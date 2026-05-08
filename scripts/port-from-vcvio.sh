@@ -113,7 +113,7 @@ echo "# Copying Layer D — Control / Logic helpers"
 mkdir -p "$DST/PolyFun/Control"/{Comonad,Lawful,Monad}
 mkdir -p "$DST/PolyFun/Logic"
 
-cp -p "$SRC"/ToMathlib/Control/Coalgebra.lean              "$DST/PolyFun/Control/"
+cp -p "$SRC"/ToMathlib/Control/{Coalgebra,Trace}.lean      "$DST/PolyFun/Control/"
 cp -p "$SRC"/ToMathlib/Control/Comonad/{Basic,Cofree,Instances}.lean \
       "$DST/PolyFun/Control/Comonad/"
 cp -p "$SRC"/ToMathlib/Control/Lawful/Basic.lean           "$DST/PolyFun/Control/Lawful/"

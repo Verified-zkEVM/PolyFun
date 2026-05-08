@@ -25,7 +25,9 @@ if [[ ! -d "PolyFun" || ! -f "PolyFun.lean" ]]; then
 fi
 
 # Files in scope: every ported .lean under PolyFun/.
-mapfile -t files < <(find PolyFun -name '*.lean' -type f | LC_ALL=C sort)
+# (`mapfile -t files` is bash-4-only; use a portable while-read loop for macOS.)
+files=()
+while IFS= read -r f; do files+=("$f"); done < <(find PolyFun -name '*.lean' -type f | LC_ALL=C sort)
 
 if (( ${#files[@]} == 0 )); then
   echo "ERROR: no .lean files found under PolyFun/. Run port-from-vcvio.sh first." >&2
@@ -37,6 +39,7 @@ echo "# Renaming namespaces across ${#files[@]} files"
 # Subset of Control modules we actually ported.
 CONTROL_SUFFIXES=(
   "Coalgebra"
+  "Trace"
   "Comonad.Basic"
   "Comonad.Cofree"
   "Comonad.Instances"
