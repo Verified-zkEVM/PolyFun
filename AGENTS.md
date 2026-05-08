@@ -111,17 +111,26 @@ New files must respect this DAG. Re-exports through
 Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) for the repo's explicit
 attribution policy.
 
-- New Lean files should use the standard copyright / license / authors
-  header and a module docstring.
+- The copyright line on every Lean file is `Copyright (c) <YEAR>
+  PolyFun Contributors. All rights reserved.` — *always* "PolyFun
+  Contributors", never an individual. This matches the
+  [`Verified-zkEVM/ArkLib`](https://github.com/Verified-zkEVM/ArkLib)
+  convention and keeps copyright ownership with the project.
+- The `Authors:` line names individual humans (comma-separated for
+  multiple authors). This is the human-attribution channel and is
+  preserved on routine edits.
+- New Lean files should use the standard copyright / license /
+  authors header and a module docstring.
 - For ordinary Lean source files, use the standard prologue layout:
   header, blank line, imports, blank line, module docstring.
 - Docstrings must be intrinsic and descriptive. Cross-reference live
   sibling definitions when helpful, but do not mention removed or
   renamed declarations, change history, or reactive wording such as
   "replaces" or "renamed from".
-- Preserve existing headers on routine edits.
-- Only rewrite attribution when a file is genuinely new or materially
-  replaced.
+- Preserve the `Authors:` line on routine edits. The copyright line
+  stays "PolyFun Contributors" regardless of who edits.
+- Only rewrite the `Authors:` line when a file is genuinely new or
+  materially replaced.
 - Do not add a separate AI-attribution line.
 - For inline section breaks within a Lean file, use Mathlib-style
   doc-comment headers `/-! ## Title -/` (or the multi-line

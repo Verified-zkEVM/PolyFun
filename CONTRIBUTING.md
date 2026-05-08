@@ -37,42 +37,62 @@ instantiate.
 
 ## Attribution And File Headers
 
-This repo uses explicit Lean file headers. Every new Lean file should
-start with the standard header:
+This repo uses explicit Lean file headers. Every Lean file under
+`PolyFun/` uses a single canonical copyright holder, "PolyFun
+Contributors", matching the convention used by
+[`Verified-zkEVM/ArkLib`](https://github.com/Verified-zkEVM/ArkLib).
+The standard header is:
 
 ```lean
 /-
-Copyright (c) CURRENT_YEAR Author Name. All rights reserved.
+Copyright (c) CURRENT_YEAR PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Author Name
 -/
 ```
 
-Replace `CURRENT_YEAR` with the calendar year when the file is created.
+* `CURRENT_YEAR` is the calendar year when the file is created.
+* The first line *always* attributes copyright to "PolyFun
+  Contributors" — never to an individual. This keeps copyright
+  ownership with the project and avoids per-file divergence as
+  contributors come and go.
+* The `Authors:` line *always* names individual humans. List the
+  people credited for the file's design and content; comma-separate
+  multiple authors. This line is the human-attribution channel and is
+  preserved on routine edits.
 
 Attribution policy:
 
-1. **New files**: add the standard header with the current year and the
-   author name(s) that should be credited for the new file.
-2. **Routine edits to existing files**: preserve the existing header.
-   Do not rewrite attribution just because you touched the file.
+1. **New files**: add the standard header with the current year,
+   "PolyFun Contributors" as copyright holder, and the author
+   name(s) that should be credited for the new file on the
+   `Authors:` line.
+2. **Routine edits to existing files**: preserve the existing
+   `Authors:` line. Do not rewrite attribution just because you
+   touched the file. The copyright line stays "PolyFun Contributors"
+   regardless of who edits.
 3. **Substantial rewrites or replacements**: if a file is effectively
-   replaced with new content, or an old file is renamed/recreated as a
-   genuinely new file, update the header to reflect the new authorship.
+   replaced with new content, update the `Authors:` line to reflect
+   the new authorship. The copyright line still stays "PolyFun
+   Contributors".
 4. **Copied or ported material**: if a new file is derived from an
-   existing file or external source and substantial original structure /
-   content remains, preserve any required upstream attribution and add
-   current credited authors as appropriate. Files imported from
-   `Verified-zkEVM/VCV-io` during the initial bootstrap retain their
-   existing headers verbatim.
-5. **AI assistance**: do not add a separate AI-attribution line. Use the
-   repo's normal header format and list only the credited author name(s).
+   existing file or external source and substantial original
+   structure / content remains, preserve any required upstream
+   `Authors:` attribution. Files imported from
+   `Verified-zkEVM/VCV-io` during the initial bootstrap had their
+   copyright line normalized to "PolyFun Contributors" but their
+   `Authors:` line retained verbatim.
+5. **AI assistance**: do not add a separate AI-attribution line. Use
+   the repo's normal header format with only the credited human
+   author name(s) on the `Authors:` line.
 
 When in doubt, prefer:
 
-- preserving attribution on incremental edits
-- updating attribution only when the file is genuinely new or materially
-  replaced
+- preserving the `Authors:` line on incremental edits
+- updating the `Authors:` line only when the file is genuinely new or
+  materially replaced
+- never changing the copyright holder line away from "PolyFun
+  Contributors"
 
 ## Documentation Expectations
 
