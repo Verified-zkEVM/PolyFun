@@ -16,8 +16,26 @@ permissions:
 jobs:
   summarize:
     runs-on: ubuntu-latest
+    # Skip when no provider API key is configured. This keeps the workflow
+    # green-by-skip until a `GEMINI_API_KEY` (or other provider key) is
+    # provisioned as a repository secret. Once a key exists, this guard lets
+    # the job run; otherwise the summarize action would fail with
+    # `API_KEY not set`.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]' }}
     steps:
+      - name: Skip if API key missing
+        id: gate
+        env:
+          API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [[ -z "${API_KEY}" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::GEMINI_API_KEY secret is not set; skipping PR summary."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Generate PR Summary
+        if: steps.gate.outputs.skip == 'false'
         uses: alexanderlhicks/lean-summary-workflow@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -19,8 +19,13 @@ lake exe cache get
 ```
 
 `./scripts/validate.sh` is the recommended convenience wrapper for routine
-local validation. By default it runs `lake build` followed by
-`./scripts/check-imports.sh`.
+local validation. By default it runs:
+
+1. `lake build`
+2. `./scripts/check-imports.sh` (umbrella `PolyFun.lean` matches the
+   tracked source tree)
+3. `python3 ./scripts/check-docs-integrity.py` (CLAUDE.md symlink and
+   tracked-markdown link resolution)
 
 ## Validation By Change Type
 
@@ -58,6 +63,7 @@ issue:
 ```bash
 lake build
 ./scripts/check-imports.sh
+python3 ./scripts/check-docs-integrity.py
 ```
 
 If you specifically need to regenerate `PolyFun.lean`, use:
@@ -76,17 +82,27 @@ To run the style lint on its own:
 
 - [`../../.github/workflows/ci.yml`](../../.github/workflows/ci.yml): runs
   `lake build` and `./scripts/validate.sh` on every push to `main` and on
-  pull requests.
+  pull requests. The `build` job is a required status check on `main`.
+- [`../../.github/workflows/check-imports.yml`](../../.github/workflows/check-imports.yml):
+  checks that `PolyFun.lean` matches the tracked source tree. `Check
+  Library File Imports` is a required status check on `main`.
+- [`../../.github/workflows/docs-integrity.yml`](../../.github/workflows/docs-integrity.yml):
+  runs `./scripts/check-docs-integrity.py` (CLAUDE.md symlink, tracked
+  markdown link resolution). `Check Docs Integrity` is a required status
+  check on `main`. This is the agent-documentation liveness check: any
+  PR that breaks an internal link in `AGENTS.md`, `README.md`,
+  `CONTRIBUTING.md`, `REFERENCES.md`, `PORTING-PLAN.md`, or any tracked
+  page under `docs/` will fail this job.
 - [`../../.github/workflows/linting.yml`](../../.github/workflows/linting.yml):
   runs `./scripts/lint-style.sh` (Mathlib-derived style linter).
-- [`../../.github/workflows/check-imports.yml`](../../.github/workflows/check-imports.yml):
-  checks that `PolyFun.lean` matches the tracked source tree.
+- [`../../.github/workflows/summary.yml`](../../.github/workflows/summary.yml):
+  optional AI-generated PR summary; gated on `GEMINI_API_KEY` repository
+  secret. Skipped (with a notice) if the secret is not set.
 - [`../../.github/workflows/release-tag.yml`](../../.github/workflows/release-tag.yml),
   [`../../.github/workflows/update.yml`](../../.github/workflows/update.yml),
-  [`../../.github/workflows/summary.yml`](../../.github/workflows/summary.yml),
   [`../../.github/workflows/review.yml`](../../.github/workflows/review.yml):
-  release tagging, dependency-update PRs, summary stats, and review-helper
-  workflows ported from
+  release tagging, dependency-update PRs, and review-helper workflows
+  ported from
   [`Verified-zkEVM/ArkLib`](https://github.com/Verified-zkEVM/ArkLib).
 
 ## Toolchain
