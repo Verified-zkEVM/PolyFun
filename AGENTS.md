@@ -187,6 +187,48 @@ For routine local validation: `./scripts/validate.sh`.
 Lean toolchain and Mathlib stay in sync (both currently `v4.29.0`).
 Files should stay under 1500 lines.
 
+## Further Reading
+
+Deeper agent-facing notes live in [`docs/wiki/`](docs/wiki/). Use this
+`AGENTS.md` for the one-screen overview and the wiki for details that are
+too specific or too changeable to keep at the repo root.
+
+- [`docs/wiki/README.md`](docs/wiki/README.md): hub and maintenance contract.
+- [`docs/wiki/quickstart.md`](docs/wiki/quickstart.md): commands and
+  validation playbook.
+- [`docs/wiki/repo-map.md`](docs/wiki/repo-map.md): subtree map and where to
+  start by task.
+- [`docs/wiki/generated-files.md`](docs/wiki/generated-files.md): derived
+  outputs and source-of-truth rules.
+- [`docs/wiki/pfunctor.md`](docs/wiki/pfunctor.md): the polynomial-functor
+  substrate.
+- [`docs/wiki/itree.md`](docs/wiki/itree.md): interaction trees layer.
+- [`docs/wiki/interaction.md`](docs/wiki/interaction.md): generic interaction
+  framework (`Spec`, two-party, multiparty, concurrent, UC).
+- [`docs/wiki/notation.md`](docs/wiki/notation.md): notation reference (UC
+  composition operators).
+- [`docs/wiki/gotchas.md`](docs/wiki/gotchas.md): recurring traps and
+  troubleshooting.
+
+### Wiki Maintenance Contract
+
+The wiki is **recently authored and not stable**. Most pages were written
+together with the initial port from
+[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io) and will
+be edited and refined as the formalization matures. Do **not** treat the
+wiki, `AGENTS.md`, `CONTRIBUTING.md`, or `README.md` as gospel:
+
+- If a page contradicts the source, the source wins. Fix the page in the
+  same PR.
+- If a PR changes commands, repo structure, generated-file behavior, file
+  naming, namespaces, or load-bearing public APIs, update the matching wiki
+  page in the same PR. Add a new page when that is the cleaner split.
+- Promote recurring agent learnings into [`docs/wiki/`](docs/wiki/); do not
+  let stable guidance live only in ephemeral notes (`*-NEVER-COMMIT.md`,
+  scratch chats, scratch worktrees).
+- Prefer linking to canonical docs (Lean source, Mathlib, papers in
+  [`REFERENCES.md`](REFERENCES.md)) over copying their contents.
+
 ## References
 
 Module docstrings cite a small set of foundational papers. The

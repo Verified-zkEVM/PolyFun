@@ -16,6 +16,7 @@ Usage: ./scripts/validate.sh [--lint]
 Default checks:
   - lake build
   - ./scripts/check-imports.sh
+  - python3 ./scripts/check-docs-integrity.py
 
 Optional checks:
   --lint   Run ./scripts/lint-style.sh
@@ -45,6 +46,10 @@ lake build
 echo ""
 echo "# Checking umbrella imports"
 ./scripts/check-imports.sh
+
+echo ""
+echo "# Checking docs integrity"
+python3 ./scripts/check-docs-integrity.py
 
 if (( run_lint )); then
   echo ""
