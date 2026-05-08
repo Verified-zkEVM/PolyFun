@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Restore Lean cache
+        uses: actions/cache/restore@v5
+        id: lake-cache
+        with:
+          path: ./.lake
+          key: ${{ runner.os }}-lean-ci-${{ hashFiles('lake-manifest.json') }}
+          restore-keys: |
+            ${{ runner.os }}-lean-ci-
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up Lean environment
+        uses: leanprover/lean-action@v1.5.0
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-github-cache: false
+          use-mathlib-cache: false
+
+      - name: Fetch dependency cache
+        run: lake exe cache get
+
+      - name: Build PolyFun
+        run: lake build
+
+      - name: Run validation wrapper
+        run: ./scripts/validate.sh
+
+      - name: Save Lean cache
+        if: success() && steps.lake-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ./.lake
+          key: ${{ runner.os }}-lean-ci-${{ hashFiles('lake-manifest.json') }}

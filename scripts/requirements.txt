@@ -1,0 +1,5 @@
+# Python dependencies for the local repo scripts.
+#
+# `lint-style.py` itself uses only the standard library; this file is reserved
+# for future scripts (PR-summary helpers, blueprint utilities, etc.) that may
+# need third-party packages. Currently empty by design.
