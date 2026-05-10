@@ -15,7 +15,7 @@ public import PolyFun.PFunctor.Chart.Basic
 For a polynomial functor `P`, the universal "log of `P`-events" is the free
 monoid on indices `Idx P = Σ a : P.A, P.B a`.  This file packages that monoid
 together with the abstract `Control.Trace` machinery from
-`ToMathlib/Control/Trace.lean`.
+`PolyFun/Control/Trace.lean`.
 
 ## Main definitions
 
@@ -39,7 +39,7 @@ category.  Stateful executors (e.g. running over an `OracleComp`) are handled
 separately in `VCVio/OracleComp/QueryTracking/`.
 
 The canonical user inside this repository is `BoundaryAction.emit` in
-`VCVio/Interaction/UC/OpenProcess.lean`, where `Trace Δ.Out X` records the
+`PolyFun/Interaction/UC/OpenProcess.lean`, where `Trace Δ.Out X` records the
 list of output-port packets a node emits when the local state transitions
 to `x : X`. Operations such as `mapBoundary`, `wireLeft`, `wireRight`, and
 the tensor embeddings of open processes are implemented directly by

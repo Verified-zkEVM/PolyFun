@@ -41,7 +41,7 @@ with `inl`/`inr`/`sumPair`, and `⊗` is the categorical product with
 
 ## Layout
 
-This file mirrors `ToMathlib/PFunctor/Lens/Basic.lean` for ease of
+This file mirrors `PolyFun/PFunctor/Lens/Basic.lean` for ease of
 cross-reference. Each section header that overlaps with `Lens` is named
 identically; the chart-specific sections (`Tensor` for the categorical
 product, `Prod` for the polynomial product) are documented inline.

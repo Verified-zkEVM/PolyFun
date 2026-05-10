@@ -28,11 +28,11 @@ References informing this terminology:
 * Spivak (2012), schemas as structured descriptions whose instances carry data.
 
 The rest of the interaction core consumes realized node contexts, not schemas:
-* `Spec.Decoration Γ spec` decorates a protocol tree by concrete values in
+* `PFunctor.FreeM.Displayed.Decoration Γ spec` decorates a protocol tree by concrete values in
   context `Γ`;
-* `Spec.SyntaxOver` and `Spec.InteractionOver` define syntax and execution over
+* `SyntaxOver` and `InteractionOver` define syntax and execution over
   those realized contexts.
-* `Spec.ShapeOver` is the functorial refinement of `Spec.SyntaxOver`, used
+* `ShapeOver` is the functorial refinement of `SyntaxOver`, used
   when node objects support generic continuation reindexing.
 * `Spec.Node.ContextHom` records structure-preserving maps between realized
   contexts, so forgetting or repackaging metadata can be expressed explicitly.
@@ -73,7 +73,7 @@ abbrev Context := Type u → Type v
 
 At each move space `X`, it turns a `Γ X`-value into a `Δ X`-value. This is the
 right notion of morphism for realized node contexts, and it is what
-`Spec.Decoration.map` consumes.
+`PFunctor.FreeM.Displayed.Decoration.map` consumes.
 -/
 abbrev ContextHom (Γ : Type u → Type v) (Δ : Type u → Type w) := ∀ X, Γ X → Δ X
 
@@ -105,7 +105,7 @@ from `Γ.toPFunctor` to `Spec.basePFunctor`; its lift to free monads is the
 shape-forgetful map `DecoratedSpec.shape` in `Basic/Decoration.lean`.
 
 This is the polynomial substrate that justifies the `Spec`-indexed
-recursion of `Spec.Decoration`: a decorated spec is a free term of this
+recursion of `PFunctor.FreeM.Displayed.Decoration`: a decorated spec is a free term of this
 polynomial, and the existing `Decoration Γ spec` is exactly its fiber
 over the underlying `spec : Spec`.
 -/
