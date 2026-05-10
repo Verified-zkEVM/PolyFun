@@ -41,6 +41,7 @@ instance : LawfulCoapplicative Id where
   coseqLeft_eq := by simp [CoseqLeft.coseqLeft, coseqLeft, Functor.map, coseq]
   coseqRight_eq := by simp [CoseqRight.coseqRight, coseqRight, Functor.map, coseq]
   coseq_assoc := by simp [coseq, Functor.map, Equiv.prodAssoc]
+  coseq_map := by simp [coseq, Functor.map]
 
 instance : LawfulComonad Id where
   map_eq_extend_extract := by simp [Functor.map, extend, Extract.extract]
@@ -95,6 +96,11 @@ instance : LawfulCoapplicative (Prod ε) where
       simp only [coseq, Functor.map]
     · -- Goal: (map (Equiv.prodAssoc α β γ) (coseq (coseq wa wb) wc)).2 = (coseq wa (coseq wb wc)).2
       simp only [coseq, Functor.map, Equiv.prodAssoc_apply]
+  coseq_map := by
+    intro _ _ _ _ f g wa wb
+    cases wa
+    cases wb
+    rfl
 
 instance : LawfulComonad (Prod ε) where
   -- Inherits LawfulCoapplicative proofs
@@ -205,6 +211,11 @@ instance : LawfulCoapplicative Stream' where
   coseq_assoc := by
     intros α β γ s₁ s₂ s₃; apply Stream'.ext; intro n
     simp only [Functor.map, coseq, Stream'.map, Stream'.get, Stream'.zip, Equiv.prodAssoc_apply]
+  coseq_map := by
+    intro _ _ _ _ f g s₁ s₂
+    apply Stream'.ext
+    intro n
+    simp only [Functor.map, coseq, Stream'.map, Stream'.get, Stream'.zip]
 
 instance : LawfulComonad Stream' where
   map_eq_extend_extract := by
@@ -288,6 +299,18 @@ instance : LawfulCoapplicative NonEmptyList where
         | cons h3 t3 =>
           simp only [List.zip, List.zipWith, List.map]
           exact congrArg _ (ih t2 t3)
+  coseq_map := by
+    intro _ _ _ _ f g ⟨ha, la⟩ ⟨hb, lb⟩
+    simp only [Functor.map, coseq, zip, NonEmptyList.map]
+    congr 1
+    induction la generalizing lb with
+    | nil => simp [List.zip]
+    | cons h t ih =>
+      cases lb with
+      | nil => simp [List.zip]
+      | cons h2 t2 =>
+        simp only [List.zip, List.zipWith, List.map]
+        exact congrArg _ (ih t2)
 
 theorem filterMap_fromList?_tails_map (f : α → β) (l : List α) :
     List.map (fun nel : NonEmptyList α => f nel.head)
@@ -530,6 +553,22 @@ instance : LawfulCoapplicative Zipper where
           cases rc with
           | nil => simp [List.zip]
           | cons h3 t3 => simp only [List.zip, List.zipWith]; exact congrArg _ (ih t2 t3)
+  coseq_map := by
+    intro _ _ _ _ f g ⟨la, fa, ra⟩ ⟨lb, fb, rb⟩
+    simp only [Functor.map, Coseq.coseq, coseq, map]
+    congr 1
+    · induction la generalizing lb with
+      | nil => simp [List.zip]
+      | cons h t ih =>
+        cases lb with
+        | nil => simp [List.zip]
+        | cons h2 t2 => simp only [List.zip, List.zipWith, List.map]; exact congrArg _ (ih t2)
+    · induction ra generalizing rb with
+      | nil => simp [List.zip]
+      | cons h t ih =>
+        cases rb with
+        | nil => simp [List.zip]
+        | cons h2 t2 => simp only [List.zip, List.zipWith, List.map]; exact congrArg _ (ih t2)
 
 instance : LawfulComonad Zipper where
   map_eq_extend_extract := by
@@ -629,6 +668,10 @@ instance instLawfulCoapplicative [Comonad w] [LawfulCoapplicative w] :
     intro _ _ _ ⟨ra, ea⟩ ⟨rb, eb⟩ ⟨rc, ec⟩
     simp only [Functor.map, Coseq.coseq]
     exact congrArg (EnvT.mk · ea) (coseq_assoc ra rb rc)
+  coseq_map := by
+    intro _ _ _ _ f g ⟨ra, ea⟩ ⟨rb, eb⟩
+    simp only [Functor.map, Coseq.coseq]
+    exact congrArg (EnvT.mk · ea) (coseq_map f g ra rb)
 
 instance instLawfulComonad [Comonad w] [LawfulComonad w] : LawfulComonad (EnvT e w) where
   map_eq_extend_extract := by
@@ -705,8 +748,34 @@ instance instLawfulCoapplicative [Comonad w] [LawfulCoapplicative w] :
     LawfulCoapplicative (StoreT s w) where
   coseqLeft_eq := by intros; rfl
   coseqRight_eq := by intros; rfl
-  coseq_assoc := sorry -- Requires naturality of coseq w.r.t. map, not available from
-                       -- `LawfulCoapplicative` alone
+  coseq_assoc := by
+    intro α β γ ⟨ra, pa⟩ ⟨rb, pb⟩ ⟨rc, pc⟩
+    simp only [Functor.map, Coseq.coseq]
+    have hLeft := coseq_map
+      (fun x : (s → α) × (s → β) => fun s' => (x.1 s', x.2 s'))
+      (id : (s → γ) → (s → γ))
+      (Coseq.coseq ra rb) rc
+    simp only [id_map] at hLeft
+    rw [← hLeft]
+    have hRight := coseq_map
+      (id : (s → α) → (s → α))
+      (fun x : (s → β) × (s → γ) => fun s' => (x.1 s', x.2 s'))
+      ra (Coseq.coseq rb rc)
+    simp only [id_map] at hRight
+    rw [← hRight]
+    repeat rw [← comp_map]
+    simpa [Function.comp_def] using
+      congrArg
+        (Functor.map
+          (fun p : (s → α) × ((s → β) × (s → γ)) =>
+            fun s' => (p.1 s', (p.2.1 s', p.2.2 s'))))
+        (coseq_assoc ra rb rc)
+  coseq_map := by
+    intro α β α' β' f g ⟨ra, pa⟩ ⟨rb, pb⟩
+    simp only [Functor.map, Coseq.coseq]
+    rw [← coseq_map (fun h : s → α => f ∘ h) (fun h : s → β => g ∘ h) ra rb]
+    repeat rw [← comp_map]
+    rfl
 
 instance instLawfulComonad [Comonad w] [LawfulComonad w] : LawfulComonad (StoreT s w) where
   map_eq_extend_extract := by
@@ -728,15 +797,18 @@ instance instLawfulComonad [Comonad w] [LawfulComonad w] : LawfulComonad (StoreT
 
 end StoreT
 
-/-! ## Day Convolution -/
+/-! ## Day convolution -/
 
--- Reuse universes declared for transformers. Add v₁ and u₃.
-universe v₁ u₃
+universe u₃
 
-/-- The Day convolution of two functors `f` and `g`.
-    It captures an operation combining elements from `f α` and `g β`
-    to produce a result of type `a`, where `α` and `β` are existentially quantified. -/
-structure Day (f : Type u₁ → Type v₁) (g : Type u₂ → Type v₂) (a : Type u₃) where
+/--
+The Day convolution of two endofunctors.
+
+The endofunctor restriction is intentional: the comonadic `extend` for Day
+uses `extend` on the component functors, producing values in `f (f α)` and
+`g (g β)`. Those must again be valid input types for `f` and `g`.
+-/
+structure Day (f : Type u₁ → Type u₁) (g : Type u₂ → Type u₂) (a : Type u₃) where
   /-- The underlying type for the first functor component. -/
   {α : Type u₁}
   /-- The underlying type for the second functor component. -/
@@ -750,12 +822,10 @@ structure Day (f : Type u₁ → Type v₁) (g : Type u₂ → Type v₂) (a : T
 
 namespace Day
 
-variable {f : Type u₁ → Type v₁} {g : Type u₂ → Type v₂}
+variable {f : Type u₁ → Type u₁} {g : Type u₂ → Type u₂}
 
--- Need Functor f and Functor g constraints for Comonad instance later
 instance instFunctor [Functor f] [Functor g] : Functor (Day f g) where
   map {a b : Type u₃} (k : a → b) (day : Day f g a) : Day f g b :=
-    -- Access fields using dot notation
     ⟨fun (x : day.α) (y : day.β) => k (day.map' x y), day.fa, day.gb⟩
 
 @[simp]
@@ -763,37 +833,33 @@ theorem map_mk [Functor f] [Functor g] {α : Type u₁} {β : Type u₂} {a b : 
     (k : a → b) (map' : α → β → a) (fa : f α) (gb : g β) :
   k <$> (⟨map', fa, gb⟩ : Day f g a) = ⟨fun x y => k (map' x y), fa, gb⟩ := rfl
 
-/-- Define `extract` for the Day comonad. -/
+/-- Extract the focused value from a Day convolution. -/
 def extract [Extract f] [Extract g] {a : Type u₃} (day : Day f g a) : a :=
-  -- Access fields using dot notation
   day.map' (Extract.extract day.fa) (Extract.extract day.gb)
 
-/-- Define `duplicate` for the Day comonad.
-    Note: This definition requires `u₁ = v₁` and `u₂ = v₂` (i.e., the underlying
-    comonads must map `Type u → Type u`), because `Extend.extend day.fa id : f (f day.α)`
-    requires `f day.α : Type u₁`. With the general universe setup of `Day`, this constraint
-    cannot be satisfied, so the definition remains as `sorry`. -/
-def duplicate [Comonad f] [Comonad g] {a : Type u₃} (day : Day f g a) : Day f g (Day f g a) :=
-  sorry -- Blocked by universe mismatch: requires v₁ = u₁ and v₂ = u₂
+/-- Extend over a Day convolution by extending both component comonads. -/
+def extend [Comonad f] [Comonad g] {a b : Type u₃}
+    (day : Day f g a) (k : Day f g a → b) : Day f g b :=
+  ⟨fun fa gb => k ⟨day.map', fa, gb⟩, Extend.extend day.fa id, Extend.extend day.gb id⟩
 
-/-- Define `coseq` for the Day comonad. -/
-def coseq [Comonad f] [Comonad g] {a b : Type u₃} (day_a : Day f g a)
+/-- Duplicate a Day convolution. -/
+def duplicate [Comonad f] [Comonad g] {a : Type u₃} (day : Day f g a) :
+    Day f g (Day f g a) :=
+  ⟨fun fa gb => ⟨day.map', fa, gb⟩, Extend.extend day.fa id, Extend.extend day.gb id⟩
+
+/-- Pair two Day convolutions componentwise. -/
+def coseq [Coseq f] [Coseq g] {a b : Type u₃} (day_a : Day f g a)
     (day_b : Day f g b) : Day f g (a × b) :=
-  -- New map function combines results using the original maps
   let map_c := fun (x : day_a.α × day_b.α) (y : day_a.β × day_b.β) =>
-                 (day_a.map' x.1 y.1, day_b.map' x.2 y.2)
-  -- Combine underlying functor values using their coseq
+    (day_a.map' x.1 y.1, day_b.map' x.2 y.2)
   ⟨map_c, Coseq.coseq day_a.fa day_b.fa, Coseq.coseq day_a.gb day_b.gb⟩
 
-instance instCoseq [Comonad f] [Comonad g] : Coseq (Day f g) where
+instance instCoseq [Coseq f] [Coseq g] : Coseq (Day f g) where
   coseq := coseq
 
--- Requires Functor f/g because Comonad extends Functor
--- Also requires Coseq f/g for the Day coseq definition
 instance [Comonad f] [Comonad g] : Comonad (Day f g) where
-  extract {a : Type u₃} := extract
-  extend {a b : Type u₃} (day : Day f g a) (k : Day f g a → b) : Day f g b :=
-    sorry -- Blocked by universe mismatch: requires v₁ = u₁ and v₂ = u₂ (same as duplicate)
-  coseq {a b : Type u₃} := coseq -- Provide the coseq field
+  extract := extract
+  extend := extend
+  coseq := coseq
 
 end Day

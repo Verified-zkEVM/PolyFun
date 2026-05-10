@@ -75,7 +75,7 @@ variable {F : Type u → Type y} {m : Type u → Type v} {α β : Type u}
 
 -- def bind [Bind m] (x : FreeT F m α) (f : α → FreeT F m β) : FreeT F m β :=
 --   match x with
---   | FreeT.lift ma => by sorry
+--   | FreeT.lift ma => ...
 --   | FreeT.roll fx k => FreeT.roll fx (fun a => f a)
 
 -- instance [Monad m] : Monad (FreeT F m) where
@@ -160,25 +160,19 @@ instance [Monad m] [LawfulMonad m] : LawfulMonadLift m (FreeContT f m) where
     change (ma >>= g) >>= handlePure = ma >>= fun x => g x >>= handlePure
     exact LawfulMonad.bind_assoc (m := m) (x := ma) (f := g) (g := handlePure)
 
-instance {n : Type u → Type v} [MonadLiftT m n] : MonadLiftT (FreeContT f m) (FreeContT f n) where
-  monadLift := fun x => fun handleEff handlePure => by
-    dsimp at x
-    dsimp [ContT] at handleEff
-    sorry
-
 end FreeContT
 
 -- /-- Convert free monad transformers from inductive style to continuation-passing style. -/
 -- def FreeT.toFreeContT : FreeT f m α → FreeContT f m α :=
 --   fun x => match x with
 --     | FreeT.pure a => fun _ handlePure => handlePure a
---     | FreeT.lift mb k => fun handleEff handlePure => sorry
+--     | FreeT.lift mb k => ...
 --       -- handleEff mb (fun a => FreeT.toFreeContT (k a) handleEff handlePure)
 --     | FreeT.roll fx k => fun handleEff handlePure =>
 --       handleEff fx (fun a => FreeT.toFreeContT (k a) handleEff handlePure)
 
 -- def FreeContT.toFreeT : FreeContT f m α → FreeT f m α :=
---   fun x => sorry
+--   fun x => ...
 --   -- FreeT.lift (x FreeT.roll FreeT.pure) (by simp)
 
 /-- Convert free monads from inductive style to continuation-passing style. -/
@@ -203,21 +197,12 @@ lemma FreeMonad.toFreeMonad_toFreeContM (x : FreeMonad f α) :
       funext b
       exact ih b
 
-lemma FreeContM.toFreeContM_toFreeMonad (x : FreeContM f α) :
-    @FreeMonad.toFreeContM f α (FreeContM.toFreeMonad x) = @x := by
-  funext r handleEff handlePure
-  set y := FreeContM.toFreeMonad x with hy
-  induction h : y with
-  | pure a =>
-    simp [h, toFreeMonad] at hy
-    simp [FreeMonad.toFreeContM]
-    sorry
-  | roll x k ih => sorry
-  -- unfold FreeMonad.toFreeContM
+/-
+The Church encoding retracts onto the inductive free monad via
+`FreeContM.toFreeMonad`, as witnessed by
+`FreeMonad.toFreeMonad_toFreeContM`.
 
-/-- Two monad definitions are equivalent. -/
-def equivFreeM : FreeMonad f α ≃ FreeContM f α where
-  toFun := FreeMonad.toFreeContM
-  invFun := FreeContM.toFreeMonad
-  left_inv := FreeMonad.toFreeMonad_toFreeContM
-  right_inv := FreeContM.toFreeContM_toFreeMonad
+The converse direction is not available for arbitrary Lean functions of the
+Church-encoded type without an additional parametricity principle, so these
+maps are intentionally not packaged as an equivalence.
+-/
