@@ -83,5 +83,3 @@ See the *Wiki Maintenance Contract* section in
   attribution, and large-contribution policy.
 - [`../../REFERENCES.md`](../../REFERENCES.md): bibliography backing module
   docstrings.
-- [`../../PORTING-PLAN.md`](../../PORTING-PLAN.md): the wholesale port plan
-  from [`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io).

@@ -11,9 +11,7 @@ PolyFun is a ready, buildable Lean 4 library. The repository builds without
 current module layout and scope.
 
 PolyFun originated as a wholesale extraction from
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io). See
-[`PORTING-PLAN.md`](PORTING-PLAN.md) for the historical migration plan and
-file inventory.
+[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io).
 
 ## Scope
 
@@ -59,8 +57,6 @@ external dependency).
 - [`docs/wiki/`](docs/wiki/): deeper agent-facing notes on the
   `PFunctor` substrate, interaction trees, the interaction framework,
   notation, and recurring gotchas.
-- [`PORTING-PLAN.md`](PORTING-PLAN.md): historical wholesale port plan from
-  VCV-io.
 
 ## License
 

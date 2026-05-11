@@ -2,10 +2,10 @@
 
 # Wholesale-copy phase of the VCV-io → PolyFun port.
 #
-# This script is intentionally one-shot. It performs the file moves
-# documented in PORTING-PLAN.md §3 (phase 1) and PORTING-PLAN.md §13.6.
-# The expectation is that you run it exactly once, then commit, then
-# run `rename-namespaces.sh` for the textual rename pass (phase 2).
+# This script is intentionally one-shot. It performs the wholesale-copy
+# phase of the original PolyFun extraction. The expectation is that you run
+# it exactly once, then commit, then run `rename-namespaces.sh` for the
+# textual rename pass.
 #
 # Usage:
 #   ./scripts/port-from-vcvio.sh [SRC]
@@ -18,7 +18,7 @@
 #
 # Pre-flight checks:
 #   1. The VCV-io PFUNCTOR-FIRST cutover (in the source worktree) must
-#      be merged or deemed stable. See PORTING-PLAN.md §8.6.
+#      be merged or deemed stable.
 #   2. `git status` in the destination must be clean.
 
 set -euo pipefail
@@ -89,7 +89,7 @@ cp -p "$SRC"/VCVio/Interaction/TwoParty/*.lean    "$DST/PolyFun/Interaction/TwoP
 cp -p "$SRC"/VCVio/Interaction/Multiparty/*.lean  "$DST/PolyFun/Interaction/Multiparty/"
 
 # UC: only the generic-friendly subset. Excludes Computational, Runtime,
-# Standard, AsyncRuntime, AsyncSecurity, StdDoBridge (per PORTING-PLAN §1.2).
+# Standard, AsyncRuntime, AsyncSecurity, StdDoBridge.
 # EnvAction is included; it gets a generic-monad rewrite in the rename phase.
 cp -p "$SRC"/VCVio/Interaction/UC/Interface.lean         "$DST/PolyFun/Interaction/UC/"
 cp -p "$SRC"/VCVio/Interaction/UC/OpenProcess.lean       "$DST/PolyFun/Interaction/UC/"
