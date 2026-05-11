@@ -41,7 +41,7 @@ instance : LawfulCoapplicative Id where
   coseqLeft_eq := by simp [CoseqLeft.coseqLeft, coseqLeft, Functor.map, coseq]
   coseqRight_eq := by simp [CoseqRight.coseqRight, coseqRight, Functor.map, coseq]
   coseq_assoc := by simp [coseq, Functor.map, Equiv.prodAssoc]
-  coseq_map := by simp [coseq, Functor.map]
+  map_coseq := by simp [coseq, Functor.map]
 
 instance : LawfulComonad Id where
   map_eq_extend_extract := by simp [Functor.map, extend, Extract.extract]
@@ -96,7 +96,7 @@ instance : LawfulCoapplicative (Prod ε) where
       simp only [coseq, Functor.map]
     · -- Goal: (map (Equiv.prodAssoc α β γ) (coseq (coseq wa wb) wc)).2 = (coseq wa (coseq wb wc)).2
       simp only [coseq, Functor.map, Equiv.prodAssoc_apply]
-  coseq_map := by
+  map_coseq := by
     intro _ _ _ _ f g wa wb
     cases wa
     cases wb
@@ -211,7 +211,7 @@ instance : LawfulCoapplicative Stream' where
   coseq_assoc := by
     intros α β γ s₁ s₂ s₃; apply Stream'.ext; intro n
     simp only [Functor.map, coseq, Stream'.map, Stream'.get, Stream'.zip, Equiv.prodAssoc_apply]
-  coseq_map := by
+  map_coseq := by
     intro _ _ _ _ f g s₁ s₂
     apply Stream'.ext
     intro n
@@ -299,7 +299,7 @@ instance : LawfulCoapplicative NonEmptyList where
         | cons h3 t3 =>
           simp only [List.zip, List.zipWith, List.map]
           exact congrArg _ (ih t2 t3)
-  coseq_map := by
+  map_coseq := by
     intro _ _ _ _ f g ⟨ha, la⟩ ⟨hb, lb⟩
     simp only [Functor.map, coseq, zip, NonEmptyList.map]
     congr 1
@@ -553,7 +553,7 @@ instance : LawfulCoapplicative Zipper where
           cases rc with
           | nil => simp [List.zip]
           | cons h3 t3 => simp only [List.zip, List.zipWith]; exact congrArg _ (ih t2 t3)
-  coseq_map := by
+  map_coseq := by
     intro _ _ _ _ f g ⟨la, fa, ra⟩ ⟨lb, fb, rb⟩
     simp only [Functor.map, Coseq.coseq, coseq, map]
     congr 1
@@ -668,10 +668,10 @@ instance instLawfulCoapplicative [Comonad w] [LawfulCoapplicative w] :
     intro _ _ _ ⟨ra, ea⟩ ⟨rb, eb⟩ ⟨rc, ec⟩
     simp only [Functor.map, Coseq.coseq]
     exact congrArg (EnvT.mk · ea) (coseq_assoc ra rb rc)
-  coseq_map := by
+  map_coseq := by
     intro _ _ _ _ f g ⟨ra, ea⟩ ⟨rb, eb⟩
     simp only [Functor.map, Coseq.coseq]
-    exact congrArg (EnvT.mk · ea) (coseq_map f g ra rb)
+    exact congrArg (EnvT.mk · ea) (map_coseq f g ra rb)
 
 instance instLawfulComonad [Comonad w] [LawfulComonad w] : LawfulComonad (EnvT e w) where
   map_eq_extend_extract := by
@@ -751,13 +751,13 @@ instance instLawfulCoapplicative [Comonad w] [LawfulCoapplicative w] :
   coseq_assoc := by
     intro α β γ ⟨ra, pa⟩ ⟨rb, pb⟩ ⟨rc, pc⟩
     simp only [Functor.map, Coseq.coseq]
-    have hLeft := coseq_map
+    have hLeft := map_coseq
       (fun x : (s → α) × (s → β) => fun s' => (x.1 s', x.2 s'))
       (id : (s → γ) → (s → γ))
       (Coseq.coseq ra rb) rc
     simp only [id_map] at hLeft
     rw [← hLeft]
-    have hRight := coseq_map
+    have hRight := map_coseq
       (id : (s → α) → (s → α))
       (fun x : (s → β) × (s → γ) => fun s' => (x.1 s', x.2 s'))
       ra (Coseq.coseq rb rc)
@@ -770,10 +770,10 @@ instance instLawfulCoapplicative [Comonad w] [LawfulCoapplicative w] :
           (fun p : (s → α) × ((s → β) × (s → γ)) =>
             fun s' => (p.1 s', (p.2.1 s', p.2.2 s'))))
         (coseq_assoc ra rb rc)
-  coseq_map := by
+  map_coseq := by
     intro α β α' β' f g ⟨ra, pa⟩ ⟨rb, pb⟩
     simp only [Functor.map, Coseq.coseq]
-    rw [← coseq_map (fun h : s → α => f ∘ h) (fun h : s → β => g ∘ h) ra rb]
+    rw [← map_coseq (fun h : s → α => f ∘ h) (fun h : s → β => g ∘ h) ra rb]
     repeat rw [← comp_map]
     rfl
 

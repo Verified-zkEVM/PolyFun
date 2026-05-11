@@ -159,7 +159,7 @@ instance : LawfulComonad (CofreeC F) where
   coseq_assoc := by
     intro α β γ wa wb wc
     simp [coseq, Functor.map, Function.comp, extend_assoc]
-  coseq_map := by
+  map_coseq := by
     intro α β α' β' f g wa wb
     simp [coseq, Functor.map, Function.comp, extend_assoc]
   map_eq_extend_extract := by

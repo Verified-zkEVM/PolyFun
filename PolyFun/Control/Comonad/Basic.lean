@@ -110,14 +110,14 @@ class LawfulCoapplicative (w : Type u → Type v) [Coapplicative w] extends Lawf
   coseq_assoc : ∀ {α β γ : Type u} (wa : w α) (wb : w β) (wc : w γ),
     Functor.map (Equiv.prodAssoc α β γ) (coseq (coseq wa wb) wc) = coseq wa (coseq wb wc)
   /-- Naturality of `coseq` in both arguments. -/
-  coseq_map : ∀ {α β α' β' : Type u} (f : α → α') (g : β → β')
+  map_coseq : ∀ {α β α' β' : Type u} (f : α → α') (g : β → β')
     (wa : w α) (wb : w β),
     Functor.map (fun p : α × β => (f p.1, g p.2)) (coseq wa wb) =
       coseq (Functor.map f wa) (Functor.map g wb)
   -- Other potential laws like extract_coseq : extract (wa <@> wb) = (extract wa, extract wb)
   -- are often added but require `w (α × β)` structure, so omitted here for generality.
 
-export LawfulCoapplicative (coseqLeft_eq coseqRight_eq coseq_assoc coseq_map)
+export LawfulCoapplicative (coseqLeft_eq coseqRight_eq coseq_assoc map_coseq)
 
 /-- Lawful `Comonad`. Dual to `LawfulMonad`. -/
 class LawfulComonad (w : Type u → Type v) [Comonad w] extends LawfulCoapplicative w where
