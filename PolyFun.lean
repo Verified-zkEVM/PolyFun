@@ -107,5 +107,5 @@ import PolyFun.PFunctor.Free.Replicate
 import PolyFun.PFunctor.Lens.Basic
 import PolyFun.PFunctor.Lens.Cartesian
 import PolyFun.PFunctor.Lens.State
-import PolyFun.PFunctor.MFacts
+import PolyFun.PFunctor.M
 import PolyFun.PFunctor.Trace

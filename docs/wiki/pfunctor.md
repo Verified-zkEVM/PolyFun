@@ -45,7 +45,7 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 |------|---------|
 | [`PolyFun/PFunctor/Basic.lean`](../../PolyFun/PFunctor/Basic.lean) | `PFunctor` core, `Obj`, sum / product / sigma / pi / tensor / composition, `Lens`, `selfMonomial`, ring-style `0` / `1` / `+` / `*`. |
 | [`PolyFun/PFunctor/Equiv/Basic.lean`](../../PolyFun/PFunctor/Equiv/Basic.lean) | Equivalences `P ≃ₚ Q` and canonical equivalences for sums, products, sigma / pi, tensor, composition, universe lifts. |
-| [`PolyFun/PFunctor/MFacts.lean`](../../PolyFun/PFunctor/MFacts.lean) | Facts about Mathlib's `PFunctor.M` (M-type / final coalgebra) used downstream. |
+| [`PolyFun/PFunctor/M.lean`](../../PolyFun/PFunctor/M.lean) | Extensions to Mathlib's `PFunctor.M` (M-type / final coalgebra) used downstream. |
 | [`PolyFun/PFunctor/Bound.lean`](../../PolyFun/PFunctor/Bound.lean) | Roll bounds for `FreeM` (budget-based termination predicate). |
 
 ### Lenses and charts
@@ -106,7 +106,7 @@ provides the reusable monad / comonad / coalgebra plumbing. See
 
 - `PolyFun/ITree/` (see [`itree.md`](itree.md)) builds interaction trees
   as the M-type of a one-step polynomial functor. It uses
-  `PolyFun/PFunctor/MFacts.lean` and the cofree apparatus.
+  `PolyFun/PFunctor/M.lean` and the cofree apparatus.
 - `PolyFun/Interaction/Basic/` (see [`interaction.md`](interaction.md))
   builds protocol `Spec`s as `PFunctor.FreeM Spec.basePFunctor PUnit`,
   i.e. `PUnit`-leaved free trees on a particular base polynomial. Most

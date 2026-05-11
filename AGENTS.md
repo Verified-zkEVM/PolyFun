@@ -76,7 +76,7 @@ and depend on this library.
 Imports flow strictly downward; cycles are a build error.
 
 ```
-PFunctor/{Basic, Bound, MFacts, Equiv, Chart, Lens}
+PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   → PFunctor/{Cofree, Trace}
   → PFunctor/Free/{Basic, Path}
   → PFunctor/Free/{Displayed, Displayed/Decoration}
