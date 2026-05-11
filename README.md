@@ -4,21 +4,14 @@ Polynomial functors, interaction trees, and dependent interaction frameworks
 in Lean 4, generic substrate for protocol theory, PL semantics, and
 concurrent systems.
 
-## Status: Experimental
+## Status
 
-> **PolyFun is in active bootstrap and is not yet stable.** Names, namespaces,
-> module layout, design notes, and the wiki under [`docs/wiki/`](docs/wiki/)
-> are all expected to change. Treat everything here as a work in progress.
-> Documentation, including this README, [`AGENTS.md`](AGENTS.md),
-> [`CONTRIBUTING.md`](CONTRIBUTING.md), and [`docs/wiki/`](docs/wiki/), is
-> recently authored material that will be edited and refined as the
-> formalization matures. Do not treat any of it as gospel; if you find
-> something out of date, fix it in the same PR rather than copying it forward.
+PolyFun is a ready, buildable Lean 4 library. The repository builds without
+`sorry` or `admit` placeholders, and the public documentation reflects the
+current module layout and scope.
 
-The first wholesale port from
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io) has just
-landed; see [`PORTING-PLAN.md`](PORTING-PLAN.md) for the exhaustive plan,
-file inventory, and migration sequence.
+PolyFun originated as a wholesale extraction from
+[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io).
 
 ## Scope
 
@@ -63,9 +56,7 @@ external dependency).
   docstrings.
 - [`docs/wiki/`](docs/wiki/): deeper agent-facing notes on the
   `PFunctor` substrate, interaction trees, the interaction framework,
-  notation, and recurring gotchas. **Recently authored, expected to drift; see
-  the warning above.**
-- [`PORTING-PLAN.md`](PORTING-PLAN.md): the wholesale port plan from VCV-io.
+  notation, and recurring gotchas.
 
 ## License
 

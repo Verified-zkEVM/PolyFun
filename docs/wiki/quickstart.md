@@ -91,8 +91,8 @@ To run the style lint on its own:
   markdown link resolution). `Check Docs Integrity` is a required status
   check on `main`. This is the agent-documentation liveness check: any
   PR that breaks an internal link in `AGENTS.md`, `README.md`,
-  `CONTRIBUTING.md`, `REFERENCES.md`, `PORTING-PLAN.md`, or any tracked
-  page under `docs/` will fail this job.
+  `CONTRIBUTING.md`, `REFERENCES.md`, or any tracked page under `docs/`
+  will fail this job.
 - [`../../.github/workflows/linting.yml`](../../.github/workflows/linting.yml):
   runs `./scripts/lint-style.sh` (Mathlib-derived style linter).
 - [`../../.github/workflows/summary.yml`](../../.github/workflows/summary.yml):
@@ -111,20 +111,3 @@ Lean toolchain and Mathlib stay in sync. Both currently `v4.29.0`. When
 upgrading, update [`lean-toolchain`](../../lean-toolchain) and the
 `require mathlib` line in [`lakefile.toml`](../../lakefile.toml)
 simultaneously.
-
-## Ongoing Port from VCV-io
-
-PolyFun is being seeded from
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io). The
-current port plan, file inventory, and risk register live in
-[`../../PORTING-PLAN.md`](../../PORTING-PLAN.md). Two repo-local helpers
-support follow-up resyncs:
-
-- [`../../scripts/port-from-vcvio.sh`](../../scripts/port-from-vcvio.sh):
-  wholesale copy of in-scope files from a VCV-io worktree.
-- [`../../scripts/rename-namespaces.sh`](../../scripts/rename-namespaces.sh):
-  bulk `ToMathlib.*` / `VCVio.Interaction.*` to `PolyFun.*` namespace
-  rename.
-
-These are intended for one-shot or rare resync use, not for routine
-development. Most contributions should never need to invoke them.

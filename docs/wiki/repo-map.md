@@ -35,7 +35,7 @@ Imports flow strictly downward, cycles are a build error. The DAG is also
 recorded in [`AGENTS.md`](../../AGENTS.md):
 
 ```text
-PFunctor/{Basic, Bound, MFacts, Equiv, Chart, Lens}
+PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   -> PFunctor/{Cofree, Trace}
   -> PFunctor/Free/{Basic, Path}
   -> PFunctor/Free/{Displayed, Displayed/Decoration}

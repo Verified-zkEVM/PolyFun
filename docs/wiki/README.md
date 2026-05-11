@@ -4,16 +4,15 @@ This directory is the deeper companion to [`AGENTS.md`](../../AGENTS.md). Use
 `AGENTS.md` for the one-screen overview and this wiki for details that are
 too specific or too changeable to keep at the repo root.
 
-## Status: Recently Authored, Expect Drift
+## Status And Maintenance
 
-These pages were written together with the initial port of `PolyFun` from
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io) and have
-not yet had time to settle. They are the best current reference for
-agent-facing context, but they are **not gospel**:
+These pages are the long-form companion to [`AGENTS.md`](../../AGENTS.md).
+They are maintained with the Lean source and should move in the same PR as
+load-bearing changes to commands, module layout, generated files, or public
+APIs.
 
 - If a page contradicts a Lean source file, the source wins.
-- Fix stale guidance in the same PR you noticed it in. Do not copy a stale
-  paragraph forward into a new doc.
+- Fix stale guidance in the same PR you noticed it in.
 - The repo's load-bearing files (the actual Lean source under
   [`PolyFun/`](../../PolyFun/), [`AGENTS.md`](../../AGENTS.md),
   [`CONTRIBUTING.md`](../../CONTRIBUTING.md), [`REFERENCES.md`](../../REFERENCES.md))
@@ -76,13 +75,11 @@ See the *Wiki Maintenance Contract* section in
 
 ## Canonical Project Docs
 
-- [`../../README.md`](../../README.md): project overview and experimental
-  status banner.
+- [`../../README.md`](../../README.md): project overview, scope, and build
+  status.
 - [`../../AGENTS.md`](../../AGENTS.md): canonical agent guide (also
   [`CLAUDE.md`](../../CLAUDE.md) as a symlink).
 - [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md): style, naming,
   attribution, and large-contribution policy.
 - [`../../REFERENCES.md`](../../REFERENCES.md): bibliography backing module
   docstrings.
-- [`../../PORTING-PLAN.md`](../../PORTING-PLAN.md): the wholesale port plan
-  from [`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io).

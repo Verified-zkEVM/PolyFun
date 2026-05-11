@@ -27,7 +27,6 @@ TRACKED_PATHS = [
     "CONTRIBUTING.md",
     "README.md",
     "REFERENCES.md",
-    "PORTING-PLAN.md",
     "docs",
 ]
 

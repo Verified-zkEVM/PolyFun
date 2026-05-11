@@ -5,7 +5,7 @@ Authors: Quang Dao
 -/
 module
 
-public import PolyFun.PFunctor.MFacts
+public import PolyFun.PFunctor.M
 public import PolyFun.Control.Monad.Iter
 
 /-! # Interaction Trees
