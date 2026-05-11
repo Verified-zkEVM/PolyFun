@@ -5,6 +5,10 @@ generic polynomial-functor / interaction-tree / interaction-framework code
 out of `VCV-io` (currently developed in worktree
 `~/Documents/Lean/VCV-io-freeM-displayed`) into this repository.
 
+This is now a historical migration record. The live Lean source, `README.md`,
+`AGENTS.md`, `CONTRIBUTING.md`, and `docs/wiki/` are the current project
+documentation.
+
 The plan is written against the snapshot of `VCV-io-freeM-displayed`
 on 2026-05-08. The numbers and inventories below are accurate as of that
 snapshot; before each phase, sanity-check counts with `rg` / `wc -l` against

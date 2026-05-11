@@ -12,8 +12,8 @@ Before sending work for review:
 
 - Run `lake exe cache get && lake build`.
 - After adding new `.lean` files, run `./scripts/update-lib.sh`.
-- Avoid leaving `sorry` in finished work unless the change is explicitly meant
-  to preserve partial work.
+- Finished work should not contain `sorry` or `admit`. Use `stop` only when
+  explicitly preserving partial proof work during a refactor.
 - Keep repo-wide Lean options in `lakefile.toml`. Do not restate
   `autoImplicit = false` with per-file `set_option` lines.
 - Do not disable linters locally or globally to make warnings disappear.

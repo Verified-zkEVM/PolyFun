@@ -172,8 +172,8 @@ Structures use UpperCamelCase: `PFunctor`, `Spec`, `Decoration`,
 6. **`PolyFun.lean` is generated.** Do not hand-edit it. After adding,
    renaming, or deleting `.lean` files under `PolyFun/`, run
    `./scripts/update-lib.sh`.
-7. **Preserve partial proofs** with `stop` instead of deleting large
-   proof blocks during refactors.
+7. **Do not introduce `sorry` or `admit` in finished work.** Use `stop`
+   only when explicitly preserving partial proof work during a refactor.
 
 ## Building
 
@@ -212,11 +212,9 @@ too specific or too changeable to keep at the repo root.
 
 ### Wiki Maintenance Contract
 
-The wiki is **recently authored and not stable**. Most pages were written
-together with the initial port from
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io) and will
-be edited and refined as the formalization matures. Do **not** treat the
-wiki, `AGENTS.md`, `CONTRIBUTING.md`, or `README.md` as gospel:
+The wiki is maintained alongside the Lean source. Treat it as the canonical
+long-form companion to this guide, while remembering that source files are the
+final authority for names, imports, and theorem statements:
 
 - If a page contradicts the source, the source wins. Fix the page in the
   same PR.

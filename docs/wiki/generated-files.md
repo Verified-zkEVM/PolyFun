@@ -23,5 +23,5 @@ Edit the source of truth, not the output.
   doc rename, move, or deletion. CI runs this via
   [`../../.github/workflows/docs-integrity.yml`](../../.github/workflows/docs-integrity.yml).
 - If a path looks derived, confirm its source of truth before editing it.
-- The wiki itself is *not* generated, but is recently authored and expected
-  to drift. See [`README.md`](README.md) for the maintenance contract.
+- The wiki itself is *not* generated. Keep it maintained with source changes;
+  see [`README.md`](README.md) for the maintenance contract.
