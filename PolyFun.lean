@@ -36,6 +36,7 @@ import PolyFun.Interaction.Basic.Spec
 import PolyFun.Interaction.Basic.SpecFintype
 import PolyFun.Interaction.Basic.StateChain
 import PolyFun.Interaction.Basic.Strategy
+import PolyFun.Interaction.Basic.StrategyOver
 import PolyFun.Interaction.Basic.Syntax
 import PolyFun.Interaction.Basic.Telescope
 import PolyFun.Interaction.Concurrent.Bisimulation
@@ -98,8 +99,11 @@ import PolyFun.PFunctor.Cofree
 import PolyFun.PFunctor.Equiv.Basic
 import PolyFun.PFunctor.Free.Basic
 import PolyFun.PFunctor.Free.Displayed
+import PolyFun.PFunctor.Free.Displayed.Append
 import PolyFun.PFunctor.Free.Displayed.Decoration
+import PolyFun.PFunctor.Free.Displayed.StateChain
 import PolyFun.PFunctor.Free.Path
+import PolyFun.PFunctor.Free.Replicate
 import PolyFun.PFunctor.Lens.Basic
 import PolyFun.PFunctor.Lens.Cartesian
 import PolyFun.PFunctor.Lens.State

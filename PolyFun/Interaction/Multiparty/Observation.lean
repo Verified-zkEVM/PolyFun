@@ -30,7 +30,7 @@ on this exact object:
 ## Polynomial substrate
 
 `Observation` is built directly on top of the polynomial-functor library
-in `ToMathlib/PFunctor`, mirroring the pattern by which
+in `PolyFun/PFunctor`, mirroring the pattern by which
 `Interaction.Spec` is built from `Spec.basePFunctor`:
 
 ```

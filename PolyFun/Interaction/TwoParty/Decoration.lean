@@ -11,7 +11,7 @@ import PolyFun.Interaction.TwoParty.Role
 /-!
 # Role decorations and common role-based node contexts
 
-A `RoleDecoration spec` is a `Spec.Decoration` with fiber `fun _ => Role`:
+A `RoleDecoration spec` is a `Decoration` with fiber `fun _ => Role`:
 each internal node is labeled sender or receiver. It adds two-party control
 information to an ordinary interaction tree while reusing the surrounding `Spec` infrastructure
 (`Transcript`, `append`, etc.).
@@ -35,9 +35,10 @@ move, and monad decorations say which node effect is used by each participant.
 universe u uA uB t
 
 namespace Interaction
+open PFunctor.FreeM.Displayed (Decoration)
 namespace TwoParty
 
-open _root_.Interaction.TwoParty
+open TwoParty
 open PFunctor
 
 variable {P : PFunctor.{uA, uB}} {α : Type t}
@@ -55,6 +56,15 @@ abbrev RoleMonadContextOver (P : PFunctor.{uA, uB}) : P.A → Type (u + 1) :=
 /-- Generic role context extended by a pair of bundled monads. -/
 abbrev RolePairedMonadContextOver (P : PFunctor.{uA, uB}) : P.A → Type (u + 1) :=
   fun _ => Σ _ : Role, BundledMonad.{u, u} × BundledMonad.{u, u}
+
+namespace RoleMonadContextOver
+
+/-- Duplicate one generic role/monad context into paired focal/counterpart monads. -/
+abbrev diagonal :
+    ∀ pos, RoleMonadContextOver P pos → RolePairedMonadContextOver P pos :=
+  fun _ ⟨role, bm⟩ => ⟨role, (bm, bm)⟩
+
+end RoleMonadContextOver
 
 namespace RolePairedMonadContextOver
 
@@ -173,6 +183,25 @@ abbrev RoleMonadContext : Spec.Node.Context.{u, u + 1} :=
 abbrev RolePairedMonadContext : Spec.Node.Context.{u, u + 1} :=
   fun _ => Σ _ : Role, BundledMonad.{u, u} × BundledMonad.{u, u}
 
+namespace RoleContext
+
+/-- Pair a plain role context with one fixed bundled monad at every node. -/
+abbrev withMonad (bm : BundledMonad.{u, u}) :
+    Spec.Node.ContextHom RoleContext RoleMonadContext :=
+  fun _ role => ⟨role, bm⟩
+
+end RoleContext
+
+namespace RoleMonadContext
+
+/-- Duplicate one role/monad context into paired focal/counterpart monads. -/
+abbrev diagonal : Spec.Node.ContextHom RoleMonadContext RolePairedMonadContext :=
+  Spec.Node.Context.extendMap
+    (Spec.Node.ContextHom.id RoleContext)
+    (fun _ _ (bm : BundledMonad.{u, u}) => (bm, bm))
+
+end RoleMonadContext
+
 namespace RolePairedMonadContext
 
 /-- Forget the counterpart monad from a paired role/monad context. -/
@@ -190,7 +219,8 @@ abbrev snd : Spec.Node.ContextHom RolePairedMonadContext RoleMonadContext :=
 end RolePairedMonadContext
 
 /-- Per-node sender/receiver assignment on a `Spec`. -/
-abbrev RoleDecoration := Spec.Decoration (fun _ => Role)
+abbrev RoleDecoration := Decoration (P := Spec.basePFunctor)
+  (α := PUnit.{u+1}) (fun _ => Role)
 
 /-- Swap sender and receiver at each node of a role decoration. -/
 def RoleDecoration.swap {spec : Spec} (roles : RoleDecoration spec) :
@@ -210,8 +240,31 @@ def monadsOver :
 /-- Pack roles together with one bundled monad per node into `RoleMonadContext`. -/
 def withMonads {spec : Spec.{u}}
     (roles : RoleDecoration spec) (md : Spec.MonadDecoration spec) :
-    Spec.Decoration RoleMonadContext spec :=
+    Decoration RoleMonadContext spec :=
   Decoration.ofOver spec roles (monadsOver spec roles md)
+
+/--
+Adding the same bundled monad at every role-labeled node is just the structural
+decoration map that pairs each role with that bundled monad.
+-/
+theorem withMonads_constant_eq_map
+    (bm : BundledMonad.{u, u}) :
+    (spec : Spec.{u}) → (roles : RoleDecoration spec) →
+    RoleDecoration.withMonads roles (Spec.MonadDecoration.constant bm spec) =
+      Decoration.map (RoleContext.withMonad bm) spec roles
+  | .done, _ => rfl
+  | .node _ rest, ⟨role, rRest⟩ => by
+      change
+        (⟨⟨role, bm⟩,
+          fun x =>
+            RoleDecoration.withMonads (rRest x)
+              (Spec.MonadDecoration.constant bm (rest x))⟩ :
+          Decoration RoleMonadContext (Spec.node _ rest)) =
+          ⟨⟨role, bm⟩,
+            fun x => Decoration.map (RoleContext.withMonad bm) (rest x) (rRest x)⟩
+      congr
+      funext x
+      exact withMonads_constant_eq_map bm (rest x) (rRest x)
 
 /-- View a pair of monad decorations as one displayed layer over an existing role decoration. -/
 def pairedMonadsOver :
@@ -227,7 +280,7 @@ def pairedMonadsOver :
 def withPairedMonads {spec : Spec.{u}}
     (roles : RoleDecoration spec) (stratDeco : Spec.MonadDecoration spec)
     (cptDeco : Spec.MonadDecoration spec) :
-    Spec.Decoration RolePairedMonadContext spec :=
+    Decoration RolePairedMonadContext spec :=
   Decoration.ofOver spec roles (pairedMonadsOver spec roles stratDeco cptDeco)
 
 @[simp]

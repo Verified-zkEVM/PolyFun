@@ -25,6 +25,7 @@ universe u uA uB t
 namespace Interaction
 
 open PFunctor
+open PFunctor.FreeM.Displayed (Decoration)
 
 variable {P : PFunctor.{uA, uB}} {α : Type t}
 
@@ -131,7 +132,8 @@ end MonadDecoration
 At each node the strategy chooses a move `x` immediately, then supplies the
 continuation in the `BundledMonad` stored by the node decoration. -/
 def Strategy.monadicSyntax :
-    SyntaxOver.{u, u, u, u + 1} PUnit (fun (_ : Type u) => BundledMonad.{u, u}) where
+    SyntaxOver
+      (PFunctor.Lens.id Spec.basePFunctor) PUnit (fun (_ : Type u) => BundledMonad.{u, u}) where
   Node _ (X : Type u) bm (Cont : X → Type u) :=
     (x : X) × bm.M (Cont x)
 
@@ -142,7 +144,9 @@ decorated node monad into the ambient execution monad before the generic runner
 continues with the selected subtree. -/
 def Strategy.monadicInteraction {m : Type u → Type u} [Monad m]
     (liftM : ∀ (bm : BundledMonad.{u, u}) {α : Type u}, bm.M α → m α) :
-    InteractionOver PUnit (fun (_ : Type u) => BundledMonad.{u, u}) Strategy.monadicSyntax m where
+    InteractionOver
+      (PFunctor.Lens.id Spec.basePFunctor) PUnit
+      (fun (_ : Type u) => BundledMonad.{u, u}) Strategy.monadicSyntax m where
   interact := fun {_X} {γ} {_Cont} {_Result} profile k => do
     let node := profile PUnit.unit
     let next ← liftM γ node.2
