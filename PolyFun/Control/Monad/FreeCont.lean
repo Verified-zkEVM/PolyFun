@@ -52,53 +52,6 @@ def PFunctor.FreeContT (P : PFunctor.{z, y}) (m : Type u → Type v) (α : Type 
 def PFunctor.FreeContM (P : PFunctor.{z, y}) (α : Type w) : Type _ :=
   FreeContT P Id.{u} α
 
--- mutual
-
--- /-- Free monad transformer, defined inductively.
--- -/
--- inductive FreeStepT (F : Type u → Type y) (m : Type u → Type v) (α : Type w)
---     -- Type (max (u + 1) v w y (z + 1)) where
---   | pure (a : α) : FreeStepT F m α
---   | roll {β : Type u} (fx : F β) (k : m β → FreeT F m α) : FreeStepT F m α
-
--- inductive FreeT (F : Type u → Type y) (m : Type u → Type v) (α : Type w)
---   | lift (mb : FreeStepT F m α) : FreeT F m α
-
--- end
-
-namespace FreeT
-
-variable {F : Type u → Type y} {m : Type u → Type v} {α β : Type u}
-
--- def pure [Pure m] (a : α) : FreeT F m α :=
---   FreeT.lift (pure a)
-
--- def bind [Bind m] (x : FreeT F m α) (f : α → FreeT F m β) : FreeT F m β :=
---   match x with
---   | FreeT.lift ma => ...
---   | FreeT.roll fx k => FreeT.roll fx (fun a => f a)
-
--- instance [Monad m] : Monad (FreeT F m) where
---   pure := FreeT.pure
---   bind := FreeT.bind
-
-end FreeT
-
--- /-- Free monad transformer from a polynomial functor, defined inductively. -/
--- inductive PFunctor.FreeT (P : PFunctor.{w, u}) (m : Type u → Type v) (α : Type u) :
---     Type (max u v w) where
---   | pure (x : α) : PFunctor.FreeT P m α
---   | lift (a : P.A) (mb : m (P.B a)) (k : P.B a → PFunctor.FreeT P m α) : PFunctor.FreeT P m α
---   | roll (a : P.A) (k : P.B a → PFunctor.FreeT P m α) : PFunctor.FreeT P m α
-
--- /-- Free monad, defined inductively. -/
--- def FreeM (F : Type z → Type y) (α : Type w) : Type (max (u + 1) w y (z + 1)) :=
---   FreeT F Id.{u} α
-
--- /-- Free monad from a polynomial functor, defined inductively. -/
--- def PFunctor.FreeM' (P : PFunctor.{w, u}) (α : Type u) : Type (max u w) :=
---   PFunctor.FreeT P Id α
-
 variable {f : Type z → Type y} {m : Type u → Type v} {α β : Type w}
 
 namespace FreeContT
@@ -162,19 +115,6 @@ instance [Monad m] [LawfulMonad m] : LawfulMonadLift m (FreeContT f m) where
 
 end FreeContT
 
--- /-- Convert free monad transformers from inductive style to continuation-passing style. -/
--- def FreeT.toFreeContT : FreeT f m α → FreeContT f m α :=
---   fun x => match x with
---     | FreeT.pure a => fun _ handlePure => handlePure a
---     | FreeT.lift mb k => ...
---       -- handleEff mb (fun a => FreeT.toFreeContT (k a) handleEff handlePure)
---     | FreeT.roll fx k => fun handleEff handlePure =>
---       handleEff fx (fun a => FreeT.toFreeContT (k a) handleEff handlePure)
-
--- def FreeContT.toFreeT : FreeContT f m α → FreeT f m α :=
---   fun x => ...
---   -- FreeT.lift (x FreeT.roll FreeT.pure) (by simp)
-
 /-- Convert free monads from inductive style to continuation-passing style. -/
 def FreeMonad.toFreeContM : FreeMonad f α → FreeContM f α :=
   fun x => match x with
@@ -197,12 +137,26 @@ lemma FreeMonad.toFreeMonad_toFreeContM (x : FreeMonad f α) :
       funext b
       exact ih b
 
-/-
-The Church encoding retracts onto the inductive free monad via
-`FreeContM.toFreeMonad`, as witnessed by
-`FreeMonad.toFreeMonad_toFreeContM`.
+/-- `FreeMonad.toFreeContM` is a section of `FreeContM.toFreeMonad`. -/
+lemma FreeMonad.toFreeContM_leftInverse :
+    Function.LeftInverse
+      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeMonad x)
+      (fun x : FreeMonad f α =>
+        (FreeMonad.toFreeContM x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α)) := by
+  intro x
+  exact FreeMonad.toFreeMonad_toFreeContM x
 
-The converse direction is not available for arbitrary Lean functions of the
-Church-encoded type without an additional parametricity principle, so these
-maps are intentionally not packaged as an equivalence.
--/
+/-- The inductive-to-Church map is injective. -/
+lemma FreeMonad.toFreeContM_injective :
+    Function.Injective
+      (fun x : FreeMonad f α =>
+        (FreeMonad.toFreeContM x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α)) :=
+  (FreeMonad.toFreeContM_leftInverse (f := f) (α := α)).injective
+
+/-- The Church-to-inductive map is surjective. -/
+lemma FreeContM.toFreeMonad_surjective :
+    Function.Surjective
+      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeMonad x) :=
+by
+  intro x
+  exact ⟨FreeMonad.toFreeContM x, FreeMonad.toFreeMonad_toFreeContM x⟩
