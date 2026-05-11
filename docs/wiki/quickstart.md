@@ -111,18 +111,3 @@ Lean toolchain and Mathlib stay in sync. Both currently `v4.29.0`. When
 upgrading, update [`lean-toolchain`](../../lean-toolchain) and the
 `require mathlib` line in [`lakefile.toml`](../../lakefile.toml)
 simultaneously.
-
-## VCV-io Resync Helpers
-
-PolyFun originated as a generic extraction from
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io). Two
-repo-local helpers support follow-up resyncs:
-
-- [`../../scripts/port-from-vcvio.sh`](../../scripts/port-from-vcvio.sh):
-  wholesale copy of in-scope files from a VCV-io worktree.
-- [`../../scripts/rename-namespaces.sh`](../../scripts/rename-namespaces.sh):
-  bulk `ToMathlib.*` / `VCVio.Interaction.*` to `PolyFun.*` namespace
-  rename.
-
-These are intended for one-shot or rare resync use, not for routine
-development. Most contributions should never need to invoke them.
