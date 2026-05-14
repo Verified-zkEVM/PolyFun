@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Quang Dao
+Authors: Quang Dao, Devon Tuma
 -/
 module
 
@@ -42,6 +42,12 @@ deriving Inhabited
 namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {α β γ : Type v}
+
+def equivW_of_isEmpty [IsEmpty α] : FreeM P α ≃ P.W where
+  toFun := sorry
+  invFun := sorry
+  left_inv := sorry
+  right_inv := sorry
 
 /-- Lift an object of the base polynomial functor into the free monad. -/
 @[always_inline, inline, reducible]

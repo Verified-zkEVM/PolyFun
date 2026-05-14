@@ -41,10 +41,12 @@ variable {f : Type u → Type v} {α β γ : Type u}
 @[always_inline, inline]
 def lift (x : f α) : FreeMonad f α := FreeMonad.roll x FreeMonad.pure
 
+protected lemma lift_def (x : f α) : FreeMonad.lift x = FreeMonad.roll x FreeMonad.pure := rfl
+
 instance : MonadLift f (FreeMonad f) where
   monadLift x := FreeMonad.lift x
 
-@[simp]
+@[simp, grind =]
 lemma monadLift_eq_lift (x : f α) :
   (x : FreeMonad f α) = FreeMonad.lift x := rfl
 
@@ -133,6 +135,12 @@ lemma construct_roll (x : f β) (r : β → FreeMonad f α) :
     (FreeMonad.construct h_pure h_roll (roll x r) : C (roll x r)) =
       (h_roll x r (fun u ↦ FreeMonad.construct h_pure h_roll (r u))) := rfl
 
+@[simp]
+lemma construct_lift {m} [Monad m] [LawfulMonad m] (x : f α) :
+    (FreeMonad.construct h_pure h_roll (FreeMonad.lift x) : C (FreeMonad.lift x)) =
+      h_roll x FreeMonad.pure h_pure  := by
+  simp [lift, FreeMonad.construct]
+
 end construct
 
 section mapM
@@ -144,21 +152,6 @@ protected def mapM_aux [Pure m] [Bind m] (s : {α : Type u} → f α → m α) :
   | .pure x => pure x
   | .roll x r => s x >>= fun u ↦ (r u).mapM_aux s
 
-protected def mapM' (m : Type u → Type w) [Monad m] [LawfulMonad m]
-    (s : {α : Type u} → f α → m α) : FreeMonad f →ᵐ m where
-  toFun α f := FreeMonad.mapM_aux s f
-  toFun_pure' x := rfl
-  toFun_bind' x y := by
-    induction x using FreeMonad.inductionOn with
-    | pure x => simp [FreeMonad.mapM_aux]
-    | roll x r h => simp at h; simp [FreeMonad.mapM_aux, h]
-
-@[simp]
-lemma mapM'_lift [Monad m] [LawfulMonad m]
-    (s : {α : Type u} → f α → m α) (x : f α) :
-    FreeMonad.mapM' m s (FreeMonad.lift x) = s x := by
-  simp [FreeMonad.mapM', FreeMonad.lift, FreeMonad.mapM_aux]
-
 /-- Canonical mapping of a free monad into any other monad, given a map on the base functor. -/
 protected def mapM [Pure m] [Bind m] :
     (oa : FreeMonad f α) → (s : {α : Type u} → f α → m α) → m α
@@ -167,17 +160,43 @@ protected def mapM [Pure m] [Bind m] :
 
 variable [Monad m]
 
-@[simp]
+@[simp, grind =]
 lemma mapM_pure (x : α) : (FreeMonad.pure x : FreeMonad f α).mapM s = pure x := rfl
 
--- @[simp]
--- lemma mapM'_pure (x : α) : (FreeMonad.pure x : FreeMonad f α).mapM' s = pure x := rfl
-
-@[simp]
+@[simp, grind =]
 lemma mapM_roll (x : f α) (r : α → FreeMonad f β) :
     (FreeMonad.roll x r).mapM s = s x >>= fun u ↦ (r u).mapM s := rfl
 
+@[simp, grind =]
+lemma mapM_lift [LawfulMonad m] (x : f α) : (FreeMonad.lift x).mapM s = s x := by
+  simp [FreeMonad.lift_def]
+
 end mapM
+
+section mapM'
+
+variable {m : Type u → Type w} [Monad m] [LawfulMonad m]
+
+protected def mapM' {m : Type u → Type w} [Monad m] [LawfulMonad m]
+    (s : {α : Type u} → f α → m α) : FreeMonad f →ᵐ m where
+  toFun α f := FreeMonad.mapM_aux s f
+  toFun_pure' x := rfl
+  toFun_bind' x y := by
+    induction x using FreeMonad.inductionOn with
+    | pure x => simp [FreeMonad.mapM_aux]
+    | roll x r h => simp at h; simp [FreeMonad.mapM_aux, h]
+
+-- @[simp]
+-- lemma mapM'_lift (s : {α : Type u} → f α → m α) (x : f α) :
+--     (FreeMonad.mapM' s).toFun α (FreeMonad.lift x) = s x := by
+
+--   simp [FreeMonad.mapM', FreeMonad.lift, FreeMonad.mapM_aux]
+
+-- @[simp]
+-- lemma mapM'_pure (s : {α : Type u} → f α → m α) (x : α) :
+--     FreeMonad.mapM' (FreeMonad.pure x : FreeMonad f α) s = pure x := rfl
+
+end mapM'
 
 -- instance instMonadAlgebra {f} {pre : {α : Type v} → f α → α} : MonadAlgebra (FreeMonad f) where
 --   monadAlg
