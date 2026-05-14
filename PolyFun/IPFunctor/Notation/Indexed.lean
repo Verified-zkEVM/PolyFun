@@ -49,19 +49,6 @@ hand a value to a `FreeM`-shaped API.
 
 @[expose] public section
 
-namespace IPFunctor.FreeM₂
-
-variable {I : Type*} {P : IPFunctor I}
-
-/-- `Pure` instance for `FreeM₂ P s s`. The `IndexedMonad.ipure` already
-gives this morally, but exposing the plain `Pure` typeclass instance is
-required for `pure x` / `return x` to resolve inside a `do`-block whose
-expected type is `FreeM₂ P s s α`. -/
-instance instPure (s : I) : Pure (FreeM₂ P s s) where
-  pure x := FreeM₂.pure x
-
-end IPFunctor.FreeM₂
-
 namespace IPFunctor.FreeM₂Notation
 
 open Lean Lean.Meta Lean.Elab Lean.Elab.Do Lean.Elab.Term Lean.Parser.Term
@@ -70,16 +57,18 @@ open Lean Lean.Meta Lean.Elab Lean.Elab.Do Lean.Elab.Term Lean.Parser.Term
 
 /--
 If `m` is `@IPFunctor.FreeM₂ I P s t` for some `I, P, s, t`, return those
-four arguments; otherwise `none`. Called at the top of every elaborator
-override so that non-`FreeM₂` monads fall through.
+four arguments together with the universe levels on the `FreeM₂` constant;
+otherwise `none`. Returning the levels here avoids a second `whnf` +
+`getAppFn` walk in the elaborators that consume the detector's output.
 -/
 meta def isFreeM₂Monad? (m : Expr) :
-    MetaM (Option (Expr × Expr × Expr × Expr)) := do
+    MetaM (Option (Expr × Expr × Expr × Expr × List Level)) := do
   let m ← whnf m
-  unless m.getAppFn.isConstOf ``IPFunctor.FreeM₂ do return none
+  let fn := m.getAppFn
+  unless fn.isConstOf ``IPFunctor.FreeM₂ do return none
   let args := m.getAppArgs
   unless args.size = 4 do return none
-  return some (args[0]!, args[1]!, args[2]!, args[3]!)
+  return some (args[0]!, args[1]!, args[2]!, args[3]!, fn.constLevels!)
 
 /-! ## Bind builder -/
 
@@ -93,12 +82,8 @@ where `uOuter` is the do-block's overall post-state extracted from the
 monadic context.
 -/
 meta def mkBindFreeM₂
-    (dec : DoElemCont) (I P s tStep uOuter e : Expr) : DoElabM Expr := do
-  let info := (← read).monadInfo
-  let lvls := info.m.getAppFn.constLevels!
-  unless lvls.length = 4 do
-    throwError "FreeM₂ `do`-notation: unexpected universe count \
-      (found {lvls.length}, expected 4)."
+    (dec : DoElemCont) (lvls : List Level) (I P s tStep uOuter e : Expr) :
+    DoElabM Expr := do
   let xType := dec.resultType
   let declKind := Lean.LocalDeclKind.ofBinderName dec.resultName
   let nextM := mkAppN (mkConst ``IPFunctor.FreeM₂ lvls) #[I, P, tStep, uOuter]
@@ -127,13 +112,16 @@ synthesis only fires when both type arguments are concrete.
 -/
 @[doElem_elab Lean.Parser.Term.doExpr]
 meta def elabFreeM₂Expr : DoElab := fun stx dec => do
-  let some (I, P, s, uOuter) ← isFreeM₂Monad? (← read).monadInfo.m
+  let some (I, P, s, uOuter, lvls) ← isFreeM₂Monad? (← read).monadInfo.m
     | throwUnsupportedSyntax
   let `(doExpr| $e:term) := stx | throwUnsupportedSyntax
-  let lvls := (← read).monadInfo.m.getAppFn.constLevels!
   -- First attempt: assume this step is state-preserving (pre = post = s).
-  -- Works for `pure x`, `return x`, and helpers of type `FreeM₂ P s s α`.
-  let mαPreserve := mkAppN (mkConst ``IPFunctor.FreeM₂ lvls) #[I, P, s, s] |>.app dec.resultType
+  -- Concrete on both type arguments, so `Pure (FreeM₂ P s s)` resolves
+  -- eagerly for `pure x`/`return x`. A fresh post-state metavariable
+  -- would postpone instance synthesis past the end of the do-block,
+  -- leaving `Pure (FreeM₂ P s ?t)` stuck.
+  let mαPreserve :=
+    mkAppN (mkConst ``IPFunctor.FreeM₂ lvls) #[I, P, s, s] |>.app dec.resultType
   let saved ← saveState
   let attempt? : Option (Expr × Expr) ← try
     let eExpr ← Term.withoutErrToSorry <|
@@ -145,7 +133,7 @@ meta def elabFreeM₂Expr : DoElab := fun stx dec => do
     pure none
   match attempt? with
   | some (tStep, eExpr) =>
-    mkBindFreeM₂ dec I P s tStep uOuter eExpr
+    mkBindFreeM₂ dec lvls I P s tStep uOuter eExpr
   | none =>
     -- Second attempt: use a fresh metavariable for the post-state and let
     -- unification fix it from `e`'s actual type. Required for state-changing
@@ -155,7 +143,7 @@ meta def elabFreeM₂Expr : DoElab := fun stx dec => do
     let mα := mkApp stepM dec.resultType
     let eExpr ← Term.elabTermEnsuringType e mα
     let tStep ← instantiateMVars tFresh
-    mkBindFreeM₂ dec I P s tStep uOuter eExpr
+    mkBindFreeM₂ dec lvls I P s tStep uOuter eExpr
 
 /--
 `doLetArrow` override for `FreeM₂`. Recursively elaborate the RHS at the
@@ -164,7 +152,7 @@ bindings (`let (a, b) ← e`) and `mut` bindings fall through.
 -/
 @[doElem_elab Lean.Parser.Term.doLetArrow]
 meta def elabFreeM₂LetArrow : DoElab := fun stx dec => do
-  let some _ ← isFreeM₂Monad? (← read).monadInfo.m | throwUnsupportedSyntax
+  unless (← isFreeM₂Monad? (← read).monadInfo.m).isSome do throwUnsupportedSyntax
   let `(doLetArrow| let $[mut%$mutTk?]? $decl) := stx | throwUnsupportedSyntax
   if mutTk?.isSome then throwUnsupportedSyntax
   match decl with
@@ -251,6 +239,76 @@ example : IPFunctor.FreeM₂ demoP true true Nat := do
   let a ← read₂
   let b ← read₂
   pure (a * b)
+
+/-! ### `erase` interop
+
+When `I = PUnit` the `IPFunctor` is just a `PFunctor`, and
+`FreeM₂.toFreeM` followed by `erase` should collapse `do`-block trees to
+the corresponding `PFunctor.FreeM` trees via the `@[simp]` lemmas in
+`Free/Basic.lean` (`erase_punit_pure`, `erase_punit_roll`,
+`toFreeM_pure`, `toFreeM_roll`). -/
+
+/-- A `PUnit`-indexed `IPFunctor`: pick a `Bool` shape, get a `Nat` back. -/
+@[expose] def demoQ : IPFunctor PUnit where
+  A _ := Bool
+  B _ _ := Nat
+  st _ _ _ := PUnit.unit
+
+/-- A single-step action lifting the shape `b : Bool`. -/
+@[expose] def stepQ (b : Bool) :
+    IPFunctor.FreeM₂ demoQ PUnit.unit PUnit.unit Nat :=
+  IPFunctor.FreeM₂.roll b (fun n => IPFunctor.FreeM₂.pure n)
+
+/-- A two-step `do`-tree on `FreeM₂ demoQ`. -/
+@[expose] def twoStep : IPFunctor.FreeM₂ demoQ PUnit.unit PUnit.unit Nat := do
+  let n ← stepQ true
+  let m ← stepQ false
+  pure (n + m : Nat)
+
+/-- A single-step `do`-tree on `FreeM₂ demoQ`. -/
+@[expose] def oneStep : IPFunctor.FreeM₂ demoQ PUnit.unit PUnit.unit Nat := do
+  let n ← stepQ true
+  pure (n + 1 : Nat)
+
+/-- A pure-only `do`-tree on `FreeM₂ demoQ`. -/
+@[expose] def purely : IPFunctor.FreeM₂ demoQ PUnit.unit PUnit.unit Nat := do
+  let k := 42
+  pure k
+
+-- `erase ∘ toFreeM` on a two-step `do`-tree is definitionally a nested
+-- `PFunctor.FreeM.roll` chain.
+example :
+    IPFunctor.FreeM.erase demoQ PUnit.unit twoStep.toFreeM
+    = PFunctor.FreeM.roll (P := demoQ.toPFunctor) true (fun n : Nat =>
+        PFunctor.FreeM.roll false (fun m : Nat =>
+          PFunctor.FreeM.pure (n + m))) := by
+  rfl
+
+-- `simp` collapses the erased one-step tree using the `erase_punit_*` /
+-- `toFreeM_*` simp lemmas plus the obvious unfolds.
+example :
+    IPFunctor.FreeM.erase demoQ PUnit.unit oneStep.toFreeM
+    = PFunctor.FreeM.roll (P := demoQ.toPFunctor) true (fun n : Nat =>
+        PFunctor.FreeM.pure (n + 1)) := by
+  rfl
+
+-- A pure-only do-block erases to a pure leaf.
+example :
+    IPFunctor.FreeM.erase demoQ PUnit.unit purely.toFreeM
+    = PFunctor.FreeM.pure (P := demoQ.toPFunctor) 42 := by
+  rfl
+
+-- `simp` (rather than `rfl`) drives the same reduction via the
+-- `@[simp]`-tagged `erase_punit_*` / `toFreeM_*` lemmas plus the unfolds.
+example :
+    IPFunctor.FreeM.erase demoQ PUnit.unit oneStep.toFreeM
+    = PFunctor.FreeM.roll (P := demoQ.toPFunctor) true (fun n : Nat =>
+        PFunctor.FreeM.pure (n + 1)) := by
+  change IPFunctor.FreeM.erase demoQ PUnit.unit
+      ((IPFunctor.FreeM₂.bind (stepQ true)
+        (fun n => IPFunctor.FreeM₂.pure (n + 1))).toFreeM) = _
+  simp [stepQ, IPFunctor.FreeM₂.bind]
+  rfl
 
 /-! ### Regression — non-`FreeM₂` monads still work via fall-through. -/
 

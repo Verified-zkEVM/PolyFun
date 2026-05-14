@@ -89,6 +89,22 @@ lemma bind_lift (s : I) (x : P.Obj α s) (g : (s' : I) → α → FreeM P s' β)
     FreeM.bind (FreeM.lift s x) g =
       FreeM.roll s x.1 (fun b => g (P.st s x.1 b) (x.2 b)) := rfl
 
+/-! ## Specialized bind under deterministic transitions
+
+When `P` has [`DeterministicTransitions`](../Basic.lean), a single
+`liftA s a` step lands at a single concrete post-state `det.next s a`,
+and `bind` can be specialized to a non-polymorphic continuation. -/
+
+/-- Specialized bind for a single `liftA`-style step under
+`DeterministicTransitions`. The continuation receives the response `b`
+at the *concrete* post-state `det.next s a` (no universal quantification
+over leaf states), unlike the general `FreeM.bind`. -/
+@[always_inline, inline]
+def bindLiftA [det : IPFunctor.DeterministicTransitions P]
+    {s : I} (a : P.A s) (g : P.B s a → FreeM P (det.next s a) β) :
+    FreeM P s β :=
+  FreeM.roll s a (fun b => (det.spec s a b).symm ▸ g b)
+
 /-! ## Injectivity -/
 
 lemma pure_inj (s : I) (x y : α) :

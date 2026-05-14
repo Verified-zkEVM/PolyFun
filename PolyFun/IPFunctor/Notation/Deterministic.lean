@@ -60,53 +60,23 @@ pre/post-state in the type.
 
 @[expose] public section
 
-universe uI uA uB v
-
-/-- An `IPFunctor` has *deterministic transitions* when `P.st s a b` is
-independent of the response `b`. Equivalently, `(fun b => P.st s a b)`
-is a constant function for every shape `a`. -/
-class IPFunctor.DeterministicTransitions {I : Type uI}
-    (P : IPFunctor.{uI, uA, uB} I) where
-  /-- The (unique) post-state after taking shape `a` at state `s`. -/
-  next : (s : I) → P.A s → I
-  /-- `P.st s a b` agrees with `next s a` for every response `b`. -/
-  spec : ∀ s a b, P.st s a b = next s a
-
-namespace IPFunctor.FreeM
-
-variable {I : Type uI} {P : IPFunctor.{uI, uA, uB} I} {β : Type v}
-
-/-- Specialized bind for a single `liftA`-style step under
-`DeterministicTransitions`. The continuation receives the response `b`
-at the *concrete* post-state `det.next s a` (no universal quantification
-over leaf states). -/
-@[always_inline, inline]
-def bindLiftA [det : IPFunctor.DeterministicTransitions P]
-    {s : I} (a : P.A s) (g : P.B s a → FreeM P (det.next s a) β) :
-    FreeM P s β :=
-  FreeM.roll s a (fun b => (det.spec s a b).symm ▸ g b)
-
-@[simp]
-lemma bindLiftA_eq [det : IPFunctor.DeterministicTransitions P]
-    {s : I} (a : P.A s) (g : P.B s a → FreeM P (det.next s a) β) :
-    bindLiftA a g = FreeM.roll s a (fun b => (det.spec s a b).symm ▸ g b) :=
-  rfl
-
-end IPFunctor.FreeM
-
 namespace IPFunctor.FreeMDetNotation
 
 open Lean Lean.Meta Lean.Elab Lean.Elab.Do Lean.Elab.Term Lean.Parser.Term
 
 /-! ## Monad-info detection -/
 
-/-- If `m = @IPFunctor.FreeM I P s`, return `(I, P, s)`. -/
-meta def isFreeMMonad? (m : Expr) : MetaM (Option (Expr × Expr × Expr)) := do
+/-- If `m = @IPFunctor.FreeM I P s`, return `(I, P, s, lvls)` where `lvls`
+are the universe levels on the `FreeM` constant. Returning the levels
+here avoids a second `whnf` + `getAppFn` walk in the elaborator. -/
+meta def isFreeMMonad? (m : Expr) :
+    MetaM (Option (Expr × Expr × Expr × List Level)) := do
   let m ← whnf m
-  unless m.getAppFn.isConstOf ``IPFunctor.FreeM do return none
+  let fn := m.getAppFn
+  unless fn.isConstOf ``IPFunctor.FreeM do return none
   let args := m.getAppArgs
   unless args.size = 3 do return none
-  return some (args[0]!, args[1]!, args[2]!)
+  return some (args[0]!, args[1]!, args[2]!, fn.constLevels!)
 
 /-! ## Bind builder using `FreeM.bindLiftA` -/
 
@@ -118,16 +88,13 @@ comes from the `DeterministicTransitions P` instance — no universal
 quantification, so subsequent steps can be state-specific.
 -/
 meta def mkBindLiftA
-    (dec : DoElemCont) (I P s aShape detInst : Expr) : DoElabM Expr := do
-  let info := (← read).monadInfo
-  let lvls := info.m.getAppFn.constLevels!
-  unless lvls.length = 4 do
-    throwError "FreeMDet `do`-notation: unexpected universe count."
+    (dec : DoElemCont) (lvls : List Level)
+    (I P s aShape detInst : Expr) : DoElabM Expr := do
   let detLvls := lvls.take 3
   -- next s a — a closed expression of type `I`.
-  let nextState := mkAppN (mkConst ``IPFunctor.DeterministicTransitions.next detLvls)
-    #[I, P, detInst, s, aShape]
-  let nextState ← whnf nextState
+  let nextState ← whnf <|
+    mkAppN (mkConst ``IPFunctor.DeterministicTransitions.next detLvls)
+      #[I, P, detInst, s, aShape]
   let xType := dec.resultType
   let declKind := Lean.LocalDeclKind.ofBinderName dec.resultName
   let nextM := mkAppN (mkConst ``IPFunctor.FreeM lvls) #[I, P, nextState]
@@ -156,25 +123,23 @@ condition fails (no instance, non-`liftA` shape, etc.).
 -/
 @[doElem_elab Lean.Parser.Term.doExpr]
 meta def elabFreeMDetExpr : DoElab := fun stx dec => do
-  let some (I, P, s) ← isFreeMMonad? (← read).monadInfo.m
+  let some (I, P, s, lvls) ← isFreeMMonad? (← read).monadInfo.m
     | throwUnsupportedSyntax
-  let lvls := (← read).monadInfo.m.getAppFn.constLevels!
-  let detLvls := lvls.take 3
   -- Try to synthesize `DeterministicTransitions P`; fall through if not.
-  let detClass := mkAppN (mkConst ``IPFunctor.DeterministicTransitions detLvls)
+  let detClass := mkAppN (mkConst ``IPFunctor.DeterministicTransitions (lvls.take 3))
     #[I, P]
   let detInst ← try
     synthInstance detClass
   catch _ => throwUnsupportedSyntax
   -- Elaborate the term, then whnf-reduce to detect a `liftA`-style action.
-  -- `liftA s a` is `@[reducible]`, so `whnf .all` unfolds it to
+  -- `liftA s a` is `@[reducible]`, so default-transparency `whnf` unfolds it to
   --   `FreeM.roll s a (fun b => FreeM.pure (P.st s a b) b)`.
   -- We detect that shape and trust the inner `pure` to mean "this is a
   -- single-action step".
   let `(doExpr| $e:term) := stx | throwUnsupportedSyntax
   let mα ← mkMonadicType dec.resultType
   let eExpr ← Term.elabTermEnsuringType e mα
-  let eReduced ← withTransparency .all <| whnf eExpr
+  let eReduced ← whnf eExpr
   unless eReduced.getAppFn.isConstOf ``IPFunctor.FreeM.roll do
     throwUnsupportedSyntax
   let args := eReduced.getAppArgs
@@ -188,7 +153,7 @@ meta def elabFreeMDetExpr : DoElab := fun stx dec => do
   unless rFun.isLambda do throwUnsupportedSyntax
   unless rFun.bindingBody!.getAppFn.isConstOf ``IPFunctor.FreeM.pure do
     throwUnsupportedSyntax
-  mkBindLiftA dec I P s aShape detInst
+  mkBindLiftA dec lvls I P s aShape detInst
 
 end IPFunctor.FreeMDetNotation
 
@@ -257,6 +222,41 @@ example : IPFunctor.FreeM demoP true Nat := do
 example (b : Bool) : IPFunctor.FreeM demoP true Nat := do
   let n ← read
   if b then pure n else pure (n + 1)
+
+/-! ### `erase` interop
+
+On a `[Unique I]` index, `FreeM.erase` collapses a `do`-block built via
+the deterministic-`FreeM` elaborator to a `PFunctor.FreeM` tree, with the
+`@[simp]` lemmas in `Free/Basic.lean` doing the actual simplification. -/
+
+/-- A `PUnit`-indexed `IPFunctor`: pick a `Bool`, get a `Nat` back. -/
+@[expose] def demoQ : IPFunctor PUnit where
+  A _ := Bool
+  B _ _ := Nat
+  st _ _ _ := PUnit.unit
+
+/-- Transitions for a `PUnit`-indexed `IPFunctor` are trivially deterministic. -/
+@[expose] instance instDemoQ : IPFunctor.DeterministicTransitions demoQ where
+  next _ _ := PUnit.unit
+  spec _ _ _ := rfl
+
+/-- A `liftA`-style step at the unit state. -/
+@[reducible, expose] def stepQ (b : Bool) :
+    IPFunctor.FreeM demoQ PUnit.unit Nat :=
+  IPFunctor.FreeM.liftA PUnit.unit b
+
+/-- A two-step `do`-tree on `FreeM demoQ`, using the deterministic elaborator. -/
+@[expose] def twoStepDet : IPFunctor.FreeM demoQ PUnit.unit Nat := do
+  let n ← stepQ true
+  let m ← stepQ false
+  pure (n + m : Nat)
+
+example :
+    IPFunctor.FreeM.erase demoQ PUnit.unit twoStepDet
+    = PFunctor.FreeM.roll (P := demoQ.toPFunctor) true (fun n : Nat =>
+        PFunctor.FreeM.roll false (fun m : Nat =>
+          PFunctor.FreeM.pure (n + m))) := by
+  rfl
 
 /-! ### Regression — non-`FreeM` monads still elaborate via fall-through. -/
 

@@ -101,12 +101,14 @@ return those three arguments; otherwise `none`. Called at the top of
 every elaborator override so that non-`FreeM` monads fall through to
 the builtin via `throwUnsupportedSyntax`.
 -/
-meta def isFreeMMonad? (m : Expr) : MetaM (Option (Expr × Expr × Expr)) := do
+meta def isFreeMMonad? (m : Expr) :
+    MetaM (Option (Expr × Expr × Expr × List Level)) := do
   let m ← whnf m
-  unless m.getAppFn.isConstOf ``IPFunctor.FreeM do return none
+  let fn := m.getAppFn
+  unless fn.isConstOf ``IPFunctor.FreeM do return none
   let args := m.getAppArgs
   unless args.size = 3 do return none
-  return some (args[0]!, args[1]!, args[2]!)
+  return some (args[0]!, args[1]!, args[2]!, fn.constLevels!)
 
 /-! ## State-polymorphic bind builder -/
 
@@ -119,12 +121,8 @@ while elaborating the body, so further `let ←` steps see the new
 pre-state and our overrides keep firing.
 -/
 meta def mkBindUnlessPureFreeM
-    (dec : DoElemCont) (I P s e : Expr) : DoElabM Expr := do
-  let info := (← read).monadInfo
-  let lvls := info.m.getAppFn.constLevels!
-  unless lvls.length = 4 do
-    throwError "FreeM `do`-notation: unexpected universe count on \
-      `IPFunctor.FreeM` (found {lvls.length}, expected 4)."
+    (dec : DoElemCont) (lvls : List Level)
+    (I P s e : Expr) : DoElabM Expr := do
   let xType := dec.resultType
   let declKind := Lean.LocalDeclKind.ofBinderName dec.resultName
   withLocalDeclD `s' I fun s'FVar => do
@@ -135,8 +133,11 @@ meta def mkBindUnlessPureFreeM
           { c with monadInfo := { c.monadInfo with m := newM } }) do
         let bodyRaw ← dec.k
         let bodyTyped ← Term.ensureHasType (mkApp newM β) bodyRaw
+        -- Force any pending typeclass synthesis (most importantly `Pure
+        -- (FreeM P s'FVar)` for a terminal `pure x`) before exiting the
+        -- `withLocalDeclD` scope, since postponed synthesis would later
+        -- run in a context where `s'FVar` is out of scope.
         Term.synthesizeSyntheticMVarsNoPostponing
-        Term.synthesizeSyntheticMVarsUsingDefault
         instantiateMVars bodyTyped
       let kLam ← try
         mkLambdaFVars #[s'FVar, xFVar] body
@@ -162,49 +163,49 @@ emit a *state mismatch* diagnostic naming the two pre-states.
 -/
 @[doElem_elab Lean.Parser.Term.doExpr]
 meta def elabFreeMExpr : DoElab := fun stx dec => do
-  let some (I, P, s) ← isFreeMMonad? (← read).monadInfo.m | throwUnsupportedSyntax
+  let some (I, P, s, lvls) ← isFreeMMonad? (← read).monadInfo.m
+    | throwUnsupportedSyntax
   let `(doExpr| $e:term) := stx | throwUnsupportedSyntax
   let mα ← mkMonadicType dec.resultType
-  -- Pre-check: elaborate without an expected type and see what we got, so
-  -- a state mismatch can be reported with a useful diagnostic before the
-  -- generic `Type mismatch` fires.
-  let saved ← saveState
-  let actual? : Option (Expr × Expr) ← try
-    let e' ← Term.elabTerm e none
-    let t ← whnf (← inferType e')
-    match (← isFreeMMonad? t.appFn!) with
-    | some (_, _, sActual) => pure (some (e', sActual))
-    | none => pure none
-  catch _ => pure none
-  saved.restore (restoreInfo := true)
-  match actual? with
-  | some (_, sActual) =>
-    let sExpected ← instantiateMVars s
-    let sActualN ← instantiateMVars sActual
-    unless ← Lean.Meta.isDefEq sExpected sActualN do
-      -- If `sExpected` is a free variable, it's the fresh post-state our
-      -- elaborator introduced when handling a previous `let ← …`. It is
-      -- universally quantified over every leaf state of the prior step,
-      -- not a single concrete value waiting to be revealed.
-      let expectedExpl :=
-        if sExpected.isFVar then
-          m!"expected pre-state: any post-state of the previous \
-             `let ← …` step (bound here as `{sExpected}`; \
-             `FreeM.bind` quantifies over it universally)"
-        else
-          m!"expected pre-state: {sExpected}"
-      throwErrorAt e
-        "FreeM `do`-notation: state mismatch in this `do`-block step.\n  \
-         {expectedExpl}\n  \
-         actual pre-state:   {sActualN}\n\
-         `FreeM.bind`'s continuation has type `(s' : I) → α → FreeM P s' β`, \
-         so every step after a `let ← …` must typecheck for an arbitrary \
-         post-state — but this step is fixed at the concrete state above. \
-         Use a state-polymorphic helper, pattern-match on the previous \
-         response, or write `FreeM.bind` explicitly."
-  | none => pure ()
-  let eExpr ← Term.elabTermEnsuringType e mα
-  mkBindUnlessPureFreeM dec I P s eExpr
+  -- Elaborate the term, throwing instead of sorry-ifying on type errors so
+  -- we can catch a state mismatch and emit a friendlier diagnostic. On
+  -- success, this incurs no extra cost vs. the default elaboration path.
+  let eExpr ← try
+    Term.withoutErrToSorry <| Term.elabTermEnsuringType e mα
+  catch ex =>
+    let saved ← saveState
+    let actual? : Option Expr ← try
+      let e' ← Term.elabTerm e none
+      let t ← whnf (← inferType e')
+      match (← isFreeMMonad? t.appFn!) with
+      | some (_, _, sActual, _) => pure (some sActual)
+      | none => pure none
+    catch _ => pure none
+    saved.restore (restoreInfo := true)
+    match actual? with
+    | some sActual =>
+      let sExpected ← instantiateMVars s
+      let sActualN ← instantiateMVars sActual
+      unless ← Lean.Meta.isDefEq sExpected sActualN do
+        let expectedExpl :=
+          if sExpected.isFVar then
+            m!"expected pre-state: any post-state of the previous \
+               `let ← …` step (bound here as `{sExpected}`; \
+               `FreeM.bind` quantifies over it universally)"
+          else
+            m!"expected pre-state: {sExpected}"
+        throwErrorAt e
+          "FreeM `do`-notation: state mismatch in this `do`-block step.\n  \
+           {expectedExpl}\n  \
+           actual pre-state:   {sActualN}\n\
+           `FreeM.bind`'s continuation has type `(s' : I) → α → FreeM P s' β`, \
+           so every step after a `let ← …` must typecheck for an arbitrary \
+           post-state — but this step is fixed at the concrete state above. \
+           Use a state-polymorphic helper, pattern-match on the previous \
+           response, or write `FreeM.bind` explicitly."
+    | none => pure ()
+    throw ex
+  mkBindUnlessPureFreeM dec lvls I P s eExpr
 
 /--
 Override of `doLetArrow` for the `doIdDecl` form `let x ← rhs` and
@@ -218,7 +219,7 @@ the builtin, which fails informatively. The simple underscore form
 -/
 @[doElem_elab Lean.Parser.Term.doLetArrow]
 meta def elabFreeMLetArrow : DoElab := fun stx dec => do
-  let some _ ← isFreeMMonad? (← read).monadInfo.m | throwUnsupportedSyntax
+  unless (← isFreeMMonad? (← read).monadInfo.m).isSome do throwUnsupportedSyntax
   let `(doLetArrow| let $[mut%$mutTk?]? $decl) := stx | throwUnsupportedSyntax
   if mutTk?.isSome then throwUnsupportedSyntax
   match decl with
@@ -361,6 +362,29 @@ example : IPFunctor.FreeM demoP false Nat := do
   let _ ← flip
   let n ← read
   pure n
+
+/-! ### `erase` interop
+
+On a `[Unique I]` index, `FreeM.erase` collapses `do`-block trees built
+via the single-index elaborator to the corresponding `PFunctor.FreeM`
+trees. The `@[simp]` lemmas `erase_punit_pure` / `erase_punit_roll` in
+`Free/Basic.lean` do the simplification. -/
+
+/-- A `PUnit`-indexed `IPFunctor`. Single-index `FreeM`'s universal
+state-polymorphism constraint is vacuous here, since every leaf state
+is forced to `PUnit.unit`. -/
+private def demoQ : IPFunctor PUnit where
+  A _ := Bool
+  B _ _ := Nat
+  st _ _ _ := PUnit.unit
+
+/-- A pure-only `do`-block erases to a pure leaf — no `liftA` involved
+so the universal-quantification limit doesn't bite. -/
+example :
+    IPFunctor.FreeM.erase demoQ PUnit.unit
+        (do let k := 17; pure k : IPFunctor.FreeM demoQ PUnit.unit Nat)
+    = PFunctor.FreeM.pure (P := demoQ.toPFunctor) 17 := by
+  rfl
 
 section Regression
 

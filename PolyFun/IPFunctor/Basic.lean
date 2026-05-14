@@ -78,3 +78,18 @@ def toPFunctor [Inhabited I] (P : IPFunctor I) : PFunctor where
 @[simp] lemma toPFunctor_one [Inhabited I] : (1 : IPFunctor I).toPFunctor = 1 := rfl
 
 end IPFunctor
+
+/-- An `IPFunctor` has *deterministic transitions* when `P.st s a b` is
+independent of the response `b`. Equivalently, `(fun b => P.st s a b)`
+is a constant function for every shape `a`.
+
+This is the structural condition that lets `liftA`-style steps of the
+single-index free monad `IPFunctor.FreeM` land at a uniquely determined
+post-state — see [`PolyFun/IPFunctor/Notation/Deterministic.lean`](Notation/Deterministic.lean)
+for `do`-notation that takes advantage of it. -/
+class IPFunctor.DeterministicTransitions {I : Type uI}
+    (P : IPFunctor.{uI, uA, uB} I) where
+  /-- The (unique) post-state after taking shape `a` at state `s`. -/
+  next : (s : I) → P.A s → I
+  /-- `P.st s a b` agrees with `next s a` for every response `b`. -/
+  spec : ∀ s a b, P.st s a b = next s a

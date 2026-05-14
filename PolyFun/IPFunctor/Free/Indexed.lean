@@ -114,7 +114,14 @@ protected def inductionOn {C : ∀ s t, FreeM₂ P s t α → Prop}
   | _, _, .pure x   => pure _ x
   | _, _, .roll a r => roll _ _ a r (fun b => FreeM₂.inductionOn pure roll (r b))
 
-/-! ## `IndexedMonad` and `LawfulIndexedMonad` instances -/
+/-! ## `Pure` instance and `IndexedMonad` / `LawfulIndexedMonad` instances -/
+
+/-- Plain `Pure` instance for the state-preserving slice `FreeM₂ P s s`.
+The `IndexedMonad.ipure` below carries the same data, but exposing the
+plain `Pure` typeclass instance is what lets `pure x` / `return x`
+resolve inside a `do`-block whose expected type is `FreeM₂ P s s α`. -/
+instance (s : I) : Pure (FreeM₂ P s s) where
+  pure x := FreeM₂.pure x
 
 instance (P : IPFunctor.{uI, uA, uB} I) :
     IndexedMonad I (fun s t α => FreeM₂.{uI, uA, uB, v} P s t α) where
