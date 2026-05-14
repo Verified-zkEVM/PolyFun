@@ -87,6 +87,7 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
 
 Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
+  → IPFunctor/Notation, IPFunctor/Notation/{Indexed, Deterministic}
 
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
   (free-standing helpers, depended on by both PFunctor and ITree)

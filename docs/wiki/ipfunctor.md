@@ -37,6 +37,9 @@ indexed-monad shape that `FreeM₂` instantiates.
 | [`PolyFun/IPFunctor/Basic.lean`](../../PolyFun/IPFunctor/Basic.lean) | `IPFunctor I` structure, `Obj`, `CoeFun`, `Zero`, `One`, `toPFunctor`. |
 | [`PolyFun/IPFunctor/Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean) | `FreeM P : I → Type v → Type _` — the single-index indexed free monad. `pure`, `roll`, `lift`, `liftA`, `bind` (state-polymorphic continuation), `Functor` / `LawfulFunctor`, `inductionOn`, `construct`, `mapM`, `erase` (forgetful to `PFunctor.FreeM` under `[Unique I]`). |
 | [`PolyFun/IPFunctor/Free/Indexed.lean`](../../PolyFun/IPFunctor/Free/Indexed.lean) | `FreeM₂ P : I → I → Type v → Type _` — the two-index variant tracking pre- and post-state. `bind` chains indices positionally; carries `IndexedMonad` and `LawfulIndexedMonad` instances. Forgetful coercion `FreeM₂.toFreeM`. |
+| [`PolyFun/IPFunctor/Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | Lean 4.29 `@[doElem_elab]` overrides making ordinary `do { let x ← e; … }` elaborate to `FreeM.bind`-trees. Custom diagnostics for state mismatches and non-polymorphic remainders. Opt in with `set_option backward.do.legacy false`. |
+| [`PolyFun/IPFunctor/Notation/Indexed.lean`](../../PolyFun/IPFunctor/Notation/Indexed.lean) | `do`-notation for `FreeM₂`. Statically-tracked intermediate states; chains of any length compose. Adds the `Pure (FreeM₂ P s s)` instance. |
+| [`PolyFun/IPFunctor/Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `do`-notation for `FreeM` with a `DeterministicTransitions P` class. Specializes `liftA`-style steps to a concrete post-state, lifting the universal-quantification constraint of the base `Notation.lean`. |
 | [`PolyFun/Control/Monad/Indexed.lean`](../../PolyFun/Control/Monad/Indexed.lean) | Atkey indexed-monad class (`IndexedMonad`, `LawfulIndexedMonad`) and the trivial-`Unit` instance. |
 
 ## Mental model
@@ -121,6 +124,19 @@ target side, lift the responses into a state-monad and read the state back.
 - `erase` is gated on `[Unique I]` because the equivalence between
   `IPFunctor I` and `PFunctor` only collapses at that point. An `[Inhabited I]`
   variant is conceivable (picking a designated state) but is not provided.
+
+## `do`-notation flavors
+
+Three parallel `do`-notation files plug into Lean 4.29's extensible
+do-elaborator. All require `set_option backward.do.legacy false` and check
+the expected monad type before activating, so other monads in the same file
+are unaffected.
+
+| File | Monad | Continuation type | When to use |
+|---|---|---|---|
+| [`Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | `FreeM P s α` | `(s' : I) → α → FreeM P s' β` (universal) | Tail of the block is state-polymorphic (`pure`/`return`, polymorphic helpers). Custom diagnostics call out state mismatches and non-polymorphic remainders. |
+| [`Notation/Indexed.lean`](../../PolyFun/IPFunctor/Notation/Indexed.lean) | `FreeM₂ P s t α` | `α → FreeM₂ P t u β` (statically tracked) | Chains of any length where every step's tree converges to a single post-state. Also adds the `Pure (FreeM₂ P s s)` instance. |
+| [`Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `FreeM P s α` with `[DeterministicTransitions P]` | `P.B s a → FreeM P (next s a) β` (specialized) | Stay on single-index `FreeM` for downstream compatibility; specialize `liftA`-style steps via the determinism class. |
 
 ## What lives where downstream
 
