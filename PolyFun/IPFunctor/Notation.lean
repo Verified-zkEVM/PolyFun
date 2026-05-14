@@ -34,10 +34,24 @@ must opt in by setting
 set_option backward.do.legacy false
 ```
 
-at the top of any file that wants `do`-notation for `FreeM`. Other
-monads in the same file continue to work — our elaborators check the
-expected type and `throwUnsupportedSyntax` for non-`FreeM` monads,
+at the top of any file that wants `do`-notation for `FreeM`. To opt in
+*project-wide*, add the option to your `lakefile.toml`:
+
+```toml
+[leanOptions]
+backward.do.legacy = false
+```
+
+Other monads in the same file continue to work — our elaborators check
+the expected type and `throwUnsupportedSyntax` for non-`FreeM` monads,
 falling back to the builtin.
+
+**Roadmap.** `backward.do.legacy` is a transitional flag (note the
+`backward.` prefix). When upstream Lean flips the default to `false`
+and eventually retires the option, the `set_option` lines in the test
+sections of these files come out and the docstrings are updated. A
+`grep -rn 'backward.do.legacy' PolyFun/` finds every site that needs
+touching.
 
 ## Supported subset
 

@@ -1,0 +1,173 @@
+# `do`-notation for `IPFunctor.FreeM` / `FreeM₂`
+
+Three parallel files in
+[`PolyFun/IPFunctor/Notation/`](../../PolyFun/IPFunctor/Notation/) plug
+custom `@[doElem_elab]` overrides into Lean 4.29's extensible
+do-elaborator so that ordinary `do { let x ← e; … }` blocks elaborate
+to the right `bind`-trees over `IPFunctor.FreeM` and `FreeM₂`.
+
+This page is a worked walkthrough; the canonical definitions live in
+the linked Lean files.
+
+## Activation
+
+All three flavors require `set_option backward.do.legacy false` (or a
+project-wide entry in `[leanOptions]` of `lakefile.toml`). This switches
+Lean from the legacy do-elaborator to the new extensible one, which is
+where our overrides plug in. The flag is transitional; when upstream
+Lean retires it the lines come out.
+
+## The three flavors at a glance
+
+| File | Monad | When to reach for it |
+|---|---|---|
+| [`Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | `FreeM P s α` | Tail of the block is state-polymorphic. Custom error messages call out state-mismatches and non-polymorphic remainders. |
+| [`Notation/Indexed.lean`](../../PolyFun/IPFunctor/Notation/Indexed.lean) | `FreeM₂ P s t α` | Statically-tracked pre/post-states; chains of any length compose. |
+| [`Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `FreeM P s α` + `[DeterministicTransitions P]` | Stay on single-index `FreeM` and lift the universal-quantification constraint when `P.st s a b` is independent of `b`. |
+| [`Notation/Mixed.lean`](../../PolyFun/IPFunctor/Notation/Mixed.lean) | (tests) | Sanity tests confirming the three overrides cohabit correctly. |
+
+## Worked example: a tiny two-phase protocol
+
+Pick a state machine with two phases:
+
+```
+Phase = open | counting
+```
+
+At `open`, an `init` action transitions us to `counting`. At `counting`,
+a `tick` action returns a `Nat` and stays at `counting`. There is no
+data-dependent branching — both transitions are deterministic.
+
+```lean
+inductive Phase | open | counting
+deriving DecidableEq
+
+def proto : IPFunctor Phase where
+  A
+    | Phase.open     => Unit       -- only `init` available
+    | Phase.counting => Unit       -- only `tick` available
+  B
+    | Phase.open,     _ => Unit
+    | Phase.counting, _ => Nat
+  st
+    | Phase.open,     _, _ => Phase.counting
+    | Phase.counting, _, _ => Phase.counting
+```
+
+### Flavor 1: `FreeM₂` — full chain support
+
+Statically-tracked indices, no metavariable gymnastics. Best when you
+want the type to record the start and end phases.
+
+```lean
+import PolyFun.IPFunctor.Notation.Indexed
+set_option backward.do.legacy false
+
+def init : IPFunctor.FreeM₂ proto Phase.open Phase.counting Unit :=
+  IPFunctor.FreeM₂.roll () (fun _ => IPFunctor.FreeM₂.pure ())
+
+def tick : IPFunctor.FreeM₂ proto Phase.counting Phase.counting Nat :=
+  IPFunctor.FreeM₂.roll () (fun n => IPFunctor.FreeM₂.pure n)
+
+example : IPFunctor.FreeM₂ proto Phase.open Phase.counting Nat := do
+  let _ ← init
+  let a ← tick
+  let b ← tick
+  pure (a + b)
+```
+
+The chain `.open → .counting → .counting → .counting` is threaded
+through the type at every step.
+
+### Flavor 2: `FreeM` + `DeterministicTransitions` — same chain, single index
+
+Same protocol, but stay on single-index `FreeM`. We add a class
+instance certifying that transitions are deterministic, then the
+elaborator specializes each `liftA`-style step to its known post-state.
+
+```lean
+import PolyFun.IPFunctor.Notation.Deterministic
+set_option backward.do.legacy false
+
+instance : IPFunctor.DeterministicTransitions proto where
+  next
+    | Phase.open,     _ => Phase.counting
+    | Phase.counting, _ => Phase.counting
+  spec s a b := by cases s <;> rfl
+
+@[reducible] def init : IPFunctor.FreeM proto Phase.open Unit :=
+  IPFunctor.FreeM.liftA Phase.open ()
+
+@[reducible] def tick : IPFunctor.FreeM proto Phase.counting Nat :=
+  IPFunctor.FreeM.liftA Phase.counting ()
+
+example : IPFunctor.FreeM proto Phase.open Nat := do
+  let _ ← init
+  let a ← tick
+  let b ← tick
+  pure (a + b)
+```
+
+(`Notation.Deterministic` transitively imports `Notation` to guarantee
+its specialization fires before the basic single-index handler — see
+the comment at the top of [`Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean).)
+
+This compiles for the same reason the `FreeM₂` version does — the
+post-state of each step is uniquely determined by the
+`DeterministicTransitions` instance, and the elaborator builds
+`FreeM.bindLiftA` calls that thread the concrete next state through
+the continuation.
+
+### Flavor 3: basic `Notation.lean` — what you *can* do without DT or FreeM₂
+
+The basic single-index notation only handles `do`-block *tails* that
+are polymorphic in the fresh post-state. In practice that means tails
+made of `pure` / `return` / control flow over pure arms — anything
+state-specific gets the *state mismatch* diagnostic.
+
+```lean
+import PolyFun.IPFunctor.Notation
+set_option backward.do.legacy false
+
+example : IPFunctor.FreeM proto Phase.open Unit := do
+  let _ ← init
+  pure ()              -- polymorphic tail, OK
+
+example : IPFunctor.FreeM proto Phase.open Nat := do
+  let _ ← init
+  let a ← tick         -- ERROR: tick is at Phase.counting; the bind continuation
+  pure a               -- must be state-polymorphic.
+```
+
+The second example fails with the custom diagnostic explaining that
+`tick`'s pre-state `Phase.counting` doesn't unify with the fresh `s'` that
+`FreeM.bind`'s continuation quantifies over.
+
+## `erase` interop (`Unique I` case)
+
+When the state type is `Unique`, `IPFunctor.FreeM.erase` collapses
+`do`-block trees to plain `PFunctor.FreeM`. Both the `@[simp]` lemmas
+`erase_punit_pure` / `erase_punit_roll` (in
+[`Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean)) and the
+`toFreeM_*` lemmas fire on do-block-elaborated trees by `rfl`. The
+existing test files include positive examples confirming this; see the
+"`erase` interop" sections in
+[`Notation.lean`](../../PolyFun/IPFunctor/Notation.lean),
+[`Notation/Indexed.lean`](../../PolyFun/IPFunctor/Notation/Indexed.lean),
+and
+[`Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean).
+
+## Choosing between flavors
+
+A short decision tree:
+
+* Need every leaf of every step at the same state? → `FreeM₂` notation.
+* Stuck on single-index `FreeM` (e.g. for compatibility with existing
+  APIs), and `P.st s a b` is independent of `b`? →
+  `Notation/Deterministic.lean`, after adding a
+  `DeterministicTransitions P` instance.
+* Only need `do { pure … }` / `do { let _ ← op; pure … }` shapes? →
+  basic `Notation.lean` suffices.
+
+The forgetful map `FreeM₂.toFreeM` lets you author in the indexed
+variant and convert when downstream code expects single-index `FreeM`.

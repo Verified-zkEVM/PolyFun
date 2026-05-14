@@ -17,6 +17,7 @@ import PolyFun.IPFunctor.Free.Indexed
 import PolyFun.IPFunctor.Notation
 import PolyFun.IPFunctor.Notation.Deterministic
 import PolyFun.IPFunctor.Notation.Indexed
+import PolyFun.IPFunctor.Notation.Mixed
 import PolyFun.ITree.Basic
 import PolyFun.ITree.Bisim.Bind
 import PolyFun.ITree.Bisim.Defs

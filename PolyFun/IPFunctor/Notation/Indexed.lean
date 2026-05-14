@@ -20,9 +20,12 @@ naturally under ordinary `do`-notation.
 
 Like the single-index variant in `PolyFun/IPFunctor/Notation.lean`, this
 file plugs into the Lean 4.29 extensible do-elaborator. Users opt in by
-setting `set_option backward.do.legacy false`. Our overrides check the
-expected type and fall through (`throwUnsupportedSyntax`) for any monad
-other than `FreeM₂ P s t`.
+setting `set_option backward.do.legacy false` (or, project-wide, via
+`[leanOptions]` in `lakefile.toml` — see
+[`../Notation.lean`](../Notation.lean) for the roadmap on this
+transitional flag). Our overrides check the expected type and fall
+through (`throwUnsupportedSyntax`) for any monad other than
+`FreeM₂ P s t`.
 
 ## Why three flavors of `IPFunctor` `do`-notation?
 

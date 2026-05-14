@@ -105,6 +105,17 @@ def bindLiftA [det : IPFunctor.DeterministicTransitions P]
     FreeM P s β :=
   FreeM.roll s a (fun b => (det.spec s a b).symm ▸ g b)
 
+/-- Unfolding lemma for `bindLiftA` (definitional). `simp`-tagged so
+chains using the deterministic-`do`-notation can be pushed through
+existing simp sets without first calling `unfold bindLiftA`. The result
+still contains a transport along `det.spec`; for the trivially-`rfl`
+case (e.g. `Unique I`) the transport collapses by computation. -/
+@[simp]
+lemma bindLiftA_eq [det : IPFunctor.DeterministicTransitions P]
+    {s : I} (a : P.A s) (g : P.B s a → FreeM P (det.next s a) β) :
+    bindLiftA a g = FreeM.roll s a (fun b => (det.spec s a b).symm ▸ g b) :=
+  rfl
+
 /-! ## Injectivity -/
 
 lemma pure_inj (s : I) (x y : α) :

@@ -128,7 +128,11 @@ target side, lift the responses into a state-monad and read the state back.
 ## `do`-notation flavors
 
 Three parallel `do`-notation files plug into Lean 4.29's extensible
-do-elaborator. All require `set_option backward.do.legacy false` and check
+do-elaborator. See
+[`ipfunctor-do-notation.md`](ipfunctor-do-notation.md) for a worked
+walkthrough with a small two-phase-protocol example.
+
+All three require `set_option backward.do.legacy false` and check
 the expected monad type before activating, so other monads in the same file
 are unaffected.
 

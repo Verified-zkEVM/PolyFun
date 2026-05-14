@@ -5,7 +5,13 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.IPFunctor.Free.Basic
+-- `Notation` defines the generic single-index `FreeM` overrides; importing
+-- it transitively here forces our deterministic-`FreeM` override to be
+-- registered *after*, so the keyed-attribute lookup tries it first. Without
+-- this, downstream `import` order would silently determine which override
+-- fires for `FreeM`-shaped `do`-blocks. See `Notation/Mixed.lean` for the
+-- regression test.
+public import PolyFun.IPFunctor.Notation
 public import Lean.Elab.Do
 meta import Lean.Parser.Do
 
@@ -37,7 +43,10 @@ generic state-polymorphic one.
 ## Activation
 
 Users must
-* set `set_option backward.do.legacy false`, and
+* set `set_option backward.do.legacy false` (or, project-wide, via
+  `[leanOptions]` in `lakefile.toml` — see
+  [`../Notation.lean`](../Notation.lean) for the roadmap on this
+  transitional flag), and
 * provide an `IPFunctor.DeterministicTransitions P` instance, and
 * express each monadic step using `IPFunctor.FreeM.liftA` directly (or a
   `@[reducible]` alias). Steps that don't reduce to `liftA s a` fall
