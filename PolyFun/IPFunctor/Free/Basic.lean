@@ -114,6 +114,11 @@ lemma map_roll (s : I) (f : α → β) (x : P.A s)
     FreeM.map s f (FreeM.roll s x r) =
       FreeM.roll s x (fun b => FreeM.map (P.st s x b) f (r b)) := rfl
 
+@[simp]
+lemma map_lift (s : I) (f : α → β) (x : P.Obj α s) :
+    FreeM.map s f (FreeM.lift s x) =
+      FreeM.lift s ⟨x.1, fun b => f (x.2 b)⟩ := rfl
+
 /-- While `FreeM P s` is not a `Monad` (because `roll`'s continuation can change state),
 mapping leaves a tree at the same state, so the `Functor` instance is well-defined. -/
 instance (s : I) : Functor (P.FreeM s) where
@@ -174,6 +179,12 @@ lemma construct_pure (s : I) (x : α) :
 lemma construct_roll (s : I) (x : P.A s) (r : (b : P.B s x) → FreeM P (P.st s x b) α) :
     (FreeM.construct h_pure h_roll (FreeM.roll s x r) : C s (FreeM.roll s x r)) =
       h_roll s x r (fun b => FreeM.construct h_pure h_roll (r b)) := rfl
+
+@[simp]
+lemma construct_lift (s : I) (x : P.Obj α s) :
+    (FreeM.construct h_pure h_roll (FreeM.lift s x) : C s (FreeM.lift s x)) =
+      h_roll s x.1 (fun b => FreeM.pure (P.st s x.1 b) (x.2 b))
+        (fun b => h_pure (P.st s x.1 b) (x.2 b)) := rfl
 
 end construct
 
@@ -291,6 +302,11 @@ lemma erase_punit_roll (x : Q.A PUnit.unit)
     (r : (b : Q.B PUnit.unit x) → Q.FreeM (Q.st PUnit.unit x b) α) :
     erase Q PUnit.unit (FreeM.roll PUnit.unit x r) =
       PFunctor.FreeM.roll x (fun b => erase Q (Q.st PUnit.unit x b) (r b)) := rfl
+
+@[simp]
+lemma erase_punit_lift (x : Q.Obj α PUnit.unit) :
+    erase Q PUnit.unit (FreeM.lift PUnit.unit x) =
+      PFunctor.FreeM.lift (P := Q.toPFunctor) x := rfl
 
 end erasePUnit
 
