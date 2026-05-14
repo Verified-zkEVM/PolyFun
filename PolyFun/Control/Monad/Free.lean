@@ -177,6 +177,7 @@ section mapM'
 
 variable {m : Type u → Type w} [Monad m] [LawfulMonad m]
 
+/-- Bundled monad-homomorphism form of `FreeMonad.mapM`. -/
 protected def mapM' {m : Type u → Type w} [Monad m] [LawfulMonad m]
     (s : {α : Type u} → f α → m α) : FreeMonad f →ᵐ m where
   toFun α f := FreeMonad.mapM_aux s f
@@ -185,16 +186,6 @@ protected def mapM' {m : Type u → Type w} [Monad m] [LawfulMonad m]
     induction x using FreeMonad.inductionOn with
     | pure x => simp [FreeMonad.mapM_aux]
     | roll x r h => simp at h; simp [FreeMonad.mapM_aux, h]
-
--- @[simp]
--- lemma mapM'_lift (s : {α : Type u} → f α → m α) (x : f α) :
---     (FreeMonad.mapM' s).toFun α (FreeMonad.lift x) = s x := by
-
---   simp [FreeMonad.mapM', FreeMonad.lift, FreeMonad.mapM_aux]
-
--- @[simp]
--- lemma mapM'_pure (s : {α : Type u} → f α → m α) (x : α) :
---     FreeMonad.mapM' (FreeMonad.pure x : FreeMonad f α) s = pure x := rfl
 
 end mapM'
 

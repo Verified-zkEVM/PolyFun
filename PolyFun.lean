@@ -8,8 +8,12 @@ import PolyFun.Control.Monad.Equiv
 import PolyFun.Control.Monad.Free
 import PolyFun.Control.Monad.FreeCont
 import PolyFun.Control.Monad.Hom
+import PolyFun.Control.Monad.Indexed
 import PolyFun.Control.Monad.Iter
 import PolyFun.Control.Trace
+import PolyFun.IPFunctor.Basic
+import PolyFun.IPFunctor.Free.Basic
+import PolyFun.IPFunctor.Free.Indexed
 import PolyFun.ITree.Basic
 import PolyFun.ITree.Bisim.Bind
 import PolyFun.ITree.Bisim.Defs

@@ -50,6 +50,10 @@ and depend on this library.
 
 - `PolyFun/PFunctor/`: polynomial functors, charts, lenses, equivalences,
   M-type / cofree, free monad and displayed-free machinery.
+- `PolyFun/IPFunctor/`: state-indexed polynomial functors (`IPFunctor I`)
+  and their indexed free monads. `Free/Basic.lean` holds the single-index
+  `FreeM` (state-polymorphic continuations); `Free/Indexed.lean` holds the
+  two-index `FreeM₂` carrying a `LawfulIndexedMonad` instance.
 - `PolyFun/ITree/`: coinductive interaction trees, bisimulation,
   simulation, handlers, event signatures.
 - `PolyFun/Interaction/`: protocol-flavored generic interaction framework.
@@ -80,6 +84,9 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   → PFunctor/{Cofree, Trace}
   → PFunctor/Free/{Basic, Path}
   → PFunctor/Free/{Displayed, Displayed/Decoration}
+
+Control/Monad/Indexed, PFunctor/Free/Basic
+  → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
 
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
   (free-standing helpers, depended on by both PFunctor and ITree)
@@ -202,6 +209,8 @@ too specific or too changeable to keep at the repo root.
   outputs and source-of-truth rules.
 - [`docs/wiki/pfunctor.md`](docs/wiki/pfunctor.md): the polynomial-functor
   substrate.
+- [`docs/wiki/ipfunctor.md`](docs/wiki/ipfunctor.md): state-indexed
+  polynomial functors and their indexed free monads.
 - [`docs/wiki/itree.md`](docs/wiki/itree.md): interaction trees layer.
 - [`docs/wiki/interaction.md`](docs/wiki/interaction.md): generic interaction
   framework (`Spec`, two-party, multiparty, concurrent, UC).
