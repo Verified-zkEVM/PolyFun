@@ -96,6 +96,16 @@ lemma pure_inj (s : I) (x y : α) :
   refine ⟨?_, fun h => by rw [h]⟩
   intro h; cases h; rfl
 
+@[simp]
+lemma roll_inj (s : I) (x x' : P.A s)
+    (r : (b : P.B s x) → FreeM P (P.st s x b) α)
+    (r' : (b : P.B s x') → FreeM P (P.st s x' b) α) :
+    FreeM.roll s x r = FreeM.roll s x' r' ↔ ∃ h : x = x', h ▸ r = r' := by
+  by_cases hx : x = x'
+  · subst hx; simp
+  · refine ⟨fun h => ?_, fun ⟨h, _⟩ => absurd h hx⟩
+    cases h; exact (hx rfl).elim
+
 /-! ## Functor / LawfulFunctor -/
 
 /-- Functor map on `FreeM P s`. The state is unchanged because mapping only rewrites leaves;

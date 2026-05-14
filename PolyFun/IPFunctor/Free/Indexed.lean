@@ -85,6 +85,23 @@ lemma map_pure (f : α → β) (x : α) :
 lemma map_roll (f : α → β) (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.st s a b) t α) :
     (FreeM₂.roll a r).map f = FreeM₂.roll a (fun b => (r b).map f) := rfl
 
+/-! ## Injectivity -/
+
+lemma pure_inj (x y : α) :
+    (FreeM₂.pure (P := P) (s := s) x : FreeM₂ P s s α) = FreeM₂.pure y ↔ x = y := by
+  refine ⟨?_, fun h => by rw [h]⟩
+  intro h; cases h; rfl
+
+@[simp]
+lemma roll_inj (a a' : P.A s)
+    (r : (b : P.B s a) → FreeM₂ P (P.st s a b) t α)
+    (r' : (b : P.B s a') → FreeM₂ P (P.st s a' b) t α) :
+    FreeM₂.roll a r = FreeM₂.roll a' r' ↔ ∃ h : a = a', h ▸ r = r' := by
+  by_cases ha : a = a'
+  · subst ha; simp
+  · refine ⟨fun h => ?_, fun ⟨h, _⟩ => absurd h ha⟩
+    cases h; exact (ha rfl).elim
+
 /-! ## Induction principle -/
 
 /-- Induction principle for `FreeM₂` with both pre- and post-state in the motive. -/
