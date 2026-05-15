@@ -105,17 +105,6 @@ def bindLiftA [det : IPFunctor.DeterministicTransitions P]
     FreeM P s β :=
   FreeM.roll s a (fun b => (det.spec s a b).symm ▸ g b)
 
-/-- Unfolding lemma for `bindLiftA` (definitional). `simp`-tagged so
-chains using the deterministic-`do`-notation can be pushed through
-existing simp sets without first calling `unfold bindLiftA`. The result
-still contains a transport along `det.spec`; for the trivially-`rfl`
-case (e.g. `Unique I`) the transport collapses by computation. -/
-@[simp]
-lemma bindLiftA_eq [det : IPFunctor.DeterministicTransitions P]
-    {s : I} (a : P.A s) (g : P.B s a → FreeM P (det.next s a) β) :
-    bindLiftA a g = FreeM.roll s a (fun b => (det.spec s a b).symm ▸ g b) :=
-  rfl
-
 /-! ## Injectivity -/
 
 lemma pure_inj (s : I) (x y : α) :
@@ -165,15 +154,13 @@ instance (s : I) : Functor (P.FreeM s) where
 instance (s : I) : LawfulFunctor (P.FreeM s) where
   map_const := rfl
   id_map x := by
-    change FreeM.map s id x = x
     induction x with
-    | pure s' x => rfl
-    | roll s' a r ih => exact congrArg (FreeM.roll s' a) (funext ih)
+    | pure _ _ => rfl
+    | roll _ _ _ ih => exact congrArg _ (funext ih)
   comp_map f g x := by
-    change FreeM.map s (g ∘ f) x = FreeM.map s g (FreeM.map s f x)
     induction x with
-    | pure s' x => rfl
-    | roll s' a r ih => exact congrArg (FreeM.roll s' a) (funext (fun b => ih b f))
+    | pure _ _ => rfl
+    | roll _ _ _ ih => exact congrArg _ (funext (fun b => ih b f))
 
 /-! ## Induction principles
 
@@ -273,10 +260,8 @@ lemma mapM_map (s : I) (x : FreeM P s α) (f : α → β) :
     (f <$> x).mapM h = f <$> x.mapM h := by
   change (FreeM.map s f x).mapM h = f <$> x.mapM h
   induction x with
-  | pure s' x => simp [FreeM.map, FreeM.mapM]
-  | roll s' a r ih =>
-      simp only [FreeM.map, FreeM.mapM, map_bind]
-      exact congrArg _ (funext (fun b => ih b f))
+  | pure _ _ => simp [FreeM.map, FreeM.mapM]
+  | roll _ _ _ ih => simp [FreeM.map, FreeM.mapM, map_bind, ih]
 
 end mapM
 

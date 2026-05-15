@@ -138,20 +138,15 @@ lemma ibind_def (x : FreeM₂ P s t α) (g : α → FreeM₂ P t u β) :
 
 instance (P : IPFunctor.{uI, uA, uB} I) :
     LawfulIndexedMonad I (fun s t α => FreeM₂.{uI, uA, uB, v} P s t α) where
-  ipure_ibind a f := rfl
+  ipure_ibind _ _ := rfl
   ibind_ipure x := by
     induction x using FreeM₂.inductionOn with
-    | pure s x => rfl
-    | roll s t a r ih =>
-        change FreeM₂.roll a (fun b => (r b).bind FreeM₂.pure) = FreeM₂.roll a r
-        exact congrArg (FreeM₂.roll a) (funext ih)
-  ibind_assoc x f g := by
+    | pure _ _ => rfl
+    | roll _ _ _ _ ih => exact congrArg _ (funext ih)
+  ibind_assoc x f _ := by
     induction x using FreeM₂.inductionOn with
-    | pure s x => rfl
-    | roll s t a r ih =>
-        change FreeM₂.roll a (fun b => ((r b).bind f).bind g) =
-             FreeM₂.roll a (fun b => (r b).bind (fun a => (f a).bind g))
-        exact congrArg (FreeM₂.roll a) (funext (fun b => ih b f))
+    | pure _ _ => rfl
+    | roll _ _ _ _ ih => exact congrArg _ (funext (fun b => ih b f))
 
 /-! ## Forgetful coercion to single-index `FreeM`
 

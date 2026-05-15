@@ -41,8 +41,6 @@ variable {f : Type u → Type v} {α β γ : Type u}
 @[always_inline, inline]
 def lift (x : f α) : FreeMonad f α := FreeMonad.roll x FreeMonad.pure
 
-protected lemma lift_def (x : f α) : FreeMonad.lift x = FreeMonad.roll x FreeMonad.pure := rfl
-
 instance : MonadLift f (FreeMonad f) where
   monadLift x := FreeMonad.lift x
 
@@ -169,7 +167,7 @@ lemma mapM_roll (x : f α) (r : α → FreeMonad f β) :
 
 @[simp, grind =]
 lemma mapM_lift [LawfulMonad m] (x : f α) : (FreeMonad.lift x).mapM s = s x := by
-  simp [FreeMonad.lift_def]
+  simp [FreeMonad.lift]
 
 end mapM
 
