@@ -77,6 +77,18 @@ def toPFunctor [Inhabited I] (P : IPFunctor I) : PFunctor where
 
 @[simp] lemma toPFunctor_one [Inhabited I] : (1 : IPFunctor I).toPFunctor = 1 := rfl
 
+/-- View an `IPFunctor` as a `PFunctor` by Σ-bundling the originating state into each position.
+Unlike `toPFunctor`, no state information is lost — but the position type becomes the indexed
+sum `Σ s : I, P.A s`, and the state-transition `P.st` is still not represented on the target
+side. Works for any index type (no `[Inhabited I]` needed).
+
+Used by `IPFunctor.FreeM.toSigmaFreeM` to map an indexed free tree into the plain `PFunctor`
+free monad without requiring `[Unique I]`. -/
+@[reducible, inline]
+def sigmaPFunctor (P : IPFunctor I) : PFunctor where
+  A := Σ s : I, P.A s
+  B := fun x => P.B x.1 x.2
+
 end IPFunctor
 
 /-- An `IPFunctor` has *deterministic transitions* when `P.st s a b` is

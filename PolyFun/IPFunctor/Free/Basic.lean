@@ -271,7 +271,11 @@ When the index type has at most one element, the state information carries no co
 `IPFunctor` collapses to a `PFunctor`. We provide a forgetful map `erase` from
 `IPFunctor.FreeM P s α` to `PFunctor.FreeM P.toPFunctor α` (at any `s : I`). The reverse
 direction would require transport gymnastics through `P.st`'s data-dependent post-state; we
-do not provide it. -/
+do not provide it.
+
+For a variant that works on *any* index type by Σ-bundling the state into each position,
+see `toSigmaFreeM` below. It produces a `PFunctor.FreeM` over `P.sigmaPFunctor` instead of
+`P.toPFunctor`, paying for generality with a richer position type. -/
 
 section erase
 
@@ -331,6 +335,42 @@ lemma erase_punit_lift (x : Q.Obj α PUnit.unit) :
       PFunctor.FreeM.lift (P := Q.toPFunctor) x := rfl
 
 end erasePUnit
+
+/-! ## Σ-bundled forgetful map
+
+`toSigmaFreeM` is the unrestricted analog of `erase`: it converts an
+`IPFunctor.FreeM P s α` into a plain `PFunctor.FreeM` over the Σ-bundled
+`P.sigmaPFunctor`, with the originating state recorded in each position.
+No `[Unique I]` assumption is needed, but the target's positions live in
+`Σ s : I, P.A s` rather than the flat `P.A default`. The state-transition
+`P.st` is still not represented on the target side. -/
+
+section toSigmaFreeM
+
+/-- Forget the state-indexing on each step by Σ-bundling the originating state into the
+position, yielding a `PFunctor.FreeM` over `P.sigmaPFunctor`. Works for any index type. -/
+def toSigmaFreeM (P : IPFunctor I) :
+    {s : I} → {α : Type v} → P.FreeM s α → P.sigmaPFunctor.FreeM α
+  | _, _, .pure _ x   => PFunctor.FreeM.pure x
+  | _, _, .roll s a r => PFunctor.FreeM.roll ⟨s, a⟩ (fun b => toSigmaFreeM P (r b))
+
+@[simp]
+lemma toSigmaFreeM_pure (P : IPFunctor I) (s : I) (x : α) :
+    toSigmaFreeM P (FreeM.pure s x) = PFunctor.FreeM.pure x := rfl
+
+@[simp]
+lemma toSigmaFreeM_roll (P : IPFunctor I) (s : I) (a : P.A s)
+    (r : (b : P.B s a) → P.FreeM (P.st s a b) α) :
+    toSigmaFreeM P (FreeM.roll s a r) =
+      PFunctor.FreeM.roll (⟨s, a⟩ : P.sigmaPFunctor.A)
+        (fun b => toSigmaFreeM P (r b)) := rfl
+
+@[simp]
+lemma toSigmaFreeM_lift (P : IPFunctor I) (s : I) (x : P.Obj α s) :
+    toSigmaFreeM P (FreeM.lift s x) =
+      PFunctor.FreeM.lift (P := P.sigmaPFunctor) ⟨⟨s, x.1⟩, x.2⟩ := rfl
+
+end toSigmaFreeM
 
 end FreeM
 
