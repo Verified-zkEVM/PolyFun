@@ -135,7 +135,9 @@ content* of a single party's view.
 `OpenNodeProfile Party Δ X`
 ([`PolyFun/Interaction/UC/OpenProcess.lean`](../../PolyFun/Interaction/UC/OpenProcess.lean))
 is the open-system extension that adds one `BoundaryAction Δ X` field for
-external traffic.
+external traffic. `OpenNodeContext.boundaryTrace` extracts the finite
+outbound-packet trace emitted along a completed decorated step transcript;
+routing and probabilistic execution remain downstream runtime concerns.
 
 ### Mental picture
 
@@ -588,7 +590,7 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `OpenSyntax/Raw.lean` | `Raw` syntax tree, `Raw.interpret`, `Raw.Equiv` (incl. monoidal / traced / CC equations) |
 | `OpenSyntax/Interp.lean` | `Interp` (tagless-final), granular `HasUnit` / `HasIdWire` / `IsMonoidal` / `IsTraced` / `IsCompactClosed` / `HasPlugWireFactor` instances |
 | `OpenSyntax/Expr.lean` | `Expr` (quotient of `Raw`), granular `OpenTheory` lawfulness instances, `Expr.toInterp` |
-| `OpenProcess.lean` | `BoundaryAction`, `OpenNodeProfile`, `OpenNodeContext` (with polynomial-product bridge `productView`), `OpenProcess m Party Δ` (monad-parametric, with intrinsic `stepSampler`), `toProcess`, `OpenProcessIso` |
+| `OpenProcess.lean` | `BoundaryAction`, `OpenNodeProfile`, `OpenNodeContext` (with polynomial-product bridge `productView` and structural `boundaryTrace`), `OpenProcess m Party Δ` (monad-parametric, with intrinsic `stepSampler`), `toProcess`, `OpenProcessIso` |
 | `OpenProcessModel.lean` | `openTheory m Party schedulerSampler` (concrete model threading `Spec.Sampler` through `map` / `par` / `wire` / `plug`), `IsLawful`, monoidal / CC laws up to `OpenProcessIso` |
 | `Emulates.lean` | `Observation`, `Emulates`, `UCSecure`. Contextual emulation and UC security stated abstractly over an `Observation` (an equivalence relation on closed systems), with no probability monad and no concrete security predicate. |
 | `Notation.lean` | UC notation helpers (`∥`, `⊞`, `⊠`, `⊗ᵇ`, `ᵛ`); see [`notation.md`](notation.md) |
