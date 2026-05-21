@@ -111,9 +111,14 @@ open Lean Lean.Meta Lean.Elab Lean.Elab.Do Lean.Elab.Term Lean.Parser.Term
 
 /--
 If `m` is (definitionally) `@IPFunctor.FreeM I P s` for some `I, P, s`,
-return those three arguments; otherwise `none`. Called at the top of
-every elaborator override so that non-`FreeM` monads fall through to
-the builtin via `throwUnsupportedSyntax`.
+return those three arguments together with the universe levels on the
+`FreeM` constant; otherwise `none`. Called at the top of every
+elaborator override so that non-`FreeM` monads fall through to the
+builtin via `throwUnsupportedSyntax`.
+
+This is the canonical detector — `Notation/Deterministic.lean` imports
+and reuses it via `open IPFunctor.FreeMNotation`, so the two single-index
+elaborators recognize exactly the same monad shapes.
 -/
 meta def isFreeMMonad? (m : Expr) :
     MetaM (Option (Expr × Expr × Expr × List Level)) := do

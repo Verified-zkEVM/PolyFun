@@ -12,6 +12,7 @@ import PolyFun.Control.Monad.Indexed
 import PolyFun.Control.Monad.Iter
 import PolyFun.Control.Trace
 import PolyFun.IPFunctor.Basic
+import PolyFun.IPFunctor.Examples
 import PolyFun.IPFunctor.Free.Basic
 import PolyFun.IPFunctor.Free.Indexed
 import PolyFun.IPFunctor.Notation

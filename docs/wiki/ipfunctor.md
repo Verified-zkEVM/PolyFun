@@ -40,6 +40,7 @@ indexed-monad shape that `FreeM₂` instantiates.
 | [`PolyFun/IPFunctor/Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | Lean 4.29 `@[doElem_elab]` overrides making ordinary `do { let x ← e; … }` elaborate to `FreeM.bind`-trees. Custom diagnostics for state mismatches and non-polymorphic remainders. Opt in with `set_option backward.do.legacy false`. |
 | [`PolyFun/IPFunctor/Notation/Indexed.lean`](../../PolyFun/IPFunctor/Notation/Indexed.lean) | `do`-notation for `FreeM₂`. Statically-tracked intermediate states; chains of any length compose. Adds the `Pure (FreeM₂ P s s)` instance. |
 | [`PolyFun/IPFunctor/Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `do`-notation for `FreeM` with a `DeterministicTransitions P` class. Specializes `liftA`-style steps to a concrete post-state, lifting the universal-quantification constraint of the base `Notation.lean`. |
+| [`PolyFun/IPFunctor/Examples.lean`](../../PolyFun/IPFunctor/Examples.lean) | Worked examples: a two-phase protocol compiled three ways (`FreeM₂`, deterministic `FreeM`, Σ-bundled erase via `toSigmaFreeM`), plus a `PFunctor.FreeM.equivW_of_isEmpty` round-trip. Companion to [`ipfunctor-do-notation.md`](ipfunctor-do-notation.md). |
 | [`PolyFun/Control/Monad/Indexed.lean`](../../PolyFun/Control/Monad/Indexed.lean) | Atkey indexed-monad class (`IndexedMonad`, `LawfulIndexedMonad`) and the trivial-`Unit` instance. |
 
 ## Mental model
@@ -96,6 +97,13 @@ Forgetful maps:
   the uniform post-state.
 - `IPFunctor.FreeM.erase : FreeM P s α → P.toPFunctor.FreeM α` — available
   only when `[Unique I]`; drops the entire indexing.
+- `IPFunctor.FreeM.toSigmaFreeM : FreeM P s α → P.sigmaPFunctor.FreeM α` —
+  available for *any* index type; Σ-bundles the originating state into each
+  position, so the result sits over `P.sigmaPFunctor` (positions of type
+  `Σ s : I, P.A s`) rather than the flat `P.toPFunctor`. Use this when the
+  index type is not a `Unique` but you still want to hand the tree to
+  `PFunctor`-shaped APIs. Worked example in
+  [`Examples.lean`](../../PolyFun/IPFunctor/Examples.lean).
 
 The reverse directions do not in general exist: `FreeM P s α` may have
 non-uniform leaf states (so no single `t` for `FreeM₂`), and re-attaching
@@ -124,6 +132,9 @@ target side, lift the responses into a state-monad and read the state back.
 - `erase` is gated on `[Unique I]` because the equivalence between
   `IPFunctor I` and `PFunctor` only collapses at that point. An `[Inhabited I]`
   variant is conceivable (picking a designated state) but is not provided.
+  For arbitrary index types, the Σ-bundled `toSigmaFreeM` lifts that
+  restriction at the cost of a richer position type — see the
+  *Forgetful maps* list above.
 
 ## `do`-notation flavors
 

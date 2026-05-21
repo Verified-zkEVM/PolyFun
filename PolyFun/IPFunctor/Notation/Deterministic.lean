@@ -72,22 +72,14 @@ pre/post-state in the type.
 namespace IPFunctor.FreeMDetNotation
 
 open Lean Lean.Meta Lean.Elab Lean.Elab.Do Lean.Elab.Term Lean.Parser.Term
+open IPFunctor.FreeMNotation (isFreeMMonad?)
 
-/-! ## Monad-info detection -/
+/-! ## Bind builder using `FreeM.bindLiftA`
 
-/-- If `m = @IPFunctor.FreeM I P s`, return `(I, P, s, lvls)` where `lvls`
-are the universe levels on the `FreeM` constant. Returning the levels
-here avoids a second `whnf` + `getAppFn` walk in the elaborator. -/
-meta def isFreeMMonad? (m : Expr) :
-    MetaM (Option (Expr × Expr × Expr × List Level)) := do
-  let m ← whnf m
-  let fn := m.getAppFn
-  unless fn.isConstOf ``IPFunctor.FreeM do return none
-  let args := m.getAppArgs
-  unless args.size = 3 do return none
-  return some (args[0]!, args[1]!, args[2]!, fn.constLevels!)
-
-/-! ## Bind builder using `FreeM.bindLiftA` -/
+The monad-info detector is shared with the generic single-index notation:
+this file reuses [`IPFunctor.FreeMNotation.isFreeMMonad?`](../Notation.lean),
+brought into scope by the `open` above, so the `@[doElem_elab]` guard
+matches exactly the same shapes the generic elaborator recognizes. -/
 
 /--
 Build `@IPFunctor.FreeM.bindLiftA` for a step that reduced to
@@ -119,7 +111,16 @@ meta def mkBindLiftA
     return mkAppN (mkConst ``IPFunctor.FreeM.bindLiftA lvls)
       #[I, P, β, detInst, s, aShape, kLam]
 
-/-! ## Elaborator -/
+/-! ## Elaborator
+
+Only `doExpr` is overridden here. The `doLetArrow` form `let x ← rhs` is
+delegated to the generic single-index elaborator in
+[`../Notation.lean`](../Notation.lean) (`elabFreeMLetArrow`), which
+recursively invokes `doElem` on `rhs` — and Lean's keyed-attribute
+priority then picks *this* file's `doExpr` first for `liftA`-style steps.
+So a single `doLetArrow` override at the bottom of the dispatch chain is
+enough; we just need a specialized `doExpr` that catches the
+deterministic-step shape before the generic one does. -/
 
 /--
 `doExpr` override for `FreeM P s` blocks where a `DeterministicTransitions P`

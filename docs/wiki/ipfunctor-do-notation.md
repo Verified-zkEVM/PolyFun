@@ -7,7 +7,10 @@ do-elaborator so that ordinary `do { let x ← e; … }` blocks elaborate
 to the right `bind`-trees over `IPFunctor.FreeM` and `FreeM₂`.
 
 This page is a worked walkthrough; the canonical definitions live in
-the linked Lean files.
+the linked Lean files. The full running example below is also compiled
+inside the library at
+[`PolyFun/IPFunctor/Examples.lean`](../../PolyFun/IPFunctor/Examples.lean),
+which serves as the live-Lean companion to this prose.
 
 ## Activation
 
@@ -31,26 +34,29 @@ Lean retires it the lines come out.
 Pick a state machine with two phases:
 
 ```
-Phase = open | counting
+Phase = opn | counting
 ```
 
-At `open`, an `init` action transitions us to `counting`. At `counting`,
+At `opn`, an `init` action transitions us to `counting`. At `counting`,
 a `tick` action returns a `Nat` and stays at `counting`. There is no
-data-dependent branching — both transitions are deterministic.
+data-dependent branching — both transitions are deterministic. (We
+spell the first constructor `opn` rather than `open` so it cannot be
+confused with the Lean `open` keyword; this matches the live example
+in [`Examples.lean`](../../PolyFun/IPFunctor/Examples.lean).)
 
 ```lean
-inductive Phase | open | counting
+inductive Phase | opn | counting
 deriving DecidableEq
 
 def proto : IPFunctor Phase where
   A
-    | Phase.open     => Unit       -- only `init` available
+    | Phase.opn     => Unit       -- only `init` available
     | Phase.counting => Unit       -- only `tick` available
   B
-    | Phase.open,     _ => Unit
+    | Phase.opn,     _ => Unit
     | Phase.counting, _ => Nat
   st
-    | Phase.open,     _, _ => Phase.counting
+    | Phase.opn,     _, _ => Phase.counting
     | Phase.counting, _, _ => Phase.counting
 ```
 
@@ -63,20 +69,20 @@ want the type to record the start and end phases.
 import PolyFun.IPFunctor.Notation.Indexed
 set_option backward.do.legacy false
 
-def init : IPFunctor.FreeM₂ proto Phase.open Phase.counting Unit :=
+def init : IPFunctor.FreeM₂ proto Phase.opn Phase.counting Unit :=
   IPFunctor.FreeM₂.roll () (fun _ => IPFunctor.FreeM₂.pure ())
 
 def tick : IPFunctor.FreeM₂ proto Phase.counting Phase.counting Nat :=
   IPFunctor.FreeM₂.roll () (fun n => IPFunctor.FreeM₂.pure n)
 
-example : IPFunctor.FreeM₂ proto Phase.open Phase.counting Nat := do
+example : IPFunctor.FreeM₂ proto Phase.opn Phase.counting Nat := do
   let _ ← init
   let a ← tick
   let b ← tick
   pure (a + b)
 ```
 
-The chain `.open → .counting → .counting → .counting` is threaded
+The chain `.opn → .counting → .counting → .counting` is threaded
 through the type at every step.
 
 ### Flavor 2: `FreeM` + `DeterministicTransitions` — same chain, single index
@@ -91,17 +97,17 @@ set_option backward.do.legacy false
 
 instance : IPFunctor.DeterministicTransitions proto where
   next
-    | Phase.open,     _ => Phase.counting
+    | Phase.opn,     _ => Phase.counting
     | Phase.counting, _ => Phase.counting
   spec s a b := by cases s <;> rfl
 
-@[reducible] def init : IPFunctor.FreeM proto Phase.open Unit :=
-  IPFunctor.FreeM.liftA Phase.open ()
+@[reducible] def init : IPFunctor.FreeM proto Phase.opn Unit :=
+  IPFunctor.FreeM.liftA Phase.opn ()
 
 @[reducible] def tick : IPFunctor.FreeM proto Phase.counting Nat :=
   IPFunctor.FreeM.liftA Phase.counting ()
 
-example : IPFunctor.FreeM proto Phase.open Nat := do
+example : IPFunctor.FreeM proto Phase.opn Nat := do
   let _ ← init
   let a ← tick
   let b ← tick
@@ -129,11 +135,11 @@ state-specific gets the *state mismatch* diagnostic.
 import PolyFun.IPFunctor.Notation
 set_option backward.do.legacy false
 
-example : IPFunctor.FreeM proto Phase.open Unit := do
+example : IPFunctor.FreeM proto Phase.opn Unit := do
   let _ ← init
   pure ()              -- polymorphic tail, OK
 
-example : IPFunctor.FreeM proto Phase.open Nat := do
+example : IPFunctor.FreeM proto Phase.opn Nat := do
   let _ ← init
   let a ← tick         -- ERROR: tick is at Phase.counting; the bind continuation
   pure a               -- must be state-polymorphic.
