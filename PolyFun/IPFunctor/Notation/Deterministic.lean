@@ -21,24 +21,24 @@ meta import Lean.Parser.Do
 The single-index `do`-notation in
 [`PolyFun/IPFunctor/Notation.lean`](../Notation.lean) restricts the
 remainder of a `do`-block after a `let ← …` to be polymorphic in the
-fresh post-state `s'`, because `FreeM.bind` quantifies the continuation
-universally. That kills most realistic chains.
+fresh post-state `s'`, because `IPFunctor.FreeM.bind` quantifies the
+continuation universally. That kills most realistic chains.
 
 This file lifts that restriction in the common case where every
 `P.st s a b` is independent of the response `b` — i.e. `P` has *deterministic
-transitions*. When that holds, a `liftA s a`-style step lands at a single
-concrete post-state `next s a`, and the continuation can be specialized
-to that state instead of left polymorphic. Chains like
+transitions*. When that holds, an `IPFunctor.FreeM.liftA s a`-style step
+lands at a single concrete post-state `next s a`, and the continuation can
+be specialized to that state instead of left polymorphic. Chains like
 
 ```
 do
-  let _ ← liftA false ()   -- post-state: next false () = true
-  let n ← liftA true  ()   -- post-state: next true ()  = true
-  pure n                    -- at state true
+  let _ ← IPFunctor.FreeM.liftA false ()   -- post-state: next false () = true
+  let n ← IPFunctor.FreeM.liftA true  ()   -- post-state: next true ()  = true
+  pure n                                    -- at state true
 ```
 
-then elaborate via a specialized bind `FreeM.bindLiftA` rather than the
-generic state-polymorphic one.
+then elaborate via a specialized bind `IPFunctor.FreeM.bindLiftA` rather
+than the generic state-polymorphic one.
 
 ## Activation
 
@@ -49,21 +49,23 @@ Users must
   transitional flag), and
 * provide an `IPFunctor.DeterministicTransitions P` instance, and
 * express each monadic step using `IPFunctor.FreeM.liftA` directly (or a
-  `@[reducible]` alias). Steps that don't reduce to `liftA s a` fall
-  through to the generic single-index `FreeM` elaborator, where they hit
-  the usual polymorphic-continuation constraint.
+  `@[reducible]` alias). Steps that don't reduce to
+  `IPFunctor.FreeM.liftA s a` fall through to the generic single-index
+  `IPFunctor.FreeM` elaborator, where they hit the usual
+  polymorphic-continuation constraint.
 
 ## Limitations
 
-We only specialize *single-action* steps (those reducing to `liftA s a`).
-A step that is itself a multi-step `do`-block is *not* specialized — its
-internal leaves might genuinely diverge, and detecting "all leaves land
-at one state" by structural analysis would require an inductive proof we
-don't construct. Users who hit this should nest a `do`-block of `FreeM₂`
-instead, via the conversion `FreeM₂.toFreeM`.
+We only specialize *single-action* steps (those reducing to
+`IPFunctor.FreeM.liftA s a`). A step that is itself a multi-step
+`do`-block is *not* specialized — its internal leaves might genuinely
+diverge, and detecting "all leaves land at one state" by structural
+analysis would require an inductive proof we don't construct. Users who
+hit this should nest a `do`-block of `IPFunctor.FreeM₂` instead, via the
+conversion `IPFunctor.FreeM₂.toFreeM`.
 
-See [`Indexed.lean`](Indexed.lean) for `FreeM₂` `do`-notation, which
-sidesteps the universal-quantification issue entirely by tracking
+See [`Indexed.lean`](Indexed.lean) for `IPFunctor.FreeM₂` `do`-notation,
+which sidesteps the universal-quantification issue entirely by tracking
 pre/post-state in the type.
 -/
 
@@ -74,7 +76,7 @@ namespace IPFunctor.FreeMDetNotation
 open Lean Lean.Meta Lean.Elab Lean.Elab.Do Lean.Elab.Term Lean.Parser.Term
 open IPFunctor.FreeMNotation (isFreeMMonad?)
 
-/-! ## Bind builder using `FreeM.bindLiftA`
+/-! ## Bind builder using `IPFunctor.FreeM.bindLiftA`
 
 The monad-info detector is shared with the generic single-index notation:
 this file reuses [`IPFunctor.FreeMNotation.isFreeMMonad?`](../Notation.lean),
@@ -117,10 +119,11 @@ Only `doExpr` is overridden here. The `doLetArrow` form `let x ← rhs` is
 delegated to the generic single-index elaborator in
 [`../Notation.lean`](../Notation.lean) (`elabFreeMLetArrow`), which
 recursively invokes `doElem` on `rhs` — and Lean's keyed-attribute
-priority then picks *this* file's `doExpr` first for `liftA`-style steps.
-So a single `doLetArrow` override at the bottom of the dispatch chain is
-enough; we just need a specialized `doExpr` that catches the
-deterministic-step shape before the generic one does. -/
+priority then picks *this* file's `doExpr` first for
+`IPFunctor.FreeM.liftA`-style steps. So a single `doLetArrow` override at
+the bottom of the dispatch chain is enough; we just need a specialized
+`doExpr` that catches the deterministic-step shape before the generic
+one does. -/
 
 /--
 `doExpr` override for `FreeM P s` blocks where a `DeterministicTransitions P`
@@ -233,11 +236,12 @@ example (b : Bool) : IPFunctor.FreeM demoP true Nat := do
   let n ← read
   if b then pure n else pure (n + 1)
 
-/-! ### `erase` interop
+/-! ### `IPFunctor.FreeM.erase` interop
 
-On a `[Unique I]` index, `FreeM.erase` collapses a `do`-block built via
-the deterministic-`FreeM` elaborator to a `PFunctor.FreeM` tree, with the
-`@[simp]` lemmas in `Free/Basic.lean` doing the actual simplification. -/
+On a `[Unique I]` index, `IPFunctor.FreeM.erase` collapses a `do`-block
+built via the deterministic-`IPFunctor.FreeM` elaborator to a
+`PFunctor.FreeM` tree, with the `@[simp]` lemmas in `Free/Basic.lean`
+doing the actual simplification. -/
 
 /-- A `PUnit`-indexed `IPFunctor`: pick a `Bool`, get a `Nat` back. -/
 @[expose] def demoQ : IPFunctor PUnit where

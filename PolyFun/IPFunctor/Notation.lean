@@ -15,14 +15,17 @@ meta import Lean.Parser.Do
 `IPFunctor.FreeM P s α` has a state-polymorphic bind:
 
 ```
-FreeM.bind : FreeM P s α → ((s' : I) → α → FreeM P s' β) → FreeM P s β
+IPFunctor.FreeM.bind :
+    IPFunctor.FreeM P s α
+  → ((s' : I) → α → IPFunctor.FreeM P s' β)
+  → IPFunctor.FreeM P s β
 ```
 
 The continuation must accept the per-leaf post-state `s'`, so a standard
-`Bind (FreeM P s)` instance cannot express it. This file plugs into the
-Lean 4.29 extensible do-elaborator (`@[doElem_elab …]`) to make ordinary
-`do { let x ← e; … }` blocks elaborate to the right `FreeM.bind`-tree,
-threading a fresh post-state through each step.
+`Bind (IPFunctor.FreeM P s)` instance cannot express it. This file plugs
+into the Lean 4.29 extensible do-elaborator (`@[doElem_elab …]`) to make
+ordinary `do { let x ← e; … }` blocks elaborate to the right
+`IPFunctor.FreeM.bind`-tree, threading a fresh post-state through each step.
 
 ## Activating the new elaborator
 
@@ -34,8 +37,8 @@ must opt in by setting
 set_option backward.do.legacy false
 ```
 
-at the top of any file that wants `do`-notation for `FreeM`. To opt in
-*project-wide*, add the option to your `lakefile.toml`:
+at the top of any file that wants `do`-notation for `IPFunctor.FreeM`.
+To opt in *project-wide*, add the option to your `lakefile.toml`:
 
 ```toml
 [leanOptions]
@@ -43,8 +46,8 @@ backward.do.legacy = false
 ```
 
 Other monads in the same file continue to work — our elaborators check
-the expected type and `throwUnsupportedSyntax` for non-`FreeM` monads,
-falling back to the builtin.
+the expected type and `throwUnsupportedSyntax` for non-`IPFunctor.FreeM`
+monads, falling back to the builtin.
 
 **Roadmap.** `backward.do.legacy` is a transitional flag (note the
 `backward.` prefix). When upstream Lean flips the default to `false`
@@ -58,9 +61,10 @@ touching.
 * `let x ← e; …` and `let x : T ← e; …` (single-identifier `doIdDecl`).
 * `let _ ← e; …` (anonymous bind, the simple underscore form).
 * `e1; e2` (sequencing).
-* Terminal `pure x` / `return x` (uses the existing `Pure (FreeM P s)`).
+* Terminal `pure x` / `return x` (uses the existing
+  `Pure (IPFunctor.FreeM P s)`).
 * Plain `let x := v` and `have x := v` (non-monadic binders).
-* `do { … }` nested inside a `FreeM` do-block.
+* `do { … }` nested inside an `IPFunctor.FreeM` do-block.
 * `if c then e1 else e2` and `match x with | … => …` — *provided every
   arm lands at the same post-state*. This is a structural property of the
   new elaborator (`if`/`match` produces a single `m γ` for both branches)
@@ -70,14 +74,14 @@ touching.
 
 * `let mut`, `:=` reassignment, `for`/`break`/`continue`, `try`/`catch`,
   `dbg_trace`, `assert!` — all require typeclasses (`Bind`, `Monad`,
-  `MonadExcept`, `ForIn`) `FreeM P s` does not provide.
+  `MonadExcept`, `ForIn`) `IPFunctor.FreeM P s` does not provide.
 * Pattern bindings in `let (a, b) ← e` (the default desugaring uses
   `Bind`).
 
 ## Error messages
 
-Two custom diagnostics are emitted when elaboration of a `FreeM`
-do-block fails for the common reasons:
+Two custom diagnostics are emitted when elaboration of an
+`IPFunctor.FreeM` do-block fails for the common reasons:
 
 * **State mismatch** — when `let x ← e` is written at a step whose
   pre-state doesn't unify with the previous step's post-state. The
@@ -85,20 +89,22 @@ do-block fails for the common reasons:
 * **Non-polymorphic remainder** — when the rest of the block forces the
   fresh post-state metavariable to a concrete value that the framework
   cannot abstract over. The message asks the user to pattern-match on
-  the previous step's response or use `FreeM.bind` explicitly.
+  the previous step's response or use `IPFunctor.FreeM.bind` explicitly.
 
 ## When the constraint bites: alternatives
 
-Because `FreeM.bind`'s continuation is universally quantified over the
-post-state, only *polymorphic* tails compose. For chains where each step
-lands at a concrete state, see one of the parallel notation files:
+Because `IPFunctor.FreeM.bind`'s continuation is universally quantified
+over the post-state, only *polymorphic* tails compose. For chains where
+each step lands at a concrete state, see one of the parallel notation
+files:
 
 * [`PolyFun/IPFunctor/Notation/Indexed.lean`](Notation/Indexed.lean) —
-  `do`-notation for `FreeM₂`, the two-index variant whose bind threads
-  pre/post-states statically with no universal quantifier.
+  `do`-notation for `IPFunctor.FreeM₂`, the two-index variant whose bind
+  threads pre/post-states statically with no universal quantifier.
 * [`PolyFun/IPFunctor/Notation/Deterministic.lean`](Notation/Deterministic.lean)
-  — single-index `FreeM` plus a `DeterministicTransitions P` class that
-  specializes `liftA`-style steps to a concrete post-state.
+  — single-index `IPFunctor.FreeM` plus a `DeterministicTransitions P`
+  class that specializes `IPFunctor.FreeM.liftA`-style steps to a
+  concrete post-state.
 -/
 
 @[expose] public section
@@ -260,8 +266,9 @@ end IPFunctor.FreeMNotation
 /-! ## Tests
 
 These live outside the `IPFunctor.FreeM` namespace so that `pure` resolves
-to `Pure.pure` (via the typeclass instance) rather than to the `FreeM.pure`
-constructor (which has an explicit state argument and would shadow). -/
+to `Pure.pure` (via the typeclass instance) rather than to the
+`IPFunctor.FreeM.pure` constructor (which has an explicit state argument
+and would shadow). -/
 
 set_option backward.do.legacy false
 
@@ -293,10 +300,10 @@ private def read : IPFunctor.FreeM demoP true Nat :=
 
 These exercise the supported subset: a single state-changing bind followed by
 a polymorphic continuation (purely `pure` / `return` / control-flow over pure
-arms). The constraint comes from `FreeM.bind`'s state-polymorphic continuation
-`(s' : I) → α → FreeM P s' β`: every later step must typecheck *for every
-post-state `s'`*, which in practice means it must use only `Pure.pure` or
-helpers that are polymorphic in the state index. -/
+arms). The constraint comes from `IPFunctor.FreeM.bind`'s state-polymorphic
+continuation `(s' : I) → α → IPFunctor.FreeM P s' β`: every later step must
+typecheck *for every post-state `s'`*, which in practice means it must use
+only `Pure.pure` or helpers that are polymorphic in the state index. -/
 
 -- Basic `let _ ← e; pure ()`.
 example : IPFunctor.FreeM demoP false Unit := do
@@ -382,10 +389,10 @@ example : IPFunctor.FreeM demoP false Nat := do
   let n ← read
   pure n
 
-/-! ### `erase` interop
+/-! ### `IPFunctor.FreeM.erase` interop
 
-On a `[Unique I]` index, `FreeM.erase` collapses `do`-block trees built
-via the single-index elaborator to the corresponding `PFunctor.FreeM`
+On a `[Unique I]` index, `IPFunctor.FreeM.erase` collapses `do`-block trees
+built via the single-index elaborator to the corresponding `PFunctor.FreeM`
 trees. The `@[simp]` lemmas `erase_punit_pure` / `erase_punit_roll` in
 `Free/Basic.lean` do the simplification. -/
 

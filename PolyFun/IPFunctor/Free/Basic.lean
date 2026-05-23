@@ -16,13 +16,13 @@ polynomial functor. Pure return values are allowed in any ambient state; the ava
 shapes at each `roll` are gated by the current state, and the state for each continuation is
 determined by `P.st`.
 
-Because the post-state of each branch can depend on the chosen response, `FreeM P s α` is **not**
-a `Monad` — its bind takes a state-polymorphic continuation. For a variant that tracks the
-post-state statically and is therefore an `IndexedMonad` in the sense of Atkey, see
+Because the post-state of each branch can depend on the chosen response, `IPFunctor.FreeM P s α`
+is **not** a `Monad` — its bind takes a state-polymorphic continuation. For a variant that tracks
+the post-state statically and is therefore an `IndexedMonad` in the sense of Atkey, see
 [`PolyFun/IPFunctor/Free/Indexed.lean`](Indexed.lean).
 
 When the index type is a `Unique`, the forgetful map `IPFunctor.FreeM.erase` collapses
-`FreeM P s α` into `PFunctor.FreeM P.toPFunctor α`.
+`IPFunctor.FreeM P s α` into `PFunctor.FreeM P.toPFunctor α`.
 -/
 
 @[expose] public section
@@ -66,8 +66,8 @@ def liftA (s : I) (a : P.A s) : FreeM P s (P.B s a) :=
 
 /-! ## Bind
 
-`bind` here is not the `Monad.bind` shape: the continuation `g` must accept the leaf state
-explicitly because different branches of the tree end at different states. -/
+`IPFunctor.FreeM.bind` here is not the `Monad.bind` shape: the continuation `g` must accept the
+leaf state explicitly because different branches of the tree end at different states. -/
 
 /-- State-polymorphic bind on `FreeM P`. -/
 @[always_inline, inline]
@@ -92,8 +92,9 @@ lemma bind_lift (s : I) (x : P.Obj α s) (g : (s' : I) → α → FreeM P s' β)
 /-! ## Specialized bind under deterministic transitions
 
 When `P` has [`DeterministicTransitions`](../Basic.lean), a single
-`liftA s a` step lands at a single concrete post-state `det.next s a`,
-and `bind` can be specialized to a non-polymorphic continuation. -/
+`IPFunctor.FreeM.liftA s a` step lands at a single concrete post-state
+`det.next s a`, and `IPFunctor.FreeM.bind` can be specialized to a
+non-polymorphic continuation. -/
 
 /-- Specialized bind for a single `liftA`-style step under
 `DeterministicTransitions`. The continuation receives the response `b`
@@ -164,8 +165,8 @@ instance (s : I) : LawfulFunctor (P.FreeM s) where
 
 /-! ## Induction principles
 
-The motive must be state-indexed (`∀ s, FreeM P s α → Prop`) because the continuation in `roll`
-lands at a different state than its parent. -/
+The motive must be state-indexed (`∀ s, IPFunctor.FreeM P s α → Prop`) because the continuation
+in `roll` lands at a different state than its parent. -/
 
 /-- Induction principle for `FreeM P` with a state-indexed motive (Prop-valued).
 The `roll` case may use the inductive hypothesis at each successor state. -/
@@ -212,7 +213,7 @@ lemma construct_lift (s : I) (x : P.Obj α s) :
 
 end construct
 
-/-! ## `mapM`: interpreting `FreeM` into a monad
+/-! ## `mapM`: interpreting `IPFunctor.FreeM` into a monad
 
 The responses `P.B s a` live in `Type uB`, so the target monad `m` is constrained to
 `Type uB → Type w` and the value type `α` to `Type uB`. -/
@@ -268,14 +269,14 @@ end mapM
 /-! ## Forgetful map to `PFunctor.FreeM`
 
 When the index type has at most one element, the state information carries no content and an
-`IPFunctor` collapses to a `PFunctor`. We provide a forgetful map `erase` from
+`IPFunctor` collapses to a `PFunctor`. We provide a forgetful map `IPFunctor.FreeM.erase` from
 `IPFunctor.FreeM P s α` to `PFunctor.FreeM P.toPFunctor α` (at any `s : I`). The reverse
 direction would require transport gymnastics through `P.st`'s data-dependent post-state; we
 do not provide it.
 
 For a variant that works on *any* index type by Σ-bundling the state into each position,
-see `toSigmaFreeM` below. It produces a `PFunctor.FreeM` over `P.sigmaPFunctor` instead of
-`P.toPFunctor`, paying for generality with a richer position type. -/
+see `IPFunctor.FreeM.toSigmaFreeM` below. It produces a `PFunctor.FreeM` over `P.sigmaPFunctor`
+instead of `P.toPFunctor`, paying for generality with a richer position type. -/
 
 section erase
 
@@ -307,7 +308,7 @@ lemma erase_roll (P : IPFunctor I) (s : I) (x : P.A s)
 
 end erase
 
-/-! ### `PUnit`-specialized `erase` simp lemmas
+/-! ### `PUnit`-specialized `IPFunctor.FreeM.erase` simp lemmas
 
 When the index type is literally `PUnit`, the `Unique.eq_default` transports collapse
 definitionally and simp can fire cleanly. These specializations cover the practically common
@@ -338,12 +339,13 @@ end erasePUnit
 
 /-! ## Σ-bundled forgetful map
 
-`toSigmaFreeM` is the unrestricted analog of `erase`: it converts an
-`IPFunctor.FreeM P s α` into a plain `PFunctor.FreeM` over the Σ-bundled
-`P.sigmaPFunctor`, with the originating state recorded in each position.
-No `[Unique I]` assumption is needed, but the target's positions live in
-`Σ s : I, P.A s` rather than the flat `P.A default`. The state-transition
-`P.st` is still not represented on the target side. -/
+`IPFunctor.FreeM.toSigmaFreeM` is the unrestricted analog of
+`IPFunctor.FreeM.erase`: it converts an `IPFunctor.FreeM P s α` into a
+plain `PFunctor.FreeM` over the Σ-bundled `P.sigmaPFunctor`, with the
+originating state recorded in each position. No `[Unique I]` assumption
+is needed, but the target's positions live in `Σ s : I, P.A s` rather
+than the flat `P.A default`. The state-transition `P.st` is still not
+represented on the target side. -/
 
 section toSigmaFreeM
 

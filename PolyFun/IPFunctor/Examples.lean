@@ -10,7 +10,7 @@ public import PolyFun.IPFunctor.Notation.Indexed
 public import PolyFun.IPFunctor.Notation.Deterministic
 
 /-!
-# Worked Examples for `IPFunctor.FreeM` / `FreeM₂` and Their `do`-Notation
+# Worked Examples for `IPFunctor.FreeM` / `IPFunctor.FreeM₂` and Their `do`-Notation
 
 This module is a worked-examples companion to
 [`docs/wiki/ipfunctor.md`](../../docs/wiki/ipfunctor.md) and
@@ -35,15 +35,18 @@ Phase.opn      ─ init ──▶ Phase.counting ─ tick ──▶ Phase.counti
 
 We compile the same three-step run three ways:
 
-1. `FreeM₂` — pre/post-state tracked statically in the type.
-2. `FreeM` with a `DeterministicTransitions proto` instance — single-index
-   `FreeM`, post-states recovered from the deterministic-class.
+1. `IPFunctor.FreeM₂` — pre/post-state tracked statically in the type.
+2. `IPFunctor.FreeM` with a `DeterministicTransitions proto` instance —
+   single-index `IPFunctor.FreeM`, post-states recovered from the
+   deterministic-class.
 3. The result mapped down to a plain `PFunctor.FreeM` via the Σ-bundled
-   `toSigmaFreeM`, since the index type `Phase` is not a `Unique` (so the
-   `[Unique I]`-gated `erase` does not apply).
+   `IPFunctor.FreeM.toSigmaFreeM`, since the index type `Phase` is not a
+   `Unique` (so the `[Unique I]`-gated `IPFunctor.FreeM.erase` does not
+   apply).
 
-A final small example exercises `PFunctor.FreeM.equivW_of_isEmpty` to
-show that an empty leaf type collapses `FreeM` structurally to the W-type.
+A final small example exercises `PFunctor.FreeM.equivW_of_isEmpty` to show
+that an empty leaf type collapses `PFunctor.FreeM` structurally to the
+W-type.
 -/
 
 @[expose] public section
@@ -90,7 +93,7 @@ specialize `liftA`-style steps to a concrete post-state. -/
     | .counting, _ => .counting
   spec s _ _ := by cases s <;> rfl
 
-/-! ## Flavor 1: `FreeM₂` with statically-tracked post-states
+/-! ## Flavor 1: `IPFunctor.FreeM₂` with statically-tracked post-states
 
 The two-index variant tracks pre- and post-state in the type, so chains
 compose without restriction and the `IndexedMonad` instance from
@@ -127,13 +130,14 @@ example :
 
 end TwoIndex
 
-/-! ## Flavor 2: single-index `FreeM` under `DeterministicTransitions`
+/-! ## Flavor 2: single-index `IPFunctor.FreeM` under `DeterministicTransitions`
 
-When transitions are deterministic, a single-index `FreeM` chain can still
-compose arbitrarily because each `liftA s a` lands at the unique post-state
-`det.next s a`. The [`Notation/Deterministic.lean`](Notation/Deterministic.lean)
-elaborator detects the `liftA`-shape and uses the specialized
-`FreeM.bindLiftA` to thread that concrete post-state, lifting the
+When transitions are deterministic, a single-index `IPFunctor.FreeM` chain
+can still compose arbitrarily because each `IPFunctor.FreeM.liftA s a`
+lands at the unique post-state `det.next s a`. The
+[`Notation/Deterministic.lean`](Notation/Deterministic.lean) elaborator
+detects the `IPFunctor.FreeM.liftA`-shape and uses the specialized
+`IPFunctor.FreeM.bindLiftA` to thread that concrete post-state, lifting the
 universal-quantification restriction that bites generic single-index
 `do`-blocks. -/
 
@@ -163,16 +167,16 @@ quantification restriction. -/
 
 end Deterministic
 
-/-! ## Flavor 3: erasing into a plain `PFunctor.FreeM` via `toSigmaFreeM`
+/-! ## Flavor 3: erasing into a plain `PFunctor.FreeM` via `IPFunctor.FreeM.toSigmaFreeM`
 
 `IPFunctor.FreeM.erase` requires `[Unique I]`, which `Phase` is not. The
-Σ-bundled forgetful map `toSigmaFreeM` (in
+Σ-bundled forgetful map `IPFunctor.FreeM.toSigmaFreeM` (in
 [`Free/Basic.lean`](Free/Basic.lean)) works for any index type by recording
 the originating state inside each position; the result sits over
 `proto.sigmaPFunctor` rather than `proto.toPFunctor`. We test the
 collapsing simp lemmas (`toSigmaFreeM_pure`, `toSigmaFreeM_roll`) by
-checking that the `TwoIndex.run` tree, viewed as a `FreeM`, agrees
-definitionally with the expected nested `PFunctor.FreeM.roll`. -/
+checking that the `TwoIndex.run` tree, viewed as an `IPFunctor.FreeM`,
+agrees definitionally with the expected nested `PFunctor.FreeM.roll`. -/
 
 example :
     IPFunctor.FreeM.toSigmaFreeM proto TwoIndex.run.toFreeM
@@ -186,7 +190,7 @@ example :
 /-! ## `PFunctor.FreeM.equivW_of_isEmpty` round-trip
 
 When the value type `α` is empty, every `pure` leaf is unreachable and
-`FreeM P α` collapses structurally to `P.W`. The forward direction
+`PFunctor.FreeM P α` collapses structurally to `P.W`. The forward direction
 `toW` reinterprets each `roll` as a W-node; the inverse `ofW` rebuilds
 the tree. Both directions are mutual inverses by induction; this example
 just confirms the equivalence resolves and either round-trip is

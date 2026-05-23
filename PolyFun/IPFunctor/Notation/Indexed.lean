@@ -12,11 +12,11 @@ meta import Lean.Parser.Do
 /-!
 # `do`-notation for `IPFunctor.FreeM₂`
 
-The two-index variant `FreeM₂ P s t α` tracks both pre- and post-state
-statically. Its bind has signature
-`FreeM₂ P s t α → (α → FreeM₂ P t u β) → FreeM₂ P s u β` — no universal
-quantification over the post-state — so arbitrarily long chains compose
-naturally under ordinary `do`-notation.
+The two-index variant `IPFunctor.FreeM₂ P s t α` tracks both pre- and
+post-state statically. Its bind has signature
+`IPFunctor.FreeM₂ P s t α → (α → IPFunctor.FreeM₂ P t u β) → IPFunctor.FreeM₂ P s u β`
+— no universal quantification over the post-state — so arbitrarily long
+chains compose naturally under ordinary `do`-notation.
 
 Like the single-index variant in `PolyFun/IPFunctor/Notation.lean`, this
 file plugs into the Lean 4.29 extensible do-elaborator. Users opt in by
@@ -25,29 +25,31 @@ setting `set_option backward.do.legacy false` (or, project-wide, via
 [`../Notation.lean`](../Notation.lean) for the roadmap on this
 transitional flag). Our overrides check the expected type and fall
 through (`throwUnsupportedSyntax`) for any monad other than
-`FreeM₂ P s t`.
+`IPFunctor.FreeM₂ P s t`.
 
 ## Why three flavors of `IPFunctor` `do`-notation?
 
 * [`PolyFun/IPFunctor/Notation.lean`](../Notation.lean) — single-index
-  `FreeM` with the universal-quantification constraint. Bind continuation
-  is `(s' : I) → α → FreeM P s' β`; the remainder of the `do`-block must
-  typecheck for *every* leaf state. Useful when the tail of the block is
-  state-polymorphic (typically just `pure`).
-* This file — `FreeM₂`. Bind continuation is `α → FreeM₂ P t u β`. The
-  intermediate state `t` is statically tracked, single-valued, and
-  recoverable from `e`'s actual type via unification. Chains of any
-  length compose naturally. Use when every step's tree has a single
-  converging post-state.
-* [`Deterministic.lean`](Deterministic.lean) — single-index `FreeM` plus
-  a `DeterministicTransitions P` class. Specializes `liftA`-style steps
-  to a concrete post-state via the class, so chains compose without
-  switching to `FreeM₂`. Useful when you want to stay on `FreeM` for
-  downstream compatibility.
+  `IPFunctor.FreeM` with the universal-quantification constraint. Bind
+  continuation is `(s' : I) → α → IPFunctor.FreeM P s' β`; the remainder
+  of the `do`-block must typecheck for *every* leaf state. Useful when
+  the tail of the block is state-polymorphic (typically just `pure`).
+* This file — `IPFunctor.FreeM₂`. Bind continuation is
+  `α → IPFunctor.FreeM₂ P t u β`. The intermediate state `t` is
+  statically tracked, single-valued, and recoverable from `e`'s actual
+  type via unification. Chains of any length compose naturally. Use
+  when every step's tree has a single converging post-state.
+* [`Deterministic.lean`](Deterministic.lean) — single-index
+  `IPFunctor.FreeM` plus a `DeterministicTransitions P` class.
+  Specializes `IPFunctor.FreeM.liftA`-style steps to a concrete
+  post-state via the class, so chains compose without switching to
+  `IPFunctor.FreeM₂`. Useful when you want to stay on `IPFunctor.FreeM`
+  for downstream compatibility.
 
-The forgetful map `FreeM₂.toFreeM` lets you embed a `FreeM₂` tree back
-into `FreeM` if you mostly work with the indexed variant but need to
-hand a value to a `FreeM`-shaped API.
+The forgetful map `IPFunctor.FreeM₂.toFreeM` lets you embed an
+`IPFunctor.FreeM₂` tree back into `IPFunctor.FreeM` if you mostly work
+with the indexed variant but need to hand a value to an
+`IPFunctor.FreeM`-shaped API.
 -/
 
 @[expose] public section
@@ -243,13 +245,13 @@ example : IPFunctor.FreeM₂ demoP true true Nat := do
   let b ← read₂
   pure (a * b)
 
-/-! ### `erase` interop
+/-! ### `IPFunctor.FreeM.erase` interop
 
 When `I = PUnit` the `IPFunctor` is just a `PFunctor`, and
-`FreeM₂.toFreeM` followed by `erase` should collapse `do`-block trees to
-the corresponding `PFunctor.FreeM` trees via the `@[simp]` lemmas in
-`Free/Basic.lean` (`erase_punit_pure`, `erase_punit_roll`,
-`toFreeM_pure`, `toFreeM_roll`). -/
+`IPFunctor.FreeM₂.toFreeM` followed by `IPFunctor.FreeM.erase` should
+collapse `do`-block trees to the corresponding `PFunctor.FreeM` trees via
+the `@[simp]` lemmas in `Free/Basic.lean` (`erase_punit_pure`,
+`erase_punit_roll`, `toFreeM_pure`, `toFreeM_roll`). -/
 
 /-- A `PUnit`-indexed `IPFunctor`: pick a `Bool` shape, get a `Nat` back. -/
 @[expose] def demoQ : IPFunctor PUnit where
@@ -313,7 +315,7 @@ example :
   simp [stepQ, IPFunctor.FreeM₂.bind]
   rfl
 
-/-! ### Regression — non-`FreeM₂` monads still work via fall-through. -/
+/-! ### Regression — non-`IPFunctor.FreeM₂` monads still work via fall-through. -/
 
 example : Id Nat := do
   let x := 1

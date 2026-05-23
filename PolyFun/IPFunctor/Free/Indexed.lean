@@ -12,20 +12,20 @@ public import PolyFun.IPFunctor.Free.Basic
 # Two-Index Free Monad on an `IPFunctor` — the `IndexedMonad` Variant
 
 This file defines `IPFunctor.FreeM₂ P : I → I → Type v → Type _`, the two-index variant of the
-indexed free monad. Unlike `IPFunctor.FreeM`, every leaf of a `FreeM₂ P s t α` tree is required to
-sit at the post-state `t`, so `bind` chains pre- and post-indices positionally and the type
-carries a `LawfulIndexedMonad I (FreeM₂ P)` instance.
+indexed free monad. Unlike `IPFunctor.FreeM`, every leaf of an `IPFunctor.FreeM₂ P s t α` tree is
+required to sit at the post-state `t`, so `IPFunctor.FreeM₂.bind` chains pre- and post-indices
+positionally and the type carries a `LawfulIndexedMonad I (IPFunctor.FreeM₂ P)` instance.
 
-`FreeM₂` is strictly more restrictive than `FreeM`: a `FreeM₂ P s t α` tree corresponds to a
-`FreeM P s α` tree whose leaves are uniformly at state `t`. The forgetful coercion
-`FreeM₂.toFreeM` makes this explicit.
+`IPFunctor.FreeM₂` is strictly more restrictive than `IPFunctor.FreeM`: an
+`IPFunctor.FreeM₂ P s t α` tree corresponds to an `IPFunctor.FreeM P s α` tree whose leaves are
+uniformly at state `t`. The forgetful coercion `IPFunctor.FreeM₂.toFreeM` makes this explicit.
 
 ## Limitations
 
-There is no general `lift : P.Obj α s → FreeM₂ P s t α` because `lift`'s post-state varies with
-the response (`P.st s a b`); a `FreeM₂` instead requires a statically chosen post-state. Where
-this matters, use `FreeM` and `FreeM.lift` directly, then convert if/when the post-state is
-known to be uniform.
+There is no general `lift : P.Obj α s → IPFunctor.FreeM₂ P s t α` because `lift`'s post-state
+varies with the response (`P.st s a b`); an `IPFunctor.FreeM₂` instead requires a statically
+chosen post-state. Where this matters, use `IPFunctor.FreeM` and `IPFunctor.FreeM.lift` directly,
+then convert if/when the post-state is known to be uniform.
 -/
 
 @[expose] public section
@@ -148,11 +148,11 @@ instance (P : IPFunctor.{uI, uA, uB} I) :
     | pure _ _ => rfl
     | roll _ _ _ _ ih => exact congrArg _ (funext (fun b => ih b f))
 
-/-! ## Forgetful coercion to single-index `FreeM`
+/-! ## Forgetful coercion to single-index `IPFunctor.FreeM`
 
-Every `FreeM₂ P s t α` tree can be viewed as a `FreeM P s α` tree by forgetting the uniform
-post-state. The reverse direction is not generally available because `FreeM P s α` may have
-leaves at differing states across branches. -/
+Every `IPFunctor.FreeM₂ P s t α` tree can be viewed as an `IPFunctor.FreeM P s α` tree by
+forgetting the uniform post-state. The reverse direction is not generally available because
+`IPFunctor.FreeM P s α` may have leaves at differing states across branches. -/
 
 /-- Forget the post-state, yielding a single-index `FreeM`. -/
 def toFreeM : {s t : I} → FreeM₂ P s t α → FreeM P s α
@@ -171,8 +171,8 @@ lemma toFreeM_roll (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.st s a b) t 
 
 The state-transition `P.st s a b` is data-dependent on the response `b`, which prevents
 chaining it through the `IndexedMonad` `ibind` signature (whose indices are static). We
-therefore interpret `FreeM₂` into an ordinary monad, dropping the indexed structure on the
-target side. The responses live in `Type uB`, so the target monad must operate at that
+therefore interpret `IPFunctor.FreeM₂` into an ordinary monad, dropping the indexed structure on
+the target side. The responses live in `Type uB`, so the target monad must operate at that
 universe. -/
 
 section mapM

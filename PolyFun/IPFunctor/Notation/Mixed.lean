@@ -20,8 +20,9 @@ which falls through to the next override (and finally to the builtin).
 
 This file holds tests that exercise every flavor in the same compilation
 unit, so any silent drift in the override priority — e.g. an import
-reordering that puts `FreeM₂`'s override behind `FreeM`'s — would surface
-as a type-checking failure here rather than at downstream call sites.
+reordering that puts `IPFunctor.FreeM₂`'s override behind
+`IPFunctor.FreeM`'s — would surface as a type-checking failure here
+rather than at downstream call sites.
 -/
 
 @[expose] public section
@@ -59,7 +60,7 @@ fixtures so the tests below stay self-contained. -/
 @[expose] def read₂ : IPFunctor.FreeM₂ demoP true true Nat :=
   IPFunctor.FreeM₂.roll () (fun n => IPFunctor.FreeM₂.pure n)
 
-/-! ### Single-index `FreeM` with the polymorphic-tail restriction. -/
+/-! ### Single-index `IPFunctor.FreeM` with the polymorphic-tail restriction. -/
 
 -- The basic `FreeM`-notation elaborator handles this: terminal `pure ()`
 -- is polymorphic in the post-state.
@@ -67,7 +68,7 @@ example : IPFunctor.FreeM demoP false Unit := do
   let _ ← flip
   pure ()
 
-/-! ### Single-index `FreeM` with a `DeterministicTransitions` instance.
+/-! ### Single-index `IPFunctor.FreeM` with a `DeterministicTransitions` instance.
 
 A chain that would *fail* under the basic elaborator (because `read`'s
 pre-state is the concrete `true`, not polymorphic) succeeds here because
@@ -85,7 +86,7 @@ example : IPFunctor.FreeM demoP false Nat := do
   let b ← read
   pure (a + b)
 
-/-! ### `FreeM₂` — handled by the indexed-notation elaborator. -/
+/-! ### `IPFunctor.FreeM₂` — handled by the indexed-notation elaborator. -/
 
 example : IPFunctor.FreeM₂ demoP false true Nat := do
   let _ ← flip₂
@@ -93,7 +94,7 @@ example : IPFunctor.FreeM₂ demoP false true Nat := do
   let m ← read₂
   pure (n + m)
 
-/-! ### Non-`FreeM` monads — none of our elaborators claim them. -/
+/-! ### Non-`IPFunctor.FreeM` monads — none of our elaborators claim them. -/
 
 example : Id Nat := do
   let x := 1
