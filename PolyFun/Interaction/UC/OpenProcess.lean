@@ -48,6 +48,10 @@ structural boundary operations land directly in the generic `Trace` API:
 `wireRight` are `Trace.mapPartial` on the appropriate sum projections. The
 empty-emission default is the trace-monoid unit `1`, which is definitionally
 the constant-`[]` trace.
+
+`OpenNodeContext.boundaryTrace` reads the emitted-packet trace from a
+decorated step transcript. It is structural only: routing, buffering, and
+probabilistic execution belong to downstream runtime interpreters.
 -/
 
 universe u v w w'
@@ -664,6 +668,29 @@ theorem map_eq_ofProductView_comp_prodMap_comp_toProductView
 
 end OpenNodeContext
 
+/-! ## Boundary trace extraction -/
+
+/--
+Extract the finite boundary-output trace emitted by a decorated open-process
+interaction transcript.
+
+The `BoundaryAction.emit` field is indexed by the move chosen at each node;
+a transcript supplies exactly those moves. The result is the ordered product
+of all emitted packets along the root-to-leaf path of the step.
+
+This is structural: it reads only the boundary actions already present in the
+open-process decoration. Runtime concerns such as buffering, delivery, and
+routing across internal wires are intentionally handled downstream.
+-/
+def OpenNodeContext.boundaryTrace
+    {Party : Type u} {Δ : PortBoundary} :
+    (spec : Spec.{w}) →
+    Decoration (OpenNodeContext Party Δ) spec →
+    Spec.Transcript spec → PFunctor.TraceList Δ.Out
+  | .done, _, _ => 1
+  | .node _ rest, ⟨node, next⟩, ⟨x, tr⟩ =>
+      node.boundary.emit x * OpenNodeContext.boundaryTrace (rest x) (next x) tr
+
 /--
 The open-world specialization of `StepOver`.
 
@@ -673,6 +700,16 @@ records both the usual controller/view data and its boundary traffic against
 -/
 abbrev OpenStep (Party : Type u) (Δ : PortBoundary) (P : Type v) :=
   StepOver (OpenNodeContext Party Δ : Spec.Node.Context.{0}) P
+
+namespace OpenStep
+
+/-- The boundary-output trace emitted by a completed open step transcript. -/
+def boundaryTrace {Party : Type u} {Δ : PortBoundary} {P : Type v}
+    (step : OpenStep Party Δ P) (tr : Spec.Transcript step.spec) :
+    PFunctor.TraceList Δ.Out :=
+  OpenNodeContext.boundaryTrace step.spec step.semantics tr
+
+end OpenStep
 
 /--
 An `m`-parametric open concurrent process exposing boundary `Δ`.
