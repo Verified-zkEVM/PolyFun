@@ -125,10 +125,14 @@ builtin via `throwUnsupportedSyntax`.
 This is the canonical detector — `Notation/Deterministic.lean` imports
 and reuses it via `open IPFunctor.FreeMNotation`, so the two single-index
 elaborators recognize exactly the same monad shapes.
+
+We `whnf` at `.reducible` transparency so the `IPFunctor.FreeM` head — defined as a plain
+(non-`@[reducible]`) `def` aliasing the primitive `IPFunctor.IFreeM` — survives without being
+unfolded.
 -/
 meta def isFreeMMonad? (m : Expr) :
     MetaM (Option (Expr × Expr × Expr × List Level)) := do
-  let m ← whnf m
+  let m ← Meta.withTransparency .reducible <| whnf m
   let fn := m.getAppFn
   unless fn.isConstOf ``IPFunctor.FreeM do return none
   let args := m.getAppArgs
@@ -201,7 +205,8 @@ meta def elabFreeMExpr : DoElab := fun stx dec => do
     let saved ← saveState
     let actual? : Option Expr ← try
       let e' ← Term.elabTerm e none
-      let t ← whnf (← inferType e')
+      -- `.reducible` so the plain-`def` `IPFunctor.FreeM` head survives intact.
+      let t ← Meta.withTransparency .reducible <| whnf (← inferType e')
       match (← isFreeMMonad? t.appFn!) with
       | some (_, _, sActual, _) => pure (some sActual)
       | none => pure none
@@ -274,17 +279,17 @@ set_option backward.do.legacy false
 
 namespace IPFunctorNotationTests
 
-/-- A tiny `IPFunctor` over `Bool`. At state `false` only a trivial "flip"
+/-- A tiny `IPFunctor.Endo` over `Bool`. At state `false` only a trivial "flip"
 shape is available, which transitions to state `true`; at state `true`
 only a "read" shape is available, returning a `Nat` and staying at `true`. -/
-private def demoP : IPFunctor Bool where
+private def demoP : IPFunctor.Endo Bool where
   A
     | false => Unit
     | true  => Unit
   B
     | false, _ => Unit
     | true,  _ => Nat
-  st
+  src
     | false, _, _ => true
     | true,  _, _ => true
 
@@ -396,13 +401,13 @@ built via the single-index elaborator to the corresponding `PFunctor.FreeM`
 trees. The `@[simp]` lemmas `erase_punit_pure` / `erase_punit_roll` in
 `Free/Basic.lean` do the simplification. -/
 
-/-- A `PUnit`-indexed `IPFunctor`. Single-index `FreeM`'s universal
+/-- A `PUnit`-indexed `IPFunctor.Endo`. Single-index `FreeM`'s universal
 state-polymorphism constraint is vacuous here, since every leaf state
 is forced to `PUnit.unit`. -/
-private def demoQ : IPFunctor PUnit where
+private def demoQ : IPFunctor.Endo PUnit where
   A _ := Bool
   B _ _ := Nat
-  st _ _ _ := PUnit.unit
+  src _ _ _ := PUnit.unit
 
 /-- A pure-only `do`-block erases to a pure leaf — no `liftA` involved
 so the universal-quantification limit doesn't bite. -/

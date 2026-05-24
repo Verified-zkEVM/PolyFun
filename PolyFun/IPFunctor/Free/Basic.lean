@@ -5,24 +5,23 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.IPFunctor.Basic
-public import PolyFun.PFunctor.Free.Basic
+public import PolyFun.IPFunctor.Free.Family
 
 /-!
-# State-Indexed Free Monad on an `IPFunctor`
+# State-Indexed Free Monad on an `IPFunctor.Endo`
 
-This file defines `IPFunctor.FreeM P : I → Type v → Type _`, the free monad over a state-indexed
-polynomial functor. Pure return values are allowed in any ambient state; the available head
-shapes at each `roll` are gated by the current state, and the state for each continuation is
-determined by `P.st`.
+`IPFunctor.FreeM P s α` is the *constant-family* specialization of the primitive
+[`IPFunctor.IFreeM`](Family.lean): `FreeM P s α := IFreeM P (fun _ => α) s`. Pure return values
+are allowed in any ambient state; the available head shapes at each `roll` are gated by the
+current state, and the state for each continuation is determined by `P.src`.
 
-Because the post-state of each branch can depend on the chosen response, `IPFunctor.FreeM P s α`
-is **not** a `Monad` — its bind takes a state-polymorphic continuation. For a variant that tracks
+Because the source index of each branch can depend on the chosen response, `FreeM P s α` is
+**not** a `Monad` — its bind takes a state-polymorphic continuation. For a variant that tracks
 the post-state statically and is therefore an `IndexedMonad` in the sense of Atkey, see
-[`PolyFun/IPFunctor/Free/Indexed.lean`](Indexed.lean).
+[`PolyFun/IPFunctor/Free/Indexed.lean`](Indexed.lean) (`FreeM₂`).
 
-When the index type is a `Unique`, the forgetful map `IPFunctor.FreeM.erase` collapses
-`IPFunctor.FreeM P s α` into `PFunctor.FreeM P.toPFunctor α`.
+When the index type is `Unique`, the forgetful map `IPFunctor.FreeM.erase` collapses
+`FreeM P s α` into `PFunctor.FreeM P.toPFunctor α`.
 -/
 
 @[expose] public section
@@ -33,103 +32,126 @@ namespace IPFunctor
 
 variable {I : Type uI}
 
-/-- The free monad on a state-indexed polynomial functor.
-Analogous to `PFunctor.FreeM`, but the available shapes at each step depend on the ambient
-state, and the state for each continuation branch is updated by `P.st`. -/
-inductive FreeM (P : IPFunctor.{uI, uA, uB} I) :
-    I → Type v → Type (max uI uA uB (v + 1))
-  /-- A pure return value of `x`, available at any state `s`. -/
-  | pure (s : I) {α} (x : α) : FreeM P s α
-  /-- Roll a value in the shapes available at `s` into a continuation, with the state for each
-  branch determined by `P.st`. -/
-  | roll (s : I) {α} (x : P.A s)
-      (r : (b : P.B s x) → FreeM P (P.st s x b) α) : FreeM P s α
+/-- The state-indexed free monad on an endomorphic `IPFunctor`, as the constant-family
+specialization of [`IPFunctor.IFreeM`](Family.lean). Different branches of a `FreeM P s α`
+tree can end at different leaf states because `roll`'s source map `P.src` may produce different
+results for different responses; all leaves carry values of the same type `α`.
+
+Defined as a plain `def` (not `@[reducible]`) so that the `do`-notation elaborator's
+reducible-transparency `whnf` does not unfold the head — keeping `IPFunctor.FreeM` visible as
+the dispatch handle. The body is `IFreeM P (fun _ => α) s`, and at default transparency the
+two are definitionally equal, which is what the equation-lemma `rfl` proofs in this file rely
+on. -/
+def FreeM (P : Endo.{uI, uA, uB} I) (s : I) (α : Type v) :
+    Type (max uI uA uB (v + 1)) :=
+  IFreeM P (fun _ => α) s
 
 namespace FreeM
 
-variable {P : IPFunctor.{uI, uA, uB} I} {α β γ : Type v}
+variable {P : Endo.{uI, uA, uB} I} {α β γ : Type v}
+
+/-- A pure return value of `x`, available at any state `s`. Tagged `@[match_pattern]` so it
+can appear in `match`/`induction` constructor-style patterns. Kept as a plain `def` so the
+notation elaborator's `.reducible` `whnf` does not unfold the head. -/
+@[match_pattern]
+def pure (s : I) {α} (x : α) : FreeM P s α := IFreeM.pure (s := s) (X := fun _ => α) x
+
+/-- Roll a value in the shapes available at `s` into a continuation, with the source index
+for each branch determined by `P.src`. Tagged `@[match_pattern]`; plain `def` (same reasoning
+as `FreeM.pure`). -/
+@[match_pattern]
+def roll (s : I) {α} (a : P.A s) (r : (b : P.B s a) → FreeM P (P.src s a b) α) :
+    FreeM P s α :=
+  IFreeM.roll (X := fun _ => α) a r
 
 instance (s : I) : Pure (FreeM P s) where
-  pure := .pure s
+  pure := FreeM.pure s
 
 /-! ## Lifting -/
 
 /-- Lift an object of the base `IPFunctor` at state `s` into the free monad. -/
 @[always_inline, inline, reducible]
-def lift (s : I) (x : P.Obj α s) : FreeM P s α :=
-  FreeM.roll s x.1 (fun b => FreeM.pure (P.st s x.1 b) (x.2 b))
+def lift (s : I) (x : P.Obj (fun _ => α) s) : FreeM P s α :=
+  FreeM.roll s x.1 (fun b => FreeM.pure (P.src s x.1 b) (x.2 b))
 
 /-- Lift a shape `a : P.A s` into the free monad, returning its response. -/
 @[always_inline, inline, reducible]
 def liftA (s : I) (a : P.A s) : FreeM P s (P.B s a) :=
-  FreeM.roll s a (fun b => FreeM.pure (P.st s a b) b)
+  FreeM.roll s a (fun b => FreeM.pure (P.src s a b) b)
 
 /-! ## Bind
 
-`IPFunctor.FreeM.bind` here is not the `Monad.bind` shape: the continuation `g` must accept the
-leaf state explicitly because different branches of the tree end at different states. -/
+`FreeM.bind` is not the `Monad.bind` shape: the continuation `g` must accept the leaf state
+explicitly because different branches of the tree end at different states. The implementation
+is `IFreeM.bind` specialized to the constant family. -/
 
-/-- State-polymorphic bind on `FreeM P`. -/
+/-- State-polymorphic bind on `FreeM P`. Specializes `IFreeM.bind` to the constant family. -/
 @[always_inline, inline]
-protected def bind : {s : I} → FreeM P s α → ((s' : I) → α → FreeM P s' β) → FreeM P s β
-  | _, FreeM.pure s x,   g => g s x
-  | _, FreeM.roll s x r, g => FreeM.roll s x (fun b => FreeM.bind (r b) g)
+protected def bind {s : I} (x : FreeM P s α) (g : (s' : I) → α → FreeM P s' β) :
+    FreeM P s β :=
+  IFreeM.bind x g
 
 @[simp]
 lemma bind_pure (s : I) (x : α) (g : (s' : I) → α → FreeM P s' β) :
     FreeM.bind (FreeM.pure (P := P) s x) g = g s x := rfl
 
 @[simp]
-lemma bind_roll (s : I) (x : P.A s) (r : (b : P.B s x) → FreeM P (P.st s x b) α)
+lemma bind_roll (s : I) (x : P.A s) (r : (b : P.B s x) → FreeM P (P.src s x b) α)
     (g : (s' : I) → α → FreeM P s' β) :
     FreeM.bind (FreeM.roll s x r) g = FreeM.roll s x (fun b => FreeM.bind (r b) g) := rfl
 
 @[simp]
-lemma bind_lift (s : I) (x : P.Obj α s) (g : (s' : I) → α → FreeM P s' β) :
+lemma bind_lift (s : I) (x : P.Obj (fun _ => α) s) (g : (s' : I) → α → FreeM P s' β) :
     FreeM.bind (FreeM.lift s x) g =
-      FreeM.roll s x.1 (fun b => g (P.st s x.1 b) (x.2 b)) := rfl
+      FreeM.roll s x.1 (fun b => g (P.src s x.1 b) (x.2 b)) := rfl
+
+@[simp]
+lemma bind_liftA {β : Type uB} (s : I) (a : P.A s)
+    (g : (s' : I) → P.B s a → FreeM P s' β) :
+    FreeM.bind (FreeM.liftA s a) g =
+      FreeM.roll s a (fun b => g (P.src s a b) b) := rfl
 
 /-! ## Specialized bind under deterministic transitions
 
-When `P` has [`DeterministicTransitions`](../Basic.lean), a single
-`IPFunctor.FreeM.liftA s a` step lands at a single concrete post-state
-`det.next s a`, and `IPFunctor.FreeM.bind` can be specialized to a
+When `P` has [`DeterministicTransitions`](../Basic.lean), a single `liftA s a` step lands at
+a single concrete source index `det.next s a`, and `FreeM.bind` can be specialized to a
 non-polymorphic continuation. -/
 
-/-- Specialized bind for a single `liftA`-style step under
-`DeterministicTransitions`. The continuation receives the response `b`
-at the *concrete* post-state `det.next s a` (no universal quantification
-over leaf states), unlike the general `FreeM.bind`. -/
+/-- Specialized bind for a single `liftA`-style step under `DeterministicTransitions`. The
+continuation receives the response `b` at the *concrete* source index `det.next s a` (no
+universal quantification over leaf states), unlike the general `FreeM.bind`. -/
 @[always_inline, inline]
 def bindLiftA [det : IPFunctor.DeterministicTransitions P]
     {s : I} (a : P.A s) (g : P.B s a → FreeM P (det.next s a) β) :
     FreeM P s β :=
   FreeM.roll s a (fun b => (det.spec s a b).symm ▸ g b)
 
+@[simp]
+lemma bindLiftA_eq [det : IPFunctor.DeterministicTransitions P]
+    {s : I} (a : P.A s) (g : P.B s a → FreeM P (det.next s a) β) :
+    bindLiftA a g = FreeM.roll s a (fun b => (det.spec s a b).symm ▸ g b) :=
+  rfl
+
 /-! ## Injectivity -/
 
 lemma pure_inj (s : I) (x y : α) :
-    FreeM.pure (P := P) s x = FreeM.pure s y ↔ x = y := by
-  refine ⟨?_, fun h => by rw [h]⟩
-  intro h; cases h; rfl
+    FreeM.pure (P := P) s x = FreeM.pure s y ↔ x = y :=
+  IFreeM.pure_inj (P := P) (X := fun _ => α) (s := s) x y
 
 @[simp]
 lemma roll_inj (s : I) (x x' : P.A s)
-    (r : (b : P.B s x) → FreeM P (P.st s x b) α)
-    (r' : (b : P.B s x') → FreeM P (P.st s x' b) α) :
-    FreeM.roll s x r = FreeM.roll s x' r' ↔ ∃ h : x = x', h ▸ r = r' := by
-  by_cases hx : x = x'
-  · subst hx; simp
-  · refine ⟨fun h => ?_, fun ⟨h, _⟩ => absurd h hx⟩
-    cases h; exact (hx rfl).elim
+    (r : (b : P.B s x) → FreeM P (P.src s x b) α)
+    (r' : (b : P.B s x') → FreeM P (P.src s x' b) α) :
+    FreeM.roll s x r = FreeM.roll s x' r' ↔ ∃ h : x = x', h ▸ r = r' :=
+  IFreeM.roll_inj (P := P) (X := fun _ => α) (s := s) x x' r r'
 
 /-! ## Functor / LawfulFunctor -/
 
 /-- Functor map on `FreeM P s`. The state is unchanged because mapping only rewrites leaves;
-the state argument tracks the current position. -/
-protected def map (s : I) (f : α → β) : P.FreeM s α → P.FreeM s β
-  | .pure _ x   => .pure s (f x)
-  | .roll _ x r => .roll s x (fun b => FreeM.map (P.st s x b) f (r b))
+the state argument tracks the current position. Specializes `IFreeM.imap` at the constant
+family. -/
+protected def map (s : I) (f : α → β) : FreeM P s α → FreeM P s β :=
+  IFreeM.imap (fun _ => f)
 
 @[simp]
 lemma map_pure (s : I) (f : α → β) (x : α) :
@@ -137,12 +159,12 @@ lemma map_pure (s : I) (f : α → β) (x : α) :
 
 @[simp]
 lemma map_roll (s : I) (f : α → β) (x : P.A s)
-    (r : (b : P.B s x) → FreeM P (P.st s x b) α) :
+    (r : (b : P.B s x) → FreeM P (P.src s x b) α) :
     FreeM.map s f (FreeM.roll s x r) =
-      FreeM.roll s x (fun b => FreeM.map (P.st s x b) f (r b)) := rfl
+      FreeM.roll s x (fun b => FreeM.map (P.src s x b) f (r b)) := rfl
 
 @[simp]
-lemma map_lift (s : I) (f : α → β) (x : P.Obj α s) :
+lemma map_lift (s : I) (f : α → β) (x : P.Obj (fun _ => α) s) :
     FreeM.map s f (FreeM.lift s x) =
       FreeM.lift s ⟨x.1, fun b => f (x.2 b)⟩ := rfl
 
@@ -155,65 +177,61 @@ instance (s : I) : Functor (P.FreeM s) where
 instance (s : I) : LawfulFunctor (P.FreeM s) where
   map_const := rfl
   id_map x := by
-    induction x with
+    induction x using IFreeM.inductionOn with
     | pure _ _ => rfl
     | roll _ _ _ ih => exact congrArg _ (funext ih)
   comp_map f g x := by
-    induction x with
+    induction x using IFreeM.inductionOn with
     | pure _ _ => rfl
-    | roll _ _ _ ih => exact congrArg _ (funext (fun b => ih b f))
+    | roll _ _ _ ih => exact congrArg _ (funext (fun b => ih b))
 
-/-! ## Induction principles
-
-The motive must be state-indexed (`∀ s, IPFunctor.FreeM P s α → Prop`) because the continuation
-in `roll` lands at a different state than its parent. -/
+/-! ## Induction principles -/
 
 /-- Induction principle for `FreeM P` with a state-indexed motive (Prop-valued).
-The `roll` case may use the inductive hypothesis at each successor state. -/
+Wraps `IFreeM.inductionOn` at the constant family so downstream `induction x using
+FreeM.inductionOn` calls continue to work. -/
 @[elab_as_elim]
 protected def inductionOn {C : ∀ s, FreeM P s α → Prop}
     (pure : ∀ s x, C s (FreeM.pure s x))
-    (roll : ∀ s (x : P.A s) (r : (b : P.B s x) → FreeM P (P.st s x b) α),
-      (∀ b, C (P.st s x b) (r b)) → C s (FreeM.roll s x r)) :
-    ∀ {s} (oa : FreeM P s α), C s oa
-  | _, FreeM.pure s x   => pure s x
-  | _, FreeM.roll s x r => roll s x r (fun b => FreeM.inductionOn pure roll (r b))
+    (roll : ∀ s (x : P.A s) (r : (b : P.B s x) → FreeM P (P.src s x b) α),
+      (∀ b, C (P.src s x b) (r b)) → C s (FreeM.roll s x r))
+    {s : I} (oa : FreeM P s α) : C s oa :=
+  IFreeM.inductionOn (C := C) pure roll oa
 
 /-- Dependent recursor (`Type*`-valued) for `FreeM P` with state-indexed motive. -/
 @[elab_as_elim]
 protected def construct {C : ∀ s, FreeM P s α → Type*}
     (pure : ∀ s (x : α), C s (FreeM.pure s x))
-    (roll : ∀ s (x : P.A s) (r : (b : P.B s x) → FreeM P (P.st s x b) α),
-      (∀ b, C (P.st s x b) (r b)) → C s (FreeM.roll s x r)) :
-    ∀ {s} (oa : FreeM P s α), C s oa
-  | _, .pure s x   => pure s x
-  | _, .roll s x r => roll s x r (fun b => FreeM.construct pure roll (r b))
+    (roll : ∀ s (x : P.A s) (r : (b : P.B s x) → FreeM P (P.src s x b) α),
+      (∀ b, C (P.src s x b) (r b)) → C s (FreeM.roll s x r))
+    {s : I} (oa : FreeM P s α) : C s oa :=
+  IFreeM.construct (C := C) pure roll oa
 
 section construct
 
 variable {C : ∀ s, FreeM P s α → Type*}
   (h_pure : ∀ s (x : α), C s (FreeM.pure s x))
-  (h_roll : ∀ s (x : P.A s) (r : (b : P.B s x) → FreeM P (P.st s x b) α),
-      (∀ b, C (P.st s x b) (r b)) → C s (FreeM.roll s x r))
+  (h_roll : ∀ s (x : P.A s) (r : (b : P.B s x) → FreeM P (P.src s x b) α),
+      (∀ b, C (P.src s x b) (r b)) → C s (FreeM.roll s x r))
 
 @[simp]
 lemma construct_pure (s : I) (x : α) :
     FreeM.construct h_pure h_roll (FreeM.pure (P := P) s x) = h_pure s x := rfl
 
 @[simp]
-lemma construct_roll (s : I) (x : P.A s) (r : (b : P.B s x) → FreeM P (P.st s x b) α) :
+lemma construct_roll (s : I) (x : P.A s) (r : (b : P.B s x) → FreeM P (P.src s x b) α) :
     (FreeM.construct h_pure h_roll (FreeM.roll s x r) : C s (FreeM.roll s x r)) =
       h_roll s x r (fun b => FreeM.construct h_pure h_roll (r b)) := rfl
 
 @[simp]
-lemma construct_lift (s : I) (x : P.Obj α s) :
+lemma construct_lift (s : I) (x : P.Obj (fun _ => α) s) :
     (FreeM.construct h_pure h_roll (FreeM.lift s x) : C s (FreeM.lift s x)) =
-      h_roll s x.1 (fun b => FreeM.pure (P.st s x.1 b) (x.2 b))
-        (fun b => h_pure (P.st s x.1 b) (x.2 b)) := rfl
+      h_roll s x.1 (fun b => FreeM.pure (P.src s x.1 b) (x.2 b))
+        (fun b => h_pure (P.src s x.1 b) (x.2 b)) := rfl
 
 end construct
 
-/-! ## `mapM`: interpreting `IPFunctor.FreeM` into a monad
+/-! ## `mapM`: interpreting `FreeM` into a monad
 
 The responses `P.B s a` live in `Type uB`, so the target monad `m` is constrained to
 `Type uB → Type w` and the value type `α` to `Type uB`. -/
@@ -224,11 +242,10 @@ variable {m : Type uB → Type w} {α β : Type uB}
 
 /-- Interpret a `FreeM P` into an arbitrary monad `m`, given for each state `s` and shape
 `a : P.A s` a way to produce a response `m (P.B s a)`. The leaf state is erased on the
-target side; if you need it, package the leaf state into the response or use `FreeM₂`. -/
-protected def mapM [Pure m] [Bind m] (h : (s : I) → (a : P.A s) → m (P.B s a)) :
-    {s : I} → FreeM P s α → m α
-  | _, .pure _ x   => Pure.pure x
-  | _, .roll s a r => h s a >>= fun b => (r b).mapM h
+target side. Wraps `IFreeM.mapM` with the trivial leaf interpretation. -/
+protected def mapM [Pure m] [Bind m] (h : (s : I) → (a : P.A s) → m (P.B s a))
+    {s : I} (x : FreeM P s α) : m α :=
+  IFreeM.mapM h (fun _ a => Pure.pure a) x
 
 variable [Monad m] (h : (s : I) → (a : P.A s) → m (P.B s a))
 
@@ -241,83 +258,81 @@ lemma mapM_pure' (s : I) (x : α) :
     (Pure.pure x : FreeM P s α).mapM h = Pure.pure x := rfl
 
 @[simp]
-lemma mapM_roll (s : I) (a : P.A s) (r : (b : P.B s a) → FreeM P (P.st s a b) α) :
+lemma mapM_roll (s : I) (a : P.A s) (r : (b : P.B s a) → FreeM P (P.src s a b) α) :
     (FreeM.roll s a r).mapM h = h s a >>= fun b => (r b).mapM h := rfl
 
 @[simp]
-lemma mapM_lift [LawfulMonad m] (s : I) (x : P.Obj α s) :
+lemma mapM_lift [LawfulMonad m] (s : I) (x : P.Obj (fun _ => α) s) :
     (FreeM.lift s x).mapM h = h s x.1 >>= fun b => Pure.pure (x.2 b) := by
-  simp [FreeM.mapM]
+  simp [FreeM.mapM, IFreeM.mapM]
 
 variable [LawfulMonad m]
 
 @[simp]
 lemma mapM_liftA (s : I) (a : P.A s) :
     (FreeM.liftA s a).mapM h = h s a := by
-  simp [FreeM.mapM]
+  simp [FreeM.mapM, IFreeM.mapM]
 
 @[simp]
 lemma mapM_map (s : I) (x : FreeM P s α) (f : α → β) :
     (f <$> x).mapM h = f <$> x.mapM h := by
   change (FreeM.map s f x).mapM h = f <$> x.mapM h
-  induction x with
-  | pure _ _ => simp [FreeM.map, FreeM.mapM]
-  | roll _ _ _ ih => simp [FreeM.map, FreeM.mapM, map_bind, ih]
+  induction x using IFreeM.inductionOn with
+  | pure _ _ => simp [FreeM.map, FreeM.mapM, IFreeM.imap, IFreeM.mapM]
+  | roll _ _ _ ih =>
+    simp only [FreeM.map, IFreeM.imap, FreeM.mapM, IFreeM.mapM, map_bind]
+    congr 1
+    funext b
+    exact ih b
 
 end mapM
 
 /-! ## Forgetful map to `PFunctor.FreeM`
 
 When the index type has at most one element, the state information carries no content and an
-`IPFunctor` collapses to a `PFunctor`. We provide a forgetful map `IPFunctor.FreeM.erase` from
-`IPFunctor.FreeM P s α` to `PFunctor.FreeM P.toPFunctor α` (at any `s : I`). The reverse
-direction would require transport gymnastics through `P.st`'s data-dependent post-state; we
-do not provide it.
+`IPFunctor.Endo` collapses to a `PFunctor`. We provide a forgetful map `erase` from
+`FreeM P s α` to `PFunctor.FreeM P.toPFunctor α` (at any `s : I`). The reverse direction would
+require transport gymnastics through `P.src`'s data-dependent source index; we do not provide
+it.
 
 For a variant that works on *any* index type by Σ-bundling the state into each position,
-see `IPFunctor.FreeM.toSigmaFreeM` below. It produces a `PFunctor.FreeM` over `P.sigmaPFunctor`
-instead of `P.toPFunctor`, paying for generality with a richer position type. -/
+see `toSigmaFreeM` below. -/
 
 section erase
 
 variable [Unique I]
 
-/-- Remove all indexing information from an `IPFunctor.FreeM` to obtain a `PFunctor.FreeM`,
-when the index type is `Unique`. -/
-def erase (P : IPFunctor I) (s : I) : {α : Type v} → P.FreeM s α → P.toPFunctor.FreeM α
-  | _, .pure _ x   => PFunctor.FreeM.pure x
-  | _, .roll _ x r =>
+/-- Remove all indexing information from a `FreeM` to obtain a `PFunctor.FreeM`, when the
+index type is `Unique`. Defined via `IFreeM.construct` to sidestep the equation compiler's
+difficulty matching against reducible-`def` wrappers; the `pure`/`roll` simp lemmas below are
+each `rfl` through the `IFreeM.construct_pure`/`construct_roll` reductions. -/
+def erase (P : Endo I) (s : I) {α : Type v} (x : P.FreeM s α) :
+    P.toPFunctor.FreeM α :=
+  IFreeM.construct (P := P) (X := fun _ => α)
+    (C := fun _ _ => P.toPFunctor.FreeM α)
+    (fun _ a => PFunctor.FreeM.pure a)
+    (fun s' a _ ih =>
       PFunctor.FreeM.roll
-        (show P.A default from Unique.eq_default s ▸ x)
-        (fun b => erase P (P.st s _ _) (r (Unique.eq_default s ▸ b)))
+        (show P.A default from Unique.eq_default s' ▸ a)
+        (fun b => ih (Unique.eq_default s' ▸ b)))
+    (s := s) x
 
 @[simp]
-lemma erase_pure (P : IPFunctor I) (s : I) (x : α) :
+lemma erase_pure (P : Endo I) (s : I) (x : α) :
     erase P s (FreeM.pure s x) = PFunctor.FreeM.pure x := rfl
-
-/-- Unfolding lemma for `erase` on a `roll` constructor at an arbitrary `[Unique I]` index.
-Not marked `@[simp]` because the resulting transports keep simp's syntactic matcher from
-firing reliably; for the practically useful `I = PUnit` case see `erase_roll_punit`. The
-equation is `rfl`, so callers needing it can use `unfold erase` or invoke it directly. -/
-lemma erase_roll (P : IPFunctor I) (s : I) (x : P.A s)
-    (r : (b : P.B s x) → P.FreeM (P.st s x b) α) :
-    erase P s (FreeM.roll s x r) =
-      PFunctor.FreeM.roll
-        (show P.A default from Unique.eq_default s ▸ x)
-        (fun b => erase P (P.st s _ _) (r (Unique.eq_default s ▸ b))) := rfl
 
 end erase
 
-/-! ### `PUnit`-specialized `IPFunctor.FreeM.erase` simp lemmas
+/-! ### `PUnit`-specialized `erase` simp lemmas
 
 When the index type is literally `PUnit`, the `Unique.eq_default` transports collapse
 definitionally and simp can fire cleanly. These specializations cover the practically common
-case where one wants to use `IPFunctor.FreeM` as a state-aware wrapper over `PFunctor.FreeM`
-without any actual state content. -/
+case where one wants to use `FreeM` as a state-aware wrapper over `PFunctor.FreeM` without
+any actual state content. -/
 
 section erasePUnit
 
-variable {Q : IPFunctor PUnit} {α : Type v}
+variable {Q : Endo PUnit} {α : Type v}
 
 @[simp]
 lemma erase_punit_pure (x : α) :
@@ -326,51 +341,65 @@ lemma erase_punit_pure (x : α) :
 
 @[simp]
 lemma erase_punit_roll (x : Q.A PUnit.unit)
-    (r : (b : Q.B PUnit.unit x) → Q.FreeM (Q.st PUnit.unit x b) α) :
+    (r : (b : Q.B PUnit.unit x) → Q.FreeM (Q.src PUnit.unit x b) α) :
     erase Q PUnit.unit (FreeM.roll PUnit.unit x r) =
-      PFunctor.FreeM.roll x (fun b => erase Q (Q.st PUnit.unit x b) (r b)) := rfl
+      PFunctor.FreeM.roll x (fun b => erase Q (Q.src PUnit.unit x b) (r b)) := rfl
 
 @[simp]
-lemma erase_punit_lift (x : Q.Obj α PUnit.unit) :
+lemma erase_punit_lift (x : Q.Obj (fun _ => α) PUnit.unit) :
     erase Q PUnit.unit (FreeM.lift PUnit.unit x) =
       PFunctor.FreeM.lift (P := Q.toPFunctor) x := rfl
+
+@[simp]
+lemma erase_punit_liftA (a : Q.A PUnit.unit) :
+    erase Q PUnit.unit (FreeM.liftA PUnit.unit a) =
+      PFunctor.FreeM.liftA (P := Q.toPFunctor) a := rfl
 
 end erasePUnit
 
 /-! ## Σ-bundled forgetful map
 
-`IPFunctor.FreeM.toSigmaFreeM` is the unrestricted analog of
-`IPFunctor.FreeM.erase`: it converts an `IPFunctor.FreeM P s α` into a
-plain `PFunctor.FreeM` over the Σ-bundled `P.sigmaPFunctor`, with the
-originating state recorded in each position. No `[Unique I]` assumption
-is needed, but the target's positions live in `Σ s : I, P.A s` rather
-than the flat `P.A default`. The state-transition `P.st` is still not
-represented on the target side. -/
+`toSigmaFreeM` is the unrestricted analog of `erase`: it converts a `FreeM P s α` into a plain
+`PFunctor.FreeM` over the Σ-bundled `P.sigmaPFunctor`, with the originating state recorded in
+each position. No `[Unique I]` assumption is needed, but the target's positions live in
+`Σ s : I, P.A s` rather than the flat `P.A default`.
+
+Specializes `IFreeM.toSigmaFreeM` at the constant family and post-composes with
+`PFunctor.FreeM.map Sigma.snd` to drop the leaf-state component from leaves. -/
 
 section toSigmaFreeM
 
 /-- Forget the state-indexing on each step by Σ-bundling the originating state into the
-position, yielding a `PFunctor.FreeM` over `P.sigmaPFunctor`. Works for any index type. -/
-def toSigmaFreeM (P : IPFunctor I) :
-    {s : I} → {α : Type v} → P.FreeM s α → P.sigmaPFunctor.FreeM α
-  | _, _, .pure _ x   => PFunctor.FreeM.pure x
-  | _, _, .roll s a r => PFunctor.FreeM.roll ⟨s, a⟩ (fun b => toSigmaFreeM P (r b))
+position, yielding a `PFunctor.FreeM` over `P.sigmaPFunctor`. Works for any index type.
+Defined via `IFreeM.construct` so the simp lemmas below reduce by `rfl`. -/
+def toSigmaFreeM (P : Endo I) {s : I} {α : Type v} (x : P.FreeM s α) :
+    P.sigmaPFunctor.FreeM α :=
+  IFreeM.construct (P := P) (X := fun _ => α)
+    (C := fun _ _ => P.sigmaPFunctor.FreeM α)
+    (fun _ a => PFunctor.FreeM.pure a)
+    (fun s' a _ ih => PFunctor.FreeM.roll (⟨s', a⟩ : P.sigmaPFunctor.A) ih)
+    x
 
 @[simp]
-lemma toSigmaFreeM_pure (P : IPFunctor I) (s : I) (x : α) :
+lemma toSigmaFreeM_pure (P : Endo I) (s : I) (x : α) :
     toSigmaFreeM P (FreeM.pure s x) = PFunctor.FreeM.pure x := rfl
 
 @[simp]
-lemma toSigmaFreeM_roll (P : IPFunctor I) (s : I) (a : P.A s)
-    (r : (b : P.B s a) → P.FreeM (P.st s a b) α) :
+lemma toSigmaFreeM_roll (P : Endo I) (s : I) (a : P.A s)
+    (r : (b : P.B s a) → P.FreeM (P.src s a b) α) :
     toSigmaFreeM P (FreeM.roll s a r) =
       PFunctor.FreeM.roll (⟨s, a⟩ : P.sigmaPFunctor.A)
         (fun b => toSigmaFreeM P (r b)) := rfl
 
 @[simp]
-lemma toSigmaFreeM_lift (P : IPFunctor I) (s : I) (x : P.Obj α s) :
+lemma toSigmaFreeM_lift (P : Endo I) (s : I) (x : P.Obj (fun _ => α) s) :
     toSigmaFreeM P (FreeM.lift s x) =
       PFunctor.FreeM.lift (P := P.sigmaPFunctor) ⟨⟨s, x.1⟩, x.2⟩ := rfl
+
+@[simp]
+lemma toSigmaFreeM_liftA (P : Endo I) (s : I) (a : P.A s) :
+    toSigmaFreeM P (FreeM.liftA s a) =
+      PFunctor.FreeM.liftA (P := P.sigmaPFunctor) ⟨s, a⟩ := rfl
 
 end toSigmaFreeM
 

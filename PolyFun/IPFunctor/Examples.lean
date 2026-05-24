@@ -68,18 +68,18 @@ inductive Phase where
   | counting
 deriving DecidableEq, Inhabited
 
-/-- The protocol as an `IPFunctor`. At `Phase.opn` the only shape is the
+/-- The protocol as an `IPFunctor.Endo`. At `Phase.opn` the only shape is the
 trivial unit (read as "`init`"), which transitions to `counting`; at
 `Phase.counting` the only shape is the trivial unit (read as "`tick`"),
 which returns a `Nat` and stays at `counting`. -/
-@[expose] def proto : IPFunctor Phase where
+@[expose] def proto : IPFunctor.Endo Phase where
   A
     | .opn      => Unit
     | .counting => Unit
   B
     | .opn, _      => Unit
     | .counting, _ => Nat
-  st
+  src
     | .opn, _, _      => .counting
     | .counting, _, _ => .counting
 
@@ -164,6 +164,17 @@ quantification restriction. -/
   let a ← tick
   let b ← tick
   pure (a + b)
+
+/-- The deterministic elaborator emits a nested `roll` chain whose post-states
+are pinned by the `DeterministicTransitions` instance; the `(det.spec _).symm ▸`
+transports inside `bindLiftA` collapse by `rfl` because `proto`'s `spec` proof
+is itself `rfl` after `cases s`. Mirrors the parallel `TwoIndex.run` check
+above. -/
+example :
+    run = IPFunctor.FreeM.roll Phase.opn () (fun _ : Unit =>
+      IPFunctor.FreeM.roll Phase.counting () (fun a : Nat =>
+        IPFunctor.FreeM.roll Phase.counting () (fun b : Nat =>
+          IPFunctor.FreeM.pure Phase.counting (a + b)))) := rfl
 
 end Deterministic
 

@@ -25,7 +25,7 @@ fresh post-state `s'`, because `IPFunctor.FreeM.bind` quantifies the
 continuation universally. That kills most realistic chains.
 
 This file lifts that restriction in the common case where every
-`P.st s a b` is independent of the response `b` — i.e. `P` has *deterministic
+`P.src s a b` is independent of the response `b` — i.e. `P` has *deterministic
 transitions*. When that holds, an `IPFunctor.FreeM.liftA s a`-style step
 lands at a single concrete post-state `next s a`, and the continuation can
 be specialized to that state instead of left polymorphic. Chains like
@@ -93,11 +93,15 @@ quantification, so subsequent steps can be state-specific.
 meta def mkBindLiftA
     (dec : DoElemCont) (lvls : List Level)
     (I P s aShape detInst : Expr) : DoElabM Expr := do
-  let detLvls := lvls.take 3
-  -- next s a — a closed expression of type `I`.
+  -- `DeterministicTransitions` is declared over `IPFunctor I J` (4 universes uI uJ uA uB).
+  -- The `FreeM` universes are [uI, uA, uB, v]; for the endomorphic case `Endo I = IPFunctor I I`,
+  -- we instantiate `uJ := uI` so the level list becomes [uI, uI, uA, uB].
+  let detLvls : List Level := [lvls[0]!, lvls[0]!, lvls[1]!, lvls[2]!]
+  -- next s a — a closed expression of type `I`. We want full default-transparency unfolding
+  -- here to obtain the concrete post-state value, not just the head form.
   let nextState ← whnf <|
     mkAppN (mkConst ``IPFunctor.DeterministicTransitions.next detLvls)
-      #[I, P, detInst, s, aShape]
+      #[I, I, P, detInst, s, aShape]
   let xType := dec.resultType
   let declKind := Lean.LocalDeclKind.ofBinderName dec.resultName
   let nextM := mkAppN (mkConst ``IPFunctor.FreeM lvls) #[I, P, nextState]
@@ -139,20 +143,25 @@ meta def elabFreeMDetExpr : DoElab := fun stx dec => do
   let some (I, P, s, lvls) ← isFreeMMonad? (← read).monadInfo.m
     | throwUnsupportedSyntax
   -- Try to synthesize `DeterministicTransitions P`; fall through if not.
-  let detClass := mkAppN (mkConst ``IPFunctor.DeterministicTransitions (lvls.take 3))
-    #[I, P]
+  -- `DeterministicTransitions` has 4 universes [uI, uJ, uA, uB]; the endomorphic
+  -- specialization repeats `uI` for `uJ`.
+  let detLvls : List Level := [lvls[0]!, lvls[0]!, lvls[1]!, lvls[2]!]
+  let detClass := mkAppN (mkConst ``IPFunctor.DeterministicTransitions detLvls)
+    #[I, I, P]
   let detInst ← try
     synthInstance detClass
   catch _ => throwUnsupportedSyntax
   -- Elaborate the term, then whnf-reduce to detect a `liftA`-style action.
   -- `liftA s a` is `@[reducible]`, so default-transparency `whnf` unfolds it to
-  --   `FreeM.roll s a (fun b => FreeM.pure (P.st s a b) b)`.
+  --   `FreeM.roll s a (fun b => FreeM.pure (P.src s a b) b)`.
   -- We detect that shape and trust the inner `pure` to mean "this is a
   -- single-action step".
   let `(doExpr| $e:term) := stx | throwUnsupportedSyntax
   let mα ← mkMonadicType dec.resultType
   let eExpr ← Term.elabTermEnsuringType e mα
-  let eReduced ← whnf eExpr
+  -- Reducible-transparency `whnf` so user-side `@[reducible]` aliases (`flip`, `liftA`, …)
+  -- unfold but the underlying plain-`def` `FreeM.roll` head survives for the check below.
+  let eReduced ← Meta.withTransparency .reducible <| whnf eExpr
   unless eReduced.getAppFn.isConstOf ``IPFunctor.FreeM.roll do
     throwUnsupportedSyntax
   let args := eReduced.getAppArgs
@@ -176,16 +185,16 @@ set_option backward.do.legacy false
 
 namespace IPFunctorFreeMDetNotationTests
 
-/-- The same demo `IPFunctor` as the other `Notation` files. Both states
+/-- The same demo `IPFunctor.Endo` as the other `Notation` files. Both states
 transition to `true` regardless of the response, so deterministic. -/
-@[expose] def demoP : IPFunctor Bool where
+@[expose] def demoP : IPFunctor.Endo Bool where
   A
     | false => Unit
     | true  => Unit
   B
     | false, _ => Unit
     | true,  _ => Nat
-  st
+  src
     | false, _, _ => true
     | true,  _, _ => true
 
@@ -243,11 +252,11 @@ built via the deterministic-`IPFunctor.FreeM` elaborator to a
 `PFunctor.FreeM` tree, with the `@[simp]` lemmas in `Free/Basic.lean`
 doing the actual simplification. -/
 
-/-- A `PUnit`-indexed `IPFunctor`: pick a `Bool`, get a `Nat` back. -/
-@[expose] def demoQ : IPFunctor PUnit where
+/-- A `PUnit`-indexed `IPFunctor.Endo`: pick a `Bool`, get a `Nat` back. -/
+@[expose] def demoQ : IPFunctor.Endo PUnit where
   A _ := Bool
   B _ _ := Nat
-  st _ _ _ := PUnit.unit
+  src _ _ _ := PUnit.unit
 
 /-- Transitions for a `PUnit`-indexed `IPFunctor` are trivially deterministic. -/
 @[expose] instance instDemoQ : IPFunctor.DeterministicTransitions demoQ where

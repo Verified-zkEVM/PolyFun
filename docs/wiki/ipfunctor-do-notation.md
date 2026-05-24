@@ -26,7 +26,7 @@ Lean retires it the lines come out.
 |---|---|---|
 | [`Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | `IPFunctor.FreeM P s α` | Tail of the block is state-polymorphic. Custom error messages call out state-mismatches and non-polymorphic remainders. |
 | [`Notation/Indexed.lean`](../../PolyFun/IPFunctor/Notation/Indexed.lean) | `IPFunctor.FreeM₂ P s t α` | Statically-tracked pre/post-states; chains of any length compose. |
-| [`Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `IPFunctor.FreeM P s α` + `[DeterministicTransitions P]` | Stay on single-index `IPFunctor.FreeM` and lift the universal-quantification constraint when `P.st s a b` is independent of `b`. |
+| [`Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `IPFunctor.FreeM P s α` + `[DeterministicTransitions P]` | Stay on single-index `IPFunctor.FreeM` and lift the universal-quantification constraint when `P.src s a b` is independent of `b`. |
 | [`Notation/Mixed.lean`](../../PolyFun/IPFunctor/Notation/Mixed.lean) | (tests) | Sanity tests confirming the three overrides cohabit correctly. |
 
 ## Worked example: a tiny two-phase protocol
@@ -46,17 +46,17 @@ in [`Examples.lean`](../../PolyFun/IPFunctor/Examples.lean).)
 
 ```lean
 inductive Phase | opn | counting
-deriving DecidableEq
+deriving DecidableEq, Inhabited
 
-def proto : IPFunctor Phase where
+def proto : IPFunctor.Endo Phase where
   A
-    | Phase.opn     => Unit       -- only `init` available
+    | Phase.opn      => Unit       -- only `init` available
     | Phase.counting => Unit       -- only `tick` available
   B
-    | Phase.opn,     _ => Unit
+    | Phase.opn,      _ => Unit
     | Phase.counting, _ => Nat
-  st
-    | Phase.opn,     _, _ => Phase.counting
+  src
+    | Phase.opn,      _, _ => Phase.counting
     | Phase.counting, _, _ => Phase.counting
 ```
 
@@ -171,7 +171,7 @@ A short decision tree:
 * Need every leaf of every step at the same state? →
   `IPFunctor.FreeM₂` notation.
 * Stuck on single-index `IPFunctor.FreeM` (e.g. for compatibility with
-  existing APIs), and `P.st s a b` is independent of `b`? →
+  existing APIs), and `P.src s a b` is independent of `b`? →
   `Notation/Deterministic.lean`, after adding a
   `DeterministicTransitions P` instance.
 * Only need `do { pure … }` / `do { let _ ← op; pure … }` shapes? →

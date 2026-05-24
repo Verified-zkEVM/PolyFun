@@ -31,16 +31,16 @@ set_option backward.do.legacy false
 
 namespace IPFunctorMixedNotationTests
 
-/-- Shared demo `IPFunctor` over `Bool`, identical to the per-file
+/-- Shared demo `IPFunctor.Endo` over `Bool`, identical to the per-file
 fixtures so the tests below stay self-contained. -/
-@[expose] def demoP : IPFunctor Bool where
+@[expose] def demoP : IPFunctor.Endo Bool where
   A
     | false => Unit
     | true  => Unit
   B
     | false, _ => Unit
     | true,  _ => Nat
-  st
+  src
     | false, _, _ => true
     | true,  _, _ => true
 

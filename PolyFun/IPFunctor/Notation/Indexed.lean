@@ -68,7 +68,9 @@ otherwise `none`. Returning the levels here avoids a second `whnf` +
 -/
 meta def isFreeM₂Monad? (m : Expr) :
     MetaM (Option (Expr × Expr × Expr × Expr × List Level)) := do
-  let m ← whnf m
+  -- Reducible-transparency `whnf` so the plain-`def` `FreeM₂` head is preserved without being
+  -- unfolded into the underlying `IFreeM` form.
+  let m ← Meta.withTransparency .reducible <| whnf m
   let fn := m.getAppFn
   unless fn.isConstOf ``IPFunctor.FreeM₂ do return none
   let args := m.getAppArgs
@@ -181,16 +183,16 @@ set_option backward.do.legacy false
 
 namespace IPFunctorFreeM₂NotationTests
 
-/-- A tiny `IPFunctor` over `Bool`. State `false` lets you `flip` (→ `true`);
+/-- A tiny `IPFunctor.Endo` over `Bool`. State `false` lets you `flip` (→ `true`);
 state `true` lets you `read` (returns `Nat`, stays at `true`). -/
-@[expose] def demoP : IPFunctor Bool where
+@[expose] def demoP : IPFunctor.Endo Bool where
   A
     | false => Unit
     | true  => Unit
   B
     | false, _ => Unit
     | true,  _ => Nat
-  st
+  src
     | false, _, _ => true
     | true,  _, _ => true
 
@@ -253,11 +255,11 @@ collapse `do`-block trees to the corresponding `PFunctor.FreeM` trees via
 the `@[simp]` lemmas in `Free/Basic.lean` (`erase_punit_pure`,
 `erase_punit_roll`, `toFreeM_pure`, `toFreeM_roll`). -/
 
-/-- A `PUnit`-indexed `IPFunctor`: pick a `Bool` shape, get a `Nat` back. -/
-@[expose] def demoQ : IPFunctor PUnit where
+/-- A `PUnit`-indexed `IPFunctor.Endo`: pick a `Bool` shape, get a `Nat` back. -/
+@[expose] def demoQ : IPFunctor.Endo PUnit where
   A _ := Bool
   B _ _ := Nat
-  st _ _ _ := PUnit.unit
+  src _ _ _ := PUnit.unit
 
 /-- A single-step action lifting the shape `b : Bool`. -/
 @[expose] def stepQ (b : Bool) :
