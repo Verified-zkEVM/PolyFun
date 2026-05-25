@@ -12,6 +12,8 @@ live in the dedicated pages [`pfunctor.md`](pfunctor.md),
 PolyFun/
   PFunctor/          polynomial functors, charts, lenses, equivalences,
                      M-type / cofree, free monad and displayed-free
+  IPFunctor/         state-indexed polynomial functors and their free monads
+                     (single-index FreeM, two-index FreeM₂ + IndexedMonad)
   ITree/             coinductive interaction trees, bisim/sim, handlers,
                      event signatures
   Interaction/       generic interaction framework
@@ -71,6 +73,9 @@ module index. See [`generated-files.md`](generated-files.md).
   lenses, charts, free monad, cofree / M-type, displayed `FreeM`): start
   in `PolyFun/PFunctor/`. See [`pfunctor.md`](pfunctor.md) for the layer
   guide.
+- Working on state-indexed polynomial functors (multi-phase protocols,
+  session-typed interaction): start in `PolyFun/IPFunctor/`. See
+  [`ipfunctor.md`](ipfunctor.md).
 - Working on coinductive interaction trees, bisimulation, simulation, or
   event signatures: start in `PolyFun/ITree/`. See [`itree.md`](itree.md).
 - Working on the generic interaction framework (sequential `Spec`,
