@@ -23,7 +23,7 @@ bridges are TODO and live alongside the operations they unblock).
 
 @[expose] public section
 
-universe uI uJ uA₁ uA₂ uA₃ uB₁ uB₂ uB₃
+universe uI uJ uK uL uA uA₁ uA₂ uA₃ uB uB₁ uB₂ uB₃
 
 namespace IPFunctor
 
@@ -93,5 +93,60 @@ def trans (e₁ : P ≃ₚ Q) (e₂ : Q ≃ₚ R) : P ≃ₚ R where
     (e₁.src_eq j a b).trans (e₂.src_eq j (e₁.equivA j a) (e₁.equivB j a b))
 
 end Equiv
+
+/-! ## Composition laws
+
+`IPFunctor.X` (defined in `IPFunctor.Basic`) is the categorical identity for `IPFunctor.comp`
+on `IPFunctor.Endo I`. Like the non-indexed `PFunctor` story, the left/right identity and
+associativity laws hold up to `IPFunctor.Equiv` (i.e. `≃ₚ`) rather than definitional
+equality, because the comp construction reshuffles Σ/Π factors. The extra `src_eq`
+obligation closes by `rfl` in each case, since `X.src i _ _ = i` and the position /
+response equivalences are direct projections. -/
+
+section CompIdentity
+
+variable (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J)
+
+/-- `P ◃ X ≃ₚ P`: right identity for indexed composition. The right argument `X` is on
+`IPFunctor.Endo I` (so its index matches `P`'s input). -/
+def compX : P ◃ X ≃ₚ P where
+  equivA j := _root_.Equiv.sigmaUnique (P.A j) (fun a => P.B j a → PUnit.{uA₁ + 1})
+  equivB _ _ := _root_.Equiv.sigmaPUnit _
+  src_eq _ _ _ := rfl
+
+/-- `X ◃ P ≃ₚ P`: left identity for indexed composition. The left argument `X` is on
+`IPFunctor.Endo J` (so its index matches `P`'s output). -/
+def XComp : X ◃ P ≃ₚ P where
+  equivA j :=
+    (_root_.Equiv.uniqueSigma (fun _ : PUnit.{uA₁ + 1} => PUnit.{uA₁ + 1} → P.A j)).trans
+      (_root_.Equiv.punitArrowEquiv (P.A j))
+  equivB _ _ := _root_.Equiv.uniqueSigma _
+  src_eq _ _ _ := rfl
+
+end CompIdentity
+
+section CompAssoc
+
+variable {K : Type uK} {L : Type uL}
+  (P : IPFunctor.{uK, uL, uA₁, uB₁} K L)
+  (Q : IPFunctor.{uJ, uK, uA₂, uB₂} J K)
+  (R : IPFunctor.{uI, uJ, uA₃, uB₃} I J)
+
+/-- Associativity of indexed composition, up to `IPFunctor.Equiv`. With `R` innermost
+(input index `I`), `Q` in the middle, and `P` outermost (output index `L`), the two
+parenthesizations `(P ◃ Q) ◃ R` and `P ◃ (Q ◃ R)` are equivalent. -/
+def compAssoc : (P ◃ Q) ◃ R ≃ₚ P ◃ (Q ◃ R) where
+  equivA _ := {
+    toFun := fun ⟨⟨pa, qf⟩, rf⟩ => ⟨pa, fun pb => ⟨qf pb, fun qb => rf ⟨pb, qb⟩⟩⟩
+    invFun := fun ⟨pa, g⟩ => ⟨⟨pa, fun pb => (g pb).1⟩, fun ⟨pb, qb⟩ => (g pb).2 qb⟩
+    left_inv := by rintro ⟨⟨pa, qf⟩, rf⟩; rfl
+    right_inv := by rintro ⟨pa, g⟩; rfl
+  }
+  equivB l := fun ⟨⟨pa, qf⟩, rf⟩ =>
+    _root_.Equiv.sigmaAssoc
+      (fun pb qb => R.B (Q.src (P.src l pa pb) (qf pb) qb) (rf ⟨pb, qb⟩))
+  src_eq _ _ _ := rfl
+
+end CompAssoc
 
 end IPFunctor

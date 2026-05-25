@@ -107,6 +107,13 @@ lemma map_roll (f : α → β) (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.
 
 /-! ## Injectivity -/
 
+lemma pure_inj (s : I) (x y : α) :
+    FreeM₂.pure (P := P) (s := s) x = FreeM₂.pure (s := s) y ↔ x = y := by
+  refine (IFreeM.pure_inj (P := P) (X := fun u => PSigma (fun _ : u = s => α))
+    (s := s) ⟨rfl, x⟩ ⟨rfl, y⟩).trans ?_
+  refine ⟨fun h => ?_, fun h => h ▸ rfl⟩
+  injection h
+
 @[simp]
 lemma roll_inj (a a' : P.A s)
     (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α)

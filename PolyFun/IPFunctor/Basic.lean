@@ -54,13 +54,16 @@ implements the functor composition `Q ∘ P : (I → Type) → (K → Type)`. Se
   preservation law) live in [`PolyFun/IPFunctor/Lens/Basic.lean`](Lens/Basic.lean),
   [`PolyFun/IPFunctor/Chart/Basic.lean`](Chart/Basic.lean), and
   [`PolyFun/IPFunctor/Equiv/Basic.lean`](Equiv/Basic.lean).
-* When `J` has at most one element, `IPFunctor I J` reduces to an ordinary `PFunctor` via
-  `IPFunctor.toPFunctor`; the unconditional Σ-bundled erasure is `IPFunctor.sigmaPFunctor`.
+* When both `I` and `J` have at most one element, `IPFunctor I J` reduces to an ordinary
+  `PFunctor` via `IPFunctor.toPFunctor`. For the weaker `[Unique J]`-only case, the
+  selected-output-fiber view is `IPFunctor.fiberPFunctor` (an erasure, since the input
+  index `I` can still carry information that gets flattened). The unconditional
+  Σ-bundled erasure is `IPFunctor.sigmaPFunctor`.
 -/
 
 @[expose] public section
 
-universe uI uJ uK uA uB
+universe uI uJ uK uA uA₁ uA₂ uB uB₁ uB₂
 
 /-- Atkey-style polynomial functor between indexed family categories. Given input index type
 `I` and output index type `J`, `IPFunctor I J` packages the shapes available at each `j : J`,
@@ -102,24 +105,44 @@ instance (I : Type uI) (J : Type uJ) : One (IPFunctor.{uI, uJ, uA, uB} I J) wher
 
 instance : Inhabited (IPFunctor I J) := ⟨0⟩
 
-/-- View an `IPFunctor I J` as a `PFunctor` when `J` has exactly one element. The single
-fiber `P.A default` becomes the position type and `P.B default` the response. The source
-map `P.src` is dropped — under `[Unique J]` the source index carries no information beyond
-"there is exactly one place to be," so collapsing it loses nothing.
+/-- The **selected-output-fiber** view of an `IPFunctor I J` as a plain `PFunctor`, when
+`J` has exactly one element. The single fiber `P.A default` becomes the position type and
+`P.B default` the response. The source map `P.src : … → I` is dropped, so this is an
+*erasure*: when `I` is non-trivial, distinct children of the same shape may originate in
+different `I`-fibers and that distinction is lost on the target.
 
-The constraint is `[Unique J]` rather than `[Inhabited J]` because a richer `J` would
-have multiple fibers and silently picking the default one would discard observable
-information; for arbitrary `J`, use [`sigmaPFunctor`](#IPFunctor.sigmaPFunctor) instead,
-which Σ-bundles the index into positions and preserves every fiber. -/
+The constraint is `[Unique J]` rather than `[Inhabited J]` because a richer `J` would have
+multiple fibers and silently picking the default one would discard observable information.
+For arbitrary `J`, use [`sigmaPFunctor`](#IPFunctor.sigmaPFunctor) instead, which Σ-bundles
+the index into positions and preserves every fiber. For the genuine `PFunctor`
+recovery — where nothing is lost — see [`toPFunctor`](#IPFunctor.toPFunctor), which
+strengthens to `[Unique I] [Unique J]`. -/
 @[reducible, inline]
-def toPFunctor [Unique J] (P : IPFunctor I J) : PFunctor where
+def fiberPFunctor [Unique J] (P : IPFunctor I J) : PFunctor where
   A := P.A default
   B := P.B default
 
-@[simp] lemma toPFunctor_zero [Unique J] :
+@[simp] lemma fiberPFunctor_zero [Unique J] :
+    (0 : IPFunctor.{uI, uJ, uA, uB} I J).fiberPFunctor = 0 := rfl
+
+@[simp] lemma fiberPFunctor_one [Unique J] :
+    (1 : IPFunctor.{uI, uJ, uA, uB} I J).fiberPFunctor = 1 := rfl
+
+/-- View an `IPFunctor I J` as a plain `PFunctor` when both input and output index types are
+unique. With `[Unique I] [Unique J]` there is exactly one fiber on each side and `P.src`'s
+single possible value carries no information, so this is a genuine no-information-lost
+recovery — not an erasure. For the fiber-only view that drops `P.src` even when `I` is
+non-trivial, see [`fiberPFunctor`](#IPFunctor.fiberPFunctor); for the unconditional
+Σ-bundled erasure, see [`sigmaPFunctor`](#IPFunctor.sigmaPFunctor). -/
+@[reducible, inline]
+def toPFunctor [Unique I] [Unique J] (P : IPFunctor I J) : PFunctor where
+  A := P.A default
+  B := P.B default
+
+@[simp] lemma toPFunctor_zero [Unique I] [Unique J] :
     (0 : IPFunctor.{uI, uJ, uA, uB} I J).toPFunctor = 0 := rfl
 
-@[simp] lemma toPFunctor_one [Unique J] :
+@[simp] lemma toPFunctor_one [Unique I] [Unique J] :
     (1 : IPFunctor.{uI, uJ, uA, uB} I J).toPFunctor = 1 := rfl
 
 /-- View an `IPFunctor` as a `PFunctor` by Σ-bundling the output index into each position.
@@ -145,13 +168,22 @@ pair `(b, b')` with `b : Q.B k a` and `b' : P.B _ (f b)`; its source index is th
 
 /-- Composition of indexed polynomials. For `P : IPFunctor I J` and `Q : IPFunctor J K`,
 `Q ◃ P : IPFunctor I K` is the container for the composite functor `Q ∘ P`. -/
-def comp (Q : IPFunctor.{uJ, uK, uA, uB} J K) (P : IPFunctor.{uI, uJ, uA, uB} I J) :
-    IPFunctor.{uI, uK, max uA uB, uB} I K where
+def comp (Q : IPFunctor.{uJ, uK, uA₁, uB₁} J K) (P : IPFunctor.{uI, uJ, uA₂, uB₂} I J) :
+    IPFunctor.{uI, uK, max uA₁ uA₂ uB₁, max uB₁ uB₂} I K where
   A k := Σ a : Q.A k, (b : Q.B k a) → P.A (Q.src k a b)
   B k := fun x => Σ b : Q.B k x.1, P.B (Q.src k x.1 b) (x.2 b)
   src k := fun x d => P.src (Q.src k x.1 d.1) (x.2 d.1) d.2
 
 @[inherit_doc] scoped infixl:80 " ◃ " => IPFunctor.comp
+
+/-- The identity indexed polynomial on `I`. Realises the identity functor `X ↦ X` on
+`(I → Type)`: a unique position at each index, a single response landing at the same index.
+This is the categorical identity for [`comp`](#IPFunctor.comp); see `compX` / `XComp` /
+`compAssoc` in [`PolyFun/IPFunctor/Equiv/Basic.lean`](Equiv/Basic.lean) for the laws. -/
+@[reducible] def X : IPFunctor.Endo.{uI, uA, uB} I where
+  A _ := PUnit
+  B _ _ := PUnit
+  src i _ _ := i
 
 end IPFunctor
 
