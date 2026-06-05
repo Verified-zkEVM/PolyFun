@@ -860,8 +860,8 @@ The direction matters: later plugging and contextual composition should not
 identify incoming and outgoing traffic.
 -/
 structure PortBoundary where
-  In : Interface
-  Out : Interface
+  In : Interface.{uA, uB}
+  Out : Interface.{uA, uB}
 
 namespace PortBoundary
 
@@ -1014,7 +1014,6 @@ theorem tensor_comp
   cases g₁
   cases g₂
   simp only [tensor, comp, Interface.Hom.sum_comp]
-  rfl
 
 @[simp]
 theorem swap_id

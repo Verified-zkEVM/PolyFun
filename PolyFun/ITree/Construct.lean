@@ -51,7 +51,6 @@ def diverge : ITree F α :=
     shape' (diverge (F := F) (α := α)) = ⟨.step, fun _ => diverge⟩ := by
   unfold shape' diverge
   rw [PFunctor.M.dest_corec_eq _ _ rfl]
-  rfl
 
 @[simp] theorem shape_diverge :
     shape (diverge (F := F) (α := α)) = .step := by

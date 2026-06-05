@@ -41,14 +41,14 @@ def stateChain (a : α) (Stage : Nat → Type w)
       (s i state).append
         (fun path => stateChain a Stage s advance n (i + 1) (advance i state path))
 
-@[simp, grind =, freeM_unfold]
+@[simp, grind =]
 theorem stateChain_zero (a : α) (Stage : Nat → Type w)
     (s : (i : Nat) → Stage i → FreeM P α)
     (advance : (i : Nat) → (state : Stage i) → Path (s i state) → Stage (i + 1))
     (i : Nat) (state : Stage i) :
     FreeM.stateChain a Stage s advance 0 i state = FreeM.pure a := rfl
 
-@[simp, freeM_unfold]
+@[simp]
 theorem stateChain_succ (a : α) (Stage : Nat → Type w)
     (s : (i : Nat) → Stage i → FreeM P α)
     (advance : (i : Nat) → (state : Stage i) → Path (s i state) → Stage (i + 1))
@@ -97,7 +97,7 @@ def stateChain {Γ : P.A → Type w₂}
       Decoration.append (deco i state)
         (fun path => Decoration.stateChain deco n (i + 1) (advance i state path))
 
-@[simp, freeM_unfold]
+@[simp]
 theorem stateChain_zero {Γ : P.A → Type w₂}
     {a : α} {Stage : Nat → Type w}
     {s : (i : Nat) → Stage i → FreeM P α}
@@ -108,7 +108,7 @@ theorem stateChain_zero {Γ : P.A → Type w₂}
       (⟨⟩ : Decoration Γ (FreeM.stateChain a Stage s advance 0 i state)) :=
   rfl
 
-@[simp, freeM_unfold]
+@[simp]
 theorem stateChain_succ {Γ : P.A → Type w₂}
     {a : α} {Stage : Nat → Type w}
     {s : (i : Nat) → Stage i → FreeM P α}
@@ -141,7 +141,7 @@ def stateChain {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Type w₃}
       Decoration.Over.append (rDeco i state)
         (fun path => Over.stateChain rDeco n (i + 1) (advance i state path))
 
-@[simp, freeM_unfold]
+@[simp]
 theorem stateChain_zero {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Type w₃}
     {a : α} {Stage : Nat → Type w}
     {s : (i : Nat) → Stage i → FreeM P α}
@@ -156,7 +156,7 @@ theorem stateChain_zero {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Typ
         (Decoration.stateChain deco 0 i state)) :=
   rfl
 
-@[simp, freeM_unfold]
+@[simp]
 theorem stateChain_succ {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Type w₃}
     {a : α} {Stage : Nat → Type w}
     {s : (i : Nat) → Stage i → FreeM P α}

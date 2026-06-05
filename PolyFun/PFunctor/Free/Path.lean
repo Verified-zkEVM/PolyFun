@@ -5,6 +5,7 @@ Authors: Quang Dao
 -/
 module
 
+public import PolyFun.PFunctor.Free.Basic
 public import PolyFun.PFunctor.Free.Displayed
 
 /-!
@@ -262,12 +263,12 @@ def append {β : Type t} :
   | .roll a rest, s₂ =>
       .roll a fun b => append (rest b) (fun path => s₂ ⟨b, path⟩)
 
-@[simp, freeM_unfold]
+@[simp]
 theorem append_pure {β : Type t} (x : α)
     (s₂ : Path (FreeM.pure (P := P) x) → FreeM P β) :
     append (FreeM.pure x) s₂ = s₂ ⟨⟩ := rfl
 
-@[simp, freeM_unfold]
+@[simp]
 theorem append_roll {β : Type t} (a : P.A) (rest : P.B a → FreeM P α)
     (s₂ : Path (FreeM.roll a rest) → FreeM P β) :
     append (FreeM.roll a rest) s₂ =

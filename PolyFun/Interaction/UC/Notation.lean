@@ -49,6 +49,8 @@ Precedence ensures natural parenthesization:
 
 namespace Interaction.UC
 
+universe p q u
+
 /-! ### Boundary-level notation -/
 
 /-- Tensor (parallel) of port boundaries: `Δ₁ ⊗ᵇ Δ₂`. -/
@@ -64,20 +66,21 @@ scoped notation:max Δ "ᵛ" => PortBoundary.swap Δ
 /-! ### Composition typeclasses -/
 
 /-- Parallel composition on boundary-indexed types. -/
-class HasPar (F : PortBoundary → Type*) where
-  par : {Δ₁ Δ₂ : PortBoundary} → F Δ₁ → F Δ₂ → F (PortBoundary.tensor Δ₁ Δ₂)
+class HasPar (F : PortBoundary.{p, q} → Type u) where
+  par : {Δ₁ Δ₂ : PortBoundary.{p, q}} →
+    F Δ₁ → F Δ₂ → F (PortBoundary.tensor Δ₁ Δ₂)
 
 /-- Wiring (partial internal connection) on boundary-indexed types. -/
-class HasWire (F : PortBoundary → Type*) where
-  wire : {Δ₁ Γ Δ₂ : PortBoundary} →
+class HasWire (F : PortBoundary.{p, q} → Type u) where
+  wire : {Δ₁ Γ Δ₂ : PortBoundary.{p, q}} →
     F (PortBoundary.tensor Δ₁ Γ) →
     F (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) →
     F (PortBoundary.tensor Δ₁ Δ₂)
 
 /-- Plugging (full closure) on boundary-indexed types. -/
-class HasPlug (F : PortBoundary → Type*) where
-  plug : {Δ : PortBoundary} →
-    F Δ → F (PortBoundary.swap Δ) → F PortBoundary.empty
+class HasPlug (F : PortBoundary.{p, q} → Type u) where
+  plug : {Δ : PortBoundary.{p, q}} →
+    F Δ → F (PortBoundary.swap Δ) → F (PortBoundary.empty : PortBoundary.{p, q})
 
 /-! ### Notation -/
 
@@ -94,17 +97,17 @@ scoped infixr:60 " ⊠ " => HasPlug.plug
 
 namespace OpenSyntax.Raw
 
-instance {Atom : PortBoundary → Type*} : HasPar (Raw Atom) where
+instance {Atom : PortBoundary.{p, q} → Type u} : HasPar (Raw Atom) where
   par := Raw.par
 
-instance {Atom : PortBoundary → Type*} : HasWire (Raw Atom) where
+instance {Atom : PortBoundary.{p, q} → Type u} : HasWire (Raw Atom) where
   wire := Raw.wire
 
-instance {Atom : PortBoundary → Type*} : HasPlug (Raw Atom) where
+instance {Atom : PortBoundary.{p, q} → Type u} : HasPlug (Raw Atom) where
   plug := Raw.plug
 
-variable {Atom : PortBoundary → Type*}
-variable {Δ₁ Δ₂ Γ : PortBoundary}
+variable {Atom : PortBoundary.{p, q} → Type u}
+variable {Δ₁ Δ₂ Γ : PortBoundary.{p, q}}
 
 @[simp]
 theorem hasPar (e₁ : Raw Atom Δ₁) (e₂ : Raw Atom Δ₂) :
@@ -126,17 +129,17 @@ end OpenSyntax.Raw
 
 namespace OpenSyntax.Expr
 
-instance {Atom : PortBoundary → Type*} : HasPar (Expr Atom) where
+instance {Atom : PortBoundary.{p, q} → Type u} : HasPar (Expr Atom) where
   par := Expr.par
 
-instance {Atom : PortBoundary → Type*} : HasWire (Expr Atom) where
+instance {Atom : PortBoundary.{p, q} → Type u} : HasWire (Expr Atom) where
   wire := Expr.wire
 
-instance {Atom : PortBoundary → Type*} : HasPlug (Expr Atom) where
+instance {Atom : PortBoundary.{p, q} → Type u} : HasPlug (Expr Atom) where
   plug := Expr.plug
 
-variable {Atom : PortBoundary → Type*}
-variable {Δ₁ Δ₂ Γ : PortBoundary}
+variable {Atom : PortBoundary.{p, q} → Type u}
+variable {Δ₁ Δ₂ Γ : PortBoundary.{p, q}}
 
 @[simp]
 theorem hasPar (e₁ : Expr Atom Δ₁) (e₂ : Expr Atom Δ₂) :
@@ -158,17 +161,17 @@ end OpenSyntax.Expr
 
 namespace OpenSyntax.Interp
 
-instance {Atom : PortBoundary → Type*} : HasPar (Interp Atom) where
+instance {Atom : PortBoundary.{p, q} → Type u} : HasPar (Interp Atom) where
   par := Interp.par
 
-instance {Atom : PortBoundary → Type*} : HasWire (Interp Atom) where
+instance {Atom : PortBoundary.{p, q} → Type u} : HasWire (Interp Atom) where
   wire := Interp.wire
 
-instance {Atom : PortBoundary → Type*} : HasPlug (Interp Atom) where
+instance {Atom : PortBoundary.{p, q} → Type u} : HasPlug (Interp Atom) where
   plug := Interp.plug
 
-variable {Atom : PortBoundary → Type*}
-variable {Δ₁ Δ₂ Γ : PortBoundary}
+variable {Atom : PortBoundary.{p, q} → Type u}
+variable {Δ₁ Δ₂ Γ : PortBoundary.{p, q}}
 
 @[simp]
 theorem hasPar (e₁ : Interp Atom Δ₁) (e₂ : Interp Atom Δ₂) :
@@ -195,8 +198,8 @@ section Tests
 
 open Interaction.UC
 
-variable {Atom : PortBoundary → Type*}
-variable {Δ₁ Δ₂ Δ₃ Γ : PortBoundary}
+variable {Atom : PortBoundary.{p, q} → Type u}
+variable {Δ₁ Δ₂ Δ₃ Γ : PortBoundary.{p, q}}
 
 -- Boundary notation
 example : Δ₁ ⊗ᵇ Δ₂ = PortBoundary.tensor Δ₁ Δ₂ := rfl

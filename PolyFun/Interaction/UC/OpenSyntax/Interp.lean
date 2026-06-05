@@ -23,7 +23,7 @@ See `OpenSyntax.Expr` for the quotiented initial model that supports
 pattern matching and inspection.
 -/
 
-universe u
+universe p q u
 
 namespace Interaction
 namespace UC
@@ -38,16 +38,16 @@ open theory `T` and every atom interpretation, it produces an object of
 boundary `Δ` in `T`.
 -/
 structure Interp
-    (Atom : PortBoundary → Type u)
-    (Δ : PortBoundary) where
+    (Atom : PortBoundary.{p, q} → Type u)
+    (Δ : PortBoundary.{p, q}) where
   /--
   Interpret the free expression in an arbitrary target theory with the full
   plug-wire factorization structure.
   -/
   run :
-    (T : OpenTheory.{max (u + 1) 3}) →
+    (T : OpenTheory.{p, q, max (u + 1) (p + 2) (q + 2)}) →
     OpenTheory.HasPlugWireFactor T →
-    (∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) →
+    (∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) →
     T.Obj Δ
 
 namespace Interp
@@ -59,12 +59,12 @@ plug-wire factorization structure.
 This is just the `run` field restated as a named eliminator.
 -/
 abbrev interpret
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ : PortBoundary.{p, q}}
     (W : Interp Atom Δ)
-    (T : OpenTheory.{max (u + 1) 3})
+    (T : OpenTheory.{p, q, max (u + 1) (p + 2) (q + 2)})
     (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     T.Obj Δ :=
   W.run T hT interp
 
@@ -74,13 +74,13 @@ in every lawful target theory.
 -/
 @[ext]
 theorem ext
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ : PortBoundary.{p, q}}
     {W₁ W₂ : Interp Atom Δ}
     (h :
-      ∀ (T : OpenTheory.{max (u + 1) 3})
+      ∀ (T : OpenTheory.{p, q, max (u + 1) (p + 2) (q + 2)})
         (hT : OpenTheory.HasPlugWireFactor T)
-        (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ),
+        (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ),
           W₁.run T hT interp = W₂.run T hT interp) :
     W₁ = W₂ := by
   cases W₁
@@ -94,19 +94,19 @@ theorem ext
 Inject a primitive open component into the tagless-final syntax.
 -/
 def atom
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary} :
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ : PortBoundary.{p, q}} :
     Atom Δ → Interp Atom Δ
   | a => ⟨fun _ _ interp => interp a⟩
 
 @[simp]
 theorem interpret_atom
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ : PortBoundary.{p, q}}
     (a : Atom Δ)
-    (T : OpenTheory.{max (u + 1) 3})
+    (T : OpenTheory.{p, q, max (u + 1) (p + 2) (q + 2)})
     (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (atom a).interpret T hT interp = interp a :=
   rfl
 
@@ -114,21 +114,21 @@ theorem interpret_atom
 Adapt the exposed boundary of a tagless-final expression.
 -/
 def map
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Δ₂ : PortBoundary}
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (f : PortBoundary.Hom Δ₁ Δ₂) :
     Interp Atom Δ₁ → Interp Atom Δ₂
   | W => ⟨fun T hT interp => T.map f (W.run T hT interp)⟩
 
 @[simp]
 theorem interpret_map
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Δ₂ : PortBoundary}
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (f : PortBoundary.Hom Δ₁ Δ₂)
     (W : Interp Atom Δ₁)
-    (T : OpenTheory.{max (u + 1) 3})
+    (T : OpenTheory.{p, q, max (u + 1) (p + 2) (q + 2)})
     (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (map f W).interpret T hT interp = T.map f (W.interpret T hT interp) :=
   rfl
 
@@ -136,8 +136,8 @@ theorem interpret_map
 Place two tagless-final expressions side by side.
 -/
 def par
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Δ₂ : PortBoundary} :
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}} :
     Interp Atom Δ₁ →
     Interp Atom Δ₂ →
     Interp Atom (PortBoundary.tensor Δ₁ Δ₂)
@@ -146,13 +146,13 @@ def par
 
 @[simp]
 theorem interpret_par
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Δ₂ : PortBoundary}
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (W₁ : Interp Atom Δ₁)
     (W₂ : Interp Atom Δ₂)
-    (T : OpenTheory.{max (u + 1) 3})
+    (T : OpenTheory.{p, q, max (u + 1) (p + 2) (q + 2)})
     (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (par W₁ W₂).interpret T hT interp =
       T.par (W₁.interpret T hT interp) (W₂.interpret T hT interp) :=
   rfl
@@ -161,8 +161,8 @@ theorem interpret_par
 Connect one shared boundary between two tagless-final expressions.
 -/
 def wire
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Γ Δ₂ : PortBoundary} :
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}} :
     Interp Atom (PortBoundary.tensor Δ₁ Γ) →
     Interp Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) →
     Interp Atom (PortBoundary.tensor Δ₁ Δ₂)
@@ -171,13 +171,13 @@ def wire
 
 @[simp]
 theorem interpret_wire
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Γ Δ₂ : PortBoundary}
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     (W₁ : Interp Atom (PortBoundary.tensor Δ₁ Γ))
     (W₂ : Interp Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
-    (T : OpenTheory.{max (u + 1) 3})
+    (T : OpenTheory.{p, q, max (u + 1) (p + 2) (q + 2)})
     (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (wire W₁ W₂).interpret T hT interp =
       T.wire (W₁.interpret T hT interp) (W₂.interpret T hT interp) :=
   rfl
@@ -186,8 +186,8 @@ theorem interpret_wire
 Close a tagless-final expression against a matching context.
 -/
 def plug
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary} :
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ : PortBoundary.{p, q}} :
     Interp Atom Δ →
     Interp Atom (PortBoundary.swap Δ) →
     Interp Atom (PortBoundary.empty)
@@ -196,13 +196,13 @@ def plug
 
 @[simp]
 theorem interpret_plug
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ : PortBoundary.{p, q}}
     (W : Interp Atom Δ)
     (K : Interp Atom (PortBoundary.swap Δ))
-    (T : OpenTheory.{max (u + 1) 3})
+    (T : OpenTheory.{p, q, max (u + 1) (p + 2) (q + 2)})
     (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (plug W K).interpret T hT interp =
       T.plug (W.interpret T hT interp) (K.interpret T hT interp) :=
   rfl
@@ -211,17 +211,17 @@ theorem interpret_plug
 The monoidal unit (closed system with no boundary).
 -/
 def unit
-    {Atom : PortBoundary → Type u} :
+    {Atom : PortBoundary.{p, q} → Type u} :
     Interp Atom PortBoundary.empty :=
   ⟨fun _ hCC _ => OpenTheory.HasUnit.unit
     (self := hCC.toIsCompactClosed.toIsTraced.toIsMonoidal.toHasUnit)⟩
 
 @[simp]
 theorem interpret_unit
-    {Atom : PortBoundary → Type u}
-    (T : OpenTheory.{max (u + 1) 3})
+    {Atom : PortBoundary.{p, q} → Type u}
+    (T : OpenTheory.{p, q, max (u + 1) (p + 2) (q + 2)})
     (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (unit : Interp Atom _).interpret T hT interp =
       OpenTheory.HasUnit.unit (T := T) :=
   rfl
@@ -230,19 +230,19 @@ theorem interpret_unit
 The identity wire (coevaluation) on boundary `Γ`.
 -/
 def idWire
-    {Atom : PortBoundary → Type u}
-    (Γ : PortBoundary) :
+    {Atom : PortBoundary.{p, q} → Type u}
+    (Γ : PortBoundary.{p, q}) :
     Interp Atom (PortBoundary.tensor (PortBoundary.swap Γ) Γ) :=
   ⟨fun _ hCC _ => OpenTheory.HasIdWire.idWire
     (self := hCC.toIsCompactClosed.toHasIdWire) Γ⟩
 
 @[simp]
 theorem interpret_idWire
-    {Atom : PortBoundary → Type u}
-    (Γ : PortBoundary)
-    (T : OpenTheory.{max (u + 1) 3})
+    {Atom : PortBoundary.{p, q} → Type u}
+    (Γ : PortBoundary.{p, q})
+    (T : OpenTheory.{p, q, max (u + 1) (p + 2) (q + 2)})
     (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (idWire Γ : Interp Atom _).interpret T hT interp =
       OpenTheory.HasIdWire.idWire (T := T) Γ :=
   rfl
@@ -251,8 +251,8 @@ theorem interpret_idWire
 The free lawful `OpenTheory` generated by tagless-final expressions over `Atom`.
 -/
 abbrev theory
-    (Atom : PortBoundary → Type u) :
-    OpenTheory.{max (u + 2) 4} where
+    (Atom : PortBoundary.{p, q} → Type u) :
+    OpenTheory.{p, q, max (u + 2) (p + 3) (q + 3)} where
   Obj := Interp Atom
   map := Interp.map
   par := Interp.par
@@ -260,7 +260,7 @@ abbrev theory
   plug := Interp.plug
 
 instance lawfulMap
-    (Atom : PortBoundary → Type u) :
+    (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsLawfulMap (Interp.theory Atom) where
   map_id := by
     intro Δ W
@@ -281,7 +281,7 @@ instance lawfulMap
       OpenTheory.map_comp (T := T) g f (W.run T hT interp)
 
 instance lawfulPar
-    (Atom : PortBoundary → Type u) :
+    (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsLawfulPar (Interp.theory Atom) where
   map_id := OpenTheory.IsLawfulMap.map_id (T := Interp.theory Atom)
   map_comp := OpenTheory.IsLawfulMap.map_comp (T := Interp.theory Atom)
@@ -299,7 +299,7 @@ instance lawfulPar
       OpenTheory.map_par (T := T) f₁ f₂ (W₁.run T hT interp) (W₂.run T hT interp)
 
 instance lawfulWire
-    (Atom : PortBoundary → Type u) :
+    (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsLawfulWire (Interp.theory Atom) where
   map_id := OpenTheory.IsLawfulMap.map_id (T := Interp.theory Atom)
   map_comp := OpenTheory.IsLawfulMap.map_comp (T := Interp.theory Atom)
@@ -323,7 +323,7 @@ instance lawfulWire
       OpenTheory.map_wire (T := T) f₁ f₂ (W₁.run T hT interp) (W₂.run T hT interp)
 
 instance lawfulPlug
-    (Atom : PortBoundary → Type u) :
+    (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsLawfulPlug (Interp.theory Atom) where
   map_id := OpenTheory.IsLawfulMap.map_id (T := Interp.theory Atom)
   map_comp := OpenTheory.IsLawfulMap.map_comp (T := Interp.theory Atom)
@@ -341,21 +341,21 @@ instance lawfulPlug
       OpenTheory.map_plug (T := T) f (W.run T hT interp) (K.run T hT interp)
 
 instance lawful
-    (Atom : PortBoundary → Type u) :
+    (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsLawful (Interp.theory Atom) where
 
 instance hasUnit
-    (Atom : PortBoundary → Type u) :
+    (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.HasUnit (Interp.theory Atom) where
   unit := Interp.unit
 
 instance hasIdWire
-    (Atom : PortBoundary → Type u) :
+    (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.HasIdWire (Interp.theory Atom) where
   idWire := Interp.idWire
 
 instance isMonoidal
-    (Atom : PortBoundary → Type u) :
+    (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsMonoidal (Interp.theory Atom) where
   par_assoc := by
     intro Δ₁ Δ₂ Δ₃ W₁ W₂ W₃
@@ -407,7 +407,7 @@ instance isMonoidal
     simp [Interp.map, Interp.par, Interp.unit]
 
 instance isTraced
-    (Atom : PortBoundary → Type u) :
+    (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsTraced (Interp.theory Atom) where
   wire_assoc := by
     intro Δ₁ Γ₁ Γ₂ Δ₃ W₁ W₂ W₃
@@ -435,7 +435,7 @@ instance isTraced
       (W₁.run T hT interp) (W₂.run T hT interp)
 
 instance isCompactClosed
-    (Atom : PortBoundary → Type u) :
+    (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsCompactClosed (Interp.theory Atom) where
   wire_idWire := by
     intro Γ Δ₂ W₂
@@ -467,7 +467,7 @@ instance isCompactClosed
     exact OpenTheory.unit_eq (T := T)
 
 instance hasPlugWireFactor
-    (Atom : PortBoundary → Type u) :
+    (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.HasPlugWireFactor (Interp.theory Atom) where
   plug_eq_wire := by
     intro Δ W K

@@ -65,7 +65,7 @@ filter incoming routed packets explicitly through `allowed` at the
 appropriate boundary surface.
 -/
 
-universe u v w w'
+universe p q u v w w'
 
 namespace Interaction
 namespace UC
@@ -145,8 +145,8 @@ composition operates uniformly over this type.
 Existing examples that use a flat `Party` are unaffected; only protocols that
 need session-aware identity instantiate this abbreviation.
 -/
-abbrev MachineProcess (Sid Pid : Type u) (m : Type w → Type w') (Δ : PortBoundary) :=
-  OpenProcess.{u, v, w, w'} m (MachineId Sid Pid) Δ
+abbrev MachineProcess (Sid Pid : Type u) (m : Type w → Type w') (Δ : PortBoundary.{p, q}) :=
+  OpenProcess m (MachineId Sid Pid) Δ
 
 /-! ## Per-process access control -/
 
@@ -173,13 +173,13 @@ Until that integration lands, `HasAccessControl` is a *declarative* contract
 that downstream constructions must thread by hand.
 -/
 class HasAccessControl
-    {Party : Type u} {m : Type w → Type w'} {Δ : PortBoundary}
-    (P : OpenProcess.{u, v, w, w'} m Party Δ) where
+    {Party : Type u} {m : Type w → Type w'} {Δ : PortBoundary.{p, q}}
+    (P : OpenProcess m Party Δ) where
   allowed : Interface.RoutedPacket Δ.In Party → Bool
 
 namespace HasAccessControl
 
-variable {Party : Type u} {m : Type w → Type w'} {Δ : PortBoundary}
+variable {Party : Type u} {m : Type w → Type w'} {Δ : PortBoundary.{p, q}}
 
 /--
 The trivial **allow-all** access control: every routed packet is admissible.
@@ -189,12 +189,12 @@ filtering, and as the canonical baseline against which more restrictive
 instances are compared.
 -/
 @[reducible]
-def allowAll (P : OpenProcess.{u, v, w, w'} m Party Δ) : HasAccessControl P where
+def allowAll (P : OpenProcess m Party Δ) : HasAccessControl P where
   allowed _ := true
 
 @[simp]
 theorem allowed_allowAll
-    (P : OpenProcess.{u, v, w, w'} m Party Δ)
+    (P : OpenProcess m Party Δ)
     (rp : Interface.RoutedPacket Δ.In Party) :
     (HasAccessControl.allowAll P).allowed rp = true := rfl
 
@@ -214,16 +214,16 @@ discipline.
 -/
 @[reducible]
 def MachineProcess.allowSameSession
-    {Sid Pid : Type u} {m : Type w → Type w'} {Δ : PortBoundary} [DecidableEq Sid]
+    {Sid Pid : Type u} {m : Type w → Type w'} {Δ : PortBoundary.{p, q}} [DecidableEq Sid]
     (owner : MachineId Sid Pid)
-    (P : MachineProcess.{u, v, w, w'} Sid Pid m Δ) : HasAccessControl P where
+    (P : MachineProcess Sid Pid m Δ) : HasAccessControl P where
   allowed rp := rp.sender.sameSession owner
 
 @[simp]
 theorem MachineProcess.allowed_allowSameSession
-    {Sid Pid : Type u} {m : Type w → Type w'} {Δ : PortBoundary} [DecidableEq Sid]
+    {Sid Pid : Type u} {m : Type w → Type w'} {Δ : PortBoundary.{p, q}} [DecidableEq Sid]
     (owner : MachineId Sid Pid)
-    (P : MachineProcess.{u, v, w, w'} Sid Pid m Δ)
+    (P : MachineProcess Sid Pid m Δ)
     (rp : Interface.RoutedPacket Δ.In (MachineId Sid Pid)) :
     (MachineProcess.allowSameSession owner P).allowed rp =
       rp.sender.sameSession owner := rfl
@@ -240,7 +240,7 @@ node where `x` is chosen, every machine credited as a controller of `x`
 must share the protocol's session identifier.
 -/
 def OpenNodeProfile.SessionCoherentAtMove
-    {Sid Pid : Type u} {Δ : PortBoundary} {X : Type w}
+    {Sid Pid : Type u} {Δ : PortBoundary.{p, q}} {X : Type w}
     (sid : Sid) (ons : OpenNodeProfile (MachineId Sid Pid) Δ X)
     (x : X) : Prop :=
   ∀ m ∈ ons.controllers x, m.sid = sid
@@ -257,11 +257,11 @@ through the decoration tree and accumulates the per-node coherence
 checks.
 -/
 def DecorationSessionCoherentAt
-    {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid) :
+    {Sid Pid : Type u} {Δ : PortBoundary.{p, q}} (sid : Sid) :
     {spec : Interaction.Spec.{w}} →
     PFunctor.FreeM.Displayed.Decoration
       (P := Spec.basePFunctor) (α := PUnit.{w + 1})
-      (OpenNodeContext.{u, w} (MachineId Sid Pid) Δ) spec →
+      (OpenNodeContext (MachineId Sid Pid) Δ) spec →
     spec.Transcript → Prop
   | .done, _, _ => True
   | .node _ _, ⟨ons, drest⟩, ⟨x, tr⟩ =>
@@ -281,28 +281,28 @@ accepted `RoutedPacket` has sender in session `sid`) lives at the
 `MachineProcess.allowSameSession`.
 -/
 def MachineProcess.SubroutineRespectingAt
-    {Sid Pid : Type u} {m : Type w → Type w'} {Δ : PortBoundary}
-    (sid : Sid) (P : MachineProcess.{u, v, w, w'} Sid Pid m Δ) : Prop :=
+    {Sid Pid : Type u} {m : Type w → Type w'} {Δ : PortBoundary.{p, q}}
+    (sid : Sid) (P : MachineProcess Sid Pid m Δ) : Prop :=
   ∀ (s : P.Proc) (tr : (P.step s).spec.Transcript),
     DecorationSessionCoherentAt sid (P.step s).semantics tr
 
 @[simp]
 theorem DecorationSessionCoherentAt_done
-    {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid)
+    {Sid Pid : Type u} {Δ : PortBoundary.{p, q}} (sid : Sid)
     (d : PFunctor.FreeM.Displayed.Decoration
       (P := Spec.basePFunctor) (α := PUnit.{w + 1})
-      (OpenNodeContext.{u, w} (MachineId Sid Pid) Δ) Spec.done)
+      (OpenNodeContext (MachineId Sid Pid) Δ) Spec.done)
     (tr : (Interaction.Spec.done : Interaction.Spec.{w}).Transcript) :
     DecorationSessionCoherentAt sid d tr := by
   trivial
 
 @[simp]
 theorem DecorationSessionCoherentAt_node
-    {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid)
+    {Sid Pid : Type u} {Δ : PortBoundary.{p, q}} (sid : Sid)
     {Moves : Type w} {residual : Moves → Interaction.Spec.{w}}
     (d : PFunctor.FreeM.Displayed.Decoration
       (P := Spec.basePFunctor) (α := PUnit.{w + 1})
-      (OpenNodeContext.{u, w} (MachineId Sid Pid) Δ)
+      (OpenNodeContext (MachineId Sid Pid) Δ)
       (Spec.node Moves residual))
     (x : Moves)
     (tr : (residual x).Transcript) :

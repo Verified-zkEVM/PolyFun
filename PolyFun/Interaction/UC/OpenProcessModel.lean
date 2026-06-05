@@ -38,7 +38,7 @@ that carry a per-step nodewise-monadic sampler in the intermediate monad
   the scheduler-interleaving pattern.
 -/
 
-universe u v w w'
+universe p q u v w w'
 
 namespace Interaction
 open PFunctor.FreeM.Displayed (Decoration)
@@ -53,8 +53,8 @@ variable (m : Type w → Type w')
 variable (schedulerSampler : m (ULift.{w, 0} Bool))
 
 /-- The hidden scheduler node shared by `par`, `wire`, and `plug`. -/
-private def schedulerNode (Δ : PortBoundary) :
-    OpenNodeProfile.{u, w} Party Δ (ULift.{w, 0} Bool) where
+private def schedulerNode (Δ : PortBoundary.{p, q}) :
+    OpenNodeProfile Party Δ (ULift.{w, 0} Bool) where
   controllers := fun _ => []
   views := fun _ => .hidden
   boundary := .internal Δ _
@@ -71,7 +71,7 @@ The concrete open-composition theory backed by `OpenProcess m`.
   through `Spec.Sampler.interleave`.
 -/
 def openTheory : OpenTheory where
-  Obj Δ := OpenProcess.{u, v, w, w'} m Party Δ
+  Obj Δ := OpenProcess m Party Δ
   map φ p := p.mapBoundary φ
   par {Δ₁} {Δ₂} p₁ p₂ :=
     p₁.interleave p₂
@@ -93,7 +93,7 @@ def openTheory : OpenTheory where
       schedulerSampler
 
 instance lawfulMap_openTheory :
-    OpenTheory.IsLawfulMap (openTheory.{u, v, w, w'} Party m schedulerSampler) where
+    OpenTheory.IsLawfulMap (openTheory Party m schedulerSampler) where
   map_id {Δ} W := by
     change W.mapBoundary (PortBoundary.Hom.id Δ) = W
     simp only [OpenProcess.mapBoundary]
@@ -121,15 +121,15 @@ residual state type `Proc` definitionally, the `step` fields are equal
 as functions, and the `stepSampler` fields are HEq (which reduces to
 literal equality once `step` agrees). -/
 private theorem OpenProcess.ext_of_step_eq
-    {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
+    {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary.{p, q}}
     {Proc : Type v}
-    {step₁ step₂ : Proc → StepOver (OpenNodeContext.{u, w} Party Δ) Proc}
+    {step₁ step₂ : Proc → StepOver (OpenNodeContext Party Δ) Proc}
     {stepSampler₁ : ∀ s, Spec.Sampler.{w, w'} m (step₁ s).spec}
     {stepSampler₂ : ∀ s, Spec.Sampler.{w, w'} m (step₂ s).spec}
     (hstep : step₁ = step₂)
     (hsampler : HEq stepSampler₁ stepSampler₂) :
     (OpenProcess.mk Proc step₁ stepSampler₁ :
-      OpenProcess.{u, v, w, w'} m Party Δ) =
+      OpenProcess m Party Δ) =
       OpenProcess.mk Proc step₂ stepSampler₂ := by
   subst hstep
   cases hsampler
@@ -145,7 +145,7 @@ private theorem heq_step_of_processOver_eq.{v₀, w₀, w₂}
   h ▸ HEq.rfl
 
 instance lawfulPar_openTheory :
-    OpenTheory.IsLawfulPar (openTheory.{u, v, w, w'} Party m schedulerSampler) where
+    OpenTheory.IsLawfulPar (openTheory Party m schedulerSampler) where
   __ := lawfulMap_openTheory Party m schedulerSampler
   map_par {Δ₁} {Δ₁'} {Δ₂} {Δ₂'} f₁ f₂ W₁ W₂ := by
     change OpenProcess.mapBoundary (PortBoundary.Hom.tensor f₁ f₂)
@@ -184,7 +184,7 @@ instance lawfulPar_openTheory :
       (eq_of_heq (heq_step_of_processOver_eq hproc)) HEq.rfl
 
 instance lawfulWire_openTheory :
-    OpenTheory.IsLawfulWire (openTheory.{u, v, w, w'} Party m schedulerSampler) where
+    OpenTheory.IsLawfulWire (openTheory Party m schedulerSampler) where
   __ := lawfulMap_openTheory Party m schedulerSampler
   map_wire {Δ₁} {Δ₁'} {Γ} {Δ₂} {Δ₂'} f₁ f₂ W₁ W₂ := by
     change OpenProcess.mapBoundary (PortBoundary.Hom.tensor f₁ f₂)
@@ -225,7 +225,7 @@ instance lawfulWire_openTheory :
       (eq_of_heq (heq_step_of_processOver_eq hproc)) HEq.rfl
 
 instance lawfulPlug_openTheory :
-    OpenTheory.IsLawfulPlug (openTheory.{u, v, w, w'} Party m schedulerSampler) where
+    OpenTheory.IsLawfulPlug (openTheory Party m schedulerSampler) where
   __ := lawfulMap_openTheory Party m schedulerSampler
   map_plug {Δ₁} {Δ₂} f W K := by
     change (OpenProcess.mapBoundary f W).interleave K _ _ _ schedulerSampler =
@@ -255,7 +255,7 @@ instance lawfulPlug_openTheory :
     exact OpenProcess.ext_of_step_eq
       (eq_of_heq (heq_step_of_processOver_eq hproc)) HEq.rfl
 
-instance : OpenTheory.IsLawful (openTheory.{u, v, w, w'} Party m schedulerSampler) where
+instance : OpenTheory.IsLawful (openTheory Party m schedulerSampler) where
 
 /-! ## Monoidal and compact closed laws up to bisimilarity -/
 
@@ -263,10 +263,10 @@ instance : OpenTheory.IsLawful (openTheory.{u, v, w, w'} Party m schedulerSample
 reassociating the internal scheduler nesting does not change the observable
 boundary behavior. -/
 theorem openTheory_par_assoc_iso
-    {Δ₁ Δ₂ Δ₃ : PortBoundary}
-    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
-    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
-    (W₃ : OpenProcess.{u, v, w, w'} m Party Δ₃) :
+    {Δ₁ Δ₂ Δ₃ : PortBoundary.{p, q}}
+    (W₁ : OpenProcess m Party Δ₁)
+    (W₂ : OpenProcess m Party Δ₂)
+    (W₃ : OpenProcess m Party Δ₃) :
     OpenProcessIso
       (OpenProcess.mapBoundary
         (PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃).toHom
@@ -381,9 +381,9 @@ theorem openTheory_par_assoc_iso
 
 /-- Parallel composition of open processes is commutative up to bisimilarity. -/
 theorem openTheory_par_comm_iso
-    {Δ₁ Δ₂ : PortBoundary}
-    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
-    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂) :
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
+    (W₁ : OpenProcess m Party Δ₁)
+    (W₂ : OpenProcess m Party Δ₂) :
     OpenProcessIso
       (OpenProcess.mapBoundary
         (PortBoundary.Equiv.tensorComm Δ₁ Δ₂).toHom
@@ -445,7 +445,7 @@ theorem openTheory_par_comm_iso
 
 /-- The unit for parallel composition is the trivial process with no boundary
 and `PUnit` state. The sampler is the trivial `Decoration.done` sampler. -/
-def openTheory_unit : OpenProcess.{u, v, w, w'} m Party PortBoundary.empty where
+def openTheory_unit : OpenProcess m Party PortBoundary.empty where
   Proc := PUnit
   step := fun _ =>
     { spec := .done
@@ -456,8 +456,8 @@ def openTheory_unit : OpenProcess.{u, v, w, w'} m Party PortBoundary.empty where
 /-- The monoidal unit is a left identity for parallel composition up to
 bisimilarity. -/
 theorem openTheory_par_leftUnit_iso
-    {Δ : PortBoundary}
-    (W : OpenProcess.{u, v, w, w'} m Party Δ) :
+    {Δ : PortBoundary.{p, q}}
+    (W : OpenProcess m Party Δ) :
     OpenProcessIso
       (OpenProcess.mapBoundary
         (PortBoundary.Equiv.tensorEmptyLeft Δ).toHom
@@ -500,8 +500,8 @@ theorem openTheory_par_leftUnit_iso
 /-- The monoidal unit is a right identity for parallel composition up to
 bisimilarity. -/
 theorem openTheory_par_rightUnit_iso
-    {Δ : PortBoundary}
-    (W : OpenProcess.{u, v, w, w'} m Party Δ) :
+    {Δ : PortBoundary.{p, q}}
+    (W : OpenProcess m Party Δ) :
     OpenProcessIso
       (OpenProcess.mapBoundary
         (PortBoundary.Equiv.tensorEmptyRight Δ).toHom
@@ -543,8 +543,8 @@ theorem openTheory_par_rightUnit_iso
 
 /-- The identity wire (coevaluation) on boundary `Γ`: relays messages
 bidirectionally between `swap Γ` and `Γ`. -/
-def openTheory_idWire (Γ : PortBoundary) :
-    OpenProcess.{u, v, w, w'} m Party
+def openTheory_idWire (Γ : PortBoundary.{p, q}) :
+    OpenProcess m Party
       (PortBoundary.tensor (PortBoundary.swap Γ) Γ) where
   Proc := PUnit
   step := fun _ =>
@@ -556,9 +556,9 @@ def openTheory_idWire (Γ : PortBoundary) :
 /-- Left zig-zag: wiring the identity wire on the left is a no-op up to
 bisimilarity. -/
 theorem openTheory_wire_idWire_iso
-    (Γ : PortBoundary)
-    {Δ₂ : PortBoundary}
-    (W₂ : OpenProcess.{u, v, w, w'} m Party
+    (Γ : PortBoundary.{p, q})
+    {Δ₂ : PortBoundary.{p, q}}
+    (W₂ : OpenProcess m Party
       (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
     OpenProcessIso
       ((openTheory Party m schedulerSampler).wire
@@ -598,9 +598,9 @@ theorem openTheory_wire_idWire_iso
 /-- Right zig-zag: wiring the identity wire on the right is a no-op up to
 bisimilarity. -/
 theorem openTheory_wire_idWire_right_iso
-    (Γ : PortBoundary)
-    {Δ₁ : PortBoundary}
-    (W₁ : OpenProcess.{u, v, w, w'} m Party
+    (Γ : PortBoundary.{p, q})
+    {Δ₁ : PortBoundary.{p, q}}
+    (W₁ : OpenProcess m Party
       (PortBoundary.tensor Δ₁ Γ)) :
     OpenProcessIso
       ((openTheory Party m schedulerSampler).wire W₁
@@ -640,9 +640,9 @@ theorem openTheory_wire_idWire_right_iso
 /-- `plug` is derivable from `wire` plus boundary reshaping, up to
 bisimilarity. -/
 theorem openTheory_plug_eq_wire_iso
-    {Δ : PortBoundary}
-    (W : OpenProcess.{u, v, w, w'} m Party Δ)
-    (K : OpenProcess.{u, v, w, w'} m Party (PortBoundary.swap Δ)) :
+    {Δ : PortBoundary.{p, q}}
+    (W : OpenProcess m Party Δ)
+    (K : OpenProcess m Party (PortBoundary.swap Δ)) :
     OpenProcessIso
       ((openTheory Party m schedulerSampler).plug W K)
       (OpenProcess.mapBoundary
@@ -714,7 +714,7 @@ theorem openTheory_plug_eq_wire_iso
 up to bisimilarity. -/
 theorem openTheory_unit_eq_iso :
     OpenProcessIso
-      (openTheory_unit.{u, v, w, w'} Party m)
+      (openTheory_unit Party m)
       (OpenProcess.mapBoundary
         (PortBoundary.Equiv.tensorEmptyLeft PortBoundary.empty).toHom
         (openTheory_idWire Party m PortBoundary.empty)) :=

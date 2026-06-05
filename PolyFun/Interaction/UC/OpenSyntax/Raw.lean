@@ -33,7 +33,7 @@ The quotient of `Raw` by the `OpenTheory` equations is defined in
 * `Raw.setoid`: packages `Raw.Equiv` as a `Setoid`.
 -/
 
-universe u
+universe p q u v
 
 namespace Interaction
 namespace UC
@@ -49,33 +49,34 @@ abbreviations defined below.
 
 See `Expr` for the quotiented version.
 -/
-inductive Raw (Atom : PortBoundary → Type u) : PortBoundary → Type (u + 1) where
+inductive Raw (Atom : PortBoundary.{p, q} → Type u) :
+    PortBoundary.{p, q} → Type (max (u + 1) (p + 1) (q + 1)) where
   /-- Inject a primitive open component. -/
-  | atom {Δ : PortBoundary} : Atom Δ → Raw Atom Δ
+  | atom {Δ : PortBoundary.{p, q}} : Atom Δ → Raw Atom Δ
   /-- Adapt the exposed boundary along a structural morphism. -/
-  | map {Δ₁ Δ₂ : PortBoundary} :
+  | map {Δ₁ Δ₂ : PortBoundary.{p, q}} :
       PortBoundary.Hom Δ₁ Δ₂ → Raw Atom Δ₁ → Raw Atom Δ₂
   /-- Place two open systems side by side. -/
-  | par {Δ₁ Δ₂ : PortBoundary} :
+  | par {Δ₁ Δ₂ : PortBoundary.{p, q}} :
       Raw Atom Δ₁ → Raw Atom Δ₂ → Raw Atom (PortBoundary.tensor Δ₁ Δ₂)
   /-- Connect one shared boundary between two open systems. -/
-  | wire {Δ₁ Γ Δ₂ : PortBoundary} :
+  | wire {Δ₁ Γ Δ₂ : PortBoundary.{p, q}} :
       Raw Atom (PortBoundary.tensor Δ₁ Γ) →
       Raw Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) →
       Raw Atom (PortBoundary.tensor Δ₁ Δ₂)
   /-- The identity wire (coevaluation) on boundary `Γ`. -/
-  | idWire (Γ : PortBoundary) :
+  | idWire (Γ : PortBoundary.{p, q}) :
       Raw Atom (PortBoundary.tensor (PortBoundary.swap Γ) Γ)
 
 /-- The monoidal unit: `idWire` on the trivial boundary, mapped through a
 unitor. Derived from the two primitives `map` and `idWire`. -/
-abbrev Raw.unit {Atom : PortBoundary → Type u} : Raw Atom PortBoundary.empty :=
+abbrev Raw.unit {Atom : PortBoundary.{p, q} → Type u} : Raw Atom PortBoundary.empty :=
   .map (PortBoundary.Equiv.tensorEmptyLeft PortBoundary.empty).toHom
     (.idWire PortBoundary.empty)
 
 /-- Close an open system against a matching context. Derived from `wire` by
 embedding both operands into a tensored boundary and collapsing via a unitor. -/
-abbrev Raw.plug {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+abbrev Raw.plug {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (e : Raw Atom Δ) (k : Raw Atom (PortBoundary.swap Δ)) :
     Raw Atom PortBoundary.empty :=
   .map (PortBoundary.Equiv.tensorEmptyLeft PortBoundary.empty).toHom
@@ -94,12 +95,12 @@ This is structural recursion: each constructor maps to the corresponding
 only required when reasoning about equivalence of interpretations.
 -/
 def interpret
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ : PortBoundary.{p, q}}
     (e : Raw Atom Δ)
-    (T : OpenTheory)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ)
-    (idWireVal : ∀ (Γ : PortBoundary),
+    (T : OpenTheory.{p, q, v})
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ)
+    (idWireVal : ∀ (Γ : PortBoundary.{p, q}),
       T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Γ)) :
     T.Obj Δ :=
   match e with
@@ -113,21 +114,21 @@ def interpret
       (e₂.interpret T interp idWireVal)
   | .idWire Γ => idWireVal Γ
 
-variable {Atom : PortBoundary → Type u} {T : OpenTheory}
-    {interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ}
-    {idWireVal : ∀ (Γ : PortBoundary),
+variable {Atom : PortBoundary.{p, q} → Type u} {T : OpenTheory.{p, q, v}}
+    {interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ}
+    {idWireVal : ∀ (Γ : PortBoundary.{p, q}),
       T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Γ)}
 
 @[simp]
 theorem interpret_atom
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     (a : Atom Δ) :
     (Raw.atom a).interpret T interp idWireVal = interp a :=
   rfl
 
 @[simp]
 theorem interpret_map
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (f : PortBoundary.Hom Δ₁ Δ₂)
     (e : Raw Atom Δ₁) :
     (Raw.map f e).interpret T interp idWireVal =
@@ -136,7 +137,7 @@ theorem interpret_map
 
 @[simp]
 theorem interpret_par
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (e₁ : Raw Atom Δ₁)
     (e₂ : Raw Atom Δ₂) :
     (Raw.par e₁ e₂).interpret T interp idWireVal =
@@ -146,7 +147,7 @@ theorem interpret_par
 
 @[simp]
 theorem interpret_wire
-    {Δ₁ Γ Δ₂ : PortBoundary}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     (e₁ : Raw Atom (PortBoundary.tensor Δ₁ Γ))
     (e₂ : Raw Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
     (Raw.wire e₁ e₂).interpret T interp idWireVal =
@@ -156,7 +157,7 @@ theorem interpret_wire
 
 @[simp]
 theorem interpret_idWire
-    (Γ : PortBoundary) :
+    (Γ : PortBoundary.{p, q}) :
     (Raw.idWire Γ : Raw Atom _).interpret T interp idWireVal =
       idWireVal Γ :=
   rfl
@@ -174,21 +175,21 @@ equivalent sub-expressions can be substituted anywhere in a larger tree.
 Since `plug` and `unit` are abbreviations, laws like `plug_eq_wire` and
 `congr_plug` are now definitional and do not need dedicated constructors.
 -/
-inductive Equiv {Atom : PortBoundary → Type u} :
-    {Δ : PortBoundary} → Raw Atom Δ → Raw Atom Δ → Prop where
-  | refl {Δ : PortBoundary} {e : Raw Atom Δ} : Equiv e e
-  | symm {Δ : PortBoundary} {e₁ e₂ : Raw Atom Δ} :
+inductive Equiv {Atom : PortBoundary.{p, q} → Type u} :
+    {Δ : PortBoundary.{p, q}} → Raw Atom Δ → Raw Atom Δ → Prop where
+  | refl {Δ : PortBoundary.{p, q}} {e : Raw Atom Δ} : Equiv e e
+  | symm {Δ : PortBoundary.{p, q}} {e₁ e₂ : Raw Atom Δ} :
       Equiv e₁ e₂ → Equiv e₂ e₁
-  | trans {Δ : PortBoundary} {e₁ e₂ e₃ : Raw Atom Δ} :
+  | trans {Δ : PortBoundary.{p, q}} {e₁ e₂ e₃ : Raw Atom Δ} :
       Equiv e₁ e₂ → Equiv e₂ e₃ → Equiv e₁ e₃
-  | map_id {Δ : PortBoundary} {e : Raw Atom Δ} :
+  | map_id {Δ : PortBoundary.{p, q}} {e : Raw Atom Δ} :
       Equiv (.map (PortBoundary.Hom.id Δ) e) e
-  | map_comp {Δ₁ Δ₂ Δ₃ : PortBoundary}
+  | map_comp {Δ₁ Δ₂ Δ₃ : PortBoundary.{p, q}}
       {g : PortBoundary.Hom Δ₂ Δ₃}
       {f : PortBoundary.Hom Δ₁ Δ₂}
       {e : Raw Atom Δ₁} :
       Equiv (.map (PortBoundary.Hom.comp g f) e) (.map g (.map f e))
-  | map_par {Δ₁ Δ₁' Δ₂ Δ₂' : PortBoundary}
+  | map_par {Δ₁ Δ₁' Δ₂ Δ₂' : PortBoundary.{p, q}}
       {f₁ : PortBoundary.Hom Δ₁ Δ₁'}
       {f₂ : PortBoundary.Hom Δ₂ Δ₂'}
       {e₁ : Raw Atom Δ₁}
@@ -196,7 +197,7 @@ inductive Equiv {Atom : PortBoundary → Type u} :
       Equiv
         (.map (PortBoundary.Hom.tensor f₁ f₂) (.par e₁ e₂))
         (.par (.map f₁ e₁) (.map f₂ e₂))
-  | map_wire {Δ₁ Δ₁' Γ Δ₂ Δ₂' : PortBoundary}
+  | map_wire {Δ₁ Δ₁' Γ Δ₂ Δ₂' : PortBoundary.{p, q}}
       {f₁ : PortBoundary.Hom Δ₁ Δ₁'}
       {f₂ : PortBoundary.Hom Δ₂ Δ₂'}
       {e₁ : Raw Atom (PortBoundary.tensor Δ₁ Γ)}
@@ -210,14 +211,14 @@ inductive Equiv {Atom : PortBoundary → Type u} :
               (PortBoundary.Hom.id (PortBoundary.swap Γ))
               f₂)
             e₂))
-  | map_plug {Δ₁ Δ₂ : PortBoundary}
+  | map_plug {Δ₁ Δ₂ : PortBoundary.{p, q}}
       {f : PortBoundary.Hom Δ₁ Δ₂}
       {e : Raw Atom Δ₁}
       {k : Raw Atom (PortBoundary.swap Δ₂)} :
       Equiv
         (Raw.plug (.map f e) k)
         (Raw.plug e (.map (PortBoundary.Hom.swap f) k))
-  | par_assoc {Δ₁ Δ₂ Δ₃ : PortBoundary}
+  | par_assoc {Δ₁ Δ₂ Δ₃ : PortBoundary.{p, q}}
       {e₁ : Raw Atom Δ₁}
       {e₂ : Raw Atom Δ₂}
       {e₃ : Raw Atom Δ₃} :
@@ -225,43 +226,43 @@ inductive Equiv {Atom : PortBoundary → Type u} :
         (.map (PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃).toHom
           (.par (.par e₁ e₂) e₃))
         (.par e₁ (.par e₂ e₃))
-  | par_comm {Δ₁ Δ₂ : PortBoundary}
+  | par_comm {Δ₁ Δ₂ : PortBoundary.{p, q}}
       {e₁ : Raw Atom Δ₁}
       {e₂ : Raw Atom Δ₂} :
       Equiv
         (.map (PortBoundary.Equiv.tensorComm Δ₁ Δ₂).toHom
           (.par e₁ e₂))
         (.par e₂ e₁)
-  | par_leftUnit {Δ : PortBoundary}
+  | par_leftUnit {Δ : PortBoundary.{p, q}}
       {e : Raw Atom Δ} :
       Equiv
         (.map (PortBoundary.Equiv.tensorEmptyLeft Δ).toHom
           (.par Raw.unit e))
         e
-  | par_rightUnit {Δ : PortBoundary}
+  | par_rightUnit {Δ : PortBoundary.{p, q}}
       {e : Raw Atom Δ} :
       Equiv
         (.map (PortBoundary.Equiv.tensorEmptyRight Δ).toHom
           (.par e Raw.unit))
         e
-  | wire_idWire {Γ Δ₂ : PortBoundary}
+  | wire_idWire {Γ Δ₂ : PortBoundary.{p, q}}
       {e₂ : Raw Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)} :
       Equiv
         (.wire (.idWire Γ) e₂)
         e₂
-  | wire_idWire_right {Γ Δ₁ : PortBoundary}
+  | wire_idWire_right {Γ Δ₁ : PortBoundary.{p, q}}
       {e₁ : Raw Atom (PortBoundary.tensor Δ₁ Γ)} :
       Equiv
         (.wire e₁ (.idWire Γ))
         e₁
-  | wire_assoc {Δ₁ Γ₁ Γ₂ Δ₃ : PortBoundary}
+  | wire_assoc {Δ₁ Γ₁ Γ₂ Δ₃ : PortBoundary.{p, q}}
       {e₁ : Raw Atom (PortBoundary.tensor Δ₁ Γ₁)}
       {e₂ : Raw Atom (PortBoundary.tensor (PortBoundary.swap Γ₁) Γ₂)}
       {e₃ : Raw Atom (PortBoundary.tensor (PortBoundary.swap Γ₂) Δ₃)} :
       Equiv
         (.wire (.wire e₁ e₂) e₃)
         (.wire e₁ (.wire e₂ e₃))
-  | wire_par_superpose {Δ₁ Δ₂ Γ Δ₃ : PortBoundary}
+  | wire_par_superpose {Δ₁ Δ₂ Γ Δ₃ : PortBoundary.{p, q}}
       {e₁ : Raw Atom Δ₁}
       {e₂ : Raw Atom (PortBoundary.tensor Δ₂ Γ)}
       {e₃ : Raw Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₃)} :
@@ -272,7 +273,7 @@ inductive Equiv {Atom : PortBoundary → Type u} :
           e₃)
         (.map (PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃).symm.toHom
           (.par e₁ (.wire e₂ e₃)))
-  | wire_comm {Δ₁ Γ Δ₂ : PortBoundary}
+  | wire_comm {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
       {e₁ : Raw Atom (PortBoundary.tensor Δ₁ Γ)}
       {e₂ : Raw Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)} :
       Equiv
@@ -282,7 +283,7 @@ inductive Equiv {Atom : PortBoundary → Type u} :
             (.map (PortBoundary.Equiv.tensorComm
               (PortBoundary.swap Γ) Δ₂).toHom e₂)
             (.map (PortBoundary.Equiv.tensorComm Δ₁ Γ).toHom e₁)))
-  | plug_par_left {Δ₁ Δ₂ : PortBoundary}
+  | plug_par_left {Δ₁ Δ₂ : PortBoundary.{p, q}}
       {e₁ : Raw Atom Δ₁}
       {e₂ : Raw Atom Δ₂}
       {K : Raw Atom (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))} :
@@ -297,7 +298,7 @@ inductive Equiv {Atom : PortBoundary → Type u} :
               K
               (.map (PortBoundary.Equiv.tensorEmptyRight Δ₂).symm.toHom
                 e₂))))
-  | plug_wire_left {Δ₁ Γ Δ₂ : PortBoundary}
+  | plug_wire_left {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
       {e₁ : Raw Atom (PortBoundary.tensor Δ₁ Γ)}
       {e₂ : Raw Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)}
       {K : Raw Atom (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))} :
@@ -311,16 +312,16 @@ inductive Equiv {Atom : PortBoundary → Type u} :
             K
             (.map (PortBoundary.Equiv.tensorComm
               (PortBoundary.swap Γ) Δ₂).toHom e₂)))
-  | congr_map {Δ₁ Δ₂ : PortBoundary}
+  | congr_map {Δ₁ Δ₂ : PortBoundary.{p, q}}
       {f : PortBoundary.Hom Δ₁ Δ₂}
       {e₁ e₂ : Raw Atom Δ₁} :
       Equiv e₁ e₂ → Equiv (.map f e₁) (.map f e₂)
-  | congr_par {Δ₁ Δ₂ : PortBoundary}
+  | congr_par {Δ₁ Δ₂ : PortBoundary.{p, q}}
       {e₁ e₁' : Raw Atom Δ₁}
       {e₂ e₂' : Raw Atom Δ₂} :
       Equiv e₁ e₁' → Equiv e₂ e₂' →
       Equiv (.par e₁ e₂) (.par e₁' e₂')
-  | congr_wire {Δ₁ Γ Δ₂ : PortBoundary}
+  | congr_wire {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
       {e₁ e₁' : Raw Atom (PortBoundary.tensor Δ₁ Γ)}
       {e₂ e₂' : Raw Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)} :
       Equiv e₁ e₁' → Equiv e₂ e₂' →
@@ -330,13 +331,13 @@ inductive Equiv {Atom : PortBoundary → Type u} :
 Equivalent raw expressions interpret the same way in any lawful `OpenTheory`.
 -/
 theorem Equiv.interpret_eq
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
+    {Atom : PortBoundary.{p, q} → Type u}
+    {Δ : PortBoundary.{p, q}}
     {e₁ e₂ : Raw Atom Δ}
     (h : Equiv e₁ e₂)
-    (T : OpenTheory)
+    (T : OpenTheory.{p, q, v})
     [OpenTheory.HasPlugWireFactor T]
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     e₁.interpret T interp OpenTheory.HasIdWire.idWire =
       e₂.interpret T interp OpenTheory.HasIdWire.idWire := by
   induction h with
@@ -388,7 +389,7 @@ attribute [trans] Equiv.trans
 /--
 The `Setoid` on `Raw Atom Δ` induced by `Raw.Equiv`.
 -/
-instance setoid (Atom : PortBoundary → Type u) (Δ : PortBoundary) :
+instance setoid (Atom : PortBoundary.{p, q} → Type u) (Δ : PortBoundary.{p, q}) :
     Setoid (Raw Atom Δ) where
   r := Equiv
   iseqv := ⟨fun _ => .refl, fun h => .symm h, fun h₁ h₂ => .trans h₁ h₂⟩

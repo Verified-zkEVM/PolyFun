@@ -164,7 +164,7 @@ variable {m : Type u → Type v} {l : Type u}
 variable [Monad m] [LawfulMonad m] [CompleteLattice l] [MAlgOrdered m l]
 
 /-- Lift an ordered monad algebra through `StateT`. -/
-@[implicit_reducible] noncomputable def instStateT (σ : Type u) :
+noncomputable def instStateT (σ : Type u) :
     MAlgOrdered (StateT σ m) (σ → l) where
   μ x := fun s => MAlgOrdered.μ (x.run s >>= fun y => pure (y.1 y.2))
   μ_pure x := by
@@ -182,7 +182,7 @@ variable [Monad m] [LawfulMonad m] [CompleteLattice l] [MAlgOrdered m l]
 attribute [instance] instStateT
 
 /-- Lift an ordered monad algebra through `ReaderT`. -/
-@[implicit_reducible] noncomputable def instReaderT (ρ : Type u) :
+noncomputable def instReaderT (ρ : Type u) :
     MAlgOrdered (ReaderT ρ m) (ρ → l) where
   μ x := fun r => MAlgOrdered.μ (x.run r >>= fun q => pure (q r))
   μ_pure x := by
@@ -200,7 +200,7 @@ attribute [instance] instStateT
 attribute [instance] instReaderT
 
 /-- Lift an ordered monad algebra through `ExceptT` by interpreting exceptions as `⊥`. -/
-@[implicit_reducible] noncomputable def instExceptT (ε : Type u) :
+noncomputable def instExceptT (ε : Type u) :
     MAlgOrdered (ExceptT ε m) l where
   μ x := MAlgOrdered.μ <| (fun y : Except ε l =>
     match y with
@@ -235,7 +235,7 @@ attribute [instance] instReaderT
 attribute [instance] instExceptT
 
 /-- Lift an ordered monad algebra through `OptionT` by interpreting `none` as `⊥`. -/
-@[implicit_reducible] noncomputable def instOptionT :
+noncomputable def instOptionT :
     MAlgOrdered (OptionT m) l where
   μ x := MAlgOrdered.μ <| (fun y : Option l =>
     match y with

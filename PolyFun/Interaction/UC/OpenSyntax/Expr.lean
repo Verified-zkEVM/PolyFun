@@ -31,7 +31,7 @@ construction: each law holds because it is a constructor of `Raw.Equiv`.
 * `Expr.toInterp`: embedding into the tagless-final `Interp` model.
 -/
 
-universe u
+universe p q u v
 
 namespace Interaction
 namespace UC
@@ -48,7 +48,8 @@ laws, so it forms a lawful `OpenTheory`.
 For pattern matching on the underlying syntax, project to `Raw` via
 `Expr.liftOn` or work with `Raw` directly.
 -/
-def Expr (Atom : PortBoundary → Type u) (Δ : PortBoundary) : Type (u + 1) :=
+def Expr (Atom : PortBoundary.{p, q} → Type u)
+    (Δ : PortBoundary.{p, q}) : Type (max (u + 1) (p + 1) (q + 1)) :=
   Quotient (Raw.setoid Atom Δ)
 
 namespace Expr
@@ -56,21 +57,21 @@ namespace Expr
 /--
 Project a raw expression into the quotiented `Expr`.
 -/
-def mk {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+def mk {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (e : Raw Atom Δ) : Expr Atom Δ :=
   Quotient.mk _ e
 
 /--
 Inject a primitive open component.
 -/
-def atom {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+def atom {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (a : Atom Δ) : Expr Atom Δ :=
   mk (.atom a)
 
 /--
 Adapt the exposed boundary along a structural morphism.
 -/
-def map {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
+def map {Atom : PortBoundary.{p, q} → Type u} {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (f : PortBoundary.Hom Δ₁ Δ₂)
     (e : Expr Atom Δ₁) : Expr Atom Δ₂ :=
   Quotient.liftOn e (fun r => mk (.map f r))
@@ -79,7 +80,7 @@ def map {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
 /--
 Place two open systems side by side.
 -/
-def par {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
+def par {Atom : PortBoundary.{p, q} → Type u} {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (e₁ : Expr Atom Δ₁) (e₂ : Expr Atom Δ₂) :
     Expr Atom (PortBoundary.tensor Δ₁ Δ₂) :=
   Quotient.liftOn₂ e₁ e₂ (fun r₁ r₂ => mk (.par r₁ r₂))
@@ -88,7 +89,7 @@ def par {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
 /--
 Connect one shared boundary between two open systems.
 -/
-def wire {Atom : PortBoundary → Type u} {Δ₁ Γ Δ₂ : PortBoundary}
+def wire {Atom : PortBoundary.{p, q} → Type u} {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     (e₁ : Expr Atom (PortBoundary.tensor Δ₁ Γ))
     (e₂ : Expr Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
     Expr Atom (PortBoundary.tensor Δ₁ Δ₂) :=
@@ -98,7 +99,7 @@ def wire {Atom : PortBoundary → Type u} {Δ₁ Γ Δ₂ : PortBoundary}
 /--
 The identity wire (coevaluation) on boundary `Γ`.
 -/
-def idWire {Atom : PortBoundary → Type u} (Γ : PortBoundary) :
+def idWire {Atom : PortBoundary.{p, q} → Type u} (Γ : PortBoundary.{p, q}) :
     Expr Atom (PortBoundary.tensor (PortBoundary.swap Γ) Γ) :=
   mk (.idWire Γ)
 
@@ -106,7 +107,7 @@ def idWire {Atom : PortBoundary → Type u} (Γ : PortBoundary) :
 Close an open system against a matching context.
 Derived from `wire` and `map`, mirroring `Raw.plug`.
 -/
-def plug {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+def plug {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (e : Expr Atom Δ) (k : Expr Atom (PortBoundary.swap Δ)) :
     Expr Atom PortBoundary.empty :=
   Expr.map (PortBoundary.Equiv.tensorEmptyLeft PortBoundary.empty).toHom
@@ -119,7 +120,7 @@ def plug {Atom : PortBoundary → Type u} {Δ : PortBoundary}
 The monoidal unit (closed system with no boundary).
 Derived from `idWire` and `map`, mirroring `Raw.unit`.
 -/
-def unit {Atom : PortBoundary → Type u} : Expr Atom PortBoundary.empty :=
+def unit {Atom : PortBoundary.{p, q} → Type u} : Expr Atom PortBoundary.empty :=
   Expr.map (PortBoundary.Equiv.tensorEmptyLeft PortBoundary.empty).toHom
     (Expr.idWire PortBoundary.empty)
 
@@ -130,95 +131,95 @@ plug-wire factorization structure.
 Well-defined on the quotient because `Raw.Equiv.interpret_eq` shows that
 equivalent raw expressions interpret the same way in any such theory.
 -/
-def interpret {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+def interpret {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (e : Expr Atom Δ)
-    (T : OpenTheory)
+    (T : OpenTheory.{p, q, v})
     [hT : OpenTheory.HasPlugWireFactor T]
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     T.Obj Δ :=
   Quotient.liftOn e
     (fun r => r.interpret T interp OpenTheory.HasIdWire.idWire)
     (fun _ _ h => Raw.Equiv.interpret_eq h T interp)
 
 @[simp]
-theorem interpret_mk {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+theorem interpret_mk {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (r : Raw Atom Δ)
-    (T : OpenTheory)
+    (T : OpenTheory.{p, q, v})
     [OpenTheory.HasPlugWireFactor T]
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (mk r).interpret T interp =
       r.interpret T interp OpenTheory.HasIdWire.idWire :=
   rfl
 
 @[simp]
-theorem interpret_atom {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+theorem interpret_atom {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (a : Atom Δ)
-    (T : OpenTheory)
+    (T : OpenTheory.{p, q, v})
     [OpenTheory.HasPlugWireFactor T]
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (Expr.atom a).interpret T interp = interp a :=
   rfl
 
 @[simp]
-theorem interpret_map {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
+theorem interpret_map {Atom : PortBoundary.{p, q} → Type u} {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (f : PortBoundary.Hom Δ₁ Δ₂)
     (e : Expr Atom Δ₁)
-    (T : OpenTheory)
+    (T : OpenTheory.{p, q, v})
     [OpenTheory.HasPlugWireFactor T]
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (Expr.map f e).interpret T interp = T.map f (e.interpret T interp) :=
   Quotient.inductionOn e fun _ => rfl
 
 @[simp]
-theorem interpret_par {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
+theorem interpret_par {Atom : PortBoundary.{p, q} → Type u} {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (e₁ : Expr Atom Δ₁)
     (e₂ : Expr Atom Δ₂)
-    (T : OpenTheory)
+    (T : OpenTheory.{p, q, v})
     [OpenTheory.HasPlugWireFactor T]
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (Expr.par e₁ e₂).interpret T interp =
       T.par (e₁.interpret T interp) (e₂.interpret T interp) :=
   Quotient.inductionOn₂ e₁ e₂ fun _ _ => rfl
 
 @[simp]
-theorem interpret_wire {Atom : PortBoundary → Type u}
-    {Δ₁ Γ Δ₂ : PortBoundary}
+theorem interpret_wire {Atom : PortBoundary.{p, q} → Type u}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     (e₁ : Expr Atom (PortBoundary.tensor Δ₁ Γ))
     (e₂ : Expr Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
-    (T : OpenTheory)
+    (T : OpenTheory.{p, q, v})
     [OpenTheory.HasPlugWireFactor T]
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (Expr.wire e₁ e₂).interpret T interp =
       T.wire (e₁.interpret T interp) (e₂.interpret T interp) :=
   Quotient.inductionOn₂ e₁ e₂ fun _ _ => rfl
 
 @[simp]
-theorem interpret_idWire {Atom : PortBoundary → Type u}
-    (Γ : PortBoundary)
-    (T : OpenTheory)
+theorem interpret_idWire {Atom : PortBoundary.{p, q} → Type u}
+    (Γ : PortBoundary.{p, q})
+    (T : OpenTheory.{p, q, v})
     [OpenTheory.HasPlugWireFactor T]
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (Expr.idWire Γ : Expr Atom _).interpret T interp =
       OpenTheory.HasIdWire.idWire (T := T) Γ :=
   rfl
 
 @[simp]
-theorem interpret_plug {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+theorem interpret_plug {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (e : Expr Atom Δ)
     (k : Expr Atom (PortBoundary.swap Δ))
-    (T : OpenTheory)
+    (T : OpenTheory.{p, q, v})
     [OpenTheory.HasPlugWireFactor T]
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (Expr.plug e k).interpret T interp =
       T.plug (e.interpret T interp) (k.interpret T interp) := by
   simp only [Expr.plug, interpret_map, interpret_wire]
   exact (OpenTheory.plug_eq_wire _ _).symm
 
 @[simp]
-theorem interpret_unit {Atom : PortBoundary → Type u}
-    (T : OpenTheory)
+theorem interpret_unit {Atom : PortBoundary.{p, q} → Type u}
+    (T : OpenTheory.{p, q, v})
     [OpenTheory.HasPlugWireFactor T]
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (interp : ∀ {Δ : PortBoundary.{p, q}}, Atom Δ → T.Obj Δ) :
     (Expr.unit : Expr Atom _).interpret T interp =
       OpenTheory.HasUnit.unit (T := T) := by
   simp only [Expr.unit, interpret_map]
@@ -230,54 +231,54 @@ theorem interpret_unit {Atom : PortBoundary → Type u}
 The free lawful `OpenTheory` whose objects are quotiented expressions over
 `Atom`.
 -/
-abbrev theory (Atom : PortBoundary → Type u) :
-    OpenTheory.{u + 1} where
+abbrev theory (Atom : PortBoundary.{p, q} → Type u) :
+    OpenTheory.{p, q, max (u + 1) (p + 1) (q + 1)} where
   Obj := Expr Atom
   map := Expr.map
   par := Expr.par
   wire := Expr.wire
   plug := Expr.plug
 
-instance lawfulMap (Atom : PortBoundary → Type u) :
+instance lawfulMap (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsLawfulMap (Expr.theory Atom) where
   map_id := fun W =>
     Quotient.inductionOn W fun _ => Quotient.sound Raw.Equiv.map_id
   map_comp := fun _ _ W =>
     Quotient.inductionOn W fun _ => Quotient.sound Raw.Equiv.map_comp
 
-instance lawfulPar (Atom : PortBoundary → Type u) :
+instance lawfulPar (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsLawfulPar (Expr.theory Atom) where
   map_id := OpenTheory.IsLawfulMap.map_id (T := Expr.theory Atom)
   map_comp := OpenTheory.IsLawfulMap.map_comp (T := Expr.theory Atom)
   map_par := fun _ _ W₁ W₂ =>
     Quotient.inductionOn₂ W₁ W₂ fun _ _ => Quotient.sound Raw.Equiv.map_par
 
-instance lawfulWire (Atom : PortBoundary → Type u) :
+instance lawfulWire (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsLawfulWire (Expr.theory Atom) where
   map_id := OpenTheory.IsLawfulMap.map_id (T := Expr.theory Atom)
   map_comp := OpenTheory.IsLawfulMap.map_comp (T := Expr.theory Atom)
   map_wire := fun _ _ W₁ W₂ =>
     Quotient.inductionOn₂ W₁ W₂ fun _ _ => Quotient.sound Raw.Equiv.map_wire
 
-instance lawfulPlug (Atom : PortBoundary → Type u) :
+instance lawfulPlug (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsLawfulPlug (Expr.theory Atom) where
   map_id := OpenTheory.IsLawfulMap.map_id (T := Expr.theory Atom)
   map_comp := OpenTheory.IsLawfulMap.map_comp (T := Expr.theory Atom)
   map_plug := fun _ W K =>
     Quotient.inductionOn₂ W K fun _ _ => Quotient.sound Raw.Equiv.map_plug
 
-instance lawful (Atom : PortBoundary → Type u) :
+instance lawful (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsLawful (Expr.theory Atom) where
 
-instance hasUnit (Atom : PortBoundary → Type u) :
+instance hasUnit (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.HasUnit (Expr.theory Atom) where
   unit := Expr.unit
 
-instance hasIdWire (Atom : PortBoundary → Type u) :
+instance hasIdWire (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.HasIdWire (Expr.theory Atom) where
   idWire := Expr.idWire
 
-instance isMonoidal (Atom : PortBoundary → Type u) :
+instance isMonoidal (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsMonoidal (Expr.theory Atom) where
   par_assoc := fun W₁ W₂ W₃ =>
     Quotient.inductionOn₃ W₁ W₂ W₃ fun _ _ _ =>
@@ -292,7 +293,7 @@ instance isMonoidal (Atom : PortBoundary → Type u) :
     Quotient.inductionOn W fun _ =>
       Quotient.sound Raw.Equiv.par_rightUnit
 
-instance isTraced (Atom : PortBoundary → Type u) :
+instance isTraced (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsTraced (Expr.theory Atom) where
   wire_assoc := fun W₁ W₂ W₃ =>
     Quotient.inductionOn₃ W₁ W₂ W₃ fun _ _ _ =>
@@ -304,7 +305,7 @@ instance isTraced (Atom : PortBoundary → Type u) :
     Quotient.inductionOn₂ W₁ W₂ fun _ _ =>
       Quotient.sound Raw.Equiv.wire_comm
 
-instance isCompactClosed (Atom : PortBoundary → Type u) :
+instance isCompactClosed (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.IsCompactClosed (Expr.theory Atom) where
   wire_idWire := fun _ _ W₂ =>
     Quotient.inductionOn W₂ fun _ =>
@@ -314,7 +315,7 @@ instance isCompactClosed (Atom : PortBoundary → Type u) :
       Quotient.sound Raw.Equiv.wire_idWire_right
   unit_eq := rfl
 
-instance hasPlugWireFactor (Atom : PortBoundary → Type u) :
+instance hasPlugWireFactor (Atom : PortBoundary.{p, q} → Type u) :
     OpenTheory.HasPlugWireFactor (Expr.theory Atom) where
   plug_eq_wire := fun W K =>
     Quotient.inductionOn₂ W K fun _ _ => rfl
@@ -334,7 +335,7 @@ Well-defined on the quotient because equivalent raw expressions interpret the
 same way in every compact closed theory (which is exactly what `Interp.ext`
 requires).
 -/
-def toInterp {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+def toInterp {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (e : Expr Atom Δ) : Interp Atom Δ :=
   Quotient.liftOn e
     (fun r => ⟨fun T hCC interp => r.interpret T interp hCC.idWire⟩)
@@ -342,46 +343,46 @@ def toInterp {Atom : PortBoundary → Type u} {Δ : PortBoundary}
       @Raw.Equiv.interpret_eq _ _ _ _ h T hCC interp))
 
 @[simp]
-theorem toInterp_mk {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+theorem toInterp_mk {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (r : Raw Atom Δ) :
     (mk r).toInterp = (⟨fun T hCC interp =>
       r.interpret T interp hCC.idWire⟩ : Interp Atom Δ) :=
   rfl
 
 @[simp]
-theorem toInterp_atom {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+theorem toInterp_atom {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (a : Atom Δ) :
     (Expr.atom a).toInterp = Interp.atom (Atom := Atom) a := by
   ext T hT interp; rfl
 
 @[simp]
-theorem toInterp_map {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
+theorem toInterp_map {Atom : PortBoundary.{p, q} → Type u} {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (f : PortBoundary.Hom Δ₁ Δ₂) (e : Expr Atom Δ₁) :
     (Expr.map f e).toInterp = Interp.map f e.toInterp :=
   Quotient.inductionOn e fun _ => Interp.ext fun _ _ _ => rfl
 
 @[simp]
-theorem toInterp_par {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
+theorem toInterp_par {Atom : PortBoundary.{p, q} → Type u} {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (e₁ : Expr Atom Δ₁) (e₂ : Expr Atom Δ₂) :
     (Expr.par e₁ e₂).toInterp = Interp.par e₁.toInterp e₂.toInterp :=
   Quotient.inductionOn₂ e₁ e₂ fun _ _ => Interp.ext fun _ _ _ => rfl
 
 @[simp]
-theorem toInterp_wire {Atom : PortBoundary → Type u}
-    {Δ₁ Γ Δ₂ : PortBoundary}
+theorem toInterp_wire {Atom : PortBoundary.{p, q} → Type u}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     (e₁ : Expr Atom (PortBoundary.tensor Δ₁ Γ))
     (e₂ : Expr Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
     (Expr.wire e₁ e₂).toInterp = Interp.wire e₁.toInterp e₂.toInterp :=
   Quotient.inductionOn₂ e₁ e₂ fun _ _ => Interp.ext fun _ _ _ => rfl
 
 @[simp]
-theorem toInterp_idWire {Atom : PortBoundary → Type u}
-    (Γ : PortBoundary) :
+theorem toInterp_idWire {Atom : PortBoundary.{p, q} → Type u}
+    (Γ : PortBoundary.{p, q}) :
     (Expr.idWire Γ : Expr Atom _).toInterp = Interp.idWire Γ := by
   ext T hT interp; rfl
 
 @[simp]
-theorem toInterp_plug {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+theorem toInterp_plug {Atom : PortBoundary.{p, q} → Type u} {Δ : PortBoundary.{p, q}}
     (e : Expr Atom Δ) (k : Expr Atom (PortBoundary.swap Δ)) :
     (Expr.plug e k).toInterp = Interp.plug e.toInterp k.toInterp :=
   Quotient.inductionOn₂ e k fun r₁ r₂ =>
@@ -393,7 +394,7 @@ theorem toInterp_plug {Atom : PortBoundary → Type u} {Δ : PortBoundary}
         (r₁.interpret T interp hT.idWire) (r₂.interpret T interp hT.idWire)).symm
 
 @[simp]
-theorem toInterp_unit {Atom : PortBoundary → Type u} :
+theorem toInterp_unit {Atom : PortBoundary.{p, q} → Type u} :
     (Expr.unit : Expr Atom _).toInterp = Interp.unit := by
   have h : (Expr.unit : Expr Atom _).toInterp =
       (⟨fun T hCC interp =>

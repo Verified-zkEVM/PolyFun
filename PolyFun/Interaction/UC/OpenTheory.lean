@@ -66,7 +66,7 @@ process-backed `openTheory` in `OpenProcessModel.lean` instantiates only
 `OpenProcessIso`, not strict equality.
 -/
 
-universe u
+universe p q u
 
 namespace Interaction
 namespace UC
@@ -102,7 +102,7 @@ structure OpenTheory where
   The boundary is directed: `Δ.In` is what the surrounding context may send
   into the system, and `Δ.Out` is what the system may emit back out.
   -/
-  Obj : PortBoundary → Type u
+  Obj : PortBoundary.{p, q} → Type u
 
   /--
   Adapt the exposed boundary of an open system along a structural boundary
@@ -113,7 +113,7 @@ structure OpenTheory where
   interface adaptation `φ`.
   -/
   map :
-    {Δ₁ Δ₂ : PortBoundary} →
+    {Δ₁ Δ₂ : PortBoundary.{p, q}} →
     PortBoundary.Hom Δ₁ Δ₂ →
     Obj Δ₁ →
     Obj Δ₂
@@ -125,7 +125,7 @@ structure OpenTheory where
   world may interact independently with either side.
   -/
   par :
-    {Δ₁ Δ₂ : PortBoundary} →
+    {Δ₁ Δ₂ : PortBoundary.{p, q}} →
     Obj Δ₁ →
     Obj Δ₂ →
     Obj (PortBoundary.tensor Δ₁ Δ₂)
@@ -142,7 +142,7 @@ structure OpenTheory where
   incrementally without forcing immediate total closure.
   -/
   wire :
-    {Δ₁ Γ Δ₂ : PortBoundary} →
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}} →
     Obj (PortBoundary.tensor Δ₁ Γ) →
     Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) →
     Obj (PortBoundary.tensor Δ₁ Δ₂)
@@ -159,7 +159,7 @@ structure OpenTheory where
   later if they are genuinely needed.
   -/
   plug :
-    {Δ : PortBoundary} →
+    {Δ : PortBoundary.{p, q}} →
     Obj Δ →
     Obj (PortBoundary.swap Δ) →
     Obj (PortBoundary.empty)
@@ -175,7 +175,7 @@ play the role of the symmetric monoidal unit.
 This is purely a data class. Whether `unit` actually behaves as a left/right
 unit for `par` (up to boundary equivalence) is the content of `IsMonoidal`.
 -/
-class HasUnit (T : UC.OpenTheory.{u}) where
+class HasUnit (T : UC.OpenTheory.{p, q, u}) where
   /-- The distinguished unit object on the empty boundary. -/
   unit : T.Obj PortBoundary.empty
 
@@ -187,10 +187,10 @@ unit of duality between `Γ` and `swap Γ`.
 This is purely a data class. Whether `idWire` actually satisfies the
 zig-zag (snake) identities is the content of `IsCompactClosed`.
 -/
-class HasIdWire (T : UC.OpenTheory.{u}) where
+class HasIdWire (T : UC.OpenTheory.{p, q, u}) where
   /-- The identity-wire / coevaluation on boundary `Γ`: a process exposing
   `swap Γ ⊗ Γ` that behaves as a bidirectional relay. -/
-  idWire : ∀ (Γ : PortBoundary),
+  idWire : ∀ (Γ : PortBoundary.{p, q}),
     T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Γ)
 
 /-! ### Naturality (functoriality of `map` and naturality of `par`/`wire`/`plug`) -/
@@ -201,13 +201,13 @@ class HasIdWire (T : UC.OpenTheory.{u}) where
 This is the first law layer for `OpenTheory`, and the one we can state without
 committing to any further monoidal/coherence structure on boundaries.
 -/
-class IsLawfulMap (T : UC.OpenTheory.{u}) :
+class IsLawfulMap (T : UC.OpenTheory.{p, q, u}) :
     Prop where
   /--
   Adapting a system along the identity boundary morphism does nothing.
   -/
   map_id :
-    ∀ {Δ : PortBoundary} (W : T.Obj Δ),
+    ∀ {Δ : PortBoundary.{p, q}} (W : T.Obj Δ),
       T.map (PortBoundary.Hom.id Δ) W = W
 
   /--
@@ -215,7 +215,7 @@ class IsLawfulMap (T : UC.OpenTheory.{u}) :
   successive steps.
   -/
   map_comp :
-    ∀ {Δ₁ Δ₂ Δ₃ : PortBoundary}
+    ∀ {Δ₁ Δ₂ Δ₃ : PortBoundary.{p, q}}
       (g : PortBoundary.Hom Δ₂ Δ₃)
       (f : PortBoundary.Hom Δ₁ Δ₂)
       (W : T.Obj Δ₁),
@@ -229,14 +229,14 @@ This is the first structural law for `par` that does not require introducing a
 separate theory of boundary isomorphisms. Associativity and unit laws can be
 added later once that boundary-equivalence vocabulary is in place.
 -/
-class IsLawfulPar (T : UC.OpenTheory.{u}) :
+class IsLawfulPar (T : UC.OpenTheory.{p, q, u}) :
     Prop extends IsLawfulMap T where
   /--
   Mapping a side-by-side composite along a tensor boundary morphism is the same
   as mapping each side independently before composing them in parallel.
   -/
   map_par :
-    ∀ {Δ₁ Δ₁' Δ₂ Δ₂' : PortBoundary}
+    ∀ {Δ₁ Δ₁' Δ₂ Δ₂' : PortBoundary.{p, q}}
       (f₁ : PortBoundary.Hom Δ₁ Δ₁')
       (f₂ : PortBoundary.Hom Δ₂ Δ₂')
       (W₁ : T.Obj Δ₁)
@@ -255,7 +255,7 @@ Transporting the shared middle boundary itself is a subtler question because
 `PortBoundary.Hom.swap` is contravariant. The corresponding law should be
 stated later using boundary equivalences or a more symmetric vocabulary.
 -/
-class IsLawfulWire (T : UC.OpenTheory.{u}) :
+class IsLawfulWire (T : UC.OpenTheory.{p, q, u}) :
     Prop extends IsLawfulMap T where
   /--
   Partial wiring is natural in its still-exposed outer boundaries.
@@ -265,7 +265,7 @@ class IsLawfulWire (T : UC.OpenTheory.{u}) :
   still capturing the most important structural behavior of `wire`.
   -/
   map_wire :
-    ∀ {Δ₁ Δ₁' Γ Δ₂ Δ₂' : PortBoundary}
+    ∀ {Δ₁ Δ₁' Γ Δ₂ Δ₂' : PortBoundary.{p, q}}
       (f₁ : PortBoundary.Hom Δ₁ Δ₁')
       (f₂ : PortBoundary.Hom Δ₂ Δ₂')
       (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
@@ -286,14 +286,14 @@ boundary adaptation.
 This is the first structural law for `plug`: adapting the open side before
 closure is equivalent to adapting the matching plug on the swapped boundary.
 -/
-class IsLawfulPlug (T : UC.OpenTheory.{u}) :
+class IsLawfulPlug (T : UC.OpenTheory.{p, q, u}) :
     Prop extends IsLawfulMap T where
   /--
   Boundary adaptation may be pushed across a plug by swapping the same
   adaptation onto the context side.
   -/
   map_plug :
-    ∀ {Δ₁ Δ₂ : PortBoundary}
+    ∀ {Δ₁ Δ₂ : PortBoundary.{p, q}}
       (f : PortBoundary.Hom Δ₁ Δ₂)
       (W : T.Obj Δ₁)
       (K : T.Obj (PortBoundary.swap Δ₂)),
@@ -313,7 +313,7 @@ At this stage it only records:
 Unit, associativity, and symmetry laws for open composition should be added
 later, once the library settles on the right notion of boundary equivalence.
 -/
-class IsLawful (T : UC.OpenTheory.{u}) :
+class IsLawful (T : UC.OpenTheory.{p, q, u}) :
     Prop extends IsLawfulPar T, IsLawfulWire T, IsLawfulPlug T
 
 /-! ### Symmetric monoidal coherence -/
@@ -327,25 +327,25 @@ Pentagon and hexagon coherence conditions are deferred: they are derivable
 in the free models and hold trivially for the concrete model up to process
 isomorphism.
 -/
-class IsMonoidal (T : UC.OpenTheory.{u})
+class IsMonoidal (T : UC.OpenTheory.{p, q, u})
     extends IsLawful T, HasUnit T where
   par_assoc :
-    ∀ {Δ₁ Δ₂ Δ₃ : PortBoundary}
+    ∀ {Δ₁ Δ₂ Δ₃ : PortBoundary.{p, q}}
       (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂) (W₃ : T.Obj Δ₃),
       T.map (PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃).toHom
         (T.par (T.par W₁ W₂) W₃) =
       T.par W₁ (T.par W₂ W₃)
   par_comm :
-    ∀ {Δ₁ Δ₂ : PortBoundary} (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂),
+    ∀ {Δ₁ Δ₂ : PortBoundary.{p, q}} (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂),
       T.map (PortBoundary.Equiv.tensorComm Δ₁ Δ₂).toHom
         (T.par W₁ W₂) =
       T.par W₂ W₁
   par_leftUnit :
-    ∀ {Δ : PortBoundary} (W : T.Obj Δ),
+    ∀ {Δ : PortBoundary.{p, q}} (W : T.Obj Δ),
       T.map (PortBoundary.Equiv.tensorEmptyLeft Δ).toHom
         (T.par (HasUnit.unit (T := T)) W) = W
   par_rightUnit :
-    ∀ {Δ : PortBoundary} (W : T.Obj Δ),
+    ∀ {Δ : PortBoundary.{p, q}} (W : T.Obj Δ),
       T.map (PortBoundary.Equiv.tensorEmptyRight Δ).toHom
         (T.par W (HasUnit.unit (T := T))) = W
 
@@ -363,7 +363,7 @@ A model satisfies `IsTraced` exactly when its `wire` operation behaves like
 a JSV trace; the existence of duals (i.e., compact closure) is a separate
 class layered on top.
 -/
-class IsTraced (T : UC.OpenTheory.{u})
+class IsTraced (T : UC.OpenTheory.{p, q, u})
     extends IsMonoidal T where
   /-- Wire associativity: sequential wiring can be reassociated.
 
@@ -371,7 +371,7 @@ class IsTraced (T : UC.OpenTheory.{u})
   equals wiring `W₂` with `W₃` through `Γ₂` first, then with `W₁`
   through `Γ₁`. -/
   wire_assoc :
-    ∀ {Δ₁ Γ₁ Γ₂ Δ₃ : PortBoundary}
+    ∀ {Δ₁ Γ₁ Γ₂ Δ₃ : PortBoundary.{p, q}}
       (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ₁))
       (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ₁) Γ₂))
       (W₃ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ₂) Δ₃)),
@@ -380,7 +380,7 @@ class IsTraced (T : UC.OpenTheory.{u})
   composition does not share a boundary with the second wire argument,
   it can be factored out of the wire. -/
   wire_par_superpose :
-    ∀ {Δ₁ Δ₂ Γ Δ₃ : PortBoundary}
+    ∀ {Δ₁ Δ₂ Γ Δ₃ : PortBoundary.{p, q}}
       (W₁ : T.Obj Δ₁)
       (W₂ : T.Obj (PortBoundary.tensor Δ₂ Γ))
       (W₃ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₃)),
@@ -393,7 +393,7 @@ class IsTraced (T : UC.OpenTheory.{u})
   /-- Wire commutativity: the roles of the two wire factors are
   interchangeable up to boundary reshaping. -/
   wire_comm :
-    ∀ {Δ₁ Γ Δ₂ : PortBoundary}
+    ∀ {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
       (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
       (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)),
       T.wire W₁ W₂ =
@@ -418,16 +418,16 @@ from η/ε), so `IsCompactClosed` extends `IsTraced` rather than living
 side-by-side with it: a model that satisfies `IsCompactClosed` also has a
 JSV trace.
 -/
-class IsCompactClosed (T : UC.OpenTheory.{u})
+class IsCompactClosed (T : UC.OpenTheory.{p, q, u})
     extends IsTraced T, HasIdWire T where
   /-- Left zig-zag: wiring the identity wire on the left is a no-op. -/
   wire_idWire :
-    ∀ (Γ : PortBoundary) {Δ₂ : PortBoundary}
+    ∀ (Γ : PortBoundary.{p, q}) {Δ₂ : PortBoundary.{p, q}}
       (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)),
       T.wire (HasIdWire.idWire (T := T) Γ) W₂ = W₂
   /-- Right zig-zag: wiring the identity wire on the right is a no-op. -/
   wire_idWire_right :
-    ∀ (Γ : PortBoundary) {Δ₁ : PortBoundary}
+    ∀ (Γ : PortBoundary.{p, q}) {Δ₁ : PortBoundary.{p, q}}
       (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ)),
       T.wire W₁ (HasIdWire.idWire (T := T) Γ) = W₁
   /-- The monoidal unit is the coevaluation at the trivial boundary. -/
@@ -449,11 +449,11 @@ This is the "everything bundle" used by downstream UC composition theorems:
 `IsTraced T`, `IsMonoidal T`, `IsLawful T`, `HasUnit T`, and `HasIdWire T`
 through the inheritance chain.
 -/
-class HasPlugWireFactor (T : UC.OpenTheory.{u})
+class HasPlugWireFactor (T : UC.OpenTheory.{p, q, u})
     extends IsCompactClosed T where
   /-- `plug` is derivable from `wire` plus boundary reshaping. -/
   plug_eq_wire :
-    ∀ {Δ : PortBoundary}
+    ∀ {Δ : PortBoundary.{p, q}}
       (W : T.Obj Δ) (K : T.Obj (PortBoundary.swap Δ)),
       T.plug W K =
         T.map (PortBoundary.Equiv.tensorEmptyLeft PortBoundary.empty).toHom
@@ -469,7 +469,7 @@ class HasPlugWireFactor (T : UC.OpenTheory.{u})
   contraction over a tensor boundary `Δ₁ ⊗ Δ₂` decomposes into two sequential
   contractions, first over `Δ₂` and then over `Δ₁`. -/
   plug_par_left :
-    ∀ {Δ₁ Δ₂ : PortBoundary}
+    ∀ {Δ₁ Δ₂ : PortBoundary.{p, q}}
       (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂)
       (K : T.Obj (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))),
       T.plug (T.par W₁ W₂) K =
@@ -489,7 +489,7 @@ class HasPlugWireFactor (T : UC.OpenTheory.{u})
   boundary, producing a plug for `Δ₁ ⊗ Γ`, and then `W₁` is plugged against
   the result. -/
   plug_wire_left :
-    ∀ {Δ₁ Γ Δ₂ : PortBoundary}
+    ∀ {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
       (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
       (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
       (K : T.Obj (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))),
@@ -509,7 +509,7 @@ class HasPlugWireFactor (T : UC.OpenTheory.{u})
 These are precisely the systems with no remaining exposed inputs or outputs.
 -/
 abbrev Closed
-    (T : UC.OpenTheory.{u}) :
+    (T : UC.OpenTheory.{p, q, u}) :
     Type u :=
   T.Obj (PortBoundary.empty)
 
@@ -521,8 +521,8 @@ Such a context exposes the swapped boundary: it accepts what the open system
 emits, and emits what the open system accepts.
 -/
 abbrev Plug
-    (T : UC.OpenTheory.{u})
-    (Δ : PortBoundary) : Type u :=
+    (T : UC.OpenTheory.{p, q, u})
+    (Δ : PortBoundary.{p, q}) : Type u :=
   T.Obj (PortBoundary.swap Δ)
 
 /--
@@ -533,8 +533,8 @@ This is just the `plug` operation restated using the helper names `Closed` and
 than the raw swapped-boundary formulation.
 -/
 abbrev close
-    (T : UC.OpenTheory.{u})
-    {Δ : PortBoundary} :
+    (T : UC.OpenTheory.{p, q, u})
+    {Δ : PortBoundary.{p, q}} :
     T.Obj Δ →
     T.Plug Δ →
     T.Closed :=
@@ -550,8 +550,8 @@ drop empty boundary fragments once those facts have been expressed as
 `PortBoundary.Equiv`s.
 -/
 abbrev mapEquiv
-    (T : UC.OpenTheory.{u})
-    {Δ₁ Δ₂ : PortBoundary} :
+    (T : UC.OpenTheory.{p, q, u})
+    {Δ₁ Δ₂ : PortBoundary.{p, q}} :
     PortBoundary.Equiv Δ₁ Δ₂ →
     T.Obj Δ₁ →
     T.Obj Δ₂ :=
@@ -559,7 +559,7 @@ abbrev mapEquiv
 
 section Laws
 
-variable {T : UC.OpenTheory.{u}}
+variable {T : UC.OpenTheory.{p, q, u}}
 
 /--
 Adapting along the identity boundary morphism leaves an open system unchanged.
@@ -567,7 +567,7 @@ Adapting along the identity boundary morphism leaves an open system unchanged.
 @[simp]
 theorem map_id
     [IsLawfulMap T]
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     (W : T.Obj Δ) :
     T.map (PortBoundary.Hom.id Δ) W = W :=
   IsLawfulMap.map_id W
@@ -578,7 +578,7 @@ successive steps.
 -/
 theorem map_comp
     [IsLawfulMap T]
-    {Δ₁ Δ₂ Δ₃ : PortBoundary}
+    {Δ₁ Δ₂ Δ₃ : PortBoundary.{p, q}}
     (g : PortBoundary.Hom Δ₂ Δ₃)
     (f : PortBoundary.Hom Δ₁ Δ₂)
     (W : T.Obj Δ₁) :
@@ -591,7 +591,7 @@ Mapping along the identity boundary equivalence does nothing.
 @[simp]
 theorem mapEquiv_refl
     [IsLawfulMap T]
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     (W : T.Obj Δ) :
     T.mapEquiv (PortBoundary.Equiv.refl Δ) W = W :=
   map_id (T := T) (Δ := Δ) W
@@ -602,7 +602,7 @@ successive equivalence-guided steps.
 -/
 theorem mapEquiv_trans
     [IsLawfulMap T]
-    {Δ₁ Δ₂ Δ₃ : PortBoundary}
+    {Δ₁ Δ₂ Δ₃ : PortBoundary.{p, q}}
     (e₁ : PortBoundary.Equiv Δ₁ Δ₂)
     (e₂ : PortBoundary.Equiv Δ₂ Δ₃)
     (W : T.Obj Δ₁) :
@@ -614,7 +614,7 @@ theorem mapEquiv_trans
 @[simp]
 theorem mapEquiv_symm_cancel
     [IsLawfulMap T]
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (e : PortBoundary.Equiv Δ₁ Δ₂)
     (W : T.Obj Δ₁) :
     T.mapEquiv e.symm (T.mapEquiv e W) = W := by
@@ -625,7 +625,7 @@ theorem mapEquiv_symm_cancel
 @[simp]
 theorem mapEquiv_cancel_symm
     [IsLawfulMap T]
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (e : PortBoundary.Equiv Δ₁ Δ₂)
     (W : T.Obj Δ₂) :
     T.mapEquiv e (T.mapEquiv e.symm W) = W := by
@@ -636,7 +636,7 @@ theorem mapEquiv_cancel_symm
 /-- Parallel composition is natural with respect to boundary adaptation. -/
 theorem map_par
     [IsLawfulPar T]
-    {Δ₁ Δ₁' Δ₂ Δ₂' : PortBoundary}
+    {Δ₁ Δ₁' Δ₂ Δ₂' : PortBoundary.{p, q}}
     (f₁ : PortBoundary.Hom Δ₁ Δ₁')
     (f₂ : PortBoundary.Hom Δ₂ Δ₂')
     (W₁ : T.Obj Δ₁)
@@ -653,7 +653,7 @@ the left and right boundaries may be pushed inside `par`.
 -/
 theorem mapEquiv_par
     [IsLawfulPar T]
-    {Δ₁ Δ₁' Δ₂ Δ₂' : PortBoundary}
+    {Δ₁ Δ₁' Δ₂ Δ₂' : PortBoundary.{p, q}}
     (e₁ : PortBoundary.Equiv Δ₁ Δ₁')
     (e₂ : PortBoundary.Equiv Δ₂ Δ₂')
     (W₁ : T.Obj Δ₁)
@@ -668,7 +668,7 @@ Partial wiring is natural with respect to boundary adaptation.
 -/
 theorem map_wire
     [IsLawfulWire T]
-    {Δ₁ Δ₁' Γ Δ₂ Δ₂' : PortBoundary}
+    {Δ₁ Δ₁' Γ Δ₂ Δ₂' : PortBoundary.{p, q}}
     (f₁ : PortBoundary.Hom Δ₁ Δ₁')
     (f₂ : PortBoundary.Hom Δ₂ Δ₂')
     (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
@@ -694,7 +694,7 @@ primitive kernel of `OpenTheory`.
 -/
 theorem mapEquiv_wire
     [IsLawfulWire T]
-    {Δ₁ Δ₁' Γ Δ₂ Δ₂' : PortBoundary}
+    {Δ₁ Δ₁' Γ Δ₂ Δ₂' : PortBoundary.{p, q}}
     (e₁ : PortBoundary.Equiv Δ₁ Δ₁')
     (e₂ : PortBoundary.Equiv Δ₂ Δ₂')
     (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
@@ -717,7 +717,7 @@ Plugging is natural with respect to boundary adaptation.
 -/
 theorem map_plug
     [IsLawfulPlug T]
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (f : PortBoundary.Hom Δ₁ Δ₂)
     (W : T.Obj Δ₁)
     (K : T.Obj (PortBoundary.swap Δ₂)) :
@@ -740,7 +740,7 @@ through a second equivalence wrapper.
 -/
 theorem mapEquiv_plug
     [IsLawfulPlug T]
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (e : PortBoundary.Equiv Δ₁ Δ₂)
     (W : T.Obj Δ₁)
     (K : T.Obj (PortBoundary.swap Δ₂)) :
@@ -756,7 +756,7 @@ Reassociating a nested parallel composition of three open systems.
 -/
 theorem par_assoc
     [IsMonoidal T]
-    {Δ₁ Δ₂ Δ₃ : PortBoundary}
+    {Δ₁ Δ₂ Δ₃ : PortBoundary.{p, q}}
     (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂) (W₃ : T.Obj Δ₃) :
     T.mapEquiv (PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃)
       (T.par (T.par W₁ W₂) W₃) =
@@ -769,7 +769,7 @@ commutativity equivalence.
 -/
 theorem par_comm
     [IsMonoidal T]
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂) :
     T.mapEquiv (PortBoundary.Equiv.tensorComm Δ₁ Δ₂)
       (T.par W₁ W₂) =
@@ -780,7 +780,7 @@ theorem par_comm
 @[simp]
 theorem par_leftUnit
     [IsMonoidal T]
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     (W : T.Obj Δ) :
     T.mapEquiv (PortBoundary.Equiv.tensorEmptyLeft Δ)
       (T.par (HasUnit.unit (T := T)) W) = W :=
@@ -790,7 +790,7 @@ theorem par_leftUnit
 @[simp]
 theorem par_rightUnit
     [IsMonoidal T]
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     (W : T.Obj Δ) :
     T.mapEquiv (PortBoundary.Equiv.tensorEmptyRight Δ)
       (T.par W (HasUnit.unit (T := T))) = W :=
@@ -803,7 +803,7 @@ can be moved outside a wire when it doesn't share the contracted
 boundary. -/
 theorem wire_par_superpose
     [IsTraced T]
-    {Δ₁ Δ₂ Γ Δ₃ : PortBoundary}
+    {Δ₁ Δ₂ Γ Δ₃ : PortBoundary.{p, q}}
     (W₁ : T.Obj Δ₁)
     (W₂ : T.Obj (PortBoundary.tensor Δ₂ Γ))
     (W₃ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₃)) :
@@ -818,7 +818,7 @@ theorem wire_par_superpose
 /-- Wire associativity: sequential wiring can be reassociated. -/
 theorem wire_assoc
     [IsTraced T]
-    {Δ₁ Γ₁ Γ₂ Δ₃ : PortBoundary}
+    {Δ₁ Γ₁ Γ₂ Δ₃ : PortBoundary.{p, q}}
     (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ₁))
     (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ₁) Γ₂))
     (W₃ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ₂) Δ₃)) :
@@ -829,7 +829,7 @@ theorem wire_assoc
 interchangeable up to boundary reshaping. -/
 theorem wire_comm
     [IsTraced T]
-    {Δ₁ Γ Δ₂ : PortBoundary}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
     (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
     T.wire W₁ W₂ =
@@ -846,8 +846,8 @@ theorem wire_comm
 @[simp]
 theorem wire_idWire
     [IsCompactClosed T]
-    {Γ : PortBoundary}
-    {Δ₂ : PortBoundary}
+    {Γ : PortBoundary.{p, q}}
+    {Δ₂ : PortBoundary.{p, q}}
     (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
     T.wire (HasIdWire.idWire (T := T) Γ) W₂ = W₂ :=
   IsCompactClosed.wire_idWire Γ W₂
@@ -856,8 +856,8 @@ theorem wire_idWire
 @[simp]
 theorem wire_idWire_right
     [IsCompactClosed T]
-    {Γ : PortBoundary}
-    {Δ₁ : PortBoundary}
+    {Γ : PortBoundary.{p, q}}
+    {Δ₁ : PortBoundary.{p, q}}
     (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ)) :
     T.wire W₁ (HasIdWire.idWire (T := T) Γ) = W₁ :=
   IsCompactClosed.wire_idWire_right Γ W₁
@@ -875,7 +875,7 @@ theorem unit_eq
 /-- `plug` expressed via `wire` and boundary reshaping. -/
 theorem plug_eq_wire
     [HasPlugWireFactor T]
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     (W : T.Obj Δ) (K : T.Obj (PortBoundary.swap Δ)) :
     T.plug W K =
       T.map (PortBoundary.Equiv.tensorEmptyLeft PortBoundary.empty).toHom
@@ -891,7 +891,7 @@ context factors through the left component.
 See `HasPlugWireFactor.plug_par_left` for the full docstring. -/
 theorem plug_par_left
     [HasPlugWireFactor T]
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂)
     (K : T.Obj (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :
     T.plug (T.par W₁ W₂) K =
@@ -910,7 +910,7 @@ context factors through the left wire component.
 See `HasPlugWireFactor.plug_wire_left` for the full docstring. -/
 theorem plug_wire_left
     [HasPlugWireFactor T]
-    {Δ₁ Γ Δ₂ : PortBoundary}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
     (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
     (K : T.Obj (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :

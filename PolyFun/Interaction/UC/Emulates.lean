@@ -71,12 +71,12 @@ distance is closed under sums and is a genuine equivalence), not at the
 fixed-`ε` level.
 -/
 
-universe u
+universe p q u
 
 namespace Interaction
 namespace UC
 
-variable {T : OpenTheory.{u}}
+variable {T : OpenTheory.{p, q, u}}
 
 /--
 `Observation T` bundles a binary relation on the closed systems of an open
@@ -86,7 +86,7 @@ This is the parameter slot through which different security flavors
 (perfect, statistical, asymptotic computational) plug into the abstract UC
 judgments `Emulates` and `UCSecure`.
 -/
-structure Observation (T : OpenTheory.{u}) where
+structure Observation (T : OpenTheory.{p, q, u}) where
   /-- The underlying binary relation on closed systems. -/
   rel : T.Closed → T.Closed → Prop
   /-- The relation is an equivalence (reflexive, symmetric, transitive). -/
@@ -95,12 +95,12 @@ structure Observation (T : OpenTheory.{u}) where
 namespace Observation
 
 /-- Perfect syntactic equality on closed systems is an observation relation. -/
-def eq (T : OpenTheory.{u}) : Observation T where
+def eq (T : OpenTheory.{p, q, u}) : Observation T where
   rel := Eq
   equiv := ⟨fun _ => rfl, Eq.symm, Eq.trans⟩
 
 @[simp]
-theorem eq_rel {T : OpenTheory.{u}} {c₁ c₂ : T.Closed} :
+theorem eq_rel {T : OpenTheory.{p, q, u}} {c₁ c₂ : T.Closed} :
     (Observation.eq T).rel c₁ c₂ ↔ c₁ = c₂ := Iff.rfl
 
 end Observation
@@ -117,7 +117,7 @@ This is the definitional core of UC security: no environment can
 distinguish `real` from `ideal` under the chosen observation.
 -/
 structure Emulates
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     (real ideal : T.Obj Δ)
     (Obs : Observation T) : Prop where
   compare : ∀ K : T.Plug Δ, Obs.rel (T.close real K) (T.close ideal K)
@@ -126,7 +126,7 @@ namespace Emulates
 
 /-- Every open system emulates itself. -/
 theorem refl
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     (Obs : Observation T)
     (W : T.Obj Δ) :
     Emulates W W Obs :=
@@ -134,7 +134,7 @@ theorem refl
 
 /-- Emulation is symmetric. -/
 theorem symm
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     {Obs : Observation T}
     {W₁ W₂ : T.Obj Δ}
     (h : Emulates W₁ W₂ Obs) :
@@ -143,7 +143,7 @@ theorem symm
 
 /-- Emulation composes transitively. -/
 theorem trans
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     {Obs : Observation T}
     {W₁ W₂ W₃ : T.Obj Δ}
     (h₁₂ : Emulates W₁ W₂ Obs)
@@ -160,7 +160,7 @@ which is the `map_plug` naturality law.
 -/
 theorem map_invariance
     [OpenTheory.IsLawfulPlug T]
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     {Obs : Observation T}
     (f : PortBoundary.Hom Δ₁ Δ₂)
     {real ideal : T.Obj Δ₁}
@@ -180,7 +180,7 @@ the resulting closed systems are still observationally equivalent. This is
 immediate from the definition.
 -/
 theorem plug_invariance
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     {Obs : Observation T}
     {real ideal : T.Obj Δ}
     (h : Emulates real ideal Obs)
@@ -201,7 +201,7 @@ variable [OpenTheory.HasPlugWireFactor T]
 Given `W₂ : T.Obj Δ₂` and `K : T.Plug (tensor Δ₁ Δ₂)`, wire them
 together through the `Δ₂` boundary to obtain a plug for `Δ₁` alone. -/
 def OpenTheory.parContextLeft
-    {Δ₁ Δ₂ : PortBoundary} (W₂ : T.Obj Δ₂)
+    {Δ₁ Δ₂ : PortBoundary.{p, q}} (W₂ : T.Obj Δ₂)
     (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
     T.Plug Δ₁ :=
   T.mapEquiv (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₁))
@@ -216,7 +216,7 @@ def OpenTheory.parContextLeft
 Given `W₁ : T.Obj Δ₁` and `K : T.Plug (tensor Δ₁ Δ₂)`, wire them
 together through the `Δ₁` boundary to obtain a plug for `Δ₂` alone. -/
 def OpenTheory.parContextRight
-    {Δ₁ Δ₂ : PortBoundary} (W₁ : T.Obj Δ₁)
+    {Δ₁ Δ₂ : PortBoundary.{p, q}} (W₁ : T.Obj Δ₁)
     (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
     T.Plug Δ₂ :=
   T.mapEquiv (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₂))
@@ -235,7 +235,7 @@ This captures the string-diagram identity: plugging `par W₁ W₂` against
 `K` is the same as plugging `W₁` against the residual context formed by
 wiring `W₂` into `K`. -/
 theorem OpenTheory.close_par_left
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂)
     (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
     T.close (T.par W₁ W₂) K = T.close W₁ (T.parContextLeft W₂ K) :=
@@ -243,7 +243,7 @@ theorem OpenTheory.close_par_left
 
 /-- Closing a parallel composition factors through the right component. -/
 theorem OpenTheory.close_par_right
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂)
     (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
     T.close (T.par W₁ W₂) K = T.close W₂ (T.parContextRight W₁ K) := by
@@ -259,7 +259,7 @@ Given `W₂ : T.Obj (tensor (swap Γ) Δ₂)` and
 `K : T.Plug (tensor Δ₁ Δ₂)`, wire them together through the `Δ₂`
 boundary to obtain a plug for `tensor Δ₁ Γ`. -/
 def OpenTheory.wireContextLeft
-    {Δ₁ Γ Δ₂ : PortBoundary}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
     (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
     T.Plug (PortBoundary.tensor Δ₁ Γ) :=
@@ -278,7 +278,7 @@ Given `W₁ : T.Obj (tensor Δ₁ Γ)` and `K : T.Plug (tensor Δ₁ Δ₂)`,
 wire them together through the `Δ₁` boundary to obtain a plug for
 `tensor (swap Γ) Δ₂`. -/
 def OpenTheory.wireContextRight
-    {Δ₁ Γ Δ₂ : PortBoundary}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
     (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
     T.Plug (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) :=
@@ -296,7 +296,7 @@ def OpenTheory.wireContextRight
 
 /-- Closing a wired composition factors through the left component. -/
 theorem OpenTheory.close_wire_left
-    {Δ₁ Γ Δ₂ : PortBoundary}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
     (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
     (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
@@ -306,7 +306,7 @@ theorem OpenTheory.close_wire_left
 
 /-- Closing a wired composition factors through the right component. -/
 theorem OpenTheory.close_wire_right
-    {Δ₁ Γ Δ₂ : PortBoundary}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
     (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
     (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
@@ -328,7 +328,7 @@ theorem OpenTheory.close_wire_right
 This follows from `plug_eq_wire` plus commutativity of `wire` via
 `par_comm`. -/
 theorem OpenTheory.plug_comm
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     (W : T.Obj Δ) (K : T.Obj (PortBoundary.swap Δ)) :
     T.plug W K = T.plug K W := by
   rw [OpenTheory.plug_eq_wire W K, OpenTheory.plug_eq_wire K W,
@@ -371,7 +371,7 @@ variable [OpenTheory.HasPlugWireFactor T]
 /-- Replacing the left component of a parallel composition preserves
 emulation, with the right component and environment held fixed. -/
 theorem par_left
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     {Obs : Observation T}
     {real₁ ideal₁ : T.Obj Δ₁}
     (h₁ : Emulates real₁ ideal₁ Obs)
@@ -385,7 +385,7 @@ theorem par_left
 /-- Replacing the right component of a parallel composition preserves
 emulation, with the left component and environment held fixed. -/
 theorem par_right
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     {Obs : Observation T}
     (W₁ : T.Obj Δ₁)
     {real₂ ideal₂ : T.Obj Δ₂}
@@ -404,7 +404,7 @@ The proof uses a hybrid argument through `T.par ideal₁ real₂`, with
 each step reducing to emulation of a single component via
 `close_par_left` / `close_par_right`. -/
 theorem par_compose
-    {Δ₁ Δ₂ : PortBoundary}
+    {Δ₁ Δ₂ : PortBoundary.{p, q}}
     {Obs : Observation T}
     {real₁ ideal₁ : T.Obj Δ₁} {real₂ ideal₂ : T.Obj Δ₂}
     (h₁ : Emulates real₁ ideal₁ Obs)
@@ -414,7 +414,7 @@ theorem par_compose
 
 /-- Replacing the left factor of a wiring preserves emulation. -/
 theorem wire_left
-    {Δ₁ Γ Δ₂ : PortBoundary}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     {Obs : Observation T}
     {real₁ ideal₁ : T.Obj (PortBoundary.tensor Δ₁ Γ)}
     (h₁ : Emulates real₁ ideal₁ Obs)
@@ -427,7 +427,7 @@ theorem wire_left
 
 /-- Replacing the right factor of a wiring preserves emulation. -/
 theorem wire_right
-    {Δ₁ Γ Δ₂ : PortBoundary}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     {Obs : Observation T}
     (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
     {real₂ ideal₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)}
@@ -441,7 +441,7 @@ theorem wire_right
 /-- **UC composition theorem for `wire`**: if each factor emulates its
 ideal, then their wired composition emulates the wired ideal. -/
 theorem wire_compose
-    {Δ₁ Γ Δ₂ : PortBoundary}
+    {Δ₁ Γ Δ₂ : PortBoundary.{p, q}}
     {Obs : Observation T}
     {real₁ ideal₁ : T.Obj (PortBoundary.tensor Δ₁ Γ)}
     {real₂ ideal₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)}
@@ -454,7 +454,7 @@ theorem wire_compose
 preserves observational equivalence, using `plug_comm` to swap
 the protocol/environment roles. -/
 theorem plug_right
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     {Obs : Observation T}
     (W : T.Obj Δ)
     {K₁ K₂ : T.Obj (PortBoundary.swap Δ)}
@@ -473,7 +473,7 @@ The proof uses a hybrid through `T.close ideal K_real`:
 step 1 is `plug_invariance` (same environment, different protocol) and
 step 2 is `plug_right` (same protocol, different environment). -/
 theorem plug_compose
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     {Obs : Observation T}
     {real ideal : T.Obj Δ}
     {K_real K_ideal : T.Obj (PortBoundary.swap Δ)}
@@ -501,7 +501,7 @@ a wrapper around the honest context to make the ideal world look like the
 real world.
 -/
 def UCSecure
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     (protocol ideal : T.Obj Δ)
     (Obs : Observation T)
     (SimSpace : Type*) (simulate : SimSpace → T.Plug Δ → T.Plug Δ) : Prop :=
@@ -512,7 +512,7 @@ def UCSecure
 Emulation implies UC security with the trivial (identity) simulator.
 -/
 theorem Emulates.toUCSecure
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     {protocol ideal : T.Obj Δ}
     {Obs : Observation T}
     (h : Emulates protocol ideal Obs) :
@@ -523,7 +523,7 @@ theorem Emulates.toUCSecure
 UC security with identity simulation recovers emulation.
 -/
 theorem UCSecure.toEmulates_id
-    {Δ : PortBoundary}
+    {Δ : PortBoundary.{p, q}}
     {protocol ideal : T.Obj Δ}
     {Obs : Observation T}
     (hSec : UCSecure protocol ideal Obs PUnit (fun _ K => K)) :
