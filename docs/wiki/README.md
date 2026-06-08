@@ -35,6 +35,13 @@ See the *Wiki Maintenance Contract* section in
 - [`pfunctor.md`](pfunctor.md): the polynomial-functor substrate
   (`PFunctor`, lenses, charts, equivalences, free monad `FreeM`,
   displayed `FreeM`, `Cofree` / M-type).
+- [`ipfunctor.md`](ipfunctor.md): the state-indexed polynomial functor
+  substrate (`IPFunctor`, single-index `FreeM`, two-index `FreeM₂`
+  with `IndexedMonad` instance).
+- [`ipfunctor-do-notation.md`](ipfunctor-do-notation.md): worked
+  walkthrough of the three `do`-notation flavors for
+  `IPFunctor.FreeM` / `FreeM₂`, with a small two-phase-protocol
+  example.
 - [`itree.md`](itree.md): coinductive interaction trees.
 - [`interaction.md`](interaction.md): the generic interaction framework
   (sequential `Spec`, two-party, multiparty local views, concurrent
@@ -56,6 +63,7 @@ See the *Wiki Maintenance Contract* section in
   - `repo-map.md` for repo structure and main work areas.
   - `generated-files.md` for derived outputs and source-of-truth rules.
   - `pfunctor.md` for the `PFunctor` / `FreeM` / `Cofree` substrate.
+  - `ipfunctor.md` for the state-indexed `IPFunctor` / `FreeM` / `FreeM₂` substrate.
   - `itree.md` for interaction trees, bisimulation, and handlers.
   - `interaction.md` for the interaction framework above `FreeM`.
   - `notation.md` for notation cross-references.
