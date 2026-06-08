@@ -25,8 +25,8 @@ by a custom `Phase` type:
 
 ```
 Phase.opn      ─ init ──▶ Phase.counting ─ tick ──▶ Phase.counting
-                                          ╰─ tick ──▶ Phase.counting
-                                          ╰─ ⋯
+                                          |─ tick ──▶ Phase.counting
+                                          |─ ⋯
 ```
 
 * `Phase.opn` is the initial state; only `init` is available.
