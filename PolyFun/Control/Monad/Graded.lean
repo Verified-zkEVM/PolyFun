@@ -45,6 +45,7 @@ one-element monoid (`instGradedMonadOfMonad`).
 - `gcast` — transport along an equality of grades, with its commutation lemma suite
 - `GradedMonad` — type class for graded monads
 - `LawfulGradedMonad` — the three monad laws, stated up to `gcast` transport
+- `GradedMonadHom` — grade-indexed families of maps commuting with `gpure` / `gbind`
 - `instGradedMonadOfMonad` — every `Monad` is a `GradedMonad PUnit`
 - `GradedMonad.toIndexedMonad` — over a group, a graded monad induces an indexed monad
 
@@ -64,7 +65,7 @@ See `REFERENCES.md` for the full citations.
 
 @[expose] public section
 
-universe u v
+universe u v w
 
 variable {G : Type*} {M : G → Type u → Type v}
 
@@ -173,6 +174,53 @@ class LawfulGradedMonad (G : Type*) [Monoid G] (M : G → Type u → Type v)
 export LawfulGradedMonad (gpure_gbind gbind_gpure gbind_assoc)
 
 attribute [simp] gpure_gbind gbind_gpure gbind_assoc
+
+section gmap
+
+variable [Monoid G] [GradedMonad G M] [LawfulGradedMonad G M]
+
+/-- Binding after a graded `gmap` precomposes the continuation. Cast-free: both sides live
+at the grade `g * h`. -/
+@[simp]
+lemma gbind_gmap {α β γ : Type u} {g h : G} (f : α → β) (x : M g α) (k : β → M h γ) :
+    gbind (GradedMonad.gmap f x) k = gbind x (fun a => k (f a)) := by
+  simp only [GradedMonad.gmap, gbind_gcast_left, gbind_assoc, gpure_gbind,
+    gbind_gcast_right, gcast_gcast, gcast_rfl]
+
+end gmap
+
+/-! ## Graded monad morphisms -/
+
+/-- A morphism of graded monads over the same grading monoid: a grade-indexed family of maps
+`M g α → N g α` commuting with `gpure` and `gbind`. Commutation with `gcast` is automatic
+(`GradedMonadHom.toFun_gcast`), since the components are a family of plain functions. -/
+@[ext]
+structure GradedMonadHom (G : Type*) [Monoid G] (M : G → Type u → Type v)
+    (N : G → Type u → Type w) [GradedMonad G M] [GradedMonad G N] where
+  /-- The underlying grade-indexed family of functions. -/
+  toFun : (g : G) → (α : Type u) → M g α → N g α
+  /-- Pure values map to pure values. -/
+  toFun_gpure' {α : Type u} (x : α) : toFun 1 α (gpure x) = gpure x
+  /-- Sequencing maps to sequencing. -/
+  toFun_gbind' {α β : Type u} {g h : G} (x : M g α) (f : α → M h β) :
+    toFun (g * h) β (gbind x f) = gbind (toFun g α x) (fun a => toFun h β (f a))
+
+attribute [simp] GradedMonadHom.toFun_gpure' GradedMonadHom.toFun_gbind'
+
+namespace GradedMonadHom
+
+variable [Monoid G] {N : G → Type u → Type w} [GradedMonad G M] [GradedMonad G N]
+
+instance : CoeFun (GradedMonadHom G M N) (fun _ => {g : G} → {α : Type u} → M g α → N g α)
+    where coe T := T.toFun _ _
+
+/-- Graded monad morphisms commute with grade transport: free, by `subst`. -/
+@[simp]
+lemma toFun_gcast (T : GradedMonadHom G M N) {g h : G} {α : Type u} (e : g = h) (x : M g α) :
+    T.toFun h α (gcast e x) = gcast e (T.toFun g α x) := by
+  subst e; rfl
+
+end GradedMonadHom
 
 /-! ## Trivial grading: every monad is a graded monad over `PUnit` -/
 

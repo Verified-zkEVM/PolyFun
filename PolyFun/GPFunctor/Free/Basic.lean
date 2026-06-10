@@ -296,6 +296,47 @@ lemma mapGM_gcast {g g' : G} (e : g = g') (x : GFreeM P g α) :
     (gcast e x).mapGM h = gcast e (x.mapGM h) := by
   subst e; rfl
 
+/-! ### Freeness
+
+`mapGM` into a lawful graded monad is a morphism of graded monad structure (`mapGM_bind`),
+so it bundles as a `GradedMonadHom` (`mapGMHom`). Conversely any graded monad morphism out
+of `GFreeM P` is determined by its action on the lifted shapes
+(`GradedMonadHom.eq_mapGM`) — no lawfulness of the target is required. Together these
+exhibit `GFreeM` as the free graded monad on its shape handlers. -/
+
+/-- `mapGM` is a morphism of graded monad structure. -/
+lemma mapGM_bind [LawfulGradedMonad G m] {β : Type uB} {g g' : G}
+    (x : GFreeM P g α) (f : α → GFreeM P g' β) :
+    (x.bind f).mapGM h = gbind (x.mapGM h) (fun a => (f a).mapGM h) := by
+  induction x using GFreeM.inductionOn with
+  | pure x => simp only [bind_pure, mapGM_gcast, mapGM_pure, gpure_gbind]
+  | roll g a r ih => simp only [bind_roll, mapGM_gcast, mapGM_roll, ih, gbind_assoc]
+
+/-- `mapGM` bundled as a morphism of graded monads, for a lawful target. The value universe
+is pinned to the response universe `uB`, mirroring the constraint on `mapGM` itself. -/
+protected def mapGMHom [LawfulGradedMonad G m] :
+    GradedMonadHom G (GFreeM.{uG, uA, uB, uB} P) m where
+  toFun _ _ x := x.mapGM h
+  toFun_gpure' _ := rfl
+  toFun_gbind' x f := mapGM_bind h x f
+
+@[simp]
+lemma mapGMHom_apply [LawfulGradedMonad G m] {g : G} (x : GFreeM P g α) :
+    (GFreeM.mapGMHom h).toFun g α x = x.mapGM h := rfl
+
+/-- Freeness of `GFreeM`: a graded monad morphism out of `GFreeM P` is determined by its
+action on the lifted shapes. No lawfulness of the target is required. The value universe is
+pinned to the response universe `uB`, mirroring `mapGM`. -/
+theorem _root_.GradedMonadHom.eq_mapGM (T : GradedMonadHom G (GFreeM.{uG, uA, uB, uB} P) m)
+    {g : G} (x : GFreeM P g α) :
+    T.toFun g α x = x.mapGM (fun a => T.toFun _ _ (GFreeM.liftA a)) := by
+  induction x using GFreeM.inductionOn with
+  | pure x => exact T.toFun_gpure' x
+  | roll g a r ih =>
+    refine (congrArg (T.toFun _ _) (bind_liftA a r).symm).trans ?_
+    refine (T.toFun_gbind' (GFreeM.liftA a) r).trans ?_
+    exact congrArg (gbind (T.toFun _ _ (GFreeM.liftA a))) (funext ih)
+
 end mapGM
 
 /-! ## `mapM`: interpreting into a plain monad
@@ -362,6 +403,69 @@ lemma erase_bind {g h : G} (x : GFreeM P g α) (f : α → GFreeM P h β) :
   induction x with
   | pure x => simp
   | roll a r ih => simp [ih]
+
+/-- The plain-monad interpretation factors through grade erasure: interpreting a graded
+tree and interpreting its erased plain tree agree. -/
+lemma mapM_eq_erase_mapM {m : Type uB → Type w} [Pure m] [Bind m] {α : Type uB}
+    (h : (a : P.A) → m (P.B a)) {g : G} (x : GFreeM P g α) :
+    x.mapM h = x.erase.mapM h := by
+  induction x using GFreeM.inductionOn with
+  | pure x => rfl
+  | roll g a r ih => exact congrArg (Bind.bind (h a)) (funext ih)
+
+/-! ## Trivially graded trees
+
+Every plain free-monad tree embeds as a trivially graded tree over
+[`GPFunctor.ofPFunctor`](../Basic.lean): all shapes sit at the trivial grade, so the
+embedded tree's total grade is a product of `1`s. The embedding sections grade erasure
+(`erase_ofFreeM`), and over the one-element monoid `PUnit` it is an equivalence
+(`equivFreeM`), exhibiting `PFunctor.FreeM` as the trivially graded fragment of `GFreeM`. -/
+
+section ofFreeM
+
+variable {P' : PFunctor.{uA, uB}}
+
+/-- Embed a plain free-monad tree as a trivially graded tree at the trivial grade. -/
+def ofFreeM : P'.FreeM α → GFreeM (ofPFunctor (G := G) P') 1 α
+  | .pure x => .pure x
+  | .roll a r =>
+      gcast (one_mul 1)
+        (GFreeM.roll (P := ofPFunctor (G := G) P') (g := 1) a fun b => ofFreeM (r b))
+
+@[simp]
+lemma ofFreeM_pure (x : α) :
+    ofFreeM (G := G) (PFunctor.FreeM.pure (P := P') x) = GFreeM.pure x := rfl
+
+@[simp]
+lemma ofFreeM_roll (a : P'.A) (r : P'.B a → P'.FreeM α) :
+    ofFreeM (G := G) (PFunctor.FreeM.roll a r) =
+      gcast (one_mul 1) (GFreeM.roll (P := ofPFunctor (G := G) P') a
+        fun b => ofFreeM (r b)) := rfl
+
+/-- The embedding sections grade erasure. -/
+@[simp]
+theorem erase_ofFreeM (x : P'.FreeM α) : (ofFreeM (G := G) x).erase = x := by
+  induction x with
+  | pure x => rfl
+  | roll a r ih =>
+    exact (erase_gcast _ _).trans (congrArg (PFunctor.FreeM.roll a) (funext ih))
+
+/-- Over the one-element monoid, trivially graded trees at any grade are exactly plain
+trees: erasure and embedding are mutually inverse, with all `PUnit` grades identified by
+structure eta. -/
+def equivFreeM {g : PUnit.{uG + 1}} :
+    GFreeM (ofPFunctor (G := PUnit.{uG + 1}) P') g α ≃ P'.FreeM α where
+  toFun x := x.erase
+  invFun x := ofFreeM x
+  left_inv x := by
+    induction x using GFreeM.inductionOn with
+    | pure x => rfl
+    | roll g a r ih =>
+      exact (congrArg (gcast (one_mul 1))
+        (congrArg (GFreeM.roll a) (funext ih))).trans (gcast_rfl _ _)
+  right_inv x := erase_ofFreeM x
+
+end ofFreeM
 
 end GFreeM
 

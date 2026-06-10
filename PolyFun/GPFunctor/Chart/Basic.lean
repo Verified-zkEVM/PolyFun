@@ -7,6 +7,7 @@ module
 
 public import PolyFun.GPFunctor.Basic
 public import PolyFun.IPFunctor.Chart.Basic
+public import PolyFun.PFunctor.Chart.Basic
 
 /-!
 # Charts Between Graded Polynomial Functors
@@ -24,11 +25,11 @@ over `[Mul G]` it induces the indexed `src_eq` on the `toIPFunctor` images (`toI
 
 @[expose] public section
 
-universe uG uA uA₁ uA₂ uA₃ uA₄ uB uB₁ uB₂ uB₃ uB₄
+universe uG uH uA uA₁ uA₂ uA₃ uA₄ uB uB₁ uB₂ uB₃ uB₄
 
 namespace GPFunctor
 
-variable {G : Type uG}
+variable {G : Type uG} {H : Type uH}
 
 /-- A **chart** between graded polynomial functors `P Q : GPFunctor G`: a forward map on
 positions, a forward map on responses, and the grade preservation law `grade_eq`. -/
@@ -140,6 +141,60 @@ def toPChart {P : GPFunctor.{uG, uA₁, uB₁} G} {Q : GPFunctor.{uG, uA₂, uB�
     (c : Chart P Q) : PFunctor.Chart P.toPFunctor Q.toPFunctor where
   toFunA := c.toFunA
   toFunB := c.toFunB
+
+@[simp]
+theorem toPChart_id (P : GPFunctor.{uG, uA, uB} G) :
+    (Chart.id P).toPChart = PFunctor.Chart.id P.toPFunctor := rfl
+
+@[simp]
+theorem toPChart_comp (c : Chart Q R) (c' : Chart P Q) :
+    (c ∘c c').toPChart = PFunctor.Chart.comp c.toPChart c'.toPChart := rfl
+
+/-! ## Induced equivalences on the images -/
+
+/-- A chart equivalence induces a chart equivalence between the indexed images. -/
+def Equiv.toIPEquiv [Mul G] (e : P ≃c Q) :
+    IPFunctor.Chart.Equiv P.toIPFunctor Q.toIPFunctor where
+  toChart := e.toChart.toIPChart
+  invChart := e.invChart.toIPChart
+  left_inv := by rw [← toIPChart_comp, e.left_inv, toIPChart_id]
+  right_inv := by rw [← toIPChart_comp, e.right_inv, toIPChart_id]
+
+/-- A chart equivalence induces a plain chart equivalence between the underlying
+containers. -/
+def Equiv.toPEquiv (e : P ≃c Q) :
+    PFunctor.Chart.Equiv P.toPFunctor Q.toPFunctor where
+  toChart := e.toChart.toPChart
+  invChart := e.invChart.toPChart
+  left_inv := by rw [← toPChart_comp, e.left_inv, toPChart_id]
+  right_inv := by rw [← toPChart_comp, e.right_inv, toPChart_id]
+
+/-! ## Grade relabeling and trivial grading -/
+
+/-- Relabel the grades on both sides of a chart along `φ : G → H`: the maps on positions and
+responses are unchanged, and no multiplicative structure on `H` is required. -/
+def mapGrade (φ : G → H) (c : Chart P Q) : Chart (P.mapGrade φ) (Q.mapGrade φ) where
+  toFunA := c.toFunA
+  toFunB := c.toFunB
+  grade_eq a := congrArg φ (c.grade_eq a)
+
+@[simp]
+theorem toPChart_mapGrade (φ : G → H) (c : Chart P Q) :
+    (c.mapGrade φ).toPChart = c.toPChart := rfl
+
+/-- Lift a plain chart to a chart between trivially graded polynomials: every shape on both
+sides sits at the trivial grade, so grade preservation is definitional. -/
+def ofPChart [One G] {P' : PFunctor.{uA₁, uB₁}} {Q' : PFunctor.{uA₂, uB₂}}
+    (c : PFunctor.Chart P' Q') :
+    Chart (ofPFunctor (G := G) P') (ofPFunctor (G := G) Q') where
+  toFunA := c.toFunA
+  toFunB := c.toFunB
+  grade_eq _ := rfl
+
+@[simp]
+theorem toPChart_ofPChart [One G] {P' : PFunctor.{uA₁, uB₁}} {Q' : PFunctor.{uA₂, uB₂}}
+    (c : PFunctor.Chart P' Q') :
+    (ofPChart (G := G) c).toPChart = c := rfl
 
 end Chart
 

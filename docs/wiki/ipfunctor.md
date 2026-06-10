@@ -53,6 +53,7 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 | [`PolyFun/IPFunctor/Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean) | `IPFunctor.FreeM P s α := IFreeM P (fun _ => α) s` — the constant-family specialization. Constructors `pure` / `roll` (as `@[match_pattern]` aliases over `IFreeM`), `lift`, `liftA`, `bind` (state-polymorphic), `Functor` / `LawfulFunctor`, `inductionOn`, `construct`, `mapM`, `erase` (forgetful to `PFunctor.FreeM` under `[Unique I]`), `toSigmaFreeM`. |
 | [`PolyFun/IPFunctor/Free/Indexed.lean`](../../PolyFun/IPFunctor/Free/Indexed.lean) | `IPFunctor.FreeM₂ P s t α := IFreeM P (fun u => PSigma (fun _ : u = t => α)) s` — the terminal-state-marker specialization. `bind` chains indices positionally; carries `IndexedMonad` / `LawfulIndexedMonad` instances. Forgetful coercion `toFreeM`. |
 | [`PolyFun/IPFunctor/Lens/Basic.lean`](../../PolyFun/IPFunctor/Lens/Basic.lean) | `IPFunctor.Lens P Q` — Cartesian lens between indexed polynomials with the source-index preservation law `src_eq`. Identity, composition, `Lens.Equiv`. |
+| [`PolyFun/IPFunctor/Free/Lens.lean`](../../PolyFun/IPFunctor/Free/Lens.lean) | Transport of free-monad trees along a lens: pre-state transport `IFreeM.castPre`, `IFreeM.mapLens` on the primitive, and the `FreeM` / `FreeM₂` specializations, with functoriality and `bind`-compatibility. |
 | [`PolyFun/IPFunctor/Chart/Basic.lean`](../../PolyFun/IPFunctor/Chart/Basic.lean) | `IPFunctor.Chart P Q` — covariant chart (dual to lens) with `src_eq` in the chart direction. Identity, composition, `Chart.Equiv`. |
 | [`PolyFun/IPFunctor/Equiv/Basic.lean`](../../PolyFun/IPFunctor/Equiv/Basic.lean) | `IPFunctor.Equiv P Q` (`≃ₚ`) — structural equivalence with fiberwise `A` / `B` equivalences plus `src_eq`. |
 | [`PolyFun/IPFunctor/Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | Lean 4.29 `@[doElem_elab]` overrides making ordinary `do { let x ← e; … }` elaborate to `IPFunctor.FreeM.bind`-trees. Custom diagnostics for state mismatches and non-polymorphic remainders. Opt in with `set_option backward.do.legacy false`. |
@@ -180,9 +181,17 @@ equality of *index values*, not of types — so most concrete morphisms discharg
 it by `rfl`. Object maps along a lens / chart, however, may need to transport
 children through `src_eq` because they live in fibers over `src ...`.
 
-Only the core structure (identity, composition, `Equiv`) is provided today;
-the monoidal / distributive layer mirrored from `PFunctor.Lens` is a future
-addition.
+Lenses also act on the free monads
+([`Free/Lens.lean`](../../PolyFun/IPFunctor/Free/Lens.lean)): `IFreeM.mapLens`
+maps shapes forward, selects source branches via the backward response map,
+and carries each child to the image source index with the pre-state transport
+`IFreeM.castPre` (the propositional `src_eq` makes the cast unavoidable; it
+vanishes for `rfl`-lenses). The `FreeM` / `FreeM₂` specializations are
+functorial and commute with `bind` and with `FreeM₂.toFreeM`.
+
+Beyond that, only the core structure (identity, composition, `Equiv`) is
+provided today; the monoidal / distributive layer mirrored from
+`PFunctor.Lens` is a future addition.
 
 ## Composition
 

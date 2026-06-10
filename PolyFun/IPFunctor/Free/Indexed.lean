@@ -269,6 +269,33 @@ lemma bind_pureCast {s t u : I} (w : s = t) (x : α) (g : α → FreeM₂ P t u 
     (pureCast (P := P) w x).bind g = castPre w.symm (g x) := by
   subst w; rfl
 
+/-- Pre-state transports float out of the tree argument of `bind`. -/
+@[simp]
+lemma bind_castPre {s s' t u : I} (e : s = s') (x : FreeM₂ P s t α)
+    (g : α → FreeM₂ P t u β) :
+    (castPre e x).bind g = castPre e (x.bind g) := by
+  subst e; rfl
+
+/-- Witness-carrying leaves are equal exactly when their payloads are: the witnesses are
+proofs and play no role. -/
+@[simp]
+lemma pureCast_inj {s t : I} (w₁ w₂ : s = t) (x y : α) :
+    pureCast (P := P) w₁ x = pureCast w₂ y ↔ x = y := by
+  subst w₁
+  rw [pureCast_rfl, pureCast_rfl, pure_inj]
+
+@[simp]
+lemma pureCast_ne_roll {s t : I} (w : s = t) (x : α) (a : P.A s)
+    (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α) :
+    pureCast (P := P) w x ≠ FreeM₂.roll a r := by
+  intro h; injection h
+
+@[simp]
+lemma roll_ne_pureCast {s t : I} (w : s = t) (x : α) (a : P.A s)
+    (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α) :
+    FreeM₂.roll a r ≠ pureCast (P := P) w x := by
+  intro h; injection h
+
 /-! ## `mapM` into a plain monad
 
 The source-index map `P.src s a b` is data-dependent on the response `b`, which prevents
@@ -297,6 +324,11 @@ lemma mapM_roll [Pure m] [Bind m]
     (h : (s : I) → (a : P.A s) → m (P.B s a))
     (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α) :
     (FreeM₂.roll a r).mapM h = h _ a >>= fun b => (r b).mapM h := rfl
+
+@[simp]
+lemma mapM_pureCast [Pure m] [Bind m]
+    (h : (s : I) → (a : P.A s) → m (P.B s a)) {s t : I} (w : s = t) (x : α) :
+    (pureCast (P := P) w x).mapM h = Pure.pure x := rfl
 
 end mapM
 

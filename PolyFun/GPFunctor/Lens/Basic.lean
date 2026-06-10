@@ -7,6 +7,7 @@ module
 
 public import PolyFun.GPFunctor.Basic
 public import PolyFun.IPFunctor.Lens.Basic
+public import PolyFun.PFunctor.Lens.Basic
 
 /-!
 # Lenses Between Graded Polynomial Functors
@@ -26,17 +27,19 @@ This file provides the basic structure plus identity, composition, the structura
 companion (`Lens.Equiv`), and the bridges to `IPFunctor.Lens` and `PFunctor.Lens`. The richer
 monoidal / distributive infrastructure of [`PFunctor.Lens`](../../PFunctor/Lens/Basic.lean)
 is intentionally not mirrored here yet — add operations on demand as downstream consumers
-need them. There is no transport of `GFreeM` trees along a lens yet, matching the indexed
-layer (which has no `FreeM` transport along morphisms either).
+need them. Transport of `GFreeM` trees along a lens, with its naturality in the forgetful
+maps, lives in [`PolyFun/GPFunctor/Free/Lens.lean`](../Free/Lens.lean); the indexed
+counterpart on `FreeM₂` lives in
+[`PolyFun/IPFunctor/Free/Lens.lean`](../../IPFunctor/Free/Lens.lean).
 -/
 
 @[expose] public section
 
-universe uG uA uA₁ uA₂ uA₃ uA₄ uB uB₁ uB₂ uB₃ uB₄
+universe uG uH uA uA₁ uA₂ uA₃ uA₄ uB uB₁ uB₂ uB₃ uB₄
 
 namespace GPFunctor
 
-variable {G : Type uG}
+variable {G : Type uG} {H : Type uH}
 
 /-- A **lens** between graded polynomial functors `P Q : GPFunctor G`: a forward map on
 positions, a backward map on responses, and the grade preservation law `grade_eq`. -/
@@ -138,6 +141,15 @@ def toIPLens [Mul G] {P : GPFunctor.{uG, uA₁, uB₁} G} {Q : GPFunctor.{uG, uA
   src_eq g a _ := congrArg (g * ·) (l.grade_eq a)
 
 @[simp]
+theorem toIPLens_toFunA [Mul G] (l : Lens P Q) (g : G) (a : P.A) :
+    l.toIPLens.toFunA g a = l.toFunA a := rfl
+
+@[simp]
+theorem toIPLens_toFunB [Mul G] (l : Lens P Q) (g : G) (a : P.A)
+    (d : Q.B (l.toFunA a)) :
+    l.toIPLens.toFunB g a d = l.toFunB a d := rfl
+
+@[simp]
 theorem toIPLens_id [Mul G] (P : GPFunctor.{uG, uA, uB} G) :
     (Lens.id P).toIPLens = IPFunctor.Lens.id P.toIPFunctor := rfl
 
@@ -150,6 +162,60 @@ def toPLens {P : GPFunctor.{uG, uA₁, uB₁} G} {Q : GPFunctor.{uG, uA₂, uB�
     (l : Lens P Q) : PFunctor.Lens P.toPFunctor Q.toPFunctor where
   toFunA := l.toFunA
   toFunB := l.toFunB
+
+@[simp]
+theorem toPLens_id (P : GPFunctor.{uG, uA, uB} G) :
+    (Lens.id P).toPLens = PFunctor.Lens.id P.toPFunctor := rfl
+
+@[simp]
+theorem toPLens_comp (l : Lens Q R) (l' : Lens P Q) :
+    (l ∘ₗ l').toPLens = PFunctor.Lens.comp l.toPLens l'.toPLens := rfl
+
+/-! ## Induced equivalences on the images -/
+
+/-- A lens equivalence induces a lens equivalence between the indexed images. -/
+def Equiv.toIPEquiv [Mul G] (e : P ≃ₗ Q) :
+    IPFunctor.Lens.Equiv P.toIPFunctor Q.toIPFunctor where
+  toLens := e.toLens.toIPLens
+  invLens := e.invLens.toIPLens
+  left_inv := by rw [← toIPLens_comp, e.left_inv, toIPLens_id]
+  right_inv := by rw [← toIPLens_comp, e.right_inv, toIPLens_id]
+
+/-- A lens equivalence induces a plain lens equivalence between the underlying
+containers. -/
+def Equiv.toPEquiv (e : P ≃ₗ Q) :
+    PFunctor.Lens.Equiv P.toPFunctor Q.toPFunctor where
+  toLens := e.toLens.toPLens
+  invLens := e.invLens.toPLens
+  left_inv := by rw [← toPLens_comp, e.left_inv, toPLens_id]
+  right_inv := by rw [← toPLens_comp, e.right_inv, toPLens_id]
+
+/-! ## Grade relabeling and trivial grading -/
+
+/-- Relabel the grades on both sides of a lens along `φ : G → H`: the maps on positions and
+responses are unchanged, and no multiplicative structure on `H` is required. -/
+def mapGrade (φ : G → H) (l : Lens P Q) : Lens (P.mapGrade φ) (Q.mapGrade φ) where
+  toFunA := l.toFunA
+  toFunB := l.toFunB
+  grade_eq a := congrArg φ (l.grade_eq a)
+
+@[simp]
+theorem toPLens_mapGrade (φ : G → H) (l : Lens P Q) :
+    (l.mapGrade φ).toPLens = l.toPLens := rfl
+
+/-- Lift a plain lens to a lens between trivially graded polynomials: every shape on both
+sides sits at the trivial grade, so grade preservation is definitional. -/
+def ofPLens [One G] {P' : PFunctor.{uA₁, uB₁}} {Q' : PFunctor.{uA₂, uB₂}}
+    (l : PFunctor.Lens P' Q') :
+    Lens (ofPFunctor (G := G) P') (ofPFunctor (G := G) Q') where
+  toFunA := l.toFunA
+  toFunB := l.toFunB
+  grade_eq _ := rfl
+
+@[simp]
+theorem toPLens_ofPLens [One G] {P' : PFunctor.{uA₁, uB₁}} {Q' : PFunctor.{uA₂, uB₂}}
+    (l : PFunctor.Lens P' Q') :
+    (ofPLens (G := G) l).toPLens = l := rfl
 
 end Lens
 

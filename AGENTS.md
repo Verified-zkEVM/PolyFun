@@ -94,11 +94,14 @@ Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
   → IPFunctor/Notation, IPFunctor/Notation/{Indexed, Deterministic}
 
+IPFunctor/Free/Indexed, IPFunctor/Lens/Basic → IPFunctor/Free/Lens
+
 Control/Monad/Indexed → Control/Monad/Graded
 
 Control/Monad/Graded, IPFunctor/Basic
-  → GPFunctor/Basic → GPFunctor/Free/{Basic, Indexed}
-  → GPFunctor/{Lens, Chart, Equiv}/Basic → GPFunctor/Examples
+  → GPFunctor/Basic → GPFunctor/Free/{Basic, Indexed, Path}
+  → GPFunctor/{Lens, Chart, Equiv}/Basic
+  → GPFunctor/Free/{Lens, MapGrade} → GPFunctor/Examples
 
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
   (free-standing helpers, depended on by both PFunctor and ITree)

@@ -111,6 +111,23 @@ The underlying container is the identity polynomial `PFunctor.X`. -/
   B _ := PUnit
   grade _ := 1
 
+@[simp] lemma toPFunctor_X [One G] :
+    (X : GPFunctor.{uG, uA, uB} G).toPFunctor = PFunctor.X := rfl
+
+@[simp] lemma grade_X [One G] (a : (X : GPFunctor.{uG, uA, uB} G).A) :
+    (X : GPFunctor.{uG, uA, uB} G).grade a = 1 := rfl
+
+/-- View a plain polynomial functor as a graded polynomial with every shape at the trivial
+grade. A section of the grade-forgetting projection `toPFunctor`. -/
+def ofPFunctor [One G] (P : PFunctor.{uA, uB}) : GPFunctor.{uG, uA, uB} G :=
+  { P with grade := fun _ => 1 }
+
+@[simp] lemma toPFunctor_ofPFunctor [One G] (P : PFunctor.{uA, uB}) :
+    (ofPFunctor (G := G) P).toPFunctor = P := rfl
+
+@[simp] lemma grade_ofPFunctor [One G] (P : PFunctor.{uA, uB}) (a : P.A) :
+    (ofPFunctor (G := G) P).grade a = 1 := rfl
+
 /-! ## Homogeneous components -/
 
 /-- The grade-`g` homogeneous component of the action of `P` on a type `X`: positions are
@@ -118,11 +135,22 @@ shapes of grade exactly `g`. The full (grade-forgetting) action is `P.toPFunctor
 def Obj (P : GPFunctor.{uG, uA, uB} G) (g : G) (X : Type v) : Type (max uA uB v) :=
   Σ a : { a : P.A // P.grade a = g }, P.B a.1 → X
 
+/-- The homogeneous components decompose the full grade-forgetting action: a grade together
+with a position of exactly that grade is the same data as a bare position of the underlying
+container. -/
+def sigmaObjEquiv (P : GPFunctor.{uG, uA, uB} G) (X : Type v) :
+    (Σ g : G, P.Obj g X) ≃ P.toPFunctor.Obj X where
+  toFun x := ⟨x.2.1.1, x.2.2⟩
+  invFun y := ⟨P.grade y.1, ⟨y.1, rfl⟩, y.2⟩
+  left_inv := fun ⟨g, ⟨a, h⟩, f⟩ => by subst h; rfl
+  right_inv y := rfl
+
 /-! ## Grade reindexing -/
 
 /-- Relabel the grades of a graded polynomial along a function `φ : G → H`. The underlying
 container is unchanged. No multiplicative structure is involved at this level; the
-`MonoidHom`-aware interaction with the free graded monad is future work. -/
+`MonoidHom`-aware action on the free graded monad lives in
+[`PolyFun/GPFunctor/Free/MapGrade.lean`](Free/MapGrade.lean). -/
 def mapGrade (φ : G → H) (P : GPFunctor.{uG, uA, uB} G) : GPFunctor.{uH, uA, uB} H where
   A := P.A
   B := P.B

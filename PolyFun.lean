@@ -18,6 +18,9 @@ import PolyFun.GPFunctor.Equiv.Basic
 import PolyFun.GPFunctor.Examples
 import PolyFun.GPFunctor.Free.Basic
 import PolyFun.GPFunctor.Free.Indexed
+import PolyFun.GPFunctor.Free.Lens
+import PolyFun.GPFunctor.Free.MapGrade
+import PolyFun.GPFunctor.Free.Path
 import PolyFun.GPFunctor.Lens.Basic
 import PolyFun.IPFunctor.Basic
 import PolyFun.IPFunctor.Chart.Basic
@@ -26,6 +29,7 @@ import PolyFun.IPFunctor.Examples
 import PolyFun.IPFunctor.Free.Basic
 import PolyFun.IPFunctor.Free.Family
 import PolyFun.IPFunctor.Free.Indexed
+import PolyFun.IPFunctor.Free.Lens
 import PolyFun.IPFunctor.Lens.Basic
 import PolyFun.IPFunctor.Notation
 import PolyFun.IPFunctor.Notation.Deterministic
