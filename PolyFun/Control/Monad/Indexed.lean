@@ -46,7 +46,7 @@ other in general. However:
 - Atkey, R. (2009). *Parameterised notions of computation*. JFP.
 - Fujii, S., Katsumata, S., Melliès, P.-A. (2016). *Towards a formal theory of graded monads*.
   FOSSACS.
-- Orchard, D., Wadler, P., Eades, H. (2019). *Unifying graded and parameterised monads*.
+- Orchard, D., Wadler, P., Eades, H. (2020). *Unifying graded and parameterised monads*. MSFP.
 -/
 
 @[expose] public section

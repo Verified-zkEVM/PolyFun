@@ -14,6 +14,8 @@ PolyFun/
                      M-type / cofree, free monad and displayed-free
   IPFunctor/         state-indexed polynomial functors and their free monads
                      (single-index FreeM, two-index FreeM₂ + IndexedMonad)
+  GPFunctor/         graded polynomial functors and their free graded monad
+                     (GFreeM + GradedMonad, grade-preserving morphisms)
   ITree/             coinductive interaction trees, bisim/sim, handlers,
                      event signatures
   Interaction/       generic interaction framework
@@ -41,6 +43,16 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   -> PFunctor/{Cofree, Trace}
   -> PFunctor/Free/{Basic, Path}
   -> PFunctor/Free/{Displayed, Displayed/Decoration}
+
+Control/Monad/Indexed -> Control/Monad/Graded
+
+Control/Monad/Indexed, PFunctor/Free/Basic
+  -> IPFunctor/Basic -> IPFunctor/Free/{Family, Basic, Indexed}
+  -> IPFunctor/{Lens, Chart, Equiv}, IPFunctor/Notation*
+
+Control/Monad/Graded, IPFunctor/Basic
+  -> GPFunctor/Basic -> GPFunctor/Free/{Basic, Indexed}
+  -> GPFunctor/{Lens, Chart, Equiv}/Basic -> GPFunctor/Examples
 
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
   (free-standing helpers, depended on by both PFunctor and ITree)
@@ -76,6 +88,9 @@ module index. See [`generated-files.md`](generated-files.md).
 - Working on state-indexed polynomial functors (multi-phase protocols,
   session-typed interaction): start in `PolyFun/IPFunctor/`. See
   [`ipfunctor.md`](ipfunctor.md).
+- Working on graded polynomial functors (cost / effect grading, graded
+  monads): start in `PolyFun/GPFunctor/`. See
+  [`gpfunctor.md`](gpfunctor.md).
 - Working on coinductive interaction trees, bisimulation, simulation, or
   event signatures: start in `PolyFun/ITree/`. See [`itree.md`](itree.md).
 - Working on the generic interaction framework (sequential `Spec`,

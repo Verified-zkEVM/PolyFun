@@ -143,3 +143,76 @@ lens layer in `PolyFun/PFunctor/Lens/` makes dependent.
 
 Used in: `PolyFun/PFunctor/Lens/State.lean`,
 `PolyFun/PFunctor/Lens/Basic.lean`.
+
+### Atk09 — Atkey, *Parameterised notions of computation*
+
+Robert Atkey.
+*Parameterised Notions of Computation*.
+*Journal of Functional Programming* 19(3-4):335–376, 2009.
+
+Indexed (parameterised) monads `M : I → I → Type → Type` with pre- and
+post-condition indices chained positionally; the notion behind
+`IndexedMonad` and the two-index free monad `IPFunctor.FreeM₂`.
+
+Used in: `PolyFun/Control/Monad/Indexed.lean`,
+`PolyFun/IPFunctor/Free/Indexed.lean`.
+
+### Smi08 — Smirnov, *Graded monads and rings of polynomials*
+
+A. L. Smirnov.
+*Graded Monads and Rings of Polynomials*.
+*Journal of Mathematical Sciences* 151(3):3032–3051, 2008.
+
+The original definition of monads graded by a monoid, with the polynomial
+ring as the motivating example.
+
+Used in: `PolyFun/Control/Monad/Graded.lean`.
+
+### Kat14 — Katsumata, *Parametric effect monads and semantics of effect systems*
+
+Shin-ya Katsumata.
+*Parametric Effect Monads and Semantics of Effect Systems*.
+In *POPL 2014*, pages 633–645, 2014.
+
+Graded (parametric effect) monads as the denotational counterpart of
+effect systems; grades as effect annotations accumulated through bind.
+
+Used in: `PolyFun/Control/Monad/Graded.lean`,
+`PolyFun/GPFunctor/Basic.lean`.
+
+### MPS15 — Milius, Pattinson, Schröder, *Generic trace semantics and graded monads*
+
+Stefan Milius, Dirk Pattinson, and Lutz Schröder.
+*Generic Trace Semantics and Graded Monads*.
+In *CALCO 2015*, LIPIcs 35, pages 253–269, 2015.
+
+Graded monads from graded theories; operations of uniform depth-one grade,
+which is the per-shape grading discipline `GPFunctor` adopts.
+
+Used in: `PolyFun/Control/Monad/Graded.lean`,
+`PolyFun/GPFunctor/Free/Basic.lean`.
+
+### FKM16 — Fujii, Katsumata, Melliès, *Towards a formal theory of graded monads*
+
+Soichiro Fujii, Shin-ya Katsumata, and Paul-André Melliès.
+*Towards a Formal Theory of Graded Monads*.
+In *FoSSaCS 2016*, LNCS 9634, pages 513–530, 2016.
+
+Graded monads as lax monoidal functors; category-graded monads unifying
+the graded and indexed notions.
+
+Used in: `PolyFun/Control/Monad/Graded.lean`,
+`PolyFun/Control/Monad/Indexed.lean`.
+
+### OWE20 — Orchard, Wadler, Eades, *Unifying graded and parameterised monads*
+
+Dominic Orchard, Philip Wadler, and Harley Eades III.
+*Unifying Graded and Parameterised Monads*.
+In *MSFP 2020*, EPTCS 317, pages 18–38, 2020.
+
+The precise relationship between graded and indexed (parameterised)
+monads, including the group-graded-to-indexed construction realized by
+`GradedMonad.toIndexedMonad`.
+
+Used in: `PolyFun/Control/Monad/Graded.lean`,
+`PolyFun/Control/Monad/Indexed.lean`.

@@ -223,6 +223,52 @@ lemma toFreeM_pure (s : I) (x : α) :
 lemma toFreeM_roll (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α) :
     (FreeM₂.roll a r).toFreeM = FreeM.roll s a (fun b => (r b).toFreeM) := rfl
 
+/-! ## Pre-state transport and witness-carrying leaves
+
+The pre-state of a `FreeM₂` is a type-level parameter, so translations that compute the
+pre-state only propositionally need an explicit transport `castPre`. Its companion `pureCast`
+generalizes `FreeM₂.pure` to a leaf carrying an arbitrary proof that the pre-state equals the
+post-state; binding such a leaf transports the continuation along the witness
+(`bind_pureCast`). Both are bare `Eq.rec`s / constructor applications, so every commutation
+lemma is proved by `subst` and reflexive transports vanish definitionally.
+
+There is no `castPost`-through-`roll` analogue for the *pre*-state: the shape type `P.A s`
+itself depends on the pre-state, so casting it commutes with `roll` only when the shape
+family is constant (as for the indexed image of a graded polynomial). -/
+
+/-- Transport a `FreeM₂` along an equality of pre-states. -/
+def castPre {s s' : I} (e : s = s') (x : FreeM₂ P s t α) : FreeM₂ P s' t α :=
+  e ▸ x
+
+@[simp]
+lemma castPre_rfl {s : I} (e : s = s) (x : FreeM₂ P s t α) :
+    castPre e x = x := rfl
+
+@[simp]
+lemma castPre_castPre {s s' s'' : I} (e : s = s') (e' : s' = s'') (x : FreeM₂ P s t α) :
+    castPre e' (castPre e x) = castPre (e.trans e') x := by
+  subst e'; subst e; rfl
+
+/-- A pure leaf at pre-state `s` with post-state `t`, carrying a proof `s = t`.
+Generalizes `FreeM₂.pure`, which is the diagonal case `pureCast rfl`. -/
+def pureCast {s t : I} (w : s = t) (x : α) : FreeM₂ P s t α :=
+  IFreeM.pure ⟨w, x⟩
+
+@[simp]
+lemma pureCast_rfl {s : I} (w : s = s) (x : α) :
+    pureCast (P := P) w x = FreeM₂.pure x := rfl
+
+@[simp]
+lemma castPre_pureCast {s s' t : I} (e : s = s') (w : s = t) (x : α) :
+    castPre (P := P) e (pureCast w x) = pureCast (e.symm.trans w) x := by
+  subst e; rfl
+
+/-- Binding a witness-carrying leaf transports the continuation along the witness. -/
+@[simp]
+lemma bind_pureCast {s t u : I} (w : s = t) (x : α) (g : α → FreeM₂ P t u β) :
+    (pureCast (P := P) w x).bind g = castPre w.symm (g x) := by
+  subst w; rfl
+
 /-! ## `mapM` into a plain monad
 
 The source-index map `P.src s a b` is data-dependent on the response `b`, which prevents

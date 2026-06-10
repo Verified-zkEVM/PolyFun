@@ -42,6 +42,10 @@ See the *Wiki Maintenance Contract* section in
   walkthrough of the three `do`-notation flavors for
   `IPFunctor.FreeM` / `FreeM₂`, with a small two-phase-protocol
   example.
+- [`gpfunctor.md`](gpfunctor.md): the graded polynomial functor layer
+  (`GPFunctor`, free graded monad `GFreeM` with `GradedMonad`
+  instance, `gcast` transport discipline, connections to `PFunctor`
+  and `IPFunctor`).
 - [`itree.md`](itree.md): coinductive interaction trees.
 - [`interaction.md`](interaction.md): the generic interaction framework
   (sequential `Spec`, two-party, multiparty local views, concurrent
@@ -64,6 +68,7 @@ See the *Wiki Maintenance Contract* section in
   - `generated-files.md` for derived outputs and source-of-truth rules.
   - `pfunctor.md` for the `PFunctor` / `FreeM` / `Cofree` substrate.
   - `ipfunctor.md` for the state-indexed `IPFunctor` / `FreeM` / `FreeM₂` substrate.
+  - `gpfunctor.md` for the graded `GPFunctor` / `GFreeM` / `GradedMonad` substrate.
   - `itree.md` for interaction trees, bisimulation, and handlers.
   - `interaction.md` for the interaction framework above `FreeM`.
   - `notation.md` for notation cross-references.

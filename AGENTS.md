@@ -54,6 +54,11 @@ and depend on this library.
   and their indexed free monads. `Free/Basic.lean` holds the single-index
   `FreeM` (state-polymorphic continuations); `Free/Indexed.lean` holds the
   two-index `FreeM₂` carrying a `LawfulIndexedMonad` instance.
+- `PolyFun/GPFunctor/`: graded polynomial functors (`GPFunctor G`, a
+  container with per-shape grades in `G`) and their free graded monad
+  `GFreeM` carrying a `LawfulGradedMonad` instance, plus grade-preserving
+  lenses / charts / equivalences and the connections to `PFunctor`
+  (grade erasure) and `IPFunctor` (accumulated-grade indexed image).
 - `PolyFun/ITree/`: coinductive interaction trees, bisimulation,
   simulation, handlers, event signatures.
 - `PolyFun/Interaction/`: protocol-flavored generic interaction framework.
@@ -88,6 +93,12 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
 Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
   → IPFunctor/Notation, IPFunctor/Notation/{Indexed, Deterministic}
+
+Control/Monad/Indexed → Control/Monad/Graded
+
+Control/Monad/Graded, IPFunctor/Basic
+  → GPFunctor/Basic → GPFunctor/Free/{Basic, Indexed}
+  → GPFunctor/{Lens, Chart, Equiv}/Basic → GPFunctor/Examples
 
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
   (free-standing helpers, depended on by both PFunctor and ITree)
@@ -212,6 +223,8 @@ too specific or too changeable to keep at the repo root.
   substrate.
 - [`docs/wiki/ipfunctor.md`](docs/wiki/ipfunctor.md): state-indexed
   polynomial functors and their indexed free monads.
+- [`docs/wiki/gpfunctor.md`](docs/wiki/gpfunctor.md): graded polynomial
+  functors and their free graded monad.
 - [`docs/wiki/itree.md`](docs/wiki/itree.md): interaction trees layer.
 - [`docs/wiki/interaction.md`](docs/wiki/interaction.md): generic interaction
   framework (`Spec`, two-party, multiparty, concurrent, UC).
