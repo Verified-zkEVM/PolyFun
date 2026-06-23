@@ -85,6 +85,9 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   → PFunctor/Free/{Basic, Path}
   → PFunctor/Free/{Displayed, Displayed/Decoration}
 
+PFunctor/{Lens, Cofree, M}
+  → PFunctor/Dynamical/{Basic, Combinators, Run, Trajectory, Examples}
+
 Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
   → IPFunctor/Notation, IPFunctor/Notation/{Indexed, Deterministic}

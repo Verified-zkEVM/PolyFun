@@ -58,6 +58,16 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/Chart/Basic.lean`](../../PolyFun/PFunctor/Chart/Basic.lean) | Charts (forward map on both positions and directions). Chart category is isomorphic to `Set^→` and has a different monoidal structure from the lens category. |
 | [`PolyFun/PFunctor/Category.lean`](../../PolyFun/PFunctor/Category.lean) | Category-theoretic packaging where applicable. |
 
+### Dynamical systems (Spivak–Niu Ch. 4)
+
+| File | Purpose |
+|------|---------|
+| [`PolyFun/PFunctor/Dynamical/Basic.lean`](../../PolyFun/PFunctor/Dynamical/Basic.lean) | `DynSystem p` (a `p`-system = lens `selfMonomial State ⟹ p`), `toLens`/`ofLens`, `MooreMachine`, `DetAutomaton`, `Closed`/`Section`. |
+| [`PolyFun/PFunctor/Dynamical/Combinators.lean`](../../PolyFun/PFunctor/Dynamical/Combinators.lean) | Building systems from old ones: `wrap` (§4.3.3), `tensor` (§4.3.2), `pairing` (§4.3.1), `Wiring₂` / `wire₂` (§4.4). |
+| [`PolyFun/PFunctor/Dynamical/Run.lean`](../../PolyFun/PFunctor/Dynamical/Run.lean) | Finite runs: `run`, `trace`, `outputOn`, `DetAutomaton.accepts`. |
+| [`PolyFun/PFunctor/Dynamical/Trajectory.lean`](../../PolyFun/PFunctor/Dynamical/Trajectory.lean) | Infinite behaviour: `trajectory : DynSystem p → State → CofreeC p p.A`. |
+| [`PolyFun/PFunctor/Dynamical/Examples.lean`](../../PolyFun/PFunctor/Dynamical/Examples.lean) | Worked examples / regression tests (counter, parity automaton). |
+
 ### Free monad `FreeM`
 
 | File | Purpose |

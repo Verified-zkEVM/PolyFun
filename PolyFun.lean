@@ -109,6 +109,11 @@ import PolyFun.PFunctor.Bound
 import PolyFun.PFunctor.Category
 import PolyFun.PFunctor.Chart.Basic
 import PolyFun.PFunctor.Cofree
+import PolyFun.PFunctor.Dynamical.Basic
+import PolyFun.PFunctor.Dynamical.Combinators
+import PolyFun.PFunctor.Dynamical.Examples
+import PolyFun.PFunctor.Dynamical.Run
+import PolyFun.PFunctor.Dynamical.Trajectory
 import PolyFun.PFunctor.Equiv.Basic
 import PolyFun.PFunctor.Free.Basic
 import PolyFun.PFunctor.Free.Displayed
