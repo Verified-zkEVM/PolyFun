@@ -5,15 +5,16 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Dynamical.Combinators
+public import PolyFun.PFunctor.Dynamical.Behavior
 public import PolyFun.PFunctor.Dynamical.Run
 
 /-!
 # Examples of dynamical systems
 
 Small worked examples that exercise the `Dynamical` API and double as regression
-tests: a counter Moore machine and its finite runs, the lens round-trip, and the
-wrapper/parallel combinators.
+tests: a counter Moore machine and its finite runs, the lens round-trip, the
+wrapper/parallel combinators, a genuinely mode-dependent (non-Moore) system, and
+the closed-loop feedback / stream behaviour.
 -/
 
 @[expose] public section
@@ -54,6 +55,51 @@ def parity : DetAutomaton Bool Bool where
 example : parity.accepts [true, true] := by decide
 
 example : ¬ parity.accepts [true] := by decide
+
+/-! ## A mode-dependent system
+
+A genuinely non-Moore interface whose available directions depend on the position:
+in the `true` mode there is a single silent direction, while in the `false` mode the
+direction is a `Bool`. This exercises the dependent `update : (s) → p.B (expose s) → State`. -/
+
+/-- An interface with two modes: `true` exposes a `Unit` of directions, `false`
+exposes a `Bool` of directions. -/
+def gate : PFunctor := ⟨Bool, fun b => bif b then Unit else Bool⟩
+
+/-- A system over `gate`: from the `true` mode it advances silently to `false`; from
+the `false` mode the incoming `Bool` direction becomes the next mode. -/
+def gateSys : DynSystem gate where
+  State := Bool
+  expose := id
+  update := fun s => match s with
+    | true => fun _ => false
+    | false => fun i => i
+
+example : gateSys.expose true = true := rfl
+
+example : gateSys.update true () = false := rfl
+
+example : gateSys.update false true = true := rfl
+
+/-! ## Feedback and streams -/
+
+/-- Closing the counter by always feeding back the input `1` makes it advance by one
+each step, so its closed-loop output stream is the identity on time. -/
+example : counter.feedbackStream (fun _ => 1) (0 : ℕ) 3 = 3 := rfl
+
+/-- One step of the closed-loop recurrence. -/
+example : counter.feedbackStream (fun _ => 1) (0 : ℕ) 1
+    = counter.feedbackStream (fun _ => 1) (counter.transition (0 : ℕ) 1) 0 :=
+  counter.feedbackStream_succ (fun _ => 1) (0 : ℕ) 0
+
+/-- The output stream on a constant input stream. -/
+example : counter.outputStream (0 : ℕ) (fun _ => 1) 3 = 3 := rfl
+
+/-- Streams agree with finite runs on every prefix. -/
+example (n : ℕ) :
+    counter.stateStream (0 : ℕ) (fun _ => 1) n
+      = counter.run (0 : ℕ) ((List.range n).map (fun _ => 1)) :=
+  counter.stateStream_eq_run (0 : ℕ) (fun _ => 1) n
 
 end DynSystem.Examples
 

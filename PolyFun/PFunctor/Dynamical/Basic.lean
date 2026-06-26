@@ -146,12 +146,23 @@ def toMooreMachine (a : DetAutomaton O I) : MooreMachine O I :=
 
 end DetAutomaton
 
-/-! ## Closed systems and sections -/
+/-! ## Closed systems, points, and sections -/
 
-/-- A **section** of an interface `p` is a lens `X ⟹ p` (the book's `y ⟹ p`):
-it picks a position and discards directions. Composing a section into a system's
-interface closes the system off (Niu–Spivak §4.3.4). -/
-abbrev Section (p : PFunctor.{uA, uB}) : Type _ := Lens X p
+/-- A **point** of an interface `p` is a lens `X ⟹ p` (the book's `y ⟹ p`): it
+picks a position and discards directions, so `Point p ≅ p.A`. It is the data of a
+generalized element of the interface, not enough on its own to close a system. -/
+abbrev Point (p : PFunctor.{uA, uB}) : Type _ := Lens X p
+
+/-- A **section** of an interface `p` is a lens `p ⟹ X` (the book's `p ⟹ y`),
+equivalently a dependent section `(a : p.A) → p.B a` choosing a direction at every
+position. Composing a section after a system's interface lens closes the system off
+(Niu–Spivak §4.3.4); see `DynSystem.close`. This is defeq to `Lens.enclose p`. -/
+abbrev Section (p : PFunctor.{uA, uB}) : Type _ := Lens p X
+
+/-- The section `p ⟹ X` picking the direction `σ a` at each position `a`. Unpacking
+a `Section p`, the position map is trivial and the direction map is `σ`. -/
+def sectionLens {p : PFunctor.{uA, uB}} (σ : (a : p.A) → p.B a) : Section p :=
+  (fun _ => PUnit.unit) ⇆ (fun a _ => σ a)
 
 /-- A **closed** dynamical system is an `X`-system: its interface is the
 composition unit, so the dynamics reduce to a pure state endofunction. -/
@@ -162,6 +173,18 @@ namespace Closed
 /-- The pure state transition of a closed system. -/
 def step (s : Closed) (st : s.State) : s.State :=
   s.update st PUnit.unit
+
+/-- The state of a closed system after `n` steps from `st`: the `n`-fold iterate of
+`step`. The closed system runs autonomously, so its behaviour is this ℕ-indexed
+trajectory of states. -/
+def iterate (s : Closed) (st : s.State) : ℕ → s.State :=
+  fun n => (s.step)^[n] st
+
+@[simp] theorem iterate_zero (s : Closed) (st : s.State) : s.iterate st 0 = st := rfl
+
+theorem iterate_succ (s : Closed) (st : s.State) (n : ℕ) :
+    s.iterate st (n + 1) = s.iterate (s.step st) n :=
+  Function.iterate_succ_apply s.step n st
 
 end Closed
 

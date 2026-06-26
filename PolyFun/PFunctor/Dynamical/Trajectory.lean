@@ -25,9 +25,14 @@ on, in the Niu–Spivak slogan).
 
 @[expose] public section
 
-universe uA uB
+universe uA uB w
 
 namespace PFunctor
+
+/-- The unique successor of a node in a unary (`X`-)cofree tree: read off the single
+child indexed by the lone direction `PUnit.unit`. -/
+def CofreeC.next {α : Type w} (t : CofreeC X.{uA, uB} α) : CofreeC X.{uA, uB} α :=
+  (CofreeC.tail t).2 PUnit.unit
 
 namespace DynSystem
 
@@ -53,6 +58,27 @@ theorem dest_trajectory (s : DynSystem p) (st : s.State) :
 @[simp] theorem tail_trajectory (s : DynSystem p) (st : s.State) :
     (trajectory s st).tail = ⟨s.expose st, fun d => trajectory s (s.update st d)⟩ := by
   simp only [CofreeC.tail]; rw [dest_trajectory]; rfl
+
+/-! ## Closed-system spine
+
+A closed system's interface is `X`, whose lone direction gives every cofree node a
+single successor `CofreeC.next`. Iterating it traces the system's spine, which is
+exactly the `iterate` of its states. -/
+
+/-- One step along a closed system's trajectory is the trajectory from the next
+state. -/
+theorem next_trajectory (s : Closed) (st : s.State) :
+    CofreeC.next (trajectory s st) = trajectory s (s.step st) := by
+  simp only [CofreeC.next]; rfl
+
+/-- The `n`-fold successor of a closed system's trajectory is the trajectory from
+its `n`-th iterated state: the trajectory's spine is the `iterate` of states. -/
+theorem next_iterate_trajectory (s : Closed) (st : s.State) (n : ℕ) :
+    (CofreeC.next)^[n] (trajectory s st) = trajectory s ((s.step)^[n] st) := by
+  induction n generalizing st with
+  | zero => rfl
+  | succ n ih =>
+    rw [Function.iterate_succ_apply, next_trajectory, ih, Function.iterate_succ_apply]
 
 end DynSystem
 

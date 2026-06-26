@@ -110,6 +110,7 @@ import PolyFun.PFunctor.Category
 import PolyFun.PFunctor.Chart.Basic
 import PolyFun.PFunctor.Cofree
 import PolyFun.PFunctor.Dynamical.Basic
+import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Combinators
 import PolyFun.PFunctor.Dynamical.Examples
 import PolyFun.PFunctor.Dynamical.Run

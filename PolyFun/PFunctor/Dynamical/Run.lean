@@ -65,6 +65,39 @@ theorem run_append (m : MooreMachine O I) (st : m.State) (is js : List I) :
   | nil => rfl
   | cons i is ih => simp [trace, ih]
 
+/-! ## Streams
+
+The behaviour of a Moore machine driven by an infinite stream of inputs
+`ins : ℕ → I`: the state visited at each time, the output observed there, and the
+identification with the finite `run` on every prefix. -/
+
+/-- The state of the machine at time `n`, started from `st` and driven by the input
+stream `ins`. -/
+def stateStream (m : MooreMachine O I) (st : m.State) (ins : ℕ → I) : ℕ → m.State
+  | 0 => st
+  | n + 1 => m.stepM (m.stateStream st ins n) (ins n)
+
+/-- The output observed at time `n` along the stream-driven run. -/
+def outputStream (m : MooreMachine O I) (st : m.State) (ins : ℕ → I) (n : ℕ) : O :=
+  m.output (m.stateStream st ins n)
+
+@[simp] theorem stateStream_zero (m : MooreMachine O I) (st : m.State) (ins : ℕ → I) :
+    m.stateStream st ins 0 = st := rfl
+
+@[simp] theorem stateStream_succ (m : MooreMachine O I) (st : m.State) (ins : ℕ → I)
+    (n : ℕ) : m.stateStream st ins (n + 1) = m.stepM (m.stateStream st ins n) (ins n) :=
+  rfl
+
+/-- The stream-driven state at time `n` is the finite `run` on the first `n` inputs:
+streams and finite runs agree on every prefix. -/
+theorem stateStream_eq_run (m : MooreMachine O I) (st : m.State) (ins : ℕ → I) (n : ℕ) :
+    m.stateStream st ins n = m.run st ((List.range n).map ins) := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [stateStream_succ, ih, List.range_succ, List.map_append, List.map_cons,
+      List.map_nil, run_append, run_cons, run_nil]
+
 end MooreMachine
 
 namespace DetAutomaton

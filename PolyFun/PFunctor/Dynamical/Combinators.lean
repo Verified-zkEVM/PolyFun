@@ -16,6 +16,9 @@ monoidal and lens structure of `Poly`.
 * `DynSystem.wrap` — change the interface along a lens `p ⟹ q` (a *wrapper*,
   §4.3.3), i.e. precomposition with the interface lens. Sections (§4.3.4) are the
   special case where the outer interface is `X`.
+* `DynSystem.close` / `MooreMachine.feedback` — close a system off with a section
+  `(a : p.A) → p.B a` (§4.3.4); for a Moore machine the section is a feedback map
+  `O → I`, yielding an autonomous closed system.
 * `DynSystem.tensor` — the *parallel product* (§4.3.2): juxtapose two systems;
   the states multiply and the interfaces tensor.
 * `DynSystem.pairing` — the *categorical product* (§4.3.1): two interfaces driven
@@ -31,7 +34,7 @@ combinator by a `*_toLens` lemma.
 
 @[expose] public section
 
-universe u v uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃
+universe u v uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uO uI
 
 namespace PFunctor
 
@@ -55,6 +58,20 @@ def wrap (w : Lens p q) (s : DynSystem p) : DynSystem q where
 
 theorem wrap_comp (w₂ : Lens q r) (w₁ : Lens p q) (s : DynSystem p) :
     wrap w₂ (wrap w₁ s) = wrap (w₂ ∘ₗ w₁) s := rfl
+
+/-! ## Sections close systems (§4.3.4) -/
+
+/-- Close a system off with a section `σ : (a : p.A) → p.B a` (Niu–Spivak §4.3.4):
+wrap the interface along the section lens `p ⟹ X`, leaving a closed system whose
+single available direction at each state is the one `σ` selects. -/
+def close (σ : (a : p.A) → p.B a) (s : DynSystem p) : Closed :=
+  wrap (sectionLens σ) s
+
+@[simp] theorem close_step (σ : (a : p.A) → p.B a) (s : DynSystem p) (st : s.State) :
+    (close σ s).step st = s.update st (σ (s.expose st)) := rfl
+
+@[simp] theorem close_toLens (σ : (a : p.A) → p.B a) (s : DynSystem p) :
+    (close σ s).toLens = sectionLens σ ∘ₗ s.toLens := rfl
 
 /-! ## Parallel product (§4.3.2) -/
 
@@ -100,5 +117,23 @@ def wire₂ (w : Wiring₂ p q r) (s : DynSystem p) (t : DynSystem q) : DynSyste
     (wire₂ w s t).toLens = w ∘ₗ (s.toLens ⊗ₗ t.toLens) := rfl
 
 end DynSystem
+
+/-! ## Feedback: closing a Moore machine on itself -/
+
+namespace MooreMachine
+
+variable {O : Type uO} {I : Type uI}
+
+/-- Close a Moore machine into an autonomous (closed) system by feeding its output
+back as its next input through `f : O → I` (Niu–Spivak §4.3.4). A section of the
+Moore interface `O X^ I` is exactly such a function, so this is `DynSystem.close`.
+The closed-loop state set is unchanged, so `m.output` still reads each state. -/
+def feedback (f : O → I) (m : MooreMachine O I) : Closed :=
+  DynSystem.close (p := monomial O I) f m
+
+@[simp] theorem feedback_step (f : O → I) (m : MooreMachine O I) (st : m.State) :
+    (feedback f m).step st = m.transition st (f (m.output st)) := rfl
+
+end MooreMachine
 
 end PFunctor
