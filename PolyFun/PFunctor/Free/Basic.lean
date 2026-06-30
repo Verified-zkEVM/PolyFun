@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Quang Dao
+Authors: Quang Dao, Devon Tuma
 -/
 module
 
@@ -42,6 +42,30 @@ deriving Inhabited
 namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {α β γ : Type v}
+
+/-- Forward direction of the equivalence with `P.W` when the leaf type is empty: every `pure`
+case is unreachable, and every `roll` is reinterpreted as a W-node. -/
+def toW [IsEmpty α] : FreeM P α → P.W
+  | .pure y   => (IsEmpty.false y).elim
+  | .roll a r => ⟨a, fun b => toW (r b)⟩
+
+/-- Inverse direction of the equivalence with `P.W` when the leaf type is empty: every W-node
+becomes a `roll`. -/
+def ofW [IsEmpty α] : P.W → FreeM P α
+  | ⟨a, f⟩ => FreeM.roll a (fun b => ofW (f b))
+
+/-- When the value type is empty, every `pure` is unreachable and `FreeM P α` is structurally
+identical to `P.W`. -/
+def equivW_of_isEmpty [IsEmpty α] : FreeM P α ≃ P.W where
+  toFun := toW
+  invFun := ofW
+  left_inv x := by
+    induction x with
+    | pure y => exact (IsEmpty.false y).elim
+    | roll a r ih => exact congrArg (FreeM.roll a) (funext ih)
+  right_inv w := by
+    induction w with
+    | mk a f ih => exact congrArg (WType.mk a) (funext ih)
 
 /-- Lift an object of the base polynomial functor into the free monad. -/
 @[always_inline, inline, reducible]
