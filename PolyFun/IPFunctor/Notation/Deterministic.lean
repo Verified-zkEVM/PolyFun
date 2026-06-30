@@ -157,7 +157,7 @@ meta def elabFreeMDetExpr : DoElab := fun stx dec => do
   -- We detect that shape and trust the inner `pure` to mean "this is a
   -- single-action step".
   let `(doExpr| $e:term) := stx | throwUnsupportedSyntax
-  let mα ← mkMonadicType dec.resultType
+  let mα ← mkMonadApp dec.resultType
   let eExpr ← Term.elabTermEnsuringType e mα
   -- Reducible-transparency `whnf` so user-side `@[reducible]` aliases (`flip`, `liftA`, …)
   -- unfold but the underlying plain-`def` `FreeM.roll` head survives for the check below.

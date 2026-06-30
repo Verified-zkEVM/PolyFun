@@ -72,7 +72,7 @@ variable {S₁ S₂ S₃ : Type u} [Coalg F S₁] [Coalg F S₂] [Coalg F S₃]
 
 instance : FunLike (Coalg.Hom F S₁ S₂) S₁ S₂ where
   coe := Coalg.Hom.toFun
-  coe_injective' f g h := by cases f; cases g; congr
+  coe_injective f g h := by cases f; cases g; congr
 
 @[ext]
 theorem ext {f g : Coalg.Hom F S₁ S₂} (h : ∀ x, f x = g x) : f = g :=

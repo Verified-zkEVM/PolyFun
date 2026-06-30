@@ -608,8 +608,8 @@ theorem mapEquiv_trans
     (W : T.Obj Δ₁) :
     T.mapEquiv (PortBoundary.Equiv.trans e₁ e₂) W =
       T.mapEquiv e₂ (T.mapEquiv e₁ W) := by
-  simpa [OpenTheory.mapEquiv, PortBoundary.Equiv.trans] using
-    map_comp (T := T) e₂.toHom e₁.toHom W
+  simp only [OpenTheory.mapEquiv, PortBoundary.Equiv.trans]
+  exact map_comp (T := T) e₂.toHom e₁.toHom W
 
 @[simp]
 theorem mapEquiv_symm_cancel
@@ -709,8 +709,8 @@ theorem mapEquiv_wire
             (PortBoundary.Equiv.refl (PortBoundary.swap Γ))
             e₂)
           W₂) := by
-  simpa [OpenTheory.mapEquiv] using
-    map_wire (T := T) e₁.toHom e₂.toHom W₁ W₂
+  simp only [OpenTheory.mapEquiv, PortBoundary.Equiv.toHom_tensorCongr]
+  exact map_wire (T := T) e₁.toHom e₂.toHom W₁ W₂
 
 /--
 Plugging is natural with respect to boundary adaptation.

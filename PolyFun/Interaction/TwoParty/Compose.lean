@@ -305,11 +305,11 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_splitPrefix
               strat x >>= fun next => pure next := by
           refine congrArg (fun k => strat x >>= k) ?_
           funext next
-          simpa using
-            go (rest x) (rRest x)
-              (s₂ := fun p => s₂ ⟨x, p⟩)
-              (r₂ := fun p => r₂ ⟨x, p⟩) next
-        simpa [monad_norm] using hcont
+          exact go (rest x) (rRest x)
+            (s₂ := fun p => s₂ ⟨x, p⟩)
+            (r₂ := fun p => r₂ ⟨x, p⟩) next
+        simp only [bind_map_left, bind_pure] at *
+        exact hcont
   exact go s₁ r₁ strat
 
 /-- Compose counterparts along `PFunctor.FreeM.append` with a two-argument output family
@@ -391,9 +391,8 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Counterpart.append_eq_appendFla
       funext x
       refine congrArg (fun k => c₁ x >>= k) ?_
       funext cRest
-      simpa [monad_norm] using
-        congrArg pure
-          (append_eq_appendFlat_mapOutput cRest (fun p o => c₂ ⟨x, p⟩ o))
+      exact congrArg pure
+        (append_eq_appendFlat_mapOutput cRest (fun p o => c₂ ⟨x, p⟩ o))
   | .node _ rest, _, ⟨.receiver, rRest⟩, _, _, _, c₁, c₂ => by
       simp only [StrategyOver.TwoParty.Counterpart.append,
         StrategyOver.TwoParty.Counterpart.appendFlat]
@@ -449,17 +448,15 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.comp_eq_compFlat_mapOutpu
               (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                 (fun path => r₂ ⟨x, path⟩))
               (fun tr => PFunctor.FreeM.Path.liftAppend (Spec.node X rest) s₂ F ⟨x, tr⟩)
-          simpa [monad_norm, PFunctor.Lens.id, PFunctor.FreeM.Path.packAppend] using
-            congrArg (fun z => z >>= fun tail => pure (⟨x, tail⟩ : (x : X) × Tail x))
-              (comp_eq_compFlat_mapOutput next (fun p o => f ⟨x, p⟩ o))
+          exact congrArg (fun z => z >>= fun tail => pure (⟨x, tail⟩ : (x : X) × Tail x))
+            (comp_eq_compFlat_mapOutput next (fun p o => f ⟨x, p⟩ o))
   | .node X rest, s₂, ⟨.receiver, rRest⟩, r₂, Mid, F, strat₁, f => by
       simp only [StrategyOver.TwoParty.Focal.comp, StrategyOver.TwoParty.Focal.compFlat]
       refine congrArg pure ?_
       funext x
       apply bind_congr
       intro next
-      simpa [monad_norm, PFunctor.FreeM.Path.packAppend] using
-        comp_eq_compFlat_mapOutput next (fun p o => f ⟨x, p⟩ o)
+      exact comp_eq_compFlat_mapOutput next (fun p o => f ⟨x, p⟩ o)
 
 /-- Executing a flat composed strategy/counterpart factors into first executing
 the prefix interaction and then executing the suffix continuation. -/
@@ -566,17 +563,16 @@ theorem run_compFlat_appendFlat_pure
                   (PFunctor.FreeM.append (Spec.node X rest) s₂)) ×
                   OutputP tr × OutputC tr) :=
               fun a => ⟨⟨x, a.1⟩, a.2.1, a.2.2⟩
-            simpa [monad_norm, addPrefix, PFunctor.FreeM.Path.append] using
-              go (rest x) (rRest x)
-                (s₂ := fun path => s₂ ⟨x, path⟩)
-                (r₂ := fun path => r₂ ⟨x, path⟩)
-                (OutputP := fun tr => OutputP ⟨x, tr⟩)
-                (OutputC := fun tr => OutputC ⟨x, tr⟩)
-                next
-                (fun tr₁ mid => f ⟨x, tr₁⟩ mid)
-                cNext
-                (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
-                (fun a => g (addPrefix a))
+            exact go (rest x) (rRest x)
+              (s₂ := fun path => s₂ ⟨x, path⟩)
+              (r₂ := fun path => r₂ ⟨x, path⟩)
+              (OutputP := fun tr => OutputP ⟨x, tr⟩)
+              (OutputC := fun tr => OutputC ⟨x, tr⟩)
+              next
+              (fun tr₁ mid => f ⟨x, tr₁⟩ mid)
+              cNext
+              (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
+              (fun a => g (addPrefix a))
     | .node X rest, ⟨.receiver, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.compFlatPure,
           StrategyOver.TwoParty.Counterpart.appendFlat,
@@ -622,17 +618,16 @@ theorem run_compFlat_appendFlat_pure
                   (PFunctor.FreeM.append (Spec.node X rest) s₂)) ×
                   OutputP tr × OutputC tr) :=
               fun a => ⟨⟨x, a.1⟩, a.2.1, a.2.2⟩
-            simpa [monad_norm, addPrefix, PFunctor.FreeM.Path.append] using
-              go (rest x) (rRest x)
-                (s₂ := fun path => s₂ ⟨x, path⟩)
-                (r₂ := fun path => r₂ ⟨x, path⟩)
-                (OutputP := fun tr => OutputP ⟨x, tr⟩)
-                (OutputC := fun tr => OutputC ⟨x, tr⟩)
-                next
-                (fun tr₁ mid => f ⟨x, tr₁⟩ mid)
-                cNext
-                (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
-                (fun a => g (addPrefix a))
+            exact go (rest x) (rRest x)
+              (s₂ := fun path => s₂ ⟨x, path⟩)
+              (r₂ := fun path => r₂ ⟨x, path⟩)
+              (OutputP := fun tr => OutputP ⟨x, tr⟩)
+              (OutputC := fun tr => OutputC ⟨x, tr⟩)
+              next
+              (fun tr₁ mid => f ⟨x, tr₁⟩ mid)
+              cNext
+              (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
+              (fun a => g (addPrefix a))
   rw [StrategyOver.TwoParty.Focal.compFlat_eq_pure_compFlatPure strat₁ f]
   simpa [monad_norm] using go s₁ r₁ strat₁ f cpt₁ cpt₂ pure
 
@@ -843,17 +838,26 @@ theorem run_compFlat_appendFlat
                             (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)))
                         g
               _ = _ := by
-                simpa [monad_norm, addPrefix, PFunctor.FreeM.Path.append] using
-                  go (rest x) (rRest x)
-                    (s₂ := fun path => s₂ ⟨x, path⟩)
-                    (r₂ := fun path => r₂ ⟨x, path⟩)
-                    (OutputP := fun tr => OutputP ⟨x, tr⟩)
-                    (OutputC := fun tr => OutputC ⟨x, tr⟩)
-                    next
-                    (fun tr₁ mid => f ⟨x, tr₁⟩ mid)
-                    cNext
-                    (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
-                    (fun a => g (addPrefix a))
+                have h := go (rest x) (rRest x)
+                  (s₂ := fun path => s₂ ⟨x, path⟩)
+                  (r₂ := fun path => r₂ ⟨x, path⟩)
+                  (OutputP := fun tr => OutputP ⟨x, tr⟩)
+                  (OutputC := fun tr => OutputC ⟨x, tr⟩)
+                  next
+                  (fun tr₁ mid => f ⟨x, tr₁⟩ mid)
+                  cNext
+                  (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
+                  (fun a => g (addPrefix a))
+                exact h.trans (bind_map_left
+                  (fun a : (tr : PFunctor.FreeM.Path (rest x)) × MidP ⟨x, tr⟩ × MidC ⟨x, tr⟩ =>
+                    (⟨⟨x, a.1⟩, a.2.1, a.2.2⟩ :
+                      (tr : PFunctor.FreeM.Path (Spec.node X rest)) × MidP tr × MidC tr))
+                  (run (rest x) (rRest x) next cNext)
+                  (fun r₁ => do
+                    let strat₂ ← f r₁.fst r₁.snd.1
+                    let r₂ ← run (s₂ r₁.fst) (r₂ r₁.fst) strat₂ (cpt₂ r₁.fst r₁.snd.2)
+                    g ⟨PFunctor.FreeM.Path.append (Spec.node X rest) s₂ r₁.fst r₂.fst,
+                      r₂.snd⟩)).symm
     | .node X rest, ⟨.receiver, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.compFlat,
           StrategyOver.TwoParty.Counterpart.appendFlat,
@@ -977,17 +981,16 @@ theorem run_compFlat_appendFlat
                         g ⟨⟨x, PFunctor.FreeM.Path.append (rest x)
                             (fun path => s₂ ⟨x, path⟩) r₁.1 r₂.1⟩,
                           r₂.2.1, r₂.2.2⟩) := by
-                            simpa [monad_norm, comp, addPrefix, PFunctor.FreeM.Path.append] using
-                              go (rest x) (rRest x)
-                                (s₂ := fun path => s₂ ⟨x, path⟩)
-                                (r₂ := fun path => r₂ ⟨x, path⟩)
-                                (OutputP := fun tr => OutputP ⟨x, tr⟩)
-                                (OutputC := fun tr => OutputC ⟨x, tr⟩)
-                                next
-                                (fun tr₁ mid => f ⟨x, tr₁⟩ mid)
-                                cNext
-                                (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
-                                (fun a => g (addPrefix a))
+                            exact go (rest x) (rRest x)
+                              (s₂ := fun path => s₂ ⟨x, path⟩)
+                              (r₂ := fun path => r₂ ⟨x, path⟩)
+                              (OutputP := fun tr => OutputP ⟨x, tr⟩)
+                              (OutputC := fun tr => OutputC ⟨x, tr⟩)
+                              next
+                              (fun tr₁ mid => f ⟨x, tr₁⟩ mid)
+                              cNext
+                              (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
+                              (fun a => g (addPrefix a))
                   _ = _ := by
                     exact (bind_map_left addPrefix₁ (run (rest x) (rRest x) next cNext)
                       (fun r₁ => do

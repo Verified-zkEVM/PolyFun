@@ -643,11 +643,11 @@ theorem _root_.Interaction.InteractionOver.TwoParty.run_paired_mapOutput_mapOutp
               (fun tr => OutputC' ⟨xc.1, tr⟩) tr) →
             ((tr : PFunctor.FreeM.Path (Spec.node _ rest)) × OutputP' tr × OutputC' tr) :=
           fun a => ⟨⟨xc.1, a.1⟩, a.2.1, a.2.2⟩
-        simpa [monad_norm, addPrefix, PFunctor.Lens.id, InteractionOver.TwoParty.pairedSpec,
-          InteractionOver.TwoParty.paired] using
-          congrArg (fun z => addPrefix <$> z)
-            (go (rest xc.1) (rRest xc.1) (fun tr => fP ⟨xc.1, tr⟩) (fun tr => fC ⟨xc.1, tr⟩)
-              xc.2 cNext)
+        have h := congrArg (fun z => addPrefix <$> z)
+          (go (rest xc.1) (rRest xc.1) (fun tr => fP ⟨xc.1, tr⟩) (fun tr => fC ⟨xc.1, tr⟩)
+            xc.2 cNext)
+        rw [Functor.map_map] at h
+        exact h
     | .node X rest, ⟨.receiver, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.mapOutput,
           StrategyOver.TwoParty.Counterpart.mapOutput]
@@ -673,11 +673,11 @@ theorem _root_.Interaction.InteractionOver.TwoParty.run_paired_mapOutput_mapOutp
               (fun tr => OutputC' ⟨xc.1, tr⟩) tr) →
             ((tr : PFunctor.FreeM.Path (Spec.node _ rest)) × OutputP' tr × OutputC' tr) :=
           fun a => ⟨⟨xc.1, a.1⟩, a.2.1, a.2.2⟩
-        simpa [monad_norm, addPrefix, PFunctor.Lens.id, InteractionOver.TwoParty.pairedSpec,
-          InteractionOver.TwoParty.paired] using
-          congrArg (fun z => addPrefix <$> z)
-            (go (rest xc.1) (rRest xc.1) (fun tr => fP ⟨xc.1, tr⟩) (fun tr => fC ⟨xc.1, tr⟩)
-              next xc.2)
+        have h := congrArg (fun z => addPrefix <$> z)
+          (go (rest xc.1) (rRest xc.1) (fun tr => fP ⟨xc.1, tr⟩) (fun tr => fC ⟨xc.1, tr⟩)
+            next xc.2)
+        rw [Functor.map_map] at h
+        exact h
   exact go spec roles fP fC strat cpt
 
 @[simp]
@@ -777,22 +777,18 @@ def _root_.Interaction.StrategyOver.TwoParty.Focal.toConstantMonadsHom
   mapNode := by
     intro X role A B f node
     cases role
-    · simpa [ShapeOver.TwoParty.Focal.monadicSpec, SyntaxOver.TwoParty.Focal.monadicSpec,
+    · simp only [ShapeOver.TwoParty.Focal.monadicSpec,
         ShapeOver.comap, SyntaxOver.comap, ShapeOver.forAgent, SyntaxOver.forAgent,
-        ShapeOver.TwoParty.pairedSpec, ShapeOver.TwoParty.paired,
-        SyntaxOver.TwoParty.pairedSpec, SyntaxOver.TwoParty.paired,
         ShapeOver.TwoParty.pairedMonadicSpec, ShapeOver.TwoParty.pairedMonadic,
-        SyntaxOver.TwoParty.pairedMonadicSpec, SyntaxOver.TwoParty.pairedMonadic]
-        using (ShapeOver.TwoParty.pairedSpec m).map
-          (agent := Participant.focal) (γ := Role.sender) f node
-    · simpa [ShapeOver.TwoParty.Focal.monadicSpec, SyntaxOver.TwoParty.Focal.monadicSpec,
+        SyntaxOver.TwoParty.pairedMonadic]
+      exact (ShapeOver.TwoParty.pairedSpec m).map
+        (agent := Participant.focal) (γ := Role.sender) f node
+    · simp only [ShapeOver.TwoParty.Focal.monadicSpec,
         ShapeOver.comap, SyntaxOver.comap, ShapeOver.forAgent, SyntaxOver.forAgent,
-        ShapeOver.TwoParty.pairedSpec, ShapeOver.TwoParty.paired,
-        SyntaxOver.TwoParty.pairedSpec, SyntaxOver.TwoParty.paired,
         ShapeOver.TwoParty.pairedMonadicSpec, ShapeOver.TwoParty.pairedMonadic,
-        SyntaxOver.TwoParty.pairedMonadicSpec, SyntaxOver.TwoParty.pairedMonadic]
-        using (ShapeOver.TwoParty.pairedSpec m).map
-          (agent := Participant.focal) (γ := Role.receiver) f node
+        SyntaxOver.TwoParty.pairedMonadic]
+      exact (ShapeOver.TwoParty.pairedSpec m).map
+        (agent := Participant.focal) (γ := Role.receiver) f node
   mapNode_map := by
     intro X role A B C D f₁ f₂ g₁ g₂ comm node
     cases role

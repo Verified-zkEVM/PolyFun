@@ -392,10 +392,10 @@ lemma equivB_symm_apply (e : P ≃ₚ Q) (a : P.A) (b : P.B (e.equivA.symm (e.eq
       _root_.cast (congrArg P.B (e.equivA.symm_apply_apply a)) b := by
   have hEqA : e.equivA a = e.equivA (e.equivA.symm (e.equivA a)) := by
     simp
-  simpa [PFunctor.Equiv.symm, hEqA] using
-    (equivB_symm_apply_of_eq (e := e)
-      (a := a) (a' := e.equivA.symm (e.equivA a))
-      (ha := hEqA) (b := b))
+  simp only [PFunctor.Equiv.symm]
+  exact equivB_symm_apply_of_eq (e := e)
+    (a := a) (a' := e.equivA.symm (e.equivA a))
+    (ha := hEqA) (b := b)
 
 /-- Specialized cast-normalization for `e.symm` followed by `e`. -/
 lemma symm_equivB_symm_apply (e : P ≃ₚ Q) (a : Q.A) (b : Q.B (e.equivA (e.equivA.symm a))) :

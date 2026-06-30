@@ -481,7 +481,7 @@ theorem relUpTo_of_pointwise {Party : Type u}
       · exact ih leftRun.tail rightRun.tail
           (by
             intro k
-            simpa [Process.Run.tail] using hrel k.succ)
+            exact hrel k.succ)
 
 /-- Pointwise transcript matching implies full run matching. -/
 theorem rel_of_pointwise {Party : Type u}
@@ -539,7 +539,7 @@ theorem eventsUpTo_eq_of_relUpTo_byEvent {Party : Type u}
   | succ n ih =>
       rcases hrel with ⟨hHead, hTail⟩
       have hHead' : leftRun.event eventL 0 = rightRun.event eventR 0 := by
-        simpa [TranscriptRel.byEvent, Process.Run.event] using hHead
+        simp only [TranscriptRel.byEvent, Process.Run.event]; exact hHead
       change leftRun.event eventL 0 :: leftRun.tail.eventsUpTo eventL n =
         rightRun.event eventR 0 :: rightRun.tail.eventsUpTo eventR n
       rw [hHead', ih leftRun.tail rightRun.tail hTail]
@@ -557,7 +557,7 @@ theorem ticketsUpTo_eq_of_relUpTo_byTicket {Party : Type u}
   | succ n ih =>
       rcases hrel with ⟨hHead, hTail⟩
       have hHead' : leftRun.ticket ticketL 0 = rightRun.ticket ticketR 0 := by
-        simpa [TranscriptRel.byTicket, Process.Run.ticket] using hHead
+        simp only [TranscriptRel.byTicket, Process.Run.ticket]; exact hHead
       change leftRun.ticket ticketL 0 :: leftRun.tail.ticketsUpTo ticketL n =
         rightRun.ticket ticketR 0 :: rightRun.tail.ticketsUpTo ticketR n
       rw [hHead', ih leftRun.tail rightRun.tail hTail]
