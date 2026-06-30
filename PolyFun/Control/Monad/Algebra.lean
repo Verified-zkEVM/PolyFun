@@ -213,7 +213,8 @@ attribute [instance] instReaderT
       match y with
       | Except.ok z => z
       | Except.error _ => ⊥
-    simpa [ExceptT.run_bind, collapse] using
+    simp only [ExceptT.run_bind, map_bind]
+    exact
       (MAlgOrdered.μ_bind_mono
         (f := fun y => collapse <$>
           (match y with
