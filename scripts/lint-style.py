@@ -294,6 +294,14 @@ def regular_check(lines, path):
         if copy_done and line == "\n":
             continue
         words = line.split()
+        # The module-system prologue may appear between the copyright header and the
+        # module docstring: the `module` keyword, and import lines with optional
+        # modifiers (e.g. `public import …`, `meta import …`).
+        stripped = words
+        while stripped and stripped[0] in ("public", "meta", "private"):
+            stripped = stripped[1:]
+        if words[0] == "module" or (stripped and stripped[0] == "import"):
+            continue
         if words[0] != "import" and words[0] != "--" and words[0] != "/-!" and words[0] != "#align_import":
             errors += [(ERR_MOD, line_nr, path)]
             break
