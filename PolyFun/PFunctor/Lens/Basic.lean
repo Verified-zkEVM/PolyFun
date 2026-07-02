@@ -736,11 +736,11 @@ def toLensEquiv (e : P ≃ₚ Q) : P ≃ₗ Q where
       have hb :
           (e.equivB a).symm ((e.symm.equivB (e.equivA a)).symm b) =
             _root_.cast (congrArg P.B (e.equivA.symm_apply_apply a)) b := by
-        simpa [PFunctor.Equiv.symm] using
-          (equivB_symm_apply (e := e) (a := a) (b := b))
+        simp only [PFunctor.Equiv.symm]
+        exact (equivB_symm_apply (e := e) (a := a) (b := b))
       have h0 : a = e.equivA.symm (e.equivA a) := (e.equivA.symm_apply_apply a).symm
       have hr := eqRec_id_apply (β := P.B) (h := h0) (x := b)
-      simpa [h0] using hb.trans hr.symm
+      exact hb.trans hr.symm
   right_inv := by
     simp only [Lens.comp, Lens.id]
     ext a b
@@ -749,12 +749,12 @@ def toLensEquiv (e : P ≃ₚ Q) : P ≃ₗ Q where
       have hb :
           (e.symm.equivB a).symm ((e.equivB (e.symm.equivA a)).symm b) =
             _root_.cast (congrArg Q.B (e.equivA.apply_symm_apply a)) b := by
-        simpa [PFunctor.Equiv.symm] using
-          (symm_equivB_symm_apply (e := e) (a := a) (b := b))
+        simp only [PFunctor.Equiv.symm]
+        exact (symm_equivB_symm_apply (e := e) (a := a) (b := b))
       have h0 : a = e.equivA (e.equivA.symm a) :=
         (_root_.Equiv.symm_apply_eq e.equivA).mp rfl
       have hr := eqRec_id_apply (β := Q.B) (h := h0) (x := b)
-      simpa [h0] using hb.trans hr.symm
+      exact hb.trans hr.symm
 
 end Equiv
 
@@ -834,9 +834,9 @@ def piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0)
     pi F ≃ₗ 0 := by
   letI : IsEmpty (pi F).A := by
     refine ⟨fun f => ?_⟩
-    have : PEmpty := by
-      simpa [F_zero (default : I)] using (f default)
-    exact this.elim
+    have hf : (F default).A := f default
+    rw [F_zero (default : I)] at hf
+    exact hf.elim
   refine
     { toLens := isEmptyElim ⇆ (fun a _ => isEmptyElim a)
       invLens := PEmpty.elim ⇆ (fun a => PEmpty.elim a)

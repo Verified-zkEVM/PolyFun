@@ -298,9 +298,8 @@ theorem family_comap {Δ : P.A → Type vΔ}
     StrategyOver (ShapeOver.comap f shape).toSyntaxOver agent spec ctxs Out =
       StrategyOver shape.toSyntaxOver agent spec (Decoration.map f spec ctxs) Out := by
   intro agent spec ctxs Out
-  simpa using
-    (StrategyOver.comap shape.toSyntaxOver f
-      (agent := agent) (spec := spec) (ctxs := ctxs) (Out := Out))
+  exact (StrategyOver.comap shape.toSyntaxOver f
+    (agent := agent) (spec := spec) (ctxs := ctxs) (Out := Out))
 
 end ShapeOver
 

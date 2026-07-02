@@ -74,7 +74,7 @@ def extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) : CofreeC 
 
 @[simp] theorem dest_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     M.dest (extend t f) = (constProd F β).map (fun x => extend x f) (extendF f t) := by
-  simpa [extend] using (M.dest_corec (P := constProd F β) (g := extendF f) t)
+  simp only [extend]; exact (M.dest_corec (P := constProd F β) (g := extendF f) t)
 
 @[simp] theorem dest_extend_eq {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     M.dest (extend t f) = ⟨(f t, (M.dest t).1.2), (fun x => extend x f) ∘ (M.dest t).2⟩ := by

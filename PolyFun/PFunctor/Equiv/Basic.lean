@@ -355,7 +355,7 @@ def piPUnit (P : PFunctor.{uA, uB}) :
     pi (fun (_ : PUnit) => P) ≃ₚ P where
   equivA := _root_.Equiv.punitArrowEquiv P.A
   equivB := fun f => by
-    simpa using (_root_.Equiv.uniqueSigma (fun i : PUnit => P.B (f i)))
+    exact _root_.Equiv.uniqueSigma (fun i : PUnit => P.B (f i))
 
 end Pi
 

@@ -926,9 +926,9 @@ def piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0)
     pi F ≃c 0 := by
   letI : IsEmpty (pi F).A := by
     refine ⟨fun f => ?_⟩
-    have : PEmpty := by
-      simpa [F_zero (default : I)] using (f default)
-    exact this.elim
+    have hf : (F default).A := f default
+    rw [F_zero (default : I)] at hf
+    exact hf.elim
   refine
     { toChart := isEmptyElim ⇉ (fun a _ => isEmptyElim a)
       invChart := PEmpty.elim ⇉ (fun a _ => PEmpty.elim a)

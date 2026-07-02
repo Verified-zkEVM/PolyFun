@@ -195,7 +195,7 @@ meta def elabFreeMExpr : DoElab := fun stx dec => do
   let some (I, P, s, lvls) ← isFreeMMonad? (← read).monadInfo.m
     | throwUnsupportedSyntax
   let `(doExpr| $e:term) := stx | throwUnsupportedSyntax
-  let mα ← mkMonadicType dec.resultType
+  let mα ← mkMonadApp dec.resultType
   -- Elaborate the term, throwing instead of sorry-ifying on type errors so
   -- we can catch a state mismatch and emit a friendlier diagnostic. On
   -- success, this incurs no extra cost vs. the default elaboration path.

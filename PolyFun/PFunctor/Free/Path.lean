@@ -485,9 +485,9 @@ theorem collapseAppend_append {β : Type t} :
         (fun path₁ path₂ => F (append s₁ s₂ path₁ path₂)) path₁ path₂ x
   | .pure _, _, _, ⟨⟩, _, _ => rfl
   | .roll _ rest, s₂, F, ⟨b, path₁⟩, path₂, x => by
-      simpa [collapseAppend, append] using
-        collapseAppend_append (rest b) (fun path => s₂ ⟨b, path⟩)
-          (fun tail => F ⟨b, tail⟩) path₁ path₂ x
+      simp only [collapseAppend, append, unpackAppend]
+      exact collapseAppend_append (rest b) (fun path => s₂ ⟨b, path⟩)
+        (fun tail => F ⟨b, tail⟩) path₁ path₂ x
 
 /-- Split a fused `liftAppend` product payload into separately lifted payloads. -/
 def liftAppendProd {β : Type t} :
