@@ -46,10 +46,10 @@ example {p : PFunctor} (s : DynSystem p) : wrap (Lens.id p) s = s := rfl
 
 /-- A deterministic automaton whose state accumulates the `xor` of its inputs,
 starting from `true`. -/
-def parity : DetAutomaton Bool Bool where
+def parity : DeterministicAutomaton Bool Bool where
   State := Bool
   output := id
-  transition := fun b i => Bool.xor b i
+  transition := Bool.xor
   start := true
 
 example : parity.accepts [true, true] := by decide
@@ -73,7 +73,7 @@ def gateSys : DynSystem gate where
   expose := id
   update := fun s => match s with
     | true => fun _ => false
-    | false => fun i => i
+    | false => id
 
 example : gateSys.expose true = true := rfl
 

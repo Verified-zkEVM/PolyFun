@@ -5,8 +5,8 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Dynamical.Basic
 public import PolyFun.PFunctor.Cofree
+public import PolyFun.PFunctor.Dynamical.Basic
 public import PolyFun.PFunctor.M
 
 /-!
@@ -32,7 +32,7 @@ namespace PFunctor
 /-- The unique successor of a node in a unary (`X`-)cofree tree: read off the single
 child indexed by the lone direction `PUnit.unit`. -/
 def CofreeC.next {α : Type w} (t : CofreeC X.{uA, uB} α) : CofreeC X.{uA, uB} α :=
-  (CofreeC.tail t).2 PUnit.unit
+  t.tail.2 PUnit.unit
 
 namespace DynSystem
 
@@ -68,8 +68,7 @@ exactly the `iterate` of its states. -/
 /-- One step along a closed system's trajectory is the trajectory from the next
 state. -/
 theorem next_trajectory (s : Closed) (st : s.State) :
-    CofreeC.next (trajectory s st) = trajectory s (s.step st) := by
-  simp only [CofreeC.next]; rfl
+    CofreeC.next (trajectory s st) = trajectory s (s.step st) := rfl
 
 /-- The `n`-fold successor of a closed system's trajectory is the trajectory from
 its `n`-th iterated state: the trajectory's spine is the `iterate` of states. -/

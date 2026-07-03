@@ -34,9 +34,14 @@ combinator by a `*_toLens` lemma.
 
 @[expose] public section
 
-universe u v uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uO uI
+universe u uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uO uI
 
 namespace PFunctor
+
+/-- The state polynomial of a product of state sets is the tensor of the state
+polynomials: `selfMonomial (S × T) = selfMonomial S ⊗ selfMonomial T`. -/
+theorem selfMonomial_prod (S : Type uA₁) (T : Type uA₂) :
+    selfMonomial (S × T) = selfMonomial S ⊗ selfMonomial T := rfl
 
 namespace DynSystem
 
@@ -45,7 +50,7 @@ namespace DynSystem
 variable {p : PFunctor.{uA₁, uB₁}} {q : PFunctor.{uA₂, uB₂}} {r : PFunctor.{uA₃, uB₃}}
 
 /-- Change the interface of a system along a lens `w : p ⟹ q` (Niu–Spivak §4.3.3).
-This is precomposition of the interface lens with `w`. -/
+The new interface lens is `w` composed after the old one; see `wrap_toLens`. -/
 def wrap (w : Lens p q) (s : DynSystem p) : DynSystem q where
   State := s.State
   expose := fun st => w.toFunA (s.expose st)
@@ -56,7 +61,7 @@ def wrap (w : Lens p q) (s : DynSystem p) : DynSystem q where
 
 @[simp] theorem wrap_id (s : DynSystem p) : wrap (Lens.id p) s = s := rfl
 
-theorem wrap_comp (w₂ : Lens q r) (w₁ : Lens p q) (s : DynSystem p) :
+@[simp] theorem wrap_comp (w₂ : Lens q r) (w₁ : Lens p q) (s : DynSystem p) :
     wrap w₂ (wrap w₁ s) = wrap (w₂ ∘ₗ w₁) s := rfl
 
 /-! ## Sections close systems (§4.3.4) -/
@@ -64,8 +69,7 @@ theorem wrap_comp (w₂ : Lens q r) (w₁ : Lens p q) (s : DynSystem p) :
 /-- Close a system off with a section `σ : (a : p.A) → p.B a` (Niu–Spivak §4.3.4):
 wrap the interface along the section lens `p ⟹ X`, leaving a closed system whose
 single available direction at each state is the one `σ` selects. -/
-def close (σ : (a : p.A) → p.B a) (s : DynSystem p) : Closed :=
-  wrap (sectionLens σ) s
+def close (σ : (a : p.A) → p.B a) (s : DynSystem p) : Closed := wrap (sectionLens σ) s
 
 @[simp] theorem close_step (σ : (a : p.A) → p.B a) (s : DynSystem p) (st : s.State) :
     (close σ s).step st = s.update st (σ (s.expose st)) := rfl
@@ -74,11 +78,6 @@ def close (σ : (a : p.A) → p.B a) (s : DynSystem p) : Closed :=
     (close σ s).toLens = sectionLens σ ∘ₗ s.toLens := rfl
 
 /-! ## Parallel product (§4.3.2) -/
-
-/-- The state polynomial of a product of state sets is the tensor of the state
-polynomials: `selfMonomial (S × T) = selfMonomial S ⊗ selfMonomial T`. -/
-theorem selfMonomial_prod (S : Type uA₁) (T : Type uA₂) :
-    selfMonomial (S × T) = selfMonomial S ⊗ selfMonomial T := rfl
 
 /-- The **parallel product** of two systems (Niu–Spivak §4.3.2): the states
 multiply and the interfaces tensor. -/
@@ -94,19 +93,22 @@ def tensor (s : DynSystem p) (t : DynSystem q) : DynSystem (p ⊗ q) where
 
 /-- The **categorical product** of two interfaces on a shared state (Niu–Spivak
 §4.3.1): given two interface lenses out of the same state polynomial, expose both
-interfaces at once, valued in the product `p * q`. -/
+interfaces at once, valued in the product `prod p q`. -/
 def pairing {S : Type u} (l₁ : Lens (selfMonomial S) p) (l₂ : Lens (selfMonomial S) q) :
-    DynSystem (PFunctor.prod p q) where
+    DynSystem (prod p q) where
   State := S
   expose := fun s => (l₁.toFunA s, l₂.toFunA s)
-  update := fun s d => Sum.elim (l₁.toFunB s) (l₂.toFunB s) d
+  update := fun s => Sum.elim (l₁.toFunB s) (l₂.toFunB s)
+
+@[simp] theorem pairing_toLens {S : Type u} (l₁ : Lens (selfMonomial S) p)
+    (l₂ : Lens (selfMonomial S) q) : (pairing l₁ l₂).toLens = ⟨l₁, l₂⟩ₗ := rfl
 
 /-! ## Wiring diagrams (§4.4) -/
 
 /-- A **(binary) wiring diagram** with inner interfaces `p`, `q` and outer
 interface `r` is a lens `p ⊗ q ⟹ r` (Niu–Spivak §4.4). -/
-abbrev Wiring₂ (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂})
-    (r : PFunctor.{uA₃, uB₃}) : Type _ := Lens (p ⊗ q) r
+abbrev Wiring₂ (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) (r : PFunctor.{uA₃, uB₃}) :
+    Type _ := Lens (p ⊗ q) r
 
 /-- Install two systems into a wiring diagram: juxtapose them with `tensor`, then
 wrap along the diagram lens. -/
@@ -128,8 +130,7 @@ variable {O : Type uO} {I : Type uI}
 back as its next input through `f : O → I` (Niu–Spivak §4.3.4). A section of the
 Moore interface `O X^ I` is exactly such a function, so this is `DynSystem.close`.
 The closed-loop state set is unchanged, so `m.output` still reads each state. -/
-def feedback (f : O → I) (m : MooreMachine O I) : Closed :=
-  DynSystem.close (p := monomial O I) f m
+def feedback (f : O → I) (m : MooreMachine O I) : Closed := DynSystem.close f m
 
 @[simp] theorem feedback_step (f : O → I) (m : MooreMachine O I) (st : m.State) :
     (feedback f m).step st = m.transition st (f (m.output st)) := rfl
