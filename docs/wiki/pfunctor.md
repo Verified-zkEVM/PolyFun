@@ -62,9 +62,9 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/PFunctor/Dynamical/Basic.lean`](../../PolyFun/PFunctor/Dynamical/Basic.lean) | `DynSystem p` (a `p`-system = lens `selfMonomial State ⟹ p`), `toLens`/`ofLens`, `MooreMachine`, `DetAutomaton`, `Closed` / `Closed.iterate`, `Point` (`X ⟹ p`) and `Section` (`p ⟹ X`) / `sectionLens`. |
+| [`PolyFun/PFunctor/Dynamical/Basic.lean`](../../PolyFun/PFunctor/Dynamical/Basic.lean) | `DynSystem p` (a `p`-system = lens `selfMonomial State ⟹ p`), `toLens`/`ofLens`, `MooreMachine`, `DeterministicAutomaton`, `Closed` / `Closed.iterate`, `Point` (`X ⟹ p`) and `Section` (`p ⟹ X`) / `sectionLens`. |
 | [`PolyFun/PFunctor/Dynamical/Combinators.lean`](../../PolyFun/PFunctor/Dynamical/Combinators.lean) | Building systems from old ones: `wrap` (§4.3.3), `close` / `MooreMachine.feedback` (§4.3.4), `tensor` (§4.3.2), `pairing` (§4.3.1), `Wiring₂` / `wire₂` (§4.4). |
-| [`PolyFun/PFunctor/Dynamical/Run.lean`](../../PolyFun/PFunctor/Dynamical/Run.lean) | Finite runs: `run`, `trace`, `outputOn`, `DetAutomaton.accepts`; input streams `stateStream` / `outputStream` with `stateStream_eq_run`. |
+| [`PolyFun/PFunctor/Dynamical/Run.lean`](../../PolyFun/PFunctor/Dynamical/Run.lean) | Finite runs: `run`, `trace`, `outputOn`, `DeterministicAutomaton.accepts`; input streams `stateStream` / `outputStream` with `stateStream_eq_run`. |
 | [`PolyFun/PFunctor/Dynamical/Trajectory.lean`](../../PolyFun/PFunctor/Dynamical/Trajectory.lean) | Infinite behaviour: `trajectory : DynSystem p → State → CofreeC p p.A`; closed-system spine `CofreeC.next`, `next_iterate_trajectory`. |
 | [`PolyFun/PFunctor/Dynamical/Behavior.lean`](../../PolyFun/PFunctor/Dynamical/Behavior.lean) | Closed-loop behaviour of a Moore machine: `feedbackStep`, `feedbackStream`, `next_iterate_feedback`. |
 | [`PolyFun/PFunctor/Dynamical/Examples.lean`](../../PolyFun/PFunctor/Dynamical/Examples.lean) | Worked examples / regression tests (counter, parity automaton, mode-dependent `gate`, feedback / stream behaviour). |
