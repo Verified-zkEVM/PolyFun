@@ -48,7 +48,8 @@ the free monad / cofree comonad pair (`FreeM ⊣ Cofree`), and the slogan
 "pattern runs on matter".
 
 Used in: `PolyFun/PFunctor/Trace.lean`, `PolyFun/PFunctor/Lens/State.lean`,
-`PolyFun/PFunctor/Free/Path.lean`, `PolyFun/Interaction/Basic/Spec.lean`,
+`PolyFun/PFunctor/Free/Path.lean`, the dynamical-systems layer in
+`PolyFun/PFunctor/Dynamical/` (Ch. 4), `PolyFun/Interaction/Basic/Spec.lean`,
 `PolyFun/Interaction/Basic/Telescope.lean`,
 `PolyFun/Interaction/UC/Interface.lean`, and
 companion files in `PolyFun/Interaction/UC/`.

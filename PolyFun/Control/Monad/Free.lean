@@ -1,4 +1,3 @@
-
 /-
 Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
@@ -9,7 +8,7 @@ module
 public import PolyFun.Control.Monad.Hom
 public import Mathlib.Data.PFunctor.Univariate.Basic
 public import Mathlib.Data.ENat.Lattice
-public import Mathlib.Tactic
+public import Mathlib.Tactic.GCongr
 
 /-!
 # Free Monads

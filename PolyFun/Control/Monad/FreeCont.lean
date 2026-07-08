@@ -10,6 +10,21 @@ public import PolyFun.PFunctor.Free.Basic
 public import Mathlib.Control.Monad.Cont
 public import Mathlib
 
+/-!
+# Continuation-passing (Church-encoded) free monads
+
+Church / CPS encodings of the freer monad and freer monad transformer as
+interpreters into a continuation monad `ContT`, an alternative to the inductive
+`FreeMonad`.
+
+* `FreeContT f m` / `FreeContM f` — the freer monad transformer and monad over an
+  arbitrary effect signature `f : Type z → Type y`.
+* `PFunctor.FreeContT P m` / `PFunctor.FreeContM P` — the variants over a
+  polynomial functor `P`, which do not raise universe levels.
+
+See `PFunctor.FreeM` for the inductive polynomial free monad.
+-/
+
 @[expose] public section
 
 universe u v w y z
