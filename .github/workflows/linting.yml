@@ -7,6 +7,7 @@ on:
       - "PolyFun/**/*.lean"
       - "PolyFun.lean"
       - "lakefile.toml"
+      - "scripts/nolints-style.txt"
       - ".github/workflows/linting.yml"
   push:
     branches: [main]
@@ -14,6 +15,7 @@ on:
       - "PolyFun/**/*.lean"
       - "PolyFun.lean"
       - "lakefile.toml"
+      - "scripts/nolints-style.txt"
       - ".github/workflows/linting.yml"
 
 concurrency:

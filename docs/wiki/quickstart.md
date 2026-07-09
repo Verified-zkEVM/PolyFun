@@ -21,7 +21,8 @@ lake exe cache get
 `./scripts/validate.sh` is the recommended convenience wrapper for routine
 local validation. By default it runs:
 
-1. `lake build`
+1. `lake build --wfail` (warnings — including `mathlibStandardSet` style
+   warnings — are hard failures, matching CI)
 2. `./scripts/check-imports.sh` (umbrella `PolyFun.lean` matches the
    tracked source tree)
 3. `python3 ./scripts/check-docs-integrity.py` (CLAUDE.md symlink and
@@ -94,10 +95,11 @@ deliberately outside the `lake lint` scope.
 
 - [`../../.github/workflows/ci.yml`](../../.github/workflows/ci.yml): runs
   three independent jobs on every push to `main` and on pull requests — a
-  `build` job (`lake build` + `./scripts/validate.sh`), a `lint` job
+  `build` job (`lake build --wfail` + `./scripts/validate.sh`), a `lint` job
   (`lake lint`, the environment linters), and a `test` job (`lake test`, the
-  `PolyFunTest` library). The `build` job is a required status check on
-  `main`.
+  `PolyFunTest` library). All builds pass `--wfail`, so any compiler or
+  `mathlibStandardSet` warning fails CI rather than slipping through. The
+  `build` job is a required status check on `main`.
 - [`../../.github/workflows/check-imports.yml`](../../.github/workflows/check-imports.yml):
   checks that `PolyFun.lean` matches the tracked source tree. `Check
   Library File Imports` is a required status check on `main`.

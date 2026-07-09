@@ -52,7 +52,7 @@ jobs:
         run: lake exe cache get
 
       - name: Build PolyFun
-        run: lake build
+        run: lake build --wfail
 
       - name: Run validation wrapper
         run: ./scripts/validate.sh
@@ -95,7 +95,7 @@ jobs:
         run: lake exe cache get
 
       - name: Build PolyFun
-        run: lake build
+        run: lake build --wfail
 
       - name: Run environment linters
         run: lake lint
@@ -131,4 +131,6 @@ jobs:
         run: lake exe cache get
 
       - name: Run test library
-        run: lake test
+        run: |
+          lake build PolyFunTest --wfail
+          lake test

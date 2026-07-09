@@ -46,7 +46,7 @@ for arg in "$@"; do
 done
 
 echo "# Building project"
-lake build
+lake build --wfail
 
 echo ""
 echo "# Checking umbrella imports"
