@@ -51,13 +51,14 @@ untracked `PolyFun/**/*.lean` files are present.
 ./scripts/validate.sh --lint --test
 ```
 
-`--lint` adds `./scripts/lint-style.sh` (text style) and `lake lint`
-(Batteries' environment linters: `docBlame`, `simpNF`, `checkUnivs`, …) to
-the convenience wrapper. `--test` adds `lake test` (builds the `PolyFunTest`
-library). The main CI `build` job runs `validate.sh` without these flags, but
-separate `lint` and `test` CI jobs run `lake lint` / `lake test`, and the
-`linting.yml` workflow runs the style lint, so treat all three as required for
-merge.
+`--lint` adds `lake lint` (Batteries' environment linters: `docBlame`,
+`simpNF`, `checkUnivs`, …) to the convenience wrapper. `--test` adds
+`lake test` (builds the `PolyFunTest` library). The main CI `build` job runs
+`validate.sh` without these flags, but separate `lint` and `test` CI jobs run
+`lake lint` / `lake test`, and the `linting.yml` workflow runs the text style
+lint, so treat all three as required for merge. Text style (copyright headers,
+line length, module docstrings) is additionally enforced at build time by the
+`mathlibStandardSet` linters.
 
 ## Optional Direct Commands
 
@@ -74,12 +75,6 @@ If you specifically need to regenerate `PolyFun.lean`, use:
 
 ```bash
 ./scripts/update-lib.sh
-```
-
-To run the style lint on its own:
-
-```bash
-./scripts/lint-style.sh
 ```
 
 To run the environment linters or the test library on their own:
@@ -114,7 +109,9 @@ deliberately outside the `lake lint` scope.
   `CONTRIBUTING.md`, `REFERENCES.md`, or any tracked page under `docs/`
   will fail this job.
 - [`../../.github/workflows/linting.yml`](../../.github/workflows/linting.yml):
-  runs `./scripts/lint-style.sh` (Mathlib-derived style linter).
+  runs the community `leanprover-community/lint-style-action` (the Lean-based
+  Mathlib text style linter: copyright headers, line length, module
+  docstrings).
 - [`../../.github/workflows/summary.yml`](../../.github/workflows/summary.yml):
   optional AI-generated PR summary; gated on `GEMINI_API_KEY` repository
   secret. Skipped (with a notice) if the secret is not set.

@@ -20,7 +20,7 @@ Default checks:
   - python3 ./scripts/check-docs-integrity.py
 
 Optional checks:
-  --lint   Run ./scripts/lint-style.sh (text style) and `lake lint` (env linters)
+  --lint   Run `lake lint` (Batteries environment linters)
   --test   Run `lake test` (builds the PolyFunTest library)
 EOF
 }
@@ -57,10 +57,6 @@ echo "# Checking docs integrity"
 python3 ./scripts/check-docs-integrity.py
 
 if (( run_lint )); then
-  echo ""
-  echo "# Running Lean style lint"
-  ./scripts/lint-style.sh
-
   echo ""
   echo "# Running environment linters (lake lint)"
   lake lint

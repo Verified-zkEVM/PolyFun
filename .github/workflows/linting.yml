@@ -7,10 +7,6 @@ on:
       - "PolyFun/**/*.lean"
       - "PolyFun.lean"
       - "lakefile.toml"
-      - "scripts/lint-style.py"
-      - "scripts/print-style-errors.sh"
-      - "scripts/nolints-style.txt"
-      - "scripts/style-exceptions.txt"
       - ".github/workflows/linting.yml"
   push:
     branches: [main]
@@ -18,10 +14,6 @@ on:
       - "PolyFun/**/*.lean"
       - "PolyFun.lean"
       - "lakefile.toml"
-      - "scripts/lint-style.py"
-      - "scripts/print-style-errors.sh"
-      - "scripts/nolints-style.txt"
-      - "scripts/style-exceptions.txt"
       - ".github/workflows/linting.yml"
 
 concurrency:
