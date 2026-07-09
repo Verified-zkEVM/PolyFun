@@ -7,6 +7,7 @@ import PolyFun.PFunctor.Trace
 import PolyFun.Interaction.Basic.Sampler
 import PolyFun.Interaction.Concurrent.Process
 import PolyFun.Interaction.UC.Interface
+import Batteries.Tactic.Lint
 
 /-!
 # Open concurrent processes with boundary traffic
@@ -86,7 +87,12 @@ concerns (buffering, duplication, scheduling, delivery) belong in a separate
 `Runtime` layer and are not encoded here.
 -/
 structure BoundaryAction (Δ : PortBoundary) (X : Type w) where
+  /-- Flags whether this node is driven by external boundary input (`true`)
+  or by the internal protocol dynamics (`false`). -/
   isActivated : Bool := false
+  /-- The outbound traffic on `Δ.Out`: for each chosen move `x : X`, the finite
+  ordered list of outbound packets the node contributes. Defaults to the
+  monoid unit `1`, definitionally the constant-`[]` trace. -/
   emit : PFunctor.Trace Δ.Out X := 1
 
 namespace BoundaryAction
@@ -301,6 +307,8 @@ world.
 -/
 structure OpenNodeProfile (Party : Type u) (Δ : PortBoundary) (X : Type w)
     extends NodeProfile Party X where
+  /-- The node's interaction with the external boundary. Defaults to the
+  purely internal action `.internal Δ X`. -/
   boundary : BoundaryAction Δ X := .internal Δ X
 
 namespace OpenNodeProfile
@@ -851,6 +859,9 @@ predicates used throughout PolyFun. The verification predicates are about
 the structural `ProcessOver` layer, so `OpenProcess.System` is monad- and
 sampler-agnostic and refers to the underlying `ProcessOver.System`.
 -/
+-- `OpenProcess.System`'s two universes are the independent party universe (`u`) and the
+-- move-space universe (`w`) of the open node context; kept separate for generality.
+@[nolint checkUnivs]
 abbrev OpenProcess.System (Party : Type u) (Δ : PortBoundary) :=
   ProcessOver.System (OpenNodeContext.{u, w} Party Δ)
 

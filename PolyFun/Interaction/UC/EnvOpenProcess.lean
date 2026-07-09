@@ -143,7 +143,7 @@ underlying `EnvAction.react`.
 Provided as a top-level projection so that downstream consumers can
 write `E.react e s` without unfolding the wrapper.
 -/
-def react [Pure m] (E : EnvOpenProcess.{u, uE, v, w, w'} m Party Δ Event State)
+def react (E : EnvOpenProcess.{u, uE, v, w, w'} m Party Δ Event State)
     (e : Event) (s : State) : m State :=
   E.envAction.react e s
 

@@ -65,10 +65,13 @@ scoped notation:max Δ "ᵛ" => PortBoundary.swap Δ
 
 /-- Parallel composition on boundary-indexed types. -/
 class HasPar (F : PortBoundary → Type*) where
+  /-- Place two boundary-indexed values side by side, tensoring their boundaries. -/
   par : {Δ₁ Δ₂ : PortBoundary} → F Δ₁ → F Δ₂ → F (PortBoundary.tensor Δ₁ Δ₂)
 
 /-- Wiring (partial internal connection) on boundary-indexed types. -/
 class HasWire (F : PortBoundary → Type*) where
+  /-- Connect the shared boundary `Γ` of two values internally, exposing only
+  the remaining boundaries `Δ₁` and `Δ₂`. -/
   wire : {Δ₁ Γ Δ₂ : PortBoundary} →
     F (PortBoundary.tensor Δ₁ Γ) →
     F (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) →
@@ -76,6 +79,8 @@ class HasWire (F : PortBoundary → Type*) where
 
 /-- Plugging (full closure) on boundary-indexed types. -/
 class HasPlug (F : PortBoundary → Type*) where
+  /-- Fully connect a value against its dual boundary, closing off both sides
+  to leave the empty boundary. -/
   plug : {Δ : PortBoundary} →
     F Δ → F (PortBoundary.swap Δ) → F PortBoundary.empty
 

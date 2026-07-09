@@ -54,14 +54,19 @@ def tail (t : CofreeC F α) : F (CofreeC F α) :=
   let d := M.dest t       --  d : constProd F α (CofreeC F α)
   ⟨d.1.2, d.2⟩            -- drop the constant `α` stored in `d.1.1`
 
+/-- Comonad counit: extract the label at the root of a cofree tree, i.e. its `head`. -/
 def extract (t : CofreeC F α) : α :=
   head t
 
+/-- One-step coalgebra map for `extend`: relabel the root of `t` by `f t` while
+    keeping the `F`-structured family of sub-trees. -/
 def extendF {β : Type u} (f : CofreeC F α → β) (t : CofreeC F α) :
     constProd F β (CofreeC F α) :=
   let d := M.dest t
   ⟨(f t, d.1.2), d.2⟩
 
+/-- Comonad coextension: relabel every node of `t` by applying `f` to the sub-tree
+    rooted at that node. -/
 def extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) : CofreeC F β :=
   M.corec (extendF f) t
 
@@ -76,7 +81,7 @@ def extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) : CofreeC 
     M.dest (extend t f) = (constProd F β).map (fun x => extend x f) (extendF f t) := by
   simp only [extend]; exact (M.dest_corec (P := constProd F β) (g := extendF f) t)
 
-@[simp] theorem dest_extend_eq {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
+theorem dest_extend_eq {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     M.dest (extend t f) = ⟨(f t, (M.dest t).1.2), (fun x => extend x f) ∘ (M.dest t).2⟩ := by
   simp [extendF, PFunctor.map_eq]
   rfl

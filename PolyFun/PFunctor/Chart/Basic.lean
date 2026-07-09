@@ -7,6 +7,7 @@ module
 
 public import PolyFun.PFunctor.Basic
 public import PolyFun.PFunctor.Equiv.Basic
+import Batteries.Tactic.Lint
 
 /-!
 # Charts between polynomial functors
@@ -108,7 +109,9 @@ theorem comp_assoc {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {
     This corresponds to an isomorphism in the category `PFunctor` with `Chart` morphisms. -/
 @[ext]
 protected structure Equiv (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) where
+  /-- The forward chart of the equivalence, from `P` to `Q`. -/
   toChart : Chart P Q
+  /-- The backward chart of the equivalence, from `Q` to `P`. -/
   invChart : Chart Q P
   left_inv : comp invChart toChart = Chart.id P := by simp
   right_inv : comp toChart invChart = Chart.id Q := by simp
@@ -118,14 +121,17 @@ infix:50 " ≃c " => Chart.Equiv
 
 namespace Equiv
 
+/-- The identity equivalence on `P`, built from the identity chart in both directions. -/
 @[refl]
 def refl (P : PFunctor.{uA, uB}) : P ≃c P :=
   ⟨Chart.id P, Chart.id P, rfl, rfl⟩
 
+/-- The inverse equivalence, swapping the forward and backward charts of `e`. -/
 @[symm]
 def symm {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (e : P ≃c Q) : Q ≃c P :=
   ⟨e.invChart, e.toChart, e.right_inv, e.left_inv⟩
 
+/-- The composite equivalence `P ≃c R` obtained by chaining `e₁ : P ≃c Q` and `e₂ : Q ≃c R`. -/
 @[trans]
 def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     (e₁ : P ≃c Q) (e₂ : Q ≃c R) : P ≃c R :=
@@ -294,6 +300,9 @@ def mapIdx (φ : Chart P Q) (i : Idx P) : Idx Q :=
 A chart `P → X` is equivalent to a function `(a : P.A) → P.B a → PUnit`,
 i.e. a boundary valuation that picks out a single direction at every
 position. Analogous to `Lens.enclose`. -/
+-- `Chart.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
+-- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
+@[nolint checkUnivs]
 def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
   Chart P X.{uA₁, uB₁}
 
@@ -302,7 +311,9 @@ def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
 @[inherit_doc] infixl:75 " ⊎c " => sumMap
 @[inherit_doc] infixl:75 " ⊗c " => tensorMap
 @[inherit_doc] infixl:75 " ×c " => prodMap
+/-- Notation for the copairing `sumPair c₁ c₂` of two charts out of a sum. -/
 notation "[" c₁ "," c₂ "]c" => sumPair c₁ c₂
+/-- Notation for the pairing `tensorPair c₁ c₂` of two charts into a tensor. -/
 notation "⟨" c₁ "," c₂ "⟩c" => tensorPair c₁ c₂
 
 /-! ### Coproduct coherence -/

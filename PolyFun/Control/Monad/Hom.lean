@@ -29,6 +29,7 @@ variable {m : Type u → Type v} {n : Type u → Type w}
 /-- A `NatHom m n` for two functors `m` and `n` is a map `m α → n α` for each possible type `α`.
 This is exactly an element of the category `m ⟶ n`, but that has more restricted universes -/
 structure NatHom (m : Type u → Type v) (n : Type u → Type w) where
+  /-- The underlying family of maps `m α → n α`, one for each type `α`. -/
   toFun : (α : Type u) → m α → n α
 
 /-- `f mx` notation for `NatHom m n` applied to an element of `m α`, with implicit `α` inferred. -/
@@ -132,13 +133,15 @@ variable {m : Type u → Type v} [Monad m]
   {n'' : Type u → Type y} [Monad n'']
   {α β γ : Type u}
 
-@[ext] protected def ext' {F G : m →ᵐ n}
+/-- Extensionality for monad homomorphisms: two morphisms agreeing on every argument at every
+type are equal. -/
+@[ext] protected theorem ext' {F G : m →ᵐ n}
     (h : ∀ α (x : m α), F x = G x) : F = G := by aesop
 
-@[simp, grind =] lemma mmap_pure (F : m →ᵐ n) (x : α) : F (pure x) = pure x := by grind
+@[grind =] lemma mmap_pure (F : m →ᵐ n) (x : α) : F (pure x) = pure x := by grind
 
 -- dt: should we be using `F ∘ my`?
-@[simp, grind =] lemma mmap_bind (F : m →ᵐ n) (mx : m α) (my : α → m β) :
+@[grind =] lemma mmap_bind (F : m →ᵐ n) (mx : m α) (my : α → m β) :
     F (mx >>= my) = F mx >>= fun x => F (my x) := by grind
 
 @[simp, grind =] lemma mmap_map [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n)
@@ -179,6 +182,7 @@ protected def comp (G : n →ᵐ n') (F : m →ᵐ n) : m →ᵐ n' where
   toFun_pure' := by simp
   toFun_bind' := by simp
 
+/-- Infix notation for composition of monad homomorphisms, `G ∘ₘ F`. -/
 infixr:90 " ∘ₘ "  => MonadHom.comp
 
 @[simp, grind =] lemma comp_apply (G : n →ᵐ n') (F : m →ᵐ n) (x : m α) :

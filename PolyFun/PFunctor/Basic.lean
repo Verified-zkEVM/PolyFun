@@ -26,14 +26,14 @@ section Basic
 
 /-- The zero polynomial functor, defined as `A = PEmpty` and `B _ = PEmpty`, is the identity with
   respect to sum (up to equivalence) -/
-instance : Zero PFunctor.{uA, uB} where
+instance instZeroPFunctor : Zero PFunctor.{uA, uB} where
   zero := ⟨PEmpty, fun _ => PEmpty⟩
 
 -- protected lemma zero_def : (0 : PFunctor) = PFunctor.zero := rfl
 
 /-- The unit polynomial functor, defined as `A = PUnit` and `B _ = PEmpty`, is the identity with
   respect to product (up to equivalence) -/
-instance : One PFunctor.{uA, uB} where
+instance instOnePFunctor : One PFunctor.{uA, uB} where
   one := ⟨PUnit, fun _ => PEmpty⟩
 
 -- protected lemma one_def : (1 : PFunctor) = PFunctor.one := rfl
@@ -132,10 +132,11 @@ def sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
   ⟨P.A ⊕ Q.A, Sum.elim P.B Q.B⟩
 
 /-- Addition of polynomial functors, defined as the sum construction. -/
-instance : HAdd PFunctor.{uA₁, uB} PFunctor.{uA₂, uB} PFunctor.{max uA₁ uA₂, uB} where
+instance instHAddPFunctor :
+    HAdd PFunctor.{uA₁, uB} PFunctor.{uA₂, uB} PFunctor.{max uA₁ uA₂, uB} where
   hAdd := sum
 
-instance : Add PFunctor.{uA, uB} where
+instance instAddPFunctor : Add PFunctor.{uA, uB} where
   add := sum
 
 lemma add_def (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
@@ -162,10 +163,11 @@ def prod (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
   ⟨P.A × Q.A, fun ab => P.B ab.1 ⊕ Q.B ab.2⟩
 
 /-- Multiplication of polynomial functors, defined as the product construction. -/
-instance : HMul PFunctor.{uA₁, uB₁} PFunctor.{uA₂, uB₂} PFunctor.{max uA₁ uA₂, max uB₁ uB₂} where
+instance instHMulPFunctor :
+    HMul PFunctor.{uA₁, uB₁} PFunctor.{uA₂, uB₂} PFunctor.{max uA₁ uA₂, max uB₁ uB₂} where
   hMul := prod
 
-instance : Mul PFunctor.{uA, uB} where
+instance instMulPFunctor : Mul PFunctor.{uA, uB} where
   mul := prod
 
 /-- The generalized product (pi type) of an indexed family of polynomial functors. -/
@@ -205,7 +207,7 @@ def compNth (P : PFunctor.{uA, uB}) : Nat → PFunctor.{max uA uB, uB}
   | 0 => X
   | Nat.succ n => P ◃ compNth P n
 
-instance : NatPow PFunctor.{max uA uB, uB} where
+instance instNatPowPFunctor : NatPow PFunctor.{max uA uB, uB} where
   pow := compNth
 
 end Comp
@@ -222,80 +224,88 @@ end ULift
 def exp (P Q : PFunctor.{uA, uB}) : PFunctor.{max uA uB, max uA uB} :=
   pi (fun a => P ◃ (X + C (Q.B a)))
 
-instance : HPow PFunctor.{uA, uB} PFunctor.{uA, uB} PFunctor.{max uA uB, max uA uB} where
+instance instHPowPFunctor :
+    HPow PFunctor.{uA, uB} PFunctor.{uA, uB} PFunctor.{max uA uB, max uA uB} where
   hPow := exp
 
 section Fintype
 
 /-- A polynomial functor is finitely branching if each of its branches is a finite type. -/
 protected class Fintype (P : PFunctor.{uA, uB}) where
-  fintype_B : ∀ a, Fintype (P.B a)
+  /-- The direction type over each position `a` is a finite type. -/
+  fintypeB : ∀ a, Fintype (P.B a)
 
 instance {P : PFunctor.{uA, uB}} [inst : P.Fintype] : PFunctor.Fintype (PFunctor.ulift P) where
-  fintype_B := fun a => by
+  fintypeB := fun a => by
     unfold PFunctor.ulift
-    haveI : Fintype (P.B (ULift.down a)) := inst.fintype_B (ULift.down a)
+    haveI : Fintype (P.B (ULift.down a)) := inst.fintypeB (ULift.down a)
     infer_instance
 
 @[simp]
 instance {P : PFunctor.{uA, uB}} [inst : P.Fintype] : ∀ a, Fintype (P.B a) :=
-  fun a => inst.fintype_B a
+  fun a => inst.fintypeB a
 
 instance : PFunctor.Fintype 0 where
-  fintype_B _ := Fintype.instPEmpty
+  fintypeB _ := Fintype.instPEmpty
 
 instance : PFunctor.Fintype 1 where
-  fintype_B _ := Fintype.instPEmpty
+  fintypeB _ := Fintype.instPEmpty
 
 end Fintype
 
 section Inhabited
 
+/-- A polynomial functor is pointwise inhabited if each of its branches is an inhabited type. -/
 protected class Inhabited (P : PFunctor.{uA, uB}) where
-  inhabited_B : ∀ a, Inhabited (P.B a)
+  /-- The direction type over each position `a` is inhabited. -/
+  inhabitedB : ∀ a, Inhabited (P.B a)
 
 instance {P : PFunctor.{uA, uB}} [inst : P.Inhabited] :
     PFunctor.Inhabited (PFunctor.ulift P) where
-  inhabited_B := fun a => by
+  inhabitedB := fun a => by
     unfold PFunctor.ulift
-    haveI : Inhabited (P.B (ULift.down a)) := inst.inhabited_B (ULift.down a)
+    haveI : Inhabited (P.B (ULift.down a)) := inst.inhabitedB (ULift.down a)
     infer_instance
 
 @[simp]
 instance {P : PFunctor.{uA, uB}} [inst : P.Inhabited] : ∀ a, Inhabited (P.B a) :=
-  fun a => inst.inhabited_B a
+  fun a => inst.inhabitedB a
 
 end Inhabited
 
 section DecidableEq
 
+/-- A polynomial functor has decidable equality if its position type and each of its
+direction types have decidable equality. -/
 protected class DecidableEq (P : PFunctor.{uA, uB}) where
-  decidableEq_A : DecidableEq P.A
-  decidableEq_B : ∀ a, DecidableEq (P.B a)
+  /-- The position type `P.A` has decidable equality. -/
+  decidableEqA : DecidableEq P.A
+  /-- The direction type over each position `a` has decidable equality. -/
+  decidableEqB : ∀ a, DecidableEq (P.B a)
 
 instance {P : PFunctor.{uA, uB}} [inst : P.DecidableEq] : DecidableEq P.A :=
-  inst.decidableEq_A
+  inst.decidableEqA
 
 instance {P : PFunctor.{uA, uB}} [inst : P.DecidableEq] (a : P.A) :
-    DecidableEq (P.B a) := inst.decidableEq_B a
+    DecidableEq (P.B a) := inst.decidableEqB a
 
 @[simp]
 instance {P : PFunctor.{uA, uB}} [inst : P.DecidableEq] :
     PFunctor.DecidableEq (PFunctor.ulift P) where
-  decidableEq_A := by
+  decidableEqA := by
     unfold PFunctor.ulift
     infer_instance
-  decidableEq_B := fun a => by
+  decidableEqB := fun a => by
     unfold PFunctor.ulift
     infer_instance
 
 instance : PFunctor.DecidableEq 0 where
-  decidableEq_A := inferInstanceAs (DecidableEq PEmpty)
-  decidableEq_B _ := inferInstanceAs (DecidableEq PEmpty)
+  decidableEqA := inferInstanceAs (DecidableEq PEmpty)
+  decidableEqB _ := inferInstanceAs (DecidableEq PEmpty)
 
 instance : PFunctor.DecidableEq 1 where
-  decidableEq_A := inferInstanceAs (DecidableEq PUnit)
-  decidableEq_B _ := inferInstanceAs (DecidableEq PEmpty)
+  decidableEqA := inferInstanceAs (DecidableEq PUnit)
+  decidableEqB _ := inferInstanceAs (DecidableEq PEmpty)
 
 end DecidableEq
 
@@ -309,14 +319,14 @@ def ofConst (A : Type uA) (B : Type uB) : PFunctor.{uA, uB} where
 variable (A : Type uA) (B : Type uB)
 
 instance [hB : Fintype B] : (ofConst A B).Fintype where
-  fintype_B _ := inferInstanceAs (Fintype B)
+  fintypeB _ := inferInstanceAs (Fintype B)
 
 instance [DecidableEq A] [DecidableEq B] : (ofConst A B).DecidableEq where
-  decidableEq_A := inferInstanceAs (DecidableEq A)
-  decidableEq_B _ := inferInstanceAs (DecidableEq B)
+  decidableEqA := inferInstanceAs (DecidableEq A)
+  decidableEqB _ := inferInstanceAs (DecidableEq B)
 
 instance [Inhabited B] : (ofConst A B).Inhabited where
-  inhabited_B _ := inferInstanceAs (Inhabited B)
+  inhabitedB _ := inferInstanceAs (Inhabited B)
 
 end ofConst
 /-- An equivalence between two polynomial functors `P` and `Q`, written `P ≃ₚ Q`, is given by an
@@ -436,7 +446,10 @@ end Equiv
 - `toFunA : P.A → Q.A`
 - `toFunB : ∀ a, Q.B (toFunA a) → P.B a` -/
 structure Lens (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) where
+  /-- The forward map on positions, sending each position of `P` to a position of `Q`. -/
   toFunA : P.A → Q.A
+  /-- The backward map on directions, pulling a direction of `Q` at `toFunA a` back to a
+  direction of `P` at `a`. -/
   toFunB : ∀ a, Q.B (toFunA a) → P.B a
 
 /-- Infix notation for constructing a lens `toFunA ⇆ toFunB` -/
@@ -446,7 +459,10 @@ infixr:25 " ⇆ " => Lens.mk
 - `toFunA : P.A → Q.A`
 - `toFunB : ∀ a, P.B a → Q.B (toFunA a)` -/
 structure Chart (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) where
+  /-- The forward map on positions, sending each position of `P` to a position of `Q`. -/
   toFunA : P.A → Q.A
+  /-- The forward map on directions, pushing a direction of `P` at `a` to a direction of `Q`
+  at `toFunA a`. -/
   toFunB : ∀ a, P.B a → Q.B (toFunA a)
 
 /-- Infix notation for constructing a chart `toFunA ⇉ toFunB` -/

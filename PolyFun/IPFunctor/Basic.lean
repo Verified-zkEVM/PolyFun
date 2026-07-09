@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Basic
+import Batteries.Tactic.Lint
 
 /-!
 # Two-Index (Indexed) Polynomial Functors
@@ -68,6 +69,10 @@ universe uI uJ uK uA uA₁ uA₂ uB uB₁ uB₂
 /-- Atkey-style polynomial functor between indexed family categories. Given input index type
 `I` and output index type `J`, `IPFunctor I J` packages the shapes available at each `j : J`,
 the response type at each shape, and the source index (in `I`) of each child. -/
+-- `uA` (head/position universe) and `uB` (child/direction universe) are independent
+-- components of a polynomial functor and are deliberately kept separate for full
+-- universe polymorphism; they need not coincide.
+@[nolint checkUnivs]
 structure IPFunctor (I : Type uI) (J : Type uJ) where
   /-- The head type at each output index. -/
   A : J → Type uA
@@ -80,6 +85,8 @@ structure IPFunctor (I : Type uI) (J : Type uJ) where
 /-- Endomorphic specialization `IPFunctor I I`. This is the case where the polynomial action
 is an endofunctor `(I → Type) → (I → Type)`, and free monads / indexed monads / `do`-notation
 make sense. -/
+-- Inherits `IPFunctor`'s independent head/child universes `uA`, `uB`; kept separate.
+@[nolint checkUnivs]
 abbrev IPFunctor.Endo (I : Type uI) : Type _ := IPFunctor.{uI, uI, uA, uB} I I
 
 namespace IPFunctor
@@ -134,7 +141,10 @@ single possible value carries no information, so this is a genuine no-informatio
 recovery — not an erasure. For the fiber-only view that drops `P.src` even when `I` is
 non-trivial, see [`fiberPFunctor`](#IPFunctor.fiberPFunctor); for the unconditional
 Σ-bundled erasure, see [`sigmaPFunctor`](#IPFunctor.sigmaPFunctor). -/
-@[reducible, inline]
+-- `[Unique I]` is not needed to elaborate the body, but it is a deliberate part of the
+-- interface: it witnesses that `P.src`'s single value carries no information, which is what
+-- makes this a no-information-lost recovery rather than the fiber-only `fiberPFunctor`.
+@[reducible, inline, nolint unusedArguments]
 def toPFunctor [Unique I] [Unique J] (P : IPFunctor I J) : PFunctor where
   A := P.A default
   B := P.B default

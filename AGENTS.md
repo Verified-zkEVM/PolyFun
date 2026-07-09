@@ -74,6 +74,11 @@ and depend on this library.
   required by the above (coalgebra, comonad, free / freecont monad
   algebra, monad iter / hom, lawful re-exports).
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
+- `PolyFunTest/`: separate test / worked-example library (glob
+  `PolyFunTest.+`), built by `lake test` and kept out of the `lake lint`
+  scope. Holds the dynamical / interaction worked examples and the
+  `IPFunctor` `do`-notation smoke tests. Imports `PolyFun` one-way; nothing
+  in `PolyFun` depends on it.
 
 ## Module Layering
 
@@ -196,7 +201,19 @@ lake exe cache get && lake build
 After adding new `.lean` files: `./scripts/update-lib.sh`.
 For routine local validation: `./scripts/validate.sh`.
 
-Lean toolchain and Mathlib stay in sync (both currently `v4.29.0`).
+Environment linters and the test library have Lake drivers:
+
+```bash
+lake lint   # Batteries runLinter over the PolyFun library
+lake test   # builds the PolyFunTest library
+```
+
+`./scripts/validate.sh --lint --test` folds both into the convenience wrapper.
+Both run as independent CI jobs (`lint`, `test`) alongside `build`. Adding a
+per-declaration `@[nolint <linter>]` exception requires
+`import Batteries.Tactic.Lint` in that file.
+
+Lean toolchain and Mathlib stay in sync (both currently `v4.31.0`).
 Files should stay under 1500 lines.
 
 ## Further Reading

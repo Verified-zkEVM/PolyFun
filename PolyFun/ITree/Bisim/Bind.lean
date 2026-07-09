@@ -464,8 +464,8 @@ theorem iter_bind (body : β → ITree F (β ⊕ α)) (k : α → ITree F γ) (i
                 show PFunctor.M.dest (pure (F := F) r) =
                   ⟨.pure r, PEmpty.elim⟩ from PFunctor.M.dest_mk _]
               change (⟨.pure r, fun b : PEmpty =>
-                  PFunctor.M.corec (iterStep body) (PEmpty.elim b)⟩
-                : (Poly F α).Obj _) = ⟨.pure r, PEmpty.elim⟩
+                  PFunctor.M.corec (iterStep body) (PEmpty.elim b)⟩ :
+                (Poly F α).Obj _) = ⟨.pure r, PEmpty.elim⟩
               congr 1; funext z; exact z.elim
             rw [hcorec, bind_pure_left]
             -- Transition into Phase B with `u := k r`; case-split on `M.dest (k r)`.

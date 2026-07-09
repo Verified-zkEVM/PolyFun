@@ -192,6 +192,7 @@ def emptySigma [inst : IsEmpty I] : sigma F ≃ₚ 0 where
   equivA := Equiv.equivPEmpty _
   equivB := fun a => inst.elim a.1
 
+/-- Sigma over a subsingleton index type is the single functor `F default`. -/
 def uniqueSigma [Unique I] : sigma F ≃ₚ F default where
   equivA := _root_.Equiv.uniqueSigma _
   equivB := fun ⟨i, a⟩ => by
@@ -588,6 +589,7 @@ variable (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) (R : PFunct
 instance : IsEmpty (0 ◃ P).A where
   false := fun a => a.1.elim
 
+/-- Composing the zero functor with `P` yields the zero functor. -/
 def zeroComp : 0 ◃ P ≃ₚ 0 where
   equivA := Equiv.equivPEmpty _
   equivB := fun a => a.1.elim
@@ -595,6 +597,7 @@ def zeroComp : 0 ◃ P ≃ₚ 0 where
 instance {a : (1 ◃ P).A} : IsEmpty ((1 ◃ P).B a) where
   false := fun a => a.1.elim
 
+/-- Composing the unit functor with `P` yields the unit functor. -/
 def oneComp : (1 : PFunctor.{uA, uB}) ◃ P ≃ₚ 1 where
   equivA := (@_root_.Equiv.uniqueSigma _ (fun i => B 1 i → P.A)
     (instUniqueAOfNatOne.{uA, uB})).trans (Equiv.pemptyArrowEquivPUnit _)

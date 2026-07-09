@@ -483,7 +483,7 @@ abbrev ofTrace {Party : Type u} [DecidableEq Party]
     (Interaction.Spec.Node.ContextHom.id (StepContext Party))
     process
 
-@[simp, grind =]
+@[grind =]
 theorem length_done {Party : Type u} [DecidableEq Party]
     {me : Party} {process : Process Party} {p : process.Proc}
     {h : (process.step p).spec.Transcript → False} :
@@ -495,7 +495,7 @@ theorem length_done {Party : Type u} [DecidableEq Party]
       (h := h)) = 0 := by
   rfl
 
-@[simp, grind =]
+@[grind =]
 theorem length_step {Party : Type u} [DecidableEq Party]
     {me : Party} {process : Process Party} {p : process.Proc}
     {tr : (process.step p).spec.Transcript}

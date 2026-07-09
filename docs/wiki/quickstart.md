@@ -48,12 +48,16 @@ untracked `PolyFun/**/*.lean` files are present.
 ### Lean-heavy refactors or cleanup
 
 ```bash
-./scripts/validate.sh --lint
+./scripts/validate.sh --lint --test
 ```
 
-This adds `./scripts/lint-style.sh` to the convenience wrapper. The main CI
-build runs `validate.sh` without `--lint`, but a separate `linting.yml`
-workflow runs the style lint, so treat lint passes as required for merge.
+`--lint` adds `./scripts/lint-style.sh` (text style) and `lake lint`
+(Batteries' environment linters: `docBlame`, `simpNF`, `checkUnivs`, …) to
+the convenience wrapper. `--test` adds `lake test` (builds the `PolyFunTest`
+library). The main CI `build` job runs `validate.sh` without these flags, but
+separate `lint` and `test` CI jobs run `lake lint` / `lake test`, and the
+`linting.yml` workflow runs the style lint, so treat all three as required for
+merge.
 
 ## Optional Direct Commands
 
@@ -78,11 +82,27 @@ To run the style lint on its own:
 ./scripts/lint-style.sh
 ```
 
+To run the environment linters or the test library on their own:
+
+```bash
+lake lint   # Batteries runLinter over the PolyFun library
+lake test   # builds the PolyFunTest library (worked examples / regression tests)
+```
+
+`lake lint` and `lake test` are wired in [`lakefile.toml`](../../lakefile.toml)
+via `lintDriver = "batteries/runLinter"` (with `lintDriverArgs = ["PolyFun"]`)
+and `testDriver = "PolyFunTest"`. The `PolyFunTest` library is glob-based
+(`PolyFunTest.+`), holds the worked examples and notation smoke tests, and is
+deliberately outside the `lake lint` scope.
+
 ## CI Mapping
 
 - [`../../.github/workflows/ci.yml`](../../.github/workflows/ci.yml): runs
-  `lake build` and `./scripts/validate.sh` on every push to `main` and on
-  pull requests. The `build` job is a required status check on `main`.
+  three independent jobs on every push to `main` and on pull requests — a
+  `build` job (`lake build` + `./scripts/validate.sh`), a `lint` job
+  (`lake lint`, the environment linters), and a `test` job (`lake test`, the
+  `PolyFunTest` library). The `build` job is a required status check on
+  `main`.
 - [`../../.github/workflows/check-imports.yml`](../../.github/workflows/check-imports.yml):
   checks that `PolyFun.lean` matches the tracked source tree. `Check
   Library File Imports` is a required status check on `main`.
@@ -107,7 +127,7 @@ To run the style lint on its own:
 
 ## Toolchain
 
-Lean toolchain and Mathlib stay in sync. Both currently `v4.29.0`. When
+Lean toolchain and Mathlib stay in sync. Both currently `v4.31.0`. When
 upgrading, update [`lean-toolchain`](../../lean-toolchain) and the
 `require mathlib` line in [`lakefile.toml`](../../lakefile.toml)
 simultaneously.

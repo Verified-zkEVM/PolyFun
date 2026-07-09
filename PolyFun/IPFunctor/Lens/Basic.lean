@@ -100,6 +100,7 @@ structure Equiv (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J)
 
 namespace Equiv
 
+/-- The identity equivalence on `P`, built from the identity lens in both directions. -/
 @[refl]
 def refl (P : IPFunctor.{uI, uJ, uA, uB} I J) : P ≃ₗ P where
   toLens := Lens.id P
@@ -107,6 +108,7 @@ def refl (P : IPFunctor.{uI, uJ, uA, uB} I J) : P ≃ₗ P where
   left_inv := rfl
   right_inv := rfl
 
+/-- The inverse of an equivalence, swapping the forward and inverse lenses. -/
 @[symm]
 def symm (e : P ≃ₗ Q) : Q ≃ₗ P where
   toLens := e.invLens
@@ -114,6 +116,7 @@ def symm (e : P ≃ₗ Q) : Q ≃ₗ P where
   left_inv := e.right_inv
   right_inv := e.left_inv
 
+/-- Composition of equivalences, composing the forward and inverse lenses respectively. -/
 @[trans]
 def trans (e₁ : P ≃ₗ Q) (e₂ : Q ≃ₗ R) : P ≃ₗ R where
   toLens := e₂.toLens ∘ₗ e₁.toLens

@@ -129,12 +129,10 @@ theorem diamond :
       residual (afterLeft h) = residual (afterRight h)
   | .par _ _, .left _, .right _, .left_right _ _ => rfl
   | .par _ _, .right _, .left _, .right_left _ _ => rfl
-  | .par _ rightSpec, .left _event₁, .left _event₂, .left h =>
-      by
+  | .par _ rightSpec, .left _event₁, .left _event₂, .left h => by
         simpa [afterLeft, afterRight, residual] using
           congrArg (fun s => Spec.par s rightSpec) (diamond h)
-  | .par leftSpec _, .right _event₁, .right _event₂, .right h =>
-      by
+  | .par leftSpec _, .right _event₁, .right _event₂, .right h => by
         simpa [afterLeft, afterRight, residual] using
           congrArg (fun s => Spec.par leftSpec s) (diamond h)
 

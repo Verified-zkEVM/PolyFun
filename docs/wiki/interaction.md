@@ -609,13 +609,13 @@ re-import the generic primitives from PolyFun.
 
 ## In-tree examples
 
-- [`PolyFun/Interaction/TwoParty/Examples.lean`](../../PolyFun/Interaction/TwoParty/Examples.lean):
+- [`PolyFunTest/Interaction/TwoParty/Examples.lean`](../../PolyFunTest/Interaction/TwoParty/Examples.lean):
   `rfl` checks that `withRoles` / `Counterpart` types unfold correctly on
   a two-step spec.
-- [`PolyFun/Interaction/Multiparty/Examples.lean`](../../PolyFun/Interaction/Multiparty/Examples.lean):
+- [`PolyFunTest/Interaction/Multiparty/Examples.lean`](../../PolyFunTest/Interaction/Multiparty/Examples.lean):
   pattern-matching resolvers for broadcast, directed, and profile-based
   models; adversarial leakage and adaptive corruption.
-- [`PolyFun/Interaction/Concurrent/Examples.lean`](../../PolyFun/Interaction/Concurrent/Examples.lean):
+- [`PolyFunTest/Interaction/Concurrent/Examples.lean`](../../PolyFunTest/Interaction/Concurrent/Examples.lean):
   small concurrent specs with profiles, control, process execution,
   policies, and interleaving.
 

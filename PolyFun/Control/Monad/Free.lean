@@ -45,7 +45,7 @@ instance : MonadLift f (FreeMonad f) where
 
 @[simp, grind =]
 lemma monadLift_eq_lift (x : f α) :
-  (x : FreeMonad f α) = FreeMonad.lift x := rfl
+    (x : FreeMonad f α) = FreeMonad.lift x := rfl
 
 instance [Inhabited (f α)] : Inhabited (FreeMonad f α) := ⟨FreeMonad.lift default⟩
 
@@ -99,7 +99,7 @@ instance : MonadFunctor f (FreeMonad f) where
 * `pure x` for some `x : α`
 Note that we can't use `Sort v` instead of `Prop` due to universe levels. -/
 @[elab_as_elim]
-protected def inductionOn {C : FreeMonad f α → Prop}
+protected theorem inductionOn {C : FreeMonad f α → Prop}
     (pure : ∀ x, C (pure x))
     (roll : ∀ {β} (x : f β), (r : β → FreeMonad f α) →
       (∀ y, C (r y)) → C (x >>= r)) :
@@ -124,7 +124,6 @@ variable {C : FreeMonad f α → Type*} (h_pure : (x : α) → C (pure x))
   (h_roll : {β : Type u} → (x : f β) → (r : β → FreeMonad f α) →
     ((y : β) → C (r y)) → C (x >>= r))
 
-@[simp]
 lemma construct_pure (y : α) : FreeMonad.construct h_pure h_roll (pure y) = h_pure y := rfl
 
 @[simp]
@@ -132,7 +131,6 @@ lemma construct_roll (x : f β) (r : β → FreeMonad f α) :
     (FreeMonad.construct h_pure h_roll (roll x r) : C (roll x r)) =
       (h_roll x r (fun u ↦ FreeMonad.construct h_pure h_roll (r u))) := rfl
 
-@[simp]
 lemma construct_lift {m} [Monad m] [LawfulMonad m] (x : f α) :
     (FreeMonad.construct h_pure h_roll (FreeMonad.lift x) : C (FreeMonad.lift x)) =
       h_roll x FreeMonad.pure h_pure  := by
@@ -144,10 +142,12 @@ section mapM
 
 variable {m : Type u → Type w} (s : {α : Type u} → f α → m α)
 
-protected def mapM_aux [Pure m] [Bind m] (s : {α : Type u} → f α → m α) :
+/-- Auxiliary recursion carrying the base-functor interpretation `s` explicitly, used to
+define `FreeMonad.mapM`. -/
+protected def mapMAux [Pure m] [Bind m] (s : {α : Type u} → f α → m α) :
     (oa : FreeMonad f α) → m α
   | .pure x => pure x
-  | .roll x r => s x >>= fun u ↦ (r u).mapM_aux s
+  | .roll x r => s x >>= fun u ↦ (r u).mapMAux s
 
 /-- Canonical mapping of a free monad into any other monad, given a map on the base functor. -/
 protected def mapM [Pure m] [Bind m] :
@@ -177,12 +177,12 @@ variable {m : Type u → Type w} [Monad m] [LawfulMonad m]
 /-- Bundled monad-homomorphism form of `FreeMonad.mapM`. -/
 protected def mapM' {m : Type u → Type w} [Monad m] [LawfulMonad m]
     (s : {α : Type u} → f α → m α) : FreeMonad f →ᵐ m where
-  toFun α f := FreeMonad.mapM_aux s f
+  toFun α f := FreeMonad.mapMAux s f
   toFun_pure' x := rfl
   toFun_bind' x y := by
     induction x using FreeMonad.inductionOn with
-    | pure x => simp [FreeMonad.mapM_aux]
-    | roll x r h => simp at h; simp [FreeMonad.mapM_aux, h]
+    | pure x => simp [FreeMonad.mapMAux]
+    | roll x r h => simp at h; simp [FreeMonad.mapMAux, h]
 
 end mapM'
 
@@ -213,6 +213,8 @@ lemma depth_pure' {x : α} : depth (FreeMonad.pure x : FreeMonad f α) = 0 := rf
 lemma depth_roll {x : f α} {r : α → FreeMonad f β} :
     depth (roll x r : FreeMonad f β) = 1 + iSup (fun u ↦ depth (r u)) := rfl
 
+/-- Structural recursion computing the depth of a bind `x >>= g` by descending through the
+layers of `x` and taking the depth of `g` at each leaf. -/
 @[simp]
 noncomputable def depthBindAux {f : Type u → Type v} {α β : Type u} :
     FreeMonad f α → (α → FreeMonad f β) → ℕ∞

@@ -85,7 +85,9 @@ be addressed by hierarchical paths (the standard CJSV22 idiom for spawned
 subprotocols).
 -/
 structure MachineId (Sid : Type u) (Pid : Type u) where
+  /-- The session identifier locating the machine within a (possibly nested) session. -/
   sid : Sid
+  /-- The party identifier distinguishing the machine within its session. -/
   pid : Pid
 deriving DecidableEq
 
@@ -175,6 +177,8 @@ that downstream constructions must thread by hand.
 class HasAccessControl
     {Party : Type u} {m : Type w → Type w'} {Δ : PortBoundary}
     (P : OpenProcess.{u, v, w, w'} m Party Δ) where
+  /-- Decides which routed input packets the process `P` accepts, keyed on the
+  packet together with its declared sender. -/
   allowed : Interface.RoutedPacket Δ.In Party → Bool
 
 namespace HasAccessControl

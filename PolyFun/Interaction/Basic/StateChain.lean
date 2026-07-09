@@ -36,7 +36,7 @@ abbrev stateChain (Stage : Nat → Type u)
   PFunctor.FreeM.stateChain (P := Spec.basePFunctor) (α := PUnit.{u+1})
     PUnit.unit Stage spec advance
 
-@[simp, grind =]
+@[grind =]
 theorem stateChain_zero (Stage : Nat → Type u)
     (spec : (i : Nat) → Stage i → Spec)
     (advance : (i : Nat) → (s : Stage i) → Transcript (spec i s) → Stage (i + 1))

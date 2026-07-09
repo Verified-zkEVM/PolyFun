@@ -9,7 +9,7 @@ to the right `bind`-trees over `IPFunctor.FreeM` and `IPFunctor.FreeM₂`.
 This page is a worked walkthrough; the canonical definitions live in
 the linked Lean files. The full running example below is also compiled
 inside the library at
-[`PolyFun/IPFunctor/Examples.lean`](../../PolyFun/IPFunctor/Examples.lean),
+[`PolyFunTest/IPFunctor/Examples.lean`](../../PolyFunTest/IPFunctor/Examples.lean),
 which serves as the live-Lean companion to this prose.
 
 ## Activation
@@ -27,7 +27,7 @@ Lean retires it the lines come out.
 | [`Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | `IPFunctor.FreeM P s α` | Tail of the block is state-polymorphic. Custom error messages call out state-mismatches and non-polymorphic remainders. |
 | [`Notation/Indexed.lean`](../../PolyFun/IPFunctor/Notation/Indexed.lean) | `IPFunctor.FreeM₂ P s t α` | Statically-tracked pre/post-states; chains of any length compose. |
 | [`Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `IPFunctor.FreeM P s α` + `[DeterministicTransitions P]` | Stay on single-index `IPFunctor.FreeM` and lift the universal-quantification constraint when `P.src s a b` is independent of `b`. |
-| [`Notation/Mixed.lean`](../../PolyFun/IPFunctor/Notation/Mixed.lean) | (tests) | Sanity tests confirming the three overrides cohabit correctly. |
+| [`Notation/Mixed.lean`](../../PolyFunTest/IPFunctor/Notation/Mixed.lean) | (tests) | Sanity tests confirming the three overrides cohabit correctly. |
 
 ## Worked example: a tiny two-phase protocol
 
@@ -42,7 +42,7 @@ a `tick` action returns a `Nat` and stays at `counting`. There is no
 data-dependent branching — both transitions are deterministic. (We
 spell the first constructor `opn` rather than `open` so it cannot be
 confused with the Lean `open` keyword; this matches the live example
-in [`Examples.lean`](../../PolyFun/IPFunctor/Examples.lean).)
+in [`Examples.lean`](../../PolyFunTest/IPFunctor/Examples.lean).)
 
 ```lean
 inductive Phase | opn | counting

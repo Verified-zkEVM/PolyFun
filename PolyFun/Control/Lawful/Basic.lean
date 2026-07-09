@@ -25,31 +25,24 @@ universe u v
 
 variable {m : Type u → Type v} [Monad m] [LawfulMonad m]
 
-@[simp]
 theorem do_pure_bind {α β : Type u} (a : α) (f : α → m β) :
     (do let x ← (pure a : m α); f x) = f a := by simp
 
-@[simp]
 theorem do_bind_pure {α : Type u} (x : m α) :
     (do let a ← x; pure a) = x := by simp
 
-@[simp]
 theorem do_bind_assoc {α β γ : Type u} (x : m α) (f : α → m β) (g : β → m γ) :
     (do let b ← (do let a ← x; f a); g b) = (do let a ← x; let b ← f a; g b) := by simp
 
-@[simp]
 theorem do_bind_pure_comp {α β : Type u} (f : α → β) (x : m α) :
     (do let a ← x; pure (f a)) = f <$> x := by simp
 
-@[simp]
 theorem do_map_bind {α β γ : Type u} (f : β → γ) (x : m α) (g : α → m β) :
     f <$> (do let a ← x; g a) = (do let a ← x; f <$> g a) := by simp
 
-@[simp]
 theorem do_bind_map_left {α β γ : Type u} (f : α → β) (x : m α) (g : β → m γ) :
     (do let b ← f <$> x; g b) = (do let a ← x; g (f a)) := by simp
 
-@[simp]
 theorem do_bind_do_pure_bind {α β γ : Type u} (x : m α) (f : α → β) (g : β → m γ) :
     (do let a ← x; let b ← (pure (f a) : m β); g b) =
       (do let a ← x; g (f a)) := by simp
@@ -62,7 +55,6 @@ theorem bind_pure_sigma_mk {α : Type u} {β : α → Type u} (x : α)
   rw [h]
   simp
 
-@[simp]
 theorem do_pure_bind_sigma {α : Type u} {β : α → Type u} {γ : Type u}
     (x : α) (tail : β x) (k : ((x : α) × β x) → m γ) :
     (do
@@ -70,7 +62,6 @@ theorem do_pure_bind_sigma {α : Type u} {β : α → Type u} {γ : Type u}
       k pair) = k ⟨x, tail⟩ :=
   do_pure_bind (m := m) (a := (⟨x, tail⟩ : (x : α) × β x)) k
 
-@[simp]
 theorem do_bind_do_pure_bind_sigma {α : Type u} {β : α → Type u} {γ : Type u}
     (x : α) (action : m (β x)) (k : ((x : α) × β x) → m γ) :
     (do

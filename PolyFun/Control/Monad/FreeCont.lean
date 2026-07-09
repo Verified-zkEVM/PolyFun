@@ -79,6 +79,9 @@ lemma def_eq : FreeContT f m α =
 lemma FreeContM.def_eq : FreeContM.{u, w, y, z} f α =
     ({r : Type u} → ({x : Type z} → f x → (x → r) → r) → (α → r) → r) := rfl
 
+/-- The inductive free monad over `f`: a computation is either a pure value or an effect `f β`
+paired with a continuation consuming its result. The Church-encoded `FreeContT` is the
+continuation-passing counterpart of this datatype. -/
 inductive FreeM (f : Type v → Type w) (α : Type u) where
   | pure (a : α) : FreeM f α
   | roll {β : Type v} (x : f β) (k : β → FreeM f α) : FreeM f α
@@ -171,7 +174,6 @@ lemma FreeMonad.toFreeContM_injective :
 /-- The Church-to-inductive map is surjective. -/
 lemma FreeContM.toFreeMonad_surjective :
     Function.Surjective
-      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeMonad x) :=
-by
+      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeMonad x) := by
   intro x
   exact ⟨FreeMonad.toFreeContM x, FreeMonad.toFreeMonad_toFreeContM x⟩

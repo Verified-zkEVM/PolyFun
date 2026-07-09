@@ -8,10 +8,11 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
 run_lint=0
+run_test=0
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/validate.sh [--lint]
+Usage: ./scripts/validate.sh [--lint] [--test]
 
 Default checks:
   - lake build
@@ -19,7 +20,8 @@ Default checks:
   - python3 ./scripts/check-docs-integrity.py
 
 Optional checks:
-  --lint   Run ./scripts/lint-style.sh
+  --lint   Run ./scripts/lint-style.sh (text style) and `lake lint` (env linters)
+  --test   Run `lake test` (builds the PolyFunTest library)
 EOF
 }
 
@@ -27,6 +29,9 @@ for arg in "$@"; do
   case "$arg" in
     --lint)
       run_lint=1
+      ;;
+    --test)
+      run_test=1
       ;;
     -h|--help)
       usage
@@ -55,6 +60,16 @@ if (( run_lint )); then
   echo ""
   echo "# Running Lean style lint"
   ./scripts/lint-style.sh
+
+  echo ""
+  echo "# Running environment linters (lake lint)"
+  lake lint
+fi
+
+if (( run_test )); then
+  echo ""
+  echo "# Running test library (lake test)"
+  lake test
 fi
 
 echo ""

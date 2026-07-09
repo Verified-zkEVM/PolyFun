@@ -1,6 +1,14 @@
 name = "PolyFun"
 defaultTargets = ["PolyFun"]
 
+# `lake lint` runs Batteries' environment linters over the `PolyFun` library.
+# `lake test` builds the `PolyFunTest` library; any failing `example` /
+# `#guard` / `#eval` fails elaboration. This mirrors Mathlib and cslib, which
+# reuse `batteries/runLinter` rather than shipping a local runner.
+lintDriver = "batteries/runLinter"
+lintDriverArgs = ["PolyFun"]
+testDriver = "PolyFunTest"
+
 [leanOptions]
 pp.unicode.fun = true
 autoImplicit = false
@@ -20,3 +28,11 @@ rev = "v4.31.0"
 
 [[lean_lib]]
 name = "PolyFun"
+
+# Test / worked-example library. Built by `lake test`, kept out of the
+# `lake lint` scope (which lints only `PolyFun`). Glob-based, so no umbrella
+# file is generated; the file-header style linter is relaxed on test files.
+[[lean_lib]]
+name = "PolyFunTest"
+globs = ["PolyFunTest.+"]
+leanOptions = { weak.linter.style.header = false }

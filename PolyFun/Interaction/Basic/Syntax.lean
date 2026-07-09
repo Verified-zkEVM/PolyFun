@@ -5,6 +5,7 @@ Authors: Quang Dao
 -/
 import PolyFun.Interaction.Basic.Spec
 import PolyFun.Interaction.Basic.Node
+import Batteries.Tactic.Lint
 
 /-!
 # Generic local syntax over interaction trees
@@ -67,6 +68,8 @@ structure SyntaxOver
     (l : PFunctor.Lens P Q)
     (Agent : Type a)
     (Γ : P.A → Type vΓ) where
+  /-- The local node object at control position `pos` for the given agent and
+  node metadata `γ`, as a function of the runtime continuation family. -/
   Node :
     (agent : Agent) →
     (pos : P.A) →
@@ -129,6 +132,9 @@ trees with no node-local context.
 This is the right facade when the protocol tree carries no node metadata at
 all.
 -/
+-- `Syntax`'s universes are the independent agent universe and the `Spec` position / node-context
+-- metadata universes of the underlying `SyntaxOver`; kept separate for generality.
+@[nolint checkUnivs]
 abbrev Syntax
     (Agent : Type a) :=
   SyntaxOver (PFunctor.Lens.id Spec.basePFunctor) Agent Node.Context.empty

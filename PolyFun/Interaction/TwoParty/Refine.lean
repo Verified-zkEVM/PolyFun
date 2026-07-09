@@ -200,6 +200,9 @@ theorem map_stateChain {S T : Type u → Type v} (f : ∀ X, S X → T X)
       funext tr
       exact map_stateChain f sdeco n (i + 1) (advance i s tr)
 
+/-- Present a role refinement as a displayed decoration, attaching the sender
+data at each node to the underlying role decoration. Inverse to
+`ofDecorationOver`. -/
 def toDecorationOver {S : Type u → Type v} :
     (spec : Spec) → (roles : RoleDecoration spec) →
     Role.Refine S spec roles →
@@ -210,6 +213,8 @@ def toDecorationOver {S : Type u → Type v} :
   | .node _ rest, ⟨.receiver, rRest⟩, rr =>
       ⟨⟨⟩, fun x => toDecorationOver (rest x) (rRest x) (rr x)⟩
 
+/-- Recover a role refinement from a displayed decoration carrying the sender
+data over the role decoration. Inverse to `toDecorationOver`. -/
 def ofDecorationOver {S : Type u → Type v} :
     (spec : Spec) → (roles : RoleDecoration spec) →
     Decoration.Over (fun _ => Role) (fun X r => Role.SenderData S X r) spec roles →

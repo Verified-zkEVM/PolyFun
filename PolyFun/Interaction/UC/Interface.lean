@@ -6,6 +6,7 @@ Authors: Quang Dao
 import PolyFun.PFunctor.Chart.Basic
 import PolyFun.PFunctor.Equiv.Basic
 import PolyFun.PFunctor.Lens.Basic
+import Batteries.Tactic.Lint
 
 /-!
 # UC interfaces and open boundaries
@@ -92,6 +93,9 @@ This is the same dependent-container structure already used throughout the
 existing `PFunctor` world. The point of the new name is only to reflect the
 intended reading: these are typed communication interfaces.
 -/
+-- `Interface`'s two universes are the independent port (position) and message (direction)
+-- universes of the underlying `PFunctor`; kept separate for generality.
+@[nolint checkUnivs]
 abbrev Interface := PFunctor
 
 namespace Interface
@@ -331,7 +335,9 @@ opt into `RoutedPacket I M`.
 -/
 structure RoutedPacket (I : Interface.{uA, uB}) (M : Type wA) :
     Type (max uA uB wA) where
+  /-- The identity of the party that originated the packet. -/
   sender : M
+  /-- The underlying `Interface.Packet I` being routed. -/
   packet : Packet I
 
 namespace RoutedPacket
@@ -659,7 +665,6 @@ abbrev sum
     QueryHom (Interface.sum I₁ I₂) (Interface.sum J₁ J₂) :=
   PFunctor.Lens.sumMap f₁ f₂
 
-@[simp]
 theorem sum_id
     {I₁ : Interface.{uA, uB}}
     {I₂ : Interface.{vA, uB}} :
@@ -860,7 +865,9 @@ The direction matters: later plugging and contextual composition should not
 identify incoming and outgoing traffic.
 -/
 structure PortBoundary where
+  /-- The interface of packets accepted from the outside. -/
   In : Interface
+  /-- The interface of packets emitted to the outside. -/
   Out : Interface
 
 namespace PortBoundary
@@ -905,7 +912,9 @@ This is the boundary-level notion later used for interface adaptation and
 structural plugging.
 -/
 structure Hom (Δ₁ Δ₂ : PortBoundary) where
+  /-- The contravariant translation of inputs, from `Δ₂.In` back to `Δ₁.In`. -/
   onIn : Interface.Hom Δ₂.In Δ₁.In
+  /-- The covariant translation of outputs, from `Δ₁.Out` forward to `Δ₂.Out`. -/
   onOut : Interface.Hom Δ₁.Out Δ₂.Out
 
 namespace Hom
@@ -1057,7 +1066,9 @@ the exposed boundary may change shape, but only up to a canonical directed
 isomorphism.
 -/
 structure Equiv (Δ₁ Δ₂ : PortBoundary) where
+  /-- The contravariant equivalence of inputs, between `Δ₂.In` and `Δ₁.In`. -/
   onIn : Interface.Equiv Δ₂.In Δ₁.In
+  /-- The covariant equivalence of outputs, between `Δ₁.Out` and `Δ₂.Out`. -/
   onOut : Interface.Equiv Δ₁.Out Δ₂.Out
 
 namespace Equiv

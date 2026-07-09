@@ -126,7 +126,7 @@ lemma roll_inj (a a' : P.A s)
 /-- Induction principle for `FreeM₂` with both pre- and post-state in the motive. Wraps
 `IFreeM.inductionOn` so the `pure` / `roll` cases see the high-level `FreeM₂` constructors. -/
 @[elab_as_elim]
-protected def inductionOn {C : ∀ s t, FreeM₂ P s t α → Prop}
+protected theorem inductionOn {C : ∀ s t, FreeM₂ P s t α → Prop}
     (pure : ∀ s (x : α), C s s (FreeM₂.pure x))
     (roll : ∀ s t (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α),
       (∀ b, C (P.src s a b) t (r b)) → C s t (FreeM₂.roll a r))

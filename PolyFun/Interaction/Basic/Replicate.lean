@@ -23,7 +23,7 @@ namespace Spec
 abbrev replicate (spec : Spec) : (n : Nat) → Spec :=
   PFunctor.FreeM.replicate PUnit.unit spec
 
-@[simp, grind =] theorem replicate_zero (spec : Spec) : spec.replicate 0 = .done := rfl
+@[grind =] theorem replicate_zero (spec : Spec) : spec.replicate 0 = .done := rfl
 
 theorem replicate_succ (spec : Spec) (n : Nat) :
     spec.replicate (n + 1) = spec.append (fun _ => spec.replicate n) := rfl

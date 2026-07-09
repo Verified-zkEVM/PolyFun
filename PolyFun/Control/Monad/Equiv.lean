@@ -26,7 +26,9 @@ universe u v w z
 This represents a natural isomorphism between two type constructors `m` and `n`. It consists
 of natural transformations in both directions that are inverses of each other. -/
 structure NatEquiv (m : Type u → Type v) (n : Type u → Type w) where
+  /-- The forward natural transformation from `m` to `n`. -/
   toFun : {α : Type u} → m α → n α
+  /-- The backward natural transformation from `n` to `m`, inverse to `toFun`. -/
   invFun : {α : Type u} → n α → m α
   left_inv : ∀ {α}, Function.LeftInverse (@invFun α) (@toFun α) := by
     intros; first | rfl | ext <;> rfl
@@ -37,9 +39,11 @@ namespace NatEquiv
 
 variable {m : Type u → Type v} {n : Type u → Type w} {p : Type u → Type z}
 
+/-- The underlying forward natural transformation of `e` as a `NatHom`. -/
 def toNatHom (e : NatEquiv m n) : NatHom m n where
   toFun α x := @e.toFun α x
 
+/-- The underlying backward natural transformation of `e` as a `NatHom`. -/
 def invNatHom (e : NatEquiv m n) : NatHom n m where
   toFun α x := @e.invFun α x
 
@@ -161,6 +165,12 @@ A `MonadEquiv` demonstrates that two monads are "essentially identical" from the
 monadic computations. -/
 structure MonadEquiv (m : Type u → Type v) [Pure m] [Bind m] (n : Type u → Type w) [Pure n] [Bind n]
     extends NatEquiv m n, PureEquiv m n, BindEquiv m n
+
+/-- The underlying `PureEquiv` witnessing that a monad equivalence preserves `pure`. -/
+add_decl_doc MonadEquiv.toPureEquiv
+
+/-- The underlying `BindEquiv` witnessing that a monad equivalence preserves `bind`. -/
+add_decl_doc MonadEquiv.toBindEquiv
 
 @[inherit_doc]
 infixr:25 " ≃ᵐ " => MonadEquiv

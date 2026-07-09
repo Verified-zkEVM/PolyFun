@@ -7,6 +7,7 @@ module
 
 public import PolyFun.PFunctor.Basic
 public import PolyFun.PFunctor.Equiv.Basic
+import Batteries.Tactic.Lint
 
 /-!
 # More properties about lenses between polynomial functors
@@ -72,7 +73,9 @@ theorem comp_assoc {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {
     This corresponds to an isomorphism in the category `PFunctor` with `Lens` morphisms. -/
 @[ext]
 structure Equiv (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) where
+  /-- The forward lens of the equivalence, from `P` to `Q`. -/
   toLens : Lens P Q
+  /-- The backward lens of the equivalence, from `Q` to `P`. -/
   invLens : Lens Q P
   left_inv : comp invLens toLens = Lens.id P := by simp
   right_inv : comp toLens invLens = Lens.id Q := by simp
@@ -81,14 +84,17 @@ structure Equiv (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) wher
 
 namespace Equiv
 
+/-- The identity equivalence on `P`, built from the identity lens in both directions. -/
 @[refl]
 def refl (P : PFunctor.{uA, uB}) : P ≃ₗ P :=
   ⟨Lens.id P, Lens.id P, rfl, rfl⟩
 
+/-- The inverse equivalence, swapping the forward and backward lenses of `e`. -/
 @[symm]
 def symm {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (e : P ≃ₗ Q) : Q ≃ₗ P :=
   ⟨e.invLens, e.toLens, e.right_inv, e.left_inv⟩
 
+/-- The composite equivalence `P ≃ₗ R` obtained by chaining `e₁ : P ≃ₗ Q` and `e₂ : Q ≃ₗ R`. -/
 @[trans]
 def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     (e₁ : P ≃ₗ Q) (e₂ : Q ≃ₗ R) : P ≃ₗ R :=
@@ -232,10 +238,15 @@ def invTildeL {P : PFunctor.{uA, uB}} : Lens (X ◃ P) P :=
 @[inherit_doc] infixl:75 " ×ₗ " => prodMap
 @[inherit_doc] infixl:75 " ⊎ₗ " => sumMap
 @[inherit_doc] infixl:75 " ⊗ₗ " => tensorMap
+/-- Notation for the copairing `sumPair l₁ l₂` of two lenses out of a sum. -/
 notation "[" l₁ "," l₂ "]ₗ" => sumPair l₁ l₂
+/-- Notation for the pairing `prodPair l₁ l₂` of two lenses into a product. -/
 notation "⟨" l₁ "," l₂ "⟩ₗ" => prodPair l₁ l₂
 
 /-- The type of lenses from a polynomial functor `P` to `X` -/
+-- `Lens.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
+-- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
+@[nolint checkUnivs]
 def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
   Lens P X.{uA₁, uB₁}
 

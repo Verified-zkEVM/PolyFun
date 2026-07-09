@@ -42,7 +42,9 @@ This is the simplest uniform carrier for local observations whose precise type
 may vary from one visited node to the next.
 -/
 structure PackedObs : Type (w + 1) where
+  /-- The type of the locally observed value. -/
   α : Type w
+  /-- The locally observed value itself. -/
   val : α
 
 namespace Step
@@ -539,7 +541,7 @@ theorem eventsUpTo_eq_of_relUpTo_byEvent {Party : Type u}
   | succ n ih =>
       rcases hrel with ⟨hHead, hTail⟩
       have hHead' : leftRun.event eventL 0 = rightRun.event eventR 0 := by
-        simp only [TranscriptRel.byEvent, Process.Run.event]; exact hHead
+        simp only [Process.Run.event]; exact hHead
       change leftRun.event eventL 0 :: leftRun.tail.eventsUpTo eventL n =
         rightRun.event eventR 0 :: rightRun.tail.eventsUpTo eventR n
       rw [hHead', ih leftRun.tail rightRun.tail hTail]
@@ -557,7 +559,7 @@ theorem ticketsUpTo_eq_of_relUpTo_byTicket {Party : Type u}
   | succ n ih =>
       rcases hrel with ⟨hHead, hTail⟩
       have hHead' : leftRun.ticket ticketL 0 = rightRun.ticket ticketR 0 := by
-        simp only [TranscriptRel.byTicket, Process.Run.ticket]; exact hHead
+        simp only [Process.Run.ticket]; exact hHead
       change leftRun.ticket ticketL 0 :: leftRun.tail.ticketsUpTo ticketL n =
         rightRun.ticket ticketR 0 :: rightRun.tail.ticketsUpTo ticketR n
       rw [hHead', ih leftRun.tail rightRun.tail hTail]

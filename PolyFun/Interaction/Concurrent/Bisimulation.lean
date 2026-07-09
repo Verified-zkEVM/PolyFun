@@ -99,7 +99,9 @@ structure Bisimulation
     (matchBack :
       ProcessOver.TranscriptRel right.toProcess left.toProcess :=
         ProcessOver.TranscriptRel.reverse matchForth) where
+  /-- The forward simulation: `left` refines `right` under `matchForth`. -/
   forth : ForwardSimulation left right matchForth
+  /-- The backward simulation: `right` refines `left` under `matchBack`. -/
   back : ForwardSimulation right left matchBack
 
 namespace Bisimulation

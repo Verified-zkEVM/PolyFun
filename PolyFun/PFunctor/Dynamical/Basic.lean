@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Lens.Basic
+import Batteries.Tactic.Lint
 
 /-!
 # Dynamical systems as dependent lenses
@@ -156,6 +157,9 @@ def sectionLens {p : PFunctor.{uA, uB}} (σ : (a : p.A) → p.B a) : Section p :
 
 /-- A **closed** dynamical system is an `X`-system: its interface is the
 composition unit, so the dynamics reduce to a pure state endofunction. -/
+-- `Closed`'s universes are the composition-unit interface's independent position (`uA`) and
+-- direction (`uB`) universes; kept separate for generality.
+@[nolint checkUnivs]
 abbrev Closed : Type _ := DynSystem X.{uA, uB}
 
 namespace Closed

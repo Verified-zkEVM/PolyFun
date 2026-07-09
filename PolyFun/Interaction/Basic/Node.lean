@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
 import PolyFun.PFunctor.Free.Basic
+import Batteries.Tactic.Lint
 
 /-!
 # Node-local contexts and schemas
@@ -66,6 +67,9 @@ what metadata is available at a node whose next move lies in `X`.
 This is the semantic object consumed by the rest of the interaction core.
 Contexts may be written directly, or assembled in stages via `Node.Schema`.
 -/
+-- `u` (the move-space universe) and `v` (the metadata universe) are independent
+-- components of a node context and are deliberately kept separate.
+@[nolint checkUnivs]
 abbrev Context := Type u → Type v
 
 /--
@@ -272,6 +276,9 @@ This uses the active name `toContext` rather than a noun like `context`
 because a schema is a descriptive telescope, while a context is the semantic
 family it determines.
 -/
+-- The schema argument is ignored in the body (the context `Γ` is recovered from its
+-- type), but it is intentional: it lets callers write `S.toContext` in schema-level terms.
+@[nolint unusedArguments]
 abbrev Schema.toContext {Γ : Context} (_ : Schema Γ) : Context := Γ
 
 namespace Schema

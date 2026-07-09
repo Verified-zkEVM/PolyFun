@@ -56,7 +56,7 @@ def ofW [IsEmpty α] : P.W → FreeM P α
 
 /-- When the value type is empty, every `pure` is unreachable and `FreeM P α` is structurally
 identical to `P.W`. -/
-def equivW_of_isEmpty [IsEmpty α] : FreeM P α ≃ P.W where
+def equivWOfIsEmpty [IsEmpty α] : FreeM P α ≃ P.W where
   toFun := toW
   invFun := ofW
   left_inv x := by
@@ -117,8 +117,6 @@ instance : Monad (FreeM P) where
   pure := FreeM.pure
   bind := FreeM.bind
 
-lemma monad_pure_def (x : α) : (pure x : FreeM P α) = FreeM.pure x := rfl
-
 lemma monad_bind_def (x : FreeM P α) (g : α → FreeM P β) :
     x >>= g = FreeM.bind x g := rfl
 
@@ -136,9 +134,9 @@ instance : LawfulMonad (FreeM P) :=
 
 lemma pure_inj (x y : α) : FreeM.pure (P := P) x = FreeM.pure y ↔ x = y := by simp
 
-@[simp] lemma roll_inj (x x' : P.A) (y : P.B x → P.FreeM α) (y' : P.B x' → P.FreeM α) :
+lemma roll_inj (x x' : P.A) (y : P.B x → P.FreeM α) (y' : P.B x' → P.FreeM α) :
     FreeM.roll x y = FreeM.roll x' y' ↔ ∃ h : x = x', h ▸ y = y' := by
-  simp
+  simp only [FreeM.roll.injEq]
   by_cases hx : x = x'
   · cases hx
     simp
@@ -209,7 +207,7 @@ end mapLens
 * `roll x r h` for some `x : P.A`, `r : P.B x → FreeM P α`, and `h : ∀ y, C (r y)`
 Note that we can't use `Sort v` instead of `Prop` due to universe levels. -/
 @[elab_as_elim]
-protected def inductionOn {C : FreeM P α → Prop}
+protected theorem inductionOn {C : FreeM P α → Prop}
     (pure : ∀ x, C (pure x))
     (roll : (x : P.A) → (r : P.B x → FreeM P α) → (∀ y, C (r y)) → C (FreeM.roll x r)) :
     (oa : FreeM P α) → C oa
@@ -285,12 +283,10 @@ lemma mapM_seq {α β}
     FreeM.mapM s (x <*> y) = (FreeM.mapM s x) <*> (FreeM.mapM s y) := by
   simp [monad_norm]
 
-@[simp]
 lemma mapM_lift (s : (a : P.A) → m (P.B a)) (x : P.Obj α) :
     FreeM.mapM s (FreeM.lift x) = s x.1 >>= (fun u ↦ (pure (x.2 u)).mapM s) := by
   simp [FreeM.mapM]
 
-@[simp]
 lemma mapM_liftA (s : (a : P.A) → m (P.B a)) (x : P.A) :
     FreeM.mapM s (FreeM.liftA x) = s x := by simp [liftA]
 
@@ -304,6 +300,8 @@ protected def mapMHom (s : (a : P.A) → m (P.B a)) : FreeM P →ᵐ m where
 @[simp] lemma mapMHom_toFun_eq (s : (a : P.A) → m (P.B a)) :
     ((FreeM.mapMHom s).toFun α) = FreeM.mapM s := rfl
 
+/-- `FreeM.mapM` as a monad homomorphism, packaging the interpretation of
+positions as a natural transformation `NatHom P.Obj m`. -/
 protected def mapMHom' (s : NatHom P.Obj m) : FreeM P →ᵐ m where
   toFun _ := FreeM.mapM (fun t => s ⟨t, id⟩)
   toFun_pure' x := by simp --[FreeM.mapM]

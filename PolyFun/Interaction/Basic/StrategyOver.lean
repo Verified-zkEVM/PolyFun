@@ -63,6 +63,8 @@ object after recursive continuations have already been translated.
 structure Hom
     (syn₁ : SyntaxOver l Agent₁ Γ) (agent₁ : Agent₁)
     (syn₂ : SyntaxOver l Agent₂ Γ) (agent₂ : Agent₂) where
+  /-- Translate a source node object into the target node object at a fixed
+  context value, given a map of the already-translated continuations. -/
   mapNode :
     {pos : P.A} →
     {γ : Γ pos} →
@@ -107,6 +109,9 @@ structure ContextHom
     (syn₁ : SyntaxOver l Agent₁ Γ) (agent₁ : Agent₁)
     (syn₂ : SyntaxOver l Agent₂ Δ) (agent₂ : Agent₂)
     (φ : ∀ pos, Γ pos → Δ pos) where
+  /-- Translate a source node object at context value `γ` into the target node
+  object at context value `φ pos γ`, given a map of the already-translated
+  continuations. -/
   mapNode :
     {pos : P.A} →
     {γ : Γ pos} →

@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
 
+import Batteries.Tactic.Lint
+
 /-!
 # Bundled monads
 
@@ -15,6 +17,9 @@ available. This module is independent of `Interaction.Spec`.
 universe u v
 
 /-- Bundled monad: a monad constructor packaged as a structure for use inside `Spec` data. -/
+-- `BundledMonad`'s two universes are the independent domain (`u`) and codomain (`v`) universes
+-- of the packaged constructor `M : Type u → Type v`; kept separate for generality.
+@[nolint checkUnivs]
 structure BundledMonad where
   /-- The underlying monad family. -/
   M : Type u → Type v

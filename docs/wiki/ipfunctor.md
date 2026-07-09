@@ -58,7 +58,7 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 | [`PolyFun/IPFunctor/Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | Lean 4.29 `@[doElem_elab]` overrides making ordinary `do { let x ← e; … }` elaborate to `IPFunctor.FreeM.bind`-trees. Custom diagnostics for state mismatches and non-polymorphic remainders. Opt in with `set_option backward.do.legacy false`. |
 | [`PolyFun/IPFunctor/Notation/Indexed.lean`](../../PolyFun/IPFunctor/Notation/Indexed.lean) | `do`-notation for `IPFunctor.FreeM₂`. Statically-tracked intermediate states; chains of any length compose. Adds the `Pure (IPFunctor.FreeM₂ P s s)` instance. |
 | [`PolyFun/IPFunctor/Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `do`-notation for `IPFunctor.FreeM` with a `DeterministicTransitions P` class. Specializes `IPFunctor.FreeM.liftA`-style steps to a concrete source index. |
-| [`PolyFun/IPFunctor/Examples.lean`](../../PolyFun/IPFunctor/Examples.lean) | Worked examples: a two-phase protocol compiled three ways (`IPFunctor.FreeM₂`, deterministic `IPFunctor.FreeM`, Σ-bundled erase via `toSigmaFreeM`), plus a `PFunctor.FreeM.equivW_of_isEmpty` round-trip. |
+| [`PolyFunTest/IPFunctor/Examples.lean`](../../PolyFunTest/IPFunctor/Examples.lean) | Worked examples: a two-phase protocol compiled three ways (`IPFunctor.FreeM₂`, deterministic `IPFunctor.FreeM`, Σ-bundled erase via `toSigmaFreeM`), plus a `PFunctor.FreeM.equivW_of_isEmpty` round-trip. |
 | [`PolyFun/Control/Monad/Indexed.lean`](../../PolyFun/Control/Monad/Indexed.lean) | Atkey indexed-monad class (`IndexedMonad`, `LawfulIndexedMonad`) and the trivial-`Unit` instance. |
 
 ## Mental model
@@ -158,7 +158,7 @@ computation (session-typed protocols are the canonical example).
   `Σ s : I, P.A s`) rather than the flat `P.toPFunctor`. Use this when the
   index type is not a `Unique` but you still want to hand the tree to
   `PFunctor`-shaped APIs. Worked example in
-  [`Examples.lean`](../../PolyFun/IPFunctor/Examples.lean).
+  [`Examples.lean`](../../PolyFunTest/IPFunctor/Examples.lean).
 
 The reverse directions do not in general exist: `FreeM P s α` may have
 non-uniform leaf states (so no single `t` for `FreeM₂`), and re-attaching
