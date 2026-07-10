@@ -90,9 +90,9 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   → PFunctor/Free/{Basic, Path}
   → PFunctor/Free/{Displayed, Displayed/Decoration}
 
-PFunctor/{Lens, Cofree, M}
-  → PFunctor/Dynamical/{Basic, Combinators, Run, Trajectory}
-  → PFunctor/Dynamical/Behavior → PFunctor/Dynamical/Examples
+PFunctor/{Lens, Cofree, M} + Control/Coalgebra
+  → PFunctor/Dynamical/{Basic, System, Combinators, Run, Trajectory}
+  → PFunctor/Dynamical/Behavior
 
 Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
@@ -103,6 +103,7 @@ Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
 
 PFunctor/Free → ITree/{Basic, Construct, Handler, Rec,
                        Events, Sim, Bisim}
+PFunctor/Dynamical + ITree/Basic → ITree/Unfold
 
 PFunctor/Free + Control → Interaction/Basic/{Spec, Node, Decoration,
                             Syntax, Shape, Interaction, Strategy,
@@ -110,7 +111,9 @@ PFunctor/Free + Control → Interaction/Basic/{Spec, Node, Decoration,
                             Telescope, Sampler, MonadDecoration,
                             BundledMonad, Ownership, SpecFintype}
 
-Interaction/Basic → Interaction/{TwoParty, Multiparty, Concurrent}
+Interaction/Basic + PFunctor/Dynamical
+  → Interaction/{TwoParty, Multiparty, Concurrent}
+  (processes and machines are dynamical systems over their step polynomials)
 
 Interaction/{Concurrent, Basic} → Interaction/UC/{Interface,
                                   OpenProcess, OpenProcessModel,

@@ -3,7 +3,9 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import Mathlib.Data.FunLike.Basic
+module
+
+public import Mathlib.Data.FunLike.Basic
 
 /-!
 # F-coalgebras
@@ -25,10 +27,12 @@ functor layer, a coalgebra *observes* one layer of structure from a state.
 `CategoryTheory.Endofunctor.Coalgebra` in Mathlib defines coalgebras for
 endofunctors on an arbitrary category. This file instead provides a Lean-native
 typeclass for `Type`-endofunctors, following the style of `MonadAlgebra`.
-The `Type`-level definition suffices for the interaction framework, where
-the step functors (`StepOver Γ`, `Machine.StepFun`) are polynomial
-endofunctors on `Type` in the sense of the Poly book (Spivak, 2022).
+The `Type`-level definition suffices for the polynomial-functor framework:
+a `PFunctor.DynSystem p` is exactly a `p.Obj`-coalgebra on its state set via
+`PFunctor.DynSystem.out`, in the sense of the Poly book (Spivak, 2022).
 -/
+
+@[expose] public section
 
 universe u v
 

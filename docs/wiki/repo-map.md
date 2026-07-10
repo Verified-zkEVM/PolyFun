@@ -45,8 +45,13 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
   (free-standing helpers, depended on by both PFunctor and ITree)
 
+PFunctor/{Lens, Cofree, M} + Control/Coalgebra
+  -> PFunctor/Dynamical/{Basic, System, Combinators, Run, Trajectory}
+  -> PFunctor/Dynamical/Behavior
+
 PFunctor/Free -> ITree/{Basic, Construct, Handler, Rec,
                         Events, Sim, Bisim}
+PFunctor/Dynamical + ITree/Basic -> ITree/Unfold
 
 PFunctor/Free + Control -> Interaction/Basic/{Spec, Node, Decoration,
                             Syntax, Shape, Interaction, Strategy,
@@ -54,7 +59,8 @@ PFunctor/Free + Control -> Interaction/Basic/{Spec, Node, Decoration,
                             Telescope, Sampler, MonadDecoration,
                             BundledMonad, Ownership, SpecFintype}
 
-Interaction/Basic -> Interaction/{TwoParty, Multiparty, Concurrent}
+Interaction/Basic + PFunctor/Dynamical
+  -> Interaction/{TwoParty, Multiparty, Concurrent}
 
 Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    OpenProcess, OpenProcessModel,

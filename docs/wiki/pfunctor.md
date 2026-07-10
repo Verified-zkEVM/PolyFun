@@ -62,12 +62,14 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/PFunctor/Dynamical/Basic.lean`](../../PolyFun/PFunctor/Dynamical/Basic.lean) | `DynSystem p` (a `p`-system = lens `selfMonomial State ⟹ p`), `toLens`/`ofLens`, `MooreMachine`, `DeterministicAutomaton`, `Closed` / `Closed.iterate`, `Point` (`X ⟹ p`) and `Section` (`p ⟹ X`) / `sectionLens`. |
-| [`PolyFun/PFunctor/Dynamical/Combinators.lean`](../../PolyFun/PFunctor/Dynamical/Combinators.lean) | Building systems from old ones: `wrap` (§4.3.3), `close` / `MooreMachine.feedback` (§4.3.4), `tensor` (§4.3.2), `pairing` (§4.3.1), `Wiring₂` / `wire₂` (§4.4). |
-| [`PolyFun/PFunctor/Dynamical/Run.lean`](../../PolyFun/PFunctor/Dynamical/Run.lean) | Finite runs: `run`, `trace`, `outputOn`, `DeterministicAutomaton.accepts`; input streams `stateStream` / `outputStream` with `stateStream_eq_run`. |
-| [`PolyFun/PFunctor/Dynamical/Trajectory.lean`](../../PolyFun/PFunctor/Dynamical/Trajectory.lean) | Infinite behaviour: `trajectory : DynSystem p → State → CofreeC p p.A`; closed-system spine `CofreeC.next`, `next_iterate_trajectory`. |
+| [`PolyFun/PFunctor/Dynamical/Basic.lean`](../../PolyFun/PFunctor/Dynamical/Basic.lean) | `DynSystem p` (a `p`-system = lens `selfMonomial State ⟹ p`), `toLens`/`ofLens`; the coalgebra structure map `out : State → p.Obj State` with its `Coalg p.Obj` instance; `MooreMachine`, `DeterministicAutomaton`, `Closed` / `Closed.iterate`, `Point` (`X ⟹ p`) and `Section` (`p ⟹ X`) / `sectionLens`. |
+| [`PolyFun/PFunctor/Dynamical/System.lean`](../../PolyFun/PFunctor/Dynamical/System.lean) | Transition metadata and verification bundles: `EventMap` / `Tickets`, `Labeled` / `Ticketed`, `System` (`init` / `assumptions` / `safe` / `inv`), and the step-matching relations `DirRel` (`top` / `reverse` / `inter`). Instantiated by concurrent machines and processes. |
+| [`PolyFun/PFunctor/Dynamical/Combinators.lean`](../../PolyFun/PFunctor/Dynamical/Combinators.lean) | Building systems from old ones: `wrap` (§4.3.3), `close` / `MooreMachine.feedback` (§4.3.4), `tensor` (§4.3.2), `pairing` (§4.3.1), `choiceProd` (asynchronous choice), `Wiring₂` / `wire₂` (§4.4). |
+| [`PolyFun/PFunctor/Dynamical/Run.lean`](../../PolyFun/PFunctor/Dynamical/Run.lean) | Generic orbits: `DynSystem.Prefix` / `DynSystem.Run` (with `take`, `event(s)`/`ticket(s)`, `RelUpTo` / `Rel`); Moore finite runs `run`, `trace`, `outputOn`, `DeterministicAutomaton.accepts`; input streams `stateStream` / `outputStream` with `stateStream_eq_run`; `streamRun` / `iterateRun` identifying them with generic runs. |
+| [`PolyFun/PFunctor/Dynamical/Trajectory.lean`](../../PolyFun/PFunctor/Dynamical/Trajectory.lean) | Infinite behaviour: terminal-coalgebra `behavior : State → M p` with `behavior_unique` and `ObsEq`; cofree `trajectory : DynSystem p → State → CofreeC p p.A` with `trajectory_eq_selfLabel_behavior`; closed-system spine `CofreeC.next`, `next_iterate_trajectory`. |
 | [`PolyFun/PFunctor/Dynamical/Behavior.lean`](../../PolyFun/PFunctor/Dynamical/Behavior.lean) | Closed-loop behaviour of a Moore machine: `feedbackStep`, `feedbackStream`, `next_iterate_feedback`. |
-| [`PolyFunTest/PFunctor/Dynamical/Examples.lean`](../../PolyFunTest/PFunctor/Dynamical/Examples.lean) | Worked examples / regression tests (counter, parity automaton, mode-dependent `gate`, feedback / stream behaviour). |
+| [`PolyFun/ITree/Unfold.lean`](../../PolyFun/ITree/Unfold.lean) | `DynSystem.toITree`: unfold a dynamical system into an all-query interaction tree; `M.toITree` embeds behaviour trees. |
+| [`PolyFunTest/PFunctor/Dynamical/Examples.lean`](../../PolyFunTest/PFunctor/Dynamical/Examples.lean) | Worked examples / regression tests (counter, parity automaton, mode-dependent `gate`, feedback / stream behaviour, the `univ`-system `toggle`, generic runs, `choiceProd`, behaviour / ITree unfolding). |
 
 ### Free monad `FreeM`
 
@@ -90,7 +92,8 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 `PolyFun/Control/` is logically below `PFunctor/Free` in the import DAG and
 provides the reusable monad / comonad / coalgebra plumbing. See
 [`PolyFun/Control/`](../../PolyFun/Control/) for the full inventory:
-`Coalgebra`, `Comonad/{Basic, Cofree, Instances}`, `Lawful/Basic`,
+`Coalgebra` (the `Coalg` class: every `DynSystem p` is a `Coalg p.Obj`),
+`Comonad/{Basic, Cofree, Instances}`, `Lawful/Basic`,
 `Monad/{Algebra, Equiv, Free, FreeCont, Hom, Iter}`, `Trace`.
 
 ## Mental model

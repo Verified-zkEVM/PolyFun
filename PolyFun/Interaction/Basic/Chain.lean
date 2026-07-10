@@ -78,7 +78,9 @@ def replicate (spec : Spec) : (n : Nat) → Chain n
   | 0 => ⟨⟩
   | n + 1 => ⟨spec, fun _ => replicate spec n⟩
 
-/-- Build a chain from a state machine. The state `σ` is consumed
+/-- Build a chain from a state machine — exactly a coalgebra `(step, next)` of
+the undecorated step polynomial `Spec.stepPoly` (a `PFunctor.DynSystem
+Spec.stepPoly` unpacked on its state set). The state `σ` is consumed
 during construction and does not appear in the resulting `Chain`. -/
 def ofStateMachine {σ : Type u} (step : σ → Spec)
     (next : (s : σ) → Transcript (step s) → σ) : (n : Nat) → σ → Chain n

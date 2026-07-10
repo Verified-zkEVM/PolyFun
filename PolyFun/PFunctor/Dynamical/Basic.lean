@@ -5,6 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
+public import PolyFun.Control.Coalgebra
 public import PolyFun.PFunctor.Lens.Basic
 import Batteries.Tactic.Lint
 
@@ -19,7 +20,10 @@ state, valued in the positions `p.A`) and an `update` map (how an incoming
 direction `p.B (expose s)` evolves the state). We bundle the state existentially
 as a `structure` for ergonomics and record the round-trip identification with the
 lens form (`toLens` / `ofLens`), so the entire `PFunctor.Lens` combinator library
-applies to dynamical systems.
+applies to dynamical systems. Equivalently, repackaging `expose` / `update` as
+`out : State → p.Obj State` (`DynSystem.out`) exhibits a dynamical system as an
+F-coalgebra of the extension functor of `p`, with a `Coalg p.Obj` instance:
+dynamical systems are the bundled coalgebras of polynomial functors.
 
 * `PFunctor.DynSystem p` — a `p`-dynamical system.
 * `PFunctor.MooreMachine O I` — the special case over the interface `O X^ I`
@@ -76,6 +80,22 @@ def ofLens {S : Type u} (l : Lens (selfMonomial S) p) : DynSystem p where
 @[simp] theorem toLens_toFunA (s : DynSystem p) : s.toLens.toFunA = s.expose := rfl
 
 @[simp] theorem toLens_toFunB (s : DynSystem p) : s.toLens.toFunB = s.update := rfl
+
+/-! ## The coalgebra structure map -/
+
+/-- The coalgebra structure map of a dynamical system: at each state, the exposed
+position together with the transition function at that position. A `DynSystem p`
+with state set `S` is exactly a coalgebra `S → p.Obj S` of the extension functor
+of `p`, unpacked into the `expose` / `update` fields. -/
+def out (s : DynSystem p) (st : s.State) : p.Obj s.State := ⟨s.expose st, s.update st⟩
+
+@[simp] theorem out_fst (s : DynSystem p) (st : s.State) : (s.out st).1 = s.expose st := rfl
+
+@[simp] theorem out_snd (s : DynSystem p) (st : s.State) (d : p.B (s.expose st)) :
+    (s.out st).2 d = s.update st d := rfl
+
+/-- Every dynamical system is an F-coalgebra of its interface's extension functor. -/
+instance (s : DynSystem p) : Coalg p.Obj s.State := ⟨s.out⟩
 
 end DynSystem
 

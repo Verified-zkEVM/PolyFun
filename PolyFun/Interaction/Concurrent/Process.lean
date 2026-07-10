@@ -6,7 +6,9 @@ Authors: Quang Dao
 import PolyFun.Interaction.Basic.Spec
 import PolyFun.Interaction.Basic.Decoration
 import PolyFun.Interaction.Multiparty.Core
-import PolyFun.Control.Coalgebra
+import PolyFun.PFunctor.Dynamical.Combinators
+import PolyFun.PFunctor.Dynamical.System
+import PolyFun.PFunctor.Dynamical.Trajectory
 import Mathlib.Data.PFunctor.Univariate.M
 import Batteries.Tactic.Lint
 
@@ -263,7 +265,8 @@ end StepOver
 
 /--
 `ProcessOver Γ` is a continuation-based concurrent process whose current step
-episodes are decorated by realized context `Γ`.
+episodes are decorated by realized context `Γ`: a dynamical system over the
+step polynomial `StepOver.toPFunctor Γ`.
 
 From any residual process state `p : Proc`, the process exposes exactly one
 step protocol `step p : StepOver Γ Proc`. Running that step to completion
@@ -276,15 +279,66 @@ So `ProcessOver` should be read as:
 This is the generic semantic center for the concurrent layer. Structural
 trees, flat machines, and future frontends can all compile into `ProcessOver`
 by choosing an appropriate node-local context `Γ`.
+
+Being a `PFunctor.DynSystem`, the whole dynamical-system toolkit applies to
+processes directly: the coalgebra structure map (`DynSystem.out`, with its
+`Coalg` instance), terminal-coalgebra behavior and observational equivalence
+(`DynSystem.behavior`, `DynSystem.ObsEq`), finite and infinite orbits
+(`DynSystem.Prefix`, `DynSystem.Run`), and transition metadata
+(`DynSystem.EventMap`, `DynSystem.System`, …). The `StepOver`-shaped views of
+the coalgebra structure map are `ProcessOver.step` and `ProcessOver.ofStep`.
 -/
-structure ProcessOver (Γ : Interaction.Spec.Node.Context.{w, w₂}) where
-  /-- The type of residual process states. -/
-  Proc : Type v
-  /-- The step protocol exposed at each residual state, whose completion yields
-  the next state. -/
-  step : Proc → StepOver Γ Proc
+abbrev ProcessOver (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
+  PFunctor.DynSystem.{v} (StepOver.toPFunctor Γ)
 
 namespace ProcessOver
+
+/-- The type of residual process states. -/
+abbrev Proc {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (process : ProcessOver.{v, w, w₂} Γ) : Type v :=
+  process.State
+
+/-- The step protocol exposed at each residual state, whose completion yields
+the next state: the `StepOver`-shaped view of the coalgebra structure map.
+
+Reducible so that, like the structure projection it replaces, it unfolds during
+unification and instance search. -/
+@[reducible]
+def step {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (process : ProcessOver.{v, w, w₂} Γ) (p : process.Proc) :
+    StepOver Γ process.Proc :=
+  ⟨(process.expose p).1, (process.expose p).2, process.update p⟩
+
+/-- Build a process from a state space and a step-protocol assignment. This is
+the `StepOver`-shaped constructor inverse to `ProcessOver.step`; both round
+trips hold definitionally (`step_ofStep`, `ofStep_step`).
+
+Reducible so that, like the structure constructor it replaces, it unfolds during
+unification and instance search. -/
+@[reducible]
+def ofStep {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (Proc : Type v) (step : Proc → StepOver Γ Proc) : ProcessOver.{v, w, w₂} Γ where
+  State := Proc
+  expose p := ⟨(step p).spec, (step p).semantics⟩
+  update p := (step p).next
+
+@[simp] theorem step_ofStep
+    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (Proc : Type v) (f : Proc → StepOver Γ Proc) :
+    (ofStep Proc f).step = f := rfl
+
+@[simp] theorem ofStep_step
+    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (process : ProcessOver.{v, w, w₂} Γ) :
+    ofStep process.Proc process.step = process := rfl
+
+/-- Processes with pointwise-equal step assignments on the same state space are
+equal. -/
+theorem ofStep_congr
+    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Proc : Type v} {f g : Proc → StepOver Γ Proc}
+    (h : ∀ p, f p = g p) : ofStep Proc f = ofStep Proc g :=
+  congrArg _ (funext h)
 
 /--
 Map the node-local context carried by a process along a realized context
@@ -297,13 +351,8 @@ def mapContext
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
     (f : Interaction.Spec.Node.ContextHom Γ Δ)
-    (process : ProcessOver Γ) : ProcessOver Δ where
-  Proc := process.Proc
-  step p := (process.step p).mapContext f
-
-/-- Every `ProcessOver Γ` is an F-coalgebra for the `StepOver Γ` endofunctor. -/
-instance {Γ : Interaction.Spec.Node.Context.{w, w₂}} (p : ProcessOver.{v, w, w₂} Γ) :
-    Coalg (StepOver.{v, w, w₂} Γ) p.Proc := ⟨p.step⟩
+    (process : ProcessOver Γ) : ProcessOver Δ :=
+  ofStep process.Proc fun p => (process.step p).mapContext f
 
 /--
 Binary-choice interleaving of two processes with different node contexts.
@@ -325,9 +374,8 @@ def interleave
     (p₂ : ProcessOver.{v, w, w₂} Γ₂)
     (f₁ : Interaction.Spec.Node.ContextHom Γ₁ Δ)
     (f₂ : Interaction.Spec.Node.ContextHom Γ₂ Δ)
-    (schedulerCtx : Δ (ULift.{w} Bool)) : ProcessOver.{v, w, w₂} Δ where
-  Proc := p₁.Proc × p₂.Proc
-  step := fun (s₁, s₂) =>
+    (schedulerCtx : Δ (ULift.{w} Bool)) : ProcessOver.{v, w, w₂} Δ :=
+  ofStep (p₁.Proc × p₂.Proc) fun (s₁, s₂) =>
     let step₁ := p₁.step s₁
     let step₂ := p₂.step s₂
     { spec := .node (ULift.{w} Bool) fun
@@ -356,7 +404,8 @@ theorem mapContext_interleave
         (Interaction.Spec.Node.ContextHom.comp g f₂)
         (g _ sched) := by
   simp only [mapContext, interleave, StepOver.mapContext]
-  congr 1; funext ⟨s₁, s₂⟩; dsimp only []
+  refine ofStep_congr fun ⟨s₁, s₂⟩ => ?_
+  dsimp only []
   congr 1
   simp only [PFunctor.FreeM.Displayed.Decoration.map,
     PFunctor.FreeM.Displayed.Decoration.mapLocalHom,
@@ -386,7 +435,8 @@ theorem interleave_mapContext
         (Interaction.Spec.Node.ContextHom.comp f₂ g₂)
         sched := by
   simp only [mapContext, interleave, StepOver.mapContext]
-  congr 1; funext ⟨s₁, s₂⟩; dsimp only []
+  refine ofStep_congr fun ⟨s₁, s₂⟩ => ?_
+  dsimp only []
   congr 1
   · congr 1; funext ⟨b⟩
     cases b <;> dsimp
@@ -413,7 +463,8 @@ theorem interleave_mapContext_left
         f₂
         sched := by
   simp only [mapContext, interleave, StepOver.mapContext]
-  congr 1; funext ⟨s₁, s₂⟩; dsimp only []
+  refine ofStep_congr fun ⟨s₁, s₂⟩ => ?_
+  dsimp only []
   congr 1
   · congr 1; funext ⟨b⟩
     cases b <;> dsimp
@@ -437,7 +488,8 @@ theorem interleave_mapContext_right
         (Interaction.Spec.Node.ContextHom.comp f₂ g₂)
         sched := by
   simp only [mapContext, interleave, StepOver.mapContext]
-  congr 1; funext ⟨s₁, s₂⟩; dsimp only []
+  refine ofStep_congr fun ⟨s₁, s₂⟩ => ?_
+  dsimp only []
   congr 1
   · congr 1; funext ⟨b⟩
     cases b <;> dsimp
@@ -447,7 +499,63 @@ theorem interleave_mapContext_right
   · funext ⟨⟨b⟩, tr⟩; cases b <;> rfl
 
 /--
-A stable external label for each complete step transcript of a process.
+The wiring lens implementing scheduler-tagged interleaving: at a pair of
+decorated step specs, the position is one `ULift Bool` scheduler node whose
+branches are the two specs with decorations mapped into the common context,
+and a transcript of that node projects back to the chosen side's transcript.
+
+`interleave` is the `wrap` of `choiceProd` along this lens
+(`interleave_eq_wrap_choiceProd`).
+-/
+def interleaveLens
+    {Γ₁ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ₂ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Δ : Interaction.Spec.Node.Context.{w, w₂}}
+    (f₁ : Interaction.Spec.Node.ContextHom Γ₁ Δ)
+    (f₂ : Interaction.Spec.Node.ContextHom Γ₂ Δ)
+    (schedulerCtx : Δ (ULift.{w} Bool)) :
+    PFunctor.Lens
+      (PFunctor.prod (StepOver.toPFunctor Γ₁) (StepOver.toPFunctor Γ₂))
+      (StepOver.toPFunctor Δ) where
+  toFunA := fun (a₁, a₂) =>
+    ⟨.node (ULift.{w} Bool) fun
+        | ⟨true⟩ => a₁.1
+        | ⟨false⟩ => a₂.1,
+      ⟨schedulerCtx, fun
+        | ⟨true⟩ => PFunctor.FreeM.Displayed.Decoration.map f₁ a₁.1 a₁.2
+        | ⟨false⟩ => PFunctor.FreeM.Displayed.Decoration.map f₂ a₂.1 a₂.2⟩⟩
+  toFunB := fun (_, _) => fun
+    | ⟨⟨true⟩, tr⟩ => .inl tr
+    | ⟨⟨false⟩, tr⟩ => .inr tr
+
+/-- `interleave` factors through the dynamical-system layer: it is the
+asynchronous choice `choiceProd` of the two processes, wrapped along the
+scheduler wiring lens `interleaveLens`. -/
+theorem interleave_eq_wrap_choiceProd
+    {Γ₁ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ₂ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Δ : Interaction.Spec.Node.Context.{w, w₂}}
+    (p₁ : ProcessOver.{v, w, w₂} Γ₁)
+    (p₂ : ProcessOver.{v, w, w₂} Γ₂)
+    (f₁ : Interaction.Spec.Node.ContextHom Γ₁ Δ)
+    (f₂ : Interaction.Spec.Node.ContextHom Γ₂ Δ)
+    (schedulerCtx : Δ (ULift.{w} Bool)) :
+    p₁.interleave p₂ f₁ f₂ schedulerCtx
+      = PFunctor.DynSystem.wrap (interleaveLens f₁ f₂ schedulerCtx)
+          (PFunctor.DynSystem.choiceProd p₁ p₂) := by
+  refine Eq.trans (ofStep_congr fun (s₁, s₂) => ?_)
+    (ofStep_step (PFunctor.DynSystem.wrap (interleaveLens f₁ f₂ schedulerCtx)
+      (PFunctor.DynSystem.choiceProd p₁ p₂)))
+  change _ = StepOver.mk _ _ _
+  refine congrArg (StepOver.mk _ _) ?_
+  funext tr
+  obtain ⟨⟨b⟩, tail⟩ := tr
+  cases b <;> rfl
+
+/--
+A stable external label for each complete step transcript of a process: the
+dynamical-system `EventMap` at the step polynomial, where a transition is a
+complete step transcript.
 
 The point of an `EventMap` is to attach one comparison-friendly label to a
 whole step, independently of how much internal sequential structure that step
@@ -455,10 +563,11 @@ contains.
 -/
 abbrev EventMap {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     (process : ProcessOver.{v, w, w₂} Γ) (Event : Type w₃) :=
-  (p : process.Proc) → PFunctor.FreeM.Path (process.step p).spec → Event
+  PFunctor.DynSystem.EventMap process Event
 
 /--
-A stable ticket for each complete step transcript of a process.
+A stable ticket for each complete step transcript of a process: the
+dynamical-system `Tickets` at the step polynomial.
 
 Tickets are the intended handles for fairness and liveness: instead of talking
 about unstable frontier events whose types change from state to state, later
@@ -466,11 +575,12 @@ semantic layers can talk about these stable identifiers.
 -/
 abbrev Tickets {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     (process : ProcessOver.{v, w, w₂} Γ) (Ticket : Type w₃) :=
-  (p : process.Proc) → PFunctor.FreeM.Path (process.step p).spec → Ticket
+  PFunctor.DynSystem.Tickets process Ticket
 
 /--
 `TranscriptRel left right` is a relation between one complete step transcript
-of `left` and one complete step transcript of `right`.
+of `left` and one complete step transcript of `right`: the dynamical-system
+`DirRel` at the step polynomial.
 
 This is the generic step-matching interface consumed by refinement and
 bisimulation. No controller or observation structure is assumed here; those
@@ -481,88 +591,96 @@ abbrev TranscriptRel
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
     (left : ProcessOver Γ) (right : ProcessOver Δ) :=
-  {pL : left.Proc} → {pR : right.Proc} →
-    PFunctor.FreeM.Path (left.step pL).spec →
-    PFunctor.FreeM.Path (right.step pR).spec →
-    Prop
+  PFunctor.DynSystem.DirRel left right
 
 namespace TranscriptRel
 
 /-- The permissive step relation that accepts every pair of complete step
 transcripts. -/
-def top
+abbrev top
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
     {left : ProcessOver Γ} {right : ProcessOver Δ} :
     TranscriptRel left right :=
-  fun _ _ => True
+  PFunctor.DynSystem.DirRel.top
 
 /-- Reverse a step-matching relation by flipping its two transcript
 arguments. -/
-def reverse
+abbrev reverse
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
     {left : ProcessOver Γ} {right : ProcessOver Δ}
     (rel : TranscriptRel left right) :
     TranscriptRel right left :=
-  fun trR trL => rel trL trR
+  PFunctor.DynSystem.DirRel.reverse rel
 
 /-- Conjunction of step-matching relations. -/
-def inter
+abbrev inter
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
     {left : ProcessOver Γ} {right : ProcessOver Δ}
     (first second : TranscriptRel left right) :
     TranscriptRel left right :=
-  fun trL trR => first trL trR ∧ second trL trR
+  PFunctor.DynSystem.DirRel.inter first second
 
 end TranscriptRel
 
 /--
 `ProcessOver.Labeled` is a process equipped with a stable external event label
-for each complete step transcript.
+for each complete step transcript: the dynamical-system `Labeled` bundle at the
+step polynomial. The underlying process is `Labeled.toProcess`.
 -/
--- The process state/message universes and the event-label universe (`w₃`) are independent.
+-- The process state/message universes and the event-label universe are independent.
 @[nolint checkUnivs]
-structure Labeled (Γ : Interaction.Spec.Node.Context.{w, w₂}) where
-  /-- The underlying process being labeled. -/
-  toProcess : ProcessOver.{v, w, w₂} Γ
-  /-- The type of external event labels. -/
-  Event : Type w₃
-  /-- The assignment of an event label to each complete step transcript. -/
-  event : toProcess.EventMap Event
+abbrev Labeled (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
+  PFunctor.DynSystem.Labeled.{v} (StepOver.toPFunctor Γ)
+
+/-- The underlying process of a labeled process. -/
+abbrev Labeled.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (labeled : Labeled Γ) : ProcessOver Γ :=
+  labeled.toDynSystem
 
 /--
 `ProcessOver.Ticketed` is a process equipped with a stable ticket for each
-complete step transcript.
+complete step transcript: the dynamical-system `Ticketed` bundle at the step
+polynomial. The underlying process is `Ticketed.toProcess`.
 
 These tickets are the obligation identifiers used by the fairness and liveness
 layers.
 -/
--- The process state/message universes and the ticket universe (`w₃`) are independent.
+-- The process state/message universes and the ticket universe are independent.
 @[nolint checkUnivs]
-structure Ticketed (Γ : Interaction.Spec.Node.Context.{w, w₂}) where
-  /-- The underlying process being ticketed. -/
-  toProcess : ProcessOver.{v, w, w₂} Γ
-  /-- The type of stable tickets. -/
-  Ticket : Type w₃
-  /-- The assignment of a ticket to each complete step transcript. -/
-  ticket : toProcess.Tickets Ticket
+abbrev Ticketed (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
+  PFunctor.DynSystem.Ticketed.{v} (StepOver.toPFunctor Γ)
+
+/-- The underlying process of a ticketed process. -/
+abbrev Ticketed.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (ticketed : Ticketed Γ) : ProcessOver Γ :=
+  ticketed.toDynSystem
 
 /--
 `ProcessOver.System Γ` augments a process over context `Γ` by the standard
-verification predicates used throughout PolyFun.
+verification predicates used throughout PolyFun (`init`, `assumptions`,
+`safe`, `inv`): the dynamical-system `System` bundle at the step polynomial.
+The underlying process is `System.toProcess`.
 -/
-structure System (Γ : Interaction.Spec.Node.Context.{w, w₂}) extends
-    toProcess : ProcessOver Γ where
-  /-- Marks the initial residual states of the system. -/
-  init : Proc → Prop
-  /-- Records ambient assumptions imposed on runs of the system. -/
-  assumptions : Proc → Prop := fun _ => True
-  /-- The intended state safety predicate. -/
-  safe : Proc → Prop := fun _ => True
-  /-- The intended inductive invariant. -/
-  inv : Proc → Prop := fun _ => True
+abbrev System (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
+  PFunctor.DynSystem.System.{v} (StepOver.toPFunctor Γ)
+
+/-- The underlying process of a verification-oriented system. -/
+abbrev System.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (system : System Γ) : ProcessOver Γ :=
+  system.toDynSystem
+
+/-- The residual state space of a system's underlying process. -/
+abbrev System.Proc {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (system : System Γ) : Type _ :=
+  system.toProcess.Proc
+
+/-- The step protocol of a system's underlying process. -/
+abbrev System.step {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (system : System Γ) (p : system.Proc) : StepOver Γ system.Proc :=
+  system.toProcess.step p
 
 /-! ### Polynomial-coalgebra behavior
 
@@ -571,90 +689,22 @@ interaction as a polynomial functor. Its terminal coalgebra is the M-type
 `PFunctor.M (StepOver.toPFunctor Γ)`: the type of all possibly-infinite
 trees of step protocols.
 
-Every `ProcessOver Γ` is canonically a coalgebra for this polynomial
-functor (`process.step` composed with the polynomial bridge `equivObj`),
-so the universal property of M-types gives a unique coalgebra
-homomorphism `behavior : process.Proc → M (StepOver.toPFunctor Γ)`. This
-function records, at each residual state, the observable infinite tree
-of step protocols obtained by repeatedly running `process.step`.
-
-The universal property is concretely the "bisimulation by uniqueness"
-principle: any candidate behavior function that respects the coalgebra
-structure must equal the canonical one. Equality of behavior trees is
-therefore the canonical observational equivalence on residual states,
-agreeing on the nose with any relational bisimulation witness one might
-construct via `Concurrent.Refinement.Bisimulation`. -/
+Since a `ProcessOver Γ` is a dynamical system over this polynomial, the
+terminal-coalgebra semantics comes directly from the dynamical-system layer:
+`process.behavior : process.Proc → Behavior Γ` is `PFunctor.DynSystem.behavior`,
+its defining equation is `DynSystem.dest_behavior`, the "bisimulation by
+uniqueness" principle is `DynSystem.behavior_unique`, and equality of behavior
+trees — the canonical observational equivalence on residual states, agreeing
+with any relational bisimulation witness constructed via
+`Concurrent.Refinement.Bisimulation` — is `DynSystem.ObsEq`. -/
 
 /-- The terminal coalgebra of `StepOver.toPFunctor Γ`: the type of
 possibly-infinite trees of `Γ`-decorated step protocols. Each such tree
 records one complete observable behavior of a `ProcessOver Γ` from a
-chosen seed state. -/
+chosen seed state, the target of `PFunctor.DynSystem.behavior`. -/
 abbrev Behavior (Γ : Interaction.Spec.Node.Context.{w, w₂}) :
     Type (max (w + 1) w₂) :=
   PFunctor.M (StepOver.toPFunctor Γ)
-
-/-- The unique coalgebra homomorphism from `process` into the terminal
-`StepOver.toPFunctor Γ`-coalgebra. Each residual state is mapped to its
-observable behavior tree. -/
-def behavior {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (process : ProcessOver.{v, w, w₂} Γ) :
-    process.Proc → Behavior.{w, w₂} Γ :=
-  PFunctor.M.corec (fun p => StepOver.equivObj (process.step p))
-
-/-- The defining equation of `behavior`: destructing the behavior tree at a
-state recovers one step protocol from `process.step`, with each subtree
-obtained by applying `behavior` to the corresponding continuation. -/
-@[simp]
-theorem dest_behavior {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (process : ProcessOver.{v, w, w₂} Γ) (p : process.Proc) :
-    PFunctor.M.dest (process.behavior p) =
-      (StepOver.toPFunctor Γ).map process.behavior
-        (StepOver.equivObj (process.step p)) :=
-  PFunctor.M.dest_corec _ _
-
-/-- **Bisimulation by uniqueness.** Any function `f : process.Proc → Behavior Γ`
-that commutes with the coalgebra structure (i.e., that satisfies the
-coalgebra-homomorphism diagram for the M-type) agrees with `process.behavior`
-on the nose. This is the universal property of `M (StepOver.toPFunctor Γ)`
-as the terminal `StepOver.toPFunctor Γ`-coalgebra. -/
-theorem behavior_unique {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (process : ProcessOver.{v, w, w₂} Γ)
-    (f : process.Proc → Behavior.{w, w₂} Γ)
-    (hf : ∀ p, PFunctor.M.dest (f p) =
-      (StepOver.toPFunctor Γ).map f (StepOver.equivObj (process.step p))) :
-    f = process.behavior :=
-  PFunctor.M.corec_unique _ f hf
-
-/-- Two residual states (possibly in different processes over the same
-context) are **observationally equivalent** when their behavior trees are
-equal. By `behavior_unique`, this is the strongest equivalence preserved
-by every `StepOver Γ`-coalgebra homomorphism. -/
-def ObsEq {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (process₁ process₂ : ProcessOver.{v, w, w₂} Γ)
-    (p₁ : process₁.Proc) (p₂ : process₂.Proc) : Prop :=
-  process₁.behavior p₁ = process₂.behavior p₂
-
-/-- Observational equivalence is reflexive (within a fixed process). -/
-@[refl]
-theorem ObsEq.refl {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (process : ProcessOver.{v, w, w₂} Γ) (p : process.Proc) :
-    ObsEq process process p p := rfl
-
-/-- Observational equivalence is symmetric. -/
-@[symm]
-theorem ObsEq.symm {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process₁ process₂ : ProcessOver.{v, w, w₂} Γ}
-    {p₁ : process₁.Proc} {p₂ : process₂.Proc}
-    (h : ObsEq process₁ process₂ p₁ p₂) :
-    ObsEq process₂ process₁ p₂ p₁ := Eq.symm h
-
-/-- Observational equivalence is transitive. -/
-theorem ObsEq.trans {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process₁ process₂ process₃ : ProcessOver.{v, w, w₂} Γ}
-    {p₁ : process₁.Proc} {p₂ : process₂.Proc} {p₃ : process₃.Proc}
-    (h₁₂ : ObsEq process₁ process₂ p₁ p₂)
-    (h₂₃ : ObsEq process₂ process₃ p₂ p₃) :
-    ObsEq process₁ process₃ p₁ p₃ := Eq.trans h₁₂ h₂₃
 
 end ProcessOver
 

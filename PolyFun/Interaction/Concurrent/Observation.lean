@@ -168,37 +168,18 @@ end Prefix
 
 /--
 `TranscriptRel left right` is a cross-process relation on one complete process
-step transcript of `left` and one complete process step transcript of `right`.
+step transcript of `left` and one complete process step transcript of `right`:
+the closed-world `Concurrent.Process.TranscriptRel`.
 
 This is the basic matching interface used later by refinement, equivalence, and
-observation-preservation theorems.
+observation-preservation theorems. The permissive relation and conjunction live
+on the canonical type as `ProcessOver.TranscriptRel.top` / `.inter`.
 -/
 abbrev TranscriptRel {Party : Type u}
     (left right : Process Party) :=
-  {pL : left.Proc} → {pR : right.Proc} →
-    (left.step pL).spec.Transcript →
-    (right.step pR).spec.Transcript →
-    Prop
+  Concurrent.Process.TranscriptRel left right
 
 namespace TranscriptRel
-
-/--
-The permissive transcript relation that accepts every pair of transcripts.
--/
-def top {Party : Type u} {left right : Process Party} :
-    TranscriptRel left right :=
-  fun _ _ => True
-
-/--
-Conjunction of transcript relations.
-
-This is useful when one refinement should preserve several observational
-features at once.
--/
-def inter {Party : Type u} {left right : Process Party}
-    (first second : TranscriptRel left right) :
-    TranscriptRel left right :=
-  fun trL trR => first trL trR ∧ second trL trR
 
 /--
 Match two transcripts by equality of their current controlling parties.

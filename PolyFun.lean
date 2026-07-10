@@ -32,6 +32,7 @@ import PolyFun.ITree.Handler
 import PolyFun.ITree.Rec
 import PolyFun.ITree.Sim.Defs
 import PolyFun.ITree.Sim.Facts
+import PolyFun.ITree.Unfold
 import PolyFun.Interaction.Basic.Append
 import PolyFun.Interaction.Basic.BundledMonad
 import PolyFun.Interaction.Basic.Chain
@@ -108,6 +109,7 @@ import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Combinators
 import PolyFun.PFunctor.Dynamical.Run
+import PolyFun.PFunctor.Dynamical.System
 import PolyFun.PFunctor.Dynamical.Trajectory
 import PolyFun.PFunctor.Equiv.Basic
 import PolyFun.PFunctor.Free.Basic

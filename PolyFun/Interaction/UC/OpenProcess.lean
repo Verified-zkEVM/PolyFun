@@ -769,9 +769,8 @@ the per-state sampler. The closed-world `ProcessOver` lemmas from
 @[reducible]
 def toProcess {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
     (op : OpenProcess.{u, v, w, w'} m Party Δ) :
-    ProcessOver (OpenNodeContext.{u, w} Party Δ) where
-  Proc := op.Proc
-  step := op.step
+    ProcessOver (OpenNodeContext.{u, w} Party Δ) :=
+  ProcessOver.ofStep op.Proc op.step
 
 /--
 Forget the boundary layer and view an open process as a plain closed-world

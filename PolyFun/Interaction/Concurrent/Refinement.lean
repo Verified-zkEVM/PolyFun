@@ -143,7 +143,7 @@ noncomputable def matchedState
     {pSpec : spec.Proc}
     (hrel : sim.stateRel run.initial pSpec) :
     (n : Nat) → {qSpec : spec.Proc // sim.stateRel (run.state n) qSpec}
-  | 0 => ⟨pSpec, by simpa [ProcessOver.Run.initial] using hrel⟩
+  | 0 => ⟨pSpec, by simpa [PFunctor.DynSystem.Run.initial] using hrel⟩
   | n + 1 =>
       let prev := sim.matchedState run hrel n
       let trSpec := sim.matchTranscript prev.2 (run.transcript n)
@@ -194,7 +194,7 @@ noncomputable def mapRun
     (hrel : sim.stateRel run.initial pSpec) :
     ProcessOver.Run spec.toProcess where
   state n := (sim.matchedState run hrel n).1
-  transcript n := sim.matchedTranscript run hrel n
+  dir n := sim.matchedTranscript run hrel n
   next_state _ := rfl
 
 /--

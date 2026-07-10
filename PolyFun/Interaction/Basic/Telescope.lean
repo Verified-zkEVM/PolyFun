@@ -49,7 +49,11 @@ At each state `s : St`, an inhabitant either terminates (`.done s`) or extends
 by running the round `round s : Spec` and recursing into
 `Telescope round step (step s tr)` for every transcript `tr`. As an inductive
 type, every inhabitant is finite, so the existence of a `Telescope` term is a
-proof that the underlying state machine terminates. -/
+proof that the underlying state machine terminates.
+
+The `(round, step)` data is exactly a coalgebra of the undecorated step
+polynomial `Spec.stepPoly` — a `PFunctor.DynSystem Spec.stepPoly` unpacked on
+its state set. -/
 abbrev Telescope {St : Type v}
     (round : St → Spec.{u})
     (step : (s : St) → Transcript (round s) → St) : St → Type (max u v) :=

@@ -193,6 +193,15 @@ it is a chosen move `x : X` paired with a transcript for `rest x`. -/
 abbrev Transcript (s : Spec.{u}) : Type u :=
   PFunctor.FreeM.Path s
 
+/-- The **undecorated step polynomial** of sequential interaction: positions are
+interaction shapes, and the directions at a shape are its complete transcripts.
+A coalgebra of `stepPoly` is a system that at each state plays one whole `Spec`
+episode and continues from the resulting transcript; `Spec.Telescope` and
+`Spec.Chain.ofStateMachine` consume exactly this data to build finite specs,
+and the decorated refinement is `Concurrent.StepOver.toPFunctor`. -/
+def stepPoly : PFunctor.{u + 1, u} :=
+  ⟨Spec.{u}, Transcript⟩
+
 /-- A straight-line `Spec` with no branching: each move type in the list
 becomes one round, and later rounds do not depend on earlier moves. -/
 def ofList : List (Type u) → Spec

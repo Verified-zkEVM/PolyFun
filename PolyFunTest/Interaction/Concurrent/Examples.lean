@@ -14,6 +14,7 @@ import PolyFun.Interaction.Concurrent.Policy
 import PolyFun.Interaction.Concurrent.Refinement
 import PolyFun.Interaction.Concurrent.Run
 import PolyFun.Interaction.Concurrent.Tree
+import PolyFun.Interaction.Concurrent.Machine
 
 /-!
 # Concurrent interaction examples
@@ -391,16 +392,15 @@ def loopNode : NodeProfile Party Bool where
 /-- A tiny one-state looping process used to exercise runs, tickets, fairness,
 and refinement. -/
 def loopProcess : Process Party :=
-  { Proc := PUnit
-    step := fun _ =>
-      { spec := .node Bool (fun _ => .done)
-        semantics := ⟨loopNode, fun _ => PUnit.unit⟩
-        next := fun _ => PUnit.unit } }
+  ProcessOver.ofStep PUnit fun _ =>
+    { spec := .node Bool (fun _ => .done)
+      semantics := ⟨loopNode, fun _ => PUnit.unit⟩
+      next := fun _ => PUnit.unit }
 
 /-- A ticketed view of `loopProcess` using the chosen boolean as the stable
 ticket. -/
 def loopTicketed : Process.Ticketed Party where
-  toProcess := loopProcess
+  toDynSystem := loopProcess
   Ticket := Bool
   ticket := fun _ tr =>
     match tr with
@@ -409,7 +409,7 @@ def loopTicketed : Process.Ticketed Party where
 /-- A simple always-true infinite run of `loopProcess`. -/
 def trueRun : Process.Run loopProcess where
   state _ := PUnit.unit
-  transcript _ := ⟨true, PUnit.unit⟩
+  dir _ := ⟨true, PUnit.unit⟩
   next_state _ := rfl
 
 example : Process.Run.initial trueRun = PUnit.unit := rfl
@@ -417,7 +417,7 @@ example : Process.Run.initial trueRun = PUnit.unit := rfl
 example :
     Process.Run.ticketsUpTo loopTicketed.ticket trueRun 3 = [true, true, true] := by
   simp only [ProcessOver.Run.ticketsUpTo_succ, ProcessOver.Run.ticketsUpTo_zero,
-    ProcessOver.Run.ticket, ProcessOver.Run.tail, loopTicketed, trueRun]
+    PFunctor.DynSystem.Run.ticket, PFunctor.DynSystem.Run.tail, loopTicketed, trueRun]
 
 example :
     (Observation.Process.Run.observationsUpTo Party.adv trueRun 2).length = 2 := rfl
@@ -448,7 +448,7 @@ example :
 
 /-- A trivial system wrapper around `loopProcess`. -/
 def loopSystem : Process.System Party where
-  toProcess := loopProcess
+  toDynSystem := loopProcess
   init _ := True
   assumptions _ := True
   safe _ := True
@@ -510,6 +510,7 @@ example : loopMappedRun.state 4 = PUnit.unit := rfl
 
 example :
     Observation.Process.TranscriptRel.byTicket loopTicketed.ticket loopTicketed.ticket
+      (st₁ := trueRun.state 3) (st₂ := loopMappedRun.state 3)
       (trueRun.transcript 3) (loopMappedRun.transcript 3) := by
   exact loopSim.match_mapRun (pSpec := PUnit.unit) trueRun trivial 3
 
@@ -580,6 +581,56 @@ example :
         trivial)
 
 end PhaseOneExamples
+
+section MachineExamples
+
+/-! ## Flat machines as dynamical systems
+
+`Machine` is `PFunctor.DynSystem PFunctor.univ`, so the classical vocabulary
+(`mk'`, `Enabled`, `step`) coexists with the whole dynamical-system toolkit
+(`out`, `ObsEq`, `System`, …) via dot notation through the abbrev. -/
+
+/-- A counter machine via the classical constructor: at every state a boolean
+event is enabled — `true` increments, `false` stays. -/
+def counterMachine : Machine :=
+  Machine.mk' ℕ (fun _ => Bool) (fun n b => if b then n + 1 else n)
+
+example : counterMachine.step (3 : ℕ) true = (4 : ℕ) := rfl
+
+example : counterMachine.Enabled (3 : ℕ) = Bool := rfl
+
+/-- The generic coalgebra structure map applies to machines directly. -/
+example : counterMachine.out (3 : ℕ) = ⟨Bool, fun b => if b then (4 : ℕ) else (3 : ℕ)⟩ := rfl
+
+/-- Observational equivalence of machine states. -/
+example : PFunctor.DynSystem.ObsEq counterMachine counterMachine (3 : ℕ) (3 : ℕ) := rfl
+
+/-- A machine system with verification predicates, using the generic bundle. -/
+def counterSystem : Machine.System where
+  toDynSystem := counterMachine
+  init := fun (n : ℕ) => n = 0
+
+example : counterSystem.init (0 : ℕ) := rfl
+
+example : counterSystem.safe (5 : ℕ) := trivial
+
+example : counterSystem.toMachine = counterMachine := rfl
+
+/-- Node semantics for compiling the counter machine into a process. -/
+def counterProfile :
+    (σ : counterMachine.State) → NodeProfile Party (counterMachine.Enabled σ) :=
+  fun _ => { controllers := fun _ => [.adv], views := fun _ => .observe }
+
+/-- The one-node-step process compiled from the counter machine. -/
+def counterProcess : Process Party := counterMachine.toProcess counterProfile
+
+example :
+    (counterProcess.step (3 : ℕ)).spec
+      = .node (counterMachine.Enabled (3 : ℕ)) (fun _ => .done) := rfl
+
+example : (counterProcess.step (3 : ℕ)).next ⟨true, PUnit.unit⟩ = (4 : ℕ) := rfl
+
+end MachineExamples
 
 end Examples
 end Concurrent
