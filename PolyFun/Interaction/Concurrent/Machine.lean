@@ -5,6 +5,7 @@ Authors: Quang Dao
 -/
 import PolyFun.Interaction.Concurrent.Process
 import PolyFun.Control.Coalgebra
+import Batteries.Tactic.Lint
 
 /-!
 # State-indexed concurrent machines
@@ -50,9 +51,14 @@ tickets, controller ownership, local views, and verification predicates are all
 added in separate layers so that the core transition semantics stays small and
 reusable.
 -/
+-- The state universe (`v`) and the enabled-event universe (`u`) are independent.
+@[nolint checkUnivs]
 structure Machine where
+  /-- The type of residual states of the machine. -/
   State : Type v
+  /-- The events enabled at a given residual state. -/
   Enabled : State → Type u
+  /-- The successor state produced by choosing an enabled event at a state. -/
   step : (σ : State) → Enabled σ → State
 
 namespace Machine
@@ -101,8 +107,11 @@ This is the smallest bundle that supports statements about observable event
 traces without committing to fairness or safety metadata.
 -/
 structure Labeled where
+  /-- The underlying machine being labeled. -/
   toMachine : Machine
+  /-- The type of observable external event labels. -/
   Event : Type u
+  /-- The assignment of an event label to each enabled machine event. -/
   event : toMachine.EventMap Event
 
 /--
@@ -112,8 +121,11 @@ enabled events.
 This is the machine-side entry point for fairness and liveness statements.
 -/
 structure Ticketed where
+  /-- The underlying machine being ticketed. -/
   toMachine : Machine
+  /-- The type of stable scheduling-obligation identifiers. -/
   Ticket : Type u
+  /-- The assignment of a ticket to each enabled machine event. -/
   ticket : toMachine.Tickets Ticket
 
 /--
@@ -125,10 +137,16 @@ These predicates are orthogonal to the step relation itself, so they are kept
 out of `Machine` and bundled only when one wants verification-oriented
 statements about the machine.
 -/
+-- The machine's state universe (`v`) and event universe (`u`) are independent.
+@[nolint checkUnivs]
 structure System extends Machine where
+  /-- The predicate characterizing the machine's initial states. -/
   init : State → Prop
+  /-- The ambient assumptions imposed on machine states. -/
   assumptions : State → Prop := fun _ => True
+  /-- The safety predicate that machine states are required to satisfy. -/
   safe : State → Prop := fun _ => True
+  /-- The invariant predicate maintained across machine steps. -/
   inv : State → Prop := fun _ => True
 
 /--

@@ -169,7 +169,9 @@ process state evolves when one complete process step is chosen at each time.
 structure Run
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     (process : ProcessOver Γ) where
+  /-- The residual process state after `n` complete process steps. -/
   state : Nat → process.Proc
+  /-- The concrete transcript chosen for step `n`. -/
   transcript : (n : Nat) → (process.step (state n)).spec.Transcript
   next_state : ∀ n, state n.succ = (process.step (state n)).next (transcript n)
 

@@ -41,8 +41,11 @@ This is the exact structural data needed to view the current tree as one state
 of a dynamic `Concurrent.Process`.
 -/
 structure State (Party : Type u) where
+  /-- The structural concurrent specification of the residual state. -/
   spec : Concurrent.Spec
+  /-- The control tree governing which parties may act at this state. -/
   control : Control Party spec
+  /-- The observation profile recording each party's local view. -/
   profile : Profile Party spec
 
 namespace State

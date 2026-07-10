@@ -1,12 +1,30 @@
 name = "PolyFun"
 defaultTargets = ["PolyFun"]
 
+# `lake lint` runs Batteries' environment linters over the `PolyFun` library.
+# `lake test` builds the `PolyFunTest` library; any failing `example` /
+# `#guard` / `#eval` fails elaboration. This mirrors Mathlib and cslib, which
+# reuse `batteries/runLinter` rather than shipping a local runner.
+lintDriver = "batteries/runLinter"
+lintDriverArgs = ["PolyFun"]
+testDriver = "PolyFunTest"
+
 [leanOptions]
 pp.unicode.fun = true
 autoImplicit = false
 relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
 weak.linter.style.longFile = 1500
+# The standalone `lake exe lint-style` tool (run in CI via `linting.yml`) reads
+# these options. Disable the Mathlib-infrastructure text linters that do not
+# apply to a downstream library: `pythonStyle` shells out to a `./scripts`
+# Python linter, `checkInitImports` enforces Mathlib's own import graph, and
+# `allScriptsDocumented` enforces Mathlib's `scripts/README.md`. `unicodeLinter`
+# is intentionally left enabled — PolyFun's unicode stays within Mathlib's
+# allowlist and the check catches genuinely stray characters.
+weak.linter.pythonStyle = false
+weak.linter.checkInitImports = false
+weak.linter.allScriptsDocumented = false
 
 [moreServerOptions]
 linter.mathlibStandardSet = true
@@ -20,3 +38,11 @@ rev = "v4.31.0"
 
 [[lean_lib]]
 name = "PolyFun"
+
+# Test / worked-example library. Built by `lake test`, kept out of the
+# `lake lint` scope (which lints only `PolyFun`). Glob-based, so no umbrella
+# file is generated; the file-header style linter is relaxed on test files.
+[[lean_lib]]
+name = "PolyFunTest"
+globs = ["PolyFunTest.+"]
+leanOptions = { weak.linter.style.header = false }

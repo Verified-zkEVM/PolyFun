@@ -44,7 +44,7 @@ We compile the same three-step run three ways:
    `Unique` (so the `[Unique I]`-gated `IPFunctor.FreeM.erase` does not
    apply).
 
-A final small example exercises `PFunctor.FreeM.equivW_of_isEmpty` to show
+A final small example exercises `PFunctor.FreeM.equivWOfIsEmpty` to show
 that an empty leaf type collapses `PFunctor.FreeM` structurally to the
 W-type.
 -/
@@ -72,7 +72,7 @@ deriving DecidableEq, Inhabited
 trivial unit (read as "`init`"), which transitions to `counting`; at
 `Phase.counting` the only shape is the trivial unit (read as "`tick`"),
 which returns a `Nat` and stays at `counting`. -/
-@[expose] def proto : IPFunctor.Endo Phase where
+def proto : IPFunctor.Endo Phase where
   A
     | .opn      => Unit
     | .counting => Unit
@@ -87,7 +87,7 @@ which returns a `Nat` and stays at `counting`. -/
 deterministic transitions. The class instance lets the
 [`Notation/Deterministic.lean`](Notation/Deterministic.lean) `do`-elaborator
 specialize `liftA`-style steps to a concrete post-state. -/
-@[expose] instance : IPFunctor.DeterministicTransitions proto where
+instance : IPFunctor.DeterministicTransitions proto where
   next
     | .opn, _      => .counting
     | .counting, _ => .counting
@@ -103,18 +103,18 @@ compose without restriction and the `IndexedMonad` instance from
 namespace TwoIndex
 
 /-- `init` as a `FreeM₂` step: pre-state `opn`, post-state `counting`. -/
-@[expose] def init : IPFunctor.FreeM₂ proto .opn .counting Unit :=
+def init : IPFunctor.FreeM₂ proto .opn .counting Unit :=
   IPFunctor.FreeM₂.roll () (fun _ => IPFunctor.FreeM₂.pure ())
 
 /-- `tick` as a `FreeM₂` step: stays at `counting`, returns a `Nat`. -/
-@[expose] def tick : IPFunctor.FreeM₂ proto .counting .counting Nat :=
+def tick : IPFunctor.FreeM₂ proto .counting .counting Nat :=
   IPFunctor.FreeM₂.roll () (fun n => IPFunctor.FreeM₂.pure n)
 
 /-- A three-step protocol run: one `init` then two `tick`s, summing the
 responses. The intermediate post-state after `init` is `counting`, which
 becomes the pre-state of the first `tick`; both `tick`s land at
 `counting`, matching the do-block's overall post-state. -/
-@[expose] def run : IPFunctor.FreeM₂ proto .opn .counting Nat := do
+def run : IPFunctor.FreeM₂ proto .opn .counting Nat := do
   let _ ← init
   let a ← tick
   let b ← tick
@@ -148,18 +148,18 @@ deterministic elaborator can see through it to the underlying `liftA`.
 `liftA`'s state argument is explicit, so we use the fully-qualified
 `Phase.opn` rather than the dotted form, which has no type to infer
 from at that position. -/
-@[reducible, expose] def init : IPFunctor.FreeM proto Phase.opn Unit :=
+@[reducible] def init : IPFunctor.FreeM proto Phase.opn Unit :=
   IPFunctor.FreeM.liftA Phase.opn ()
 
 /-- `tick` as a `FreeM` `liftA`-style step. -/
-@[reducible, expose] def tick : IPFunctor.FreeM proto Phase.counting Nat :=
+@[reducible] def tick : IPFunctor.FreeM proto Phase.counting Nat :=
   IPFunctor.FreeM.liftA Phase.counting ()
 
 /-- The same three-step protocol run, this time as a single-index `FreeM`.
 With `DeterministicTransitions proto` in scope, each step's post-state is
 known to the elaborator, so the chain composes without the universal-
 quantification restriction. -/
-@[expose] def run : IPFunctor.FreeM proto .opn Nat := do
+def run : IPFunctor.FreeM proto .opn Nat := do
   let _ ← init
   let a ← tick
   let b ← tick
@@ -198,7 +198,7 @@ example :
           PFunctor.FreeM.pure (a + b)))) := by
   rfl
 
-/-! ## `PFunctor.FreeM.equivW_of_isEmpty` round-trip
+/-! ## `PFunctor.FreeM.equivWOfIsEmpty` round-trip
 
 When the value type `α` is empty, every `pure` leaf is unreachable and
 `PFunctor.FreeM P α` collapses structurally to `P.W`. The forward direction
@@ -208,7 +208,7 @@ just confirms the equivalence resolves and either round-trip is
 `rfl` after unfolding. -/
 
 example (P : PFunctor) (w : P.W) :
-    (PFunctor.FreeM.equivW_of_isEmpty (P := P) (α := PEmpty)).invFun w =
+    (PFunctor.FreeM.equivWOfIsEmpty (P := P) (α := PEmpty)).invFun w =
       PFunctor.FreeM.ofW w := rfl
 
 end IPFunctor.Examples

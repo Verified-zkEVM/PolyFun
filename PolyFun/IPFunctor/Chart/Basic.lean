@@ -97,6 +97,7 @@ structure Equiv (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J)
 
 namespace Equiv
 
+/-- The identity equivalence on `P`, built from the identity chart in both directions. -/
 @[refl]
 def refl (P : IPFunctor.{uI, uJ, uA, uB} I J) : P ≃c P where
   toChart := Chart.id P
@@ -104,6 +105,7 @@ def refl (P : IPFunctor.{uI, uJ, uA, uB} I J) : P ≃c P where
   left_inv := rfl
   right_inv := rfl
 
+/-- The inverse of an equivalence, swapping the forward and inverse charts. -/
 @[symm]
 def symm (e : P ≃c Q) : Q ≃c P where
   toChart := e.invChart
@@ -111,6 +113,7 @@ def symm (e : P ≃c Q) : Q ≃c P where
   left_inv := e.right_inv
   right_inv := e.left_inv
 
+/-- Composition of equivalences, composing the forward and inverse charts respectively. -/
 @[trans]
 def trans (e₁ : P ≃c Q) (e₂ : Q ≃c R) : P ≃c R where
   toChart := e₂.toChart ∘c e₁.toChart

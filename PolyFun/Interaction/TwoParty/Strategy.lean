@@ -47,6 +47,8 @@ namespace TwoParty
 variable {m : Type u → Type u}
 open TwoParty
 
+/-- The ordinary paired two-party local syntax specialized to plain specs,
+using the identity lens on `Spec.basePFunctor` and roles as node metadata. -/
 def _root_.Interaction.SyntaxOver.TwoParty.pairedSpec (m : Type u → Type u) :
     SyntaxOver
       (PFunctor.Lens.id Spec.basePFunctor) Participant.{u} (fun _ => Role) :=
@@ -112,6 +114,9 @@ def _root_.Interaction.InteractionOver.TwoParty.pairedSpec (m : Type u → Type 
       (SyntaxOver.TwoParty.pairedSpec m) m :=
   InteractionOver.TwoParty.paired (PFunctor.Lens.id Spec.basePFunctor) m
 
+/-- The paired role/monad two-party local syntax specialized to plain specs,
+using the identity lens on `Spec.basePFunctor` and `RolePairedMonadContext`
+as node metadata. -/
 def _root_.Interaction.SyntaxOver.TwoParty.pairedMonadicSpec :
     SyntaxOver
       (PFunctor.Lens.id Spec.basePFunctor) Participant.{u} RolePairedMonadContext :=
@@ -203,8 +208,8 @@ def _root_.Interaction.StrategyOver.TwoParty.Focal.mapOutput {m : Type u → Typ
     {A B : PFunctor.FreeM.Path spec → Type u} →
     (∀ tr, A tr → B tr) →
       StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal spec roles A →
-      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal spec roles B
-  := fun {spec} {roles} {A} {B} f =>
+      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal spec roles B :=
+    fun {spec} {roles} {A} {B} f =>
     ShapeOver.mapOutput (ShapeOver.TwoParty.pairedSpec m)
       (agent := Participant.focal)
       (spec := spec)
@@ -272,8 +277,8 @@ def _root_.Interaction.StrategyOver.TwoParty.Counterpart.mapOutput
     {A B : PFunctor.FreeM.Path spec → Type u} →
     (∀ tr, A tr → B tr) →
       StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart spec roles A →
-      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart spec roles B
-  := fun {spec} {roles} {A} {B} f =>
+      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart spec roles B :=
+    fun {spec} {roles} {A} {B} f =>
     ShapeOver.mapOutput (ShapeOver.TwoParty.pairedSpec m)
       (agent := Participant.counterpart)
       (spec := spec)
@@ -338,8 +343,7 @@ def toCounterpart {m : Type u → Type u} [Monad m] :
     {spec : Spec.{u}} → {roles : RoleDecoration spec} →
     {Output : PFunctor.FreeM.Path spec → Type u} →
     StrategyOver (counterpartSyntax m) PUnit.unit spec roles Output →
-    StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart spec roles Output
-  :=
+    StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart spec roles Output :=
     fun {spec} {roles} {Output} =>
       StrategyOver.map toCounterpartHom
         (spec := spec) (ctxs := roles)

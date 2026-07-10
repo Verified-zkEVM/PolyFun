@@ -61,7 +61,7 @@ lemma isRollBound_roll_iff (a : P.A) (r : P.B a → FreeM P α) (b : B)
       canRoll a b ∧ ∀ y, IsRollBound (r y) (cost a b) canRoll cost :=
   Iff.rfl
 
-@[simp, grind =]
+@[grind =]
 lemma isRollBound_liftA_iff (a : P.A) (b : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
     IsRollBound (FreeM.liftA a : FreeM P (P.B a)) b canRoll cost ↔ canRoll a b := by

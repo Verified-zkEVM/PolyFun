@@ -65,6 +65,7 @@ structure ForwardSimulation
     (matchStep :
       ProcessOver.TranscriptRel impl.toProcess spec.toProcess :=
         ProcessOver.TranscriptRel.top) where
+  /-- The relation linking implementation states to specification states. -/
   stateRel : impl.Proc → spec.Proc → Prop
   init :
     ∀ pImpl, impl.init pImpl →

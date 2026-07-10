@@ -8,6 +8,7 @@ module
 public import PolyFun.Control.Comonad.Basic
 public import Mathlib.Data.Stream.Init
 public import Batteries.Data.List.Basic
+import Batteries.Tactic.Lint
 
 /-! # Instances of Comonads -/
 
@@ -61,7 +62,7 @@ instance : Extract (Prod ε) where
 instance : Extend (Prod ε) where
   extend wx f := (wx.1, f wx) -- Keep the environment, compute new value from old context
 
-instance : Functor (Prod ε) where -- Need Functor explicitly for Coapplicative
+instance instFunctorProd : Functor (Prod ε) where -- Need Functor explicitly for Coapplicative
   map f wx := (wx.1, f wx.2)
 
 instance : Coseq (Prod ε) where
@@ -115,10 +116,17 @@ end Prod
 
 /-- A list guaranteed to have at least one element. -/
 structure NonEmptyList (α : Type u) where
+  /-- The guaranteed first element. -/
   head : α
+  /-- The remaining, possibly empty, elements. -/
   tail : List α
 
 deriving Repr, DecidableEq
+
+-- The `prec` precedence argument is mandated by the `Repr.reprPrec` interface but is
+-- unused for this structure (there is no infix form to disambiguate), so the derived
+-- `repr` legitimately ignores it.
+attribute [nolint unusedArguments] instReprNonEmptyList.repr
 
 namespace NonEmptyList
 variable {α β : Type u} -- Declare universes here
@@ -138,7 +146,7 @@ def map (f : α → β) : NonEmptyList α → NonEmptyList β
 -- Need LawfulFunctor instance for this map later
 
 /-- Get the head of the `NonEmptyList` (extract). -/
-@[simp] def head_nel (nel : NonEmptyList α) : α := nel.head
+@[simp] def headNel (nel : NonEmptyList α) : α := nel.head
 
 /-- Zip two `NonEmptyList`s. The resulting list length is the minimum of the two input lengths. -/
 def zip : NonEmptyList α → NonEmptyList β → NonEmptyList (α × β)
@@ -164,7 +172,7 @@ end NonEmptyList
 namespace Stream'
 variable {α β γ : Type u}
 
-instance : Functor Stream' where
+instance instFunctorStream : Functor Stream' where
   map := Stream'.map
 
 instance : Extract Stream' where
@@ -250,7 +258,7 @@ instance : Functor NonEmptyList where
   map := NonEmptyList.map
 
 instance : Extract NonEmptyList where
-  extract := NonEmptyList.head_nel -- Use defined head
+  extract := NonEmptyList.headNel -- Use defined head
 
 instance : Extend NonEmptyList where
   extend s f := NonEmptyList.map f (NonEmptyList.tails s) -- Use defined tails
@@ -280,10 +288,10 @@ instance : LawfulFunctor NonEmptyList where
 instance : LawfulCoapplicative NonEmptyList where
   coseqLeft_eq := by
     intros
-    simp [CoseqLeft.coseqLeft, Functor.map, zip, NonEmptyList.map]
+    simp [CoseqLeft.coseqLeft, Functor.map, NonEmptyList.map]
   coseqRight_eq := by
     intros
-    simp [CoseqRight.coseqRight, Functor.map, zip, NonEmptyList.map]
+    simp [CoseqRight.coseqRight, Functor.map, NonEmptyList.map]
   coseq_assoc := by
     intro _ _ _ ⟨ha, la⟩ ⟨hb, lb⟩ ⟨hc, lc⟩
     simp only [Functor.map, coseq, zip, NonEmptyList.map, Equiv.prodAssoc_apply]
@@ -378,11 +386,19 @@ end NonEmptyList
 /-- Represents a List with a distinguished element ('focus'), and elements to the left and right.
     The list `left` is typically stored reversed for efficient modification near the focus. -/
 structure List.Zipper (α : Type u) where
-  left : List α -- Elements to the left of the focus (reversed)
-  focus : α -- The focused element
-  right  : List α -- Elements to the right of the focus
+  /-- Elements to the left of the focus, stored reversed for efficient edits near the focus. -/
+  left : List α
+  /-- The focused (distinguished) element. -/
+  focus : α
+  /-- Elements to the right of the focus. -/
+  right  : List α
 
 deriving Repr, DecidableEq
+
+-- The `prec` precedence argument is mandated by the `Repr.reprPrec` interface but is
+-- unused for this structure (there is no infix form to disambiguate), so the derived
+-- `repr` legitimately ignores it.
+attribute [nolint unusedArguments] List.instReprZipper.repr
 
 -- Define instances for List.Zipper
 namespace List.Zipper
@@ -824,12 +840,12 @@ namespace Day
 
 variable {f : Type u₁ → Type u₁} {g : Type u₂ → Type u₂}
 
-instance instFunctor [Functor f] [Functor g] : Functor (Day f g) where
+instance instFunctor : Functor (Day f g) where
   map {a b : Type u₃} (k : a → b) (day : Day f g a) : Day f g b :=
     ⟨fun (x : day.α) (y : day.β) => k (day.map' x y), day.fa, day.gb⟩
 
 @[simp]
-theorem map_mk [Functor f] [Functor g] {α : Type u₁} {β : Type u₂} {a b : Type u₃}
+theorem map_mk {α : Type u₁} {β : Type u₂} {a b : Type u₃}
     (k : a → b) (map' : α → β → a) (fa : f α) (gb : g β) :
   k <$> (⟨map', fa, gb⟩ : Day f g a) = ⟨fun x y => k (map' x y), fa, gb⟩ := rfl
 

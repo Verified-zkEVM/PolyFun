@@ -29,11 +29,16 @@ Loom's `MonadAlgebras` development.
 
 universe u v
 
+/-- An algebra for a monad `m`: a structure map collapsing a monadic value `m α` into a plain
+value of `α`. -/
 class MonadAlgebra (m : Type u → Type v) where
+  /-- The structure map of the algebra, collapsing `m α` into `α`. -/
   monadAlg {α : Type u} : m α → α
 
 export MonadAlgebra (monadAlg)
 
+/-- A monad algebra is lawful when its structure map is compatible with the monad's `pure` and
+`bind`, making it an Eilenberg-Moore algebra. -/
 class LawfulMonadAlgebra (m : Type u → Type v) [Monad m] [MonadAlgebra m] where
   monadAlg_pure {α : Type u} (a : α) : monadAlg (pure a : m α) = a
   monadAlg_bind {α β : Type u} (ma : m α) (mb : α → m β) :
@@ -49,6 +54,7 @@ universe w
 
 /-- Ordered monad algebra interface used for quantitative WP/triple reasoning. -/
 class MAlgOrdered (m : Type u → Type v) (l : Type u) [Monad m] [CompleteLattice l] where
+  /-- The ordered algebra's structure map, collapsing `m l` into a lattice element `l`. -/
   μ : m l → l
   μ_pure : ∀ x : l, μ (pure x) = x
   μ_bind_mono {α : Type u} :

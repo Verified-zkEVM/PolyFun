@@ -137,7 +137,7 @@ abbrev Decoration.Over.map {Γ : Node.Context.{u, v}}
     Decoration.Over F spec d → Decoration.Over G spec d :=
   PFunctor.FreeM.Displayed.Decoration.Over.map (P := Spec.basePFunctor) (α := PUnit.{u+1}) f
 
-@[simp, grind =]
+@[grind =]
 theorem Decoration.Over.map_id {Γ : Node.Context.{u, v}} {F : ∀ X, Γ X → Type w} :
     (spec : Spec) → (d : Decoration Γ spec) → (r : Decoration.Over F spec d) →
     Decoration.Over.map (fun _ _ x => x) spec d r = r :=
@@ -230,13 +230,11 @@ abbrev Decoration.toOver {Γ : Node.Context.{u, v}} (A : ∀ X, Γ X → Type w)
     Σ d : Decoration Γ spec, Decoration.Over A spec d :=
   PFunctor.FreeM.Displayed.Decoration.toOver (P := Spec.basePFunctor) (α := PUnit.{u+1})
 
-@[simp]
 theorem Decoration.toOver_ofOver {Γ : Node.Context.{u, v}} (A : ∀ X, Γ X → Type w) :
     (spec : Spec) → (d : Decoration Γ spec) → (r : Decoration.Over A spec d) →
     Decoration.toOver A spec (Decoration.ofOver A spec d r) = ⟨d, r⟩ :=
   PFunctor.FreeM.Displayed.Decoration.toOver_ofOver (P := Spec.basePFunctor) (α := PUnit.{u+1})
 
-@[simp]
 theorem Decoration.ofOver_toOver {Γ : Node.Context.{u, v}} (A : ∀ X, Γ X → Type w) :
     (spec : Spec) → (d : Decoration (Node.Context.extend Γ A) spec) →
     Decoration.ofOver A spec (Decoration.toOver A spec d).1 (Decoration.toOver A spec d).2 = d :=
@@ -453,13 +451,11 @@ abbrev pack {Γ : Node.Context.{u, v}} (S : Node.Schema Γ) (spec : Spec) :
     View S spec → Decoration Γ spec :=
   (telescope S spec).2.invFun
 
-@[simp]
 theorem pack_unpack {Γ : Node.Context.{u, v}} (S : Node.Schema Γ) (spec : Spec)
     (d : Decoration Γ spec) :
     pack S spec (unpack S spec d) = d :=
   (telescope S spec).2.left_inv d
 
-@[simp]
 theorem unpack_pack {Γ : Node.Context.{u, v}} (S : Node.Schema Γ) (spec : Spec)
     (d : View S spec) :
     unpack S spec (pack S spec d) = d :=
@@ -478,7 +474,6 @@ abbrev mapView
     View S spec → View T spec :=
   unpack T spec ∘ Decoration.Schema.map f spec ∘ pack S spec
 
-@[simp]
 theorem unpack_map
     {Γ Δ : Node.Context.{u, v}} {S : Node.Schema Γ} {T : Node.Schema Δ}
     (f : Node.Schema.SchemaMap S T) (spec : Spec) (d : Decoration S.toContext spec) :
@@ -486,7 +481,6 @@ theorem unpack_map
       mapView f spec (unpack S spec d) := by
   simp [mapView]
 
-@[simp]
 theorem pack_mapView
     {Γ Δ : Node.Context.{u, v}} {S : Node.Schema Γ} {T : Node.Schema Δ}
     (f : Node.Schema.SchemaMap S T) (spec : Spec) (d : View S spec) :
@@ -494,7 +488,6 @@ theorem pack_mapView
       Decoration.Schema.map f spec (pack S spec d) := by
   simp [mapView]
 
-@[simp]
 theorem mapView_id
     {Γ : Node.Context.{u, v}} {S : Node.Schema Γ} :
     (spec : Spec) → (d : View S spec) →

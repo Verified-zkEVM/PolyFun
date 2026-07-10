@@ -14,7 +14,6 @@ import PolyFun.Control.Trace
 import PolyFun.IPFunctor.Basic
 import PolyFun.IPFunctor.Chart.Basic
 import PolyFun.IPFunctor.Equiv.Basic
-import PolyFun.IPFunctor.Examples
 import PolyFun.IPFunctor.Free.Basic
 import PolyFun.IPFunctor.Free.Family
 import PolyFun.IPFunctor.Free.Indexed
@@ -22,7 +21,6 @@ import PolyFun.IPFunctor.Lens.Basic
 import PolyFun.IPFunctor.Notation
 import PolyFun.IPFunctor.Notation.Deterministic
 import PolyFun.IPFunctor.Notation.Indexed
-import PolyFun.IPFunctor.Notation.Mixed
 import PolyFun.ITree.Basic
 import PolyFun.ITree.Bisim.Bind
 import PolyFun.ITree.Bisim.Defs
@@ -56,7 +54,6 @@ import PolyFun.Interaction.Concurrent.Bisimulation
 import PolyFun.Interaction.Concurrent.Control
 import PolyFun.Interaction.Concurrent.Current
 import PolyFun.Interaction.Concurrent.Equivalence
-import PolyFun.Interaction.Concurrent.Examples
 import PolyFun.Interaction.Concurrent.Execution
 import PolyFun.Interaction.Concurrent.Fairness
 import PolyFun.Interaction.Concurrent.Frontier
@@ -76,13 +73,11 @@ import PolyFun.Interaction.Concurrent.Tree
 import PolyFun.Interaction.Multiparty.Broadcast
 import PolyFun.Interaction.Multiparty.Core
 import PolyFun.Interaction.Multiparty.Directed
-import PolyFun.Interaction.Multiparty.Examples
 import PolyFun.Interaction.Multiparty.Observation
 import PolyFun.Interaction.Multiparty.ObservationProfile
 import PolyFun.Interaction.Multiparty.Profile
 import PolyFun.Interaction.TwoParty.Compose
 import PolyFun.Interaction.TwoParty.Decoration
-import PolyFun.Interaction.TwoParty.Examples
 import PolyFun.Interaction.TwoParty.Refine
 import PolyFun.Interaction.TwoParty.Role
 import PolyFun.Interaction.TwoParty.Strategy
@@ -112,7 +107,6 @@ import PolyFun.PFunctor.Cofree
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Combinators
-import PolyFun.PFunctor.Dynamical.Examples
 import PolyFun.PFunctor.Dynamical.Run
 import PolyFun.PFunctor.Dynamical.Trajectory
 import PolyFun.PFunctor.Equiv.Basic

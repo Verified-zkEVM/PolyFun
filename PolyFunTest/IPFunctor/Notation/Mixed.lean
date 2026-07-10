@@ -33,7 +33,7 @@ namespace IPFunctorMixedNotationTests
 
 /-- Shared demo `IPFunctor.Endo` over `Bool`, identical to the per-file
 fixtures so the tests below stay self-contained. -/
-@[expose] def demoP : IPFunctor.Endo Bool where
+def demoP : IPFunctor.Endo Bool where
   A
     | false => Unit
     | true  => Unit
@@ -44,20 +44,20 @@ fixtures so the tests below stay self-contained. -/
     | false, _, _ => true
     | true,  _, _ => true
 
-@[expose] instance : IPFunctor.DeterministicTransitions demoP where
+instance : IPFunctor.DeterministicTransitions demoP where
   next _ _ := true
   spec s a b := by cases s <;> rfl
 
-@[reducible, expose] def flip : IPFunctor.FreeM demoP false Unit :=
+@[reducible] def flip : IPFunctor.FreeM demoP false Unit :=
   IPFunctor.FreeM.liftA false ()
 
-@[reducible, expose] def read : IPFunctor.FreeM demoP true Nat :=
+@[reducible] def read : IPFunctor.FreeM demoP true Nat :=
   IPFunctor.FreeM.liftA true ()
 
-@[expose] def flip₂ : IPFunctor.FreeM₂ demoP false true Unit :=
+def flip₂ : IPFunctor.FreeM₂ demoP false true Unit :=
   IPFunctor.FreeM₂.roll () (fun _ => IPFunctor.FreeM₂.pure ())
 
-@[expose] def read₂ : IPFunctor.FreeM₂ demoP true true Nat :=
+def read₂ : IPFunctor.FreeM₂ demoP true true Nat :=
   IPFunctor.FreeM₂.roll () (fun n => IPFunctor.FreeM₂.pure n)
 
 /-! ### Single-index `IPFunctor.FreeM` with the polymorphic-tail restriction. -/

@@ -748,7 +748,7 @@ These follow directly from `mapSpec_bind` + `mapSpec_pure`. -/
     mapSpec φ (ITree.map f t) = ITree.map f (mapSpec φ t) := by
   simp only [ITree.map, mapSpec_bind, mapSpec_pure]
 
-@[simp] theorem mapSpec_functorMap (φ : PFunctor.Lens E F) (f : α → β)
+theorem mapSpec_functorMap (φ : PFunctor.Lens E F) (f : α → β)
     (t : ITree E α) : mapSpec φ (f <$> t) = f <$> mapSpec φ t := by
   simp only [map_eq_functor_map, mapSpec_map]
 

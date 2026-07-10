@@ -7,6 +7,7 @@ import PolyFun.Interaction.Basic.Spec
 import PolyFun.Interaction.Basic.Decoration
 import PolyFun.Interaction.Basic.MonadDecoration
 import PolyFun.Interaction.TwoParty.Role
+import Batteries.Tactic.Lint
 
 /-!
 # Role decorations and common role-based node contexts
@@ -46,14 +47,21 @@ variable {P : PFunctor.{uA, uB}} {α : Type t}
 /-! ## Generic role contexts -/
 
 /-- The generic role-labeled node context for a polynomial control tree. -/
+-- A constant context family: the same role data is attached at every position, so the
+-- `P.A` argument is intentionally ignored.
+@[nolint unusedArguments]
 abbrev RoleContextOver (P : PFunctor.{uA, uB}) : P.A → Type :=
   fun _ => Role
 
 /-- Generic role context extended by one bundled monad field. -/
+-- Constant context family; the `P.A` argument is intentionally ignored.
+@[nolint unusedArguments]
 abbrev RoleMonadContextOver (P : PFunctor.{uA, uB}) : P.A → Type (u + 1) :=
   fun _ => Σ _ : Role, BundledMonad.{u, u}
 
 /-- Generic role context extended by a pair of bundled monads. -/
+-- Constant context family; the `P.A` argument is intentionally ignored.
+@[nolint unusedArguments]
 abbrev RolePairedMonadContextOver (P : PFunctor.{uA, uB}) : P.A → Type (u + 1) :=
   fun _ => Σ _ : Role, BundledMonad.{u, u} × BundledMonad.{u, u}
 

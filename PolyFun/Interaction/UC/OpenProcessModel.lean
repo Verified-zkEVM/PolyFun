@@ -445,7 +445,7 @@ theorem openTheory_par_comm_iso
 
 /-- The unit for parallel composition is the trivial process with no boundary
 and `PUnit` state. The sampler is the trivial `Decoration.done` sampler. -/
-def openTheory_unit : OpenProcess.{u, v, w, w'} m Party PortBoundary.empty where
+def openTheoryUnit : OpenProcess.{u, v, w, w'} m Party PortBoundary.empty where
   Proc := PUnit
   step := fun _ =>
     { spec := .done
@@ -462,9 +462,9 @@ theorem openTheory_par_leftUnit_iso
       (OpenProcess.mapBoundary
         (PortBoundary.Equiv.tensorEmptyLeft Δ).toHom
         ((openTheory Party m schedulerSampler).par
-          (openTheory_unit Party m) W))
+          (openTheoryUnit Party m) W))
       W := by
-  simp only [openTheory, openTheory_unit, OpenProcess.interleave]
+  simp only [openTheory, openTheoryUnit, OpenProcess.interleave]
   refine ⟨fun s₁ s₂ => s₁.2 = s₂, fun ⟨_, s⟩ => ⟨s, rfl⟩,
     fun s => ⟨⟨⟨⟩, s⟩, rfl⟩, ?_, ?_, ?_, ?_⟩
   all_goals intro ⟨_, s⟩ s₂ heq
@@ -506,9 +506,9 @@ theorem openTheory_par_rightUnit_iso
       (OpenProcess.mapBoundary
         (PortBoundary.Equiv.tensorEmptyRight Δ).toHom
         ((openTheory Party m schedulerSampler).par W
-          (openTheory_unit Party m)))
+          (openTheoryUnit Party m)))
       W := by
-  simp only [openTheory, openTheory_unit, OpenProcess.interleave]
+  simp only [openTheory, openTheoryUnit, OpenProcess.interleave]
   refine ⟨fun s₁ s₂ => s₁.1 = s₂, fun ⟨s, _⟩ => ⟨s, rfl⟩,
     fun s => ⟨⟨s, ⟨⟩⟩, rfl⟩, ?_, ?_, ?_, ?_⟩
   all_goals intro ⟨s, _⟩ s₂ heq
@@ -543,7 +543,7 @@ theorem openTheory_par_rightUnit_iso
 
 /-- The identity wire (coevaluation) on boundary `Γ`: relays messages
 bidirectionally between `swap Γ` and `Γ`. -/
-def openTheory_idWire (Γ : PortBoundary) :
+def openTheoryIdWire (Γ : PortBoundary) :
     OpenProcess.{u, v, w, w'} m Party
       (PortBoundary.tensor (PortBoundary.swap Γ) Γ) where
   Proc := PUnit
@@ -562,9 +562,9 @@ theorem openTheory_wire_idWire_iso
       (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
     OpenProcessIso
       ((openTheory Party m schedulerSampler).wire
-        (openTheory_idWire Party m Γ) W₂)
+        (openTheoryIdWire Party m Γ) W₂)
       W₂ := by
-  simp only [openTheory, openTheory_idWire, OpenProcess.interleave]
+  simp only [openTheory, openTheoryIdWire, OpenProcess.interleave]
   refine ⟨fun s₁ s₂ => s₁.2 = s₂, fun ⟨_, s⟩ => ⟨s, rfl⟩,
     fun s => ⟨⟨⟨⟩, s⟩, rfl⟩, ?_, ?_, ?_, ?_⟩
   all_goals intro ⟨_, s⟩ s₂ heq
@@ -604,9 +604,9 @@ theorem openTheory_wire_idWire_right_iso
       (PortBoundary.tensor Δ₁ Γ)) :
     OpenProcessIso
       ((openTheory Party m schedulerSampler).wire W₁
-        (openTheory_idWire Party m Γ))
+        (openTheoryIdWire Party m Γ))
       W₁ := by
-  simp only [openTheory, openTheory_idWire, OpenProcess.interleave]
+  simp only [openTheory, openTheoryIdWire, OpenProcess.interleave]
   refine ⟨fun s₁ s₂ => s₁.1 = s₂, fun ⟨s, _⟩ => ⟨s, rfl⟩,
     fun s => ⟨⟨s, ⟨⟩⟩, rfl⟩, ?_, ?_, ?_, ?_⟩
   all_goals intro ⟨s, _⟩ s₂ heq
@@ -714,10 +714,10 @@ theorem openTheory_plug_eq_wire_iso
 up to bisimilarity. -/
 theorem openTheory_unit_eq_iso :
     OpenProcessIso
-      (openTheory_unit.{u, v, w, w'} Party m)
+      (openTheoryUnit.{u, v, w, w'} Party m)
       (OpenProcess.mapBoundary
         (PortBoundary.Equiv.tensorEmptyLeft PortBoundary.empty).toHom
-        (openTheory_idWire Party m PortBoundary.empty)) :=
+        (openTheoryIdWire Party m PortBoundary.empty)) :=
   ⟨fun _ _ => True, fun _ => ⟨PUnit.unit, trivial⟩, fun _ => ⟨PUnit.unit, trivial⟩,
     fun _ _ _ _ _ => .inl ⟨PUnit.unit, trivial⟩,
     fun _ _ _ _ hns => absurd trivial hns,

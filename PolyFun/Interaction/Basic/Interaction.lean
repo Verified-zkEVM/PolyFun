@@ -56,6 +56,9 @@ structure InteractionOver
     (Γ : P.A → Type vΓ)
     (syn : SyntaxOver l Agent Γ)
     (m : Type (max uB₂ a w) → Type (max uB₂ a w)) where
+  /-- The one-step operational law: given each agent's local node object at a
+  control node, choose a runtime direction and pass each agent's matching
+  continuation to the recursive runner in `m`. -/
   interact :
     {pos : P.A} →
     {γ : Γ pos} →

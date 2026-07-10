@@ -163,7 +163,6 @@ lemma map_roll (s : I) (f : α → β) (x : P.A s)
     FreeM.map s f (FreeM.roll s x r) =
       FreeM.roll s x (fun b => FreeM.map (P.src s x b) f (r b)) := rfl
 
-@[simp]
 lemma map_lift (s : I) (f : α → β) (x : P.Obj (fun _ => α) s) :
     FreeM.map s f (FreeM.lift s x) =
       FreeM.lift s ⟨x.1, fun b => f (x.2 b)⟩ := rfl
@@ -191,7 +190,7 @@ instance (s : I) : LawfulFunctor (P.FreeM s) where
 Wraps `IFreeM.inductionOn` at the constant family so downstream `induction x using
 FreeM.inductionOn` calls continue to work. -/
 @[elab_as_elim]
-protected def inductionOn {C : ∀ s, FreeM P s α → Prop}
+protected theorem inductionOn {C : ∀ s, FreeM P s α → Prop}
     (pure : ∀ s x, C s (FreeM.pure s x))
     (roll : ∀ s (x : P.A s) (r : (b : P.B s x) → FreeM P (P.src s x b) α),
       (∀ b, C (P.src s x b) (r b)) → C s (FreeM.roll s x r))
@@ -261,14 +260,12 @@ lemma mapM_pure' (s : I) (x : α) :
 lemma mapM_roll (s : I) (a : P.A s) (r : (b : P.B s a) → FreeM P (P.src s a b) α) :
     (FreeM.roll s a r).mapM h = h s a >>= fun b => (r b).mapM h := rfl
 
-@[simp]
 lemma mapM_lift [LawfulMonad m] (s : I) (x : P.Obj (fun _ => α) s) :
     (FreeM.lift s x).mapM h = h s x.1 >>= fun b => Pure.pure (x.2 b) := by
   simp [FreeM.mapM, IFreeM.mapM]
 
 variable [LawfulMonad m]
 
-@[simp]
 lemma mapM_liftA (s : I) (a : P.A s) :
     (FreeM.liftA s a).mapM h = h s a := by
   simp [FreeM.mapM, IFreeM.mapM]
@@ -345,12 +342,10 @@ lemma erase_punit_roll (x : Q.A PUnit.unit)
     erase Q PUnit.unit (FreeM.roll PUnit.unit x r) =
       PFunctor.FreeM.roll x (fun b => erase Q (Q.src PUnit.unit x b) (r b)) := rfl
 
-@[simp]
 lemma erase_punit_lift (x : Q.Obj (fun _ => α) PUnit.unit) :
     erase Q PUnit.unit (FreeM.lift PUnit.unit x) =
       PFunctor.FreeM.lift (P := Q.toPFunctor) x := rfl
 
-@[simp]
 lemma erase_punit_liftA (a : Q.A PUnit.unit) :
     erase Q PUnit.unit (FreeM.liftA PUnit.unit a) =
       PFunctor.FreeM.liftA (P := Q.toPFunctor) a := rfl
@@ -391,12 +386,10 @@ lemma toSigmaFreeM_roll (P : Endo I) (s : I) (a : P.A s)
       PFunctor.FreeM.roll (⟨s, a⟩ : P.sigmaPFunctor.A)
         (fun b => toSigmaFreeM P (r b)) := rfl
 
-@[simp]
 lemma toSigmaFreeM_lift (P : Endo I) (s : I) (x : P.Obj (fun _ => α) s) :
     toSigmaFreeM P (FreeM.lift s x) =
       PFunctor.FreeM.lift (P := P.sigmaPFunctor) ⟨⟨s, x.1⟩, x.2⟩ := rfl
 
-@[simp]
 lemma toSigmaFreeM_liftA (P : Endo I) (s : I) (a : P.A s) :
     toSigmaFreeM P (FreeM.liftA s a) =
       PFunctor.FreeM.liftA (P := P.sigmaPFunctor) ⟨s, a⟩ := rfl

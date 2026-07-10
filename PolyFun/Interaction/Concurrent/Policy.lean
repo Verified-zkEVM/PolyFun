@@ -212,7 +212,7 @@ abbrev respects {Party : Type u} {process : Process Party}
     {p : process.Proc} → Trace process p → Bool :=
   ProcessOver.Trace.respects policy
 
-@[simp, grind =]
+@[grind =]
 theorem respects_top {Party : Type u} {process : Process Party}
     {p : process.Proc} (trace : Trace process p) :
     respects StepPolicy.top trace = true :=

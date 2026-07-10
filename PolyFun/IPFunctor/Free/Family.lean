@@ -94,7 +94,6 @@ lemma pure_inj {s : I} (x y : X s) :
   refine ⟨?_, fun h => by rw [h]⟩
   intro h; cases h; rfl
 
-@[simp]
 lemma roll_inj {s : I} (a a' : P.A s)
     (r : (b : P.B s a) → IFreeM P X (P.src s a b))
     (r' : (b : P.B s a') → IFreeM P X (P.src s a' b)) :
@@ -111,7 +110,7 @@ state than the parent. -/
 
 /-- Induction principle for `IFreeM` with a state-indexed Prop-valued motive. -/
 @[elab_as_elim]
-protected def inductionOn {C : ∀ s, IFreeM P X s → Prop}
+protected theorem inductionOn {C : ∀ s, IFreeM P X s → Prop}
     (pure : ∀ s (x : X s), C s (IFreeM.pure x))
     (roll : ∀ s (a : P.A s) (r : (b : P.B s a) → IFreeM P X (P.src s a b)),
       (∀ b, C (P.src s a b) (r b)) → C s (IFreeM.roll a r)) :

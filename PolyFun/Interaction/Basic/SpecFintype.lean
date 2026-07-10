@@ -59,8 +59,7 @@ def rootFintype {X : Type} {rest : X → Spec.{0}}
   | .node hFin _ _ => hFin
 
 /-- Extract the `Nonempty` instance for the move space of the root node. -/
-@[reducible]
-def rootNonempty {X : Type} {rest : X → Spec.{0}}
+theorem rootNonempty {X : Type} {rest : X → Spec.{0}}
     (h : Spec.Fintype (Spec.node X rest)) : Nonempty X :=
   match h with
   | .node _ hNon _ => hNon

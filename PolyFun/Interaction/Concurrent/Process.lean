@@ -8,6 +8,7 @@ import PolyFun.Interaction.Basic.Decoration
 import PolyFun.Interaction.Multiparty.Core
 import PolyFun.Control.Coalgebra
 import Mathlib.Data.PFunctor.Univariate.M
+import Batteries.Tactic.Lint
 
 /-!
 # Dynamic concurrent processes
@@ -62,6 +63,8 @@ party-side responsibility arguments) can take a `NodeAuthority` parameter
 without committing to any particular observation structure.
 -/
 structure NodeAuthority (Party : Type u) (X : Type w) where
+  /-- `controllers x` is the ordered list of parties credited as controllers of
+  the move `x : X`. -/
   controllers : X → List Party := fun _ => []
 
 /--
@@ -82,6 +85,8 @@ view assignment at one node; `Observation` is one quotient morphism
 `X → Obs` packaged with its codomain.
 -/
 structure NodeView (Party : Type u) (X : Type w) where
+  /-- `views me` is the local view that party `me` has of the chosen move,
+  expressed as a `Multiparty.ViewMode X`. -/
   views : Party → Multiparty.ViewMode X
 
 /--
@@ -161,8 +166,11 @@ construction at every call site, and projections such as `(mapContext f s).spec`
 are definitionally equal to `s.spec`.
 -/
 structure StepOver (Γ : Interaction.Spec.Node.Context.{w, w₂}) (P : Type v) where
+  /-- The shape of the finite sequential interaction episode of this step. -/
   spec : Interaction.Spec.{w}
+  /-- The decoration of `spec` by node-local context `Γ`. -/
   semantics : PFunctor.FreeM.Displayed.Decoration Γ spec
+  /-- Maps a complete transcript of `spec` to the next residual process state. -/
   next : PFunctor.FreeM.Path spec → P
 
 namespace StepOver
@@ -270,7 +278,10 @@ trees, flat machines, and future frontends can all compile into `ProcessOver`
 by choosing an appropriate node-local context `Γ`.
 -/
 structure ProcessOver (Γ : Interaction.Spec.Node.Context.{w, w₂}) where
+  /-- The type of residual process states. -/
   Proc : Type v
+  /-- The step protocol exposed at each residual state, whose completion yields
+  the next state. -/
   step : Proc → StepOver Γ Proc
 
 namespace ProcessOver
@@ -511,9 +522,14 @@ end TranscriptRel
 `ProcessOver.Labeled` is a process equipped with a stable external event label
 for each complete step transcript.
 -/
+-- The process state/message universes and the event-label universe (`w₃`) are independent.
+@[nolint checkUnivs]
 structure Labeled (Γ : Interaction.Spec.Node.Context.{w, w₂}) where
+  /-- The underlying process being labeled. -/
   toProcess : ProcessOver.{v, w, w₂} Γ
+  /-- The type of external event labels. -/
   Event : Type w₃
+  /-- The assignment of an event label to each complete step transcript. -/
   event : toProcess.EventMap Event
 
 /--
@@ -523,9 +539,14 @@ complete step transcript.
 These tickets are the obligation identifiers used by the fairness and liveness
 layers.
 -/
+-- The process state/message universes and the ticket universe (`w₃`) are independent.
+@[nolint checkUnivs]
 structure Ticketed (Γ : Interaction.Spec.Node.Context.{w, w₂}) where
+  /-- The underlying process being ticketed. -/
   toProcess : ProcessOver.{v, w, w₂} Γ
+  /-- The type of stable tickets. -/
   Ticket : Type w₃
+  /-- The assignment of a ticket to each complete step transcript. -/
   ticket : toProcess.Tickets Ticket
 
 /--
@@ -534,9 +555,13 @@ verification predicates used throughout PolyFun.
 -/
 structure System (Γ : Interaction.Spec.Node.Context.{w, w₂}) extends
     toProcess : ProcessOver Γ where
+  /-- Marks the initial residual states of the system. -/
   init : Proc → Prop
+  /-- Records ambient assumptions imposed on runs of the system. -/
   assumptions : Proc → Prop := fun _ => True
+  /-- The intended state safety predicate. -/
   safe : Proc → Prop := fun _ => True
+  /-- The intended inductive invariant. -/
   inv : Proc → Prop := fun _ => True
 
 /-! ### Polynomial-coalgebra behavior
@@ -644,6 +669,19 @@ abbrev Step (Party : Type u) (P : Type v) :=
 
 namespace Step
 
+/-- Recursively walk a transcript alongside its decoration, concatenating the
+controller list recorded at each visited node into the accumulated path.
+
+Auxiliary for `Step.controllerPath`. -/
+private def controllerPathAux {Party : Type u} :
+    {spec : Interaction.Spec.{w}} →
+    PFunctor.FreeM.Displayed.Decoration (StepContext Party) spec →
+    PFunctor.FreeM.Path spec →
+    List Party
+  | .done, _, _ => []
+  | .node _ _, ⟨node, restSemantics⟩, ⟨x, tail⟩ =>
+      node.controllers x ++ controllerPathAux (restSemantics x) tail
+
 /--
 `controllerPath step tr` is the controller sequence exposed by the concrete
 step transcript `tr`.
@@ -657,17 +695,8 @@ then Alice chooses a payload", the controller path records both pieces in
 order.
 -/
 def controllerPath {Party : Type u} {P : Type v} (step : Step Party P) :
-    PFunctor.FreeM.Path step.spec → List Party := by
-  let rec go :
-      {spec : Interaction.Spec.{w}} →
-      PFunctor.FreeM.Displayed.Decoration (StepContext Party) spec →
-      PFunctor.FreeM.Path spec →
-      List Party
-    | .done, _, _ => []
-    | .node _ rest, ⟨node, restSemantics⟩, ⟨x, tail⟩ =>
-        node.controllers x ++ go (restSemantics x) tail
-  intro tr
-  exact go step.semantics tr
+    PFunctor.FreeM.Path step.spec → List Party :=
+  fun tr => controllerPathAux step.semantics tr
 
 /--
 `currentController? step tr` is the head of the controller path exposed by the
@@ -714,6 +743,8 @@ The closed-world specialization of `ProcessOver`.
 This is the process type consumed by the current execution, run, observation,
 refinement, fairness, and liveness layers.
 -/
+-- The `Party` universe and the process's state/message universes are independent.
+@[nolint checkUnivs]
 abbrev Process (Party : Type u) :=
   ProcessOver (StepContext Party)
 
@@ -742,6 +773,8 @@ abbrev TranscriptRel {Party : Type u}
 `Process.Labeled` is a closed-world process together with a stable event label
 for each complete step transcript.
 -/
+-- The `Party` universe and the event/process universes are independent.
+@[nolint checkUnivs]
 abbrev Labeled (Party : Type u) :=
   ProcessOver.Labeled (StepContext Party)
 
@@ -752,6 +785,8 @@ each complete step transcript.
 These tickets are the obligation identifiers used later by the fairness and
 liveness layers.
 -/
+-- The `Party` universe and the ticket/process universes are independent.
+@[nolint checkUnivs]
 abbrev Ticketed (Party : Type u) :=
   ProcessOver.Ticketed (StepContext Party)
 
@@ -770,6 +805,8 @@ verification metadata on top of that semantics:
 This keeps the semantic object and the proof obligations separate while still
 bundling them in one place for refinement and liveness statements.
 -/
+-- The `Party` universe and the process's state/message universes are independent.
+@[nolint checkUnivs]
 abbrev System (Party : Type u) :=
   ProcessOver.System (StepContext Party)
 

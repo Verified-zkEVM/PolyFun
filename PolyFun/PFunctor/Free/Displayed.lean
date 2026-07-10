@@ -53,7 +53,10 @@ Special cases include node decorations, branch paths, and compact transcript
 views that suppress uninformative nodes.
 -/
 structure Shape (P : PFunctor.{uA, uB}) (α : Type v) where
+  /-- The fiber assigned to a terminal payload `x : α`. -/
   leaf : α → Sort w
+  /-- The fiber assigned to a node at position `a`, given the fibers already chosen for
+  each child `b : P.B a`. -/
   node : (a : P.A) → ((b : P.B a) → Sort w) → Sort w
 
 end Displayed
@@ -92,7 +95,10 @@ second-layer fiber over each inhabitant of `Displayed D s`. This is the
 generic form of a dependent decoration over a base decoration.
 -/
 structure OverShape (D : Shape.{uA, uB, v, w} P α) where
+  /-- The second-layer fiber over a base leaf fiber at payload `x : α`. -/
   leaf : (x : α) → D.leaf x → Sort w₂
+  /-- The second-layer fiber over a base node fiber at position `a`, given the second-layer
+  fibers already chosen over each child. -/
   node :
     (a : P.A) →
     (child : (b : P.B a) → Sort w) →
@@ -193,6 +199,7 @@ variable
 structure Hom
     (D : Shape.{uA, uB, v, w} P α)
     (E : Shape.{uA, uB, v, w₂} P α) where
+  /-- The fiberwise action, mapping the `D`-fiber to the `E`-fiber over each tree `s`. -/
   toFun : (s : FreeM P α) → Displayed D s → Displayed E s
 
 instance : CoeFun (Hom D E)
@@ -258,7 +265,10 @@ data.
 structure LocalHom
     (D : Shape.{uA, uB, v, w} P α)
     (E : Shape.{uA, uB, v, w₂} P α) where
+  /-- The action on leaf fibers, mapping `D.leaf x` to `E.leaf x`. -/
   mapLeaf : (x : α) → D.leaf x → E.leaf x
+  /-- The action on one node layer, mapping `D.node` to `E.node` given the already-mapped
+  child data. -/
   mapChild :
     (a : P.A) →
     (childD : (b : P.B a) → Sort w) →
@@ -311,6 +321,8 @@ When the base morphism is `Displayed.Hom.id`, this is a fiberwise morphism over
 the same displayed data.
 -/
 structure Hom (η : Displayed.Hom D E) (R : OverShape D) (S : OverShape E) where
+  /-- The fiberwise action on second-layer fibers, sending the `R`-fiber over `d` to the
+  `S`-fiber over `η s d`. -/
   toFun :
     (s : FreeM P α) →
     (d : Displayed D s) →
@@ -416,7 +428,10 @@ data and keep the base displayed data fixed.
 structure FiberLocalHom
     (R : OverShape.{uA, uB, v, w, w₅} D)
     (S : OverShape.{uA, uB, v, w, w₆} D) where
+  /-- The action on leaf fibers, mapping `R.leaf` to `S.leaf` over the same base leaf data. -/
   mapLeaf : (x : α) → (d : D.leaf x) → R.leaf x d → S.leaf x d
+  /-- The action on one node layer, mapping `R.node` to `S.node` over the same base node data,
+  given the already-mapped child data. -/
   mapChild :
     (a : P.A) →
     (child : (b : P.B a) → Sort w) →
@@ -481,11 +496,15 @@ structure LocalHom
     (η : Displayed.LocalHom D E)
     (R : OverShape.{uA, uB, v, w, w₅} D)
     (S : OverShape.{uA, uB, v, w₂, w₆} E) where
+  /-- The action on leaf fibers, mapping `R.leaf` to `S.leaf` over the base leaf morphism
+  `η.mapLeaf`. -/
   mapLeaf :
     (x : α) →
     (d : D.leaf x) →
     R.leaf x d →
     S.leaf x (η.mapLeaf x d)
+  /-- The action on one node layer, mapping `R.node` to `S.node` over the base node morphism
+  `η.mapChild`, given the already-mapped child data. -/
   mapChild :
     (a : P.A) →
     (childD : (b : P.B a) → Sort w) →

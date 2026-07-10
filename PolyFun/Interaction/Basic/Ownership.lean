@@ -47,7 +47,11 @@ inductive Perspective where
 runtime directions have type `Move`.
 -/
 structure LocalView (Move : Type uB₂) where
+  /-- Node object shape when the agent owns the node, as a function of the
+  local continuation family. -/
   own : (Move → Type w) → Type w
+  /-- Node object shape when the agent observes another agent's move at the
+  node, as a function of the local continuation family. -/
   other : (Move → Type w) → Type w
 
 /-- Select the local node shape determined by an ownership perspective. -/

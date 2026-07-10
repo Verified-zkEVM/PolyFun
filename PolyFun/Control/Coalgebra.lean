@@ -38,6 +38,7 @@ Named `Coalg` to avoid collision with `Mathlib.RingTheory.Coalgebra`.
 This is the dual of `MonadAlgebra`. No `[Functor F]` constraint is imposed on the
 class itself so that the definition applies to arbitrary type-level maps. -/
 class Coalg (F : Type u → Type v) (S : Type u) where
+  /-- The structure map of the coalgebra, unfolding a state `S` into one layer of `F`. -/
   out : S → F S
 
 export Coalg (out)

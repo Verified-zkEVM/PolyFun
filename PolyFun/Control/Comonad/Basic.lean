@@ -66,9 +66,11 @@ export Coseq (coseq)
 export CoseqLeft (coseqLeft)
 export CoseqRight (coseqRight)
 
--- Notation for cosequencing operations
+/-- Cosequencing `Coseq.coseq`, pairing two comonadic contexts. -/
 infixl:60 " <@> " => Coseq.coseq
+/-- Left cosequencing `CoseqLeft.coseqLeft`, keeping the left context's result. -/
 infixl:60 " <@ "  => CoseqLeft.coseqLeft
+/-- Right cosequencing `CoseqRight.coseqRight`, keeping the right context's result. -/
 infixl:60 " @> "  => CoseqRight.coseqRight
 
 /-- `Coapplicative` functor. Dual to `Applicative`.
@@ -142,7 +144,7 @@ export LawfulComonad (map_eq_extend_extract extend_extract extract_extend extend
 section LawfulnessProofs
 variable {w : Type u → Type v} [Comonad w] [LawfulComonad w]
 
-@[simp] theorem comonad_id_map {α : Type u} (wa : w α) : Functor.map id wa = wa :=
+theorem comonad_id_map {α : Type u} (wa : w α) : Functor.map id wa = wa :=
   id_map wa
 
 @[simp] theorem comonad_comp_map {α β γ : Type u} (f : β → γ) (g : α → β) (wa : w α) :
@@ -151,8 +153,7 @@ variable {w : Type u → Type v} [Comonad w] [LawfulComonad w]
 
 -- Proof for extract_map
 @[simp] theorem extract_map {α β : Type u} (f : α → β) (wa : w α) :
-  extract (Functor.map f wa) = f (extract wa) :=
-by
+  extract (Functor.map f wa) = f (extract wa) := by
   rw [map_eq_extend_extract, extract_extend, Function.comp_apply]
 
 end LawfulnessProofs
@@ -170,24 +171,21 @@ def duplicate {α : Type u} (wa : w α) : w (w α) :=
 variable [LawfulComonad w]
 variable {α : Type u} (wa : w α)
 
-@[simp] theorem extract_duplicate_eq_id : extract (duplicate wa) = wa :=
+theorem extract_duplicate_eq_id : extract (duplicate wa) = wa :=
   extract_extend wa id
 
-@[simp] theorem map_extract_duplicate_eq_id : Functor.map extract (duplicate wa) = wa :=
-by
+theorem map_extract_duplicate_eq_id : Functor.map extract (duplicate wa) = wa := by
   rw [duplicate, map_eq_extend_extract, extend_assoc]
   simp only [Function.comp_apply, extract_extend, id_def]
   rw [extend_extract]
 
-@[simp] theorem extend_eq_map_duplicate {β : Type u} (f : w α → β) :
-  extend wa f = Functor.map f (duplicate wa) :=
-by
+theorem extend_eq_map_duplicate {β : Type u} (f : w α → β) :
+    extend wa f = Functor.map f (duplicate wa) := by
   rw [duplicate, map_eq_extend_extract, extend_assoc]
   simp only [Function.comp_apply, extract_extend, id_def]
 
-@[simp] theorem duplicate_duplicate_eq_map_duplicate :
-    duplicate (duplicate wa) = Functor.map duplicate (duplicate wa) :=
-by
+theorem duplicate_duplicate_eq_map_duplicate :
+    duplicate (duplicate wa) = Functor.map duplicate (duplicate wa) := by
   have h_lhs : duplicate (duplicate wa) = extend wa duplicate := by
     rw [duplicate, duplicate, extend_assoc]
     simp only [id_def]
