@@ -43,4 +43,35 @@ example : (Lens.id P).IsVertical := Lens.IsVertical.id P
 is injective but not surjective when `Q` has positions). -/
 example : (Lens.inl : Lens P (P + Q)).IsCartesian := Lens.IsCartesian.inl
 
+section Closure
+
+variable {R W : PFunctor.{u, u}} {l₁ : Lens P R} {l₂ : Lens Q W}
+
+/-- Verticality is closed under `⊎ₗ`, `×ₗ`, `⊗ₗ` (Spivak–Niu Prop 5.63). -/
+example (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊎ₗ l₂).IsVertical :=
+  h₁.sumMap h₂
+
+example (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ×ₗ l₂).IsVertical :=
+  h₁.prodMap h₂
+
+example (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊗ₗ l₂).IsVertical :=
+  h₁.tensorMap h₂
+
+/-- Cartesianness is closed under `×ₗ`, `⊗ₗ`, and `◃ₗ` (Spivak–Niu Prop 5.63,
+6.88). -/
+example (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ×ₗ l₂).IsCartesian :=
+  h₁.prodMap h₂
+
+example (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ⊗ₗ l₂).IsCartesian :=
+  h₁.tensorMap h₂
+
+example (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ◃ₗ l₂).IsCartesian :=
+  h₁.compMap h₂
+
+end Closure
+
+/-- A lens that is both vertical and cartesian is an isomorphism `P ≃ₗ Q`. -/
+example (l : Lens P Q) (hv : l.IsVertical) (hc : l.IsCartesian) :
+    Nonempty (P ≃ₗ Q) := ⟨Lens.equivOfVerticalCartesian l hv hc⟩
+
 end PFunctor

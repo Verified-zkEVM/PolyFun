@@ -109,4 +109,44 @@ lenses `q ⇆ y = enclose q`. -/
 theorem ihom_X_A (q : PFunctor.{uA, uB}) :
     (ihom q X.{uA, uB}).A = Lens q X.{uA, uB} := rfl
 
+/-! ## The internal hom of a coproduct
+
+The internal hom turns a coproduct in its first argument into a categorical
+product: `[q₁ + q₂, r] ≅ [q₁, r] × [q₂, r]`. On positions this is the universal
+property of the coproduct, `Lens (q₁ + q₂) r ≃ Lens q₁ r × Lens q₂ r`; on
+directions the sigma `Σ j : q₁.A ⊕ q₂.A, r.B (f.toFunA j)` splits as the
+*coproduct* of the two direction sigmas (`Equiv.sumSigmaDistrib`), which matches
+the directions of the categorical product `*` (positions multiply, directions
+add). The target is therefore the categorical product `*`, not the tensor `⊗`:
+the tensor combines directions multiplicatively and does not match the
+coproduct-shaped fibers here. -/
+
+/-- The positions of `[q₁ + q₂, r]` split as a product: a lens `q₁ + q₂ ⇆ r` is
+exactly a pair of lenses `(q₁ ⇆ r, q₂ ⇆ r)`, by the universal property of the
+coproduct. This is the position component of `ihomSum`, and equally identifies
+the positions of the categorical-product form `ihom q₁ r * ihom q₂ r`. -/
+def ihomSumAEquiv (q₁ q₂ r : PFunctor.{uA, uB}) :
+    (ihom (q₁ + q₂) r).A ≃ (ihom q₁ r).A × (ihom q₂ r).A where
+  toFun f := (f ∘ₗ Lens.inl, f ∘ₗ Lens.inr)
+  invFun p := Lens.sumPair p.1 p.2
+  left_inv f := Lens.comp_inl_inr f
+  right_inv p := by
+    obtain ⟨a, b⟩ := p
+    simp only [Lens.sumPair_comp_inl, Lens.sumPair_comp_inr]
+
+/-- The position bijection together with the fiber splitting, packaged as a
+`PFunctor.Equiv`: over a lens `f : q₁ + q₂ ⇆ r` the sigma of `r`-directions over
+`(q₁ + q₂).A` splits as the coproduct of the sigmas over `q₁.A` and `q₂.A`. -/
+def ihomSumPEquiv (q₁ q₂ r : PFunctor.{uA, uB}) :
+    ihom (q₁ + q₂) r ≃ₚ (ihom q₁ r * ihom q₂ r) where
+  equivA := ihomSumAEquiv q₁ q₂ r
+  equivB f := _root_.Equiv.sumSigmaDistrib (fun j => r.B (f.toFunA j))
+
+/-- The internal hom sends a coproduct in its first argument to a categorical
+product: `[q₁ + q₂, r] ≅ [q₁, r] × [q₂, r]`. This is the contravariant image of
+the coproduct's universal property under the tensor–hom adjunction. -/
+def ihomSum (q₁ q₂ r : PFunctor.{uA, uB}) :
+    ihom (q₁ + q₂) r ≃ₗ (ihom q₁ r * ihom q₂ r) :=
+  PFunctor.Equiv.toLensEquiv (ihomSumPEquiv q₁ q₂ r)
+
 end PFunctor

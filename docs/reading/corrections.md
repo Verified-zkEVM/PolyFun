@@ -68,6 +68,17 @@ with the commit/PR that fixed them.
   guarding `iter`. The true differentiator is `Bisim = Eq` (M-type
   universal property; no strong-bisim setoid). Verified against
   `PolyFun/ITree/{Basic.lean,Bisim/Defs.lean}` 2026-07-10.
+- The ⊗-internal hom does **not** turn a coproduct in its first argument into
+  a tensor: `[q₁ + q₂, r] ≅ [q₁,r] × [q₂,r]` uses the **categorical product
+  `*`**, not `⊗`. A direction of `[q₁+q₂, r]` is `Σ j : q₁.A ⊕ q₂.A, …`, and
+  a Σ over a *sum* splits as a *coproduct* of sigmas (positions ×, directions
+  ⊕ = `*`), not multiplicatively (`⊗`). Formalized as `PFunctor.ihomSum`
+  (`InternalHom.lean`); the earlier roadmap draft wrongly wrote `⊗`.
+- The Ex 6.84 catalogue iso `By ⊗ p ≅ By ◃ p` uses the **linear** functor
+  `By = linear B`, **not** the constant `C B`. `C B ⊗ p ≅ C (B × p.A)` while
+  `C B ◃ p ≅ C B` (a constant absorbs substitution), so the `C B` version is
+  false unless `p.A` is a singleton. Formalized correctly as
+  `PFunctor.Lens.Equiv.linearTensor` (`Lens/Duoidal.lean`).
 
 ## Resolved
 

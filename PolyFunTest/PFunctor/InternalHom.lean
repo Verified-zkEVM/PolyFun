@@ -40,4 +40,18 @@ example (φ : Lens (p ⊗ q) r) :
 /-- The hom-set transposition is an equivalence. -/
 example : Lens (p ⊗ q) r ≃ Lens p (ihom q r) := Lens.curryEquiv
 
+/-- Positions of `[q₁ + q₂, r]` split as a product of positions. -/
+example : (ihom (p + q) r).A ≃ (ihom p r).A × (ihom q r).A := ihomSumAEquiv p q r
+
+/-- The position bijection is `f ↦ (f ∘ inl, f ∘ inr)`. -/
+example (f : Lens (p + q) r) :
+    ihomSumAEquiv p q r f = (f ∘ₗ Lens.inl, f ∘ₗ Lens.inr) := rfl
+
+/-- The internal hom sends a coproduct to a categorical product `[q₁+q₂, r] ≅
+[q₁, r] × [q₂, r]`. -/
+example : Nonempty (ihom (p + q) r ≃ₗ (ihom p r * ihom q r)) := ⟨ihomSum p q r⟩
+
+/-- The direction / fiber splitting is packaged into a `PFunctor.Equiv`. -/
+example : Nonempty (ihom (p + q) r ≃ₚ (ihom p r * ihom q r)) := ⟨ihomSumPEquiv p q r⟩
+
 end PFunctor

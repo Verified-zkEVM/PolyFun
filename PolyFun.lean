@@ -100,8 +100,10 @@ import PolyFun.Interaction.UC.OpenSyntax.Interp
 import PolyFun.Interaction.UC.OpenSyntax.Raw
 import PolyFun.Interaction.UC.OpenTheory
 import PolyFun.Logic.HEq
+import PolyFun.PFunctor.Adjunctions
 import PolyFun.PFunctor.Basic
 import PolyFun.PFunctor.Bound
+import PolyFun.PFunctor.CartesianClosed
 import PolyFun.PFunctor.Category
 import PolyFun.PFunctor.Chart.Basic
 import PolyFun.PFunctor.Cofree
@@ -125,6 +127,8 @@ import PolyFun.PFunctor.InternalHom
 import PolyFun.PFunctor.Lens.Basic
 import PolyFun.PFunctor.Lens.Cartesian
 import PolyFun.PFunctor.Lens.Composite
+import PolyFun.PFunctor.Lens.Distributivity
+import PolyFun.PFunctor.Lens.Duoidal
 import PolyFun.PFunctor.Lens.Factorization
 import PolyFun.PFunctor.Lens.State
 import PolyFun.PFunctor.M

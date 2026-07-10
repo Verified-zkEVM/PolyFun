@@ -15,9 +15,9 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 |---|---|
 | Ch 1–3 lens/chart calculus, monoidal ops | Deep (`PFunctor/{Basic,Equiv,Lens,Chart}`) |
 | Ch 4.1–4.4 dynamical systems, wiring | Deep (`PFunctor/Dynamical/*`, coalgebra core) |
-| Ch 4.5 ⊗-closure `[q,r]`, eval | **Done (A1)**: `ihom`/`eval`/`curry`/`curryEquiv` in `PFunctor/InternalHom.lean` (note: `exp` is the §5.3 cartesian exponential, not this) |
-| Ch 5 factorizations, adjunctions, (co)limits | **Vertical–cartesian factorization done (A3 core)** in `PFunctor/Lens/Factorization.lean`; adjunction/(co)limit tickets open |
-| Ch 6 ◁ theory (composites, coclosure, duoidal) | **Destructor triple + `compNthMap` + transition-lens/`twoStep` done (A6/A7a/A7b)**; coclosure/duoidal open |
+| Ch 4.5 ⊗-closure `[q,r]`, eval | **Done (A1)**: `ihom`/`eval`/`curry`/`curryEquiv`/`ihomSum` in `PFunctor/InternalHom.lean` (note: `exp` is the §5.3 cartesian exponential, not this) |
+| Ch 5 factorizations, adjunctions, (co)limits | **Done**: full vertical–cartesian factorization (A3, `Lens/Factorization.lean`), trivial-interface adjunction pack (A4, `Adjunctions.lean`), cartesian-closure `eval`/`curry` (A2 partial, `CartesianClosed.lean`); general (co)limits + A5 gluing open |
+| Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: destructor triple, `compNthMap`, δ/`twoStep` (A6/A7a/A7b), left-distributivity + `(6.65)` (A10, `Lens/Distributivity.lean`), ordering + duoidal interchange lens (A9, `Lens/Duoidal.lean`); coclosure/multiadjoint (A8) + duoidal coherence open |
 | Ch 7 comonoids = categories, retrofunctors | Missing (raw material: `IsVeryWellBehaved`) |
 | Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | Missing (raw material: `M p`, `M.corec`, `FreeM.Path`) |
 
@@ -115,6 +115,46 @@ The **honest split** confirmed in code: A7c gives the *structural* half of
 `IsPolyTime.bind`; the remaining half is the TM running-time bound
 (`VCVio/ToMathlib/Computability/PolyTimeTM.lean:537-552`, a documented VCVio
 `sorry`), which PolyFun does not own.
+
+### Phase A — implementation status (milestone 2: A2 + A4 + A8·(6.65) + A9 + A10 + A1/A3 deferrals)
+
+Landed 2026-07-10 (five parallel subagents; full `lake build` + `lake lint` +
+`lake test` green, no `sorry`):
+
+- **A2 ✅ (partial)** `PFunctor/CartesianClosed.lean`: the cartesian exponential
+  `exp`'s `eval`, `curry`, `uncurry`, the full forward round-trip
+  `uncurry_curry`, and the position-level reverse `curry_uncurry_toFunA`.
+  *Deferred (documented, no `sorry`):* the direction-level reverse identity and
+  hence the packaged `curryEquiv` — it reduces to a `HEq` of two `toFunB` maps
+  whose domains are only propositionally equal (a `PUnit`-collapse).
+- **A4 ✅** `PFunctor/Adjunctions.lean`: `homFromZero`/`homToOne`/`homFromX`/
+  `homToConst`/`homToLinear` (trivial-interface hom-set `≃`s, Thm 5.4 family).
+  **A5 (⊗-gluing) deferred** — the exact Prop 5.49/5.50 statement wasn't
+  confirmable from the notes; noted, not stubbed.
+- **A8 partial ✅** `(6.65)` `homMonomialEquiv : Lens (monomial A B) p ≃ (A → p.Obj B)`
+  landed in `Lens/Distributivity.lean`. The coclosure `⌈q\p⌉` + multiadjoint
+  (6.78) remain open.
+- **A9 ✅** `Lens/Duoidal.lean`: `orderingLens` (+ `orderingLens_isCartesian`),
+  the four ⊗/◁ catalogue isos, and the full `duoidalLens` interchange (6.86).
+  Duoidal coherence (Prop 6.87) deferred by design.
+- **A10 ✅** `Lens/Distributivity.lean`: `scalarCompDistrib` (Ex 6.55),
+  lens-level `prodCompDistrib` (6.49), plus the Ex 6.56 right-distributivity
+  **failure** proved (`IsEmpty` of a position bijection). `(6.48)`/Σ-form reused
+  from pre-existing `sumCompDistrib`/`sigmaCompDistrib`. Π-form (6.51) open.
+- **A1/A3 deferrals cleared ✅** in `InternalHom.lean` / `Lens/Factorization.lean`:
+  `ihomSum` (full `≃ₗ`), `IsVertical`/`IsCartesian` closure under `+`/`×`/`⊗`,
+  `IsCartesian.compMap` (Prop 6.88), and `equivOfVerticalCartesian` (the
+  intersection = iso, via the existing `PFunctor.Equiv.toLensEquiv` bridge).
+
+Two **math corrections to the plan** the agents caught (logged in
+`corrections.md`): `ihomSum`'s target is the categorical product `*`, not `⊗`
+(a Σ over a *sum* is a *coproduct* of sigmas); and the catalogue iso
+`By ⊗ p ≅ By ◃ p` needs `linear B`, not the constant `C B` (which is false).
+
+**Phase A remaining (open, lower urgency):** A5 (⊗-gluing), A8 coclosure +
+multiadjoint (6.78), A2's full `curryEquiv`, general Ch 5 (co)limits/base-change,
+duoidal coherence (6.87), Π-distributivity (6.51). None block the VCVio
+consumers; they are natural follow-ons or Phase B/C prerequisites.
 
 ### Phase B — comonoid layer (Ch 7) — API freeze after G0
 
@@ -394,3 +434,15 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   verdict deferred until the downstream VCVio swap is attempted (the falsifiable
   test: does `seqComp`/`eval` delete more branch lines than PolyFun added?).
   Next: A3 follow-on (or A2/A4 adjunction/closure lemmas), then Phase B.
+- 2026-07-10 (cont.): **Phase A milestone 2 landed** — A2 (partial), A4,
+  A8·(6.65), A9, A10, and the A1/A3 deferrals, implemented by five parallel
+  subagents into four new modules (`CartesianClosed`, `Adjunctions`,
+  `Lens/Duoidal`, `Lens/Distributivity`) plus extensions to `InternalHom` and
+  `Lens/Factorization`. Full `lake build` + `lake lint` + `lake test` green,
+  no `sorry`. Agents caught two math errors in the plan (see `corrections.md`:
+  `ihomSum` → `*` not `⊗`; catalogue `By⊗p≅By◃p` needs `linear B` not `C B`)
+  and reused pre-existing repo lemmas (`sumCompDistrib`, `sigmaCompDistrib`,
+  object-level `prodCompDistrib`, `PFunctor.Equiv.toLensEquiv`) instead of
+  duplicating. Open Phase A remnants (A5, A8 coclosure/multiadjoint, A2 full
+  `curryEquiv`, (co)limits, 6.87 coherence, 6.51) are non-blocking follow-ons.
+  **Phase A is substantially complete.** Next: Phase B (comonoids, `Run_n`).

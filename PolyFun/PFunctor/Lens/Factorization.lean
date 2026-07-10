@@ -27,10 +27,17 @@ lens through the middle object `factorMid l = Σ_{i} y^{Q[l.toFunA i]}`:
 
 The two classes meet in the isomorphisms: a lens is a `PFunctor.Lens.Equiv`
 exactly when it is both vertical (`toFunA` bijective) and cartesian (`toFunB a`
-bijective), as recorded in `PFunctor/Lens/Cartesian.lean`. Building that
-equivalence from the two bijections, together with the `+ / × / ⊗ / ◃` closure
-of both classes (Spivak–Niu Prop 5.63, 6.88), is left to a follow-on; this file
-supplies the definitions and the factorization itself.
+bijective), as recorded in `PFunctor/Lens/Cartesian.lean`. That equivalence is
+built here as `equivOfVerticalCartesian`, by packaging the position bijection
+and the fiber bijections into a `PFunctor.Equiv` and pushing through
+`PFunctor.Equiv.toLensEquiv`.
+
+Both classes are closed under the polynomial operations (Spivak–Niu Prop 5.63,
+6.88): `IsVertical.sumMap` / `prodMap` / `tensorMap` and `IsCartesian.prodMap`
+/ `tensorMap` / `compMap` witness closure under `+`, `×`, `⊗`, and `◃`. Vertical
+lenses are *not* closed under the copairing `sumPair` (a `Sum.elim` of two
+bijections into a shared codomain need not be injective), so no such witness is
+provided.
 
 The downstream consumer is the `LawfulSubSpec` theory in VCVio, where the
 cartesian leg is the probability-preserving part of a sub-spec embedding.
@@ -38,7 +45,7 @@ cartesian leg is the probability-preserving part of a sub-spec embedding.
 
 @[expose] public section
 
-universe u v uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃
+universe u v uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uA₄ uB₄
 
 namespace PFunctor
 
@@ -61,6 +68,31 @@ theorem id (P : PFunctor.{uA, uB}) : (Lens.id P).IsVertical :=
 theorem comp {l₁ : Lens Q R} {l₂ : Lens P Q}
     (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ∘ₗ l₂).IsVertical :=
   show Function.Bijective (l₁.toFunA ∘ l₂.toFunA) from Function.Bijective.comp h₁ h₂
+
+/-- Verticality is closed under the coproduct `⊎ₗ`: the position map of
+`l₁ ⊎ₗ l₂` is `Sum.map l₁.toFunA l₂.toFunA`, bijective when both legs are. -/
+theorem sumMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}}
+    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₃}}
+    {l₁ : Lens P R} {l₂ : Lens Q W}
+    (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊎ₗ l₂).IsVertical :=
+  Function.Bijective.sumMap h₁ h₂
+
+/-- Verticality is closed under the categorical product `×ₗ`: the position map of
+`l₁ ×ₗ l₂` is `Prod.map l₁.toFunA l₂.toFunA`, bijective when both legs are. -/
+theorem prodMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
+    {l₁ : Lens P R} {l₂ : Lens Q W}
+    (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ×ₗ l₂).IsVertical :=
+  Function.Bijective.prodMap h₁ h₂
+
+/-- Verticality is closed under the tensor product `⊗ₗ`: the position map of
+`l₁ ⊗ₗ l₂` agrees with that of `l₁ ×ₗ l₂` (`Prod.map` on positions), so it is
+bijective when both legs are. -/
+theorem tensorMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
+    {l₁ : Lens P R} {l₂ : Lens Q W}
+    (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊗ₗ l₂).IsVertical :=
+  Function.Bijective.prodMap h₁ h₂
 
 end IsVertical
 
@@ -94,6 +126,63 @@ theorem isVertical_factorVert (l : Lens P Q) : (factorVert l).IsVertical :=
 /-- The cartesian leg is cartesian. -/
 theorem isCartesian_factorCart (l : Lens P Q) : (factorCart l).IsCartesian :=
   fun _ => Function.bijective_id
+
+/-! ## Closure of cartesian lenses under the polynomial operations
+
+The cartesian analogues of the verticality closure lemmas (Spivak–Niu Prop 5.63,
+6.88). Unlike positions, the fiber of a product / tensor / composition splits as
+a `Sum.map` / `Prod.map` / dependent `Sigma`-map of the leg fibers, so each is a
+bijection when both legs are cartesian. -/
+
+namespace IsCartesian
+
+/-- Cartesianness is closed under the categorical product `×ₗ`: the fiber of
+`l₁ ×ₗ l₂` at `pq` is `Sum.map (l₁.toFunB pq.1) (l₂.toFunB pq.2)`. -/
+theorem prodMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
+    {l₁ : Lens P R} {l₂ : Lens Q W}
+    (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ×ₗ l₂).IsCartesian := fun pq => by
+  have hfib : (l₁ ×ₗ l₂).toFunB pq = Sum.map (l₁.toFunB pq.1) (l₂.toFunB pq.2) := by
+    funext d; cases d <;> rfl
+  rw [hfib]
+  exact Function.Bijective.sumMap (h₁ pq.1) (h₂ pq.2)
+
+/-- Cartesianness is closed under the tensor product `⊗ₗ`: the fiber of
+`l₁ ⊗ₗ l₂` at `pq` is `Prod.map (l₁.toFunB pq.1) (l₂.toFunB pq.2)`. -/
+theorem tensorMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
+    {l₁ : Lens P R} {l₂ : Lens Q W}
+    (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ⊗ₗ l₂).IsCartesian := fun pq =>
+  Function.Bijective.prodMap (h₁ pq.1) (h₂ pq.2)
+
+/-- Cartesianness is closed under the composition `◃ₗ` (Spivak–Niu Prop 6.88):
+the fiber of `l₁ ◃ₗ l₂` at `⟨pa, pq⟩` sends `⟨rb, wc⟩` to
+`⟨l₁.toFunB pa rb, l₂.toFunB (pq (l₁.toFunB pa rb)) wc⟩`, a dependent
+`Sigma`-congruence built from the base bijection `l₁.toFunB pa` and the fiber
+bijections `l₂.toFunB _`. -/
+theorem compMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
+    {l₁ : Lens P R} {l₂ : Lens Q W}
+    (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ◃ₗ l₂).IsCartesian := by
+  rintro ⟨pa, pq⟩
+  exact (_root_.Equiv.sigmaCongr (β₂ := fun pb => Q.B (pq pb))
+    (_root_.Equiv.ofBijective _ (h₁ pa))
+    (fun rb => _root_.Equiv.ofBijective _ (h₂ (pq (l₁.toFunB pa rb))))).bijective
+
+end IsCartesian
+
+/-! ## The intersection: vertical ∩ cartesian = iso -/
+
+/-- A lens that is both **vertical** (position map bijective) and **cartesian**
+(every fiber bijective) is an isomorphism `P ≃ₗ Q`. This realizes the meeting of
+the two factorization classes: the position bijection and the fiber bijections
+assemble into a `PFunctor.Equiv`, which `PFunctor.Equiv.toLensEquiv` turns into a
+lens equivalence. -/
+noncomputable def equivOfVerticalCartesian (l : Lens P Q)
+    (hv : l.IsVertical) (hc : l.IsCartesian) : P ≃ₗ Q :=
+  PFunctor.Equiv.toLensEquiv
+    { equivA := _root_.Equiv.ofBijective l.toFunA hv
+      equivB := fun a => (_root_.Equiv.ofBijective (l.toFunB a) (hc a)).symm }
 
 end Lens
 
