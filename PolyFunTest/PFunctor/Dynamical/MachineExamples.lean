@@ -1,0 +1,56 @@
+/-
+Copyright (c) 2026 PolyFun Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Devon Tuma
+-/
+module
+
+public import PolyFun.PFunctor.Dynamical.Machine
+public import PolyFun.PFunctor.Dynamical.Speedup
+
+/-!
+# Examples for two-step systems and machine composition
+
+Regression tests: `twoStep` preserves the state set, `seqComp` has `⊕`-state and
+a faithful second phase, a concrete halting machine unrolls as expected, and
+zero-step reachability is reflexive.
+-/
+
+@[expose] public section
+
+universe u
+
+namespace PFunctor
+
+variable {p : PFunctor.{u, u}} {α β mid : Type u}
+
+/-- The two-step system shares its state set with the original. -/
+example (s : DynSystem p) : s.twoStep.State = s.State := rfl
+
+/-- Sequential composition has state `M₁.State ⊕ M₂.State`. -/
+example (M₁ : Machine p α mid) (M₂ : Machine p mid β) :
+    (M₁.seqComp M₂).State = (M₁.State ⊕ M₂.State) := rfl
+
+/-- The second phase of `seqComp` unrolls exactly like `M₂`. -/
+example (M₁ : Machine p α mid) (M₂ : Machine p mid β) (s₂ : M₂.State) :
+    (M₁.seqComp M₂).toComp 3 (Sum.inr s₂) = M₂.toComp 3 s₂ :=
+  Machine.toComp_seqComp_inr M₁ M₂ 3 s₂
+
+/-- A machine that halts immediately with output `b`. -/
+def haltMachine (b : β) : Machine X.{u, u} α β where
+  State := PUnit
+  expose := fun _ => PUnit.unit
+  update := fun _ _ => PUnit.unit
+  init := fun _ => PUnit.unit
+  output := fun _ => some b
+
+/-- With fuel it reads off its value immediately; with none it is `none`. -/
+example (b : β) : (haltMachine (α := α) b).toComp 1 PUnit.unit = FreeM.pure (some b) := rfl
+
+example (b : β) : (haltMachine (α := α) b).toComp 0 PUnit.unit = FreeM.pure none := rfl
+
+/-- Zero-step reachability is reflexive. -/
+example (D : DynSystem p) (s : D.State) : Machine.ReachableIn D 0 s s :=
+  Machine.ReachableIn.refl s
+
+end PFunctor

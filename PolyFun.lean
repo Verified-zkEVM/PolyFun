@@ -108,7 +108,9 @@ import PolyFun.PFunctor.Cofree
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Combinators
+import PolyFun.PFunctor.Dynamical.Machine
 import PolyFun.PFunctor.Dynamical.Run
+import PolyFun.PFunctor.Dynamical.Speedup
 import PolyFun.PFunctor.Dynamical.System
 import PolyFun.PFunctor.Dynamical.Trajectory
 import PolyFun.PFunctor.Equiv.Basic
@@ -119,8 +121,11 @@ import PolyFun.PFunctor.Free.Displayed.Decoration
 import PolyFun.PFunctor.Free.Displayed.StateChain
 import PolyFun.PFunctor.Free.Path
 import PolyFun.PFunctor.Free.Replicate
+import PolyFun.PFunctor.InternalHom
 import PolyFun.PFunctor.Lens.Basic
 import PolyFun.PFunctor.Lens.Cartesian
+import PolyFun.PFunctor.Lens.Composite
+import PolyFun.PFunctor.Lens.Factorization
 import PolyFun.PFunctor.Lens.State
 import PolyFun.PFunctor.M
 import PolyFun.PFunctor.Trace

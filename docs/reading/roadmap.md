@@ -15,9 +15,9 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 |---|---|
 | Ch 1–3 lens/chart calculus, monoidal ops | Deep (`PFunctor/{Basic,Equiv,Lens,Chart}`) |
 | Ch 4.1–4.4 dynamical systems, wiring | Deep (`PFunctor/Dynamical/*`, coalgebra core) |
-| Ch 4.5 ⊗-closure `[q,r]`, eval | Missing (note: `exp` is the §5.3 cartesian exponential, not this) |
-| Ch 5 factorizations, adjunctions, (co)limits | Missing except `IsCartesian` |
-| Ch 6 ◁ theory (composites, coclosure, duoidal) | `◃` data + equivalences only |
+| Ch 4.5 ⊗-closure `[q,r]`, eval | **Done (A1)**: `ihom`/`eval`/`curry`/`curryEquiv` in `PFunctor/InternalHom.lean` (note: `exp` is the §5.3 cartesian exponential, not this) |
+| Ch 5 factorizations, adjunctions, (co)limits | **Vertical–cartesian factorization done (A3 core)** in `PFunctor/Lens/Factorization.lean`; adjunction/(co)limit tickets open |
+| Ch 6 ◁ theory (composites, coclosure, duoidal) | **Destructor triple + `compNthMap` + transition-lens/`twoStep` done (A6/A7a/A7b)**; coclosure/duoidal open |
 | Ch 7 comonoids = categories, retrofunctors | Missing (raw material: `IsVeryWellBehaved`) |
 | Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | Missing (raw material: `M p`, `M.corec`, `FreeM.Path`) |
 
@@ -79,6 +79,42 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
   (Prop 6.47, 6.48–6.51), `A(p◁q) ≅ (Ap)◁q` (Ex 6.55); right-distributivity
   failures (Ex 6.56) and the ◁-action interchange failure (Ex 6.33) as
   `PolyFunTest/` counterexamples + docstring guardrails.
+
+### Phase A — implementation status (milestone 1: A1 + A3 + A6 + A7)
+
+Landed 2026-07-10 (build + `lake lint` + `lake test` green, no `sorry`):
+
+- **A1 ✅** `PFunctor/InternalHom.lean`: `ihom q r` (positions = `Lens q r`),
+  `eval`, `curry`/`uncurry`, `curryEquiv` (hom-set adjunction), `eval_comp_curry`
+  naturality, `ihomX` (`[y,r] ≅ r`), `ihom_X_A` (`[q,y]` positions = handlers).
+  *Deferred:* `ihom_sum`; the bundled Mathlib `MonoidalClosed` instance (no
+  consumer needs it — PolyFun's monoidal layer is à-la-carte).
+- **A3 ✅ (core)** `PFunctor/Lens/Factorization.lean`: `IsVertical`
+  (`toFunA` bijective) with `id`/`comp`; `factorMid`/`factorVert`/`factorCart`;
+  `factorCart_comp_factorVert = l`; the two leg-class lemmas. *Deferred to a
+  follow-on:* `equivOfVerticalCartesian` (the intersection = iso; needs
+  dependent transport) and the `+/×/⊗/◃` preservation suite (Prop 5.63, 6.88).
+- **A6 ✅** `PFunctor/Lens/Composite.lean`: `CompTriple` + `toCompTriple`
+  (`Equiv`, both round-trips `rfl`) + `ofCompTriple` (Example 6.40). The `ext`
+  principle is `toCompTriple.injective`. *Deferred:* the (6.78) fixed-policy
+  route (A8 refinement).
+- **A7a ✅** `Lens.compNthMap` (φ^◁n) + `_zero`/`_succ`/`_id` (same file).
+- **A7b ✅** `PFunctor/Dynamical/Speedup.lean`: `Lens.transitionLens` (δ, a
+  cited alias of the pre-existing `Lens.fixState`) and `DynSystem.twoStep`
+  (lifting the pre-existing `Lens.speedup`) with `twoStep_toLens`/`_state`.
+  General `nStep` intentionally left to B3 (needs `δ^(n)`).
+- **A7c ✅ (structural)** `PFunctor/Dynamical/Machine.lean`: the pointed
+  `Machine` structure (VCVio `OracleMachine`'s generic core); `seqComp` with
+  `M₁.State ⊕ M₂.State` (Example 6.41 — the structural unlock for
+  `IsPolyTime.bind` / `OracleMachine.seqComp`); phase `rfl` lemmas; fuelled
+  `toComp`; `toComp_seqComp_inr` (second phase faithful to `M₂`); `ReachableIn`.
+  *Deferred (documented, not `sorry`):* the fuel-exact cross-phase `bind` law
+  and the `IsSimulation`/`Implements`-via-`behavior_unique` transfer.
+
+The **honest split** confirmed in code: A7c gives the *structural* half of
+`IsPolyTime.bind`; the remaining half is the TM running-time bound
+(`VCVio/ToMathlib/Computability/PolyTimeTM.lean:537-552`, a documented VCVio
+`sorry`), which PolyFun does not own.
 
 ### Phase B — comonoid layer (Ch 7) — API freeze after G0
 
@@ -348,3 +384,13 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   **Reading program R0–R5 + G0 is complete.** Next milestone: Phase A
   formalization (A1–A10), starting with A1 (ihom/eval/curry) and
   A7b (transition lens δ) as the highest-leverage openers.
+- 2026-07-10 (cont.): **Phase A milestone 1 landed** — A1, A3 (core), A6,
+  A7a/b/c implemented (five new modules under `PFunctor/`, four `PolyFunTest/`
+  example files). Full `lake build` + `lake lint` + `lake test` green, no
+  `sorry`. `vcv-connection.md` cleaned into a per-construct payoff ledger.
+  Reuse wins: `Lens.fixState` already *was* δ and `Lens.speedup` the lens-level
+  two-step, so A7b was a lift. Deferrals recorded above (A3 intersection-iso +
+  preservation suite; A7c fuel-exact bind law + `IsSimulation`). Pays-rent
+  verdict deferred until the downstream VCVio swap is attempted (the falsifiable
+  test: does `seqComp`/`eval` delete more branch lines than PolyFun added?).
+  Next: A3 follow-on (or A2/A4 adjunction/closure lemmas), then Phase B.
