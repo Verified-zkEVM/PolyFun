@@ -32,7 +32,7 @@ distinct names/notations.
 i.e. *positions of `[q,r]` are exactly lenses `q ⇆ r`*, and directions at `f`
 are pairs of a `q`-position `j` with an `r[f₁ j]`-direction. This is the
 natural Lean definition (`⟨Lens q r, fun f => Σ j, r.B (f.toFunA j)⟩`): it
-makes Exercise 4.87 (`Poly(p, q) ≅ [p, q](1)`, p. 127) definitional and avoids
+makes Exercise 4.87 (`Poly(p, q) ≅ [p, q]` evaluated at `1`, p. 127) definitional and avoids
 the `∏∘◁` encoding entirely.
 
 Useful facts:
