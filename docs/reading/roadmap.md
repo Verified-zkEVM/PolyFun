@@ -531,3 +531,32 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   index-equality-test base machine away from general. Next: Phase C (cofree
   comonoid, mate = `M.corec`) with the CPA hybrid ladder (P8) as its pays-rent
   test.
+- 2026-07-11 (cont.): **Game-wiring package landed** (PR #20, the A1 payoff
+  proper). Two new modules: `Dynamical/Responder.lean` (`Responder S q :=
+  DynSystem S (q ⊸ X)` — positions are committed answer-sections via
+  `ihom_X_A`; accessors `committed`/`answer`/`next`; the Kleisli–Mealy
+  `equivStateHandler : Responder S q ≃ Handler (StateT S Id) q` with `rfl`
+  round-trips) and `Dynamical/Game.lean` (`game := wire₂ (Lens.eval q r)`,
+  `closedGame` its autonomous `r = X` instance, `game_eq_uncurry` the
+  adjunction reading; monadic runs `kleisliStep`/`kleisliIterate` and the
+  stateful-handler `stepWith`/`iterWith` with the responder/handler state
+  *first* in the pair; the machine-vs-responder step law
+  `PointedMachine.runWith_run_succ_of_output_eq_none`; two-phase
+  `Lens.eval₂ = (eval ◃ₗ eval) ∘ₗ duoidalLens` (Eq 6.86), `orderPair`
+  (Ex 6.85, guess phase cannot see the commit answer within a composite
+  step), and `game₂`). All designed `rfl` canaries held on first compile —
+  the double-eta `update_eq_next`, both `equivStateHandler` round-trips,
+  `game_expose`/`game_update`/`closedGame_step`, `stepWith_toStateHandler`
+  at `m := Id`, and the PrivK-shaped `game₂` composite step in
+  `PolyFunTest/PFunctor/Dynamical/GameExamples.lean`. Design decision
+  recorded: no scored-game structure — a win readout is a state readout on
+  the closed run, and the Moore win-bit form is the `r := monomial Bool
+  PUnit` instance of `game`. One universe finding: `Lens.uncurry` is
+  single-universe-pair, so `game_eq_uncurry` pins the challenger state
+  universe to the interfaces'. **Pays-rent slot (open):** falsifiable test
+  = the downstream VCVio PR deletes `wireKStep`/`wireKIterate`/
+  `kleisliStep`/`kleisliIterate` as definitions (they become instances of
+  `stepWith`/`iterWith`/`kleisliStep` at `m := SPMF`, modulo the
+  responder-first order flip) and derives its machine-game step lemmas
+  from `runWith_run_succ_of_output_eq_none`; verdict to be recorded at
+  VCVio landing.
