@@ -20,11 +20,15 @@ weak.linter.style.longFile = 1500
 # apply to a downstream library: `pythonStyle` shells out to a `./scripts`
 # Python linter, `checkInitImports` enforces Mathlib's own import graph, and
 # `allScriptsDocumented` enforces Mathlib's `scripts/README.md`. `unicodeLinter`
-# is intentionally left enabled — PolyFun's unicode stays within Mathlib's
-# allowlist and the check catches genuinely stray characters.
+# is also disabled: its allowlist (`UnicodeLinter.othersInMathlib`) is a
+# hardcoded set inside the Mathlib dependency with no downstream extension point,
+# so legitimate math notation PolyFun uses but Mathlib does not — e.g. `⨟`
+# (U+2A1F, diagrammatic composition) in docstrings — cannot be allowed without
+# patching the dependency.
 weak.linter.pythonStyle = false
 weak.linter.checkInitImports = false
 weak.linter.allScriptsDocumented = false
+weak.linter.unicodeLinter = false
 
 [moreServerOptions]
 linter.mathlibStandardSet = true
