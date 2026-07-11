@@ -36,25 +36,22 @@ namespace PFunctor
 
 namespace DynSystem
 
-variable {p : PFunctor.{u, u}}
+variable {S : Type u} {p : PFunctor.{u, u}}
 
 /-- The **`n`-step system** `Run_n(φ) = φ^{◁n} ∘ₗ δ^{(n)} : DynSystem (p^{◃n})`
 (Spivak–Niu §7.1.5): a single composite step exposes `n` successive `p`-positions,
 consuming a direction after each, and updates the state. Same state set as `φ`. -/
-def nStep (φ : DynSystem p) (n : ℕ) : DynSystem (compNth p n) :=
-  ofLens (φ.toLens.compNthMap n ∘ₗ (stateComonoid φ.State).comultN n)
+def nStep (φ : DynSystem S p) (n : ℕ) : DynSystem S (compNth p n) :=
+  φ.compNthMap n ∘ₗ (stateComonoid S).comultN n
 
-@[simp] theorem nStep_state (φ : DynSystem p) (n : ℕ) :
-    (φ.nStep n).State = φ.State := rfl
-
-@[simp] theorem nStep_toLens (φ : DynSystem p) (n : ℕ) :
-    (φ.nStep n).toLens = φ.toLens.compNthMap n ∘ₗ (stateComonoid φ.State).comultN n := rfl
+@[simp] theorem nStep_eq (φ : DynSystem S p) (n : ℕ) :
+    φ.nStep n = φ.compNthMap n ∘ₗ (stateComonoid S).comultN n := rfl
 
 /-- Coherence with `twoStep`: the `n = 2` step over the right-nested power
 `compNth p 2 = p ◃ (p ◃ y)` collapses to `twoStep`'s binary composite `p ◃ p`
 after the inner unitor `compX` (`p ◃ y ≅ p`). -/
-theorem twoStep_toLens_eq (φ : DynSystem p) :
-    (Lens.id p ◃ₗ Lens.Equiv.compX.toLens) ∘ₗ (φ.nStep 2).toLens = (φ.twoStep).toLens := by
+theorem twoStep_toLens_eq (φ : DynSystem S p) :
+    (Lens.id p ◃ₗ Lens.Equiv.compX.toLens) ∘ₗ φ.nStep 2 = φ.twoStep := by
   rfl
 
 end DynSystem

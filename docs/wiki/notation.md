@@ -62,8 +62,9 @@ than via custom notation, to keep elaboration predictable. Specifically:
   `(M₁.State ⊕ M₂.State) ⊕ M₃.State`. This parsing convention does not
   assert that the two possible associations of machine composition are
   definitionally equal. Note `∘ₗ` on lenses is in function-composition
-  order (`l ∘ₗ l'` applies `l'` first); extending `⨟` to lenses/charts is
-  planned alongside the `DynSystem`-as-lens re-cut.
+  order (`l ∘ₗ l'` applies `l'` first); the same `⨟` is
+  available diagrammatically on lenses (`l₁ ⨟ l₂ = l₂ ∘ₗ l₁`) and charts
+  (`c ⨟ c' = c' ∘c c`), and so on dynamical systems themselves.
 
 If you find yourself wishing for new notation in PolyFun, consider
 whether the underlying name suffices first: this library leans toward

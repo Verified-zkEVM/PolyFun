@@ -96,7 +96,7 @@ Each list element corresponds to one executed process step and stores the local
 observations that `me` obtained during that step.
 -/
 def observations {Party : Type u} [DecidableEq Party]
-    {process : Process Party} (me : Party) :
+    {P : Type v} {process : Process P Party} (me : Party) :
     {p : process.Proc} → Process.Trace process p → List (List PackedObs)
   | _, .done _ => []
   | p, .step tr tail =>
@@ -112,7 +112,7 @@ The per-step packed local observations exposed along a finite process prefix.
 This is the prefix-level analogue of `Trace.observations`.
 -/
 def observations {Party : Type u} [DecidableEq Party]
-    {process : Process Party} (me : Party) :
+    {P : Type v} {process : Process P Party} (me : Party) :
     {p : process.Proc} → {n : Nat} → Process.Prefix process p n →
       List (List PackedObs)
   | _, _, .nil => []
@@ -131,7 +131,7 @@ chooses what it means for one process step of `left` to match one process step
 of `right`, and `Rel` lifts that choice to whole finite prefixes.
 -/
 def Rel {Party : Type u}
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (rel : Concurrent.Process.TranscriptRel left right) :
     {pL : left.Proc} → {pR : right.Proc} → {n : Nat} →
       Process.Prefix left pL n → Process.Prefix right pR n → Prop
@@ -142,7 +142,7 @@ def Rel {Party : Type u}
 /-- Transporting both prefixes along equal start states does not change their
 matching relation. -/
 theorem rel_cast {Party : Type u}
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (rel : Concurrent.Process.TranscriptRel left right)
     {pL pL' : left.Proc} {pR pR' : right.Proc} {n : Nat}
     (hL : pL = pL') (hR : pR = pR')
@@ -168,7 +168,7 @@ observation-preservation theorems. The permissive relation and conjunction live
 on the canonical type as `ProcessOver.TranscriptRel.top` / `.inter`.
 -/
 abbrev TranscriptRel {Party : Type u}
-    (left right : Process Party) :=
+    {P₁ P₂ : Type v} (left : Process P₁ Party) (right : Process P₂ Party) :=
   Concurrent.Process.TranscriptRel left right
 
 namespace TranscriptRel
@@ -176,7 +176,8 @@ namespace TranscriptRel
 /--
 Match two transcripts by equality of their current controlling parties.
 -/
-def byController {Party : Type u} {left right : Process Party} :
+def byController {Party : Type u} {P₁ P₂ : Type v}
+    {left : Process P₁ Party} {right : Process P₂ Party} :
     TranscriptRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     (left.step pL).currentController? trL = (right.step pR).currentController? trR
@@ -184,7 +185,7 @@ def byController {Party : Type u} {left right : Process Party} :
 /--
 Match two transcripts by equality of their full controller paths.
 -/
-def byPath {Party : Type u} {left right : Process Party} :
+def byPath {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} :
     TranscriptRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     (left.step pL).controllerPath trL = (right.step pR).controllerPath trR
@@ -192,7 +193,7 @@ def byPath {Party : Type u} {left right : Process Party} :
 /--
 Match two transcripts by equality of stable external event labels.
 -/
-def byEvent {Party : Type u} {left right : Process Party}
+def byEvent {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     {Event : Type w}
     (eventL : left.EventMap Event) (eventR : right.EventMap Event) :
     TranscriptRel left right :=
@@ -202,7 +203,7 @@ def byEvent {Party : Type u} {left right : Process Party}
 /--
 Match two transcripts by equality of stable tickets.
 -/
-def byTicket {Party : Type u} {left right : Process Party}
+def byTicket {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     {Ticket : Type w}
     (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket) :
     TranscriptRel left right :=
@@ -216,7 +217,7 @@ This is the relation that identifies executions that are observationally
 indistinguishable to `me` at the step level.
 -/
 def byObservation {Party : Type u} [DecidableEq Party]
-    {left right : Process Party} (me : Party) :
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} (me : Party) :
     TranscriptRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     let obsL : List PackedObs := Step.obsList me (left.step pL) trL
@@ -230,7 +231,7 @@ namespace Prefix
 /-- Matching by current controller equality preserves the extracted controller
 sequence of finite prefixes. -/
 theorem currentControllers_eq_of_relByController {Party : Type u}
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     {pL : left.Proc} {pR : right.Proc} {n : Nat}
     {leftPrefix : Process.Prefix left pL n}
     {rightPrefix : Process.Prefix right pR n}
@@ -264,7 +265,7 @@ theorem currentControllers_eq_of_relByController {Party : Type u}
 /-- Matching by controller-path equality preserves the extracted controller
 path sequence of finite prefixes. -/
 theorem controllerPaths_eq_of_relByPath {Party : Type u}
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     {pL : left.Proc} {pR : right.Proc} {n : Nat}
     {leftPrefix : Process.Prefix left pL n}
     {rightPrefix : Process.Prefix right pR n}
@@ -298,7 +299,7 @@ theorem controllerPaths_eq_of_relByPath {Party : Type u}
 /-- Matching by stable event equality preserves the extracted event sequence of
 finite prefixes. -/
 theorem events_eq_of_relByEvent {Party : Type u}
-    {left right : Process Party} {Event : Type w}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} {Event : Type w}
     (eventL : left.EventMap Event) (eventR : right.EventMap Event)
     {pL : left.Proc} {pR : right.Proc} {n : Nat}
     {leftPrefix : Process.Prefix left pL n}
@@ -330,7 +331,7 @@ theorem events_eq_of_relByEvent {Party : Type u}
 /-- Matching by stable ticket equality preserves the extracted ticket sequence
 of finite prefixes. -/
 theorem tickets_eq_of_relByTicket {Party : Type u}
-    {left right : Process Party} {Ticket : Type w}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} {Ticket : Type w}
     (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket)
     {pL : left.Proc} {pR : right.Proc} {n : Nat}
     {leftPrefix : Process.Prefix left pL n}
@@ -363,7 +364,7 @@ theorem tickets_eq_of_relByTicket {Party : Type u}
 sequence of finite prefixes for the chosen party. -/
 theorem observations_eq_of_relByObservation {Party : Type u} [DecidableEq Party]
     (me : Party)
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     {pL : left.Proc} {pR : right.Proc} {n : Nat}
     {leftPrefix : Process.Prefix left pL n}
     {rightPrefix : Process.Prefix right pR n}
@@ -403,7 +404,7 @@ This is the infinite-run analogue of `Prefix.observations`, truncated to the
 first `n` steps.
 -/
 def observationsUpTo {Party : Type u} [DecidableEq Party]
-    {process : Process Party} (me : Party)
+    {P : Type v} {process : Process P Party} (me : Party)
     (run : Process.Run process) : Nat → List (List PackedObs)
   | 0 => []
   | n + 1 =>
@@ -417,7 +418,7 @@ runs `left` and `right` match step-by-step according to `rel`.
 This is the finite-prefix comparison predicate for runs.
 -/
 def RelUpTo {Party : Type u}
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (rel : TranscriptRel left right)
     (leftRun : Process.Run left) (rightRun : Process.Run right) : Nat → Prop
   | 0 => True
@@ -434,7 +435,7 @@ So two runs are related when they remain indistinguishable at every finite
 horizon under the chosen step-matching criterion.
 -/
 def Rel {Party : Type u}
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (rel : TranscriptRel left right)
     (leftRun : Process.Run left) (rightRun : Process.Run right) : Prop :=
   ∀ n, RelUpTo rel leftRun rightRun n
@@ -442,7 +443,7 @@ def Rel {Party : Type u}
 /-- Pointwise transcript matching implies prefix matching of the first `n`
 steps. -/
 theorem relUpTo_of_pointwise {Party : Type u}
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (rel : TranscriptRel left right)
     (leftRun : Process.Run left) (rightRun : Process.Run right)
     (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
@@ -462,7 +463,7 @@ theorem relUpTo_of_pointwise {Party : Type u}
 
 /-- Pointwise transcript matching implies full run matching. -/
 theorem rel_of_pointwise {Party : Type u}
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (rel : TranscriptRel left right)
     (leftRun : Process.Run left) (rightRun : Process.Run right)
     (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
@@ -473,7 +474,7 @@ theorem rel_of_pointwise {Party : Type u}
 /-- Matching by current controller equality preserves the extracted controller
 sequence of the first `n` run steps. -/
 theorem currentControllersUpTo_eq_of_relUpTo_byController {Party : Type u}
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (leftRun : Process.Run left) (rightRun : Process.Run right) {n : Nat}
     (hrel : RelUpTo TranscriptRel.byController leftRun rightRun n) :
     leftRun.currentControllersUpTo n = rightRun.currentControllersUpTo n := by
@@ -490,7 +491,7 @@ theorem currentControllersUpTo_eq_of_relUpTo_byController {Party : Type u}
 /-- Matching by controller-path equality preserves the extracted controller-path
 sequence of the first `n` run steps. -/
 theorem controllerPathsUpTo_eq_of_relUpTo_byPath {Party : Type u}
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (leftRun : Process.Run left) (rightRun : Process.Run right) {n : Nat}
     (hrel : RelUpTo TranscriptRel.byPath leftRun rightRun n) :
     leftRun.controllerPathsUpTo n = rightRun.controllerPathsUpTo n := by
@@ -507,7 +508,7 @@ theorem controllerPathsUpTo_eq_of_relUpTo_byPath {Party : Type u}
 /-- Matching by stable event equality preserves the extracted event sequence of
 the first `n` run steps. -/
 theorem eventsUpTo_eq_of_relUpTo_byEvent {Party : Type u}
-    {left right : Process Party} {Event : Type w}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} {Event : Type w}
     (eventL : left.EventMap Event) (eventR : right.EventMap Event)
     (leftRun : Process.Run left) (rightRun : Process.Run right) {n : Nat}
     (hrel : RelUpTo (TranscriptRel.byEvent eventL eventR) leftRun rightRun n) :
@@ -525,7 +526,7 @@ theorem eventsUpTo_eq_of_relUpTo_byEvent {Party : Type u}
 /-- Matching by stable ticket equality preserves the extracted ticket sequence
 of the first `n` run steps. -/
 theorem ticketsUpTo_eq_of_relUpTo_byTicket {Party : Type u}
-    {left right : Process Party} {Ticket : Type w}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} {Ticket : Type w}
     (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket)
     (leftRun : Process.Run left) (rightRun : Process.Run right) {n : Nat}
     (hrel : RelUpTo (TranscriptRel.byTicket ticketL ticketR) leftRun rightRun n) :
@@ -544,7 +545,7 @@ theorem ticketsUpTo_eq_of_relUpTo_byTicket {Party : Type u}
 sequence of the first `n` run steps for the chosen party. -/
 theorem observationsUpTo_eq_of_relUpTo_byObservation {Party : Type u}
     [DecidableEq Party] (me : Party)
-    {left right : Process Party}
+    {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (leftRun : Process.Run left) (rightRun : Process.Run right) {n : Nat}
     (hrel : RelUpTo (TranscriptRel.byObservation me) leftRun rightRun n) :
     observationsUpTo me leftRun n = observationsUpTo me rightRun n := by

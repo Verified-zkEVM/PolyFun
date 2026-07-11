@@ -323,7 +323,7 @@ independent events.
 
 ### Dynamic processes
 
-`Process Party` is a coinductive-style stream: each step is a sequential
+`Process P Party` is a coinductive-style stream on states `P`: each step is a sequential
 `Interaction.Spec` episode, producing a residual process. `Process.Run`
 and `Process.Prefix` model infinite and finite executions. `Machine`
 provides a state-indexed transition-system frontend that compiles to
@@ -331,23 +331,24 @@ provides a state-indexed transition-system frontend that compiles to
 
 ### Coalgebraic structure
 
-Both `ProcessOver` and `Machine` are dynamical systems, i.e. bundled
+Both `ProcessOver` and `Machine` are dynamical systems, i.e.
 coalgebras of polynomial functors
 ([`PolyFun/PFunctor/Dynamical/Basic.lean`](../../PolyFun/PFunctor/Dynamical/Basic.lean)):
 
-- `ProcessOver Γ` *is* `PFunctor.DynSystem (StepOver.toPFunctor Γ)` — a
-  state space together with a coalgebra of the step polynomial whose
+- `ProcessOver P Γ` *is* `PFunctor.DynSystem P (StepOver.toPFunctor Γ)`
+  — a coalgebra on the state space `P` of the step polynomial whose
   positions are `Γ`-decorated specs and whose directions are complete
   transcripts. `ProcessOver.step` / `ProcessOver.ofStep` are the
   `StepOver`-shaped views of the coalgebra structure map.
-- `Machine` *is* `PFunctor.DynSystem PFunctor.univ` — the exposed
+- `Machine S` *is* `PFunctor.DynSystem S PFunctor.univ` — the exposed
   position at each state is the type of currently enabled events.
   `Machine.Enabled` / `Machine.step` / `Machine.mk'` keep the classical
   vocabulary.
 - `StepOver Γ` remains a `Functor` (post-compose on `next`) and
   `LawfulFunctor`; `StepOver.equivObj` identifies it with the extension
   of `StepOver.toPFunctor Γ`.
-- The generic instance `Coalg p.Obj s.State` (from `DynSystem.out`, in
+- The coalgebra packaging `DynSystem.coalg : Coalg p.Obj S` (built from
+  `DynSystem.out`, against
   [`PolyFun/Control/Coalgebra.lean`](../../PolyFun/Control/Coalgebra.lean))
   therefore covers both; a `Coalg F S` is a type `S` together with
   `out : S → F S`, the categorical dual of `MonadAlgebra`.
@@ -370,9 +371,9 @@ polynomial endofunctor, with the step functor playing the role of the
 
 `ProcessOver.interleave` factors out the binary-choice interleaving
 pattern shared by `par`, `wire`, and `plug` in `OpenProcessModel`. Given
-two processes `p₁ : ProcessOver Γ₁`, `p₂ : ProcessOver Γ₂`, context
-morphisms into a target context `Δ`, and a scheduler decoration, it
-produces a `ProcessOver Δ` with product state space `p₁.Proc × p₂.Proc`.
+two processes `p₁ : ProcessOver P₁ Γ₁`, `p₂ : ProcessOver P₂ Γ₂`,
+context morphisms into a target context `Δ`, and a scheduler decoration,
+it produces a `ProcessOver (P₁ × P₂) Δ` on the product state space.
 
 ### Control and observation
 
@@ -589,9 +590,9 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Control.lean` | `Control`, `scheduler?`, `current?`, `controllers` |
 | `Profile.lean` | `Profile`, `observe`, `residual`, `frontierView` |
 | `Current.lean` | `view`, `observe`, `residualView` |
-| `Process.lean` | `NodeAuthority`, `NodeView`, `NodeProfile`, `StepOver`, `ProcessOver` (= `DynSystem` of the step polynomial; views `step` / `ofStep`), `Process`, `Functor (StepOver Γ)`, `interleave` / `interleaveLens` / `interleave_eq_wrap_choiceProd`, `Behavior`, metadata bundles as `DynSystem` instantiations |
+| `Process.lean` | `NodeAuthority`, `NodeView`, `NodeProfile`, `StepOver`, `ProcessOver` (= `DynSystem` of the step polynomial, state space as parameter; views `step` / `ofStep`), `Process`, `Functor (StepOver Γ)`, `interleave` / `interleaveLens` / `interleave_eq_wrap_choiceProd`, `Behavior`, metadata bundles as `DynSystem` instantiations |
 | `Tree.lean` | structural concurrent syntax → `Process` |
-| `Machine.lean` | `Machine` (= `DynSystem PFunctor.univ`), `Machine.{Enabled, step, mk', SafetySpec}`, `Machine.toProcess` |
+| `Machine.lean` | `Machine` (= `DynSystem` at `PFunctor.univ`, state space as parameter), `Machine.{Enabled, step, mk', SafetySpec}`, `Machine.toProcess` |
 | `Execution.lean` | `Trace`, `ObservedTrace` for processes |
 | `Run.lean` | `Prefix`, `Run` (infinite), controller / event extraction |
 | `Policy.lean` | `StepPolicy`, `respects`, combinators |

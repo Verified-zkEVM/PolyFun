@@ -40,7 +40,7 @@ It returns `true` when that step is allowed and `false` when it is forbidden.
 -/
 abbrev StepPolicy
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (process : ProcessOver Γ) :=
+    {P : Type v} (process : ProcessOver P Γ) :=
   {p : process.Proc} → (process.step p).spec.Transcript → Bool
 
 namespace StepPolicy
@@ -48,14 +48,14 @@ namespace StepPolicy
 /-- The permissive policy that allows every step transcript. -/
 def top
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ} : StepPolicy process :=
+    {P : Type v} {process : ProcessOver P Γ} : StepPolicy process :=
   fun _ => true
 
 /-- Conjunction of two step policies. A step is allowed exactly when both
 component policies allow it. -/
 def inter
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     (left right : StepPolicy process) : StepPolicy process :=
   fun tr => left tr && right tr
 
@@ -67,7 +67,7 @@ the concrete step transcript, after projecting the generic context into
 def byController
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Party : Type u}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
     (allow : Party → Bool) : StepPolicy process :=
   fun {p} tr =>
@@ -82,7 +82,7 @@ transcript, after projecting the generic context into `StepContext`.
 def byPath
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Party : Type u}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
     (allow : List Party → Bool) : StepPolicy process :=
   fun {p} tr => allow (((process.step p).mapContext resolve).controllerPath tr)
@@ -93,7 +93,7 @@ transcript-level event map `eventMap`.
 -/
 def byEvent
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event)
     (allow : Event → Bool) : StepPolicy process :=
@@ -105,7 +105,7 @@ transcript by `ticketMap`.
 -/
 def byTicket
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket)
     (allow : Ticket → Bool) : StepPolicy process :=
@@ -121,7 +121,7 @@ execution `trace` satisfies the executable step policy `policy`.
 -/
 def respects
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     (policy : StepPolicy process) :
     {p : process.Proc} → Trace process p → Bool
   | _, .done _ => true
@@ -130,7 +130,7 @@ def respects
 @[simp, grind =]
 theorem respects_top
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     {p : process.Proc} (trace : Trace process p) :
     respects StepPolicy.top trace = true := by
   induction trace with
@@ -145,17 +145,17 @@ end ProcessOver
 namespace Process
 
 /-- The closed-world specialization of `ProcessOver.StepPolicy`. -/
-abbrev StepPolicy {Party : Type u} (process : Process Party) :=
+abbrev StepPolicy {Party : Type u} {P : Type v} (process : Process P Party) :=
   ProcessOver.StepPolicy process
 
 namespace StepPolicy
 
 /-- The permissive closed-world step policy. -/
-abbrev top {Party : Type u} {process : Process Party} : StepPolicy process :=
+abbrev top {Party : Type u} {P : Type v} {process : Process P Party} : StepPolicy process :=
   ProcessOver.StepPolicy.top
 
 /-- Conjunction of closed-world step policies. -/
-abbrev inter {Party : Type u} {process : Process Party}
+abbrev inter {Party : Type u} {P : Type v} {process : Process P Party}
     (left right : StepPolicy process) : StepPolicy process :=
   ProcessOver.StepPolicy.inter left right
 
@@ -163,7 +163,7 @@ abbrev inter {Party : Type u} {process : Process Party}
 `byController allow` constrains only the current controlling party of the
 concrete closed-world step transcript.
 -/
-abbrev byController {Party : Type u} {process : Process Party}
+abbrev byController {Party : Type u} {P : Type v} {process : Process P Party}
     (allow : Party → Bool) : StepPolicy process :=
   ProcessOver.StepPolicy.byController
     (resolve := Interaction.Spec.Node.ContextHom.id (StepContext Party))
@@ -173,7 +173,7 @@ abbrev byController {Party : Type u} {process : Process Party}
 `byPath allow` constrains the full controller path of the concrete closed-world
 step transcript.
 -/
-abbrev byPath {Party : Type u} {process : Process Party}
+abbrev byPath {Party : Type u} {P : Type v} {process : Process P Party}
     (allow : List Party → Bool) : StepPolicy process :=
   ProcessOver.StepPolicy.byPath
     (resolve := Interaction.Spec.Node.ContextHom.id (StepContext Party))
@@ -183,7 +183,7 @@ abbrev byPath {Party : Type u} {process : Process Party}
 `byEvent eventMap allow` constrains the stable event label induced by the
 transcript-level event map `eventMap`.
 -/
-abbrev byEvent {Party : Type u} {process : Process Party}
+abbrev byEvent {Party : Type u} {P : Type v} {process : Process P Party}
     {Event : Type w₃}
     (eventMap : process.EventMap Event)
     (allow : Event → Bool) : StepPolicy process :=
@@ -193,7 +193,7 @@ abbrev byEvent {Party : Type u} {process : Process Party}
 `byTicket ticketMap allow` constrains the stable ticket attached to each
 closed-world step transcript by `ticketMap`.
 -/
-abbrev byTicket {Party : Type u} {process : Process Party}
+abbrev byTicket {Party : Type u} {P : Type v} {process : Process P Party}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket)
     (allow : Ticket → Bool) : StepPolicy process :=
@@ -207,13 +207,13 @@ namespace Trace
 `respects policy trace` checks whether every step of the finite closed-world
 process execution `trace` satisfies the executable step policy `policy`.
 -/
-abbrev respects {Party : Type u} {process : Process Party}
+abbrev respects {Party : Type u} {P : Type v} {process : Process P Party}
     (policy : StepPolicy process) :
     {p : process.Proc} → Trace process p → Bool :=
   ProcessOver.Trace.respects policy
 
 @[grind =]
-theorem respects_top {Party : Type u} {process : Process Party}
+theorem respects_top {Party : Type u} {P : Type v} {process : Process P Party}
     {p : process.Proc} (trace : Trace process p) :
     respects StepPolicy.top trace = true :=
   ProcessOver.Trace.respects_top trace

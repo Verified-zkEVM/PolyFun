@@ -57,6 +57,12 @@ def comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunct
 
 @[inherit_doc] infixl:75 " ∘ₗ " => comp
 
+/-- Diagrammatic composition of lenses: `l₁ ⨟ l₂` applies `l₁` first and `l₂`
+second, the book's left-to-right composition order, so `l₁ ⨟ l₂ = l₂ ∘ₗ l₁`.
+This is the same `⨟` used for machine sequential composition and throughout
+`docs/reading`. -/
+notation:75 l₁:75 " ⨟ " l₂:76 => Lens.comp l₂ l₁
+
 @[simp]
 theorem id_comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (f : Lens P Q) :
     (Lens.id Q) ∘ₗ f = f := rfl

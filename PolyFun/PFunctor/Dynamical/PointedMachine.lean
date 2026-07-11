@@ -63,9 +63,17 @@ namespace PFunctor
 
 /-- A **pointed machine** over the interface `p`: a `p`-dynamical system pointed
 by an `init` map and read out by a partial `output` (`none` while still
-running). The interface-agnostic form of VCVio's `OracleMachine`. -/
-structure PointedMachine (p : PFunctor.{uA, uB}) (α : Type uα) (β : Type uβ)
-    extends DynSystem.{u} p where
+running). The interface-agnostic form of VCVio's `OracleMachine`. The dynamical
+core — the lens `selfMonomial State ⟹ p` — is `toDynSystem`; the machine
+bundles its state set so that runs and composition can be stated without
+threading the state type. -/
+structure PointedMachine (p : PFunctor.{uA, uB}) (α : Type uα) (β : Type uβ) where
+  /-- The set of states of the machine. -/
+  State : Type u
+  /-- The position exposed at each state (the "output" of the underlying system). -/
+  expose : State → p.A
+  /-- The transition: given a direction at the exposed position, the next state. -/
+  update : (s : State) → p.B (expose s) → State
   /-- Where the machine starts, given an input. -/
   init : α → State
   /-- The value read off a state; `none` while the machine is still running. -/
@@ -153,6 +161,17 @@ def wrap (M : PointedMachine.{u} p α β) (w : Lens p q) : PointedMachine.{u} q 
 @[simp] theorem wrap_update (w : Lens p q) (M : PointedMachine.{u} p α β)
     (st : M.State) (d : q.B (w.toFunA (M.expose st))) :
     (M.wrap w).update st d = M.update st (w.toFunB (M.expose st) d) := rfl
+
+/-- The dynamical core of a pointed machine: its `expose` / `update` data as a
+lens out of the self monomial of its state set. -/
+def toDynSystem (M : PointedMachine.{u} p α β) : DynSystem M.State p :=
+  M.expose ⇆ M.update
+
+@[simp] theorem expose_toDynSystem (M : PointedMachine.{u} p α β) :
+    M.toDynSystem.expose = M.expose := rfl
+
+@[simp] theorem update_toDynSystem (M : PointedMachine.{u} p α β) :
+    M.toDynSystem.update = M.update := rfl
 
 /-! ## Sequential composition -/
 

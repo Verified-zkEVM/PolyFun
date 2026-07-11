@@ -23,60 +23,65 @@ universe u v
 
 namespace PFunctor
 
-variable {p : PFunctor.{u, u}}
+variable {S : Type u} {p : PFunctor.{u, u}}
 
 /-- Equality is a simulation of any dynamical system by itself. -/
-def idSim (D : DynSystem.{u} p) : DynSystem.IsSimulation D D (· = ·) where
+def idSim (D : DynSystem S p) : DynSystem.IsSimulation D D (· = ·) where
   expose_eq h := congrArg D.expose h
   update_rel h _ := by subst h; rfl
 
 /-- A simulation turns into behaviour equality. -/
-example (D : DynSystem.{u} p) (s : D.State) : D.behavior s = D.behavior s :=
+example (D : DynSystem S p) (s : S) : D.behavior s = D.behavior s :=
   DynSystem.behavior_eq_of_isSimulation (idSim D) rfl
 
 /-- ...and hence observational equivalence. -/
-example (D : DynSystem.{u} p) (s : D.State) : DynSystem.ObsEq D D s s :=
+example (D : DynSystem S p) (s : S) : DynSystem.ObsEq D D s s :=
   DynSystem.obsEq_of_isSimulation (idSim D) rfl
 
 /-- Simulations do not require the two state types to inhabit the same
 universe. -/
-example {D₁ : DynSystem.{u} p} {D₂ : DynSystem.{v} p}
-    {R : D₁.State → D₂.State → Prop} (sim : DynSystem.IsSimulation D₁ D₂ R)
-    {s₁ : D₁.State} {s₂ : D₂.State} (h : R s₁ s₂) :
+example {S₁ : Type u} {S₂ : Type v} {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p}
+    {R : S₁ → S₂ → Prop} (sim : DynSystem.IsSimulation D₁ D₂ R)
+    {s₁ : S₁} {s₂ : S₂} (h : R s₁ s₂) :
     D₁.behavior s₁ = D₂.behavior s₂ :=
   DynSystem.behavior_eq_of_isSimulation sim h
 
-/-- The graph of the identity coalgebra morphism is a simulation. -/
-example (D : DynSystem.{u} p) :
+/-- The graph of the identity coalgebra morphism is a simulation. The coalgebra
+structure is the system's own, supplied locally via `letI := D.coalg`. -/
+example (D : DynSystem S p) :
+    letI := D.coalg
     DynSystem.IsSimulation D D (fun s₁ s₂ => Coalg.Hom.id (F := p.Obj) s₁ = s₂) :=
+  letI := D.coalg
   DynSystem.isSimulation_graph_coalgHom (Coalg.Hom.id)
 
 /-- Coalgebra morphisms preserve behaviour trees. -/
-example (D : DynSystem.{u} p) (s : D.State) :
-    D.behavior (Coalg.Hom.id (F := p.Obj) (S₁ := D.State) s) = D.behavior s :=
+example (D : DynSystem S p) (s : S) :
+    letI := D.coalg
+    D.behavior (Coalg.Hom.id (F := p.Obj) (S₁ := S) s) = D.behavior s :=
+  letI := D.coalg
   DynSystem.behavior_coalgHom Coalg.Hom.id s
 
 /-- A step-synchronized simulation is an operational forward simulation at
 `StepRel.sync`. -/
-example (D : DynSystem.{u} p) :
+example (D : DynSystem S p) :
     DynSystem.ForwardSimulation D D (DynSystem.StepRel.sync D D) :=
   DynSystem.ForwardSimulation.ofIsSimulation (idSim D)
 
 /-- The same synchronized simulation lifts to safety refinement once the three
 verification-policy obligations are supplied. -/
-example (D : DynSystem.{u} p) :
+example (D : DynSystem S p) :
     DynSystem.SafetyRefinement
-      ⟨D, fun _ => True, fun _ => True, fun _ => True⟩
-      ⟨D, fun _ => True, fun _ => True, fun _ => True⟩
+      ⟨S, D, fun _ => True, fun _ => True, fun _ => True⟩
+      ⟨S, D, fun _ => True, fun _ => True, fun _ => True⟩
       (DynSystem.StepRel.sync D D) :=
   DynSystem.SafetyRefinement.ofIsSimulation (idSim D)
     (fun st _ => ⟨st, trivial, rfl⟩) (fun _ _ => trivial) (fun _ _ => trivial)
 
 /-- Safety refinements compose by composing their operational simulations and
 their verification-policy obligations. -/
-example (D : DynSystem.{u} p) :
+example (D : DynSystem S p) :
     let system : DynSystem.SafetySpec.{u} p :=
-      ⟨D, fun _ => True, fun _ => True, fun _ => True⟩
+      ⟨S, D, fun _ => True, fun _ => True, fun _ => True⟩
     DynSystem.SafetyRefinement system system
       (DynSystem.StepRel.comp
         (DynSystem.StepRel.top : DynSystem.StepRel system.toDynSystem system.toDynSystem)
@@ -87,11 +92,11 @@ example (D : DynSystem.{u} p) :
 
 /-! Concrete-step relations expose the expected relational algebra. -/
 
-example (D : DynSystem.{u} p) :
+example (D : DynSystem S p) :
     DynSystem.StepRel.comp (DynSystem.StepRel.id D) DynSystem.StepRel.top =
       (DynSystem.StepRel.top : DynSystem.StepRel D D) := by simp
 
-example (D : DynSystem.{u} p) :
+example (D : DynSystem S p) :
     DynSystem.StepRel.reverse
         (DynSystem.StepRel.comp DynSystem.StepRel.top (DynSystem.StepRel.id D)) =
       (DynSystem.StepRel.top : DynSystem.StepRel D D) := by
@@ -99,9 +104,9 @@ example (D : DynSystem.{u} p) :
   simp
 
 /-- Mutual refinements can weaken both endpoint matching relations together. -/
-example (D : DynSystem.{u} p) :
+example (D : DynSystem S p) :
     let system : DynSystem.SafetySpec.{u} p :=
-      ⟨D, fun _ => True, fun _ => True, fun _ => True⟩
+      ⟨S, D, fun _ => True, fun _ => True, fun _ => True⟩
     DynSystem.MutualSafetyRefinement system system
       DynSystem.StepRel.top DynSystem.StepRel.top := by
   intro system

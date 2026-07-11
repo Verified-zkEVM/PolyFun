@@ -52,8 +52,8 @@ type, every inhabitant is finite, so the existence of a `Telescope` term is a
 proof that the underlying state machine terminates.
 
 The `(round, step)` data is exactly a coalgebra of the undecorated step
-polynomial `Spec.stepPoly` — a `PFunctor.DynSystem Spec.stepPoly` unpacked on
-its state set. -/
+polynomial `Spec.stepPoly` — a `PFunctor.DynSystem St Spec.stepPoly`
+unpacked on its states. -/
 abbrev Telescope {St : Type v}
     (round : St → Spec.{u})
     (step : (s : St) → Transcript (round s) → St) : St → Type (max u v) :=
