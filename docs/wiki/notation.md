@@ -49,8 +49,18 @@ than via custom notation, to keep elaboration predictable. Specifically:
   surface syntax for `roll` / `pure`; reach for `PFunctor.FreeM.lift`
   and `PFunctor.FreeM.liftPos` when you need to embed a single
   polynomial step.
+- Machine sequential composition `M₁ ⨟ M₂` (input `\;;`, U+2A1F) is
+  `PointedMachine.seqComp`, defined in
+  [`PolyFun/PFunctor/Dynamical/PointedMachine.lean`](../../PolyFun/PFunctor/Dynamical/PointedMachine.lean)
+  at `infixl:75`. This is the book's diagrammatic composition order
+  (left machine runs first), the same `⨟` used throughout
+  `docs/reading/`; its intentional use is recorded as a narrow exception in
+  `scripts/nolints-style.txt`. Note `∘ₗ` on lenses is
+  *anti*-diagrammatic (`l ∘ₗ l'` applies `l'` first); extending `⨟` to
+  lenses/charts is planned alongside the `DynSystem`-as-lens re-cut.
 
 If you find yourself wishing for new notation in PolyFun, consider
 whether the underlying name suffices first: this library leans toward
 explicit names and standard Mathlib notation, and reserves custom
-operators for the UC-composition algebra above.
+operators for the UC-composition algebra above (plus the book's `⨟`
+for machine composition).
