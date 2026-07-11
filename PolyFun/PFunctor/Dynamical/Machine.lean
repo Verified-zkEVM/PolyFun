@@ -202,15 +202,6 @@ theorem runWith_output_some (M : Machine q α β) (h : Handler m q) (k : ℕ) {s
 
 end Run
 
-/-! ## Reachability -/
-
-/-- `ReachableIn D n s s'`: state `s'` is reachable from `s` in exactly `n` steps
-of the dynamical system `D` under some sequence of directions. -/
-inductive ReachableIn (D : DynSystem p) : ℕ → D.State → D.State → Prop
-  | refl (s : D.State) : ReachableIn D 0 s s
-  | step {n : ℕ} {s s' : D.State} (d : p.B (D.expose s)) :
-      ReachableIn D n (D.update s d) s' → ReachableIn D (n + 1) s s'
-
 end Machine
 
 end PFunctor

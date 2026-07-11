@@ -107,7 +107,8 @@ Landed 2026-07-10 (build + `lake lint` + `lake test` green, no `sorry`):
   `Machine` structure (VCVio `OracleMachine`'s generic core); `seqComp` with
   `M₁.State ⊕ M₂.State` (Example 6.41 — the structural unlock for
   `IsPolyTime.bind` / `OracleMachine.seqComp`); phase `rfl` lemmas; fuelled
-  `toComp`; `toComp_seqComp_inr` (second phase faithful to `M₂`); `ReachableIn`.
+  `toComp`; `toComp_seqComp_inr` (second phase faithful to `M₂`);
+  `DynSystem.ReachableIn` (in `Dynamical/Run.lean`, via `Prefix.last`).
   *Deferred (documented, not `sorry`):* the fuel-exact cross-phase `bind` law
   and the `IsSimulation`/`Implements`-via-`behavior_unique` transfer.
 

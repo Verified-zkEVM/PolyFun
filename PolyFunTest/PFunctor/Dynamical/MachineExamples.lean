@@ -12,8 +12,7 @@ public import PolyFun.PFunctor.Dynamical.Speedup
 # Examples for two-step systems and machine composition
 
 Regression tests: `twoStep` preserves the state set, `seqComp` has `⊕`-state and
-a faithful second phase, a concrete halting machine unrolls as expected, and
-zero-step reachability is reflexive.
+a faithful second phase, and a concrete halting machine unrolls as expected.
 -/
 
 @[expose] public section
@@ -57,9 +56,5 @@ def haltMachine (b : β) : Machine X.{u, u} α β where
 example (b : β) : (haltMachine (α := α) b).toComp 1 PUnit.unit = FreeM.pure (some b) := rfl
 
 example (b : β) : (haltMachine (α := α) b).toComp 0 PUnit.unit = FreeM.pure none := rfl
-
-/-- Zero-step reachability is reflexive. -/
-example (D : DynSystem p) (s : D.State) : Machine.ReachableIn D 0 s s :=
-  Machine.ReachableIn.refl s
 
 end PFunctor

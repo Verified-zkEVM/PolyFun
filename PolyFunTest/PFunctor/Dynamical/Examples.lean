@@ -134,6 +134,13 @@ example (r : DynSystem.Run counter) (n : ℕ) :
     r.state n = counter.stateStream r.initial r.dir n :=
   counter.state_eq_stateStream r n
 
+/-- Zero-step reachability is reflexive. -/
+example : toggle.ReachableIn 0 (3 : ℕ) (3 : ℕ) := .refl toggle (3 : ℕ)
+
+/-- Two increments reach `5` from `3` in two steps. -/
+example : toggle.ReachableIn 2 (3 : ℕ) (5 : ℕ) :=
+  .step true (.step true (.refl toggle (5 : ℕ)))
+
 /-! ## Asynchronous choice -/
 
 /-- One `choiceProd` step advances exactly the chosen side. -/

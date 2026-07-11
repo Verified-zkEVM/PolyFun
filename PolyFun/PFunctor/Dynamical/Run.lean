@@ -18,7 +18,10 @@ state).
 
 For a general `p`-system:
 
-* `DynSystem.Prefix` — a finite orbit: a chosen direction at each visited state.
+* `DynSystem.Prefix` — a finite orbit: a chosen direction at each visited
+  state, with `Prefix.last` reading off the final state visited.
+* `DynSystem.ReachableIn` — `n`-step reachability: some length-`n` finite
+  orbit connects the two states.
 * `DynSystem.Run` — an infinite orbit: the state at each time, the direction
   chosen there, and the proof that states follow the transition; with
   `Run.take` truncating to a `Prefix` and `Run.eventsUpTo` / `Run.ticketsUpTo`
@@ -76,6 +79,11 @@ def tickets {s : DynSystem.{u} p} {Ticket : Type w} (ticketMap : s.Tickets Ticke
   | _, _, .nil => []
   | st, _, .step d tail => ticketMap st d :: tail.tickets ticketMap
 
+/-- The final state visited by a finite orbit. -/
+def last {s : DynSystem.{u} p} : {st : s.State} → {n : ℕ} → Prefix s st n → s.State
+  | st, _, .nil => st
+  | _, _, .step _ tail => tail.last
+
 @[simp] theorem events_nil {s : DynSystem.{u} p} {Event : Type w}
     (eventMap : s.EventMap Event) {st : s.State} :
     events eventMap (.nil : Prefix s st 0) = [] := rfl
@@ -94,7 +102,44 @@ def tickets {s : DynSystem.{u} p} {Ticket : Type w} (ticketMap : s.Tickets Ticke
     (d : p.B (s.expose st)) (tail : Prefix s (s.update st d) n) :
     tickets ticketMap (.step d tail) = ticketMap st d :: tail.tickets ticketMap := rfl
 
+@[simp] theorem last_nil {s : DynSystem.{u} p} {st : s.State} :
+    (.nil : Prefix s st 0).last = st := rfl
+
+@[simp] theorem last_step {s : DynSystem.{u} p} {st : s.State} {n : ℕ}
+    (d : p.B (s.expose st)) (tail : Prefix s (s.update st d) n) :
+    (Prefix.step d tail).last = tail.last := rfl
+
 end Prefix
+
+/-! ## Reachability -/
+
+/-- `ReachableIn s n st st'`: the state `st'` is reachable from `st` in exactly
+`n` steps of the system `s` under some choice of directions — some length-`n`
+finite orbit from `st` ends at `st'`. -/
+def ReachableIn (s : DynSystem.{u} p) (n : ℕ) (st st' : s.State) : Prop :=
+  ∃ pre : Prefix s st n, pre.last = st'
+
+/-- Every state is reachable from itself in zero steps. -/
+theorem ReachableIn.refl (s : DynSystem.{u} p) (st : s.State) :
+    s.ReachableIn 0 st st :=
+  ⟨.nil, rfl⟩
+
+/-- Reachability extends by one leading step along any direction at the
+current state. -/
+theorem ReachableIn.step {s : DynSystem.{u} p} {n : ℕ} {st st' : s.State}
+    (d : p.B (s.expose st)) (h : s.ReachableIn n (s.update st d) st') :
+    s.ReachableIn (n + 1) st st' := by
+  obtain ⟨pre, hpre⟩ := h
+  exact ⟨.step d pre, hpre⟩
+
+@[simp] theorem reachableIn_zero_iff {s : DynSystem.{u} p} {st st' : s.State} :
+    s.ReachableIn 0 st st' ↔ st' = st := by
+  constructor
+  · rintro ⟨pre, hpre⟩
+    cases pre
+    exact hpre.symm
+  · rintro rfl
+    exact .refl s _
 
 /-- An infinite orbit of a `p`-system: the state at each time, the direction
 chosen there, and the proof that the state stream follows the transition
