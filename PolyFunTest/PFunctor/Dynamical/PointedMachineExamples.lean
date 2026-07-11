@@ -22,10 +22,11 @@ universe u
 
 namespace PFunctor
 
-variable {p : PFunctor.{u, u}} {α β mid : Type u}
+variable {S : Type u} {p : PFunctor.{u, u}} {α β mid : Type u}
 
-/-- The two-step system shares its state set with the original. -/
-example (s : DynSystem p) : s.twoStep.State = s.State := rfl
+/-- The two-step system shares its state set with the original, as recorded by
+its type: it is literally `Lens.speedup` on the system's lens. -/
+example (s : DynSystem S p) : s.twoStep = Lens.speedup s := rfl
 
 /-- The `⨟` notation is diagrammatic sequential composition. -/
 example (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) :

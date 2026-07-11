@@ -97,7 +97,7 @@ end State
 Each process state is one packaged structural residual state, and each process
 step is the current frontier interaction produced by `State.currentStep`.
 -/
-def toProcess {Party : Type u} [DecidableEq Party] : Process Party :=
+def toProcess {Party : Type u} [DecidableEq Party] : Process (State Party) Party :=
   ProcessOver.ofStep (State Party) State.currentStep
 
 /-- Package one structural residual state as the initial state of the tree

@@ -28,7 +28,7 @@ namespace DynSystem.Examples
 
 /-- A running-sum counter: state is the accumulated total, the output is the total
 itself, and each input is added to the state. -/
-def counter : MooreMachine ℕ ℕ := MooreMachine.mk' id (· + ·)
+def counter : MooreMachine ℕ ℕ ℕ := MooreMachine.mk' id (· + ·)
 
 example : counter.run (0 : ℕ) [1, 2, 3] = (6 : ℕ) := rfl
 
@@ -41,11 +41,12 @@ example (st : ℕ) (is js : List ℕ) :
     counter.run st (is ++ js) = counter.run (counter.run st is) js :=
   counter.run_append st is js
 
-/-- The lens round-trip is definitional. -/
-example {p : PFunctor} (s : DynSystem p) : ofLens s.toLens = s := rfl
+/-- Rebuilding a system from its dynamical accessors is definitional: a
+dynamical system *is* the lens `expose ⇆ update`. -/
+example {S : Type} {p : PFunctor} (s : DynSystem S p) : (s.expose ⇆ s.update) = s := rfl
 
 /-- Wrapping with the identity lens is a no-op. -/
-example {p : PFunctor} (s : DynSystem p) : wrap (Lens.id p) s = s := rfl
+example {S : Type} {p : PFunctor} (s : DynSystem S p) : wrap (Lens.id p) s = s := rfl
 
 /-- A deterministic automaton whose state accumulates the `xor` of its inputs,
 starting from `true`. -/
@@ -71,10 +72,8 @@ def gate : PFunctor := ⟨Bool, fun b => bif b then Unit else Bool⟩
 
 /-- A system over `gate`: from the `true` mode it advances silently to `false`; from
 the `false` mode the incoming `Bool` direction becomes the next mode. -/
-def gateSys : DynSystem gate where
-  State := Bool
-  expose := id
-  update := fun s => match s with
+def gateSys : DynSystem Bool gate :=
+  DynSystem.mk' id fun s => match s with
     | true => fun _ => false
     | false => id
 
@@ -109,10 +108,8 @@ example (n : ℕ) :
 /-- A machine-style system over the universe polynomial: the exposed position is
 the type of currently enabled events. From `n`, choosing `true` increments and
 `false` stays. -/
-def toggle : DynSystem univ where
-  State := ℕ
-  expose := fun _ => Bool
-  update := fun n b => if b then n + 1 else n
+def toggle : DynSystem ℕ univ :=
+  DynSystem.mk' (fun _ => Bool) (fun n b => if b then n + 1 else n)
 
 example : toggle.update (3 : ℕ) true = (4 : ℕ) := rfl
 

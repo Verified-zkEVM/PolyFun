@@ -189,7 +189,7 @@ remembers the entire internal interaction episode that realized that step.
 -/
 inductive Trace
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (process : ProcessOver Γ) :
+    {P : Type v} (process : ProcessOver P Γ) :
     process.Proc → Sort _ where
   | /-- A finished execution of a residual process state whose current step has
     no complete transcripts. -/
@@ -208,7 +208,7 @@ namespace Trace
 /-- The number of process steps recorded by a finite execution trace. -/
 def length
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ} :
+    {P : Type v} {process : ProcessOver P Γ} :
     {p : process.Proc} → Trace process p → Nat
   | _, .done _ => 0
   | _, .step _ tail => tail.length.succ
@@ -221,7 +221,7 @@ each executed process step after projecting the generic step context into
 def currentControllers
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Party : Type u}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party)) :
     {p : process.Proc} → Trace process p → List (Option Party)
   | _, .done _ => []
@@ -237,7 +237,7 @@ executed process step after projecting the generic step context into
 def controllerPaths
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Party : Type u}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party)) :
     {p : process.Proc} → Trace process p → List (List Party)
   | _, .done _ => []
@@ -251,7 +251,7 @@ process step transcript by the stable event map `eventMap`.
 -/
 def events
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event) :
     {p : process.Proc} → Trace process p → List Event
@@ -265,7 +265,7 @@ step transcript by `ticketMap`.
 -/
 def tickets
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket) :
     {p : process.Proc} → Trace process p → List Ticket
@@ -276,7 +276,7 @@ def tickets
 @[simp, grind =]
 theorem length_done
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     {p : process.Proc}
     (h : (process.step p).spec.Transcript → False) :
     length (.done h : Trace process p) = 0 := rfl
@@ -284,7 +284,7 @@ theorem length_done
 @[simp, grind =]
 theorem length_step
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     {p : process.Proc}
     (tr : (process.step p).spec.Transcript)
     (tail : Trace process ((process.step p).next tr)) :
@@ -302,7 +302,7 @@ inductive ObservedTrace
     {Party : Type u} [DecidableEq Party]
     (me : Party)
     (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
-    (process : ProcessOver Γ) :
+    {P : Type v} (process : ProcessOver P Γ) :
     {p : process.Proc} → Trace process p → Sort _ where
   | /-- The unique observed trace of a finished quiescent execution. -/
     done {p : process.Proc}
@@ -324,7 +324,7 @@ def length
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Party : Type u} [DecidableEq Party]
     {me : Party} {resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party)}
-    {process : ProcessOver Γ} :
+    {P : Type v} {process : ProcessOver P Γ} :
     {p : process.Proc} → {trace : Trace process p} →
       ObservedTrace me resolve process trace →
       Nat
@@ -340,7 +340,7 @@ def ofTrace
     {Party : Type u} [DecidableEq Party]
     (me : Party)
     (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
-    (process : ProcessOver Γ) :
+    {P : Type v} (process : ProcessOver P Γ) :
     {p : process.Proc} → (trace : Trace process p) →
       ObservedTrace me resolve process trace
   | _, .done _ => .done
@@ -354,7 +354,7 @@ theorem length_done
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Party : Type u} [DecidableEq Party]
     {me : Party} {resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party)}
-    {process : ProcessOver Γ} {p : process.Proc}
+    {P : Type v} {process : ProcessOver P Γ} {p : process.Proc}
     {h : (process.step p).spec.Transcript → False} :
     length (ObservedTrace.done
       (me := me) (resolve := resolve) (process := process) (p := p) (h := h)) = 0 := by
@@ -365,7 +365,7 @@ theorem length_step
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Party : Type u} [DecidableEq Party]
     {me : Party} {resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party)}
-    {process : ProcessOver Γ} {p : process.Proc}
+    {P : Type v} {process : ProcessOver P Γ} {p : process.Proc}
     {tr : (process.step p).spec.Transcript}
     {tail : Trace process ((process.step p).next tr)}
     (obs : StepOver.ObservedTranscript me resolve (process.step p) tr)
@@ -383,7 +383,7 @@ theorem length_ofTrace
     {Party : Type u} [DecidableEq Party]
     {me : Party}
     (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
-    (process : ProcessOver Γ) :
+    {P : Type v} (process : ProcessOver P Γ) :
     {p : process.Proc} → (trace : Trace process p) →
       (ofTrace me resolve process trace).length = trace.length
   | _, .done _ => rfl
@@ -398,27 +398,27 @@ end ProcessOver
 namespace Process
 
 /-- The closed-world specialization of `ProcessOver.Trace`. -/
-abbrev Trace {Party : Type u} (process : Process Party) :=
+abbrev Trace {Party : Type u} {P : Type v} (process : Process P Party) :=
   ProcessOver.Trace process
 
 namespace Trace
 
 /-- The number of process steps recorded by a finite closed-world execution
 trace. -/
-abbrev length {Party : Type u} {process : Process Party} :
+abbrev length {Party : Type u} {P : Type v} {process : Process P Party} :
     {p : process.Proc} → Process.Trace process p → Nat :=
   ProcessOver.Trace.length
 
 /-- The current controlling party of each executed step of a closed-world
 trace. -/
-def currentControllers {Party : Type u} {process : Process Party} :
+def currentControllers {Party : Type u} {P : Type v} {process : Process P Party} :
     {p : process.Proc} → Process.Trace process p → List (Option Party)
   | _, .done _ => []
   | p, .step tr tail =>
       (process.step p).currentController? tr :: currentControllers tail
 
 /-- The full controller path of each executed step of a closed-world trace. -/
-def controllerPaths {Party : Type u} {process : Process Party} :
+def controllerPaths {Party : Type u} {P : Type v} {process : Process P Party} :
     {p : process.Proc} → Process.Trace process p → List (List Party)
   | _, .done _ => []
   | p, .step tr tail =>
@@ -426,25 +426,25 @@ def controllerPaths {Party : Type u} {process : Process Party} :
 
 /-- The stable event labels attached to the executed steps of a closed-world
 trace. -/
-abbrev events {Party : Type u} {process : Process Party} {Event : Type w₃}
+abbrev events {Party : Type u} {P : Type v} {process : Process P Party} {Event : Type w₃}
     (eventMap : process.EventMap Event) :
     {p : process.Proc} → Process.Trace process p → List Event :=
   ProcessOver.Trace.events eventMap
 
 /-- The stable tickets attached to the executed steps of a closed-world trace. -/
-abbrev tickets {Party : Type u} {process : Process Party} {Ticket : Type w₃}
+abbrev tickets {Party : Type u} {P : Type v} {process : Process P Party} {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket) :
     {p : process.Proc} → Process.Trace process p → List Ticket :=
   ProcessOver.Trace.tickets ticketMap
 
 @[simp, grind =]
-theorem length_done {Party : Type u} {process : Process Party}
+theorem length_done {Party : Type u} {P : Type v} {process : Process P Party}
     {p : process.Proc} (h : (process.step p).spec.Transcript → False) :
     length (.done h : Process.Trace process p) = 0 :=
   ProcessOver.Trace.length_done h
 
 @[simp, grind =]
-theorem length_step {Party : Type u} {process : Process Party}
+theorem length_step {Party : Type u} {P : Type v} {process : Process P Party}
     {p : process.Proc}
     (tr : (process.step p).spec.Transcript)
     (tail : Process.Trace process ((process.step p).next tr)) :
@@ -455,7 +455,7 @@ end Trace
 
 /-- The closed-world specialization of `ProcessOver.ObservedTrace`. -/
 abbrev ObservedTrace {Party : Type u} [DecidableEq Party]
-    (me : Party) (process : Process Party) :
+    (me : Party) {P : Type v} (process : Process P Party) :
     {p : process.Proc} → Process.Trace process p → Sort _ :=
   ProcessOver.ObservedTrace me
     (Interaction.Spec.Node.ContextHom.id (StepContext Party))
@@ -465,7 +465,7 @@ namespace ObservedTrace
 
 /-- The number of process steps recorded by an observed closed-world trace. -/
 abbrev length {Party : Type u} [DecidableEq Party]
-    {me : Party} {process : Process Party} :
+    {me : Party} {P : Type v} {process : Process P Party} :
     {p : process.Proc} → {trace : Process.Trace process p} →
       ObservedTrace me process trace →
       Nat :=
@@ -476,7 +476,7 @@ abbrev length {Party : Type u} [DecidableEq Party]
 induced by the concrete execution trace `trace`.
 -/
 abbrev ofTrace {Party : Type u} [DecidableEq Party]
-    (me : Party) (process : Process Party) :
+    (me : Party) {P : Type v} (process : Process P Party) :
     {p : process.Proc} → (trace : Process.Trace process p) →
       ObservedTrace me process trace :=
   ProcessOver.ObservedTrace.ofTrace me
@@ -485,7 +485,7 @@ abbrev ofTrace {Party : Type u} [DecidableEq Party]
 
 @[grind =]
 theorem length_done {Party : Type u} [DecidableEq Party]
-    {me : Party} {process : Process Party} {p : process.Proc}
+    {me : Party} {P : Type v} {process : Process P Party} {p : process.Proc}
     {h : (process.step p).spec.Transcript → False} :
     length (ProcessOver.ObservedTrace.done
       (me := me)
@@ -497,7 +497,7 @@ theorem length_done {Party : Type u} [DecidableEq Party]
 
 @[grind =]
 theorem length_step {Party : Type u} [DecidableEq Party]
-    {me : Party} {process : Process Party} {p : process.Proc}
+    {me : Party} {P : Type v} {process : Process P Party} {p : process.Proc}
     {tr : (process.step p).spec.Transcript}
     {tail : Process.Trace process ((process.step p).next tr)}
     (obs : StepOver.ObservedTranscript me
@@ -513,7 +513,7 @@ The canonical observed closed-world trace has the same number of process steps
 as the underlying execution trace.
 -/
 theorem length_ofTrace {Party : Type u} [DecidableEq Party]
-    {me : Party} (process : Process Party) :
+    {me : Party} {P : Type v} (process : Process P Party) :
     {p : process.Proc} → (trace : Process.Trace process p) →
       (ofTrace me process trace).length = trace.length :=
   ProcessOver.ObservedTrace.length_ofTrace

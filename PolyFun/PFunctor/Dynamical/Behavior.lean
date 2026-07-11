@@ -26,38 +26,38 @@ Niu–Spivak slogan).
 
 @[expose] public section
 
-universe uO uI
+universe u uO uI
 
 namespace PFunctor
 
 namespace MooreMachine
 
-variable {O : Type uO} {I : Type uI}
+variable {S : Type u} {O : Type uO} {I : Type uI}
 
 /-- The closed-loop transition: advance the state by feeding the current output back
 through `f` as the next input. This is definitionally `(feedback f m).step` (see
 `feedback_step`); it is phrased directly on `m` so the resulting stream's universes do
 not depend on the phantom direction universe of the closed interface `X`. -/
-def feedbackStep (f : O → I) (m : MooreMachine O I) (st : m.State) : m.State :=
+def feedbackStep (f : O → I) (m : MooreMachine S O I) (st : S) : S :=
   m.transition st (f (m.output st))
 
 /-- The output observed at time `n` once the machine is closed on itself by feeding
 its output back through `f`: the original Moore output read off each closed-loop state. -/
-def feedbackStream (f : O → I) (m : MooreMachine O I) (st : m.State) (n : ℕ) : O :=
+def feedbackStream (f : O → I) (m : MooreMachine S O I) (st : S) (n : ℕ) : O :=
   m.output ((m.feedbackStep f)^[n] st)
 
-@[simp] theorem feedbackStream_zero (f : O → I) (m : MooreMachine O I) (st : m.State) :
+@[simp] theorem feedbackStream_zero (f : O → I) (m : MooreMachine S O I) (st : S) :
     m.feedbackStream f st 0 = m.output st := rfl
 
 /-- The closed-loop output stream advances by feeding the current output back as the
 next input. -/
-theorem feedbackStream_succ (f : O → I) (m : MooreMachine O I) (st : m.State) (n : ℕ) :
+theorem feedbackStream_succ (f : O → I) (m : MooreMachine S O I) (st : S) (n : ℕ) :
     m.feedbackStream f st (n + 1) = m.feedbackStream f (m.transition st (f (m.output st))) n := by
   simp only [feedbackStream, Function.iterate_succ_apply, feedbackStep]
 
 /-- The trajectory spine of the closed-loop system is the iterate of its states:
 the closed system's "matter" is exactly its state stream. -/
-theorem next_iterate_feedback (f : O → I) (m : MooreMachine O I) (st : m.State) (n : ℕ) :
+theorem next_iterate_feedback (f : O → I) (m : MooreMachine S O I) (st : S) (n : ℕ) :
     (CofreeC.next)^[n] (DynSystem.trajectory (feedback f m) st)
       = DynSystem.trajectory (feedback f m) ((feedback f m).iterate st n) :=
   DynSystem.next_iterate_trajectory (feedback f m) st n

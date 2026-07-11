@@ -135,11 +135,11 @@ private theorem OpenProcess.ext_of_step_eq
   cases hsampler
   rfl
 
-/-- Derive step equality (as a function) from a `ProcessOver` equality,
-when both ProcessOvers have the same `.Proc` type definitionally. -/
+/-- Derive step equality (as a function) from a `ProcessOver` equality
+between two processes on the same residual state space. -/
 private theorem heq_step_of_processOver_eq.{v₀, w₀, w₂}
-    {Γ : Interaction.Spec.Node.Context.{w₀, w₂}}
-    {P₁ P₂ : Concurrent.ProcessOver.{v₀, w₀, w₂} Γ}
+    {Proc : Type v₀} {Γ : Interaction.Spec.Node.Context.{w₀, w₂}}
+    {P₁ P₂ : Concurrent.ProcessOver.{v₀, w₀, w₂} Proc Γ}
     (h : P₁ = P₂) :
     HEq P₁.step P₂.step :=
   h ▸ HEq.rfl

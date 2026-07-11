@@ -23,14 +23,15 @@ universe u
 
 namespace PFunctor
 
-variable {p : PFunctor.{u, u}} {α β mid : Type u}
+variable {S : Type u} {p : PFunctor.{u, u}} {α β mid : Type u}
 
-/-- `nStep` preserves the state set. -/
-example (φ : DynSystem p) (n : ℕ) : (φ.nStep n).State = φ.State := rfl
+/-- `nStep` preserves the state set, visible in its type: an `n`-step system on
+states `S` is again a system on states `S`. -/
+example (φ : DynSystem S p) (n : ℕ) : DynSystem S (compNth p n) := φ.nStep n
 
 /-- `Run_2` collapses to `twoStep` after the inner unitor. -/
-example (φ : DynSystem p) :
-    (Lens.id p ◃ₗ Lens.Equiv.compX.toLens) ∘ₗ (φ.nStep 2).toLens = φ.twoStep.toLens :=
+example (φ : DynSystem S p) :
+    (Lens.id p ◃ₗ Lens.Equiv.compX.toLens) ∘ₗ φ.nStep 2 = φ.twoStep :=
   DynSystem.twoStep_toLens_eq φ
 
 /-! ## The monad-parametric run in `Option` (pays-rent instance) -/

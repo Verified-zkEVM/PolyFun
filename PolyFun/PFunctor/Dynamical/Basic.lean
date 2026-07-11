@@ -13,20 +13,22 @@ import Batteries.Tactic.Lint
 # Dynamical systems as dependent lenses
 
 Following Niu–Spivak, *Polynomial Functors: A Mathematical Theory of Interaction*
-(Chapter 4), a **`p`-dynamical system** is a dependent lens out of a
-self-monomial state polynomial: `selfMonomial State ⟹ p`. Unpacking the lens
-gives a state set together with an `expose` map (what the system reads off its
-state, valued in the positions `p.A`) and an `update` map (how an incoming
-direction `p.B (expose s)` evolves the state). We bundle the state existentially
-as a `structure` for ergonomics and record the round-trip identification with the
-lens form (`toLens` / `ofLens`), so the entire `PFunctor.Lens` combinator library
-applies to dynamical systems. Equivalently, repackaging `expose` / `update` as
-`out : State → p.Obj State` (`DynSystem.out`) exhibits a dynamical system as an
-F-coalgebra of the extension functor of `p`, with a `Coalg p.Obj` instance:
-dynamical systems are the bundled coalgebras of polynomial functors.
+(Chapter 4), a **`p`-dynamical system with states `S`** *is* a dependent lens out
+of the self-monomial state polynomial: `DynSystem S p` is definitionally
+`Lens (selfMonomial S) p`, so the entire `PFunctor.Lens` combinator library
+applies to dynamical systems on the nose — wrapping a system along a wiring lens
+is literally lens composition. The lens's position map is the system's `expose`
+(what the system reads off its state, valued in the positions `p.A`) and its
+direction map is `update` (how an incoming direction `p.B (expose s)` evolves the
+state); both are provided as definitional accessors under the dynamical names.
+Equivalently, repackaging `expose` / `update` as `out : S → p.Obj S`
+(`DynSystem.out`) exhibits a dynamical system as an F-coalgebra of the extension
+functor of `p`, with a `Coalg p.Obj` instance: dynamical systems are the
+coalgebras of polynomial functors.
 
-* `PFunctor.DynSystem p` — a `p`-dynamical system.
-* `PFunctor.MooreMachine O I` — the special case over the interface `O X^ I`
+* `PFunctor.DynSystem S p` — a `p`-dynamical system with state set `S`, i.e. a
+  lens `selfMonomial S ⟹ p`.
+* `PFunctor.MooreMachine S O I` — the special case over the interface `O X^ I`
   (output set `O`, input set `I`), recovering classical Moore machines.
 * `PFunctor.DeterministicAutomaton O I` — a Moore machine with a distinguished start state.
 
@@ -41,90 +43,97 @@ universe u uA uB uO uI
 
 namespace PFunctor
 
-/-- A **`p`-dynamical system** (Niu–Spivak §4.1): a state set together with the
-data of a dependent lens `selfMonomial State ⟹ p`, unpacked into
+/-- A **`p`-dynamical system with states `S`** (Niu–Spivak §4.1): a dependent
+lens `selfMonomial S ⟹ p`. Under the dynamical accessors this is
 
-* `expose : State → p.A` — the position the system currently presents, and
-* `update : (s : State) → p.B (expose s) → State` — the next state, given a
-  direction at the exposed position.
+* `expose : S → p.A` — the position the system currently presents (the lens's
+  position map `toFunA`), and
+* `update : (s : S) → p.B (expose s) → S` — the next state, given a direction at
+  the exposed position (the lens's direction map `toFunB`).
 
-The lens identification is `toLens` / `ofLens`. -/
-structure DynSystem (p : PFunctor.{uA, uB}) where
-  /-- The set of states of the system. -/
-  State : Type u
-  /-- The position exposed at each state (the "output" of the system). -/
-  expose : State → p.A
-  /-- The transition: given a direction at the exposed position, the next state. -/
-  update : (s : State) → p.B (expose s) → State
+The identification is definitional — "a dynamical system *is* a lens" — so lens
+combinators, lens equalities, and the diagrammatic composition `⨟` apply to
+dynamical systems directly. -/
+abbrev DynSystem (S : Type u) (p : PFunctor.{uA, uB}) : Type _ :=
+  Lens (selfMonomial S) p
 
 namespace DynSystem
 
-variable {p : PFunctor.{uA, uB}}
+variable {S : Type u} {p : PFunctor.{uA, uB}}
 
-/-- The interface lens `selfMonomial State ⟹ p` of a dynamical system: the
-"a dynamical system *is* a lens" identification. -/
-def toLens (s : DynSystem p) : Lens (selfMonomial s.State) p := s.expose ⇆ s.update
+/-- The position exposed at each state (the "output" of the system): the lens's
+position map under its dynamical name. -/
+def expose (s : DynSystem S p) : S → p.A := s.toFunA
 
-/-- Build a dynamical system from a state set and an interface lens
-`selfMonomial S ⟹ p`. -/
-def ofLens {S : Type u} (l : Lens (selfMonomial S) p) : DynSystem p where
-  State := S
-  expose := l.toFunA
-  update := l.toFunB
+/-- The transition: given a direction at the exposed position, the next state.
+The lens's direction map under its dynamical name. -/
+def update (s : DynSystem S p) : (st : S) → p.B (s.expose st) → S := s.toFunB
 
-@[simp] theorem toLens_ofLens {S : Type u} (l : Lens (selfMonomial S) p) :
-    (ofLens l).toLens = l := rfl
+/-- Build a dynamical system from its dynamical data; definitionally `Lens.mk`
+(and so also writable as `expose ⇆ update`). -/
+def mk' (expose : S → p.A) (update : (st : S) → p.B (expose st) → S) :
+    DynSystem S p :=
+  expose ⇆ update
 
-@[simp] theorem ofLens_toLens (s : DynSystem p) : ofLens s.toLens = s := rfl
+@[simp] theorem expose_mk' (e : S → p.A) (t : (st : S) → p.B (e st) → S) :
+    (mk' e t).expose = e := rfl
 
-@[simp] theorem toLens_toFunA (s : DynSystem p) : s.toLens.toFunA = s.expose := rfl
+@[simp] theorem update_mk' (e : S → p.A) (t : (st : S) → p.B (e st) → S) :
+    (mk' e t).update = t := rfl
 
-@[simp] theorem toLens_toFunB (s : DynSystem p) : s.toLens.toFunB = s.update := rfl
+/-- Normalize the lens position map of a dynamical system to `expose`. -/
+@[simp] theorem toFunA_eq_expose (s : DynSystem S p) : s.toFunA = s.expose := rfl
+
+/-- Normalize the lens direction map of a dynamical system to `update`. -/
+@[simp] theorem toFunB_eq_update (s : DynSystem S p) : s.toFunB = s.update := rfl
 
 /-! ## The coalgebra structure map -/
 
 /-- The coalgebra structure map of a dynamical system: at each state, the exposed
-position together with the transition function at that position. A `DynSystem p`
-with state set `S` is exactly a coalgebra `S → p.Obj S` of the extension functor
-of `p`, unpacked into the `expose` / `update` fields. -/
-def out (s : DynSystem p) (st : s.State) : p.Obj s.State := ⟨s.expose st, s.update st⟩
+position together with the transition function at that position. A `DynSystem S p`
+is exactly a coalgebra `S → p.Obj S` of the extension functor of `p`, unpacked
+into the `expose` / `update` accessors. -/
+def out (s : DynSystem S p) (st : S) : p.Obj S := ⟨s.expose st, s.update st⟩
 
-@[simp] theorem out_fst (s : DynSystem p) (st : s.State) : (s.out st).1 = s.expose st := rfl
+@[simp] theorem out_fst (s : DynSystem S p) (st : S) : (s.out st).1 = s.expose st := rfl
 
-@[simp] theorem out_snd (s : DynSystem p) (st : s.State) (d : p.B (s.expose st)) :
+@[simp] theorem out_snd (s : DynSystem S p) (st : S) (d : p.B (s.expose st)) :
     (s.out st).2 d = s.update st d := rfl
 
-/-- Every dynamical system is an F-coalgebra of its interface's extension functor. -/
-instance (s : DynSystem p) : Coalg p.Obj s.State := ⟨s.out⟩
+/-- Every dynamical system is an F-coalgebra of its interface's extension functor.
+Not an instance: with the state a parameter, the system no longer appears in the
+class's return type, so synthesis could not select one. -/
+@[reducible] def coalg (s : DynSystem S p) : Coalg p.Obj S := ⟨s.out⟩
 
 end DynSystem
 
 /-! ## Moore machines and deterministic automata -/
 
-/-- A **Moore machine** with output set `O` and input set `I`: a dynamical system
-over the interface `monomial O I = O X^ I`. Unpacking, `expose : State → O` is
-the Moore output and `update : State → I → State` is the transition function
-(Niu–Spivak §4.1). -/
-abbrev MooreMachine (O : Type uO) (I : Type uI) : Type _ := DynSystem (monomial O I)
+/-- A **Moore machine** with states `S`, output set `O` and input set `I`: a
+dynamical system over the interface `monomial O I = O X^ I`. Unpacking,
+`expose : S → O` is the Moore output and `update : S → I → S` is the transition
+function (Niu–Spivak §4.1). -/
+abbrev MooreMachine (S : Type u) (O : Type uO) (I : Type uI) : Type _ :=
+  DynSystem S (monomial O I)
 
 namespace MooreMachine
 
-variable {O : Type uO} {I : Type uI}
+variable {S : Type u} {O : Type uO} {I : Type uI}
 
 /-- The Moore output at each state. -/
-def output (m : MooreMachine O I) : m.State → O := m.expose
+def output (m : MooreMachine S O I) : S → O := m.expose
 
-/-- The transition function `State → I → State`. -/
-def transition (m : MooreMachine O I) : m.State → I → m.State := m.update
+/-- The transition function `S → I → S`. -/
+def transition (m : MooreMachine S O I) : S → I → S := m.update
 
-/-- Build a Moore machine from a state set, an output function and a transition
-function, using the classical field names. -/
-def mk' {S : Type u} (out : S → O) (tr : S → I → S) : MooreMachine O I := ⟨S, out, tr⟩
+/-- Build a Moore machine from an output function and a transition function,
+using the classical field names; definitionally `out ⇆ tr`. -/
+def mk' (out : S → O) (tr : S → I → S) : MooreMachine S O I := out ⇆ tr
 
-@[simp] theorem output_mk' {S : Type u} (out : S → O) (tr : S → I → S) :
+@[simp] theorem output_mk' (out : S → O) (tr : S → I → S) :
     (mk' out tr).output = out := rfl
 
-@[simp] theorem transition_mk' {S : Type u} (out : S → O) (tr : S → I → S) :
+@[simp] theorem transition_mk' (out : S → O) (tr : S → I → S) :
     (mk' out tr).transition = tr := rfl
 
 end MooreMachine
@@ -148,11 +157,8 @@ namespace DeterministicAutomaton
 variable {O : Type uO} {I : Type uI}
 
 /-- The Moore machine underlying a deterministic automaton (forgetting the start state). -/
-def toMooreMachine (a : DeterministicAutomaton O I) : MooreMachine O I :=
+def toMooreMachine (a : DeterministicAutomaton O I) : MooreMachine a.State O I :=
   MooreMachine.mk' a.output a.transition
-
-@[simp] theorem toMooreMachine_State (a : DeterministicAutomaton O I) :
-    a.toMooreMachine.State = a.State := rfl
 
 end DeterministicAutomaton
 
@@ -175,26 +181,28 @@ a `Section p`, the position map is trivial and the direction map is `σ`. -/
 def sectionLens {p : PFunctor.{uA, uB}} (σ : (a : p.A) → p.B a) : Section p :=
   (fun _ => PUnit.unit) ⇆ (fun a _ => σ a)
 
-/-- A **closed** dynamical system is an `X`-system: its interface is the
-composition unit, so the dynamics reduce to a pure state endofunction. -/
+/-- A **closed** dynamical system on states `S` is an `X`-system: its interface is
+the composition unit, so the dynamics reduce to a pure state endofunction. -/
 -- `Closed`'s universes are the composition-unit interface's independent position (`uA`) and
 -- direction (`uB`) universes; kept separate for generality.
 @[nolint checkUnivs]
-abbrev Closed : Type _ := DynSystem X.{uA, uB}
+abbrev Closed (S : Type u) : Type _ := DynSystem S X.{uA, uB}
 
 namespace Closed
 
+variable {S : Type u}
+
 /-- The pure state transition of a closed system. -/
-def step (s : Closed) (st : s.State) : s.State := s.update st PUnit.unit
+def step (s : Closed S) (st : S) : S := s.update st PUnit.unit
 
 /-- The state of a closed system after `n` steps from `st`: the `n`-fold iterate of
 `step`. The closed system runs autonomously, so its behaviour is this ℕ-indexed
 trajectory of states. -/
-def iterate (s : Closed) (st : s.State) : ℕ → s.State := fun n => s.step^[n] st
+def iterate (s : Closed S) (st : S) : ℕ → S := fun n => s.step^[n] st
 
-@[simp] theorem iterate_zero (s : Closed) (st : s.State) : s.iterate st 0 = st := rfl
+@[simp] theorem iterate_zero (s : Closed S) (st : S) : s.iterate st 0 = st := rfl
 
-theorem iterate_succ (s : Closed) (st : s.State) (n : ℕ) :
+theorem iterate_succ (s : Closed S) (st : S) (n : ℕ) :
     s.iterate st (n + 1) = s.iterate (s.step st) n := rfl
 
 end Closed

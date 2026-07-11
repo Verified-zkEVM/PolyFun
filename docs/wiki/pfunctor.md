@@ -63,11 +63,11 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/PFunctor/Dynamical/Basic.lean`](../../PolyFun/PFunctor/Dynamical/Basic.lean) | `DynSystem p` (a `p`-system = lens `selfMonomial State ⟹ p`), `toLens`/`ofLens`; the coalgebra structure map `out : State → p.Obj State` with its `Coalg p.Obj` instance; `MooreMachine`, `DeterministicAutomaton`, `Closed` / `Closed.iterate`, `Point` (`X ⟹ p`) and `Section` (`p ⟹ X`) / `sectionLens`. |
+| [`PolyFun/PFunctor/Dynamical/Basic.lean`](../../PolyFun/PFunctor/Dynamical/Basic.lean) | `DynSystem S p` (a `p`-system on states `S`, definitionally the lens type `Lens (selfMonomial S) p`, with accessors `expose` / `update` and constructor `mk'`); the coalgebra structure map `out : S → p.Obj S` with its packaging `DynSystem.coalg : Coalg p.Obj S`; `MooreMachine`, `DeterministicAutomaton`, `Closed` / `Closed.iterate`, `Point` (`X ⟹ p`) and `Section` (`p ⟹ X`) / `sectionLens`. |
 | [`PolyFun/PFunctor/Dynamical/System.lean`](../../PolyFun/PFunctor/Dynamical/System.lean) | Transition metadata and verification bundles: `EventMap` / `Tickets`, `Labeled` / `Ticketed`, `System` (`init` / `assumptions` / `safe` / `inv`), and the step-matching relations `DirRel` (`top` / `reverse` / `inter`). Instantiated by concurrent machines and processes. |
 | [`PolyFun/PFunctor/Dynamical/Combinators.lean`](../../PolyFun/PFunctor/Dynamical/Combinators.lean) | Building systems from old ones: `wrap` (§4.3.3), `close` / `MooreMachine.feedback` (§4.3.4), `tensor` (§4.3.2), `pairing` (§4.3.1), `choiceProd` (asynchronous choice), `Wiring₂` / `wire₂` (§4.4). |
 | [`PolyFun/PFunctor/Dynamical/Run.lean`](../../PolyFun/PFunctor/Dynamical/Run.lean) | Generic orbits: `DynSystem.Prefix` / `DynSystem.Run` (with `take`, `event(s)`/`ticket(s)`, `Prefix.last`, `RelUpTo` / `Rel`); `DynSystem.ReachableIn` (`n`-step reachability via `Prefix`); Moore finite runs `run`, `trace`, `outputOn`, `DeterministicAutomaton.accepts`; input streams `stateStream` / `outputStream` with `stateStream_eq_run`; `streamRun` / `iterateRun` identifying them with generic runs. |
-| [`PolyFun/PFunctor/Dynamical/Trajectory.lean`](../../PolyFun/PFunctor/Dynamical/Trajectory.lean) | Infinite behaviour: terminal-coalgebra `behavior : State → M p` with `behavior_unique` and `ObsEq`; cofree `trajectory : DynSystem p → State → CofreeC p p.A` with `trajectory_eq_selfLabel_behavior`; closed-system spine `CofreeC.next`, `next_iterate_trajectory`. |
+| [`PolyFun/PFunctor/Dynamical/Trajectory.lean`](../../PolyFun/PFunctor/Dynamical/Trajectory.lean) | Infinite behaviour: terminal-coalgebra `behavior : S → M p` with `behavior_unique` and `ObsEq`; cofree `trajectory : DynSystem S p → S → CofreeC p p.A` with `trajectory_eq_selfLabel_behavior`; closed-system spine `CofreeC.next`, `next_iterate_trajectory`. |
 | [`PolyFun/PFunctor/Dynamical/Behavior.lean`](../../PolyFun/PFunctor/Dynamical/Behavior.lean) | Closed-loop behaviour of a Moore machine: `feedbackStep`, `feedbackStream`, `next_iterate_feedback`. |
 | [`PolyFun/PFunctor/Dynamical/Speedup.lean`](../../PolyFun/PFunctor/Dynamical/Speedup.lean) | The transition lens `δ = Lens.transitionLens` (Ex 6.44) and `DynSystem.twoStep` (the `n = 2` composite over `p ◃ p`). |
 | [`PolyFun/PFunctor/Dynamical/PointedMachine.lean`](../../PolyFun/PFunctor/Dynamical/PointedMachine.lean) | `PointedMachine`: pointed machines (`init` / partial `output`) over an interface; `seqComp` (⊕-state sequential composition, Ex 6.41) with `toComp_seqComp_inl/inr`; fuelled `toComp`; monad-parametric `runWith` = `mapM ∘ toComp` with `runWith_succ` / `runWith_output_some` (fuel irrelevance). |
@@ -98,7 +98,7 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 `PolyFun/Control/` is logically below `PFunctor/Free` in the import DAG and
 provides the reusable monad / comonad / coalgebra plumbing. See
 [`PolyFun/Control/`](../../PolyFun/Control/) for the full inventory:
-`Coalgebra` (the `Coalg` class: every `DynSystem p` is a `Coalg p.Obj`),
+`Coalgebra` (the `Coalg` class: every `DynSystem S p` yields a `Coalg p.Obj S` via `DynSystem.coalg`),
 `Comonad/{Basic, Instances}`, `Lawful/Basic`,
 `Monad/{Algebra, Equiv, Free, FreeCont, Hom, Iter}`, `Trace`.
 

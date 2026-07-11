@@ -294,8 +294,9 @@ def ForwardSimulation.ofIsSimulation {S₁ S₂ : System.{u} p}
   stateRel := R
   init := hinit
   assumptions := hassumptions
-  step h d₁ :=
-    ⟨hsim.expose_eq h ▸ d₁, ⟨hsim.expose_eq h, (eqRec_heq _ _).symm⟩,
+  step := fun {_stImpl stSpec} h d₁ =>
+    ⟨show p.B (S₂.toDynSystem.expose stSpec) from hsim.expose_eq h ▸ d₁,
+      ⟨hsim.expose_eq h, (eqRec_heq _ _).symm⟩,
       hsim.update_rel h d₁⟩
   safe := hsafe
 

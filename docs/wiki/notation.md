@@ -56,8 +56,9 @@ than via custom notation, to keep elaboration predictable. Specifically:
   (left machine runs first), the same `⨟` used throughout
   `docs/reading/` — the glyph the `unicodeLinter` carve-out in
   `lakefile.toml` was made for. Note `∘ₗ` on lenses is
-  *anti*-diagrammatic (`l ∘ₗ l'` applies `l'` first); extending `⨟` to
-  lenses/charts is planned alongside the `DynSystem`-as-lens re-cut.
+  *anti*-diagrammatic (`l ∘ₗ l'` applies `l'` first); the same `⨟` is
+  available diagrammatically on lenses (`l₁ ⨟ l₂ = l₂ ∘ₗ l₁`) and charts
+  (`c ⨟ c' = c' ∘c c`), and so on dynamical systems themselves.
 
 If you find yourself wishing for new notation in PolyFun, consider
 whether the underlying name suffices first: this library leans toward

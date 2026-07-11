@@ -769,7 +769,7 @@ the per-state sampler. The closed-world `ProcessOver` lemmas from
 @[reducible]
 def toProcess {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
     (op : OpenProcess.{u, v, w, w'} m Party Δ) :
-    ProcessOver (OpenNodeContext.{u, w} Party Δ) :=
+    ProcessOver op.Proc (OpenNodeContext.{u, w} Party Δ) :=
   ProcessOver.ofStep op.Proc op.step
 
 /--
@@ -782,7 +782,8 @@ local views. The sampler is also discarded, so the result is a bare
 `ProcessOver` over the closed-world context.
 -/
 def toClosed {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
-    (op : OpenProcess.{u, v, w, w'} m Party Δ) : Process.{u, v, w} Party :=
+    (op : OpenProcess.{u, v, w, w'} m Party Δ) :
+    Process.{u, v, w} op.Proc Party :=
   op.toProcess.mapContext (OpenNodeContext.forget.{u, w} Party Δ)
 
 /--
@@ -794,7 +795,7 @@ produces no packets. The caller must supply the nodewise sampler because
 the closed-world process carries no monadic information.
 -/
 def ofClosed {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
-    (p : Process.{u, v, w} Party)
+    {P : Type v} (p : Process.{u, v, w} P Party)
     (sampler : ∀ s, Spec.Sampler.{w, w'} m (p.step s).spec) :
     OpenProcess.{u, v, w, w'} m Party Δ where
   Proc := (p.mapContext (OpenNodeContext.embed.{u, w} Party Δ)).Proc

@@ -40,14 +40,14 @@ namespace PFunctor
 
 namespace DynSystem
 
-variable {p : PFunctor.{uA, uB}}
+variable {S₁ S₂ : Type u} {p : PFunctor.{uA, uB}}
 
 /-- `IsSimulation D₁ D₂ R`: the relation `R` on states is a **simulation** —
 related states expose the same position, and the two systems' updates carry
 related states to related states (with the `D₁`-direction transported along the
 shared exposed position). -/
-structure IsSimulation (D₁ D₂ : DynSystem.{u} p)
-    (R : D₁.State → D₂.State → Prop) : Prop where
+structure IsSimulation (D₁ : DynSystem S₁ p) (D₂ : DynSystem S₂ p)
+    (R : S₁ → S₂ → Prop) : Prop where
   /-- Related states expose the same `p`-position. -/
   expose_eq : ∀ {s₁ s₂}, R s₁ s₂ → D₁.expose s₁ = D₂.expose s₂
   /-- One synchronized step preserves the relation. -/
@@ -57,9 +57,9 @@ structure IsSimulation (D₁ D₂ : DynSystem.{u} p)
 /-- **A simulation preserves behaviour.** If `R` is a simulation and `R s₁ s₂`,
 the two states have the same behaviour tree; hence they are observationally
 equivalent (`ObsEq`). Proved by the terminal-coalgebra bisimulation principle. -/
-theorem implements_of_isSimulation {D₁ D₂ : DynSystem.{u} p}
-    {R : D₁.State → D₂.State → Prop} (hsim : IsSimulation D₁ D₂ R)
-    {s₁ : D₁.State} {s₂ : D₂.State} (h : R s₁ s₂) :
+theorem implements_of_isSimulation {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p}
+    {R : S₁ → S₂ → Prop} (hsim : IsSimulation D₁ D₂ R)
+    {s₁ : S₁} {s₂ : S₂} (h : R s₁ s₂) :
     D₁.behavior s₁ = D₂.behavior s₂ := by
   refine M.corec_eq_corec D₁.out D₂.out R s₁ s₂ h (fun x y hxy => ?_)
   have he : D₁.expose x = D₂.expose y := hsim.expose_eq hxy
@@ -70,16 +70,16 @@ theorem implements_of_isSimulation {D₁ D₂ : DynSystem.{u} p}
   exact heq_of_eq (congrArg (D₂.update y) (eq_of_heq (hab.trans (eqRec_heq he a').symm)))
 
 /-- Simulation-related states are observationally equivalent. -/
-theorem obsEq_of_isSimulation {D₁ D₂ : DynSystem.{u} p}
-    {R : D₁.State → D₂.State → Prop} (hsim : IsSimulation D₁ D₂ R)
-    {s₁ : D₁.State} {s₂ : D₂.State} (h : R s₁ s₂) : ObsEq D₁ D₂ s₁ s₂ :=
+theorem obsEq_of_isSimulation {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p}
+    {R : S₁ → S₂ → Prop} (hsim : IsSimulation D₁ D₂ R)
+    {s₁ : S₁} {s₂ : S₂} (h : R s₁ s₂) : ObsEq D₁ D₂ s₁ s₂ :=
   implements_of_isSimulation hsim h
 
 /-! ## Coalgebra morphisms as simulations -/
 
 /-- The graph of a map commuting with the coalgebra structure maps is a
 simulation: coalgebra morphisms are the functional forward simulations. -/
-theorem isSimulation_graph {D₁ D₂ : DynSystem.{u} p} (f : D₁.State → D₂.State)
+theorem isSimulation_graph {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p} (f : S₁ → S₂)
     (hf : ∀ st, D₂.out (f st) = p.map f (D₁.out st)) :
     IsSimulation D₁ D₂ (fun st₁ st₂ => f st₁ = st₂) := by
   have hexpose : ∀ st, D₂.expose (f st) = D₁.expose st :=
@@ -91,17 +91,26 @@ theorem isSimulation_graph {D₁ D₂ : DynSystem.{u} p} (f : D₁.State → D�
   exact (congr_heq (hupdate st₁) (eqRec_heq _ d)).symm
 
 /-- A coalgebra morphism between the state coalgebras of two `p`-systems is a
-functional simulation: its graph is a simulation. -/
-theorem isSimulation_graph_coalgHom {D₁ D₂ : DynSystem.{u} p}
-    (f : Coalg.Hom p.Obj D₁.State D₂.State) :
-    IsSimulation D₁ D₂ (fun st₁ st₂ => f st₁ = st₂) :=
-  isSimulation_graph f fun st => (congrFun f.comm st).symm
+functional simulation: its graph is a simulation. The coalgebra structures are
+the systems' own (`DynSystem.coalg`), supplied locally: with the state set a
+parameter, the system no longer determines them by instance synthesis. -/
+theorem isSimulation_graph_coalgHom {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p} :
+    letI := D₁.coalg
+    letI := D₂.coalg
+    ∀ f : Coalg.Hom p.Obj S₁ S₂, IsSimulation D₁ D₂ (fun st₁ st₂ => f st₁ = st₂) := by
+  letI := D₁.coalg
+  letI := D₂.coalg
+  exact fun f => isSimulation_graph f fun st => (congrFun f.comm st).symm
 
 /-- Coalgebra morphisms preserve behaviour trees. -/
-theorem behavior_coalgHom {D₁ D₂ : DynSystem.{u} p}
-    (f : Coalg.Hom p.Obj D₁.State D₂.State) (st : D₁.State) :
-    D₂.behavior (f st) = D₁.behavior st :=
-  (implements_of_isSimulation (isSimulation_graph_coalgHom f) rfl).symm
+theorem behavior_coalgHom {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p} :
+    letI := D₁.coalg
+    letI := D₂.coalg
+    ∀ f : Coalg.Hom p.Obj S₁ S₂, ∀ st : S₁, D₂.behavior (f st) = D₁.behavior st := by
+  letI := D₁.coalg
+  letI := D₂.coalg
+  exact fun f st =>
+    (implements_of_isSimulation (isSimulation_graph_coalgHom f) rfl).symm
 
 end DynSystem
 

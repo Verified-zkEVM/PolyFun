@@ -68,8 +68,9 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
   *(Direct `IsPolyTime.bind` unlock.)*
 - **A8** left coclosure `⌈q\p⌉ = Σ_i y^{q(p[i])}` + adjunction
   `Poly(p, r◁q) ≅ Poly(⌈q\p⌉, r)` (Prop 6.57); corollary (6.65)
-  `Poly(Ay^B, p) ≅ Set(A, p(B))` — recast `DynSystem.toLens/ofLens` as this
-  equivalence's special case; concrete connected-limit corollary (6.82)
+  `Poly(Ay^B, p) ≅ Set(A, p(B))` — recast the `DynSystem S p := Lens
+  (selfMonomial S) p` identification as this equivalence's special case;
+  concrete connected-limit corollary (6.82)
   `p ◁ (qr) ≅ (p◁q) ×_{p◁1} (p◁r)` if a consumer appears.
 - **A9** ordering lens `o_{p,q} : p ⊗ q → p ◁ q` (cartesian, Example 6.85)
   and duoidal interchange lens (6.86); the ⊗/◁ catalogue of Ex 6.84 as
@@ -101,7 +102,7 @@ Landed 2026-07-10 (build + `lake lint` + `lake test` green, no `sorry`):
 - **A7a ✅** `Lens.compNthMap` (φ^◁n) + `_zero`/`_succ`/`_id` (same file).
 - **A7b ✅** `PFunctor/Dynamical/Speedup.lean`: `Lens.transitionLens` (δ, a
   cited alias of the pre-existing `Lens.fixState`) and `DynSystem.twoStep`
-  (lifting the pre-existing `Lens.speedup`) with `twoStep_toLens`/`_state`.
+  (lifting the pre-existing `Lens.speedup`) with `twoStep_eq_speedup`.
   General `nStep` intentionally left to B3 (needs `δ^(n)`).
 - **A7c ✅ (structural)** `PFunctor/Dynamical/PointedMachine.lean`: the
   `PointedMachine` structure (VCVio `OracleMachine`'s generic core); `seqComp` with
@@ -396,7 +397,7 @@ honest reading of the evidence:
   probability preservation (paper Thm 5.1) is a crisp dividend of the
   positions/directions decomposition that FCF/CryptHOL handle ad hoc.
 - *One substrate, two readings*: the same `p` classifies programs
-  (`FreeM p`) and machines (`DynSystem p`), so the branch got
+  (`FreeM p`) and machines (`DynSystem S p`), so the branch got
   `reduce/pair/juxtapose` as literal `wrap/pairing/tensor` one-liners
   instead of a bespoke combinator layer (CryptHOL needed dedicated
   `inline`/`exec_gpv` machinery for the analogous glue).

@@ -44,19 +44,17 @@ abbrev Lens.transitionLens (S : Type u) :
 
 namespace DynSystem
 
-variable {p : PFunctor.{uA, uB}}
+variable {S : Type u} {p : PFunctor.{uA, uB}}
 
-/-- The two-step system `δ ⨟ (φ ◃ φ) : DynSystem (p ◃ p)` of a `p`-dynamical
+/-- The two-step system `δ ⨟ (φ ◃ φ) : DynSystem S (p ◃ p)` of a `p`-dynamical
 system (Spivak–Niu Example 6.44): one composite step exposes a first `p`-position,
 consumes a direction, exposes a second `p`-position, and updates. Same state set
-as `φ`. -/
-def twoStep (s : DynSystem p) : DynSystem (p ◃ p) :=
-  ofLens (Lens.speedup s.toLens)
+as `φ` — literally `Lens.speedup` on the system's interface lens. -/
+def twoStep (s : DynSystem S p) : DynSystem S (p ◃ p) :=
+  Lens.speedup s
 
-@[simp] theorem twoStep_toLens (s : DynSystem p) :
-    s.twoStep.toLens = Lens.speedup s.toLens := rfl
-
-@[simp] theorem twoStep_state (s : DynSystem p) : s.twoStep.State = s.State := rfl
+@[simp] theorem twoStep_eq_speedup (s : DynSystem S p) :
+    s.twoStep = Lens.speedup s := rfl
 
 end DynSystem
 

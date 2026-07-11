@@ -61,9 +61,17 @@ abbrev Handler (m : Type u → Type v) (q : PFunctor.{uA, u}) := (a : q.A) → m
 
 /-- A **pointed machine** over the interface `p`: a `p`-dynamical system pointed
 by an `init` map and read out by a partial `output` (`none` while still
-running). The interface-agnostic form of VCVio's `OracleMachine`. -/
-structure PointedMachine (p : PFunctor.{uA, uB}) (α : Type u) (β : Type u)
-    extends DynSystem.{u} p where
+running). The interface-agnostic form of VCVio's `OracleMachine`. The dynamical
+core — the lens `selfMonomial State ⟹ p` — is `toDynSystem`; the machine
+bundles its state set so that runs and composition can be stated without
+threading the state type. -/
+structure PointedMachine (p : PFunctor.{uA, uB}) (α : Type u) (β : Type u) where
+  /-- The set of states of the machine. -/
+  State : Type u
+  /-- The position exposed at each state (the "output" of the underlying system). -/
+  expose : State → p.A
+  /-- The transition: given a direction at the exposed position, the next state. -/
+  update : (s : State) → p.B (expose s) → State
   /-- Where the machine starts, given an input. -/
   init : α → State
   /-- The value read off a state; `none` while the machine is still running. -/
@@ -72,6 +80,17 @@ structure PointedMachine (p : PFunctor.{uA, uB}) (α : Type u) (β : Type u)
 namespace PointedMachine
 
 variable {p : PFunctor.{uA, uB}} {α β mid : Type u}
+
+/-- The dynamical core of a pointed machine: its `expose` / `update` data as a
+lens out of the self monomial of its state set. -/
+def toDynSystem (M : PointedMachine p α β) : DynSystem M.State p :=
+  M.expose ⇆ M.update
+
+@[simp] theorem expose_toDynSystem (M : PointedMachine p α β) :
+    M.toDynSystem.expose = M.expose := rfl
+
+@[simp] theorem update_toDynSystem (M : PointedMachine p α β) :
+    M.toDynSystem.update = M.update := rfl
 
 /-! ## Sequential composition -/
 

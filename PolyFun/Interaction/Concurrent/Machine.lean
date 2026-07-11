@@ -43,10 +43,11 @@ namespace Interaction
 namespace Concurrent
 
 /--
-`Machine` is the minimal state-indexed presentation of a concurrent system: a
-dynamical system over the universe polynomial. At any residual state `σ`, the
-exposed position `Enabled σ` is the type of events that may occur next, and
-`step σ e` is the successor state produced by choosing the enabled event `e`.
+`Machine S` is the minimal state-indexed presentation of a concurrent system
+with residual states `S`: a dynamical system over the universe polynomial. At
+any residual state `σ`, the exposed position `Enabled σ` is the type of events
+that may occur next, and `step σ e` is the successor state produced by choosing
+the enabled event `e`.
 
 This carrier intentionally contains only dynamics. Event labels, fairness
 tickets, controller ownership, local views, and verification predicates are all
@@ -56,26 +57,26 @@ semantics stays small and reusable.
 -/
 -- The state universe (`v`) and the enabled-event universe (`u`) are independent.
 @[nolint checkUnivs]
-abbrev Machine := PFunctor.DynSystem.{v} PFunctor.univ.{u}
+abbrev Machine (S : Type v) := PFunctor.DynSystem S PFunctor.univ.{u}
 
 namespace Machine
 
 /-- The events enabled at a given residual state: the machine's exposed
 position, read as a type. -/
-abbrev Enabled (machine : Machine.{u, v}) (σ : machine.State) : Type u :=
+abbrev Enabled {S : Type v} (machine : Machine.{u, v} S) (σ : S) : Type u :=
   machine.expose σ
 
 /-- The successor state produced by choosing an enabled event at a state: the
 machine's transition function. -/
-abbrev step (machine : Machine.{u, v}) (σ : machine.State)
-    (e : machine.Enabled σ) : machine.State :=
+abbrev step {S : Type v} (machine : Machine.{u, v} S) (σ : S)
+    (e : machine.Enabled σ) : S :=
   machine.update σ e
 
 /-- Build a machine from its state set, enabled-event family, and successor
 function, using the classical field names. -/
 def mk' (State : Type v) (Enabled : State → Type u)
-    (step : (σ : State) → Enabled σ → State) : Machine.{u, v} :=
-  ⟨State, Enabled, step⟩
+    (step : (σ : State) → Enabled σ → State) : Machine.{u, v} State :=
+  PFunctor.DynSystem.mk' Enabled step
 
 @[simp] theorem enabled_mk' (State : Type v) (Enabled : State → Type u)
     (step : (σ : State) → Enabled σ → State) :
@@ -95,7 +96,7 @@ invariants: the dynamical-system `System` bundle at the universe polynomial.
 abbrev System := PFunctor.DynSystem.System.{v} PFunctor.univ.{u}
 
 /-- The underlying machine of a verification-oriented machine system. -/
-abbrev System.toMachine (system : System.{u, v}) : Machine.{u, v} :=
+abbrev System.toMachine (system : System.{u, v}) : Machine.{u, v} system.State :=
   system.toDynSystem
 
 /--
@@ -111,10 +112,10 @@ step inside the richer interaction semantics.
 `Machine.toProcess` is therefore the canonical bridge from transition-system
 models to the more general process-centered concurrent layer.
 -/
-def toProcess {Party : Type u} (machine : Machine)
-    (semantics : (σ : machine.State) → NodeProfile Party (machine.Enabled σ)) :
-    Process Party :=
-  ProcessOver.ofStep machine.State fun σ =>
+def toProcess {Party : Type u} {S : Type v} (machine : Machine S)
+    (semantics : (σ : S) → NodeProfile Party (machine.Enabled σ)) :
+    Process S Party :=
+  ProcessOver.ofStep S fun σ =>
     { spec := .node (machine.Enabled σ) (fun _ => .done)
       semantics := ⟨semantics σ, fun _ => PUnit.unit⟩
       next := fun
@@ -128,6 +129,7 @@ invariant predicates.
 def System.toProcess {Party : Type u} (system : Machine.System)
     (semantics : (σ : system.State) → NodeProfile Party (system.toMachine.Enabled σ)) :
     Process.System Party where
+  State := system.State
   toDynSystem := system.toMachine.toProcess semantics
   init := system.init
   assumptions := system.assumptions

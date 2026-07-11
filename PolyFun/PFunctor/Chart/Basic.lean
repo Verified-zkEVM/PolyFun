@@ -91,6 +91,10 @@ def comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunct
 /-- Infix notation for chart composition `c' ∘c c` -/
 infixl:75 " ∘c " => comp
 
+/-- Diagrammatic composition of charts: `c ⨟ c'` applies `c` first and `c'`
+second, the book's left-to-right composition order, so `c ⨟ c' = c' ∘c c`. -/
+notation:75 c:75 " ⨟ " c':76 => Chart.comp c' c
+
 @[simp]
 theorem id_comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (f : Chart P Q) :
     (Chart.id Q) ∘c f = f := rfl
