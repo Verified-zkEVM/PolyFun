@@ -18,7 +18,7 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 | Ch 4.5 ⊗-closure `[q,r]`, eval | **Done (A1)**: `ihom`/`eval`/`curry`/`curryEquiv`/`ihomSum` in `PFunctor/InternalHom.lean` (note: `exp` is the §5.3 cartesian exponential, not this) |
 | Ch 5 factorizations, adjunctions, (co)limits | **Done**: full vertical–cartesian factorization (A3, `Lens/Factorization.lean`), trivial-interface adjunction pack (A4, `Adjunctions.lean`), cartesian-closure `eval`/`curry` (A2 partial, `CartesianClosed.lean`); general (co)limits + A5 gluing open |
 | Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: destructor triple, `compNthMap`, δ/`twoStep` (A6/A7a/A7b), left-distributivity + `(6.65)` (A10, `Lens/Distributivity.lean`), ordering + duoidal interchange lens (A9, `Lens/Duoidal.lean`); coclosure/multiadjoint (A8) + duoidal coherence open |
-| Ch 7 comonoids = categories, retrofunctors | **Done (B1/B2/B3)**: `Comonoid` structure + `δ^(n)` (`PFunctor/Comonoid.lean`), state comonoid `Sy^S` + `IsStateSystem`, `Run_n`/`nStep` (`Dynamical/RunN.lean`), monad-parametric `runWith` + `seqComp` bind-law core + `IsSimulation` (`Dynamical/{Machine,Simulation}.lean`); retrofunctors + §7.3.3 quadruple (B4/B5) open |
+| Ch 7 comonoids = categories, retrofunctors | **Done (B1/B2/B3)**: `Comonoid` structure + `δ^(n)` (`PFunctor/Comonoid.lean`), state comonoid `Sy^S` + `IsStateSystem`, `Run_n`/`nStep` (`Dynamical/RunN.lean`), monad-parametric `runWith` + `seqComp` bind-law core + `IsSimulation` (`Dynamical/{PointedMachine,Simulation}.lean`); retrofunctors + §7.3.3 quadruple (B4/B5) open |
 | Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | Missing (raw material: `M p`, `M.corec`, `FreeM.Path`) |
 
 ## Reading units
@@ -62,7 +62,7 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
   = `(id, tgt, run)` (Example 6.44) + `DynSystem.twoStep := δ ⨟ (φ ◁ φ)` —
   needs no comonoid vocabulary, lands ahead of B2;
   **c.** pointed machine (state + init + partial readout, generalizing VCVio
-  `OracleMachine`) as `PFunctor/Dynamical/Machine.lean`; two-phase
+  `OracleMachine`) as `PFunctor/Dynamical/PointedMachine.lean`; two-phase
   composition via A6 with a shared mid-boundary (Example 6.41 "cascading
   menus"); `Implements`/`IsSimulation` transfer lemmas.
   *(Direct `IsPolyTime.bind` unlock.)*
@@ -103,8 +103,8 @@ Landed 2026-07-10 (build + `lake lint` + `lake test` green, no `sorry`):
   cited alias of the pre-existing `Lens.fixState`) and `DynSystem.twoStep`
   (lifting the pre-existing `Lens.speedup`) with `twoStep_toLens`/`_state`.
   General `nStep` intentionally left to B3 (needs `δ^(n)`).
-- **A7c ✅ (structural)** `PFunctor/Dynamical/Machine.lean`: the pointed
-  `Machine` structure (VCVio `OracleMachine`'s generic core); `seqComp` with
+- **A7c ✅ (structural)** `PFunctor/Dynamical/PointedMachine.lean`: the
+  `PointedMachine` structure (VCVio `OracleMachine`'s generic core); `seqComp` with
   `M₁.State ⊕ M₂.State` (Example 6.41 — the structural unlock for
   `IsPolyTime.bind` / `OracleMachine.seqComp`); phase `rfl` lemmas; fuelled
   `toComp`; `toComp_seqComp_inr` (second phase faithful to `M₂`);
@@ -189,7 +189,7 @@ consumers; they are natural follow-ons or Phase B/C prerequisites.
 - **B6** `FreeM P` as ◁-monoid; handlers/`mapMHom` as monoid morphisms
   (universal property behind `simulateQ`).
 
-### Phase B — implementation status (spine: B1 + B2 + B3 + Machine finish)
+### Phase B — implementation status (spine: B1 + B2 + B3 + PointedMachine finish)
 
 Landed the K-L-prioritized machine spine (crypto-free):
 
@@ -206,11 +206,11 @@ Landed the K-L-prioritized machine spine (crypto-free):
 - **B3 done** — `DynSystem.nStep` = `Run_n` (`Dynamical/RunN.lean`), finishing
   the `Speedup.lean` `nStep` deferral; **`twoStep_toLens_eq` (the `n = 2`
   coherence with the existing `twoStep`) is `rfl`**. The monad-parametric run
-  `Machine.runWith = FreeM.mapM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
+  `PointedMachine.runWith = FreeM.mapM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
   shadow) and `runWith_output_some` (fuel irrelevance, the
   `runK_eq_of_apply_none_eq_zero` shadow); the `Option`/fuel pays-rent instance
   is in `RunNExamples.lean`. The ω-limit `ωSup` stays downstream (SPMF ωCPO).
-- **Machine finish** — `toComp_seqComp_inl` fixes the first-phase operational
+- **PointedMachine finish** — `toComp_seqComp_inl` fixes the first-phase operational
   behaviour (with `toComp_seqComp_inr` this is the structural `IsPolyTime.bind`
   content); the naive fuel-additive single-`bind` law is **false** (fuel threads
   continuously), so the fuel-exact form via reachability + fuel-irrelevance is a

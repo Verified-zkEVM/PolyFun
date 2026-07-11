@@ -5,7 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Dynamical.Machine
+public import PolyFun.PFunctor.Dynamical.PointedMachine
 public import PolyFun.PFunctor.Dynamical.Speedup
 
 /-!
@@ -27,25 +27,25 @@ variable {p : PFunctor.{u, u}} {α β mid : Type u}
 example (s : DynSystem p) : s.twoStep.State = s.State := rfl
 
 /-- Sequential composition has state `M₁.State ⊕ M₂.State`. -/
-example (M₁ : Machine p α mid) (M₂ : Machine p mid β) :
+example (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) :
     (M₁.seqComp M₂).State = (M₁.State ⊕ M₂.State) := rfl
 
 /-- The second phase of `seqComp` unrolls exactly like `M₂`. -/
-example (M₁ : Machine p α mid) (M₂ : Machine p mid β) (s₂ : M₂.State) :
+example (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) (s₂ : M₂.State) :
     (M₁.seqComp M₂).toComp 3 (Sum.inr s₂) = M₂.toComp 3 s₂ :=
-  Machine.toComp_seqComp_inr M₁ M₂ 3 s₂
+  PointedMachine.toComp_seqComp_inr M₁ M₂ 3 s₂
 
 /-- The first phase exposes `M₁` and hands off to `M₂` exactly on `M₁`'s output. -/
-example (M₁ : Machine p α mid) (M₂ : Machine p mid β) (s₁ : M₁.State) :
+example (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) (s₁ : M₁.State) :
     (M₁.seqComp M₂).toComp 1 (Sum.inl s₁)
       = FreeM.roll (M₁.expose s₁) (fun d =>
           (M₁.seqComp M₂).toComp 0 (match M₁.output (M₁.update s₁ d) with
             | some m => Sum.inr (M₂.init m)
             | none => Sum.inl (M₁.update s₁ d))) :=
-  Machine.toComp_seqComp_inl M₁ M₂ 0 s₁
+  PointedMachine.toComp_seqComp_inl M₁ M₂ 0 s₁
 
 /-- A machine that halts immediately with output `b`. -/
-def haltMachine (b : β) : Machine X.{u, u} α β where
+def haltMachine (b : β) : PointedMachine X.{u, u} α β where
   State := PUnit
   expose := fun _ => PUnit.unit
   update := fun _ _ => PUnit.unit

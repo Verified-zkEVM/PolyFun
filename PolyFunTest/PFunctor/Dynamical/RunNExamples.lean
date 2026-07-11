@@ -6,7 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Dynamical.RunN
-public import PolyFun.PFunctor.Dynamical.Machine
+public import PolyFun.PFunctor.Dynamical.PointedMachine
 
 /-!
 # Examples for `n`-step systems and the monad-parametric run
@@ -37,7 +37,7 @@ example (φ : DynSystem p) :
 
 /-- A one-step-delay machine over `y`: it runs for one step, then halts with `b`
 (concrete universe so the `Bool` state set lives in the machine's state type). -/
-def delayMachine (b : Bool) : Machine X.{0, 0} PUnit Bool where
+def delayMachine (b : Bool) : PointedMachine X.{0, 0} PUnit Bool where
   State := Bool
   expose := fun _ => PUnit.unit
   update := fun _ _ => true
@@ -45,7 +45,7 @@ def delayMachine (b : Bool) : Machine X.{0, 0} PUnit Bool where
   output := fun s => if s then some b else none
 
 /-- The `Option`-handler on `y`: every position resolves to the unique direction. -/
-def unitHandler : Machine.Handler Option X.{0, 0} := fun _ => some PUnit.unit
+def unitHandler : PointedMachine.Handler Option X.{0, 0} := fun _ => some PUnit.unit
 
 /-- Two steps of fuel resolve the delayed output. -/
 example (b : Bool) : (delayMachine b).runWith unitHandler 2 false = some (some b) := rfl
@@ -61,7 +61,7 @@ example (b : Bool) :
 /-- A halted state reads off its value at any positive fuel (via
 `runWith_output_some`). -/
 example (b : Bool) : (delayMachine b).runWith unitHandler 1 true = some (some b) :=
-  Machine.runWith_output_some _ _ 0 rfl
+  PointedMachine.runWith_output_some _ _ 0 rfl
 
 /-- Zero fuel always yields `none`. -/
 example (b : Bool) : (delayMachine b).runWith unitHandler 0 false = some none := rfl
