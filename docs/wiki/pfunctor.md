@@ -1,7 +1,7 @@
 # Polynomial Functors and `FreeM`
 
-This page is the agent-facing tour of `PolyFun/PFunctor/` and
-`PolyFun/Control/Comonad/Cofree.lean`. It is descriptive, not load-bearing:
+This page is the agent-facing tour of `PolyFun/PFunctor/`. It is
+descriptive, not load-bearing:
 the source files are the canonical reference. Cite Lean source by file path
 plus declaration name when accuracy matters.
 
@@ -98,7 +98,7 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 provides the reusable monad / comonad / coalgebra plumbing. See
 [`PolyFun/Control/`](../../PolyFun/Control/) for the full inventory:
 `Coalgebra` (the `Coalg` class: every `DynSystem p` is a `Coalg p.Obj`),
-`Comonad/{Basic, Cofree, Instances}`, `Lawful/Basic`,
+`Comonad/{Basic, Instances}`, `Lawful/Basic`,
 `Monad/{Algebra, Equiv, Free, FreeCont, Hom, Iter}`, `Trace`.
 
 ## Mental model

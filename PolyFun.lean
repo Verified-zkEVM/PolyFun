@@ -1,6 +1,5 @@
 import PolyFun.Control.Coalgebra
 import PolyFun.Control.Comonad.Basic
-import PolyFun.Control.Comonad.Cofree
 import PolyFun.Control.Comonad.Instances
 import PolyFun.Control.Lawful.Basic
 import PolyFun.Control.Monad.Algebra
