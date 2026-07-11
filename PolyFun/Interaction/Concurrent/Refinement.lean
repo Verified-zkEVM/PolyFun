@@ -5,15 +5,19 @@ Authors: Quang Dao
 -/
 import PolyFun.Interaction.Concurrent.Liveness
 import PolyFun.Interaction.Concurrent.Observation
+import PolyFun.PFunctor.Dynamical.Refinement
 
 /-!
 # Forward refinement for dynamic concurrent processes
 
-This file introduces the first process-level refinement notion for the dynamic
-concurrent core.
+The process-level refinement notion for the dynamic concurrent core:
+`Refinement.ForwardSimulation` between two `ProcessOver.System`s is the
+generic dynamical-system forward simulation
+`PFunctor.DynSystem.ForwardSimulation` at the step polynomial, with the
+step-matching relation ranging over complete step transcripts
+(`ProcessOver.TranscriptRel`).
 
-The central object is `ForwardSimulation` between two `Process.System`s. It
-captures the usual implementation/specification picture:
+It captures the usual implementation/specification picture:
 
 * implementation and specification states are related by a simulation
   invariant;
@@ -22,12 +26,16 @@ captures the usual implementation/specification picture:
 * every concrete implementation step can be simulated by a specification step;
 * the simulation may additionally insist that the two steps agree on events,
   tickets, controller data, or local observations; and
-* safety obligations may be transferred from the specification side back to the
-  implementation side.
+* safety obligations may be transferred from the specification side back to
+  the implementation side.
 
-This gives a reusable refinement layer that is independent of any particular
-concurrent frontend and rich enough to support observational reasoning, not
-just state-reachability arguments.
+The state-transport machinery — `matchDir`, `matchedState`, `mapRun`, and the
+`stateRel_mapRun` / `match_mapRun` / `safe_of_mapRun` / `relUpTo_mapRun` /
+`rel_mapRun` transport lemmas — lives at the generic layer and applies to
+processes directly. This file adds the transcript-flavoured vocabulary
+(`matchTranscript`), the admissibility form of assumption transport
+(`admissible_mapRun`), the observation-preservation corollaries for the
+concrete `TranscriptRel`s, and the top-level `safe_of_satisfies` transfer.
 -/
 
 universe u v w w₂ w₃
@@ -38,7 +46,8 @@ namespace Refinement
 
 /--
 `ForwardSimulation impl spec matchStep` is a forward simulation from the
-implementation system `impl` to the specification system `spec`.
+implementation system `impl` to the specification system `spec`: the generic
+`PFunctor.DynSystem.ForwardSimulation` at the step polynomial.
 
 The meaning is:
 
@@ -49,49 +58,30 @@ The meaning is:
   step transcript satisfying `matchStep`;
 * related safe specification states imply safe implementation states.
 
-This is intentionally phrased over the dynamic `Process.System` core rather
-than any particular concurrent frontend.
-
 The parameter `matchStep` determines what behavioral information the
 simulation preserves at each step. Choosing different transcript relations
 recovers event-preserving, ticket-preserving, controller-preserving, or
 observation-preserving refinements.
 -/
-structure ForwardSimulation
+abbrev ForwardSimulation
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
     (impl : ProcessOver.System Γ)
     (spec : ProcessOver.System Δ)
     (matchStep :
       ProcessOver.TranscriptRel impl.toProcess spec.toProcess :=
-        ProcessOver.TranscriptRel.top) where
-  /-- The relation linking implementation states to specification states. -/
-  stateRel : impl.Proc → spec.Proc → Prop
-  init :
-    ∀ pImpl, impl.init pImpl →
-      ∃ pSpec, spec.init pSpec ∧ stateRel pImpl pSpec
-  assumptions :
-    ∀ {pImpl pSpec}, stateRel pImpl pSpec →
-      impl.assumptions pImpl → spec.assumptions pSpec
-  step :
-    ∀ {pImpl pSpec}, stateRel pImpl pSpec →
-      ∀ trImpl : (impl.step pImpl).spec.Transcript,
-        ∃ trSpec : (spec.step pSpec).spec.Transcript,
-          matchStep trImpl trSpec ∧
-            stateRel ((impl.step pImpl).next trImpl) ((spec.step pSpec).next trSpec)
-  safe :
-    ∀ {pImpl pSpec}, stateRel pImpl pSpec →
-      spec.safe pSpec → impl.safe pImpl
+        ProcessOver.TranscriptRel.top) :=
+  PFunctor.DynSystem.ForwardSimulation impl spec matchStep
 
 namespace ForwardSimulation
 
 /--
-Choose the matching specification transcript for one implementation transcript.
-
-This is the specification-side step selected by the simulation for the given
-implementation step.
+Choose the matching specification transcript for one implementation
+transcript: the specification-side step selected by the simulation for the
+given implementation step, as the generic `matchDir` read at the
+step-polynomial interface.
 -/
-noncomputable def matchTranscript
+noncomputable abbrev matchTranscript
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
     {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
@@ -102,158 +92,7 @@ noncomputable def matchTranscript
     (hrel : sim.stateRel pImpl pSpec)
     (trImpl : (impl.step pImpl).spec.Transcript) :
     (spec.step pSpec).spec.Transcript :=
-  Classical.choose (sim.step hrel trImpl)
-
-/--
-The chosen matching transcript satisfies `matchStep` and preserves the state
-relation to the next residual states.
--/
-theorem matchTranscript_spec
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
-    {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
-    {pImpl pSpec : _}
-    (hrel : sim.stateRel pImpl pSpec)
-    (trImpl : (impl.step pImpl).spec.Transcript) :
-    matchStep trImpl (sim.matchTranscript hrel trImpl) ∧
-      sim.stateRel ((impl.step pImpl).next trImpl)
-        ((spec.step pSpec).next (sim.matchTranscript hrel trImpl)) :=
-  Classical.choose_spec (sim.step hrel trImpl)
-
-/--
-`matchedState sim run hrel n` is the specification-side state reached after
-matching the first `n` steps of the implementation run `run`, starting from an
-initial related specification state witnessed by `hrel`.
-
-This is the fundamental state-transport construction behind run-level
-refinement: it recursively follows the implementation run while using the
-simulation to pick matching specification transcripts.
--/
-noncomputable def matchedState
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
-    {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
-    (run : ProcessOver.Run impl.toProcess)
-    {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec) :
-    (n : Nat) → {qSpec : spec.Proc // sim.stateRel (run.state n) qSpec}
-  | 0 => ⟨pSpec, by simpa [PFunctor.DynSystem.Run.initial] using hrel⟩
-  | n + 1 =>
-      let prev := sim.matchedState run hrel n
-      let trSpec := sim.matchTranscript prev.2 (run.transcript n)
-      let hspec := sim.matchTranscript_spec prev.2 (run.transcript n)
-      ⟨(spec.step prev.1).next trSpec, by
-        dsimp [trSpec]
-        rw [run.next_state n]
-        exact hspec.2⟩
-
-/--
-The specification transcript chosen to match the `n`th implementation step of
-the run `run`, relative to the initial related specification state witnessed by
-`hrel`.
-
-This is the stepwise witness used to build the whole matched specification run.
--/
-noncomputable def matchedTranscript
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
-    {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
-    (run : ProcessOver.Run impl.toProcess)
-    {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec)
-    (n : Nat) :
-    (spec.step (sim.matchedState run hrel n).1).spec.Transcript :=
-  sim.matchTranscript (sim.matchedState run hrel n).2 (run.transcript n)
-
-/--
-`mapRun sim run hrel` is the specification run obtained by recursively matching
-every step of the implementation run `run`, starting from an initial related
-specification state witnessed by `hrel`.
-
-So `mapRun` turns a forward simulation into an execution-level translation from
-implementation runs to matching specification runs.
--/
-noncomputable def mapRun
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
-    {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
-    (run : ProcessOver.Run impl.toProcess)
-    {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec) :
-    ProcessOver.Run spec.toProcess where
-  state n := (sim.matchedState run hrel n).1
-  dir n := sim.matchedTranscript run hrel n
-  next_state _ := rfl
-
-/--
-At every step index `n`, the mapped specification run remains related to the
-implementation run by `stateRel`.
--/
-theorem stateRel_mapRun
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
-    {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
-    (run : ProcessOver.Run impl.toProcess)
-    {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec) :
-    ∀ n, sim.stateRel (run.state n) ((sim.mapRun run hrel).state n)
-  | n => (sim.matchedState run hrel n).2
-
-/--
-At every step index `n`, the mapped specification transcript matches the
-implementation transcript by `matchStep`.
-
-This is the run-level form of the step-matching guarantee.
--/
-theorem match_mapRun
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
-    {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
-    (run : ProcessOver.Run impl.toProcess)
-    {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec) :
-    ∀ n,
-      matchStep (run.transcript n) ((sim.mapRun run hrel).transcript n)
-  | n => (sim.matchTranscript_spec (sim.matchedState run hrel n).2 (run.transcript n)).1
-
-/--
-If every state along the mapped specification run is safe, then every state
-along the implementation run is safe.
-
-This is the basic safety-transport principle of forward simulation.
--/
-theorem safe_of_mapRun
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
-    {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
-    (run : ProcessOver.Run impl.toProcess)
-    {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec)
-    (hsafe :
-      ∀ n, spec.safe ((sim.mapRun run hrel).state n)) :
-    ∀ n, impl.safe (run.state n)
-  | n => sim.safe (sim.stateRel_mapRun run hrel n) (hsafe n)
+  sim.matchDir hrel trImpl
 
 /--
 If an implementation run is admissible, then its mapped specification run is
@@ -274,39 +113,7 @@ theorem admissible_mapRun
     (hrel : sim.stateRel run.initial pSpec)
     (hadm : ProcessOver.System.Admissible impl run) :
     ProcessOver.System.Admissible spec (sim.mapRun run hrel) :=
-  fun n => sim.assumptions (sim.stateRel_mapRun run hrel n) (hadm n)
-
-/-- The first `n` steps of the mapped specification run match the first `n`
-implementation steps according to `matchStep`. -/
-theorem prefixRel_mapRun
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
-    {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
-    (run : ProcessOver.Run impl.toProcess)
-    {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec) :
-    ∀ n, ProcessOver.Run.RelUpTo matchStep run (sim.mapRun run hrel) n :=
-  ProcessOver.Run.relUpTo_of_pointwise matchStep run (sim.mapRun run hrel)
-    (sim.match_mapRun run hrel)
-
-/-- The mapped specification run matches the implementation run at every finite
-prefix according to `matchStep`. -/
-theorem runRel_mapRun
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
-    {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
-    (run : ProcessOver.Run impl.toProcess)
-    {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec) :
-    ProcessOver.Run.Rel matchStep run (sim.mapRun run hrel) :=
-  ProcessOver.Run.rel_of_pointwise matchStep run (sim.mapRun run hrel)
-    (sim.match_mapRun run hrel)
+  sim.assumptions_mapRun run hrel hadm
 
 /-- A controller-preserving simulation preserves the current controller sequence
 of every finite run prefix. -/
@@ -423,7 +230,7 @@ theorem safe_of_satisfies
   intro run hInit hAdm hFair
   rcases sim.init run.initial hInit with ⟨pSpec, hInitSpec, hrel⟩
   have hAdmSpec : ProcessOver.System.Admissible spec (sim.mapRun run hrel) :=
-    sim.admissible_mapRun run hrel hAdm
+    admissible_mapRun sim run hrel hAdm
   have hSafeSpec : ProcessOver.System.Safe spec (sim.mapRun run hrel) :=
     hspec (sim.mapRun run hrel) hInitSpec hAdmSpec (hfair run hrel hFair)
   exact sim.safe_of_mapRun run hrel hSafeSpec

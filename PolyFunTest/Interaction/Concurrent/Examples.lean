@@ -469,7 +469,7 @@ def loopSim :
 /-- The specification-side run obtained by matching `trueRun` through
 `loopSim`. -/
 noncomputable def loopMappedRun : Process.Run loopSystem.toProcess :=
-  loopSim.mapRun (pSpec := PUnit.unit) trueRun trivial
+  loopSim.mapRun (stSpec := PUnit.unit) trueRun trivial
 
 /-- The identity simulation on `loopSystem`, preserving Bob's local
 observations. -/
@@ -486,7 +486,7 @@ def loopObsSimBob :
 /-- The specification-side run obtained by matching `trueRun` through
 `loopObsSimBob`. -/
 noncomputable def loopObsMappedRunBob : Process.Run loopSystem.toProcess :=
-  loopObsSimBob.mapRun (pSpec := PUnit.unit) trueRun trivial
+  loopObsSimBob.mapRun (stSpec := PUnit.unit) trueRun trivial
 
 /-- The identity ticket bisimulation on `loopSystem`. -/
 def loopTicketBisim :
@@ -512,7 +512,7 @@ example :
     Observation.Process.TranscriptRel.byTicket loopTicketed.ticket loopTicketed.ticket
       (st₁ := trueRun.state 3) (st₂ := loopMappedRun.state 3)
       (trueRun.transcript 3) (loopMappedRun.transcript 3) := by
-  exact loopSim.match_mapRun (pSpec := PUnit.unit) trueRun trivial 3
+  exact loopSim.match_mapRun (stSpec := PUnit.unit) trueRun trivial 3
 
 example : Process.System.Safe loopSystem loopMappedRun := by
   intro _
@@ -525,7 +525,8 @@ example :
 
 example :
     Process.System.Satisfies loopSystem (fun _ => True) (Process.System.Safe loopSystem) := by
-  apply loopSim.safe_of_satisfies (fairImpl := fun _ => True) (fairSpec := fun _ => True)
+  apply Refinement.ForwardSimulation.safe_of_satisfies loopSim
+    (fairImpl := fun _ => True) (fairSpec := fun _ => True)
   · intro _ _ _
     trivial
   · intro run _ _ _ n
@@ -534,12 +535,13 @@ example :
 example :
     Process.Run.ticketsUpTo loopTicketed.ticket trueRun 4 =
       Process.Run.ticketsUpTo loopTicketed.ticket loopMappedRun 4 := by
-  exact loopSim.ticketsUpTo_mapRun (pSpec := PUnit.unit) trueRun trivial 4
+  exact Refinement.ForwardSimulation.ticketsUpTo_mapRun loopSim
+    (pSpec := PUnit.unit) trueRun trivial 4
 
 example :
     Observation.Process.Run.observationsUpTo Party.bob trueRun 3 =
       Observation.Process.Run.observationsUpTo Party.bob loopObsMappedRunBob 3 := by
-  exact loopObsSimBob.observationsUpTo_mapRun Party.bob
+  exact Refinement.ForwardSimulation.observationsUpTo_mapRun Party.bob loopObsSimBob
     (pSpec := PUnit.unit) trueRun trivial 3
 
 example :
@@ -549,19 +551,19 @@ example :
   exact Observation.Process.Run.rel_of_pointwise
     (Observation.Process.TranscriptRel.byTicket loopTicketed.ticket loopTicketed.ticket)
     trueRun loopMappedRun
-    (loopSim.match_mapRun (pSpec := PUnit.unit) trueRun trivial)
+    (loopSim.match_mapRun (stSpec := PUnit.unit) trueRun trivial)
 
 example :
     Process.Run.ticketsUpTo loopTicketed.ticket trueRun 5 =
       Process.Run.ticketsUpTo loopTicketed.ticket
-        (loopTicketBisim.forth.mapRun trueRun (pSpec := PUnit.unit) trivial) 5 := by
+        (loopTicketBisim.forth.mapRun trueRun (stSpec := PUnit.unit) trivial) 5 := by
   exact Equivalence.Ticket.ticketsUpTo_eq loopTicketBisim trueRun
     (pRight := PUnit.unit) trivial 5
 
 example :
     Observation.Process.Run.observationsUpTo Party.bob trueRun 4 =
       Observation.Process.Run.observationsUpTo Party.bob
-        (loopObsBisimBob.forth.mapRun trueRun (pSpec := PUnit.unit) trivial) 4 := by
+        (loopObsBisimBob.forth.mapRun trueRun (stSpec := PUnit.unit) trivial) 4 := by
   exact Equivalence.Observation.observationsUpTo_eq Party.bob loopObsBisimBob
     trueRun (pRight := PUnit.unit) trivial 4
 

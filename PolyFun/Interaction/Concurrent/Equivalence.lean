@@ -108,7 +108,7 @@ theorem currentControllersUpTo_eq {Party : Type u}
     (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
     Process.Run.currentControllersUpTo run n =
       Process.Run.currentControllersUpTo (equiv.forth.mapRun run hrel) n :=
-  equiv.forth.currentControllersUpTo_mapRun run hrel n
+  Refinement.ForwardSimulation.currentControllersUpTo_mapRun equiv.forth run hrel n
 
 end Controller
 
@@ -126,7 +126,7 @@ theorem controllerPathsUpTo_eq {Party : Type u}
     (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
     Process.Run.controllerPathsUpTo run n =
       Process.Run.controllerPathsUpTo (equiv.forth.mapRun run hrel) n :=
-  equiv.forth.controllerPathsUpTo_mapRun run hrel n
+  Refinement.ForwardSimulation.controllerPathsUpTo_mapRun equiv.forth run hrel n
 
 end ControllerPath
 
@@ -146,7 +146,7 @@ theorem eventsUpTo_eq {Party : Type u} {Event : Type w}
     (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
     Process.Run.eventsUpTo eventLeft run n =
       Process.Run.eventsUpTo eventRight (equiv.forth.mapRun run hrel) n :=
-  equiv.forth.eventsUpTo_mapRun run hrel n
+  Refinement.ForwardSimulation.eventsUpTo_mapRun equiv.forth run hrel n
 
 end Trace
 
@@ -166,7 +166,7 @@ theorem ticketsUpTo_eq {Party : Type u} {TicketTy : Type w}
     (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
     Process.Run.ticketsUpTo ticketLeft run n =
       Process.Run.ticketsUpTo ticketRight (equiv.forth.mapRun run hrel) n :=
-  equiv.forth.ticketsUpTo_mapRun run hrel n
+  Refinement.ForwardSimulation.ticketsUpTo_mapRun equiv.forth run hrel n
 
 end Ticket
 
@@ -185,7 +185,7 @@ theorem observationsUpTo_eq {Party : Type u} [DecidableEq Party]
     (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
     Observation.Process.Run.observationsUpTo me run n =
       Observation.Process.Run.observationsUpTo me (equiv.forth.mapRun run hrel) n :=
-  equiv.forth.observationsUpTo_mapRun me run hrel n
+  Refinement.ForwardSimulation.observationsUpTo_mapRun me equiv.forth run hrel n
 
 end Observation
 
