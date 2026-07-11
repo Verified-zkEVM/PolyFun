@@ -22,6 +22,8 @@ universe u
 
 namespace PFunctor
 
+open CartesianClosed
+
 variable {p q r : PFunctor.{u, u}}
 
 /-- The evaluation / counit lens typechecks (Spivak–Niu Example 5.32). -/

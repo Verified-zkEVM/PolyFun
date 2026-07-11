@@ -16,7 +16,7 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 | Ch 1–3 lens/chart calculus, monoidal ops | Deep (`PFunctor/{Basic,Equiv,Lens,Chart}`) |
 | Ch 4.1–4.4 dynamical systems, wiring | Deep (`PFunctor/Dynamical/*`, coalgebra core) |
 | Ch 4.5 ⊗-closure `[q,r]`, eval | **Done (A1)**: `ihom`/`eval`/`curry`/`curryEquiv`/`ihomSum` in `PFunctor/InternalHom.lean` (note: `exp` is the §5.3 cartesian exponential, not this) |
-| Ch 5 factorizations, adjunctions, (co)limits | **Done**: full vertical–cartesian factorization (A3, `Lens/Factorization.lean`), trivial-interface adjunction pack (A4, `Adjunctions.lean`), cartesian-closure `eval`/`curry` (A2 partial, `CartesianClosed.lean`); general (co)limits + A5 gluing open |
+| Ch 5 factorizations, adjunctions, (co)limits | **Done**: full vertical–cartesian factorization (A3, `Lens/Factorization.lean`), trivial-interface adjunction pack (A4, `Adjunctions.lean`), cartesian-closure `CartesianClosed.eval`/`curry` (A2 partial, `CartesianClosed.lean`); general (co)limits + A5 gluing open |
 | Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: destructor triple, `compNthMap`, δ/`twoStep` (A6/A7a/A7b), left-distributivity + `(6.65)` (A10, `Lens/Distributivity.lean`), ordering + duoidal interchange lens (A9, `Lens/Duoidal.lean`); coclosure/multiadjoint (A8) + duoidal coherence open |
 | Ch 7 comonoids = categories, retrofunctors | **Done (B1/B2/B3)**: `Comonoid` structure + `δ^(n)` (`PFunctor/Comonoid.lean`), state comonoid `Sy^S` + `IsStateSystem`, `Run_n`/`nStep` (`Dynamical/RunN.lean`), monad-parametric `runWith` + `seqComp` bind-law core + `IsSimulation` (`Dynamical/{PointedMachine,Simulation}.lean`); retrofunctors + §7.3.3 quadruple (B4/B5) open |
 | Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | Missing (raw material: `M p`, `M.corec`, `FreeM.Path`) |
@@ -123,8 +123,11 @@ Landed 2026-07-10 (five parallel subagents; full `lake build` + `lake lint` +
 `lake test` green, no `sorry`):
 
 - **A2 ✅ (partial)** `PFunctor/CartesianClosed.lean`: the cartesian exponential
-  `exp`'s `eval`, `curry`, `uncurry`, the full forward round-trip
-  `uncurry_curry`, and the position-level reverse `curry_uncurry_toFunA`.
+  `exp`'s `CartesianClosed.eval`, `curry`, `uncurry`, the full forward
+  round-trip `uncurry_curry`, and the position-level reverse
+  `curry_uncurry_toFunA` (namespaced `PFunctor.CartesianClosed`, mirroring
+  Mathlib's `CartesianClosed`/`MonoidalClosed` split against the ⊗-side
+  `Lens.curry`).
   *Deferred (documented, no `sorry`):* the direction-level reverse identity and
   hence the packaged `curryEquiv` — it reduces to a `HEq` of two `toFunB` maps
   whose domains are only propositionally equal (a `PUnit`-collapse).

@@ -162,7 +162,8 @@ Flagged in-text as "even more technical … we won't use it again in the book".
   `ihom_sum` (Ex 4.77), `ihom_X` (`[p,y] ≅ Γ(p)y^{p(1)}`, tie to `Section`).
 - **A2. Cartesian-closure lemmas for existing `exp`.**
   `Lens p (exp r q) ≃ Lens (p * q) r`, `eval : exp r q * q ⇆ r` (Thm 5.31,
-  Ex 5.32). Rename/document `exp` to disambiguate from `ihom`.
+  Ex 5.32). Disambiguated from `ihom` by namespace: the cartesian transposes
+  live in `PFunctor.CartesianClosed`, the tensor ones in `PFunctor.Lens`.
 - **A3. `IsVertical` + factorization.** Predicate, 2-out-of-3 (Prop 5.53),
   explicit vertical–cartesian factorization with middle
   `Σ_i y^{q[f₁ i]}` (Prop 5.52), preservation by `+`/`×`/`⊗` (Prop 5.63)

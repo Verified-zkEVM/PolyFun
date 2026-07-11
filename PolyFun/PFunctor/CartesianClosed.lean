@@ -22,19 +22,22 @@ exponential: it is the right adjoint to the categorical product functor
 
 Do not confuse this with the `⊗`-internal hom (right adjoint to the tensor /
 Dirichlet product `⊗`), which lives in `PolyFun/PFunctor/InternalHom.lean` as
-`PFunctor.ihom`; the two closures answer different universal properties.
+`PFunctor.ihom`; the two closures answer different universal properties. The
+namespaces mirror Mathlib's split between `CartesianClosed.curry` and
+`MonoidalClosed.curry`: the cartesian transposes live in
+`PFunctor.CartesianClosed`, the tensor transposes in `PFunctor.Lens`.
 
 ## Main definitions and results
 
-- `PFunctor.eval : Lens (exp r q * q) r` — the evaluation / counit lens.
-- `PFunctor.curry : Lens (p * q) r → Lens p (exp r q)` — the adjunction
+- `CartesianClosed.eval : Lens (exp r q * q) r` — the evaluation / counit lens.
+- `CartesianClosed.curry : Lens (p * q) r → Lens p (exp r q)` — the adjunction
   transpose (Theorem 5.31, forward direction).
-- `PFunctor.uncurry : Lens p (exp r q) → Lens (p * q) r` — the inverse
+- `CartesianClosed.uncurry : Lens p (exp r q) → Lens (p * q) r` — the inverse
   transpose, `eval ∘ₗ (g ×ₗ id)`.
-- `PFunctor.uncurry_curry : uncurry (curry l) = l` — one round-trip of the
-  transpose bijection, fully proven.
-- `PFunctor.curry_uncurry_toFunA : (curry (uncurry g)).toFunA = g.toFunA` — the
-  position component of the other round-trip, fully proven.
+- `CartesianClosed.uncurry_curry : uncurry (curry l) = l` — one round-trip of
+  the transpose bijection, fully proven.
+- `CartesianClosed.curry_uncurry_toFunA : (curry (uncurry g)).toFunA = g.toFunA`
+  — the position component of the other round-trip, fully proven.
 
 ## Status / gap
 
@@ -58,6 +61,8 @@ stated within the one category `Poly.{uA, uB}`.
 universe u uA uB
 
 namespace PFunctor
+
+namespace CartesianClosed
 
 /-- The evaluation lens `exp r q * q ⇆ r`, the counit of the cartesian
 exponential adjunction (Spivak–Niu Example 5.32).
@@ -139,5 +144,7 @@ theorem curry_uncurry_toFunA {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) 
     rfl
   · conv_rhs => rw [heq]
     rfl
+
+end CartesianClosed
 
 end PFunctor
