@@ -1,2 +1,5 @@
 # cache and other artifacts produced by Lean's Lake build tool
 .lake/
+
+# local reference books/papers (kept on disk for reading, never committed)
+*.pdf
