@@ -111,6 +111,7 @@ import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Combinators
 import PolyFun.PFunctor.Dynamical.PointedMachine
+import PolyFun.PFunctor.Dynamical.Refinement
 import PolyFun.PFunctor.Dynamical.Run
 import PolyFun.PFunctor.Dynamical.RunN
 import PolyFun.PFunctor.Dynamical.Simulation

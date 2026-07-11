@@ -117,6 +117,14 @@ def reverse (rel : DirRel s₁ s₂) : DirRel s₂ s₁ := fun d₂ d₁ => rel 
 def inter (first second : DirRel s₁ s₂) : DirRel s₁ s₂ :=
   fun d₁ d₂ => first d₁ d₂ ∧ second d₁ d₂
 
+/-- The synchronized step relation between two systems over a shared interface:
+the two states expose equal positions and the chosen directions agree up to
+transport along that equality. This is the step-matching relation at which a
+step-synchronized simulation (`DynSystem.IsSimulation`) is a forward
+simulation. -/
+def sync (t₁ : DynSystem.{u₁} p) (t₂ : DynSystem.{u₂} p) : DirRel t₁ t₂ :=
+  fun {st₁} {st₂} d₁ d₂ => t₁.expose st₁ = t₂.expose st₂ ∧ HEq d₁ d₂
+
 end DirRel
 
 end DynSystem

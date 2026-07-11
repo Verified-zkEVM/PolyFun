@@ -21,6 +21,15 @@ simulation method VCVio's oracle machines use to discharge `Implements`.
 The relation is step-synchronized (one `D₁` step matches exactly one `D₂` step).
 A stutter-budget variant (several `D₂` steps per `D₁` step) is a later addition,
 needed once looping / sequential composition introduces silent steps.
+
+Coalgebra morphisms (`Coalg.Hom`) are the functional instances of this notion:
+`isSimulation_graph` shows the graph of a map commuting with the structure maps
+is a simulation, so morphisms preserve behaviour (`behavior_coalgHom`). The
+lax, existential counterpart between verification-oriented `System`s — matching
+steps by a `DirRel` and transporting init / assumption / safety obligations —
+is `DynSystem.ForwardSimulation` in `PolyFun/PFunctor/Dynamical/Refinement.lean`;
+`ForwardSimulation.ofIsSimulation` embeds a step-synchronized simulation there
+at the relation `DirRel.sync`.
 -/
 
 @[expose] public section
@@ -65,6 +74,34 @@ theorem obsEq_of_isSimulation {D₁ D₂ : DynSystem.{u} p}
     {R : D₁.State → D₂.State → Prop} (hsim : IsSimulation D₁ D₂ R)
     {s₁ : D₁.State} {s₂ : D₂.State} (h : R s₁ s₂) : ObsEq D₁ D₂ s₁ s₂ :=
   implements_of_isSimulation hsim h
+
+/-! ## Coalgebra morphisms as simulations -/
+
+/-- The graph of a map commuting with the coalgebra structure maps is a
+simulation: coalgebra morphisms are the functional forward simulations. -/
+theorem isSimulation_graph {D₁ D₂ : DynSystem.{u} p} (f : D₁.State → D₂.State)
+    (hf : ∀ st, D₂.out (f st) = p.map f (D₁.out st)) :
+    IsSimulation D₁ D₂ (fun st₁ st₂ => f st₁ = st₂) := by
+  have hexpose : ∀ st, D₂.expose (f st) = D₁.expose st :=
+    fun st => congrArg Sigma.fst (hf st)
+  have hupdate : ∀ st, HEq (D₂.update (f st)) (f ∘ D₁.update st) :=
+    fun st => congr_arg_heq Sigma.snd (hf st)
+  refine ⟨fun {st₁ st₂} h => h ▸ (hexpose st₁).symm, fun {st₁ st₂} h d => ?_⟩
+  subst h
+  exact (congr_heq (hupdate st₁) (eqRec_heq _ d)).symm
+
+/-- A coalgebra morphism between the state coalgebras of two `p`-systems is a
+functional simulation: its graph is a simulation. -/
+theorem isSimulation_graph_coalgHom {D₁ D₂ : DynSystem.{u} p}
+    (f : Coalg.Hom p.Obj D₁.State D₂.State) :
+    IsSimulation D₁ D₂ (fun st₁ st₂ => f st₁ = st₂) :=
+  isSimulation_graph f fun st => (congrFun f.comm st).symm
+
+/-- Coalgebra morphisms preserve behaviour trees. -/
+theorem behavior_coalgHom {D₁ D₂ : DynSystem.{u} p}
+    (f : Coalg.Hom p.Obj D₁.State D₂.State) (st : D₁.State) :
+    D₂.behavior (f st) = D₁.behavior st :=
+  (implements_of_isSimulation (isSimulation_graph_coalgHom f) rfl).symm
 
 end DynSystem
 
