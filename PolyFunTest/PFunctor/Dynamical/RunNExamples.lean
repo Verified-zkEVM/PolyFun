@@ -45,25 +45,22 @@ def delayMachine (b : Bool) : PointedMachine X.{0, 0} PUnit Bool where
   output := fun s => if s then some b else none
 
 /-- The `Option`-handler on `y`: every position resolves to the unique direction. -/
-def unitHandler : PointedMachine.Handler Option X.{0, 0} := fun _ => some PUnit.unit
+def unitHandler : Handler Option X.{0, 0} := fun _ => some PUnit.unit
 
-/-- Two steps of fuel resolve the delayed output. -/
-example (b : Bool) : (delayMachine b).runWith unitHandler 2 false = some (some b) := rfl
+/-- One answered query resolves the delayed output: fuel counts queries, and the
+readout after the answer is free. -/
+example (b : Bool) : (delayMachine b).runWith unitHandler 1 false = some (some b) := rfl
 
-/-- One step of fuel is not enough — the run is still unresolved. -/
-example (b : Bool) : (delayMachine b).runWith unitHandler 1 false = some none := rfl
+/-- Zero fuel allows no query — the run is still unresolved. -/
+example (b : Bool) : (delayMachine b).runWith unitHandler 0 false = some none := rfl
 
 /-- **Fuel irrelevance**: once resolved, more fuel does not change the run. -/
 example (b : Bool) :
-    (delayMachine b).runWith unitHandler 3 false
-      = (delayMachine b).runWith unitHandler 2 false := rfl
+    (delayMachine b).runWith unitHandler 2 false
+      = (delayMachine b).runWith unitHandler 1 false := rfl
 
-/-- A halted state reads off its value at any positive fuel (via
-`runWith_output_some`). -/
-example (b : Bool) : (delayMachine b).runWith unitHandler 1 true = some (some b) :=
+/-- A halted state reads off its value at any fuel (via `runWith_output_some`). -/
+example (b : Bool) : (delayMachine b).runWith unitHandler 0 true = some (some b) :=
   PointedMachine.runWith_output_some _ _ 0 rfl
-
-/-- Zero fuel always yields `none`. -/
-example (b : Bool) : (delayMachine b).runWith unitHandler 0 false = some none := rfl
 
 end PFunctor

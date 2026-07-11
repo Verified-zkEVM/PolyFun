@@ -61,9 +61,10 @@ def universeSeparatedMachine {α : Type v} {β : Type w} (b : β) :
   init := fun _ => false
   output := fun _ => some b
 
-/-- With fuel it reads off its value immediately; with none it is `none`. -/
+/-- The readout is free: a halted machine reads off its value at any fuel,
+including zero. -/
 example (b : β) : (haltMachine (α := α) b).toComp 1 PUnit.unit = FreeM.pure (some b) := rfl
 
-example (b : β) : (haltMachine (α := α) b).toComp 0 PUnit.unit = FreeM.pure none := rfl
+example (b : β) : (haltMachine (α := α) b).toComp 0 PUnit.unit = FreeM.pure (some b) := rfl
 
 end PFunctor
