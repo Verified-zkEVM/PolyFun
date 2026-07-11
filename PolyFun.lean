@@ -107,11 +107,14 @@ import PolyFun.PFunctor.CartesianClosed
 import PolyFun.PFunctor.Category
 import PolyFun.PFunctor.Chart.Basic
 import PolyFun.PFunctor.Cofree
+import PolyFun.PFunctor.Comonoid
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Combinators
 import PolyFun.PFunctor.Dynamical.Machine
 import PolyFun.PFunctor.Dynamical.Run
+import PolyFun.PFunctor.Dynamical.RunN
+import PolyFun.PFunctor.Dynamical.Simulation
 import PolyFun.PFunctor.Dynamical.Speedup
 import PolyFun.PFunctor.Dynamical.System
 import PolyFun.PFunctor.Dynamical.Trajectory

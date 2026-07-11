@@ -18,7 +18,7 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 | Ch 4.5 ⊗-closure `[q,r]`, eval | **Done (A1)**: `ihom`/`eval`/`curry`/`curryEquiv`/`ihomSum` in `PFunctor/InternalHom.lean` (note: `exp` is the §5.3 cartesian exponential, not this) |
 | Ch 5 factorizations, adjunctions, (co)limits | **Done**: full vertical–cartesian factorization (A3, `Lens/Factorization.lean`), trivial-interface adjunction pack (A4, `Adjunctions.lean`), cartesian-closure `eval`/`curry` (A2 partial, `CartesianClosed.lean`); general (co)limits + A5 gluing open |
 | Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: destructor triple, `compNthMap`, δ/`twoStep` (A6/A7a/A7b), left-distributivity + `(6.65)` (A10, `Lens/Distributivity.lean`), ordering + duoidal interchange lens (A9, `Lens/Duoidal.lean`); coclosure/multiadjoint (A8) + duoidal coherence open |
-| Ch 7 comonoids = categories, retrofunctors | Missing (raw material: `IsVeryWellBehaved`) |
+| Ch 7 comonoids = categories, retrofunctors | **Done (B1/B2/B3)**: `Comonoid` structure + `δ^(n)` (`PFunctor/Comonoid.lean`), state comonoid `Sy^S` + `IsStateSystem`, `Run_n`/`nStep` (`Dynamical/RunN.lean`), monad-parametric `runWith` + `seqComp` bind-law core + `IsSimulation` (`Dynamical/{Machine,Simulation}.lean`); retrofunctors + §7.3.3 quadruple (B4/B5) open |
 | Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | Missing (raw material: `M p`, `M.corec`, `FreeM.Path`) |
 
 ## Reading units
@@ -187,6 +187,40 @@ consumers; they are natural follow-ons or Phase B/C prerequisites.
   factorization.
 - **B6** `FreeM P` as ◁-monoid; handlers/`mapMHom` as monoid morphisms
   (universal property behind `simulateQ`).
+
+### Phase B — implementation status (spine: B1 + B2 + B3 + Machine finish)
+
+Landed the K-L-prioritized machine spine (crypto-free):
+
+- **B1 done** — `PFunctor.Comonoid` (Def 7.14) as an à-la-carte structure with
+  counit/comult and the three lens laws through `compX`/`XComp`/`compAssoc`
+  (`PFunctor/Comonoid.lean`). The `MonoidalCategory (Poly, ◃, y)` bundle and a
+  `Comonoid.Hom` (retrofunctor) are deliberately deferred (B4).
+- **B2 done** — `stateComonoid S` on `Sy^S` with `δ = fixState` and the stay-put
+  counit; **all three comonoid laws are `rfl`** (discharges the laws
+  `Speedup.lean` flagged unproved). `IsStateSystem` (Ex 7.22) as a predicate,
+  proved for `stateComonoid`. `Comonoid.comultN` = `δ^(n)` (Prop 7.20) with its
+  defining equations; full canonicity (all bracketings agree) deferred.
+  Representable `y^M ≃ monoid` (Ex 7.40) deferred.
+- **B3 done** — `DynSystem.nStep` = `Run_n` (`Dynamical/RunN.lean`), finishing
+  the `Speedup.lean` `nStep` deferral; **`twoStep_toLens_eq` (the `n = 2`
+  coherence with the existing `twoStep`) is `rfl`**. The monad-parametric run
+  `Machine.runWith = FreeM.mapM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
+  shadow) and `runWith_output_some` (fuel irrelevance, the
+  `runK_eq_of_apply_none_eq_zero` shadow); the `Option`/fuel pays-rent instance
+  is in `RunNExamples.lean`. The ω-limit `ωSup` stays downstream (SPMF ωCPO).
+- **Machine finish** — `toComp_seqComp_inl` fixes the first-phase operational
+  behaviour (with `toComp_seqComp_inr` this is the structural `IsPolyTime.bind`
+  content); the naive fuel-additive single-`bind` law is **false** (fuel threads
+  continuously), so the fuel-exact form via reachability + fuel-irrelevance is a
+  noted next increment. Generic `IsSimulation` + `implements_of_isSimulation`
+  (via `behavior_unique`/`M.corec_eq_corec`) in `Dynamical/Simulation.lean`;
+  the stutter-budget variant is deferred.
+
+Full `lake build` + `lake lint` + `lake test` green with `--wfail`, no `sorry`.
+Open Phase B remnants (B4/B5 retrofunctors + §7.3.3 quadruple, B6 ◁-monoid,
+full Prop 7.20 canonicity, `runWith` = `toComp` at `m = FreeM`) are non-blocking
+follow-ons; B4/B5 arrive with the Phase C cofree layer.
 
 ### Phase C — cofree comonoid and adjunctions (Ch 8.1–8.2)
 
@@ -382,7 +416,11 @@ honest reading of the evidence:
   hand-rolled anyway, the ◁ framing failed this test.
 - Phase B bet: the generic `Run_n`/limit skeleton must make `RunLimit`
   strictly thinner and reusable for at least one non-probabilistic instance
-  (e.g. `Option`/fuel), else it is over-engineering.
+  (e.g. `Option`/fuel), else it is over-engineering. **Verdict (2026-07-10,
+  partial):** the reusability half is met — `runWith`/`runWith_output_some`
+  instantiate to a deterministic `Option`/fuel run (`RunNExamples.lean`), so the
+  ladder is genuinely monad-parametric, not SPMF-bespoke. The `RunLimit`-thinning
+  half awaits the downstream VCVio swap (we do not edit VCVio).
 - Phase C bet: `mate = M.corec` must actually discharge the ITree reverse
   bridge or machine-semantics uniqueness proofs; a cofree comonoid nobody
   calls is a museum piece.
@@ -446,3 +484,20 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   duplicating. Open Phase A remnants (A5, A8 coclosure/multiadjoint, A2 full
   `curryEquiv`, (co)limits, 6.87 coherence, 6.51) are non-blocking follow-ons.
   **Phase A is substantially complete.** Next: Phase B (comonoids, `Run_n`).
+- 2026-07-10 (cont.): **Phase B spine landed** — B1 (`Comonoid`), B2 (state
+  comonoid `Sy^S` + `δ^(n)` + `IsStateSystem`), B3 (`nStep`/`Run_n` +
+  monad-parametric `runWith` + fuel irrelevance), and the finished `Machine`
+  deferrals (`toComp_seqComp_inl` operational law, generic `IsSimulation`),
+  scoped by three read-only surveys to the live K-L blocker cluster (VCVio
+  `RunLimit`/`IsPolyTime.bind`). Three new modules (`PFunctor/Comonoid.lean`,
+  `Dynamical/{RunN,Simulation}.lean`) + a `Machine.lean` extension + three
+  `PolyFunTest/` files. Full `lake build` + `lake lint` + `lake test` green with
+  `--wfail`, no `sorry`. Canaries all `rfl`: the state-comonoid laws,
+  `twoStep_toLens_eq` (`n = 2` coherence), and `runWith = mapM ∘ toComp`.
+  Finding: the naive fuel-additive `seqComp` bind law is **false** (fuel threads
+  continuously through the handoff), so the operational two-lemma
+  characterization is shipped instead, with the fuel-exact form (via reachability
+  + `runWith_output_some`) noted as the next increment. Pays-rent (partial):
+  the `Option`/fuel `runWith` instance discharges the reusability half of the
+  Phase B bet. Next: Phase C (cofree comonoid `t_p` + mate = `M.corec`) or the
+  Cluster-3 interface-rebasing bridge (SemanticSecurity sorries).

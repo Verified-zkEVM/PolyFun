@@ -36,6 +36,15 @@ example (M₁ : Machine p α mid) (M₂ : Machine p mid β) (s₂ : M₂.State) 
     (M₁.seqComp M₂).toComp 3 (Sum.inr s₂) = M₂.toComp 3 s₂ :=
   Machine.toComp_seqComp_inr M₁ M₂ 3 s₂
 
+/-- The first phase exposes `M₁` and hands off to `M₂` exactly on `M₁`'s output. -/
+example (M₁ : Machine p α mid) (M₂ : Machine p mid β) (s₁ : M₁.State) :
+    (M₁.seqComp M₂).toComp 1 (Sum.inl s₁)
+      = FreeM.roll (M₁.expose s₁) (fun d =>
+          (M₁.seqComp M₂).toComp 0 (match M₁.output (M₁.update s₁ d) with
+            | some m => Sum.inr (M₂.init m)
+            | none => Sum.inl (M₁.update s₁ d))) :=
+  Machine.toComp_seqComp_inl M₁ M₂ 0 s₁
+
 /-- A machine that halts immediately with output `b`. -/
 def haltMachine (b : β) : Machine X.{u, u} α β where
   State := PUnit

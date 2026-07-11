@@ -42,7 +42,7 @@ the second phase of `seqComp` is faithful to `M₂`; the fuel-exact cross-phase
 
 @[expose] public section
 
-universe u uA uB
+universe u v uA uB
 
 namespace PFunctor
 
@@ -118,8 +118,24 @@ theorem toComp_succ (M : Machine p α β) (k : ℕ) (st : M.State) :
       | some b => FreeM.pure (some b)
       | none => FreeM.roll (M.expose st) (fun d => M.toComp k (M.update st d))) := rfl
 
+/-- First phase, one step: while in `M₁` (a left state), `seqComp` exposes `M₁`'s
+position and, after `M₁`'s update, hands off to `M₂` exactly when `M₁` produces an
+output. Together with `toComp_seqComp_inr` this fixes the whole operational
+behaviour of the composite: run `M₁`, then run `M₂` from `M₁`'s output. This is
+the structural content of the sought `IsPolyTime.bind` (the composite is a
+faithful sequential composition); the fuel-threaded single-`bind` form is not a
+plain fuel-additive law — `runWith_output_some` supplies the fuel irrelevance it
+needs. -/
+theorem toComp_seqComp_inl (M₁ : Machine p α mid) (M₂ : Machine p mid β)
+    (k : ℕ) (s₁ : M₁.State) :
+    (M₁.seqComp M₂).toComp (k + 1) (Sum.inl s₁)
+      = FreeM.roll (M₁.expose s₁) (fun d =>
+          (M₁.seqComp M₂).toComp k (match M₁.output (M₁.update s₁ d) with
+            | some m => Sum.inr (M₂.init m)
+            | none => Sum.inl (M₁.update s₁ d))) := rfl
+
 /-- Faithfulness of the second phase: once `seqComp` has handed off to `M₂`, its
-unrolling coincides with `M₂`'s. (The cross-phase `bind` law is the next step.) -/
+unrolling coincides with `M₂`'s. -/
 theorem toComp_seqComp_inr (M₁ : Machine p α mid) (M₂ : Machine p mid β)
     (k : ℕ) (s₂ : M₂.State) :
     (M₁.seqComp M₂).toComp k (Sum.inr s₂) = M₂.toComp k s₂ := by
@@ -137,6 +153,54 @@ theorem toComp_seqComp_inr (M₁ : Machine p α mid) (M₂ : Machine p mid β)
     cases M₂.output s₂ with
     | some b => rfl
     | none => exact congrArg (FreeM.roll (M₂.expose s₂)) (funext fun d => ih (M₂.update s₂ d))
+
+/-! ## Monad-parametric fuelled run
+
+`toComp` unrolls a machine into the *syntactic* free monad. Interpreting that
+unrolling in any monad `m` — via a handler `h : (a : q.A) → m (q.B a)` that
+resolves each exposed position monadically — gives the machine a run in `m`. This
+is the interface-generic core of VCVio's deterministic `runD` (`m = Option`) and
+probabilistic `runK` (`m = SPMF`); the actual ω-limit of the fuel-indexed chain
+needs an order/ωCPO on `m` and stays with the concrete instance. The direction
+universe is pinned to `β`'s (`q : PFunctor.{uA, u}`) so `FreeM.mapM` applies. -/
+
+section Run
+
+variable {q : PFunctor.{uA, u}} {m : Type u → Type v} [Monad m]
+
+/-- A **handler** for the interface `q`: a monadic choice of direction at each
+exposed position (a Kleisli section of `q`). -/
+abbrev Handler (m : Type u → Type v) (q : PFunctor.{uA, u}) := (a : q.A) → m (q.B a)
+
+/-- The **monad-parametric fuelled run**: interpret the `k`-step unrolling
+`toComp` in the monad `m` through a handler `h`. `toComp` is the syntactic case
+`m = FreeM q`, `h = FreeM.liftA`. -/
+def runWith (M : Machine q α β) (h : Handler m q) (k : ℕ) (s : M.State) : m (Option β) :=
+  FreeM.mapM h (M.toComp k s)
+
+@[simp] theorem runWith_zero (M : Machine q α β) (h : Handler m q) (s : M.State) :
+    M.runWith h 0 s = pure none := rfl
+
+/-- One-step unfolding of the run: halt with the current output if it is `some`,
+else resolve the exposed position with `h` and recurse. The generic shadow of
+VCVio's `runLimit_fix`. -/
+theorem runWith_succ (M : Machine q α β) (h : Handler m q) (k : ℕ) (s : M.State) :
+    M.runWith h (k + 1) s = (match M.output s with
+      | some b => pure (some b)
+      | none => h (M.expose s) >>= fun d => M.runWith h k (M.update s d)) := by
+  unfold runWith
+  rw [toComp_succ]
+  cases M.output s <;> rfl
+
+/-- **Fuel irrelevance**: once a state has resolved (`output = some b`), any
+positive fuel produces `pure (some b)` — extra fuel does not change the run. The
+generic shadow of VCVio's `runK_eq_of_apply_none_eq_zero`, the run-extension
+lemma sequential composition consumes. -/
+theorem runWith_output_some (M : Machine q α β) (h : Handler m q) (k : ℕ) {s : M.State}
+    {b : β} (hb : M.output s = some b) : M.runWith h (k + 1) s = pure (some b) := by
+  rw [runWith_succ, hb]
+
+end Run
 
 /-! ## Reachability -/
 
