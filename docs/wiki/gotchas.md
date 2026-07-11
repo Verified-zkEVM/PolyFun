@@ -118,6 +118,20 @@ re-export it as an abbrev with the alias-typed signature
 (`abbrev Run.tail (run : Run process) : Run process := DynSystem.Run.tail run`);
 the alias is definitionally transparent, so proofs are unaffected.
 
+### 8d. Alias layers: alias-namespace lemmas are not dot-callable on generic-headed values
+
+The reverse direction of 8c. Lemmas that live in an *alias's* namespace
+(e.g. `Interaction.Concurrent.Refinement.ForwardSimulation.safe_of_satisfies`
+over `ForwardSimulation := PFunctor.DynSystem.ForwardSimulation ...`) cannot
+be reached by dot notation on a value whose head symbol is the generic
+structure — and structure projections always produce generic-headed
+values (`bisim.forth : DynSystem.ForwardSimulation ...`), even when `bisim`'s
+declared type is the alias. So `bisim.forth.safe_of_satisfies` fails while
+`sim.safe_of_satisfies` on a binder `sim : ForwardSimulation ...` succeeds.
+Use full application (`ForwardSimulation.safe_of_satisfies bisim.forth ...`)
+at such sites, or keep the lemma in the generic namespace if it is not
+specific to the alias layer.
+
 ### 9. Avoid `cast` / `Eq.mp` / `Eq.mpr` in core definitions
 
 Per [`AGENTS.md`](../../AGENTS.md): keep core definitions, especially in
