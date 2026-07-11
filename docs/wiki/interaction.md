@@ -391,8 +391,11 @@ under fairness.
 ### Refinement and equivalence
 
 `Refinement.lean` lifts implementation runs to specification runs,
-preserving safety and event / ticket / controller traces.
-`Bisimulation.lean` and `BackwardSimulation` establish behavioral
+preserving safety and event / ticket / controller traces; its
+`ForwardSimulation` is the generic `PFunctor.DynSystem.ForwardSimulation`
+at the step polynomial, with `mapRun` and the transport lemmas supplied by
+`PolyFun/PFunctor/Dynamical/Refinement.lean`. `Bisimulation.lean` and
+`BackwardSimulation` (likewise the `DynSystem` notions) establish behavioral
 equivalence. Named equivalences in `Equivalence.lean` specialize to
 controller, trace, and observational comparisons.
 
@@ -592,8 +595,8 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Run.lean` | `Prefix`, `Run` (infinite), controller / event extraction |
 | `Policy.lean` | `StepPolicy`, `respects`, combinators |
 | `Observation.lean` | `PackedObs`, transcript relations, observation preservation |
-| `Refinement.lean` | `ForwardSimulation`, safety / trace preservation |
-| `Bisimulation.lean` | `Bisimulation`, `BackwardSimulation`, `refl`, `symm` |
+| `Refinement.lean` | `ForwardSimulation` (= `DynSystem.ForwardSimulation` at the step polynomial), `matchTranscript`, observation preservation, `safe_of_satisfies` |
+| `Bisimulation.lean` | `Bisimulation`, `BackwardSimulation` (= the `DynSystem` notions), `Satisfies`-based safety transport |
 | `Equivalence.lean` | controller, trace, observational equivalences |
 | `Fairness.lean` | `WeakFair`, `StrongFair`, temporal predicates |
 | `Liveness.lean` | `Safe`, `Satisfies`, `Admissible`, state predicates |
