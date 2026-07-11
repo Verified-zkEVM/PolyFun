@@ -46,7 +46,8 @@ Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
   (free-standing helpers, depended on by both PFunctor and ITree)
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
-  -> PFunctor/Dynamical/{Basic, System, Combinators, Run, Trajectory}
+  -> PFunctor/Dynamical/{Basic, System, Combinators, Responder, Game,
+                         Run, Trajectory}
   -> PFunctor/Dynamical/Behavior
 
 PFunctor/Free -> ITree/{Basic, Construct, Handler, Rec,

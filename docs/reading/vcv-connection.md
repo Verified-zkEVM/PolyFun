@@ -35,6 +35,18 @@ become the *same* wiring along `eval`, with the SPMF-Kleisli lift as the only
 VCVio-side residue. The two are flagged in-source as un-unified siblings
 (`WireK.lean:42-44`); A1 is their common parent.
 
+**Status (2026-07-11): upstream half landed.** `Responder S q`
+(`PFunctor/Dynamical/Responder.lean`, systems over `q ⊸ X` with the
+Kleisli–Mealy `equivStateHandler` bridge), the game formers
+`DynSystem.game` / `closedGame` (`PFunctor/Dynamical/Game.lean`, wiring
+along `eval`, with `game_eq_uncurry` the adjunction reading), the monadic
+runs `kleisliStep` / `kleisliIterate` / `stepWith` / `iterWith`, and the
+machine-vs-responder step law
+`PointedMachine.runWith_run_succ_of_output_eq_none` are all in place, plus
+the two-phase `Lens.eval₂` / `orderPair` / `game₂` (Eq 6.86 + Ex 6.85).
+Remaining VCVio-side residue: the `m := SPMF` instance (ProbResponder as
+the bundled Kleisli sibling) and `QueryLog` transcripts.
+
 ### Vertical–cartesian factorization (Prop 5.51–5.63 → A3)
 
 Sub-spec inclusions in VCVio are cartesian lenses, and the paper's Thm 5.1
