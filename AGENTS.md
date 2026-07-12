@@ -98,6 +98,7 @@ PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
   → PFunctor/Dynamical/{Behavior, Simulation, RunN, PointedMachine}
   → PFunctor/Dynamical/{Refinement, Responder, Game}
+  → PFunctor/Dynamical/Bisimulation   (also imports Control/Bisimulation)
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
    for RunN and PointedMachine, PFunctor/InternalHom for Responder, and
@@ -107,8 +108,9 @@ Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
   → IPFunctor/Notation, IPFunctor/Notation/{Indexed, Deterministic}
 
-Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
-  (free-standing helpers, depended on by both PFunctor and ITree)
+Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation}
+  (free-standing helpers, depended on by both PFunctor and ITree;
+   Control/Bisimulation is the generic LTS bisimulation theory)
 
 PFunctor/Free → ITree/{Basic, Construct, Handler, Rec,
                        Events, Sim, Bisim}
@@ -130,7 +132,11 @@ Interaction/{Concurrent, Basic} → Interaction/UC/{Interface,
                                   OpenTheory, OpenSyntax, Notation,
                                   Emulates, MachineId, EnvAction,
                                   EnvOpenProcess, CorruptionModel,
-                                  MomentaryCorruption, Leakage}
+                                  MomentaryCorruption, Leakage,
+                                  OpenProcessBisim, BisimObservation}
+  (OpenProcessBisim also imports Control/Bisimulation; the
+   OpenProcessBisim/BisimObservation pair connects OpenProcessIso to the
+   generic bisimulation theory and to the Emulates observation.)
 ```
 
 New files must respect this DAG. Re-exports through
