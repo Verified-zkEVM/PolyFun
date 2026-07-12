@@ -580,3 +580,46 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   `evalDist_simulateQ_run'_eq_evalDist`, `evalDist_simulateQ_run_congr` (each an
   `OracleComp.inductionOn`) — to one-liners at `φ := evalDist`; verdict recorded
   at VCVio landing. VCVio payoff-map row: B6 → "`simulateQ` universal property".
+- 2026-07-11 (**regroup & remediation** cleanup pass, stacked on
+  `dtumad/seqcomp-state` as `dtumad/cleanup-{hygiene,naming,tests}`): a
+  post-stack consolidation after three read-only audits (duplication / debt /
+  integration). Finding: the feared large-scale duplication mostly does *not*
+  exist — the lens/adjunction layer is clean, Concurrent already instantiates
+  the generic `DynSystem.ForwardSimulation`, and the `_eq`/`_mapRun`
+  observation API is intentional bisim-level sugar with a test consumer, not
+  dead code. Hygiene: dropped the mathematically-wrong `FreeM ⊣ Cofree`
+  adjunction slogan for the Libkind–Spivak module-structure wording and
+  corrected the book citation to Cambridge UP / LMS 498 / 2025 (corrections
+  items 1, 7 resolved; the arXiv-id/subtitle inconsistency logged as open
+  item 8). Consolidation: the `Lens.transitionLens` alias and
+  `Dynamical/Speedup.lean` folded into `Lens.fixState` / `RunN.lean` (`twoStep`
+  now sits by the `nStep` ladder), and the tight `IsSimulation` merged into
+  `Dynamical/Refinement.lean` (fixing the file-name inversion;
+  `Dynamical/Simulation.lean` deleted). Added dedicated `Refinement` / `System`
+  / `Responder` tests. Both module-DAG copies + the `pfunctor.md` index were
+  re-synced, and the "processes and machines are dynamical systems" edge scoped
+  to `Concurrent` (TwoParty/Multiparty do not depend on `Dynamical`).
+
+  **Long-term unification follow-ons surfaced (not done — each needs a named
+  consumer and, for the effectful case, a design memo first):**
+  1. *Monadic / Kleisli `DynSystem`* — `UC/EnvAction`'s documented non-reuse of
+     `DynSystem` (it needs coalgebras of `m ∘ p.Obj`), `PointedMachine.runWith`,
+     and the Responder/Game monadic runs all want one Kleisli–Mealy dynamical
+     layer; it is the parent of VCVio's `ProbResponder`.
+  2. *`Interaction/Basic` reusing `DynSystem.Run`* — `Spec.stepPoly` iteration
+     (`Chain`/`Telescope`) is hand-rolled because `Interaction/Basic` sits below
+     `PFunctor/Dynamical`; unifying it needs a layering move.
+  3. *One `⨟` for morphisms and machines* — there are currently three `⨟`
+     notations: categorical composition on lenses (`Lens/Basic`) and charts
+     (`Chart/Basic`), and the two-phase `⊕`-state `PointedMachine.seqComp`. The
+     machine one is a genuinely different operation (Example 6.41), hand-rolled
+     rather than derived from the A6 `CompTriple` / `◃` lens algebra that
+     already exists. The framework unifying both under one composition is
+     bicomodule composition (Ch 8.3.5, Phase D3, "running = composing
+     bicomodules"). Falsifiable test: does re-expressing `seqComp` via
+     `CompTriple` / `◃` (and eventually bicomodules) delete the bespoke
+     `⊕`-state definition and let one `⨟` cover machines too?
+  4. *Sim/Bisim/equivalence glossary* — `ITree.simulate`/`mapSpec` (operators),
+     `ITree.{Bisim,WeakBisim}`, and `DynSystem.{ObsEq,Bisimulation,IsSimulation}`
+     coexist with overloaded vocabulary; a `docs/wiki` glossary would prevent
+     confusion (no code change).

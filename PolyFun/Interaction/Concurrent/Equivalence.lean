@@ -23,6 +23,12 @@ usually wants a smaller family of standard questions:
 
 This file packages exactly those questions as named equivalence notions and
 records the immediate preservation lemmas for finite run prefixes.
+
+Each `*_eq` preservation lemma is a thin bisimulation-level wrapper around the
+generic simulation-level `Refinement.ForwardSimulation.*_mapRun`, specialised at
+`equiv.forth`. Keeping the packaged form lets protocol proofs (see
+`PolyFunTest/Interaction/Concurrent/Examples.lean`) transport observations
+directly from an equivalence without first unfolding it to a forward simulation.
 -/
 
 universe u v w
