@@ -22,7 +22,7 @@ universe u v w
 
 namespace PFunctor
 
-variable {p : PFunctor.{u, u}} {α β mid : Type u}
+variable {p : PFunctor.{u, u}} {α β γ mid mid₁ mid₂ : Type u}
 
 /-- The two-step system shares its state set with the original. -/
 example (s : DynSystem p) : s.twoStep.State = s.State := rfl
@@ -34,6 +34,14 @@ example (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) :
 /-- Sequential composition has state `M₁.State ⊕ M₂.State`. -/
 example (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) :
     (M₁ ⨟ M₂).State = (M₁.State ⊕ M₂.State) := rfl
+
+/-- Chained `⨟` notation parses to the left, fixing the corresponding nested sum state. -/
+example (M₁ : PointedMachine p α mid₁) (M₂ : PointedMachine p mid₁ mid₂)
+    (M₃ : PointedMachine p mid₂ γ) : M₁ ⨟ M₂ ⨟ M₃ = (M₁ ⨟ M₂) ⨟ M₃ := rfl
+
+example (M₁ : PointedMachine p α mid₁) (M₂ : PointedMachine p mid₁ mid₂)
+    (M₃ : PointedMachine p mid₂ γ) :
+    (M₁ ⨟ M₂ ⨟ M₃).State = ((M₁.State ⊕ M₂.State) ⊕ M₃.State) := rfl
 
 /-- The second phase of `seqComp` unrolls exactly like `M₂`. -/
 example (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) (s₂ : M₂.State) :

@@ -53,8 +53,8 @@ protected def id (P : IPFunctor.{uI, uJ, uA, uB} I J) : Lens P P where
   toFunB _ _ := id
   src_eq _ _ _ := rfl
 
-/-- Composition of lenses (diagrammatic / functor-composition order: `l ∘ₗ l'` applies `l'`
-first, then `l`). -/
+/-- Composition of lenses in function-composition order: `l ∘ₗ l'` applies `l'` first,
+then `l`. -/
 def comp {P : IPFunctor.{uI, uJ, uA₁, uB₁} I J}
     {Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J}
     {R : IPFunctor.{uI, uJ, uA₃, uB₃} I J}

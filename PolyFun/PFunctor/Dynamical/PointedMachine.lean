@@ -161,7 +161,9 @@ def wrap (M : PointedMachine.{u} p α β) (w : Lens p q) : PointedMachine.{u} q 
 from that value. The state set is `M₁.State ⊕ M₂.State`; phase one never reads
 out, phase two carries the final output. Only the returned `mid` value crosses
 the handoff; information from phase one's private terminal state must either be
-returned in `mid` or live in the ambient handler effect. -/
+returned in `mid` or live in the ambient handler effect. The notation is
+left-associative; this fixes how chains parse, rather than asserting
+definitional associativity. -/
 def seqComp (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) : PointedMachine p α β where
   State := M₁.State ⊕ M₂.State
   expose := fun s => match s with

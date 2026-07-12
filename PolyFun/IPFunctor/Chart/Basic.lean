@@ -52,7 +52,8 @@ protected def id (P : IPFunctor.{uI, uJ, uA, uB} I J) : Chart P P where
   toFunB _ _ := id
   src_eq _ _ _ := rfl
 
-/-- Composition of charts (diagrammatic order: `c ∘c c'` applies `c'` first, then `c`). -/
+/-- Composition of charts in function-composition order: `c ∘c c'` applies `c'` first,
+then `c`. -/
 def comp {P : IPFunctor.{uI, uJ, uA₁, uB₁} I J}
     {Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J}
     {R : IPFunctor.{uI, uJ, uA₃, uB₃} I J}

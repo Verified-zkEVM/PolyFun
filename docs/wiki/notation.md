@@ -55,9 +55,15 @@ than via custom notation, to keep elaboration predictable. Specifically:
   at `infixl:75`. This is the book's diagrammatic composition order
   (left machine runs first), the same `⨟` used throughout
   `docs/reading/`; its intentional use is recorded as a narrow exception in
-  `scripts/nolints-style.txt`. Note `∘ₗ` on lenses is
-  *anti*-diagrammatic (`l ∘ₗ l'` applies `l'` first); extending `⨟` to
-  lenses/charts is planned alongside the `DynSystem`-as-lens re-cut.
+  `scripts/nolints-style.txt`. The `\;;` translation is a PolyFun workspace
+  setting in [`.vscode/settings.json`](../../.vscode/settings.json), rather than
+  a built-in Lean input abbreviation. Because the operator is left-associative,
+  `M₁ ⨟ M₂ ⨟ M₃` parses as `(M₁ ⨟ M₂) ⨟ M₃`, whose state is
+  `(M₁.State ⊕ M₂.State) ⊕ M₃.State`. This parsing convention does not
+  assert that the two possible associations of machine composition are
+  definitionally equal. Note `∘ₗ` on lenses is in function-composition
+  order (`l ∘ₗ l'` applies `l'` first); extending `⨟` to lenses/charts is
+  planned alongside the `DynSystem`-as-lens re-cut.
 
 If you find yourself wishing for new notation in PolyFun, consider
 whether the underlying name suffices first: this library leans toward
