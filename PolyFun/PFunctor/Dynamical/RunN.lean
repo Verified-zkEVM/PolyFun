@@ -24,7 +24,7 @@ the state comonoid on `S y^S` (`PFunctor.Comonoid.comultN` on `stateComonoid S`)
 and `φ^{◁n}` is the composition power of the interface lens (`Lens.compNthMap`).
 `DynSystem.nStep` is that construction on bundled systems: one composite
 `p^{◃n}`-step exposes `n` successive `p`-positions and threads the answers through
-`n` updates. `twoStep_toLens_eq` records that the `n = 2` case collapses to
+`n` updates. `nStep_two_eq_twoStep` records that the `n = 2` case collapses to
 `twoStep`. This is the generic core of the finite-run truncation ladder that a
 probabilistic run semantics (VCVio's `RunLimit`) instantiates.
 -/
@@ -46,7 +46,7 @@ variable {S : Type u} {p : PFunctor.{uA, uB}}
 system (Spivak–Niu Example 6.44): one composite step exposes a first `p`-position,
 consumes a direction, exposes a second `p`-position, and updates. Same state set
 as `φ` — literally `Lens.speedup` on the system's interface lens, and the `n = 2`
-case of `nStep` over the binary composite `p ◃ p` (see `twoStep_toLens_eq`). -/
+case of `nStep` over the binary composite `p ◃ p` (see `nStep_two_eq_twoStep`). -/
 def twoStep (s : DynSystem S p) : DynSystem S (p ◃ p) :=
   Lens.speedup s
 
@@ -66,13 +66,32 @@ consuming a direction after each, and updates the state. Same state set as `φ`.
 def nStep (φ : DynSystem S p) (n : ℕ) : DynSystem S (compNth p n) :=
   φ.compNthMap n ∘ₗ (stateComonoid S).comultN n
 
-@[simp] theorem nStep_eq (φ : DynSystem S p) (n : ℕ) :
+theorem nStep_eq (φ : DynSystem S p) (n : ℕ) :
     φ.nStep n = φ.compNthMap n ∘ₗ (stateComonoid S).comultN n := rfl
+
+/-- A zero-step system exposes the composition unit and leaves its state
+unchanged. -/
+@[simp] theorem nStep_zero_expose (φ : DynSystem S p) (state : S) :
+    (φ.nStep 0).expose state = PUnit.unit := rfl
+
+@[simp] theorem nStep_zero_update (φ : DynSystem S p) (state : S)
+    (direction : (compNth p 0).B ((φ.nStep 0).expose state)) :
+    (φ.nStep 0).update state direction = state := rfl
+
+/-- A one-step system exposes the original position followed by the unique
+position of the composition unit. -/
+@[simp] theorem nStep_one_expose (φ : DynSystem S p) (state : S) :
+    (φ.nStep 1).expose state = ⟨φ.expose state, fun _ => PUnit.unit⟩ := rfl
+
+/-- A one-step composite direction performs exactly one original update. -/
+@[simp] theorem nStep_one_update (φ : DynSystem S p) (state : S)
+    (direction : (compNth p 1).B ((φ.nStep 1).expose state)) :
+    (φ.nStep 1).update state direction = φ.update state direction.1 := rfl
 
 /-- Coherence with `twoStep`: the `n = 2` step over the right-nested power
 `compNth p 2 = p ◃ (p ◃ y)` collapses to `twoStep`'s binary composite `p ◃ p`
 after the inner unitor `compX` (`p ◃ y ≅ p`). -/
-theorem twoStep_toLens_eq (φ : DynSystem S p) :
+theorem nStep_two_eq_twoStep (φ : DynSystem S p) :
     (Lens.id p ◃ₗ Lens.Equiv.compX.toLens) ∘ₗ φ.nStep 2 = φ.twoStep := by
   rfl
 

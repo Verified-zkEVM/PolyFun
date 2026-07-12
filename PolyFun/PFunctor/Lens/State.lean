@@ -4,7 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
 
-import PolyFun.PFunctor.Lens.Basic
+module
+
+public import PolyFun.PFunctor.Lens.Basic
 
 /-!
 # Lawful State Lenses

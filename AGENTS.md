@@ -97,6 +97,7 @@ PFunctor/Lens/{Basic, Cartesian, State}
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
   → PFunctor/Dynamical/{Behavior, Simulation, RunN, PointedMachine}
+  → PFunctor/Dynamical/Bisimulation   (also imports Control/Bisimulation)
   → PFunctor/Dynamical/{Refinement, Responder, Game}
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
@@ -107,8 +108,9 @@ Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
   → IPFunctor/Notation, IPFunctor/Notation/{Indexed, Deterministic}
 
-Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
-  (free-standing helpers, depended on by both PFunctor and ITree)
+Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation}
+  (free-standing helpers, depended on by both PFunctor and ITree;
+   Control/Bisimulation is the generic LTS bisimulation theory)
 
 PFunctor/Free → ITree/{Basic, Construct, Handler, Rec,
                        Events, Sim, Bisim}
@@ -282,7 +284,7 @@ Highlights:
   free interaction structure on a polynomial container.
 - Altenkirch-Ghani-Hancock-McBride-Morris 2015 — *Indexed Containers*
   (JFP 25, e5).
-- Spivak-Niu 2025 — *Polynomial Functors: A General Theory of
+- Spivak-Niu 2025 — *Polynomial Functors: A Mathematical Theory of
   Interaction* (Cambridge University Press); the pattern-runs-on-matter
   module structure of `FreeM` over `Cofree`.
 - Xia-Zakowski-He-Hur-Malecha-Pierce-Zdancewic 2020 —
