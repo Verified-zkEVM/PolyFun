@@ -256,7 +256,11 @@ notation "⟨" l₁ "," l₂ "⟩ₗ" => prodPair l₁ l₂
 def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
   Lens P X.{uA₁, uB₁}
 
-/-- Helper lens for `speedup` -/
+/-- The transition lens `δ : Sy^S ⇆ Sy^S ◃ Sy^S` on the self-monomial state
+polynomial (Spivak–Niu Example 6.44): `δ = (id, tgt, run)` remembers the start
+state, relabels each direction by the state it targets, and composes two hops
+into one. It is the comultiplication of the state comonoid `stateComonoid S`, and
+the helper behind `speedup`. -/
 def fixState {S : Type u} : Lens (selfMonomial S) (selfMonomial S ◃ selfMonomial S) :=
   (fun s₀ => ⟨s₀, fun s₁ => s₁⟩) ⇆ (fun _s₀ => fun ⟨_s₁, s₂⟩ => s₂)
 
