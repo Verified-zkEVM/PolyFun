@@ -38,19 +38,19 @@ namespace DynSystem
 
 /-- The ITree unfolding of a dynamical system from a state: query the exposed
 position forever, transitioning along each answer. -/
-def toITree {p : PFunctor.{u, u}} (s : DynSystem.{v} p) :
-    s.State → ITree p PEmpty.{u + 1} :=
+def toITree {S : Type v} {p : PFunctor.{u, u}} (s : DynSystem S p) :
+    S → ITree p PEmpty.{u + 1} :=
   M.corec fun st => ⟨.query (s.expose st), fun d => s.update st d⟩
 
-@[simp] theorem dest_toITree {p : PFunctor.{u, u}} (s : DynSystem.{v} p) (st : s.State) :
+@[simp] theorem dest_toITree {S : Type v} {p : PFunctor.{u, u}} (s : DynSystem S p) (st : S) :
     M.dest (s.toITree st)
       = ⟨.query (s.expose st), fun d => s.toITree (s.update st d)⟩ := by
   simp only [toITree, M.dest_corec_apply]
 
 /-- Unfolding a system into an ITree is the query-embedding of its behavior
 tree: the two coinductive semantics agree. -/
-theorem toITree_eq_toITree_behavior {p : PFunctor.{u, u}} (s : DynSystem.{v} p)
-    (st : s.State) : s.toITree st = M.toITree (s.behavior st) := by
+theorem toITree_eq_toITree_behavior {S : Type v} {p : PFunctor.{u, u}} (s : DynSystem S p)
+    (st : S) : s.toITree st = M.toITree (s.behavior st) := by
   refine congrFun (Eq.symm (M.corec_unique _ (fun st => M.toITree (s.behavior st)) ?_)) st
   intro st
   simp only [M.toITree, M.dest_corec_apply]

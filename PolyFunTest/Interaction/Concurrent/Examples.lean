@@ -193,7 +193,7 @@ def deliveryThenAck : Trace inFlight :=
     (.step (.right (.move false)) (Trace.doneOfNotLive rfl))
 
 /-- The dynamic process compiled from the structural tree frontend. -/
-def inFlightProcess : Process Party :=
+def inFlightProcess : Process (Tree.State Party) Party :=
   Tree.toProcess (Party := Party)
 
 /-- The packaged initial structural state of the in-flight system. -/
@@ -391,7 +391,7 @@ def loopNode : NodeProfile Party Bool where
 
 /-- A tiny one-state looping process used to exercise runs, tickets, fairness,
 and refinement. -/
-def loopProcess : Process Party :=
+def loopProcess : Process PUnit Party :=
   ProcessOver.ofStep PUnit fun _ =>
     { spec := .node Bool (fun _ => .done)
       semantics := ⟨loopNode, fun _ => PUnit.unit⟩
@@ -400,6 +400,7 @@ def loopProcess : Process Party :=
 /-- A ticketed view of `loopProcess` using the chosen boolean as the stable
 ticket. -/
 def loopTicketed : Process.Ticketed Party where
+  State := PUnit
   toDynSystem := loopProcess
   Ticket := Bool
   ticket := fun _ tr =>
@@ -448,6 +449,7 @@ example :
 
 /-- A trivial system wrapper around `loopProcess`. -/
 def loopSystem : Process.SafetySpec Party where
+  State := PUnit
   toDynSystem := loopProcess
   init _ := True
   assumptions _ := True
@@ -619,7 +621,7 @@ section MachineExamples
 
 /-- A counter machine via the classical constructor: at every state a boolean
 event is enabled — `true` increments, `false` stays. -/
-def counterMachine : Machine :=
+def counterMachine : Machine ℕ :=
   Machine.mk' ℕ (fun _ => Bool) (fun n b => if b then n + 1 else n)
 
 example : counterMachine.step (3 : ℕ) true = (4 : ℕ) := rfl
@@ -634,6 +636,7 @@ example : PFunctor.DynSystem.ObsEq counterMachine counterMachine (3 : ℕ) (3 : 
 
 /-- A machine system with verification predicates, using the generic bundle. -/
 def counterSystem : Machine.SafetySpec where
+  State := ℕ
   toDynSystem := counterMachine
   init := fun (n : ℕ) => n = 0
 
@@ -645,11 +648,11 @@ example : counterSystem.toMachine = counterMachine := rfl
 
 /-- Node semantics for compiling the counter machine into a process. -/
 def counterProfile :
-    (σ : counterMachine.State) → NodeProfile Party (counterMachine.Enabled σ) :=
+    (σ : ℕ) → NodeProfile Party (counterMachine.Enabled σ) :=
   fun _ => { controllers := fun _ => [.adv], views := fun _ => .observe }
 
 /-- The one-node-step process compiled from the counter machine. -/
-def counterProcess : Process Party := counterMachine.toProcess counterProfile
+def counterProcess : Process ℕ Party := counterMachine.toProcess counterProfile
 
 example :
     (counterProcess.step (3 : ℕ)).spec

@@ -32,7 +32,7 @@ on, in the Niu–Spivak slogan).
 
 @[expose] public section
 
-universe uA uB w
+universe u u₁ u₂ u₃ uA uB w
 
 namespace PFunctor
 
@@ -50,26 +50,26 @@ def M.selfLabel {p : PFunctor.{uA, uB}} : M p → CofreeC p p.A :=
 
 namespace DynSystem
 
-variable {p : PFunctor.{uA, uB}}
+variable {S : Type u} {p : PFunctor.{uA, uB}}
 
 /-- The behaviour tree of a `p`-system started from `st`: a cofree-`p` tree whose
 head label is the exposed position and whose `p.B`-indexed children are the
 trajectories from each successor state. -/
-def trajectory (s : DynSystem p) (st : s.State) : CofreeC p p.A :=
+def trajectory (s : DynSystem S p) (st : S) : CofreeC p p.A :=
   M.corec (fun st => ⟨(s.expose st, s.expose st), fun d => s.update st d⟩) st
 
 /-- One-step unfolding of a trajectory's `M.dest`: the stored label and position
 are the exposed position, and the children are the successor trajectories. -/
-theorem dest_trajectory (s : DynSystem p) (st : s.State) :
+theorem dest_trajectory (s : DynSystem S p) (st : S) :
     M.dest (trajectory s st)
       = ⟨(s.expose st, s.expose st), fun d => trajectory s (s.update st d)⟩ := by
   simp only [trajectory, M.dest_corec_apply]
 
-@[simp] theorem head_trajectory (s : DynSystem p) (st : s.State) :
+@[simp] theorem head_trajectory (s : DynSystem S p) (st : S) :
     (trajectory s st).head = s.expose st := by
   simp only [CofreeC.head, dest_trajectory]
 
-@[simp] theorem tail_trajectory (s : DynSystem p) (st : s.State) :
+@[simp] theorem tail_trajectory (s : DynSystem S p) (st : S) :
     (trajectory s st).tail = ⟨s.expose st, fun d => trajectory s (s.update st d)⟩ := by
   simp only [CofreeC.tail]; rw [dest_trajectory]; rfl
 
@@ -82,45 +82,49 @@ equivalence on states. -/
 
 /-- The unique coalgebra homomorphism from a `p`-system into the terminal
 `p.Obj`-coalgebra `M p`: the observable behavior tree from each state. -/
-def behavior (s : DynSystem p) : s.State → M p :=
+def behavior (s : DynSystem S p) : S → M p :=
   M.corec s.out
 
 /-- The defining equation of `behavior`: destructing the behavior tree at a state
 recovers the exposed position, with each subtree the behavior of the corresponding
 successor state. -/
-@[simp] theorem dest_behavior (s : DynSystem p) (st : s.State) :
+@[simp] theorem dest_behavior (s : DynSystem S p) (st : S) :
     M.dest (s.behavior st) = ⟨s.expose st, fun d => s.behavior (s.update st d)⟩ := by
   simp only [behavior, M.dest_corec_apply]; rfl
 
 /-- **Bisimulation by uniqueness.** Any function into `M p` that commutes with the
 coalgebra structure map `out` agrees with `behavior` on the nose: the universal
 property of `M p` as the terminal `p.Obj`-coalgebra. -/
-theorem behavior_unique (s : DynSystem p) (f : s.State → M p)
+theorem behavior_unique (s : DynSystem S p) (f : S → M p)
     (hf : ∀ st, M.dest (f st) = p.map f (s.out st)) : f = s.behavior :=
   M.corec_unique _ f hf
 
 /-- Two states (possibly of different `p`-systems) are **observationally
 equivalent** when their behavior trees are equal. By `behavior_unique`, this is
 the strongest equivalence preserved by every `p.Obj`-coalgebra homomorphism. -/
-def ObsEq (s₁ s₂ : DynSystem p) (st₁ : s₁.State) (st₂ : s₂.State) : Prop :=
+def ObsEq {S₁ : Type u₁} {S₂ : Type u₂} (s₁ : DynSystem S₁ p) (s₂ : DynSystem S₂ p)
+    (st₁ : S₁) (st₂ : S₂) : Prop :=
   s₁.behavior st₁ = s₂.behavior st₂
 
 /-- Observational equivalence is reflexive (within a fixed system). -/
-@[refl] theorem ObsEq.refl (s : DynSystem p) (st : s.State) : ObsEq s s st st := rfl
+@[refl] theorem ObsEq.refl (s : DynSystem S p) (st : S) : ObsEq s s st st := rfl
 
 /-- Observational equivalence is symmetric. -/
-@[symm] theorem ObsEq.symm {s₁ s₂ : DynSystem p} {st₁ : s₁.State} {st₂ : s₂.State}
+@[symm] theorem ObsEq.symm {S₁ : Type u₁} {S₂ : Type u₂}
+    {s₁ : DynSystem S₁ p} {s₂ : DynSystem S₂ p} {st₁ : S₁} {st₂ : S₂}
     (h : ObsEq s₁ s₂ st₁ st₂) : ObsEq s₂ s₁ st₂ st₁ := Eq.symm h
 
 /-- Observational equivalence is transitive. -/
-@[trans] theorem ObsEq.trans {s₁ s₂ s₃ : DynSystem p}
-    {st₁ : s₁.State} {st₂ : s₂.State} {st₃ : s₃.State}
+@[trans]
+theorem ObsEq.trans {S₁ : Type u₁} {S₂ : Type u₂} {S₃ : Type u₃}
+    {s₁ : DynSystem S₁ p} {s₂ : DynSystem S₂ p} {s₃ : DynSystem S₃ p}
+    {st₁ : S₁} {st₂ : S₂} {st₃ : S₃}
     (h₁₂ : ObsEq s₁ s₂ st₁ st₂) (h₂₃ : ObsEq s₂ s₃ st₂ st₃) :
     ObsEq s₁ s₃ st₁ st₃ := Eq.trans h₁₂ h₂₃
 
 /-- The cofree trajectory is the behavior tree relabeled with its own positions:
 the two coinductive semantics of a dynamical system carry the same information. -/
-theorem trajectory_eq_selfLabel_behavior (s : DynSystem p) (st : s.State) :
+theorem trajectory_eq_selfLabel_behavior (s : DynSystem S p) (st : S) :
     s.trajectory st = M.selfLabel (s.behavior st) := by
   refine congrFun (Eq.symm (M.corec_unique _ (fun st => M.selfLabel (s.behavior st)) ?_)) st
   intro st
@@ -135,12 +139,12 @@ exactly the `iterate` of its states. -/
 
 /-- One step along a closed system's trajectory is the trajectory from the next
 state. -/
-theorem next_trajectory (s : Closed) (st : s.State) :
+theorem next_trajectory (s : Closed S) (st : S) :
     CofreeC.next (trajectory s st) = trajectory s (s.step st) := rfl
 
 /-- The `n`-fold successor of a closed system's trajectory is the trajectory from
 its `n`-th iterated state: the trajectory's spine is the `iterate` of states. -/
-theorem next_iterate_trajectory (s : Closed) (st : s.State) (n : ℕ) :
+theorem next_iterate_trajectory (s : Closed S) (st : S) (n : ℕ) :
     (CofreeC.next)^[n] (trajectory s st) = trajectory s ((s.step)^[n] st) := by
   induction n generalizing st with
   | zero => rfl

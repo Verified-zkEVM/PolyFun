@@ -36,21 +36,21 @@ namespace Run
 `process`. -/
 abbrev Pred
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (process : ProcessOver Γ) :=
+    {P : Type v} (process : ProcessOver P Γ) :=
   ProcessOver.Run process → Prop
 
 /-- `StatePred process` is the type of predicates on residual process
 states. -/
 abbrev StatePred
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (process : ProcessOver Γ) :=
+    {P : Type v} (process : ProcessOver P Γ) :=
   process.Proc → Prop
 
 /-- `AlwaysState P run` means that the state predicate `P` holds at every state
 of the run `run`. -/
 def AlwaysState
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     (P : StatePred process) (run : ProcessOver.Run process) : Prop :=
   ∀ n, P (run.state n)
 
@@ -60,7 +60,7 @@ satisfying `P`.
 -/
 def EventuallyState
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     (P : StatePred process) (run : ProcessOver.Run process) : Prop :=
   ∃ n, P (run.state n)
 
@@ -68,14 +68,14 @@ def EventuallyState
 states of `run`. -/
 def InfinitelyOftenState
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     (P : StatePred process) (run : ProcessOver.Run process) : Prop :=
   ∀ N, ∃ n, N ≤ n ∧ P (run.state n)
 
 /-- Monotonicity of `AlwaysState`. -/
 theorem alwaysState_mono
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     {P Q : StatePred process}
     (himp : ∀ p, P p → Q p) :
     ∀ {run : ProcessOver.Run process}, AlwaysState P run → AlwaysState Q run := by
@@ -85,7 +85,7 @@ theorem alwaysState_mono
 /-- Monotonicity of `EventuallyState`. -/
 theorem eventuallyState_mono
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     {P Q : StatePred process}
     (himp : ∀ p, P p → Q p) :
     ∀ {run : ProcessOver.Run process}, EventuallyState P run → EventuallyState Q run := by
@@ -95,7 +95,7 @@ theorem eventuallyState_mono
 /-- Monotonicity of `InfinitelyOftenState`. -/
 theorem infinitelyOftenState_mono
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {process : ProcessOver Γ}
+    {P : Type v} {process : ProcessOver P Γ}
     {P Q : StatePred process}
     (himp : ∀ p, P p → Q p) :
     ∀ {run : ProcessOver.Run process},
@@ -169,41 +169,41 @@ namespace Process
 namespace Run
 
 /-- The closed-world specialization of `ProcessOver.Run.Pred`. -/
-abbrev Pred {Party : Type u} (process : Process Party) :=
+abbrev Pred {Party : Type u} {P : Type v} (process : Process P Party) :=
   ProcessOver.Run.Pred process
 
 /-- The closed-world specialization of `ProcessOver.Run.StatePred`. -/
-abbrev StatePred {Party : Type u} (process : Process Party) :=
+abbrev StatePred {Party : Type u} {P : Type v} (process : Process P Party) :=
   ProcessOver.Run.StatePred process
 
 /-- `AlwaysState` for closed-world runs. -/
-abbrev AlwaysState {Party : Type u} {process : Process Party}
+abbrev AlwaysState {Party : Type u} {P : Type v} {process : Process P Party}
     (P : StatePred process) (run : Process.Run process) : Prop :=
   ProcessOver.Run.AlwaysState P run
 
 /-- `EventuallyState` for closed-world runs. -/
-abbrev EventuallyState {Party : Type u} {process : Process Party}
+abbrev EventuallyState {Party : Type u} {P : Type v} {process : Process P Party}
     (P : StatePred process) (run : Process.Run process) : Prop :=
   ProcessOver.Run.EventuallyState P run
 
 /-- `InfinitelyOftenState` for closed-world runs. -/
-abbrev InfinitelyOftenState {Party : Type u} {process : Process Party}
+abbrev InfinitelyOftenState {Party : Type u} {P : Type v} {process : Process P Party}
     (P : StatePred process) (run : Process.Run process) : Prop :=
   ProcessOver.Run.InfinitelyOftenState P run
 
-theorem alwaysState_mono {Party : Type u} {process : Process Party}
+theorem alwaysState_mono {Party : Type u} {P : Type v} {process : Process P Party}
     {P Q : StatePred process}
     (himp : ∀ p, P p → Q p) :
     ∀ {run : Process.Run process}, AlwaysState P run → AlwaysState Q run :=
   ProcessOver.Run.alwaysState_mono himp
 
-theorem eventuallyState_mono {Party : Type u} {process : Process Party}
+theorem eventuallyState_mono {Party : Type u} {P : Type v} {process : Process P Party}
     {P Q : StatePred process}
     (himp : ∀ p, P p → Q p) :
     ∀ {run : Process.Run process}, EventuallyState P run → EventuallyState Q run :=
   ProcessOver.Run.eventuallyState_mono himp
 
-theorem infinitelyOftenState_mono {Party : Type u} {process : Process Party}
+theorem infinitelyOftenState_mono {Party : Type u} {P : Type v} {process : Process P Party}
     {P Q : StatePred process}
     (himp : ∀ p, P p → Q p) :
     ∀ {run : Process.Run process},
