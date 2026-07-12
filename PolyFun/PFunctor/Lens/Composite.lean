@@ -23,9 +23,10 @@ A lens `φ : p ⇆ q ◃ r` is exactly a triple `(φ^q, φ^r, φ♯)`:
 * `φ♯ : (i : p.A) → (Σ u : q.B (φ^q i), r.B (φ^r i u)) → p.B i` — the joint pullback
   of directions.
 
-`compTripleEquiv` packages this as an `Equiv`, so protocol lenses into a two-phase
-interface can be built and destructed without unfolding `PFunctor.comp`. This is
-the intro/elim rule VCVio's two-phase games (`TwoPhaseGame`) want.
+These are not a second representation: they are the components already stored by
+the lens. The accessors `Lens.compOuter`, `Lens.compInner`, and
+`Lens.compPullback` expose the three views directly, without conversion or an
+auxiliary wrapper type.
 
 ## Composition power of a lens (§6.1.4)
 
@@ -45,32 +46,23 @@ namespace Lens
 
 variable {p q r : PFunctor.{uA, uB}}
 
-/-! ## Destructor triple for `Lens p (q ◃ r)` -/
+/-! ## Components of a lens into `q ◃ r` -/
 
-/-- The triple `(φ^q, φ^r, φ♯)` equivalent to a lens `p ⇆ q ◃ r` (Spivak–Niu
-Example 6.40): a `q`-position policy, an `r`-position policy depending on a
-`q`-direction, and a joint pullback of directions. -/
-structure CompTriple (p q r : PFunctor.{uA, uB}) : Type (max uA uB) where
-  /-- The outer `q`-position selected at each source position. -/
-  outer : (i : p.A) → q.A
-  /-- The inner `r`-position selected after receiving a `q`-direction. -/
-  inner : (i : p.A) → q.B (outer i) → r.A
-  /-- The joint pullback of the outer and inner directions. -/
-  pullback : (i : p.A) → (Σ u : q.B (outer i), r.B (inner i u)) → p.B i
+/-- The outer `q`-position selected by a lens into `q ◃ r` at each source
+position (Spivak–Niu Example 6.40). -/
+def compOuter (l : Lens p (q ◃ r)) (i : p.A) : q.A :=
+  (l.toFunA i).1
 
-/-- A lens into a composite `q ◃ r` is equivalently its destructor triple
-`(φ^q, φ^r, φ♯)` (Spivak–Niu Example 6.40). Both round-trips are `rfl`. -/
-def compTripleEquiv : Lens p (q ◃ r) ≃ CompTriple p q r where
-  toFun φ := ⟨fun i => (φ.toFunA i).1, fun i => (φ.toFunA i).2, fun i => φ.toFunB i⟩
-  invFun t := (fun i => ⟨t.outer i, t.inner i⟩) ⇆ t.pullback
-  left_inv _ := rfl
-  right_inv t := by cases t; rfl
+/-- The inner `r`-position selected by a lens into `q ◃ r` after receiving
+an outer `q`-direction. -/
+def compInner (l : Lens p (q ◃ r)) (i : p.A) (u : q.B (l.compOuter i)) : r.A :=
+  (l.toFunA i).2 u
 
-/-- Destruct a lens into a composite into its three named components. -/
-abbrev toCompTriple (l : Lens p (q ◃ r)) : CompTriple p q r := compTripleEquiv l
-
-/-- Build a lens into `q ◃ r` from its destructor triple. -/
-abbrev ofCompTriple (t : CompTriple p q r) : Lens p (q ◃ r) := compTripleEquiv.symm t
+/-- The joint pullback of the outer and inner directions of a lens into
+`q ◃ r`. -/
+def compPullback (l : Lens p (q ◃ r)) (i : p.A) :
+    (Σ u : q.B (l.compOuter i), r.B (l.compInner i u)) → p.B i :=
+  l.toFunB i
 
 /-! ## The composition power of a lens -/
 

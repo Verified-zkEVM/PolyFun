@@ -94,9 +94,10 @@ Landed 2026-07-10 (build + `lake lint` + `lake test` green, no `sorry`):
   `factorCart_comp_factorVert = l`; the two leg-class lemmas. *Deferred to a
   follow-on:* `equivOfVerticalCartesian` (the intersection = iso; needs
   dependent transport) and the `+/×/⊗/◃` preservation suite (Prop 5.63, 6.88).
-- **A6 ✅** `PFunctor/Lens/Composite.lean`: `CompTriple` + `toCompTriple`
-  (`Equiv`, both round-trips `rfl`) + `ofCompTriple` (Example 6.40). The `ext`
-  principle is `toCompTriple.injective`. *Deferred:* the (6.78) fixed-policy
+- **A6 ✅** `PFunctor/Lens/Composite.lean`: direct `Lens.compOuter` /
+  `compInner` / `compPullback` views of a lens into a composite (Example 6.40),
+  without a second representation. The ordinary `Lens.ext` principle applies.
+  *Deferred:* the (6.78) fixed-policy
   route (A8 refinement).
 - **A7a ✅** `Lens.compNthMap` (φ^◁n) + `_zero`/`_succ`/`_id` (same file).
 - **A7b ✅** `PFunctor/Dynamical/Speedup.lean`: `Lens.transitionLens` (δ, a

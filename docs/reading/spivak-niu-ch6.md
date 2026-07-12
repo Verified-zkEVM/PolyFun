@@ -81,8 +81,8 @@ lens `⇆`; horizontal product of lenses `f ◁ g` ↔ `Lens.compMap` (`◃ₗ`)
   equivalently a triple `(φ^q, φ^r, φ^♯)`:
   `φ^q : p(1) → q(1)`; `φ^r_i : q[φ^q(i)] → r(1)`;
   `φ^♯_i : Σ_{b∈q[φ^q i]} r[φ^r_i b] → p[i]`.
-  Roadmap A6: provide this as an `Equiv` (`Lens.toCompTriple`), the workhorse
-  for building/destructing protocol lenses without unfolding `comp`.
+  Roadmap A6: expose this directly as `Lens.compOuter`, `Lens.compInner`, and
+  `Lens.compPullback`, without introducing a second representation.
 - **Example 6.41 — composite-interface machines ("cascading menus").**
   A system `Sy^S ⇆ q ◁ r` returns a `q`-position, receives `b`, returns an
   `r`-position (depending on `s` and `b`), receives `c`, then updates state

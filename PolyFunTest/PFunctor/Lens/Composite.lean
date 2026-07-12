@@ -10,8 +10,9 @@ public import PolyFun.PFunctor.Lens.Composite
 /-!
 # Examples for lenses into composites and the composition power
 
-Regression tests: the destructor-triple `Equiv` round-trips, and `compNthMap`
-unfolds to iterated `compMap`.
+Regression tests: the named components of a lens into a composite are
+definitionally its existing lens data, and `compNthMap` unfolds to iterated
+`compMap`.
 -/
 
 @[expose] public section
@@ -22,11 +23,15 @@ namespace PFunctor
 
 variable {p q r : PFunctor.{u, u}}
 
-/-- A lens into `q ◃ r` round-trips through its destructor triple. -/
-example (φ : Lens p (q ◃ r)) : Lens.ofCompTriple (Lens.toCompTriple φ) = φ := by simp
+/-- The named outer component is the first component of the position map. -/
+example (φ : Lens p (q ◃ r)) (i : p.A) : φ.compOuter i = (φ.toFunA i).1 := rfl
 
-/-- ...and every triple round-trips back through the lens. -/
-example (t : Lens.CompTriple p q r) : Lens.toCompTriple (Lens.ofCompTriple t) = t := by simp
+/-- The named inner component is the continuation in the position map. -/
+example (φ : Lens p (q ◃ r)) (i : p.A) (u : q.B (φ.compOuter i)) :
+    φ.compInner i u = (φ.toFunA i).2 u := rfl
+
+/-- The named joint pullback is the lens's direction map. -/
+example (φ : Lens p (q ◃ r)) (i : p.A) : φ.compPullback i = φ.toFunB i := rfl
 
 /-- The composition power unfolds to iterated `compMap`. -/
 example (l : Lens p q) : Lens.compNthMap l 2 = l ◃ₗ (l ◃ₗ Lens.id X) := rfl
