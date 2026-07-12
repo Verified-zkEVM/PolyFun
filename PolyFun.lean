@@ -126,6 +126,7 @@ import PolyFun.PFunctor.Free.Displayed.Decoration
 import PolyFun.PFunctor.Free.Displayed.StateChain
 import PolyFun.PFunctor.Free.Path
 import PolyFun.PFunctor.Free.Replicate
+import PolyFun.PFunctor.Handler
 import PolyFun.PFunctor.InternalHom
 import PolyFun.PFunctor.Lens.Basic
 import PolyFun.PFunctor.Lens.Cartesian

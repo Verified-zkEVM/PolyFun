@@ -207,9 +207,11 @@ Landed the K-L-prioritized machine spine (crypto-free):
 - **B3 done** — `DynSystem.nStep` = `Run_n` (`Dynamical/RunN.lean`), finishing
   the `Speedup.lean` `nStep` deferral; **`twoStep_toLens_eq` (the `n = 2`
   coherence with the existing `twoStep`) is `rfl`**. The monad-parametric run
-  `PointedMachine.runWith = FreeM.mapM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
-  shadow) and `runWith_output_some` (fuel irrelevance, the
-  `runK_eq_of_apply_none_eq_zero` shadow); the `Option`/fuel pays-rent instance
+  `PointedMachine.runWith = FreeM.mapM ∘ toComp` with `runWith_succ` (the
+  `runLimit_fix` shadow) and `runWith_of_output_eq_some` (local absorption after
+  the current state has resolved). VCVio's probabilistic
+  `runK_eq_of_apply_none_eq_zero` is stronger: it derives limit-level equality
+  from a zero-probability failure condition. The `Option`/fuel pays-rent instance
   is in `RunNExamples.lean`. The ω-limit `ωSup` stays downstream (SPMF ωCPO).
 - **PointedMachine finish** — `toComp_seqComp_inl` fixes the first-phase operational
   behaviour (with `toComp_seqComp_inr` this is the structural `IsPolyTime.bind`
@@ -419,7 +421,7 @@ honest reading of the evidence:
 - Phase B bet: the generic `Run_n`/limit skeleton must make `RunLimit`
   strictly thinner and reusable for at least one non-probabilistic instance
   (e.g. `Option`/fuel), else it is over-engineering. **Verdict (2026-07-10,
-  partial):** the reusability half is met — `runWith`/`runWith_output_some`
+  partial):** the reusability half is met — `runWith`/`runWith_of_output_eq_some`
   instantiate to a deterministic `Option`/fuel run (`RunNExamples.lean`), so the
   ladder is genuinely monad-parametric, not SPMF-bespoke. The `RunLimit`-thinning
   half awaits the downstream VCVio swap (we do not edit VCVio).
@@ -499,7 +501,7 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   Finding: the naive fuel-additive `seqComp` bind law is **false** (fuel threads
   continuously through the handoff), so the operational two-lemma
   characterization is shipped instead, with the fuel-exact form (via reachability
-  + `runWith_output_some`) noted as the next increment. Pays-rent (partial):
+  + `runWith_of_output_eq_some`) noted as the next increment. Pays-rent (partial):
   the `Option`/fuel `runWith` instance discharges the reusability half of the
   Phase B bet. Next: Phase C (cofree comonoid `t_p` + mate = `M.corec`) or the
   Cluster-3 interface-rebasing bridge (SemanticSecurity sorries).

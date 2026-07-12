@@ -19,7 +19,7 @@ and fuel irrelevance.
 
 @[expose] public section
 
-universe u
+universe u v w uA
 
 namespace PFunctor
 
@@ -47,6 +47,16 @@ def delayMachine (b : Bool) : PointedMachine X.{0, 0} PUnit Bool where
 /-- The `Option`-handler on `y`: every position resolves to the unique direction. -/
 def unitHandler : Handler Option X.{0, 0} := fun _ => some PUnit.unit
 
+/-- `runWith` also preserves the independent input, effect, and interface
+universes admitted by its monad. -/
+example {q : PFunctor.{uA, v}} {m : Type v → Type w} [Monad m]
+    {α : Type u} {β : Type v} (M : PointedMachine q α β)
+    (h : Handler m q) (s : M.State) :
+    M.runWith h 0 s = pure (M.output s) := rfl
+
+/-- A handler whose effect fails if the machine attempts a query. -/
+def lossyUnitHandler : Handler Option X.{0, 0} := fun _ => none
+
 /-- One answered query resolves the delayed output: fuel counts queries, and the
 readout after the answer is free. -/
 example (b : Bool) : (delayMachine b).runWith unitHandler 1 false = some (some b) := rfl
@@ -59,8 +69,18 @@ example (b : Bool) :
     (delayMachine b).runWith unitHandler 2 false
       = (delayMachine b).runWith unitHandler 1 false := rfl
 
-/-- A halted state reads off its value at any fuel (via `runWith_output_some`). -/
+/-- A halted state reads off its value at any fuel. The lossy handler witnesses
+that no query effect is performed after halting. -/
 example (b : Bool) : (delayMachine b).runWith unitHandler 0 true = some (some b) :=
-  PointedMachine.runWith_output_some _ _ 0 rfl
+  PointedMachine.runWith_of_output_eq_some _ _ 0 rfl
+
+example (b : Bool) : (delayMachine b).runWith lossyUnitHandler 8 true = some (some b) := by
+  simp
+
+/-- The output equation is available directly to `simp`. -/
+example (M : PointedMachine X.{0, 0} PUnit Bool) (h : Handler Option X.{0, 0})
+    (k : ℕ) (s : M.State) (b : Bool) (hb : M.output s = some b) :
+    M.runWith h k s = some (some b) := by
+  simp [hb]
 
 end PFunctor

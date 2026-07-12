@@ -67,4 +67,19 @@ example (b : β) : (haltMachine (α := α) b).toComp 1 PUnit.unit = FreeM.pure (
 
 example (b : β) : (haltMachine (α := α) b).toComp 0 PUnit.unit = FreeM.pure (some b) := rfl
 
+/-- The machine fuel is a total structural roll bound, including at zero. -/
+example (M : PointedMachine p α β) (k : ℕ) (s : M.State) :
+    (M.toComp k s).IsTotalRollBound k :=
+  M.toComp_isTotalRollBound k s
+
+/-- A single roll cannot fit in a zero total-roll budget. -/
+example (a : p.A) (r : p.B a → FreeM p β) :
+    ¬ (FreeM.roll a r).IsTotalRollBound 0 := by
+  simp
+
+/-- The resolved-output equation is available directly to `simp`. -/
+example (M : PointedMachine p α β) (k : ℕ) (s : M.State) (b : β)
+    (hb : M.output s = some b) : M.toComp k s = FreeM.pure (some b) := by
+  simp [hb]
+
 end PFunctor
