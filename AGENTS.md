@@ -90,9 +90,18 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   → PFunctor/Free/{Basic, Path}
   → PFunctor/Free/{Displayed, Displayed/Decoration}
 
+PFunctor/Lens/{Basic, Cartesian, State}
+  → PFunctor/Lens/{Composite, Distributivity, Factorization, Duoidal}
+  → PFunctor/{InternalHom, CartesianClosed, Adjunctions, Comonoid}
+
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
-  → PFunctor/Dynamical/{Basic, System, Combinators, Run, Trajectory}
-  → PFunctor/Dynamical/Behavior
+  → PFunctor/Dynamical/{Basic, System, Combinators, Run, Speedup, Trajectory}
+  → PFunctor/Dynamical/{Behavior, Simulation, RunN, PointedMachine}
+  → PFunctor/Dynamical/{Refinement, Responder, Game}
+
+  (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
+   for RunN and PointedMachine, PFunctor/InternalHom for Responder, and
+   PFunctor/Lens/Duoidal for Game.)
 
 Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
@@ -111,9 +120,10 @@ PFunctor/Free + Control → Interaction/Basic/{Spec, Node, Decoration,
                             Telescope, Sampler, MonadDecoration,
                             BundledMonad, Ownership, SpecFintype}
 
-Interaction/Basic + PFunctor/Dynamical
-  → Interaction/{TwoParty, Multiparty, Concurrent}
-  (processes and machines are dynamical systems over their step polynomials)
+Interaction/Basic → Interaction/{TwoParty, Multiparty}
+Interaction/Basic + PFunctor/Dynamical → Interaction/Concurrent
+  (concurrent processes and machines are dynamical systems over their step
+   polynomials; TwoParty/Multiparty do not depend on PFunctor/Dynamical)
 
 Interaction/{Concurrent, Basic} → Interaction/UC/{Interface,
                                   OpenProcess, OpenProcessModel,
@@ -272,9 +282,9 @@ Highlights:
   free interaction structure on a polynomial container.
 - Altenkirch-Ghani-Hancock-McBride-Morris 2015 — *Indexed Containers*
   (JFP 25, e5).
-- Spivak-Niu 2024 — *Polynomial Functors: A General Theory of
-  Interaction* (MIT Press); the patterns/matter pairing
-  `FreeM ⊣ Cofree`.
+- Spivak-Niu 2025 — *Polynomial Functors: A General Theory of
+  Interaction* (Cambridge University Press); the pattern-runs-on-matter
+  module structure of `FreeM` over `Cofree`.
 - Xia-Zakowski-He-Hur-Malecha-Pierce-Zdancewic 2020 —
   *Interaction Trees* (POPL).
 - Escardó-Oliva 2023 — games as type trees (TCS 974).

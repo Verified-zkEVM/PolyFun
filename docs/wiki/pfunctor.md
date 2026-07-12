@@ -55,8 +55,15 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/Lens/Basic.lean`](../../PolyFun/PFunctor/Lens/Basic.lean) | Properties of `Lens P Q`: extensionality, composition lemmas, action on `Obj`. |
 | [`PolyFun/PFunctor/Lens/Cartesian.lean`](../../PolyFun/PFunctor/Lens/Cartesian.lean) | Cartesian lenses (`toFunB a` is a bijection); fiberwise isomorphisms over a forward position map. |
 | [`PolyFun/PFunctor/Lens/State.lean`](../../PolyFun/PFunctor/Lens/State.lean) | Lawful state-lens specialization for the self-monomial polynomial (`get`, `put`, `PutGet` / `GetPut` / `PutPut`). |
+| [`PolyFun/PFunctor/Lens/Composite.lean`](../../PolyFun/PFunctor/Lens/Composite.lean) | Lenses into a composite `q ◃ r`: the `CompTriple` destructor `Lens p (q ◃ r) ≃ (φ^q, φ^r, φ♯)` (Ex 6.40) via `toCompTriple` / `ofCompTriple`; `Lens.compNthMap` (φ^◁n) with its `zero` / `succ` / `id` laws. |
+| [`PolyFun/PFunctor/Lens/Distributivity.lean`](../../PolyFun/PFunctor/Lens/Distributivity.lean) | Left-distributivity of `◃`: `prodCompDistrib` (6.49) and `scalarCompDistrib` (Ex 6.55) lens equivalences, `homMonomialEquiv` (6.65) `Lens (monomial A B) p ≃ (A → p.Obj B)`, and the Ex 6.56 right-distributivity failure. Reuses object-level `sumCompDistrib` / `sigmaCompDistrib`. |
+| [`PolyFun/PFunctor/Lens/Factorization.lean`](../../PolyFun/PFunctor/Lens/Factorization.lean) | Vertical–cartesian factorization (Prop 5.52/5.53): `IsVertical`, `factorMid` / `factorVert` / `factorCart` with `factorCart_comp_factorVert = l`; closure of `IsVertical` / `IsCartesian` under `+` / `×` / `⊗`; `equivOfVerticalCartesian` (the intersection is an iso). |
+| [`PolyFun/PFunctor/Lens/Duoidal.lean`](../../PolyFun/PFunctor/Lens/Duoidal.lean) | The `⊗ → ◃` ordering lens `orderingLens` (Ex 6.85, cartesian) and the duoidal interchange lens `duoidalLens` (6.86); the Ex 6.84 catalogue of `⊗`/`◃` coincidences as `≃ₗ` formers (reference API). |
 | [`PolyFun/PFunctor/Chart/Basic.lean`](../../PolyFun/PFunctor/Chart/Basic.lean) | Charts (forward map on both positions and directions). Chart category is isomorphic to `Set^→` and has a different monoidal structure from the lens category. |
 | [`PolyFun/PFunctor/Category.lean`](../../PolyFun/PFunctor/Category.lean) | Category-theoretic packaging where applicable. |
+| [`PolyFun/PFunctor/InternalHom.lean`](../../PolyFun/PFunctor/InternalHom.lean) | The `⊗`-internal hom `ihom q r` = `[q, r]` (Ex 4.78; positions are lenses `q ⇆ r`), the evaluation lens `Lens.eval`, and the tensor–hom adjunction `curry` / `uncurry` / `curryEquiv : Lens (p ⊗ q) r ≃ Lens p (ihom q r)`; `ihomSum`, `ihomX`. |
+| [`PolyFun/PFunctor/CartesianClosed.lean`](../../PolyFun/PFunctor/CartesianClosed.lean) | Cartesian-closed structure w.r.t. the categorical product `*`: the exponential `exp`'s `CartesianClosed.eval` / `curry` / `uncurry` (Thm 5.31). Reference API — the load-bearing `⊗`-transposes are in `InternalHom.lean`. |
+| [`PolyFun/PFunctor/Adjunctions.lean`](../../PolyFun/PFunctor/Adjunctions.lean) | Trivial-interface hom-set equivalences (Thm 5.4 family): `homFromZero` / `homToOne` / `homFromX` / `homToConst` / `homToLinear`. Reference API. |
 | [`PolyFun/PFunctor/Comonoid.lean`](../../PolyFun/PFunctor/Comonoid.lean) | Comonoids in `(Poly, ◃, y)` (= small categories, Def 7.14): `Comonoid` structure with counit/comult and the lens laws; the state comonoid `stateComonoid S` on `Sy^S`; `IsStateSystem` (Ex 7.22); the `n`-fold comultiplication `comultN` = `δ^{(n)}` (Prop 7.20). |
 
 ### Dynamical systems (Spivak–Niu Ch. 4)
@@ -74,6 +81,8 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/Dynamical/RunN.lean`](../../PolyFun/PFunctor/Dynamical/RunN.lean) | `DynSystem.nStep` = `Run_n(φ) = δ^{(n)} ⨟ φ^{◁n}` (§7.1.5) over the composition power `compNth p n`; `twoStep_toLens_eq` collapses `n = 2` to `twoStep`. |
 | [`PolyFun/PFunctor/Dynamical/Simulation.lean`](../../PolyFun/PFunctor/Dynamical/Simulation.lean) | `DynSystem.IsSimulation` (step-synchronized relation) with `implements_of_isSimulation` — related states have equal `behavior`, via `M.corec_eq_corec`; `isSimulation_graph` / `behavior_coalgHom` — coalgebra morphisms are the functional simulations. |
 | [`PolyFun/PFunctor/Dynamical/Refinement.lean`](../../PolyFun/PFunctor/Dynamical/Refinement.lean) | `DynSystem.ForwardSimulation` (existential refinement between `System`s over possibly different interfaces, step-matched by a `DirRel`) with `mapRun` and its transport lemmas; `BackwardSimulation` / `Bisimulation` packagings; `ForwardSimulation.ofIsSimulation` embedding `IsSimulation` at `DirRel.sync`. Instantiated by the concurrent `Refinement` / `Bisimulation` layers. |
+| [`PolyFun/PFunctor/Dynamical/Responder.lean`](../../PolyFun/PFunctor/Dynamical/Responder.lean) | `Responder S q := DynSystem S (q ⊸ X)`: state systems whose positions are committed answer-sections (`committed` / `answer` / `next`); the Kleisli–Mealy `equivStateHandler : Responder S q ≃ Handler (StateT S Id) q` with `rfl` round-trips. |
+| [`PolyFun/PFunctor/Dynamical/Game.lean`](../../PolyFun/PFunctor/Dynamical/Game.lean) | Game wiring: `DynSystem.game := wire₂ (Lens.eval q r)` and its autonomous `closedGame`, `game_eq_uncurry` (the adjunction reading); monadic runs `kleisliStep` / `kleisliIterate` / `stepWith` / `iterWith`; two-phase `Lens.eval₂` / `orderPair` / `game₂` (Eq 6.86 / Ex 6.85). |
 | [`PolyFun/ITree/Unfold.lean`](../../PolyFun/ITree/Unfold.lean) | `DynSystem.toITree`: unfold a dynamical system into an all-query interaction tree; `M.toITree` embeds behaviour trees. |
 | [`PolyFunTest/PFunctor/Dynamical/Examples.lean`](../../PolyFunTest/PFunctor/Dynamical/Examples.lean) | Worked examples / regression tests (counter, parity automaton, mode-dependent `gate`, feedback / stream behaviour, the `univ`-system `toggle`, generic runs, `choiceProd`, behaviour / ITree unfolding). |
 
@@ -112,8 +121,10 @@ provides the reusable monad / comonad / coalgebra plumbing. See
   type of well-founded `P`-branching trees with `α`-leaves. It is the
   syntax of "programs" in the signature `P`.
 - `CofreeC P` is the cofree comonad on `P`. Coinductively, it is the
-  type of infinite, fully-decorated `P`-trees. It is the patterns/matter
-  pairing `FreeM ⊣ Cofree` from Spivak-Niu.
+  type of infinite, fully-decorated `P`-trees. `FreeM` and `CofreeC` carry
+  the pattern-runs-on-matter *module structure* of Libkind–Spivak (a module
+  action, not an adjunction); PolyFun formalizes `LawfulMonad (FreeM P)` and
+  `LawfulComonad (CofreeC F)` separately.
 - `Lens P Q` and `Chart P Q` are the two natural categorical morphisms
   between polynomial functors. Lenses go `forward on positions, backward
   on directions`; charts go forward on both. Both categories are useful

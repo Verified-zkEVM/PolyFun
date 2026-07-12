@@ -51,6 +51,12 @@ equality of the two `toFunB` maps whose domains are only *propositionally* equal
 definitional), requiring dependent cast / `HEq` bookkeeping over the composition
 `◃` that is deferred. All declarations below are `sorry`-free.
 
+These transposes are reference API: a book-completeness formalization of the
+§5.3 cartesian exponential (Thm 5.31), exercised in
+`PolyFunTest/PFunctor/CartesianClosed.lean` and staged for a downstream
+consumer. The `curry` / `eval` / `uncurry` used elsewhere in PolyFun (e.g.
+`Game.lean`) are instead the `⊗`-internal-hom ones in `InternalHom.lean`.
+
 All three of `p`, `q`, `r` live in a single universe `PFunctor.{uA, uB}`, since
 `exp` requires its two arguments in a common universe and the adjunction is
 stated within the one category `Poly.{uA, uB}`.
