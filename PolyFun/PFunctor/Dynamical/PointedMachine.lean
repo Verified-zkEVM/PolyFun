@@ -27,7 +27,10 @@ machine is a `PointedMachine` over an oracle spec's polynomial).
 `seqComp M₁ M₂ : PointedMachine p α β` runs `M₁ : PointedMachine p α mid` until it produces a
 `mid` value, then hands off to `M₂ : PointedMachine p mid β`, over the *same* interface
 `p`. Its state set is `M₁.State ⊕ M₂.State` — the "cascading menus" two-phase
-machine. This is the structural content of VCVio's `OracleMachine.seqComp` and
+machine. This sum is the machine-local control state; ambient resources carried
+by the handler monad (such as a random-oracle cache or transcript) are shared
+and threaded through both phases by the single `runWith`. This is the structural
+content of VCVio's `OracleMachine.seqComp` and
 the structural half of the sought `IsPolyTime.bind`: the definition (with its
 `⊕`-state) is exactly what is currently missing downstream. The complementary
 half — the Turing-machine running-time bound for the composed machine — is
@@ -214,8 +217,8 @@ theorem toComp_seqComp_inr (M₁ : PointedMachine p α mid) (M₂ : PointedMachi
 `ResolvesIn k st` says the `k`-query unrolling from `st` reads out on every answer
 path — the syntactic finiteness certificate that the sequential-composition fuel
 law consumes. It is the leaf condition "`toComp k st` has no `none` leaves", and
-`resolvesIn_of_toComp_eq_map_some` recovers it from any `some <$> _` factorization
-of the unrolling — e.g. from a machine-implements-program equation instantiated at
+`resolvesIn_iff_exists_toComp_eq_map_some` characterizes it by a `some <$> _`
+factorization of the unrolling — e.g. from a machine-implements-program equation instantiated at
 the syntactic monad `m := FreeM p`, where the run *is* the unrolling. -/
 
 /-- Every answer path of the `k`-query unrolling from `st` reads out. -/
@@ -226,6 +229,7 @@ def ResolvesIn (M : PointedMachine p α β) : ℕ → M.State → Prop
 @[simp] theorem resolvesIn_zero (M : PointedMachine p α β) (st : M.State) :
     M.ResolvesIn 0 st ↔ (M.output st).isSome := Iff.rfl
 
+@[simp, grind =]
 theorem resolvesIn_succ_iff (M : PointedMachine p α β) (k : ℕ) (st : M.State) :
     M.ResolvesIn (k + 1) st ↔
       (M.output st).isSome ∨ ∀ d, M.ResolvesIn k (M.update st d) := Iff.rfl
@@ -275,10 +279,105 @@ theorem resolvesIn_of_toComp_eq_map_some {M : PointedMachine p α β} :
       | roll a f =>
         have h' : FreeM.roll (M.expose st) (fun d => M.toComp k (M.update st d)) =
             FreeM.roll a (fun d => some <$> f d) := h
-        injection h' with ha hf
-        subst ha
+        obtain ⟨rfl, hf⟩ := (FreeM.roll_inj _ _ _ _).mp h'
         exact Or.inr fun d =>
-          resolvesIn_of_toComp_eq_map_some (congrFun (eq_of_heq hf) d)
+          resolvesIn_of_toComp_eq_map_some (congrFun hf d)
+
+/-- Build the value tree whose leaves witness a resolution certificate. This is
+the converse of `resolvesIn_of_toComp_eq_map_some`: resolution within `k`
+queries means exactly that `toComp k st` has only `some` leaves.
+
+The construction uses choice only to assemble the family of recursively
+obtained trees, one for each dependent direction of an unresolved query. -/
+theorem toComp_eq_map_some_of_resolvesIn {M : PointedMachine p α β} :
+    ∀ {k : ℕ} {st : M.State}, M.ResolvesIn k st →
+      ∃ z : FreeM p β, M.toComp k st = some <$> z
+  | 0, st, h => by
+    obtain ⟨b, hb⟩ := Option.isSome_iff_exists.mp h
+    exact ⟨FreeM.pure b, by rw [toComp_zero, hb]; rfl⟩
+  | k + 1, st, h => by
+    cases hout : M.output st with
+    | some b => exact ⟨FreeM.pure b, by rw [toComp_succ, hout]; rfl⟩
+    | none =>
+      have hnext : ∀ d, M.ResolvesIn k (M.update st d) := by
+        rcases h with h | h
+        · simp [hout] at h
+        · exact h
+      classical
+      choose z hz using fun d =>
+        toComp_eq_map_some_of_resolvesIn (hnext d)
+      exact ⟨FreeM.roll (M.expose st) z, by
+        rw [toComp_succ, hout]
+        exact congrArg (FreeM.roll (M.expose st)) (funext hz)⟩
+
+/-- A machine resolves within `k` queries exactly when its `k`-query unrolling
+is a value tree with `some` at every leaf. -/
+theorem resolvesIn_iff_exists_toComp_eq_map_some {M : PointedMachine p α β}
+    {k : ℕ} {st : M.State} :
+    M.ResolvesIn k st ↔ ∃ z : FreeM p β, M.toComp k st = some <$> z :=
+  ⟨toComp_eq_map_some_of_resolvesIn, fun ⟨_, h⟩ =>
+    resolvesIn_of_toComp_eq_map_some h⟩
+
+/-! ## Resolution under sequential composition -/
+
+/-- A second-phase resolution certificate is also a certificate for the
+composite after handoff. -/
+theorem ResolvesIn.seqComp_inr {M₁ : PointedMachine p α mid}
+    {M₂ : PointedMachine p mid β} {k : ℕ} {s₂ : M₂.State}
+    (h : M₂.ResolvesIn k s₂) :
+    (M₁.seqComp M₂).ResolvesIn k (Sum.inr s₂) := by
+  induction k generalizing s₂ with
+  | zero => exact h
+  | succ k ih =>
+    rcases h with h | h
+    · exact Or.inl h
+    · exact Or.inr fun d => ih (h d)
+
+/-- From an unresolved first-phase state, certificates for phase one and every
+possible phase-two initial state compose at the sum of their query budgets. -/
+theorem ResolvesIn.seqComp_inl {M₁ : PointedMachine p α mid}
+    {M₂ : PointedMachine p mid β} {k₁ k₂ : ℕ} {s₁ : M₁.State}
+    (h₁ : M₁.ResolvesIn k₁ s₁) (hout : M₁.output s₁ = none)
+    (h₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y)) :
+    (M₁.seqComp M₂).ResolvesIn (k₁ + k₂) (Sum.inl s₁) := by
+  induction k₁ generalizing s₁ with
+  | zero => simp [hout] at h₁
+  | succ k₁ ih =>
+    rcases h₁ with h | h
+    · simp [hout] at h
+    · rw [show k₁ + 1 + k₂ = (k₁ + k₂) + 1 by omega,
+          resolvesIn_succ_iff]
+      exact Or.inr fun d => by
+        cases hd : M₁.output (M₁.update s₁ d) with
+        | some y =>
+          simp only [seqComp_update_inl, hd]
+          exact (h₂ y).seqComp_inr.mono (by omega)
+        | none =>
+          simp only [seqComp_update_inl, hd]
+          exact ih (h d) hd
+
+/-- Resolution certificates compose from the initial state, including the case
+where phase one has already produced its handoff value. -/
+theorem ResolvesIn.seqComp_init {M₁ : PointedMachine p α mid}
+    {M₂ : PointedMachine p mid β} {k₁ k₂ : ℕ} {x : α}
+    (h₁ : M₁.ResolvesIn k₁ (M₁.init x))
+    (h₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y)) :
+    (M₁.seqComp M₂).ResolvesIn (k₁ + k₂) ((M₁.seqComp M₂).init x) := by
+  cases hout : M₁.output (M₁.init x) with
+  | some y =>
+    change (M₁.seqComp M₂).ResolvesIn (k₁ + k₂)
+      (match M₁.output (M₁.init x) with
+        | some y => Sum.inr (M₂.init y)
+        | none => Sum.inl (M₁.init x))
+    rw [hout]
+    exact (h₂ y).seqComp_inr.mono (by omega)
+  | none =>
+    change (M₁.seqComp M₂).ResolvesIn (k₁ + k₂)
+      (match M₁.output (M₁.init x) with
+        | some y => Sum.inr (M₂.init y)
+        | none => Sum.inl (M₁.init x))
+    rw [hout]
+    exact h₁.seqComp_inl hout h₂
 
 /-! ## Monad-parametric fuelled run
 
@@ -342,10 +441,11 @@ theorem runWith_eq_of_resolvesIn (M : PointedMachine q α β) (h : Handler m q)
   induction j generalizing s k with
   | zero =>
     obtain ⟨b, hb⟩ := Option.isSome_iff_exists.mp hres
-    rw [runWith_output_some M h k hb, runWith_output_some M h 0 hb]
+    rw [runWith_of_output_eq_some M h k hb, runWith_of_output_eq_some M h 0 hb]
   | succ j ih =>
     cases hout : M.output s with
-    | some b => rw [runWith_output_some M h k hout, runWith_output_some M h (j + 1) hout]
+    | some b => rw [runWith_of_output_eq_some M h k hout,
+        runWith_of_output_eq_some M h (j + 1) hout]
     | none =>
       rcases hres with hs | hf
       · simp [hout] at hs
@@ -394,7 +494,7 @@ theorem runWith_seqComp_inl [LawfulMonad m] (M₁ : PointedMachine q α mid)
       | some y =>
         simp only [seqComp_update_inl, hd]
         rw [runWith_seqComp_inr, runWith_eq_of_resolvesIn M₂ h (hres₂ y) (by omega),
-          M₁.runWith_output_some h k₁ hd, pure_bind]
+          M₁.runWith_of_output_eq_some h k₁ hd, pure_bind]
       | none =>
         simp only [seqComp_update_inl, hd]
         exact ih (hf d) hd
@@ -412,7 +512,7 @@ theorem runWith_seqComp_init [LawfulMonad m] (M₁ : PointedMachine q α mid)
   | some y =>
     simp only [seqComp_init, hout]
     rw [runWith_seqComp_inr, runWith_eq_of_resolvesIn M₂ h (hres₂ y) (by omega),
-      M₁.runWith_output_some h k₁ hout, pure_bind]
+      M₁.runWith_of_output_eq_some h k₁ hout, pure_bind]
   | none =>
     simp only [seqComp_init, hout]
     exact runWith_seqComp_inl M₁ M₂ h k₂ hres₁ hout hres₂
