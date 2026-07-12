@@ -609,16 +609,23 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   2. *`Interaction/Basic` reusing `DynSystem.Run`* — `Spec.stepPoly` iteration
      (`Chain`/`Telescope`) is hand-rolled because `Interaction/Basic` sits below
      `PFunctor/Dynamical`; unifying it needs a layering move.
-  3. *One `⨟` for morphisms and machines* — there are currently three `⨟`
-     notations: categorical composition on lenses (`Lens/Basic`) and charts
-     (`Chart/Basic`), and the two-phase `⊕`-state `PointedMachine.seqComp`. The
-     machine one is a genuinely different operation (Example 6.41), hand-rolled
-     rather than derived from the A6 `CompTriple` / `◃` lens algebra that
-     already exists. The framework unifying both under one composition is
-     bicomodule composition (Ch 8.3.5, Phase D3, "running = composing
-     bicomodules"). Falsifiable test: does re-expressing `seqComp` via
-     `CompTriple` / `◃` (and eventually bicomodules) delete the bespoke
-     `⊕`-state definition and let one `⨟` cover machines too?
+  3. *One `⨟` for morphisms and machines* — there are three `⨟` notations:
+     categorical composition on lenses (`Lens/Basic`) and charts (`Chart/Basic`),
+     already unified as Mathlib `Category` instances (`PFunctor/Category.lean`),
+     and the two-phase `⊕`-state `PointedMachine.seqComp`. **Correction to the
+     first-pass note:** `seqComp` is *not* re-expressible via `CompTriple` / `◃`
+     (it composes same-interface machines at a *data* boundary, not a lens into a
+     `◃`-*interface*-composite; four concrete mismatches). The real picture is two
+     orthogonal axes — the interface axis (Poly, done) and the program axis
+     (`FreeM p` Kleisli, where `seqComp` and `Interaction/Basic`'s `FreeM.append`
+     are *one* operation) — unified by the bicomodule double category (Ch 8.3).
+     Full analysis, spike-validated feasibility (retrofunctors are free; the
+     `◃`-associator coherence is the real cost, concentrated at generic
+     bicomodule composition), and a staged refactor proposal (B4 → C → D1 → D3)
+     live in `docs/reading/composition-unification.md`. Falsifiable test: does
+     bicomodule composition `⊳` collapse UC `par`/`wire`/`plug` (already one
+     `interleave` call) into one wiring-parameterized op, and unify `append` with
+     `seqComp`?
   4. *Sim/Bisim/equivalence glossary* — `ITree.simulate`/`mapSpec` (operators),
      `ITree.{Bisim,WeakBisim}`, and `DynSystem.{ObsEq,Bisimulation,IsSimulation}`
      coexist with overloaded vocabulary; a `docs/wiki` glossary would prevent
