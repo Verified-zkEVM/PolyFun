@@ -1,0 +1,2 @@
+-- Spivak–Niu's diagrammatic sequential-composition notation (PolyFun PR #18).
+PolyFun/PFunctor/Dynamical/PointedMachine.lean : line 26 : ERR_UNICODE : This line contains a unicode character that is not on the allowlist '⨟' (U+2a1f). For adding new symbols see `Mathlib.Linter.TextBased.UnicodeLinter.othersInMathlib`.

@@ -24,13 +24,14 @@ machine is a `PointedMachine` over an oracle spec's polynomial).
 
 ## Sequential composition (Spivak–Niu Example 6.41)
 
-`seqComp M₁ M₂ : PointedMachine p α β` runs `M₁ : PointedMachine p α mid` until it produces a
-`mid` value, then hands off to `M₂ : PointedMachine p mid β`, over the *same* interface
-`p`. Its state set is `M₁.State ⊕ M₂.State` — the "cascading menus" two-phase
-machine. This sum is the machine-local control state; ambient resources carried
-by the handler monad (such as a random-oracle cache or transcript) are shared
-and threaded through both phases by the single `runWith`. This is the structural
-content of VCVio's `OracleMachine.seqComp` and
+`M₁ ⨟ M₂ : PointedMachine p α β` (`seqComp`, in the book's order) runs
+`M₁ : PointedMachine p α mid` until it produces a `mid` value, then hands off
+to `M₂ : PointedMachine p mid β`, over the *same* interface `p`. Its state set
+is `M₁.State ⊕ M₂.State` — the "cascading menus" two-phase machine. This sum
+is the machine-local control state; ambient resources carried by the handler
+monad (such as a random-oracle cache or transcript) are shared and threaded
+through both phases by the single `runWith`. This is the structural content of
+VCVio's `OracleMachine.seqComp` and
 the structural half of the sought `IsPolyTime.bind`: the definition (with its
 `⊕`-state) is exactly what is currently missing downstream. The complementary
 half — the Turing-machine running-time bound for the composed machine — is
@@ -155,12 +156,14 @@ def wrap (M : PointedMachine.{u} p α β) (w : Lens p q) : PointedMachine.{u} q 
 
 /-! ## Sequential composition -/
 
-/-- Sequential composition of machines over a shared interface (Spivak–Niu
-Example 6.41): run `M₁` until it outputs a `mid` value, then run `M₂` from that
-value. The state set is `M₁.State ⊕ M₂.State`; phase one never reads out, phase
-two carries the final output. As with ordinary monadic bind, only the returned
-`mid` value crosses the handoff; information from phase one's private terminal
-state must either be returned in `mid` or live in the ambient handler effect. -/
+/-- Sequential composition `M₁ ⨟ M₂` of machines over a shared interface
+(Spivak–Niu Example 6.41): run `M₁` until it outputs a `mid` value, then run `M₂`
+from that value. The state set is `M₁.State ⊕ M₂.State`; phase one never reads
+out, phase two carries the final output. Only the returned `mid` value crosses
+the handoff; information from phase one's private terminal state must either be
+returned in `mid` or live in the ambient handler effect. The notation is
+left-associative; this fixes how chains parse, rather than asserting
+definitional associativity. -/
 def seqComp (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) : PointedMachine p α β where
   State := M₁.State ⊕ M₂.State
   expose := fun s => match s with
@@ -181,31 +184,33 @@ def seqComp (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) : 
     | Sum.inl _ => none
     | Sum.inr s₂ => M₂.output s₂
 
+@[inherit_doc] infixl:75 " ⨟ " => seqComp
+
 @[simp] theorem seqComp_expose_inr (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
-    (s₂ : M₂.State) : (M₁.seqComp M₂).expose (Sum.inr s₂) = M₂.expose s₂ := rfl
+    (s₂ : M₂.State) : (M₁ ⨟ M₂).expose (Sum.inr s₂) = M₂.expose s₂ := rfl
 
 @[simp] theorem seqComp_expose_inl (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
-    (s₁ : M₁.State) : (M₁.seqComp M₂).expose (Sum.inl s₁) = M₁.expose s₁ := rfl
+    (s₁ : M₁.State) : (M₁ ⨟ M₂).expose (Sum.inl s₁) = M₁.expose s₁ := rfl
 
 @[simp] theorem seqComp_init (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
-    (x : α) : (M₁.seqComp M₂).init x =
+    (x : α) : (M₁ ⨟ M₂).init x =
       match M₁.output (M₁.init x) with
       | some m => Sum.inr (M₂.init m)
       | none => Sum.inl (M₁.init x) := rfl
 
 @[simp] theorem seqComp_output_inr (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
-    (s₂ : M₂.State) : (M₁.seqComp M₂).output (Sum.inr s₂) = M₂.output s₂ := rfl
+    (s₂ : M₂.State) : (M₁ ⨟ M₂).output (Sum.inr s₂) = M₂.output s₂ := rfl
 
 @[simp] theorem seqComp_output_inl (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
-    (s₁ : M₁.State) : (M₁.seqComp M₂).output (Sum.inl s₁) = none := rfl
+    (s₁ : M₁.State) : (M₁ ⨟ M₂).output (Sum.inl s₁) = none := rfl
 
 @[simp] theorem seqComp_update_inr (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
     (s₂ : M₂.State) (d : p.B (M₂.expose s₂)) :
-    (M₁.seqComp M₂).update (Sum.inr s₂) d = Sum.inr (M₂.update s₂ d) := rfl
+    (M₁ ⨟ M₂).update (Sum.inr s₂) d = Sum.inr (M₂.update s₂ d) := rfl
 
 @[simp] theorem seqComp_update_inl (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
     (s₁ : M₁.State) (d : p.B (M₁.expose s₁)) :
-    (M₁.seqComp M₂).update (Sum.inl s₁) d =
+    (M₁ ⨟ M₂).update (Sum.inl s₁) d =
       match M₁.output (M₁.update s₁ d) with
       | some m => Sum.inr (M₂.init m)
       | none => Sum.inl (M₁.update s₁ d) := rfl
@@ -265,9 +270,9 @@ plain fuel-additive law — `runWith_of_output_eq_some` supplies the fuel irrele
 needs. -/
 theorem toComp_seqComp_inl (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
     (k : ℕ) (s₁ : M₁.State) :
-    (M₁.seqComp M₂).toComp (k + 1) (Sum.inl s₁)
+    (M₁ ⨟ M₂).toComp (k + 1) (Sum.inl s₁)
       = FreeM.roll (M₁.expose s₁) (fun d =>
-          (M₁.seqComp M₂).toComp k (match M₁.output (M₁.update s₁ d) with
+          (M₁ ⨟ M₂).toComp k (match M₁.output (M₁.update s₁ d) with
             | some m => Sum.inr (M₂.init m)
             | none => Sum.inl (M₁.update s₁ d))) := rfl
 
@@ -275,7 +280,7 @@ theorem toComp_seqComp_inl (M₁ : PointedMachine p α mid) (M₂ : PointedMachi
 unrolling coincides with `M₂`'s. -/
 theorem toComp_seqComp_inr (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
     (k : ℕ) (s₂ : M₂.State) :
-    (M₁.seqComp M₂).toComp k (Sum.inr s₂) = M₂.toComp k s₂ := by
+    (M₁ ⨟ M₂).toComp k (Sum.inr s₂) = M₂.toComp k s₂ := by
   induction k generalizing s₂ with
   | zero => rfl
   | succ k ih =>
@@ -284,7 +289,7 @@ theorem toComp_seqComp_inr (M₁ : PointedMachine p α mid) (M₂ : PointedMachi
     change (match M₂.output s₂ with
           | some b => FreeM.pure (some b)
           | none => FreeM.roll (M₂.expose s₂)
-              (fun d => (M₁.seqComp M₂).toComp k (Sum.inr (M₂.update s₂ d))))
+              (fun d => (M₁ ⨟ M₂).toComp k (Sum.inr (M₂.update s₂ d))))
         = M₂.toComp (k + 1) s₂
     rw [toComp_succ]
     cases M₂.output s₂ with
@@ -588,7 +593,7 @@ variable {mid : Type uβ}
 off to `M₂`, its run coincides with `M₂`'s. -/
 theorem runWith_seqComp_inr (M₁ : PointedMachine q α mid) (M₂ : PointedMachine q mid β)
     (h : Handler m q) (k : ℕ) (s₂ : M₂.State) :
-    (M₁.seqComp M₂).runWith h k (Sum.inr s₂) = M₂.runWith h k s₂ :=
+    (M₁ ⨟ M₂).runWith h k (Sum.inr s₂) = M₂.runWith h k s₂ :=
   congrArg (FreeM.mapM h) (toComp_seqComp_inr M₁ M₂ k s₂)
 
 /-- **The fuel-exact sequential-composition law**, phase-one form: from an
@@ -602,7 +607,7 @@ theorem runWith_seqComp_inl [LawfulMonad m] (M₁ : PointedMachine q α mid)
     (M₂ : PointedMachine q mid β) (h : Handler m q) {k₁ : ℕ} (k₂ : ℕ) {s₁ : M₁.State}
     (hres₁ : M₁.ResolvesIn k₁ s₁) (hout : M₁.output s₁ = none)
     (hres₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y)) :
-    (M₁.seqComp M₂).runWith h (k₁ + k₂) (Sum.inl s₁)
+    (M₁ ⨟ M₂).runWith h (k₁ + k₂) (Sum.inl s₁)
       = M₁.runWith h k₁ s₁ >>= fun r => match r with
           | some y => M₂.runWith h k₂ (M₂.init y)
           | none => pure none := by
@@ -612,7 +617,7 @@ theorem runWith_seqComp_inl [LawfulMonad m] (M₁ : PointedMachine q α mid)
     rcases hres₁ with hs | hf
     · simp [hout] at hs
     · rw [show k₁ + 1 + k₂ = (k₁ + k₂) + 1 from by omega,
-        (M₁.seqComp M₂).runWith_succ_of_output_eq_none h (seqComp_output_inl M₁ M₂ s₁) _,
+        (M₁ ⨟ M₂).runWith_succ_of_output_eq_none h (seqComp_output_inl M₁ M₂ s₁) _,
         M₁.runWith_succ_of_output_eq_none h hout, bind_assoc]
       refine bind_congr fun d => ?_
       cases hd : M₁.output (M₁.update s₁ d) with
@@ -629,7 +634,7 @@ state: run phase one at `k₁`, then phase two at `k₂`. -/
 theorem runWith_seqComp_init [LawfulMonad m] (M₁ : PointedMachine q α mid)
     (M₂ : PointedMachine q mid β) (h : Handler m q) {k₁ : ℕ} (k₂ : ℕ) (x : α)
     (hres₁ : M₁.ResolvesIn k₁ (M₁.init x)) (hres₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y)) :
-    (M₁.seqComp M₂).runWith h (k₁ + k₂) ((M₁.seqComp M₂).init x)
+    (M₁ ⨟ M₂).runWith h (k₁ + k₂) ((M₁ ⨟ M₂).init x)
       = M₁.runWith h k₁ (M₁.init x) >>= fun r => match r with
           | some y => M₂.runWith h k₂ (M₂.init y)
           | none => pure none := by
