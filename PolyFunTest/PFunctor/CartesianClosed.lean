@@ -12,8 +12,8 @@ public import PolyFun.PFunctor.CartesianClosed
 
 Regression tests exercising the cartesian exponential `exp` together with `eval`,
 `curry`/`uncurry`, the forward round-trip `uncurry_curry`, and the position-level
-reverse round-trip `curry_uncurry_toFunA`, both abstractly and on concrete small
-polynomials.
+reverse round-trip `curry_uncurry_toFunA`, the full reverse round-trip
+`curry_uncurry`, and `curryEquiv`, both abstractly and on concrete small polynomials.
 -/
 
 @[expose] public section
@@ -46,6 +46,16 @@ positions. -/
 example (g : Lens p (exp r q)) : (curry (uncurry g)).toFunA = g.toFunA :=
   curry_uncurry_toFunA g
 
+/-- Reverse round-trip of the transpose bijection: `curry ∘ uncurry = id`. -/
+example (g : Lens p (exp r q)) : curry (uncurry g) = g := curry_uncurry g
+
+/-- Currying and uncurrying package as an equivalence of lens types. -/
+example : Lens (p * q) r ≃ Lens p (exp r q) := curryEquiv
+
+example (l : Lens (p * q) r) : curryEquiv l = curry l := rfl
+
+example (g : Lens p (exp r q)) : curryEquiv.symm g = uncurry g := rfl
+
 /-! ## Concrete small polynomials -/
 
 /-- `eval` typechecks on concrete monomials, e.g. `exp (C Bool) (Bool y^ Bool)`. -/
@@ -64,5 +74,9 @@ example (l : Lens (X.{0, 0} * X.{0, 0}) X.{0, 0}) : Lens X.{0, 0} (exp X.{0, 0} 
 /-- Forward round-trip on a concrete lens. -/
 example (l : Lens (X.{0, 0} * X.{0, 0}) X.{0, 0}) : uncurry (curry l) = l :=
   uncurry_curry l
+
+/-- Reverse round-trip on a concrete lens. -/
+example (g : Lens X.{0, 0} (exp X.{0, 0} X.{0, 0})) : curry (uncurry g) = g :=
+  curry_uncurry g
 
 end PFunctor
