@@ -24,7 +24,7 @@ The point of the example is that the choice of internal state carrier — a full
 log versus a bare counter — is **unobservable**: the two systems have *equal*
 behaviour trees. This is the strongest form of state hiding, honest `Eq` of
 `behavior` trees via the terminal-coalgebra bisimulation principle
-(`DynSystem.implements_of_isSimulation`), and it is the strong-bisimulation
+(`DynSystem.behavior_eq_of_isSimulation`), and it is the strong-bisimulation
 warm-up for the weak-bisimulation open-process demonstration in
 `PolyFunTest/Interaction/UC/BisimObservationExamples.lean`.
 -/
@@ -75,7 +75,7 @@ from empty bookkeeping and the same initial answer, have *equal* behaviour
 trees: the internal state representation is unobservable. -/
 theorem behavior_oracleLog_eq_oracleCount (a : Option A) :
     (oracleLog f).behavior (a, []) = (oracleCount f).behavior (a, 0) :=
-  DynSystem.implements_of_isSimulation (sim f) rfl
+  DynSystem.behavior_eq_of_isSimulation (sim f) rfl
 
 /-- The same fact packaged as observational equivalence. -/
 theorem obsEq_oracleLog_oracleCount (a : Option A) :

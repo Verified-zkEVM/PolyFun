@@ -66,7 +66,7 @@ extension and is future work.
 - `DynSystem.behavior : S → M p` (`Trajectory.lean`) — the unique map into the
   terminal `p`-coalgebra; `DynSystem.ObsEq s₁ s₂ := behavior s₁ = behavior s₂`
   is behavioural equivalence as **honest `Eq`** of behaviour trees.
-- `DynSystem.IsSimulation` / `implements_of_isSimulation` (`Refinement.lean`) —
+- `DynSystem.IsSimulation` / `behavior_eq_of_isSimulation` (`Simulation.lean`) —
   a step-synchronized simulation forces equal behaviour trees, via
   `M.corec_eq_corec`.
 - `DynSystem.ForwardSimulation` / `Bisimulation` (`Refinement.lean`) — the lax,
