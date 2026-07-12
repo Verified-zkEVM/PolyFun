@@ -7,7 +7,7 @@ import PolyFun.Interaction.Basic.Spec
 import PolyFun.Interaction.Basic.Decoration
 import PolyFun.Interaction.Multiparty.Core
 import PolyFun.PFunctor.Dynamical.Combinators
-import PolyFun.PFunctor.Dynamical.System
+import PolyFun.PFunctor.Dynamical.Safety
 import PolyFun.PFunctor.Dynamical.Trajectory
 import Mathlib.Data.PFunctor.Univariate.M
 import Batteries.Tactic.Lint
@@ -285,7 +285,7 @@ processes directly: the coalgebra structure map (`DynSystem.out`, with its
 `Coalg` instance), terminal-coalgebra behavior and observational equivalence
 (`DynSystem.behavior`, `DynSystem.ObsEq`), finite and infinite orbits
 (`DynSystem.Prefix`, `DynSystem.Run`), and transition metadata
-(`DynSystem.EventMap`, `DynSystem.System`, …). The `StepOver`-shaped views of
+(`DynSystem.EventMap`, `DynSystem.SafetySpec`, …). The `StepOver`-shaped views of
 the coalgebra structure map are `ProcessOver.step` and `ProcessOver.ofStep`.
 -/
 abbrev ProcessOver (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
@@ -659,27 +659,26 @@ abbrev Ticketed.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
   ticketed.toDynSystem
 
 /--
-`ProcessOver.System Γ` augments a process over context `Γ` by the standard
-verification predicates used throughout PolyFun (`init`, `assumptions`,
-`safe`, `inv`): the dynamical-system `System` bundle at the step polynomial.
-The underlying process is `System.toProcess`.
+`ProcessOver.SafetySpec Γ` is a process-level safety-verification problem:
+dynamics, initial states, ambient assumptions, and a safety predicate. The
+underlying process is `SafetySpec.toProcess`.
 -/
-abbrev System (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
-  PFunctor.DynSystem.System.{v} (StepOver.toPFunctor Γ)
+abbrev SafetySpec (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
+  PFunctor.DynSystem.SafetySpec.{v} (StepOver.toPFunctor Γ)
 
 /-- The underlying process of a verification-oriented system. -/
-abbrev System.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (system : System Γ) : ProcessOver Γ :=
+abbrev SafetySpec.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (system : SafetySpec Γ) : ProcessOver Γ :=
   system.toDynSystem
 
 /-- The residual state space of a system's underlying process. -/
-abbrev System.Proc {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (system : System Γ) : Type _ :=
+abbrev SafetySpec.Proc {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (system : SafetySpec Γ) : Type _ :=
   system.toProcess.Proc
 
 /-- The step protocol of a system's underlying process. -/
-abbrev System.step {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (system : System Γ) (p : system.Proc) : StepOver Γ system.Proc :=
+abbrev SafetySpec.step {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    (system : SafetySpec Γ) (p : system.Proc) : StepOver Γ system.Proc :=
   system.toProcess.step p
 
 /-! ### Polynomial-coalgebra behavior
@@ -696,7 +695,7 @@ its defining equation is `DynSystem.dest_behavior`, the "bisimulation by
 uniqueness" principle is `DynSystem.behavior_unique`, and equality of behavior
 trees — the canonical observational equivalence on residual states, agreeing
 with any relational bisimulation witness constructed via
-`Concurrent.Refinement.Bisimulation` — is `DynSystem.ObsEq`. -/
+`Concurrent.Refinement.MutualSafetyRefinement` — is `DynSystem.ObsEq`. -/
 
 /-- The terminal coalgebra of `StepOver.toPFunctor Γ`: the type of
 possibly-infinite trees of `Γ`-decorated step protocols. Each such tree
@@ -841,24 +840,23 @@ abbrev Ticketed (Party : Type u) :=
   ProcessOver.Ticketed (StepContext Party)
 
 /--
-`Process.System` augments a closed-world process by the standard verification
-predicates used throughout VCVio and in transition-system-style frameworks.
+`Process.SafetySpec` is a closed-world process-level safety-verification
+problem.
 
 Its parent field `toProcess` is the dynamic semantics; the remaining fields are
 verification metadata on top of that semantics:
 
 * `init` marks initial residual states;
 * `assumptions` records ambient assumptions on runs;
-* `safe` is the intended state safety predicate;
-* `inv` is the intended inductive invariant.
+* `safe` is the state predicate to be established.
 
 This keeps the semantic object and the proof obligations separate while still
 bundling them in one place for refinement and liveness statements.
 -/
 -- The `Party` universe and the process's state/message universes are independent.
 @[nolint checkUnivs]
-abbrev System (Party : Type u) :=
-  ProcessOver.System (StepContext Party)
+abbrev SafetySpec (Party : Type u) :=
+  ProcessOver.SafetySpec (StepContext Party)
 
 end Process
 end Concurrent

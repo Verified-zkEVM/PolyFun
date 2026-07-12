@@ -20,11 +20,10 @@ system, kept out of `DynSystem` itself so the core dynamics stay minimal:
 * `DynSystem.Tickets` / `DynSystem.Ticketed` — a stable obligation identifier
   for each transition, the handles that fairness and liveness layers quantify
   over instead of the state-dependent direction types themselves.
-* `DynSystem.System` — a dynamical system together with the standard
-  verification predicates: initial states, ambient assumptions, safety, and
-  invariants.
+* `DynSystem.SafetySpec` — a dynamical system together with an initial-state
+  predicate, ambient assumptions, and a safety predicate.
 * `DynSystem.DirRel` — a relation between single transitions of two systems,
-  the generic step-matching interface consumed by refinement and bisimulation.
+  the generic step-matching interface consumed by refinement.
 
 Instantiating `p` recovers the corresponding bundles for the concrete system
 notions built on `DynSystem`, such as concurrent machines and processes.
@@ -79,26 +78,23 @@ structure Ticketed (p : PFunctor.{uA, uB}) where
   /-- The assignment of a ticket to each transition. -/
   ticket : toDynSystem.Tickets Ticket
 
-/-- A dynamical system together with the standard verification predicates:
-initial states, ambient assumptions, safety, and invariants.
+/-- A safety-verification problem: dynamics together with initial states,
+ambient assumptions, and the state predicate to be established.
 
 These predicates are orthogonal to the dynamics themselves, so they are kept
 out of `DynSystem` and bundled only for verification-oriented statements. -/
 -- The system's state universe (`u`) and interface universes are independent.
 @[nolint checkUnivs]
-structure System (p : PFunctor.{uA, uB}) extends toDynSystem : DynSystem.{u} p where
+structure SafetySpec (p : PFunctor.{uA, uB}) extends toDynSystem : DynSystem.{u} p where
   /-- The predicate characterizing the system's initial states. -/
   init : State → Prop
   /-- The ambient assumptions imposed on states. -/
   assumptions : State → Prop := fun _ => True
   /-- The safety predicate that states are required to satisfy. -/
   safe : State → Prop := fun _ => True
-  /-- The invariant predicate maintained across transitions. -/
-  inv : State → Prop := fun _ => True
 
 /-- A relation between one transition of `s₁` and one transition of `s₂`, at
-any pair of states: the generic step-matching interface consumed by refinement
-and bisimulation. -/
+any pair of states: the generic step-matching interface consumed by refinement. -/
 abbrev DirRel (s₁ : DynSystem.{u₁} p) (s₂ : DynSystem.{u₂} q) :=
   {st₁ : s₁.State} → {st₂ : s₂.State} →
     p.B (s₁.expose st₁) → q.B (s₂.expose st₂) → Prop

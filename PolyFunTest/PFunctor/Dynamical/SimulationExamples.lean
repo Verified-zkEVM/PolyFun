@@ -51,24 +51,24 @@ example (D : DynSystem.{u} p) (s : D.State) :
 /-- A step-synchronized simulation is a forward simulation at `DirRel.sync`:
 the identity simulation on the trivial verification bundle. -/
 noncomputable example (D : DynSystem.{u} p) :
-    DynSystem.ForwardSimulation
-      ⟨D, fun _ => True, fun _ => True, fun _ => True, fun _ => True⟩
-      ⟨D, fun _ => True, fun _ => True, fun _ => True, fun _ => True⟩
+    DynSystem.SafetyRefinement
+      ⟨D, fun _ => True, fun _ => True, fun _ => True⟩
+      ⟨D, fun _ => True, fun _ => True, fun _ => True⟩
       (DynSystem.DirRel.sync D D) :=
-  DynSystem.ForwardSimulation.ofIsSimulation (idSim D)
+  DynSystem.SafetyRefinement.ofIsSimulation (idSim D)
     (fun st _ => ⟨st, trivial, rfl⟩) (fun _ _ => trivial) (fun _ _ => trivial)
 
 /-- Forward simulations compose, retaining the intermediate state and
 direction witnesses required by dependent interfaces. -/
 noncomputable example (D : DynSystem.{u} p) :
-    let system : DynSystem.System.{u} p :=
-      ⟨D, fun _ => True, fun _ => True, fun _ => True, fun _ => True⟩
-    DynSystem.ForwardSimulation system system
+    let system : DynSystem.SafetySpec.{u} p :=
+      ⟨D, fun _ => True, fun _ => True, fun _ => True⟩
+    DynSystem.SafetyRefinement system system
       (DynSystem.DirRel.comp
         (DynSystem.DirRel.top : DynSystem.DirRel system.toDynSystem system.toDynSystem)
         (DynSystem.DirRel.top : DynSystem.DirRel system.toDynSystem system.toDynSystem)) := by
   intro system
-  exact (DynSystem.ForwardSimulation.reflTop system).comp
-    (DynSystem.ForwardSimulation.reflTop system)
+  exact (DynSystem.SafetyRefinement.reflTop system).comp
+    (DynSystem.SafetyRefinement.reflTop system)
 
 end PFunctor

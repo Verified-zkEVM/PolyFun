@@ -13,20 +13,20 @@ import Batteries.Tactic.Lint
 # Forward refinement between dynamical systems
 
 The lax, existential refinement notion between two verification-oriented
-`DynSystem.System`s, possibly over different interface polynomials:
+`DynSystem.SafetySpec`s, possibly over different interface polynomials:
 
-* `DynSystem.ForwardSimulation impl spec matchStep` — a state relation such
+* `DynSystem.SafetyRefinement impl spec matchStep` — a state relation such
   that every initial implementation state is matched by an initial
   specification state, assumptions transfer forward, every implementation
   direction is matched by *some* specification direction related by the
   `DirRel` `matchStep`, and safety transfers backward.
-* `ForwardSimulation.mapRun` — the induced translation of implementation runs
+* `SafetyRefinement.mapRun` — the induced translation of implementation runs
   into matching specification runs, with `stateRel_mapRun` / `match_mapRun` /
   `safe_of_mapRun` / `assumptions_mapRun` and the prefix-matching forms
   `relUpTo_mapRun` / `rel_mapRun`.
-* `BackwardSimulation` / `Bisimulation` — the reversed and two-way packagings,
-  with `Bisimulation.symm` / `Bisimulation.refl`.
-* `ForwardSimulation.ofIsSimulation` — a step-synchronized simulation
+* `ReverseSafetyRefinement` / `MutualSafetyRefinement` — the reversed and two-way packagings,
+  with `MutualSafetyRefinement.symm` / `MutualSafetyRefinement.refl`.
+* `SafetyRefinement.ofIsSimulation` — a step-synchronized simulation
   (`DynSystem.IsSimulation`, the tight notion with the coinductive
   `behavior`-equality payoff) is a forward simulation at the synchronized step
   relation `DirRel.sync`.
@@ -45,7 +45,7 @@ namespace DynSystem
 
 variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
 
-/-- `ForwardSimulation impl spec matchStep` is a forward simulation from the
+/-- `SafetyRefinement impl spec matchStep` is a forward simulation from the
 implementation system `impl` to the specification system `spec`:
 
 * every initial implementation state is related to some initial specification
@@ -60,7 +60,7 @@ simulation preserves at each step: choosing different `DirRel`s recovers
 event-preserving, ticket-preserving, or observation-preserving refinements. -/
 -- The state universes (`u₁`, `u₂`) and the interface universes are independent.
 @[nolint checkUnivs]
-structure ForwardSimulation (impl : System.{u₁} p) (spec : System.{u₂} q)
+structure SafetyRefinement (impl : SafetySpec.{u₁} p) (spec : SafetySpec.{u₂} q)
     (matchStep : DirRel impl.toDynSystem spec.toDynSystem := DirRel.top) where
   /-- The relation linking implementation states to specification states. -/
   stateRel : impl.State → spec.State → Prop
@@ -80,18 +80,18 @@ structure ForwardSimulation (impl : System.{u₁} p) (spec : System.{u₂} q)
     ∀ {stImpl stSpec}, stateRel stImpl stSpec →
       spec.safe stSpec → impl.safe stImpl
 
-namespace ForwardSimulation
+namespace SafetyRefinement
 
-variable {impl : System.{u₁} p} {spec : System.{u₂} q}
+variable {impl : SafetySpec.{u₁} p} {spec : SafetySpec.{u₂} q}
   {matchStep : DirRel impl.toDynSystem spec.toDynSystem}
 
 /-- The identity simulation on `system`, provided that `matchStep` relates
 each direction to itself. This is the canonical witness that every system
 refines itself. -/
-def refl (system : System.{u} p)
+def refl (system : SafetySpec.{u} p)
     (matchStep : DirRel system.toDynSystem system.toDynSystem := DirRel.top)
     (hmatch : ∀ {st : system.State} (d : p.B (system.expose st)), matchStep d d) :
-    ForwardSimulation system system matchStep where
+    SafetyRefinement system system matchStep where
   stateRel st₁ st₂ := st₁ = st₂
   init st hst := ⟨st, hst, rfl⟩
   assumptions
@@ -102,17 +102,17 @@ def refl (system : System.{u} p)
     | rfl, h => h
 
 /-- The identity simulation using the permissive direction relation. -/
-def reflTop (system : System.{u} p) : ForwardSimulation system system DirRel.top :=
+def reflTop (system : SafetySpec.{u} p) : SafetyRefinement system system DirRel.top :=
   refl system DirRel.top fun _ => trivial
 
 /-- Composition of forward simulations. The intermediate state retained by the
 composite relation is the witness needed to compose the two step simulations. -/
-def comp {r : PFunctor.{uA₃, uB₃}} {middle : System.{u₂} q} {target : System.{u₃} r}
+def comp {r : PFunctor.{uA₃, uB₃}} {middle : SafetySpec.{u₂} q} {target : SafetySpec.{u₃} r}
     {matchFirst : DirRel impl.toDynSystem middle.toDynSystem}
     {matchSecond : DirRel middle.toDynSystem target.toDynSystem}
-    (second : ForwardSimulation middle target matchSecond)
-    (first : ForwardSimulation impl middle matchFirst) :
-    ForwardSimulation impl target (DirRel.comp matchFirst matchSecond) where
+    (second : SafetyRefinement middle target matchSecond)
+    (first : SafetyRefinement impl middle matchFirst) :
+    SafetyRefinement impl target (DirRel.comp matchFirst matchSecond) where
   stateRel stImpl stTarget :=
     ∃ stMiddle, first.stateRel stImpl stMiddle ∧ second.stateRel stMiddle stTarget
   init stImpl hinit := by
@@ -135,7 +135,7 @@ def comp {r : PFunctor.{uA₃, uB₃}} {middle : System.{u₂} q} {target : Syst
 /-- Choose the matching specification direction for one implementation
 direction: the specification-side step selected by the simulation for the
 given implementation step. -/
-noncomputable def matchDir (sim : ForwardSimulation impl spec matchStep)
+noncomputable def matchDir (sim : SafetyRefinement impl spec matchStep)
     {stImpl : impl.State} {stSpec : spec.State}
     (hrel : sim.stateRel stImpl stSpec)
     (dImpl : p.B (impl.expose stImpl)) : q.B (spec.expose stSpec) :=
@@ -143,7 +143,7 @@ noncomputable def matchDir (sim : ForwardSimulation impl spec matchStep)
 
 /-- The chosen matching direction satisfies `matchStep` and preserves the state
 relation to the next states. -/
-theorem matchDir_spec (sim : ForwardSimulation impl spec matchStep)
+theorem matchDir_spec (sim : SafetyRefinement impl spec matchStep)
     {stImpl : impl.State} {stSpec : spec.State}
     (hrel : sim.stateRel stImpl stSpec)
     (dImpl : p.B (impl.expose stImpl)) :
@@ -159,7 +159,7 @@ initial related specification state witnessed by `hrel`.
 This is the fundamental state-transport construction behind run-level
 refinement: it recursively follows the implementation run while using the
 simulation to pick matching specification directions. -/
-noncomputable def matchedState (sim : ForwardSimulation impl spec matchStep)
+noncomputable def matchedState (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     (n : ℕ) → {tSpec : spec.State // sim.stateRel (run.state n) tSpec}
@@ -177,7 +177,7 @@ noncomputable def matchedState (sim : ForwardSimulation impl spec matchStep)
 of the run `run`, relative to the initial related specification state
 witnessed by `hrel`. This is the stepwise witness used to build the whole
 matched specification run. -/
-noncomputable def matchedDir (sim : ForwardSimulation impl spec matchStep)
+noncomputable def matchedDir (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) (n : ℕ) :
     q.B (spec.expose (sim.matchedState run hrel n).1) :=
@@ -189,7 +189,7 @@ related specification state witnessed by `hrel`.
 
 So `mapRun` turns a forward simulation into an execution-level translation
 from implementation runs to matching specification runs. -/
-noncomputable def mapRun (sim : ForwardSimulation impl spec matchStep)
+noncomputable def mapRun (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) : Run spec.toDynSystem where
   state n := (sim.matchedState run hrel n).1
@@ -198,7 +198,7 @@ noncomputable def mapRun (sim : ForwardSimulation impl spec matchStep)
 
 /-- At every step index `n`, the mapped specification run remains related to
 the implementation run by `stateRel`. -/
-theorem stateRel_mapRun (sim : ForwardSimulation impl spec matchStep)
+theorem stateRel_mapRun (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     ∀ n, sim.stateRel (run.state n) ((sim.mapRun run hrel).state n)
@@ -207,7 +207,7 @@ theorem stateRel_mapRun (sim : ForwardSimulation impl spec matchStep)
 /-- At every step index `n`, the mapped specification direction matches the
 implementation direction by `matchStep`. This is the run-level form of the
 step-matching guarantee. -/
-theorem match_mapRun (sim : ForwardSimulation impl spec matchStep)
+theorem match_mapRun (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     ∀ n, matchStep (run.dir n) ((sim.mapRun run hrel).dir n)
@@ -216,7 +216,7 @@ theorem match_mapRun (sim : ForwardSimulation impl spec matchStep)
 /-- If every state along the mapped specification run is safe, then every
 state along the implementation run is safe. This is the basic safety-transport
 principle of forward simulation. -/
-theorem safe_of_mapRun (sim : ForwardSimulation impl spec matchStep)
+theorem safe_of_mapRun (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec)
     (hsafe : ∀ n, spec.safe ((sim.mapRun run hrel).state n)) :
@@ -226,7 +226,7 @@ theorem safe_of_mapRun (sim : ForwardSimulation impl spec matchStep)
 /-- If ambient assumptions hold along an implementation run, they hold along
 its mapped specification run: assumptions are preserved by the run translation
 induced by the simulation. -/
-theorem assumptions_mapRun (sim : ForwardSimulation impl spec matchStep)
+theorem assumptions_mapRun (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec)
     (hassumptions : ∀ n, impl.assumptions (run.state n)) :
@@ -235,7 +235,7 @@ theorem assumptions_mapRun (sim : ForwardSimulation impl spec matchStep)
 
 /-- The first `n` steps of the mapped specification run match the first `n`
 implementation steps according to `matchStep`. -/
-theorem relUpTo_mapRun (sim : ForwardSimulation impl spec matchStep)
+theorem relUpTo_mapRun (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     ∀ n, Run.RelUpTo matchStep run (sim.mapRun run hrel) n :=
@@ -244,69 +244,67 @@ theorem relUpTo_mapRun (sim : ForwardSimulation impl spec matchStep)
 
 /-- The mapped specification run matches the implementation run at every
 finite prefix according to `matchStep`. -/
-theorem rel_mapRun (sim : ForwardSimulation impl spec matchStep)
+theorem rel_mapRun (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     Run.Rel matchStep run (sim.mapRun run hrel) :=
   Run.rel_of_pointwise matchStep run (sim.mapRun run hrel)
     (sim.match_mapRun run hrel)
 
-end ForwardSimulation
+end SafetyRefinement
 
-/-! ## Backward simulation and bisimulation -/
+/-! ## Reverse and mutual safety refinement -/
 
-/-- `BackwardSimulation impl spec matchStep` is a forward simulation from
-`spec` to `impl`, with the step-matching relation reversed accordingly. So
-"backward simulation" is only a change of viewpoint, not a second primitive
-notion. -/
-abbrev BackwardSimulation (impl : System.{u₁} p) (spec : System.{u₂} q)
+/-- `ReverseSafetyRefinement impl spec matchStep` is the safety refinement from
+`spec` to `impl`, with the step-matching relation reversed accordingly. It is
+only a change of viewpoint, not a second primitive notion. -/
+abbrev ReverseSafetyRefinement (impl : SafetySpec.{u₁} p) (spec : SafetySpec.{u₂} q)
     (matchStep : DirRel impl.toDynSystem spec.toDynSystem := DirRel.top) :=
-  ForwardSimulation spec impl (DirRel.reverse matchStep)
+  SafetyRefinement spec impl (DirRel.reverse matchStep)
 
-/-- `Bisimulation left right matchForth matchBack` packages one forward
+/-- `MutualSafetyRefinement left right matchForth matchBack` packages one forward
 simulation in each direction between `left` and `right`. By default, the
 backward step-matching relation is the reversal of the forward one.
 
-This is the main system-level equivalence witness: each side can match the
-other's executions while preserving the chosen step relation. -/
+This is the symmetric closure of `SafetyRefinement`: each side can match the
+other's executions, possibly using independent state relations. It is not a
+coalgebraic bisimulation. -/
 -- The state universes and the interface universes are independent.
 @[nolint checkUnivs]
-structure Bisimulation (left : System.{u₁} p) (right : System.{u₂} q)
+structure MutualSafetyRefinement (left : SafetySpec.{u₁} p) (right : SafetySpec.{u₂} q)
     (matchForth : DirRel left.toDynSystem right.toDynSystem := DirRel.top)
     (matchBack : DirRel right.toDynSystem left.toDynSystem :=
       DirRel.reverse matchForth) where
-  /-- The forward simulation: `left` refines `right` under `matchForth`. -/
-  forth : ForwardSimulation left right matchForth
-  /-- The backward simulation: `right` refines `left` under `matchBack`. -/
-  back : ForwardSimulation right left matchBack
+  /-- The forward refinement: `left` refines `right` under `matchForth`. -/
+  forth : SafetyRefinement left right matchForth
+  /-- The reverse refinement: `right` refines `left` under `matchBack`. -/
+  back : SafetyRefinement right left matchBack
 
-namespace Bisimulation
+namespace MutualSafetyRefinement
 
-variable {left : System.{u₁} p} {right : System.{u₂} q}
+variable {left : SafetySpec.{u₁} p} {right : SafetySpec.{u₂} q}
   {matchForth : DirRel left.toDynSystem right.toDynSystem}
   {matchBack : DirRel right.toDynSystem left.toDynSystem}
 
-/-- Swap the two sides of a bisimulation: the symmetry principle for the
-packaged equivalence witness. -/
-def symm (bisim : Bisimulation left right matchForth matchBack) :
-    Bisimulation right left matchBack matchForth where
-  forth := bisim.back
-  back := bisim.forth
+/-- Swap the two sides of a mutual safety refinement. -/
+def symm (both : MutualSafetyRefinement left right matchForth matchBack) :
+    MutualSafetyRefinement right left matchBack matchForth where
+  forth := both.back
+  back := both.forth
 
-/-- The identity bisimulation on `system`, provided that both step relations
-relate every direction to itself: the reflexivity principle for the packaged
-equivalence witness. -/
-def refl (system : System.{u} p)
+/-- The identity mutual safety refinement on `system`, provided that both step
+relations relate every direction to itself. -/
+def refl (system : SafetySpec.{u} p)
     (matchForth : DirRel system.toDynSystem system.toDynSystem := DirRel.top)
     (matchBack : DirRel system.toDynSystem system.toDynSystem :=
       DirRel.reverse matchForth)
     (hForth : ∀ {st : system.State} (d : p.B (system.expose st)), matchForth d d)
     (hBack : ∀ {st : system.State} (d : p.B (system.expose st)), matchBack d d) :
-    Bisimulation system system matchForth matchBack where
-  forth := ForwardSimulation.refl system matchForth hForth
-  back := ForwardSimulation.refl system matchBack hBack
+    MutualSafetyRefinement system system matchForth matchBack where
+  forth := SafetyRefinement.refl system matchForth hForth
+  back := SafetyRefinement.refl system matchBack hBack
 
-end Bisimulation
+end MutualSafetyRefinement
 
 /-! ## Step-synchronized simulations as forward simulations -/
 
@@ -314,14 +312,14 @@ end Bisimulation
 systems over a shared interface is a forward simulation at the synchronized
 step relation `DirRel.sync`, given transport of the initial-state, assumption,
 and safety predicates along the relation. -/
-def ForwardSimulation.ofIsSimulation {S₁ S₂ : System.{u} p}
+def SafetyRefinement.ofIsSimulation {S₁ S₂ : SafetySpec.{u} p}
     {R : S₁.State → S₂.State → Prop}
     (hsim : IsSimulation S₁.toDynSystem S₂.toDynSystem R)
     (hinit : ∀ st₁, S₁.init st₁ → ∃ st₂, S₂.init st₂ ∧ R st₁ st₂)
     (hassumptions : ∀ {st₁ st₂}, R st₁ st₂ →
       S₁.assumptions st₁ → S₂.assumptions st₂)
     (hsafe : ∀ {st₁ st₂}, R st₁ st₂ → S₂.safe st₂ → S₁.safe st₁) :
-    ForwardSimulation S₁ S₂ (DirRel.sync S₁.toDynSystem S₂.toDynSystem) where
+    SafetyRefinement S₁ S₂ (DirRel.sync S₁.toDynSystem S₂.toDynSystem) where
   stateRel := R
   init := hinit
   assumptions := hassumptions

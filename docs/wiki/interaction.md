@@ -357,7 +357,7 @@ machines directly: terminal-coalgebra behavior and observational
 equivalence (`DynSystem.behavior`, `DynSystem.ObsEq`), orbits
 (`DynSystem.Run` / `DynSystem.Prefix`, of which `ProcessOver.Run` /
 `ProcessOver.Prefix` are the transcript-vocabulary views), transition
-metadata (`DynSystem.EventMap`, `DynSystem.Labeled`, `DynSystem.System`,
+metadata (`DynSystem.EventMap`, `DynSystem.Labeled`, `DynSystem.SafetySpec`,
 `DynSystem.DirRel`), and the combinators (`ProcessOver.interleave` is the
 `wrap` of `DynSystem.choiceProd` along the scheduler wiring lens,
 `interleave_eq_wrap_choiceProd`).
@@ -388,16 +388,17 @@ systems. `Liveness.lean` provides temporal predicates (`AlwaysState`,
 `EventuallyState`, `InfinitelyOftenState`) and safety / admissibility
 under fairness.
 
-### Refinement and equivalence
+### Safety refinement and mutual refinement
 
 `Refinement.lean` lifts implementation runs to specification runs,
 preserving safety and event / ticket / controller traces; its
-`ForwardSimulation` is the generic `PFunctor.DynSystem.ForwardSimulation`
+`SafetyRefinement` is the generic `PFunctor.DynSystem.SafetyRefinement`
 at the step polynomial, with `mapRun` and the transport lemmas supplied by
-`PolyFun/PFunctor/Dynamical/Refinement.lean`. `Bisimulation.lean` and
-`BackwardSimulation` (likewise the `DynSystem` notions) establish behavioral
-equivalence. Named equivalences in `Equivalence.lean` specialize to
-controller, trace, and observational comparisons.
+`PolyFun/PFunctor/Dynamical/Refinement.lean`. `MutualSafetyRefinement.lean` and
+`ReverseSafetyRefinement` (likewise the `DynSystem` notions) package the reverse
+and two-way forms. These use independent relations in each direction and are
+not coalgebraic bisimulations. Named two-way comparisons in `Equivalence.lean`
+specialize to controller, trace, and observational matching.
 
 ### Open systems (UC frontend)
 
@@ -590,13 +591,13 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Current.lean` | `view`, `observe`, `residualView` |
 | `Process.lean` | `NodeAuthority`, `NodeView`, `NodeProfile`, `StepOver`, `ProcessOver` (= `DynSystem` of the step polynomial; views `step` / `ofStep`), `Process`, `Functor (StepOver Γ)`, `interleave` / `interleaveLens` / `interleave_eq_wrap_choiceProd`, `Behavior`, metadata bundles as `DynSystem` instantiations |
 | `Tree.lean` | structural concurrent syntax → `Process` |
-| `Machine.lean` | `Machine` (= `DynSystem PFunctor.univ`), `Machine.{Enabled, step, mk', System}`, `Machine.toProcess` |
+| `Machine.lean` | `Machine` (= `DynSystem PFunctor.univ`), `Machine.{Enabled, step, mk', SafetySpec}`, `Machine.toProcess` |
 | `Execution.lean` | `Trace`, `ObservedTrace` for processes |
 | `Run.lean` | `Prefix`, `Run` (infinite), controller / event extraction |
 | `Policy.lean` | `StepPolicy`, `respects`, combinators |
 | `Observation.lean` | `PackedObs`, transcript relations, observation preservation |
-| `Refinement.lean` | `ForwardSimulation` (= `DynSystem.ForwardSimulation` at the step polynomial), `matchTranscript`, observation preservation, `safe_of_satisfies` |
-| `Bisimulation.lean` | `Bisimulation`, `BackwardSimulation` (= the `DynSystem` notions), `Satisfies`-based safety transport |
+| `Refinement.lean` | `SafetyRefinement` (= `DynSystem.SafetyRefinement` at the step polynomial), `matchTranscript`, observation preservation, `safe_of_satisfies` |
+| `MutualSafetyRefinement.lean` | `MutualSafetyRefinement`, `ReverseSafetyRefinement` (= the `DynSystem` notions), `Satisfies`-based safety transport |
 | `Equivalence.lean` | controller, trace, observational equivalences |
 | `Fairness.lean` | `WeakFair`, `StrongFair`, temporal predicates |
 | `Liveness.lean` | `Safe`, `Satisfies`, `Admissible`, state predicates |

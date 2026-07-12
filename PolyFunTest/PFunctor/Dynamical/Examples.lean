@@ -9,7 +9,7 @@ public import PolyFun.ITree.Unfold
 public import PolyFun.PFunctor.Dynamical.Behavior
 public import PolyFun.PFunctor.Dynamical.Combinators
 public import PolyFun.PFunctor.Dynamical.Run
-public import PolyFun.PFunctor.Dynamical.System
+public import PolyFun.PFunctor.Dynamical.Safety
 
 /-!
 # Examples of dynamical systems

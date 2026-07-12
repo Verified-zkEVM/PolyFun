@@ -50,7 +50,6 @@ import PolyFun.Interaction.Basic.Strategy
 import PolyFun.Interaction.Basic.StrategyOver
 import PolyFun.Interaction.Basic.Syntax
 import PolyFun.Interaction.Basic.Telescope
-import PolyFun.Interaction.Concurrent.Bisimulation
 import PolyFun.Interaction.Concurrent.Control
 import PolyFun.Interaction.Concurrent.Current
 import PolyFun.Interaction.Concurrent.Equivalence
@@ -61,6 +60,7 @@ import PolyFun.Interaction.Concurrent.Independence
 import PolyFun.Interaction.Concurrent.Interleaving
 import PolyFun.Interaction.Concurrent.Liveness
 import PolyFun.Interaction.Concurrent.Machine
+import PolyFun.Interaction.Concurrent.MutualSafetyRefinement
 import PolyFun.Interaction.Concurrent.Observation
 import PolyFun.Interaction.Concurrent.Policy
 import PolyFun.Interaction.Concurrent.Process
@@ -114,9 +114,9 @@ import PolyFun.PFunctor.Dynamical.PointedMachine
 import PolyFun.PFunctor.Dynamical.Refinement
 import PolyFun.PFunctor.Dynamical.Run
 import PolyFun.PFunctor.Dynamical.RunN
+import PolyFun.PFunctor.Dynamical.Safety
 import PolyFun.PFunctor.Dynamical.Simulation
 import PolyFun.PFunctor.Dynamical.Speedup
-import PolyFun.PFunctor.Dynamical.System
 import PolyFun.PFunctor.Dynamical.Trajectory
 import PolyFun.PFunctor.Equiv.Basic
 import PolyFun.PFunctor.Free.Basic

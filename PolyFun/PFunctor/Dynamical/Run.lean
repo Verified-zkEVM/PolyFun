@@ -5,7 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Dynamical.System
+public import PolyFun.PFunctor.Dynamical.Safety
 
 /-!
 # Running dynamical systems

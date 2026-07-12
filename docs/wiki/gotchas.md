@@ -121,14 +121,14 @@ the alias is definitionally transparent, so proofs are unaffected.
 ### 8d. Alias layers: alias-namespace lemmas are not dot-callable on generic-headed values
 
 The reverse direction of 8c. Lemmas that live in an *alias's* namespace
-(e.g. `Interaction.Concurrent.Refinement.ForwardSimulation.safe_of_satisfies`
-over `ForwardSimulation := PFunctor.DynSystem.ForwardSimulation ...`) cannot
+(e.g. `Interaction.Concurrent.Refinement.SafetyRefinement.safe_of_satisfies`
+over `SafetyRefinement := PFunctor.DynSystem.SafetyRefinement ...`) cannot
 be reached by dot notation on a value whose head symbol is the generic
 structure — and structure projections always produce generic-headed
-values (`bisim.forth : DynSystem.ForwardSimulation ...`), even when `bisim`'s
+values (`bisim.forth : DynSystem.SafetyRefinement ...`), even when `bisim`'s
 declared type is the alias. So `bisim.forth.safe_of_satisfies` fails while
-`sim.safe_of_satisfies` on a binder `sim : ForwardSimulation ...` succeeds.
-Use full application (`ForwardSimulation.safe_of_satisfies bisim.forth ...`)
+`sim.safe_of_satisfies` on a binder `sim : SafetyRefinement ...` succeeds.
+Use full application (`SafetyRefinement.safe_of_satisfies bisim.forth ...`)
 at such sites, or keep the lemma in the generic namespace if it is not
 specific to the alias layer.
 

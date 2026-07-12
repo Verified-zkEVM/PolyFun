@@ -51,7 +51,7 @@ exposed position `Enabled σ` is the type of events that may occur next, and
 This carrier intentionally contains only dynamics. Event labels, fairness
 tickets, controller ownership, local views, and verification predicates are all
 added by the generic `PFunctor.DynSystem` layers (`DynSystem.Labeled`,
-`DynSystem.Ticketed`, `Machine.System`, …) so that the core transition
+`DynSystem.Ticketed`, `Machine.SafetySpec`, …) so that the core transition
 semantics stays small and reusable.
 -/
 -- The state universe (`v`) and the enabled-event universe (`u`) are independent.
@@ -86,16 +86,15 @@ def mk' (State : Type v) (Enabled : State → Type u)
     (mk' State Enabled step).step = step := rfl
 
 /--
-`Machine.System` augments a machine by the standard verification predicates
-used throughout VCVio — initial states, ambient assumptions, safety, and
-invariants: the dynamical-system `System` bundle at the universe polynomial.
+`Machine.SafetySpec` is a machine-level safety-verification problem: dynamics,
+initial states, ambient assumptions, and the safety predicate.
 -/
 -- The machine's state universe (`v`) and event universe (`u`) are independent.
 @[nolint checkUnivs]
-abbrev System := PFunctor.DynSystem.System.{v} PFunctor.univ.{u}
+abbrev SafetySpec := PFunctor.DynSystem.SafetySpec.{v} PFunctor.univ.{u}
 
 /-- The underlying machine of a verification-oriented machine system. -/
-abbrev System.toMachine (system : System.{u, v}) : Machine.{u, v} :=
+abbrev SafetySpec.toMachine (system : SafetySpec.{u, v}) : Machine.{u, v} :=
   system.toDynSystem
 
 /--
@@ -121,18 +120,16 @@ def toProcess {Party : Type u} (machine : Machine)
         | ⟨event, _⟩ => machine.step σ event }
 
 /--
-Lift `Machine.toProcess` from bare dynamics to the verification-oriented
-`Process.System` layer by reusing the same initial, assumption, safety, and
-invariant predicates.
+Lift `Machine.toProcess` from bare dynamics to `Process.SafetySpec` by reusing
+the same initial-state, assumption, and safety predicates.
 -/
-def System.toProcess {Party : Type u} (system : Machine.System)
+def SafetySpec.toProcess {Party : Type u} (system : Machine.SafetySpec)
     (semantics : (σ : system.State) → NodeProfile Party (system.toMachine.Enabled σ)) :
-    Process.System Party where
+    Process.SafetySpec Party where
   toDynSystem := system.toMachine.toProcess semantics
   init := system.init
   assumptions := system.assumptions
   safe := system.safe
-  inv := system.inv
 
 end Machine
 end Concurrent

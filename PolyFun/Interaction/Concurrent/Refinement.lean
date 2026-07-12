@@ -11,9 +11,9 @@ import PolyFun.PFunctor.Dynamical.Refinement
 # Forward refinement for dynamic concurrent processes
 
 The process-level refinement notion for the dynamic concurrent core:
-`Refinement.ForwardSimulation` between two `ProcessOver.System`s is the
+`Refinement.SafetyRefinement` between two `ProcessOver.SafetySpec`s is the
 generic dynamical-system forward simulation
-`PFunctor.DynSystem.ForwardSimulation` at the step polynomial, with the
+`PFunctor.DynSystem.SafetyRefinement` at the step polynomial, with the
 step-matching relation ranging over complete step transcripts
 (`ProcessOver.TranscriptRel`).
 
@@ -45,9 +45,9 @@ namespace Concurrent
 namespace Refinement
 
 /--
-`ForwardSimulation impl spec matchStep` is a forward simulation from the
+`SafetyRefinement impl spec matchStep` is a forward simulation from the
 implementation system `impl` to the specification system `spec`: the generic
-`PFunctor.DynSystem.ForwardSimulation` at the step polynomial.
+`PFunctor.DynSystem.SafetyRefinement` at the step polynomial.
 
 The meaning is:
 
@@ -63,17 +63,17 @@ simulation preserves at each step. Choosing different transcript relations
 recovers event-preserving, ticket-preserving, controller-preserving, or
 observation-preserving refinements.
 -/
-abbrev ForwardSimulation
+abbrev SafetyRefinement
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    (impl : ProcessOver.System Γ)
-    (spec : ProcessOver.System Δ)
+    (impl : ProcessOver.SafetySpec Γ)
+    (spec : ProcessOver.SafetySpec Δ)
     (matchStep :
       ProcessOver.TranscriptRel impl.toProcess spec.toProcess :=
         ProcessOver.TranscriptRel.top) :=
-  PFunctor.DynSystem.ForwardSimulation impl spec matchStep
+  PFunctor.DynSystem.SafetyRefinement impl spec matchStep
 
-namespace ForwardSimulation
+namespace SafetyRefinement
 
 /--
 Choose the matching specification transcript for one implementation
@@ -84,10 +84,10 @@ step-polynomial interface.
 noncomputable abbrev matchTranscript
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
+    {impl : ProcessOver.SafetySpec Γ} {spec : ProcessOver.SafetySpec Δ}
     {matchStep :
       ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
+    (sim : SafetyRefinement impl spec matchStep)
     {pImpl pSpec : _}
     (hrel : sim.stateRel pImpl pSpec)
     (trImpl : (impl.step pImpl).spec.Transcript) :
@@ -104,22 +104,22 @@ simulation.
 theorem admissible_mapRun
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
+    {impl : ProcessOver.SafetySpec Γ} {spec : ProcessOver.SafetySpec Δ}
     {matchStep :
       ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
+    (sim : SafetyRefinement impl spec matchStep)
     (run : ProcessOver.Run impl.toProcess)
     {pSpec : spec.Proc}
     (hrel : sim.stateRel run.initial pSpec)
-    (hadm : ProcessOver.System.Admissible impl run) :
-    ProcessOver.System.Admissible spec (sim.mapRun run hrel) :=
+    (hadm : ProcessOver.SafetySpec.Admissible impl run) :
+    ProcessOver.SafetySpec.Admissible spec (sim.mapRun run hrel) :=
   sim.assumptions_mapRun run hrel hadm
 
 /-- A controller-preserving simulation preserves the current controller sequence
 of every finite run prefix. -/
 theorem currentControllersUpTo_mapRun {Party : Type u}
-    {impl spec : Process.System Party}
-    (sim : ForwardSimulation impl spec Observation.Process.TranscriptRel.byController)
+    {impl spec : Process.SafetySpec Party}
+    (sim : SafetyRefinement impl spec Observation.Process.TranscriptRel.byController)
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
     (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
@@ -134,8 +134,8 @@ theorem currentControllersUpTo_mapRun {Party : Type u}
 /-- A controller-path-preserving simulation preserves the controller-path
 sequence of every finite run prefix. -/
 theorem controllerPathsUpTo_mapRun {Party : Type u}
-    {impl spec : Process.System Party}
-    (sim : ForwardSimulation impl spec Observation.Process.TranscriptRel.byPath)
+    {impl spec : Process.SafetySpec Party}
+    (sim : SafetyRefinement impl spec Observation.Process.TranscriptRel.byPath)
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
     (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
@@ -150,10 +150,10 @@ theorem controllerPathsUpTo_mapRun {Party : Type u}
 /-- An event-preserving simulation preserves the stable event sequence of every
 finite run prefix. -/
 theorem eventsUpTo_mapRun {Party : Type u}
-    {impl spec : Process.System Party} {Event : Type w}
+    {impl spec : Process.SafetySpec Party} {Event : Type w}
     {eventImpl : impl.toProcess.EventMap Event}
     {eventSpec : spec.toProcess.EventMap Event}
-    (sim : ForwardSimulation impl spec
+    (sim : SafetyRefinement impl spec
       (Observation.Process.TranscriptRel.byEvent eventImpl eventSpec))
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
@@ -169,10 +169,10 @@ theorem eventsUpTo_mapRun {Party : Type u}
 /-- A ticket-preserving simulation preserves the stable ticket sequence of every
 finite run prefix. -/
 theorem ticketsUpTo_mapRun {Party : Type u}
-    {impl spec : Process.System Party} {Ticket : Type w}
+    {impl spec : Process.SafetySpec Party} {Ticket : Type w}
     {ticketImpl : impl.toProcess.Tickets Ticket}
     {ticketSpec : spec.toProcess.Tickets Ticket}
-    (sim : ForwardSimulation impl spec
+    (sim : SafetyRefinement impl spec
       (Observation.Process.TranscriptRel.byTicket ticketImpl ticketSpec))
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
@@ -189,8 +189,8 @@ theorem ticketsUpTo_mapRun {Party : Type u}
 observations of every finite run prefix. -/
 theorem observationsUpTo_mapRun {Party : Type u} [DecidableEq Party]
     (me : Party)
-    {impl spec : Process.System Party}
-    (sim : ForwardSimulation impl spec
+    {impl spec : Process.SafetySpec Party}
+    (sim : SafetyRefinement impl spec
       (Observation.Process.TranscriptRel.byObservation me))
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
@@ -215,27 +215,27 @@ proving them on the specification side.
 theorem safe_of_satisfies
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    {impl : ProcessOver.System Γ} {spec : ProcessOver.System Δ}
+    {impl : ProcessOver.SafetySpec Γ} {spec : ProcessOver.SafetySpec Δ}
     {matchStep :
       ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
-    (sim : ForwardSimulation impl spec matchStep)
+    (sim : SafetyRefinement impl spec matchStep)
     (fairImpl : ProcessOver.Run.Pred impl.toProcess)
     (fairSpec : ProcessOver.Run.Pred spec.toProcess)
     (hfair :
       ∀ (run : ProcessOver.Run impl.toProcess) {pSpec : spec.Proc},
         (hrel : sim.stateRel run.initial pSpec) →
           fairImpl run → fairSpec (sim.mapRun run hrel))
-    (hspec : ProcessOver.System.Satisfies spec fairSpec (ProcessOver.System.Safe spec)) :
-    ProcessOver.System.Satisfies impl fairImpl (ProcessOver.System.Safe impl) := by
+    (hspec : ProcessOver.SafetySpec.Satisfies spec fairSpec (ProcessOver.SafetySpec.Safe spec)) :
+    ProcessOver.SafetySpec.Satisfies impl fairImpl (ProcessOver.SafetySpec.Safe impl) := by
   intro run hInit hAdm hFair
   rcases sim.init run.initial hInit with ⟨pSpec, hInitSpec, hrel⟩
-  have hAdmSpec : ProcessOver.System.Admissible spec (sim.mapRun run hrel) :=
+  have hAdmSpec : ProcessOver.SafetySpec.Admissible spec (sim.mapRun run hrel) :=
     admissible_mapRun sim run hrel hAdm
-  have hSafeSpec : ProcessOver.System.Safe spec (sim.mapRun run hrel) :=
+  have hSafeSpec : ProcessOver.SafetySpec.Safe spec (sim.mapRun run hrel) :=
     hspec (sim.mapRun run hrel) hInitSpec hAdmSpec (hfair run hrel hFair)
   exact sim.safe_of_mapRun run hrel hSafeSpec
 
-end ForwardSimulation
+end SafetyRefinement
 
 end Refinement
 end Concurrent

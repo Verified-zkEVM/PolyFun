@@ -16,7 +16,7 @@ full temporal-logic syntax, the file defines:
 
 * run predicates and state predicates;
 * the basic temporal lifts of a state predicate along a run;
-* admissibility, safety, and initiality for `ProcessOver.System`; and
+* admissibility, safety, and initiality for `ProcessOver.SafetySpec`; and
 * what it means for a system to satisfy a run property under a chosen fairness
   assumption.
 
@@ -106,13 +106,13 @@ theorem infinitelyOftenState_mono
 
 end Run
 
-namespace System
+namespace SafetySpec
 
 /-- A run of `system` is admissible when the ambient assumptions hold at every
 state along the run. -/
 def Admissible
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (system : ProcessOver.System Γ)
+    (system : ProcessOver.SafetySpec Γ)
     (run : ProcessOver.Run system.toProcess) : Prop :=
   ProcessOver.Run.AlwaysState system.assumptions run
 
@@ -120,7 +120,7 @@ def Admissible
 along the run. -/
 def Safe
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (system : ProcessOver.System Γ)
+    (system : ProcessOver.SafetySpec Γ)
     (run : ProcessOver.Run system.toProcess) : Prop :=
   ProcessOver.Run.AlwaysState system.safe run
 
@@ -128,7 +128,7 @@ def Safe
 satisfies `system.init`. -/
 def Initial
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (system : ProcessOver.System Γ)
+    (system : ProcessOver.SafetySpec Γ)
     (run : ProcessOver.Run system.toProcess) : Prop :=
   system.init run.initial
 
@@ -139,7 +139,7 @@ assumption `fairness` also satisfies the run property `property`.
 -/
 def Satisfies
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (system : ProcessOver.System Γ)
+    (system : ProcessOver.SafetySpec Γ)
     (fairness property : ProcessOver.Run.Pred system.toProcess) : Prop :=
   ∀ run : ProcessOver.Run system.toProcess,
     Initial system run →
@@ -153,7 +153,7 @@ state along the run.
 -/
 theorem alwaysState_of_safe
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (system : ProcessOver.System Γ)
+    (system : ProcessOver.SafetySpec Γ)
     {P : ProcessOver.Run.StatePred system.toProcess}
     (himp : ∀ p, system.safe p → P p) :
     ∀ {run : ProcessOver.Run system.toProcess},
@@ -161,7 +161,7 @@ theorem alwaysState_of_safe
   intro run hsafe n
   exact himp _ (hsafe n)
 
-end System
+end SafetySpec
 
 end ProcessOver
 
@@ -212,36 +212,36 @@ theorem infinitelyOftenState_mono {Party : Type u} {process : Process Party}
 
 end Run
 
-namespace System
+namespace SafetySpec
 
 /-- The closed-world specialization of run admissibility. -/
-abbrev Admissible {Party : Type u} (system : Process.System Party)
+abbrev Admissible {Party : Type u} (system : Process.SafetySpec Party)
     (run : Process.Run system.toProcess) : Prop :=
-  ProcessOver.System.Admissible system run
+  ProcessOver.SafetySpec.Admissible system run
 
 /-- The closed-world specialization of run safety. -/
-abbrev Safe {Party : Type u} (system : Process.System Party)
+abbrev Safe {Party : Type u} (system : Process.SafetySpec Party)
     (run : Process.Run system.toProcess) : Prop :=
-  ProcessOver.System.Safe system run
+  ProcessOver.SafetySpec.Safe system run
 
 /-- The closed-world specialization of initiality. -/
-abbrev Initial {Party : Type u} (system : Process.System Party)
+abbrev Initial {Party : Type u} (system : Process.SafetySpec Party)
     (run : Process.Run system.toProcess) : Prop :=
-  ProcessOver.System.Initial system run
+  ProcessOver.SafetySpec.Initial system run
 
 /-- The closed-world specialization of semantic satisfaction under fairness. -/
-abbrev Satisfies {Party : Type u} (system : Process.System Party)
+abbrev Satisfies {Party : Type u} (system : Process.SafetySpec Party)
     (fairness property : Process.Run.Pred system.toProcess) : Prop :=
-  ProcessOver.System.Satisfies system fairness property
+  ProcessOver.SafetySpec.Satisfies system fairness property
 
-theorem alwaysState_of_safe {Party : Type u} (system : Process.System Party)
+theorem alwaysState_of_safe {Party : Type u} (system : Process.SafetySpec Party)
     {P : Process.Run.StatePred system.toProcess}
     (himp : ∀ p, system.safe p → P p) :
     ∀ {run : Process.Run system.toProcess},
       Safe system run → Process.Run.AlwaysState P run :=
-  ProcessOver.System.alwaysState_of_safe system himp
+  ProcessOver.SafetySpec.alwaysState_of_safe system himp
 
-end System
+end SafetySpec
 
 end Process
 
