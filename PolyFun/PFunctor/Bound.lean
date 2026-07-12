@@ -243,4 +243,18 @@ lemma IsTotalRollBound.mono {oa : FreeM P α} {n₁ n₂ : ℕ}
       exact ⟨Nat.lt_of_lt_of_le h.1 hle,
         fun y => ih y (h.2 y) (Nat.sub_le_sub_right hle 1)⟩
 
+/-- Total roll bounds add under monadic sequencing. -/
+lemma isTotalRollBound_bind {oa : FreeM P α} {ob : α → FreeM P β}
+    {n₁ n₂ : ℕ} (h₁ : IsTotalRollBound oa n₁)
+    (h₂ : ∀ x, IsTotalRollBound (ob x) n₂) :
+    IsTotalRollBound (oa >>= ob) (n₁ + n₂) := by
+  refine isRollBound_bind (fun a b => a + b) ?_ ?_ h₁ h₂ <;> grind
+
+/-- Total roll bounds add under applicative sequencing. -/
+lemma isTotalRollBound_seq {og : FreeM P (α → β)} {oa : FreeM P α}
+    {n₁ n₂ : ℕ} (h₁ : IsTotalRollBound og n₁)
+    (h₂ : IsTotalRollBound oa n₂) :
+    IsTotalRollBound (og <*> oa) (n₁ + n₂) := by
+  refine isRollBound_seq (fun a b => a + b) ?_ ?_ h₁ h₂ <;> grind
+
 end PFunctor.FreeM

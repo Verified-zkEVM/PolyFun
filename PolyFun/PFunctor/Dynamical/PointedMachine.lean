@@ -33,6 +33,11 @@ the structural half of the sought `IsPolyTime.bind`: the definition (with its
 half — the Turing-machine running-time bound for the composed machine — is
 computability content that stays in VCVio.
 
+The sum stores only the private operational state of the currently active
+phase. Shared runtime resources do not belong in either summand: a handler in
+`StateT σ m`, for example, threads the same ambient state through queries from
+both phases when the machine is interpreted by `runWith`.
+
 ## Fuelled unrolling
 
 `toComp k : State → FreeM p (Option β)` unrolls a machine into a free-monad
@@ -71,7 +76,9 @@ variable {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {mid : Type uMi
 /-- Sequential composition of machines over a shared interface (Spivak–Niu
 Example 6.41): run `M₁` until it outputs a `mid` value, then run `M₂` from that
 value. The state set is `M₁.State ⊕ M₂.State`; phase one never reads out, phase
-two carries the final output. -/
+two carries the final output. As with ordinary monadic bind, only the returned
+`mid` value crosses the handoff; information from phase one's private terminal
+state must either be returned in `mid` or live in the ambient handler effect. -/
 def seqComp (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) : PointedMachine p α β where
   State := M₁.State ⊕ M₂.State
   expose := fun s => match s with
@@ -145,7 +152,7 @@ theorem toComp_succ (M : PointedMachine p α β) (k : ℕ) (st : M.State) :
 
 /-- A resolved state unrolls to its readout at any fuel: the readout is free,
 so extra fuel is never consumed. -/
-@[simp, grind =]
+@[simp]
 theorem toComp_of_output_eq_some (M : PointedMachine p α β) (k : ℕ) {st : M.State}
     {b : β} (hb : M.output st = some b) : M.toComp k st = FreeM.pure (some b) := by
   cases k with
@@ -154,7 +161,7 @@ theorem toComp_of_output_eq_some (M : PointedMachine p α β) (k : ℕ) {st : M.
 
 /-- The `k`-step unrolling has total roll bound `k`: fuel counts answered
 queries exactly, and every `FreeM.roll` consumes one unit of fuel. -/
-theorem toComp_isTotalRollBound (M : PointedMachine p α β) (k : ℕ) (st : M.State) :
+theorem isTotalRollBound_toComp (M : PointedMachine p α β) (k : ℕ) (st : M.State) :
     (M.toComp k st).IsTotalRollBound k := by
   induction k generalizing st with
   | zero => simp
@@ -164,7 +171,7 @@ theorem toComp_isTotalRollBound (M : PointedMachine p α β) (k : ℕ) (st : M.S
       · simp
       · simp only [FreeM.isTotalRollBound_roll_iff, Nat.zero_lt_succ,
           Nat.add_sub_cancel]
-        exact ⟨fun d => ih (M.update st d)⟩
+        exact ⟨trivial, fun d => ih (M.update st d)⟩
 
 /-- First phase, one step: while in `M₁` (a left state), `seqComp` exposes `M₁`'s
 position and, after `M₁`'s update, hands off to `M₂` exactly when `M₁` produces an
@@ -242,7 +249,7 @@ theorem runWith_succ (M : PointedMachine q α β) (h : Handler m q) (k : ℕ) (s
 /-- Once a state has resolved (`output = some b`), any fuel produces
 `pure (some b)`: the readout is free and extra fuel does not change the run.
 This is the local absorption law used when extending a run after resolution. -/
-@[simp, grind =]
+@[simp]
 theorem runWith_of_output_eq_some (M : PointedMachine q α β) (h : Handler m q) (k : ℕ)
     {s : M.State}
     {b : β} (hb : M.output s = some b) : M.runWith h k s = pure (some b) := by
