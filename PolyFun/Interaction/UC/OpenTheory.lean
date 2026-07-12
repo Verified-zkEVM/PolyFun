@@ -63,7 +63,7 @@ each model declare exactly the strength it can honestly satisfy. The free
 models (`Expr.theory`, `Interp.theory`) instantiate the entire chain. The
 process-backed `openTheory` in `OpenProcessModel.lean` instantiates only
 `IsLawful`; its monoidal coherence and snake equations hold up to
-`OpenProcessIso`, not strict equality.
+`OpenProcessActivationEquiv`, not strict equality.
 -/
 
 universe u

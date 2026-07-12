@@ -37,7 +37,7 @@ The wrapper does two concrete jobs that an ad-hoc tuple does not:
 
 The alternative, threading the env-event alphabet `Σ` (with
 `Σ := Empty` default) directly through `OpenNodeProfile`, would
-touch every existing constructor and every `_iso` lemma in
+touch every existing constructor and every activation-equivalence lemma in
 `OpenProcessModel.lean`. The wrapper achieves the same expressive
 power additively, with zero invasion.
 

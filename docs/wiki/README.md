@@ -49,6 +49,9 @@ See the *Wiki Maintenance Contract* section in
 
 ## Cross-Cutting Notes
 
+- [`bisimulation.md`](bisimulation.md): glossary of the bisimulation and
+  behavioural-equivalence notions (strong / delay / weak), the generic
+  `Control.LTS` framework, and how the ITree, dynamical, and UC layers relate.
 - [`notation.md`](notation.md): notation reference. Currently scoped to UC
   composition (`∥`, `⊞`, `⊠`) and boundary tensor / swap.
 - [`gotchas.md`](gotchas.md): recurring Lean traps and PolyFun-specific
