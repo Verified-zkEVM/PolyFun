@@ -45,10 +45,18 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
   (free-standing helpers, depended on by both PFunctor and ITree)
 
+PFunctor/Lens/{Basic, Cartesian, State}
+  -> PFunctor/Lens/{Composite, Distributivity, Factorization, Duoidal}
+  -> PFunctor/{InternalHom, CartesianClosed, Adjunctions, Comonoid}
+
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
-  -> PFunctor/Dynamical/{Basic, Safety, Combinators, Responder, Game,
-                         Run, Trajectory}
-  -> PFunctor/Dynamical/Behavior
+  -> PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
+  -> PFunctor/Dynamical/{Behavior, Simulation, RunN, PointedMachine}
+  -> PFunctor/Dynamical/{Refinement, Responder, Game}
+
+  (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
+   for RunN and PointedMachine, PFunctor/InternalHom for Responder, and
+   PFunctor/Lens/Duoidal for Game.)
 
 PFunctor/Free -> ITree/{Basic, Construct, Handler, Rec,
                         Events, Sim, Bisim}
@@ -60,8 +68,10 @@ PFunctor/Free + Control -> Interaction/Basic/{Spec, Node, Decoration,
                             Telescope, Sampler, MonadDecoration,
                             BundledMonad, Ownership, SpecFintype}
 
-Interaction/Basic + PFunctor/Dynamical
-  -> Interaction/{TwoParty, Multiparty, Concurrent}
+Interaction/Basic -> Interaction/{TwoParty, Multiparty}
+Interaction/Basic + PFunctor/Dynamical -> Interaction/Concurrent
+  (concurrent processes and machines are dynamical systems over their step
+   polynomials; TwoParty/Multiparty do not depend on PFunctor/Dynamical)
 
 Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    OpenProcess, OpenProcessModel,

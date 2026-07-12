@@ -122,7 +122,12 @@ def duoidalLens (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
 These are the special cases in which `orderingLens` is an isomorphism, i.e. the
 two monoidal products agree outright. In each case one of the factors has a
 unique continuation into the other, so the ordering of moves carries no
-information. -/
+information.
+
+These catalogue isos are reference API — book-completeness formalizations of
+Example 6.84, exercised in `PolyFunTest/PFunctor/Lens/Duoidal.lean`. The
+load-bearing formers of this file are `orderingLens` and `duoidalLens` above
+(consumed by `PolyFun/PFunctor/Dynamical/Game.lean`). -/
 
 namespace Equiv
 

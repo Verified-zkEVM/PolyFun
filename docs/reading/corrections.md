@@ -7,14 +7,6 @@ with the commit/PR that fixed them.
 
 ## Open
 
-1. **PolyFun `FreeM ⊣ Cofree` over-claim.**
-   `PolyFun/Interaction/Basic/Spec.lean:83` and `REFERENCES.md:65` describe
-   the "patterns/matter pairing `FreeM ⊣ Cofree`" as if present; no
-   adjunction is formalized anywhere in PolyFun (only `LawfulMonad (FreeM P)`
-   and `LawfulComonad (CofreeC F)` separately). Fix wording now or land the
-   adjunction (roadmap Phase C) — whichever comes first; wiki maintenance
-   contract applies.
-
 2. **Polytime encoding model (in-flight repair on `dtumad/k-l-examples`).**
    The earlier existential-encoding `EncPolyTime` model admitted an
    advice-collapse and an encoding-caching triviality
@@ -49,11 +41,16 @@ with the commit/PR that fixed them.
    must reconcile the framing (the pitch becomes: both sides over one
    substrate, with the free/cofree pairing between them).
 
-7. **Spivak–Niu publisher wrong in repo docs.** `REFERENCES.md` and
-   `AGENTS.md`/`CLAUDE.md` cite the book as "MIT Press 2024"; the published
-   edition is Cambridge University Press, LMS Lecture Note Series 498, 2025
-   (DOI 10.1017/9781009576734; arXiv 2312.00990 remains the preprint). Fix
-   in the next docs pass.
+8. **Spivak–Niu arXiv id / subtitle inconsistency.** The book's preprint is
+   cited two ways across the repo: arXiv:2312.00990 with subtitle "A General
+   Theory of Interaction" (roadmap, this bibliography's highlights) versus
+   arXiv:2202.00534 with subtitle "A Mathematical Theory of Interaction"
+   (`REFERENCES.md` SN24 entry, `docs/wiki/interaction.md:433`,
+   `PolyFun/Control/Trace.lean`, `PolyFun/PFunctor/Trace.lean`,
+   `PolyFun/PFunctor/Dynamical/Basic.lean`). Reconcile to a single canonical
+   id + subtitle once verified against arXiv; deferred from the 2026-07-12
+   hygiene pass to avoid guessing which posting each `Trace`/§4.3 citation
+   actually intends.
 
 ## Watch (potential over-claims to avoid in future writing)
 
@@ -82,4 +79,15 @@ with the commit/PR that fixed them.
 
 ## Resolved
 
-- (none yet)
+- **Item 1 (`FreeM ⊣ Cofree` over-claim).** Wording fixed on
+  `dtumad/cleanup-hygiene`: `PolyFun/Interaction/Basic/Spec.lean`,
+  `REFERENCES.md`, and `AGENTS.md`/`CLAUDE.md` now describe the
+  pattern-runs-on-matter *module structure* (Libkind–Spivak) rather than an
+  adjunction, and note that PolyFun formalizes `LawfulMonad (FreeM P)` /
+  `LawfulComonad (CofreeC F)` separately. Formalizing the true `U ⊣ 𝒯`
+  adjunction (Thm 8.45) remains roadmap Phase C.
+- **Item 7 (Spivak–Niu publisher).** Corrected to Cambridge University Press,
+  LMS Lecture Note Series 498, 2025 (DOI 10.1017/9781009576734) on
+  `dtumad/cleanup-hygiene` across `REFERENCES.md`, `AGENTS.md`/`CLAUDE.md`, and
+  `PolyFun/PFunctor/Adjunctions.lean`. The arXiv-id/subtitle inconsistency
+  surfaced during that pass is tracked separately as open item 8.
