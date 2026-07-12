@@ -93,6 +93,13 @@ def contramapInput (M : PointedMachine.{u} p α β) (f : γ → α) :
 @[simp] theorem contramapInput_output (f : γ → α) (M : PointedMachine.{u} p α β)
     (st : M.State) : (M.contramapInput f).output st = M.output st := rfl
 
+@[simp] theorem contramapInput_expose (f : γ → α) (M : PointedMachine.{u} p α β)
+    (st : M.State) : (M.contramapInput f).expose st = M.expose st := rfl
+
+@[simp] theorem contramapInput_update (f : γ → α) (M : PointedMachine.{u} p α β)
+    (st : M.State) (d : p.B (M.expose st)) :
+    (M.contramapInput f).update st d = M.update st d := rfl
+
 /-- Map the values read out by a pointed machine. This does not change when or
 how the machine interacts; it maps only a successful partial readout. -/
 def mapOutput (M : PointedMachine.{u} p α β) (f : β → γ) :
@@ -111,6 +118,13 @@ def mapOutput (M : PointedMachine.{u} p α β) (f : β → γ) :
 @[simp] theorem mapOutput_output (f : β → γ) (M : PointedMachine.{u} p α β)
     (st : M.State) : (M.mapOutput f).output st = Option.map f (M.output st) := by
   cases h : M.output st <;> simp [mapOutput, h]
+
+@[simp] theorem mapOutput_expose (f : β → γ) (M : PointedMachine.{u} p α β)
+    (st : M.State) : (M.mapOutput f).expose st = M.expose st := rfl
+
+@[simp] theorem mapOutput_update (f : β → γ) (M : PointedMachine.{u} p α β)
+    (st : M.State) (d : p.B (M.expose st)) :
+    (M.mapOutput f).update st d = M.update st d := rfl
 
 /-- Reindex the input and map the output of a pointed machine. -/
 def dimap (M : PointedMachine.{u} p α β) (f : γ → α) (g : β → mid) :
@@ -131,6 +145,13 @@ def wrap (M : PointedMachine.{u} p α β) (w : Lens p q) : PointedMachine.{u} q 
 
 @[simp] theorem wrap_output (w : Lens p q) (M : PointedMachine.{u} p α β) (st : M.State) :
     (M.wrap w).output st = M.output st := rfl
+
+@[simp] theorem wrap_expose (w : Lens p q) (M : PointedMachine.{u} p α β) (st : M.State) :
+    (M.wrap w).expose st = w.toFunA (M.expose st) := rfl
+
+@[simp] theorem wrap_update (w : Lens p q) (M : PointedMachine.{u} p α β)
+    (st : M.State) (d : q.B (w.toFunA (M.expose st))) :
+    (M.wrap w).update st d = M.update st (w.toFunB (M.expose st) d) := rfl
 
 /-! ## Sequential composition -/
 

@@ -87,6 +87,21 @@ steps; reaching `1` itself requires no additional fuel because readout is free. 
 def Conjecture : Prop :=
   ∀ n : ℕ, 0 < n → ∃ k : ℕ, machine.ResolvesIn k (machine.init n)
 
+/-- Machine resolution recovers the usual reachability formulation: a Collatz
+run terminates exactly when some iterate of `step` is `1`. -/
+theorem eventually_resolves_iff_reaches_one (n : ℕ) :
+    (∃ k, machine.ResolvesIn k (machine.init n)) ↔
+      ∃ k, (step^[k]) n = 1 := by
+  rw [machine.exists_resolvesIn_iff_exists_iterate_output_isSome]
+  change (∃ k, (if (step^[k]) n = 1 then some PUnit.unit else none).isSome) ↔ _
+  simp
+
+/-- Thus the pointed-machine formulation is equivalent to the familiar
+statement of the Collatz conjecture. -/
+theorem conjecture_iff :
+    Conjecture ↔ ∀ n : ℕ, 0 < n → ∃ k, (step^[k]) n = 1 := by
+  simp only [Conjecture, eventually_resolves_iff_reaches_one]
+
 /-- The distinguished initial state `1` is already resolved. -/
 example : machine.ResolvesIn 0 (machine.init 1) := by
   simp [machine]
