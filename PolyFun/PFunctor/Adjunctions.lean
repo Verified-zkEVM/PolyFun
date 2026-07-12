@@ -11,8 +11,8 @@ public import PolyFun.PFunctor.Lens.Basic
 # Hom-set adjunctions for trivial-interface polynomial functors
 
 This file records the "trivial interface" hom-set equivalences of Spivak–Niu
-*Polynomial Functors: A General Theory of Interaction* (MIT Press, 2024),
-§5.1. Each computes the set of lenses out of, or into, one of the
+*Polynomial Functors: A General Theory of Interaction* (Cambridge University
+Press, 2025), §5.1. Each computes the set of lenses out of, or into, one of the
 distinguished polynomial functors `0`, `1`, `X = y`, a constant `C A`, or a
 linear `linear A` by a concrete data type. These are the hom-isomorphisms
 witnessing the adjoint quadruple `linear ⊣ (−)(1) ⊣ C ⊣ (−)(0)` together with
@@ -39,8 +39,11 @@ the sections/principal-monomial refinements.
 
 The equivalences are stated as bare `Equiv`s between `Lens` types and concrete
 types, matching the observation of the reading notes (§5.1) that none of these
-hom-isos needs category-theory packaging to be useful; the dynamical layer
-uses `homFromX` and `homToConst` pervasively for points and event maps.
+hom-isos needs category-theory packaging to be useful.
+
+These hom-isomorphisms are reference API: book-completeness formalizations of
+the §5.1 trivial-interface adjunctions, staged for downstream (VCV-io)
+consumers and exercised in `PolyFunTest/PFunctor/Adjunctions.lean`.
 
 Both directions of `homFromX` and `homToLinear` hold definitionally
 (`PUnit`/`Prod` eta), so their inverse laws are `rfl`. The three equivalences

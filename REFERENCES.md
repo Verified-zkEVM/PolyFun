@@ -41,11 +41,14 @@ Used in: `PolyFun/PFunctor/Free/Path.lean`,
 
 David I. Spivak and Nelson Niu.
 *Polynomial Functors: A Mathematical Theory of Interaction*.
-Cambridge University Press, 2024 (preprint: arXiv:2202.00534).
+Cambridge University Press, London Mathematical Society Lecture Note
+Series 498, 2025 (DOI 10.1017/9781009576734; preprint: arXiv:2202.00534).
 
 The polynomial-functor calculus, charts, lenses, the composition product,
-the free monad / cofree comonad pair (`FreeM ⊣ Cofree`), and the slogan
-"pattern runs on matter".
+the free-monad / cofree-comonad pairing, and the slogan "pattern runs on
+matter". (The pairing is the module structure of Libkind–Spivak below, not
+an adjunction; PolyFun formalizes `LawfulMonad (FreeM P)` and
+`LawfulComonad (CofreeC F)` separately.)
 
 Used in: `PolyFun/PFunctor/Trace.lean`, `PolyFun/PFunctor/Lens/State.lean`,
 `PolyFun/PFunctor/Free/Path.lean`, the dynamical-systems layer in
@@ -62,7 +65,8 @@ cofree comonad comonad*.
 arXiv:2208.12504, 2022.
 
 Free polynomial monads as terminating decision trees, with the
-`FreeM ⊣ Cofree` adjunction made explicit.
+free-monad-as-module-over-cofree-comonad structure made explicit (a module
+action, not an adjunction).
 
 Used in: `PolyFun/PFunctor/Free/Path.lean`.
 

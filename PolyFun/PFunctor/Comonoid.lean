@@ -77,10 +77,12 @@ namespace Comonoid
 
 /-! ## The `n`-fold comultiplication `δ^{(n)}` -/
 
-/-- The canonical `n`-fold comultiplication `δ^{(n)} : c ⇆ c^{◃n}` of a comonoid
-(Spivak–Niu Prop 7.20), recursively `δ^{(0)} = ε` and
-`δ^{(n+1)} = (id ◃ δ^{(n)}) ∘ δ`. The comonoid data underneath the `n`-step run
-`PFunctor.DynSystem.nStep`. -/
+/-- The `n`-fold comultiplication `δ^{(n)} : c ⇆ c^{◃n}` of a comonoid, defined
+recursively by `δ^{(0)} = ε` and `δ^{(n+1)} = (id ◃ δ^{(n)}) ∘ δ`
+(Spivak–Niu Prop 7.20). Only the definitional unfolders `comultN_zero` /
+`comultN_succ` are proved here; the canonicity of Prop 7.20(d) — that every
+bracketing of the `n`-fold comultiplication agrees — is a follow-on. This is
+the comonoid data underneath the `n`-step run `PFunctor.DynSystem.nStep`. -/
 def comultN (C : Comonoid.{uA, uB}) : (n : ℕ) → Lens C.carrier (compNth C.carrier n)
   | 0 => C.counit
   | n + 1 => (Lens.id C.carrier ◃ₗ C.comultN n) ∘ₗ C.comult
@@ -95,7 +97,10 @@ def comultN (C : Comonoid.{uA, uB}) : (n : ℕ) → Lens C.carrier (compNth C.ca
 /-- A comonoid **is a state system** when, at every object, its codomain map
 `d ↦ cod d` (the second component of `δ`'s position action) is a bijection: from
 each object there is exactly one morphism to each object (a contractible
-groupoid). A predicate, never a field (Spivak–Niu Ex 7.22). -/
+groupoid). A predicate, never a field (Spivak–Niu Ex 7.22).
+
+Reference API: exercised in `PolyFunTest/PFunctor/Comonoid.lean`, staged for
+downstream state-system consumers. -/
 def IsStateSystem (C : Comonoid.{uA, uB}) : Prop :=
   ∀ a : C.carrier.A, Function.Bijective (C.comult.toFunA a).2
 
