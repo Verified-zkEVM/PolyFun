@@ -32,7 +32,7 @@ notions built on `DynSystem`, such as concurrent machines and processes.
 
 @[expose] public section
 
-universe u u₁ u₂ uA uB uA₂ uB₂ w
+universe u u₁ u₂ u₃ uA uB uA₂ uB₂ uA₃ uB₃ w
 
 namespace PFunctor
 
@@ -107,15 +107,35 @@ namespace DirRel
 
 variable {s₁ : DynSystem.{u₁} p} {s₂ : DynSystem.{u₂} q}
 
+/-- Relational composition of direction matchers. The intermediate state and
+direction are retained existentially because direction types depend on state. -/
+def comp {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem.{u₃} r}
+    (first : DirRel s₁ s₂) (second : DirRel s₂ s₃) : DirRel s₁ s₃ :=
+  fun {_} {_} d₁ d₃ =>
+    ∃ st₂ : s₂.State, ∃ d₂ : q.B (s₂.expose st₂), first d₁ d₂ ∧ second d₂ d₃
+
 /-- The permissive step relation that accepts every pair of transitions. -/
 def top : DirRel s₁ s₂ := fun _ _ => True
+
+@[simp] theorem top_apply {st₁ : s₁.State} {st₂ : s₂.State}
+    (d₁ : p.B (s₁.expose st₁)) (d₂ : q.B (s₂.expose st₂)) :
+    (top : DirRel s₁ s₂) d₁ d₂ := trivial
 
 /-- Reverse a step-matching relation by flipping its two arguments. -/
 def reverse (rel : DirRel s₁ s₂) : DirRel s₂ s₁ := fun d₂ d₁ => rel d₁ d₂
 
+@[simp] theorem reverse_apply (rel : DirRel s₁ s₂) {st₁ : s₁.State} {st₂ : s₂.State}
+    (d₂ : q.B (s₂.expose st₂)) (d₁ : p.B (s₁.expose st₁)) :
+    reverse rel d₂ d₁ ↔ rel d₁ d₂ := Iff.rfl
+
 /-- Conjunction of step-matching relations. -/
 def inter (first second : DirRel s₁ s₂) : DirRel s₁ s₂ :=
   fun d₁ d₂ => first d₁ d₂ ∧ second d₁ d₂
+
+@[simp] theorem inter_apply (first second : DirRel s₁ s₂)
+    {st₁ : s₁.State} {st₂ : s₂.State}
+    (d₁ : p.B (s₁.expose st₁)) (d₂ : q.B (s₂.expose st₂)) :
+    inter first second d₁ d₂ ↔ first d₁ d₂ ∧ second d₁ d₂ := Iff.rfl
 
 /-- The synchronized step relation between two systems over a shared interface:
 the two states expose equal positions and the chosen directions agree up to

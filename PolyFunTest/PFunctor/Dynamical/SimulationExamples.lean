@@ -58,4 +58,17 @@ noncomputable example (D : DynSystem.{u} p) :
   DynSystem.ForwardSimulation.ofIsSimulation (idSim D)
     (fun st _ => ⟨st, trivial, rfl⟩) (fun _ _ => trivial) (fun _ _ => trivial)
 
+/-- Forward simulations compose, retaining the intermediate state and
+direction witnesses required by dependent interfaces. -/
+noncomputable example (D : DynSystem.{u} p) :
+    let system : DynSystem.System.{u} p :=
+      ⟨D, fun _ => True, fun _ => True, fun _ => True, fun _ => True⟩
+    DynSystem.ForwardSimulation system system
+      (DynSystem.DirRel.comp
+        (DynSystem.DirRel.top : DynSystem.DirRel system.toDynSystem system.toDynSystem)
+        (DynSystem.DirRel.top : DynSystem.DirRel system.toDynSystem system.toDynSystem)) := by
+  intro system
+  exact (DynSystem.ForwardSimulation.reflTop system).comp
+    (DynSystem.ForwardSimulation.reflTop system)
+
 end PFunctor

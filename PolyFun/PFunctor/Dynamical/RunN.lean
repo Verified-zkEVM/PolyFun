@@ -14,7 +14,7 @@ public import PolyFun.PFunctor.Comonoid
 Spivak–Niu §7.1.5 assembles the length-`n` behaviours of a `p`-dynamical system
 into the **`n`-step system**
 
-`Run_n(φ) = δ^{(n)} ⨟ φ^{◁n} : Sy^S ⇆ p^{◃n}`,
+`Run_n(φ) = φ^{◁n} ∘ₗ δ^{(n)} : Sy^S ⇆ p^{◃n}`,
 
 where `δ^{(n)}` is the `n`-fold comultiplication of the state comonoid on `S y^S`
 (`PFunctor.Comonoid.comultN` on `stateComonoid S`) and `φ^{◁n}` is the
@@ -38,7 +38,7 @@ namespace DynSystem
 
 variable {p : PFunctor.{u, u}}
 
-/-- The **`n`-step system** `Run_n(φ) = δ^{(n)} ⨟ φ^{◁n} : DynSystem (p^{◃n})`
+/-- The **`n`-step system** `Run_n(φ) = φ^{◁n} ∘ₗ δ^{(n)} : DynSystem (p^{◃n})`
 (Spivak–Niu §7.1.5): a single composite step exposes `n` successive `p`-positions,
 consuming a direction after each, and updates the state. Same state set as `φ`. -/
 def nStep (φ : DynSystem p) (n : ℕ) : DynSystem (compNth p n) :=

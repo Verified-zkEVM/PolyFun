@@ -23,7 +23,7 @@ A lens `φ : p ⇆ q ◃ r` is exactly a triple `(φ^q, φ^r, φ♯)`:
 * `φ♯ : (i : p.A) → (Σ u : q.B (φ^q i), r.B (φ^r i u)) → p.B i` — the joint pullback
   of directions.
 
-`toCompTriple` packages this as an `Equiv`, so protocol lenses into a two-phase
+`compTripleEquiv` packages this as an `Equiv`, so protocol lenses into a two-phase
 interface can be built and destructed without unfolding `PFunctor.comp`. This is
 the intro/elim rule VCVio's two-phase games (`TwoPhaseGame`) want.
 
@@ -50,21 +50,27 @@ variable {p q r : PFunctor.{uA, uB}}
 /-- The triple `(φ^q, φ^r, φ♯)` equivalent to a lens `p ⇆ q ◃ r` (Spivak–Niu
 Example 6.40): a `q`-position policy, an `r`-position policy depending on a
 `q`-direction, and a joint pullback of directions. -/
-def CompTriple (p q r : PFunctor.{uA, uB}) : Type (max uA uB) :=
-  Σ φq : (i : p.A) → q.A,
-  Σ _φr : (i : p.A) → q.B (φq i) → r.A,
-    (i : p.A) → (Σ u : q.B (φq i), r.B (_φr i u)) → p.B i
+structure CompTriple (p q r : PFunctor.{uA, uB}) : Type (max uA uB) where
+  /-- The outer `q`-position selected at each source position. -/
+  outer : (i : p.A) → q.A
+  /-- The inner `r`-position selected after receiving a `q`-direction. -/
+  inner : (i : p.A) → q.B (outer i) → r.A
+  /-- The joint pullback of the outer and inner directions. -/
+  pullback : (i : p.A) → (Σ u : q.B (outer i), r.B (inner i u)) → p.B i
 
 /-- A lens into a composite `q ◃ r` is equivalently its destructor triple
 `(φ^q, φ^r, φ♯)` (Spivak–Niu Example 6.40). Both round-trips are `rfl`. -/
-def toCompTriple : Lens p (q ◃ r) ≃ CompTriple p q r where
+def compTripleEquiv : Lens p (q ◃ r) ≃ CompTriple p q r where
   toFun φ := ⟨fun i => (φ.toFunA i).1, fun i => (φ.toFunA i).2, fun i => φ.toFunB i⟩
-  invFun t := (fun i => ⟨t.1 i, t.2.1 i⟩) ⇆ (fun i => t.2.2 i)
+  invFun t := (fun i => ⟨t.outer i, t.inner i⟩) ⇆ t.pullback
   left_inv _ := rfl
-  right_inv _ := rfl
+  right_inv t := by cases t; rfl
+
+/-- Destruct a lens into a composite into its three named components. -/
+abbrev toCompTriple (l : Lens p (q ◃ r)) : CompTriple p q r := compTripleEquiv l
 
 /-- Build a lens into `q ◃ r` from its destructor triple. -/
-abbrev ofCompTriple (t : CompTriple p q r) : Lens p (q ◃ r) := toCompTriple.symm t
+abbrev ofCompTriple (t : CompTriple p q r) : Lens p (q ◃ r) := compTripleEquiv.symm t
 
 /-! ## The composition power of a lens -/
 

@@ -23,12 +23,10 @@ namespace PFunctor
 variable {p q r : PFunctor.{u, u}}
 
 /-- A lens into `q ◃ r` round-trips through its destructor triple. -/
-example (φ : Lens p (q ◃ r)) : Lens.ofCompTriple (Lens.toCompTriple φ) = φ :=
-  Lens.toCompTriple.symm_apply_apply φ
+example (φ : Lens p (q ◃ r)) : Lens.ofCompTriple (Lens.toCompTriple φ) = φ := by simp
 
 /-- ...and every triple round-trips back through the lens. -/
-example (t : Lens.CompTriple p q r) : Lens.toCompTriple (Lens.ofCompTriple t) = t :=
-  Lens.toCompTriple.apply_symm_apply t
+example (t : Lens.CompTriple p q r) : Lens.toCompTriple (Lens.ofCompTriple t) = t := by simp
 
 /-- The composition power unfolds to iterated `compMap`. -/
 example (l : Lens p q) : Lens.compNthMap l 2 = l ◃ₗ (l ◃ₗ Lens.id X) := rfl

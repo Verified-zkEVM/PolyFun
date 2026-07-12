@@ -28,10 +28,10 @@ example (l : Lens P Q) : Lens.factorCart l ∘ₗ Lens.factorVert l = l :=
   Lens.factorCart_comp_factorVert l
 
 /-- The vertical leg is vertical. -/
-example (l : Lens P Q) : (Lens.factorVert l).IsVertical := Lens.isVertical_factorVert l
+example (l : Lens P Q) : (Lens.factorVert l).IsVertical := Lens.factorVert_isVertical l
 
 /-- The cartesian leg is cartesian. -/
-example (l : Lens P Q) : (Lens.factorCart l).IsCartesian := Lens.isCartesian_factorCart l
+example (l : Lens P Q) : (Lens.factorCart l).IsCartesian := Lens.factorCart_isCartesian l
 
 /-- `IsVertical` is closed under composition and holds of the identity. -/
 example (l₁ l₂ : Lens P P) (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) :

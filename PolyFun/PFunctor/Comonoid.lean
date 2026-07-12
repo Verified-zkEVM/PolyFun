@@ -115,6 +115,9 @@ def stateComonoid (S : Type u) : Comonoid.{u} where
 @[simp] theorem stateComonoid_comult (S : Type u) :
     (stateComonoid S).comult = Lens.fixState := rfl
 
+@[simp, grind =] theorem stateComonoid_counit (S : Type u) :
+    (stateComonoid S).counit = ((fun _ => PUnit.unit) ⇆ (fun s _ => s)) := rfl
+
 /-- The state comonoid is a state system: its codomain map `s₁ ↦ s₁` is the
 identity, hence bijective (Spivak–Niu Ex 7.22). -/
 theorem isStateSystem_stateComonoid (S : Type u) :

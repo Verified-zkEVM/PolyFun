@@ -98,6 +98,7 @@ theorem isSimulation_graph_coalgHom {D₁ D₂ : DynSystem.{u} p}
   isSimulation_graph f fun st => (congrFun f.comm st).symm
 
 /-- Coalgebra morphisms preserve behaviour trees. -/
+@[simp, grind =]
 theorem behavior_coalgHom {D₁ D₂ : DynSystem.{u} p}
     (f : Coalg.Hom p.Obj D₁.State D₂.State) (st : D₁.State) :
     D₂.behavior (f st) = D₁.behavior st :=

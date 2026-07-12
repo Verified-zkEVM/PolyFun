@@ -37,7 +37,7 @@ concrete system notions built on `DynSystem`, such as concurrent processes.
 
 @[expose] public section
 
-universe u u₁ u₂ uA uB uA₂ uB₂
+universe u u₁ u₂ u₃ uA uB uA₂ uB₂ uA₃ uB₃
 
 namespace PFunctor
 
@@ -100,6 +100,37 @@ def refl (system : System.{u} p)
     | rfl, d => ⟨d, hmatch d, rfl⟩
   safe
     | rfl, h => h
+
+/-- The identity simulation using the permissive direction relation. -/
+def reflTop (system : System.{u} p) : ForwardSimulation system system DirRel.top :=
+  refl system DirRel.top fun _ => trivial
+
+/-- Composition of forward simulations. The intermediate state retained by the
+composite relation is the witness needed to compose the two step simulations. -/
+def comp {r : PFunctor.{uA₃, uB₃}} {middle : System.{u₂} q} {target : System.{u₃} r}
+    {matchFirst : DirRel impl.toDynSystem middle.toDynSystem}
+    {matchSecond : DirRel middle.toDynSystem target.toDynSystem}
+    (second : ForwardSimulation middle target matchSecond)
+    (first : ForwardSimulation impl middle matchFirst) :
+    ForwardSimulation impl target (DirRel.comp matchFirst matchSecond) where
+  stateRel stImpl stTarget :=
+    ∃ stMiddle, first.stateRel stImpl stMiddle ∧ second.stateRel stMiddle stTarget
+  init stImpl hinit := by
+    obtain ⟨stMiddle, hMiddleInit, hFirst⟩ := first.init stImpl hinit
+    obtain ⟨stTarget, hTargetInit, hSecond⟩ := second.init stMiddle hMiddleInit
+    exact ⟨stTarget, hTargetInit, stMiddle, hFirst, hSecond⟩
+  assumptions := by
+    rintro stImpl stTarget ⟨stMiddle, hFirst, hSecond⟩ hAssumptions
+    exact second.assumptions hSecond (first.assumptions hFirst hAssumptions)
+  step := by
+    rintro stImpl stTarget ⟨stMiddle, hFirst, hSecond⟩ dImpl
+    obtain ⟨dMiddle, hMatchFirst, hFirst'⟩ := first.step hFirst dImpl
+    obtain ⟨dTarget, hMatchSecond, hSecond'⟩ := second.step hSecond dMiddle
+    exact ⟨dTarget, ⟨stMiddle, dMiddle, hMatchFirst, hMatchSecond⟩,
+      ⟨middle.update stMiddle dMiddle, hFirst', hSecond'⟩⟩
+  safe := by
+    rintro stImpl stTarget ⟨stMiddle, hFirst, hSecond⟩ hSafe
+    exact first.safe hFirst (second.safe hSecond hSafe)
 
 /-- Choose the matching specification direction for one implementation
 direction: the specification-side step selected by the simulation for the

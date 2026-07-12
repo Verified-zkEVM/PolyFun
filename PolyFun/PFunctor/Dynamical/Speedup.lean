@@ -46,7 +46,7 @@ namespace DynSystem
 
 variable {p : PFunctor.{uA, uB}}
 
-/-- The two-step system `δ ⨟ (φ ◃ φ) : DynSystem (p ◃ p)` of a `p`-dynamical
+/-- The two-step system `(φ ◃ φ) ∘ₗ δ : DynSystem (p ◃ p)` of a `p`-dynamical
 system (Spivak–Niu Example 6.44): one composite step exposes a first `p`-position,
 consumes a direction, exposes a second `p`-position, and updates. Same state set
 as `φ`. -/

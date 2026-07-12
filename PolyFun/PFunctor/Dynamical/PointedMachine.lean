@@ -89,6 +89,15 @@ def seqComp (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) : 
 @[simp] theorem seqComp_expose_inr (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
     (s₂ : M₂.State) : (M₁.seqComp M₂).expose (Sum.inr s₂) = M₂.expose s₂ := rfl
 
+@[simp] theorem seqComp_expose_inl (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
+    (s₁ : M₁.State) : (M₁.seqComp M₂).expose (Sum.inl s₁) = M₁.expose s₁ := rfl
+
+@[simp] theorem seqComp_init (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
+    (x : α) : (M₁.seqComp M₂).init x =
+      match M₁.output (M₁.init x) with
+      | some m => Sum.inr (M₂.init m)
+      | none => Sum.inl (M₁.init x) := rfl
+
 @[simp] theorem seqComp_output_inr (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
     (s₂ : M₂.State) : (M₁.seqComp M₂).output (Sum.inr s₂) = M₂.output s₂ := rfl
 
@@ -98,6 +107,13 @@ def seqComp (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) : 
 @[simp] theorem seqComp_update_inr (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
     (s₂ : M₂.State) (d : p.B (M₂.expose s₂)) :
     (M₁.seqComp M₂).update (Sum.inr s₂) d = Sum.inr (M₂.update s₂ d) := rfl
+
+@[simp] theorem seqComp_update_inl (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
+    (s₁ : M₁.State) (d : p.B (M₁.expose s₁)) :
+    (M₁.seqComp M₂).update (Sum.inl s₁) d =
+      match M₁.output (M₁.update s₁ d) with
+      | some m => Sum.inr (M₂.init m)
+      | none => Sum.inl (M₁.update s₁ d) := rfl
 
 /-! ## Fuelled unrolling -/
 
@@ -113,6 +129,7 @@ def toComp (M : PointedMachine p α β) : ℕ → M.State → FreeM p (Option β
 @[simp] theorem toComp_zero (M : PointedMachine p α β) (st : M.State) :
     M.toComp 0 st = FreeM.pure none := rfl
 
+@[simp, grind =]
 theorem toComp_succ (M : PointedMachine p α β) (k : ℕ) (st : M.State) :
     M.toComp (k + 1) st = (match M.output st with
       | some b => FreeM.pure (some b)
@@ -184,6 +201,7 @@ def runWith (M : PointedMachine q α β) (h : Handler m q) (k : ℕ) (s : M.Stat
 /-- One-step unfolding of the run: halt with the current output if it is `some`,
 else resolve the exposed position with `h` and recurse. The generic shadow of
 VCVio's `runLimit_fix`. -/
+@[simp, grind =]
 theorem runWith_succ (M : PointedMachine q α β) (h : Handler m q) (k : ℕ) (s : M.State) :
     M.runWith h (k + 1) s = (match M.output s with
       | some b => pure (some b)

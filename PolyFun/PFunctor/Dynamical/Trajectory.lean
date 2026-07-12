@@ -113,7 +113,7 @@ def ObsEq (s₁ s₂ : DynSystem p) (st₁ : s₁.State) (st₂ : s₂.State) : 
     (h : ObsEq s₁ s₂ st₁ st₂) : ObsEq s₂ s₁ st₂ st₁ := Eq.symm h
 
 /-- Observational equivalence is transitive. -/
-theorem ObsEq.trans {s₁ s₂ s₃ : DynSystem p}
+@[trans] theorem ObsEq.trans {s₁ s₂ s₃ : DynSystem p}
     {st₁ : s₁.State} {st₂ : s₂.State} {st₃ : s₃.State}
     (h₁₂ : ObsEq s₁ s₂ st₁ st₂) (h₂₃ : ObsEq s₂ s₃ st₂ st₃) :
     ObsEq s₁ s₃ st₁ st₃ := Eq.trans h₁₂ h₂₃

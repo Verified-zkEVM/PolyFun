@@ -8,11 +8,10 @@ module
 public import PolyFun.PFunctor.Lens.Basic
 
 /-!
-# Cartesian-closed structure of `Poly`
+# Cartesian exponential transposes for `Poly`
 
-The category of polynomial functors with lens morphisms is cartesian closed with
-respect to the categorical product `*`. This file constructs the evaluation lens
-and the currying transpose realizing the adjunction, following Spivak–Niu
+This file constructs the evaluation lens and one direction of the cartesian
+exponential transpose, following Spivak–Niu
 *Polynomial Functors* (Theorem 5.31, Example 5.32).
 
 The exponential object used here is the `PFunctor.exp` of `PFunctor.Basic`,
@@ -23,9 +22,8 @@ exponential: it is the right adjoint to the categorical product functor
 Do not confuse this with the `⊗`-internal hom (right adjoint to the tensor /
 Dirichlet product `⊗`), which lives in `PolyFun/PFunctor/InternalHom.lean` as
 `PFunctor.ihom`; the two closures answer different universal properties. The
-namespaces mirror Mathlib's split between `CartesianClosed.curry` and
-`MonoidalClosed.curry`: the cartesian transposes live in
-`PFunctor.CartesianClosed`, the tensor transposes in `PFunctor.Lens`.
+cartesian transposes live in `PFunctor.CartesianClosed`, while the tensor
+transposes live in `PFunctor.Lens`.
 
 ## Main definitions and results
 
@@ -107,6 +105,7 @@ def uncurry {p q r : PFunctor.{uA, uB}}
     (g : Lens p (exp r q)) : Lens (p * q) r :=
   eval ∘ₗ (g ×ₗ Lens.id q)
 
+@[simp, grind =]
 theorem uncurry_curry {p q r : PFunctor.{uA, uB}} (l : Lens (p * q) r) :
     uncurry (curry l) = l := by
   apply Lens.ext
@@ -131,6 +130,7 @@ theorem uncurry_curry {p q r : PFunctor.{uA, uB}} (l : Lens (p * q) r) :
 positions. This is the position component of the adjunction unit-counit identity
 `curry ∘ uncurry = id`; see the module docstring for the status of the full
 direction-level identity. -/
+@[simp]
 theorem curry_uncurry_toFunA {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) :
     (curry (uncurry g)).toFunA = g.toFunA := by
   funext pa a

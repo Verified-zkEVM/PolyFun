@@ -8,7 +8,7 @@ module
 public import PolyFun.PFunctor.Lens.Cartesian
 
 /-!
-# Duoidal structure relating tensor and composition
+# Interchange maps relating tensor and composition
 
 The category `Poly` carries two monoidal products that are both relevant to
 interaction: the tensor (Dirichlet) product `⊗`, whose positions are pairs and
@@ -18,7 +18,9 @@ Functors: A General Theory of Interaction* §6.3.4–6.3.5 show that these two
 products are **duoidal**: they share the unit `y` and there is a canonical
 family of interchange lenses that make `(Poly, ⊗, ◃)` a duoidal category.
 
-This file records the concrete lenses that witness the duoidal structure.
+This file records the concrete ordering and interchange lenses underlying the
+duoidal structure. It does not package a duoidal category or prove its coherence
+laws.
 
 * `orderingLens` (Example 6.85) is the canonical lens `p ⊗ q → p ◃ q` that
   *orders* a pair of simultaneous moves into a sequence: it keeps the position
