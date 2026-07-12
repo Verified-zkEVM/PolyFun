@@ -351,6 +351,39 @@ end Sigma
 
 section Pi
 
+/-- Composition distributes over an indexed product on the left
+(Spivak–Niu (6.51)):
+`(Π i, F i) ◃ P ≃ₚ Π i, (F i ◃ P)`.
+
+A position on the left chooses all `F i` positions and one continuation on
+their dependent sum of directions. The equivalence curries that continuation
+one index at a time; directions are reassociated dependent pairs. -/
+def piCompDistrib {I : Type v} (F : I → PFunctor.{uA₁, uB₁})
+    (P : PFunctor.{uA₂, uB₂}) :
+    pi F ◃ P ≃ₚ pi (fun i => F i ◃ P) where
+  equivA :=
+    { toFun := fun ⟨f, k⟩ i => ⟨f i, fun d => k ⟨i, d⟩⟩
+      invFun := fun g =>
+        ⟨fun i => (g i).1, fun ⟨i, d⟩ => (g i).2 d⟩
+      left_inv := by
+        rintro ⟨f, k⟩
+        apply Sigma.ext
+        · rfl
+        exact heq_of_eq <| by
+          funext ⟨i, d⟩
+          rfl
+      right_inv := by
+        intro g
+        funext i
+        rfl }
+  equivB := fun x => by
+    rcases x with ⟨f, k⟩
+    exact
+    { toFun := fun ⟨⟨i, d⟩, pd⟩ => ⟨i, d, pd⟩
+      invFun := fun ⟨i, d, pd⟩ => ⟨⟨i, d⟩, pd⟩
+      left_inv := fun _ => rfl
+      right_inv := fun _ => rfl }
+
 /-- Pi over a `PUnit`-indexed family is equivalent to the functor itself. -/
 def piPUnit (P : PFunctor.{uA, uB}) :
     pi (fun (_ : PUnit) => P) ≃ₚ P where

@@ -212,6 +212,14 @@ noncomputable def matchedState (sim : ForwardSimulation impl spec matchStep)
         rw [run.next_state n]
         exact hspec.2⟩
 
+/-- Before any steps are matched, the chosen specification state is the
+initial state supplied by the caller. -/
+@[simp] theorem matchedState_zero (sim : ForwardSimulation impl spec matchStep)
+    (run : Run impl) {stSpec : SSpec}
+    (hrel : sim.stateRel run.initial stSpec) :
+    (sim.matchedState run hrel 0).1 = stSpec :=
+  rfl
+
 /-- The specification direction chosen to match the `n`th implementation step
 of the run `run`, relative to the initial related specification state
 witnessed by `hrel`. This is the stepwise witness used to build the whole
@@ -221,6 +229,15 @@ noncomputable def matchedDir (sim : ForwardSimulation impl spec matchStep)
     (hrel : sim.stateRel run.initial stSpec) (n : ℕ) :
     q.B (spec.expose (sim.matchedState run hrel n).1) :=
   sim.matchDir (sim.matchedState run hrel n).2 (run.dir n)
+
+/-- The chosen specification state after one more matched step is obtained by
+updating the previous chosen state along its matched direction. -/
+@[simp] theorem matchedState_succ (sim : ForwardSimulation impl spec matchStep)
+    (run : Run impl) {stSpec : SSpec}
+    (hrel : sim.stateRel run.initial stSpec) (n : ℕ) :
+    (sim.matchedState run hrel (n + 1)).1 =
+      spec.update (sim.matchedState run hrel n).1 (sim.matchedDir run hrel n) :=
+  rfl
 
 /-- `mapRun sim run hrel` is the specification run obtained by recursively
 matching every step of the implementation run `run`, starting from an initial
@@ -234,6 +251,29 @@ noncomputable def mapRun (sim : ForwardSimulation impl spec matchStep)
   state n := (sim.matchedState run hrel n).1
   dir n := sim.matchedDir run hrel n
   next_state _ := rfl
+
+/-- The state of a mapped run is the state recursively chosen by the forward
+simulation. -/
+@[simp] theorem mapRun_state (sim : ForwardSimulation impl spec matchStep)
+    (run : Run impl) {stSpec : SSpec}
+    (hrel : sim.stateRel run.initial stSpec) (n : ℕ) :
+    (sim.mapRun run hrel).state n = (sim.matchedState run hrel n).1 :=
+  rfl
+
+/-- The direction of a mapped run is the direction recursively chosen by the
+forward simulation. -/
+@[simp] theorem mapRun_dir (sim : ForwardSimulation impl spec matchStep)
+    (run : Run impl) {stSpec : SSpec}
+    (hrel : sim.stateRel run.initial stSpec) (n : ℕ) :
+    (sim.mapRun run hrel).dir n = sim.matchedDir run hrel n :=
+  rfl
+
+/-- A mapped run starts at the specification state supplied by the caller. -/
+@[simp] theorem mapRun_initial (sim : ForwardSimulation impl spec matchStep)
+    (run : Run impl) {stSpec : SSpec}
+    (hrel : sim.stateRel run.initial stSpec) :
+    (sim.mapRun run hrel).initial = stSpec :=
+  rfl
 
 /-- At every step index `n`, the mapped specification run remains related to
 the implementation run by `stateRel`. -/
@@ -343,6 +383,8 @@ noncomputable abbrev matchDir (sim : SafetyRefinement impl spec matchStep)
     (dImpl : p.B (impl.expose stImpl)) : q.B (spec.expose stSpec) :=
   sim.toForwardSimulation.matchDir hrel dImpl
 
+/-- The direction chosen through a safety refinement satisfies its requested
+step relation and preserves the underlying simulation relation. -/
 theorem matchDir_spec (sim : SafetyRefinement impl spec matchStep)
     {stImpl : impl.State} {stSpec : spec.State}
     (hrel : sim.stateRel stImpl stSpec)
@@ -359,12 +401,29 @@ noncomputable abbrev matchedState (sim : SafetyRefinement impl spec matchStep)
     (hrel : sim.stateRel run.initial stSpec) :=
   sim.toForwardSimulation.matchedState run hrel
 
+/-- Before any steps are matched, a safety refinement retains the
+specification state supplied by the caller. -/
+@[simp] theorem matchedState_zero (sim : SafetyRefinement impl spec matchStep)
+    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (hrel : sim.stateRel run.initial stSpec) :
+    (sim.matchedState run hrel 0).1 = stSpec :=
+  sim.toForwardSimulation.matchedState_zero run hrel
+
 /-- The direction selected by the underlying forward simulation for the `n`th
 implementation step. -/
 noncomputable abbrev matchedDir (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) (n : ℕ) :=
   sim.toForwardSimulation.matchedDir run hrel n
+
+/-- The chosen specification state after one more matched step is obtained by
+updating the previous chosen state along its matched direction. -/
+theorem matchedState_succ (sim : SafetyRefinement impl spec matchStep)
+    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (hrel : sim.stateRel run.initial stSpec) (n : ℕ) :
+    (sim.matchedState run hrel (n + 1)).1 =
+      spec.update (sim.matchedState run hrel n).1 (sim.matchedDir run hrel n) :=
+  sim.toForwardSimulation.matchedState_succ run hrel n
 
 /-- Translate an implementation run using the underlying forward simulation.
 This forwarding abbreviation preserves the `sim.mapRun` API for safety
@@ -374,12 +433,32 @@ noncomputable abbrev mapRun (sim : SafetyRefinement impl spec matchStep)
     (hrel : sim.stateRel run.initial stSpec) :=
   sim.toForwardSimulation.mapRun run hrel
 
+/-- The state of a run mapped through a safety refinement is the state chosen
+by its underlying forward simulation. -/
+@[simp] theorem mapRun_state (sim : SafetyRefinement impl spec matchStep)
+    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (hrel : sim.stateRel run.initial stSpec) (n : ℕ) :
+    (sim.mapRun run hrel).state n = (sim.matchedState run hrel n).1 :=
+  sim.toForwardSimulation.mapRun_state run hrel n
+
+/-- The direction of a run mapped through a safety refinement is the direction
+chosen by its underlying forward simulation. -/
+theorem mapRun_dir (sim : SafetyRefinement impl spec matchStep)
+    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (hrel : sim.stateRel run.initial stSpec) (n : ℕ) :
+    (sim.mapRun run hrel).dir n = sim.matchedDir run hrel n :=
+  sim.toForwardSimulation.mapRun_dir run hrel n
+
+/-- A mapped safety-specification run remains related to the implementation
+run at every state index. -/
 theorem stateRel_mapRun (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     ∀ n, sim.stateRel (run.state n) ((sim.mapRun run hrel).state n) :=
   sim.toForwardSimulation.stateRel_mapRun run hrel
 
+/-- Every step of a mapped safety-specification run satisfies the requested
+step-matching relation. -/
 theorem match_mapRun (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
@@ -387,17 +466,28 @@ theorem match_mapRun (sim : SafetyRefinement impl spec matchStep)
       ⟨(sim.mapRun run hrel).state n, (sim.mapRun run hrel).dir n⟩ :=
   sim.toForwardSimulation.match_mapRun run hrel
 
+/-- Every finite prefix of the mapped run matches the corresponding
+implementation prefix. -/
 theorem relUpTo_mapRun (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     ∀ n, Run.RelUpTo matchStep run (sim.mapRun run hrel) n :=
   sim.toForwardSimulation.relUpTo_mapRun run hrel
 
+/-- The mapped run matches the implementation run at every finite prefix. -/
 theorem rel_mapRun (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     Run.Rel matchStep run (sim.mapRun run hrel) :=
   sim.toForwardSimulation.rel_mapRun run hrel
+
+/-- A run mapped through a safety refinement starts at the specification state
+supplied by the caller. -/
+@[simp] theorem mapRun_initial (sim : SafetyRefinement impl spec matchStep)
+    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (hrel : sim.stateRel run.initial stSpec) :
+    (sim.mapRun run hrel).initial = stSpec :=
+  sim.toForwardSimulation.mapRun_initial run hrel
 
 /-- If every state along the mapped specification run is safe, then every
 state along the implementation run is safe. -/

@@ -227,6 +227,20 @@ def RelUpTo (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂) : ℕ 
   | n + 1 => rel ⟨r₁.state 0, r₁.dir 0⟩ ⟨r₂.state 0, r₂.dir 0⟩ ∧
       RelUpTo rel r₁.tail r₂.tail n
 
+/-- Every pair of runs matches for zero steps. -/
+@[simp] theorem relUpTo_zero (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂) :
+    RelUpTo rel r₁ r₂ 0 :=
+  trivial
+
+/-- Matching one more step consists of matching the heads and then matching
+the tails for the remaining number of steps. -/
+@[simp] theorem relUpTo_succ (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂)
+    (n : ℕ) :
+    RelUpTo rel r₁ r₂ (n + 1) ↔
+      rel ⟨r₁.state 0, r₁.dir 0⟩ ⟨r₂.state 0, r₂.dir 0⟩ ∧
+        RelUpTo rel r₁.tail r₂.tail n :=
+  Iff.rfl
+
 /-- `Rel rel r₁ r₂` states that every finite prefix of the runs `r₁` and `r₂`
 matches according to `rel`. -/
 def Rel (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂) : Prop :=
@@ -241,10 +255,42 @@ theorem relUpTo_of_pointwise (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ :
   | zero => trivial
   | succ n ih => exact ⟨hrel 0, ih r₁.tail r₂.tail (fun k => hrel k.succ)⟩
 
+/-- Prefix matching is equivalent to pointwise matching at every index in the
+prefix. This is the elimination form of `RelUpTo`; unlike
+`relUpTo_of_pointwise`, it requires no hypothesis about later steps. -/
+theorem relUpTo_iff_pointwise (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂)
+    (n : ℕ) :
+    RelUpTo rel r₁ r₂ n ↔
+      ∀ k, k < n → rel ⟨r₁.state k, r₁.dir k⟩ ⟨r₂.state k, r₂.dir k⟩ := by
+  induction n generalizing r₁ r₂ with
+  | zero => simp
+  | succ n ih =>
+      constructor
+      · rintro ⟨hhead, htail⟩ k hk
+        cases k with
+        | zero => exact hhead
+        | succ k =>
+            exact (ih r₁.tail r₂.tail).mp htail k (Nat.lt_of_succ_lt_succ hk)
+      · intro h
+        exact ⟨h 0 (Nat.zero_lt_succ n),
+          (ih r₁.tail r₂.tail).mpr fun k hk =>
+            h k.succ (Nat.succ_lt_succ hk)⟩
+
 /-- Pointwise step matching implies full run matching. -/
 theorem rel_of_pointwise (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂)
     (hrel : ∀ n, rel ⟨r₁.state n, r₁.dir n⟩ ⟨r₂.state n, r₂.dir n⟩) : Rel rel r₁ r₂ :=
   relUpTo_of_pointwise rel r₁ r₂ hrel
+
+/-- Full run matching is equivalent to matching the two concrete steps at
+every time index. -/
+theorem rel_iff_pointwise (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂) :
+    Rel rel r₁ r₂ ↔
+      ∀ n, rel ⟨r₁.state n, r₁.dir n⟩ ⟨r₂.state n, r₂.dir n⟩ := by
+  constructor
+  · intro h n
+    exact (relUpTo_iff_pointwise rel r₁ r₂ (n + 1)).mp (h (n + 1)) n
+      (Nat.lt_succ_self n)
+  · exact rel_of_pointwise rel r₁ r₂
 
 end Run
 

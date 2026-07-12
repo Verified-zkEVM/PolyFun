@@ -92,9 +92,10 @@ Statements keep book numbering. Companions: `spivak-niu-ch6.md` (δ's origin),
     u t'}` with `S ≅ T × U` and `get = proj_T`; `put` is recoverable from
     the bijection (constant-complement form). Ex 7.86: converse (every
     projection extends uniquely); Ex 7.87: counting corollaries (none exist
-    when `|T| ∤ |S|`). Roadmap B5 should state *both* the retrofunctor
-    bridge and the product-projection characterization for
-    `Lens/State.IsVeryWellBehaved`.
+    when `|T| ∤ |S|`). The retrofunctor bridge is now formalized as
+    `Comonoid.Hom.stateLensEquiv`; the remaining B5 work is the product-
+    projection/constant-complement characterization and the wider §7.3.3
+    quadruple.
   - Example 7.88: canonical retrofunctor `(Ob 𝒞)y^{Ob 𝒞} ⇸ 𝒞` (send each
     morphism to its codomain). Example 7.90/Ex 7.91: objects are *not*
     representable in `Cat♯`. Example 7.92: retrofunctors into `ℝy^ℝ` =
@@ -127,8 +128,8 @@ Statements keep book numbering. Companions: `spivak-niu-ch6.md` (δ's origin),
    `Run_0 = ε`, `Run_1 = φ`; Example 7.13 (every-other-position sampling) as
    the worked test. VCVio's `RunLimit` truncations are `Run_n` at the state
    comonoid; the ω-limit packaging question is answered by Ch 8's `𝒯_p`.
-3. **B5 upgraded into a quadruple.** Beyond
-   `IsVeryWellBehaved ↔ Retrofunctor (Sy^S) (Ty^T)`, formalize the
+3. **B5 bridge landed; quadruple remains.** Using the implemented
+   `IsVeryWellBehaved ↔ Retrofunctor (Sy^S) (Ty^T)` equivalence, formalize the
    product-projection/constant-complement theorem (pp. 266–267) — it is
    self-contained, classical (lens folklore made precise), and a crisp
    standalone result. The §7.3.3 quadruple gives machine semantics three

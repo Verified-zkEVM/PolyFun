@@ -42,7 +42,7 @@ Used in: `PolyFun/PFunctor/Free/Path.lean`,
 David I. Spivak and Nelson Niu.
 *Polynomial Functors: A Mathematical Theory of Interaction*.
 Cambridge University Press, London Mathematical Society Lecture Note
-Series 498, 2025 (DOI 10.1017/9781009576734; preprint: arXiv:2202.00534).
+Series 498, 2025 (DOI 10.1017/9781009576734; preprint: arXiv:2312.00990).
 
 The polynomial-functor calculus, charts, lenses, the composition product,
 the free-monad / cofree-comonad pairing, and the slogan "pattern runs on

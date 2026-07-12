@@ -21,7 +21,45 @@ universe u v
 
 namespace PFunctor
 
+open CategoryTheory
+
 variable {S : Type u}
+
+/-- Retrofunctors form a category-shaped API with identity and composition. -/
+example (C : Comonoid.{u, v}) : Comonoid.Hom C C := Comonoid.Hom.id C
+
+example {C D E : Comonoid.{u, v}} (f : Comonoid.Hom C D)
+    (g : Comonoid.Hom D E) :
+    (f.comp g).toLens = g.toLens ∘ₗ f.toLens := rfl
+
+example {C D E : Comonoid.{u, v}} (f : C ⟶ D) (g : D ⟶ E) :
+    (f ≫ g).toLens = g.toLens ∘ₗ f.toLens := rfl
+
+/-- Retrofunctors preserve the complete finite comultiplication ladder. -/
+example {C D : Comonoid.{u, v}} (f : Comonoid.Hom C D) (n : ℕ) :
+    D.comultN n ∘ₗ f.toLens = f.toLens.compNthMap n ∘ₗ C.comultN n :=
+  f.map_comultN n
+
+/-- Retrofunctors between state comonoids are precisely very-well-behaved
+state lenses; the first projection supplies a concrete nontrivial example. -/
+example {S T : Type u} :
+    Comonoid.Hom (stateComonoid (S × T)) (stateComonoid S) :=
+  Comonoid.Hom.ofStateLens (Lens.State.fst S T)
+
+example {S T : Type u}
+    (F : Comonoid.Hom (stateComonoid S) (stateComonoid T)) :
+    Lens.State.IsVeryWellBehaved
+      (show Lens.State S T from F.toLens) :=
+  Comonoid.Hom.stateLens_isVeryWellBehaved F
+
+/-- The state-comonoid equivalence has projection and round-trip simp laws. -/
+example {S T : Type u} (L : Lens.State S T) [L.IsVeryWellBehaved] :
+    (Comonoid.Hom.ofStateLens L).toLens = L := by simp
+
+example {S T : Type u}
+    (F : Comonoid.Hom (stateComonoid S) (stateComonoid T)) :
+    (Comonoid.Hom.stateLensEquiv.symm (Comonoid.Hom.stateLensEquiv F)) = F := by
+  simp
 
 /-- Comonoids support independent position and direction universes. -/
 example (C : Comonoid.{u, v}) : C.comultN 0 = C.counit := rfl

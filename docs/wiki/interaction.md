@@ -431,7 +431,8 @@ Coherence (each subsequent class adds laws on top of the previous):
 - `IsCompactClosed`: compact closed structure (a `(Poly, ⊗)`-friendly
   weakening; the strict snake equations are *not* asserted, since
   `(Poly, ⊗)` is monoidal closed but not strictly compact closed; see
-  Spivak arXiv:2202.00534 §4.3).
+  Spivak, *A reference for categorical structures on Poly*,
+  arXiv:2202.00534 §4.3).
 - `HasPlugWireFactor`: closure-factorization identities relating `plug`
   to `wire` (`plug_eq_wire`, `plug_par_left`, `plug_wire_left`).
 

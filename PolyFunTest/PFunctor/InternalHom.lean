@@ -16,11 +16,17 @@ special cases `[y, r] ≅ r` and `(ihom q X).A = Lens q X`.
 
 @[expose] public section
 
-universe u
+universe u pA pB qA qA₁ qA₂ qB rA rB
 
 namespace PFunctor
 
 variable {p q r : PFunctor.{u, u}}
+
+/-- The closed structure does not force the three polynomial interfaces into
+one universe pair. -/
+example {p : PFunctor.{pA, pB}} {q : PFunctor.{qA, qB}}
+    {r : PFunctor.{rA, rB}} :
+    Lens (p ⊗ q) r ≃ Lens p (ihom q r) := Lens.curryEquiv
 
 /-- Positions of `[q, y]` are exactly the handlers `q ⇆ y`. -/
 example : (ihom q X.{u, u}).A = Lens q X.{u, u} := ihom_X_A q
@@ -53,5 +59,13 @@ example : Nonempty (ihom (p + q) r ≃ₗ (ihom p r * ihom q r)) := ⟨ihomSum p
 
 /-- The direction / fiber splitting is packaged into a `PFunctor.Equiv`. -/
 example : Nonempty (ihom (p + q) r ≃ₚ (ihom p r * ihom q r)) := ⟨ihomSumPEquiv p q r⟩
+
+/-- Coproduct-to-product internal hom permits independent position universes
+for both summands and an unrelated universe pair for the codomain. -/
+example {q₁ : PFunctor.{qA₁, qB}} {q₂ : PFunctor.{qA₂, qB}}
+    {r : PFunctor.{rA, rB}} :
+    Nonempty (ihom (PFunctor.sum q₁ q₂) r ≃ₗ
+      PFunctor.prod (ihom q₁ r) (ihom q₂ r)) :=
+  ⟨ihomSum q₁ q₂ r⟩
 
 end PFunctor

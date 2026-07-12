@@ -24,6 +24,12 @@ namespace PFunctor
 
 variable {S : Type u} {p : PFunctor.{u, u}} {α β γ mid mid₁ mid₂ : Type u}
 
+/-- Path append specializes directly to free-monad bind when the suffix reads
+only the selected leaf output. -/
+example (s : FreeM p α) (k : α → FreeM p β) :
+    FreeM.append s (fun path => k (FreeM.output s path)) = s >>= k := by
+  simp
+
 /-- The two-step system shares its state set with the original, as recorded by
 its type: it is literally `Lens.speedup` on the system's lens. -/
 example (s : DynSystem S p) : s.twoStep = Lens.speedup s := rfl
@@ -75,6 +81,113 @@ def oneQueryMachine (b : β) : PointedMachine X.{u, u} α β where
   output := fun
     | false => none
     | true => some b
+
+/-! ## Chosen-position pure machines and variance laws -/
+
+/-- The clock interface has its canonical point, but the generic constructor
+still records that choice explicitly. -/
+def clockPoint : Point X.{u, u} := Lens.id X
+
+/-- A pure machine is resolved before making any query. -/
+example (f : α → β) (x : α) :
+    (PointedMachine.pureAt clockPoint f).run 0 x = FreeM.pure (some (f x)) := by
+  simp
+
+example (f : α → β) (x : α) :
+    (PointedMachine.pureAt clockPoint f).ResolvesIn 0
+      ((PointedMachine.pureAt clockPoint f).init x) := by
+  simp [PointedMachine.ResolvesIn]
+
+/-- Input and output variance obey their identity and composition laws as
+machine equalities because they retain the same carrier. -/
+example (M : PointedMachine p α β) : M.contramapInput id = M := by simp
+
+example (M : PointedMachine p α β) (f : γ → α) (g : mid → γ) :
+    (M.contramapInput f).contramapInput g = M.contramapInput (f ∘ g) := by simp
+
+example (M : PointedMachine p α β) : M.mapOutput id = M := by simp
+
+example (M : PointedMachine p α β) (f : β → γ) (g : γ → mid) :
+    (M.mapOutput f).mapOutput g = M.mapOutput (g ∘ f) := by simp
+
+example (M : PointedMachine p α β) : M.dimap id id = M := by simp
+
+example (M : PointedMachine p α β) (f₁ : γ → α) (g₁ : β → mid₁)
+    (f₂ : mid₂ → γ) (g₂ : mid₁ → mid) :
+    (M.dimap f₁ g₁).dimap f₂ g₂ = M.dimap (f₁ ∘ f₂) (g₂ ∘ g₁) := by
+  simp
+
+example (M : PointedMachine p α β) : M.wrap (Lens.id p) = M := by simp
+
+example (M : PointedMachine p α β) (w₁ w₂ : Lens p p) :
+    (M.wrap w₁).wrap w₂ = M.wrap (w₂ ∘ₗ w₁) := by simp
+
+example (M : PointedMachine p α β) (f : γ → α) :
+    (M.contramapInput f).State = M.State := by simp
+
+/-- Re-lifting every query into the free monad is the syntactic execution. -/
+example (M : PointedMachine p α β) (k : ℕ) (x : α) :
+    M.runWithInput (m := FreeM p) FreeM.liftA k x = M.run k x := by
+  simp
+
+/-- Pure machines are semantic identities for sequencing. They are not
+structural identities because sequential composition deliberately has a sum
+carrier. -/
+example (f : α → mid) (M : PointedMachine X mid β) (k : ℕ) (x : α) :
+    ((PointedMachine.pureAt clockPoint f) ⨟ M).run k x = M.run k (f x) := by
+  simp
+
+example (M : PointedMachine X α β) (k : ℕ) (x : α) :
+    (M ⨟ PointedMachine.pureAt clockPoint id).run k x = M.run k x := by
+  simp
+
+/-- The input-packaged run theorem exposes the fuel-exact Kleisli equation
+without making clients repeat `init` at every occurrence. -/
+example {m : Type u → Type v} [Monad m] [LawfulMonad m]
+    (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
+    (h : Handler m p) {k₁ : ℕ} (k₂ : ℕ) (x : α)
+    (hres₁ : M₁.ResolvesIn k₁ (M₁.init x))
+    (hres₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y)) :
+    (M₁ ⨟ M₂).runWithInput h (k₁ + k₂) x =
+      M₁.runWithInput h k₁ x >>= fun r => match r with
+        | some y => M₂.runWithInput h k₂ y
+        | none => pure none :=
+  PointedMachine.runWithInput_seqComp M₁ M₂ h k₂ x hres₁ hres₂
+
+/-- The same certified composition law is available syntactically as both
+free-monad bind and path grafting. -/
+example (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
+    {k₁ : ℕ} (k₂ : ℕ) (x : α)
+    (hres₁ : M₁.ResolvesIn k₁ (M₁.init x))
+    (hres₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y)) :
+    (M₁ ⨟ M₂).run (k₁ + k₂) x =
+      FreeM.append (M₁.run k₁ x) (fun path =>
+        match FreeM.output (M₁.run k₁ x) path with
+        | some y => M₂.run k₂ y
+        | none => pure none) :=
+  PointedMachine.run_seqComp_eq_append M₁ M₂ k₂ x hres₁ hres₂
+
+/-- The differently nested sum carriers of three composed machines have the
+same certified finite-run semantics. -/
+example {m : Type u → Type v} [Monad m] [LawfulMonad m]
+    (M₁ : PointedMachine p α mid₁) (M₂ : PointedMachine p mid₁ mid₂)
+    (M₃ : PointedMachine p mid₂ γ) (h : Handler m p) {k₁ : ℕ}
+    (k₂ k₃ : ℕ) (x : α) (hres₁ : M₁.ResolvesIn k₁ (M₁.init x))
+    (hres₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y))
+    (hres₃ : ∀ z, M₃.ResolvesIn k₃ (M₃.init z)) :
+    ((M₁ ⨟ M₂) ⨟ M₃).runWithInput h ((k₁ + k₂) + k₃) x =
+      (M₁ ⨟ (M₂ ⨟ M₃)).runWithInput h (k₁ + (k₂ + k₃)) x :=
+  PointedMachine.runWithInput_seqComp_assoc M₁ M₂ M₃ h
+    k₂ k₃ x hres₁ hres₂ hres₃
+
+example (M₁ : PointedMachine p α mid₁) (M₂ : PointedMachine p mid₁ mid₂)
+    (M₃ : PointedMachine p mid₂ γ) {k₁ : ℕ} (k₂ k₃ : ℕ) (x : α)
+    (hres₁ : M₁.ResolvesIn k₁ (M₁.init x))
+    (hres₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y))
+    (hres₃ : ∀ z, M₃.ResolvesIn k₃ (M₃.init z)) :
+    ((M₁ ⨟ M₂) ⨟ M₃).run ((k₁ + k₂) + k₃) x =
+      (M₁ ⨟ (M₂ ⨟ M₃)).run (k₁ + (k₂ + k₃)) x :=
+  PointedMachine.run_seqComp_assoc M₁ M₂ M₃ k₂ k₃ x hres₁ hres₂ hres₃
 
 /-! ## Collatz as a pointed machine -/
 

@@ -14,13 +14,15 @@ The category `Poly` carries two monoidal products that are both relevant to
 interaction: the tensor (Dirichlet) product `⊗`, whose positions are pairs and
 whose directions are pairs, and the substitution product `◃`, whose positions
 package a first move together with a continuation. Spivak–Niu, *Polynomial
-Functors: A General Theory of Interaction* §6.3.4–6.3.5 show that these two
+Functors: A Mathematical Theory of Interaction* §6.3.4–6.3.5 show that these two
 products are **duoidal**: they share the unit `y` and there is a canonical
 family of interchange lenses that make `(Poly, ⊗, ◃)` a duoidal category.
 
 This file records the concrete ordering and interchange lenses underlying the
-duoidal structure. It does not package a duoidal category or prove its coherence
-laws.
+duoidal structure, together with their naturality, cartesianness, and the
+concrete middle-four and unit coherence laws. It deliberately does not add an
+abstract duoidal-category typeclass: the current API needs only these canonical
+lenses and equations.
 
 * `orderingLens` (Example 6.85) is the canonical lens `p ⊗ q → p ◃ q` that
   *orders* a pair of simultaneous moves into a sequence: it keeps the position
@@ -51,15 +53,15 @@ laws.
   that the two first phases `p` and `q` run in parallel, followed by the two
   second phases `p'` and `q'` in parallel.
 
-The full duoidal coherence laws (Spivak–Niu Proposition 6.87: associativity,
-unitality, and compatibility of `orderingLens`/`duoidalLens` with the monoidal
-structures) are **not** proved here; only the witnessing lenses are
-constructed.
+The remaining boundary is abstract packaging and the higher associativity
+diagram for three interchange maps. The naturality, middle-four compatibility,
+and unit laws used by concrete developments are proved below.
 -/
 
 @[expose] public section
 
 universe u v uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uA₄ uB₄
+  uA₅ uB₅ uA₆ uB₆ uA₇ uB₇ uA₈ uB₈
 
 namespace PFunctor
 namespace Lens
@@ -87,6 +89,13 @@ theorem orderingLens_isCartesian (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA
   Function.bijective_iff_has_inverse.mpr
     ⟨fun uv => ⟨uv.1, uv.2⟩, fun _ => rfl, fun _ => rfl⟩
 
+/-- Naturality of the ordering lens in both polynomial arguments. -/
+@[simp]
+theorem orderingLens_natural {p : PFunctor.{uA₁, uB₁}} {p' : PFunctor.{uA₂, uB₂}}
+    {q : PFunctor.{uA₃, uB₃}} {q' : PFunctor.{uA₄, uB₄}}
+    (f : Lens p p') (g : Lens q q') :
+    orderingLens p' q' ∘ₗ (f ⊗ₗ g) = (f ◃ₗ g) ∘ₗ orderingLens p q := rfl
+
 /-! ## The duoidal interchange lens
 
 The interchange lens `(p ◃ p') ⊗ (q ◃ q') → (p ⊗ q) ◃ (p' ⊗ q')` runs two
@@ -108,14 +117,71 @@ On directions, a target direction over that position is
 `y : q'.B (g w)`; it maps back to the tensor of two composite directions
 `(⟨u, x⟩, ⟨w, y⟩)`.
 
-The duoidal coherence laws (Spivak–Niu Proposition 6.87) that make this lens,
-together with `orderingLens`, a duoidal structure on `(Poly, ⊗, ◃, y)` are not
-formalized here; only the interchange lens itself is constructed. -/
+The concrete naturality, middle-four, cartesianness, and unit coherence laws
+used by the current API are formalized below. The remaining part of
+Spivak–Niu Proposition 6.87 is the higher three-interchange associativity
+diagram and abstract duoidal-category packaging. -/
 def duoidalLens (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
     (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
     Lens ((p ◃ p') ⊗ (q ◃ q')) ((p ⊗ q) ◃ (p' ⊗ q')) :=
   (fun pos => ⟨(pos.1.1, pos.2.1), fun uw => (pos.1.2 uw.1, pos.2.2 uw.2)⟩) ⇆
     (fun _pos dir => (⟨dir.1.1, dir.2.1⟩, ⟨dir.1.2, dir.2.2⟩))
+
+/-- The interchange lens is cartesian: its backward map is the middle-four
+permutation on direction pairs. -/
+theorem duoidalLens_isCartesian (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
+    (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
+    (duoidalLens p p' q q').IsCartesian := fun _ =>
+  Function.bijective_iff_has_inverse.mpr
+    ⟨fun dir => ⟨(dir.1.1, dir.2.1), (dir.1.2, dir.2.2)⟩,
+      fun _ => rfl, fun _ => rfl⟩
+
+/-- Full four-variable naturality of duoidal interchange. -/
+@[simp]
+theorem duoidalLens_natural
+    {p₁ : PFunctor.{uA₁, uB₁}} {p₂ : PFunctor.{uA₂, uB₂}}
+    {q₁ : PFunctor.{uA₃, uB₃}} {q₂ : PFunctor.{uA₄, uB₄}}
+    {r₁ : PFunctor.{uA₅, uB₅}} {r₂ : PFunctor.{uA₆, uB₆}}
+    {s₁ : PFunctor.{uA₇, uB₇}} {s₂ : PFunctor.{uA₈, uB₈}}
+    (f₁ : Lens p₁ r₁) (f₂ : Lens p₂ r₂)
+    (g₁ : Lens q₁ s₁) (g₂ : Lens q₂ s₂) :
+    duoidalLens r₁ r₂ s₁ s₂ ∘ₗ ((f₁ ◃ₗ f₂) ⊗ₗ (g₁ ◃ₗ g₂)) =
+      ((f₁ ⊗ₗ g₁) ◃ₗ (f₂ ⊗ₗ g₂)) ∘ₗ duoidalLens p₁ p₂ q₁ q₂ := rfl
+
+/-- The canonical middle-four tensor permutation
+`(p ⊗ p') ⊗ (q ⊗ q') ≅ (p ⊗ q) ⊗ (p' ⊗ q')`.
+
+This is the structural reordering required to state the lax-monoidal law for
+`orderingLens` without silently identifying differently ordered products. -/
+def Equiv.tensorMiddleFour
+    (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
+    (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
+    ((p ⊗ p') ⊗ (q ⊗ q')) ≃ₗ ((p ⊗ q) ⊗ (p' ⊗ q')) where
+  toLens := (fun x => ((x.1.1, x.2.1), (x.1.2, x.2.2))) ⇆
+    (fun _ d => ((d.1.1, d.2.1), (d.1.2, d.2.2)))
+  invLens := (fun x => ((x.1.1, x.2.1), (x.1.2, x.2.2))) ⇆
+    (fun _ d => ((d.1.1, d.2.1), (d.1.2, d.2.2)))
+  left_inv := rfl
+  right_inv := rfl
+
+/-- `orderingLens : (⊗) ⇒ (◃)` preserves the binary multiplication:
+ordering each pair and then interchanging phases agrees with first applying the
+middle-four permutation and then ordering the regrouped tensor products. -/
+@[simp]
+theorem orderingLens_duoidal
+    (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
+    (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
+    duoidalLens p p' q q' ∘ₗ (orderingLens p p' ⊗ₗ orderingLens q q') =
+      orderingLens (p ⊗ q) (p' ⊗ q') ∘ₗ
+        (Equiv.tensorMiddleFour p p' q q').toLens := rfl
+
+/-- Right-unit compatibility of `orderingLens`. -/
+@[simp] theorem orderingLens_unit_right (p : PFunctor.{uA₁, uB₁}) :
+    Equiv.compX.toLens ∘ₗ orderingLens p X = Equiv.tensorX.toLens := rfl
+
+/-- Left-unit compatibility of `orderingLens`. -/
+@[simp] theorem orderingLens_unit_left (p : PFunctor.{uA₁, uB₁}) :
+    Equiv.XComp.toLens ∘ₗ orderingLens X p = Equiv.xTensor.toLens := rfl
 
 /-! ## Catalogue of `⊗`/`◃` coincidences (Example 6.84)
 

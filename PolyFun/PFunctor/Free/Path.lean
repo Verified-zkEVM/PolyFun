@@ -273,6 +273,20 @@ theorem append_roll {β : Type t} (a : P.A) (rest : P.B a → FreeM P α)
     append (FreeM.roll a rest) s₂ =
       FreeM.roll a (fun b => append (rest b) (fun path => s₂ ⟨b, path⟩)) := rfl
 
+/-- Grafting a continuation selected only by the leaf payload is ordinary
+free-monad bind. `append` is more general because its continuation may inspect
+the entire path; this theorem identifies their exact overlap. -/
+@[simp] theorem append_output_eq_bind {β : Type v} (s : FreeM P α)
+    (k : α → FreeM P β) :
+    append s (fun path => k (output s path)) = s >>= k := by
+  induction s with
+  | pure x => rfl
+  | roll a rest ih =>
+      simp only [append_roll, monad_bind_def, bind_roll]
+      apply congrArg (FreeM.roll a)
+      funext b
+      exact ih b
+
 namespace Path
 
 /-! ## Canonical paths through appended trees -/
