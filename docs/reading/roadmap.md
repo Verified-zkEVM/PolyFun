@@ -108,13 +108,15 @@ Landed 2026-07-10 (build + `lake lint` + `lake test` green, no `sorry`):
   `PointedMachine` structure (VCVio `OracleMachine`'s generic core); `seqComp` with
   `M₁.State ⊕ M₂.State` (Example 6.41 — the structural unlock for
   `IsPolyTime.bind` / `OracleMachine.seqComp`); phase `rfl` lemmas; fuelled
-  `toComp`; `toComp_seqComp_inr` (second phase faithful to `M₂`);
+  `toComp`; `toComp_seqComp_inr` (second phase faithful to `M₂`); the exact
+  all-`some`-leaves characterization and additive `ResolvesIn` certificate
+  algebra; the fuel-exact `runWith_seqComp_init` bind law;
   `DynSystem.ReachableIn` (in `Dynamical/Run.lean`, via `Prefix.last`).
-  *Deferred (documented, not `sorry`):* the fuel-exact cross-phase `bind` law
-  and the `IsSimulation`/`Implements`-via-`behavior_unique` transfer.
+  *Deferred (documented, not `sorry`):* the
+  `IsSimulation`/`Implements`-via-`behavior_unique` transfer.
 
-The **honest split** confirmed in code: A7c gives the *structural* half of
-`IsPolyTime.bind`; the remaining half is the TM running-time bound
+The **honest split** confirmed in code: A7c gives the *structural and semantic*
+half of `IsPolyTime.bind`; the remaining half is the TM running-time bound
 (`VCVio/ToMathlib/Computability/PolyTimeTM.lean:537-552`, a documented VCVio
 `sorry`), which PolyFun does not own.
 
@@ -207,17 +209,16 @@ Landed the K-L-prioritized machine spine (crypto-free):
 - **B3 done** — `DynSystem.nStep` = `Run_n` (`Dynamical/RunN.lean`), finishing
   the `Speedup.lean` `nStep` deferral; **`twoStep_toLens_eq` (the `n = 2`
   coherence with the existing `twoStep`) is `rfl`**. The monad-parametric run
-  `PointedMachine.runWith = FreeM.mapM ∘ toComp` with `runWith_succ` (the
-  `runLimit_fix` shadow) and `runWith_of_output_eq_some` (local absorption after
-  the current state has resolved). VCVio's probabilistic
-  `runK_eq_of_apply_none_eq_zero` is stronger: it derives limit-level equality
-  from a zero-probability failure condition. The `Option`/fuel pays-rent instance
+  `PointedMachine.runWith = FreeM.mapM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
+  shadow) and `runWith_of_output_eq_some` (fuel irrelevance, the
+  `runK_eq_of_apply_none_eq_zero` shadow); the `Option`/fuel pays-rent instance
   is in `RunNExamples.lean`. The ω-limit `ωSup` stays downstream (SPMF ωCPO).
 - **PointedMachine finish** — `toComp_seqComp_inl` fixes the first-phase operational
   behaviour (with `toComp_seqComp_inr` this is the structural `IsPolyTime.bind`
-  content); the naive fuel-additive single-`bind` law is **false** (fuel threads
-  continuously), so the fuel-exact form via reachability + fuel-irrelevance is a
-  noted next increment. Generic `IsSimulation` + `behavior_eq_of_isSimulation`
+  content); the naive unqualified fuel-additive single-`bind` law is **false**
+  (fuel threads continuously), while `ResolvesIn` certificates make the exact
+  summed-budget law true and compositional. Generic `IsSimulation` +
+  `behavior_eq_of_isSimulation`
   (via `behavior_unique`/`M.corec_eq_corec`) in `Dynamical/Simulation.lean`;
   the stutter-budget variant is deferred.
 
@@ -498,10 +499,10 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   `PolyFunTest/` files. Full `lake build` + `lake lint` + `lake test` green with
   `--wfail`, no `sorry`. Canaries all `rfl`: the state-comonoid laws,
   `twoStep_toLens_eq` (`n = 2` coherence), and `runWith = mapM ∘ toComp`.
-  Finding: the naive fuel-additive `seqComp` bind law is **false** (fuel threads
-  continuously through the handoff), so the operational two-lemma
-  characterization is shipped instead, with the fuel-exact form (via reachability
-  + `runWith_of_output_eq_some`) noted as the next increment. Pays-rent (partial):
+  Finding: the naive unqualified fuel-additive `seqComp` bind law is **false**
+  (fuel threads continuously through the handoff). The shipped `ResolvesIn`
+  certificate algebra records exactly the missing totality hypothesis and gives
+  the fuel-exact summed-budget bind law. Pays-rent (partial):
   the `Option`/fuel `runWith` instance discharges the reusability half of the
   Phase B bet. Next: Phase C (cofree comonoid `t_p` + mate = `M.corec`) or the
   Cluster-3 interface-rebasing bridge (SemanticSecurity sorries).

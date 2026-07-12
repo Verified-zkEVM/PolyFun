@@ -66,11 +66,14 @@ machine with `M₁.State ⊕ M₂.State` that runs phase 1 to its output, then h
 off to phase 2. The transition lens δ (A7b, already present as `Lens.fixState`)
 gives multi-step execution a canonical primitive.
 
-**Payoff:** the referenced-but-unbuilt `OracleMachine.seqComp` (a future target
-in `ToMathlib/Computability/Encoding.lean:243`, with its `M₁.State ⊕ M₂.State`
-encoding `finEncodingSum` already scaffolded) gets a principled definition and a
-`bind` correctness law. **Honest split:** this is the *structural* half of
-`IsPolyTime.bind` (which does not yet exist). The *remaining* half is a
+**Payoff:** PolyFun now supplies the generic `PointedMachine.seqComp`, its
+query-resolution certificate algebra, and the fuel-exact `runWith_seqComp_init`
+bind law. VCVio specializes this to `OracleMachine.seqComp` and reuses the law
+in `IsPolyTime.bind`, with `M₁.State ⊕ M₂.State` encoded by the already
+scaffolded `finEncodingSum`. The sum stores only phase-local machine control;
+a stateful handler monad threads one shared random-oracle cache or transcript
+through both phases. **Honest split:** this is the *structural* and
+semantic half of `IsPolyTime.bind`. The *remaining* half is a
 TM running-time bound — the documented `sorry` in
 `ToMathlib/Computability/PolyTimeTM.lean:537-552`
 (`sumElim` / `time_sumElim_eval_le`, a length-changing streaming transducer).
