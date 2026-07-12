@@ -63,6 +63,45 @@ def oneQueryMachine (b : β) : PointedMachine X.{u, u} α β where
     | false => none
     | true => some b
 
+/-! ## Collatz as a pointed machine -/
+
+namespace Collatz
+
+/-- One step of the Collatz iteration. -/
+def step (n : ℕ) : ℕ :=
+  if n % 2 = 0 then n / 2 else 3 * n + 1
+
+/-- The Collatz iteration as a deterministic pointed machine over the clock
+interface `X`. Its input selects the initial natural-number state, its unique
+direction advances one Collatz step, and it reads out upon reaching `1`. -/
+def machine : PointedMachine.{0, 0, 0, 0, 0} X.{0, 0} ℕ PUnit where
+  State := ℕ
+  expose := fun _ => PUnit.unit
+  update := fun n _ => step n
+  init := id
+  output := fun n => if n = 1 then some PUnit.unit else none
+
+/-- The Collatz conjecture says exactly that every positive input eventually
+resolves in this pointed machine. The query budget is the number of Collatz
+steps; reaching `1` itself requires no additional fuel because readout is free. -/
+def Conjecture : Prop :=
+  ∀ n : ℕ, 0 < n → ∃ k : ℕ, machine.ResolvesIn k (machine.init n)
+
+/-- The distinguished initial state `1` is already resolved. -/
+example : machine.ResolvesIn 0 (machine.init 1) := by
+  simp [machine]
+
+/-- The trajectory `3, 10, 5, 16, 8, 4, 2, 1` resolves in seven steps. -/
+example : machine.ResolvesIn 7 (machine.init 3) := by
+  simp [PointedMachine.ResolvesIn, machine, step]
+
+/-- Once a trajectory resolves, monotonicity permits any larger fuel budget. -/
+example : machine.ResolvesIn 20 (machine.init 3) :=
+  (show machine.ResolvesIn 7 (machine.init 3) by
+    simp [PointedMachine.ResolvesIn, machine, step]).mono (by omega)
+
+end Collatz
+
 /-- Machine states, inputs, and outputs may inhabit independent universes. -/
 def universeSeparatedMachine {α : Type v} {β : Type w} (b : β) :
     PointedMachine X.{0, 0} α β where
