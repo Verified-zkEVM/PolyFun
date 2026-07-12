@@ -223,6 +223,30 @@ example (b : β) :
       (oneQueryMachine (α := α) b).runWith (m := Id) (fun _ => PUnit.unit) 1 false :=
   PointedMachine.runWith_eq_of_resolvesIn _ _ (by simp [oneQueryMachine]) (by omega)
 
+/-! ## Machine-implements-program -/
+
+/-- The immediate-halt machine implements the pure program, at any fuel. -/
+example (b : β) (k : ℕ) :
+    PointedMachine.Implements (haltMachine (α := α) b) (fun _ => (FreeM.pure b : FreeM X β)) k :=
+  fun _ => PointedMachine.toComp_of_output_eq_some _ k rfl
+
+/-- `Implements` yields the syntactic resolution certificate. -/
+example (b : β) (k : ℕ) (x : α) :
+    (haltMachine (α := α) b).ResolvesIn k ((haltMachine b).init x) :=
+  PointedMachine.Implements.resolvesIn (z := fun _ => (FreeM.pure b : FreeM X β))
+    (fun _ => PointedMachine.toComp_of_output_eq_some _ k rfl) x
+
+/-- The step-synchronized proof method certifies `Implements` from a simulation relation. -/
+example (b : β) :
+    PointedMachine.Implements (haltMachine (α := α) b) (fun _ => (FreeM.pure b : FreeM X β)) 0 :=
+  PointedMachine.implements_of_isSimulation
+    (R := fun _ z => z = FreeM.pure b)
+    { output_pure := fun _ _ h => by injection h with h; subst h; rfl
+      output_roll := fun _ _ _ h => by cases h
+      expose_eq := fun _ _ _ h => by cases h
+      update_rel := fun _ _ _ h => by cases h }
+    (fun _ => rfl) (fun _ => FreeM.isTotalRollBound_pure _ _)
+
 /-! ## Compositional resolution and the fuel-exact run law -/
 
 /-- A second-phase certificate lifts through the composite. -/

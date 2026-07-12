@@ -534,6 +534,90 @@ theorem ResolvesIn.seqComp_init {M₁ : PointedMachine p α mid}
     rw [hout]
     exact h₁.seqComp_inl hout h₂
 
+/-! ## Machine-implements-program
+
+`Implements M z k` says the machine `M` reproduces the program family `z : α → FreeM p β`
+within `k` steps. It is stated at the *free/initial* handler — `M.toComp k (M.init x)`,
+the run in the syntactic monad `m = FreeM p` — which pins the machine's observable
+behaviour once and universally: by `FreeM.mapM` naturality every concrete handler reads
+the same run (`Implements.runWith_eq`, in the `Run` section), so a machine cannot realise
+`z` one way for a cost/complexity proof and another for a semantic (e.g. distributional)
+reading. This is the interface-generic core of VCVio's `OracleMachine.Implements`. -/
+
+/-- The machine `M` **implements the program family** `z` **within `k` steps**: for every
+input `x`, the `k`-step unrolling from `M.init x` is `z x` with `some` at each leaf.
+Equivalently — via `Implements.runWith_eq` / `implements_of_runWith_eq` — the run through
+*any* handler agrees with the handler's reading of `z`. -/
+def Implements (M : PointedMachine p α β) (z : α → FreeM p β) (k : ℕ) : Prop :=
+  ∀ x, M.toComp k (M.init x) = some <$> z x
+
+@[inherit_doc]
+scoped notation:50 M " ⊨[" k "] " z => PointedMachine.Implements M z k
+
+/-- A machine that implements a program family within `k` steps **resolves** within `k`
+steps from every start state: the syntactic finiteness certificate is immediate from the
+`some <$> _` factorization of the unrolling. -/
+theorem Implements.resolvesIn {M : PointedMachine p α β} {z : α → FreeM p β} {k : ℕ}
+    (h : M.Implements z k) (x : α) : M.ResolvesIn k (M.init x) :=
+  resolvesIn_of_toComp_eq_map_some (h x)
+
+/-! ## Simulation relations: the practical proof method for `Implements`
+
+A step-synchronized simulation between machine states and program residues discharges
+`Implements` by induction on the program. Each machine round consumes exactly one program
+`roll` (enforced by `expose_eq`): related `pure` programs read out, related `roll`
+programs are unresolved and expose the same position, and updating along any direction
+stays related to the continuation. This is the interface-generic core of VCVio's
+`OracleMachine.IsSimulation`. -/
+
+/-- A step-synchronized simulation between machine states and free-monad program residues:
+related `pure` programs read out, related `roll` programs are unresolved and expose the
+same position, and updating along any direction tracks the continuation. -/
+structure IsSimulation (M : PointedMachine p α β) (R : M.State → FreeM p β → Prop) : Prop where
+  /-- A state related to a halted program reads out its value. -/
+  output_pure : ∀ ⦃s : M.State⦄ ⦃b : β⦄, R s (FreeM.pure b) → M.output s = some b
+  /-- A state related to a querying program is unresolved. -/
+  output_roll : ∀ ⦃s : M.State⦄ ⦃a : p.A⦄ ⦃r : p.B a → FreeM p β⦄,
+    R s (FreeM.roll a r) → M.output s = none
+  /-- A state related to a querying program exposes that position. -/
+  expose_eq : ∀ ⦃s : M.State⦄ ⦃a : p.A⦄ ⦃r : p.B a → FreeM p β⦄,
+    R s (FreeM.roll a r) → M.expose s = a
+  /-- Updating along any direction tracks the program continuation. -/
+  update_rel : ∀ ⦃s : M.State⦄ ⦃a : p.A⦄ ⦃r : p.B a → FreeM p β⦄
+    (hR : R s (FreeM.roll a r)) (d : p.B (M.expose s)),
+    R (M.update s d) (r (expose_eq hR ▸ d))
+
+/-- Auxiliary induction for `implements_of_isSimulation`: at any fuel at least a total
+roll bound of the residual program, the unrolling from any related state is `some <$> z`.
+Early stopping makes the `pure` case fuel-independent. -/
+theorem IsSimulation.toComp_eq {M : PointedMachine p α β}
+    {R : M.State → FreeM p β → Prop} (hsim : M.IsSimulation R) (z : FreeM p β) :
+    ∀ (s : M.State) (n j : ℕ), R s z → z.IsTotalRollBound j → j ≤ n →
+      M.toComp n s = some <$> z := by
+  induction z using FreeM.inductionOn with
+  | pure b =>
+    intro s n j hR _ _
+    rw [toComp_of_output_eq_some M n (hsim.output_pure hR)]; rfl
+  | roll a r ih =>
+    intro s n j hR hb hjn
+    rw [FreeM.isTotalRollBound_roll_iff] at hb
+    obtain ⟨hj, hk⟩ := hb
+    obtain ⟨n, rfl⟩ : ∃ n', n = n' + 1 := ⟨n - 1, by omega⟩
+    have he := hsim.expose_eq hR
+    subst he
+    simp only [toComp_succ, hsim.output_roll hR]
+    exact congrArg (FreeM.roll (M.expose s))
+      (funext fun d => ih d (M.update s d) n (j - 1) (hsim.update_rel hR d) (hk d) (by omega))
+
+/-- **Main proof method.** A machine implements a program family at any fuel that totally
+bounds the program's rolls, given a simulation relation matching the initial states. The
+bound supplies the fuel; the simulation supplies the step-by-step agreement. -/
+theorem implements_of_isSimulation {M : PointedMachine p α β}
+    {z : α → FreeM p β} {k : ℕ} {R : M.State → FreeM p β → Prop}
+    (hsim : M.IsSimulation R) (hinit : ∀ x, R (M.init x) (z x))
+    (hb : ∀ x, (z x).IsTotalRollBound k) : M.Implements z k :=
+  fun x => hsim.toComp_eq (z x) (M.init x) k k (hinit x) (hb x) le_rfl
+
 /-! ## Monad-parametric fuelled run
 
 `toComp` unrolls a machine into the *syntactic* free monad. Interpreting that
@@ -607,6 +691,31 @@ theorem runWith_eq_of_resolvesIn (M : PointedMachine q α β) (h : Handler m q)
       · obtain ⟨k, rfl⟩ : ∃ k', k = k' + 1 := ⟨k - 1, by omega⟩
         rw [M.runWith_succ_of_output_eq_none h hout, M.runWith_succ_of_output_eq_none h hout]
         exact bind_congr fun d => ih (hf d) (by omega)
+
+/-- The **handler reading** of `Implements`: a machine implementing `z` within `k` steps,
+run through *any* handler `h`, reproduces `some <$> FreeM.mapM h (z x)`. This is the shape
+VCVio takes as the *definition* of `OracleMachine.Implements`; here it is a one-line
+corollary of the single free-handler equation, via `FreeM.mapM` naturality (`mapM_map`).
+Instantiating `m`/`h` recovers the deterministic (`Id`), distributional (`SPMF`), and every
+custom reading. -/
+theorem Implements.runWith_eq [LawfulMonad m] (M : PointedMachine q α β) {z : α → FreeM q β}
+    {k : ℕ} (h : Handler m q) (himp : M.Implements z k) (x : α) :
+    M.runWith h k (M.init x) = some <$> FreeM.mapM h (z x) := by
+  unfold runWith
+  rw [himp x, FreeM.mapM_map]
+
+/-- Converse of `Implements.runWith_eq`: agreement at the free/initial handler
+(`m = FreeM q`, `h = FreeM.liftA`, where the run *is* the unrolling) already gives
+`Implements`. So the single free-handler equation and the "∀ handler" reading are
+equivalent — the behaviour is pinned once, for all readings. -/
+theorem implements_of_runWith_eq (M : PointedMachine q α β) {z : α → FreeM q β} {k : ℕ}
+    (h : ∀ x, M.runWith (m := FreeM q) FreeM.liftA k (M.init x)
+      = some <$> FreeM.mapM (m := FreeM q) FreeM.liftA (z x)) :
+    M.Implements z k := by
+  intro x
+  have hx := h x
+  unfold runWith at hx
+  rwa [FreeM.mapM_liftA_eq_self, FreeM.mapM_liftA_eq_self] at hx
 
 /-! ## The sequential-composition run law -/
 
