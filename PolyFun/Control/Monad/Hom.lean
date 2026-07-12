@@ -206,3 +206,24 @@ protected def pure (m) [Monad m] [LawfulMonad m] : Id →ᵐ m where
     MonadHom.pure m x = pure x.run := rfl
 
 end MonadHom
+
+namespace StateT
+
+variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n]
+  [LawfulMonad m] [LawfulMonad n] {σ α : Type u}
+
+/-- `StateT σ` is functorial on monad morphisms: a monad morphism `φ : m →ᵐ n` lifts to a monad
+morphism `StateT σ m →ᵐ StateT σ n`, acting on the underlying state-run and threading the state
+unchanged. This transports the naturality of a fold (e.g. `FreeM.mapM_natural`) through a *stateful*
+handler — the form a `StateT`-threaded semantic morphism (such as an evaluation-distribution map)
+needs. -/
+def mapHom (φ : m →ᵐ n) : StateT σ m →ᵐ StateT σ n where
+  toFun _ x := StateT.mk fun s => φ (x.run s)
+  toFun_pure' a := by ext s; simp
+  toFun_bind' x y := by ext s; simp
+
+omit [LawfulMonad m] [LawfulMonad n] in
+@[simp] lemma run_mapHom (φ : m →ᵐ n) (x : StateT σ m α) (s : σ) :
+    (StateT.mapHom φ x).run s = φ (x.run s) := rfl
+
+end StateT

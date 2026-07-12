@@ -560,3 +560,11 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   responder-first order flip) and derives its machine-game step lemmas
   from `runWith_run_succ_of_output_eq_none`; verdict to be recorded at
   VCVio landing.
+- 2026-07-11 (**B6**, fold universal property and monad-morphism naturality):
+  added `FreeM.mapMHom_unique`, `FreeM.mapM_natural`, and `mapMHom_comp`, plus
+  `StateT.mapHom` / `run_mapHom` and the composed `FreeM.run_mapM_mapHom` law.
+  The identity-handler laws `mapM_liftA_eq_self` and `mapMHom_liftA` complete
+  the basic universal-property API. Regression coverage lives in
+  `PolyFunTest/PFunctor/FreeMapMNaturality.lean`. Downstream payoff to check:
+  VCVio should be able to bundle `evalDist` as a monad hom and replace its
+  hand-proved `simulateQ` fold-naturality family with these generic laws.

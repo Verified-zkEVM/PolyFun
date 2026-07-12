@@ -311,7 +311,87 @@ protected def mapMHom' (s : NatHom P.Obj m) : FreeM P →ᵐ m where
 @[simp] lemma mapMHom'_toFun_eq (s : NatHom P.Obj m) :
     (FreeM.mapMHom' s).toFun α = FreeM.mapM (fun t => s ⟨t, id⟩) := rfl
 
+/-! ## Universal property and naturality of the fold
+
+`FreeM.mapM s` is the universal fold: the *unique* monad homomorphism out of `FreeM P` extending a
+handler `s` (`mapMHom_unique`), and it is *natural* in the target monad — post-composing with a
+monad morphism `φ : m →ᵐ n` is the fold of the post-composed handler (`mapM_natural`,
+`mapMHom_comp`). This is the freeness of `FreeM P`; downstream it lets a semantic monad morphism
+(e.g. an evaluation-distribution map) be pushed through a fold uniformly, rather than re-run by
+induction per interpretation. -/
+
+variable {n : Type uB → Type u} [Monad n] [LawfulMonad n]
+
+/-- **Universal property of `FreeM.mapM`** (freeness of `FreeM P`): a monad homomorphism out of
+`FreeM P` is determined by its action on generators. If `F : FreeM P →ᵐ m` agrees with `s` on every
+`FreeM.liftA a`, then `F = FreeM.mapMHom s`. So handlers `(a : P.A) → m (P.B a)` are in bijection
+with monad homomorphisms `FreeM P →ᵐ m` — the universal property behind `simulateQ`. -/
+theorem mapMHom_unique (F : FreeM P →ᵐ m) (h : ∀ a, F (FreeM.liftA a) = s a) :
+    F = FreeM.mapMHom s := by
+  refine MonadHom.ext' fun β x => ?_
+  induction x with
+  | pure x => exact F.mmap_pure x
+  | roll a r ih =>
+    change F (FreeM.roll a r) = FreeM.mapM s (FreeM.roll a r)
+    rw [mapM_roll, show (FreeM.roll a r : FreeM P β) = FreeM.liftA a >>= r from rfl,
+      MonadHom.mmap_bind, h]
+    exact bind_congr fun d => ih d
+
+omit [LawfulMonad m] [LawfulMonad n] in
+/-- **Naturality of the fold along a monad morphism**: pushing a monad morphism `φ : m →ᵐ n` through
+`FreeM.mapM s` is the fold of the post-composed handler `fun a => φ (s a)` — the value-level
+naturality square of the universal fold. -/
+@[simp] theorem mapM_natural (φ : m →ᵐ n) (x : FreeM P α) :
+    φ (FreeM.mapM s x) = FreeM.mapM (fun a => φ (s a)) x := by
+  induction x with
+  | pure x => exact φ.mmap_pure x
+  | roll a r ih => simp only [mapM_roll, MonadHom.mmap_bind, ih]
+
+/-- Bundled form of `mapM_natural`: composing the fold monad-homomorphism `FreeM.mapMHom s` with a
+monad morphism `φ` is the fold of the post-composed handler. -/
+theorem mapMHom_comp (φ : m →ᵐ n) :
+    φ ∘ₘ FreeM.mapMHom s = FreeM.mapMHom (fun a => φ (s a)) :=
+  MonadHom.ext' fun β x => by simp only [MonadHom.comp_apply, mapMHom_toFun_eq, mapM_natural]
+
 end mapM
+
+section stateNaturality
+
+variable {m : Type uB → Type v} {n : Type uB → Type u} [Monad m] [Monad n] {σ : Type uB}
+  {α : Type uB}
+
+/-- **Stateful naturality of the fold**: running a fold whose stateful handler is post-composed by
+a `StateT`-lifted monad morphism `StateT.mapHom φ` is `φ` applied to the run of the original fold —
+the shape a `StateT`-threaded semantic morphism (e.g. an evaluation-distribution map through a
+stateful handler) instantiates, collapsing a per-interpretation induction to one use of
+`mapM_natural`. -/
+theorem run_mapM_mapHom (φ : m →ᵐ n) (impl : (a : P.A) → StateT σ m (P.B a))
+    (x : FreeM P α) (s : σ) :
+    (FreeM.mapM (fun a => StateT.mapHom φ (impl a)) x).run s = φ ((FreeM.mapM impl x).run s) := by
+  rw [← mapM_natural impl (StateT.mapHom φ) x, StateT.run_mapHom]
+
+end stateNaturality
+
+section idFold
+
+variable {α : Type uB}
+
+/-- The fold with the canonical re-lifting handler `FreeM.liftA` is the identity: interpreting each
+position back into the free monad recovers the tree (equivalently `FreeM.mapMHom FreeM.liftA` is the
+identity homomorphism, `mapMHom_liftA`). The upstream form of `simulateQ` of the identity handler
+being the identity — a corollary of the universal property. -/
+@[simp] theorem mapM_liftA_eq_self (x : FreeM P α) : FreeM.mapM FreeM.liftA x = x := by
+  induction x with
+  | pure y => rfl
+  | roll a r ih =>
+    rw [mapM_roll]
+    change FreeM.roll a (fun u => FreeM.mapM FreeM.liftA (r u)) = FreeM.roll a r
+    exact congrArg (FreeM.roll a) (funext ih)
+
+theorem mapMHom_liftA : FreeM.mapMHom (P := P) (m := FreeM P) FreeM.liftA = MonadHom.id (FreeM P) :=
+  MonadHom.ext' fun _ x => by simp
+
+end idFold
 
 end FreeM
 
