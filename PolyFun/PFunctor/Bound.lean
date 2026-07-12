@@ -207,4 +207,54 @@ lemma isRollBound_seq {og : FreeM P (α → β)} {oa : FreeM P α}
   exact isRollBound_bind combine h_can h_cost h₁
     (fun g => (isRollBound_map_iff oa g b₂ canRoll cost).mpr h₂)
 
+/-! ### Total roll bounds -/
+
+/-- A total roll bound: `oa` encounters at most `n` `FreeM.roll` constructors
+along every branch. Each roll consumes one unit of a natural-number budget,
+independently of its position. -/
+def IsTotalRollBound (oa : FreeM P α) (n : ℕ) : Prop :=
+  IsRollBound oa n (fun _ b => 0 < b) (fun _ b => b - 1)
+
+/-- The total-bound specialization exposes the underlying generalized
+`IsRollBound` definitionally. -/
+theorem isTotalRollBound_iff_isRollBound (oa : FreeM P α) (n : ℕ) :
+    IsTotalRollBound oa n ↔
+      IsRollBound oa n (fun _ b => 0 < b) (fun _ b => b - 1) :=
+  Iff.rfl
+
+@[simp, grind .]
+lemma isTotalRollBound_pure (x : α) (n : ℕ) :
+    IsTotalRollBound (pure x : FreeM P α) n := trivial
+
+@[simp, grind =]
+lemma isTotalRollBound_roll_iff (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) :
+    IsTotalRollBound (FreeM.roll a r) n ↔
+      0 < n ∧ ∀ y, IsTotalRollBound (r y) (n - 1) :=
+  Iff.rfl
+
+/-- A total roll bound remains valid when its budget is increased. -/
+lemma IsTotalRollBound.mono {oa : FreeM P α} {n₁ n₂ : ℕ}
+    (h : IsTotalRollBound oa n₁) (hle : n₁ ≤ n₂) :
+    IsTotalRollBound oa n₂ := by
+  induction oa using FreeM.inductionOn generalizing n₁ n₂ with
+  | pure _ => simp
+  | roll a r ih =>
+      rw [isTotalRollBound_roll_iff] at h ⊢
+      exact ⟨Nat.lt_of_lt_of_le h.1 hle,
+        fun y => ih y (h.2 y) (Nat.sub_le_sub_right hle 1)⟩
+
+/-- Total roll bounds add under monadic sequencing. -/
+lemma isTotalRollBound_bind {oa : FreeM P α} {ob : α → FreeM P β}
+    {n₁ n₂ : ℕ} (h₁ : IsTotalRollBound oa n₁)
+    (h₂ : ∀ x, IsTotalRollBound (ob x) n₂) :
+    IsTotalRollBound (oa >>= ob) (n₁ + n₂) := by
+  refine isRollBound_bind (fun a b => a + b) ?_ ?_ h₁ h₂ <;> grind
+
+/-- Total roll bounds add under applicative sequencing. -/
+lemma isTotalRollBound_seq {og : FreeM P (α → β)} {oa : FreeM P α}
+    {n₁ n₂ : ℕ} (h₁ : IsTotalRollBound og n₁)
+    (h₂ : IsTotalRollBound oa n₂) :
+    IsTotalRollBound (og <*> oa) (n₁ + n₂) := by
+  refine isRollBound_seq (fun a b => a + b) ?_ ?_ h₁ h₂ <;> grind
+
 end PFunctor.FreeM

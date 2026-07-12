@@ -61,9 +61,31 @@ def universeSeparatedMachine {α : Type v} {β : Type w} (b : β) :
   init := fun _ => false
   output := fun _ => some b
 
-/-- With fuel it reads off its value immediately; with none it is `none`. -/
+/-- The readout is free: a halted machine reads off its value at any fuel,
+including zero. -/
 example (b : β) : (haltMachine (α := α) b).toComp 1 PUnit.unit = FreeM.pure (some b) := rfl
 
-example (b : β) : (haltMachine (α := α) b).toComp 0 PUnit.unit = FreeM.pure none := rfl
+example (b : β) : (haltMachine (α := α) b).toComp 0 PUnit.unit = FreeM.pure (some b) := rfl
+
+/-- The machine fuel is a total structural roll bound, including at zero. -/
+example (M : PointedMachine p α β) (k : ℕ) (s : M.State) :
+    (M.toComp k s).IsTotalRollBound k :=
+  M.isTotalRollBound_toComp k s
+
+/-- A single roll cannot fit in a zero total-roll budget. -/
+example (a : p.A) (r : p.B a → FreeM p β) :
+    ¬ (FreeM.roll a r).IsTotalRollBound 0 := by
+  simp
+
+/-- Total structural bounds add through free-monad sequencing. -/
+example (oa : FreeM p α) (ob : α → FreeM p β) (j k : ℕ)
+    (ha : oa.IsTotalRollBound j) (hb : ∀ x, (ob x).IsTotalRollBound k) :
+    (oa >>= ob).IsTotalRollBound (j + k) :=
+  FreeM.isTotalRollBound_bind ha hb
+
+/-- The resolved-output equation is available directly to `simp`. -/
+example (M : PointedMachine p α β) (k : ℕ) (s : M.State) (b : β)
+    (hb : M.output s = some b) : M.toComp k s = FreeM.pure (some b) := by
+  simp [hb]
 
 end PFunctor
