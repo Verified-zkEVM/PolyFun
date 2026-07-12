@@ -5,37 +5,59 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Dynamical.Speedup
+public import PolyFun.PFunctor.Dynamical.Basic
 public import PolyFun.PFunctor.Comonoid
 
 /-!
-# `n`-step dynamical systems `Run_n`
+# Two-step and `n`-step dynamical systems (`Run_n`)
 
-Spivak–Niu §7.1.5 assembles the length-`n` behaviours of a `p`-dynamical system
-into the **`n`-step system**
+Spivak–Niu §6.2.2 / §7.1.5 assemble the multi-step behaviours of a
+`p`-dynamical system into composite systems over the composition powers of `p`.
 
-`Run_n(φ) = φ^{◁n} ∘ₗ δ^{(n)} : Sy^S ⇆ p^{◃n}`,
+The **two-step system** `DynSystem.twoStep φ = (φ ◃ φ) ∘ₗ δ : DynSystem S (p ◃ p)`
+(Example 6.44) runs `φ` twice through one composite `p ◃ p`-step via the
+transition lens `δ = Lens.fixState`; it is `Lens.speedup` on the interface lens.
 
-where `δ^{(n)}` is the `n`-fold comultiplication of the state comonoid on `S y^S`
-(`PFunctor.Comonoid.comultN` on `stateComonoid S`) and `φ^{◁n}` is the
-composition power of the interface lens (`Lens.compNthMap`). `DynSystem.nStep`
-is that construction on bundled systems: one composite `p^{◃n}`-step exposes `n`
-successive `p`-positions and threads the answers through `n` updates.
-
-This generalises `DynSystem.twoStep` (the `n = 2` case over the *binary*
-composite `p ◃ p`) to all `n` over the right-nested power `compNth p n`. It is the
-generic core of the finite-run truncation ladder that a probabilistic run
-semantics (VCVio's `RunLimit`) instantiates.
+The **`n`-step system** `Run_n(φ) = φ^{◁n} ∘ₗ δ^{(n)} : Sy^S ⇆ p^{◃n}` (§7.1.5)
+generalises this to all `n`, where `δ^{(n)}` is the `n`-fold comultiplication of
+the state comonoid on `S y^S` (`PFunctor.Comonoid.comultN` on `stateComonoid S`)
+and `φ^{◁n}` is the composition power of the interface lens (`Lens.compNthMap`).
+`DynSystem.nStep` is that construction on bundled systems: one composite
+`p^{◃n}`-step exposes `n` successive `p`-positions and threads the answers through
+`n` updates. `twoStep_toLens_eq` records that the `n = 2` case collapses to
+`twoStep`. This is the generic core of the finite-run truncation ladder that a
+probabilistic run semantics (VCVio's `RunLimit`) instantiates.
 -/
 
 @[expose] public section
 
-universe u
+universe u uA uB
 
 namespace PFunctor
 
 namespace DynSystem
 
+/-! ## The two-step system (Example 6.44) -/
+
+section
+variable {S : Type u} {p : PFunctor.{uA, uB}}
+
+/-- The two-step system `(φ ◃ φ) ∘ₗ δ : DynSystem S (p ◃ p)` of a `p`-dynamical
+system (Spivak–Niu Example 6.44): one composite step exposes a first `p`-position,
+consumes a direction, exposes a second `p`-position, and updates. Same state set
+as `φ` — literally `Lens.speedup` on the system's interface lens, and the `n = 2`
+case of `nStep` over the binary composite `p ◃ p` (see `twoStep_toLens_eq`). -/
+def twoStep (s : DynSystem S p) : DynSystem S (p ◃ p) :=
+  Lens.speedup s
+
+@[simp] theorem twoStep_eq_speedup (s : DynSystem S p) :
+    s.twoStep = Lens.speedup s := rfl
+
+end
+
+/-! ## The `n`-step system `Run_n` (§7.1.5) -/
+
+section
 variable {S : Type u} {p : PFunctor.{u, u}}
 
 /-- The **`n`-step system** `Run_n(φ) = φ^{◁n} ∘ₗ δ^{(n)} : DynSystem (p^{◃n})`
@@ -53,6 +75,8 @@ after the inner unitor `compX` (`p ◃ y ≅ p`). -/
 theorem twoStep_toLens_eq (φ : DynSystem S p) :
     (Lens.id p ◃ₗ Lens.Equiv.compX.toLens) ∘ₗ φ.nStep 2 = φ.twoStep := by
   rfl
+
+end
 
 end DynSystem
 

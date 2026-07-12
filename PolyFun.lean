@@ -118,7 +118,6 @@ import PolyFun.PFunctor.Dynamical.Run
 import PolyFun.PFunctor.Dynamical.RunN
 import PolyFun.PFunctor.Dynamical.Safety
 import PolyFun.PFunctor.Dynamical.Simulation
-import PolyFun.PFunctor.Dynamical.Speedup
 import PolyFun.PFunctor.Dynamical.Trajectory
 import PolyFun.PFunctor.Equiv.Basic
 import PolyFun.PFunctor.Free.Basic
