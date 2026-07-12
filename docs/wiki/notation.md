@@ -49,6 +49,13 @@ than via custom notation, to keep elaboration predictable. Specifically:
   surface syntax for `roll` / `pure`; reach for `PFunctor.FreeM.lift`
   and `PFunctor.FreeM.liftPos` when you need to embed a single
   polynomial step.
+- The internal hom of the tensor product `q ⊸ r` (input `\multimap`,
+  U+22B8) is `PFunctor.ihom`, defined in
+  [`PolyFun/PFunctor/InternalHom.lean`](../../PolyFun/PFunctor/InternalHom.lean)
+  at `infixr:60`, scoped to the `PFunctor` namespace. Its positions are
+  the lenses `q ⇆ r` (Spivak–Niu Ex 4.78); `Responder S q` and the game
+  formers in `PolyFun/PFunctor/Dynamical/{Responder, Game}.lean` are
+  dynamical systems over `q ⊸ X` and `q ⊸ r`.
 - Machine sequential composition `M₁ ⨟ M₂` (input `\;;`, U+2A1F) is
   `PointedMachine.seqComp`, defined in
   [`PolyFun/PFunctor/Dynamical/PointedMachine.lean`](../../PolyFun/PFunctor/Dynamical/PointedMachine.lean)
