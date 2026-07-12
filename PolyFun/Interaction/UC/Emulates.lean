@@ -188,6 +188,56 @@ theorem plug_invariance
     Obs.rel (T.close real K) (T.close ideal K) :=
   h.compare K
 
+/-! ### Composition up to a plug-commutation observation
+
+The `plug`-composition theorems below (`plug_right`, `plug_compose`) are stated
+for theories with the full compact-closed `HasPlugWireFactor` structure, which
+provides `plug_comm` as a strict equality. The concrete process model
+`openTheory` is *not* `HasPlugWireFactor` on the nose — its coherences hold only
+up to weak bisimulation — so those theorems do not apply to it directly.
+
+The `_of_commObs` variants replace the strict-equality dependency with a single
+hypothesis: that `plug` commutes *up to the observation `Obs`*. Discharging that
+hypothesis for `Observation.bisim` (via `openTheory_plug_comm_iso`) makes UC
+`plug`-composition available for real processes, judged up to bisimulation. The
+`HasPlugWireFactor` versions are the special case where `Obs`-commutation is
+`plug_comm` composed with reflexivity. -/
+
+/-- `Obs.rel`-relative `plug_right`: given that `plug` commutes up to the
+observation `Obs`, replacing the plug (environment) while keeping the protocol
+`W` fixed preserves the observation. No compact-closed structure is required. -/
+theorem plug_right_of_commObs
+    {Δ : PortBoundary}
+    {Obs : Observation T}
+    (hcomm : ∀ (W : T.Obj Δ) (K : T.Obj (PortBoundary.swap Δ)),
+      Obs.rel (T.plug W K) (T.plug K W))
+    (W : T.Obj Δ)
+    {K₁ K₂ : T.Obj (PortBoundary.swap Δ)}
+    (hK : Emulates K₁ K₂ Obs) :
+    Obs.rel (T.close W K₁) (T.close W K₂) :=
+  Obs.equiv.trans (hcomm W K₁)
+    (Obs.equiv.trans (hK.compare W) (Obs.equiv.symm (hcomm W K₂)))
+
+/-- `Obs.rel`-relative **UC `plug`-composition**: if the protocol emulates its
+ideal and the environment emulates its ideal, and `plug` commutes up to the
+observation `Obs`, then the closed real-world execution is `Obs`-related to the
+closed ideal-world execution. The proof is the standard hybrid through
+`T.close ideal K_real`: `plug_invariance` (same environment, different protocol,
+needs no structure) then `plug_right_of_commObs` (same protocol, different
+environment). -/
+theorem plug_compose_of_commObs
+    {Δ : PortBoundary}
+    {Obs : Observation T}
+    (hcomm : ∀ (W : T.Obj Δ) (K : T.Obj (PortBoundary.swap Δ)),
+      Obs.rel (T.plug W K) (T.plug K W))
+    {real ideal : T.Obj Δ}
+    {K_real K_ideal : T.Obj (PortBoundary.swap Δ)}
+    (hProt : Emulates real ideal Obs)
+    (hEnv : Emulates K_real K_ideal Obs) :
+    Obs.rel (T.close real K_real) (T.close ideal K_ideal) :=
+  Obs.equiv.trans (hProt.plug_invariance K_real)
+    (plug_right_of_commObs hcomm ideal hEnv)
+
 end Emulates
 
 /-! ## Structural factorization of `close` under composition -/

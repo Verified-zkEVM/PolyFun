@@ -443,6 +443,70 @@ theorem openTheory_par_comm_iso
         ((isSilentDecoration_iff_map _ (fun X ons => by
           simp [OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor]) _ _).mp h.2)⟩
 
+/-- `plug` is commutative up to bisimilarity: closing a protocol `W` against an
+environment `K` observes the same boundary behaviour as closing `K` against `W`.
+Both sides are already closed (`Obj empty`), so — unlike `par_comm` — no boundary
+reshaping is needed; the witness swaps the two components of the product state
+and flips the internal scheduler branch. This is the commutation fact behind
+`Emulates.plug_compose_of_commObs` for the concrete process model. -/
+theorem openTheory_plug_comm_iso
+    {Δ : PortBoundary}
+    (W : OpenProcess.{u, v, w, w'} m Party Δ)
+    (K : OpenProcess.{u, v, w, w'} m Party (PortBoundary.swap Δ)) :
+    OpenProcessIso
+      ((openTheory Party m schedulerSampler).plug W K)
+      ((openTheory Party m schedulerSampler).plug K W) := by
+  simp only [openTheory, OpenProcess.interleave]
+  refine ⟨fun ⟨s₁, s₂⟩ ⟨s₂', s₁'⟩ => s₁ = s₁' ∧ s₂ = s₂',
+    fun ⟨s₁, s₂⟩ => ⟨⟨s₂, s₁⟩, rfl, rfl⟩,
+    fun ⟨s₂, s₁⟩ => ⟨⟨s₁, s₂⟩, rfl, rfl⟩, ?_, ?_, ?_, ?_⟩
+  all_goals intro ⟨s₁, s₂⟩ ⟨s₂', s₁'⟩ ⟨h1, h2⟩
+  all_goals subst h1; subst h2
+  · intro ⟨⟨b⟩, rest⟩ _
+    match b with
+    | true => exact .inl ⟨⟨⟨false⟩, rest⟩, rfl, rfl⟩
+    | false => exact .inl ⟨⟨⟨true⟩, rest⟩, rfl, rfl⟩
+  · intro ⟨⟨b⟩, rest⟩ hvisible
+    match b with
+    | true =>
+      refine ⟨⟨⟨false⟩, rest⟩, fun h => hvisible ?_, rfl, rfl⟩
+      simp only [IsSilentStep, ProcessOver.interleave]
+      simp only [IsSilentStep, ProcessOver.interleave] at h
+      exact ⟨rfl, (isSilentDecoration_iff_map _ (fun X ons => by
+          simp [OpenNodeContext.close, BoundaryAction.closed]) _ _).mpr
+        ((isSilentDecoration_iff_map _ (fun X ons => by
+          simp [OpenNodeContext.close, BoundaryAction.closed]) _ _).mp h.2)⟩
+    | false =>
+      refine ⟨⟨⟨true⟩, rest⟩, fun h => hvisible ?_, rfl, rfl⟩
+      simp only [IsSilentStep, ProcessOver.interleave]
+      simp only [IsSilentStep, ProcessOver.interleave] at h
+      exact ⟨rfl, (isSilentDecoration_iff_map _ (fun X ons => by
+          simp [OpenNodeContext.close, BoundaryAction.closed]) _ _).mpr
+        ((isSilentDecoration_iff_map _ (fun X ons => by
+          simp [OpenNodeContext.close, BoundaryAction.closed]) _ _).mp h.2)⟩
+  · intro ⟨⟨b⟩, rest⟩ _
+    match b with
+    | true => exact .inl ⟨⟨⟨false⟩, rest⟩, rfl, rfl⟩
+    | false => exact .inl ⟨⟨⟨true⟩, rest⟩, rfl, rfl⟩
+  · intro ⟨⟨b⟩, rest⟩ hvisible
+    match b with
+    | true =>
+      refine ⟨⟨⟨false⟩, rest⟩, fun h => hvisible ?_, rfl, rfl⟩
+      simp only [IsSilentStep, ProcessOver.interleave]
+      simp only [IsSilentStep, ProcessOver.interleave] at h
+      exact ⟨rfl, (isSilentDecoration_iff_map _ (fun X ons => by
+          simp [OpenNodeContext.close, BoundaryAction.closed]) _ _).mpr
+        ((isSilentDecoration_iff_map _ (fun X ons => by
+          simp [OpenNodeContext.close, BoundaryAction.closed]) _ _).mp h.2)⟩
+    | false =>
+      refine ⟨⟨⟨true⟩, rest⟩, fun h => hvisible ?_, rfl, rfl⟩
+      simp only [IsSilentStep, ProcessOver.interleave]
+      simp only [IsSilentStep, ProcessOver.interleave] at h
+      exact ⟨rfl, (isSilentDecoration_iff_map _ (fun X ons => by
+          simp [OpenNodeContext.close, BoundaryAction.closed]) _ _).mpr
+        ((isSilentDecoration_iff_map _ (fun X ons => by
+          simp [OpenNodeContext.close, BoundaryAction.closed]) _ _).mp h.2)⟩
+
 /-- The unit for parallel composition is the trivial process with no boundary
 and `PUnit` state. The sampler is the trivial `Decoration.done` sampler. -/
 def openTheoryUnit : OpenProcess.{u, v, w, w'} m Party PortBoundary.empty where
