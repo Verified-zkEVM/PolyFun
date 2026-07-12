@@ -578,12 +578,14 @@ abbrev Tickets {Γ : Interaction.Spec.Node.Context.{w, w₂}}
   PFunctor.DynSystem.Tickets process Ticket
 
 /--
-`TranscriptRel left right` is a relation between one complete step transcript
-of `left` and one complete step transcript of `right`: the dynamical-system
-`DirRel` at the step polynomial.
+`TranscriptRel left right` relates concrete process steps: each argument
+contains the source process state together with the complete transcript chosen
+at that state. It specializes dynamical-system `StepRel` to the step
+polynomial; including the source states lets relations inspect the contexts in
+which dependent transcripts are available.
 
-This is the generic step-matching interface consumed by refinement and
-bisimulation. No controller or observation structure is assumed here; those
+This is the generic step-matching interface consumed by refinement. No
+controller or observation structure is assumed here; those
 become special cases once the surrounding contexts are projected into
 `StepContext`.
 -/
@@ -591,18 +593,18 @@ abbrev TranscriptRel
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
     (left : ProcessOver Γ) (right : ProcessOver Δ) :=
-  PFunctor.DynSystem.DirRel left right
+  PFunctor.DynSystem.StepRel left right
 
 namespace TranscriptRel
 
-/-- The permissive step relation that accepts every pair of complete step
-transcripts. -/
+/-- The permissive step relation that accepts every pair of concrete process
+steps. -/
 abbrev top
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
     {left : ProcessOver Γ} {right : ProcessOver Δ} :
     TranscriptRel left right :=
-  PFunctor.DynSystem.DirRel.top
+  PFunctor.DynSystem.StepRel.top
 
 /-- Reverse a step-matching relation by flipping its two transcript
 arguments. -/
@@ -612,7 +614,7 @@ abbrev reverse
     {left : ProcessOver Γ} {right : ProcessOver Δ}
     (rel : TranscriptRel left right) :
     TranscriptRel right left :=
-  PFunctor.DynSystem.DirRel.reverse rel
+  PFunctor.DynSystem.StepRel.reverse rel
 
 /-- Conjunction of step-matching relations. -/
 abbrev inter
@@ -621,7 +623,7 @@ abbrev inter
     {left : ProcessOver Γ} {right : ProcessOver Δ}
     (first second : TranscriptRel left right) :
     TranscriptRel left right :=
-  PFunctor.DynSystem.DirRel.inter first second
+  PFunctor.DynSystem.StepRel.inter first second
 
 end TranscriptRel
 

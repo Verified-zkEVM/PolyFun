@@ -22,8 +22,8 @@ system, kept out of `DynSystem` itself so the core dynamics stay minimal:
   over instead of the state-dependent direction types themselves.
 * `DynSystem.SafetySpec` — a dynamical system together with an initial-state
   predicate, ambient assumptions, and a safety predicate.
-* `DynSystem.DirRel` — a relation between single transitions of two systems,
-  the generic step-matching interface consumed by refinement.
+Concrete steps and their relations live with the operational core in
+`PFunctor.Dynamical.Basic` as `DynSystem.Step` and `DynSystem.StepRel`.
 
 Instantiating `p` recovers the corresponding bundles for the concrete system
 notions built on `DynSystem`, such as concurrent machines and processes.
@@ -31,13 +31,13 @@ notions built on `DynSystem`, such as concurrent machines and processes.
 
 @[expose] public section
 
-universe u u₁ u₂ u₃ uA uB uA₂ uB₂ uA₃ uB₃ w
+universe u uA uB w
 
 namespace PFunctor
 
 namespace DynSystem
 
-variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
+variable {p : PFunctor.{uA, uB}}
 
 /-- A stable external label for each transition of a dynamical system: at each
 state, an assignment of an `Event` to every direction at the exposed position. -/
@@ -92,56 +92,6 @@ structure SafetySpec (p : PFunctor.{uA, uB}) extends toDynSystem : DynSystem.{u}
   assumptions : State → Prop := fun _ => True
   /-- The safety predicate that states are required to satisfy. -/
   safe : State → Prop := fun _ => True
-
-/-- A relation between one transition of `s₁` and one transition of `s₂`, at
-any pair of states: the generic step-matching interface consumed by refinement. -/
-abbrev DirRel (s₁ : DynSystem.{u₁} p) (s₂ : DynSystem.{u₂} q) :=
-  {st₁ : s₁.State} → {st₂ : s₂.State} →
-    p.B (s₁.expose st₁) → q.B (s₂.expose st₂) → Prop
-
-namespace DirRel
-
-variable {s₁ : DynSystem.{u₁} p} {s₂ : DynSystem.{u₂} q}
-
-/-- Relational composition of direction matchers. The intermediate state and
-direction are retained existentially because direction types depend on state. -/
-def comp {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem.{u₃} r}
-    (first : DirRel s₁ s₂) (second : DirRel s₂ s₃) : DirRel s₁ s₃ :=
-  fun {_} {_} d₁ d₃ =>
-    ∃ st₂ : s₂.State, ∃ d₂ : q.B (s₂.expose st₂), first d₁ d₂ ∧ second d₂ d₃
-
-/-- The permissive step relation that accepts every pair of transitions. -/
-def top : DirRel s₁ s₂ := fun _ _ => True
-
-@[simp] theorem top_apply {st₁ : s₁.State} {st₂ : s₂.State}
-    (d₁ : p.B (s₁.expose st₁)) (d₂ : q.B (s₂.expose st₂)) :
-    (top : DirRel s₁ s₂) d₁ d₂ := trivial
-
-/-- Reverse a step-matching relation by flipping its two arguments. -/
-def reverse (rel : DirRel s₁ s₂) : DirRel s₂ s₁ := fun d₂ d₁ => rel d₁ d₂
-
-@[simp] theorem reverse_apply (rel : DirRel s₁ s₂) {st₁ : s₁.State} {st₂ : s₂.State}
-    (d₂ : q.B (s₂.expose st₂)) (d₁ : p.B (s₁.expose st₁)) :
-    reverse rel d₂ d₁ ↔ rel d₁ d₂ := Iff.rfl
-
-/-- Conjunction of step-matching relations. -/
-def inter (first second : DirRel s₁ s₂) : DirRel s₁ s₂ :=
-  fun d₁ d₂ => first d₁ d₂ ∧ second d₁ d₂
-
-@[simp] theorem inter_apply (first second : DirRel s₁ s₂)
-    {st₁ : s₁.State} {st₂ : s₂.State}
-    (d₁ : p.B (s₁.expose st₁)) (d₂ : q.B (s₂.expose st₂)) :
-    inter first second d₁ d₂ ↔ first d₁ d₂ ∧ second d₁ d₂ := Iff.rfl
-
-/-- The synchronized step relation between two systems over a shared interface:
-the two states expose equal positions and the chosen directions agree up to
-transport along that equality. This is the step-matching relation at which a
-step-synchronized simulation (`DynSystem.IsSimulation`) is a forward
-simulation. -/
-def sync (t₁ : DynSystem.{u₁} p) (t₂ : DynSystem.{u₂} p) : DirRel t₁ t₂ :=
-  fun {st₁} {st₂} d₁ d₂ => t₁.expose st₁ = t₂.expose st₂ ∧ HEq d₁ d₂
-
-end DirRel
 
 end DynSystem
 

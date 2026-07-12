@@ -37,7 +37,7 @@ system lives in `PolyFun.PFunctor.Dynamical.Run` and `…Dynamical.Trajectory`.
 
 @[expose] public section
 
-universe u uA uB uO uI
+universe u u₁ u₂ u₃ uA uB uA₂ uB₂ uA₃ uB₃ uO uI
 
 namespace PFunctor
 
@@ -59,7 +59,7 @@ structure DynSystem (p : PFunctor.{uA, uB}) where
 
 namespace DynSystem
 
-variable {p : PFunctor.{uA, uB}}
+variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
 
 /-- The interface lens `selfMonomial State ⟹ p` of a dynamical system: the
 "a dynamical system *is* a lens" identification. -/
@@ -96,6 +96,80 @@ def out (s : DynSystem p) (st : s.State) : p.Obj s.State := ⟨s.expose st, s.up
 
 /-- Every dynamical system is an F-coalgebra of its interface's extension functor. -/
 instance (s : DynSystem p) : Coalg p.Obj s.State := ⟨s.out⟩
+
+/-! ## Concrete steps and step relations -/
+
+/-- A concrete step offered by `s`: its source state together with one
+direction available at the position exposed by that state. The target state is
+determined by `s.update`, so it is not stored separately. -/
+abbrev Step (s : DynSystem.{u} p) := Σ st : s.State, p.B (s.expose st)
+
+namespace Step
+
+/-- The source state of a concrete step. -/
+abbrev source {s : DynSystem.{u} p} (step : s.Step) : s.State := step.1
+
+/-- The direction selected by a concrete step at its source state. -/
+abbrev direction {s : DynSystem.{u} p} (step : s.Step) : p.B (s.expose step.source) := step.2
+
+/-- The target state determined by executing a concrete step. -/
+def target {s : DynSystem.{u} p} (step : s.Step) : s.State :=
+  s.update step.source step.direction
+
+end Step
+
+/-- A relation between concrete steps of two dynamical systems. Unlike a
+relation on bare directions, the source states are explicit first-class data. -/
+abbrev StepRel (s₁ : DynSystem.{u₁} p) (s₂ : DynSystem.{u₂} q) :=
+  s₁.Step → s₂.Step → Prop
+
+namespace StepRel
+
+variable {s₁ : DynSystem.{u₁} p} {s₂ : DynSystem.{u₂} q}
+
+/-- Relational composition of step relations. -/
+def comp {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem.{u₃} r}
+    (first : StepRel s₁ s₂) (second : StepRel s₂ s₃) : StepRel s₁ s₃ :=
+  fun step₁ step₃ => ∃ step₂, first step₁ step₂ ∧ second step₂ step₃
+
+@[simp] theorem comp_apply {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem.{u₃} r}
+    (first : StepRel s₁ s₂) (second : StepRel s₂ s₃)
+    (step₁ : s₁.Step) (step₃ : s₃.Step) :
+    comp first second step₁ step₃ ↔
+      ∃ step₂, first step₁ step₂ ∧ second step₂ step₃ := Iff.rfl
+
+/-- The permissive relation accepting every pair of concrete steps. -/
+def top : StepRel s₁ s₂ := fun _ _ => True
+
+@[simp] theorem top_apply (step₁ : s₁.Step) (step₂ : s₂.Step) :
+    (top : StepRel s₁ s₂) step₁ step₂ := trivial
+
+/-- Reverse a step relation by flipping its arguments. -/
+def reverse (rel : StepRel s₁ s₂) : StepRel s₂ s₁ := fun step₂ step₁ => rel step₁ step₂
+
+@[simp] theorem reverse_apply (rel : StepRel s₁ s₂) (step₂ : s₂.Step) (step₁ : s₁.Step) :
+    reverse rel step₂ step₁ ↔ rel step₁ step₂ := Iff.rfl
+
+/-- Conjunction of step relations. -/
+def inter (first second : StepRel s₁ s₂) : StepRel s₁ s₂ :=
+  fun step₁ step₂ => first step₁ step₂ ∧ second step₁ step₂
+
+@[simp] theorem inter_apply (first second : StepRel s₁ s₂)
+    (step₁ : s₁.Step) (step₂ : s₂.Step) :
+    inter first second step₁ step₂ ↔ first step₁ step₂ ∧ second step₁ step₂ := Iff.rfl
+
+/-- Synchronized concrete steps over a shared interface expose equal positions
+and select equal directions up to transport along that equality. -/
+def sync (t₁ : DynSystem.{u₁} p) (t₂ : DynSystem.{u₂} p) : StepRel t₁ t₂ :=
+  fun ⟨st₁, d₁⟩ ⟨st₂, d₂⟩ => t₁.expose st₁ = t₂.expose st₂ ∧ HEq d₁ d₂
+
+@[simp] theorem sync_apply (t₁ : DynSystem.{u₁} p) (t₂ : DynSystem.{u₂} p)
+    (st₁ : t₁.State) (d₁ : p.B (t₁.expose st₁))
+    (st₂ : t₂.State) (d₂ : p.B (t₂.expose st₂)) :
+    sync t₁ t₂ ⟨st₁, d₁⟩ ⟨st₂, d₂⟩ ↔
+      t₁.expose st₁ = t₂.expose st₂ ∧ HEq d₁ d₂ := Iff.rfl
+
+end StepRel
 
 end DynSystem
 

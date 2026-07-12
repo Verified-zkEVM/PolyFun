@@ -14,7 +14,7 @@ Regression tests: equality is a simulation of a system by itself,
 `implements_of_isSimulation` turns a simulation into behaviour equality, a
 coalgebra-morphism graph is a simulation preserving behaviour, and a
 step-synchronized simulation embeds into the forward-simulation layer at
-`DirRel.sync`.
+`StepRel.sync`.
 -/
 
 @[expose] public section
@@ -48,25 +48,31 @@ example (D : DynSystem.{u} p) (s : D.State) :
     D.behavior (Coalg.Hom.id (F := p.Obj) (S₁ := D.State) s) = D.behavior s :=
   DynSystem.behavior_coalgHom Coalg.Hom.id s
 
-/-- A step-synchronized simulation is a forward simulation at `DirRel.sync`:
-the identity simulation on the trivial verification bundle. -/
-noncomputable example (D : DynSystem.{u} p) :
+/-- A step-synchronized simulation is an operational forward simulation at
+`StepRel.sync`. -/
+example (D : DynSystem.{u} p) :
+    DynSystem.ForwardSimulation D D (DynSystem.StepRel.sync D D) :=
+  DynSystem.ForwardSimulation.ofIsSimulation (idSim D)
+
+/-- The same synchronized simulation lifts to safety refinement once the three
+verification-policy obligations are supplied. -/
+example (D : DynSystem.{u} p) :
     DynSystem.SafetyRefinement
       ⟨D, fun _ => True, fun _ => True, fun _ => True⟩
       ⟨D, fun _ => True, fun _ => True, fun _ => True⟩
-      (DynSystem.DirRel.sync D D) :=
+      (DynSystem.StepRel.sync D D) :=
   DynSystem.SafetyRefinement.ofIsSimulation (idSim D)
     (fun st _ => ⟨st, trivial, rfl⟩) (fun _ _ => trivial) (fun _ _ => trivial)
 
-/-- Forward simulations compose, retaining the intermediate state and
-direction witnesses required by dependent interfaces. -/
-noncomputable example (D : DynSystem.{u} p) :
+/-- Safety refinements compose by composing their operational simulations and
+their verification-policy obligations. -/
+example (D : DynSystem.{u} p) :
     let system : DynSystem.SafetySpec.{u} p :=
       ⟨D, fun _ => True, fun _ => True, fun _ => True⟩
     DynSystem.SafetyRefinement system system
-      (DynSystem.DirRel.comp
-        (DynSystem.DirRel.top : DynSystem.DirRel system.toDynSystem system.toDynSystem)
-        (DynSystem.DirRel.top : DynSystem.DirRel system.toDynSystem system.toDynSystem)) := by
+      (DynSystem.StepRel.comp
+        (DynSystem.StepRel.top : DynSystem.StepRel system.toDynSystem system.toDynSystem)
+        (DynSystem.StepRel.top : DynSystem.StepRel system.toDynSystem system.toDynSystem)) := by
   intro system
   exact (DynSystem.SafetyRefinement.reflTop system).comp
     (DynSystem.SafetyRefinement.reflTop system)

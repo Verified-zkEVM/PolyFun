@@ -339,7 +339,8 @@ theorem relUpTo_of_pointwise
     {right : ProcessOver Δ}
     (rel : ProcessOver.TranscriptRel left right)
     (leftRun : Run left) (rightRun : Run right)
-    (hrel : ∀ n, rel (leftRun.transcript n) (rightRun.transcript n)) :
+    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
+      ⟨rightRun.state n, rightRun.transcript n⟩) :
     ∀ n, RelUpTo rel leftRun rightRun n :=
   PFunctor.DynSystem.Run.relUpTo_of_pointwise rel leftRun rightRun hrel
 
@@ -351,7 +352,8 @@ theorem rel_of_pointwise
     {right : ProcessOver Δ}
     (rel : ProcessOver.TranscriptRel left right)
     (leftRun : Run left) (rightRun : Run right)
-    (hrel : ∀ n, rel (leftRun.transcript n) (rightRun.transcript n)) :
+    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
+      ⟨rightRun.state n, rightRun.transcript n⟩) :
     Rel rel leftRun rightRun :=
   PFunctor.DynSystem.Run.rel_of_pointwise rel leftRun rightRun hrel
 

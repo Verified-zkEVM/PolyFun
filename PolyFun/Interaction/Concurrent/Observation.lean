@@ -132,26 +132,18 @@ of `right`, and `Rel` lifts that choice to whole finite prefixes.
 -/
 def Rel {Party : Type u}
     {left right : Process Party}
-    (rel :
-      {pL : left.Proc} → {pR : right.Proc} →
-        (left.step pL).spec.Transcript →
-        (right.step pR).spec.Transcript →
-        Prop) :
+    (rel : Concurrent.Process.TranscriptRel left right) :
     {pL : left.Proc} → {pR : right.Proc} → {n : Nat} →
       Process.Prefix left pL n → Process.Prefix right pR n → Prop
   | _, _, _, .nil, .nil => True
-  | _, _, _, .step trL tailL, .step trR tailR =>
-      rel trL trR ∧ Rel rel tailL tailR
+  | pL, pR, _, .step trL tailL, .step trR tailR =>
+      rel ⟨pL, trL⟩ ⟨pR, trR⟩ ∧ Rel rel tailL tailR
 
 /-- Transporting both prefixes along equal start states does not change their
 matching relation. -/
 theorem rel_cast {Party : Type u}
     {left right : Process Party}
-    (rel :
-      {pL : left.Proc} → {pR : right.Proc} →
-        (left.step pL).spec.Transcript →
-        (right.step pR).spec.Transcript →
-        Prop)
+    (rel : Concurrent.Process.TranscriptRel left right)
     {pL pL' : left.Proc} {pR pR' : right.Proc} {n : Nat}
     (hL : pL = pL') (hR : pR = pR')
     (leftPrefix : Process.Prefix left pL n)
@@ -167,9 +159,9 @@ theorem rel_cast {Party : Type u}
 end Prefix
 
 /--
-`TranscriptRel left right` is a cross-process relation on one complete process
-step transcript of `left` and one complete process step transcript of `right`:
-the closed-world `Concurrent.Process.TranscriptRel`.
+`Concurrent.Process.TranscriptRel left right` is a cross-process relation on
+concrete process steps. Each step pairs its source process state with the
+complete transcript selected there.
 
 This is the basic matching interface used later by refinement, equivalence, and
 observation-preservation theorems. The permissive relation and conjunction live
@@ -186,7 +178,7 @@ Match two transcripts by equality of their current controlling parties.
 -/
 def byController {Party : Type u} {left right : Process Party} :
     TranscriptRel left right :=
-  fun {pL} {pR} trL trR =>
+  fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     (left.step pL).currentController? trL = (right.step pR).currentController? trR
 
 /--
@@ -194,7 +186,7 @@ Match two transcripts by equality of their full controller paths.
 -/
 def byPath {Party : Type u} {left right : Process Party} :
     TranscriptRel left right :=
-  fun {pL} {pR} trL trR =>
+  fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     (left.step pL).controllerPath trL = (right.step pR).controllerPath trR
 
 /--
@@ -204,7 +196,7 @@ def byEvent {Party : Type u} {left right : Process Party}
     {Event : Type w}
     (eventL : left.EventMap Event) (eventR : right.EventMap Event) :
     TranscriptRel left right :=
-  fun {pL} {pR} trL trR =>
+  fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     eventL pL trL = eventR pR trR
 
 /--
@@ -214,7 +206,7 @@ def byTicket {Party : Type u} {left right : Process Party}
     {Ticket : Type w}
     (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket) :
     TranscriptRel left right :=
-  fun {pL} {pR} trL trR =>
+  fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     ticketL pL trL = ticketR pR trR
 
 /-- Match two transcripts by equality of the packed local observations exposed
@@ -226,7 +218,7 @@ indistinguishable to `me` at the step level.
 def byObservation {Party : Type u} [DecidableEq Party]
     {left right : Process Party} (me : Party) :
     TranscriptRel left right :=
-  fun {pL} {pR} trL trR =>
+  fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     let obsL : List PackedObs := Step.obsList me (left.step pL) trL
     let obsR : List PackedObs := Step.obsList me (right.step pR) trR
     obsL = obsR
@@ -430,7 +422,8 @@ def RelUpTo {Party : Type u}
     (leftRun : Process.Run left) (rightRun : Process.Run right) : Nat → Prop
   | 0 => True
   | n + 1 =>
-      rel (leftRun.transcript 0) (rightRun.transcript 0) ∧
+      rel ⟨leftRun.state 0, leftRun.transcript 0⟩
+          ⟨rightRun.state 0, rightRun.transcript 0⟩ ∧
         RelUpTo rel leftRun.tail rightRun.tail n
 
 /--
@@ -452,7 +445,8 @@ theorem relUpTo_of_pointwise {Party : Type u}
     {left right : Process Party}
     (rel : TranscriptRel left right)
     (leftRun : Process.Run left) (rightRun : Process.Run right)
-    (hrel : ∀ n, rel (leftRun.transcript n) (rightRun.transcript n)) :
+    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
+      ⟨rightRun.state n, rightRun.transcript n⟩) :
     ∀ n, RelUpTo rel leftRun rightRun n := by
   intro n
   induction n generalizing leftRun rightRun with
@@ -471,7 +465,8 @@ theorem rel_of_pointwise {Party : Type u}
     {left right : Process Party}
     (rel : TranscriptRel left right)
     (leftRun : Process.Run left) (rightRun : Process.Run right)
-    (hrel : ∀ n, rel (leftRun.transcript n) (rightRun.transcript n)) :
+    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
+      ⟨rightRun.state n, rightRun.transcript n⟩) :
     Rel rel leftRun rightRun :=
   relUpTo_of_pointwise rel leftRun rightRun hrel
 

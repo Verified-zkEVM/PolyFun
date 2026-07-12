@@ -25,11 +25,12 @@ needed once looping / sequential composition introduces silent steps.
 Coalgebra morphisms (`Coalg.Hom`) are the functional instances of this notion:
 `isSimulation_graph` shows the graph of a map commuting with the structure maps
 is a simulation, so morphisms preserve behaviour (`behavior_coalgHom`). The
-lax, existential counterpart between verification-oriented `SafetySpec`s — matching
-steps by a `DirRel` and transporting init / assumption / safety obligations —
-is `DynSystem.SafetyRefinement` in `PolyFun/PFunctor/Dynamical/Refinement.lean`;
-`SafetyRefinement.ofIsSimulation` embeds a step-synchronized simulation there
-at the relation `DirRel.sync`.
+lax, existential operational counterpart between possibly different
+interfaces is `DynSystem.ForwardSimulation` in
+`PolyFun/PFunctor/Dynamical/Refinement.lean`. `SafetyRefinement` adds initial,
+assumption, and safety preservation for verification-oriented `SafetySpec`s;
+`ForwardSimulation.ofIsSimulation` embeds this synchronized notion at
+`StepRel.sync`.
 -/
 
 @[expose] public section

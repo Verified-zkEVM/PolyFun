@@ -27,7 +27,7 @@ For a general `p`-system:
   `Run.take` truncating to a `Prefix` and `Run.eventsUpTo` / `Run.ticketsUpTo`
   reading off labels along the way.
 * `DynSystem.Run.RelUpTo` / `DynSystem.Run.Rel` — step-by-step matching of two
-  runs by a `DirRel`.
+  runs by a `StepRel`.
 
 For Moore machines and closed systems:
 
@@ -222,26 +222,28 @@ variable {s₁ : DynSystem.{u₁} p} {s₂ : DynSystem.{u₂} q}
 
 /-- `RelUpTo rel r₁ r₂ n` states that the first `n` steps of the runs `r₁` and
 `r₂` match step-by-step according to `rel`. -/
-def RelUpTo (rel : DirRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂) : ℕ → Prop
+def RelUpTo (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂) : ℕ → Prop
   | 0 => True
-  | n + 1 => rel (r₁.dir 0) (r₂.dir 0) ∧ RelUpTo rel r₁.tail r₂.tail n
+  | n + 1 => rel ⟨r₁.state 0, r₁.dir 0⟩ ⟨r₂.state 0, r₂.dir 0⟩ ∧
+      RelUpTo rel r₁.tail r₂.tail n
 
 /-- `Rel rel r₁ r₂` states that every finite prefix of the runs `r₁` and `r₂`
 matches according to `rel`. -/
-def Rel (rel : DirRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂) : Prop :=
+def Rel (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂) : Prop :=
   ∀ n, RelUpTo rel r₁ r₂ n
 
 /-- Pointwise step matching implies prefix matching of the first `n` steps. -/
-theorem relUpTo_of_pointwise (rel : DirRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂)
-    (hrel : ∀ n, rel (r₁.dir n) (r₂.dir n)) : ∀ n, RelUpTo rel r₁ r₂ n := by
+theorem relUpTo_of_pointwise (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂)
+    (hrel : ∀ n, rel ⟨r₁.state n, r₁.dir n⟩ ⟨r₂.state n, r₂.dir n⟩) :
+    ∀ n, RelUpTo rel r₁ r₂ n := by
   intro n
   induction n generalizing r₁ r₂ with
   | zero => trivial
   | succ n ih => exact ⟨hrel 0, ih r₁.tail r₂.tail (fun k => hrel k.succ)⟩
 
 /-- Pointwise step matching implies full run matching. -/
-theorem rel_of_pointwise (rel : DirRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂)
-    (hrel : ∀ n, rel (r₁.dir n) (r₂.dir n)) : Rel rel r₁ r₂ :=
+theorem rel_of_pointwise (rel : StepRel s₁ s₂) (r₁ : Run s₁) (r₂ : Run s₂)
+    (hrel : ∀ n, rel ⟨r₁.state n, r₁.dir n⟩ ⟨r₂.state n, r₂.dir n⟩) : Rel rel r₁ r₂ :=
   relUpTo_of_pointwise rel r₁ r₂ hrel
 
 end Run

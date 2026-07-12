@@ -358,7 +358,7 @@ equivalence (`DynSystem.behavior`, `DynSystem.ObsEq`), orbits
 (`DynSystem.Run` / `DynSystem.Prefix`, of which `ProcessOver.Run` /
 `ProcessOver.Prefix` are the transcript-vocabulary views), transition
 metadata (`DynSystem.EventMap`, `DynSystem.Labeled`, `DynSystem.SafetySpec`,
-`DynSystem.DirRel`), and the combinators (`ProcessOver.interleave` is the
+`DynSystem.StepRel`), and the combinators (`ProcessOver.interleave` is the
 `wrap` of `DynSystem.choiceProd` along the scheduler wiring lens,
 `interleave_eq_wrap_choiceProd`).
 

@@ -509,8 +509,8 @@ example : loopMappedRun.state 4 = PUnit.unit := rfl
 
 example :
     Observation.Process.TranscriptRel.byTicket loopTicketed.ticket loopTicketed.ticket
-      (st₁ := trueRun.state 3) (st₂ := loopMappedRun.state 3)
-      (trueRun.transcript 3) (loopMappedRun.transcript 3) := by
+      ⟨trueRun.state 3, trueRun.transcript 3⟩
+      ⟨loopMappedRun.state 3, loopMappedRun.transcript 3⟩ := by
   exact loopSim.match_mapRun (stSpec := PUnit.unit) trueRun trivial 3
 
 example : Process.SafetySpec.Safe loopSystem loopMappedRun := by

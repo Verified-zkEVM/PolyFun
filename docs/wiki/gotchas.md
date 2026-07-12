@@ -91,20 +91,15 @@ non-standard instances.
 
 ## Proof Patterns
 
-### 8b. One canonical implicit-function-type abbrev per relation
+### 8b. Keep one canonical concrete-step relation type
 
-Step-matching relation types like `PFunctor.DynSystem.DirRel` (and its
-views `ProcessOver.TranscriptRel`, `Process.TranscriptRel`,
-`Observation.Process.TranscriptRel`) are abbrevs whose body is an
-*implicit function type* (`{st₁} → {st₂} → … → Prop`). All such views
-must be thin aliases of the **one canonical** abbrev. If two independent
-abbrevs spell out the same implicit pi, terms typed by one fail to
-elaborate against binders typed by the other: the implicit-lambda
-feature eta-expands through both spellings, whnf beta-erases the state
-dependency for state-independent processes, and the state metavariables
-end up unassignable ("don't know how to synthesize implicit argument").
-For one-state toy systems this can be genuinely uninferable — pass the
-states explicitly (`(st₁ := …) (st₂ := …)`) at such call sites.
+`PFunctor.DynSystem.StepRel s₁ s₂` is the canonical relation type on explicit
+concrete steps (`s₁.Step → s₂.Step → Prop`). Its process-specific views
+(`ProcessOver.TranscriptRel`, `Process.TranscriptRel`, and
+`Observation.Process.TranscriptRel`) should remain abbrevs of that one type.
+Keeping the source state inside each step avoids hidden implicit state
+arguments and makes applications, composition witnesses, and type errors show
+the dependent data at the point where it is used.
 
 ### 8c. Alias layers over generic types: shadow the chained operations
 
