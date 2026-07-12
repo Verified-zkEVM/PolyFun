@@ -1,100 +1,98 @@
-# Bisimulation And Behavioural Equivalence
+# Bisimulation and behavioural equivalence
 
-This page is the agent-facing glossary for the several bisimulation and
-behavioural-equivalence notions in PolyFun. They span three layers (interaction
-trees, dynamical systems, UC open processes) and are easy to confuse because the
-words "bisimulation", "weak", and "observation" are reused with different
-technical meanings. The source files are the final authority; this page situates
-them relative to one another.
+PolyFun has several related notions whose names are easy to conflate. This page
+records their precise boundaries.
 
-## The generic framework: `Control.LTS` + `Control.WeakBisim` / `StrongBisim`
+## Generic labelled transition systems
 
-`PolyFun/Control/Bisimulation.lean` factors the common construction out of the
-per-layer relations. A `Control.LTS Obs` is a labeled transition system: a state
-space, a family of `Move`s out of each state, a `next` successor per move, and a
-`label` that is either **silent** (`none`, a τ-move) or a **visible** observation
-(`some o`). On two systems sharing an observation alphabet it defines two
-bisimulations:
+`PolyFun/Control/Bisimulation.lean` defines `Control.LTS Obs`. A direct
+transition has an `Option Obs` label: `none` is silent (`τ`), while `some o` is
+visible. The derived transitions are:
 
-- **`StrongBisim`** (`IsStrongBisim`): every move — silent or visible — is
-  matched *immediately* by an equally-labeled move preserving the relation.
-- **`WeakBisim`** (`IsWeakBisim`): silent moves may be matched by *any* move or
-  **stuttered** (the other side stays put); visible moves are matched
-  immediately by an equally-labeled visible move.
+- `SilentSteps`: zero or more silent transitions;
+- `DelayStep none`: `τ*`;
+- `DelayStep (some o)`: `τ*` followed by one `o`-transition;
+- `WeakStep none`: `τ*`;
+- `WeakStep (some o)`: `τ*`, one `o`-transition, then `τ*`.
 
-Both come with `refl`/`symm`/`trans` proved **once**, and `StrongBisim.toWeakBisim`
-records the inclusion `StrongBisim ⊆ WeakBisim`. Two properties are worth
-knowing:
+This gives the standard spectrum:
 
-- **`trans` is constructive / axiom-free.** Silence is a decidable `Option`
-  label, so the transitivity stutter argument classifies the middle move by
-  reading its label — no `Classical.em`. (`#print axioms Control.WeakBisim.trans`
-  is `[]`.)
-- **`WeakBisim` matches visible moves immediately** — it does *not* absorb silent
-  steps *around* a visible action. This is the "delay" flavour, not full weak
-  bisimulation; see the spectrum below.
+| Flavour | Match for a silent transition | Match for a visible transition |
+|---|---|---|
+| strong | one silent transition | one equally labelled transition |
+| delay | `τ*` | `τ*` then one equally labelled transition |
+| weak | `τ*` | `τ*`, one equally labelled transition, `τ*` |
 
-## The spectrum
+The API deliberately separates three levels:
 
-For a fixed transition system, the notions are ordered strong ⊂ delay ⊂ weak:
+- `Is{Strong,Delay,Weak}Simulation` and `Is…Bisimulation` concern a supplied
+  relation and impose no totality condition;
+- `{Strong,Delay,Weak}Bisimilar L₁ L₂ s₁ s₂` concern a particular pair of
+  states and have reflexive, symmetric, and transitive laws;
+- `{Strong,Delay,Weak}BisimulationEquivalent L₁ L₂` require a bisimulation relation
+  that is total on both state spaces.
 
-| Flavour | Silent steps | Visible steps | In PolyFun |
-|---|---|---|---|
-| **strong** | matched immediately | matched immediately | `ITree.Bisim` (`= Eq`); `DynSystem.ObsEq` / `IsSimulation`; `Control.StrongBisim` |
-| **delay** | absorbed (stutter) | matched **immediately** | `Interaction.UC.OpenProcessIso` `=` `Control.WeakBisim` |
-| **weak** | absorbed | matched **up to** silent steps | `ITree.WeakBisim` (`eutt` / `≈`) |
+Closure lemmas lift simulations across silent/delay/weak paths, and the
+inclusions `strong ⊆ delay ⊆ weak` are explicit. State and move universes are
+independent on the two sides.
 
-The three are genuinely different equivalences, not one notion written three
-times. In particular `eutt` relates `pure r ≈ step (pure r)` (a silent step
-before an observation), which is **not** an `OpenProcessIso`/`Control.WeakBisim`
-relation. So `ITree.WeakBisim` is *not* an instance of `Control.WeakBisim`; a
-fully-weak generic notion (visible-up-to-silent, via a τ*-closure) is the natural
-extension and is future work.
+## Dynamical systems
 
-## Per-layer notions
+`DynSystem.behavior : S → M p` is the unique map into the terminal
+`p`-coalgebra. `DynSystem.ObsEq` is equality of those behaviour trees.
+`DynSystem.IsSimulation` is the synchronized, polynomial-specific relation:
+related states expose the same position and remain related after every
+direction.
 
-### Interaction trees (`PolyFun/ITree/Bisim/`)
-- `ITree.Bisim t s := t = s` — **strong** bisimulation *is definitional
-  equality*, because `ITree F = M (Poly F)` is a terminal coalgebra. This is the
-  setoid/paco-free payoff the project advertises.
-- `ITree.WeakBisim` (`≈`, Coq `eutt`) — **weak** bisimulation, a Tarski greatest
-  fixed point of "strip finitely many τ-`step` nodes (`TauSteps`) then match
-  observable heads (`Match`)". Equivalence + `Setoid` + continuation
-  bind-congruence in `Bisim/Equiv.lean`, `Bisim/Bind.lean`.
+`Dynamical/Bisimulation.lean` supplies an adapter:
 
-### Dynamical systems (`PolyFun/PFunctor/Dynamical/`)
-- `DynSystem.behavior : S → M p` (`Trajectory.lean`) — the unique map into the
-  terminal `p`-coalgebra; `DynSystem.ObsEq s₁ s₂ := behavior s₁ = behavior s₂`
-  is behavioural equivalence as **honest `Eq`** of behaviour trees.
-- `DynSystem.IsSimulation` / `behavior_eq_of_isSimulation` (`Simulation.lean`) —
-  a step-synchronized simulation forces equal behaviour trees, via
-  `M.corec_eq_corec`.
-- `DynSystem.ForwardSimulation` / `Bisimulation` (`Refinement.lean`) — the lax,
-  step-relation-parameterized simulations with run-transport; instantiated by
-  `Concurrent.Bisimulation` (a *strong* relational bisimulation over process
-  transcripts).
-- **Framework connection** (`Dynamical/Bisimulation.lean`): `DynSystem.toLTS`
-  exhibits a `p`-system as a `Control.LTS`, and
-  `DynSystem.obsEq_of_isStrongBisim` proves a generic `Control.StrongBisim` on
-  the induced systems implies `ObsEq` — "bisimulation ⟹ behavioural
-  equivalence", landing the generic framework on the M-finality equality.
+- `DynSystem.toLTS` records the current polynomial position and direction as
+  visible observations;
+- `isSimulation_of_isStrongSimulation` turns a generic strong LTS simulation
+  into the existing `DynSystem.IsSimulation`;
+- `isStrongSimulation_of_isSimulation` gives the converse, and
+  `isStrongSimulation_toLTS_iff_isSimulation` packages the exact
+  correspondence;
+- `obsEq_of_isStrongSimulation` then reuses
+  `behavior_eq_of_isSimulation` to obtain equality of behavior trees.
 
-### UC open processes (`PolyFun/Interaction/UC/`)
-- `OpenProcessIso` (`OpenProcess.lean`) — the silent-step-absorbing **delay**
-  bisimulation used to prove the concrete `openTheory` monoidal/compact-closed
-  laws up to bisimilarity. `OpenProcessBisim.lean` proves
-  `openProcessIso_iff_weakBisim` (it *is* `Control.WeakBisim` at the process
-  LTS) and re-derives its `refl`/`symm`/`trans` from the generic lemmas.
-- `Observation.bisim` (`BisimObservation.lean`) — `OpenProcessIso` packaged as
-  an `Emulates` `Observation`, so UC emulation can be judged **up to weak
-  (delay) bisimulation** rather than syntactic equality. With
-  `Emulates.plug_compose_of_commObs` / `plug_compose_bisim`, UC `plug`-
-  composition applies to the concrete process model (which is not
-  `HasPlugWireFactor` on the nose).
+The adapter contains no second coinduction proof; terminal-coalgebra finality
+remains the single behavioural-equality principle.
 
-## See also
+## Interaction trees
 
-- [`itree.md`](itree.md), [`pfunctor.md`](pfunctor.md),
-  [`interaction.md`](interaction.md) for the surrounding layers.
-- `docs/reading/roadmap.md` long-term follow-on #4 (the sim/bisim glossary this
-  page discharges) and the delay-vs-weak finding.
+- `ITree.Bisim` is strong/structural bisimulation and coincides with `Eq` by the
+  M-type universal property.
+- `ITree.WeakBisim` is the coinductive `eutt`-style relation already developed
+  in `ITree/Bisim`. It strips finite `TauSteps` around observable heads.
+
+The generic LTS weak closure and `ITree.WeakBisim` describe the same standard
+shape at different representation layers; no adapter is claimed here until it
+preserves dependent event labels and continuations explicitly.
+
+## UC open processes
+
+`OpenProcess.activationLTS` labels a complete silent transcript by `none` and
+every activated transcript by the single observation `some ()`.
+`OpenProcessActivationEquiv` is exactly whole-system delay bisimulation of
+these generic labelled transition systems. The structural `openTheory` laws
+prove the stronger delay notion (not merely weak bisimulation): their matches
+are immediate activation-preserving steps or genuine silent stutters.
+
+This observation is deliberately coarse. It does not retain packet/action
+identity or `stepSampler` effects, and is therefore **not** exported as a UC
+security `Observation`.
+
+The generic theorems `Emulates.plug_right_of_observes_plug_comm` and
+`plug_compose_of_observes_plug_comm` are still useful: a concrete security observation can
+apply them once it proves plug commutation while retaining the events and
+effects relevant to the security statement.
+`openTheory_plug_comm_activation_equiv` remains
+a structural coherence lemma, not an indistinguishability definition.
+
+## Naming rule
+
+Use “simulation” for a directional, relation-local preservation theorem;
+“bisimulation” when both directions are present; “bisimilar” for a state pair;
+and “bisimulation equivalent” only for a total whole-system witness. Always say
+strong, delay, or weak when silent transitions are possible.

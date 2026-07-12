@@ -194,19 +194,20 @@ The `plug`-composition theorems below (`plug_right`, `plug_compose`) are stated
 for theories with the full compact-closed `HasPlugWireFactor` structure, which
 provides `plug_comm` as a strict equality. The concrete process model
 `openTheory` is *not* `HasPlugWireFactor` on the nose — its coherences hold only
-up to weak bisimulation — so those theorems do not apply to it directly.
+up to coarse activation equivalence — so those theorems do not apply to it
+directly.
 
-The `_of_commObs` variants replace the strict-equality dependency with a single
-hypothesis: that `plug` commutes *up to the observation `Obs`*. Discharging that
-hypothesis for `Observation.bisim` (via `openTheory_plug_comm_iso`) makes UC
-`plug`-composition available for real processes, judged up to bisimulation. The
+The `_of_observes_plug_comm` variants replace the strict-equality dependency with a single
+hypothesis: that `plug` commutes *up to the observation `Obs`*. The
 `HasPlugWireFactor` versions are the special case where `Obs`-commutation is
-`plug_comm` composed with reflexivity. -/
+`plug_comm` composed with reflexivity. A concrete model must supply an
+observation that retains the events its security statement intends to expose;
+a scheduler-only structural relation is not sufficient by itself. -/
 
 /-- `Obs.rel`-relative `plug_right`: given that `plug` commutes up to the
 observation `Obs`, replacing the plug (environment) while keeping the protocol
 `W` fixed preserves the observation. No compact-closed structure is required. -/
-theorem plug_right_of_commObs
+theorem plug_right_of_observes_plug_comm
     {Δ : PortBoundary}
     {Obs : Observation T}
     (hcomm : ∀ (W : T.Obj Δ) (K : T.Obj (PortBoundary.swap Δ)),
@@ -223,9 +224,9 @@ ideal and the environment emulates its ideal, and `plug` commutes up to the
 observation `Obs`, then the closed real-world execution is `Obs`-related to the
 closed ideal-world execution. The proof is the standard hybrid through
 `T.close ideal K_real`: `plug_invariance` (same environment, different protocol,
-needs no structure) then `plug_right_of_commObs` (same protocol, different
+needs no structure) then `plug_right_of_observes_plug_comm` (same protocol, different
 environment). -/
-theorem plug_compose_of_commObs
+theorem plug_compose_of_observes_plug_comm
     {Δ : PortBoundary}
     {Obs : Observation T}
     (hcomm : ∀ (W : T.Obj Δ) (K : T.Obj (PortBoundary.swap Δ)),
@@ -236,7 +237,7 @@ theorem plug_compose_of_commObs
     (hEnv : Emulates K_real K_ideal Obs) :
     Obs.rel (T.close real K_real) (T.close ideal K_ideal) :=
   Obs.equiv.trans (hProt.plug_invariance K_real)
-    (plug_right_of_commObs hcomm ideal hEnv)
+    (plug_right_of_observes_plug_comm hcomm ideal hEnv)
 
 end Emulates
 

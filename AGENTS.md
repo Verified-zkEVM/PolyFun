@@ -97,8 +97,8 @@ PFunctor/Lens/{Basic, Cartesian, State}
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
   → PFunctor/Dynamical/{Behavior, Simulation, RunN, PointedMachine}
-  → PFunctor/Dynamical/{Refinement, Responder, Game}
   → PFunctor/Dynamical/Bisimulation   (also imports Control/Bisimulation)
+  → PFunctor/Dynamical/{Refinement, Responder, Game}
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
    for RunN and PointedMachine, PFunctor/InternalHom for Responder, and
@@ -132,11 +132,7 @@ Interaction/{Concurrent, Basic} → Interaction/UC/{Interface,
                                   OpenTheory, OpenSyntax, Notation,
                                   Emulates, MachineId, EnvAction,
                                   EnvOpenProcess, CorruptionModel,
-                                  MomentaryCorruption, Leakage,
-                                  OpenProcessBisim, BisimObservation}
-  (OpenProcessBisim also imports Control/Bisimulation; the
-   OpenProcessBisim/BisimObservation pair connects OpenProcessIso to the
-   generic bisimulation theory and to the Emulates observation.)
+                                  MomentaryCorruption, Leakage}
 ```
 
 New files must respect this DAG. Re-exports through

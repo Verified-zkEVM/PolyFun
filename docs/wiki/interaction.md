@@ -436,10 +436,13 @@ Coherence (each subsequent class adds laws on top of the previous):
 - `HasPlugWireFactor`: closure-factorization identities relating `plug`
   to `wire` (`plug_eq_wire`, `plug_par_left`, `plug_wire_left`).
 
-`OpenProcessIso` (in `OpenProcess.lean`) provides a bisimulation-based
-equivalence for `OpenProcess`, used to state monoidal and compact-closed
-laws for the concrete `openTheory` model up to isomorphism (see
-`OpenProcessModel.lean`).
+`OpenProcess.activationLTS` (in `OpenProcess.lean`) exposes only whether a
+complete transcript is silent or activated. `OpenProcessActivationEquiv` is
+the standard generic whole-system delay bisimulation of those labelled
+transition systems and is used to state structural laws for the concrete
+`openTheory` model (see `OpenProcessModel.lean`). The activation observation
+does not retain packet/action identity or sampler effects, so it is not a
+security observation.
 
 `OpenSyntax/` provides three layers for free open-system expressions:
 
@@ -614,8 +617,8 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `OpenSyntax/Raw.lean` | `Raw` syntax tree, `Raw.interpret`, `Raw.Equiv` (incl. monoidal / traced / CC equations) |
 | `OpenSyntax/Interp.lean` | `Interp` (tagless-final), granular `HasUnit` / `HasIdWire` / `IsMonoidal` / `IsTraced` / `IsCompactClosed` / `HasPlugWireFactor` instances |
 | `OpenSyntax/Expr.lean` | `Expr` (quotient of `Raw`), granular `OpenTheory` lawfulness instances, `Expr.toInterp` |
-| `OpenProcess.lean` | `BoundaryAction`, `OpenNodeProfile`, `OpenNodeContext` (with polynomial-product bridge `productView` and structural `boundaryTrace`), `OpenProcess m Party Δ` (monad-parametric, with intrinsic `stepSampler`), `toProcess`, `OpenProcessIso` |
-| `OpenProcessModel.lean` | `openTheory m Party schedulerSampler` (concrete model threading `Spec.Sampler` through `map` / `par` / `wire` / `plug`), `IsLawful`, monoidal / CC laws up to `OpenProcessIso` |
+| `OpenProcess.lean` | `BoundaryAction`, `OpenNodeProfile`, `OpenNodeContext` (with polynomial-product bridge `productView` and structural `boundaryTrace`), `OpenProcess m Party Δ` (monad-parametric, with intrinsic `stepSampler`), `toProcess`, `OpenProcessActivationEquiv` |
+| `OpenProcessModel.lean` | `openTheory m Party schedulerSampler` (concrete model threading `Spec.Sampler` through `map` / `par` / `wire` / `plug`), `IsLawful`, monoidal / CC laws up to `OpenProcessActivationEquiv` |
 | `Emulates.lean` | `Observation`, `Emulates`, `UCSecure`. Contextual emulation and UC security stated abstractly over an `Observation` (an equivalence relation on closed systems), with no probability monad and no concrete security predicate. |
 | `Notation.lean` | UC notation helpers (`∥`, `⊞`, `⊠`, `⊗ᵇ`, `ᵛ`); see [`notation.md`](notation.md) |
 | `MachineId.lean` | machine identifiers |

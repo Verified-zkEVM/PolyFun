@@ -5,7 +5,6 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Dynamical.Refinement
 public import PolyFun.PFunctor.Dynamical.Bisimulation
 
 /-!
@@ -24,9 +23,8 @@ The point of the example is that the choice of internal state carrier — a full
 log versus a bare counter — is **unobservable**: the two systems have *equal*
 behaviour trees. This is the strongest form of state hiding, honest `Eq` of
 `behavior` trees via the terminal-coalgebra bisimulation principle
-(`DynSystem.behavior_eq_of_isSimulation`), and it is the strong-bisimulation
-warm-up for the weak-bisimulation open-process demonstration in
-`PolyFunTest/Interaction/UC/BisimObservationExamples.lean`.
+(`DynSystem.behavior_eq_of_isSimulation`). The generic LTS adapter below shows
+that the same proof boundary can be reached from a labelled strong simulation.
 -/
 
 @[expose] public section
@@ -82,17 +80,22 @@ theorem obsEq_oracleLog_oracleCount (a : Option A) :
     DynSystem.ObsEq (oracleLog f) (oracleCount f) (a, []) (a, 0) :=
   DynSystem.obsEq_of_isSimulation (sim f) rfl
 
-/-- **The generic bisimulation framework recovers the same conclusion.** A
-`Control.IsStrongBisim` between the induced transition systems (`DynSystem.toLTS`)
-forces equal behaviour trees: `obsEq_of_isStrongBisim` is the framework's route
-to the state-hiding fact above, tying the generic LTS strong bisimulation to the
-terminal-coalgebra behaviour equality. -/
-example {S₁ S₂ : Type u} {p : PFunctor.{u, u}}
-    {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p} {rel : S₁ → S₂ → Prop}
-    (h : Control.IsStrongBisim D₁.toLTS D₂.toLTS rel)
-    {st₁ : S₁} {st₂ : S₂} (hr : rel st₁ st₂) :
-    D₁.behavior st₁ = D₂.behavior st₂ :=
-  DynSystem.obsEq_of_isStrongBisim h hr
+/-- The concrete log/count simulation induces a generic strong LTS simulation,
+so the generic adapter—not merely an assumed witness—recovers the oracle
+state-hiding result. -/
+def ltsSim : Control.IsStrongSimulation
+    (oracleLog f).toLTS (oracleCount f).toLTS logCountRel :=
+  DynSystem.isStrongSimulation_of_isSimulation (sim f)
+
+example (a : Option A) :
+    (oracleLog f).behavior (a, []) = (oracleCount f).behavior (a, 0) :=
+  DynSystem.obsEq_of_isStrongSimulation (ltsSim f) rfl
+
+/-- The adapter is an equivalence on the concrete oracle relation. -/
+example :
+    Control.IsStrongSimulation (oracleLog f).toLTS (oracleCount f).toLTS logCountRel ↔
+      DynSystem.IsSimulation (oracleLog f) (oracleCount f) logCountRel :=
+  DynSystem.isStrongSimulation_toLTS_iff_isSimulation
 
 end OracleObsEqExample
 end PFunctor

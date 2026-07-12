@@ -84,7 +84,6 @@ import PolyFun.Interaction.TwoParty.Role
 import PolyFun.Interaction.TwoParty.Strategy
 import PolyFun.Interaction.TwoParty.Swap
 import PolyFun.Interaction.TwoParty.Syntax
-import PolyFun.Interaction.UC.BisimObservation
 import PolyFun.Interaction.UC.CorruptionModel
 import PolyFun.Interaction.UC.Emulates
 import PolyFun.Interaction.UC.EnvAction
@@ -95,7 +94,6 @@ import PolyFun.Interaction.UC.MachineId
 import PolyFun.Interaction.UC.MomentaryCorruption
 import PolyFun.Interaction.UC.Notation
 import PolyFun.Interaction.UC.OpenProcess
-import PolyFun.Interaction.UC.OpenProcessBisim
 import PolyFun.Interaction.UC.OpenProcessModel
 import PolyFun.Interaction.UC.OpenSyntax.Expr
 import PolyFun.Interaction.UC.OpenSyntax.Interp
