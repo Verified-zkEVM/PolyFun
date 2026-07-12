@@ -23,6 +23,9 @@ monoidal and lens structure of `Poly`.
   the states multiply and the interfaces tensor.
 * `DynSystem.pairing` — the *categorical product* (§4.3.1): two interfaces driven
   by a shared state.
+* `DynSystem.choiceProd` — asynchronous choice: juxtapose two systems on the
+  product state, but expose the product interface `prod p q`, so each step
+  advances exactly one side.
 * `Wiring₂` / `DynSystem.wire₂` — a *wiring diagram* (§4.4) is a lens between the
   juxtaposed interfaces and an outer interface; installing systems into it is
   "tensor, then wrap".
@@ -102,6 +105,20 @@ def pairing {S : Type u} (l₁ : Lens (selfMonomial S) p) (l₂ : Lens (selfMono
 
 @[simp] theorem pairing_toLens {S : Type u} (l₁ : Lens (selfMonomial S) p)
     (l₂ : Lens (selfMonomial S) q) : (pairing l₁ l₂).toLens = ⟨l₁, l₂⟩ₗ := rfl
+
+/-! ## Asynchronous choice -/
+
+/-- The **asynchronous choice** of two systems: the states multiply as in
+`tensor`, but the interface is the product `prod p q`, whose directions at a
+position choose a side, so each step advances exactly one component and leaves
+the other frozen. Where `tensor` steps both systems in lockstep, `choiceProd`
+interleaves them one step at a time; scheduled interleavings of processes are
+wrappers of this combinator. -/
+def choiceProd (s : DynSystem p) (t : DynSystem q) : DynSystem (prod p q) where
+  State := s.State × t.State
+  expose := fun st => (s.expose st.1, t.expose st.2)
+  update := fun st =>
+    Sum.elim (fun d => (s.update st.1 d, st.2)) (fun d => (st.1, t.update st.2 d))
 
 /-! ## Wiring diagrams (§4.4) -/
 

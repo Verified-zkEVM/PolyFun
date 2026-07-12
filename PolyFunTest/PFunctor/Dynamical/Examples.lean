@@ -5,8 +5,11 @@ Authors: Devon Tuma
 -/
 module
 
+public import PolyFun.ITree.Unfold
 public import PolyFun.PFunctor.Dynamical.Behavior
+public import PolyFun.PFunctor.Dynamical.Combinators
 public import PolyFun.PFunctor.Dynamical.Run
+public import PolyFun.PFunctor.Dynamical.Safety
 
 /-!
 # Examples of dynamical systems
@@ -100,6 +103,72 @@ example (n : ℕ) :
     counter.stateStream (0 : ℕ) (fun _ => 1) n
       = counter.run (0 : ℕ) ((List.range n).map (fun _ => 1)) :=
   counter.stateStream_eq_run (0 : ℕ) (fun _ => 1) n
+
+/-! ## The universe polynomial and generic orbits -/
+
+/-- A machine-style system over the universe polynomial: the exposed position is
+the type of currently enabled events. From `n`, choosing `true` increments and
+`false` stays. -/
+def toggle : DynSystem univ where
+  State := ℕ
+  expose := fun _ => Bool
+  update := fun n b => if b then n + 1 else n
+
+example : toggle.update (3 : ℕ) true = (4 : ℕ) := rfl
+
+example : toggle.out (3 : ℕ) = ⟨Bool, fun b => if b then (4 : ℕ) else (3 : ℕ)⟩ := rfl
+
+/-- The input-stream orbit of the counter as a generic `Run`. -/
+example : (counter.streamRun (0 : ℕ) fun _ => 2).state 3 = (6 : ℕ) := rfl
+
+/-- Reading stable event labels off a generic run. -/
+def parityEvent : counter.EventMap Bool := fun _ (i : ℕ) => i % 2 == 0
+
+example : (counter.streamRun (0 : ℕ) fun _ => 2).eventsUpTo parityEvent 2 = [true, true] := rfl
+
+/-- The unique orbit of a closed system is its state iterate. -/
+example : ((counter.feedback fun _ => 1).iterateRun (0 : ℕ)).state 5 = (5 : ℕ) := rfl
+
+/-- Every run of a Moore machine is its input-driven state stream. -/
+example (r : DynSystem.Run counter) (n : ℕ) :
+    r.state n = counter.stateStream r.initial r.dir n :=
+  counter.state_eq_stateStream r n
+
+/-- Zero-step reachability is reflexive. -/
+example : toggle.ReachableIn 0 (3 : ℕ) (3 : ℕ) := .refl toggle (3 : ℕ)
+
+/-- Two increments reach `5` from `3` in two steps. -/
+example : toggle.ReachableIn 2 (3 : ℕ) (5 : ℕ) :=
+  .step true (.step true (.refl toggle (5 : ℕ)))
+
+/-! ## Asynchronous choice -/
+
+/-- One `choiceProd` step advances exactly the chosen side. -/
+example :
+    (counter.choiceProd counter).update ((0 : ℕ), (5 : ℕ)) (.inl (3 : ℕ))
+      = ((3 : ℕ), (5 : ℕ)) := rfl
+
+example :
+    (counter.choiceProd counter).update ((0 : ℕ), (5 : ℕ)) (.inr (7 : ℕ))
+      = ((0 : ℕ), (12 : ℕ)) := rfl
+
+/-! ## Behavior trees and ITree unfolding -/
+
+/-- The defining equation of the terminal-coalgebra behavior. -/
+example : M.dest (counter.behavior (2 : ℕ))
+    = ⟨(2 : ℕ), fun (i : ℕ) => counter.behavior (2 + i)⟩ :=
+  counter.dest_behavior (2 : ℕ)
+
+/-- Observational equivalence is reflexive by definition. -/
+example : DynSystem.ObsEq counter counter (3 : ℕ) (3 : ℕ) := rfl
+
+/-- The cofree trajectory is the self-labeled behavior tree. -/
+example (st : ℕ) : counter.trajectory st = M.selfLabel (counter.behavior st) :=
+  counter.trajectory_eq_selfLabel_behavior st
+
+/-- The ITree unfolding is the query-embedding of the behavior tree. -/
+example (st : ℕ) : counter.toITree st = M.toITree (counter.behavior st) :=
+  counter.toITree_eq_toITree_behavior st
 
 end DynSystem.Examples
 

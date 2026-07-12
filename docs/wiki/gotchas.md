@@ -91,6 +91,42 @@ non-standard instances.
 
 ## Proof Patterns
 
+### 8b. Keep one canonical concrete-step relation type
+
+`PFunctor.DynSystem.StepRel s₁ s₂` is the canonical relation type on explicit
+concrete steps (`s₁.Step → s₂.Step → Prop`). Its process-specific views
+(`ProcessOver.TranscriptRel`, `Process.TranscriptRel`, and
+`Observation.Process.TranscriptRel`) should remain abbrevs of that one type.
+Keeping the source state inside each step avoids hidden implicit state
+arguments and makes applications, composition witnesses, and type errors show
+the dependent data at the point where it is used.
+
+### 8c. Alias layers over generic types: shadow the chained operations
+
+`ProcessOver`, `Machine`, `ProcessOver.Run`, … are abbrevs over the
+generic `PFunctor.DynSystem` types. Dot notation on a binder whose
+declared type is the alias resolves methods in the alias's namespace,
+but a value *returned by a generic operation* has the generic head, so
+chained calls (`run.tail.eventsUpTo`) lose the alias namespace. When a
+generic operation returns the aliased type and is used in chains,
+re-export it as an abbrev with the alias-typed signature
+(`abbrev Run.tail (run : Run process) : Run process := DynSystem.Run.tail run`);
+the alias is definitionally transparent, so proofs are unaffected.
+
+### 8d. Alias layers: alias-namespace lemmas are not dot-callable on generic-headed values
+
+The reverse direction of 8c. Lemmas that live in an *alias's* namespace
+(e.g. `Interaction.Concurrent.Refinement.SafetyRefinement.safe_of_satisfies`
+over `SafetyRefinement := PFunctor.DynSystem.SafetyRefinement ...`) cannot
+be reached by dot notation on a value whose head symbol is the generic
+structure — and structure projections always produce generic-headed
+values (`bisim.forth : DynSystem.SafetyRefinement ...`), even when `bisim`'s
+declared type is the alias. So `bisim.forth.safe_of_satisfies` fails while
+`sim.safe_of_satisfies` on a binder `sim : SafetyRefinement ...` succeeds.
+Use full application (`SafetyRefinement.safe_of_satisfies bisim.forth ...`)
+at such sites, or keep the lemma in the generic namespace if it is not
+specific to the alias layer.
+
 ### 9. Avoid `cast` / `Eq.mp` / `Eq.mpr` in core definitions
 
 Per [`AGENTS.md`](../../AGENTS.md): keep core definitions, especially in

@@ -14,6 +14,7 @@ import PolyFun.Interaction.Concurrent.Policy
 import PolyFun.Interaction.Concurrent.Refinement
 import PolyFun.Interaction.Concurrent.Run
 import PolyFun.Interaction.Concurrent.Tree
+import PolyFun.Interaction.Concurrent.Machine
 
 /-!
 # Concurrent interaction examples
@@ -391,16 +392,15 @@ def loopNode : NodeProfile Party Bool where
 /-- A tiny one-state looping process used to exercise runs, tickets, fairness,
 and refinement. -/
 def loopProcess : Process Party :=
-  { Proc := PUnit
-    step := fun _ =>
-      { spec := .node Bool (fun _ => .done)
-        semantics := ⟨loopNode, fun _ => PUnit.unit⟩
-        next := fun _ => PUnit.unit } }
+  ProcessOver.ofStep PUnit fun _ =>
+    { spec := .node Bool (fun _ => .done)
+      semantics := ⟨loopNode, fun _ => PUnit.unit⟩
+      next := fun _ => PUnit.unit }
 
 /-- A ticketed view of `loopProcess` using the chosen boolean as the stable
 ticket. -/
 def loopTicketed : Process.Ticketed Party where
-  toProcess := loopProcess
+  toDynSystem := loopProcess
   Ticket := Bool
   ticket := fun _ tr =>
     match tr with
@@ -409,7 +409,7 @@ def loopTicketed : Process.Ticketed Party where
 /-- A simple always-true infinite run of `loopProcess`. -/
 def trueRun : Process.Run loopProcess where
   state _ := PUnit.unit
-  transcript _ := ⟨true, PUnit.unit⟩
+  dir _ := ⟨true, PUnit.unit⟩
   next_state _ := rfl
 
 example : Process.Run.initial trueRun = PUnit.unit := rfl
@@ -417,7 +417,7 @@ example : Process.Run.initial trueRun = PUnit.unit := rfl
 example :
     Process.Run.ticketsUpTo loopTicketed.ticket trueRun 3 = [true, true, true] := by
   simp only [ProcessOver.Run.ticketsUpTo_succ, ProcessOver.Run.ticketsUpTo_zero,
-    ProcessOver.Run.ticket, ProcessOver.Run.tail, loopTicketed, trueRun]
+    PFunctor.DynSystem.Run.ticket, PFunctor.DynSystem.Run.tail, loopTicketed, trueRun]
 
 example :
     (Observation.Process.Run.observationsUpTo Party.adv trueRun 2).length = 2 := rfl
@@ -447,16 +447,15 @@ example :
   simp [ProcessOver.Ticketed.firedAt, loopTicketed, trueRun]
 
 /-- A trivial system wrapper around `loopProcess`. -/
-def loopSystem : Process.System Party where
-  toProcess := loopProcess
+def loopSystem : Process.SafetySpec Party where
+  toDynSystem := loopProcess
   init _ := True
   assumptions _ := True
   safe _ := True
-  inv _ := True
 
 /-- The identity simulation on `loopSystem`, preserving the boolean ticket. -/
 def loopSim :
-    Refinement.ForwardSimulation loopSystem loopSystem
+    Refinement.SafetyRefinement loopSystem loopSystem
       (Observation.Process.TranscriptRel.byTicket
         loopTicketed.ticket loopTicketed.ticket) where
   stateRel _ _ := True
@@ -469,12 +468,12 @@ def loopSim :
 /-- The specification-side run obtained by matching `trueRun` through
 `loopSim`. -/
 noncomputable def loopMappedRun : Process.Run loopSystem.toProcess :=
-  loopSim.mapRun (pSpec := PUnit.unit) trueRun trivial
+  loopSim.mapRun (stSpec := PUnit.unit) trueRun trivial
 
 /-- The identity simulation on `loopSystem`, preserving Bob's local
 observations. -/
 def loopObsSimBob :
-    Refinement.ForwardSimulation loopSystem loopSystem
+    Refinement.SafetyRefinement loopSystem loopSystem
       (Observation.Process.TranscriptRel.byObservation Party.bob) where
   stateRel _ _ := True
   init p hp := ⟨p, hp, trivial⟩
@@ -486,11 +485,11 @@ def loopObsSimBob :
 /-- The specification-side run obtained by matching `trueRun` through
 `loopObsSimBob`. -/
 noncomputable def loopObsMappedRunBob : Process.Run loopSystem.toProcess :=
-  loopObsSimBob.mapRun (pSpec := PUnit.unit) trueRun trivial
+  loopObsSimBob.mapRun (stSpec := PUnit.unit) trueRun trivial
 
-/-- The identity ticket bisimulation on `loopSystem`. -/
-def loopTicketBisim :
-    Refinement.Bisimulation loopSystem loopSystem
+/-- The identity ticket mutual safety refinement on `loopSystem`. -/
+def loopTicketMutual :
+    Refinement.MutualSafetyRefinement loopSystem loopSystem
       (Observation.Process.TranscriptRel.byTicket
         loopTicketed.ticket loopTicketed.ticket)
       (Observation.Process.TranscriptRel.byTicket
@@ -498,33 +497,60 @@ def loopTicketBisim :
   forth := loopSim
   back := loopSim
 
-/-- The identity observational bisimulation on `loopSystem` for Bob. -/
-def loopObsBisimBob :
-    Refinement.Bisimulation loopSystem loopSystem
+/-- The identity observational mutual safety refinement on `loopSystem` for Bob. -/
+def loopObsMutualBob :
+    Refinement.MutualSafetyRefinement loopSystem loopSystem
       (Observation.Process.TranscriptRel.byObservation Party.bob)
       (Observation.Process.TranscriptRel.byObservation Party.bob) where
   forth := loopObsSimBob
   back := loopObsSimBob
 
+/-! The standard two-way comparisons expose actual equivalence operations. -/
+
+example : Equivalence.Controller loopSystem loopSystem :=
+  (Equivalence.Controller.refl loopSystem).trans
+    (Equivalence.Controller.refl loopSystem)
+
+example : Equivalence.ControllerPath loopSystem loopSystem :=
+  (Equivalence.ControllerPath.refl loopSystem).symm
+
+example : Equivalence.Trace loopSystem loopSystem
+    loopTicketed.ticket loopTicketed.ticket :=
+  (Equivalence.Trace.refl loopSystem loopTicketed.ticket).trans
+    (Equivalence.Trace.refl loopSystem loopTicketed.ticket)
+
+example : Equivalence.Ticket loopSystem loopSystem
+    loopTicketed.ticket loopTicketed.ticket :=
+  (Equivalence.Ticket.refl loopSystem loopTicketed.ticket).symm
+
+example : Equivalence.Observation Party.bob loopSystem loopSystem :=
+  Equivalence.Observation.trans Party.bob
+    (Equivalence.Observation.refl Party.bob loopSystem)
+    (Equivalence.Observation.refl Party.bob loopSystem)
+
 example : loopMappedRun.state 4 = PUnit.unit := rfl
 
 example :
     Observation.Process.TranscriptRel.byTicket loopTicketed.ticket loopTicketed.ticket
-      (trueRun.transcript 3) (loopMappedRun.transcript 3) := by
-  exact loopSim.match_mapRun (pSpec := PUnit.unit) trueRun trivial 3
+      ⟨trueRun.state 3, trueRun.transcript 3⟩
+      ⟨loopMappedRun.state 3, loopMappedRun.transcript 3⟩ := by
+  exact loopSim.match_mapRun (stSpec := PUnit.unit) trueRun trivial 3
 
-example : Process.System.Safe loopSystem loopMappedRun := by
+example : Process.SafetySpec.Safe loopSystem loopMappedRun := by
   intro _
   trivial
 
 example :
-    Process.System.Satisfies loopSystem (fun _ => True) (Process.System.Safe loopSystem) := by
+    Process.SafetySpec.Satisfies loopSystem (fun _ => True)
+      (Process.SafetySpec.Safe loopSystem) := by
   intro run _ _ _ n
   trivial
 
 example :
-    Process.System.Satisfies loopSystem (fun _ => True) (Process.System.Safe loopSystem) := by
-  apply loopSim.safe_of_satisfies (fairImpl := fun _ => True) (fairSpec := fun _ => True)
+    Process.SafetySpec.Satisfies loopSystem (fun _ => True)
+      (Process.SafetySpec.Safe loopSystem) := by
+  apply Refinement.SafetyRefinement.safe_of_satisfies loopSim
+    (fairImpl := fun _ => True) (fairSpec := fun _ => True)
   · intro _ _ _
     trivial
   · intro run _ _ _ n
@@ -533,12 +559,13 @@ example :
 example :
     Process.Run.ticketsUpTo loopTicketed.ticket trueRun 4 =
       Process.Run.ticketsUpTo loopTicketed.ticket loopMappedRun 4 := by
-  exact loopSim.ticketsUpTo_mapRun (pSpec := PUnit.unit) trueRun trivial 4
+  exact Refinement.SafetyRefinement.ticketsUpTo_mapRun loopSim
+    (pSpec := PUnit.unit) trueRun trivial 4
 
 example :
     Observation.Process.Run.observationsUpTo Party.bob trueRun 3 =
       Observation.Process.Run.observationsUpTo Party.bob loopObsMappedRunBob 3 := by
-  exact loopObsSimBob.observationsUpTo_mapRun Party.bob
+  exact Refinement.SafetyRefinement.observationsUpTo_mapRun Party.bob loopObsSimBob
     (pSpec := PUnit.unit) trueRun trivial 3
 
 example :
@@ -548,26 +575,27 @@ example :
   exact Observation.Process.Run.rel_of_pointwise
     (Observation.Process.TranscriptRel.byTicket loopTicketed.ticket loopTicketed.ticket)
     trueRun loopMappedRun
-    (loopSim.match_mapRun (pSpec := PUnit.unit) trueRun trivial)
+    (loopSim.match_mapRun (stSpec := PUnit.unit) trueRun trivial)
 
 example :
     Process.Run.ticketsUpTo loopTicketed.ticket trueRun 5 =
       Process.Run.ticketsUpTo loopTicketed.ticket
-        (loopTicketBisim.forth.mapRun trueRun (pSpec := PUnit.unit) trivial) 5 := by
-  exact Equivalence.Ticket.ticketsUpTo_eq loopTicketBisim trueRun
+        (loopTicketMutual.forth.mapRun trueRun (stSpec := PUnit.unit) trivial) 5 := by
+  exact Equivalence.Ticket.ticketsUpTo_eq loopTicketMutual trueRun
     (pRight := PUnit.unit) trivial 5
 
 example :
     Observation.Process.Run.observationsUpTo Party.bob trueRun 4 =
       Observation.Process.Run.observationsUpTo Party.bob
-        (loopObsBisimBob.forth.mapRun trueRun (pSpec := PUnit.unit) trivial) 4 := by
-  exact Equivalence.Observation.observationsUpTo_eq Party.bob loopObsBisimBob
+        (loopObsMutualBob.forth.mapRun trueRun (stSpec := PUnit.unit) trivial) 4 := by
+  exact Equivalence.Observation.observationsUpTo_eq Party.bob loopObsMutualBob
     trueRun (pRight := PUnit.unit) trivial 4
 
 example :
-    Process.System.Satisfies loopSystem (fun _ => True) (Process.System.Safe loopSystem) := by
+    Process.SafetySpec.Satisfies loopSystem (fun _ => True)
+      (Process.SafetySpec.Safe loopSystem) := by
   exact
-    (Refinement.Bisimulation.safe_iff_of_satisfies loopTicketBisim
+    (Refinement.MutualSafetyRefinement.safe_iff_of_satisfies loopTicketMutual
       (fairLeft := fun _ => True) (fairRight := fun _ => True)
       (hfairLeft := by
         intro _ _ _ _
@@ -580,6 +608,56 @@ example :
         trivial)
 
 end PhaseOneExamples
+
+section MachineExamples
+
+/-! ## Flat machines as dynamical systems
+
+`Machine` is `PFunctor.DynSystem PFunctor.univ`, so the classical vocabulary
+(`mk'`, `Enabled`, `step`) coexists with the whole dynamical-system toolkit
+(`out`, `ObsEq`, `SafetySpec`, …) via dot notation through the abbrev. -/
+
+/-- A counter machine via the classical constructor: at every state a boolean
+event is enabled — `true` increments, `false` stays. -/
+def counterMachine : Machine :=
+  Machine.mk' ℕ (fun _ => Bool) (fun n b => if b then n + 1 else n)
+
+example : counterMachine.step (3 : ℕ) true = (4 : ℕ) := rfl
+
+example : counterMachine.Enabled (3 : ℕ) = Bool := rfl
+
+/-- The generic coalgebra structure map applies to machines directly. -/
+example : counterMachine.out (3 : ℕ) = ⟨Bool, fun b => if b then (4 : ℕ) else (3 : ℕ)⟩ := rfl
+
+/-- Observational equivalence of machine states. -/
+example : PFunctor.DynSystem.ObsEq counterMachine counterMachine (3 : ℕ) (3 : ℕ) := rfl
+
+/-- A machine system with verification predicates, using the generic bundle. -/
+def counterSystem : Machine.SafetySpec where
+  toDynSystem := counterMachine
+  init := fun (n : ℕ) => n = 0
+
+example : counterSystem.init (0 : ℕ) := rfl
+
+example : counterSystem.safe (5 : ℕ) := trivial
+
+example : counterSystem.toMachine = counterMachine := rfl
+
+/-- Node semantics for compiling the counter machine into a process. -/
+def counterProfile :
+    (σ : counterMachine.State) → NodeProfile Party (counterMachine.Enabled σ) :=
+  fun _ => { controllers := fun _ => [.adv], views := fun _ => .observe }
+
+/-- The one-node-step process compiled from the counter machine. -/
+def counterProcess : Process Party := counterMachine.toProcess counterProfile
+
+example :
+    (counterProcess.step (3 : ℕ)).spec
+      = .node (counterMachine.Enabled (3 : ℕ)) (fun _ => .done) := rfl
+
+example : (counterProcess.step (3 : ℕ)).next ⟨true, PUnit.unit⟩ = (4 : ℕ) := rfl
+
+end MachineExamples
 
 end Examples
 end Concurrent

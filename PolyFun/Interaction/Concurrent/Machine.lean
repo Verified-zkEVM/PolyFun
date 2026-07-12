@@ -1,10 +1,9 @@
 /-
 Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Quang Dao
+Authors: Quang Dao, Devon Tuma
 -/
 import PolyFun.Interaction.Concurrent.Process
-import PolyFun.Control.Coalgebra
 import Batteries.Tactic.Lint
 
 /-!
@@ -24,11 +23,15 @@ Many protocol designers, however, start from a more operational picture:
 * a family `Enabled σ` of events that may happen next, and
 * a function describing the successor state after such an event.
 
-`Machine` packages exactly that presentation. It is intentionally small, and
-then layered enrichments add stable event labels, fairness tickets, and system
-predicates. The key bridge is `Machine.toProcess`, which interprets each
-enabled event set as a one-node sequential step and thereby embeds machine
-semantics into the general `Concurrent.Process` core.
+`Machine` packages exactly that presentation: it is the dynamical system over
+the universe polynomial `PFunctor.univ`, whose exposed position at each state
+is the type of currently enabled events and whose update is the successor
+state. The classical vocabulary is kept as `Machine.Enabled` / `Machine.step`
+/ `Machine.mk'`, and the whole `PFunctor.DynSystem` toolkit (coalgebra
+structure map, behavior, runs, labels, tickets, verification predicates)
+applies to machines directly. The key bridge is `Machine.toProcess`, which
+interprets each enabled event set as a one-node sequential step and thereby
+embeds machine semantics into the general `Concurrent.Process` core.
 
 This is the natural frontend for transition-system style models, including
 state-heavy distributed and cryptographic protocol semantics.
@@ -40,114 +43,59 @@ namespace Interaction
 namespace Concurrent
 
 /--
-`Machine` is the minimal state-indexed presentation of a concurrent system.
+`Machine` is the minimal state-indexed presentation of a concurrent system: a
+dynamical system over the universe polynomial. At any residual state `σ`, the
+exposed position `Enabled σ` is the type of events that may occur next, and
+`step σ e` is the successor state produced by choosing the enabled event `e`.
 
-At any residual state `σ`, the type `Enabled σ` describes the events that may
-occur next, and `step σ e` records the successor state produced by choosing the
-enabled event `e`.
-
-This record intentionally contains only dynamics. Event labels, fairness
+This carrier intentionally contains only dynamics. Event labels, fairness
 tickets, controller ownership, local views, and verification predicates are all
-added in separate layers so that the core transition semantics stays small and
-reusable.
+added by the generic `PFunctor.DynSystem` layers (`DynSystem.Labeled`,
+`DynSystem.Ticketed`, `Machine.SafetySpec`, …) so that the core transition
+semantics stays small and reusable.
 -/
 -- The state universe (`v`) and the enabled-event universe (`u`) are independent.
 @[nolint checkUnivs]
-structure Machine where
-  /-- The type of residual states of the machine. -/
-  State : Type v
-  /-- The events enabled at a given residual state. -/
-  Enabled : State → Type u
-  /-- The successor state produced by choosing an enabled event at a state. -/
-  step : (σ : State) → Enabled σ → State
+abbrev Machine := PFunctor.DynSystem.{v} PFunctor.univ.{u}
 
 namespace Machine
 
-/-- The step functor for `Machine`: at a state, the machine exposes an event type `E`
-together with a successor-state function `E → S`. -/
-def StepFun : Type v → Type (max (u + 1) v) := fun S => Σ (E : Type u), (E → S)
+/-- The events enabled at a given residual state: the machine's exposed
+position, read as a type. -/
+abbrev Enabled (machine : Machine.{u, v}) (σ : machine.State) : Type u :=
+  machine.expose σ
 
-instance : Functor Machine.StepFun.{u, v} where
-  map f := fun ⟨E, g⟩ => ⟨E, f ∘ g⟩
+/-- The successor state produced by choosing an enabled event at a state: the
+machine's transition function. -/
+abbrev step (machine : Machine.{u, v}) (σ : machine.State)
+    (e : machine.Enabled σ) : machine.State :=
+  machine.update σ e
 
-instance : LawfulFunctor Machine.StepFun.{u, v} where
-  id_map := fun ⟨_, _⟩ => rfl
-  comp_map := fun _ _ ⟨_, _⟩ => rfl
-  map_const := rfl
+/-- Build a machine from its state set, enabled-event family, and successor
+function, using the classical field names. -/
+def mk' (State : Type v) (Enabled : State → Type u)
+    (step : (σ : State) → Enabled σ → State) : Machine.{u, v} :=
+  ⟨State, Enabled, step⟩
 
-/-- Every `Machine` is an F-coalgebra for `Machine.StepFun`. -/
-instance (m : Machine.{u, v}) : Coalg Machine.StepFun m.State :=
-  ⟨fun σ => ⟨m.Enabled σ, m.step σ⟩⟩
+@[simp] theorem enabled_mk' (State : Type v) (Enabled : State → Type u)
+    (step : (σ : State) → Enabled σ → State) :
+    (mk' State Enabled step).Enabled = Enabled := rfl
 
-/--
-`EventMap` assigns a stable external label to each enabled machine event.
-
-These labels are the observable step descriptions that one typically wants to
-preserve under refinement, compare across runs, or expose in user-facing trace
-statements.
--/
-abbrev EventMap (machine : Machine) (Event : Type u) :=
-  (σ : machine.State) → machine.Enabled σ → Event
-
-/--
-`Tickets` assigns a stable obligation identifier to each enabled machine event.
-
-Unlike the raw event itself, a ticket is meant to persist across different
-representations of the same scheduling obligation, so later fairness and
-liveness layers quantify over tickets rather than over the concrete event type
-of one particular state.
--/
-abbrev Tickets (machine : Machine) (Ticket : Type u) :=
-  (σ : machine.State) → machine.Enabled σ → Ticket
+@[simp] theorem step_mk' (State : Type v) (Enabled : State → Type u)
+    (step : (σ : State) → Enabled σ → State) :
+    (mk' State Enabled step).step = step := rfl
 
 /--
-`Machine.Labeled` packages a machine together with its chosen event-label map.
-
-This is the smallest bundle that supports statements about observable event
-traces without committing to fairness or safety metadata.
--/
-structure Labeled where
-  /-- The underlying machine being labeled. -/
-  toMachine : Machine
-  /-- The type of observable external event labels. -/
-  Event : Type u
-  /-- The assignment of an event label to each enabled machine event. -/
-  event : toMachine.EventMap Event
-
-/--
-`Machine.Ticketed` packages a machine together with stable tickets for its
-enabled events.
-
-This is the machine-side entry point for fairness and liveness statements.
--/
-structure Ticketed where
-  /-- The underlying machine being ticketed. -/
-  toMachine : Machine
-  /-- The type of stable scheduling-obligation identifiers. -/
-  Ticket : Type u
-  /-- The assignment of a ticket to each enabled machine event. -/
-  ticket : toMachine.Tickets Ticket
-
-/--
-`Machine.System` augments a machine by the standard verification predicates
-used throughout VCVio: initial states, ambient assumptions, safety, and
-invariants.
-
-These predicates are orthogonal to the step relation itself, so they are kept
-out of `Machine` and bundled only when one wants verification-oriented
-statements about the machine.
+`Machine.SafetySpec` is a machine-level safety-verification problem: dynamics,
+initial states, ambient assumptions, and the safety predicate.
 -/
 -- The machine's state universe (`v`) and event universe (`u`) are independent.
 @[nolint checkUnivs]
-structure System extends Machine where
-  /-- The predicate characterizing the machine's initial states. -/
-  init : State → Prop
-  /-- The ambient assumptions imposed on machine states. -/
-  assumptions : State → Prop := fun _ => True
-  /-- The safety predicate that machine states are required to satisfy. -/
-  safe : State → Prop := fun _ => True
-  /-- The invariant predicate maintained across machine steps. -/
-  inv : State → Prop := fun _ => True
+abbrev SafetySpec := PFunctor.DynSystem.SafetySpec.{v} PFunctor.univ.{u}
+
+/-- The underlying machine of a verification-oriented machine system. -/
+abbrev SafetySpec.toMachine (system : SafetySpec.{u, v}) : Machine.{u, v} :=
+  system.toDynSystem
 
 /--
 Compile a flat state-indexed machine into the continuation-based
@@ -164,27 +112,24 @@ models to the more general process-centered concurrent layer.
 -/
 def toProcess {Party : Type u} (machine : Machine)
     (semantics : (σ : machine.State) → NodeProfile Party (machine.Enabled σ)) :
-    Process Party where
-  Proc := machine.State
-  step σ :=
+    Process Party :=
+  ProcessOver.ofStep machine.State fun σ =>
     { spec := .node (machine.Enabled σ) (fun _ => .done)
       semantics := ⟨semantics σ, fun _ => PUnit.unit⟩
       next := fun
         | ⟨event, _⟩ => machine.step σ event }
 
 /--
-Lift `Machine.toProcess` from bare dynamics to the verification-oriented
-`Process.System` layer by reusing the same initial, assumption, safety, and
-invariant predicates.
+Lift `Machine.toProcess` from bare dynamics to `Process.SafetySpec` by reusing
+the same initial-state, assumption, and safety predicates.
 -/
-def System.toProcess {Party : Type u} (system : Machine.System)
-    (semantics : (σ : system.State) → NodeProfile Party (system.Enabled σ)) :
-    Process.System Party where
-  toProcess := system.toMachine.toProcess semantics
+def SafetySpec.toProcess {Party : Type u} (system : Machine.SafetySpec)
+    (semantics : (σ : system.State) → NodeProfile Party (system.toMachine.Enabled σ)) :
+    Process.SafetySpec Party where
+  toDynSystem := system.toMachine.toProcess semantics
   init := system.init
   assumptions := system.assumptions
   safe := system.safe
-  inv := system.inv
 
 end Machine
 end Concurrent

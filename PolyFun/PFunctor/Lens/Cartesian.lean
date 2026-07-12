@@ -21,12 +21,17 @@ cartesian morphisms: the type-square underlying each fiber is a pullback.
 A cartesian lens is a *fiberwise isomorphism* over an arbitrary forward
 map on positions.
 
-The two extremes of the orthogonal factorization system on `Poly` are
-captured separately:
+The two classes in the orthogonal factorization system on `Poly` are captured
+separately:
 
-* a **vertical** lens has `toFunA = id` (only the directions move);
-* a **cartesian** lens has each `toFunB a` a bijection (only the positions
-  move freely; each fiber is rigid).
+* a **vertical** lens has bijective `toFunA` (it changes position coordinates
+  without losing or adding positions); and
+* a **cartesian** lens has each `toFunB a` a bijection (each direction fiber is
+  rigid over an arbitrary position map).
+
+The canonical vertical leg in the factorization is identity on positions, but
+identity is a chosen representative of the more general bijective-on-positions
+class. See `PFunctor.Lens.IsVertical` in `Lens/Factorization.lean`.
 
 A `PFunctor.Lens.Equiv` (a categorical isomorphism in the lens category)
 is the intersection of the two: `toFunA` is a bijection AND every

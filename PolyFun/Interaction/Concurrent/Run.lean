@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
 import PolyFun.Interaction.Concurrent.Execution
+import PolyFun.PFunctor.Dynamical.Run
 
 /-!
 # Finite prefixes and infinite runs of dynamic concurrent processes
@@ -30,26 +31,18 @@ namespace ProcessOver
 
 /--
 `Prefix process p n` is a finite prefix of length `n` of an execution starting
-from the residual process state `p`.
+from the residual process state `p`: the dynamical-system `Prefix` at the step
+polynomial, where each `step` records one complete sequential transcript of the
+current process step.
 
 Unlike `ProcessOver.Trace`, a `Prefix` may stop at any residual state. This
 makes it the correct finite prefix object for later infinite-run semantics.
-
-Each `step` constructor records one complete sequential transcript of the
-current process step and then continues with a shorter prefix of the induced
-residual state.
 -/
-inductive Prefix
+abbrev Prefix
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     (process : ProcessOver Γ) :
-    process.Proc → Nat → Sort _ where
-  | /-- The empty execution prefix. -/
-    nil {p : process.Proc} : Prefix process p 0
-  | /-- Extend a finite prefix by one complete process step transcript. -/
-    step {p : process.Proc} {n : Nat}
-      (tr : (process.step p).spec.Transcript) :
-      Prefix process ((process.step p).next tr) n →
-      Prefix process p n.succ
+    process.Proc → Nat → Sort _ :=
+  PFunctor.DynSystem.Prefix process
 
 namespace Prefix
 
@@ -82,26 +75,22 @@ def controllerPaths
       ((process.step p).mapContext resolve).controllerPath tr :: controllerPaths resolve tail
 
 /-- The stable event labels attached to the executed steps of a finite prefix. -/
-def events
+abbrev events
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {process : ProcessOver Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event) :
-    {p : process.Proc} → {n : Nat} → Prefix process p n → List Event
-  | _, _, .nil => []
-  | p, _, .step tr tail =>
-      eventMap p tr :: events eventMap tail
+    {p : process.Proc} → {n : Nat} → Prefix process p n → List Event :=
+  PFunctor.DynSystem.Prefix.events eventMap
 
 /-- The stable tickets attached to the executed steps of a finite prefix. -/
-def tickets
+abbrev tickets
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {process : ProcessOver Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket) :
-    {p : process.Proc} → {n : Nat} → Prefix process p n → List Ticket
-  | _, _, .nil => []
-  | p, _, .step tr tail =>
-      ticketMap p tr :: tickets ticketMap tail
+    {p : process.Proc} → {n : Nat} → Prefix process p n → List Ticket :=
+  PFunctor.DynSystem.Prefix.tickets ticketMap
 
 /--
 Forget the quiescence proof of a finite `Trace` and keep only its executed
@@ -139,7 +128,8 @@ theorem events_nil
     {Event : Type w₃}
     (eventMap : process.EventMap Event)
     {p : process.Proc} :
-    events eventMap (.nil : Prefix process p 0) = [] := rfl
+    events eventMap (.nil : Prefix process p 0) = [] :=
+  PFunctor.DynSystem.Prefix.events_nil eventMap
 
 @[simp, grind =]
 theorem tickets_nil
@@ -148,17 +138,20 @@ theorem tickets_nil
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket)
     {p : process.Proc} :
-    tickets ticketMap (.nil : Prefix process p 0) = [] := rfl
+    tickets ticketMap (.nil : Prefix process p 0) = [] :=
+  PFunctor.DynSystem.Prefix.tickets_nil ticketMap
 
 end Prefix
 
 /--
-`Run process` is an infinite execution of the dynamic process `process`.
+`Run process` is an infinite execution of the dynamic process `process`: the
+dynamical-system `Run` at the step polynomial.
 
 It is represented by:
 
 * `state n`, the residual process state after `n` complete process steps;
-* `transcript n`, the concrete transcript chosen for step `n`;
+* `transcript n` (the generic `dir` field), the concrete transcript chosen for
+  step `n`;
 * `next_state`, which states that the residual state stream follows the
   process continuation exactly.
 
@@ -166,44 +159,46 @@ This is a continuation-based infinite semantics: the run does not introduce a
 new operational state space of its own. It simply records how the residual
 process state evolves when one complete process step is chosen at each time.
 -/
-structure Run
+abbrev Run
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    (process : ProcessOver Γ) where
-  /-- The residual process state after `n` complete process steps. -/
-  state : Nat → process.Proc
-  /-- The concrete transcript chosen for step `n`. -/
-  transcript : (n : Nat) → (process.step (state n)).spec.Transcript
-  next_state : ∀ n, state n.succ = (process.step (state n)).next (transcript n)
+    (process : ProcessOver Γ) :=
+  PFunctor.DynSystem.Run process
 
 namespace Run
 
+/-- The concrete transcript chosen for step `n`: the run's generic direction
+choice, read at the step-polynomial interface. -/
+abbrev transcript
+    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {process : ProcessOver Γ}
+    (run : Run process) (n : Nat) : (process.step (run.state n)).spec.Transcript :=
+  run.dir n
+
 /-- The initial residual process state of a run. -/
-def initial
+abbrev initial
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {process : ProcessOver Γ}
     (run : Run process) : process.Proc :=
-  run.state 0
+  PFunctor.DynSystem.Run.initial run
 
 /--
 The first complete process-step transcript of the run.
 -/
-def head
+abbrev head
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {process : ProcessOver Γ}
     (run : Run process) : (process.step run.initial).spec.Transcript :=
-  run.transcript 0
+  PFunctor.DynSystem.Run.head run
 
 /--
 The tail of a run after its first process step.
 -/
-def tail
+abbrev tail
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {process : ProcessOver Γ}
     (run : Run process) :
-    Run process where
-  state n := run.state n.succ
-  transcript n := run.transcript n.succ
-  next_state n := run.next_state n.succ
+    Run process :=
+  PFunctor.DynSystem.Run.tail run
 
 /--
 The initial state of `run.tail` is exactly the residual state obtained by
@@ -214,19 +209,17 @@ theorem tail_initial
     {process : ProcessOver Γ}
     (run : Run process) :
     run.tail.initial = (process.step run.initial).next run.head :=
-  run.next_state 0
+  PFunctor.DynSystem.Run.tail_initial run
 
 /--
 `take run n` is the length-`n` finite execution prefix of the infinite run
 `run`.
 -/
-def take
+abbrev take
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {process : ProcessOver Γ}
-    (run : Run process) : (n : Nat) → Prefix process run.initial n
-  | 0 => .nil
-  | n + 1 =>
-      .step run.head (run.tail_initial ▸ run.tail.take n)
+    (run : Run process) : (n : Nat) → Prefix process run.initial n :=
+  PFunctor.DynSystem.Run.take run
 
 /--
 The current controlling party of step `n` of a run, if any, after projecting
@@ -275,73 +268,68 @@ def controllerPathsUpTo
   | n + 1 => run.controllerPath resolve 0 :: run.tail.controllerPathsUpTo resolve n
 
 /-- The stable event label attached to step `n` of a run. -/
-def event
+abbrev event
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {process : ProcessOver Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event)
     (run : Run process) (n : Nat) : Event :=
-  eventMap (run.state n) (run.transcript n)
+  PFunctor.DynSystem.Run.event eventMap run n
 
 /-- The stable event labels attached to the first `n` executed steps of the run
 `run`. -/
-def eventsUpTo
+abbrev eventsUpTo
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {process : ProcessOver Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event)
-    (run : Run process) : Nat → List Event
-  | 0 => []
-  | n + 1 => run.event eventMap 0 :: run.tail.eventsUpTo eventMap n
+    (run : Run process) : Nat → List Event :=
+  PFunctor.DynSystem.Run.eventsUpTo eventMap run
 
 /-- The stable ticket attached to step `n` of a run. -/
-def ticket
+abbrev ticket
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {process : ProcessOver Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket)
     (run : Run process) (n : Nat) : Ticket :=
-  ticketMap (run.state n) (run.transcript n)
+  PFunctor.DynSystem.Run.ticket ticketMap run n
 
 /-- The stable tickets attached to the first `n` executed steps of the run
 `run`. -/
-def ticketsUpTo
+abbrev ticketsUpTo
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {process : ProcessOver Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket)
-    (run : Run process) : Nat → List Ticket
-  | 0 => []
-  | n + 1 => run.ticket ticketMap 0 :: run.tail.ticketsUpTo ticketMap n
+    (run : Run process) : Nat → List Ticket :=
+  PFunctor.DynSystem.Run.ticketsUpTo ticketMap run
 
 /--
 `RelUpTo rel left right n` states that the first `n` executed steps of the
 runs `left` and `right` match step-by-step according to `rel`.
 -/
-def RelUpTo
+abbrev RelUpTo
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
     {left : ProcessOver Γ}
     {right : ProcessOver Δ}
     (rel : ProcessOver.TranscriptRel left right)
-    (leftRun : Run left) (rightRun : Run right) : Nat → Prop
-  | 0 => True
-  | n + 1 =>
-      rel (leftRun.transcript 0) (rightRun.transcript 0) ∧
-        RelUpTo rel leftRun.tail rightRun.tail n
+    (leftRun : Run left) (rightRun : Run right) : Nat → Prop :=
+  PFunctor.DynSystem.Run.RelUpTo rel leftRun rightRun
 
 /--
 `Rel rel left right` states that every finite prefix of the runs `left` and
 `right` matches according to `rel`.
 -/
-def Rel
+abbrev Rel
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {Δ : Interaction.Spec.Node.Context.{w, w₃}}
     {left : ProcessOver Γ}
     {right : ProcessOver Δ}
     (rel : ProcessOver.TranscriptRel left right)
     (leftRun : Run left) (rightRun : Run right) : Prop :=
-  ∀ n, RelUpTo rel leftRun rightRun n
+  PFunctor.DynSystem.Run.Rel rel leftRun rightRun
 
 /-- Pointwise step matching implies prefix matching of the first `n` steps. -/
 theorem relUpTo_of_pointwise
@@ -351,16 +339,10 @@ theorem relUpTo_of_pointwise
     {right : ProcessOver Δ}
     (rel : ProcessOver.TranscriptRel left right)
     (leftRun : Run left) (rightRun : Run right)
-    (hrel : ∀ n, rel (leftRun.transcript n) (rightRun.transcript n)) :
-    ∀ n, RelUpTo rel leftRun rightRun n := by
-  intro n
-  induction n generalizing leftRun rightRun with
-  | zero =>
-      trivial
-  | succ n ih =>
-      refine ⟨?_, ?_⟩
-      · exact hrel 0
-      · exact ih leftRun.tail rightRun.tail (fun k => hrel k.succ)
+    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
+      ⟨rightRun.state n, rightRun.transcript n⟩) :
+    ∀ n, RelUpTo rel leftRun rightRun n :=
+  PFunctor.DynSystem.Run.relUpTo_of_pointwise rel leftRun rightRun hrel
 
 /-- Pointwise step matching implies full run matching. -/
 theorem rel_of_pointwise
@@ -370,16 +352,17 @@ theorem rel_of_pointwise
     {right : ProcessOver Δ}
     (rel : ProcessOver.TranscriptRel left right)
     (leftRun : Run left) (rightRun : Run right)
-    (hrel : ∀ n, rel (leftRun.transcript n) (rightRun.transcript n)) :
+    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
+      ⟨rightRun.state n, rightRun.transcript n⟩) :
     Rel rel leftRun rightRun :=
-  relUpTo_of_pointwise rel leftRun rightRun hrel
+  PFunctor.DynSystem.Run.rel_of_pointwise rel leftRun rightRun hrel
 
 @[simp, grind =]
 theorem take_zero
     {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     {process : ProcessOver Γ}
     (run : Run process) :
-    run.take 0 = Prefix.nil := rfl
+    run.take 0 = .nil := rfl
 
 @[simp, grind =]
 theorem take_succ
@@ -387,7 +370,8 @@ theorem take_succ
     {process : ProcessOver Γ}
     (run : Run process) (n : Nat) :
     run.take (n + 1) =
-      Prefix.step run.head (run.tail_initial ▸ run.tail.take n) := rfl
+      PFunctor.DynSystem.Prefix.step run.head
+        (PFunctor.DynSystem.Run.tail_initial run ▸ run.tail.take n) := rfl
 
 @[simp, grind =]
 theorem currentControllersUpTo_zero
@@ -624,14 +608,15 @@ abbrev ticketsUpTo {Party : Type u} {process : Process Party}
 @[simp, grind =]
 theorem take_zero {Party : Type u} {process : Process Party}
     (run : Run process) :
-    run.take 0 = ProcessOver.Prefix.nil :=
+    run.take 0 = .nil :=
   ProcessOver.Run.take_zero run
 
 @[simp, grind =]
 theorem take_succ {Party : Type u} {process : Process Party}
     (run : Run process) (n : Nat) :
     run.take (n + 1) =
-      ProcessOver.Prefix.step run.head (run.tail_initial ▸ run.tail.take n) :=
+      PFunctor.DynSystem.Prefix.step run.head
+        (PFunctor.DynSystem.Run.tail_initial run ▸ run.tail.take n) :=
   ProcessOver.Run.take_succ run n
 
 @[simp, grind =]

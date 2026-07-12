@@ -21,6 +21,13 @@ on, in the Niu–Spivak slogan).
 * `DynSystem.trajectory` — the behaviour tree from a starting state.
 * `DynSystem.head_trajectory` / `DynSystem.tail_trajectory` — its one-step
   unfolding (exposed position and successor trajectories).
+* `DynSystem.behavior` — the plain terminal-coalgebra semantics: the unique
+  coalgebra homomorphism into `M p`, with the universal property
+  `DynSystem.behavior_unique` and the induced observational equivalence
+  `DynSystem.ObsEq`.
+* `M.selfLabel` / `DynSystem.trajectory_eq_selfLabel_behavior` — `trajectory`
+  is `behavior` relabeled so each node carries its own position, so the two
+  semantics have the same information.
 -/
 
 @[expose] public section
@@ -33,6 +40,13 @@ namespace PFunctor
 child indexed by the lone direction `PUnit.unit`. -/
 def CofreeC.next {α : Type w} (t : CofreeC X.{uA, uB} α) : CofreeC X.{uA, uB} α :=
   t.tail.2 PUnit.unit
+
+/-- Relabel a `p`-tree into the cofree tree whose label at each node is that node's
+own position. The label carries no information beyond the tree itself; this is the
+comparison map between the plain terminal-coalgebra semantics `M p` and the cofree
+semantics `CofreeC p p.A` (see `DynSystem.trajectory_eq_selfLabel_behavior`). -/
+def M.selfLabel {p : PFunctor.{uA, uB}} : M p → CofreeC p p.A :=
+  M.corec fun t => ⟨((M.dest t).1, (M.dest t).1), (M.dest t).2⟩
 
 namespace DynSystem
 
@@ -58,6 +72,60 @@ theorem dest_trajectory (s : DynSystem p) (st : s.State) :
 @[simp] theorem tail_trajectory (s : DynSystem p) (st : s.State) :
     (trajectory s st).tail = ⟨s.expose st, fun d => trajectory s (s.update st d)⟩ := by
   simp only [CofreeC.tail]; rw [dest_trajectory]; rfl
+
+/-! ## Terminal-coalgebra behavior
+
+`M p` is the terminal coalgebra of the extension functor of `p`, so the coalgebra
+structure map `DynSystem.out` induces a unique coalgebra homomorphism from each
+`p`-system into it. Equality of behavior trees is the canonical observational
+equivalence on states. -/
+
+/-- The unique coalgebra homomorphism from a `p`-system into the terminal
+`p.Obj`-coalgebra `M p`: the observable behavior tree from each state. -/
+def behavior (s : DynSystem p) : s.State → M p :=
+  M.corec s.out
+
+/-- The defining equation of `behavior`: destructing the behavior tree at a state
+recovers the exposed position, with each subtree the behavior of the corresponding
+successor state. -/
+@[simp] theorem dest_behavior (s : DynSystem p) (st : s.State) :
+    M.dest (s.behavior st) = ⟨s.expose st, fun d => s.behavior (s.update st d)⟩ := by
+  simp only [behavior, M.dest_corec_apply]; rfl
+
+/-- **Bisimulation by uniqueness.** Any function into `M p` that commutes with the
+coalgebra structure map `out` agrees with `behavior` on the nose: the universal
+property of `M p` as the terminal `p.Obj`-coalgebra. -/
+theorem behavior_unique (s : DynSystem p) (f : s.State → M p)
+    (hf : ∀ st, M.dest (f st) = p.map f (s.out st)) : f = s.behavior :=
+  M.corec_unique _ f hf
+
+/-- Two states (possibly of different `p`-systems) are **observationally
+equivalent** when their behavior trees are equal. By `behavior_unique`, this is
+the strongest equivalence preserved by every `p.Obj`-coalgebra homomorphism. -/
+def ObsEq (s₁ s₂ : DynSystem p) (st₁ : s₁.State) (st₂ : s₂.State) : Prop :=
+  s₁.behavior st₁ = s₂.behavior st₂
+
+/-- Observational equivalence is reflexive (within a fixed system). -/
+@[refl] theorem ObsEq.refl (s : DynSystem p) (st : s.State) : ObsEq s s st st := rfl
+
+/-- Observational equivalence is symmetric. -/
+@[symm] theorem ObsEq.symm {s₁ s₂ : DynSystem p} {st₁ : s₁.State} {st₂ : s₂.State}
+    (h : ObsEq s₁ s₂ st₁ st₂) : ObsEq s₂ s₁ st₂ st₁ := Eq.symm h
+
+/-- Observational equivalence is transitive. -/
+@[trans] theorem ObsEq.trans {s₁ s₂ s₃ : DynSystem p}
+    {st₁ : s₁.State} {st₂ : s₂.State} {st₃ : s₃.State}
+    (h₁₂ : ObsEq s₁ s₂ st₁ st₂) (h₂₃ : ObsEq s₂ s₃ st₂ st₃) :
+    ObsEq s₁ s₃ st₁ st₃ := Eq.trans h₁₂ h₂₃
+
+/-- The cofree trajectory is the behavior tree relabeled with its own positions:
+the two coinductive semantics of a dynamical system carry the same information. -/
+theorem trajectory_eq_selfLabel_behavior (s : DynSystem p) (st : s.State) :
+    s.trajectory st = M.selfLabel (s.behavior st) := by
+  refine congrFun (Eq.symm (M.corec_unique _ (fun st => M.selfLabel (s.behavior st)) ?_)) st
+  intro st
+  simp only [M.selfLabel, M.dest_corec_apply]
+  rfl
 
 /-! ## Closed-system spine
 

@@ -331,18 +331,36 @@ provides a state-indexed transition-system frontend that compiles to
 
 ### Coalgebraic structure
 
-Both `ProcessOver` and `Machine` are instances of the `Coalg` typeclass
-defined in
-[`PolyFun/Control/Coalgebra.lean`](../../PolyFun/Control/Coalgebra.lean).
-A `Coalg F S` is a type `S` together with `out : S → F S`, the
-categorical dual of `MonadAlgebra`.
+Both `ProcessOver` and `Machine` are dynamical systems, i.e. bundled
+coalgebras of polynomial functors
+([`PolyFun/PFunctor/Dynamical/Basic.lean`](../../PolyFun/PFunctor/Dynamical/Basic.lean)):
 
-- `StepOver Γ` is a `Functor` (post-compose on `next`) and
-  `LawfulFunctor`.
-- `ProcessOver Γ` is a `Coalg (StepOver Γ)` via its `step` field.
-- `Machine.StepFun` is a `Functor` and `LawfulFunctor`.
-- `Machine` is a `Coalg Machine.StepFun` via its `Enabled` / `step`
-  fields.
+- `ProcessOver Γ` *is* `PFunctor.DynSystem (StepOver.toPFunctor Γ)` — a
+  state space together with a coalgebra of the step polynomial whose
+  positions are `Γ`-decorated specs and whose directions are complete
+  transcripts. `ProcessOver.step` / `ProcessOver.ofStep` are the
+  `StepOver`-shaped views of the coalgebra structure map.
+- `Machine` *is* `PFunctor.DynSystem PFunctor.univ` — the exposed
+  position at each state is the type of currently enabled events.
+  `Machine.Enabled` / `Machine.step` / `Machine.mk'` keep the classical
+  vocabulary.
+- `StepOver Γ` remains a `Functor` (post-compose on `next`) and
+  `LawfulFunctor`; `StepOver.equivObj` identifies it with the extension
+  of `StepOver.toPFunctor Γ`.
+- The generic instance `Coalg p.Obj s.State` (from `DynSystem.out`, in
+  [`PolyFun/Control/Coalgebra.lean`](../../PolyFun/Control/Coalgebra.lean))
+  therefore covers both; a `Coalg F S` is a type `S` together with
+  `out : S → F S`, the categorical dual of `MonadAlgebra`.
+
+Consequently the whole dynamical-system toolkit applies to processes and
+machines directly: terminal-coalgebra behavior and observational
+equivalence (`DynSystem.behavior`, `DynSystem.ObsEq`), orbits
+(`DynSystem.Run` / `DynSystem.Prefix`, of which `ProcessOver.Run` /
+`ProcessOver.Prefix` are the transcript-vocabulary views), transition
+metadata (`DynSystem.EventMap`, `DynSystem.Labeled`, `DynSystem.SafetySpec`,
+`DynSystem.StepRel`), and the combinators (`ProcessOver.interleave` is the
+`wrap` of `DynSystem.choiceProd` along the scheduler wiring lens,
+`interleave_eq_wrap_choiceProd`).
 
 This reflects the Poly / ACT perspective: a process is a coalgebra for a
 polynomial endofunctor, with the step functor playing the role of the
@@ -370,13 +388,17 @@ systems. `Liveness.lean` provides temporal predicates (`AlwaysState`,
 `EventuallyState`, `InfinitelyOftenState`) and safety / admissibility
 under fairness.
 
-### Refinement and equivalence
+### Safety refinement and mutual refinement
 
 `Refinement.lean` lifts implementation runs to specification runs,
-preserving safety and event / ticket / controller traces.
-`Bisimulation.lean` and `BackwardSimulation` establish behavioral
-equivalence. Named equivalences in `Equivalence.lean` specialize to
-controller, trace, and observational comparisons.
+preserving safety and event / ticket / controller traces; its
+`SafetyRefinement` is the generic `PFunctor.DynSystem.SafetyRefinement`
+at the step polynomial, with `mapRun` and the transport lemmas supplied by
+`PolyFun/PFunctor/Dynamical/Refinement.lean`. `MutualSafetyRefinement.lean` and
+`ReverseSafetyRefinement` (likewise the `DynSystem` notions) package the reverse
+and two-way forms. These use independent relations in each direction and are
+not coalgebraic bisimulations. Named two-way comparisons in `Equivalence.lean`
+specialize to controller, trace, and observational matching.
 
 ### Open systems (UC frontend)
 
@@ -567,15 +589,15 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Control.lean` | `Control`, `scheduler?`, `current?`, `controllers` |
 | `Profile.lean` | `Profile`, `observe`, `residual`, `frontierView` |
 | `Current.lean` | `view`, `observe`, `residualView` |
-| `Process.lean` | `NodeAuthority`, `NodeView`, `NodeProfile`, `StepOver`, `ProcessOver`, `Process`, `Functor (StepOver Γ)`, `Coalg` instance, `interleave`, `ProcessOver.{Behavior, behavior, ObsEq}` |
+| `Process.lean` | `NodeAuthority`, `NodeView`, `NodeProfile`, `StepOver`, `ProcessOver` (= `DynSystem` of the step polynomial; views `step` / `ofStep`), `Process`, `Functor (StepOver Γ)`, `interleave` / `interleaveLens` / `interleave_eq_wrap_choiceProd`, `Behavior`, metadata bundles as `DynSystem` instantiations |
 | `Tree.lean` | structural concurrent syntax → `Process` |
-| `Machine.lean` | `Machine`, `Machine.toProcess`, `Machine.StepFun`, `Coalg` instance |
+| `Machine.lean` | `Machine` (= `DynSystem PFunctor.univ`), `Machine.{Enabled, step, mk', SafetySpec}`, `Machine.toProcess` |
 | `Execution.lean` | `Trace`, `ObservedTrace` for processes |
 | `Run.lean` | `Prefix`, `Run` (infinite), controller / event extraction |
 | `Policy.lean` | `StepPolicy`, `respects`, combinators |
 | `Observation.lean` | `PackedObs`, transcript relations, observation preservation |
-| `Refinement.lean` | `ForwardSimulation`, safety / trace preservation |
-| `Bisimulation.lean` | `Bisimulation`, `BackwardSimulation`, `refl`, `symm` |
+| `Refinement.lean` | `SafetyRefinement` (= `DynSystem.SafetyRefinement` at the step polynomial), `matchTranscript`, observation preservation, `safe_of_satisfies` |
+| `MutualSafetyRefinement.lean` | `MutualSafetyRefinement`, `ReverseSafetyRefinement` (= the `DynSystem` notions), `Satisfies`-based safety transport |
 | `Equivalence.lean` | controller, trace, observational equivalences |
 | `Fairness.lean` | `WeakFair`, `StrongFair`, temporal predicates |
 | `Liveness.lean` | `Safe`, `Satisfies`, `Admissible`, state predicates |

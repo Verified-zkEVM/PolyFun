@@ -769,9 +769,8 @@ the per-state sampler. The closed-world `ProcessOver` lemmas from
 @[reducible]
 def toProcess {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
     (op : OpenProcess.{u, v, w, w'} m Party Δ) :
-    ProcessOver (OpenNodeContext.{u, w} Party Δ) where
-  Proc := op.Proc
-  step := op.step
+    ProcessOver (OpenNodeContext.{u, w} Party Δ) :=
+  ProcessOver.ofStep op.Proc op.step
 
 /--
 Forget the boundary layer and view an open process as a plain closed-world
@@ -854,16 +853,16 @@ def interleave {m : Type w → Type w'} {Party : Type u} {Δ₁ Δ₂ Δ : PortB
 end OpenProcess
 
 /--
-`OpenProcess.System` augments an open process by the standard verification
+`OpenProcess.SafetySpec` augments an open process by the standard verification
 predicates used throughout PolyFun. The verification predicates are about
-the structural `ProcessOver` layer, so `OpenProcess.System` is monad- and
-sampler-agnostic and refers to the underlying `ProcessOver.System`.
+the structural `ProcessOver` layer, so `OpenProcess.SafetySpec` is monad- and
+sampler-agnostic and refers to the underlying `ProcessOver.SafetySpec`.
 -/
--- `OpenProcess.System`'s two universes are the independent party universe (`u`) and the
+-- `OpenProcess.SafetySpec`'s two universes are the independent party universe (`u`) and the
 -- move-space universe (`w`) of the open node context; kept separate for generality.
 @[nolint checkUnivs]
-abbrev OpenProcess.System (Party : Type u) (Δ : PortBoundary) :=
-  ProcessOver.System (OpenNodeContext.{u, w} Party Δ)
+abbrev OpenProcess.SafetySpec (Party : Type u) (Δ : PortBoundary) :=
+  ProcessOver.SafetySpec (OpenNodeContext.{u, w} Party Δ)
 
 /-! ## Silent steps and weak bisimulation -/
 

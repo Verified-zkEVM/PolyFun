@@ -1,7 +1,7 @@
 # Polynomial Functors and `FreeM`
 
-This page is the agent-facing tour of `PolyFun/PFunctor/` and
-`PolyFun/Control/Comonad/Cofree.lean`. It is descriptive, not load-bearing:
+This page is the agent-facing tour of `PolyFun/PFunctor/`. It is
+descriptive, not load-bearing:
 the source files are the canonical reference. Cite Lean source by file path
 plus declaration name when accuracy matters.
 
@@ -57,17 +57,25 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/Lens/State.lean`](../../PolyFun/PFunctor/Lens/State.lean) | Lawful state-lens specialization for the self-monomial polynomial (`get`, `put`, `PutGet` / `GetPut` / `PutPut`). |
 | [`PolyFun/PFunctor/Chart/Basic.lean`](../../PolyFun/PFunctor/Chart/Basic.lean) | Charts (forward map on both positions and directions). Chart category is isomorphic to `Set^→` and has a different monoidal structure from the lens category. |
 | [`PolyFun/PFunctor/Category.lean`](../../PolyFun/PFunctor/Category.lean) | Category-theoretic packaging where applicable. |
+| [`PolyFun/PFunctor/Comonoid.lean`](../../PolyFun/PFunctor/Comonoid.lean) | Comonoids in `(Poly, ◃, y)` (= small categories, Def 7.14): `Comonoid` structure with counit/comult and the lens laws; the state comonoid `stateComonoid S` on `Sy^S`; `IsStateSystem` (Ex 7.22); the `n`-fold comultiplication `comultN` = `δ^{(n)}` (Prop 7.20). |
 
 ### Dynamical systems (Spivak–Niu Ch. 4)
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/PFunctor/Dynamical/Basic.lean`](../../PolyFun/PFunctor/Dynamical/Basic.lean) | `DynSystem p` (a `p`-system = lens `selfMonomial State ⟹ p`), `toLens`/`ofLens`, `MooreMachine`, `DeterministicAutomaton`, `Closed` / `Closed.iterate`, `Point` (`X ⟹ p`) and `Section` (`p ⟹ X`) / `sectionLens`. |
-| [`PolyFun/PFunctor/Dynamical/Combinators.lean`](../../PolyFun/PFunctor/Dynamical/Combinators.lean) | Building systems from old ones: `wrap` (§4.3.3), `close` / `MooreMachine.feedback` (§4.3.4), `tensor` (§4.3.2), `pairing` (§4.3.1), `Wiring₂` / `wire₂` (§4.4). |
-| [`PolyFun/PFunctor/Dynamical/Run.lean`](../../PolyFun/PFunctor/Dynamical/Run.lean) | Finite runs: `run`, `trace`, `outputOn`, `DeterministicAutomaton.accepts`; input streams `stateStream` / `outputStream` with `stateStream_eq_run`. |
-| [`PolyFun/PFunctor/Dynamical/Trajectory.lean`](../../PolyFun/PFunctor/Dynamical/Trajectory.lean) | Infinite behaviour: `trajectory : DynSystem p → State → CofreeC p p.A`; closed-system spine `CofreeC.next`, `next_iterate_trajectory`. |
+| [`PolyFun/PFunctor/Dynamical/Basic.lean`](../../PolyFun/PFunctor/Dynamical/Basic.lean) | `DynSystem p` (a `p`-system = lens `selfMonomial State ⟹ p`), `toLens`/`ofLens`; the coalgebra structure map `out : State → p.Obj State` with its `Coalg p.Obj` instance; concrete `Step`s and `StepRel` (`comp` / `top` / `reverse` / `inter` / `sync`); `MooreMachine`, `DeterministicAutomaton`, `Closed` / `Closed.iterate`, `Point` (`X ⟹ p`) and `Section` (`p ⟹ X`) / `sectionLens`. |
+| [`PolyFun/PFunctor/Dynamical/Safety.lean`](../../PolyFun/PFunctor/Dynamical/Safety.lean) | Transition metadata and safety specifications: `EventMap` / `Tickets`, `Labeled` / `Ticketed`, and `SafetySpec` (`init` / `assumptions` / `safe`). Instantiated by concurrent machines and processes. |
+| [`PolyFun/PFunctor/Dynamical/Combinators.lean`](../../PolyFun/PFunctor/Dynamical/Combinators.lean) | Building systems from old ones: `wrap` (§4.3.3), `close` / `MooreMachine.feedback` (§4.3.4), `tensor` (§4.3.2), `pairing` (§4.3.1), `choiceProd` (asynchronous choice), `Wiring₂` / `wire₂` (§4.4). |
+| [`PolyFun/PFunctor/Dynamical/Run.lean`](../../PolyFun/PFunctor/Dynamical/Run.lean) | Generic orbits: `DynSystem.Prefix` / `DynSystem.Run` (with `take`, `event(s)`/`ticket(s)`, `Prefix.last`, `RelUpTo` / `Rel`); `DynSystem.ReachableIn` (`n`-step reachability via `Prefix`); Moore finite runs `run`, `trace`, `outputOn`, `DeterministicAutomaton.accepts`; input streams `stateStream` / `outputStream` with `stateStream_eq_run`; `streamRun` / `iterateRun` identifying them with generic runs. |
+| [`PolyFun/PFunctor/Dynamical/Trajectory.lean`](../../PolyFun/PFunctor/Dynamical/Trajectory.lean) | Infinite behaviour: terminal-coalgebra `behavior : State → M p` with `behavior_unique` and `ObsEq`; cofree `trajectory : DynSystem p → State → CofreeC p p.A` with `trajectory_eq_selfLabel_behavior`; closed-system spine `CofreeC.next`, `next_iterate_trajectory`. |
 | [`PolyFun/PFunctor/Dynamical/Behavior.lean`](../../PolyFun/PFunctor/Dynamical/Behavior.lean) | Closed-loop behaviour of a Moore machine: `feedbackStep`, `feedbackStream`, `next_iterate_feedback`. |
-| [`PolyFunTest/PFunctor/Dynamical/Examples.lean`](../../PolyFunTest/PFunctor/Dynamical/Examples.lean) | Worked examples / regression tests (counter, parity automaton, mode-dependent `gate`, feedback / stream behaviour). |
+| [`PolyFun/PFunctor/Dynamical/Speedup.lean`](../../PolyFun/PFunctor/Dynamical/Speedup.lean) | The transition lens `δ = Lens.transitionLens` (Ex 6.44) and `DynSystem.twoStep` (the `n = 2` composite over `p ◃ p`). |
+| [`PolyFun/PFunctor/Dynamical/PointedMachine.lean`](../../PolyFun/PFunctor/Dynamical/PointedMachine.lean) | `PointedMachine`: pointed machines (`init` / partial `output`) over an interface; `seqComp` (⊕-state sequential composition, Ex 6.41) with `toComp_seqComp_inl/inr`; fuelled `toComp`; monad-parametric `runWith` = `mapM ∘ toComp` with `runWith_succ` / `runWith_output_some` (fuel irrelevance). |
+| [`PolyFun/PFunctor/Dynamical/RunN.lean`](../../PolyFun/PFunctor/Dynamical/RunN.lean) | `DynSystem.nStep` = `Run_n(φ) = δ^{(n)} ⨟ φ^{◁n}` (§7.1.5) over the composition power `compNth p n`; `twoStep_toLens_eq` collapses `n = 2` to `twoStep`. |
+| [`PolyFun/PFunctor/Dynamical/Simulation.lean`](../../PolyFun/PFunctor/Dynamical/Simulation.lean) | `DynSystem.IsSimulation` (step-synchronized relation) with `behavior_eq_of_isSimulation` — related states have equal `behavior`, via `M.corec_eq_corec`; `isSimulation_graph` / `behavior_coalgHom` — coalgebra morphisms are the functional simulations. |
+| [`PolyFun/PFunctor/Dynamical/Refinement.lean`](../../PolyFun/PFunctor/Dynamical/Refinement.lean) | Operational `DynSystem.ForwardSimulation` between bare systems, with `mapRun` and its transport lemmas; `SafetyRefinement` extends it with initial-state coverage, assumption preservation, and safety reflection; `ReverseSafetyRefinement` / `MutualSafetyRefinement` package one- and two-way safety refinement; `ForwardSimulation.ofIsSimulation` embeds `IsSimulation` at `StepRel.sync`. Instantiated by the concurrent refinement layers. |
+| [`PolyFun/ITree/Unfold.lean`](../../PolyFun/ITree/Unfold.lean) | `DynSystem.toITree`: unfold a dynamical system into an all-query interaction tree; `M.toITree` embeds behaviour trees. |
+| [`PolyFunTest/PFunctor/Dynamical/Examples.lean`](../../PolyFunTest/PFunctor/Dynamical/Examples.lean) | Worked examples / regression tests (counter, parity automaton, mode-dependent `gate`, feedback / stream behaviour, the `univ`-system `toggle`, generic runs, `choiceProd`, behaviour / ITree unfolding). |
 
 ### Free monad `FreeM`
 
@@ -90,7 +98,8 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 `PolyFun/Control/` is logically below `PFunctor/Free` in the import DAG and
 provides the reusable monad / comonad / coalgebra plumbing. See
 [`PolyFun/Control/`](../../PolyFun/Control/) for the full inventory:
-`Coalgebra`, `Comonad/{Basic, Cofree, Instances}`, `Lawful/Basic`,
+`Coalgebra` (the `Coalg` class: every `DynSystem p` is a `Coalg p.Obj`),
+`Comonad/{Basic, Instances}`, `Lawful/Basic`,
 `Monad/{Algebra, Equiv, Free, FreeCont, Hom, Iter}`, `Trace`.
 
 ## Mental model

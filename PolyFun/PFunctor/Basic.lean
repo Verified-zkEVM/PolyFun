@@ -80,6 +80,17 @@ def purePower (B : Type uB) : PFunctor.{uA, uB} :=
 /-- A polynomial functor is representable if it is equivalent to `X^A` for some type `A`. -/
 alias representable := purePower
 
+/-- The **universe polynomial functor** `P(X) = Σ (T : Type u), X^ T`: positions are types,
+and the directions at a position `T` are its elements. Its extension `univ.Obj S` is
+`Σ (T : Type u), T → S`, so a dynamical system over `univ` is a transition system that
+exposes at each state the type of its currently enabled events; see `PFunctor.DynSystem`.
+
+Reducible so that a direction type `univ.B T` unfolds to `T` during elaboration and
+instance search, keeping transitions over `univ` as ergonomic as bare functions. -/
+@[reducible]
+def univ : PFunctor.{u + 1, u} :=
+  ⟨Type u, fun T => T⟩
+
 section ofFn
 
 /-- Construct a polynomial functor from just a function `B`, with `A` derived implicitly. -/
@@ -117,6 +128,9 @@ instance {β} : Unique (A (purePower β)) := inferInstanceAs (Unique PUnit)
 @[simp] lemma purePower_A (B : Type u) : (purePower B).A = PUnit := rfl
 @[simp] lemma purePower_B (B : Type u) (a : (purePower B).A) : (purePower B).B a = B := rfl
 @[simp] lemma purePower_unit : purePower PUnit = X := rfl
+
+@[simp] lemma univ_A : univ.{u}.A = Type u := rfl
+lemma univ_B (T : Type u) : univ.{u}.B T = T := rfl
 
 -- end Basic
 

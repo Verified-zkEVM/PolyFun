@@ -119,6 +119,13 @@ The structure is independent of the boundary `Δ` so that environment
 events are *not* keyed by port: an environment event acts on whatever
 `X`-typed slice of state the protocol exposes, with no dependence on
 which ports happen to be in scope.
+
+Categorically this is a **Kleisli Mealy machine**: an event-indexed state
+transition valued in the Kleisli category of `m`. It is intentionally not
+unified with `PFunctor.DynSystem` — dynamical systems are pure coalgebras
+`State → p.Obj State`, and identifying monadic transition systems with
+dynamical systems would require a monadic-dynamical abstraction (coalgebras of
+the composite `m ∘ p.Obj`) that the library does not yet provide.
 -/
 @[ext]
 structure EnvAction (m : Type v → Type w) (Event : Type u) (X : Type v)
