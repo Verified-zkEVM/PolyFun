@@ -559,3 +559,24 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   responder-first order flip) and derives its machine-game step lemmas
   from `runWith_run_succ_of_output_eq_none`; verdict to be recorded at
   VCVio landing.
+- 2026-07-11 (**B6**, the fold's universal property + naturality along a monad
+  morphism): landed in `PFunctor/Free/Basic.lean` (+ `StateT.mapHom` in
+  `Control/Monad/Hom.lean`), no new imports / DAG change. `FreeM.mapMHom_unique`
+  (freeness of `FreeM P` — a monad hom out of `FreeM P` is determined by its
+  action on generators `FreeM.liftA`), `FreeM.mapM_natural` / `mapMHom_comp`
+  (naturality of the fold along `φ : m →ᵐ n`: `φ (mapM s x) = mapM (φ ∘ s) x`),
+  `StateT.mapHom` (`StateT σ` is functorial on `MonadHom`) + `run_mapHom`, the
+  composed `FreeM.run_mapM_mapHom` (the stateful `φ`-through-a-fold-run shape),
+  and `mapM_liftA_eq_self` / `mapMHom_liftA` (the identity handler folds to the
+  identity). The `MonadHom`/`→ᵐ`/`∘ₘ` layer and the bundled fold `mapMHom` were
+  already upstream — only the naturality/universal-property *laws* were missing.
+  Regression: `PolyFunTest/PFunctor/FreeMapMNaturality.lean`. Proof note: the
+  `MonadHom` `CoeFun` is an un-β-reduced redex, so coe-form lemmas (`mmap_bind`)
+  match hypotheses while `simp` β-reduces to the `.toFun` fields — mixing the two
+  fails; keep a case in one form. **Pays-rent slot (open):** falsifiable test =
+  the downstream VCVio PR bundles `evalDist` as `ProbComp →ᵐ SPMF`
+  (`MonadHom.ofLift`) and collapses its hand-proved fold-naturality family —
+  `simulateQ_stateless_run`, `run_simulateQ_toQueryImpl_ofStateQueryImpl`,
+  `evalDist_simulateQ_run'_eq_evalDist`, `evalDist_simulateQ_run_congr` (each an
+  `OracleComp.inductionOn`) — to one-liners at `φ := evalDist`; verdict recorded
+  at VCVio landing. VCVio payoff-map row: B6 → "`simulateQ` universal property".
