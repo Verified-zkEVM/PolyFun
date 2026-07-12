@@ -215,7 +215,7 @@ Landed the K-L-prioritized machine spine (crypto-free):
   behaviour (with `toComp_seqComp_inr` this is the structural `IsPolyTime.bind`
   content); the naive fuel-additive single-`bind` law is **false** (fuel threads
   continuously), so the fuel-exact form via reachability + fuel-irrelevance is a
-  noted next increment. Generic `IsSimulation` + `implements_of_isSimulation`
+  noted next increment. Generic `IsSimulation` + `behavior_eq_of_isSimulation`
   (via `behavior_unique`/`M.corec_eq_corec`) in `Dynamical/Simulation.lean`;
   the stutter-budget variant is deferred.
 

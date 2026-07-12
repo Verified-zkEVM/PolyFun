@@ -174,6 +174,37 @@ end IsCartesian
 
 /-! ## The intersection: vertical ∩ cartesian = iso -/
 
+namespace Equiv
+
+/-- The forward lens of a lens equivalence is vertical: its inverse lens
+supplies the inverse of its position map. -/
+theorem toLens_isVertical (e : P ≃ₗ Q) : e.toLens.IsVertical := by
+  apply Function.bijective_iff_has_inverse.mpr
+  exact ⟨e.invLens.toFunA,
+    fun a => congrFun (congrArg Lens.toFunA e.left_inv) a,
+    fun b => congrFun (congrArg Lens.toFunA e.right_inv) b⟩
+
+/-- The forward lens of a lens equivalence is cartesian. The two inverse lens
+laws make each backward fiber map bijective. -/
+theorem toLens_isCartesian (e : P ≃ₗ Q) : e.toLens.IsCartesian := by
+  intro a
+  have hleft : (e.invLens ∘ₗ e.toLens).IsCartesian := by
+    rw [e.left_inv]
+    exact IsCartesian.id P
+  have hright : (e.toLens ∘ₗ e.invLens).IsCartesian := by
+    rw [e.right_inv]
+    exact IsCartesian.id Q
+  constructor
+  · have hinj : Function.Injective
+        (e.toLens.toFunB (e.invLens.toFunA (e.toLens.toFunA a))) :=
+      Function.Injective.of_comp (hright (e.toLens.toFunA a)).1
+    have hA : e.invLens.toFunA (e.toLens.toFunA a) = a :=
+      congrFun (congrArg Lens.toFunA e.left_inv) a
+    exact hA ▸ hinj
+  · exact Function.Surjective.of_comp (hleft a).2
+
+end Equiv
+
 /-- A lens that is both **vertical** (position map bijective) and **cartesian**
 (every fiber bijective) is an isomorphism `P ≃ₗ Q`. This realizes the meeting of
 the two factorization classes: the position bijection and the fiber bijections
@@ -189,6 +220,16 @@ noncomputable def equivOfVerticalCartesian (l : Lens P Q)
     (hv : l.IsVertical) (hc : l.IsCartesian) :
     (equivOfVerticalCartesian l hv hc).toLens = l := by
   ext <;> rfl
+
+/-- A lens is the forward map of a lens equivalence exactly when it is both
+vertical and cartesian. -/
+theorem exists_equiv_toLens_iff (l : Lens P Q) :
+    (∃ e : P ≃ₗ Q, e.toLens = l) ↔ l.IsVertical ∧ l.IsCartesian := by
+  constructor
+  · rintro ⟨e, rfl⟩
+    exact ⟨e.toLens_isVertical, e.toLens_isCartesian⟩
+  · rintro ⟨hv, hc⟩
+    exact ⟨equivOfVerticalCartesian l hv hc, equivOfVerticalCartesian_toLens l hv hc⟩
 
 end Lens
 

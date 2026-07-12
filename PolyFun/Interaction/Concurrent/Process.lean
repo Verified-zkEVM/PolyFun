@@ -695,9 +695,10 @@ terminal-coalgebra semantics comes directly from the dynamical-system layer:
 `process.behavior : process.Proc → Behavior Γ` is `PFunctor.DynSystem.behavior`,
 its defining equation is `DynSystem.dest_behavior`, the "bisimulation by
 uniqueness" principle is `DynSystem.behavior_unique`, and equality of behavior
-trees — the canonical observational equivalence on residual states, agreeing
-with any relational bisimulation witness constructed via
-`Concurrent.Refinement.MutualSafetyRefinement` — is `DynSystem.ObsEq`. -/
+trees is the canonical observational equivalence `DynSystem.ObsEq`. A
+same-interface `DynSystem.IsSimulation` implies this equality; mutual safety
+refinement instead expresses two-way existential trace matching and is not a
+coalgebraic bisimulation. -/
 
 /-- The terminal coalgebra of `StepOver.toPFunctor Γ`: the type of
 possibly-infinite trees of `Γ`-decorated step protocols. Each such tree

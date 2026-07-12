@@ -11,7 +11,7 @@ public import PolyFun.PFunctor.Dynamical.Refinement
 # Examples for simulations between dynamical systems
 
 Regression tests: equality is a simulation of a system by itself,
-`implements_of_isSimulation` turns a simulation into behaviour equality, a
+`behavior_eq_of_isSimulation` turns a simulation into behaviour equality, a
 coalgebra-morphism graph is a simulation preserving behaviour, and a
 step-synchronized simulation embeds into the forward-simulation layer at
 `StepRel.sync`.
@@ -19,7 +19,7 @@ step-synchronized simulation embeds into the forward-simulation layer at
 
 @[expose] public section
 
-universe u
+universe u v
 
 namespace PFunctor
 
@@ -32,11 +32,19 @@ def idSim (D : DynSystem.{u} p) : DynSystem.IsSimulation D D (· = ·) where
 
 /-- A simulation turns into behaviour equality. -/
 example (D : DynSystem.{u} p) (s : D.State) : D.behavior s = D.behavior s :=
-  DynSystem.implements_of_isSimulation (idSim D) rfl
+  DynSystem.behavior_eq_of_isSimulation (idSim D) rfl
 
 /-- ...and hence observational equivalence. -/
 example (D : DynSystem.{u} p) (s : D.State) : DynSystem.ObsEq D D s s :=
   DynSystem.obsEq_of_isSimulation (idSim D) rfl
+
+/-- Simulations do not require the two state types to inhabit the same
+universe. -/
+example {D₁ : DynSystem.{u} p} {D₂ : DynSystem.{v} p}
+    {R : D₁.State → D₂.State → Prop} (sim : DynSystem.IsSimulation D₁ D₂ R)
+    {s₁ : D₁.State} {s₂ : D₂.State} (h : R s₁ s₂) :
+    D₁.behavior s₁ = D₂.behavior s₂ :=
+  DynSystem.behavior_eq_of_isSimulation sim h
 
 /-- The graph of the identity coalgebra morphism is a simulation. -/
 example (D : DynSystem.{u} p) :

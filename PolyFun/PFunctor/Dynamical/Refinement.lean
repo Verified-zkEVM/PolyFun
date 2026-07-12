@@ -21,8 +21,9 @@ This file separates operational trace simulation from verification policy:
   `relUpTo_mapRun` / `rel_mapRun`.
 * `DynSystem.SafetyRefinement impl spec matchStep` extends that operational core
   with initial-state coverage, assumption preservation, and safety reflection.
-* `ReverseSafetyRefinement` / `MutualSafetyRefinement` — the reversed and two-way packagings,
-  with `MutualSafetyRefinement.symm` / `MutualSafetyRefinement.refl`.
+* `ReverseSafetyRefinement` / `MutualSafetyRefinement` — the reversed and
+  two-way packagings, with reflexivity, symmetry, and transitivity operations.
+  `weakenMatch` changes only the required endpoint step relation.
 * `ForwardSimulation.ofIsSimulation` — a step-synchronized simulation
   (`DynSystem.IsSimulation`, the tight notion with the coinductive
   `behavior`-equality payoff) is a forward simulation at the synchronized step
@@ -137,6 +138,19 @@ def refl (system : DynSystem.{u} p)
 /-- The identity simulation using the permissive step relation. -/
 def reflTop (system : DynSystem.{u} p) : ForwardSimulation system system StepRel.top :=
   refl system StepRel.top fun _ => trivial
+
+/-- Weaken the required step relation of a forward simulation. The state
+relation and its preservation proof are unchanged. -/
+def weakenMatch
+    {matchStrong matchWeak : StepRel impl spec}
+    (sim : ForwardSimulation impl spec matchStrong)
+    (hmatch : ∀ stepImpl stepSpec, matchStrong stepImpl stepSpec →
+      matchWeak stepImpl stepSpec) :
+    ForwardSimulation impl spec matchWeak where
+  stateRel := sim.stateRel
+  step hrel dImpl := by
+    obtain ⟨dSpec, hstep, hnext⟩ := sim.step hrel dImpl
+    exact ⟨dSpec, hmatch _ _ hstep, hnext⟩
 
 /-- Composition of forward simulations. The intermediate state retained by the
 composite relation is the witness needed to compose the two step simulations. -/
@@ -280,6 +294,19 @@ def refl (system : SafetySpec.{u} p)
 /-- The identity safety refinement using the permissive step relation. -/
 def reflTop (system : SafetySpec.{u} p) : SafetyRefinement system system StepRel.top :=
   refl system StepRel.top fun _ => trivial
+
+/-- Weaken the required step relation of a safety refinement while retaining
+its operational state relation and all verification-policy obligations. -/
+def weakenMatch
+    {matchStrong matchWeak : StepRel impl.toDynSystem spec.toDynSystem}
+    (sim : SafetyRefinement impl spec matchStrong)
+    (hmatch : ∀ stepImpl stepSpec, matchStrong stepImpl stepSpec →
+      matchWeak stepImpl stepSpec) :
+    SafetyRefinement impl spec matchWeak where
+  toForwardSimulation := sim.toForwardSimulation.weakenMatch hmatch
+  init := sim.init
+  assumptions := sim.assumptions
+  safe := sim.safe
 
 /-- Composition of safety refinements, using ordinary relational composition
 on their concrete-step relations. -/
@@ -441,13 +468,36 @@ def refl (system : SafetySpec.{u} p)
   forth := SafetyRefinement.refl system matchForth hForth
   back := SafetyRefinement.refl system matchBack hBack
 
+/-- Compose mutual safety refinements when the composed forward and backward
+step relations imply the relations required by the endpoints. -/
+def trans {r : PFunctor.{uA₃, uB₃}}
+    {middle : SafetySpec.{u₂} q} {target : SafetySpec.{u₃} r}
+    {matchLeftMiddle : StepRel left.toDynSystem middle.toDynSystem}
+    {matchMiddleLeft : StepRel middle.toDynSystem left.toDynSystem}
+    {matchMiddleTarget : StepRel middle.toDynSystem target.toDynSystem}
+    {matchTargetMiddle : StepRel target.toDynSystem middle.toDynSystem}
+    {matchLeftTarget : StepRel left.toDynSystem target.toDynSystem}
+    {matchTargetLeft : StepRel target.toDynSystem left.toDynSystem}
+    (first : MutualSafetyRefinement left middle matchLeftMiddle matchMiddleLeft)
+    (second : MutualSafetyRefinement middle target matchMiddleTarget matchTargetMiddle)
+    (hForth : ∀ stepLeft stepTarget,
+      StepRel.comp matchLeftMiddle matchMiddleTarget stepLeft stepTarget →
+        matchLeftTarget stepLeft stepTarget)
+    (hBack : ∀ stepTarget stepLeft,
+      StepRel.comp matchTargetMiddle matchMiddleLeft stepTarget stepLeft →
+        matchTargetLeft stepTarget stepLeft) :
+    MutualSafetyRefinement left target matchLeftTarget matchTargetLeft where
+  forth := (second.forth.comp first.forth).weakenMatch hForth
+  back := (first.back.comp second.back).weakenMatch hBack
+
 end MutualSafetyRefinement
 
 /-! ## Step-synchronized simulations as forward simulations -/
 
 /-- A synchronized same-interface simulation induces an operational forward
 simulation at `StepRel.sync`. -/
-def ForwardSimulation.ofIsSimulation {D₁ D₂ : DynSystem.{u} p}
+def ForwardSimulation.ofIsSimulation
+    {D₁ : DynSystem.{u₁} p} {D₂ : DynSystem.{u₂} p}
     {R : D₁.State → D₂.State → Prop}
     (hsim : IsSimulation D₁ D₂ R) :
     ForwardSimulation D₁ D₂ (StepRel.sync D₁ D₂) where
@@ -458,7 +508,8 @@ def ForwardSimulation.ofIsSimulation {D₁ D₂ : DynSystem.{u} p}
 
 /-- Lift a synchronized simulation to a safety refinement by supplying the
 three verification-policy preservation properties separately. -/
-def SafetyRefinement.ofIsSimulation {S₁ S₂ : SafetySpec.{u} p}
+def SafetyRefinement.ofIsSimulation
+    {S₁ : SafetySpec.{u₁} p} {S₂ : SafetySpec.{u₂} p}
     {R : S₁.State → S₂.State → Prop}
     (hsim : IsSimulation S₁.toDynSystem S₂.toDynSystem R)
     (hinit : ∀ st₁, S₁.init st₁ → ∃ st₂, S₂.init st₂ ∧ R st₁ st₂)

@@ -91,8 +91,9 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   → PFunctor/Free/{Displayed, Displayed/Decoration}
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
-  → PFunctor/Dynamical/{Basic, System, Combinators, Run, Trajectory}
-  → PFunctor/Dynamical/Behavior
+  → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Trajectory,
+                        Simulation, Refinement}
+  → PFunctor/Dynamical/{Behavior, PointedMachine, RunN}
 
 Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}

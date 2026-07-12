@@ -30,7 +30,7 @@ defining and reasoning about ITrees:
 
 @[expose] public section
 
-universe u uA uB v
+universe u uA uB v w
 
 namespace PFunctor
 
@@ -69,7 +69,7 @@ theorem dest_corec_eq {a : P.A} {h : P.B a → α} (g : α → P α) (x : α) (h
 /-- Bisimulation principle specialized to two `corec`s built from the same
 shape transformer. If at every reachable state the two seed transitions agree
 on shapes and yield bisimilar children, the two `corec`s are equal. -/
-theorem corec_eq_corec {α β : Type v} (g : α → P α) (h : β → P β)
+theorem corec_eq_corec {α : Type v} {β : Type w} (g : α → P α) (h : β → P β)
     (R : α → β → Prop) (x₀ : α) (y₀ : β)
     (hR : R x₀ y₀)
     (step : ∀ x y, R x y → ∃ a f f',

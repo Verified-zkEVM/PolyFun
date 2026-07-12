@@ -505,6 +505,29 @@ def loopObsMutualBob :
   forth := loopObsSimBob
   back := loopObsSimBob
 
+/-! The standard two-way comparisons expose actual equivalence operations. -/
+
+example : Equivalence.Controller loopSystem loopSystem :=
+  (Equivalence.Controller.refl loopSystem).trans
+    (Equivalence.Controller.refl loopSystem)
+
+example : Equivalence.ControllerPath loopSystem loopSystem :=
+  (Equivalence.ControllerPath.refl loopSystem).symm
+
+example : Equivalence.Trace loopSystem loopSystem
+    loopTicketed.ticket loopTicketed.ticket :=
+  (Equivalence.Trace.refl loopSystem loopTicketed.ticket).trans
+    (Equivalence.Trace.refl loopSystem loopTicketed.ticket)
+
+example : Equivalence.Ticket loopSystem loopSystem
+    loopTicketed.ticket loopTicketed.ticket :=
+  (Equivalence.Ticket.refl loopSystem loopTicketed.ticket).symm
+
+example : Equivalence.Observation Party.bob loopSystem loopSystem :=
+  Equivalence.Observation.trans Party.bob
+    (Equivalence.Observation.refl Party.bob loopSystem)
+    (Equivalence.Observation.refl Party.bob loopSystem)
+
 example : loopMappedRun.state 4 = PUnit.unit := rfl
 
 example :

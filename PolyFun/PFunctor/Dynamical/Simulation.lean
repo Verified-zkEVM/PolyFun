@@ -14,7 +14,7 @@ A **simulation** of one `p`-dynamical system by another is a relation on their
 states that is preserved by a single synchronized step and matches the exposed
 positions. Because `M p` is the terminal `p.Obj`-coalgebra, a simulation forces
 related states to have equal `behavior` trees — the coinductive
-`implements_of_isSimulation`, proved via the bisimulation principle
+`behavior_eq_of_isSimulation`, proved via the bisimulation principle
 `M.corec_eq_corec`. This is the interface-generic core of the step-synchronized
 simulation method VCVio's oracle machines use to discharge `Implements`.
 
@@ -35,7 +35,7 @@ assumption, and safety preservation for verification-oriented `SafetySpec`s;
 
 @[expose] public section
 
-universe u uA uB
+universe u u₁ u₂ uA uB
 
 namespace PFunctor
 
@@ -47,7 +47,7 @@ variable {p : PFunctor.{uA, uB}}
 related states expose the same position, and the two systems' updates carry
 related states to related states (with the `D₁`-direction transported along the
 shared exposed position). -/
-structure IsSimulation (D₁ D₂ : DynSystem.{u} p)
+structure IsSimulation (D₁ : DynSystem.{u₁} p) (D₂ : DynSystem.{u₂} p)
     (R : D₁.State → D₂.State → Prop) : Prop where
   /-- Related states expose the same `p`-position. -/
   expose_eq : ∀ {s₁ s₂}, R s₁ s₂ → D₁.expose s₁ = D₂.expose s₂
@@ -58,7 +58,7 @@ structure IsSimulation (D₁ D₂ : DynSystem.{u} p)
 /-- **A simulation preserves behaviour.** If `R` is a simulation and `R s₁ s₂`,
 the two states have the same behaviour tree; hence they are observationally
 equivalent (`ObsEq`). Proved by the terminal-coalgebra bisimulation principle. -/
-theorem implements_of_isSimulation {D₁ D₂ : DynSystem.{u} p}
+theorem behavior_eq_of_isSimulation {D₁ : DynSystem.{u₁} p} {D₂ : DynSystem.{u₂} p}
     {R : D₁.State → D₂.State → Prop} (hsim : IsSimulation D₁ D₂ R)
     {s₁ : D₁.State} {s₂ : D₂.State} (h : R s₁ s₂) :
     D₁.behavior s₁ = D₂.behavior s₂ := by
@@ -71,16 +71,17 @@ theorem implements_of_isSimulation {D₁ D₂ : DynSystem.{u} p}
   exact heq_of_eq (congrArg (D₂.update y) (eq_of_heq (hab.trans (eqRec_heq he a').symm)))
 
 /-- Simulation-related states are observationally equivalent. -/
-theorem obsEq_of_isSimulation {D₁ D₂ : DynSystem.{u} p}
+theorem obsEq_of_isSimulation {D₁ : DynSystem.{u₁} p} {D₂ : DynSystem.{u₂} p}
     {R : D₁.State → D₂.State → Prop} (hsim : IsSimulation D₁ D₂ R)
     {s₁ : D₁.State} {s₂ : D₂.State} (h : R s₁ s₂) : ObsEq D₁ D₂ s₁ s₂ :=
-  implements_of_isSimulation hsim h
+  behavior_eq_of_isSimulation hsim h
 
 /-! ## Coalgebra morphisms as simulations -/
 
 /-- The graph of a map commuting with the coalgebra structure maps is a
 simulation: coalgebra morphisms are the functional forward simulations. -/
-theorem isSimulation_graph {D₁ D₂ : DynSystem.{u} p} (f : D₁.State → D₂.State)
+theorem isSimulation_graph {D₁ : DynSystem.{u₁} p} {D₂ : DynSystem.{u₂} p}
+    (f : D₁.State → D₂.State)
     (hf : ∀ st, D₂.out (f st) = p.map f (D₁.out st)) :
     IsSimulation D₁ D₂ (fun st₁ st₂ => f st₁ = st₂) := by
   have hexpose : ∀ st, D₂.expose (f st) = D₁.expose st :=
@@ -103,7 +104,7 @@ theorem isSimulation_graph_coalgHom {D₁ D₂ : DynSystem.{u} p}
 theorem behavior_coalgHom {D₁ D₂ : DynSystem.{u} p}
     (f : Coalg.Hom p.Obj D₁.State D₂.State) (st : D₁.State) :
     D₂.behavior (f st) = D₁.behavior st :=
-  (implements_of_isSimulation (isSimulation_graph_coalgHom f) rfl).symm
+  (behavior_eq_of_isSimulation (isSimulation_graph_coalgHom f) rfl).symm
 
 end DynSystem
 

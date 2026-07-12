@@ -21,8 +21,11 @@ usually wants a smaller family of standard questions:
 * do they preserve the same fairness tickets?
 * does a chosen party observe the same thing in both systems?
 
-This file packages exactly those questions as named equivalence notions and
-records the immediate preservation lemmas for finite run prefixes.
+This file packages exactly those questions as named equivalence notions,
+provides their `refl`, `symm`, and `trans` operations, and records the immediate
+preservation lemmas for finite run prefixes. Trace and ticket transitivity use
+one shared map on the intermediate system, making the compared observation
+type explicit rather than hiding a change of representation.
 -/
 
 universe u v w
@@ -96,6 +99,36 @@ abbrev Observation {Party : Type u} [DecidableEq Party]
 
 namespace Controller
 
+/-- Controller equivalence is reflexive. -/
+@[refl]
+def refl {Party : Type u} (system : Process.SafetySpec Party) :
+    Controller system system :=
+  PFunctor.DynSystem.MutualSafetyRefinement.refl system
+    Observation.Process.TranscriptRel.byController
+    Observation.Process.TranscriptRel.byController
+    (fun _ => rfl) (fun _ => rfl)
+
+/-- Controller equivalence is symmetric. -/
+@[symm]
+def symm {Party : Type u} {left right : Process.SafetySpec Party}
+    (equiv : Controller left right) : Controller right left :=
+  PFunctor.DynSystem.MutualSafetyRefinement.symm equiv
+
+/-- Controller equivalence is transitive. -/
+@[trans]
+def trans {Party : Type u} {left middle right : Process.SafetySpec Party}
+    (first : Controller left middle) (second : Controller middle right) :
+    Controller left right :=
+  PFunctor.DynSystem.MutualSafetyRefinement.trans first second
+    (by
+      rintro ⟨pLeft, trLeft⟩ ⟨pRight, trRight⟩
+        ⟨⟨pMiddle, trMiddle⟩, hFirst, hSecond⟩
+      exact hFirst.trans hSecond)
+    (by
+      rintro ⟨pRight, trRight⟩ ⟨pLeft, trLeft⟩
+        ⟨⟨pMiddle, trMiddle⟩, hSecond, hFirst⟩
+      exact hSecond.trans hFirst)
+
 /--
 Along the forward direction of a controller equivalence, the current controller
 sequence of every finite run prefix is preserved.
@@ -114,6 +147,36 @@ end Controller
 
 namespace ControllerPath
 
+/-- Controller-path equivalence is reflexive. -/
+@[refl]
+def refl {Party : Type u} (system : Process.SafetySpec Party) :
+    ControllerPath system system :=
+  PFunctor.DynSystem.MutualSafetyRefinement.refl system
+    Observation.Process.TranscriptRel.byPath
+    Observation.Process.TranscriptRel.byPath
+    (fun _ => rfl) (fun _ => rfl)
+
+/-- Controller-path equivalence is symmetric. -/
+@[symm]
+def symm {Party : Type u} {left right : Process.SafetySpec Party}
+    (equiv : ControllerPath left right) : ControllerPath right left :=
+  PFunctor.DynSystem.MutualSafetyRefinement.symm equiv
+
+/-- Controller-path equivalence is transitive. -/
+@[trans]
+def trans {Party : Type u} {left middle right : Process.SafetySpec Party}
+    (first : ControllerPath left middle) (second : ControllerPath middle right) :
+    ControllerPath left right :=
+  PFunctor.DynSystem.MutualSafetyRefinement.trans first second
+    (by
+      rintro ⟨pLeft, trLeft⟩ ⟨pRight, trRight⟩
+        ⟨⟨pMiddle, trMiddle⟩, hFirst, hSecond⟩
+      exact hFirst.trans hSecond)
+    (by
+      rintro ⟨pRight, trRight⟩ ⟨pLeft, trLeft⟩
+        ⟨⟨pMiddle, trMiddle⟩, hSecond, hFirst⟩
+      exact hSecond.trans hFirst)
+
 /--
 Along the forward direction of a controller-path equivalence, the full
 controller-path sequence of every finite run prefix is preserved.
@@ -131,6 +194,46 @@ theorem controllerPathsUpTo_eq {Party : Type u}
 end ControllerPath
 
 namespace Trace
+
+/-- Trace equivalence is reflexive for any fixed event map. -/
+@[refl]
+def refl {Party : Type u} {Event : Type w}
+    (system : Process.SafetySpec Party)
+    (event : system.toProcess.EventMap Event) : Trace system system event event :=
+  PFunctor.DynSystem.MutualSafetyRefinement.refl system
+    (Observation.Process.TranscriptRel.byEvent event event)
+    (Observation.Process.TranscriptRel.byEvent event event)
+    (fun _ => rfl) (fun _ => rfl)
+
+/-- Trace equivalence is symmetric. -/
+@[symm]
+def symm {Party : Type u} {Event : Type w}
+    {left right : Process.SafetySpec Party}
+    {eventLeft : left.toProcess.EventMap Event}
+    {eventRight : right.toProcess.EventMap Event}
+    (equiv : Trace left right eventLeft eventRight) :
+    Trace right left eventRight eventLeft :=
+  PFunctor.DynSystem.MutualSafetyRefinement.symm equiv
+
+/-- Trace equivalence is transitive through a shared middle event map. -/
+@[trans]
+def trans {Party : Type u} {Event : Type w}
+    {left middle right : Process.SafetySpec Party}
+    {eventLeft : left.toProcess.EventMap Event}
+    {eventMiddle : middle.toProcess.EventMap Event}
+    {eventRight : right.toProcess.EventMap Event}
+    (first : Trace left middle eventLeft eventMiddle)
+    (second : Trace middle right eventMiddle eventRight) :
+    Trace left right eventLeft eventRight :=
+  PFunctor.DynSystem.MutualSafetyRefinement.trans first second
+    (by
+      rintro ⟨pLeft, trLeft⟩ ⟨pRight, trRight⟩
+        ⟨⟨pMiddle, trMiddle⟩, hFirst, hSecond⟩
+      exact hFirst.trans hSecond)
+    (by
+      rintro ⟨pRight, trRight⟩ ⟨pLeft, trLeft⟩
+        ⟨⟨pMiddle, trMiddle⟩, hSecond, hFirst⟩
+      exact hSecond.trans hFirst)
 
 /--
 Along the forward direction of a trace equivalence, the stable event trace of
@@ -152,6 +255,46 @@ end Trace
 
 namespace Ticket
 
+/-- Ticket equivalence is reflexive for any fixed ticket map. -/
+@[refl]
+def refl {Party : Type u} {TicketTy : Type w}
+    (system : Process.SafetySpec Party)
+    (ticket : system.toProcess.Tickets TicketTy) : Ticket system system ticket ticket :=
+  PFunctor.DynSystem.MutualSafetyRefinement.refl system
+    (Observation.Process.TranscriptRel.byTicket ticket ticket)
+    (Observation.Process.TranscriptRel.byTicket ticket ticket)
+    (fun _ => rfl) (fun _ => rfl)
+
+/-- Ticket equivalence is symmetric. -/
+@[symm]
+def symm {Party : Type u} {TicketTy : Type w}
+    {left right : Process.SafetySpec Party}
+    {ticketLeft : left.toProcess.Tickets TicketTy}
+    {ticketRight : right.toProcess.Tickets TicketTy}
+    (equiv : Ticket left right ticketLeft ticketRight) :
+    Ticket right left ticketRight ticketLeft :=
+  PFunctor.DynSystem.MutualSafetyRefinement.symm equiv
+
+/-- Ticket equivalence is transitive through a shared middle ticket map. -/
+@[trans]
+def trans {Party : Type u} {TicketTy : Type w}
+    {left middle right : Process.SafetySpec Party}
+    {ticketLeft : left.toProcess.Tickets TicketTy}
+    {ticketMiddle : middle.toProcess.Tickets TicketTy}
+    {ticketRight : right.toProcess.Tickets TicketTy}
+    (first : Ticket left middle ticketLeft ticketMiddle)
+    (second : Ticket middle right ticketMiddle ticketRight) :
+    Ticket left right ticketLeft ticketRight :=
+  PFunctor.DynSystem.MutualSafetyRefinement.trans first second
+    (by
+      rintro ⟨pLeft, trLeft⟩ ⟨pRight, trRight⟩
+        ⟨⟨pMiddle, trMiddle⟩, hFirst, hSecond⟩
+      exact hFirst.trans hSecond)
+    (by
+      rintro ⟨pRight, trRight⟩ ⟨pLeft, trLeft⟩
+        ⟨⟨pMiddle, trMiddle⟩, hSecond, hFirst⟩
+      exact hSecond.trans hFirst)
+
 /--
 Along the forward direction of a ticket equivalence, the stable ticket
 sequence of every finite run prefix is preserved.
@@ -171,6 +314,38 @@ theorem ticketsUpTo_eq {Party : Type u} {TicketTy : Type w}
 end Ticket
 
 namespace Observation
+
+/-- Observational equivalence for one party is reflexive. -/
+@[refl]
+def refl {Party : Type u} [DecidableEq Party] (me : Party)
+    (system : Process.SafetySpec Party) : Observation me system system :=
+  PFunctor.DynSystem.MutualSafetyRefinement.refl system
+    (_root_.Interaction.Concurrent.Observation.Process.TranscriptRel.byObservation me)
+    (_root_.Interaction.Concurrent.Observation.Process.TranscriptRel.byObservation me)
+    (fun _ => rfl) (fun _ => rfl)
+
+/-- Observational equivalence for one party is symmetric. -/
+@[symm]
+def symm {Party : Type u} [DecidableEq Party] (me : Party)
+    {left right : Process.SafetySpec Party}
+    (equiv : Observation me left right) : Observation me right left :=
+  PFunctor.DynSystem.MutualSafetyRefinement.symm equiv
+
+/-- Observational equivalence for one party is transitive. -/
+@[trans]
+def trans {Party : Type u} [DecidableEq Party] (me : Party)
+    {left middle right : Process.SafetySpec Party}
+    (first : Observation me left middle) (second : Observation me middle right) :
+    Observation me left right :=
+  PFunctor.DynSystem.MutualSafetyRefinement.trans first second
+    (by
+      rintro ⟨pLeft, trLeft⟩ ⟨pRight, trRight⟩
+        ⟨⟨pMiddle, trMiddle⟩, hFirst, hSecond⟩
+      exact hFirst.trans hSecond)
+    (by
+      rintro ⟨pRight, trRight⟩ ⟨pLeft, trLeft⟩
+        ⟨⟨pMiddle, trMiddle⟩, hSecond, hFirst⟩
+      exact hSecond.trans hFirst)
 
 /--
 Along the forward direction of an observational equivalence, the packed local

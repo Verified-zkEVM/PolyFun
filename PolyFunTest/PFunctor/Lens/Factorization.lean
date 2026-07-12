@@ -74,4 +74,15 @@ end Closure
 example (l : Lens P Q) (hv : l.IsVertical) (hc : l.IsCartesian) :
     Nonempty (P ≃ₗ Q) := ⟨Lens.equivOfVerticalCartesian l hv hc⟩
 
+/-- Conversely, the forward lens of every lens equivalence is vertical and
+cartesian. -/
+example (e : P ≃ₗ Q) : e.toLens.IsVertical ∧ e.toLens.IsCartesian :=
+  ⟨e.toLens_isVertical, e.toLens_isCartesian⟩
+
+/-- The two predicates exactly characterize the lenses underlying
+equivalences. -/
+example (l : Lens P Q) :
+    (∃ e : P ≃ₗ Q, e.toLens = l) ↔ l.IsVertical ∧ l.IsCartesian :=
+  Lens.exists_equiv_toLens_iff l
+
 end PFunctor
