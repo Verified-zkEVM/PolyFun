@@ -75,7 +75,7 @@ example (b : Bool) : (delayMachine b).runWith unitHandler 0 true = some (some b)
   PointedMachine.runWith_of_output_eq_some _ _ 0 rfl
 
 example (b : Bool) : (delayMachine b).runWith lossyUnitHandler 8 true = some (some b) := by
-  simp
+  exact PointedMachine.runWith_of_output_eq_some _ _ 8 rfl
 
 /-- The output equation is available directly to `simp`. -/
 example (M : PointedMachine X.{0, 0} PUnit Bool) (h : Handler Option X.{0, 0})
