@@ -14,7 +14,7 @@ A **simulation** of one `p`-dynamical system by another is a relation on their
 states that is preserved by a single synchronized step and matches the exposed
 positions. Because `M p` is the terminal `p.Obj`-coalgebra, a simulation forces
 related states to have equal `behavior` trees — the coinductive
-`implements_of_isSimulation`, proved via the bisimulation principle
+`behavior_eq_of_isSimulation`, proved via the bisimulation principle
 `M.corec_eq_corec`. This is the interface-generic core of the step-synchronized
 simulation method VCVio's oracle machines use to discharge `Implements`.
 
@@ -25,11 +25,12 @@ needed once looping / sequential composition introduces silent steps.
 Coalgebra morphisms (`Coalg.Hom`) are the functional instances of this notion:
 `isSimulation_graph` shows the graph of a map commuting with the structure maps
 is a simulation, so morphisms preserve behaviour (`behavior_coalgHom`). The
-lax, existential counterpart between verification-oriented `System`s — matching
-steps by a `DirRel` and transporting init / assumption / safety obligations —
-is `DynSystem.ForwardSimulation` in `PolyFun/PFunctor/Dynamical/Refinement.lean`;
-`ForwardSimulation.ofIsSimulation` embeds a step-synchronized simulation there
-at the relation `DirRel.sync`.
+lax, existential counterpart between bare systems — matching concrete steps by
+a `StepRel` — is `DynSystem.ForwardSimulation` in
+`PolyFun/PFunctor/Dynamical/Refinement.lean`. The optional verification layer is
+`SafetySpec` / `SafetyRefinement`, which adds initial-state, assumption, and
+safety obligations. `ForwardSimulation.ofIsSimulation` embeds a synchronized
+simulation at the relation `StepRel.sync`.
 -/
 
 @[expose] public section

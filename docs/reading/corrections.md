@@ -41,17 +41,6 @@ with the commit/PR that fixed them.
    must reconcile the framing (the pitch becomes: both sides over one
    substrate, with the free/cofree pairing between them).
 
-8. **Spivak–Niu arXiv id / subtitle inconsistency.** The book's preprint is
-   cited two ways across the repo: arXiv:2312.00990 with subtitle "A General
-   Theory of Interaction" (roadmap, this bibliography's highlights) versus
-   arXiv:2202.00534 with subtitle "A Mathematical Theory of Interaction"
-   (`REFERENCES.md` SN24 entry, `docs/wiki/interaction.md:433`,
-   `PolyFun/Control/Trace.lean`, `PolyFun/PFunctor/Trace.lean`,
-   `PolyFun/PFunctor/Dynamical/Basic.lean`). Reconcile to a single canonical
-   id + subtitle once verified against arXiv; deferred from the 2026-07-12
-   hygiene pass to avoid guessing which posting each `Trace`/§4.3 citation
-   actually intends.
-
 ## Watch (potential over-claims to avoid in future writing)
 
 - `IPFunctor ≅ bicomodules over discrete comonoids`: folklore
@@ -89,5 +78,10 @@ with the commit/PR that fixed them.
 - **Item 7 (Spivak–Niu publisher).** Corrected to Cambridge University Press,
   LMS Lecture Note Series 498, 2025 (DOI 10.1017/9781009576734) on
   `dtumad/cleanup-hygiene` across `REFERENCES.md`, `AGENTS.md`/`CLAUDE.md`, and
-  `PolyFun/PFunctor/Adjunctions.lean`. The arXiv-id/subtitle inconsistency
-  surfaced during that pass is tracked separately as open item 8.
+  `PolyFun/PFunctor/Adjunctions.lean`.
+- **Item 8 (Spivak–Niu arXiv id / subtitle inconsistency).** Verified against
+  arXiv and split the two distinct works correctly. The Niu–Spivak monograph
+  *Polynomial Functors: A Mathematical Theory of Interaction* is
+  arXiv:2312.00990. arXiv:2202.00534 is Spivak's separate article
+  *A reference for categorical structures on Poly*; the §4.3 citation in the
+  interaction wiki intentionally refers to that article.

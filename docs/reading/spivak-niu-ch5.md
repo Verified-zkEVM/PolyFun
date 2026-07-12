@@ -129,7 +129,8 @@ gap with an existing definition to attach lemmas to.
 ## §5.5 Vertical–cartesian factorization (pp. 158–162)
 
 - **Def 5.51**: `f` *vertical* ⟺ `f₁` bijective; *cartesian* ⟺ every `f♯ᵢ`
-  bijective. (PolyFun has `IsCartesian`; no `IsVertical` yet.)
+  bijective. PolyFun now has both predicates and their orthogonal
+  factorization API.
 - **Prop 5.52**: (vertical, cartesian) is a factorization system; middle
   object is explicitly `Σ_{i ∈ p(1)} y^{q[f₁ i]}` — vertical then cartesian.
 - **Prop 5.53**: verticals satisfy 2-out-of-3; if `g` cartesian then
@@ -164,16 +165,18 @@ Flagged in-text as "even more technical … we won't use it again in the book".
   `Lens p (exp r q) ≃ Lens (p * q) r`, `eval : exp r q * q ⇆ r` (Thm 5.31,
   Ex 5.32). Disambiguated from `ihom` by namespace: the cartesian transposes
   live in `PFunctor.CartesianClosed`, the tensor ones in `PFunctor.Lens`.
-- **A3. `IsVertical` + factorization.** Predicate, 2-out-of-3 (Prop 5.53),
+- **A3 ✅ `IsVertical` + factorization.** Predicate, 2-out-of-3 (Prop 5.53),
   explicit vertical–cartesian factorization with middle
   `Σ_i y^{q[f₁ i]}` (Prop 5.52), preservation by `+`/`×`/`⊗` (Prop 5.63)
   extending the existing `IsCartesian` closure lemmas; fixes the
   `Lens/Cartesian.lean` docstring over-promise.
 - **A4. Adjunction pack (cheap glue).** The hom `Equiv`s of Thm 5.4,
   Prop 5.8, Prop 5.12, Cor 5.15 as standalone `Equiv`s.
-- **A5. ⊗-gluing (wiring principle).** Prop 5.49/Cor 5.50 as a constructor:
-  build `Lens (p ⊗ q) r` from compatible `Lens (p ⊗ q(1)y) r`,
-  `Lens (p(1)y ⊗ q) r`; n-ary version for `Wiring₂`-style APIs.
+- **A5 binary ✅ ⊗-gluing (wiring principle).** Proposition 5.49 is the
+  ordinary-lens API `tensorLeftView` / `tensorRightView` / `tensorGlue` /
+  `tensorGlueEquiv`, with no parallel view structure. Corollary 5.50 remains a
+  separate n-ary phase because the library has no indexed tensor or wide-
+  pushout primitive yet.
 - **B-track (defer until a consumer exists):** epi–mono factorization
   (Prop 5.27), balancedness, general limits/colimits, base change
   `f!/f*/f_*` (§5.6), exponentiability of cartesian lenses (Thm 5.68 — note

@@ -11,10 +11,10 @@ import Batteries.Tactic.Lint
 /-!
 # Vertical–cartesian factorization of lenses
 
-Following Spivak–Niu, *Polynomial Functors: A General Theory of Interaction*
+Following Spivak–Niu, *Polynomial Functors: A Mathematical Theory of Interaction*
 (§5.5, Prop 5.51–5.53), this file constructs the vertical–cartesian
-factorization of a lens. The orthogonality and lifting laws needed to package a
-factorization system are not formalized here. The two classes are:
+factorization of a lens and proves the corresponding lifting law. The two
+classes are:
 
 * **cartesian** lenses — every backward fiber `toFunB a` is a bijection
   (already `PFunctor.Lens.IsCartesian`); and
@@ -40,13 +40,18 @@ lenses are *not* closed under the copairing `sumPair` (a `Sum.elim` of two
 bijections into a shared codomain need not be injective), so no such witness is
 provided.
 
+Finally, `verticalCartesianDiagonal` constructs the unique diagonal in every
+commutative square whose left edge is vertical and whose right edge is
+cartesian.  Thus the two classes are orthogonal, not merely complementary
+classes through which every lens happens to factor.
+
 The downstream consumer is the `LawfulSubSpec` theory in VCVio, where the
 cartesian leg is the probability-preserving part of a sub-spec embedding.
 -/
 
 @[expose] public section
 
-universe u v uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uA₄ uB₄
+universe u v w z uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uA₄ uB₄
 
 namespace PFunctor
 
@@ -127,6 +132,265 @@ theorem factorVert_isVertical (l : Lens P Q) : (factorVert l).IsVertical :=
 /-- The cartesian leg is cartesian. -/
 theorem factorCart_isCartesian (l : Lens P Q) : (factorCart l).IsCartesian :=
   fun _ => Function.bijective_id
+
+/-! ## Orthogonality
+
+Given a commutative square
+
+```
+P ---f---> R
+|          |
+v          c
+|          |
+V          V
+Q ---g---> S
+```
+
+with `v` vertical and `c` cartesian, there is a unique diagonal `d : Q ⇆ R`.
+Surjectivity of the position map of `v` determines the forward map of `d`;
+bijectivity of each backward fiber of `c` determines its backward map. -/
+
+/-- A diagonal filler for a commutative lens square. -/
+structure DiagonalFiller {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
+    (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) where
+  /-- The diagonal lens from the lower-left to the upper-right corner. -/
+  diagonal : Lens Q R
+  /-- The upper triangle commutes. -/
+  comp_left : diagonal ∘ₗ v = f
+  /-- The lower triangle commutes. -/
+  comp_right : c ∘ₗ diagonal = g
+
+/-- The position equivalence carried by a vertical lens. -/
+noncomputable def verticalPositionEquiv (v : Lens P Q) (hv : v.IsVertical) : P.A ≃ Q.A :=
+  _root_.Equiv.ofBijective v.toFunA hv
+
+@[simp] theorem verticalPositionEquiv_apply (v : Lens P Q) (hv : v.IsVertical) (p : P.A) :
+    verticalPositionEquiv v hv p = v.toFunA p := rfl
+
+@[simp] theorem verticalPositionEquiv_symm_toFunA (v : Lens P Q) (hv : v.IsVertical)
+    (p : P.A) : (verticalPositionEquiv v hv).symm (v.toFunA p) = p :=
+  (verticalPositionEquiv v hv).symm_apply_apply p
+
+/-- The backward-fiber equivalence carried by a cartesian lens at a position. -/
+noncomputable def cartesianDirectionEquiv (c : Lens P Q) (hc : c.IsCartesian) (p : P.A) :
+    Q.B (c.toFunA p) ≃ P.B p :=
+  _root_.Equiv.ofBijective (c.toFunB p) (hc p)
+
+@[simp] theorem cartesianDirectionEquiv_apply (c : Lens P Q) (hc : c.IsCartesian)
+    (p : P.A) (q : Q.B (c.toFunA p)) :
+    cartesianDirectionEquiv c hc p q = c.toFunB p q := rfl
+
+@[simp] theorem cartesianDirectionEquiv_symm_toFunB (c : Lens P Q) (hc : c.IsCartesian)
+    (p : P.A) (q : Q.B (c.toFunA p)) :
+    (cartesianDirectionEquiv c hc p).symm (c.toFunB p q) = q :=
+  (cartesianDirectionEquiv c hc p).left_inv q
+
+@[simp] theorem cartesianDirectionEquiv_toFunB_symm (c : Lens P Q) (hc : c.IsCartesian)
+    (p : P.A) (r : P.B p) :
+    c.toFunB p ((cartesianDirectionEquiv c hc p).symm r) = r :=
+  (cartesianDirectionEquiv c hc p).apply_symm_apply r
+
+/-- The position component of the lower triangle for the canonical diagonal. -/
+theorem verticalCartesianDiagonal_pos_comm
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
+    (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
+    (hv : v.IsVertical) (comm : c ∘ₗ f = g ∘ₗ v) (q : Q.A) :
+    c.toFunA (f.toFunA ((verticalPositionEquiv v hv).symm q)) = g.toFunA q := by
+  have h := congrFun (congrArg Lens.toFunA comm) ((verticalPositionEquiv v hv).symm q)
+  change c.toFunA (f.toFunA ((verticalPositionEquiv v hv).symm q)) =
+    g.toFunA (verticalPositionEquiv v hv ((verticalPositionEquiv v hv).symm q)) at h
+  simpa using h
+
+private theorem transport_inverse_comp {I : Type u} (B : I → Type v) {x y : I}
+    (h : x = y) {A : Type w} {C : Type z} (e : B x ≃ A) (k : B y → C) :
+    (fun a => k (h ▸ e.symm a)) ∘ e = h.symm ▸ k := by
+  cases h
+  funext a
+  exact congrArg k (e.symm_apply_apply a)
+
+private theorem toFunB_heq_of_eq {P : PFunctor.{uA₁, uB₁}}
+    {Q : PFunctor.{uA₂, uB₂}} {l₁ l₂ : Lens P Q} (h : l₁ = l₂) (p : P.A) :
+    l₁.toFunB p ≍ l₂.toFunB p := by
+  cases h
+  rfl
+
+/-- The canonical diagonal in a vertical-left/cartesian-right square.
+
+The definition uses the inverse of the vertical position bijection and the
+inverse of the cartesian backward-fiber bijections. -/
+noncomputable def verticalCartesianDiagonal
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
+    (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
+    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) : Lens Q R := by
+  let toA : Q.A → R.A := fun q => f.toFunA ((verticalPositionEquiv v hv).symm q)
+  have hpos (q : Q.A) : c.toFunA (toA q) = g.toFunA q :=
+    verticalCartesianDiagonal_pos_comm v f c g hv comm q
+  exact toA ⇆ fun q rb =>
+    g.toFunB q (hpos q ▸
+      (cartesianDirectionEquiv c hc (toA q)).symm rb)
+
+/-- The canonical diagonal fills the left triangle. -/
+@[simp] theorem verticalCartesianDiagonal_comp_left
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
+    (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
+    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
+    verticalCartesianDiagonal v f c g hv hc comm ∘ₗ v = f := by
+  let hA : ∀ p, (verticalCartesianDiagonal v f c g hv hc comm ∘ₗ v).toFunA p =
+      f.toFunA p := fun p => by
+    change f.toFunA ((verticalPositionEquiv v hv).symm (v.toFunA p)) = f.toFunA p
+    rw [verticalPositionEquiv_symm_toFunA]
+  apply Lens.ext _ _ hA
+  intro p
+  apply eq_of_heq
+  have hp : c.toFunA (f.toFunA p) = g.toFunA (v.toFunA p) := by
+    exact congrFun (congrArg Lens.toFunA comm) p
+  let e := cartesianDirectionEquiv c hc (f.toFunA p)
+  have hnorm : (verticalCartesianDiagonal v f c g hv hc comm ∘ₗ v).toFunB p ≍
+      v.toFunB p ∘ fun rb => g.toFunB (v.toFunA p) (hp ▸ e.symm rb) := by
+    let p' := (verticalPositionEquiv v hv).symm (v.toFunA p)
+    have hpp : p' = p := verticalPositionEquiv_symm_toFunA v hv p
+    change (v.toFunB p ∘ fun rb => g.toFunB (v.toFunA p)
+      (verticalCartesianDiagonal_pos_comm v f c g hv comm (v.toFunA p) ▸
+        (cartesianDirectionEquiv c hc (f.toFunA p')).symm rb)) ≍ _
+    apply Function.hfunext (congrArg R.B (congrArg f.toFunA hpp))
+    intro rb' rb hrb
+    apply heq_of_eq
+    apply congrArg (v.toFunB p)
+    apply congrArg (g.toFunB (v.toFunA p))
+    let invPacked : (Σ x, R.B (f.toFunA x)) → (Σ x, S.B (c.toFunA (f.toFunA x))) :=
+      fun x => ⟨x.1, (cartesianDirectionEquiv c hc (f.toFunA x.1)).symm x.2⟩
+    have hz : (⟨p', rb'⟩ : Σ x, R.B (f.toFunA x)) = ⟨p, rb⟩ := Sigma.ext hpp hrb
+    have hout := congrArg invPacked hz
+    have hs : (cartesianDirectionEquiv c hc (f.toFunA p')).symm rb' ≍
+        e.symm rb := congr_arg_heq Sigma.snd hout
+    exact eq_of_heq ((eqRec_heq _ _).trans (hs.trans (eqRec_heq _ _).symm))
+  have hnormEq : (v.toFunB p ∘ fun rb =>
+      g.toFunB (v.toFunA p) (hp ▸ e.symm rb)) = f.toFunB p := by
+    funext rb
+    have hfun := toFunB_heq_of_eq comm p
+    have harg : e.symm rb ≍ hp ▸ e.symm rb := (eqRec_heq _ _).symm
+    have hsquare := congr_heq hfun harg
+    simpa [comp, Function.comp_apply, e] using hsquare.symm
+  have hcast : (hA p ▸ f.toFunB p) ≍ f.toFunB p := by
+    exact eqRec_heq_self _ _
+  exact hnorm.trans ((heq_of_eq hnormEq).trans hcast.symm)
+
+/-- The canonical diagonal fills the right triangle. -/
+@[simp] theorem verticalCartesianDiagonal_comp_right
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
+    (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
+    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
+    c ∘ₗ verticalCartesianDiagonal v f c g hv hc comm = g := by
+  refine Lens.ext _ _ (verticalCartesianDiagonal_pos_comm v f c g hv comm) ?_
+  intro q
+  exact transport_inverse_comp S.B
+    (verticalCartesianDiagonal_pos_comm v f c g hv comm q)
+    (cartesianDirectionEquiv c hc _) (g.toFunB q)
+
+/-- Vertical lenses have the left lifting property with respect to cartesian
+lenses. The returned filler carries both commuting triangle equations. -/
+noncomputable def verticalCartesianFiller
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
+    (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
+    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
+    DiagonalFiller v f c g where
+  diagonal := verticalCartesianDiagonal v f c g hv hc comm
+  comp_left := verticalCartesianDiagonal_comp_left v f c g hv hc comm
+  comp_right := verticalCartesianDiagonal_comp_right v f c g hv hc comm
+
+/-- Existence form of vertical/cartesian orthogonality. -/
+theorem exists_verticalCartesianDiagonal
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
+    (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
+    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
+    Nonempty (DiagonalFiller v f c g) :=
+  ⟨verticalCartesianFiller v f c g hv hc comm⟩
+
+/-- The forward map of a diagonal filler is forced by the left triangle and
+the vertical position bijection. -/
+theorem diagonalFiller_toFunA_unique
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
+    (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
+    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v)
+    (d : DiagonalFiller v f c g) (q : Q.A) :
+    d.diagonal.toFunA q =
+      (verticalCartesianDiagonal v f c g hv hc comm).toFunA q := by
+  have h := congrFun (congrArg Lens.toFunA d.comp_left) ((verticalPositionEquiv v hv).symm q)
+  change d.diagonal.toFunA
+      (verticalPositionEquiv v hv ((verticalPositionEquiv v hv).symm q)) =
+    f.toFunA ((verticalPositionEquiv v hv).symm q) at h
+  rw [_root_.Equiv.apply_symm_apply] at h
+  exact h
+
+private theorem eq_of_comp_cartesian_eq_of_toFunA_eq
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} (l₁ l₂ : Lens P Q) (c : Lens Q R)
+    (hc : c.IsCartesian) (hA : ∀ p, l₁.toFunA p = l₂.toFunA p)
+    (hcomp : c ∘ₗ l₁ = c ∘ₗ l₂) : l₁ = l₂ := by
+  apply Lens.ext _ _ hA
+  intro p
+  apply eq_of_heq
+  have hfun := toFunB_heq_of_eq hcomp p
+  have hcancel : l₁.toFunB p ≍ l₂.toFunB p := by
+    apply Function.hfunext (congrArg Q.B (hA p))
+    intro r₁ r₂ hr
+    let invPacked : (Σ q, Q.B q) → (Σ q, R.B (c.toFunA q)) :=
+      fun x => ⟨x.1, (cartesianDirectionEquiv c hc x.1).symm x.2⟩
+    have hz : (⟨l₁.toFunA p, r₁⟩ : Σ q, Q.B q) = ⟨l₂.toFunA p, r₂⟩ :=
+      Sigma.ext (hA p) hr
+    have hout := congrArg invPacked hz
+    have hs : (cartesianDirectionEquiv c hc (l₁.toFunA p)).symm r₁ ≍
+        (cartesianDirectionEquiv c hc (l₂.toFunA p)).symm r₂ :=
+      congr_arg_heq Sigma.snd hout
+    have happ := congr_heq hfun hs
+    simpa [comp, Function.comp_apply] using happ
+  have hcast : (hA p ▸ l₂.toFunB p) ≍ l₂.toFunB p := by
+    exact eqRec_heq_self _ _
+  exact hcancel.trans hcast.symm
+
+/-- The vertical/cartesian diagonal is unique. Consequently the bundled type
+of fillers of such a square is a subsingleton. -/
+theorem verticalCartesianDiagonal_unique
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
+    (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
+    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v)
+    (d : DiagonalFiller v f c g) :
+    d.diagonal = verticalCartesianDiagonal v f c g hv hc comm := by
+  apply eq_of_comp_cartesian_eq_of_toFunA_eq _ _ c hc
+    (diagonalFiller_toFunA_unique v f c g hv hc comm d)
+  rw [d.comp_right, verticalCartesianDiagonal_comp_right v f c g hv hc comm]
+
+/-- Orthogonality in bundled form: a vertical/cartesian square has exactly one
+diagonal filler. -/
+theorem subsingleton_verticalCartesianFillers
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
+    (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
+    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
+    Subsingleton (DiagonalFiller v f c g) where
+  allEq d₁ d₂ := by
+    cases d₁ with
+    | mk diagonal₁ left₁ right₁ =>
+      cases d₂ with
+      | mk diagonal₂ left₂ right₂ =>
+        have h₁ := verticalCartesianDiagonal_unique v f c g hv hc comm
+          ⟨diagonal₁, left₁, right₁⟩
+        have h₂ := verticalCartesianDiagonal_unique v f c g hv hc comm
+          ⟨diagonal₂, left₂, right₂⟩
+        change diagonal₁ = _ at h₁
+        change diagonal₂ = _ at h₂
+        cases h₁
+        cases h₂
+        rfl
 
 /-! ## Closure of cartesian lenses under the polynomial operations
 

@@ -54,7 +54,7 @@ appropriate boundary morphisms.
 * Hancock, Setzer — *Interactive programs and weakly final coalgebras in
   dependent type theory*.
 * Spivak, Niu — *Polynomial Functors: A Mathematical Theory of Interaction*,
-  arXiv:2202.00534.
+  arXiv:2312.00990.
 -/
 
 @[expose] public section

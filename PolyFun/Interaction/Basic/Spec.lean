@@ -79,7 +79,7 @@ representation.
   free interaction structure on a polynomial container
 * Altenkirch–Ghani–Hancock–McBride–Morris (2015), *Indexed Containers*,
   Journal of Functional Programming 25, e5
-* Spivak–Niu (2025), *Polynomial Functors: A General Theory of
+* Spivak–Niu (2025), *Polynomial Functors: A Mathematical Theory of
   Interaction*, Cambridge University Press; the pattern-runs-on-matter
   module structure of `FreeM` over `Cofree`
 * Escardó–Oliva (2023, TCS 974), games as type trees
