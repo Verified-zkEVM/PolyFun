@@ -17,7 +17,7 @@ a faithful second phase, and a concrete halting machine unrolls as expected.
 
 @[expose] public section
 
-universe u
+universe u v w
 
 namespace PFunctor
 
@@ -50,6 +50,15 @@ def haltMachine (b : β) : PointedMachine X.{u, u} α β where
   expose := fun _ => PUnit.unit
   update := fun _ _ => PUnit.unit
   init := fun _ => PUnit.unit
+  output := fun _ => some b
+
+/-- Machine states, inputs, and outputs may inhabit independent universes. -/
+def universeSeparatedMachine {α : Type v} {β : Type w} (b : β) :
+    PointedMachine X.{0, 0} α β where
+  State := Bool
+  expose := fun _ => PUnit.unit
+  update := fun state _ => state
+  init := fun _ => false
   output := fun _ => some b
 
 /-- With fuel it reads off its value immediately; with none it is `none`. -/

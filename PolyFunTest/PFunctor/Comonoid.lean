@@ -17,11 +17,14 @@ recovers the counit at `n = 0` and unfolds as expected.
 
 @[expose] public section
 
-universe u
+universe u v
 
 namespace PFunctor
 
 variable {S : Type u}
+
+/-- Comonoids support independent position and direction universes. -/
+example (C : Comonoid.{u, v}) : C.comultN 0 = C.counit := rfl
 
 /-- The state comonoid's comultiplication is the transition lens. -/
 example : (stateComonoid S).comult = Lens.fixState := rfl

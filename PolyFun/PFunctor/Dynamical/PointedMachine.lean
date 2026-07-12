@@ -12,7 +12,8 @@ public import PolyFun.PFunctor.Free.Basic
 # Pointed machines and sequential composition
 
 A **pointed machine** is a `p`-dynamical system pointed by an initialisation
-map and equipped with a partial (Moore) readout:
+map and equipped with a partial (Moore) readout. Its state, input, output, and
+interface types may live in independent universes:
 
 * `init : α → State` — where the machine starts, given an input;
 * `output : State → Option β` — the value read off a state, `none` while running.
@@ -42,14 +43,14 @@ the second phase of `seqComp` is faithful to `M₂`; the fuel-exact cross-phase
 
 @[expose] public section
 
-universe u v uA uB
+universe u v uα uβ uMid uA uB
 
 namespace PFunctor
 
 /-- A **pointed machine** over the interface `p`: a `p`-dynamical system pointed
 by an `init` map and read out by a partial `output` (`none` while still
 running). The interface-agnostic form of VCVio's `OracleMachine`. -/
-structure PointedMachine (p : PFunctor.{uA, uB}) (α : Type u) (β : Type u)
+structure PointedMachine (p : PFunctor.{uA, uB}) (α : Type uα) (β : Type uβ)
     extends DynSystem.{u} p where
   /-- Where the machine starts, given an input. -/
   init : α → State
@@ -58,7 +59,7 @@ structure PointedMachine (p : PFunctor.{uA, uB}) (α : Type u) (β : Type u)
 
 namespace PointedMachine
 
-variable {p : PFunctor.{uA, uB}} {α β mid : Type u}
+variable {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {mid : Type uMid}
 
 /-! ## Sequential composition -/
 
@@ -178,16 +179,19 @@ unrolling in any monad `m` — via a handler `h : (a : q.A) → m (q.B a)` that
 resolves each exposed position monadically — gives the machine a run in `m`. This
 is the interface-generic core of VCVio's deterministic `runD` (`m = Option`) and
 probabilistic `runK` (`m = SPMF`); the actual ω-limit of the fuel-indexed chain
-needs an order/ωCPO on `m` and stays with the concrete instance. The direction
-universe is pinned to `β`'s (`q : PFunctor.{uA, u}`) so `FreeM.mapM` applies. -/
+needs an order/ωCPO on `m` and stays with the concrete instance. For `runWith`,
+the direction universe is pinned to `β`'s (`q : PFunctor.{uA, uβ}`) because
+`FreeM.mapM` interprets directions and return values in one monad universe. The
+machine state and input universes remain independent. -/
 
 section Run
 
-variable {q : PFunctor.{uA, u}} {m : Type u → Type v} [Monad m]
+variable {q : PFunctor.{uA, uβ}} {m : Type uβ → Type v} [Monad m]
 
 /-- A **handler** for the interface `q`: a monadic choice of direction at each
 exposed position (a Kleisli section of `q`). -/
-abbrev Handler (m : Type u → Type v) (q : PFunctor.{uA, u}) := (a : q.A) → m (q.B a)
+abbrev Handler (m : Type uβ → Type v) (q : PFunctor.{uA, uβ}) :=
+  (a : q.A) → m (q.B a)
 
 /-- The **monad-parametric fuelled run**: interpret the `k`-step unrolling
 `toComp` in the monad `m` through a handler `h`. `toComp` is the syntactic case

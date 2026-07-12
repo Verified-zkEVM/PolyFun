@@ -83,6 +83,16 @@ def compNthMap (l : Lens p q) : (n : ℕ) → Lens (compNth p n) (compNth q n)
   | zero => rfl
   | succ n ih => simp [compNthMap, ih, compMap_id]
 
+/-- Composition powers preserve lens composition: taking `n` copies of a
+composite is the composite of the two `n`-fold maps. -/
+@[simp] theorem compNthMap_comp (l₁ : Lens q r) (l₂ : Lens p q) (n : ℕ) :
+    compNthMap (l₁ ∘ₗ l₂) n = compNthMap l₁ n ∘ₗ compNthMap l₂ n := by
+  induction n with
+  | zero => simp [compNthMap]
+  | succ n ih =>
+      rw [compNthMap_succ, compNthMap_succ, compNthMap_succ, ih]
+      exact compMap_comp l₂ (compNthMap l₂ n) l₁ (compNthMap l₁ n)
+
 end Lens
 
 end PFunctor

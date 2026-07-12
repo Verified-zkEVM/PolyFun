@@ -456,6 +456,20 @@ def symm (both : MutualSafetyRefinement left right matchForth matchBack) :
   forth := both.back
   back := both.forth
 
+/-- Weaken the required forward and backward step relations without changing
+either operational simulation or its verification-policy obligations. -/
+def weakenMatch
+    {matchForthWeak : StepRel left.toDynSystem right.toDynSystem}
+    {matchBackWeak : StepRel right.toDynSystem left.toDynSystem}
+    (both : MutualSafetyRefinement left right matchForth matchBack)
+    (hForth : ∀ stepLeft stepRight, matchForth stepLeft stepRight →
+      matchForthWeak stepLeft stepRight)
+    (hBack : ∀ stepRight stepLeft, matchBack stepRight stepLeft →
+      matchBackWeak stepRight stepLeft) :
+    MutualSafetyRefinement left right matchForthWeak matchBackWeak where
+  forth := both.forth.weakenMatch hForth
+  back := both.back.weakenMatch hBack
+
 /-- The identity mutual safety refinement on `system`, provided that both step
 relations relate every direction to itself. -/
 def refl (system : SafetySpec.{u} p)
@@ -486,9 +500,13 @@ def trans {r : PFunctor.{uA₃, uB₃}}
     (hBack : ∀ stepTarget stepLeft,
       StepRel.comp matchTargetMiddle matchMiddleLeft stepTarget stepLeft →
         matchTargetLeft stepTarget stepLeft) :
-    MutualSafetyRefinement left target matchLeftTarget matchTargetLeft where
-  forth := (second.forth.comp first.forth).weakenMatch hForth
-  back := (first.back.comp second.back).weakenMatch hBack
+    MutualSafetyRefinement left target matchLeftTarget matchTargetLeft := by
+  let composed : MutualSafetyRefinement left target
+      (StepRel.comp matchLeftMiddle matchMiddleTarget)
+      (StepRel.comp matchTargetMiddle matchMiddleLeft) :=
+    { forth := second.forth.comp first.forth
+      back := first.back.comp second.back }
+  exact composed.weakenMatch hForth hBack
 
 end MutualSafetyRefinement
 

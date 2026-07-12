@@ -25,9 +25,10 @@ The construction is deliberately simple:
   way, provided the chosen fairness assumptions also transfer.
 
 The packagings themselves — `ReverseSafetyRefinement`,
-`MutualSafetyRefinement`, and their `refl` / `symm` principles — are the generic
-dynamical-system notions at the step polynomial. This file adds fairness-aware
-safety-transport theorems phrased through `ProcessOver.SafetySpec.Satisfies`.
+`MutualSafetyRefinement`, and their `refl` / `symm` / `trans` operations — are
+the generic dynamical-system notions at the step polynomial. This file adds
+fairness-aware safety-transport theorems phrased through
+`ProcessOver.SafetySpec.Satisfies`.
 -/
 
 universe u v w w₂ w₃
@@ -106,7 +107,7 @@ theorem left_safe_of_satisfies
   SafetyRefinement.safe_of_satisfies both.forth fairLeft fairRight hfair hright
 
 /--
-Transport safety from the left system to the right system under a both
+Transport safety from the left system to the right system under a mutual
 safety refinement,
 assuming the chosen fairness predicates transfer along the backward direction.
 

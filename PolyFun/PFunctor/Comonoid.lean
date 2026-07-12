@@ -33,12 +33,15 @@ packages the canonical `n`-fold comultiplication `δ^{(n)} : c ⇆ c^{◃n}`
 
 The layer is kept à-la-carte (explicit lens laws) rather than routed through a
 `MonoidalCategory (Poly, ◃, y)` instance, matching the rest of PolyFun's
-monoidal machinery.
+monoidal machinery. The carrier's position and direction universes are
+independent, matching `PFunctor`; the counit's copy of `y` is instantiated at
+the universe of `compNth carrier 0` so the iterated comultiplication has a
+uniform codomain.
 -/
 
 @[expose] public section
 
-universe u
+universe u uA uB
 
 namespace PFunctor
 
@@ -49,11 +52,15 @@ namespace PFunctor
 comultiplication `δ : c ⇆ c ◃ c` satisfying left/right counitality and
 coassociativity as lens equations (through the unitors `XComp` / `compX` and the
 associator `compAssoc`). This is the polynomial encoding of a small category. -/
+-- The carrier's position and direction universes are independent; `checkUnivs`
+-- sees only their joint contribution to the structure's resulting sort.
+@[nolint checkUnivs]
 structure Comonoid where
   /-- The carrier polynomial (the "objects and morphisms"). -/
-  carrier : PFunctor.{u, u}
-  /-- The counit `ε : c ⇆ y` — selects the identity morphisms. -/
-  counit : Lens carrier X.{u, u}
+  carrier : PFunctor.{uA, uB}
+  /-- The counit `ε : c ⇆ y` — selects the identity morphisms. Its universe
+  instance agrees with the zeroth composition power of `carrier`. -/
+  counit : Lens carrier X.{max uA uB, uB}
   /-- The comultiplication `δ : c ⇆ c ◃ c` — the composition operation. -/
   comult : Lens carrier (carrier ◃ carrier)
   /-- Left counitality: `λ ∘ (ε ◃ id) ∘ δ = id`. -/
@@ -74,13 +81,13 @@ namespace Comonoid
 (Spivak–Niu Prop 7.20), recursively `δ^{(0)} = ε` and
 `δ^{(n+1)} = (id ◃ δ^{(n)}) ∘ δ`. The comonoid data underneath the `n`-step run
 `PFunctor.DynSystem.nStep`. -/
-def comultN (C : Comonoid.{u}) : (n : ℕ) → Lens C.carrier (compNth C.carrier n)
+def comultN (C : Comonoid.{uA, uB}) : (n : ℕ) → Lens C.carrier (compNth C.carrier n)
   | 0 => C.counit
   | n + 1 => (Lens.id C.carrier ◃ₗ C.comultN n) ∘ₗ C.comult
 
-@[simp] theorem comultN_zero (C : Comonoid.{u}) : C.comultN 0 = C.counit := rfl
+@[simp] theorem comultN_zero (C : Comonoid.{uA, uB}) : C.comultN 0 = C.counit := rfl
 
-@[simp] theorem comultN_succ (C : Comonoid.{u}) (n : ℕ) :
+@[simp] theorem comultN_succ (C : Comonoid.{uA, uB}) (n : ℕ) :
     C.comultN (n + 1) = (Lens.id C.carrier ◃ₗ C.comultN n) ∘ₗ C.comult := rfl
 
 /-! ## State systems (Spivak–Niu Ex 7.22) -/
@@ -89,7 +96,7 @@ def comultN (C : Comonoid.{u}) : (n : ℕ) → Lens C.carrier (compNth C.carrier
 `d ↦ cod d` (the second component of `δ`'s position action) is a bijection: from
 each object there is exactly one morphism to each object (a contractible
 groupoid). A predicate, never a field (Spivak–Niu Ex 7.22). -/
-def IsStateSystem (C : Comonoid.{u}) : Prop :=
+def IsStateSystem (C : Comonoid.{uA, uB}) : Prop :=
   ∀ a : C.carrier.A, Function.Bijective (C.comult.toFunA a).2
 
 end Comonoid
@@ -101,7 +108,7 @@ contractible groupoid on the state set `S`. Its comultiplication is the
 transition lens `Lens.fixState` and its counit is the stay-put self-loop
 `s ↦ (⋆ ↦ s)`. This discharges the state-comonoid laws referenced by
 `PFunctor.Lens.transitionLens`. -/
-def stateComonoid (S : Type u) : Comonoid.{u} where
+def stateComonoid (S : Type u) : Comonoid.{u, u} where
   carrier := selfMonomial S
   counit := (fun _ => PUnit.unit) ⇆ (fun s _ => s)
   comult := Lens.fixState

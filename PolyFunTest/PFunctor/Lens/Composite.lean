@@ -40,4 +40,9 @@ example (l : Lens p q) : Lens.compNthMap l 2 = l ◃ₗ (l ◃ₗ Lens.id X) := 
 example (n : ℕ) : Lens.compNthMap (Lens.id p) n = Lens.id (compNth p n) :=
   Lens.compNthMap_id p n
 
+/-- `compNthMap` respects composition. -/
+example (l₁ : Lens q r) (l₂ : Lens p q) (n : ℕ) :
+    Lens.compNthMap (l₁ ∘ₗ l₂) n = Lens.compNthMap l₁ n ∘ₗ Lens.compNthMap l₂ n :=
+  Lens.compNthMap_comp l₁ l₂ n
+
 end PFunctor

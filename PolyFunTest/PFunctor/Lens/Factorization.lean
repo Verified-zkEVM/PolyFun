@@ -79,6 +79,9 @@ cartesian. -/
 example (e : P ≃ₗ Q) : e.toLens.IsVertical ∧ e.toLens.IsCartesian :=
   ⟨e.toLens_isVertical, e.toLens_isCartesian⟩
 
+/-- Both legs of an equivalence lie in both factorization classes. -/
+example (e : P ≃ₗ Q) : e.invLens.IsVertical ∧ e.invLens.IsCartesian := by simp
+
 /-- The two predicates exactly characterize the lenses underlying
 equivalences. -/
 example (l : Lens P Q) :

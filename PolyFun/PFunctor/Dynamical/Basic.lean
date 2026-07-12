@@ -37,7 +37,7 @@ system lives in `PolyFun.PFunctor.Dynamical.Run` and `…Dynamical.Trajectory`.
 
 @[expose] public section
 
-universe u u₁ u₂ u₃ uA uB uA₂ uB₂ uA₃ uB₃ uO uI
+universe u u₁ u₂ u₃ u₄ uA uB uA₂ uB₂ uA₃ uB₃ uA₄ uB₄ uO uI
 
 namespace PFunctor
 
@@ -127,6 +127,12 @@ namespace StepRel
 
 variable {s₁ : DynSystem.{u₁} p} {s₂ : DynSystem.{u₂} q}
 
+/-- Equality of concrete steps, the identity for relational composition. -/
+def id (s : DynSystem.{u} p) : StepRel s s := Eq
+
+@[simp] theorem id_apply (s : DynSystem.{u} p) (step₁ step₂ : s.Step) :
+    id s step₁ step₂ ↔ step₁ = step₂ := Iff.rfl
+
 /-- Relational composition of step relations. -/
 def comp {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem.{u₃} r}
     (first : StepRel s₁ s₂) (second : StepRel s₂ s₃) : StepRel s₁ s₃ :=
@@ -137,6 +143,39 @@ def comp {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem.{u₃} r}
     (step₁ : s₁.Step) (step₃ : s₃.Step) :
     comp first second step₁ step₃ ↔
       ∃ step₂, first step₁ step₂ ∧ second step₂ step₃ := Iff.rfl
+
+@[simp] theorem comp_id (rel : StepRel s₁ s₂) :
+    comp rel (id s₂) = rel := by
+  funext step₁ step₂
+  apply propext
+  constructor
+  · rintro ⟨middle, hrel, rfl⟩
+    exact hrel
+  · intro hrel
+    exact ⟨step₂, hrel, rfl⟩
+
+@[simp] theorem id_comp (rel : StepRel s₁ s₂) :
+    comp (id s₁) rel = rel := by
+  funext step₁ step₂
+  apply propext
+  constructor
+  · rintro ⟨middle, rfl, hrel⟩
+    exact hrel
+  · intro hrel
+    exact ⟨step₁, rfl, hrel⟩
+
+/-- Relational composition of concrete-step relations is associative. -/
+theorem comp_assoc {r : PFunctor.{uA₃, uB₃}} {t : PFunctor.{uA₄, uB₄}}
+    {s₃ : DynSystem.{u₃} r} {s₄ : DynSystem.{u₄} t}
+    (first : StepRel s₁ s₂) (second : StepRel s₂ s₃) (third : StepRel s₃ s₄) :
+    comp (comp first second) third = comp first (comp second third) := by
+  funext step₁ step₄
+  apply propext
+  constructor
+  · rintro ⟨step₃, ⟨step₂, hFirst, hSecond⟩, hThird⟩
+    exact ⟨step₂, hFirst, step₃, hSecond, hThird⟩
+  · rintro ⟨step₂, hFirst, step₃, hSecond, hThird⟩
+    exact ⟨step₃, ⟨step₂, hFirst, hSecond⟩, hThird⟩
 
 /-- The permissive relation accepting every pair of concrete steps. -/
 def top : StepRel s₁ s₂ := fun _ _ => True
@@ -150,6 +189,27 @@ def reverse (rel : StepRel s₁ s₂) : StepRel s₂ s₁ := fun step₂ step₁
 @[simp] theorem reverse_apply (rel : StepRel s₁ s₂) (step₂ : s₂.Step) (step₁ : s₁.Step) :
     reverse rel step₂ step₁ ↔ rel step₁ step₂ := Iff.rfl
 
+@[simp] theorem reverse_reverse (rel : StepRel s₁ s₂) : reverse (reverse rel) = rel := rfl
+
+@[simp] theorem reverse_id (s : DynSystem.{u} p) : reverse (id s) = id s := by
+  funext step₁ step₂
+  exact propext eq_comm
+
+@[simp] theorem reverse_top :
+    reverse (top : StepRel s₁ s₂) = (top : StepRel s₂ s₁) := rfl
+
+/-- Reversing a relational composite reverses the order of its factors. -/
+theorem reverse_comp {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem.{u₃} r}
+    (first : StepRel s₁ s₂) (second : StepRel s₂ s₃) :
+    reverse (comp first second) = comp (reverse second) (reverse first) := by
+  funext step₃ step₁
+  apply propext
+  constructor
+  · rintro ⟨step₂, hFirst, hSecond⟩
+    exact ⟨step₂, hSecond, hFirst⟩
+  · rintro ⟨step₂, hSecond, hFirst⟩
+    exact ⟨step₂, hFirst, hSecond⟩
+
 /-- Conjunction of step relations. -/
 def inter (first second : StepRel s₁ s₂) : StepRel s₁ s₂ :=
   fun step₁ step₂ => first step₁ step₂ ∧ second step₁ step₂
@@ -157,6 +217,9 @@ def inter (first second : StepRel s₁ s₂) : StepRel s₁ s₂ :=
 @[simp] theorem inter_apply (first second : StepRel s₁ s₂)
     (step₁ : s₁.Step) (step₂ : s₂.Step) :
     inter first second step₁ step₂ ↔ first step₁ step₂ ∧ second step₁ step₂ := Iff.rfl
+
+@[simp] theorem reverse_inter (first second : StepRel s₁ s₂) :
+    reverse (inter first second) = inter (reverse first) (reverse second) := rfl
 
 /-- Synchronized concrete steps over a shared interface expose equal positions
 and select equal directions up to transport along that equality. -/

@@ -178,7 +178,7 @@ namespace Equiv
 
 /-- The forward lens of a lens equivalence is vertical: its inverse lens
 supplies the inverse of its position map. -/
-theorem toLens_isVertical (e : P ≃ₗ Q) : e.toLens.IsVertical := by
+@[simp] theorem toLens_isVertical (e : P ≃ₗ Q) : e.toLens.IsVertical := by
   apply Function.bijective_iff_has_inverse.mpr
   exact ⟨e.invLens.toFunA,
     fun a => congrFun (congrArg Lens.toFunA e.left_inv) a,
@@ -186,7 +186,7 @@ theorem toLens_isVertical (e : P ≃ₗ Q) : e.toLens.IsVertical := by
 
 /-- The forward lens of a lens equivalence is cartesian. The two inverse lens
 laws make each backward fiber map bijective. -/
-theorem toLens_isCartesian (e : P ≃ₗ Q) : e.toLens.IsCartesian := by
+@[simp] theorem toLens_isCartesian (e : P ≃ₗ Q) : e.toLens.IsCartesian := by
   intro a
   have hleft : (e.invLens ∘ₗ e.toLens).IsCartesian := by
     rw [e.left_inv]
@@ -202,6 +202,14 @@ theorem toLens_isCartesian (e : P ≃ₗ Q) : e.toLens.IsCartesian := by
       congrFun (congrArg Lens.toFunA e.left_inv) a
     exact hA ▸ hinj
   · exact Function.Surjective.of_comp (hleft a).2
+
+/-- The inverse lens of a lens equivalence is vertical. -/
+@[simp] theorem invLens_isVertical (e : P ≃ₗ Q) : e.invLens.IsVertical :=
+  e.symm.toLens_isVertical
+
+/-- The inverse lens of a lens equivalence is cartesian. -/
+@[simp] theorem invLens_isCartesian (e : P ≃ₗ Q) : e.invLens.IsCartesian :=
+  e.symm.toLens_isCartesian
 
 end Equiv
 

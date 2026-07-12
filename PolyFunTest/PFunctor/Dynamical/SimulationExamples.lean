@@ -85,4 +85,28 @@ example (D : DynSystem.{u} p) :
   exact (DynSystem.SafetyRefinement.reflTop system).comp
     (DynSystem.SafetyRefinement.reflTop system)
 
+/-! Concrete-step relations expose the expected relational algebra. -/
+
+example (D : DynSystem.{u} p) :
+    DynSystem.StepRel.comp (DynSystem.StepRel.id D) DynSystem.StepRel.top =
+      (DynSystem.StepRel.top : DynSystem.StepRel D D) := by simp
+
+example (D : DynSystem.{u} p) :
+    DynSystem.StepRel.reverse
+        (DynSystem.StepRel.comp DynSystem.StepRel.top (DynSystem.StepRel.id D)) =
+      (DynSystem.StepRel.top : DynSystem.StepRel D D) := by
+  rw [DynSystem.StepRel.reverse_comp]
+  simp
+
+/-- Mutual refinements can weaken both endpoint matching relations together. -/
+example (D : DynSystem.{u} p) :
+    let system : DynSystem.SafetySpec.{u} p :=
+      ⟨D, fun _ => True, fun _ => True, fun _ => True⟩
+    DynSystem.MutualSafetyRefinement system system
+      DynSystem.StepRel.top DynSystem.StepRel.top := by
+  intro system
+  exact (DynSystem.MutualSafetyRefinement.refl system
+    DynSystem.StepRel.top DynSystem.StepRel.top (fun _ => trivial) (fun _ => trivial)).weakenMatch
+      (fun _ _ h => h) (fun _ _ h => h)
+
 end PFunctor
