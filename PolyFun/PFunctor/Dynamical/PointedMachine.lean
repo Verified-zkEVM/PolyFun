@@ -56,7 +56,7 @@ faithful to `M₂`; `runWith_seqComp_init` is the fuel-exact cross-phase `bind` 
 
 @[expose] public section
 
-universe u v uα uβ uMid uA uB
+universe u v uα uβ uγ uMid uA uB uA₂ uB₂
 
 namespace PFunctor
 
@@ -72,7 +72,65 @@ structure PointedMachine (p : PFunctor.{uA, uB}) (α : Type uα) (β : Type uβ)
 
 namespace PointedMachine
 
-variable {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {mid : Type uMid}
+variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
+  {α : Type uα} {β : Type uβ} {γ : Type uγ} {mid : Type uMid}
+
+/-! ## Variance and interface transport -/
+
+/-- Reindex the inputs of a pointed machine. The operational state and output
+are unchanged; `f` only selects the initial state. -/
+def contramapInput (M : PointedMachine.{u} p α β) (f : γ → α) :
+    PointedMachine.{u} p γ β where
+  State := M.State
+  expose := M.expose
+  update := M.update
+  init := M.init ∘ f
+  output := M.output
+
+@[simp] theorem contramapInput_init (f : γ → α) (M : PointedMachine.{u} p α β) (x : γ) :
+    (M.contramapInput f).init x = M.init (f x) := rfl
+
+@[simp] theorem contramapInput_output (f : γ → α) (M : PointedMachine.{u} p α β)
+    (st : M.State) : (M.contramapInput f).output st = M.output st := rfl
+
+/-- Map the values read out by a pointed machine. This does not change when or
+how the machine interacts; it maps only a successful partial readout. -/
+def mapOutput (M : PointedMachine.{u} p α β) (f : β → γ) :
+    PointedMachine.{u} p α γ where
+  State := M.State
+  expose := M.expose
+  update := M.update
+  init := M.init
+  output := fun st => match M.output st with
+    | none => none
+    | some b => some (f b)
+
+@[simp] theorem mapOutput_init (f : β → γ) (M : PointedMachine.{u} p α β) (x : α) :
+    (M.mapOutput f).init x = M.init x := rfl
+
+@[simp] theorem mapOutput_output (f : β → γ) (M : PointedMachine.{u} p α β)
+    (st : M.State) : (M.mapOutput f).output st = Option.map f (M.output st) := by
+  cases h : M.output st <;> simp [mapOutput, h]
+
+/-- Reindex the input and map the output of a pointed machine. -/
+def dimap (M : PointedMachine.{u} p α β) (f : γ → α) (g : β → mid) :
+    PointedMachine.{u} p γ mid :=
+  (M.contramapInput f).mapOutput g
+
+/-- Transport a pointed machine along a lens between interaction interfaces.
+The initial states and partial readout are unchanged. -/
+def wrap (M : PointedMachine.{u} p α β) (w : Lens p q) : PointedMachine.{u} q α β where
+  State := M.State
+  expose := fun st => w.toFunA (M.expose st)
+  update := fun st d => M.update st (w.toFunB (M.expose st) d)
+  init := M.init
+  output := M.output
+
+@[simp] theorem wrap_init (w : Lens p q) (M : PointedMachine.{u} p α β) (x : α) :
+    (M.wrap w).init x = M.init x := rfl
+
+@[simp] theorem wrap_output (w : Lens p q) (M : PointedMachine.{u} p α β) (st : M.State) :
+    (M.wrap w).output st = M.output st := rfl
 
 /-! ## Sequential composition -/
 
@@ -317,6 +375,52 @@ theorem resolvesIn_iff_exists_toComp_eq_map_some {M : PointedMachine p α β}
     M.ResolvesIn k st ↔ ∃ z : FreeM p β, M.toComp k st = some <$> z :=
   ⟨toComp_eq_map_some_of_resolvesIn, fun ⟨_, h⟩ =>
     resolvesIn_of_toComp_eq_map_some h⟩
+
+/-! ## Resolution of closed deterministic machines -/
+
+/-- For a pointed machine over the clock interface `X`, resolution within `k`
+steps is exactly reachability of a readable state among the first `k` iterates.
+The universal quantifier over directions in `ResolvesIn` disappears because
+`X` has the unique direction `PUnit.unit`. -/
+theorem resolvesIn_iff_exists_le_iterate_output_isSome
+    (M : PointedMachine X.{uA, uB} α β) (k : ℕ) (st : M.State) :
+    M.ResolvesIn k st ↔
+      ∃ j ≤ k, (M.output (Closed.iterate M.toDynSystem st j)).isSome := by
+  induction k generalizing st with
+  | zero => simp
+  | succ k ih =>
+      rw [resolvesIn_succ_iff]
+      constructor
+      · rintro (h | h)
+        · exact ⟨0, by omega, by simpa⟩
+        · obtain ⟨j, hj, hout⟩ :=
+            (ih (M.update st PUnit.unit)).mp (h PUnit.unit)
+          exact ⟨j + 1, by omega, by
+            simpa [Closed.iterate_succ, Closed.step] using hout⟩
+      · rintro ⟨j, hj, hout⟩
+        cases j with
+        | zero => exact Or.inl (by simpa using hout)
+        | succ j =>
+            apply Or.inr
+            intro d
+            have hd : d = PUnit.unit := Subsingleton.elim _ _
+            subst d
+            apply (ih (M.update st PUnit.unit)).mpr
+            exact ⟨j, by omega, by
+              simpa [Closed.iterate_succ, Closed.step] using hout⟩
+
+/-- A closed deterministic pointed machine eventually resolves exactly when
+some state on its autonomous trajectory has a readable output. -/
+theorem exists_resolvesIn_iff_exists_iterate_output_isSome
+    (M : PointedMachine X.{uA, uB} α β) (st : M.State) :
+    (∃ k, M.ResolvesIn k st) ↔
+      ∃ j, (M.output (Closed.iterate M.toDynSystem st j)).isSome := by
+  constructor
+  · rintro ⟨k, hk⟩
+    obtain ⟨j, _, hj⟩ := (M.resolvesIn_iff_exists_le_iterate_output_isSome k st).mp hk
+    exact ⟨j, hj⟩
+  · rintro ⟨j, hj⟩
+    exact ⟨j, (M.resolvesIn_iff_exists_le_iterate_output_isSome j st).mpr ⟨j, le_rfl, hj⟩⟩
 
 /-! ## Resolution under sequential composition -/
 
