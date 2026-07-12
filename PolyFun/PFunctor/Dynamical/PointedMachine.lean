@@ -121,6 +121,12 @@ def seqComp (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) : 
 
 @[inherit_doc] infixl:75 " ⨟ " => seqComp
 
+/-- The carrier of a sequential composition is the sum of the two carriers. A `@[simp]` `rfl`
+bridge so the composed machine's `State` reduces in downstream goals (the `PointedMachine.State`
+field is otherwise opaque to `simp`/instance resolution, blocking rewriting through it). -/
+@[simp] theorem seqComp_State (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) :
+    (M₁ ⨟ M₂).State = (M₁.State ⊕ M₂.State) := rfl
+
 @[simp] theorem seqComp_expose_inr (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β)
     (s₂ : M₂.State) : (M₁ ⨟ M₂).expose (Sum.inr s₂) = M₂.expose s₂ := rfl
 
