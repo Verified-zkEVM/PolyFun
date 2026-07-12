@@ -26,6 +26,12 @@ provides their `refl`, `symm`, and `trans` operations, and records the immediate
 preservation lemmas for finite run prefixes. Trace and ticket transitivity use
 one shared map on the intermediate system, making the compared observation
 type explicit rather than hiding a change of representation.
+
+Each `*_eq` preservation lemma is a thin equivalence-level wrapper around the
+generic simulation-level `DynSystem.ForwardSimulation.*_mapRun`, specialized at
+`equiv.forth`. Keeping the packaged form lets protocol proofs transport
+observations directly from an equivalence without first projecting a forward
+simulation.
 -/
 
 universe u v w

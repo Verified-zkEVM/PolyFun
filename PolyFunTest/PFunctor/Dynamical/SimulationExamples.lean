@@ -67,6 +67,29 @@ example (D : DynSystem S p) :
     DynSystem.ForwardSimulation D D (DynSystem.StepRel.sync D D) :=
   DynSystem.ForwardSimulation.ofIsSimulation (idSim D)
 
+/-- Every dynamical system operationally simulates itself. -/
+def selfSimulation (D : DynSystem S p) : DynSystem.ForwardSimulation D D :=
+  DynSystem.ForwardSimulation.reflTop D
+
+/-- Mapping a run preserves the simulation relation at every step. -/
+example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpec p}
+    {matchStep : DynSystem.StepRel impl spec}
+    (sim : DynSystem.ForwardSimulation impl spec matchStep)
+    (run : DynSystem.Run impl) {initialSpec : SSpec}
+    (hrel : sim.stateRel run.initial initialSpec) (n : ℕ) :
+    sim.stateRel (run.state n) ((sim.mapRun run hrel).state n) :=
+  sim.stateRel_mapRun run hrel n
+
+/-- The mapped run also satisfies the requested concrete-step relation. -/
+example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpec p}
+    {matchStep : DynSystem.StepRel impl spec}
+    (sim : DynSystem.ForwardSimulation impl spec matchStep)
+    (run : DynSystem.Run impl) {initialSpec : SSpec}
+    (hrel : sim.stateRel run.initial initialSpec) (n : ℕ) :
+    matchStep ⟨run.state n, run.dir n⟩
+      ⟨(sim.mapRun run hrel).state n, (sim.mapRun run hrel).dir n⟩ :=
+  sim.match_mapRun run hrel n
+
 /-- The same synchronized simulation lifts to safety refinement once the three
 verification-policy obligations are supplied. -/
 example (D : DynSystem S p) :
