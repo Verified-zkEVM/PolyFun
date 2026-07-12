@@ -6,7 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Dynamical.PointedMachine
-public import PolyFun.PFunctor.Dynamical.Speedup
+public import PolyFun.PFunctor.Dynamical.RunN
 
 /-!
 # Examples for two-step systems and machine composition

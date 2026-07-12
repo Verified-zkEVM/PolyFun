@@ -95,8 +95,8 @@ PFunctor/Lens/{Basic, Cartesian, State}
   → PFunctor/{InternalHom, CartesianClosed, Adjunctions, Comonoid}
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
-  → PFunctor/Dynamical/{Basic, System, Combinators, Run, Speedup, Trajectory}
-  → PFunctor/Dynamical/{Behavior, Simulation, RunN, PointedMachine}
+  → PFunctor/Dynamical/{Basic, System, Combinators, Run, Trajectory}
+  → PFunctor/Dynamical/{Behavior, RunN, PointedMachine}
   → PFunctor/Dynamical/{Refinement, Responder, Game}
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
