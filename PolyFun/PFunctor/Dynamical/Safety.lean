@@ -53,11 +53,11 @@ particular state. -/
 abbrev Tickets {S : Type u} (s : DynSystem S p) (Ticket : Type w) :=
   (st : S) → p.B (s.expose st) → Ticket
 
+set_option linter.checkUnivs false in
 /-- A dynamical system equipped with a stable external event label for each
 transition. This is the smallest bundle supporting statements about observable
 event traces. -/
 -- The system's state/interface universes and the event-label universe (`w`) are independent.
-@[nolint checkUnivs]
 structure Labeled (p : PFunctor.{uA, uB}) where
   /-- The set of states of the underlying system. -/
   State : Type u
@@ -68,10 +68,10 @@ structure Labeled (p : PFunctor.{uA, uB}) where
   /-- The assignment of an event label to each transition. -/
   event : toDynSystem.EventMap Event
 
+set_option linter.checkUnivs false in
 /-- A dynamical system equipped with a stable ticket for each transition. This
 is the entry point for fairness and liveness statements. -/
 -- The system's state/interface universes and the ticket universe (`w`) are independent.
-@[nolint checkUnivs]
 structure Ticketed (p : PFunctor.{uA, uB}) where
   /-- The set of states of the underlying system. -/
   State : Type u
@@ -82,13 +82,13 @@ structure Ticketed (p : PFunctor.{uA, uB}) where
   /-- The assignment of a ticket to each transition. -/
   ticket : toDynSystem.Tickets Ticket
 
+set_option linter.checkUnivs false in
 /-- A safety-verification problem: dynamics together with initial states,
 ambient assumptions, and the state predicate to be established.
 
 These predicates are orthogonal to the dynamics themselves, so they are kept
 out of `DynSystem` and bundled only for verification-oriented statements. -/
 -- The system's state universe (`u`) and interface universes are independent.
-@[nolint checkUnivs]
 structure SafetySpec (p : PFunctor.{uA, uB}) where
   /-- The set of states of the underlying system. -/
   State : Type u

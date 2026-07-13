@@ -16,10 +16,10 @@ available. This module is independent of `Interaction.Spec`.
 
 universe u v
 
+set_option linter.checkUnivs false in
 /-- Bundled monad: a monad constructor packaged as a structure for use inside `Spec` data. -/
 -- `BundledMonad`'s two universes are the independent domain (`u`) and codomain (`v`) universes
 -- of the packaged constructor `M : Type u → Type v`; kept separate for generality.
-@[nolint checkUnivs]
 structure BundledMonad where
   /-- The underlying monad family. -/
   M : Type u → Type v

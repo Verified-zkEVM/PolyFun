@@ -299,6 +299,7 @@ def mapIdx (φ : Chart P Q) (i : Idx P) : Idx Q :=
 
 /-! ### Special charts -/
 
+set_option linter.checkUnivs false in
 /-- The type of charts from a polynomial functor `P` to `X`.
 
 A chart `P → X` is equivalent to a function `(a : P.A) → P.B a → PUnit`,
@@ -306,7 +307,6 @@ i.e. a boundary valuation that picks out a single direction at every
 position. Analogous to `Lens.enclose`. -/
 -- `Chart.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
 -- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
-@[nolint checkUnivs]
 def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
   Chart P X.{uA₁, uB₁}
 

@@ -46,13 +46,13 @@ variable {SImpl : Type u₁} {SSpec : Type u₂}
 
 /-! ## Operational forward simulation -/
 
+set_option linter.checkUnivs false in
 /-- A trace-theoretic forward simulation between bare dynamical systems.
 
 Related implementation states can match every concrete implementation step by
 some related specification step, preserving both `matchStep` and the state
 relation. Initial states and semantic predicates are deliberately separate. -/
 -- The state universes (`u₁`, `u₂`) and the interface universes are independent.
-@[nolint checkUnivs]
 structure ForwardSimulation (impl : DynSystem SImpl p) (spec : DynSystem SSpec q)
     (matchStep : StepRel impl spec := StepRel.top) where
   /-- The relation linking implementation states to specification states. -/
@@ -91,6 +91,7 @@ def ReflectsStatePred (sim : ForwardSimulation impl spec matchStep)
 
 end ForwardSimulation
 
+set_option linter.checkUnivs false in
 /-- `SafetyRefinement impl spec matchStep` is a forward simulation from the
 implementation system `impl` to the specification system `spec`:
 
@@ -105,7 +106,6 @@ The parameter `matchStep` determines what behavioral information the
 simulation preserves at each step: choosing different `StepRel`s recovers
 event-preserving, ticket-preserving, or observation-preserving refinements. -/
 -- The state universes (`u₁`, `u₂`) and the interface universes are independent.
-@[nolint checkUnivs]
 structure SafetyRefinement (impl : SafetySpec.{u₁} p) (spec : SafetySpec.{u₂} q)
     (matchStep : StepRel impl.toDynSystem spec.toDynSystem := StepRel.top)
     extends ForwardSimulation impl.toDynSystem spec.toDynSystem matchStep where
@@ -518,6 +518,7 @@ abbrev ReverseSafetyRefinement (impl : SafetySpec.{u₁} p) (spec : SafetySpec.{
     (matchStep : StepRel impl.toDynSystem spec.toDynSystem := StepRel.top) :=
   SafetyRefinement spec impl (StepRel.reverse matchStep)
 
+set_option linter.checkUnivs false in
 /-- `MutualSafetyRefinement left right matchForth matchBack` packages one forward
 simulation in each direction between `left` and `right`. By default, the
 backward step-matching relation is the reversal of the forward one.
@@ -526,7 +527,6 @@ This is the symmetric closure of `SafetyRefinement`: each side can match the
 other's executions, possibly using independent state relations. It is not a
 coalgebraic bisimulation. -/
 -- The state universes and the interface universes are independent.
-@[nolint checkUnivs]
 structure MutualSafetyRefinement (left : SafetySpec.{u₁} p) (right : SafetySpec.{u₂} q)
     (matchForth : StepRel left.toDynSystem right.toDynSystem := StepRel.top)
     (matchBack : StepRel right.toDynSystem left.toDynSystem :=

@@ -249,10 +249,10 @@ notation "[" l₁ "," l₂ "]ₗ" => sumPair l₁ l₂
 /-- Notation for the pairing `prodPair l₁ l₂` of two lenses into a product. -/
 notation "⟨" l₁ "," l₂ "⟩ₗ" => prodPair l₁ l₂
 
+set_option linter.checkUnivs false in
 /-- The type of lenses from a polynomial functor `P` to `X` -/
 -- `Lens.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
 -- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
-@[nolint checkUnivs]
 def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
   Lens P X.{uA₁, uB₁}
 
