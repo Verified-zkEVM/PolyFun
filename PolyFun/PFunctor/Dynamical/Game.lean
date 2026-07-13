@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Dynamical.Responder
+public import PolyFun.PFunctor.Dynamical.IOMachine
 public import PolyFun.PFunctor.Dynamical.Combinators
 public import PolyFun.PFunctor.Lens.Duoidal
 
@@ -31,7 +32,7 @@ Monadic runs against handlers are provided in two strengths: `kleisliStep` /
 first in the pair. The two agree along `StateT.lift` (`stepWith_lift`), and at
 `m := Id` a responder's handler recovers the closed game
 (`stepWith_toStateHandler`). The load-bearing export is
-`PointedMachine.runWith_run_succ_of_output_eq_none`, the machine-vs-responder
+`IOMachine.runWith_run_succ_of_output_eq_none`, the machine-vs-responder
 step law that unrolls a machine's fuelled `runWith` through `stepWith` of its
 dynamical core.
 
@@ -89,7 +90,7 @@ challenger's state universe identified with the interface universes, as
 `Lens.uncurry` requires. -/
 theorem game_eq_uncurry {S : Type u} {T : Type v} {q r : PFunctor.{u, u}}
     (chal : DynSystem S (q ⊸ r)) (adv : DynSystem T q) :
-    game chal adv = (Lens.comp (Lens.uncurry chal) (Lens.id (selfMonomial S) ⊗ₗ adv) :
+    game chal adv = ((Lens.id (selfMonomial S) ⊗ₗ adv) ⨟ Lens.uncurry chal :
       Lens (selfMonomial S ⊗ selfMonomial T) r) := rfl
 
 /-! ## Closed games -/
@@ -195,7 +196,7 @@ end DynSystem
 
 /-! ## The machine-vs-responder step law -/
 
-namespace PointedMachine
+namespace DynSystem.IOMachine
 
 section RunBridge
 
@@ -206,17 +207,18 @@ fuel of a machine's `runWith` against a stateful handler — read in
 state-transformer form — is one `DynSystem.stepWith` of the machine's dynamical
 core, bound into the rest of the run. Downstream machine-game step lemmas are
 instances of this law at concrete monads (`m := SPMF` for VCVio's wiring). -/
-theorem runWith_run_succ_of_output_eq_none [LawfulMonad m] (M : PointedMachine q α β)
+theorem runWith_run_succ_of_output_eq_none [LawfulMonad m] (M : DynSystem.IOMachine q α β)
     (h : Handler (StateT σ m) q) {s : M.State} (hs : M.output s = none) (k : ℕ) (t : σ) :
     (M.runWith h (k + 1) s).run t
-      = DynSystem.stepWith h M.toDynSystem (t, s) >>= fun p => (M.runWith h k p.2).run p.1 := by
+      = DynSystem.stepWith h M.toMachine.behavior (t, s) >>=
+          fun p => (M.runWith h k p.2).run p.1 := by
   rw [M.runWith_succ_of_output_eq_none h hs k]
   simp only [DynSystem.stepWith, bind_map_left]
   rfl
 
 end RunBridge
 
-end PointedMachine
+end DynSystem.IOMachine
 
 /-! ## Two-phase games
 
@@ -233,7 +235,7 @@ Eq 6.86), so the phase-one pair and phase-two pair each meet in an evaluation
 lens (Ex 4.78), run in sequence. -/
 def eval₂ (q₁ r₁ q₂ r₂ : PFunctor.{uA, uB}) :
     Lens (((q₁ ⊸ r₁) ◃ (q₂ ⊸ r₂)) ⊗ (q₁ ◃ q₂)) (r₁ ◃ r₂) :=
-  (eval q₁ r₁ ◃ₗ eval q₂ r₂) ∘ₗ duoidalLens (q₁ ⊸ r₁) (q₂ ⊸ r₂) q₁ q₂
+  duoidalLens (q₁ ⊸ r₁) (q₂ ⊸ r₂) q₁ q₂ ⨟ (eval q₁ r₁ ◃ₗ eval q₂ r₂)
 
 end Lens
 

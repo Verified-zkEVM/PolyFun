@@ -18,7 +18,7 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 | Ch 4.5 ⊗-closure `[q,r]`, eval | **Done (A1)**: `ihom`/`eval`/`curry`/`curryEquiv`/`ihomSum` in `PFunctor/InternalHom.lean` (note: `exp` is the §5.3 cartesian exponential, not this) |
 | Ch 5 factorizations, adjunctions, (co)limits | **Done**: full vertical–cartesian factorization (A3, `Lens/Factorization.lean`), trivial-interface adjunction pack (A4, `Adjunctions.lean`), cartesian-closure equivalence `CartesianClosed.curryEquiv` (A2, `CartesianClosed.lean`); general (co)limits + A5 gluing open |
 | Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: direct composite-lens projections, `compNthMap`, δ/`twoStep` (A6/A7a/A7b), left-distributivity + `(6.65)` (A10, `Lens/Distributivity.lean`), ordering + duoidal interchange lens (A9, `Lens/Duoidal.lean`); coclosure/multiadjoint (A8) + duoidal coherence open |
-| Ch 7 comonoids = categories, retrofunctors | **Done (B1/B2/B3)**: `Comonoid` structure + `δ^(n)` (`PFunctor/Comonoid.lean`), state comonoid `Sy^S` + `IsStateSystem`, `Run_n`/`nStep` (`Dynamical/RunN.lean`), monad-parametric `runWith` + `seqComp` bind-law core + `IsSimulation` (`Dynamical/{PointedMachine,Simulation}.lean`); retrofunctors + §7.3.3 quadruple (B4/B5) open |
+| Ch 7 comonoids = categories, retrofunctors | **Done (B1/B2/B3)**: `Comonoid` structure + `δ^(n)` (`PFunctor/Comonoid.lean`), state comonoid `Sy^S` + `IsStateSystem`, `Run_n`/`nStep` (`Dynamical/RunN.lean`), monad-parametric `runWith` + `seqComp` bind-law core + `IsSimulation` (`Dynamical/{IOMachine,Simulation}.lean`); retrofunctors + §7.3.3 quadruple (B4/B5) open |
 | Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | Missing (raw material: `M p`, `M.corec`, `FreeM.Path`) |
 
 ## Reading units
@@ -61,8 +61,8 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
   **b.** transition lens `δ : selfMonomial S ⇆ selfMonomial S ◃ selfMonomial S`
   = `(id, tgt, run)` (Example 6.44) + `DynSystem.twoStep := δ ⨟ (φ ◁ φ)` —
   needs no comonoid vocabulary, lands ahead of B2;
-  **c.** pointed machine (state + init + partial readout, generalizing VCVio
-  `OracleMachine`) as `PFunctor/Dynamical/PointedMachine.lean`; two-phase
+  **c.** input/output machine (state + init + partial readout, generalizing VCVio
+  `OracleMachine`) as `PFunctor/Dynamical/IOMachine.lean`; two-phase
   composition via A6 with a shared mid-boundary (Example 6.41 "cascading
   menus"); `Implements`/`IsSimulation` transfer lemmas.
   *(Direct `IsPolyTime.bind` unlock.)*
@@ -105,8 +105,8 @@ Landed 2026-07-10 (build + `lake lint` + `lake test` green, no `sorry`):
   cited alias of the pre-existing `Lens.fixState`) and `DynSystem.twoStep`
   (lifting the pre-existing `Lens.speedup`) with `twoStep_eq_speedup`.
   General `nStep` intentionally left to B3 (needs `δ^(n)`).
-- **A7c ✅ (structural)** `PFunctor/Dynamical/PointedMachine.lean`: the
-  `PointedMachine` structure (VCVio `OracleMachine`'s generic core); `seqComp` with
+- **A7c ✅ (structural)** `PFunctor/Dynamical/IOMachine.lean`: the
+  `IOMachine` structure (VCVio `OracleMachine`'s generic core); `seqComp` with
   `M₁.State ⊕ M₂.State` (Example 6.41 — the structural unlock for
   `IsPolyTime.bind` / `OracleMachine.seqComp`); phase `rfl` lemmas; fuelled
   `toComp`; `toComp_seqComp_inr` (second phase faithful to `M₂`); the exact
@@ -193,7 +193,7 @@ consumers; they are natural follow-ons or Phase B/C prerequisites.
 - **B6** `FreeM P` as ◁-monoid; handlers/`mapMHom` as monoid morphisms
   (universal property behind `simulateQ`).
 
-### Phase B — implementation status (spine: B1 + B2 + B3 + PointedMachine finish)
+### Phase B — implementation status (spine: B1 + B2 + B3 + IOMachine finish)
 
 Landed the K-L-prioritized machine spine (crypto-free):
 
@@ -210,11 +210,11 @@ Landed the K-L-prioritized machine spine (crypto-free):
 - **B3 done** — `DynSystem.nStep` = `Run_n` (`Dynamical/RunN.lean`), finishing
   the `Speedup.lean` `nStep` deferral; **`twoStep_toLens_eq` (the `n = 2`
   coherence with the existing `twoStep`) is `rfl`**. The monad-parametric run
-  `PointedMachine.runWith = FreeM.mapM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
+  `IOMachine.runWith = FreeM.mapM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
   shadow) and `runWith_of_output_eq_some` (fuel irrelevance, the
   `runK_eq_of_apply_none_eq_zero` shadow); the `Option`/fuel pays-rent instance
   is in `RunNExamples.lean`. The ω-limit `ωSup` stays downstream (SPMF ωCPO).
-- **PointedMachine finish** — `toComp_seqComp_inl` fixes the first-phase operational
+- **IOMachine finish** — `toComp_seqComp_inl` fixes the first-phase operational
   behaviour (with `toComp_seqComp_inr` this is the structural `IsPolyTime.bind`
   content); the naive unqualified fuel-additive single-`bind` law is **false**
   (fuel threads continuously), while `ResolvesIn` certificates make the exact
@@ -514,9 +514,11 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   `selfMonomial_prod`), `pairing` *is* `⟨l₁, l₂⟩ₗ` — and the inverted file compiled
   first try, the cleanest pays-rent signal yet: the book's algebra was already the
   code, only the packaging resisted. The book's `⨟` now covers lenses, charts, and
-  machine `seqComp` with full display. `PointedMachine` stayed a flat five-field
-  structure (bundled state is what runs and composition want), with `toDynSystem`
-  the lens-valued face — all #16/#17 fuel/composition laws survived untouched.
+  machine `seqComp` with full display. The machine bundles now share a minimal
+  `Machine` parent containing `State` and `behavior`: `IOMachine` adds `init` and
+  `output`, while `Labeled`, `Ticketed`, and `SafetySpec` extend the same parent.
+  Their lens-valued dynamics are uniformly accessed as `.toMachine.behavior`,
+  and all #16/#17 fuel/composition laws survived the hierarchy change.
   Downstream pays-rent (VCVio): the fuel-exact `runWith_seqComp` laws + the
   implements-extracted `ResolvesIn` certificates delivered a **zero-new-sorry
   `IsPolyTime.bind`**, whose entire machine debt is a declared six-ticket
@@ -541,7 +543,7 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   adjunction reading; monadic runs `kleisliStep`/`kleisliIterate` and the
   stateful-handler `stepWith`/`iterWith` with the responder/handler state
   *first* in the pair; the machine-vs-responder step law
-  `PointedMachine.runWith_run_succ_of_output_eq_none`; two-phase
+  `IOMachine.runWith_run_succ_of_output_eq_none`; two-phase
   `Lens.eval₂ = (eval ◃ₗ eval) ∘ₗ duoidalLens` (Eq 6.86), `orderPair`
   (Ex 6.85, guess phase cannot see the commit answer within a composite
   step), and `game₂`). All designed `rfl` canaries held on first compile —

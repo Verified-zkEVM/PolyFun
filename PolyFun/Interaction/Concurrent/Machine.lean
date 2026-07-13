@@ -76,7 +76,7 @@ abbrev step {S : Type v} (machine : Machine.{u, v} S) (σ : S)
 function, using the classical field names. -/
 def mk' (State : Type v) (Enabled : State → Type u)
     (step : (σ : State) → Enabled σ → State) : Machine.{u, v} State :=
-  PFunctor.DynSystem.mk' Enabled step
+  Enabled ⇆ step
 
 @[simp] theorem enabled_mk' (State : Type v) (Enabled : State → Type u)
     (step : (σ : State) → Enabled σ → State) :
@@ -93,10 +93,6 @@ initial states, ambient assumptions, and the safety predicate.
 -- The machine's state universe (`v`) and event universe (`u`) are independent.
 @[nolint checkUnivs]
 abbrev SafetySpec := PFunctor.DynSystem.SafetySpec.{v} PFunctor.univ.{u}
-
-/-- The underlying machine of a verification-oriented machine system. -/
-abbrev SafetySpec.toMachine (system : SafetySpec.{u, v}) : Machine.{u, v} system.State :=
-  system.toDynSystem
 
 /--
 Compile a flat state-indexed machine into the continuation-based
@@ -125,13 +121,12 @@ Lift `Machine.toProcess` from bare dynamics to `Process.SafetySpec` by reusing
 the same initial-state, assumption, and safety predicates.
 -/
 def SafetySpec.toProcess {Party : Type u} (system : Machine.SafetySpec)
-    (semantics : (σ : system.State) → NodeProfile Party (system.toMachine.Enabled σ)) :
-    Process.SafetySpec Party where
-  State := system.State
-  toDynSystem := system.toMachine.toProcess semantics
-  init := system.init
-  assumptions := system.assumptions
-  safe := system.safe
+    (semantics : (σ : system.State) →
+      NodeProfile Party (system.toMachine.behavior.expose σ)) :
+    Process.SafetySpec Party :=
+  { system with toMachine :=
+      { system.toMachine with
+        behavior := Machine.toProcess system.toMachine.behavior semantics } }
 
 end Machine
 end Concurrent

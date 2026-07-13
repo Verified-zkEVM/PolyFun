@@ -6,7 +6,8 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.InternalHom
-public import PolyFun.PFunctor.Dynamical.PointedMachine
+public import PolyFun.PFunctor.Handler
+public import PolyFun.PFunctor.Dynamical.Basic
 
 /-!
 # Responders: stateful answerers as systems over the internal hom

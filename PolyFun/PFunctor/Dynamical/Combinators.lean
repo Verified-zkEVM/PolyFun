@@ -64,12 +64,12 @@ def wrap (w : Lens p q) (s : DynSystem S p) : DynSystem S q := s ⨟ w
     (d : q.B ((wrap w s).expose st)) :
     (wrap w s).update st d = s.update st (w.toFunB (s.expose st) d) := rfl
 
-theorem wrap_eq_comp (w : Lens p q) (s : DynSystem S p) : wrap w s = w ∘ₗ s := rfl
+theorem wrap_eq_comp (w : Lens p q) (s : DynSystem S p) : wrap w s = s ⨟ w := rfl
 
 @[simp] theorem wrap_id (s : DynSystem S p) : wrap (Lens.id p) s = s := rfl
 
 @[simp] theorem wrap_comp (w₂ : Lens q r) (w₁ : Lens p q) (s : DynSystem S p) :
-    wrap w₂ (wrap w₁ s) = wrap (w₂ ∘ₗ w₁) s := rfl
+    wrap w₂ (wrap w₁ s) = wrap (w₁ ⨟ w₂) s := rfl
 
 /-! ## Sections close systems (§4.3.4) -/
 

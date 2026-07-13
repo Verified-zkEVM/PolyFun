@@ -107,8 +107,8 @@ event-preserving, ticket-preserving, or observation-preserving refinements. -/
 -- The state universes (`u₁`, `u₂`) and the interface universes are independent.
 @[nolint checkUnivs]
 structure SafetyRefinement (impl : SafetySpec.{u₁} p) (spec : SafetySpec.{u₂} q)
-    (matchStep : StepRel impl.toDynSystem spec.toDynSystem := StepRel.top)
-    extends ForwardSimulation impl.toDynSystem spec.toDynSystem matchStep where
+    (matchStep : StepRel impl.toMachine.behavior spec.toMachine.behavior := StepRel.top)
+    extends ForwardSimulation impl.toMachine.behavior spec.toMachine.behavior matchStep where
   /-- Every initial implementation state is related to an initial
   specification state. -/
   init : toForwardSimulation.RelatesInitial impl.init spec.init
@@ -278,15 +278,15 @@ end ForwardSimulation
 namespace SafetyRefinement
 
 variable {impl : SafetySpec.{u₁} p} {spec : SafetySpec.{u₂} q}
-  {matchStep : StepRel impl.toDynSystem spec.toDynSystem}
+  {matchStep : StepRel impl.toMachine.behavior spec.toMachine.behavior}
 
 /-- The identity safety refinement, provided that `matchStep` relates each
 concrete step to itself. -/
 def refl (system : SafetySpec.{u} p)
-    (matchStep : StepRel system.toDynSystem system.toDynSystem := StepRel.top)
-    (hmatch : ∀ step : system.toDynSystem.Step, matchStep step step) :
+    (matchStep : StepRel system.toMachine.behavior system.toMachine.behavior := StepRel.top)
+    (hmatch : ∀ step : system.toMachine.behavior.Step, matchStep step step) :
     SafetyRefinement system system matchStep where
-  toForwardSimulation := ForwardSimulation.refl system.toDynSystem matchStep hmatch
+  toForwardSimulation := ForwardSimulation.refl system.toMachine.behavior matchStep hmatch
   init st hst := ⟨st, hst, rfl⟩
   assumptions
     | rfl, h => h
@@ -300,7 +300,7 @@ def reflTop (system : SafetySpec.{u} p) : SafetyRefinement system system StepRel
 /-- Weaken the required step relation of a safety refinement while retaining
 its operational state relation and all verification-policy obligations. -/
 def weakenMatch
-    {matchStrong matchWeak : StepRel impl.toDynSystem spec.toDynSystem}
+    {matchStrong matchWeak : StepRel impl.toMachine.behavior spec.toMachine.behavior}
     (sim : SafetyRefinement impl spec matchStrong)
     (hmatch : ∀ stepImpl stepSpec, matchStrong stepImpl stepSpec →
       matchWeak stepImpl stepSpec) :
@@ -314,8 +314,8 @@ def weakenMatch
 on their concrete-step relations. -/
 def comp {r : PFunctor.{uA₃, uB₃}} {middle : SafetySpec.{u₂} q}
     {target : SafetySpec.{u₃} r}
-    {matchFirst : StepRel impl.toDynSystem middle.toDynSystem}
-    {matchSecond : StepRel middle.toDynSystem target.toDynSystem}
+    {matchFirst : StepRel impl.toMachine.behavior middle.toMachine.behavior}
+    {matchSecond : StepRel middle.toMachine.behavior target.toMachine.behavior}
     (second : SafetyRefinement middle target matchSecond)
     (first : SafetyRefinement impl middle matchFirst) :
     SafetyRefinement impl target (StepRel.comp matchFirst matchSecond) where
@@ -340,29 +340,30 @@ refinements. -/
 noncomputable abbrev matchDir (sim : SafetyRefinement impl spec matchStep)
     {stImpl : impl.State} {stSpec : spec.State}
     (hrel : sim.stateRel stImpl stSpec)
-    (dImpl : p.B (impl.expose stImpl)) : q.B (spec.expose stSpec) :=
+    (dImpl : p.B (impl.toMachine.behavior.expose stImpl)) :
+      q.B (spec.toMachine.behavior.expose stSpec) :=
   sim.toForwardSimulation.matchDir hrel dImpl
 
 theorem matchDir_spec (sim : SafetyRefinement impl spec matchStep)
     {stImpl : impl.State} {stSpec : spec.State}
     (hrel : sim.stateRel stImpl stSpec)
-    (dImpl : p.B (impl.expose stImpl)) :
+    (dImpl : p.B (impl.toMachine.behavior.expose stImpl)) :
     matchStep ⟨stImpl, dImpl⟩ ⟨stSpec, sim.matchDir hrel dImpl⟩ ∧
-      sim.stateRel (impl.update stImpl dImpl)
-        (spec.update stSpec (sim.matchDir hrel dImpl)) :=
+      sim.stateRel (impl.toMachine.behavior.update stImpl dImpl)
+        (spec.toMachine.behavior.update stSpec (sim.matchDir hrel dImpl)) :=
   sim.toForwardSimulation.matchDir_spec hrel dImpl
 
 /-- The related specification state constructed by the underlying forward
 simulation after `n` implementation steps. -/
 noncomputable abbrev matchedState (sim : SafetyRefinement impl spec matchStep)
-    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (run : Run impl.toMachine.behavior) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :=
   sim.toForwardSimulation.matchedState run hrel
 
 /-- The direction selected by the underlying forward simulation for the `n`th
 implementation step. -/
 noncomputable abbrev matchedDir (sim : SafetyRefinement impl spec matchStep)
-    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (run : Run impl.toMachine.behavior) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) (n : ℕ) :=
   sim.toForwardSimulation.matchedDir run hrel n
 
@@ -370,31 +371,31 @@ noncomputable abbrev matchedDir (sim : SafetyRefinement impl spec matchStep)
 This forwarding abbreviation preserves the `sim.mapRun` API for safety
 refinements. -/
 noncomputable abbrev mapRun (sim : SafetyRefinement impl spec matchStep)
-    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (run : Run impl.toMachine.behavior) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :=
   sim.toForwardSimulation.mapRun run hrel
 
 theorem stateRel_mapRun (sim : SafetyRefinement impl spec matchStep)
-    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (run : Run impl.toMachine.behavior) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     ∀ n, sim.stateRel (run.state n) ((sim.mapRun run hrel).state n) :=
   sim.toForwardSimulation.stateRel_mapRun run hrel
 
 theorem match_mapRun (sim : SafetyRefinement impl spec matchStep)
-    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (run : Run impl.toMachine.behavior) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     ∀ n, matchStep ⟨run.state n, run.dir n⟩
       ⟨(sim.mapRun run hrel).state n, (sim.mapRun run hrel).dir n⟩ :=
   sim.toForwardSimulation.match_mapRun run hrel
 
 theorem relUpTo_mapRun (sim : SafetyRefinement impl spec matchStep)
-    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (run : Run impl.toMachine.behavior) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     ∀ n, Run.RelUpTo matchStep run (sim.mapRun run hrel) n :=
   sim.toForwardSimulation.relUpTo_mapRun run hrel
 
 theorem rel_mapRun (sim : SafetyRefinement impl spec matchStep)
-    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (run : Run impl.toMachine.behavior) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) :
     Run.Rel matchStep run (sim.mapRun run hrel) :=
   sim.toForwardSimulation.rel_mapRun run hrel
@@ -402,7 +403,7 @@ theorem rel_mapRun (sim : SafetyRefinement impl spec matchStep)
 /-- If every state along the mapped specification run is safe, then every
 state along the implementation run is safe. -/
 theorem safe_of_mapRun (sim : SafetyRefinement impl spec matchStep)
-    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (run : Run impl.toMachine.behavior) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec)
     (hsafe : ∀ n, spec.safe ((sim.mapRun run hrel).state n)) :
     ∀ n, impl.safe (run.state n)
@@ -411,7 +412,7 @@ theorem safe_of_mapRun (sim : SafetyRefinement impl spec matchStep)
 /-- If ambient assumptions hold along an implementation run, they hold along
 its mapped specification run. -/
 theorem assumptions_mapRun (sim : SafetyRefinement impl spec matchStep)
-    (run : Run impl.toDynSystem) {stSpec : spec.State}
+    (run : Run impl.toMachine.behavior) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec)
     (hassumptions : ∀ n, impl.assumptions (run.state n)) :
     ∀ n, spec.assumptions ((sim.mapRun run hrel).state n) :=
@@ -425,7 +426,7 @@ end SafetyRefinement
 `spec` to `impl`, with the step-matching relation reversed accordingly. It is
 only a change of viewpoint, not a second primitive notion. -/
 abbrev ReverseSafetyRefinement (impl : SafetySpec.{u₁} p) (spec : SafetySpec.{u₂} q)
-    (matchStep : StepRel impl.toDynSystem spec.toDynSystem := StepRel.top) :=
+    (matchStep : StepRel impl.toMachine.behavior spec.toMachine.behavior := StepRel.top) :=
   SafetyRefinement spec impl (StepRel.reverse matchStep)
 
 /-- `MutualSafetyRefinement left right matchForth matchBack` packages one forward
@@ -438,8 +439,8 @@ coalgebraic bisimulation. -/
 -- The state universes and the interface universes are independent.
 @[nolint checkUnivs]
 structure MutualSafetyRefinement (left : SafetySpec.{u₁} p) (right : SafetySpec.{u₂} q)
-    (matchForth : StepRel left.toDynSystem right.toDynSystem := StepRel.top)
-    (matchBack : StepRel right.toDynSystem left.toDynSystem :=
+    (matchForth : StepRel left.toMachine.behavior right.toMachine.behavior := StepRel.top)
+    (matchBack : StepRel right.toMachine.behavior left.toMachine.behavior :=
       StepRel.reverse matchForth) where
   /-- The forward refinement: `left` refines `right` under `matchForth`. -/
   forth : SafetyRefinement left right matchForth
@@ -449,8 +450,8 @@ structure MutualSafetyRefinement (left : SafetySpec.{u₁} p) (right : SafetySpe
 namespace MutualSafetyRefinement
 
 variable {left : SafetySpec.{u₁} p} {right : SafetySpec.{u₂} q}
-  {matchForth : StepRel left.toDynSystem right.toDynSystem}
-  {matchBack : StepRel right.toDynSystem left.toDynSystem}
+  {matchForth : StepRel left.toMachine.behavior right.toMachine.behavior}
+  {matchBack : StepRel right.toMachine.behavior left.toMachine.behavior}
 
 /-- Swap the two sides of a mutual safety refinement. -/
 def symm (both : MutualSafetyRefinement left right matchForth matchBack) :
@@ -461,8 +462,8 @@ def symm (both : MutualSafetyRefinement left right matchForth matchBack) :
 /-- Weaken the required forward and backward step relations without changing
 either operational simulation or its verification-policy obligations. -/
 def weakenMatch
-    {matchForthWeak : StepRel left.toDynSystem right.toDynSystem}
-    {matchBackWeak : StepRel right.toDynSystem left.toDynSystem}
+    {matchForthWeak : StepRel left.toMachine.behavior right.toMachine.behavior}
+    {matchBackWeak : StepRel right.toMachine.behavior left.toMachine.behavior}
     (both : MutualSafetyRefinement left right matchForth matchBack)
     (hForth : ∀ stepLeft stepRight, matchForth stepLeft stepRight →
       matchForthWeak stepLeft stepRight)
@@ -475,11 +476,11 @@ def weakenMatch
 /-- The identity mutual safety refinement on `system`, provided that both step
 relations relate every direction to itself. -/
 def refl (system : SafetySpec.{u} p)
-    (matchForth : StepRel system.toDynSystem system.toDynSystem := StepRel.top)
-    (matchBack : StepRel system.toDynSystem system.toDynSystem :=
+    (matchForth : StepRel system.toMachine.behavior system.toMachine.behavior := StepRel.top)
+    (matchBack : StepRel system.toMachine.behavior system.toMachine.behavior :=
       StepRel.reverse matchForth)
-    (hForth : ∀ step : system.toDynSystem.Step, matchForth step step)
-    (hBack : ∀ step : system.toDynSystem.Step, matchBack step step) :
+    (hForth : ∀ step : system.toMachine.behavior.Step, matchForth step step)
+    (hBack : ∀ step : system.toMachine.behavior.Step, matchBack step step) :
     MutualSafetyRefinement system system matchForth matchBack where
   forth := SafetyRefinement.refl system matchForth hForth
   back := SafetyRefinement.refl system matchBack hBack
@@ -488,12 +489,12 @@ def refl (system : SafetySpec.{u} p)
 step relations imply the relations required by the endpoints. -/
 def trans {r : PFunctor.{uA₃, uB₃}}
     {middle : SafetySpec.{u₂} q} {target : SafetySpec.{u₃} r}
-    {matchLeftMiddle : StepRel left.toDynSystem middle.toDynSystem}
-    {matchMiddleLeft : StepRel middle.toDynSystem left.toDynSystem}
-    {matchMiddleTarget : StepRel middle.toDynSystem target.toDynSystem}
-    {matchTargetMiddle : StepRel target.toDynSystem middle.toDynSystem}
-    {matchLeftTarget : StepRel left.toDynSystem target.toDynSystem}
-    {matchTargetLeft : StepRel target.toDynSystem left.toDynSystem}
+    {matchLeftMiddle : StepRel left.toMachine.behavior middle.toMachine.behavior}
+    {matchMiddleLeft : StepRel middle.toMachine.behavior left.toMachine.behavior}
+    {matchMiddleTarget : StepRel middle.toMachine.behavior target.toMachine.behavior}
+    {matchTargetMiddle : StepRel target.toMachine.behavior middle.toMachine.behavior}
+    {matchLeftTarget : StepRel left.toMachine.behavior target.toMachine.behavior}
+    {matchTargetLeft : StepRel target.toMachine.behavior left.toMachine.behavior}
     (first : MutualSafetyRefinement left middle matchLeftMiddle matchMiddleLeft)
     (second : MutualSafetyRefinement middle target matchMiddleTarget matchTargetMiddle)
     (hForth : ∀ stepLeft stepTarget,
@@ -531,12 +532,12 @@ three verification-policy preservation properties separately. -/
 def SafetyRefinement.ofIsSimulation
     {S₁ : SafetySpec.{u₁} p} {S₂ : SafetySpec.{u₂} p}
     {R : S₁.State → S₂.State → Prop}
-    (hsim : IsSimulation S₁.toDynSystem S₂.toDynSystem R)
+    (hsim : IsSimulation S₁.toMachine.behavior S₂.toMachine.behavior R)
     (hinit : ∀ st₁, S₁.init st₁ → ∃ st₂, S₂.init st₂ ∧ R st₁ st₂)
     (hassumptions : ∀ {st₁ st₂}, R st₁ st₂ →
       S₁.assumptions st₁ → S₂.assumptions st₂)
     (hsafe : ∀ {st₁ st₂}, R st₁ st₂ → S₂.safe st₂ → S₁.safe st₁) :
-    SafetyRefinement S₁ S₂ (StepRel.sync S₁.toDynSystem S₂.toDynSystem) where
+    SafetyRefinement S₁ S₂ (StepRel.sync S₁.toMachine.behavior S₂.toMachine.behavior) where
   toForwardSimulation := ForwardSimulation.ofIsSimulation hsim
   init := hinit
   assumptions := hassumptions

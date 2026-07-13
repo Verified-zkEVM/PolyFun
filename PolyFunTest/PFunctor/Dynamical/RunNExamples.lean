@@ -6,7 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Dynamical.RunN
-public import PolyFun.PFunctor.Dynamical.PointedMachine
+public import PolyFun.PFunctor.Dynamical.IOMachine
 
 /-!
 # Examples for `n`-step systems and the monad-parametric run
@@ -31,17 +31,16 @@ example (φ : DynSystem S p) (n : ℕ) : DynSystem S (compNth p n) := φ.nStep n
 
 /-- `Run_2` collapses to `twoStep` after the inner unitor. -/
 example (φ : DynSystem S p) :
-    (Lens.id p ◃ₗ Lens.Equiv.compX.toLens) ∘ₗ φ.nStep 2 = φ.twoStep :=
+    φ.nStep 2 ⨟ (Lens.id p ◃ₗ Lens.Equiv.compX.toLens) = φ.twoStep :=
   DynSystem.twoStep_toLens_eq φ
 
 /-! ## The monad-parametric run in `Option` (pays-rent instance) -/
 
 /-- A one-step-delay machine over `y`: it runs for one step, then halts with `b`
 (concrete universe so the `Bool` state set lives in the machine's state type). -/
-def delayMachine (b : Bool) : PointedMachine X.{0, 0} PUnit Bool where
+def delayMachine (b : Bool) : DynSystem.IOMachine X.{0, 0} PUnit Bool where
   State := Bool
-  expose := fun _ => PUnit.unit
-  update := fun _ _ => true
+  behavior := (fun _ => PUnit.unit) ⇆ (fun _ _ => true)
   init := fun _ => false
   output := fun s => if s then some b else none
 
@@ -51,7 +50,7 @@ def unitHandler : Handler Option X.{0, 0} := fun _ => some PUnit.unit
 /-- `runWith` also preserves the independent input, effect, and interface
 universes admitted by its monad. -/
 example {q : PFunctor.{uA, v}} {m : Type v → Type w} [Monad m]
-    {α : Type u} {β : Type v} (M : PointedMachine q α β)
+    {α : Type u} {β : Type v} (M : DynSystem.IOMachine q α β)
     (h : Handler m q) (s : M.State) :
     M.runWith h 0 s = pure (M.output s) := rfl
 
@@ -73,13 +72,13 @@ example (b : Bool) :
 /-- A halted state reads off its value at any fuel. The lossy handler witnesses
 that no query effect is performed after halting. -/
 example (b : Bool) : (delayMachine b).runWith unitHandler 0 true = some (some b) :=
-  PointedMachine.runWith_of_output_eq_some _ _ 0 rfl
+  DynSystem.IOMachine.runWith_of_output_eq_some _ _ 0 rfl
 
 example (b : Bool) : (delayMachine b).runWith lossyUnitHandler 8 true = some (some b) := by
-  exact PointedMachine.runWith_of_output_eq_some _ _ 8 rfl
+  exact DynSystem.IOMachine.runWith_of_output_eq_some _ _ 8 rfl
 
 /-- The output equation is available directly to `simp`. -/
-example (M : PointedMachine X.{0, 0} PUnit Bool) (h : Handler Option X.{0, 0})
+example (M : DynSystem.IOMachine X.{0, 0} PUnit Bool) (h : Handler Option X.{0, 0})
     (k : ℕ) (s : M.State) (b : Bool) (hb : M.output s = some b) :
     M.runWith h k s = some (some b) := by
   simp [hb]

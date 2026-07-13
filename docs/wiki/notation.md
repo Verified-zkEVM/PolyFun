@@ -57,8 +57,8 @@ than via custom notation, to keep elaboration predictable. Specifically:
   formers in `PolyFun/PFunctor/Dynamical/{Responder, Game}.lean` are
   dynamical systems over `q ⊸ X` and `q ⊸ r`.
 - Machine sequential composition `M₁ ⨟ M₂` (input `\;;`, U+2A1F) is
-  `PointedMachine.seqComp`, defined in
-  [`PolyFun/PFunctor/Dynamical/PointedMachine.lean`](../../PolyFun/PFunctor/Dynamical/PointedMachine.lean)
+  `IOMachine.seqComp`, defined in
+  [`PolyFun/PFunctor/Dynamical/IOMachine.lean`](../../PolyFun/PFunctor/Dynamical/IOMachine.lean)
   at `infixl:75`. This is the book's diagrammatic composition order
   (left machine runs first), the same `⨟` used throughout
   `docs/reading/`; its intentional use is recorded as a narrow exception in

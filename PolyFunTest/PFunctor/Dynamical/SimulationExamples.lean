@@ -94,8 +94,8 @@ example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpe
 verification-policy obligations are supplied. -/
 example (D : DynSystem S p) :
     DynSystem.SafetyRefinement
-      ⟨S, D, fun _ => True, fun _ => True, fun _ => True⟩
-      ⟨S, D, fun _ => True, fun _ => True, fun _ => True⟩
+      ⟨⟨S, D⟩, fun _ => True, fun _ => True, fun _ => True⟩
+      ⟨⟨S, D⟩, fun _ => True, fun _ => True, fun _ => True⟩
       (DynSystem.StepRel.sync D D) :=
   DynSystem.SafetyRefinement.ofIsSimulation (idSim D)
     (fun st _ => ⟨st, trivial, rfl⟩) (fun _ _ => trivial) (fun _ _ => trivial)
@@ -104,11 +104,13 @@ example (D : DynSystem S p) :
 their verification-policy obligations. -/
 example (D : DynSystem S p) :
     let system : DynSystem.SafetySpec.{u} p :=
-      ⟨S, D, fun _ => True, fun _ => True, fun _ => True⟩
+      ⟨⟨S, D⟩, fun _ => True, fun _ => True, fun _ => True⟩
     DynSystem.SafetyRefinement system system
       (DynSystem.StepRel.comp
-        (DynSystem.StepRel.top : DynSystem.StepRel system.toDynSystem system.toDynSystem)
-        (DynSystem.StepRel.top : DynSystem.StepRel system.toDynSystem system.toDynSystem)) := by
+        (DynSystem.StepRel.top :
+          DynSystem.StepRel system.toMachine.behavior system.toMachine.behavior)
+        (DynSystem.StepRel.top :
+          DynSystem.StepRel system.toMachine.behavior system.toMachine.behavior)) := by
   intro system
   exact (DynSystem.SafetyRefinement.reflTop system).comp
     (DynSystem.SafetyRefinement.reflTop system)
@@ -129,7 +131,7 @@ example (D : DynSystem S p) :
 /-- Mutual refinements can weaken both endpoint matching relations together. -/
 example (D : DynSystem S p) :
     let system : DynSystem.SafetySpec.{u} p :=
-      ⟨S, D, fun _ => True, fun _ => True, fun _ => True⟩
+      ⟨⟨S, D⟩, fun _ => True, fun _ => True, fun _ => True⟩
     DynSystem.MutualSafetyRefinement system system
       DynSystem.StepRel.top DynSystem.StepRel.top := by
   intro system
