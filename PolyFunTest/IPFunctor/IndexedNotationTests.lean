@@ -38,11 +38,11 @@ def demoP : IPFunctor.Endo Bool where
 
 /-- The "flip" action as a two-index tree: pre `false`, post `true`. -/
 def flip₂ : IPFunctor.FreeM₂ demoP false true Unit :=
-  IPFunctor.FreeM₂.roll () (fun _ => IPFunctor.FreeM₂.pure ())
+  IPFunctor.FreeM₂.liftBind () (fun _ => IPFunctor.FreeM₂.pure ())
 
 /-- The "read" action as a two-index tree: stays at `true`. -/
 def read₂ : IPFunctor.FreeM₂ demoP true true Nat :=
-  IPFunctor.FreeM₂.roll () (fun n => IPFunctor.FreeM₂.pure n)
+  IPFunctor.FreeM₂.liftBind () (fun n => IPFunctor.FreeM₂.pure n)
 
 /-! ### Positive tests — chains of any length compose. -/
 
@@ -93,7 +93,7 @@ When `I = PUnit` the `IPFunctor` is just a `PFunctor`, and
 `IPFunctor.FreeM₂.toFreeM` followed by `IPFunctor.FreeM.erase` should
 collapse `do`-block trees to the corresponding `PFunctor.FreeM` trees via
 the `@[simp]` lemmas in `Free/Basic.lean` (`erase_punit_pure`,
-`erase_punit_roll`, `toFreeM_pure`, `toFreeM_roll`). -/
+`erase_punit_liftBind`, `toFreeM_pure`, `toFreeM_liftBind`). -/
 
 /-- A `PUnit`-indexed `IPFunctor.Endo`: pick a `Bool` shape, get a `Nat` back. -/
 def demoQ : IPFunctor.Endo PUnit where
@@ -104,7 +104,7 @@ def demoQ : IPFunctor.Endo PUnit where
 /-- A single-step action lifting the shape `b : Bool`. -/
 def stepQ (b : Bool) :
     IPFunctor.FreeM₂ demoQ PUnit.unit PUnit.unit Nat :=
-  IPFunctor.FreeM₂.roll b (fun n => IPFunctor.FreeM₂.pure n)
+  IPFunctor.FreeM₂.liftBind b (fun n => IPFunctor.FreeM₂.pure n)
 
 /-- A two-step `do`-tree on `FreeM₂ demoQ`. -/
 def twoStep : IPFunctor.FreeM₂ demoQ PUnit.unit PUnit.unit Nat := do
@@ -123,11 +123,11 @@ def purely : IPFunctor.FreeM₂ demoQ PUnit.unit PUnit.unit Nat := do
   pure k
 
 -- `erase ∘ toFreeM` on a two-step `do`-tree is definitionally a nested
--- `PFunctor.FreeM.roll` chain.
+-- `PFunctor.FreeM.liftBind` chain.
 example :
     IPFunctor.FreeM.erase demoQ PUnit.unit twoStep.toFreeM
-    = PFunctor.FreeM.roll (P := demoQ.toPFunctor) true (fun n : Nat =>
-        PFunctor.FreeM.roll false (fun m : Nat =>
+    = PFunctor.FreeM.liftBind (P := demoQ.toPFunctor) true (fun n : Nat =>
+        PFunctor.FreeM.liftBind false (fun m : Nat =>
           PFunctor.FreeM.pure (n + m))) := by
   rfl
 
@@ -135,7 +135,7 @@ example :
 -- `toFreeM_*` simp lemmas plus the obvious unfolds.
 example :
     IPFunctor.FreeM.erase demoQ PUnit.unit oneStep.toFreeM
-    = PFunctor.FreeM.roll (P := demoQ.toPFunctor) true (fun n : Nat =>
+    = PFunctor.FreeM.liftBind (P := demoQ.toPFunctor) true (fun n : Nat =>
         PFunctor.FreeM.pure (n + 1)) := by
   rfl
 
@@ -149,7 +149,7 @@ example :
 -- `@[simp]`-tagged `erase_punit_*` / `toFreeM_*` lemmas plus the unfolds.
 example :
     IPFunctor.FreeM.erase demoQ PUnit.unit oneStep.toFreeM
-    = PFunctor.FreeM.roll (P := demoQ.toPFunctor) true (fun n : Nat =>
+    = PFunctor.FreeM.liftBind (P := demoQ.toPFunctor) true (fun n : Nat =>
         PFunctor.FreeM.pure (n + 1)) := by
   change IPFunctor.FreeM.erase demoQ PUnit.unit
       ((IPFunctor.FreeM₂.bind (stepQ true)

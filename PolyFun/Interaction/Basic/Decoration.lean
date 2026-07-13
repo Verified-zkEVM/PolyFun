@@ -291,21 +291,21 @@ tree shape. This is the lift to free monads of the polynomial lens
 whose child map is the identity. -/
 def shape : DecoratedSpec Γ → Spec.{u}
   | .pure _ => Spec.done
-  | .roll ⟨X, _⟩ rest => Spec.node X (fun x => DecoratedSpec.shape (rest x))
+  | .liftBind ⟨X, _⟩ rest => Spec.node X (fun x => DecoratedSpec.shape (rest x))
 
 /-- Read off the per-node `Γ`-decoration of a decorated spec, indexed by
 the spec's underlying `shape`. Together with `shape`, this exhibits the
 fiberwise structure of `DecoratedSpec Γ` over `Spec`. -/
 def decoration : (ds : DecoratedSpec Γ) → Decoration Γ (DecoratedSpec.shape ds)
   | .pure _ => PUnit.unit
-  | .roll ⟨_, γ⟩ rest => ⟨γ, fun x => DecoratedSpec.decoration (rest x)⟩
+  | .liftBind ⟨_, γ⟩ rest => ⟨γ, fun x => DecoratedSpec.decoration (rest x)⟩
 
 /-- Pack a tree shape together with a `Γ`-decoration on it into a single
 decorated spec. Inverse to the pair `(shape, decoration)`. -/
 def mk : (spec : Spec.{u}) → Decoration Γ spec → DecoratedSpec Γ
   | .done, _ => PFunctor.FreeM.pure PUnit.unit
   | .node X rest, ⟨γ, dRest⟩ =>
-      PFunctor.FreeM.roll ⟨X, γ⟩ (fun x => DecoratedSpec.mk (rest x) (dRest x))
+      PFunctor.FreeM.liftBind ⟨X, γ⟩ (fun x => DecoratedSpec.mk (rest x) (dRest x))
 
 @[simp]
 theorem shape_mk : (spec : Spec.{u}) → (d : Decoration Γ spec) →
@@ -334,8 +334,8 @@ theorem decoration_mk : (spec : Spec.{u}) → (d : Decoration Γ spec) →
 theorem mk_shape_decoration : (ds : DecoratedSpec Γ) →
     DecoratedSpec.mk (DecoratedSpec.shape ds) (DecoratedSpec.decoration ds) = ds
   | .pure _ => rfl
-  | .roll ⟨X, γ⟩ rest => by
-    refine congr_arg (PFunctor.FreeM.roll (P := Γ.toPFunctor) ⟨X, γ⟩) ?_
+  | .liftBind ⟨X, γ⟩ rest => by
+    refine congr_arg (PFunctor.FreeM.liftBind (P := Γ.toPFunctor) ⟨X, γ⟩) ?_
     funext x
     exact mk_shape_decoration (rest x)
 

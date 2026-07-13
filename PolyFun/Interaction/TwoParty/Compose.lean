@@ -515,13 +515,13 @@ theorem run_compFlat_appendFlat_pure
     match s₁, r₁ with
     | .done, r₁ =>
         cases r₁
-        simp [StrategyOver.TwoParty.Focal.compFlatPure,
-          StrategyOver.TwoParty.Counterpart.appendFlat.eq_1, run_done,
-          PFunctor.FreeM.Path.append_done]
+        simp [run_done, StrategyOver.TwoParty.Focal.compFlatPure,
+          StrategyOver.TwoParty.Counterpart.appendFlat.eq_1]
+        simp [Spec.done]
     | .node X rest, ⟨.sender, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.compFlatPure,
           StrategyOver.TwoParty.Counterpart.appendFlat,
-          PFunctor.FreeM.append_roll, PFunctor.FreeM.Displayed.Decoration.append_roll,
+          PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
           run, InteractionOver.runSpec, InteractionOver.TwoParty.pairedSpec,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
           participantOutputFamily, bind_assoc, pure_bind]
@@ -576,7 +576,7 @@ theorem run_compFlat_appendFlat_pure
     | .node X rest, ⟨.receiver, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.compFlatPure,
           StrategyOver.TwoParty.Counterpart.appendFlat,
-          PFunctor.FreeM.append_roll, PFunctor.FreeM.Displayed.Decoration.append_roll,
+          PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
           run, InteractionOver.runSpec, InteractionOver.TwoParty.pairedSpec,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
           participantOutputFamily, bind_assoc, pure_bind]
@@ -689,13 +689,13 @@ theorem run_compFlat_appendFlat
     match s₁, r₁ with
     | .done, r₁ =>
         cases r₁
-        simp [StrategyOver.TwoParty.Focal.compFlat.eq_1,
-          StrategyOver.TwoParty.Counterpart.appendFlat.eq_1, run_done,
-          PFunctor.FreeM.Path.append_done]
+        simp [run_done, StrategyOver.TwoParty.Focal.compFlat.eq_1,
+          StrategyOver.TwoParty.Counterpart.appendFlat.eq_1]
+        simp [Spec.done]
     | .node X rest, ⟨.sender, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.compFlat,
           StrategyOver.TwoParty.Counterpart.appendFlat,
-          PFunctor.FreeM.append_roll, PFunctor.FreeM.Displayed.Decoration.append_roll,
+          PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
           run, InteractionOver.runSpec, InteractionOver.TwoParty.pairedSpec,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
           participantOutputFamily, LawfulMonad.do_bind_assoc,
@@ -861,7 +861,7 @@ theorem run_compFlat_appendFlat
     | .node X rest, ⟨.receiver, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.compFlat,
           StrategyOver.TwoParty.Counterpart.appendFlat,
-          PFunctor.FreeM.append_roll, PFunctor.FreeM.Displayed.Decoration.append_roll,
+          PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
           run, InteractionOver.runSpec, InteractionOver.TwoParty.pairedSpec,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
           participantOutputFamily, LawfulMonad.do_bind_assoc,

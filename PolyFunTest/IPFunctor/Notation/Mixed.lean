@@ -49,16 +49,16 @@ instance : IPFunctor.DeterministicTransitions demoP where
   spec s a b := by cases s <;> rfl
 
 @[reducible] def flip : IPFunctor.FreeM demoP false Unit :=
-  IPFunctor.FreeM.liftA false ()
+  IPFunctor.FreeM.lift false ()
 
 @[reducible] def read : IPFunctor.FreeM demoP true Nat :=
-  IPFunctor.FreeM.liftA true ()
+  IPFunctor.FreeM.lift true ()
 
 def flip₂ : IPFunctor.FreeM₂ demoP false true Unit :=
-  IPFunctor.FreeM₂.roll () (fun _ => IPFunctor.FreeM₂.pure ())
+  IPFunctor.FreeM₂.liftBind () (fun _ => IPFunctor.FreeM₂.pure ())
 
 def read₂ : IPFunctor.FreeM₂ demoP true true Nat :=
-  IPFunctor.FreeM₂.roll () (fun n => IPFunctor.FreeM₂.pure n)
+  IPFunctor.FreeM₂.liftBind () (fun n => IPFunctor.FreeM₂.pure n)
 
 /-! ### Single-index `IPFunctor.FreeM` with the polymorphic-tail restriction. -/
 

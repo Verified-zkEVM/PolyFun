@@ -19,8 +19,8 @@ unfolds, parameterized by:
   budget `b`
 - `cost : P.A → B → B` — how the budget is updated after a `roll` at `a`
 
-The definition is structural via `FreeM.construct`: `pure` satisfies any bound,
-and `roll a r` satisfies the bound when `canRoll a b` holds and each
+The definition is structural via `FreeM.rec`: `pure` satisfies any bound,
+and `liftBind a r` satisfies the bound when `canRoll a b` holds and each
 continuation `r y` satisfies the bound at `cost a b`.
 
 `OracleComp.IsQueryBound` (in `VCVio/OracleComp/QueryTracking/QueryBound.lean`)
@@ -43,8 +43,7 @@ bound; `roll a r` satisfies the bound when `canRoll a b` holds and every
 continuation satisfies the bound at `cost a b`. -/
 def IsRollBound (oa : FreeM P α) (budget : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) : Prop :=
-  FreeM.construct
-    (C := fun _ => B → Prop)
+  FreeM.rec (motive := fun _ => B → Prop)
     (fun _ _ => True)
     (fun a _r ih b => canRoll a b ∧ ∀ y, ih y (cost a b))
     oa budget
@@ -55,28 +54,28 @@ lemma isRollBound_pure (x : α) (b : B)
     IsRollBound (pure x : FreeM P α) b canRoll cost := trivial
 
 @[simp, grind =]
-lemma isRollBound_roll_iff (a : P.A) (r : P.B a → FreeM P α) (b : B)
+lemma isRollBound_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) (b : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
-    IsRollBound (FreeM.roll a r) b canRoll cost ↔
+    IsRollBound ((FreeM.lift a).bind r) b canRoll cost ↔
       canRoll a b ∧ ∀ y, IsRollBound (r y) (cost a b) canRoll cost :=
   Iff.rfl
 
 @[grind =]
-lemma isRollBound_liftA_iff (a : P.A) (b : B)
+lemma isRollBound_lift_iff (a : P.A) (b : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
-    IsRollBound (FreeM.liftA a : FreeM P (P.B a)) b canRoll cost ↔ canRoll a b := by
-  simp [IsRollBound, FreeM.liftA, FreeM.lift]
+    IsRollBound (FreeM.lift a : FreeM P (P.B a)) b canRoll cost ↔ canRoll a b := by
+  simp [IsRollBound, lift, - liftBind_eq, ← pure_eq_pure]
 
 private lemma isRollBound_map_aux (oa : FreeM P α) (f : α → β)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
     ∀ {b : B}, (f <$> oa).IsRollBound b canRoll cost ↔
       oa.IsRollBound b canRoll cost := by
-  induction oa using FreeM.inductionOn with
+  induction oa with
   | pure x => intro b; exact ⟨fun _ => trivial, fun _ => trivial⟩
-  | roll a r ih =>
+  | lift_bind a r ih =>
     intro b
-    simp only [monad_norm, Function.comp_def, monad_bind_def, bind_roll]
-    rw [isRollBound_roll_iff, isRollBound_roll_iff]
+    rw [show (f <$> (lift a).bind r) = (lift a).bind (fun y => f <$> r y) from rfl,
+      isRollBound_lift_bind_iff, isRollBound_lift_bind_iff]
     exact and_congr_right fun _ => forall_congr' fun y => ih y
 
 @[simp, grind =]
@@ -101,13 +100,13 @@ private lemma isRollBound_congr_aux
     (hcan : ∀ (a : P.A) (b : B), canRoll₁ a b ↔ canRoll₂ a b)
     (hcost : ∀ (a : P.A) (b : B), cost₁ a b = cost₂ a b) :
     ∀ {b : B}, oa.IsRollBound b canRoll₁ cost₁ ↔ oa.IsRollBound b canRoll₂ cost₂ := by
-  induction oa using FreeM.inductionOn with
+  induction oa using FreeM.induction with
   | pure _ =>
       intro b
       simp
-  | roll a r ih =>
+  | lift_bind a r ih =>
       intro b
-      rw [isRollBound_roll_iff, isRollBound_roll_iff]
+      rw [isRollBound_lift_bind_iff, isRollBound_lift_bind_iff]
       constructor
       · intro h
         refine ⟨(hcan a b).1 h.1, fun y => ?_⟩
@@ -145,10 +144,10 @@ lemma IsRollBound.proj
     (h_cost : ∀ (a : P.A) (b' : B), canRoll a b' → proj (cost a b') = cost' a (proj b'))
     (h : IsRollBound oa b canRoll cost) :
     IsRollBound oa (proj b) canRoll' cost' := by
-  induction oa using FreeM.inductionOn generalizing b with
+  induction oa using FreeM.induction generalizing b with
   | pure x => simp
-  | roll a r ih =>
-      rw [isRollBound_roll_iff] at h ⊢
+  | lift_bind a r ih =>
+      rw [isRollBound_lift_bind_iff] at h ⊢
       refine ⟨h_can a b h.1, fun y => ?_⟩
       have hy : IsRollBound (r y) (proj (cost a b)) canRoll' cost' :=
         ih y (h.2 y)
@@ -174,17 +173,17 @@ lemma isRollBound_bind {oa : FreeM P α} {ob : α → FreeM P β}
     (h₁ : IsRollBound oa b₁ canRoll cost)
     (h₂ : ∀ x, IsRollBound (ob x) b₂ canRoll cost) :
     IsRollBound (oa >>= ob) (combine b₁ b₂) canRoll cost := by
-  induction oa using FreeM.inductionOn generalizing b₁ with
+  induction oa using FreeM.induction generalizing b₁ with
   | pure x =>
-      simp only [monad_bind_def, bind_pure]
+      simp only [monad_bind_def]
       exact IsRollBound.proj (combine b₁)
         (fun a b hcan => (h_can a b₁ b₂ b hcan).1)
         (fun a b hcan => (h_cost a b₁ b₂ b hcan).1)
         (h₂ x)
-  | roll a r ih =>
-      rw [isRollBound_roll_iff] at h₁
-      simp only [monad_bind_def, bind_roll]
-      rw [isRollBound_roll_iff]
+  | lift_bind a r ih =>
+      rw [isRollBound_lift_bind_iff] at h₁
+      simp only [monad_bind_def, liftBind_bind]
+      rw [isRollBound_lift_bind_iff]
       refine ⟨(h_can a b₁ b₂ b₁ h₁.1).2, fun y => ?_⟩
       have hrec := ih y (h₁.2 y)
       rw [(h_cost a b₁ b₂ b₁ h₁.1).2]
@@ -209,7 +208,7 @@ lemma isRollBound_seq {og : FreeM P (α → β)} {oa : FreeM P α}
 
 /-! ### Total roll bounds -/
 
-/-- A total roll bound: `oa` encounters at most `n` `FreeM.roll` constructors
+/-- A total roll bound: `oa` encounters at most `n` `FreeM.liftBind` constructors
 along every branch. Each roll consumes one unit of a natural-number budget,
 independently of its position. -/
 def IsTotalRollBound (oa : FreeM P α) (n : ℕ) : Prop :=
@@ -227,8 +226,8 @@ lemma isTotalRollBound_pure (x : α) (n : ℕ) :
     IsTotalRollBound (pure x : FreeM P α) n := trivial
 
 @[simp, grind =]
-lemma isTotalRollBound_roll_iff (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) :
-    IsTotalRollBound (FreeM.roll a r) n ↔
+lemma isTotalRollBound_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) :
+    IsTotalRollBound ((FreeM.lift a).bind r) n ↔
       0 < n ∧ ∀ y, IsTotalRollBound (r y) (n - 1) :=
   Iff.rfl
 
@@ -236,10 +235,10 @@ lemma isTotalRollBound_roll_iff (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) :
 lemma IsTotalRollBound.mono {oa : FreeM P α} {n₁ n₂ : ℕ}
     (h : IsTotalRollBound oa n₁) (hle : n₁ ≤ n₂) :
     IsTotalRollBound oa n₂ := by
-  induction oa using FreeM.inductionOn generalizing n₁ n₂ with
+  induction oa using FreeM.induction generalizing n₁ n₂ with
   | pure _ => simp
-  | roll a r ih =>
-      rw [isTotalRollBound_roll_iff] at h ⊢
+  | lift_bind a r ih =>
+      rw [isTotalRollBound_lift_bind_iff] at h ⊢
       exact ⟨Nat.lt_of_lt_of_le h.1 hle,
         fun y => ih y (h.2 y) (Nat.sub_le_sub_right hle 1)⟩
 

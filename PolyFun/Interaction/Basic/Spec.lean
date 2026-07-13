@@ -150,12 +150,12 @@ def done : Spec := PFunctor.FreeM.pure PUnit.unit
 /-- A round of interaction: a value of type `Moves` is exchanged, then
 the protocol continues with `rest x` depending on the chosen move `x`.
 
-This is `PFunctor.FreeM.roll Moves rest` at the polynomial substrate;
+This is `PFunctor.FreeM.liftBind Moves rest` at the polynomial substrate;
 the `@[match_pattern]` attribute makes it usable both as a constructor
 term and as a `match` pattern. -/
 @[match_pattern, reducible]
 def node (Moves : Type u) (rest : Moves → Spec) : Spec :=
-  PFunctor.FreeM.roll Moves rest
+  PFunctor.FreeM.liftBind Moves rest
 
 /-- Cases eliminator on `Spec` exposing the high-level `done` / `node`
 alternatives. Registered as the default `cases` eliminator so that

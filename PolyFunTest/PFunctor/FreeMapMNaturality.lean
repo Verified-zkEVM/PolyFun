@@ -10,10 +10,11 @@ public import PolyFun.PFunctor.Free.Basic
 /-!
 # Examples: universal property and naturality of the free-monad fold
 
-Regression tests for the universal property and naturality of `FreeM.mapM` along a monad morphism:
-`mapMHom_unique`, `mapM_natural`, `mapMHom_comp`, `run_mapM_mapHom`, `mapM_liftA_eq_self`,
-`mapMHom_liftA`, and `StateT.mapHom`. These are the upstream shape of the fold-naturality bridges
-that VCVio's `simulateQ` / `evalDist` layer instantiates at `φ := evalDist`.
+Regression tests for the universal property and naturality of `FreeM.liftM` along a monad morphism:
+`liftMHom_unique`, `liftM_natural`, `liftMHom_comp`, `run_liftM_mapHom`, `liftM_lift_eq_self`,
+`liftMHom_lift_eq_id`, and `StateT.mapHom`. These are the upstream shape of the
+fold-naturality bridges that VCVio's `simulateQ` / `evalDist` layer instantiates at
+`φ := evalDist`.
 -/
 
 @[expose] public section
@@ -29,39 +30,39 @@ variable {m n : Type → Type} [Monad m] [LawfulMonad m] [Monad n] [LawfulMonad 
 
 /-- **Naturality** of the fold along a monad morphism applies. -/
 example (s : (a : P.A) → m (P.B a)) (φ : m →ᵐ n) {α : Type} (x : FreeM P α) :
-    φ (FreeM.mapM s x) = FreeM.mapM (fun a => φ (s a)) x :=
-  FreeM.mapM_natural s φ x
+    φ (FreeM.liftM s x) = FreeM.liftM (fun a => φ (s a)) x :=
+  FreeM.liftM_natural s φ x
 
-/-- **Bundled naturality**: `φ ∘ₘ mapMHom s = mapMHom (φ ∘ s)`. -/
+/-- **Bundled naturality**: `φ ∘ₘ liftMHom s = liftMHom (φ ∘ s)`. -/
 example (s : (a : P.A) → m (P.B a)) (φ : m →ᵐ n) :
-    φ ∘ₘ FreeM.mapMHom s = FreeM.mapMHom (fun a => φ (s a)) :=
-  FreeM.mapMHom_comp s φ
+    φ ∘ₘ FreeM.liftMHom s = FreeM.liftMHom (fun a => φ (s a)) :=
+  FreeM.liftMHom_comp s φ
 
 /-- **Universal property**: a monad hom out of `FreeM P` agreeing with `s` on generators is
-`mapMHom s`. -/
-example (s : (a : P.A) → m (P.B a)) (F : FreeM P →ᵐ m) (h : ∀ a, F (FreeM.liftA a) = s a) :
-    F = FreeM.mapMHom s :=
-  FreeM.mapMHom_unique s F h
+`liftMHom s`. -/
+example (s : (a : P.A) → m (P.B a)) (F : FreeM P →ᵐ m) (h : ∀ a, F (FreeM.lift a) = s a) :
+    F = FreeM.liftMHom s :=
+  FreeM.liftMHom_unique s F h
 
 /-- The identity handler folds to the identity homomorphism. -/
-example : FreeM.mapMHom (m := FreeM P) FreeM.liftA = MonadHom.id (FreeM P) :=
-  FreeM.mapMHom_liftA
+example : FreeM.liftMHom (m := FreeM P) FreeM.lift = MonadHom.id (FreeM P) :=
+  FreeM.liftMHom_lift_eq_id
 
 /-- The identity handler folds any tree to itself. -/
-example {α : Type} (x : FreeM P α) : FreeM.mapM FreeM.liftA x = x :=
-  FreeM.mapM_liftA_eq_self x
+example {α : Type} (x : FreeM P α) : FreeM.liftM FreeM.lift x = x :=
+  FreeM.liftM_lift_eq_self x
 
 /-- **Stateful naturality**: `φ` pushed through a `StateT`-threaded fold. -/
 example (φ : m →ᵐ n) {σ α : Type} (impl : (a : P.A) → StateT σ m (P.B a))
     (x : FreeM P α) (s : σ) :
-    (FreeM.mapM (fun a => StateT.mapHom φ (impl a)) x).run s = φ ((FreeM.mapM impl x).run s) :=
-  FreeM.run_mapM_mapHom φ impl x s
+    (FreeM.liftM (fun a => StateT.mapHom φ (impl a)) x).run s = φ ((FreeM.liftM impl x).run s) :=
+  FreeM.run_liftM_mapHom φ impl x s
 
 /-- A concrete push-through: lifting `Id → Option` commutes with the fold — the shape a semantic
 monad morphism (e.g. an evaluation-distribution map) instantiates. -/
 example (s : (a : P.A) → Id (P.B a)) (x : FreeM P Bool) :
-    MonadHom.ofLift Id Option (FreeM.mapM s x)
-      = FreeM.mapM (fun a => MonadHom.ofLift Id Option (s a)) x :=
-  FreeM.mapM_natural s (MonadHom.ofLift Id Option) x
+    MonadHom.ofLift Id Option (FreeM.liftM s x)
+      = FreeM.liftM (fun a => MonadHom.ofLift Id Option (s a)) x :=
+  FreeM.liftM_natural s (MonadHom.ofLift Id Option) x
 
 end PolyFunTest.FreeMapM

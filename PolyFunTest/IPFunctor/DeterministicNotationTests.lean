@@ -42,14 +42,14 @@ instance instDemoP : IPFunctor.DeterministicTransitions demoP where
   next _ _ := true
   spec s a b := by cases s <;> rfl
 
-/-- `flip` written as `liftA false ()` and marked `@[reducible]` so the
+/-- `flip` written as `lift false ()` and marked `@[reducible]` so the
 elaborator can see through it. -/
 @[reducible] def flip : IPFunctor.FreeM demoP false Unit :=
-  IPFunctor.FreeM.liftA false ()
+  IPFunctor.FreeM.lift false ()
 
-/-- `read` written as `liftA true ()` and marked `@[reducible]`. -/
+/-- `read` written as `lift true ()` and marked `@[reducible]`. -/
 @[reducible] def read : IPFunctor.FreeM demoP true Nat :=
-  IPFunctor.FreeM.liftA true ()
+  IPFunctor.FreeM.lift true ()
 
 /-! ### Positive tests — long chains now compose. -/
 
@@ -101,10 +101,10 @@ instance instDemoQ : IPFunctor.DeterministicTransitions demoQ where
   next _ _ := PUnit.unit
   spec _ _ _ := rfl
 
-/-- A `liftA`-style step at the unit state. -/
+/-- A `lift`-style step at the unit state. -/
 @[reducible] def stepQ (b : Bool) :
     IPFunctor.FreeM demoQ PUnit.unit Nat :=
-  IPFunctor.FreeM.liftA PUnit.unit b
+  IPFunctor.FreeM.lift PUnit.unit b
 
 /-- A two-step `do`-tree on `FreeM demoQ`, using the deterministic elaborator. -/
 def twoStepDet : IPFunctor.FreeM demoQ PUnit.unit Nat := do
@@ -114,8 +114,8 @@ def twoStepDet : IPFunctor.FreeM demoQ PUnit.unit Nat := do
 
 example :
     IPFunctor.FreeM.erase demoQ PUnit.unit twoStepDet
-    = PFunctor.FreeM.roll (P := demoQ.toPFunctor) true (fun n : Nat =>
-        PFunctor.FreeM.roll false (fun m : Nat =>
+    = PFunctor.FreeM.liftBind (P := demoQ.toPFunctor) true (fun n : Nat =>
+        PFunctor.FreeM.liftBind false (fun m : Nat =>
           PFunctor.FreeM.pure (n + m))) := by
   rfl
 

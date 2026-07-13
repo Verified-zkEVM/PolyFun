@@ -214,7 +214,8 @@ variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n]
 
 /-- `StateT σ` is functorial on monad morphisms: a monad morphism `φ : m →ᵐ n` lifts to a monad
 morphism `StateT σ m →ᵐ StateT σ n`, acting on the underlying state-run and threading the state
-unchanged. This transports the naturality of a fold (e.g. `FreeM.mapM_natural`) through a *stateful*
+unchanged. This transports the naturality of a fold (for example,
+`FreeM.liftM_natural`) through a *stateful*
 handler — the form a `StateT`-threaded semantic morphism (such as an evaluation-distribution map)
 needs. -/
 def mapHom (φ : m →ᵐ n) : StateT σ m →ᵐ StateT σ n where
