@@ -34,7 +34,7 @@ enough of that category to model:
 References:
 [`REFERENCES.md`](../../REFERENCES.md). Hancock-Setzer 2000,
 Altenkirch-Ghani-Hancock-McBride-Morris 2015 (*Indexed Containers*),
-Spivak-Niu 2024 (*Polynomial Functors: A General Theory of Interaction*),
+Spivak-Niu 2024 (*Polynomial Functors: A Mathematical Theory of Interaction*),
 McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 
 ## File index
@@ -55,16 +55,16 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/Lens/Basic.lean`](../../PolyFun/PFunctor/Lens/Basic.lean) | Properties of `Lens P Q`: extensionality, composition lemmas, action on `Obj`. |
 | [`PolyFun/PFunctor/Lens/Cartesian.lean`](../../PolyFun/PFunctor/Lens/Cartesian.lean) | Cartesian lenses (`toFunB a` is a bijection); fiberwise isomorphisms over a forward position map. |
 | [`PolyFun/PFunctor/Lens/State.lean`](../../PolyFun/PFunctor/Lens/State.lean) | Lawful state-lens specialization for the self-monomial polynomial (`get`, `put`, `PutGet` / `GetPut` / `PutPut`). |
-| [`PolyFun/PFunctor/Lens/Composite.lean`](../../PolyFun/PFunctor/Lens/Composite.lean) | Lenses into a composite `q ◃ r`: the `CompTriple` destructor `Lens p (q ◃ r) ≃ (φ^q, φ^r, φ♯)` (Ex 6.40) via `toCompTriple` / `ofCompTriple`; `Lens.compNthMap` (φ^◁n) with its `zero` / `succ` / `id` laws. |
-| [`PolyFun/PFunctor/Lens/Distributivity.lean`](../../PolyFun/PFunctor/Lens/Distributivity.lean) | Left-distributivity of `◃`: `prodCompDistrib` (6.49) and `scalarCompDistrib` (Ex 6.55) lens equivalences, `homMonomialEquiv` (6.65) `Lens (monomial A B) p ≃ (A → p.Obj B)`, and the Ex 6.56 right-distributivity failure. Reuses object-level `sumCompDistrib` / `sigmaCompDistrib`. |
-| [`PolyFun/PFunctor/Lens/Factorization.lean`](../../PolyFun/PFunctor/Lens/Factorization.lean) | Vertical–cartesian factorization (Prop 5.52/5.53): `IsVertical`, `factorMid` / `factorVert` / `factorCart` with `factorCart_comp_factorVert = l`; closure of `IsVertical` / `IsCartesian` under `+` / `×` / `⊗`; `equivOfVerticalCartesian` (the intersection is an iso). |
-| [`PolyFun/PFunctor/Lens/Duoidal.lean`](../../PolyFun/PFunctor/Lens/Duoidal.lean) | The `⊗ → ◃` ordering lens `orderingLens` (Ex 6.85, cartesian) and the duoidal interchange lens `duoidalLens` (6.86); the Ex 6.84 catalogue of `⊗`/`◃` coincidences as `≃ₗ` formers (reference API). |
+| [`PolyFun/PFunctor/Lens/Composite.lean`](../../PolyFun/PFunctor/Lens/Composite.lean) | Direct `Lens.compOuter` / `compInner` / `compPullback` views of a lens into `q ◃ r` (Ex 6.40), plus `Lens.compNthMap` (φ^◁n) and its `zero` / `succ` / `id` laws. |
+| [`PolyFun/PFunctor/Lens/Distributivity.lean`](../../PolyFun/PFunctor/Lens/Distributivity.lean) | Left-distributivity of `◃`: Π-indexed `piCompDistrib` (6.51), `prodCompDistrib` (6.49), `scalarCompDistrib` (Ex 6.55), `homMonomialEquiv` (6.65), and the Ex 6.56 right-distributivity failure. |
+| [`PolyFun/PFunctor/Lens/Factorization.lean`](../../PolyFun/PFunctor/Lens/Factorization.lean) | Vertical–cartesian factorization (Prop 5.52/5.53), closure under polynomial operations, `equivOfVerticalCartesian`, and vertical-left/cartesian-right orthogonality through the unique `DiagonalFiller`. |
+| [`PolyFun/PFunctor/Lens/Duoidal.lean`](../../PolyFun/PFunctor/Lens/Duoidal.lean) | `orderingLens` and `duoidalLens` with cartesianness, naturality, middle-four compatibility, and unit laws; the Ex 6.84 catalogue of `⊗`/`◃` coincidences. |
 | [`PolyFun/PFunctor/Chart/Basic.lean`](../../PolyFun/PFunctor/Chart/Basic.lean) | Charts (forward map on both positions and directions). Chart category is isomorphic to `Set^→` and has a different monoidal structure from the lens category. |
 | [`PolyFun/PFunctor/Category.lean`](../../PolyFun/PFunctor/Category.lean) | Category-theoretic packaging where applicable. |
 | [`PolyFun/PFunctor/InternalHom.lean`](../../PolyFun/PFunctor/InternalHom.lean) | The `⊗`-internal hom `ihom q r` = `[q, r]` (Ex 4.78; positions are lenses `q ⇆ r`), the evaluation lens `Lens.eval`, and the tensor–hom adjunction `curry` / `uncurry` / `curryEquiv : Lens (p ⊗ q) r ≃ Lens p (ihom q r)`; `ihomSum`, `ihomX`. |
 | [`PolyFun/PFunctor/CartesianClosed.lean`](../../PolyFun/PFunctor/CartesianClosed.lean) | Cartesian-closed structure w.r.t. the categorical product `*`: the exponential `exp`'s `CartesianClosed.eval` / `curry` / `uncurry` (Thm 5.31). Reference API — the load-bearing `⊗`-transposes are in `InternalHom.lean`. |
-| [`PolyFun/PFunctor/Adjunctions.lean`](../../PolyFun/PFunctor/Adjunctions.lean) | Trivial-interface hom-set equivalences (Thm 5.4 family): `homFromZero` / `homToOne` / `homFromX` / `homToConst` / `homToLinear`. Reference API. |
-| [`PolyFun/PFunctor/Comonoid.lean`](../../PolyFun/PFunctor/Comonoid.lean) | Comonoids in `(Poly, ◃, y)` (= small categories, Def 7.14): `Comonoid` structure with counit/comult and the lens laws; the state comonoid `stateComonoid S` on `Sy^S`; `IsStateSystem` (Ex 7.22); the `n`-fold comultiplication `comultN` = `δ^{(n)}` (Prop 7.20). |
+| [`PolyFun/PFunctor/Adjunctions.lean`](../../PolyFun/PFunctor/Adjunctions.lean) | Trivial-interface hom-set equivalences plus binary tensor gluing (Prop 5.49): direct one-sided lens views, `tensorGlue`, its β laws, and `tensorGlueEquiv` over compatible ordinary lenses. |
+| [`PolyFun/PFunctor/Comonoid.lean`](../../PolyFun/PFunctor/Comonoid.lean) | Comonoids in `(Poly, ◃, y)`, state comonoids, `IsStateSystem`, and `comultN`; `Comonoid.Hom` packages retrofunctors and supplies the `Category Comonoid` (`Cat♯`). |
 
 ### Dynamical systems (Spivak–Niu Ch. 4)
 
@@ -76,21 +76,32 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/Dynamical/Run.lean`](../../PolyFun/PFunctor/Dynamical/Run.lean) | Generic orbits: `DynSystem.Prefix` / `DynSystem.Run` (with `take`, `event(s)`/`ticket(s)`, `Prefix.last`, `RelUpTo` / `Rel`); `DynSystem.ReachableIn` (`n`-step reachability via `Prefix`); Moore finite runs `run`, `trace`, `outputOn`, `DeterministicAutomaton.accepts`; input streams `stateStream` / `outputStream` with `stateStream_eq_run`; `streamRun` / `iterateRun` identifying them with generic runs. |
 | [`PolyFun/PFunctor/Dynamical/Trajectory.lean`](../../PolyFun/PFunctor/Dynamical/Trajectory.lean) | Infinite behaviour: terminal-coalgebra `behavior : S → M p` with `behavior_unique` and `ObsEq`; cofree `trajectory : DynSystem S p → S → CofreeC p p.A` with `trajectory_eq_selfLabel_behavior`; closed-system spine `CofreeC.next`, `next_iterate_trajectory`. |
 | [`PolyFun/PFunctor/Dynamical/Behavior.lean`](../../PolyFun/PFunctor/Dynamical/Behavior.lean) | Closed-loop behaviour of a Moore machine: `feedbackStep`, `feedbackStream`, `next_iterate_feedback`. |
-| [`PolyFun/PFunctor/Handler.lean`](../../PolyFun/PFunctor/Handler.lean) | `Handler m p`: a monadic choice of direction at every position of `p`; the generic interface consumed by `FreeM.mapM`. |
-| [`PolyFun/PFunctor/Dynamical/IOMachine.lean`](../../PolyFun/PFunctor/Dynamical/IOMachine.lean) | `IOMachine`, extending `Machine` with `init` and partial `output`; `seqComp` (⊕-state sequential composition, Ex 6.41); query-exact `toComp` with a total structural roll bound; `ResolvesIn` certificates with an exact all-`some`-leaves characterization and additive composition; monad-parametric `runWith` = `mapM ∘ toComp`, fuel irrelevance after resolution, and the fuel-exact `runWith_seqComp_init` bind law. |
-| [`PolyFun/PFunctor/Dynamical/RunN.lean`](../../PolyFun/PFunctor/Dynamical/RunN.lean) | `DynSystem.twoStep` (Ex 6.44) and `DynSystem.nStep` = `Run_n(φ) = δ^{(n)} ⨟ φ^{◁n}` (§7.1.5) over `compNth p n`; `twoStep_toLens_eq` identifies the `n = 2` specialization after the inner unitor. The transition lens itself is `Lens.fixState`. |
+| [`PolyFun/PFunctor/Handler.lean`](../../PolyFun/PFunctor/Handler.lean) | `Handler m p`: a monadic choice of direction at every position of `p`; the generic interface consumed by `FreeM.liftM`. |
+| [`PolyFun/PFunctor/Dynamical/IOMachine.lean`](../../PolyFun/PFunctor/Dynamical/IOMachine.lean) | `IOMachine`, extending the minimal `Machine` substrate with `init` and partial `output`; variance/wrapping laws, chosen-position `pureAt`, state-level `toComp`, input-level `run`, and interpreted `runWithInput`; `seqComp` has syntactic/semantic identity laws and the fuel-exact Kleisli composition theorem. Its dynamics are uniformly available as `.toMachine.behavior`. |
+| [`PolyFun/PFunctor/Dynamical/RunN.lean`](../../PolyFun/PFunctor/Dynamical/RunN.lean) | `DynSystem.twoStep` (Ex 6.44) and `DynSystem.nStep` = `Run_n(φ) = δ^{(n)} ⨟ φ^{◁n}` (§7.1.5) over `compNth p n`; `nStep_two_eq_twoStep` identifies the `n = 2` specialization after the inner unitor. The transition lens itself is `Lens.fixState`. |
 | [`PolyFun/PFunctor/Dynamical/Simulation.lean`](../../PolyFun/PFunctor/Dynamical/Simulation.lean) | `DynSystem.IsSimulation` (step-synchronized relation) with `behavior_eq_of_isSimulation` — related states have equal `behavior`, via `M.corec_eq_corec`; `isSimulation_graph` / `behavior_coalgHom` — coalgebra morphisms are the functional simulations. |
 | [`PolyFun/PFunctor/Dynamical/Refinement.lean`](../../PolyFun/PFunctor/Dynamical/Refinement.lean) | Operational `DynSystem.ForwardSimulation` between bare systems, with `mapRun` and its transport lemmas; `SafetyRefinement` extends it with initial-state coverage, assumption preservation, and safety reflection; `ReverseSafetyRefinement` / `MutualSafetyRefinement` package one- and two-way safety refinement; `ForwardSimulation.ofIsSimulation` embeds `IsSimulation` at `StepRel.sync`. Instantiated by the concurrent refinement layers. |
 | [`PolyFun/PFunctor/Dynamical/Responder.lean`](../../PolyFun/PFunctor/Dynamical/Responder.lean) | `Responder S q := DynSystem S (q ⊸ X)`: state systems whose positions are committed answer-sections (`committed` / `answer` / `next`); the Kleisli–Mealy `equivStateHandler : Responder S q ≃ Handler (StateT S Id) q` with `rfl` round-trips. |
 | [`PolyFun/PFunctor/Dynamical/Game.lean`](../../PolyFun/PFunctor/Dynamical/Game.lean) | Game wiring: `DynSystem.game := wire₂ (Lens.eval q r)` and its autonomous `closedGame`, `game_eq_uncurry` (the adjunction reading); monadic runs `kleisliStep` / `kleisliIterate` / `stepWith` / `iterWith`; two-phase `Lens.eval₂` / `orderPair` / `game₂` (Eq 6.86 / Ex 6.85). |
+| [`PolyFun/PFunctor/Dynamical/Bisimulation.lean`](../../PolyFun/PFunctor/Dynamical/Bisimulation.lean) | `DynSystem.toLTS` exhibits a `p`-system as a labelled transition system; `isStrongSimulation_toLTS_iff_isSimulation` identifies generic strong simulation with the native synchronized notion, and `obsEq_of_isStrongSimulation` derives behaviour-tree equality through finality. See [`bisimulation.md`](bisimulation.md). |
 | [`PolyFun/ITree/Unfold.lean`](../../PolyFun/ITree/Unfold.lean) | `DynSystem.toITree`: unfold a dynamical system into an all-query interaction tree; `M.toITree` embeds behaviour trees. |
 | [`PolyFunTest/PFunctor/Dynamical/Examples.lean`](../../PolyFunTest/PFunctor/Dynamical/Examples.lean) | Worked examples / regression tests (counter, parity automaton, mode-dependent `gate`, feedback / stream behaviour, the `univ`-system `toggle`, generic runs, `choiceProd`, behaviour / ITree unfolding). |
 
 ### Free monad `FreeM`
 
+`PFunctor.FreeM` is **re-exported from upstream cslib**
+(`Cslib.Foundations.Data.PFunctor.Free`, originally ported from VCV-io). cslib
+supplies the inductive type (constructors `pure` / `liftBind`), the `bind` / `map`
+/ `Monad` / `LawfulMonad` / `MonadLift` instances, the `@[induction_eliminator]
+induction` principle (non-pure case `lift_bind`), the shape lift `lift : P.A →
+FreeM (P.B a)` and object lift `liftObj : P.Obj α → FreeM α`, and the `liftM`
+interpreter with its `Interprets` universal property. PolyFun layers its own API
+(`mapLens`, `liftM` monad-hom and naturality lemmas, `toW` / `equivWOfIsEmpty`, paths,
+displayed families, roll bounds) on top of the upstream type.
+
 | File | Purpose |
 |------|---------|
-| [`PolyFun/PFunctor/Free/Basic.lean`](../../PolyFun/PFunctor/Free/Basic.lean) | `FreeM P α` (`pure` / `roll`), `lift`, `liftPos`, `bind`, `Monad` and `LawfulMonad` instances, eliminator combinators. |
+| [`PolyFun/PFunctor/Free/Basic.lean`](../../PolyFun/PFunctor/Free/Basic.lean) | Re-exports cslib's `FreeM P α` (`pure` / `liftBind`) and canonical `liftM` evaluator; adds `mapLens`, `liftMHom` naturality, and `toW` / `ofW` / `equivWOfIsEmpty`. |
 | [`PolyFun/PFunctor/Free/Path.lean`](../../PolyFun/PFunctor/Free/Path.lean) | `FreeM.Path s` (explicit polynomial direction at every node), `PathAlong`, `output`, `append`, `TelescopeWith` (state-indexed initial algebra). |
 | [`PolyFun/PFunctor/Free/Displayed.lean`](../../PolyFun/PFunctor/Free/Displayed.lean) | `FreeM.Displayed D s` (displayed family over a tree), `Displayed.Section` (displayed catamorphism). The substrate behind decorations, paths, and compact observations. |
 | [`PolyFun/PFunctor/Free/Displayed/Decoration.lean`](../../PolyFun/PFunctor/Free/Displayed/Decoration.lean) | `Decoration Γ s`: every node carries one `Γ a` and recursively decorates children. |
@@ -117,9 +128,10 @@ provides the reusable monad / comonad / coalgebra plumbing. See
   every interesting structure in PolyFun is built by combining a few of
   these via `+` / `*` / `⊗` / `Σ` / `Π` / composition, or by taking the
   free monad / cofree comonad / lens / chart of one.
-- `FreeM P` is the free monad on `P`. Operationally it is the inductive
-  type of well-founded `P`-branching trees with `α`-leaves. It is the
-  syntax of "programs" in the signature `P`.
+- `FreeM P` is the free monad on `P` (the upstream cslib type). Operationally
+  it is the inductive type of well-founded `P`-branching trees with `α`-leaves,
+  built from a `pure` leaf and a combined `liftBind` step. It is the syntax of
+  "programs" in the signature `P`.
 - `CofreeC P` is the cofree comonad on `P`. Coinductively, it is the
   type of infinite, fully-decorated `P`-trees. `FreeM` and `CofreeC` carry
   the pattern-runs-on-matter *module structure* of Libkind–Spivak (a module

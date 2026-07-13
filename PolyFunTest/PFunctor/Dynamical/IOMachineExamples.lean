@@ -22,60 +22,174 @@ universe u v w
 
 namespace PFunctor
 
+open DynSystem
+
 variable {S : Type u} {p : PFunctor.{u, u}} {α β γ mid mid₁ mid₂ : Type u}
+
+/-- Path append specializes directly to free-monad bind when the suffix reads
+only the selected leaf output. -/
+example (s : FreeM p α) (k : α → FreeM p β) :
+    FreeM.append s (fun path => k (FreeM.output s path)) = s >>= k := by
+  simp
 
 /-- The two-step system shares its state set with the original, as recorded by
 its type: it is literally `Lens.speedup` on the system's lens. -/
 example (s : DynSystem S p) : s.twoStep = Lens.speedup s := rfl
 
 /-- The `⨟` notation is diagrammatic sequential composition. -/
-example (M₁ : DynSystem.IOMachine p α mid) (M₂ : DynSystem.IOMachine p mid β) :
+example (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β) :
     M₁ ⨟ M₂ = M₁.seqComp M₂ := rfl
 
 /-- Sequential composition has state `M₁.State ⊕ M₂.State`. -/
-example (M₁ : DynSystem.IOMachine p α mid) (M₂ : DynSystem.IOMachine p mid β) :
+example (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β) :
     (M₁ ⨟ M₂).State = (M₁.State ⊕ M₂.State) := rfl
 
 /-- Chained `⨟` notation parses to the left, fixing the corresponding nested sum state. -/
-example (M₁ : DynSystem.IOMachine p α mid₁) (M₂ : DynSystem.IOMachine p mid₁ mid₂)
-    (M₃ : DynSystem.IOMachine p mid₂ γ) : M₁ ⨟ M₂ ⨟ M₃ = (M₁ ⨟ M₂) ⨟ M₃ := rfl
+example (M₁ : IOMachine p α mid₁) (M₂ : IOMachine p mid₁ mid₂)
+    (M₃ : IOMachine p mid₂ γ) : M₁ ⨟ M₂ ⨟ M₃ = (M₁ ⨟ M₂) ⨟ M₃ := rfl
 
-example (M₁ : DynSystem.IOMachine p α mid₁) (M₂ : DynSystem.IOMachine p mid₁ mid₂)
-    (M₃ : DynSystem.IOMachine p mid₂ γ) :
+example (M₁ : IOMachine p α mid₁) (M₂ : IOMachine p mid₁ mid₂)
+    (M₃ : IOMachine p mid₂ γ) :
     (M₁ ⨟ M₂ ⨟ M₃).State = ((M₁.State ⊕ M₂.State) ⊕ M₃.State) := rfl
 
 /-- The second phase of `seqComp` unrolls exactly like `M₂`. -/
-example (M₁ : DynSystem.IOMachine p α mid) (M₂ : DynSystem.IOMachine p mid β) (s₂ : M₂.State) :
+example (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β) (s₂ : M₂.State) :
     (M₁ ⨟ M₂).toComp 3 (Sum.inr s₂) = M₂.toComp 3 s₂ :=
-  DynSystem.IOMachine.toComp_seqComp_inr M₁ M₂ 3 s₂
+  IOMachine.toComp_seqComp_inr M₁ M₂ 3 s₂
 
 /-- The first phase exposes `M₁` and hands off to `M₂` exactly on `M₁`'s output. -/
-example (M₁ : DynSystem.IOMachine p α mid) (M₂ : DynSystem.IOMachine p mid β) (s₁ : M₁.State) :
+example (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β) (s₁ : M₁.State) :
     (M₁ ⨟ M₂).toComp 1 (Sum.inl s₁)
-      = FreeM.roll (M₁.toMachine.behavior.expose s₁) (fun d =>
-          (M₁ ⨟ M₂).toComp 0
-            (match M₁.output (M₁.toMachine.behavior.update s₁ d) with
+      = FreeM.liftBind (M₁.toMachine.behavior.expose s₁) (fun d =>
+          (M₁ ⨟ M₂).toComp 0 (match M₁.output (M₁.toMachine.behavior.update s₁ d) with
             | some m => Sum.inr (M₂.init m)
             | none => Sum.inl (M₁.toMachine.behavior.update s₁ d))) :=
-  DynSystem.IOMachine.toComp_seqComp_inl M₁ M₂ 0 s₁
+  IOMachine.toComp_seqComp_inl M₁ M₂ 0 s₁
 
 /-- A machine that halts immediately with output `b`. -/
-def haltMachine (b : β) : DynSystem.IOMachine X.{u, u} α β where
+def haltMachine (b : β) : IOMachine X.{u, u} α β where
   State := PUnit
-  behavior := (fun _ => PUnit.unit) ⇆ (fun _ _ => PUnit.unit)
+  behavior := (fun _ => PUnit.unit) ⇆ fun _ _ => PUnit.unit
   init := fun _ => PUnit.unit
   output := fun _ => some b
 
 /-- A machine that makes exactly one query before returning `b`. -/
-def oneQueryMachine (b : β) : DynSystem.IOMachine X.{u, u} α β where
+def oneQueryMachine (b : β) : IOMachine X.{u, u} α β where
   State := Bool
-  behavior := (fun _ => PUnit.unit) ⇆ (fun _ _ => true)
+  behavior := (fun _ => PUnit.unit) ⇆ fun _ _ => true
   init := fun _ => false
   output := fun
     | false => none
     | true => some b
 
-/-! ## Collatz as an input/output machine -/
+/-! ## Chosen-position pure machines and variance laws -/
+
+/-- The clock interface has its canonical point, but the generic constructor
+still records that choice explicitly. -/
+def clockPoint : Point X.{u, u} := Lens.id X
+
+/-- A pure machine is resolved before making any query. -/
+example (f : α → β) (x : α) :
+    (IOMachine.pureAt clockPoint f).run 0 x = FreeM.pure (some (f x)) := by
+  simp
+
+example (f : α → β) (x : α) :
+    (IOMachine.pureAt clockPoint f).ResolvesIn 0
+      ((IOMachine.pureAt clockPoint f).init x) := by
+  simp [IOMachine.ResolvesIn]
+
+/-- Input and output variance obey their identity and composition laws as
+machine equalities because they retain the same carrier. -/
+example (M : IOMachine p α β) : M.contramapInput id = M := by simp
+
+example (M : IOMachine p α β) (f : γ → α) (g : mid → γ) :
+    (M.contramapInput f).contramapInput g = M.contramapInput (f ∘ g) := by simp
+
+example (M : IOMachine p α β) : M.mapOutput id = M := by simp
+
+example (M : IOMachine p α β) (f : β → γ) (g : γ → mid) :
+    (M.mapOutput f).mapOutput g = M.mapOutput (g ∘ f) := by simp
+
+example (M : IOMachine p α β) : M.dimap id id = M := by simp
+
+example (M : IOMachine p α β) (f₁ : γ → α) (g₁ : β → mid₁)
+    (f₂ : mid₂ → γ) (g₂ : mid₁ → mid) :
+    (M.dimap f₁ g₁).dimap f₂ g₂ = M.dimap (f₁ ∘ f₂) (g₂ ∘ g₁) := by
+  simp
+
+example (M : IOMachine p α β) : M.wrap (Lens.id p) = M := by simp
+
+example (M : IOMachine p α β) (w₁ w₂ : Lens p p) :
+    (M.wrap w₁).wrap w₂ = M.wrap (w₁ ⨟ w₂) := by simp
+
+example (M : IOMachine p α β) (f : γ → α) :
+    (M.contramapInput f).State = M.State := by simp
+
+/-- Re-lifting every query into the free monad is the syntactic execution. -/
+example (M : IOMachine p α β) (k : ℕ) (x : α) :
+    M.runWithInput (m := FreeM p) FreeM.lift k x = M.run k x := by
+  simp
+
+/-- Pure machines are semantic identities for sequencing. They are not
+structural identities because sequential composition deliberately has a sum
+carrier. -/
+example (f : α → mid) (M : IOMachine X mid β) (k : ℕ) (x : α) :
+    ((IOMachine.pureAt clockPoint f) ⨟ M).run k x = M.run k (f x) := by
+  simp
+
+example (M : IOMachine X α β) (k : ℕ) (x : α) :
+    (M ⨟ IOMachine.pureAt clockPoint id).run k x = M.run k x := by
+  simp
+
+/-- The input-packaged run theorem exposes the fuel-exact Kleisli equation
+without making clients repeat `init` at every occurrence. -/
+example {m : Type u → Type v} [Monad m] [LawfulMonad m]
+    (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β)
+    (h : Handler m p) {k₁ : ℕ} (k₂ : ℕ) (x : α)
+    (hres₁ : M₁.ResolvesIn k₁ (M₁.init x))
+    (hres₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y)) :
+    (M₁ ⨟ M₂).runWithInput h (k₁ + k₂) x =
+      M₁.runWithInput h k₁ x >>= fun r => match r with
+        | some y => M₂.runWithInput h k₂ y
+        | none => pure none :=
+  IOMachine.runWithInput_seqComp M₁ M₂ h k₂ x hres₁ hres₂
+
+/-- The same certified composition law is available syntactically as both
+free-monad bind and path grafting. -/
+example (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β)
+    {k₁ : ℕ} (k₂ : ℕ) (x : α)
+    (hres₁ : M₁.ResolvesIn k₁ (M₁.init x))
+    (hres₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y)) :
+    (M₁ ⨟ M₂).run (k₁ + k₂) x =
+      FreeM.append (M₁.run k₁ x) (fun path =>
+        match FreeM.output (M₁.run k₁ x) path with
+        | some y => M₂.run k₂ y
+        | none => pure none) :=
+  IOMachine.run_seqComp_eq_append M₁ M₂ k₂ x hres₁ hres₂
+
+/-- The differently nested sum carriers of three composed machines have the
+same certified finite-run semantics. -/
+example {m : Type u → Type v} [Monad m] [LawfulMonad m]
+    (M₁ : IOMachine p α mid₁) (M₂ : IOMachine p mid₁ mid₂)
+    (M₃ : IOMachine p mid₂ γ) (h : Handler m p) {k₁ : ℕ}
+    (k₂ k₃ : ℕ) (x : α) (hres₁ : M₁.ResolvesIn k₁ (M₁.init x))
+    (hres₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y))
+    (hres₃ : ∀ z, M₃.ResolvesIn k₃ (M₃.init z)) :
+    ((M₁ ⨟ M₂) ⨟ M₃).runWithInput h ((k₁ + k₂) + k₃) x =
+      (M₁ ⨟ (M₂ ⨟ M₃)).runWithInput h (k₁ + (k₂ + k₃)) x :=
+  IOMachine.runWithInput_seqComp_assoc M₁ M₂ M₃ h
+    k₂ k₃ x hres₁ hres₂ hres₃
+
+example (M₁ : IOMachine p α mid₁) (M₂ : IOMachine p mid₁ mid₂)
+    (M₃ : IOMachine p mid₂ γ) {k₁ : ℕ} (k₂ k₃ : ℕ) (x : α)
+    (hres₁ : M₁.ResolvesIn k₁ (M₁.init x))
+    (hres₂ : ∀ y, M₂.ResolvesIn k₂ (M₂.init y))
+    (hres₃ : ∀ z, M₃.ResolvesIn k₃ (M₃.init z)) :
+    ((M₁ ⨟ M₂) ⨟ M₃).run ((k₁ + k₂) + k₃) x =
+      (M₁ ⨟ (M₂ ⨟ M₃)).run (k₁ + (k₂ + k₃)) x :=
+  IOMachine.run_seqComp_assoc M₁ M₂ M₃ k₂ k₃ x hres₁ hres₂ hres₃
+
+/-! ## Collatz as a input/output machine -/
 
 namespace Collatz
 
@@ -86,9 +200,9 @@ def step (n : ℕ) : ℕ :=
 /-- The Collatz iteration as a deterministic input/output machine over the clock
 interface `X`. Its input selects the initial natural-number state, its unique
 direction advances one Collatz step, and it reads out upon reaching `1`. -/
-def machine : DynSystem.IOMachine.{0, 0, 0, 0, 0} X.{0, 0} ℕ PUnit where
+def machine : IOMachine.{0, 0, 0, 0, 0} X.{0, 0} ℕ PUnit where
   State := ℕ
-  behavior := (fun _ => PUnit.unit) ⇆ (fun n _ => step n)
+  behavior := (fun _ => PUnit.unit) ⇆ fun n _ => step n
   init := id
   output := fun n => if n = 1 then some PUnit.unit else none
 
@@ -119,20 +233,20 @@ example : machine.ResolvesIn 0 (machine.init 1) := by
 
 /-- The trajectory `3, 10, 5, 16, 8, 4, 2, 1` resolves in seven steps. -/
 example : machine.ResolvesIn 7 (machine.init 3) := by
-  simp [DynSystem.IOMachine.ResolvesIn, machine, DynSystem.update, step]
+  simp [IOMachine.ResolvesIn, machine, step, DynSystem.update]
 
 /-- Once a trajectory resolves, monotonicity permits any larger fuel budget. -/
 example : machine.ResolvesIn 20 (machine.init 3) :=
   (show machine.ResolvesIn 7 (machine.init 3) by
-    simp [DynSystem.IOMachine.ResolvesIn, machine, DynSystem.update, step]).mono (by omega)
+    simp [IOMachine.ResolvesIn, machine, step, DynSystem.update]).mono (by omega)
 
 end Collatz
 
 /-- Machine states, inputs, and outputs may inhabit independent universes. -/
 def universeSeparatedMachine {α : Type v} {β : Type w} (b : β) :
-    DynSystem.IOMachine X.{0, 0} α β where
+    IOMachine X.{0, 0} α β where
   State := Bool
-  behavior := (fun _ => PUnit.unit) ⇆ (fun state _ => state)
+  behavior := (fun _ => PUnit.unit) ⇆ fun state _ => state
   init := fun _ => false
   output := fun _ => some b
 
@@ -140,9 +254,9 @@ def universeSeparatedMachine {α : Type v} {β : Type w} (b : β) :
 the interface direction universe follows the output because `runWith` uses a
 homogeneous monad. -/
 def universeSeparatedOneQueryMachine {input : Type v} {out : Type w} (b : out) :
-    DynSystem.IOMachine X.{0, w} input out where
+    IOMachine X.{0, w} input out where
   State := Bool
-  behavior := (fun _ => PUnit.unit) ⇆ (fun _ _ => true)
+  behavior := (fun _ => PUnit.unit) ⇆ fun _ _ => true
   init := fun _ => false
   output := fun
     | false => none
@@ -150,9 +264,9 @@ def universeSeparatedOneQueryMachine {input : Type v} {out : Type w} (b : out) :
 
 /-- An immediate-output machine over the same homogeneous run interface. -/
 def universeSeparatedRunHaltMachine {input : Type v} {out : Type w} (b : out) :
-    DynSystem.IOMachine X.{0, w} input out where
+    IOMachine X.{0, w} input out where
   State := Bool
-  behavior := (fun _ => PUnit.unit) ⇆ (fun state _ => state)
+  behavior := (fun _ => PUnit.unit) ⇆ fun state _ => state
   init := fun _ => false
   output := fun _ => some b
 
@@ -163,14 +277,14 @@ example (b : β) : (haltMachine (α := α) b).toComp 1 PUnit.unit = FreeM.pure (
 example (b : β) : (haltMachine (α := α) b).toComp 0 PUnit.unit = FreeM.pure (some b) := rfl
 
 /-- The machine fuel is a total structural roll bound, including at zero. -/
-example (M : DynSystem.IOMachine p α β) (k : ℕ) (s : M.State) :
+example (M : IOMachine p α β) (k : ℕ) (s : M.State) :
     (M.toComp k s).IsTotalRollBound k :=
   M.isTotalRollBound_toComp k s
 
 /-- A single roll cannot fit in a zero total-roll budget. -/
 example (a : p.A) (r : p.B a → FreeM p β) :
-    ¬ (FreeM.roll a r).IsTotalRollBound 0 := by
-  simp
+    ¬ (FreeM.liftBind a r).IsTotalRollBound 0 := by
+  intro h; exact absurd h.1 (lt_irrefl 0)
 
 /-- Total structural bounds add through free-monad sequencing. -/
 example (oa : FreeM p α) (ob : α → FreeM p β) (j k : ℕ)
@@ -179,7 +293,7 @@ example (oa : FreeM p α) (ob : α → FreeM p β) (j k : ℕ)
   FreeM.isTotalRollBound_bind ha hb
 
 /-- The resolved-output equation is available directly to `simp`. -/
-example (M : DynSystem.IOMachine p α β) (k : ℕ) (s : M.State) (b : β)
+example (M : IOMachine p α β) (k : ℕ) (s : M.State) (b : β)
     (hb : M.output s = some b) : M.toComp k s = FreeM.pure (some b) := by
   simp [hb]
 
@@ -206,24 +320,23 @@ example (b : β) : (oneQueryMachine (α := α) b).ResolvesIn 4 false :=
 
 example (b : β) : ∃ z : FreeM X β,
     (oneQueryMachine (α := α) b).toComp 1 false = some <$> z :=
-  DynSystem.IOMachine.toComp_eq_map_some_of_resolvesIn (by simp [oneQueryMachine, DynSystem.update])
+  IOMachine.toComp_eq_map_some_of_resolvesIn (by simp [oneQueryMachine, DynSystem.update])
 
 example (b : β) (z : FreeM X β)
     (h : (oneQueryMachine (α := α) b).toComp 1 false = some <$> z) :
     (oneQueryMachine (α := α) b).ResolvesIn 1 false :=
-  DynSystem.IOMachine.resolvesIn_of_toComp_eq_map_some h
+  IOMachine.resolvesIn_of_toComp_eq_map_some h
 
 /-- Once resolution is certified, surplus fuel does not change the run. -/
 example (b : β) :
     (oneQueryMachine (α := α) b).runWith (m := Id) (fun _ => PUnit.unit) 4 false =
       (oneQueryMachine (α := α) b).runWith (m := Id) (fun _ => PUnit.unit) 1 false :=
-  DynSystem.IOMachine.runWith_eq_of_resolvesIn _ _
-    (by simp [oneQueryMachine, DynSystem.update]) (by omega)
+  IOMachine.runWith_eq_of_resolvesIn _ _ (by simp [oneQueryMachine, DynSystem.update]) (by omega)
 
 /-! ## Compositional resolution and the fuel-exact run law -/
 
 /-- A second-phase certificate lifts through the composite. -/
-example (M₁ : DynSystem.IOMachine p α mid) (M₂ : DynSystem.IOMachine p mid β)
+example (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β)
     (k : ℕ) (s₂ : M₂.State) (h : M₂.ResolvesIn k s₂) :
     (M₁.seqComp M₂).ResolvesIn k (Sum.inr s₂) := h.seqComp_inr
 
@@ -233,7 +346,7 @@ example (y : mid) (b : β) (x : α) :
     ((oneQueryMachine (α := α) y).seqComp (oneQueryMachine (α := mid) b)).ResolvesIn 2
       (((oneQueryMachine (α := α) y).seqComp
         (oneQueryMachine (α := mid) b)).init x) := by
-  exact DynSystem.IOMachine.ResolvesIn.seqComp_init
+  exact IOMachine.ResolvesIn.seqComp_init
     (show (oneQueryMachine (α := α) y).ResolvesIn 1 false by
       simp [oneQueryMachine, DynSystem.update])
     (fun _ => show (oneQueryMachine (α := mid) b).ResolvesIn 1 false by
@@ -244,7 +357,7 @@ with surplus phase-one fuel, and an already halted second phase. -/
 example (y : mid) (b : β) (x : α) :
     ((haltMachine (α := α) y).seqComp (oneQueryMachine (α := mid) b)).ResolvesIn 1
       (((haltMachine (α := α) y).seqComp (oneQueryMachine (α := mid) b)).init x) := by
-  exact DynSystem.IOMachine.ResolvesIn.seqComp_init
+  exact IOMachine.ResolvesIn.seqComp_init
     (show (haltMachine (α := α) y).ResolvesIn 0 PUnit.unit by
       simp [haltMachine])
     (fun _ => show (oneQueryMachine (α := mid) b).ResolvesIn 1 false by
@@ -254,7 +367,7 @@ example (y : mid) (b : β) (x : α) :
     ((oneQueryMachine (α := α) y).seqComp (haltMachine (α := mid) b)).ResolvesIn 3
       (((oneQueryMachine (α := α) y).seqComp
         (haltMachine (α := mid) b)).init x) := by
-  exact DynSystem.IOMachine.ResolvesIn.seqComp_init (k₁ := 3) (k₂ := 0)
+  exact IOMachine.ResolvesIn.seqComp_init (k₁ := 3) (k₂ := 0)
     ((show (oneQueryMachine (α := α) y).ResolvesIn 1 false by
       simp [oneQueryMachine, DynSystem.update]).mono (by omega))
     (fun _ => show (haltMachine (α := mid) b).ResolvesIn 0 PUnit.unit by
@@ -311,7 +424,7 @@ example :
       (some 9, 2) := rfl
 
 /-- The run law elaborates with independent machine-state/input universes and
-the homogeneous handler/output universe required by `FreeM.mapM`. -/
+the homogeneous handler/output universe required by `FreeM.liftM`. -/
 example {input : Type v} {out : Type w} (y b : out) (x : input) :
     let M₁ := universeSeparatedOneQueryMachine (input := input) y
     let M₂ := universeSeparatedRunHaltMachine (input := out) b
@@ -324,7 +437,7 @@ example {input : Type v} {out : Type w} (y b : out) (x : input) :
         | none => pure none := by
   simp only
   let h : Handler Id X.{0, w} := fun _ => PUnit.unit
-  exact DynSystem.IOMachine.runWith_seqComp_init
+  exact IOMachine.runWith_seqComp_init
     (universeSeparatedOneQueryMachine (input := input) y)
     (universeSeparatedRunHaltMachine (input := out) b) h (k₁ := 1) 0 x
     (by simp [universeSeparatedOneQueryMachine, DynSystem.update])

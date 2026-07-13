@@ -272,8 +272,9 @@ variable {S : Type u} {T : Type v} {q₁ r₁ q₂ r₂ : PFunctor.{uA, uB}}
 
 /-- Wire a two-phase challenger against a two-phase adversary along
 `Lens.eval₂`: commit phase, then guess phase, exposed on the outer interface
-`r₁ ◃ r₂`. The challenger's interface has `Lens.toCompTriple` /
-the composite-lens accessors (Spivak–Niu Ex 6.40) as its elimination rules; VCVio's
+`r₁ ◃ r₂`. The challenger's interface has the direct composite-lens accessors
+`compOuter`, `compInner`, and `compPullback` (Spivak–Niu Ex 6.40) as its
+elimination rules; VCVio's
 `Challenger₂` is the Kleisli consumer of this former. -/
 def game₂ (chal : DynSystem S ((q₁ ⊸ r₁) ◃ (q₂ ⊸ r₂))) (adv : DynSystem T (q₁ ◃ q₂)) :
     DynSystem (S × T) (r₁ ◃ r₂) :=

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
 import PolyFun.PFunctor.Trace
+import PolyFun.Control.Bisimulation
 import PolyFun.Interaction.Basic.Sampler
 import PolyFun.Interaction.Concurrent.Process
 import PolyFun.Interaction.UC.Interface
@@ -55,7 +56,7 @@ decorated step transcript. It is structural only: routing, buffering, and
 probabilistic execution belong to downstream runtime interpreters.
 -/
 
-universe u v w w'
+universe u v v₁ v₂ v₃ w w'
 
 namespace Interaction
 open PFunctor.FreeM.Displayed (Decoration)
@@ -748,7 +749,7 @@ universe `v` remain free.
 
 `op.toProcess : ProcessOver ...` projects onto the underlying
 `ProcessOver`, feeding the structural lemmas in `Concurrent/Process.lean`
-and the bisimulation infrastructure below.
+and the activation-equivalence infrastructure below.
 -/
 structure OpenProcess
     (m : Type w → Type w')
@@ -865,7 +866,7 @@ sampler-agnostic and refers to the underlying `ProcessOver.SafetySpec`.
 abbrev OpenProcess.SafetySpec (Party : Type u) (Δ : PortBoundary) :=
   ProcessOver.SafetySpec (OpenNodeContext.{u, w} Party Δ)
 
-/-! ## Silent steps and weak bisimulation -/
+/-! ## Silent steps and activation-labelled transition systems -/
 
 /-- A transcript path through a decorated open-process spec is **silent** when
 every visited node is not externally activated (`isActivated = false`).
@@ -881,8 +882,8 @@ def IsSilentDecoration {Party : Type u} {Δ : PortBoundary} :
   | .node _ _, ⟨ons, drest⟩, ⟨x, tr⟩ =>
       ons.boundary.isActivated = false ∧ IsSilentDecoration (drest x) tr
 
-/-- A complete step of an open process is **silent** when every node along
-the chosen transcript path has boundary-internal semantics. -/
+/-- A complete step of an open process is **silent** when no node along the
+chosen transcript path is externally activated. -/
 def IsSilentStep {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
     (p : OpenProcess.{u, v, w, w'} m Party Δ) (s : p.Proc)
     (tr : (p.step s).spec.Transcript) : Prop :=
@@ -924,120 +925,141 @@ theorem isSilentStep_mapBoundary_iff {m : Type w → Type w'}
   intro X ons
   simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary, BoundaryAction.mapBoundary]
 
-/-! ## OpenProcessIso: weak bisimulation equivalence for open processes -/
+/-! ## Activation-labelled transition systems -/
 
-/--
-Two open processes with the same boundary are **weakly bisimilar** when there
-exists a relation on their state types satisfying:
+/-- The labelled transition system of an open process when the only exposed
+observation is whether a complete transcript is externally activated. Silent
+transcripts receive label `none`; every activated transcript receives the
+single visible label `some ()`. Packet/action identity and sampler effects are
+deliberately absent from this structural observation. -/
+noncomputable def OpenProcess.activationLTS
+    {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
+    (p : OpenProcess.{u, v, w, w'} m Party Δ) : Control.LTS Unit := by
+  classical
+  exact
+    { State := p.Proc
+      Move s := (p.step s).spec.Transcript
+      next s tr := (p.step s).next tr
+      label s tr := if IsSilentStep p s tr then none else some () }
 
-1. **Totality / surjectivity**: every state on each side has a related partner.
-2. **Silent forward/backward**: a silent step can either be matched by some step
-   on the other side (maintaining the relation), or absorbed (the other side
-   stays put and the relation is maintained with the successor).
-3. **Visible forward/backward**: a visible (non-silent) step must be matched by
-   a visible step on the other side that preserves the relation.
+@[simp] theorem OpenProcess.activationLTS_label_of_silent
+    {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
+    (p : OpenProcess.{u, v, w, w'} m Party Δ) (s : p.Proc)
+    (tr : (p.step s).spec.Transcript) (h : IsSilentStep p s tr) :
+    p.activationLTS.label s tr = none := by
+  simp [OpenProcess.activationLTS, h]
 
-This is the appropriate equality notion for `openTheory` monoidal laws,
-where the internal scheduler structure differs (e.g., left-nested vs.
-right-nested interleaving) but the observable boundary traffic is the same.
-The scheduler nodes introduced by `ProcessOver.interleave` are always silent,
-so they can be absorbed by the weak bisimulation.
--/
-def OpenProcessIso {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
-    (p₁ p₂ : OpenProcess.{u, v, w, w'} m Party Δ) : Prop :=
-  ∃ (rel : p₁.Proc → p₂.Proc → Prop),
-    (∀ s₁, ∃ s₂, rel s₁ s₂) ∧
-    (∀ s₂, ∃ s₁, rel s₁ s₂) ∧
-    (∀ s₁ s₂, rel s₁ s₂ →
-      ∀ tr₁ : (p₁.step s₁).spec.Transcript, IsSilentStep p₁ s₁ tr₁ →
-        (∃ tr₂ : (p₂.step s₂).spec.Transcript,
-          rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂)) ∨
-        rel ((p₁.step s₁).next tr₁) s₂) ∧
-    (∀ s₁ s₂, rel s₁ s₂ →
-      ∀ tr₁ : (p₁.step s₁).spec.Transcript, ¬ IsSilentStep p₁ s₁ tr₁ →
-        ∃ tr₂ : (p₂.step s₂).spec.Transcript, ¬ IsSilentStep p₂ s₂ tr₂ ∧
-          rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂)) ∧
-    (∀ s₁ s₂, rel s₁ s₂ →
-      ∀ tr₂ : (p₂.step s₂).spec.Transcript, IsSilentStep p₂ s₂ tr₂ →
-        (∃ tr₁ : (p₁.step s₁).spec.Transcript,
-          rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂)) ∨
-        rel s₁ ((p₂.step s₂).next tr₂)) ∧
-    (∀ s₁ s₂, rel s₁ s₂ →
-      ∀ tr₂ : (p₂.step s₂).spec.Transcript, ¬ IsSilentStep p₂ s₂ tr₂ →
-        ∃ tr₁ : (p₁.step s₁).spec.Transcript, ¬ IsSilentStep p₁ s₁ tr₁ ∧
-          rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂))
+@[simp] theorem OpenProcess.activationLTS_label_of_not_silent
+    {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
+    (p : OpenProcess.{u, v, w, w'} m Party Δ) (s : p.Proc)
+    (tr : (p.step s).spec.Transcript) (h : ¬ IsSilentStep p s tr) :
+    p.activationLTS.label s tr = some () := by
+  simp [OpenProcess.activationLTS, h]
 
-namespace OpenProcessIso
+/-- Two open processes are activation equivalent when their activation-labelled
+transition systems are delay-bisimulation equivalent. Silent scheduler steps
+may be absorbed or matched by finite silent prefixes, while an activated step
+must be matched by an activated step after such a prefix.
+
+This remains only a structural coherence notion: it does not retain packet or
+action labels and does not compare `stepSampler` effects, so it is not itself a
+UC security observation. -/
+def OpenProcessActivationEquiv {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
+    (p₁ : OpenProcess.{u, v₁, w, w'} m Party Δ)
+    (p₂ : OpenProcess.{u, v₂, w, w'} m Party Δ) : Prop :=
+  Control.DelayBisimulationEquivalent p₁.activationLTS p₂.activationLTS
+
+namespace OpenProcessActivationEquiv
 
 variable {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
 
-/-- Every open process is weakly bisimilar to itself. -/
-protected theorem refl (p : OpenProcess.{u, v, w, w'} m Party Δ) :
-    OpenProcessIso p p :=
-  ⟨Eq, fun s => ⟨s, rfl⟩, fun s => ⟨s, rfl⟩,
-    fun s₁ _ h tr _ => by subst h; exact .inl ⟨tr, rfl⟩,
-    fun s₁ _ h tr hv => by subst h; exact ⟨tr, hv, rfl⟩,
-    fun s₁ _ h tr _ => by subst h; exact .inl ⟨tr, rfl⟩,
-    fun s₁ _ h tr hv => by subst h; exact ⟨tr, hv, rfl⟩⟩
+/-- Every open process is activation equivalent to itself. -/
+@[refl] protected theorem refl (p : OpenProcess.{u, v, w, w'} m Party Δ) :
+    OpenProcessActivationEquiv p p :=
+  Control.DelayBisimulationEquivalent.refl p.activationLTS
 
-/-- Weak bisimilarity is symmetric. -/
-protected theorem symm {p₁ p₂ : OpenProcess.{u, v, w, w'} m Party Δ}
-    (h : OpenProcessIso p₁ p₂) :
-    OpenProcessIso p₂ p₁ := by
-  obtain ⟨rel, htot, hsurj, hfs, hfv, hbs, hbv⟩ := h
-  exact ⟨fun s₂ s₁ => rel s₁ s₂, hsurj, htot,
-    fun s₂ s₁ hr => hbs s₁ s₂ hr,
-    fun s₂ s₁ hr => hbv s₁ s₂ hr,
-    fun s₂ s₁ hr => hfs s₁ s₂ hr,
-    fun s₂ s₁ hr => hfv s₁ s₂ hr⟩
+/-- Activation equivalence is symmetric. -/
+@[symm] protected theorem symm {p₁ : OpenProcess.{u, v₁, w, w'} m Party Δ}
+    {p₂ : OpenProcess.{u, v₂, w, w'} m Party Δ}
+    (h : OpenProcessActivationEquiv p₁ p₂) :
+    OpenProcessActivationEquiv p₂ p₁ :=
+  Control.DelayBisimulationEquivalent.symm h
 
-/-- Weak bisimilarity is transitive. The composite relation witnesses p₂ as
-an intermediate: `∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃`. For silent steps, the
-intermediate state can advance or stay, using `Classical.em` to case-split
-on whether the intermediate step is itself silent. -/
-protected theorem trans {p₁ p₂ p₃ : OpenProcess.{u, v, w, w'} m Party Δ}
-    (h₁₂ : OpenProcessIso p₁ p₂)
-    (h₂₃ : OpenProcessIso p₂ p₃) :
-    OpenProcessIso p₁ p₃ := by
-  obtain ⟨r₁₂, htot₁₂, hsurj₁₂, hfs₁₂, hfv₁₂, hbs₁₂, hbv₁₂⟩ := h₁₂
-  obtain ⟨r₂₃, htot₂₃, hsurj₂₃, hfs₂₃, hfv₂₃, hbs₂₃, hbv₂₃⟩ := h₂₃
-  refine ⟨fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  · intro s₁
-    obtain ⟨s₂, h₂⟩ := htot₁₂ s₁
-    obtain ⟨s₃, h₃⟩ := htot₂₃ s₂
-    exact ⟨s₃, s₂, h₂, h₃⟩
-  · intro s₃
-    obtain ⟨s₂, h₂⟩ := hsurj₂₃ s₃
-    obtain ⟨s₁, h₁⟩ := hsurj₁₂ s₂
-    exact ⟨s₁, s₂, h₁, h₂⟩
-  · intro s₁ s₃ ⟨s₂, hr₁₂, hr₂₃⟩ tr₁ hsilent₁
-    rcases hfs₁₂ s₁ s₂ hr₁₂ tr₁ hsilent₁ with ⟨tr₂, hn₁₂⟩ | hstay
-    · rcases Classical.em (IsSilentStep p₂ s₂ tr₂) with hsilent₂ | hvisible₂
-      · rcases hfs₂₃ s₂ s₃ hr₂₃ tr₂ hsilent₂ with ⟨tr₃, hn₂₃⟩ | hstay₂₃
-        · exact .inl ⟨tr₃, _, hn₁₂, hn₂₃⟩
-        · exact .inr ⟨_, hn₁₂, hstay₂₃⟩
-      · obtain ⟨tr₃, _, hn₂₃⟩ := hfv₂₃ s₂ s₃ hr₂₃ tr₂ hvisible₂
-        exact .inl ⟨tr₃, _, hn₁₂, hn₂₃⟩
-    · exact .inr ⟨s₂, hstay, hr₂₃⟩
-  · intro s₁ s₃ ⟨s₂, hr₁₂, hr₂₃⟩ tr₁ hvisible₁
-    obtain ⟨tr₂, hv₂, hn₁₂⟩ := hfv₁₂ s₁ s₂ hr₁₂ tr₁ hvisible₁
-    obtain ⟨tr₃, hv₃, hn₂₃⟩ := hfv₂₃ s₂ s₃ hr₂₃ tr₂ hv₂
-    exact ⟨tr₃, hv₃, _, hn₁₂, hn₂₃⟩
-  · intro s₁ s₃ ⟨s₂, hr₁₂, hr₂₃⟩ tr₃ hsilent₃
-    rcases hbs₂₃ s₂ s₃ hr₂₃ tr₃ hsilent₃ with ⟨tr₂, hn₂₃⟩ | hstay
-    · rcases Classical.em (IsSilentStep p₂ s₂ tr₂) with hsilent₂ | hvisible₂
-      · rcases hbs₁₂ s₁ s₂ hr₁₂ tr₂ hsilent₂ with ⟨tr₁, hn₁₂⟩ | hstay₁₂
-        · exact .inl ⟨tr₁, _, hn₁₂, hn₂₃⟩
-        · exact .inr ⟨_, hstay₁₂, hn₂₃⟩
-      · obtain ⟨tr₁, _, hn₁₂⟩ := hbv₁₂ s₁ s₂ hr₁₂ tr₂ hvisible₂
-        exact .inl ⟨tr₁, _, hn₁₂, hn₂₃⟩
-    · exact .inr ⟨s₂, hr₁₂, hstay⟩
-  · intro s₁ s₃ ⟨s₂, hr₁₂, hr₂₃⟩ tr₃ hvisible₃
-    obtain ⟨tr₂, hv₂, hn₂₃⟩ := hbv₂₃ s₂ s₃ hr₂₃ tr₃ hvisible₃
-    obtain ⟨tr₁, hv₁, hn₁₂⟩ := hbv₁₂ s₁ s₂ hr₁₂ tr₂ hv₂
-    exact ⟨tr₁, hv₁, _, hn₁₂, hn₂₃⟩
+/-- Activation equivalence is transitive. -/
+@[trans] protected theorem trans {p₁ : OpenProcess.{u, v₁, w, w'} m Party Δ}
+    {p₂ : OpenProcess.{u, v₂, w, w'} m Party Δ}
+    {p₃ : OpenProcess.{u, v₃, w, w'} m Party Δ}
+    (h₁₂ : OpenProcessActivationEquiv p₁ p₂)
+    (h₂₃ : OpenProcessActivationEquiv p₂ p₃) :
+    OpenProcessActivationEquiv p₁ p₃ :=
+  Control.DelayBisimulationEquivalent.trans h₁₂ h₂₃
 
-end OpenProcessIso
+/-- Build activation equivalence from immediate activation-preserving matches,
+allowing a silent step to be absorbed instead. This is the convenient proof
+interface for structural scheduler laws; the result itself uses the canonical
+generic delay-bisimulation notion. -/
+theorem of_step_match
+    {p₁ : OpenProcess.{u, v₁, w, w'} m Party Δ}
+    {p₂ : OpenProcess.{u, v₂, w, w'} m Party Δ}
+    (rel : p₁.Proc → p₂.Proc → Prop)
+    (leftTotal : ∀ s₁, ∃ s₂, rel s₁ s₂)
+    (rightTotal : ∀ s₂, ∃ s₁, rel s₁ s₂)
+    (forwardSilent : ∀ s₁ s₂, rel s₁ s₂ →
+      ∀ tr₁ : (p₁.step s₁).spec.Transcript, IsSilentStep p₁ s₁ tr₁ →
+        (∃ tr₂ : (p₂.step s₂).spec.Transcript, IsSilentStep p₂ s₂ tr₂ ∧
+          rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂)) ∨
+        rel ((p₁.step s₁).next tr₁) s₂)
+    (forwardVisible : ∀ s₁ s₂, rel s₁ s₂ →
+      ∀ tr₁ : (p₁.step s₁).spec.Transcript, ¬ IsSilentStep p₁ s₁ tr₁ →
+        ∃ tr₂ : (p₂.step s₂).spec.Transcript, ¬ IsSilentStep p₂ s₂ tr₂ ∧
+          rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂))
+    (backwardSilent : ∀ s₁ s₂, rel s₁ s₂ →
+      ∀ tr₂ : (p₂.step s₂).spec.Transcript, IsSilentStep p₂ s₂ tr₂ →
+        (∃ tr₁ : (p₁.step s₁).spec.Transcript, IsSilentStep p₁ s₁ tr₁ ∧
+          rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂)) ∨
+        rel s₁ ((p₂.step s₂).next tr₂))
+    (backwardVisible : ∀ s₁ s₂, rel s₁ s₂ →
+      ∀ tr₂ : (p₂.step s₂).spec.Transcript, ¬ IsSilentStep p₂ s₂ tr₂ →
+        ∃ tr₁ : (p₁.step s₁).spec.Transcript, ¬ IsSilentStep p₁ s₁ tr₁ ∧
+          rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂)) :
+    OpenProcessActivationEquiv p₁ p₂ := by
+  refine ⟨rel, ⟨?_, ?_⟩, leftTotal, rightTotal⟩
+  · rintro s₁ s₂ hrel label _ ⟨tr₁, hlabel, rfl⟩
+    by_cases hsilent₁ : IsSilentStep p₁ s₁ tr₁
+    · rw [p₁.activationLTS_label_of_silent s₁ tr₁ hsilent₁] at hlabel
+      subst label
+      rcases forwardSilent s₁ s₂ hrel tr₁ hsilent₁ with
+        ⟨tr₂, hsilent₂, hrel'⟩ | hstay
+      · exact ⟨_, .single ⟨tr₂,
+          p₂.activationLTS_label_of_silent s₂ tr₂ hsilent₂, rfl⟩,
+          hrel'⟩
+      · exact ⟨s₂, .refl, hstay⟩
+    · rw [p₁.activationLTS_label_of_not_silent s₁ tr₁ hsilent₁] at hlabel
+      subst label
+      obtain ⟨tr₂, hvisible₂, hrel'⟩ :=
+        forwardVisible s₁ s₂ hrel tr₁ hsilent₁
+      exact ⟨_, ⟨s₂, .refl,
+        ⟨tr₂, p₂.activationLTS_label_of_not_silent s₂ tr₂ hvisible₂, rfl⟩⟩,
+        hrel'⟩
+  · rintro s₂ s₁ hrel label _ ⟨tr₂, hlabel, rfl⟩
+    by_cases hsilent₂ : IsSilentStep p₂ s₂ tr₂
+    · rw [p₂.activationLTS_label_of_silent s₂ tr₂ hsilent₂] at hlabel
+      subst label
+      rcases backwardSilent s₁ s₂ hrel tr₂ hsilent₂ with
+        ⟨tr₁, hsilent₁, hrel'⟩ | hstay
+      · exact ⟨_, .single ⟨tr₁,
+          p₁.activationLTS_label_of_silent s₁ tr₁ hsilent₁, rfl⟩,
+          hrel'⟩
+      · exact ⟨s₁, .refl, hstay⟩
+    · rw [p₂.activationLTS_label_of_not_silent s₂ tr₂ hsilent₂] at hlabel
+      subst label
+      obtain ⟨tr₁, hvisible₁, hrel'⟩ :=
+        backwardVisible s₁ s₂ hrel tr₂ hsilent₂
+      exact ⟨_, ⟨s₁, .refl,
+        ⟨tr₁, p₁.activationLTS_label_of_not_silent s₁ tr₁ hvisible₁, rfl⟩⟩,
+        hrel'⟩
+
+end OpenProcessActivationEquiv
 
 end UC
 end Interaction

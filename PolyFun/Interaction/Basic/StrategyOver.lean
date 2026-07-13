@@ -42,7 +42,7 @@ def StrategyOver {l : PFunctor.Lens P Q}
     (PFunctor.FreeM.PathAlong l spec → Type w) →
     Type w
   | _, .pure _, _, Out => Out ⟨⟩
-  | agent, .roll pos rest, ⟨γ, ctxs⟩, Out =>
+  | agent, .liftBind pos rest, ⟨γ, ctxs⟩, Out =>
       syn.Node agent pos γ (fun d =>
         StrategyOver syn agent (rest (l.toFunB pos d)) (ctxs (l.toFunB pos d))
           (fun path => Out ⟨d, path⟩))
@@ -90,7 +90,7 @@ def map
     StrategyOver syn₁ agent₁ spec ctxs A →
     StrategyOver syn₂ agent₂ spec ctxs B
   | PFunctor.FreeM.pure _, _, _, _, f, out => f ⟨⟩ out
-  | PFunctor.FreeM.roll pos _, ⟨_, ctxs⟩, _, _, f, stratNode =>
+  | PFunctor.FreeM.liftBind pos _, ⟨_, ctxs⟩, _, _, f, stratNode =>
       η.mapNode
         (fun d =>
           map η (ctxs := ctxs (l.toFunB pos d))
@@ -136,7 +136,7 @@ def mapContext
     StrategyOver syn₁ agent₁ spec ctxs Out →
     StrategyOver syn₂ agent₂ spec (Decoration.map φ spec ctxs) Out
   | PFunctor.FreeM.pure _, _, _, out => out
-  | PFunctor.FreeM.roll pos _, ⟨_, ctxs⟩, _, stratNode =>
+  | PFunctor.FreeM.liftBind pos _, ⟨_, ctxs⟩, _, stratNode =>
       η.mapNode
         (fun d =>
           mapContext η (ctxs := ctxs (l.toFunB pos d)))
@@ -181,7 +181,7 @@ theorem forAgent
     StrategyOver (SyntaxOver.forAgent syn agent) PUnit.unit spec ctxs Out =
       StrategyOver syn agent spec ctxs Out
   | .pure _, _, _ => rfl
-  | .roll pos rest, ⟨γ, ctxs⟩, Out => by
+  | .liftBind pos rest, ⟨γ, ctxs⟩, Out => by
       change syn.Node agent pos γ _ = syn.Node agent pos γ _
       congr 1
       funext d
@@ -202,8 +202,8 @@ theorem comap {Δ : P.A → Type vΔ}
     StrategyOver (SyntaxOver.comap f syn) agent spec ctxs Out =
       StrategyOver syn agent spec (Decoration.map f spec ctxs) Out
   | _, .pure _, _, _ => rfl
-  | agent, .roll pos rest, ⟨γ, ctxs⟩, Out => by
-      simp only [StrategyOver, SyntaxOver.comap, Decoration.map_roll]
+  | agent, .liftBind pos rest, ⟨γ, ctxs⟩, Out => by
+      simp only [StrategyOver, SyntaxOver.comap]
       congr 1
       funext d
       exact comap syn f (agent := agent) (ctxs := ctxs (l.toFunB pos d))
@@ -241,7 +241,7 @@ def mapOutput
     StrategyOver shape.toSyntaxOver agent spec ctxs B :=
   match spec, ctxs with
   | .pure _, _ => fun f out => f ⟨⟩ out
-  | .roll pos _, ⟨γ, ctxsRest⟩ => fun f node =>
+  | .liftBind pos _, ⟨γ, ctxsRest⟩ => fun f node =>
       shape.map
         (agent := agent)
         (γ := γ)
@@ -269,8 +269,8 @@ theorem _root_.Interaction.StrategyOver.mapContext_mapOutput
       ShapeOver.mapOutput shape₂ (ctxs := Decoration.map φ spec ctxs) f
         (StrategyOver.mapContext η.toContextHom (ctxs := ctxs) strat)
   | PFunctor.FreeM.pure _, _, _, _, _, _ => rfl
-  | PFunctor.FreeM.roll pos rest, ⟨_, ctxs⟩, _, _, f, stratNode => by
-      simp only [StrategyOver.mapContext, ShapeOver.mapOutput, Decoration.map_roll]
+  | PFunctor.FreeM.liftBind pos rest, ⟨_, ctxs⟩, _, _, f, stratNode => by
+      simp only [StrategyOver.mapContext, ShapeOver.mapOutput]
       exact η.mapNode_map
         (fun d =>
           ShapeOver.mapOutput shape₁ (ctxs := ctxs (l.toFunB pos d))

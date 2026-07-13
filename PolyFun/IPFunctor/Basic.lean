@@ -200,7 +200,7 @@ end IPFunctor
 /-! ## Deterministic transitions
 
 When `P.src j a b` is independent of the response `b`, the source map collapses to a function
-`next : (j : J) → P.A j → I`. Under this hypothesis, a single `liftA`-style step of the
+`next : (j : J) → P.A j → I`. Under this hypothesis, a single `lift`-style step of the
 free monad lands at a uniquely determined source index, which permits a specialized bind
 operation and the deterministic `do`-notation in
 [`PolyFun/IPFunctor/Notation/Deterministic.lean`](Notation/Deterministic.lean). -/
@@ -208,7 +208,7 @@ operation and the deterministic `do`-notation in
 /-- An `IPFunctor` has *deterministic transitions* when `P.src j a b` is independent of the
 response `b`. Equivalently, `(fun b => P.src j a b)` is a constant function for every shape `a`.
 
-This is the structural condition that lets `liftA`-style steps of the single-index free monad
+This is the structural condition that lets `lift`-style steps of the single-index free monad
 `IPFunctor.FreeM` land at a uniquely determined source index. -/
 class IPFunctor.DeterministicTransitions {I : Type uI} {J : Type uJ}
     (P : IPFunctor.{uI, uJ, uA, uB} I J) where

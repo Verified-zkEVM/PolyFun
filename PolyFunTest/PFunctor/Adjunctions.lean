@@ -17,7 +17,7 @@ small concrete polynomial `qBool = Bool y^Bool`.
 
 @[expose] public section
 
-universe u
+universe u pA pB qA qB rA rB
 
 namespace PFunctor
 
@@ -92,5 +92,45 @@ example (f : Bool → Nat) (s : (a : qBool.A) → qBool.B a) :
 /-- Round-trip through a `(position map, section)` pair is the identity. -/
 example (f : qBool.A → Nat) (s : (a : qBool.A) → qBool.B a) :
     homToLinear (p := qBool) ((homToLinear (p := qBool) (A := Nat)).symm (f, s)) = (f, s) := rfl
+
+/-! ## Tensor gluing -/
+
+/-- Canonical tensor restrictions expose their position and direction
+projections to `simp` without unfolding the constructors. -/
+example {p : PFunctor.{pA, pB}} (a : p.A) (d : p.B a) :
+    (Lens.positionCounit p).toFunA a = a ∧
+      (Lens.positionCounit p).toFunB a d = PUnit.unit := by
+  simp
+
+example {p : PFunctor.{pA, pB}} {q : PFunctor.{qA, qB}}
+    {r : PFunctor.{rA, rB}} (l : Lens (p ⊗ q) r) (pq : p.A × q.A)
+    (d : r.B (l.toFunA pq)) :
+    (Lens.tensorLeftView l).toFunA pq = l.toFunA pq ∧
+      ((Lens.tensorLeftView l).toFunB pq d).1 = (l.toFunB pq d).1 ∧
+      ((Lens.tensorRightView l).toFunB pq d).2 = (l.toFunB pq d).2 := by
+  simp
+
+/-- A lens out of a tensor is recovered from its two position-only views. -/
+example {p q r : PFunctor.{u, u}} (l : Lens (p ⊗ q) r) :
+    Lens.tensorGlue (Lens.tensorLeftView l) (Lens.tensorRightView l) rfl = l := by simp
+
+/-- The universal property is stated directly in terms of compatible ordinary
+lenses, with no second tensor-view representation. -/
+example {p q r : PFunctor.{u, u}} :
+    Lens (p ⊗ q) r ≃
+      { views : Lens (p ⊗ linear q.A) r × Lens (linear p.A ⊗ q) r //
+        views.1.toFunA = views.2.toFunA } :=
+  Lens.tensorGlueEquiv
+
+/-- The client-facing β laws hold for arbitrary compatible ordinary lenses,
+including a caller-supplied compatibility proof and independent universes. -/
+example {p : PFunctor.{pA, pB}} {q : PFunctor.{qA, qB}}
+    {r : PFunctor.{rA, rB}}
+    (left : Lens (p ⊗ linear q.A) r)
+    (right : Lens (linear p.A ⊗ q) r)
+    (positions : left.toFunA = right.toFunA) :
+    Lens.tensorLeftView (Lens.tensorGlue left right positions) = left ∧
+      Lens.tensorRightView (Lens.tensorGlue left right positions) = right := by
+  simp
 
 end PFunctor

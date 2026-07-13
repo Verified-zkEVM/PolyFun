@@ -11,7 +11,7 @@ import Batteries.Tactic.Lint
 /-!
 # The internal hom of the tensor product
 
-Following Spivak–Niu, *Polynomial Functors: A General Theory of Interaction*
+Following Spivak–Niu, *Polynomial Functors: A Mathematical Theory of Interaction*
 (§4.5, Ex 4.78), the tensor (parallel / Dirichlet) product `⊗` on `PFunctor` is
 closed: for each `q` the functor `- ⊗ q` has a right adjoint `ihom q -`, the
 **internal hom** `[q, r]`. Its positions are exactly the lenses `q ⇆ r`, and a
@@ -39,14 +39,15 @@ not to `⊗`.
 
 @[expose] public section
 
-universe uA uB
+universe uA uB pA pB qA qA₁ qA₂ qB rA rB
 
 namespace PFunctor
 
 /-- The **internal hom** `[q, r]` of the tensor product (Spivak–Niu Ex 4.78):
 positions are the lenses `q ⇆ r`, and a direction at a lens `f` is a `q`-position
 `j` paired with an `r`-direction over `f.toFunA j`. -/
-def ihom (q r : PFunctor.{uA, uB}) : PFunctor.{max uA uB, max uA uB} where
+def ihom (q : PFunctor.{qA, qB}) (r : PFunctor.{rA, rB}) :
+    PFunctor.{max qA qB rA rB, max qA rB} where
   A := Lens q r
   B f := Σ j : q.A, r.B (f.toFunA j)
 
@@ -54,12 +55,14 @@ def ihom (q r : PFunctor.{uA, uB}) : PFunctor.{max uA uB, max uA uB} where
 
 namespace Lens
 
-variable {p q r : PFunctor.{uA, uB}}
+variable {p : PFunctor.{pA, pB}} {q : PFunctor.{qA, qB}}
+  {r : PFunctor.{rA, rB}}
 
 /-- The evaluation (counit) lens `eval : ihom q r ⊗ q ⇆ r`: at a position
 `(f, j)` it exposes `f.toFunA j`, and pulls a direction `d : r.B (f.toFunA j)`
 back to the pair `(⟨j, d⟩, f.toFunB j d)`. -/
-def eval (q r : PFunctor.{uA, uB}) : Lens (ihom q r ⊗ q) r :=
+def eval (q : PFunctor.{qA, qB}) (r : PFunctor.{rA, rB}) :
+    Lens (ihom q r ⊗ q) r :=
   (fun fj => fj.1.toFunA fj.2) ⇆
     (fun fj d => (⟨fj.2, d⟩, fj.1.toFunB fj.2 d))
 
@@ -125,8 +128,9 @@ coproduct-shaped fibers here. -/
 exactly a pair of lenses `(q₁ ⇆ r, q₂ ⇆ r)`, by the universal property of the
 coproduct. This is the position component of `ihomSum`, and equally identifies
 the positions of the categorical-product form `ihom q₁ r * ihom q₂ r`. -/
-def ihomSumAEquiv (q₁ q₂ r : PFunctor.{uA, uB}) :
-    (ihom (q₁ + q₂) r).A ≃ (ihom q₁ r).A × (ihom q₂ r).A where
+def ihomSumAEquiv (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
+    (r : PFunctor.{rA, rB}) :
+    (ihom (PFunctor.sum q₁ q₂) r).A ≃ (ihom q₁ r).A × (ihom q₂ r).A where
   toFun f := (f ∘ₗ Lens.inl, f ∘ₗ Lens.inr)
   invFun p := Lens.sumPair p.1 p.2
   left_inv f := Lens.comp_inl_inr f
@@ -137,16 +141,18 @@ def ihomSumAEquiv (q₁ q₂ r : PFunctor.{uA, uB}) :
 /-- The position bijection together with the fiber splitting, packaged as a
 `PFunctor.Equiv`: over a lens `f : q₁ + q₂ ⇆ r` the sigma of `r`-directions over
 `(q₁ + q₂).A` splits as the coproduct of the sigmas over `q₁.A` and `q₂.A`. -/
-def ihomSumPEquiv (q₁ q₂ r : PFunctor.{uA, uB}) :
-    ihom (q₁ + q₂) r ≃ₚ (ihom q₁ r * ihom q₂ r) where
+def ihomSumPEquiv (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
+    (r : PFunctor.{rA, rB}) :
+    ihom (PFunctor.sum q₁ q₂) r ≃ₚ PFunctor.prod (ihom q₁ r) (ihom q₂ r) where
   equivA := ihomSumAEquiv q₁ q₂ r
   equivB f := _root_.Equiv.sumSigmaDistrib (fun j => r.B (f.toFunA j))
 
 /-- The internal hom sends a coproduct in its first argument to a categorical
 product: `[q₁ + q₂, r] ≅ [q₁, r] × [q₂, r]`. This is the contravariant image of
 the coproduct's universal property under the tensor–hom adjunction. -/
-def ihomSum (q₁ q₂ r : PFunctor.{uA, uB}) :
-    ihom (q₁ + q₂) r ≃ₗ (ihom q₁ r * ihom q₂ r) :=
+def ihomSum (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
+    (r : PFunctor.{rA, rB}) :
+    ihom (PFunctor.sum q₁ q₂) r ≃ₗ PFunctor.prod (ihom q₁ r) (ihom q₂ r) :=
   PFunctor.Equiv.toLensEquiv (ihomSumPEquiv q₁ q₂ r)
 
 end PFunctor

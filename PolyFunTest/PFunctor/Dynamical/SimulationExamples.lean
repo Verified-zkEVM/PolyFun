@@ -90,6 +90,68 @@ example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpe
       ⟨(sim.mapRun run hrel).state n, (sim.mapRun run hrel).dir n⟩ :=
   sim.match_mapRun run hrel n
 
+/-- The chosen matched state and mapped run expose their supplied initial
+specification state to `simp`. -/
+example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpec p}
+    {matchStep : DynSystem.StepRel impl spec}
+    (sim : DynSystem.ForwardSimulation impl spec matchStep)
+    (run : DynSystem.Run impl) {initialSpec : SSpec}
+    (hrel : sim.stateRel run.initial initialSpec) :
+    (sim.matchedState run hrel 0).1 = initialSpec ∧
+      (sim.mapRun run hrel).initial = initialSpec := by
+  simp
+
+/-- The recursive state and mapped-run projections also reduce through their
+named simp equations. -/
+example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpec p}
+    {matchStep : DynSystem.StepRel impl spec}
+    (sim : DynSystem.ForwardSimulation impl spec matchStep)
+    (run : DynSystem.Run impl) {initialSpec : SSpec}
+    (hrel : sim.stateRel run.initial initialSpec) (n : ℕ) :
+    (sim.mapRun run hrel).state n = (sim.matchedState run hrel n).1 ∧
+      (sim.matchedState run hrel (n + 1)).1 =
+        spec.update (sim.matchedState run hrel n).1 (sim.matchedDir run hrel n) := by
+  simp
+
+/-- The zero- and successor-step equations for finite-prefix matching are simp
+rules. -/
+example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpec p}
+    (matchStep : DynSystem.StepRel impl spec)
+    (left : DynSystem.Run impl) (right : DynSystem.Run spec) (n : ℕ) :
+    DynSystem.Run.RelUpTo matchStep left right 0 ∧
+      (DynSystem.Run.RelUpTo matchStep left right (n + 1) ↔
+        matchStep ⟨left.state 0, left.dir 0⟩ ⟨right.state 0, right.dir 0⟩ ∧
+          DynSystem.Run.RelUpTo matchStep left.tail right.tail n) := by
+  simp
+
+/-- Finite-prefix matching has a pointwise elimination form. -/
+example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpec p}
+    (matchStep : DynSystem.StepRel impl spec)
+    (left : DynSystem.Run impl) (right : DynSystem.Run spec) (n : ℕ) :
+    DynSystem.Run.RelUpTo matchStep left right n ↔
+      ∀ k, k < n →
+        matchStep ⟨left.state k, left.dir k⟩ ⟨right.state k, right.dir k⟩ :=
+  DynSystem.Run.relUpTo_iff_pointwise matchStep left right n
+
+/-- Full run matching is pointwise matching at every time index. -/
+example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpec p}
+    (matchStep : DynSystem.StepRel impl spec)
+    (left : DynSystem.Run impl) (right : DynSystem.Run spec) :
+    DynSystem.Run.Rel matchStep left right ↔
+      ∀ n, matchStep ⟨left.state n, left.dir n⟩ ⟨right.state n, right.dir n⟩ :=
+  DynSystem.Run.rel_iff_pointwise matchStep left right
+
+/-- The safety-refinement forwarding API has the same initial-state simp
+behavior as its underlying forward simulation. -/
+example {impl spec : DynSystem.SafetySpec.{u} p}
+    {matchStep : DynSystem.StepRel impl.toMachine.behavior spec.toMachine.behavior}
+    (sim : DynSystem.SafetyRefinement impl spec matchStep)
+    (run : DynSystem.Run impl.toMachine.behavior) {initialSpec : spec.State}
+    (hrel : sim.stateRel run.initial initialSpec) :
+    (sim.matchedState run hrel 0).1 = initialSpec ∧
+      (sim.mapRun run hrel).initial = initialSpec := by
+  simp
+
 /-- The same synchronized simulation lifts to safety refinement once the three
 verification-policy obligations are supplied. -/
 example (D : DynSystem S p) :

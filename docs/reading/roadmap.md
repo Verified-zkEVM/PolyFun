@@ -4,7 +4,8 @@ Living document: reading progress, formalization tickets keyed to the book,
 VCVio payoffs, publication trajectory, and an honest running assessment of
 whether the abstraction is earning its keep. Companions:
 `overview.md` (Ch 6–9 sketch-map), `spivak-niu-ch5.md` (R1 notes),
-`corrections.md` (announced-vs-actual ledger).
+`corrections.md` (announced-vs-actual ledger), and
+`composition-unification.md` (the two composition axes and bicomodule target).
 
 Book: `spivak-niu.pdf`, arXiv:2312.00990v2 (book page = PDF page − 12).
 Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
@@ -16,9 +17,9 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 | Ch 1–3 lens/chart calculus, monoidal ops | Deep (`PFunctor/{Basic,Equiv,Lens,Chart}`) |
 | Ch 4.1–4.4 dynamical systems, wiring | Deep (`PFunctor/Dynamical/*`, coalgebra core) |
 | Ch 4.5 ⊗-closure `[q,r]`, eval | **Done (A1)**: `ihom`/`eval`/`curry`/`curryEquiv`/`ihomSum` in `PFunctor/InternalHom.lean` (note: `exp` is the §5.3 cartesian exponential, not this) |
-| Ch 5 factorizations, adjunctions, (co)limits | **Done**: full vertical–cartesian factorization (A3, `Lens/Factorization.lean`), trivial-interface adjunction pack (A4, `Adjunctions.lean`), cartesian-closure equivalence `CartesianClosed.curryEquiv` (A2, `CartesianClosed.lean`); general (co)limits + A5 gluing open |
-| Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: direct composite-lens projections, `compNthMap`, δ/`twoStep` (A6/A7a/A7b), left-distributivity + `(6.65)` (A10, `Lens/Distributivity.lean`), ordering + duoidal interchange lens (A9, `Lens/Duoidal.lean`); coclosure/multiadjoint (A8) + duoidal coherence open |
-| Ch 7 comonoids = categories, retrofunctors | **Done (B1/B2/B3)**: `Comonoid` structure + `δ^(n)` (`PFunctor/Comonoid.lean`), state comonoid `Sy^S` + `IsStateSystem`, `Run_n`/`nStep` (`Dynamical/RunN.lean`), monad-parametric `runWith` + `seqComp` bind-law core + `IsSimulation` (`Dynamical/{IOMachine,Simulation}.lean`); retrofunctors + §7.3.3 quadruple (B4/B5) open |
+| Ch 5 factorizations, adjunctions, (co)limits | **Done**: vertical–cartesian factorization and orthogonality (A3), trivial-interface adjunctions plus binary tensor gluing (A4/A5), and cartesian closure (A2); general (co)limits remain open |
+| Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: direct composite-lens projections, `compNthMap`, δ/`twoStep`, full left Π-distributivity, ordering/interchange naturality and concrete duoidal coherence; coclosure/multiadjoint (A8) and the higher three-interchange diagram remain open |
+| Ch 7 comonoids = categories, retrofunctors | **Done (B1–B4 spine)**: `Comonoid`, `Comonoid.Hom`/`Cat♯`, state comonoids, `δ^(n)`, `Run_n`, and the `IOMachine` run/composition core; §7.3.3 quadruple (B5), all-bracketing canonicity, and representable-monoid equivalence remain open |
 | Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | Missing (raw material: `M p`, `M.corec`, `FreeM.Path`) |
 
 ## Reading units
@@ -112,9 +113,14 @@ Landed 2026-07-10 (build + `lake lint` + `lake test` green, no `sorry`):
   `toComp`; `toComp_seqComp_inr` (second phase faithful to `M₂`); the exact
   all-`some`-leaves characterization and additive `ResolvesIn` certificate
   algebra; the fuel-exact `runWith_seqComp_init` bind law;
-  `DynSystem.ReachableIn` (in `Dynamical/Run.lean`, via `Prefix.last`).
-  *Deferred (documented, not `sorry`):* the
-  `IsSimulation`/`Implements`-via-`behavior_unique` transfer.
+  semantic run identity and associativity laws; `DynSystem.ReachableIn` (in
+  `Dynamical/Run.lean`, via `Prefix.last`); and the
+  `IsSimulation`/`behavior_eq_of_isSimulation` transfer.
+  *Deferred (documented, not `sorry`):* general may-resolution, divergence,
+  and unbounded/coinductive execution should be introduced together with
+  adequacy lemmas. The existing closed deterministic
+  `exists_resolvesIn_iff_exists_iterate_output_isSome` is only that special
+  case, not the general termination vocabulary.
 
 The **honest split** confirmed in code: A7c gives the *structural and semantic*
 half of `IsPolyTime.bind`; the remaining half is the TM running-time bound
@@ -134,31 +140,36 @@ Landed 2026-07-10 (five parallel subagents; full `lake build` + `lake lint` +
   `Lens.curry`).
 - **A4 ✅** `PFunctor/Adjunctions.lean`: `homFromZero`/`homToOne`/`homFromX`/
   `homToConst`/`homToLinear` (trivial-interface hom-set `≃`s, Thm 5.4 family).
-  **A5 (⊗-gluing) deferred** — the exact Prop 5.49/5.50 statement wasn't
-  confirmable from the notes; noted, not stubbed.
+  **A5 ✅ (binary)** — Proposition 5.49 tensor gluing is stated directly using
+  two ordinary one-sided lenses plus equality of their position maps, with
+  `tensorGlueEquiv`; no duplicate view structure. Corollary 5.50's n-ary wide
+  pushout remains open.
 - **A8 partial ✅** `(6.65)` `homMonomialEquiv : Lens (monomial A B) p ≃ (A → p.Obj B)`
   landed in `Lens/Distributivity.lean`. The coclosure `⌈q\p⌉` + multiadjoint
   (6.78) remain open.
-- **A9 ✅** `Lens/Duoidal.lean`: `orderingLens` (+ `orderingLens_isCartesian`),
-  the four ⊗/◁ catalogue isos, and the full `duoidalLens` interchange (6.86).
-  Duoidal coherence (Prop 6.87) deferred by design.
+- **A9 ✅** `Lens/Duoidal.lean`: `orderingLens`, the four ⊗/◁ catalogue isos,
+  and `duoidalLens` (6.86), with cartesianness, full naturality, middle-four
+  compatibility, and both unit laws. Abstract packaging and the higher
+  three-interchange associativity diagram remain open.
 - **A10 ✅** `Lens/Distributivity.lean`: `scalarCompDistrib` (Ex 6.55),
-  lens-level `prodCompDistrib` (6.49), plus the Ex 6.56 right-distributivity
+  lens-level `prodCompDistrib` (6.49), Π-indexed `piCompDistrib` (6.51), plus the Ex 6.56 right-distributivity
   **failure** proved (`IsEmpty` of a position bijection). `(6.48)`/Σ-form reused
-  from pre-existing `sumCompDistrib`/`sigmaCompDistrib`. Π-form (6.51) open.
+  from pre-existing `sumCompDistrib`/`sigmaCompDistrib`.
 - **A1/A3 deferrals cleared ✅** in `InternalHom.lean` / `Lens/Factorization.lean`:
   `ihomSum` (full `≃ₗ`), `IsVertical`/`IsCartesian` closure under `+`/`×`/`⊗`,
   `IsCartesian.compMap` (Prop 6.88), and `equivOfVerticalCartesian` (the
   intersection = iso, via the existing `PFunctor.Equiv.toLensEquiv` bridge).
+  Vertical-left/cartesian-right orthogonality now has a canonical unique
+  `DiagonalFiller`, including both triangle equations.
 
 Two **math corrections to the plan** the agents caught (logged in
 `corrections.md`): `ihomSum`'s target is the categorical product `*`, not `⊗`
 (a Σ over a *sum* is a *coproduct* of sigmas); and the catalogue iso
 `By ⊗ p ≅ By ◃ p` needs `linear B`, not the constant `C B` (which is false).
 
-**Phase A remaining (open, lower urgency):** A5 (⊗-gluing), A8 coclosure +
-multiadjoint (6.78), general Ch 5 (co)limits/base-change,
-duoidal coherence (6.87), Π-distributivity (6.51). None block the VCVio
+**Phase A remaining (open, lower urgency):** A8 coclosure + multiadjoint (6.78),
+Cor 5.50 n-ary tensor gluing, general Ch 5 (co)limits/base-change, and the
+higher duoidal associativity diagram. None block the VCVio
 consumers; they are natural follow-ons or Phase B/C prerequisites.
 
 ### Phase B — comonoid layer (Ch 7) — API freeze after G0
@@ -190,17 +201,19 @@ consumers; they are natural follow-ons or Phase B/C prerequisites.
   (pp. 266–267): vwb ⟺ `get` is a product projection `T × U → T`.
   **Depends on A3**: Prop 7.109's proof runs through vertical–cartesian
   factorization.
-- **B6** `FreeM P` as ◁-monoid; handlers/`mapMHom` as monoid morphisms
+- **B6** `FreeM P` as ◁-monoid; handlers/`liftMHom` as monoid morphisms
   (universal property behind `simulateQ`).
 
 ### Phase B — implementation status (spine: B1 + B2 + B3 + IOMachine finish)
 
 Landed the K-L-prioritized machine spine (crypto-free):
 
-- **B1 done** — `PFunctor.Comonoid` (Def 7.14) as an à-la-carte structure with
+- **B1/B4 done** — `PFunctor.Comonoid` (Def 7.14) as an à-la-carte structure with
   counit/comult and the three lens laws through `compX`/`XComp`/`compAssoc`
-  (`PFunctor/Comonoid.lean`). The `MonoidalCategory (Poly, ◃, y)` bundle and a
-  `Comonoid.Hom` (retrofunctor) are deliberately deferred (B4).
+  (`PFunctor/Comonoid.lean`). `Comonoid.Hom` packages counit/comultiplication-
+  preserving retrofunctors with identity/composition, and the resulting
+  `Category Comonoid` is the concrete `Cat♯` boundary. A generic
+  `MonoidalCategory (Poly, ◃, y)` bundle is still intentionally unnecessary.
 - **B2 done** — `stateComonoid S` on `Sy^S` with `δ = fixState` and the stay-put
   counit; **all three comonoid laws are `rfl`** (discharges the laws
   `Speedup.lean` flagged unproved). `IsStateSystem` (Ex 7.22) as a predicate,
@@ -208,9 +221,9 @@ Landed the K-L-prioritized machine spine (crypto-free):
   defining equations; full canonicity (all bracketings agree) deferred.
   Representable `y^M ≃ monoid` (Ex 7.40) deferred.
 - **B3 done** — `DynSystem.nStep` = `Run_n` (`Dynamical/RunN.lean`), finishing
-  the `Speedup.lean` `nStep` deferral; **`twoStep_toLens_eq` (the `n = 2`
+  the `Speedup.lean` `nStep` deferral; **`nStep_two_eq_twoStep` (the `n = 2`
   coherence with the existing `twoStep`) is `rfl`**. The monad-parametric run
-  `IOMachine.runWith = FreeM.mapM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
+  `IOMachine.runWith = FreeM.liftM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
   shadow) and `runWith_of_output_eq_some` (fuel irrelevance, the
   `runK_eq_of_apply_none_eq_zero` shadow); the `Option`/fuel pays-rent instance
   is in `RunNExamples.lean`. The ω-limit `ωSup` stays downstream (SPMF ωCPO).
@@ -221,12 +234,15 @@ Landed the K-L-prioritized machine spine (crypto-free):
   summed-budget law true and compositional. Generic `IsSimulation` +
   `behavior_eq_of_isSimulation`
   (via `behavior_unique`/`M.corec_eq_corec`) in `Dynamical/Simulation.lean`;
-  the stutter-budget variant is deferred.
+  the stutter-budget variant is deferred. General may-resolution, divergence,
+  and unbounded/coinductive execution also remain a single future adequacy
+  layer; they should not be added as disconnected aliases of `ResolvesIn`.
 
 Full `lake build` + `lake lint` + `lake test` green with `--wfail`, no `sorry`.
-Open Phase B remnants (B4/B5 retrofunctors + §7.3.3 quadruple, B6 ◁-monoid,
-full Prop 7.20 canonicity, `runWith` = `toComp` at `m = FreeM`) are non-blocking
-follow-ons; B4/B5 arrive with the Phase C cofree layer.
+Open Phase B remnants (B5 §7.3.3 quadruple, B6 ◁-monoid, and full Prop 7.20
+canonicity) are non-blocking follow-ons; B5 arrives with the Phase C cofree
+layer. `runWith_liftA` already identifies `runWith` with `toComp` under the
+canonical `FreeM` interpretation.
 
 ### Phase C — cofree comonoid and adjunctions (Ch 8.1–8.2)
 
@@ -499,7 +515,7 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   `Dynamical/{RunN,Simulation}.lean`) + a `Machine.lean` extension + three
   `PolyFunTest/` files. Full `lake build` + `lake lint` + `lake test` green with
   `--wfail`, no `sorry`. Canaries all `rfl`: the state-comonoid laws,
-  `twoStep_toLens_eq` (`n = 2` coherence), and `runWith = mapM ∘ toComp`.
+  `nStep_two_eq_twoStep` (`n = 2` coherence), and `runWith = mapM ∘ toComp`.
   Finding: the naive unqualified fuel-additive `seqComp` bind law is **false**
   (fuel threads continuously through the handoff). The shipped `ResolvesIn`
   certificate algebra records exactly the missing totality hypothesis and gives
@@ -563,9 +579,9 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   from `runWith_run_succ_of_output_eq_none`; verdict to be recorded at
   VCVio landing.
 - 2026-07-11 (**B6**, fold universal property and monad-morphism naturality):
-  added `FreeM.mapMHom_unique`, `FreeM.mapM_natural`, and `mapMHom_comp`, plus
-  `StateT.mapHom` / `run_mapHom` and the composed `FreeM.run_mapM_mapHom` law.
-  The identity-handler laws `mapM_liftA_eq_self` and `mapMHom_liftA` complete
+  added `FreeM.liftMHom_unique`, `FreeM.liftM_natural`, and `liftMHom_comp`, plus
+  `StateT.mapHom` / `run_mapHom` and the composed `FreeM.run_liftM_mapHom` law.
+  The identity-handler laws `liftM_lift_eq_self` and `liftMHom_lift_eq_id` complete
   the basic universal-property API. Regression coverage lives in
   `PolyFunTest/PFunctor/FreeMapMNaturality.lean`. Downstream payoff to check:
   VCVio should be able to bundle `evalDist` as a monad hom and replace its

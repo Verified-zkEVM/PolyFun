@@ -26,14 +26,14 @@ continuation universally. That kills most realistic chains.
 
 This file lifts that restriction in the common case where every
 `P.src s a b` is independent of the response `b` — i.e. `P` has *deterministic
-transitions*. When that holds, an `IPFunctor.FreeM.liftA s a`-style step
+transitions*. When that holds, an `IPFunctor.FreeM.lift s a`-style step
 lands at a single concrete post-state `next s a`, and the continuation can
 be specialized to that state instead of left polymorphic. Chains like
 
 ```
 do
-  let _ ← IPFunctor.FreeM.liftA false ()   -- post-state: next false () = true
-  let n ← IPFunctor.FreeM.liftA true  ()   -- post-state: next true ()  = true
+  let _ ← IPFunctor.FreeM.lift false ()   -- post-state: next false () = true
+  let n ← IPFunctor.FreeM.lift true  ()   -- post-state: next true ()  = true
   pure n                                    -- at state true
 ```
 
@@ -48,16 +48,16 @@ Users must
   [`../Notation.lean`](../Notation.lean) for the roadmap on this
   transitional flag), and
 * provide an `IPFunctor.DeterministicTransitions P` instance, and
-* express each monadic step using `IPFunctor.FreeM.liftA` directly (or a
+* express each monadic step using `IPFunctor.FreeM.lift` directly (or a
   `@[reducible]` alias). Steps that don't reduce to
-  `IPFunctor.FreeM.liftA s a` fall through to the generic single-index
+  `IPFunctor.FreeM.lift s a` fall through to the generic single-index
   `IPFunctor.FreeM` elaborator, where they hit the usual
   polymorphic-continuation constraint.
 
 ## Limitations
 
 We only specialize *single-action* steps (those reducing to
-`IPFunctor.FreeM.liftA s a`). A step that is itself a multi-step
+`IPFunctor.FreeM.lift s a`). A step that is itself a multi-step
 `do`-block is *not* specialized — its internal leaves might genuinely
 diverge, and detecting "all leaves land at one state" by structural
 analysis would require an inductive proof we don't construct. Users who
@@ -85,7 +85,7 @@ matches exactly the same shapes the generic elaborator recognizes. -/
 
 /--
 Build `@IPFunctor.FreeM.bindLiftA` for a step that reduced to
-`FreeM.liftA s a`, followed by the continuation in `dec`. The
+`FreeM.lift s a`, followed by the continuation in `dec`. The
 continuation is elaborated at `FreeM P (next s a) β`, where `next s a`
 comes from the `DeterministicTransitions P` instance — no universal
 quantification, so subsequent steps can be state-specific.
@@ -113,7 +113,7 @@ meta def mkBindLiftA
       Term.ensureHasType (mkApp nextM β) bodyRaw
     let kLam ← mkLambdaFVars #[xFVar] body
     -- @bindLiftA.{uI,uA,uB,v} I P β det s a kLam — note `α` (the response type
-    -- of `liftA`) is implicit and inferred from `a`.
+    -- of `lift`) is implicit and inferred from `a`.
     return mkAppN (mkConst ``IPFunctor.FreeM.bindLiftA lvls)
       #[I, P, β, detInst, s, aShape, kLam]
 
@@ -124,19 +124,19 @@ delegated to the generic single-index elaborator in
 [`../Notation.lean`](../Notation.lean) (`elabFreeMLetArrow`), which
 recursively invokes `doElem` on `rhs` — and Lean's keyed-attribute
 priority then picks *this* file's `doExpr` first for
-`IPFunctor.FreeM.liftA`-style steps. So a single `doLetArrow` override at
+`IPFunctor.FreeM.lift`-style steps. So a single `doLetArrow` override at
 the bottom of the dispatch chain is enough; we just need a specialized
 `doExpr` that catches the deterministic-step shape before the generic
 one does. -/
 
 /--
 `doExpr` override for `FreeM P s` blocks where a `DeterministicTransitions P`
-instance is in scope *and* the step's RHS reduces to `FreeM.liftA s a`.
+instance is in scope *and* the step's RHS reduces to `FreeM.lift s a`.
 Specializes the continuation's pre-state to `det.next s a` so that the
 rest of the block can use state-specific operations.
 
 Falls through to the generic single-index `FreeM` elaborator if any
-condition fails (no instance, non-`liftA` shape, etc.).
+condition fails (no instance, non-`lift` shape, etc.).
 -/
 @[doElem_elab Lean.Parser.Term.doExpr]
 meta def elabFreeMDetExpr : DoElab := fun stx dec => do
@@ -151,26 +151,26 @@ meta def elabFreeMDetExpr : DoElab := fun stx dec => do
   let detInst ← try
     synthInstance detClass
   catch _ => throwUnsupportedSyntax
-  -- Elaborate the term, then whnf-reduce to detect a `liftA`-style action.
-  -- `liftA s a` is `@[reducible]`, so default-transparency `whnf` unfolds it to
-  --   `FreeM.roll s a (fun b => FreeM.pure (P.src s a b) b)`.
+  -- Elaborate the term, then whnf-reduce to detect a `lift`-style action.
+  -- `lift s a` is `@[reducible]`, so default-transparency `whnf` unfolds it to
+  --   `FreeM.liftBind s a (fun b => FreeM.pure (P.src s a b) b)`.
   -- We detect that shape and trust the inner `pure` to mean "this is a
   -- single-action step".
   let `(doExpr| $e:term) := stx | throwUnsupportedSyntax
   let mα ← mkMonadApp dec.resultType
   let eExpr ← Term.elabTermEnsuringType e mα
-  -- Reducible-transparency `whnf` so user-side `@[reducible]` aliases (`flip`, `liftA`, …)
-  -- unfold but the underlying plain-`def` `FreeM.roll` head survives for the check below.
+  -- Reducible-transparency `whnf` so user-side `@[reducible]` aliases (`flip`, `lift`, …)
+  -- unfold but the underlying plain-`def` `FreeM.liftBind` head survives for the check below.
   let eReduced ← Meta.withTransparency .reducible <| whnf eExpr
-  unless eReduced.getAppFn.isConstOf ``IPFunctor.FreeM.roll do
+  unless eReduced.getAppFn.isConstOf ``IPFunctor.FreeM.liftBind do
     throwUnsupportedSyntax
   let args := eReduced.getAppArgs
-  -- `@FreeM.roll {I} {P} {α} (s) (a) (r)` — 6 args after `getAppArgs`.
+  -- `@FreeM.liftBind {I} {P} {α} (s) (a) (r)` — 6 args after `getAppArgs`.
   unless args.size = 6 do throwUnsupportedSyntax
   let aShape := args[4]!
   let rFun := args[5]!
   -- `r` must be a single-step continuation: `fun b => FreeM.pure …`.
-  -- Anything else (e.g. a nested `roll`) is a multi-step tree we can't
+  -- Anything else (e.g. a nested `liftBind`) is a multi-step tree we can't
   -- safely specialize via `bindLiftA`.
   unless rFun.isLambda do throwUnsupportedSyntax
   unless rFun.bindingBody!.getAppFn.isConstOf ``IPFunctor.FreeM.pure do

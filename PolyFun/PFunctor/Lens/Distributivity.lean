@@ -14,7 +14,7 @@ This file collects the *left*-distributivity laws for the substitution product
 `◃` over the coproduct and product of polynomial functors, promoted to
 lens-equivalences `≃ₗ`, together with the representable-hom description of lenses
 out of a monomial. These are distributive laws of Spivak–Niu, *Polynomial
-Functors: A General Theory of Interaction*, Chapter 6.
+Functors: A Mathematical Theory of Interaction*, Chapter 6.
 
 Substitution distributes over the various operations *on the left* — that is,
 in the outer position of `p ◃ r` — because at the level of the underlying
@@ -25,6 +25,8 @@ products.
   as `PFunctor.Lens.Equiv.sumCompDistrib`.
 * **(6.50)** the `Σ`-indexed generalization `(Σ i, Fᵢ) ◃ r ≃ₗ Σ i, (Fᵢ ◃ r)` is
   `PFunctor.Lens.sigmaCompDistrib`.
+* **(6.51)** `(Π i, Fᵢ) ◃ r ≃ₗ Π i, (Fᵢ ◃ r)` is
+  `Lens.Equiv.piCompDistrib` below.
 * **(6.49)** `(p * q) ◃ r ≃ₗ (p ◃ r) * (q ◃ r)` is `Lens.Equiv.prodCompDistrib`
   below, obtained from the object-level `PFunctor.Equiv.prodCompDistrib`.
 * **Ex. 6.55** the scalar special case `(A · p) ◃ q ≃ₗ A · (p ◃ q)`, phrased via
@@ -45,10 +47,6 @@ forward position map is `A → p.A` and its backward direction map assigns to ea
 `a` a function `p.B (toFunA a) → B`, together packaging as an element of
 `p.Obj B = Σ x : p.A, (p.B x → B)`. This is `Lens.homMonomialEquiv`.
 
-## Future work
-
-The `Π`-indexed law `(Π i, Fᵢ) ◃ r ≃ₗ Π i, (Fᵢ ◃ r)` (Spivak–Niu (6.51)) is not
-yet formalized.
 -/
 
 @[expose] public section
@@ -99,6 +97,13 @@ namespace Equiv
 /-! ## Substitution over a product and a scalar (lens level) -/
 
 variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
+
+/-- **Spivak–Niu (6.51)**: `(Π i, F i) ◃ P ≃ₗ Π i, (F i ◃ P)`, obtained from
+the object-level indexed-product distributivity equivalence. -/
+def piCompDistrib {I : Type v} {F : I → PFunctor.{uA₁, uB₁}}
+    {P : PFunctor.{uA₂, uB₂}} :
+    Lens.Equiv (pi F ◃ P) (pi (fun i => F i ◃ P)) :=
+  PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.piCompDistrib F P)
 
 /-- **Spivak–Niu (6.49)**: `(P * Q) ◃ R ≃ₗ (P ◃ R) * (Q ◃ R)`, the
 lens-equivalence obtained from the object-level `PFunctor.Equiv.prodCompDistrib`. -/

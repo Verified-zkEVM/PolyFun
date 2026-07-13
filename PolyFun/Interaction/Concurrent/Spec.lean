@@ -101,7 +101,8 @@ theorem ofSequential_done : ofSequential Interaction.Spec.done = .done := rfl
 
 @[simp, grind =]
 theorem ofSequential_node (Moves : Type u) (rest : Moves → Interaction.Spec) :
-    ofSequential (.node Moves rest) = .node Moves (fun x => ofSequential (rest x)) := rfl
+    ofSequential (@PFunctor.FreeM.lift Interaction.Spec.basePFunctor Moves >>= rest) =
+      .node Moves (fun x => ofSequential (rest x)) := rfl
 
 @[simp, grind =]
 theorem isLive_done : isLive .done = false := rfl

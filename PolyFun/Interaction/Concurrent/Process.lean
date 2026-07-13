@@ -413,9 +413,9 @@ theorem mapContext_interleave
   refine ofStep_congr fun ⟨s₁, s₂⟩ => ?_
   dsimp only [ofStep, PFunctor.DynSystem.expose_mk', PFunctor.DynSystem.update_mk']
   congr 1
-  simp only [PFunctor.FreeM.Displayed.Decoration.map,
-    PFunctor.FreeM.Displayed.Decoration.mapLocalHom,
-    PFunctor.FreeM.Displayed.LocalHom.toHom_roll]
+  simp only [PFunctor.FreeM.liftBind_eq]
+  rw [PFunctor.FreeM.Displayed.Decoration.map_lift_bind]
+  dsimp only
   congr 1; funext ⟨b⟩
   cases b <;> dsimp
   · exact PFunctor.FreeM.Displayed.Decoration.map_comp

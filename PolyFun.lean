@@ -1,3 +1,4 @@
+import PolyFun.Control.Bisimulation
 import PolyFun.Control.Coalgebra
 import PolyFun.Control.Comonad.Basic
 import PolyFun.Control.Comonad.Instances
@@ -109,6 +110,7 @@ import PolyFun.PFunctor.Cofree
 import PolyFun.PFunctor.Comonoid
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
+import PolyFun.PFunctor.Dynamical.Bisimulation
 import PolyFun.PFunctor.Dynamical.Combinators
 import PolyFun.PFunctor.Dynamical.Game
 import PolyFun.PFunctor.Dynamical.IOMachine

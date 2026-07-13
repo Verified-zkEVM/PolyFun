@@ -15,7 +15,7 @@ infer.
 
 `Spec` is defined as `PFunctor.FreeM Spec.basePFunctor PUnit`, with
 `done` / `node` exposed as `@[match_pattern, reducible]` wrappers over
-`PFunctor.FreeM.{pure, roll}`. Pattern matching on `done` / `node` works
+`PFunctor.FreeM.{pure, liftBind}`. Pattern matching on `done` / `node` works
 transparently; `rfl` against the polynomial substrate also works. **Do
 not break either invariant when refactoring** the substrate or these
 wrappers.
@@ -55,9 +55,9 @@ formatting issue.
 `Spec`, `Decoration`, `Strategy`, and friends are `def` / `abbrev` /
 `@[reducible]` over `PFunctor.FreeM` machinery. Lean may unfold them
 aggressively. Use the canonical eliminators
-(`PFunctor.FreeM.construct` / `FreeM.inductionOn` and the
+(`PFunctor.FreeM.rec` / `FreeM.induction` and the
 `Decoration` / `Path` analogues) rather than pattern matching on
-`PFunctor.FreeM.pure` / `roll` directly.
+`PFunctor.FreeM.pure` / `liftBind` directly.
 
 ### 7. Universe polymorphism
 

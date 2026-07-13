@@ -45,7 +45,7 @@ whose node effects are described by a `MonadDecoration`.
 def constant (bm : BundledMonad.{u, u}) :
     (s : PFunctor.FreeM P α) → MonadDecoration.{u} s
   | .pure _ => PUnit.unit
-  | .roll _ rest => ⟨bm, fun b => constant bm (rest b)⟩
+  | .liftBind _ rest => ⟨bm, fun b => constant bm (rest b)⟩
 
 /--
 Nodewise monad homomorphism between two monad decorations on the same
@@ -59,7 +59,7 @@ def Hom :
     (s : PFunctor.FreeM P α) → MonadDecoration.{u} s →
       MonadDecoration.{u} s → Type (max uB (u + 1))
   | .pure _, _, _ => PUnit
-  | .roll pos rest, ⟨m₁, md₁⟩, ⟨m₂, md₂⟩ =>
+  | .liftBind pos rest, ⟨m₁, md₁⟩, ⟨m₂, md₂⟩ =>
       (∀ {α : Type u}, m₁.M α → m₂.M α) ×
         ((b : P.B pos) → Hom (rest b) (md₁ b) (md₂ b))
 
@@ -70,7 +70,7 @@ def id :
     (s : PFunctor.FreeM P α) → (md : MonadDecoration.{u} s) →
       Hom s md md
   | .pure _, _ => PUnit.unit
-  | .roll _ rest, ⟨_, mdRest⟩ =>
+  | .liftBind _ rest, ⟨_, mdRest⟩ =>
       ⟨fun x => x, fun b => id (rest b) (mdRest b)⟩
 
 /-- Constant homomorphism induced by a single monad lift. -/
@@ -79,7 +79,7 @@ def constant {bm₁ bm₂ : BundledMonad.{u, u}}
     (s : PFunctor.FreeM P α) →
       Hom s (MonadDecoration.constant bm₁ s) (MonadDecoration.constant bm₂ s)
   | .pure _ => PUnit.unit
-  | .roll _ rest => ⟨lift, fun b => constant lift (rest b)⟩
+  | .liftBind _ rest => ⟨lift, fun b => constant lift (rest b)⟩
 
 end Hom
 

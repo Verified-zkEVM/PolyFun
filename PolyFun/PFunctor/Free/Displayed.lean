@@ -70,18 +70,18 @@ polynomial structure.
 def Displayed (D : Displayed.Shape P α) :
     FreeM P α → Sort w
   | .pure x => D.leaf x
-  | .roll a rest => D.node a (fun b => Displayed D (rest b))
+  | .liftBind a rest => D.node a (fun b => Displayed D (rest b))
 
 namespace Displayed
 
 @[simp]
 theorem pure_eq (D : Shape P α) (x : α) :
-    Displayed D (FreeM.pure (P := P) x) = D.leaf x :=
+    Displayed D (pure x) = D.leaf x :=
   rfl
 
 @[simp]
-theorem roll_eq (D : Shape P α) (a : P.A) (rest : P.B a → FreeM P α) :
-    Displayed D (FreeM.roll a rest) =
+theorem lift_bind_eq (D : Shape P α) (a : P.A) (rest : P.B a → FreeM P α) :
+    Displayed D ((FreeM.lift a).bind rest) =
       D.node a (fun b => Displayed D (rest b)) :=
   rfl
 
@@ -114,7 +114,7 @@ which second-layer fiber is available at every node.
 def Over (E : OverShape D) :
     (s : FreeM P α) → Displayed D s → Sort w₂
   | .pure x, d => E.leaf x d
-  | .roll a rest, d =>
+  | .liftBind a rest, d =>
       E.node a (fun b => Displayed D (rest b))
         (fun b d => Over E (rest b) d) d
 
@@ -122,13 +122,13 @@ namespace Over
 
 @[simp]
 theorem pure_eq (E : OverShape D) (x : α) (d : D.leaf x) :
-    Over E (FreeM.pure (P := P) x) d = E.leaf x d :=
+    Over E (pure x) d = E.leaf x d :=
   rfl
 
 @[simp]
-theorem roll_eq (E : OverShape D) (a : P.A) (rest : P.B a → FreeM P α)
+theorem lift_bind_eq (E : OverShape D) (a : P.A) (rest : P.B a → FreeM P α)
     (d : D.node a (fun b => Displayed D (rest b))) :
-    Over E (FreeM.roll a rest) d =
+    Over E ((FreeM.lift a).bind rest) d =
       E.node a (fun b => Displayed D (rest b))
         (fun b d => Over E (rest b) d) d :=
   rfl
@@ -160,7 +160,7 @@ def ofConstruct
       D.node a child) :
     Section D
   | .pure x => leafSec x
-  | .roll a rest => nodeSec a _ (fun b => ofConstruct leafSec nodeSec (rest b))
+  | .liftBind a rest => nodeSec a _ (fun b => ofConstruct leafSec nodeSec (rest b))
 
 @[simp]
 theorem ofConstruct_pure
@@ -171,11 +171,11 @@ theorem ofConstruct_pure
       ((b : P.B a) → child b) →
       D.node a child)
     (x : α) :
-    ofConstruct leafSec nodeSec (FreeM.pure (P := P) x) = leafSec x :=
+    ofConstruct leafSec nodeSec (pure x) = leafSec x :=
   rfl
 
 @[simp]
-theorem ofConstruct_roll
+theorem ofConstruct_lift_bind
     (leafSec : (x : α) → D.leaf x)
     (nodeSec :
       (a : P.A) →
@@ -183,7 +183,7 @@ theorem ofConstruct_roll
       ((b : P.B a) → child b) →
       D.node a child)
     (a : P.A) (rest : P.B a → FreeM P α) :
-    ofConstruct leafSec nodeSec (FreeM.roll a rest) =
+    ofConstruct leafSec nodeSec ((FreeM.lift a).bind rest) =
       nodeSec a (fun b => Displayed D (rest b))
         (fun b => ofConstruct leafSec nodeSec (rest b)) :=
   rfl
@@ -282,7 +282,7 @@ namespace LocalHom
 def toHomFun (η : LocalHom D E) :
     (s : FreeM P α) → Displayed D s → Displayed E s
   | .pure x, d => η.mapLeaf x d
-  | .roll a rest, d =>
+  | .liftBind a rest, d =>
       η.mapChild a _ _ (fun b => toHomFun η (rest b)) d
 
 /-- Interpret a constructor-local morphism as a tree-indexed displayed morphism. -/
@@ -291,14 +291,14 @@ def toHom (η : LocalHom D E) : Hom D E where
 
 @[simp]
 theorem toHom_pure (η : LocalHom D E) (x : α) (d : D.leaf x) :
-    η.toHom (FreeM.pure (P := P) x) d = η.mapLeaf x d :=
+    η.toHom (pure x) d = η.mapLeaf x d :=
   rfl
 
 @[simp]
-theorem toHom_roll (η : LocalHom D E)
+theorem toHom_lift_bind (η : LocalHom D E)
     (a : P.A) (rest : P.B a → FreeM P α)
     (d : D.node a (fun b => Displayed D (rest b))) :
-    η.toHom (FreeM.roll a rest) d =
+    η.toHom ((FreeM.lift a).bind rest) d =
       η.mapChild a (fun b => Displayed D (rest b))
         (fun b => Displayed E (rest b))
         (fun b => η.toHom (rest b)) d :=
@@ -455,7 +455,7 @@ def toHomFun (η : FiberLocalHom R' S') :
     Over R' s d →
     Over S' s d
   | .pure x, d, r => η.mapLeaf x d r
-  | .roll a rest, d, r =>
+  | .liftBind a rest, d, r =>
       η.mapChild a (fun b => Displayed D (rest b))
         (fun b d => Over R' (rest b) d)
         (fun b d => Over S' (rest b) d)
@@ -468,16 +468,16 @@ def toHom (η : FiberLocalHom R' S') : Hom Displayed.Hom.id R' S' where
 @[simp]
 theorem toHom_pure (η : FiberLocalHom R' S') (x : α)
     (d : D.leaf x) (r : R'.leaf x d) :
-    η.toHom (FreeM.pure (P := P) x) d r = η.mapLeaf x d r :=
+    η.toHom (pure x) d r = η.mapLeaf x d r :=
   rfl
 
 @[simp]
-theorem toHom_roll (η : FiberLocalHom R' S')
+theorem toHom_lift_bind (η : FiberLocalHom R' S')
     (a : P.A) (rest : P.B a → FreeM P α)
     (d : D.node a (fun b => Displayed D (rest b)))
     (r : R'.node a (fun b => Displayed D (rest b))
       (fun b d => Over R' (rest b) d) d) :
-    η.toHom (FreeM.roll a rest) d r =
+    η.toHom ((FreeM.lift a).bind rest) d r =
       η.mapChild a (fun b => Displayed D (rest b))
         (fun b d => Over R' (rest b) d)
         (fun b d => Over S' (rest b) d)
@@ -527,7 +527,7 @@ def toHomFun
     Over R s d →
     Over S s (η.toHom s d)
   | .pure x, d, r => φ.mapLeaf x d r
-  | .roll a rest, d, r =>
+  | .liftBind a rest, d, r =>
       φ.mapChild a (fun b => Displayed D (rest b))
         (fun b => Displayed E (rest b))
         (fun b => η.toHom (rest b))
@@ -546,16 +546,16 @@ def toHom {η : Displayed.LocalHom D E} (φ : LocalHom η R S) :
 @[simp]
 theorem toHom_pure {η : Displayed.LocalHom D E} (φ : LocalHom η R S)
     (x : α) (d : D.leaf x) (r : R.leaf x d) :
-    φ.toHom (FreeM.pure (P := P) x) d r = φ.mapLeaf x d r :=
+    φ.toHom (pure x) d r = φ.mapLeaf x d r :=
   rfl
 
 @[simp]
-theorem toHom_roll {η : Displayed.LocalHom D E} (φ : LocalHom η R S)
+theorem toHom_lift_bind {η : Displayed.LocalHom D E} (φ : LocalHom η R S)
     (a : P.A) (rest : P.B a → FreeM P α)
     (d : D.node a (fun b => Displayed D (rest b)))
     (r : R.node a (fun b => Displayed D (rest b))
       (fun b d => Over R (rest b) d) d) :
-    φ.toHom (FreeM.roll a rest) d r =
+    φ.toHom ((FreeM.lift a).bind rest) d r =
       φ.mapChild a (fun b => Displayed D (rest b))
         (fun b => Displayed E (rest b))
         (fun b => η.toHom (rest b))

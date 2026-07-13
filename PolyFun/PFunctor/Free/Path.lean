@@ -96,35 +96,35 @@ branch choices, the tree and path together determine the terminal `pure`
 payload. -/
 def output : (s : FreeM P α) → Path s → α
   | .pure x, _ => x
-  | .roll _ rest, ⟨b, path⟩ => output (rest b) path
+  | .liftBind _ rest, ⟨b, path⟩ => output (rest b) path
 
 /-- The leaf payload selected by a runtime path along a lens. -/
 def outputAlong (l : Lens P Q) : (s : FreeM P α) → PathAlong l s → α
   | .pure x, _ => x
-  | .roll a rest, ⟨d, path⟩ => outputAlong l (rest (l.toFunB a d)) path
+  | .liftBind a rest, ⟨d, path⟩ => outputAlong l (rest (l.toFunB a d)) path
 
 @[simp]
 theorem outputAlong_pure (l : Lens P Q) (x : α)
     (path : PathAlong l (FreeM.pure x : FreeM P α)) :
-    outputAlong l (FreeM.pure x) path = x :=
+    outputAlong l (pure x) path = x :=
   rfl
 
 @[simp]
-theorem outputAlong_roll (l : Lens P Q) (a : P.A)
+theorem outputAlong_lift_bind (l : Lens P Q) (a : P.A)
     (rest : P.B a → FreeM P α)
     (d : Q.B (l.toFunA a)) (path : PathAlong l (rest (l.toFunB a d))) :
-    outputAlong l (FreeM.roll a rest) ⟨d, path⟩ =
+    outputAlong l ((FreeM.lift a).bind rest) ⟨d, path⟩ =
       outputAlong l (rest (l.toFunB a d)) path :=
   rfl
 
 @[simp]
 theorem output_pure (x : α) (path : Path (FreeM.pure (P := P) x)) :
-    output (FreeM.pure x) path = x := rfl
+    output (pure x) path = x := rfl
 
 @[simp]
-theorem output_roll (a : P.A) (rest : P.B a → FreeM P α)
+theorem output_lift_bind (a : P.A) (rest : P.B a → FreeM P α)
     (b : P.B a) (path : Path (rest b)) :
-    output (FreeM.roll a rest) ⟨b, path⟩ = output (rest b) path := rfl
+    output ((FreeM.lift a).bind rest) ⟨b, path⟩ = output (rest b) path := rfl
 
 /-- Constructor-local projection from runtime paths to control paths. -/
 def projectPathAlongLocalHom (l : Lens P Q) :
@@ -141,14 +141,14 @@ def projectPathAlong (l : Lens P Q) : (s : FreeM P α) → PathAlong l s → Pat
 @[simp]
 theorem projectPathAlong_pure (l : Lens P Q) (x : α)
     (path : PathAlong l (FreeM.pure x : FreeM P α)) :
-    projectPathAlong l (FreeM.pure x) path = ⟨⟩ :=
+    projectPathAlong l (pure x) path = ⟨⟩ :=
   rfl
 
 @[simp]
-theorem projectPathAlong_roll (l : Lens P Q) (a : P.A)
+theorem projectPathAlong_lift_bind (l : Lens P Q) (a : P.A)
     (rest : P.B a → FreeM P α)
-    (path : PathAlong l (FreeM.roll a rest)) :
-    projectPathAlong l (FreeM.roll a rest) path =
+    (path : PathAlong l (FreeM.liftBind a rest)) :
+    projectPathAlong l ((FreeM.lift a).bind rest) path =
       ⟨l.toFunB a path.1,
         projectPathAlong l (rest (l.toFunB a path.1)) path.2⟩ :=
   rfl
@@ -158,7 +158,7 @@ theorem output_projectPathAlong (l : Lens P Q) :
     (s : FreeM P α) → (path : PathAlong l s) →
       output s (projectPathAlong l s path) = outputAlong l s path
   | .pure _, _ => rfl
-  | .roll a rest, ⟨d, path⟩ =>
+  | .liftBind a rest, ⟨d, path⟩ =>
       output_projectPathAlong l (rest (l.toFunB a d)) path
 
 /-! ## Runtime paths and lens-mapped trees -/
@@ -173,20 +173,20 @@ the source tree while `Path (s.mapLens l)` is defined over the lens-mapped tree.
 def pathAlongToMapLensPath (l : Lens P Q) :
     (s : FreeM P α) → PathAlong l s → Path (s.mapLens l)
   | .pure _, _ => ⟨⟩
-  | .roll a rest, ⟨d, path⟩ =>
+  | .liftBind a rest, ⟨d, path⟩ =>
       ⟨d, pathAlongToMapLensPath l (rest (l.toFunB a d)) path⟩
 
 @[simp]
 theorem pathAlongToMapLensPath_pure (l : Lens P Q) (x : α)
     (path : PathAlong l (FreeM.pure x : FreeM P α)) :
-    pathAlongToMapLensPath l (FreeM.pure x) path = ⟨⟩ :=
+    pathAlongToMapLensPath l (pure x) path = ⟨⟩ :=
   rfl
 
 @[simp]
-theorem pathAlongToMapLensPath_roll (l : Lens P Q) (a : P.A)
+theorem pathAlongToMapLensPath_lift_bind (l : Lens P Q) (a : P.A)
     (rest : P.B a → FreeM P α)
     (d : Q.B (l.toFunA a)) (path : PathAlong l (rest (l.toFunB a d))) :
-    pathAlongToMapLensPath l (FreeM.roll a rest) ⟨d, path⟩ =
+    pathAlongToMapLensPath l ((FreeM.lift a).bind rest) ⟨d, path⟩ =
       ⟨d, pathAlongToMapLensPath l (rest (l.toFunB a d)) path⟩ :=
   rfl
 
@@ -200,21 +200,21 @@ This is the inverse constructor-by-constructor view of
 def mapLensPathToPathAlong (l : Lens P Q) :
     (s : FreeM P α) → Path (s.mapLens l) → PathAlong l s
   | .pure _, _ => ⟨⟩
-  | .roll a rest, ⟨d, path⟩ =>
+  | .liftBind a rest, ⟨d, path⟩ =>
       ⟨d, mapLensPathToPathAlong l (rest (l.toFunB a d)) path⟩
 
 @[simp]
 theorem mapLensPathToPathAlong_pure (l : Lens P Q) (x : α)
     (path : Path ((FreeM.pure x : FreeM P α).mapLens l)) :
-    mapLensPathToPathAlong l (FreeM.pure x) path = ⟨⟩ :=
+    mapLensPathToPathAlong l (pure x) path = ⟨⟩ :=
   rfl
 
 @[simp]
-theorem mapLensPathToPathAlong_roll (l : Lens P Q) (a : P.A)
+theorem mapLensPathToPathAlong_lift_bind (l : Lens P Q) (a : P.A)
     (rest : P.B a → FreeM P α)
     (d : Q.B (l.toFunA a))
     (path : Path ((rest (l.toFunB a d)).mapLens l)) :
-    mapLensPathToPathAlong l (FreeM.roll a rest) ⟨d, path⟩ =
+    mapLensPathToPathAlong l ((FreeM.lift a).bind rest) ⟨d, path⟩ =
       ⟨d, mapLensPathToPathAlong l (rest (l.toFunB a d)) path⟩ :=
   rfl
 
@@ -223,8 +223,8 @@ theorem mapLensPathToPathAlong_toMapLensPath (l : Lens P Q) :
     (s : FreeM P α) → (path : PathAlong l s) →
       mapLensPathToPathAlong l s (pathAlongToMapLensPath l s path) = path
   | .pure _, _ => rfl
-  | .roll a rest, ⟨d, path⟩ => by
-      simp [pathAlongToMapLensPath,
+  | .liftBind a rest, ⟨d, path⟩ => by
+      simp [pathAlongToMapLensPath, mapLensPathToPathAlong, -liftBind_eq,
         mapLensPathToPathAlong_toMapLensPath l (rest (l.toFunB a d)) path]
 
 @[simp]
@@ -232,8 +232,9 @@ theorem pathAlongToMapLensPath_toPathAlong (l : Lens P Q) :
     (s : FreeM P α) → (path : Path (s.mapLens l)) →
       pathAlongToMapLensPath l s (mapLensPathToPathAlong l s path) = path
   | .pure _, _ => rfl
-  | .roll a rest, ⟨d, path⟩ => by
-      simp [pathAlongToMapLensPath_toPathAlong l (rest (l.toFunB a d)) path]
+  | .liftBind a rest, ⟨d, path⟩ => by
+      simp [pathAlongToMapLensPath, mapLensPathToPathAlong, -liftBind_eq,
+        pathAlongToMapLensPath_toPathAlong l (rest (l.toFunB a d)) path]
 
 @[simp]
 theorem output_mapLens_pathAlongToMapLensPath (l : Lens P Q) :
@@ -241,7 +242,7 @@ theorem output_mapLens_pathAlongToMapLensPath (l : Lens P Q) :
       output (s.mapLens l) (pathAlongToMapLensPath l s path) =
         outputAlong l s path
   | .pure _, _ => rfl
-  | .roll a rest, ⟨d, path⟩ =>
+  | .liftBind a rest, ⟨d, path⟩ =>
       output_mapLens_pathAlongToMapLensPath l (rest (l.toFunB a d)) path
 
 @[simp]
@@ -250,7 +251,7 @@ theorem outputAlong_mapLensPathToPathAlong (l : Lens P Q) :
       outputAlong l s (mapLensPathToPathAlong l s path) =
         output (s.mapLens l) path
   | .pure _, _ => rfl
-  | .roll a rest, ⟨d, path⟩ =>
+  | .liftBind a rest, ⟨d, path⟩ =>
       outputAlong_mapLensPathToPathAlong l (rest (l.toFunB a d)) path
 
 /-- Dependent sequential composition for `FreeM` trees using canonical paths. -/
@@ -259,19 +260,33 @@ def append {β : Type t} :
     (Path s₁ → FreeM P β) →
     FreeM P β
   | .pure _, s₂ => s₂ ⟨⟩
-  | .roll a rest, s₂ =>
-      .roll a fun b => append (rest b) (fun path => s₂ ⟨b, path⟩)
+  | .liftBind a rest, s₂ =>
+      .liftBind a fun b => append (rest b) (fun path => s₂ ⟨b, path⟩)
 
 @[simp, freeM_unfold]
 theorem append_pure {β : Type t} (x : α)
     (s₂ : Path (FreeM.pure (P := P) x) → FreeM P β) :
-    append (FreeM.pure x) s₂ = s₂ ⟨⟩ := rfl
+    append (pure x) s₂ = s₂ ⟨⟩ := rfl
 
 @[simp, freeM_unfold]
-theorem append_roll {β : Type t} (a : P.A) (rest : P.B a → FreeM P α)
-    (s₂ : Path (FreeM.roll a rest) → FreeM P β) :
-    append (FreeM.roll a rest) s₂ =
-      FreeM.roll a (fun b => append (rest b) (fun path => s₂ ⟨b, path⟩)) := rfl
+theorem append_lift_bind {β : Type t} (a : P.A) (rest : P.B a → FreeM P α)
+    (s₂ : Path (FreeM.liftBind a rest) → FreeM P β) :
+    append ((FreeM.lift a).bind rest) s₂ =
+      FreeM.liftBind a (fun b => append (rest b) (fun path => s₂ ⟨b, path⟩)) := rfl
+
+/-- Grafting a continuation selected only by the leaf payload is ordinary
+free-monad bind. `append` is more general because its continuation may inspect
+the entire path; this theorem identifies their exact overlap. -/
+@[simp] theorem append_output_eq_bind {β : Type v} (s : FreeM P α)
+    (k : α → FreeM P β) :
+    append s (fun path => k (output s path)) = s >>= k := by
+  induction s with
+  | pure x => rfl
+  | lift_bind a rest ih =>
+      simp only [append_lift_bind, monad_bind_def, liftBind_bind]
+      apply congrArg (FreeM.liftBind a)
+      funext b
+      exact ih b
 
 namespace Path
 
@@ -284,7 +299,7 @@ def liftAppend {β : Type t} :
     ((path₁ : Path s₁) → Path (s₂ path₁) → Type w) →
     Path (FreeM.append s₁ s₂) → Type w
   | .pure _, _, F, path => F ⟨⟩ path
-  | .roll _ rest, s₂, F, ⟨b, path⟩ =>
+  | .liftBind _ rest, s₂, F, ⟨b, path⟩ =>
       liftAppend (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path
 
@@ -294,7 +309,7 @@ def append {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (path₁ : Path s₁) → Path (s₂ path₁) → Path (FreeM.append s₁ s₂)
   | .pure _, _, _, path₂ => path₂
-  | .roll _ rest, s₂, ⟨b, path₁⟩, path₂ =>
+  | .liftBind _ rest, s₂, ⟨b, path₁⟩, path₂ =>
       ⟨b, append (rest b) (fun path => s₂ ⟨b, path⟩) path₁ path₂⟩
 
 @[simp]
@@ -302,7 +317,7 @@ theorem append_done {β : Type t}
     (x : α)
     (s₂ : Path (FreeM.pure (P := P) x) → FreeM P β)
     (path₂ : Path (s₂ ⟨⟩)) :
-    append (FreeM.pure x) s₂ ⟨⟩ path₂ = path₂ :=
+    append (pure x) s₂ ⟨⟩ path₂ = path₂ :=
   rfl
 
 /-- Split a canonical path through an appended tree into prefix and suffix
@@ -311,7 +326,7 @@ def split {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     Path (FreeM.append s₁ s₂) → (path₁ : Path s₁) × Path (s₂ path₁)
   | .pure _, _, path => ⟨⟨⟩, path⟩
-  | .roll _ rest, s₂, ⟨b, path⟩ =>
+  | .liftBind _ rest, s₂, ⟨b, path⟩ =>
       let splitRest := split (rest b) (fun path₁ => s₂ ⟨b, path₁⟩) path
       ⟨⟨b, splitRest.1⟩, splitRest.2⟩
 
@@ -324,8 +339,8 @@ theorem liftAppend_append {β : Type t} :
     (path₁ : Path s₁) → (path₂ : Path (s₂ path₁)) →
     liftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂) = F path₁ path₂
   | .pure _, _, _, ⟨⟩, _ => rfl
-  | .roll _ rest, s₂, F, ⟨b, path₁⟩, path₂ => by
-      simpa [liftAppend, append] using
+  | .liftBind _ rest, s₂, F, ⟨b, path₁⟩, path₂ => by
+      simpa [liftAppend, append, -liftBind_eq] using
         liftAppend_append (rest b) (fun path => s₂ ⟨b, path⟩)
           (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path₁ path₂
 
@@ -336,7 +351,7 @@ theorem split_append {β : Type t} :
     (path₁ : Path s₁) → (path₂ : Path (s₂ path₁)) →
     split s₁ s₂ (append s₁ s₂ path₁ path₂) = ⟨path₁, path₂⟩
   | .pure _, _, ⟨⟩, _ => rfl
-  | .roll _ rest, s₂, ⟨b, path₁⟩, path₂ => by
+  | .liftBind _ rest, s₂, ⟨b, path₁⟩, path₂ => by
       simp only [append, split]
       rw [split_append]
 
@@ -349,7 +364,7 @@ theorem append_split {β : Type t} :
     let splitPath := split s₁ s₂ path
     append s₁ s₂ splitPath.1 splitPath.2 = path
   | .pure _, _, _ => rfl
-  | .roll _ rest, s₂, ⟨b, path⟩ => by
+  | .liftBind _ rest, s₂, ⟨b, path⟩ => by
       simp only [split, append]
       rw [append_split]
 
@@ -361,7 +376,7 @@ def packAppend {β : Type t} :
     (path₁ : Path s₁) → (path₂ : Path (s₂ path₁)) →
     F path₁ path₂ → liftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂)
   | .pure _, _, _, ⟨⟩, _, x => x
-  | .roll _ rest, s₂, F, ⟨b, path₁⟩, path₂, x =>
+  | .liftBind _ rest, s₂, F, ⟨b, path₁⟩, path₂, x =>
       packAppend (rest b) (fun path => s₂ ⟨b, path⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path₁ path₂ x
 
@@ -371,7 +386,7 @@ theorem packAppend_done {β : Type t}
     (s₂ : Path (FreeM.pure (P := P) x) → FreeM P β)
     (F : (path₁ : Path (FreeM.pure (P := P) x)) → Path (s₂ path₁) → Type w)
     (path₂ : Path (s₂ ⟨⟩)) (y : F ⟨⟩ path₂) :
-    packAppend (FreeM.pure x) s₂ F ⟨⟩ path₂ y = y :=
+    packAppend (pure x) s₂ F ⟨⟩ path₂ y = y :=
   rfl
 
 /-- Transport a value from the `liftAppend` family at an appended canonical path
@@ -382,7 +397,7 @@ def unpackAppend {β : Type t} :
     (path₁ : Path s₁) → (path₂ : Path (s₂ path₁)) →
     liftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂) → F path₁ path₂
   | .pure _, _, _, ⟨⟩, _, x => x
-  | .roll _ rest, s₂, F, ⟨b, path₁⟩, path₂, x =>
+  | .liftBind _ rest, s₂, F, ⟨b, path₁⟩, path₂, x =>
       unpackAppend (rest b) (fun path => s₂ ⟨b, path⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path₁ path₂ x
 
@@ -394,7 +409,7 @@ theorem liftAppend_congr {β : Type t} :
     (path : Path (FreeM.append s₁ s₂)) →
     liftAppend s₁ s₂ F path = liftAppend s₁ s₂ G path
   | .pure _, _, _, _, h, path => h ⟨⟩ path
-  | .roll _ rest, s₂, _, _, h, ⟨b, path⟩ =>
+  | .liftBind _ rest, s₂, _, _, h, ⟨b, path⟩ =>
       liftAppend_congr (rest b) (fun path₁ => s₂ ⟨b, path₁⟩) _ _
         (fun path₁ path₂ => h ⟨b, path₁⟩ path₂) path
 
@@ -405,7 +420,7 @@ theorem liftAppend_const {β : Type t} (γ : Type w) :
     (path : Path (FreeM.append s₁ s₂)) →
     liftAppend s₁ s₂ (fun _ _ => γ) path = γ
   | .pure _, _, _ => rfl
-  | .roll _ rest, s₂, ⟨b, path⟩ =>
+  | .liftBind _ rest, s₂, ⟨b, path⟩ =>
       liftAppend_const γ (rest b) (fun path₁ => s₂ ⟨b, path₁⟩) path
 
 /-- `liftAppend` can be reconstructed from the path pieces returned by `split`. -/
@@ -416,8 +431,8 @@ theorem liftAppend_split {β : Type t} :
     let splitPath := split s₁ s₂ path
     liftAppend s₁ s₂ F path = F splitPath.1 splitPath.2
   | .pure _, _, _, _ => rfl
-  | .roll _ rest, s₂, F, ⟨b, path⟩ => by
-      simpa [split, liftAppend] using
+  | .liftBind _ rest, s₂, F, ⟨b, path⟩ => by
+      simpa [split, liftAppend, -liftBind_eq] using
         liftAppend_split (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
           (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path
 
@@ -430,7 +445,7 @@ def unliftAppend {β : Type t} :
     let splitPath := split s₁ s₂ path
     F splitPath.1 splitPath.2
   | .pure _, _, _, _, x => x
-  | .roll _ rest, s₂, F, ⟨b, path⟩, x =>
+  | .liftBind _ rest, s₂, F, ⟨b, path⟩, x =>
       unliftAppend (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path x
 
@@ -442,7 +457,7 @@ theorem unpackAppend_packAppend {β : Type t} :
     (x : F path₁ path₂) →
     unpackAppend s₁ s₂ F path₁ path₂ (packAppend s₁ s₂ F path₁ path₂ x) = x
   | .pure _, _, _, ⟨⟩, _, _ => rfl
-  | .roll _ rest, s₂, F, ⟨b, path₁⟩, path₂, x =>
+  | .liftBind _ rest, s₂, F, ⟨b, path₁⟩, path₂, x =>
       unpackAppend_packAppend (rest b) (fun path => s₂ ⟨b, path⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path₁ path₂ x
 
@@ -454,7 +469,7 @@ theorem packAppend_unpackAppend {β : Type t} :
     (x : liftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂)) →
     packAppend s₁ s₂ F path₁ path₂ (unpackAppend s₁ s₂ F path₁ path₂ x) = x
   | .pure _, _, _, ⟨⟩, _, _ => rfl
-  | .roll _ rest, s₂, F, ⟨b, path₁⟩, path₂, x =>
+  | .liftBind _ rest, s₂, F, ⟨b, path₁⟩, path₂, x =>
       packAppend_unpackAppend (rest b) (fun path => s₂ ⟨b, path⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path₁ path₂ x
 
@@ -468,7 +483,7 @@ def collapseAppend {β : Type t} :
       (fun path₁ path₂ => F (append s₁ s₂ path₁ path₂)) path →
       F path
   | .pure _, _, _, _, x => x
-  | .roll _ rest, s₂, F, ⟨b, path⟩, x =>
+  | .liftBind _ rest, s₂, F, ⟨b, path⟩, x =>
       collapseAppend (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun tail => F ⟨b, tail⟩) path x
 
@@ -484,7 +499,7 @@ theorem collapseAppend_append {β : Type t} :
       unpackAppend s₁ s₂
         (fun path₁ path₂ => F (append s₁ s₂ path₁ path₂)) path₁ path₂ x
   | .pure _, _, _, ⟨⟩, _, _ => rfl
-  | .roll _ rest, s₂, F, ⟨b, path₁⟩, path₂, x => by
+  | .liftBind _ rest, s₂, F, ⟨b, path₁⟩, path₂, x => by
       simp only [collapseAppend, append, unpackAppend]
       exact collapseAppend_append (rest b) (fun path => s₂ ⟨b, path⟩)
         (fun tail => F ⟨b, tail⟩) path₁ path₂ x
@@ -497,7 +512,7 @@ def liftAppendProd {β : Type t} :
     liftAppend s₁ s₂ (fun path₁ path₂ => A path₁ path₂ × B path₁ path₂) path →
       liftAppend s₁ s₂ A path × liftAppend s₁ s₂ B path
   | .pure _, _, _, _, _, x => x
-  | .roll _ rest, s₂, A, B, ⟨b, path⟩, x =>
+  | .liftBind _ rest, s₂, A, B, ⟨b, path⟩, x =>
       liftAppendProd (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => A ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => B ⟨b, path₁⟩ path₂) path x
@@ -510,7 +525,7 @@ def liftAppendProdMk {β : Type t} :
     liftAppend s₁ s₂ A path × liftAppend s₁ s₂ B path →
       liftAppend s₁ s₂ (fun path₁ path₂ => A path₁ path₂ × B path₁ path₂) path
   | .pure _, _, _, _, _, x => x
-  | .roll _ rest, s₂, A, B, ⟨b, path⟩, x =>
+  | .liftBind _ rest, s₂, A, B, ⟨b, path⟩, x =>
       liftAppendProdMk (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => A ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => B ⟨b, path₁⟩ path₂) path x
@@ -523,7 +538,7 @@ theorem liftAppendProdMk_liftAppendProd {β : Type t} :
     (x : liftAppend s₁ s₂ (fun path₁ path₂ => A path₁ path₂ × B path₁ path₂) path) →
     liftAppendProdMk s₁ s₂ A B path (liftAppendProd s₁ s₂ A B path x) = x
   | .pure _, _, _, _, _, _ => rfl
-  | .roll _ rest, s₂, A, B, ⟨b, path⟩, x =>
+  | .liftBind _ rest, s₂, A, B, ⟨b, path⟩, x =>
       liftAppendProdMk_liftAppendProd (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => A ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => B ⟨b, path₁⟩ path₂) path x
@@ -536,7 +551,7 @@ theorem liftAppendProd_liftAppendProdMk {β : Type t} :
     (x : liftAppend s₁ s₂ A path × liftAppend s₁ s₂ B path) →
     liftAppendProd s₁ s₂ A B path (liftAppendProdMk s₁ s₂ A B path x) = x
   | .pure _, _, _, _, _, _ => rfl
-  | .roll _ rest, s₂, A, B, ⟨b, path⟩, x =>
+  | .liftBind _ rest, s₂, A, B, ⟨b, path⟩, x =>
       liftAppendProd_liftAppendProdMk (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => A ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => B ⟨b, path₁⟩ path₂) path x
@@ -551,7 +566,7 @@ theorem liftAppendProd_packAppend {β : Type t} :
       (packAppend s₁ s₂ (fun path₁ path₂ => A path₁ path₂ × B path₁ path₂) path₁ path₂ x) =
         (packAppend s₁ s₂ A path₁ path₂ x.1, packAppend s₁ s₂ B path₁ path₂ x.2)
   | .pure _, _, _, _, ⟨⟩, _, _ => rfl
-  | .roll _ rest, s₂, A, B, ⟨b, path₁⟩, path₂, x =>
+  | .liftBind _ rest, s₂, A, B, ⟨b, path₁⟩, path₂, x =>
       liftAppendProd_packAppend (rest b) (fun path => s₂ ⟨b, path⟩)
         (fun path₁ path₂ => A ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => B ⟨b, path₁⟩ path₂) path₁ path₂ x
@@ -573,9 +588,9 @@ theorem rel_unliftAppend_append {β : Type t} :
         (packAppend s₁ s₂ G path₁ path₂ y))
     = R path₁ path₂ x y
   | .pure _, _, _, _, _, ⟨⟩, _, _, _ => rfl
-  | .roll _ rest, s₂, F, G, R, ⟨b, path₁⟩, path₂, x, y => by
+  | .liftBind _ rest, s₂, F, G, R, ⟨b, path₁⟩, path₂, x, y => by
       change _ = R ⟨b, path₁⟩ path₂ x y
-      simpa [append, split, unliftAppend, liftAppend, packAppend] using
+      simpa [append, split, unliftAppend, liftAppend, packAppend, -liftBind_eq] using
         rel_unliftAppend_append (rest b) (fun path => s₂ ⟨b, path⟩)
           (fun path₁ path₂ => F ⟨b, path₁⟩ path₂)
           (fun path₁ path₂ => G ⟨b, path₁⟩ path₂)
@@ -592,7 +607,7 @@ def liftAppendRel {β : Type t} :
     liftAppend s₁ s₂ F path →
     liftAppend s₁ s₂ G path → Prop
   | .pure _, _, _, _, R, path, x, y => R ⟨⟩ path x y
-  | .roll _ rest, s₂, F, G, R, ⟨b, path⟩, x, y =>
+  | .liftBind _ rest, s₂, F, G, R, ⟨b, path⟩, x, y =>
       liftAppendRel (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => G ⟨b, path₁⟩ path₂)
@@ -613,7 +628,7 @@ theorem liftAppendRel_iff {β : Type t} :
         (unliftAppend s₁ s₂ F path x)
         (unliftAppend s₁ s₂ G path y)
   | .pure _, _, _, _, _, _, _, _ => Iff.rfl
-  | .roll _ rest, s₂, F, G, R, ⟨b, path⟩, x, y =>
+  | .liftBind _ rest, s₂, F, G, R, ⟨b, path⟩, x, y =>
       liftAppendRel_iff (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => G ⟨b, path₁⟩ path₂)
@@ -627,7 +642,7 @@ def liftAppendPred {β : Type t} :
     (path : Path (FreeM.append s₁ s₂)) →
     liftAppend s₁ s₂ F path → Prop
   | .pure _, _, _, Pred, path, x => Pred ⟨⟩ path x
-  | .roll _ rest, s₂, F, Pred, ⟨b, path⟩, x =>
+  | .liftBind _ rest, s₂, F, Pred, ⟨b, path⟩, x =>
       liftAppendPred (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => Pred ⟨b, path₁⟩ path₂) path x
@@ -643,7 +658,7 @@ theorem liftAppendPred_iff {β : Type t} :
       Pred (split s₁ s₂ path).1 (split s₁ s₂ path).2
         (unliftAppend s₁ s₂ F path x)
   | .pure _, _, _, _, _, _ => Iff.rfl
-  | .roll _ rest, s₂, F, Pred, ⟨b, path⟩, x =>
+  | .liftBind _ rest, s₂, F, Pred, ⟨b, path⟩, x =>
       liftAppendPred_iff (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => Pred ⟨b, path₁⟩ path₂) path x
@@ -664,7 +679,7 @@ def liftAppend {β : Type t} (l : Lens P Q) :
       PathAlong l (s₂ (projectPathAlong l s₁ path₁)) → Type w) →
     PathAlong l (FreeM.append s₁ s₂) → Type w
   | .pure _, _, F, path => F ⟨⟩ path
-  | .roll a rest, s₂, F, ⟨d, path⟩ =>
+  | .liftBind a rest, s₂, F, ⟨d, path⟩ =>
       liftAppend l (rest (l.toFunB a d))
         (fun path₁ => s₂ ⟨l.toFunB a d, path₁⟩)
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂)
@@ -678,7 +693,7 @@ def append {β : Type t} (l : Lens P Q) :
     PathAlong l (s₂ (projectPathAlong l s₁ path₁)) →
     PathAlong l (FreeM.append s₁ s₂)
   | .pure _, _, _, path₂ => path₂
-  | .roll a rest, s₂, ⟨d, path₁⟩, path₂ =>
+  | .liftBind a rest, s₂, ⟨d, path₁⟩, path₂ =>
       ⟨d, append l (rest (l.toFunB a d))
         (fun path => s₂ ⟨l.toFunB a d, path⟩)
         path₁ path₂⟩
@@ -691,7 +706,7 @@ def split {β : Type t} (l : Lens P Q) :
     (path₁ : PathAlong l s₁) ×
       PathAlong l (s₂ (projectPathAlong l s₁ path₁))
   | .pure _, _, path => ⟨⟨⟩, path⟩
-  | .roll a rest, s₂, ⟨d, path⟩ =>
+  | .liftBind a rest, s₂, ⟨d, path⟩ =>
       let splitRest :=
         split l (rest (l.toFunB a d))
           (fun path₁ => s₂ ⟨l.toFunB a d, path₁⟩)
@@ -709,8 +724,8 @@ theorem liftAppend_append {β : Type t} (l : Lens P Q) :
     (path₂ : PathAlong l (s₂ (projectPathAlong l s₁ path₁))) →
     liftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂) = F path₁ path₂
   | .pure _, _, _, ⟨⟩, _ => rfl
-  | .roll a rest, s₂, F, ⟨d, path₁⟩, path₂ => by
-      simpa [liftAppend, append] using
+  | .liftBind a rest, s₂, F, ⟨d, path₁⟩, path₂ => by
+      simpa [liftAppend, append, -liftBind_eq] using
         liftAppend_append l (rest (l.toFunB a d))
           (fun path => s₂ ⟨l.toFunB a d, path⟩)
           (fun path₁ path₂ => F ⟨d, path₁⟩ path₂)
@@ -724,7 +739,7 @@ theorem split_append {β : Type t} (l : Lens P Q) :
     (path₂ : PathAlong l (s₂ (projectPathAlong l s₁ path₁))) →
     split l s₁ s₂ (append l s₁ s₂ path₁ path₂) = ⟨path₁, path₂⟩
   | .pure _, _, ⟨⟩, _ => rfl
-  | .roll a rest, s₂, ⟨d, path₁⟩, path₂ => by
+  | .liftBind a rest, s₂, ⟨d, path₁⟩, path₂ => by
       simp only [append, split]
       rw [split_append]
 
@@ -736,7 +751,7 @@ theorem append_split {β : Type t} (l : Lens P Q) :
     let splitPath := split l s₁ s₂ path
     append l s₁ s₂ splitPath.1 splitPath.2 = path
   | .pure _, _, _ => rfl
-  | .roll a rest, s₂, ⟨d, path⟩ => by
+  | .liftBind a rest, s₂, ⟨d, path⟩ => by
       simp only [split, append]
       rw [append_split]
 
@@ -751,7 +766,7 @@ def packAppend {β : Type t} (l : Lens P Q) :
     (path₂ : PathAlong l (s₂ (projectPathAlong l s₁ path₁))) →
     F path₁ path₂ → liftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂)
   | .pure _, _, _, ⟨⟩, _, x => x
-  | .roll a rest, s₂, F, ⟨d, path₁⟩, path₂, x =>
+  | .liftBind a rest, s₂, F, ⟨d, path₁⟩, path₂, x =>
       packAppend l (rest (l.toFunB a d))
         (fun path => s₂ ⟨l.toFunB a d, path⟩)
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂)
@@ -767,7 +782,7 @@ def unpackAppend {β : Type t} (l : Lens P Q) :
     (path₂ : PathAlong l (s₂ (projectPathAlong l s₁ path₁))) →
     liftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂) → F path₁ path₂
   | .pure _, _, _, ⟨⟩, _, x => x
-  | .roll a rest, s₂, F, ⟨d, path₁⟩, path₂, x =>
+  | .liftBind a rest, s₂, F, ⟨d, path₁⟩, path₂, x =>
       unpackAppend l (rest (l.toFunB a d))
         (fun path => s₂ ⟨l.toFunB a d, path⟩)
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂)
@@ -782,8 +797,8 @@ theorem liftAppend_split {β : Type t} (l : Lens P Q) :
     let splitPath := split l s₁ s₂ path
     liftAppend l s₁ s₂ F path = F splitPath.1 splitPath.2
   | .pure _, _, _, _ => rfl
-  | .roll a rest, s₂, F, ⟨d, path⟩ => by
-      simpa [split, liftAppend] using
+  | .liftBind a rest, s₂, F, ⟨d, path⟩ => by
+      simpa [split, liftAppend, -liftBind_eq] using
         liftAppend_split l (rest (l.toFunB a d))
           (fun path₁ => s₂ ⟨l.toFunB a d, path₁⟩)
           (fun path₁ path₂ => F ⟨d, path₁⟩ path₂) path
@@ -798,7 +813,7 @@ def unliftAppend {β : Type t} (l : Lens P Q) :
     let splitPath := split l s₁ s₂ path
     F splitPath.1 splitPath.2
   | .pure _, _, _, _, x => x
-  | .roll a rest, s₂, F, ⟨d, path⟩, x =>
+  | .liftBind a rest, s₂, F, ⟨d, path⟩, x =>
       unliftAppend l (rest (l.toFunB a d))
         (fun path₁ => s₂ ⟨l.toFunB a d, path₁⟩)
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂) path x
@@ -813,7 +828,7 @@ theorem unpackAppend_packAppend {β : Type t} (l : Lens P Q) :
     (x : F path₁ path₂) →
     unpackAppend l s₁ s₂ F path₁ path₂ (packAppend l s₁ s₂ F path₁ path₂ x) = x
   | .pure _, _, _, ⟨⟩, _, _ => rfl
-  | .roll a rest, s₂, F, ⟨d, path₁⟩, path₂, x =>
+  | .liftBind a rest, s₂, F, ⟨d, path₁⟩, path₂, x =>
       unpackAppend_packAppend l (rest (l.toFunB a d))
         (fun path => s₂ ⟨l.toFunB a d, path⟩)
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂) path₁ path₂ x
@@ -828,7 +843,7 @@ theorem packAppend_unpackAppend {β : Type t} (l : Lens P Q) :
     (x : liftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂)) →
     packAppend l s₁ s₂ F path₁ path₂ (unpackAppend l s₁ s₂ F path₁ path₂ x) = x
   | .pure _, _, _, ⟨⟩, _, _ => rfl
-  | .roll a rest, s₂, F, ⟨d, path₁⟩, path₂, x =>
+  | .liftBind a rest, s₂, F, ⟨d, path₁⟩, path₂, x =>
       packAppend_unpackAppend l (rest (l.toFunB a d))
         (fun path => s₂ ⟨l.toFunB a d, path⟩)
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂) path₁ path₂ x
@@ -843,14 +858,14 @@ theorem projectPathAlong_append {β : Type t} (l : Lens P Q) :
       Path.append s₁ s₂ (projectPathAlong l s₁ path₁)
         (projectPathAlong l (s₂ (projectPathAlong l s₁ path₁)) path₂)
   | .pure _, _, ⟨⟩, _ => rfl
-  | .roll a rest, s₂, ⟨d, path₁⟩, path₂ => by
+  | .liftBind a rest, s₂, ⟨d, path₁⟩, path₂ => by
       change
         (⟨l.toFunB a d,
           projectPathAlong l (FreeM.append (rest (l.toFunB a d))
             (fun path => s₂ ⟨l.toFunB a d, path⟩))
             (append l (rest (l.toFunB a d))
               (fun path => s₂ ⟨l.toFunB a d, path⟩) path₁ path₂)⟩ :
-          Path (FreeM.append (FreeM.roll a rest) s₂)) =
+          Path (FreeM.append (FreeM.liftBind a rest) s₂)) =
         (⟨l.toFunB a d,
           Path.append (rest (l.toFunB a d))
             (fun path => s₂ ⟨l.toFunB a d, path⟩)
@@ -858,12 +873,12 @@ theorem projectPathAlong_append {β : Type t} (l : Lens P Q) :
             (projectPathAlong l
               (s₂ ⟨l.toFunB a d, projectPathAlong l (rest (l.toFunB a d)) path₁⟩)
               path₂)⟩ :
-          Path (FreeM.append (FreeM.roll a rest) s₂))
+          Path (FreeM.append (FreeM.liftBind a rest) s₂))
       exact congrArg
         (fun path : Path (FreeM.append (rest (l.toFunB a d))
             (fun path => s₂ ⟨l.toFunB a d, path⟩)) =>
           (⟨l.toFunB a d, path⟩ :
-            Path (FreeM.append (FreeM.roll a rest) s₂)))
+            Path (FreeM.append (FreeM.liftBind a rest) s₂)))
         (projectPathAlong_append l (rest (l.toFunB a d))
           (fun path => s₂ ⟨l.toFunB a d, path⟩) path₁ path₂)
 

@@ -12,7 +12,7 @@ public import PolyFun.PFunctor.Basic
 
 A `PFunctor.Handler m q` chooses a direction of `q` at each position, with the
 choice interpreted in the type constructor `m`. This is the generic interface
-consumed by `FreeM.mapM`; it does not depend on machines or dynamical systems.
+consumed by `FreeM.liftM`; it does not depend on machines or dynamical systems.
 In particular, taking `m := StateT σ n` threads one shared runtime state through
 every handled position. That ambient state is distinct from a dynamical
 system's private operational state.
