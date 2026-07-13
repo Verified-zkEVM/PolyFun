@@ -335,11 +335,11 @@ a `Section p`, the position map is trivial and the direction map is `σ`. -/
 def sectionLens {p : PFunctor.{uA, uB}} (σ : (a : p.A) → p.B a) : Section p :=
   Lens.toLinear (fun _ => PUnit.unit) σ
 
+set_option linter.checkUnivs false in
 /-- A **closed** dynamical system on states `S` is an `X`-system: its interface is
 the composition unit, so the dynamics reduce to a pure state endofunction. -/
 -- `Closed`'s universes are the composition-unit interface's independent position (`uA`) and
 -- direction (`uB`) universes; kept separate for generality.
-@[nolint checkUnivs]
 abbrev Closed (S : Type u) : Type _ := DynSystem S X.{uA, uB}
 
 namespace Closed

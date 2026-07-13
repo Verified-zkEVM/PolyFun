@@ -854,6 +854,7 @@ def interleave {m : Type w → Type w'} {Party : Type u} {Δ₁ Δ₂ Δ : PortB
 
 end OpenProcess
 
+set_option linter.checkUnivs false in
 /--
 `OpenProcess.SafetySpec` augments an open process by the standard verification
 predicates used throughout PolyFun. The verification predicates are about
@@ -862,7 +863,6 @@ sampler-agnostic and refers to the underlying `ProcessOver.SafetySpec`.
 -/
 -- `OpenProcess.SafetySpec`'s two universes are the independent party universe (`u`) and the
 -- move-space universe (`w`) of the open node context; kept separate for generality.
-@[nolint checkUnivs]
 abbrev OpenProcess.SafetySpec (Party : Type u) (Δ : PortBoundary) :=
   ProcessOver.SafetySpec (OpenNodeContext.{u, w} Party Δ)
 

@@ -641,13 +641,13 @@ abbrev inter
 
 end TranscriptRel
 
+set_option linter.checkUnivs false in
 /--
 `ProcessOver.Labeled` is a process equipped with a stable external event label
 for each complete step transcript: the dynamical-system `Labeled` bundle at the
 step polynomial. The underlying process is `Labeled.toProcess`.
 -/
 -- The process state/message universes and the event-label universe are independent.
-@[nolint checkUnivs]
 abbrev Labeled (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
   PFunctor.DynSystem.Labeled.{v} (StepOver.toPFunctor Γ)
 
@@ -656,6 +656,7 @@ abbrev Labeled.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     (labeled : Labeled Γ) : ProcessOver labeled.State Γ :=
   labeled.toDynSystem
 
+set_option linter.checkUnivs false in
 /--
 `ProcessOver.Ticketed` is a process equipped with a stable ticket for each
 complete step transcript: the dynamical-system `Ticketed` bundle at the step
@@ -665,7 +666,6 @@ These tickets are the obligation identifiers used by the fairness and liveness
 layers.
 -/
 -- The process state/message universes and the ticket universe are independent.
-@[nolint checkUnivs]
 abbrev Ticketed (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
   PFunctor.DynSystem.Ticketed.{v} (StepOver.toPFunctor Γ)
 
@@ -803,6 +803,7 @@ abbrev currentController? {Party : Type u} {P : Type v}
 
 end StepOver
 
+set_option linter.checkUnivs false in
 /--
 The closed-world specialization of `ProcessOver`, with residual state space
 `P`.
@@ -811,7 +812,6 @@ This is the process type consumed by the current execution, run, observation,
 refinement, fairness, and liveness layers.
 -/
 -- The `Party` universe and the process's state/message universes are independent.
-@[nolint checkUnivs]
 abbrev Process (P : Type v) (Party : Type u) :=
   ProcessOver P (StepContext Party)
 
@@ -838,15 +838,16 @@ abbrev TranscriptRel {P₁ P₂ : Type v} {Party : Type u}
     (left : Process P₁ Party) (right : Process P₂ Party) :=
   ProcessOver.TranscriptRel left right
 
+set_option linter.checkUnivs false in
 /--
 `Process.Labeled` is a closed-world process together with a stable event label
 for each complete step transcript.
 -/
 -- The `Party` universe and the event/process universes are independent.
-@[nolint checkUnivs]
 abbrev Labeled (Party : Type u) :=
   ProcessOver.Labeled (StepContext Party)
 
+set_option linter.checkUnivs false in
 /--
 `Process.Ticketed` is a closed-world process together with a stable ticket for
 each complete step transcript.
@@ -855,10 +856,10 @@ These tickets are the obligation identifiers used later by the fairness and
 liveness layers.
 -/
 -- The `Party` universe and the ticket/process universes are independent.
-@[nolint checkUnivs]
 abbrev Ticketed (Party : Type u) :=
   ProcessOver.Ticketed (StepContext Party)
 
+set_option linter.checkUnivs false in
 /--
 `Process.SafetySpec` is a closed-world process-level safety-verification
 problem.
@@ -874,7 +875,6 @@ This keeps the semantic object and the proof obligations separate while still
 bundling them in one place for refinement and liveness statements.
 -/
 -- The `Party` universe and the process's state/message universes are independent.
-@[nolint checkUnivs]
 abbrev SafetySpec (Party : Type u) :=
   ProcessOver.SafetySpec (StepContext Party)
 

@@ -58,6 +58,7 @@ namespace Interaction
 namespace Spec
 namespace Node
 
+set_option linter.checkUnivs false in
 /--
 `Context` is the realized family of node-local information.
 
@@ -69,7 +70,6 @@ Contexts may be written directly, or assembled in stages via `Node.Schema`.
 -/
 -- `u` (the move-space universe) and `v` (the metadata universe) are independent
 -- components of a node context and are deliberately kept separate.
-@[nolint checkUnivs]
 abbrev Context := Type u → Type v
 
 /--

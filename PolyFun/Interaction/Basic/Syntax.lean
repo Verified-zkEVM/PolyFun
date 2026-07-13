@@ -125,6 +125,7 @@ namespace Spec
 variable {Agent : Type a}
 variable {Γ : Node.Context.{u, vΓ}}
 
+set_option linter.checkUnivs false in
 /--
 `Syntax Agent` is the specialization of generic `SyntaxOver` to plain `Spec`
 trees with no node-local context.
@@ -134,7 +135,6 @@ all.
 -/
 -- `Syntax`'s universes are the independent agent universe and the `Spec` position / node-context
 -- metadata universes of the underlying `SyntaxOver`; kept separate for generality.
-@[nolint checkUnivs]
 abbrev Syntax
     (Agent : Type a) :=
   SyntaxOver (PFunctor.Lens.id Spec.basePFunctor) Agent Node.Context.empty

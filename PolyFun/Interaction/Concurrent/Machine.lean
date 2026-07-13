@@ -42,6 +42,7 @@ universe u v
 namespace Interaction
 namespace Concurrent
 
+set_option linter.checkUnivs false in
 /--
 `Machine S` is the minimal state-indexed presentation of a concurrent system
 with residual states `S`: a dynamical system over the universe polynomial. At
@@ -56,7 +57,6 @@ added by the generic `PFunctor.DynSystem` layers (`DynSystem.Labeled`,
 semantics stays small and reusable.
 -/
 -- The state universe (`v`) and the enabled-event universe (`u`) are independent.
-@[nolint checkUnivs]
 abbrev Machine (S : Type v) := PFunctor.DynSystem S PFunctor.univ.{u}
 
 namespace Machine
@@ -86,12 +86,12 @@ def mk' (State : Type v) (Enabled : State → Type u)
     (step : (σ : State) → Enabled σ → State) :
     (mk' State Enabled step).step = step := rfl
 
+set_option linter.checkUnivs false in
 /--
 `Machine.SafetySpec` is a machine-level safety-verification problem: dynamics,
 initial states, ambient assumptions, and the safety predicate.
 -/
 -- The machine's state universe (`v`) and event universe (`u`) are independent.
-@[nolint checkUnivs]
 abbrev SafetySpec := PFunctor.DynSystem.SafetySpec.{v} PFunctor.univ.{u}
 
 /--

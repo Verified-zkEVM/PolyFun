@@ -51,6 +51,7 @@ namespace PFunctor
 
 /-! ## The comonoid structure -/
 
+set_option linter.checkUnivs false in
 /-- A **comonoid** in the composition-monoidal category `(Poly, ◃, y)`
 (Spivak–Niu Def 7.14): a carrier `c`, a counit `ε : c ⇆ y`, and a
 comultiplication `δ : c ⇆ c ◃ c` satisfying left/right counitality and
@@ -58,7 +59,6 @@ coassociativity as lens equations (through the unitors `XComp` / `compX` and the
 associator `compAssoc`). This is the polynomial encoding of a small category. -/
 -- The carrier's position and direction universes are independent; `checkUnivs`
 -- sees only their joint contribution to the structure's resulting sort.
-@[nolint checkUnivs]
 structure Comonoid where
   /-- The carrier polynomial (the "objects and morphisms"). -/
   carrier : PFunctor.{uA, uB}
