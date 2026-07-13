@@ -86,7 +86,7 @@ def proto : IPFunctor.Endo Phase where
 /-- Transitions are independent of the response, so `proto` has
 deterministic transitions. The class instance lets the
 [`Notation/Deterministic.lean`](Notation/Deterministic.lean) `do`-elaborator
-specialize `liftA`-style steps to a concrete post-state. -/
+specialize `lift`-style steps to a concrete post-state. -/
 instance : IPFunctor.DeterministicTransitions proto where
   next
     | .opn, _      => .counting
@@ -104,11 +104,11 @@ namespace TwoIndex
 
 /-- `init` as a `FreeM₂` step: pre-state `opn`, post-state `counting`. -/
 def init : IPFunctor.FreeM₂ proto .opn .counting Unit :=
-  IPFunctor.FreeM₂.roll () (fun _ => IPFunctor.FreeM₂.pure ())
+  IPFunctor.FreeM₂.liftBind () (fun _ => IPFunctor.FreeM₂.pure ())
 
 /-- `tick` as a `FreeM₂` step: stays at `counting`, returns a `Nat`. -/
 def tick : IPFunctor.FreeM₂ proto .counting .counting Nat :=
-  IPFunctor.FreeM₂.roll () (fun n => IPFunctor.FreeM₂.pure n)
+  IPFunctor.FreeM₂.liftBind () (fun n => IPFunctor.FreeM₂.pure n)
 
 /-- A three-step protocol run: one `init` then two `tick`s, summing the
 responses. The intermediate post-state after `init` is `counting`, which
@@ -120,12 +120,12 @@ def run : IPFunctor.FreeM₂ proto .opn .counting Nat := do
   let b ← tick
   pure (a + b)
 
-/-- The run unfolds to a transparent nested `roll` tree, exercising the
+/-- The run unfolds to a transparent nested `liftBind` tree, exercising the
 `FreeM₂.bind` simp lemmas. -/
 example :
-    run = IPFunctor.FreeM₂.roll () (fun _ =>
-      IPFunctor.FreeM₂.roll () (fun a : Nat =>
-        IPFunctor.FreeM₂.roll () (fun b : Nat =>
+    run = IPFunctor.FreeM₂.liftBind () (fun _ =>
+      IPFunctor.FreeM₂.liftBind () (fun a : Nat =>
+        IPFunctor.FreeM₂.liftBind () (fun b : Nat =>
           IPFunctor.FreeM₂.pure (a + b)))) := rfl
 
 end TwoIndex
@@ -133,27 +133,27 @@ end TwoIndex
 /-! ## Flavor 2: single-index `IPFunctor.FreeM` under `DeterministicTransitions`
 
 When transitions are deterministic, a single-index `IPFunctor.FreeM` chain
-can still compose arbitrarily because each `IPFunctor.FreeM.liftA s a`
+can still compose arbitrarily because each `IPFunctor.FreeM.lift s a`
 lands at the unique post-state `det.next s a`. The
 [`Notation/Deterministic.lean`](Notation/Deterministic.lean) elaborator
-detects the `IPFunctor.FreeM.liftA`-shape and uses the specialized
+detects the `IPFunctor.FreeM.lift`-shape and uses the specialized
 `IPFunctor.FreeM.bindLiftA` to thread that concrete post-state, lifting the
 universal-quantification restriction that bites generic single-index
 `do`-blocks. -/
 
 namespace Deterministic
 
-/-- `init` as a `FreeM` `liftA`-style step. Marked `@[reducible]` so the
-deterministic elaborator can see through it to the underlying `liftA`.
-`liftA`'s state argument is explicit, so we use the fully-qualified
+/-- `init` as a `FreeM` `lift`-style step. Marked `@[reducible]` so the
+deterministic elaborator can see through it to the underlying `lift`.
+`lift`'s state argument is explicit, so we use the fully-qualified
 `Phase.opn` rather than the dotted form, which has no type to infer
 from at that position. -/
 @[reducible] def init : IPFunctor.FreeM proto Phase.opn Unit :=
-  IPFunctor.FreeM.liftA Phase.opn ()
+  IPFunctor.FreeM.lift Phase.opn ()
 
-/-- `tick` as a `FreeM` `liftA`-style step. -/
+/-- `tick` as a `FreeM` `lift`-style step. -/
 @[reducible] def tick : IPFunctor.FreeM proto Phase.counting Nat :=
-  IPFunctor.FreeM.liftA Phase.counting ()
+  IPFunctor.FreeM.lift Phase.counting ()
 
 /-- The same three-step protocol run, this time as a single-index `FreeM`.
 With `DeterministicTransitions proto` in scope, each step's post-state is
@@ -165,15 +165,15 @@ def run : IPFunctor.FreeM proto .opn Nat := do
   let b ← tick
   pure (a + b)
 
-/-- The deterministic elaborator emits a nested `roll` chain whose post-states
+/-- The deterministic elaborator emits a nested `liftBind` chain whose post-states
 are pinned by the `DeterministicTransitions` instance; the `(det.spec _).symm ▸`
 transports inside `bindLiftA` collapse by `rfl` because `proto`'s `spec` proof
 is itself `rfl` after `cases s`. Mirrors the parallel `TwoIndex.run` check
 above. -/
 example :
-    run = IPFunctor.FreeM.roll Phase.opn () (fun _ : Unit =>
-      IPFunctor.FreeM.roll Phase.counting () (fun a : Nat =>
-        IPFunctor.FreeM.roll Phase.counting () (fun b : Nat =>
+    run = IPFunctor.FreeM.liftBind Phase.opn () (fun _ : Unit =>
+      IPFunctor.FreeM.liftBind Phase.counting () (fun a : Nat =>
+        IPFunctor.FreeM.liftBind Phase.counting () (fun b : Nat =>
           IPFunctor.FreeM.pure Phase.counting (a + b)))) := rfl
 
 end Deterministic
@@ -185,16 +185,16 @@ end Deterministic
 [`Free/Basic.lean`](Free/Basic.lean)) works for any index type by recording
 the originating state inside each position; the result sits over
 `proto.sigmaPFunctor` rather than `proto.toPFunctor`. We test the
-collapsing simp lemmas (`toSigmaFreeM_pure`, `toSigmaFreeM_roll`) by
+collapsing simp lemmas (`toSigmaFreeM_pure`, `toSigmaFreeM_liftBind`) by
 checking that the `TwoIndex.run` tree, viewed as an `IPFunctor.FreeM`,
-agrees definitionally with the expected nested `PFunctor.FreeM.roll`. -/
+agrees definitionally with the expected nested `PFunctor.FreeM.liftBind`. -/
 
 example :
     IPFunctor.FreeM.toSigmaFreeM proto TwoIndex.run.toFreeM
-    = PFunctor.FreeM.roll
+    = PFunctor.FreeM.liftBind
         (P := proto.sigmaPFunctor) ⟨.opn, ()⟩ (fun _ =>
-      PFunctor.FreeM.roll ⟨.counting, ()⟩ (fun a : Nat =>
-        PFunctor.FreeM.roll ⟨.counting, ()⟩ (fun b : Nat =>
+      PFunctor.FreeM.liftBind ⟨.counting, ()⟩ (fun a : Nat =>
+        PFunctor.FreeM.liftBind ⟨.counting, ()⟩ (fun b : Nat =>
           PFunctor.FreeM.pure (a + b)))) := by
   rfl
 
@@ -202,7 +202,7 @@ example :
 
 When the value type `α` is empty, every `pure` leaf is unreachable and
 `PFunctor.FreeM P α` collapses structurally to `P.W`. The forward direction
-`toW` reinterprets each `roll` as a W-node; the inverse `ofW` rebuilds
+`toW` reinterprets each `liftBind` as a W-node; the inverse `ofW` rebuilds
 the tree. Both directions are mutual inverses by induction; this example
 just confirms the equivalence resolves and either round-trip is
 `rfl` after unfolding. -/

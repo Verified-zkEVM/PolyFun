@@ -58,7 +58,7 @@ example (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) (s₂ 
 /-- The first phase exposes `M₁` and hands off to `M₂` exactly on `M₁`'s output. -/
 example (M₁ : PointedMachine p α mid) (M₂ : PointedMachine p mid β) (s₁ : M₁.State) :
     (M₁ ⨟ M₂).toComp 1 (Sum.inl s₁)
-      = FreeM.roll (M₁.expose s₁) (fun d =>
+      = FreeM.liftBind (M₁.expose s₁) (fun d =>
           (M₁ ⨟ M₂).toComp 0 (match M₁.output (M₁.update s₁ d) with
             | some m => Sum.inr (M₂.init m)
             | none => Sum.inl (M₁.update s₁ d))) :=
@@ -127,7 +127,7 @@ example (M : PointedMachine p α β) (f : γ → α) :
 
 /-- Re-lifting every query into the free monad is the syntactic execution. -/
 example (M : PointedMachine p α β) (k : ℕ) (x : α) :
-    M.runWithInput (m := FreeM p) FreeM.liftA k x = M.run k x := by
+    M.runWithInput (m := FreeM p) FreeM.lift k x = M.run k x := by
   simp
 
 /-- Pure machines are semantic identities for sequencing. They are not
@@ -287,8 +287,8 @@ example (M : PointedMachine p α β) (k : ℕ) (s : M.State) :
 
 /-- A single roll cannot fit in a zero total-roll budget. -/
 example (a : p.A) (r : p.B a → FreeM p β) :
-    ¬ (FreeM.roll a r).IsTotalRollBound 0 := by
-  simp
+    ¬ (FreeM.liftBind a r).IsTotalRollBound 0 := by
+  intro h; exact absurd h.1 (lt_irrefl 0)
 
 /-- Total structural bounds add through free-monad sequencing. -/
 example (oa : FreeM p α) (ob : α → FreeM p β) (j k : ℕ)
@@ -427,7 +427,7 @@ example :
       (some 9, 2) := rfl
 
 /-- The run law elaborates with independent machine-state/input universes and
-the homogeneous handler/output universe required by `FreeM.mapM`. -/
+the homogeneous handler/output universe required by `FreeM.liftM`. -/
 example {input : Type v} {out : Type w} (y b : out) (x : input) :
     let M₁ := universeSeparatedOneQueryMachine (input := input) y
     let M₂ := universeSeparatedRunHaltMachine (input := out) b

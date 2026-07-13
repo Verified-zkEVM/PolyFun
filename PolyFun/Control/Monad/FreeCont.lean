@@ -15,7 +15,7 @@ public import Mathlib
 
 Church / CPS encodings of the freer monad and freer monad transformer as
 interpreters into a continuation monad `ContT`, an alternative to the inductive
-`FreeMonad`.
+`Cslib.FreeM`.
 
 * `FreeContT f m` / `FreeContM f` — the freer monad transformer and monad over an
   arbitrary effect signature `f : Type z → Type y`.
@@ -37,8 +37,8 @@ When unfolded (recall that `ContT r m α = (α → m r) → m r`), it takes the 
 ```
 
 Compare this to the inductive definition, which has two constructors:
-- `pure : α → FreeMonad f α`
-- `roll : f β → (β → FreeMonad f α) → FreeMonad f α`
+- `pure : α → Cslib.FreeM f α`
+- `liftBind : f β → (β → Cslib.FreeM f α) → Cslib.FreeM f α`
 -/
 def FreeContT (f : Type z → Type y) (m : Type u → Type v) (α : Type w) :
     Type (max (u + 1) v w y (z + 1)) :=
@@ -52,8 +52,8 @@ When unfolded, it takes the form:
 ```
 
 Compare this to the inductive definition, which has two constructors:
-- `pure : α → FreeMonad f α`
-- `roll : f β → (β → FreeMonad f α) → FreeMonad f α` -/
+- `pure : α → Cslib.FreeM f α`
+- `liftBind : f β → (β → Cslib.FreeM f α) → Cslib.FreeM f α` -/
 def FreeContM (f : Type z → Type y) (α : Type w) : Type (max (u + 1) w y (z + 1)) :=
   FreeContT f Id.{u} α
 
@@ -134,46 +134,47 @@ instance [Monad m] [LawfulMonad m] : LawfulMonadLift m (FreeContT f m) where
 end FreeContT
 
 /-- Convert free monads from inductive style to continuation-passing style. -/
-def FreeMonad.toFreeContM : FreeMonad f α → FreeContM f α :=
+def Cslib.FreeM.toFreeContM : Cslib.FreeM f α → FreeContM f α :=
   fun x => match x with
-    | FreeMonad.pure a => fun _ handlePure => handlePure a
-    | FreeMonad.roll x k => fun handleEff handlePure =>
-      handleEff x (fun a => FreeMonad.toFreeContM (k a) handleEff handlePure)
+    | Cslib.FreeM.pure a => fun _ handlePure => handlePure a
+    | Cslib.FreeM.liftBind x k => fun handleEff handlePure =>
+      handleEff x (fun a => Cslib.FreeM.toFreeContM (k a) handleEff handlePure)
 
 /-- Convert free monads from continuation-passing style to inductive style. -/
-def FreeContM.toFreeMonad : FreeContM f α → FreeMonad f α :=
-  fun x => x FreeMonad.roll FreeMonad.pure
+def FreeContM.toFreeM : FreeContM f α → Cslib.FreeM f α :=
+  fun x => x Cslib.FreeM.liftBind Cslib.FreeM.pure
 
 @[simp]
-lemma FreeMonad.toFreeMonad_toFreeContM (x : FreeMonad f α) :
-    FreeContM.toFreeMonad (FreeMonad.toFreeContM x) = x := by
+lemma Cslib.FreeM.toFreeM_toFreeContM (x : Cslib.FreeM f α) :
+    FreeContM.toFreeM (Cslib.FreeM.toFreeContM x) = x := by
   induction x with
     | pure a => rfl
-    | roll x k ih =>
-      dsimp [FreeMonad.toFreeContM, FreeContM.toFreeMonad]
+    | lift_bind x k ih =>
+      rw [← Cslib.FreeM.liftBind_eq]
+      dsimp only [Cslib.FreeM.toFreeContM, FreeContM.toFreeM]
       congr
       funext b
       exact ih b
 
-/-- `FreeMonad.toFreeContM` is a section of `FreeContM.toFreeMonad`. -/
-lemma FreeMonad.toFreeContM_leftInverse :
+/-- `Cslib.FreeM.toFreeContM` is a section of `FreeContM.toFreeM`. -/
+lemma Cslib.FreeM.toFreeContM_leftInverse :
     Function.LeftInverse
-      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeMonad x)
-      (fun x : FreeMonad f α =>
-        (FreeMonad.toFreeContM x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α)) := by
+      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeM x)
+      (fun x : Cslib.FreeM f α =>
+        (Cslib.FreeM.toFreeContM x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α)) := by
   intro x
-  exact FreeMonad.toFreeMonad_toFreeContM x
+  exact Cslib.FreeM.toFreeM_toFreeContM x
 
 /-- The inductive-to-Church map is injective. -/
-lemma FreeMonad.toFreeContM_injective :
+lemma Cslib.FreeM.toFreeContM_injective :
     Function.Injective
-      (fun x : FreeMonad f α =>
-        (FreeMonad.toFreeContM x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α)) :=
-  (FreeMonad.toFreeContM_leftInverse (f := f) (α := α)).injective
+      (fun x : Cslib.FreeM f α =>
+        (Cslib.FreeM.toFreeContM x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α)) :=
+  (Cslib.FreeM.toFreeContM_leftInverse (f := f) (α := α)).injective
 
 /-- The Church-to-inductive map is surjective. -/
-lemma FreeContM.toFreeMonad_surjective :
+lemma FreeContM.toFreeM_surjective :
     Function.Surjective
-      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeMonad x) := by
+      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeM x) := by
   intro x
-  exact ⟨FreeMonad.toFreeContM x, FreeMonad.toFreeMonad_toFreeContM x⟩
+  exact ⟨Cslib.FreeM.toFreeContM x, Cslib.FreeM.toFreeM_toFreeContM x⟩

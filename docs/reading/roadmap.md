@@ -201,7 +201,7 @@ consumers; they are natural follow-ons or Phase B/C prerequisites.
   (pp. 266–267): vwb ⟺ `get` is a product projection `T × U → T`.
   **Depends on A3**: Prop 7.109's proof runs through vertical–cartesian
   factorization.
-- **B6** `FreeM P` as ◁-monoid; handlers/`mapMHom` as monoid morphisms
+- **B6** `FreeM P` as ◁-monoid; handlers/`liftMHom` as monoid morphisms
   (universal property behind `simulateQ`).
 
 ### Phase B — implementation status (spine: B1 + B2 + B3 + PointedMachine finish)
@@ -223,7 +223,7 @@ Landed the K-L-prioritized machine spine (crypto-free):
 - **B3 done** — `DynSystem.nStep` = `Run_n` (`Dynamical/RunN.lean`), finishing
   the `Speedup.lean` `nStep` deferral; **`nStep_two_eq_twoStep` (the `n = 2`
   coherence with the existing `twoStep`) is `rfl`**. The monad-parametric run
-  `PointedMachine.runWith = FreeM.mapM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
+  `PointedMachine.runWith = FreeM.liftM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
   shadow) and `runWith_of_output_eq_some` (fuel irrelevance, the
   `runK_eq_of_apply_none_eq_zero` shadow); the `Option`/fuel pays-rent instance
   is in `RunNExamples.lean`. The ω-limit `ωSup` stays downstream (SPMF ωCPO).
@@ -577,9 +577,9 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   from `runWith_run_succ_of_output_eq_none`; verdict to be recorded at
   VCVio landing.
 - 2026-07-11 (**B6**, fold universal property and monad-morphism naturality):
-  added `FreeM.mapMHom_unique`, `FreeM.mapM_natural`, and `mapMHom_comp`, plus
-  `StateT.mapHom` / `run_mapHom` and the composed `FreeM.run_mapM_mapHom` law.
-  The identity-handler laws `mapM_liftA_eq_self` and `mapMHom_liftA` complete
+  added `FreeM.liftMHom_unique`, `FreeM.liftM_natural`, and `liftMHom_comp`, plus
+  `StateT.mapHom` / `run_mapHom` and the composed `FreeM.run_liftM_mapHom` law.
+  The identity-handler laws `liftM_lift_eq_self` and `liftMHom_lift_eq_id` complete
   the basic universal-property API. Regression coverage lives in
   `PolyFunTest/PFunctor/FreeMapMNaturality.lean`. Downstream payoff to check:
   VCVio should be able to bundle `evalDist` as a monad hom and replace its

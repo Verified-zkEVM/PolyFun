@@ -76,7 +76,7 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/Dynamical/Run.lean`](../../PolyFun/PFunctor/Dynamical/Run.lean) | Generic orbits: `DynSystem.Prefix` / `DynSystem.Run` (with `take`, `event(s)`/`ticket(s)`, `Prefix.last`, `RelUpTo` / `Rel`); `DynSystem.ReachableIn` (`n`-step reachability via `Prefix`); Moore finite runs `run`, `trace`, `outputOn`, `DeterministicAutomaton.accepts`; input streams `stateStream` / `outputStream` with `stateStream_eq_run`; `streamRun` / `iterateRun` identifying them with generic runs. |
 | [`PolyFun/PFunctor/Dynamical/Trajectory.lean`](../../PolyFun/PFunctor/Dynamical/Trajectory.lean) | Infinite behaviour: terminal-coalgebra `behavior : S → M p` with `behavior_unique` and `ObsEq`; cofree `trajectory : DynSystem S p → S → CofreeC p p.A` with `trajectory_eq_selfLabel_behavior`; closed-system spine `CofreeC.next`, `next_iterate_trajectory`. |
 | [`PolyFun/PFunctor/Dynamical/Behavior.lean`](../../PolyFun/PFunctor/Dynamical/Behavior.lean) | Closed-loop behaviour of a Moore machine: `feedbackStep`, `feedbackStream`, `next_iterate_feedback`. |
-| [`PolyFun/PFunctor/Handler.lean`](../../PolyFun/PFunctor/Handler.lean) | `Handler m p`: a monadic choice of direction at every position of `p`; the generic interface consumed by `FreeM.mapM`. |
+| [`PolyFun/PFunctor/Handler.lean`](../../PolyFun/PFunctor/Handler.lean) | `Handler m p`: a monadic choice of direction at every position of `p`; the generic interface consumed by `FreeM.liftM`. |
 | [`PolyFun/PFunctor/Dynamical/PointedMachine.lean`](../../PolyFun/PFunctor/Dynamical/PointedMachine.lean) | Pointed machines with variance/wrapping laws, chosen-position `pureAt`, state-level `toComp`, input-level `run`, and interpreted `runWithInput`; `seqComp` has syntactic/semantic identity laws and the fuel-exact Kleisli composition theorem. |
 | [`PolyFun/PFunctor/Dynamical/RunN.lean`](../../PolyFun/PFunctor/Dynamical/RunN.lean) | `DynSystem.twoStep` (Ex 6.44) and `DynSystem.nStep` = `Run_n(φ) = δ^{(n)} ⨟ φ^{◁n}` (§7.1.5) over `compNth p n`; `nStep_two_eq_twoStep` identifies the `n = 2` specialization after the inner unitor. The transition lens itself is `Lens.fixState`. |
 | [`PolyFun/PFunctor/Dynamical/Simulation.lean`](../../PolyFun/PFunctor/Dynamical/Simulation.lean) | `DynSystem.IsSimulation` (step-synchronized relation) with `behavior_eq_of_isSimulation` — related states have equal `behavior`, via `M.corec_eq_corec`; `isSimulation_graph` / `behavior_coalgHom` — coalgebra morphisms are the functional simulations. |
@@ -89,9 +89,19 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 
 ### Free monad `FreeM`
 
+`PFunctor.FreeM` is **re-exported from upstream cslib**
+(`Cslib.Foundations.Data.PFunctor.Free`, originally ported from VCV-io). cslib
+supplies the inductive type (constructors `pure` / `liftBind`), the `bind` / `map`
+/ `Monad` / `LawfulMonad` / `MonadLift` instances, the `@[induction_eliminator]
+induction` principle (non-pure case `lift_bind`), the shape lift `lift : P.A →
+FreeM (P.B a)` and object lift `liftObj : P.Obj α → FreeM α`, and the `liftM`
+interpreter with its `Interprets` universal property. PolyFun layers its own API
+(`mapLens`, `liftM` monad-hom and naturality lemmas, `toW` / `equivWOfIsEmpty`, paths,
+displayed families, roll bounds) on top of the upstream type.
+
 | File | Purpose |
 |------|---------|
-| [`PolyFun/PFunctor/Free/Basic.lean`](../../PolyFun/PFunctor/Free/Basic.lean) | `FreeM P α` (`pure` / `roll`), `lift`, `liftPos`, `bind`, `Monad` and `LawfulMonad` instances, eliminator combinators. |
+| [`PolyFun/PFunctor/Free/Basic.lean`](../../PolyFun/PFunctor/Free/Basic.lean) | Re-exports cslib's `FreeM P α` (`pure` / `liftBind`) and canonical `liftM` evaluator; adds `mapLens`, `liftMHom` naturality, and `toW` / `ofW` / `equivWOfIsEmpty`. |
 | [`PolyFun/PFunctor/Free/Path.lean`](../../PolyFun/PFunctor/Free/Path.lean) | `FreeM.Path s` (explicit polynomial direction at every node), `PathAlong`, `output`, `append`, `TelescopeWith` (state-indexed initial algebra). |
 | [`PolyFun/PFunctor/Free/Displayed.lean`](../../PolyFun/PFunctor/Free/Displayed.lean) | `FreeM.Displayed D s` (displayed family over a tree), `Displayed.Section` (displayed catamorphism). The substrate behind decorations, paths, and compact observations. |
 | [`PolyFun/PFunctor/Free/Displayed/Decoration.lean`](../../PolyFun/PFunctor/Free/Displayed/Decoration.lean) | `Decoration Γ s`: every node carries one `Γ a` and recursively decorates children. |
@@ -118,9 +128,10 @@ provides the reusable monad / comonad / coalgebra plumbing. See
   every interesting structure in PolyFun is built by combining a few of
   these via `+` / `*` / `⊗` / `Σ` / `Π` / composition, or by taking the
   free monad / cofree comonad / lens / chart of one.
-- `FreeM P` is the free monad on `P`. Operationally it is the inductive
-  type of well-founded `P`-branching trees with `α`-leaves. It is the
-  syntax of "programs" in the signature `P`.
+- `FreeM P` is the free monad on `P` (the upstream cslib type). Operationally
+  it is the inductive type of well-founded `P`-branching trees with `α`-leaves,
+  built from a `pure` leaf and a combined `liftBind` step. It is the syntax of
+  "programs" in the signature `P`.
 - `CofreeC P` is the cofree comonad on `P`. Coinductively, it is the
   type of infinite, fully-decorated `P`-trees. `FreeM` and `CofreeC` carry
   the pattern-runs-on-matter *module structure* of Libkind–Spivak (a module

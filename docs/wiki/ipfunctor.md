@@ -50,14 +50,14 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 |------|---------|
 | [`PolyFun/IPFunctor/Basic.lean`](../../PolyFun/IPFunctor/Basic.lean) | `IPFunctor I J` structure (fields `A`, `B`, `src`), `Endo I := IPFunctor I I` abbrev, `Obj`, `CoeFun`, `Zero`, `One`, `toPFunctor`, `sigmaPFunctor`, composition `Q ◃ P`, `DeterministicTransitions`. |
 | [`PolyFun/IPFunctor/Free/Family.lean`](../../PolyFun/IPFunctor/Free/Family.lean) | **Primitive `IPFunctor.IFreeM P X : I → Type`** for `P : Endo I` and `X : I → Type` (state-indexed return family). Family-polymorphic `bind`, `imap`, `inductionOn`, `construct`, `mapM`, `toSigmaFreeM`, injectivity / equation lemmas. |
-| [`PolyFun/IPFunctor/Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean) | `IPFunctor.FreeM P s α := IFreeM P (fun _ => α) s` — the constant-family specialization. Constructors `pure` / `roll` (as `@[match_pattern]` aliases over `IFreeM`), `lift`, `liftA`, `bind` (state-polymorphic), `Functor` / `LawfulFunctor`, `inductionOn`, `construct`, `mapM`, `erase` (forgetful to `PFunctor.FreeM` under `[Unique I]`), `toSigmaFreeM`. |
+| [`PolyFun/IPFunctor/Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean) | `IPFunctor.FreeM P s α := IFreeM P (fun _ => α) s` — the constant-family specialization. Constructors `pure` / `liftBind` (as `@[match_pattern]` aliases over `IFreeM`), `lift` (shape) / `liftObj` (object), `bind` (state-polymorphic), `Functor` / `LawfulFunctor`, `inductionOn`, `construct`, `mapM`, `erase` (forgetful to `PFunctor.FreeM` under `[Unique I]`), `toSigmaFreeM`. |
 | [`PolyFun/IPFunctor/Free/Indexed.lean`](../../PolyFun/IPFunctor/Free/Indexed.lean) | `IPFunctor.FreeM₂ P s t α := IFreeM P (fun u => PSigma (fun _ : u = t => α)) s` — the terminal-state-marker specialization. `bind` chains indices positionally; carries `IndexedMonad` / `LawfulIndexedMonad` instances. Forgetful coercion `toFreeM`. |
 | [`PolyFun/IPFunctor/Lens/Basic.lean`](../../PolyFun/IPFunctor/Lens/Basic.lean) | `IPFunctor.Lens P Q` — Cartesian lens between indexed polynomials with the source-index preservation law `src_eq`. Identity, composition, `Lens.Equiv`. |
 | [`PolyFun/IPFunctor/Chart/Basic.lean`](../../PolyFun/IPFunctor/Chart/Basic.lean) | `IPFunctor.Chart P Q` — covariant chart (dual to lens) with `src_eq` in the chart direction. Identity, composition, `Chart.Equiv`. |
 | [`PolyFun/IPFunctor/Equiv/Basic.lean`](../../PolyFun/IPFunctor/Equiv/Basic.lean) | `IPFunctor.Equiv P Q` (`≃ₚ`) — structural equivalence with fiberwise `A` / `B` equivalences plus `src_eq`. |
 | [`PolyFun/IPFunctor/Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | Lean 4.29 `@[doElem_elab]` overrides making ordinary `do { let x ← e; … }` elaborate to `IPFunctor.FreeM.bind`-trees. Custom diagnostics for state mismatches and non-polymorphic remainders. Opt in with `set_option backward.do.legacy false`. |
 | [`PolyFun/IPFunctor/Notation/Indexed.lean`](../../PolyFun/IPFunctor/Notation/Indexed.lean) | `do`-notation for `IPFunctor.FreeM₂`. Statically-tracked intermediate states; chains of any length compose. Adds the `Pure (IPFunctor.FreeM₂ P s s)` instance. |
-| [`PolyFun/IPFunctor/Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `do`-notation for `IPFunctor.FreeM` with a `DeterministicTransitions P` class. Specializes `IPFunctor.FreeM.liftA`-style steps to a concrete source index. |
+| [`PolyFun/IPFunctor/Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `do`-notation for `IPFunctor.FreeM` with a `DeterministicTransitions P` class. Specializes `IPFunctor.FreeM.lift`-style steps to a concrete source index. |
 | [`PolyFunTest/IPFunctor/Examples.lean`](../../PolyFunTest/IPFunctor/Examples.lean) | Worked examples: a two-phase protocol compiled three ways (`IPFunctor.FreeM₂`, deterministic `IPFunctor.FreeM`, Σ-bundled erase via `toSigmaFreeM`), plus a `PFunctor.FreeM.equivW_of_isEmpty` round-trip. |
 | [`PolyFun/Control/Monad/Indexed.lean`](../../PolyFun/Control/Monad/Indexed.lean) | Atkey indexed-monad class (`IndexedMonad`, `LawfulIndexedMonad`) and the trivial-`Unit` instance. |
 
@@ -85,7 +85,7 @@ to `src s a b`." This is the only case where `IFreeM` / `FreeM` / `FreeM₂`,
 
 A well-founded tree starting at state `s` with `X s`-leaves (the leaf type
 depends on the leaf state). Different branches can end at *different* leaf
-states because `roll`'s source map `src` may produce different results for
+states because `liftBind`'s source map `src` may produce different results for
 different responses, and a leaf's payload type may depend on the state it
 sits in.
 
@@ -113,7 +113,7 @@ state-polymorphic continuation `(s' : I) → α → IPFunctor.FreeM P s' β`,
 which corresponds exactly to `IFreeM.bind` at the constant family.
 
 The induction principle (`IPFunctor.FreeM.inductionOn`) takes a state-indexed
-motive `C : ∀ s, IPFunctor.FreeM P s α → Prop` — necessary because `roll`'s
+motive `C : ∀ s, IPFunctor.FreeM P s α → Prop` — necessary because `liftBind`'s
 continuation lands at a different state from its parent.
 
 ### `IPFunctor.FreeM₂ P s t α` (terminal-state marker)
@@ -201,7 +201,7 @@ needs distinct input and output indices to type-check in general.
 For both `IPFunctor.FreeM` and `IPFunctor.FreeM₂`, `mapM` interprets into an
 ordinary `Monad m`. Because the responses `P.B s a` live in `Type uB`, the
 target monad must operate at that same universe: `m : Type uB → Type w`, and
-the value type `α : Type uB`. This mirrors `PFunctor.FreeM.mapM` and is
+the value type `α : Type uB`. This mirrors `PFunctor.FreeM.liftM` and is
 enforced by the `variable` block at the top of each `mapM` section.
 
 `IPFunctor.IFreeM.mapM` additionally takes an explicit leaf interpretation
@@ -219,7 +219,7 @@ read the state back.
 ## Limitations
 
 - `IPFunctor.FreeM₂` does not support a general
-  `lift : P.Obj (fun _ => α) s → FreeM₂ P s t α`, because `lift`'s post-state
+  `liftObj : P.Obj (fun _ => α) s → FreeM₂ P s t α`, because `liftObj`'s post-state
   varies with the response (`P.src s a b`) while `FreeM₂` requires a
   statically chosen `t`. Where this matters, work in `FreeM` and convert when
   post-state becomes known.
@@ -253,15 +253,15 @@ are unaffected.
 The elaborator detectors use `Meta.withTransparency .reducible <| whnf m`
 so the `IPFunctor.FreeM` / `IPFunctor.FreeM₂` head — defined as a plain
 (non-`@[reducible]`) `def` aliasing the primitive `IPFunctor.IFreeM` — survives
-without being unfolded. The aliased constructors `FreeM.pure` / `FreeM.roll`
-and `FreeM₂.pure` / `FreeM₂.roll` are `@[match_pattern]` but also plain `def`,
-so the deterministic elaborator's head check on `FreeM.roll` continues to fire.
+without being unfolded. The aliased constructors `FreeM.pure` / `FreeM.liftBind`
+and `FreeM₂.pure` / `FreeM₂.liftBind` are `@[match_pattern]` but also plain `def`,
+so the deterministic elaborator's head check on `FreeM.liftBind` continues to fire.
 
 | File | Monad | Continuation type | When to use |
 |---|---|---|---|
 | [`Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | `IPFunctor.FreeM P s α` | `(s' : I) → α → IPFunctor.FreeM P s' β` (universal) | Tail of the block is state-polymorphic (`pure`/`return`, polymorphic helpers). Custom diagnostics call out state mismatches and non-polymorphic remainders. |
 | [`Notation/Indexed.lean`](../../PolyFun/IPFunctor/Notation/Indexed.lean) | `IPFunctor.FreeM₂ P s t α` | `α → IPFunctor.FreeM₂ P t u β` (statically tracked) | Chains of any length where every step's tree converges to a single post-state. Also adds the `Pure (IPFunctor.FreeM₂ P s s)` instance. |
-| [`Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `IPFunctor.FreeM P s α` with `[DeterministicTransitions P]` | `P.B s a → IPFunctor.FreeM P (next s a) β` (specialized) | Stay on single-index `IPFunctor.FreeM` for downstream compatibility; specialize `IPFunctor.FreeM.liftA`-style steps via the determinism class. |
+| [`Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `IPFunctor.FreeM P s α` with `[DeterministicTransitions P]` | `P.B s a → IPFunctor.FreeM P (next s a) β` (specialized) | Stay on single-index `IPFunctor.FreeM` for downstream compatibility; specialize `IPFunctor.FreeM.lift`-style steps via the determinism class. |
 
 ## What lives where downstream
 

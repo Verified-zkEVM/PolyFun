@@ -106,7 +106,7 @@ def monadsOver :
     Decoration.Over (P := P) (α := α) (RoleContextOver P)
       (fun _ (_ : Role) => BundledMonad.{u, u}) s roles
   | .pure _, _, _ => ⟨⟩
-  | .roll _ rest, ⟨_, rRest⟩, ⟨bm, mRest⟩ =>
+  | .liftBind _ rest, ⟨_, rRest⟩, ⟨bm, mRest⟩ =>
       ⟨bm, fun b => monadsOver (rest b) (rRest b) (mRest b)⟩
 
 /-- Pack roles together with one bundled monad per node generically. -/
@@ -124,7 +124,7 @@ def pairedMonadsOver :
     Decoration.Over (P := P) (α := α) (RoleContextOver P)
       (fun _ (_ : Role) => BundledMonad.{u, u} × BundledMonad.{u, u}) s roles
   | .pure _, _, _, _ => ⟨⟩
-  | .roll _ rest, ⟨_, rRest⟩, ⟨bmS, mRestS⟩, ⟨bmC, mRestC⟩ =>
+  | .liftBind _ rest, ⟨_, rRest⟩, ⟨bmS, mRestS⟩, ⟨bmC, mRestC⟩ =>
       ⟨(bmS, bmC), fun b => pairedMonadsOver (rest b) (rRest b) (mRestS b) (mRestC b)⟩
 
 /-- Pack roles together with paired focal/counterpart monads generically. -/
@@ -144,9 +144,9 @@ theorem withPairedMonads_map_fst :
         (withPairedMonads (P := P) (α := α) roles stratDeco cptDeco) =
       withMonads (P := P) (α := α) roles stratDeco
   | .pure _, _, _, _ => rfl
-  | .roll _ rest, ⟨role, rRest⟩, ⟨bmS, mRestS⟩, ⟨bmC, mRestC⟩ => by
+  | .liftBind _ rest, ⟨role, rRest⟩, ⟨bmS, mRestS⟩, ⟨bmC, mRestC⟩ => by
       simp only [withPairedMonads, withMonads, monadsOver, pairedMonadsOver,
-        RolePairedMonadContextOver.fst, Decoration.map_roll, Decoration.ofOver]
+        Decoration.ofOver]
       apply Prod.ext
       · rfl
       funext b
@@ -162,9 +162,9 @@ theorem withPairedMonads_map_snd :
         (withPairedMonads (P := P) (α := α) roles stratDeco cptDeco) =
       withMonads (P := P) (α := α) roles cptDeco
   | .pure _, _, _, _ => rfl
-  | .roll _ rest, ⟨role, rRest⟩, ⟨bmS, mRestS⟩, ⟨bmC, mRestC⟩ => by
+  | .liftBind _ rest, ⟨role, rRest⟩, ⟨bmS, mRestS⟩, ⟨bmC, mRestC⟩ => by
       simp only [withPairedMonads, withMonads, monadsOver, pairedMonadsOver,
-        RolePairedMonadContextOver.snd, Decoration.map_roll, Decoration.ofOver]
+        Decoration.ofOver]
       apply Prod.ext
       · rfl
       funext b

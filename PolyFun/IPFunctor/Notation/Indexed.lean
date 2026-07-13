@@ -41,7 +41,7 @@ through (`throwUnsupportedSyntax`) for any monad other than
   when every step's tree has a single converging post-state.
 * [`Deterministic.lean`](Deterministic.lean) — single-index
   `IPFunctor.FreeM` plus a `DeterministicTransitions P` class.
-  Specializes `IPFunctor.FreeM.liftA`-style steps to a concrete
+  Specializes `IPFunctor.FreeM.lift`-style steps to a concrete
   post-state via the class, so chains compose without switching to
   `IPFunctor.FreeM₂`. Useful when you want to stay on `IPFunctor.FreeM`
   for downstream compatibility.

@@ -122,7 +122,7 @@ def run
     m ((path : PFunctor.FreeM.PathAlong l spec) × Result path) :=
   match spec, ctxs with
   | .pure _, _ => pure ⟨⟨⟩, collect ⟨⟩ profile⟩
-  | .roll pos rest, ⟨γ, ctxs⟩ =>
+  | .liftBind pos rest, ⟨γ, ctxs⟩ =>
       I.interact
         (γ := γ)
         (Cont := fun agent d =>
