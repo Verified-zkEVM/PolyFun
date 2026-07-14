@@ -44,11 +44,11 @@ def demoP : IPFunctor.Endo Bool where
 
 /-- Lift the `flip` shape into a `FreeM` action at state `false`. -/
 def flip : IPFunctor.FreeM demoP false Unit :=
-  IPFunctor.FreeM.liftA false ()
+  IPFunctor.FreeM.lift false ()
 
 /-- Lift the `read` shape into a `FreeM` action at state `true`. -/
 def read : IPFunctor.FreeM demoP true Nat :=
-  IPFunctor.FreeM.liftA true ()
+  IPFunctor.FreeM.lift true ()
 
 /-! ### Positive tests
 
@@ -147,7 +147,7 @@ example : IPFunctor.FreeM demoP false Nat := do
 
 On a `[Unique I]` index, `IPFunctor.FreeM.erase` collapses `do`-block trees
 built via the single-index elaborator to the corresponding `PFunctor.FreeM`
-trees. The `@[simp]` lemmas `erase_punit_pure` / `erase_punit_roll` in
+trees. The `@[simp]` lemmas `erase_punit_pure` / `erase_punit_liftBind` in
 `Free/Basic.lean` do the simplification. -/
 
 /-- A `PUnit`-indexed `IPFunctor.Endo`. Single-index `FreeM`'s universal
@@ -158,7 +158,7 @@ def demoQ : IPFunctor.Endo PUnit where
   B _ _ := Nat
   src _ _ _ := PUnit.unit
 
-/-- A pure-only `do`-block erases to a pure leaf — no `liftA` involved
+/-- A pure-only `do`-block erases to a pure leaf — no `lift` involved
 so the universal-quantification limit doesn't bite. -/
 example :
     IPFunctor.FreeM.erase demoQ PUnit.unit

@@ -103,7 +103,7 @@ files:
   threads pre/post-states statically with no universal quantifier.
 * [`PolyFun/IPFunctor/Notation/Deterministic.lean`](Notation/Deterministic.lean)
   — single-index `IPFunctor.FreeM` plus a `DeterministicTransitions P`
-  class that specializes `IPFunctor.FreeM.liftA`-style steps to a
+  class that specializes `IPFunctor.FreeM.lift`-style steps to a
   concrete post-state.
 -/
 

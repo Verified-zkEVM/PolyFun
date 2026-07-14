@@ -46,7 +46,7 @@ than via custom notation, to keep elaboration predictable. Specifically:
 - Lens equivalence `P ≃ₚ Q` (input `\equiv p`) is defined in
   [`PolyFun/PFunctor/Equiv/Basic.lean`](../../PolyFun/PFunctor/Equiv/Basic.lean).
 - `FreeM` uses standard monadic `do`-notation. There is no separate
-  surface syntax for `roll` / `pure`; reach for `PFunctor.FreeM.lift`
+  surface syntax for `liftBind` / `pure`; reach for `PFunctor.FreeM.lift`
   and `PFunctor.FreeM.liftPos` when you need to embed a single
   polynomial step.
 - The internal hom of the tensor product `q ⊸ r` (input `\multimap`,

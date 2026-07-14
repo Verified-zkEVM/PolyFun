@@ -38,7 +38,7 @@ into `q ◃ r`:
 
 The current bridge between machine and program presentations is
 `PointedMachine.toComp`. Its run semantics is the fold
-`runWith = FreeM.mapM ∘ toComp`. Under a `ResolvesIn` certificate, the
+`runWith = FreeM.liftM ∘ toComp`. Under a `ResolvesIn` certificate, the
 fuel-exact `runWithInput_seqComp` theorem says that machine sequencing denotes
 the corresponding `OptionT` Kleisli composition at the summed budget. Without
 that termination witness, a fixed-fuel statement is false because fuel is
@@ -52,7 +52,7 @@ types do not associate definitionally.
   associativity laws are definitional.
 - `DynSystem S p` is definitionally a lens `selfMonomial S ⇆ p`, so interface
   wrapping and polynomial products reuse lens composition and monoidal maps.
-- `FreeM.mapM` and monad morphisms move programs between interpretations.
+- `FreeM.liftM` and monad morphisms move programs between interpretations.
 - `DynSystem.behavior` / `M.corec` moves a machine into its final behavior
   tree, with uniqueness providing the simulation proof principle.
 - `nStep` uses the state comonoid's iterated comultiplication to package a

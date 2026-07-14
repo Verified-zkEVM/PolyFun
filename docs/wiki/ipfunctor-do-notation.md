@@ -70,10 +70,10 @@ import PolyFun.IPFunctor.Notation.Indexed
 set_option backward.do.legacy false
 
 def init : IPFunctor.FreeM₂ proto Phase.opn Phase.counting Unit :=
-  IPFunctor.FreeM₂.roll () (fun _ => IPFunctor.FreeM₂.pure ())
+  IPFunctor.FreeM₂.liftBind () (fun _ => IPFunctor.FreeM₂.pure ())
 
 def tick : IPFunctor.FreeM₂ proto Phase.counting Phase.counting Nat :=
-  IPFunctor.FreeM₂.roll () (fun n => IPFunctor.FreeM₂.pure n)
+  IPFunctor.FreeM₂.liftBind () (fun n => IPFunctor.FreeM₂.pure n)
 
 example : IPFunctor.FreeM₂ proto Phase.opn Phase.counting Nat := do
   let _ ← init
@@ -89,7 +89,7 @@ through the type at every step.
 
 Same protocol, but stay on single-index `IPFunctor.FreeM`. We add a class
 instance certifying that transitions are deterministic, then the
-elaborator specializes each `IPFunctor.FreeM.liftA`-style step to its
+elaborator specializes each `IPFunctor.FreeM.lift`-style step to its
 known post-state.
 
 ```lean
@@ -103,10 +103,10 @@ instance : IPFunctor.DeterministicTransitions proto where
   spec s a b := by cases s <;> rfl
 
 @[reducible] def init : IPFunctor.FreeM proto Phase.opn Unit :=
-  IPFunctor.FreeM.liftA Phase.opn ()
+  IPFunctor.FreeM.lift Phase.opn ()
 
 @[reducible] def tick : IPFunctor.FreeM proto Phase.counting Nat :=
-  IPFunctor.FreeM.liftA Phase.counting ()
+  IPFunctor.FreeM.lift Phase.counting ()
 
 example : IPFunctor.FreeM proto Phase.opn Nat := do
   let _ ← init
@@ -154,7 +154,7 @@ The second example fails with the custom diagnostic explaining that
 
 When the state type is `Unique`, `IPFunctor.FreeM.erase` collapses
 `do`-block trees to plain `PFunctor.FreeM`. Both the `@[simp]` lemmas
-`erase_punit_pure` / `erase_punit_roll` (in
+`erase_punit_pure` / `erase_punit_liftBind` (in
 [`Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean)) and the
 `toFreeM_*` lemmas fire on do-block-elaborated trees by `rfl`. The
 existing test files include positive examples confirming this; see the

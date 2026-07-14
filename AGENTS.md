@@ -27,7 +27,12 @@ that emerged from the cryptographic-protocols formalization in
    directions), polynomial charts, lenses (Cartesian, state),
    equivalences, free monad `FreeM`, displayed `FreeM`, and the
    `Cofree` / M-type companion. The Spivak-Niu *Poly* category and its
-   internal-language fragments live here.
+   internal-language fragments live here. The free monads are re-exported
+   from upstream [`leanprover/cslib`](https://github.com/leanprover/cslib)
+   (a pinned lake dependency): `PFunctor.FreeM` from
+   `Cslib.Foundations.Data.PFunctor.Free` and the functor-generic
+   `Cslib.FreeM` from `Cslib.Foundations.Control.Monad.Free`; PolyFun adds
+   its own API on top.
 2. **Interaction trees** in the style of Xia-Zakowski-He-Hur-Malecha-
    Pierce-Zdancewic (POPL 2020), modeled as the M-type of a one-step
    polynomial functor, with strong / weak bisimulation, simulation,
@@ -192,7 +197,7 @@ Structures use UpperCamelCase: `PFunctor`, `Spec`, `Decoration`,
    instead. Cryptographic content belongs in
    [`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io).
 3. **`Spec.done` and `Spec.node` are `@[match_pattern, reducible]`**
-   wrappers over `PFunctor.FreeM.{pure, roll}`. Pattern matching on
+   wrappers over `PFunctor.FreeM.{pure, liftBind}`. Pattern matching on
    them works transparently; `rfl` against the polynomial substrate
    also works. Do not break either invariant when refactoring.
 4. **Files should stay under 1500 lines** unless explicitly opted out
@@ -227,6 +232,12 @@ lake test   # builds the PolyFunTest library
 Both run as independent CI jobs (`lint`, `test`) alongside `build`. Adding a
 per-declaration `@[nolint <linter>]` exception requires
 `import Batteries.Tactic.Lint` in that file.
+
+The cslib dependency registers its `topNamespace` environment linter. PolyFun's
+intentional root-level notation, typeclasses, and compatibility instances are
+listed declaration-by-declaration in `scripts/nolints.json`; regenerate that
+file with the Batteries `runLinter --update` driver when this surface changes,
+and review every new entry rather than treating the file as a blanket waiver.
 
 Lean toolchain and Mathlib stay in sync (both currently `v4.31.0`).
 Files should stay under 1500 lines.

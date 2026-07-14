@@ -676,7 +676,7 @@ theorem openTheory_par_left_unit_activation_equiv
     | true =>
       exact absurd (by simp [IsSilentStep, ProcessOver.interleave,
         IsSilentDecoration, schedulerNode,
-        BoundaryAction.internal]) hvisible
+        BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
     | false =>
       refine ⟨rest, fun h => hvisible ?_, rfl⟩
       simp only [IsSilentStep, ProcessOver.interleave, Decoration.map]
@@ -737,7 +737,7 @@ theorem openTheory_par_right_unit_activation_equiv
     | false =>
       exact absurd (by simp [IsSilentStep, ProcessOver.interleave,
         IsSilentDecoration, schedulerNode,
-        BoundaryAction.internal]) hvisible
+        BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
   · intro tr₂ hsilent
     refine .inl ⟨⟨⟨true⟩, tr₂⟩, ?_, rfl⟩
     rw [isSilentStep_mapBoundary_iff]
@@ -796,7 +796,7 @@ theorem openTheory_wire_id_wire_activation_equiv
     | true =>
       exact absurd (by simp [IsSilentStep, ProcessOver.interleave,
         IsSilentDecoration, schedulerNode,
-        BoundaryAction.internal]) hvisible
+        BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
     | false =>
       refine ⟨rest, fun h => hvisible ?_, rfl⟩
       simp only [IsSilentStep, ProcessOver.interleave, Decoration.map]
@@ -853,7 +853,7 @@ theorem openTheory_wire_id_wire_right_activation_equiv
     | false =>
       exact absurd (by simp [IsSilentStep, ProcessOver.interleave,
         IsSilentDecoration, schedulerNode,
-        BoundaryAction.internal]) hvisible
+        BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
   · intro tr₂ hsilent
     refine .inl ⟨⟨⟨true⟩, tr₂⟩, ?_, rfl⟩
     simp only [IsSilentStep, ProcessOver.interleave, Decoration.map]

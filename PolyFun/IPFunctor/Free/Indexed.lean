@@ -29,9 +29,9 @@ makes this explicit by discarding the equality witness.
 
 ## Limitations
 
-There is no general `lift : P.Obj α s → FreeM₂ P s t α` because `lift`'s post-state varies
+There is no general `liftObj : P.Obj α s → FreeM₂ P s t α` because `liftObj`'s post-state varies
 with the response (`P.src s a b`); `FreeM₂` instead requires a statically chosen post-state.
-Where this matters, use `FreeM` and `FreeM.lift` directly, then convert if/when the post-state
+Where this matters, use `FreeM` and `FreeM.liftObj` directly, then convert if/when the post-state
 is known to be uniform.
 -/
 
@@ -68,9 +68,9 @@ def pure {s : I} {α} (x : α) : FreeM₂ P s s α :=
 /-- Roll a shape into a continuation whose branches all terminate at the same post-state `t`.
 Tagged `@[match_pattern]`; plain `def` (same reasoning as `FreeM₂.pure`). -/
 @[match_pattern]
-def roll {s t : I} {α} (a : P.A s)
+def liftBind {s t : I} {α} (a : P.A s)
     (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α) : FreeM₂ P s t α :=
-  IFreeM.roll (X := fun u => PSigma (fun _ : u = t => α)) a r
+  IFreeM.liftBind (X := fun u => PSigma (fun _ : u = t => α)) a r
 
 /-! ## Bind chaining indices positionally -/
 
@@ -87,9 +87,9 @@ lemma bind_pure (x : α) (g : α → FreeM₂ P s u β) :
     (FreeM₂.pure (P := P) (s := s) x).bind g = g x := rfl
 
 @[simp]
-lemma bind_roll (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α)
+lemma bind_liftBind (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α)
     (g : α → FreeM₂ P t u β) :
-    (FreeM₂.roll a r).bind g = FreeM₂.roll a (fun b => (r b).bind g) := rfl
+    (FreeM₂.liftBind a r).bind g = FreeM₂.liftBind a (fun b => (r b).bind g) := rfl
 
 /-! ## Functor map -/
 
@@ -102,8 +102,8 @@ lemma map_pure (f : α → β) (x : α) :
     (FreeM₂.pure (P := P) (s := s) x).map f = FreeM₂.pure (f x) := rfl
 
 @[simp]
-lemma map_roll (f : α → β) (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α) :
-    (FreeM₂.roll a r).map f = FreeM₂.roll a (fun b => (r b).map f) := rfl
+lemma map_liftBind (f : α → β) (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α) :
+    (FreeM₂.liftBind a r).map f = FreeM₂.liftBind a (fun b => (r b).map f) := rfl
 
 /-! ## Injectivity -/
 
@@ -115,21 +115,21 @@ lemma pure_inj (s : I) (x y : α) :
   injection h
 
 @[simp]
-lemma roll_inj (a a' : P.A s)
+lemma liftBind_inj (a a' : P.A s)
     (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α)
     (r' : (b : P.B s a') → FreeM₂ P (P.src s a' b) t α) :
-    FreeM₂.roll a r = FreeM₂.roll a' r' ↔ ∃ h : a = a', h ▸ r = r' :=
-  IFreeM.roll_inj (P := P) (X := fun u => PSigma (fun _ : u = t => α)) (s := s) a a' r r'
+    FreeM₂.liftBind a r = FreeM₂.liftBind a' r' ↔ ∃ h : a = a', h ▸ r = r' :=
+  IFreeM.liftBind_inj (P := P) (X := fun u => PSigma (fun _ : u = t => α)) (s := s) a a' r r'
 
 /-! ## Induction principle -/
 
 /-- Induction principle for `FreeM₂` with both pre- and post-state in the motive. Wraps
-`IFreeM.inductionOn` so the `pure` / `roll` cases see the high-level `FreeM₂` constructors. -/
+`IFreeM.inductionOn` so the `pure` / `liftBind` cases see the high-level `FreeM₂` constructors. -/
 @[elab_as_elim]
 protected theorem inductionOn {C : ∀ s t, FreeM₂ P s t α → Prop}
     (pure : ∀ s (x : α), C s s (FreeM₂.pure x))
-    (roll : ∀ s t (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α),
-      (∀ b, C (P.src s a b) t (r b)) → C s t (FreeM₂.roll a r))
+    (liftBind : ∀ s t (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α),
+      (∀ b, C (P.src s a b) t (r b)) → C s t (FreeM₂.liftBind a r))
     {s t : I} (x : FreeM₂ P s t α) : C s t x := by
   -- Reduce to induction on the underlying IFreeM. The leaf payload `⟨h, a⟩` carries the
   -- equality witness `h : s' = t`, which lets us identify the leaf state with `t`.
@@ -141,7 +141,7 @@ protected theorem inductionOn {C : ∀ s t, FreeM₂ P s t α → Prop}
     subst h
     exact pure _ a
   · intro s' a r ih
-    exact roll s' t a r ih
+    exact liftBind s' t a r ih
 
 /-! ## `Functor` / `LawfulFunctor` instances
 
@@ -159,16 +159,16 @@ instance (s t : I) : LawfulFunctor (FreeM₂ P s t) where
     change FreeM₂.map id x = x
     induction x using IFreeM.inductionOn with
     | pure _ _ => rfl
-    | roll _ a r ih =>
-      change FreeM₂.map id (FreeM₂.roll a r) = FreeM₂.roll a r
+    | liftBind _ a r ih =>
+      change FreeM₂.map id (FreeM₂.liftBind a r) = FreeM₂.liftBind a r
       exact congrArg _ (funext ih)
   comp_map f g x := by
     change FreeM₂.map (g ∘ f) x = FreeM₂.map g (FreeM₂.map f x)
     induction x using IFreeM.inductionOn with
     | pure _ _ => rfl
-    | roll _ a r ih =>
-      change FreeM₂.map (g ∘ f) (FreeM₂.roll a r) =
-        FreeM₂.map g (FreeM₂.map f (FreeM₂.roll a r))
+    | liftBind _ a r ih =>
+      change FreeM₂.map (g ∘ f) (FreeM₂.liftBind a r) =
+        FreeM₂.map g (FreeM₂.map f (FreeM₂.liftBind a r))
       exact congrArg _ (funext (fun b => ih b))
 
 /-! ## `Pure` instance and `IndexedMonad` / `LawfulIndexedMonad` instances -/
@@ -198,11 +198,11 @@ instance (P : Endo.{uI, uA, uB} I) :
   ibind_ipure x := by
     induction x using FreeM₂.inductionOn with
     | pure _ _ => rfl
-    | roll _ _ _ _ ih => exact congrArg _ (funext ih)
+    | liftBind _ _ _ _ ih => exact congrArg _ (funext ih)
   ibind_assoc x f _ := by
     induction x using FreeM₂.inductionOn with
     | pure _ _ => rfl
-    | roll _ _ _ _ ih => exact congrArg _ (funext (fun b => ih b f))
+    | liftBind _ _ _ _ ih => exact congrArg _ (funext (fun b => ih b f))
 
 /-! ## Forgetful coercion to single-index `FreeM`
 
@@ -220,8 +220,8 @@ lemma toFreeM_pure (s : I) (x : α) :
     (FreeM₂.pure (P := P) (s := s) x).toFreeM = FreeM.pure s x := rfl
 
 @[simp]
-lemma toFreeM_roll (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α) :
-    (FreeM₂.roll a r).toFreeM = FreeM.roll s a (fun b => (r b).toFreeM) := rfl
+lemma toFreeM_liftBind (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α) :
+    (FreeM₂.liftBind a r).toFreeM = FreeM.liftBind s a (fun b => (r b).toFreeM) := rfl
 
 /-! ## `mapM` into a plain monad
 
@@ -247,10 +247,10 @@ lemma mapM_pure [Pure m] [Bind m]
     (FreeM₂.pure (P := P) (s := s) x).mapM h = Pure.pure x := rfl
 
 @[simp]
-lemma mapM_roll [Pure m] [Bind m]
+lemma mapM_liftBind [Pure m] [Bind m]
     (h : (s : I) → (a : P.A s) → m (P.B s a))
     (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α) :
-    (FreeM₂.roll a r).mapM h = h _ a >>= fun b => (r b).mapM h := rfl
+    (FreeM₂.liftBind a r).mapM h = h _ a >>= fun b => (r b).mapM h := rfl
 
 end mapM
 
