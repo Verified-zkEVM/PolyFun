@@ -28,9 +28,6 @@ variable {m : Type u → Type v} [Monad m] [LawfulMonad m]
 theorem do_pure_bind {α β : Type u} (a : α) (f : α → m β) :
     (do let x ← (pure a : m α); f x) = f a := by simp
 
-theorem do_bind_pure {α : Type u} (x : m α) :
-    (do let a ← x; pure a) = x := by simp
-
 theorem do_bind_assoc {α β γ : Type u} (x : m α) (f : α → m β) (g : β → m γ) :
     (do let b ← (do let a ← x; f a); g b) = (do let a ← x; let b ← f a; g b) := by simp
 
