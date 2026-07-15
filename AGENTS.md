@@ -101,12 +101,12 @@ PFunctor/Lens/{Basic, Cartesian, State}
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
-  → PFunctor/Dynamical/{Behavior, Simulation, RunN, PointedMachine}
+  → PFunctor/Dynamical/{Behavior, Simulation, RunN, IOMachine}
   → PFunctor/Dynamical/Bisimulation   (also imports Control/Bisimulation)
   → PFunctor/Dynamical/{Refinement, Responder, Game}
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
-   for RunN and PointedMachine, PFunctor/InternalHom for Responder, and
+   for RunN and IOMachine, PFunctor/InternalHom for Responder, and
    PFunctor/Lens/Duoidal for Game.)
 
 Control/Monad/Indexed, PFunctor/Free/Basic

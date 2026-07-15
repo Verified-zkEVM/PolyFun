@@ -42,7 +42,7 @@ Kleisli–Mealy `equivStateHandler` bridge), the game formers
 along `eval`, with `game_eq_uncurry` the adjunction reading), the monadic
 runs `kleisliStep` / `kleisliIterate` / `stepWith` / `iterWith`, and the
 machine-vs-responder step law
-`PointedMachine.runWith_run_succ_of_output_eq_none` are all in place, plus
+`IOMachine.runWith_run_succ_of_output_eq_none` are all in place, plus
 the two-phase `Lens.eval₂` / `orderPair` / `game₂` (Eq 6.86 + Ex 6.85).
 Remaining VCVio-side residue: the `m := SPMF` instance (ProbResponder as
 the bundled Kleisli sibling) and `QueryLog` transcripts.
@@ -78,7 +78,7 @@ machine with `M₁.State ⊕ M₂.State` that runs phase 1 to its output, then h
 off to phase 2. The transition lens δ (A7b, already present as `Lens.fixState`)
 gives multi-step execution a canonical primitive.
 
-**Payoff:** PolyFun now supplies the generic `PointedMachine.seqComp`, its
+**Payoff:** PolyFun now supplies the generic `IOMachine.seqComp`, its
 query-resolution certificate algebra, and the fuel-exact `runWith_seqComp_init`
 bind law. VCVio specializes this to `OracleMachine.seqComp` and reuses the law
 in `IsPolyTime.bind`, with `M₁.State ⊕ M₂.State` encoded by the already

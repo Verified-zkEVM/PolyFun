@@ -20,7 +20,7 @@ There are two orthogonal meanings of “compose”.
    is inspected directly through `l.compOuter`, `l.compInner`, and
    `l.compPullback`; no parallel `CompTriple` representation is needed.
 2. **Program composition over a fixed interface.** `FreeM.append` grafts one
-   interaction tree into another. `PointedMachine.seqComp` runs one pointed
+   interaction tree into another. `IOMachine.seqComp` runs one pointed
    machine until it returns an intermediate value and then initializes the
    next machine. This is Kleisli composition, not lens composition.
 
@@ -37,7 +37,7 @@ into `q ◃ r`:
   composite interface.
 
 The current bridge between machine and program presentations is
-`PointedMachine.toComp`. Its run semantics is the fold
+`IOMachine.toComp`. Its run semantics is the fold
 `runWith = FreeM.liftM ∘ toComp`. Under a `ResolvesIn` certificate, the
 fuel-exact `runWithInput_seqComp` theorem says that machine sequencing denotes
 the corresponding `OptionT` Kleisli composition at the summed budget. Without
@@ -77,7 +77,7 @@ an untested generic layer. The generic construction earns its place only when
 it makes an existing consumer simpler. In particular, it should eventually
 explain rather than obscure:
 
-- the relation between `FreeM.append` and `PointedMachine.seqComp`;
+- the relation between `FreeM.append` and `IOMachine.seqComp`;
 - the shared wiring core behind UC `par`, `wire`, and `plug`;
 - `DynSystem` behavior as the mate into the cofree comonoid;
 - fixed finite runs (`nStep`) as projections of the same behavior.

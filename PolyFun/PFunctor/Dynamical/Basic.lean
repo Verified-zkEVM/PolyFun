@@ -247,6 +247,17 @@ def sync {S₁ : Type u₁} {S₂ : Type u₂}
 
 end StepRel
 
+/-! ## Bundled dynamical systems -/
+
+/-- A dynamical system with its state type bundled. Specialized bundles such as
+`IOMachine`, `Labeled`, `Ticketed`, and `SafetySpec` extend this common core, so
+their underlying dynamics are uniformly available as `.toDynSystem`. -/
+structure Machine (p : PFunctor.{uA, uB}) where
+  /-- The state type of the machine. -/
+  State : Type u
+  /-- The dynamical system on the bundled state type. -/
+  toDynSystem : DynSystem State p
+
 end DynSystem
 
 /-! ## Moore machines and deterministic automata -/
@@ -300,7 +311,7 @@ variable {O : Type uO} {I : Type uI}
 
 /-- The Moore machine underlying a deterministic automaton (forgetting the start state). -/
 def toMooreMachine (a : DeterministicAutomaton O I) : MooreMachine a.State O I :=
-  MooreMachine.mk' a.output a.transition
+  a.output ⇆ a.transition
 
 end DeterministicAutomaton
 

@@ -21,7 +21,7 @@ namespace DynSystem.Examples
 
 /-- A two-state system over the terminal interface. -/
 def toggle : DynSystem Bool X.{0, 0} :=
-  DynSystem.mk' (fun _ => PUnit.unit) (fun state _ => !state)
+  (fun _ => PUnit.unit) ⇆ fun state _ => !state
 
 /-- A safety problem with one initial state and default-true policy predicates. -/
 def toggleSafety : DynSystem.SafetySpec X.{0, 0} where
@@ -32,8 +32,9 @@ def toggleSafety : DynSystem.SafetySpec X.{0, 0} where
 example : toggleSafety.init false := rfl
 example (state : Bool) : toggleSafety.assumptions state := trivial
 example (state : Bool) : toggleSafety.safe state := trivial
-example (state : Bool) : toggleSafety.expose state = toggle.expose state := rfl
-example (state : Bool) : toggleSafety.update state PUnit.unit = !state := rfl
+example (state : Bool) :
+    toggleSafety.toDynSystem.expose state = toggle.expose state := rfl
+example (state : Bool) : toggleSafety.toDynSystem.update state PUnit.unit = !state := rfl
 
 /-- Event labels may expose stable information about the source transition. -/
 def toggleLabeled : DynSystem.Labeled X.{0, 0} where

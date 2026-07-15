@@ -644,7 +644,7 @@ example : counterSystem.init (0 : ℕ) := rfl
 
 example : counterSystem.safe (5 : ℕ) := trivial
 
-example : counterSystem.toMachine = counterMachine := rfl
+example : counterSystem.toDynSystem = counterMachine := rfl
 
 /-- Node semantics for compiling the counter machine into a process. -/
 def counterProfile :

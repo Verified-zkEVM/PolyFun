@@ -52,7 +52,7 @@ example (R : Responder S q) (adv : DynSystem T q) (s : S) (t : T) :
 /-- The game former is the uncurried challenger (tensor–hom adjunction). -/
 example (chal : DynSystem S (q ⊸ r)) (adv : DynSystem T q) :
     DynSystem.game chal adv
-      = (Lens.comp (Lens.uncurry chal) (Lens.id (selfMonomial S) ⊗ₗ adv) :
+      = ((Lens.id (selfMonomial S) ⊗ₗ adv) ⨟ Lens.uncurry chal :
           Lens (selfMonomial S ⊗ selfMonomial T) r) := rfl
 
 /-- Eta canary: a responder's raw lens update reads only the query component. -/
@@ -86,7 +86,7 @@ def countingResponder : Responder ℕ (monomial ℕ ℕ) :=
 /-- The doubling adversary over `ℕ X^ ℕ`: queries its state, stores double the
 answer it hears. -/
 def doublingAdversary : DynSystem ℕ (monomial ℕ ℕ) :=
-  DynSystem.mk' (fun t => t) (fun _ (a : ℕ) => 2 * a)
+  (fun t => t) ⇆ fun _ (a : ℕ) => 2 * a
 
 /-- Three closed-game steps, computed by `rfl`:
 `(0, 5) ↦ (1, 0) ↦ (2, 2) ↦ (3, 4)`. -/
@@ -98,7 +98,7 @@ example : (DynSystem.closedGame countingResponder doublingAdversary).iterate (0,
 /-- A challenger with a Moore win bit: the adversary wins when its query matches
 the secret; every answer leaks the secret, and the secret never changes. -/
 def secretMatchChallenger : DynSystem ℕ (monomial ℕ ℕ ⊸ monomial Bool PUnit) :=
-  DynSystem.mk' (fun s => (fun (qy : ℕ) => qy == s) ⇆ (fun _ _ => s)) (fun s _ => s)
+  (fun s => (fun (qy : ℕ) => qy == s) ⇆ fun _ _ => s) ⇆ fun s _ => s
 
 /-- The win-bit game *is* a Moore machine: `game` at `r := monomial Bool PUnit`
 lands in `MooreMachine (S × T) Bool PUnit`, no scored-game structure needed. -/
@@ -135,11 +135,11 @@ def privKChallenger :
 
 /-- The commit-phase adversary: submits the fixed message pair `(false, true)`. -/
 def commitAdversary : DynSystem PUnit (monomial (Bool × Bool) Bool) :=
-  DynSystem.mk' (fun _ => (false, true)) (fun _ _ => PUnit.unit)
+  (fun _ => (false, true)) ⇆ fun _ _ => PUnit.unit
 
 /-- The guess-phase adversary: guesses its own (fixed) state bit. -/
 def guessAdversary : DynSystem Bool (monomial Bool PUnit) :=
-  DynSystem.mk' (fun t => t) (fun t _ => t)
+  (fun t => t) ⇆ fun t _ => t
 
 /-- The full PrivK-shaped game: challenger against the ordered adversary pair. -/
 def privKGame : DynSystem (Bool × (PUnit × Bool)) (X.{0, 0} ◃ monomial Bool PUnit) :=

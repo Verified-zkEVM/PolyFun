@@ -58,29 +58,21 @@ transition. This is the smallest bundle supporting statements about observable
 event traces. -/
 -- The system's state/interface universes and the event-label universe (`w`) are independent.
 @[nolint checkUnivs]
-structure Labeled (p : PFunctor.{uA, uB}) where
-  /-- The set of states of the underlying system. -/
-  State : Type u
-  /-- The underlying dynamical system being labeled. -/
-  toDynSystem : DynSystem State p
+structure Labeled (p : PFunctor.{uA, uB}) extends Machine.{u} p where
   /-- The type of observable external event labels. -/
   Event : Type w
   /-- The assignment of an event label to each transition. -/
-  event : toDynSystem.EventMap Event
+  event : toMachine.toDynSystem.EventMap Event
 
 /-- A dynamical system equipped with a stable ticket for each transition. This
 is the entry point for fairness and liveness statements. -/
 -- The system's state/interface universes and the ticket universe (`w`) are independent.
 @[nolint checkUnivs]
-structure Ticketed (p : PFunctor.{uA, uB}) where
-  /-- The set of states of the underlying system. -/
-  State : Type u
-  /-- The underlying dynamical system being ticketed. -/
-  toDynSystem : DynSystem State p
+structure Ticketed (p : PFunctor.{uA, uB}) extends Machine.{u} p where
   /-- The type of stable scheduling-obligation identifiers. -/
   Ticket : Type w
   /-- The assignment of a ticket to each transition. -/
-  ticket : toDynSystem.Tickets Ticket
+  ticket : toMachine.toDynSystem.Tickets Ticket
 
 /-- A safety-verification problem: dynamics together with initial states,
 ambient assumptions, and the state predicate to be established.
@@ -89,30 +81,13 @@ These predicates are orthogonal to the dynamics themselves, so they are kept
 out of `DynSystem` and bundled only for verification-oriented statements. -/
 -- The system's state universe (`u`) and interface universes are independent.
 @[nolint checkUnivs]
-structure SafetySpec (p : PFunctor.{uA, uB}) where
-  /-- The set of states of the underlying system. -/
-  State : Type u
-  /-- The underlying dynamical system. -/
-  toDynSystem : DynSystem State p
+structure SafetySpec (p : PFunctor.{uA, uB}) extends Machine.{u} p where
   /-- The predicate characterizing the system's initial states. -/
   init : State → Prop
   /-- The ambient assumptions imposed on states. -/
   assumptions : State → Prop := fun _ => True
   /-- The safety predicate that states are required to satisfy. -/
   safe : State → Prop := fun _ => True
-namespace SafetySpec
-
-/-- The position exposed by the underlying dynamical system at each state. -/
-abbrev expose (spec : SafetySpec.{u} p) : spec.State → p.A := spec.toDynSystem.expose
-
-/-- The transition of the underlying dynamical system: given a direction at the
-exposed position, the next state. -/
-abbrev update (spec : SafetySpec.{u} p) :
-    (st : spec.State) → p.B (spec.expose st) → spec.State :=
-  spec.toDynSystem.update
-
-end SafetySpec
-
 end DynSystem
 
 end PFunctor

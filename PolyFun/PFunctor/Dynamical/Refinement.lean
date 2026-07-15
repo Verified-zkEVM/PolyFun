@@ -380,7 +380,8 @@ refinements. -/
 noncomputable abbrev matchDir (sim : SafetyRefinement impl spec matchStep)
     {stImpl : impl.State} {stSpec : spec.State}
     (hrel : sim.stateRel stImpl stSpec)
-    (dImpl : p.B (impl.expose stImpl)) : q.B (spec.expose stSpec) :=
+    (dImpl : p.B (impl.toDynSystem.expose stImpl)) :
+      q.B (spec.toDynSystem.expose stSpec) :=
   sim.toForwardSimulation.matchDir hrel dImpl
 
 /-- The direction chosen through a safety refinement satisfies its requested
@@ -388,10 +389,10 @@ step relation and preserves the underlying simulation relation. -/
 theorem matchDir_spec (sim : SafetyRefinement impl spec matchStep)
     {stImpl : impl.State} {stSpec : spec.State}
     (hrel : sim.stateRel stImpl stSpec)
-    (dImpl : p.B (impl.expose stImpl)) :
+    (dImpl : p.B (impl.toDynSystem.expose stImpl)) :
     matchStep ⟨stImpl, dImpl⟩ ⟨stSpec, sim.matchDir hrel dImpl⟩ ∧
-      sim.stateRel (impl.update stImpl dImpl)
-        (spec.update stSpec (sim.matchDir hrel dImpl)) :=
+      sim.stateRel (impl.toDynSystem.update stImpl dImpl)
+        (spec.toDynSystem.update stSpec (sim.matchDir hrel dImpl)) :=
   sim.toForwardSimulation.matchDir_spec hrel dImpl
 
 /-- The related specification state constructed by the underlying forward
@@ -422,7 +423,8 @@ theorem matchedState_succ (sim : SafetyRefinement impl spec matchStep)
     (run : Run impl.toDynSystem) {stSpec : spec.State}
     (hrel : sim.stateRel run.initial stSpec) (n : ℕ) :
     (sim.matchedState run hrel (n + 1)).1 =
-      spec.update (sim.matchedState run hrel n).1 (sim.matchedDir run hrel n) :=
+      spec.toDynSystem.update (sim.matchedState run hrel n).1
+        (sim.matchedDir run hrel n) :=
   sim.toForwardSimulation.matchedState_succ run hrel n
 
 /-- Translate an implementation run using the underlying forward simulation.
