@@ -250,8 +250,9 @@ end StepRel
 /-! ## Bundled dynamical systems -/
 
 /-- A dynamical system with its state type bundled. Specialized bundles such as
-`IOMachine`, `Labeled`, `Ticketed`, and `SafetySpec` extend this common core, so
-their underlying dynamics are uniformly available as `.toDynSystem`. -/
+`DynComputation`, `IOMachine`, `Labeled`, `Ticketed`, and `SafetySpec` extend
+this common core, so their underlying dynamics are uniformly available as
+`.toDynSystem`. -/
 structure Machine (p : PFunctor.{uA, uB}) where
   /-- The state type of the machine. -/
   State : Type u

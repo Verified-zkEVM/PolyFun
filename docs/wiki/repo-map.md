@@ -39,6 +39,7 @@ recorded in [`AGENTS.md`](../../AGENTS.md):
 ```text
 PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   -> PFunctor/{Cofree, Trace}
+  -> PFunctor/Resumption
   -> PFunctor/Free/{Basic, Path}
   -> PFunctor/Free/{Displayed, Displayed/Decoration}
 
@@ -51,7 +52,7 @@ PFunctor/Lens/{Basic, Cartesian, State}
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   -> PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
-  -> PFunctor/Dynamical/{Behavior, Simulation, RunN, IOMachine}
+  -> PFunctor/Dynamical/{Behavior, Simulation, RunN, DynComputation, IOMachine}
   -> PFunctor/Dynamical/{Refinement, Responder, Game}
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
