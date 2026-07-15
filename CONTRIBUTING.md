@@ -27,7 +27,7 @@ free / displayed-free / cofree structures, interaction trees, and the
 generic interaction framework over a polynomial substrate. PRs that
 introduce *cryptographic* content (probabilistic semantics, evaluation
 distributions, oracle-simulation security definitions, scheme-specific
-algebra) belong in [`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io)
+algebra) belong in [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio)
 or downstream consumers, not here.
 
 If a PolyFun definition has a load-bearing dependency on a probability
@@ -79,7 +79,7 @@ Attribution policy:
    existing file or external source and substantial original
    structure / content remains, preserve any required upstream
    `Authors:` attribution. Files imported from
-   `Verified-zkEVM/VCV-io` during the initial bootstrap had their
+   `Verified-zkEVM/VCVio` during the initial bootstrap had their
    copyright line normalized to "PolyFun Contributors" but their
    `Authors:` line retained verbatim.
 5. **AI assistance**: do not add a separate AI-attribution line. Use

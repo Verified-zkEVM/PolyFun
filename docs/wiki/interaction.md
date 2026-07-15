@@ -5,7 +5,7 @@ roles, multiparty local views, and concurrent process semantics. PolyFun's
 [`PolyFun/Interaction/`](../../PolyFun/Interaction/) is intentionally
 *generic*. It carries no probability, no security predicates, and no
 concrete cryptographic algebra. Cryptographic content of any kind belongs
-in [`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io)
+in [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio)
 downstream.
 
 This page is descriptive. The Lean source under
@@ -41,7 +41,7 @@ The framework is organized around a few stable principles:
   operations (`map`, `par`, `wire`, `plug`). Computational equivalence,
   asymptotic security, and other security-flavored UC layers are *not*
   part of PolyFun: those live in
-  [`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io).
+  [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio).
 
 ## Quick orientation
 
@@ -502,7 +502,7 @@ PolyFun deliberately stops here: anything that requires a probability
 monad (e.g. `processSemanticsProbComp`), an oracle simulation
 (`processSemanticsOracle`), or a UC security predicate
 (`UCSecure`, `CompEmulates`) lives downstream in
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io). The
+[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio). The
 relevant runtime / async / security files live there, not here.
 
 ## Import guide
@@ -628,10 +628,10 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `MomentaryCorruption.lean` | momentary corruption surface, parametric over `m` |
 | `Leakage.lean` | leakage-oriented UC observation helpers |
 
-UC files that depended on a probability monad in VCV-io (`Computational.lean`,
+UC files that depended on a probability monad in VCVio (`Computational.lean`,
 `Runtime.lean`, `AsyncRuntime.lean`, `AsyncSecurity.lean`, `Standard.lean`,
 `StdDoBridge.lean`) deliberately do **not** appear in PolyFun. They live in
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io) and
+[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio) and
 re-import the generic primitives from PolyFun.
 
 ## In-tree examples
@@ -648,4 +648,4 @@ re-import the generic primitives from PolyFun.
 
 End-to-end UC examples that involve probability monads or concrete
 cryptographic content (one-time pad, oracle protocols, etc.) live in
-VCV-io rather than PolyFun, by design.
+VCVio rather than PolyFun, by design.

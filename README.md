@@ -11,12 +11,12 @@ PolyFun is a ready, buildable Lean 4 library. The repository builds without
 current module layout and scope.
 
 PolyFun originated as a wholesale extraction from
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io).
+[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio).
 
 ## Scope
 
 `PolyFun` collects three layers of generic, domain-agnostic infrastructure
-that emerged from the cryptographic-protocols formalization in `VCV-io`:
+that emerged from the cryptographic-protocols formalization in `VCVio`:
 
 1. **Polynomial functors and lenses.** `PFunctor` cores (positions /
    directions), polynomial charts, lenses, equivalences, free monad
@@ -32,7 +32,7 @@ that emerged from the cryptographic-protocols formalization in `VCV-io`:
 
 Cryptographic content (probabilistic semantics, evaluation distributions,
 oracle simulation, security definitions) lives in
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io)
+[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio)
 and depends on this library.
 
 ## Build

@@ -12,7 +12,7 @@ public import PolyFun.PFunctor.Dynamical.Bisimulation
 
 A deterministic "lookup oracle" with a fixed underlying answer function
 `f : Q → A` (a crypto-free, structural stand-in for a random oracle: sampling
-lives downstream in VCV-io). We model the *same* observable oracle two ways,
+lives downstream in VCVio). We model the *same* observable oracle two ways,
 differing only in the internal bookkeeping state:
 
 * `oracleLog` keeps the full query **log** as a `List Q`;

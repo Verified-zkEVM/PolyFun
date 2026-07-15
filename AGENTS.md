@@ -21,7 +21,7 @@ interaction framework over a polynomial substrate. Built on Mathlib.
 
 PolyFun packages three layers of generic, domain-agnostic infrastructure
 that emerged from the cryptographic-protocols formalization in
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io):
+[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio):
 
 1. **Polynomial functors and lenses.** `PFunctor` cores (positions /
    directions), polynomial charts, lenses (Cartesian, state),
@@ -48,7 +48,7 @@ PolyFun is intentionally *not* the place for cryptographic content.
 Probabilistic semantics, evaluation distributions, oracle-simulation
 security definitions, scheme-specific algebra, and concrete-protocol
 runtime layers all live in
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io)
+[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio)
 and depend on this library.
 
 ## Repo Map
@@ -74,7 +74,7 @@ and depend on this library.
   - `UC/`: open-process / open-theory layer, structural composition
     (interfaces, par, wire, plug), corruption models, environment
     actions, leakage. *Generic only* — security-flavored UC layers
-    (computational equivalence, asymptotic security) live in VCV-io.
+    (computational equivalence, asymptotic security) live in VCVio.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
   algebra, monad iter / hom, lawful re-exports).
@@ -196,7 +196,7 @@ Structures use UpperCamelCase: `PFunctor`, `Spec`, `Decoration`,
    probability monads, evaluation distributions, security predicates,
    or concrete-scheme algebra. Parameterize over an abstract monad
    instead. Cryptographic content belongs in
-   [`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io).
+   [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio).
 3. **`Spec.done` and `Spec.node` are `@[match_pattern, reducible]`**
    wrappers over `PFunctor.FreeM.{pure, liftBind}`. Pattern matching on
    them works transparently; `rfl` against the polynomial substrate

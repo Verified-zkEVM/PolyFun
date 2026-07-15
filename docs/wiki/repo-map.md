@@ -111,14 +111,14 @@ PolyFun is intentionally *not* the place for cryptographic content.
 Probabilistic semantics, evaluation distributions, oracle-simulation
 security definitions, scheme-specific algebra, and concrete-protocol
 runtime layers all live in
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io) and
+[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio) and
 depend on this library.
 
 When in doubt, ask: *can this definition be stated against an arbitrary
 monad `m` with `[Monad m]` and friends, with no probability, no security
 predicate, and no concrete cryptographic algebra?* If the answer is yes,
 it belongs in PolyFun. If the answer is no, it belongs downstream in
-VCV-io or a more specialized repo.
+VCVio or a more specialized repo.
 
 ## Navigation Notes
 
