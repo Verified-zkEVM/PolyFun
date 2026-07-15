@@ -78,6 +78,8 @@ and depend on this library.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
   algebra, monad iter / hom, lawful re-exports).
+- `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
+  silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
 - `PolyFunTest/`: separate test / worked-example library (glob
   `PolyFunTest.+`), built by `lake test` and kept out of the `lake lint`
@@ -120,12 +122,12 @@ Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
   → IPFunctor/Notation, IPFunctor/Notation/{Indexed, Deterministic}
 
-Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation}
+Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   (free-standing helpers, depended on by both PFunctor and ITree;
    Control/Bisimulation is the generic LTS bisimulation theory)
 
 PFunctor/Free → ITree/{Basic, Construct, Handler, Rec,
-                       Events, Sim, Bisim}
+                       Events, Sim, Bisim, Trace}
 PFunctor/Dynamical + ITree/Basic → ITree/Unfold
 
 PFunctor/Free + Control → Interaction/Basic/{Spec, Node, Decoration,
