@@ -25,7 +25,7 @@ map concatenates finite vertices.
 
 @[expose] public section
 
-universe uA uB uA₂ uB₂ uA₃ uB₃
+universe uA uB uA₂ uB₂ uA₃ uB₃ v
 
 namespace PFunctor
 namespace M
@@ -109,6 +109,28 @@ theorem mapLens_comp {R : PFunctor.{uA₃, uB₃}} (g : Lens Q R)
       exact M.dest_corec _ _
     rw [hmapped, hsource]
     rfl
+
+/-- Mapping commutes with M-type corecursion by mapping each coalgebra step. -/
+theorem mapLens_corec {α : Type v} (l : Lens P Q) (step : α → P α)
+    (seed : α) :
+    mapLens l (M.corec step seed) =
+      M.corec (fun state => Lens.mapObj l (step state)) seed := by
+  change M.corec (fun tree => Lens.mapObj l (M.dest tree))
+      (M.corec step seed) =
+    M.corec (fun state => Lens.mapObj l (step state)) seed
+  refine M.corec_eq_corec
+    (fun tree => Lens.mapObj l (M.dest tree))
+    (fun state => Lens.mapObj l (step state))
+    (fun tree state => tree = M.corec step state)
+    (M.corec step seed) seed rfl ?_
+  rintro tree state rfl
+  rcases hstep : step state with ⟨shape, children⟩
+  refine ⟨l.toFunA shape,
+    fun direction => M.corec step (children (l.toFunB shape direction)),
+    fun direction => children (l.toFunB shape direction), ?_, ?_, fun _ => rfl⟩
+  · rw [M.dest_corec_apply, hstep]
+    rfl
+  · rfl
 
 /-- A finite rooted vertex of an M-type tree. -/
 inductive Vertex : (t : M P) → Type (max uA uB) where

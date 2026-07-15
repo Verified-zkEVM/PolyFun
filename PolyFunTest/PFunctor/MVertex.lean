@@ -124,6 +124,14 @@ example (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂})
     M.mapLens (g ∘ₗ f) tree = M.mapLens g (M.mapLens f tree) :=
   M.mapLens_comp g f tree
 
+/-- Lens mapping fuses with an independently universe-polymorphic coalgebra. -/
+example {α : Type uA₃} (P : PFunctor.{uA, uB})
+    (Q : PFunctor.{uA₂, uB₂}) (l : Lens P Q) (step : α → P α)
+    (seed : α) :
+    M.mapLens l (M.corec step seed) =
+      M.corec (fun state => Lens.mapObj l (step state)) seed :=
+  M.mapLens_corec l step seed
+
 /-- Vertex transport likewise does not couple source and target universes. -/
 example (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂})
     (l : Lens P Q) (tree : M P) :
