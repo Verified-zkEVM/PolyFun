@@ -5,8 +5,8 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Dynamical.Trajectory
-public import PolyFun.PFunctor.Resumption
+public import PolyFun.PFunctor.Dynamical.Simulation
+public import PolyFun.PFunctor.Free.Resumption
 
 /-!
 # Returning dynamical computations
@@ -147,8 +147,93 @@ def ofResumption (semantics : α → Resumption p β) : DynComputation p α β w
   unfold denote ofResumption
   exact M.corec_dest _
 
+/-! ## Finite free programs -/
+
+/-- Realize an input-indexed family of finite free programs as a returning
+dynamical computation whose states are the residual programs. -/
+def ofFreeM (program : α → FreeM p β) : DynComputation p α β where
+  State := FreeM p β
+  toDynSystem :=
+    (fun
+      | .pure value => Sum.inl value
+      | .liftBind position _ => Sum.inr position) ⇆
+    fun state => match state with
+      | .pure _ => PEmpty.elim
+      | .liftBind _ next => next
+  init := program
+
+@[simp] theorem ofFreeM_State (program : α → FreeM p β) :
+    (ofFreeM program).State = FreeM p β := rfl
+
+@[simp] theorem ofFreeM_init (program : α → FreeM p β) (input : α) :
+    (ofFreeM program).init input = program input := rfl
+
+@[simp] theorem view_ofFreeM_pure (program : α → FreeM p β) (value : β) :
+    (ofFreeM program).view (pure value) = Sum.inl value := rfl
+
+@[simp] theorem view_ofFreeM_liftBind (program : α → FreeM p β)
+    (position : p.A) (next : p.B position → FreeM p β) :
+    (ofFreeM program).view ((FreeM.lift position).bind next) =
+      Sum.inr ⟨position, next⟩ := rfl
+
+/-- `ofFreeM` has exactly the tau-free resumption semantics of its source
+program. -/
+@[simp] theorem denote_ofFreeM (program : α → FreeM p β) (input : α) :
+    (ofFreeM program).denote input = FreeM.toResumption (program input) := by
+  let machine := (ofFreeM program).toDynSystem
+  have hsem : FreeM.toResumption = machine.behavior := by
+    apply DynSystem.behavior_unique machine
+    intro state
+    cases state with
+    | pure value =>
+        simp only [FreeM.toResumption, Resumption.pure, M.dest_mk]
+        change ⟨Sum.inl value, PEmpty.elim⟩ =
+          (C β + p).map FreeM.toResumption ⟨Sum.inl value, PEmpty.elim⟩
+        apply Sigma.ext
+        · rfl
+        · apply heq_of_eq
+          funext direction
+          exact PEmpty.elim direction
+    | liftBind position next =>
+        simp only [FreeM.toResumption, Resumption.query, M.dest_mk]
+        change ⟨Sum.inr position, fun direction => FreeM.toResumption (next direction)⟩ =
+          (C β + p).map FreeM.toResumption ⟨Sum.inr position, next⟩
+        rfl
+  exact (congrFun hsem (program input)).symm
+
+/-- Qualitative semantic correctness of a returning dynamical computation
+with respect to a finite free program. Resource bounds are deliberately not
+part of this predicate. -/
+def Implements (M : DynComputation p α β) (program : α → FreeM p β) : Prop :=
+  ∀ input, M.denote input = FreeM.toResumption (program input)
+
+@[simp] theorem implements_ofFreeM (program : α → FreeM p β) :
+    Implements (ofFreeM program) program :=
+  denote_ofFreeM program
+
+@[simp] theorem implements_ofResumption (program : α → FreeM p β) :
+    Implements (ofResumption fun input => FreeM.toResumption (program input)) program :=
+  denote_ofResumption _
+
+/-- A synchronized state simulation from a dynamical implementation to the
+canonical residual-program realization proves qualitative implementation. -/
+theorem implements_of_isSimulation (M : DynComputation p α β)
+    (program : α → FreeM p β) (R : M.State → FreeM p β → Prop)
+    (simulation : IsSimulation M.toDynSystem (ofFreeM program).toDynSystem R)
+    (init_rel : ∀ input, R (M.init input) (program input)) :
+    M.Implements program := by
+  intro input
+  rw [← denote_ofFreeM program input]
+  exact behavior_eq_of_isSimulation simulation (init_rel input)
+
 end DynComputation
 
 end DynSystem
 
 end PFunctor
+
+/-- Locally scoped notation for qualitative implementation of a finite free
+program. The turnstile-style symbol follows the common model-satisfaction
+notation used for semantic realization judgments. -/
+scoped[PFunctor.DynComputation] infix:50 " ⊨ " =>
+  PFunctor.DynSystem.DynComputation.Implements

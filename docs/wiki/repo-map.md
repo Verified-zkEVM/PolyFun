@@ -40,8 +40,10 @@ recorded in [`AGENTS.md`](../../AGENTS.md):
 PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   -> PFunctor/{Cofree, Trace}
   -> PFunctor/Resumption
-  -> PFunctor/Free/{Basic, Path}
-  -> PFunctor/Free/{Displayed, Displayed/Decoration}
+PFunctor/Free/Basic
+  -> PFunctor/Free/Displayed
+  -> PFunctor/Free/{Path, Displayed/Decoration}
+PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption
 
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
   (free-standing helpers, depended on by both PFunctor and ITree)
