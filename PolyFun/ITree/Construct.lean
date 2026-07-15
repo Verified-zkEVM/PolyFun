@@ -25,26 +25,29 @@ The list of definitions and their Coq counterparts:
 | `ITree.ignore`  | `ITree.ignore`    |
 | `burn n t`      | `ITree.take`      |
 
-The `Functor` and `Applicative` instances on `ITree F` are derived from the
-`Monad` instance in `PolyFun.ITree.Basic`; we record the corresponding `simp`
-lemma `Functor.map = ITree.map` so that `simp` can normalise occurrences of
-`(· <$> ·)` to `ITree.map`.
+The named `map`, `cat`, and `forever` operations allow their source and target
+types to live in different universes. The `Functor` and `Applicative` instances
+on `ITree F` are derived from the `Monad` instance in `PolyFun.ITree.Basic` and
+therefore use one value universe at a time. We record the corresponding `simp`
+lemma `Functor.map = ITree.map` on that homogeneous fragment so that `simp` can
+normalise occurrences of `(· <$> ·)` to `ITree.map`.
 -/
 
 @[expose] public section
 
-universe u
+universe u uA uB uα uβ uγ uUnit
 
 namespace ITree
 
-variable {F : PFunctor.{u, u}} {α β γ : Type u}
+variable {F : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type uγ}
 
 /-! ### Diverging tree -/
 
 /-- The diverging interaction tree, an infinite sequence of silent (`step`)
 nodes. (Coq `spin`.) -/
 def diverge : ITree F α :=
-  PFunctor.M.corec (F := Poly F α) (fun (_ : PUnit.{u + 1}) => ⟨.step, fun _ => PUnit.unit⟩)
+  PFunctor.M.corec (F := Poly F α)
+    (fun (_ : PUnit.{uB + 1}) => ⟨.step, fun _ => PUnit.unit⟩)
     PUnit.unit
 
 @[simp] theorem shape'_diverge :
@@ -73,8 +76,9 @@ def cat (f : α → ITree F β) (g : β → ITree F γ) : α → ITree F γ :=
 
 /-! ### Ignoring the result -/
 
-/-- Run `t`, discarding its leaf value. (Coq `ITree.ignore`.) -/
-def ignore (t : ITree F α) : ITree F PUnit.{u + 1} :=
+/-- Run `t`, discarding its leaf value. The unit result may live in any
+universe. (Coq `ITree.ignore`.) -/
+def ignore (t : ITree F α) : ITree F PUnit.{uUnit + 1} :=
   map (fun _ => PUnit.unit) t
 
 /-! ### Forever -/
@@ -82,7 +86,7 @@ def ignore (t : ITree F α) : ITree F PUnit.{u + 1} :=
 /-- Run `t` forever, discarding each leaf value. The result type `β` is
 arbitrary because `forever t` never produces a leaf. (Coq `forever`.) -/
 def forever (t : ITree F α) : ITree F β :=
-  iter (fun _ : PUnit.{u + 1} => bind t (fun _ => pure (Sum.inl PUnit.unit))) PUnit.unit
+  iter (fun _ : PUnit.{uB + 1} => bind t (fun _ => pure (Sum.inl PUnit.unit))) PUnit.unit
 
 /-! ### Bounded execution -/
 
@@ -130,7 +134,7 @@ in `PolyFun.ITree.Basic`) and computes `Functor.map f t` as
 a `simp` lemma so that ordinary `(· <$> ·)` notation is normalised to
 `ITree.map`. -/
 
-@[simp] theorem map_eq_functor_map (f : α → β) (t : ITree F α) :
+@[simp] theorem map_eq_functor_map {α β : Type u} (f : α → β) (t : ITree F α) :
     f <$> t = ITree.map f t := rfl
 
 end ITree

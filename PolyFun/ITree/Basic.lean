@@ -24,10 +24,12 @@ CoInductive itree (E : Type → Type) (R : Type) :=
 ```
 
 In Lean we model the event signature as a *polynomial functor*
-`F : PFunctor.{u, u}` (shapes are event names, positions are answer types) so
-that the resulting tree lives at a single universe `u`. ITrees themselves are
-the M-type (final coalgebra) of the one-step polynomial functor `Poly F α`
-whose shapes are pure leaves, silent steps, or visible queries.
+`F : PFunctor.{uA, uB}`: its positions are event names and its directions are
+answer types. The event-name, answer, and return universes are independent.
+For `α : Type uα`, the resulting tree lives in `Type (max uA uB uα)`.
+ITrees themselves are the M-type (final coalgebra) of the one-step polynomial
+functor `Poly F α` whose shapes are pure leaves, silent steps, or visible
+queries.
 
 ## Naming conventions
 
@@ -70,7 +72,7 @@ the project's `ITreePilot.lean` (no longer needed once this file is in place).
 
 @[expose] public section
 
-universe u v
+universe uA uB uα uβ
 
 namespace ITree
 
@@ -78,7 +80,7 @@ namespace ITree
 
 /-- One-step view of an ITree node: a pure leaf, a silent step, or a visible
 query. Mirrors Coq's `itreeF` (`Core/ITreeDefinition.v`). -/
-inductive Shape (F : PFunctor.{u, u}) (α : Type u) : Type u where
+inductive Shape (F : PFunctor.{uA, uB}) (α : Type uα) : Type (max uA uα) where
   /-- A leaf carrying a result of type `α`. (Coq `RetF`.) -/
   | pure (r : α) : Shape F α
   /-- A silent (`τ`) step. (Coq `TauF`.) -/
@@ -96,26 +98,29 @@ inductive Shape (F : PFunctor.{u, u}) (α : Type u) : Type u where
   - `.step` has exactly one child (`PUnit`).
   - `.query a` has children indexed by the answer type `F.B a`. -/
 @[reducible]
-def Poly (F : PFunctor.{u, u}) (α : Type u) : PFunctor.{u, u} where
+def Poly (F : PFunctor.{uA, uB}) (α : Type uα) : PFunctor.{max uA uα, uB} where
   A := Shape F α
   B
-    | .pure _r => PEmpty.{u + 1}
-    | .step    => PUnit.{u + 1}
+    | .pure _r => PEmpty.{uB + 1}
+    | .step    => PUnit.{uB + 1}
     | .query a => F.B a
 
 end ITree
 
-/-- Interaction trees over events `F : PFunctor.{u, u}` with leaves of type
-`α : Type u`, defined as the final coalgebra (M-type) of `ITree.Poly F α`.
+/-- Interaction trees over events `F : PFunctor.{uA, uB}` with leaves of type
+`α : Type uα`, defined as the final coalgebra (M-type) of `ITree.Poly F α`.
+
+Event names, event answers, and returned values may live in independent
+universes. The resulting tree lives in `Type (max uA uB uα)`.
 
 This is the Lean / Mathlib analogue of Coq's `itree E R`
 (`InteractionTrees/theories/Core/ITreeDefinition.v`). -/
-def ITree (F : PFunctor.{u, u}) (α : Type u) : Type u :=
+def ITree (F : PFunctor.{uA, uB}) (α : Type uα) : Type (max uA uB uα) :=
   PFunctor.M (ITree.Poly F α)
 
 namespace ITree
 
-variable {F : PFunctor.{u, u}} {α β γ : Type u}
+variable {F : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
 
 /-! ### Smart constructors -/
 
