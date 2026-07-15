@@ -35,9 +35,12 @@ def Interface : PFunctor where
   A := Command
   B := Answer
 
+def afterIndex (index : Fin 2) : FreeM Interface Nat :=
+  .liftBind (.select false) fun _ => .pure (10 + index.val)
+
 def afterChoice : Bool → FreeM Interface Nat
   | false => .pure 7
-  | true => .liftBind (.select true) fun index => .pure (10 + index.val)
+  | true => .liftBind (.select true) afterIndex
 
 def program : FreeM Interface Nat :=
   .liftBind .choose afterChoice
@@ -54,27 +57,36 @@ example : internal.length = 1 := rfl
 
 example : internal.trace = [⟨Command.choose, true⟩] := rfl
 
-/-- One more edge selects a leaf within the `Fin 2` branch. -/
-def leafEdge : Cursor.Edge internal.residual :=
+/-- A second edge selects an answer within the `Fin 2` branch. -/
+def indexEdge : Cursor.Edge internal.residual :=
   Cursor.Edge.down selectedIndex
 
+def afterIndexCursor : Cursor program :=
+  internal.comp indexEdge.toCursor
+
+/-- The final edge has the distinct answer type `PUnit`. -/
+def unitEdge : Cursor.Edge afterIndexCursor.residual :=
+  Cursor.Edge.down PUnit.unit
+
 def trueLeaf : Cursor program :=
-  internal.comp leafEdge.toCursor
+  afterIndexCursor.comp unitEdge.toCursor
 
 example : trueLeaf.residual = FreeM.pure 11 := rfl
 
-example : trueLeaf.length = 2 := rfl
+example : trueLeaf.length = 3 := rfl
 
 example : trueLeaf.trace =
-    [⟨Command.choose, true⟩, ⟨Command.select true, selectedIndex⟩] := rfl
+    [⟨Command.choose, true⟩, ⟨Command.select true, selectedIndex⟩,
+      ⟨Command.select false, PUnit.unit⟩] := rfl
 
 def truePath : Path program :=
-  ⟨true, selectedIndex, ⟨⟩⟩
+  ⟨true, selectedIndex, PUnit.unit, ⟨⟩⟩
 
 def falsePath : Path program :=
   ⟨false, ⟨⟩⟩
 
-example : internal.plug (⟨selectedIndex, ⟨⟩⟩ : Path internal.residual) = truePath := rfl
+example : internal.plug (⟨selectedIndex, PUnit.unit, ⟨⟩⟩ : Path internal.residual) =
+    truePath := rfl
 
 example : Cursor.ofPath program truePath = trueLeaf := rfl
 
@@ -100,14 +112,44 @@ example : Cursor.terminalOfPath program (Cursor.pathOfTerminal trueTerminal) =
 example : Cursor.terminalEquivPath program trueTerminal = truePath := by
   simp [Cursor.terminalEquivPath, trueTerminal]
 
+/-! The producer tests below name the public algebraic laws explicitly, so
+their availability and simp orientation remain part of the regression surface. -/
+
+example : (Cursor.root program).comp internal = internal := by
+  exact Cursor.root_comp internal
+
+example : internal.comp (Cursor.root internal.residual) = internal := by
+  exact Cursor.comp_root internal
+
+example : (internal.comp indexEdge.toCursor).comp unitEdge.toCursor =
+    internal.comp (indexEdge.toCursor.comp unitEdge.toCursor) := by
+  exact Cursor.comp_assoc internal indexEdge.toCursor unitEdge.toCursor
+
+example : trueLeaf.length = internal.length + indexEdge.toCursor.length +
+    unitEdge.toCursor.length := by
+  simp only [trueLeaf, afterIndexCursor, Cursor.length_comp]
+
+example : trueLeaf.trace =
+    List.append (List.append internal.trace indexEdge.toCursor.trace)
+      unitEdge.toCursor.trace := by
+  simp only [trueLeaf, afterIndexCursor, Cursor.trace_comp]
+
+example (path : Path unitEdge.residual) :
+    (afterIndexCursor.comp unitEdge.toCursor).plug path =
+      afterIndexCursor.plug (unitEdge.toCursor.plug path) := by
+  exact Cursor.plug_comp afterIndexCursor unitEdge.toCursor path
+
+example : trueLeaf.length = FreeMonoid.length trueLeaf.trace := by
+  exact Cursor.length_eq_trace_length trueLeaf
+
 /-- The witness retains the continuation, rather than merely comparing lengths. -/
 def extendsInternal : Cursor.Extends internal trueLeaf where
-  continuation := leafEdge.toCursor
+  continuation := indexEdge.toCursor.comp unitEdge.toCursor
   comp_eq := rfl
 
 /-- A separate witness records that the extension is exactly one edge. -/
-def extendsInternalByOne : Cursor.ExtendsByOne internal trueLeaf where
-  edge := leafEdge
+def extendsInternalByOne : Cursor.ExtendsByOne internal afterIndexCursor where
+  edge := indexEdge
   comp_eq := rfl
 
 end PFunctor.FreeM.CursorExamples
