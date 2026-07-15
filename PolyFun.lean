@@ -112,6 +112,7 @@ import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Bisimulation
 import PolyFun.PFunctor.Dynamical.Combinators
+import PolyFun.PFunctor.Dynamical.DynComputation
 import PolyFun.PFunctor.Dynamical.Game
 import PolyFun.PFunctor.Dynamical.IOMachine
 import PolyFun.PFunctor.Dynamical.Refinement
@@ -139,4 +140,5 @@ import PolyFun.PFunctor.Lens.Duoidal
 import PolyFun.PFunctor.Lens.Factorization
 import PolyFun.PFunctor.Lens.State
 import PolyFun.PFunctor.M
+import PolyFun.PFunctor.Resumption
 import PolyFun.PFunctor.Trace

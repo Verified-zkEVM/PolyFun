@@ -586,3 +586,14 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   `PolyFunTest/PFunctor/FreeMapMNaturality.lean`. Downstream payoff to check:
   VCVio should be able to bundle `evalDist` as a monad hom and replace its
   hand-proved `simulateQ` fold-naturality family with these generic laws.
+- 2026-07-13: **Returning-computation foundation.** Added the canonical
+  `Resumption p β := M (C β + p)` behavior and `DynComputation p α β`, a
+  hidden-state realization extending `Machine (C β + p)` with `init`.
+  `view` exposes the return-or-query step, `denote` is the initialized
+  terminal-coalgebra behavior, and input-dependent `ofFn` together with the
+  constant-value `Pure` instance remove the arbitrary `Point p` required by a
+  separate partial readout. The one-step `viewEquiv`, injective destructor,
+  corecursor, and canonical `DynComputation.ofResumption` realization complete
+  the coalgebraic foundation. These form the additive foundation for the later
+  `FreeM → Resumption → ITree` bridges and
+  the eventual returning-machine cutover; `IOMachine` remains unchanged here.
