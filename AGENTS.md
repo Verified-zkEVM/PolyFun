@@ -99,7 +99,7 @@ PFunctor/Free/Basic
   → PFunctor/Free/Path/Execution
   → PFunctor/Free/Cursor
   → PFunctor/Free/Cursor/Occurrence
-  → PFunctor/Free/Cursor/Refork
+  → PFunctor/Free/Cursor/Fork
 PFunctor/{Resumption, Free/Basic} → PFunctor/Free/Resumption
 
 PFunctor/Lens/{Basic, Cartesian, State}

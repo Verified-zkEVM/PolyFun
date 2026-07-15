@@ -403,7 +403,7 @@ theorem complete_prependOther {a : P.A} {next : P.B a → FreeM P α}
 
 end Split
 
-/-! ## Executable splitting and prefix-first reforking -/
+/-! ## Executable splitting and prefix-first forking -/
 
 /-- Execute a program only until immediately before occurrence `n` of `target`. -/
 def splitAt [DecidableEq P.A] (target : P.A) :

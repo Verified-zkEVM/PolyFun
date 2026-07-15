@@ -8,11 +8,11 @@ module
 public import PolyFun.PFunctor.Free.Cursor.Occurrence
 
 /-!
-# Reforking free polynomial programs at typed occurrences
+# Forking free polynomial programs at typed occurrences
 
 This file locates a selected occurrence on an executed path and independently
 completes the retained occurrence context a second time. Fixed and dynamically
-selected reforking share the same path-independent `Occurrence` representation.
+selected forking share the same path-independent `Occurrence` representation.
 -/
 
 @[expose] public section
@@ -88,7 +88,7 @@ def prependOther {target a : P.A}
 
 end Located
 
-/-! ## Path-first and dynamically selected reforking -/
+/-! ## Path-first and dynamically selected forking -/
 
 /-- Locate occurrence `n` on an existing path and return its typed context
 decomposition. -/
@@ -206,7 +206,7 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
 namespace Located
 
 /-- Independently complete the occurrence carried by a located first path. -/
-def refork {target : P.A} {program : FreeM P α}
+def fork {target : P.A} {program : FreeM P α}
     {path : Path program} {n : Nat} (located : Located target program path n) :
     FreeM P (ForkView target program n) :=
   FreeM.liftBind target fun secondAnswer =>
@@ -216,32 +216,32 @@ def refork {target : P.A} {program : FreeM P α}
       second := ⟨secondAnswer, secondSuffix⟩ })
       (withPath (located.occurrence.resume secondAnswer))
 
-/-- A located refork is a generic completion of its occurrence, decorated
+/-- A located fork is a generic completion of its occurrence, decorated
 with the already observed first completion. -/
-theorem refork_eq_map_complete {target : P.A}
+theorem fork_eq_map_complete {target : P.A}
     {program : FreeM P α} {path : Path program} {n : Nat}
     (located : Located target program path n) :
-    located.refork =
+    located.fork =
       FreeM.map (fun second : located.occurrence.Completion => ({
         occurrence := located.occurrence
         first := located.completion
         second := second } : ForkView target program n))
         located.occurrence.complete := by
-  unfold refork Occurrence.complete
+  unfold fork Occurrence.complete
   simp only [FreeM.map]
   apply congrArg (FreeM.bind (FreeM.lift target))
   funext secondAnswer
   rw [← FreeM.comp_map]
   rfl
 
-/-- Reforking commutes with an earlier target occurrence. -/
-theorem refork_prependSame {target : P.A}
+/-- Forking commutes with an earlier target occurrence. -/
+theorem fork_prependSame {target : P.A}
     {next : P.B target → FreeM P α} (answer : P.B target)
     {suffix : Path (next answer)} {n : Nat}
     (located : Located target (next answer) suffix n) :
-    (prependSame answer located).refork =
-      FreeM.map (ForkView.prependSame answer) located.refork := by
-  unfold refork prependSame ForkView.prependSame
+    (prependSame answer located).fork =
+      FreeM.map (ForkView.prependSame answer) located.fork := by
+  unfold fork prependSame ForkView.prependSame
   simp only [Occurrence.resume, FreeM.map]
   apply congrArg (FreeM.liftBind target)
   funext secondAnswer
@@ -251,14 +251,14 @@ theorem refork_prependSame {target : P.A}
   funext secondSuffix
   rfl
 
-/-- Reforking commutes with an earlier non-target event. -/
-theorem refork_prependOther {target a : P.A}
+/-- Forking commutes with an earlier non-target event. -/
+theorem fork_prependOther {target a : P.A}
     {next : P.B a → FreeM P α} (hne : a ≠ target) (answer : P.B a)
     {suffix : Path (next answer)} {n : Nat}
     (located : Located target (next answer) suffix n) :
-    (prependOther hne answer located).refork =
-      FreeM.map (ForkView.prependOther hne answer) located.refork := by
-  unfold refork prependOther ForkView.prependOther
+    (prependOther hne answer located).fork =
+      FreeM.map (ForkView.prependOther hne answer) located.fork := by
+  unfold fork prependOther ForkView.prependOther
   simp only [Occurrence.resume, FreeM.map]
   apply congrArg (FreeM.liftBind target)
   funext secondAnswer
@@ -272,18 +272,19 @@ end Located
 
 /-- Path-first presentation of `forkAt`: execute one complete path, recover
 its occurrence context, and independently complete that context once more. -/
-def reforkAt [DecidableEq P.A] (target : P.A) (program : FreeM P α) (n : Nat) :
+def locateAndForkAt [DecidableEq P.A]
+    (target : P.A) (program : FreeM P α) (n : Nat) :
     FreeM P (Option (ForkView target program n)) :=
   FreeM.bind (withPath program) fun (path : Path program) =>
     match locateAt? target program path n with
     | none => pure none
-    | some located => FreeM.map some located.refork
+    | some located => FreeM.map some located.fork
 
-/-- A dynamically selected refork together with the label that chose its
+/-- A dynamically selected fork together with the label that chose its
 dependent occurrence index. -/
 structure SelectedForkView (target : P.A) (program : FreeM P α)
     (κ : Type*) (index : κ → Nat) where
-  /-- Selector label that determines the reforked occurrence. -/
+  /-- Selector label that determines the forked occurrence. -/
   label : κ
   /-- Two completions of the occurrence selected by `label`. -/
   view : ForkView target program (index label)
@@ -307,10 +308,10 @@ def outputs (selected : SelectedForkView target program κ index) : α × α :=
 
 end SelectedForkView
 
-/-- Dynamically select an occurrence from the first output and refork its
+/-- Dynamically select an occurrence from the first output and fork its
 typed context.  The observer hides the path-dependent occurrence index from
 the result type, making this the canonical reduction-wiring interface. -/
-def reforkBy [DecidableEq P.A] {κ β : Type*}
+def locateAndForkBy [DecidableEq P.A] {κ β : Type*}
     (target : P.A) (program : FreeM P α)
     (select : α → Option κ) (index : κ → Nat)
     (observe : (k : κ) → ForkView target program (index k) → β) :
@@ -321,41 +322,42 @@ def reforkBy [DecidableEq P.A] {κ β : Type*}
     | some k =>
         match locateAt? target program path (index k) with
         | none => pure none
-        | some located => FreeM.map (some ∘ observe k) located.refork
+        | some located => FreeM.map (some ∘ observe k) located.fork
 
 /-- Dynamically select an occurrence and retain its typed fork view together
 with the selecting label. -/
-def reforkSelected [DecidableEq P.A] {κ : Type*}
+def locateAndForkSelected [DecidableEq P.A] {κ : Type*}
     (target : P.A) (program : FreeM P α)
     (select : α → Option κ) (index : κ → Nat) :
     FreeM P (Option (SelectedForkView target program κ index)) :=
-  reforkBy target program select index fun label view => ⟨label, view⟩
+  locateAndForkBy target program select index fun label view => ⟨label, view⟩
 
-/-- Dynamically select and refork an occurrence, discarding observations
+/-- Dynamically select and fork an occurrence, discarding observations
 that do not satisfy a pure optional classifier. -/
-def filterMapReforkBy [DecidableEq P.A] {κ β : Type*}
+def filterMapLocateAndForkBy [DecidableEq P.A] {κ β : Type*}
     (target : P.A) (program : FreeM P α)
     (select : α → Option κ) (index : κ → Nat)
     (observe : (k : κ) → ForkView target program (index k) → Option β) :
     FreeM P (Option β) :=
-  FreeM.map Option.join (reforkBy target program select index observe)
+  FreeM.map Option.join (locateAndForkBy target program select index observe)
 
-/-- Refork one fixed occurrence and discard views rejected by a pure optional
-classifier. -/
-def filterMapReforkAt [DecidableEq P.A] {β : Type*}
+/-- Locate and fork one fixed occurrence, discarding views rejected by a pure
+optional classifier. -/
+def filterMapLocateAndForkAt [DecidableEq P.A] {β : Type*}
     (target : P.A) (program : FreeM P α) (n : Nat)
     (observe : ForkView target program n → Option β) :
     FreeM P (Option β) :=
-  FreeM.map (fun view? => view?.bind observe) (reforkAt target program n)
+  FreeM.map (fun view? => view?.bind observe)
+    (locateAndForkAt target program n)
 
-/-- Mapping an observation after dynamic refork selection fuses into the
+/-- Mapping an observation after dynamic fork selection fuses into the
 path-dependent observer. -/
-theorem map_reforkBy [DecidableEq P.A] {κ β γ : Type*}
+theorem map_locateAndForkBy [DecidableEq P.A] {κ β γ : Type*}
     (target : P.A) (program : FreeM P α)
     (select : α → Option κ) (index : κ → Nat)
     (observe : (k : κ) → ForkView target program (index k) → β)
     (f : Option β → γ) :
-    FreeM.map f (reforkBy target program select index observe) =
+    FreeM.map f (locateAndForkBy target program select index observe) =
       FreeM.bind (withPath program) fun path =>
         match select (output program path) with
         | none => pure (f none)
@@ -363,8 +365,8 @@ theorem map_reforkBy [DecidableEq P.A] {κ β γ : Type*}
             match locateAt? target program path (index k) with
             | none => pure (f none)
             | some located =>
-                FreeM.map (f ∘ some ∘ observe k) located.refork := by
-  unfold reforkBy
+                FreeM.map (f ∘ some ∘ observe k) located.fork := by
+  unfold locateAndForkBy
   rw [← FreeM.bind_pure_comp, FreeM.bind_assoc]
   apply congrArg (FreeM.bind (withPath program))
   funext path
@@ -376,13 +378,13 @@ theorem map_reforkBy [DecidableEq P.A] {κ β γ : Type*}
     · simp only [hlocate]
       rw [FreeM.bind_pure_comp, ← FreeM.comp_map]
 
-/-- Eliminate a dynamically selected optional refork into its first path and
+/-- Eliminate a dynamically selected optional fork into its first path and
 one independently sampled completion. -/
-theorem filterMapReforkBy_eq_bind_complete [DecidableEq P.A]
+theorem filterMapLocateAndForkBy_eq_bind_complete [DecidableEq P.A]
     {κ β : Type*} (target : P.A) (program : FreeM P α)
     (select : α → Option κ) (index : κ → Nat)
     (observe : (k : κ) → ForkView target program (index k) → Option β) :
-    filterMapReforkBy target program select index observe =
+    filterMapLocateAndForkBy target program select index observe =
       FreeM.bind (withPath program) fun path =>
         match select (output program path) with
         | none => pure none
@@ -394,8 +396,8 @@ theorem filterMapReforkBy_eq_bind_complete [DecidableEq P.A]
                   occurrence := located.occurrence
                   first := located.completion
                   second := second }) located.occurrence.complete := by
-  unfold filterMapReforkBy
-  rw [map_reforkBy]
+  unfold filterMapLocateAndForkBy
+  rw [map_locateAndForkBy]
   apply congrArg (FreeM.bind (withPath program))
   funext path
   rcases hselect : select (output program path) with _ | k
@@ -403,21 +405,21 @@ theorem filterMapReforkBy_eq_bind_complete [DecidableEq P.A]
   · rcases hlocate : locateAt? target program path (index k) with _ | located
     · simp [hlocate]
     · simp only [hlocate]
-      rw [Located.refork_eq_map_complete, ← FreeM.comp_map]
+      rw [Located.fork_eq_map_complete, ← FreeM.comp_map]
       rfl
 
-/-- Mapping an observation over a path-first refork can be pushed into each
+/-- Mapping an observation over a path-first fork can be pushed into each
 located continuation. This is the canonical elimination rule for consumers
-that inspect a `ForkView` without otherwise changing the reforking program. -/
-theorem map_reforkAt [DecidableEq P.A] {β : Type*} (target : P.A)
+that inspect a `ForkView` without otherwise changing the forking program. -/
+theorem map_locateAndForkAt [DecidableEq P.A] {β : Type*} (target : P.A)
     (program : FreeM P α) (n : Nat)
     (observe : Option (ForkView target program n) → β) :
-    FreeM.map observe (reforkAt target program n) =
+    FreeM.map observe (locateAndForkAt target program n) =
       FreeM.bind (withPath program) fun path =>
         match locateAt? target program path n with
         | none => pure (observe none)
-        | some located => FreeM.map (observe ∘ some) located.refork := by
-  unfold reforkAt
+        | some located => FreeM.map (observe ∘ some) located.fork := by
+  unfold locateAndForkAt
   rw [← FreeM.bind_pure_comp, FreeM.bind_assoc]
   apply congrArg (FreeM.bind (withPath program))
   funext path
@@ -425,12 +427,12 @@ theorem map_reforkAt [DecidableEq P.A] {β : Type*} (target : P.A)
   · rfl
   · rw [FreeM.bind_pure_comp, ← FreeM.comp_map]
 
-/-- Eliminate a fixed optional refork into its first path and one
+/-- Eliminate a fixed optional fork into its first path and one
 independently sampled completion. -/
-theorem filterMapReforkAt_eq_bind_complete [DecidableEq P.A]
+theorem filterMapLocateAndForkAt_eq_bind_complete [DecidableEq P.A]
     {β : Type*} (target : P.A) (program : FreeM P α) (n : Nat)
     (observe : ForkView target program n → Option β) :
-    filterMapReforkAt target program n observe =
+    filterMapLocateAndForkAt target program n observe =
       FreeM.bind (withPath program) fun path =>
         match locateAt? target program path n with
         | none => pure none
@@ -439,43 +441,43 @@ theorem filterMapReforkAt_eq_bind_complete [DecidableEq P.A]
               occurrence := located.occurrence
               first := located.completion
               second := second }) located.occurrence.complete := by
-  unfold filterMapReforkAt reforkAt
+  unfold filterMapLocateAndForkAt locateAndForkAt
   rw [← bind_map_right]
   apply congrArg (FreeM.bind (withPath program))
   funext path
   rcases hlocate : locateAt? target program path n with _ | located
   · rfl
-  · rw [← FreeM.comp_map, Located.refork_eq_map_complete, ← FreeM.comp_map]
+  · rw [← FreeM.comp_map, Located.fork_eq_map_complete, ← FreeM.comp_map]
     rfl
 
-@[simp] theorem reforkAt_pure [DecidableEq P.A] (target : P.A)
+@[simp] theorem locateAndForkAt_pure [DecidableEq P.A] (target : P.A)
     (value : α) (n : Nat) :
-    reforkAt target (pure value : FreeM P α) n = pure none := rfl
+    locateAndForkAt target (pure value : FreeM P α) n = pure none := rfl
 
-theorem reforkAt_liftBind_same_zero [DecidableEq P.A] (target : P.A)
+theorem locateAndForkAt_liftBind_same_zero [DecidableEq P.A] (target : P.A)
     (next : P.B target → FreeM P α) :
-    reforkAt target (FreeM.liftBind target next) 0 =
+    locateAndForkAt target (FreeM.liftBind target next) 0 =
       Split.completeFork (.found (.here next)) := by
-  unfold reforkAt
+  unfold locateAndForkAt
   rw [withPath_liftBind_bind]
   apply congrArg (FreeM.liftBind target)
   funext firstAnswer
   apply congrArg (FreeM.bind (withPath (next firstAnswer)))
   funext firstSuffix
   rw [locateAt?_liftBind_same_zero]
-  simp only [Located.refork, Occurrence.resume, FreeM.map]
+  simp only [Located.fork, Occurrence.resume, FreeM.map]
   apply congrArg (FreeM.liftBind target)
   funext secondAnswer
   rw [← FreeM.comp_map]
   rfl
 
-theorem reforkAt_liftBind_same_succ [DecidableEq P.A] (target : P.A)
+theorem locateAndForkAt_liftBind_same_succ [DecidableEq P.A] (target : P.A)
     (next : P.B target → FreeM P α) (n : Nat) :
-    reforkAt target (FreeM.liftBind target next) (n + 1) =
+    locateAndForkAt target (FreeM.liftBind target next) (n + 1) =
       FreeM.liftBind target fun answer =>
         FreeM.map (Option.map (ForkView.prependSame answer))
-          (reforkAt target (next answer) n) := by
-  unfold reforkAt
+          (locateAndForkAt target (next answer) n) := by
+  unfold locateAndForkAt
   rw [withPath_liftBind_bind]
   apply congrArg (FreeM.liftBind target)
   funext answer
@@ -486,16 +488,16 @@ theorem reforkAt_liftBind_same_succ [DecidableEq P.A] (target : P.A)
   rcases hlocated : locateAt? target (next answer) suffix n with _ | located
   · rfl
   · simp only [Option.map_some]
-    rw [Located.refork_prependSame, ← FreeM.comp_map, ← FreeM.comp_map]
+    rw [Located.fork_prependSame, ← FreeM.comp_map, ← FreeM.comp_map]
     rfl
 
-theorem reforkAt_liftBind_other [DecidableEq P.A] {target a : P.A}
+theorem locateAndForkAt_liftBind_other [DecidableEq P.A] {target a : P.A}
     (hne : a ≠ target) (next : P.B a → FreeM P α) (n : Nat) :
-    reforkAt target (FreeM.liftBind a next) n =
+    locateAndForkAt target (FreeM.liftBind a next) n =
       FreeM.liftBind a fun answer =>
         FreeM.map (Option.map (ForkView.prependOther hne answer))
-          (reforkAt target (next answer) n) := by
-  unfold reforkAt
+          (locateAndForkAt target (next answer) n) := by
+  unfold locateAndForkAt
   rw [withPath_liftBind_bind]
   apply congrArg (FreeM.liftBind a)
   funext answer
@@ -506,19 +508,19 @@ theorem reforkAt_liftBind_other [DecidableEq P.A] {target a : P.A}
   rcases hlocated : locateAt? target (next answer) suffix n with _ | located
   · rfl
   · simp only [Option.map_some]
-    rw [Located.refork_prependOther, ← FreeM.comp_map, ← FreeM.comp_map]
+    rw [Located.fork_prependOther, ← FreeM.comp_map, ← FreeM.comp_map]
     rfl
 
 /-- Splitting before execution and locating the same occurrence after one
 execution define the same resampling program. -/
-theorem forkAt_eq_reforkAt [DecidableEq P.A] (target : P.A) :
+theorem forkAt_eq_locateAndForkAt [DecidableEq P.A] (target : P.A) :
     (program : FreeM P α) → (n : Nat) →
-      forkAt target program n = reforkAt target program n := by
+      forkAt target program n = locateAndForkAt target program n := by
   intro program
   induction program with
   | pure value =>
       intro n
-      rw [forkAt_pure, reforkAt_pure]
+      rw [forkAt_pure, locateAndForkAt_pure]
   | lift_bind a next ih =>
       intro n
       by_cases h : a = target
@@ -526,18 +528,19 @@ theorem forkAt_eq_reforkAt [DecidableEq P.A] (target : P.A) :
         cases n with
         | zero =>
             change forkAt target (FreeM.liftBind target next) 0 =
-              reforkAt target (FreeM.liftBind target next) 0
-            rw [forkAt_liftBind_same_zero, reforkAt_liftBind_same_zero]
+              locateAndForkAt target (FreeM.liftBind target next) 0
+            rw [forkAt_liftBind_same_zero, locateAndForkAt_liftBind_same_zero]
         | succ n =>
             change forkAt target (FreeM.liftBind target next) (n + 1) =
-              reforkAt target (FreeM.liftBind target next) (n + 1)
-            rw [forkAt_liftBind_same_succ, reforkAt_liftBind_same_succ]
+              locateAndForkAt target (FreeM.liftBind target next) (n + 1)
+            rw [forkAt_liftBind_same_succ,
+              locateAndForkAt_liftBind_same_succ]
             apply congrArg (FreeM.liftBind target)
             funext answer
             rw [ih answer n]
       · change forkAt target (FreeM.liftBind a next) n =
-          reforkAt target (FreeM.liftBind a next) n
-        rw [forkAt_liftBind_other h, reforkAt_liftBind_other h]
+          locateAndForkAt target (FreeM.liftBind a next) n
+        rw [forkAt_liftBind_other h, locateAndForkAt_liftBind_other h]
         apply congrArg (FreeM.liftBind a)
         funext answer
         rw [ih answer n]

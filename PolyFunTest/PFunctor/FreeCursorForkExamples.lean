@@ -5,10 +5,10 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Free.Cursor.Refork
+public import PolyFun.PFunctor.Free.Cursor.Fork
 public import PolyFunTest.PFunctor.FreeCursorOccurrenceExamples
 
-/-! # Free-program reforking examples -/
+/-! # Free-program occurrence-forking examples -/
 
 @[expose] public section
 
@@ -37,12 +37,12 @@ example : (locateAt? ExampleOp.target nestedProgram nestedTrueTruePath 1).isSome
 example : locateAt? ExampleOp.noise rootProgram rootTruePath 0 = none := rfl
 
 example : forkAt ExampleOp.target rootProgram 0 =
-    reforkAt ExampleOp.target rootProgram 0 :=
-  forkAt_eq_reforkAt ExampleOp.target rootProgram 0
+    locateAndForkAt ExampleOp.target rootProgram 0 :=
+  forkAt_eq_locateAndForkAt ExampleOp.target rootProgram 0
 
 example : forkAt ExampleOp.target nestedProgram 0 =
-    reforkAt ExampleOp.target nestedProgram 0 :=
-  forkAt_eq_reforkAt ExampleOp.target nestedProgram 0
+    locateAndForkAt ExampleOp.target nestedProgram 0 :=
+  forkAt_eq_locateAndForkAt ExampleOp.target nestedProgram 0
 
 /-- Reject equal focused answers and retain observably different forks. -/
 def classifyDifferent (view : ForkView ExampleOp.target nestedProgram 0) :
@@ -62,8 +62,8 @@ example : (if equalAnswerFork.firstAnswer = equalAnswerFork.secondAnswer then
       none else some (equalAnswerFork.firstAnswer, equalAnswerFork.secondAnswer)) =
     none := rfl
 
-/-- Rejecting selection performs no reforking. -/
-example : reforkBy ExampleOp.target rootProgram
+/-- Rejecting selection performs no second completion. -/
+example : locateAndForkBy ExampleOp.target rootProgram
     (fun _ => (none : Option Unit)) (fun _ => 0)
     (fun _ _ => ()) =
     FreeM.liftBind ExampleOp.target fun _ => pure none := rfl
@@ -71,7 +71,7 @@ example : reforkBy ExampleOp.target rootProgram
 /-- Accepted selection retains independently sampled, observably distinct
 answers in the two output components. -/
 example : FreeM.map (Option.map SelectedForkView.outputs)
-      (reforkSelected ExampleOp.target rootProgram
+      (locateAndForkSelected ExampleOp.target rootProgram
         (fun _ => some ()) (fun _ => 0)) =
     FreeM.liftBind ExampleOp.target fun first =>
       FreeM.liftBind ExampleOp.target fun second =>
@@ -79,17 +79,18 @@ example : FreeM.map (Option.map SelectedForkView.outputs)
 
 /-- Selecting a missing ordinal returns `none` after only the original
 program execution; no second target query is introduced. -/
-example : reforkSelected ExampleOp.target rootProgram
+example : locateAndForkSelected ExampleOp.target rootProgram
       (fun _ => some ()) (fun _ => 1) =
     FreeM.liftBind ExampleOp.target fun _ => pure none := rfl
 
 /-- A rejecting classifier is applied after both completions. -/
-example : filterMapReforkAt ExampleOp.target rootProgram 0 (fun _ =>
+example : filterMapLocateAndForkAt ExampleOp.target rootProgram 0 (fun _ =>
       (none : Option Unit)) =
     FreeM.liftBind ExampleOp.target fun _ =>
       FreeM.liftBind ExampleOp.target fun _ => pure none := rfl
 
-example : filterMapReforkAt ExampleOp.target nestedProgram 0 classifyDifferent =
+example : filterMapLocateAndForkAt ExampleOp.target nestedProgram 0
+    classifyDifferent =
     FreeM.bind (withPath nestedProgram) fun path =>
       match locateAt? ExampleOp.target nestedProgram path 0 with
       | none => pure none
@@ -98,7 +99,8 @@ example : filterMapReforkAt ExampleOp.target nestedProgram 0 classifyDifferent =
             occurrence := located.occurrence
             first := located.completion
             second := second }) located.occurrence.complete :=
-  filterMapReforkAt_eq_bind_complete ExampleOp.target nestedProgram 0 classifyDifferent
+  filterMapLocateAndForkAt_eq_bind_complete ExampleOp.target nestedProgram 0
+    classifyDifferent
 
 /-- The dynamic API keeps operation, answer, output, selector, and observer
 universes independent. -/
@@ -108,17 +110,17 @@ def universeCanary {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (select : α → Option κ) (index : κ → Nat)
     (observe : (k : κ) → ForkView target program (index k) → β) :
     FreeM P (Option β) :=
-  reforkBy target program select index observe
+  locateAndForkBy target program select index observe
 
-/-- Mapping over fixed reforking needs equality only on positions, not on
+/-- Mapping over fixed occurrence forking needs equality only on positions, not on
 every dependent answer family. -/
 example {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     {α : Type uα} (target : P.A) (program : FreeM P α) (n : Nat) :
-    FreeM.map id (reforkAt target program n) =
+    FreeM.map id (locateAndForkAt target program n) =
       FreeM.bind (withPath program) fun path =>
         match locateAt? target program path n with
         | none => pure none
-        | some located => FreeM.map (id ∘ some) located.refork :=
-  map_reforkAt target program n id
+        | some located => FreeM.map (id ∘ some) located.fork :=
+  map_locateAndForkAt target program n id
 
 end PFunctor.FreeM.Cursor
