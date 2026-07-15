@@ -29,7 +29,7 @@ attribute.
 -/
 register_simp_attr freeM_unfold
 
-universe u v uA uB uA₂ uB₂ uA₃ uB₃
+universe u v uA uB uA₂ uB₂ uA₃ uB₃ uδ uβ uγ
 
 namespace PFunctor
 
@@ -63,6 +63,14 @@ def equivWOfIsEmpty [IsEmpty α] : FreeM P α ≃ P.W where
 
 lemma monad_bind_def (x : FreeM P α) (g : α → FreeM P β) :
     x >>= g = FreeM.bind x g := rfl
+
+/-- Mapping after a free-monad bind can be moved into each continuation. -/
+theorem bind_map_right {δ : Type uδ} {β : Type uβ} {γ : Type uγ}
+    (mx : FreeM P δ) (g : δ → FreeM P β) (f : β → γ) :
+    FreeM.bind mx (fun x => FreeM.map f (g x)) =
+      FreeM.map f (FreeM.bind mx g) := by
+  simpa only [FreeM.bind_pure_comp] using
+    (FreeM.bind_assoc mx g (pure ∘ f)).symm
 
 section mapLens
 

@@ -71,6 +71,15 @@ in turn is reducibly `List (Idx P)`.  This is the universal carrier for
 @[reducible] def TraceList (P : PFunctor.{uA, uB}) : Type max uA uB :=
   FreeMonoid (Idx P)
 
+namespace TraceList
+
+/-- Number of events at a given position in an erased execution trace. -/
+def occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (target : P.A) (events : TraceList P) : Nat :=
+  events.countP fun (event : P.Idx) => event.1 = target
+
+end TraceList
+
 /--
 An `X`-indexed trace of `P`-events: for each input `x : X`, a finite ordered
 list of `P`-events.  Specialisation of `Control.Trace` at
