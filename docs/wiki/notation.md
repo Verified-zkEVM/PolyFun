@@ -72,6 +72,10 @@ than via custom notation, to keep elaboration predictable. Specifically:
   order (`l ∘ₗ l'` applies `l'` first); the same `⨟` is
   available diagrammatically on lenses (`l₁ ⨟ l₂ = l₂ ∘ₗ l₁`) and charts
   (`c ⨟ c' = c' ∘c c`), and so on dynamical systems themselves.
+- Qualitative program implementation `M ⊨ program` (input `\models`, U+22A8)
+  abbreviates `DynComputation.Implements M program`. It is opt-in via
+  `open scoped PFunctor.DynComputation`; the symbol deliberately says nothing
+  about resource bounds.
 
 If you find yourself wishing for new notation in PolyFun, consider
 whether the underlying name suffices first: this library leans toward

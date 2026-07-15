@@ -93,8 +93,10 @@ Imports flow strictly downward; cycles are a build error.
 PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   → PFunctor/{Cofree, Trace}
   → PFunctor/Resumption
-  → PFunctor/Free/{Basic, Path}
-  → PFunctor/Free/{Displayed, Displayed/Decoration}
+PFunctor/Free/Basic
+  → PFunctor/Free/Displayed
+  → PFunctor/Free/{Path, Displayed/Decoration}
+PFunctor/{Resumption, Free/Basic} → PFunctor/Free/Resumption
 
 PFunctor/Lens/{Basic, Cartesian, State}
   → PFunctor/Lens/{Composite, Distributivity, Factorization, Duoidal}
