@@ -66,13 +66,13 @@ implements the functor composition `Q ∘ P : (I → Type) → (K → Type)`. Se
 
 universe uI uJ uK uA uA₁ uA₂ uB uB₁ uB₂
 
+set_option linter.checkUnivs false in
 /-- Atkey-style polynomial functor between indexed family categories. Given input index type
 `I` and output index type `J`, `IPFunctor I J` packages the shapes available at each `j : J`,
 the response type at each shape, and the source index (in `I`) of each child. -/
 -- `uA` (head/position universe) and `uB` (child/direction universe) are independent
 -- components of a polynomial functor and are deliberately kept separate for full
 -- universe polymorphism; they need not coincide.
-@[nolint checkUnivs]
 structure IPFunctor (I : Type uI) (J : Type uJ) where
   /-- The head type at each output index. -/
   A : J → Type uA
@@ -82,11 +82,11 @@ structure IPFunctor (I : Type uI) (J : Type uJ) where
   in the target family `X : I → Type`. -/
   src : (j : J) → (a : A j) → B j a → I
 
+set_option linter.checkUnivs false in
 /-- Endomorphic specialization `IPFunctor I I`. This is the case where the polynomial action
 is an endofunctor `(I → Type) → (I → Type)`, and free monads / indexed monads / `do`-notation
 make sense. -/
 -- Inherits `IPFunctor`'s independent head/child universes `uA`, `uB`; kept separate.
-@[nolint checkUnivs]
 abbrev IPFunctor.Endo (I : Type uI) : Type _ := IPFunctor.{uI, uI, uA, uB} I I
 
 namespace IPFunctor

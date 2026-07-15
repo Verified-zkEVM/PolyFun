@@ -60,7 +60,7 @@ def logCountRel : (Option A × List Q) → (Option A × Nat) → Prop :=
 /-- The observable-agreement relation is a simulation: related states expose the
 same answer, and one query step keeps them related (both set the last answer to
 `some (f q)`, regardless of how they record the query). -/
-def sim : DynSystem.IsSimulation (oracleLog f) (oracleCount f) logCountRel where
+theorem sim : DynSystem.IsSimulation (oracleLog f) (oracleCount f) logCountRel where
   expose_eq h := h
   update_rel {s₁ s₂} h d := by
     -- `oraclePoly` has a constant direction family, so the transported query
@@ -83,7 +83,7 @@ theorem obsEq_oracleLog_oracleCount (a : Option A) :
 /-- The concrete log/count simulation induces a generic strong LTS simulation,
 so the generic adapter—not merely an assumed witness—recovers the oracle
 state-hiding result. -/
-def ltsSim : Control.IsStrongSimulation
+theorem ltsSim : Control.IsStrongSimulation
     (oracleLog f).toLTS (oracleCount f).toLTS logCountRel :=
   DynSystem.isStrongSimulation_of_isSimulation (sim f)
 

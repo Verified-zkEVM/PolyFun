@@ -81,6 +81,7 @@ universe uA uB vA vB wA wB
 namespace Interaction
 namespace UC
 
+set_option linter.checkUnivs false in
 /--
 `Interface` is the interaction-facing name for `PFunctor`.
 
@@ -95,7 +96,6 @@ intended reading: these are typed communication interfaces.
 -/
 -- `Interface`'s two universes are the independent port (position) and message (direction)
 -- universes of the underlying `PFunctor`; kept separate for generality.
-@[nolint checkUnivs]
 abbrev Interface := PFunctor
 
 namespace Interface

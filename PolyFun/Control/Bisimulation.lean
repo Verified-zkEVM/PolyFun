@@ -46,9 +46,9 @@ universe uObs uState uMove uState₁ uMove₁ uState₂ uMove₂ uState₃ uMove
 
 namespace Control
 
+set_option linter.checkUnivs false in
 /-- A labelled transition system.  The universes of observations, states, and
 moves are independent. -/
-@[nolint checkUnivs]
 structure LTS (Obs : Type uObs) where
   /-- States of the transition system. -/
   State : Type uState
