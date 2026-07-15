@@ -28,7 +28,7 @@ typeclasses, security predicates, or concrete cryptographic algebra
 (specific groups, fields, hash functions). Parameterize over an abstract
 monad `m : Type v → Type w` with `[Pure m]` / `[Monad m]` / `[LawfulMonad m]`
 instead. Cryptographic content belongs in
-[`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io)
+[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio)
 downstream.
 
 When in doubt, ask: *can I state this against an arbitrary monad with no

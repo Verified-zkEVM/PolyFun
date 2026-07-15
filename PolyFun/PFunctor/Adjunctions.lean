@@ -42,7 +42,7 @@ types, matching the observation of the reading notes (§5.1) that none of these
 hom-isos needs category-theory packaging to be useful.
 
 These hom-isomorphisms are reference API: book-completeness formalizations of
-the §5.1 trivial-interface adjunctions, staged for downstream (VCV-io)
+the §5.1 trivial-interface adjunctions, staged for downstream (VCVio)
 consumers and exercised in `PolyFunTest/PFunctor/Adjunctions.lean`.
 
 Both directions of `homFromX` and `homToLinear` hold definitionally

@@ -268,5 +268,5 @@ so the deterministic elaborator's head check on `FreeM.liftBind` continues to fi
 `IPFunctor` is generic substrate, like `PFunctor`. Downstream usage that
 benefits from state-gated interaction (multi-phase oracle protocols, session
 types) should sit on top, not inline these constructors. Cryptographic
-content remains in [`Verified-zkEVM/VCV-io`](https://github.com/Verified-zkEVM/VCV-io)
+content remains in [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio)
 per the project policy in [`CLAUDE.md`](../../CLAUDE.md).

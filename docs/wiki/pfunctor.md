@@ -92,7 +92,7 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 ### Free monad `FreeM`
 
 `PFunctor.FreeM` is **re-exported from upstream cslib**
-(`Cslib.Foundations.Data.PFunctor.Free`, originally ported from VCV-io). cslib
+(`Cslib.Foundations.Data.PFunctor.Free`, originally ported from VCVio). cslib
 supplies the inductive type (constructors `pure` / `liftBind`), the `bind` / `map`
 / `Monad` / `LawfulMonad` / `MonadLift` instances, the `@[induction_eliminator]
 induction` principle (non-pure case `lift_bind`), the shape lift `lift : P.A →

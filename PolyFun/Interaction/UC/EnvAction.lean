@@ -74,7 +74,7 @@ the consumer needs (deterministic via `Id`, probabilistic via a
 probability monad, oracle-using via a free interaction monad, etc.).
 Deterministic events use `pure ∘ update` and pay no extra cost.
 
-Crypto-flavored consumers (e.g. VCV-io) instantiate `m := ProbComp`
+Crypto-flavored consumers (e.g. VCVio) instantiate `m := ProbComp`
 to recover the original probabilistic-corruption interface; this
 file itself depends only on `Pure` / `Monad` from `Mathlib.Init`.
 
