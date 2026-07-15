@@ -18,10 +18,22 @@ CoInductive itree (E : Type → Type) (R : Type) :=
 ```
 
 In Lean we model the event signature as a *polynomial functor*
-`F : PFunctor.{u, u}` (shapes are event names, positions are answer types)
-so the resulting tree lives at a single universe `u`. ITrees themselves
-are the M-type (final coalgebra) of the one-step polynomial functor
-`Poly F α` whose shapes are pure leaves, silent steps, or visible queries.
+`F : PFunctor.{uA, uB}`: its positions are event names and its directions are
+answer types. The event-position, event-direction, and return universes are
+independent. ITrees themselves are the M-type (final coalgebra) of the one-step
+polynomial functor `Poly F α` whose positions are pure leaves, silent steps, or
+visible queries.
+
+For `α : Type uR`, the public universe contract is:
+
+```lean
+ITree.Shape F α : Type (max uA uR)
+ITree.Poly F α  : PFunctor.{max uA uR, uB}
+ITree F α       : Type (max uA uB uR)
+```
+
+The empty direction type of a pure leaf and the unit direction type of a silent
+step are lifted to `uB`; a visible query retains its original direction type.
 
 | Coq | Lean |
 |---|---|
@@ -37,8 +49,8 @@ are the M-type (final coalgebra) of the one-step polynomial functor
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/ITree/Basic.lean`](../../PolyFun/ITree/Basic.lean) | `ITree F α` defined as `PFunctor.M (Poly F α)`, `Shape` (one-step view), smart constructors `pure` / `step` / `query`, `bind`, `iter`, `Monad` instance. |
-| [`PolyFun/ITree/Construct.lean`](../../PolyFun/ITree/Construct.lean) | Standard combinators: `diverge` (Coq `spin`), `forever`, `map`, `cat`, `ignore`, `burn`. Pure consequences of `bind` / `iter` / `M.corec`. |
+| [`PolyFun/ITree/Basic.lean`](../../PolyFun/ITree/Basic.lean) | `ITree F α` defined as `PFunctor.M (Poly F α)`, `Shape` (one-step view), smart constructors `pure` / `step` / `query`, mixed-universe named `bind`, `iter`, and the homogeneous `Monad` instance. |
+| [`PolyFun/ITree/Construct.lean`](../../PolyFun/ITree/Construct.lean) | Standard combinators: `diverge` (Coq `spin`), `forever`, mixed-universe `map` / `cat`, `ignore`, `burn`. Pure consequences of `bind` / `iter` / `M.corec`. |
 | [`PolyFun/ITree/Handler.lean`](../../PolyFun/ITree/Handler.lean) | `Handler E F`: choice of `F`-program for every `E`-event. Source data of the simulation operator. |
 | [`PolyFun/ITree/Sim/Defs.lean`](../../PolyFun/ITree/Sim/Defs.lean) | `ITree.simulate` (interprets every event via a handler), `ITree.mapSpec` (pure event-renaming via a `PFunctor.Lens`). Coq `interp` analogue. |
 | [`PolyFun/ITree/Sim/Facts.lean`](../../PolyFun/ITree/Sim/Facts.lean) | Algebraic facts about simulation. |
