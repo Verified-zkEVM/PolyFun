@@ -392,12 +392,80 @@ structure Extends (earlier later : Cursor program) : Type (max uA uB v) where
   /-- Composing the continuation gives the later cursor. -/
   comp_eq : earlier.comp continuation = later
 
+namespace Extends
+
+variable {earlier later : Cursor program}
+
+/-- Every cursor extends itself by the root cursor on its residual. -/
+def refl (cursor : Cursor program) : Extends cursor cursor where
+  continuation := root cursor.residual
+  comp_eq := comp_root cursor
+
+/-- Compose two cursor-extension witnesses. -/
+def trans {first second third : Cursor program}
+    (firstToSecond : Extends first second)
+    (secondToThird : Extends second third) : Extends first third := by
+  rcases firstToSecond with ⟨continuation₁, rfl⟩
+  rcases first with ⟨firstResidual, firstSpine⟩
+  rcases continuation₁ with ⟨secondResidual, secondSpine⟩
+  rcases secondToThird with ⟨continuation₂, comp_eq₂⟩
+  refine ⟨⟨continuation₂.residual,
+    secondSpine.comp continuation₂.spine⟩, ?_⟩
+  simpa only [comp, Spine.comp_assoc] using comp_eq₂
+
+/-- Extending a cursor adds the length of the retained continuation. -/
+theorem length_eq (extension : Extends earlier later) :
+    later.length = earlier.length + extension.continuation.length :=
+  calc
+    later.length = (earlier.comp extension.continuation).length :=
+      congrArg length extension.comp_eq.symm
+    _ = earlier.length + extension.continuation.length :=
+      length_comp earlier extension.continuation
+
+/-- Cursor length is monotone under extension. -/
+theorem length_le (extension : Extends earlier later) :
+    earlier.length ≤ later.length := by
+  rw [extension.length_eq]
+  omega
+
+/-- Extending a cursor appends the continuation trace. -/
+theorem trace_eq (extension : Extends earlier later) :
+    later.trace = List.append earlier.trace extension.continuation.trace :=
+  calc
+    later.trace = (earlier.comp extension.continuation).trace :=
+      congrArg trace extension.comp_eq.symm
+    _ = List.append earlier.trace extension.continuation.trace :=
+      trace_comp earlier extension.continuation
+
+end Extends
+
 /-- Witness that `later` is exactly one edge beyond `earlier`. -/
 structure ExtendsByOne (earlier later : Cursor program) : Type (max uA uB v) where
   /-- Immediate edge below the earlier cursor. -/
   edge : Edge earlier.residual
   /-- Composing the edge gives the later cursor. -/
   comp_eq : earlier.comp edge.toCursor = later
+
+namespace ExtendsByOne
+
+variable {earlier later : Cursor program}
+
+/-- Forget that an extension consists of exactly one edge. -/
+def toExtends (extension : ExtendsByOne earlier later) : Extends earlier later where
+  continuation := extension.edge.toCursor
+  comp_eq := extension.comp_eq
+
+/-- A one-edge extension increases cursor length by exactly one. -/
+theorem length_eq_add_one (extension : ExtendsByOne earlier later) :
+    later.length = earlier.length + 1 :=
+  calc
+    later.length = (earlier.comp extension.edge.toCursor).length :=
+      congrArg length extension.comp_eq.symm
+    _ = earlier.length + extension.edge.toCursor.length :=
+      length_comp earlier extension.edge.toCursor
+    _ = earlier.length + 1 := by rw [Edge.length_toCursor]
+
+end ExtendsByOne
 
 /-! ## Terminal cursors and complete paths -/
 
@@ -474,6 +542,17 @@ theorem ofPath_residualPath (terminal : Terminal program) :
           rfl
 
 end Terminal
+
+/-- A cursor is terminal exactly when it is the cursor of a data-bearing
+terminal bundle. -/
+theorem isTerminal_iff_exists_terminal (cursor : Cursor program) :
+    cursor.IsTerminal ↔
+      ∃ terminal : Terminal program, terminal.cursor = cursor := by
+  constructor
+  · rintro ⟨output, residual_eq⟩
+    exact ⟨⟨cursor, output, residual_eq⟩, rfl⟩
+  · rintro ⟨terminal, rfl⟩
+    exact terminal.isTerminal
 
 /-- Convert a complete path to the corresponding terminal cursor. -/
 def terminalOfPath : (program : FreeM P α) → Path program → Terminal program

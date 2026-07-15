@@ -161,4 +161,34 @@ def extendsInternalByOne : Cursor.ExtendsByOne internal afterIndexCursor where
   edge := indexEdge
   comp_eq := rfl
 
+/-- The final edge supplies a second one-edge extension witness. -/
+def extendsAfterIndexByOne : Cursor.ExtendsByOne afterIndexCursor trueLeaf where
+  edge := unitEdge
+  comp_eq := rfl
+
+/-- One-edge witnesses compose through the general extension relation. -/
+def extendsInternalComposed : Cursor.Extends internal trueLeaf :=
+  extendsInternalByOne.toExtends.trans extendsAfterIndexByOne.toExtends
+
+example : (Cursor.Extends.refl internal).continuation =
+    Cursor.root internal.residual := rfl
+
+example : trueLeaf.length = internal.length +
+    extendsInternalComposed.continuation.length :=
+  extendsInternalComposed.length_eq
+
+example : internal.length ≤ trueLeaf.length :=
+  extendsInternalComposed.length_le
+
+example : trueLeaf.trace = List.append internal.trace
+    extendsInternalComposed.continuation.trace :=
+  extendsInternalComposed.trace_eq
+
+example : afterIndexCursor.length = internal.length + 1 :=
+  extendsInternalByOne.length_eq_add_one
+
+example : trueLeaf.IsTerminal ↔
+    ∃ terminal : Cursor.Terminal program, terminal.cursor = trueLeaf :=
+  Cursor.isTerminal_iff_exists_terminal trueLeaf
+
 end PFunctor.FreeM.CursorExamples

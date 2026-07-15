@@ -96,6 +96,8 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
 PFunctor/Free/Basic
   → PFunctor/Free/Displayed
   → PFunctor/Free/{Path, Displayed/Decoration}
+  → PFunctor/Free/Path/Execution
+  → PFunctor/Free/Cursor
 PFunctor/{Resumption, Free/Basic} → PFunctor/Free/Resumption
 
 PFunctor/Lens/{Basic, Cartesian, State}
@@ -242,7 +244,7 @@ listed declaration-by-declaration in `scripts/nolints.json`; regenerate that
 file with the Batteries `runLinter --update` driver when this surface changes,
 and review every new entry rather than treating the file as a blanket waiver.
 
-Lean toolchain and Mathlib stay in sync (both currently `v4.31.0`).
+Lean toolchain and Mathlib stay in sync (both currently `v4.32.0`).
 Files should stay under 1500 lines.
 
 ## Further Reading
