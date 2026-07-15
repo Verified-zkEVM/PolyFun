@@ -26,7 +26,7 @@ namespace PFunctor
 variable {S : Type u} {p : PFunctor.{u, u}}
 
 /-- Equality is a simulation of any dynamical system by itself. -/
-def idSim (D : DynSystem S p) : DynSystem.IsSimulation D D (· = ·) where
+theorem idSim (D : DynSystem S p) : DynSystem.IsSimulation D D (· = ·) where
   expose_eq h := congrArg D.expose h
   update_rel h _ := by subst h; rfl
 
