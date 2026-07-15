@@ -23,6 +23,8 @@ one-sided corollary.
 * `bind_pure_left`, `bind_pure_right`, `bind_assoc` — monad laws on
   `ITree.bind`, as strong bisimulations (i.e. exact equalities on
   `PFunctor.M`).
+* `instLawfulMonad` — packages those exact equalities for generic monadic
+  APIs; named `bind` remains available across different result universes.
 * `bind_step`, `bind_query` — `bind` distributes over a leading silent
   step / visible query.
 * `iter_unfold` — the canonical fixed-point equation for `ITree.iter`,
@@ -216,6 +218,24 @@ theorem bind_assoc (t : ITree F α) (k : α → ITree F β) (k' : β → ITree F
           ?_, ?_, fun _ => Or.inr (.inr ⟨_, rfl, rfl⟩)⟩
         · exact dest_bind_query k' (bind t k) a _ hbind
         · exact dest_bind_query (fun a => bind (k a) k') t a c h
+
+/-! ### Lawful monad instance -/
+
+/-- The homogeneous `Monad (ITree F)` instance is lawful by the exact
+M-type equalities for the two unit laws and associativity. The standalone
+named `ITree.bind` remains more universe-polymorphic than this typeclass
+instance. -/
+instance instLawfulMonad : LawfulMonad (ITree F) :=
+  LawfulMonad.mk' _
+    (fun t => by
+      change bind t pure = t
+      exact bind_pure_right t)
+    (fun r k => by
+      change bind (pure r) k = k r
+      exact bind_pure_left r k)
+    (fun t k k' => by
+      change bind (bind t k) k' = bind t (fun r => bind (k r) k')
+      exact bind_assoc t k k')
 
 /-! ### `iter` unfolding and interaction with `bind` -/
 

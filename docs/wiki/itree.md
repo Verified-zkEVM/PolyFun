@@ -50,6 +50,7 @@ step are lifted to `uB`; a visible query retains its original direction type.
 | File | Purpose |
 |------|---------|
 | [`PolyFun/ITree/Basic.lean`](../../PolyFun/ITree/Basic.lean) | `ITree F α` defined as `PFunctor.M (Poly F α)`, `Shape` (one-step view), smart constructors `pure` / `step` / `query`, mixed-universe named `bind`, `iter`, and the homogeneous `Monad` instance. |
+| [`PolyFun/ITree/Do.lean`](../../PolyFun/ITree/Do.lean) | Opt-in `open scoped ITree` integration that sends Lean `while` notation through productive `ITree.iter` instead of core partial `whileM`. |
 | [`PolyFun/ITree/Construct.lean`](../../PolyFun/ITree/Construct.lean) | Standard combinators: `diverge` (Coq `spin`), `forever`, mixed-universe `map` / `cat`, `ignore`, `burn`. Pure consequences of `bind` / `iter` / `M.corec`. |
 | [`PolyFun/ITree/Handler.lean`](../../PolyFun/ITree/Handler.lean) | Universe-polymorphic `Handler E F`: choice of an `F`-program for every `E`-event, with identity, lens promotion, and coproduct routing via `Handler.case_`. |
 | [`PolyFun/ITree/Sim/Defs.lean`](../../PolyFun/ITree/Sim/Defs.lean) | Universe-polymorphic `ITree.simulate` (interprets every event via a handler), `Handler.comp`, and `ITree.mapSpec` (pure event-renaming via a `PFunctor.Lens`). Coq `interp` analogue. |
@@ -61,8 +62,9 @@ step are lifted to `uB`; a visible query retains its original direction type.
 | File | Purpose |
 |------|---------|
 | [`PolyFun/ITree/Bisim/Defs.lean`](../../PolyFun/ITree/Bisim/Defs.lean) | Universe-polymorphic `ITree.Bisim` (strong / structural equality), relational `ITree.WeakBisimRel RR` (Coq `euttR`), and `ITree.WeakBisim` as its equality specialization (Coq `eutt`). |
-| [`PolyFun/ITree/Bisim/Bind.lean`](../../PolyFun/ITree/Bisim/Bind.lean) | Mixed-universe monad/iteration equations plus two-sided relational congruence of `bind` and `map`. |
+| [`PolyFun/ITree/Bisim/Bind.lean`](../../PolyFun/ITree/Bisim/Bind.lean) | Mixed-universe monad/iteration equations, the homogeneous `LawfulMonad` instance, and two-sided relational congruence of `bind` and `map`. |
 | [`PolyFun/ITree/Bisim/Equiv.lean`](../../PolyFun/ITree/Bisim/Equiv.lean) | Equivalence properties of bisimulation. |
+| [`PolyFun/ITree/Bisim/Iter.lean`](../../PolyFun/ITree/Bisim/Iter.lean) | Relational iteration congruence and the `LawfulMonadIter` instance over `WeakBisim`, including unfolding, naturality, dinaturality, and codiagonal laws. |
 
 ### Standard events
 
@@ -77,6 +79,10 @@ step are lifted to `uB`; a visible query retains its original direction type.
   steps, modulo coinductive equality". They give a single Lean datatype
   that uniformly models pure programs, programs with effects, recursive
   procedures, and partial / non-terminating computations.
+- Lean's core `whileM` has the same continue/terminate protocol as `ITree.iter`
+  but uses generic partial recursion and requires an inhabited result type.
+  Import `PolyFun.ITree.Do` and write `open scoped ITree` to make `while`
+  inside an `ITree` `do` block use the guarded `ITree.iter` implementation.
 - A `Handler E F` is the data needed to interpret one signature inside
   another. `simulate` is the recursive interpretation, `Handler.comp`
   composes interpretations, and `Handler.case_` routes coproduct events.
