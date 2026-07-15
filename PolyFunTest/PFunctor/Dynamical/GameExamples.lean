@@ -86,7 +86,7 @@ def countingResponder : Responder ℕ (monomial ℕ ℕ) :=
 /-- The doubling adversary over `ℕ X^ ℕ`: queries its state, stores double the
 answer it hears. -/
 def doublingAdversary : DynSystem ℕ (monomial ℕ ℕ) :=
-  (fun t => t) ⇆ fun _ (a : ℕ) => 2 * a
+  id ⇆ fun _ (a : ℕ) => 2 * a
 
 /-- Three closed-game steps, computed by `rfl`:
 `(0, 5) ↦ (1, 0) ↦ (2, 2) ↦ (3, 4)`. -/
@@ -135,11 +135,11 @@ def privKChallenger :
 
 /-- The commit-phase adversary: submits the fixed message pair `(false, true)`. -/
 def commitAdversary : DynSystem PUnit (monomial (Bool × Bool) Bool) :=
-  (fun _ => (false, true)) ⇆ fun _ _ => PUnit.unit
+  Lens.fromX (false, true)
 
 /-- The guess-phase adversary: guesses its own (fixed) state bit. -/
 def guessAdversary : DynSystem Bool (monomial Bool PUnit) :=
-  (fun t => t) ⇆ fun t _ => t
+  id ⇆ fun t _ => t
 
 /-- The full PrivK-shaped game: challenger against the ordered adversary pair. -/
 def privKGame : DynSystem (Bool × (PUnit × Bool)) (X.{0, 0} ◃ monomial Bool PUnit) :=

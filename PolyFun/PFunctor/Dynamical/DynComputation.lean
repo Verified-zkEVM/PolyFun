@@ -57,7 +57,7 @@ def denote (M : DynComputation.{u} p α β) (input : α) : Resumption p β :=
 `C β`. -/
 def ofFn (f : α → β) : DynComputation.{uβ} p α β where
   State := β
-  toDynSystem := (fun value => Sum.inl value) ⇆ fun _ direction => PEmpty.elim direction
+  toDynSystem := Sum.inl ⇆ fun _ => PEmpty.elim
   init := f
 
 @[simp] theorem ofFn_State (f : α → β) : (ofFn (p := p) f).State = β := rfl

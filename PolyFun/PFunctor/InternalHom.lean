@@ -63,8 +63,8 @@ variable {p : PFunctor.{pA, pB}} {q : PFunctor.{qA, qB}}
 back to the pair `(⟨j, d⟩, f.toFunB j d)`. -/
 def eval (q : PFunctor.{qA, qB}) (r : PFunctor.{rA, rB}) :
     Lens (ihom q r ⊗ q) r :=
-  (fun fj => fj.1.toFunA fj.2) ⇆
-    (fun fj d => (⟨fj.2, d⟩, fj.1.toFunB fj.2 d))
+  (fun (f, j) => f.toFunA j) ⇆
+    fun (f, j) d => (⟨j, d⟩, f.toFunB j d)
 
 /-- Currying: a lens `p ⊗ q ⇆ r` transposes to a lens `p ⇆ ihom q r`. This is
 the forward direction of the tensor–hom adjunction. -/
@@ -75,8 +75,8 @@ def curry (φ : Lens (p ⊗ q) r) : Lens p (ihom q r) :=
 /-- Uncurrying: a lens `p ⇆ ihom q r` transposes to a lens `p ⊗ q ⇆ r`. Inverse
 to `curry`. -/
 def uncurry (ψ : Lens p (ihom q r)) : Lens (p ⊗ q) r :=
-  (fun ij => (ψ.toFunA ij.1).toFunA ij.2) ⇆
-    (fun ij d => (ψ.toFunB ij.1 ⟨ij.2, d⟩, (ψ.toFunA ij.1).toFunB ij.2 d))
+  (fun (i, j) => (ψ.toFunA i).toFunA j) ⇆
+    fun (i, j) d => (ψ.toFunB i ⟨j, d⟩, (ψ.toFunA i).toFunB j d)
 
 /-- The tensor–hom adjunction as an equivalence of hom-sets:
 `Lens (p ⊗ q) r ≃ Lens p (ihom q r)`. -/
@@ -103,7 +103,7 @@ end Lens
 direction of `[y, r]` at that lens is a direction of `r`. -/
 def ihomX (r : PFunctor.{uA, uB}) : ihom X r ≃ₗ r where
   toLens := (fun f => f.toFunA PUnit.unit) ⇆ (fun _f d => ⟨PUnit.unit, d⟩)
-  invLens := (fun a => (fun _ => a) ⇆ (fun _ _ => PUnit.unit)) ⇆ (fun _ d => d.2)
+  invLens := Lens.fromX ⇆ fun _ ⟨_, d⟩ => d
   left_inv := rfl
   right_inv := rfl
 

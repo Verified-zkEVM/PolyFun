@@ -69,7 +69,7 @@ example (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β) (s₁ : M₁.Sta
 /-- A machine that halts immediately with output `b`. -/
 def haltMachine (b : β) : IOMachine X.{u, u} α β where
   State := PUnit
-  toDynSystem := (fun _ => PUnit.unit) ⇆ fun _ _ => PUnit.unit
+  toDynSystem := Lens.fromX PUnit.unit
   init := fun _ => PUnit.unit
   output := fun _ => some b
 

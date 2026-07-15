@@ -45,12 +45,12 @@ abbrev oraclePoly (A Q : Type u) : PFunctor.{u, u} := ⟨Option A, fun _ => Q⟩
 /-- The log-carrying oracle: state is `(lastAnswer, queryLog)`. On query `q` it
 answers `f q`, records the answer, and appends `q` to the log. -/
 def oracleLog : DynSystem (Option A × List Q) (oraclePoly A Q) :=
-  (fun s => s.1) ⇆ (fun s q => (some (f q), s.2 ++ [(q : Q)]))
+  Prod.fst ⇆ fun s q => (some (f q), s.2 ++ [(q : Q)])
 
 /-- The count-carrying oracle: state is `(lastAnswer, queryCount)`. On query `q`
 it answers `f q`, records the answer, and increments the counter. -/
 def oracleCount : DynSystem (Option A × Nat) (oraclePoly A Q) :=
-  (fun s => s.1) ⇆ (fun s q => (some (f q), s.2 + 1))
+  Prod.fst ⇆ fun s q => (some (f q), s.2 + 1)
 
 /-- The two carriers agree exactly on the observable part (the last answer);
 the log/count bookkeeping is unconstrained. -/

@@ -122,38 +122,73 @@ def initial {P : PFunctor.{uA, uB}} : Lens 0 P :=
 
 /-- The (unique) terminal lens from any functor `P` to the unit functor `1`. -/
 def terminal {P : PFunctor.{uA, uB}} : Lens P 1 :=
-  (fun _ => PUnit.unit) ⇆ (fun _ => PEmpty.elim)
+  (fun _ => PUnit.unit) ⇆ fun _ => PEmpty.elim
 
 alias fromZero := initial
 alias toOne := terminal
 
+/-- Construct a lens from the variable polynomial by selecting a position. The
+backward map is uniquely determined by the unit direction of `X`. -/
+def fromX {P : PFunctor.{uA, uB}} (a : P.A) : Lens X.{uA₁, uB₁} P :=
+  (fun _ => a) ⇆ fun _ _ => PUnit.unit
+
+@[simp] theorem fromX_toFunA {P : PFunctor.{uA, uB}} (a : P.A) (u : PUnit) :
+    (fromX a : Lens X.{uA₁, uB₁} P).toFunA u = a := rfl
+
+@[simp] theorem fromX_toFunB {P : PFunctor.{uA, uB}} (a : P.A) (u : PUnit)
+    (d : P.B a) :
+    (fromX a : Lens X.{uA₁, uB₁} P).toFunB u d = PUnit.unit := rfl
+
+/-- Construct a lens into a constant polynomial from its position map. The
+backward map is uniquely determined by the empty direction type. -/
+def toConst {P : PFunctor.{uA, uB}} {A : Type uA₂} (f : P.A → A) :
+    Lens P (C A : PFunctor.{uA₂, uB₁}) :=
+  f ⇆ fun _ => PEmpty.elim
+
+@[simp] theorem toConst_toFunA {P : PFunctor.{uA, uB}} {A : Type uA₂}
+    (f : P.A → A) (a : P.A) :
+    (toConst f : Lens P (C A : PFunctor.{uA₂, uB₁})).toFunA a = f a := rfl
+
+/-- Construct a lens into a linear polynomial from a position map and a choice
+of source direction over every position. -/
+def toLinear {P : PFunctor.{uA, uB}} {A : Type uA₂}
+    (f : P.A → A) (choose : (a : P.A) → P.B a) :
+    Lens P (linear A : PFunctor.{uA₂, uB₁}) :=
+  f ⇆ fun a _ => choose a
+
+@[simp] theorem toLinear_toFunA {P : PFunctor.{uA, uB}} {A : Type uA₂}
+    (f : P.A → A) (choose : (a : P.A) → P.B a) (a : P.A) :
+    (toLinear f choose : Lens P (linear A : PFunctor.{uA₂, uB₁})).toFunA a = f a := rfl
+
+@[simp] theorem toLinear_toFunB {P : PFunctor.{uA, uB}} {A : Type uA₂}
+    (f : P.A → A) (choose : (a : P.A) → P.B a) (a : P.A) (u : PUnit) :
+    (toLinear f choose : Lens P (linear A : PFunctor.{uA₂, uB₁})).toFunB a u = choose a := rfl
+
 /-- Left injection lens `inl : P → P + Q` -/
 def inl {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
     Lens.{uA₁, uB, max uA₁ uA₂, uB} P (P + Q) :=
-  Sum.inl ⇆ (fun _ d => d)
+  Sum.inl ⇆ fun _ => id
 
 /-- Right injection lens `inr : Q → P + Q` -/
 def inr {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
     Lens.{uA₂, uB, max uA₁ uA₂, uB} Q (P + Q) :=
-  Sum.inr ⇆ (fun _ d => d)
+  Sum.inr ⇆ fun _ => id
 
 /-- Copairing of lenses `[l₁, l₂]ₗ : P + Q → R` -/
 def sumPair {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB₃}}
     (l₁ : Lens P R) (l₂ : Lens Q R) :
     Lens.{max uA₁ uA₂, uB, uA₃, uB₃} (P + Q) R :=
-  (Sum.elim l₁.toFunA l₂.toFunA) ⇆
-    (fun a d => match a with
-      | Sum.inl pa => l₁.toFunB pa d
-      | Sum.inr qa => l₂.toFunB qa d)
+  Sum.elim l₁.toFunA l₂.toFunA ⇆ fun
+    | .inl pa => l₁.toFunB pa
+    | .inr qa => l₂.toFunB qa
 
 /-- Parallel application of lenses for coproduct `l₁ ⊎ l₂ : P + Q → R + W` -/
 def sumMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}} {R : PFunctor.{uA₃, uB₃}}
     {W : PFunctor.{uA₄, uB₃}} (l₁ : Lens P R) (l₂ : Lens Q W) :
     Lens.{max uA₁ uA₂, uB₁, max uA₃ uA₄, uB₃} (P + Q) (R + W) :=
-  (Sum.map l₁.toFunA l₂.toFunA) ⇆
-    (fun psum => match psum with
-      | Sum.inl pa => l₁.toFunB pa
-      | Sum.inr qa => l₂.toFunB qa)
+  Sum.map l₁.toFunA l₂.toFunA ⇆ fun
+    | .inl pa => l₁.toFunB pa
+    | .inr qa => l₂.toFunB qa
 
 /-- Dependent copairing of lenses over `sigma`: `Σ i, F i → R`. -/
 def sigmaExists {I : Type v} {F : I → PFunctor.{uA₁, uB₁}} {R : PFunctor.{uA₂, uB₂}}
@@ -172,12 +207,12 @@ def sigmaMap {I : Type v} {F : I → PFunctor.{uA₁, uB₁}} {G : I → PFuncto
 /-- Projection lens `fst : P * Q → P` -/
 def fst {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} :
     Lens.{max uA₁ uA₂, max uB₁ uB₂, uA₁, uB₁} (P * Q) P :=
-  Prod.fst ⇆ (fun _ => Sum.inl)
+  Prod.fst ⇆ fun _ => Sum.inl
 
 /-- Projection lens `snd : P * Q → Q` -/
 def snd {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} :
     Lens.{max uA₁ uA₂, max uB₁ uB₂, uA₂, uB₂} (P * Q) Q :=
-  Prod.snd ⇆ (fun _ => Sum.inr)
+  Prod.snd ⇆ fun _ => Sum.inr
 
 /-- Pairing of lenses `⟨l₁, l₂⟩ₗ : P → Q * R` -/
 def prodPair {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
@@ -221,8 +256,8 @@ def compMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFu
 def tensorMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     {W : PFunctor.{uA₄, uB₄}} (l₁ : Lens P R) (l₂ : Lens Q W) :
     Lens.{max uA₁ uA₂, max uB₁ uB₂, max uA₃ uA₄, max uB₃ uB₄} (P ⊗ Q) (R ⊗ W) :=
-  (fun ⟨pa, qa⟩ => (l₁.toFunA pa, l₂.toFunA qa)) ⇆
-    (fun ⟨_pa, qa⟩ ⟨rb, wb⟩ => (l₁.toFunB _pa rb, l₂.toFunB qa wb))
+  Prod.map l₁.toFunA l₂.toFunA ⇆
+    fun (pa, qa) => Prod.map (l₁.toFunB pa) (l₂.toFunB qa)
 
 /-- Lens to introduce `X` on the right: `P → P ◃ X` -/
 def tildeR {P : PFunctor.{uA, uB}} : Lens P (P ◃ X) :=
@@ -434,8 +469,8 @@ namespace Equiv
 /-- Commutativity of product -/
 def prodComm (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
     Lens.Equiv.{max uA₁ uA₂, max uB₁ uB₂, max uA₁ uA₂, max uB₁ uB₂} (P * Q) (Q * P) where
-  toLens := Prod.swap ⇆ (fun _ => Sum.elim Sum.inr Sum.inl)
-  invLens := Prod.swap ⇆ (fun _ => Sum.elim Sum.inr Sum.inl)
+  toLens := Prod.swap ⇆ fun _ => Sum.elim Sum.inr Sum.inl
+  invLens := Prod.swap ⇆ fun _ => Sum.elim Sum.inr Sum.inl
   left_inv := by
     ext _ b
     · rfl
@@ -454,9 +489,9 @@ variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunct
 def prodAssoc : Lens.Equiv.{max uA₁ uA₂ uA₃, max uB₁ uB₂ uB₃, max uA₁ uA₂ uA₃, max uB₁ uB₂ uB₃}
     ((P * Q) * R) (P * (Q * R)) where
   toLens := (_root_.Equiv.prodAssoc P.A Q.A R.A).toFun ⇆
-              (fun _ d => (_root_.Equiv.sumAssoc _ _ _).invFun d)
+              (fun _ => (_root_.Equiv.sumAssoc _ _ _).invFun)
   invLens := (_root_.Equiv.prodAssoc P.A Q.A R.A).invFun ⇆
-               (fun _ d => _root_.Equiv.sumAssoc _ _ _ d)
+               (fun _ => _root_.Equiv.sumAssoc _ _ _)
   left_inv := by
     ext _ b
     · rfl
@@ -473,8 +508,8 @@ def prodAssoc : Lens.Equiv.{max uA₁ uA₂ uA₃, max uB₁ uB₂ uB₃, max uA
 /-- Product with `1` is identity (right) -/
 def prodOne :
     Lens.Equiv.{max uA₁ uA₂, max uB₁ uB₂, uA₁, uB₁} (P * (1 : PFunctor.{uA₂, uB₂})) P where
-  toLens := Prod.fst ⇆ (fun _ => Sum.inl)
-  invLens := (fun p => (p, PUnit.unit)) ⇆ (fun _ => Sum.elim id PEmpty.elim)
+  toLens := Prod.fst ⇆ fun _ => Sum.inl
+  invLens := (·, PUnit.unit) ⇆ fun _ => Sum.elim id PEmpty.elim
   left_inv := by
     ext _ b
     · rfl
@@ -487,8 +522,8 @@ def prodOne :
 /-- Product with `1` is identity (left) -/
 def oneProd :
     Lens.Equiv.{max uA₁ uA₂, max uB₁ uB₂, uA₁, uB₁} ((1 : PFunctor.{uA₂, uB₂}) * P) P where
-  toLens := Prod.snd ⇆ (fun _ => Sum.inr)
-  invLens := (fun p => (PUnit.unit, p)) ⇆ (fun _ => Sum.elim PEmpty.elim id)
+  toLens := Prod.snd ⇆ fun _ => Sum.inr
+  invLens := (PUnit.unit, ·) ⇆ fun _ => Sum.elim PEmpty.elim id
   left_inv := by
     ext _ b
     · rfl
@@ -501,8 +536,8 @@ def oneProd :
 /-- Product with `0` is zero (right) -/
 def prodZero :
     Lens.Equiv.{max uA₁ uA₂, max uB₁ uB₂, uA₁, uB₁} (P * (0 : PFunctor.{uA₂, uB₂})) 0 where
-  toLens := (fun a => PEmpty.elim a.2) ⇆ (fun _ x => PEmpty.elim x)
-  invLens := PEmpty.elim ⇆ (fun pe _ => PEmpty.elim pe)
+  toLens := (fun a => PEmpty.elim a.2) ⇆ fun _ => PEmpty.elim
+  invLens := PEmpty.elim ⇆ fun pe => PEmpty.elim pe
   left_inv := by
     ext ⟨_, a⟩ _ <;> exact PEmpty.elim a
   right_inv := by
@@ -511,8 +546,8 @@ def prodZero :
 /-- Product with `0` is zero (left) -/
 def zeroProd :
     Lens.Equiv.{max uA₁ uA₂, max uB₁ uB₂, uA₁, uB₁} ((0 : PFunctor.{uA₂, uB₂}) * P) 0 where
-  toLens := (fun ⟨pa, _⟩ => PEmpty.elim pa) ⇆ (fun _ x => PEmpty.elim x)
-  invLens := PEmpty.elim ⇆ (fun pe _ => PEmpty.elim pe)
+  toLens := (fun (pa, _) => PEmpty.elim pa) ⇆ fun _ => PEmpty.elim
+  invLens := PEmpty.elim ⇆ fun pe => PEmpty.elim pe
   left_inv := by
     ext ⟨a, _⟩ <;> exact PEmpty.elim a
   right_inv := by
@@ -524,41 +559,23 @@ variable {R : PFunctor.{uA₃, uB₂}}
 def prodCoprodDistrib :
     Lens.Equiv.{max uA₁ uA₂ uA₃, max uB₁ uB₂, max uA₁ uA₂ uA₃, max uB₁ uB₂}
       (P * (Q + R)) ((P * Q) + (P * R)) where
-  toLens := (fun ⟨p, qr⟩ => match qr with
-              | Sum.inl q => Sum.inl (p, q)
-              | Sum.inr r => Sum.inr (p, r)) ⇆
-            (fun ⟨_, qr⟩ => match qr with
-              | Sum.inl _ => id -- P.B p ⊕ Q.B q
-              | Sum.inr _ => id) -- P.B p ⊕ R.B r
-  invLens := (Sum.elim
-              (fun ⟨p, q⟩ => (p, Sum.inl q))
-              (fun ⟨p, r⟩ => (p, Sum.inr r))) ⇆
-             (fun pq_pr => match pq_pr with
-              | Sum.inl _ => id -- P.B p ⊕ Q.B q
-              | Sum.inr _ => id) -- P.B p ⊕ R.B r
-  left_inv := by
-    ext a <;> rcases a with ⟨p, q | r⟩ <;> rfl
-  right_inv := by
-    ext a <;> rcases a with ⟨p, q⟩ | ⟨p, r⟩ <;> rfl
+  toLens := (fun (p, qr) => qr.map (p, ·) (p, ·)) ⇆
+    (fun | ⟨_, .inl _⟩ | ⟨_, .inr _⟩ => id)
+  invLens := Sum.elim (Prod.map id Sum.inl) (Prod.map id Sum.inr) ⇆
+    (fun | .inl _ | .inr _ => id)
+  left_inv := by ext ⟨_, qr⟩ <;> cases qr <;> rfl
+  right_inv := by ext pqpr <;> cases pqpr <;> rfl
 
 /-- Right distributive law for coproduct over product -/
 def sumProdDistrib :
     Lens.Equiv.{max uA₁ uA₂ uA₃, max uB₁ uB₂, max uA₁ uA₂ uA₃, max uB₁ uB₂}
       ((Q + R) * P) ((Q * P) + (R * P)) where
-  toLens := (fun ⟨qr, p⟩ => Sum.elim (fun q => Sum.inl (q, p)) (fun r => Sum.inr (r, p)) qr) ⇆
-            (fun ⟨qr, p⟩ => match qr with
-              | Sum.inl _ => id
-              | Sum.inr _ => id)
-  invLens := (fun qp_rp => match qp_rp with
-              | Sum.inl (q, p) => (Sum.inl q, p)
-              | Sum.inr (r, p) => (Sum.inr r, p)) ⇆
-             (fun qp_rp => match qp_rp with
-              | Sum.inl _ => id
-              | Sum.inr _ => id)
-  left_inv := by
-    ext a <;> rcases a with ⟨q | r, p⟩ <;> rfl
-  right_inv := by
-    ext a <;> rcases a with ⟨q, p⟩ | ⟨r, p⟩ <;> rfl
+  toLens := (fun (qr, p) => qr.map (·, p) (·, p)) ⇆
+    (fun | ⟨.inl _, _⟩ | ⟨.inr _, _⟩ => id)
+  invLens := Sum.elim (Prod.map Sum.inl id) (Prod.map Sum.inr id) ⇆
+    (fun | .inl _ | .inr _ => id)
+  left_inv := by ext ⟨qr, _⟩ <;> cases qr <;> rfl
+  right_inv := by ext qprp <;> cases qprp <;> rfl
 
 end Equiv
 
@@ -607,22 +624,16 @@ def XComp : X ◃ P ≃ₗ P where
 def sumCompDistrib {R : PFunctor.{uA₃, uB₂}} :
     Lens.Equiv.{max uA₁ uA₂ uA₃ uB₂, max uB₁ uB₂, max uA₁ uA₂ uA₃ uB₂, max uB₁ uB₂}
       ((Q + R : PFunctor.{max uA₂ uA₃, uB₂}) ◃ P) ((Q ◃ P) + (R ◃ P)) where
-  toLens := (fun a => match a with
-              | ⟨Sum.inl qa, pf⟩ => Sum.inl ⟨qa, pf⟩
-              | ⟨Sum.inr ra, pf⟩ => Sum.inr ⟨ra, pf⟩) ⇆
-            (fun ⟨qr, pf⟩ b => match qr with
-              | Sum.inl _ => b
-              | Sum.inr _ => b)
-  invLens := (fun a => match a with
-              | Sum.inl ⟨qa, pf⟩ => ⟨Sum.inl qa, pf⟩
-              | Sum.inr ⟨ra, pf⟩ => ⟨Sum.inr ra, pf⟩) ⇆
-            (fun qprp b => match qprp with
-              | Sum.inl _ => b
-              | Sum.inr _ => b)
-  left_inv := by
-    ext a <;> rcases a with ⟨_ | _, _⟩ <;> rfl
-  right_inv := by
-    ext a <;> cases a <;> rfl
+  toLens := (fun
+    | ⟨.inl qa, pf⟩ => .inl ⟨qa, pf⟩
+    | ⟨.inr ra, pf⟩ => .inr ⟨ra, pf⟩) ⇆
+      (fun | ⟨.inl _, _⟩ | ⟨.inr _, _⟩ => id)
+  invLens := (fun
+    | .inl ⟨qa, pf⟩ => ⟨.inl qa, pf⟩
+    | .inr ⟨ra, pf⟩ => ⟨.inr ra, pf⟩) ⇆
+      (fun | .inl _ | .inr _ => id)
+  left_inv := by ext ⟨qr, _⟩ <;> cases qr <;> rfl
+  right_inv := by ext qprp <;> cases qprp <;> rfl
 
 end Equiv
 
@@ -653,30 +664,30 @@ def tensorComm (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) : P �
 /-- Associativity of tensor product -/
 def tensorAssoc : (P ⊗ Q) ⊗ R ≃ₗ P ⊗ (Q ⊗ R) where
   toLens := (_root_.Equiv.prodAssoc _ _ _).toFun ⇆
-            (fun _ => (_root_.Equiv.prodAssoc _ _ _).invFun)
+    (fun _ => (_root_.Equiv.prodAssoc _ _ _).invFun)
   invLens := (_root_.Equiv.prodAssoc _ _ _).invFun ⇆
-            (fun _ => (_root_.Equiv.prodAssoc _ _ _).toFun)
+    (fun _ => (_root_.Equiv.prodAssoc _ _ _).toFun)
   left_inv := rfl
   right_inv := rfl
 
 /-- Tensor product with `X` is identity (right) -/
 def tensorX : P ⊗ X ≃ₗ P where
-  toLens := Prod.fst ⇆ (fun _ b => (b, PUnit.unit))
-  invLens := (fun p => (p, PUnit.unit)) ⇆ (fun _ bp => bp.1)
+  toLens := Prod.fst ⇆ fun _ => (·, PUnit.unit)
+  invLens := (·, PUnit.unit) ⇆ fun _ => Prod.fst
   left_inv := rfl
   right_inv := rfl
 
 /-- Tensor product with `X` is identity (left) -/
 def xTensor : X ⊗ P ≃ₗ P where
-  toLens := Prod.snd ⇆ (fun _ b => (PUnit.unit, b))
-  invLens := (fun p => (PUnit.unit, p)) ⇆ (fun _ bp => bp.2)
+  toLens := Prod.snd ⇆ fun _ => (PUnit.unit, ·)
+  invLens := (PUnit.unit, ·) ⇆ fun _ => Prod.snd
   left_inv := rfl
   right_inv := rfl
 
 /-- Tensor product with `0` is zero (left) -/
 def zeroTensor : 0 ⊗ P ≃ₗ 0 where
-  toLens := (fun a => PEmpty.elim a.1) ⇆ (fun _ b => PEmpty.elim b)
-  invLens := PEmpty.elim ⇆ (fun a _ => PEmpty.elim a)
+  toLens := (fun a => PEmpty.elim a.1) ⇆ fun _ => PEmpty.elim
+  invLens := PEmpty.elim ⇆ fun a => PEmpty.elim a
   left_inv := by
     ext ⟨a, _⟩ <;> exact PEmpty.elim a
   right_inv := by
@@ -684,8 +695,8 @@ def zeroTensor : 0 ⊗ P ≃ₗ 0 where
 
 /-- Tensor product with `0` is zero (right) -/
 def tensorZero : P ⊗ 0 ≃ₗ 0 where
-  toLens := (fun a => PEmpty.elim a.2) ⇆ (fun _ b => PEmpty.elim b)
-  invLens := PEmpty.elim ⇆ (fun a _ => PEmpty.elim a)
+  toLens := (fun a => PEmpty.elim a.2) ⇆ fun _ => PEmpty.elim
+  invLens := PEmpty.elim ⇆ fun a => PEmpty.elim a
   left_inv := by
     ext ⟨_, b⟩ <;> exact PEmpty.elim b
   right_inv := by
@@ -697,43 +708,23 @@ variable {R : PFunctor.{uA₃, uB₂}}
 def tensorCoprodDistrib :
     Lens.Equiv.{max uA₁ uA₂ uA₃, max uB₁ uB₂, max uA₁ uA₂ uA₃, max uB₁ uB₂}
       (P ⊗ (Q + R : PFunctor.{max uA₂ uA₃, uB₂})) ((P ⊗ Q) + (P ⊗ R)) where
-  toLens := (fun ⟨p, qr⟩ => match qr with
-              | Sum.inl q => Sum.inl (p, q)
-              | Sum.inr r => Sum.inr (p, r)) ⇆
-            (fun ⟨p, qr⟩ b => match qr with
-              | Sum.inl _ => b
-              | Sum.inr _ => b)
-  invLens := (fun pqpr => match pqpr with
-              | Sum.inl (p, q) => (p, Sum.inl q)
-              | Sum.inr (p, r) => (p, Sum.inr r)) ⇆
-             (fun pqpr b => match pqpr with
-              | Sum.inl _ => b
-              | Sum.inr _ => b)
-  left_inv := by
-    ext ⟨_, qr⟩ <;> cases qr <;> rfl
-  right_inv := by
-    ext pqpr <;> cases pqpr <;> rfl
+  toLens := (fun (p, qr) => qr.map (p, ·) (p, ·)) ⇆
+    (fun | ⟨_, .inl _⟩ | ⟨_, .inr _⟩ => id)
+  invLens := Sum.elim (Prod.map id Sum.inl) (Prod.map id Sum.inr) ⇆
+    (fun | .inl _ | .inr _ => id)
+  left_inv := by ext ⟨_, qr⟩ <;> cases qr <;> rfl
+  right_inv := by ext pqpr <;> cases pqpr <;> rfl
 
 /-- Right distributivity of tensor product over coproduct -/
 def sumTensorDistrib :
     (Q + R : PFunctor.{max uA₂ uA₃, uB₂}) ⊗ P
       ≃ₗ ((Q ⊗ P) + (R ⊗ P) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) where
-  toLens := (fun ⟨qr, p⟩ => match qr with
-              | Sum.inl q => Sum.inl (q, p)
-              | Sum.inr r => Sum.inr (r, p)) ⇆
-            (fun ⟨qr, _⟩ b => match qr with
-              | Sum.inl _ => b
-              | Sum.inr _ => b)
-  invLens := (fun qprp => match qprp with
-              | Sum.inl (q, p) => (Sum.inl q, p)
-              | Sum.inr (r, p) => (Sum.inr r, p)) ⇆
-             (fun qprp b => match qprp with
-              | Sum.inl _ => b
-              | Sum.inr _ => b)
-  left_inv := by
-    ext ⟨qr, _⟩ <;> cases qr <;> rfl
-  right_inv := by
-    ext qprp <;> cases qprp <;> rfl
+  toLens := (fun (qr, p) => qr.map (·, p) (·, p)) ⇆
+    (fun | ⟨.inl _, _⟩ | ⟨.inr _, _⟩ => id)
+  invLens := Sum.elim (Prod.map Sum.inl id) (Prod.map Sum.inr id) ⇆
+    (fun | .inl _ | .inr _ => id)
+  left_inv := by ext ⟨qr, _⟩ <;> cases qr <;> rfl
+  right_inv := by ext qprp <;> cases qprp <;> rfl
 
 end Equiv
 
@@ -859,8 +850,8 @@ def piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0)
     rw [F_zero (default : I)] at hf
     exact hf.elim
   refine
-    { toLens := isEmptyElim ⇆ (fun a _ => isEmptyElim a)
-      invLens := PEmpty.elim ⇆ (fun a => PEmpty.elim a)
+    { toLens := isEmptyElim ⇆ fun a => isEmptyElim a
+      invLens := PEmpty.elim ⇆ fun a => PEmpty.elim a
       left_inv := by
         ext a <;> exact isEmptyElim a
       right_inv := by
@@ -872,8 +863,8 @@ namespace Equiv
 
 /-- ULift equivalence for lenses -/
 def ulift {P : PFunctor.{uA, uB}} : P.ulift ≃ₗ P where
-  toLens := (fun a => ULift.down a) ⇆ (fun _ b => ULift.up b)
-  invLens := (fun a => ULift.up a) ⇆ (fun _ b => ULift.down b)
+  toLens := ULift.down ⇆ fun _ => ULift.up
+  invLens := ULift.up ⇆ fun _ => ULift.down
   left_inv := rfl
   right_inv := rfl
 

@@ -29,7 +29,7 @@ namespace DynSystem.Examples
 /-- A running-sum counter: state is the accumulated total, the output is the total
 itself, and each input is added to the state. -/
 def counter : MooreMachine ℕ ℕ ℕ :=
-  (fun n : ℕ => n) ⇆ fun (n : ℕ) (i : ℕ) => n + i
+  id ⇆ fun (n : ℕ) (i : ℕ) => n + i
 
 example : counter.run (0 : ℕ) [1, 2, 3] = (6 : ℕ) := rfl
 

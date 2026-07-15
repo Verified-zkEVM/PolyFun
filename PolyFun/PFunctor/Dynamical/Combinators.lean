@@ -129,8 +129,8 @@ interleaves them one step at a time; scheduled interleavings of processes are
 wrappers of this combinator. -/
 def choiceProd (s : DynSystem S p) (t : DynSystem T q) :
     DynSystem (S × T) (prod p q) :=
-  (fun st => (s.expose st.1, t.expose st.2)) ⇆ fun st =>
-    Sum.elim (fun d => (s.update st.1 d, st.2)) (fun d => (st.1, t.update st.2 d))
+  Prod.map s.expose t.expose ⇆ fun (ss, ts) =>
+    Sum.elim (fun d => (s.update ss d, ts)) (fun d => (ss, t.update ts d))
 
 @[simp] theorem choiceProd_expose (s : DynSystem S p) (t : DynSystem T q) (st : S × T) :
     (s.choiceProd t).expose st = (s.expose st.1, t.expose st.2) := rfl

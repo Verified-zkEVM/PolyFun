@@ -89,7 +89,7 @@ lens `X ⇆ p` picks a single position of `p` via `toFunA PUnit.unit`, and its
 `toFunB` is forced (every direction of `X` is `PUnit.unit`). -/
 def homFromX : Lens X.{uA₁, uB₁} p ≃ p.A where
   toFun l := l.toFunA PUnit.unit
-  invFun a := (fun _ => a) ⇆ (fun _ _ => PUnit.unit)
+  invFun := Lens.fromX
   left_inv _ := rfl
   right_inv _ := rfl
 
@@ -98,7 +98,7 @@ def homFromX : Lens X.{uA₁, uB₁} p ≃ p.A where
 positions `p.A → A`; its backward map is forced since `C A` has no directions. -/
 def homToConst {A : Type uA₂} : Lens p (C A : PFunctor.{uA₂, uB₁}) ≃ (p.A → A) where
   toFun l := l.toFunA
-  invFun f := f ⇆ (fun _ => PEmpty.elim)
+  invFun := Lens.toConst
   left_inv l := by
     refine Lens.ext _ _ (fun a => rfl) (fun a => ?_)
     funext d
@@ -113,7 +113,7 @@ of `p`. -/
 def homToLinear {A : Type uA₂} :
     Lens p (linear A : PFunctor.{uA₂, uB₁}) ≃ ((p.A → A) × ((a : p.A) → p.B a)) where
   toFun l := (l.toFunA, fun a => l.toFunB a PUnit.unit)
-  invFun fg := fg.1 ⇆ (fun a _ => fg.2 a)
+  invFun fg := Lens.toLinear fg.1 fg.2
   left_inv _ := rfl
   right_inv _ := rfl
 

@@ -164,8 +164,8 @@ def sumProdDistrib (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₁}) (
     ((P + Q) * R : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) ≃ₚ
     ((P * R) + (Q * R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) where
   equivA := _root_.Equiv.sumProdDistrib P.A Q.A R.A
-  equivB := fun ⟨a, _⟩ =>
-    Sum.casesOn a (fun _ => _root_.Equiv.refl _) (fun _ => _root_.Equiv.refl _)
+  equivB := fun
+    | ⟨.inl _, _⟩ | ⟨.inr _, _⟩ => _root_.Equiv.refl _
 
 /-- Product distributes over sum: `P * (Q + R) ≃ₚ (P * Q) + (P * R)`
 
@@ -175,8 +175,8 @@ def prodSumDistrib (R : PFunctor.{uA₃, uB₂}) :
     (P * (Q + R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) ≃ₚ
     ((P * Q) + (P * R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) where
   equivA := _root_.Equiv.prodSumDistrib P.A Q.A R.A
-  equivB := fun ⟨_, a⟩ =>
-    Sum.casesOn a (fun _ => _root_.Equiv.refl _) (fun _ => _root_.Equiv.refl _)
+  equivB := fun
+    | ⟨_, .inl _⟩ | ⟨_, .inr _⟩ => _root_.Equiv.refl _
 
 end Prod
 
@@ -602,16 +602,16 @@ def sumTensorDistrib (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₁})
     ((P + Q : PFunctor.{max uA₁ uA₂, uB₁}) ⊗ R) ≃ₚ
     ((P ⊗ R) + (Q ⊗ R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) where
   equivA := _root_.Equiv.sumProdDistrib P.A Q.A R.A
-  equivB := fun ⟨a, _⟩ =>
-    Sum.casesOn a (fun _ => _root_.Equiv.refl _) (fun _ => _root_.Equiv.refl _)
+  equivB := fun
+    | ⟨.inl _, _⟩ | ⟨.inr _, _⟩ => _root_.Equiv.refl _
 
 /-- Tensor product distributes over sum: `P ⊗ (Q + R) ≃ₚ (P ⊗ Q) + (P ⊗ R)` -/
 def tensorSumDistrib (R : PFunctor.{uA₃, uB₂}) :
     (P ⊗ (Q + R : PFunctor.{max uA₂ uA₃, uB₂})) ≃ₚ
     ((P ⊗ Q) + (P ⊗ R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) where
   equivA := _root_.Equiv.prodSumDistrib P.A Q.A R.A
-  equivB := fun ⟨_, a⟩ =>
-    Sum.casesOn a (fun _ => _root_.Equiv.refl _) (fun _ => _root_.Equiv.refl _)
+  equivB := fun
+    | ⟨_, .inl _⟩ | ⟨_, .inr _⟩ => _root_.Equiv.refl _
 
 end Tensor
 
