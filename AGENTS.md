@@ -59,8 +59,9 @@ and depend on this library.
   and their indexed free monads. `Free/Basic.lean` holds the single-index
   `FreeM` (state-polymorphic continuations); `Free/Indexed.lean` holds the
   two-index `FreeM₂` carrying a `LawfulIndexedMonad` instance.
-- `PolyFun/ITree/`: coinductive interaction trees, bisimulation,
-  simulation, handlers, event signatures.
+- `PolyFun/ITree/`: coinductive interaction trees, same-signature weak
+  bisimulation, cross-signature relational trees (`Bisim/CrossSignature.lean`),
+  simulation, handlers, event signatures, and finite observation traces.
 - `PolyFun/Interaction/`: protocol-flavored generic interaction framework.
   - `Basic/`: `Spec`, node contexts, decorations, syntax / shape /
     interaction, strategies, append / replicate / state-chain
@@ -248,7 +249,7 @@ listed declaration-by-declaration in `scripts/nolints.json`; regenerate that
 file with the Batteries `runLinter --update` driver when this surface changes,
 and review every new entry rather than treating the file as a blanket waiver.
 
-Lean toolchain and Mathlib stay in sync (both currently `v4.32.0`).
+Lean toolchain, Mathlib, and cslib stay in sync (all currently `v4.32.0`).
 Files should stay under 1500 lines.
 
 ## Further Reading
