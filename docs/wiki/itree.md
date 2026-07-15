@@ -55,7 +55,7 @@ step are lifted to `uB`; a visible query retains its original direction type.
 | [`PolyFun/ITree/Handler.lean`](../../PolyFun/ITree/Handler.lean) | Universe-polymorphic `Handler E F`: choice of an `F`-program for every `E`-event, with identity, lens promotion, and coproduct routing via `Handler.case_`. |
 | [`PolyFun/ITree/Sim/Defs.lean`](../../PolyFun/ITree/Sim/Defs.lean) | Universe-polymorphic `ITree.simulate` (interprets every event via a handler), `Handler.comp`, and `ITree.mapSpec` (pure event-renaming via a `PFunctor.Lens`). Coq `interp` analogue. |
 | [`PolyFun/ITree/Sim/Facts.lean`](../../PolyFun/ITree/Sim/Facts.lean) | Universe-polymorphic one-step, identity, relational congruence, bind, iteration, lens-composition, and handler-composition facts. `simulate_comp` identifies sequential and composite interpretation up to weak bisimulation; `Handler.comp_assoc_apply` gives pointwise associativity. |
-| [`PolyFun/ITree/Rec.lean`](../../PolyFun/ITree/Rec.lean) | `mutualRec`, `fixRec` recursive procedure-call combinators. The `CallE α β` event signature describes one recursive call expecting `α` and returning `β`. |
+| [`PolyFun/ITree/Rec.lean`](../../PolyFun/ITree/Rec.lean) | Universe-polymorphic `mutualRec`, `fixRec` recursive procedure-call combinators. `CallE α β : PFunctor.{uα,uβ}` separates call inputs from results; recursive coproducts retain only the equal reply-universe constraint of `PFunctor.sum`. |
 
 ### Bisimulation
 
@@ -70,8 +70,8 @@ step are lifted to `uB`; a visible query retains its original direction type.
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/ITree/Events/State.lean`](../../PolyFun/ITree/Events/State.lean) | `StateE σ` signature and the `get` / `put` smart constructors. |
-| [`PolyFun/ITree/Events/Exception.lean`](../../PolyFun/ITree/Events/Exception.lean) | `ExceptE ε` signature and the `throw` smart constructor; the answer type is `PEmpty`, so execution cannot resume. |
+| [`PolyFun/ITree/Events/State.lean`](../../PolyFun/ITree/Events/State.lean) | `StateE σ` signature and the `get` / `put` smart constructors. Positions and replies genuinely share `uσ` because `get` returns `σ`; final computation results remain independent. |
+| [`PolyFun/ITree/Events/Exception.lean`](../../PolyFun/ITree/Events/Exception.lean) | `ExceptE ε : PFunctor.{uε,uB}` and the `throw` smart constructor with an independent result universe; the answer type is empty, so execution cannot resume. |
 
 ## Mental model
 
@@ -95,6 +95,10 @@ step are lifted to `uB`; a visible query retains its original direction type.
 - The `Events/{State, Exception}.lean` files are small canonical patterns for
   signatures and smart constructors. Handlers for such signatures can be
   routed, composed, and executed through the generic APIs above.
+- Recursive calls separate input, result, external-event, and final-result
+  universes. `mutualRec` and `fixRec` retain one local equality: recursive and
+  external replies share a universe because the current `PFunctor.sum`
+  representation requires it. No other ITree API inherits that constraint.
 
 ## Recovering Coq references
 

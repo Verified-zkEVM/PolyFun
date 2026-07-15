@@ -23,25 +23,26 @@ Coq references:
 
 @[expose] public section
 
-universe u
+universe uε uB uα
 
 namespace ITree
 
 /-- Exception events over an error type `ε : Type u`. The single event
 family is `throw e` for `e : ε`; the answer type `PEmpty` reflects the fact
-that a thrown exception never returns. -/
-def ExceptE (ε : Type u) : PFunctor.{u, u} where
+that a thrown exception never returns. The error, empty-answer, and eventual
+computation-result universes are independent. -/
+def ExceptE (ε : Type uε) : PFunctor.{uε, uB} where
   A := ε
-  B _ := PEmpty.{u + 1}
+  B _ := PEmpty.{uB + 1}
 
 namespace ExceptE
 
-variable {ε α : Type u}
+variable {ε : Type uε} {α : Type uα}
 
 /-- Throw the exception `e`, never returning. The arbitrary return type `α`
 is supplied by `PEmpty.elim` on the (empty) answer type of `e`. -/
-def throw (e : ε) : ITree (ExceptE ε) α :=
-  query (F := ExceptE ε) e PEmpty.elim
+def throw (e : ε) : ITree (ExceptE.{uε, uB} ε) α :=
+  query (F := ExceptE.{uε, uB} ε) e PEmpty.elim
 
 end ExceptE
 

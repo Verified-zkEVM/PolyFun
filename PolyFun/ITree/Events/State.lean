@@ -26,13 +26,13 @@ Coq references:
 
 @[expose] public section
 
-universe u
+universe uσ
 
 namespace ITree
 
 /-- The two state events. `Shape.get` returns the current state, `Shape.put`
 replaces it. -/
-inductive StateE.Shape (σ : Type u) : Type u where
+inductive StateE.Shape (σ : Type uσ) : Type uσ where
   /-- Read the current state. -/
   | get : StateE.Shape σ
   /-- Overwrite the current state with `s : σ`. -/
@@ -43,21 +43,22 @@ inductive StateE.Shape (σ : Type u) : Type u where
 * for `get` — `σ` (the value read);
 * for `put _` — `PUnit` (the unit return of an assignment).
 -/
-def StateE (σ : Type u) : PFunctor.{u, u} where
+def StateE (σ : Type uσ) : PFunctor.{uσ, uσ} where
   A := StateE.Shape σ
   B
     | .get => σ
-    | .put _ => PUnit.{u + 1}
+    | .put _ => PUnit.{uσ + 1}
 
 namespace StateE
 
-variable {σ : Type u}
+variable {σ : Type uσ}
 
 /-- Issue a `get` event, returning the current state. -/
 def get : ITree (StateE σ) σ := lift (F := StateE σ) Shape.get
 
 /-- Issue a `put` event, returning `PUnit`. -/
-def put (s : σ) : ITree (StateE σ) PUnit.{u + 1} := lift (F := StateE σ) (Shape.put s)
+def put (s : σ) : ITree (StateE σ) PUnit.{uσ + 1} :=
+  lift (F := StateE σ) (Shape.put s)
 
 end StateE
 
