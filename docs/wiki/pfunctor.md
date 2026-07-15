@@ -26,6 +26,7 @@ enough of that category to model:
 - displayed families and decorations over them
   (`PFunctor.FreeM.Displayed`);
 - branch paths through trees (`PFunctor.FreeM.Path`);
+- finite typed prefixes selecting residual subtrees (`PFunctor.FreeM.Cursor`);
 - the cofree comonad / M-type (`PFunctor.CofreeC`);
 - lenses and charts between polynomial functors as morphisms of two
   natural categories on `Poly`;
@@ -106,6 +107,8 @@ displayed families, roll bounds) on top of the upstream type.
 | [`PolyFun/PFunctor/Free/Basic.lean`](../../PolyFun/PFunctor/Free/Basic.lean) | Re-exports cslib's `FreeM P α` (`pure` / `liftBind`) and canonical `liftM` evaluator; adds `mapLens`, `liftMHom` naturality, and `toW` / `ofW` / `equivWOfIsEmpty`. |
 | [`PolyFun/PFunctor/Free/Resumption.lean`](../../PolyFun/PFunctor/Free/Resumption.lean) | Injective monad-hom embedding `FreeM.toResumption`, with constructor, bind, and map compatibility laws. Kept separate to preserve the base `Resumption` import layer. |
 | [`PolyFun/PFunctor/Free/Path.lean`](../../PolyFun/PFunctor/Free/Path.lean) | `FreeM.Path s` (explicit polynomial direction at every node), `PathAlong`, `output`, `append`, `TelescopeWith` (state-indexed initial algebra). |
+| [`PolyFun/PFunctor/Free/Path/Execution.lean`](../../PolyFun/PFunctor/Free/Path/Execution.lean) | Structural `withPath` execution, erased `Path.trace`, and the exact recovery law `map_output_withPath`. |
+| [`PolyFun/PFunctor/Free/Cursor.lean`](../../PolyFun/PFunctor/Free/Cursor.lean) | `FreeM.Cursor s`, a finite typed path prefix with an explicit residual subtree; composition, prefix traces, residual-path plugging, extension witnesses, and the equivalence between terminal cursors and complete `Path`s. |
 | [`PolyFun/PFunctor/Free/Displayed.lean`](../../PolyFun/PFunctor/Free/Displayed.lean) | `FreeM.Displayed D s` (displayed family over a tree), `Displayed.Section` (displayed catamorphism). The substrate behind decorations, paths, and compact observations. |
 | [`PolyFun/PFunctor/Free/Displayed/Decoration.lean`](../../PolyFun/PFunctor/Free/Displayed/Decoration.lean) | `Decoration Γ s`: every node carries one `Γ a` and recursively decorates children. |
 
