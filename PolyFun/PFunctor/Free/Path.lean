@@ -75,6 +75,43 @@ def Path.shape (P : PFunctor.{uA, uB}) (α : Type v) :
 abbrev Path {α : Type v} : FreeM P α → Type uB :=
   Displayed (Path.shape P α)
 
+namespace Path
+
+/-- Prepend one operation-node direction to a path through the selected
+child. -/
+def cons (a : P.A) (rest : P.B a → FreeM P α) (b : P.B a)
+    (path : Path (rest b)) : Path (FreeM.liftBind a rest) :=
+  ⟨b, path⟩
+
+/-- The direction selected at the root of a non-leaf path. -/
+def head (a : P.A) (rest : P.B a → FreeM P α)
+    (path : Path (FreeM.liftBind a rest)) : P.B a :=
+  path.1
+
+/-- The path remaining below the root direction of a non-leaf path. -/
+def tail (a : P.A) (rest : P.B a → FreeM P α)
+    (path : Path (FreeM.liftBind a rest)) : Path (rest (head a rest path)) :=
+  path.2
+
+@[simp]
+theorem head_cons (a : P.A) (rest : P.B a → FreeM P α) (b : P.B a)
+    (path : Path (rest b)) : head a rest (cons a rest b path) = b :=
+  rfl
+
+@[simp]
+theorem tail_cons (a : P.A) (rest : P.B a → FreeM P α) (b : P.B a)
+    (path : Path (rest b)) : tail a rest (cons a rest b path) = path :=
+  rfl
+
+@[simp]
+theorem cons_head_tail (a : P.A) (rest : P.B a → FreeM P α)
+    (path : Path (FreeM.liftBind a rest)) :
+    cons a rest (head a rest path) (tail a rest path) = path := by
+  rcases path with ⟨b, path⟩
+  rfl
+
+end Path
+
 /-! ## Runtime paths along a lens -/
 
 /-- Runtime path through a `P`-tree executed along a lens `l : Lens P Q`.
@@ -254,6 +291,62 @@ theorem outputAlong_mapLensPathToPathAlong (l : Lens P Q) :
   | .liftBind a rest, ⟨d, path⟩ =>
       outputAlong_mapLensPathToPathAlong l (rest (l.toFunB a d)) path
 
+/-- Pull a canonical path through a lens-mapped tree back to the corresponding
+canonical path through the source tree. -/
+def Path.pullMapLens (l : Lens P Q) :
+    (s : FreeM P α) → Path (s.mapLens l) → Path s
+  | .pure _, _ => ⟨⟩
+  | .liftBind a rest, ⟨d, path⟩ =>
+      ⟨l.toFunB a d, pullMapLens l (rest (l.toFunB a d)) path⟩
+
+@[simp]
+theorem Path.pullMapLens_pure (l : Lens P Q) (x : α)
+    (path : Path ((FreeM.pure x : FreeM P α).mapLens l)) :
+    Path.pullMapLens l (pure x) path = ⟨⟩ :=
+  rfl
+
+@[simp]
+theorem Path.pullMapLens_lift_bind (l : Lens P Q) (a : P.A)
+    (rest : P.B a → FreeM P α) (d : Q.B (l.toFunA a))
+    (path : Path ((rest (l.toFunB a d)).mapLens l)) :
+    Path.pullMapLens l ((FreeM.lift a).bind rest) ⟨d, path⟩ =
+      ⟨l.toFunB a d, Path.pullMapLens l (rest (l.toFunB a d)) path⟩ :=
+  rfl
+
+/-- Pulling a mapped path directly agrees with first viewing it as a runtime
+path and then projecting it to the control tree. -/
+theorem Path.pullMapLens_eq_projectPathAlong (l : Lens P Q) :
+    (s : FreeM P α) → (path : Path (s.mapLens l)) →
+    Path.pullMapLens l s path =
+      projectPathAlong l s (mapLensPathToPathAlong l s path)
+  | .pure _, _ => rfl
+  | .liftBind a rest, ⟨d, path⟩ =>
+      congrArg (fun tail : Path (rest (l.toFunB a d)) =>
+        (⟨l.toFunB a d, tail⟩ : Path (FreeM.liftBind a rest)))
+        (pullMapLens_eq_projectPathAlong l (rest (l.toFunB a d)) path)
+
+/-- Pull a path through a leaf-relabelled tree back to the original tree.
+Relabelling changes no operation-node directions. -/
+def Path.pullMap {β : Type t} (f : α → β) :
+    (s : FreeM P α) → Path (s.map f) → Path s
+  | .pure _, _ => ⟨⟩
+  | .liftBind _a rest, ⟨b, path⟩ =>
+      ⟨b, pullMap f (rest b) path⟩
+
+@[simp]
+theorem Path.pullMap_pure {β : Type t} (f : α → β) (x : α)
+    (path : Path ((FreeM.pure x : FreeM P α).map f)) :
+    Path.pullMap f (pure x) path = ⟨⟩ :=
+  rfl
+
+@[simp]
+theorem Path.pullMap_lift_bind {β : Type t} (f : α → β) (a : P.A)
+    (rest : P.B a → FreeM P α) (b : P.B a)
+    (path : Path ((rest b).map f)) :
+    Path.pullMap f ((FreeM.lift a).bind rest) ⟨b, path⟩ =
+      ⟨b, Path.pullMap f (rest b) path⟩ :=
+  rfl
+
 /-- Dependent sequential composition for `FreeM` trees using canonical paths. -/
 def append {β : Type t} :
     (s₁ : FreeM P α) →
@@ -319,6 +412,23 @@ theorem append_done {β : Type t}
     (path₂ : Path (s₂ ⟨⟩)) :
     append (pure x) s₂ ⟨⟩ path₂ = path₂ :=
   rfl
+
+/-- Associativity of path-indexed tree grafting. The suffix continuation on
+the right is reindexed by the path obtained by appending the outer and middle
+paths. -/
+theorem append_tree_assoc {β : Type t} {γ : Type z} :
+    (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
+    (s₃ : Path (FreeM.append s₁ s₂) → FreeM P γ) →
+    FreeM.append (FreeM.append s₁ s₂) s₃ =
+      FreeM.append s₁ (fun path₁ =>
+        FreeM.append (s₂ path₁) (fun path₂ =>
+          s₃ (append s₁ s₂ path₁ path₂)))
+  | .pure _, s₂, s₃ => rfl
+  | .liftBind a rest, s₂, s₃ => by
+      apply congrArg (FreeM.liftBind a)
+      funext b
+      exact append_tree_assoc (rest b) (fun path => s₂ ⟨b, path⟩)
+        (fun path => s₃ ⟨b, path⟩)
 
 /-- Split a canonical path through an appended tree into prefix and suffix
 canonical paths. -/
