@@ -17,6 +17,8 @@ The standard equational theory for the simulation operators:
 * `simulate_bind` — `simulate` distributes over `bind`.
 * `simulate_id` — interpreting via the trivial handler is (weakly) the
   identity.
+* `Handler.id_comp_apply`, `Handler.comp_id_apply` — the trivial handler is
+  a pointwise weak identity for handler composition.
 * `mapSpec_pure`, `mapSpec_step`, `mapSpec_query` — one-step unfoldings of
   `mapSpec`.
 * `mapSpec_id`, `mapSpec_comp` — functoriality of `mapSpec` over the lens
@@ -29,16 +31,27 @@ The standard equational theory for the simulation operators:
   step of `M.corec (iterStep body)` in each of the four cases for the head of
   the input ITree.
 * `simulate_ofLens` — relating `simulate` and `mapSpec` on a renaming.
+* `Handler.ofLens_comp_apply` — pure-renaming handler composition agrees
+  pointwise with lens composition.
 
 Each proof is built by coinduction on the shared `ITree` shape and combines
 one-step `M.corec` unfoldings with the bisimulation laws of
 `PolyFun.ITree.Bisim.Bind` (notably `bind_weakBisim_cont` and the bind
 unfoldings), so the resulting equations hold up to weak bisimulation.
+
+The executable Handler/Sim layer is fully universe-polymorphic. The primitive
+strong equations listed above retain the universe separation of the
+definitions. Laws that depend on the shared bind/iteration theory—including
+`simulate_query_eq_bind`, `mapSpec_bind`, `mapSpec_iter`, `mapSpec_map`, and
+`mapSpec_cat`—remain in the homogeneous fragment in this slice. The next two
+stack slices generalize that algebra and then these consumer laws. Theorems
+that mention `WeakBisim` likewise remain homogeneous until the relational
+bisimulation layer.
 -/
 
 @[expose] public section
 
-universe u
+universe u uEA uEB uFA uFB uGA uGB uα
 
 namespace ITree
 
@@ -47,17 +60,22 @@ variable {E F G : PFunctor.{u, u}} {α β : Type u}
 /-! ### One-step unfoldings of `simulate` -/
 
 /-- Step transformer used internally by `simulate`. -/
-private def simulateStep (h : Handler E F) :
+private def simulateStep {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
+    {α : Type uα} (h : Handler E F) :
     ITree E α → ITree F (ITree E α ⊕ α) := fun t =>
   match shape' t with
   | ⟨.pure r, _⟩ => pure (.inr r)
   | ⟨.step, c⟩ => pure (.inl (c PUnit.unit))
   | ⟨.query a, c⟩ => bind (h a) (fun b => pure (.inl (c b)))
 
-private theorem simulate_eq_iter (h : Handler E F) (t : ITree E α) :
+private theorem simulate_eq_iter {E : PFunctor.{uEA, uEB}}
+    {F : PFunctor.{uFA, uFB}} {α : Type uα}
+    (h : Handler E F) (t : ITree E α) :
     simulate h t = iter (simulateStep h) t := rfl
 
-private theorem simulateStep_pure (h : Handler E F) (r : α) :
+private theorem simulateStep_pure {E : PFunctor.{uEA, uEB}}
+    {F : PFunctor.{uFA, uFB}} {α : Type uα}
+    (h : Handler E F) (r : α) :
     simulateStep h (pure (F := E) r) = (pure (.inr r) : ITree F (ITree E α ⊕ α)) := by
   change (match shape' (pure (F := E) r) with
       | ⟨.pure r, _⟩ => (pure (.inr r) : ITree F (ITree E α ⊕ α))
@@ -65,7 +83,8 @@ private theorem simulateStep_pure (h : Handler E F) (r : α) :
       | ⟨.query a, c⟩ => bind (h a) (fun b => pure (.inl (c b)))) = pure (.inr r)
   rw [shape'_pure]
 
-theorem simulate_pure (h : Handler E F) (r : α) :
+theorem simulate_pure {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
+    {α : Type uα} (h : Handler E F) (r : α) :
     simulate h (pure (F := E) r) = pure r := by
   apply PFunctor.M.eq_of_dest_eq
   rw [simulate_eq_iter, iter, PFunctor.M.dest_corec_eq _ _
@@ -86,7 +105,9 @@ theorem simulate_pure (h : Handler E F) (r : α) :
   funext b
   exact b.elim
 
-private theorem simulateStep_step (h : Handler E F) (t : ITree E α) :
+private theorem simulateStep_step {E : PFunctor.{uEA, uEB}}
+    {F : PFunctor.{uFA, uFB}} {α : Type uα}
+    (h : Handler E F) (t : ITree E α) :
     simulateStep h (step t) = (pure (.inl t) : ITree F (ITree E α ⊕ α)) := by
   change (match shape' (step t) with
       | ⟨.pure r, _⟩ => (pure (.inr r) : ITree F (ITree E α ⊕ α))
@@ -94,7 +115,9 @@ private theorem simulateStep_step (h : Handler E F) (t : ITree E α) :
       | ⟨.query a, c⟩ => bind (h a) (fun b => pure (.inl (c b)))) = pure (.inl t)
   rw [shape'_step]
 
-private theorem simulateStep_query (h : Handler E F) (a : E.A)
+private theorem simulateStep_query {E : PFunctor.{uEA, uEB}}
+    {F : PFunctor.{uFA, uFB}} {α : Type uα}
+    (h : Handler E F) (a : E.A)
     (k : E.B a → ITree E α) :
     simulateStep h (query a k) =
       (bind (h a) (fun b => pure (.inl (k b))) : ITree F (ITree E α ⊕ α)) := by
@@ -106,7 +129,8 @@ private theorem simulateStep_query (h : Handler E F) (a : E.A)
 
 /-- One-step strong unfolding: `simulate` distributes over a leading silent
 step. -/
-theorem simulate_step_eq (h : Handler E F) (t : ITree E α) :
+theorem simulate_step_eq {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
+    {α : Type uα} (h : Handler E F) (t : ITree E α) :
     simulate h (step t) = step (simulate h t) := by
   apply PFunctor.M.eq_of_dest_eq
   rw [simulate_eq_iter, iter, PFunctor.M.dest_corec_eq _ _
@@ -122,7 +146,7 @@ theorem simulate_step_eq (h : Handler E F) (t : ITree E α) :
             ⟨.step, fun _ => simulateStep h t⟩
         rw [show PFunctor.M.dest (pure (.inl t) : ITree F (ITree E α ⊕ α)) =
           ⟨.pure (.inl t), PEmpty.elim⟩ from shape'_pure _])]
-  show ⟨.step, fun _ => PFunctor.M.corec _ (simulateStep h t)⟩ =
+  change ⟨.step, fun _ => PFunctor.M.corec _ (simulateStep h t)⟩ =
     PFunctor.M.dest (step (simulate h t))
   rw [show PFunctor.M.dest (step (simulate h t)) = ⟨.step, fun _ => simulate h t⟩
       from shape'_step _]
@@ -254,6 +278,22 @@ theorem simulate_id (t : ITree E α) :
       refine Match.query a _ _ (shape'_query _ _) (shape'_query _ _) ?_
       intro b
       exact Or.inr rfl
+
+/-! ### Handler-composition identities -/
+
+/-- Postcomposing a handler with the trivial handler is pointwise weakly
+equivalent to the original handler. -/
+theorem Handler.id_comp_apply (h : Handler E F) (a : E.A) :
+    WeakBisim ((Handler.id F).comp h a) (h a) :=
+  simulate_id (h a)
+
+/-- Precomposing a handler with the trivial handler is pointwise weakly
+equivalent to the original handler. -/
+theorem Handler.comp_id_apply (h : Handler E F) (a : E.A) :
+    WeakBisim (h.comp (Handler.id E) a) (h a) := by
+  change WeakBisim (simulate h (lift a)) (h a)
+  simpa only [lift, simulate_pure, bind_pure_right] using
+    (simulate_query h a (fun b => pure b))
 
 /-- `simulate` distributes over `bind`, up to weak bisimilarity. The `step`
 wrappers that appear after the coinductive unfolding are absorbed by the
@@ -416,7 +456,9 @@ These are direct `M.corec` unfoldings using `dest_corec_eq` and the fact
 that `M.dest` is injective (`PFunctor.M.eq_of_dest_eq`). They do **not**
 need any bisimulation tooling. -/
 
-@[simp] theorem mapSpec_pure (φ : PFunctor.Lens E F) (r : α) :
+@[simp] theorem mapSpec_pure {E : PFunctor.{uEA, uEB}}
+    {F : PFunctor.{uFA, uFB}} {α : Type uα}
+    (φ : PFunctor.Lens E F) (r : α) :
     mapSpec φ (pure (F := E) r) = pure r := by
   apply PFunctor.M.eq_of_dest_eq
   rw [mapSpec, PFunctor.M.dest_corec_eq _ _ (mapSpecStep_pure φ r)]
@@ -426,14 +468,18 @@ need any bisimulation tooling. -/
   funext b
   exact b.elim
 
-@[simp] theorem mapSpec_step (φ : PFunctor.Lens E F) (t : ITree E α) :
+@[simp] theorem mapSpec_step {E : PFunctor.{uEA, uEB}}
+    {F : PFunctor.{uFA, uFB}} {α : Type uα}
+    (φ : PFunctor.Lens E F) (t : ITree E α) :
     mapSpec φ (step t) = step (mapSpec φ t) := by
   apply PFunctor.M.eq_of_dest_eq
   rw [mapSpec, PFunctor.M.dest_corec_eq _ _ (mapSpecStep_step φ t)]
   unfold ITree.step
   rw [PFunctor.M.dest_mk]
 
-@[simp] theorem mapSpec_query (φ : PFunctor.Lens E F) (a : E.A) (k : E.B a → ITree E α) :
+@[simp] theorem mapSpec_query {E : PFunctor.{uEA, uEB}}
+    {F : PFunctor.{uFA, uFB}} {α : Type uα}
+    (φ : PFunctor.Lens E F) (a : E.A) (k : E.B a → ITree E α) :
     mapSpec φ (query a k) =
       query (φ.toFunA a) (fun b => mapSpec φ (k (φ.toFunB a b))) := by
   apply PFunctor.M.eq_of_dest_eq
@@ -443,7 +489,8 @@ need any bisimulation tooling. -/
 
 /-! ### Functoriality of `mapSpec` -/
 
-theorem mapSpec_id (t : ITree E α) :
+theorem mapSpec_id {E : PFunctor.{uEA, uEB}} {α : Type uα}
+    (t : ITree E α) :
     mapSpec (PFunctor.Lens.id E) t = t := by
   conv_rhs => rw [← PFunctor.M.corec_dest t]
   refine PFunctor.M.corec_eq_corec
@@ -461,23 +508,29 @@ theorem mapSpec_id (t : ITree E α) :
       simp only [mapSpecStep, shape', h]
   | query a =>
       refine ⟨.query a, c, c, ?_, rfl, fun _ => rfl⟩
-      show mapSpecStep (PFunctor.Lens.id E) u = ⟨.query a, c⟩
+      change mapSpecStep (PFunctor.Lens.id E) u = ⟨.query a, c⟩
       simp only [mapSpecStep, shape', h]
       rfl
 
 /-- Computing one `M.dest` step of `mapSpec`, in terms of `mapSpecStep`. -/
-theorem dest_mapSpec (φ : PFunctor.Lens E F) (u : ITree E α) :
+theorem dest_mapSpec {E : PFunctor.{uEA, uEB}}
+    {F : PFunctor.{uFA, uFB}} {α : Type uα}
+    (φ : PFunctor.Lens E F) (u : ITree E α) :
     PFunctor.M.dest (mapSpec φ u) =
       ⟨(mapSpecStep φ u).1, fun b => mapSpec φ ((mapSpecStep φ u).2 b)⟩ := by
   rw [mapSpec, PFunctor.M.dest_corec_apply]
 
 /-- Same as `dest_mapSpec` but stated with `shape'` on the LHS. -/
-theorem shape'_mapSpec (φ : PFunctor.Lens E F) (u : ITree E α) :
+theorem shape'_mapSpec {E : PFunctor.{uEA, uEB}}
+    {F : PFunctor.{uFA, uFB}} {α : Type uα}
+    (φ : PFunctor.Lens E F) (u : ITree E α) :
     shape' (mapSpec φ u) =
       ⟨(mapSpecStep φ u).1, fun b => mapSpec φ ((mapSpecStep φ u).2 b)⟩ :=
   dest_mapSpec φ u
 
-theorem mapSpec_comp (φ : PFunctor.Lens E F) (ψ : PFunctor.Lens F G) (t : ITree E α) :
+theorem mapSpec_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
+    {G : PFunctor.{uGA, uGB}} {α : Type uα}
+    (φ : PFunctor.Lens E F) (ψ : PFunctor.Lens F G) (t : ITree E α) :
     mapSpec (ψ ∘ₗ φ) t = mapSpec ψ (mapSpec φ t) := by
   refine PFunctor.M.corec_eq_corec
     (mapSpecStep (ψ ∘ₗ φ)) (mapSpecStep ψ)
@@ -488,28 +541,28 @@ theorem mapSpec_comp (φ : PFunctor.Lens E F) (ψ : PFunctor.Lens F G) (t : ITre
   cases sh with
   | pure r =>
       refine ⟨.pure r, PEmpty.elim, PEmpty.elim, ?_, ?_, ?_⟩
-      · show mapSpecStep (ψ ∘ₗ φ) u = ⟨.pure r, PEmpty.elim⟩
+      · change mapSpecStep (ψ ∘ₗ φ) u = ⟨.pure r, PEmpty.elim⟩
         rw [mapSpecStep, hu]
-      · show mapSpecStep ψ (mapSpec φ u) = ⟨.pure r, PEmpty.elim⟩
+      · change mapSpecStep ψ (mapSpec φ u) = ⟨.pure r, PEmpty.elim⟩
         rw [mapSpecStep, shape'_mapSpec, mapSpecStep, hu]
       · intro b; exact b.elim
   | step =>
       refine ⟨.step, fun _ => c PUnit.unit, fun _ => mapSpec φ (c PUnit.unit),
         ?_, ?_, fun _ => rfl⟩
-      · show mapSpecStep (ψ ∘ₗ φ) u = ⟨.step, fun _ => c PUnit.unit⟩
+      · change mapSpecStep (ψ ∘ₗ φ) u = ⟨.step, fun _ => c PUnit.unit⟩
         rw [mapSpecStep, hu]
-      · show mapSpecStep ψ (mapSpec φ u) = ⟨.step, fun _ => mapSpec φ (c PUnit.unit)⟩
+      · change mapSpecStep ψ (mapSpec φ u) = ⟨.step, fun _ => mapSpec φ (c PUnit.unit)⟩
         rw [mapSpecStep, shape'_mapSpec, mapSpecStep, hu]
   | query a =>
       refine ⟨.query (ψ.toFunA (φ.toFunA a)),
         fun b => c ((ψ ∘ₗ φ).toFunB a b),
         fun b => mapSpec φ (c ((ψ ∘ₗ φ).toFunB a b)),
         ?_, ?_, fun _ => rfl⟩
-      · show mapSpecStep (ψ ∘ₗ φ) u =
+      · change mapSpecStep (ψ ∘ₗ φ) u =
           ⟨.query (ψ.toFunA (φ.toFunA a)), fun b => c ((ψ ∘ₗ φ).toFunB a b)⟩
         rw [mapSpecStep, hu]
         rfl
-      · show mapSpecStep ψ (mapSpec φ u) =
+      · change mapSpecStep ψ (mapSpec φ u) =
           ⟨.query (ψ.toFunA (φ.toFunA a)),
             fun b => mapSpec φ (c ((ψ ∘ₗ φ).toFunB a b))⟩
         rw [mapSpecStep, shape'_mapSpec, mapSpecStep, hu]
@@ -827,5 +880,15 @@ theorem simulate_ofLens (φ : PFunctor.Lens E F) (t : ITree E α) :
       refine Match.query (φ.toFunA a) _ _ (shape'_query _ _) (shape'_query _ _) ?_
       intro b
       exact Or.inr ⟨c (φ.toFunB a b), rfl, rfl⟩
+
+/-- Composition of pure-renaming handlers agrees pointwise, up to weak
+bisimilarity, with composition of their underlying lenses. -/
+theorem Handler.ofLens_comp_apply (φ : PFunctor.Lens E F)
+    (ψ : PFunctor.Lens F G) (a : E.A) :
+    WeakBisim ((Handler.ofLens ψ).comp (Handler.ofLens φ) a)
+      (Handler.ofLens (ψ ∘ₗ φ) a) := by
+  simpa only [Handler.comp_apply, Handler.ofLens, mapSpec_query, mapSpec_pure,
+    PFunctor.Lens.comp, Function.comp_apply] using
+    (simulate_ofLens ψ (Handler.ofLens φ a))
 
 end ITree

@@ -51,9 +51,9 @@ step are lifted to `uB`; a visible query retains its original direction type.
 |------|---------|
 | [`PolyFun/ITree/Basic.lean`](../../PolyFun/ITree/Basic.lean) | `ITree F α` defined as `PFunctor.M (Poly F α)`, `Shape` (one-step view), smart constructors `pure` / `step` / `query`, mixed-universe named `bind`, `iter`, and the homogeneous `Monad` instance. |
 | [`PolyFun/ITree/Construct.lean`](../../PolyFun/ITree/Construct.lean) | Standard combinators: `diverge` (Coq `spin`), `forever`, mixed-universe `map` / `cat`, `ignore`, `burn`. Pure consequences of `bind` / `iter` / `M.corec`. |
-| [`PolyFun/ITree/Handler.lean`](../../PolyFun/ITree/Handler.lean) | `Handler E F`: choice of `F`-program for every `E`-event. Source data of the simulation operator. |
-| [`PolyFun/ITree/Sim/Defs.lean`](../../PolyFun/ITree/Sim/Defs.lean) | `ITree.simulate` (interprets every event via a handler), `ITree.mapSpec` (pure event-renaming via a `PFunctor.Lens`). Coq `interp` analogue. |
-| [`PolyFun/ITree/Sim/Facts.lean`](../../PolyFun/ITree/Sim/Facts.lean) | Algebraic facts about simulation. |
+| [`PolyFun/ITree/Handler.lean`](../../PolyFun/ITree/Handler.lean) | Universe-polymorphic `Handler E F`: choice of an `F`-program for every `E`-event, with identity, lens promotion, and coproduct routing via `Handler.case_`. |
+| [`PolyFun/ITree/Sim/Defs.lean`](../../PolyFun/ITree/Sim/Defs.lean) | Universe-polymorphic `ITree.simulate` (interprets every event via a handler), `Handler.comp`, and `ITree.mapSpec` (pure event-renaming via a `PFunctor.Lens`). Coq `interp` analogue. |
+| [`PolyFun/ITree/Sim/Facts.lean`](../../PolyFun/ITree/Sim/Facts.lean) | One-step, identity, bind, iteration, lens-composition, and handler-composition facts. Weak-bisimulation statements use the homogeneous fragment required by `WeakBisim`; independent strong equations retain full universe separation. |
 | [`PolyFun/ITree/Rec.lean`](../../PolyFun/ITree/Rec.lean) | `mutualRec`, `fixRec` recursive procedure-call combinators. The `CallE α β` event signature describes one recursive call expecting `α` and returning `β`. |
 
 ### Bisimulation
@@ -68,8 +68,8 @@ step are lifted to `uB`; a visible query retains its original direction type.
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/ITree/Events/State.lean`](../../PolyFun/ITree/Events/State.lean) | `StateE σ`: `get` / `put`. Standard "state monad as ITree" embedding via a `simulate`-based handler interpreting `StateE σ` over `σ`. |
-| [`PolyFun/ITree/Events/Exception.lean`](../../PolyFun/ITree/Events/Exception.lean) | `ExceptE ε`: single `throw e` event with answer type `PEmpty` (no resume). Standard exception monad as ITree. |
+| [`PolyFun/ITree/Events/State.lean`](../../PolyFun/ITree/Events/State.lean) | `StateE σ` signature and the `get` / `put` smart constructors. |
+| [`PolyFun/ITree/Events/Exception.lean`](../../PolyFun/ITree/Events/Exception.lean) | `ExceptE ε` signature and the `throw` smart constructor; the answer type is `PEmpty`, so execution cannot resume. |
 
 ## Mental model
 
@@ -78,16 +78,17 @@ step are lifted to `uB`; a visible query retains its original direction type.
   that uniformly models pure programs, programs with effects, recursive
   procedures, and partial / non-terminating computations.
 - A `Handler E F` is the data needed to interpret one signature inside
-  another. `simulate` is the recursive interpretation. `mapSpec` is the
-  syntactically pure case (pure event rename via a `PFunctor.Lens`).
+  another. `simulate` is the recursive interpretation, `Handler.comp`
+  composes interpretations, and `Handler.case_` routes coproduct events.
+  `mapSpec` is the syntactically pure case (pure event rename via a
+  `PFunctor.Lens`).
 - Strong bisimulation `Bisim` is set to definitional equality, courtesy
   of the M-type universal property. Reach for `WeakBisim` whenever you
   want to ignore finitely many leading silent `step`s, which is the
   typical "ITree equivalence" used in Coq.
-- The `Events/{State, Exception}.lean` files are the small canonical
-  examples to read first. They are also the recommended pattern for new
-  event signatures: define the polynomial, write a `Handler`, prove the
-  small algebraic facts you need.
+- The `Events/{State, Exception}.lean` files are small canonical patterns for
+  signatures and smart constructors. Handlers for such signatures can be
+  routed, composed, and executed through the generic APIs above.
 
 ## Recovering Coq references
 
