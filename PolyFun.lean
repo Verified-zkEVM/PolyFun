@@ -29,9 +29,12 @@ import PolyFun.ITree.Bisim.Iter
 import PolyFun.ITree.Construct
 import PolyFun.ITree.Do
 import PolyFun.ITree.Events.Exception
+import PolyFun.ITree.Events.ExceptionFacts
 import PolyFun.ITree.Events.State
+import PolyFun.ITree.Events.StateFacts
 import PolyFun.ITree.Handler
 import PolyFun.ITree.Rec
+import PolyFun.ITree.Rec.Facts
 import PolyFun.ITree.Sim.Defs
 import PolyFun.ITree.Sim.Facts
 import PolyFun.ITree.Unfold

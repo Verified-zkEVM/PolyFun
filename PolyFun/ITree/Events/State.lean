@@ -15,9 +15,11 @@ A standard event signature for stateful computations. The polynomial functor
 * `get` — returns the current state of type `σ`.
 * `put s` — replaces the current state with `s`, returning `PUnit`.
 
-Together with a `simulate`-based handler interpreting `StateE σ` over `σ`
-itself (mapping each `get`/`put` to the corresponding `StateT σ` operation),
-this gives the standard "state monad as ITree" embedding.
+`interpState` eliminates state events from a tree over `StateE σ + E`,
+threading an initial state through the computation and leaving every external
+`E`-event visible. `runState` is its conventional runner alias. Both use a
+direct productive corecursor, so their computation rules are exact equalities
+rather than merely weak bisimulations.
 
 Coq references:
 
@@ -26,7 +28,7 @@ Coq references:
 
 @[expose] public section
 
-universe uσ
+universe uσ uEA uα
 
 namespace ITree
 
@@ -61,5 +63,44 @@ def put (s : σ) : ITree (StateE σ) PUnit.{uσ + 1} :=
   lift (F := StateE σ) (Shape.put s)
 
 end StateE
+
+/-! ## State interpretation -/
+
+/-- One productive layer of state interpretation. The corecursor state stores
+the current state together with the source tree. State operations become
+silent steps, while external events remain visible. -/
+def interpStateStep {σ : Type uσ} {E : PFunctor.{uEA, uσ}}
+    {α : Type uα}
+    (st : σ × ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :
+    (Poly E (σ × α)).Obj
+      (σ × ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :=
+  match shape' st.2 with
+  | ⟨.pure r, _⟩ => ⟨.pure (st.1, r), PEmpty.elim⟩
+  | ⟨.step, c⟩ => ⟨.step, fun _ => (st.1, c PUnit.unit)⟩
+  | ⟨.query (.inl .get), c⟩ =>
+      ⟨.step, fun _ => (st.1, c st.1)⟩
+  | ⟨.query (.inl (.put s')), c⟩ =>
+      ⟨.step, fun _ => (s', c PUnit.unit)⟩
+  | ⟨.query (.inr e), c⟩ =>
+      ⟨.query e, fun b => (st.1, c b)⟩
+
+/-- Interpret state operations in `t`, starting from `s`, and return the final
+state together with the computation result. External events remain visible.
+
+The direction universe of `E` agrees with that of `σ` only because the source
+signature uses the current homogeneous `PFunctor.sum`. The final result
+universe is independent. -/
+def interpState {σ : Type uσ} {E : PFunctor.{uEA, uσ}}
+    {α : Type uα}
+    (t : ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α)
+    (s : σ) : ITree E (σ × α) :=
+  PFunctor.M.corec interpStateStep (s, t)
+
+/-- Conventional runner name for `interpState`. -/
+def runState {σ : Type uσ} {E : PFunctor.{uEA, uσ}}
+    {α : Type uα}
+    (t : ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α)
+    (s : σ) : ITree E (σ × α) :=
+  interpState t s
 
 end ITree

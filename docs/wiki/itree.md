@@ -56,6 +56,7 @@ step are lifted to `uB`; a visible query retains its original direction type.
 | [`PolyFun/ITree/Sim/Defs.lean`](../../PolyFun/ITree/Sim/Defs.lean) | Universe-polymorphic `ITree.simulate` (interprets every event via a handler), `Handler.comp`, and `ITree.mapSpec` (pure event-renaming via a `PFunctor.Lens`). Coq `interp` analogue. |
 | [`PolyFun/ITree/Sim/Facts.lean`](../../PolyFun/ITree/Sim/Facts.lean) | Universe-polymorphic one-step, identity, relational congruence, bind, iteration, lens-composition, and handler-composition facts. `simulate_comp` identifies sequential and composite interpretation up to weak bisimulation; `Handler.comp_assoc_apply` gives pointwise associativity. |
 | [`PolyFun/ITree/Rec.lean`](../../PolyFun/ITree/Rec.lean) | Universe-polymorphic `mutualRec`, `fixRec` recursive procedure-call combinators. `CallE α β : PFunctor.{uα,uβ}` separates call inputs from results; recursive coproducts retain only the equal reply-universe constraint of `PFunctor.sum`. |
+| [`PolyFun/ITree/Rec/Facts.lean`](../../PolyFun/ITree/Rec/Facts.lean) | Exact head equations for `interpMrec`, bind compatibility, external-event renaming naturality, and the guarded characteristic equations for `mutualRec` / `fixRec`. |
 
 ### Bisimulation
 
@@ -70,8 +71,10 @@ step are lifted to `uB`; a visible query retains its original direction type.
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/ITree/Events/State.lean`](../../PolyFun/ITree/Events/State.lean) | `StateE σ` signature and the `get` / `put` smart constructors. Positions and replies genuinely share `uσ` because `get` returns `σ`; final computation results remain independent. |
-| [`PolyFun/ITree/Events/Exception.lean`](../../PolyFun/ITree/Events/Exception.lean) | `ExceptE ε : PFunctor.{uε,uB}` and the `throw` smart constructor with an independent result universe; the answer type is empty, so execution cannot resume. |
+| [`PolyFun/ITree/Events/State.lean`](../../PolyFun/ITree/Events/State.lean) | `StateE σ`, `get` / `put`, and the direct `interpState` / `runState` runner from `ITree (StateE σ + E) α` to `σ → ITree E (σ × α)`. Positions and replies genuinely share `uσ` because `get` returns `σ`; final computation results remain independent. |
+| [`PolyFun/ITree/Events/StateFacts.lean`](../../PolyFun/ITree/Events/StateFacts.lean) | Exact computation rules for returns, steps, `get`, `put`, and external queries, plus the state-transformer bind law. |
+| [`PolyFun/ITree/Events/Exception.lean`](../../PolyFun/ITree/Events/Exception.lean) | `ExceptE ε : PFunctor.{uε,uB}`, `throw`, and the direct `interpExcept` / `runExcept` runner to `ITree E (Except ε α)`; exception, reply, and final-result universes remain independent. |
+| [`PolyFun/ITree/Events/ExceptionFacts.lean`](../../PolyFun/ITree/Events/ExceptionFacts.lean) | Exact computation rules for returns, steps, throws, and external queries, plus the exception-transformer bind law. |
 
 ## Mental model
 
@@ -92,9 +95,10 @@ step are lifted to `uB`; a visible query retains its original direction type.
   of the M-type universal property. `WeakBisimRel RR` ignores finitely many
   leading silent `step`s and compares returns through `RR`; `WeakBisim` is
   the same-type `Eq` specialization used as the ordinary ITree setoid.
-- The `Events/{State, Exception}.lean` files are small canonical patterns for
-  signatures and smart constructors. Handlers for such signatures can be
-  routed, composed, and executed through the generic APIs above.
+- The state and exception runners are direct productive corecursors. State
+  operations become one silent step while threading the current state;
+  exceptions terminate as `Except.error`; untouched external events remain
+  visible. Their facts files expose exact computation and bind laws.
 - Recursive calls separate input, result, external-event, and final-result
   universes. `mutualRec` and `fixRec` retain one local equality: recursive and
   external replies share a universe because the current `PFunctor.sum`
