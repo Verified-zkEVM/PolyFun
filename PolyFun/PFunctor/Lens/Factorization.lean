@@ -113,12 +113,12 @@ def factorMid (l : Lens P Q) : PFunctor.{uA₁, uB₂} :=
 /-- The vertical leg `P ⇆ factorMid l`: identity on positions, `l.toFunB` on
 directions. -/
 def factorVert (l : Lens P Q) : Lens P (factorMid l) :=
-  (fun i => i) ⇆ l.toFunB
+  id ⇆ l.toFunB
 
 /-- The cartesian leg `factorMid l ⇆ Q`: `l.toFunA` on positions, identity on
 each direction fiber. -/
 def factorCart (l : Lens P Q) : Lens (factorMid l) Q :=
-  l.toFunA ⇆ (fun _ d => d)
+  l.toFunA ⇆ fun _ => id
 
 /-- The factorization recovers the original lens. -/
 @[simp]

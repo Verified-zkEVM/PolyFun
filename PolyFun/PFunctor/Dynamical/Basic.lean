@@ -333,7 +333,7 @@ abbrev Section (p : PFunctor.{uA, uB}) : Type _ := Lens p X.{uA, uB}
 /-- The section `p ⟹ X` picking the direction `σ a` at each position `a`. Unpacking
 a `Section p`, the position map is trivial and the direction map is `σ`. -/
 def sectionLens {p : PFunctor.{uA, uB}} (σ : (a : p.A) → p.B a) : Section p :=
-  (fun _ => PUnit.unit) ⇆ (fun a _ => σ a)
+  Lens.toLinear (fun _ => PUnit.unit) σ
 
 /-- A **closed** dynamical system on states `S` is an `X`-system: its interface is
 the composition unit, so the dynamics reduce to a pure state endofunction. -/

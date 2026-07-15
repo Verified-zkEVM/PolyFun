@@ -178,30 +178,28 @@ construction. -/
 /-- Left injection chart `inl : P → P + Q`. -/
 def inl {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
     Chart.{uA₁, uB, max uA₁ uA₂, uB} P (P + Q) :=
-  Sum.inl ⇉ (fun _ d => d)
+  Sum.inl ⇉ fun _ => id
 
 /-- Right injection chart `inr : Q → P + Q`. -/
 def inr {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
     Chart.{uA₂, uB, max uA₁ uA₂, uB} Q (P + Q) :=
-  Sum.inr ⇉ (fun _ d => d)
+  Sum.inr ⇉ fun _ => id
 
 /-- Copairing of charts `[c₁, c₂]c : P + Q → R`. -/
 def sumPair {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB₃}}
     (c₁ : Chart P R) (c₂ : Chart Q R) :
     Chart.{max uA₁ uA₂, uB, uA₃, uB₃} (P + Q) R :=
-  (Sum.elim c₁.toFunA c₂.toFunA) ⇉
-    (fun a d => match a with
-      | Sum.inl pa => c₁.toFunB pa d
-      | Sum.inr qa => c₂.toFunB qa d)
+  Sum.elim c₁.toFunA c₂.toFunA ⇉ fun
+    | .inl pa => c₁.toFunB pa
+    | .inr qa => c₂.toFunB qa
 
 /-- Parallel application of charts for coproduct `c₁ ⊎c c₂ : P + Q → R + W`. -/
 def sumMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}} {R : PFunctor.{uA₃, uB₃}}
     {W : PFunctor.{uA₄, uB₃}} (c₁ : Chart P R) (c₂ : Chart Q W) :
     Chart.{max uA₁ uA₂, uB₁, max uA₃ uA₄, uB₃} (P + Q) (R + W) :=
-  (Sum.map c₁.toFunA c₂.toFunA) ⇉
-    (fun psum => match psum with
-      | Sum.inl pa => c₁.toFunB pa
-      | Sum.inr qa => c₂.toFunB qa)
+  Sum.map c₁.toFunA c₂.toFunA ⇉ fun
+    | .inl pa => c₁.toFunB pa
+    | .inr qa => c₂.toFunB qa
 
 /-! ### Tensor (`⊗`) — the chart category's binary product
 
@@ -230,8 +228,8 @@ def tensorPair {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : 
 def tensorMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     {W : PFunctor.{uA₄, uB₄}} (c₁ : Chart P R) (c₂ : Chart Q W) :
     Chart.{max uA₁ uA₂, max uB₁ uB₂, max uA₃ uA₄, max uB₃ uB₄} (P ⊗ Q) (R ⊗ W) :=
-  (Prod.map c₁.toFunA c₂.toFunA) ⇉
-    (fun pq pb => (c₁.toFunB pq.1 pb.1, c₂.toFunB pq.2 pb.2))
+  Prod.map c₁.toFunA c₂.toFunA ⇉
+    fun (pa, qa) => Prod.map (c₁.toFunB pa) (c₂.toFunB qa)
 
 /-! ### Polynomial product (`*`) — *not* the chart categorical product
 
@@ -246,10 +244,8 @@ For categorical projections / pairing, use `⊗` instead. -/
 def prodMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     {W : PFunctor.{uA₄, uB₄}} (c₁ : Chart P R) (c₂ : Chart Q W) :
     Chart.{max uA₁ uA₂, max uB₁ uB₂, max uA₃ uA₄, max uB₃ uB₄} (P * Q) (R * W) :=
-  (Prod.map c₁.toFunA c₂.toFunA) ⇉
-    (fun pq psum => match psum with
-      | Sum.inl pb => Sum.inl (c₁.toFunB pq.1 pb)
-      | Sum.inr qb => Sum.inr (c₂.toFunB pq.2 qb))
+  Prod.map c₁.toFunA c₂.toFunA ⇉
+    fun (pa, qa) => Sum.map (c₁.toFunB pa) (c₂.toFunB qa)
 
 /-! ### Indexed colimits and limits
 
@@ -537,15 +533,15 @@ def xTensor : X ⊗ P ≃c P where
 
 /-- Tensor product with `0` is zero (left) -/
 def zeroTensor : 0 ⊗ P ≃c 0 where
-  toChart := (fun a => PEmpty.elim a.1) ⇉ (fun a _ => PEmpty.elim a.1)
-  invChart := PEmpty.elim ⇉ (fun a _ => PEmpty.elim a)
+  toChart := (fun a => PEmpty.elim a.1) ⇉ fun a => PEmpty.elim a.1
+  invChart := PEmpty.elim ⇉ fun a => PEmpty.elim a
   left_inv := by ext ⟨a, _⟩ <;> exact PEmpty.elim a
   right_inv := by ext a <;> exact PEmpty.elim a
 
 /-- Tensor product with `0` is zero (right) -/
 def tensorZero : P ⊗ 0 ≃c 0 where
-  toChart := (fun a => PEmpty.elim a.2) ⇉ (fun a _ => PEmpty.elim a.2)
-  invChart := PEmpty.elim ⇉ (fun a _ => PEmpty.elim a)
+  toChart := (fun a => PEmpty.elim a.2) ⇉ fun a => PEmpty.elim a.2
+  invChart := PEmpty.elim ⇉ fun a => PEmpty.elim a
   left_inv := by ext ⟨_, b⟩ <;> exact PEmpty.elim b
   right_inv := by ext a <;> exact PEmpty.elim a
 
@@ -570,28 +566,12 @@ def tensorCongr {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
 def tensorSumDistrib {P : PFunctor.{uA₁, uB₁}} {Q R : PFunctor.{uA₂, uB₂}} :
     Chart.Equiv.{max uA₁ uA₂, max uB₁ uB₂, max uA₁ uA₂, max uB₁ uB₂}
       (P ⊗ (Q + R)) ((P ⊗ Q) + (P ⊗ R)) where
-  toChart :=
-    (fun ⟨p, qr⟩ => match qr with
-      | Sum.inl q => Sum.inl (p, q)
-      | Sum.inr r => Sum.inr (p, r)) ⇉
-    (fun ⟨_, qr⟩ pb => match qr with
-      | Sum.inl _ => pb
-      | Sum.inr _ => pb)
-  invChart :=
-    (Sum.elim
-      (fun ⟨p, q⟩ => (p, Sum.inl q))
-      (fun ⟨p, r⟩ => (p, Sum.inr r))) ⇉
-    (fun pqpr pb => match pqpr with
-      | Sum.inl _ => pb
-      | Sum.inr _ => pb)
-  left_inv := by
-    refine Chart.ext _ _ ?_ ?_
-    · intro a; rcases a with ⟨_, _ | _⟩ <;> rfl
-    · intro a; funext _; rcases a with ⟨_, _ | _⟩ <;> rfl
-  right_inv := by
-    refine Chart.ext _ _ ?_ ?_
-    · intro a; rcases a <;> rfl
-    · intro a; funext _; rcases a <;> rfl
+  toChart := (fun (p, qr) => qr.map (p, ·) (p, ·)) ⇉
+    (fun | ⟨_, .inl _⟩ | ⟨_, .inr _⟩ => id)
+  invChart := Sum.elim (Prod.map id Sum.inl) (Prod.map id Sum.inr) ⇉
+    (fun | .inl _ | .inr _ => id)
+  left_inv := by ext ⟨_, qr⟩ <;> cases qr <;> rfl
+  right_inv := by ext pqpr <;> cases pqpr <;> rfl
 
 /-- Right distributivity of tensor product over coproduct.
 
@@ -599,28 +579,12 @@ def tensorSumDistrib {P : PFunctor.{uA₁, uB₁}} {Q R : PFunctor.{uA₂, uB₂
 def sumTensorDistrib {P : PFunctor.{uA₁, uB₁}} {Q R : PFunctor.{uA₂, uB₂}} :
     Chart.Equiv.{max uA₁ uA₂, max uB₁ uB₂, max uA₁ uA₂, max uB₁ uB₂}
       ((Q + R) ⊗ P) ((Q ⊗ P) + (R ⊗ P)) where
-  toChart :=
-    (fun ⟨qr, p⟩ => match qr with
-      | Sum.inl q => Sum.inl (q, p)
-      | Sum.inr r => Sum.inr (r, p)) ⇉
-    (fun ⟨qr, _⟩ pb => match qr with
-      | Sum.inl _ => pb
-      | Sum.inr _ => pb)
-  invChart :=
-    (Sum.elim
-      (fun ⟨q, p⟩ => (Sum.inl q, p))
-      (fun ⟨r, p⟩ => (Sum.inr r, p))) ⇉
-    (fun qprp pb => match qprp with
-      | Sum.inl _ => pb
-      | Sum.inr _ => pb)
-  left_inv := by
-    refine Chart.ext _ _ ?_ ?_
-    · intro a; rcases a with ⟨_ | _, _⟩ <;> rfl
-    · intro a; funext _; rcases a with ⟨_ | _, _⟩ <;> rfl
-  right_inv := by
-    refine Chart.ext _ _ ?_ ?_
-    · intro a; rcases a <;> rfl
-    · intro a; funext _; rcases a <;> rfl
+  toChart := (fun (qr, p) => qr.map (·, p) (·, p)) ⇉
+    (fun | ⟨.inl _, _⟩ | ⟨.inr _, _⟩ => id)
+  invChart := Sum.elim (Prod.map Sum.inl id) (Prod.map Sum.inr id) ⇉
+    (fun | .inl _ | .inr _ => id)
+  left_inv := by ext ⟨qr, _⟩ <;> cases qr <;> rfl
+  right_inv := by ext qprp <;> cases qprp <;> rfl
 
 end Equiv
 
@@ -670,8 +634,8 @@ def prodCongr {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
 /-- Commutativity of the polynomial product. -/
 def prodComm (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
     Chart.Equiv.{max uA₁ uA₂, max uB₁ uB₂, max uA₁ uA₂, max uB₁ uB₂} (P * Q) (Q * P) where
-  toChart := Prod.swap ⇉ (fun _ d => d.swap)
-  invChart := Prod.swap ⇉ (fun _ d => d.swap)
+  toChart := Prod.swap ⇉ fun _ => Sum.swap
+  invChart := Prod.swap ⇉ fun _ => Sum.swap
   left_inv := by
     refine Chart.ext _ _ ?_ ?_
     · intro _; rfl
@@ -686,9 +650,9 @@ def prodAssoc :
     Chart.Equiv.{max uA₁ uA₂ uA₃, max uB₁ uB₂ uB₃, max uA₁ uA₂ uA₃, max uB₁ uB₂ uB₃}
       ((P * Q) * R) (P * (Q * R)) where
   toChart := (_root_.Equiv.prodAssoc _ _ _).toFun ⇉
-    (fun _ d => (_root_.Equiv.sumAssoc _ _ _).toFun d)
+    (fun _ => (_root_.Equiv.sumAssoc _ _ _).toFun)
   invChart := (_root_.Equiv.prodAssoc _ _ _).invFun ⇉
-    (fun _ d => (_root_.Equiv.sumAssoc _ _ _).invFun d)
+    (fun _ => (_root_.Equiv.sumAssoc _ _ _).invFun)
   left_inv := by
     refine Chart.ext _ _ ?_ ?_
     · intro _; rfl
@@ -704,15 +668,15 @@ def prodAssoc :
 
 /-- Polynomial-product with `0` is `0` (right). -/
 def prodZero : P * 0 ≃c 0 where
-  toChart := (fun a => PEmpty.elim a.2) ⇉ (fun a _ => PEmpty.elim a.2)
-  invChart := PEmpty.elim ⇉ (fun a _ => PEmpty.elim a)
+  toChart := (fun a => PEmpty.elim a.2) ⇉ fun a => PEmpty.elim a.2
+  invChart := PEmpty.elim ⇉ fun a => PEmpty.elim a
   left_inv := by ext ⟨_, b⟩ <;> exact PEmpty.elim b
   right_inv := by ext a <;> exact PEmpty.elim a
 
 /-- Polynomial-product with `0` is `0` (left). -/
 def zeroProd : 0 * P ≃c 0 where
-  toChart := (fun a => PEmpty.elim a.1) ⇉ (fun a _ => PEmpty.elim a.1)
-  invChart := PEmpty.elim ⇉ (fun a _ => PEmpty.elim a)
+  toChart := (fun a => PEmpty.elim a.1) ⇉ fun a => PEmpty.elim a.1
+  invChart := PEmpty.elim ⇉ fun a => PEmpty.elim a
   left_inv := by ext ⟨a, _⟩ <;> exact PEmpty.elim a
   right_inv := by ext a <;> exact PEmpty.elim a
 
@@ -722,34 +686,12 @@ def zeroProd : 0 * P ≃c 0 where
 def prodSumDistrib {P : PFunctor.{uA₁, uB₁}} {Q R : PFunctor.{uA₂, uB₂}} :
     Chart.Equiv.{max uA₁ uA₂, max uB₁ uB₂, max uA₁ uA₂, max uB₁ uB₂}
       (P * (Q + R)) ((P * Q) + (P * R)) where
-  toChart :=
-    (fun ⟨p, qr⟩ => match qr with
-      | Sum.inl q => Sum.inl (p, q)
-      | Sum.inr r => Sum.inr (p, r)) ⇉
-    (fun ⟨_, qr⟩ d => match qr, d with
-      | Sum.inl _, Sum.inl pb => Sum.inl pb
-      | Sum.inl _, Sum.inr qb => Sum.inr qb
-      | Sum.inr _, Sum.inl pb => Sum.inl pb
-      | Sum.inr _, Sum.inr rb => Sum.inr rb)
-  invChart :=
-    (Sum.elim
-      (fun ⟨p, q⟩ => (p, Sum.inl q))
-      (fun ⟨p, r⟩ => (p, Sum.inr r))) ⇉
-    (fun pqpr d => match pqpr, d with
-      | Sum.inl _, Sum.inl pb => Sum.inl pb
-      | Sum.inl _, Sum.inr qb => Sum.inr qb
-      | Sum.inr _, Sum.inl pb => Sum.inl pb
-      | Sum.inr _, Sum.inr rb => Sum.inr rb)
-  left_inv := by
-    refine Chart.ext _ _ ?_ ?_
-    · intro a; rcases a with ⟨_, _ | _⟩ <;> rfl
-    · intro a; funext d
-      rcases a with ⟨_, _ | _⟩ <;> rcases d <;> rfl
-  right_inv := by
-    refine Chart.ext _ _ ?_ ?_
-    · intro a; rcases a <;> rfl
-    · intro a; funext d
-      rcases a <;> rcases d <;> rfl
+  toChart := (fun (p, qr) => qr.map (p, ·) (p, ·)) ⇉
+    (fun | ⟨_, .inl _⟩ | ⟨_, .inr _⟩ => id)
+  invChart := Sum.elim (Prod.map id Sum.inl) (Prod.map id Sum.inr) ⇉
+    (fun | .inl _ | .inr _ => id)
+  left_inv := by ext ⟨_, qr⟩ <;> cases qr <;> rfl
+  right_inv := by ext pqpr <;> cases pqpr <;> rfl
 
 /-- Right distributivity of polynomial product over coproduct.
 
@@ -757,34 +699,12 @@ def prodSumDistrib {P : PFunctor.{uA₁, uB₁}} {Q R : PFunctor.{uA₂, uB₂}}
 def sumProdDistrib {P : PFunctor.{uA₁, uB₁}} {Q R : PFunctor.{uA₂, uB₂}} :
     Chart.Equiv.{max uA₁ uA₂, max uB₁ uB₂, max uA₁ uA₂, max uB₁ uB₂}
       ((Q + R) * P) ((Q * P) + (R * P)) where
-  toChart :=
-    (fun ⟨qr, p⟩ => match qr with
-      | Sum.inl q => Sum.inl (q, p)
-      | Sum.inr r => Sum.inr (r, p)) ⇉
-    (fun ⟨qr, _⟩ d => match qr, d with
-      | Sum.inl _, Sum.inl qb => Sum.inl qb
-      | Sum.inl _, Sum.inr pb => Sum.inr pb
-      | Sum.inr _, Sum.inl rb => Sum.inl rb
-      | Sum.inr _, Sum.inr pb => Sum.inr pb)
-  invChart :=
-    (Sum.elim
-      (fun ⟨q, p⟩ => (Sum.inl q, p))
-      (fun ⟨r, p⟩ => (Sum.inr r, p))) ⇉
-    (fun qprp d => match qprp, d with
-      | Sum.inl _, Sum.inl qb => Sum.inl qb
-      | Sum.inl _, Sum.inr pb => Sum.inr pb
-      | Sum.inr _, Sum.inl rb => Sum.inl rb
-      | Sum.inr _, Sum.inr pb => Sum.inr pb)
-  left_inv := by
-    refine Chart.ext _ _ ?_ ?_
-    · intro a; rcases a with ⟨_ | _, _⟩ <;> rfl
-    · intro a; funext d
-      rcases a with ⟨_ | _, _⟩ <;> rcases d <;> rfl
-  right_inv := by
-    refine Chart.ext _ _ ?_ ?_
-    · intro a; rcases a <;> rfl
-    · intro a; funext d
-      rcases a <;> rcases d <;> rfl
+  toChart := (fun (qr, p) => qr.map (·, p) (·, p)) ⇉
+    (fun | ⟨.inl _, _⟩ | ⟨.inr _, _⟩ => id)
+  invChart := Sum.elim (Prod.map Sum.inl id) (Prod.map Sum.inr id) ⇉
+    (fun | .inl _ | .inr _ => id)
+  left_inv := by ext ⟨qr, _⟩ <;> cases qr <;> rfl
+  right_inv := by ext qprp <;> cases qprp <;> rfl
 
 end Equiv
 
@@ -945,8 +865,8 @@ def piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0)
     rw [F_zero (default : I)] at hf
     exact hf.elim
   refine
-    { toChart := isEmptyElim ⇉ (fun a _ => isEmptyElim a)
-      invChart := PEmpty.elim ⇉ (fun a _ => PEmpty.elim a)
+    { toChart := isEmptyElim ⇉ fun a => isEmptyElim a
+      invChart := PEmpty.elim ⇉ fun a => PEmpty.elim a
       left_inv := by
         refine Chart.ext _ _ ?_ ?_
         · intro a; exact isEmptyElim a

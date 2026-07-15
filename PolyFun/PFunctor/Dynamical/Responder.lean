@@ -95,7 +95,7 @@ the `X`-component is trivial. Definitional, by sigma and unit eta. -/
 
 /-- The stateless responder answering along a fixed section of `q`. -/
 def ofSection (σ : Section q) : Responder PUnit.{v + 1} q :=
-  (fun _ => σ) ⇆ (fun _ _ => PUnit.unit)
+  Lens.fromX σ
 
 @[simp] theorem committed_ofSection (σ : Section q) (s : PUnit.{v + 1}) :
     (ofSection σ).committed s = σ := rfl

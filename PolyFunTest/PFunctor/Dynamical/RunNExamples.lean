@@ -57,7 +57,7 @@ example (φ : DynSystem S p) (state : S)
 (concrete universe so the `Bool` state set lives in the machine's state type). -/
 def delayMachine (b : Bool) : DynSystem.IOMachine X.{0, 0} PUnit Bool where
   State := Bool
-  toDynSystem := (fun _ => PUnit.unit) ⇆ (fun _ _ => true)
+  toDynSystem := (fun _ => PUnit.unit) ⇆ fun _ _ => true
   init := fun _ => false
   output := fun s => if s then some b else none
 

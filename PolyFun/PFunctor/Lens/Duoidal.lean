@@ -77,7 +77,7 @@ constant map returning `b`. On directions, a `p ◃ q`-direction over
 which maps back to the tensor-direction `(u, v) : p.B a × q.B b`. -/
 def orderingLens (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) :
     Lens (p ⊗ q) (p ◃ q) :=
-  (fun ab => ⟨ab.1, fun _ => ab.2⟩) ⇆ (fun _ab uv => (uv.1, uv.2))
+  (fun (a, b) => ⟨a, fun _ => b⟩) ⇆ fun _ ⟨u, v⟩ => (u, v)
 
 /-- The ordering lens is cartesian: on every fiber the backward map
 `⟨u, v⟩ ↦ (u, v)` is the bijection between the (constant-family) dependent pair
@@ -157,10 +157,10 @@ def Equiv.tensorMiddleFour
     (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
     (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
     ((p ⊗ p') ⊗ (q ⊗ q')) ≃ₗ ((p ⊗ q) ⊗ (p' ⊗ q')) where
-  toLens := (fun x => ((x.1.1, x.2.1), (x.1.2, x.2.2))) ⇆
-    (fun _ d => ((d.1.1, d.2.1), (d.1.2, d.2.2)))
-  invLens := (fun x => ((x.1.1, x.2.1), (x.1.2, x.2.2))) ⇆
-    (fun _ d => ((d.1.1, d.2.1), (d.1.2, d.2.2)))
+  toLens := (fun ((a, b), (c, d)) => ((a, c), (b, d))) ⇆
+    (fun _ ((a, b), (c, d)) => ((a, c), (b, d)))
+  invLens := (fun ((a, b), (c, d)) => ((a, c), (b, d))) ⇆
+    (fun _ ((a, b), (c, d)) => ((a, c), (b, d)))
   left_inv := rfl
   right_inv := rfl
 
@@ -205,7 +205,7 @@ direction. The forward lens is `orderingLens (linear A) (linear B)`. -/
 def linearTensorLinear (A : Type u) (B : Type u) :
     (linear.{u, u} A ⊗ linear.{u, u} B) ≃ₗ (linear.{u, u} A ◃ linear.{u, u} B) where
   toLens := orderingLens (linear A) (linear B)
-  invLens := (fun af => (af.1, af.2 PUnit.unit)) ⇆ (fun _af uw => ⟨uw.1, uw.2⟩)
+  invLens := (fun ⟨a, f⟩ => (a, f PUnit.unit)) ⇆ fun _ (u, w) => ⟨u, w⟩
   left_inv := rfl
   right_inv := rfl
 
@@ -218,7 +218,7 @@ def purePowerTensorPurePower (A : Type u) (B : Type u) :
     (purePower.{u, u} A ⊗ purePower.{u, u} B) ≃ₗ
       (purePower.{u, u} A ◃ purePower.{u, u} B) where
   toLens := orderingLens (purePower A) (purePower B)
-  invLens := (fun uf => (uf.1, PUnit.unit)) ⇆ (fun _uf xy => ⟨xy.1, xy.2⟩)
+  invLens := (fun uf => (uf.1, PUnit.unit)) ⇆ fun _ (x, y) => ⟨x, y⟩
   left_inv := rfl
   right_inv := rfl
 
@@ -232,7 +232,7 @@ first and then continuing with `p`. The forward lens is
 def linearTensor (B : Type u) (p : PFunctor.{u, u}) :
     (linear.{u, u} B ⊗ p) ≃ₗ (linear.{u, u} B ◃ p) where
   toLens := orderingLens (linear B) p
-  invLens := (fun bf => (bf.1, bf.2 PUnit.unit)) ⇆ (fun _bf ud => ⟨ud.1, ud.2⟩)
+  invLens := (fun ⟨b, f⟩ => (b, f PUnit.unit)) ⇆ fun _ (u, d) => ⟨u, d⟩
   left_inv := rfl
   right_inv := rfl
 
@@ -245,7 +245,7 @@ paired with an `A`-direction is the same as a `p`-move followed by an
 def tensorPurePower (p : PFunctor.{u, u}) (A : Type u) :
     (p ⊗ purePower.{u, u} A) ≃ₗ (p ◃ purePower.{u, u} A) where
   toLens := orderingLens p (purePower A)
-  invLens := (fun pf => (pf.1, PUnit.unit)) ⇆ (fun _pf xy => ⟨xy.1, xy.2⟩)
+  invLens := (fun pf => (pf.1, PUnit.unit)) ⇆ fun _ (x, y) => ⟨x, y⟩
   left_inv := rfl
   right_inv := rfl
 
