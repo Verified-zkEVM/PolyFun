@@ -57,18 +57,20 @@ Used in: `PolyFun/PFunctor/Trace.lean`, `PolyFun/PFunctor/Lens/State.lean`,
 `PolyFun/Interaction/UC/Interface.lean`, and
 companion files in `PolyFun/Interaction/UC/`.
 
-### LS22 — Libkind and Spivak, *Pattern runs on matter*
+### LS25 — Libkind and Spivak, *Pattern runs on matter*
 
 Sophie Libkind and David I. Spivak.
 *Pattern runs on matter: the free monad monad as a module over the
 cofree comonad comonad*.
-arXiv:2208.12504, 2022.
+Electronic Proceedings in Theoretical Computer Science 429 (2025), pp. 1–28.
+DOI 10.4204/EPTCS.429.1; arXiv:2404.16321.
 
 Free polynomial monads as terminating decision trees, with the
 free-monad-as-module-over-cofree-comonad structure made explicit (a module
 action, not an adjunction).
 
-Used in: `PolyFun/PFunctor/Free/Path.lean`.
+Used in: `PolyFun/PFunctor/SubstMonoid.lean`,
+`PolyFun/PFunctor/Free/Path.lean`.
 
 ### XZHHMPZ20 — Xia, Zakowski, He, Hur, Malecha, Pierce, Zdancewic, *Interaction Trees*
 
