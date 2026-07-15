@@ -5,8 +5,7 @@ Authors: Quang Dao
 -/
 module
 
-public import PolyFun.PFunctor.Free.Path
-public import PolyFun.PFunctor.Trace
+public import PolyFun.PFunctor.Free.Path.Execution
 
 /-!
 # Cursors into free polynomial programs
@@ -177,6 +176,17 @@ theorem output_plug (spine : Spine program residual) (path : Path residual) :
   | down answer tail ih =>
       exact ih path
 
+@[simp]
+theorem trace_plug (spine : Spine program residual) (path : Path residual) :
+    Path.trace program (spine.plug path) =
+      List.append spine.trace (Path.trace residual path) := by
+  induction spine with
+  | root => rfl
+  | down answer tail ih =>
+      change _ :: Path.trace _ (tail.plug path) =
+        _ :: List.append tail.trace (Path.trace _ path)
+      rw [ih]
+
 end Spine
 
 end Cursor
@@ -324,6 +334,12 @@ theorem plug_comp (first : Cursor program) (second : Cursor first.residual)
 theorem output_plug (cursor : Cursor program) (path : Path cursor.residual) :
     output program (cursor.plug path) = output cursor.residual path :=
   Spine.output_plug cursor.spine path
+
+@[simp]
+theorem trace_plug (cursor : Cursor program) (path : Path cursor.residual) :
+    Path.trace program (cursor.plug path) =
+      List.append cursor.trace (Path.trace cursor.residual path) :=
+  Spine.trace_plug cursor.spine path
 
 /-! ## Immediate edges and extension witnesses -/
 

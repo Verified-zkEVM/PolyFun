@@ -88,6 +88,15 @@ def falsePath : Path program :=
 example : internal.plug (⟨selectedIndex, PUnit.unit, ⟨⟩⟩ : Path internal.residual) =
     truePath := rfl
 
+example : Path.trace program truePath = trueLeaf.trace := by
+  change Path.trace program
+      (trueLeaf.plug (⟨⟩ : Path trueLeaf.residual)) = trueLeaf.trace
+  rw [Cursor.trace_plug]
+  rfl
+
+example : FreeM.map (output program) (withPath program) = program := by
+  exact map_output_withPath program
+
 example : Cursor.ofPath program truePath = trueLeaf := rfl
 
 def trueTerminal : Cursor.Terminal program :=

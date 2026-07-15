@@ -43,6 +43,7 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
 PFunctor/Free/Basic
   -> PFunctor/Free/Displayed
   -> PFunctor/Free/{Path, Displayed/Decoration}
+  -> PFunctor/Free/Path/Execution
   -> PFunctor/Free/Cursor
 PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption
 
