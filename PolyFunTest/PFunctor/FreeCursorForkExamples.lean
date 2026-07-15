@@ -83,6 +83,46 @@ example : locateAndForkSelected ExampleOp.target rootProgram
       (fun _ => some ()) (fun _ => 1) =
     FreeM.liftBind ExampleOp.target fun _ => pure none := rfl
 
+/-! ## Output-dependent selection -/
+
+/-- The first output selects both a label and a different target ordinal. -/
+def selectOrdinalFromOutput (result : Nat) : Option Bool :=
+  if result < 200 then some false else some true
+
+/-- The low-output label selects the first target; the high-output label
+selects the second target. -/
+def ordinalOfLabel : Bool → Nat
+  | false => 0
+  | true => 1
+
+/-- Retain enough data to distinguish the selected label, occurrence, focused
+answers, and both completed outputs. -/
+def observeOutputDependent (label : Bool)
+    (view : ForkView ExampleOp.target nestedProgram (ordinalOfLabel label)) :
+    Bool × Bool × Bool × Nat × Nat :=
+  (label, view.firstAnswer, view.secondAnswer,
+    output nestedProgram view.firstPath, output nestedProgram view.secondPath)
+
+def outputDependentFork :
+    FreeM ExampleQuery (Option (Bool × Bool × Bool × Nat × Nat)) :=
+  locateAndForkBy ExampleOp.target nestedProgram selectOrdinalFromOutput
+    ordinalOfLabel observeOutputDependent
+
+/-- A low first output selects ordinal zero and independently takes the
+continuing branch on its second completion. -/
+def outputDependentLowPath : Path outputDependentFork :=
+  ⟨noiseOne, ⟨false, ⟨true, ⟨false, ⟨⟩⟩⟩⟩⟩
+
+example : output outputDependentFork outputDependentLowPath =
+    some (false, false, true, 101, 210) := rfl
+
+/-- A high first output selects ordinal one and resamples only that target. -/
+def outputDependentHighPath : Path outputDependentFork :=
+  ⟨noiseOne, ⟨true, ⟨true, ⟨false, ⟨⟩⟩⟩⟩⟩
+
+example : output outputDependentFork outputDependentHighPath =
+    some (true, true, false, 211, 210) := rfl
+
 /-- A rejecting classifier is applied after both completions. -/
 example : filterMapLocateAndForkAt ExampleOp.target rootProgram 0 (fun _ =>
       (none : Option Unit)) =
@@ -112,8 +152,8 @@ def universeCanary {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     FreeM P (Option β) :=
   locateAndForkBy target program select index observe
 
-/-- Mapping over fixed occurrence forking needs equality only on positions, not on
-every dependent answer family. -/
+/-- Mapping over fixed occurrence forking needs equality only on positions,
+not on every dependent answer family. -/
 example {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     {α : Type uα} (target : P.A) (program : FreeM P α) (n : Nat) :
     FreeM.map id (locateAndForkAt target program n) =
