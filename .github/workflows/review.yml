@@ -37,9 +37,21 @@
         contents: read
         pull-requests: write
       steps:
+        - name: Skip if API key missing
+          id: gate
+          env:
+            API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          run: |
+            if [[ -z "${API_KEY}" ]]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::GEMINI_API_KEY secret is not set; skipping PR review."
+            else
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+            fi
+
         - name: Extract arguments from comment
           id: get_args
-          if: github.event_name == 'issue_comment'
+          if: steps.gate.outputs.skip == 'false' && github.event_name == 'issue_comment'
           env:
             COMMENT_BODY: ${{ github.event.comment.body }}
           run: |
@@ -83,6 +95,7 @@
           shell: bash
 
         - uses: alexanderlhicks/lean-review-workflow@main
+          if: steps.gate.outputs.skip == 'false'
           with:
             github_token: ${{ secrets.GITHUB_TOKEN }}
             api_key: ${{ secrets.GEMINI_API_KEY }}
@@ -92,4 +105,3 @@
             external_refs: "${{ steps.get_args.outputs.external_refs }}"
             repo_context_refs: "${{ steps.get_args.outputs.repo_context_refs }}"
             additional_comments: "${{ steps.get_args.outputs.additional_comments }}"
-
