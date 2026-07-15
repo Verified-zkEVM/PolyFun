@@ -63,8 +63,15 @@ remains the single behavioural-equality principle.
 
 - `ITree.Bisim` is strong/structural bisimulation and coincides with `Eq` by the
   M-type universal property.
-- `ITree.WeakBisim` is the coinductive `eutt`-style relation already developed
-  in `ITree/Bisim`. It strips finite `TauSteps` around observable heads.
+- `ITree.WeakBisimRel RR` is the relational `euttR`-style relation. The trees
+  share an event signature but may return types in independent universes;
+  pure leaves are compared by `RR`, while finite `TauSteps` around observable
+  heads are ignored.
+- `ITree.WeakBisim` is definitionally `WeakBisimRel Eq`. It supplies the
+  same-type equivalence and `Setoid` used by the existing simulation theory.
+- `bind_weakBisimRel` and `map_weakBisimRel` are the two-sided congruence laws:
+  they relate different source return types and different continuation return
+  types without collapsing their universes.
 
 The generic LTS weak closure and `ITree.WeakBisim` describe the same standard
 shape at different representation layers; no adapter is claimed here until it

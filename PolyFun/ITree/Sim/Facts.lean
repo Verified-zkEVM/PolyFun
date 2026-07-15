@@ -41,12 +41,10 @@ unfoldings), so the resulting equations hold up to weak bisimulation.
 
 The executable Handler/Sim layer is fully universe-polymorphic. The primitive
 strong equations listed above retain the universe separation of the
-definitions. Laws that depend on the shared bind/iteration theory—including
+definitions. The shared bind/iteration algebra and `WeakBisimRel` are now
+universe-separated, but their consumer laws in this module—including
 `simulate_query_eq_bind`, `mapSpec_bind`, `mapSpec_iter`, `mapSpec_map`, and
-`mapSpec_cat`—remain in the homogeneous fragment in this slice. The next two
-stack slices generalize that algebra and then these consumer laws. Theorems
-that mention `WeakBisim` likewise remain homogeneous until the relational
-bisimulation layer.
+`mapSpec_cat`—remain in the homogeneous fragment until the next stack slice.
 -/
 
 @[expose] public section

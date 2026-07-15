@@ -53,15 +53,15 @@ step are lifted to `uB`; a visible query retains its original direction type.
 | [`PolyFun/ITree/Construct.lean`](../../PolyFun/ITree/Construct.lean) | Standard combinators: `diverge` (Coq `spin`), `forever`, mixed-universe `map` / `cat`, `ignore`, `burn`. Pure consequences of `bind` / `iter` / `M.corec`. |
 | [`PolyFun/ITree/Handler.lean`](../../PolyFun/ITree/Handler.lean) | Universe-polymorphic `Handler E F`: choice of an `F`-program for every `E`-event, with identity, lens promotion, and coproduct routing via `Handler.case_`. |
 | [`PolyFun/ITree/Sim/Defs.lean`](../../PolyFun/ITree/Sim/Defs.lean) | Universe-polymorphic `ITree.simulate` (interprets every event via a handler), `Handler.comp`, and `ITree.mapSpec` (pure event-renaming via a `PFunctor.Lens`). Coq `interp` analogue. |
-| [`PolyFun/ITree/Sim/Facts.lean`](../../PolyFun/ITree/Sim/Facts.lean) | One-step, identity, bind, iteration, lens-composition, and handler-composition facts. Weak-bisimulation statements use the homogeneous fragment required by `WeakBisim`; independent strong equations retain full universe separation. |
+| [`PolyFun/ITree/Sim/Facts.lean`](../../PolyFun/ITree/Sim/Facts.lean) | One-step, identity, bind, iteration, lens-composition, and handler-composition facts. Its current weak simulation statements retain homogeneous source/target signatures; independent strong equations retain full universe separation. |
 | [`PolyFun/ITree/Rec.lean`](../../PolyFun/ITree/Rec.lean) | `mutualRec`, `fixRec` recursive procedure-call combinators. The `CallE α β` event signature describes one recursive call expecting `α` and returning `β`. |
 
 ### Bisimulation
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/ITree/Bisim/Defs.lean`](../../PolyFun/ITree/Bisim/Defs.lean) | `ITree.Bisim` (strong / structural; coincides with definitional equality by the M-type universal property), `ITree.WeakBisim` (Coq `eutt`, modulo finitely many leading `step` nodes). |
-| [`PolyFun/ITree/Bisim/Bind.lean`](../../PolyFun/ITree/Bisim/Bind.lean) | Compatibility of bisimulation with `bind`. |
+| [`PolyFun/ITree/Bisim/Defs.lean`](../../PolyFun/ITree/Bisim/Defs.lean) | Universe-polymorphic `ITree.Bisim` (strong / structural equality), relational `ITree.WeakBisimRel RR` (Coq `euttR`), and `ITree.WeakBisim` as its equality specialization (Coq `eutt`). |
+| [`PolyFun/ITree/Bisim/Bind.lean`](../../PolyFun/ITree/Bisim/Bind.lean) | Mixed-universe monad/iteration equations plus two-sided relational congruence of `bind` and `map`. |
 | [`PolyFun/ITree/Bisim/Equiv.lean`](../../PolyFun/ITree/Bisim/Equiv.lean) | Equivalence properties of bisimulation. |
 
 ### Standard events
@@ -83,9 +83,9 @@ step are lifted to `uB`; a visible query retains its original direction type.
   `mapSpec` is the syntactically pure case (pure event rename via a
   `PFunctor.Lens`).
 - Strong bisimulation `Bisim` is set to definitional equality, courtesy
-  of the M-type universal property. Reach for `WeakBisim` whenever you
-  want to ignore finitely many leading silent `step`s, which is the
-  typical "ITree equivalence" used in Coq.
+  of the M-type universal property. `WeakBisimRel RR` ignores finitely many
+  leading silent `step`s and compares returns through `RR`; `WeakBisim` is
+  the same-type `Eq` specialization used as the ordinary ITree setoid.
 - The `Events/{State, Exception}.lean` files are small canonical patterns for
   signatures and smart constructors. Handlers for such signatures can be
   routed, composed, and executed through the generic APIs above.
