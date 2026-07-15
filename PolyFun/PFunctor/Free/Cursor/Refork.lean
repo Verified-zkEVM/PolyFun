@@ -5,7 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Free.Context
+public import PolyFun.PFunctor.Free.Cursor.Occurrence
 
 /-!
 # Reforking free polynomial programs at typed occurrences
@@ -21,7 +21,9 @@ open scoped PFunctor
 
 universe uA uB v
 
-namespace PFunctor.FreeM.Path
+namespace PFunctor.FreeM.Cursor
+
+open PFunctor.TraceList
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
@@ -152,7 +154,7 @@ theorem locateAt?_completion_path [DecidableEq P.A]
   | stepSame prefixAnswer tail ih =>
       rcases completion with ⟨answer, suffix⟩
       change Path (tail.resume answer) at suffix
-      simp only [Occurrence.Completion.path, Occurrence.plug]
+      simp only [Occurrence.Completion.path, Occurrence.plug_stepSame]
       rw [locateAt?_liftBind_same_succ]
       have htail := ih (⟨answer, suffix⟩ : tail.Completion)
       simp only [Occurrence.Completion.path] at htail
@@ -161,7 +163,7 @@ theorem locateAt?_completion_path [DecidableEq P.A]
   | stepOther hne prefixAnswer tail ih =>
       rcases completion with ⟨answer, suffix⟩
       change Path (tail.resume answer) at suffix
-      simp only [Occurrence.Completion.path, Occurrence.plug]
+      simp only [Occurrence.Completion.path, Occurrence.plug_stepOther]
       rw [locateAt?_liftBind_other hne]
       have htail := ih (⟨answer, suffix⟩ : tail.Completion)
       simp only [Occurrence.Completion.path] at htail
@@ -173,7 +175,7 @@ target occurrence. -/
 theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
     (program : FreeM P α) (path : Path program) (n : Nat) :
     (locateAt? target program path n).isSome ↔
-      n < occurrences target (trace program path) := by
+      n < occurrences target (Path.trace program path) := by
   induction program generalizing n with
   | pure value => simp [occurrences]
   | lift_bind a next ih =>
@@ -185,19 +187,19 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
             change (locateAt? target (FreeM.liftBind target next)
               (⟨answer, suffix⟩ : Path (FreeM.liftBind target next)) 0).isSome ↔
               0 < occurrences target
-                (⟨target, answer⟩ :: trace (next answer) suffix)
+                (⟨target, answer⟩ :: Path.trace (next answer) suffix)
             rw [locateAt?_liftBind_same_zero]
             simp [occurrences]
         | succ n =>
             change (locateAt? target (FreeM.liftBind target next)
               (⟨answer, suffix⟩ : Path (FreeM.liftBind target next)) (n + 1)).isSome ↔
               n + 1 < occurrences target
-                (⟨target, answer⟩ :: trace (next answer) suffix)
+                (⟨target, answer⟩ :: Path.trace (next answer) suffix)
             rw [locateAt?_liftBind_same_succ, Option.isSome_map]
             simpa [occurrences] using ih answer suffix n
       · change (locateAt? target (FreeM.liftBind a next)
             (⟨answer, suffix⟩ : Path (FreeM.liftBind a next)) n).isSome ↔
-          n < occurrences target (⟨a, answer⟩ :: trace (next answer) suffix)
+          n < occurrences target (⟨a, answer⟩ :: Path.trace (next answer) suffix)
         rw [locateAt?_liftBind_other h, Option.isSome_map]
         simpa [occurrences, h] using ih answer suffix n
 
@@ -206,9 +208,9 @@ namespace Located
 /-- Independently complete the occurrence carried by a located first path. -/
 def refork {target : P.A} {program : FreeM P α}
     {path : Path program} {n : Nat} (located : Located target program path n) :
-    FreeM P (Option (ForkView target program n)) :=
+    FreeM P (ForkView target program n) :=
   FreeM.liftBind target fun secondAnswer =>
-    FreeM.map (fun secondSuffix => some {
+    FreeM.map (fun secondSuffix => {
       occurrence := located.occurrence
       first := located.completion
       second := ⟨secondAnswer, secondSuffix⟩ })
@@ -220,7 +222,7 @@ theorem refork_eq_map_complete {target : P.A}
     {program : FreeM P α} {path : Path program} {n : Nat}
     (located : Located target program path n) :
     located.refork =
-      FreeM.map (fun second : located.occurrence.Completion => some ({
+      FreeM.map (fun second : located.occurrence.Completion => ({
         occurrence := located.occurrence
         first := located.completion
         second := second } : ForkView target program n))
@@ -238,7 +240,7 @@ theorem refork_prependSame {target : P.A}
     {suffix : Path (next answer)} {n : Nat}
     (located : Located target (next answer) suffix n) :
     (prependSame answer located).refork =
-      FreeM.map (Option.map (ForkView.prependSame answer)) located.refork := by
+      FreeM.map (ForkView.prependSame answer) located.refork := by
   unfold refork prependSame ForkView.prependSame
   simp only [Occurrence.resume, FreeM.map]
   apply congrArg (FreeM.liftBind target)
@@ -255,7 +257,7 @@ theorem refork_prependOther {target a : P.A}
     {suffix : Path (next answer)} {n : Nat}
     (located : Located target (next answer) suffix n) :
     (prependOther hne answer located).refork =
-      FreeM.map (Option.map (ForkView.prependOther hne answer)) located.refork := by
+      FreeM.map (ForkView.prependOther hne answer) located.refork := by
   unfold refork prependOther ForkView.prependOther
   simp only [Occurrence.resume, FreeM.map]
   apply congrArg (FreeM.liftBind target)
@@ -275,7 +277,7 @@ def reforkAt [DecidableEq P.A] (target : P.A) (program : FreeM P α) (n : Nat) :
   FreeM.bind (withPath program) fun (path : Path program) =>
     match locateAt? target program path n with
     | none => pure none
-    | some located => located.refork
+    | some located => FreeM.map some located.refork
 
 /-- A dynamically selected refork together with the label that chose its
 dependent occurrence index. -/
@@ -319,7 +321,7 @@ def reforkBy [DecidableEq P.A] {κ β : Type*}
     | some k =>
         match locateAt? target program path (index k) with
         | none => pure none
-        | some located => FreeM.map (Option.map (observe k)) located.refork
+        | some located => FreeM.map (some ∘ observe k) located.refork
 
 /-- Dynamically select an occurrence and retain its typed fork view together
 with the selecting label. -/
@@ -361,7 +363,7 @@ theorem map_reforkBy [DecidableEq P.A] {κ β γ : Type*}
             match locateAt? target program path (index k) with
             | none => pure (f none)
             | some located =>
-                FreeM.map (f ∘ Option.map (observe k)) located.refork := by
+                FreeM.map (f ∘ some ∘ observe k) located.refork := by
   unfold reforkBy
   rw [← FreeM.bind_pure_comp, FreeM.bind_assoc]
   apply congrArg (FreeM.bind (withPath program))
@@ -369,15 +371,7 @@ theorem map_reforkBy [DecidableEq P.A] {κ β γ : Type*}
   rcases hselect : select (output program path) with _ | k
   · rfl
   · rcases hlocate : locateAt? target program path (index k) with _ | located
-    · change (match locateAt? target program path (index k) with
-          | none => pure none
-          | some located => FreeM.map (Option.map (observe k)) located.refork).bind
-            (pure ∘ f) =
-        match locateAt? target program path (index k) with
-        | none => pure (f none)
-        | some located =>
-            FreeM.map (f ∘ Option.map (observe k)) located.refork
-      rw [hlocate]
+    · simp only [hlocate]
       rfl
     · simp only [hlocate]
       rw [FreeM.bind_pure_comp, ← FreeM.comp_map]
@@ -415,21 +409,21 @@ theorem filterMapReforkBy_eq_bind_complete [DecidableEq P.A]
 /-- Mapping an observation over a path-first refork can be pushed into each
 located continuation. This is the canonical elimination rule for consumers
 that inspect a `ForkView` without otherwise changing the reforking program. -/
-theorem map_reforkAt [P.DecidableEq] {β : Type*} (target : P.A)
+theorem map_reforkAt [DecidableEq P.A] {β : Type*} (target : P.A)
     (program : FreeM P α) (n : Nat)
     (observe : Option (ForkView target program n) → β) :
     FreeM.map observe (reforkAt target program n) =
       FreeM.bind (withPath program) fun path =>
         match locateAt? target program path n with
         | none => pure (observe none)
-        | some located => FreeM.map observe located.refork := by
+        | some located => FreeM.map (observe ∘ some) located.refork := by
   unfold reforkAt
   rw [← FreeM.bind_pure_comp, FreeM.bind_assoc]
   apply congrArg (FreeM.bind (withPath program))
   funext path
   rcases locateAt? target program path n with _ | located
   · rfl
-  · rw [FreeM.bind_pure_comp]
+  · rw [FreeM.bind_pure_comp, ← FreeM.comp_map]
 
 /-- Eliminate a fixed optional refork into its first path and one
 independently sampled completion. -/
@@ -451,8 +445,7 @@ theorem filterMapReforkAt_eq_bind_complete [DecidableEq P.A]
   funext path
   rcases hlocate : locateAt? target program path n with _ | located
   · rfl
-  · change FreeM.map (fun view? => view?.bind observe) located.refork = _
-    rw [Located.refork_eq_map_complete, ← FreeM.comp_map]
+  · rw [← FreeM.comp_map, Located.refork_eq_map_complete, ← FreeM.comp_map]
     rfl
 
 @[simp] theorem reforkAt_pure [DecidableEq P.A] (target : P.A)
@@ -470,6 +463,10 @@ theorem reforkAt_liftBind_same_zero [DecidableEq P.A] (target : P.A)
   apply congrArg (FreeM.bind (withPath (next firstAnswer)))
   funext firstSuffix
   rw [locateAt?_liftBind_same_zero]
+  simp only [Located.refork, Occurrence.resume, FreeM.map]
+  apply congrArg (FreeM.liftBind target)
+  funext secondAnswer
+  rw [← FreeM.comp_map]
   rfl
 
 theorem reforkAt_liftBind_same_succ [DecidableEq P.A] (target : P.A)
@@ -488,8 +485,9 @@ theorem reforkAt_liftBind_same_succ [DecidableEq P.A] (target : P.A)
   rw [locateAt?_liftBind_same_succ]
   rcases hlocated : locateAt? target (next answer) suffix n with _ | located
   · rfl
-  · simpa only [hlocated, Option.map_some] using
-      Located.refork_prependSame answer located
+  · simp only [Option.map_some]
+    rw [Located.refork_prependSame, ← FreeM.comp_map, ← FreeM.comp_map]
+    rfl
 
 theorem reforkAt_liftBind_other [DecidableEq P.A] {target a : P.A}
     (hne : a ≠ target) (next : P.B a → FreeM P α) (n : Nat) :
@@ -507,8 +505,9 @@ theorem reforkAt_liftBind_other [DecidableEq P.A] {target a : P.A}
   rw [locateAt?_liftBind_other hne]
   rcases hlocated : locateAt? target (next answer) suffix n with _ | located
   · rfl
-  · simpa only [hlocated, Option.map_some] using
-      Located.refork_prependOther hne answer located
+  · simp only [Option.map_some]
+    rw [Located.refork_prependOther, ← FreeM.comp_map, ← FreeM.comp_map]
+    rfl
 
 /-- Splitting before execution and locating the same occurrence after one
 execution define the same resampling program. -/
@@ -543,4 +542,4 @@ theorem forkAt_eq_reforkAt [DecidableEq P.A] (target : P.A) :
         funext answer
         rw [ih answer n]
 
-end PFunctor.FreeM.Path
+end PFunctor.FreeM.Cursor

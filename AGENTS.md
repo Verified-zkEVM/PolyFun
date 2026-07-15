@@ -98,7 +98,8 @@ PFunctor/Free/Basic
   → PFunctor/Free/{Path, Displayed/Decoration}
   → PFunctor/Free/Path/Execution
   → PFunctor/Free/Cursor
-PFunctor/Free/Cursor → PFunctor/Free/Context → PFunctor/Free/Refork
+  → PFunctor/Free/Cursor/Occurrence
+  → PFunctor/Free/Cursor/Refork
 PFunctor/{Resumption, Free/Basic} → PFunctor/Free/Resumption
 
 PFunctor/Lens/{Basic, Cartesian, State}

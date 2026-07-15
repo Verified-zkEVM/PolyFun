@@ -5,7 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Free.Focus
+public import PolyFun.PFunctor.Free.Cursor
 
 /-!
 # Typed contexts and occurrence splitting for free polynomial programs
@@ -23,39 +23,13 @@ open scoped PFunctor
 
 universe uA uB v
 
-namespace PFunctor.FreeM.Path
+namespace PFunctor.FreeM.Cursor
+
+open PFunctor.TraceList
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
 /-! ## Occurrence contexts and completions -/
-
-/-- Mapping after a universe-polymorphic free-monad bind can be moved into
-each continuation. -/
-theorem bind_map_right {δ : Type*} {β : Type*} {γ : Type*}
-    (mx : FreeM P δ) (g : δ → FreeM P β) (f : β → γ) :
-    FreeM.bind mx (fun x => FreeM.map f (g x)) =
-      FreeM.map f (FreeM.bind mx g) := by
-  simpa only [FreeM.bind_pure_comp] using
-    (FreeM.bind_assoc mx g (pure ∘ f)).symm
-
-/-- Binding after path execution exposes the root answer and tail path
-without leaving a dependent `map` in the term. -/
-theorem withPath_liftBind_bind {γ : Type*} (a : P.A)
-    (next : P.B a → FreeM P α)
-    (k : Path (FreeM.liftBind a next) → FreeM P γ) :
-    FreeM.bind (withPath (FreeM.liftBind a next)) k =
-      FreeM.liftBind a fun answer =>
-        FreeM.bind (withPath (next answer)) fun suffix =>
-          k (⟨answer, suffix⟩ : Path (FreeM.liftBind a next)) := by
-  change FreeM.liftBind a (fun answer =>
-      FreeM.bind
-        (FreeM.map (fun path : Path (next answer) =>
-          (⟨answer, path⟩ : Path (FreeM.liftBind a next)))
-          (withPath (next answer))) k) = _
-  apply congrArg (FreeM.liftBind a)
-  funext answer
-  rw [← FreeM.bind_pure_comp, FreeM.bind_assoc]
-  rfl
 
 /-- A typed prefix ending immediately before occurrence `n` of `target`. -/
 inductive Occurrence (target : P.A) : (program : FreeM P α) → Nat → Type (max uA uB v)
@@ -79,22 +53,48 @@ def resume : {program : FreeM P α} → {n : Nat} →
   | _, _, .stepSame _ tail => tail.resume
   | _, _, .stepOther _ _ tail => tail.resume
 
+/-- The generic cursor underlying an occurrence context. Its residual is the
+selected target node, before any answer at that node has been chosen. -/
+def toSpine : {program : FreeM P α} → {n : Nat} →
+    (occ : Occurrence target program n) →
+      Cursor.Spine program (FreeM.liftBind target occ.resume)
+  | _, _, .here next => .root (FreeM.liftBind target next)
+  | _, _, .stepSame answer tail => .down answer tail.toSpine
+  | _, _, .stepOther _ answer tail => .down answer tail.toSpine
+
+/-- Forget occurrence counting while retaining its typed structural prefix. -/
+def toCursor (occ : Occurrence target program n) : Cursor program :=
+  ⟨FreeM.liftBind target occ.resume, occ.toSpine⟩
+
+@[simp] theorem residual_toCursor (occ : Occurrence target program n) :
+    occ.toCursor.residual = FreeM.liftBind target occ.resume := rfl
+
 /-- Erased events strictly before the focused occurrence. -/
-def before : {program : FreeM P α} → {n : Nat} →
-    Occurrence target program n → PFunctor.TraceList P
-  | _, _, .here _ => []
-  | _, _, .stepSame answer tail => ⟨target, answer⟩ :: tail.before
-  | _, _, .stepOther _ answer tail => ⟨_, answer⟩ :: tail.before
+def before (occ : Occurrence target program n) : PFunctor.TraceList P :=
+  occ.toCursor.trace
 
 /-- Plug an answer and residual suffix through an occurrence context. -/
-def plug : {program : FreeM P α} → {n : Nat} →
-    (occ : Occurrence target program n) → (answer : P.B target) →
-      Path (occ.resume answer) → Path program
-  | _, _, .here _, answer, suffix => ⟨answer, suffix⟩
-  | _, _, .stepSame prefixAnswer tail, answer, suffix =>
-      ⟨prefixAnswer, tail.plug answer suffix⟩
-  | _, _, .stepOther _ prefixAnswer tail, answer, suffix =>
-      ⟨prefixAnswer, tail.plug answer suffix⟩
+def plug (occ : Occurrence target program n) (answer : P.B target)
+    (suffix : Path (occ.resume answer)) : Path program :=
+  occ.toCursor.plug
+    (⟨answer, suffix⟩ : Path (FreeM.liftBind target occ.resume))
+
+@[simp] theorem plug_here (next : P.B target → FreeM P α)
+    (answer : P.B target) (suffix : Path (next answer)) :
+    (Occurrence.here next).plug answer suffix = ⟨answer, suffix⟩ := rfl
+
+@[simp] theorem plug_stepSame {next : P.B target → FreeM P α}
+    (prefixAnswer : P.B target) (tail : Occurrence target (next prefixAnswer) n)
+    (answer : P.B target) (suffix : Path (tail.resume answer)) :
+    (Occurrence.stepSame prefixAnswer tail).plug answer suffix =
+      ⟨prefixAnswer, tail.plug answer suffix⟩ := rfl
+
+@[simp] theorem plug_stepOther {a : P.A} {next : P.B a → FreeM P α}
+    (hne : a ≠ target) (prefixAnswer : P.B a)
+    (tail : Occurrence target (next prefixAnswer) n)
+    (answer : P.B target) (suffix : Path (tail.resume answer)) :
+    (Occurrence.stepOther hne prefixAnswer tail).plug answer suffix =
+      ⟨prefixAnswer, tail.plug answer suffix⟩ := rfl
 
 @[simp] theorem before_count [DecidableEq P.A]
     (occ : Occurrence target program n) :
@@ -102,39 +102,34 @@ def plug : {program : FreeM P α} → {n : Nat} →
   induction occ with
   | here => rfl
   | stepSame answer tail ih =>
-      rw [before, occurrences, List.countP_cons_of_pos (by simp)]
+      change occurrences target
+        ((⟨target, answer⟩ : P.Idx) :: tail.before) = _
+      rw [occurrences, List.countP_cons_of_pos (by simp)]
       change occurrences target tail.before + 1 = _
       rw [ih]
   | stepOther hne answer tail ih =>
-      rw [before, occurrences, List.countP_cons_of_neg (by simp [hne])]
-      exact ih
+      change occurrences target
+        ((⟨_, answer⟩ : P.Idx) :: tail.before) = _
+      simpa [occurrences, hne] using ih
 
 @[simp] theorem trace_plug (occ : Occurrence target program n)
     (answer : P.B target) (suffix : Path (occ.resume answer)) :
-    trace program (occ.plug answer suffix) = List.append occ.before
-      (⟨target, answer⟩ :: trace (occ.resume answer) suffix) := by
-  induction occ with
-  | here => rfl
-  | stepSame prefixAnswer tail ih =>
-      change _ :: trace _ (tail.plug answer suffix) =
-        _ :: List.append tail.before (⟨target, answer⟩ :: trace (tail.resume answer) suffix)
-      rw [ih]
-  | stepOther hne prefixAnswer tail ih =>
-      change _ :: trace _ (tail.plug answer suffix) =
-        _ :: List.append tail.before (⟨target, answer⟩ :: trace (tail.resume answer) suffix)
-      rw [ih]
+    Path.trace program (occ.plug answer suffix) = List.append occ.before
+      (⟨target, answer⟩ :: Path.trace (occ.resume answer) suffix) := by
+  change Path.trace program
+      (occ.toCursor.plug
+        (⟨answer, suffix⟩ : Path (FreeM.liftBind target occ.resume))) = _
+  rw [Cursor.trace_plug]
+  rfl
 
 @[simp] theorem output_plug (occ : Occurrence target program n)
     (answer : P.B target) (suffix : Path (occ.resume answer)) :
     output program (occ.plug answer suffix) = output (occ.resume answer) suffix := by
-  induction occ with
-  | here => rfl
-  | stepSame _ tail ih =>
-      change output _ (tail.plug answer suffix) = output (tail.resume answer) suffix
-      exact ih suffix
-  | stepOther _ _ tail ih =>
-      change output _ (tail.plug answer suffix) = output (tail.resume answer) suffix
-      exact ih suffix
+  change output program
+      (occ.toCursor.plug
+        (⟨answer, suffix⟩ : Path (FreeM.liftBind target occ.resume))) = _
+  rw [Cursor.output_plug]
+  rfl
 
 /-- An answer at the focused event and a path through the resulting residual. -/
 structure Completion (occ : Occurrence target program n) where
@@ -222,7 +217,7 @@ variable [DecidableEq P.A] {target : P.A} {program : FreeM P α} {n : Nat}
 returned after executing a path containing at most `n` target events. -/
 def Valid (result : Split target program n) : Prop :=
   match result with
-  | .missing path => occurrences target (trace program path) ≤ n
+  | .missing path => occurrences target (Path.trace program path) ≤ n
   | .found _ => True
 
 /-- Resume a split result to a complete path. -/
@@ -304,7 +299,7 @@ theorem valid_prependSame {next : P.B target → FreeM P α}
   cases result with
   | missing path =>
       change occurrences target
-        (⟨target, answer⟩ :: trace (next answer) path) ≤ n + 1
+        (⟨target, answer⟩ :: Path.trace (next answer) path) ≤ n + 1
       simpa [occurrences] using Nat.succ_le_succ hresult
   | found occurrence => trivial
 
@@ -314,8 +309,8 @@ theorem valid_prependOther {a : P.A} {next : P.B a → FreeM P α}
     (prependOther hne answer result).Valid := by
   cases result with
   | missing path =>
-      change occurrences target (trace (next answer) path) ≤ n at hresult
-      change occurrences target (⟨a, answer⟩ :: trace (next answer) path) ≤ n
+      change occurrences target (Path.trace (next answer) path) ≤ n at hresult
+      change occurrences target (⟨a, answer⟩ :: Path.trace (next answer) path) ≤ n
       simpa [occurrences, hne] using hresult
   | found occurrence => trivial
 
@@ -667,4 +662,4 @@ theorem forkAt_liftBind_other [DecidableEq P.A] {target a : P.A}
   rw [bind_map_right]
 
 
-end PFunctor.FreeM.Path
+end PFunctor.FreeM.Cursor
