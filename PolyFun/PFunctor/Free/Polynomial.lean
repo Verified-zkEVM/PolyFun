@@ -132,6 +132,64 @@ theorem encode_decode (x : (FreeP P).Obj α) : encode (decode x) = x := by
   rcases x with ⟨s, label⟩
   exact encode_decodeAt s label
 
+/-- Binding a decoded tree depends on a leaf label only through the
+continuation selected by that label. -/
+theorem decodeAt_bind {α β : Type uB}
+    (s : FreeM P PUnit.{uB + 1}) (label : FreeM.Path s → α)
+    (next : α → FreeM P β) :
+    FreeM.bind (decodeAt s label) next =
+      FreeM.bind (decodeAt s id) (fun path => next (label path)) := by
+  match s with
+  | .pure u =>
+      cases u
+      rfl
+  | .liftBind a rest =>
+      simp only [decodeAt, FreeM.bind]
+      apply congrArg (FreeM.liftBind a)
+      funext d
+      calc
+        FreeM.bind
+            (decodeAt (rest d)
+              (fun path => label (FreeM.Path.cons a rest d path))) next =
+            FreeM.bind (decodeAt (rest d) id) (fun path =>
+              next (label (FreeM.Path.cons a rest d path))) :=
+          decodeAt_bind (rest d)
+            (fun path => label (FreeM.Path.cons a rest d path)) next
+        _ = FreeM.bind
+            (decodeAt (rest d)
+              (fun path => FreeM.Path.cons a rest d path))
+            (fun path => next (label path)) :=
+          (decodeAt_bind (rest d)
+            (fun path => FreeM.Path.cons a rest d path)
+            (fun path => next (label path))).symm
+
+/-- Decoding a grafted tree with its path split as payload is ordinary
+free-monad bind of the separately decoded outer and inner trees. -/
+theorem decodeAt_append_split {α : Type uB}
+    (s : FreeM P PUnit.{uB + 1})
+    (next : FreeM.Path s → FreeM P PUnit.{uB + 1})
+    (label : ((path : FreeM.Path s) × FreeM.Path (next path)) → α) :
+    decodeAt (FreeM.append s next)
+        (fun path => label (FreeM.Path.split s next path)) =
+      FreeM.bind (decodeAt s id) (fun path =>
+        decodeAt (next path) (fun inner => label ⟨path, inner⟩)) := by
+  match s with
+  | .pure u =>
+      cases u
+      rfl
+  | .liftBind a rest =>
+      simp only [FreeM.append, decodeAt, FreeM.bind]
+      apply congrArg (FreeM.liftBind a)
+      funext d
+      exact (decodeAt_append_split (rest d)
+          (fun path => next (FreeM.Path.cons a rest d path))
+          (fun pair => label
+            ⟨FreeM.Path.cons a rest d pair.1, pair.2⟩)).trans
+        (decodeAt_bind (rest d)
+          (fun path => FreeM.Path.cons a rest d path)
+          (fun path => decodeAt (next path)
+            (fun inner => label ⟨path, inner⟩))).symm
+
 /-- Labelling the leaves of an unlabelled `P`-tree is equivalent to an
 ordinary free-monad computation. -/
 def objEquiv : (FreeP P).Obj α ≃ FreeM P α where

@@ -57,6 +57,25 @@ def comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunct
 
 @[inherit_doc] infixl:75 " ∘ₗ " => comp
 
+/-- Apply a polynomial lens to an element of the source polynomial's
+extension. The position is sent forward and the payload is pulled back along
+the lens's direction map. -/
+def mapObj {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (l : Lens P Q) {α : Type v} (x : P.Obj α) : Q.Obj α :=
+  ⟨l.toFunA x.1, x.2 ∘ l.toFunB x.1⟩
+
+@[simp]
+theorem mapObj_id {P : PFunctor.{uA, uB}} {α : Type v}
+    (x : P.Obj α) : mapObj (Lens.id P) x = x :=
+  rfl
+
+@[simp]
+theorem mapObj_comp {P : PFunctor.{uA₁, uB₁}}
+    {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
+    (g : Lens Q R) (f : Lens P Q) {α : Type v} (x : P.Obj α) :
+    mapObj (g ∘ₗ f) x = mapObj g (mapObj f x) :=
+  rfl
+
 /-- Diagrammatic composition of lenses: `l₁ ⨟ l₂` applies `l₁` first and `l₂`
 second, the book's left-to-right composition order, so `l₁ ⨟ l₂ = l₂ ∘ₗ l₁`.
 This is the same `⨟` used for machine sequential composition and throughout

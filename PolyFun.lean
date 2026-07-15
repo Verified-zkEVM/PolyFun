@@ -136,6 +136,7 @@ import PolyFun.PFunctor.Free.Path.Execution
 import PolyFun.PFunctor.Free.Polynomial
 import PolyFun.PFunctor.Free.Replicate
 import PolyFun.PFunctor.Free.Resumption
+import PolyFun.PFunctor.Free.Universal
 import PolyFun.PFunctor.Handler
 import PolyFun.PFunctor.InternalHom
 import PolyFun.PFunctor.Lens.Basic
@@ -148,4 +149,5 @@ import PolyFun.PFunctor.Lens.State
 import PolyFun.PFunctor.M
 import PolyFun.PFunctor.Resumption
 import PolyFun.PFunctor.SubstMonoid
+import PolyFun.PFunctor.SubstMonoid.Extension
 import PolyFun.PFunctor.Trace
