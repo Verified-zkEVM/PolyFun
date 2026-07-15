@@ -146,4 +146,5 @@ import PolyFun.PFunctor.Lens.Factorization
 import PolyFun.PFunctor.Lens.State
 import PolyFun.PFunctor.M
 import PolyFun.PFunctor.Resumption
+import PolyFun.PFunctor.SubstMonoid
 import PolyFun.PFunctor.Trace
