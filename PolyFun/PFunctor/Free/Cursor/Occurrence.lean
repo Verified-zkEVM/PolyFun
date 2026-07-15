@@ -142,6 +142,18 @@ structure Completion (occ : Occurrence target program n) where
 def Completion.path {occ : Occurrence target program n} (completion : Completion occ) :
     Path program := occ.plug completion.answer completion.suffix
 
+/-- Looking up the focused occurrence on a completion's erased trace returns
+the answer stored by that completion. -/
+@[simp] theorem getAt?_trace_completion_path [DecidableEq P.A]
+    (occ : Occurrence target program n) (completion : Completion occ) :
+    PFunctor.TraceList.getAt? (Path.trace program completion.path) target n =
+      some completion.answer := by
+  rw [Completion.path, trace_plug]
+  simpa only [before_count] using
+    (PFunctor.TraceList.getAt?_append_self_occurrences
+      occ.before (Path.trace (occ.resume completion.answer) completion.suffix)
+        target completion.answer)
+
 /-- Execute the focused query and its residual, retaining the typed completion. -/
 def complete (occ : Occurrence target program n) : FreeM P (Completion occ) :=
   FreeM.liftBind target fun answer =>

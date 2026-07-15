@@ -78,6 +78,66 @@ def occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (target : P.A) (events : TraceList P) : Nat :=
   events.countP fun (event : P.Idx) => event.1 = target
 
+/-- The answer carried by the `n`-th event at `target`, if that occurrence exists. -/
+def getAt? {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (events : TraceList P) (target : P.A) : Nat → Option (P.B target)
+  | n =>
+      match events, n with
+      | [], _ => none
+      | ⟨a, answer⟩ :: tail, 0 =>
+          if h : a = target then some (h ▸ answer) else getAt? tail target 0
+      | ⟨a, _⟩ :: tail, n + 1 =>
+          if a = target then getAt? tail target n else getAt? tail target (n + 1)
+
+@[simp] theorem getAt?_nil {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (target : P.A) (n : Nat) :
+    getAt? ([] : TraceList P) target n = none := rfl
+
+@[simp] theorem getAt?_cons_self_zero {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (target : P.A) (answer : P.B target) (tail : TraceList P) :
+    getAt? ((show P.Idx from ⟨target, answer⟩) :: tail) target 0 = some answer := by
+  simp [getAt?]
+
+@[simp] theorem getAt?_cons_self_succ {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (target : P.A) (answer : P.B target) (tail : TraceList P) (n : Nat) :
+    getAt? ((show P.Idx from ⟨target, answer⟩) :: tail) target (n + 1) =
+      getAt? tail target n := by
+  simp [getAt?]
+
+@[simp] theorem getAt?_cons_of_ne {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    {a target : P.A} (hne : a ≠ target) (answer : P.B a) (tail : TraceList P) (n : Nat) :
+    getAt? ((show P.Idx from ⟨a, answer⟩) :: tail) target n = getAt? tail target n := by
+  cases n <;> simp [getAt?, hne]
+
+/-- A dependent trace lookup succeeds exactly for the counted occurrences. -/
+@[simp] theorem getAt?_isSome_iff_lt_occurrences
+    {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (events : TraceList P) (target : P.A) (n : Nat) :
+    (getAt? events target n).isSome ↔ n < occurrences target events := by
+  induction events generalizing n with
+  | nil => simp [occurrences]
+  | cons event tail ih =>
+      rcases event with ⟨a, answer⟩
+      by_cases h : a = target
+      · subst a
+        cases n <;> simp [occurrences, ih]
+      · simp [occurrences, h, ih]
+
+/-- The event following a prefix is found at the prefix's occurrence count. -/
+theorem getAt?_append_self_occurrences
+    {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (before after : TraceList P) (target : P.A) (answer : P.B target) :
+    getAt? (List.append before ((show P.Idx from ⟨target, answer⟩) :: after)) target
+      (occurrences target before) = some answer := by
+  induction before with
+  | nil => simp [occurrences]
+  | cons event before ih =>
+      rcases event with ⟨a, prefixAnswer⟩
+      by_cases h : a = target
+      · subst a
+        simpa [occurrences] using ih
+      · simpa [occurrences, h] using ih
+
 end TraceList
 
 /--
