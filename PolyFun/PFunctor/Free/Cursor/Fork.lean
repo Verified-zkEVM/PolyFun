@@ -51,6 +51,14 @@ def ofCompletion {target : P.A} {program : FreeM P α} {n : Nat}
   completion := completion
   path_eq := rfl
 
+@[simp] theorem ofCompletion_occurrence {target : P.A} {program : FreeM P α} {n : Nat}
+    {occ : Occurrence target program n} (completion : occ.Completion) :
+    (ofCompletion completion).occurrence = occ := rfl
+
+@[simp] theorem ofCompletion_completion {target : P.A} {program : FreeM P α} {n : Nat}
+    {occ : Occurrence target program n} (completion : occ.Completion) :
+    (ofCompletion completion).completion = completion := rfl
+
 /-- Locate the root occurrence of a path. -/
 def here {target : P.A}
     (next : P.B target → FreeM P α) (answer : P.B target)
@@ -306,6 +314,38 @@ def secondOutput (selected : SelectedForkView target program κ index) : α :=
 def outputs (selected : SelectedForkView target program κ index) : α × α :=
   (selected.firstOutput, selected.secondOutput)
 
+@[simp] theorem firstOutput_mk (label : κ)
+    (view : ForkView target program (index label)) :
+    firstOutput (⟨label, view⟩ : SelectedForkView target program κ index) =
+      output program view.firstPath := rfl
+
+@[simp] theorem secondOutput_mk (label : κ)
+    (view : ForkView target program (index label)) :
+    secondOutput (⟨label, view⟩ : SelectedForkView target program κ index) =
+      output program view.secondPath := rfl
+
+@[simp] theorem outputs_mk (label : κ)
+    (view : ForkView target program (index label)) :
+    outputs (⟨label, view⟩ : SelectedForkView target program κ index) =
+      (output program view.firstPath, output program view.secondPath) := rfl
+
+/-- Retain a selected fork only when it belongs to a fixed selector fiber,
+transporting its dependent view to that fiber. -/
+def forLabel [DecidableEq κ] (label : κ)
+    (selected : SelectedForkView target program κ index) :
+    Option (ForkView target program (index label)) :=
+  if h : selected.label = label then some (h ▸ selected.view) else none
+
+@[simp] theorem forLabel_mk_self [DecidableEq κ] (label : κ)
+    (view : ForkView target program (index label)) :
+    forLabel label (⟨label, view⟩ : SelectedForkView target program κ index) = some view := by
+  simp [forLabel]
+
+@[simp] theorem forLabel_mk_of_ne [DecidableEq κ] {label other : κ}
+    (hne : other ≠ label) (view : ForkView target program (index other)) :
+    forLabel label (⟨other, view⟩ : SelectedForkView target program κ index) = none := by
+  simp [forLabel, hne]
+
 end SelectedForkView
 
 /-- Dynamically select an occurrence from the first output and fork its
@@ -350,6 +390,16 @@ def filterMapLocateAndForkAt [DecidableEq P.A] {β : Type*}
   FreeM.map (fun view? => view?.bind observe)
     (locateAndForkAt target program n)
 
+/-- Dynamically select an occurrence and retain its label and typed fork view,
+discarding selected views rejected by a pure optional classifier. -/
+def filterMapLocateAndForkSelected [DecidableEq P.A] {κ β : Type*}
+    (target : P.A) (program : FreeM P α)
+    (select : α → Option κ) (index : κ → Nat)
+    (observe : SelectedForkView target program κ index → Option β) :
+    FreeM P (Option β) :=
+  FreeM.map (fun selected? => selected?.bind observe)
+    (locateAndForkSelected target program select index)
+
 /-- Mapping an observation after dynamic fork selection fuses into the
 path-dependent observer. -/
 theorem map_locateAndForkBy [DecidableEq P.A] {κ β γ : Type*}
@@ -377,6 +427,32 @@ theorem map_locateAndForkBy [DecidableEq P.A] {κ β γ : Type*}
       rfl
     · simp only [hlocate]
       rw [FreeM.bind_pure_comp, ← FreeM.comp_map]
+
+/-- The selected-filter presentation is the dynamic observer presentation
+with the selector label and typed view packaged before classification. -/
+theorem filterMapLocateAndForkSelected_eq_filterMapLocateAndForkBy
+    [DecidableEq P.A] {κ β : Type*}
+    (target : P.A) (program : FreeM P α)
+    (select : α → Option κ) (index : κ → Nat)
+    (observe : SelectedForkView target program κ index → Option β) :
+    filterMapLocateAndForkSelected target program select index observe =
+      filterMapLocateAndForkBy target program select index
+        (fun label view => observe ⟨label, view⟩) := by
+  unfold filterMapLocateAndForkSelected locateAndForkSelected
+  rw [map_locateAndForkBy]
+  unfold filterMapLocateAndForkBy
+  rw [map_locateAndForkBy]
+  apply congrArg (FreeM.bind (withPath program))
+  funext path
+  rcases select (output program path) with _ | label
+  · simp
+  · rcases hlocate : locateAt? target program path (index label) with _ | located
+    · simp only [hlocate]
+      rfl
+    · simp only [hlocate]
+      apply congrArg (fun f => FreeM.map f located.fork)
+      funext view
+      rfl
 
 /-- Eliminate a dynamically selected optional fork into its first path and
 one independently sampled completion. -/
