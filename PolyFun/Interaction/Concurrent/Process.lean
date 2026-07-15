@@ -654,7 +654,7 @@ abbrev Labeled (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
 /-- The underlying process of a labeled process. -/
 abbrev Labeled.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     (labeled : Labeled Γ) : ProcessOver labeled.State Γ :=
-  labeled.toMachine.behavior
+  labeled.toDynSystem
 
 /--
 `ProcessOver.Ticketed` is a process equipped with a stable ticket for each
@@ -672,7 +672,7 @@ abbrev Ticketed (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
 /-- The underlying process of a ticketed process. -/
 abbrev Ticketed.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     (ticketed : Ticketed Γ) : ProcessOver ticketed.State Γ :=
-  ticketed.toMachine.behavior
+  ticketed.toDynSystem
 
 /--
 `ProcessOver.SafetySpec Γ` is a process-level safety-verification problem:
@@ -685,7 +685,7 @@ abbrev SafetySpec (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
 /-- The underlying process of a verification-oriented system. -/
 abbrev SafetySpec.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
     (system : SafetySpec Γ) : ProcessOver system.State Γ :=
-  system.toMachine.behavior
+  system.toDynSystem
 
 /-- The residual state space of a system's underlying process. -/
 abbrev SafetySpec.Proc {Γ : Interaction.Spec.Node.Context.{w, w₂}}

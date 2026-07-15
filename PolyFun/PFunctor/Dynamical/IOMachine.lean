@@ -67,7 +67,7 @@ namespace DynSystem
 /-- An **input/output machine** over the interface `p`: a bundled `Machine p`
 initialized by an `init` map and read out by a partial `output` (`none` while still
 running). The interface-agnostic form of VCVio's `OracleMachine`. The dynamical
-core is `toMachine.behavior`; bundling the state set lets runs and composition
+core is `.toDynSystem`; bundling the state set lets runs and composition
 be stated without threading the state type. -/
 structure IOMachine (p : PFunctor.{uA, uB}) (α : Type uα) (β : Type uβ)
     extends Machine.{u} p where
@@ -92,7 +92,7 @@ The carrier stores the returned value itself. Consequently `init` applies `f`,
 value unchanged. -/
 def pureAt (point : Point p) (f : α → β) : IOMachine.{uβ} p α β where
   State := β
-  behavior := (fun _ => point.toFunA PUnit.unit) ⇆ fun b _ => b
+  toDynSystem := (fun _ => point.toFunA PUnit.unit) ⇆ fun b _ => b
   init := f
   output := some
 
@@ -100,11 +100,11 @@ def pureAt (point : Point p) (f : α → β) : IOMachine.{uβ} p α β where
     (pureAt point f).State = β := rfl
 
 @[simp] theorem pureAt_expose (point : Point p) (f : α → β) (b : β) :
-    (pureAt point f).toMachine.behavior.expose b = point.toFunA PUnit.unit := rfl
+    (pureAt point f).toDynSystem.expose b = point.toFunA PUnit.unit := rfl
 
 @[simp] theorem pureAt_update (point : Point p) (f : α → β) (b : β)
     (d : p.B (point.toFunA PUnit.unit)) :
-    (pureAt point f).toMachine.behavior.update b d = b := rfl
+    (pureAt point f).toDynSystem.update b d = b := rfl
 
 @[simp] theorem pureAt_init (point : Point p) (f : α → β) (x : α) :
     (pureAt point f).init x = f x := rfl
@@ -128,12 +128,13 @@ def contramapInput (M : IOMachine.{u} p α β) (f : γ → α) :
 
 @[simp] theorem contramapInput_expose (f : γ → α) (M : IOMachine.{u} p α β)
     (st : M.State) :
-    (M.contramapInput f).toMachine.behavior.expose st =
-      M.toMachine.behavior.expose st := rfl
+    (M.contramapInput f).toDynSystem.expose st =
+      M.toDynSystem.expose st := rfl
 
 @[simp] theorem contramapInput_update (f : γ → α) (M : IOMachine.{u} p α β)
-    (st : M.State) (d : p.B (M.toMachine.behavior.expose st)) :
-    (M.contramapInput f).toMachine.behavior.update st d = M.toMachine.behavior.update st d := rfl
+    (st : M.State) (d : p.B (M.toDynSystem.expose st)) :
+    (M.contramapInput f).toDynSystem.update st d =
+      M.toDynSystem.update st d := rfl
 
 @[simp] theorem contramapInput_id (M : IOMachine.{u} p α β) :
     M.contramapInput id = M := rfl
@@ -161,12 +162,12 @@ def mapOutput (M : IOMachine.{u} p α β) (f : β → γ) :
 
 @[simp] theorem mapOutput_expose (f : β → γ) (M : IOMachine.{u} p α β)
     (st : M.State) :
-    (M.mapOutput f).toMachine.behavior.expose st =
-      M.toMachine.behavior.expose st := rfl
+    (M.mapOutput f).toDynSystem.expose st =
+      M.toDynSystem.expose st := rfl
 
 @[simp] theorem mapOutput_update (f : β → γ) (M : IOMachine.{u} p α β)
-    (st : M.State) (d : p.B (M.toMachine.behavior.expose st)) :
-    (M.mapOutput f).toMachine.behavior.update st d = M.toMachine.behavior.update st d := rfl
+    (st : M.State) (d : p.B (M.toDynSystem.expose st)) :
+    (M.mapOutput f).toDynSystem.update st d = M.toDynSystem.update st d := rfl
 
 @[simp] theorem mapOutput_id (M : IOMachine.{u} p α β) : M.mapOutput id = M := by
   cases M with
@@ -204,12 +205,12 @@ def dimap (M : IOMachine.{u} p α β) (f : γ → α) (g : β → mid) :
 
 @[simp] theorem dimap_expose (M : IOMachine.{u} p α β) (f : γ → α)
     (g : β → mid) (st : M.State) :
-    (M.dimap f g).toMachine.behavior.expose st =
-      M.toMachine.behavior.expose st := rfl
+    (M.dimap f g).toDynSystem.expose st =
+      M.toDynSystem.expose st := rfl
 
 @[simp] theorem dimap_update (M : IOMachine.{u} p α β) (f : γ → α)
-    (g : β → mid) (st : M.State) (d : p.B (M.toMachine.behavior.expose st)) :
-    (M.dimap f g).toMachine.behavior.update st d = M.toMachine.behavior.update st d := rfl
+    (g : β → mid) (st : M.State) (d : p.B (M.toDynSystem.expose st)) :
+    (M.dimap f g).toDynSystem.update st d = M.toDynSystem.update st d := rfl
 
 @[simp] theorem dimap_id (M : IOMachine.{u} p α β) : M.dimap id id = M := by
   simp [dimap]
@@ -228,7 +229,7 @@ def dimap (M : IOMachine.{u} p α β) (f : γ → α) (g : β → mid) :
 /-- Transport an input/output machine along a lens between interaction interfaces.
 The initial states and partial readout are unchanged. -/
 def wrap (M : IOMachine.{u} p α β) (w : Lens p q) : IOMachine.{u} q α β where
-  toMachine := { M.toMachine with behavior := M.toMachine.behavior ⨟ w }
+  toMachine := { M.toMachine with toDynSystem := M.toDynSystem ⨟ w }
   init := M.init
   output := M.output
 
@@ -241,14 +242,14 @@ def wrap (M : IOMachine.{u} p α β) (w : Lens p q) : IOMachine.{u} q α β wher
 @[simp] theorem wrap_output (w : Lens p q) (M : IOMachine.{u} p α β) (st : M.State) :
     (M.wrap w).output st = M.output st := rfl
 
-@[simp] theorem wrap_behavior (w : Lens p q) (M : IOMachine.{u} p α β) :
-    (M.wrap w).toMachine.behavior = M.toMachine.behavior ⨟ w := rfl
+@[simp] theorem wrap_toDynSystem (w : Lens p q) (M : IOMachine.{u} p α β) :
+    (M.wrap w).toDynSystem = M.toDynSystem ⨟ w := rfl
 
 @[simp] theorem wrap_update (w : Lens p q) (M : IOMachine.{u} p α β)
-    (st : M.State) (d : q.B (w.toFunA (M.toMachine.behavior.expose st))) :
-    DynSystem.update (M.toMachine.behavior ⨟ w) st d =
-      M.toMachine.behavior.update st
-        (w.toFunB (M.toMachine.behavior.expose st) d) := rfl
+    (st : M.State) (d : q.B (w.toFunA (M.toDynSystem.expose st))) :
+    DynSystem.update (M.toDynSystem ⨟ w) st d =
+      M.toDynSystem.update st
+        (w.toFunB (M.toDynSystem.expose st) d) := rfl
 
 @[simp] theorem wrap_id (M : IOMachine.{u} p α β) : M.wrap (Lens.id p) = M := rfl
 
@@ -268,15 +269,15 @@ left-associative; this fixes how chains parse, rather than asserting
 definitional associativity. -/
 def seqComp (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β) : IOMachine p α β where
   State := M₁.State ⊕ M₂.State
-  behavior := (fun s => match s with
-    | Sum.inl s₁ => M₁.toMachine.behavior.expose s₁
-    | Sum.inr s₂ => M₂.toMachine.behavior.expose s₂) ⇆ fun s => match s with
+  toDynSystem := (fun s => match s with
+    | Sum.inl s₁ => M₁.toDynSystem.expose s₁
+    | Sum.inr s₂ => M₂.toDynSystem.expose s₂) ⇆ fun s => match s with
     | Sum.inl s₁ => fun d =>
-        let s₁' := M₁.toMachine.behavior.update s₁ d
+        let s₁' := M₁.toDynSystem.update s₁ d
         match M₁.output s₁' with
         | some m => Sum.inr (M₂.init m)
         | none => Sum.inl s₁'
-    | Sum.inr s₂ => fun d => Sum.inr (M₂.toMachine.behavior.update s₂ d)
+    | Sum.inr s₂ => fun d => Sum.inr (M₂.toDynSystem.update s₂ d)
   init := fun x =>
     match M₁.output (M₁.init x) with
     | some m => Sum.inr (M₂.init m)
@@ -296,13 +297,13 @@ resolution, blocking rewriting through it). -/
 
 @[simp] theorem seqComp_expose_inr (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β)
     (s₂ : M₂.State) :
-    (M₁ ⨟ M₂).toMachine.behavior.expose (Sum.inr s₂) =
-      M₂.toMachine.behavior.expose s₂ := rfl
+    (M₁ ⨟ M₂).toDynSystem.expose (Sum.inr s₂) =
+      M₂.toDynSystem.expose s₂ := rfl
 
 @[simp] theorem seqComp_expose_inl (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β)
     (s₁ : M₁.State) :
-    (M₁ ⨟ M₂).toMachine.behavior.expose (Sum.inl s₁) =
-      M₁.toMachine.behavior.expose s₁ := rfl
+    (M₁ ⨟ M₂).toDynSystem.expose (Sum.inl s₁) =
+      M₁.toDynSystem.expose s₁ := rfl
 
 @[simp] theorem seqComp_init (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β)
     (x : α) : (M₁ ⨟ M₂).init x =
@@ -317,16 +318,16 @@ resolution, blocking rewriting through it). -/
     (s₁ : M₁.State) : (M₁ ⨟ M₂).output (Sum.inl s₁) = none := rfl
 
 @[simp] theorem seqComp_update_inr (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β)
-    (s₂ : M₂.State) (d : p.B (M₂.toMachine.behavior.expose s₂)) :
-    (M₁ ⨟ M₂).toMachine.behavior.update (Sum.inr s₂) d =
-      Sum.inr (M₂.toMachine.behavior.update s₂ d) := rfl
+    (s₂ : M₂.State) (d : p.B (M₂.toDynSystem.expose s₂)) :
+    (M₁ ⨟ M₂).toDynSystem.update (Sum.inr s₂) d =
+      Sum.inr (M₂.toDynSystem.update s₂ d) := rfl
 
 @[simp] theorem seqComp_update_inl (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β)
-    (s₁ : M₁.State) (d : p.B (M₁.toMachine.behavior.expose s₁)) :
-    (M₁ ⨟ M₂).toMachine.behavior.update (Sum.inl s₁) d =
-      match M₁.output (M₁.toMachine.behavior.update s₁ d) with
+    (s₁ : M₁.State) (d : p.B (M₁.toDynSystem.expose s₁)) :
+    (M₁ ⨟ M₂).toDynSystem.update (Sum.inl s₁) d =
+      match M₁.output (M₁.toDynSystem.update s₁ d) with
       | some m => Sum.inr (M₂.init m)
-      | none => Sum.inl (M₁.toMachine.behavior.update s₁ d) := rfl
+      | none => Sum.inl (M₁.toDynSystem.update s₁ d) := rfl
 
 /-! ## Fuelled unrolling -/
 
@@ -339,8 +340,8 @@ def toComp (M : IOMachine p α β) : ℕ → M.State → FreeM p (Option β)
   | 0, st => FreeM.pure (M.output st)
   | k + 1, st => match M.output st with
     | some b => FreeM.pure (some b)
-    | none => FreeM.liftBind (M.toMachine.behavior.expose st)
-        (fun d => M.toComp k (M.toMachine.behavior.update st d))
+    | none => FreeM.liftBind (M.toDynSystem.expose st)
+        (fun d => M.toComp k (M.toDynSystem.update st d))
 
 @[simp] theorem toComp_zero (M : IOMachine p α β) (st : M.State) :
     M.toComp 0 st = FreeM.pure (M.output st) := rfl
@@ -349,8 +350,8 @@ def toComp (M : IOMachine p α β) : ℕ → M.State → FreeM p (Option β)
 theorem toComp_succ (M : IOMachine p α β) (k : ℕ) (st : M.State) :
     M.toComp (k + 1) st = (match M.output st with
       | some b => FreeM.pure (some b)
-      | none => FreeM.liftBind (M.toMachine.behavior.expose st)
-          (fun d => M.toComp k (M.toMachine.behavior.update st d))) := rfl
+      | none => FreeM.liftBind (M.toDynSystem.expose st)
+          (fun d => M.toComp k (M.toDynSystem.update st d))) := rfl
 
 /-- The syntactic execution of a machine on an input, packaging the ubiquitous
 `toComp k (init x)` composite as a Kleisli-style map. -/
@@ -385,7 +386,7 @@ theorem isTotalRollBound_toComp (M : IOMachine p α β) (k : ℕ) (st : M.State)
       · simp
       · simp only [FreeM.liftBind_eq, FreeM.isTotalRollBound_lift_bind_iff, Nat.zero_lt_succ,
           Nat.add_sub_cancel]
-        exact ⟨trivial, fun d => ih (M.toMachine.behavior.update st d)⟩
+        exact ⟨trivial, fun d => ih (M.toDynSystem.update st d)⟩
 
 /-- First phase, one step: while in `M₁` (a left state), `seqComp` exposes `M₁`'s
 position and, after `M₁`'s update, hands off to `M₂` exactly when `M₁` produces an
@@ -398,10 +399,10 @@ needs. -/
 theorem toComp_seqComp_inl (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β)
     (k : ℕ) (s₁ : M₁.State) :
     (M₁ ⨟ M₂).toComp (k + 1) (Sum.inl s₁)
-      = FreeM.liftBind (M₁.toMachine.behavior.expose s₁) (fun d =>
-          (M₁ ⨟ M₂).toComp k (match M₁.output (M₁.toMachine.behavior.update s₁ d) with
+      = FreeM.liftBind (M₁.toDynSystem.expose s₁) (fun d =>
+          (M₁ ⨟ M₂).toComp k (match M₁.output (M₁.toDynSystem.update s₁ d) with
             | some m => Sum.inr (M₂.init m)
-            | none => Sum.inl (M₁.toMachine.behavior.update s₁ d))) := rfl
+            | none => Sum.inl (M₁.toDynSystem.update s₁ d))) := rfl
 
 /-- Faithfulness of the second phase: once `seqComp` has handed off to `M₂`, its
 unrolling coincides with `M₂`'s. -/
@@ -415,15 +416,15 @@ theorem toComp_seqComp_inr (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid �
     -- one-step unrolling of the left side is defeq to this `M₂`-flavoured form.
     change (match M₂.output s₂ with
           | some b => FreeM.pure (some b)
-          | none => FreeM.liftBind (M₂.toMachine.behavior.expose s₂)
-              (fun d => (M₁ ⨟ M₂).toComp k (Sum.inr (M₂.toMachine.behavior.update s₂ d))))
+          | none => FreeM.liftBind (M₂.toDynSystem.expose s₂)
+              (fun d => (M₁ ⨟ M₂).toComp k (Sum.inr (M₂.toDynSystem.update s₂ d))))
         = M₂.toComp (k + 1) s₂
     rw [toComp_succ]
     cases M₂.output s₂ with
     | some b => rfl
     | none =>
-      exact congrArg (FreeM.liftBind (M₂.toMachine.behavior.expose s₂))
-        (funext fun d => ih (M₂.toMachine.behavior.update s₂ d))
+      exact congrArg (FreeM.liftBind (M₂.toDynSystem.expose s₂))
+        (funext fun d => ih (M₂.toDynSystem.update s₂ d))
 
 /-- A chosen-position pure machine is a left identity for sequential
 composition at the input-level syntactic semantics. The machine structures are
@@ -467,13 +468,13 @@ sequential composition at the input-level syntactic semantics. -/
         | none =>
             simp only [embed, hout]
             rw [toComp_succ, toComp_succ, seqComp_output_inl, hout]
-            change FreeM.liftBind (M.toMachine.behavior.expose st) _ =
-              FreeM.liftBind (M.toMachine.behavior.expose st) _
-            exact congrArg (FreeM.liftBind (M.toMachine.behavior.expose st)) (funext fun d => by
+            change FreeM.liftBind (M.toDynSystem.expose st) _ =
+              FreeM.liftBind (M.toDynSystem.expose st) _
+            exact congrArg (FreeM.liftBind (M.toDynSystem.expose st)) (funext fun d => by
               rw [seqComp_update_inl]
-              cases hnext : M.output (M.toMachine.behavior.update st d) with
-              | some b => simpa [embed, hnext] using ih (M.toMachine.behavior.update st d)
-              | none => simpa [embed, hnext] using ih (M.toMachine.behavior.update st d))
+              cases hnext : M.output (M.toDynSystem.update st d) with
+              | some b => simpa [embed, hnext] using ih (M.toDynSystem.update st d)
+              | none => simpa [embed, hnext] using ih (M.toDynSystem.update st d))
   change (M ⨟ pureAt point id).toComp k
       (match M.output (M.init x) with
         | some b => Sum.inr b
@@ -492,7 +493,7 @@ the syntactic monad `m := FreeM p`, where the run *is* the unrolling. -/
 /-- Every answer path of the `k`-query unrolling from `st` reads out. -/
 def ResolvesIn (M : IOMachine p α β) : ℕ → M.State → Prop
   | 0, st => (M.output st).isSome
-  | k + 1, st => (M.output st).isSome ∨ ∀ d, M.ResolvesIn k (M.toMachine.behavior.update st d)
+  | k + 1, st => (M.output st).isSome ∨ ∀ d, M.ResolvesIn k (M.toDynSystem.update st d)
 
 @[simp] theorem resolvesIn_zero (M : IOMachine p α β) (st : M.State) :
     M.ResolvesIn 0 st ↔ (M.output st).isSome := Iff.rfl
@@ -500,7 +501,7 @@ def ResolvesIn (M : IOMachine p α β) : ℕ → M.State → Prop
 @[simp, grind =]
 theorem resolvesIn_succ_iff (M : IOMachine p α β) (k : ℕ) (st : M.State) :
     M.ResolvesIn (k + 1) st ↔
-      (M.output st).isSome ∨ ∀ d, M.ResolvesIn k (M.toMachine.behavior.update st d) := Iff.rfl
+      (M.output st).isSome ∨ ∀ d, M.ResolvesIn k (M.toDynSystem.update st d) := Iff.rfl
 
 /-- A resolved state resolves within any budget: the readout is free. -/
 theorem ResolvesIn.of_output_isSome {M : IOMachine p α β} {st : M.State}
@@ -541,13 +542,13 @@ theorem resolvesIn_of_toComp_eq_map_some {M : IOMachine p α β} :
       rw [toComp_succ, hout] at h
       cases z with
       | pure b =>
-        have h' : FreeM.liftBind (M.toMachine.behavior.expose st)
-              (fun d => M.toComp k (M.toMachine.behavior.update st d)) =
+        have h' : FreeM.liftBind (M.toDynSystem.expose st)
+              (fun d => M.toComp k (M.toDynSystem.update st d)) =
             FreeM.pure (some b) := h
         simp at h'
       | liftBind a f =>
-        have h' : FreeM.liftBind (M.toMachine.behavior.expose st)
-              (fun d => M.toComp k (M.toMachine.behavior.update st d)) =
+        have h' : FreeM.liftBind (M.toDynSystem.expose st)
+              (fun d => M.toComp k (M.toDynSystem.update st d)) =
             FreeM.liftBind a (fun d => some <$> f d) := h
         obtain ⟨rfl, hf⟩ := (FreeM.liftBind_inj _ _ _ _).mp h'
         exact Or.inr fun d =>
@@ -569,16 +570,16 @@ theorem toComp_eq_map_some_of_resolvesIn {M : IOMachine p α β} :
     cases hout : M.output st with
     | some b => exact ⟨FreeM.pure b, by rw [toComp_succ, hout]; rfl⟩
     | none =>
-      have hnext : ∀ d, M.ResolvesIn k (M.toMachine.behavior.update st d) := by
+      have hnext : ∀ d, M.ResolvesIn k (M.toDynSystem.update st d) := by
         rcases h with h | h
         · simp [hout] at h
         · exact h
       classical
       choose z hz using fun d =>
         toComp_eq_map_some_of_resolvesIn (hnext d)
-      exact ⟨FreeM.liftBind (M.toMachine.behavior.expose st) z, by
+      exact ⟨FreeM.liftBind (M.toDynSystem.expose st) z, by
         rw [toComp_succ, hout]
-        exact congrArg (FreeM.liftBind (M.toMachine.behavior.expose st)) (funext hz)⟩
+        exact congrArg (FreeM.liftBind (M.toDynSystem.expose st)) (funext hz)⟩
 
 /-- A machine resolves within `k` queries exactly when its `k`-query unrolling
 is a value tree with `some` at every leaf. -/
@@ -597,7 +598,7 @@ The universal quantifier over directions in `ResolvesIn` disappears because
 theorem resolvesIn_iff_exists_le_iterate_output_isSome
     (M : IOMachine X.{uA, uB} α β) (k : ℕ) (st : M.State) :
     M.ResolvesIn k st ↔
-      ∃ j ≤ k, (M.output (Closed.iterate M.toMachine.behavior st j)).isSome := by
+      ∃ j ≤ k, (M.output (Closed.iterate M.toDynSystem st j)).isSome := by
   induction k generalizing st with
   | zero => simp
   | succ k ih =>
@@ -606,7 +607,7 @@ theorem resolvesIn_iff_exists_le_iterate_output_isSome
       · rintro (h | h)
         · exact ⟨0, by omega, by simpa⟩
         · obtain ⟨j, hj, hout⟩ :=
-            (ih (M.toMachine.behavior.update st PUnit.unit)).mp (h PUnit.unit)
+            (ih (M.toDynSystem.update st PUnit.unit)).mp (h PUnit.unit)
           exact ⟨j + 1, by omega, by
             simpa [Closed.iterate_succ, Closed.step] using hout⟩
       · rintro ⟨j, hj, hout⟩
@@ -617,7 +618,7 @@ theorem resolvesIn_iff_exists_le_iterate_output_isSome
             intro d
             have hd : d = PUnit.unit := Subsingleton.elim _ _
             subst d
-            apply (ih (M.toMachine.behavior.update st PUnit.unit)).mpr
+            apply (ih (M.toDynSystem.update st PUnit.unit)).mpr
             exact ⟨j, by omega, by
               simpa [Closed.iterate_succ, Closed.step] using hout⟩
 
@@ -626,7 +627,7 @@ some state on its autonomous trajectory has a readable output. -/
 theorem exists_resolvesIn_iff_exists_iterate_output_isSome
     (M : IOMachine X.{uA, uB} α β) (st : M.State) :
     (∃ k, M.ResolvesIn k st) ↔
-      ∃ j, (M.output (Closed.iterate M.toMachine.behavior st j)).isSome := by
+      ∃ j, (M.output (Closed.iterate M.toDynSystem st j)).isSome := by
   constructor
   · rintro ⟨k, hk⟩
     obtain ⟨j, _, hj⟩ := (M.resolvesIn_iff_exists_le_iterate_output_isSome k st).mp hk
@@ -664,7 +665,7 @@ theorem ResolvesIn.seqComp_inl {M₁ : IOMachine p α mid}
     · rw [show k₁ + 1 + k₂ = (k₁ + k₂) + 1 by omega,
           resolvesIn_succ_iff]
       exact Or.inr fun d => by
-        cases hd : M₁.output (M₁.toMachine.behavior.update s₁ d) with
+        cases hd : M₁.output (M₁.toDynSystem.update s₁ d) with
         | some y =>
           simp only [seqComp_update_inl, hd]
           exact (h₂ y).seqComp_inr.mono (by omega)
@@ -765,8 +766,8 @@ VCVio's `runLimit_fix`. -/
 theorem runWith_succ (M : IOMachine q α β) (h : Handler m q) (k : ℕ) (s : M.State) :
     M.runWith h (k + 1) s = (match M.output s with
       | some b => pure (some b)
-      | none => h (M.toMachine.behavior.expose s) >>= fun d =>
-          M.runWith h k (M.toMachine.behavior.update s d)) := by
+      | none => h (M.toDynSystem.expose s) >>= fun d =>
+          M.runWith h k (M.toDynSystem.update s d)) := by
   unfold runWith
   rw [toComp_succ]
   cases M.output s <;> rfl
@@ -785,8 +786,8 @@ theorem runWith_of_output_eq_some (M : IOMachine q α β) (h : Handler m q) (k :
 /-- One-step unfolding on an unresolved state: answer the exposed query, recurse. -/
 theorem runWith_succ_of_output_eq_none (M : IOMachine q α β) (h : Handler m q)
     {s : M.State} (hb : M.output s = none) (k : ℕ) :
-    M.runWith h (k + 1) s = h (M.toMachine.behavior.expose s) >>= fun d =>
-      M.runWith h k (M.toMachine.behavior.update s d) := by
+    M.runWith h (k + 1) s = h (M.toDynSystem.expose s) >>= fun d =>
+      M.runWith h k (M.toDynSystem.update s d) := by
   rw [runWith_succ, hb]
 
 /-- **Fuel irrelevance beyond resolution**: once the unrolling resolves within `j`
@@ -846,7 +847,7 @@ theorem runWith_seqComp_inl [LawfulMonad m] (M₁ : IOMachine q α mid)
         (M₁ ⨟ M₂).runWith_succ_of_output_eq_none h (seqComp_output_inl M₁ M₂ s₁) _,
         M₁.runWith_succ_of_output_eq_none h hout, bind_assoc]
       refine bind_congr fun d => ?_
-      cases hd : M₁.output (M₁.toMachine.behavior.update s₁ d) with
+      cases hd : M₁.output (M₁.toDynSystem.update s₁ d) with
       | some y =>
         simp only [seqComp_update_inl, hd]
         rw [runWith_seqComp_inr, runWith_eq_of_resolvesIn M₂ h (hres₂ y) (by omega),

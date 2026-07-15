@@ -26,19 +26,20 @@ def toggle : DynSystem Bool X.{0, 0} :=
 /-- A safety problem with one initial state and default-true policy predicates. -/
 def toggleSafety : DynSystem.SafetySpec X.{0, 0} where
   State := Bool
-  behavior := toggle
+  toDynSystem := toggle
   init state := state = false
 
 example : toggleSafety.init false := rfl
 example (state : Bool) : toggleSafety.assumptions state := trivial
 example (state : Bool) : toggleSafety.safe state := trivial
-example (state : Bool) : toggleSafety.toMachine.behavior.expose state = toggle.expose state := rfl
-example (state : Bool) : toggleSafety.toMachine.behavior.update state PUnit.unit = !state := rfl
+example (state : Bool) :
+    toggleSafety.toDynSystem.expose state = toggle.expose state := rfl
+example (state : Bool) : toggleSafety.toDynSystem.update state PUnit.unit = !state := rfl
 
 /-- Event labels may expose stable information about the source transition. -/
 def toggleLabeled : DynSystem.Labeled X.{0, 0} where
   State := Bool
-  behavior := toggle
+  toDynSystem := toggle
   Event := Bool
   event state _ := state
 
@@ -47,7 +48,7 @@ example (state : Bool) : toggleLabeled.event state PUnit.unit = state := rfl
 /-- Tickets may identify scheduling obligations independently of directions. -/
 def toggleTicketed : DynSystem.Ticketed X.{0, 0} where
   State := Bool
-  behavior := toggle
+  toDynSystem := toggle
   Ticket := Unit
   ticket _ _ := ()
 

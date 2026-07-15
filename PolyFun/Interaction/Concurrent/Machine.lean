@@ -122,11 +122,11 @@ the same initial-state, assumption, and safety predicates.
 -/
 def SafetySpec.toProcess {Party : Type u} (system : Machine.SafetySpec)
     (semantics : (σ : system.State) →
-      NodeProfile Party (system.toMachine.behavior.expose σ)) :
+      NodeProfile Party (system.toDynSystem.expose σ)) :
     Process.SafetySpec Party :=
   { system with toMachine :=
       { system.toMachine with
-        behavior := Machine.toProcess system.toMachine.behavior semantics } }
+        toDynSystem := Machine.toProcess system.toDynSystem semantics } }
 
 end Machine
 end Concurrent

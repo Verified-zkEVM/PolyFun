@@ -210,7 +210,7 @@ instances of this law at concrete monads (`m := SPMF` for VCVio's wiring). -/
 theorem runWith_run_succ_of_output_eq_none [LawfulMonad m] (M : DynSystem.IOMachine q α β)
     (h : Handler (StateT σ m) q) {s : M.State} (hs : M.output s = none) (k : ℕ) (t : σ) :
     (M.runWith h (k + 1) s).run t
-      = DynSystem.stepWith h M.toMachine.behavior (t, s) >>=
+      = DynSystem.stepWith h M.toDynSystem (t, s) >>=
           fun p => (M.runWith h k p.2).run p.1 := by
   rw [M.runWith_succ_of_output_eq_none h hs k]
   simp only [DynSystem.stepWith, bind_map_left]

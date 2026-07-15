@@ -251,12 +251,12 @@ end StepRel
 
 /-- A dynamical system with its state type bundled. Specialized bundles such as
 `IOMachine`, `Labeled`, `Ticketed`, and `SafetySpec` extend this common core, so
-their underlying dynamics are uniformly available as `toMachine.behavior`. -/
+their underlying dynamics are uniformly available as `.toDynSystem`. -/
 structure Machine (p : PFunctor.{uA, uB}) where
   /-- The state type of the machine. -/
   State : Type u
-  /-- The dynamical behavior on the bundled state type. -/
-  behavior : DynSystem State p
+  /-- The dynamical system on the bundled state type. -/
+  toDynSystem : DynSystem State p
 
 end DynSystem
 

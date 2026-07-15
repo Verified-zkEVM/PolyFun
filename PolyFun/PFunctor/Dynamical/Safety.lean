@@ -62,7 +62,7 @@ structure Labeled (p : PFunctor.{uA, uB}) extends Machine.{u} p where
   /-- The type of observable external event labels. -/
   Event : Type w
   /-- The assignment of an event label to each transition. -/
-  event : toMachine.behavior.EventMap Event
+  event : toMachine.toDynSystem.EventMap Event
 
 /-- A dynamical system equipped with a stable ticket for each transition. This
 is the entry point for fairness and liveness statements. -/
@@ -72,7 +72,7 @@ structure Ticketed (p : PFunctor.{uA, uB}) extends Machine.{u} p where
   /-- The type of stable scheduling-obligation identifiers. -/
   Ticket : Type w
   /-- The assignment of a ticket to each transition. -/
-  ticket : toMachine.behavior.Tickets Ticket
+  ticket : toMachine.toDynSystem.Tickets Ticket
 
 /-- A safety-verification problem: dynamics together with initial states,
 ambient assumptions, and the state predicate to be established.

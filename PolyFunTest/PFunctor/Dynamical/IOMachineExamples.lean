@@ -60,23 +60,23 @@ example (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β) (s₂ : M₂.Sta
 /-- The first phase exposes `M₁` and hands off to `M₂` exactly on `M₁`'s output. -/
 example (M₁ : IOMachine p α mid) (M₂ : IOMachine p mid β) (s₁ : M₁.State) :
     (M₁ ⨟ M₂).toComp 1 (Sum.inl s₁)
-      = FreeM.liftBind (M₁.toMachine.behavior.expose s₁) (fun d =>
-          (M₁ ⨟ M₂).toComp 0 (match M₁.output (M₁.toMachine.behavior.update s₁ d) with
+      = FreeM.liftBind (M₁.toDynSystem.expose s₁) (fun d =>
+          (M₁ ⨟ M₂).toComp 0 (match M₁.output (M₁.toDynSystem.update s₁ d) with
             | some m => Sum.inr (M₂.init m)
-            | none => Sum.inl (M₁.toMachine.behavior.update s₁ d))) :=
+            | none => Sum.inl (M₁.toDynSystem.update s₁ d))) :=
   IOMachine.toComp_seqComp_inl M₁ M₂ 0 s₁
 
 /-- A machine that halts immediately with output `b`. -/
 def haltMachine (b : β) : IOMachine X.{u, u} α β where
   State := PUnit
-  behavior := (fun _ => PUnit.unit) ⇆ fun _ _ => PUnit.unit
+  toDynSystem := (fun _ => PUnit.unit) ⇆ fun _ _ => PUnit.unit
   init := fun _ => PUnit.unit
   output := fun _ => some b
 
 /-- A machine that makes exactly one query before returning `b`. -/
 def oneQueryMachine (b : β) : IOMachine X.{u, u} α β where
   State := Bool
-  behavior := (fun _ => PUnit.unit) ⇆ fun _ _ => true
+  toDynSystem := (fun _ => PUnit.unit) ⇆ fun _ _ => true
   init := fun _ => false
   output := fun
     | false => none
@@ -202,7 +202,7 @@ interface `X`. Its input selects the initial natural-number state, its unique
 direction advances one Collatz step, and it reads out upon reaching `1`. -/
 def machine : IOMachine.{0, 0, 0, 0, 0} X.{0, 0} ℕ PUnit where
   State := ℕ
-  behavior := (fun _ => PUnit.unit) ⇆ fun n _ => step n
+  toDynSystem := (fun _ => PUnit.unit) ⇆ fun n _ => step n
   init := id
   output := fun n => if n = 1 then some PUnit.unit else none
 
@@ -246,7 +246,7 @@ end Collatz
 def universeSeparatedMachine {α : Type v} {β : Type w} (b : β) :
     IOMachine X.{0, 0} α β where
   State := Bool
-  behavior := (fun _ => PUnit.unit) ⇆ fun state _ => state
+  toDynSystem := (fun _ => PUnit.unit) ⇆ fun state _ => state
   init := fun _ => false
   output := fun _ => some b
 
@@ -256,7 +256,7 @@ homogeneous monad. -/
 def universeSeparatedOneQueryMachine {input : Type v} {out : Type w} (b : out) :
     IOMachine X.{0, w} input out where
   State := Bool
-  behavior := (fun _ => PUnit.unit) ⇆ fun _ _ => true
+  toDynSystem := (fun _ => PUnit.unit) ⇆ fun _ _ => true
   init := fun _ => false
   output := fun
     | false => none
@@ -266,7 +266,7 @@ def universeSeparatedOneQueryMachine {input : Type v} {out : Type w} (b : out) :
 def universeSeparatedRunHaltMachine {input : Type v} {out : Type w} (b : out) :
     IOMachine X.{0, w} input out where
   State := Bool
-  behavior := (fun _ => PUnit.unit) ⇆ fun state _ => state
+  toDynSystem := (fun _ => PUnit.unit) ⇆ fun state _ => state
   init := fun _ => false
   output := fun _ => some b
 

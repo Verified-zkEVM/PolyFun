@@ -533,7 +533,7 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   machine `seqComp` with full display. The machine bundles now share a minimal
   `Machine` parent containing `State` and `behavior`: `IOMachine` adds `init` and
   `output`, while `Labeled`, `Ticketed`, and `SafetySpec` extend the same parent.
-  Their lens-valued dynamics are uniformly accessed as `.toMachine.behavior`,
+  Their lens-valued dynamics are uniformly accessed as `.toDynSystem`,
   and all #16/#17 fuel/composition laws survived the hierarchy change.
   Downstream pays-rent (VCVio): the fuel-exact `runWith_seqComp` laws + the
   implements-extracted `ResolvesIn` certificates delivered a **zero-new-sorry

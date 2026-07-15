@@ -401,7 +401,7 @@ def loopProcess : Process PUnit Party :=
 ticket. -/
 def loopTicketed : Process.Ticketed Party where
   State := PUnit
-  behavior := loopProcess
+  toDynSystem := loopProcess
   Ticket := Bool
   ticket := fun _ tr =>
     match tr with
@@ -450,7 +450,7 @@ example :
 /-- A trivial system wrapper around `loopProcess`. -/
 def loopSystem : Process.SafetySpec Party where
   State := PUnit
-  behavior := loopProcess
+  toDynSystem := loopProcess
   init _ := True
   assumptions _ := True
   safe _ := True
@@ -637,14 +637,14 @@ example : PFunctor.DynSystem.ObsEq counterMachine counterMachine (3 : ℕ) (3 : 
 /-- A machine system with verification predicates, using the generic bundle. -/
 def counterSystem : Machine.SafetySpec where
   State := ℕ
-  behavior := counterMachine
+  toDynSystem := counterMachine
   init := fun (n : ℕ) => n = 0
 
 example : counterSystem.init (0 : ℕ) := rfl
 
 example : counterSystem.safe (5 : ℕ) := trivial
 
-example : counterSystem.toMachine.behavior = counterMachine := rfl
+example : counterSystem.toDynSystem = counterMachine := rfl
 
 /-- Node semantics for compiling the counter machine into a process. -/
 def counterProfile :

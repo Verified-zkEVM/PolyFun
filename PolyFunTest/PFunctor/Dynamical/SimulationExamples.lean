@@ -144,9 +144,9 @@ example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpe
 /-- The safety-refinement forwarding API has the same initial-state simp
 behavior as its underlying forward simulation. -/
 example {impl spec : DynSystem.SafetySpec.{u} p}
-    {matchStep : DynSystem.StepRel impl.toMachine.behavior spec.toMachine.behavior}
+    {matchStep : DynSystem.StepRel impl.toDynSystem spec.toDynSystem}
     (sim : DynSystem.SafetyRefinement impl spec matchStep)
-    (run : DynSystem.Run impl.toMachine.behavior) {initialSpec : spec.State}
+    (run : DynSystem.Run impl.toDynSystem) {initialSpec : spec.State}
     (hrel : sim.stateRel run.initial initialSpec) :
     (sim.matchedState run hrel 0).1 = initialSpec ∧
       (sim.mapRun run hrel).initial = initialSpec := by
@@ -170,9 +170,9 @@ example (D : DynSystem S p) :
     DynSystem.SafetyRefinement system system
       (DynSystem.StepRel.comp
         (DynSystem.StepRel.top :
-          DynSystem.StepRel system.toMachine.behavior system.toMachine.behavior)
+          DynSystem.StepRel system.toDynSystem system.toDynSystem)
         (DynSystem.StepRel.top :
-          DynSystem.StepRel system.toMachine.behavior system.toMachine.behavior)) := by
+          DynSystem.StepRel system.toDynSystem system.toDynSystem)) := by
   intro system
   exact (DynSystem.SafetyRefinement.reflTop system).comp
     (DynSystem.SafetyRefinement.reflTop system)
