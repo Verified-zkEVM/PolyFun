@@ -59,8 +59,9 @@ and depend on this library.
   and their indexed free monads. `Free/Basic.lean` holds the single-index
   `FreeM` (state-polymorphic continuations); `Free/Indexed.lean` holds the
   two-index `FreeM₂` carrying a `LawfulIndexedMonad` instance.
-- `PolyFun/ITree/`: coinductive interaction trees, bisimulation,
-  simulation, handlers, event signatures.
+- `PolyFun/ITree/`: coinductive interaction trees, same-signature weak
+  bisimulation, cross-signature relational trees (`Bisim/CrossSignature.lean`),
+  simulation, handlers, event signatures, and finite observation traces.
 - `PolyFun/Interaction/`: protocol-flavored generic interaction framework.
   - `Basic/`: `Spec`, node contexts, decorations, syntax / shape /
     interaction, strategies, append / replicate / state-chain
@@ -78,6 +79,8 @@ and depend on this library.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
   algebra, monad iter / hom, lawful re-exports).
+- `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
+  silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
 - `PolyFunTest/`: separate test / worked-example library (glob
   `PolyFunTest.+`), built by `lake test` and kept out of the `lake lint`
@@ -120,12 +123,12 @@ Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
   → IPFunctor/Notation, IPFunctor/Notation/{Indexed, Deterministic}
 
-Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation}
+Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   (free-standing helpers, depended on by both PFunctor and ITree;
    Control/Bisimulation is the generic LTS bisimulation theory)
 
 PFunctor/Free → ITree/{Basic, Construct, Handler, Rec,
-                       Events, Sim, Bisim}
+                       Events, Sim, Bisim, Trace}
 PFunctor/Dynamical + ITree/Basic → ITree/Unfold
 
 PFunctor/Free + Control → Interaction/Basic/{Spec, Node, Decoration,
@@ -246,7 +249,7 @@ listed declaration-by-declaration in `scripts/nolints.json`; regenerate that
 file with the Batteries `runLinter --update` driver when this surface changes,
 and review every new entry rather than treating the file as a blanket waiver.
 
-Lean toolchain and Mathlib stay in sync (both currently `v4.32.0`).
+Lean toolchain, Mathlib, and cslib stay in sync (all currently `v4.32.0`).
 Files should stay under 1500 lines.
 
 ## Further Reading

@@ -55,23 +55,29 @@ step are lifted to `uB`; a visible query retains its original direction type.
 | [`PolyFun/ITree/Handler.lean`](../../PolyFun/ITree/Handler.lean) | Universe-polymorphic `Handler E F`: choice of an `F`-program for every `E`-event, with identity, lens promotion, and coproduct routing via `Handler.case_`. |
 | [`PolyFun/ITree/Sim/Defs.lean`](../../PolyFun/ITree/Sim/Defs.lean) | Universe-polymorphic `ITree.simulate` (interprets every event via a handler), `Handler.comp`, and `ITree.mapSpec` (pure event-renaming via a `PFunctor.Lens`). Coq `interp` analogue. |
 | [`PolyFun/ITree/Sim/Facts.lean`](../../PolyFun/ITree/Sim/Facts.lean) | Universe-polymorphic one-step, identity, relational congruence, bind, iteration, lens-composition, and handler-composition facts. `simulate_comp` identifies sequential and composite interpretation up to weak bisimulation; `Handler.comp_assoc_apply` gives pointwise associativity. |
+| [`PolyFun/ITree/Sim/CrossSignature.lean`](../../PolyFun/ITree/Sim/CrossSignature.lean) | Lens-specific bridge from core `CrossSignatureWeakBisim` to simulation: the dependent lens-graph relation and the theorem relating every tree to its `mapSpec` image. |
 | [`PolyFun/ITree/Rec.lean`](../../PolyFun/ITree/Rec.lean) | Universe-polymorphic `mutualRec`, `fixRec` recursive procedure-call combinators. `CallE α β : PFunctor.{uα,uβ}` separates call inputs from results; recursive coproducts retain only the equal reply-universe constraint of `PFunctor.sum`. |
+| [`PolyFun/ITree/Rec/Facts.lean`](../../PolyFun/ITree/Rec/Facts.lean) | Exact head equations for `interpMrec`, bind compatibility, external-event renaming naturality, and definition bridges for `mutualRec` / `fixRec`; `interpMrec_query_recursive` exposes the recursive-call guard. |
+| [`PolyFun/ITree/Trace.lean`](../../PolyFun/ITree/Trace.lean) | Derived labelled transition system and finite weak traces. Visible labels record complete event/reply interactions or terminal returns; `step` is silent. `traces_eq_of_weakBisim` proves weak-bisimulation invariance through the generic `Control.LTS` trace layer. |
 
 ### Bisimulation
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/ITree/Bisim/Defs.lean`](../../PolyFun/ITree/Bisim/Defs.lean) | Universe-polymorphic `ITree.Bisim` (strong / structural equality), relational `ITree.WeakBisimRel RR` (Coq `euttR`), and `ITree.WeakBisim` as its equality specialization (Coq `eutt`). |
+| [`PolyFun/ITree/Bisim/Defs.lean`](../../PolyFun/ITree/Bisim/Defs.lean) | Universe-polymorphic `ITree.Bisim` (strong / structural equality), relational `ITree.WeakBisimRel resultRel` (Coq `euttR`), and `ITree.WeakBisim` as its equality specialization (Coq `eutt`). |
 | [`PolyFun/ITree/Bisim/Bind.lean`](../../PolyFun/ITree/Bisim/Bind.lean) | Mixed-universe monad/iteration equations, the homogeneous `LawfulMonad` instance, and two-sided relational congruence of `bind` and `map`. |
 | [`PolyFun/ITree/Bisim/Equiv.lean`](../../PolyFun/ITree/Bisim/Equiv.lean) | Equivalence properties of bisimulation. |
 | [`PolyFun/ITree/Bisim/Iter.lean`](../../PolyFun/ITree/Bisim/Iter.lean) | Relational iteration congruence and the `LawfulMonadIter` instance over `WeakBisim`, including unfolding, naturality, dinaturality, and codiagonal laws. |
+| [`PolyFun/ITree/Bisim/CrossSignature.lean`](../../PolyFun/ITree/Bisim/CrossSignature.lean) | `CrossSignatureWeakBisim`: weak bisimulation across two event signatures, with supplied relations on event names, dependent replies, and results; includes finite-τ-safe coinduction, symmetry, monotonicity, `bind` / `map` congruence, and identity specialization to `WeakBisimRel`. |
 
 ### Standard events
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/ITree/Events/State.lean`](../../PolyFun/ITree/Events/State.lean) | `StateE σ` signature and the `get` / `put` smart constructors. Positions and replies genuinely share `uσ` because `get` returns `σ`; final computation results remain independent. |
-| [`PolyFun/ITree/Events/Exception.lean`](../../PolyFun/ITree/Events/Exception.lean) | `ExceptE ε : PFunctor.{uε,uB}` and the `throw` smart constructor with an independent result universe; the answer type is empty, so execution cannot resume. |
+| [`PolyFun/ITree/Events/State.lean`](../../PolyFun/ITree/Events/State.lean) | `StateE σ`, `get` / `put`, and the direct `interpState` / `runState` runner from `ITree (StateE σ + E) α` to `σ → ITree E (σ × α)`. Positions and replies genuinely share `uσ` because `get` returns `σ`; final computation results remain independent. |
+| [`PolyFun/ITree/Events/StateFacts.lean`](../../PolyFun/ITree/Events/StateFacts.lean) | Exact computation rules for returns, steps, `get`, `put`, and external queries, plus the state-transformer bind law. |
+| [`PolyFun/ITree/Events/Exception.lean`](../../PolyFun/ITree/Events/Exception.lean) | `ExceptE ε : PFunctor.{uε,uB}`, `throw`, and the direct `interpExcept` / `runExcept` runner to `ITree E (Except ε α)`; exception, reply, and final-result universes remain independent. |
+| [`PolyFun/ITree/Events/ExceptionFacts.lean`](../../PolyFun/ITree/Events/ExceptionFacts.lean) | Exact computation rules for returns, steps, throws, and external queries, plus the exception-transformer bind law. |
 
 ## Mental model
 
@@ -88,13 +94,32 @@ step are lifted to `uB`; a visible query retains its original direction type.
   composes interpretations, and `Handler.case_` routes coproduct events.
   `mapSpec` is the syntactically pure case (pure event rename via a
   `PFunctor.Lens`).
-- Strong bisimulation `Bisim` is set to definitional equality, courtesy
-  of the M-type universal property. `WeakBisimRel RR` ignores finitely many
-  leading silent `step`s and compares returns through `RR`; `WeakBisim` is
+- Strong bisimulation `Bisim` is set to Lean equality, courtesy
+  of the M-type universal property. `WeakBisimRel resultRel` ignores finitely many
+  leading silent `step`s and compares returns through `resultRel`; `WeakBisim` is
   the same-type `Eq` specialization used as the ordinary ITree setoid.
-- The `Events/{State, Exception}.lean` files are small canonical patterns for
-  signatures and smart constructors. Handlers for such signatures can be
-  routed, composed, and executed through the generic APIs above.
+- `CrossSignatureWeakBisim eventRel resultRel` generalizes `WeakBisimRel` to
+  two different event signatures. `eventRel.event` relates event names and
+  `eventRel.reply` dependently relates their replies. The identity event-signature
+  relation recovers `WeakBisimRel` exactly, while `EventSignatureRel.ofLens`
+  relates every tree to its `mapSpec` image. The current API
+  adds only coinduction and congruence principles used by concrete consumers;
+  it intentionally does not duplicate the upstream Paco up-to tower.
+- Reader, writer, failure, and nondeterminism event libraries remain
+  consumer-driven follow-ups. State and exception are the current canonical
+  interpreted effects; the conditional event-library roadmap item is not
+  part of this foundational stack.
+- `ITree.toLTS F α` has states `Option (ITree F α)`, with `none` as the
+  terminal state after a return. Its finite traces ignore silent steps and
+  observe `Observation.event a reply` and `Observation.ret result`. Thus a
+  trace records which reply selected each query continuation and whether the
+  observed prefix terminated. The generic `Control.LTS.WeakTrace` semantics
+  is preserved by weak simulation, so `WeakBisim`-related trees have equal
+  trace sets.
+- The state and exception runners are direct productive corecursors. State
+  operations become one silent step while threading the current state;
+  exceptions terminate as `Except.error`; untouched external events remain
+  visible. Their facts files expose exact computation and bind laws.
 - Recursive calls separate input, result, external-event, and final-result
   universes. `mutualRec` and `fixRec` retain one local equality: recursive and
   external replies share a universe because the current `PFunctor.sum`

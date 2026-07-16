@@ -13,8 +13,10 @@ A standard event signature for computations that may raise exceptions. The
 polynomial functor `ExceptE ε` has a single event family `throw e` for
 `e : ε`, with answer type `PEmpty` (the throw never resumes).
 
-Together with a handler that runs `throw e` to "abort with `e`", this gives
-the standard exception monad as an ITree.
+`interpExcept` eliminates exception events from a tree over `ExceptE ε + E`.
+A thrown exception terminates as `Except.error`, while ordinary returns become
+`Except.ok` and external `E`-events remain visible. `runExcept` is its
+conventional runner alias.
 
 Coq references:
 
@@ -23,7 +25,7 @@ Coq references:
 
 @[expose] public section
 
-universe uε uB uα
+universe uε uEA uB uα
 
 namespace ITree
 
@@ -45,5 +47,35 @@ def throw (e : ε) : ITree (ExceptE.{uε, uB} ε) α :=
   query (F := ExceptE.{uε, uB} ε) e PEmpty.elim
 
 end ExceptE
+
+/-! ## Exception interpretation -/
+
+/-- One productive layer of exception interpretation. A thrown exception has
+no continuation and becomes an immediate `Except.error` leaf. -/
+def interpExceptStep {ε : Type uε} {E : PFunctor.{uEA, uB}}
+    {α : Type uα}
+    (t : ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :
+    (Poly E (Except ε α)).Obj
+      (ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :=
+  match shape' t with
+  | ⟨.pure r, _⟩ => ⟨.pure (.ok r), PEmpty.elim⟩
+  | ⟨.step, c⟩ => ⟨.step, fun _ => c PUnit.unit⟩
+  | ⟨.query (.inl e), _⟩ => ⟨.pure (.error e), PEmpty.elim⟩
+  | ⟨.query (.inr e), c⟩ => ⟨.query e, c⟩
+
+/-- Eliminate exception events from `t`, returning either the first thrown
+exception or the ordinary result. External events remain visible. -/
+def interpExcept {ε : Type uε} {E : PFunctor.{uEA, uB}}
+    {α : Type uα}
+    (t : ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :
+    ITree E (Except ε α) :=
+  PFunctor.M.corec interpExceptStep t
+
+/-- Conventional runner name for `interpExcept`. -/
+def runExcept {ε : Type uε} {E : PFunctor.{uEA, uB}}
+    {α : Type uα}
+    (t : ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :
+    ITree E (Except ε α) :=
+  interpExcept t
 
 end ITree
