@@ -766,6 +766,19 @@ def sumTensorDistrib :
 
 end Equiv
 
+/-- Naturality of the tensor associator across lenses whose source and target
+polynomials may occupy six independent universe pairs. -/
+theorem tensorAssoc_natural
+    {P₁ : PFunctor.{uA₁, uB₁}} {P₂ : PFunctor.{uA₂, uB₂}}
+    {Q₁ : PFunctor.{uA₃, uB₃}} {Q₂ : PFunctor.{uA₄, uB₄}}
+    {R₁ : PFunctor.{uA₅, uB₅}} {R₂ : PFunctor.{uA₆, uB₆}}
+    (f : Lens P₁ P₂) (g : Lens Q₁ Q₂) (h : Lens R₁ R₂) :
+    (f ⊗ₗ (g ⊗ₗ h)) ∘ₗ
+        (Equiv.tensorAssoc (P := P₁) (Q := Q₁) (R := R₁)).toLens =
+      (Equiv.tensorAssoc (P := P₂) (Q := Q₂) (R := R₂)).toLens ∘ₗ
+        ((f ⊗ₗ g) ⊗ₗ h) := by
+  rfl
+
 end Tensor
 
 end Lens

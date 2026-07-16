@@ -286,7 +286,8 @@ canonical `FreeM` interpretation.
   (Prop 8.72); `𝒯_p` free on a graph (Prop 8.57). The composition-unit
   comonoid, heterogeneous tensor of comonoids and retrofunctors, and pointwise
   tensor unitors/associator are complete; lax monoidality
-  `t_p ⊗ t_q ⇆ t_{p⊗q}` (Prop 8.81) remains downstream. Worked tests with paper value:
+  `t_p ⊗ t_q ⇆ t_{p⊗q}` (Prop 8.79 in the current edition; Prop 8.81
+  in earlier-edition notes) remains downstream. Worked tests with paper value:
   DFA mate = accepted language (Example 8.51); the general Moore-mate shape of
   Example 8.52 is now captured by the behavior/reached-state bridge, while a
   concrete `List A → B` worked example remains open.
@@ -329,7 +330,8 @@ canonical `FreeM` interpretation.
     `wp`/`Triple` layer (`Control/Monad/Algebra`) is a fragment of that
     internal logic. Highest-value research track; natural paper-3
     companion.
-  - *Q5 — ⊗-monoids in Cat♯*: grounded by Prop 8.79 (⊗ on Cat♯ =
+  - *Q5 — ⊗-monoids in Cat♯*: grounded by Prop 8.77 in the current
+    edition (Prop 8.79 in earlier-edition notes; ⊗ on Cat♯ =
     products of categories, built from the duoidal lens). ⊗-monoids =
     monoidal protocol categories — the multiparty/UC parallel-
     composition algebra.
