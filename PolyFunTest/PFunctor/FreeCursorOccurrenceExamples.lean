@@ -82,6 +82,10 @@ example : nestedFork.firstAnswer = false := rfl
 
 example : nestedFork.secondAnswer = true := rfl
 
+example : PFunctor.TraceList.getAt? (Path.trace nestedProgram nestedFork.first.path)
+    ExampleOp.target 0 = some nestedFork.first.answer := by
+  exact Occurrence.getAt?_trace_completion_path nestedOccurrence nestedFork.first
+
 example : output nestedProgram nestedFork.firstPath = 101 := rfl
 
 example : output nestedProgram nestedFork.secondPath = 211 := rfl
