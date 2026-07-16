@@ -138,6 +138,11 @@ accepted language — in VCVio terms, the behavior of an oracle machine is the
 transcript tree it accepts, a canonical semantics for `Emulates`-style
 statements. Also the clean reverse `OracleComp.toITree` bridge via finality.
 
+PolyFun now proves this finite-run spine as the full lens equality
+`DynSystem.cofreeMate_comp_projectionN`; the generic
+`CofreeP.extend_comp_projectionN` theorem applies to any generator lens from a
+polynomial comonoid, not only state systems.
+
 **Payoff:** machine-behavior semantics for `Emulates`; `DynSystem.behavior`
 (`PFunctor/Dynamical/Trajectory.lean:85`) recast as the mate.
 

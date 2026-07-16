@@ -20,7 +20,7 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 | Ch 5 factorizations, adjunctions, (co)limits | **Done**: vertical–cartesian factorization and orthogonality (A3), trivial-interface adjunctions plus binary tensor gluing (A4/A5), and cartesian closure (A2); general (co)limits remain open |
 | Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: direct composite-lens projections, `compNthMap`, δ/`twoStep`, full left Π-distributivity, ordering/interchange naturality and concrete duoidal coherence; coclosure/multiadjoint (A8) and the higher three-interchange diagram remain open |
 | Ch 7 comonoids = categories, retrofunctors | **Done (B1–B4 spine)**: `Comonoid`, `Comonoid.Hom`/`Cat♯`, state comonoids, `δ^(n)`, `Run_n`, and the `IOMachine` run/composition core; §7.3.3 quadruple (B5), all-bracketing canonicity, and representable-monoid equivalence remain open |
-| Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | **C1/C2 done; C3 hom-set data + behavior mate done**: `M.Vertex`, `CofreeP.comonoid`, generic coiteration, the natural hom-set equivalence, and its dynamical behavior/trajectory specialization; finite projections/Prop 8.49, lax monoidality, and bicomodules remain open |
+| Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | **C1/C2 done; C3 finite-run spine done**: `M.Vertex`, `CofreeP.comonoid`, generic coiteration, the natural hom-set equivalence, its dynamical behavior/trajectory specialization, structural finite projections, and Prop 8.49; Equation 8.32/additive reassociation, explicit pretree-limit coherence, lax monoidality, and bicomodules remain open |
 
 ## Reading units
 
@@ -256,12 +256,15 @@ canonical `FreeM` interpretation.
 - **C1 — done:** `M.Vertex t` (finite rooted paths; inductive over
   coinductive) + `M.Vertex.subtree` (= `cod`, the subtree at a path's end) +
   append/assoc lemmas. Bridge lemma: `M p` *is*
-  `tree_p` (Ex 8.16 — terminal `p`-coalgebra); trimming projections
-  `ε_p^{(n)}` per Prop 8.18 remain a separate finite-projection slice.
+  `tree_p` (Ex 8.16 — terminal `p`-coalgebra). Structural trimming
+  projections `projectionN = ε_p^{(n)}` now expose exactly `n` layers and
+  pull every composite direction back to a vertex of depth exactly `n`.
 - **C2 — done:** carrier `t_p := ⟨M p, M.Vertex⟩` (Prop 8.18); ε = root/nil,
   δ = (follow, append); comonoid laws (Prop 8.33) proved by direct path
   induction. The stronger workhorse spec (8.32)
-  `δ ⨟ (ε^{(ℓ)} ◁ ε^{(m)}) = ε^{(ℓ+m)}` remains with finite projections.
+  `δ ⨟ (ε^{(ℓ)} ◁ ε^{(m)}) = ε^{(ℓ+m)}` remains open: the
+  right-nested `compNth` convention first needs a canonical additive
+  reassociation equivalence between its two differently typed codomains.
   Still-open instances:
   `t_1 ≅ y`, `t_y ≅ y^ℕ` = (ℕ,0,+), `t_{By} ≅ B^ℕ y^ℕ` = B-streams
   (Example 8.38), `t_{By^A} ≅ B^{List A} y^{List A}` (Ex 8.40).
@@ -274,8 +277,11 @@ canonical `FreeM` interpretation.
   generic state-comonoid coiteration with `DynSystem.behavior`, proves that
   decoding arbitrary reached-state labels gives `labeledTrajectory`, packages
   the fixed-maximum full retrofunctor mate, and relates it to the existing
-  `trajectory`. Still open: **Prop 8.49**,
-  `mate ⨟ ε_p^{(n)} = Run_n(φ)` — the mate packages every finite run.
+  `trajectory`. **Prop 8.49 is done:** `projectionN` is defined structurally
+  at independent generator universes, agrees at the homogeneous boundary with
+  `comultN ⨟ cogenerator.compNthMap`, and proves
+  `mate ⨟ ε_p^{(n)} = Run_n(φ)` as a full lens equality for arbitrary
+  cofree extensions and dynamical-system mates.
   Functoriality `𝒯_φ` (§8.1.5) + `φ` cartesian ⟹ `𝒯_φ` cartesian
   (Prop 8.72); `𝒯_p` free on a graph (Prop 8.57); lax monoidality
   `t_p ⊗ t_q ⇆ t_{p⊗q}` (Prop 8.81). Worked tests with paper value:

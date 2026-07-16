@@ -121,6 +121,7 @@ PFunctor/{Cofree, Comonoid, M/Vertex}
 
 PFunctor/{Cofree/Polynomial, Comonoid/Category}
   → PFunctor/Cofree/Universal
+  → PFunctor/Cofree/FiniteProjection
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
@@ -129,6 +130,8 @@ PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Refinement, Responder, Game}
 PFunctor/{Cofree/Universal, Dynamical/Trajectory}
   → PFunctor/Dynamical/CofreeMate
+PFunctor/{Cofree/FiniteProjection, Dynamical/CofreeMate, Dynamical/RunN}
+  → PFunctor/Dynamical/CofreeMate/FiniteProjection
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
    for RunN and IOMachine, PFunctor/InternalHom for Responder, and
