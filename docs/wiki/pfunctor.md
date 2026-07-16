@@ -144,6 +144,9 @@ displayed families, roll bounds) on top of the upstream type.
 | [`PolyFun/PFunctor/PatternRunsOnMatter/Basic.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Basic.lean) | The fully heterogeneous executable traversal `FreeP.runOn : FreeP P ⊗ CofreeP Q ⇆ FreeP (P ⊗ Q)`, including the complete backward map from output paths to pattern paths and finite matter vertices, and covariance in both generators. |
 | [`PolyFun/PFunctor/PatternRunsOnMatter/Universal.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Universal.lean) | The paper's curried convolution construction `FreeP.xi` and its equality with the independently executable traversal. For `Q : PFunctor.{qA,qB}`, the homogeneous free-extension API requires only `P`'s direction universe to be `max qA qB`; their position universes remain independent. |
 | [`PolyFun/PFunctor/PatternRunsOnMatter/Module.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Module.lean) | The concrete right-module unit and associativity laws for the Libkind--Spivak interaction. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Operational.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Operational.lean) | Decoded execution, recursive and grafting laws, substitution-monoid compatibility, and lawful monadic handler interpretation. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Dynamical.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Dynamical.lean) | Object-labelled execution on cofree behavior, reached-state semantics, observational/simulation invariance, and exact finite-game compatibility. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Applications.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Applications.lean) | The Section 4 generic interaction composite, internal-hom evaluation and Equation (6), plus behavior and strong-simulation bridges. |
 | [`PolyFun/PFunctor/Trace.lean`](../../PolyFun/PFunctor/Trace.lean) | Polynomial-trace machinery shared between `PFunctor` and downstream layers. |
 
 ### Control helpers

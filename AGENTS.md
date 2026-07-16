@@ -134,6 +134,12 @@ PFunctor/{PatternRunsOnMatter/Basic, Free/Universal,
   → PFunctor/PatternRunsOnMatter/Universal
 PFunctor/{PatternRunsOnMatter/Universal, Cofree/LaxMonoidal}
   → PFunctor/PatternRunsOnMatter/Module
+PFunctor/PatternRunsOnMatter/Universal + PFunctor/Handler
+  → PFunctor/PatternRunsOnMatter/Operational
+PFunctor/PatternRunsOnMatter/Basic + PFunctor/Dynamical/{CofreeMate, Simulation, Game}
+  → PFunctor/PatternRunsOnMatter/Dynamical
+PFunctor/PatternRunsOnMatter/{Module, Dynamical} + PFunctor/Dynamical/Bisimulation
+  → PFunctor/PatternRunsOnMatter/Applications
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}

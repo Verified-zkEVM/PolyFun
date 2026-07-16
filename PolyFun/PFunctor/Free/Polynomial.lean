@@ -74,6 +74,14 @@ def decode (x : Σ s : FreeM P PUnit.{uB + 1}, FreeM.Path s → α) :
     FreeM P α :=
   decodeAt x.1 x.2
 
+/-- Decoding a labelled polynomial node is `FreeM.liftBind` of the decoded
+children. -/
+theorem decode_node (a : P.A)
+    (children : P.B a → (FreeP P).Obj α) :
+    decode (node a children) =
+      FreeM.liftBind a (fun direction => decode (children direction)) :=
+  rfl
+
 @[simp]
 theorem decode_encode : (s : FreeM P α) → decode (encode s) = s
   | .pure _ => rfl
@@ -203,6 +211,22 @@ changing its tree shape. -/
 def relabel {β : Type w} (f : α → β) (x : (FreeP P).Obj α) :
     (FreeP P).Obj β :=
   ⟨x.1, f ∘ x.2⟩
+
+/-- Decoding after relabelling is ordinary free-monad mapping. -/
+theorem decode_relabel {β : Type w} (f : α → β)
+    (x : (FreeP P).Obj α) :
+    decode (relabel f x) = FreeM.map f (decode x) := by
+  rcases x with ⟨shape, labels⟩
+  induction shape with
+  | pure value =>
+      cases value
+      rfl
+  | liftBind a rest ih =>
+      simp only [decode, decodeAt, relabel, Function.comp_apply, FreeM.map]
+      apply congrArg (FreeM.liftBind a)
+      funext direction
+      exact ih direction
+        (fun path => labels (FreeM.Path.cons a rest direction path))
 
 @[simp]
 theorem relabel_node {β : Type w} (f : α → β) (a : P.A)
