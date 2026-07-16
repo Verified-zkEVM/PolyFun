@@ -149,6 +149,52 @@ theorem children_castDirection {tree tree' : M P} (h : tree = tree')
   subst h
   rfl
 
+private theorem dependent_apply_heq {A : Sort uA}
+    {B : A → Sort uB} {C : A → Sort uB₂}
+    (function : (a : A) → B a → C a)
+    {a a' : A} (ha : a = a') {b : B a} {b' : B a'} (hb : b ≍ b') :
+    function a b ≍ function a' b' := by
+  subst a'
+  cases hb
+  rfl
+
+/-- Pulling a root direction through a composite lens is the same as pulling
+it through the two lenses successively. -/
+theorem pullDirection_comp {R : PFunctor.{uA₃, uB₃}}
+    (g : Lens Q R) (f : Lens P Q) (tree : M P)
+    (direction : R.B (M.head (M.mapLens (g ∘ₗ f) tree))) :
+    M.pullDirection (g ∘ₗ f) tree direction =
+      M.pullDirection f tree
+        (M.pullDirection g (M.mapLens f tree)
+          (M.castDirection (M.mapLens_comp g f tree) direction)) := by
+  unfold M.pullDirection M.castDirection
+  apply eq_of_heq
+  change f.toFunB (M.head tree)
+      (g.toFunB (f.toFunA (M.head tree)) (cast _ direction)) ≍
+    f.toFunB (M.head tree)
+      (cast _ (g.toFunB (M.head (M.mapLens f tree))
+        (cast _ (cast _ direction))))
+  apply heq_of_eq
+  apply congrArg (f.toFunB (M.head tree))
+  apply eq_of_heq
+  let leftInput := cast
+    (congrArg R.B (M.head_mapLens (g ∘ₗ f) tree)) direction
+  let rightInput := cast
+    (congrArg R.B (M.head_mapLens g (M.mapLens f tree)))
+      (cast
+        (congrArg (fun current => R.B (M.head current))
+          (M.mapLens_comp g f tree)) direction)
+  have hinputs : leftInput ≍ rightInput :=
+    (cast_heq _ direction).trans
+      ((cast_heq _ (cast _ direction)).trans
+        (cast_heq _ direction)).symm
+  have houtputs :
+      g.toFunB (f.toFunA (M.head tree)) leftInput ≍
+        g.toFunB (M.head (M.mapLens f tree)) rightInput :=
+    dependent_apply_heq g.toFunB
+      (M.head_mapLens f tree).symm hinputs
+  exact houtputs.trans (cast_heq _ _).symm
+
 /-- A finite rooted vertex of an M-type tree. -/
 inductive Vertex : (t : M P) → Type (max uA uB) where
   /-- The root vertex. -/
@@ -535,6 +581,147 @@ theorem subtree_pullMapLens (l : Lens P Q) (tree : M P)
                 (M.children tree sourceDirection)
                 (cast (congrArg Vertex childEq) next) rfl
             _ = subtree next := subtree_cast childEq next
+
+/-- Pulling finite vertices through the identity lens is the dependent
+identity transport induced by `M.mapLens_id`. -/
+@[simp]
+theorem pullMapLens_id (tree : M P)
+    (vertex : Vertex (M.mapLens (Lens.id P) tree)) :
+    pullMapLens (Lens.id P) tree vertex =
+      cast (congrArg Vertex (M.mapLens_id tree)) vertex := by
+  induction hdepth : depth vertex using Nat.strong_induction_on generalizing tree with
+  | h n ih =>
+      cases vertex with
+      | root =>
+          rw [pullMapLens_root]
+          exact (cast_root (M.mapLens_id tree)).symm
+      | child direction next =>
+          let sourceDirection := M.pullDirection (Lens.id P) tree direction
+          let targetDirection := M.castDirection (M.mapLens_id tree) direction
+          let childEq := M.children_mapLens (Lens.id P) tree direction
+          have hsource : sourceDirection ≍ direction := by
+            unfold sourceDirection M.pullDirection
+            exact cast_heq
+              (congrArg P.B (M.head_mapLens (Lens.id P) tree)) direction
+          have htarget : targetDirection ≍ direction := by
+            unfold targetDirection M.castDirection
+            exact cast_heq
+              (congrArg (fun current => P.B (M.head current))
+                (M.mapLens_id tree)) direction
+          have hdirection : sourceDirection = targetDirection :=
+            eq_of_heq (hsource.trans htarget.symm)
+          rw [pullMapLens_child, cast_child (M.mapLens_id tree)]
+          rw [Vertex.child.injEq]
+          refine ⟨hdirection, ?_⟩
+          have hrecursive := ih
+            (depth (cast (congrArg Vertex childEq) next)) (by
+              calc
+                depth (cast (congrArg Vertex childEq) next) = depth next :=
+                  depth_cast childEq next
+                _ < depth next + 1 := Nat.lt_succ_self _
+                _ = n := hdepth)
+            (M.children tree sourceDirection)
+            (cast (congrArg Vertex childEq) next) rfl
+          exact (heq_of_eq hrecursive).trans
+            ((cast_heq _ (cast (congrArg Vertex childEq) next)).trans
+              ((cast_heq (congrArg Vertex childEq) next).trans
+                (cast_heq _ next).symm))
+
+/-- Pulling a finite vertex through a composite lens agrees with pulling it
+through the two lenses successively. -/
+theorem pullMapLens_comp {R : PFunctor.{uA₃, uB₃}}
+    (g : Lens Q R) (f : Lens P Q) (tree : M P)
+    (vertex : Vertex (M.mapLens (g ∘ₗ f) tree)) :
+    pullMapLens (g ∘ₗ f) tree vertex =
+      pullMapLens f tree
+        (pullMapLens g (M.mapLens f tree)
+          (cast (congrArg Vertex (M.mapLens_comp g f tree)) vertex)) := by
+  induction hdepth : depth vertex using Nat.strong_induction_on generalizing tree with
+  | h n ih =>
+      cases vertex with
+      | root =>
+          rw [cast_root (M.mapLens_comp g f tree)]
+          rw [pullMapLens_root, pullMapLens_root, pullMapLens_root]
+      | child direction next =>
+          rw [pullMapLens_child]
+          rw [cast_child (M.mapLens_comp g f tree)]
+          rw [pullMapLens_child, pullMapLens_child]
+          rw [Vertex.child.injEq]
+          refine ⟨M.pullDirection_comp g f tree direction, ?_⟩
+          let compositeDirection :=
+            M.pullDirection (g ∘ₗ f) tree direction
+          let transportedDirection :=
+            M.castDirection (M.mapLens_comp g f tree) direction
+          let gDirection :=
+            M.pullDirection g (M.mapLens f tree) transportedDirection
+          let fDirection := M.pullDirection f tree gDirection
+          have hdirection : compositeDirection = fDirection :=
+            M.pullDirection_comp g f tree direction
+          let compositeChild := M.children tree compositeDirection
+          let sequentialChild := M.children tree fDirection
+          have hchildren : compositeChild = sequentialChild :=
+            congrArg (M.children tree) hdirection
+          let compositeChildEq :=
+            M.children_mapLens (g ∘ₗ f) tree direction
+          let fChildEq :=
+            M.children_mapLens f tree gDirection
+          let ambientChildEq :=
+            M.children_castDirection (M.mapLens_comp g f tree) direction
+          let gChildEq :=
+            M.children_mapLens g (M.mapLens f tree) transportedDirection
+          let canonicalVertex :
+              Vertex (M.mapLens g (M.mapLens f compositeChild)) :=
+            cast (congrArg Vertex (M.mapLens_comp g f compositeChild))
+              (cast (congrArg Vertex compositeChildEq) next)
+          let actualGChild :=
+            M.children (M.mapLens f tree) gDirection
+          let actualVertex : Vertex (M.mapLens g actualGChild) :=
+            cast (congrArg Vertex gChildEq)
+              (cast (congrArg Vertex ambientChildEq) next)
+          have hgChildren : M.mapLens f compositeChild = actualGChild := by
+            calc
+              M.mapLens f compositeChild =
+                  M.mapLens f sequentialChild := congrArg (M.mapLens f) hchildren
+              _ = actualGChild := fChildEq.symm
+          have hvertices : canonicalVertex ≍ actualVertex := by
+            exact
+              ((cast_heq _
+                (cast (congrArg Vertex compositeChildEq) next)).trans
+                (cast_heq (congrArg Vertex compositeChildEq) next)).trans
+              (((cast_heq _
+                (cast (congrArg Vertex ambientChildEq) next)).trans
+                (cast_heq (congrArg Vertex ambientChildEq) next)).symm)
+          have hgResults :
+              pullMapLens g (M.mapLens f compositeChild) canonicalVertex ≍
+                pullMapLens g actualGChild actualVertex :=
+            dependent_apply_heq
+              (fun source : M Q => pullMapLens g source)
+              hgChildren hvertices
+          have hfInputs :
+              pullMapLens g (M.mapLens f compositeChild) canonicalVertex ≍
+                cast (congrArg Vertex fChildEq)
+                  (pullMapLens g actualGChild actualVertex) :=
+            hgResults.trans (cast_heq _ _).symm
+          have hresults :
+              pullMapLens f compositeChild
+                  (pullMapLens g (M.mapLens f compositeChild)
+                    canonicalVertex) ≍
+                pullMapLens f sequentialChild
+                  (cast (congrArg Vertex fChildEq)
+                    (pullMapLens g actualGChild actualVertex)) :=
+            dependent_apply_heq
+              (fun source : M P => pullMapLens f source)
+              hchildren hfInputs
+          have hrecursive := ih
+            (depth (cast (congrArg Vertex compositeChildEq) next)) (by
+              calc
+                depth (cast (congrArg Vertex compositeChildEq) next) =
+                    depth next := depth_cast compositeChildEq next
+                _ < depth next + 1 := Nat.lt_succ_self _
+                _ = n := hdepth)
+            compositeChild
+            (cast (congrArg Vertex compositeChildEq) next) rfl
+          exact (heq_of_eq hrecursive).trans hresults
 
 end Vertex
 end M
