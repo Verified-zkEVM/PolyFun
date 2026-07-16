@@ -126,7 +126,7 @@ deliberately outside the `lake lint` scope.
 
 ## Toolchain
 
-Lean toolchain and Mathlib stay in sync. Both currently `v4.32.0`. When
+Lean toolchain, Mathlib, and cslib stay in sync. All currently `v4.32.0`. When
 upgrading, update [`lean-toolchain`](../../lean-toolchain) and the
-`require mathlib` line in [`lakefile.toml`](../../lakefile.toml)
-simultaneously.
+`require mathlib` / `require cslib` pins in
+[`lakefile.toml`](../../lakefile.toml) simultaneously.
