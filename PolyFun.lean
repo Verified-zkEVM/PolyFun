@@ -2,6 +2,7 @@ import PolyFun.Control.Bisimulation
 import PolyFun.Control.Coalgebra
 import PolyFun.Control.Comonad.Basic
 import PolyFun.Control.Comonad.Instances
+import PolyFun.Control.LTS.Trace
 import PolyFun.Control.Lawful.Basic
 import PolyFun.Control.Monad.Algebra
 import PolyFun.Control.Monad.Equiv
@@ -26,6 +27,7 @@ import PolyFun.ITree.Bisim.Bind
 import PolyFun.ITree.Bisim.Defs
 import PolyFun.ITree.Bisim.Equiv
 import PolyFun.ITree.Bisim.Iter
+import PolyFun.ITree.Bisim.CrossSignature
 import PolyFun.ITree.Construct
 import PolyFun.ITree.Do
 import PolyFun.ITree.Events.Exception
@@ -37,6 +39,8 @@ import PolyFun.ITree.Rec
 import PolyFun.ITree.Rec.Facts
 import PolyFun.ITree.Sim.Defs
 import PolyFun.ITree.Sim.Facts
+import PolyFun.ITree.Sim.CrossSignature
+import PolyFun.ITree.Trace
 import PolyFun.ITree.Unfold
 import PolyFun.Interaction.Basic.Append
 import PolyFun.Interaction.Basic.BundledMonad
