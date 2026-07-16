@@ -132,6 +132,23 @@ theorem mapLens_corec {α : Type v} (l : Lens P Q) (step : α → P α)
     rfl
   · rfl
 
+/-! ## Dependent transport along tree equalities -/
+
+/-- Transport a root direction along an equality of its ambient M-type
+trees. -/
+def castDirection {tree tree' : M P} (h : tree = tree')
+    (direction : P.B (M.head tree)) : P.B (M.head tree') :=
+  cast (congrArg (fun current => P.B (M.head current)) h) direction
+
+/-- Selecting a transported direction in an equal M-type tree recovers the
+same child subtree. -/
+theorem children_castDirection {tree tree' : M P} (h : tree = tree')
+    (direction : P.B (M.head tree)) :
+    M.children tree direction =
+      M.children tree' (castDirection h direction) := by
+  subst h
+  rfl
+
 /-- A finite rooted vertex of an M-type tree. -/
 inductive Vertex : (t : M P) → Type (max uA uB) where
   /-- The root vertex. -/
@@ -391,6 +408,23 @@ theorem splitAt_fst_isPrefix (n : Nat) {t : M P} (vertex : Vertex t) :
 /-- Transport finite vertices along an equality of their ambient trees. -/
 def castEquiv {t t' : M P} (h : t = t') : Vertex t ≃ Vertex t' :=
   _root_.Equiv.cast (congrArg Vertex h)
+
+@[simp]
+theorem cast_root {t t' : M P} (h : t = t') :
+    cast (congrArg Vertex h) (.root t) = .root t' := by
+  subst h
+  rfl
+
+@[simp]
+theorem cast_child {t t' : M P} (h : t = t')
+    (direction : P.B (M.head t))
+    (next : Vertex (M.children t direction)) :
+    cast (congrArg Vertex h) (.child direction next) =
+      .child (M.castDirection h direction)
+        (cast (congrArg Vertex
+          (M.children_castDirection h direction)) next) := by
+  subst h
+  rfl
 
 @[simp]
 theorem castEquiv_rfl {t : M P} (vertex : Vertex t) :

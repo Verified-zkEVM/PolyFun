@@ -138,5 +138,16 @@ example (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂})
     M.Vertex (M.mapLens l tree) → M.Vertex tree :=
   M.Vertex.pullMapLens l tree
 
+/-- Transport preserves the explicit root/child structure of a finite
+vertex, including the dependent child subtree. -/
+example (P : PFunctor.{uA, uB}) {tree tree' : M P}
+    (h : tree = tree') (direction : P.B (M.head tree))
+    (next : M.Vertex (M.children tree direction)) :
+    cast (congrArg M.Vertex h) (.child direction next) =
+      .child (M.castDirection h direction)
+        (cast (congrArg M.Vertex
+          (M.children_castDirection h direction)) next) :=
+  M.Vertex.cast_child h direction next
+
 end MVertexTest
 end PFunctor
