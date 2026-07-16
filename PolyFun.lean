@@ -118,6 +118,7 @@ import PolyFun.PFunctor.Category
 import PolyFun.PFunctor.Chart.Basic
 import PolyFun.PFunctor.Cofree
 import PolyFun.PFunctor.Cofree.FiniteProjection
+import PolyFun.PFunctor.Cofree.LaxMonoidal
 import PolyFun.PFunctor.Cofree.Polynomial
 import PolyFun.PFunctor.Cofree.Universal
 import PolyFun.PFunctor.Comonoid
