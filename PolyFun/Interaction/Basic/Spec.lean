@@ -3,7 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.PFunctor.Free.Path
+import PolyFun.PFunctor.Free.Polynomial
 
 /-!
 # Interaction specifications and transcripts
@@ -196,12 +196,38 @@ abbrev Transcript (s : Spec.{u}) : Type u :=
 
 /-- The **undecorated step polynomial** of sequential interaction: positions are
 interaction shapes, and the directions at a shape are its complete transcripts.
-A coalgebra of `stepPoly` is a system that at each state plays one whole `Spec`
-episode and continues from the resulting transcript; `Spec.Telescope` and
-`Spec.Chain.ofStateMachine` consume exactly this data to build finite specs,
-and the decorated refinement is `Concurrent.StepOver.toPFunctor`. -/
-def stepPoly : PFunctor.{u + 1, u} :=
-  ⟨Spec.{u}, Transcript⟩
+
+This is definitionally the free polynomial on `Spec.basePFunctor`. Consequently
+its substitution-monoid multiplication is dependent protocol append, and its
+backward direction map splits a transcript at the append boundary. A coalgebra
+of `stepPoly` is a system that at each state plays one whole `Spec` episode and
+continues from the resulting transcript. -/
+abbrev stepPoly : PFunctor.{u + 1, u} :=
+  PFunctor.FreeP Spec.basePFunctor
+
+/-- The canonical substitution-monoid structure on interaction specs.
+
+Its unit is `Spec.done`; its multiplication grafts a continuation spec at every
+complete transcript of an outer spec. -/
+abbrev substMonoid : PFunctor.SubstMonoid.{u + 1, u} :=
+  PFunctor.FreeP.substMonoid Spec.basePFunctor
+
+theorem substMonoid_unit_toFunA (x : PUnit) :
+    Spec.substMonoid.unit.toFunA x = Spec.done :=
+  rfl
+
+@[simp]
+theorem substMonoid_mult_toFunA (spec : Spec)
+    (next : Transcript spec → Spec) :
+    Spec.substMonoid.mult.toFunA ⟨spec, next⟩ = spec.append next :=
+  rfl
+
+@[simp]
+theorem substMonoid_mult_toFunB (spec : Spec)
+    (next : Transcript spec → Spec) (tr : Transcript (spec.append next)) :
+    Spec.substMonoid.mult.toFunB ⟨spec, next⟩ tr =
+      PFunctor.FreeM.Path.split spec next tr :=
+  rfl
 
 /-- A straight-line `Spec` with no branching: each move type in the list
 becomes one round, and later rounds do not depend on earlier moves. -/

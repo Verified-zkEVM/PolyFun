@@ -188,8 +188,20 @@ pattern:
 |------------|-------------|
 | `Spec.append s₁ s₂` | Two-phase protocol where phase 2 depends on phase 1's transcript |
 | `Spec.replicate spec n` | Fixed `n`-fold repetition of an identical spec |
-| `Spec.stateChain Stage step n` | `n` stages with explicit state threading |
-| `Spec.Chain n` | Continuation-style telescope (no external state type needed) |
+| `Spec.stateChain Stage step n` | Clocked finite unfold with explicit stage-indexed state |
+| `Spec.Chain n` | Sigma-friendly presentation of `(Spec.stepPoly.Obj)^[n] PUnit` |
+| `Spec.Telescope round step s` | Well-founded, possibly unbounded stopping tree from state `s` |
+
+These constructions share one polynomial substrate. `Spec.stepPoly` is
+definitionally `PFunctor.FreeP Spec.basePFunctor`, and `Spec.append` is the
+forward map of its substitution-monoid multiplication (the backward map is
+transcript splitting). `Chain.ofStateChain` unfolds a stage-indexed coalgebra
+into `Chain`; `Chain.toSpec_ofStateChain` shows that flattening it recovers
+`Spec.stateChain`.
+
+`Spec.Telescope` serves a different role: it is the indexed W-type generated
+by `done` and `extend`, with a formal initial-algebra fold. It is not by itself
+a termination certificate, because `done` is available at every state.
 
 `Transcript.liftAppend` lifts a type family on the first transcript to
 the combined transcript, avoiding `cast` / `Eq.rec` pollution.
@@ -539,7 +551,7 @@ import PolyFun.Interaction.UC.OpenProcessModel
 
 | File | Purpose |
 |------|---------|
-| `Spec.lean` | `Spec`, `Transcript`, `ofList` |
+| `Spec.lean` | `Spec`, `Transcript`, canonical `stepPoly` / `substMonoid`, `ofList` |
 | `Node.lean` | `Node.Context`, `Node.Schema`, `Prefix` |
 | `Decoration.lean` | `Decoration`, `Decoration.Over`, `telescope`, `pack` / `unpack` |
 | `Syntax.lean` | `SyntaxOver`, `SyntaxOver.Family` |
@@ -549,8 +561,8 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Append.lean` | `Spec.append`, transcript ops, `Strategy.comp` / `compFlat` |
 | `Replicate.lean` | `Spec.replicate`, `Strategy.iterate` |
 | `StateChain.lean` | `Spec.stateChain`, `Strategy.stateChainComp` |
-| `Chain.lean` | `Spec.Chain`, `Chain.toSpec`, `Chain.ofStateMachine` |
-| `Telescope.lean` | telescope helpers shared across composition |
+| `Chain.lean` | finite final-sequence `Spec.Chain`, `toSpec`, `ofStateChain`, `ofStateMachine` |
+| `Telescope.lean` | indexed stopping trees and their initial-algebra fold to `Spec` |
 | `Ownership.lean` | `LocalView` / `LocalRunner` builders for `SyntaxOver` |
 | `MonadDecoration.lean` | `MonadDecoration`, `Strategy.withMonads`, `runWithMonads` |
 | `BundledMonad.lean` | `BundledMonad` (monad packaged for inductive data) |

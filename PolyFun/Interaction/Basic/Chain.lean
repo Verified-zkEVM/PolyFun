@@ -6,23 +6,33 @@ Authors: Quang Dao
 import PolyFun.Interaction.Basic.StateChain
 
 /-!
-# Continuation-style chains (`Spec.Chain`)
+# Finite final-sequence approximants (`Spec.Chain`)
 
-A `Chain n` is a self-contained recipe for an `n`-round protocol:
-at each level it carries the current round's `Spec` and a transcript-indexed
-continuation to the next level. There is **no external state type**, no
-`Stage : Nat → Type`, and no round index family.
+A `Chain n` presents the `n`-th finite approximant obtained by iterating the
+undecorated step polynomial on the terminal object:
 
-Converting to a `Spec` via `Chain.toSpec` uses only `PFunctor.FreeM.append`.
-State-machine constructions are *derived*: `Chain.ofStateMachine`
-builds a chain from `(σ, step, next, s₀)` and then forgets `σ`.
+```
+Chain n ≃ (Spec.stepPoly.Obj)^[n] PUnit.
+```
+
+Concretely, each successor level carries the current `Spec` and a
+transcript-indexed continuation to the next level. Thus `Chain` is a
+sigma-friendly presentation of the finite final sequence of `Spec.stepPoly`;
+it is not a separate protocol language.
+
+Converting to a `Spec` via `Chain.toSpec` iterates the multiplication of
+`Spec.substMonoid` (definitionally `PFunctor.FreeM.append`). State-machine
+constructions are finite coalgebra unfolds: `Chain.ofStateChain` handles a
+stage-indexed state family, and `Chain.ofStateMachine` is its homogeneous
+specialization.
 
 ## Main definitions
 
-* `Spec.Chain` — depth-indexed telescope: round spec + continuation.
-* `Spec.Chain.toSpec` — convert a chain into a concrete `Spec`.
+* `Spec.Chain` — finite final-sequence approximant of `Spec.stepPoly`.
+* `Spec.Chain.toSpec` — flatten via the substitution-monoid structure.
 * `Chain.replicate` — constant rounds (recovers `Spec.replicate`).
-* `Chain.ofStateMachine` — build from a state machine (recovers `Spec.stateChain`).
+* `Chain.ofStateChain` — finite unfold of a stage-indexed coalgebra.
+* `Chain.ofStateMachine` — homogeneous-state specialization.
 
 ## Three composition mechanisms
 
@@ -32,10 +42,9 @@ builds a chain from `(σ, step, next, s₀)` and then forgets `σ`.
 | `Spec.stateChain` | Yes (`Stage i`) | Yes | State machine with explicit state type |
 | `Spec.Chain` | No (baked in) | Yes | Continuation-style, no external state |
 
-`Chain` is the most fundamental: it requires no external state type, yet
-supports full transcript dependence. `stateChain` is a specialization
-(recovered by `Chain.ofStateMachine`), and `replicate` is a further
-specialization (recovered by `Chain.replicate`).
+These are three views of the same polynomial iteration. `Chain` is the
+state-erased finite approximant, `stateChain` is its clocked coalgebra unfold
+already flattened to a `Spec`, and `replicate` is the constant-coalgebra case.
 
 ## Toy examples
 
@@ -48,19 +57,34 @@ universe u
 namespace Interaction
 namespace Spec
 
-/-- A self-contained recipe for an `n`-round protocol. At each level,
-carries the current round's `Spec` and, for each possible transcript,
-the recipe for the remaining rounds. No external state type. -/
+/-- The `n`-th finite final-sequence approximant of `Spec.stepPoly`, starting
+from the terminal object `PUnit`.
+
+At a successor level this reduces definitionally to a current `Spec` paired
+with one remaining chain for each of its transcripts. `succEquiv` identifies
+that presentation with `Spec.stepPoly.Obj (Chain n)`. -/
 def Chain : Nat → Type (u + 1)
   | 0 => PUnit
   | n + 1 => (spec : Spec) × (Transcript spec → Chain n)
 
 namespace Chain
 
-/-- Convert a chain into a concrete `Spec` via iterated `append`. -/
+/-- Canonical equivalence between the sigma-friendly successor presentation
+and the extension of `Spec.stepPoly` applied to the preceding approximant. -/
+def succEquiv (n : Nat) :
+    Chain (Nat.succ n) ≃ Spec.stepPoly.Obj (Chain n) where
+  toFun c := ⟨c.1, c.2⟩
+  invFun c := ⟨c.1, c.2⟩
+  left_inv c := by cases c; rfl
+  right_inv c := by cases c; rfl
+
+/-- Flatten a finite approximant into a concrete `Spec` by iterating the
+multiplication of `Spec.substMonoid`. This multiplication is definitionally
+dependent `PFunctor.FreeM.append`. -/
 def toSpec : (n : Nat) → Chain n → Spec
   | 0, _ => .done
-  | n + 1, ⟨spec, cont⟩ => spec.append (fun tr => toSpec n (cont tr))
+  | n + 1, ⟨spec, cont⟩ =>
+      Spec.substMonoid.mult.toFunA ⟨spec, fun tr => toSpec n (cont tr)⟩
 
 @[simp, grind =]
 theorem toSpec_zero (c : Chain 0) : toSpec 0 c = Spec.done := rfl
@@ -78,14 +102,21 @@ def replicate (spec : Spec) : (n : Nat) → Chain n
   | 0 => ⟨⟩
   | n + 1 => ⟨spec, fun _ => replicate spec n⟩
 
-/-- Build a chain from a state machine — exactly a coalgebra `(step, next)` of
-the undecorated step polynomial `Spec.stepPoly` (a `PFunctor.DynSystem σ
-Spec.stepPoly` unpacked on its states). The state `σ` is consumed
-during construction and does not appear in the resulting `Chain`. -/
+/-- Finite unfold of a stage-indexed `Spec.stepPoly` coalgebra into the final
+sequence. The stage state is erased from the resulting `Chain`. -/
+def ofStateChain (Stage : Nat → Type u)
+    (step : (i : Nat) → Stage i → Spec)
+    (next : (i : Nat) → (s : Stage i) → Transcript (step i s) → Stage (i + 1)) :
+    (n : Nat) → (i : Nat) → Stage i → Chain n
+  | 0, _, _ => ⟨⟩
+  | n + 1, i, s =>
+      ⟨step i s, fun tr => ofStateChain Stage step next n (i + 1) (next i s tr)⟩
+
+/-- Homogeneous-state specialization of `ofStateChain`. This is the finite
+unfold of a coalgebra `σ → Spec.stepPoly.Obj σ`. -/
 def ofStateMachine {σ : Type u} (step : σ → Spec)
-    (next : (s : σ) → Transcript (step s) → σ) : (n : Nat) → σ → Chain n
-  | 0, _ => ⟨⟩
-  | n + 1, s => ⟨step s, fun tr => ofStateMachine step next n (next s tr)⟩
+    (next : (s : σ) → Transcript (step s) → σ) (n : Nat) (s : σ) : Chain n :=
+  ofStateChain (fun _ => σ) (fun _ => step) (fun _ => next) n 0 s
 
 /-! ## Bridge to existing API -/
 
@@ -94,8 +125,39 @@ theorem toSpec_replicate (spec : Spec) :
     (n : Nat) → toSpec n (Chain.replicate spec n) = spec.replicate n
   | 0 => rfl
   | n + 1 => by
-      simp only [Chain.replicate, toSpec, PFunctor.FreeM.replicate]
+      simp only [Chain.replicate, toSpec, Spec.substMonoid_mult_toFunA,
+        PFunctor.FreeM.replicate]
       congr 1; funext _; exact toSpec_replicate spec n
+
+/-- Flattening the finite unfold of a stage-indexed coalgebra recovers the
+existing `Spec.stateChain` construction. -/
+theorem toSpec_ofStateChain (Stage : Nat → Type u)
+    (step : (i : Nat) → Stage i → Spec)
+    (next : (i : Nat) → (s : Stage i) → Transcript (step i s) → Stage (i + 1)) :
+    (n : Nat) → (i : Nat) → (s : Stage i) →
+    toSpec n (Chain.ofStateChain Stage step next n i s) =
+      PFunctor.FreeM.stateChain PUnit.unit Stage step next n i s
+  | 0, _, _ => rfl
+  | n + 1, i, s => by
+      simp only [Chain.ofStateChain, toSpec, Spec.substMonoid_mult_toFunA,
+        PFunctor.FreeM.stateChain]
+      congr 1
+      funext tr
+      exact toSpec_ofStateChain Stage step next n (i + 1) (next i s tr)
+
+/-- For a homogeneous coalgebra, the clock carried by `ofStateChain` is
+observationally irrelevant already at the unflattened `Chain` level. -/
+theorem ofStateChain_const_index {σ : Type u} (step : σ → Spec)
+    (next : (s : σ) → Transcript (step s) → σ) :
+    (n i j : Nat) → (s : σ) →
+    Chain.ofStateChain (fun _ => σ) (fun _ => step) (fun _ => next) n i s =
+      Chain.ofStateChain (fun _ => σ) (fun _ => step) (fun _ => next) n j s
+  | 0, _, _, _ => rfl
+  | n + 1, i, j, s => by
+      simp only [Chain.ofStateChain]
+      congr 1
+      funext tr
+      exact ofStateChain_const_index step next n (i + 1) (j + 1) (next s tr)
 
 /-- Converting a state-machine chain recovers `Spec.stateChain` with
 constant stage family and round index erased. -/
@@ -104,11 +166,10 @@ theorem toSpec_ofStateMachine {σ : Type u} (step : σ → Spec)
     (n : Nat) → (i : Nat) → (s : σ) →
     toSpec n (Chain.ofStateMachine step next n s) =
       PFunctor.FreeM.stateChain PUnit.unit (fun _ => σ) (fun _ => step) (fun _ => next) n i s
-  | 0, _, _ => rfl
-  | n + 1, i, s => by
-      simp only [Chain.ofStateMachine, toSpec, PFunctor.FreeM.stateChain]
-      congr 1; funext tr
-      exact toSpec_ofStateMachine step next n (i + 1) (next s tr)
+  | n, i, s => by
+      rw [ofStateMachine,
+        ofStateChain_const_index step next n 0 i s]
+      exact toSpec_ofStateChain (fun _ => σ) (fun _ => step) (fun _ => next) n i s
 
 /-! ## Transcript operations -/
 
