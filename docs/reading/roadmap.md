@@ -210,9 +210,15 @@ Landed the K-L-prioritized machine spine (crypto-free):
 
 - **B1/B4 done** — `PFunctor.Comonoid` (Def 7.14) as an à-la-carte structure with
   counit/comult and the three lens laws through `compX`/`XComp`/`compAssoc`
-  (`PFunctor/Comonoid.lean`). `Comonoid.Hom` packages counit/comultiplication-
-  preserving retrofunctors with identity/composition, and the resulting
-  `Category Comonoid` is the concrete `Cat♯` boundary. A generic
+  (`PFunctor/Comonoid.lean`). `PFunctor/Comonoid/Category.lean` derives the
+  extraction direction of the Ahman–Uustalu outgoing-arrow
+  presentation—identity, target/codomain,
+  composition, and all five category laws—directly from those three lens
+  equations. `Comonoid.Hom` packages counit/comultiplication-preserving
+  retrofunctors; its derived laws preserve identities backward, targets
+  forward, and composites backward, and the resulting `Category Comonoid` is
+  the concrete `Cat♯` boundary. The reverse category-to-comonoid construction
+  and packaged equivalence are deferred. A generic
   `MonoidalCategory (Poly, ◃, y)` bundle is still intentionally unnecessary.
 - **B2 done** — `stateComonoid S` on `Sy^S` with `δ = fixState` and the stay-put
   counit; **all three comonoid laws are `rfl`** (discharges the laws
