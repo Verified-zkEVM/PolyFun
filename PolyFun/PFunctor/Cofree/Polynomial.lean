@@ -353,6 +353,27 @@ theorem map_toFunB {Q : PFunctor.{uA₂, uB₂}} (lens : Lens P Q)
       M.Vertex.pullMapLens lens tree vertex :=
   rfl
 
+/-- Package the child of a mapped cofree tree together with its vertex
+pullback. This equality hides the dependent transport induced by
+`M.children_mapLens`, so consumers can rewrite the complete child object
+without separating its shape from its direction family. -/
+theorem mapChildObj {Q : PFunctor.{uA₂, uB₂}} (lens : Lens P Q)
+    (tree : (CofreeP P).A)
+    (direction : Q.B (M.head (M.mapLens lens tree))) :
+    let sourceDirection := M.pullDirection lens tree direction
+    let sourceChild := M.children tree sourceDirection
+    let childEq := M.children_mapLens lens tree direction
+    (⟨M.children (M.mapLens lens tree) direction,
+        fun vertex => M.Vertex.pullMapLens lens sourceChild
+          (cast (congrArg M.Vertex childEq) vertex)⟩ :
+      (CofreeP Q).Obj (M.Vertex sourceChild)) =
+      ⟨M.mapLens lens sourceChild,
+        M.Vertex.pullMapLens lens sourceChild⟩ := by
+  dsimp only
+  let childEq := M.children_mapLens lens tree direction
+  cases childEq
+  rfl
+
 /-- Pointwise container form of identity preservation for `CofreeP.map`. -/
 private theorem map_obj_id (tree : (CofreeP P).A) :
     (⟨(map (Lens.id P)).toFunA tree,

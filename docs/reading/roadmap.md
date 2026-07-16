@@ -294,12 +294,17 @@ canonical `FreeM` interpretation.
   DFA mate = accepted language (Example 8.51); the general Moore-mate shape of
   Example 8.52 is now captured by the behavior/reached-state bridge, while a
   concrete `List A → B` worked example remains open.
-- **C4** honest statement replacing the `FreeM ⊣ Cofree` slogan: the true
+- **C4 core done** honest statement replacing the `FreeM ⊣ Cofree` slogan:
+  the true
   adjunction is `U ⊣ 𝒯_₋` between `Comon(Poly)` and `Poly` (Thm 8.45);
   the free-monad/cofree-comonad relationship is Libkind–Spivak's module
-  structure (EPTCS 429). Fix `Interaction/Basic/TypeTree.lean:83` +
-  `REFERENCES.md:65` wording; resolves `corrections.md` item 1; recast
-  `behavior`/`trajectory` as induced universal maps.
+  structure (EPTCS 429). `PatternRunsOnMatter/Basic` gives the executable
+  action and full naturality; `Universal` identifies it with the paper's
+  convolution extension; `Module` proves unit and associativity. Section 4
+  operational bridges and worked applications remain the next slice. The
+  corrected wording in `Interaction/Basic/TypeTree.lean` and `REFERENCES.md`
+  resolves `corrections.md` item 1 and presents `behavior`/`trajectory` as
+  induced universal maps.
 
 ### Phase D — comodules, bicomodules, research (Ch 8.3 + Ch 9)
 
