@@ -127,6 +127,13 @@ PFunctor/{Cofree/Polynomial, Comonoid/Category}
   → PFunctor/Cofree/FiniteProjection
 PFunctor/{Cofree/Universal, Comonoid/Tensor}
   → PFunctor/Cofree/LaxMonoidal
+PFunctor/{Free/Polynomial, Cofree/Polynomial}
+  → PFunctor/PatternRunsOnMatter/Basic
+PFunctor/{PatternRunsOnMatter/Basic, Free/Universal,
+  Cofree/Universal, SubstMonoid/Convolution}
+  → PFunctor/PatternRunsOnMatter/Universal
+PFunctor/{PatternRunsOnMatter/Universal, Cofree/LaxMonoidal}
+  → PFunctor/PatternRunsOnMatter/Module
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
