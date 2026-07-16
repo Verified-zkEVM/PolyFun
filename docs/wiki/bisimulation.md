@@ -73,9 +73,12 @@ remains the single behavioural-equality principle.
   they relate different source return types and different continuation return
   types without collapsing their universes.
 
-The generic LTS weak closure and `ITree.WeakBisim` describe the same standard
-shape at different representation layers; no adapter is claimed here until it
-preserves dependent event labels and continuations explicitly.
+`ITree.toLTS F α` is the explicit adapter to the generic LTS layer. Its states
+are `Option (ITree F α)` so a visible return can enter terminal state `none`;
+its labels record either a dependent event/reply pair or a returned value.
+`weakBisim_isLTSWeakBisimulation` proves that `ITree.WeakBisim`, lifted to
+optional states, is a generic weak bisimulation, and
+`traces_eq_of_weakBisim` derives equality of finite visible trace sets.
 
 ## UC open processes
 
