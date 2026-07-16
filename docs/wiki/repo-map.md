@@ -45,6 +45,7 @@ PFunctor/Free/Basic
   -> PFunctor/Free/{Path, Displayed/Decoration}
   -> PFunctor/Free/Path/Execution
   -> PFunctor/Free/Cursor
+  -> PFunctor/Free/Displayed/Cursor
   -> PFunctor/Free/Cursor/Occurrence
   -> PFunctor/Free/Cursor/Fork
 PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption

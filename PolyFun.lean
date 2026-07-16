@@ -129,6 +129,7 @@ import PolyFun.PFunctor.Free.Cursor.Fork
 import PolyFun.PFunctor.Free.Cursor.Occurrence
 import PolyFun.PFunctor.Free.Displayed
 import PolyFun.PFunctor.Free.Displayed.Append
+import PolyFun.PFunctor.Free.Displayed.Cursor
 import PolyFun.PFunctor.Free.Displayed.Decoration
 import PolyFun.PFunctor.Free.Displayed.StateChain
 import PolyFun.PFunctor.Free.Path
