@@ -20,7 +20,7 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 | Ch 5 factorizations, adjunctions, (co)limits | **Done**: vertical–cartesian factorization and orthogonality (A3), trivial-interface adjunctions plus binary tensor gluing (A4/A5), and cartesian closure (A2); general (co)limits remain open |
 | Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: direct composite-lens projections, `compNthMap`, δ/`twoStep`, full left Π-distributivity, ordering/interchange naturality and concrete duoidal coherence; coclosure/multiadjoint (A8) and the higher three-interchange diagram remain open |
 | Ch 7 comonoids = categories, retrofunctors | **Done (B1–B4 spine)**: `Comonoid`, `Comonoid.Hom`/`Cat♯`, state comonoids, `δ^(n)`, `Run_n`, and the `IOMachine` run/composition core; §7.3.3 quadruple (B5), all-bracketing canonicity, and representable-monoid equivalence remain open |
-| Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | **C1/C2 done; C3 hom-set data done**: `M.Vertex`, `CofreeP.comonoid`, generic coiteration, and the natural hom-set equivalence; behavior mates, finite projections/Prop 8.49, lax monoidality, and bicomodules remain open |
+| Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | **C1/C2 done; C3 hom-set data + behavior mate done**: `M.Vertex`, `CofreeP.comonoid`, generic coiteration, the natural hom-set equivalence, and its dynamical behavior/trajectory specialization; finite projections/Prop 8.49, lax monoidality, and bicomodules remain open |
 
 ## Reading units
 
@@ -265,18 +265,23 @@ canonical `FreeM` interpretation.
   Still-open instances:
   `t_1 ≅ y`, `t_y ≅ y^ℕ` = (ℕ,0,+), `t_{By} ≅ B^ℕ y^ℕ` = B-streams
   (Example 8.38), `t_{By^A} ≅ B^{List A} y^{List A}` (Ex 8.40).
-- **C3 — hom-set data done:** the universe-local form of `U ⊣ 𝒯_₋`
+- **C3 — hom-set data and behavior mate done:** the universe-local form of `U ⊣ 𝒯_₋`
   (Thm 8.45), `Lens c p ≃ Retrofunctor 𝒞 (𝒯_p)`, with mate via `M.corec`,
   full dependent-path uniqueness, and naturality in both variables. It is
   packaged as a concrete hom-set equivalence rather than a bundled
   `CategoryTheory.Adjunction`, because bare `PFunctor` currently has
-  overlapping lens/chart category instances. Still open: **Prop 8.49**,
+  overlapping lens/chart category instances. `Dynamical/CofreeMate` identifies
+  generic state-comonoid coiteration with `DynSystem.behavior`, proves that
+  decoding arbitrary reached-state labels gives `labeledTrajectory`, packages
+  the fixed-maximum full retrofunctor mate, and relates it to the existing
+  `trajectory`. Still open: **Prop 8.49**,
   `mate ⨟ ε_p^{(n)} = Run_n(φ)` — the mate packages every finite run.
   Functoriality `𝒯_φ` (§8.1.5) + `φ` cartesian ⟹ `𝒯_φ` cartesian
   (Prop 8.72); `𝒯_p` free on a graph (Prop 8.57); lax monoidality
   `t_p ⊗ t_q ⇆ t_{p⊗q}` (Prop 8.81). Worked tests with paper value:
-  DFA mate = accepted language (Example 8.51); Moore mate =
-  `List A → B` (Example 8.52) — recast `DynSystem.behavior` as the mate.
+  DFA mate = accepted language (Example 8.51); the general Moore-mate shape of
+  Example 8.52 is now captured by the behavior/reached-state bridge, while a
+  concrete `List A → B` worked example remains open.
 - **C4** honest statement replacing the `FreeM ⊣ Cofree` slogan: the true
   adjunction is `U ⊣ 𝒯_₋` between `Comon(Poly)` and `Poly` (Thm 8.45);
   the free-monad/cofree-comonad relationship is Libkind–Spivak's module

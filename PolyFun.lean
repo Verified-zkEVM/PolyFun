@@ -123,6 +123,7 @@ import PolyFun.PFunctor.Comonoid.Category
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Bisimulation
+import PolyFun.PFunctor.Dynamical.CofreeMate
 import PolyFun.PFunctor.Dynamical.Combinators
 import PolyFun.PFunctor.Dynamical.DynComputation
 import PolyFun.PFunctor.Dynamical.Game
