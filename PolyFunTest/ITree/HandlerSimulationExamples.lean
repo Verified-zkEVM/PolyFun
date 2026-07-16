@@ -35,9 +35,27 @@ def simulateSeparated (handler : ITree.Handler E F) (tree : ITree E R) :
     ITree F R :=
   ITree.simulate handler tree
 
+example (tree : ITree E R) :
+    ITree.WeakBisim (ITree.simulate (ITree.Handler.id E) tree) tree :=
+  ITree.simulate_id tree
+
 example (handler : ITree.Handler E F) (value : R) :
     ITree.simulate handler (ITree.pure value) = ITree.pure value :=
   ITree.simulate_pure handler value
+
+example (handler : ITree.Handler E F) (event : E.A)
+    (cont : E.B event → ITree E R) :
+    ITree.simulate handler (ITree.query event cont) =
+      ITree.bind (handler event)
+        (fun answer => ITree.step (ITree.simulate handler (cont answer))) :=
+  ITree.simulate_query_eq_bind handler event cont
+
+example {S : Type uQA} {RR : R → S → Prop}
+    (handler : ITree.Handler E F) {tree : ITree E R} {tree' : ITree E S}
+    (h : ITree.WeakBisimRel RR tree tree') :
+    ITree.WeakBisimRel RR (ITree.simulate handler tree)
+      (ITree.simulate handler tree') :=
+  ITree.simulate_weakBisimRel handler h
 
 /-- Pure event renaming has the same universe separation as generic
 simulation. -/
@@ -51,11 +69,57 @@ example (first : PFunctor.Lens E F) (second : PFunctor.Lens F G)
       ITree.mapSpec second (ITree.mapSpec first tree) :=
   ITree.mapSpec_comp first second tree
 
+example {S : Type uQA} (lens : PFunctor.Lens E F)
+    (tree : ITree E R) (cont : R → ITree E S) :
+    ITree.mapSpec lens (ITree.bind tree cont) =
+      ITree.bind (ITree.mapSpec lens tree)
+        (fun value => ITree.mapSpec lens (cont value)) :=
+  ITree.mapSpec_bind lens tree cont
+
+example {S : Type uQA} (lens : PFunctor.Lens E F)
+    (f : R → S) (tree : ITree E R) :
+    ITree.mapSpec lens (ITree.map f tree) =
+      ITree.map f (ITree.mapSpec lens tree) :=
+  ITree.mapSpec_map lens f tree
+
+example {S : Type uQA} (lens : PFunctor.Lens E F)
+    (body : S → ITree E (S ⊕ R)) (init : S) :
+    ITree.mapSpec lens (ITree.iter body init) =
+      ITree.iter (fun s => ITree.mapSpec lens (body s)) init :=
+  ITree.mapSpec_iter lens body init
+
+example {S : Type uQA} {T : Type uHA} (lens : PFunctor.Lens E F)
+    (first : R → ITree E S) (second : S → ITree E T) (value : R) :
+    ITree.mapSpec lens (ITree.cat first second value) =
+      ITree.cat (ITree.mapSpec lens ∘ first)
+        (ITree.mapSpec lens ∘ second) value :=
+  ITree.mapSpec_cat lens first second value
+
 /-- Handler composition permits all three signatures to use independent
 position and direction universes. -/
 def compSeparated (first : ITree.Handler E F) (second : ITree.Handler F G) :
     ITree.Handler E G :=
   second.comp first
+
+example (first : ITree.Handler E F) (second : ITree.Handler F G)
+    (tree : ITree E R) :
+    ITree.WeakBisim
+      (ITree.simulate second (ITree.simulate first tree))
+      (ITree.simulate (second.comp first) tree) :=
+  ITree.simulate_comp second first tree
+
+example {H : PFunctor.{uHA, uHB}} (first : ITree.Handler E F)
+    (second : ITree.Handler F G) (third : ITree.Handler G H) (a : E.A) :
+    ITree.WeakBisim (third.comp (second.comp first) a)
+      ((third.comp second).comp first a) :=
+  ITree.Handler.comp_assoc_apply third second first a
+
+example (first : PFunctor.Lens E F) (second : PFunctor.Lens F G)
+    (a : E.A) :
+    ITree.WeakBisim
+      ((ITree.Handler.ofLens second).comp (ITree.Handler.ofLens first) a)
+      (ITree.Handler.ofLens (second ∘ₗ first) a) :=
+  ITree.Handler.ofLens_comp_apply first second a
 
 /-- Coproduct routing only inherits the equal direction-universe constraint
 of `PFunctor.sum`; the two position universes and target universes remain
@@ -125,5 +189,15 @@ example : chooseTrueHandler.comp negateHandler .bit =
   rw [ITree.Handler.comp_apply, negateHandler, ITree.simulate_query_eq_bind,
     chooseTrueHandler, ITree.bind_pure_left, ITree.simulate_pure]
   rfl
+
+/-- Sequential and composite interpretation agree on a query whose answer is
+transformed by the inner handler and resolved by the outer handler. -/
+example : ITree.WeakBisim
+    (ITree.simulate chooseTrueHandler
+      (ITree.simulate negateHandler
+        (ITree.query .bit (fun answer => ITree.pure answer))))
+    (ITree.simulate (chooseTrueHandler.comp negateHandler)
+      (ITree.query .bit (fun answer => ITree.pure answer))) :=
+  ITree.simulate_comp chooseTrueHandler negateHandler _
 
 end ITree.HandlerSimulationExamples
