@@ -87,6 +87,36 @@ example (p p' q q' : PFunctor.{u, u}) :
 example : Lens X.{pA₁, pB₁} X.{qA₁, qB₁} :=
   Lens.unitComparison
 
+/-- Tensor-unitor naturality leaves the source and target position and
+direction universes independent. -/
+example {p : PFunctor.{pA₁, pB₁}} {q : PFunctor.{qA₁, qB₁}}
+    (f : Lens p q) :
+    f ∘ₗ (Lens.Equiv.xTensor (P := p)).toLens =
+      (Lens.Equiv.xTensor (P := q)).toLens ∘ₗ
+        ((Lens.unitComparison : Lens X.{pA₁, pB₁} X.{qA₁, qB₁}) ⊗ₗ f) :=
+  Lens.xTensor_natural f
+
+example {p : PFunctor.{pA₁, pB₁}} {q : PFunctor.{qA₁, qB₁}}
+    (f : Lens p q) :
+    f ∘ₗ (Lens.Equiv.tensorX (P := p)).toLens =
+      (Lens.Equiv.tensorX (P := q)).toLens ∘ₗ
+        (f ⊗ₗ
+          (Lens.unitComparison : Lens X.{pA₁, pB₁} X.{qA₁, qB₁})) :=
+  Lens.tensorX_natural f
+
+/-- Tensor-associator naturality leaves all six polynomial universe pairs
+independent. -/
+example
+    {p₁ : PFunctor.{pA₁, pB₁}} {p₂ : PFunctor.{pA₂, pB₂}}
+    {q₁ : PFunctor.{qA₁, qB₁}} {q₂ : PFunctor.{qA₂, qB₂}}
+    {r₁ : PFunctor.{rA₁, rB₁}} {r₂ : PFunctor.{rA₂, rB₂}}
+    (f : Lens p₁ p₂) (g : Lens q₁ q₂) (h : Lens r₁ r₂) :
+    (f ⊗ₗ (g ⊗ₗ h)) ∘ₗ
+        (Lens.Equiv.tensorAssoc (P := p₁) (Q := q₁) (R := r₁)).toLens =
+      (Lens.Equiv.tensorAssoc (P := p₂) (Q := q₂) (R := r₂)).toLens ∘ₗ
+        ((f ⊗ₗ g) ⊗ₗ h) :=
+  Lens.tensorAssoc_natural f g h
+
 example :
     Lens X.{max pA₁ qA₁ pB₁, max pB₁ qB₁}
       (X.{pA₁, pB₁} ◃ X.{qA₁, qB₁}) :=

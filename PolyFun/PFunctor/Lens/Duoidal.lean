@@ -155,6 +155,29 @@ copies of the common tensor/composition unit `X`. -/
 def unitComparison : Lens X.{uA₁, uB₁} X.{uA₂, uB₂} :=
   Lens.fromX PUnit.unit
 
+/-- Naturality of the left tensor unitor.  The unit component is the canonical
+comparison between the independently instantiated source and target copies of
+`X`. -/
+theorem xTensor_natural
+    {p : PFunctor.{uA₁, uB₁}} {q : PFunctor.{uA₂, uB₂}}
+    (f : Lens p q) :
+    f ∘ₗ (Equiv.xTensor (P := p)).toLens =
+      (Equiv.xTensor (P := q)).toLens ∘ₗ
+        ((unitComparison : Lens X.{uA₁, uB₁} X.{uA₂, uB₂}) ⊗ₗ f) := by
+  rfl
+
+/-- Naturality of the right tensor unitor.  The unit component is the
+canonical comparison between the independently instantiated source and target
+copies of `X`. -/
+theorem tensorX_natural
+    {p : PFunctor.{uA₁, uB₁}} {q : PFunctor.{uA₂, uB₂}}
+    (f : Lens p q) :
+    f ∘ₗ (Equiv.tensorX (P := p)).toLens =
+      (Equiv.tensorX (P := q)).toLens ∘ₗ
+        (f ⊗ₗ
+          (unitComparison : Lens X.{uA₁, uB₁} X.{uA₂, uB₂})) := by
+  rfl
+
 /-- The canonical comparison from the tensor of two possibly differently
 instantiated composition units to the unit at their componentwise maximum
 universes.  Unlike `Equiv.tensorX`, this lens does not require the two copies
