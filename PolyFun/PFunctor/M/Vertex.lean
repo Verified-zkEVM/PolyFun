@@ -473,6 +473,17 @@ theorem cast_child {t t' : M P} (h : t = t')
   rfl
 
 @[simp]
+theorem castEquiv_child {t t' : M P} (h : t = t')
+    (direction : P.B (M.head t))
+    (next : Vertex (M.children t direction)) :
+    castEquiv h (.child direction next) =
+      .child (M.castDirection h direction)
+        (cast (congrArg Vertex
+          (M.children_castDirection h direction)) next) := by
+  change cast (congrArg Vertex h) (.child direction next) = _
+  exact cast_child h direction next
+
+@[simp]
 theorem castEquiv_rfl {t : M P} (vertex : Vertex t) :
     castEquiv rfl vertex = vertex :=
   rfl
@@ -581,6 +592,179 @@ theorem subtree_pullMapLens (l : Lens P Q) (tree : M P)
                 (M.children tree sourceDirection)
                 (cast (congrArg Vertex childEq) next) rfl
             _ = subtree next := subtree_cast childEq next
+
+private theorem append_congr {tree : M P}
+    {initial initial' : Vertex tree} (hinitial : initial = initial')
+    {suffix : Vertex (subtree initial)}
+    {suffix' : Vertex (subtree initial')} (hsuffix : suffix ≍ suffix') :
+    append initial suffix = append initial' suffix' := by
+  subst initial'
+  cases hsuffix
+  rfl
+
+private theorem cast_append {tree tree' : M P} (h : tree = tree')
+    (initial : Vertex tree) (suffix : Vertex (subtree initial)) :
+    cast (congrArg Vertex h) (append initial suffix) =
+      append (cast (congrArg Vertex h) initial)
+        (cast (congrArg Vertex (subtree_cast h initial).symm) suffix) := by
+  subst h
+  rfl
+
+/-- Pulling a mapped finite path commutes with concatenation. The explicit
+transport puts the target suffix in the mapped copy of the selected source
+subtree. -/
+theorem pullMapLens_append (l : Lens P Q) (tree : M P)
+    (initial : Vertex (M.mapLens l tree))
+    (suffix : Vertex (subtree initial)) :
+    pullMapLens l tree (append initial suffix) =
+      append (pullMapLens l tree initial)
+        (pullMapLens l (subtree (pullMapLens l tree initial))
+          (castEquiv (subtree_pullMapLens l tree initial).symm suffix)) := by
+  change pullMapLens l tree (append initial suffix) =
+    append (pullMapLens l tree initial)
+      (pullMapLens l (subtree (pullMapLens l tree initial))
+        (cast (congrArg Vertex
+          (subtree_pullMapLens l tree initial).symm) suffix))
+  induction hdepth : depth initial using Nat.strong_induction_on generalizing tree with
+  | h n ih =>
+      cases initial with
+      | root =>
+          have hpulled :
+              pullMapLens l tree (.root (M.mapLens l tree)) =
+                .root tree := pullMapLens_root l tree
+          have hsource :
+              subtree (pullMapLens l tree (.root (M.mapLens l tree))) =
+                tree := by rw [hpulled, subtree_root]
+          have hinput :
+              cast (congrArg Vertex
+                  (subtree_pullMapLens l tree
+                    (.root (M.mapLens l tree))).symm) suffix ≍
+                suffix := cast_heq _ suffix
+          have hsuffix :
+              pullMapLens l
+                  (subtree (pullMapLens l tree
+                    (.root (M.mapLens l tree))))
+                  (cast (congrArg Vertex
+                    (subtree_pullMapLens l tree
+                      (.root (M.mapLens l tree))).symm) suffix) ≍
+                pullMapLens l tree suffix :=
+            dependent_apply_heq
+              (fun source : M P => pullMapLens l source) hsource hinput
+          calc
+            pullMapLens l tree
+                (append (.root (M.mapLens l tree)) suffix) =
+                pullMapLens l tree suffix := by rw [append_root]
+            _ = append (pullMapLens l tree (.root (M.mapLens l tree)))
+                (pullMapLens l
+                  (subtree (pullMapLens l tree
+                    (.root (M.mapLens l tree))))
+                  (cast (congrArg Vertex
+                    (subtree_pullMapLens l tree
+                      (.root (M.mapLens l tree))).symm) suffix)) := by
+              symm
+              calc
+                append (pullMapLens l tree (.root (M.mapLens l tree)))
+                    (pullMapLens l
+                      (subtree (pullMapLens l tree
+                        (.root (M.mapLens l tree))))
+                      (cast (congrArg Vertex
+                        (subtree_pullMapLens l tree
+                          (.root (M.mapLens l tree))).symm) suffix)) =
+                    append (.root tree) (pullMapLens l tree suffix) :=
+                  append_congr hpulled hsuffix
+                _ = pullMapLens l tree suffix := append_root _ _
+      | child direction next =>
+          simp only [subtree_child] at suffix
+          let sourceDirection := M.pullDirection l tree direction
+          let childEq := M.children_mapLens l tree direction
+          let sourceChild := M.children tree sourceDirection
+          let next' : Vertex (M.mapLens l sourceChild) :=
+            cast (congrArg Vertex childEq) next
+          let subtreeEq : subtree next' = subtree next :=
+            subtree_cast childEq next
+          let suffix' : Vertex (subtree next') :=
+            cast (congrArg Vertex subtreeEq.symm) suffix
+          have hlt : depth next' < n := by
+            calc
+              depth next' = depth next := depth_cast childEq next
+              _ < depth next + 1 := Nat.lt_succ_self _
+              _ = n := hdepth
+          have hrecursive := ih (depth next') hlt sourceChild next' suffix' rfl
+          let pulledNext := pullMapLens l sourceChild next'
+          let recursiveSuffix :=
+            pullMapLens l (subtree pulledNext)
+              (cast (congrArg Vertex
+                (subtree_pullMapLens l sourceChild next').symm) suffix')
+          have hleftInput :
+              cast (congrArg Vertex childEq) (append next suffix) =
+                append next' suffix' := by
+            exact cast_append childEq next suffix
+          have hleft :
+              pullMapLens l tree
+                  (append (.child direction next) suffix) =
+                .child sourceDirection
+                  (pullMapLens l sourceChild (append next' suffix')) := by
+            rw [append_child, pullMapLens_child]
+            exact congrArg (Vertex.child sourceDirection)
+              (congrArg (pullMapLens l sourceChild) hleftInput)
+          have hpulled :
+              pullMapLens l tree (.child direction next) =
+                .child sourceDirection pulledNext := by
+            exact pullMapLens_child l tree direction next
+          have hsource :
+              subtree (pullMapLens l tree (.child direction next)) =
+                subtree pulledNext := by
+            rw [hpulled, subtree_child]
+          have hinput :
+              cast (congrArg Vertex
+                    (subtree_pullMapLens l tree (.child direction next)).symm)
+                  suffix ≍
+                cast (congrArg Vertex
+                  (subtree_pullMapLens l sourceChild next').symm)
+                  suffix' := by
+            exact (cast_heq _ suffix).trans
+              (((cast_heq (congrArg Vertex subtreeEq.symm) suffix).symm).trans
+                (cast_heq _ suffix').symm)
+          have hsuffix :
+              pullMapLens l
+                  (subtree (pullMapLens l tree (.child direction next)))
+                  (cast (congrArg Vertex
+                    (subtree_pullMapLens l tree (.child direction next)).symm)
+                    suffix) ≍
+                recursiveSuffix := by
+            exact dependent_apply_heq
+              (fun source : M P => pullMapLens l source) hsource hinput
+          have hright :
+              append (pullMapLens l tree (.child direction next))
+                  (pullMapLens l
+                    (subtree (pullMapLens l tree (.child direction next)))
+                    (cast (congrArg Vertex
+                      (subtree_pullMapLens l tree (.child direction next)).symm)
+                      suffix)) =
+                .child sourceDirection (append pulledNext recursiveSuffix) := by
+            calc
+              append (pullMapLens l tree (.child direction next))
+                  (pullMapLens l
+                    (subtree (pullMapLens l tree (.child direction next)))
+                    (cast (congrArg Vertex
+                      (subtree_pullMapLens l tree (.child direction next)).symm)
+                      suffix)) =
+                  append (.child sourceDirection pulledNext) recursiveSuffix :=
+                append_congr hpulled hsuffix
+              _ = .child sourceDirection (append pulledNext recursiveSuffix) :=
+                append_child _ _ _
+          calc
+            pullMapLens l tree (append (.child direction next) suffix) =
+                .child sourceDirection
+                  (pullMapLens l sourceChild (append next' suffix')) := hleft
+            _ = .child sourceDirection (append pulledNext recursiveSuffix) :=
+              congrArg (Vertex.child sourceDirection) hrecursive
+            _ = append (pullMapLens l tree (.child direction next))
+                (pullMapLens l
+                  (subtree (pullMapLens l tree (.child direction next)))
+                  (cast (congrArg Vertex
+                    (subtree_pullMapLens l tree (.child direction next)).symm)
+                    suffix)) := hright.symm
 
 /-- Pulling finite vertices through the identity lens is the dependent
 identity transport induced by `M.mapLens_id`. -/

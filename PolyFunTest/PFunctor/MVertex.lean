@@ -83,29 +83,75 @@ abbrev natBinaryP : PFunctor := ⟨Nat, fun _ => Bool⟩
 def reverseBranchLens : Lens binaryP natBinaryP :=
   (fun label => if label then 1 else 0) ⇆ (fun _ branch => !branch)
 
-def mappedFalse : M.Vertex (M.mapLens reverseBranchLens binaryTree) :=
+/-- A one-edge prefix in the mapped tree. -/
+def mappedPrefix : M.Vertex (M.mapLens reverseBranchLens binaryTree) :=
   .child false (.root _)
+
+/-- A one-edge suffix below `mappedPrefix`. -/
+def mappedSuffix : M.Vertex (M.Vertex.subtree mappedPrefix) :=
+  .child true (.root _)
 
 /-- Pulling target branch `false` really selects source branch `true`. -/
 example :
-    match M.Vertex.pullMapLens reverseBranchLens binaryTree mappedFalse with
+    match M.Vertex.pullMapLens reverseBranchLens binaryTree mappedPrefix with
     | .root _ => False
     | .child direction _ => direction = true := by
-  rw [M.Vertex.pullMapLens.eq_def]
+  unfold mappedPrefix
+  rw [M.Vertex.pullMapLens_child]
+  rfl
+
+def pulledMappedPrefix : M.Vertex binaryTree :=
+  M.Vertex.pullMapLens reverseBranchLens binaryTree mappedPrefix
+
+def pulledMappedSuffix : M.Vertex (M.Vertex.subtree pulledMappedPrefix) :=
+  M.Vertex.pullMapLens reverseBranchLens
+    (M.Vertex.subtree pulledMappedPrefix)
+    (M.Vertex.castEquiv
+      (M.Vertex.subtree_pullMapLens
+        reverseBranchLens binaryTree mappedPrefix).symm mappedSuffix)
+
+/-- The concrete concatenation law keeps the reversed prefix before the
+reversed suffix. -/
+example :
+    M.Vertex.pullMapLens reverseBranchLens binaryTree
+        (M.Vertex.append mappedPrefix mappedSuffix) =
+      M.Vertex.append pulledMappedPrefix pulledMappedSuffix :=
+  M.Vertex.pullMapLens_append reverseBranchLens binaryTree
+    mappedPrefix mappedSuffix
+
+example :
+    match pulledMappedPrefix with
+    | .child direction _ => direction = true
+    | _ => False := by
+  unfold pulledMappedPrefix mappedPrefix
+  rw [M.Vertex.pullMapLens_child]
+  rfl
+
+def mappedChildSuffix : M.Vertex
+    (M.mapLens reverseBranchLens (M.children binaryTree true)) :=
+  .child true (.root _)
+
+example :
+    match M.Vertex.pullMapLens reverseBranchLens
+        (M.children binaryTree true) mappedChildSuffix with
+    | .child direction _ => direction = false
+    | _ => False := by
+  unfold mappedChildSuffix
+  rw [M.Vertex.pullMapLens_child]
   rfl
 
 /-- The transported path preserves its length and selects a mapped copy of
 the exact target subtree. -/
 example : M.Vertex.depth
-    (M.Vertex.pullMapLens reverseBranchLens binaryTree mappedFalse) = 1 := by
+    (M.Vertex.pullMapLens reverseBranchLens binaryTree mappedPrefix) = 1 := by
   rw [M.Vertex.depth_pullMapLens]
   rfl
 
 example : M.mapLens reverseBranchLens
       (M.Vertex.subtree
-        (M.Vertex.pullMapLens reverseBranchLens binaryTree mappedFalse)) =
-    M.Vertex.subtree mappedFalse :=
-  M.Vertex.subtree_pullMapLens reverseBranchLens binaryTree mappedFalse
+        (M.Vertex.pullMapLens reverseBranchLens binaryTree mappedPrefix)) =
+    M.Vertex.subtree mappedPrefix :=
+  M.Vertex.subtree_pullMapLens reverseBranchLens binaryTree mappedPrefix
 
 /-- Root-only behavior remains stable for a nullary signature. -/
 abbrev nullaryP : PFunctor := ⟨Unit, fun _ => Empty⟩
@@ -137,6 +183,20 @@ example (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂})
     (l : Lens P Q) (tree : M P) :
     M.Vertex (M.mapLens l tree) → M.Vertex tree :=
   M.Vertex.pullMapLens l tree
+
+/-- Pulling mapped vertices preserves prefix-then-suffix concatenation across
+independent source and target polynomial universes. -/
+example (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂})
+    (l : Lens P Q) (tree : M P)
+    (initial : M.Vertex (M.mapLens l tree))
+    (suffix : M.Vertex (M.Vertex.subtree initial)) :
+    M.Vertex.pullMapLens l tree (M.Vertex.append initial suffix) =
+      M.Vertex.append (M.Vertex.pullMapLens l tree initial)
+        (M.Vertex.pullMapLens l
+          (M.Vertex.subtree (M.Vertex.pullMapLens l tree initial))
+          (M.Vertex.castEquiv
+            (M.Vertex.subtree_pullMapLens l tree initial).symm suffix)) :=
+  M.Vertex.pullMapLens_append l tree initial suffix
 
 /-- Transport preserves the explicit root/child structure of a finite
 vertex, including the dependent child subtree. -/
