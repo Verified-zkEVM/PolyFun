@@ -125,6 +125,8 @@ PFunctor/{Cofree, Comonoid, M/Vertex}
 PFunctor/{Cofree/Polynomial, Comonoid/Category}
   → PFunctor/Cofree/Universal
   → PFunctor/Cofree/FiniteProjection
+PFunctor/{Cofree/Universal, Comonoid/Tensor}
+  → PFunctor/Cofree/LaxMonoidal
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
