@@ -134,6 +134,7 @@ displayed families, roll bounds) on top of the upstream type.
 | [`PolyFun/PFunctor/Cofree.lean`](../../PolyFun/PFunctor/Cofree.lean) | `CofreeC` (cofree comonad on a `PFunctor`), built from `PFunctor.M` of the `constProd` polynomial. The dual of `FreeM`. |
 | [`PolyFun/PFunctor/M/Vertex.lean`](../../PolyFun/PFunctor/M/Vertex.lean) | `M.Vertex t`, the finite path calculus selecting rooted subtrees of a potentially infinite `t : M P`; unlike the doubly indexed `FreeM.Cursor`, the residual is the `subtree` projection, which is the indexing choice needed for the cofree polynomial's direction type. |
 | [`PolyFun/PFunctor/Cofree/Polynomial.lean`](../../PolyFun/PFunctor/Cofree/Polynomial.lean) | `CofreeP P`, whose positions are potentially infinite `P`-trees and whose directions are finite rooted vertices; its extension equivalence with `CofreeC P`, functorial action on lenses, and substitution-comonoid structure. Its carrier uses `max uA uB` for both polynomial universes because a vertex stores directions along an ambient `M P` tree. |
+| [`PolyFun/PFunctor/Cofree/Universal.lean`](../../PolyFun/PFunctor/Cofree/Universal.lean) | Generic coiteration and the cofree-comonoid universal property `Comonoid.Hom C (CofreeP.comonoid P) ≃ Lens C.carrier P`, with explicit naturality in both variables. The generic unfolding keeps the comonoid and generator universe pairs independent; the hom-set packaging specializes `C` to the homogeneous `max uA uB` universe pair required by the existing `Comonoid.Hom`. This is unbundled adjunction data, not a `CategoryTheory.Adjunction`. |
 | [`PolyFun/PFunctor/Trace.lean`](../../PolyFun/PFunctor/Trace.lean) | Polynomial-trace machinery shared between `PFunctor` and downstream layers. |
 
 ### Control helpers
@@ -165,7 +166,9 @@ provides the reusable monad / comonad / coalgebra plumbing. See
   universe pairs to agree. The current `CofreeP.mapHom` API ensures that by
   choosing a common generator universe pair, so both resulting comonoid
   universes are definitionally `max uA uB`; a future lift/equal-maximum API
-  could relax this specialization. PolyFun separately formalizes
+  could relax this specialization. `CofreeP.homEquiv` packages the cofree
+  universal property at the same fixed-maximum boundary, while its underlying
+  coiteration remains fully heterogeneous. PolyFun separately formalizes
   `LawfulMonad (FreeM P)` and `LawfulComonad (CofreeC F)`; those type-level
   structures are not the paper's polynomial module action
   `FreeP p ⊗ CofreeP q → FreeP (p ⊗ q)`. That module-action layer is a

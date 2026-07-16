@@ -117,6 +117,7 @@ import PolyFun.PFunctor.Category
 import PolyFun.PFunctor.Chart.Basic
 import PolyFun.PFunctor.Cofree
 import PolyFun.PFunctor.Cofree.Polynomial
+import PolyFun.PFunctor.Cofree.Universal
 import PolyFun.PFunctor.Comonoid
 import PolyFun.PFunctor.Comonoid.Category
 import PolyFun.PFunctor.Dynamical.Basic

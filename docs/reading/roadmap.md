@@ -20,7 +20,7 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 | Ch 5 factorizations, adjunctions, (co)limits | **Done**: vertical–cartesian factorization and orthogonality (A3), trivial-interface adjunctions plus binary tensor gluing (A4/A5), and cartesian closure (A2); general (co)limits remain open |
 | Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: direct composite-lens projections, `compNthMap`, δ/`twoStep`, full left Π-distributivity, ordering/interchange naturality and concrete duoidal coherence; coclosure/multiadjoint (A8) and the higher three-interchange diagram remain open |
 | Ch 7 comonoids = categories, retrofunctors | **Done (B1–B4 spine)**: `Comonoid`, `Comonoid.Hom`/`Cat♯`, state comonoids, `δ^(n)`, `Run_n`, and the `IOMachine` run/composition core; §7.3.3 quadruple (B5), all-bracketing canonicity, and representable-monoid equivalence remain open |
-| Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | Missing (raw material: `M p`, `M.corec`, `FreeM.Path`) |
+| Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | **C1/C2 done; C3 hom-set data done**: `M.Vertex`, `CofreeP.comonoid`, generic coiteration, and the natural hom-set equivalence; behavior mates, finite projections/Prop 8.49, lax monoidality, and bicomodules remain open |
 
 ## Reading units
 
@@ -253,19 +253,24 @@ canonical `FreeM` interpretation.
 
 ### Phase C — cofree comonoid and adjunctions (Ch 8.1–8.2)
 
-- **C1** `MPath p : M p → Type` (finite rooted paths; inductive over
-  coinductive) + `follow : (T : M p) → MPath p T → M p` (= `cod`, the
-  subtree at a path's end) + append/assoc lemmas. Bridge lemma: `M p` *is*
+- **C1 — done:** `M.Vertex t` (finite rooted paths; inductive over
+  coinductive) + `M.Vertex.subtree` (= `cod`, the subtree at a path's end) +
+  append/assoc lemmas. Bridge lemma: `M p` *is*
   `tree_p` (Ex 8.16 — terminal `p`-coalgebra); trimming projections
-  `ε_p^{(n)}` per Prop 8.18.
-- **C2** carrier `t_p := ⟨M p, MPath p⟩` (Prop 8.18); ε = root/nil,
-  δ = (follow, append); comonoid laws (Prop 8.33) derived from the
-  workhorse spec (8.32) `δ ⨟ (ε^{(ℓ)} ◁ ε^{(m)}) = ε^{(ℓ+m)}` (or by
-  direct path induction — decide by proof ergonomics). Instances:
+  `ε_p^{(n)}` per Prop 8.18 remain a separate finite-projection slice.
+- **C2 — done:** carrier `t_p := ⟨M p, M.Vertex⟩` (Prop 8.18); ε = root/nil,
+  δ = (follow, append); comonoid laws (Prop 8.33) proved by direct path
+  induction. The stronger workhorse spec (8.32)
+  `δ ⨟ (ε^{(ℓ)} ◁ ε^{(m)}) = ε^{(ℓ+m)}` remains with finite projections.
+  Still-open instances:
   `t_1 ≅ y`, `t_y ≅ y^ℕ` = (ℕ,0,+), `t_{By} ≅ B^ℕ y^ℕ` = B-streams
   (Example 8.38), `t_{By^A} ≅ B^{List A} y^{List A}` (Ex 8.40).
-- **C3** `U ⊣ 𝒯_₋` (Thm 8.45): `Lens c p ≃ Retrofunctor 𝒞 (𝒯_p)`; mate via
-  `M.corec`; uniqueness via M-finality; **Prop 8.49**:
+- **C3 — hom-set data done:** the universe-local form of `U ⊣ 𝒯_₋`
+  (Thm 8.45), `Lens c p ≃ Retrofunctor 𝒞 (𝒯_p)`, with mate via `M.corec`,
+  full dependent-path uniqueness, and naturality in both variables. It is
+  packaged as a concrete hom-set equivalence rather than a bundled
+  `CategoryTheory.Adjunction`, because bare `PFunctor` currently has
+  overlapping lens/chart category instances. Still open: **Prop 8.49**,
   `mate ⨟ ε_p^{(n)} = Run_n(φ)` — the mate packages every finite run.
   Functoriality `𝒯_φ` (§8.1.5) + `φ` cartesian ⟹ `𝒯_φ` cartesian
   (Prop 8.72); `𝒯_p` free on a graph (Prop 8.57); lax monoidality
