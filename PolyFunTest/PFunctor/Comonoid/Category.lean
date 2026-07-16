@@ -108,6 +108,38 @@ example {C D : Comonoid.{uA, uB}} (F : Comonoid.Hom C D)
           (cast (congrArg D.carrier.B (F.map_target c d).symm) e)) :=
   F.map_compose c d e
 
+/-! ## Reconstruction from the outgoing-category laws -/
+
+/-- The converse constructor keeps position and direction universes
+independent and requires exactly the three laws exposed by a retrofunctor. -/
+example {C D : Comonoid.{uA, uB}}
+    (F : Lens C.carrier D.carrier)
+    (mapIdentity : ∀ c : C.carrier.A,
+      F.toFunB c (Comonoid.identity D (F.toFunA c)) =
+        Comonoid.identity C c)
+    (mapTarget : ∀ (c : C.carrier.A)
+      (d : D.carrier.B (F.toFunA c)),
+      F.toFunA (Comonoid.target C c (F.toFunB c d)) =
+        Comonoid.target D (F.toFunA c) d)
+    (mapCompose : ∀ (c : C.carrier.A)
+      (d : D.carrier.B (F.toFunA c))
+      (e : D.carrier.B (Comonoid.target D (F.toFunA c) d)),
+      F.toFunB c (Comonoid.compose D (F.toFunA c) d e) =
+        Comonoid.compose C c (F.toFunB c d)
+          (F.toFunB (Comonoid.target C c (F.toFunB c d))
+            (cast (congrArg D.carrier.B (mapTarget c d).symm) e))) :
+    Comonoid.Hom C D :=
+  Comonoid.Hom.ofCategoryLaws F mapIdentity mapTarget mapCompose
+
+/-- Reconstructing an existing homomorphism from its derived category laws
+preserves its exact underlying lens. -/
+example {C D : Comonoid.{uA, uB}} (F : Comonoid.Hom C D) :
+    Comonoid.Hom.ofCategoryLaws F.toLens
+        (fun c => F.map_identity c)
+        (fun c d => F.map_target c d)
+        (fun c d e => F.map_compose c d e) = F :=
+  F.ofCategoryLaws_map
+
 /-! ## Observable state-category behavior -/
 
 /-- Three genuinely distinct objects make the source, intermediate target, and
@@ -174,6 +206,42 @@ by retaining the hidden second component. -/
 def fstHom : Comonoid.Hom
     (stateComonoid (ThreeState × Bool)) (stateComonoid ThreeState) :=
   Comonoid.Hom.ofStateLens (Lens.State.fst ThreeState Bool)
+
+/-- Rebuild the concrete first-projection retrofunctor only from its
+identity/target/composition behavior. -/
+def fstHomFromCategoryLaws : Comonoid.Hom
+    (stateComonoid (ThreeState × Bool)) (stateComonoid ThreeState) :=
+  Comonoid.Hom.ofCategoryLaws fstHom.toLens
+    (fun c => fstHom.map_identity c)
+    (fun c d => fstHom.map_target c d)
+    (fun c d e => fstHom.map_compose c d e)
+
+example : fstHomFromCategoryLaws = fstHom := by
+  apply Comonoid.Hom.ext
+  rfl
+
+/-- Reconstruction retains the concrete backward state update, not merely the
+forward object projection. -/
+example :
+    fstHomFromCategoryLaws.toLens.toFunB (.source, true) .final =
+      (.final, true) :=
+  rfl
+
+/-- The reconstructed raw comultiplication proof re-derives the concrete
+composition law, including the hidden state component. -/
+example :
+    fstHomFromCategoryLaws.toLens.toFunB (.source, true)
+        (Comonoid.compose (stateComonoid ThreeState)
+          (fstHomFromCategoryLaws.toLens.toFunA (.source, true))
+          .middle .final) =
+      Comonoid.compose (stateComonoid (ThreeState × Bool)) (.source, true)
+        (fstHomFromCategoryLaws.toLens.toFunB (.source, true) .middle)
+        (fstHomFromCategoryLaws.toLens.toFunB
+          (Comonoid.target (stateComonoid (ThreeState × Bool))
+            (.source, true)
+            (fstHomFromCategoryLaws.toLens.toFunB
+              (.source, true) .middle)) .final) :=
+  fstHomFromCategoryLaws.map_compose (.source, true) .middle .final
 
 example :
     fstHom.toLens.toFunB (.source, true)

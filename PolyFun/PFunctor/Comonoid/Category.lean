@@ -21,7 +21,9 @@ This file exposes that dictionary and derives the five category laws directly
 from the two counitality equations and coassociativity. It also projects the
 laws of `Comonoid.Hom` into the identity/target/composition laws of a
 retrofunctor (Spivak–Niu, Definition 7.55): objects move forward while outgoing
-arrows move backward.
+arrows move backward. Conversely, `Comonoid.Hom.ofCategoryLaws` reconstructs
+the raw comonoid-homomorphism equations from exactly those three laws, keeping
+dependent transport localized in this producer module.
 
 The scope here is the extraction direction of the correspondence. The reverse
 construction from an outgoing-arrow category to a polynomial comonoid, and a
@@ -494,6 +496,139 @@ theorem Hom.map_compose (F : Hom C D) (c : C.carrier.A)
         (cast (congrArg D.carrier.B (F.map_target c d).symm) e)) =
     F.toLens.toFunB c (compose D (F.toLens.toFunA c) d e) at h
   exact h.symm
+
+/-! ## Constructing retrofunctors from category laws -/
+
+private theorem normalizedComult_natural_of_categoryLaws
+    (F : Lens C.carrier D.carrier)
+    (mapTarget : ∀ (c : C.carrier.A)
+      (d : D.carrier.B (F.toFunA c)),
+      F.toFunA (target C c (F.toFunB c d)) =
+        target D (F.toFunA c) d)
+    (mapCompose : ∀ (c : C.carrier.A)
+      (d : D.carrier.B (F.toFunA c))
+      (e : D.carrier.B (target D (F.toFunA c) d)),
+      F.toFunB c (compose D (F.toFunA c) d e) =
+        compose C c (F.toFunB c d)
+          (F.toFunB (target C c (F.toFunB c d))
+            (cast (congrArg D.carrier.B (mapTarget c d).symm) e))) :
+    normalizedComult D ∘ₗ F =
+      (F ◃ₗ F) ∘ₗ normalizedComult C := by
+  let hobj : ∀ c : C.carrier.A,
+      Lens.mapObj (normalizedComult D ∘ₗ F)
+          (⟨c, id⟩ : C.carrier.Obj (C.carrier.B c)) =
+        Lens.mapObj ((F ◃ₗ F) ∘ₗ normalizedComult C)
+          (⟨c, id⟩ : C.carrier.Obj (C.carrier.B c)) := fun c => by
+    let leftTargets :
+        D.carrier.B (F.toFunA c) → D.carrier.A :=
+      target D (F.toFunA c)
+    let rightTargets :
+        D.carrier.B (F.toFunA c) → D.carrier.A :=
+      fun d => F.toFunA (target C c (F.toFunB c d))
+    let targetsEq : leftTargets = rightTargets :=
+      funext fun d => (mapTarget c d).symm
+    let leftPosition : (D.carrier ◃ D.carrier).A :=
+      ⟨F.toFunA c, leftTargets⟩
+    let rightPosition : (D.carrier ◃ D.carrier).A :=
+      ⟨F.toFunA c, rightTargets⟩
+    let positionEq : leftPosition = rightPosition :=
+      congrArg
+        (fun current =>
+          (⟨F.toFunA c, current⟩ :
+            (D.carrier ◃ D.carrier).A))
+        targetsEq
+    apply Sigma.ext positionEq
+    apply Function.hfunext
+      (congrArg (D.carrier ◃ D.carrier).B positionEq)
+    intro leftDirection rightDirection hDirection
+    have hcast :
+        cast (congrArg (D.carrier ◃ D.carrier).B positionEq)
+            leftDirection = rightDirection :=
+      (cast_eq_iff_heq).2 hDirection
+    rcases leftDirection with ⟨d, e⟩
+    let canonical : (D.carrier ◃ D.carrier).B rightPosition :=
+      ⟨d, cast (congrArg D.carrier.B (mapTarget c d).symm) e⟩
+    have hcanonical :
+        cast (congrArg (D.carrier ◃ D.carrier).B positionEq)
+            (⟨d, e⟩ : (D.carrier ◃ D.carrier).B leftPosition) =
+          canonical := by
+      have hCast := cast_comp_direction
+        (P := D.carrier) (Q := D.carrier)
+        (F.toFunA c) targetsEq d e
+      convert hCast using 1
+    have hright : canonical = rightDirection :=
+      hcanonical.symm.trans hcast
+    subst rightDirection
+    apply heq_of_eq
+    rw [hcanonical]
+    dsimp only [Lens.mapObj, Lens.comp, normalizedComult, Lens.compMap]
+    change F.toFunB c (compose D (F.toFunA c) d e) =
+      compose C c (F.toFunB c d)
+        (F.toFunB (target C c (F.toFunB c d))
+          (cast (congrArg D.carrier.B (mapTarget c d).symm) e))
+    exact mapCompose c d e
+  let hA : ∀ c,
+      (normalizedComult D ∘ₗ F).toFunA c =
+        ((F ◃ₗ F) ∘ₗ normalizedComult C).toFunA c :=
+    fun c => congrArg Sigma.fst (hobj c)
+  refine Lens.ext _ _ hA ?_
+  intro c
+  apply eq_of_heq
+  have hraw :
+      (normalizedComult D ∘ₗ F).toFunB c ≍
+        ((F ◃ₗ F) ∘ₗ normalizedComult C).toFunB c :=
+    (Sigma.ext_iff.mp (hobj c)).2
+  have htransport :
+      (hA c ▸ ((F ◃ₗ F) ∘ₗ normalizedComult C).toFunB c) ≍
+        ((F ◃ₗ F) ∘ₗ normalizedComult C).toFunB c :=
+    eqRec_heq_self _ _
+  exact hraw.trans htransport.symm
+
+/-- Construct a comonoid homomorphism from a carrier lens satisfying the three
+outgoing-category laws of a retrofunctor. This is the converse of
+`Hom.map_identity`, `Hom.map_target`, and `Hom.map_compose`: identities and
+composites are pulled backward, while targets are preserved forward. -/
+def Hom.ofCategoryLaws (F : Lens C.carrier D.carrier)
+    (mapIdentity : ∀ c : C.carrier.A,
+      F.toFunB c (identity D (F.toFunA c)) = identity C c)
+    (mapTarget : ∀ (c : C.carrier.A)
+      (d : D.carrier.B (F.toFunA c)),
+      F.toFunA (target C c (F.toFunB c d)) =
+        target D (F.toFunA c) d)
+    (mapCompose : ∀ (c : C.carrier.A)
+      (d : D.carrier.B (F.toFunA c))
+      (e : D.carrier.B (target D (F.toFunA c) d)),
+      F.toFunB c (compose D (F.toFunA c) d e) =
+        compose C c (F.toFunB c d)
+          (F.toFunB (target C c (F.toFunB c d))
+            (cast (congrArg D.carrier.B (mapTarget c d).symm) e))) :
+    Hom C D where
+  toLens := F
+  map_counit := by
+    refine Lens.ext _ _ (fun _ => rfl) ?_
+    intro c
+    funext direction
+    cases direction
+    exact mapIdentity c
+  map_comult := by
+    simpa only [normalizedComult_eq] using
+      normalizedComult_natural_of_categoryLaws F mapTarget mapCompose
+
+@[simp]
+theorem Hom.ofCategoryLaws_toLens (F : Lens C.carrier D.carrier)
+    (mapIdentity mapTarget mapCompose) :
+    (Hom.ofCategoryLaws F mapIdentity mapTarget mapCompose).toLens = F :=
+  rfl
+
+/-- Reconstructing an existing retrofunctor from its three derived
+outgoing-category laws returns the original homomorphism. -/
+@[simp]
+theorem Hom.ofCategoryLaws_map (F : Hom C D) :
+    Hom.ofCategoryLaws F.toLens
+        (fun c => F.map_identity c)
+        (fun c d => F.map_target c d)
+        (fun c d e => F.map_compose c d e) = F :=
+  Hom.ext _ _ rfl
 
 end Comonoid
 end PFunctor

@@ -216,8 +216,10 @@ Landed the K-L-prioritized machine spine (crypto-free):
   composition, and all five category laws—directly from those three lens
   equations. `Comonoid.Hom` packages counit/comultiplication-preserving
   retrofunctors; its derived laws preserve identities backward, targets
-  forward, and composites backward, and the resulting `Category Comonoid` is
-  the concrete `Cat♯` boundary. The reverse category-to-comonoid construction
+  forward, and composites backward; `Hom.ofCategoryLaws` reconstructs the raw
+  comonoid-homomorphism equations from those three laws. The resulting
+  `Category Comonoid` is the concrete `Cat♯` boundary. The reverse
+  category-to-comonoid construction
   and packaged equivalence are deferred. A generic
   `MonoidalCategory (Poly, ◃, y)` bundle is still intentionally unnecessary.
 - **B2 done** — `stateComonoid S` on `Sy^S` with `δ = fixState` and the stay-put
