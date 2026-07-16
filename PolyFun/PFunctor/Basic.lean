@@ -91,15 +91,20 @@ instance search, keeping transitions over `univ` as ergonomic as bare functions.
 def univ : PFunctor.{u + 1, u} :=
   ⟨Type u, fun T => T⟩
 
-section ofFn
+section ofFamily
 
-/-- Construct a polynomial functor from just a function `B`, with `A` derived implicitly. -/
-@[simps]
-def ofFn {A : Type uA₁} (B : (a : A) → Type uB) : PFunctor.{uA₁, uB} where
+/-- Construct a polynomial functor from a dependent family of directions.
+
+The family's domain remains the position type, so this constructor is useful
+when an API keeps the position type explicit and passes only its direction
+family. It is the generic polynomial-functor form of interfaces such as an
+oracle specification `Query → Type`. -/
+@[reducible, simps]
+def ofFamily {A : Type uA₁} (B : (a : A) → Type uB) : PFunctor.{uA₁, uB} where
   A := A
   B := B
 
-end ofFn
+end ofFamily
 
 section Coprod
 instance {a} : IsEmpty (B 1 a) := inferInstanceAs (IsEmpty PEmpty)
