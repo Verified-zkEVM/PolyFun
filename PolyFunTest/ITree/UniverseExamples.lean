@@ -6,6 +6,9 @@ Authors: Quang Dao
 module
 
 public import PolyFun.ITree.Construct
+public import PolyFun.ITree.Events.Exception
+public import PolyFun.ITree.Events.State
+public import PolyFun.ITree.Rec
 public import PolyFun.ITree.Unfold
 
 /-!
@@ -18,7 +21,7 @@ states may inhabit independent universes.
 
 @[expose] public section
 
-universe u uA uB uR uS uT uState
+universe u uA uB uR uS uT uState uExtA uErr
 
 namespace ITree.UniverseExamples
 
@@ -72,6 +75,33 @@ the named operations above provide the heterogeneous API. -/
 def homogeneousDo {A B : Type u} (tree : ITree F A) (next : A → ITree F B) :
     ITree F B := do
   next (← tree)
+
+/-- Recursive-call inputs and outputs occupy independent universes. -/
+def separatedCall {A : Type uA} {B : Type uB} (a : A) :
+    ITree (CallE A B) B :=
+  CallE.call a
+
+/-- Recursive procedures permit independent call-input and external-event
+position universes. The common reply universe is the genuine current
+constraint inherited from `PFunctor.sum`. -/
+def separatedFixRec {A : Type uA} {B : Type uB}
+    {E : PFunctor.{uExtA, uB}}
+    (body : A →
+      ITree (CallE A B + E : PFunctor.{max uA uExtA, uB}) B) (a : A) :
+    ITree E B :=
+  fixRec body a
+
+/-- Exception names, impossible replies, and computation results may occupy
+three independent universes. -/
+def separatedThrow {ε : Type uErr} {A : Type uR} (e : ε) :
+    ITree (ExceptE.{uErr, uB} ε) A :=
+  ExceptE.throw e
+
+/-- State positions and replies genuinely share the state universe because
+`get` returns the state itself; this does not constrain other ITree result
+types. -/
+def separatedStateGet : ITree (StateE State) State :=
+  StateE.get
 
 /-- Embedding an M-type behavior permits an independently universe-lifted
 empty return type. -/

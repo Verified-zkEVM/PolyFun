@@ -23,6 +23,14 @@ each recursive `D`-event replaced by one silent `step` followed by
 `bind (body d) continuation`. The silent step is what makes the corec
 productive.
 
+`D` and `E` may have independent event-position universes, and every final
+result universe is independent of the event signatures. Their direction
+universes remain equal because the current `PFunctor.sum` representation
+requires that genuine local constraint. In particular, `CallE α β` itself
+does have independent argument and result universes; `fixRec` only requires
+the external signature's direction universe to agree with that of `β` at the
+coproduct boundary.
+
 Coq references:
 
 * `Interp/Recursion.v` — `mrec`, `rec`, `interp_mrec`, `calling'`.
@@ -31,7 +39,7 @@ Coq references:
 
 @[expose] public section
 
-universe u
+universe uDA uEA uB uα uCallA uCallB
 
 namespace ITree
 
@@ -41,13 +49,14 @@ a recursive call with an `α`-argument and expect a `β`-result".
 In Coq this is `inductive callE (A B : Type) : Type → Type | Call : A →
 callE A B B`. Translated to a polynomial functor, the event name carries the
 input `α`-value and the answer type is constantly `β`. -/
-def CallE (α β : Type u) : PFunctor.{u, u} where
+def CallE (α : Type uCallA) (β : Type uCallB) :
+    PFunctor.{uCallA, uCallB} where
   A := α
   B _ := β
 
 namespace CallE
 
-variable {α β : Type u}
+variable {α : Type uCallA} {β : Type uCallB}
 
 /-- Issue a single recursive call, returning its result. -/
 def call (a : α) : ITree (CallE α β) β :=
@@ -72,9 +81,13 @@ The four cases mirror the ITree shape constructors:
 The `.step` inserted in the `.inl` case is what keeps the enclosing
 `PFunctor.M.corec` productive even in the presence of unbounded recursive
 calls. -/
-def mutualRecStep {D E : PFunctor.{u, u}} {α : Type u}
-    (body : ∀ a : D.A, ITree (D + E) (D.B a)) (u : ITree (D + E) α) :
-    (Poly E α).Obj (ITree (D + E) α) :=
+def mutualRecStep {D : PFunctor.{uDA, uB}} {E : PFunctor.{uEA, uB}}
+    {α : Type uα}
+    (body : ∀ a : D.A,
+      ITree (D + E : PFunctor.{max uDA uEA, uB}) (D.B a))
+    (u : ITree (D + E : PFunctor.{max uDA uEA, uB}) α) :
+    (Poly E α).Obj
+      (ITree (D + E : PFunctor.{max uDA uEA, uB}) α) :=
   match PFunctor.M.dest u with
   | ⟨.pure r, _⟩ => ⟨.pure r, PEmpty.elim⟩
   | ⟨.step, c⟩ => ⟨.step, fun _ => c PUnit.unit⟩
@@ -83,8 +96,11 @@ def mutualRecStep {D E : PFunctor.{u, u}} {α : Type u}
 
 /-- Interpret a tree over the combined spec `D + E` by splicing recursive
 `D`-calls into the body. -/
-def interpMrec {D E : PFunctor.{u, u}} {α : Type u}
-    (body : ∀ a : D.A, ITree (D + E) (D.B a)) (u : ITree (D + E) α) :
+def interpMrec {D : PFunctor.{uDA, uB}} {E : PFunctor.{uEA, uB}}
+    {α : Type uα}
+    (body : ∀ a : D.A,
+      ITree (D + E : PFunctor.{max uDA uEA, uB}) (D.B a))
+    (u : ITree (D + E : PFunctor.{max uDA uEA, uB}) α) :
     ITree E α :=
   PFunctor.M.corec (mutualRecStep body) u
 
@@ -93,8 +109,10 @@ invoking `body : Handler D (D + E)`. Each recursive `D`-call in the body is
 silent-step-guarded so the combined corecursive definition is productive.
 
 This is the Lean version of Coq's `mrec`. -/
-def mutualRec {D E : PFunctor.{u, u}}
-    (body : ∀ a : D.A, ITree (D + E) (D.B a)) (req : D.A) : ITree E (D.B req) :=
+def mutualRec {D : PFunctor.{uDA, uB}} {E : PFunctor.{uEA, uB}}
+    (body : ∀ a : D.A,
+      ITree (D + E : PFunctor.{max uDA uEA, uB}) (D.B a))
+    (req : D.A) : ITree E (D.B req) :=
   interpMrec body (body req)
 
 /-- `ITree.fixRec body a` defines a single recursive procedure with input
@@ -103,8 +121,10 @@ specialised tree at input `a`.
 
 This is the Lean version of Coq's `rec`. It is a direct specialisation of
 `mutualRec` to the single-call event signature `CallE α β`. -/
-def fixRec {E : PFunctor.{u, u}} {α β : Type u}
-    (body : α → ITree (CallE α β + E) β) (a : α) : ITree E β :=
+def fixRec {E : PFunctor.{uEA, uB}} {α : Type uCallA} {β : Type uB}
+    (body : α →
+      ITree (CallE α β + E : PFunctor.{max uCallA uEA, uB}) β)
+    (a : α) : ITree E β :=
   mutualRec (D := CallE α β) (E := E) body a
 
 end ITree
