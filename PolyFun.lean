@@ -121,6 +121,7 @@ import PolyFun.PFunctor.Cofree.Polynomial
 import PolyFun.PFunctor.Cofree.Universal
 import PolyFun.PFunctor.Comonoid
 import PolyFun.PFunctor.Comonoid.Category
+import PolyFun.PFunctor.Comonoid.Tensor
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Bisimulation
@@ -167,5 +168,6 @@ import PolyFun.PFunctor.M
 import PolyFun.PFunctor.M.Vertex
 import PolyFun.PFunctor.Resumption
 import PolyFun.PFunctor.SubstMonoid
+import PolyFun.PFunctor.SubstMonoid.Convolution
 import PolyFun.PFunctor.SubstMonoid.Extension
 import PolyFun.PFunctor.Trace

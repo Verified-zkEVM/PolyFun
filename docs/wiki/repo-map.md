@@ -62,6 +62,9 @@ PFunctor/Lens/{Basic, Cartesian, State}
 PFunctor/Lens/Basic -> PFunctor/SubstMonoid
 PFunctor/{Free/Path, SubstMonoid} -> PFunctor/Free/Polynomial
 PFunctor/Comonoid -> PFunctor/Comonoid/Category
+PFunctor/{Comonoid, Lens/Duoidal} -> PFunctor/Comonoid/Tensor
+PFunctor/{SubstMonoid, Comonoid, InternalHom, Lens/Duoidal}
+  -> PFunctor/SubstMonoid/Convolution
 
 PFunctor/{Cofree, Comonoid, M/Vertex}
   -> PFunctor/Cofree/Polynomial
