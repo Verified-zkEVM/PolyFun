@@ -115,7 +115,11 @@ private theorem unfoldDirection_stateComonoid_child
   rw [CofreeP.unfoldDirection.eq_def]
   rfl
 
-private theorem mateObj_child
+/-- Taking one child of the object-level dynamical mate advances the system
+state by exactly the selected direction, while preserving the state labelling.
+The cast only transports across the definitional presentation of the unfolded
+behavior tree. -/
+theorem mateObj_child
     (system : DynSystem S P) (state : S) (label : S → α)
     (direction : P.B (M.head (mateObj system state label).1)) :
     CofreeP.childObj (mateObj system state label) direction =

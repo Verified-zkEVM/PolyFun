@@ -300,11 +300,16 @@ canonical `FreeM` interpretation.
   the free-monad/cofree-comonad relationship is Libkind–Spivak's module
   structure (EPTCS 429). `PatternRunsOnMatter/Basic` gives the executable
   action and full naturality; `Universal` identifies it with the paper's
-  convolution extension; `Module` proves unit and associativity. Section 4
-  operational bridges and worked applications remain the next slice. The
-  corrected wording in `Interaction/Basic/TypeTree.lean` and `REFERENCES.md`
-  resolves `corrections.md` item 1 and presents `behavior`/`trajectory` as
-  induced universal maps.
+  convolution extension; `Module` proves unit and associativity;
+  `Operational`, `Dynamical`, and `Applications` prove grafting and handler
+  laws, connect cofree matter to behavior/simulation and finite games, and
+  formalize the Section 4 interaction/evaluation schema. A concrete
+  Moore-machine Equation (2) test pins the forward outputs and full backward
+  trace. Voting/operadic and probabilistic applications remain deferred to
+  their missing theory and downstream VCVio semantics. The corrected wording
+  in `Interaction/Basic/TypeTree.lean` and `REFERENCES.md` resolves
+  `corrections.md` item 1 and presents `behavior`/`trajectory` as induced
+  universal maps.
 
 ### Phase D — comodules, bicomodules, research (Ch 8.3 + Ch 9)
 
