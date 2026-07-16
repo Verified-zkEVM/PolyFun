@@ -112,6 +112,8 @@ PFunctor/Lens/{Basic, Cartesian, State}
 
 PFunctor/Lens/Basic → PFunctor/SubstMonoid
 PFunctor/{Free/Path, SubstMonoid} → PFunctor/Free/Polynomial
+PFunctor/{Cofree, Comonoid, M/Vertex}
+  → PFunctor/Cofree/Polynomial
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}

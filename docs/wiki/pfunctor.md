@@ -131,6 +131,7 @@ displayed families, roll bounds) on top of the upstream type.
 |------|---------|
 | [`PolyFun/PFunctor/Cofree.lean`](../../PolyFun/PFunctor/Cofree.lean) | `CofreeC` (cofree comonad on a `PFunctor`), built from `PFunctor.M` of the `constProd` polynomial. The dual of `FreeM`. |
 | [`PolyFun/PFunctor/M/Vertex.lean`](../../PolyFun/PFunctor/M/Vertex.lean) | `M.Vertex t`, the finite path calculus selecting rooted subtrees of a potentially infinite `t : M P`; unlike the doubly indexed `FreeM.Cursor`, the residual is the `subtree` projection, which is the indexing choice needed for the cofree polynomial's direction type. |
+| [`PolyFun/PFunctor/Cofree/Polynomial.lean`](../../PolyFun/PFunctor/Cofree/Polynomial.lean) | `CofreeP P`, whose positions are potentially infinite `P`-trees and whose directions are finite rooted vertices; its extension equivalence with `CofreeC P`, functorial action on lenses, and substitution-comonoid structure. Its carrier uses `max uA uB` for both polynomial universes because a vertex stores directions along an ambient `M P` tree. |
 | [`PolyFun/PFunctor/Trace.lean`](../../PolyFun/PFunctor/Trace.lean) | Polynomial-trace machinery shared between `PFunctor` and downstream layers. |
 
 ### Control helpers
@@ -153,10 +154,20 @@ provides the reusable monad / comonad / coalgebra plumbing. See
   built from a `pure` leaf and a combined `liftBind` step. It is the syntax of
   "programs" in the signature `P`.
 - `CofreeC P` is the cofree comonad on `P`. Coinductively, it is the
-  type of infinite, fully-decorated `P`-trees. `FreeM` and `CofreeC` carry
-  the pattern-runs-on-matter *module structure* of Libkind–Spivak (a module
-  action, not an adjunction); PolyFun formalizes `LawfulMonad (FreeM P)` and
-  `LawfulComonad (CofreeC F)` separately.
+  type of infinite, fully-decorated `P`-trees. `CofreeP P` packages the
+  same data polynomially: an unlabelled M-tree is a position and each finite
+  rooted vertex is a direction; `(CofreeP P).Obj X ≃ CofreeC P X` labels all
+  such vertices by `X`. Its root/vertex-concatenation lenses form the cofree
+  substitution comonoid, while `CofreeP.map` supplies the heterogeneous
+  lens-level functorial action. `Comonoid.Hom` requires its two carrier
+  universe pairs to agree. The current `CofreeP.mapHom` API ensures that by
+  choosing a common generator universe pair, so both resulting comonoid
+  universes are definitionally `max uA uB`; a future lift/equal-maximum API
+  could relax this specialization. PolyFun separately formalizes
+  `LawfulMonad (FreeM P)` and `LawfulComonad (CofreeC F)`; those type-level
+  structures are not the paper's polynomial module action
+  `FreeP p ⊗ CofreeP q → FreeP (p ⊗ q)`. That module-action layer is a
+  later slice of the formalization.
 - `Lens P Q` and `Chart P Q` are the two natural categorical morphisms
   between polynomial functors. Lenses go `forward on positions, backward
   on directions`; charts go forward on both. Both categories are useful
@@ -179,4 +190,4 @@ provides the reusable monad / comonad / coalgebra plumbing. See
 If a concept appears redundant between layers, the substrate version
 (here, in `PFunctor/`) is almost always the load-bearing one. Downstream
 layers exist to give protocol-flavored names and ergonomics; the maths
-lives in `PFunctor/Free/` and `PFunctor/Cofree.lean`.
+lives in `PFunctor/Free/`, `PFunctor/Cofree.lean`, and `PFunctor/Cofree/`.
