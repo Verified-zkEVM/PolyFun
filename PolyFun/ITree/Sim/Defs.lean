@@ -15,6 +15,11 @@ to produce an interaction tree over the target spec. `ITree.mapSpec`
 specialises this to event-renaming via a `PFunctor.Lens`, performing a pure
 relabelling without inserting any extra silent steps or queries.
 
+Both operators permit the source positions, source directions, target
+positions, target directions, and return values to inhabit independent
+universes. `Handler.comp` composes two handlers by simulating the output of
+the first through the second.
+
 The shape of `simulate` mirrors Coq's `interp` (`Core/Subevent.v`): we run
 the source ITree, replacing every `query a c` with `bind (h a) c`, every
 `step c` with `step (... continue ...)`, and every `pure r` with `pure r`.
@@ -26,11 +31,12 @@ long stretch in `query` nodes).
 
 @[expose] public section
 
-universe u
+universe uEA uEB uFA uFB uGA uGB uHA uHB uα
 
 namespace ITree
 
-variable {E F : PFunctor.{u, u}} {α : Type u}
+variable {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
+  {G : PFunctor.{uGA, uGB}} {α : Type uα}
 
 /-! ### Generic simulation -/
 
@@ -47,6 +53,34 @@ def simulate (h : Handler E F) (t : ITree E α) : ITree F α :=
       | ⟨.step, c⟩ => pure (.inl (c PUnit.unit))
       | ⟨.query a, c⟩ => bind (h a) (fun b => pure (.inl (c b))))
     t
+
+/-! ### Handler composition -/
+
+namespace Handler
+
+/-- Compose event handlers by simulating the output of the first handler with
+the second. Thus `second.comp first` interprets `E`-events as `F`-programs and
+then interprets those `F`-programs over `G`.
+
+Composition is maximally universe-polymorphic. Its pointwise weak identity and
+pure-renaming laws are stated in `PolyFun.ITree.Sim.Facts`.
+-/
+def comp (second : Handler F G) (first : Handler E F) : Handler E G :=
+  fun a => simulate second (first a)
+
+@[simp] theorem comp_apply (second : Handler F G) (first : Handler E F) (a : E.A) :
+    second.comp first a = simulate second (first a) := rfl
+
+/-- Handler composition distributes definitionally over coproduct routing. -/
+theorem comp_case {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uEB}}
+    {G : PFunctor.{uGA, uGB}} {H : PFunctor.{uHA, uHB}}
+    (outer : Handler G H) (left : Handler E G) (right : Handler F G) :
+    outer.comp (Handler.case_ left right) =
+      Handler.case_ (outer.comp left) (outer.comp right) := by
+  funext a
+  cases a <;> rfl
+
+end Handler
 
 /-! ### Event renaming -/
 
