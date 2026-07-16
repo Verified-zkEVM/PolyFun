@@ -7,63 +7,63 @@ import PolyFun.Interaction.Basic.Append
 import PolyFun.PFunctor.Free.Replicate
 
 /-!
-# `Spec.replicate` and transcript operations
+# `TypeTree.replicate` and path operations
 
-Non-dependent `n`-fold append of the same spec, with `Transcript.replicateJoin` / `replicateSplit`,
+Non-dependent `n`-fold append of the same type tree, with `Path.replicateJoin` / `replicateSplit`,
 replicated decorations/refinements, and `Strategy.iterate`. This is the uniform special case of
-`Spec.stateChain` (see `PolyFun.Interaction.Basic.StateChain`).
+`TypeTree.stateChain` (see `PolyFun.Interaction.Basic.StateChain`).
 -/
 
 universe u v w
 
 namespace Interaction
-namespace Spec
+namespace TypeTree
 
 /-- `n`-fold dependent append of `spec` with trivial continuation (`fun _ => replicate …`). -/
-abbrev replicate (spec : Spec) : (n : Nat) → Spec :=
+abbrev replicate (spec : TypeTree) : (n : Nat) → TypeTree :=
   PFunctor.FreeM.replicate PUnit.unit spec
 
-@[grind =] theorem replicate_zero (spec : Spec) : spec.replicate 0 = .done := rfl
+@[grind =] theorem replicate_zero (spec : TypeTree) : spec.replicate 0 = .done := rfl
 
-theorem replicate_succ (spec : Spec) (n : Nat) :
+theorem replicate_succ (spec : TypeTree) (n : Nat) :
     spec.replicate (n + 1) = spec.append (fun _ => spec.replicate n) := rfl
 
-/-- Prepend one transcript to a length-`n` replicated tail. -/
-abbrev Transcript.replicateCons (spec : Spec) (n : Nat) :
-    Transcript spec → Transcript (spec.replicate n) →
-    Transcript (spec.replicate (n + 1)) :=
+/-- Prepend one path to a length-`n` replicated tail. -/
+abbrev Path.replicateCons (spec : TypeTree) (n : Nat) :
+    Path spec → Path (spec.replicate n) →
+    Path (spec.replicate (n + 1)) :=
   PFunctor.FreeM.Path.append spec (fun _ => spec.replicate n)
 
-/-- Split the head round from a length-`(n+1)` replicated transcript. -/
-abbrev Transcript.replicateUncons (spec : Spec) (n : Nat) :
-    Transcript (spec.replicate (n + 1)) →
-    Transcript spec × Transcript (spec.replicate n) :=
+/-- Split the head round from a length-`(n+1)` replicated path. -/
+abbrev Path.replicateUncons (spec : TypeTree) (n : Nat) :
+    Path (spec.replicate (n + 1)) →
+    Path spec × Path (spec.replicate n) :=
   fun tr =>
     let ⟨hd, tl⟩ := PFunctor.FreeM.Path.split spec (fun _ => spec.replicate n) tr
     (hd, tl)
 
-/-- Combine `n` transcripts of `spec` into one of `spec.replicate n`. -/
-def Transcript.replicateJoin (spec : Spec) :
-    (n : Nat) → (Fin n → Transcript spec) → Transcript (spec.replicate n)
+/-- Combine `n` paths of `spec` into one of `spec.replicate n`. -/
+def Path.replicateJoin (spec : TypeTree) :
+    (n : Nat) → (Fin n → Path spec) → Path (spec.replicate n)
   | 0, _ => ⟨⟩
   | n + 1, trs =>
       PFunctor.FreeM.Path.append spec (fun _ => spec.replicate n)
-        (trs 0) (Transcript.replicateJoin spec n (fun i => trs i.succ))
+        (trs 0) (Path.replicateJoin spec n (fun i => trs i.succ))
 
-/-- Split `spec.replicate n` into `n` per-round transcripts. -/
-def Transcript.replicateSplit (spec : Spec) :
-    (n : Nat) → Transcript (spec.replicate n) → (Fin n → Transcript spec)
+/-- Split `spec.replicate n` into `n` per-round paths. -/
+def Path.replicateSplit (spec : TypeTree) :
+    (n : Nat) → Path (spec.replicate n) → (Fin n → Path spec)
   | 0, _ => fun i => i.elim0
   | n + 1, tr => fun i =>
       let ⟨hd, tl⟩ := PFunctor.FreeM.Path.split spec (fun _ => spec.replicate n) tr
       match i with
         | ⟨0, _⟩ => hd
-        | ⟨i + 1, h⟩ => Transcript.replicateSplit spec n tl ⟨i, Nat.lt_of_succ_lt_succ h⟩
+        | ⟨i + 1, h⟩ => Path.replicateSplit spec n tl ⟨i, Nat.lt_of_succ_lt_succ h⟩
 
 @[simp, grind =]
-theorem Transcript.replicateSplit_replicateJoin (spec : Spec) :
-    (n : Nat) → (trs : Fin n → Transcript spec) → (i : Fin n) →
-    Transcript.replicateSplit spec n (Transcript.replicateJoin spec n trs) i = trs i
+theorem Path.replicateSplit_replicateJoin (spec : TypeTree) :
+    (n : Nat) → (trs : Fin n → Path spec) → (i : Fin n) →
+    Path.replicateSplit spec n (Path.replicateJoin spec n trs) i = trs i
   | 0, _, i => i.elim0
   | n + 1, trs, ⟨0, _⟩ => by
       simp [replicateSplit, replicateJoin, PFunctor.FreeM.Path.split_append]
@@ -71,24 +71,24 @@ theorem Transcript.replicateSplit_replicateJoin (spec : Spec) :
       simp only [replicateSplit, replicateJoin, PFunctor.FreeM.Path.split_append]
       exact replicateSplit_replicateJoin spec n (fun i => trs i.succ) ⟨i, Nat.lt_of_succ_lt_succ h⟩
 
-theorem Transcript.replicateSplit_join_zero (spec : Spec) (n : Nat)
-    (hd : Transcript spec) (tl : Transcript (spec.replicate n)) :
-    Transcript.replicateSplit spec (n + 1)
+theorem Path.replicateSplit_join_zero (spec : TypeTree) (n : Nat)
+    (hd : Path spec) (tl : Path (spec.replicate n)) :
+    Path.replicateSplit spec (n + 1)
         (PFunctor.FreeM.Path.append spec (fun _ => spec.replicate n) hd tl) ⟨0, n.succ_pos⟩ =
       hd := by
   simp [replicateSplit, PFunctor.FreeM.Path.split_append]
 
-theorem Transcript.replicateSplit_join_succ (spec : Spec) (n : Nat)
-    (hd : Transcript spec) (tl : Transcript (spec.replicate n)) (i : Fin n) :
-    Transcript.replicateSplit spec (n + 1)
+theorem Path.replicateSplit_join_succ (spec : TypeTree) (n : Nat)
+    (hd : Path spec) (tl : Path (spec.replicate n)) (i : Fin n) :
+    Path.replicateSplit spec (n + 1)
         (PFunctor.FreeM.Path.append spec (fun _ => spec.replicate n) hd tl) i.succ =
-      Transcript.replicateSplit spec n tl i := by
+      Path.replicateSplit spec n tl i := by
   simp [replicateSplit, PFunctor.FreeM.Path.split_append, Fin.succ]
 
 @[simp, grind =]
-theorem Transcript.replicateJoin_replicateSplit (spec : Spec) (n : Nat)
-    (tr : Transcript (spec.replicate n)) :
-    Transcript.replicateJoin spec n (Transcript.replicateSplit spec n tr) = tr := by
+theorem Path.replicateJoin_replicateSplit (spec : TypeTree) (n : Nat)
+    (tr : Path (spec.replicate n)) :
+    Path.replicateJoin spec n (Path.replicateSplit spec n tr) = tr := by
   induction n with
   | zero =>
     cases tr
@@ -103,54 +103,54 @@ theorem Transcript.replicateJoin_replicateSplit (spec : Spec) (n : Nat)
     congr 1
     · simpa using replicateSplit_join_zero spec n hd tl
     · have hfns :
-          (fun i => Transcript.replicateSplit spec (n + 1)
+          (fun i => Path.replicateSplit spec (n + 1)
               (PFunctor.FreeM.Path.append spec (fun _ => spec.replicate n) hd tl) i.succ) =
-            Transcript.replicateSplit spec n tl := by
+            Path.replicateSplit spec n tl := by
         funext i
         exact replicateSplit_join_succ spec n hd tl i
       rw [hfns, ih]
 
 variable {S : Type u → Type v}
 
-/-- Replicate a decoration `n` times along `Spec.replicate`. -/
+/-- Replicate a decoration `n` times along `TypeTree.replicate`. -/
 abbrev Decoration.replicate {S : Type u → Type v}
-    {spec : Spec} (d : Decoration S spec) : (n : Nat) →
+    {spec : TypeTree} (d : Decoration S spec) : (n : Nat) →
     Decoration S (spec.replicate n) :=
-  PFunctor.FreeM.Displayed.Decoration.replicate (P := Spec.basePFunctor)
+  PFunctor.FreeM.Displayed.Decoration.replicate (P := TypeTree.basePFunctor)
     (α := PUnit.{u+1}) (a := PUnit.unit) d
 
 /-- Replicate a dependent decoration `n` times along replicated base
 decorations. -/
 abbrev Decoration.Over.replicate {L : Type u → Type v} {F : ∀ X, L X → Type w}
-    {spec : Spec} {d : Decoration L spec}
+    {spec : TypeTree} {d : Decoration L spec}
     (r : Decoration.Over F spec d) : (n : Nat) →
     Decoration.Over F (spec.replicate n) (d.replicate n) :=
-  PFunctor.FreeM.Displayed.Decoration.Over.replicate (P := Spec.basePFunctor)
+  PFunctor.FreeM.Displayed.Decoration.Over.replicate (P := TypeTree.basePFunctor)
     (α := PUnit.{u+1}) (a := PUnit.unit) r
 
 /-- `Decoration.map` commutes with `Decoration.replicate`. -/
 theorem Decoration.map_replicate {S : Type u → Type v} {T : Type u → Type w}
-    (f : ∀ X, S X → T X) {spec : Spec} (d : Decoration S spec) (n : Nat) :
+    (f : ∀ X, S X → T X) {spec : TypeTree} (d : Decoration S spec) (n : Nat) :
     Decoration.map f (spec.replicate n) (d.replicate n) =
       (Decoration.map f spec d).replicate n :=
   PFunctor.FreeM.Displayed.Decoration.map_replicate
-    (P := Spec.basePFunctor) (α := PUnit.{u+1}) f PUnit.unit d n
+    (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) f PUnit.unit d n
 
 /-- `Decoration.Over.map` commutes with `Over.replicate`. -/
 theorem Decoration.Over.map_replicate {L : Type u → Type v} {F G : ∀ X, L X → Type w}
-    (η : ∀ X l, F X l → G X l) {spec : Spec} {d : Decoration L spec}
+    (η : ∀ X l, F X l → G X l) {spec : TypeTree} {d : Decoration L spec}
     (r : Decoration.Over F spec d) (n : Nat) :
     Decoration.Over.map η (PFunctor.FreeM.replicate PUnit.unit spec n) (Decoration.replicate d n)
         (Decoration.Over.replicate r n) =
       Decoration.Over.replicate (Decoration.Over.map η spec d r) n :=
   PFunctor.FreeM.Displayed.Decoration.Over.map_replicate
-    (P := Spec.basePFunctor) (α := PUnit.{u+1}) η PUnit.unit r n
+    (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) η PUnit.unit r n
 
 variable {m : Type u → Type u}
 
 /-- Iterate a strategy `n` times on `spec.replicate n`, threading a value of type `α`. -/
 def Strategy.iterate {m : Type u → Type u} [Monad m]
-    {spec : Spec} {α : Type u} :
+    {spec : TypeTree} {α : Type u} :
     (n : Nat) →
     (step : Fin n → α → m (Strategy.Plain m spec (fun _ => α))) →
     α →
@@ -161,5 +161,5 @@ def Strategy.iterate {m : Type u → Type u} [Monad m]
     Strategy.compFlat spec (fun _ => spec.replicate n) strat
       (fun _ mid => iterate n (fun i => step i.succ) mid)
 
-end Spec
+end TypeTree
 end Interaction

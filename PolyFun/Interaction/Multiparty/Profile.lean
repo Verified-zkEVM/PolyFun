@@ -37,7 +37,7 @@ This is the intended structured node-local metadata for adversarial and
 multiparty interaction: one actual global move may give different local
 observations to different parties.
 -/
-abbrev ViewProfile (Party : Type u) : Spec.Node.Context.{u, u + 1} :=
+abbrev ViewProfile (Party : Type u) : TypeTree.Node.Context.{u, u + 1} :=
   fun X => Party → ViewMode X
 
 /--
@@ -47,8 +47,8 @@ A `Decoration Party spec` assigns one local-view profile to every node of
 At a node with move space `X`, the attached profile says, for each party, how
 that party locally sees the chosen move `x : X`.
 -/
-abbrev Decoration (Party : Type u) (spec : Spec.{u}) : Type (u + 1) :=
-  PFunctor.FreeM.Displayed.Decoration (P := Spec.basePFunctor) (α := PUnit.{u + 1})
+abbrev Decoration (Party : Type u) (spec : TypeTree.{u}) : Type (u + 1) :=
+  PFunctor.FreeM.Displayed.Decoration (P := TypeTree.basePFunctor) (α := PUnit.{u + 1})
     (ViewProfile Party) spec
 
 /--
@@ -62,7 +62,7 @@ abbrev Strategy
     (m : Type u → Type u)
     {Party : Type u}
     (me : Party)
-    (spec : Spec) (views : Decoration Party spec)
+    (spec : TypeTree) (views : Decoration Party spec)
     (Output : PFunctor.FreeM.Path spec → Type u) :=
   Multiparty.Strategy m (resolve := fun _ profile => profile me) spec views Output
 

@@ -44,13 +44,13 @@ import PolyFun.Interaction.Basic.Ownership
 import PolyFun.Interaction.Basic.Replicate
 import PolyFun.Interaction.Basic.Sampler
 import PolyFun.Interaction.Basic.Shape
-import PolyFun.Interaction.Basic.Spec
-import PolyFun.Interaction.Basic.SpecFintype
 import PolyFun.Interaction.Basic.StateChain
 import PolyFun.Interaction.Basic.Strategy
 import PolyFun.Interaction.Basic.StrategyOver
 import PolyFun.Interaction.Basic.Syntax
 import PolyFun.Interaction.Basic.Telescope
+import PolyFun.Interaction.Basic.TypeTree
+import PolyFun.Interaction.Basic.TypeTreeFintype
 import PolyFun.Interaction.Concurrent.Control
 import PolyFun.Interaction.Concurrent.Current
 import PolyFun.Interaction.Concurrent.Equivalence

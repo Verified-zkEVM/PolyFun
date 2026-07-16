@@ -12,7 +12,7 @@ This file adds a lightweight policy layer on top of finite executions of
 `Concurrent.ProcessOver`.
 
 The point of a policy here is operational rather than semantic in the liveness
-sense: it describes which concrete step transcripts are allowed to occur in a
+sense: it describes which concrete step paths are allowed to occur in a
 finite execution. So this layer is useful for expressing scheduler rules,
 authorization filters, event allowlists, or ticket filters that can be checked
 step by step.
@@ -33,42 +33,42 @@ namespace ProcessOver
 A policy sees:
 
 * the current residual process state `p`;
-* the concrete sequential transcript `tr` chosen for the current step protocol
+* the concrete sequential path `tr` chosen for the current step protocol
   `process.step p`.
 
 It returns `true` when that step is allowed and `false` when it is forbidden.
 -/
 abbrev StepPolicy
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} (process : ProcessOver P Γ) :=
-  {p : process.Proc} → (process.step p).spec.Transcript → Bool
+  {p : process.Proc} → (process.step p).tree.Path → Bool
 
 namespace StepPolicy
 
-/-- The permissive policy that allows every step transcript. -/
+/-- The permissive policy that allows every step path. -/
 def top
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ} : StepPolicy process :=
   fun _ => true
 
 /-- Conjunction of two step policies. A step is allowed exactly when both
 component policies allow it. -/
 def inter
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (left right : StepPolicy process) : StepPolicy process :=
   fun tr => left tr && right tr
 
 /--
 `byController resolve allow` constrains only the current controlling party of
-the concrete step transcript, after projecting the generic context into
+the concrete step path, after projecting the generic context into
 `StepContext`.
 -/
 def byController
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     (allow : Party → Bool) : StepPolicy process :=
   fun {p} tr =>
     match ((process.step p).mapContext resolve).currentController? tr with
@@ -77,22 +77,22 @@ def byController
 
 /--
 `byPath resolve allow` constrains the full controller path of the concrete step
-transcript, after projecting the generic context into `StepContext`.
+path, after projecting the generic context into `StepContext`.
 -/
 def byPath
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     (allow : List Party → Bool) : StepPolicy process :=
   fun {p} tr => allow (((process.step p).mapContext resolve).controllerPath tr)
 
 /--
 `byEvent eventMap allow` constrains the stable event label induced by the
-transcript-level event map `eventMap`.
+path-level event map `eventMap`.
 -/
 def byEvent
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event)
@@ -101,10 +101,10 @@ def byEvent
 
 /--
 `byTicket ticketMap allow` constrains the stable ticket attached to each step
-transcript by `ticketMap`.
+path by `ticketMap`.
 -/
 def byTicket
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket)
@@ -120,7 +120,7 @@ namespace Trace
 execution `trace` satisfies the executable step policy `policy`.
 -/
 def respects
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (policy : StepPolicy process) :
     {p : process.Proc} → Trace process p → Bool
@@ -129,7 +129,7 @@ def respects
 
 @[simp, grind =]
 theorem respects_top
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {p : process.Proc} (trace : Trace process p) :
     respects StepPolicy.top trace = true := by
@@ -161,27 +161,27 @@ abbrev inter {Party : Type u} {P : Type v} {process : Process P Party}
 
 /--
 `byController allow` constrains only the current controlling party of the
-concrete closed-world step transcript.
+concrete closed-world step path.
 -/
 abbrev byController {Party : Type u} {P : Type v} {process : Process P Party}
     (allow : Party → Bool) : StepPolicy process :=
   ProcessOver.StepPolicy.byController
-    (resolve := Interaction.Spec.Node.ContextHom.id (StepContext Party))
+    (resolve := Interaction.TypeTree.Node.ContextHom.id (StepContext Party))
     allow
 
 /--
 `byPath allow` constrains the full controller path of the concrete closed-world
-step transcript.
+step path.
 -/
 abbrev byPath {Party : Type u} {P : Type v} {process : Process P Party}
     (allow : List Party → Bool) : StepPolicy process :=
   ProcessOver.StepPolicy.byPath
-    (resolve := Interaction.Spec.Node.ContextHom.id (StepContext Party))
+    (resolve := Interaction.TypeTree.Node.ContextHom.id (StepContext Party))
     allow
 
 /--
 `byEvent eventMap allow` constrains the stable event label induced by the
-transcript-level event map `eventMap`.
+path-level event map `eventMap`.
 -/
 abbrev byEvent {Party : Type u} {P : Type v} {process : Process P Party}
     {Event : Type w₃}
@@ -191,7 +191,7 @@ abbrev byEvent {Party : Type u} {P : Type v} {process : Process P Party}
 
 /--
 `byTicket ticketMap allow` constrains the stable ticket attached to each
-closed-world step transcript by `ticketMap`.
+closed-world step path by `ticketMap`.
 -/
 abbrev byTicket {Party : Type u} {P : Type v} {process : Process P Party}
     {Ticket : Type w₃}

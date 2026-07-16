@@ -3,7 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Spec
+import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.Basic.Decoration
 import PolyFun.Interaction.Basic.StrategyOver
 import PolyFun.Interaction.Multiparty.Observation
@@ -44,7 +44,7 @@ The definitions in this file are intentionally local and minimal.
 
 Crucially, this file does **not** commit to any particular global communication
 model. In particular, it does not choose between:
-* broadcast / public-transcript interaction, where one party chooses and all
+* broadcast / public-path interaction, where one party chooses and all
   others observe; or
 * directed point-to-point interaction, where one party sends, one party
   receives, and the remaining parties are hidden or only partially informed.
@@ -123,9 +123,9 @@ See `docs/agents/interaction.md` for the design rationale of the
 information-vs-operational split.
 
 Naming note: this file does not introduce a new global multiparty protocol
-syntax. The existing `Interaction.Spec` already captures the global branching
+syntax. The existing `Interaction.TypeTree` already captures the global branching
 structure. The multiparty layer only describes how one fixed participant
-locally sees each node of such a spec.
+locally sees each node of such a type tree.
 -/
 
 universe u v
@@ -365,7 +365,7 @@ This is the direct multiparty local-view analogue of the two-party
 More structured multiparty models usually decorate nodes by richer metadata
 and then project that metadata to `ViewMode` via `SyntaxOver.comap`.
 -/
-abbrev ViewModeContext : Spec.Node.Context.{u, u + 1} := fun X : Type u => ViewMode X
+abbrev ViewModeContext : TypeTree.Node.Context.{u, u + 1} := fun X : Type u => ViewMode X
 
 /--
 `localSyntax m` is the fundamental local syntax for one fixed participant when
@@ -380,7 +380,7 @@ profile.
 -/
 def localSyntax (m : Type u → Type u) :
     SyntaxOver
-      (PFunctor.Lens.id Spec.basePFunctor) (PUnit : Type) (fun X : Type u => ViewMode X) where
+      (PFunctor.Lens.id TypeTree.basePFunctor) (PUnit : Type) (fun X : Type u => ViewMode X) where
   Node _ _ view Cont := view.Action m Cont
 
 /--
@@ -404,9 +404,9 @@ metadata contexts `Γ`, decorations `ctxs`, and resolvers `resolve`.
 -/
 abbrev Strategy
     (m : Type u → Type u)
-    {Γ : Spec.Node.Context.{u, v}}
-    (resolve : Spec.Node.ContextHom Γ (fun X : Type u => ViewMode X))
-    (spec : Spec) (ctxs : PFunctor.FreeM.Displayed.Decoration Γ spec)
+    {Γ : TypeTree.Node.Context.{u, v}}
+    (resolve : TypeTree.Node.ContextHom Γ (fun X : Type u => ViewMode X))
+    (spec : TypeTree) (ctxs : PFunctor.FreeM.Displayed.Decoration Γ spec)
     (Output : PFunctor.FreeM.Path spec → Type u) :=
   StrategyOver ((localSyntax m).comap resolve) PUnit.unit spec ctxs Output
 

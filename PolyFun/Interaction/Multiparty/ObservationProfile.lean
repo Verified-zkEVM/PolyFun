@@ -84,7 +84,7 @@ standard `bot_le` and `le_top` lemmas) is inherited from the per-party
 `Observation X` instances via `Pi.preorder`, `Pi.instOrderTop`,
 `Pi.instOrderBot`, and `Pi.instMax`.
 -/
-abbrev ObservationProfile (Party : Type u) : Spec.Node.Context.{u, u + 1} :=
+abbrev ObservationProfile (Party : Type u) : TypeTree.Node.Context.{u, u + 1} :=
   fun X => Party → Observation X
 
 namespace ObservationProfile

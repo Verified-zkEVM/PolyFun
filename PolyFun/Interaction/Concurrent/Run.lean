@@ -16,7 +16,7 @@ reasoning about ongoing concurrent behavior.
   execution. Unlike `ProcessOver.Trace`, it may stop at any residual process
   state, not only at a quiescent one.
 * `ProcessOver.Run` is an infinite execution, represented by the residual
-  process state at each time index together with the complete transcript chosen
+  process state at each time index together with the complete path chosen
   for the corresponding process step.
 
 The closed-world `Process` API is recovered as a specialization of these
@@ -32,14 +32,14 @@ namespace ProcessOver
 /--
 `Prefix process p n` is a finite prefix of length `n` of an execution starting
 from the residual process state `p`: the dynamical-system `Prefix` at the step
-polynomial, where each `step` records one complete sequential transcript of the
+polynomial, where each `step` records one complete sequential path of the
 current process step.
 
 Unlike `ProcessOver.Trace`, a `Prefix` may stop at any residual state. This
 makes it the correct finite prefix object for later infinite-run semantics.
 -/
 abbrev Prefix
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} (process : ProcessOver P Γ) :
     process.Proc → Nat → Sort _ :=
   PFunctor.DynSystem.Prefix process
@@ -51,10 +51,10 @@ The sequence of current controlling parties exposed by a finite prefix after
 projecting the generic context into `StepContext`.
 -/
 def currentControllers
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party)) :
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party)) :
     {p : process.Proc} → {n : Nat} → Prefix process p n → List (Option Party)
   | _, _, .nil => []
   | p, _, .step tr tail =>
@@ -65,10 +65,10 @@ The sequence of full controller paths exposed by a finite prefix after
 projecting the generic context into `StepContext`.
 -/
 def controllerPaths
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party)) :
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party)) :
     {p : process.Proc} → {n : Nat} → Prefix process p n → List (List Party)
   | _, _, .nil => []
   | p, _, .step tr tail =>
@@ -76,7 +76,7 @@ def controllerPaths
 
 /-- The stable event labels attached to the executed steps of a finite prefix. -/
 abbrev events
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event) :
@@ -85,7 +85,7 @@ abbrev events
 
 /-- The stable tickets attached to the executed steps of a finite prefix. -/
 abbrev tickets
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket) :
@@ -97,7 +97,7 @@ Forget the quiescence proof of a finite `Trace` and keep only its executed
 prefix.
 -/
 def ofTrace
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ} :
     {p : process.Proc} → (trace : Trace process p) → Prefix process p trace.length
   | _, .done _ => .nil
@@ -105,25 +105,25 @@ def ofTrace
 
 @[simp, grind =]
 theorem currentControllers_nil
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     {p : process.Proc} :
     currentControllers resolve (.nil : Prefix process p 0) = [] := rfl
 
 @[simp, grind =]
 theorem controllerPaths_nil
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     {p : process.Proc} :
     controllerPaths resolve (.nil : Prefix process p 0) = [] := rfl
 
 @[simp, grind =]
 theorem events_nil
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event)
@@ -133,7 +133,7 @@ theorem events_nil
 
 @[simp, grind =]
 theorem tickets_nil
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket)
@@ -150,7 +150,7 @@ dynamical-system `Run` at the step polynomial.
 It is represented by:
 
 * `state n`, the residual process state after `n` complete process steps;
-* `transcript n` (the generic `dir` field), the concrete transcript chosen for
+* `path n` (the generic `dir` field), the concrete path chosen for
   step `n`;
 * `next_state`, which states that the residual state stream follows the
   process continuation exactly.
@@ -160,41 +160,41 @@ new operational state space of its own. It simply records how the residual
 process state evolves when one complete process step is chosen at each time.
 -/
 abbrev Run
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} (process : ProcessOver P Γ) :=
   PFunctor.DynSystem.Run process
 
 namespace Run
 
-/-- The concrete transcript chosen for step `n`: the run's generic direction
+/-- The concrete path chosen for step `n`: the run's generic direction
 choice, read at the step-polynomial interface. -/
-abbrev transcript
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+abbrev path
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
-    (run : Run process) (n : Nat) : (process.step (run.state n)).spec.Transcript :=
+    (run : Run process) (n : Nat) : (process.step (run.state n)).tree.Path :=
   run.dir n
 
 /-- The initial residual process state of a run. -/
 abbrev initial
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (run : Run process) : process.Proc :=
   PFunctor.DynSystem.Run.initial run
 
 /--
-The first complete process-step transcript of the run.
+The first complete process-step path of the run.
 -/
 abbrev head
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
-    (run : Run process) : (process.step run.initial).spec.Transcript :=
+    (run : Run process) : (process.step run.initial).tree.Path :=
   PFunctor.DynSystem.Run.head run
 
 /--
 The tail of a run after its first process step.
 -/
 abbrev tail
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (run : Run process) :
     Run process :=
@@ -205,7 +205,7 @@ The initial state of `run.tail` is exactly the residual state obtained by
 executing `run.head`.
 -/
 theorem tail_initial
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (run : Run process) :
     run.tail.initial = (process.step run.initial).next run.head :=
@@ -216,7 +216,7 @@ theorem tail_initial
 `run`.
 -/
 abbrev take
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (run : Run process) : (n : Nat) → Prefix process run.initial n :=
   PFunctor.DynSystem.Run.take run
@@ -226,20 +226,20 @@ The current controlling party of step `n` of a run, if any, after projecting
 the generic context into `StepContext`.
 -/
 def currentController?
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     (run : Run process) (n : Nat) : Option Party :=
-  ((process.step (run.state n)).mapContext resolve).currentController? (run.transcript n)
+  ((process.step (run.state n)).mapContext resolve).currentController? (run.path n)
 
 /-- The current controlling parties exposed along the first `n` executed steps
 of the run `run`. -/
 def currentControllersUpTo
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     (run : Run process) : Nat → List (Option Party)
   | 0 => []
   | n + 1 => run.currentController? resolve 0 :: run.tail.currentControllersUpTo resolve n
@@ -249,27 +249,27 @@ The full controller path recorded by step `n` of a run after projecting the
 generic context into `StepContext`.
 -/
 def controllerPath
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     (run : Run process) (n : Nat) : List Party :=
-  ((process.step (run.state n)).mapContext resolve).controllerPath (run.transcript n)
+  ((process.step (run.state n)).mapContext resolve).controllerPath (run.path n)
 
 /-- The full controller paths exposed along the first `n` executed steps of the
 run `run`. -/
 def controllerPathsUpTo
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     (run : Run process) : Nat → List (List Party)
   | 0 => []
   | n + 1 => run.controllerPath resolve 0 :: run.tail.controllerPathsUpTo resolve n
 
 /-- The stable event label attached to step `n` of a run. -/
 abbrev event
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event)
@@ -279,7 +279,7 @@ abbrev event
 /-- The stable event labels attached to the first `n` executed steps of the run
 `run`. -/
 abbrev eventsUpTo
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event)
@@ -288,7 +288,7 @@ abbrev eventsUpTo
 
 /-- The stable ticket attached to step `n` of a run. -/
 abbrev ticket
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket)
@@ -298,7 +298,7 @@ abbrev ticket
 /-- The stable tickets attached to the first `n` executed steps of the run
 `run`. -/
 abbrev ticketsUpTo
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket)
@@ -310,11 +310,11 @@ abbrev ticketsUpTo
 runs `left` and `right` match step-by-step according to `rel`.
 -/
 abbrev RelUpTo
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {P₁ : Type v} {left : ProcessOver P₁ Γ}
     {P₂ : Type v} {right : ProcessOver P₂ Δ}
-    (rel : ProcessOver.TranscriptRel left right)
+    (rel : ProcessOver.StepRel left right)
     (leftRun : Run left) (rightRun : Run right) : Nat → Prop :=
   PFunctor.DynSystem.Run.RelUpTo rel leftRun rightRun
 
@@ -323,50 +323,50 @@ abbrev RelUpTo
 `right` matches according to `rel`.
 -/
 abbrev Rel
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {P₁ : Type v} {left : ProcessOver P₁ Γ}
     {P₂ : Type v} {right : ProcessOver P₂ Δ}
-    (rel : ProcessOver.TranscriptRel left right)
+    (rel : ProcessOver.StepRel left right)
     (leftRun : Run left) (rightRun : Run right) : Prop :=
   PFunctor.DynSystem.Run.Rel rel leftRun rightRun
 
 /-- Pointwise step matching implies prefix matching of the first `n` steps. -/
 theorem relUpTo_of_pointwise
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {P₁ : Type v} {left : ProcessOver P₁ Γ}
     {P₂ : Type v} {right : ProcessOver P₂ Δ}
-    (rel : ProcessOver.TranscriptRel left right)
+    (rel : ProcessOver.StepRel left right)
     (leftRun : Run left) (rightRun : Run right)
-    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
-      ⟨rightRun.state n, rightRun.transcript n⟩) :
+    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.path n⟩
+      ⟨rightRun.state n, rightRun.path n⟩) :
     ∀ n, RelUpTo rel leftRun rightRun n :=
   PFunctor.DynSystem.Run.relUpTo_of_pointwise rel leftRun rightRun hrel
 
 /-- Pointwise step matching implies full run matching. -/
 theorem rel_of_pointwise
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {P₁ : Type v} {left : ProcessOver P₁ Γ}
     {P₂ : Type v} {right : ProcessOver P₂ Δ}
-    (rel : ProcessOver.TranscriptRel left right)
+    (rel : ProcessOver.StepRel left right)
     (leftRun : Run left) (rightRun : Run right)
-    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
-      ⟨rightRun.state n, rightRun.transcript n⟩) :
+    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.path n⟩
+      ⟨rightRun.state n, rightRun.path n⟩) :
     Rel rel leftRun rightRun :=
   PFunctor.DynSystem.Run.rel_of_pointwise rel leftRun rightRun hrel
 
 @[simp, grind =]
 theorem take_zero
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (run : Run process) :
     run.take 0 = .nil := rfl
 
 @[simp, grind =]
 theorem take_succ
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (run : Run process) (n : Nat) :
     run.take (n + 1) =
@@ -375,25 +375,25 @@ theorem take_succ
 
 @[simp, grind =]
 theorem currentControllersUpTo_zero
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     (run : Run process) :
     run.currentControllersUpTo resolve 0 = [] := rfl
 
 @[simp, grind =]
 theorem controllerPathsUpTo_zero
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     (run : Run process) :
     run.controllerPathsUpTo resolve 0 = [] := rfl
 
 @[simp, grind =]
 theorem eventsUpTo_zero
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event)
@@ -402,7 +402,7 @@ theorem eventsUpTo_zero
 
 @[simp, grind =]
 theorem ticketsUpTo_zero
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket)
@@ -411,27 +411,27 @@ theorem ticketsUpTo_zero
 
 @[simp, grind =]
 theorem currentControllersUpTo_succ
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     (run : Run process) (n : Nat) :
     run.currentControllersUpTo resolve (n + 1) =
       run.currentController? resolve 0 :: run.tail.currentControllersUpTo resolve n := rfl
 
 @[simp, grind =]
 theorem controllerPathsUpTo_succ
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
     {P : Type v} {process : ProcessOver P Γ}
-    (resolve : Interaction.Spec.Node.ContextHom Γ (StepContext Party))
+    (resolve : Interaction.TypeTree.Node.ContextHom Γ (StepContext Party))
     (run : Run process) (n : Nat) :
     run.controllerPathsUpTo resolve (n + 1) =
       run.controllerPath resolve 0 :: run.tail.controllerPathsUpTo resolve n := rfl
 
 @[simp, grind =]
 theorem eventsUpTo_succ
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Event : Type w₃}
     (eventMap : process.EventMap Event)
@@ -441,7 +441,7 @@ theorem eventsUpTo_succ
 
 @[simp, grind =]
 theorem ticketsUpTo_succ
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
     (ticketMap : process.Tickets Ticket)
@@ -534,9 +534,9 @@ abbrev initial {Party : Type u} {P : Type v} {process : Process P Party}
     (run : Run process) : process.Proc :=
   ProcessOver.Run.initial run
 
-/-- The first complete process-step transcript of a closed-world run. -/
+/-- The first complete process-step path of a closed-world run. -/
 abbrev head {Party : Type u} {P : Type v} {process : Process P Party}
-    (run : Run process) : (process.step run.initial).spec.Transcript :=
+    (run : Run process) : (process.step run.initial).tree.Path :=
   ProcessOver.Run.head run
 
 /-- The tail of a closed-world run after its first process step. -/
@@ -558,7 +558,7 @@ abbrev take {Party : Type u} {P : Type v} {process : Process P Party}
 /-- The current controlling party of step `n` of a closed-world run, if any. -/
 def currentController? {Party : Type u} {P : Type v} {process : Process P Party}
     (run : Run process) (n : Nat) : Option Party :=
-  (process.step (run.state n)).currentController? (run.transcript n)
+  (process.step (run.state n)).currentController? (run.path n)
 
 /-- The current controlling parties exposed along the first `n` executed steps
 of a closed-world run. -/
@@ -570,7 +570,7 @@ def currentControllersUpTo {Party : Type u} {P : Type v} {process : Process P Pa
 /-- The full controller path recorded by step `n` of a closed-world run. -/
 def controllerPath {Party : Type u} {P : Type v} {process : Process P Party}
     (run : Run process) (n : Nat) : List Party :=
-  (process.step (run.state n)).controllerPath (run.transcript n)
+  (process.step (run.state n)).controllerPath (run.path n)
 
 /-- The full controller paths exposed along the first `n` executed steps of a
 closed-world run. -/

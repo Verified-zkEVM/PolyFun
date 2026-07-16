@@ -3,7 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Spec
+import PolyFun.Interaction.Basic.TypeTree
 
 /-!
 # Concurrent interaction specifications
@@ -11,8 +11,8 @@ import PolyFun.Interaction.Basic.Spec
 This file introduces the minimal concurrent source syntax for the
 `Interaction` library.
 
-The existing sequential `Interaction.Spec` is a continuation tree with one
-currently enabled move family at each node. The concurrent extension keeps that
+The sequential `Interaction.TypeTree` is a continuation tree with one
+currently enabled move family at each node. This concurrent syntax keeps that
 continuation-first shape and adds exactly one new constructor:
 
 * `par left right` — both `left` and `right` are concurrently live.
@@ -47,7 +47,7 @@ Constructors:
 
 * `done` — no further behavior.
 * `node Moves rest` — one currently enabled atomic move family, just as in the
-  sequential `Interaction.Spec`.
+  sequential `Interaction.TypeTree`.
 * `par left right` — both `left` and `right` are concurrently live.
 
 This is intentionally only a **source syntax** for concurrency.
@@ -86,22 +86,22 @@ def isLive : Concurrent.Spec → Bool
   | .par left right => left.isLive || right.isLive
 
 /--
-Embed a sequential `Interaction.Spec` into the concurrent syntax as the
+Embed a sequential `Interaction.TypeTree` into the concurrent syntax as the
 one-thread fragment with no use of `par`.
 
-This is the basic bridge from the existing sequential library to the new
-concurrent source language.
+This is the canonical embedding of sequential type trees into the concurrent
+source language.
 -/
-def ofSequential : Interaction.Spec → Concurrent.Spec
+def ofSequential : Interaction.TypeTree → Concurrent.Spec
   | .done => .done
   | .node Moves rest => .node Moves (fun x => ofSequential (rest x))
 
 @[simp, grind =]
-theorem ofSequential_done : ofSequential Interaction.Spec.done = .done := rfl
+theorem ofSequential_done : ofSequential Interaction.TypeTree.done = .done := rfl
 
 @[simp, grind =]
-theorem ofSequential_node (Moves : Type u) (rest : Moves → Interaction.Spec) :
-    ofSequential (@PFunctor.FreeM.lift Interaction.Spec.basePFunctor Moves >>= rest) =
+theorem ofSequential_node (Moves : Type u) (rest : Moves → Interaction.TypeTree) :
+    ofSequential (@PFunctor.FreeM.lift Interaction.TypeTree.basePFunctor Moves >>= rest) =
       .node Moves (fun x => ofSequential (rest x)) := rfl
 
 @[simp, grind =]

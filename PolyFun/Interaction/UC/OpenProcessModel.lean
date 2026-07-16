@@ -26,7 +26,7 @@ that carry a per-step nodewise-monadic sampler in the intermediate monad
   the appropriate summand of the tensor output interface. The scheduler
   move is resolved by the theory's shared `schedulerSampler : m (ULift
   Bool)`; per-branch samplers are assembled via
-  `Spec.Sampler.interleave`.
+  `TypeTree.Sampler.interleave`.
 
 * `wire` connects a shared internal boundary between two processes.
   Packets on the shared boundary are filtered out (deferred to runtime
@@ -68,7 +68,7 @@ The concrete open-composition theory backed by `OpenProcess m`.
   samplers verbatim.
 * `par`, `wire`, and `plug` all use `OpenProcess.interleave` with the
   appropriate context morphisms and thread the shared `schedulerSampler`
-  through `Spec.Sampler.interleave`.
+  through `TypeTree.Sampler.interleave`.
 -/
 def openTheory : OpenTheory where
   Obj Δ := OpenProcess.{u, v, w, w'} m Party Δ
@@ -124,8 +124,8 @@ private theorem OpenProcess.ext_of_step_eq
     {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
     {Proc : Type v}
     {step₁ step₂ : Proc → StepOver (OpenNodeContext.{u, w} Party Δ) Proc}
-    {stepSampler₁ : ∀ s, Spec.Sampler.{w, w'} m (step₁ s).spec}
-    {stepSampler₂ : ∀ s, Spec.Sampler.{w, w'} m (step₂ s).spec}
+    {stepSampler₁ : ∀ s, TypeTree.Sampler.{w, w'} m (step₁ s).tree}
+    {stepSampler₂ : ∀ s, TypeTree.Sampler.{w, w'} m (step₂ s).tree}
     (hstep : step₁ = step₂)
     (hsampler : HEq stepSampler₁ stepSampler₂) :
     (OpenProcess.mk Proc step₁ stepSampler₁ :
@@ -138,7 +138,7 @@ private theorem OpenProcess.ext_of_step_eq
 /-- Derive step equality (as a function) from a `ProcessOver` equality
 between two processes on the same residual state space. -/
 private theorem heq_step_of_processOver_eq.{v₀, w₀, w₂}
-    {Proc : Type v₀} {Γ : Interaction.Spec.Node.Context.{w₀, w₂}}
+    {Proc : Type v₀} {Γ : Interaction.TypeTree.Node.Context.{w₀, w₂}}
     {P₁ P₂ : Concurrent.ProcessOver.{v₀, w₀, w₂} Proc Γ}
     (h : P₁ = P₂) :
     HEq P₁.step P₂.step :=
@@ -639,7 +639,7 @@ and `PUnit` state. The sampler is the trivial `Decoration.done` sampler. -/
 def openTheoryUnit : OpenProcess.{u, v, w, w'} m Party PortBoundary.empty where
   Proc := PUnit
   step := fun _ =>
-    { spec := .done
+    { tree := .done
       semantics := ⟨⟩
       next := fun _ => PUnit.unit }
   stepSampler := fun _ => ⟨⟩
@@ -761,7 +761,7 @@ def openTheoryIdWire (Γ : PortBoundary) :
       (PortBoundary.tensor (PortBoundary.swap Γ) Γ) where
   Proc := PUnit
   step := fun _ =>
-    { spec := .done
+    { tree := .done
       semantics := ⟨⟩
       next := fun _ => PUnit.unit }
   stepSampler := fun _ => ⟨⟩

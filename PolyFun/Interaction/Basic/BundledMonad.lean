@@ -11,13 +11,13 @@ import Batteries.Tactic.Lint
 
 `BundledMonad` packages a `Type u → Type v` constructor with a `Monad` instance so it can be
 stored inside inductive types (e.g. per-node monad decorations) where typeclass inference is not
-available. This module is independent of `Interaction.Spec`.
+available. This module is independent of `Interaction.TypeTree`.
 -/
 
 universe u v
 
 set_option linter.checkUnivs false in
-/-- Bundled monad: a monad constructor packaged as a structure for use inside `Spec` data. -/
+/-- Bundled monad: a monad constructor packaged as a structure for use inside `TypeTree` data. -/
 -- `BundledMonad`'s two universes are the independent domain (`u`) and codomain (`v`) universes
 -- of the packaged constructor `M : Type u → Type v`; kept separate for generality.
 structure BundledMonad where

@@ -21,9 +21,9 @@ The resulting API provides:
 
 * packed local observations for one sequential step;
 * per-step observation summaries for finite traces, finite prefixes, and runs;
-* generic transcript relations saying when two executions match; and
+* generic path relations saying when two executions match; and
 * reusable lemmas showing that controller, event, ticket, and observation data
-  are preserved when those transcript relations hold.
+  are preserved when those path relations hold.
 
 This is the comparison layer later used by refinement and equivalence results.
 -/
@@ -51,14 +51,14 @@ namespace Step
 namespace Observed
 
 /--
-Forget the dependent indices of an observed sequential transcript and keep only
+Forget the dependent indices of an observed sequential path and keep only
 the concrete packed sequence of observations that was exposed locally.
 
 This is the uniform, comparison-friendly summary of what one party learned from
-one complete sequential step transcript.
+one complete sequential step path.
 -/
 def toList {Party : Type u} [DecidableEq Party] {me : Party} :
-    {spec : Interaction.Spec.{w}} →
+    {spec : Interaction.TypeTree.{w}} →
       {semantics : PFunctor.FreeM.Displayed.Decoration (StepContext Party) spec} →
       {tr : PFunctor.FreeM.Path spec} →
       Interaction.Concurrent.Step.Observed me semantics tr →
@@ -72,7 +72,7 @@ end Observed
 /--
 `obsList me step tr` is the packed sequence of local observations available to
 the fixed party `me` while the sequential process step `step` executes along
-the transcript `tr`.
+the path `tr`.
 
 This forgets the exact dependent observation types but keeps their concrete
 values in order, which makes it the basic comparison object for one process
@@ -80,7 +80,7 @@ step.
 -/
 def obsList {Party : Type u} [DecidableEq Party] (me : Party)
     {P : Type v} (step : Interaction.Concurrent.Step Party P)
-    (tr : PFunctor.FreeM.Path step.spec) : List PackedObs :=
+    (tr : PFunctor.FreeM.Path step.tree) : List PackedObs :=
   Observed.toList (Interaction.Concurrent.Step.observe me step tr)
 
 end Step
@@ -121,7 +121,7 @@ def observations {Party : Type u} [DecidableEq Party]
 
 /--
 `Rel rel left right` states that the two finite prefixes `left` and `right`
-match step-by-step according to the transcript relation `rel`.
+match step-by-step according to the path relation `rel`.
 
 The length index forces the two prefixes to have the same number of executed
 steps.
@@ -132,7 +132,7 @@ of `right`, and `Rel` lifts that choice to whole finite prefixes.
 -/
 def Rel {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
-    (rel : Concurrent.Process.TranscriptRel left right) :
+    (rel : Concurrent.Process.StepRel left right) :
     {pL : left.Proc} → {pR : right.Proc} → {n : Nat} →
       Process.Prefix left pL n → Process.Prefix right pR n → Prop
   | _, _, _, .nil, .nil => True
@@ -143,7 +143,7 @@ def Rel {Party : Type u}
 matching relation. -/
 theorem rel_cast {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
-    (rel : Concurrent.Process.TranscriptRel left right)
+    (rel : Concurrent.Process.StepRel left right)
     {pL pL' : left.Proc} {pR pR' : right.Proc} {n : Nat}
     (hL : pL = pL') (hR : pR = pR')
     (leftPrefix : Process.Prefix left pL n)
@@ -159,58 +159,58 @@ theorem rel_cast {Party : Type u}
 end Prefix
 
 /--
-`Concurrent.Process.TranscriptRel left right` is a cross-process relation on
+`Concurrent.Process.StepRel left right` is a cross-process relation on
 concrete process steps. Each step pairs its source process state with the
-complete transcript selected there.
+complete path selected there.
 
 This is the basic matching interface used later by refinement, equivalence, and
 observation-preservation theorems. The permissive relation and conjunction live
-on the canonical type as `ProcessOver.TranscriptRel.top` / `.inter`.
+on the canonical type as `ProcessOver.StepRel.top` / `.inter`.
 -/
-abbrev TranscriptRel {Party : Type u}
+abbrev StepRel {Party : Type u}
     {P₁ P₂ : Type v} (left : Process P₁ Party) (right : Process P₂ Party) :=
-  Concurrent.Process.TranscriptRel left right
+  Concurrent.Process.StepRel left right
 
-namespace TranscriptRel
+namespace StepRel
 
 /--
-Match two transcripts by equality of their current controlling parties.
+Match two paths by equality of their current controlling parties.
 -/
 def byController {Party : Type u} {P₁ P₂ : Type v}
     {left : Process P₁ Party} {right : Process P₂ Party} :
-    TranscriptRel left right :=
+    StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     (left.step pL).currentController? trL = (right.step pR).currentController? trR
 
 /--
-Match two transcripts by equality of their full controller paths.
+Match two paths by equality of their full controller paths.
 -/
 def byPath {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} :
-    TranscriptRel left right :=
+    StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     (left.step pL).controllerPath trL = (right.step pR).controllerPath trR
 
 /--
-Match two transcripts by equality of stable external event labels.
+Match two paths by equality of stable external event labels.
 -/
 def byEvent {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     {Event : Type w}
     (eventL : left.EventMap Event) (eventR : right.EventMap Event) :
-    TranscriptRel left right :=
+    StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     eventL pL trL = eventR pR trR
 
 /--
-Match two transcripts by equality of stable tickets.
+Match two paths by equality of stable tickets.
 -/
 def byTicket {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     {Ticket : Type w}
     (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket) :
-    TranscriptRel left right :=
+    StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     ticketL pL trL = ticketR pR trR
 
-/-- Match two transcripts by equality of the packed local observations exposed
+/-- Match two paths by equality of the packed local observations exposed
 to one fixed party.
 
 This is the relation that identifies executions that are observationally
@@ -218,13 +218,13 @@ indistinguishable to `me` at the step level.
 -/
 def byObservation {Party : Type u} [DecidableEq Party]
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} (me : Party) :
-    TranscriptRel left right :=
+    StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     let obsL : List PackedObs := Step.obsList me (left.step pL) trL
     let obsR : List PackedObs := Step.obsList me (right.step pR) trR
     obsL = obsR
 
-end TranscriptRel
+end StepRel
 
 namespace Prefix
 
@@ -235,7 +235,7 @@ theorem currentControllers_eq_of_relByController {Party : Type u}
     {pL : left.Proc} {pR : right.Proc} {n : Nat}
     {leftPrefix : Process.Prefix left pL n}
     {rightPrefix : Process.Prefix right pR n}
-    (hrel : Rel TranscriptRel.byController leftPrefix rightPrefix) :
+    (hrel : Rel StepRel.byController leftPrefix rightPrefix) :
     Process.Prefix.currentControllers leftPrefix =
       Process.Prefix.currentControllers rightPrefix := by
   revert pR rightPrefix
@@ -251,11 +251,11 @@ theorem currentControllers_eq_of_relByController {Party : Type u}
       | step trR tailR =>
           intro hrel
           rcases hrel with ⟨hHead, hTail⟩
-          have hTail' : Rel TranscriptRel.byController tailL tailR := by
+          have hTail' : Rel StepRel.byController tailL tailR := by
             simpa using hTail
           have hHead' :
               (left.step _).currentController? trL = (right.step _).currentController? trR := by
-            simpa [TranscriptRel.byController] using hHead
+            simpa [StepRel.byController] using hHead
           change (left.step _).currentController? trL ::
               Process.Prefix.currentControllers tailL =
             (right.step _).currentController? trR ::
@@ -269,7 +269,7 @@ theorem controllerPaths_eq_of_relByPath {Party : Type u}
     {pL : left.Proc} {pR : right.Proc} {n : Nat}
     {leftPrefix : Process.Prefix left pL n}
     {rightPrefix : Process.Prefix right pR n}
-    (hrel : Rel TranscriptRel.byPath leftPrefix rightPrefix) :
+    (hrel : Rel StepRel.byPath leftPrefix rightPrefix) :
     Process.Prefix.controllerPaths leftPrefix =
       Process.Prefix.controllerPaths rightPrefix := by
   revert pR rightPrefix
@@ -285,11 +285,11 @@ theorem controllerPaths_eq_of_relByPath {Party : Type u}
       | step trR tailR =>
           intro hrel
           rcases hrel with ⟨hHead, hTail⟩
-          have hTail' : Rel TranscriptRel.byPath tailL tailR := by
+          have hTail' : Rel StepRel.byPath tailL tailR := by
             simpa using hTail
           have hHead' :
               (left.step _).controllerPath trL = (right.step _).controllerPath trR := by
-            simpa [TranscriptRel.byPath] using hHead
+            simpa [StepRel.byPath] using hHead
           change (left.step _).controllerPath trL ::
               Process.Prefix.controllerPaths tailL =
             (right.step _).controllerPath trR ::
@@ -304,7 +304,7 @@ theorem events_eq_of_relByEvent {Party : Type u}
     {pL : left.Proc} {pR : right.Proc} {n : Nat}
     {leftPrefix : Process.Prefix left pL n}
     {rightPrefix : Process.Prefix right pR n}
-    (hrel : Rel (TranscriptRel.byEvent eventL eventR) leftPrefix rightPrefix) :
+    (hrel : Rel (StepRel.byEvent eventL eventR) leftPrefix rightPrefix) :
     Process.Prefix.events eventL leftPrefix =
       Process.Prefix.events eventR rightPrefix := by
   revert pR rightPrefix
@@ -320,10 +320,10 @@ theorem events_eq_of_relByEvent {Party : Type u}
       | step trR tailR =>
           intro hrel
           rcases hrel with ⟨hHead, hTail⟩
-          have hTail' : Rel (TranscriptRel.byEvent eventL eventR) tailL tailR := by
+          have hTail' : Rel (StepRel.byEvent eventL eventR) tailL tailR := by
             simpa using hTail
           have hHead' : eventL _ trL = eventR _ trR := by
-            simpa [TranscriptRel.byEvent] using hHead
+            simpa [StepRel.byEvent] using hHead
           change eventL _ trL :: Process.Prefix.events eventL tailL =
             eventR _ trR :: Process.Prefix.events eventR tailR
           simp [hHead', ih hTail']
@@ -336,7 +336,7 @@ theorem tickets_eq_of_relByTicket {Party : Type u}
     {pL : left.Proc} {pR : right.Proc} {n : Nat}
     {leftPrefix : Process.Prefix left pL n}
     {rightPrefix : Process.Prefix right pR n}
-    (hrel : Rel (TranscriptRel.byTicket ticketL ticketR) leftPrefix rightPrefix) :
+    (hrel : Rel (StepRel.byTicket ticketL ticketR) leftPrefix rightPrefix) :
     Process.Prefix.tickets ticketL leftPrefix =
       Process.Prefix.tickets ticketR rightPrefix := by
   revert pR rightPrefix
@@ -352,10 +352,10 @@ theorem tickets_eq_of_relByTicket {Party : Type u}
       | step trR tailR =>
           intro hrel
           rcases hrel with ⟨hHead, hTail⟩
-          have hTail' : Rel (TranscriptRel.byTicket ticketL ticketR) tailL tailR := by
+          have hTail' : Rel (StepRel.byTicket ticketL ticketR) tailL tailR := by
             simpa using hTail
           have hHead' : ticketL _ trL = ticketR _ trR := by
-            simpa [TranscriptRel.byTicket] using hHead
+            simpa [StepRel.byTicket] using hHead
           change ticketL _ trL :: Process.Prefix.tickets ticketL tailL =
             ticketR _ trR :: Process.Prefix.tickets ticketR tailR
           simp [hHead', ih hTail']
@@ -368,7 +368,7 @@ theorem observations_eq_of_relByObservation {Party : Type u} [DecidableEq Party]
     {pL : left.Proc} {pR : right.Proc} {n : Nat}
     {leftPrefix : Process.Prefix left pL n}
     {rightPrefix : Process.Prefix right pR n}
-    (hrel : Rel (TranscriptRel.byObservation me) leftPrefix rightPrefix) :
+    (hrel : Rel (StepRel.byObservation me) leftPrefix rightPrefix) :
     observations me leftPrefix = observations me rightPrefix := by
   revert pR rightPrefix
   induction leftPrefix with
@@ -383,11 +383,11 @@ theorem observations_eq_of_relByObservation {Party : Type u} [DecidableEq Party]
       | step trR tailR =>
           intro hrel
           rcases hrel with ⟨hHead, hTail⟩
-          have hTail' : Rel (TranscriptRel.byObservation me) tailL tailR := by
+          have hTail' : Rel (StepRel.byObservation me) tailL tailR := by
             simpa using hTail
           have hHead' :
               Step.obsList me (left.step _) trL = Step.obsList me (right.step _) trR := by
-            simpa [TranscriptRel.byObservation] using hHead
+            simpa [StepRel.byObservation] using hHead
           change Step.obsList me (left.step _) trL :: observations me tailL =
             Step.obsList me (right.step _) trR :: observations me tailR
           simp [hHead', ih hTail']
@@ -408,7 +408,7 @@ def observationsUpTo {Party : Type u} [DecidableEq Party]
     (run : Process.Run process) : Nat → List (List PackedObs)
   | 0 => []
   | n + 1 =>
-      Step.obsList me (process.step (run.state 0)) (run.transcript 0) ::
+      Step.obsList me (process.step (run.state 0)) (run.path 0) ::
         observationsUpTo me run.tail n
 
 /--
@@ -419,12 +419,12 @@ This is the finite-prefix comparison predicate for runs.
 -/
 def RelUpTo {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
-    (rel : TranscriptRel left right)
+    (rel : StepRel left right)
     (leftRun : Process.Run left) (rightRun : Process.Run right) : Nat → Prop
   | 0 => True
   | n + 1 =>
-      rel ⟨leftRun.state 0, leftRun.transcript 0⟩
-          ⟨rightRun.state 0, rightRun.transcript 0⟩ ∧
+      rel ⟨leftRun.state 0, leftRun.path 0⟩
+          ⟨rightRun.state 0, rightRun.path 0⟩ ∧
         RelUpTo rel leftRun.tail rightRun.tail n
 
 /--
@@ -436,18 +436,18 @@ horizon under the chosen step-matching criterion.
 -/
 def Rel {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
-    (rel : TranscriptRel left right)
+    (rel : StepRel left right)
     (leftRun : Process.Run left) (rightRun : Process.Run right) : Prop :=
   ∀ n, RelUpTo rel leftRun rightRun n
 
-/-- Pointwise transcript matching implies prefix matching of the first `n`
+/-- Pointwise path matching implies prefix matching of the first `n`
 steps. -/
 theorem relUpTo_of_pointwise {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
-    (rel : TranscriptRel left right)
+    (rel : StepRel left right)
     (leftRun : Process.Run left) (rightRun : Process.Run right)
-    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
-      ⟨rightRun.state n, rightRun.transcript n⟩) :
+    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.path n⟩
+      ⟨rightRun.state n, rightRun.path n⟩) :
     ∀ n, RelUpTo rel leftRun rightRun n := by
   intro n
   induction n generalizing leftRun rightRun with
@@ -461,13 +461,13 @@ theorem relUpTo_of_pointwise {Party : Type u}
             intro k
             exact hrel k.succ)
 
-/-- Pointwise transcript matching implies full run matching. -/
+/-- Pointwise path matching implies full run matching. -/
 theorem rel_of_pointwise {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
-    (rel : TranscriptRel left right)
+    (rel : StepRel left right)
     (leftRun : Process.Run left) (rightRun : Process.Run right)
-    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.transcript n⟩
-      ⟨rightRun.state n, rightRun.transcript n⟩) :
+    (hrel : ∀ n, rel ⟨leftRun.state n, leftRun.path n⟩
+      ⟨rightRun.state n, rightRun.path n⟩) :
     Rel rel leftRun rightRun :=
   relUpTo_of_pointwise rel leftRun rightRun hrel
 
@@ -476,14 +476,14 @@ sequence of the first `n` run steps. -/
 theorem currentControllersUpTo_eq_of_relUpTo_byController {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (leftRun : Process.Run left) (rightRun : Process.Run right) {n : Nat}
-    (hrel : RelUpTo TranscriptRel.byController leftRun rightRun n) :
+    (hrel : RelUpTo StepRel.byController leftRun rightRun n) :
     leftRun.currentControllersUpTo n = rightRun.currentControllersUpTo n := by
   induction n generalizing leftRun rightRun with
   | zero => rfl
   | succ n ih =>
       rcases hrel with ⟨hHead, hTail⟩
       have hHead' : leftRun.currentController? 0 = rightRun.currentController? 0 := by
-        simpa [TranscriptRel.byController, Process.Run.currentController?] using hHead
+        simpa [StepRel.byController, Process.Run.currentController?] using hHead
       change leftRun.currentController? 0 :: leftRun.tail.currentControllersUpTo n =
         rightRun.currentController? 0 :: rightRun.tail.currentControllersUpTo n
       rw [hHead', ih leftRun.tail rightRun.tail hTail]
@@ -493,14 +493,14 @@ sequence of the first `n` run steps. -/
 theorem controllerPathsUpTo_eq_of_relUpTo_byPath {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (leftRun : Process.Run left) (rightRun : Process.Run right) {n : Nat}
-    (hrel : RelUpTo TranscriptRel.byPath leftRun rightRun n) :
+    (hrel : RelUpTo StepRel.byPath leftRun rightRun n) :
     leftRun.controllerPathsUpTo n = rightRun.controllerPathsUpTo n := by
   induction n generalizing leftRun rightRun with
   | zero => rfl
   | succ n ih =>
       rcases hrel with ⟨hHead, hTail⟩
       have hHead' : leftRun.controllerPath 0 = rightRun.controllerPath 0 := by
-        simpa [TranscriptRel.byPath, Process.Run.controllerPath] using hHead
+        simpa [StepRel.byPath, Process.Run.controllerPath] using hHead
       change leftRun.controllerPath 0 :: leftRun.tail.controllerPathsUpTo n =
         rightRun.controllerPath 0 :: rightRun.tail.controllerPathsUpTo n
       rw [hHead', ih leftRun.tail rightRun.tail hTail]
@@ -511,7 +511,7 @@ theorem eventsUpTo_eq_of_relUpTo_byEvent {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} {Event : Type w}
     (eventL : left.EventMap Event) (eventR : right.EventMap Event)
     (leftRun : Process.Run left) (rightRun : Process.Run right) {n : Nat}
-    (hrel : RelUpTo (TranscriptRel.byEvent eventL eventR) leftRun rightRun n) :
+    (hrel : RelUpTo (StepRel.byEvent eventL eventR) leftRun rightRun n) :
     leftRun.eventsUpTo eventL n = rightRun.eventsUpTo eventR n := by
   induction n generalizing leftRun rightRun with
   | zero => rfl
@@ -529,7 +529,7 @@ theorem ticketsUpTo_eq_of_relUpTo_byTicket {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} {Ticket : Type w}
     (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket)
     (leftRun : Process.Run left) (rightRun : Process.Run right) {n : Nat}
-    (hrel : RelUpTo (TranscriptRel.byTicket ticketL ticketR) leftRun rightRun n) :
+    (hrel : RelUpTo (StepRel.byTicket ticketL ticketR) leftRun rightRun n) :
     leftRun.ticketsUpTo ticketL n = rightRun.ticketsUpTo ticketR n := by
   induction n generalizing leftRun rightRun with
   | zero => rfl
@@ -547,20 +547,20 @@ theorem observationsUpTo_eq_of_relUpTo_byObservation {Party : Type u}
     [DecidableEq Party] (me : Party)
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
     (leftRun : Process.Run left) (rightRun : Process.Run right) {n : Nat}
-    (hrel : RelUpTo (TranscriptRel.byObservation me) leftRun rightRun n) :
+    (hrel : RelUpTo (StepRel.byObservation me) leftRun rightRun n) :
     observationsUpTo me leftRun n = observationsUpTo me rightRun n := by
   induction n generalizing leftRun rightRun with
   | zero => rfl
   | succ n ih =>
       rcases hrel with ⟨hHead, hTail⟩
       have hHead' :
-          Step.obsList me (left.step (leftRun.state 0)) (leftRun.transcript 0) =
-            Step.obsList me (right.step (rightRun.state 0)) (rightRun.transcript 0) := by
-        simpa [TranscriptRel.byObservation] using hHead
+          Step.obsList me (left.step (leftRun.state 0)) (leftRun.path 0) =
+            Step.obsList me (right.step (rightRun.state 0)) (rightRun.path 0) := by
+        simpa [StepRel.byObservation] using hHead
       change
-        Step.obsList me (left.step (leftRun.state 0)) (leftRun.transcript 0) ::
+        Step.obsList me (left.step (leftRun.state 0)) (leftRun.path 0) ::
             observationsUpTo me leftRun.tail n =
-          Step.obsList me (right.step (rightRun.state 0)) (rightRun.transcript 0) ::
+          Step.obsList me (right.step (rightRun.state 0)) (rightRun.path 0) ::
             observationsUpTo me rightRun.tail n
       rw [hHead', ih leftRun.tail rightRun.tail hTail]
 

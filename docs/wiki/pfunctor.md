@@ -168,7 +168,7 @@ provides the reusable monad / comonad / coalgebra plumbing. See
   as the M-type of a one-step polynomial functor. It uses
   `PolyFun/PFunctor/M.lean` and the cofree apparatus.
 - `PolyFun/Interaction/Basic/` (see [`interaction.md`](interaction.md))
-  builds protocol `Spec`s as `PFunctor.FreeM Spec.basePFunctor PUnit`,
+  builds protocol `TypeTree`s as `PFunctor.FreeM TypeTree.basePFunctor PUnit`,
   i.e. `PUnit`-leaved free trees on a particular base polynomial. Most
   of the interaction framework is just a dependent-typed dressing on top
   of `FreeM` plus `Decoration` / `Displayed`.

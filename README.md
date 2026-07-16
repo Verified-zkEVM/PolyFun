@@ -26,7 +26,7 @@ that emerged from the cryptographic-protocols formalization in `VCVio`:
    polynomial functor, with strong/weak bisimulation, simulation,
    handlers, and event signatures.
 3. **Generic interaction framework** for sequential, two-party, multi-party,
-   and concurrent interaction over a `Spec` polynomial substrate, with
+   and concurrent interaction over a `TypeTree` polynomial substrate, with
    structural decoration, syntax/strategy/execution lenses, and an
    open-process layer for compositional reasoning.
 

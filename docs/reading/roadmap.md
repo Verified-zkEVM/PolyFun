@@ -268,7 +268,7 @@ canonical `FreeM` interpretation.
 - **C4** honest statement replacing the `FreeM ⊣ Cofree` slogan: the true
   adjunction is `U ⊣ 𝒯_₋` between `Comon(Poly)` and `Poly` (Thm 8.45);
   the free-monad/cofree-comonad relationship is Libkind–Spivak's module
-  structure (EPTCS 429). Fix `Interaction/Basic/Spec.lean:83` +
+  structure (EPTCS 429). Fix `Interaction/Basic/TypeTree.lean:83` +
   `REFERENCES.md:65` wording; resolves `corrections.md` item 1; recast
   `behavior`/`trajectory` as induced universal maps.
 

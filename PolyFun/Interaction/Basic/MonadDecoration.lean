@@ -85,43 +85,43 @@ end Hom
 
 end MonadDecoration
 
-namespace Spec
+namespace TypeTree
 
-/-- Node-wise choice of monad on a plain interaction spec. -/
+/-- Node-wise choice of monad on a plain interaction type tree. -/
 abbrev MonadDecoration :=
   _root_.Interaction.MonadDecoration.{u, u + 1, u, u}
-    (P := Spec.basePFunctor) (α := PUnit.{u + 1})
+    (P := TypeTree.basePFunctor) (α := PUnit.{u + 1})
 
 namespace MonadDecoration
 
-/-- Constant monad decoration on a plain interaction spec. -/
+/-- Constant monad decoration on a plain interaction type tree. -/
 abbrev constant (bm : BundledMonad.{u, u}) :
-    (spec : Spec.{u}) → MonadDecoration.{u} spec :=
+    (spec : TypeTree.{u}) → MonadDecoration.{u} spec :=
   _root_.Interaction.MonadDecoration.constant.{u, u + 1, u, u}
-    (P := Spec.basePFunctor) (α := PUnit.{u + 1}) bm
+    (P := TypeTree.basePFunctor) (α := PUnit.{u + 1}) bm
 
-/-- Nodewise monad homomorphism between plain-spec monad decorations. -/
-abbrev Hom (spec : Spec.{u})
+/-- Nodewise monad homomorphism between plain-tree monad decorations. -/
+abbrev Hom (spec : TypeTree.{u})
     (md₁ md₂ : MonadDecoration.{u} spec) : Type (u + 1) :=
   _root_.Interaction.MonadDecoration.Hom.{u, u + 1, u, u}
-    (P := Spec.basePFunctor) (α := PUnit.{u + 1}) spec md₁ md₂
+    (P := TypeTree.basePFunctor) (α := PUnit.{u + 1}) spec md₁ md₂
 
 namespace Hom
 
-/-- Identity homomorphism on a plain-spec monad decoration. -/
+/-- Identity homomorphism on a plain-tree monad decoration. -/
 abbrev id :
-    (spec : Spec.{u}) → (md : MonadDecoration.{u} spec) →
+    (spec : TypeTree.{u}) → (md : MonadDecoration.{u} spec) →
       Hom spec md md :=
   _root_.Interaction.MonadDecoration.Hom.id.{u, u + 1, u, u}
-    (P := Spec.basePFunctor) (α := PUnit.{u + 1})
+    (P := TypeTree.basePFunctor) (α := PUnit.{u + 1})
 
 /-- Constant homomorphism induced by a single monad lift. -/
 abbrev constant {bm₁ bm₂ : BundledMonad.{u, u}}
     (lift : ∀ {α : Type u}, bm₁.M α → bm₂.M α) :
-    (spec : Spec.{u}) →
+    (spec : TypeTree.{u}) →
       Hom spec (MonadDecoration.constant bm₁ spec) (MonadDecoration.constant bm₂ spec) :=
   _root_.Interaction.MonadDecoration.Hom.constant.{u, u + 1, u, u}
-    (P := Spec.basePFunctor) (α := PUnit.{u + 1}) lift
+    (P := TypeTree.basePFunctor) (α := PUnit.{u + 1}) lift
 
 end Hom
 
@@ -133,7 +133,7 @@ At each node the strategy chooses a move `x` immediately, then supplies the
 continuation in the `BundledMonad` stored by the node decoration. -/
 def Strategy.monadicSyntax :
     SyntaxOver
-      (PFunctor.Lens.id Spec.basePFunctor) PUnit (fun (_ : Type u) => BundledMonad.{u, u}) where
+      (PFunctor.Lens.id TypeTree.basePFunctor) PUnit (fun (_ : Type u) => BundledMonad.{u, u}) where
   Node _ (X : Type u) bm (Cont : X → Type u) :=
     (x : X) × bm.M (Cont x)
 
@@ -145,12 +145,12 @@ continues with the selected subtree. -/
 def Strategy.monadicInteraction {m : Type u → Type u} [Monad m]
     (liftM : ∀ (bm : BundledMonad.{u, u}) {α : Type u}, bm.M α → m α) :
     InteractionOver
-      (PFunctor.Lens.id Spec.basePFunctor) PUnit
+      (PFunctor.Lens.id TypeTree.basePFunctor) PUnit
       (fun (_ : Type u) => BundledMonad.{u, u}) Strategy.monadicSyntax m where
   interact := fun {_X} {γ} {_Cont} {_Result} profile k => do
     let node := profile PUnit.unit
     let next ← liftM γ node.2
     k node.1 (fun _ => next)
 
-end Spec
+end TypeTree
 end Interaction

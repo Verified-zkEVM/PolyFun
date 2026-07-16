@@ -3,7 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Spec
+import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.TwoParty.Role
 import PolyFun.Interaction.TwoParty.Decoration
 import PolyFun.Interaction.TwoParty.Strategy
@@ -23,15 +23,15 @@ section Examples
 variable (m : Type u → Type u) [Monad m]
 variable (T U : Type u) (α : Type u)
 
-private def exSpec := Spec.node T fun _ => .node U fun _ => .done
+private def exSpec := TypeTree.node T fun _ => .node U fun _ => .done
 private def exRoles : TwoParty.RoleDecoration (exSpec T U) :=
   ⟨.sender, fun _ => ⟨.receiver, fun _ => ⟨⟩⟩⟩
 
-example : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) TwoParty.Participant.focal
+example : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) TwoParty.Participant.focal
     (exSpec T U) (exRoles T U) (fun _ => α)
     = m ((_ : T) × ((_ : U) → m α)) := rfl
 
-example : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) TwoParty.Participant.counterpart
+example : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) TwoParty.Participant.counterpart
     (exSpec T U) (exRoles T U) (fun _ => α)
     = ((_ : T) → m (m ((_ : U) × α))) := rfl
 

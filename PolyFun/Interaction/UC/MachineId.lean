@@ -250,23 +250,23 @@ def OpenNodeProfile.SessionCoherentAtMove
   ∀ m ∈ ons.controllers x, m.sid = sid
 
 /--
-A spec decoration is **session-coherent at** `sid` along a chosen
-transcript iff every visited node attributes only controllers in
+A type-tree decoration is **session-coherent at** `sid` along a chosen
+path iff every visited node attributes only controllers in
 session `sid`.
 
 This is the recursive companion to
 `OpenNodeProfile.SessionCoherentAtMove`, modeled directly on
-`IsSilentDecoration`: the predicate walks the same transcript path
+`IsSilentDecoration`: the predicate walks the same path
 through the decoration tree and accumulates the per-node coherence
 checks.
 -/
 def DecorationSessionCoherentAt
     {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid) :
-    {spec : Interaction.Spec.{w}} →
+    {spec : Interaction.TypeTree.{w}} →
     PFunctor.FreeM.Displayed.Decoration
-      (P := Spec.basePFunctor) (α := PUnit.{w + 1})
+      (P := TypeTree.basePFunctor) (α := PUnit.{w + 1})
       (OpenNodeContext.{u, w} (MachineId Sid Pid) Δ) spec →
-    spec.Transcript → Prop
+    spec.Path → Prop
   | .done, _, _ => True
   | .node _ _, ⟨ons, drest⟩, ⟨x, tr⟩ =>
       ons.SessionCoherentAtMove sid x ∧
@@ -274,7 +274,7 @@ def DecorationSessionCoherentAt
 
 /--
 A `MachineProcess` is **subroutine respecting at** `sid` iff every step
-from every reachable state, along every transcript path, only attributes
+from every reachable state, along every path, only attributes
 controllers in session `sid`.
 
 This is the **controller-side** fragment of CJSV22's subroutine
@@ -287,29 +287,29 @@ accepted `RoutedPacket` has sender in session `sid`) lives at the
 def MachineProcess.SubroutineRespectingAt
     {Sid Pid : Type u} {m : Type w → Type w'} {Δ : PortBoundary}
     (sid : Sid) (P : MachineProcess.{u, v, w, w'} Sid Pid m Δ) : Prop :=
-  ∀ (s : P.Proc) (tr : (P.step s).spec.Transcript),
+  ∀ (s : P.Proc) (tr : (P.step s).tree.Path),
     DecorationSessionCoherentAt sid (P.step s).semantics tr
 
 @[simp]
 theorem DecorationSessionCoherentAt_done
     {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid)
     (d : PFunctor.FreeM.Displayed.Decoration
-      (P := Spec.basePFunctor) (α := PUnit.{w + 1})
-      (OpenNodeContext.{u, w} (MachineId Sid Pid) Δ) Spec.done)
-    (tr : (Interaction.Spec.done : Interaction.Spec.{w}).Transcript) :
+      (P := TypeTree.basePFunctor) (α := PUnit.{w + 1})
+      (OpenNodeContext.{u, w} (MachineId Sid Pid) Δ) TypeTree.done)
+    (tr : (Interaction.TypeTree.done : Interaction.TypeTree.{w}).Path) :
     DecorationSessionCoherentAt sid d tr := by
   trivial
 
 @[simp]
 theorem DecorationSessionCoherentAt_node
     {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid)
-    {Moves : Type w} {residual : Moves → Interaction.Spec.{w}}
+    {Moves : Type w} {residual : Moves → Interaction.TypeTree.{w}}
     (d : PFunctor.FreeM.Displayed.Decoration
-      (P := Spec.basePFunctor) (α := PUnit.{w + 1})
+      (P := TypeTree.basePFunctor) (α := PUnit.{w + 1})
       (OpenNodeContext.{u, w} (MachineId Sid Pid) Δ)
-      (Spec.node Moves residual))
+      (TypeTree.node Moves residual))
     (x : Moves)
-    (tr : (residual x).Transcript) :
+    (tr : (residual x).Path) :
     DecorationSessionCoherentAt sid d ⟨x, tr⟩ ↔
       d.1.SessionCoherentAtMove sid x ∧
       DecorationSessionCoherentAt sid (d.2 x) tr := by

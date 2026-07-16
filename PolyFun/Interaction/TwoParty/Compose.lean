@@ -16,14 +16,14 @@ import PolyFun.Interaction.Basic.StateChain
 # Composing two-party protocols
 
 Role-aware composition of strategies and counterparts along `PFunctor.FreeM.append`,
-`Spec.replicate`, and `Spec.stateChain`. Each combinator dispatches on the role at
+`TypeTree.replicate`, and `TypeTree.stateChain`. Each combinator dispatches on the role at
 each node (sending or receiving) to compose the two-party strategies correctly.
 
 For binary composition, `StrategyOver.TwoParty.Focal.comp` and
 `StrategyOver.TwoParty.Counterpart.append` use `PFunctor.FreeM.Path.liftAppend`
 for the output type (factored form). The flat variants (`compFlat`,
 `StrategyOver.TwoParty.Counterpart.appendFlat`) take a single output
-family on the combined transcript.
+family on the combined path.
 -/
 
 open LawfulMonad
@@ -62,17 +62,17 @@ class LawfulCommMonad (m : Type u → Type u) [Monad m] extends LawfulMonad m wh
 lifted through `PFunctor.FreeM.Path.liftAppend`. The continuation receives the first phase's
 output and produces a second-phase strategy. -/
 def _root_.Interaction.StrategyOver.TwoParty.Focal.comp {m : Type u → Type u} [Monad m]
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
     {Mid : PFunctor.FreeM.Path s₁ → Type u}
     {F : (tr₁ : PFunctor.FreeM.Path s₁) → PFunctor.FreeM.Path (s₂ tr₁) → Type u}
-    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ Mid)
+    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ Mid)
     (f : (tr₁ : PFunctor.FreeM.Path s₁) → Mid tr₁ →
       m (StrategyOver
-        (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁) (F tr₁))) :
+        (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁) (F tr₁))) :
     m (StrategyOver
-      (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₁.append s₂) (r₁.append r₂)
+      (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₁.append s₂) (r₁.append r₂)
         (PFunctor.FreeM.Path.liftAppend s₁ s₂ F)) :=
   match s₁, r₁ with
   | .done, _ => f ⟨⟩ strat₁
@@ -87,19 +87,20 @@ def _root_.Interaction.StrategyOver.TwoParty.Focal.comp {m : Type u → Type u} 
         comp next (fun tr₁ mid => f ⟨x, tr₁⟩ mid)
 
 /-- Compose role-aware strategies along `PFunctor.FreeM.append` with a single output family
-on the combined transcript. The continuation indexes via `PFunctor.FreeM.Path.append`. -/
+on the combined path. The continuation indexes via `PFunctor.FreeM.Path.append`. -/
 def _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat {m : Type u → Type u} [Monad m]
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
     {Mid : PFunctor.FreeM.Path s₁ → Type u}
     {Output : PFunctor.FreeM.Path (s₁.append s₂) → Type u}
-    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ Mid)
+    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ Mid)
     (f : (tr₁ : PFunctor.FreeM.Path s₁) → Mid tr₁ →
-      m (StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁)
+      m (StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁)
         (fun tr₂ => Output (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂)))) :
     m (StrategyOver
-      (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₁.append s₂) (r₁.append r₂) Output) :=
+      (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
+        (s₁.append s₂) (r₁.append r₂) Output) :=
   match s₁, r₁ with
   | .done, _ => f ⟨⟩ strat₁
   | .node _ _, ⟨.sender, _⟩ =>
@@ -116,17 +117,18 @@ def _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat {m : Type u → Type
 it only serves the weaker `[LawfulMonad]` execution theorem below. -/
 private def _root_.Interaction.StrategyOver.TwoParty.Focal.compFlatPure
     {m : Type u → Type u} [Monad m]
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
     {Mid : PFunctor.FreeM.Path s₁ → Type u}
     {Output : PFunctor.FreeM.Path (s₁.append s₂) → Type u}
-    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ Mid)
+    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ Mid)
     (f : (tr₁ : PFunctor.FreeM.Path s₁) → Mid tr₁ →
-      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁)
+      StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁)
         (fun tr₂ => Output (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂))) :
     StrategyOver
-      (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₁.append s₂) (r₁.append r₂) Output :=
+      (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
+        (s₁.append s₂) (r₁.append r₂) Output :=
   match s₁, r₁ with
   | .done, _ => f ⟨⟩ strat₁
   | .node _ _, ⟨.sender, _⟩ => do
@@ -139,26 +141,26 @@ private def _root_.Interaction.StrategyOver.TwoParty.Focal.compFlatPure
 
 private theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_eq_pure_compFlatPure
     {m : Type u → Type u} [Monad m] [LawfulMonad m]
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
     {Mid : PFunctor.FreeM.Path s₁ → Type u}
     {Output : PFunctor.FreeM.Path (s₁.append s₂) → Type u}
-    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ Mid)
+    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ Mid)
     (f : (tr₁ : PFunctor.FreeM.Path s₁) → Mid tr₁ →
-      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁)
+      StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁)
         (fun tr₂ => Output (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂))) :
     StrategyOver.TwoParty.Focal.compFlat strat₁ (fun tr₁ mid => pure (f tr₁ mid)) =
       pure (StrategyOver.TwoParty.Focal.compFlatPure strat₁ f) := by
   let rec go
-      (s₁ : Spec) (r₁ : RoleDecoration s₁)
-      {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+      (s₁ : TypeTree) (r₁ : RoleDecoration s₁)
+      {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
       {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
       {Mid : PFunctor.FreeM.Path s₁ → Type u}
       {Output : PFunctor.FreeM.Path (s₁.append s₂) → Type u}
-      (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ Mid)
+      (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ Mid)
       (f : (tr₁ : PFunctor.FreeM.Path s₁) → Mid tr₁ →
-        StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁)
+        StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁)
           (fun tr₂ => Output (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂))) :
       StrategyOver.TwoParty.Focal.compFlat strat₁ (fun tr₁ mid => pure (f tr₁ mid)) =
         pure (StrategyOver.TwoParty.Focal.compFlatPure strat₁ f) := by
@@ -196,17 +198,18 @@ private theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_eq_pure_
   exact go s₁ r₁ strat₁ f
 
 /-- Extract the first-phase role-aware strategy from a strategy on a composed
-interaction. At each first-phase transcript `tr₁`, the remainder is the
+interaction. At each first-phase path `tr₁`, the remainder is the
 second-phase strategy with output indexed by `PFunctor.FreeM.Path.append`. -/
 def _root_.Interaction.StrategyOver.TwoParty.Focal.splitPrefix {m : Type u → Type u} [Functor m] :
-    {s₁ : Spec} → {s₂ : PFunctor.FreeM.Path s₁ → Spec} →
+    {s₁ : TypeTree} → {s₂ : PFunctor.FreeM.Path s₁ → TypeTree} →
     {r₁ : RoleDecoration s₁} →
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)} →
     {Output : PFunctor.FreeM.Path (s₁.append s₂) → Type u} →
     StrategyOver
-      (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₁.append s₂) (r₁.append r₂) Output →
-    StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ (fun tr₁ =>
-      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁)
+      (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
+        (s₁.append s₂) (r₁.append r₂) Output →
+    StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ (fun tr₁ =>
+      StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁)
         (fun tr₂ => Output (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂)))
   | .done, _, _, _, _, strat => strat
   | .node _ _, s₂, ⟨.sender, rRest⟩, r₂, _, strat =>
@@ -224,22 +227,22 @@ def _root_.Interaction.StrategyOver.TwoParty.Focal.splitPrefix {m : Type u → T
 /-- Recompose a role-aware strategy from its prefix decomposition. -/
 theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_splitPrefix
     {m : Type u → Type u} [Monad m] [LawfulMonad m]
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
     {Output : PFunctor.FreeM.Path (s₁.append s₂) → Type u}
     (strat :
-      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+      StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
         (s₁.append s₂) (r₁.append r₂) Output) :
     StrategyOver.TwoParty.Focal.compFlat
       (StrategyOver.TwoParty.Focal.splitPrefix (s₂ := s₂) (r₁ := r₁) (r₂ := r₂) strat)
       (fun _ strat₂ => pure strat₂) = pure strat := by
   let rec go
-      (s₁ : Spec) (r₁ : RoleDecoration s₁)
-      {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+      (s₁ : TypeTree) (r₁ : RoleDecoration s₁)
+      {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
       {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
       {Output : PFunctor.FreeM.Path (s₁.append s₂) → Type u}
-      (strat : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+      (strat : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
         (s₁.append s₂) (r₁.append r₂) Output) :
       StrategyOver.TwoParty.Focal.compFlat
         (StrategyOver.TwoParty.Focal.splitPrefix (s₂ := s₂) (r₁ := r₁) (r₂ := r₂) strat)
@@ -269,11 +272,11 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_splitPrefix
                 funext xc
                 rcases xc with ⟨x, tail⟩
                 let Suffix : X → Type u := fun y =>
-                  StrategyOver (SyntaxOver.TwoParty.pairedSpec m) TwoParty.Participant.focal
+                  StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) TwoParty.Participant.focal
                     ((fun b => PFunctor.FreeM.append (rest b) (fun path => s₂ ⟨b, path⟩)) y)
                     ((fun y =>
                       PFunctor.FreeM.Displayed.Decoration.append
-                        (P := Spec.basePFunctor) (α := PUnit.{u+1}) (β := PUnit.{u+1})
+                        (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) (β := PUnit.{u+1})
                         (rRest y) (fun p => r₂ ⟨y, p⟩)) y)
                     (fun tr => Output ⟨y, tr⟩)
                 have hgo :
@@ -316,18 +319,18 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_splitPrefix
 lifted through `PFunctor.FreeM.Path.liftAppend`. The continuation maps the first phase's
 output to a second-phase counterpart. -/
 def _root_.Interaction.StrategyOver.TwoParty.Counterpart.append {m : Type u → Type u} [Monad m]
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
     {Output₁ : PFunctor.FreeM.Path s₁ → Type u}
     {F : (tr₁ : PFunctor.FreeM.Path s₁) → PFunctor.FreeM.Path (s₂ tr₁) → Type u} :
     StrategyOver
-      (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart s₁ r₁ Output₁ →
+      (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart s₁ r₁ Output₁ →
     ((tr₁ : PFunctor.FreeM.Path s₁) → Output₁ tr₁ →
       StrategyOver
-        (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart (s₂ tr₁) (r₂ tr₁) (F tr₁)) →
+        (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart (s₂ tr₁) (r₂ tr₁) (F tr₁)) →
     StrategyOver
-      (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart (s₁.append s₂) (r₁.append r₂)
+      (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart (s₁.append s₂) (r₁.append r₂)
         (PFunctor.FreeM.Path.liftAppend s₁ s₂ F) :=
   match s₁, r₁ with
   | .done, _ => fun out₁ c₂ => c₂ ⟨⟩ out₁
@@ -340,18 +343,18 @@ def _root_.Interaction.StrategyOver.TwoParty.Counterpart.append {m : Type u → 
       return ⟨x, StrategyOver.TwoParty.Counterpart.append cRest (fun p o => c₂ ⟨x, p⟩ o)⟩
 
 /-- Compose counterparts along `PFunctor.FreeM.append` with a single output family on the
-combined transcript. The continuation indexes via `PFunctor.FreeM.Path.append`. -/
+combined path. The continuation indexes via `PFunctor.FreeM.Path.append`. -/
 def _root_.Interaction.StrategyOver.TwoParty.Counterpart.appendFlat {m : Type u → Type u} [Monad m]
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
     {Output₁ : PFunctor.FreeM.Path s₁ → Type u}
     {Output₂ : PFunctor.FreeM.Path (s₁.append s₂) → Type u} :
-    StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart s₁ r₁ Output₁ →
+    StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart s₁ r₁ Output₁ →
     ((tr₁ : PFunctor.FreeM.Path s₁) → Output₁ tr₁ →
-      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart (s₂ tr₁) (r₂ tr₁)
+      StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart (s₂ tr₁) (r₂ tr₁)
         (fun tr₂ => Output₂ (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂))) →
-    StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+    StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
       (s₁.append s₂) (r₁.append r₂) Output₂ :=
   match s₁, r₁ with
   | .done, _ => fun out₁ c₂ => c₂ ⟨⟩ out₁
@@ -369,16 +372,16 @@ This lets proofs that decompose an arbitrary strategy via `splitPrefix` +
 `appendFlat` still work when `Reduction.comp` uses the non-flat `append`. -/
 theorem _root_.Interaction.StrategyOver.TwoParty.Counterpart.append_eq_appendFlat_mapOutput
     {m : Type u → Type u} [Monad m] [LawfulMonad m] :
-    {s₁ : Spec} → {s₂ : PFunctor.FreeM.Path s₁ → Spec} →
+    {s₁ : TypeTree} → {s₂ : PFunctor.FreeM.Path s₁ → TypeTree} →
     {r₁ : RoleDecoration s₁} →
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)} →
     {Output₁ : PFunctor.FreeM.Path s₁ → Type u} →
     {F : (tr₁ : PFunctor.FreeM.Path s₁) → PFunctor.FreeM.Path (s₂ tr₁) → Type u} →
     (c₁ : StrategyOver
-      (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart s₁ r₁ Output₁) →
+      (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart s₁ r₁ Output₁) →
     (c₂ : (tr₁ : PFunctor.FreeM.Path s₁) → Output₁ tr₁ →
       StrategyOver
-        (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart (s₂ tr₁) (r₂ tr₁) (F tr₁)) →
+        (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart (s₂ tr₁) (r₂ tr₁) (F tr₁)) →
     StrategyOver.TwoParty.Counterpart.append c₁ c₂ =
       StrategyOver.TwoParty.Counterpart.appendFlat c₁ (fun tr₁ o =>
         StrategyOver.TwoParty.Counterpart.mapOutput
@@ -404,16 +407,16 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Counterpart.append_eq_appendFla
 `mapOutput packAppend` on the suffix strategy produced by the continuation. -/
 theorem _root_.Interaction.StrategyOver.TwoParty.Focal.comp_eq_compFlat_mapOutput
     {m : Type u → Type u} [Monad m] [LawfulMonad m] :
-    {s₁ : Spec} → {s₂ : PFunctor.FreeM.Path s₁ → Spec} →
+    {s₁ : TypeTree} → {s₂ : PFunctor.FreeM.Path s₁ → TypeTree} →
     {r₁ : RoleDecoration s₁} →
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)} →
     {Mid : PFunctor.FreeM.Path s₁ → Type u} →
     {F : (tr₁ : PFunctor.FreeM.Path s₁) → PFunctor.FreeM.Path (s₂ tr₁) → Type u} →
     (strat₁ : StrategyOver
-      (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ Mid) →
+      (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ Mid) →
     (f : (tr₁ : PFunctor.FreeM.Path s₁) → Mid tr₁ →
       m (StrategyOver
-        (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁) (F tr₁))) →
+        (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁) (F tr₁))) →
     StrategyOver.TwoParty.Focal.comp strat₁ f =
       StrategyOver.TwoParty.Focal.compFlat strat₁ (fun tr₁ mid => do
         let strat₂ ← f tr₁ mid
@@ -443,11 +446,11 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.comp_eq_compFlat_mapOutpu
       cases xc with
       | mk x next =>
           let Tail : X → Type u := fun x =>
-            StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+            StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
               (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
               (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                 (fun path => r₂ ⟨x, path⟩))
-              (fun tr => PFunctor.FreeM.Path.liftAppend (Spec.node X rest) s₂ F ⟨x, tr⟩)
+              (fun tr => PFunctor.FreeM.Path.liftAppend (TypeTree.node X rest) s₂ F ⟨x, tr⟩)
           exact congrArg (fun z => z >>= fun tail => pure (⟨x, tail⟩ : (x : X) × Tail x))
             (comp_eq_compFlat_mapOutput next (fun p o => f ⟨x, p⟩ o))
   | .node X rest, s₂, ⟨.receiver, rRest⟩, r₂, Mid, F, strat₁, f => by
@@ -462,19 +465,19 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.comp_eq_compFlat_mapOutpu
 the prefix interaction and then executing the suffix continuation. -/
 theorem run_compFlat_appendFlat_pure
     {m : Type u → Type u} [Monad m] [LawfulMonad m]
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
     {MidP MidC : PFunctor.FreeM.Path s₁ → Type u}
     {OutputP OutputC : PFunctor.FreeM.Path (s₁.append s₂) → Type u}
     (strat₁ : StrategyOver
-      (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ MidP)
+      (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ MidP)
     (f : (tr₁ : PFunctor.FreeM.Path s₁) → MidP tr₁ →
-      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁)
+      StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁)
         (fun tr₂ => OutputP (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂)))
-    (cpt₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart s₁ r₁ MidC)
+    (cpt₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart s₁ r₁ MidC)
     (cpt₂ : (tr₁ : PFunctor.FreeM.Path s₁) → MidC tr₁ →
-      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart (s₂ tr₁) (r₂ tr₁)
+      StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart (s₂ tr₁) (r₂ tr₁)
         (fun tr₂ => OutputC (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂))) :
     (do
       let strat ← StrategyOver.TwoParty.Focal.compFlat strat₁ (fun tr₁ mid => pure (f tr₁ mid))
@@ -486,19 +489,21 @@ theorem run_compFlat_appendFlat_pure
           run (s₂ tr₁) (r₂ tr₁) (f tr₁ mid) (cpt₂ tr₁ out₁)
         pure ⟨PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂, outP, outC⟩) := by
   let rec go
-      (s₁ : Spec) (r₁ : RoleDecoration s₁)
+      (s₁ : TypeTree) (r₁ : RoleDecoration s₁)
       {MidP MidC : PFunctor.FreeM.Path s₁ → Type u}
-      {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+      {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
       {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
       {OutputP OutputC : PFunctor.FreeM.Path (s₁.append s₂) → Type u}
       {β : Type u}
-      (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ MidP)
+      (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ MidP)
       (f : (tr₁ : PFunctor.FreeM.Path s₁) → MidP tr₁ →
-        StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁)
+        StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁)
           (fun tr₂ => OutputP (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂)))
-      (cpt₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart s₁ r₁ MidC)
+      (cpt₁ : StrategyOver
+        (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart s₁ r₁ MidC)
       (cpt₂ : (tr₁ : PFunctor.FreeM.Path s₁) → MidC tr₁ →
-        StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart (s₂ tr₁) (r₂ tr₁)
+        StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
+          (s₂ tr₁) (r₂ tr₁)
           (fun tr₂ => OutputC (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂)))
       (g : ((tr : PFunctor.FreeM.Path (s₁.append s₂)) × OutputP tr × OutputC tr) → m β) :
       (do
@@ -517,18 +522,18 @@ theorem run_compFlat_appendFlat_pure
         cases r₁
         simp [run_done, StrategyOver.TwoParty.Focal.compFlatPure,
           StrategyOver.TwoParty.Counterpart.appendFlat.eq_1]
-        simp [Spec.done]
+        simp [TypeTree.done]
     | .node X rest, ⟨.sender, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.compFlatPure,
           StrategyOver.TwoParty.Counterpart.appendFlat,
           PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
-          run, InteractionOver.runSpec, InteractionOver.TwoParty.pairedSpec,
+          run, InteractionOver.runTypeTree, InteractionOver.TwoParty.pairedTypeTree,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
           participantOutputFamily, bind_assoc, pure_bind]
         let mapStrat :
-            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
               (rest x) (rRest x) (fun tr => MidP ⟨x, tr⟩)) →
-            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
               (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
               (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                 (fun path => r₂ ⟨x, path⟩))
@@ -542,9 +547,9 @@ theorem run_compFlat_appendFlat_pure
         cases xc with
         | mk x next =>
             let mapCpt :
-                StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+                StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
                   (rest x) (rRest x) (fun tr => MidC ⟨x, tr⟩) →
-                StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+                StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
                   (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                   (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                     (fun path => r₂ ⟨x, path⟩))
@@ -560,7 +565,7 @@ theorem run_compFlat_appendFlat_pure
                   (fun tr => OutputP ⟨x, tr⟩) tr ×
                   (fun tr => OutputC ⟨x, tr⟩) tr) →
                 ((tr : PFunctor.FreeM.Path
-                  (PFunctor.FreeM.append (Spec.node X rest) s₂)) ×
+                  (PFunctor.FreeM.append (TypeTree.node X rest) s₂)) ×
                   OutputP tr × OutputC tr) :=
               fun a => ⟨⟨x, a.1⟩, a.2.1, a.2.2⟩
             exact go (rest x) (rRest x)
@@ -577,13 +582,13 @@ theorem run_compFlat_appendFlat_pure
         simp only [StrategyOver.TwoParty.Focal.compFlatPure,
           StrategyOver.TwoParty.Counterpart.appendFlat,
           PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
-          run, InteractionOver.runSpec, InteractionOver.TwoParty.pairedSpec,
+          run, InteractionOver.runTypeTree, InteractionOver.TwoParty.pairedTypeTree,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
           participantOutputFamily, bind_assoc, pure_bind]
         let mapCpt :
-            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
               (rest x) (rRest x) (fun tr => MidC ⟨x, tr⟩)) →
-            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
               (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
               (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                 (fun path => r₂ ⟨x, path⟩))
@@ -597,9 +602,9 @@ theorem run_compFlat_appendFlat_pure
         cases xc with
         | mk x cNext =>
             let mapStrat :
-                StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+                StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
                   (rest x) (rRest x) (fun tr => MidP ⟨x, tr⟩) →
-                StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+                StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
                   (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                   (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                     (fun path => r₂ ⟨x, path⟩))
@@ -615,7 +620,7 @@ theorem run_compFlat_appendFlat_pure
                   (fun tr => OutputP ⟨x, tr⟩) tr ×
                   (fun tr => OutputC ⟨x, tr⟩) tr) →
                 ((tr : PFunctor.FreeM.Path
-                  (PFunctor.FreeM.append (Spec.node X rest) s₂)) ×
+                  (PFunctor.FreeM.append (TypeTree.node X rest) s₂)) ×
                   OutputP tr × OutputC tr) :=
               fun a => ⟨⟨x, a.1⟩, a.2.1, a.2.2⟩
             exact go (rest x) (rRest x)
@@ -635,18 +640,18 @@ theorem run_compFlat_appendFlat_pure
 the prefix interaction and then executing the suffix continuation. -/
 theorem run_compFlat_appendFlat
     {m : Type u → Type u} [Monad m] [LawfulCommMonad m]
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
     {MidP MidC : PFunctor.FreeM.Path s₁ → Type u}
     {OutputP OutputC : PFunctor.FreeM.Path (s₁.append s₂) → Type u}
-    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ MidP)
+    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ MidP)
     (f : (tr₁ : PFunctor.FreeM.Path s₁) → MidP tr₁ →
-      m (StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁)
+      m (StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁)
         (fun tr₂ => OutputP (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂))))
-    (cpt₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart s₁ r₁ MidC)
+    (cpt₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart s₁ r₁ MidC)
     (cpt₂ : (tr₁ : PFunctor.FreeM.Path s₁) → MidC tr₁ →
-      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart (s₂ tr₁) (r₂ tr₁)
+      StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart (s₂ tr₁) (r₂ tr₁)
         (fun tr₂ => OutputC (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂))) :
     (do
       let strat ← StrategyOver.TwoParty.Focal.compFlat strat₁ f
@@ -659,19 +664,21 @@ theorem run_compFlat_appendFlat
           run (s₂ tr₁) (r₂ tr₁) strat₂ (cpt₂ tr₁ out₁)
         pure ⟨PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂, outP, outC⟩) := by
   let rec go
-      (s₁ : Spec) (r₁ : RoleDecoration s₁)
+      (s₁ : TypeTree) (r₁ : RoleDecoration s₁)
       {MidP MidC : PFunctor.FreeM.Path s₁ → Type u}
-      {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+      {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
       {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
       {OutputP OutputC : PFunctor.FreeM.Path (s₁.append s₂) → Type u}
       {β : Type u}
-      (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ MidP)
+      (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ MidP)
       (f : (tr₁ : PFunctor.FreeM.Path s₁) → MidP tr₁ →
-        m (StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁)
+        m (StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁)
           (fun tr₂ => OutputP (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂))))
-      (cpt₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart s₁ r₁ MidC)
+      (cpt₁ : StrategyOver
+        (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart s₁ r₁ MidC)
       (cpt₂ : (tr₁ : PFunctor.FreeM.Path s₁) → MidC tr₁ →
-        StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart (s₂ tr₁) (r₂ tr₁)
+        StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
+          (s₂ tr₁) (r₂ tr₁)
           (fun tr₂ => OutputC (PFunctor.FreeM.Path.append s₁ s₂ tr₁ tr₂)))
       (g : ((tr : PFunctor.FreeM.Path (s₁.append s₂)) × OutputP tr × OutputC tr) → m β) :
       (do
@@ -691,12 +698,12 @@ theorem run_compFlat_appendFlat
         cases r₁
         simp [run_done, StrategyOver.TwoParty.Focal.compFlat.eq_1,
           StrategyOver.TwoParty.Counterpart.appendFlat.eq_1]
-        simp [Spec.done]
+        simp [TypeTree.done]
     | .node X rest, ⟨.sender, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.compFlat,
           StrategyOver.TwoParty.Counterpart.appendFlat,
           PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
-          run, InteractionOver.runSpec, InteractionOver.TwoParty.pairedSpec,
+          run, InteractionOver.runTypeTree, InteractionOver.TwoParty.pairedTypeTree,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
           participantOutputFamily, LawfulMonad.do_bind_assoc,
           LawfulMonad.do_bind_pure_comp, pure_bind]
@@ -704,7 +711,7 @@ theorem run_compFlat_appendFlat
           (fun xc =>
             (fun restStrat =>
               (⟨xc.1, restStrat⟩ :
-                (x : X) × StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+                (x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
                   (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                   (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                     (fun path => r₂ ⟨x, path⟩))
@@ -717,9 +724,9 @@ theorem run_compFlat_appendFlat
         cases xc with
         | mk x next =>
             let mapCpt :
-                StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+                StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
                   (rest x) (rRest x) (fun tr => MidC ⟨x, tr⟩) →
-                StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+                StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
                   (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                   (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                     (fun path => r₂ ⟨x, path⟩))
@@ -727,12 +734,12 @@ theorem run_compFlat_appendFlat
               fun a => StrategyOver.TwoParty.Counterpart.appendFlat a
                 (fun p o => cpt₂ ⟨x, p⟩ o)
             let mapStratTail :
-                StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+                StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
                   (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                   (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                     (fun path => r₂ ⟨x, path⟩))
                   (fun tr => OutputP ⟨x, tr⟩) →
-                (x : X) × StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+                (x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
                   (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                   (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                     (fun path => r₂ ⟨x, path⟩))
@@ -754,12 +761,12 @@ theorem run_compFlat_appendFlat
             let obs := mapCpt <$> cpt₁ x
             let k :=
               fun
-                (a : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+                (a : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
                   (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                   (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                     (fun path => r₂ ⟨x, path⟩))
                   (fun tr => OutputP ⟨x, tr⟩))
-                (a₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+                (a₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
                   (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                   (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                     (fun path => r₂ ⟨x, path⟩))
@@ -772,7 +779,7 @@ theorem run_compFlat_appendFlat
                         (fun tr => OutputC ⟨x, tr⟩) tr) =>
                       (⟨⟨x, a₂.1⟩, a₂.2.1, a₂.2.2⟩ :
                       (tr : PFunctor.FreeM.Path
-                        (PFunctor.FreeM.append (Spec.node X rest) s₂)) ×
+                        (PFunctor.FreeM.append (TypeTree.node X rest) s₂)) ×
                         OutputP tr × OutputC tr)) <$>
                       run (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                         (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
@@ -790,7 +797,7 @@ theorem run_compFlat_appendFlat
                   (fun tr => OutputP ⟨x, tr⟩) tr ×
                   (fun tr => OutputC ⟨x, tr⟩) tr) →
                 ((tr : PFunctor.FreeM.Path
-                  (PFunctor.FreeM.append (Spec.node X rest) s₂)) ×
+                  (PFunctor.FreeM.append (TypeTree.node X rest) s₂)) ×
                   OutputP tr × OutputC tr) :=
               fun a => ⟨⟨x, a.1⟩, a.2.1, a.2.2⟩
             simp only [comp, k, mapCpt]
@@ -851,25 +858,25 @@ theorem run_compFlat_appendFlat
                 exact h.trans (bind_map_left
                   (fun a : (tr : PFunctor.FreeM.Path (rest x)) × MidP ⟨x, tr⟩ × MidC ⟨x, tr⟩ =>
                     (⟨⟨x, a.1⟩, a.2.1, a.2.2⟩ :
-                      (tr : PFunctor.FreeM.Path (Spec.node X rest)) × MidP tr × MidC tr))
+                      (tr : PFunctor.FreeM.Path (TypeTree.node X rest)) × MidP tr × MidC tr))
                   (run (rest x) (rRest x) next cNext)
                   (fun r₁ => do
                     let strat₂ ← f r₁.fst r₁.snd.1
                     let r₂ ← run (s₂ r₁.fst) (r₂ r₁.fst) strat₂ (cpt₂ r₁.fst r₁.snd.2)
-                    g ⟨PFunctor.FreeM.Path.append (Spec.node X rest) s₂ r₁.fst r₂.fst,
+                    g ⟨PFunctor.FreeM.Path.append (TypeTree.node X rest) s₂ r₁.fst r₂.fst,
                       r₂.snd⟩)).symm
     | .node X rest, ⟨.receiver, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.compFlat,
           StrategyOver.TwoParty.Counterpart.appendFlat,
           PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
-          run, InteractionOver.runSpec, InteractionOver.TwoParty.pairedSpec,
+          run, InteractionOver.runTypeTree, InteractionOver.TwoParty.pairedTypeTree,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
           participantOutputFamily, LawfulMonad.do_bind_assoc,
           LawfulMonad.do_bind_pure_comp, pure_bind]
         let mapCpt :
-            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
               (rest x) (rRest x) (fun tr => MidC ⟨x, tr⟩)) →
-            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+            ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
               (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
               (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                 (fun path => r₂ ⟨x, path⟩))
@@ -882,9 +889,9 @@ theorem run_compFlat_appendFlat
         cases xc with
         | mk x cNext =>
             let comp :
-                StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+                StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
                   (rest x) (rRest x) (fun tr => MidP ⟨x, tr⟩) →
-                m (StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+                m (StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
                   (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                   (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                     (fun path => r₂ ⟨x, path⟩))
@@ -901,7 +908,7 @@ theorem run_compFlat_appendFlat
                   (fun tr => OutputP ⟨x, tr⟩) tr ×
                   (fun tr => OutputC ⟨x, tr⟩) tr) →
                 ((tr : PFunctor.FreeM.Path
-                  (PFunctor.FreeM.append (Spec.node X rest) s₂)) ×
+                  (PFunctor.FreeM.append (TypeTree.node X rest) s₂)) ×
                   OutputP tr × OutputC tr) :=
               fun a => ⟨⟨x, a.1⟩, a.2.1, a.2.2⟩
             simp only [mapCpt]
@@ -959,7 +966,7 @@ theorem run_compFlat_appendFlat
                 let addPrefix₁ :
                     ((tr : PFunctor.FreeM.Path (rest x)) ×
                       (fun tr => MidP ⟨x, tr⟩) tr × (fun tr => MidC ⟨x, tr⟩) tr) →
-                    ((tr : PFunctor.FreeM.Path (Spec.node X rest)) × MidP tr × MidC tr) :=
+                    ((tr : PFunctor.FreeM.Path (TypeTree.node X rest)) × MidP tr × MidC tr) :=
                   fun a => ⟨⟨x, a.1⟩, a.2.1, a.2.2⟩
                 calc
                   (do
@@ -996,7 +1003,7 @@ theorem run_compFlat_appendFlat
                       (fun r₁ => do
                         let strat₂ ← f r₁.1 r₁.2.1
                         let r₂ ← run (s₂ r₁.1) (r₂ r₁.1) strat₂ (cpt₂ r₁.1 r₁.2.2)
-                        g ⟨PFunctor.FreeM.Path.append (Spec.node X rest) s₂ r₁.1 r₂.1,
+                        g ⟨PFunctor.FreeM.Path.append (TypeTree.node X rest) s₂ r₁.1 r₂.1,
                           r₂.2.1, r₂.2.2⟩)).symm
   simpa [monad_norm] using go s₁ r₁ strat₁ f cpt₁ cpt₂ pure
 
@@ -1006,20 +1013,20 @@ prefix interaction and then
 executing the suffix continuation. Outputs are transported via `packAppend`. -/
 theorem run_comp_append
     {m : Type u → Type u} [Monad m] [LawfulCommMonad m]
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
     {MidP MidC : PFunctor.FreeM.Path s₁ → Type u}
     {FP FC : (tr₁ : PFunctor.FreeM.Path s₁) → PFunctor.FreeM.Path (s₂ tr₁) → Type u}
-    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal s₁ r₁ MidP)
+    (strat₁ : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal s₁ r₁ MidP)
     (f : (tr₁ : PFunctor.FreeM.Path s₁) → MidP tr₁ →
       m (StrategyOver
-        (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (s₂ tr₁) (r₂ tr₁) (FP tr₁)))
+        (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁) (FP tr₁)))
     (cpt₁ : StrategyOver
-      (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart s₁ r₁ MidC)
+      (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart s₁ r₁ MidC)
     (cpt₂ : (tr₁ : PFunctor.FreeM.Path s₁) → MidC tr₁ →
       StrategyOver
-        (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart (s₂ tr₁) (r₂ tr₁) (FC tr₁)) :
+        (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart (s₂ tr₁) (r₂ tr₁) (FC tr₁)) :
     (do
       let strat ← StrategyOver.TwoParty.Focal.comp strat₁ f
       run (s₁.append s₂) (r₁.append r₂) strat
@@ -1049,30 +1056,30 @@ theorem run_comp_append
             (cpt₂ tr₁ out)))
 
 /-- Role swapping commutes with replication. -/
-theorem RoleDecoration.swap_replicate {spec : Spec}
+theorem RoleDecoration.swap_replicate {spec : TypeTree}
     (roles : RoleDecoration spec) (n : Nat) :
     RoleDecoration.swap
         (PFunctor.FreeM.Displayed.Decoration.replicate
-          (P := Spec.basePFunctor) (α := PUnit.{u+1}) PUnit.unit roles n) =
+          (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) PUnit.unit roles n) =
       PFunctor.FreeM.Displayed.Decoration.replicate
-        (P := Spec.basePFunctor) (α := PUnit.{u+1}) PUnit.unit (RoleDecoration.swap roles) n :=
+        (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) PUnit.unit (RoleDecoration.swap roles) n :=
   PFunctor.FreeM.Displayed.Decoration.map_replicate
-    (P := Spec.basePFunctor) (α := PUnit.{u+1})
+    (P := TypeTree.basePFunctor) (α := PUnit.{u+1})
     (fun _ => Role.swap) PUnit.unit roles n
 
 /-- `n`-fold counterpart iteration on `spec.replicate n`, threading state `β`
 through each round. -/
 def _root_.Interaction.StrategyOver.TwoParty.Counterpart.iterate {m : Type u → Type u} [Monad m]
-    {spec : Spec} {roles : RoleDecoration spec} {β : Type u} :
+    {spec : TypeTree} {roles : RoleDecoration spec} {β : Type u} :
     (n : Nat) →
     (Fin n → β →
       StrategyOver
-        (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart spec roles (fun _ => β)) →
+        (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart spec roles (fun _ => β)) →
     β →
-    StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+    StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
       (spec.replicate n)
       (PFunctor.FreeM.Displayed.Decoration.replicate
-        (P := Spec.basePFunctor) (α := PUnit.{u+1}) PUnit.unit roles n)
+        (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) PUnit.unit roles n)
       (fun _ => β)
   | 0, _, b => b
   | n + 1, step, b =>
@@ -1082,16 +1089,16 @@ def _root_.Interaction.StrategyOver.TwoParty.Counterpart.iterate {m : Type u →
 /-- `n`-fold role-aware strategy iteration on `spec.replicate n`, threading state `α`
 through each round. -/
 def _root_.Interaction.StrategyOver.TwoParty.Focal.iterate {m : Type u → Type u} [Monad m]
-    {spec : Spec} {roles : RoleDecoration spec} {α : Type u} :
+    {spec : TypeTree} {roles : RoleDecoration spec} {α : Type u} :
     (n : Nat) →
     (step : Fin n → α →
       m (StrategyOver
-        (SyntaxOver.TwoParty.pairedSpec m) Participant.focal spec roles (fun _ => α))) →
+        (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal spec roles (fun _ => α))) →
     α →
-    m (StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+    m (StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
       (spec.replicate n)
       (PFunctor.FreeM.Displayed.Decoration.replicate
-        (P := Spec.basePFunctor) (α := PUnit.{u+1}) PUnit.unit roles n)
+        (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) PUnit.unit roles n)
       (fun _ => α))
   | 0, _, a => pure a
   | n + 1, step, a => do
@@ -1105,18 +1112,18 @@ the step transforms `Family i s` into a counterpart whose output is
 `PFunctor.FreeM.Path.stateChainFamily Family`. -/
 def _root_.Interaction.StrategyOver.TwoParty.Counterpart.stateChainComp
     {m : Type u → Type u} [Monad m]
-    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → Spec}
+    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → PFunctor.FreeM.Path (spec i s) → Stage (i + 1)}
     {roles : (i : Nat) → (s : Stage i) → RoleDecoration (spec i s)}
     {Family : (i : Nat) → Stage i → Type u}
     (step : (i : Nat) → (s : Stage i) → Family i s →
-      StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+      StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
         (spec i s) (roles i s) (fun tr => Family (i + 1) (advance i s tr))) :
     (n : Nat) → (i : Nat) → (s : Stage i) → Family i s →
-    StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.counterpart
+    StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
       (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i s)
       (PFunctor.FreeM.Displayed.Decoration.stateChain
-        (P := Spec.basePFunctor) (α := PUnit.{u+1}) (a := PUnit.unit)
+        (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) (a := PUnit.unit)
         (advance := advance) roles n i s)
       (PFunctor.FreeM.Path.stateChainFamily Family n i s)
   | 0, _, _, b => b
@@ -1129,19 +1136,19 @@ At each stage, the step transforms `Family i s` into a strategy whose output is
 `Family (i+1) (advance i s tr)`. The full state chain output is
 `PFunctor.FreeM.Path.stateChainFamily Family`. -/
 def _root_.Interaction.StrategyOver.TwoParty.Focal.stateChainComp {m : Type u → Type u} [Monad m]
-    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → Spec}
+    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → PFunctor.FreeM.Path (spec i s) → Stage (i + 1)}
     {roles : (i : Nat) → (s : Stage i) → RoleDecoration (spec i s)}
     {Family : (i : Nat) → Stage i → Type u}
     (step : (i : Nat) → (s : Stage i) → Family i s →
       m (StrategyOver
-        (SyntaxOver.TwoParty.pairedSpec m) Participant.focal (spec i s) (roles i s)
+        (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (spec i s) (roles i s)
         (fun tr => Family (i + 1) (advance i s tr)))) :
     (n : Nat) → (i : Nat) → (s : Stage i) → Family i s →
-    m (StrategyOver (SyntaxOver.TwoParty.pairedSpec m) Participant.focal
+    m (StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
       (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i s)
       (PFunctor.FreeM.Displayed.Decoration.stateChain
-        (P := Spec.basePFunctor) (α := PUnit.{u+1}) (a := PUnit.unit)
+        (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) (a := PUnit.unit)
         (advance := advance) roles n i s)
       (PFunctor.FreeM.Path.stateChainFamily Family n i s))
   | 0, _, _, a => pure a

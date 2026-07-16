@@ -17,7 +17,7 @@ PolyFun/
   ITree/             coinductive interaction trees, bisim/sim, handlers,
                      event signatures
   Interaction/       generic interaction framework
-    Basic/           Spec, Node, Decoration, Strategy, Append, ...
+    Basic/           TypeTree, Node, Decoration, Strategy, Append, ...
     TwoParty/        sender/receiver roles, paired strategies
     Multiparty/      per-party local view modes, observation kernels
     Concurrent/      structural and dynamic concurrent semantics
@@ -69,11 +69,11 @@ PFunctor/Free -> ITree/{Basic, Construct, Handler, Rec,
                         Events, Sim, Bisim}
 PFunctor/Dynamical + ITree/Basic -> ITree/Unfold
 
-PFunctor/Free + Control -> Interaction/Basic/{Spec, Node, Decoration,
+PFunctor/Free + Control -> Interaction/Basic/{TypeTree, Node, Decoration,
                             Syntax, Shape, Interaction, Strategy,
                             Append, Replicate, StateChain, Chain,
                             Telescope, Sampler, MonadDecoration,
-                            BundledMonad, Ownership, SpecFintype}
+                            BundledMonad, Ownership, TypeTreeFintype}
 
 Interaction/Basic -> Interaction/{TwoParty, Multiparty}
 Interaction/Basic + PFunctor/Dynamical -> Interaction/Concurrent
@@ -102,7 +102,7 @@ module index. See [`generated-files.md`](generated-files.md).
   [`ipfunctor.md`](ipfunctor.md).
 - Working on coinductive interaction trees, bisimulation, simulation, or
   event signatures: start in `PolyFun/ITree/`. See [`itree.md`](itree.md).
-- Working on the generic interaction framework (sequential `Spec`,
+- Working on the generic interaction framework (sequential `TypeTree`,
   decorations, strategies, two-party, multiparty, concurrent, UC open
   systems): start in `PolyFun/Interaction/`. See
   [`interaction.md`](interaction.md).

@@ -49,7 +49,7 @@ The `leaf` argument interprets terminal payloads. The `node` argument
 interprets a polynomial position `a : P.A`, given the already-generated
 displayed families for each child `b : P.B a`.
 
-Special cases include node decorations, branch paths, and compact transcript
+Special cases include node decorations, branch paths, and compact observation
 views that suppress uninformative nodes.
 -/
 structure Shape (P : PFunctor.{uA, uB}) (α : Type v) where

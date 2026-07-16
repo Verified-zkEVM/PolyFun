@@ -19,7 +19,7 @@ with the commit/PR that fixed them.
 3. **`QueryImpl`/`ProbHandler` vs. PolyFun `Sampler`/`Decoration` duplication.**
    `ProbHandler spec := QueryImpl spec SPMF` (per-query subdistribution) is
    the memoryless oracle-signature-level analogue of PolyFun's
-   `Spec.Sampler m spec := Decoration (fun X => m X) spec` (per-node monadic
+   `TypeTree.Sampler m spec := Decoration (fun X => m X) spec` (per-node monadic
    move). Two vocabularies for one concept; decide the canonical one when the
    generic Kleisli-Mealy wiring lands (roadmap Phase A) and reconcile.
 
@@ -28,7 +28,7 @@ with the commit/PR that fixed them.
    Long-standing, low-harm, but any new algebra should go through
    `PFunctor.Basic` and be re-exported, not re-proved.
 
-5. **Two "Spec" vocabularies.** PolyFun's `Interaction.Spec`
+5. **Tree and signature vocabularies.** PolyFun's `Interaction.TypeTree`
    (`FreeM basePFunctor PUnit`, a *tree* of typed nodes) is not
    `OracleSpec ≅ PFunctor` (a flat signature). Documentation should never
    conflate them; check paper 3 drafts especially (the UC layer uses the
@@ -69,7 +69,7 @@ with the commit/PR that fixed them.
 ## Resolved
 
 - **Item 1 (`FreeM ⊣ Cofree` over-claim).** Wording fixed on
-  `dtumad/cleanup-hygiene`: `PolyFun/Interaction/Basic/Spec.lean`,
+  `dtumad/cleanup-hygiene`: `PolyFun/Interaction/Basic/TypeTree.lean`,
   `REFERENCES.md`, and `AGENTS.md`/`CLAUDE.md` now describe the
   pattern-runs-on-matter *module structure* (Libkind–Spivak) rather than an
   adjunction, and note that PolyFun formalizes `LawfulMonad (FreeM P)` /

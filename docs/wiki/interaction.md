@@ -1,6 +1,6 @@
 # Interaction Framework
 
-General-purpose protocol interaction theory: sequential specs, two-party
+General-purpose protocol interaction theory: sequential type trees, two-party
 roles, multiparty local views, and concurrent process semantics. PolyFun's
 [`PolyFun/Interaction/`](../../PolyFun/Interaction/) is intentionally
 *generic*. It carries no probability, no security predicates, and no
@@ -17,8 +17,8 @@ matters.
 
 The framework is organized around a few stable principles:
 
-- **Continuation-first semantics.** `Spec` is a `PUnit`-leaved free tree on
-  `Spec.basePFunctor` (`PFunctor.FreeM Spec.basePFunctor PUnit`): each
+- **Continuation-first semantics.** `TypeTree` is a `PUnit`-leaved free tree on
+  `TypeTree.basePFunctor` (`PFunctor.FreeM TypeTree.basePFunctor PUnit`): each
   round's continuation type depends on the move chosen. All composition,
   decoration, and strategy types respect this structure. See
   [`pfunctor.md`](pfunctor.md) for the substrate.
@@ -29,13 +29,13 @@ The framework is organized around a few stable principles:
   control a node but see only a quotient of its own move, or observe a node
   fully without controlling it.
 - **Boundary vs composition.** *Boundaries* adapt the interface of a fixed
-  protocol (same transcript shape, same round structure). *Composition*
+  protocol (same path shape, same round structure). *Composition*
   (`append`, `replicate`, `stateChain`) extends the protocol with new
   rounds. Never conflate the two.
 - **Concurrency is layered.** The kernel is `par` + `Front` (frontier) +
   `residual` (one-step reduction). Interleaving is the basic semantics;
   independence and true concurrency are refinements on top. Dynamic
-  `Process` wraps sequential `Spec` episodes into a coinductive stream.
+  `Process` wraps sequential `TypeTree` episodes into a coinductive stream.
 - **UC as a frontend, not the foundation.** The open-systems layer
   (`Interface`, `PortBoundary`, `OpenTheory`) provides compositional
   operations (`map`, `par`, `wire`, `plug`). Computational equivalence,
@@ -47,7 +47,7 @@ The framework is organized around a few stable principles:
 
 | Layer | Directory | What it models |
 |-------|-----------|----------------|
-| Sequential core | `Basic/` | Specs, transcripts, decorations, strategies, composition |
+| Sequential core | `Basic/` | Type trees, paths, decorations, strategies, composition |
 | Two-party | `TwoParty/` | Sender/receiver roles, counterparts, public-coin replay |
 | Multiparty | `Multiparty/` | Per-party local view modes (pick / observe / hidden / react) and observation kernels |
 | Concurrent | `Concurrent/` | Parallel composition, frontiers, processes, refinement |
@@ -57,24 +57,24 @@ Dependencies flow downward: `Concurrent/` may import `Multiparty/` and
 `Basic/`; `TwoParty/` and `Multiparty/` import only `Basic/`; `UC/` is
 above all of them.
 
-## Core concepts: Spec, Node, Party, Profile
+## Core concepts: TypeTree, Node, Party, Profile
 
 Before reading any one file, it helps to fix four words. They are the
 load-bearing vocabulary of the entire `Interaction/` layer.
 
 ### Node, a structural location in the protocol tree
 
-A `Spec` is an interaction tree
-([`PolyFun/Interaction/Basic/Spec.lean`](../../PolyFun/Interaction/Basic/Spec.lean)).
+A `TypeTree` is an interaction tree
+([`PolyFun/Interaction/Basic/TypeTree.lean`](../../PolyFun/Interaction/Basic/TypeTree.lean)).
 A **node** is one branching point of that tree: a pair
-`(Moves : Type, rest : Moves → Spec)`. It is *not* an actor; it is a
-location where some next move gets chosen. At the level of `Spec` alone, a
+`(Moves : Type, rest : Moves → TypeTree)`. It is *not* an actor; it is a
+location where some next move gets chosen. At the level of `TypeTree` alone, a
 node knows its move space and its continuation family, and nothing else:
 not who chooses, not who watches, not what monad runs, not what data is
 attached. Those concerns are deferred to companion layers (`Decoration`,
 `NodeProfile`, `StepOver`, `SyntaxOver`, `InteractionOver`).
 
-The namespace `Spec.Node.*` (`Context`, `Schema`, `ContextHom` in
+The namespace `TypeTree.Node.*` (`Context`, `Schema`, `ContextHom` in
 [`PolyFun/Interaction/Basic/Node.lean`](../../PolyFun/Interaction/Basic/Node.lean))
 is *generic node-context infrastructure*: for any type family
 `Γ : Type → Type`, a `Γ`-decoration attaches one `Γ X` value at every node
@@ -85,7 +85,7 @@ with move space `X`.
 A `Party` is a free type parameter introduced by the *content* layers
 (`Multiparty/`, `Concurrent/`, `UC/`). A party is an actor that may control
 or observe moves at *various* nodes throughout the same protocol tree. A
-party is whole-tree (it has a strategy across the entire `Spec`); a node
+party is whole-tree (it has a strategy across the entire `TypeTree`); a node
 is local (it lives at one location in the tree). Typically there are *many
 more* nodes than parties: a long protocol may have unboundedly many nodes
 (or a continuation-based infinite stream of them via `ProcessOver`), but
@@ -136,7 +136,7 @@ content* of a single party's view.
 ([`PolyFun/Interaction/UC/OpenProcess.lean`](../../PolyFun/Interaction/UC/OpenProcess.lean))
 is the open-system extension that adds one `BoundaryAction Δ X` field for
 external traffic. `OpenNodeContext.boundaryTrace` extracts the finite
-outbound-packet trace emitted along a completed decorated step transcript;
+outbound-packet trace emitted along a completed decorated step path;
 routing and probabilistic execution remain downstream runtime concerns.
 
 ### Mental picture
@@ -148,7 +148,7 @@ vantage on a single scene.
 
 | Concept | Scope | Role |
 |---|---|---|
-| `Spec` | whole protocol tree | branching shape of all possible plays |
+| `TypeTree` | whole protocol tree | branching shape of all possible plays |
 | Node | one location in the tree | one scene: move space + continuation |
 | Party | spans the whole tree | actor; may control or observe at various nodes |
 | `Multiparty.ViewMode X` | one node × one party | that party's vantage on that one scene |
@@ -157,18 +157,18 @@ vantage on a single scene.
 
 ## Core types
 
-### `Spec` and `Transcript` (`Basic/Spec.lean`)
+### `TypeTree` and `Path` (`Basic/TypeTree.lean`)
 
-`Spec` is `PFunctor.FreeM Spec.basePFunctor PUnit` exposed via
-`@[match_pattern, reducible]` wrappers `Spec.done` and `Spec.node`:
+`TypeTree` is `PFunctor.FreeM TypeTree.basePFunctor PUnit` exposed via
+`@[match_pattern, reducible]` wrappers `TypeTree.done` and `TypeTree.node`:
 `done` (no more moves) or `node Moves rest` (one round of type `Moves`,
-with dependent continuation `rest : Moves → Spec`). `Transcript spec` is
-one full play through a `Spec`.
+with dependent continuation `rest : Moves → TypeTree`). `Path spec` is
+one full play through a `TypeTree`.
 
 ### `Decoration` (`Basic/Decoration.lean`)
 
 `Decoration Γ spec` attaches node-local metadata from a `Node.Context Γ`
-to every node of a `Spec`. `Decoration.Over` adds a dependent second
+to every node of a `TypeTree`. `Decoration.Over` adds a dependent second
 layer. Used for role labels, monad annotations, party assignments, etc.
 The substrate is `PFunctor.FreeM.Displayed` /
 `PFunctor.FreeM.Decoration`. See [`pfunctor.md`](pfunctor.md).
@@ -177,34 +177,34 @@ The substrate is `PFunctor.FreeM.Displayed` /
 
 `Strategy m spec Output` is a one-player strategy with monadic effects in
 `m`. `Strategy.run` executes it against a counterpart to produce a
-`Transcript`. `Strategy.mapOutput` is functorial over the output family.
+`Path`. `Strategy.mapOutput` is functorial over the output family.
 
 ## Sequential composition
 
-Three ways to compose specs sequentially, each suited to a different
+Three ways to compose type trees sequentially, each suited to a different
 pattern:
 
 | Combinator | When to use |
 |------------|-------------|
-| `Spec.append s₁ s₂` | Two-phase protocol where phase 2 depends on phase 1's transcript |
-| `Spec.replicate spec n` | Fixed `n`-fold repetition of an identical spec |
-| `Spec.stateChain Stage step n` | Clocked finite unfold with explicit stage-indexed state |
-| `Spec.Chain n` | Sigma-friendly presentation of `(Spec.stepPoly.Obj)^[n] PUnit` |
-| `Spec.Telescope round step s` | Well-founded, possibly unbounded stopping tree from state `s` |
+| `TypeTree.append s₁ s₂` | Two-phase protocol where phase 2 depends on phase 1's path |
+| `TypeTree.replicate spec n` | Fixed `n`-fold repetition of an identical spec |
+| `TypeTree.stateChain Stage step n` | Clocked finite unfold with explicit stage-indexed state |
+| `TypeTree.Chain n` | Sigma-friendly presentation of `(TypeTree.stepPoly.Obj)^[n] PUnit` |
+| `TypeTree.Telescope round step s` | Well-founded, possibly unbounded stopping tree from state `s` |
 
-These constructions share one polynomial substrate. `Spec.stepPoly` is
-definitionally `PFunctor.FreeP Spec.basePFunctor`, and `Spec.append` is the
+These constructions share one polynomial substrate. `TypeTree.stepPoly` is
+definitionally `PFunctor.FreeP TypeTree.basePFunctor`, and `TypeTree.append` is the
 forward map of its substitution-monoid multiplication (the backward map is
-transcript splitting). `Chain.ofStateChain` unfolds a stage-indexed coalgebra
-into `Chain`; `Chain.toSpec_ofStateChain` shows that flattening it recovers
-`Spec.stateChain`.
+path splitting). `Chain.ofStateChain` unfolds a stage-indexed coalgebra
+into `Chain`; `Chain.toTypeTree_ofStateChain` shows that flattening it recovers
+`TypeTree.stateChain`.
 
-`Spec.Telescope` serves a different role: it is the indexed W-type generated
+`TypeTree.Telescope` serves a different role: it is the indexed W-type generated
 by `done` and `extend`, with a formal initial-algebra fold. It is not by itself
 a termination certificate, because `done` is available at every state.
 
-`Transcript.liftAppend` lifts a type family on the first transcript to
-the combined transcript, avoiding `cast` / `Eq.rec` pollution.
+`Path.liftAppend` lifts a type family on the first path to
+the combined path, avoiding `cast` / `Eq.rec` pollution.
 `Strategy.comp` composes strategies along `append`.
 
 ## Two-party protocols (`TwoParty/`)
@@ -218,17 +218,17 @@ Label each node with `Role` (`.sender` or `.receiver`) via
 - **`Counterpart m spec roles Output`**: the environment (verifier if
   focal is prover).
 - **`Strategy.runWithRoles`**: executes focal + counterpart to get a
-  transcript.
+  path.
 
 For public-coin protocols, `PublicCoinCounterpart` and `replay` support
-public-coin transcript replay (Fiat-Shamir-style).
+public-coin path replay (Fiat-Shamir-style).
 
 ### Composition
 
 `Strategy.compWithRoles` and `Counterpart.append` compose along
-`Spec.append`. The flat variants (`compWithRolesFlat`,
+`TypeTree.append`. The flat variants (`compWithRolesFlat`,
 `Counterpart.appendFlat`) take a single output family on the combined
-transcript. Factorization theorems (e.g.
+path. Factorization theorems (e.g.
 `runWithRoles_compWithRoles_append`) show that executing a composed
 protocol equals sequential execution of its parts. These require
 `LawfulCommMonad` (independent effects may be swapped).
@@ -327,7 +327,7 @@ observation modes mirror the four-constructor operational shape.
 
 ### Structural layer
 
-`Concurrent.Spec` extends `Spec` with `par left right`. `Front S` is the
+`Concurrent.Spec` extends `TypeTree` with `par left right`. `Front S` is the
 type of currently enabled frontier events. `residual event` gives the
 spec after one event fires. The `diamond` theorem proves independent
 events commute. `Trace.Equiv` identifies different linearizations of
@@ -336,7 +336,7 @@ independent events.
 ### Dynamic processes
 
 `Process P Party` is a coinductive-style stream on states `P`: each step is a sequential
-`Interaction.Spec` episode, producing a residual process. `Process.Run`
+`Interaction.TypeTree` episode, producing a residual process. `Process.Run`
 and `Process.Prefix` model infinite and finite executions. `Machine`
 provides a state-indexed transition-system frontend that compiles to
 `Process` via `Machine.toProcess`.
@@ -349,8 +349,8 @@ coalgebras of polynomial functors
 
 - `ProcessOver P Γ` *is* `PFunctor.DynSystem P (StepOver.toPFunctor Γ)`
   — a coalgebra on the state space `P` of the step polynomial whose
-  positions are `Γ`-decorated specs and whose directions are complete
-  transcripts. `ProcessOver.step` / `ProcessOver.ofStep` are the
+  positions are `Γ`-decorated type trees and whose directions are complete
+  paths. `ProcessOver.step` / `ProcessOver.ofStep` are the
   `StepOver`-shaped views of the coalgebra structure map.
 - `Machine S` *is* `PFunctor.DynSystem S PFunctor.univ` — the exposed
   position at each state is the type of currently enabled events.
@@ -369,7 +369,7 @@ Consequently the whole dynamical-system toolkit applies to processes and
 machines directly: terminal-coalgebra behavior and observational
 equivalence (`DynSystem.behavior`, `DynSystem.ObsEq`), orbits
 (`DynSystem.Run` / `DynSystem.Prefix`, of which `ProcessOver.Run` /
-`ProcessOver.Prefix` are the transcript-vocabulary views), transition
+`ProcessOver.Prefix` are the path-vocabulary views), transition
 metadata (`DynSystem.EventMap`, `DynSystem.Labeled`, `DynSystem.SafetySpec`,
 `DynSystem.StepRel`), and the combinators (`ProcessOver.interleave` is the
 `wrap` of `DynSystem.choiceProd` along the scheduler wiring lens,
@@ -449,7 +449,7 @@ Coherence (each subsequent class adds laws on top of the previous):
   to `wire` (`plug_eq_wire`, `plug_par_left`, `plug_wire_left`).
 
 `OpenProcess.activationLTS` (in `OpenProcess.lean`) exposes only whether a
-complete transcript is silent or activated. `OpenProcessActivationEquiv` is
+complete path is silent or activated. `OpenProcessActivationEquiv` is
 the standard generic whole-system delay bisimulation of those labelled
 transition systems and is used to state structural laws for the concrete
 `openTheory` model (see `OpenProcessModel.lean`). The activation observation
@@ -475,22 +475,22 @@ model.
 `OpenProcess m Party Δ`
 ([`PolyFun/Interaction/UC/OpenProcess.lean`](../../PolyFun/Interaction/UC/OpenProcess.lean))
 is the runtime-facing analogue of `Concurrent.ProcessOver`: an
-`m`-parametric structure that bundles, at every step, a `Spec.Sampler m`
+`m`-parametric structure that bundles, at every step, a `TypeTree.Sampler m`
 for resolving that step's nondeterminism. Samplers are carried as data,
 not threaded through as an external argument. Three concrete
 consequences:
 
 1. **Samplers are a decoration, not a side argument.**
-   `Spec.Sampler m spec` is definitionally
+   `TypeTree.Sampler m spec` is definitionally
    `Decoration (fun X => m X) spec`
    ([`PolyFun/Interaction/Basic/Sampler.lean`](../../PolyFun/Interaction/Basic/Sampler.lean)).
-   Every move type `X` in the spec receives an `m X` computation;
-   `sampleTranscript` folds a sampler into an `m (Transcript spec)`.
+   Every move type `X` in the tree receives an `m X` computation;
+   `samplePath` folds a sampler into an `m (Path spec)`.
    Universe-polymorphic at `(w, w')` so that `m : Type w → Type w'` and
-   `spec : Spec.{w}`.
+   `spec : TypeTree.{w}`.
 2. **`OpenProcess` carries `stepSampler` as a field.**
    For each reachable step, `OpenProcess.stepSampler` supplies the
-   `Spec.Sampler m` that resolves that step's move choices. The
+   `TypeTree.Sampler m` that resolves that step's move choices. The
    underlying pure structure is still a `Concurrent.ProcessOver`,
    recoverable via `OpenProcess.toProcess`. The structural layer
    (`StepOver`, `ProcessOver`) is left untouched.
@@ -499,14 +499,14 @@ consequences:
    The monad `m` and a scheduler sampler (resolving binary-choice
    scheduler nodes introduced by `par` / `wire` / `plug`) become
    parameters of the concrete model. Each combinator builds the new
-   step's sampler via `Spec.Sampler.interleave` from its inputs'
+   step's sampler via `TypeTree.Sampler.interleave` from its inputs'
    samplers, so any law about `map` / `par` / `wire` / `plug` that holds
    in the pure structural theory lifts to the monad-parametric one once
    `schedulerSampler` is fixed.
 
-`Spec.Fintype` in
-[`PolyFun/Interaction/Basic/SpecFintype.lean`](../../PolyFun/Interaction/Basic/SpecFintype.lean)
-is the per-spec ornament (recursive `Fintype` + `Nonempty` for every
+`TypeTree.Fintype` in
+[`PolyFun/Interaction/Basic/TypeTreeFintype.lean`](../../PolyFun/Interaction/Basic/TypeTreeFintype.lean)
+is the per-tree ornament (recursive `Fintype` + `Nonempty` for every
 move type) that lets users recover canonical uniform samplers
 (`Sampler.uniformI`) without writing one by hand.
 
@@ -523,7 +523,7 @@ Choose the minimal set for your task:
 
 ```lean
 -- Sequential protocol
-import PolyFun.Interaction.Basic.Spec
+import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.Basic.Strategy
 import PolyFun.Interaction.Basic.Append      -- if composing
 
@@ -551,23 +551,23 @@ import PolyFun.Interaction.UC.OpenProcessModel
 
 | File | Purpose |
 |------|---------|
-| `Spec.lean` | `Spec`, `Transcript`, canonical `stepPoly` / `substMonoid`, `ofList` |
+| `TypeTree.lean` | `TypeTree`, `Path`, canonical `stepPoly` / `substMonoid`, `ofList` |
 | `Node.lean` | `Node.Context`, `Node.Schema`, `Prefix` |
 | `Decoration.lean` | `Decoration`, `Decoration.Over`, `telescope`, `pack` / `unpack` |
 | `Syntax.lean` | `SyntaxOver`, `SyntaxOver.Family` |
 | `Shape.lean` | `ShapeOver` (functorial `SyntaxOver` with continuation map) |
 | `Interaction.lean` | `InteractionOver`, `Interaction`, `run` |
 | `Strategy.lean` | `Strategy`, `Strategy.run`, `mapOutput` |
-| `Append.lean` | `Spec.append`, transcript ops, `Strategy.comp` / `compFlat` |
-| `Replicate.lean` | `Spec.replicate`, `Strategy.iterate` |
-| `StateChain.lean` | `Spec.stateChain`, `Strategy.stateChainComp` |
-| `Chain.lean` | finite final-sequence `Spec.Chain`, `toSpec`, `ofStateChain`, `ofStateMachine` |
-| `Telescope.lean` | indexed stopping trees and their initial-algebra fold to `Spec` |
+| `Append.lean` | `TypeTree.append`, path ops, `Strategy.comp` / `compFlat` |
+| `Replicate.lean` | `TypeTree.replicate`, `Strategy.iterate` |
+| `StateChain.lean` | `TypeTree.stateChain`, `Strategy.stateChainComp` |
+| `Chain.lean` | finite final-sequence `TypeTree.Chain`, `toTypeTree`, `ofStateChain`, `ofStateMachine` |
+| `Telescope.lean` | indexed stopping trees and their initial-algebra fold to `TypeTree` |
 | `Ownership.lean` | `LocalView` / `LocalRunner` builders for `SyntaxOver` |
 | `MonadDecoration.lean` | `MonadDecoration`, `Strategy.withMonads`, `runWithMonads` |
 | `BundledMonad.lean` | `BundledMonad` (monad packaged for inductive data) |
-| `Sampler.lean` | `Spec.Sampler m spec := Decoration (fun X => m X) spec`, `sampleTranscript`, `Sampler.interleave`, `Sampler.uniformI` |
-| `SpecFintype.lean` | `Spec.Fintype` per-spec ornament; enables canonical `Sampler.uniformI` |
+| `Sampler.lean` | `TypeTree.Sampler m spec := Decoration (fun X => m X) spec`, `samplePath`, `Sampler.interleave`, `Sampler.uniformI` |
+| `TypeTreeFintype.lean` | `TypeTree.Fintype` per-tree ornament; enables canonical `Sampler.uniformI` |
 
 ### `TwoParty/`
 
@@ -580,7 +580,7 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Compose.lean` | `compWithRoles`, `Counterpart.append`, factorization theorems |
 | `Refine.lean` | `Role.Refine`, equivalence with `Decoration.Over` |
 | `Swap.lean` | role swap involutivity and append compatibility |
-| `Examples.lean` | definitional `rfl` checks on small specs |
+| `Examples.lean` | definitional `rfl` checks on small type trees |
 
 ### `Multiparty/`
 
@@ -612,8 +612,8 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Execution.lean` | `Trace`, `ObservedTrace` for processes |
 | `Run.lean` | `Prefix`, `Run` (infinite), controller / event extraction |
 | `Policy.lean` | `StepPolicy`, `respects`, combinators |
-| `Observation.lean` | `PackedObs`, transcript relations, observation preservation |
-| `Refinement.lean` | `SafetyRefinement` (= `DynSystem.SafetyRefinement` at the step polynomial), `matchTranscript`, observation preservation, `safe_of_satisfies` |
+| `Observation.lean` | `PackedObs`, path relations, observation preservation |
+| `Refinement.lean` | `SafetyRefinement` (= `DynSystem.SafetyRefinement` at the step polynomial), `matchPath`, observation preservation, `safe_of_satisfies` |
 | `MutualSafetyRefinement.lean` | `MutualSafetyRefinement`, `ReverseSafetyRefinement` (= the `DynSystem` notions), `Satisfies`-based safety transport |
 | `Equivalence.lean` | controller, trace, observational equivalences |
 | `Fairness.lean` | `WeakFair`, `StrongFair`, temporal predicates |
@@ -630,7 +630,7 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `OpenSyntax/Interp.lean` | `Interp` (tagless-final), granular `HasUnit` / `HasIdWire` / `IsMonoidal` / `IsTraced` / `IsCompactClosed` / `HasPlugWireFactor` instances |
 | `OpenSyntax/Expr.lean` | `Expr` (quotient of `Raw`), granular `OpenTheory` lawfulness instances, `Expr.toInterp` |
 | `OpenProcess.lean` | `BoundaryAction`, `OpenNodeProfile`, `OpenNodeContext` (with polynomial-product bridge `productView` and structural `boundaryTrace`), `OpenProcess m Party Δ` (monad-parametric, with intrinsic `stepSampler`), `toProcess`, `OpenProcessActivationEquiv` |
-| `OpenProcessModel.lean` | `openTheory m Party schedulerSampler` (concrete model threading `Spec.Sampler` through `map` / `par` / `wire` / `plug`), `IsLawful`, monoidal / CC laws up to `OpenProcessActivationEquiv` |
+| `OpenProcessModel.lean` | `openTheory m Party schedulerSampler` (concrete model threading `TypeTree.Sampler` through `map` / `par` / `wire` / `plug`), `IsLawful`, monoidal / CC laws up to `OpenProcessActivationEquiv` |
 | `Emulates.lean` | `Observation`, `Emulates`, `UCSecure`. Contextual emulation and UC security stated abstractly over an `Observation` (an equivalence relation on closed systems), with no probability monad and no concrete security predicate. |
 | `Notation.lean` | UC notation helpers (`∥`, `⊞`, `⊠`, `⊗ᵇ`, `ᵛ`); see [`notation.md`](notation.md) |
 | `MachineId.lean` | machine identifiers |
@@ -650,12 +650,12 @@ re-import the generic primitives from PolyFun.
 
 - [`PolyFunTest/Interaction/TwoParty/Examples.lean`](../../PolyFunTest/Interaction/TwoParty/Examples.lean):
   `rfl` checks that `withRoles` / `Counterpart` types unfold correctly on
-  a two-step spec.
+  a two-step type tree.
 - [`PolyFunTest/Interaction/Multiparty/Examples.lean`](../../PolyFunTest/Interaction/Multiparty/Examples.lean):
   pattern-matching resolvers for broadcast, directed, and profile-based
   models; adversarial leakage and adaptive corruption.
 - [`PolyFunTest/Interaction/Concurrent/Examples.lean`](../../PolyFunTest/Interaction/Concurrent/Examples.lean):
-  small concurrent specs with profiles, control, process execution,
+  small concurrent source terms with profiles, control, process execution,
   policies, and interleaving.
 
 End-to-end UC examples that involve probability monads or concrete
