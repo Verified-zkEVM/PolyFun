@@ -30,8 +30,8 @@ The framework is organized around a few stable principles:
   fully without controlling it.
 - **Boundary vs composition.** *Boundaries* adapt the interface of a fixed
   protocol (same path shape, same round structure). *Composition*
-  (`append`, `replicate`, `stateChain`) extends the protocol with new
-  rounds. Never conflate the two.
+  (`append`, `replicate`, `stateChain`, `Chain.then`) extends the protocol
+  with new rounds. Never conflate the two.
 - **Concurrency is layered.** The kernel is `par` + `Front` (frontier) +
   `residual` (one-step reduction). Interleaving is the basic semantics;
   independence and true concurrency are refinements on top. Dynamic
@@ -187,9 +187,10 @@ pattern:
 | Combinator | When to use |
 |------------|-------------|
 | `TypeTree.append s₁ s₂` | Two-phase protocol where phase 2 depends on phase 1's path |
-| `TypeTree.replicate spec n` | Fixed `n`-fold repetition of an identical spec |
+| `TypeTree.replicate tree n` | Fixed `n`-fold repetition of an identical type tree |
 | `TypeTree.stateChain Stage step n` | Clocked finite unfold with explicit stage-indexed state |
 | `TypeTree.Chain n` | Sigma-friendly presentation of `(TypeTree.stepPoly.Obj)^[n] PUnit` |
+| `TypeTree.Chain.then c k` | Path-dependent concatenation preserving explicit round counts |
 | `TypeTree.Telescope round step s` | Well-founded, possibly unbounded stopping tree from state `s` |
 
 These constructions share one polynomial substrate. `TypeTree.stepPoly` is
@@ -206,6 +207,13 @@ a termination certificate, because `done` is available at every state.
 `Path.liftAppend` lifts a type family on the first path to
 the combined path, avoiding `cast` / `Eq.rec` pollution.
 `Strategy.comp` composes strategies along `append`.
+At the explicit-round `Chain.then` boundary, `Chain.thenPathEquiv` and its
+split/join operations recover the two path pieces, `Chain.liftThen` transports
+dependent output families, and `Chain.strategyCompThen` composes strategies.
+Units hold at both the round-indexed and flattened levels. Three-stage
+associativity is stated after `Chain.toTypeTree`, the stable operational
+interpretation; raw equality of intensional `Chain` presentations is not part
+of the API contract.
 
 ## Two-party protocols (`TwoParty/`)
 
@@ -557,11 +565,12 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Syntax.lean` | `SyntaxOver`, `SyntaxOver.Family` |
 | `Shape.lean` | `ShapeOver` (functorial `SyntaxOver` with continuation map) |
 | `Interaction.lean` | `InteractionOver`, `Interaction`, `run` |
-| `Strategy.lean` | `Strategy`, `Strategy.run`, `mapOutput` |
+| `Strategy.lean` | `Strategy`, `Strategy.run`, `mapOutput`, equality transport via `castSpec` |
 | `Append.lean` | `TypeTree.append`, path ops, `Strategy.comp` / `compFlat` |
 | `Replicate.lean` | `TypeTree.replicate`, `Strategy.iterate` |
 | `StateChain.lean` | `TypeTree.stateChain`, `Strategy.stateChainComp` |
 | `Chain.lean` | finite final-sequence `TypeTree.Chain`, `toTypeTree`, `ofStateChain`, `ofStateMachine` |
+| `Chain/Append.lean` | dependent `Chain.then`, units, boundary path/output/strategy composition, and three-stage coherence |
 | `Telescope.lean` | indexed stopping trees and their initial-algebra fold to `TypeTree` |
 | `Ownership.lean` | `LocalView` / `LocalRunner` builders for `SyntaxOver` |
 | `MonadDecoration.lean` | `MonadDecoration`, `Strategy.withMonads`, `runWithMonads` |

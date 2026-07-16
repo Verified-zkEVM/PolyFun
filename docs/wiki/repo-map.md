@@ -164,7 +164,7 @@ PFunctor/Dynamical + ITree/Basic -> ITree/Unfold
 
 PFunctor/Free + Control -> Interaction/Basic/{TypeTree, Node, Decoration,
                             Syntax, Shape, Interaction, Strategy,
-                            Append, Replicate, StateChain, Chain,
+                            Append, Replicate, StateChain, Chain, Chain/Append,
                             Telescope, Sampler, MonadDecoration,
                             BundledMonad, Ownership, TypeTreeFintype}
 
