@@ -206,7 +206,7 @@ theorem decode_mateObj
   intro direction
   rfl
 
-/-- Labelling states by their exposed positions recovers the existing
+/-- Labeling states by their exposed positions recovers the existing
 trajectory definition. -/
 @[simp]
 theorem labeledTrajectory_expose (system : DynSystem S P) (state : S) :
