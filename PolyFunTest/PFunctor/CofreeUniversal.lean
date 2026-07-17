@@ -256,7 +256,7 @@ example :
       CofreeP.homEquiv (stateComonoid ThreeState)
           (CofreeP.extend (stateComonoid ThreeState) branchingLens) ∘ₗ
         fstHom.toLens :=
-  CofreeP.homEquiv_natural_left fstHom
+  CofreeP.homEquiv_naturality_left fstHom
     (CofreeP.extend (stateComonoid ThreeState) branchingLens)
 
 /-- Generator-side naturality is exercised with a branch-reversing lens. -/
@@ -265,7 +265,7 @@ example :
         (listExtension.comp (CofreeP.mapHom reverseBranchLens)) =
       reverseBranchLens ∘ₗ
         CofreeP.homEquiv boolListComonoid listExtension :=
-  CofreeP.homEquiv_natural_right boolListComonoid
+  CofreeP.homEquiv_naturality_right boolListComonoid
     reverseBranchLens listExtension
 
 end CofreeUniversalTest

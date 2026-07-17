@@ -196,7 +196,9 @@ theorem unfoldDirection_root (lens : Lens C.carrier P)
       Comonoid.identity C object := by
   rw [unfoldDirection.eq_def]
 
-private theorem unfoldDirection_child (lens : Lens C.carrier P)
+/-- Pulling back a child vertex first selects the root arrow and then composes
+it with the recursively pulled-back arrow in the selected subtree. -/
+theorem unfoldDirection_child (lens : Lens C.carrier P)
     (object : C.carrier.A)
     (direction : P.B (M.head (unfoldShape C lens object)))
     (next : M.Vertex
@@ -301,7 +303,7 @@ private theorem compose_heq (object : C.carrier.A)
 by its prefix and suffix, in outer-then-inner path order. The suffix is
 transported from the selected subtree to the propositionally equal coiterated
 tree at the prefix target. -/
-private theorem unfoldDirection_append (lens : Lens C.carrier P) :
+theorem unfoldDirection_append (lens : Lens C.carrier P) :
     (object : C.carrier.A) →
       (initial : M.Vertex (unfoldShape C lens object)) →
       (suffix : M.Vertex (M.Vertex.subtree initial)) →
@@ -795,7 +797,7 @@ def homEquiv
   right_inv := restrict_extend C
 
 /-- The cofree hom-set equivalence is natural in its source comonoid. -/
-theorem homEquiv_natural_left
+theorem homEquiv_naturality_left
     {C₁ C₂ : Comonoid.{max uA uB, max uA uB}}
     (pre : Comonoid.Hom C₁ C₂)
     (hom : Comonoid.Hom C₂ (comonoid P)) :
@@ -806,7 +808,7 @@ theorem homEquiv_natural_left
   exact (Lens.comp_assoc (cogenerator P) hom.toLens pre.toLens).symm
 
 /-- The cofree hom-set equivalence is natural in its generator polynomial. -/
-theorem homEquiv_natural_right
+theorem homEquiv_naturality_right
     {Q : PFunctor.{uA, uB}}
     (C : Comonoid.{max uA uB, max uA uB})
     (lens : Lens P Q)
