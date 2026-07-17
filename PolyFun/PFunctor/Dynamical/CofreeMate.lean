@@ -116,7 +116,7 @@ private theorem unfoldDirection_stateComonoid_child
   rfl
 
 /-- Taking one child of the object-level dynamical mate advances the system
-state by exactly the selected direction, while preserving the state labelling.
+state by exactly the selected direction, while preserving the state labeling.
 The cast only transports across the definitional presentation of the unfolded
 behavior tree. -/
 theorem mateObj_child
