@@ -38,6 +38,7 @@ import PolyFun.ITree.Events.StateFacts
 import PolyFun.ITree.Handler
 import PolyFun.ITree.Rec
 import PolyFun.ITree.Rec.Facts
+import PolyFun.ITree.Resumption
 import PolyFun.ITree.Sim.CrossSignature
 import PolyFun.ITree.Sim.Defs
 import PolyFun.ITree.Sim.Facts
