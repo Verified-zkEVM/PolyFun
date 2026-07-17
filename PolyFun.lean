@@ -208,6 +208,7 @@ import PolyFun.PFunctor.PatternRunsOnMatter.Operational
 import PolyFun.PFunctor.PatternRunsOnMatter.Parallel
 import PolyFun.PFunctor.PatternRunsOnMatter.Universal
 import PolyFun.PFunctor.Resumption
+import PolyFun.PFunctor.Resumption.Truncate
 import PolyFun.PFunctor.SubstMonoid
 import PolyFun.PFunctor.SubstMonoid.Convolution
 import PolyFun.PFunctor.SubstMonoid.Extension
