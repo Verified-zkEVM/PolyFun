@@ -41,8 +41,8 @@ Kleisli–Mealy `equivStateHandler` bridge), the game formers
 `DynSystem.game` / `closedGame` (`PFunctor/Dynamical/Game.lean`, wiring
 along `eval`, with `game_eq_uncurry` the adjunction reading), the monadic
 runs `kleisliStep` / `kleisliIterate` / `stepWith` / `iterWith`, and the
-machine-vs-responder step law
-`IOMachine.runWith_run_succ_of_output_eq_none` are all in place, plus
+query-conditioned stateful execution law
+`DynComputation.runWith_query_succ_stateT` are all in place, plus
 the two-phase `Lens.eval₂` / `orderPair` / `game₂` (Eq 6.86 + Ex 6.85).
 Remaining VCVio-side residue: the `m := SPMF` instance (ProbResponder as
 the bundled Kleisli sibling) and `QueryLog` transcripts.
@@ -70,23 +70,27 @@ games.
 commit-then-guess / CPA-CCA shape) stops unfolding `comp` by hand — it becomes
 three typed functions plus an `ext` lemma.
 
-### Sequential machine composition (Example 6.41 → A6 + A7)
+### Sequential returning computations (A7)
 
-Binding two machines that share an interface is a machine over `q ◃ r` with a
-shared mid-boundary — the "cascading menus" example — realized as a state
-machine with `M₁.State ⊕ M₂.State` that runs phase 1 to its output, then hands
-off to phase 2. The transition lens δ (A7b, already present as `Lens.fixState`)
-gives multi-step execution a canonical primitive.
+Binding two returning computations over the same visible-query interface `p`
+uses hidden state `M₁.State ⊕ M₂.State`: phase one runs until its return value
+initializes phase two, and the handoff itself consumes no query. This is
+Kleisli-style program composition, distinct from a static lens into `q ◃ r`.
+The transition lens δ (A7b, already present as `Lens.fixState`) separately gives
+fixed-length `DynSystem` execution a canonical primitive.
 
-**Payoff:** PolyFun now supplies the generic `IOMachine.seqComp`, its
-query-resolution certificate algebra, and the fuel-exact `runWith_seqComp_init`
-bind law. VCVio specializes this to `OracleMachine.seqComp` and reuses the law
-in `IsPolyTime.bind`, with `M₁.State ⊕ M₂.State` encoded by the already
-scaffolded `finEncodingSum`. The sum stores only phase-local machine control;
-a stateful handler monad threads one shared random-oracle cache or transcript
-through both phases. **Honest split:** this is the *structural* and
-semantic half of `IsPolyTime.bind`. The *remaining* half is a
-TM running-time bound — the documented `sorry` in
+**Payoff:** PolyFun now supplies generic `DynComputation.seqComp`, its
+qualitative resumption-bind semantics, its query-resolution certificate
+algebra, and the certified fuel-exact `runWithInput_seqComp` handler law.
+The intended downstream VCVio migration can specialize this construction to
+its returning oracle computations and reuse the law in `IsPolyTime.bind`, with
+`M₁.State ⊕ M₂.State` encoded by the already scaffolded `finEncodingSum`. The
+sum stores only phase-local machine control; a stateful handler monad threads
+one shared random-oracle cache or transcript through both phases. Sequencing is
+observational rather than structural: nested phase-sum states need not be equal
+for their denotations to associate. **Honest split:**
+this is the *structural* and semantic half of `IsPolyTime.bind`. The *remaining*
+half is a TM running-time bound — the documented `sorry` in
 `ToMathlib/Computability/PolyTimeTM.lean:537-552`
 (`sumElim` / `time_sumElim_eval_le`, a length-changing streaming transducer).
 That is computability content PolyFun neither has nor should own.

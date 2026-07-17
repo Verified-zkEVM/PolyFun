@@ -149,7 +149,6 @@ import PolyFun.PFunctor.Dynamical.DynComputation
 import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 import PolyFun.PFunctor.Dynamical.DynComputation.Termination
 import PolyFun.PFunctor.Dynamical.Game
-import PolyFun.PFunctor.Dynamical.IOMachine
 import PolyFun.PFunctor.Dynamical.Refinement
 import PolyFun.PFunctor.Dynamical.Responder
 import PolyFun.PFunctor.Dynamical.Responder.Behavior

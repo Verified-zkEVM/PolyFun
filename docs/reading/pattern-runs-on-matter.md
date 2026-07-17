@@ -76,7 +76,7 @@ The paper's voting/operadic/gerrymandering development needs operad and
 aggregation theory not currently in PolyFun. Stochastic players and
 probabilistic security belong downstream in VCVio. The paper's transfinite
 construction is represented by the equivalent inductive `FreeM` W-type, not
-reconstructed stage by stage. `IOMachine.runWith` selects one effectful path
+reconstructed stage by stage. `DynComputation.runWith` selects one effectful path
 and may halt early, whereas `runOn` constructs the complete finite branching
 tree; `runWithHandler` is the honest interpreter bridge, not an equality with
-arbitrary `IOMachine.runWith` executions.
+arbitrary `DynComputation.runWith` executions.

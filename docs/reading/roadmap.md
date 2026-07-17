@@ -19,7 +19,7 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 | Ch 4.5 ⊗-closure `[q,r]`, eval | **Done (A1)**: `ihom`/`eval`/`curry`/`curryEquiv`/`ihomSum` in `PFunctor/InternalHom.lean` (note: `exp` is the §5.3 cartesian exponential, not this) |
 | Ch 5 factorizations, adjunctions, (co)limits | **Done**: vertical–cartesian factorization and orthogonality (A3), trivial-interface adjunctions plus binary tensor gluing (A4/A5), and cartesian closure (A2); general (co)limits remain open |
 | Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: direct composite-lens projections, `compNthMap`, δ/`twoStep`, full left Π-distributivity, ordering/interchange naturality and complete concrete duoidal coherence; coclosure/multiadjoint (A8) remains open |
-| Ch 7 comonoids = categories, retrofunctors | **Done (B1–B4 spine)**: `Comonoid`, `Comonoid.Hom`/`Cat♯`, state comonoids, `δ^(n)`, `Run_n`, and the `IOMachine` run/composition core; §7.3.3 quadruple (B5), all-bracketing canonicity, and representable-monoid equivalence remain open |
+| Ch 7 comonoids = categories, retrofunctors | **Done (B1–B4 spine)**: `Comonoid`, `Comonoid.Hom`/`Cat♯`, state comonoids, `δ^(n)`, `Run_n`, and the `DynComputation` execution/composition core; §7.3.3 quadruple (B5), all-bracketing canonicity, and representable-monoid equivalence remain open |
 | Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | **C1/C2 done; C3 finite-run and lax-monoidal spine done**: `M.Vertex`, `CofreeP.comonoid`, generic coiteration, the natural hom-set equivalence, its dynamical behavior/trajectory specialization, structural finite projections, Prop 8.49, and the cofree laxator with its concrete coherence laws; Equation 8.32/additive reassociation, explicit pretree-limit coherence, abstract monoidal packaging, and bicomodules remain open |
 
 ## Reading units
@@ -62,10 +62,11 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
   **b.** transition lens `δ : selfMonomial S ⇆ selfMonomial S ◃ selfMonomial S`
   = `(id, tgt, run)` (Example 6.44) + `DynSystem.twoStep := δ ⨟ (φ ◁ φ)` —
   needs no comonoid vocabulary, lands ahead of B2;
-  **c.** input/output machine (state + init + partial readout, generalizing VCVio
-  `OracleMachine`) as `PFunctor/Dynamical/IOMachine.lean`; two-phase
-  composition via A6 with a shared mid-boundary (Example 6.41 "cascading
-  menus"); `Implements`/`IsSimulation` transfer lemmas.
+  **c.** returning computation (hidden state + input-selected initial state +
+  return-or-query view, generalizing VCVio `OracleMachine`) as
+  `PFunctor/Dynamical/DynComputation.lean`; sequential composition by terminal
+  handoff over a shared visible-query interface; `Implements`/`IsSimulation`
+  transfer lemmas.
   *(Direct `IsPolyTime.bind` unlock.)*
 - **A8** left coclosure `⌈q\p⌉ = Σ_i y^{q(p[i])}` + adjunction
   `Poly(p, r◁q) ≅ Poly(⌈q\p⌉, r)` (Prop 6.57); corollary (6.65)
@@ -106,21 +107,18 @@ Landed 2026-07-10 (build + `lake lint` + `lake test` green, no `sorry`):
   cited alias of the pre-existing `Lens.fixState`) and `DynSystem.twoStep`
   (lifting the pre-existing `Lens.speedup`) with `twoStep_eq_speedup`.
   General `nStep` intentionally left to B3 (needs `δ^(n)`).
-- **A7c ✅ (structural)** `PFunctor/Dynamical/IOMachine.lean`: the
-  `IOMachine` structure (VCVio `OracleMachine`'s generic core); `seqComp` with
-  `M₁.State ⊕ M₂.State` (Example 6.41 — the structural unlock for
-  `IsPolyTime.bind` / `OracleMachine.seqComp`); phase `rfl` lemmas; fuelled
-  `toComp`; `toComp_seqComp_inr` (second phase faithful to `M₂`); the exact
-  all-`some`-leaves characterization and additive `ResolvesIn` certificate
-  algebra; the fuel-exact `runWith_seqComp_init` bind law;
-  semantic run identity and associativity laws; `DynSystem.ReachableIn` (in
-  `Dynamical/Run.lean`, via `Prefix.last`); and the
-  `IsSimulation`/`behavior_eq_of_isSimulation` transfer.
-  *Deferred (documented, not `sorry`):* general may-resolution, divergence,
-  and unbounded/coinductive execution should be introduced together with
-  adequacy lemmas. The existing closed deterministic
-  `exists_resolvesIn_iff_exists_iterate_output_isSome` is only that special
-  case, not the general termination vocabulary.
+- **A7c ✅ (structural)** `PFunctor/Dynamical/DynComputation.lean` and its
+  `Bounded`/`Termination` modules: `DynComputation` is VCVio
+  `OracleMachine`'s generic return-or-query core. `seqComp` uses
+  `M₁.State ⊕ M₂.State` and hands a terminal result directly to the second
+  phase, while `denote_seqComp` proves resumption-bind semantics. Fuelled
+  `unroll` charges exactly visible queries; `ResolvesIn` supports exact
+  bounded implementation and additive sequencing; `runWithInput_seqComp`
+  gives the certified handler-level Kleisli law. `TerminatesFrom` supplies the
+  strictly more general accessibility notion and computable `FreeM`
+  extraction, including programs with finite branches but no uniform bound.
+  Associativity and identity are deliberately observational (`ObsEq`), not
+  equality of the phase-indexed hidden-state representations.
 
 The **honest split** confirmed in code: A7c gives the *structural and semantic*
 half of `IsPolyTime.bind`; the remaining half is the TM running-time bound
@@ -204,7 +202,7 @@ consumers; they are natural follow-ons or Phase B/C prerequisites.
 - **B6** `FreeM P` as ◁-monoid; handlers/`liftMHom` as monoid morphisms
   (universal property behind `simulateQ`).
 
-### Phase B — implementation status (spine: B1 + B2 + B3 + IOMachine finish)
+### Phase B — implementation status (spine: B1 + B2 + B3 + returning computations)
 
 Landed the K-L-prioritized machine spine (crypto-free):
 
@@ -229,26 +227,32 @@ Landed the K-L-prioritized machine spine (crypto-free):
   Representable `y^M ≃ monoid` (Ex 7.40) deferred.
 - **B3 done** — `DynSystem.nStep` = `Run_n` (`Dynamical/RunN.lean`), finishing
   the `Speedup.lean` `nStep` deferral; **`nStep_two_eq_twoStep` (the `n = 2`
-  coherence with the existing `twoStep`) is `rfl`**. The monad-parametric run
-  `IOMachine.runWith = FreeM.liftM ∘ toComp` with `runWith_succ` (the `runLimit_fix`
-  shadow) and `runWith_of_output_eq_some` (fuel irrelevance, the
-  `runK_eq_of_apply_none_eq_zero` shadow); the `Option`/fuel pays-rent instance
-  is in `RunNExamples.lean`. The ω-limit `ωSup` stays downstream (SPMF ωCPO).
-- **IOMachine finish** — `toComp_seqComp_inl` fixes the first-phase operational
-  behaviour (with `toComp_seqComp_inr` this is the structural `IsPolyTime.bind`
-  content); the naive unqualified fuel-additive single-`bind` law is **false**
-  (fuel threads continuously), while `ResolvesIn` certificates make the exact
-  summed-budget law true and compositional. Generic `IsSimulation` +
-  `behavior_eq_of_isSimulation`
-  (via `behavior_unique`/`M.corec_eq_corec`) in `Dynamical/Simulation.lean`;
-  the stutter-budget variant is deferred. General may-resolution, divergence,
-  and unbounded/coinductive execution also remain a single future adequacy
-  layer; they should not be added as disconnected aliases of `ResolvesIn`.
+  coherence with the existing `twoStep`) is `rfl`**. Returning computations
+  interpret bounded-depth unrollings monad-parametrically via
+  `DynComputation.runWith = FreeM.liftM ∘ unroll`; terminal states are
+  fuel-free and `runWith_eq_of_resolvesIn` gives fuel irrelevance after a
+  resolution certificate. Deterministic `Option`/fuel canaries live in
+  `DynComputationBoundedExamples.lean`. The ω-limit `ωSup` stays downstream
+  (SPMF ωCPO).
+- For closed `X` computations, `closedStutterStep` follows the unique query
+  direction and leaves returned states fixed; `closedStutterIterate` then gives
+  exact bounded and eventual resolution-as-reachability characterizations
+  without inventing a terminal query transition.
+- **Returning-computation finish** — direct first- and second-phase `unroll`
+  laws pin operational sequencing (the structural `IsPolyTime.bind` content).
+  The naive unqualified fuel-additive single-`bind` law is **false** because
+  fuel threads continuously; `ResolvesIn` certificates make the exact
+  summed-budget law true and compositional. `TerminatesFrom`, defined by
+  accessibility of visible-query children, separately captures qualitative
+  termination and extracts a well-founded `FreeM` even when no uniform natural
+  bound exists. Generic `IsSimulation` + `behavior_eq_of_isSimulation`
+  (via `behavior_unique`/`M.corec_eq_corec`) live in
+  `Dynamical/Simulation.lean`; the stutter-budget variant remains deferred.
 
 Full `lake build` + `lake lint` + `lake test` green with `--wfail`, no `sorry`.
 Open Phase B remnants (B5 §7.3.3 quadruple, B6 ◁-monoid, and full Prop 7.20
 canonicity) are non-blocking follow-ons; B5 arrives with the Phase C cofree
-layer. `runWith_liftA` already identifies `runWith` with `toComp` under the
+layer. `runWith_liftA` already identifies `runWith` with `unroll` under the
 canonical `FreeM` interpretation.
 
 ### Phase C — cofree comonoid and adjunctions (Ch 8.1–8.2)
@@ -479,10 +483,12 @@ honest reading of the evidence:
 - Phase B bet: the generic `Run_n`/limit skeleton must make `RunLimit`
   strictly thinner and reusable for at least one non-probabilistic instance
   (e.g. `Option`/fuel), else it is over-engineering. **Verdict (2026-07-10,
-  partial):** the reusability half is met — `runWith`/`runWith_of_output_eq_some`
-  instantiate to a deterministic `Option`/fuel run (`RunNExamples.lean`), so the
-  ladder is genuinely monad-parametric, not SPMF-bespoke. The `RunLimit`-thinning
-  half awaits the downstream VCVio swap (we do not edit VCVio).
+  partial):** the reusability half is met — `DynComputation.runWith` interprets
+  the same bounded-depth unrolling through any lawful monadic handler, while
+  `runWith_eq_of_resolvesIn` gives fuel irrelevance once resolution is proved.
+  The deterministic execution canaries live in the bounded-computation
+  examples. The `RunLimit`-thinning half awaits the downstream
+  VCVio swap (we do not edit VCVio).
 - Phase C bet: `mate = M.corec` must actually discharge the ITree reverse
   bridge or machine-semantics uniqueness proofs; a cofree comonoid nobody
   calls is a museum piece.
@@ -548,14 +554,14 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   **Phase A is substantially complete.** Next: Phase B (comonoids, `Run_n`).
 - 2026-07-10 (cont.): **Phase B spine landed** — B1 (`Comonoid`), B2 (state
   comonoid `Sy^S` + `δ^(n)` + `IsStateSystem`), B3 (`nStep`/`Run_n` +
-  monad-parametric `runWith` + fuel irrelevance), and the finished `Machine`
-  deferrals (`toComp_seqComp_inl` operational law, generic `IsSimulation`),
+  monad-parametric `runWith` + fuel irrelevance), and the finished returning-
+  computation deferrals (direct phase-view laws and generic `IsSimulation`),
   scoped by three read-only surveys to the live K-L blocker cluster (VCVio
   `RunLimit`/`IsPolyTime.bind`). Three new modules (`PFunctor/Comonoid.lean`,
   `Dynamical/{RunN,Simulation}.lean`) + a `Machine.lean` extension + three
   `PolyFunTest/` files. Full `lake build` + `lake lint` + `lake test` green with
   `--wfail`, no `sorry`. Canaries all `rfl`: the state-comonoid laws,
-  `nStep_two_eq_twoStep` (`n = 2` coherence), and `runWith = mapM ∘ toComp`.
+  `nStep_two_eq_twoStep` (`n = 2` coherence), and `runWith = mapM ∘ unroll`.
   Finding: the naive unqualified fuel-additive `seqComp` bind law is **false**
   (fuel threads continuously through the handoff). The shipped `ResolvesIn`
   certificate algebra records exactly the missing totality hypothesis and gives
@@ -569,13 +575,14 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   *is* diagrammatic composition `s ⨟ w`, `tensor` *is* `s ⊗ₗ t` (via the `rfl`
   `selfMonomial_prod`), `pairing` *is* `⟨l₁, l₂⟩ₗ` — and the inverted file compiled
   first try, the cleanest pays-rent signal yet: the book's algebra was already the
-  code, only the packaging resisted. The book's `⨟` now covers lenses, charts, and
-  machine `seqComp` with full display. The machine bundles now share a minimal
-  `Machine` parent containing `State` and `behavior`: `IOMachine` adds `init` and
-  `output`, while `Labeled`, `Ticketed`, and `SafetySpec` extend the same parent.
-  Their lens-valued dynamics are uniformly accessed as `.toDynSystem`,
-  and all #16/#17 fuel/composition laws survived the hierarchy change.
-  Downstream pays-rent (VCVio): the fuel-exact `runWith_seqComp` laws + the
+  code, only the packaging resisted. The book's `⨟` covers lenses, charts, and
+  lens-defined dynamical systems. The machine bundles share a minimal `Machine`
+  parent containing `State` and `toDynSystem`; `DynComputation` adds `init` over
+  the return-or-query interface, while `Labeled`, `Ticketed`, and `SafetySpec`
+  extend the same parent. Sequential returning computations use named
+  `seqComp`, whose laws are behavioral because its phase-sum state is not a
+  canonical structural quotient.
+  Downstream pays-rent (VCVio): the fuel-exact `runWithInput_seqComp` law + the
   implements-extracted `ResolvesIn` certificates delivered a **zero-new-sorry
   `IsPolyTime.bind`**, whose entire machine debt is a declared six-ticket
   base-machine frontier at raw encodings. Findings for the ledger: (1) the
@@ -598,8 +605,8 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   `closedGame` its autonomous `r = X` instance, `game_eq_uncurry` the
   adjunction reading; monadic runs `kleisliStep`/`kleisliIterate` and the
   stateful-handler `stepWith`/`iterWith` with the responder/handler state
-  *first* in the pair; the machine-vs-responder step law
-  `IOMachine.runWith_run_succ_of_output_eq_none`; two-phase
+  *first* in the pair; the query-conditioned
+  `DynComputation.runWith_query_succ_stateT` law; two-phase
   `Lens.eval₂ = (eval ◃ₗ eval) ∘ₗ duoidalLens` (Eq 6.86), `orderPair`
   (Ex 6.85, guess phase cannot see the commit answer within a composite
   step), and `game₂`). All designed `rfl` canaries held on first compile —
@@ -615,9 +622,9 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   = the downstream VCVio PR deletes `wireKStep`/`wireKIterate`/
   `kleisliStep`/`kleisliIterate` as definitions (they become instances of
   `stepWith`/`iterWith`/`kleisliStep` at `m := SPMF`, modulo the
-  responder-first order flip) and derives its machine-game step lemmas
-  from `runWith_run_succ_of_output_eq_none`; verdict to be recorded at
-  VCVio landing.
+  responder-first order flip) and derives its computation-vs-responder step
+  lemma from the explicit-query `runWith_query_succ_stateT` law; verdict to be
+  recorded at VCVio landing.
 - 2026-07-11 (**B6**, fold universal property and monad-morphism naturality):
   added `FreeM.liftMHom_unique`, `FreeM.liftM_natural`, and `liftMHom_comp`, plus
   `StateT.mapHom` / `run_mapHom` and the composed `FreeM.run_liftM_mapHom` law.
@@ -631,11 +638,13 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   hidden-state realization extending `Machine (C β + p)` with `init`.
   `view` exposes the return-or-query step, `denote` is the initialized
   terminal-coalgebra behavior, and input-dependent `ofFn` together with the
-  constant-value `Pure` instance remove the arbitrary `Point p` required by a
-  separate partial readout. The one-step `viewEquiv`, injective destructor,
+  constant-value `Pure` instance construct returning computations without any
+  arbitrary choice of a visible-interface position. The one-step `viewEquiv`,
+  injective destructor,
   corecursor, and canonical `DynComputation.ofResumption` realization complete
   the coalgebraic foundation. `Resumption` also has a lawful `map` / `bind` API;
   the separately layered `FreeM.toResumption` is an injective monad hom.
   `DynComputation.ofFreeM` and `ofResumption` give canonical realizations,
   while the qualitative `Implements` predicate is preserved by synchronized
-  simulation. `IOMachine` remains unchanged here.
+  simulation. The later `Bounded` and `Termination` modules supply finite
+  execution, exact resource characterizations, and qualitative extraction.

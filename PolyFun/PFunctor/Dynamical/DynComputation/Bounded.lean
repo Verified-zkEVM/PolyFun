@@ -179,6 +179,102 @@ theorem ResolvesIn.mono {M : DynComputation.{u} p α β}
           rw [M.resolvesIn_query_succ_iff k state position next hview]
           exact fun direction => ih (h direction) (by omega)
 
+/-! ## Closed deterministic trajectories -/
+
+/-- Advance a returning computation over the closed interface `X` by one
+query. A returned state explicitly stutters: it has no query continuation to
+follow, so this total state function leaves it unchanged. -/
+def closedStutterStep (M : DynComputation.{u} X.{uA, uB} α β)
+    (state : M.State) : M.State :=
+  match M.view state with
+  | Sum.inl _ => state
+  | Sum.inr ⟨_, next⟩ => next PUnit.unit
+
+@[simp] theorem closedStutterStep_return
+    (M : DynComputation.{u} X.{uA, uB} α β) (state : M.State)
+    (value : β) (hview : M.view state = Sum.inl value) :
+    M.closedStutterStep state = state := by
+  simp [closedStutterStep, hview]
+
+theorem closedStutterStep_query
+    (M : DynComputation.{u} X.{uA, uB} α β) (state : M.State)
+    (position : X.{uA, uB}.A) (next : X.{uA, uB}.B position → M.State)
+    (hview : M.view state = Sum.inr ⟨position, next⟩) :
+    M.closedStutterStep state = next PUnit.unit := by
+  simp [closedStutterStep, hview]
+
+/-- The closed deterministic trajectory obtained by iterating
+`closedStutterStep`. It follows the unique direction at query states and
+remains at the first returned state. -/
+def closedStutterIterate (M : DynComputation.{u} X.{uA, uB} α β)
+    (state : M.State) (n : ℕ) : M.State :=
+  M.closedStutterStep^[n] state
+
+@[simp] theorem closedStutterIterate_zero
+    (M : DynComputation.{u} X.{uA, uB} α β) (state : M.State) :
+    M.closedStutterIterate state 0 = state := rfl
+
+theorem closedStutterIterate_succ
+    (M : DynComputation.{u} X.{uA, uB} α β) (state : M.State) (n : ℕ) :
+    M.closedStutterIterate state (n + 1) =
+      M.closedStutterIterate (M.closedStutterStep state) n := rfl
+
+/-- A closed deterministic computation resolves within `k` queries exactly
+when its stuttering trajectory reaches a returned state among its first `k`
+steps. The trajectory stutters only after return; those later witnesses do not
+represent additional queries. -/
+theorem resolvesIn_iff_exists_le_closedStutterIterate_return
+    (M : DynComputation.{u} X.{uA, uB} α β) (k : ℕ) (state : M.State) :
+    M.ResolvesIn k state ↔
+      ∃ j ≤ k, ∃ value, M.view (M.closedStutterIterate state j) = Sum.inl value := by
+  induction k generalizing state with
+  | zero =>
+      rw [M.resolvesIn_zero state]
+      simp only [Nat.le_zero, exists_eq_left, closedStutterIterate_zero]
+  | succ k ih =>
+      cases hview : M.view state with
+      | inl value =>
+          constructor
+          · intro _
+            exact ⟨0, by omega, value, by simpa using hview⟩
+          · intro _
+            exact M.resolvesIn_return (k + 1) state value hview
+      | inr query =>
+          rcases query with ⟨position, next⟩
+          rw [M.resolvesIn_query_succ_iff k state position next hview]
+          constructor
+          · intro hnext
+            obtain ⟨j, hj, value, hreturn⟩ := (ih (next PUnit.unit)).mp (hnext PUnit.unit)
+            exact ⟨j + 1, by omega, value, by
+              rw [M.closedStutterIterate_succ state j,
+                M.closedStutterStep_query state position next hview]
+              exact hreturn⟩
+          · rintro ⟨j, hj, value, hreturn⟩ direction
+            have hdirection : direction = PUnit.unit := Subsingleton.elim _ _
+            subst direction
+            apply (ih (next PUnit.unit)).mpr
+            cases j with
+            | zero => simp [hview] at hreturn
+            | succ j =>
+                exact ⟨j, by omega, value, by
+                  simpa only [closedStutterIterate_succ,
+                    M.closedStutterStep_query state position next hview] using hreturn⟩
+
+/-- A closed deterministic computation eventually resolves exactly when its
+stuttering trajectory reaches a returned state. -/
+theorem exists_resolvesIn_iff_exists_closedStutterIterate_return
+    (M : DynComputation.{u} X.{uA, uB} α β) (state : M.State) :
+    (∃ k, M.ResolvesIn k state) ↔
+      ∃ j value, M.view (M.closedStutterIterate state j) = Sum.inl value := by
+  constructor
+  · rintro ⟨k, hk⟩
+    obtain ⟨j, _, value, hreturn⟩ :=
+      (M.resolvesIn_iff_exists_le_closedStutterIterate_return k state).mp hk
+    exact ⟨j, value, hreturn⟩
+  · rintro ⟨j, value, hreturn⟩
+    exact ⟨j, (M.resolvesIn_iff_exists_le_closedStutterIterate_return j state).mpr
+      ⟨j, le_rfl, value, hreturn⟩⟩
+
 /-- A `some`-mapped unrolling has no unresolved leaf. This direction is fully
 constructive. -/
 theorem resolvesIn_of_unroll_eq_map_some {M : DynComputation.{u} p α β} :

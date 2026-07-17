@@ -56,22 +56,15 @@ than via custom notation, to keep elaboration predictable. Specifically:
   the lenses `q ⇆ r` (Spivak–Niu Ex 4.78); `Responder S q` and the game
   formers in `PolyFun/PFunctor/Dynamical/{Responder, Game}.lean` are
   dynamical systems over `q ⊸ X` and `q ⊸ r`.
-- Machine sequential composition `M₁ ⨟ M₂` (input `\;;`, U+2A1F) is
-  `IOMachine.seqComp`, defined in
-  [`PolyFun/PFunctor/Dynamical/IOMachine.lean`](../../PolyFun/PFunctor/Dynamical/IOMachine.lean)
-  at `infixl:75`. This is the book's diagrammatic composition order
-  (left machine runs first), the same `⨟` used throughout
-  `docs/reading/`; its intentional use is recorded as a narrow exception in
-  `scripts/nolints-style.txt`. The `\;;` translation is a PolyFun workspace
-  setting in [`.vscode/settings.json`](../../.vscode/settings.json), rather than
-  a built-in Lean input abbreviation. Because the operator is left-associative,
-  `M₁ ⨟ M₂ ⨟ M₃` parses as `(M₁ ⨟ M₂) ⨟ M₃`, whose state is
-  `(M₁.State ⊕ M₂.State) ⊕ M₃.State`. This parsing convention does not
-  assert that the two possible associations of machine composition are
-  definitionally equal. Note `∘ₗ` on lenses is in function-composition
-  order (`l ∘ₗ l'` applies `l'` first); the same `⨟` is
-  available diagrammatically on lenses (`l₁ ⨟ l₂ = l₂ ∘ₗ l₁`) and charts
-  (`c ⨟ c' = c' ∘c c`), and so on dynamical systems themselves.
+- Diagrammatic composition `f ⨟ g` (input `\;;`, U+2A1F) applies `f` first
+  and then `g`. It is available for lenses (`l₁ ⨟ l₂ = l₂ ∘ₗ l₁`), charts
+  (`c₁ ⨟ c₂ = c₂ ∘c c₁`), and lens-defined dynamical systems. The `\;;`
+  translation is a PolyFun workspace setting in
+  [`.vscode/settings.json`](../../.vscode/settings.json), rather than a
+  built-in Lean input abbreviation. Sequential returning computations use the
+  named operation `DynComputation.seqComp`; there is no overloaded machine
+  notation for it, and its associativity law is observational (`ObsEq`) rather
+  than structural equality of nested sum-state representations.
 - Qualitative program implementation `M ⊨ program` (input `\models`, U+22A8)
   abbreviates `DynComputation.Implements M program`. It is opt-in via
   `open scoped PFunctor.DynComputation`; the symbol deliberately says nothing
@@ -79,6 +72,6 @@ than via custom notation, to keep elaboration predictable. Specifically:
 
 If you find yourself wishing for new notation in PolyFun, consider
 whether the underlying name suffices first: this library leans toward
-explicit names and standard Mathlib notation, and reserves custom
-operators for the UC-composition algebra above (plus the book's `⨟`
-for machine composition).
+explicit names and standard Mathlib notation, and reserves custom operators
+for the UC-composition algebra above and the book-order composition of lenses,
+charts, and lens-defined systems.
