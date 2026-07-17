@@ -42,18 +42,6 @@ namespace SubstMonoid
 
 /-! ## The comonoid action on tensor -/
 
-/-- Cancel postcomposition with the forward lens of a lens equivalence. -/
-private theorem cancel_toLens {p : PFunctor.{pA, pB}}
-    {q : PFunctor.{qA, qB}} {r : PFunctor.{rA, rB}}
-    (e : p ≃ₗ q) {f g : Lens r p}
-    (h : e.toLens ∘ₗ f = e.toLens ∘ₗ g) : f = g := by
-  calc
-    f = e.invLens ∘ₗ (e.toLens ∘ₗ f) := by
-      rw [← Lens.comp_assoc, e.left_inv, Lens.id_comp]
-    _ = e.invLens ∘ₗ (e.toLens ∘ₗ g) :=
-      congrArg (e.invLens ∘ₗ ·) h
-    _ = g := by rw [← Lens.comp_assoc, e.left_inv, Lens.id_comp]
-
 /-- Unit comparison for the action `p ↦ p ⊗ C`, instantiated at the universe
 pair of the convolution carrier. Tensoring with `C` may enlarge the direction
 universe from `max cA mB` to `max cA cB mB`. -/
@@ -100,14 +88,6 @@ private theorem action_assoc (C : Comonoid.{cA, cB})
         ((Lens.id C.carrier ◃ₗ C.comult) ∘ₗ C.comult))
   rw [C.coassoc]
 
-/-- Uncurrying is injective because `curry` and `uncurry` are inverse. -/
-private theorem uncurry_injective
-    {p : PFunctor.{pA, pB}} {q : PFunctor.{qA, qB}}
-    {r : PFunctor.{rA, rB}} {f g : Lens p (ihom q r)}
-    (h : Lens.uncurry f = Lens.uncurry g) : f = g := by
-  rw [← Lens.curry_uncurry f, ← Lens.curry_uncurry g]
-  exact congrArg Lens.curry h
-
 /-- The unique lens from the post-action composition unit to the universe
 instance required by `M.unit`. It carries no mathematical data; it only
 compares two copies of `X`. -/
@@ -120,7 +100,10 @@ private def compositionUnitMap (_C : Comonoid.{cA, cB})
 /-! ## Raw convolution operations -/
 
 /-- The uncurried convolution unit. It discards the comonoid input with the
-counit and then applies the unit of `M`. -/
+counit and then applies the unit of `M`. Public declarations cannot depend on
+the private universe-normalization helpers above, so this body intentionally
+copies `compositionUnitMap` and `actionUnit`; the copies must remain
+definitionally identical to those helpers. -/
 def convolutionUnitRaw (C : Comonoid.{cA, cB})
     (M : SubstMonoid.{mA, mB}) :
     Lens (X.{max cA cB mA mB, max cA mB} ⊗ C.carrier)
@@ -158,7 +141,7 @@ private theorem unit_left_factor (C : Comonoid.{cA, cB})
         (Lens.Equiv.XComp.invLens ⊗ₗ Lens.id C.carrier) =
       Lens.Equiv.XComp.invLens ∘ₗ
         Lens.eval C.carrier M.carrier := by
-  apply cancel_toLens Lens.Equiv.XComp
+  apply Lens.cancel_toLens Lens.Equiv.XComp
   change
     Lens.eval C.carrier M.carrier ∘ₗ
         (Lens.id (ihom C.carrier M.carrier) ⊗ₗ
@@ -175,7 +158,7 @@ private theorem unit_right_factor (C : Comonoid.{cA, cB})
         (Lens.Equiv.compX.invLens ⊗ₗ Lens.id C.carrier) =
       Lens.Equiv.compX.invLens ∘ₗ
         Lens.eval C.carrier M.carrier := by
-  apply cancel_toLens Lens.Equiv.compX
+  apply Lens.cancel_toLens Lens.Equiv.compX
   change
     Lens.eval C.carrier M.carrier ∘ₗ
         (Lens.id (ihom C.carrier M.carrier) ⊗ₗ
@@ -262,7 +245,7 @@ def convolution (C : Comonoid.{cA, cB}) (M : SubstMonoid.{mA, mB}) :
   unit := Lens.curry (convolutionUnitRaw C M)
   mult := Lens.curry (convolutionMultRaw C M)
   unit_left := by
-    apply uncurry_injective
+    apply Lens.curryEquiv.symm.injective
     change
       convolutionMultRaw C M ∘ₗ
           (((Lens.curry (convolutionUnitRaw C M) ◃ₗ
@@ -285,7 +268,7 @@ def convolution (C : Comonoid.{cA, cB}) (M : SubstMonoid.{mA, mB}) :
         simpa only [Lens.id_comp] using congrArg
           (fun l => l ∘ₗ Lens.eval C.carrier M.carrier) M.unit_left
   unit_right := by
-    apply uncurry_injective
+    apply Lens.curryEquiv.symm.injective
     change
       convolutionMultRaw C M ∘ₗ
           (((Lens.id (ihom C.carrier M.carrier) ◃ₗ
@@ -308,7 +291,7 @@ def convolution (C : Comonoid.{cA, cB}) (M : SubstMonoid.{mA, mB}) :
         simpa only [Lens.id_comp] using congrArg
           (fun l => l ∘ₗ Lens.eval C.carrier M.carrier) M.unit_right
   assoc := by
-    apply uncurry_injective
+    apply Lens.curryEquiv.symm.injective
     change
       convolutionMultRaw C M ∘ₗ
           ((Lens.curry (convolutionMultRaw C M) ◃ₗ
