@@ -61,7 +61,7 @@ controller-path contribution of each move is exactly
 -/
 def currentStep {Party : Type u} [DecidableEq Party] (st : State Party) :
     Step Party (State Party) :=
-  { spec := .node (Front st.spec) (fun _ => .done)
+  { tree := .node (Front st.spec) (fun _ => .done)
     semantics :=
       ⟨{ controllers := Control.controllers st.control
          views := fun me => Current.view me st.control st.profile },
@@ -73,19 +73,19 @@ def currentStep {Party : Type u} [DecidableEq Party] (st : State Party) :
             profile := Profile.residual st.profile event } }
 
 /--
-`eventOfTranscript st tr` forgets the trivial `done` tail of the process step
-transcript and recovers the scheduled structural frontier event.
+`eventOfPath st tr` forgets the trivial `done` tail of the process step
+path and recovers the scheduled structural frontier event.
 -/
-def eventOfTranscript {Party : Type u} [DecidableEq Party] (st : State Party) :
-    PFunctor.FreeM.Path st.currentStep.spec → Front st.spec
+def eventOfPath {Party : Type u} [DecidableEq Party] (st : State Party) :
+    PFunctor.FreeM.Path st.currentStep.tree → Front st.spec
   | ⟨event, _⟩ => event
 
 /--
-`transcriptOfEvent st event` re-expresses a structural frontier event as the
-corresponding one-step process transcript.
+`pathOfEvent st event` re-expresses a structural frontier event as the
+corresponding one-step process path.
 -/
-def transcriptOfEvent {Party : Type u} [DecidableEq Party] (st : State Party) :
-    Front st.spec → PFunctor.FreeM.Path st.currentStep.spec
+def pathOfEvent {Party : Type u} [DecidableEq Party] (st : State Party) :
+    Front st.spec → PFunctor.FreeM.Path st.currentStep.tree
   | event => ⟨event, PUnit.unit⟩
 
 end State
@@ -117,10 +117,10 @@ def ofLinearization {Party : Type u} [DecidableEq Party] :
       Concurrent.Trace spec →
       Process.Trace (toProcess (Party := Party)) (init control profile)
   | _, control, profile, .done h =>
-      .done (fun tr => h ((init control profile).eventOfTranscript tr))
+      .done (fun tr => h ((init control profile).eventOfPath tr))
   | _, control, profile, .step event tail =>
       .step
-        ((init control profile).transcriptOfEvent event)
+        ((init control profile).pathOfEvent event)
         (ofLinearization (Control.residual control event) (Profile.residual profile event) tail)
 
 end Tree

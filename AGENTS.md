@@ -12,7 +12,7 @@ interaction framework over a polynomial substrate. Built on Mathlib.
 3. To gauge interaction trees, start with
    [`PolyFun/ITree/Basic.lean`](PolyFun/ITree/Basic.lean).
 4. To gauge the protocol-flavored interaction framework, start with
-   [`PolyFun/Interaction/Basic/Spec.lean`](PolyFun/Interaction/Basic/Spec.lean)
+   [`PolyFun/Interaction/Basic/TypeTree.lean`](PolyFun/Interaction/Basic/TypeTree.lean)
    and [`PolyFun/Interaction/Basic/Decoration.lean`](PolyFun/Interaction/Basic/Decoration.lean).
 
 `AGENTS.md` is the canonical guide. `CLAUDE.md` is a symlink to this file.
@@ -38,8 +38,8 @@ that emerged from the cryptographic-protocols formalization in
    polynomial functor, with strong / weak bisimulation, simulation,
    handlers, and event signatures.
 3. **Generic interaction framework** for sequential, two-party,
-   multi-party, and concurrent interaction over a `Spec` polynomial
-   substrate (`Spec := PFunctor.FreeM Spec.basePFunctor PUnit`), with
+   multi-party, and concurrent interaction over a `TypeTree` polynomial
+   substrate (`TypeTree := PFunctor.FreeM TypeTree.basePFunctor PUnit`), with
    structural decoration, syntax / strategy / execution lenses, and an
    open-process layer for compositional reasoning. Hancock-Setzer
    recursion over interaction interfaces.
@@ -59,10 +59,11 @@ and depend on this library.
   and their indexed free monads. `Free/Basic.lean` holds the single-index
   `FreeM` (state-polymorphic continuations); `Free/Indexed.lean` holds the
   two-index `FreeM₂` carrying a `LawfulIndexedMonad` instance.
-- `PolyFun/ITree/`: coinductive interaction trees, bisimulation,
-  simulation, handlers, event signatures.
+- `PolyFun/ITree/`: coinductive interaction trees, same-signature weak
+  bisimulation, cross-signature relational trees (`Bisim/CrossSignature.lean`),
+  simulation, handlers, event signatures, and finite observation traces.
 - `PolyFun/Interaction/`: protocol-flavored generic interaction framework.
-  - `Basic/`: `Spec`, node contexts, decorations, syntax / shape /
+  - `Basic/`: `TypeTree`, node contexts, decorations, syntax / shape /
     interaction, strategies, append / replicate / state-chain
     composition.
   - `TwoParty/`: sender / receiver roles, paired strategies, refinement,
@@ -78,6 +79,8 @@ and depend on this library.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
   algebra, monad iter / hom, lawful re-exports).
+- `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
+  silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
 - `PolyFunTest/`: separate test / worked-example library (glob
   `PolyFunTest.+`), built by `lake test` and kept out of the `lake lint`
@@ -120,19 +123,19 @@ Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
   → IPFunctor/Notation, IPFunctor/Notation/{Indexed, Deterministic}
 
-Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation}
+Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   (free-standing helpers, depended on by both PFunctor and ITree;
    Control/Bisimulation is the generic LTS bisimulation theory)
 
 PFunctor/Free → ITree/{Basic, Construct, Handler, Rec,
-                       Events, Sim, Bisim}
+                       Events, Sim, Bisim, Trace}
 PFunctor/Dynamical + ITree/Basic → ITree/Unfold
 
-PFunctor/Free + Control → Interaction/Basic/{Spec, Node, Decoration,
+PFunctor/Free + Control → Interaction/Basic/{TypeTree, Node, Decoration,
                             Syntax, Shape, Interaction, Strategy,
                             Append, Replicate, StateChain, Chain,
                             Telescope, Sampler, MonadDecoration,
-                            BundledMonad, Ownership, SpecFintype}
+                            BundledMonad, Ownership, TypeTreeFintype}
 
 Interaction/Basic → Interaction/{TwoParty, Multiparty}
 Interaction/Basic + PFunctor/Dynamical → Interaction/Concurrent
@@ -190,7 +193,7 @@ attribution policy.
 
 Follow Mathlib convention: `{head_symbol}_{operation}_{rhs_form}`.
 Examples: `FreeM.bind_pure`, `Decoration.map_comp`, `ITree.bisim_bind`.
-Structures use UpperCamelCase: `PFunctor`, `Spec`, `Decoration`,
+Structures use UpperCamelCase: `PFunctor`, `TypeTree`, `Decoration`,
 `SyntaxOver`, `InteractionOver`, `ITree.Shape`.
 
 ## Critical Gotchas
@@ -203,7 +206,7 @@ Structures use UpperCamelCase: `PFunctor`, `Spec`, `Decoration`,
    or concrete-scheme algebra. Parameterize over an abstract monad
    instead. Cryptographic content belongs in
    [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio).
-3. **`Spec.done` and `Spec.node` are `@[match_pattern, reducible]`**
+3. **`TypeTree.done` and `TypeTree.node` are `@[match_pattern, reducible]`**
    wrappers over `PFunctor.FreeM.{pure, liftBind}`. Pattern matching on
    them works transparently; `rfl` against the polynomial substrate
    also works. Do not break either invariant when refactoring.
@@ -246,7 +249,7 @@ listed declaration-by-declaration in `scripts/nolints.json`; regenerate that
 file with the Batteries `runLinter --update` driver when this surface changes,
 and review every new entry rather than treating the file as a blanket waiver.
 
-Lean toolchain and Mathlib stay in sync (both currently `v4.32.0`).
+Lean toolchain, Mathlib, and cslib stay in sync (all currently `v4.32.0`).
 Files should stay under 1500 lines.
 
 ## Further Reading
@@ -268,7 +271,7 @@ too specific or too changeable to keep at the repo root.
   polynomial functors and their indexed free monads.
 - [`docs/wiki/itree.md`](docs/wiki/itree.md): interaction trees layer.
 - [`docs/wiki/interaction.md`](docs/wiki/interaction.md): generic interaction
-  framework (`Spec`, two-party, multiparty, concurrent, UC).
+  framework (`TypeTree`, two-party, multiparty, concurrent, UC).
 - [`docs/wiki/notation.md`](docs/wiki/notation.md): notation reference (UC
   composition operators).
 - [`docs/wiki/gotchas.md`](docs/wiki/gotchas.md): recurring traps and

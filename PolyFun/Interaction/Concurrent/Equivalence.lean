@@ -47,8 +47,8 @@ preserving the current controlling party chosen at each executed step.
 abbrev Controller {Party : Type u}
     (left right : Process.SafetySpec Party) :=
   Refinement.MutualSafetyRefinement left right
-    Observation.Process.TranscriptRel.byController
-    (Observation.Process.TranscriptRel.byController
+    Observation.Process.StepRel.byController
+    (Observation.Process.StepRel.byController
       (left := right.toProcess) (right := left.toProcess))
 
 /--
@@ -58,36 +58,36 @@ preserving the full controller path of each executed step.
 abbrev ControllerPath {Party : Type u}
     (left right : Process.SafetySpec Party) :=
   Refinement.MutualSafetyRefinement left right
-    Observation.Process.TranscriptRel.byPath
-    (Observation.Process.TranscriptRel.byPath
+    Observation.Process.StepRel.byPath
+    (Observation.Process.StepRel.byPath
       (left := right.toProcess) (right := left.toProcess))
 
 /--
 `Trace left right eventLeft eventRight` means that `left` and `right` are
 mutually safety-refining while preserving the stable external event label attached to each
-complete step transcript.
+complete step path.
 -/
 abbrev Trace {Party : Type u} {Event : Type w}
     (left right : Process.SafetySpec Party)
     (eventLeft : left.toProcess.EventMap Event)
     (eventRight : right.toProcess.EventMap Event) :=
   Refinement.MutualSafetyRefinement left right
-    (Observation.Process.TranscriptRel.byEvent eventLeft eventRight)
-    (Observation.Process.TranscriptRel.byEvent
+    (Observation.Process.StepRel.byEvent eventLeft eventRight)
+    (Observation.Process.StepRel.byEvent
       (left := right.toProcess) (right := left.toProcess) eventRight eventLeft)
 
 /--
 `Ticket left right ticketLeft ticketRight` means that `left` and `right` are
 mutually safety-refining while preserving the stable tickets attached to complete step
-transcripts.
+paths.
 -/
 abbrev Ticket {Party : Type u} {TicketTy : Type w}
     (left right : Process.SafetySpec Party)
     (ticketLeft : left.toProcess.Tickets TicketTy)
     (ticketRight : right.toProcess.Tickets TicketTy) :=
   Refinement.MutualSafetyRefinement left right
-    (Observation.Process.TranscriptRel.byTicket ticketLeft ticketRight)
-    (Observation.Process.TranscriptRel.byTicket
+    (Observation.Process.StepRel.byTicket ticketLeft ticketRight)
+    (Observation.Process.StepRel.byTicket
       (left := right.toProcess) (right := left.toProcess) ticketRight ticketLeft)
 
 /--
@@ -99,8 +99,8 @@ abbrev Observation {Party : Type u} [DecidableEq Party]
     (me : Party)
     (left right : Process.SafetySpec Party) :=
   Refinement.MutualSafetyRefinement left right
-    (Observation.Process.TranscriptRel.byObservation me)
-    (Observation.Process.TranscriptRel.byObservation
+    (Observation.Process.StepRel.byObservation me)
+    (Observation.Process.StepRel.byObservation
       (left := right.toProcess) (right := left.toProcess) me)
 
 namespace Controller
@@ -110,8 +110,8 @@ namespace Controller
 def refl {Party : Type u} (system : Process.SafetySpec Party) :
     Controller system system :=
   PFunctor.DynSystem.MutualSafetyRefinement.refl system
-    Observation.Process.TranscriptRel.byController
-    Observation.Process.TranscriptRel.byController
+    Observation.Process.StepRel.byController
+    Observation.Process.StepRel.byController
     (fun _ => rfl) (fun _ => rfl)
 
 /-- Controller equivalence is symmetric. -/
@@ -158,8 +158,8 @@ namespace ControllerPath
 def refl {Party : Type u} (system : Process.SafetySpec Party) :
     ControllerPath system system :=
   PFunctor.DynSystem.MutualSafetyRefinement.refl system
-    Observation.Process.TranscriptRel.byPath
-    Observation.Process.TranscriptRel.byPath
+    Observation.Process.StepRel.byPath
+    Observation.Process.StepRel.byPath
     (fun _ => rfl) (fun _ => rfl)
 
 /-- Controller-path equivalence is symmetric. -/
@@ -207,8 +207,8 @@ def refl {Party : Type u} {Event : Type w}
     (system : Process.SafetySpec Party)
     (event : system.toProcess.EventMap Event) : Trace system system event event :=
   PFunctor.DynSystem.MutualSafetyRefinement.refl system
-    (Observation.Process.TranscriptRel.byEvent event event)
-    (Observation.Process.TranscriptRel.byEvent event event)
+    (Observation.Process.StepRel.byEvent event event)
+    (Observation.Process.StepRel.byEvent event event)
     (fun _ => rfl) (fun _ => rfl)
 
 /-- Trace equivalence is symmetric. -/
@@ -267,8 +267,8 @@ def refl {Party : Type u} {TicketTy : Type w}
     (system : Process.SafetySpec Party)
     (ticket : system.toProcess.Tickets TicketTy) : Ticket system system ticket ticket :=
   PFunctor.DynSystem.MutualSafetyRefinement.refl system
-    (Observation.Process.TranscriptRel.byTicket ticket ticket)
-    (Observation.Process.TranscriptRel.byTicket ticket ticket)
+    (Observation.Process.StepRel.byTicket ticket ticket)
+    (Observation.Process.StepRel.byTicket ticket ticket)
     (fun _ => rfl) (fun _ => rfl)
 
 /-- Ticket equivalence is symmetric. -/
@@ -326,8 +326,8 @@ namespace Observation
 def refl {Party : Type u} [DecidableEq Party] (me : Party)
     (system : Process.SafetySpec Party) : Observation me system system :=
   PFunctor.DynSystem.MutualSafetyRefinement.refl system
-    (_root_.Interaction.Concurrent.Observation.Process.TranscriptRel.byObservation me)
-    (_root_.Interaction.Concurrent.Observation.Process.TranscriptRel.byObservation me)
+    (_root_.Interaction.Concurrent.Observation.Process.StepRel.byObservation me)
+    (_root_.Interaction.Concurrent.Observation.Process.StepRel.byObservation me)
     (fun _ => rfl) (fun _ => rfl)
 
 /-- Observational equivalence for one party is symmetric. -/

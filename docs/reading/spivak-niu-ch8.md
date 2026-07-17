@@ -144,7 +144,7 @@ trace-equivalence directive, revisited in §8.3 below).
 2. **C4 resolution shape.** The true theorem is `U ⊣ 𝒯_₋` between Cat♯
    and Poly (Thm 8.45) — *not* a monad-comonad adjunction "FreeM ⊣
    Cofree". The honest companion is Libkind–Spivak's module structure
-   (EPTCS 429). Fix `Interaction/Basic/Spec.lean:83` + `REFERENCES.md`
+   (EPTCS 429). Fix `Interaction/Basic/TypeTree.lean:83` + `REFERENCES.md`
    wording accordingly when C3/C4 land (corrections item 1).
 3. **A-ticket consumers multiplied.** A3 (factorization): consumed by
    Prop 7.109, Prop 8.66/8.68/8.69, Thm 8.102(3≅4), Ex 8.94. A9

@@ -147,7 +147,7 @@ Replaces the over-claimed `FreeM ⊣ Cofree` citation with the true theorems
 (`U ⊣ 𝒯_₋`, Thm 8.45; the free/cofree relationship is Libkind–Spivak's module
 structure), so paper 2 states the "programs run on behaviors" pairing as
 something we actually proved. Resolves `corrections.md` item 1
-(`Interaction/Basic/Spec.lean:83`, `REFERENCES.md:65`).
+(`Interaction/Basic/TypeTree.lean:83`, `REFERENCES.md:65`).
 
 ## Phase D — the UC bet (payoff is a paper, not deleted lines)
 

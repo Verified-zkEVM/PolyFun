@@ -73,6 +73,29 @@ in turn is reducibly `List (Idx P)`.  This is the universal carrier for
 
 namespace TraceList
 
+/-- Every event in a trace carries a direction allowed at its position.
+
+The allowed directions remain fiber-indexed: checking an event `⟨a, b⟩`
+uses `allowed a`, so no equality casts or decidable equality on positions are
+needed. -/
+def DirectionsWithin {P : PFunctor.{uA, uB}}
+    (allowed : (a : P.A) → Set (P.B a)) (events : TraceList P) : Prop :=
+  ∀ event ∈ events, event.2 ∈ allowed event.1
+
+@[simp]
+theorem directionsWithin_nil {P : PFunctor.{uA, uB}}
+    (allowed : (a : P.A) → Set (P.B a)) :
+    DirectionsWithin allowed ([] : TraceList P) :=
+  fun _ event_mem => absurd event_mem List.not_mem_nil
+
+@[simp]
+theorem directionsWithin_cons {P : PFunctor.{uA, uB}}
+    (allowed : (a : P.A) → Set (P.B a)) (event : P.Idx)
+    (events : TraceList P) :
+    DirectionsWithin allowed (event :: events) ↔
+      event.2 ∈ allowed event.1 ∧ DirectionsWithin allowed events :=
+  List.forall_mem_cons
+
 /-- Number of events at a given position in an erased execution trace. -/
 def occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (target : P.A) (events : TraceList P) : Nat :=

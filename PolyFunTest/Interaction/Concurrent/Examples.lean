@@ -213,18 +213,18 @@ example :
 
 example :
     (Step.observe Party.adv inFlightState.currentStep
-      (inFlightState.transcriptOfEvent (.left (.move (7, true))))).length = 1 := rfl
+      (inFlightState.pathOfEvent (.left (.move (7, true))))).length = 1 := rfl
 
 def afterDeliveryState : Tree.State Party :=
   Tree.init afterDelivery afterDeliveryProfile
 
 example :
     (Step.observe Party.alice inFlightState.currentStep
-      (inFlightState.transcriptOfEvent (.left (.move (7, true))))).length = 1 := rfl
+      (inFlightState.pathOfEvent (.left (.move (7, true))))).length = 1 := rfl
 
 example :
     ((Step.observe Party.bob afterDeliveryState.currentStep
-      (afterDeliveryState.transcriptOfEvent (.right (.move false)))).length = 1) := rfl
+      (afterDeliveryState.pathOfEvent (.right (.move false)))).length = 1) := rfl
 
 example :
     (Process.ObservedTrace.ofTrace Party.bob inFlightProcess deliveryThenAckExec).length =
@@ -255,14 +255,14 @@ example :
 
 example :
     ((Step.observe Party.adv inFlightState.currentStep
-      (inFlightState.transcriptOfEvent (.right (.move true)))).length = 1) := rfl
+      (inFlightState.pathOfEvent (.right (.move true)))).length = 1) := rfl
 
 def afterAckState : Tree.State Party :=
   Tree.init afterAck afterAckProfile
 
 example :
     (Step.observe Party.adv afterAckState.currentStep
-      (afterAckState.transcriptOfEvent (.left (.move (9, false))))).length = 1 := rfl
+      (afterAckState.pathOfEvent (.left (.move (9, false))))).length = 1 := rfl
 
 def deliveryEvent : Front inFlight :=
   .left (.move (4, true))
@@ -393,7 +393,7 @@ def loopNode : NodeProfile Party Bool where
 and refinement. -/
 def loopProcess : Process PUnit Party :=
   ProcessOver.ofStep PUnit fun _ =>
-    { spec := .node Bool (fun _ => .done)
+    { tree := .node Bool (fun _ => .done)
       semantics := ⟨loopNode, fun _ => PUnit.unit⟩
       next := fun _ => PUnit.unit }
 
@@ -458,7 +458,7 @@ def loopSystem : Process.SafetySpec Party where
 /-- The identity simulation on `loopSystem`, preserving the boolean ticket. -/
 def loopSim :
     Refinement.SafetyRefinement loopSystem loopSystem
-      (Observation.Process.TranscriptRel.byTicket
+      (Observation.Process.StepRel.byTicket
         loopTicketed.ticket loopTicketed.ticket) where
   stateRel _ _ := True
   init p hp := ⟨p, hp, trivial⟩
@@ -476,7 +476,7 @@ noncomputable def loopMappedRun : Process.Run loopSystem.toProcess :=
 observations. -/
 def loopObsSimBob :
     Refinement.SafetyRefinement loopSystem loopSystem
-      (Observation.Process.TranscriptRel.byObservation Party.bob) where
+      (Observation.Process.StepRel.byObservation Party.bob) where
   stateRel _ _ := True
   init p hp := ⟨p, hp, trivial⟩
   assumptions _ _ := trivial
@@ -492,9 +492,9 @@ noncomputable def loopObsMappedRunBob : Process.Run loopSystem.toProcess :=
 /-- The identity ticket mutual safety refinement on `loopSystem`. -/
 def loopTicketMutual :
     Refinement.MutualSafetyRefinement loopSystem loopSystem
-      (Observation.Process.TranscriptRel.byTicket
+      (Observation.Process.StepRel.byTicket
         loopTicketed.ticket loopTicketed.ticket)
-      (Observation.Process.TranscriptRel.byTicket
+      (Observation.Process.StepRel.byTicket
         loopTicketed.ticket loopTicketed.ticket) where
   forth := loopSim
   back := loopSim
@@ -502,8 +502,8 @@ def loopTicketMutual :
 /-- The identity observational mutual safety refinement on `loopSystem` for Bob. -/
 def loopObsMutualBob :
     Refinement.MutualSafetyRefinement loopSystem loopSystem
-      (Observation.Process.TranscriptRel.byObservation Party.bob)
-      (Observation.Process.TranscriptRel.byObservation Party.bob) where
+      (Observation.Process.StepRel.byObservation Party.bob)
+      (Observation.Process.StepRel.byObservation Party.bob) where
   forth := loopObsSimBob
   back := loopObsSimBob
 
@@ -533,9 +533,9 @@ example : Equivalence.Observation Party.bob loopSystem loopSystem :=
 example : loopMappedRun.state 4 = PUnit.unit := rfl
 
 example :
-    Observation.Process.TranscriptRel.byTicket loopTicketed.ticket loopTicketed.ticket
-      ⟨trueRun.state 3, trueRun.transcript 3⟩
-      ⟨loopMappedRun.state 3, loopMappedRun.transcript 3⟩ := by
+    Observation.Process.StepRel.byTicket loopTicketed.ticket loopTicketed.ticket
+      ⟨trueRun.state 3, trueRun.path 3⟩
+      ⟨loopMappedRun.state 3, loopMappedRun.path 3⟩ := by
   exact loopSim.match_mapRun (stSpec := PUnit.unit) trueRun trivial 3
 
 example : Process.SafetySpec.Safe loopSystem loopMappedRun := by
@@ -572,10 +572,10 @@ example :
 
 example :
     Observation.Process.Run.Rel
-      (Observation.Process.TranscriptRel.byTicket loopTicketed.ticket loopTicketed.ticket)
+      (Observation.Process.StepRel.byTicket loopTicketed.ticket loopTicketed.ticket)
       trueRun loopMappedRun := by
   exact Observation.Process.Run.rel_of_pointwise
-    (Observation.Process.TranscriptRel.byTicket loopTicketed.ticket loopTicketed.ticket)
+    (Observation.Process.StepRel.byTicket loopTicketed.ticket loopTicketed.ticket)
     trueRun loopMappedRun
     (loopSim.match_mapRun (stSpec := PUnit.unit) trueRun trivial)
 
@@ -655,7 +655,7 @@ def counterProfile :
 def counterProcess : Process ℕ Party := counterMachine.toProcess counterProfile
 
 example :
-    (counterProcess.step (3 : ℕ)).spec
+    (counterProcess.step (3 : ℕ)).tree
       = .node (counterMachine.Enabled (3 : ℕ)) (fun _ => .done) := rfl
 
 example : (counterProcess.step (3 : ℕ)).next ⟨true, PUnit.unit⟩ = (4 : ℕ) := rfl

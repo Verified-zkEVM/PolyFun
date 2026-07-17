@@ -50,11 +50,11 @@ absence of full transitivity.
 
 @[expose] public section
 
-universe u
+universe uFA uFB uα uβ uγ
 
 namespace ITree
 
-variable {F : PFunctor.{u, u}} {α : Type u}
+variable {F : PFunctor.{uFA, uFB}} {α : Type uα} {β : Type uβ}
 
 /-! ### `Bisim` is an equivalence -/
 
@@ -84,7 +84,7 @@ theorem rigid_of_query {t t' : ITree F α} (a : F.A) (c : F.B a → ITree F α)
 /-- Determinism of τ-stripping on a step-headed tree: a stripping from
 a step-headed tree either does nothing or proceeds through the unique
 step continuation. -/
-theorem step_cases {t t' : ITree F α} (c : PUnit.{u + 1} → ITree F α)
+theorem step_cases {t t' : ITree F α} (c : PUnit.{uFB + 1} → ITree F α)
     (ht : shape' t = ⟨.step, c⟩) (h : TauSteps t t') :
     t' = t ∨ TauSteps (c PUnit.unit) t' := by
   cases h with
@@ -94,11 +94,484 @@ theorem step_cases {t t' : ITree F α} (c : PUnit.{u + 1} → ITree F α)
       subst hcc
       exact Or.inr hr
 
+private theorem diverge_target_eq_aux {source t : ITree F α}
+    (hsource : source = diverge) (h : TauSteps source t) :
+    t = diverge := by
+  exact TauSteps.rec
+    (motive := fun initial target _ =>
+      initial = diverge → target = diverge)
+    (fun _ hs => hs)
+    (fun {t t'} c hstep (_ : TauSteps (c PUnit.unit) t') ih hs => by
+      subst t
+      have hc : c = fun _ => diverge :=
+        TauSteps.cont_eq hstep shape'_diverge
+      subst c
+      exact ih rfl)
+    h hsource
+
+/-- Every finite silent stripping of `diverge` still ends at `diverge`. -/
+theorem diverge_target_eq {t : ITree F α}
+    (h : TauSteps (diverge (F := F) (α := α)) t) :
+    t = diverge :=
+  diverge_target_eq_aux rfl h
+
 end TauSteps
+
+/-! ### Basic relational laws -/
+
+namespace WeakBisimRel
+
+/-- Pure trees are relationally weakly bisimilar exactly when their return
+values are related. -/
+theorem pure {RR : α → β → Prop} {r : α} {s : β} (h : RR r s) :
+    WeakBisimRel RR (pure (F := F) r) (pure (F := F) s) := by
+  refine fold ⟨ITree.pure r, ITree.pure s, .refl _, .refl _, ?_⟩
+  exact MatchRel.pure r s h (shape'_pure r) (shape'_pure s)
+
+/-- Relational reflexivity, assuming the return relation is reflexive. -/
+theorem refl {RR : α → α → Prop} (hRR : ∀ r, RR r r) (t : ITree F α) :
+    WeakBisimRel RR t t := by
+  refine coinduct RR Eq ?_ rfl
+  rintro a b rfl
+  rcases hsh : shape' a with ⟨sh, c⟩
+  refine ⟨a, a, .refl _, .refl _, ?_⟩
+  cases sh with
+  | pure r =>
+      refine MatchRel.pure r r (hRR r) ?_ ?_
+      · rw [hsh]; congr 1; funext z; exact z.elim
+      · rw [hsh]; congr 1; funext z; exact z.elim
+  | step => exact MatchRel.tau c c hsh hsh rfl
+  | query a => exact MatchRel.query a c c hsh hsh (fun _ => rfl)
+
+/-- Swap a relational weak bisimulation and reverse its return relation. -/
+theorem symm {RR : α → β → Prop} {t : ITree F α} {s : ITree F β}
+    (h : WeakBisimRel RR t s) :
+    WeakBisimRel (fun b a => RR a b) s t := by
+  obtain ⟨R, hcl, hR⟩ := h
+  refine coinduct (fun b a => RR a b) (fun a b => R b a) ?_ hR
+  intro a b hab
+  obtain ⟨b', a', hb, ha, hm⟩ := hcl _ _ hab
+  exact ⟨a', b', ha, hb, MatchRel.swap hm⟩
+
+/-- Prepending finitely many silent steps on the left preserves relational
+weak bisimulation. -/
+theorem absorb_tauSteps_left {RR : α → β → Prop}
+    {t t' : ITree F α} {s : ITree F β}
+    (h : TauSteps t t') (hw : WeakBisimRel RR t' s) : WeakBisimRel RR t s := by
+  refine coinduct RR
+    (fun x y => ∃ x', TauSteps x x' ∧ WeakBisimRel RR x' y) ?_ ⟨t', h, hw⟩
+  rintro a b ⟨a', haa', hab⟩
+  obtain ⟨a'', b', ha'a'', hbb', M⟩ := hab.dest
+  refine ⟨a'', b', haa'.trans ha'a'', hbb', M.mono ?_⟩
+  intro x y hxy
+  exact ⟨x, .refl _, hxy⟩
+
+/-- Appending finitely many silent steps before the right endpoint preserves
+relational weak bisimulation. -/
+theorem of_tauSteps_right {RR : α → β → Prop}
+    {t : ITree F α} {s s' : ITree F β}
+    (h : WeakBisimRel RR t s') (hstrip : TauSteps s s') :
+    WeakBisimRel RR t s := by
+  refine coinduct RR
+    (fun x y => ∃ y', TauSteps y y' ∧ WeakBisimRel RR x y') ?_ ⟨s', hstrip, h⟩
+  rintro a b ⟨b', hbb', hab'⟩
+  obtain ⟨a', b'', ha, hb, M⟩ := hab'.dest
+  exact ⟨a', b'', ha, hbb'.trans hb,
+    M.mono (fun _ y hxy => ⟨y, .refl _, hxy⟩)⟩
+
+/-- A leading silent step on the left is observationally irrelevant. -/
+theorem step_left {RR : α → β → Prop} {t : ITree F α} {s : ITree F β}
+    (h : WeakBisimRel RR t s) : WeakBisimRel RR (step t) s :=
+  absorb_tauSteps_left (TauSteps.one (fun _ => t) (shape'_step t)) h
+
+/-- A leading silent step on the right is observationally irrelevant. -/
+theorem step_right {RR : α → β → Prop} {t : ITree F α} {s : ITree F β}
+    (h : WeakBisimRel RR t s) : WeakBisimRel RR t (step s) :=
+  of_tauSteps_right h (TauSteps.one (fun _ => s) (shape'_step s))
+
+/-- Paired leading silent steps preserve relational weak bisimulation. -/
+theorem step {RR : α → β → Prop} {t : ITree F α} {s : ITree F β}
+    (h : WeakBisimRel RR t s) : WeakBisimRel RR (ITree.step t) (ITree.step s) :=
+  (step_left h).step_right
+
+/-- Strip one silent step from the right endpoint of a relational weak
+bisimulation. This is the direction not supplied directly by the post-fixed
+point constructors and is the key to relational composition. -/
+theorem step_absorb_right {RR : α → β → Prop}
+    {t : ITree F α} {s : ITree F β}
+    (c : PUnit.{uFB + 1} → ITree F β) (h : WeakBisimRel RR t s)
+    (hstep : shape' s = ⟨.step, c⟩) :
+    WeakBisimRel RR t (c PUnit.unit) := by
+  refine coinduct RR
+    (fun x z => WeakBisimRel RR x z ∨
+      ∃ (s' : ITree F β) (c' : PUnit.{uFB + 1} → ITree F β),
+        WeakBisimRel RR x s' ∧ shape' s' = ⟨.step, c'⟩ ∧ z = c' PUnit.unit)
+    ?_ (Or.inr ⟨s, c, h, hstep, rfl⟩)
+  intro a b hab
+  rcases hab with hab | ⟨s', c', hab, hstep', rfl⟩
+  · obtain ⟨a', b', ha, hb, M⟩ := hab.dest
+    exact ⟨a', b', ha, hb, M.mono (fun _ _ hxy => Or.inl hxy)⟩
+  · obtain ⟨a', s₁, ha, hs, M⟩ := hab.dest
+    rcases TauSteps.step_cases c' hstep' hs with hs_eq | hs_strict
+    · subst hs_eq
+      cases M with
+      | pure _ _ _ _ hs_bad => exfalso; rw [hstep'] at hs_bad; cases hs_bad
+      | query _ _ _ _ hs_bad _ => exfalso; rw [hstep'] at hs_bad; cases hs_bad
+      | tau ct cs ht_a hs_a hr =>
+          have hcc : cs = c' := TauSteps.cont_eq hs_a hstep'
+          subst hcc
+          rcases hsh : shape' (cs PUnit.unit) with ⟨sh, cc⟩
+          cases sh with
+          | pure r =>
+              have hsh' : shape' (cs PUnit.unit) =
+                  ⟨Shape.pure r, PEmpty.elim⟩ := by
+                rw [hsh]
+                congr 1
+                funext z
+                exact z.elim
+              obtain ⟨X, Y, hX, hY, MXY⟩ := hr.dest
+              have hYeq : Y = cs PUnit.unit :=
+                TauSteps.rigid_of_pure r hsh' hY
+              subst hYeq
+              cases MXY with
+              | pure x y hxy hX' hY' =>
+                  have heq : (⟨Shape.pure y, PEmpty.elim⟩ :
+                      (Poly F β).Obj (ITree F β)) =
+                      ⟨Shape.pure r, PEmpty.elim⟩ := hY'.symm.trans hsh'
+                  have hyr : y = r := Shape.pure.inj (Sigma.mk.inj heq).1
+                  subst y
+                  refine ⟨X, cs PUnit.unit,
+                    ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩
+                  exact MatchRel.pure x r hxy hX' hsh'
+              | query _ _ _ _ hY' _ =>
+                  exfalso; rw [hY'] at hsh'; cases hsh'
+              | tau _ _ _ hY' _ =>
+                  exfalso; rw [hY'] at hsh'; cases hsh'
+          | step =>
+              refine ⟨a', cs PUnit.unit, ha, .refl _, ?_⟩
+              refine MatchRel.tau ct cc ht_a hsh ?_
+              exact Or.inr ⟨cs PUnit.unit, cc, hr, hsh, rfl⟩
+          | query q =>
+              obtain ⟨X, Y, hX, hY, MXY⟩ := hr.dest
+              have hYeq : Y = cs PUnit.unit :=
+                TauSteps.rigid_of_query q cc hsh hY
+              subst hYeq
+              cases MXY with
+              | pure _ _ _ _ hY' =>
+                  exfalso; rw [hY'] at hsh; cases hsh
+              | query q' cX cY hX' hY' hcont =>
+                  have heq : (⟨Shape.query q', cY⟩ :
+                      (Poly F β).Obj (ITree F β)) =
+                      ⟨Shape.query q, cc⟩ := hY'.symm.trans hsh
+                  have hqq : q' = q := Shape.query.inj (Sigma.mk.inj heq).1
+                  subst hqq
+                  have hcc : cY = cc := eq_of_heq (Sigma.mk.inj heq).2
+                  subst hcc
+                  refine ⟨X, cs PUnit.unit,
+                    ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩
+                  exact MatchRel.query q' cX cY hX' hsh
+                    (fun reply => Or.inl (hcont reply))
+              | tau _ _ _ hY' _ =>
+                  exfalso; rw [hY'] at hsh; cases hsh
+    · exact ⟨a', s₁, ha, hs_strict,
+        M.mono (fun _ _ hxy => Or.inl hxy)⟩
+
+/-- Strip finitely many silent steps from the right endpoint. -/
+theorem absorb_tauSteps_right {RR : α → β → Prop}
+    {t : ITree F α} {s s' : ITree F β}
+    (h : WeakBisimRel RR t s) (hstrip : TauSteps s s') :
+    WeakBisimRel RR t s' := by
+  induction hstrip generalizing t with
+  | refl _ => exact h
+  | @step _ _ c ht hr ih => exact ih (step_absorb_right c h ht)
+
+/-- Strip finitely many silent steps from the left endpoint. -/
+theorem tauSteps_left {RR : α → β → Prop}
+    {t t' : ITree F α} {s : ITree F β}
+    (h : WeakBisimRel RR t s) (hstrip : TauSteps t t') :
+    WeakBisimRel RR t' s := by
+  have hs := absorb_tauSteps_right (RR := fun y x => RR x y) h.symm hstrip
+  exact hs.symm
+
+end WeakBisimRel
+
+/-! ### Relational head alignment -/
+
+namespace MatchRel
+
+/-- Advance the right endpoint of a relational head match through silent
+steps, absorbing those steps into its continuation relation. -/
+theorem advance_right {RR : α → β → Prop}
+    {x : ITree F α} {z₁ z₂ : ITree F β}
+    (headMatch : MatchRel RR (WeakBisimRel RR) x z₁)
+    (steps : TauSteps z₁ z₂) :
+    ∃ x' z', TauSteps x x' ∧ TauSteps z₂ z' ∧
+      MatchRel RR (WeakBisimRel RR) x' z' := by
+  induction steps generalizing x with
+  | refl z => exact ⟨x, z, .refl _, .refl _, headMatch⟩
+  | @step _ z₂' c hz hr _ =>
+      cases headMatch with
+      | pure _ _ _ _ hp => exfalso; rw [hp] at hz; cases hz
+      | query _ _ _ _ hq _ => exfalso; rw [hq] at hz; cases hz
+      | tau ct cs hx hz' hrel =>
+          have hcc : cs = c := TauSteps.cont_eq hz' hz
+          subst hcc
+          have hrel' : WeakBisimRel RR (ct PUnit.unit) z₂' :=
+            WeakBisimRel.absorb_tauSteps_right hrel hr
+          obtain ⟨X, Z, hX, hZ, matched⟩ := hrel'.dest
+          refine ⟨X, Z, ?_, hZ, matched⟩
+          exact (TauSteps.one ct hx).trans hX
+
+/-- Advance the left endpoint of a relational head match through silent
+steps, absorbing those steps into its continuation relation. -/
+theorem advance_left {RR : α → β → Prop}
+    {x₁ x₂ : ITree F α} {z : ITree F β}
+    (headMatch : MatchRel RR (WeakBisimRel RR) x₁ z)
+    (steps : TauSteps x₁ x₂) :
+    ∃ x' z', TauSteps x₂ x' ∧ TauSteps z z' ∧
+      MatchRel RR (WeakBisimRel RR) x' z' := by
+  induction steps generalizing z with
+  | refl x => exact ⟨x, z, .refl _, .refl _, headMatch⟩
+  | @step _ x₂' c hx hr _ =>
+      cases headMatch with
+      | pure _ _ _ hp _ => exfalso; rw [hp] at hx; cases hx
+      | query _ _ _ hp _ _ => exfalso; rw [hp] at hx; cases hx
+      | tau ct cs hx' hz hrel =>
+          have hcc : c = ct := TauSteps.cont_eq hx hx'
+          subst hcc
+          have hrel' : WeakBisimRel RR x₂' (cs PUnit.unit) :=
+            WeakBisimRel.tauSteps_left hrel hr
+          obtain ⟨X, Z, hX, hZ, matched⟩ := hrel'.dest
+          refine ⟨X, Z, hX, ?_, matched⟩
+          exact (TauSteps.one cs hz).trans hZ
+
+/-- Compose two head matches aligned at the same middle tree. The intermediate
+return value remains explicit in `Relation.Comp`. -/
+theorem comp_aligned {γ : Type uγ} {RR : α → β → Prop} {SS : β → γ → Prop}
+    {left : ITree F α} {middle : ITree F β} {right : ITree F γ}
+    (first : MatchRel RR (WeakBisimRel RR) left middle)
+    (second : MatchRel SS (WeakBisimRel SS) middle right) :
+    MatchRel (Relation.Comp RR SS)
+      (fun x z => ∃ y, WeakBisimRel RR x y ∧ WeakBisimRel SS y z)
+      left right := by
+  cases first with
+  | pure x y hxy hleft hmiddle =>
+      cases second with
+      | pure y' z hyz hmiddle' hright =>
+          have heq : (⟨Shape.pure y, PEmpty.elim⟩ :
+              (Poly F β).Obj (ITree F β)) =
+              ⟨Shape.pure y', PEmpty.elim⟩ := hmiddle.symm.trans hmiddle'
+          have hyy : y = y' := Shape.pure.inj (Sigma.mk.inj heq).1
+          subst y'
+          exact .pure x z ⟨y, hxy, hyz⟩ hleft hright
+      | query _ _ _ hbad _ _ => exfalso; rw [hmiddle] at hbad; cases hbad
+      | tau _ _ hbad _ _ => exfalso; rw [hmiddle] at hbad; cases hbad
+  | query event cLeft cMiddle hleft hmiddle hcont =>
+      cases second with
+      | pure _ _ _ hbad _ => exfalso; rw [hmiddle] at hbad; cases hbad
+      | query event' cMiddle' cRight hmiddle' hright hcont' =>
+          have heq : (⟨Shape.query event, cMiddle⟩ :
+              (Poly F β).Obj (ITree F β)) =
+              ⟨Shape.query event', cMiddle'⟩ := hmiddle.symm.trans hmiddle'
+          have hevent : event = event' := Shape.query.inj (Sigma.mk.inj heq).1
+          subst event'
+          have hc : cMiddle = cMiddle' := eq_of_heq (Sigma.mk.inj heq).2
+          subst cMiddle'
+          exact .query event cLeft cRight hleft hright
+            (fun reply => ⟨cMiddle reply, hcont reply, hcont' reply⟩)
+      | tau _ _ hbad _ _ => exfalso; rw [hmiddle] at hbad; cases hbad
+  | tau cLeft cMiddle hleft hmiddle hcont =>
+      cases second with
+      | pure _ _ _ hbad _ => exfalso; rw [hmiddle] at hbad; cases hbad
+      | query _ _ _ hbad _ _ => exfalso; rw [hmiddle] at hbad; cases hbad
+      | tau cMiddle' cRight hmiddle' hright hcont' =>
+          have hc : cMiddle' = cMiddle := TauSteps.cont_eq hmiddle' hmiddle
+          exact .tau cLeft cRight hleft hright
+            ⟨cMiddle PUnit.unit, hcont, hc ▸ hcont'⟩
+
+end MatchRel
+
+namespace WeakBisimRel
+
+/-- Relational weak bisimulations compose through an explicit intermediate
+return value. This is the heterogeneous form of `WeakBisim.trans`. -/
+protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
+    {SS : β → γ → Prop}
+    {left : ITree F α} {middle : ITree F β} {right : ITree F γ}
+    (first : WeakBisimRel RR left middle)
+    (second : WeakBisimRel SS middle right) :
+    WeakBisimRel (Relation.Comp RR SS) left right := by
+  let R : ITree F α → ITree F γ → Prop := fun x z =>
+    ∃ y, WeakBisimRel RR x y ∧ WeakBisimRel SS y z
+  refine coinduct (Relation.Comp RR SS) R ?_ ⟨middle, first, second⟩
+  rintro a d ⟨b, hab, hbd⟩
+  obtain ⟨a', b₁, ha, hb₁, Ma⟩ := hab.dest
+  obtain ⟨b₂, d', hb₂, hd, Mb⟩ := hbd.dest
+  cases TauSteps.linear hb₁ hb₂ with
+  | inl hlin =>
+      obtain ⟨a'', b', ha', hb', Ma'⟩ := MatchRel.advance_right Ma hlin
+      obtain ⟨b'', d'', hb'', hd', Mb'⟩ := MatchRel.advance_left Mb hb'
+      cases Ma' with
+      | pure x y hxy Ha Hb =>
+          have hEq : b'' = b' := TauSteps.rigid_of_pure y Hb hb''
+          subst hEq
+          exact ⟨a'', d'', ha.trans ha', hd.trans hd',
+            (MatchRel.pure x y hxy Ha Hb).comp_aligned Mb'⟩
+      | query event ca cb Ha Hb hcont =>
+          have hEq : b'' = b' := TauSteps.rigid_of_query event cb Hb hb''
+          subst hEq
+          exact ⟨a'', d'', ha.trans ha', hd.trans hd',
+            (MatchRel.query event ca cb Ha Hb hcont).comp_aligned Mb'⟩
+      | tau ca cb Ha Hb hAB =>
+          rcases TauSteps.step_cases cb Hb hb'' with hEq | hrest
+          · subst hEq
+            exact ⟨a'', d'', ha.trans ha', hd.trans hd',
+              (MatchRel.tau ca cb Ha Hb hAB).comp_aligned Mb'⟩
+          · cases Mb' with
+            | pure y z hyz Hb'' Hd'' =>
+                have hAC : WeakBisimRel RR (ca PUnit.unit) b'' :=
+                  absorb_tauSteps_right hAB hrest
+                obtain ⟨X, Y, hX, hY, MXY⟩ := hAC.dest
+                have hYeq : Y = b'' := TauSteps.rigid_of_pure y Hb'' hY
+                subst hYeq
+                cases MXY with
+                | pure x y' hxy HX HY =>
+                    have heq : (⟨Shape.pure y', PEmpty.elim⟩ :
+                        (Poly F β).Obj (ITree F β)) =
+                        ⟨Shape.pure y, PEmpty.elim⟩ := HY.symm.trans Hb''
+                    have hyy : y' = y := Shape.pure.inj (Sigma.mk.inj heq).1
+                    subst y'
+                    refine ⟨X, d'',
+                      ha.trans (ha'.trans ((TauSteps.one ca Ha).trans hX)),
+                      hd.trans hd', ?_⟩
+                    exact MatchRel.pure x z ⟨y, hxy, hyz⟩ HX Hd''
+                | query _ _ _ _ HY _ => exfalso; rw [HY] at Hb''; cases Hb''
+                | tau _ _ _ HY _ => exfalso; rw [HY] at Hb''; cases Hb''
+            | query event cMiddle cRight Hb'' Hd'' hBD =>
+                have hAC : WeakBisimRel RR (ca PUnit.unit) b'' :=
+                  absorb_tauSteps_right hAB hrest
+                obtain ⟨X, Y, hX, hY, MXY⟩ := hAC.dest
+                have hYeq : Y = b'' :=
+                  TauSteps.rigid_of_query event cMiddle Hb'' hY
+                subst hYeq
+                cases MXY with
+                | pure _ _ _ _ HY => exfalso; rw [HY] at Hb''; cases Hb''
+                | query event' cLeft cMiddle' HX HY hAC' =>
+                    have heq : (⟨Shape.query event', cMiddle'⟩ :
+                        (Poly F β).Obj (ITree F β)) =
+                        ⟨Shape.query event, cMiddle⟩ := HY.symm.trans Hb''
+                    have hevent : event' = event :=
+                      Shape.query.inj (Sigma.mk.inj heq).1
+                    subst event'
+                    have hc : cMiddle' = cMiddle := eq_of_heq (Sigma.mk.inj heq).2
+                    subst cMiddle'
+                    refine ⟨X, d'',
+                      ha.trans (ha'.trans ((TauSteps.one ca Ha).trans hX)),
+                      hd.trans hd', ?_⟩
+                    exact MatchRel.query event cLeft cRight HX Hd''
+                      (fun reply => ⟨cMiddle reply, hAC' reply, hBD reply⟩)
+                | tau _ _ _ HY _ => exfalso; rw [HY] at Hb''; cases Hb''
+            | tau cMiddle cRight Hb'' Hd'' hBD =>
+                refine ⟨a'', d'', ha.trans ha', hd.trans hd', ?_⟩
+                refine MatchRel.tau ca cRight Ha Hd'' ?_
+                refine ⟨cMiddle PUnit.unit, ?_, hBD⟩
+                exact absorb_tauSteps_right hAB
+                  (hrest.trans (TauSteps.one cMiddle Hb''))
+  | inr hlin =>
+      obtain ⟨b', d'', hb', hd', Mb'⟩ := MatchRel.advance_left Mb hlin
+      obtain ⟨a'', b'', ha', hb'', Ma'⟩ := MatchRel.advance_right Ma hb'
+      cases Mb' with
+      | pure y z hyz Hb Hd =>
+          have hEq : b'' = b' := TauSteps.rigid_of_pure y Hb hb''
+          subst hEq
+          exact ⟨a'', d'', ha.trans ha', hd.trans hd',
+            Ma'.comp_aligned (MatchRel.pure y z hyz Hb Hd)⟩
+      | query event cb cd Hb Hd hcont =>
+          have hEq : b'' = b' := TauSteps.rigid_of_query event cb Hb hb''
+          subst hEq
+          exact ⟨a'', d'', ha.trans ha', hd.trans hd',
+            Ma'.comp_aligned (MatchRel.query event cb cd Hb Hd hcont)⟩
+      | tau cb cd Hb Hd hBD =>
+          rcases TauSteps.step_cases cb Hb hb'' with hEq | hrest
+          · subst hEq
+            exact ⟨a'', d'', ha.trans ha', hd.trans hd',
+              Ma'.comp_aligned (MatchRel.tau cb cd Hb Hd hBD)⟩
+          · cases Ma' with
+            | pure x y hxy Ha Hb'' =>
+                have hBD' : WeakBisimRel SS b'' (cd PUnit.unit) :=
+                  tauSteps_left hBD hrest
+                obtain ⟨X, Y, hX, hY, MXY⟩ := hBD'.dest
+                have hXeq : X = b'' := TauSteps.rigid_of_pure y Hb'' hX
+                subst hXeq
+                cases MXY with
+                | pure y' z hyz HX HY =>
+                    have heq : (⟨Shape.pure y', PEmpty.elim⟩ :
+                        (Poly F β).Obj (ITree F β)) =
+                        ⟨Shape.pure y, PEmpty.elim⟩ := HX.symm.trans Hb''
+                    have hyy : y' = y := Shape.pure.inj (Sigma.mk.inj heq).1
+                    subst y'
+                    refine ⟨a'', Y, ha.trans ha',
+                      hd.trans (hd'.trans ((TauSteps.one cd Hd).trans hY)), ?_⟩
+                    exact MatchRel.pure x z ⟨y, hxy, hyz⟩ Ha HY
+                | query _ _ _ HX _ _ => exfalso; rw [HX] at Hb''; cases Hb''
+                | tau _ _ HX _ _ => exfalso; rw [HX] at Hb''; cases Hb''
+            | query event cLeft cMiddle Ha Hb'' hAB =>
+                have hBD' : WeakBisimRel SS b'' (cd PUnit.unit) :=
+                  tauSteps_left hBD hrest
+                obtain ⟨X, Y, hX, hY, MXY⟩ := hBD'.dest
+                have hXeq : X = b'' :=
+                  TauSteps.rigid_of_query event cMiddle Hb'' hX
+                subst hXeq
+                cases MXY with
+                | pure _ _ _ HX _ => exfalso; rw [HX] at Hb''; cases Hb''
+                | query event' cMiddle' cRight HX HY hBD' =>
+                    have heq : (⟨Shape.query event', cMiddle'⟩ :
+                        (Poly F β).Obj (ITree F β)) =
+                        ⟨Shape.query event, cMiddle⟩ := HX.symm.trans Hb''
+                    have hevent : event' = event :=
+                      Shape.query.inj (Sigma.mk.inj heq).1
+                    subst event'
+                    have hc : cMiddle' = cMiddle := eq_of_heq (Sigma.mk.inj heq).2
+                    subst cMiddle'
+                    refine ⟨a'', Y, ha.trans ha',
+                      hd.trans (hd'.trans ((TauSteps.one cd Hd).trans hY)), ?_⟩
+                    exact MatchRel.query event cLeft cRight Ha HY
+                      (fun reply => ⟨cMiddle reply, hAB reply, hBD' reply⟩)
+                | tau _ _ HX _ _ => exfalso; rw [HX] at Hb''; cases Hb''
+            | tau cLeft cMiddle Ha Hb'' hAB =>
+                refine ⟨a'', d'', ha.trans ha', hd.trans hd', ?_⟩
+                refine MatchRel.tau cLeft cd Ha Hd ?_
+                refine ⟨cMiddle PUnit.unit, hAB, ?_⟩
+                exact tauSteps_left hBD
+                  (hrest.trans (TauSteps.one cMiddle Hb''))
+
+end WeakBisimRel
 
 /-! ### `WeakBisim` is an equivalence -/
 
 namespace WeakBisim
+
+/-- A terminating return is not weakly bisimilar to silent divergence.
+This is the central finite-τ safety property of the definition. -/
+theorem pure_not_diverge (r : α) :
+    ¬ WeakBisim (pure (F := F) r) (diverge (F := F) (α := α)) := by
+  intro h
+  obtain ⟨left, right, hleft, hright, matched⟩ := h.dest
+  have hleft_eq : left = pure (F := F) r :=
+    TauSteps.rigid_of_pure r (shape'_pure r) hleft
+  have hright_eq : right = diverge := TauSteps.diverge_target_eq hright
+  subst left
+  subst right
+  cases matched with
+  | pure _ _ hdiverge =>
+      rw [shape'_diverge] at hdiverge
+      cases hdiverge
+  | query _ _ _ hpure _ _ =>
+      rw [shape'_pure] at hpure
+      cases hpure
+  | tau _ _ hpure _ _ =>
+      rw [shape'_pure] at hpure
+      cases hpure
 
 /-- Reflexivity: every tree is weakly bisimilar to itself. -/
 @[refl] theorem refl (t : ITree F α) : t ≈ t := by
@@ -116,11 +589,7 @@ namespace WeakBisim
 
 /-- Symmetry: weak bisimilarity is symmetric. -/
 @[symm] theorem symm {t s : ITree F α} (h : t ≈ s) : s ≈ t := by
-  obtain ⟨R, hcl, hR⟩ := h
-  refine coinduct (fun a b => R b a) ?_ hR
-  intro a b hab
-  obtain ⟨b', a', hb, ha, hm⟩ := hcl _ _ hab
-  exact ⟨a', b', ha, hb, hm.swap⟩
+  exact (WeakBisimRel.symm h).mono_result (fun _ _ hEq => hEq.symm)
 
 /-! ### τ-absorption lemmas
 
@@ -144,12 +613,12 @@ given `t ≈ s` and `s` step-headed with continuation `c`, conclude
 `t ≈ (c .unit)`. The proof unfolds the bisim once and case-analyzes on
 the head of `(c .unit)`, in the worst case unfolding the inner
 `WeakBisim (ct .unit) (cs .unit)` one more level to reach a head match. -/
-theorem step_absorb_right {t s : ITree F α} (c : PUnit.{u + 1} → ITree F α)
+theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α)
     (h : t ≈ s) (hstep : shape' s = ⟨.step, c⟩) :
     t ≈ (c PUnit.unit) := by
   refine coinduct
     (fun x z => x ≈ z ∨
-      ∃ (s' : ITree F α) (c' : PUnit.{u + 1} → ITree F α),
+      ∃ (s' : ITree F α) (c' : PUnit.{uFB + 1} → ITree F α),
         x ≈ s' ∧ shape' s' = ⟨.step, c'⟩ ∧ z = (c' PUnit.unit))
     ?_ (Or.inr ⟨s, c, h, hstep, rfl⟩)
   intro a b hab

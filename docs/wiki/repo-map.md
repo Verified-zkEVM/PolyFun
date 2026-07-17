@@ -15,15 +15,15 @@ PolyFun/
   IPFunctor/         state-indexed polynomial functors and their free monads
                      (single-index FreeM, two-index FreeM₂ + IndexedMonad)
   ITree/             coinductive interaction trees, bisim/sim, handlers,
-                     event signatures
+                     event signatures, relational trees, finite traces
   Interaction/       generic interaction framework
-    Basic/           Spec, Node, Decoration, Strategy, Append, ...
+    Basic/           TypeTree, Node, Decoration, Strategy, Append, ...
     TwoParty/        sender/receiver roles, paired strategies
     Multiparty/      per-party local view modes, observation kernels
     Concurrent/      structural and dynamic concurrent semantics
     UC/              open-process / open-theory layer (no security content)
-  Control/           monad and comonad infrastructure (Coalg, Comonad,
-                     Lawful, Free, FreeCont, Hom, Iter, Trace)
+  Control/           monad/comonad and LTS infrastructure (Coalgebra,
+                     Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace)
   Logic/             small logic helpers (HEq)
 
 docs/wiki/           agent-facing notes (this directory)
@@ -50,7 +50,7 @@ PFunctor/Free/Basic
   -> PFunctor/Free/Cursor/Fork
 PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption
 
-Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
+Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   (free-standing helpers, depended on by both PFunctor and ITree)
 
 PFunctor/Lens/{Basic, Cartesian, State}
@@ -67,14 +67,14 @@ PFunctor/{Lens, Cofree, M} + Control/Coalgebra
    PFunctor/Lens/Duoidal for Game.)
 
 PFunctor/Free -> ITree/{Basic, Construct, Handler, Rec,
-                        Events, Sim, Bisim}
+                        Events, Sim, Bisim, Trace}
 PFunctor/Dynamical + ITree/Basic -> ITree/Unfold
 
-PFunctor/Free + Control -> Interaction/Basic/{Spec, Node, Decoration,
+PFunctor/Free + Control -> Interaction/Basic/{TypeTree, Node, Decoration,
                             Syntax, Shape, Interaction, Strategy,
                             Append, Replicate, StateChain, Chain,
                             Telescope, Sampler, MonadDecoration,
-                            BundledMonad, Ownership, SpecFintype}
+                            BundledMonad, Ownership, TypeTreeFintype}
 
 Interaction/Basic -> Interaction/{TwoParty, Multiparty}
 Interaction/Basic + PFunctor/Dynamical -> Interaction/Concurrent
@@ -103,7 +103,7 @@ module index. See [`generated-files.md`](generated-files.md).
   [`ipfunctor.md`](ipfunctor.md).
 - Working on coinductive interaction trees, bisimulation, simulation, or
   event signatures: start in `PolyFun/ITree/`. See [`itree.md`](itree.md).
-- Working on the generic interaction framework (sequential `Spec`,
+- Working on the generic interaction framework (sequential `TypeTree`,
   decorations, strategies, two-party, multiparty, concurrent, UC open
   systems): start in `PolyFun/Interaction/`. See
   [`interaction.md`](interaction.md).

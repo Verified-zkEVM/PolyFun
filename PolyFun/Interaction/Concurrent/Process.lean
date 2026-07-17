@@ -3,7 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Spec
+import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.Basic.Decoration
 import PolyFun.Interaction.Multiparty.Core
 import PolyFun.PFunctor.Dynamical.Combinators
@@ -44,7 +44,7 @@ So the intended reading is:
 
 This design stays continuation-first, but is more general than the structural
 tree frontend: cyclic or unbounded behavior is represented by the residual
-state type, while each individual step remains a finite `Interaction.Spec`.
+state type, while each individual step remains a finite `Interaction.TypeTree`.
 -/
 
 universe u v w w₂ w₃
@@ -139,9 +139,9 @@ residual process state `P`.
 
 Fields:
 
-* `spec` is the shape of the sequential interaction episode;
+* `tree` is the shape of the sequential interaction episode;
 * `semantics` decorates that sequential tree by node-local context `Γ`;
-* `next` maps a complete transcript of that episode to the next residual
+* `next` maps a complete path of that episode to the next residual
   process state.
 
 The important point is that a `StepOver` is **not** restricted to a single
@@ -156,24 +156,24 @@ everything into atomic transitions.
 ## Polynomial reading
 
 `StepOver Γ P` is the application to `P` of the polynomial functor
-`StepOver.toPFunctor Γ` whose positions are `Γ`-decorated specs and whose
-directions over a position are transcripts of its underlying spec. The
+`StepOver.toPFunctor Γ` whose positions are `Γ`-decorated type trees and whose
+directions over a position are paths of its underlying tree. The
 `Equiv` `StepOver.equivObj` exhibits this on the nose by regrouping the
-`(spec, semantics, next)` fields. The position type is itself equivalent to
-`Interaction.Spec.DecoratedSpec Γ` via `Interaction.Spec.decoratedSpecEquiv`,
+`(tree, semantics, next)` fields. The position type is itself equivalent to
+`Interaction.TypeTree.Decorated Γ` via `Interaction.TypeTree.decoratedEquiv`,
 identifying `StepOver` as a polynomial substrate built directly on top of
 `Γ.toPFunctor`. The structure form is preserved as the working API because
-its named fields support clean `{ spec := ..., semantics := ..., next := ... }`
-construction at every call site, and projections such as `(mapContext f s).spec`
-are definitionally equal to `s.spec`.
+its named fields support clean `{ tree := ..., semantics := ..., next := ... }`
+construction at every call site, and projections such as `(mapContext f s).tree`
+are definitionally equal to `s.tree`.
 -/
-structure StepOver (Γ : Interaction.Spec.Node.Context.{w, w₂}) (P : Type v) where
+structure StepOver (Γ : Interaction.TypeTree.Node.Context.{w, w₂}) (P : Type v) where
   /-- The shape of the finite sequential interaction episode of this step. -/
-  spec : Interaction.Spec.{w}
-  /-- The decoration of `spec` by node-local context `Γ`. -/
-  semantics : PFunctor.FreeM.Displayed.Decoration Γ spec
-  /-- Maps a complete transcript of `spec` to the next residual process state. -/
-  next : PFunctor.FreeM.Path spec → P
+  tree : Interaction.TypeTree.{w}
+  /-- The decoration of `tree` by node-local context `Γ`. -/
+  semantics : PFunctor.FreeM.Displayed.Decoration Γ tree
+  /-- Maps a complete path through `tree` to the next residual process state. -/
+  next : PFunctor.FreeM.Path tree → P
 
 namespace StepOver
 
@@ -184,23 +184,23 @@ This changes only the metadata decorating the step protocol. The underlying
 sequential interaction tree and the continuation `next` are left unchanged.
 -/
 def mapContext
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {P : Type v}
-    (f : Interaction.Spec.Node.ContextHom Γ Δ)
+    (f : Interaction.TypeTree.Node.ContextHom Γ Δ)
     (step : StepOver Γ P) : StepOver Δ P where
-  spec := step.spec
-  semantics := PFunctor.FreeM.Displayed.Decoration.map f step.spec step.semantics
+  tree := step.tree
+  semantics := PFunctor.FreeM.Displayed.Decoration.map f step.tree step.semantics
   next := step.next
 
 end StepOver
 
 /-- `StepOver Γ` is functorial in the continuation type: `map f` post-composes `f` after
 the `next` continuation, preserving the interaction protocol and its decoration. -/
-instance {Γ : Interaction.Spec.Node.Context.{w, w₂}} : Functor (StepOver.{v, w, w₂} Γ) where
-  map f s := { spec := s.spec, semantics := s.semantics, next := f ∘ s.next }
+instance {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} : Functor (StepOver.{v, w, w₂} Γ) where
+  map f s := { tree := s.tree, semantics := s.semantics, next := f ∘ s.next }
 
-instance {Γ : Interaction.Spec.Node.Context.{w, w₂}} :
+instance {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} :
     LawfulFunctor (StepOver.{v, w, w₂} Γ) where
   id_map _ := rfl
   comp_map _ _ _ := rfl
@@ -211,14 +211,14 @@ namespace StepOver
 /-! ### Polynomial bridge
 
 `StepOver Γ P` is the application to `P` of the polynomial functor
-`StepOver.toPFunctor Γ` whose positions are `Γ`-decorated specs and whose
-direction family at each position is the type of complete transcripts of
-the underlying spec. The `Equiv` `StepOver.equivObj` regroups the
-`(spec, semantics, next)` fields into the polynomial form
+`StepOver.toPFunctor Γ` whose positions are `Γ`-decorated type trees and whose
+direction family at each position is the type of complete paths of
+the underlying tree. The `Equiv` `StepOver.equivObj` regroups the
+`(tree, semantics, next)` fields into the polynomial form
 `(position, continuation)`; both roundtrips are definitionally `rfl`.
 
-The position type `Σ spec, Decoration Γ spec` is itself equivalent to
-`Interaction.Spec.DecoratedSpec Γ` via `Interaction.Spec.decoratedSpecEquiv`,
+The position type `Σ tree, Decoration Γ tree` is itself equivalent to
+`Interaction.TypeTree.Decorated Γ` via `Interaction.TypeTree.decoratedEquiv`,
 which is the free monad on `Γ.toPFunctor` at the unit payload. This bridge
 identifies `StepOver` as a polynomial substrate sitting directly on top of
 `Γ.toPFunctor` while preserving the structure form's ergonomic call sites
@@ -226,40 +226,40 @@ and definitional projection equalities. -/
 
 /-- The polynomial functor whose application to `P` is `StepOver Γ P`.
 
-A position is a `Γ`-decorated spec — a pair of an interaction shape
-`spec : Spec` and a `Decoration Γ spec` of per-node `Γ`-metadata on it.
-A direction over such a position is a complete transcript of `spec`.
+A position is a `Γ`-decorated type tree — a pair of an interaction shape
+`tree : TypeTree` and a `Decoration Γ tree` of per-node `Γ`-metadata on it.
+A direction over such a position is a complete path of `tree`.
 
-Up to `Interaction.Spec.decoratedSpecEquiv`, positions are exactly
-`Interaction.Spec.DecoratedSpec Γ`, the free term of `Γ.toPFunctor` at the
+Up to `Interaction.TypeTree.decoratedEquiv`, positions are exactly
+`Interaction.TypeTree.Decorated Γ`, the free term of `Γ.toPFunctor` at the
 unit payload. -/
 @[reducible]
-def toPFunctor (Γ : Interaction.Spec.Node.Context.{w, w₂}) :
+def toPFunctor (Γ : Interaction.TypeTree.Node.Context.{w, w₂}) :
     PFunctor.{max (w+1) w₂, w} where
-  A := Σ spec : Interaction.Spec.{w}, PFunctor.FreeM.Displayed.Decoration Γ spec
+  A := Σ tree : Interaction.TypeTree.{w}, PFunctor.FreeM.Displayed.Decoration Γ tree
   B := fun p => PFunctor.FreeM.Path p.1
 
 /-- `StepOver Γ P` is exactly `(StepOver.toPFunctor Γ).Obj P`, exhibiting
 the step-over structure as a polynomial application.
 
-The forward direction regroups the `(spec, semantics, next)` fields into
+The forward direction regroups the `(tree, semantics, next)` fields into
 the polynomial form `(position, continuation)`, and the inverse unpacks
 them again. Both roundtrips are definitionally `rfl`. -/
 @[simps]
-def equivObj {Γ : Interaction.Spec.Node.Context.{w, w₂}} {P : Type v} :
+def equivObj {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} {P : Type v} :
     StepOver.{v, w, w₂} Γ P ≃ (StepOver.toPFunctor Γ).Obj P where
-  toFun s := ⟨⟨s.spec, s.semantics⟩, s.next⟩
+  toFun s := ⟨⟨s.tree, s.semantics⟩, s.next⟩
   invFun := fun ⟨⟨spec, semantics⟩, next⟩ => ⟨spec, semantics, next⟩
   left_inv _ := rfl
   right_inv := fun ⟨⟨_, _⟩, _⟩ => rfl
 
 /-- The position type of `StepOver.toPFunctor Γ` is the same data as a
-`Γ`-decorated spec, via `Interaction.Spec.decoratedSpecEquiv`. This is the
+`Γ`-decorated type tree, via `Interaction.TypeTree.decoratedEquiv`. This is the
 bridge that identifies the `StepOver` polynomial as a substrate built on
 top of `Γ.toPFunctor`. -/
-def equivPositions (Γ : Interaction.Spec.Node.Context.{w, w₂}) :
-    (StepOver.toPFunctor Γ).A ≃ Interaction.Spec.DecoratedSpec Γ :=
-  Interaction.Spec.decoratedSpecEquiv.symm
+def equivPositions (Γ : Interaction.TypeTree.Node.Context.{w, w₂}) :
+    (StepOver.toPFunctor Γ).A ≃ Interaction.TypeTree.Decorated Γ :=
+  Interaction.TypeTree.decoratedEquiv.symm
 
 end StepOver
 
@@ -289,7 +289,7 @@ metadata (`DynSystem.EventMap`, `DynSystem.SafetySpec`, …). The `StepOver`-sha
 views of the coalgebra structure map are `ProcessOver.step` and
 `ProcessOver.ofStep`.
 -/
-abbrev ProcessOver (P : Type v) (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
+abbrev ProcessOver (P : Type v) (Γ : Interaction.TypeTree.Node.Context.{w, w₂}) :=
   PFunctor.DynSystem P (StepOver.toPFunctor Γ)
 
 namespace ProcessOver
@@ -299,7 +299,7 @@ exposed under its dynamical name for dot notation at use sites. -/
 -- The process argument exists only to support dot notation; the state space is
 -- fully determined by the parameter `P`.
 @[nolint unusedArguments]
-abbrev Proc {P : Type v} {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+abbrev Proc {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (_process : ProcessOver.{v, w, w₂} P Γ) : Type v :=
   P
 
@@ -308,7 +308,7 @@ the next state: the `StepOver`-shaped view of the coalgebra structure map.
 
 Reducible so that it unfolds during unification and instance search. -/
 @[reducible]
-def step {P : Type v} {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+def step {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (process : ProcessOver.{v, w, w₂} P Γ) (p : process.Proc) :
     StepOver Γ process.Proc :=
   ⟨(process.expose p).1, (process.expose p).2, process.update p⟩
@@ -319,26 +319,26 @@ trips hold definitionally (`step_ofStep`, `ofStep_step`).
 
 Reducible so that it unfolds during unification and instance search. -/
 @[reducible]
-def ofStep {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+def ofStep {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (Proc : Type v) (step : Proc → StepOver Γ Proc) : ProcessOver.{v, w, w₂} Proc Γ :=
   PFunctor.DynSystem.mk'
-    (fun p => ⟨(step p).spec, (step p).semantics⟩)
+    (fun p => ⟨(step p).tree, (step p).semantics⟩)
     (fun p => (step p).next)
 
 @[simp] theorem step_ofStep
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (Proc : Type v) (f : Proc → StepOver Γ Proc) :
     (ofStep Proc f).step = f := rfl
 
 @[simp] theorem ofStep_step
-    {P : Type v} {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (process : ProcessOver.{v, w, w₂} P Γ) :
     ofStep process.Proc process.step = process := rfl
 
 /-- Processes with pointwise-equal step assignments on the same state space are
 equal. -/
 theorem ofStep_congr
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Proc : Type v} {f g : Proc → StepOver Γ Proc}
     (h : ∀ p, f p = g p) : ofStep Proc f = ofStep Proc g :=
   congrArg _ (funext h)
@@ -352,9 +352,9 @@ and transition structure are preserved.
 -/
 def mapContext
     {P : Type v}
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
-    (f : Interaction.Spec.Node.ContextHom Γ Δ)
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
+    (f : Interaction.TypeTree.Node.ContextHom Γ Δ)
     (process : ProcessOver P Γ) : ProcessOver P Δ :=
   ofStep process.Proc fun p => (process.step p).mapContext f
 
@@ -372,24 +372,24 @@ the selected subprocess's step protocol runs with its decoration mapped into
 -/
 def interleave
     {P₁ P₂ : Type v}
-    {Γ₁ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Γ₂ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ₁ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Γ₂ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (p₁ : ProcessOver.{v, w, w₂} P₁ Γ₁)
     (p₂ : ProcessOver.{v, w, w₂} P₂ Γ₂)
-    (f₁ : Interaction.Spec.Node.ContextHom Γ₁ Δ)
-    (f₂ : Interaction.Spec.Node.ContextHom Γ₂ Δ)
+    (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Δ)
+    (f₂ : Interaction.TypeTree.Node.ContextHom Γ₂ Δ)
     (schedulerCtx : Δ (ULift.{w} Bool)) : ProcessOver.{v, w, w₂} (P₁ × P₂) Δ :=
   ofStep (p₁.Proc × p₂.Proc) fun (s₁, s₂) =>
     let step₁ := p₁.step s₁
     let step₂ := p₂.step s₂
-    { spec := .node (ULift.{w} Bool) fun
-        | ⟨true⟩ => step₁.spec
-        | ⟨false⟩ => step₂.spec
+    { tree := .node (ULift.{w} Bool) fun
+        | ⟨true⟩ => step₁.tree
+        | ⟨false⟩ => step₂.tree
       semantics :=
         ⟨schedulerCtx, fun
-          | ⟨true⟩ => PFunctor.FreeM.Displayed.Decoration.map f₁ step₁.spec step₁.semantics
-          | ⟨false⟩ => PFunctor.FreeM.Displayed.Decoration.map f₂ step₂.spec step₂.semantics⟩
+          | ⟨true⟩ => PFunctor.FreeM.Displayed.Decoration.map f₁ step₁.tree step₁.semantics
+          | ⟨false⟩ => PFunctor.FreeM.Displayed.Decoration.map f₂ step₂.tree step₂.semantics⟩
       next := fun
         | ⟨⟨true⟩, tr⟩ => (step₁.next tr, s₂)
         | ⟨⟨false⟩, tr⟩ => (s₁, step₂.next tr) }
@@ -398,16 +398,16 @@ def interleave
 the same interleaving with each injection pre-composed by `g`. -/
 theorem mapContext_interleave
     {P₁ P₂ : Type v}
-    {Γ₁ Γ₂ Δ Δ' : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ₁ Γ₂ Δ Δ' : Interaction.TypeTree.Node.Context.{w, w₂}}
     (p₁ : ProcessOver.{v, w, w₂} P₁ Γ₁) (p₂ : ProcessOver.{v, w, w₂} P₂ Γ₂)
-    (f₁ : Interaction.Spec.Node.ContextHom Γ₁ Δ)
-    (f₂ : Interaction.Spec.Node.ContextHom Γ₂ Δ)
+    (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Δ)
+    (f₂ : Interaction.TypeTree.Node.ContextHom Γ₂ Δ)
     (sched : Δ (ULift.{w} Bool))
-    (g : Interaction.Spec.Node.ContextHom Δ Δ') :
+    (g : Interaction.TypeTree.Node.ContextHom Δ Δ') :
     (p₁.interleave p₂ f₁ f₂ sched).mapContext g =
       p₁.interleave p₂
-        (Interaction.Spec.Node.ContextHom.comp g f₁)
-        (Interaction.Spec.Node.ContextHom.comp g f₂)
+        (Interaction.TypeTree.Node.ContextHom.comp g f₁)
+        (Interaction.TypeTree.Node.ContextHom.comp g f₂)
         (g _ sched) := by
   simp only [mapContext, interleave, StepOver.mapContext]
   refine ofStep_congr fun ⟨s₁, s₂⟩ => ?_
@@ -419,27 +419,27 @@ theorem mapContext_interleave
   congr 1; funext ⟨b⟩
   cases b <;> dsimp
   · exact PFunctor.FreeM.Displayed.Decoration.map_comp
-        (P := Interaction.Spec.basePFunctor) (α := PUnit.{w+1})
+        (P := Interaction.TypeTree.basePFunctor) (α := PUnit.{w+1})
         g f₂ _ _
   · exact PFunctor.FreeM.Displayed.Decoration.map_comp
-        (P := Interaction.Spec.basePFunctor) (α := PUnit.{w+1})
+        (P := Interaction.TypeTree.basePFunctor) (α := PUnit.{w+1})
         g f₁ _ _
 
 /-- Pre-composing both operands with `mapContext` distributes into the
 `interleave` injections via `ContextHom.comp`. -/
 theorem interleave_mapContext
     {P₁ P₂ : Type v}
-    {Γ₁ Γ₁' Γ₂ Γ₂' Δ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ₁ Γ₁' Γ₂ Γ₂' Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (p₁ : ProcessOver.{v, w, w₂} P₁ Γ₁) (p₂ : ProcessOver.{v, w, w₂} P₂ Γ₂)
-    (g₁ : Interaction.Spec.Node.ContextHom Γ₁ Γ₁')
-    (g₂ : Interaction.Spec.Node.ContextHom Γ₂ Γ₂')
-    (f₁ : Interaction.Spec.Node.ContextHom Γ₁' Δ)
-    (f₂ : Interaction.Spec.Node.ContextHom Γ₂' Δ)
+    (g₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Γ₁')
+    (g₂ : Interaction.TypeTree.Node.ContextHom Γ₂ Γ₂')
+    (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁' Δ)
+    (f₂ : Interaction.TypeTree.Node.ContextHom Γ₂' Δ)
     (sched : Δ (ULift.{w} Bool)) :
     (p₁.mapContext g₁).interleave (p₂.mapContext g₂) f₁ f₂ sched =
       p₁.interleave p₂
-        (Interaction.Spec.Node.ContextHom.comp f₁ g₁)
-        (Interaction.Spec.Node.ContextHom.comp f₂ g₂)
+        (Interaction.TypeTree.Node.ContextHom.comp f₁ g₁)
+        (Interaction.TypeTree.Node.ContextHom.comp f₂ g₂)
         sched := by
   simp only [mapContext, interleave, StepOver.mapContext]
   refine ofStep_congr fun ⟨s₁, s₂⟩ => ?_
@@ -448,10 +448,10 @@ theorem interleave_mapContext
   · congr 1; funext ⟨b⟩
     cases b <;> dsimp
     · exact PFunctor.FreeM.Displayed.Decoration.map_comp
-        (P := Interaction.Spec.basePFunctor) (α := PUnit.{w+1})
+        (P := Interaction.TypeTree.basePFunctor) (α := PUnit.{w+1})
         f₂ g₂ _ _
     · exact PFunctor.FreeM.Displayed.Decoration.map_comp
-        (P := Interaction.Spec.basePFunctor) (α := PUnit.{w+1})
+        (P := Interaction.TypeTree.basePFunctor) (α := PUnit.{w+1})
         f₁ g₁ _ _
   · funext ⟨⟨b⟩, tr⟩; cases b <;> rfl
 
@@ -459,15 +459,15 @@ theorem interleave_mapContext
 is pre-composed with `mapContext`. -/
 theorem interleave_mapContext_left
     {P₁ P₂ : Type v}
-    {Γ₁ Γ₁' Γ₂ Δ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ₁ Γ₁' Γ₂ Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (p₁ : ProcessOver.{v, w, w₂} P₁ Γ₁) (p₂ : ProcessOver.{v, w, w₂} P₂ Γ₂)
-    (g₁ : Interaction.Spec.Node.ContextHom Γ₁ Γ₁')
-    (f₁ : Interaction.Spec.Node.ContextHom Γ₁' Δ)
-    (f₂ : Interaction.Spec.Node.ContextHom Γ₂ Δ)
+    (g₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Γ₁')
+    (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁' Δ)
+    (f₂ : Interaction.TypeTree.Node.ContextHom Γ₂ Δ)
     (sched : Δ (ULift.{w} Bool)) :
     (p₁.mapContext g₁).interleave p₂ f₁ f₂ sched =
       p₁.interleave p₂
-        (Interaction.Spec.Node.ContextHom.comp f₁ g₁)
+        (Interaction.TypeTree.Node.ContextHom.comp f₁ g₁)
         f₂
         sched := by
   simp only [mapContext, interleave, StepOver.mapContext]
@@ -477,7 +477,7 @@ theorem interleave_mapContext_left
   · congr 1; funext ⟨b⟩
     cases b <;> dsimp
     exact PFunctor.FreeM.Displayed.Decoration.map_comp
-        (P := Interaction.Spec.basePFunctor) (α := PUnit.{w+1})
+        (P := Interaction.TypeTree.basePFunctor) (α := PUnit.{w+1})
         f₁ g₁ _ _
   · funext ⟨⟨b⟩, tr⟩; cases b <;> rfl
 
@@ -485,16 +485,16 @@ theorem interleave_mapContext_left
 is pre-composed with `mapContext`. -/
 theorem interleave_mapContext_right
     {P₁ P₂ : Type v}
-    {Γ₁ Γ₂ Γ₂' Δ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ₁ Γ₂ Γ₂' Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (p₁ : ProcessOver.{v, w, w₂} P₁ Γ₁) (p₂ : ProcessOver.{v, w, w₂} P₂ Γ₂)
-    (g₂ : Interaction.Spec.Node.ContextHom Γ₂ Γ₂')
-    (f₁ : Interaction.Spec.Node.ContextHom Γ₁ Δ)
-    (f₂ : Interaction.Spec.Node.ContextHom Γ₂' Δ)
+    (g₂ : Interaction.TypeTree.Node.ContextHom Γ₂ Γ₂')
+    (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Δ)
+    (f₂ : Interaction.TypeTree.Node.ContextHom Γ₂' Δ)
     (sched : Δ (ULift.{w} Bool)) :
     p₁.interleave (p₂.mapContext g₂) f₁ f₂ sched =
       p₁.interleave p₂
         f₁
-        (Interaction.Spec.Node.ContextHom.comp f₂ g₂)
+        (Interaction.TypeTree.Node.ContextHom.comp f₂ g₂)
         sched := by
   simp only [mapContext, interleave, StepOver.mapContext]
   refine ofStep_congr fun ⟨s₁, s₂⟩ => ?_
@@ -503,25 +503,25 @@ theorem interleave_mapContext_right
   · congr 1; funext ⟨b⟩
     cases b <;> dsimp
     exact PFunctor.FreeM.Displayed.Decoration.map_comp
-        (P := Interaction.Spec.basePFunctor) (α := PUnit.{w+1})
+        (P := Interaction.TypeTree.basePFunctor) (α := PUnit.{w+1})
         f₂ g₂ _ _
   · funext ⟨⟨b⟩, tr⟩; cases b <;> rfl
 
 /--
 The wiring lens implementing scheduler-tagged interleaving: at a pair of
-decorated step specs, the position is one `ULift Bool` scheduler node whose
-branches are the two specs with decorations mapped into the common context,
-and a transcript of that node projects back to the chosen side's transcript.
+decorated step type trees, the position is one `ULift Bool` scheduler node whose
+branches are the two trees with decorations mapped into the common context,
+and a path of that node projects back to the chosen side's path.
 
 `interleave` is the `wrap` of `choiceProd` along this lens
 (`interleave_eq_wrap_choiceProd`).
 -/
 def interleaveLens
-    {Γ₁ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Γ₂ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₂}}
-    (f₁ : Interaction.Spec.Node.ContextHom Γ₁ Δ)
-    (f₂ : Interaction.Spec.Node.ContextHom Γ₂ Δ)
+    {Γ₁ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Γ₂ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Δ)
+    (f₂ : Interaction.TypeTree.Node.ContextHom Γ₂ Δ)
     (schedulerCtx : Δ (ULift.{w} Bool)) :
     PFunctor.Lens
       (PFunctor.prod (StepOver.toPFunctor Γ₁) (StepOver.toPFunctor Γ₂))
@@ -542,13 +542,13 @@ asynchronous choice `choiceProd` of the two processes, wrapped along the
 scheduler wiring lens `interleaveLens`. -/
 theorem interleave_eq_wrap_choiceProd
     {P₁ P₂ : Type v}
-    {Γ₁ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Γ₂ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ₁ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Γ₂ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (p₁ : ProcessOver.{v, w, w₂} P₁ Γ₁)
     (p₂ : ProcessOver.{v, w, w₂} P₂ Γ₂)
-    (f₁ : Interaction.Spec.Node.ContextHom Γ₁ Δ)
-    (f₂ : Interaction.Spec.Node.ContextHom Γ₂ Δ)
+    (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Δ)
+    (f₂ : Interaction.TypeTree.Node.ContextHom Γ₂ Δ)
     (schedulerCtx : Δ (ULift.{w} Bool)) :
     p₁.interleave p₂ f₁ f₂ schedulerCtx
       = PFunctor.DynSystem.wrap (interleaveLens f₁ f₂ schedulerCtx)
@@ -563,114 +563,114 @@ theorem interleave_eq_wrap_choiceProd
   cases b <;> rfl
 
 /--
-A stable external label for each complete step transcript of a process: the
+A stable external label for each complete step path of a process: the
 dynamical-system `EventMap` at the step polynomial, where a transition is a
-complete step transcript.
+complete step path.
 
 The point of an `EventMap` is to attach one comparison-friendly label to a
 whole step, independently of how much internal sequential structure that step
 contains.
 -/
-abbrev EventMap {P : Type v} {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+abbrev EventMap {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (process : ProcessOver.{v, w, w₂} P Γ) (Event : Type w₃) :=
   PFunctor.DynSystem.EventMap process Event
 
 /--
-A stable ticket for each complete step transcript of a process: the
+A stable ticket for each complete step path of a process: the
 dynamical-system `Tickets` at the step polynomial.
 
 Tickets are the intended handles for fairness and liveness: instead of talking
 about unstable frontier events whose types change from state to state, later
 semantic layers can talk about these stable identifiers.
 -/
-abbrev Tickets {P : Type v} {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+abbrev Tickets {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (process : ProcessOver.{v, w, w₂} P Γ) (Ticket : Type w₃) :=
   PFunctor.DynSystem.Tickets process Ticket
 
 /--
-`TranscriptRel left right` relates concrete process steps: each argument
-contains the source process state together with the complete transcript chosen
+`StepRel left right` relates concrete process steps: each argument
+contains the source process state together with the complete path chosen
 at that state. It specializes dynamical-system `StepRel` to the step
 polynomial; including the source states lets relations inspect the contexts in
-which dependent transcripts are available.
+which dependent paths are available.
 
 This is the generic step-matching interface consumed by refinement. No
 controller or observation structure is assumed here; those
 become special cases once the surrounding contexts are projected into
 `StepContext`.
 -/
-abbrev TranscriptRel
+abbrev StepRel
     {P₁ P₂ : Type v}
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     (left : ProcessOver P₁ Γ) (right : ProcessOver P₂ Δ) :=
   PFunctor.DynSystem.StepRel left right
 
-namespace TranscriptRel
+namespace StepRel
 
 /-- The permissive step relation that accepts every pair of concrete process
 steps. -/
 abbrev top
     {P₁ P₂ : Type v}
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {left : ProcessOver P₁ Γ} {right : ProcessOver P₂ Δ} :
-    TranscriptRel left right :=
+    StepRel left right :=
   PFunctor.DynSystem.StepRel.top
 
-/-- Reverse a step-matching relation by flipping its two transcript
+/-- Reverse a step-matching relation by flipping its two path
 arguments. -/
 abbrev reverse
     {P₁ P₂ : Type v}
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {left : ProcessOver P₁ Γ} {right : ProcessOver P₂ Δ}
-    (rel : TranscriptRel left right) :
-    TranscriptRel right left :=
+    (rel : StepRel left right) :
+    StepRel right left :=
   PFunctor.DynSystem.StepRel.reverse rel
 
 /-- Conjunction of step-matching relations. -/
 abbrev inter
     {P₁ P₂ : Type v}
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {left : ProcessOver P₁ Γ} {right : ProcessOver P₂ Δ}
-    (first second : TranscriptRel left right) :
-    TranscriptRel left right :=
+    (first second : StepRel left right) :
+    StepRel left right :=
   PFunctor.DynSystem.StepRel.inter first second
 
-end TranscriptRel
+end StepRel
 
 set_option linter.checkUnivs false in
 /--
 `ProcessOver.Labeled` is a process equipped with a stable external event label
-for each complete step transcript: the dynamical-system `Labeled` bundle at the
+for each complete step path: the dynamical-system `Labeled` bundle at the
 step polynomial. The underlying process is `Labeled.toProcess`.
 -/
 -- The process state/message universes and the event-label universe are independent.
-abbrev Labeled (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
+abbrev Labeled (Γ : Interaction.TypeTree.Node.Context.{w, w₂}) :=
   PFunctor.DynSystem.Labeled.{v} (StepOver.toPFunctor Γ)
 
 /-- The underlying process of a labeled process. -/
-abbrev Labeled.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+abbrev Labeled.toProcess {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (labeled : Labeled Γ) : ProcessOver labeled.State Γ :=
   labeled.toDynSystem
 
 set_option linter.checkUnivs false in
 /--
 `ProcessOver.Ticketed` is a process equipped with a stable ticket for each
-complete step transcript: the dynamical-system `Ticketed` bundle at the step
+complete step path: the dynamical-system `Ticketed` bundle at the step
 polynomial. The underlying process is `Ticketed.toProcess`.
 
 These tickets are the obligation identifiers used by the fairness and liveness
 layers.
 -/
 -- The process state/message universes and the ticket universe are independent.
-abbrev Ticketed (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
+abbrev Ticketed (Γ : Interaction.TypeTree.Node.Context.{w, w₂}) :=
   PFunctor.DynSystem.Ticketed.{v} (StepOver.toPFunctor Γ)
 
 /-- The underlying process of a ticketed process. -/
-abbrev Ticketed.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+abbrev Ticketed.toProcess {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (ticketed : Ticketed Γ) : ProcessOver ticketed.State Γ :=
   ticketed.toDynSystem
 
@@ -679,21 +679,21 @@ abbrev Ticketed.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
 dynamics, initial states, ambient assumptions, and a safety predicate. The
 underlying process is `SafetySpec.toProcess`.
 -/
-abbrev SafetySpec (Γ : Interaction.Spec.Node.Context.{w, w₂}) :=
+abbrev SafetySpec (Γ : Interaction.TypeTree.Node.Context.{w, w₂}) :=
   PFunctor.DynSystem.SafetySpec.{v} (StepOver.toPFunctor Γ)
 
 /-- The underlying process of a verification-oriented system. -/
-abbrev SafetySpec.toProcess {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+abbrev SafetySpec.toProcess {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : SafetySpec Γ) : ProcessOver system.State Γ :=
   system.toDynSystem
 
 /-- The residual state space of a system's underlying process. -/
-abbrev SafetySpec.Proc {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+abbrev SafetySpec.Proc {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : SafetySpec Γ) : Type _ :=
   system.toProcess.Proc
 
 /-- The step protocol of a system's underlying process. -/
-abbrev SafetySpec.step {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+abbrev SafetySpec.step {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : SafetySpec Γ) (p : system.Proc) : StepOver Γ system.Proc :=
   system.toProcess.step p
 
@@ -718,7 +718,7 @@ coalgebraic bisimulation. -/
 possibly-infinite trees of `Γ`-decorated step protocols. Each such tree
 records one complete observable behavior of a `ProcessOver Γ` from a
 chosen seed state, the target of `PFunctor.DynSystem.behavior`. -/
-abbrev Behavior (Γ : Interaction.Spec.Node.Context.{w, w₂}) :
+abbrev Behavior (Γ : Interaction.TypeTree.Node.Context.{w, w₂}) :
     Type (max (w + 1) w₂) :=
   PFunctor.M (StepOver.toPFunctor Γ)
 
@@ -735,14 +735,14 @@ abbrev Step (Party : Type u) (P : Type v) :=
 
 namespace Step
 
-/-- Recursively walk a transcript alongside its decoration, concatenating the
+/-- Recursively walk a path alongside its decoration, concatenating the
 controller list recorded at each visited node into the accumulated path.
 
 Auxiliary for `Step.controllerPath`. -/
 private def controllerPathAux {Party : Type u} :
-    {spec : Interaction.Spec.{w}} →
-    PFunctor.FreeM.Displayed.Decoration (StepContext Party) spec →
-    PFunctor.FreeM.Path spec →
+    {tree : Interaction.TypeTree.{w}} →
+    PFunctor.FreeM.Displayed.Decoration (StepContext Party) tree →
+    PFunctor.FreeM.Path tree →
     List Party
   | .done, _, _ => []
   | .node _ _, ⟨node, restSemantics⟩, ⟨x, tail⟩ =>
@@ -750,30 +750,30 @@ private def controllerPathAux {Party : Type u} :
 
 /--
 `controllerPath step tr` is the controller sequence exposed by the concrete
-step transcript `tr`.
+step path `tr`.
 
 Every visited node contributes the controller list recorded for the chosen
 move at that node. These per-node contributions are concatenated along the
-whole step transcript.
+whole step path.
 
 So if a step internally consists of, say, "the scheduler chooses a branch,
 then Alice chooses a payload", the controller path records both pieces in
 order.
 -/
 def controllerPath {Party : Type u} {P : Type v} (step : Step Party P) :
-    PFunctor.FreeM.Path step.spec → List Party :=
+    PFunctor.FreeM.Path step.tree → List Party :=
   fun tr => controllerPathAux step.semantics tr
 
 /--
 `currentController? step tr` is the head of the controller path exposed by the
-concrete transcript `tr`, if such a controller exists.
+concrete path `tr`, if such a controller exists.
 
 This is the most immediate "who controlled this step?" projection. It is only
 the first controller because one step may internally contain several
 controlled subchoices.
 -/
 def currentController? {Party : Type u} {P : Type v} (step : Step Party P)
-    (tr : PFunctor.FreeM.Path step.spec) : Option Party :=
+    (tr : PFunctor.FreeM.Path step.tree) : Option Party :=
   step.controllerPath tr |>.head?
 end Step
 
@@ -783,13 +783,12 @@ namespace StepOver
 Closed-world controller-path projection for a `StepOver` specialized to
 `StepContext Party`.
 
-This bridge keeps the old dot-notation ergonomics after the `StepOver`
-cutover: downstream closed-world code can still write
-`(process.step p).controllerPath tr`.
+This projection lets closed-world code write
+`(process.step p).controllerPath tr` directly.
 -/
 abbrev controllerPath {Party : Type u} {P : Type v}
     (step : StepOver (StepContext Party) P) :
-    PFunctor.FreeM.Path step.spec → List Party :=
+    PFunctor.FreeM.Path step.tree → List Party :=
   Step.controllerPath step
 
 /--
@@ -798,7 +797,7 @@ Closed-world current-controller projection for a `StepOver` specialized to
 -/
 abbrev currentController? {Party : Type u} {P : Type v}
     (step : StepOver (StepContext Party) P)
-    (tr : PFunctor.FreeM.Path step.spec) : Option Party :=
+    (tr : PFunctor.FreeM.Path step.tree) : Option Party :=
   Step.currentController? step tr
 
 end StepOver
@@ -832,16 +831,16 @@ abbrev Tickets {P : Type v} {Party : Type u}
   ProcessOver.Tickets process Ticket
 
 /--
-The closed-world specialization of `ProcessOver.TranscriptRel`.
+The closed-world specialization of `ProcessOver.StepRel`.
 -/
-abbrev TranscriptRel {P₁ P₂ : Type v} {Party : Type u}
+abbrev StepRel {P₁ P₂ : Type v} {Party : Type u}
     (left : Process P₁ Party) (right : Process P₂ Party) :=
-  ProcessOver.TranscriptRel left right
+  ProcessOver.StepRel left right
 
 set_option linter.checkUnivs false in
 /--
 `Process.Labeled` is a closed-world process together with a stable event label
-for each complete step transcript.
+for each complete step path.
 -/
 -- The `Party` universe and the event/process universes are independent.
 abbrev Labeled (Party : Type u) :=
@@ -850,7 +849,7 @@ abbrev Labeled (Party : Type u) :=
 set_option linter.checkUnivs false in
 /--
 `Process.Ticketed` is a closed-world process together with a stable ticket for
-each complete step transcript.
+each complete step path.
 
 These tickets are the obligation identifiers used later by the fairness and
 liveness layers.

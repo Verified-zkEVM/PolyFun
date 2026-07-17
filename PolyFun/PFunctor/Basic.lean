@@ -91,16 +91,6 @@ instance search, keeping transitions over `univ` as ergonomic as bare functions.
 def univ : PFunctor.{u + 1, u} :=
   ⟨Type u, fun T => T⟩
 
-section ofFn
-
-/-- Construct a polynomial functor from just a function `B`, with `A` derived implicitly. -/
-@[simps]
-def ofFn {A : Type uA₁} (B : (a : A) → Type uB) : PFunctor.{uA₁, uB} where
-  A := A
-  B := B
-
-end ofFn
-
 section Coprod
 instance {a} : IsEmpty (B 1 a) := inferInstanceAs (IsEmpty PEmpty)
 instance {α} (a : α) : IsEmpty (B (C α) a) := inferInstanceAs (IsEmpty PEmpty)

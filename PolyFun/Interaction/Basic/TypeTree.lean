@@ -3,17 +3,17 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.PFunctor.Free.Path
+import PolyFun.PFunctor.Free.Polynomial
 
 /-!
-# Interaction specifications and transcripts
+# Interaction type trees and paths
 
-A `Spec` is a tree that describes the *shape* of a sequential interaction:
+A `TypeTree` is a tree that describes the *shape* of a sequential interaction:
 what types of moves can be exchanged at each round, and how later rounds
-may depend on earlier moves. A `Transcript` records one complete play
-through a `Spec` — a concrete move at every node from root to leaf.
+may depend on earlier moves. A `Path` records one complete play
+through a `TypeTree` — a concrete move at every node from root to leaf.
 
-On its own, a `Spec` says nothing about *who* makes each move or *how*
+On its own, a `TypeTree` says nothing about *who* makes each move or *how*
 moves are computed. Those concerns are separated into companion modules:
 
 * `Node` — realized node contexts and telescope-style node schemas
@@ -28,32 +28,32 @@ moves are computed. Those concerns are separated into companion modules:
 This is the foundation of the `Interaction` layer: a dependent tree of moves
 whose later rounds may depend on earlier choices. That dependence is part of
 the protocol shape itself, matching examples such as sumcheck and FRI where
-later messages and checks are indexed by the preceding transcript.
+later messages and checks are indexed by the preceding path.
 
 ## Polynomial substrate
 
-`Spec` is built directly on top of the polynomial-functor library in
+`TypeTree` is built directly on top of the polynomial-functor library in
 `PolyFun/PFunctor`:
 
 ```
-Spec := PFunctor.FreeM Spec.basePFunctor PUnit
+TypeTree := PFunctor.FreeM TypeTree.basePFunctor PUnit
 ```
 
-where `Spec.basePFunctor : PFunctor.{u+1, u}` has positions `Type u`
+where `TypeTree.basePFunctor : PFunctor.{u+1, u}` has positions `Type u`
 (every node carries a move type) and a child family given by the identity
 (continuations are indexed by moves). This is the polynomial that
 generates the *unindexed shape* of an interaction tree; payload-bearing
 shapes are obtained by replacing `PFunctor.FreeM` with the corresponding
 `PFunctor.FreeM ... α` for nontrivial `α` (see `Strategy` / `StepOver`).
 
-The `Spec` notation, `Spec.done`, and `Spec.node` are tagged with
+The `TypeTree` notation, `TypeTree.done`, and `TypeTree.node` are tagged with
 `@[match_pattern]`, so downstream definitions can pattern-match on the
 interaction constructors while the polynomial substrate remains the canonical
 representation.
 
 ## Module map
 
-- `Basic/` — spec, node contexts, decoration, generic shapes, strategy,
+- `Basic/` — type trees, node contexts, decoration, generic shapes, strategy,
   composition (this layer)
 - `Concurrent/` — structural concurrent source syntax, frontiers and residuals,
   typed interfaces and directed open boundaries,
@@ -69,7 +69,7 @@ representation.
 - `Reduction.lean` — prover, verifier, reduction
 - `Oracle/` — oracle decoration, path-dependent oracle access
 - `Security.lean` / `OracleSecurity.lean` — security definitions
-- `Boundary/` — same-transcript interface adaptation
+- `Boundary/` — same-path interface adaptation
 - `Multiparty/` — native multiparty local views and per-party profiles,
   including broadcast and directed communication models
 
@@ -90,10 +90,10 @@ universe u
 
 namespace Interaction
 
-namespace Spec
+namespace TypeTree
 
 /-- The polynomial functor that generates the shape of an interaction
-spec: positions are move types `Type u`, and the child family at a
+type tree: positions are move types `Type u`, and the child family at a
 position `M : Type u` is `M` itself (one continuation per move).
 
 This is the canonical representation of "an interactive node where the
@@ -106,13 +106,13 @@ def basePFunctor : PFunctor.{u+1, u} where
   A := Type u
   B := id
 
-end Spec
+end TypeTree
 
-/-- A `Spec` describes the shape of a sequential interaction as a tree.
+/-- A `TypeTree` describes the shape of a sequential interaction as a tree.
 Each internal node specifies a move space `Moves`, and the rest of the
 protocol may depend on the chosen move `x : Moves`.
 
-On its own, a `Spec` is intentionally minimal:
+On its own, a `TypeTree` is intentionally minimal:
 it records only the branching structure of the interaction.
 It does **not** say
 * who controls a node,
@@ -121,7 +121,7 @@ It does **not** say
 * how a collection of participants executes the node.
 
 Those additional layers are supplied separately by:
-* `Spec.Node.Context` / `Spec.Node.Schema`, for node-local semantic contexts
+* `TypeTree.Node.Context` / `TypeTree.Node.Schema`, for node-local semantic contexts
   and their telescope-style descriptions;
 * `PFunctor.FreeM.Displayed.Decoration`, for concrete nodewise metadata;
 * `SyntaxOver`, for the most general local participant syntax over
@@ -129,15 +129,15 @@ Those additional layers are supplied separately by:
 * `ShapeOver`, for the functorial refinement of such syntax;
 * `InteractionOver`, for local execution laws over such syntax.
 
-`Spec` is **definitionally** the free monad on `Spec.basePFunctor` at the
+`TypeTree` is **definitionally** the free monad on `TypeTree.basePFunctor` at the
 unit payload, exposing the polynomial substrate that the rest of the
-`Interaction` library builds on. The `Spec.done` / `Spec.node` aliases
+`Interaction` library builds on. The `TypeTree.done` / `TypeTree.node` aliases
 are tagged with `@[match_pattern]`, so definitions can use constructor-style
 patterns without exposing the underlying `FreeM` representation. -/
-abbrev Spec : Type (u+1) :=
-  PFunctor.FreeM Spec.basePFunctor.{u} PUnit.{u+1}
+abbrev TypeTree : Type (u+1) :=
+  PFunctor.FreeM TypeTree.basePFunctor.{u} PUnit.{u+1}
 
-namespace Spec
+namespace TypeTree
 
 /-- Terminal node: the interaction is over.
 
@@ -145,7 +145,7 @@ This is `PFunctor.FreeM.pure ()` at the polynomial substrate; the
 `@[match_pattern]` attribute makes it usable both as a constructor
 term and as a `match` pattern. -/
 @[match_pattern, reducible]
-def done : Spec := PFunctor.FreeM.pure PUnit.unit
+def done : TypeTree := PFunctor.FreeM.pure PUnit.unit
 
 /-- A round of interaction: a value of type `Moves` is exchanged, then
 the protocol continues with `rest x` depending on the chosen move `x`.
@@ -154,60 +154,86 @@ This is `PFunctor.FreeM.liftBind Moves rest` at the polynomial substrate;
 the `@[match_pattern]` attribute makes it usable both as a constructor
 term and as a `match` pattern. -/
 @[match_pattern, reducible]
-def node (Moves : Type u) (rest : Moves → Spec) : Spec :=
+def node (Moves : Type u) (rest : Moves → TypeTree) : TypeTree :=
   PFunctor.FreeM.liftBind Moves rest
 
-/-- Cases eliminator on `Spec` exposing the high-level `done` / `node`
+/-- Cases eliminator on `TypeTree` exposing the high-level `done` / `node`
 alternatives. Registered as the default `cases` eliminator so that
 `cases s with | done => ... | node X rest => ...` works transparently
 on top of the polynomial substrate. -/
 @[elab_as_elim, cases_eliminator]
-def casesOn {motive : Spec → Sort*}
-    (s : Spec)
-    (done : motive Spec.done)
-    (node : (X : Type u) → (rest : X → Spec) → motive (Spec.node X rest)) :
+def casesOn {motive : TypeTree → Sort*}
+    (s : TypeTree)
+    (done : motive TypeTree.done)
+    (node : (X : Type u) → (rest : X → TypeTree) → motive (TypeTree.node X rest)) :
     motive s :=
   match s with
   | .done => done
   | .node X rest => node X rest
 
-/-- Structural recursion eliminator on `Spec` exposing the high-level
+/-- Structural recursion eliminator on `TypeTree` exposing the high-level
 `done` / `node` alternatives, with an induction hypothesis on every
 continuation in the `node` case. Registered as the default `induction`
 eliminator so that `induction s with | done => ... | node X rest ih => ...`
 works transparently on top of the polynomial substrate. -/
 @[elab_as_elim, induction_eliminator]
-def recOn {motive : Spec → Sort*}
-    (s : Spec)
-    (done : motive Spec.done)
-    (node : (X : Type u) → (rest : X → Spec) →
-        ((x : X) → motive (rest x)) → motive (Spec.node X rest)) :
+def recOn {motive : TypeTree → Sort*}
+    (s : TypeTree)
+    (done : motive TypeTree.done)
+    (node : (X : Type u) → (rest : X → TypeTree) →
+        ((x : X) → motive (rest x)) → motive (TypeTree.node X rest)) :
     motive s :=
   match s with
   | .done => done
   | .node X rest => node X rest (fun x => recOn (rest x) done node)
 
-/-- A complete play through a `Spec`: at each node, a concrete move is
+/-- A complete play through a `TypeTree`: at each node, a concrete move is
 recorded, producing a root-to-leaf path through the interaction tree.
-For `.done`, the transcript is trivial (`PUnit`); for `.node X rest`,
-it is a chosen move `x : X` paired with a transcript for `rest x`. -/
-abbrev Transcript (s : Spec.{u}) : Type u :=
+For `.done`, the path is trivial (`PUnit`); for `.node X rest`,
+it is a chosen move `x : X` paired with a path for `rest x`. -/
+abbrev Path (s : TypeTree.{u}) : Type u :=
   PFunctor.FreeM.Path s
 
 /-- The **undecorated step polynomial** of sequential interaction: positions are
-interaction shapes, and the directions at a shape are its complete transcripts.
-A coalgebra of `stepPoly` is a system that at each state plays one whole `Spec`
-episode and continues from the resulting transcript; `Spec.Telescope` and
-`Spec.Chain.ofStateMachine` consume exactly this data to build finite specs,
-and the decorated refinement is `Concurrent.StepOver.toPFunctor`. -/
-def stepPoly : PFunctor.{u + 1, u} :=
-  ⟨Spec.{u}, Transcript⟩
+interaction shapes, and the directions at a shape are its complete paths.
 
-/-- A straight-line `Spec` with no branching: each move type in the list
+This is definitionally the free polynomial on `TypeTree.basePFunctor`. Consequently
+its substitution-monoid multiplication is dependent protocol append, and its
+backward direction map splits a path at the append boundary. A coalgebra
+of `stepPoly` is a system that at each state plays one whole `TypeTree` episode and
+continues from the resulting path. -/
+abbrev stepPoly : PFunctor.{u + 1, u} :=
+  PFunctor.FreeP TypeTree.basePFunctor
+
+/-- The canonical substitution-monoid structure on interaction type trees.
+
+Its unit is `TypeTree.done`; its multiplication grafts a continuation tree at every
+complete path of an outer tree. -/
+abbrev substMonoid : PFunctor.SubstMonoid.{u + 1, u} :=
+  PFunctor.FreeP.substMonoid TypeTree.basePFunctor
+
+theorem substMonoid_unit_toFunA (x : PUnit) :
+    TypeTree.substMonoid.unit.toFunA x = TypeTree.done :=
+  rfl
+
+@[simp]
+theorem substMonoid_mult_toFunA (spec : TypeTree)
+    (next : Path spec → TypeTree) :
+    TypeTree.substMonoid.mult.toFunA ⟨spec, next⟩ = spec.append next :=
+  rfl
+
+@[simp]
+theorem substMonoid_mult_toFunB (spec : TypeTree)
+    (next : Path spec → TypeTree) (tr : Path (spec.append next)) :
+    TypeTree.substMonoid.mult.toFunB ⟨spec, next⟩ tr =
+      PFunctor.FreeM.Path.split spec next tr :=
+  rfl
+
+/-- A straight-line `TypeTree` with no branching: each move type in the list
 becomes one round, and later rounds do not depend on earlier moves. -/
-def ofList : List (Type u) → Spec
+def ofList : List (Type u) → TypeTree
   | [] => .done
   | T :: tl => .node T (fun _ => ofList tl)
 
-end Spec
+end TypeTree
 end Interaction

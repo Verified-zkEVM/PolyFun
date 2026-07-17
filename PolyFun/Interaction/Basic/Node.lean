@@ -12,11 +12,11 @@ import Batteries.Tactic.Lint
 This file isolates the node-local metadata layer of the `Interaction`
 framework.
 
-`Spec.Node.Context` is the semantic notion:
+`TypeTree.Node.Context` is the semantic notion:
 for each move space `X`, it gives the type of node-local information available
 at a node whose next move lives in `X`.
 
-`Spec.Node.Schema` is the structured, telescope-style front-end for building
+`TypeTree.Node.Schema` is the structured, telescope-style front-end for building
 such contexts in stages. This follows the use of **contexts** and
 **telescopes** in dependent type theory, where later entries may depend on
 earlier ones, and it also echoes the **schema / instance** split common in
@@ -35,19 +35,19 @@ The rest of the interaction core consumes realized node contexts, not schemas:
   those realized contexts.
 * `ShapeOver` is the functorial refinement of `SyntaxOver`, used
   when node objects support generic continuation reindexing.
-* `Spec.Node.ContextHom` records structure-preserving maps between realized
+* `TypeTree.Node.ContextHom` records structure-preserving maps between realized
   contexts, so forgetting or repackaging metadata can be expressed explicitly.
-* `Spec.Node.Schema.SchemaMap` is the corresponding notion at the schema level: a
+* `TypeTree.Node.Schema.SchemaMap` is the corresponding notion at the schema level: a
   semantic map between realized contexts presented with their schema sources
   and targets.
-* `Spec.Node.Schema.Prefix` records syntactic schema-prefix inclusions, which
+* `TypeTree.Node.Schema.Prefix` records syntactic schema-prefix inclusions, which
   induce canonical forgetful maps on realized contexts.
 
 Worked example:
 node metadata with a tag `Tag X` followed by dependent data `Data X tag`
 is represented by the schema
-`(Spec.Node.Schema.singleton Tag).extend Data`.
-Its realized context is `Spec.Node.Context.extend Tag Data`,
+`(TypeTree.Node.Schema.singleton Tag).extend Data`.
+Its realized context is `TypeTree.Node.Context.extend Tag Data`,
 so a decoration by that context provides both pieces of node-local data as one
 semantic object.
 -/
@@ -55,7 +55,7 @@ semantic object.
 universe u v w w₂ w₃
 
 namespace Interaction
-namespace Spec
+namespace TypeTree
 namespace Node
 
 set_option linter.checkUnivs false in
@@ -98,20 +98,20 @@ specializations.
 def Context.empty : Context := fun _ => PUnit
 
 /--
-The polynomial functor whose free monad realizes `Γ`-decorated specs.
+The polynomial functor whose free monad realizes `Γ`-decorated type trees.
 
 Positions are `Σ X : Type u, Γ X`: each node records both its move space
 `X` and a `Γ`-value at that node. The child family is `Sigma.fst`, so a
 continuation at position `⟨X, _⟩` is indexed by `X` itself, exactly as in
-`Spec.basePFunctor`. The forgetful projection `Sigma.fst : Σ X, Γ X → Type u`
+`TypeTree.basePFunctor`. The forgetful projection `Sigma.fst : Σ X, Γ X → Type u`
 on positions (combined with the identity on children) is a `PFunctor.Lens`
-from `Γ.toPFunctor` to `Spec.basePFunctor`; its lift to free monads is the
-shape-forgetful map `DecoratedSpec.shape` in `Basic/Decoration.lean`.
+from `Γ.toPFunctor` to `TypeTree.basePFunctor`; its lift to free monads is the
+shape-forgetful map `Decorated.shape` in `Basic/Decoration.lean`.
 
-This is the polynomial substrate that justifies the `Spec`-indexed
-recursion of `PFunctor.FreeM.Displayed.Decoration`: a decorated spec is a free term of this
-polynomial, and the existing `Decoration Γ spec` is exactly its fiber
-over the underlying `spec : Spec`.
+This is the polynomial substrate that justifies the `TypeTree`-indexed
+recursion of `PFunctor.FreeM.Displayed.Decoration`: a decorated type tree is a free term
+of this polynomial, and the existing `Decoration Γ tree` is exactly its fiber
+over the underlying `tree : TypeTree`.
 -/
 @[reducible]
 def Context.toPFunctor (Γ : Context.{u, v}) : PFunctor.{max (u+1) v, u} where
@@ -420,5 +420,5 @@ abbrev Prefix.toSchemaMap
 end Schema
 
 end Node
-end Spec
+end TypeTree
 end Interaction

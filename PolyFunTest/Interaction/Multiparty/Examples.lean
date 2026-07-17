@@ -15,9 +15,9 @@ compute definitionally in the broadcast, directed, and profile-based
 communication models introduced in the new `Interaction.Multiparty` layer.
 
 Besides the basic broadcast and directed examples, the later sections focus on
-adversarial semantics. They show that the current sequential `Interaction.Spec`
+adversarial semantics. They show that the current sequential `Interaction.TypeTree`
 framework can already model, in a definitionally transparent way:
-* public-transcript adversarial choices;
+* public-path adversarial choices;
 * directed delivery with hidden outsiders;
 * metadata leakage without full payload leakage;
 * adversarial choices among dropping, delivering, and duplicating messages; and
@@ -97,10 +97,10 @@ variable (Msg Chal WitOut : Type u)
 variable (Decision : Type u)
 variable (ExtractedWit : Type u)
 
-/-- Spec for a one-round knowledge-soundness interaction:
+/-- TypeTree for a one-round knowledge-soundness interaction:
 message, challenge, witness output, decision, extraction. -/
-private def ksSpec : Spec :=
-  Spec.node Msg fun _ => .node Chal fun _ => .node WitOut fun _ =>
+private def ksSpec : TypeTree :=
+  TypeTree.node Msg fun _ => .node Chal fun _ => .node WitOut fun _ =>
   .node Decision fun _ => .node ExtractedWit fun _ => .done
 
 /-- Acting parties for the knowledge-soundness interaction in the broadcast
@@ -154,8 +154,8 @@ variable (m : Type u → Type u) [Monad m] (α : Type u)
 
 /-- A tiny two-step protocol used to demonstrate the directed model:
 `prover → verifier`, then `verifier → extractor`. -/
-private def directedSpec : Spec :=
-  Spec.node Msg fun _ => .node Ack fun _ => .done
+private def directedSpec : TypeTree :=
+  TypeTree.node Msg fun _ => .node Ack fun _ => .done
 
 /-- Directed sender/receiver labels for `directedSpec`. -/
 private def directedEdges :
@@ -202,8 +202,8 @@ variable (Flag : Type u)
 variable (m : Type u → Type u) [Monad m] (α : Type u)
 
 /-- A one-step scheduled event with a public tag and a private payload. -/
-private def scheduledSpec : Spec :=
-  Spec.node (Flag × Msg) fun _ => .done
+private def scheduledSpec : TypeTree :=
+  TypeTree.node (Flag × Msg) fun _ => .done
 
 /-- Per-party local views of the scheduled event:
 the adversary chooses, the recipient observes the full event, the auditor
@@ -327,8 +327,8 @@ private def deliverySummary : NetworkAction Msg → DeliverySummary
 /--
 A one-step adversarially scheduled delivery action.
 -/
-private def networkSpec : Spec :=
-  Spec.node (NetworkAction Msg) fun _ => .done
+private def networkSpec : TypeTree :=
+  TypeTree.node (NetworkAction Msg) fun _ => .done
 
 /--
 Per-party views of `networkSpec`.
@@ -419,8 +419,8 @@ The first move is the adversary's corruption decision. The second move is a
 post-corruption secret-bearing action whose local visibility depends on the
 chosen corruption target.
 -/
-private def corruptionSpec : Spec :=
-  Spec.node CorruptionTarget fun _ => .node Secret fun _ => .done
+private def corruptionSpec : TypeTree :=
+  TypeTree.node CorruptionTarget fun _ => .node Secret fun _ => .done
 
 /--
 Per-party local views for `corruptionSpec`.
@@ -483,7 +483,7 @@ the corrupted party.
 -/
 private def aliceAfterSelfCorruptionViews :
     PFunctor.FreeM.Displayed.Decoration (fun X : Type u => ViewMode X)
-      (Spec.node Secret fun _ => .done) :=
+      (TypeTree.node Secret fun _ => .done) :=
   ⟨.observe, fun _ => ⟨⟩⟩
 
 /--
@@ -492,7 +492,7 @@ is corrupted instead, so Alice is hidden from the move.
 -/
 private def aliceAfterBobCorruptionViews :
     PFunctor.FreeM.Displayed.Decoration (fun X : Type u => ViewMode X)
-      (Spec.node Secret fun _ => .done) :=
+      (TypeTree.node Secret fun _ => .done) :=
   ⟨.hidden, fun _ => ⟨⟩⟩
 
 /--
@@ -513,13 +513,13 @@ adversary's first move can induce for Alice.
 -/
 example :
     Multiparty.Strategy m
-      (resolve := Spec.Node.ContextHom.id (fun X : Type u => ViewMode X))
-      (Spec.node Secret fun _ => .done) (aliceAfterSelfCorruptionViews Secret)
+      (resolve := TypeTree.Node.ContextHom.id (fun X : Type u => ViewMode X))
+      (TypeTree.node Secret fun _ => .done) (aliceAfterSelfCorruptionViews Secret)
       (fun _ => α)
     = ((_ : Secret) → m α) := by
   unfold Multiparty.Strategy
   change StrategyOver (Multiparty.localSyntax m) PUnit.unit
-    (Spec.node Secret fun _ => .done) (aliceAfterSelfCorruptionViews Secret)
+    (TypeTree.node Secret fun _ => .done) (aliceAfterSelfCorruptionViews Secret)
     (fun _ => α) = ((_ : Secret) → m α)
   rfl
 
@@ -528,13 +528,13 @@ If Bob is corrupted instead, Alice is hidden from the same second-step node.
 -/
 example :
     Multiparty.Strategy m
-      (resolve := Spec.Node.ContextHom.id (fun X : Type u => ViewMode X))
-      (Spec.node Secret fun _ => .done) (aliceAfterBobCorruptionViews Secret)
+      (resolve := TypeTree.Node.ContextHom.id (fun X : Type u => ViewMode X))
+      (TypeTree.node Secret fun _ => .done) (aliceAfterBobCorruptionViews Secret)
       (fun _ => α)
     = m ((_ : Secret) → α) := by
   unfold Multiparty.Strategy
   change StrategyOver (Multiparty.localSyntax m) PUnit.unit
-    (Spec.node Secret fun _ => .done) (aliceAfterBobCorruptionViews Secret)
+    (TypeTree.node Secret fun _ => .done) (aliceAfterBobCorruptionViews Secret)
     (fun _ => α) = m ((_ : Secret) → α)
   rfl
 

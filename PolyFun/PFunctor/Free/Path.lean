@@ -22,9 +22,9 @@ below isolate the branch-object pattern of such a tree:
   runtime branch through a control tree executed along a polynomial lens.
 * `FreeM.output s path` recovers the leaf payload selected by that path.
 * `FreeM.append s k` grafts a suffix tree selected by the canonical path of `s`.
-* `FreeM.TelescopeWith` is the state-indexed initial algebra obtained by
-  iterating such rounds, where the next state is selected by an abstract
-  observation of the round.
+* `FreeM.StoppingTree` is the state-indexed initial algebra whose next state is
+  selected by an abstract observation; `TelescopeWith` is its compatibility
+  presentation tied to a family of `FreeM` rounds.
 * `FreeM.Telescope` is the specialization where observations are canonical
   branch paths.
 
@@ -74,6 +74,43 @@ def Path.shape (P : PFunctor.{uA, uB}) (α : Type v) :
 /-- The canonical root-to-leaf path through a `FreeM` tree. -/
 abbrev Path {α : Type v} : FreeM P α → Type uB :=
   Displayed (Path.shape P α)
+
+namespace Path
+
+/-- Prepend one operation-node direction to a path through the selected
+child. -/
+def cons (a : P.A) (rest : P.B a → FreeM P α) (b : P.B a)
+    (path : Path (rest b)) : Path (FreeM.liftBind a rest) :=
+  ⟨b, path⟩
+
+/-- The direction selected at the root of a non-leaf path. -/
+def head (a : P.A) (rest : P.B a → FreeM P α)
+    (path : Path (FreeM.liftBind a rest)) : P.B a :=
+  path.1
+
+/-- The path remaining below the root direction of a non-leaf path. -/
+def tail (a : P.A) (rest : P.B a → FreeM P α)
+    (path : Path (FreeM.liftBind a rest)) : Path (rest (head a rest path)) :=
+  path.2
+
+@[simp]
+theorem head_cons (a : P.A) (rest : P.B a → FreeM P α) (b : P.B a)
+    (path : Path (rest b)) : head a rest (cons a rest b path) = b :=
+  rfl
+
+@[simp]
+theorem tail_cons (a : P.A) (rest : P.B a → FreeM P α) (b : P.B a)
+    (path : Path (rest b)) : tail a rest (cons a rest b path) = path :=
+  rfl
+
+@[simp]
+theorem cons_head_tail (a : P.A) (rest : P.B a → FreeM P α)
+    (path : Path (FreeM.liftBind a rest)) :
+    cons a rest (head a rest path) (tail a rest path) = path := by
+  rcases path with ⟨b, path⟩
+  rfl
+
+end Path
 
 /-! ## Runtime paths along a lens -/
 
@@ -254,6 +291,62 @@ theorem outputAlong_mapLensPathToPathAlong (l : Lens P Q) :
   | .liftBind a rest, ⟨d, path⟩ =>
       outputAlong_mapLensPathToPathAlong l (rest (l.toFunB a d)) path
 
+/-- Pull a canonical path through a lens-mapped tree back to the corresponding
+canonical path through the source tree. -/
+def Path.pullMapLens (l : Lens P Q) :
+    (s : FreeM P α) → Path (s.mapLens l) → Path s
+  | .pure _, _ => ⟨⟩
+  | .liftBind a rest, ⟨d, path⟩ =>
+      ⟨l.toFunB a d, pullMapLens l (rest (l.toFunB a d)) path⟩
+
+@[simp]
+theorem Path.pullMapLens_pure (l : Lens P Q) (x : α)
+    (path : Path ((FreeM.pure x : FreeM P α).mapLens l)) :
+    Path.pullMapLens l (pure x) path = ⟨⟩ :=
+  rfl
+
+@[simp]
+theorem Path.pullMapLens_lift_bind (l : Lens P Q) (a : P.A)
+    (rest : P.B a → FreeM P α) (d : Q.B (l.toFunA a))
+    (path : Path ((rest (l.toFunB a d)).mapLens l)) :
+    Path.pullMapLens l ((FreeM.lift a).bind rest) ⟨d, path⟩ =
+      ⟨l.toFunB a d, Path.pullMapLens l (rest (l.toFunB a d)) path⟩ :=
+  rfl
+
+/-- Pulling a mapped path directly agrees with first viewing it as a runtime
+path and then projecting it to the control tree. -/
+theorem Path.pullMapLens_eq_projectPathAlong (l : Lens P Q) :
+    (s : FreeM P α) → (path : Path (s.mapLens l)) →
+    Path.pullMapLens l s path =
+      projectPathAlong l s (mapLensPathToPathAlong l s path)
+  | .pure _, _ => rfl
+  | .liftBind a rest, ⟨d, path⟩ =>
+      congrArg (fun tail : Path (rest (l.toFunB a d)) =>
+        (⟨l.toFunB a d, tail⟩ : Path (FreeM.liftBind a rest)))
+        (pullMapLens_eq_projectPathAlong l (rest (l.toFunB a d)) path)
+
+/-- Pull a path through a leaf-relabelled tree back to the original tree.
+Relabelling changes no operation-node directions. -/
+def Path.pullMap {β : Type t} (f : α → β) :
+    (s : FreeM P α) → Path (s.map f) → Path s
+  | .pure _, _ => ⟨⟩
+  | .liftBind _a rest, ⟨b, path⟩ =>
+      ⟨b, pullMap f (rest b) path⟩
+
+@[simp]
+theorem Path.pullMap_pure {β : Type t} (f : α → β) (x : α)
+    (path : Path ((FreeM.pure x : FreeM P α).map f)) :
+    Path.pullMap f (pure x) path = ⟨⟩ :=
+  rfl
+
+@[simp]
+theorem Path.pullMap_lift_bind {β : Type t} (f : α → β) (a : P.A)
+    (rest : P.B a → FreeM P α) (b : P.B a)
+    (path : Path ((rest b).map f)) :
+    Path.pullMap f ((FreeM.lift a).bind rest) ⟨b, path⟩ =
+      ⟨b, Path.pullMap f (rest b) path⟩ :=
+  rfl
+
 /-- Dependent sequential composition for `FreeM` trees using canonical paths. -/
 def append {β : Type t} :
     (s₁ : FreeM P α) →
@@ -319,6 +412,23 @@ theorem append_done {β : Type t}
     (path₂ : Path (s₂ ⟨⟩)) :
     append (pure x) s₂ ⟨⟩ path₂ = path₂ :=
   rfl
+
+/-- Associativity of path-indexed tree grafting. The suffix continuation on
+the right is reindexed by the path obtained by appending the outer and middle
+paths. -/
+theorem append_tree_assoc {β : Type t} {γ : Type z} :
+    (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
+    (s₃ : Path (FreeM.append s₁ s₂) → FreeM P γ) →
+    FreeM.append (FreeM.append s₁ s₂) s₃ =
+      FreeM.append s₁ (fun path₁ =>
+        FreeM.append (s₂ path₁) (fun path₂ =>
+          s₃ (append s₁ s₂ path₁ path₂)))
+  | .pure _, s₂, s₃ => rfl
+  | .liftBind a rest, s₂, s₃ => by
+      apply congrArg (FreeM.liftBind a)
+      funext b
+      exact append_tree_assoc (rest b) (fun path => s₂ ⟨b, path⟩)
+        (fun path => s₃ ⟨b, path⟩)
 
 /-- Split a canonical path through an appended tree into prefix and suffix
 canonical paths. -/
@@ -884,29 +994,142 @@ theorem projectPathAlong_append {β : Type t} (l : Lens P Q) :
 
 end PathAlong
 
-/-! ## Telescopes -/
+/-! ## Well-founded stopping trees -/
 
-/-- Initial-algebra presentation of a state-machine telescope of `FreeM`
-rounds observed through an arbitrary observation family `Obs`.
+/-- Indexed W-type of stopping trees for a transition system observed through
+an arbitrary family `Obs`.
 
-At each state `s`, an inhabitant either terminates or extends by running
-`round s` and recursing into the next state selected by an observation
-`obs : Obs s`. The observation family is intentionally abstract: canonical
-`FreeM` branch paths use `Obs s = Path (round s)`, while quotiented or compact
-views can erase uninformative singleton choices. -/
-inductive TelescopeWith {St : Type z} {Out : St → Type v}
-    (round : (s : St) → FreeM P (Out s))
+At each state `s`, an inhabitant either stops or extends and recurses into the
+next state selected by each observation `obs : Obs s`. Because `done s` is
+available at every state, inhabitation alone does not assert termination of
+the underlying transition system. -/
+inductive StoppingTree {St : Type z}
     (Obs : St → Type w)
     (step : (s : St) → Obs s → St) : St → Type (max w z)
-  | done (s : St) : TelescopeWith round Obs step s
+  | done (s : St) : StoppingTree Obs step s
   | extend (s : St)
-      (cont : (obs : Obs s) → TelescopeWith round Obs step (step s obs)) :
-      TelescopeWith round Obs step s
+      (cont : (obs : Obs s) → StoppingTree Obs step (step s obs)) :
+      StoppingTree Obs step s
+
+namespace StoppingTree
+
+variable {St : Type z} {Obs : St → Type w} {step : (s : St) → Obs s → St}
+
+/-- An algebra for the indexed polynomial
+`X ↦ (fun s => PUnit ⊕ ((obs : Obs s) → X (step s obs)))`.
+
+`StoppingTree` is its initial algebra: `fold` below is the unique algebra
+homomorphism into any such carrier family. -/
+structure Algebra (Carrier : St → Type t) where
+  /-- Interpretation of a stopping leaf. -/
+  done : (s : St) → Carrier s
+  /-- Interpretation of one transition layer. -/
+  extend : (s : St) → ((obs : Obs s) → Carrier (step s obs)) → Carrier s
+
+/-- The catamorphism from the initial stopping-tree algebra. -/
+def fold {Carrier : St → Type t} (alg : Algebra (Obs := Obs) (step := step) Carrier) :
+    {s : St} → StoppingTree Obs step s → Carrier s
+  | _, .done s => alg.done s
+  | _, .extend s cont => alg.extend s fun obs => fold alg (cont obs)
+
+@[simp]
+theorem fold_done {Carrier : St → Type t}
+    (alg : Algebra (Obs := Obs) (step := step) Carrier) (s : St) :
+    fold alg (StoppingTree.done s) = alg.done s :=
+  rfl
+
+@[simp]
+theorem fold_extend {Carrier : St → Type t}
+    (alg : Algebra (Obs := Obs) (step := step) Carrier) (s : St)
+    (cont : (obs : Obs s) → StoppingTree Obs step (step s obs)) :
+    fold alg (StoppingTree.extend s cont) =
+      alg.extend s (fun obs => fold alg (cont obs)) :=
+  rfl
+
+/-- Uniqueness half of the initial-algebra universal property. Any function
+respecting `done` and `extend` agrees pointwise with `fold`. -/
+theorem eq_fold {Carrier : St → Type t}
+    (alg : Algebra (Obs := Obs) (step := step) Carrier)
+    (f : {s : St} → StoppingTree Obs step s → Carrier s)
+    (hDone : (s : St) → f (StoppingTree.done s) = alg.done s)
+    (hExtend : (s : St) →
+      (cont : (obs : Obs s) → StoppingTree Obs step (step s obs)) →
+      f (StoppingTree.extend s cont) =
+        alg.extend s (fun obs => f (cont obs))) :
+    {s : St} → (tree : StoppingTree Obs step s) → f tree = fold alg tree
+  | _, .done s => hDone s
+  | _, .extend s cont => by
+      rw [hExtend]
+      simp only [fold]
+      congr 1
+      funext obs
+      exact eq_fold alg f hDone hExtend (cont obs)
+
+end StoppingTree
+
+set_option linter.unusedVariables false in
+/-- Compatibility presentation of `StoppingTree` tied to a family of `FreeM`
+rounds. The `round` parameter does not affect the inductive carrier; it only
+records which rounds an observation-based flattening belongs to. New generic
+code should use `StoppingTree` directly. -/
+@[nolint unusedArguments]
+abbrev TelescopeWith {St : Type z} {Out : St → Type v}
+    (round : (s : St) → FreeM P (Out s))
+    (Obs : St → Type w)
+    (step : (s : St) → Obs s → St) : St → Type (max w z) :=
+  StoppingTree Obs step
 
 namespace TelescopeWith
 
 variable {St : Type z} {Out : St → Type v} {round : (s : St) → FreeM P (Out s)}
     {Obs : St → Type w} {step : (s : St) → Obs s → St}
+
+/-- Compatibility constructor for a stopping leaf. -/
+@[match_pattern]
+abbrev done (s : St) : TelescopeWith round Obs step s :=
+  StoppingTree.done s
+
+/-- Compatibility constructor for one observation-indexed transition layer. -/
+@[match_pattern]
+abbrev extend (s : St)
+    (cont : (obs : Obs s) → TelescopeWith round Obs step (step s obs)) :
+    TelescopeWith round Obs step s :=
+  StoppingTree.extend s cont
+
+/-- Compatibility alias for the canonical stopping-tree algebra. -/
+abbrev Algebra (Carrier : St → Type t) :=
+  StoppingTree.Algebra (Obs := Obs) (step := step) Carrier
+
+/-- Compatibility wrapper for `StoppingTree.fold`. -/
+def fold {Carrier : St → Type t} (alg : Algebra (Obs := Obs) (step := step) Carrier) :
+    {s : St} → TelescopeWith round Obs step s → Carrier s :=
+  StoppingTree.fold alg
+
+@[simp]
+theorem fold_done {Carrier : St → Type t}
+    (alg : Algebra (Obs := Obs) (step := step) Carrier) (s : St) :
+    fold (round := round) alg (TelescopeWith.done s) = alg.done s :=
+  rfl
+
+@[simp]
+theorem fold_extend {Carrier : St → Type t}
+    (alg : Algebra (Obs := Obs) (step := step) Carrier) (s : St)
+    (cont : (obs : Obs s) → TelescopeWith round Obs step (step s obs)) :
+    fold alg (TelescopeWith.extend s cont) =
+      alg.extend s (fun obs => fold alg (cont obs)) :=
+  rfl
+
+/-- Compatibility form of the stopping-tree fold uniqueness theorem. -/
+theorem eq_fold {Carrier : St → Type t}
+    (alg : Algebra (Obs := Obs) (step := step) Carrier)
+    (f : {s : St} → TelescopeWith round Obs step s → Carrier s)
+    (hDone : (s : St) → f (TelescopeWith.done s) = alg.done s)
+    (hExtend : (s : St) →
+      (cont : (obs : Obs s) → TelescopeWith round Obs step (step s obs)) →
+      f (TelescopeWith.extend s cont) =
+        alg.extend s (fun obs => f (cont obs))) :
+    {s : St} → (tree : TelescopeWith round Obs step s) → f tree = fold alg tree :=
+  StoppingTree.eq_fold alg f hDone hExtend
 
 /-- Flatten a telescope into a single `FreeM` tree by iterated dependent
 append, using `appendRound` to graft each observed round and `finish` at
@@ -914,9 +1137,11 @@ terminal states. -/
 def toFreeM {β : Type t}
     (appendRound : (s : St) → (Obs s → FreeM P β) → FreeM P β)
     (finish : St → FreeM P β) :
-    {s : St} → TelescopeWith round Obs step s → FreeM P β
-  | _, .done s => finish s
-  | _, .extend s cont => appendRound s fun obs => (cont obs).toFreeM appendRound finish
+    {s : St} → TelescopeWith round Obs step s → FreeM P β :=
+  fold {
+    done := finish
+    extend := appendRound
+  }
 
 @[simp]
 theorem toFreeM_done {β : Type t}
@@ -937,8 +1162,8 @@ theorem toFreeM_extend {β : Type t}
 end TelescopeWith
 
 /-- State-machine telescopes whose observations are canonical `FreeM` branch
-paths. This is the default specialization of `TelescopeWith`; users with a
-more compact observation type should use `TelescopeWith` directly. -/
+paths. This is the round-indexed specialization of `StoppingTree`; users with
+a more compact observation type should use `StoppingTree` directly. -/
 abbrev Telescope {St : Type z} {Out : St → Type v}
     (round : (s : St) → FreeM P (Out s))
     (step : (s : St) → Path (round s) → St) : St → Type (max uB z) :=

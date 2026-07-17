@@ -11,9 +11,9 @@ auto-implicit mechanism, and do not add
 **Symptom**: `unknown identifier` for variables you expected Lean to
 infer.
 
-### 2. `Spec.done` and `Spec.node` are `@[match_pattern, reducible]` wrappers
+### 2. `TypeTree.done` and `TypeTree.node` are `@[match_pattern, reducible]` wrappers
 
-`Spec` is defined as `PFunctor.FreeM Spec.basePFunctor PUnit`, with
+`TypeTree` is defined as `PFunctor.FreeM TypeTree.basePFunctor PUnit`, with
 `done` / `node` exposed as `@[match_pattern, reducible]` wrappers over
 `PFunctor.FreeM.{pure, liftBind}`. Pattern matching on `done` / `node` works
 transparently; `rfl` against the polynomial substrate also works. **Do
@@ -52,7 +52,7 @@ formatting issue.
 
 ### 6. Core types are `@[reducible]` thin wrappers
 
-`Spec`, `Decoration`, `Strategy`, and friends are `def` / `abbrev` /
+`TypeTree`, `Decoration`, `Strategy`, and friends are `def` / `abbrev` /
 `@[reducible]` over `PFunctor.FreeM` machinery. Lean may unfold them
 aggressively. Use the canonical eliminators
 (`PFunctor.FreeM.rec` / `FreeM.induction` and the
@@ -62,7 +62,7 @@ aggressively. Use the canonical eliminators
 ### 7. Universe polymorphism
 
 `PFunctor` carries two universe parameters `(uA, uB)`; `FreeM`,
-`Decoration`, `Spec`, `Strategy`, and the open-process layer add more
+`Decoration`, `TypeTree`, `Strategy`, and the open-process layer add more
 on top (one for the monad's argument universe, one for its result
 universe). Universe unification errors are common when composing
 across layers because lens-style `MonadLift` parents drag in extra
@@ -95,8 +95,8 @@ non-standard instances.
 
 `PFunctor.DynSystem.StepRel s₁ s₂` is the canonical relation type on explicit
 concrete steps (`s₁.Step → s₂.Step → Prop`). Its process-specific views
-(`ProcessOver.TranscriptRel`, `Process.TranscriptRel`, and
-`Observation.Process.TranscriptRel`) should remain abbrevs of that one type.
+(`ProcessOver.StepRel`, `Process.StepRel`, and
+`Observation.Process.StepRel`) should remain abbrevs of that one type.
 Keeping the source state inside each step avoids hidden implicit state
 arguments and makes applications, composition witnesses, and type errors show
 the dependent data at the point where it is used.

@@ -3,7 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Spec
+import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.Basic.Node
 import Batteries.Tactic.Lint
 
@@ -32,10 +32,10 @@ notion: it adds continuation reindexing when the local syntax really does
 support it.
 
 Role-based APIs are specializations of this pattern:
-* `Spec.Node.Context` is the semantic family of node-local data;
-* `Spec.Node.Schema` is the telescope-style front-end for building such
+* `TypeTree.Node.Context` is the semantic family of node-local data;
+* `TypeTree.Node.Schema` is the telescope-style front-end for building such
   contexts;
-* `Spec.Node.ContextHom` and `SyntaxOver.comap` express contravariant
+* `TypeTree.Node.ContextHom` and `SyntaxOver.comap` express contravariant
   reindexing of local syntax along context morphisms;
 * `fun _ => Role` is one example of a simple node context;
 * `StrategyOver` is the whole-tree local strategy induced by one-node syntax.
@@ -120,24 +120,25 @@ def forAgent (syn : SyntaxOver l Agent Γ) (agent : Agent) :
 end SyntaxOver
 
 
-namespace Spec
+namespace TypeTree
 
 variable {Agent : Type a}
 variable {Γ : Node.Context.{u, vΓ}}
 
 set_option linter.checkUnivs false in
 /--
-`Syntax Agent` is the specialization of generic `SyntaxOver` to plain `Spec`
+`Syntax Agent` is the specialization of generic `SyntaxOver` to plain `TypeTree`
 trees with no node-local context.
 
 This is the right facade when the protocol tree carries no node metadata at
 all.
 -/
--- `Syntax`'s universes are the independent agent universe and the `Spec` position / node-context
--- metadata universes of the underlying `SyntaxOver`; kept separate for generality.
+-- `Syntax`'s universes are the independent agent universe and the `TypeTree`
+-- position / node-context metadata universes of the underlying `SyntaxOver`;
+-- kept separate for generality.
 abbrev Syntax
     (Agent : Type a) :=
-  SyntaxOver (PFunctor.Lens.id Spec.basePFunctor) Agent Node.Context.empty
+  SyntaxOver (PFunctor.Lens.id TypeTree.basePFunctor) Agent Node.Context.empty
 
-end Spec
+end TypeTree
 end Interaction

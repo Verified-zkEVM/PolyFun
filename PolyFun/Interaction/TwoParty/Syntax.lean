@@ -44,8 +44,8 @@ def perspective : Role → Participant → Ownership.Perspective
   | .receiver, .focal => .observer
   | .receiver, .counterpart => .owner
 
-/-- Spec-facing form of `perspective`, using the plain `Spec.Ownership` perspective type. -/
-def perspectiveSpec (role : Role) (agent : Participant) : Spec.Ownership.Perspective :=
+/-- TypeTree-facing form of `perspective`, using the plain `TypeTree.Ownership` perspective type. -/
+def typeTreePerspective (role : Role) (agent : Participant) : TypeTree.Ownership.Perspective :=
   match perspective role agent with
   | .owner => .owner
   | .observer => .observer
@@ -266,7 +266,7 @@ by an unbundled effect-like type constructor.
 
 Sender nodes observe the focal side's move. Receiver nodes expose the sampler
 and challenge-indexed continuation separately, which supports replay against a
-prescribed public transcript.
+prescribed public path.
 -/
 def _root_.Interaction.SyntaxOver.TwoParty.PublicCoinCounterpart.counterpart
     (m : Type uB₂ → Type uB₂) :

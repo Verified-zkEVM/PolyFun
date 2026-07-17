@@ -14,8 +14,8 @@ The process-level refinement notion for the dynamic concurrent core:
 `Refinement.SafetyRefinement` between two `ProcessOver.SafetySpec`s is the
 generic dynamical-system forward simulation
 `PFunctor.DynSystem.SafetyRefinement` at the step polynomial, with the
-step-matching relation ranging over complete step transcripts
-(`ProcessOver.TranscriptRel`).
+step-matching relation ranging over complete step paths
+(`ProcessOver.StepRel`).
 
 It captures the usual implementation/specification picture:
 
@@ -32,10 +32,10 @@ It captures the usual implementation/specification picture:
 The state-transport machinery — `matchDir`, `matchedState`, `mapRun`, and the
 `stateRel_mapRun` / `match_mapRun` / `safe_of_mapRun` / `relUpTo_mapRun` /
 `rel_mapRun` transport lemmas — lives at the generic layer and applies to
-processes directly. This file adds the transcript-flavoured vocabulary
-(`matchTranscript`), the admissibility form of assumption transport
+processes directly. This file adds the path-flavoured vocabulary
+(`matchPath`), the admissibility form of assumption transport
 (`admissible_mapRun`), the observation-preservation corollaries for the
-concrete `TranscriptRel`s, and the top-level `safe_of_satisfies` transfer.
+concrete `StepRel`s, and the top-level `safe_of_satisfies` transfer.
 -/
 
 universe u v w w₂ w₃
@@ -54,44 +54,44 @@ The meaning is:
 * every initial implementation state is related to some initial specification
   state;
 * assumptions are preserved from implementation to specification;
-* every implementation step transcript can be matched by some specification
-  step transcript satisfying `matchStep`;
+* every implementation step path can be matched by some specification
+  step path satisfying `matchStep`;
 * related safe specification states imply safe implementation states.
 
 The parameter `matchStep` determines what behavioral information the
-simulation preserves at each step. Choosing different transcript relations
+simulation preserves at each step. Choosing different path relations
 recovers event-preserving, ticket-preserving, controller-preserving, or
 observation-preserving refinements.
 -/
 abbrev SafetyRefinement
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     (impl : ProcessOver.SafetySpec Γ)
     (spec : ProcessOver.SafetySpec Δ)
     (matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess :=
-        ProcessOver.TranscriptRel.top) :=
+      ProcessOver.StepRel impl.toProcess spec.toProcess :=
+        ProcessOver.StepRel.top) :=
   PFunctor.DynSystem.SafetyRefinement impl spec matchStep
 
 namespace SafetyRefinement
 
 /--
-Choose the matching specification transcript for one implementation
-transcript: the specification-side step selected by the simulation for the
+Choose the matching specification path for one implementation
+path: the specification-side step selected by the simulation for the
 given implementation step, as the generic `matchDir` read at the
 step-polynomial interface.
 -/
-noncomputable abbrev matchTranscript
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+noncomputable abbrev matchPath
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {impl : ProcessOver.SafetySpec Γ} {spec : ProcessOver.SafetySpec Δ}
     {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
+      ProcessOver.StepRel impl.toProcess spec.toProcess}
     (sim : SafetyRefinement impl spec matchStep)
     {pImpl pSpec : _}
     (hrel : sim.stateRel pImpl pSpec)
-    (trImpl : (impl.step pImpl).spec.Transcript) :
-    (spec.step pSpec).spec.Transcript :=
+    (trImpl : (impl.step pImpl).tree.Path) :
+    (spec.step pSpec).tree.Path :=
   sim.matchDir hrel trImpl
 
 /--
@@ -102,11 +102,11 @@ So ambient assumptions are preserved along the run translation induced by the
 simulation.
 -/
 theorem admissible_mapRun
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {impl : ProcessOver.SafetySpec Γ} {spec : ProcessOver.SafetySpec Δ}
     {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
+      ProcessOver.StepRel impl.toProcess spec.toProcess}
     (sim : SafetyRefinement impl spec matchStep)
     (run : ProcessOver.Run impl.toProcess)
     {pSpec : spec.Proc}
@@ -119,7 +119,7 @@ theorem admissible_mapRun
 of every finite run prefix. -/
 theorem currentControllersUpTo_mapRun {Party : Type u}
     {impl spec : Process.SafetySpec Party}
-    (sim : SafetyRefinement impl spec Observation.Process.TranscriptRel.byController)
+    (sim : SafetyRefinement impl spec Observation.Process.StepRel.byController)
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
     (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
@@ -128,14 +128,14 @@ theorem currentControllersUpTo_mapRun {Party : Type u}
   Observation.Process.Run.currentControllersUpTo_eq_of_relUpTo_byController
     run (sim.mapRun run hrel)
     (Observation.Process.Run.relUpTo_of_pointwise
-      Observation.Process.TranscriptRel.byController
+      Observation.Process.StepRel.byController
       run (sim.mapRun run hrel) (sim.match_mapRun run hrel) n)
 
 /-- A controller-path-preserving simulation preserves the controller-path
 sequence of every finite run prefix. -/
 theorem controllerPathsUpTo_mapRun {Party : Type u}
     {impl spec : Process.SafetySpec Party}
-    (sim : SafetyRefinement impl spec Observation.Process.TranscriptRel.byPath)
+    (sim : SafetyRefinement impl spec Observation.Process.StepRel.byPath)
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
     (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
@@ -144,7 +144,7 @@ theorem controllerPathsUpTo_mapRun {Party : Type u}
   Observation.Process.Run.controllerPathsUpTo_eq_of_relUpTo_byPath
     run (sim.mapRun run hrel)
     (Observation.Process.Run.relUpTo_of_pointwise
-      Observation.Process.TranscriptRel.byPath
+      Observation.Process.StepRel.byPath
       run (sim.mapRun run hrel) (sim.match_mapRun run hrel) n)
 
 /-- An event-preserving simulation preserves the stable event sequence of every
@@ -154,7 +154,7 @@ theorem eventsUpTo_mapRun {Party : Type u}
     {eventImpl : impl.toProcess.EventMap Event}
     {eventSpec : spec.toProcess.EventMap Event}
     (sim : SafetyRefinement impl spec
-      (Observation.Process.TranscriptRel.byEvent eventImpl eventSpec))
+      (Observation.Process.StepRel.byEvent eventImpl eventSpec))
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
     (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
@@ -163,7 +163,7 @@ theorem eventsUpTo_mapRun {Party : Type u}
   Observation.Process.Run.eventsUpTo_eq_of_relUpTo_byEvent
     eventImpl eventSpec run (sim.mapRun run hrel)
     (Observation.Process.Run.relUpTo_of_pointwise
-      (Observation.Process.TranscriptRel.byEvent eventImpl eventSpec)
+      (Observation.Process.StepRel.byEvent eventImpl eventSpec)
       run (sim.mapRun run hrel) (sim.match_mapRun run hrel) n)
 
 /-- A ticket-preserving simulation preserves the stable ticket sequence of every
@@ -173,7 +173,7 @@ theorem ticketsUpTo_mapRun {Party : Type u}
     {ticketImpl : impl.toProcess.Tickets Ticket}
     {ticketSpec : spec.toProcess.Tickets Ticket}
     (sim : SafetyRefinement impl spec
-      (Observation.Process.TranscriptRel.byTicket ticketImpl ticketSpec))
+      (Observation.Process.StepRel.byTicket ticketImpl ticketSpec))
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
     (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
@@ -182,7 +182,7 @@ theorem ticketsUpTo_mapRun {Party : Type u}
   Observation.Process.Run.ticketsUpTo_eq_of_relUpTo_byTicket
     ticketImpl ticketSpec run (sim.mapRun run hrel)
     (Observation.Process.Run.relUpTo_of_pointwise
-      (Observation.Process.TranscriptRel.byTicket ticketImpl ticketSpec)
+      (Observation.Process.StepRel.byTicket ticketImpl ticketSpec)
       run (sim.mapRun run hrel) (sim.match_mapRun run hrel) n)
 
 /-- An observation-preserving simulation preserves one party's packed
@@ -191,7 +191,7 @@ theorem observationsUpTo_mapRun {Party : Type u} [DecidableEq Party]
     (me : Party)
     {impl spec : Process.SafetySpec Party}
     (sim : SafetyRefinement impl spec
-      (Observation.Process.TranscriptRel.byObservation me))
+      (Observation.Process.StepRel.byObservation me))
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
     (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
@@ -200,7 +200,7 @@ theorem observationsUpTo_mapRun {Party : Type u} [DecidableEq Party]
   Observation.Process.Run.observationsUpTo_eq_of_relUpTo_byObservation
     me run (sim.mapRun run hrel)
     (Observation.Process.Run.relUpTo_of_pointwise
-      (Observation.Process.TranscriptRel.byObservation me)
+      (Observation.Process.StepRel.byObservation me)
       run (sim.mapRun run hrel) (sim.match_mapRun run hrel) n)
 
 /--
@@ -213,11 +213,11 @@ forward simulation lets one discharge implementation-side safety obligations by
 proving them on the specification side.
 -/
 theorem safe_of_satisfies
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
-    {Δ : Interaction.Spec.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {impl : ProcessOver.SafetySpec Γ} {spec : ProcessOver.SafetySpec Δ}
     {matchStep :
-      ProcessOver.TranscriptRel impl.toProcess spec.toProcess}
+      ProcessOver.StepRel impl.toProcess spec.toProcess}
     (sim : SafetyRefinement impl spec matchStep)
     (fairImpl : ProcessOver.Run.Pred impl.toProcess)
     (fairSpec : ProcessOver.Run.Pred spec.toProcess)

@@ -111,7 +111,7 @@ def toProcess {Party : Type u} {S : Type v} (machine : Machine S)
     (semantics : (σ : S) → NodeProfile Party (machine.Enabled σ)) :
     Process S Party :=
   ProcessOver.ofStep S fun σ =>
-    { spec := .node (machine.Enabled σ) (fun _ => .done)
+    { tree := .node (machine.Enabled σ) (fun _ => .done)
       semantics := ⟨semantics σ, fun _ => PUnit.unit⟩
       next := fun
         | ⟨event, _⟩ => machine.step σ event }

@@ -79,27 +79,27 @@ namespace Ticketed
 
 /--
 `enabledAt ticketed run ticket n` means that at time `n`, there exists some
-complete transcript of the current process step whose stable ticket is
+complete path of the current process step whose stable ticket is
 `ticket`.
 -/
 def enabledAt
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (ticketed : ProcessOver.Ticketed Γ)
     (run : ProcessOver.Run ticketed.toProcess)
     (ticket : ticketed.Ticket) (n : Nat) : Prop :=
-  ∃ tr : (ticketed.toProcess.step (run.state n)).spec.Transcript,
+  ∃ tr : (ticketed.toProcess.step (run.state n)).tree.Path,
     ticketed.ticket (run.state n) tr = ticket
 
 /--
-`firedAt ticketed run ticket n` means that the actual transcript chosen by the
+`firedAt ticketed run ticket n` means that the actual path chosen by the
 run at time `n` has stable ticket `ticket`.
 -/
 def firedAt
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (ticketed : ProcessOver.Ticketed Γ)
     (run : ProcessOver.Run ticketed.toProcess)
     (ticket : ticketed.Ticket) (n : Nat) : Prop :=
-  ticketed.ticket (run.state n) (run.transcript n) = ticket
+  ticketed.ticket (run.state n) (run.path n) = ticket
 
 /--
 Weak fairness for one ticket:
@@ -107,7 +107,7 @@ if the ticket is continuously enabled from some point onward, then it fires
 infinitely often.
 -/
 def WeakFairOn
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (ticketed : ProcessOver.Ticketed Γ)
     (run : ProcessOver.Run ticketed.toProcess)
     (ticket : ticketed.Ticket) : Prop :=
@@ -119,7 +119,7 @@ Strong fairness for one ticket:
 if the ticket is enabled infinitely often, then it is fired infinitely often.
 -/
 def StrongFairOn
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (ticketed : ProcessOver.Ticketed Γ)
     (run : ProcessOver.Run ticketed.toProcess)
     (ticket : ticketed.Ticket) : Prop :=
@@ -128,14 +128,14 @@ def StrongFairOn
 
 /-- A run is weakly fair when every ticket is weakly fair. -/
 def WeakFair
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (ticketed : ProcessOver.Ticketed Γ)
     (run : ProcessOver.Run ticketed.toProcess) : Prop :=
   ∀ ticket, WeakFairOn ticketed run ticket
 
 /-- A run is strongly fair when every ticket is strongly fair. -/
 def StrongFair
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (ticketed : ProcessOver.Ticketed Γ)
     (run : ProcessOver.Run ticketed.toProcess) : Prop :=
   ∀ ticket, StrongFairOn ticketed run ticket
@@ -144,13 +144,13 @@ def StrongFair
 The actually fired ticket at time `n` is always enabled at time `n`.
 -/
 theorem fired_implies_enabled
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (ticketed : ProcessOver.Ticketed Γ)
     (run : ProcessOver.Run ticketed.toProcess)
     (ticket : ticketed.Ticket) (n : Nat) :
     firedAt ticketed run ticket n → enabledAt ticketed run ticket n := by
   intro hfired
-  exact ⟨run.transcript n, hfired⟩
+  exact ⟨run.path n, hfired⟩
 
 end Ticketed
 end ProcessOver

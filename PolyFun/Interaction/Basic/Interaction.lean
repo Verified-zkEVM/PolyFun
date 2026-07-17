@@ -140,20 +140,20 @@ def run
           pure ⟨⟨d, path⟩, out⟩)
 
 variable {Agent : Type u}
-variable {Γ : Spec.Node.Context}
-variable {syn : SyntaxOver (PFunctor.Lens.id Spec.basePFunctor) Agent Γ}
+variable {Γ : TypeTree.Node.Context}
+variable {syn : SyntaxOver (PFunctor.Lens.id TypeTree.basePFunctor) Agent Γ}
 variable {m : Type u → Type u}
 
 /--
-Execute a plain `Spec` tree using an identity-lens generic local one-step law.
+Execute a plain `TypeTree` tree using an identity-lens generic local one-step law.
 
 The local execution structure is the generic `InteractionOver`; this facade only
-keeps the plain-spec transcript recursion definitionally clean for computation
+keeps the plain-tree path recursion definitionally clean for computation
 lemmas.
 -/
-def runSpec
+def runTypeTree
     [Monad m]
-    {spec : Spec}
+    {spec : TypeTree}
     (ctxs : Decoration Γ spec)
     {Out : Agent → PFunctor.FreeM.Path spec → Type u}
     {Result : PFunctor.FreeM.Path spec → Type u}
@@ -161,7 +161,7 @@ def runSpec
       (agent : Agent) → StrategyOver syn agent spec ctxs (Out agent))
     (collect : (tr : PFunctor.FreeM.Path spec) → ((agent : Agent) → Out agent tr) → Result tr)
     (I : InteractionOver
-      (PFunctor.Lens.id Spec.basePFunctor) Agent Γ syn m) :
+      (PFunctor.Lens.id TypeTree.basePFunctor) Agent Γ syn m) :
     m ((tr : PFunctor.FreeM.Path spec) × Result tr) :=
   match spec, ctxs with
   | .done, _ => pure ⟨PUnit.unit, collect PUnit.unit profile⟩
@@ -173,7 +173,7 @@ def runSpec
             (fun tr => Out agent ⟨x, tr⟩))
         (fun agent => profile agent)
         (fun x conts => do
-          let ⟨tr, out⟩ ← runSpec
+          let ⟨tr, out⟩ ← runTypeTree
             (ctxs := ctxs x)
             (Out := fun agent tr => Out agent ⟨x, tr⟩)
             (Result := fun tr => Result ⟨x, tr⟩)

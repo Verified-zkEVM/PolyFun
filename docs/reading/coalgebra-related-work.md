@@ -295,7 +295,7 @@ calls the heap-disjointness side conditions "never satisfactorily
 addressed" and replaces them with nominal sets — an argument for making
 separation *intrinsic* (our ownership/lens discipline) rather than
 side-conditional. PolyFun should mirror the law *names* (`link_assoc`,
-`interchange`, `Advantage_link`) over `Spec`/`FreeM` with
+`interchange`, `Advantage_link`) over `TypeTree`/`FreeM` with
 `Interaction/Basic/Ownership` supplying separation.
 
 ### 3.2 ITrees in Rocq: what the pain actually is
@@ -463,7 +463,7 @@ buys, in rough priority order.
    generic home in R4.
 7. **Package layer**: SSProve's law names (`link_assoc`, `par_commut`,
    `interchange`, `Advantage_link`, `Advantage_triangle`) as strict
-   equalities over `Spec`/`FreeM`, with separation intrinsic via
+   equalities over `TypeTree`/`FreeM`, with separation intrinsic via
    `Ownership`/lenses (Nominal-SSProve's critique of side-conditional
    disjointness).
 8. **ITree-layer completeness bar**: Bloom–Ésik's four iter laws, `interp`

@@ -3,7 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Spec
+import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.Basic.Decoration
 import PolyFun.Interaction.Basic.MonadDecoration
 import PolyFun.Interaction.TwoParty.Role
@@ -14,8 +14,8 @@ import Batteries.Tactic.Lint
 
 A `RoleDecoration spec` is a `Decoration` with fiber `fun _ => Role`:
 each internal node is labeled sender or receiver. It adds two-party control
-information to an ordinary interaction tree while reusing the surrounding `Spec` infrastructure
-(`Transcript`, `append`, etc.).
+information to an ordinary interaction tree while reusing the surrounding `TypeTree` infrastructure
+(`Path`, `append`, etc.).
 
 This file also packages the most common role-based node contexts used by the
 two-party interaction layer:
@@ -27,7 +27,7 @@ two-party interaction layer:
 
 Only the plain role layer is exposed as a schema here. The monadic extensions are exported as
 realized node contexts, because `BundledMonad` lives in a higher universe than `Role`, while
-`Spec.Node.Schema` currently uses one fixed universe for all staged fields.
+`TypeTree.Node.Schema` currently uses one fixed universe for all staged fields.
 
 These contexts are ordinary inputs to `StrategyOver`: roles say who owns the
 move, and monad decorations say which node effect is used by each participant.
@@ -174,28 +174,28 @@ theorem withPairedMonads_map_snd :
 
 end RoleDecorationOver
 
-/-! ## Plain-spec role contexts -/
+/-! ## Plain-tree role contexts -/
 
 /-- The plain role-labeled node context. -/
-abbrev RoleContext : Spec.Node.Context := fun _ => Role
+abbrev RoleContext : TypeTree.Node.Context := fun _ => Role
 
 /-- The singleton schema presenting `RoleContext`. -/
-abbrev RoleSchema : Spec.Node.Schema RoleContext :=
+abbrev RoleSchema : TypeTree.Node.Schema RoleContext :=
   .singleton RoleContext
 
 /-- Role context extended by one bundled monad field. -/
-abbrev RoleMonadContext : Spec.Node.Context.{u, u + 1} :=
+abbrev RoleMonadContext : TypeTree.Node.Context.{u, u + 1} :=
   fun _ => Σ _ : Role, BundledMonad.{u, u}
 
 /-- Role context extended by a pair of bundled monads. -/
-abbrev RolePairedMonadContext : Spec.Node.Context.{u, u + 1} :=
+abbrev RolePairedMonadContext : TypeTree.Node.Context.{u, u + 1} :=
   fun _ => Σ _ : Role, BundledMonad.{u, u} × BundledMonad.{u, u}
 
 namespace RoleContext
 
 /-- Pair a plain role context with one fixed bundled monad at every node. -/
 abbrev withMonad (bm : BundledMonad.{u, u}) :
-    Spec.Node.ContextHom RoleContext RoleMonadContext :=
+    TypeTree.Node.ContextHom RoleContext RoleMonadContext :=
   fun _ role => ⟨role, bm⟩
 
 end RoleContext
@@ -203,9 +203,9 @@ end RoleContext
 namespace RoleMonadContext
 
 /-- Duplicate one role/monad context into paired focal/counterpart monads. -/
-abbrev diagonal : Spec.Node.ContextHom RoleMonadContext RolePairedMonadContext :=
-  Spec.Node.Context.extendMap
-    (Spec.Node.ContextHom.id RoleContext)
+abbrev diagonal : TypeTree.Node.ContextHom RoleMonadContext RolePairedMonadContext :=
+  TypeTree.Node.Context.extendMap
+    (TypeTree.Node.ContextHom.id RoleContext)
     (fun _ _ (bm : BundledMonad.{u, u}) => (bm, bm))
 
 end RoleMonadContext
@@ -213,25 +213,25 @@ end RoleMonadContext
 namespace RolePairedMonadContext
 
 /-- Forget the counterpart monad from a paired role/monad context. -/
-abbrev fst : Spec.Node.ContextHom RolePairedMonadContext RoleMonadContext :=
-  Spec.Node.Context.extendMap
-    (Spec.Node.ContextHom.id RoleContext)
+abbrev fst : TypeTree.Node.ContextHom RolePairedMonadContext RoleMonadContext :=
+  TypeTree.Node.Context.extendMap
+    (TypeTree.Node.ContextHom.id RoleContext)
     (fun _ _ (bms : BundledMonad.{u, u} × BundledMonad.{u, u}) => bms.1)
 
 /-- Forget the focal monad from a paired role/monad context. -/
-abbrev snd : Spec.Node.ContextHom RolePairedMonadContext RoleMonadContext :=
-  Spec.Node.Context.extendMap
-    (Spec.Node.ContextHom.id RoleContext)
+abbrev snd : TypeTree.Node.ContextHom RolePairedMonadContext RoleMonadContext :=
+  TypeTree.Node.Context.extendMap
+    (TypeTree.Node.ContextHom.id RoleContext)
     (fun _ _ (bms : BundledMonad.{u, u} × BundledMonad.{u, u}) => bms.2)
 
 end RolePairedMonadContext
 
-/-- Per-node sender/receiver assignment on a `Spec`. -/
-abbrev RoleDecoration := Decoration (P := Spec.basePFunctor)
+/-- Per-node sender/receiver assignment on a `TypeTree`. -/
+abbrev RoleDecoration := Decoration (P := TypeTree.basePFunctor)
   (α := PUnit.{u+1}) (fun _ => Role)
 
 /-- Swap sender and receiver at each node of a role decoration. -/
-def RoleDecoration.swap {spec : Spec} (roles : RoleDecoration spec) :
+def RoleDecoration.swap {spec : TypeTree} (roles : RoleDecoration spec) :
     RoleDecoration spec :=
   Decoration.map (fun _ => Role.swap) spec roles
 
@@ -239,15 +239,15 @@ namespace RoleDecoration
 
 /-- View a plain monad decoration as one displayed layer over an existing role decoration. -/
 def monadsOver :
-    (spec : Spec.{u}) → (roles : RoleDecoration spec) → (md : Spec.MonadDecoration spec) →
+    (spec : TypeTree.{u}) → (roles : RoleDecoration spec) → (md : TypeTree.MonadDecoration spec) →
     Decoration.Over (fun _ => Role) (fun _ (_ : Role) => BundledMonad.{u, u}) spec roles
   | .done, _, _ => ⟨⟩
   | .node _ rest, ⟨_, rRest⟩, ⟨bm, mRest⟩ =>
       ⟨bm, fun x => monadsOver (rest x) (rRest x) (mRest x)⟩
 
 /-- Pack roles together with one bundled monad per node into `RoleMonadContext`. -/
-def withMonads {spec : Spec.{u}}
-    (roles : RoleDecoration spec) (md : Spec.MonadDecoration spec) :
+def withMonads {spec : TypeTree.{u}}
+    (roles : RoleDecoration spec) (md : TypeTree.MonadDecoration spec) :
     Decoration RoleMonadContext spec :=
   Decoration.ofOver spec roles (monadsOver spec roles md)
 
@@ -257,8 +257,8 @@ decoration map that pairs each role with that bundled monad.
 -/
 theorem withMonads_constant_eq_map
     (bm : BundledMonad.{u, u}) :
-    (spec : Spec.{u}) → (roles : RoleDecoration spec) →
-    RoleDecoration.withMonads roles (Spec.MonadDecoration.constant bm spec) =
+    (spec : TypeTree.{u}) → (roles : RoleDecoration spec) →
+    RoleDecoration.withMonads roles (TypeTree.MonadDecoration.constant bm spec) =
       Decoration.map (RoleContext.withMonad bm) spec roles
   | .done, _ => rfl
   | .node _ rest, ⟨role, rRest⟩ => by
@@ -266,8 +266,8 @@ theorem withMonads_constant_eq_map
         (⟨⟨role, bm⟩,
           fun x =>
             RoleDecoration.withMonads (rRest x)
-              (Spec.MonadDecoration.constant bm (rest x))⟩ :
-          Decoration RoleMonadContext (Spec.node _ rest)) =
+              (TypeTree.MonadDecoration.constant bm (rest x))⟩ :
+          Decoration RoleMonadContext (TypeTree.node _ rest)) =
           ⟨⟨role, bm⟩,
             fun x => Decoration.map (RoleContext.withMonad bm) (rest x) (rRest x)⟩
       congr
@@ -276,8 +276,8 @@ theorem withMonads_constant_eq_map
 
 /-- View a pair of monad decorations as one displayed layer over an existing role decoration. -/
 def pairedMonadsOver :
-    (spec : Spec.{u}) → (roles : RoleDecoration spec) →
-    (stratDeco : Spec.MonadDecoration spec) → (cptDeco : Spec.MonadDecoration spec) →
+    (spec : TypeTree.{u}) → (roles : RoleDecoration spec) →
+    (stratDeco : TypeTree.MonadDecoration spec) → (cptDeco : TypeTree.MonadDecoration spec) →
     Decoration.Over
       (fun _ => Role) (fun _ (_ : Role) => BundledMonad.{u, u} × BundledMonad.{u, u}) spec roles
   | .done, _, _, _ => ⟨⟩
@@ -285,16 +285,16 @@ def pairedMonadsOver :
       ⟨(bmS, bmC), fun x => pairedMonadsOver (rest x) (rRest x) (mRestS x) (mRestC x)⟩
 
 /-- Pack roles together with paired prover/counterpart monads into `RolePairedMonadContext`. -/
-def withPairedMonads {spec : Spec.{u}}
-    (roles : RoleDecoration spec) (stratDeco : Spec.MonadDecoration spec)
-    (cptDeco : Spec.MonadDecoration spec) :
+def withPairedMonads {spec : TypeTree.{u}}
+    (roles : RoleDecoration spec) (stratDeco : TypeTree.MonadDecoration spec)
+    (cptDeco : TypeTree.MonadDecoration spec) :
     Decoration RolePairedMonadContext spec :=
   Decoration.ofOver spec roles (pairedMonadsOver spec roles stratDeco cptDeco)
 
 @[simp]
 theorem withPairedMonads_map_fst :
-    {spec : Spec.{u}} → {roles : RoleDecoration spec} →
-    {stratDeco cptDeco : Spec.MonadDecoration spec} →
+    {spec : TypeTree.{u}} → {roles : RoleDecoration spec} →
+    {stratDeco cptDeco : TypeTree.MonadDecoration spec} →
     Decoration.map RolePairedMonadContext.fst spec
         (RoleDecoration.withPairedMonads roles stratDeco cptDeco) =
       RoleDecoration.withMonads roles stratDeco
@@ -312,8 +312,8 @@ theorem withPairedMonads_map_fst :
 
 @[simp]
 theorem withPairedMonads_map_snd :
-    {spec : Spec.{u}} → {roles : RoleDecoration spec} →
-    {stratDeco cptDeco : Spec.MonadDecoration spec} →
+    {spec : TypeTree.{u}} → {roles : RoleDecoration spec} →
+    {stratDeco cptDeco : TypeTree.MonadDecoration spec} →
     Decoration.map RolePairedMonadContext.snd spec
         (RoleDecoration.withPairedMonads roles stratDeco cptDeco) =
       RoleDecoration.withMonads roles cptDeco

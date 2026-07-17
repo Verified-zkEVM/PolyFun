@@ -18,7 +18,7 @@ observation modes. Companion paper: *Interactive programs and weakly
 final coalgebras in dependent type theory* (FOSAD III, 2005).
 
 Used in: `PolyFun/PFunctor/Free/Path.lean`, `PolyFun/PFunctor/Trace.lean`,
-`PolyFun/Interaction/Basic/Spec.lean`,
+`PolyFun/Interaction/Basic/TypeTree.lean`,
 `PolyFun/Interaction/Basic/Telescope.lean`,
 `PolyFun/Interaction/Multiparty/Core.lean`.
 
@@ -35,7 +35,7 @@ foundational result that polynomial functors / containers represent
 strictly-positive datatypes.
 
 Used in: `PolyFun/PFunctor/Free/Path.lean`,
-`PolyFun/Interaction/Basic/Spec.lean`.
+`PolyFun/Interaction/Basic/TypeTree.lean`.
 
 ### SN24 — Spivak and Niu, *Polynomial Functors*
 
@@ -52,7 +52,7 @@ an adjunction; PolyFun formalizes `LawfulMonad (FreeM P)` and
 
 Used in: `PolyFun/PFunctor/Trace.lean`, `PolyFun/PFunctor/Lens/State.lean`,
 `PolyFun/PFunctor/Free/Path.lean`, the dynamical-systems layer in
-`PolyFun/PFunctor/Dynamical/` (Ch. 4), `PolyFun/Interaction/Basic/Spec.lean`,
+`PolyFun/PFunctor/Dynamical/` (Ch. 4), `PolyFun/Interaction/Basic/TypeTree.lean`,
 `PolyFun/Interaction/Basic/Telescope.lean`,
 `PolyFun/Interaction/UC/Interface.lean`, and
 companion files in `PolyFun/Interaction/UC/`.
@@ -99,7 +99,7 @@ Games as type trees; selection-functor games; dependent moves and
 strategies.
 
 Used in: `PolyFun/PFunctor/Free/Path.lean`,
-`PolyFun/Interaction/Basic/Spec.lean`.
+`PolyFun/Interaction/Basic/TypeTree.lean`.
 
 ### McB10 — McBride, *Ornamental Algebras, Algebraic Ornaments*
 
@@ -111,7 +111,7 @@ Displayed algebras and the calculus of ornaments. The displayed-free
 machinery in `PolyFun/PFunctor/Free/Displayed.lean` follows this
 viewpoint.
 
-Used in: `PolyFun/Interaction/Basic/Spec.lean`,
+Used in: `PolyFun/Interaction/Basic/TypeTree.lean`,
 `PolyFun/PFunctor/Free/Displayed.lean` (implicit).
 
 ### DM14 — Dagand and McBride, *Transporting functions across ornaments*
@@ -123,7 +123,7 @@ Pierre-Évariste Dagand and Conor McBride.
 The displayed-algebra/ornament correspondence used to manage indexed
 data over polynomial substrates.
 
-Used in: `PolyFun/Interaction/Basic/Spec.lean`.
+Used in: `PolyFun/Interaction/Basic/TypeTree.lean`.
 
 ### Spi12 — Spivak, *Functorial data migration*
 

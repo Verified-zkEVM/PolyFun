@@ -37,6 +37,32 @@ namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {α β γ : Type v}
 
+/-- Test only the root of a free polynomial tree.
+
+A leaf demands `leafPred` of its result, while an internal node demands
+`positionPred` of its exposed position. This deliberately does not recurse
+into the continuations; callers can quantify over paths or cursors when they
+need a whole-tree property. -/
+def RootSatisfies (positionPred : P.A → Prop) (leafPred : α → Prop) :
+    FreeM P α → Prop
+  | .pure result => leafPred result
+  | .liftBind position _ => positionPred position
+
+@[simp]
+theorem rootSatisfies_pure (positionPred : P.A → Prop) (leafPred : α → Prop)
+    (result : α) :
+    RootSatisfies positionPred leafPred (pure result : FreeM P α) =
+      leafPred result :=
+  rfl
+
+@[simp]
+theorem rootSatisfies_liftBind (positionPred : P.A → Prop) (leafPred : α → Prop)
+    (position : P.A) (next : P.B position → FreeM P α) :
+    RootSatisfies positionPred leafPred
+        ((FreeM.lift (P := P) position).bind next) =
+      positionPred position :=
+  rfl
+
 /-- Forward direction of the equivalence with `P.W` when the leaf type is empty: every `pure`
 case is unreachable, and every `liftBind` is reinterpreted as a W-node. -/
 def toW [IsEmpty α] : FreeM P α → P.W
