@@ -71,6 +71,8 @@ PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption
 PFunctor/{Bound, Free/Resumption} -> PFunctor/Resumption/Truncate
 PFunctor/Dynamical/DynComputation + PFunctor/{Bound, Handler, Resumption/Truncate}
   -> PFunctor/Dynamical/DynComputation/Bounded
+PFunctor/Dynamical/DynComputation/Bounded
+  -> PFunctor/Dynamical/DynComputation/Termination
 
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   (free-standing helpers, depended on by both PFunctor and ITree)
