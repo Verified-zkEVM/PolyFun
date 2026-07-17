@@ -213,6 +213,7 @@ def relabel {β : Type w} (f : α → β) (x : (FreeP P).Obj α) :
   ⟨x.1, f ∘ x.2⟩
 
 /-- Decoding after relabelling is ordinary free-monad mapping. -/
+@[simp]
 theorem decode_relabel {β : Type w} (f : α → β)
     (x : (FreeP P).Obj α) :
     decode (relabel f x) = FreeM.map f (decode x) := by
