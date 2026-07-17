@@ -220,7 +220,7 @@ theorem runObj_natural
           runMatterObj
               ⟨M.children (M.mapLens g matter) qDirection,
                 fun vertex => M.Vertex.pullMapLens g sourceChild
-                  (cast (congrArg M.Vertex hchild) vertex)⟩ =
+                  (M.Vertex.castEquiv hchild vertex)⟩ =
             FreeP.relabel
               (fun pulled =>
                 (⟨(FreeP.map f).toFunB

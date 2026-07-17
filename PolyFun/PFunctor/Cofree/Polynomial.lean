@@ -365,7 +365,7 @@ theorem mapChildObj {Q : PFunctor.{uA₂, uB₂}} (lens : Lens P Q)
     let childEq := M.children_mapLens lens tree direction
     (⟨M.children (M.mapLens lens tree) direction,
         fun vertex => M.Vertex.pullMapLens lens sourceChild
-          (cast (congrArg M.Vertex childEq) vertex)⟩ :
+          (M.Vertex.castEquiv childEq vertex)⟩ :
       (CofreeP Q).Obj (M.Vertex sourceChild)) =
       ⟨M.mapLens lens sourceChild,
         M.Vertex.pullMapLens lens sourceChild⟩ := by
