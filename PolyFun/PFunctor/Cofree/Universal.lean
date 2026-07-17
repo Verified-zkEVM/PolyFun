@@ -181,11 +181,11 @@ def unfoldDirection (lens : Lens C.carrier P) :
       Comonoid.compose C object first
         (unfoldDirection lens
           (Comonoid.target C object first)
-          (cast (congrArg M.Vertex childEq) next))
+          (M.Vertex.castEquiv childEq next))
 termination_by _ vertex => M.Vertex.depth vertex
 decreasing_by
   calc
-    M.Vertex.depth (cast (congrArg M.Vertex childEq) next) =
+    M.Vertex.depth (M.Vertex.castEquiv childEq next) =
         M.Vertex.depth next := M.Vertex.depth_cast childEq next
     _ < M.Vertex.depth (.child direction next) := Nat.lt_succ_self _
 
@@ -209,8 +209,8 @@ theorem unfoldDirection_child (lens : Lens C.carrier P)
         (unfoldDirection C lens
           (Comonoid.target C object
             (unfoldRootDirection C lens object direction))
-          (cast (congrArg M.Vertex
-            (children_unfoldShape C lens object direction)) next)) := by
+          (M.Vertex.castEquiv
+            (children_unfoldShape C lens object direction) next)) := by
   rw [unfoldDirection.eq_def]
 
 private theorem unfoldDirection_heq (lens : Lens C.carrier P)
@@ -228,8 +228,8 @@ private theorem unfoldDirection_cast_object (lens : Lens C.carrier P)
     {object object' : C.carrier.A} (hobject : object = object')
     (vertex : M.Vertex (unfoldShape C lens object)) :
     unfoldDirection C lens object'
-        (cast (congrArg M.Vertex
-          (congrArg (unfoldShape C lens) hobject)) vertex) =
+        (M.Vertex.castEquiv
+          (congrArg (unfoldShape C lens) hobject) vertex) =
       cast (congrArg C.carrier.B hobject)
         (unfoldDirection C lens object vertex) := by
   subst object'
@@ -250,7 +250,7 @@ theorem subtree_unfoldShape (lens : Lens C.carrier P) :
   | object, .child direction next => by
       let first := unfoldRootDirection C lens object direction
       let childEq := children_unfoldShape C lens object direction
-      let next' := cast (congrArg M.Vertex childEq) next
+      let next' := M.Vertex.castEquiv childEq next
       let rest := unfoldDirection C lens
         (Comonoid.target C object first) next'
       have ih := subtree_unfoldShape lens
@@ -281,10 +281,10 @@ decreasing_by
 private theorem vertex_cast_append {tree tree' : M P} (h : tree = tree')
     (initial : M.Vertex tree)
     (suffix : M.Vertex (M.Vertex.subtree initial)) :
-    cast (congrArg M.Vertex h) (M.Vertex.append initial suffix) =
-      M.Vertex.append (cast (congrArg M.Vertex h) initial)
-        (cast (congrArg M.Vertex
-          (M.Vertex.subtree_cast h initial).symm) suffix) := by
+    M.Vertex.castEquiv h (M.Vertex.append initial suffix) =
+      M.Vertex.append (M.Vertex.castEquiv h initial)
+        (M.Vertex.castEquiv
+          (M.Vertex.subtree_cast h initial).symm suffix) := by
   subst tree'
   rfl
 
@@ -313,20 +313,20 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
           (unfoldDirection C lens
             (Comonoid.target C object
               (unfoldDirection C lens object initial))
-            (cast (congrArg M.Vertex
-              (subtree_unfoldShape C lens object initial)) suffix))
+            (M.Vertex.castEquiv
+              (subtree_unfoldShape C lens object initial) suffix))
   | object, .root _, suffix => by
       let actualDirection := unfoldDirection C lens object
         (.root (unfoldShape C lens object))
       let actualTarget := Comonoid.target C object actualDirection
-      let actualVertex := cast (congrArg M.Vertex
+      let actualVertex := M.Vertex.castEquiv
         (subtree_unfoldShape C lens object
-          (.root (unfoldShape C lens object)))) suffix
+          (.root (unfoldShape C lens object))) suffix
       let identityTarget :=
         Comonoid.target C object (Comonoid.identity C object)
-      let canonicalVertex := cast (congrArg M.Vertex
+      let canonicalVertex := M.Vertex.castEquiv
         (congrArg (unfoldShape C lens)
-          (Comonoid.target_identity C object).symm)) suffix
+          (Comonoid.target_identity C object).symm) suffix
       have hdirection : actualDirection = Comonoid.identity C object :=
         unfoldDirection_root C lens object
       have htarget : actualTarget = identityTarget :=
@@ -362,16 +362,16 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
             unfoldShape C lens (Comonoid.target C object first) := by
         simpa only [first] using
           children_unfoldShape C lens object direction
-      let next' := cast (congrArg M.Vertex childEq) next
+      let next' := M.Vertex.castEquiv childEq next
       let subtreeEq := M.Vertex.subtree_cast childEq next
-      let suffix' := cast (congrArg M.Vertex subtreeEq.symm) suffix
+      let suffix' := M.Vertex.castEquiv subtreeEq.symm suffix
       let rest := unfoldDirection C lens
         (Comonoid.target C object first) next'
       let final := Comonoid.target C
         (Comonoid.target C object first) rest
-      let finalVertex := cast (congrArg M.Vertex
+      let finalVertex := M.Vertex.castEquiv
         (subtree_unfoldShape C lens
-          (Comonoid.target C object first) next')) suffix'
+          (Comonoid.target C object first) next') suffix'
       have ih := unfoldDirection_append lens
         (Comonoid.target C object first) next' suffix'
       let compositeTarget :=
@@ -381,17 +381,24 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
             unfoldShape C lens compositeTarget := by
         simpa only [unfoldDirection_child] using
           subtree_unfoldShape C lens object (.child direction next)
-      let compositeVertex :=
-        cast (congrArg M.Vertex compositeSubtreeEq) suffix
+      let compositeVertex := M.Vertex.castEquiv compositeSubtreeEq suffix
       have htarget : compositeTarget = final :=
         Comonoid.target_compose C object first rest
       have hvertices : compositeVertex ≍ finalVertex := by
         have hcomposite : compositeVertex ≍ suffix :=
-          cast_heq _ suffix
+          by
+            unfold compositeVertex M.Vertex.castEquiv
+            exact cast_heq (congrArg M.Vertex compositeSubtreeEq) suffix
         have hfinal : finalVertex ≍ suffix' :=
-          cast_heq _ suffix'
+          by
+            unfold finalVertex M.Vertex.castEquiv
+            exact cast_heq (congrArg M.Vertex
+              (subtree_unfoldShape C lens
+                (Comonoid.target C object first) next')) suffix'
         have hsuffix : suffix' ≍ suffix :=
-          cast_heq _ suffix
+          by
+            unfold suffix' M.Vertex.castEquiv
+            exact cast_heq (congrArg M.Vertex subtreeEq.symm) suffix
         exact hcomposite.trans (hfinal.trans hsuffix).symm
       have harrows :
           unfoldDirection C lens compositeTarget compositeVertex ≍
@@ -417,7 +424,7 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
               Comonoid.compose C object first
                 (unfoldDirection C lens
                   (Comonoid.target C object first)
-                  (cast (congrArg M.Vertex childEq)
+                  (M.Vertex.castEquiv childEq
                     (M.Vertex.append next suffix))) := by
             rw [M.Vertex.append_child, unfoldDirection_child]
           _ = Comonoid.compose C object first
@@ -437,8 +444,8 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
       let actualDirection :=
         unfoldDirection C lens object (.child direction next)
       let actualTarget := Comonoid.target C object actualDirection
-      let actualVertex := cast (congrArg M.Vertex
-        (subtree_unfoldShape C lens object (.child direction next))) suffix
+      let actualVertex := M.Vertex.castEquiv
+        (subtree_unfoldShape C lens object (.child direction next)) suffix
       have hdirection :
           actualDirection = Comonoid.compose C object first rest := by
         simpa only [actualDirection, first, rest, next', childEq] using
@@ -522,8 +529,8 @@ def extend
           (unfoldDirection C lens
             (Comonoid.target C object
               (unfoldDirection C lens object initial))
-            (cast (congrArg M.Vertex
-              (subtree_unfoldShape C lens object initial)) suffix))
+            (M.Vertex.castEquiv
+              (subtree_unfoldShape C lens object initial) suffix))
       exact unfoldDirection_append C lens object initial suffix)
 
 @[simp]
@@ -635,12 +642,12 @@ private theorem unfoldDirection_restrict
       (vertex : M.Vertex (unfoldShape C (restrict C hom) object)) →
       unfoldDirection C (restrict C hom) object vertex =
         hom.toLens.toFunB object
-          (cast (congrArg M.Vertex
-            (unfoldShape_restrict C hom object)) vertex)
+          (M.Vertex.castEquiv
+            (unfoldShape_restrict C hom object) vertex)
   | object, .root _ => by
       have hcast :
-          cast (congrArg M.Vertex
-              (unfoldShape_restrict C hom object))
+          M.Vertex.castEquiv
+            (unfoldShape_restrict C hom object)
               (.root (unfoldShape C (restrict C hom) object)) =
             .root (hom.toLens.toFunA object) :=
         M.Vertex.cast_root (unfoldShape_restrict C hom object)
@@ -654,15 +661,15 @@ private theorem unfoldDirection_restrict
           simpa only [comonoid_identity] using
             (hom.map_identity object).symm
         _ = hom.toLens.toFunB object
-              (cast (congrArg M.Vertex
-                (unfoldShape_restrict C hom object))
+              (M.Vertex.castEquiv
+                (unfoldShape_restrict C hom object)
                 (.root (unfoldShape C (restrict C hom) object))) :=
           congrArg (hom.toLens.toFunB object) hcast.symm
   | object, .child direction next => by
       let shapeEq := unfoldShape_restrict C hom object
       let mappedDirection := M.castDirection shapeEq direction
-      let mappedNext := cast (congrArg M.Vertex
-        (M.children_castDirection shapeEq direction)) next
+      let mappedNext := M.Vertex.castEquiv
+        (M.children_castDirection shapeEq direction) next
       let firstVertex : M.Vertex (hom.toLens.toFunA object) :=
         .child mappedDirection
           (.root (M.children (hom.toLens.toFunA object) mappedDirection))
@@ -672,23 +679,34 @@ private theorem unfoldDirection_restrict
       have hfirst : rootDirection = first := by
         rfl
       let childEq := children_unfoldShape C (restrict C hom) object direction
-      let nativeNext := cast (congrArg M.Vertex childEq) next
+      let nativeNext := M.Vertex.castEquiv childEq next
       let nextObject := Comonoid.target C object rootDirection
       let rest := unfoldDirection C (restrict C hom) nextObject nativeNext
       have ih := unfoldDirection_restrict
         (C := C) hom nextObject nativeNext
-      let ihVertex := cast (congrArg M.Vertex
-        (unfoldShape_restrict C hom nextObject)) nativeNext
-      let homNext := cast (congrArg M.Vertex
-        (hom.map_target object firstVertex).symm) mappedNext
+      let ihVertex := M.Vertex.castEquiv
+        (unfoldShape_restrict C hom nextObject) nativeNext
+      let homNext := M.Vertex.castEquiv
+        (hom.map_target object firstVertex).symm mappedNext
       let homNextObject := Comonoid.target C object first
       have hnextObject : nextObject = homNextObject :=
         congrArg (Comonoid.target C object) hfirst
       have hvertices : ihVertex ≍ homNext := by
-        have hih : ihVertex ≍ nativeNext := cast_heq _ nativeNext
-        have hnative : nativeNext ≍ next := cast_heq _ next
-        have hmapped : mappedNext ≍ next := cast_heq _ next
-        have hhom : homNext ≍ mappedNext := cast_heq _ mappedNext
+        have hih : ihVertex ≍ nativeNext := by
+          unfold ihVertex M.Vertex.castEquiv
+          exact cast_heq (congrArg M.Vertex
+            (unfoldShape_restrict C hom nextObject)) nativeNext
+        have hnative : nativeNext ≍ next := by
+          unfold nativeNext M.Vertex.castEquiv
+          exact cast_heq (congrArg M.Vertex childEq) next
+        have hmapped : mappedNext ≍ next := by
+          unfold mappedNext M.Vertex.castEquiv
+          exact cast_heq (congrArg M.Vertex
+            (M.children_castDirection shapeEq direction)) next
+        have hhom : homNext ≍ mappedNext := by
+          unfold homNext M.Vertex.castEquiv
+          exact cast_heq (congrArg M.Vertex
+            (hom.map_target object firstVertex).symm) mappedNext
         exact (hih.trans hnative).trans (hhom.trans hmapped).symm
       have hhomDirections :
           hom.toLens.toFunB nextObject ihVertex ≍
@@ -729,8 +747,7 @@ private theorem unfoldDirection_restrict
         exact hraw.trans
           (compose_heq C object (heq_of_eq rfl) hrawDirections)
       have hmappedVertex :
-          cast (congrArg M.Vertex shapeEq)
-              (.child direction next) =
+          M.Vertex.castEquiv shapeEq (.child direction next) =
             M.Vertex.append firstVertex mappedNext := by
         rw [M.Vertex.cast_child]
         rfl
@@ -744,8 +761,7 @@ private theorem unfoldDirection_restrict
         _ = hom.toLens.toFunB object
               (M.Vertex.append firstVertex mappedNext) := hmap.symm
         _ = hom.toLens.toFunB object
-              (cast (congrArg M.Vertex shapeEq)
-                (.child direction next)) := by
+              (M.Vertex.castEquiv shapeEq (.child direction next)) := by
           exact congrArg (hom.toLens.toFunB object) hmappedVertex.symm
   termination_by _ vertex => M.Vertex.depth vertex
   decreasing_by
@@ -775,7 +791,7 @@ theorem extend_restrict
     apply Function.hfunext (congrArg M.Vertex (hA object))
     intro vertex vertex' hvertex
     have hcast :
-        cast (congrArg M.Vertex (hA object)) vertex = vertex' :=
+        M.Vertex.castEquiv (hA object) vertex = vertex' :=
       (cast_eq_iff_heq).2 hvertex
     subst vertex'
     apply heq_of_eq
