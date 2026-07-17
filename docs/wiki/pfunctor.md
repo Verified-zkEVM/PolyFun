@@ -47,7 +47,7 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/Basic.lean`](../../PolyFun/PFunctor/Basic.lean) | `PFunctor` core, `Obj`, sum / product / sigma / pi / tensor / composition, `Lens`, `selfMonomial`, ring-style `0` / `1` / `+` / `*`. |
 | [`PolyFun/PFunctor/Equiv/Basic.lean`](../../PolyFun/PFunctor/Equiv/Basic.lean) | Equivalences `P ≃ₚ Q` and canonical equivalences for sums, products, sigma / pi, tensor, composition, universe lifts. |
 | [`PolyFun/PFunctor/M.lean`](../../PolyFun/PFunctor/M.lean) | Extensions to Mathlib's `PFunctor.M` (M-type / final coalgebra) used downstream. |
-| [`PolyFun/PFunctor/M/Vertex.lean`](../../PolyFun/PFunctor/M/Vertex.lean) | Finite rooted vertices of an M-type tree: subtree selection, concatenation, canonical depth splitting, prefixes, dependent transport, and contravariant path mapping along lenses. |
+| [`PolyFun/PFunctor/M/Vertex.lean`](../../PolyFun/PFunctor/M/Vertex.lean) | Finite rooted vertices of an M-type tree: subtree selection, concatenation, canonical depth splitting, prefixes, dependent transport, and contravariant path mapping along lenses. This is the coinductive counterpart of `FreeM.Cursor`; the selected subtree is computed rather than stored as a second index so that vertices directly form the cofree polynomial's direction family. |
 | [`PolyFun/PFunctor/Bound.lean`](../../PolyFun/PFunctor/Bound.lean) | Roll bounds for `FreeM` (budget-based termination predicate). |
 
 ### Lenses and charts
@@ -130,7 +130,7 @@ displayed families, roll bounds) on top of the upstream type.
 | File | Purpose |
 |------|---------|
 | [`PolyFun/PFunctor/Cofree.lean`](../../PolyFun/PFunctor/Cofree.lean) | `CofreeC` (cofree comonad on a `PFunctor`), built from `PFunctor.M` of the `constProd` polynomial. The dual of `FreeM`. |
-| [`PolyFun/PFunctor/M/Vertex.lean`](../../PolyFun/PFunctor/M/Vertex.lean) | `M.Vertex t`, the finite path calculus selecting rooted subtrees of a potentially infinite `t : M P`; this supplies the direction type needed by the polynomial presentation of the cofree construction. |
+| [`PolyFun/PFunctor/M/Vertex.lean`](../../PolyFun/PFunctor/M/Vertex.lean) | `M.Vertex t`, the finite path calculus selecting rooted subtrees of a potentially infinite `t : M P`; unlike the doubly indexed `FreeM.Cursor`, the residual is the `subtree` projection, which is the indexing choice needed for the cofree polynomial's direction type. |
 | [`PolyFun/PFunctor/Trace.lean`](../../PolyFun/PFunctor/Trace.lean) | Polynomial-trace machinery shared between `PFunctor` and downstream layers. |
 
 ### Control helpers

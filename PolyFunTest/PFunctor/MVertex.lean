@@ -203,10 +203,10 @@ vertex, including the dependent child subtree. -/
 example (P : PFunctor.{uA, uB}) {tree tree' : M P}
     (h : tree = tree') (direction : P.B (M.head tree))
     (next : M.Vertex (M.children tree direction)) :
-    cast (congrArg M.Vertex h) (.child direction next) =
+    M.Vertex.castEquiv h (.child direction next) =
       .child (M.castDirection h direction)
-        (cast (congrArg M.Vertex
-          (M.children_castDirection h direction)) next) :=
+        (M.Vertex.castEquiv
+          (M.children_castDirection h direction) next) :=
   M.Vertex.cast_child h direction next
 
 /-- Contravariant vertex transport is itself functorial across fully
@@ -217,13 +217,13 @@ example (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂})
     M.Vertex.pullMapLens (g ∘ₗ f) tree vertex =
       M.Vertex.pullMapLens f tree
         (M.Vertex.pullMapLens g (M.mapLens f tree)
-          (cast (congrArg M.Vertex (M.mapLens_comp g f tree)) vertex)) :=
+          (M.Vertex.castEquiv (M.mapLens_comp g f tree) vertex)) :=
   M.Vertex.pullMapLens_comp g f tree vertex
 
 example (P : PFunctor.{uA, uB}) (tree : M P)
     (vertex : M.Vertex (M.mapLens (Lens.id P) tree)) :
     M.Vertex.pullMapLens (Lens.id P) tree vertex =
-      cast (congrArg M.Vertex (M.mapLens_id tree)) vertex :=
+      M.Vertex.castEquiv (M.mapLens_id tree) vertex :=
   M.Vertex.pullMapLens_id tree vertex
 
 end MVertexTest
