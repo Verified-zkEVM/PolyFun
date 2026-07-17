@@ -122,6 +122,7 @@ displayed families, roll bounds) on top of the upstream type.
 | [`PolyFun/PFunctor/Free/Cursor/Fork.lean`](../../PolyFun/PFunctor/Free/Cursor/Fork.lean) | Locating occurrences in completed paths, total forking from a located context, fixed and dynamically selected optional forking, observation fusion, and the prefix-first/path-first factorization theorem. |
 | [`PolyFun/PFunctor/Free/Displayed.lean`](../../PolyFun/PFunctor/Free/Displayed.lean) | `FreeM.Displayed D s` (displayed family over a tree), `Displayed.Section` (displayed catamorphism). The substrate behind decorations, paths, and compact observations. |
 | [`PolyFun/PFunctor/Free/Displayed/Decoration.lean`](../../PolyFun/PFunctor/Free/Displayed/Decoration.lean) | `Decoration Γ s`: every node carries one `Γ a` and recursively decorates children. |
+| [`PolyFun/PFunctor/Free/Displayed/Cursor.lean`](../../PolyFun/PFunctor/Free/Displayed/Cursor.lean) | Explicit child-projection capabilities and restriction of navigable displayed data, node decorations, and dependent over-decorations to a `Cursor` residual. |
 
 ### Cofree / M-type companion
 
