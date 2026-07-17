@@ -142,6 +142,22 @@ structure Completion (occ : Occurrence target program n) where
 def Completion.path {occ : Occurrence target program n} (completion : Completion occ) :
     Path program := occ.plug completion.answer completion.suffix
 
+@[simp] theorem Completion.path_mk (occ : Occurrence target program n)
+    (answer : P.B target) (suffix : Path (occ.resume answer)) :
+    Completion.path (occ := occ) ⟨answer, suffix⟩ = occ.plug answer suffix := rfl
+
+/-- Looking up the focused occurrence on a completion's erased trace returns
+the answer stored by that completion. -/
+@[simp] theorem getAt?_trace_completion_path [DecidableEq P.A]
+    (occ : Occurrence target program n) (completion : Completion occ) :
+    PFunctor.TraceList.getAt? (Path.trace program completion.path) target n =
+      some completion.answer := by
+  rw [Completion.path, trace_plug]
+  simpa only [before_count] using
+    (PFunctor.TraceList.getAt?_append_self_occurrences
+      occ.before (Path.trace (occ.resume completion.answer) completion.suffix)
+        target completion.answer)
+
 /-- Execute the focused query and its residual, retaining the typed completion. -/
 def complete (occ : Occurrence target program n) : FreeM P (Completion occ) :=
   FreeM.liftBind target fun answer =>
@@ -184,6 +200,22 @@ def firstAnswer (view : ForkView target program n) : P.B target :=
 def secondAnswer (view : ForkView target program n) : P.B target :=
   view.second.answer
 
+@[simp] theorem firstPath_mk (occurrence : Occurrence target program n)
+    (first second : occurrence.Completion) :
+    firstPath ({ occurrence, first, second } : ForkView target program n) = first.path := rfl
+
+@[simp] theorem secondPath_mk (occurrence : Occurrence target program n)
+    (first second : occurrence.Completion) :
+    secondPath ({ occurrence, first, second } : ForkView target program n) = second.path := rfl
+
+@[simp] theorem firstAnswer_mk (occurrence : Occurrence target program n)
+    (first second : occurrence.Completion) :
+    firstAnswer ({ occurrence, first, second } : ForkView target program n) = first.answer := rfl
+
+@[simp] theorem secondAnswer_mk (occurrence : Occurrence target program n)
+    (first second : occurrence.Completion) :
+    secondAnswer ({ occurrence, first, second } : ForkView target program n) = second.answer := rfl
+
 /-- Extend both completions by one earlier occurrence of the target. -/
 def prependSame {next : P.B target → FreeM P α} (answer : P.B target) {n : Nat}
     (view : ForkView target (next answer) n) :
@@ -225,6 +257,14 @@ def complete : Split target program n → FreeM P (Path program)
   | .missing path => pure path
   | .found occurrence => occurrence.completePath
 
+omit [DecidableEq P.A] in
+@[simp] theorem complete_missing (path : Path program) :
+    complete (.missing path : Split target program n) = pure path := rfl
+
+omit [DecidableEq P.A] in
+@[simp] theorem complete_found (occurrence : Occurrence target program n) :
+    complete (.found occurrence) = occurrence.completePath := rfl
+
 /-- Independently complete a found occurrence twice. A certified missing
 split has no occurrence to fork and therefore returns `none`. -/
 def completeFork : Split target program n →
@@ -239,6 +279,10 @@ def completeFork : Split target program n →
               first := ⟨firstAnswer, firstSuffix⟩
               second := ⟨secondAnswer, secondSuffix⟩ })
               (withPath (occurrence.resume secondAnswer))
+
+omit [DecidableEq P.A] in
+@[simp] theorem completeFork_missing (path : Path program) :
+    completeFork (.missing path : Split target program n) = pure none := rfl
 
 omit [DecidableEq P.A] in
 /-- On a found occurrence, `completeFork` is two independent executions of

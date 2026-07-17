@@ -15,15 +15,15 @@ PolyFun/
   IPFunctor/         state-indexed polynomial functors and their free monads
                      (single-index FreeM, two-index FreeM₂ + IndexedMonad)
   ITree/             coinductive interaction trees, bisim/sim, handlers,
-                     event signatures
+                     event signatures, relational trees, finite traces
   Interaction/       generic interaction framework
     Basic/           TypeTree, Node, Decoration, Strategy, Append, ...
     TwoParty/        sender/receiver roles, paired strategies
     Multiparty/      per-party local view modes, observation kernels
     Concurrent/      structural and dynamic concurrent semantics
     UC/              open-process / open-theory layer (no security content)
-  Control/           monad and comonad infrastructure (Coalg, Comonad,
-                     Lawful, Free, FreeCont, Hom, Iter, Trace)
+  Control/           monad/comonad and LTS infrastructure (Coalgebra,
+                     Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace)
   Logic/             small logic helpers (HEq)
 
 docs/wiki/           agent-facing notes (this directory)
@@ -49,7 +49,7 @@ PFunctor/Free/Basic
   -> PFunctor/Free/Cursor/Fork
 PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption
 
-Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad}
+Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   (free-standing helpers, depended on by both PFunctor and ITree)
 
 PFunctor/Lens/{Basic, Cartesian, State}
@@ -66,7 +66,7 @@ PFunctor/{Lens, Cofree, M} + Control/Coalgebra
    PFunctor/Lens/Duoidal for Game.)
 
 PFunctor/Free -> ITree/{Basic, Construct, Handler, Rec,
-                        Events, Sim, Bisim}
+                        Events, Sim, Bisim, Trace}
 PFunctor/Dynamical + ITree/Basic -> ITree/Unfold
 
 PFunctor/Free + Control -> Interaction/Basic/{TypeTree, Node, Decoration,

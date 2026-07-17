@@ -10,14 +10,21 @@ public import PolyFun.ITree.Bisim.Equiv
 /-! # Algebraic laws for `bind` and `iter`
 
 The classical equational theory of interaction trees, lifted to Lean. All
-laws are stated either as strong bisimulations (`Bisim`, i.e. definitional
+laws are stated either as strong bisimulations (`Bisim`, i.e. Lean
 equality of M-types) or weak bisimulations (`WeakBisim`).
+
+The event-position and event-direction universes and every result type used by
+the named `bind`/`iter` laws are independent. `bind_weakBisimRel` exposes the
+fully relational theorem; `bind_weakBisim_cont` is its equality-specialized,
+one-sided corollary.
 
 ## Main statements
 
 * `bind_pure_left`, `bind_pure_right`, `bind_assoc` — monad laws on
-  `ITree.bind`, as strong bisimulations (i.e. definitional equalities on
+  `ITree.bind`, as strong bisimulations (i.e. exact equalities on
   `PFunctor.M`).
+* `instLawfulMonad` — packages those exact equalities for generic monadic
+  APIs; named `bind` remains available across different result universes.
 * `bind_step`, `bind_query` — `bind` distributes over a leading silent
   step / visible query.
 * `iter_unfold` — the canonical fixed-point equation for `ITree.iter`,
@@ -25,16 +32,21 @@ equality of M-types) or weak bisimulations (`WeakBisim`).
 * `iter_bind` — left-distributive interaction between `iter` and `bind`.
 * `step_weakBisim` — silent steps are absorbed by weak bisimulation
   (`step t ≈ t`); the defining feature of `eutt`.
-* `bind_weakBisim_cont` — weak bind-congruence on the continuation.
+* `bind_weakBisimRel` — two-sided relational bind congruence for different
+  source and target result types and universes.
+* `map_weakBisimRel` — relational congruence of `ITree.map`.
+* `bind_weakBisim_cont` — equality-specialized weak bind-congruence on the
+  continuation.
 -/
 
 @[expose] public section
 
-universe u
+universe uFA uFB uα uβ uγ uδ
 
 namespace ITree
 
-variable {F : PFunctor.{u, u}} {α β γ : Type u}
+variable {F : PFunctor.{uFA, uFB}} {α : Type uα} {β : Type uβ}
+  {γ : Type uγ} {δ : Type uδ}
 
 /-! ### Monad laws -/
 
@@ -207,6 +219,24 @@ theorem bind_assoc (t : ITree F α) (k : α → ITree F β) (k' : β → ITree F
         · exact dest_bind_query k' (bind t k) a _ hbind
         · exact dest_bind_query (fun a => bind (k a) k') t a c h
 
+/-! ### Lawful monad instance -/
+
+/-- The homogeneous `Monad (ITree F)` instance is lawful by the exact
+M-type equalities for the two unit laws and associativity. The standalone
+named `ITree.bind` remains more universe-polymorphic than this typeclass
+instance. -/
+instance instLawfulMonad : LawfulMonad (ITree F) :=
+  LawfulMonad.mk' _
+    (fun t => by
+      change bind t pure = t
+      exact bind_pure_right t)
+    (fun r k => by
+      change bind (pure r) k = k r
+      exact bind_pure_left r k)
+    (fun t k k' => by
+      change bind (bind t k) k' = bind t (fun r => bind (k r) k')
+      exact bind_assoc t k k')
+
 /-! ### `iter` unfolding and interaction with `bind` -/
 
 theorem iter_unfold (body : β → ITree F (β ⊕ α)) (init : β) :
@@ -248,7 +278,7 @@ theorem iter_unfold (body : β → ITree F (β ⊕ α)) (init : β) :
                     ⟨.pure (.inl j), PEmpty.elim⟩ from PFunctor.M.dest_mk _]
               rfl
             · rw [bind_pure_left]
-              show PFunctor.M.dest (kk (.inl j)) = ⟨.step, fun _ => iter body j⟩
+              change PFunctor.M.dest (kk (.inl j)) = ⟨.step, fun _ => iter body j⟩
               rw [hkk]
               exact shape'_step _
         | inr r =>
@@ -268,7 +298,7 @@ theorem iter_unfold (body : β → ITree F (β ⊕ α)) (init : β) :
               funext z
               exact z.elim
             · rw [bind_pure_left]
-              show PFunctor.M.dest (kk (.inr r)) = ⟨.pure r, PEmpty.elim⟩
+              change PFunctor.M.dest (kk (.inr r)) = ⟨.pure r, PEmpty.elim⟩
               rw [hkk]
               exact shape'_pure r
     | step =>
@@ -538,7 +568,83 @@ theorem step_weakBisim (t : ITree F α) : WeakBisim (step t) t :=
   WeakBisim.absorb_tauSteps_left
     (TauSteps.one (fun _ => t) (shape'_step t)) (WeakBisim.refl t)
 
-/-! ### Weak bind-congruence on the continuation
+/-! ### Relational bind and map congruence -/
+
+namespace TauSteps
+
+/-- Binding a continuation preserves finite silent-step stripping. -/
+theorem bind {t t' : ITree F α} (h : TauSteps t t')
+    (k : α → ITree F β) : TauSteps (ITree.bind t k) (ITree.bind t' k) := by
+  induction h with
+  | refl _ => exact .refl _
+  | step c ht _ ih =>
+      exact .step (fun _ => ITree.bind (c PUnit.unit) k)
+        (dest_bind_step k _ c ht) ih
+
+end TauSteps
+
+/-- Two-sided relational congruence for `bind`.
+
+The source trees may return different types related by `RR`; their
+continuations may return two further different types related by `SS`. All
+four result universes are independent of each other and of the event
+signature. -/
+theorem bind_weakBisimRel {RR : α → β → Prop} {SS : γ → δ → Prop}
+    {u : ITree F α} {v : ITree F β}
+    {f : α → ITree F γ} {g : β → ITree F δ}
+    (huv : WeakBisimRel RR u v)
+    (hfg : ∀ a b, RR a b → WeakBisimRel SS (f a) (g b)) :
+    WeakBisimRel SS (bind u f) (bind v g) := by
+  refine WeakBisimRel.coinduct SS
+    (fun x y =>
+      (∃ u v, WeakBisimRel RR u v ∧ x = bind u f ∧ y = bind v g) ∨
+      WeakBisimRel SS x y) ?_ (Or.inl ⟨u, v, huv, rfl, rfl⟩)
+  rintro x y (⟨u, v, huv, rfl, rfl⟩ | hxy)
+  · obtain ⟨u', v', hu, hv, M⟩ := huv.dest
+    cases M with
+    | pure r s hrs hu' hv' =>
+        have hut : u' = pure r := by
+          apply PFunctor.M.eq_of_dest_eq
+          change shape' u' = shape' (pure r)
+          exact hu'.trans (shape'_pure r).symm
+        have hvt : v' = pure s := by
+          apply PFunctor.M.eq_of_dest_eq
+          change shape' v' = shape' (pure s)
+          exact hv'.trans (shape'_pure s).symm
+        subst hut
+        subst hvt
+        obtain ⟨x', y', hx, hy, Mxy⟩ := (hfg r s hrs).dest
+        refine ⟨x', y', ?_, ?_, Mxy.mono (fun _ _ h => Or.inr h)⟩
+        · have huf : TauSteps (bind u f) (f r) := by
+            simpa only [bind_pure_left] using hu.bind f
+          exact huf.trans hx
+        · have hvg : TauSteps (bind v g) (g s) := by
+            simpa only [bind_pure_left] using hv.bind g
+          exact hvg.trans hy
+    | query a c c' hu' hv' hcc =>
+        refine ⟨bind u' f, bind v' g, hu.bind f, hv.bind g, ?_⟩
+        refine MatchRel.query a (fun b => bind (c b) f) (fun b => bind (c' b) g)
+          (dest_bind_query f u' a c hu') (dest_bind_query g v' a c' hv') ?_
+        intro b
+        exact Or.inl ⟨c b, c' b, hcc b, rfl, rfl⟩
+    | tau cu cv hu' hv' hcc =>
+        refine ⟨bind u' f, bind v' g, hu.bind f, hv.bind g, ?_⟩
+        refine MatchRel.tau (fun _ => bind (cu PUnit.unit) f)
+          (fun _ => bind (cv PUnit.unit) g)
+          (dest_bind_step f u' cu hu') (dest_bind_step g v' cv hv') ?_
+        exact Or.inl ⟨cu PUnit.unit, cv PUnit.unit, hcc, rfl, rfl⟩
+  · obtain ⟨x', y', hx, hy, M⟩ := hxy.dest
+    exact ⟨x', y', hx, hy, M.mono (fun _ _ h => Or.inr h)⟩
+
+/-- Relational congruence of `ITree.map`. -/
+theorem map_weakBisimRel {RR : α → β → Prop} {SS : γ → δ → Prop}
+    (f : α → γ) (g : β → δ) {u : ITree F α} {v : ITree F β}
+    (huv : WeakBisimRel RR u v) (hfg : ∀ a b, RR a b → SS (f a) (g b)) :
+    WeakBisimRel SS (map f u) (map g v) := by
+  unfold map
+  exact bind_weakBisimRel huv (fun a b hab => WeakBisimRel.pure (hfg a b hab))
+
+/-! ### Equality-specialized bind congruence
 
 Pointwise-weak-bisimilar continuations yield weakly-bisimilar `bind`s. This
 is the `eutt` congruence lemma for `bind` on its second argument; the
@@ -547,35 +653,7 @@ standard tool for replacing a continuation up to weak equivalence. -/
 /-- If `f a ≈ g a` for every `a`, then `bind u f ≈ bind u g`. -/
 theorem bind_weakBisim_cont {u : ITree F α} {f g : α → ITree F β}
     (hfg : ∀ a, WeakBisim (f a) (g a)) :
-    WeakBisim (bind u f) (bind u g) := by
-  refine WeakBisim.coinduct
-    (fun x y => (∃ u : ITree F α, x = bind u f ∧ y = bind u g) ∨ WeakBisim x y)
-    ?_ (Or.inl ⟨u, rfl, rfl⟩)
-  rintro a b (⟨u, rfl, rfl⟩ | hab)
-  · rcases hu : PFunctor.M.dest u with ⟨sh, c⟩
-    cases sh with
-    | pure r =>
-        have hu_eq : u = pure r := by
-          apply PFunctor.M.eq_of_dest_eq; rw [hu]
-          change (⟨.pure r, c⟩ : (Poly F α).Obj _) = ⟨.pure r, PEmpty.elim⟩
-          congr 1; funext z; exact z.elim
-        subst hu_eq
-        rw [bind_pure_left, bind_pure_left]
-        obtain ⟨x', y', hx, hy, M⟩ := (hfg r).dest
-        exact ⟨x', y', hx, hy, M.mono (fun _ _ hxy => Or.inr hxy)⟩
-    | step =>
-        refine ⟨bind u f, bind u g, .refl _, .refl _, ?_⟩
-        refine Match.tau (fun _ => bind (c PUnit.unit) f)
-          (fun _ => bind (c PUnit.unit) g) (dest_bind_step f u c hu)
-          (dest_bind_step g u c hu) ?_
-        exact Or.inl ⟨c PUnit.unit, rfl, rfl⟩
-    | query a =>
-        refine ⟨bind u f, bind u g, .refl _, .refl _, ?_⟩
-        refine Match.query a (fun b => bind (c b) f) (fun b => bind (c b) g)
-          (dest_bind_query f u a c hu) (dest_bind_query g u a c hu) ?_
-        intro b
-        exact Or.inl ⟨c b, rfl, rfl⟩
-  · obtain ⟨x', y', hx, hy, M⟩ := hab.dest
-    exact ⟨x', y', hx, hy, M.mono (fun _ _ hxy => Or.inr hxy)⟩
+    WeakBisim (bind u f) (bind u g) :=
+  bind_weakBisimRel (WeakBisim.refl u) (fun a _ hab => hab ▸ hfg a)
 
 end ITree
