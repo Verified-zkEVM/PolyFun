@@ -158,11 +158,6 @@ theorem falseTarget_eq_middle : falseTarget = ThreeState.middle := by
   rw [cofreeMate_falseVertex]
   rfl
 
-theorem stateComonoid_compose (start first second : ThreeState) :
-    Comonoid.compose (stateComonoid ThreeState) start first second =
-      second := by
-  rfl
-
 /-- The `true` branch reaches the final state rather than reversing the branch
 labels. -/
 theorem cofreeMate_trueVertex :
@@ -200,7 +195,7 @@ example : branchingSystem.cofreeMate.toLens.toFunB .source
         ThreeState.final
     rw [DynSystem.restrict_cofreeMate, falseTarget_eq_middle]
     rfl
-  rw [stateComonoid_compose]
+  rw [Comonoid.stateComonoid_compose]
   exact htail
 
 /-! ## Universal property and trajectory compatibility -/
