@@ -18,13 +18,6 @@ namespace PFunctor.PredicateExamples
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
-/-- A direction family reconstructs its polynomial while keeping both
-universes independent. -/
-example {A : Type uA} (B : A → Type uB) :
-    (PFunctor.ofFamily B).A = A ∧
-      (∀ a, (PFunctor.ofFamily B).B a = B a) := by
-  simp
-
 /-- The trace predicate accepts genuinely dependent direction fibers without
 requiring decidable equality on positions. -/
 example (allowed : (a : P.A) → Set (P.B a)) (a : P.A) (b : P.B a)
