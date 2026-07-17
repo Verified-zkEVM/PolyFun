@@ -31,6 +31,12 @@ example (C : Comonoid.{uA, uB}) (c : C.carrier.A)
     (d : C.carrier.B c) : C.carrier.A :=
   Comonoid.target C c d
 
+example (C : Comonoid.{uA, uB}) :
+    C.IsStateSystem ↔
+      ∀ c : C.carrier.A,
+        Function.Bijective (Comonoid.target C c) :=
+  Comonoid.isStateSystem_iff_target_bijective C
+
 example (C : Comonoid.{uA, uB}) (c : C.carrier.A) :
     C.comult.toFunA c = ⟨c, Comonoid.target C c⟩ :=
   Comonoid.comultPosition_eq C c
@@ -199,6 +205,43 @@ Composition must preserve both arrows and their path order. -/
 example :
     Comonoid.compose listMonoidComonoid PUnit.unit
       [false] [true] = [false, true] := rfl
+
+/-- Boolean negation induces a nonidentity endomorphism of the one-object
+list-monoid category. Unlike the state-comonoid examples, both its source and
+target have parallel arrows, so its retrofunctor laws test the arrow action. -/
+def negateListHom : Comonoid.Hom listMonoidComonoid listMonoidComonoid :=
+  { toLens :=
+      (fun _ => PUnit.unit) ⇆
+        (fun _ arrows => arrows.map fun value => !value)
+    map_counit := by
+      refine Lens.ext _ _ (fun _ => rfl) ?_
+      intro object
+      funext direction
+      cases object
+      cases direction
+      rfl
+    map_comult := by
+      refine Lens.ext _ _ (fun _ => rfl) ?_
+      intro object
+      funext directions
+      cases object
+      exact List.map_append }
+
+/-- The non-thin retrofunctor changes individual arrows while preserving their
+path order. -/
+example :
+    negateListHom.toLens.toFunB PUnit.unit [false, true] = [true, false] :=
+  rfl
+
+/-- Composition preservation is observable on two distinct, parallel
+arrows—it is not discharged merely because the object map is trivial. -/
+example :
+    negateListHom.toLens.toFunB PUnit.unit
+        (Comonoid.compose listMonoidComonoid PUnit.unit [false] [true]) =
+      Comonoid.compose listMonoidComonoid PUnit.unit
+        (negateListHom.toLens.toFunB PUnit.unit [false])
+        (negateListHom.toLens.toFunB PUnit.unit [true]) :=
+  negateListHom.map_compose PUnit.unit [false] [true]
 
 /-- The first projection is a nontrivial retrofunctor between state
 comonoids: it maps objects by `Prod.fst` and reconstructs a source-state arrow

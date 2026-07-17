@@ -81,9 +81,8 @@ variable (C : Comonoid.{uA, uB})
 /-- The outer source object selected by comultiplication is the original
 object. -/
 theorem comultOuter_eq (c : C.carrier.A) :
-    (C.comult.toFunA c).1 = c := by
-  have h := congrArg (fun lens => lens.toFunA c) C.counit_right
-  exact h
+    (C.comult.toFunA c).1 = c :=
+  congrArg (fun lens => lens.toFunA c) C.counit_right
 
 /-! ## Outgoing-arrow operations -/
 
@@ -102,6 +101,25 @@ already recorded by the direction fiber `C.carrier.B c`. -/
 def target (c : C.carrier.A) (d : C.carrier.B c) : C.carrier.A :=
   (C.comult.toFunA c).2
     (cast (congrArg C.carrier.B (comultOuter_eq C c).symm) d)
+
+/-- The original comultiplication-based definition of a state system is
+equivalent to bijectivity of the canonical outgoing-arrow target map. -/
+theorem isStateSystem_iff_target_bijective :
+    C.IsStateSystem ↔
+      ∀ c : C.carrier.A, Function.Bijective (target C c) := by
+  constructor
+  · intro h c
+    let e := _root_.Equiv.cast
+      (congrArg C.carrier.B (comultOuter_eq C c).symm)
+    change Function.Bijective ((C.comult.toFunA c).2 ∘ e)
+    exact Function.Bijective.comp (h c) e.bijective
+  · intro h c
+    let e := _root_.Equiv.cast
+      (congrArg C.carrier.B (comultOuter_eq C c).symm)
+    have hTarget := h c
+    change Function.Bijective ((C.comult.toFunA c).2 ∘ e) at hTarget
+    simpa only [Function.comp_def, Equiv.apply_symm_apply] using
+      Function.Bijective.comp hTarget e.symm.bijective
 
 /-- The position action of comultiplication is canonically the source object
 paired with the target of every outgoing arrow. -/
@@ -398,9 +416,8 @@ variable {C D : Comonoid.{uA, uB}}
 identity. -/
 @[simp]
 theorem Hom.map_identity (F : Hom C D) (c : C.carrier.A) :
-    F.toLens.toFunB c (identity D (F.toLens.toFunA c)) = identity C c := by
-  have h := congrArg (fun lens => lens.toFunB c PUnit.unit) F.map_counit
-  exact h
+    F.toLens.toFunB c (identity D (F.toLens.toFunA c)) = identity C c :=
+  congrArg (fun lens => lens.toFunB c PUnit.unit) F.map_counit
 
 private theorem Hom.map_normalizedComult (F : Hom C D) :
     normalizedComult D ∘ₗ F.toLens =
