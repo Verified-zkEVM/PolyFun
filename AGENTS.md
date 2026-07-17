@@ -97,6 +97,9 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   → PFunctor/{Cofree, Trace}
   → PFunctor/Resumption
 Logic/HEq + PFunctor/{M, Lens/Basic} → PFunctor/M/Vertex
+PFunctor/Display/Basic
+  → PFunctor/Display/{Chart, Indexed, Free}
+  → PFunctor/Display/Handler
 PFunctor/Free/Basic
   → PFunctor/Free/Displayed
   → PFunctor/Free/{Path, Displayed/Decoration}
