@@ -106,7 +106,7 @@ def monadicSyntax
 
 end Ownership
 
-namespace Spec
+namespace TypeTree
 namespace Ownership
 
 variable {Agent : Type a}
@@ -200,20 +200,20 @@ the definitional hot path and avoids equality tests such as
 def syntaxOver
     (perspective : ∀ {X}, Γ X → Agent → Perspective)
     (view : ∀ {X}, (γ : Γ X) → Agent → LocalView X) :
-    SyntaxOver (PFunctor.Lens.id Spec.basePFunctor) Agent Γ where
+    SyntaxOver (PFunctor.Lens.id TypeTree.basePFunctor) Agent Γ where
   Node agent _ γ Cont :=
     (view γ agent).node (perspective γ agent) Cont
 
-/-- Monadic owner/passive syntax over plain `Spec` trees. -/
+/-- Monadic owner/passive syntax over plain `TypeTree` trees. -/
 def monadicSyntax
     (perspective : ∀ {X}, Γ X → Agent → Perspective)
     (monad : ∀ {X}, Γ X → Agent → BundledMonad.{u, u}) :
-    SyntaxOver (PFunctor.Lens.id Spec.basePFunctor) Agent Γ where
+    SyntaxOver (PFunctor.Lens.id TypeTree.basePFunctor) Agent Γ where
   Node agent X γ Cont :=
     match perspective γ agent with
     | .owner => (monad γ agent).M ((x : X) × Cont x)
     | .observer => (x : X) → (monad γ agent).M (Cont x)
 
 end Ownership
-end Spec
+end TypeTree
 end Interaction

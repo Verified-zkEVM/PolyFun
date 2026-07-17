@@ -53,13 +53,13 @@ import PolyFun.Interaction.Basic.Ownership
 import PolyFun.Interaction.Basic.Replicate
 import PolyFun.Interaction.Basic.Sampler
 import PolyFun.Interaction.Basic.Shape
-import PolyFun.Interaction.Basic.Spec
-import PolyFun.Interaction.Basic.SpecFintype
 import PolyFun.Interaction.Basic.StateChain
 import PolyFun.Interaction.Basic.Strategy
 import PolyFun.Interaction.Basic.StrategyOver
 import PolyFun.Interaction.Basic.Syntax
 import PolyFun.Interaction.Basic.Telescope
+import PolyFun.Interaction.Basic.TypeTree
+import PolyFun.Interaction.Basic.TypeTreeFintype
 import PolyFun.Interaction.Concurrent.Control
 import PolyFun.Interaction.Concurrent.Current
 import PolyFun.Interaction.Concurrent.Equivalence
@@ -142,8 +142,10 @@ import PolyFun.PFunctor.Free.Displayed.Decoration
 import PolyFun.PFunctor.Free.Displayed.StateChain
 import PolyFun.PFunctor.Free.Path
 import PolyFun.PFunctor.Free.Path.Execution
+import PolyFun.PFunctor.Free.Polynomial
 import PolyFun.PFunctor.Free.Replicate
 import PolyFun.PFunctor.Free.Resumption
+import PolyFun.PFunctor.Free.Universal
 import PolyFun.PFunctor.Handler
 import PolyFun.PFunctor.InternalHom
 import PolyFun.PFunctor.Lens.Basic
@@ -156,4 +158,5 @@ import PolyFun.PFunctor.Lens.State
 import PolyFun.PFunctor.M
 import PolyFun.PFunctor.Resumption
 import PolyFun.PFunctor.SubstMonoid
+import PolyFun.PFunctor.SubstMonoid.Extension
 import PolyFun.PFunctor.Trace

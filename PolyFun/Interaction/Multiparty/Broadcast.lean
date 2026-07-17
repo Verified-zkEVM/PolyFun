@@ -6,13 +6,13 @@ Authors: Quang Dao
 import PolyFun.Interaction.Multiparty.Core
 
 /-!
-# Broadcast / public-transcript multiparty interaction
+# Broadcast / public-path multiparty interaction
 
 This file specializes `Interaction.Multiparty.Core` to the communication model
 where each node has one distinguished acting party, and every other party
 observes the same chosen move.
 
-This is the natural native model for public-transcript protocols:
+This is the natural native model for public-path protocols:
 one party speaks at each step, and all other parties continue along the same
 observed branch.
 
@@ -35,12 +35,12 @@ namespace Broadcast
 A `PartyDecoration Party spec` labels each internal node of `spec` by its
 unique acting party.
 
-The intended semantics are broadcast / public-transcript:
+The intended semantics are broadcast / public-path:
 the labeled party chooses the next move, and every other participant observes
 that same move and continues along the corresponding branch.
 -/
-abbrev PartyDecoration (Party : Type u) (spec : Spec.{u}) : Type u :=
-  PFunctor.FreeM.Displayed.Decoration (P := Spec.basePFunctor) (α := PUnit.{u+1})
+abbrev PartyDecoration (Party : Type u) (spec : TypeTree.{u}) : Type u :=
+  PFunctor.FreeM.Displayed.Decoration (P := TypeTree.basePFunctor) (α := PUnit.{u+1})
     (fun _ => Party) spec
 
 /--
@@ -60,7 +60,7 @@ But the definition itself is intentionally more general: it exposes the full
 abbrev Strategy
     (m : Type u → Type u)
     {Party : Type u}
-    (spec : Spec) (parties : PartyDecoration Party spec)
+    (spec : TypeTree) (parties : PartyDecoration Party spec)
     (resolve : ∀ {X : Type u}, Party → ViewMode X)
     (Output : PFunctor.FreeM.Path spec → Type u) :=
   Multiparty.Strategy m (resolve := fun X owner => resolve (X := X) owner) spec parties Output

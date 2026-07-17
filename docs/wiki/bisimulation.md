@@ -82,8 +82,8 @@ optional states, is a generic weak bisimulation, and
 
 ## UC open processes
 
-`OpenProcess.activationLTS` labels a complete silent transcript by `none` and
-every activated transcript by the single observation `some ()`.
+`OpenProcess.activationLTS` labels a complete silent path by `none` and
+every activated path by the single observation `some ()`.
 `OpenProcessActivationEquiv` is exactly whole-system delay bisimulation of
 these generic labelled transition systems. The structural `openTheory` laws
 prove the stronger delay notion (not merely weak bisimulation): their matches

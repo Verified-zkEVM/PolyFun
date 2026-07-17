@@ -40,8 +40,8 @@ example (h : OpenProcessActivationEquiv p₁ p₂) :
   symm
   exact h
 
-/-- A transcript proved silent receives the generic silent label. -/
-example (s : p₁.Proc) (tr : (p₁.step s).spec.Transcript)
+/-- A path proved silent receives the generic silent label. -/
+example (s : p₁.Proc) (tr : (p₁.step s).tree.Path)
     (h : IsSilentStep p₁ s tr) : p₁.activationLTS.label s tr = none :=
   p₁.activationLTS_label_of_silent s tr h
 

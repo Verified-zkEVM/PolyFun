@@ -44,7 +44,7 @@ See the *Wiki Maintenance Contract* section in
   example.
 - [`itree.md`](itree.md): coinductive interaction trees.
 - [`interaction.md`](interaction.md): the generic interaction framework
-  (sequential `Spec`, two-party, multiparty local views, concurrent
+  (sequential `TypeTree`, two-party, multiparty local views, concurrent
   processes, UC open systems).
 
 ## Cross-Cutting Notes

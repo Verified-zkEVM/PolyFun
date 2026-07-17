@@ -10,7 +10,7 @@ import PolyFun.Interaction.Concurrent.Frontier
 
 This file defines finite traces of the **structural** concurrent source syntax.
 
-For sequential `Interaction.Spec`, a `Transcript` records one complete root-to-
+For sequential `Interaction.TypeTree`, a `Path` records one complete root-to-
 leaf play through a tree whose next move family is always unique.
 
 For concurrent `Interaction.Concurrent.Spec`, there may be multiple currently
@@ -43,7 +43,7 @@ It records one scheduler-chosen linearization of frontier events, ending when
 the residual concurrent spec becomes quiescent, meaning its frontier type is
 empty.
 
-This should be read as the concurrent analogue of a sequential transcript, but
+This should be read as the concurrent analogue of a sequential path, but
 with one crucial difference:
 the constructors record **frontier choices** rather than the moves of a
 single always-current node.

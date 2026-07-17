@@ -3,7 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Spec
+import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.Basic.Decoration
 import PolyFun.Interaction.Basic.Append
 import PolyFun.Interaction.TwoParty.Role
@@ -28,7 +28,7 @@ theorem Role.swap_swap (r : Role) : r.swap.swap = r := by cases r <;> rfl
 
 @[simp, grind =]
 theorem RoleDecoration.swap_swap :
-    (spec : Spec) → (roles : RoleDecoration spec) →
+    (spec : TypeTree) → (roles : RoleDecoration spec) →
     roles.swap.swap = roles
   | .done, _ => rfl
   | .node _ rest, ⟨r, rRest⟩ => by
@@ -41,13 +41,13 @@ theorem RoleDecoration.swap_swap :
 
 /-- Swapping commutes with appended role decorations. -/
 theorem RoleDecoration.swap_append
-    {s₁ : Spec.{u}} {s₂ : PFunctor.FreeM.Path s₁ → Spec.{u}}
+    {s₁ : TypeTree.{u}} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree.{u}}
     (r₁ : RoleDecoration s₁)
     (r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)) :
     RoleDecoration.swap (r₁.append r₂) =
       (RoleDecoration.swap r₁).append (fun tr₁ => RoleDecoration.swap (r₂ tr₁)) :=
   PFunctor.FreeM.Displayed.Decoration.map_append
-    (P := Spec.basePFunctor) (α := PUnit.{u+1}) (β := PUnit.{u+1})
+    (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) (β := PUnit.{u+1})
     (fun _ => Role.swap) s₁ s₂ r₁ r₂
 
 end TwoParty

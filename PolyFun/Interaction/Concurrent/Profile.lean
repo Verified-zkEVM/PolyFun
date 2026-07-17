@@ -58,7 +58,7 @@ Constructors mirror the concurrent syntax itself:
 * `par leftProfile rightProfile` — a parallel spec carries one profile for each
   concurrently live component.
 
-This is the concurrent analogue of decorating every node of a sequential spec,
+This is the concurrent analogue of decorating every node of a sequential type tree,
 but phrased directly over the structural concurrent syntax.
 -/
 inductive Profile (Party : Type u) : Spec → Type (u + 1) where

@@ -35,21 +35,21 @@ namespace Run
 /-- `Pred process` is the type of semantic properties of whole runs of
 `process`. -/
 abbrev Pred
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} (process : ProcessOver P Γ) :=
   ProcessOver.Run process → Prop
 
 /-- `StatePred process` is the type of predicates on residual process
 states. -/
 abbrev StatePred
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} (process : ProcessOver P Γ) :=
   process.Proc → Prop
 
 /-- `AlwaysState P run` means that the state predicate `P` holds at every state
 of the run `run`. -/
 def AlwaysState
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (P : StatePred process) (run : ProcessOver.Run process) : Prop :=
   ∀ n, P (run.state n)
@@ -59,7 +59,7 @@ def AlwaysState
 satisfying `P`.
 -/
 def EventuallyState
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (P : StatePred process) (run : ProcessOver.Run process) : Prop :=
   ∃ n, P (run.state n)
@@ -67,14 +67,14 @@ def EventuallyState
 /-- `InfinitelyOftenState P run` means that `P` holds at arbitrarily late
 states of `run`. -/
 def InfinitelyOftenState
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (P : StatePred process) (run : ProcessOver.Run process) : Prop :=
   ∀ N, ∃ n, N ≤ n ∧ P (run.state n)
 
 /-- Monotonicity of `AlwaysState`. -/
 theorem alwaysState_mono
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {P Q : StatePred process}
     (himp : ∀ p, P p → Q p) :
@@ -84,7 +84,7 @@ theorem alwaysState_mono
 
 /-- Monotonicity of `EventuallyState`. -/
 theorem eventuallyState_mono
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {P Q : StatePred process}
     (himp : ∀ p, P p → Q p) :
@@ -94,7 +94,7 @@ theorem eventuallyState_mono
 
 /-- Monotonicity of `InfinitelyOftenState`. -/
 theorem infinitelyOftenState_mono
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {P Q : StatePred process}
     (himp : ∀ p, P p → Q p) :
@@ -111,7 +111,7 @@ namespace SafetySpec
 /-- A run of `system` is admissible when the ambient assumptions hold at every
 state along the run. -/
 def Admissible
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : ProcessOver.SafetySpec Γ)
     (run : ProcessOver.Run system.toProcess) : Prop :=
   ProcessOver.Run.AlwaysState system.assumptions run
@@ -119,7 +119,7 @@ def Admissible
 /-- A run of `system` is safe when the safety predicate holds at every state
 along the run. -/
 def Safe
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : ProcessOver.SafetySpec Γ)
     (run : ProcessOver.Run system.toProcess) : Prop :=
   ProcessOver.Run.AlwaysState system.safe run
@@ -127,7 +127,7 @@ def Safe
 /-- A run starts from an initial state when its first residual process state
 satisfies `system.init`. -/
 def Initial
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : ProcessOver.SafetySpec Γ)
     (run : ProcessOver.Run system.toProcess) : Prop :=
   system.init run.initial
@@ -138,7 +138,7 @@ every initial admissible run of `system` that satisfies the fairness
 assumption `fairness` also satisfies the run property `property`.
 -/
 def Satisfies
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : ProcessOver.SafetySpec Γ)
     (fairness property : ProcessOver.Run.Pred system.toProcess) : Prop :=
   ∀ run : ProcessOver.Run system.toProcess,
@@ -152,7 +152,7 @@ If a run is safe and every safe state satisfies `P`, then `P` holds at every
 state along the run.
 -/
 theorem alwaysState_of_safe
-    {Γ : Interaction.Spec.Node.Context.{w, w₂}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : ProcessOver.SafetySpec Γ)
     {P : ProcessOver.Run.StatePred system.toProcess}
     (himp : ∀ p, system.safe p → P p) :

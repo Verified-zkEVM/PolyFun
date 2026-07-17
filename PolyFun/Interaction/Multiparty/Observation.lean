@@ -3,7 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Spec
+import PolyFun.Interaction.Basic.TypeTree
 import Mathlib.Order.Lattice
 import Mathlib.Order.BoundedOrder.Basic
 
@@ -31,7 +31,7 @@ on this exact object:
 
 `Observation` is built directly on top of the polynomial-functor library
 in `PolyFun/PFunctor`, mirroring the pattern by which
-`Interaction.Spec` is built from `Spec.basePFunctor`:
+`Interaction.TypeTree` is built from `TypeTree.basePFunctor`:
 
 ```
 Observation X := PFunctor.Idx (Observation.basePFunctor X)
@@ -46,7 +46,7 @@ this polynomial: a chosen codomain `Obs` together with a projection
 definitionally because `PFunctor.Idx P` unfolds to `Σ a, P.B a`. The
 polynomial substrate is the truth; the `Observation` name is an
 ergonomic re-skin in the spirit of `OracleSpec` / `OracleComp` and
-`Spec.done` / `Spec.node`.
+`TypeTree.done` / `TypeTree.node`.
 
 ## Information lattice
 
@@ -109,7 +109,7 @@ namespace Observation
 positions are observation codomains `Type u`, and the child family at a
 position `Obs : Type u` is the type of projections `X → Obs`.
 
-Following the convention established by `Interaction.Spec.basePFunctor`,
+Following the convention established by `Interaction.TypeTree.basePFunctor`,
 this exposes `Observation X` as the index type
 `PFunctor.Idx (basePFunctor X) = Σ Obs : Type u, X → Obs` of a specific
 polynomial functor: the universal "observations of `X`" container. An
@@ -129,8 +129,8 @@ packaged with its codomain `Obs`.
 
 It is **definitionally** the index type of `Observation.basePFunctor X`:
 `Observation X = PFunctor.Idx (basePFunctor X) = Σ Obs : Type u, X → Obs`,
-mirroring the pattern by which `Interaction.Spec` is defined as
-`PFunctor.FreeM Spec.basePFunctor PUnit`. The `Σ`-pair literal
+mirroring the pattern by which `Interaction.TypeTree` is defined as
+`PFunctor.FreeM TypeTree.basePFunctor PUnit`. The `Σ`-pair literal
 `⟨Obs, π⟩` works directly as a constructor, and the projections `k.1` /
 `k.2` recover the codomain and projection.
 

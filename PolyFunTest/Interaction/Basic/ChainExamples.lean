@@ -6,12 +6,12 @@ Authors: Quang Dao
 import PolyFun.Interaction.Basic.Chain
 
 /-!
-# Worked examples for continuation-style chains (`Spec.Chain`)
+# Worked examples for continuation-style chains (`TypeTree.Chain`)
 
-Toy protocols that exercise the `Spec.Chain` API from
+Toy protocols that exercise the `TypeTree.Chain` API from
 [`PolyFun.Interaction.Basic.Chain`](../../../PolyFun/Interaction/Basic/Chain.lean)
 and double as regression tests: a chain whose per-round message type grows with
-the round index, a chain with genuine transcript-prefix dependence, and
+the round index, a chain with genuine path-prefix dependence, and
 dependent strategy composition (`replay`) over the prefix-dependent example.
 -/
 
@@ -19,7 +19,7 @@ universe u
 
 namespace Interaction
 
-namespace Spec
+namespace TypeTree
 
 /-! ## Toy example: growing message types -/
 
@@ -33,16 +33,16 @@ private def growingChain : (n : Nat) → (k : Nat) → Chain.{0} n
                   fun _ => growingChain n (k + 1)⟩
 
 /-- Two rounds from position `0`: `Fin 1` then `Fin 2`. -/
-example : Chain.toSpec 2 (growingChain 2 0) =
+example : Chain.toTypeTree 2 (growingChain 2 0) =
     .node (Fin 1) fun _ => .node (Fin 2) fun _ => .done := rfl
 
 /-- Three rounds: `Fin 1`, `Fin 2`, `Fin 3`. -/
-example : Chain.toSpec 3 (growingChain 3 0) =
+example : Chain.toTypeTree 3 (growingChain 3 0) =
     .node (Fin 1) fun _ => .node (Fin 2) fun _ =>
       .node (Fin 3) fun _ => .done := rfl
 
-/-- The transcript type reflects the growing message sizes. -/
-example : Transcript (Chain.toSpec 2 (growingChain 2 0)) =
+/-- The path type reflects the growing message sizes. -/
+example : Path (Chain.toTypeTree 2 (growingChain 2 0)) =
     ((_ : Fin 1) × (_ : Fin 2) × PUnit) := rfl
 
 /-- A fully literal 3-round protocol — no parameters, no recursion,
@@ -52,134 +52,134 @@ private def threeRoundsLiteral : Chain.{0} 3 :=
     ⟨.node (Fin 2) fun _ => .done, fun _ =>
       ⟨.node (Fin 3) fun _ => .done, fun _ => ⟨⟩⟩⟩⟩
 
-example : Chain.toSpec 3 threeRoundsLiteral =
+example : Chain.toTypeTree 3 threeRoundsLiteral =
     .node (Fin 1) fun _ => .node (Fin 2) fun _ =>
       .node (Fin 3) fun _ => .done := rfl
 
 end GrowingMessages
 
-/-! ## Toy example: genuine transcript-prefix dependence -/
+/-! ## Toy example: genuine path-prefix dependence -/
 
 section PrefixDependent
 
 /-- First round branches and exposes branch-specific data to later rounds. -/
-private def branchingRound : Spec :=
+private def branchingRound : TypeTree :=
   .node Bool fun b =>
     if b then
       .node Nat fun _ => .done
     else
       .node (Fin 2) fun _ => .done
 
-/-- The second round depends on the full first-round transcript. -/
-private def secondRound : Transcript branchingRound → Spec
+/-- The second round depends on the full first-round path. -/
+private def secondRound : Path branchingRound → TypeTree
   | ⟨true, ⟨(n : Nat), ⟨⟩⟩⟩ => .node (Fin (n + 1)) fun _ => .done
   | ⟨false, ⟨i, ⟨⟩⟩⟩ => .node (Fin (i.val + 2)) fun _ => .done
 
-/-- The third round depends on the full two-round transcript prefix. -/
+/-- The third round depends on the full two-round path prefix. -/
 private def thirdRound :
-    (tr₁ : Transcript branchingRound) → Transcript (secondRound tr₁) → Spec
+    (tr₁ : Path branchingRound) → Path (secondRound tr₁) → TypeTree
   | ⟨true, ⟨(n : Nat), ⟨⟩⟩⟩, ⟨k, ⟨⟩⟩ => .node (Fin (n + k.val + 1)) fun _ => .done
   | ⟨false, ⟨i, ⟨⟩⟩⟩, ⟨k, ⟨⟩⟩ => .node (Fin (i.val + k.val + 2)) fun _ => .done
 
-/-- A three-round chain whose final move type genuinely depends on the prefix transcript. -/
+/-- A three-round chain whose final move type genuinely depends on the prefix path. -/
 private def prefixDependent : Chain.{0} 3 :=
   ⟨branchingRound, fun tr₁ =>
     ⟨secondRound tr₁, fun tr₂ =>
       ⟨thirdRound tr₁ tr₂, fun _ => ⟨⟩⟩⟩⟩
 
-/-- Flattening the chain is just iterated `PFunctor.FreeM.append` over transcript-indexed tails. -/
-example : Chain.toSpec 3 prefixDependent =
+/-- Flattening the chain is just iterated `PFunctor.FreeM.append` over path-indexed tails. -/
+example : Chain.toTypeTree 3 prefixDependent =
     branchingRound.append (fun tr₁ =>
       (secondRound tr₁).append (fun tr₂ =>
-        (thirdRound tr₁ tr₂).append (fun _ => Spec.done))) := rfl
+        (thirdRound tr₁ tr₂).append (fun _ => TypeTree.done))) := rfl
 
 /-- After a `true` prefix, the remainder remembers the earlier `Nat` choice. -/
 example (n : Nat) :
-    Chain.toSpec 2 (prefixDependent.2 ⟨true, ⟨n, ⟨⟩⟩⟩) =
+    Chain.toTypeTree 2 (prefixDependent.2 ⟨true, ⟨n, ⟨⟩⟩⟩) =
       .node (Fin (n + 1)) fun k =>
         .node (Fin (n + k.val + 1)) fun _ => .done := rfl
 
 /-- After a `false` prefix, the remainder remembers the earlier `Fin 2` choice. -/
 example (i : Fin 2) :
-    Chain.toSpec 2 (prefixDependent.2 ⟨false, ⟨i, ⟨⟩⟩⟩) =
+    Chain.toTypeTree 2 (prefixDependent.2 ⟨false, ⟨i, ⟨⟩⟩⟩) =
       .node (Fin (i.val + 2)) fun k =>
         .node (Fin (i.val + k.val + 2)) fun _ => .done := rfl
 
-/-- The transcript type itself is dependent: the third move type varies with the second. -/
+/-- The path type itself is dependent: the third move type varies with the second. -/
 example (n : Nat) :
-    Transcript (Chain.toSpec 2 (prefixDependent.2 ⟨true, ⟨n, ⟨⟩⟩⟩)) =
+    Path (Chain.toTypeTree 2 (prefixDependent.2 ⟨true, ⟨n, ⟨⟩⟩⟩)) =
       ((k : Fin (n + 1)) × ((_ : Fin (n + k.val + 1)) × PUnit)) := rfl
 
-/-- The other branch has a different dependent transcript shape. -/
+/-- The other branch has a different dependent path shape. -/
 example (i : Fin 2) :
-    Transcript (Chain.toSpec 2 (prefixDependent.2 ⟨false, ⟨i, ⟨⟩⟩⟩)) =
+    Path (Chain.toTypeTree 2 (prefixDependent.2 ⟨false, ⟨i, ⟨⟩⟩⟩)) =
       ((k : Fin (i.val + 2)) × ((_ : Fin (i.val + k.val + 2)) × PUnit)) := rfl
 
 /-! ## Dependent strategy composition over the prefix-dependent example -/
 
-/-- Pure strategy that follows a prescribed transcript and returns a chosen leaf output. -/
+/-- Pure strategy that follows a prescribed path and returns a chosen leaf output. -/
 private def scriptStrategy :
-    (spec : Spec) → (tr : Transcript spec) → {Output : Transcript spec → Type u} →
+    (spec : TypeTree) → (tr : Path spec) → {Output : Path spec → Type u} →
     Output tr → Strategy.Plain Id spec Output
   | .done, _, _, out => out
   | .node _ rest, ⟨x, trRest⟩, _, out => ⟨x, scriptStrategy (rest x) trRest out⟩
 
-/-- Carry the flattened transcript of the remaining chain as the dependent state. -/
+/-- Carry the flattened path of the remaining chain as the dependent state. -/
 private abbrev ReplayState {n : Nat} (c : Chain.{0} n) : Type :=
-  Transcript (Chain.toSpec n c)
+  Path (Chain.toTypeTree n c)
 
-/-- One dependent step: split the remaining flattened transcript into this round and the tail,
-play the current round verbatim, and return the tail transcript. -/
+/-- One dependent step: split the remaining flattened path into this round and the tail,
+play the current round verbatim, and return the tail path. -/
 private def replayStep {n : Nat} (c : Chain.{0} (n + 1))
     (tr : ReplayState c) :
     Id (Strategy.Plain Id c.1 (fun tr₁ => ReplayState (c.2 tr₁))) :=
-  let ⟨tr₁, trRest⟩ := Chain.splitTranscript n c tr
+  let ⟨tr₁, trRest⟩ := Chain.splitPath n c tr
   scriptStrategy c.1 tr₁ trRest
 
-/-- Replay a full flattened transcript using the intrinsic dependent strategy combinator. -/
+/-- Replay a full flattened path using the intrinsic dependent strategy combinator. -/
 private def replayStrategy (n : Nat) (c : Chain.{0} n) (tr : ReplayState c) :
-    Strategy.Plain Id (Chain.toSpec n c)
+    Strategy.Plain Id (Chain.toTypeTree n c)
       (Chain.outputFamily (Family := fun {_} c => ReplayState c) n c) :=
   Chain.strategyComp (Family := fun {_} c => ReplayState c) replayStep n c tr
 
-/-- A concrete `true`-branch transcript for the prefix-dependent chain. -/
-private def trueReplayTranscript (n : Nat) (k : Fin (n + 1)) (j : Fin (n + k.val + 1)) :
-    Transcript (Chain.toSpec 3 prefixDependent) := by
-  let tr₁ : Transcript branchingRound := ⟨true, ⟨n, ⟨⟩⟩⟩
+/-- A concrete `true`-branch path for the prefix-dependent chain. -/
+private def trueReplayPath (n : Nat) (k : Fin (n + 1)) (j : Fin (n + k.val + 1)) :
+    Path (Chain.toTypeTree 3 prefixDependent) := by
+  let tr₁ : Path branchingRound := ⟨true, ⟨n, ⟨⟩⟩⟩
   let c₂ := prefixDependent.2 tr₁
-  let tr₂ : Transcript c₂.1 := ⟨k, ⟨⟩⟩
+  let tr₂ : Path c₂.1 := ⟨k, ⟨⟩⟩
   let c₃ := c₂.2 tr₂
-  let tr₃ : Transcript c₃.1 := ⟨j, ⟨⟩⟩
-  exact Chain.appendTranscript 2 prefixDependent tr₁
-    (Chain.appendTranscript 1 c₂ tr₂
-      (Chain.appendTranscript 0 c₃ tr₃ ⟨⟩))
+  let tr₃ : Path c₃.1 := ⟨j, ⟨⟩⟩
+  exact Chain.appendPath 2 prefixDependent tr₁
+    (Chain.appendPath 1 c₂ tr₂
+      (Chain.appendPath 0 c₃ tr₃ ⟨⟩))
 
-/-- A concrete `false`-branch transcript for the prefix-dependent chain. -/
-private def falseReplayTranscript (i : Fin 2) (k : Fin (i.val + 2))
+/-- A concrete `false`-branch path for the prefix-dependent chain. -/
+private def falseReplayPath (i : Fin 2) (k : Fin (i.val + 2))
     (j : Fin (i.val + k.val + 2)) :
-    Transcript (Chain.toSpec 3 prefixDependent) := by
-  let tr₁ : Transcript branchingRound := ⟨false, ⟨i, ⟨⟩⟩⟩
+    Path (Chain.toTypeTree 3 prefixDependent) := by
+  let tr₁ : Path branchingRound := ⟨false, ⟨i, ⟨⟩⟩⟩
   let c₂ := prefixDependent.2 tr₁
-  let tr₂ : Transcript c₂.1 := ⟨k, ⟨⟩⟩
+  let tr₂ : Path c₂.1 := ⟨k, ⟨⟩⟩
   let c₃ := c₂.2 tr₂
-  let tr₃ : Transcript c₃.1 := ⟨j, ⟨⟩⟩
-  exact Chain.appendTranscript 2 prefixDependent tr₁
-    (Chain.appendTranscript 1 c₂ tr₂
-      (Chain.appendTranscript 0 c₃ tr₃ ⟨⟩))
+  let tr₃ : Path c₃.1 := ⟨j, ⟨⟩⟩
+  exact Chain.appendPath 2 prefixDependent tr₁
+    (Chain.appendPath 1 c₂ tr₂
+      (Chain.appendPath 0 c₃ tr₃ ⟨⟩))
 
-/-- Replaying a concrete `true`-branch transcript reproduces that exact transcript. -/
+/-- Replaying a concrete `true`-branch path reproduces that exact path. -/
 example :
-    (Strategy.run (spec := Chain.toSpec 3 prefixDependent)
-      (replayStrategy 3 prefixDependent (trueReplayTranscript 1 0 0))).1 =
-        trueReplayTranscript 1 0 0 := rfl
+    (Strategy.run (spec := Chain.toTypeTree 3 prefixDependent)
+      (replayStrategy 3 prefixDependent (trueReplayPath 1 0 0))).1 =
+        trueReplayPath 1 0 0 := rfl
 
-/-- Replaying a concrete `false`-branch transcript reproduces that exact transcript. -/
+/-- Replaying a concrete `false`-branch path reproduces that exact path. -/
 example :
-    (Strategy.run (spec := Chain.toSpec 3 prefixDependent)
-      (replayStrategy 3 prefixDependent (falseReplayTranscript 1 0 0))).1 =
-        falseReplayTranscript 1 0 0 := rfl
+    (Strategy.run (spec := Chain.toTypeTree 3 prefixDependent)
+      (replayStrategy 3 prefixDependent (falseReplayPath 1 0 0))).1 =
+        falseReplayPath 1 0 0 := rfl
 
 end PrefixDependent
 
-end Spec
+end TypeTree
 end Interaction

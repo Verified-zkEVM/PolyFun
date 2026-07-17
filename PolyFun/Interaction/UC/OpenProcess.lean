@@ -52,7 +52,7 @@ empty-emission default is the trace-monoid unit `1`, which is definitionally
 the constant-`[]` trace.
 
 `OpenNodeContext.boundaryTrace` reads the emitted-packet trace from a
-decorated step transcript. It is structural only: routing, buffering, and
+decorated step path. It is structural only: routing, buffering, and
 probabilistic execution belong to downstream runtime interpreters.
 -/
 
@@ -363,7 +363,7 @@ exhibited by `OpenNodeContext.equivProductView`, the non-dependent context
 product
 
 ```
-Spec.Node.Context.prod (StepContext Party) (fun X => BoundaryAction Δ X)
+TypeTree.Node.Context.prod (StepContext Party) (fun X => BoundaryAction Δ X)
 ```
 
 That is, the open node context is the polynomial product of the closed
@@ -397,16 +397,16 @@ universes as `OpenNodeContext Party Δ` itself: the first universe is the
 move-space universe `w`, and the second is whatever Lean infers for
 `NodeProfile Party X × BoundaryAction Δ X`. -/
 abbrev productView (Party : Type u) (Δ : PortBoundary) :
-    Spec.Node.Context.{w} :=
-  Spec.Node.Context.prod (StepContext Party)
+    TypeTree.Node.Context.{w} :=
+  TypeTree.Node.Context.prod (StepContext Party)
     (fun X : Type w => BoundaryAction Δ X)
 
 /--
 Forward direction of the polynomial-product bridge: read off the
 `(NodeProfile, BoundaryAction)` pair from an `OpenNodeProfile`. -/
 def toProductView (Party : Type u) (Δ : PortBoundary) :
-    Spec.Node.ContextHom
-      (OpenNodeContext Party Δ : Spec.Node.Context.{w})
+    TypeTree.Node.ContextHom
+      (OpenNodeContext Party Δ : TypeTree.Node.Context.{w})
       (productView.{u, w} Party Δ) :=
   fun _ ons => (ons.toNodeProfile, ons.boundary)
 
@@ -414,28 +414,28 @@ def toProductView (Party : Type u) (Δ : PortBoundary) :
 Inverse direction of the polynomial-product bridge: reassemble an
 `OpenNodeProfile` from a `(NodeProfile, BoundaryAction)` pair. -/
 def ofProductView (Party : Type u) (Δ : PortBoundary) :
-    Spec.Node.ContextHom
+    TypeTree.Node.ContextHom
       (productView.{u, w} Party Δ)
-      (OpenNodeContext Party Δ : Spec.Node.Context.{w}) :=
+      (OpenNodeContext Party Δ : TypeTree.Node.Context.{w}) :=
   fun _ p => { toNodeProfile := p.1, boundary := p.2 }
 
 @[simp]
 theorem toProductView_ofProductView (Party : Type u) (Δ : PortBoundary) :
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
         (toProductView.{u, w} Party Δ) (ofProductView Party Δ) =
-      Spec.Node.ContextHom.id (productView Party Δ) := by
+      TypeTree.Node.ContextHom.id (productView Party Δ) := by
   funext X p
   cases p
   rfl
 
 @[simp]
 theorem ofProductView_toProductView (Party : Type u) (Δ : PortBoundary) :
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
         (ofProductView.{u, w} Party Δ) (toProductView Party Δ) =
-      Spec.Node.ContextHom.id (OpenNodeContext Party Δ) := by
+      TypeTree.Node.ContextHom.id (OpenNodeContext Party Δ) := by
   funext X ons
   cases ons
-  simp [Spec.Node.ContextHom.comp, Spec.Node.ContextHom.id,
+  simp [TypeTree.Node.ContextHom.comp, TypeTree.Node.ContextHom.id,
     toProductView, ofProductView]
 
 /--
@@ -445,8 +445,8 @@ This drops the `BoundaryAction` and retains only the `NodeProfile`
 (controllers and local views).
 -/
 def forget (Party : Type u) (Δ : PortBoundary) :
-    Spec.Node.ContextHom
-      (OpenNodeContext Party Δ : Spec.Node.Context.{w})
+    TypeTree.Node.ContextHom
+      (OpenNodeContext Party Δ : TypeTree.Node.Context.{w})
       (StepContext Party) :=
   fun _ ons => ons.toNodeProfile
 
@@ -456,9 +456,9 @@ The embedding from the closed-world context into the open-world context.
 This marks every node as purely internal (no boundary traffic).
 -/
 def embed (Party : Type u) (Δ : PortBoundary) :
-    Spec.Node.ContextHom
+    TypeTree.Node.ContextHom
       (StepContext Party)
-      (OpenNodeContext Party Δ : Spec.Node.Context.{w}) :=
+      (OpenNodeContext Party Δ : TypeTree.Node.Context.{w}) :=
   fun _ ns => .ofClosed ns
 
 /--
@@ -469,24 +469,24 @@ the closed-world node semantics.
 -/
 def map (Party : Type u) {Δ₁ Δ₂ : PortBoundary}
     (φ : PortBoundary.Hom Δ₁ Δ₂) :
-    Spec.Node.ContextHom
-      (OpenNodeContext Party Δ₁ : Spec.Node.Context.{w})
-      (OpenNodeContext Party Δ₂ : Spec.Node.Context.{w}) :=
+    TypeTree.Node.ContextHom
+      (OpenNodeContext Party Δ₁ : TypeTree.Node.Context.{w})
+      (OpenNodeContext Party Δ₂ : TypeTree.Node.Context.{w}) :=
   fun _ ons => ons.mapBoundary φ
 
 @[simp]
 theorem map_id (Party : Type u) (Δ : PortBoundary) :
     OpenNodeContext.map.{u, w} Party (PortBoundary.Hom.id Δ) =
-      Spec.Node.ContextHom.id _ := by
-  funext X ons; simp [map, Spec.Node.ContextHom.id]
+      TypeTree.Node.ContextHom.id _ := by
+  funext X ons; simp [map, TypeTree.Node.ContextHom.id]
 
 theorem map_comp (Party : Type u)
     {Δ₁ Δ₂ Δ₃ : PortBoundary}
     (g : PortBoundary.Hom Δ₂ Δ₃) (f : PortBoundary.Hom Δ₁ Δ₂) :
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
       (OpenNodeContext.map.{u, w} Party g) (OpenNodeContext.map Party f) =
       OpenNodeContext.map Party (PortBoundary.Hom.comp g f) := by
-  funext X ons; simp [map, Spec.Node.ContextHom.comp,
+  funext X ons; simp [map, TypeTree.Node.ContextHom.comp,
     OpenNodeProfile.mapBoundary_comp]
 
 /--
@@ -497,9 +497,9 @@ interface while preserving the closed-world node semantics.
 -/
 def inlTensor (Party : Type u)
     (Δ₁ : PortBoundary) (Δ₂ : PortBoundary) :
-    Spec.Node.ContextHom
-      (OpenNodeContext Party Δ₁ : Spec.Node.Context.{w})
-      (OpenNodeContext Party (PortBoundary.tensor Δ₁ Δ₂) : Spec.Node.Context.{w}) :=
+    TypeTree.Node.ContextHom
+      (OpenNodeContext Party Δ₁ : TypeTree.Node.Context.{w})
+      (OpenNodeContext Party (PortBoundary.tensor Δ₁ Δ₂) : TypeTree.Node.Context.{w}) :=
   fun _ ons => {
     toNodeProfile := ons.toNodeProfile
     boundary := ons.boundary.embedInlTensor Δ₂
@@ -513,9 +513,9 @@ interface while preserving the closed-world node semantics.
 -/
 def inrTensor (Party : Type u)
     (Δ₁ : PortBoundary) (Δ₂ : PortBoundary) :
-    Spec.Node.ContextHom
-      (OpenNodeContext Party Δ₂ : Spec.Node.Context.{w})
-      (OpenNodeContext Party (PortBoundary.tensor Δ₁ Δ₂) : Spec.Node.Context.{w}) :=
+    TypeTree.Node.ContextHom
+      (OpenNodeContext Party Δ₂ : TypeTree.Node.Context.{w})
+      (OpenNodeContext Party (PortBoundary.tensor Δ₁ Δ₂) : TypeTree.Node.Context.{w}) :=
   fun _ ons => {
     toNodeProfile := ons.toNodeProfile
     boundary := ons.boundary.embedInrTensor Δ₁
@@ -528,9 +528,9 @@ and keeping only external (Δ₁) packets.
 -/
 def wireLeft (Party : Type u)
     (Δ₁ Γ Δ₂ : PortBoundary) :
-    Spec.Node.ContextHom
-      (OpenNodeContext Party (PortBoundary.tensor Δ₁ Γ) : Spec.Node.Context.{w})
-      (OpenNodeContext Party (PortBoundary.tensor Δ₁ Δ₂) : Spec.Node.Context.{w}) :=
+    TypeTree.Node.ContextHom
+      (OpenNodeContext Party (PortBoundary.tensor Δ₁ Γ) : TypeTree.Node.Context.{w})
+      (OpenNodeContext Party (PortBoundary.tensor Δ₁ Δ₂) : TypeTree.Node.Context.{w}) :=
   fun _ ons => {
     toNodeProfile := ons.toNodeProfile
     boundary := ons.boundary.wireLeft Δ₂
@@ -544,10 +544,10 @@ Wire the right factor: transform
 -/
 def wireRight (Party : Type u)
     (Δ₁ Γ Δ₂ : PortBoundary) :
-    Spec.Node.ContextHom
+    TypeTree.Node.ContextHom
       (OpenNodeContext Party (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) :
-        Spec.Node.Context.{w})
-      (OpenNodeContext Party (PortBoundary.tensor Δ₁ Δ₂) : Spec.Node.Context.{w}) :=
+        TypeTree.Node.Context.{w})
+      (OpenNodeContext Party (PortBoundary.tensor Δ₁ Δ₂) : TypeTree.Node.Context.{w}) :=
   fun _ ons => {
     toNodeProfile := ons.toNodeProfile
     boundary := ons.boundary.wireRight Δ₁
@@ -559,9 +559,9 @@ Close the boundary: transform `OpenNodeContext Party Δ` into
 Used by `plug` to internalize all external interactions.
 -/
 def close (Party : Type u) (Δ : PortBoundary) :
-    Spec.Node.ContextHom
-      (OpenNodeContext Party Δ : Spec.Node.Context.{w})
-      (OpenNodeContext Party PortBoundary.empty : Spec.Node.Context.{w}) :=
+    TypeTree.Node.ContextHom
+      (OpenNodeContext Party Δ : TypeTree.Node.Context.{w})
+      (OpenNodeContext Party PortBoundary.empty : TypeTree.Node.Context.{w}) :=
   fun _ ons => {
     toNodeProfile := ons.toNodeProfile
     boundary := ons.boundary.closed
@@ -570,65 +570,65 @@ def close (Party : Type u) (Δ : PortBoundary) :
 theorem map_tensor_comp_inlTensor (Party : Type u)
     {Δ₁ Δ₁' Δ₂ Δ₂' : PortBoundary}
     (f₁ : PortBoundary.Hom Δ₁ Δ₁') (f₂ : PortBoundary.Hom Δ₂ Δ₂') :
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
       (map.{u, w} Party (PortBoundary.Hom.tensor f₁ f₂))
       (inlTensor Party Δ₁ Δ₂) =
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
       (inlTensor Party Δ₁' Δ₂')
       (map Party f₁) := by
   funext X ons
-  simp [map, inlTensor, Spec.Node.ContextHom.comp,
+  simp [map, inlTensor, TypeTree.Node.ContextHom.comp,
     OpenNodeProfile.mapBoundary]
 
 theorem map_tensor_comp_inrTensor (Party : Type u)
     {Δ₁ Δ₁' Δ₂ Δ₂' : PortBoundary}
     (f₁ : PortBoundary.Hom Δ₁ Δ₁') (f₂ : PortBoundary.Hom Δ₂ Δ₂') :
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
       (map.{u, w} Party (PortBoundary.Hom.tensor f₁ f₂))
       (inrTensor Party Δ₁ Δ₂) =
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
       (inrTensor Party Δ₁' Δ₂')
       (map Party f₂) := by
   funext X ons
-  simp [map, inrTensor, Spec.Node.ContextHom.comp,
+  simp [map, inrTensor, TypeTree.Node.ContextHom.comp,
     OpenNodeProfile.mapBoundary]
 
 theorem close_comp_map (Party : Type u)
     {Δ₁ Δ₂ : PortBoundary}
     (φ : PortBoundary.Hom Δ₁ Δ₂) :
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
       (close.{u, w} Party Δ₂)
       (map Party φ) =
     close Party Δ₁ := by
   funext X ons
-  simp [close, map, Spec.Node.ContextHom.comp,
+  simp [close, map, TypeTree.Node.ContextHom.comp,
     OpenNodeProfile.mapBoundary, BoundaryAction.closed, BoundaryAction.mapBoundary]
 
 theorem map_tensor_comp_wireLeft (Party : Type u)
     {Δ₁ Δ₁' Γ Δ₂ Δ₂' : PortBoundary}
     (f₁ : PortBoundary.Hom Δ₁ Δ₁') (f₂ : PortBoundary.Hom Δ₂ Δ₂') :
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
       (map.{u, w} Party (PortBoundary.Hom.tensor f₁ f₂))
       (wireLeft Party Δ₁ Γ Δ₂) =
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
       (wireLeft Party Δ₁' Γ Δ₂')
       (map Party (PortBoundary.Hom.tensor f₁ (PortBoundary.Hom.id Γ))) := by
   funext X ons
-  simp [map, wireLeft, Spec.Node.ContextHom.comp,
+  simp [map, wireLeft, TypeTree.Node.ContextHom.comp,
     OpenNodeProfile.mapBoundary]
 
 theorem map_tensor_comp_wireRight (Party : Type u)
     {Δ₁ Δ₁' Γ Δ₂ Δ₂' : PortBoundary}
     (f₁ : PortBoundary.Hom Δ₁ Δ₁') (f₂ : PortBoundary.Hom Δ₂ Δ₂') :
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
       (map.{u, w} Party (PortBoundary.Hom.tensor f₁ f₂))
       (wireRight Party Δ₁ Γ Δ₂) =
-    Spec.Node.ContextHom.comp
+    TypeTree.Node.ContextHom.comp
       (wireRight Party Δ₁' Γ Δ₂')
       (map Party (PortBoundary.Hom.tensor
         (PortBoundary.Hom.id (PortBoundary.swap Γ)) f₂)) := by
   funext X ons
-  simp [map, wireRight, Spec.Node.ContextHom.comp,
+  simp [map, wireRight, TypeTree.Node.ContextHom.comp,
     OpenNodeProfile.mapBoundary]
 
 /-! #### Existing context-homs as polynomial-product operations
@@ -645,8 +645,8 @@ with the bridge `toProductView`. -/
 theorem forget_eq_prodFst_comp_toProductView
     (Party : Type u) (Δ : PortBoundary) :
     forget.{u, w} Party Δ =
-      Spec.Node.ContextHom.comp
-        (Spec.Node.Context.prodFst (StepContext Party)
+      TypeTree.Node.ContextHom.comp
+        (TypeTree.Node.Context.prodFst (StepContext Party)
           (fun X : Type w => BoundaryAction Δ X))
         (toProductView Party Δ) := rfl
 
@@ -655,10 +655,10 @@ constant `internal` boundary action, transported back along the bridge. -/
 theorem embed_eq_ofProductView_comp_prodPair
     (Party : Type u) (Δ : PortBoundary) :
     embed.{u, w} Party Δ =
-      Spec.Node.ContextHom.comp
+      TypeTree.Node.ContextHom.comp
         (ofProductView Party Δ)
-        (Spec.Node.Context.prodPair
-          (Spec.Node.ContextHom.id (StepContext Party))
+        (TypeTree.Node.Context.prodPair
+          (TypeTree.Node.ContextHom.id (StepContext Party))
           (fun X _ => BoundaryAction.internal Δ X)) := rfl
 
 /-- `map φ` factors as the polynomial-product map of the identity on
@@ -667,11 +667,11 @@ theorem embed_eq_ofProductView_comp_prodPair
 theorem map_eq_ofProductView_comp_prodMap_comp_toProductView
     (Party : Type u) {Δ₁ Δ₂ : PortBoundary} (φ : PortBoundary.Hom Δ₁ Δ₂) :
     map.{u, w} Party φ =
-      Spec.Node.ContextHom.comp
-        (Spec.Node.ContextHom.comp
+      TypeTree.Node.ContextHom.comp
+        (TypeTree.Node.ContextHom.comp
           (ofProductView Party Δ₂)
-          (Spec.Node.Context.prodMap
-            (Spec.Node.ContextHom.id (StepContext Party))
+          (TypeTree.Node.Context.prodMap
+            (TypeTree.Node.ContextHom.id (StepContext Party))
             (fun X (b : BoundaryAction Δ₁ X) => b.mapBoundary φ)))
         (toProductView Party Δ₁) := rfl
 
@@ -681,10 +681,10 @@ end OpenNodeContext
 
 /--
 Extract the finite boundary-output trace emitted by a decorated open-process
-interaction transcript.
+interaction path.
 
 The `BoundaryAction.emit` field is indexed by the move chosen at each node;
-a transcript supplies exactly those moves. The result is the ordered product
+a path supplies exactly those moves. The result is the ordered product
 of all emitted packets along the root-to-leaf path of the step.
 
 This is structural: it reads only the boundary actions already present in the
@@ -693,9 +693,9 @@ routing across internal wires are intentionally handled downstream.
 -/
 def OpenNodeContext.boundaryTrace
     {Party : Type u} {Δ : PortBoundary} :
-    (spec : Spec.{w}) →
+    (spec : TypeTree.{w}) →
     Decoration (OpenNodeContext Party Δ) spec →
-    Spec.Transcript spec → PFunctor.TraceList Δ.Out
+    TypeTree.Path spec → PFunctor.TraceList Δ.Out
   | .done, _, _ => 1
   | .node _ rest, ⟨node, next⟩, ⟨x, tr⟩ =>
       node.boundary.emit x * OpenNodeContext.boundaryTrace (rest x) (next x) tr
@@ -708,15 +708,15 @@ records both the usual controller/view data and its boundary traffic against
 `Δ`.
 -/
 abbrev OpenStep (Party : Type u) (Δ : PortBoundary) (P : Type v) :=
-  StepOver (OpenNodeContext Party Δ : Spec.Node.Context.{0}) P
+  StepOver (OpenNodeContext Party Δ : TypeTree.Node.Context.{0}) P
 
 namespace OpenStep
 
-/-- The boundary-output trace emitted by a completed open step transcript. -/
+/-- The boundary-output trace emitted by a completed open step path. -/
 def boundaryTrace {Party : Type u} {Δ : PortBoundary} {P : Type v}
-    (step : OpenStep Party Δ P) (tr : Spec.Transcript step.spec) :
+    (step : OpenStep Party Δ P) (tr : TypeTree.Path step.tree) :
     PFunctor.TraceList Δ.Out :=
-  OpenNodeContext.boundaryTrace step.spec step.semantics tr
+  OpenNodeContext.boundaryTrace step.tree step.semantics tr
 
 end OpenStep
 
@@ -727,22 +727,22 @@ An `m`-parametric open concurrent process exposing boundary `Δ`.
 
 * `Proc` — the residual state space of the process;
 * `step` — for each state, the protocol step observed by the open world
-  (move-tree `spec`, node-local semantics, and continuation `next`);
-* `stepSampler` — a per-state `Spec.Sampler m (step s).spec` resolving
+  (move tree `tree`, node-local semantics, and continuation `next`);
+* `stepSampler` — a per-state `TypeTree.Sampler m (step s).tree` resolving
   each move of the step protocol in the intermediate monad `m`.
 
 Each state of an open process carries its own nodewise-monadic
 sampler as first-class data. `openTheory m` compositionally assembles
 the per-step samplers of composite processes through `par`, `wire`,
-and `plug` via `Spec.Sampler.interleave`, and the runtime layer
+and `plug` via `TypeTree.Sampler.interleave`, and the runtime layer
 (`processSemantics`, `processSemanticsAsync`) reads the sampler off
 the process rather than taking it as a separate argument.
 
 ## Universe conventions
 
-The spec / move-type universe is pinned at `0` because `m : Type → Type`
-only operates on `Type` and the `Sampler m spec` abbrev therefore
-requires `spec : Spec.{0}`. The `Party` universe `u` and the state
+The type-tree / move-type universe is pinned at `0` because `m : Type → Type`
+only operates on `Type` and the `Sampler m tree` abbreviation therefore
+requires `tree : TypeTree.{0}`. The `Party` universe `u` and the state
 universe `v` remain free.
 
 ## Recovering the structural layer
@@ -760,7 +760,7 @@ structure OpenProcess
   step : Proc → StepOver (OpenNodeContext.{u, w} Party Δ) Proc
   /-- Per-state nodewise-monadic sampler that resolves each move of the step
   protocol in the intermediate monad `m`. -/
-  stepSampler : ∀ s, Spec.Sampler.{w, w'} m (step s).spec
+  stepSampler : ∀ s, TypeTree.Sampler.{w, w'} m (step s).tree
 
 namespace OpenProcess
 
@@ -797,7 +797,7 @@ the closed-world process carries no monadic information.
 -/
 def ofClosed {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
     {P : Type v} (p : Process.{u, v, w} P Party)
-    (sampler : ∀ s, Spec.Sampler.{w, w'} m (p.step s).spec) :
+    (sampler : ∀ s, TypeTree.Sampler.{w, w'} m (p.step s).tree) :
     OpenProcess.{u, v, w, w'} m Party Δ where
   Proc := (p.mapContext (OpenNodeContext.embed.{u, w} Party Δ)).Proc
   step := (p.mapContext (OpenNodeContext.embed.{u, w} Party Δ)).step
@@ -810,7 +810,7 @@ morphism.
 This transforms every node's boundary action along `φ` (translating emitted
 packets, preserving activation flags) while leaving the process structure,
 closed-world node semantics, and per-step samplers unchanged. The sampler
-carries over verbatim because `StepOver.mapContext` preserves `step.spec`.
+carries over verbatim because `StepOver.mapContext` preserves `step.tree`.
 -/
 def mapBoundary {m : Type w → Type w'} {Party : Type u} {Δ₁ Δ₂ : PortBoundary}
     (φ : PortBoundary.Hom Δ₁ Δ₂) (op : OpenProcess.{u, v, w, w'} m Party Δ₁) :
@@ -826,7 +826,7 @@ context `schedulerCtx : OpenNodeContext Party Δ (ULift Bool)`.
 
 Structure on `Proc` and `step` is delegated to the underlying
 `Concurrent.ProcessOver.interleave`; the per-state sampler is assembled
-by `Spec.Sampler.interleave`, which threads the scheduler sampler
+by `TypeTree.Sampler.interleave`, which threads the scheduler sampler
 `schedulerSampler : m (ULift Bool)` above the per-branch samplers so that
 the resulting step carries a well-typed nodewise-monadic sampler.
 
@@ -837,10 +837,10 @@ pair `f₁`, `f₂` they supply.
 def interleave {m : Type w → Type w'} {Party : Type u} {Δ₁ Δ₂ Δ : PortBoundary}
     (p₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
     (p₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
-    (f₁ : Spec.Node.ContextHom
+    (f₁ : TypeTree.Node.ContextHom
       (OpenNodeContext.{u, w} Party Δ₁)
       (OpenNodeContext.{u, w} Party Δ))
-    (f₂ : Spec.Node.ContextHom
+    (f₂ : TypeTree.Node.ContextHom
       (OpenNodeContext.{u, w} Party Δ₂)
       (OpenNodeContext.{u, w} Party Δ))
     (schedulerCtx : OpenNodeContext.{u, w} Party Δ (ULift.{w, 0} Bool))
@@ -849,7 +849,7 @@ def interleave {m : Type w → Type w'} {Party : Type u} {Δ₁ Δ₂ Δ : PortB
   Proc := p₁.Proc × p₂.Proc
   step := (p₁.toProcess.interleave p₂.toProcess f₁ f₂ schedulerCtx).step
   stepSampler := fun (s₁, s₂) =>
-    Spec.Sampler.interleave schedulerSampler
+    TypeTree.Sampler.interleave schedulerSampler
       (p₁.stepSampler s₁) (p₂.stepSampler s₂)
 
 end OpenProcess
@@ -868,25 +868,25 @@ abbrev OpenProcess.SafetySpec (Party : Type u) (Δ : PortBoundary) :=
 
 /-! ## Silent steps and activation-labelled transition systems -/
 
-/-- A transcript path through a decorated open-process spec is **silent** when
+/-- A path through a decorated open-process type tree is **silent** when
 every visited node is not externally activated (`isActivated = false`).
 Checking only `isActivated` (rather than also requiring `emit x = []`)
 ensures the predicate is invariant under *all* context morphisms, including
 `wireLeft` / `wireRight` which filter shared-boundary packets via
 `List.filterMap`. -/
 def IsSilentDecoration {Party : Type u} {Δ : PortBoundary} :
-    {spec : Interaction.Spec.{w}} →
+    {spec : Interaction.TypeTree.{w}} →
     PFunctor.FreeM.Displayed.Decoration (OpenNodeContext.{u, w} Party Δ) spec →
-    spec.Transcript → Prop
+    spec.Path → Prop
   | .done, _, _ => True
   | .node _ _, ⟨ons, drest⟩, ⟨x, tr⟩ =>
       ons.boundary.isActivated = false ∧ IsSilentDecoration (drest x) tr
 
 /-- A complete step of an open process is **silent** when no node along the
-chosen transcript path is externally activated. -/
+chosen path is externally activated. -/
 def IsSilentStep {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
     (p : OpenProcess.{u, v, w, w'} m Party Δ) (s : p.Proc)
-    (tr : (p.step s).spec.Transcript) : Prop :=
+    (tr : (p.step s).tree.Path) : Prop :=
   IsSilentDecoration (p.step s).semantics tr
 
 /-- `IsSilentDecoration` is invariant under context morphisms that preserve
@@ -894,12 +894,13 @@ def IsSilentStep {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
 `mapBoundary`, `embedInlTensor`, `embedInrTensor`, `wireLeft`, `wireRight`,
 and `closed`) preserve `isActivated`. -/
 theorem isSilentDecoration_iff_map {Party : Type u} {Δ₁ Δ₂ : PortBoundary}
-    (f : Spec.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₁)
+    (f : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₁)
       (OpenNodeContext.{u, w} Party Δ₂))
     (hAct : ∀ (X : Type w) (ons : OpenNodeContext Party Δ₁ X),
       (f X ons).boundary.isActivated = ons.boundary.isActivated) :
-    {spec : Spec.{w}} → (d : PFunctor.FreeM.Displayed.Decoration (OpenNodeContext Party Δ₁) spec) →
-    (tr : spec.Transcript) →
+    {spec : TypeTree.{w}} →
+    (d : PFunctor.FreeM.Displayed.Decoration (OpenNodeContext Party Δ₁) spec) →
+    (tr : spec.Path) →
     IsSilentDecoration (Decoration.map f spec d) tr ↔ IsSilentDecoration d tr
   | .done, _, _ => Iff.rfl
   | .node _ _, ⟨ons, drest⟩, ⟨x, tr⟩ => by
@@ -913,13 +914,13 @@ theorem isSilentDecoration_iff_map {Party : Type u} {Δ₁ Δ₂ : PortBoundary}
         (isSilentDecoration_iff_map f hAct (drest x) tr).mpr h2⟩
 
 /-- `IsSilentStep` is invariant under `OpenProcess.mapBoundary`: remapping
-the boundary does not change which transcripts are silent, because all
+the boundary does not change which paths are silent, because all
 boundary maps preserve `isActivated`. -/
 theorem isSilentStep_mapBoundary_iff {m : Type w → Type w'}
     {Party : Type u} {Δ₁ Δ₂ : PortBoundary}
     (φ : PortBoundary.Hom Δ₁ Δ₂)
     (p : OpenProcess.{u, v, w, w'} m Party Δ₁) (s : p.Proc)
-    (tr : (p.step s).spec.Transcript) :
+    (tr : (p.step s).tree.Path) :
     IsSilentStep (p.mapBoundary φ) s tr ↔ IsSilentStep p s tr := by
   apply isSilentDecoration_iff_map
   intro X ons
@@ -928,8 +929,8 @@ theorem isSilentStep_mapBoundary_iff {m : Type w → Type w'}
 /-! ## Activation-labelled transition systems -/
 
 /-- The labelled transition system of an open process when the only exposed
-observation is whether a complete transcript is externally activated. Silent
-transcripts receive label `none`; every activated transcript receives the
+observation is whether a complete path is externally activated. Silent
+paths receive label `none`; every activated path receives the
 single visible label `some ()`. Packet/action identity and sampler effects are
 deliberately absent from this structural observation. -/
 noncomputable def OpenProcess.activationLTS
@@ -938,21 +939,21 @@ noncomputable def OpenProcess.activationLTS
   classical
   exact
     { State := p.Proc
-      Move s := (p.step s).spec.Transcript
+      Move s := (p.step s).tree.Path
       next s tr := (p.step s).next tr
       label s tr := if IsSilentStep p s tr then none else some () }
 
 @[simp] theorem OpenProcess.activationLTS_label_of_silent
     {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
     (p : OpenProcess.{u, v, w, w'} m Party Δ) (s : p.Proc)
-    (tr : (p.step s).spec.Transcript) (h : IsSilentStep p s tr) :
+    (tr : (p.step s).tree.Path) (h : IsSilentStep p s tr) :
     p.activationLTS.label s tr = none := by
   simp [OpenProcess.activationLTS, h]
 
 @[simp] theorem OpenProcess.activationLTS_label_of_not_silent
     {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
     (p : OpenProcess.{u, v, w, w'} m Party Δ) (s : p.Proc)
-    (tr : (p.step s).spec.Transcript) (h : ¬ IsSilentStep p s tr) :
+    (tr : (p.step s).tree.Path) (h : ¬ IsSilentStep p s tr) :
     p.activationLTS.label s tr = some () := by
   simp [OpenProcess.activationLTS, h]
 
@@ -1005,22 +1006,22 @@ theorem of_step_match
     (leftTotal : ∀ s₁, ∃ s₂, rel s₁ s₂)
     (rightTotal : ∀ s₂, ∃ s₁, rel s₁ s₂)
     (forwardSilent : ∀ s₁ s₂, rel s₁ s₂ →
-      ∀ tr₁ : (p₁.step s₁).spec.Transcript, IsSilentStep p₁ s₁ tr₁ →
-        (∃ tr₂ : (p₂.step s₂).spec.Transcript, IsSilentStep p₂ s₂ tr₂ ∧
+      ∀ tr₁ : (p₁.step s₁).tree.Path, IsSilentStep p₁ s₁ tr₁ →
+        (∃ tr₂ : (p₂.step s₂).tree.Path, IsSilentStep p₂ s₂ tr₂ ∧
           rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂)) ∨
         rel ((p₁.step s₁).next tr₁) s₂)
     (forwardVisible : ∀ s₁ s₂, rel s₁ s₂ →
-      ∀ tr₁ : (p₁.step s₁).spec.Transcript, ¬ IsSilentStep p₁ s₁ tr₁ →
-        ∃ tr₂ : (p₂.step s₂).spec.Transcript, ¬ IsSilentStep p₂ s₂ tr₂ ∧
+      ∀ tr₁ : (p₁.step s₁).tree.Path, ¬ IsSilentStep p₁ s₁ tr₁ →
+        ∃ tr₂ : (p₂.step s₂).tree.Path, ¬ IsSilentStep p₂ s₂ tr₂ ∧
           rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂))
     (backwardSilent : ∀ s₁ s₂, rel s₁ s₂ →
-      ∀ tr₂ : (p₂.step s₂).spec.Transcript, IsSilentStep p₂ s₂ tr₂ →
-        (∃ tr₁ : (p₁.step s₁).spec.Transcript, IsSilentStep p₁ s₁ tr₁ ∧
+      ∀ tr₂ : (p₂.step s₂).tree.Path, IsSilentStep p₂ s₂ tr₂ →
+        (∃ tr₁ : (p₁.step s₁).tree.Path, IsSilentStep p₁ s₁ tr₁ ∧
           rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂)) ∨
         rel s₁ ((p₂.step s₂).next tr₂))
     (backwardVisible : ∀ s₁ s₂, rel s₁ s₂ →
-      ∀ tr₂ : (p₂.step s₂).spec.Transcript, ¬ IsSilentStep p₂ s₂ tr₂ →
-        ∃ tr₁ : (p₁.step s₁).spec.Transcript, ¬ IsSilentStep p₁ s₁ tr₁ ∧
+      ∀ tr₂ : (p₂.step s₂).tree.Path, ¬ IsSilentStep p₂ s₂ tr₂ →
+        ∃ tr₁ : (p₁.step s₁).tree.Path, ¬ IsSilentStep p₁ s₁ tr₁ ∧
           rel ((p₁.step s₁).next tr₁) ((p₂.step s₂).next tr₂)) :
     OpenProcessActivationEquiv p₁ p₂ := by
   refine ⟨rel, ⟨?_, ?_⟩, leftTotal, rightTotal⟩

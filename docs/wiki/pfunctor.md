@@ -53,7 +53,7 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/PFunctor/Lens/Basic.lean`](../../PolyFun/PFunctor/Lens/Basic.lean) | Properties of `Lens P Q`: extensionality, composition lemmas, action on `Obj`. |
+| [`PolyFun/PFunctor/Lens/Basic.lean`](../../PolyFun/PFunctor/Lens/Basic.lean) | Properties of `Lens P Q`: extensionality, composition lemmas, action on `Obj`, and the standard polynomial combinators. |
 | [`PolyFun/PFunctor/Lens/Cartesian.lean`](../../PolyFun/PFunctor/Lens/Cartesian.lean) | Cartesian lenses (`toFunB a` is a bijection); fiberwise isomorphisms over a forward position map. |
 | [`PolyFun/PFunctor/Lens/State.lean`](../../PolyFun/PFunctor/Lens/State.lean) | Lawful state-lens specialization for the self-monomial polynomial (`get`, `put`, `PutGet` / `GetPut` / `PutPut`). |
 | [`PolyFun/PFunctor/Lens/Composite.lean`](../../PolyFun/PFunctor/Lens/Composite.lean) | Direct `Lens.compOuter` / `compInner` / `compPullback` views of a lens into `q ◃ r` (Ex 6.40), plus `Lens.compNthMap` (φ^◁n) and its `zero` / `succ` / `id` laws. |
@@ -66,6 +66,15 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/CartesianClosed.lean`](../../PolyFun/PFunctor/CartesianClosed.lean) | Cartesian-closed structure w.r.t. the categorical product `*`: the exponential `exp`'s `CartesianClosed.eval` / `curry` / `uncurry` (Thm 5.31). Reference API — the load-bearing `⊗`-transposes are in `InternalHom.lean`. |
 | [`PolyFun/PFunctor/Adjunctions.lean`](../../PolyFun/PFunctor/Adjunctions.lean) | Trivial-interface hom-set equivalences plus binary tensor gluing (Prop 5.49): direct one-sided lens views, `tensorGlue`, its β laws, and `tensorGlueEquiv` over compatible ordinary lenses. |
 | [`PolyFun/PFunctor/Comonoid.lean`](../../PolyFun/PFunctor/Comonoid.lean) | Comonoids in `(Poly, ◃, y)`, state comonoids, `IsStateSystem`, and `comultN`; `Comonoid.Hom` packages retrofunctors and supplies the `Category Comonoid` (`Cat♯`). |
+
+### Substitution monoids and their free construction
+
+| File | Purpose |
+|------|---------|
+| [`PolyFun/PFunctor/SubstMonoid.lean`](../../PolyFun/PFunctor/SubstMonoid.lean) | Monoid objects in `(Poly, ◃, y)`, their unit/multiplication-preserving lens homomorphisms, and the category of substitution monoids. |
+| [`PolyFun/PFunctor/SubstMonoid/Extension.lean`](../../PolyFun/PFunctor/SubstMonoid/Extension.lean) | The extension of a substitution monoid as a `LawfulMonad` and the induced ordinary `MonadHom` of a substitution-monoid homomorphism. |
+| [`PolyFun/PFunctor/Free/Polynomial.lean`](../../PolyFun/PFunctor/Free/Polynomial.lean) | `FreeP P`, whose positions are unlabelled well-founded `P`-trees and whose directions are complete leaf paths; its equivalence with `FreeM P`, functorial action, and substitution-monoid laws. |
+| [`PolyFun/PFunctor/Free/Universal.lean`](../../PolyFun/PFunctor/Free/Universal.lean) | The universal property `SubstMonoid.Hom (FreeP.substMonoid P) M ≃ Lens P M.carrier`; its fold is identified with `FreeM.liftM` in the extension monad, including the full dependent backward-path law. |
 
 ### Dynamical systems (Spivak–Niu Ch. 4)
 
@@ -159,7 +168,7 @@ provides the reusable monad / comonad / coalgebra plumbing. See
   as the M-type of a one-step polynomial functor. It uses
   `PolyFun/PFunctor/M.lean` and the cofree apparatus.
 - `PolyFun/Interaction/Basic/` (see [`interaction.md`](interaction.md))
-  builds protocol `Spec`s as `PFunctor.FreeM Spec.basePFunctor PUnit`,
+  builds protocol `TypeTree`s as `PFunctor.FreeM TypeTree.basePFunctor PUnit`,
   i.e. `PUnit`-leaved free trees on a particular base polynomial. Most
   of the interaction framework is just a dependent-typed dressing on top
   of `FreeM` plus `Decoration` / `Displayed`.

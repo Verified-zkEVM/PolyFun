@@ -39,8 +39,8 @@ The intended semantics are directed point-to-point communication:
 are locally hidden at that node unless a richer resolver specifies a partial
 observation kernel via `ViewMode.react`.
 -/
-abbrev EdgeDecoration (Party : Type u) (spec : Spec.{u}) : Type u :=
-  PFunctor.FreeM.Displayed.Decoration (P := Spec.basePFunctor) (α := PUnit.{u+1})
+abbrev EdgeDecoration (Party : Type u) (spec : TypeTree.{u}) : Type u :=
+  PFunctor.FreeM.Displayed.Decoration (P := TypeTree.basePFunctor) (α := PUnit.{u+1})
     (fun _ => Party × Party) spec
 
 /--
@@ -60,7 +60,7 @@ resulting endpoint types, especially in examples and endpoint computations.
 abbrev Strategy
     (m : Type u → Type u)
     {Party : Type u}
-    (spec : Spec) (edges : EdgeDecoration Party spec)
+    (spec : TypeTree) (edges : EdgeDecoration Party spec)
     (resolve : ∀ {X : Type u}, Party → Party → ViewMode X)
     (Output : PFunctor.FreeM.Path spec → Type u) :=
   Multiparty.Strategy m

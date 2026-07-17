@@ -28,7 +28,7 @@ open TwoParty
 
 /-- Role-aware displayed data: `S X` at sender nodes; `∀` recursion at receiver nodes. -/
 @[reducible] def Role.Refine (S : Type u → Type v) :
-    (spec : Spec.{u}) → RoleDecoration spec → Type (max u v)
+    (spec : TypeTree.{u}) → RoleDecoration spec → Type (max u v)
   | .done, _ => PUnit
   | .node X rest, ⟨.sender, rRest⟩ =>
       S X × (∀ x, Role.Refine S (rest x) (rRest x))
@@ -40,7 +40,7 @@ namespace Role.Refine
 /-- Natural transformation of sender fibers, applied recursively. -/
 def map {S : Type u → Type v} {T : Type u → Type w}
     (f : ∀ X, S X → T X) :
-    (spec : Spec) → (roles : RoleDecoration spec) →
+    (spec : TypeTree) → (roles : RoleDecoration spec) →
     Role.Refine S spec roles → Role.Refine T spec roles
   | .done, _, _ => ⟨⟩
   | .node _ rest, ⟨.sender, rRest⟩, ⟨s, rr⟩ =>
@@ -50,7 +50,7 @@ def map {S : Type u → Type v} {T : Type u → Type w}
 
 /-- Append refinements over appended role decorations. -/
 def append {S : Type u → Type v}
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
     {r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)} :
     Role.Refine S s₁ r₁ →
@@ -63,26 +63,26 @@ def append {S : Type u → Type v}
   | .node _ _rest, ⟨.receiver, _rRest⟩ => fun rr sd₂ =>
       fun x => append (rr x) (fun p => sd₂ ⟨x, p⟩)
 
-/-- Replicate along `Spec.replicate` and generic displayed-decoration replication. -/
+/-- Replicate along `TypeTree.replicate` and generic displayed-decoration replication. -/
 def replicate {S : Type u → Type v}
-    {spec : Spec} {roles : RoleDecoration spec}
+    {spec : TypeTree} {roles : RoleDecoration spec}
     (sd : Role.Refine S spec roles) : (n : Nat) →
     Role.Refine S (spec.replicate n)
       (PFunctor.FreeM.Displayed.Decoration.replicate
-        (P := Spec.basePFunctor) (α := PUnit.{u+1}) PUnit.unit roles n)
+        (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) PUnit.unit roles n)
   | 0 => ⟨⟩
   | n + 1 => append sd (fun _ => replicate sd n)
 
-/-- Chain a family of refinements along `Spec.stateChain`. -/
+/-- Chain a family of refinements along `TypeTree.stateChain`. -/
 def stateChain {S : Type u → Type v}
-    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → Spec}
+    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → PFunctor.FreeM.Path (spec i s) → Stage (i + 1)}
     {roles : (i : Nat) → (s : Stage i) → RoleDecoration (spec i s)}
     (sdeco : (i : Nat) → (s : Stage i) → Role.Refine S (spec i s) (roles i s)) :
     (n : Nat) → (i : Nat) → (s : Stage i) →
     Role.Refine S (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i s)
       (PFunctor.FreeM.Displayed.Decoration.stateChain
-        (P := Spec.basePFunctor) (α := PUnit.{u+1}) (a := PUnit.unit)
+        (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) (a := PUnit.unit)
         (advance := advance) roles n i s)
   | 0, _, _ => ⟨⟩
   | n + 1, i, s =>
@@ -110,7 +110,7 @@ namespace Role.Refine
 
 @[simp, grind =]
 theorem map_id {S : Type u → Type v} :
-    (spec : Spec) → (roles : RoleDecoration spec) → (rr : Role.Refine S spec roles) →
+    (spec : TypeTree) → (roles : RoleDecoration spec) → (rr : Role.Refine S spec roles) →
     map (fun X (s : S X) => s) spec roles rr = rr
   | .done, _, _ => rfl
   | .node _ rest, ⟨.sender, rRest⟩, ⟨s, rr⟩ => by
@@ -123,7 +123,7 @@ theorem map_id {S : Type u → Type v} :
 
 theorem map_comp {S : Type u → Type v} {T : Type u → Type w} {U : Type u → Type w₂}
     (g : ∀ X, T X → U X) (f : ∀ X, S X → T X) :
-    (spec : Spec) → (roles : RoleDecoration spec) → (rr : Role.Refine S spec roles) →
+    (spec : TypeTree) → (roles : RoleDecoration spec) → (rr : Role.Refine S spec roles) →
     map g spec roles (map f spec roles rr) =
       map (fun X => g X ∘ f X) spec roles rr
   | .done, _, _ => rfl
@@ -136,7 +136,7 @@ theorem map_comp {S : Type u → Type v} {T : Type u → Type w} {U : Type u →
       exact map_comp g f (rest x) (rRest x) (rr x)
 
 theorem map_append {S T : Type u → Type v} (f : ∀ X, S X → T X)
-    {s₁ : Spec} {s₂ : PFunctor.FreeM.Path s₁ → Spec}
+    {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {rd₁ : RoleDecoration s₁}
     {rd₂ : (tr₁ : PFunctor.FreeM.Path s₁) → RoleDecoration (s₂ tr₁)}
     (sd₁ : Role.Refine S s₁ rd₁)
@@ -161,11 +161,11 @@ theorem map_append {S T : Type u → Type v} (f : ∀ X, S X → T X)
       exact ih x (sd₁ x) (fun p => sd₂ ⟨x, p⟩)
 
 theorem map_replicate {S T : Type u → Type v} (f : ∀ X, S X → T X)
-    {spec : Spec} {roles : RoleDecoration spec}
+    {spec : TypeTree} {roles : RoleDecoration spec}
     (sd : Role.Refine S spec roles) (n : Nat) :
     map f (spec.replicate n)
         (PFunctor.FreeM.Displayed.Decoration.replicate
-          (P := Spec.basePFunctor) (α := PUnit.{u+1}) PUnit.unit roles n)
+          (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) PUnit.unit roles n)
         (replicate sd n) =
       replicate (map f spec roles sd) n := by
   induction n with
@@ -179,14 +179,14 @@ theorem map_replicate {S T : Type u → Type v} (f : ∀ X, S X → T X)
     exact ih
 
 theorem map_stateChain {S T : Type u → Type v} (f : ∀ X, S X → T X)
-    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → Spec}
+    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → PFunctor.FreeM.Path (spec i s) → Stage (i + 1)}
     {roles : (i : Nat) → (s : Stage i) → RoleDecoration (spec i s)}
     (sdeco : (i : Nat) → (s : Stage i) → Role.Refine S (spec i s) (roles i s)) :
     (n : Nat) → (i : Nat) → (s : Stage i) →
     map f (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i s)
         (PFunctor.FreeM.Displayed.Decoration.stateChain
-          (P := Spec.basePFunctor) (α := PUnit.{u+1}) (a := PUnit.unit)
+          (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) (a := PUnit.unit)
           (advance := advance) roles n i s)
         (stateChain sdeco n i s) =
       stateChain (fun j t => map f (spec j t) (roles j t) (sdeco j t)) n i s
@@ -204,7 +204,7 @@ theorem map_stateChain {S T : Type u → Type v} (f : ∀ X, S X → T X)
 data at each node to the underlying role decoration. Inverse to
 `ofDecorationOver`. -/
 def toDecorationOver {S : Type u → Type v} :
-    (spec : Spec) → (roles : RoleDecoration spec) →
+    (spec : TypeTree) → (roles : RoleDecoration spec) →
     Role.Refine S spec roles →
     Decoration.Over (fun _ => Role) (fun X r => Role.SenderData S X r) spec roles
   | .done, _, _ => ⟨⟩
@@ -216,7 +216,7 @@ def toDecorationOver {S : Type u → Type v} :
 /-- Recover a role refinement from a displayed decoration carrying the sender
 data over the role decoration. Inverse to `toDecorationOver`. -/
 def ofDecorationOver {S : Type u → Type v} :
-    (spec : Spec) → (roles : RoleDecoration spec) →
+    (spec : TypeTree) → (roles : RoleDecoration spec) →
     Decoration.Over (fun _ => Role) (fun X r => Role.SenderData S X r) spec roles →
     Role.Refine S spec roles
   | .done, _, _ => ⟨⟩
@@ -227,7 +227,7 @@ def ofDecorationOver {S : Type u → Type v} :
 
 @[simp]
 theorem toDecorationOver_ofDecorationOver {S : Type u → Type v} :
-    ∀ (spec : Spec) (roles : RoleDecoration spec)
+    ∀ (spec : TypeTree) (roles : RoleDecoration spec)
       (dr : Decoration.Over (fun _ => Role) (fun X r => Role.SenderData S X r) spec roles),
       toDecorationOver spec roles (ofDecorationOver spec roles dr) = dr
   | .done, _, ⟨⟩ => rfl
@@ -245,7 +245,7 @@ theorem toDecorationOver_ofDecorationOver {S : Type u → Type v} :
 
 @[simp]
 theorem ofDecorationOver_toDecorationOver {S : Type u → Type v} :
-    ∀ (spec : Spec) (roles : RoleDecoration spec)
+    ∀ (spec : TypeTree) (roles : RoleDecoration spec)
       (rr : Role.Refine S spec roles),
       ofDecorationOver spec roles (toDecorationOver spec roles rr) = rr
   | .done, _, ⟨⟩ => rfl
@@ -261,7 +261,7 @@ theorem ofDecorationOver_toDecorationOver {S : Type u → Type v} :
 
 /-- Canonical equivalence with `Decoration.Over` at fiber `SenderData`. -/
 def equivDecorationOver {S : Type u → Type v}
-    (spec : Spec) (roles : RoleDecoration spec) :
+    (spec : TypeTree) (roles : RoleDecoration spec) :
     Equiv (Role.Refine S spec roles)
       (Decoration.Over (fun _ => Role) (fun X r => Role.SenderData S X r) spec roles) where
   toFun := toDecorationOver spec roles
@@ -270,7 +270,7 @@ def equivDecorationOver {S : Type u → Type v}
   right_inv dr := toDecorationOver_ofDecorationOver spec roles dr
 
 theorem toDecorationOver_map {S T : Type u → Type v} (f : ∀ X, S X → T X) :
-    (spec : Spec) → (roles : RoleDecoration spec) → (rr : Role.Refine S spec roles) →
+    (spec : TypeTree) → (roles : RoleDecoration spec) → (rr : Role.Refine S spec roles) →
     toDecorationOver spec roles (map f spec roles rr) =
       Decoration.Over.map (fun X r => Role.SenderData.map f X r) spec roles
         (toDecorationOver spec roles rr)
@@ -285,7 +285,7 @@ theorem toDecorationOver_map {S T : Type u → Type v} (f : ∀ X, S X → T X) 
       exact toDecorationOver_map f (rest x) (rRest x) (rr x)
 
 theorem ofDecorationOver_map {S T : Type u → Type v} (f : ∀ X, S X → T X) :
-    (spec : Spec) → (roles : RoleDecoration spec) →
+    (spec : TypeTree) → (roles : RoleDecoration spec) →
     (dr : Decoration.Over (fun _ => Role) (fun X r => Role.SenderData S X r) spec roles) →
     ofDecorationOver spec roles
         (Decoration.Over.map (fun X r => Role.SenderData.map f X r) spec roles dr) =
