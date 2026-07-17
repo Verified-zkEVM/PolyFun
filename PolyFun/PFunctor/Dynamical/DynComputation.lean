@@ -21,11 +21,14 @@ Unlike a partial readout stored separately from the dynamics, this
 representation carries no unreachable `p`-interaction data at returned
 states. In particular, `DynComputation.ofFn` and the `Pure` instance are
 available for every interface and do not require a chosen `Point p`.
+
+State-sum sequential composition performs return handoff in one observation
+and denotes exactly monadic bind on `Resumption`.
 -/
 
 @[expose] public section
 
-universe u v w uA uB uA₂ uB₂ uα uβ uγ uδ uε uζ
+universe u v w x uA uB uA₂ uB₂ uα uβ uγ uδ uε uζ
 
 namespace PFunctor
 
@@ -560,6 +563,214 @@ theorem ObsEq.dimap {M : DynComputation.{u} p α β}
   intro input
   simp only [dimap_denote, h (f input)]
 
+/-! ## Sequential composition -/
+
+private theorem view_of_packedStep {S : Type u}
+    (step : S → β ⊕ p.Obj S) (init : α → S) (state : S) :
+    ({ State := S
+       toDynSystem :=
+        (fun current => (Resumption.pack (step current)).1) ⇆
+          fun current => (Resumption.pack (step current)).2
+       init := init } : DynComputation p α β).view state = step state := by
+  change Resumption.unpack (Resumption.pack (step state)) = step state
+  exact Resumption.unpack_pack (step state)
+
+/-- Run `M₁` until it returns an intermediate value, then immediately expose
+the initial view of `M₂` at that value. The sum state records which machine
+owns the next visible query; a return-to-query handoff introduces neither a
+silent transition nor a fabricated query. -/
+def seqComp {γ : Type uγ} (M₁ : DynComputation.{u} p α β)
+    (M₂ : DynComputation.{v} p β γ) : DynComputation.{max u v} p α γ :=
+  let step : M₁.State ⊕ M₂.State → γ ⊕ p.Obj (M₁.State ⊕ M₂.State)
+    | Sum.inl state₁ =>
+        match M₁.view state₁ with
+        | Sum.inl value =>
+            Sum.map (fun result : γ => result)
+              (p.map (Sum.inr : M₂.State → M₁.State ⊕ M₂.State))
+              (M₂.view (M₂.init value))
+        | Sum.inr query =>
+            Sum.inr (p.map (Sum.inl : M₁.State → M₁.State ⊕ M₂.State) query)
+    | Sum.inr state₂ =>
+        Sum.map (fun result : γ => result)
+          (p.map (Sum.inr : M₂.State → M₁.State ⊕ M₂.State))
+          (M₂.view state₂)
+  { State := M₁.State ⊕ M₂.State
+    toDynSystem :=
+      (fun state => (Resumption.pack (step state)).1) ⇆
+        fun state => (Resumption.pack (step state)).2
+    init := fun input => Sum.inl (M₁.init input) }
+
+@[simp] theorem seqComp_State {γ : Type uγ} (M₁ : DynComputation.{u} p α β)
+    (M₂ : DynComputation.{v} p β γ) :
+    (M₁.seqComp M₂).State = (M₁.State ⊕ M₂.State) := rfl
+
+@[simp] theorem seqComp_init {γ : Type uγ} (M₁ : DynComputation.{u} p α β)
+    (M₂ : DynComputation.{v} p β γ) (input : α) :
+    (M₁.seqComp M₂).init input = Sum.inl (M₁.init input) := rfl
+
+@[simp] theorem seqComp_view_inl {γ : Type uγ} (M₁ : DynComputation.{u} p α β)
+    (M₂ : DynComputation.{v} p β γ) (state₁ : M₁.State) :
+    (M₁.seqComp M₂).view (Sum.inl state₁) =
+      match M₁.view state₁ with
+      | Sum.inl value =>
+          Sum.map (fun result : γ => result)
+            (p.map (Sum.inr : M₂.State → M₁.State ⊕ M₂.State))
+            (M₂.view (M₂.init value))
+      | Sum.inr query =>
+          Sum.inr (p.map (Sum.inl : M₁.State → M₁.State ⊕ M₂.State) query) := by
+  unfold seqComp
+  exact view_of_packedStep _ _ _
+
+@[simp] theorem seqComp_view_inr {γ : Type uγ} (M₁ : DynComputation.{u} p α β)
+    (M₂ : DynComputation.{v} p β γ) (state₂ : M₂.State) :
+    (M₁.seqComp M₂).view (Sum.inr state₂) =
+      Sum.map (fun result : γ => result)
+        (p.map (Sum.inr : M₂.State → M₁.State ⊕ M₂.State))
+        (M₂.view state₂) := by
+  unfold seqComp
+  exact view_of_packedStep _ _ _
+
+private def seqCompSem {γ : Type uγ} (M₁ : DynComputation.{u} p α β)
+    (M₂ : DynComputation.{v} p β γ) :
+    M₁.State ⊕ M₂.State → Resumption p γ
+  | Sum.inl state₁ => Resumption.bind (M₁.toDynSystem.behavior state₁) M₂.denote
+  | Sum.inr state₂ => M₂.toDynSystem.behavior state₂
+
+private theorem seqCompSem_coalg {γ : Type uγ}
+    (M₁ : DynComputation.{u} p α β) (M₂ : DynComputation.{v} p β γ)
+    (state : M₁.State ⊕ M₂.State) :
+    Resumption.dest (seqCompSem M₁ M₂ state) =
+      Sum.map (fun result : γ => result) (p.map (seqCompSem M₁ M₂))
+        ((M₁.seqComp M₂).view state) := by
+  cases state with
+  | inl state₁ =>
+      rcases h₁ : M₁.view state₁ with value | ⟨position, next⟩
+      · rcases h₂ : M₂.view (M₂.init value) with result | ⟨position, next⟩
+        · rw [seqComp_view_inl, h₁]
+          simp only [seqComp_State]
+          rw [h₂]
+          simp only [seqCompSem, Resumption.dest_bind, dest_behavior_view, h₁,
+            dest_denote, h₂, Sum.map_inl]
+        · rw [seqComp_view_inl, h₁]
+          simp only [seqComp_State]
+          rw [h₂]
+          simp only [seqCompSem, Resumption.dest_bind, dest_behavior_view, h₁,
+            dest_denote, h₂, Sum.map_inl, Sum.map_inr, PFunctor.map_eq]
+          apply congrArg Sum.inr
+          apply Sigma.ext
+          · rfl
+          · apply heq_of_eq
+            funext direction
+            rfl
+      · rw [seqComp_view_inl, h₁]
+        simp only [seqCompSem, Resumption.dest_bind, dest_behavior_view, h₁,
+          Sum.map_inr, PFunctor.map_eq]
+        apply congrArg Sum.inr
+        apply Sigma.ext
+        · rfl
+        · apply heq_of_eq
+          funext direction
+          rfl
+  | inr state₂ =>
+      rcases h₂ : M₂.view state₂ with result | ⟨position, next⟩
+      · rw [seqComp_view_inr, h₂]
+        simp only [seqCompSem, dest_behavior_view, h₂, Sum.map_inl]
+      · rw [seqComp_view_inr, h₂]
+        simp only [seqCompSem, dest_behavior_view, h₂, Sum.map_inr, PFunctor.map_eq]
+        apply congrArg Sum.inr
+        apply Sigma.ext
+        · rfl
+        · apply heq_of_eq
+          funext direction
+          rfl
+
+/-- State-level semantics of sequential composition. Phase-one states denote
+resumption bind; phase-two states denote the second computation directly. -/
+theorem behavior_seqComp {γ : Type uγ} (M₁ : DynComputation.{u} p α β)
+    (M₂ : DynComputation.{v} p β γ) (state : M₁.State ⊕ M₂.State) :
+    (M₁.seqComp M₂).toDynSystem.behavior state =
+      match state with
+      | Sum.inl state₁ =>
+          Resumption.bind (M₁.toDynSystem.behavior state₁) M₂.denote
+      | Sum.inr state₂ => M₂.toDynSystem.behavior state₂ := by
+  have hsem : seqCompSem M₁ M₂ =
+      Resumption.corec (M₁.seqComp M₂).view :=
+    Resumption.corec_unique _ _ (seqCompSem_coalg M₁ M₂)
+  have hbehavior : (M₁.seqComp M₂).toDynSystem.behavior =
+      Resumption.corec (M₁.seqComp M₂).view :=
+    Resumption.corec_unique _ _ (dest_behavior_view (M₁.seqComp M₂))
+  change (M₁.seqComp M₂).toDynSystem.behavior state = seqCompSem M₁ M₂ state
+  exact congrFun (hbehavior.trans hsem.symm) state
+
+@[simp] theorem behavior_seqComp_inl {γ : Type uγ}
+    (M₁ : DynComputation.{u} p α β) (M₂ : DynComputation.{v} p β γ)
+    (state₁ : M₁.State) :
+    (M₁.seqComp M₂).toDynSystem.behavior (Sum.inl state₁) =
+      Resumption.bind (M₁.toDynSystem.behavior state₁) M₂.denote :=
+  behavior_seqComp M₁ M₂ (Sum.inl state₁)
+
+@[simp] theorem behavior_seqComp_inr {γ : Type uγ}
+    (M₁ : DynComputation.{u} p α β) (M₂ : DynComputation.{v} p β γ)
+    (state₂ : M₂.State) :
+    (M₁.seqComp M₂).toDynSystem.behavior (Sum.inr state₂) =
+      M₂.toDynSystem.behavior state₂ :=
+  behavior_seqComp M₁ M₂ (Sum.inr state₂)
+
+/-- Sequential composition realizes resumption bind exactly. -/
+@[simp] theorem denote_seqComp {γ : Type uγ} (M₁ : DynComputation.{u} p α β)
+    (M₂ : DynComputation.{v} p β γ) (input : α) :
+    (M₁.seqComp M₂).denote input =
+      Resumption.bind (M₁.denote input) M₂.denote := by
+  unfold denote
+  exact behavior_seqComp_inl M₁ M₂ (M₁.init input)
+
+/-- Sequential composition is congruent in both computations, independently
+of all four hidden-state types and universes. -/
+theorem ObsEq.seqComp {γ : Type uγ}
+    {M₁ : DynComputation.{u} p α β} {N₁ : DynComputation.{v} p α β}
+    {M₂ : DynComputation.{w} p β γ} {N₂ : DynComputation.{x} p β γ}
+    (h₁ : ObsEq M₁ N₁) (h₂ : ObsEq M₂ N₂) :
+    ObsEq (M₁.seqComp M₂) (N₁.seqComp N₂) := by
+  intro input
+  simp only [denote_seqComp]
+  exact congrArg₂ Resumption.bind (h₁ input) (funext h₂)
+
+/-- Sequential composition is associative up to observational equivalence;
+structural equality is intentionally not claimed because the sum states nest
+in different ways. -/
+theorem seqComp_assoc_obsEq {γ : Type uγ} {δ : Type uδ}
+    (M₁ : DynComputation.{u} p α β) (M₂ : DynComputation.{v} p β γ)
+    (M₃ : DynComputation.{w} p γ δ) :
+    ObsEq ((M₁.seqComp M₂).seqComp M₃) (M₁.seqComp (M₂.seqComp M₃)) := by
+  intro input
+  simp only [denote_seqComp]
+  calc
+    _ = Resumption.bind (M₁.denote input)
+        (fun value => Resumption.bind (M₂.denote value) M₃.denote) :=
+      Resumption.bind_assoc (M₁.denote input) M₂.denote M₃.denote
+    _ = Resumption.bind (M₁.denote input) (M₂.seqComp M₃).denote := by
+      apply congrArg (Resumption.bind (M₁.denote input))
+      funext value
+      exact (denote_seqComp M₂ M₃ value).symm
+
+/-- An immediate first computation is observationally input substitution. -/
+theorem ofFn_seqComp_obsEq {γ : Type uγ} (f : α → β)
+    (M : DynComputation.{u} p β γ) :
+    ObsEq ((ofFn (p := p) f).seqComp M) (M.contramapInput f) := by
+  intro input
+  simp only [denote_seqComp, denote_ofFn, Resumption.bind_pure_left,
+    contramapInput_denote]
+
+/-- An immediate second computation is observationally result mapping. -/
+theorem seqComp_ofFn_obsEq {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (f : β → γ) :
+    ObsEq (M.seqComp (ofFn (p := p) f)) (M.mapResult f) := by
+  intro input
+  simp only [denote_seqComp, mapResult_denote, Resumption.map]
+  apply congrArg (Resumption.bind (M.denote input))
+  funext value
+  exact denote_ofFn f value
+
 /-! ## Resumption realizations -/
 
 /-- Realize a family of resumptions directly, using the resumption itself as
@@ -698,6 +909,26 @@ theorem Implements.wrap {M : DynComputation.{u} p α β}
     (M.wrap lens).Implements (fun input => (program input).mapLens lens) := by
   intro input
   simp only [wrap_denote, h input, FreeM.toResumption_mapLens]
+
+/-- Sequentially composing qualitative implementations implements free-monad
+bind, with the intermediate value selecting the second program. -/
+theorem Implements.seqComp {γ : Type uγ}
+    {M₁ : DynComputation.{u} p α β} {M₂ : DynComputation.{v} p β γ}
+    {program₁ : α → FreeM p β} {program₂ : β → FreeM p γ}
+    (h₁ : M₁.Implements program₁) (h₂ : M₂.Implements program₂) :
+    (M₁.seqComp M₂).Implements
+      (fun input => FreeM.bind (program₁ input) program₂) := by
+  intro input
+  rw [denote_seqComp, h₁ input]
+  calc
+    Resumption.bind (FreeM.toResumption (program₁ input)) M₂.denote =
+        Resumption.bind (FreeM.toResumption (program₁ input))
+          (fun value => FreeM.toResumption (program₂ value)) := by
+      apply congrArg (Resumption.bind (FreeM.toResumption (program₁ input)))
+      funext value
+      exact h₂ value
+    _ = FreeM.toResumption (FreeM.bind (program₁ input) program₂) :=
+      (FreeM.toResumption_bind (program₁ input) program₂).symm
 
 @[simp] theorem implements_ofFreeM (program : α → FreeM p β) :
     Implements (ofFreeM program) program :=

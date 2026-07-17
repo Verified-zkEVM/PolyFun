@@ -62,7 +62,7 @@ example : realizedQuerying.view (realizedQuerying.init ()) =
 example : realizedQuerying.denote () = querying.denote () := by
   simp [realizedQuerying]
 
-universe uA uB uα uβ uState
+universe uA uB uα uβ uγ uState uState₂
 
 /-- Inputs, outputs, and both polynomial universes remain independent in the
 canonical realization. -/
@@ -139,9 +139,67 @@ example : ObsEq (boolRealization.mapResult (· + 1))
     ((ofFreeM oneQuery).mapResult (· + 1)) :=
   (ObsEq.of_implements boolImplements (implements_ofFreeM oneQuery)).mapResult (· + 1)
 
+/-! ## Sequential composition -/
+
+/-- Both hidden-state universes remain independent under composition. -/
+def seqCompUniverseCanary {p : PFunctor.{uA, uB}} {α : Type uα}
+    {β : Type uβ} {γ : Type uγ} (M₁ : DynComputation.{uState} p α β)
+    (M₂ : DynComputation.{uState₂} p β γ) :
+    DynComputation.{max uState uState₂} p α γ :=
+  M₁.seqComp M₂
+
+/-- Over the empty interface, two immediate computations compose without any
+chosen query or extra transition. -/
+def emptyDouble : DynComputation (0 : PFunctor.{0, 0}) Nat Nat := ofFn (· * 2)
+
+example : (emptyOfFn.{0, 0}.seqComp emptyDouble).view
+    ((emptyOfFn.{0, 0}.seqComp emptyDouble).init 4) = Sum.inl 10 := by
+  calc
+    _ = (emptyOfFn.{0, 0}.seqComp emptyDouble).view
+        (Sum.inl (emptyOfFn.{0, 0}.init 4)) :=
+      congrArg (emptyOfFn.{0, 0}.seqComp emptyDouble).view
+        (seqComp_init emptyOfFn.{0, 0} emptyDouble 4)
+    _ = Sum.inl 10 := by
+      rw [seqComp_view_inl]
+      rfl
+
+example : (emptyOfFn.{0, 0}.seqComp emptyDouble).denote 4 = Resumption.pure 10 := by
+  simp [emptyOfFn, emptyDouble]
+
+def plusOneProgram (value : Nat) : FreeM X Nat := pure (value + 1)
+
+example : (ofFreeM oneQuery).seqComp (ofFreeM plusOneProgram) ⊨
+    (fun input => FreeM.bind (oneQuery input) plusOneProgram) :=
+  (implements_ofFreeM oneQuery).seqComp (implements_ofFreeM plusOneProgram)
+
+/-- Composition congruence compares genuinely different hidden-state
+realizations on the first phase. -/
+example : ObsEq
+    (boolRealization.seqComp (ofFn (p := X) (· + 1)))
+    ((ofFreeM oneQuery).seqComp (ofFn (p := X) (· + 1))) :=
+  (ObsEq.of_implements boolImplements (implements_ofFreeM oneQuery)).seqComp
+    (ObsEq.refl _)
+
+example : ObsEq
+    (((ofFreeM oneQuery).seqComp (ofFn (p := X) (· + 1))).seqComp
+      (ofFn (p := X) (· * 2)))
+    ((ofFreeM oneQuery).seqComp
+      ((ofFn (p := X) (· + 1)).seqComp (ofFn (p := X) (· * 2)))) :=
+  seqComp_assoc_obsEq _ _ _
+
+example : ObsEq
+    ((ofFn (p := X) (fun _ : Unit => (3 : Nat))).seqComp (ofFreeM plusOneProgram))
+    ((ofFreeM plusOneProgram).contramapInput (fun _ : Unit => (3 : Nat))) :=
+  ofFn_seqComp_obsEq _ _
+
+example : ObsEq
+    ((ofFreeM oneQuery).seqComp (ofFn (p := X) (· + 1)))
+    ((ofFreeM oneQuery).mapResult (· + 1)) :=
+  seqComp_ofFn_obsEq _ _
+
 /-! ## Variance and observational equivalence -/
 
-universe uA₂ uB₂ uγ uδ
+universe uA₂ uB₂ uδ
 
 /-- Every relevant universe remains independent, including the source and
 target direction universes of interface transport. -/
@@ -223,6 +281,77 @@ def branchMachine : DynComputation branchSource Unit Nat where
       | false => fun answer => answer
       | true => PEmpty.elim
   init := fun _ => false
+
+def handoffResult (answer : Bool) : Nat := if answer = true then 11 else 7
+
+/-- A second phase whose initial view is a branch-sensitive query. -/
+def handoffSecond : DynComputation branchSource Bool Nat where
+  State := Bool ⊕ Nat
+  toDynSystem :=
+    (fun
+      | Sum.inl position => Sum.inr position
+      | Sum.inr result => Sum.inl result) ⇆
+    fun
+      | Sum.inl _ => fun answer => by
+          change Bool at answer
+          exact Sum.inr (handoffResult answer)
+      | Sum.inr _ => PEmpty.elim
+  init := Sum.inl
+
+def handoffFirst : DynComputation branchSource Unit Bool :=
+  ofFn fun _ => true
+
+/-- A returned intermediate value exposes the second phase's actual query in
+the same view, with its continuation tagged as phase two. -/
+example : (handoffFirst.seqComp handoffSecond).view
+    ((handoffFirst.seqComp handoffSecond).init ()) =
+    Sum.inr ⟨true, fun answer =>
+      Sum.inr (Sum.inr (handoffResult answer))⟩ := by
+  rw [seqComp_init, seqComp_view_inl]
+  rfl
+
+example : (handoffFirst.seqComp handoffSecond).view
+    (Sum.inr (Sum.inr 11)) = Sum.inl 11 := by
+  rw [seqComp_view_inr]
+  rfl
+
+example : (handoffFirst.seqComp handoffSecond).view
+    (Sum.inr (Sum.inr 7)) = Sum.inl 7 := by
+  rw [seqComp_view_inr]
+  rfl
+
+/-- A first phase with two answer-dependent intermediate results. -/
+def answerFirst : DynComputation branchSource Unit Bool where
+  State := Unit ⊕ Bool
+  toDynSystem :=
+    (fun
+      | Sum.inl _ => Sum.inr false
+      | Sum.inr value => Sum.inl value) ⇆
+    fun
+      | Sum.inl _ => fun answer => Sum.inr answer
+      | Sum.inr _ => PEmpty.elim
+  init := fun _ => Sum.inl ()
+
+def answerSecond : DynComputation branchSource Bool Nat :=
+  ofFn fun answer => if answer then 1 else 2
+
+/-- A first-phase answer stays tagged as phase one until its returned value is
+observed; the very next view is the corresponding second-phase initial view. -/
+example : (answerFirst.seqComp answerSecond).view
+    ((answerFirst.seqComp answerSecond).init ()) =
+    Sum.inr ⟨false, fun answer => Sum.inl (Sum.inr answer)⟩ := by
+  rw [seqComp_init, seqComp_view_inl]
+  rfl
+
+example : (answerFirst.seqComp answerSecond).view
+    (Sum.inl (Sum.inr true)) = Sum.inl 1 := by
+  rw [seqComp_view_inl]
+  rfl
+
+example : (answerFirst.seqComp answerSecond).view
+    (Sum.inl (Sum.inr false)) = Sum.inl 2 := by
+  rw [seqComp_view_inl]
+  rfl
 
 example : (branchMachine.wrap branchLens).view false =
     Sum.inr ⟨(0 : Fin 2), fun answer => by
