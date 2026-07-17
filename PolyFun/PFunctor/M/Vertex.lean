@@ -196,6 +196,24 @@ namespace Vertex
 def castEquiv {t t' : M P} (h : t = t') : Vertex t ≃ Vertex t' :=
   _root_.Equiv.cast (congrArg Vertex h)
 
+/-- Successive vertex transports compose to transport along the composite tree
+equality. -/
+@[simp]
+theorem castEquiv_trans {t t' t'' : M P} (h : t = t') (h' : t' = t'')
+    (vertex : Vertex t) :
+    castEquiv h' (castEquiv h vertex) = castEquiv (h.trans h') vertex := by
+  subst t'
+  subst t''
+  rfl
+
+/-- Transporting a vertex forward and then back is the identity. -/
+@[simp 1100]
+theorem castEquiv_symm_apply {t t' : M P} (h : t = t')
+    (vertex : Vertex t) :
+    castEquiv h.symm (castEquiv h vertex) = vertex := by
+  subst t'
+  rfl
+
 /-- The rooted subtree selected by a finite vertex. -/
 def subtree : {t : M P} → Vertex t → M P
   | _, .root t => t
@@ -427,7 +445,7 @@ theorem IsPrefix.trans {t : M P} {first second third : Vertex t}
   refine ⟨append middle last', ?_⟩
   have hround :
       castEquiv hsub.symm last' = last := by
-    simp [last', castEquiv]
+    simp [last']
   calc
     append first (append middle last') =
         append (append first middle)

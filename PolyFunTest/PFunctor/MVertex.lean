@@ -209,6 +209,21 @@ example (P : PFunctor.{uA, uB}) {tree tree' : M P}
           (M.children_castDirection h direction) next) :=
   M.Vertex.cast_child h direction next
 
+/-- Vertex transport composes without exposing the underlying dependent
+cast. -/
+example (P : PFunctor.{uA, uB}) {tree tree' tree'' : M P}
+    (h : tree = tree') (h' : tree' = tree'')
+    (vertex : M.Vertex tree) :
+    M.Vertex.castEquiv h' (M.Vertex.castEquiv h vertex) =
+      M.Vertex.castEquiv (h.trans h') vertex := by
+  simp
+
+/-- Forward and backward vertex transports cancel. -/
+example (P : PFunctor.{uA, uB}) {tree tree' : M P}
+    (h : tree = tree') (vertex : M.Vertex tree) :
+    M.Vertex.castEquiv h.symm (M.Vertex.castEquiv h vertex) = vertex := by
+  simp
+
 /-- Contravariant vertex transport is itself functorial across fully
 independent polynomial universes. -/
 example (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂})
