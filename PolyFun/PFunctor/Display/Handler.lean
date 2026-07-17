@@ -47,7 +47,7 @@ abbrev Handler
     (T : Display.{uA', uB', uC', uD'} Q)
     (f : (a : P.A) → FreeM Q (P.B a)) :=
   (a : P.A) → (c : S.position a) →
-    FreeM.Displayed (T.toDisplayedShape (S.direction a c)) (f a)
+    FreeM.Displayed (T.toDisplayedAlgebra (S.direction a c)) (f a)
 
 /-- Extend a displayed handler recursively over a free source program. This
 maps the base tree with `FreeM.liftM` and its displayed data in lockstep. -/
@@ -57,10 +57,10 @@ def liftM
     (T : Display.{uA', uB', uC', uD'} Q)
     {E : Type uB} {F : E → Type uF}
     (t : FreeM P E)
-    (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
     (f : (a : P.A) → FreeM Q (P.B a))
     (df : Handler S T f) :
-    FreeM.Displayed (T.toDisplayedShape F) (t.liftM f) :=
+    FreeM.Displayed (T.toDisplayedAlgebra F) (t.liftM f) :=
   match t, d with
   | .pure x, d => T.leaf F x d.down
   | .liftBind a rest, ⟨c, children⟩ =>
@@ -86,7 +86,7 @@ theorem liftM_liftBind
     {E : Type uB} {F : E → Type uF}
     (a : P.A) (rest : P.B a → FreeM P E) (c : S.position a)
     (children : (b : P.B a) → S.direction a c b →
-      FreeM.Displayed (S.toDisplayedShape F) (rest b))
+      FreeM.Displayed (S.toDisplayedAlgebra F) (rest b))
     (f : (a : P.A) → FreeM Q (P.B a)) (df : Handler S T f) :
     S.liftM T (FreeM.lift a >>= rest) ⟨c, children⟩ f df =
       T.bind (f a) (df a c) (fun b => (rest b).liftM f)
@@ -149,7 +149,7 @@ theorem liftM_id
     (S : Display.{uA, uB, uC, uD} P)
     {E : Type uB} {F : E → Type uF}
     (t : FreeM P E)
-    (d : FreeM.Displayed (S.toDisplayedShape F) t) :
+    (d : FreeM.Displayed (S.toDisplayedAlgebra F) t) :
     S.transport F (FreeM.liftM_lift_eq_self t)
         (S.liftM S t d (fun a => FreeM.lift a) (Handler.id S)) = d := by
   induction t with
@@ -210,9 +210,9 @@ theorem liftM_bind
     (T : Display.{uA', uB', uC', uD'} Q)
     {E E' : Type uB} {F : E → Type uF} {G : E' → Type uG}
     (t : FreeM P E)
-    (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
     (g : E → FreeM P E')
-    (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedShape G) (g x))
+    (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedAlgebra G) (g x))
     (f : (a : P.A) → FreeM Q (P.B a))
     (df : Handler S T f) :
     T.transport G (FreeM.liftM_bind f t g)
@@ -312,7 +312,7 @@ theorem liftM_comp
     (U : Display.{uA'', uB', uC'', uD''} R)
     {E : Type uB} {F : E → Type uF}
     (t : FreeM P E)
-    (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
     (first : (a : P.A) → FreeM Q (P.B a))
     (dfirst : Handler S T first)
     (second : (a : Q.A) → FreeM R (Q.B a))

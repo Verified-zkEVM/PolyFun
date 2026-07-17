@@ -64,15 +64,15 @@ variable {P : PFunctor.{uA, uB}} {α : Type v}
 
 variable {Q : PFunctor.{uA₂, uB₂}}
 
-/-- Displayed-family shape for canonical root-to-leaf paths. -/
-def Path.shape (P : PFunctor.{uA, uB}) (α : Type v) :
-    Displayed.Shape.{uA, uB, v, uB+1} P α where
+/-- Displayed algebra for canonical root-to-leaf paths. -/
+def Path.algebra (P : PFunctor.{uA, uB}) (α : Type v) :
+    Displayed.Algebra.{uA, uB, v, uB+1} P α where
   leaf := fun _ => PUnit.{uB+1}
   node := fun a child => (b : P.B a) × child b
 
 /-- The canonical root-to-leaf path through a `FreeM` tree. -/
 abbrev Path {α : Type v} : FreeM P α → Type uB :=
-  Displayed (Path.shape P α)
+  Displayed (Path.algebra P α)
 
 namespace Path
 
@@ -118,14 +118,14 @@ end Path
 This is the displayed family over the source control tree whose node directions
 come from the runtime polynomial `Q`. A runtime direction
 `d : Q.B (l.toFunA a)` selects the source branch `l.toFunB a d`. -/
-def PathAlong.shape (l : Lens P Q) :
-    Displayed.Shape.{uA, uB, v, uB₂+1} P α where
+def PathAlong.algebra (l : Lens P Q) :
+    Displayed.Algebra.{uA, uB, v, uB₂+1} P α where
   leaf := fun _ => PUnit.{uB₂+1}
   node := fun a child => (d : Q.B (l.toFunA a)) × child (l.toFunB a d)
 
 /-- Runtime path through a `P`-tree executed along a lens `l : Lens P Q`. -/
 abbrev PathAlong (l : Lens P Q) (s : FreeM P α) : Type uB₂ :=
-  Displayed (PathAlong.shape l) s
+  Displayed (PathAlong.algebra l) s
 
 /-- The leaf payload selected by a path. Although the path itself records only
 branch choices, the tree and path together determine the terminal `pure`
@@ -163,16 +163,16 @@ theorem output_lift_bind (a : P.A) (rest : P.B a → FreeM P α)
     output ((FreeM.lift a).bind rest) ⟨b, path⟩ = output (rest b) path := rfl
 
 /-- Constructor-local projection from runtime paths to control paths. -/
-def projectPathAlongLocalHom (l : Lens P Q) :
-    Displayed.LocalHom (PathAlong.shape (P := P) (Q := Q) (α := α) l) (Path.shape P α) where
+def projectPathAlongLocalMap (l : Lens P Q) :
+    Displayed.LocalMap (PathAlong.algebra (P := P) (Q := Q) (α := α) l) (Path.algebra P α) where
   mapLeaf := fun _ _ => ⟨⟩
-  mapChild := fun a _ _ mapChild path =>
+  mapNode := fun a _ _ mapChild path =>
     ⟨l.toFunB a path.1, mapChild (l.toFunB a path.1) path.2⟩
 
 /-- Project a concrete runtime path along a lens back to the abstract
 canonical branch path of the control tree. -/
 def projectPathAlong (l : Lens P Q) : (s : FreeM P α) → PathAlong l s → Path s :=
-  (projectPathAlongLocalHom l).toHom
+  (projectPathAlongLocalMap l).toHom
 
 @[simp]
 theorem projectPathAlong_pure (l : Lens P Q) (x : α)
@@ -361,7 +361,7 @@ theorem append_pure {β : Type t} (x : α)
     append (pure x) s₂ = s₂ ⟨⟩ := rfl
 
 @[simp, freeM_unfold]
-theorem append_lift_bind {β : Type t} (a : P.A) (rest : P.B a → FreeM P α)
+theorem append_liftBind {β : Type t} (a : P.A) (rest : P.B a → FreeM P α)
     (s₂ : Path (FreeM.liftBind a rest) → FreeM P β) :
     append ((FreeM.lift a).bind rest) s₂ =
       FreeM.liftBind a (fun b => append (rest b) (fun path => s₂ ⟨b, path⟩)) := rfl
@@ -375,7 +375,7 @@ the entire path; this theorem identifies their exact overlap. -/
   induction s with
   | pure x => rfl
   | lift_bind a rest ih =>
-      simp only [append_lift_bind, monad_bind_def, liftBind_bind]
+      simp only [monad_bind_def, liftBind_bind]
       apply congrArg (FreeM.liftBind a)
       funext b
       exact ih b

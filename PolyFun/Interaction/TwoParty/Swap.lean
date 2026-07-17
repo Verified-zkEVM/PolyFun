@@ -33,8 +33,8 @@ theorem RoleDecoration.swap_swap :
   | .done, _ => rfl
   | .node _ rest, ⟨r, rRest⟩ => by
       simp only [RoleDecoration.swap, PFunctor.FreeM.liftBind_eq]
-      rw [PFunctor.FreeM.Displayed.Decoration.map_lift_bind,
-        PFunctor.FreeM.Displayed.Decoration.map_lift_bind]
+      rw [PFunctor.FreeM.Displayed.Decoration.map_liftBind,
+        PFunctor.FreeM.Displayed.Decoration.map_liftBind]
       simp only [Role.swap_swap]
       congr 1; funext x
       exact RoleDecoration.swap_swap (rest x) (rRest x)
