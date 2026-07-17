@@ -414,7 +414,7 @@ theorem mapContext_interleave
   dsimp only [ofStep, PFunctor.DynSystem.expose_mk', PFunctor.DynSystem.update_mk']
   congr 1
   simp only [PFunctor.FreeM.liftBind_eq]
-  rw [PFunctor.FreeM.Displayed.Decoration.map_lift_bind]
+  rw [PFunctor.FreeM.Displayed.Decoration.map_liftBind]
   dsimp only
   congr 1; funext ⟨b⟩
   cases b <;> dsimp

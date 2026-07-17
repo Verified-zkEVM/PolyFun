@@ -11,9 +11,9 @@ public import PolyFun.PFunctor.Free.Displayed.Decoration
 /-!
 # Restricting displayed data along free-program cursors
 
-A displayed shape can be restricted to a cursor residual when each node value
+A displayed algebra can be restricted to a cursor residual when each node value
 exposes the displayed value at a selected child. This capability is explicit:
-an arbitrary `Displayed.Shape` need not permit such a projection.
+an arbitrary `Displayed.Algebra` need not permit such a projection.
 
 The generic restriction algorithm follows `Cursor.Spine` once. Node
 decorations and dependent over-decorations supply their canonical child
@@ -30,67 +30,67 @@ namespace Displayed
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
-namespace Shape
+namespace Algebra
 
 /-- Capability for selecting one recursive child from a displayed node value. -/
-structure ChildProjection (D : Shape.{uA, uB, v, w} P α) where
+structure ChildProjection (D : Displayed.Algebra.{uA, uB, v, w} P α) where
   /-- Project the displayed value stored at child `b`. -/
-  child :
+  project :
     (a : P.A) →
     (children : P.B a → Sort w) →
     D.node a children →
     (b : P.B a) → children b
 
-end Shape
+end Algebra
 
-namespace OverShape
+namespace Over.Algebra
 
-/-- Dependent child projection for a displayed-over shape. -/
+/-- Dependent child projection for a displayed-over algebra. -/
 structure ChildProjection
-    {D : Shape.{uA, uB, v, w} P α}
-    (base : Shape.ChildProjection D)
-    (R : OverShape.{uA, uB, v, w, w₂} D) where
+    {D : Displayed.Algebra.{uA, uB, v, w} P α}
+    (base : Displayed.Algebra.ChildProjection D)
+    (R : Displayed.Over.Algebra.{uA, uB, v, w, w₂} D) where
   /-- Project the over-value lying above the selected base child. -/
-  child :
+  project :
     (a : P.A) →
     (children : P.B a → Sort w) →
     (overChildren : (b : P.B a) → children b → Sort w₂) →
     (d : D.node a children) →
     R.node a children overChildren d →
-    (b : P.B a) → overChildren b (base.child a children d b)
+    (b : P.B a) → overChildren b (base.project a children d b)
 
-end OverShape
+end Over.Algebra
 
-variable {D : Shape.{uA, uB, v, w} P α}
+variable {D : Displayed.Algebra.{uA, uB, v, w} P α}
 
 /-- Restrict displayed data along an indexed cursor spine. -/
-def restrictSpine (projection : Shape.ChildProjection D) :
+def restrictSpine (projection : Displayed.Algebra.ChildProjection D) :
     {program residual : FreeM P α} →
     Cursor.Spine program residual →
     Displayed D program → Displayed D residual
   | _, _, .root _, d => d
   | _, _, .down (a := a) answer tail, d =>
       restrictSpine projection tail
-        (projection.child a _ d answer)
+        (projection.project a _ d answer)
 
 @[simp]
-theorem restrictSpine_root (projection : Shape.ChildProjection D)
+theorem restrictSpine_root (projection : Displayed.Algebra.ChildProjection D)
     (program : FreeM P α) (d : Displayed D program) :
     restrictSpine projection (.root program) d = d :=
   rfl
 
 @[simp]
-theorem restrictSpine_down (projection : Shape.ChildProjection D)
+theorem restrictSpine_down (projection : Displayed.Algebra.ChildProjection D)
     {a : P.A} {next : P.B a → FreeM P α}
     {residual : FreeM P α} (answer : P.B a)
     (tail : Cursor.Spine (next answer) residual)
     (d : Displayed D (FreeM.liftBind a next)) :
     restrictSpine projection (.down answer tail) d =
       restrictSpine projection tail
-        (projection.child a (fun b => Displayed D (next b)) d answer) :=
+        (projection.project a (fun b => Displayed D (next b)) d answer) :=
   rfl
 
-theorem restrictSpine_comp (projection : Shape.ChildProjection D)
+theorem restrictSpine_comp (projection : Displayed.Algebra.ChildProjection D)
     {program middle residual : FreeM P α}
     (first : Cursor.Spine program middle)
     (second : Cursor.Spine middle residual)
@@ -100,31 +100,31 @@ theorem restrictSpine_comp (projection : Shape.ChildProjection D)
   induction first with
   | root => rfl
   | down answer tail ih =>
-      exact ih second (projection.child _ _ d answer)
+      exact ih second (projection.project _ _ d answer)
 
 /-- Restrict displayed data to the residual selected by a cursor. -/
-def restrict (projection : Shape.ChildProjection D)
+def restrict (projection : Displayed.Algebra.ChildProjection D)
     {program : FreeM P α} (cursor : Cursor program)
     (d : Displayed D program) : Displayed D cursor.residual :=
   restrictSpine projection cursor.spine d
 
 @[simp]
-theorem restrict_root (projection : Shape.ChildProjection D)
+theorem restrict_root (projection : Displayed.Algebra.ChildProjection D)
     (program : FreeM P α) (d : Displayed D program) :
     restrict projection (Cursor.root program) d = d :=
   rfl
 
 @[simp]
-theorem restrict_down (projection : Shape.ChildProjection D)
+theorem restrict_down (projection : Displayed.Algebra.ChildProjection D)
     {a : P.A} {next : P.B a → FreeM P α}
     (answer : P.B a) (tail : Cursor (next answer))
     (d : Displayed D (FreeM.liftBind a next)) :
     restrict projection (Cursor.down answer tail) d =
       restrict projection tail
-        (projection.child a (fun b => Displayed D (next b)) d answer) :=
+        (projection.project a (fun b => Displayed D (next b)) d answer) :=
   rfl
 
-theorem restrict_comp (projection : Shape.ChildProjection D)
+theorem restrict_comp (projection : Displayed.Algebra.ChildProjection D)
     {program : FreeM P α} (first : Cursor program)
     (second : Cursor first.residual) (d : Displayed D program) :
     restrict projection (first.comp second) d =
@@ -133,11 +133,11 @@ theorem restrict_comp (projection : Shape.ChildProjection D)
 
 namespace Over
 
-variable {R : OverShape.{uA, uB, v, w, w₂} D}
+variable {R : Displayed.Over.Algebra.{uA, uB, v, w, w₂} D}
 
 /-- Restrict displayed-over data along an indexed cursor spine. -/
-def restrictSpine (base : Shape.ChildProjection D)
-    (projection : OverShape.ChildProjection base R) :
+def restrictSpine (base : Displayed.Algebra.ChildProjection D)
+    (projection : Displayed.Over.Algebra.ChildProjection base R) :
     {program residual : FreeM P α} →
     (spine : Cursor.Spine program residual) →
     (d : Displayed D program) →
@@ -146,20 +146,20 @@ def restrictSpine (base : Shape.ChildProjection D)
   | _, _, .root _, _, r => r
   | _, _, .down (a := a) answer tail, d, r =>
       restrictSpine base projection tail
-        (base.child a _ d answer)
-        (projection.child a _ _ d r answer)
+        (base.project a _ d answer)
+        (projection.project a _ _ d r answer)
 
 @[simp]
-theorem restrictSpine_root (base : Shape.ChildProjection D)
-    (projection : OverShape.ChildProjection base R)
+theorem restrictSpine_root (base : Displayed.Algebra.ChildProjection D)
+    (projection : Displayed.Over.Algebra.ChildProjection base R)
     (program : FreeM P α) (d : Displayed D program)
     (r : Over R program d) :
     restrictSpine base projection (.root program) d r = r :=
   rfl
 
 @[simp]
-theorem restrictSpine_down (base : Shape.ChildProjection D)
-    (projection : OverShape.ChildProjection base R)
+theorem restrictSpine_down (base : Displayed.Algebra.ChildProjection D)
+    (projection : Displayed.Over.Algebra.ChildProjection base R)
     {a : P.A} {next : P.B a → FreeM P α}
     {residual : FreeM P α} (answer : P.B a)
     (tail : Cursor.Spine (next answer) residual)
@@ -167,13 +167,13 @@ theorem restrictSpine_down (base : Shape.ChildProjection D)
     (r : Over R (FreeM.liftBind a next) d) :
     restrictSpine base projection (.down answer tail) d r =
       restrictSpine base projection tail
-        (base.child a (fun b => Displayed D (next b)) d answer)
-        (projection.child a (fun b => Displayed D (next b))
+        (base.project a (fun b => Displayed D (next b)) d answer)
+        (projection.project a (fun b => Displayed D (next b))
           (fun b d => Over R (next b) d) d r answer) :=
   rfl
 
-theorem restrictSpine_comp (base : Shape.ChildProjection D)
-    (projection : OverShape.ChildProjection base R)
+theorem restrictSpine_comp (base : Displayed.Algebra.ChildProjection D)
+    (projection : Displayed.Over.Algebra.ChildProjection base R)
     {program middle residual : FreeM P α}
     (first : Cursor.Spine program middle)
     (second : Cursor.Spine middle residual)
@@ -186,41 +186,41 @@ theorem restrictSpine_comp (base : Shape.ChildProjection D)
   induction first with
   | root => exact HEq.rfl
   | down answer tail ih =>
-      exact ih second (base.child _ _ d answer)
-        (projection.child _ _ _ d r answer)
+      exact ih second (base.project _ _ d answer)
+        (projection.project _ _ _ d r answer)
 
 /-- Restrict displayed-over data to the residual selected by a cursor. -/
-def restrict (base : Shape.ChildProjection D)
-    (projection : OverShape.ChildProjection base R)
+def restrict (base : Displayed.Algebra.ChildProjection D)
+    (projection : Displayed.Over.Algebra.ChildProjection base R)
     {program : FreeM P α} (cursor : Cursor program)
     (d : Displayed D program) (r : Over R program d) :
     Over R cursor.residual (Displayed.restrict base cursor d) :=
   restrictSpine base projection cursor.spine d r
 
 @[simp]
-theorem restrict_root (base : Shape.ChildProjection D)
-    (projection : OverShape.ChildProjection base R)
+theorem restrict_root (base : Displayed.Algebra.ChildProjection D)
+    (projection : Displayed.Over.Algebra.ChildProjection base R)
     (program : FreeM P α) (d : Displayed D program)
     (r : Over R program d) :
     restrict base projection (Cursor.root program) d r = r :=
   rfl
 
 @[simp]
-theorem restrict_down (base : Shape.ChildProjection D)
-    (projection : OverShape.ChildProjection base R)
+theorem restrict_down (base : Displayed.Algebra.ChildProjection D)
+    (projection : Displayed.Over.Algebra.ChildProjection base R)
     {a : P.A} {next : P.B a → FreeM P α}
     (answer : P.B a) (tail : Cursor (next answer))
     (d : Displayed D (FreeM.liftBind a next))
     (r : Over R (FreeM.liftBind a next) d) :
     restrict base projection (Cursor.down answer tail) d r =
       restrict base projection tail
-        (base.child a (fun b => Displayed D (next b)) d answer)
-        (projection.child a (fun b => Displayed D (next b))
+        (base.project a (fun b => Displayed D (next b)) d answer)
+        (projection.project a (fun b => Displayed D (next b))
           (fun b d => Over R (next b) d) d r answer) :=
   rfl
 
-theorem restrict_comp (base : Shape.ChildProjection D)
-    (projection : OverShape.ChildProjection base R)
+theorem restrict_comp (base : Displayed.Algebra.ChildProjection D)
+    (projection : Displayed.Over.Algebra.ChildProjection base R)
     {program : FreeM P α} (first : Cursor program)
     (second : Cursor first.residual)
     (d : Displayed D program) (r : Over R program d) :
@@ -239,8 +239,8 @@ variable {Γ : P.A → Type w₂}
 
 /-- Node decorations expose the decoration stored at every child. -/
 def childProjection :
-    Shape.ChildProjection (Decoration.shape (P := P) (α := α) Γ) where
-  child := fun _ _ d b => d.2 b
+    Displayed.Algebra.ChildProjection (Decoration.algebra (P := P) (α := α) Γ) where
+  project := fun _ _ d b => d.2 b
 
 /-- Restrict a node decoration to a cursor residual. -/
 def restrict {program : FreeM P α} (cursor : Cursor program)
@@ -279,10 +279,10 @@ variable {A : (a : P.A) → Γ a → Type w₃}
 
 /-- Dependent node decorations expose the over-decoration at every child. -/
 def childProjection :
-    OverShape.ChildProjection
+    Displayed.Over.Algebra.ChildProjection
       (Decoration.childProjection (P := P) (α := α) (Γ := Γ))
-      (Decoration.overShape (P := P) (α := α) Γ A) where
-  child := fun _ _ _ _ r b => r.2 b
+      (Decoration.Over.algebra (P := P) (α := α) Γ A) where
+  project := fun _ _ _ _ r b => r.2 b
 
 /-- Restrict a dependent decoration to a cursor residual. -/
 def restrict {program : FreeM P α} (cursor : Cursor program)

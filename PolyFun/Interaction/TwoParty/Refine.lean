@@ -293,18 +293,18 @@ theorem ofDecorationOver_map {S T : Type u → Type v} (f : ∀ X, S X → T X) 
   | .done, _, _ => rfl
   | .node _ rest, ⟨.sender, rRest⟩, ⟨s, rr⟩ => by
       simp only [ofDecorationOver, Decoration.Over.map,
-        PFunctor.FreeM.Displayed.Decoration.Over.mapLocalHom,
-        PFunctor.FreeM.Displayed.Over.FiberLocalHom.toHom,
-        PFunctor.FreeM.Displayed.Over.FiberLocalHom.toHomFun, map]
+        PFunctor.FreeM.Displayed.Decoration.Over.fiberLocalMap,
+        PFunctor.FreeM.Displayed.Over.FiberLocalMap.toHom,
+        PFunctor.FreeM.Displayed.Over.FiberLocalMap.toHomFun, map]
       congr 1; funext x
       exact ofDecorationOver_map f (rest x) (rRest x) (rr x)
   | .node _ rest, ⟨.receiver, rRest⟩, ⟨u, rr⟩ => by
       cases u
       funext x
       simp only [ofDecorationOver, Decoration.Over.map,
-        PFunctor.FreeM.Displayed.Decoration.Over.mapLocalHom,
-        PFunctor.FreeM.Displayed.Over.FiberLocalHom.toHom,
-        PFunctor.FreeM.Displayed.Over.FiberLocalHom.toHomFun, map]
+        PFunctor.FreeM.Displayed.Decoration.Over.fiberLocalMap,
+        PFunctor.FreeM.Displayed.Over.FiberLocalMap.toHom,
+        PFunctor.FreeM.Displayed.Over.FiberLocalMap.toHomFun, map]
       exact ofDecorationOver_map f (rest x) (rRest x) (rr x)
 
 end Role.Refine

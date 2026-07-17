@@ -16,23 +16,23 @@ A `Decoration Γ s` is the canonical displayed family over a free `P`-tree
 `s` whose leaves carry no data and whose internal nodes carry one value of
 `Γ a` and recursively decorate every child.
 
-It is the displayed family obtained from the shape
+It is the displayed family obtained from the algebra
 
 ```
 leaf  := fun _ => PUnit
 node a child := Γ a × ((b : P.B a) → child b)
 ```
 
-Equivalently, it is `Displayed D s` where `D = Decoration.shape Γ`. Because
-`Decoration` is literally a `Displayed` at a chosen `Shape`, every Displayed
-operation specializes immediately to `Decoration`: `Displayed.map` becomes
+Equivalently, it is `Displayed D s` where `D = Decoration.algebra Γ`.
+Because `Decoration` is literally `Displayed` at a chosen `Algebra`, every
+displayed operation specializes immediately to `Decoration`: `Displayed.map` becomes
 `Decoration.map`, `Displayed.Hom`-actions become decoration morphisms, and so
 on. The lemmas in this file are exactly those specializations.
 
 `Decoration.Over` is the dependent (displayed) variant: at each node, an
 extra fiber of type `F a γ` over the base decoration's value `γ : Γ a`,
 recursively over each child. It is `Displayed.Over` at the corresponding
-`OverShape`.
+`Over.Algebra`.
 
 The bridge `equivOver` packages a decoration of an extended context
 `Γ.extend A` as a base decoration plus one `Over` layer.
@@ -51,9 +51,9 @@ namespace Displayed
 
 variable {P : PFunctor.{u, v}} {α : Type w}
 
-/-- Displayed-family shape for node-local metadata over a polynomial tree. -/
-def Decoration.shape (Γ : P.A → Type w₂) :
-    Shape P α where
+/-- Displayed algebra for node-local metadata over a polynomial tree. -/
+def Decoration.algebra (Γ : P.A → Type w₂) :
+    Displayed.Algebra P α where
   leaf := fun _ => PUnit.{max v w₂ + 1}
   node := fun a child => Γ a × ((b : P.B a) → child b)
 
@@ -64,23 +64,23 @@ At a control node `a : P.A`, the decoration stores one value of type `Γ a`
 and recursively decorates every abstract control continuation `b : P.B a`.
 -/
 abbrev Decoration (Γ : P.A → Type w₂) : FreeM P α → Type (max v w₂) :=
-  Displayed (Decoration.shape Γ)
+  Displayed (Decoration.algebra Γ)
 
 /--
-Displayed-family shape for a dependent layer over a polynomial decoration.
+Dependent displayed algebra over a polynomial decoration.
 
 At a node with base metadata `γ : Γ a`, the over-layer stores data in
 `F a γ` and recursively stores over-data over each decorated child.
 -/
-def Decoration.overShape (Γ : P.A → Type w₂) (F : (a : P.A) → Γ a → Type w₃) :
-    OverShape (Decoration.shape (P := P) (α := α) Γ) where
+def Decoration.Over.algebra (Γ : P.A → Type w₂) (F : (a : P.A) → Γ a → Type w₃) :
+    Over.Algebra (Decoration.algebra (P := P) (α := α) Γ) where
   leaf := fun _ _ => PUnit.{max v w₃ + 1}
   node := fun a _ over d => F a d.1 × ((b : P.B a) → over b (d.2 b))
 
 /-- Dependent node-local metadata over an existing polynomial decoration. -/
 abbrev Decoration.Over (Γ : P.A → Type w₂) (F : (a : P.A) → Γ a → Type w₃)
     (s : FreeM P α) (d : Decoration Γ s) : Type (max v w₃) :=
-  Displayed.Over (Decoration.overShape Γ F) s d
+  Displayed.Over (Decoration.Over.algebra Γ F) s d
 
 namespace Decoration
 
@@ -106,21 +106,21 @@ def empty : (s : FreeM P α) → Decoration (fun _ => PUnit.{max v w₂ + 1}) s
   | .pure _ => ⟨⟩
   | .liftBind _ rest => ⟨PUnit.unit, fun b => empty (rest b)⟩
 
-/-- Constructor-local displayed morphism induced by a nodewise metadata map. -/
-def mapLocalHom {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
+/-- Constructor-local displayed map induced by a nodewise metadata map. -/
+def localMap {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
     (f : ∀ a, Γ a → Δ a) :
-    LocalHom
-      (Decoration.shape (P := P) (α := α) Γ)
-      (Decoration.shape (P := P) (α := α) Δ) where
+    LocalMap
+      (Decoration.algebra (P := P) (α := α) Γ)
+      (Decoration.algebra (P := P) (α := α) Δ) where
   mapLeaf := fun _ _ => ⟨⟩
-  mapChild := fun a _ _ mapChild d =>
+  mapNode := fun a _ _ mapChild d =>
     ⟨f a d.1, fun b => mapChild b (d.2 b)⟩
 
 /-- Natural transformation between node-local decorations, applied recursively. -/
 def map {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
     (f : ∀ a, Γ a → Δ a) :
     (s : FreeM P α) → Decoration Γ s → Decoration Δ s :=
-  (mapLocalHom f).toHom
+  (localMap f).toHom
 
 @[simp]
 theorem map_pure {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
@@ -130,7 +130,7 @@ theorem map_pure {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
   rfl
 
 @[simp]
-theorem map_lift_bind {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
+theorem map_liftBind {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
     (f : ∀ a, Γ a → Δ a)
     (a : P.A) (rest : P.B a → FreeM P α)
     (d : Decoration Γ (FreeM.liftBind a rest)) :
@@ -144,7 +144,7 @@ theorem map_id {Γ : P.A → Type w₂} :
     map (fun _ γ => γ) s d = d
   | .pure _, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩ => by
-      simp only [liftBind_eq, map_lift_bind]
+      simp only [FreeM.liftBind_eq, map_liftBind]
       congr 1
       funext b
       exact map_id (rest b) (dRest b)
@@ -155,23 +155,23 @@ theorem map_comp {Γ : P.A → Type w₂} {Δ : P.A → Type w₃} {Λ : P.A →
     map g s (map f s d) = map (fun a => g a ∘ f a) s d
   | .pure _, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩ => by
-      simp only [liftBind_eq, map_lift_bind]
+      simp only [FreeM.liftBind_eq, map_liftBind]
       congr 1
       funext b
       exact map_comp g f (rest b) (dRest b)
 
 namespace Over
 
-/-- Constructor-local displayed-over morphism induced by a fiberwise map. -/
-def mapLocalHom {Γ : P.A → Type w₂}
+/-- Constructor-local displayed-over map induced by a fiberwise map. -/
+def fiberLocalMap {Γ : P.A → Type w₂}
     {F : (a : P.A) → Γ a → Type w₃}
     {G : (a : P.A) → Γ a → Type w₄}
     (f : ∀ a γ, F a γ → G a γ) :
-    Displayed.Over.FiberLocalHom
-      (Decoration.overShape (P := P) (α := α) Γ F)
-      (Decoration.overShape (P := P) (α := α) Γ G) where
+    Displayed.Over.FiberLocalMap
+      (Decoration.Over.algebra (P := P) (α := α) Γ F)
+      (Decoration.Over.algebra (P := P) (α := α) Γ G) where
   mapLeaf := fun _ _ _ => ⟨⟩
-  mapChild := fun a _ _ _ mapChild d r =>
+  mapNode := fun a _ _ _ mapChild d r =>
     ⟨f a d.1 r.1, fun b => mapChild b (d.2 b) (r.2 b)⟩
 
 /-- Fiberwise map between dependent decoration families over the same decoration. -/
@@ -181,7 +181,7 @@ def map {Γ : P.A → Type w₂}
     (f : ∀ a γ, F a γ → G a γ) :
     (s : FreeM P α) → (d : Decoration Γ s) →
     Decoration.Over Γ F s d → Decoration.Over Γ G s d :=
-  (mapLocalHom f).toHom
+  (fiberLocalMap f).toHom
 
 @[simp]
 theorem map_id {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Type w₃} :
@@ -190,7 +190,8 @@ theorem map_id {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Type w₃} :
     map (fun _ _ x => x) s d r = r
   | .pure _, ⟨⟩, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨fd, rRest⟩ => by
-      simp only [liftBind_eq, map, mapLocalHom, Displayed.Over.FiberLocalHom.toHom_lift_bind]
+      simp only [FreeM.liftBind_eq, map, fiberLocalMap,
+        Displayed.Over.FiberLocalMap.toHom_liftBind]
       congr 1
       funext b
       exact map_id (rest b) (dRest b) (rRest b)
@@ -206,26 +207,27 @@ theorem map_comp {Γ : P.A → Type w₂}
       map (fun a γ => g a γ ∘ f a γ) s d r
   | .pure _, ⟨⟩, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨fd, rRest⟩ => by
-      simp only [liftBind_eq, map, mapLocalHom, Displayed.Over.FiberLocalHom.toHom_lift_bind]
+      simp only [FreeM.liftBind_eq, map, fiberLocalMap,
+        Displayed.Over.FiberLocalMap.toHom_liftBind]
       congr 1
       funext b
       exact map_comp g f (rest b) (dRest b) (rRest b)
 
 /--
-Constructor-local displayed-over morphism induced by a map of base metadata and
+Constructor-local displayed-over map induced by a map of base metadata and
 a compatible map of the dependent over-layer.
 -/
-def mapBaseLocalHom {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
+def baseLocalMap {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
     {A : (a : P.A) → Γ a → Type w₄}
     {B : (a : P.A) → Δ a → Type w₅}
     (f : ∀ a, Γ a → Δ a)
     (g : ∀ a γ, A a γ → B a (f a γ)) :
-    Displayed.Over.LocalHom
-      (Decoration.mapLocalHom (P := P) (α := α) f)
-      (Decoration.overShape (P := P) (α := α) Γ A)
-      (Decoration.overShape (P := P) (α := α) Δ B) where
+    Displayed.Over.LocalMap
+      (Decoration.localMap (P := P) (α := α) f)
+      (Decoration.Over.algebra (P := P) (α := α) Γ A)
+      (Decoration.Over.algebra (P := P) (α := α) Δ B) where
   mapLeaf := fun _ _ _ => ⟨⟩
-  mapChild := fun a _ _ _ _ _ mapChild d r =>
+  mapNode := fun a _ _ _ _ _ mapChild d r =>
     ⟨g a d.1 r.1, fun b => mapChild b (d.2 b) (r.2 b)⟩
 
 /--
@@ -239,7 +241,7 @@ def mapBase {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
     (s : FreeM P α) → (d : Decoration Γ s) →
     Decoration.Over Γ A s d →
     Decoration.Over Δ B s (Decoration.map f s d) :=
-  (mapBaseLocalHom f g).toHom
+  (baseLocalMap f g).toHom
 
 theorem mapBase_id {Γ : P.A → Type w₂} {A : (a : P.A) → Γ a → Type w₃} :
     (s : FreeM P α) → (d : Decoration Γ s) →
@@ -247,7 +249,8 @@ theorem mapBase_id {Γ : P.A → Type w₂} {A : (a : P.A) → Γ a → Type w�
     HEq (mapBase (fun _ γ => γ) (fun _ _ x => x) s d r) r
   | .pure _, ⟨⟩, ⟨⟩ => HEq.rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨a, rRest⟩ => by
-      simp only [liftBind_eq, mapBase, mapBaseLocalHom, Displayed.Over.LocalHom.toHom_lift_bind]
+      simp only [FreeM.liftBind_eq, mapBase, baseLocalMap,
+        Displayed.Over.LocalMap.toHom_liftBind]
       refine Prod.mk_heq ?_
       refine Function.hfunext rfl ?_
       intro b y hby
@@ -272,7 +275,8 @@ theorem mapBase_comp
         (fun a γ => gOver a (f a γ) ∘ fOver a γ) s d r)
   | .pure _, ⟨⟩, ⟨⟩ => HEq.rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨a, rRest⟩ => by
-      simp only [liftBind_eq, mapBase, mapBaseLocalHom, Displayed.Over.LocalHom.toHom_lift_bind]
+      simp only [FreeM.liftBind_eq, mapBase, baseLocalMap,
+        Displayed.Over.LocalMap.toHom_liftBind]
       refine Prod.mk_heq ?_
       refine Function.hfunext rfl ?_
       intro b y hby
@@ -304,9 +308,13 @@ theorem map_ofOver
       ofOver s (Decoration.map f s d) (Over.mapBase f g s d r)
   | .pure _, ⟨⟩, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨a, rRest⟩ => by
-      simp only [liftBind_eq, map_lift_bind, Over.mapBase,
-        Over.mapBaseLocalHom, Displayed.Over.LocalHom.toHom_lift_bind]
-      simp only [← liftBind_eq, ofOver]
+      change
+        ((⟨f _ γ, g _ γ a⟩ : Context.extend Δ B _),
+            fun b => Decoration.map (Context.extendMap f g) (rest b)
+              (ofOver (rest b) (dRest b) (rRest b))) =
+          ((⟨f _ γ, g _ γ a⟩ : Context.extend Δ B _),
+            fun b => ofOver (rest b) (Decoration.map f (rest b) (dRest b))
+              (Over.mapBase f g (rest b) (dRest b) (rRest b)))
       congr 1
       funext b
       exact map_ofOver f g (rest b) (dRest b) (rRest b)

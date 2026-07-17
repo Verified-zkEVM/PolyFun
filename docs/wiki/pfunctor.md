@@ -117,11 +117,11 @@ It is intentionally distinct from the older `FreeM.Displayed` namespace:
 | Layer | Meaning | Generality |
 |------|---------|------------|
 | `PFunctor.Display P` | One-step displayed positions and directions over `P` | Polynomial and `Type`-valued |
-| `FreeM.Displayed.Shape P E` | Higher-order recipe assigning leaf and node fibers | Arbitrary `Sort`-valued node operation; need not be functorial |
-| `FreeM.Displayed D t` | Evaluation of one shape over a concrete free tree `t` | A fiber, not new one-step structure |
+| `FreeM.Displayed.Algebra P E` | Higher-order recipe assigning leaf and node fibers | Arbitrary `Sort`-valued node operation; need not be functorial |
+| `FreeM.Displayed D t` | Evaluation of one algebra over a concrete free tree `t` | A fiber, not new one-step structure |
 | `FreeM.Displayed.Over R t d` | A second fiber over existing displayed data `d` | Depends on both the tree and first-layer inhabitant |
 
-`Display.toDisplayedShape` embeds a display into the generic shape layer. Its
+`Display.toDisplayedAlgebra` embeds a display into the generic algebra layer. Its
 node operation is exactly the polynomial action
 `X ↦ Σ c, ∀ b, direction a c b → X b`; this restriction is what supports
 `Display.bind`, displayed handlers, and displayed Kleisli composition.
@@ -140,7 +140,7 @@ carrier varies.
 | [`PolyFun/PFunctor/Display/Basic.lean`](../../PolyFun/PFunctor/Display/Basic.lean) | Core display, object action, predicate contracts, and coproducts. |
 | [`PolyFun/PFunctor/Display/Chart.lean`](../../PolyFun/PFunctor/Display/Chart.lean) | Total-polynomial chart and chart-fiber normalization. |
 | [`PolyFun/PFunctor/Display/Indexed.lean`](../../PolyFun/PFunctor/Display/Indexed.lean) | Incidence/action `IPFunctor`s and object-action equivalence. |
-| [`PolyFun/PFunctor/Display/Free.lean`](../../PolyFun/PFunctor/Display/Free.lean) | Embedding into `Displayed.Shape` and dependent substitution. |
+| [`PolyFun/PFunctor/Display/Free.lean`](../../PolyFun/PFunctor/Display/Free.lean) | Embedding into `Displayed.Algebra` and dependent substitution. |
 | [`PolyFun/PFunctor/Display/Handler.lean`](../../PolyFun/PFunctor/Display/Handler.lean) | Displayed handlers, free extension, and Kleisli composition. |
 
 ### Free monad `FreeM`
@@ -165,7 +165,7 @@ displayed families, roll bounds) on top of the upstream type.
 | [`PolyFun/PFunctor/Free/Cursor/Append.lean`](../../PolyFun/PFunctor/Free/Cursor/Append.lean) | Cast-free classification of cursors through dependent `FreeM.append`, with prefix/suffix split-join equivalences, terminal-path compatibility, and decoration restriction laws. |
 | [`PolyFun/PFunctor/Free/Cursor/Occurrence.lean`](../../PolyFun/PFunctor/Free/Cursor/Occurrence.lean) | Path-independent `Occurrence` refinements of `Cursor`, certified execution splitting, completion, and prefix-first `forkAt`. |
 | [`PolyFun/PFunctor/Free/Cursor/Fork.lean`](../../PolyFun/PFunctor/Free/Cursor/Fork.lean) | Locating occurrences in completed paths, total forking from a located context, fixed and dynamically selected optional forking, observation fusion, and the prefix-first/path-first factorization theorem. |
-| [`PolyFun/PFunctor/Free/Displayed.lean`](../../PolyFun/PFunctor/Free/Displayed.lean) | `FreeM.Displayed D s` (displayed family over a tree), `Displayed.Section` (displayed catamorphism). The substrate behind decorations, paths, and compact observations. |
+| [`PolyFun/PFunctor/Free/Displayed.lean`](../../PolyFun/PFunctor/Free/Displayed.lean) | `FreeM.Displayed D s` (displayed family over a tree), `Displayed.Section` (global dependent section), and `Section.ofConstructors` (constructor-local fold). The substrate behind decorations, paths, and compact observations. |
 | [`PolyFun/PFunctor/Free/Displayed/Decoration.lean`](../../PolyFun/PFunctor/Free/Displayed/Decoration.lean) | `Decoration Γ s`: every node carries one `Γ a` and recursively decorates children. |
 | [`PolyFun/PFunctor/Free/Displayed/Cursor.lean`](../../PolyFun/PFunctor/Free/Displayed/Cursor.lean) | Explicit child-projection capabilities and restriction of navigable displayed data, node decorations, and dependent over-decorations to a `Cursor` residual. |
 
