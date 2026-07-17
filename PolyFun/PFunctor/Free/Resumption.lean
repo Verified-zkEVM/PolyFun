@@ -19,7 +19,7 @@ independent of the free-monad layer.
 
 @[expose] public section
 
-universe uA uB uα uβ
+universe uA uB uA₂ uB₂ uα uβ
 
 namespace PFunctor.FreeM
 
@@ -85,6 +85,24 @@ theorem dest_toResumption_liftBind (position : p.A)
       congr 1
       funext direction
       exact ih direction
+
+@[simp] theorem toResumption_mapLens {q : PFunctor.{uA₂, uB₂}}
+    (lens : Lens p q) (program : FreeM p α) :
+    toResumption (program.mapLens lens) =
+      Resumption.mapLens lens (toResumption program) := by
+  induction program with
+  | pure value => simp
+  | lift_bind position next ih =>
+      rw [FreeM.mapLens_lift_bind, toResumption_liftBind]
+      change Resumption.query (lens.toFunA position)
+          (fun direction => toResumption
+            ((next (lens.toFunB position direction)).mapLens lens)) =
+        Resumption.mapLens lens
+          (Resumption.query position fun direction => toResumption (next direction))
+      rw [Resumption.mapLens_query]
+      congr 1
+      funext direction
+      exact ih (lens.toFunB position direction)
 
 /-- The finite-program embedding is injective: regarding a well-founded tree
 as a possibly infinite tree loses no information. -/

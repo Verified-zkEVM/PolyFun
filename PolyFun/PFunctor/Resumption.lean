@@ -5,7 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Basic
+public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.M
 
 /-!
@@ -24,7 +24,7 @@ chosen universe.
 
 @[expose] public section
 
-universe uA uB uα uβ uγ uX uY
+universe uA uB uA₂ uB₂ uA₃ uB₃ uα uβ uγ uX uY
 
 namespace PFunctor
 
@@ -89,6 +89,18 @@ def viewEquiv {X : Type uX} : (C.{uβ, uB} β + p).Obj X ≃ β ⊕ p.Obj X wher
   rcases step with ⟨shape, next⟩
   cases shape <;> rfl
 
+theorem pack_sum_map {X : Type uX} {Y : Type uY} (f : X → Y)
+    (step : β ⊕ p.Obj X) :
+    pack (Sum.map (fun value : β => value) (p.map f) step) =
+      (C.{uβ, uB} β + p).map f (pack step) := by
+  rcases step with value | ⟨position, next⟩
+  · apply Sigma.ext
+    · rfl
+    · apply heq_of_eq
+      funext direction
+      exact PEmpty.elim direction
+  · rfl
+
 /-! ## Constructors, destructor, and corecursor -/
 
 /-- A resumption that immediately returns `value`. -/
@@ -145,6 +157,67 @@ def corec {X : Type uX} (step : X → β ⊕ p.Obj X) (seed : X) : Resumption p 
     exact pack_dest state
   rw [hstep]
   exact M.corec_dest computation
+
+/-! ## Coinduction and finality -/
+
+/-- Two resumptions have matching computational heads with respect to `R`
+when they return the same value, or expose the same query position and have
+pointwise `R`-related continuations. -/
+inductive HeadMatch (R : Resumption p β → Resumption p β → Prop) :
+    Resumption p β → Resumption p β → Prop where
+  | pure {left right : Resumption p β} (value : β)
+      (left_dest : dest left = Sum.inl value)
+      (right_dest : dest right = Sum.inl value) :
+      HeadMatch R left right
+  | query {left right : Resumption p β} (position : p.A)
+      (left_next right_next : p.B position → Resumption p β)
+      (left_dest : dest left = Sum.inr ⟨position, left_next⟩)
+      (right_dest : dest right = Sum.inr ⟨position, right_next⟩)
+      (next_rel : ∀ direction, R (left_next direction) (right_next direction)) :
+      HeadMatch R left right
+
+/-- Strengthen the relation used below a matching pair of resumption heads. -/
+theorem HeadMatch.mono {R S : Resumption p β → Resumption p β → Prop}
+    (hRS : ∀ {left right}, R left right → S left right)
+    {left right : Resumption p β} (h : HeadMatch R left right) :
+    HeadMatch S left right := by
+  cases h with
+  | pure value left_dest right_dest =>
+      exact .pure value left_dest right_dest
+  | query position left_next right_next left_dest right_dest next_rel =>
+      exact .query position left_next right_next left_dest right_dest
+        (fun direction => hRS (next_rel direction))
+
+/-- Computational-view bisimulation principle for resumptions. Clients need
+not expose the implementation polynomial `C β + p` or use raw `M.bisim`. -/
+theorem bisim (R : Resumption p β → Resumption p β → Prop)
+    (step : ∀ left right, R left right → HeadMatch R left right)
+    {left right : Resumption p β} (h : R left right) : left = right := by
+  refine M.bisim R ?_ left right h
+  intro currentLeft currentRight hrel
+  cases step currentLeft currentRight hrel with
+  | pure value left_dest right_dest =>
+      refine ⟨Sum.inl value, PEmpty.elim, PEmpty.elim, ?_, ?_, fun direction => ?_⟩
+      · rw [← pack_dest, left_dest, pack_inl]
+      · rw [← pack_dest, right_dest, pack_inl]
+      · exact PEmpty.elim direction
+  | query position left_next right_next left_dest right_dest next_rel =>
+      refine ⟨Sum.inr position, left_next, right_next, ?_, ?_, next_rel⟩
+      · rw [← pack_dest, left_dest, pack_inr]
+      · rw [← pack_dest, right_dest, pack_inr]
+
+/-- Finality of `Resumption`: a function satisfying the computational
+coalgebra equation is the computational corecursor. -/
+theorem corec_unique {X : Type uX} (step : X → β ⊕ p.Obj X)
+    (f : X → Resumption p β)
+    (hf : ∀ state, dest (f state) =
+      Sum.map (fun value : β => value) (p.map f) (step state)) :
+    f = corec step := by
+  unfold corec
+  apply M.corec_unique (fun state => pack (step state)) f
+  intro state
+  rw [← pack_dest, hf]
+  exact pack_sum_map f (step state)
 
 /-! ## Functorial and monadic structure -/
 
@@ -319,6 +392,134 @@ theorem map_comp (g : β → γ) (f : α → β) (computation : Resumption p α)
     map (g ∘ f) computation = map g (map f computation) := by
   rw [map, map, map, bind_assoc]
   simp
+
+/-! ## Interface transport -/
+
+section MapLens
+
+variable {q : PFunctor.{uA₂, uB₂}} {r : PFunctor.{uA₃, uB₃}}
+
+/-- One-step coalgebra for transporting a resumption along a polynomial
+lens. The lens sends query positions forward and runtime directions backward. -/
+def mapLensStep (lens : Lens p q) :
+    Resumption p β → β ⊕ q.Obj (Resumption p β)
+  | computation => match dest computation with
+    | Sum.inl value => Sum.inl value
+    | Sum.inr ⟨position, next⟩ =>
+        Sum.inr ⟨lens.toFunA position,
+          fun direction => next (lens.toFunB position direction)⟩
+
+/-- Transport a resumption along a polynomial lens. -/
+def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β :=
+  corec (mapLensStep lens) computation
+
+@[simp] theorem dest_mapLens (lens : Lens p q) (computation : Resumption p β) :
+    dest (mapLens lens computation) = match dest computation with
+      | Sum.inl value => Sum.inl value
+      | Sum.inr ⟨position, next⟩ =>
+          Sum.inr ⟨lens.toFunA position,
+            fun direction => mapLens lens (next (lens.toFunB position direction))⟩ := by
+  unfold mapLens
+  rw [dest_corec]
+  rcases h : dest computation with value | ⟨position, next⟩
+  · simp [mapLensStep, h]
+  · simp only [mapLensStep, h, Sum.map_inr, PFunctor.map_eq]
+    rfl
+
+@[simp] theorem mapLens_pure (lens : Lens p q) (value : β) :
+    mapLens lens (pure value) = pure value := by
+  apply eq_of_dest_eq
+  simp
+
+@[simp] theorem mapLens_query (lens : Lens p q) (position : p.A)
+    (next : p.B position → Resumption p β) :
+    mapLens lens (query position next) =
+      query (lens.toFunA position)
+        (fun direction => mapLens lens (next (lens.toFunB position direction))) := by
+  apply eq_of_dest_eq
+  simp
+
+@[simp] theorem mapLens_id (computation : Resumption p β) :
+    mapLens (Lens.id p) computation = computation := by
+  apply bisim
+    (fun left right => ∃ source,
+      left = mapLens (Lens.id p) source ∧ right = source)
+  · rintro left right ⟨source, hleft, hright⟩
+    subst left
+    subst right
+    rcases h : dest source with value | ⟨position, next⟩
+    · exact .pure value (by rw [dest_mapLens, h]) h
+    · exact .query position
+        (fun direction => mapLens (Lens.id p) (next direction)) next
+        (by rw [dest_mapLens, h]; rfl) h
+        (fun direction => ⟨next direction, rfl, rfl⟩)
+  · exact ⟨computation, rfl, rfl⟩
+
+@[simp] theorem mapLens_comp (lens₂ : Lens q r) (lens₁ : Lens p q)
+    (computation : Resumption p β) :
+    mapLens lens₂ (mapLens lens₁ computation) =
+      mapLens (lens₂ ∘ₗ lens₁) computation := by
+  apply bisim
+    (fun left right => ∃ source,
+      left = mapLens lens₂ (mapLens lens₁ source) ∧
+      right = mapLens (lens₂ ∘ₗ lens₁) source)
+  · rintro left right ⟨source, hleft, hright⟩
+    subst left
+    subst right
+    rcases h : dest source with value | ⟨position, next⟩
+    · exact .pure value (by simp [h]) (by simp [h])
+    · exact .query (lens₂.toFunA (lens₁.toFunA position))
+        (fun direction => mapLens lens₂
+          (mapLens lens₁ (next (lens₁.toFunB position
+            (lens₂.toFunB (lens₁.toFunA position) direction)))))
+        (fun direction => mapLens (lens₂ ∘ₗ lens₁)
+          (next (lens₁.toFunB position
+            (lens₂.toFunB (lens₁.toFunA position) direction))))
+        (by rw [dest_mapLens, dest_mapLens, h])
+        (by rw [dest_mapLens, h]; rfl)
+        (fun direction => ⟨_, rfl, rfl⟩)
+  · exact ⟨computation, rfl, rfl⟩
+
+theorem mapLens_bind (lens : Lens p q) (computation : Resumption p α)
+    (k : α → Resumption p β) :
+    mapLens lens (bind computation k) =
+      bind (mapLens lens computation) (fun value => mapLens lens (k value)) := by
+  apply bisim
+    (fun left right => left = right ∨ ∃ source : Resumption p α,
+      left = mapLens lens (bind source k) ∧
+      right = bind (mapLens lens source) (fun value => mapLens lens (k value)))
+  · intro left right hrel
+    rcases hrel with hEq | ⟨source, hleft, hright⟩
+    · subst left
+      rcases h : dest right with value | ⟨position, next⟩
+      · exact .pure value h h
+      · exact .query position next next h h (fun _ => Or.inl rfl)
+    · subst left
+      subst right
+      rcases h : dest source with value | ⟨position, next⟩
+      · rw [show source = pure value by apply eq_of_dest_eq; simpa using h]
+        simp only [bind_pure_left, mapLens_pure]
+        rcases hk : dest (mapLens lens (k value)) with result | ⟨position, next⟩
+        · exact .pure result hk hk
+        · exact .query position next next hk hk (fun _ => Or.inl rfl)
+      · exact .query (lens.toFunA position)
+          (fun direction => mapLens lens
+            (bind (next (lens.toFunB position direction)) k))
+          (fun direction => bind
+            (mapLens lens (next (lens.toFunB position direction)))
+            (fun value => mapLens lens (k value)))
+          (by simp [h]) (by simp [h])
+          (fun direction => Or.inr ⟨next (lens.toFunB position direction), rfl, rfl⟩)
+  · exact Or.inr ⟨computation, rfl, rfl⟩
+
+theorem mapLens_map (lens : Lens p q) (f : α → β)
+    (computation : Resumption p α) :
+    mapLens lens (map f computation) = map f (mapLens lens computation) := by
+  unfold map
+  rw [mapLens_bind]
+  simp
+
+end MapLens
 
 section Instances
 
