@@ -126,6 +126,7 @@ import PolyFun.PFunctor.Comonoid.Category
 import PolyFun.PFunctor.Comonoid.Tensor
 import PolyFun.PFunctor.Display
 import PolyFun.PFunctor.Display.Basic
+import PolyFun.PFunctor.Display.Category
 import PolyFun.PFunctor.Display.Chart
 import PolyFun.PFunctor.Display.Coalgebra
 import PolyFun.PFunctor.Display.Free
@@ -182,6 +183,7 @@ import PolyFun.PFunctor.M
 import PolyFun.PFunctor.M.Vertex
 import PolyFun.PFunctor.PatternRunsOnMatter.Applications
 import PolyFun.PFunctor.PatternRunsOnMatter.Basic
+import PolyFun.PFunctor.PatternRunsOnMatter.Display
 import PolyFun.PFunctor.PatternRunsOnMatter.Dynamical
 import PolyFun.PFunctor.PatternRunsOnMatter.Module
 import PolyFun.PFunctor.PatternRunsOnMatter.Operational
