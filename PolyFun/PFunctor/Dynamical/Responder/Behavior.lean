@@ -8,7 +8,7 @@ module
 
 public import PolyFun.PFunctor.Display.M
 public import PolyFun.PFunctor.Dynamical.Responder.Reindex
-public import PolyFun.PFunctor.Dynamical.Trajectory
+public import PolyFun.PFunctor.Dynamical.Simulation
 
 /-!
 # State-free responder behavior
@@ -126,6 +126,53 @@ end Coalgebra
 end Display
 
 namespace Responder
+
+private theorem transport_ihom_direction_fst
+    {R : PFunctor.{uA'', uB}}
+    {leftSection rightSection : (R ⊸ X.{uA'', uB}).A}
+    (h : leftSection = rightSection)
+    (direction : (R ⊸ X.{uA'', uB}).B leftSection) :
+    ((h ▸ direction : (R ⊸ X.{uA'', uB}).B rightSection)).1 =
+      direction.1 := by
+  cases h
+  rfl
+
+/-- A map of responder states preserving answers and next states preserves
+the complete coinductive behavior. -/
+theorem behavior_eq_of_responderMap
+    {R : PFunctor.{uA'', uB}}
+    {State₁ : Type uC''} {State₂ : Type uD''}
+    (left : Responder State₁ R) (right : Responder State₂ R)
+    (mapState : State₂ → State₁)
+    (answer_eq : ∀ state operation,
+      left.answer (mapState state) operation = right.answer state operation)
+    (next_eq : ∀ state operation,
+      left.next (mapState state) operation =
+        mapState (right.next state operation))
+    (state : State₂) :
+    left.behavior (mapState state) = right.behavior state := by
+  have exposeEq (current : State₂) :
+      left.expose (mapState current) = right.expose current := by
+    apply Lens.ext
+    case h₁ => intro operation; exact Subsingleton.elim _ _
+    case h₂ =>
+      intro operation
+      funext trivial
+      cases trivial
+      exact answer_eq current operation
+  apply DynSystem.behavior_eq_of_isSimulation
+    (R := fun leftState rightState => leftState = mapState rightState)
+  · refine ⟨?_, ?_⟩
+    · intro leftState rightState h
+      subst leftState
+      exact exposeEq rightState
+    · intro leftState rightState h direction
+      subst leftState
+      have hquery := transport_ihom_direction_fst
+        (exposeEq rightState) direction
+      rw [left.update_eq_next, right.update_eq_next, hquery]
+      exact next_eq rightState direction.1
+  · rfl
 
 variable {P : PFunctor.{uA, uB}}
 variable {Q : PFunctor.{uA', uB'}}
@@ -423,6 +470,14 @@ def reindexBehavior (f : Handler (FreeM Q) P)
     PFunctor.M (P ⊸ X.{uA, uB}) :=
   (Responder.reindex f (Responder.terminal (P := Q))).behavior behavior
 
+/-- State-free behavior reindexing is invariant under equality of its free
+handler. -/
+theorem reindexBehavior_congr
+    {f g : Handler (FreeM Q) P} (h : f = g)
+    (behavior : PFunctor.M (Q ⊸ X.{uA', uB})) :
+    reindexBehavior f behavior = reindexBehavior g behavior :=
+  congrArg (fun handler => reindexBehavior handler behavior) h
+
 /-- The state-free reindexing of a presented behavior agrees with reindexing
 the presenting responder first. -/
 theorem reindexBehavior_behavior (f : Handler (FreeM Q) P)
@@ -518,6 +573,27 @@ def reindexVerifiedBehavior
       (Responder.terminal (P := Q))
       (Display.Coalgebra.terminal (Display.responder T)))
     behavior displayedBehavior
+
+/-- Verified state-free reindexing is invariant under simultaneous transport
+of the base handler and its displayed lift.  The sole output transport is the
+canonical equality of the underlying ordinary behaviors. -/
+theorem reindexVerifiedBehavior_congr
+    (S : Display.{uA, uB, uC, uD} P)
+    (T : Display.{uA', uB, uC', uD'} Q)
+    {f g : Handler (FreeM Q) P} (h : f = g)
+    (displayedF : Display.Handler S T f)
+    (displayedG : Display.Handler S T g)
+    (displayedEq : Display.Handler.transport h displayedF = displayedG)
+    (behavior : PFunctor.M (Q ⊸ X.{uA', uB}))
+    (displayedBehavior : Display.M (Display.responder T) behavior) :
+    Display.M.transport (reindexBehavior_congr h behavior)
+        (reindexVerifiedBehavior S T f displayedF
+          behavior displayedBehavior) =
+      reindexVerifiedBehavior S T g displayedG behavior displayedBehavior := by
+  subst g
+  simp only [Display.Handler.transport_rfl] at displayedEq
+  subst displayedG
+  rfl
 
 /-- The postcondition returned by one state-free verified reindexing step is
 exactly the postcondition produced by executing the displayed handler program

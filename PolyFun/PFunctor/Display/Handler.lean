@@ -471,6 +471,113 @@ theorem comp_assoc_apply
       (third.comp second).comp first a c :=
   T.liftM_comp U W (f a) (first a c) g second h third
 
+/-! ## Transported categorical laws -/
+
+/-- Transport a displayed handler along equality of its ordinary free
+handler index.  This is hom-fiber transport and does not truncate the
+`Type`-valued displayed witness. -/
+def transport
+    {S : Display.{uA, uB, uC, uD} P}
+    {T : Display.{uA', uB, uC', uD'} Q}
+    {f g : PFunctor.Handler (FreeM Q) P} (h : f = g) :
+    Display.Handler S T f → Display.Handler S T g :=
+  h ▸ _root_.id
+
+@[simp] theorem transport_rfl
+    {S : Display.{uA, uB, uC, uD} P}
+    {T : Display.{uA', uB, uC', uD'} Q}
+    {f : PFunctor.Handler (FreeM Q) P} (df : Display.Handler S T f) :
+    transport rfl df = df :=
+  rfl
+
+theorem transport_proof_irrel
+    {S : Display.{uA, uB, uC, uD} P}
+    {T : Display.{uA', uB, uC', uD'} Q}
+    {f g : PFunctor.Handler (FreeM Q) P} (h h' : f = g)
+    (df : Display.Handler S T f) :
+    transport h df = transport h' df := by
+  cases h
+  rfl
+
+theorem transport_trans
+    {S : Display.{uA, uB, uC, uD} P}
+    {T : Display.{uA', uB, uC', uD'} Q}
+    {f g h : PFunctor.Handler (FreeM Q) P} (hfg : f = g) (hgh : g = h)
+    (df : Display.Handler S T f) :
+    transport hgh (transport hfg df) = transport (hfg.trans hgh) df := by
+  cases hfg
+  cases hgh
+  rfl
+
+/-- Whole-handler transport acts pointwise by displayed-free transport. -/
+theorem transport_apply
+    {S : Display.{uA, uB, uC, uD} P}
+    {T : Display.{uA', uB, uC', uD'} Q}
+    {f g : PFunctor.Handler (FreeM Q) P} (h : f = g)
+    (df : Display.Handler S T f) (operation : P.A)
+    (displayedPosition : S.position operation) :
+    (transport h df) operation displayedPosition =
+      T.transport (S.direction operation displayedPosition)
+        (congrFun h operation) (df operation displayedPosition) := by
+  cases h
+  rfl
+
+/-- Displayed left identity over the ordinary handler left-unit law. -/
+theorem id_comp
+    {S : Display.{uA, uB, uC, uD} P}
+    {T : Display.{uA', uB, uC', uD'} Q}
+    {f : PFunctor.Handler (FreeM Q) P}
+    (first : Display.Handler S T f) :
+    transport (PFunctor.Handler.id_comp f)
+        ((Display.Handler.id T).comp first) = first := by
+  funext operation displayedPosition
+  rw [transport_apply]
+  rw [T.transport_proof_irrel (S.direction operation displayedPosition)
+    (congrFun (PFunctor.Handler.id_comp f) operation)
+    (FreeM.liftM_lift_eq_self (f operation))]
+  exact id_comp_apply first operation displayedPosition
+
+/-- Displayed right identity over the ordinary handler right-unit law. -/
+theorem comp_id
+    {S : Display.{uA, uB, uC, uD} P}
+    {T : Display.{uA', uB, uC', uD'} Q}
+    {f : PFunctor.Handler (FreeM Q) P}
+    (first : Display.Handler S T f) :
+    transport (PFunctor.Handler.comp_id f)
+        (first.comp (Display.Handler.id S)) = first := by
+  funext operation displayedPosition
+  rw [transport_apply]
+  rw [T.transport_proof_irrel (S.direction operation displayedPosition)
+    (congrFun (PFunctor.Handler.comp_id f) operation)
+    (FreeM.liftM_lift f operation)]
+  exact comp_id_apply first operation displayedPosition
+
+/-- Displayed associativity over ordinary handler associativity. -/
+theorem comp_assoc
+    {V : PFunctor.{uA''', uB}}
+    {S : Display.{uA, uB, uC, uD} P}
+    {T : Display.{uA', uB, uC', uD'} Q}
+    {U : Display.{uA'', uB, uC'', uD''} R}
+    {W : Display.{uA''', uB, uC''', uD'''} V}
+    {f : PFunctor.Handler (FreeM Q) P}
+    {g : PFunctor.Handler (FreeM R) Q}
+    {h : PFunctor.Handler (FreeM V) R}
+    (first : Display.Handler S T f)
+    (second : Display.Handler T U g)
+    (third : Display.Handler U W h) :
+    transport (PFunctor.Handler.comp_assoc h g f)
+        ((third.comp second).comp first) =
+      third.comp (second.comp first) := by
+  funext operation displayedPosition
+  rw [transport_apply]
+  let hpoint := FreeM.liftM_comp (f operation) g h
+  rw [W.transport_proof_irrel (S.direction operation displayedPosition)
+    (congrFun (PFunctor.Handler.comp_assoc h g f) operation) hpoint.symm]
+  have hforward := comp_assoc_apply first second third operation displayedPosition
+  rw [← hforward]
+  exact W.transport_symm (S.direction operation displayedPosition) hpoint
+    (third.comp (second.comp first) operation displayedPosition)
+
 end Handler
 
 end Display

@@ -133,7 +133,11 @@ import PolyFun.PFunctor.Display.Free
 import PolyFun.PFunctor.Display.Handler
 import PolyFun.PFunctor.Display.Handler.Sigma
 import PolyFun.PFunctor.Display.Indexed
+import PolyFun.PFunctor.Display.Lens
 import PolyFun.PFunctor.Display.M
+import PolyFun.PFunctor.Display.Parallel
+import PolyFun.PFunctor.Display.Parallel.Free
+import PolyFun.PFunctor.Display.Parallel.Lens
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Bisimulation
@@ -147,7 +151,17 @@ import PolyFun.PFunctor.Dynamical.Refinement
 import PolyFun.PFunctor.Dynamical.Responder
 import PolyFun.PFunctor.Dynamical.Responder.Behavior
 import PolyFun.PFunctor.Dynamical.Responder.Display
+import PolyFun.PFunctor.Dynamical.Responder.Lens
+import PolyFun.PFunctor.Dynamical.Responder.Parallel
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.Behavior
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.Coherence
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.Compatibility
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.Display
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedAssociativity
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedCoherence
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedPresentation
 import PolyFun.PFunctor.Dynamical.Responder.Reindex
+import PolyFun.PFunctor.Dynamical.Responder.VerifiedPresentation
 import PolyFun.PFunctor.Dynamical.Run
 import PolyFun.PFunctor.Dynamical.RunN
 import PolyFun.PFunctor.Dynamical.Safety
@@ -164,6 +178,7 @@ import PolyFun.PFunctor.Free.Displayed.Append
 import PolyFun.PFunctor.Free.Displayed.Cursor
 import PolyFun.PFunctor.Free.Displayed.Decoration
 import PolyFun.PFunctor.Free.Displayed.StateChain
+import PolyFun.PFunctor.Free.Parallel
 import PolyFun.PFunctor.Free.Path
 import PolyFun.PFunctor.Free.Path.Execution
 import PolyFun.PFunctor.Free.Polynomial
@@ -182,12 +197,14 @@ import PolyFun.PFunctor.Lens.Factorization
 import PolyFun.PFunctor.Lens.State
 import PolyFun.PFunctor.M
 import PolyFun.PFunctor.M.Vertex
+import PolyFun.PFunctor.Parallel
 import PolyFun.PFunctor.PatternRunsOnMatter.Applications
 import PolyFun.PFunctor.PatternRunsOnMatter.Basic
 import PolyFun.PFunctor.PatternRunsOnMatter.Display
 import PolyFun.PFunctor.PatternRunsOnMatter.Dynamical
 import PolyFun.PFunctor.PatternRunsOnMatter.Module
 import PolyFun.PFunctor.PatternRunsOnMatter.Operational
+import PolyFun.PFunctor.PatternRunsOnMatter.Parallel
 import PolyFun.PFunctor.PatternRunsOnMatter.Universal
 import PolyFun.PFunctor.Resumption
 import PolyFun.PFunctor.SubstMonoid
@@ -195,3 +212,4 @@ import PolyFun.PFunctor.SubstMonoid.Convolution
 import PolyFun.PFunctor.SubstMonoid.Extension
 import PolyFun.PFunctor.Trace
 import PolyFun.PFunctor.Wiring
+import PolyFun.PFunctor.Wiring.Parallel

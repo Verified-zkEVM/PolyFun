@@ -104,6 +104,14 @@ IPFunctor/M + PFunctor/Display/Indexed → PFunctor/Display/M
 PFunctor/{Handler, Free/Basic} → PFunctor/Handler/Free
 PFunctor/{Display/Free, Handler/Free} → PFunctor/Display/Handler
 PFunctor/Display/Handler → PFunctor/Display/Handler/Sigma
+PFunctor/Display/{Chart, Handler} → PFunctor/Display/Lens
+PFunctor/Equiv/Basic → PFunctor/Parallel → PFunctor/Display/Parallel
+PFunctor/{Handler/Free, Parallel} → PFunctor/Free/Parallel
+PFunctor/{Display/Lens, Display/Parallel, Free/Parallel}
+  → PFunctor/Display/Parallel/Lens
+PFunctor/{Display/Handler, Display/Parallel, Free/Parallel}
+  → PFunctor/Display/Parallel/Free
+PFunctor/{Display/Parallel/Free, Wiring} → PFunctor/Wiring/Parallel
 PFunctor/Display/Handler/Sigma → PFunctor/Wiring
 PFunctor/{Display/Handler, Free/Universal} → PFunctor/Display/Category
 PFunctor/Free/Basic
@@ -163,15 +171,43 @@ PFunctor/Display/Coalgebra + PFunctor/Dynamical/Responder
   → PFunctor/Dynamical/Responder/Display
   → PFunctor/Dynamical/Responder/Reindex
   → PFunctor/Dynamical/Responder/Behavior
+PFunctor/{Dynamical/Responder, Parallel}
+  → PFunctor/Dynamical/Responder/Parallel
+PFunctor/{Display/Parallel, Dynamical/Responder/Display,
+  Dynamical/Responder/Parallel}
+  → PFunctor/Dynamical/Responder/Parallel/Display
+PFunctor/{Dynamical/Responder/Behavior,
+  Dynamical/Responder/Parallel/Display}
+  → PFunctor/Dynamical/Responder/Parallel/Behavior
+PFunctor/Dynamical/Simulation
+  → PFunctor/Dynamical/Responder/Behavior
+  → PFunctor/Dynamical/Responder/VerifiedPresentation
+PFunctor/{Display/Lens, Dynamical/Responder/VerifiedPresentation}
+  → PFunctor/Dynamical/Responder/Lens
+PFunctor/{Display/Parallel/Lens, Dynamical/Responder/Lens,
+  Dynamical/Responder/Parallel/Behavior}
+  → PFunctor/Dynamical/Responder/Parallel/Coherence
+PFunctor/{Dynamical/Responder/VerifiedPresentation,
+  Dynamical/Responder/Parallel/Behavior}
+  → PFunctor/Dynamical/Responder/Parallel/VerifiedPresentation
+PFunctor/{Dynamical/Responder/Parallel/Coherence,
+  Dynamical/Responder/Parallel/VerifiedPresentation}
+  → PFunctor/Dynamical/Responder/Parallel/VerifiedAssociativity
+  → PFunctor/Dynamical/Responder/Parallel/VerifiedCoherence
+PFunctor/{Dynamical/Responder/Parallel/Behavior, Free/Parallel}
+  → PFunctor/Dynamical/Responder/Parallel/Compatibility
 PFunctor/{Display/Category, PatternRunsOnMatter/Applications,
   Dynamical/Responder/Behavior} → PFunctor/PatternRunsOnMatter/Display
+PFunctor/{PatternRunsOnMatter/Display,
+  Dynamical/Responder/Parallel/Compatibility}
+  → PFunctor/PatternRunsOnMatter/Parallel
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
    for RunN and IOMachine, PFunctor/InternalHom for Responder, and
    PFunctor/Lens/Duoidal for Game. Responder/Display additionally imports
    PFunctor/Display/{Chart, Coalgebra}; Responder/Reindex additionally imports
    PFunctor/Display/Handler; Responder/Behavior additionally imports
-   IPFunctor/M, PFunctor/Display/M, and Dynamical/Trajectory.)
+   IPFunctor/M, PFunctor/Display/M, and Dynamical/Simulation.)
 
 Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}
