@@ -64,6 +64,12 @@ example (f : SubstMonoid.Hom (FreeP.substMonoid bitUnary) wordMonoid) :
     FreeP.extend wordMonoid (FreeP.restrict wordMonoid f) = f :=
   FreeP.extend_restrict wordMonoid f
 
+/-- Agreement on generators determines a homomorphism out of `FreeP`. -/
+example (f : SubstMonoid.Hom (FreeP.substMonoid bitUnary) wordMonoid)
+    (h : f.toLens ∘ₗ FreeP.generator bitUnary = bitToWord) :
+    f = FreeP.extend wordMonoid bitToWord :=
+  FreeP.extend_unique wordMonoid bitToWord f h
+
 /-- The packaged equivalence exposes both inverse laws. -/
 example : (FreeP.homEquiv wordMonoid).symm
     ((FreeP.homEquiv wordMonoid) (FreeP.extend wordMonoid bitToWord)) =
@@ -83,6 +89,15 @@ def oneBinaryNode : (FreeP binaryP).A :=
 the nontrivial backward component, not only the mapped shape. -/
 example : (FreeP.mapHom reverseBranchLens).toLens.toFunB oneBinaryNode
     ⟨false, ⟨⟩⟩ = ⟨true, ⟨⟩⟩ :=
+  rfl
+
+/-- The universal fold's backward interpreter splits a two-node target path
+through free multiplication and reverses both target branches. This pins
+`foldPath` directly, rather than restating `FreeP.map.toFunB`. -/
+example :
+    (FreeP.extend (FreeP.substMonoid natBinaryP)
+      (FreeP.generator natBinaryP ∘ₗ reverseBranchLens)).toLens.toFunB
+        controlTree ⟨false, true, ⟨⟩⟩ = ⟨true, false, ⟨⟩⟩ :=
   rfl
 
 /-- The polynomial fold is definitionally the existing `FreeM.liftM` fold on

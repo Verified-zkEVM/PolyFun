@@ -205,29 +205,9 @@ including its backward path map. -/
 theorem foldLens_comp_mult :
     foldLens M l ∘ₗ mult (P := P) =
       M.mult ∘ₗ (foldLens M l ◃ₗ foldLens M l) := by
-  let hA : ∀ x : (FreeP P ◃ FreeP P).A,
-      (foldLens M l ∘ₗ mult (P := P)).toFunA x =
-        (M.mult ∘ₗ (foldLens M l ◃ₗ foldLens M l)).toFunA x :=
-    fun x => by
-      rcases x with ⟨s, next⟩
-      exact congrArg Sigma.fst (foldLens_mult_obj M l s next)
-  refine Lens.ext _ _ hA ?_
-  intro x
-  rcases x with ⟨s, next⟩
-  apply eq_of_heq
-  have hraw :
-      (foldLens M l ∘ₗ mult (P := P)).toFunB ⟨s, next⟩ ≍
-        (M.mult ∘ₗ (foldLens M l ◃ₗ foldLens M l)).toFunB
-          ⟨s, next⟩ :=
-    (Sigma.ext_iff.mp (foldLens_mult_obj M l s next)).2
-  have hcast :
-      (hA ⟨s, next⟩ ▸
-        (M.mult ∘ₗ (foldLens M l ◃ₗ foldLens M l)).toFunB
-          ⟨s, next⟩) ≍
-        (M.mult ∘ₗ (foldLens M l ◃ₗ foldLens M l)).toFunB
-          ⟨s, next⟩ :=
-    eqRec_heq_self _ _
-  exact hraw.trans hcast.symm
+  apply Lens.ext_mapObj
+  rintro ⟨s, next⟩
+  exact foldLens_mult_obj M l s next
 
 /-- Extend a generator lens uniquely to a substitution-monoid homomorphism
 out of the free substitution monoid. -/
@@ -256,18 +236,9 @@ theorem foldLens_comp_generator_obj (a : P.A) :
 /-- The free fold extends the supplied generator lens. -/
 theorem foldLens_comp_generator :
     foldLens M l ∘ₗ generator P = l := by
-  let hA : ∀ a, (foldLens M l ∘ₗ generator P).toFunA a =
-      l.toFunA a :=
-    fun a => congrArg Sigma.fst (foldLens_comp_generator_obj M l a)
-  refine Lens.ext _ _ hA ?_
+  apply Lens.ext_mapObj
   intro a
-  apply eq_of_heq
-  have hraw : (foldLens M l ∘ₗ generator P).toFunB a ≍
-      l.toFunB a :=
-    (Sigma.ext_iff.mp (foldLens_comp_generator_obj M l a)).2
-  have hcast : (hA a ▸ l.toFunB a) ≍ l.toFunB a :=
-    eqRec_heq_self _ _
-  exact hraw.trans hcast.symm
+  exact foldLens_comp_generator_obj M l a
 
 /-- Folding into the free substitution monoid with its own generator is the
 identity on every path-labelled free-tree object. -/
@@ -346,21 +317,8 @@ theorem foldLens_generator_comp (lPQ : Lens P Q) :
         (FreeP Q).Obj ((FreeP P).B s)) =
       ⟨(map lPQ).toFunA s, (map lPQ).toFunB s⟩ at h
     exact h
-  let hA : ∀ s,
-      (foldLens (substMonoid Q) (generator Q ∘ₗ lPQ)).toFunA s =
-        (map lPQ).toFunA s :=
-    fun s => congrArg Sigma.fst (hobj s)
-  refine Lens.ext _ _ hA ?_
-  intro s
-  apply eq_of_heq
-  have hraw :
-      (foldLens (substMonoid Q) (generator Q ∘ₗ lPQ)).toFunB s ≍
-        (map lPQ).toFunB s :=
-    (Sigma.ext_iff.mp (hobj s)).2
-  have hcast : (hA s ▸ (map lPQ).toFunB s) ≍
-      (map lPQ).toFunB s :=
-    eqRec_heq_self _ _
-  exact hraw.trans hcast.symm
+  apply Lens.ext_mapObj
+  exact hobj
 
 /-- `FreeP.map` packaged as the substitution-monoid homomorphism induced by
 a generator lens. -/
@@ -466,18 +424,16 @@ theorem extend_restrict
         ⟨foldShape M (restrict M f) s,
           foldPath M (restrict M f) s⟩ at h
     exact h.symm
-  let hA : ∀ s, (foldLens M (restrict M f)).toFunA s =
-      f.toLens.toFunA s :=
-    fun s => congrArg Sigma.fst (hobj s)
-  refine Lens.ext _ _ hA ?_
-  intro s
-  apply eq_of_heq
-  have hraw : (foldLens M (restrict M f)).toFunB s ≍
-      f.toLens.toFunB s :=
-    (Sigma.ext_iff.mp (hobj s)).2
-  have hcast : (hA s ▸ f.toLens.toFunB s) ≍ f.toLens.toFunB s :=
-    eqRec_heq_self _ _
-  exact hraw.trans hcast.symm
+  apply Lens.ext_mapObj
+  exact hobj
+
+/-- A homomorphism out of the free substitution monoid is uniquely determined
+by its restriction to the generator polynomial. -/
+theorem extend_unique (f : SubstMonoid.Hom (substMonoid P) M)
+    (h : f.toLens ∘ₗ generator P = l) : f = extend M l := by
+  calc
+    f = extend M (restrict M f) := (extend_restrict M f).symm
+    _ = extend M l := congrArg (extend M) h
 
 /-- The universal property of the free substitution monoid: homomorphisms
 out of `substMonoid P` are equivalent to lenses out of the generator

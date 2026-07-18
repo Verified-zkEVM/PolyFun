@@ -76,6 +76,25 @@ theorem mapObj_comp {P : PFunctor.{uA₁, uB₁}}
     mapObj (g ∘ₗ f) x = mapObj g (mapObj f x) :=
   rfl
 
+/-- Two lenses are equal when they act equally on every source position
+equipped with its identity direction labelling. This packages the dependent
+position equality and direction-map transport needed by `Lens.ext`. -/
+theorem ext_mapObj {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (l₁ l₂ : Lens P Q)
+    (h : ∀ a, mapObj l₁ (⟨a, id⟩ : P.Obj (P.B a)) =
+      mapObj l₂ ⟨a, id⟩) :
+    l₁ = l₂ := by
+  let hA : ∀ a, l₁.toFunA a = l₂.toFunA a :=
+    fun a => congrArg Sigma.fst (h a)
+  refine Lens.ext _ _ hA ?_
+  intro a
+  apply eq_of_heq
+  have hraw : l₁.toFunB a ≍ l₂.toFunB a :=
+    (Sigma.ext_iff.mp (h a)).2
+  have hcast : (hA a ▸ l₂.toFunB a) ≍ l₂.toFunB a :=
+    eqRec_heq_self _ _
+  exact hraw.trans hcast.symm
+
 /-- Diagrammatic composition of lenses: `l₁ ⨟ l₂` applies `l₁` first and `l₂`
 second, the book's left-to-right composition order, so `l₁ ⨟ l₂ = l₂ ∘ₗ l₁`.
 This is the same `⨟` used for machine sequential composition and throughout
