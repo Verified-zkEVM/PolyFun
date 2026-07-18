@@ -52,9 +52,9 @@ displayed lens. -/
       ⟨df.toDirection operation contract
           ((Responder.terminal (P := Q)).answer behavior
             (f.toFunA operation))
-          (appD T displayedBehavior (f.toFunA operation)
+          (respondDisplayed T displayedBehavior (f.toFunA operation)
             (df.toPosition operation contract)).1,
-        (appD T displayedBehavior (f.toFunA operation)
+        (respondDisplayed T displayedBehavior (f.toFunA operation)
           (df.toPosition operation contract)).2⟩ := by
   rfl
 
@@ -173,7 +173,7 @@ theorem mapVerifiedBehavior_comp
     (Display.Lens.toHandler_comp_symm second first)
     behavior displayedBehavior
 
-theorem appD_mapVerifiedBehavior_post
+theorem respondDisplayed_mapVerifiedBehavior_post
     {S : Display.{uA₁, uB₁, uC₁, uD₁} P}
     {T : Display.{uA₂, uB₂, uC₂, uD₂} Q}
     {f : PFunctor.Lens P Q}
@@ -181,21 +181,21 @@ theorem appD_mapVerifiedBehavior_post
     (behavior : PFunctor.M (Q ⊸ X.{uA₂, uB₂}))
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (operation : P.A) (contract : S.position operation) :
-    (appD S (mapVerifiedBehavior df behavior displayedBehavior)
+    (respondDisplayed S (mapVerifiedBehavior df behavior displayedBehavior)
       operation contract).1 =
       df.toDirection operation contract
         ((Responder.terminal (P := Q)).answer behavior
           (f.toFunA operation))
-        (appD T displayedBehavior (f.toFunA operation)
+        (respondDisplayed T displayedBehavior (f.toFunA operation)
           (df.toPosition operation contract)).1 := by
-  exact (appD_reindexVerifiedBehavior_post S T
+  exact (respondDisplayed_reindexVerifiedBehavior_post S T
     (PFunctor.Handler.ofLens f) (df.toHandler)
     behavior displayedBehavior operation contract).trans
       (congrArg Prod.fst
         (runFreeDisplayed_ofLens df behavior displayedBehavior
           operation contract))
 
-theorem appD_mapVerifiedBehavior_next
+theorem respondDisplayed_mapVerifiedBehavior_next
     {S : Display.{uA₁, uB₁, uC₁, uD₁} P}
     {T : Display.{uA₂, uB₂, uC₂, uD₂} Q}
     {f : PFunctor.Lens P Q}
@@ -207,14 +207,14 @@ theorem appD_mapVerifiedBehavior_next
         (behavior_child
           (Responder.reindex (PFunctor.Handler.ofLens f)
             (Responder.terminal (P := Q))) behavior operation)
-        (appD S (mapVerifiedBehavior df behavior displayedBehavior)
+        (respondDisplayed S (mapVerifiedBehavior df behavior displayedBehavior)
           operation contract).2 =
       mapVerifiedBehavior df
         ((Responder.terminal (P := Q)).runFree
           (PFunctor.Handler.ofLens f operation) behavior).2
-        (appD T displayedBehavior (f.toFunA operation)
+        (respondDisplayed T displayedBehavior (f.toFunA operation)
           (df.toPosition operation contract)).2 := by
-  have h := appD_reindexVerifiedBehavior_next S T
+  have h := respondDisplayed_reindexVerifiedBehavior_next S T
     (PFunctor.Handler.ofLens f) (df.toHandler)
     behavior displayedBehavior operation contract
   rw [runFreeDisplayed_ofLens] at h

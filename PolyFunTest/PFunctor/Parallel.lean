@@ -826,13 +826,13 @@ def dependentRightVerifiedBehavior :
 /-- Reindexing verified behavior is observed through genuinely dependent,
 nonconstant postcondition evidence. -/
 example :
-    (Responder.appD dependentLeftDisplay
+    (Responder.respondDisplayed dependentLeftDisplay
       (Responder.mapVerifiedBehavior
         (Display.Lens.id dependentLeftDisplay)
         (ParallelExample.leftResponder.behavior 0)
         dependentLeftVerifiedBehavior)
       true sampleLeftContract).1 = leftPost false := by
-  rw [Responder.appD_mapVerifiedBehavior_post]
+  rw [Responder.respondDisplayed_mapVerifiedBehavior_post]
   rfl
 
 def dependentParallelVerifiedBehavior :
@@ -938,14 +938,14 @@ example :
   Responder.mapVerifiedBehavior_parallel_assoc _ _ _ _ _ _ _ _ _
 
 example :
-    (Responder.appD
+    (Responder.respondDisplayed
       (Display.parallelSum dependentLeftDisplay dependentRightDisplay)
       dependentParallelVerifiedBehavior (.both true PUnit.unit)
       (sampleLeftContract, sampleRightContract)).1 =
         (leftPost false, rightPost 5) := by
   unfold dependentParallelVerifiedBehavior
-  rw [Responder.appD_post]
-  rw [Responder.appD_parallelVerifiedBehavior_post_both]
+  rw [Responder.respondDisplayed_post]
+  rw [Responder.respondDisplayed_parallelVerifiedBehavior_post_both]
   rfl
 
 def sampleFalseContract : dependentLeftDisplay.position false := by
@@ -964,9 +964,9 @@ example :
   rfl
 
 example :
-    (Responder.appD
+    (Responder.respondDisplayed
       (Display.parallelSum dependentLeftDisplay dependentRightDisplay)
-      (Responder.appD
+      (Responder.respondDisplayed
         (Display.parallelSum dependentLeftDisplay dependentRightDisplay)
         dependentParallelVerifiedBehavior (.both true PUnit.unit)
         (sampleLeftContract, sampleRightContract)).2
