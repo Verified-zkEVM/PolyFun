@@ -32,6 +32,45 @@ namespace Responder
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
   {State₁ : Type uS₁} {State₂ : Type uS₂}
 
+/-- Coproduct composition of responders.  Each query selects exactly one
+responder, and the unselected state is frozen. -/
+def sum (left : Responder State₁ P) (right : Responder State₂ Q) :
+    Responder.{max uS₁ uS₂, max uA₁ uA₂, uB}
+      (State₁ × State₂) (P + Q) :=
+  Responder.mk'
+    (fun state query => match query with
+      | .inl a => left.answer state.1 a
+      | .inr b => right.answer state.2 b)
+    (fun state query => match query with
+      | .inl a => (left.next state.1 a, state.2)
+      | .inr b => (state.1, right.next state.2 b))
+
+@[simp]
+theorem sum_answer_inl (left : Responder State₁ P)
+    (right : Responder State₂ Q) (state : State₁ × State₂) (a : P.A) :
+    (sum left right).answer state (.inl a) = left.answer state.1 a :=
+  rfl
+
+@[simp]
+theorem sum_answer_inr (left : Responder State₁ P)
+    (right : Responder State₂ Q) (state : State₁ × State₂) (b : Q.A) :
+    (sum left right).answer state (.inr b) = right.answer state.2 b :=
+  rfl
+
+@[simp]
+theorem sum_next_inl (left : Responder State₁ P)
+    (right : Responder State₂ Q) (state : State₁ × State₂) (a : P.A) :
+    (sum left right).next state (.inl a) =
+      (left.next state.1 a, state.2) :=
+  rfl
+
+@[simp]
+theorem sum_next_inr (left : Responder State₁ P)
+    (right : Responder State₂ Q) (state : State₁ × State₂) (b : Q.A) :
+    (sum left right).next state (.inr b) =
+      (state.1, right.next state.2 b) :=
+  rfl
+
 /-- Parallel composition of responders.  The inactive state is frozen in a
 one-sided branch and both states advance in a joint branch. -/
 def parallel (left : Responder State₁ P) (right : Responder State₂ Q) :

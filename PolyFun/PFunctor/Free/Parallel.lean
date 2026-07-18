@@ -133,6 +133,39 @@ theorem parallelSumRight_toFunB
     (parallelSumRight P Q).toFunB b answer = answer :=
   rfl
 
+/-- Embed the binary coproduct interface into the one-or-both parallel
+interface by retaining only its one-sided calls. -/
+def sumToParallel
+    (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
+    Lens.{max uA₁ uA₂, uB, max uA₁ uA₂, uB} (P + Q) (P ∥ Q) :=
+  Lens.sumPair (parallelSumLeft P Q) (parallelSumRight P Q)
+
+@[simp]
+theorem sumToParallel_toFunA_inl
+    (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : P.A) :
+    (sumToParallel P Q).toFunA (.inl a) = .left a :=
+  rfl
+
+@[simp]
+theorem sumToParallel_toFunA_inr
+    (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (b : Q.A) :
+    (sumToParallel P Q).toFunA (.inr b) = .right b :=
+  rfl
+
+@[simp]
+theorem sumToParallel_toFunB_inl
+    (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB})
+    (a : P.A) (answer : (P ∥ Q).B (.left a)) :
+    (sumToParallel P Q).toFunB (.inl a) answer = answer :=
+  rfl
+
+@[simp]
+theorem sumToParallel_toFunB_inr
+    (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB})
+    (b : Q.A) (answer : (P ∥ Q).B (.right b)) :
+    (sumToParallel P Q).toFunB (.inr b) answer = answer :=
+  rfl
+
 /-! ## Symmetric-monoidal structural lenses -/
 
 /-- Right unitor for parallel sum, viewed as a lens. -/

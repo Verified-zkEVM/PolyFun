@@ -28,6 +28,19 @@ namespace Responder
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
   {State₁ : Type uS₁} {State₂ : Type uS₂}
 
+/-- Coproduct composition is the one-sided restriction of parallel
+composition along the canonical lens from `P + Q` to `P ∥ Q`. -/
+theorem sum_eq_reindex_parallel
+    (left : Responder State₁ P) (right : Responder State₂ Q) :
+    sum left right =
+      reindex (Handler.ofLens (Lens.sumToParallel P Q))
+        (parallel left right) := by
+  apply Responder.ext
+  · intro state query
+    cases query <;> rfl
+  · intro state query
+    cases query <;> rfl
+
 /-- Running a left-embedded program advances only the left responder. -/
 theorem runFree_left (left : Responder State₁ P)
     (right : Responder State₂ Q) {E : Type uE}

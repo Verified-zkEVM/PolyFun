@@ -78,6 +78,17 @@ for arbitrary `FreeM` handlers from the lockstep definition alone.
 
 ## Responders and verified behavior
 
+The paper's binary coproduct machine is the one-sided restriction of this
+structure, not another meaning of parallel. `Lens.sumToParallel` embeds
+`P + Q` into `P ∥ Q`, and `Display.Lens.sumToParallel` embeds
+`Display.sum S T` into `Display.parallelSum S T`. The direct
+`Responder.sum` implementation has definitionally exact branch equations;
+`sum_eq_reindex_parallel` proves that it agrees with reindexing
+`Responder.parallel` along the canonical lens. `sumCoalgebra`, `sumBehavior`,
+and `sumVerifiedBehavior` provide the corresponding state-presented,
+state-free, and proof-relevant closures. Their equations show both which
+component advances and that the other state and invariant witness are frozen.
+
 `Responder.parallel` has product state. A left-only query advances the left
 state and freezes the right; a right-only query does the converse; a joint
 query advances both. `Responder.parallelCoalgebra` proves that paired
@@ -89,6 +100,13 @@ presented as merely `CofreeP.laxTensor`: the synchronized joint component is
 tensor-like, but the one-sided branches must retain the inactive behavior.
 `parallelVerifiedBehavior` applies terminal displayed semantics to the same
 coalgebra construction.
+
+The nullary case needs no second paper-named alias: the existing
+`Responder.zero`, `zeroBehavior`, `zeroDisplayedCoalgebra`, and
+`zeroVerifiedBehavior` already give the unique empty-interface responder and
+its proof-relevant state-free semantics. Together, binary coproduct closure and
+these existing zero constructions cover the machine operations used in the
+Agda development without duplicating the library's structural vocabulary.
 
 ## Compatibility and scope
 

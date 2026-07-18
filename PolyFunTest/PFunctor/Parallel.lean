@@ -41,6 +41,27 @@ def rightProgram : FreeM Right Nat :=
   FreeM.liftBind PUnit.unit FreeM.pure
 
 example :
+    (Responder.sum leftResponder rightResponder).answer (0, 5) (.inl true) =
+      false :=
+  rfl
+
+example :
+    (Responder.sum leftResponder rightResponder).next (0, 5) (.inl true) =
+      (1, 5) :=
+  rfl
+
+example :
+    (Responder.sum leftResponder rightResponder).answer
+        (0, 5) (.inr PUnit.unit) =
+      rightResponder.answer 5 PUnit.unit :=
+  rfl
+
+example :
+    (Responder.sum leftResponder rightResponder).next
+        (0, 5) (.inr PUnit.unit) = (0, 15) :=
+  rfl
+
+example :
     (Responder.parallel leftResponder rightResponder).runFree
       (FreeM.parallel leftProgram rightProgram) (0, 5) =
         ((false, 5), (1, 15)) :=
@@ -171,6 +192,20 @@ def display
     (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
     Display.{max uA₁ uA₂, uB, max uC₁ uC₂, max uD₁ uD₂} (P ∥ Q) :=
   Display.parallelSum S T
+
+def sumLens
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
+    Lens.{max uA₁ uA₂, uB, max uA₁ uA₂, uB}
+      (PFunctor.sum P Q) (P ∥ Q) :=
+  Lens.sumToParallel P Q
+
+def displayedSumLens
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
+    Display.Lens (Display.sum S T) (Display.parallelSum S T)
+      (Lens.sumToParallel P Q) :=
+  Display.Lens.sumToParallel S T
 
 def relationalDisplayLift
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
@@ -369,12 +404,40 @@ def responder
       Responder (LeftState × RightState) (P ∥ Q) :=
   Responder.parallel
 
+def sumResponder
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    {LeftState : Type uS₁} {RightState : Type uS₂} :
+    Responder LeftState P → Responder RightState Q →
+      Responder.{max uS₁ uS₂, max uA₁ uA₂, uB}
+        (LeftState × RightState) (PFunctor.sum P Q) :=
+  Responder.sum
+
+def sumDisplayedCoalgebra
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    {S : Display.{uA₁, uB, uC₁, uD₁} P}
+    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {LeftState : Type uS₁} {RightState : Type uS₂}
+    (left : Responder LeftState P) (right : Responder RightState Q)
+    (I : LeftState → Type uC₃) (J : RightState → Type uC₄)
+    (displayedLeft : Display.Coalgebra (Display.responder S) left.out I)
+    (displayedRight : Display.Coalgebra (Display.responder T) right.out J) :
+    Display.Coalgebra (Display.responder (Display.sum S T))
+      (Responder.sum left right).out (fun state => I state.1 × J state.2) :=
+  Responder.sumCoalgebra left right I J displayedLeft displayedRight
+
 def behavior
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
     PFunctor.M (P ⊸ X.{uA₁, uB}) →
     PFunctor.M (Q ⊸ X.{uA₂, uB}) →
       PFunctor.M ((P ∥ Q) ⊸ X.{max uA₁ uA₂, uB}) :=
   Responder.parallelBehavior
+
+def sumBehavior
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
+    PFunctor.M (P ⊸ X.{uA₁, uB}) →
+    PFunctor.M (Q ⊸ X.{uA₂, uB}) →
+      PFunctor.M (PFunctor.sum P Q ⊸ X.{max uA₁ uA₂, uB}) :=
+  Responder.sumBehavior
 
 def verifiedBehavior
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
@@ -387,6 +450,18 @@ def verifiedBehavior
     Display.M (Display.responder (Display.parallelSum S T))
       (behavior left right) :=
   Responder.parallelVerifiedBehavior S T left displayedLeft right displayedRight
+
+def sumVerifiedBehavior
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (displayedLeft : Display.M (Display.responder S) left)
+    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (displayedRight : Display.M (Display.responder T) right) :
+    Display.M (Display.responder (Display.sum S T))
+      (sumBehavior left right) :=
+  Responder.sumVerifiedBehavior S T left displayedLeft right displayedRight
 
 theorem lensMapComp
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
@@ -850,6 +925,38 @@ def dependentRightVerifiedBehavior :
   Responder.verifiedBehavior dependentRightDisplay
     ParallelExample.rightResponder dependentRightInvariant
     dependentRightCoalgebra 5 ⟨rfl⟩
+
+def dependentSumVerifiedBehavior :
+    Display.M
+      (Display.responder
+        (Display.sum dependentLeftDisplay dependentRightDisplay))
+      (Responder.sumBehavior
+        (ParallelExample.leftResponder.behavior 0)
+        (ParallelExample.rightResponder.behavior 5)) :=
+  Responder.sumVerifiedBehavior dependentLeftDisplay dependentRightDisplay
+    (ParallelExample.leftResponder.behavior 0) dependentLeftVerifiedBehavior
+    (ParallelExample.rightResponder.behavior 5) dependentRightVerifiedBehavior
+
+example :
+    dependentSumVerifiedBehavior.head (.inl true)
+        (ULift.up sampleLeftContract) =
+      ULift.up (dependentLeftVerifiedBehavior.head true sampleLeftContract) :=
+  Responder.respondDisplayed_sumVerifiedBehavior_post_inl
+    dependentLeftDisplay dependentRightDisplay
+    (ParallelExample.leftResponder.behavior 0) dependentLeftVerifiedBehavior
+    (ParallelExample.rightResponder.behavior 5) dependentRightVerifiedBehavior
+    true sampleLeftContract
+
+example :
+    dependentSumVerifiedBehavior.head (.inr PUnit.unit)
+        (ULift.up sampleRightContract) =
+      ULift.up (dependentRightVerifiedBehavior.head PUnit.unit
+        sampleRightContract) :=
+  Responder.respondDisplayed_sumVerifiedBehavior_post_inr
+    dependentLeftDisplay dependentRightDisplay
+    (ParallelExample.leftResponder.behavior 0) dependentLeftVerifiedBehavior
+    (ParallelExample.rightResponder.behavior 5) dependentRightVerifiedBehavior
+    PUnit.unit sampleRightContract
 
 /-- Reindexing verified behavior is observed through genuinely dependent,
 nonconstant postcondition evidence. -/

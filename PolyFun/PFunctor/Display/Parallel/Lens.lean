@@ -158,6 +158,61 @@ def parallelSumMap
         right.toDirection b rightContract answer.2 direction.2) :=
   rfl
 
+/-- Embed the binary coproduct display into the separable parallel display by
+retaining only its one-sided contracts. -/
+def sumToParallel
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
+    Display.Lens (Display.sum S T) (Display.parallelSum S T)
+      (PFunctor.Lens.sumToParallel P Q) where
+  toPosition
+    | .inl _, contract => contract
+    | .inr _, contract => contract
+  toDirection
+    | .inl _, _, _, direction => direction
+    | .inr _, _, _, direction => direction
+
+@[simp] theorem sumToParallel_toPosition_inl
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (a : P.A) (contract : (Display.sum S T).position (.inl a)) :
+    (sumToParallel S T).toPosition (.inl a) contract = contract :=
+  rfl
+
+@[simp] theorem sumToParallel_toPosition_inr
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (b : Q.A) (contract : (Display.sum S T).position (.inr b)) :
+    (sumToParallel S T).toPosition (.inr b) contract = contract :=
+  rfl
+
+@[simp] theorem sumToParallel_toDirection_inl
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (a : P.A) (contract : (Display.sum S T).position (.inl a))
+    (answer : P.B a)
+    (direction : (Display.parallelSum S T).direction
+      (.left a) contract answer) :
+    (sumToParallel S T).toDirection (.inl a) contract answer direction =
+      direction :=
+  rfl
+
+@[simp] theorem sumToParallel_toDirection_inr
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (b : Q.A) (contract : (Display.sum S T).position (.inr b))
+    (answer : Q.B b)
+    (direction : (Display.parallelSum S T).direction
+      (.right b) contract answer) :
+    (sumToParallel S T).toDirection (.inr b) contract answer direction =
+      direction :=
+  rfl
+
 /-- Right unitor for separable parallel displays. -/
 def parallelSumZero
     {P : PFunctor.{uA₁, uB}}
