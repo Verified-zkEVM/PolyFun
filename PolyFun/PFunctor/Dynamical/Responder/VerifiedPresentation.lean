@@ -19,12 +19,12 @@ principles; lens-specific specializations live in `Responder.Lens`.
 
 @[expose] public section
 
-universe uA₁ uA₂ uA₃ uB uC₁ uD₁ uC₂ uD₂ uC₃ uD₃ uC₄ uD₄ uC₅ uD₅
+universe uA₁ uA₂ uA₃ uB uB' uC₁ uD₁ uC₂ uD₂ uC₃ uD₃ uC₄ uD₄ uC₅ uD₅
 
 namespace PFunctor
 namespace Responder
 
-variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB'}}
 
 
 /-- One proof-relevant responder step on the total state-and-witness
@@ -512,7 +512,7 @@ end VerifiedPresentationHom
 semantics is a verified presentation homomorphism. -/
 def reindexVerifiedPresentationHom
     {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {T : Display.{uA₂, uB', uC₂, uD₂} Q}
     (f : PFunctor.Handler (PFunctor.FreeM Q) P)
     (df : Display.Handler S T f)
     {State : Type uC₃} (R : Responder State Q)
@@ -555,7 +555,7 @@ def reindexVerifiedPresentationHom
           (f query) (R.behavior state)
         let sourceResult := R.runFree (f query) state
         let presentedResult : P.B query ×
-            PFunctor.M (Q ⊸ X.{uA₂, uB}) :=
+            PFunctor.M (Q ⊸ X.{uA₂, uB'}) :=
           ⟨sourceResult.1, R.behavior sourceResult.2⟩
         let targetEvidence := runFreeDisplayed T
           (Responder.terminal (P := Q))
@@ -572,7 +572,7 @@ def reindexVerifiedPresentationHom
               sourceEvidence.2⟩
         let presentationEq := runFree_terminal R (f query) state
         let Evidence := fun result : P.B query ×
-            PFunctor.M (Q ⊸ X.{uA₂, uB}) =>
+            PFunctor.M (Q ⊸ X.{uA₂, uB'}) =>
           S.direction query precondition result.1 ×
             Display.M (Display.responder T) result.2
         have hEvidence :
@@ -605,7 +605,7 @@ def reindexVerifiedPresentationHom
             (f query) (R.behavior state)
           let sourceResult := R.runFree (f query) state
           let presentedResult : P.B query ×
-              PFunctor.M (Q ⊸ X.{uA₂, uB}) :=
+              PFunctor.M (Q ⊸ X.{uA₂, uB'}) :=
             ⟨sourceResult.1, R.behavior sourceResult.2⟩
           let targetEvidence := runFreeDisplayed T
             (Responder.terminal (P := Q))
@@ -622,7 +622,7 @@ def reindexVerifiedPresentationHom
                 sourceEvidence.2⟩
           let presentationEq := runFree_terminal R (f query) state
           let Evidence := fun result : P.B query ×
-              PFunctor.M (Q ⊸ X.{uA₂, uB}) =>
+              PFunctor.M (Q ⊸ X.{uA₂, uB'}) =>
             S.direction query precondition result.1 ×
               Display.M (Display.responder T) result.2
           have hEvidence :
@@ -647,7 +647,7 @@ def reindexVerifiedPresentationHom
           (f query) (R.behavior state)
         let sourceResult := R.runFree (f query) state
         let presentedResult : P.B query ×
-            PFunctor.M (Q ⊸ X.{uA₂, uB}) :=
+            PFunctor.M (Q ⊸ X.{uA₂, uB'}) :=
           ⟨sourceResult.1, R.behavior sourceResult.2⟩
         let targetEvidence := runFreeDisplayed T
           (Responder.terminal (P := Q))
@@ -664,7 +664,7 @@ def reindexVerifiedPresentationHom
               sourceEvidence.2⟩
         let presentationEq := runFree_terminal R (f query) state
         let Evidence := fun result : P.B query ×
-            PFunctor.M (Q ⊸ X.{uA₂, uB}) =>
+            PFunctor.M (Q ⊸ X.{uA₂, uB'}) =>
           S.direction query precondition result.1 ×
             Display.M (Display.responder T) result.2
         have hEvidence :
@@ -688,7 +688,7 @@ def reindexVerifiedPresentationHom
 verified responder, after the ordinary presentation equality. -/
 theorem reindexVerifiedBehavior_verifiedBehavior
     {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {T : Display.{uA₂, uB', uC₂, uD₂} Q}
     (f : PFunctor.Handler (PFunctor.FreeM Q) P)
     (df : Display.Handler S T f)
     {State : Type uC₃} (R : Responder State Q)

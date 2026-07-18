@@ -251,6 +251,76 @@ def heterogeneousDisplayLensHandler
     Display.Handler S T (Handler.ofLens base) :=
   displayed.toHandler
 
+/-- State-free behavior reindexing along a lens keeps the source and target
+response universes independent. -/
+def heterogeneousMapBehavior
+    {P : PFunctor.{uA₄, uB₁}} {Q : PFunctor.{uA₅, uB₂}}
+    (base : Lens P Q)
+    (behavior : PFunctor.M (Q ⊸ X.{uA₅, uB₂})) :
+    PFunctor.M (P ⊸ X.{uA₄, uB₁}) :=
+  Responder.mapBehavior base behavior
+
+/-- Lens-composition reindexing only identifies the source and intermediate
+response universes; the final target remains independent. -/
+theorem heterogeneousMapBehaviorComp
+    {P : PFunctor.{uA₄, uB₁}} {Q : PFunctor.{uA₅, uB₁}}
+    {R : PFunctor.{uA₆, uB₂}}
+    (first : Lens P Q) (second : Lens Q R)
+    (behavior : PFunctor.M (R ⊸ X.{uA₆, uB₂})) :
+    Responder.mapBehavior first (Responder.mapBehavior second behavior) =
+      Responder.mapBehavior (second ∘ₗ first) behavior :=
+  Responder.mapBehavior_comp first second behavior
+
+/-- Verified state-free behavior reindexing preserves the independent
+response universes of a displayed lens. -/
+def heterogeneousMapVerifiedBehavior
+    {P : PFunctor.{uA₄, uB₁}} {Q : PFunctor.{uA₅, uB₂}}
+    {S : Display.{uA₄, uB₁, uC₄, uD₄} P}
+    {T : Display.{uA₅, uB₂, uC₅, uD₅} Q}
+    {base : Lens P Q} (displayedLens : Display.Lens S T base)
+    (behavior : PFunctor.M (Q ⊸ X.{uA₅, uB₂}))
+    (displayedBehavior : Display.M (Display.responder T) behavior) :
+    Display.M (Display.responder S)
+      (Responder.mapBehavior base behavior) :=
+  Responder.mapVerifiedBehavior displayedLens behavior displayedBehavior
+
+/-- The verified lens-composition law retains the same heterogeneous final
+target boundary as its ordinary behavior equation. -/
+theorem heterogeneousMapVerifiedBehaviorComp
+    {P : PFunctor.{uA₄, uB₁}} {Q : PFunctor.{uA₅, uB₁}}
+    {R : PFunctor.{uA₆, uB₂}}
+    {S : Display.{uA₄, uB₁, uC₄, uD₄} P}
+    {T : Display.{uA₅, uB₁, uC₅, uD₅} Q}
+    {U : Display.{uA₆, uB₂, uC₆, uD₆} R}
+    {firstBase : Lens P Q} {secondBase : Lens Q R}
+    (first : Display.Lens S T firstBase)
+    (second : Display.Lens T U secondBase)
+    (behavior : PFunctor.M (R ⊸ X.{uA₆, uB₂}))
+    (displayedBehavior : Display.M (Display.responder U) behavior) :
+    Display.M.transport
+        (Responder.mapBehavior_comp firstBase secondBase behavior)
+        (Responder.mapVerifiedBehavior first
+          (Responder.mapBehavior secondBase behavior)
+          (Responder.mapVerifiedBehavior second behavior displayedBehavior)) =
+      Responder.mapVerifiedBehavior (Display.Lens.comp second first)
+        behavior displayedBehavior :=
+  Responder.mapVerifiedBehavior_comp first second behavior displayedBehavior
+
+/-- The verified-presentation bridge does not identify the response universes
+of the source and target interfaces. -/
+def heterogeneousReindexVerifiedPresentationHom
+    {P : PFunctor.{uA₄, uB₁}} {Q : PFunctor.{uA₅, uB₂}}
+    {S : Display.{uA₄, uB₁, uC₄, uD₄} P}
+    {T : Display.{uA₅, uB₂, uC₅, uD₅} Q}
+    (base : Handler (FreeM Q) P)
+    (displayedHandler : Display.Handler S T base)
+    {State : Type uS₁} (target : Responder State Q)
+    (Invariant : State → Type uS₂)
+    (displayedTarget :
+      Display.Coalgebra (Display.responder T) target.out Invariant) :=
+  Responder.reindexVerifiedPresentationHom base displayedHandler
+    target Invariant displayedTarget
+
 def handler
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
     Handler (FreeM (P ∥ Q)) (P ∥ Q) :=
