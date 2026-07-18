@@ -22,14 +22,14 @@ combinators are thin specializations of these definitions.
 
 @[expose] public section
 
-universe u v w w₂ w₃ w₄
+universe u v w w₂ w₃ w₄ w₅
 
 namespace PFunctor
 namespace FreeM
 namespace Displayed
 namespace Decoration
 
-variable {P : PFunctor.{u, v}} {α β : Type w}
+variable {P : PFunctor.{u, v}} {α : Type w} {β : Type w₄}
 
 /-- Concatenate per-node metadata along `FreeM.append`. -/
 def append {Γ : P.A → Type w₂}
@@ -105,7 +105,7 @@ theorem append_liftBind {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Typ
 
 /-- `Decoration.Over.map` commutes with `Decoration.Over.append`. -/
 theorem map_append {Γ : P.A → Type w₂}
-    {F : (a : P.A) → Γ a → Type w₃} {G : (a : P.A) → Γ a → Type w₄}
+    {F : (a : P.A) → Γ a → Type w₃} {G : (a : P.A) → Γ a → Type w₅}
     (η : ∀ a γ, F a γ → G a γ) :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (d₁ : Decoration Γ s₁) →

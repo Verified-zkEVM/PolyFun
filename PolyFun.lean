@@ -135,6 +135,7 @@ import PolyFun.PFunctor.Dynamical.Trajectory
 import PolyFun.PFunctor.Equiv.Basic
 import PolyFun.PFunctor.Free.Basic
 import PolyFun.PFunctor.Free.Cursor
+import PolyFun.PFunctor.Free.Cursor.Append
 import PolyFun.PFunctor.Free.Cursor.Fork
 import PolyFun.PFunctor.Free.Cursor.Occurrence
 import PolyFun.PFunctor.Free.Displayed
