@@ -75,6 +75,34 @@ def mk' (ans : (s : S) → (a : q.A) → q.B a) (nxt : S → q.A → S) : Respon
 @[simp] theorem next_mk' (ans : (s : S) → (a : q.A) → q.B a) (nxt : S → q.A → S)
     (s : S) (a : q.A) : (mk' ans nxt).next s a = nxt s a := rfl
 
+/-- Responders are determined by their pointwise answers and next states.
+Unlike `equivStateHandler`, this extensionality principle imposes no equality
+between the responder-state and interface-direction universes. -/
+@[ext]
+theorem ext (R R' : Responder S q)
+    (hAnswer : ∀ state query, R.answer state query = R'.answer state query)
+    (hNext : ∀ state query, R.next state query = R'.next state query) :
+    R = R' := by
+  rcases R with ⟨expose, update⟩
+  rcases R' with ⟨expose', update'⟩
+  have hExpose : expose = expose' := by
+    funext state
+    apply Lens.ext
+    case h₁ =>
+      intro query
+      exact Subsingleton.elim _ _
+    case h₂ =>
+      intro query
+      funext direction
+      cases direction
+      exact hAnswer state query
+  subst expose'
+  congr
+  funext state direction
+  rcases direction with ⟨query, trivialDirection⟩
+  cases trivialDirection
+  exact hNext state query
+
 @[simp] theorem expose_mk' (ans : (s : S) → (a : q.A) → q.B a) (nxt : S → q.A → S)
     (s : S) : DynSystem.expose (mk' ans nxt) s = sectionLens (ans s) := rfl
 
