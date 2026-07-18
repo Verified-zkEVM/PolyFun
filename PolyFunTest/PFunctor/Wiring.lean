@@ -233,7 +233,7 @@ example (a : Interface.A) :
 
 /-! The public producers preserve all advertised universe separation. -/
 
-universe uBoxes uArity uInputs uA uB uC uD uM
+universe uBoxes uArity uInputs uA uA' uB uB' uC uD uC' uD' uM
 
 section UniverseCanary
 
@@ -264,9 +264,9 @@ def universeSigmaHandler {I : Type uInputs}
   PFunctor.Handler.sigma f
 
 def universeDisplayedSigmaHandler {I : Type uInputs}
-    {P : I → PFunctor.{uA, uB}} {Q : PFunctor.{uA, uB}}
+    {P : I → PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
     (S : (i : I) → Display.{uA, uB, uC, uD} (P i))
-    (T : Display.{uA, uB, uC, uD} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     {f : (i : I) → (a : (P i).A) → FreeM Q ((P i).B a)}
     (df : (i : I) → Display.Handler (S i) T (f i)) :
     Display.Handler (Display.sigma S) T (PFunctor.Handler.sigma f) :=
