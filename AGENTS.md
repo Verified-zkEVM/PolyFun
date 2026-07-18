@@ -105,6 +105,7 @@ PFunctor/{Handler, Free/Basic} → PFunctor/Handler/Free
 PFunctor/{Display/Free, Handler/Free}
   → PFunctor/Display/Handler → PFunctor/Display/Handler/Sigma
   → PFunctor/Wiring
+PFunctor/{Display/Handler, Free/Universal} → PFunctor/Display/Category
 PFunctor/Free/Basic
   → PFunctor/Free/Displayed
   → PFunctor/Free/{Path, Displayed/Decoration}
@@ -162,6 +163,8 @@ PFunctor/Display/Coalgebra + PFunctor/Dynamical/Responder
   → PFunctor/Dynamical/Responder/Display
   → PFunctor/Dynamical/Responder/Reindex
   → PFunctor/Dynamical/Responder/Behavior
+PFunctor/{Display/Category, PatternRunsOnMatter/Applications,
+  Dynamical/Responder/Behavior} → PFunctor/PatternRunsOnMatter/Display
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
    for RunN and IOMachine, PFunctor/InternalHom for Responder, and

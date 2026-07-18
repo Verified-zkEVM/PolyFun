@@ -134,6 +134,46 @@ def output : (s : FreeM P α) → Path s → α
   | .pure x, _ => x
   | .liftBind _ rest, ⟨b, path⟩ => output (rest b) path
 
+/-- Follow a fixed direction selector at every operation node to obtain a
+complete path through a free tree.  The selector is operation-dependent, but
+does not inspect the continuation below the selected direction. -/
+def Path.ofHandler (choose : (a : P.A) → P.B a) :
+    (tree : FreeM P α) → Path tree
+  | .pure _ => ⟨⟩
+  | .liftBind operation next =>
+      ⟨choose operation, ofHandler choose (next (choose operation))⟩
+
+@[simp]
+theorem Path.ofHandler_pure (choose : (a : P.A) → P.B a) (value : α) :
+    Path.ofHandler choose (pure value : FreeM P α) = ⟨⟩ :=
+  rfl
+
+@[simp]
+theorem Path.ofHandler_liftBind (choose : (a : P.A) → P.B a)
+    (operation : P.A) (next : P.B operation → FreeM P α) :
+    Path.ofHandler choose ((FreeM.lift operation).bind next) =
+      ⟨choose operation,
+        Path.ofHandler choose (next (choose operation))⟩ :=
+  rfl
+
+/-- Read the leaf selected by the unique direction of every node in a free
+tree over the identity polynomial `X`. -/
+def collapseUnit (tree : FreeM X.{uA, uB} α) : α :=
+  output tree (Path.ofHandler (fun _ => PUnit.unit) tree)
+
+@[simp]
+theorem collapseUnit_pure (value : α) :
+    collapseUnit (pure value : FreeM X.{uA, uB} α) = value :=
+  rfl
+
+@[simp]
+theorem collapseUnit_liftBind
+    (next : PUnit.{uB + 1} → FreeM X.{uA, uB} α) :
+    collapseUnit
+        ((FreeM.lift (P := X.{uA, uB}) PUnit.unit).bind next) =
+      collapseUnit (next PUnit.unit) :=
+  rfl
+
 /-- The leaf payload selected by a runtime path along a lens. -/
 def outputAlong (l : Lens P Q) : (s : FreeM P α) → PathAlong l s → α
   | .pure x, _ => x

@@ -6,7 +6,7 @@ Authors: Quang Dao
 
 module
 
-public import PolyFun.PFunctor.Dynamical.Responder.Reindex
+public import PolyFun.PFunctor.PatternRunsOnMatter.Display
 
 /-!
 Worked examples for base and proof-relevant responder reindexing. Contract
@@ -81,6 +81,36 @@ def twoCalls : Handler (FreeM Interface) Interface :=
     .liftBind () fun second =>
       .pure (Bool.xor first second)
 
+/-- A concrete complete path through the encoded two-call program.  Its two
+directions deliberately differ so that the backward component of
+`Handler.toFreeLens` cannot silently swap or duplicate answers. -/
+def twoCallsPath : FreeM.Path (FreeP.encode (twoCalls ())).1 :=
+  ⟨false, ⟨true, ⟨⟩⟩⟩
+
+/-- The forward component of the structural handler/lens equivalence is the
+unlabelled program shape. -/
+example :
+    (Handler.toFreeLens twoCalls).toFunA () =
+      (FreeP.encode (twoCalls ())).1 :=
+  rfl
+
+/-- The backward component reads the source result at the selected complete
+path; here `false xor true` is observable. -/
+example :
+    (Handler.toFreeLens twoCalls).toFunB () twoCallsPath = true :=
+  rfl
+
+/-- Decoding after encoding preserves a nontrivial handler extensionally. -/
+example : Handler.ofFreeLens (Handler.toFreeLens twoCalls) = twoCalls :=
+  Handler.freeLensEquiv.left_inv twoCalls
+
+/-- Encoding after decoding preserves a nontrivial lens extensionally. -/
+example :
+    Handler.toFreeLens
+        (Handler.ofFreeLens (Handler.toFreeLens twoCalls)) =
+      Handler.toFreeLens twoCalls :=
+  Handler.freeLensEquiv.right_inv (Handler.toFreeLens twoCalls)
+
 def displayedTwoCalls : Display.Handler contract contract twoCalls :=
   fun _ sourcePrecondition =>
     ⟨sourcePrecondition, fun first firstEvidence =>
@@ -107,6 +137,16 @@ example : target.runFree (twoCalls ()) false = (true, false) :=
 
 def source := Responder.reindex twoCalls target
 
+/-- G5's categorical reconstruction reaches the same responder, including
+the nontrivial answer and returned state below. -/
+example : Responder.reindexViaRunAgainst twoCalls target = source :=
+  Responder.reindexViaRunAgainst_eq_reindex twoCalls target
+
+example : Responder.runAgainstResult target (twoCalls ()) false =
+    (true, false) := by
+  rw [Responder.runAgainstResult_eq_runFree]
+  rfl
+
 example : source.answer false () = true :=
   rfl
 
@@ -120,6 +160,39 @@ def displayedExecution :=
   Responder.runFreeDisplayed contract target verifiedTarget
     (displayedTwoCalls () false) false initialWitness
 
+def patternDisplayedExecution :=
+  Responder.runAgainstDisplayed contract target verifiedTarget
+    (displayedTwoCalls () false) false initialWitness
+
+def verifiedSource :=
+  Responder.reindexCoalgebra contract contract twoCalls displayedTwoCalls
+    target verifiedTarget
+
+def transportedCoalgebraExecution :=
+  Responder.transportRunEvidence (contract.direction () false) Invariant
+    (Responder.runAgainstResult_eq_runFree
+      target (twoCalls ()) false).symm
+    ((Display.responderCoalgebraEquiv contract source Invariant)
+      verifiedSource false initialWitness () false)
+
+/-- The state-presented verified action is directly the transported
+displayed responder-reindexing obligation, with nonconstant postcondition and
+state-invariant evidence. -/
+example : patternDisplayedExecution = transportedCoalgebraExecution :=
+  Responder.runAgainstDisplayed_eq_reindexCoalgebra contract contract
+    twoCalls displayedTwoCalls target verifiedTarget false initialWitness
+    () false
+
+/-- Both proof-relevant components survive transport through the G5
+Pattern-Runs-on-Matter identification. -/
+example :
+    Responder.transportRunEvidence (contract.direction () false) Invariant
+        (Responder.runAgainstResult_eq_runFree
+          target (twoCalls ()) false)
+        patternDisplayedExecution = displayedExecution :=
+  Responder.runAgainstDisplayed_eq_runFreeDisplayed contract target
+    verifiedTarget (displayedTwoCalls () false) false initialWitness
+
 example : directionVal false (target.runFree (twoCalls ()) false).1
     displayedExecution.1 = 1 :=
   rfl
@@ -128,9 +201,29 @@ example : invariantVal (target.runFree (twoCalls ()) false).2
     displayedExecution.2 = 0 :=
   rfl
 
-def verifiedSource :=
-  Responder.reindexCoalgebra contract contract twoCalls displayedTwoCalls
-    target verifiedTarget
+example : directionVal false (target.runFree (twoCalls ()) false).1
+    (Responder.transportRunEvidence (contract.direction () false) Invariant
+      (Responder.runAgainstResult_eq_runFree target (twoCalls ()) false)
+      transportedCoalgebraExecution).1 = 1 := by
+  rw [← show patternDisplayedExecution = transportedCoalgebraExecution from
+    Responder.runAgainstDisplayed_eq_reindexCoalgebra contract contract
+      twoCalls displayedTwoCalls target verifiedTarget false initialWitness
+      () false]
+  unfold patternDisplayedExecution
+  rw [Responder.runAgainstDisplayed_eq_runFreeDisplayed]
+  rfl
+
+example : invariantVal (target.runFree (twoCalls ()) false).2
+    (Responder.transportRunEvidence (contract.direction () false) Invariant
+      (Responder.runAgainstResult_eq_runFree target (twoCalls ()) false)
+      transportedCoalgebraExecution).2 = 0 := by
+  rw [← show patternDisplayedExecution = transportedCoalgebraExecution from
+    Responder.runAgainstDisplayed_eq_reindexCoalgebra contract contract
+      twoCalls displayedTwoCalls target verifiedTarget false initialWitness
+      () false]
+  unfold patternDisplayedExecution
+  rw [Responder.runAgainstDisplayed_eq_runFreeDisplayed]
+  rfl
 
 example : directionVal false (source.answer false ())
     ((Display.responderCoalgebraEquiv contract source Invariant)
@@ -146,6 +239,27 @@ example :
     Responder.reindex twoCalls (Responder.reindex negateCall target) =
       Responder.reindex (negateCall.comp twoCalls) target :=
   Responder.reindex_comp negateCall twoCalls target
+
+/-- The free-handler encoding uses the existing substitution fold for
+categorical composition. -/
+example :
+    Handler.toFreeLens (negateCall.comp twoCalls) =
+      FreeP.foldLens (FreeP.substMonoid Interface)
+          (Handler.toFreeLens negateCall) ∘ₗ
+        Handler.toFreeLens twoCalls :=
+  Handler.toFreeLens_comp negateCall twoCalls
+
+/-- Proof-relevant displayed composition is associative only after transport
+along the ordinary handler law; this canary uses nonconstant evidence. -/
+example :
+    Display.Handler.transport
+        (Handler.comp_assoc twoCalls negateCall twoCalls)
+        ((displayedTwoCalls.comp displayedNegateCall).comp
+          displayedTwoCalls) =
+      displayedTwoCalls.comp
+        (displayedNegateCall.comp displayedTwoCalls) :=
+  Display.Handler.comp_assoc displayedTwoCalls displayedNegateCall
+    displayedTwoCalls
 
 /-! These committed observations make handler-composition order independently
 falsifiable.  Starting from `false`, interpreting `twoCalls` through

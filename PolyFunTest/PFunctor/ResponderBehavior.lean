@@ -6,7 +6,7 @@ Authors: Quang Dao
 
 module
 
-public import PolyFun.PFunctor.Dynamical.Responder.Behavior
+public import PolyFun.PFunctor.PatternRunsOnMatter.Display
 
 /-!
 Canaries for indexed M-types and state-free proof-relevant responder behavior.
@@ -136,10 +136,25 @@ def reindexedVerifiedBehavior :=
   Responder.reindexVerifiedBehavior contract contract oneCall displayedOneCall
     behavior verifiedBehavior
 
+example : Responder.reindexBehavior oneCall behavior =
+    (Responder.reindexViaRunAgainst oneCall
+      (Responder.terminal (P := Interface))).behavior behavior :=
+  Responder.reindexBehavior_eq_runAgainst oneCall behavior
+
 def directDisplayedStep :=
   Responder.runFreeDisplayed contract (Responder.terminal (P := Interface))
     (Display.Coalgebra.terminal (Display.responder contract))
     (displayedOneCall query false) behavior verifiedBehavior
+
+def runAgainstDisplayedStep :=
+  Responder.transportRunEvidence (contract.direction query false)
+    (Display.M (Display.responder contract))
+    (Responder.runAgainstResult_eq_runFree
+      (Responder.terminal (P := Interface)) (oneCall query) behavior)
+    (Responder.runAgainstDisplayed contract
+      (Responder.terminal (P := Interface))
+      (Display.Coalgebra.terminal (Display.responder contract))
+      (displayedOneCall query false) behavior verifiedBehavior)
 
 /-! The direct displayed execution and the coinductive reindexed `respondDisplayed` side
 are observed separately, so changing the semantic equation and implementation
@@ -168,6 +183,21 @@ example : directionVal false false
     rw [Responder.respondDisplayed_verifiedBehavior_post]
     rfl
 
+/-- The state-free proof-relevant postcondition is supplied by evaluated
+Pattern Runs on Matter, not merely by the raw Xi synchronization tree. -/
+example :
+    (Responder.respondDisplayed contract reindexedVerifiedBehavior query false).1 =
+      (Responder.transportRunEvidence (contract.direction query false)
+        (Display.M (Display.responder contract))
+        (Responder.runAgainstResult_eq_runFree
+          (Responder.terminal (P := Interface)) (oneCall query) behavior)
+        (Responder.runAgainstDisplayed contract
+          (Responder.terminal (P := Interface))
+          (Display.Coalgebra.terminal (Display.responder contract))
+          (displayedOneCall query false) behavior verifiedBehavior)).1 :=
+  Responder.respondDisplayed_reindexVerifiedBehavior_post_runAgainst contract contract
+    oneCall displayedOneCall behavior verifiedBehavior query false
+
 example :
     Display.M.transport
         (Responder.behavior_child
@@ -180,6 +210,50 @@ example :
           (oneCall query) behavior).2 directDisplayedStep.2 := by
   exact Responder.respondDisplayed_reindexVerifiedBehavior_next contract contract
     oneCall displayedOneCall behavior verifiedBehavior query false
+
+/-- The evaluated Pattern-Runs-on-Matter continuation bridge is exercised
+directly, rather than only through its `runFreeDisplayed` predecessor. -/
+example :
+    Display.M.transport
+        (Responder.behavior_child
+          (Responder.reindex oneCall
+            (Responder.terminal (P := Interface))) behavior query)
+        (Responder.respondDisplayed contract reindexedVerifiedBehavior query false).2 =
+      Responder.reindexVerifiedBehavior contract contract oneCall
+        displayedOneCall
+        ((Responder.terminal (P := Interface)).runFree
+          (oneCall query) behavior).2 runAgainstDisplayedStep.2 := by
+  exact
+    Responder.respondDisplayed_reindexVerifiedBehavior_next_runAgainst contract contract
+      oneCall displayedOneCall behavior verifiedBehavior query false
+
+def firstRunAgainstContinuation :
+    Display.M (Display.responder contract)
+      (Responder.reindexBehavior oneCall
+        ((Responder.terminal (P := Interface)).runFree
+          (oneCall query) behavior).2) :=
+  Responder.reindexVerifiedBehavior contract contract oneCall displayedOneCall
+    ((Responder.terminal (P := Interface)).runFree
+      (oneCall query) behavior).2 runAgainstDisplayedStep.2
+
+/-- After the evaluated-action bridge, the successor continuation still
+exposes the answer-dependent evidence of its next state. -/
+example : directionVal true true
+    (Responder.respondDisplayed contract firstRunAgainstContinuation query true).1 = 0 := by
+  have hstep : runAgainstDisplayedStep = directDisplayedStep :=
+    Responder.runAgainstDisplayed_eq_runFreeDisplayed contract
+      (Responder.terminal (P := Interface))
+      (Display.Coalgebra.terminal (Display.responder contract))
+      (displayedOneCall query false) behavior verifiedBehavior
+  change directionVal true true
+    (Responder.respondDisplayed contract
+      (Responder.reindexVerifiedBehavior contract contract oneCall
+        displayedOneCall
+        ((Responder.terminal (P := Interface)).runFree
+          (oneCall query) behavior).2 runAgainstDisplayedStep.2)
+      query true).1 = 0
+  rw [hstep]
+  rfl
 
 def firstReindexedContinuation :
     Display.M (Display.responder contract)
