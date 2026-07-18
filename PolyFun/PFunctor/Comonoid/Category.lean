@@ -141,6 +141,19 @@ def compose (c : C.carrier.A) (d : C.carrier.B c)
     (cast (congrArg (C.carrier ◃ C.carrier).B
       (comultPosition_eq C c).symm) ⟨d, e⟩)
 
+@[simp] theorem stateComonoid_identity (S : Type uA) (state : S) :
+    identity (stateComonoid S) state = state :=
+  rfl
+
+@[simp] theorem stateComonoid_target (S : Type uA) (state direction : S) :
+    target (stateComonoid S) state direction = direction :=
+  rfl
+
+@[simp] theorem stateComonoid_compose (S : Type uA)
+    (state first second : S) :
+    compose (stateComonoid S) state first second = second :=
+  rfl
+
 private def normalizedComult : Lens C.carrier (C.carrier ◃ C.carrier) where
   toFunA c := ⟨c, target C c⟩
   toFunB c direction := compose C c direction.1 direction.2

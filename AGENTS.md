@@ -127,6 +127,8 @@ PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Behavior, Simulation, RunN, DynComputation, IOMachine}
   → PFunctor/Dynamical/Bisimulation   (also imports Control/Bisimulation)
   → PFunctor/Dynamical/{Refinement, Responder, Game}
+PFunctor/{Cofree/Universal, Dynamical/Trajectory}
+  → PFunctor/Dynamical/CofreeMate
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
    for RunN and IOMachine, PFunctor/InternalHom for Responder, and

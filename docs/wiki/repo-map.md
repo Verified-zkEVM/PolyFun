@@ -73,6 +73,8 @@ PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   -> PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
   -> PFunctor/Dynamical/{Behavior, Simulation, RunN, DynComputation, IOMachine}
   -> PFunctor/Dynamical/{Refinement, Responder, Game}
+PFunctor/{Cofree/Universal, Dynamical/Trajectory}
+  -> PFunctor/Dynamical/CofreeMate
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
    for RunN and IOMachine, PFunctor/InternalHom for Responder, and
