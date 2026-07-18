@@ -415,7 +415,8 @@ private theorem map_obj_comp {R : PFunctor.{uA₃, uB₃}}
     _ = (map (g ∘ₗ f)).toFunB tree rightVertex :=
       (M.Vertex.pullMapLens_comp g f tree rightVertex).symm
 
-@[simp]
+/-- Mapping preserves lens composition. This is intentionally not a simp
+lemma: `Lens.mapObj_comp` owns the canonical object-level normal form. -/
 theorem map_comp {R : PFunctor.{uA₃, uB₃}}
     (g : Lens Q R) (f : Lens P Q) :
     map g ∘ₗ map f = map (g ∘ₗ f) := by

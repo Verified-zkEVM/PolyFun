@@ -121,6 +121,39 @@ example :
     | _ => False
   simp [outerVertex, innerVertex]
 
+/-- A third independently visible path component for coassociativity. -/
+def thirdVertex : M.Vertex (M.Vertex.subtree innerVertex) :=
+  .child true (.root _)
+
+def depthThree : M.Vertex binaryTree :=
+  .child true (.child false (.child true (.root _)))
+
+def coassocLeft :
+    Lens (CofreeP binaryP)
+      (CofreeP binaryP ◃ (CofreeP binaryP ◃ CofreeP binaryP)) :=
+  Lens.Equiv.compAssoc.toLens ∘ₗ
+      (CofreeP.comult (P := binaryP) ◃ₗ Lens.id (CofreeP binaryP)) ∘ₗ
+    CofreeP.comult (P := binaryP)
+
+def coassocRight :
+    Lens (CofreeP binaryP)
+      (CofreeP binaryP ◃ (CofreeP binaryP ◃ CofreeP binaryP)) :=
+  (Lens.id (CofreeP binaryP) ◃ₗ
+      CofreeP.comult (P := binaryP)) ∘ₗ
+    CofreeP.comult (P := binaryP)
+
+/-- Left-associated comultiplication concatenates all three backward path
+components in outer-to-inner order. -/
+example : coassocLeft.toFunB binaryTree
+    ⟨outerVertex, ⟨innerVertex, thirdVertex⟩⟩ = depthThree :=
+  rfl
+
+/-- Right-associated comultiplication has the same observable three-level
+backward behavior. -/
+example : coassocRight.toFunB binaryTree
+    ⟨outerVertex, ⟨innerVertex, thirdVertex⟩⟩ = depthThree :=
+  rfl
+
 example :
     Lens.Equiv.compAssoc.toLens ∘ₗ
           (CofreeP.comult (P := binaryP) ◃ₗ Lens.id (CofreeP binaryP)) ∘ₗ
