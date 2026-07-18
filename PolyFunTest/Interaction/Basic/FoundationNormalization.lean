@@ -18,7 +18,7 @@ namespace TypeTree
 
 /-! ## Type trees are the free substitution monoid -/
 
-example : TypeTree.stepPoly = PFunctor.FreeP TypeTree.basePFunctor := rfl
+example : TypeTree.stepPoly = ⟨TypeTree, Path⟩ := rfl
 
 example : TypeTree.substMonoid.carrier = TypeTree.stepPoly := rfl
 
