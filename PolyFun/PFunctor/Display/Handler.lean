@@ -143,8 +143,9 @@ theorem liftM_id
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
       simp only [FreeM.pure_bind] at children
-      rw [show FreeM.liftM_lift_eq_self ((FreeM.lift a).bind rest) =
-          liftMIdEq ((FreeM.lift a).bind rest) from Subsingleton.elim _ _]
+      rw [S.transport_proof_irrel F
+        (FreeM.liftM_lift_eq_self ((FreeM.lift a).bind rest))
+        (liftMIdEq ((FreeM.lift a).bind rest))]
       change S.transport F (liftMIdEq (FreeM.liftBind a rest))
           ⟨c, fun b e =>
             S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
@@ -168,8 +169,8 @@ theorem liftM_id
       rw [htransport]
       congr
       funext b e
-      rw [← show FreeM.liftM_lift_eq_self (rest b) = liftMIdEq (rest b) from
-        Subsingleton.elim _ _]
+      rw [S.transport_proof_irrel F (liftMIdEq (rest b))
+        (FreeM.liftM_lift_eq_self (rest b))]
       exact ih b (children b e)
 
 private theorem liftMBindEq
@@ -208,8 +209,9 @@ theorem liftM_bind
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
       simp only [FreeM.pure_bind] at children
-      rw [show FreeM.liftM_bind f ((FreeM.lift a).bind rest) g =
-          liftMBindEq f g ((FreeM.lift a).bind rest) from Subsingleton.elim _ _]
+      rw [T.transport_proof_irrel G
+        (FreeM.liftM_bind f ((FreeM.lift a).bind rest) g)
+        (liftMBindEq f g ((FreeM.lift a).bind rest))]
       let k : P.B a → FreeM Q E := fun b => (rest b).liftM f
       let h : E → FreeM Q E' := fun x => (g x).liftM f
       let childEq : (fun b => ((rest b).bind g).liftM f) =
@@ -232,8 +234,8 @@ theorem liftM_bind
                 (S.bind (rest b) (children b e) g dg) f df) =
             T.bind (k b) (S.liftM T (rest b) (children b e) f df) h
               (fun x dx => S.liftM T (g x) (dg x dx) f df) := by
-        rw [show congrFun childEq b = FreeM.liftM_bind f (rest b) g from
-          Subsingleton.elim _ _]
+        rw [T.transport_proof_irrel G (congrFun childEq b)
+          (FreeM.liftM_bind f (rest b) g)]
         exact ih b (children b e)
       calc
         _ = T.transport G (FreeM.bind_assoc (f a) k h).symm
@@ -305,9 +307,9 @@ theorem liftM_comp
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
       simp only [FreeM.pure_bind] at children
-      rw [show FreeM.liftM_comp ((FreeM.lift a).bind rest) first second =
-          liftMCompEq first second ((FreeM.lift a).bind rest) from
-        Subsingleton.elim _ _]
+      rw [U.transport_proof_irrel F
+        (FreeM.liftM_comp ((FreeM.lift a).bind rest) first second)
+        (liftMCompEq first second ((FreeM.lift a).bind rest))]
       let k : P.B a → FreeM Q E := fun b => (rest b).liftM first
       let childEq : (fun b => (k b).liftM second) =
           (fun b => (rest b).liftM fun a => (first a).liftM second) :=
@@ -346,8 +348,8 @@ theorem liftM_comp
                 second dsecond) =
             S.liftM U (rest b) (children b e)
               (fun a => (first a).liftM second) (dsecond.comp dfirst) := by
-        rw [show congrFun childEq b =
-            FreeM.liftM_comp (rest b) first second from Subsingleton.elim _ _]
+        rw [U.transport_proof_irrel F (congrFun childEq b)
+          (FreeM.liftM_comp (rest b) first second)]
         exact ih b (children b e)
       calc
         _ = U.transport F (congrArg (FreeM.bind ((first a).liftM second)) childEq)
@@ -394,8 +396,8 @@ theorem comp_id_apply
     (first : Handler S T f) (a : P.A) (c : S.position a) :
     T.transport (S.direction a c) (FreeM.liftM_lift f a)
         (first.comp (Handler.id S) a c) = first a c := by
-  rw [show FreeM.liftM_lift f a = FreeM.bind_pure (f a) from
-    Subsingleton.elim _ _]
+  rw [T.transport_proof_irrel (S.direction a c) (FreeM.liftM_lift f a)
+    (FreeM.bind_pure (f a))]
   exact T.bind_leaf (f a) (first a c)
 
 /-- Associativity for displayed handler composition, stated pointwise with

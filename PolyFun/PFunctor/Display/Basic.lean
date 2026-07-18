@@ -49,6 +49,9 @@ universe uA uB uC uD uE uF uG uI uA₁ uA₂ uC₁ uC₂ uD₁ uD₂
 
 namespace PFunctor
 
+-- As for `PFunctor`, the position and direction universes are intentionally
+-- independent.  This keeps `Display.total` directions and the child universe
+-- of `Display.incidence` small when only displayed positions are large.
 set_option linter.checkUnivs false in
 /-- A polynomial display over a fixed polynomial functor `P`.
 

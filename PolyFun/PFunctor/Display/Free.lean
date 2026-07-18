@@ -157,6 +157,16 @@ theorem transport_rfl (S : Display.{uA, uB, uC, uD} P)
     S.transport F rfl d = d :=
   rfl
 
+/-- Transport is independent of the proof chosen for a fixed base-tree
+equality.  This is the normalization lemma for replacing an opaque library
+proof by a structurally recursive proof of the same equality. -/
+theorem transport_proof_irrel (S : Display.{uA, uB, uC, uD} P)
+    {E : Type uE} (F : E → Type uF) {t t' : FreeM P E}
+    (h h' : t = t') (d : FreeM.Displayed (S.toDisplayedShape F) t) :
+    S.transport F h d = S.transport F h' d := by
+  cases h
+  rfl
+
 /-- Successive transports compose.  This is the public normalization lemma
 for proofs whose base-tree indices are changed by more than one free-monad
 law. -/
@@ -235,8 +245,9 @@ theorem bind_leaf (S : Display.{uA, uB, uC, uD} P)
       rcases d with ⟨c, children⟩
       simp only [FreeM.pure_bind] at children
       simp only [bind_liftBind]
-      rw [show FreeM.bind_pure ((FreeM.lift a).bind rest) =
-          bindPureEq ((FreeM.lift a).bind rest) from Subsingleton.elim _ _]
+      rw [S.transport_proof_irrel F
+        (FreeM.bind_pure ((FreeM.lift a).bind rest))
+        (bindPureEq ((FreeM.lift a).bind rest))]
       change S.transport F (bindPureEq (FreeM.liftBind a rest))
           ⟨c, fun b e =>
             S.bind (rest b) (children b e) FreeM.pure fun x dx =>
@@ -260,8 +271,8 @@ theorem bind_leaf (S : Display.{uA, uB, uC, uD} P)
       rw [htransport]
       congr
       funext b e
-      rw [← show FreeM.bind_pure (rest b) = bindPureEq (rest b) from
-        Subsingleton.elim _ _]
+      rw [S.transport_proof_irrel F (bindPureEq (rest b))
+        (FreeM.bind_pure (rest b))]
       exact ih b (children b e)
 
 /-- Displayed substitution is associative, with the left-associated result
@@ -287,8 +298,9 @@ theorem bind_assoc (S : Display.{uA, uB, uC, uD} P)
       rcases d with ⟨c, children⟩
       simp only [FreeM.pure_bind] at children
       simp only [bind_liftBind]
-      rw [show FreeM.bind_assoc ((FreeM.lift a).bind rest) g h =
-          bindAssocEq g h ((FreeM.lift a).bind rest) from Subsingleton.elim _ _]
+      rw [S.transport_proof_irrel H
+        (FreeM.bind_assoc ((FreeM.lift a).bind rest) g h)
+        (bindAssocEq g h ((FreeM.lift a).bind rest))]
       change S.transport H (bindAssocEq g h (FreeM.liftBind a rest))
           ⟨c, fun b e =>
             S.bind ((rest b).bind g) (S.bind (rest b) (children b e) g dg) h dh⟩ =
@@ -314,8 +326,8 @@ theorem bind_assoc (S : Display.{uA, uB, uC, uD} P)
       rw [htransport]
       congr
       funext b e
-      rw [← show FreeM.bind_assoc (rest b) g h = bindAssocEq g h (rest b) from
-        Subsingleton.elim _ _]
+      rw [S.transport_proof_irrel H (bindAssocEq g h (rest b))
+        (FreeM.bind_assoc (rest b) g h)]
       exact ih b (children b e)
 
 /-- Reverse orientation of displayed substitution associativity. -/

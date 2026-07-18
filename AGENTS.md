@@ -236,7 +236,11 @@ Structures use UpperCamelCase: `PFunctor`, `TypeTree`, `Decoration`,
 5. **Do not disable linters to silence errors.** Do not use
    `set_option linter.* false`, `set_option weak.linter.* false`, or
    add repo-level `leanOptions` that turn lints off. Fix the root
-   cause instead.
+   cause instead. The one narrow exception is a declaration-scoped
+   `set_option linter.checkUnivs false in` when independent universe
+   parameters are mathematically and compositionally intentional; explain
+   that reason in an adjacent comment. This matches the treatment of
+   universe-separated polynomial position/direction data upstream.
 6. **`PolyFun.lean` is generated.** Do not hand-edit it. After adding,
    renaming, or deleting `.lean` files under `PolyFun/`, run
    `./scripts/update-lib.sh`.

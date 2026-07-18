@@ -72,6 +72,145 @@ def dependentTreeData :
   ⟨⟨2, by omega⟩, fun b direction =>
     dependentContract.leaf (fun _ : Nat => Nat) b.val (b.val + direction.val)⟩
 
+def dependentObj : Dependent.Obj Nat :=
+  ⟨.query 2, fun b => b.val⟩
+
+def dependentObjData : dependentContract.Obj (fun _ : Nat => Nat) dependentObj :=
+  ⟨⟨2, by omega⟩, fun b direction => b.val + direction.val⟩
+
+/- If `Obj.map` selects the wrong response or displayed direction, this value
+is not `b + direction + 1`. -/
+example (b : Fin 2)
+    (direction : dependentContract.direction (.query 2) ⟨2, by omega⟩ b) :
+    (Obj.map (S := dependentContract) (fun _ n => n + 1)
+      dependentObj dependentObjData).2 b direction =
+      b.val + direction.val + 1 := by
+  rfl
+
+def predicateContract : Display Dependent :=
+  Display.ofPredicates
+    (fun | .query arity => arity = 2)
+    (fun | .query arity => fun _ response => response.val < arity)
+
+def predicatePosition : predicateContract.position (.query 2) :=
+  ⟨rfl⟩
+
+def predicateDirection (b : Fin 2) :
+    predicateContract.direction (.query 2) predicatePosition b :=
+  ⟨b.isLt⟩
+
+example : predicatePosition.down = (rfl : 2 = 2) := rfl
+example (b : Fin 2) : (predicateDirection b).down = b.isLt := rfl
+
+def alternateContract : Display Dependent where
+  position
+    | .query _ => Bool
+  direction
+    | .query arity, selected, _ => if selected then Fin (arity + 1) else PUnit
+
+def contractFamily : Bool → Display Dependent
+  | false => dependentContract
+  | true => alternateContract
+
+/- These witnesses are kept separate so swapping the `sigma`, `sum.inl`, or
+`sum.inr` display branch breaks elaboration or the projection tests. -/
+def sigmaLeftPosition :
+    (Display.sigma contractFamily).position ⟨false, .query 2⟩ :=
+  ⟨2, by omega⟩
+
+def sigmaRightPosition :
+    (Display.sigma contractFamily).position ⟨true, .query 2⟩ :=
+  true
+
+example : sigmaLeftPosition.val = 2 := rfl
+example : sigmaRightPosition = true := rfl
+
+def sumLeftPosition :
+    (dependentContract.sum alternateContract).position (.inl (.query 2)) :=
+  ULift.up ⟨2, by omega⟩
+
+def sumRightPosition :
+    (dependentContract.sum alternateContract).position (.inr (.query 2)) :=
+  ULift.up true
+
+def sumLeftDirection (b : Fin 2) :
+    (dependentContract.sum alternateContract).direction (.inl (.query 2))
+      sumLeftPosition b :=
+  ULift.up ⟨0, by omega⟩
+
+def sumRightDirection (b : Fin 2) :
+    (dependentContract.sum alternateContract).direction (.inr (.query 2))
+      sumRightPosition b :=
+  ULift.up ⟨2, by omega⟩
+
+example : sumLeftPosition.down.val = 2 := rfl
+example : sumRightPosition.down = true := rfl
+example (b : Fin 2) : (sumLeftDirection b).down.val = 0 := rfl
+example (b : Fin 2) : (sumRightDirection b).down.val = 2 := rfl
+
+def totalPosition : dependentContract.total.A :=
+  ⟨.query 2, ⟨2, by omega⟩⟩
+
+def totalDirection : dependentContract.total.B totalPosition :=
+  ⟨⟨1, by omega⟩, ⟨2, by simp [totalPosition]⟩⟩
+
+example : dependentContract.forget.toFunA totalPosition = .query 2 := rfl
+example : dependentContract.forget.toFunB totalPosition totalDirection =
+    (⟨1, by omega⟩ : Fin 2) := rfl
+
+def chartFiberPosition :
+    (Display.ofChart dependentContract.forget).total.A :=
+  ⟨.query 2, ⟨totalPosition, rfl⟩⟩
+
+def chartFiberDirection :
+    (Display.ofChart dependentContract.forget).total.B chartFiberPosition :=
+  ⟨⟨1, by omega⟩, ⟨totalDirection, rfl⟩⟩
+
+/- Exercise both chart-equivalence directions and both position/direction
+components; dropping an equality fiber or reversing either chart fails one of
+these four projections. -/
+example :
+    (Display.ofChartEquiv dependentContract.forget).toChart.toFunA
+      chartFiberPosition = totalPosition := rfl
+
+example :
+    (Display.ofChartEquiv dependentContract.forget).toChart.toFunB
+      chartFiberPosition chartFiberDirection = totalDirection := rfl
+
+example :
+    (Display.ofChartEquiv dependentContract.forget).invChart.toFunA
+      totalPosition = chartFiberPosition := rfl
+
+example :
+    (Display.ofChartEquiv dependentContract.forget).invChart.toFunB
+      totalPosition totalDirection = chartFiberDirection := rfl
+
+def indexedObjData :
+    (dependentContract.action Nat).Obj (fun _ : Nat => Nat) dependentObj :=
+  ⟨⟨2, by omega⟩, fun direction => direction.1.val + direction.2.val⟩
+
+example (b : Fin 2)
+    (direction : dependentContract.direction (.query 2) ⟨2, by omega⟩ b) :
+    dependentContract.incidence.src (.query 2) ⟨2, by omega⟩ ⟨b, direction⟩ =
+      ⟨.query 2, b⟩ := rfl
+
+example (b : Fin 2)
+    (direction : dependentContract.direction (.query 2) ⟨2, by omega⟩ b) :
+    (dependentContract.action Nat).src dependentObj ⟨2, by omega⟩
+      ⟨b, direction⟩ = b.val := rfl
+
+/- Exercise both curry/uncurry directions of `actionObjEquiv`; selecting only
+the base response and forgetting displayed evidence changes these results. -/
+example (b : Fin 2)
+    (direction : dependentContract.direction (.query 2) ⟨2, by omega⟩ b) :
+    (dependentContract.actionObjEquiv (fun _ : Nat => Nat) dependentObj
+      indexedObjData).2 b direction = b.val + direction.val := rfl
+
+example (b : Fin 2)
+    (direction : dependentContract.direction (.query 2) ⟨2, by omega⟩ b) :
+    ((dependentContract.actionObjEquiv (fun _ : Nat => Nat) dependentObj).symm
+      dependentObjData).2 ⟨b, direction⟩ = b.val + direction.val := rfl
+
 example :
     dependentContract.bind dependentTree dependentTreeData
       (fun n => .pure (n + 10))
@@ -105,6 +244,63 @@ example :
     dependentTree dependentTreeData (fun a => FreeM.lift a)
       (Handler.id dependentContract) (fun a => FreeM.lift a)
       (Handler.id dependentContract)
+
+/-! A three-interface canary for handler composition order.  The first
+handler increments displayed positions, while the second doubles them; the
+composite must therefore produce `(c + 1) * 2`, not `c * 2 + 1`. -/
+
+abbrev HandlerSource : PFunctor.{0, 0} where
+  A := Bool
+  B _ := PUnit
+
+abbrev HandlerMiddle : PFunctor.{0, 0} where
+  A := Nat
+  B _ := PUnit
+
+abbrev HandlerTarget : PFunctor.{0, 0} where
+  A := Nat
+  B _ := PUnit
+
+abbrev sourceDisplay : Display.{0, 0, 0, 0} HandlerSource where
+  position _ := Nat
+  direction _ _ _ := PUnit
+
+abbrev middleDisplay : Display.{0, 0, 0, 0} HandlerMiddle where
+  position _ := Nat
+  direction _ _ _ := PUnit
+
+abbrev targetDisplay : Display.{0, 0, 0, 0} HandlerTarget where
+  position _ := Nat
+  direction _ _ _ := PUnit
+
+def firstProgram (a : HandlerSource.A) : FreeM HandlerMiddle (HandlerSource.B a) :=
+  FreeM.lift (P := HandlerMiddle) (if a then 10 else 20)
+
+def secondProgram (a : HandlerMiddle.A) : FreeM HandlerTarget (HandlerMiddle.B a) :=
+  FreeM.lift (P := HandlerTarget) (a + 100)
+
+def firstDisplayedHandler :
+    Handler sourceDisplay middleDisplay firstProgram :=
+  fun a c =>
+    ⟨c + 1, fun _ _ =>
+      sourceDisplay.leaf (sourceDisplay.direction a c) .unit .unit⟩
+
+def secondDisplayedHandler :
+    Handler middleDisplay targetDisplay secondProgram :=
+  fun a c =>
+    ⟨c * 2, fun _ _ =>
+      middleDisplay.leaf (middleDisplay.direction a c) .unit .unit⟩
+
+def composedDisplayedHandler :
+    Handler sourceDisplay targetDisplay
+      (fun a => (firstProgram a).liftM secondProgram) :=
+  secondDisplayedHandler.comp firstDisplayedHandler
+
+example :
+    composedDisplayedHandler true 3 =
+      ⟨8, fun _ _ =>
+        targetDisplay.leaf (sourceDisplay.direction true 3) .unit .unit⟩ := by
+  rfl
 
 end PFunctor.Display.Example
 
