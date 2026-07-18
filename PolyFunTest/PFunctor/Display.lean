@@ -407,15 +407,15 @@ example (first : (a : P.A) → FreeM Q (P.B a))
   dfirst
 
 example (t : FreeM P E)
-    (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
     (first : (a : P.A) → FreeM Q (P.B a))
     (dfirst : Handler S T first) :=
   S.liftM T t d first dfirst
 
 example (t : FreeM P E)
-    (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
     (g : E → FreeM P E')
-    (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedShape G) (g x))
+    (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedAlgebra G) (g x))
     (first : (a : P.A) → FreeM Q (P.B a))
     (dfirst : Handler S T first) :=
   S.liftM_bind T t d g dg first dfirst
@@ -440,7 +440,7 @@ example
   dsecond.comp dfirst
 
 example (t : FreeM P E)
-    (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
     (first : (a : P.A) → FreeM Q (P.B a))
     (dfirst : Handler S T first)
     (second : (a : Q.A) → FreeM R (Q.B a))
