@@ -118,10 +118,12 @@ import PolyFun.PFunctor.Category
 import PolyFun.PFunctor.Chart.Basic
 import PolyFun.PFunctor.Cofree
 import PolyFun.PFunctor.Cofree.FiniteProjection
+import PolyFun.PFunctor.Cofree.LaxMonoidal
 import PolyFun.PFunctor.Cofree.Polynomial
 import PolyFun.PFunctor.Cofree.Universal
 import PolyFun.PFunctor.Comonoid
 import PolyFun.PFunctor.Comonoid.Category
+import PolyFun.PFunctor.Comonoid.Tensor
 import PolyFun.PFunctor.Display
 import PolyFun.PFunctor.Display.Basic
 import PolyFun.PFunctor.Display.Chart
@@ -178,7 +180,14 @@ import PolyFun.PFunctor.Lens.Factorization
 import PolyFun.PFunctor.Lens.State
 import PolyFun.PFunctor.M
 import PolyFun.PFunctor.M.Vertex
+import PolyFun.PFunctor.PatternRunsOnMatter.Applications
+import PolyFun.PFunctor.PatternRunsOnMatter.Basic
+import PolyFun.PFunctor.PatternRunsOnMatter.Dynamical
+import PolyFun.PFunctor.PatternRunsOnMatter.Module
+import PolyFun.PFunctor.PatternRunsOnMatter.Operational
+import PolyFun.PFunctor.PatternRunsOnMatter.Universal
 import PolyFun.PFunctor.Resumption
 import PolyFun.PFunctor.SubstMonoid
+import PolyFun.PFunctor.SubstMonoid.Convolution
 import PolyFun.PFunctor.SubstMonoid.Extension
 import PolyFun.PFunctor.Trace

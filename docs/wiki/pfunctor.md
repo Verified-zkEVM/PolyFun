@@ -60,7 +60,7 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/Lens/Composite.lean`](../../PolyFun/PFunctor/Lens/Composite.lean) | Direct `Lens.compOuter` / `compInner` / `compPullback` views of a lens into `q ◃ r` (Ex 6.40), plus `Lens.compNthMap` (φ^◁n) and its `zero` / `succ` / `id` laws. |
 | [`PolyFun/PFunctor/Lens/Distributivity.lean`](../../PolyFun/PFunctor/Lens/Distributivity.lean) | Left-distributivity of `◃`: Π-indexed `piCompDistrib` (6.51), `prodCompDistrib` (6.49), `scalarCompDistrib` (Ex 6.55), `homMonomialEquiv` (6.65), and the Ex 6.56 right-distributivity failure. |
 | [`PolyFun/PFunctor/Lens/Factorization.lean`](../../PolyFun/PFunctor/Lens/Factorization.lean) | Vertical–cartesian factorization (Prop 5.52/5.53), closure under polynomial operations, `equivOfVerticalCartesian`, and vertical-left/cartesian-right orthogonality through the unique `DiagonalFiller`. |
-| [`PolyFun/PFunctor/Lens/Duoidal.lean`](../../PolyFun/PFunctor/Lens/Duoidal.lean) | `orderingLens` and `duoidalLens` with cartesianness, naturality, middle-four compatibility, and unit laws; the Ex 6.84 catalogue of `⊗`/`◃` coincidences. |
+| [`PolyFun/PFunctor/Lens/Duoidal.lean`](../../PolyFun/PFunctor/Lens/Duoidal.lean) | `orderingLens` and `duoidalLens` with cartesianness, naturality, middle-four compatibility, the internal/external associativity and four mixed-unit diagrams, and the common unit object's monoid/comonoid laws; the Ex 6.84 catalogue of `⊗`/`◃` coincidences. Only abstract duoidal-category packaging is deferred. |
 | [`PolyFun/PFunctor/Chart/Basic.lean`](../../PolyFun/PFunctor/Chart/Basic.lean) | Charts (forward map on both positions and directions). Chart category is isomorphic to `Set^→` and has a different monoidal structure from the lens category. |
 | [`PolyFun/PFunctor/Category.lean`](../../PolyFun/PFunctor/Category.lean) | Category-theoretic packaging where applicable. |
 | [`PolyFun/PFunctor/InternalHom.lean`](../../PolyFun/PFunctor/InternalHom.lean) | The `⊗`-internal hom `ihom q r` = `[q, r]` (Ex 4.78; positions are lenses `q ⇆ r`), the evaluation lens `Lens.eval`, and the tensor–hom adjunction `curry` / `uncurry` / `curryEquiv : Lens (p ⊗ q) r ≃ Lens p (ihom q r)`; `ihomSum`, `ihomX`. |
@@ -68,6 +68,7 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/Adjunctions.lean`](../../PolyFun/PFunctor/Adjunctions.lean) | Trivial-interface hom-set equivalences plus binary tensor gluing (Prop 5.49): direct one-sided lens views, `tensorGlue`, its β laws, and `tensorGlueEquiv` over compatible ordinary lenses. |
 | [`PolyFun/PFunctor/Comonoid.lean`](../../PolyFun/PFunctor/Comonoid.lean) | Comonoids in `(Poly, ◃, y)`, state comonoids, `IsStateSystem`, and `comultN`; `Comonoid.Hom` packages retrofunctors and supplies the `Category Comonoid` (`Cat♯`). |
 | [`PolyFun/PFunctor/Comonoid/Category.lean`](../../PolyFun/PFunctor/Comonoid/Category.lean) | The extraction direction of the Ahman–Uustalu outgoing-arrow dictionary for a polynomial comonoid: identities, categorical targets, composition, their category laws, and the corresponding identity/target/composition laws of retrofunctors. `Hom.ofCategoryLaws` reconstructs a comonoid homomorphism from those three retrofunctor laws; the reverse object-level category construction and packaged equivalence are deferred. |
+| [`PolyFun/PFunctor/Comonoid/Tensor.lean`](../../PolyFun/PFunctor/Comonoid/Tensor.lean) | The composition-unit comonoid, heterogeneous tensor product of composition comonoids built from duoidal interchange, componentwise tensor of retrofunctors, and pointwise tensor-unit/associativity isomorphisms. This is the concrete object/morphism and coherence construction behind Proposition 8.77 in the current edition (Proposition 8.79 in earlier-edition notes), not abstract monoidal-category or natural-isomorphism packaging, pentagon/triangle laws, or the categorical-product universal property. |
 
 ### Substitution monoids and their free construction
 
@@ -75,6 +76,7 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 |------|---------|
 | [`PolyFun/PFunctor/SubstMonoid.lean`](../../PolyFun/PFunctor/SubstMonoid.lean) | Monoid objects in `(Poly, ◃, y)`, their unit/multiplication-preserving lens homomorphisms, and the category of substitution monoids. |
 | [`PolyFun/PFunctor/SubstMonoid/Extension.lean`](../../PolyFun/PFunctor/SubstMonoid/Extension.lean) | The extension of a substitution monoid as a `LawfulMonad` and the induced ordinary `MonadHom` of a substitution-monoid homomorphism. |
+| [`PolyFun/PFunctor/SubstMonoid/Convolution.lean`](../../PolyFun/PFunctor/SubstMonoid/Convolution.lean) | The internal-hom convolution substitution monoid `[C,M]` induced by a composition comonoid `C`, a substitution monoid `M`, tensor closure, and duoidal interchange. This is the algebraic dependency used to construct the Libkind–Spivak free/cofree interaction map; the interaction itself is downstream. |
 | [`PolyFun/PFunctor/Free/Polynomial.lean`](../../PolyFun/PFunctor/Free/Polynomial.lean) | `FreeP P`, whose positions are unlabelled well-founded `P`-trees and whose directions are complete leaf paths; its equivalence with `FreeM P`, functorial action, and substitution-monoid laws. |
 | [`PolyFun/PFunctor/Free/Universal.lean`](../../PolyFun/PFunctor/Free/Universal.lean) | The universal property `SubstMonoid.Hom (FreeP.substMonoid P) M ≃ Lens P M.carrier`; its fold is identified with `FreeM.liftM` in the extension monad, including the full dependent backward-path law. |
 
@@ -189,6 +191,13 @@ displayed families, roll bounds) on top of the upstream type.
 | [`PolyFun/PFunctor/Cofree/Polynomial.lean`](../../PolyFun/PFunctor/Cofree/Polynomial.lean) | `CofreeP P`, whose positions are potentially infinite `P`-trees and whose directions are finite rooted vertices; its extension equivalence with `CofreeC P`, functorial action on lenses, and substitution-comonoid structure. Its carrier uses `max uA uB` for both polynomial universes because a vertex stores directions along an ambient `M P` tree. |
 | [`PolyFun/PFunctor/Cofree/Universal.lean`](../../PolyFun/PFunctor/Cofree/Universal.lean) | Generic coiteration and the cofree-comonoid universal property `Comonoid.Hom C (CofreeP.comonoid P) ≃ Lens C.carrier P`, with explicit naturality in both variables. The generic unfolding keeps the comonoid and generator universe pairs independent; the hom-set packaging specializes `C` to the homogeneous `max uA uB` universe pair required by the existing `Comonoid.Hom`. This is unbundled adjunction data, not a `CategoryTheory.Adjunction`. |
 | [`PolyFun/PFunctor/Cofree/FiniteProjection.lean`](../../PolyFun/PFunctor/Cofree/FiniteProjection.lean) | Universe-polymorphic structural finite projections `projectionN P n : CofreeP P ⇆ compNth P n`, their exact backward-map depth semantics and low-stage unitors, and the homogeneous algebraic bridge yielding the arbitrary-retrofunctor and cofree-extension forms of Proposition 8.49. Additive splitting (Equation 8.32) is deferred until its required composition-power reassociation equivalence is available. |
+| [`PolyFun/PFunctor/Cofree/LaxMonoidal.lean`](../../PolyFun/PFunctor/Cofree/LaxMonoidal.lean) | The cofree functor's unit comparison `y ⇆ CofreeP y` and synchronized-tree laxator `CofreeP P ⊗ CofreeP Q ⇆ CofreeP (P ⊗ Q)`, packaged as retrofunctors and equipped with generator equations, fixed-universe categorical naturality, and the two unit and associativity laws. This is Proposition 8.79 in the current Spivak–Niu edition (Proposition 8.81 in the earlier-edition notes). Cross-universe naturality needs a heterogeneous retrofunctor-law API; abstract monoidal-functor packaging remains downstream. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Basic.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Basic.lean) | The fully heterogeneous executable traversal `FreeP.runOn : FreeP P ⊗ CofreeP Q ⇆ FreeP (P ⊗ Q)`, including the complete backward map from output paths to pattern paths and finite matter vertices, and covariance in both generators. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Universal.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Universal.lean) | The paper's curried convolution construction `FreeP.xi` and its equality with the independently executable traversal. For `Q : PFunctor.{qA,qB}`, the homogeneous free-extension API requires only `P`'s direction universe to be `max qA qB`; their position universes remain independent. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Module.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Module.lean) | The concrete right-module unit and associativity laws for the Libkind--Spivak interaction. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Operational.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Operational.lean) | Decoded execution, recursive and grafting laws, substitution-monoid compatibility, and lawful monadic handler interpretation. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Dynamical.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Dynamical.lean) | Object-labelled execution on cofree behavior, reached-state semantics, observational/simulation invariance, and exact finite-game compatibility. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Applications.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Applications.lean) | The Section 4 generic interaction composite, internal-hom evaluation and Equation (6), plus behavior and strong-simulation bridges. |
 | [`PolyFun/PFunctor/Trace.lean`](../../PolyFun/PFunctor/Trace.lean) | Polynomial-trace machinery shared between `PFunctor` and downstream layers. |
 
 ### Control helpers
@@ -222,11 +231,16 @@ provides the reusable monad / comonad / coalgebra plumbing. See
   universes are definitionally `max uA uB`; a future lift/equal-maximum API
   could relax this specialization. `CofreeP.homEquiv` packages the cofree
   universal property at the same fixed-maximum boundary, while its underlying
-  coiteration remains fully heterogeneous. PolyFun separately formalizes
+  coiteration remains fully heterogeneous. `CofreeP.laxTensor` synchronizes
+  two behavior trees node by node and proves the concrete naturality and
+  monoidal coherence equations without installing an abstract monoidal-functor
+  instance. PolyFun separately formalizes
   `LawfulMonad (FreeM P)` and `LawfulComonad (CofreeC F)`; those type-level
-  structures are not the paper's polynomial module action
-  `FreeP p ⊗ CofreeP q → FreeP (p ⊗ q)`. That module-action layer is a
-  later slice of the formalization.
+  structures are not the paper's polynomial module action. The latter is
+  `FreeP.runOn : FreeP p ⊗ CofreeP q ⇆ FreeP (p ⊗ q)`: it executes a
+  finite pattern against potentially infinite matter, is natural in both
+  inputs, agrees with the paper's convolution/free-universal construction
+  `FreeP.xi`, and satisfies the concrete unit and associativity equations.
 - `Lens P Q` and `Chart P Q` are the two natural categorical morphisms
   between polynomial functors. Lenses go `forward on positions, backward
   on directions`; charts go forward on both. Both categories are useful

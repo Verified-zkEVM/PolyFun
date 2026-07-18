@@ -24,7 +24,7 @@ resulting well-founded tree directly.
 
 @[expose] public section
 
-universe uA uB uA₂ uB₂ uA₃ uB₃ v w
+universe uA uB uA₂ uB₂ uA₃ uB₃ v w x
 
 namespace PFunctor
 
@@ -73,6 +73,14 @@ payload. -/
 def decode (x : Σ s : FreeM P PUnit.{uB + 1}, FreeM.Path s → α) :
     FreeM P α :=
   decodeAt x.1 x.2
+
+/-- Decoding a labelled polynomial node is `FreeM.liftBind` of the decoded
+children. -/
+theorem decode_node (a : P.A)
+    (children : P.B a → (FreeP P).Obj α) :
+    decode (node a children) =
+      FreeM.liftBind a (fun direction => decode (children direction)) :=
+  rfl
 
 @[simp]
 theorem decode_encode : (s : FreeM P α) → decode (encode s) = s
@@ -204,6 +212,36 @@ def relabel {β : Type w} (f : α → β) (x : (FreeP P).Obj α) :
     (FreeP P).Obj β :=
   ⟨x.1, f ∘ x.2⟩
 
+/-- Decoding after relabelling is ordinary free-monad mapping. -/
+@[simp]
+theorem decode_relabel {β : Type w} (f : α → β)
+    (x : (FreeP P).Obj α) :
+    decode (relabel f x) = FreeM.map f (decode x) := by
+  rcases x with ⟨shape, labels⟩
+  induction shape with
+  | pure value =>
+      cases value
+      rfl
+  | liftBind a rest ih =>
+      simp only [decode, decodeAt, relabel, Function.comp_apply, FreeM.map]
+      apply congrArg (FreeM.liftBind a)
+      funext direction
+      exact ih direction
+        (fun path => labels (FreeM.Path.cons a rest direction path))
+
+@[simp]
+theorem relabel_node {β : Type w} (f : α → β) (a : P.A)
+    (children : P.B a → (FreeP P).Obj α) :
+    relabel f (node a children) =
+      node a (fun direction => relabel f (children direction)) :=
+  rfl
+
+@[simp]
+theorem relabel_relabel {β : Type w} {γ : Type x}
+    (g : β → γ) (f : α → β) (x : (FreeP P).Obj α) :
+    relabel g (relabel f x) = relabel (g ∘ f) x :=
+  rfl
+
 /-! ## Functoriality in the generating polynomial -/
 
 variable {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
@@ -232,6 +270,40 @@ theorem map_toFunB (l : Lens P Q) (s : (FreeP P).A)
     (map l).toFunB s path =
       FreeM.Path.pullMapLens l s
         (FreeM.Path.pullMap (fun _ => PUnit.unit) (s.mapLens l) path) :=
+  rfl
+
+/-- Pulling back a complete path through a mapped operation node pulls back
+its root direction and then recursively pulls back the child path. -/
+theorem map_toFunB_cons (l : Lens P Q) (a : P.A)
+    (rest : P.B a → FreeM P PUnit.{uB + 1})
+    (direction : Q.B (l.toFunA a))
+    (path : FreeM.Path
+      (FreeM.map (fun _ => PUnit.unit)
+        (FreeM.mapLens l (rest (l.toFunB a direction))))) :
+    (map l).toFunB (FreeM.liftBind a rest)
+        (FreeM.Path.cons (l.toFunA a)
+          (fun d => FreeM.map (fun _ => PUnit.unit)
+            (FreeM.mapLens l (rest (l.toFunB a d))))
+          direction path) =
+      FreeM.Path.cons a rest (l.toFunB a direction)
+        ((map l).toFunB (rest (l.toFunB a direction)) path) :=
+  rfl
+
+/-- Mapping a labelled free node maps its operation and each child
+recursively, pulling the target direction back through the generating lens. -/
+@[simp]
+theorem mapObj_node (l : Lens P Q) (a : P.A)
+    (children : P.B a → (FreeP P).Obj α) :
+    Lens.mapObj (map l) (node a children) =
+      node (l.toFunA a) (fun direction =>
+        Lens.mapObj (map l) (children (l.toFunB a direction))) :=
+  rfl
+
+@[simp]
+theorem mapObj_relabel {β : Type w} (l : Lens P Q)
+    (f : α → β) (x : (FreeP P).Obj α) :
+    Lens.mapObj (map l) (relabel f x) =
+      relabel f (Lens.mapObj (map l) x) :=
   rfl
 
 /-- Pointwise container form of the identity law for `FreeP.map`. Packaging

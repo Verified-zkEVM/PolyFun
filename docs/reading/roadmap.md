@@ -18,9 +18,9 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 | Ch 4.1–4.4 dynamical systems, wiring | Deep (`PFunctor/Dynamical/*`, coalgebra core) |
 | Ch 4.5 ⊗-closure `[q,r]`, eval | **Done (A1)**: `ihom`/`eval`/`curry`/`curryEquiv`/`ihomSum` in `PFunctor/InternalHom.lean` (note: `exp` is the §5.3 cartesian exponential, not this) |
 | Ch 5 factorizations, adjunctions, (co)limits | **Done**: vertical–cartesian factorization and orthogonality (A3), trivial-interface adjunctions plus binary tensor gluing (A4/A5), and cartesian closure (A2); general (co)limits remain open |
-| Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: direct composite-lens projections, `compNthMap`, δ/`twoStep`, full left Π-distributivity, ordering/interchange naturality and concrete duoidal coherence; coclosure/multiadjoint (A8) and the higher three-interchange diagram remain open |
+| Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: direct composite-lens projections, `compNthMap`, δ/`twoStep`, full left Π-distributivity, ordering/interchange naturality and complete concrete duoidal coherence; coclosure/multiadjoint (A8) remains open |
 | Ch 7 comonoids = categories, retrofunctors | **Done (B1–B4 spine)**: `Comonoid`, `Comonoid.Hom`/`Cat♯`, state comonoids, `δ^(n)`, `Run_n`, and the `IOMachine` run/composition core; §7.3.3 quadruple (B5), all-bracketing canonicity, and representable-monoid equivalence remain open |
-| Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | **C1/C2 done; C3 finite-run spine done**: `M.Vertex`, `CofreeP.comonoid`, generic coiteration, the natural hom-set equivalence, its dynamical behavior/trajectory specialization, structural finite projections, and Prop 8.49; Equation 8.32/additive reassociation, explicit pretree-limit coherence, lax monoidality, and bicomodules remain open |
+| Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | **C1/C2 done; C3 finite-run and lax-monoidal spine done**: `M.Vertex`, `CofreeP.comonoid`, generic coiteration, the natural hom-set equivalence, its dynamical behavior/trajectory specialization, structural finite projections, Prop 8.49, and the cofree laxator with its concrete coherence laws; Equation 8.32/additive reassociation, explicit pretree-limit coherence, abstract monoidal packaging, and bicomodules remain open |
 
 ## Reading units
 
@@ -149,8 +149,9 @@ Landed 2026-07-10 (five parallel subagents; full `lake build` + `lake lint` +
   (6.78) remain open.
 - **A9 ✅** `Lens/Duoidal.lean`: `orderingLens`, the four ⊗/◁ catalogue isos,
   and `duoidalLens` (6.86), with cartesianness, full naturality, middle-four
-  compatibility, and both unit laws. Abstract packaging and the higher
-  three-interchange associativity diagram remain open.
+  compatibility, internal/external associativity, all four mixed-unit
+  diagrams, and the common unit object's monoid/comonoid laws. Only abstract
+  duoidal-category packaging remains open.
 - **A10 ✅** `Lens/Distributivity.lean`: `scalarCompDistrib` (Ex 6.55),
   lens-level `prodCompDistrib` (6.49), Π-indexed `piCompDistrib` (6.51), plus the Ex 6.56 right-distributivity
   **failure** proved (`IsEmpty` of a position bijection). `(6.48)`/Σ-form reused
@@ -168,8 +169,7 @@ Two **math corrections to the plan** the agents caught (logged in
 `By ⊗ p ≅ By ◃ p` needs `linear B`, not the constant `C B` (which is false).
 
 **Phase A remaining (open, lower urgency):** A8 coclosure + multiadjoint (6.78),
-Cor 5.50 n-ary tensor gluing, general Ch 5 (co)limits/base-change, and the
-higher duoidal associativity diagram. None block the VCVio
+Cor 5.50 n-ary tensor gluing, and general Ch 5 (co)limits/base-change. None block the VCVio
 consumers; they are natural follow-ons or Phase B/C prerequisites.
 
 ### Phase B — comonoid layer (Ch 7) — API freeze after G0
@@ -283,17 +283,33 @@ canonical `FreeM` interpretation.
   `mate ⨟ ε_p^{(n)} = Run_n(φ)` as a full lens equality for arbitrary
   cofree extensions and dynamical-system mates.
   Functoriality `𝒯_φ` (§8.1.5) + `φ` cartesian ⟹ `𝒯_φ` cartesian
-  (Prop 8.72); `𝒯_p` free on a graph (Prop 8.57); lax monoidality
-  `t_p ⊗ t_q ⇆ t_{p⊗q}` (Prop 8.81). Worked tests with paper value:
+  (Prop 8.72); `𝒯_p` free on a graph (Prop 8.57). The composition-unit
+  comonoid, heterogeneous tensor of comonoids and retrofunctors, and pointwise
+  tensor unitors/associator are complete. **Lax monoidality is done:** the
+  canonical retrofunctors `y ⇆ t_y` and `t_p ⊗ t_q ⇆ t_{p⊗q}` have
+  generator equations, naturality, and both unit and associativity coherence
+  laws (Prop 8.79 in the current edition; Prop 8.81 in earlier-edition notes).
+  Abstract monoidal-functor packaging is deliberately deferred. Worked tests
+  with paper value:
   DFA mate = accepted language (Example 8.51); the general Moore-mate shape of
   Example 8.52 is now captured by the behavior/reached-state bridge, while a
   concrete `List A → B` worked example remains open.
-- **C4** honest statement replacing the `FreeM ⊣ Cofree` slogan: the true
+- **C4 core done** honest statement replacing the `FreeM ⊣ Cofree` slogan:
+  the true
   adjunction is `U ⊣ 𝒯_₋` between `Comon(Poly)` and `Poly` (Thm 8.45);
   the free-monad/cofree-comonad relationship is Libkind–Spivak's module
-  structure (EPTCS 429). Fix `Interaction/Basic/TypeTree.lean:83` +
-  `REFERENCES.md:65` wording; resolves `corrections.md` item 1; recast
-  `behavior`/`trajectory` as induced universal maps.
+  structure (EPTCS 429). `PatternRunsOnMatter/Basic` gives the executable
+  action and full naturality; `Universal` identifies it with the paper's
+  convolution extension; `Module` proves unit and associativity;
+  `Operational`, `Dynamical`, and `Applications` prove grafting and handler
+  laws, connect cofree matter to behavior/simulation and finite games, and
+  formalize the Section 4 interaction/evaluation schema. A concrete
+  Moore-machine Equation (2) test pins the forward outputs and full backward
+  trace. Voting/operadic and probabilistic applications remain deferred to
+  their missing theory and downstream VCVio semantics. The corrected wording
+  in `Interaction/Basic/TypeTree.lean` and `REFERENCES.md` resolves
+  `corrections.md` item 1 and presents `behavior`/`trajectory` as induced
+  universal maps.
 
 ### Phase D — comodules, bicomodules, research (Ch 8.3 + Ch 9)
 
@@ -327,7 +343,8 @@ canonical `FreeM` interpretation.
     `wp`/`Triple` layer (`Control/Monad/Algebra`) is a fragment of that
     internal logic. Highest-value research track; natural paper-3
     companion.
-  - *Q5 — ⊗-monoids in Cat♯*: grounded by Prop 8.79 (⊗ on Cat♯ =
+  - *Q5 — ⊗-monoids in Cat♯*: grounded by Prop 8.77 in the current
+    edition (Prop 8.79 in earlier-edition notes; ⊗ on Cat♯ =
     products of categories, built from the duoidal lens). ⊗-monoids =
     monoidal protocol categories — the multiparty/UC parallel-
     composition algebra.

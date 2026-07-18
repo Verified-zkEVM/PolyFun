@@ -53,9 +53,10 @@ lenses and equations.
   that the two first phases `p` and `q` run in parallel, followed by the two
   second phases `p'` and `q'` in parallel.
 
-The remaining boundary is abstract packaging and the higher associativity
-diagram for three interchange maps. The naturality, middle-four compatibility,
-and unit laws used by concrete developments are proved below.
+The remaining boundary is abstract duoidal-category packaging. Naturality,
+middle-four compatibility, the internal and external interchange-unit
+diagrams, both interchange-associativity diagrams, and the shared unit-object
+laws are proved below.
 -/
 
 @[expose] public section
@@ -117,10 +118,9 @@ On directions, a target direction over that position is
 `y : q'.B (g w)`; it maps back to the tensor of two composite directions
 `(⟨u, x⟩, ⟨w, y⟩)`.
 
-The concrete naturality, middle-four, cartesianness, and unit coherence laws
-used by the current API are formalized below. The remaining part of
-Spivak–Niu Proposition 6.87 is the higher three-interchange associativity
-diagram and abstract duoidal-category packaging. -/
+The concrete naturality, middle-four, cartesianness, unit coherence, and both
+interchange-associativity laws used by the current API are formalized below.
+Abstract duoidal-category packaging remains deliberately absent. -/
 def duoidalLens (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
     (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
     Lens ((p ◃ p') ⊗ (q ◃ q')) ((p ⊗ q) ◃ (p' ⊗ q')) :=
@@ -147,6 +147,172 @@ theorem duoidalLens_natural
     (g₁ : Lens q₁ s₁) (g₂ : Lens q₂ s₂) :
     duoidalLens r₁ r₂ s₁ s₂ ∘ₗ ((f₁ ◃ₗ f₂) ⊗ₗ (g₁ ◃ₗ g₂)) =
       ((f₁ ⊗ₗ g₁) ◃ₗ (f₂ ⊗ₗ g₂)) ∘ₗ duoidalLens p₁ p₂ q₁ q₂ := rfl
+
+/-! ## Unit and associativity coherence -/
+
+/-- The canonical comparison from the tensor of two possibly differently
+instantiated composition units to the unit at their componentwise maximum
+universes.  Unlike `Equiv.tensorX`, this lens does not require the two copies
+of `X` to use the same universe pair. -/
+def tensorUnitMap :
+    Lens (X.{uA₁, uB₁} ⊗ X.{uA₂, uB₂})
+      X.{max uA₁ uA₂, max uB₁ uB₂} :=
+  (fun _ => PUnit.unit) ⇆ (fun _ _ => (PUnit.unit, PUnit.unit))
+
+/-- The canonical comparison from the composition unit at the target
+universe pair into a composite of two independently instantiated units. -/
+def compUnitMap :
+    Lens X.{max uA₁ uA₂ uB₁, max uB₁ uB₂}
+      (X.{uA₁, uB₁} ◃ X.{uA₂, uB₂}) :=
+  (fun _ => ⟨PUnit.unit, fun _ => PUnit.unit⟩) ⇆
+    (fun _ _ => PUnit.unit)
+
+/-! ### The shared unit object -/
+
+/-- Left unitality of the tensor-unit multiplication. -/
+theorem tensorUnitMap_unit_left :
+    (tensorUnitMap :
+        Lens (X.{uA, uB} ⊗ X.{uA, uB}) X.{uA, uB}) ∘ₗ
+      ((unitComparison : Lens X.{uA, uB} X.{uA, uB}) ⊗ₗ
+        Lens.id X.{uA, uB}) =
+      Equiv.xTensor.toLens := by
+  rfl
+
+/-- Right unitality of the tensor-unit multiplication. -/
+theorem tensorUnitMap_unit_right :
+    (tensorUnitMap :
+        Lens (X.{uA, uB} ⊗ X.{uA, uB}) X.{uA, uB}) ∘ₗ
+      (Lens.id X.{uA, uB} ⊗ₗ
+        (unitComparison : Lens X.{uA, uB} X.{uA, uB})) =
+      Equiv.tensorX.toLens := by
+  rfl
+
+/-- Associativity of the tensor-unit multiplication. -/
+theorem tensorUnitMap_assoc :
+    (tensorUnitMap :
+        Lens (X.{uA, uB} ⊗ X.{uA, uB}) X.{uA, uB}) ∘ₗ
+        ((tensorUnitMap :
+          Lens (X.{uA, uB} ⊗ X.{uA, uB}) X.{uA, uB}) ⊗ₗ
+          Lens.id X.{uA, uB}) =
+      (tensorUnitMap :
+        Lens (X.{uA, uB} ⊗ X.{uA, uB}) X.{uA, uB}) ∘ₗ
+        (Lens.id X.{uA, uB} ⊗ₗ (tensorUnitMap :
+          Lens (X.{uA, uB} ⊗ X.{uA, uB}) X.{uA, uB})) ∘ₗ
+        Equiv.tensorAssoc.toLens := by
+  rfl
+
+/-- Left counitality of the composition-unit comultiplication. -/
+theorem compUnitMap_counit_left :
+    (Equiv.XComp (P := X.{uA, uB})).toLens ∘ₗ
+        ((unitComparison : Lens X.{uA, uB} X.{uA, uB}) ◃ₗ
+          Lens.id X.{uA, uB}) ∘ₗ
+        (compUnitMap ∘ₗ
+          (unitComparison :
+            Lens X.{uA, uB} X.{max uA uB, uB})) =
+      Lens.id X.{uA, uB} := by
+  rfl
+
+/-- Right counitality of the composition-unit comultiplication. -/
+theorem compUnitMap_counit_right :
+    (Equiv.compX (P := X.{uA, uB})).toLens ∘ₗ
+        (Lens.id X.{uA, uB} ◃ₗ
+          (unitComparison : Lens X.{uA, uB} X.{uA, uB})) ∘ₗ
+        (compUnitMap ∘ₗ
+          (unitComparison :
+            Lens X.{uA, uB} X.{max uA uB, uB})) =
+      Lens.id X.{uA, uB} := by
+  rfl
+
+/-- Coassociativity of the composition-unit comultiplication. -/
+theorem compUnitMap_coassoc :
+    (Equiv.compAssoc (P := X.{uA, uB})
+      (Q := X.{uA, uB}) (R := X.{uA, uB})).toLens ∘ₗ
+        ((compUnitMap ∘ₗ
+          (unitComparison :
+            Lens X.{uA, uB} X.{max uA uB, uB})) ◃ₗ
+          Lens.id X.{uA, uB}) ∘ₗ
+        (compUnitMap ∘ₗ
+          (unitComparison :
+            Lens X.{uA, uB} X.{max uA uB, uB})) =
+      (Lens.id X.{uA, uB} ◃ₗ
+        (compUnitMap ∘ₗ
+          (unitComparison :
+            Lens X.{uA, uB} X.{max uA uB, uB}))) ∘ₗ
+        (compUnitMap ∘ₗ
+          (unitComparison :
+            Lens X.{uA, uB} X.{max uA uB, uB})) := by
+  rfl
+
+/-- Left-composition-unit coherence for duoidal interchange. Interchanging a pair of
+left-unital composites and then combining their two unit components agrees
+with applying the two composition left unitors in parallel. -/
+theorem duoidalLens_comp_unit_left
+    (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) :
+    Equiv.XComp.toLens ∘ₗ
+        (tensorUnitMap ◃ₗ Lens.id (p ⊗ q)) ∘ₗ
+        duoidalLens X p X q =
+      (Equiv.XComp.toLens ⊗ₗ Equiv.XComp.toLens) := by
+  rfl
+
+/-- Right-composition-unit coherence for duoidal interchange. Interchanging a pair of
+right-unital composites and then combining their two unit components agrees
+with applying the two composition right unitors in parallel. -/
+theorem duoidalLens_comp_unit_right
+    (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) :
+    Equiv.compX.toLens ∘ₗ
+        (Lens.id (p ⊗ q) ◃ₗ tensorUnitMap) ∘ₗ
+        duoidalLens p X q X =
+      (Equiv.compX.toLens ⊗ₗ Equiv.compX.toLens) := by
+  rfl
+
+/-- Composition-associativity coherence for three interchanges. Regrouping each of two
+three-phase composites before interchanging gives the same ordered three
+parallel phases as interchanging the outer grouping first. -/
+theorem duoidalLens_comp_assoc
+    (p₁ : PFunctor.{uA₁, uB₁}) (p₂ : PFunctor.{uA₂, uB₂})
+    (p₃ : PFunctor.{uA₃, uB₃}) (q₁ : PFunctor.{uA₄, uB₄})
+    (q₂ : PFunctor.{uA₅, uB₅}) (q₃ : PFunctor.{uA₆, uB₆}) :
+    (Lens.id (p₁ ⊗ q₁) ◃ₗ duoidalLens p₂ p₃ q₂ q₃) ∘ₗ
+        duoidalLens p₁ (p₂ ◃ p₃) q₁ (q₂ ◃ q₃) ∘ₗ
+        (Equiv.compAssoc.toLens ⊗ₗ Equiv.compAssoc.toLens) =
+      Equiv.compAssoc.toLens ∘ₗ
+        (duoidalLens p₁ p₂ q₁ q₂ ◃ₗ
+          Lens.id (p₃ ⊗ q₃)) ∘ₗ
+        duoidalLens (p₁ ◃ p₂) p₃ (q₁ ◃ q₂) q₃ := by
+  rfl
+
+/-- Tensor-associativity coherence for three interchanges. Interchanging the
+left pair of three parallel composites first agrees with interchanging the
+right pair first, after applying the tensor associators. -/
+theorem duoidalLens_tensor_assoc
+    (p₁ : PFunctor.{uA₁, uB₁}) (p₂ : PFunctor.{uA₂, uB₂})
+    (q₁ : PFunctor.{uA₃, uB₃}) (q₂ : PFunctor.{uA₄, uB₄})
+    (r₁ : PFunctor.{uA₅, uB₅}) (r₂ : PFunctor.{uA₆, uB₆}) :
+    duoidalLens p₁ p₂ (q₁ ⊗ r₁) (q₂ ⊗ r₂) ∘ₗ
+        (Lens.id (p₁ ◃ p₂) ⊗ₗ duoidalLens q₁ q₂ r₁ r₂) ∘ₗ
+        Equiv.tensorAssoc.toLens =
+      (Equiv.tensorAssoc.toLens ◃ₗ Equiv.tensorAssoc.toLens) ∘ₗ
+        duoidalLens (p₁ ⊗ q₁) (p₂ ⊗ q₂) r₁ r₂ ∘ₗ
+        (duoidalLens p₁ p₂ q₁ q₂ ⊗ₗ Lens.id (r₁ ◃ r₂)) := by
+  rfl
+
+/-- Left-tensor-unit coherence for duoidal interchange. -/
+theorem duoidalLens_tensor_unit_left
+    (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) :
+    (Equiv.xTensor.toLens ◃ₗ Equiv.xTensor.toLens) ∘ₗ
+        duoidalLens X X p q ∘ₗ
+        (compUnitMap ⊗ₗ Lens.id (p ◃ q)) =
+      Equiv.xTensor.toLens := by
+  rfl
+
+/-- Right-tensor-unit coherence for duoidal interchange. -/
+theorem duoidalLens_tensor_unit_right
+    (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) :
+    (Equiv.tensorX.toLens ◃ₗ Equiv.tensorX.toLens) ∘ₗ
+        duoidalLens p q X X ∘ₗ
+        (Lens.id (p ◃ q) ⊗ₗ compUnitMap) =
+      Equiv.tensorX.toLens := by
+  rfl
 
 /-- The canonical middle-four tensor permutation
 `(p ⊗ p') ⊗ (q ⊗ q') ≅ (p ⊗ q) ⊗ (p' ⊗ q')`.

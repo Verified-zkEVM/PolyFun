@@ -68,6 +68,9 @@ PFunctor/Lens/{Basic, Cartesian, State}
 PFunctor/Lens/Basic -> PFunctor/SubstMonoid
 PFunctor/{Free/Path, SubstMonoid} -> PFunctor/Free/Polynomial
 PFunctor/Comonoid -> PFunctor/Comonoid/Category
+PFunctor/{Comonoid, Lens/Duoidal} -> PFunctor/Comonoid/Tensor
+PFunctor/{SubstMonoid, Comonoid, InternalHom, Lens/Duoidal}
+  -> PFunctor/SubstMonoid/Convolution
 
 PFunctor/{Cofree, Comonoid, M/Vertex}
   -> PFunctor/Cofree/Polynomial
@@ -75,6 +78,21 @@ PFunctor/{Cofree, Comonoid, M/Vertex}
 PFunctor/{Cofree/Polynomial, Comonoid/Category}
   -> PFunctor/Cofree/Universal
   -> PFunctor/Cofree/FiniteProjection
+PFunctor/{Cofree/Universal, Comonoid/Tensor}
+  -> PFunctor/Cofree/LaxMonoidal
+PFunctor/{Free/Polynomial, Cofree/Polynomial}
+  -> PFunctor/PatternRunsOnMatter/Basic
+PFunctor/{PatternRunsOnMatter/Basic, Free/Universal,
+  Cofree/Universal, SubstMonoid/Convolution}
+  -> PFunctor/PatternRunsOnMatter/Universal
+PFunctor/{PatternRunsOnMatter/Universal, Cofree/LaxMonoidal}
+  -> PFunctor/PatternRunsOnMatter/Module
+PFunctor/PatternRunsOnMatter/Universal + PFunctor/Handler
+  -> PFunctor/PatternRunsOnMatter/Operational
+PFunctor/PatternRunsOnMatter/Basic + PFunctor/Dynamical/{CofreeMate, Simulation, Game}
+  -> PFunctor/PatternRunsOnMatter/Dynamical
+PFunctor/PatternRunsOnMatter/{Module, Dynamical} + PFunctor/Dynamical/Bisimulation
+  -> PFunctor/PatternRunsOnMatter/Applications
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   -> PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}

@@ -98,11 +98,13 @@ trace-equivalence directive, revisited in §8.3 below).
   all small colimits (created by `U`) and all small limits (equalizers
   are connected, so ◁ preserves them; [Por19]). Record, don't formalize,
   until a consumer appears.
-- **§8.2.4 ⊗ on Cat♯ (Prop 8.79).** `(y, ⊗)` extends to Cat♯; `U` strong
+- **§8.2.4 ⊗ on Cat♯ (Prop 8.77 current; 8.79 in earlier-edition notes).**
+  `(y, ⊗)` extends to Cat♯; `U` strong
   monoidal; **`𝒞 ⊗ 𝒟` is the product of categories in Cat**, with
   `δ_{𝒞⊗𝒟}` built from the **duoidal interchange (6.86)** — ticket A9's
   duoidal lens is literally the constructor of product protocol
-  categories (UC parallel composition target). Prop 8.81: `𝒯_₋` is lax
+  categories (UC parallel composition target). Prop 8.79 in the current
+  edition (8.81 in earlier-edition notes): `𝒯_₋` is lax
   monoidal, `t_p ⊗ t_q ⇆ t_{p⊗q}` (doctrinal adjunction).
 
 ## 8.3 Comodules and bicomodules
@@ -151,7 +153,8 @@ trace-equivalence directive, revisited in §8.3 below).
    wording accordingly when C3/C4 land (corrections item 1).
 3. **A-ticket consumers multiplied.** A3 (factorization): consumed by
    Prop 7.109, Prop 8.66/8.68/8.69, Thm 8.102(3≅4), Ex 8.94. A9
-   (duoidal): consumed by Prop 8.79 (⊗ on Cat♯ = product categories —
+   (duoidal): consumed by Prop 8.77 in the current edition (8.79 in
+   earlier-edition notes; ⊗ on Cat♯ = product categories —
    the UC parallel-composition constructor). A8/(6.66): consumed by
    Thm 8.102(7≅8). Phase A is the load-bearing floor of everything.
 4. **Worked examples with paper value:** DFA mate = accepted language
