@@ -39,7 +39,7 @@ a duplicate spelling of the existing displayed-family definitions.
 
 @[expose] public section
 
-universe uA uB uC uD uE uE' uF uG
+universe uA uB uC uD uE uE' uE'' uF uG uH
 
 namespace PFunctor
 namespace Display
@@ -156,6 +156,185 @@ theorem transport_rfl (S : Display.{uA, uB, uC, uD} P)
     (d : FreeM.Displayed (S.toDisplayedShape F) t) :
     S.transport F rfl d = d :=
   rfl
+
+/-- Successive transports compose.  This is the public normalization lemma
+for proofs whose base-tree indices are changed by more than one free-monad
+law. -/
+theorem transport_trans (S : Display.{uA, uB, uC, uD} P)
+    {E : Type uE} (F : E → Type uF) {t t' t'' : FreeM P E}
+    (h : t = t') (h' : t' = t'')
+    (d : FreeM.Displayed (S.toDisplayedShape F) t) :
+    S.transport F h' (S.transport F h d) = S.transport F (h.trans h') d := by
+  cases h
+  cases h'
+  rfl
+
+/-- Transporting forward and then backward along the same base-tree equality
+recovers the original displayed data. -/
+theorem transport_symm (S : Display.{uA, uB, uC, uD} P)
+    {E : Type uE} (F : E → Type uF) {t t' : FreeM P E}
+    (h : t = t') (d : FreeM.Displayed (S.toDisplayedShape F) t) :
+    S.transport F h.symm (S.transport F h d) = d := by
+  cases h
+  rfl
+
+/-- Transport along equality of the substitution function acts pointwise on
+the displayed data supplied at leaves. -/
+theorem transport_bind (S : Display.{uA, uB, uC, uD} P)
+    {E : Type uE} {F : E → Type uF}
+    {E' : Type uE'} {G : E' → Type uG}
+    (t : FreeM P E) (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    {g g' : E → FreeM P E'} (h : g = g')
+    (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedShape G) (g x)) :
+    S.transport G (congrArg (t.bind ·) h) (S.bind t d g dg) =
+      S.bind t d g'
+        (fun x dx => S.transport G (congrFun h x) (dg x dx)) := by
+  cases h
+  rfl
+
+/-- Transporting a displayed node along equality of its continuation family
+acts pointwise on the displayed children. -/
+theorem transport_liftBind (S : Display.{uA, uB, uC, uD} P)
+    {E : Type uE} (F : E → Type uF) (a : P.A)
+    {rest rest' : P.B a → FreeM P E} (h : rest = rest')
+    (c : S.position a)
+    (children : (b : P.B a) → S.direction a c b →
+      FreeM.Displayed (S.toDisplayedShape F) (rest b)) :
+    S.transport F (congrArg (FreeM.liftBind a) h) ⟨c, children⟩ =
+      ⟨c, fun b e => S.transport F (congrFun h b) (children b e)⟩ := by
+  cases h
+  rfl
+
+/-! ## Displayed monad laws -/
+
+private theorem bindPureEq {E : Type uE} :
+    (t : FreeM P E) → t.bind FreeM.pure = t
+  | .pure _ => rfl
+  | .liftBind a rest =>
+      congrArg (FreeM.liftBind a) (funext fun b => bindPureEq (rest b))
+
+private theorem bindAssocEq {E : Type uE} {E' : Type uE'} {E'' : Type uE''}
+    (g : E → FreeM P E') (h : E' → FreeM P E'') :
+    (t : FreeM P E) → (t.bind g).bind h = t.bind (fun x => (g x).bind h)
+  | .pure _ => rfl
+  | .liftBind a rest =>
+      congrArg (FreeM.liftBind a) (funext fun b => bindAssocEq g h (rest b))
+
+/-- Binding every leaf to the displayed leaf constructor is the right unit,
+after transporting along the corresponding base-tree right-unit equality. -/
+theorem bind_leaf (S : Display.{uA, uB, uC, uD} P)
+    {E : Type uE} {F : E → Type uF}
+    (t : FreeM P E) (d : FreeM.Displayed (S.toDisplayedShape F) t) :
+    S.transport F (FreeM.bind_pure t)
+        (S.bind t d FreeM.pure fun x dx => S.leaf F x dx) = d := by
+  induction t with
+  | pure x =>
+      cases d
+      rfl
+  | lift_bind a rest ih =>
+      rcases d with ⟨c, children⟩
+      simp only [FreeM.pure_bind] at children
+      simp only [bind_liftBind]
+      rw [show FreeM.bind_pure ((FreeM.lift a).bind rest) =
+          bindPureEq ((FreeM.lift a).bind rest) from Subsingleton.elim _ _]
+      change S.transport F (bindPureEq (FreeM.liftBind a rest))
+          ⟨c, fun b e =>
+            S.bind (rest b) (children b e) FreeM.pure fun x dx =>
+              S.leaf F x dx⟩ = ⟨c, children⟩
+      have htransport :
+          S.transport F (bindPureEq (FreeM.liftBind a rest))
+              ⟨c, fun b e =>
+                S.bind (rest b) (children b e) FreeM.pure fun x dx =>
+                  S.leaf F x dx⟩ =
+            ⟨c, fun b e =>
+              S.transport F (bindPureEq (rest b))
+                (S.bind (rest b) (children b e) FreeM.pure fun x dx =>
+                  S.leaf F x dx)⟩ := by
+        convert S.transport_liftBind F a
+          (funext fun b => bindPureEq (rest b)) c
+          (fun b e =>
+            S.bind (rest b) (children b e) FreeM.pure fun x dx =>
+              S.leaf F x dx) using 1
+        all_goals simp [FreeM.liftBind_eq]
+        all_goals congr
+      rw [htransport]
+      congr
+      funext b e
+      rw [← show FreeM.bind_pure (rest b) = bindPureEq (rest b) from
+        Subsingleton.elim _ _]
+      exact ih b (children b e)
+
+/-- Displayed substitution is associative, with the left-associated result
+transported along `FreeM.bind_assoc` to the right-associated base tree. -/
+theorem bind_assoc (S : Display.{uA, uB, uC, uD} P)
+    {E : Type uE} {F : E → Type uF}
+    {E' : Type uE'} {G : E' → Type uG}
+    {E'' : Type uE''} {H : E'' → Type uH}
+    (t : FreeM P E) (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    (g : E → FreeM P E')
+    (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedShape G) (g x))
+    (h : E' → FreeM P E'')
+    (dh : (x : E') → G x → FreeM.Displayed (S.toDisplayedShape H) (h x)) :
+    S.transport H (FreeM.bind_assoc t g h)
+        (S.bind (t.bind g) (S.bind t d g dg) h dh) =
+      S.bind t d (fun x => (g x).bind h)
+        (fun x dx => S.bind (g x) (dg x dx) h dh) := by
+  induction t with
+  | pure x =>
+      cases d
+      rfl
+  | lift_bind a rest ih =>
+      rcases d with ⟨c, children⟩
+      simp only [FreeM.pure_bind] at children
+      simp only [bind_liftBind]
+      rw [show FreeM.bind_assoc ((FreeM.lift a).bind rest) g h =
+          bindAssocEq g h ((FreeM.lift a).bind rest) from Subsingleton.elim _ _]
+      change S.transport H (bindAssocEq g h (FreeM.liftBind a rest))
+          ⟨c, fun b e =>
+            S.bind ((rest b).bind g) (S.bind (rest b) (children b e) g dg) h dh⟩ =
+        ⟨c, fun b e =>
+          S.bind (rest b) (children b e) (fun x => (g x).bind h)
+            fun x dx => S.bind (g x) (dg x dx) h dh⟩
+      have htransport :
+          S.transport H (bindAssocEq g h (FreeM.liftBind a rest))
+              ⟨c, fun b e =>
+                S.bind ((rest b).bind g)
+                  (S.bind (rest b) (children b e) g dg) h dh⟩ =
+            ⟨c, fun b e =>
+              S.transport H (bindAssocEq g h (rest b))
+                (S.bind ((rest b).bind g)
+                  (S.bind (rest b) (children b e) g dg) h dh)⟩ := by
+        convert S.transport_liftBind H a
+          (funext fun b => bindAssocEq g h (rest b)) c
+          (fun b e =>
+            S.bind ((rest b).bind g)
+              (S.bind (rest b) (children b e) g dg) h dh) using 1
+        all_goals simp [FreeM.liftBind_eq]
+        all_goals congr
+      rw [htransport]
+      congr
+      funext b e
+      rw [← show FreeM.bind_assoc (rest b) g h = bindAssocEq g h (rest b) from
+        Subsingleton.elim _ _]
+      exact ih b (children b e)
+
+/-- Reverse orientation of displayed substitution associativity. -/
+theorem bind_assoc_symm (S : Display.{uA, uB, uC, uD} P)
+    {E : Type uE} {F : E → Type uF}
+    {E' : Type uE'} {G : E' → Type uG}
+    {E'' : Type uE''} {H : E'' → Type uH}
+    (t : FreeM P E) (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    (g : E → FreeM P E')
+    (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedShape G) (g x))
+    (h : E' → FreeM P E'')
+    (dh : (x : E') → G x → FreeM.Displayed (S.toDisplayedShape H) (h x)) :
+    S.transport H (FreeM.bind_assoc t g h).symm
+        (S.bind t d (fun x => (g x).bind h)
+          (fun x dx => S.bind (g x) (dg x dx) h dh)) =
+      S.bind (t.bind g) (S.bind t d g dg) h dh := by
+  rw [← S.bind_assoc t d g dg h dh]
+  exact S.transport_symm H (FreeM.bind_assoc t g h)
+    (S.bind (t.bind g) (S.bind t d g dg) h dh)
 
 end Display
 end PFunctor

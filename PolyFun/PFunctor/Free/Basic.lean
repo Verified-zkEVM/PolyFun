@@ -255,6 +255,25 @@ theorem liftMHom_lift_eq_id :
     FreeM.liftMHom (P := P) (m := FreeM P) FreeM.lift = MonadHom.id (FreeM P) :=
   MonadHom.ext' fun _ x => by simp
 
+/-- Interpreting a free tree by `first` and then interpreting the resulting
+free tree by `second` is the same as interpreting once by the pointwise
+Kleisli composite. -/
+theorem liftM_comp {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB}}
+    (x : FreeM P α)
+    (first : (a : P.A) → FreeM Q (P.B a))
+    (second : (a : Q.A) → FreeM R (Q.B a)) :
+    (x.liftM first).liftM second =
+      x.liftM (fun a => (first a).liftM second) := by
+  induction x with
+  | pure _ => rfl
+  | lift_bind a rest ih =>
+      change
+        ((first a >>= fun b => (rest b).liftM first).liftM second) =
+          (first a).liftM second >>= fun b =>
+            (rest b).liftM (fun a => (first a).liftM second)
+      rw [FreeM.liftM_bind]
+      exact congrArg (fun k => (first a).liftM second >>= k) (funext ih)
+
 end idFold
 
 end FreeM
