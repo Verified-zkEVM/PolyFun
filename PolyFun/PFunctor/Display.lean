@@ -12,6 +12,7 @@ public import PolyFun.PFunctor.Display.Chart
 public import PolyFun.PFunctor.Display.Coalgebra
 public import PolyFun.PFunctor.Display.Free
 public import PolyFun.PFunctor.Display.Handler
+public import PolyFun.PFunctor.Display.Handler.Sigma
 public import PolyFun.PFunctor.Display.Indexed
 
 /-!
@@ -19,5 +20,6 @@ public import PolyFun.PFunctor.Display.Indexed
 
 This umbrella imports the intrinsic one-step display definition, displayed
 coalgebras, chart and indexed-polynomial comparisons, and free-tree
-substitution and displayed handlers.
+substitution and displayed handlers, including indexed coproducts of displayed
+handlers.
 -/

@@ -131,6 +131,7 @@ import PolyFun.PFunctor.Display.Chart
 import PolyFun.PFunctor.Display.Coalgebra
 import PolyFun.PFunctor.Display.Free
 import PolyFun.PFunctor.Display.Handler
+import PolyFun.PFunctor.Display.Handler.Sigma
 import PolyFun.PFunctor.Display.Indexed
 import PolyFun.PFunctor.Display.M
 import PolyFun.PFunctor.Dynamical.Basic
@@ -193,3 +194,4 @@ import PolyFun.PFunctor.SubstMonoid
 import PolyFun.PFunctor.SubstMonoid.Convolution
 import PolyFun.PFunctor.SubstMonoid.Extension
 import PolyFun.PFunctor.Trace
+import PolyFun.PFunctor.Wiring

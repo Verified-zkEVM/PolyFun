@@ -20,7 +20,7 @@ system's private operational state.
 
 @[expose] public section
 
-universe u v uA
+universe u v uA uI
 
 namespace PFunctor
 
@@ -30,5 +30,25 @@ dependent choice of one direction at every position, while a probabilistic
 monad gives a randomized choice. -/
 abbrev Handler (m : Type u → Type v) (q : PFunctor.{uA, u}) :=
   (a : q.A) → m (q.B a)
+
+namespace Handler
+
+/-- Combine monadic handlers for an indexed family into a handler for its
+indexed coproduct. -/
+def sigma {I : Type uI} {P : I → PFunctor.{uA, u}}
+    {m : Type u → Type v}
+    (f : (i : I) → PFunctor.Handler m (P i)) :
+    PFunctor.Handler m (PFunctor.sigma P) :=
+  fun a => f a.1 a.2
+
+@[simp]
+theorem sigma_apply {I : Type uI} {P : I → PFunctor.{uA, u}}
+    {m : Type u → Type v}
+    (f : (i : I) → PFunctor.Handler m (P i))
+    (i : I) (a : (P i).A) :
+    sigma f ⟨i, a⟩ = f i a :=
+  rfl
+
+end Handler
 
 end PFunctor
