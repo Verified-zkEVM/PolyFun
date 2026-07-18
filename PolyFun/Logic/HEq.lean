@@ -14,7 +14,24 @@ domain-specific developments.
 
 @[expose] public section
 
-universe u v
+universe u v w
+
+namespace PolyFun
+namespace Logic
+
+/-- Apply a dependent binary function to equal indices and heterogeneously
+equal arguments. -/
+theorem dependent_apply_heq
+    {A : Sort u} {B : A → Sort v} {C : A → Sort w}
+    (function : (a : A) → B a → C a)
+    {a a' : A} (ha : a = a') {b : B a} {b' : B a'} (hb : b ≍ b') :
+    function a b ≍ function a' b' := by
+  subst a'
+  cases hb
+  rfl
+
+end Logic
+end PolyFun
 
 namespace Prod
 
