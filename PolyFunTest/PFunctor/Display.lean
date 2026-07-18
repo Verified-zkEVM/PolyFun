@@ -122,8 +122,20 @@ def sigmaRightPosition :
     (Display.sigma contractFamily).position ⟨true, .query 2⟩ :=
   true
 
+def sigmaLeftDirection (b : Fin 2) :
+    (Display.sigma contractFamily).direction ⟨false, .query 2⟩
+      sigmaLeftPosition b :=
+  ⟨2, by simp [sigmaLeftPosition]⟩
+
+def sigmaRightDirection (b : Fin 2) :
+    (Display.sigma contractFamily).direction ⟨true, .query 2⟩
+      sigmaRightPosition b :=
+  ⟨2, by omega⟩
+
 example : sigmaLeftPosition.val = 2 := rfl
 example : sigmaRightPosition = true := rfl
+example (b : Fin 2) : (sigmaLeftDirection b).val = 2 := rfl
+example (b : Fin 2) : (sigmaRightDirection b).val = 2 := rfl
 
 def sumLeftPosition :
     (dependentContract.sum alternateContract).position (.inl (.query 2)) :=
