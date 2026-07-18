@@ -124,6 +124,7 @@ import PolyFun.PFunctor.Comonoid.Category
 import PolyFun.PFunctor.Display
 import PolyFun.PFunctor.Display.Basic
 import PolyFun.PFunctor.Display.Chart
+import PolyFun.PFunctor.Display.Coalgebra
 import PolyFun.PFunctor.Display.Free
 import PolyFun.PFunctor.Display.Handler
 import PolyFun.PFunctor.Display.Indexed
@@ -138,6 +139,7 @@ import PolyFun.PFunctor.Dynamical.Game
 import PolyFun.PFunctor.Dynamical.IOMachine
 import PolyFun.PFunctor.Dynamical.Refinement
 import PolyFun.PFunctor.Dynamical.Responder
+import PolyFun.PFunctor.Dynamical.Responder.Display
 import PolyFun.PFunctor.Dynamical.Run
 import PolyFun.PFunctor.Dynamical.RunN
 import PolyFun.PFunctor.Dynamical.Safety

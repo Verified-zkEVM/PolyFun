@@ -9,6 +9,7 @@ module
 
 public import PolyFun.PFunctor.Display.Basic
 public import PolyFun.PFunctor.Display.Chart
+public import PolyFun.PFunctor.Display.Coalgebra
 public import PolyFun.PFunctor.Display.Free
 public import PolyFun.PFunctor.Display.Handler
 public import PolyFun.PFunctor.Display.Indexed
@@ -16,7 +17,7 @@ public import PolyFun.PFunctor.Display.Indexed
 /-!
 # Polynomial displays
 
-This umbrella imports the intrinsic one-step display definition, its chart and
-indexed-polynomial comparisons, and its free-tree substitution and displayed
-handler API.
+This umbrella imports the intrinsic one-step display definition, displayed
+coalgebras, chart and indexed-polynomial comparisons, and free-tree
+substitution and displayed handlers.
 -/
