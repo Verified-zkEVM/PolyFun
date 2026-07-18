@@ -29,16 +29,21 @@ for terminal-coalgebra states such as `M (Q ⊸ X)`, whose universe also contain
 the interface-position universe.  The existing `Responder.equivStateHandler`
 bridge remains available in the homogeneous fragment where state and response
 types share a universe; it is not used to restrict the core execution API.
+
+The same structural boundary keeps the source and target response universes
+independent for `reindex`, `runFreeDisplayed`, and `reindexCoalgebra`.
+Theorems that explicitly call `FreeM.liftM` or compose handlers retain its
+homogeneous source/intermediate response-universe constraint.
 -/
 
 @[expose] public section
 
-universe uA uA' uA'' uB uC uD uC' uD' uC'' uD'' uE uF uG uS uV uW
+universe uA uA' uA'' uB uB' uC uD uC' uD' uC'' uD'' uE uF uG uS uV uW
 
 namespace PFunctor
 namespace Responder
 
-variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB}}
+variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
 variable {RPoly : PFunctor.{uA'', uB}} {State : Type uS}
 
 /-- Execute a finite free program against a responder, returning its value and
@@ -151,7 +156,7 @@ def reindex (f : Handler (FreeM Q) P) (R : Responder State Q) :
 
 @[simp]
 theorem toStateHandler_reindex
-    {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB}}
+    {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
     {State : Type uB}
     (f : Handler (FreeM Q) P)
     (R : Responder State Q) :
@@ -202,6 +207,8 @@ theorem reindex_id (R : Responder State P) :
 /-- Responder reindexing is contravariantly functorial in categorical
 free-handler composition order. -/
 theorem reindex_comp
+    {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB}}
+    {RPoly : PFunctor.{uA'', uB'}}
     (second : Handler (FreeM RPoly) Q)
     (first : Handler (FreeM Q) P)
     (R : Responder State RPoly) :
@@ -218,7 +225,7 @@ section Displayed
 coalgebra. The result contains evidence for the returned value and preserved
 evidence at the final responder state. -/
 def runFreeDisplayed
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (R : Responder State Q)
     {I : State → Type uF}
     (displayedR : Display.Coalgebra (Display.responder T) R.out I)
@@ -240,12 +247,12 @@ def runFreeDisplayed
 
 @[simp]
 theorem runFreeDisplayed_pure
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (R : Responder State Q)
     {I : State → Type uF}
     (displayedR : Display.Coalgebra (Display.responder T) R.out I)
     {E : Type uV} {F : E → Type uE}
-    (value : E) (displayedValue : ULift.{max uC' uB uD'} (F value))
+    (value : E) (displayedValue : ULift.{max uC' uB' uD'} (F value))
     (state : State) (witness : I state) :
     runFreeDisplayed T R displayedR (program := FreeM.pure value)
       displayedValue state witness = ⟨displayedValue.down, witness⟩ :=
@@ -253,7 +260,7 @@ theorem runFreeDisplayed_pure
 
 @[simp]
 theorem runFreeDisplayed_liftBind
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (R : Responder State Q)
     {I : State → Type uF}
     (displayedR : Display.Coalgebra (Display.responder T) R.out I)
@@ -278,7 +285,7 @@ theorem runFreeDisplayed_liftBind
 transport along `runFree_bind`, execution proceeds with the returned value,
 result evidence, final state, and preserved state evidence. -/
 theorem runFreeDisplayed_bind
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (R : Responder State Q)
     {I : State → Type uF}
     (displayedR : Display.Coalgebra (Display.responder T) R.out I)
@@ -335,7 +342,7 @@ theorem runFreeDisplayed_bind
 handler. This is the state-presented form of Aberlé's `prog→mealyD`. -/
 def reindexCoalgebra
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (f : Handler (FreeM Q) P)
     (df : Display.Handler S T f)
     (R : Responder State Q)
@@ -349,7 +356,7 @@ def reindexCoalgebra
 @[simp]
 theorem reindexCoalgebra_postcondition
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (f : Handler (FreeM Q) P)
     (df : Display.Handler S T f)
     (R : Responder State Q)
@@ -365,7 +372,7 @@ theorem reindexCoalgebra_postcondition
 @[simp]
 theorem reindexCoalgebra_next
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (f : Handler (FreeM Q) P)
     (df : Display.Handler S T f)
     (R : Responder State Q)
@@ -384,7 +391,7 @@ base execution transport, with first extending it by the displayed handler and
 then executing it against the target coalgebra. -/
 theorem runFreeDisplayed_reindex
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (f : Handler (FreeM Q) P)
     (df : Display.Handler S T f)
     (R : Responder State Q)
@@ -468,9 +475,11 @@ theorem reindexCoalgebra_id_obligation
 by the displayed Kleisli composite. The transport is exactly the base
 execution law `runFree_reindex`. -/
 theorem reindexCoalgebra_comp_obligation
+    {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB}}
+    {RPoly : PFunctor.{uA'', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
     (T : Display.{uA', uB, uC', uD'} Q)
-    (U : Display.{uA'', uB, uC'', uD''} RPoly)
+    (U : Display.{uA'', uB', uC'', uD''} RPoly)
     (first : Handler (FreeM Q) P)
     (dfirst : Display.Handler S T first)
     (second : Handler (FreeM RPoly) Q)

@@ -250,12 +250,29 @@ example :
 
 /-! Producer-level canaries preserve all compatible universe separation. -/
 
-universe uA uA' uB uC uD uC' uD' uE uF uS uV
+universe uA uA' uA'' uB uB' uC uD uC' uD' uE uF uS uV
 
 section UniverseCanary
 
-variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB}}
+variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
 variable {State : Type uS}
+
+def universeHandlerCompFinal
+    {Middle : PFunctor.{uA', uB}} {Target : PFunctor.{uA'', uB'}}
+    (second : Handler (FreeM Target) Middle)
+    (first : Handler (FreeM Middle) P) : Handler (FreeM Target) P :=
+  second.comp first
+
+/-- `FreeM.liftM_comp` is an arbitrary-lawful-monad theorem, not merely a
+composition theorem specialized to a second free monad. -/
+theorem universeLiftMCompOption
+    {Middle : PFunctor.{uA', uB}} {E : Type uB}
+    (program : FreeM P E)
+    (first : (a : P.A) → FreeM Middle (P.B a))
+    (second : (a : Middle.A) → Option (Middle.B a)) :
+    (program.liftM first).liftM second =
+      program.liftM (fun a ↦ (first a).liftM second) :=
+  FreeM.liftM_comp program first second
 
 def universeRunFree {E : Type uV}
     (R : Responder State Q) (program : FreeM Q E) (state : State) :
@@ -267,7 +284,7 @@ def universeReindex (f : Handler (FreeM Q) P) (R : Responder State Q) :
   Responder.reindex f R
 
 def universeRunFreeDisplayed
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (R : Responder State Q)
     {I : State → Type uF}
     (displayedR : Display.Coalgebra (Display.responder T) R.out I)
@@ -280,13 +297,30 @@ def universeRunFreeDisplayed
 
 def universeReindexCoalgebra
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (f : Handler (FreeM Q) P) (df : Display.Handler S T f)
     (R : Responder State Q)
     {I : State → Type uF}
     (displayedR : Display.Coalgebra (Display.responder T) R.out I) :
     Display.Coalgebra (Display.responder S) (Responder.reindex f R).out I :=
   Responder.reindexCoalgebra S T f df R displayedR
+
+example
+    {Middle : PFunctor.{uA', uB}} {Target : PFunctor.{uA'', uB'}}
+    (S : Display.{uA, uB, uC, uD} P)
+    (T : Display.{uA', uB, uC', uD'} Middle)
+    (U : Display.{uA'', uB', uC', uD'} Target)
+    (first : Handler (FreeM Middle) P)
+    (dfirst : Display.Handler S T first)
+    (second : Handler (FreeM Target) Middle)
+    (dsecond : Display.Handler T U second)
+    (R : Responder State Target)
+    {I : State → Type uF}
+    (displayedR : Display.Coalgebra (Display.responder U) R.out I)
+    (state : State) (witness : I state)
+    (query : P.A) (contract : S.position query) :=
+  Responder.reindexCoalgebra_comp_obligation S T U first dfirst second
+    dsecond R displayedR state witness query contract
 
 end UniverseCanary
 
