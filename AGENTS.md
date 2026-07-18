@@ -99,7 +99,8 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
 Logic/HEq + PFunctor/{M, Lens/Basic} → PFunctor/M/Vertex
 PFunctor/Display/Basic
   → PFunctor/Display/{Chart, Coalgebra, Indexed, Free}
-  → PFunctor/Display/Handler
+  → PFunctor/Display/Handler → PFunctor/Display/Handler/Sigma
+  → PFunctor/Wiring
 PFunctor/Free/Basic
   → PFunctor/Free/Displayed
   → PFunctor/Free/{Path, Displayed/Decoration}
