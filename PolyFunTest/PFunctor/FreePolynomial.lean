@@ -25,6 +25,18 @@ namespace FreePolynomialTest
 /-- A binary-branching signature whose operation positions are also bits. -/
 abbrev binaryP : PFunctor := ⟨Bool, fun _ => Bool⟩
 
+def binaryLeaf : FreeM binaryP PUnit :=
+  .pure PUnit.unit
+
+def binaryOp (label : Bool) : FreeM binaryP PUnit :=
+  .liftBind label fun _ => binaryLeaf
+
+/-- Three binary substitution layers with independently observable path
+components. -/
+def binaryTriple : ((FreeP binaryP ◃ FreeP binaryP) ◃ FreeP binaryP).A :=
+  ⟨⟨binaryOp false, fun _ => binaryOp true⟩,
+    fun _ => binaryOp false⟩
+
 /-- A binary tree with distinguishable payloads at its two leaves. -/
 def labelledBinaryTree : FreeM binaryP Nat :=
   .liftBind false fun branch => .pure (if branch then 7 else 3)
@@ -78,6 +90,31 @@ example :
     ⟨⟨PUnit.unit, ⟨⟩⟩, ⟨PUnit.unit, ⟨⟩⟩⟩ :=
   rfl
 
+/-- Splitting must preserve both nontrivial branch choices; a unary signature
+would not detect swapping or duplicating the outer and inner components. -/
+example :
+    (FreeP.mult (P := binaryP)).toFunB
+      ⟨binaryOp false, fun _ => binaryOp true⟩
+      ⟨false, true, ⟨⟩⟩ =
+    ⟨⟨false, ⟨⟩⟩, ⟨true, ⟨⟩⟩⟩ :=
+  rfl
+
+/-- Left-associated multiplication reassociates all three path components
+without permuting them. -/
+example :
+    (FreeP.multAssocLeft (P := binaryP)).toFunB binaryTriple
+      ⟨false, true, false, ⟨⟩⟩ =
+    ⟨⟨⟨false, ⟨⟩⟩, ⟨true, ⟨⟩⟩⟩, ⟨false, ⟨⟩⟩⟩ :=
+  rfl
+
+/-- The right-associated composite has the same observable reassociation of
+three nontrivial path components. -/
+example :
+    (FreeP.multAssocRight (P := binaryP)).toFunB binaryTriple
+      ⟨false, true, false, ⟨⟩⟩ =
+    ⟨⟨⟨false, ⟨⟩⟩, ⟨true, ⟨⟩⟩⟩, ⟨false, ⟨⟩⟩⟩ :=
+  rfl
+
 /-- A target signature with natural-number operation labels. -/
 abbrev natBinaryP : PFunctor := ⟨Nat, fun _ => Bool⟩
 
@@ -99,6 +136,13 @@ example : FreeP.mapShape reverseBranchLens controlTree =
   apply congrArg (FreeM.liftBind (P := natBinaryP) 0)
   funext branch
   cases branch <;> rfl
+
+/-- The mapped polynomial's backward component itself reverses both runtime
+branch choices. This pins path pullback directly, rather than observing it
+only through the mapped tree shape. -/
+example : (FreeP.map reverseBranchLens).toFunB controlTree
+    ⟨false, true, ⟨⟩⟩ = ⟨true, false, ⟨⟩⟩ :=
+  rfl
 
 /-- Mapping `FreeP` does not couple source and target position or direction
 universes. -/
