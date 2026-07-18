@@ -64,7 +64,7 @@ implements the functor composition `Q ∘ P : (I → Type) → (K → Type)`. Se
 
 @[expose] public section
 
-universe uI uJ uK uA uA₁ uA₂ uB uB₁ uB₂
+universe uI uJ uK uA uA₁ uA₂ uB uB₁ uB₂ uX uY uZ
 
 set_option linter.checkUnivs false in
 /-- Atkey-style polynomial functor between indexed family categories. Given input index type
@@ -101,6 +101,40 @@ def Obj (P : IPFunctor I J) (X : I → Type*) (j : J) : Type _ :=
 
 instance : CoeFun (IPFunctor I J) (fun _ => (I → Type*) → J → Type _) where
   coe := Obj
+
+/-- Map a fiberwise function through the object action of an indexed
+polynomial functor.  The shape is unchanged and each child is mapped in the
+fiber selected by `P.src`. -/
+def map (P : IPFunctor I J) {X : I → Type uX} {Y : I → Type uY}
+    (f : (i : I) → X i → Y i) {j : J} (x : P.Obj X j) : P.Obj Y j :=
+  ⟨x.1, fun direction => f _ (x.2 direction)⟩
+
+@[simp]
+theorem map_fst (P : IPFunctor I J) {X : I → Type uX} {Y : I → Type uY}
+    (f : (i : I) → X i → Y i) {j : J} (x : P.Obj X j) :
+    (P.map f x).1 = x.1 :=
+  rfl
+
+@[simp]
+theorem map_snd (P : IPFunctor I J) {X : I → Type uX} {Y : I → Type uY}
+    (f : (i : I) → X i → Y i) {j : J} (x : P.Obj X j)
+    (direction : P.B j x.1) :
+    (P.map f x).2 direction = f _ (x.2 direction) :=
+  rfl
+
+@[simp]
+theorem map_id (P : IPFunctor I J) {X : I → Type uX} {j : J}
+    (x : P.Obj X j) : P.map (fun _ => id) x = x := by
+  rcases x with ⟨shape, children⟩
+  rfl
+
+@[simp]
+theorem map_comp (P : IPFunctor I J)
+    {X : I → Type uX} {Y : I → Type uY} {Z : I → Type uZ}
+    (g : (i : I) → Y i → Z i) (f : (i : I) → X i → Y i)
+    {j : J} (x : P.Obj X j) :
+    P.map g (P.map f x) = P.map (fun i => g i ∘ f i) x :=
+  rfl
 
 /-- The zero `IPFunctor`: no shapes are available at any output index. -/
 instance (I : Type uI) (J : Type uJ) : Zero (IPFunctor.{uI, uJ, uA, uB} I J) where
