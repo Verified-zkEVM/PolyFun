@@ -119,6 +119,9 @@ PFunctor/Comonoid → PFunctor/Comonoid/Category
 PFunctor/{Cofree, Comonoid, M/Vertex}
   → PFunctor/Cofree/Polynomial
 
+PFunctor/{Cofree/Polynomial, Comonoid/Category}
+  → PFunctor/Cofree/Universal
+
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
   → PFunctor/Dynamical/{Behavior, Simulation, RunN, DynComputation, IOMachine}
