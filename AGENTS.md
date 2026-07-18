@@ -97,8 +97,10 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   → PFunctor/{Cofree, Trace}
   → PFunctor/Resumption
 Logic/HEq + PFunctor/{M, Lens/Basic} → PFunctor/M/Vertex
+IPFunctor/Basic + PFunctor/M/Vertex → IPFunctor/M
 PFunctor/Display/Basic
   → PFunctor/Display/{Chart, Coalgebra, Indexed, Free}
+IPFunctor/M + PFunctor/Display/Indexed → PFunctor/Display/M
 PFunctor/{Handler, Free/Basic} → PFunctor/Handler/Free
 PFunctor/{Display/Free, Handler/Free} → PFunctor/Display/Handler
 PFunctor/Free/Basic
@@ -139,12 +141,14 @@ PFunctor/{Cofree/FiniteProjection, Dynamical/CofreeMate, Dynamical/RunN}
 PFunctor/Display/Coalgebra + PFunctor/Dynamical/Responder
   → PFunctor/Dynamical/Responder/Display
   → PFunctor/Dynamical/Responder/Reindex
+  → PFunctor/Dynamical/Responder/Behavior
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
    for RunN and IOMachine, PFunctor/InternalHom for Responder, and
    PFunctor/Lens/Duoidal for Game. Responder/Display additionally imports
    PFunctor/Display/{Chart, Coalgebra}; Responder/Reindex additionally imports
-   PFunctor/Display/Handler.)
+   PFunctor/Display/Handler; Responder/Behavior additionally imports
+   IPFunctor/M, PFunctor/Display/M, and Dynamical/Trajectory.)
 
 Control/Monad/Indexed, PFunctor/Free/Basic
   → IPFunctor/Basic → IPFunctor/Free/{Basic, Indexed}

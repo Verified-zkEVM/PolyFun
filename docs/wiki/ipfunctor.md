@@ -48,7 +48,8 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/IPFunctor/Basic.lean`](../../PolyFun/IPFunctor/Basic.lean) | `IPFunctor I J` structure (fields `A`, `B`, `src`), `Endo I := IPFunctor I I` abbrev, `Obj`, `CoeFun`, `Zero`, `One`, `toPFunctor`, `sigmaPFunctor`, composition `Q ◃ P`, `DeterministicTransitions`. |
+| [`PolyFun/IPFunctor/Basic.lean`](../../PolyFun/IPFunctor/Basic.lean) | `IPFunctor I J` structure (fields `A`, `B`, `src`), `Endo I := IPFunctor I I` abbrev, `Obj`, fiberwise `map` and functor laws, `CoeFun`, `Zero`, `One`, `toPFunctor`, `sigmaPFunctor`, composition `Q ◃ P`, `DeterministicTransitions`. |
+| [`PolyFun/IPFunctor/M.lean`](../../PolyFun/IPFunctor/M.lean) | `IPFunctor.IM P i`, the indexed final coalgebra for `P : Endo I`: audit-visible sigma-erased representation with root/all-edge coherence, constructor/destructor equivalence, corecursor equations, uniqueness, and a cast-free indexed bisimulation principle. |
 | [`PolyFun/IPFunctor/Free/Family.lean`](../../PolyFun/IPFunctor/Free/Family.lean) | **Primitive `IPFunctor.IFreeM P X : I → Type`** for `P : Endo I` and `X : I → Type` (state-indexed return family). Family-polymorphic `bind`, `imap`, `inductionOn`, `construct`, `mapM`, `toSigmaFreeM`, injectivity / equation lemmas. |
 | [`PolyFun/IPFunctor/Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean) | `IPFunctor.FreeM P s α := IFreeM P (fun _ => α) s` — the constant-family specialization. Constructors `pure` / `liftBind` (as `@[match_pattern]` aliases over `IFreeM`), `lift` (shape) / `liftObj` (object), `bind` (state-polymorphic), `Functor` / `LawfulFunctor`, `inductionOn`, `construct`, `mapM`, `erase` (forgetful to `PFunctor.FreeM` under `[Unique I]`), `toSigmaFreeM`. |
 | [`PolyFun/IPFunctor/Free/Indexed.lean`](../../PolyFun/IPFunctor/Free/Indexed.lean) | `IPFunctor.FreeM₂ P s t α := IFreeM P (fun u => PSigma (fun _ : u = t => α)) s` — the terminal-state-marker specialization. `bind` chains indices positionally; carries `IndexedMonad` / `LawfulIndexedMonad` instances. Forgetful coercion `toFreeM`. |
@@ -80,6 +81,15 @@ Conceptually, "from state `s`, the agent may select shape `A s`; each shape
 carries response set `B s a`; once response `b` is fixed, the state advances
 to `src s a b`." This is the only case where `IFreeM` / `FreeM` / `FreeM₂`,
 `IndexedMonad`, and `do`-notation make sense.
+
+### `IPFunctor.IM P i` (indexed final coalgebra)
+
+`IM P i` is the coinductive counterpart of `IFreeM`: a potentially infinite
+`P`-tree rooted at index `i`, where every child is forced into the fiber named
+by `P.src`. Its implementation is an ordinary M-tree over `P.sigmaPFunctor`
+plus a proposition-valued coherence invariant at every finite vertex. The
+client-facing final-coalgebra API is `dest` / `mk` / `corec`, with defining
+equation, uniqueness, and `corec dest = id`.
 
 ### `IPFunctor.IFreeM P X s` (primitive: state-indexed return family)
 
