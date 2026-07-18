@@ -32,11 +32,14 @@ def rightRoot : Cursor (suffix truePath) :=
 def rightJoined : Cursor (FreeM.append program suffix) :=
   Cursor.joinRight program suffix truePath rightRoot
 
-theorem internalIsNode : Cursor.IsNode internal.residual := by
-  change Cursor.IsNode
+theorem internalIsNode : IsNode internal.residual := by
+  change IsNode
     (FreeM.liftBind (P := Interface) Command.index afterIndex)
-  exact Cursor.IsNode.liftBind (P := Interface) (α := Nat)
+  exact IsNode.liftBind (P := Interface) (α := Nat)
     Command.index afterIndex
+
+example : ¬ internal.IsTerminal :=
+  (Cursor.not_isTerminal_iff_isNode internal).2 internalIsNode
 
 example : leftJoined.residual =
     FreeM.append internal.residual (fun path => suffix (internal.plug path)) := rfl
@@ -44,11 +47,9 @@ example : leftJoined.residual =
 example : rightJoined.residual = suffix truePath := rfl
 
 example : Cursor.split program suffix leftJoined =
-    .left internal internalIsNode := by
-  exact Cursor.split_liftAppend_of_isNode suffix internal internalIsNode
+    .left internal internalIsNode := rfl
 
-example : Cursor.split program suffix rightJoined = .right truePath rightRoot := by
-  exact Cursor.split_joinRight program suffix truePath rightRoot
+example : Cursor.split program suffix rightJoined = .right truePath rightRoot := rfl
 
 example : (Cursor.split program suffix leftJoined).join = leftJoined :=
   Cursor.join_split program suffix leftJoined
@@ -67,6 +68,18 @@ example (view : Cursor.AppendView program suffix) :
   Cursor.split_join view
 
 def suffixPath : Path (suffix truePath) := ⟨PUnit.unit, ⟨⟩⟩
+
+example : leftJoined.length = 1 := rfl
+
+example : leftJoined.trace =
+    [⟨Command.choose, true⟩] := rfl
+
+example : rightJoined.trace =
+    [⟨Command.choose, true⟩, ⟨Command.index, selectedIndex⟩,
+      ⟨Command.finish, PUnit.unit⟩] := rfl
+
+example : rightJoined.plug suffixPath =
+    Path.append program suffix truePath (rightRoot.plug suffixPath) := rfl
 
 example : Cursor.joinRight program suffix truePath
       (Cursor.ofPath (suffix truePath) suffixPath) =
@@ -89,11 +102,11 @@ def appendedLabels : Decoration Labels (FreeM.append program suffix) :=
 example : Decoration.restrict leftJoined appendedLabels =
     Decoration.append (Decoration.restrict internal labels)
       (fun path => suffixLabels (internal.plug path)) :=
-  Cursor.Decoration.restrict_liftAppend suffix internal labels suffixLabels
+  Decoration.restrict_liftAppend suffix internal labels suffixLabels
 
 example : Decoration.restrict rightJoined appendedLabels =
     Decoration.restrict rightRoot (suffixLabels truePath) :=
-  Cursor.Decoration.restrict_joinRight program suffix truePath rightRoot labels suffixLabels
+  Decoration.restrict_joinRight program suffix truePath rightRoot labels suffixLabels
 
 def suffixFibers (path : Path program) :
     Decoration.Over Labels Fibers (suffix path) (suffixLabels path) :=
@@ -108,13 +121,13 @@ example : HEq
     (Decoration.Over.append
       (Decoration.Over.restrict internal labels fibers)
       (fun path => suffixFibers (internal.plug path))) :=
-  Cursor.Decoration.Over.restrict_liftAppend suffix internal labels suffixLabels
+  Decoration.Over.restrict_liftAppend suffix internal labels suffixLabels
     fibers suffixFibers
 
 example : HEq
     (Decoration.Over.restrict rightJoined appendedLabels appendedFibers)
     (Decoration.Over.restrict rightRoot (suffixLabels truePath) (suffixFibers truePath)) :=
-  Cursor.Decoration.Over.restrict_joinRight program suffix truePath rightRoot
+  Decoration.Over.restrict_joinRight program suffix truePath rightRoot
     labels suffixLabels fibers suffixFibers
 
 end PFunctor.FreeM.CursorAppendExamples

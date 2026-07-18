@@ -27,7 +27,6 @@ universe uA uB v w w₂ w₃
 
 namespace PFunctor
 namespace FreeM
-namespace Cursor
 
 variable {P : PFunctor.{uA, uB}} {α : Type v} {β : Type w}
 
@@ -35,6 +34,27 @@ variable {P : PFunctor.{uA, uB}} {α : Type v} {β : Type w}
 inductive IsNode : FreeM P α → Prop
   | liftBind (a : P.A) (next : P.B a → FreeM P α) :
       IsNode (FreeM.liftBind a next)
+
+namespace Cursor
+
+/-- A cursor has an internal residual exactly when it is not terminal. -/
+theorem not_isTerminal_iff_isNode {program : FreeM P α} (cursor : Cursor program) :
+    ¬ cursor.IsTerminal ↔ IsNode cursor.residual := by
+  rcases cursor with ⟨residual, spine⟩
+  cases residual with
+  | pure output =>
+      constructor
+      · intro notTerminal
+        exact (notTerminal ⟨output, rfl⟩).elim
+      · intro isNode
+        cases isNode
+  | liftBind a next =>
+      constructor
+      · intro _
+        exact IsNode.liftBind a next
+      · intro _ terminal
+        rcases terminal with ⟨output, residualEq⟩
+        cases residualEq
 
 namespace Spine
 
@@ -65,6 +85,27 @@ theorem liftAppend_down {a : P.A} {next : P.B a → FreeM P α}
         (tail.liftAppend (fun path => suffix ⟨answer, path⟩)) :=
   rfl
 
+@[simp]
+theorem length_liftAppend {program residual : FreeM P α}
+    (spine : Spine program residual)
+    (suffix : Path program → FreeM P β) :
+    (spine.liftAppend suffix).length = spine.length := by
+  induction spine with
+  | root => rfl
+  | down answer tail ih =>
+      exact congrArg (· + 1) (ih (fun path => suffix ⟨answer, path⟩))
+
+@[simp]
+theorem trace_liftAppend {program residual : FreeM P α}
+    (spine : Spine program residual)
+    (suffix : Path program → FreeM P β) :
+    (spine.liftAppend suffix).trace = spine.trace := by
+  induction spine with
+  | root => rfl
+  | down answer tail ih =>
+      exact congrArg (List.cons ⟨_, answer⟩)
+        (ih (fun path => suffix ⟨answer, path⟩))
+
 /-- Follow a complete prefix path before a cursor spine in its selected suffix. -/
 def joinRight : (program : FreeM P α) →
     (suffix : Path program → FreeM P β) →
@@ -86,6 +127,32 @@ theorem joinRight_comp : (program : FreeM P α) →
       exact congrArg (Spine.down answer)
         (joinRight_comp (next answer) (fun tail => suffix ⟨answer, tail⟩)
           path first second)
+
+@[simp]
+theorem trace_joinRight : (program : FreeM P α) →
+    (suffix : Path program → FreeM P β) →
+    (path : Path program) → {residual : FreeM P β} →
+    (spine : Spine (suffix path) residual) →
+    (spine.joinRight program suffix path).trace =
+      List.append (Path.trace program path) spine.trace
+  | .pure _, _, ⟨⟩, _, _ => rfl
+  | .liftBind _ next, suffix, ⟨answer, path⟩, _, spine => by
+      exact congrArg (List.cons ⟨_, answer⟩)
+        (trace_joinRight (next answer) (fun tail => suffix ⟨answer, tail⟩)
+          path spine)
+
+theorem plug_joinRight : (program : FreeM P α) →
+    (suffix : Path program → FreeM P β) →
+    (path : Path program) → {residual : FreeM P β} →
+    (spine : Spine (suffix path) residual) → (tail : Path residual) →
+    (spine.joinRight program suffix path).plug tail =
+      Path.append program suffix path (spine.plug tail)
+  | .pure _, _, ⟨⟩, _, _, _ => rfl
+  | .liftBind _ next, suffix, ⟨answer, path⟩, _, spine, tail => by
+      exact congrArg
+        (fun rest => (⟨answer, rest⟩ : Path (FreeM.append (.liftBind _ next) suffix)))
+        (plug_joinRight (next answer) (fun rest => suffix ⟨answer, rest⟩)
+          path spine tail)
 
 end Spine
 
@@ -118,6 +185,18 @@ theorem liftAppend_down {a : P.A} {next : P.B a → FreeM P α}
       Cursor.down answer
         (tail.liftAppend (fun path => suffix ⟨answer, path⟩)) :=
   rfl
+
+@[simp]
+theorem length_liftAppend {program : FreeM P α} (cursor : Cursor program)
+    (suffix : Path program → FreeM P β) :
+    (cursor.liftAppend suffix).length = cursor.length :=
+  Spine.length_liftAppend cursor.spine suffix
+
+@[simp]
+theorem trace_liftAppend {program : FreeM P α} (cursor : Cursor program)
+    (suffix : Path program → FreeM P β) :
+    (cursor.liftAppend suffix).trace = cursor.trace :=
+  Spine.trace_liftAppend cursor.spine suffix
 
 theorem liftAppend_comp {program : FreeM P α} (first : Cursor program)
     (second : Cursor first.residual)
@@ -159,12 +238,11 @@ def joinRight : (program : FreeM P α) →
 
 @[simp]
 theorem joinRight_pure (output : α)
-    (suffix : Path (FreeM.pure (P := P) output) → FreeM P β)
+    (suffix : Path (pure output : FreeM P α) → FreeM P β)
     (cursor : Cursor (suffix ⟨⟩)) :
-    joinRight (FreeM.pure output) suffix ⟨⟩ cursor = cursor :=
+    joinRight (pure output) suffix ⟨⟩ cursor = cursor :=
   rfl
 
-@[simp]
 theorem joinRight_liftBind {a : P.A} (next : P.B a → FreeM P α)
     (suffix : Path (FreeM.liftBind a next) → FreeM P β)
     (answer : P.B a) (path : Path (next answer))
@@ -192,6 +270,24 @@ theorem joinRight_comp : (program : FreeM P α) →
         (fun spine =>
           (⟨residual, spine⟩ : Cursor (FreeM.append program suffix)))
         (Spine.joinRight_comp program suffix path firstSpine secondSpine)
+
+@[simp]
+theorem trace_joinRight : (program : FreeM P α) →
+    (suffix : Path program → FreeM P β) →
+    (path : Path program) → (cursor : Cursor (suffix path)) →
+    (joinRight program suffix path cursor).trace =
+      List.append (Path.trace program path) cursor.trace
+  | program, suffix, path, cursor =>
+      Spine.trace_joinRight program suffix path cursor.spine
+
+@[simp]
+theorem plug_joinRight (program : FreeM P α)
+    (suffix : Path program → FreeM P β)
+    (path : Path program) (cursor : Cursor (suffix path))
+    (tail : Path cursor.residual) :
+    (joinRight program suffix path cursor).plug tail =
+      Path.append program suffix path (cursor.plug tail) :=
+  Spine.plug_joinRight program suffix path cursor.spine tail
 
 /-- Classification of a cursor through dependent append. -/
 inductive AppendView (program : FreeM P α)
@@ -257,7 +353,6 @@ def split : (program : FreeM P α) →
       AppendView.prepend answer
         (split (next answer) (fun path => suffix ⟨answer, path⟩) ⟨_, tail⟩)
 
-@[simp]
 theorem split_down {a : P.A} (next : P.B a → FreeM P α)
     (suffix : Path (FreeM.liftBind a next) → FreeM P β)
     (answer : P.B a)
@@ -270,12 +365,11 @@ theorem split_down {a : P.A} (next : P.B a → FreeM P α)
 
 @[simp]
 theorem split_pure (output : α)
-    (suffix : Path (FreeM.pure (P := P) output) → FreeM P β)
+    (suffix : Path (pure output : FreeM P α) → FreeM P β)
     (cursor : Cursor (suffix ⟨⟩)) :
-    split (FreeM.pure output) suffix cursor = .right ⟨⟩ cursor :=
+    split (pure output) suffix cursor = .right ⟨⟩ cursor :=
   rfl
 
-@[simp]
 theorem split_root_liftBind {a : P.A} (next : P.B a → FreeM P α)
     (suffix : Path (FreeM.liftBind a next) → FreeM P β) :
     split (FreeM.liftBind a next) suffix
@@ -372,8 +466,11 @@ theorem split_ofPath_append {program : FreeM P α}
   rw [← joinRight_ofPath]
   exact split_joinRight program suffix path _
 
+end Cursor
+
 /-! ## Decoration compatibility -/
 
+namespace Displayed
 namespace Decoration
 
 variable {Γ : P.A → Type w₂}
@@ -383,9 +480,9 @@ theorem restrict_liftAppend : {program : FreeM P α} →
     (cursor : Cursor program) →
     (d₁ : Displayed.Decoration Γ program) →
     (d₂ : (path : Path program) → Displayed.Decoration Γ (suffix path)) →
-    Displayed.Decoration.restrict (cursor.liftAppend suffix)
-      (Displayed.Decoration.append d₁ d₂) =
-      Displayed.Decoration.append (Displayed.Decoration.restrict cursor d₁)
+    Decoration.restrict (cursor.liftAppend suffix)
+      (Decoration.append d₁ d₂) =
+      Decoration.append (Decoration.restrict cursor d₁)
         (fun path => d₂ (cursor.plug path))
   | _, _, ⟨_, .root _⟩, _, _ => rfl
   | _, suffix, ⟨_, .down answer tail⟩, d₁, d₂ =>
@@ -397,9 +494,9 @@ theorem restrict_joinRight : (program : FreeM P α) →
     (path : Path program) → (cursor : Cursor (suffix path)) →
     (d₁ : Displayed.Decoration Γ program) →
     (d₂ : (prefixPath : Path program) → Displayed.Decoration Γ (suffix prefixPath)) →
-    Displayed.Decoration.restrict (joinRight program suffix path cursor)
-      (Displayed.Decoration.append d₁ d₂) =
-      Displayed.Decoration.restrict cursor (d₂ path)
+    Decoration.restrict (Cursor.joinRight program suffix path cursor)
+      (Decoration.append d₁ d₂) =
+      Decoration.restrict cursor (d₂ path)
   | .pure _, _, ⟨⟩, _, _, _ => rfl
   | .liftBind _ next, suffix, ⟨answer, path⟩, cursor, d₁, d₂ =>
       restrict_joinRight (next answer) (fun tail => suffix ⟨answer, tail⟩)
@@ -417,11 +514,11 @@ theorem restrict_liftAppend : {program : FreeM P α} →
     (r₁ : Displayed.Decoration.Over Γ A program d₁) →
     (r₂ : (path : Path program) → Displayed.Decoration.Over Γ A (suffix path) (d₂ path)) →
     HEq
-      (Displayed.Decoration.Over.restrict (cursor.liftAppend suffix)
-        (Displayed.Decoration.append d₁ d₂)
-        (Displayed.Decoration.Over.append r₁ r₂))
-      (Displayed.Decoration.Over.append
-        (Displayed.Decoration.Over.restrict cursor d₁ r₁)
+      (Decoration.Over.restrict (cursor.liftAppend suffix)
+        (Decoration.append d₁ d₂)
+        (Decoration.Over.append r₁ r₂))
+      (Decoration.Over.append
+        (Decoration.Over.restrict cursor d₁ r₁)
         (fun path => r₂ (cursor.plug path)))
   | _, _, ⟨_, .root _⟩, _, _, _, _ => HEq.rfl
   | _, suffix, ⟨_, .down answer tail⟩, d₁, d₂, r₁, r₂ =>
@@ -438,10 +535,10 @@ theorem restrict_joinRight : (program : FreeM P α) →
     (r₂ : (prefixPath : Path program) →
       Displayed.Decoration.Over Γ A (suffix prefixPath) (d₂ prefixPath)) →
     HEq
-      (Displayed.Decoration.Over.restrict (joinRight program suffix path cursor)
-        (Displayed.Decoration.append d₁ d₂)
-        (Displayed.Decoration.Over.append r₁ r₂))
-      (Displayed.Decoration.Over.restrict cursor (d₂ path) (r₂ path))
+      (Decoration.Over.restrict (Cursor.joinRight program suffix path cursor)
+        (Decoration.append d₁ d₂)
+        (Decoration.Over.append r₁ r₂))
+      (Decoration.Over.restrict cursor (d₂ path) (r₂ path))
   | .pure _, _, ⟨⟩, _, _, _, _, _ => HEq.rfl
   | .liftBind _ next, suffix, ⟨answer, path⟩, cursor, d₁, d₂, r₁, r₂ =>
       restrict_joinRight (next answer) (fun tail => suffix ⟨answer, tail⟩)
@@ -451,7 +548,6 @@ theorem restrict_joinRight : (program : FreeM P α) →
 end Over
 
 end Decoration
-
-end Cursor
+end Displayed
 end FreeM
 end PFunctor
