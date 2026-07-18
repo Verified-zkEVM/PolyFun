@@ -116,6 +116,7 @@ import PolyFun.PFunctor.CartesianClosed
 import PolyFun.PFunctor.Category
 import PolyFun.PFunctor.Chart.Basic
 import PolyFun.PFunctor.Cofree
+import PolyFun.PFunctor.Cofree.Polynomial
 import PolyFun.PFunctor.Comonoid
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
