@@ -333,7 +333,9 @@ theorem map_obj_comp (l₂ : Lens Q R) (l₁ : Lens P Q)
         (map_obj_comp l₂ l₁
           (rest (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d))))
 
-@[simp]
+/-- Mapping preserves lens composition. This is intentionally not a simp
+lemma: `Lens.mapObj_comp` already selects the canonical normal form for
+composition acting on polynomial extensions. -/
 theorem map_comp (l₂ : Lens Q R) (l₁ : Lens P Q) :
     map l₂ ∘ₗ map l₁ = map (l₂ ∘ₗ l₁) := by
   let hA : ∀ s, (map l₂ ∘ₗ map l₁).toFunA s =

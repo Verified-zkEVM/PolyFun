@@ -109,6 +109,9 @@ PFunctor/Lens/{Basic, Cartesian, State}
   → PFunctor/Lens/{Composite, Distributivity, Factorization, Duoidal}
   → PFunctor/{InternalHom, CartesianClosed, Adjunctions, Comonoid}
 
+PFunctor/Lens/Basic → PFunctor/SubstMonoid
+PFunctor/{Free/Path, SubstMonoid} → PFunctor/Free/Polynomial
+
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
   → PFunctor/Dynamical/{Behavior, Simulation, RunN, DynComputation, IOMachine}
