@@ -22,7 +22,7 @@ two unary displays.
 
 @[expose] public section
 
-universe uA₁ uA₂ uB uC uD uC₁ uD₁ uC₂ uD₂
+universe uA₁ uA₂ uB uC uD uC₁ uD₁ uC₂ uD₂ uC₃ uD₃
 
 namespace PFunctor
 namespace Display
@@ -82,6 +82,167 @@ def parallelSumComponents
     | .left a => left.direction a contract answer
     | .right b => right.direction b contract answer
     | .both a b => joint.direction (a, b) contract answer
+
+/-- Assemble a display over `P ∥ Q` from components whose position and
+direction evidence live in independent universes.
+
+Each branch is lifted into the corresponding maximum universe.  This is the
+fully heterogeneous constructor; `parallelSumComponents` remains the
+definitionally strict common-universe constructor used by exact component
+decomposition. -/
+def parallelSumComponentsLift
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q)) :
+    Display.{max uA₁ uA₂, uB, max uC₁ uC₂ uC₃,
+      max uD₁ uD₂ uD₃} (P ∥ Q) where
+  position
+    | .left a => ULift.{max uC₂ uC₃} (left.position a)
+    | .right b => ULift.{max uC₁ uC₃} (right.position b)
+    | .both a b => ULift.{max uC₁ uC₂} (joint.position (a, b))
+  direction operation contract answer := match operation with
+    | .left a => ULift.{max uD₂ uD₃}
+        (left.direction a contract.down answer)
+    | .right b => ULift.{max uD₁ uD₃}
+        (right.direction b contract.down answer)
+    | .both a b => ULift.{max uD₁ uD₂}
+        (joint.direction (a, b) contract.down answer)
+
+@[simp] theorem parallelSumComponentsLift_position_left
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (a : P.A) :
+    (parallelSumComponentsLift left right joint).position (.left a) =
+      ULift.{max uC₂ uC₃} (left.position a) := rfl
+
+@[simp] theorem parallelSumComponentsLift_position_right
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (b : Q.A) :
+    (parallelSumComponentsLift left right joint).position (.right b) =
+      ULift.{max uC₁ uC₃} (right.position b) := rfl
+
+@[simp] theorem parallelSumComponentsLift_position_both
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (a : P.A) (b : Q.A) :
+    (parallelSumComponentsLift left right joint).position (.both a b) =
+      ULift.{max uC₁ uC₂} (joint.position (a, b)) := rfl
+
+@[simp] theorem parallelSumComponentsLift_direction_left
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (a : P.A) (contract : left.position a) (answer : P.B a) :
+    (parallelSumComponentsLift left right joint).direction
+        (.left a) (ULift.up.{max uC₂ uC₃} contract) answer =
+      ULift.{max uD₂ uD₃} (left.direction a contract answer) := rfl
+
+@[simp] theorem parallelSumComponentsLift_direction_right
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (b : Q.A) (contract : right.position b) (answer : Q.B b) :
+    (parallelSumComponentsLift left right joint).direction
+        (.right b) (ULift.up.{max uC₁ uC₃} contract) answer =
+      ULift.{max uD₁ uD₃} (right.direction b contract answer) := rfl
+
+@[simp] theorem parallelSumComponentsLift_direction_both
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (a : P.A) (b : Q.A) (contract : joint.position (a, b))
+    (answer : P.B a × Q.B b) :
+    (parallelSumComponentsLift left right joint).direction
+        (.both a b) (ULift.up.{max uC₁ uC₂} contract) answer =
+      ULift.{max uD₁ uD₂}
+        (joint.direction (a, b) contract answer) := rfl
+
+/-- The left position component of heterogeneous assembly is canonically
+equivalent to the original evidence fiber. -/
+def parallelSumComponentsLiftPositionLeftEquiv
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (a : P.A) :
+    left.position a ≃
+      (parallelSumComponentsLift left right joint).position (.left a) :=
+  Equiv.ulift.symm
+
+/-- The right position component of heterogeneous assembly is canonically
+equivalent to the original evidence fiber. -/
+def parallelSumComponentsLiftPositionRightEquiv
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (b : Q.A) :
+    right.position b ≃
+      (parallelSumComponentsLift left right joint).position (.right b) :=
+  Equiv.ulift.symm
+
+/-- The joint position component of heterogeneous assembly is canonically
+equivalent to the original relational evidence fiber. -/
+def parallelSumComponentsLiftPositionBothEquiv
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (a : P.A) (b : Q.A) :
+    joint.position (a, b) ≃
+      (parallelSumComponentsLift left right joint).position (.both a b) :=
+  Equiv.ulift.symm
+
+/-- The left direction component of heterogeneous assembly is canonically
+equivalent to the original evidence fiber. -/
+def parallelSumComponentsLiftDirectionLeftEquiv
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (a : P.A) (contract : left.position a) (answer : P.B a) :
+    left.direction a contract answer ≃
+      (parallelSumComponentsLift left right joint).direction
+        (.left a) (ULift.up.{max uC₂ uC₃} contract) answer :=
+  Equiv.ulift.symm
+
+/-- The right direction component of heterogeneous assembly is canonically
+equivalent to the original evidence fiber. -/
+def parallelSumComponentsLiftDirectionRightEquiv
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (b : Q.A) (contract : right.position b) (answer : Q.B b) :
+    right.direction b contract answer ≃
+      (parallelSumComponentsLift left right joint).direction
+        (.right b) (ULift.up.{max uC₁ uC₃} contract) answer :=
+  Equiv.ulift.symm
+
+/-- The joint direction component of heterogeneous assembly is canonically
+equivalent to the original relational evidence fiber. -/
+def parallelSumComponentsLiftDirectionBothEquiv
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (a : P.A) (b : Q.A) (contract : joint.position (a, b))
+    (answer : P.B a × Q.B b) :
+    joint.direction (a, b) contract answer ≃
+      (parallelSumComponentsLift left right joint).direction
+        (.both a b) (ULift.up.{max uC₁ uC₂} contract) answer :=
+  Equiv.ulift.symm
 
 /-- Restrict a parallel display to left-only operations. -/
 def leftComponent

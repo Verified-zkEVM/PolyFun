@@ -474,7 +474,7 @@ def reindexBehavior (f : Handler (FreeM Q) P)
 handler. -/
 theorem reindexBehavior_congr
     {f g : Handler (FreeM Q) P} (h : f = g)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB})) :
+    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'})) :
     reindexBehavior f behavior = reindexBehavior g behavior :=
   congrArg (fun handler => reindexBehavior handler behavior) h
 
@@ -579,12 +579,12 @@ of the base handler and its displayed lift.  The sole output transport is the
 canonical equality of the underlying ordinary behaviors. -/
 theorem reindexVerifiedBehavior_congr
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     {f g : Handler (FreeM Q) P} (h : f = g)
     (displayedF : Display.Handler S T f)
     (displayedG : Display.Handler S T g)
     (displayedEq : Display.Handler.transport h displayedF = displayedG)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB}))
+    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior) :
     Display.M.transport (reindexBehavior_congr h behavior)
         (reindexVerifiedBehavior S T f displayedF

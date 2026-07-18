@@ -27,19 +27,6 @@ namespace Responder
 
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 
-private theorem heq_funext
-    {A A' : Sort uA₃} {B : A → Sort uC₃} {B' : A' → Sort uC₃}
-    {f : (a : A) → B a} {f' : (a : A') → B' a}
-    (hA : A = A')
-    (h : ∀ a a', HEq a a' → HEq (f a) (f' a')) : HEq f f' := by
-  cases hA
-  have hB : B = B' := by
-    funext a
-    exact type_eq_of_heq (h a a HEq.rfl)
-  cases hB
-  apply heq_of_eq
-  funext a
-  exact eq_of_heq (h a a HEq.rfl)
 private theorem ulift_heq
     {A B : Type uC₁} {a : A} {b : B}
     (h : HEq a b) :
@@ -119,10 +106,10 @@ def parallel
             rw [f.behavior_eq state.1 witness.1,
               g.behavior_eq state.2 witness.2]
           _ = _ := (parallel_behavior _ _ _).symm
-      · apply heq_funext rfl
+      · apply Function.hfunext rfl
         intro operation operation' hOperation
         cases hOperation
-        apply heq_funext rfl
+        apply Function.hfunext rfl
         intro contract contract' hContract
         cases hContract
         cases operation with
@@ -140,7 +127,7 @@ def parallel
                 (fun step => step.1.2 leftOperation contract.1) hf
             · exact congr_arg_heq
                 (fun step => step.1.2 rightOperation contract.2) hg
-    · apply heq_funext
+    · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder
             (Display.parallelSum S T))).sigmaPFunctor.B
@@ -156,10 +143,10 @@ def parallel
               rw [f.behavior_eq state.1 witness.1,
                 g.behavior_eq state.2 witness.2]
             _ = _ := (parallel_behavior _ _ _).symm
-        · apply heq_funext rfl
+        · apply Function.hfunext rfl
           intro operation operation' hOperation
           cases hOperation
-          apply heq_funext rfl
+          apply Function.hfunext rfl
           intro contract contract' hContract
           cases hContract
           cases operation with

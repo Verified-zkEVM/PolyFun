@@ -22,16 +22,17 @@ displayed free handler.
 
 @[expose] public section
 
-universe uA₁ uB uC₁ uD₁ uA₂ uC₂ uD₂ uA₃ uC₃ uD₃ uA₄ uC₄ uD₄
+universe uA₁ uB₁ uC₁ uD₁ uA₂ uB₂ uC₂ uD₂
+  uA₃ uB₃ uC₃ uD₃ uA₄ uB₄ uC₄ uD₄
 
 namespace PFunctor
 namespace Display
 
 /-- A fiberwise lift of an ordinary polynomial lens between two displays. -/
 structure Lens
-    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
-    (S : Display.{uA₁, uB, uC₁, uD₁} P)
-    (T : Display.{uA₂, uB, uC₂, uD₂} Q)
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (S : Display.{uA₁, uB₁, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB₂, uC₂, uD₂} Q)
     (base : PFunctor.Lens P Q) where
   /-- Map displayed positions over the base position map. -/
   toPosition : (a : P.A) → S.position a → T.position (base.toFunA a)
@@ -43,11 +44,11 @@ structure Lens
 
 namespace Lens
 
-variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
-  {R : PFunctor.{uA₃, uB}}
-  {S : Display.{uA₁, uB, uC₁, uD₁} P}
-  {T : Display.{uA₂, uB, uC₂, uD₂} Q}
-  {U : Display.{uA₃, uB, uC₃, uD₃} R}
+variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+  {R : PFunctor.{uA₃, uB₃}}
+  {S : Display.{uA₁, uB₁, uC₁, uD₁} P}
+  {T : Display.{uA₂, uB₂, uC₂, uD₂} Q}
+  {U : Display.{uA₃, uB₃, uC₃, uD₃} R}
   {f : PFunctor.Lens P Q} {g : PFunctor.Lens Q R}
 
 /-- Extensionality for fiberwise lenses over a fixed base lens.  The direction
@@ -76,7 +77,7 @@ theorem ext {left right : Display.Lens S T f}
           rfl
 
 /-- Identity fiberwise lens. -/
-def id (S : Display.{uA₁, uB, uC₁, uD₁} P) :
+def id (S : Display.{uA₁, uB₁, uC₁, uD₁} P) :
     Display.Lens S S (PFunctor.Lens.id P) where
   toPosition _ c := c
   toDirection _ _ _ d := d
@@ -150,8 +151,8 @@ def toTotal (displayed : Display.Lens S T f) :
   rfl
 
 theorem comp_assoc
-    {V : PFunctor.{uA₄, uB}}
-    {W : Display.{uA₄, uB, uC₄, uD₄} V}
+    {V : PFunctor.{uA₄, uB₄}}
+    {W : Display.{uA₄, uB₄, uC₄, uD₄} V}
     {h : PFunctor.Lens R V}
     (third : Display.Lens U W h)
     (second : Display.Lens T U g) (first : Display.Lens S T f) :
@@ -288,7 +289,7 @@ def toHandler (displayed : Display.Lens S T f) :
   rfl
 
 @[simp] theorem toHandler_id
-    (S : Display.{uA₁, uB, uC₁, uD₁} P) :
+    (S : Display.{uA₁, uB₁, uC₁, uD₁} P) :
     (id S).toHandler = Display.Handler.id S :=
   rfl
 
@@ -305,21 +306,33 @@ theorem toHandler_transport {g : PFunctor.Lens P Q} (h : f = g)
 /-- Converting a composite displayed lens to a handler agrees pointwise with
 displayed Kleisli composition, after transport along `Handler.ofLens_comp`. -/
 theorem toHandler_comp_apply
-    (second : Display.Lens T U g) (first : Display.Lens S T f)
-    (a : P.A) (c : S.position a) :
-    U.transport (S.direction a c)
-        (congrFun (PFunctor.Handler.ofLens_comp g f) a)
+    {P₀ : PFunctor.{uA₁, uB₁}} {Q₀ : PFunctor.{uA₂, uB₁}}
+    {R₀ : PFunctor.{uA₃, uB₃}}
+    {S₀ : Display.{uA₁, uB₁, uC₁, uD₁} P₀}
+    {T₀ : Display.{uA₂, uB₁, uC₂, uD₂} Q₀}
+    {U₀ : Display.{uA₃, uB₃, uC₃, uD₃} R₀}
+    {f₀ : PFunctor.Lens P₀ Q₀} {g₀ : PFunctor.Lens Q₀ R₀}
+    (second : Display.Lens T₀ U₀ g₀) (first : Display.Lens S₀ T₀ f₀)
+    (a : P₀.A) (c : S₀.position a) :
+    U₀.transport (S₀.direction a c)
+        (congrFun (PFunctor.Handler.ofLens_comp g₀ f₀) a)
         ((comp second first).toHandler a c) =
       (second.toHandler.comp first.toHandler) a c := by
-  rw [U.transport_proof_irrel (S.direction a c)
-    (congrFun (PFunctor.Handler.ofLens_comp g f) a) rfl]
+  rw [U₀.transport_proof_irrel (S₀.direction a c)
+    (congrFun (PFunctor.Handler.ofLens_comp g₀ f₀) a) rfl]
   rfl
 
 /-- Conversion of a composite fiberwise lens is displayed-handler
 composition, after transport along the corresponding base-handler law. -/
 theorem toHandler_comp
-    (second : Display.Lens T U g) (first : Display.Lens S T f) :
-    Display.Handler.transport (PFunctor.Handler.ofLens_comp g f)
+    {P₀ : PFunctor.{uA₁, uB₁}} {Q₀ : PFunctor.{uA₂, uB₁}}
+    {R₀ : PFunctor.{uA₃, uB₃}}
+    {S₀ : Display.{uA₁, uB₁, uC₁, uD₁} P₀}
+    {T₀ : Display.{uA₂, uB₁, uC₂, uD₂} Q₀}
+    {U₀ : Display.{uA₃, uB₃, uC₃, uD₃} R₀}
+    {f₀ : PFunctor.Lens P₀ Q₀} {g₀ : PFunctor.Lens Q₀ R₀}
+    (second : Display.Lens T₀ U₀ g₀) (first : Display.Lens S₀ T₀ f₀) :
+    Display.Handler.transport (PFunctor.Handler.ofLens_comp g₀ f₀)
         ((comp second first).toHandler) =
       second.toHandler.comp first.toHandler := by
   funext a c
@@ -329,14 +342,20 @@ theorem toHandler_comp
 /-- The inverse orientation of `toHandler_comp`, convenient when a generic
 handler-composition theorem has already produced the Kleisli composite. -/
 theorem toHandler_comp_symm
-    (second : Display.Lens T U g) (first : Display.Lens S T f) :
-    Display.Handler.transport (PFunctor.Handler.ofLens_comp g f).symm
+    {P₀ : PFunctor.{uA₁, uB₁}} {Q₀ : PFunctor.{uA₂, uB₁}}
+    {R₀ : PFunctor.{uA₃, uB₃}}
+    {S₀ : Display.{uA₁, uB₁, uC₁, uD₁} P₀}
+    {T₀ : Display.{uA₂, uB₁, uC₂, uD₂} Q₀}
+    {U₀ : Display.{uA₃, uB₃, uC₃, uD₃} R₀}
+    {f₀ : PFunctor.Lens P₀ Q₀} {g₀ : PFunctor.Lens Q₀ R₀}
+    (second : Display.Lens T₀ U₀ g₀) (first : Display.Lens S₀ T₀ f₀) :
+    Display.Handler.transport (PFunctor.Handler.ofLens_comp g₀ f₀).symm
         (second.toHandler.comp first.toHandler) =
       (comp second first).toHandler := by
   rw [← toHandler_comp second first, Display.Handler.transport_trans]
   rw [Display.Handler.transport_proof_irrel
-    ((PFunctor.Handler.ofLens_comp g f).trans
-      (PFunctor.Handler.ofLens_comp g f).symm) rfl]
+    ((PFunctor.Handler.ofLens_comp g₀ f₀).trans
+      (PFunctor.Handler.ofLens_comp g₀ f₀).symm) rfl]
   rfl
 
 end Lens

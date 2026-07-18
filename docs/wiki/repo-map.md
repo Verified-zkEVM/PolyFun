@@ -47,6 +47,11 @@ PFunctor/Display/Basic
 IPFunctor/M + PFunctor/Display/Indexed -> PFunctor/Display/M
 PFunctor/{Handler, Free/Basic} -> PFunctor/Handler/Free
 PFunctor/{Display/Free, Handler/Free} -> PFunctor/Display/Handler
+PFunctor/Equiv/Basic -> PFunctor/Parallel
+PFunctor/{Display/Basic, Parallel} -> PFunctor/Display/Parallel
+PFunctor/{Handler/Free, Parallel} -> PFunctor/Free/Parallel
+PFunctor/{Display/Handler, Display/Parallel, Free/Parallel}
+  -> PFunctor/Display/Parallel/Free
 PFunctor/Display/{Chart, Handler} -> PFunctor/Display/Lens
 PFunctor/{Display/Lens, Display/Parallel, Free/Parallel}
   -> PFunctor/Display/Parallel/Lens
@@ -56,6 +61,14 @@ PFunctor/Dynamical/Simulation
   -> PFunctor/Dynamical/Responder/VerifiedPresentation
 PFunctor/{Display/Lens, Dynamical/Responder/VerifiedPresentation}
   -> PFunctor/Dynamical/Responder/Lens
+PFunctor/{Dynamical/Responder, Parallel}
+  -> PFunctor/Dynamical/Responder/Parallel
+PFunctor/{Display/Parallel, Dynamical/Responder/Display,
+  Dynamical/Responder/Parallel}
+  -> PFunctor/Dynamical/Responder/Parallel/Display
+PFunctor/{Dynamical/Responder/Behavior,
+  Dynamical/Responder/Parallel/Display}
+  -> PFunctor/Dynamical/Responder/Parallel/Behavior
 PFunctor/{Display/Parallel/Lens, Dynamical/Responder/Lens,
   Dynamical/Responder/Parallel/Behavior}
   -> PFunctor/Dynamical/Responder/Parallel/Coherence
@@ -68,6 +81,9 @@ PFunctor/{Dynamical/Responder/Parallel/Coherence,
   -> PFunctor/Dynamical/Responder/Parallel/VerifiedCoherence
 PFunctor/{Dynamical/Responder/Parallel/Behavior, Free/Parallel}
   -> PFunctor/Dynamical/Responder/Parallel/Compatibility
+PFunctor/{Display/Parallel/Free, Wiring} -> PFunctor/Wiring/Parallel
+PFunctor/{Dynamical/Responder/Parallel/Compatibility,
+  PatternRunsOnMatter/Display} -> PFunctor/PatternRunsOnMatter/Parallel
 PFunctor/Free/Basic
   -> PFunctor/Free/Displayed
   -> PFunctor/Free/{Path, Displayed/Decoration}

@@ -34,6 +34,10 @@ form, while `leftComponent`, `rightComponent`, and `jointComponent` recover
 the three pieces. The joint component `U` is genuinely relational: for
 example, its position evidence can require the two simultaneous operations to
 be equal, a condition that cannot in general factor into unary evidence.
+The strict constructor and decomposition use a common evidence universe for
+definitional round trips. `Display.parallelSumComponentsLift` accepts three
+independent position and direction evidence universes, lifts each branch into
+their maxima, and exposes canonical equivalences back to every component.
 
 The paper's concrete binary operation `r ∥Dep s` is the separable
 specialization `Display.parallelSum S T`: its joint component is

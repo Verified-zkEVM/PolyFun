@@ -155,7 +155,7 @@ end PFunctor.ParallelExample
 
 namespace PFunctor.ParallelUniverseCanary
 
-universe uA₁ uA₂ uA₃ uA₄ uA₅ uA₆ uB uE uF
+universe uA₁ uA₂ uA₃ uA₄ uA₅ uA₆ uB uB₁ uB₂ uE uF
   uC₁ uD₁ uC₂ uD₂ uC₃ uD₃ uC₄ uD₄ uC₅ uD₅ uC₆ uD₆
   uS₁ uS₂
 
@@ -171,6 +171,85 @@ def display
     (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
     Display.{max uA₁ uA₂, uB, max uC₁ uC₂, max uD₁ uD₂} (P ∥ Q) :=
   Display.parallelSum S T
+
+def relationalDisplayLift
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q)) :
+    Display.{max uA₁ uA₂, uB, max uC₁ uC₂ uC₃,
+      max uD₁ uD₂ uD₃} (P ∥ Q) :=
+  Display.parallelSumComponentsLift left right joint
+
+def relationalDisplayLiftLeftPositionEquiv
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (a : P.A) :
+    left.position a ≃
+      (relationalDisplayLift left right joint).position (.left a) :=
+  Display.parallelSumComponentsLiftPositionLeftEquiv left right joint a
+
+def relationalDisplayLiftRightDirectionEquiv
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (b : Q.A) (contract : right.position b) (answer : Q.B b) :
+    right.direction b contract answer ≃
+      (relationalDisplayLift left right joint).direction
+        (.right b) (ULift.up.{max uC₁ uC₃} contract) answer :=
+  Display.parallelSumComponentsLiftDirectionRightEquiv
+    left right joint b contract answer
+
+def relationalDisplayLiftJointDirectionEquiv
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Display.{uA₁, uB, uC₁, uD₁} P)
+    (right : Display.{uA₂, uB, uC₂, uD₂} Q)
+    (joint : Display.{max uA₁ uA₂, uB, uC₃, uD₃} (P ⊗ Q))
+    (a : P.A) (b : Q.A) (contract : joint.position (a, b))
+    (answer : P.B a × Q.B b) :
+    joint.direction (a, b) contract answer ≃
+      (relationalDisplayLift left right joint).direction
+        (.both a b) (ULift.up.{max uC₁ uC₂} contract) answer :=
+  Display.parallelSumComponentsLiftDirectionBothEquiv
+    left right joint a b contract answer
+
+/-- A displayed lens does not identify the response universes of its source
+and target polynomial interfaces. -/
+def heterogeneousDisplayLens
+    {P : PFunctor.{uA₄, uB₁}} {Q : PFunctor.{uA₅, uB₂}}
+    {S : Display.{uA₄, uB₁, uC₄, uD₄} P}
+    {T : Display.{uA₅, uB₂, uC₅, uD₅} Q}
+    (base : Lens P Q)
+    (toPosition : (a : P.A) → S.position a → T.position (base.toFunA a))
+    (toDirection : (a : P.A) → (c : S.position a) →
+      (answer : Q.B (base.toFunA a)) →
+      T.direction (base.toFunA a) (toPosition a c) answer →
+        S.direction a c (base.toFunB a answer)) :
+    Display.Lens S T base :=
+  ⟨toPosition, toDirection⟩
+
+/-- Totalization preserves the independent response universes exposed by a
+displayed lens. -/
+def heterogeneousDisplayLensTotal
+    {P : PFunctor.{uA₄, uB₁}} {Q : PFunctor.{uA₅, uB₂}}
+    {S : Display.{uA₄, uB₁, uC₄, uD₄} P}
+    {T : Display.{uA₅, uB₂, uC₅, uD₅} Q}
+    {base : Lens P Q} (displayed : Display.Lens S T base) :
+    Lens S.total T.total :=
+  displayed.toTotal
+
+/-- The one-operation handler embedding preserves the independent response
+universes exposed by a displayed lens. -/
+def heterogeneousDisplayLensHandler
+    {P : PFunctor.{uA₄, uB₁}} {Q : PFunctor.{uA₅, uB₂}}
+    {S : Display.{uA₄, uB₁, uC₄, uD₄} P}
+    {T : Display.{uA₅, uB₂, uC₅, uD₅} Q}
+    {base : Lens P Q} (displayed : Display.Lens S T base) :
+    Display.Handler S T (Handler.ofLens base) :=
+  displayed.toHandler
 
 def handler
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :

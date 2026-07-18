@@ -477,22 +477,25 @@ theorem comp_assoc_apply
 handler index.  This is hom-fiber transport and does not truncate the
 `Type`-valued displayed witness. -/
 def transport
+    {Q : PFunctor.{uA', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
-    {T : Display.{uA', uB, uC', uD'} Q}
+    {T : Display.{uA', uB', uC', uD'} Q}
     {f g : PFunctor.Handler (FreeM Q) P} (h : f = g) :
     Display.Handler S T f → Display.Handler S T g :=
   h ▸ _root_.id
 
 @[simp] theorem transport_rfl
+    {Q : PFunctor.{uA', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
-    {T : Display.{uA', uB, uC', uD'} Q}
+    {T : Display.{uA', uB', uC', uD'} Q}
     {f : PFunctor.Handler (FreeM Q) P} (df : Display.Handler S T f) :
     transport rfl df = df :=
   rfl
 
 theorem transport_proof_irrel
+    {Q : PFunctor.{uA', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
-    {T : Display.{uA', uB, uC', uD'} Q}
+    {T : Display.{uA', uB', uC', uD'} Q}
     {f g : PFunctor.Handler (FreeM Q) P} (h h' : f = g)
     (df : Display.Handler S T f) :
     transport h df = transport h' df := by
@@ -500,8 +503,9 @@ theorem transport_proof_irrel
   rfl
 
 theorem transport_trans
+    {Q : PFunctor.{uA', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
-    {T : Display.{uA', uB, uC', uD'} Q}
+    {T : Display.{uA', uB', uC', uD'} Q}
     {f g h : PFunctor.Handler (FreeM Q) P} (hfg : f = g) (hgh : g = h)
     (df : Display.Handler S T f) :
     transport hgh (transport hfg df) = transport (hfg.trans hgh) df := by
@@ -511,8 +515,9 @@ theorem transport_trans
 
 /-- Whole-handler transport acts pointwise by displayed-free transport. -/
 theorem transport_apply
+    {Q : PFunctor.{uA', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
-    {T : Display.{uA', uB, uC', uD'} Q}
+    {T : Display.{uA', uB', uC', uD'} Q}
     {f g : PFunctor.Handler (FreeM Q) P} (h : f = g)
     (df : Display.Handler S T f) (operation : P.A)
     (displayedPosition : S.position operation) :
@@ -524,6 +529,7 @@ theorem transport_apply
 
 /-- Displayed left identity over the ordinary handler left-unit law. -/
 theorem id_comp
+    {Q : PFunctor.{uA', uB}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
     {f : PFunctor.Handler (FreeM Q) P}
@@ -539,8 +545,9 @@ theorem id_comp
 
 /-- Displayed right identity over the ordinary handler right-unit law. -/
 theorem comp_id
+    {Q : PFunctor.{uA', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
-    {T : Display.{uA', uB, uC', uD'} Q}
+    {T : Display.{uA', uB', uC', uD'} Q}
     {f : PFunctor.Handler (FreeM Q) P}
     (first : Display.Handler S T f) :
     transport (PFunctor.Handler.comp_id f)
@@ -554,11 +561,13 @@ theorem comp_id
 
 /-- Displayed associativity over ordinary handler associativity. -/
 theorem comp_assoc
-    {V : PFunctor.{uA''', uB}}
+    {Q : PFunctor.{uA', uB}}
+    {R : PFunctor.{uA'', uB}}
+    {V : PFunctor.{uA''', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
     {U : Display.{uA'', uB, uC'', uD''} R}
-    {W : Display.{uA''', uB, uC''', uD'''} V}
+    {W : Display.{uA''', uB', uC''', uD'''} V}
     {f : PFunctor.Handler (FreeM Q) P}
     {g : PFunctor.Handler (FreeM R) Q}
     {h : PFunctor.Handler (FreeM V) R}

@@ -26,20 +26,6 @@ namespace Responder
 
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 
-private theorem heq_funext
-    {A A' : Sort uA₃} {B : A → Sort uC₃} {B' : A' → Sort uC₃}
-    {f : (a : A) → B a} {f' : (a : A') → B' a}
-    (hA : A = A')
-    (h : ∀ a a', HEq a a' → HEq (f a) (f' a')) : HEq f f' := by
-  cases hA
-  have hB : B = B' := by
-    funext a
-    exact type_eq_of_heq (h a a HEq.rfl)
-  cases hB
-  apply heq_of_eq
-  funext a
-  exact eq_of_heq (h a a HEq.rfl)
-
 
 /-- One proof-relevant responder step on the total state-and-witness
 presentation. -/
@@ -332,10 +318,10 @@ def toTerminal
     · apply Sigma.ext_iff.mpr
       constructor
       · exact hBase
-      · apply heq_funext rfl
+      · apply Function.hfunext rfl
         intro query query' hQuery
         cases hQuery
-        apply heq_funext rfl
+        apply Function.hfunext rfl
         intro precondition precondition' hPrecondition
         cases hPrecondition
         let targetResult := (Responder.terminal (P := P)).runFree
@@ -377,16 +363,16 @@ def toTerminal
             targetEvidence).symm.trans (heq_of_eq hEvidence)
         exact congr_arg_heq
           (fun result : Σ result, Evidence result => result.2.1) hSigma
-    · apply heq_funext
+    · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder S)).sigmaPFunctor.B
         apply Sigma.ext_iff.mpr
         constructor
         · exact hBase
-        · apply heq_funext rfl
+        · apply Function.hfunext rfl
           intro query query' hQuery
           cases hQuery
-          apply heq_funext rfl
+          apply Function.hfunext rfl
           intro precondition precondition' hPrecondition
           cases hPrecondition
           let targetResult := (Responder.terminal (P := P)).runFree
@@ -559,10 +545,10 @@ def reindexVerifiedPresentationHom
     · apply Sigma.ext_iff.mpr
       constructor
       · exact hBase
-      · apply heq_funext rfl
+      · apply Function.hfunext rfl
         intro query query' hQuery
         cases hQuery
-        apply heq_funext rfl
+        apply Function.hfunext rfl
         intro precondition precondition' hPrecondition
         cases hPrecondition
         let targetResult := (Responder.terminal (P := Q)).runFree
@@ -603,16 +589,16 @@ def reindexVerifiedPresentationHom
             targetEvidence).symm.trans (heq_of_eq hEvidence)
         exact congr_arg_heq
           (fun result : Σ result, Evidence result => result.2.1) hSigma
-    · apply heq_funext
+    · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder S)).sigmaPFunctor.B
         apply Sigma.ext_iff.mpr
         constructor
         · exact hBase
-        · apply heq_funext rfl
+        · apply Function.hfunext rfl
           intro query query' hQuery
           cases hQuery
-          apply heq_funext rfl
+          apply Function.hfunext rfl
           intro precondition precondition' hPrecondition
           cases hPrecondition
           let targetResult := (Responder.terminal (P := Q)).runFree
