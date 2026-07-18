@@ -20,7 +20,7 @@ over `Display.sigma`. These are the multi-input composition primitives used by
 
 @[expose] public section
 
-universe uI uA uA' uB uC uD uC' uD'
+universe uI uA uA' uB uB' uC uD uC' uD'
 
 namespace PFunctor
 
@@ -30,9 +30,9 @@ namespace Handler
 /-- Combine displayed handlers over an indexed family into one displayed
 handler from `Display.sigma`. -/
 def sigma {I : Type uI} {P : I → PFunctor.{uA, uB}}
-    {Q : PFunctor.{uA', uB}}
+    {Q : PFunctor.{uA', uB'}}
     (S : (i : I) → Display.{uA, uB, uC, uD} (P i))
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     {f : (i : I) → (a : (P i).A) → FreeM Q ((P i).B a)}
     (df : (i : I) → Display.Handler (S i) T (f i)) :
     Display.Handler (Display.sigma S) T (PFunctor.Handler.sigma f) :=
@@ -40,9 +40,9 @@ def sigma {I : Type uI} {P : I → PFunctor.{uA, uB}}
 
 @[simp]
 theorem sigma_apply {I : Type uI} {P : I → PFunctor.{uA, uB}}
-    {Q : PFunctor.{uA', uB}}
+    {Q : PFunctor.{uA', uB'}}
     (S : (i : I) → Display.{uA, uB, uC, uD} (P i))
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     {f : (i : I) → (a : (P i).A) → FreeM Q ((P i).B a)}
     (df : (i : I) → Display.Handler (S i) T (f i))
     (i : I) (a : (P i).A) (c : (S i).position a) :

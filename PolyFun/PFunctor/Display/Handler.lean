@@ -97,8 +97,9 @@ theorem liftM_liftBind
 the underlying handler. The transport is forced by the equality of the base
 handlers. -/
 theorem liftM_congr
+    {Q : PFunctor.{uA', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     {E : Type uB} {F : E → Type uF}
     (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
