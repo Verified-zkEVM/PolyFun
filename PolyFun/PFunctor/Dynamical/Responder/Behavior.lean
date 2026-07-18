@@ -28,11 +28,16 @@ There is only a covariant chart from the total responder display to the base
 responder polynomial: a bare query cannot supply the precondition witness
 needed by the displayed child.  `Display.M` retains that genuine branching
 instead of postulating a nonexistent lens.
+
+Structural state-free reindexing keeps the source and target interface
+universes independent. Only its categorical composition laws retain the
+homogeneous source/intermediate response-universe constraint of
+`FreeM.liftM`.
 -/
 
 @[expose] public section
 
-universe uA uA' uA'' uB uC uD uC' uD' uC'' uD'' uE uF uS
+universe uA uA' uA'' uB uB' uC uD uC' uD' uC'' uD'' uE uF uS
 
 namespace PFunctor
 
@@ -123,7 +128,7 @@ end Display
 namespace Responder
 
 variable {P : PFunctor.{uA, uB}}
-variable {Q : PFunctor.{uA', uB}}
+variable {Q : PFunctor.{uA', uB'}}
 variable {State : Type uS}
 
 /-- The canonical responder whose states are state-free responder behaviors. -/
@@ -183,12 +188,14 @@ theorem runFree_terminal (R : Responder State Q)
       rw [terminal_answer_behavior, terminal_next_behavior]
       exact ih (R.answer state query) (R.next state query)
 
-/-! ## The coinductive `appD` interface -/
+/-! ## Coinductive displayed response -/
 
-/-- Destructor equivalence corresponding exactly to Aberlé's coinductive
-`DepMealy.appD`: a query and precondition witness produce postcondition data
-and a verified continuation over the selected ordinary behavior child. -/
-def appDEquiv
+/-- Destructor equivalence for one displayed responder observation.
+
+This is the intrinsic form of Aberlé's coinductive `DepMealy.appD`: a query and
+precondition witness produce postcondition data and a verified continuation
+over the selected ordinary behavior child. -/
+def respondDisplayedEquiv
     (S : Display.{uA, uB, uC, uD} P)
     (behavior : PFunctor.M (P ⊸ X.{uA, uB})) :
     Display.M (Display.responder S) behavior ≃
@@ -212,69 +219,69 @@ def appDEquiv
     rfl
 
 /-- Apply one coinductive verified responder step. -/
-def appD
+def respondDisplayed
     (S : Display.{uA, uB, uC, uD} P)
     {behavior : PFunctor.M (P ⊸ X.{uA, uB})}
     (displayedBehavior : Display.M (Display.responder S) behavior)
     (query : P.A) (precondition : S.position query) :=
-  appDEquiv S behavior displayedBehavior query precondition
+  respondDisplayedEquiv S behavior displayedBehavior query precondition
 
 @[simp]
-theorem appD_post
+theorem respondDisplayed_post
     (S : Display.{uA, uB, uC, uD} P)
     {behavior : PFunctor.M (P ⊸ X.{uA, uB})}
     (displayedBehavior : Display.M (Display.responder S) behavior)
     (query : P.A) (precondition : S.position query) :
-    (appD S displayedBehavior query precondition).1 =
+    (respondDisplayed S displayedBehavior query precondition).1 =
       displayedBehavior.head query precondition :=
   rfl
 
 @[simp]
-theorem appD_next
+theorem respondDisplayed_next
     (S : Display.{uA, uB, uC, uD} P)
     {behavior : PFunctor.M (P ⊸ X.{uA, uB})}
     (displayedBehavior : Display.M (Display.responder S) behavior)
     (query : P.A) (precondition : S.position query) :
-    (appD S displayedBehavior query precondition).2 =
+    (respondDisplayed S displayedBehavior query precondition).2 =
       displayedBehavior.child ⟨query, PUnit.unit⟩ precondition :=
   rfl
 
 /-- Transporting a displayed behavior transports its complete dependent
-`appD` observation. This function-level form avoids exposing casts in the
-postcondition and continuation projections separately. -/
-theorem appDEquiv_transport
+`respondDisplayed` observation. This function-level form avoids exposing casts
+in the postcondition and continuation projections separately. -/
+theorem respondDisplayedEquiv_transport
     (S : Display.{uA, uB, uC, uD} P)
     {left right : PFunctor.M (P ⊸ X.{uA, uB})}
     (h : left = right)
     (displayedBehavior : Display.M (Display.responder S) left) :
-    appDEquiv S right (Display.M.transport h displayedBehavior) =
-      h ▸ appDEquiv S left displayedBehavior := by
+    respondDisplayedEquiv S right (Display.M.transport h displayedBehavior) =
+      h ▸ respondDisplayedEquiv S left displayedBehavior := by
   cases h
   rfl
 
 /-- A cast-free, observation-shaped bisimulation for verified responder
 behaviors. Related values return the same evidence for every query and
 precondition and have related answer-selected continuations. -/
-def IsAppDBisimulation
+def IsDisplayedResponseBisimulation
     (S : Display.{uA, uB, uC, uD} P)
     (R : (behavior : PFunctor.M (P ⊸ X.{uA, uB})) →
       Display.M (Display.responder S) behavior →
       Display.M (Display.responder S) behavior → Prop) : Prop :=
   ∀ behavior left right, R behavior left right →
     ∀ query precondition,
-      (appD S left query precondition).1 =
-          (appD S right query precondition).1 ∧
+      (respondDisplayed S left query precondition).1 =
+          (respondDisplayed S right query precondition).1 ∧
         R (behavior.children ⟨query, PUnit.unit⟩)
-          (appD S left query precondition).2
-          (appD S right query precondition).2
+          (respondDisplayed S left query precondition).2
+          (respondDisplayed S right query precondition).2
 
 /-- Observation-shaped responder bisimulation implies equality. -/
-theorem appD_bisim
+theorem respondDisplayed_bisim
     (S : Display.{uA, uB, uC, uD} P)
     (R : (behavior : PFunctor.M (P ⊸ X.{uA, uB})) →
       Display.M (Display.responder S) behavior →
       Display.M (Display.responder S) behavior → Prop)
-    (hR : IsAppDBisimulation S R)
+    (hR : IsDisplayedResponseBisimulation S R)
     {behavior : PFunctor.M (P ⊸ X.{uA, uB})}
     {left right : Display.M (Display.responder S) behavior}
     (h : R behavior left right) : left = right := by
@@ -306,15 +313,15 @@ def verifiedBehavior
     Display.M (Display.responder S) (R.behavior state) :=
   Display.Coalgebra.toM R I displayedR state witness
 
-/-- The postcondition component of state-free `appD` is exactly the local
-displayed responder-coalgebra obligation. -/
-theorem appD_verifiedBehavior_post
+/-- The postcondition component of state-free `respondDisplayed` is exactly the
+local displayed responder-coalgebra obligation. -/
+theorem respondDisplayed_verifiedBehavior_post
     (S : Display.{uA, uB, uC, uD} P)
     (R : Responder State P) (I : State → Type uF)
     (displayedR : Display.Coalgebra (Display.responder S) R.out I)
     (state : State) (witness : I state)
     (query : P.A) (precondition : S.position query) :
-    (appD S (verifiedBehavior S R I displayedR state witness)
+    (respondDisplayed S (verifiedBehavior S R I displayedR state witness)
       query precondition).1 =
       ((Display.responderCoalgebraEquiv S R I) displayedR
         state witness query precondition).1 := by
@@ -322,17 +329,17 @@ theorem appD_verifiedBehavior_post
     (Display.Coalgebra.dest_toM R I displayedR state witness)
   exact congrFun (congrFun h query) precondition
 
-/-- The continuation component of state-free `appD`, transported along the
-ordinary behavior-child equation, is the verified behavior generated from the
-locally preserved next-state witness. -/
-theorem appD_verifiedBehavior_next
+/-- The continuation component of state-free `respondDisplayed`, transported
+along the ordinary behavior-child equation, is the verified behavior generated
+from the locally preserved next-state witness. -/
+theorem respondDisplayed_verifiedBehavior_next
     (S : Display.{uA, uB, uC, uD} P)
     (R : Responder State P) (I : State → Type uF)
     (displayedR : Display.Coalgebra (Display.responder S) R.out I)
     (state : State) (witness : I state)
     (query : P.A) (precondition : S.position query) :
     Display.M.transport (behavior_child R state query)
-        (appD S (verifiedBehavior S R I displayedR state witness)
+        (respondDisplayed S (verifiedBehavior S R I displayedR state witness)
           query precondition).2 =
       verifiedBehavior S R I displayedR (R.next state query)
         ((Display.responderCoalgebraEquiv S R I) displayedR
@@ -381,19 +388,19 @@ theorem runFreeDisplayed_verifiedBehavior
       let evidence :=
         (Display.responderCoalgebraEquiv S R I) displayedR
           state witness query precondition
-      have hPost := appD_verifiedBehavior_post S R I displayedR
+      have hPost := respondDisplayed_verifiedBehavior_post S R I displayedR
         state witness query precondition
-      have hNext := appD_verifiedBehavior_next S R I displayedR
+      have hNext := respondDisplayed_verifiedBehavior_next S R I displayedR
         state witness query precondition
       change transportRunEvidence F (Display.M (Display.responder S))
           (runFree_terminal R (FreeM.liftBind query next) state)
           (runFreeDisplayed S (Responder.terminal (P := P))
             (Display.Coalgebra.terminal (Display.responder S))
             (displayedNext (R.answer state query)
-              (appD S (verifiedBehavior S R I displayedR state witness)
+              (respondDisplayed S (verifiedBehavior S R I displayedR state witness)
                 query precondition).1)
             ((Responder.terminal (P := P)).next (R.behavior state) query)
-            (appD S (verifiedBehavior S R I displayedR state witness)
+            (respondDisplayed S (verifiedBehavior S R I displayedR state witness)
               query precondition).2) = _
       rw [hPost]
       change transportRunEvidence F (Display.M (Display.responder S)) _
@@ -402,7 +409,7 @@ theorem runFreeDisplayed_verifiedBehavior
             (displayedNext (R.answer state query) evidence.1)
             (R.behavior (R.next state query))
             (Display.M.transport (behavior_child R state query)
-              (appD S (verifiedBehavior S R I displayedR state witness)
+              (respondDisplayed S (verifiedBehavior S R I displayedR state witness)
                 query precondition).2)) = _
       rw [hNext]
       exact ih (R.answer state query)
@@ -412,7 +419,7 @@ theorem runFreeDisplayed_verifiedBehavior
 /-- Reindex a state-free responder behavior by using it as the state of the
 terminal responder and applying ordinary responder reindexing. -/
 def reindexBehavior (f : Handler (FreeM Q) P)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB})) :
+    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'})) :
     PFunctor.M (P ⊸ X.{uA, uB}) :=
   (Responder.reindex f (Responder.terminal (P := Q))).behavior behavior
 
@@ -472,10 +479,11 @@ theorem reindexBehavior_id
 /-- State-free responder reindexing is contravariantly functorial in the
 same categorical composition order as state-presented reindexing. -/
 theorem reindexBehavior_comp
-    {RPoly : PFunctor.{uA'', uB}}
+    {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB}}
+    {RPoly : PFunctor.{uA'', uB'}}
     (second : Handler (FreeM RPoly) Q)
     (first : Handler (FreeM Q) P)
-    (behavior : PFunctor.M (RPoly ⊸ X.{uA'', uB})) :
+    (behavior : PFunctor.M (RPoly ⊸ X.{uA'', uB'})) :
     reindexBehavior first (reindexBehavior second behavior) =
       reindexBehavior (second.comp first) behavior := by
   calc
@@ -497,10 +505,10 @@ free handler.  The construction is the state-free semantics of G3's
 `reindexCoalgebra`, evaluated at the canonical terminal responder. -/
 def reindexVerifiedBehavior
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (f : Handler (FreeM Q) P)
     (displayedF : Display.Handler S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB}))
+    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior) :
     Display.M (Display.responder S) (reindexBehavior f behavior) :=
   verifiedBehavior S
@@ -514,22 +522,22 @@ def reindexVerifiedBehavior
 /-- The postcondition returned by one state-free verified reindexing step is
 exactly the postcondition produced by executing the displayed handler program
 against the target displayed behavior. -/
-theorem appD_reindexVerifiedBehavior_post
+theorem respondDisplayed_reindexVerifiedBehavior_post
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (f : Handler (FreeM Q) P)
     (displayedF : Display.Handler S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB}))
+    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (query : P.A) (precondition : S.position query) :
-    (appD S
+    (respondDisplayed S
       (reindexVerifiedBehavior S T f displayedF behavior displayedBehavior)
       query precondition).1 =
       (runFreeDisplayed T (Responder.terminal (P := Q))
         (Display.Coalgebra.terminal (Display.responder T))
         (displayedF query precondition) behavior displayedBehavior).1 := by
   change
-    (appD S
+    (respondDisplayed S
       (verifiedBehavior S
         (Responder.reindex f (Responder.terminal (P := Q)))
         (Display.M (Display.responder T))
@@ -537,18 +545,18 @@ theorem appD_reindexVerifiedBehavior_post
           (Responder.terminal (P := Q))
           (Display.Coalgebra.terminal (Display.responder T)))
         behavior displayedBehavior) query precondition).1 = _
-  rw [appD_verifiedBehavior_post]
+  rw [respondDisplayed_verifiedBehavior_post]
   rfl
 
 /-- The continuation returned by one state-free verified reindexing step is
 the recursively reindexed target continuation produced by displayed program
 execution, after the canonical ordinary behavior-child transport. -/
-theorem appD_reindexVerifiedBehavior_next
+theorem respondDisplayed_reindexVerifiedBehavior_next
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (f : Handler (FreeM Q) P)
     (displayedF : Display.Handler S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB}))
+    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (query : P.A) (precondition : S.position query) :
     let result := (Responder.terminal (P := Q)).runFree (f query) behavior
@@ -559,11 +567,11 @@ theorem appD_reindexVerifiedBehavior_next
     Display.M.transport
         (behavior_child
           (Responder.reindex f (Responder.terminal (P := Q))) behavior query)
-        (appD S
+        (respondDisplayed S
           (reindexVerifiedBehavior S T f displayedF behavior displayedBehavior)
           query precondition).2 =
       reindexVerifiedBehavior S T f displayedF result.2 displayedResult.2 := by
-  exact appD_verifiedBehavior_next S
+  exact respondDisplayed_verifiedBehavior_next S
     (Responder.reindex f (Responder.terminal (P := Q)))
     (Display.M (Display.responder T))
     (Responder.reindexCoalgebra S T f displayedF
@@ -603,9 +611,9 @@ theorem reindexVerifiedBehavior_id
       apply heq_of_eq
       funext query precondition
       change
-        (appD S reindexed query precondition).1 =
-          (appD S displayed query precondition).1
-      rw [appD_reindexVerifiedBehavior_post]
+        (respondDisplayed S reindexed query precondition).1 =
+          (respondDisplayed S displayed query precondition).1
+      rw [respondDisplayed_reindexVerifiedBehavior_post]
       rfl
     let hDirection :
         (Display.mStep (Display.responder S)).B
@@ -646,14 +654,14 @@ theorem reindexVerifiedBehavior_id
         (Display.Coalgebra.terminal (Display.responder S))
         (Display.Handler.id S query precondition) current displayed
       refine ⟨result.2, displayedResult.2, ?_, ?_⟩
-      · have hNext := appD_reindexVerifiedBehavior_next S S
+      · have hNext := respondDisplayed_reindexVerifiedBehavior_next S S
           (Handler.id P) (Display.Handler.id S) current displayed
           query precondition
         have hToM := congrArg IPFunctor.IM.toM hNext
         unfold leftChildren
         rw [hDirection_rfl]
         change
-          (appD S reindexed query precondition).2.toM = _
+          (respondDisplayed S reindexed query precondition).2.toM = _
         simpa only [Display.M.toM_transport] using hToM
       · have hObligation := reindexCoalgebra_id_obligation S
           (Responder.terminal (P := P))
@@ -666,15 +674,16 @@ theorem reindexVerifiedBehavior_id
 by the displayed Kleisli composite, after the canonical equality of the
 underlying ordinary behaviors. -/
 theorem reindexVerifiedBehavior_comp
-    {RPoly : PFunctor.{uA'', uB}}
+    {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB}}
+    {RPoly : PFunctor.{uA'', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
     (T : Display.{uA', uB, uC', uD'} Q)
-    (U : Display.{uA'', uB, uC'', uD''} RPoly)
+    (U : Display.{uA'', uB', uC'', uD''} RPoly)
     (second : Handler (FreeM RPoly) Q)
     (dsecond : Display.Handler T U second)
     (first : Handler (FreeM Q) P)
     (dfirst : Display.Handler S T first)
-    (behavior : PFunctor.M (RPoly ⊸ X.{uA'', uB}))
+    (behavior : PFunctor.M (RPoly ⊸ X.{uA'', uB'}))
     (displayedBehavior : Display.M (Display.responder U) behavior) :
     Display.M.transport (reindexBehavior_comp second first behavior)
         (reindexVerifiedBehavior S T first dfirst
@@ -745,7 +754,7 @@ theorem reindexVerifiedBehavior_comp
         (first query) current
       let rightResult := terminalR.runFree ((first query).liftM second) current
       let Evidence := fun result :
-          P.B query × PFunctor.M (RPoly ⊸ X.{uA'', uB}) =>
+          P.B query × PFunctor.M (RPoly ⊸ X.{uA'', uB'}) =>
         S.direction query precondition result.1 ×
           Display.M (Display.responder U) result.2
       have hSigma :
@@ -806,15 +815,15 @@ theorem reindexVerifiedBehavior_comp
           (fun result : Σ result, PresentationEvidence result => result.2.1)
           hPresentationSigma
       have hLeft :
-          (appD S sequential query precondition).1 = outerEvidence.1 := by
-        exact appD_reindexVerifiedBehavior_post S T first dfirst
+          (respondDisplayed S sequential query precondition).1 = outerEvidence.1 := by
+        exact respondDisplayed_reindexVerifiedBehavior_post S T first dfirst
           (reindexBehavior second current) middle query precondition
       have hRight :
-          (appD S composite query precondition).1 = rightObligation.1 := by
-        have h := appD_reindexVerifiedBehavior_post S U
+          (respondDisplayed S composite query precondition).1 = rightObligation.1 := by
+        have h := respondDisplayed_reindexVerifiedBehavior_post S U
           (second.comp first) (dsecond.comp dfirst)
           current displayed query precondition
-        change (appD S composite query precondition).1 = _ at h
+        change (respondDisplayed S composite query precondition).1 = _ at h
         change _ = rightObligation.1
         exact h
       exact (heq_of_eq hLeft).trans
@@ -910,7 +919,7 @@ theorem reindexVerifiedBehavior_comp
         current displayed
       let runEq := runFree_reindex second terminalR (first query) current
       let StateEvidence := fun result :
-          P.B query × PFunctor.M (RPoly ⊸ X.{uA'', uB}) =>
+          P.B query × PFunctor.M (RPoly ⊸ X.{uA'', uB'}) =>
         S.direction query precondition result.1 ×
           Display.M (Display.responder U) result.2
       have hState :
@@ -939,12 +948,12 @@ theorem reindexVerifiedBehavior_comp
       refine ⟨compositeResult.2, compositeEvidence.2, ?_, ?_⟩
       · unfold leftChildren
         rw [hDirection_rfl]
-        change (appD S sequential query precondition).2.toM = _
-        have hOuterNext := appD_reindexVerifiedBehavior_next S T first dfirst
+        change (respondDisplayed S sequential query precondition).2.toM = _
+        have hOuterNext := respondDisplayed_reindexVerifiedBehavior_next S T first dfirst
           (reindexBehavior second current) middle query precondition
         have hOuterToM := congrArg IPFunctor.IM.toM hOuterNext
         calc
-          (appD S sequential query precondition).2.toM =
+          (respondDisplayed S sequential query precondition).2.toM =
               (reindexVerifiedBehavior S T first dfirst
                 outerResult.2 outerEvidence.2).toM := by
             simpa only [Display.M.toM_transport] using hOuterToM
@@ -956,11 +965,11 @@ theorem reindexVerifiedBehavior_comp
                 (reindexBehavior second compositeResult.2)
                 (reindexVerifiedBehavior T U second dsecond
                   compositeResult.2 compositeEvidence.2)).toM := hComposed
-      · have hCompositeNext := appD_reindexVerifiedBehavior_next S U
+      · have hCompositeNext := respondDisplayed_reindexVerifiedBehavior_next S U
           (second.comp first) (dsecond.comp dfirst)
           current displayed query precondition
         have hCompositeToM := congrArg IPFunctor.IM.toM hCompositeNext
-        change (appD S composite query precondition).2.toM = _
+        change (respondDisplayed S composite query precondition).2.toM = _
         simpa [Display.M.toM_transport, compositeResult, compositeEvidence,
           composite, terminalR, terminalD] using hCompositeToM
   · exact ⟨behavior, displayedBehavior, rfl, rfl⟩
