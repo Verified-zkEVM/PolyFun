@@ -33,7 +33,7 @@ collapsing displayed witnesses into ordinary hom equality.
 
 @[expose] public section
 
-universe u uA uA' uA'' uA''' uC uD uC' uD' uC'' uD'' uC''' uD'''
+universe u u' uA uA' uA'' uA''' uC uD uC' uD' uC'' uD'' uC''' uD'''
 
 namespace PFunctor
 namespace Handler
@@ -41,21 +41,21 @@ namespace Handler
 /-- Package a free handler as the corresponding lens into the free
 polynomial.  The forward map is the erased program shape and the backward map
 reads the label at the selected complete path. -/
-def toFreeLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+def toFreeLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     (f : Handler (FreeM Q) P) : Lens P (FreeP Q) where
   toFunA operation := (FreeP.encode (f operation)).1
   toFunB operation := (FreeP.encode (f operation)).2
 
 /-- Decode a lens into a free polynomial as a free handler. -/
-def ofFreeLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+def ofFreeLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     (lens : Lens P (FreeP Q)) : Handler (FreeM Q) P :=
   fun operation =>
     FreeP.decode ⟨lens.toFunA operation, lens.toFunB operation⟩
 
 /-- Free handlers are structurally equivalent to lenses into the free
-polynomial.  This remains heterogeneous in the position universes; only the
-common answer/direction universe required by `FreeM` is shared. -/
-def freeLensEquiv {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}} :
+polynomial, with independent position and direction universes for the source
+and target interfaces. -/
+def freeLensEquiv {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}} :
     Handler (FreeM Q) P ≃ Lens P (FreeP Q) where
   toFun := toFreeLens
   invFun := ofFreeLens
@@ -71,14 +71,14 @@ def freeLensEquiv {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}} :
 
 @[simp]
 theorem freeLensEquiv_apply
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     (f : Handler (FreeM Q) P) :
     freeLensEquiv f = toFreeLens f :=
   rfl
 
 @[simp]
 theorem freeLensEquiv_symm_apply
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     (lens : Lens P (FreeP Q)) :
     freeLensEquiv.symm lens = ofFreeLens lens :=
   rfl
@@ -201,26 +201,26 @@ namespace Handler
 handler index.  This is the hom-fiber transport of the displayed category;
 it does not identify or truncate the `Type`-valued displayed witness. -/
 def transport
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     {S : Display.{uA, u, uC, uD} P}
-    {T : Display.{uA', u, uC', uD'} Q}
+    {T : Display.{uA', u', uC', uD'} Q}
     {f g : PFunctor.Handler (FreeM Q) P} (h : f = g) :
     Display.Handler S T f → Display.Handler S T g :=
   h ▸ _root_.id
 
 @[simp]
 theorem transport_rfl
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     {S : Display.{uA, u, uC, uD} P}
-    {T : Display.{uA', u, uC', uD'} Q}
+    {T : Display.{uA', u', uC', uD'} Q}
     {f : PFunctor.Handler (FreeM Q) P} (df : Display.Handler S T f) :
     transport rfl df = df :=
   rfl
 
 theorem transport_proof_irrel
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     {S : Display.{uA, u, uC, uD} P}
-    {T : Display.{uA', u, uC', uD'} Q}
+    {T : Display.{uA', u', uC', uD'} Q}
     {f g : PFunctor.Handler (FreeM Q) P} (h h' : f = g)
     (df : Display.Handler S T f) :
     transport h df = transport h' df := by
@@ -228,9 +228,9 @@ theorem transport_proof_irrel
   rfl
 
 theorem transport_trans
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     {S : Display.{uA, u, uC, uD} P}
-    {T : Display.{uA', u, uC', uD'} Q}
+    {T : Display.{uA', u', uC', uD'} Q}
     {f g h : PFunctor.Handler (FreeM Q) P} (hfg : f = g) (hgh : g = h)
     (df : Display.Handler S T f) :
     transport hgh (transport hfg df) = transport (hfg.trans hgh) df := by
@@ -242,9 +242,9 @@ theorem transport_trans
 transport.  This is the bridge from the displayed-category hom fiber to the
 local laws proved in `Display.Handler`. -/
 theorem transport_apply
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     {S : Display.{uA, u, uC, uD} P}
-    {T : Display.{uA', u, uC', uD'} Q}
+    {T : Display.{uA', u', uC', uD'} Q}
     {f g : PFunctor.Handler (FreeM Q) P} (h : f = g)
     (df : Display.Handler S T f) (operation : P.A)
     (displayedPosition : S.position operation) :
@@ -272,9 +272,9 @@ theorem id_comp
 
 /-- Displayed right identity over the ordinary free-handler right-unit law. -/
 theorem comp_id
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     {S : Display.{uA, u, uC, uD} P}
-    {T : Display.{uA', u, uC', uD'} Q}
+    {T : Display.{uA', u', uC', uD'} Q}
     {f : PFunctor.Handler (FreeM Q) P}
     (first : Display.Handler S T f) :
     transport (PFunctor.Handler.comp_id f)
@@ -295,8 +295,8 @@ theorem comp_assoc
     {S : Display.{uA, u, uC, uD} P}
     {T : Display.{uA', u, uC', uD'} Q}
     {U : Display.{uA'', u, uC'', uD''} R}
-    {V : PFunctor.{uA''', u}}
-    {W : Display.{uA''', u, uC''', uD'''} V}
+    {V : PFunctor.{uA''', u'}}
+    {W : Display.{uA''', u', uC''', uD'''} V}
     {f : PFunctor.Handler (FreeM Q) P}
     {g : PFunctor.Handler (FreeM R) Q}
     {h : PFunctor.Handler (FreeM V) R}

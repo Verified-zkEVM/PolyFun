@@ -364,12 +364,48 @@ example :
 
 /-! Producer-level canaries preserve all compatible universe separation. -/
 
-universe uA uA' uA'' uB uB' uC uD uC' uD' uE uF uS uV
+universe uA uA' uA'' uA''' uB uB' uC uD uC' uD' uE uF uS uV
 
 section UniverseCanary
 
 variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
 variable {State : Type uS}
+
+def universeFreeLensEquiv :
+    Handler (FreeM Q) P ≃ Lens P (FreeP Q) :=
+  Handler.freeLensEquiv
+
+def universeDisplayHandlerTransport
+    (S : Display.{uA, uB, uC, uD} P)
+    (T : Display.{uA', uB', uC', uD'} Q)
+    {f g : Handler (FreeM Q) P} (h : f = g)
+    (df : Display.Handler S T f) : Display.Handler S T g :=
+  Display.Handler.transport (S := S) (T := T) h df
+
+example
+    (S : Display.{uA, uB, uC, uD} P)
+    (T : Display.{uA', uB', uC', uD'} Q)
+    {f : Handler (FreeM Q) P} (df : Display.Handler S T f) :
+    Display.Handler.transport (Handler.comp_id f)
+        (df.comp (Display.Handler.id S)) = df :=
+  Display.Handler.comp_id (S := S) (T := T) df
+
+example
+    {Middle : PFunctor.{uA', uB}} {Third : PFunctor.{uA'', uB}}
+    {Target : PFunctor.{uA''', uB'}}
+    (S : Display.{uA, uB, uC, uD} P)
+    (T : Display.{uA', uB, uC', uD'} Middle)
+    (U : Display.{uA'', uB, uE, uF} Third)
+    (W : Display.{uA''', uB', uE, uF} Target)
+    {f : Handler (FreeM Middle) P}
+    {g : Handler (FreeM Third) Middle}
+    {h : Handler (FreeM Target) Third}
+    (df : Display.Handler S T f)
+    (dg : Display.Handler T U g)
+    (dh : Display.Handler U W h) :
+    Display.Handler.transport (Handler.comp_assoc h g f)
+        ((dh.comp dg).comp df) = dh.comp (dg.comp df) :=
+  Display.Handler.comp_assoc (S := S) (T := T) (U := U) (W := W) df dg dh
 
 def universeHandlerCompFinal
     {Middle : PFunctor.{uA', uB}} {Target : PFunctor.{uA'', uB'}}
@@ -435,6 +471,22 @@ example
     (query : P.A) (contract : S.position query) :=
   Responder.reindexCoalgebra_comp_obligation S T U first dfirst second
     dsecond R displayedR state witness query contract
+
+def universeRunAgainstProgramObj {E : Type uV}
+    (R : Responder State Q) (program : FreeM Q E) (state : State) :
+    (FreeP X.{uA', uB'}).Obj (E × State) :=
+  Responder.runAgainstProgramObj R program state
+
+def universeRunAgainstDisplayed
+    (T : Display.{uA', uB', uC', uD'} Q)
+    (R : Responder State Q)
+    {I : State → Type uF}
+    (displayedR : Display.Coalgebra (Display.responder T) R.out I)
+    {E : Type uV} {F : E → Type uE}
+    {program : FreeM Q E}
+    (displayedProgram : FreeM.Displayed (T.toDisplayedAlgebra F) program)
+    (state : State) (witness : I state) :=
+   Responder.runAgainstDisplayed T R displayedR displayedProgram state witness
 
 end UniverseCanary
 
