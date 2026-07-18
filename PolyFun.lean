@@ -116,6 +116,7 @@ import PolyFun.PFunctor.CartesianClosed
 import PolyFun.PFunctor.Category
 import PolyFun.PFunctor.Chart.Basic
 import PolyFun.PFunctor.Cofree
+import PolyFun.PFunctor.Cofree.FiniteProjection
 import PolyFun.PFunctor.Cofree.Polynomial
 import PolyFun.PFunctor.Cofree.Universal
 import PolyFun.PFunctor.Comonoid
@@ -124,6 +125,7 @@ import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Bisimulation
 import PolyFun.PFunctor.Dynamical.CofreeMate
+import PolyFun.PFunctor.Dynamical.CofreeMate.FiniteProjection
 import PolyFun.PFunctor.Dynamical.Combinators
 import PolyFun.PFunctor.Dynamical.DynComputation
 import PolyFun.PFunctor.Dynamical.Game

@@ -25,7 +25,9 @@ trace-equivalence directive, revisited in §8.3 below).
   vertices of `T` ≅ **finite rooted paths** of `T` (infinite "paths" are
   *rays* and are excluded). Projections `ε_p^{(n)} : t_p ⇆ p^◁n`: stage-n
   pretree on positions, height-n leaf ↦ length-n rooted path on
-  directions. These projections are the workhorse interface.
+  directions. In Lean this is the universe-polymorphic structural recursion
+  `CofreeP.projectionN`; its backward map is proved to return a vertex of
+  exactly depth `n`.
 - **Comonoid structure (§8.1.2, Prop 8.33).** Eraser `ε_p : t_p ⇆ y` =
   the limit projection to `y`: picks each tree's **root** = empty rooted
   path = `id_T`. Duplicator `δ_p : t_p ⇆ t_p ◁ t_p` is induced by
@@ -60,8 +62,9 @@ trace-equivalence directive, revisited in §8.3 below).
   *the mate is the single morphism packaging every `Run_n`* — the answer
   to §7.1.5's drawback, and the semantic justification for VCVio's
   `RunLimit` being one object rather than a family. In Lean the mate is
-  `M.corec`-built and is essentially the existing `DynSystem.behavior`;
-  ticket C3's real content is the **universal property**, not the map.
+  `M.corec`-built and is essentially the existing `DynSystem.behavior`.
+  `CofreeP.extend_comp_projectionN` proves the general full-lens equation;
+  `DynSystem.cofreeMate_comp_projectionN` is its `Run_n` specialization.
 - **Examples 8.50–8.53.** For a halting DFA `φ : Sy^S ⇆ 2y^A`, the mate
   sends `s₀` to an element of `2^List(A)` = **the language the automaton
   accepts**, and backward on morphisms sends each word to the state
