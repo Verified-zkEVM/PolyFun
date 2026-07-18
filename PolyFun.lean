@@ -118,6 +118,7 @@ import PolyFun.PFunctor.Chart.Basic
 import PolyFun.PFunctor.Cofree
 import PolyFun.PFunctor.Cofree.Polynomial
 import PolyFun.PFunctor.Comonoid
+import PolyFun.PFunctor.Comonoid.Category
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Bisimulation

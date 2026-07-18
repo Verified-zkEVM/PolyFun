@@ -114,6 +114,8 @@ PFunctor/Lens/{Basic, Cartesian, State}
 
 PFunctor/Lens/Basic → PFunctor/SubstMonoid
 PFunctor/{Free/Path, SubstMonoid} → PFunctor/Free/Polynomial
+PFunctor/Comonoid → PFunctor/Comonoid/Category
+
 PFunctor/{Cofree, Comonoid, M/Vertex}
   → PFunctor/Cofree/Polynomial
 
