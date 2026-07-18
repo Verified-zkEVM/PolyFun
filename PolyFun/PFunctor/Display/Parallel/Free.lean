@@ -294,6 +294,19 @@ def parallel
       FreeM.Displayed.parallel (leftHandler a) (rightHandler b)
         (displayedLeft a leftContract) (displayedRight b rightContract) := rfl
 
+/-- Parallel composition preserves displayed identity handlers, after the
+ordinary parallel-identity equation aligns their base-handler indices. -/
+@[simp] theorem parallel_id
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
+    transport (PFunctor.Handler.parallel_id P Q)
+        (parallel (id S) (id T)) =
+      id (Display.parallelSum S T) := by
+  funext operation contract
+  rw [transport_apply]
+  cases operation <;> rfl
+
 end Handler
 end Display
 end PFunctor

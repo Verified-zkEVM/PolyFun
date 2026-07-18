@@ -51,6 +51,10 @@ returns. `FreeM.parallelAfterLeftReturn` names this residual phase explicitly.
 Left/right program embeddings, parallel handlers, and all their displayed
 lifts use the same operational definition.
 
+Although unrestricted handler composition interchange fails below, ordinary
+and displayed parallel handlers do preserve identities; the displayed law is
+stated over the ordinary `Handler.parallel_id` index equality.
+
 At the polynomial-lens level, parallel sum is a genuine symmetric monoidal
 bifunctor: the implementation proves functoriality, braiding naturality and
 involutivity, associator naturality, the pentagon, and the triangle. Lockstep

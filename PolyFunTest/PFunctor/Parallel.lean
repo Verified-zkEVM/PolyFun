@@ -334,6 +334,34 @@ def displayedHandler
       (handler (P := P) (Q := Q)) :=
   Display.Handler.parallel (Display.Handler.id S) (Display.Handler.id T)
 
+/-- Displayed parallel handlers preserve the identity law over the ordinary
+parallel-handler identity equation. -/
+theorem displayedHandlerParallelId
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
+    Display.Handler.transport (Handler.parallel_id P Q)
+        (Display.Handler.parallel (Display.Handler.id S)
+          (Display.Handler.id T)) =
+      Display.Handler.id (Display.parallelSum S T) :=
+  Display.Handler.parallel_id S T
+
+/-- Pattern-Runs-on-Matter parallel reconstruction permits the two components
+to have independent position universes. -/
+theorem reindexViaRunAgainstParallel
+    {P R : PFunctor.{uA₁, uB}} {Q V : PFunctor.{uA₂, uB}}
+    {LeftState : Type uS₁} {RightState : Type uS₂}
+    (leftHandler : Handler (FreeM P) R)
+    (rightHandler : Handler (FreeM Q) V)
+    (left : Responder LeftState P) (right : Responder RightState Q) :
+    Responder.reindexViaRunAgainst
+        (Handler.parallel leftHandler rightHandler)
+        (Responder.parallel left right) =
+      Responder.parallel
+        (Responder.reindexViaRunAgainst leftHandler left)
+        (Responder.reindexViaRunAgainst rightHandler right) :=
+  Responder.reindexViaRunAgainst_parallel leftHandler rightHandler left right
+
 def responder
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {LeftState : Type uS₁} {RightState : Type uS₂} :

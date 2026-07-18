@@ -19,7 +19,7 @@ is true directly for `reindexViaRunAgainst`.
 
 @[expose] public section
 
-universe uA uB uS₁ uS₂
+universe uA₁ uA₂ uB uS₁ uS₂
 
 namespace PFunctor
 namespace Responder
@@ -27,7 +27,7 @@ namespace Responder
 /-- Pattern-Runs-on-Matter reconstruction commutes with parallel handlers and
 parallel responders. -/
 theorem reindexViaRunAgainst_parallel
-    {P Q R V : PFunctor.{uA, uB}}
+    {P R : PFunctor.{uA₁, uB}} {Q V : PFunctor.{uA₂, uB}}
     {State₁ : Type uS₁} {State₂ : Type uS₂}
     (leftHandler : Handler (FreeM P) R)
     (rightHandler : Handler (FreeM Q) V)
