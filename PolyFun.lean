@@ -126,6 +126,7 @@ import PolyFun.PFunctor.Display.Basic
 import PolyFun.PFunctor.Display.Chart
 import PolyFun.PFunctor.Display.Free
 import PolyFun.PFunctor.Display.Handler
+import PolyFun.PFunctor.Display.Handler.Sigma
 import PolyFun.PFunctor.Display.Indexed
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
@@ -175,3 +176,4 @@ import PolyFun.PFunctor.Resumption
 import PolyFun.PFunctor.SubstMonoid
 import PolyFun.PFunctor.SubstMonoid.Extension
 import PolyFun.PFunctor.Trace
+import PolyFun.PFunctor.Wiring
