@@ -258,7 +258,7 @@ theorem liftMHom_lift_eq_id :
 /-- Interpreting a free tree by `first` and then interpreting the resulting
 free tree by `second` is the same as interpreting once by the pointwise
 Kleisli composite. -/
-theorem liftM_comp {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB}}
+theorem liftM_comp {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB₃}}
     (x : FreeM P α)
     (first : (a : P.A) → FreeM Q (P.B a))
     (second : (a : Q.A) → FreeM R (Q.B a)) :

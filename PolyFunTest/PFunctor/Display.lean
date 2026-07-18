@@ -320,7 +320,7 @@ end PFunctor.Display.Example
 displayed-position, displayed-direction, and leaf-value universes remain
 independent in the public handler laws. -/
 
-universe uA uA' uA'' uB uC uD uC' uD' uC'' uD'' uF uG
+universe uA uA' uA'' uB uB' uC uD uC' uD' uC'' uD'' uF uG
 
 namespace PFunctor.Display.UniverseTest
 
@@ -360,3 +360,91 @@ example (first : (a : P.A) → FreeM Q (P.B a))
   Handler.comp_id_apply dfirst a c
 
 end PFunctor.Display.UniverseTest
+
+/-! The core displayed-handler and extension APIs do not require the target
+interface's response universe to equal the source response universe. For
+Kleisli composition, only the source and intermediate response universes must
+agree; the final target remains independent. -/
+
+namespace PFunctor.Display.HeterogeneousResponseUniverseTest
+
+abbrev SmallResponseInterface : PFunctor.{0, 0} where
+  A := PUnit
+  B _ := Bool
+
+abbrev LargeResponseInterface : PFunctor.{0, 1} where
+  A := PUnit
+  B _ := ULift.{1} Bool
+
+abbrev smallResponseDisplay : Display.{0, 0, 0, 0} SmallResponseInterface where
+  position _ := Bool
+  direction _ _ _ := Nat
+
+abbrev largeResponseDisplay : Display.{0, 1, 0, 0} LargeResponseInterface where
+  position _ := PUnit
+  direction _ _ _ := PUnit
+
+def heterogeneousProgram (_ : SmallResponseInterface.A) :
+    FreeM LargeResponseInterface Bool :=
+  .pure true
+
+def heterogeneousHandler :
+    Handler smallResponseDisplay largeResponseDisplay heterogeneousProgram :=
+  fun _ _ => largeResponseDisplay.leaf (fun _ : Bool => Nat) true 7
+
+example :
+    heterogeneousHandler .unit false =
+      largeResponseDisplay.leaf (fun _ : Bool => Nat) true 7 :=
+  rfl
+
+variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
+  (S : Display.{uA, uB, uC, uD} P)
+  (T : Display.{uA', uB', uC', uD'} Q)
+  {E E' : Type uB} {F : E → Type uF} {G : E' → Type uG}
+
+example (first : (a : P.A) → FreeM Q (P.B a))
+    (dfirst : Handler S T first) : Handler S T first :=
+  dfirst
+
+example (t : FreeM P E)
+    (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    (first : (a : P.A) → FreeM Q (P.B a))
+    (dfirst : Handler S T first) :=
+  S.liftM T t d first dfirst
+
+example (t : FreeM P E)
+    (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    (g : E → FreeM P E')
+    (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedShape G) (g x))
+    (first : (a : P.A) → FreeM Q (P.B a))
+    (dfirst : Handler S T first) :=
+  S.liftM_bind T t d g dg first dfirst
+
+end PFunctor.Display.HeterogeneousResponseUniverseTest
+
+namespace PFunctor.Display.HeterogeneousCompositionTargetUniverseTest
+
+variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB}}
+  {R : PFunctor.{uA'', uB'}}
+  (S : Display.{uA, uB, uC, uD} P)
+  (T : Display.{uA', uB, uC', uD'} Q)
+  (U : Display.{uA'', uB', uC'', uD''} R)
+  {E : Type uB} {F : E → Type uF}
+
+example
+    (first : (a : P.A) → FreeM Q (P.B a))
+    (dfirst : Handler S T first)
+    (second : (a : Q.A) → FreeM R (Q.B a))
+    (dsecond : Handler T U second) :
+    Handler S U (fun a ↦ (first a).liftM second) :=
+  dsecond.comp dfirst
+
+example (t : FreeM P E)
+    (d : FreeM.Displayed (S.toDisplayedShape F) t)
+    (first : (a : P.A) → FreeM Q (P.B a))
+    (dfirst : Handler S T first)
+    (second : (a : Q.A) → FreeM R (Q.B a))
+    (dsecond : Handler T U second) :=
+  S.liftM_comp T U t d first dfirst second dsecond
+
+end PFunctor.Display.HeterogeneousCompositionTargetUniverseTest

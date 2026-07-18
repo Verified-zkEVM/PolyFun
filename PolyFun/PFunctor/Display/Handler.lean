@@ -29,18 +29,22 @@ and `Handler.comp` is displayed Kleisli composition.
 
 @[expose] public section
 
-universe uA uA' uA'' uA''' uB uC uD uC' uD' uC'' uD'' uC''' uD''' uF uG
+universe uA uA' uA'' uA''' uB uB' uC uD uC' uD' uC'' uD'' uC''' uD''' uF uG
 
 namespace PFunctor
 namespace Display
 
-variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB}}
-  {R : PFunctor.{uA'', uB}}
+variable {P : PFunctor.{uA, uB}}
 
-/-- A displayed implementation of a free-monad handler. -/
+/-- A displayed implementation of a free-monad handler.
+
+The source and target response universes are independent. In composition,
+only the source and intermediate interfaces must share a response universe;
+the final target remains independent. -/
 abbrev Handler
+    {Q : PFunctor.{uA', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     (f : (a : P.A) → FreeM Q (P.B a)) :=
   (a : P.A) → (c : S.position a) →
     FreeM.Displayed (T.toDisplayedShape (S.direction a c)) (f a)
@@ -48,8 +52,9 @@ abbrev Handler
 /-- Extend a displayed handler recursively over a free source program. This
 maps the base tree with `FreeM.liftM` and its displayed data in lockstep. -/
 def liftM
+    {Q : PFunctor.{uA', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     {E : Type uB} {F : E → Type uF}
     (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedShape F) t)
@@ -64,8 +69,9 @@ def liftM
 
 @[simp]
 theorem liftM_pure
+    {Q : PFunctor.{uA', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     {E : Type uB} {F : E → Type uF}
     (x : E) (d : ULift.{max uC uB uD} (F x))
     (f : (a : P.A) → FreeM Q (P.B a)) (df : Handler S T f) :
@@ -74,8 +80,9 @@ theorem liftM_pure
 
 @[simp]
 theorem liftM_liftBind
+    {Q : PFunctor.{uA', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     {E : Type uB} {F : E → Type uF}
     (a : P.A) (rest : P.B a → FreeM P E) (c : S.position a)
     (children : (b : P.B a) → S.direction a c b →
@@ -96,11 +103,18 @@ def id (S : Display.{uA, uB, uC, uD} P) :
     ⟨c, fun b d => S.leaf (S.direction a c) b d⟩
 
 /-- Displayed Kleisli composition of handlers, in categorical order:
-`second.comp first` first interprets by `first`, then by `second`. -/
+`second.comp first` first interprets by `first`, then by `second`.
+
+The source and intermediate interfaces share a response universe because the
+first handler returns a tree whose leaves are source responses and whose nodes
+are intermediate operations. The final target's response universe remains
+independent. -/
 def comp
+    {Q : PFunctor.{uA', uB}}
+    {R : PFunctor.{uA'', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
-    {U : Display.{uA'', uB, uC'', uD''} R}
+    {U : Display.{uA'', uB', uC'', uD''} R}
     {f : (a : P.A) → FreeM Q (P.B a)}
     {g : (a : Q.A) → FreeM R (Q.B a)}
     (second : Handler T U g) (first : Handler S T f) :
@@ -109,9 +123,11 @@ def comp
 
 @[simp]
 theorem comp_apply
+    {Q : PFunctor.{uA', uB}}
+    {R : PFunctor.{uA'', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
-    {U : Display.{uA'', uB, uC'', uD''} R}
+    {U : Display.{uA'', uB', uC'', uD''} R}
     {f : (a : P.A) → FreeM Q (P.B a)}
     {g : (a : Q.A) → FreeM R (Q.B a)}
     (second : Handler T U g) (first : Handler S T f)
@@ -174,6 +190,7 @@ theorem liftM_id
       exact ih b (children b e)
 
 private theorem liftMBindEq
+    {Q : PFunctor.{uA', uB'}}
     {E E' : Type uB}
     (f : (a : P.A) → FreeM Q (P.B a)) (g : E → FreeM P E') :
     (t : FreeM P E) →
@@ -188,8 +205,9 @@ private theorem liftMBindEq
 /-- Displayed handler extension preserves displayed substitution, after
 transport along the corresponding base-tree `FreeM.liftM_bind` law. -/
 theorem liftM_bind
+    {Q : PFunctor.{uA', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB, uC', uD'} Q)
+    (T : Display.{uA', uB', uC', uD'} Q)
     {E E' : Type uB} {F : E → Type uF} {G : E' → Type uG}
     (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedShape F) t)
@@ -270,6 +288,8 @@ theorem liftM_bind
           (fun x dx => S.liftM T (g x) (dg x dx) f df)
 
 private theorem liftMCompEq
+    {Q : PFunctor.{uA', uB}}
+    {R : PFunctor.{uA'', uB'}}
     {E : Type uB}
     (first : (a : P.A) → FreeM Q (P.B a))
     (second : (a : Q.A) → FreeM R (Q.B a)) :
@@ -285,9 +305,11 @@ private theorem liftMCompEq
 /-- Extending two displayed handlers in sequence agrees with extending their
 displayed Kleisli composite, after transport along `FreeM.liftM_comp`. -/
 theorem liftM_comp
+    {Q : PFunctor.{uA', uB}}
+    {R : PFunctor.{uA'', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
     (T : Display.{uA', uB, uC', uD'} Q)
-    (U : Display.{uA'', uB, uC'', uD''} R)
+    (U : Display.{uA'', uB', uC'', uD''} R)
     {E : Type uB} {F : E → Type uF}
     (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedShape F) t)
@@ -295,7 +317,7 @@ theorem liftM_comp
     (dfirst : Handler S T first)
     (second : (a : Q.A) → FreeM R (Q.B a))
     (dsecond : Handler T U second) :
-    U.transport F (FreeM.liftM_comp t first second)
+    U.transport F (FreeM.liftM_comp (P := P) (Q := Q) (R := R) t first second)
         (T.liftM U (t.liftM first) (S.liftM T t d first dfirst)
           second dsecond) =
       S.liftM U t d (fun a => (first a).liftM second)
@@ -379,6 +401,7 @@ namespace Handler
 /-- Left identity for displayed handler composition, stated pointwise with
 the base handler's right-unit equality made explicit. -/
 theorem id_comp_apply
+    {Q : PFunctor.{uA', uB}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
     {f : (a : P.A) → FreeM Q (P.B a)}
@@ -390,8 +413,9 @@ theorem id_comp_apply
 /-- Right identity for displayed handler composition, stated pointwise with
 the generator interpretation equality made explicit. -/
 theorem comp_id_apply
+    {Q : PFunctor.{uA', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
-    {T : Display.{uA', uB, uC', uD'} Q}
+    {T : Display.{uA', uB', uC', uD'} Q}
     {f : (a : P.A) → FreeM Q (P.B a)}
     (first : Handler S T f) (a : P.A) (c : S.position a) :
     T.transport (S.direction a c) (FreeM.liftM_lift f a)
@@ -403,17 +427,20 @@ theorem comp_id_apply
 /-- Associativity for displayed handler composition, stated pointwise with
 the base free-monad composition equality made explicit. -/
 theorem comp_assoc_apply
-    {V : PFunctor.{uA''', uB}}
+    {Q : PFunctor.{uA', uB}}
+    {R : PFunctor.{uA'', uB}}
+    {V : PFunctor.{uA''', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
     {U : Display.{uA'', uB, uC'', uD''} R}
-    {W : Display.{uA''', uB, uC''', uD'''} V}
+    {W : Display.{uA''', uB', uC''', uD'''} V}
     {f : (a : P.A) → FreeM Q (P.B a)}
     {g : (a : Q.A) → FreeM R (Q.B a)}
     {h : (a : R.A) → FreeM V (R.B a)}
     (first : Handler S T f) (second : Handler T U g)
     (third : Handler U W h) (a : P.A) (c : S.position a) :
-    W.transport (S.direction a c) (FreeM.liftM_comp (f a) g h)
+    W.transport (S.direction a c)
+        (FreeM.liftM_comp (P := Q) (Q := R) (R := V) (f a) g h)
         (third.comp (second.comp first) a c) =
       (third.comp second).comp first a c :=
   T.liftM_comp U W (f a) (first a c) g second h third
