@@ -23,8 +23,7 @@ below isolate the branch-object pattern of such a tree:
 * `FreeM.output s path` recovers the leaf payload selected by that path.
 * `FreeM.append s k` grafts a suffix tree selected by the canonical path of `s`.
 * `FreeM.StoppingTree` is the state-indexed initial algebra whose next state is
-  selected by an abstract observation; `TelescopeWith` is its compatibility
-  presentation tied to a family of `FreeM` rounds.
+  selected by an abstract observation.
 * `FreeM.Telescope` is the specialization where observations are canonical
   branch paths.
 
@@ -1067,107 +1066,13 @@ theorem eq_fold {Carrier : St → Type t}
 
 end StoppingTree
 
-set_option linter.unusedVariables false in
-/-- Compatibility presentation of `StoppingTree` tied to a family of `FreeM`
-rounds. The `round` parameter does not affect the inductive carrier; it only
-records which rounds an observation-based flattening belongs to. New generic
-code should use `StoppingTree` directly. -/
-@[nolint unusedArguments]
-abbrev TelescopeWith {St : Type z} {Out : St → Type v}
-    (round : (s : St) → FreeM P (Out s))
-    (Obs : St → Type w)
-    (step : (s : St) → Obs s → St) : St → Type (max w z) :=
-  StoppingTree Obs step
-
-namespace TelescopeWith
-
-variable {St : Type z} {Out : St → Type v} {round : (s : St) → FreeM P (Out s)}
-    {Obs : St → Type w} {step : (s : St) → Obs s → St}
-
-/-- Compatibility constructor for a stopping leaf. -/
-@[match_pattern]
-abbrev done (s : St) : TelescopeWith round Obs step s :=
-  StoppingTree.done s
-
-/-- Compatibility constructor for one observation-indexed transition layer. -/
-@[match_pattern]
-abbrev extend (s : St)
-    (cont : (obs : Obs s) → TelescopeWith round Obs step (step s obs)) :
-    TelescopeWith round Obs step s :=
-  StoppingTree.extend s cont
-
-/-- Compatibility alias for the canonical stopping-tree algebra. -/
-abbrev Algebra (Carrier : St → Type t) :=
-  StoppingTree.Algebra (Obs := Obs) (step := step) Carrier
-
-/-- Compatibility wrapper for `StoppingTree.fold`. -/
-def fold {Carrier : St → Type t} (alg : Algebra (Obs := Obs) (step := step) Carrier) :
-    {s : St} → TelescopeWith round Obs step s → Carrier s :=
-  StoppingTree.fold alg
-
-@[simp]
-theorem fold_done {Carrier : St → Type t}
-    (alg : Algebra (Obs := Obs) (step := step) Carrier) (s : St) :
-    fold (round := round) alg (TelescopeWith.done s) = alg.done s :=
-  rfl
-
-@[simp]
-theorem fold_extend {Carrier : St → Type t}
-    (alg : Algebra (Obs := Obs) (step := step) Carrier) (s : St)
-    (cont : (obs : Obs s) → TelescopeWith round Obs step (step s obs)) :
-    fold alg (TelescopeWith.extend s cont) =
-      alg.extend s (fun obs => fold alg (cont obs)) :=
-  rfl
-
-/-- Compatibility form of the stopping-tree fold uniqueness theorem. -/
-theorem eq_fold {Carrier : St → Type t}
-    (alg : Algebra (Obs := Obs) (step := step) Carrier)
-    (f : {s : St} → TelescopeWith round Obs step s → Carrier s)
-    (hDone : (s : St) → f (TelescopeWith.done s) = alg.done s)
-    (hExtend : (s : St) →
-      (cont : (obs : Obs s) → TelescopeWith round Obs step (step s obs)) →
-      f (TelescopeWith.extend s cont) =
-        alg.extend s (fun obs => f (cont obs))) :
-    {s : St} → (tree : TelescopeWith round Obs step s) → f tree = fold alg tree :=
-  StoppingTree.eq_fold alg f hDone hExtend
-
-/-- Flatten a telescope into a single `FreeM` tree by iterated dependent
-append, using `appendRound` to graft each observed round and `finish` at
-terminal states. -/
-def toFreeM {β : Type t}
-    (appendRound : (s : St) → (Obs s → FreeM P β) → FreeM P β)
-    (finish : St → FreeM P β) :
-    {s : St} → TelescopeWith round Obs step s → FreeM P β :=
-  fold {
-    done := finish
-    extend := appendRound
-  }
-
-@[simp]
-theorem toFreeM_done {β : Type t}
-    (appendRound : (s : St) → (Obs s → FreeM P β) → FreeM P β)
-    (finish : St → FreeM P β) (s : St) :
-    (TelescopeWith.done (round := round) (Obs := Obs) (step := step) s).toFreeM
-      appendRound finish =
-      finish s := rfl
-
-@[simp]
-theorem toFreeM_extend {β : Type t}
-    (appendRound : (s : St) → (Obs s → FreeM P β) → FreeM P β)
-    (finish : St → FreeM P β) (s : St)
-    (cont : (obs : Obs s) → TelescopeWith round Obs step (step s obs)) :
-    (TelescopeWith.extend s cont).toFreeM appendRound finish =
-      appendRound s (fun obs => (cont obs).toFreeM appendRound finish) := rfl
-
-end TelescopeWith
-
 /-- State-machine telescopes whose observations are canonical `FreeM` branch
 paths. This is the round-indexed specialization of `StoppingTree`; users with
 a more compact observation type should use `StoppingTree` directly. -/
 abbrev Telescope {St : Type z} {Out : St → Type v}
     (round : (s : St) → FreeM P (Out s))
     (step : (s : St) → Path (round s) → St) : St → Type (max uB z) :=
-  TelescopeWith round (fun s => Path (round s)) step
+  StoppingTree (fun s => Path (round s)) step
 
 namespace Telescope
 
@@ -1176,19 +1081,22 @@ variable {St : Type z} {Out : St → Type v} {round : (s : St) → FreeM P (Out 
 
 /-- Constructor wrapper for terminating a canonical-path telescope. -/
 abbrev done (s : St) : Telescope round step s :=
-  TelescopeWith.done s
+  StoppingTree.done s
 
 /-- Constructor wrapper for extending a canonical-path telescope. -/
 abbrev extend (s : St)
     (cont : (path : Path (round s)) → Telescope round step (step s path)) :
     Telescope round step s :=
-  TelescopeWith.extend s cont
+  StoppingTree.extend s cont
 
 /-- Flatten a canonical-path telescope into a single `FreeM` tree by iterated
 dependent append, using `finish` at terminal states. -/
 def toFreeM {β : Type t} (finish : St → FreeM P β) :
     {s : St} → Telescope round step s → FreeM P β :=
-  TelescopeWith.toFreeM (fun s => append (round s)) finish
+  StoppingTree.fold {
+    done := finish
+    extend := fun s => append (round s)
+  }
 
 @[simp]
 theorem toFreeM_done {β : Type t} (finish : St → FreeM P β) (s : St) :
