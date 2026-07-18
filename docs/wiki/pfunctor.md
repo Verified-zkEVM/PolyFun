@@ -139,9 +139,15 @@ carrier varies.
 |------|---------|
 | [`PolyFun/PFunctor/Display/Basic.lean`](../../PolyFun/PFunctor/Display/Basic.lean) | Core display, object action, predicate contracts, and coproducts. |
 | [`PolyFun/PFunctor/Display/Chart.lean`](../../PolyFun/PFunctor/Display/Chart.lean) | Total-polynomial chart and chart-fiber normalization. |
+| [`PolyFun/PFunctor/Display/Coalgebra.lean`](../../PolyFun/PFunctor/Display/Coalgebra.lean) | Proof-relevant displayed coalgebras over a fixed base coalgebra map. |
 | [`PolyFun/PFunctor/Display/Indexed.lean`](../../PolyFun/PFunctor/Display/Indexed.lean) | Incidence/action `IPFunctor`s and object-action equivalence. |
 | [`PolyFun/PFunctor/Display/Free.lean`](../../PolyFun/PFunctor/Display/Free.lean) | Embedding into `Displayed.Algebra` and dependent substitution. |
 | [`PolyFun/PFunctor/Display/Handler.lean`](../../PolyFun/PFunctor/Display/Handler.lean) | Displayed handlers, free extension, and Kleisli composition. |
+| [`PolyFun/PFunctor/Dynamical/Responder/Display.lean`](../../PolyFun/PFunctor/Dynamical/Responder/Display.lean) | The responder display, its forgetful chart, and the equivalence between displayed responder coalgebras and the paper's local dependent-Mealy obligation. The projection is not generally a lens because a bare query does not supply the required precondition witness. |
+
+Displayed responder coalgebras preserve proof-relevant evidence over one
+responder. They are distinct from `DynSystem.SafetyRefinement`, whose policy is
+a proposition-valued relation between two systems.
 
 ### Free monad `FreeM`
 
