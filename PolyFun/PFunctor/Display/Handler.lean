@@ -7,6 +7,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.PFunctor.Display.Free
+public import PolyFun.PFunctor.Handler.Free
 
 /-!
 # Displayed handlers between polynomial interfaces
@@ -122,7 +123,7 @@ namespace Handler
 /-- The identity displayed handler: retain every displayed position and pass
 each displayed direction directly to the corresponding continuation. -/
 def id (S : Display.{uA, uB, uC, uD} P) :
-    Handler S S (fun a => FreeM.lift a) :=
+    Handler S S (PFunctor.Handler.id P) :=
   fun a c =>
     ⟨c, fun b d => S.leaf (S.direction a c) b d⟩
 
@@ -142,7 +143,7 @@ def comp
     {f : (a : P.A) → FreeM Q (P.B a)}
     {g : (a : Q.A) → FreeM R (Q.B a)}
     (second : Handler T U g) (first : Handler S T f) :
-    Handler S U (fun a => (f a).liftM g) :=
+    Handler S U (PFunctor.Handler.comp g f) :=
   fun a c => T.liftM U (f a) (first a c) g second
 
 @[simp]
