@@ -58,22 +58,6 @@ theorem runTree_liftBind (a : P.A)
   change P.B a × Q.B (M.head matter) at direction
   rw [decode_relabel]
 
-private theorem freeM_map_id {R : PFunctor.{pA, pB}} {α : Type u}
-    (x : FreeM R α) : FreeM.map id x = x := by
-  induction x with
-  | pure value => rfl
-  | lift_bind operation continuation ih =>
-      exact congrArg (FreeM.liftBind operation) (funext ih)
-
-private theorem freeM_map_comp {R : PFunctor.{pA, pB}}
-    {α : Type u} {β : Type v} {γ : Type qA}
-    (g : β → γ) (f : α → β) (x : FreeM R α) :
-    FreeM.map g (FreeM.map f x) = FreeM.map (g ∘ f) x := by
-  induction x with
-  | pure value => rfl
-  | lift_bind operation continuation ih =>
-      exact congrArg (FreeM.liftBind operation) (funext ih)
-
 private theorem freeM_bind_map_left {R : PFunctor.{pA, pB}}
     {α : Type u} {β : Type v} {γ : Type qA}
     (f : α → β) (x : FreeM R α) (g : β → FreeM R γ) :
@@ -103,7 +87,7 @@ theorem runTree_append
       simp only [FreeM.append, FreeM.Path.append]
       change runTree (next PUnit.unit) matter =
         FreeM.map id (runTree (next PUnit.unit) matter)
-      exact (freeM_map_id _).symm
+      exact (FreeM.id_map _).symm
   | liftBind a rest ih =>
       simp only [FreeM.append, runTree_liftBind, FreeM.bind]
       apply congrArg (FreeM.liftBind (P := P ⊗ Q) (a, M.head matter))
@@ -117,7 +101,7 @@ theorem runTree_append
       apply congrArg (FreeM.bind
         (runTree (rest direction.1) (M.children matter direction.2)))
       funext pulled
-      rw [freeM_map_comp]
+      rw [← FreeM.comp_map]
       rfl
 
 /-- The universal interaction map is a substitution-monoid morphism: running
