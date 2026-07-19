@@ -31,6 +31,15 @@ def binaryLeaf : FreeM binaryP PUnit :=
 def binaryOp (label : Bool) : FreeM binaryP PUnit :=
   .liftBind label fun _ => binaryLeaf
 
+/-- Four distinct payloads make both an outer and an inner binary direction
+observable. -/
+def branchPayload (outer inner : Bool) : Nat :=
+  match outer, inner with
+  | false, false => 3
+  | false, true => 5
+  | true, false => 7
+  | true, true => 11
+
 /-- Three binary substitution layers with independently observable path
 components. -/
 def binaryTriple : ((FreeP binaryP ◃ FreeP binaryP) ◃ FreeP binaryP).A :=
@@ -99,6 +108,31 @@ example :
     ⟨⟨false, ⟨⟩⟩, ⟨true, ⟨⟩⟩⟩ :=
   rfl
 
+/-- A two-layer labelled free polynomial whose inner operation label is the
+outer direction and whose payload observes both path components. -/
+def nestedBinaryObj : (FreeP binaryP ◃ FreeP binaryP).Obj Nat :=
+  ⟨⟨binaryOp false, fun outerPath => binaryOp outerPath.1⟩,
+    fun paths => branchPayload paths.1.1 paths.2.1⟩
+
+/-- `nest` preserves the outer tree while decoding each direction-indexed
+inner tree, including its operation label and both payload indices. -/
+example : FreeP.decode (FreeP.nest nestedBinaryObj) =
+    FreeM.liftBind false (fun outer =>
+      FreeM.pure (FreeM.liftBind outer (fun inner =>
+        FreeM.pure (branchPayload outer inner)))) :=
+  rfl
+
+/-- Decoding multiplication joins the same nested computation in
+outer-then-inner order. Reversing the two path components changes either the
+inner operation label or one of the four leaf payloads. -/
+example :
+    FreeP.decode
+        (Lens.mapObj (FreeP.mult (P := binaryP)) nestedBinaryObj) =
+      FreeM.liftBind false (fun outer =>
+        FreeM.liftBind outer (fun inner =>
+          FreeM.pure (branchPayload outer inner))) :=
+  rfl
+
 /-- Left-associated multiplication reassociates all three path components
 without permuting them. -/
 example :
@@ -126,6 +160,25 @@ def reverseBranchLens : Lens binaryP natBinaryP :=
 def controlTree : FreeM binaryP PUnit :=
   .liftBind false fun branch =>
     .liftBind branch fun _ => .pure PUnit.unit
+
+/-- A labelled control tree whose second operation and leaf payload both
+depend on the directions pulled back through `reverseBranchLens`. -/
+def labelledControlTree : FreeM binaryP Nat :=
+  .liftBind false fun outer =>
+    .liftBind outer fun inner =>
+      .pure (branchPayload outer inner)
+
+/-- Decoding `FreeP.map` observes both parts of the nontrivial lens: positions
+are mapped to naturals and each runtime direction is reversed before selecting
+the next operation and final payload. -/
+example :
+    FreeP.decode
+        (Lens.mapObj (FreeP.map reverseBranchLens)
+          (FreeP.encode labelledControlTree)) =
+      FreeM.liftBind (P := natBinaryP) 0 (fun outer =>
+        FreeM.liftBind (P := natBinaryP) (if !outer then 1 else 0) (fun inner =>
+          FreeM.pure (branchPayload (!outer) (!inner)))) :=
+  rfl
 
 /-- The backward lens direction is observable: runtime `false` selects the
 source `true` child (label `1`), while runtime `true` selects label `0`. -/

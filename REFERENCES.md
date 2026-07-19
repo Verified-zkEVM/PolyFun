@@ -70,7 +70,8 @@ free-monad-as-module-over-cofree-comonad structure made explicit (a module
 action, not an adjunction).
 
 Used in: `PolyFun/PFunctor/SubstMonoid.lean`,
-`PolyFun/PFunctor/Free/Path.lean`.
+`PolyFun/PFunctor/Free/Path.lean`, and
+`PolyFun/PFunctor/PatternRunsOnMatter/`.
 
 ### XZHHMPZ20 — Xia, Zakowski, He, Hur, Malecha, Pierce, Zdancewic, *Interaction Trees*
 

@@ -37,7 +37,7 @@ the fixed-universe categorical module laws live in downstream modules.
 
 @[expose] public section
 
-universe pA pB pA' pB' qA qB qA' qB' v
+universe pA pB pA' pB' qA qB qA' qB' v w
 
 namespace PFunctor
 namespace FreeP
@@ -150,6 +150,57 @@ theorem runOn_toFunB (pattern : (FreeP P).A) (matter : (CofreeP Q).A)
     (runOn P Q).toFunB (pattern, matter) path =
       (runObj pattern matter).2 path :=
   rfl
+
+/-! ## Labelled object execution -/
+
+/-- Run a leaf-labelled finite pattern on vertex-labelled matter. Every output
+leaf carries both the original pattern result and the label at the reached
+matter vertex. This is the type-level consumer boundary behind operational
+applications; `runObj` remains the lower-level path/vertex kernel. -/
+def runObjects {α : Type v} {β : Type w}
+    (pattern : (FreeP P).Obj α) (matter : (CofreeP Q).Obj β) :
+    (FreeP (P ⊗ Q)).Obj (α × β) :=
+  Lens.mapObj (runOn P Q)
+    ⟨(pattern.1, matter.1), fun direction =>
+      (pattern.2 direction.1, matter.2 direction.2)⟩
+
+@[simp]
+theorem runObjects_shape {α : Type v} {β : Type w}
+    (pattern : (FreeP P).Obj α) (matter : (CofreeP Q).Obj β) :
+    (runObjects pattern matter).1 = (runObj pattern.1 matter.1).1 :=
+  rfl
+
+/-- The output label is obtained by pulling the complete output path back to
+the source pattern path and matter vertex, then reading both source labels. -/
+theorem runObjects_label {α : Type v} {β : Type w}
+    (pattern : (FreeP P).Obj α) (matter : (CofreeP Q).Obj β)
+    (path : FreeM.Path (runObjects pattern matter).1) :
+    (runObjects pattern matter).2 path =
+      let pulled := (runObj pattern.1 matter.1).2 path
+      (pattern.2 pulled.1, matter.2 pulled.2) :=
+  rfl
+
+/-- Recursive normal form for labelled object execution. -/
+def runObjectsTree {α : Type v} {β : Type w} :
+    FreeM P α → (CofreeP Q).Obj β → FreeM (P ⊗ Q) (α × β)
+  | .pure value, matter => .pure (value, matter.2 (.root matter.1))
+  | .liftBind operation next, matter =>
+      .liftBind (operation, M.head matter.1) fun direction =>
+        runObjectsTree (next direction.1)
+          (CofreeP.childObj matter direction.2)
+
+/-- Decoding labelled object execution computes by synchronized recursion. -/
+theorem decode_runObjects_encode {α : Type v} {β : Type w}
+    (pattern : FreeM P α) (matter : (CofreeP Q).Obj β) :
+    FreeP.decode (runObjects (FreeP.encode pattern) matter) =
+      runObjectsTree pattern matter := by
+  induction pattern generalizing matter with
+  | pure value => rfl
+  | lift_bind operation next ih =>
+      change FreeM.liftBind _ _ = FreeM.liftBind _ _
+      congr 1
+      funext direction
+      exact ih direction.1 (CofreeP.childObj matter direction.2)
 
 /-! ## Naturality -/
 

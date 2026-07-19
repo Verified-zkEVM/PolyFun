@@ -74,6 +74,14 @@ def decode (x : Σ s : FreeM P PUnit.{uB + 1}, FreeM.Path s → α) :
     FreeM P α :=
   decodeAt x.1 x.2
 
+/-- Decoding a labelled polynomial node is `FreeM.liftBind` of the decoded
+children. -/
+theorem decode_node (a : P.A)
+    (children : P.B a → (FreeP P).Obj α) :
+    decode (node a children) =
+      FreeM.liftBind a (fun direction => decode (children direction)) :=
+  rfl
+
 @[simp]
 theorem decode_encode : (s : FreeM P α) → decode (encode s) = s
   | .pure _ => rfl
@@ -204,6 +212,23 @@ def relabel {β : Type w} (f : α → β) (x : (FreeP P).Obj α) :
     (FreeP P).Obj β :=
   ⟨x.1, f ∘ x.2⟩
 
+/-- Decoding after relabelling is ordinary free-monad mapping. -/
+@[simp]
+theorem decode_relabel {β : Type w} (f : α → β)
+    (x : (FreeP P).Obj α) :
+    decode (relabel f x) = FreeM.map f (decode x) := by
+  rcases x with ⟨shape, labels⟩
+  induction shape with
+  | pure value =>
+      cases value
+      rfl
+  | liftBind a rest ih =>
+      simp only [decode, decodeAt, relabel, Function.comp_apply, FreeM.map]
+      apply congrArg (FreeM.liftBind a)
+      funext direction
+      exact ih direction
+        (fun path => labels (FreeM.Path.cons a rest direction path))
+
 @[simp]
 theorem relabel_node {β : Type w} (f : α → β) (a : P.A)
     (children : P.B a → (FreeP P).Obj α) :
@@ -280,6 +305,23 @@ theorem mapObj_relabel {β : Type w} (l : Lens P Q)
     Lens.mapObj (map l) (relabel f x) =
       relabel f (Lens.mapObj (map l) x) :=
   rfl
+
+/-- Mapping a labelled `FreeP` object along a signature lens corresponds under
+`objEquiv` to mapping the decoded free-monad tree along that lens. -/
+@[simp]
+theorem decode_map (l : Lens P Q) (x : (FreeP P).Obj α) :
+    decode (Lens.mapObj (map l) x) = (decode x).mapLens l := by
+  rcases x with ⟨s, label⟩
+  induction s with
+  | pure u =>
+      cases u
+      rfl
+  | liftBind a rest ih =>
+      simp only [Lens.mapObj, map, mapShape, decode, decodeAt, FreeM.mapLens,
+        FreeM.map, Function.comp_apply]
+      apply congrArg (FreeM.liftBind (l.toFunA a))
+      funext d
+      exact ih (l.toFunB a d) (fun path ↦ label ⟨l.toFunB a d, path⟩)
 
 /-- Pointwise container form of the identity law for `FreeP.map`. Packaging
 the mapped shape together with its pulled-back path avoids exposing a cast in
@@ -428,6 +470,30 @@ theorem mult_toFunB (x : (FreeP P ◃ FreeP P).A)
     (path : (FreeP P).B ((mult (P := P)).toFunA x)) :
     (mult (P := P)).toFunB x path = FreeM.Path.split x.1 x.2 path :=
   rfl
+
+/-- Decode each inner tree of a two-layer `FreeP` object, leaving the outer
+tree labelled by free-monad computations. -/
+def nest (x : (FreeP P ◃ FreeP P).Obj α) : (FreeP P).Obj (FreeM P α) :=
+  ⟨x.1.1, fun path₁ ↦
+    decodeAt (x.1.2 path₁) (fun path₂ ↦ x.2 ⟨path₁, path₂⟩)⟩
+
+/-- Multiplication of labelled free polynomials corresponds under `objEquiv`
+to joining the nested decoded free-monad computation. -/
+theorem decode_mult (x : (FreeP P ◃ FreeP P).Obj α) :
+    decode (Lens.mapObj (mult (P := P)) x) =
+      FreeM.bind (decode (nest x)) id := by
+  rcases x with ⟨⟨s, middle⟩, label⟩
+  induction s with
+  | pure u =>
+      cases u
+      rfl
+  | liftBind a rest ih =>
+      simp only [Lens.mapObj, mult, nest, decode, decodeAt, FreeM.append,
+        FreeM.bind, Function.comp_apply]
+      apply congrArg (FreeM.liftBind a)
+      funext b
+      exact ih b (fun path ↦ middle ⟨b, path⟩)
+        (fun pair ↦ label ⟨⟨b, pair.1⟩, pair.2⟩)
 
 theorem mult_unit_left :
     Lens.comp
