@@ -812,6 +812,16 @@ def homEquiv
   left_inv := extend_restrict C
   right_inv := restrict_extend C
 
+/-- Two retrofunctors into a cofree polynomial comonoid are equal when their
+one-layer cogenerator projections agree. -/
+theorem hom_ext_cogenerator
+    {C : Comonoid.{max uA uB, max uA uB}}
+    {f g : Comonoid.Hom C (comonoid P)}
+    (h : cogenerator P ∘ₗ f.toLens = cogenerator P ∘ₗ g.toLens) :
+    f = g := by
+  apply (homEquiv (P := P) C).injective
+  exact h
+
 /-- The cofree hom-set equivalence is natural in its source comonoid. -/
 theorem homEquiv_naturality_left
     {C₁ C₂ : Comonoid.{max uA uB, max uA uB}}

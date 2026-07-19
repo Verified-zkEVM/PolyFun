@@ -20,7 +20,7 @@ Announced VCVio baseline: `2026-899.pdf` (ePrint 2026/899).
 | Ch 5 factorizations, adjunctions, (co)limits | **Done**: vertical–cartesian factorization and orthogonality (A3), trivial-interface adjunctions plus binary tensor gluing (A4/A5), and cartesian closure (A2); general (co)limits remain open |
 | Ch 6 ◁ theory (composites, coclosure, duoidal) | **Done**: direct composite-lens projections, `compNthMap`, δ/`twoStep`, full left Π-distributivity, ordering/interchange naturality and complete concrete duoidal coherence; coclosure/multiadjoint (A8) remains open |
 | Ch 7 comonoids = categories, retrofunctors | **Done (B1–B4 spine)**: `Comonoid`, `Comonoid.Hom`/`Cat♯`, state comonoids, `δ^(n)`, `Run_n`, and the `IOMachine` run/composition core; §7.3.3 quadruple (B5), all-bracketing canonicity, and representable-monoid equivalence remain open |
-| Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | **C1/C2 done; C3 finite-run spine done**: `M.Vertex`, `CofreeP.comonoid`, generic coiteration, the natural hom-set equivalence, its dynamical behavior/trajectory specialization, structural finite projections, and Prop 8.49; Equation 8.32/additive reassociation, explicit pretree-limit coherence, lax monoidality, and bicomodules remain open |
+| Ch 8 cofree comonoid, Cat♯ ⊣ Poly, bicomodules | **C1/C2 done; C3 finite-run and lax-monoidal spine done**: `M.Vertex`, `CofreeP.comonoid`, generic coiteration, the natural hom-set equivalence, its dynamical behavior/trajectory specialization, structural finite projections, Prop 8.49, and the cofree laxator with its concrete coherence laws; Equation 8.32/additive reassociation, explicit pretree-limit coherence, abstract monoidal packaging, and bicomodules remain open |
 
 ## Reading units
 
@@ -285,9 +285,12 @@ canonical `FreeM` interpretation.
   Functoriality `𝒯_φ` (§8.1.5) + `φ` cartesian ⟹ `𝒯_φ` cartesian
   (Prop 8.72); `𝒯_p` free on a graph (Prop 8.57). The composition-unit
   comonoid, heterogeneous tensor of comonoids and retrofunctors, and pointwise
-  tensor unitors/associator are complete; lax monoidality
-  `t_p ⊗ t_q ⇆ t_{p⊗q}` (Prop 8.79 in the current edition; Prop 8.81
-  in earlier-edition notes) remains downstream. Worked tests with paper value:
+  tensor unitors/associator are complete. **Lax monoidality is done:** the
+  canonical retrofunctors `y ⇆ t_y` and `t_p ⊗ t_q ⇆ t_{p⊗q}` have
+  generator equations, naturality, and both unit and associativity coherence
+  laws (Prop 8.79 in the current edition; Prop 8.81 in earlier-edition notes).
+  Abstract monoidal-functor packaging is deliberately deferred. Worked tests
+  with paper value:
   DFA mate = accepted language (Example 8.51); the general Moore-mate shape of
   Example 8.52 is now captured by the behavior/reached-state bridge, while a
   concrete `List A → B` worked example remains open.
