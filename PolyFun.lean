@@ -141,6 +141,7 @@ import PolyFun.PFunctor.Dynamical.IOMachine
 import PolyFun.PFunctor.Dynamical.Refinement
 import PolyFun.PFunctor.Dynamical.Responder
 import PolyFun.PFunctor.Dynamical.Responder.Display
+import PolyFun.PFunctor.Dynamical.Responder.Reindex
 import PolyFun.PFunctor.Dynamical.Run
 import PolyFun.PFunctor.Dynamical.RunN
 import PolyFun.PFunctor.Dynamical.Safety
@@ -164,6 +165,7 @@ import PolyFun.PFunctor.Free.Replicate
 import PolyFun.PFunctor.Free.Resumption
 import PolyFun.PFunctor.Free.Universal
 import PolyFun.PFunctor.Handler
+import PolyFun.PFunctor.Handler.Free
 import PolyFun.PFunctor.InternalHom
 import PolyFun.PFunctor.Lens.Basic
 import PolyFun.PFunctor.Lens.Cartesian

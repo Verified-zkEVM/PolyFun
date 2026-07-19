@@ -7,6 +7,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.PFunctor.Display.Free
+public import PolyFun.PFunctor.Handler.Free
 
 /-!
 # Displayed handlers between polynomial interfaces
@@ -122,7 +123,7 @@ namespace Handler
 /-- The identity displayed handler: retain every displayed position and pass
 each displayed direction directly to the corresponding continuation. -/
 def id (S : Display.{uA, uB, uC, uD} P) :
-    Handler S S (fun a => FreeM.lift a) :=
+    Handler S S (PFunctor.Handler.id P) :=
   fun a c =>
     ⟨c, fun b d => S.leaf (S.direction a c) b d⟩
 
@@ -142,7 +143,7 @@ def comp
     {f : (a : P.A) → FreeM Q (P.B a)}
     {g : (a : Q.A) → FreeM R (Q.B a)}
     (second : Handler T U g) (first : Handler S T f) :
-    Handler S U (fun a => (f a).liftM g) :=
+    Handler S U (PFunctor.Handler.comp g f) :=
   fun a c => T.liftM U (f a) (first a c) g second
 
 @[simp]
@@ -341,7 +342,8 @@ theorem liftM_comp
     (dfirst : Handler S T first)
     (second : (a : Q.A) → FreeM R (Q.B a))
     (dsecond : Handler T U second) :
-    U.transport F (FreeM.liftM_comp (P := P) (Q := Q) (R := R) t first second)
+    U.transport F
+        (FreeM.liftM_comp (P := P) (Q := Q) (m := FreeM R) t first second)
         (T.liftM U (t.liftM first) (S.liftM T t d first dfirst)
           second dsecond) =
       S.liftM U t d (fun a => (first a).liftM second)
@@ -464,7 +466,7 @@ theorem comp_assoc_apply
     (first : Handler S T f) (second : Handler T U g)
     (third : Handler U W h) (a : P.A) (c : S.position a) :
     W.transport (S.direction a c)
-        (FreeM.liftM_comp (P := Q) (Q := R) (R := V) (f a) g h)
+        (FreeM.liftM_comp (P := Q) (Q := R) (m := FreeM V) (f a) g h)
         (third.comp (second.comp first) a c) =
       (third.comp second).comp first a c :=
   T.liftM_comp U W (f a) (first a c) g second h third

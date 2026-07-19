@@ -255,13 +255,14 @@ theorem liftMHom_lift_eq_id :
     FreeM.liftMHom (P := P) (m := FreeM P) FreeM.lift = MonadHom.id (FreeM P) :=
   MonadHom.ext' fun _ x => by simp
 
-/-- Interpreting a free tree by `first` and then interpreting the resulting
-free tree by `second` is the same as interpreting once by the pointwise
-Kleisli composite. -/
-theorem liftM_comp {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB₃}}
+/-- Interpreting a free tree by a free handler and then interpreting the
+resulting free tree by an arbitrary monadic handler is the same as interpreting
+once by their pointwise Kleisli composite. -/
+theorem liftM_comp {Q : PFunctor.{uA₂, uB}} {m : Type uB → Type v}
+    [Monad m] [LawfulMonad m]
     (x : FreeM P α)
     (first : (a : P.A) → FreeM Q (P.B a))
-    (second : (a : Q.A) → FreeM R (Q.B a)) :
+    (second : (a : Q.A) → m (Q.B a)) :
     (x.liftM first).liftM second =
       x.liftM (fun a => (first a).liftM second) := by
   induction x with

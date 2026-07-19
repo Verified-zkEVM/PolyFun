@@ -42,8 +42,9 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   -> PFunctor/Resumption
 Logic/HEq + PFunctor/{M, Lens/Basic} -> PFunctor/M/Vertex
 PFunctor/Display/Basic
-  -> PFunctor/Display/{Chart, Indexed, Free}
-  -> PFunctor/Display/Handler
+  -> PFunctor/Display/{Chart, Coalgebra, Indexed, Free}
+PFunctor/{Handler, Free/Basic} -> PFunctor/Handler/Free
+PFunctor/{Display/Free, Handler/Free} -> PFunctor/Display/Handler
 PFunctor/Free/Basic
   -> PFunctor/Free/Displayed
   -> PFunctor/Free/{Path, Displayed/Decoration}
@@ -81,6 +82,9 @@ PFunctor/{Cofree/Universal, Dynamical/Trajectory}
   -> PFunctor/Dynamical/CofreeMate
 PFunctor/{Cofree/FiniteProjection, Dynamical/CofreeMate, Dynamical/RunN}
   -> PFunctor/Dynamical/CofreeMate/FiniteProjection
+PFunctor/Display/Coalgebra + PFunctor/Dynamical/Responder
+  -> PFunctor/Dynamical/Responder/Display
+  -> PFunctor/Dynamical/Responder/Reindex
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
    for RunN and IOMachine, PFunctor/InternalHom for Responder, and
