@@ -148,6 +148,17 @@ theorem transportRunEvidence_injective {E : Type uV}
   cases h
   exact Function.injective_id
 
+/-- Transported run evidence is heterogeneously equal to the original
+evidence.  This is the cast-free elimination rule used when comparing
+displayed executions whose ordinary result pairs are propositionally equal. -/
+theorem transportRunEvidence_heq {E : Type uV}
+    (F : E → Type uE) (I : State → Type uF)
+    {x y : E × State} (h : x = y)
+    (evidence : F x.1 × I x.2) :
+    transportRunEvidence F I h evidence ≍ evidence := by
+  cases h
+  rfl
+
 /-- Reindex a responder contravariantly along a free handler. -/
 def reindex (f : Handler (FreeM Q) P) (R : Responder State Q) :
     Responder State P :=

@@ -19,6 +19,7 @@ import PolyFun.IPFunctor.Free.Basic
 import PolyFun.IPFunctor.Free.Family
 import PolyFun.IPFunctor.Free.Indexed
 import PolyFun.IPFunctor.Lens.Basic
+import PolyFun.IPFunctor.M
 import PolyFun.IPFunctor.Notation
 import PolyFun.IPFunctor.Notation.Deterministic
 import PolyFun.IPFunctor.Notation.Indexed
@@ -129,6 +130,7 @@ import PolyFun.PFunctor.Display.Free
 import PolyFun.PFunctor.Display.Handler
 import PolyFun.PFunctor.Display.Handler.Sigma
 import PolyFun.PFunctor.Display.Indexed
+import PolyFun.PFunctor.Display.M
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Bisimulation
@@ -140,6 +142,7 @@ import PolyFun.PFunctor.Dynamical.Game
 import PolyFun.PFunctor.Dynamical.IOMachine
 import PolyFun.PFunctor.Dynamical.Refinement
 import PolyFun.PFunctor.Dynamical.Responder
+import PolyFun.PFunctor.Dynamical.Responder.Behavior
 import PolyFun.PFunctor.Dynamical.Responder.Display
 import PolyFun.PFunctor.Dynamical.Responder.Reindex
 import PolyFun.PFunctor.Dynamical.Run
