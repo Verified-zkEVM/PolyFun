@@ -42,9 +42,8 @@ lake exe cache get
 lake build
 ```
 
-Requires the toolchain pinned in [`lean-toolchain`](lean-toolchain) and
-[`mathlib v4.29.0`](https://github.com/leanprover-community/mathlib4) (only
-external dependency).
+Requires the toolchain pinned in [`lean-toolchain`](lean-toolchain), along with
+[`mathlib v4.32.0`](https://github.com/leanprover-community/mathlib4) and [`cslib v4.32.0`](https://github.com/leanprover/cslib).
 
 ## Documentation
 
