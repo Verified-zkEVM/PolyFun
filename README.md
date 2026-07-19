@@ -43,7 +43,7 @@ lake build
 ```
 
 Requires the toolchain pinned in [`lean-toolchain`](lean-toolchain), along with
-[`mathlib v4.31.0`](https://github.com/leanprover-community/mathlib4) and [`cslib v4.31.0`](https://github.com/leanprover/cslib).
+[`mathlib v4.32.0`](https://github.com/leanprover-community/mathlib4) and [`cslib v4.32.0`](https://github.com/leanprover/cslib).
 
 ## Documentation
 
