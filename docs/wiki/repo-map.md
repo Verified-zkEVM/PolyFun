@@ -108,6 +108,11 @@ PFunctor/Display/Coalgebra + PFunctor/Dynamical/Responder
   -> PFunctor/Dynamical/Responder/Display
   -> PFunctor/Dynamical/Responder/Reindex
   -> PFunctor/Dynamical/Responder/Behavior
+PFunctor/Dynamical/Simulation
+  -> PFunctor/Dynamical/Responder/Behavior
+  -> PFunctor/Dynamical/Responder/VerifiedPresentation
+PFunctor/{Display/Lens, Dynamical/Responder/VerifiedPresentation}
+  -> PFunctor/Dynamical/Responder/Lens
 PFunctor/{Display/Category, PatternRunsOnMatter/Applications,
   Dynamical/Responder/Behavior} -> PFunctor/PatternRunsOnMatter/Display
 
