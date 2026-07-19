@@ -136,6 +136,11 @@ PFunctor/Dynamical/Responder/{VerifiedPresentation, Parallel/Behavior}
 PFunctor/{Free/Parallel, Dynamical/Responder/Lens,
   Dynamical/Responder/Parallel/Behavior}
   -> PFunctor/Dynamical/Responder/Parallel/Coherence
+PFunctor/{Display/Parallel/Lens,
+  Dynamical/Responder/Parallel/Coherence,
+  Dynamical/Responder/Parallel/VerifiedPresentation}
+  -> PFunctor/Dynamical/Responder/Parallel/VerifiedAssociativity
+  -> PFunctor/Dynamical/Responder/Parallel/VerifiedCoherence
 PFunctor/{Display/Category, PatternRunsOnMatter/Applications,
   Dynamical/Responder/Behavior} -> PFunctor/PatternRunsOnMatter/Display
 

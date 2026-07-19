@@ -157,6 +157,8 @@ import PolyFun.PFunctor.Dynamical.Responder.Parallel.Behavior
 import PolyFun.PFunctor.Dynamical.Responder.Parallel.Coherence
 import PolyFun.PFunctor.Dynamical.Responder.Parallel.Compatibility
 import PolyFun.PFunctor.Dynamical.Responder.Parallel.Display
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedAssociativity
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedCoherence
 import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedPresentation
 import PolyFun.PFunctor.Dynamical.Responder.Reindex
 import PolyFun.PFunctor.Dynamical.Responder.VerifiedPresentation
