@@ -103,6 +103,46 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/ITree/Unfold.lean`](../../PolyFun/ITree/Unfold.lean) | `DynSystem.toITree`: unfold a dynamical system into an all-query interaction tree; `M.toITree` embeds behaviour trees. |
 | [`PolyFunTest/PFunctor/Dynamical/Examples.lean`](../../PolyFunTest/PFunctor/Dynamical/Examples.lean) | Worked examples / regression tests (counter, parity automaton, mode-dependent `gate`, feedback / stream behaviour, the `univ`-system `toggle`, generic runs, `choiceProd`, behaviour / ITree unfolding). |
 
+### Displays over a polynomial
+
+`PFunctor.Display P` is local polynomial data over one base polynomial:
+
+```text
+position : (a : P.A) → Type
+direction : (a : P.A) → position a → P.B a → Type
+```
+
+It is intentionally distinct from the older `FreeM.Displayed` namespace:
+
+| Layer | Meaning | Generality |
+|------|---------|------------|
+| `PFunctor.Display P` | One-step displayed positions and directions over `P` | Polynomial and `Type`-valued |
+| `FreeM.Displayed.Shape P E` | Higher-order recipe assigning leaf and node fibers | Arbitrary `Sort`-valued node operation; need not be functorial |
+| `FreeM.Displayed D t` | Evaluation of one shape over a concrete free tree `t` | A fiber, not new one-step structure |
+| `FreeM.Displayed.Over R t d` | A second fiber over existing displayed data `d` | Depends on both the tree and first-layer inhabitant |
+
+`Display.toDisplayedShape` embeds a display into the generic shape layer. Its
+node operation is exactly the polynomial action
+`X ↦ Σ c, ∀ b, direction a c b → X b`; this restriction is what supports
+`Display.bind`, displayed handlers, and displayed Kleisli composition.
+
+A display also has two complementary structural readings. `Display.total`
+packages its total positions and directions and `Display.forget` is a chart
+back to `P`; conversely, `Display.ofChart` takes the literal fibers of any
+chart into `P`, at the cost of equality witnesses and transports. Meanwhile
+`Display.incidence` and `Display.action` are `IPFunctor`s. An arbitrary
+`IPFunctor I J` fixes unrelated input/output index types, while a display
+uniformly derives those indexed actions from one base polynomial as its
+carrier varies.
+
+| File | Purpose |
+|------|---------|
+| [`PolyFun/PFunctor/Display/Basic.lean`](../../PolyFun/PFunctor/Display/Basic.lean) | Core display, object action, predicate contracts, and coproducts. |
+| [`PolyFun/PFunctor/Display/Chart.lean`](../../PolyFun/PFunctor/Display/Chart.lean) | Total-polynomial chart and chart-fiber normalization. |
+| [`PolyFun/PFunctor/Display/Indexed.lean`](../../PolyFun/PFunctor/Display/Indexed.lean) | Incidence/action `IPFunctor`s and object-action equivalence. |
+| [`PolyFun/PFunctor/Display/Free.lean`](../../PolyFun/PFunctor/Display/Free.lean) | Embedding into `Displayed.Shape` and dependent substitution. |
+| [`PolyFun/PFunctor/Display/Handler.lean`](../../PolyFun/PFunctor/Display/Handler.lean) | Displayed handlers, free extension, and Kleisli composition. |
+
 ### Free monad `FreeM`
 
 `PFunctor.FreeM` is **re-exported from upstream cslib**

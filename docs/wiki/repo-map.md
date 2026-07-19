@@ -10,8 +10,8 @@ live in the dedicated pages [`pfunctor.md`](pfunctor.md),
 
 ```text
 PolyFun/
-  PFunctor/          polynomial functors, charts, lenses, equivalences,
-                     M-type / cofree, free monad and displayed-free
+  PFunctor/          polynomial functors, charts, lenses, displays,
+                     equivalences, M-type / cofree, free monad and displayed-free
   IPFunctor/         state-indexed polynomial functors and their free monads
                      (single-index FreeM, two-index FreeM₂ + IndexedMonad)
   ITree/             coinductive interaction trees, bisim/sim, handlers,
@@ -41,6 +41,9 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   -> PFunctor/{Cofree, Trace}
   -> PFunctor/Resumption
 Logic/HEq + PFunctor/{M, Lens/Basic} -> PFunctor/M/Vertex
+PFunctor/Display/Basic
+  -> PFunctor/Display/{Chart, Indexed, Free}
+  -> PFunctor/Display/Handler
 PFunctor/Free/Basic
   -> PFunctor/Free/Displayed
   -> PFunctor/Free/{Path, Displayed/Decoration}

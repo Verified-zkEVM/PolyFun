@@ -125,6 +125,17 @@ data over polynomial substrates.
 
 Used in: `PolyFun/Interaction/Basic/TypeTree.lean`.
 
+### Abe26 — Aberlé, *Compositional Program Verification with Polynomial Functors*
+
+Christian Aberlé.
+*Compositional Program Verification with Polynomial Functors*.
+arXiv:2604.01303, 2026.
+
+Dependent polynomials over a base polynomial, their free displayed extension,
+displayed handlers, and compositional verification applications.
+
+Used in: `PolyFun/PFunctor/Display/`.
+
 ### Spi12 — Spivak, *Functorial data migration*
 
 David I. Spivak.
