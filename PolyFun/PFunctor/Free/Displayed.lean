@@ -10,7 +10,7 @@ public import PolyFun.PFunctor.Free.Basic
 /-!
 # Displayed families over `PFunctor.FreeM`
 
-This file defines displayed-family shapes over the free monad of a polynomial
+This file defines displayed algebras over the free monad of a polynomial
 functor.
 
 For a polynomial/container `P`, a payload type `α`, and a tree
@@ -27,8 +27,9 @@ This is the common substrate behind several familiar structures:
   reinterpreted.
 
 Categorically, this is the displayed algebra generated over the initial
-`FreeM` algebra. A `Displayed.Section D` is the corresponding displayed
-catamorphism: it chooses data in the displayed fiber over every tree.
+`FreeM` algebra. A `Displayed.Section D` is a global dependent section: it
+chooses data in the displayed fiber over every tree. Constructor-local fold
+data produces such a section via `Displayed.Section.ofConstructors`.
 -/
 
 @[expose] public section
@@ -43,16 +44,16 @@ variable {P : PFunctor.{uA, uB}} {α : Type v}
 namespace Displayed
 
 /--
-A displayed-family shape over `FreeM P α`.
+A large algebra generating displayed fibers over `FreeM P α`.
 
 The `leaf` argument interprets terminal payloads. The `node` argument
 interprets a polynomial position `a : P.A`, given the already-generated
-displayed families for each child `b : P.B a`.
+displayed fibers for each child `b : P.B a`.
 
 Special cases include node decorations, branch paths, and compact observation
 views that suppress uninformative nodes.
 -/
-structure Shape (P : PFunctor.{uA, uB}) (α : Type v) where
+structure Algebra (P : PFunctor.{uA, uB}) (α : Type v) where
   /-- The fiber assigned to a terminal payload `x : α`. -/
   leaf : α → Sort w
   /-- The fiber assigned to a node at position `a`, given the fibers already chosen for
@@ -62,12 +63,12 @@ structure Shape (P : PFunctor.{uA, uB}) (α : Type v) where
 end Displayed
 
 /--
-Evaluate a displayed-family shape over a concrete `FreeM` tree.
+Evaluate a displayed algebra over a concrete `FreeM` tree.
 
 This generates the displayed fiber at every tree by recursion on the free
 polynomial structure.
 -/
-def Displayed (D : Displayed.Shape P α) :
+def Displayed (D : Displayed.Algebra P α) :
     FreeM P α → Sort w
   | .pure x => D.leaf x
   | .liftBind a rest => D.node a (fun b => Displayed D (rest b))
@@ -75,43 +76,44 @@ def Displayed (D : Displayed.Shape P α) :
 namespace Displayed
 
 @[simp]
-theorem pure_eq (D : Shape P α) (x : α) :
+theorem pure_eq (D : Algebra P α) (x : α) :
     Displayed D (pure x) = D.leaf x :=
   rfl
 
 @[simp]
-theorem lift_bind_eq (D : Shape P α) (a : P.A) (rest : P.B a → FreeM P α) :
+theorem liftBind_eq (D : Algebra P α) (a : P.A) (rest : P.B a → FreeM P α) :
     Displayed D ((FreeM.lift a).bind rest) =
       D.node a (fun b => Displayed D (rest b)) :=
   rfl
 
-variable {D : Shape.{uA, uB, v, w} P α}
+variable {D : Displayed.Algebra.{uA, uB, v, w} P α}
 
 /--
-A displayed family over an existing displayed family.
+A dependent displayed algebra over an existing displayed algebra.
 
-If `D` assigns a fiber to each `FreeM` tree, then an `OverShape D` assigns a
+If `D` assigns a fiber to each `FreeM` tree, then an `Over.Algebra D` assigns a
 second-layer fiber over each inhabitant of `Displayed D s`. This is the
 generic form of a dependent decoration over a base decoration.
 -/
-structure OverShape (D : Shape.{uA, uB, v, w} P α) where
+structure Over.Algebra
+    (D : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w} P α) where
   /-- The second-layer fiber over a base leaf fiber at payload `x : α`. -/
   leaf : (x : α) → D.leaf x → Sort w₂
   /-- The second-layer fiber over a base node fiber at position `a`, given the second-layer
   fibers already chosen over each child. -/
   node :
     (a : P.A) →
-    (child : (b : P.B a) → Sort w) →
-    ((b : P.B a) → child b → Sort w₂) →
-    D.node a child → Sort w₂
+    (children : (b : P.B a) → Sort w) →
+    ((b : P.B a) → children b → Sort w₂) →
+    D.node a children → Sort w₂
 
 /--
-Evaluate a displayed-over shape over concrete displayed data.
+Evaluate a dependent displayed algebra over concrete displayed data.
 
 This is the dependent analogue of `Displayed`: the base displayed data chooses
 which second-layer fiber is available at every node.
 -/
-def Over (E : OverShape D) :
+def Over (E : Over.Algebra D) :
     (s : FreeM P α) → Displayed D s → Sort w₂
   | .pure x, d => E.leaf x d
   | .liftBind a rest, d =>
@@ -121,26 +123,30 @@ def Over (E : OverShape D) :
 namespace Over
 
 @[simp]
-theorem pure_eq (E : OverShape D) (x : α) (d : D.leaf x) :
-    Over E (pure x) d = E.leaf x d :=
+theorem pure_eq
+    (E : _root_.PFunctor.FreeM.Displayed.Over.Algebra D)
+    (x : α) (d : D.leaf x) :
+    _root_.PFunctor.FreeM.Displayed.Over E (pure x) d = E.leaf x d :=
   rfl
 
 @[simp]
-theorem lift_bind_eq (E : OverShape D) (a : P.A) (rest : P.B a → FreeM P α)
+theorem liftBind_eq
+    (E : _root_.PFunctor.FreeM.Displayed.Over.Algebra D)
+    (a : P.A) (rest : P.B a → FreeM P α)
     (d : D.node a (fun b => Displayed D (rest b))) :
-    Over E ((FreeM.lift a).bind rest) d =
+    _root_.PFunctor.FreeM.Displayed.Over E ((FreeM.lift a).bind rest) d =
       E.node a (fun b => Displayed D (rest b))
-        (fun b d => Over E (rest b) d) d :=
+        (fun b d => _root_.PFunctor.FreeM.Displayed.Over E (rest b) d) d :=
   rfl
 
 end Over
 
 /-- The total space of a displayed family together with one displayed-over layer. -/
-abbrev Total (E : OverShape D) (s : FreeM P α) :=
-  PSigma fun d : Displayed D s => Over E s d
+abbrev Over.Total (E : Over.Algebra D) (s : FreeM P α) :=
+  PSigma fun d : Displayed D s => _root_.PFunctor.FreeM.Displayed.Over E s d
 
 /-- A section chooses displayed data over every `FreeM` tree. -/
-abbrev Section (D : Shape P α) :=
+abbrev Section (D : _root_.PFunctor.FreeM.Displayed.Algebra P α) :=
   (s : FreeM P α) → Displayed D s
 
 namespace Section
@@ -151,54 +157,54 @@ Construct a section from constructor-local data.
 This is the displayed-family specialization of the dependent recursor for
 `FreeM`.
 -/
-def ofConstruct
-    (leafSec : (x : α) → D.leaf x)
-    (nodeSec :
+def ofConstructors
+    (onLeaf : (x : α) → D.leaf x)
+    (onNode :
       (a : P.A) →
-      (child : (b : P.B a) → Sort w) →
-      ((b : P.B a) → child b) →
-      D.node a child) :
+      (children : (b : P.B a) → Sort w) →
+      ((b : P.B a) → children b) →
+      D.node a children) :
     Section D
-  | .pure x => leafSec x
-  | .liftBind a rest => nodeSec a _ (fun b => ofConstruct leafSec nodeSec (rest b))
+  | .pure x => onLeaf x
+  | .liftBind a rest => onNode a _ (fun b => ofConstructors onLeaf onNode (rest b))
 
 @[simp]
-theorem ofConstruct_pure
-    (leafSec : (x : α) → D.leaf x)
-    (nodeSec :
+theorem ofConstructors_pure
+    (onLeaf : (x : α) → D.leaf x)
+    (onNode :
       (a : P.A) →
-      (child : (b : P.B a) → Sort w) →
-      ((b : P.B a) → child b) →
-      D.node a child)
+      (children : (b : P.B a) → Sort w) →
+      ((b : P.B a) → children b) →
+      D.node a children)
     (x : α) :
-    ofConstruct leafSec nodeSec (pure x) = leafSec x :=
+    ofConstructors onLeaf onNode (pure x) = onLeaf x :=
   rfl
 
 @[simp]
-theorem ofConstruct_lift_bind
-    (leafSec : (x : α) → D.leaf x)
-    (nodeSec :
+theorem ofConstructors_liftBind
+    (onLeaf : (x : α) → D.leaf x)
+    (onNode :
       (a : P.A) →
-      (child : (b : P.B a) → Sort w) →
-      ((b : P.B a) → child b) →
-      D.node a child)
+      (children : (b : P.B a) → Sort w) →
+      ((b : P.B a) → children b) →
+      D.node a children)
     (a : P.A) (rest : P.B a → FreeM P α) :
-    ofConstruct leafSec nodeSec ((FreeM.lift a).bind rest) =
-      nodeSec a (fun b => Displayed D (rest b))
-        (fun b => ofConstruct leafSec nodeSec (rest b)) :=
+    ofConstructors onLeaf onNode ((FreeM.lift a).bind rest) =
+      onNode a (fun b => Displayed D (rest b))
+        (fun b => ofConstructors onLeaf onNode (rest b)) :=
   rfl
 
 end Section
 
 variable
-    {E : Shape.{uA, uB, v, w₂} P α}
-    {F : Shape.{uA, uB, v, w₃} P α}
-    {G : Shape.{uA, uB, v, w₄} P α}
+    {E : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w₂} P α}
+    {F : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w₃} P α}
+    {G : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w₄} P α}
 
 /-- A morphism between two displayed families over the same `FreeM` tree. -/
 structure Hom
-    (D : Shape.{uA, uB, v, w} P α)
-    (E : Shape.{uA, uB, v, w₂} P α) where
+    (D : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w} P α)
+    (E : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w₂} P α) where
   /-- The fiberwise action, mapping the `D`-fiber to the `E`-fiber over each tree `s`. -/
   toFun : (s : FreeM P α) → Displayed D s → Displayed E s
 
@@ -257,61 +263,62 @@ theorem comp_assoc (h : Hom F G) (g : Hom E F) (f : Hom D E) :
 end Hom
 
 /--
-A constructor-local morphism between displayed-family shapes.
+A constructor-local map between displayed algebras.
 
-The `mapChild` field maps one node layer, given already-mapped recursive child
-data.
+The `mapNode` field maps one node layer, given already-mapped recursive child
+data. This is transformation data sufficient to recursively produce a
+tree-indexed `Displayed.Hom` via `LocalMap.toHom`; it is intentionally not
+called a homomorphism because an arbitrary, potentially negative `Algebra.node`
+need not admit identity or composition at this local level.
 -/
-structure LocalHom
-    (D : Shape.{uA, uB, v, w} P α)
-    (E : Shape.{uA, uB, v, w₂} P α) where
+structure LocalMap
+    (D : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w} P α)
+    (E : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w₂} P α) where
   /-- The action on leaf fibers, mapping `D.leaf x` to `E.leaf x`. -/
   mapLeaf : (x : α) → D.leaf x → E.leaf x
   /-- The action on one node layer, mapping `D.node` to `E.node` given the already-mapped
   child data. -/
-  mapChild :
+  mapNode :
     (a : P.A) →
-    (childD : (b : P.B a) → Sort w) →
-    (childE : (b : P.B a) → Sort w₂) →
-    ((b : P.B a) → childD b → childE b) →
-    D.node a childD → E.node a childE
+    (sourceChildren : (b : P.B a) → Sort w) →
+    (targetChildren : (b : P.B a) → Sort w₂) →
+    ((b : P.B a) → sourceChildren b → targetChildren b) →
+    D.node a sourceChildren → E.node a targetChildren
 
-namespace LocalHom
+namespace LocalMap
 
-/-- The recursive function underlying `LocalHom.toHom`. -/
-def toHomFun (η : LocalHom D E) :
+/-- The recursive function underlying `LocalMap.toHom`. -/
+def toHomFun (η : LocalMap D E) :
     (s : FreeM P α) → Displayed D s → Displayed E s
   | .pure x, d => η.mapLeaf x d
   | .liftBind a rest, d =>
-      η.mapChild a _ _ (fun b => toHomFun η (rest b)) d
+      η.mapNode a _ _ (fun b => toHomFun η (rest b)) d
 
-/-- Interpret a constructor-local morphism as a tree-indexed displayed morphism. -/
-def toHom (η : LocalHom D E) : Hom D E where
+/-- Interpret a constructor-local map as a tree-indexed displayed morphism. -/
+def toHom (η : LocalMap D E) : Hom D E where
   toFun := toHomFun η
 
 @[simp]
-theorem toHom_pure (η : LocalHom D E) (x : α) (d : D.leaf x) :
+theorem toHom_pure (η : LocalMap D E) (x : α) (d : D.leaf x) :
     η.toHom (pure x) d = η.mapLeaf x d :=
   rfl
 
 @[simp]
-theorem toHom_lift_bind (η : LocalHom D E)
+theorem toHom_liftBind (η : LocalMap D E)
     (a : P.A) (rest : P.B a → FreeM P α)
     (d : D.node a (fun b => Displayed D (rest b))) :
     η.toHom ((FreeM.lift a).bind rest) d =
-      η.mapChild a (fun b => Displayed D (rest b))
+      η.mapNode a (fun b => Displayed D (rest b))
         (fun b => Displayed E (rest b))
         (fun b => η.toHom (rest b)) d :=
   rfl
 
-end LocalHom
-
-namespace Over
+end LocalMap
 
 variable
-    {R : OverShape.{uA, uB, v, w, w₅} D}
-    {S : OverShape.{uA, uB, v, w₂, w₆} E}
-    {T : OverShape.{uA, uB, v, w₃, w₄} F}
+    {R : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w, w₅} D}
+    {S : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w₂, w₆} E}
+    {T : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w₃, w₄} F}
 
 /--
 A morphism between displayed-over families, lying over a morphism between their
@@ -320,27 +327,34 @@ base displayed families.
 When the base morphism is `Displayed.Hom.id`, this is a fiberwise morphism over
 the same displayed data.
 -/
-structure Hom (η : Displayed.Hom D E) (R : OverShape D) (S : OverShape E) where
+structure Over.Hom
+    {D : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w} P α}
+    {E : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w₂} P α}
+    (η : Displayed.Hom D E)
+    (R : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w, w₅} D)
+    (S : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w₂, w₆} E) where
   /-- The fiberwise action on second-layer fibers, sending the `R`-fiber over `d` to the
   `S`-fiber over `η s d`. -/
   toFun :
     (s : FreeM P α) →
     (d : Displayed D s) →
-    Over R s d →
-    Over S s (η s d)
+    _root_.PFunctor.FreeM.Displayed.Over R s d →
+    _root_.PFunctor.FreeM.Displayed.Over S s (η s d)
 
-instance {η : Displayed.Hom D E} : CoeFun (Hom η R S)
+namespace Over
+
+instance {η : Displayed.Hom D E} : CoeFun (Displayed.Over.Hom η R S)
     (fun _ =>
       (s : FreeM P α) →
       (d : Displayed D s) →
-      Over R s d →
-      Over S s (η s d)) where
+      _root_.PFunctor.FreeM.Displayed.Over R s d →
+      _root_.PFunctor.FreeM.Displayed.Over S s (η s d)) where
   coe f := f.toFun
 
 namespace Hom
 
 @[ext]
-theorem ext {η : Displayed.Hom D E} (f g : Hom η R S)
+theorem ext {η : Displayed.Hom D E} (f g : Displayed.Over.Hom η R S)
     (h : ∀ s d r, f s d r = g s d r) : f = g := by
   cases f
   cases g
@@ -349,43 +363,47 @@ theorem ext {η : Displayed.Hom D E} (f g : Hom η R S)
   exact h s d r
 
 /-- Identity morphism of a displayed-over family. -/
-protected def id (R : OverShape D) : Hom Displayed.Hom.id R R where
+protected def id
+    (R : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w, w₅} D) :
+    Displayed.Over.Hom (Displayed.Hom.id (D := D)) R R where
   toFun := fun _ _ r => r
 
 /-- Composition of displayed-over morphisms over composed base morphisms. -/
 def comp {η : Displayed.Hom D E} {θ : Displayed.Hom E F}
-    (g : Hom θ S T) (f : Hom η R S) :
-    Hom (Displayed.Hom.comp θ η) R T where
+    (g : Displayed.Over.Hom θ S T) (f : Displayed.Over.Hom η R S) :
+    Displayed.Over.Hom (Displayed.Hom.comp θ η) R T where
   toFun := fun s d r => g s (η s d) (f s d r)
 
 @[simp]
-theorem id_apply (s : FreeM P α) (d : Displayed D s) (r : Over R s d) :
-    Hom.id R s d r = r :=
+theorem id_apply (s : FreeM P α) (d : Displayed D s)
+    (r : _root_.PFunctor.FreeM.Displayed.Over R s d) :
+    Displayed.Over.Hom.id R s d r = r :=
   rfl
 
 @[simp]
 theorem comp_apply {η : Displayed.Hom D E} {θ : Displayed.Hom E F}
-    (g : Hom θ S T) (f : Hom η R S)
-    (s : FreeM P α) (d : Displayed D s) (r : Over R s d) :
+    (g : Displayed.Over.Hom θ S T) (f : Displayed.Over.Hom η R S)
+    (s : FreeM P α) (d : Displayed D s) (r : _root_.PFunctor.FreeM.Displayed.Over R s d) :
     comp g f s d r = g s (η s d) (f s d r) :=
   rfl
 
 @[simp]
-theorem comp_id {η : Displayed.Hom D E} (f : Hom η R S) :
-    comp (Hom.id S) f = f := by
+theorem comp_id {η : Displayed.Hom D E} (f : Displayed.Over.Hom η R S) :
+    comp (Displayed.Over.Hom.id S) f = f := by
   ext s d r
   rfl
 
 @[simp]
-theorem id_comp {η : Displayed.Hom D E} (f : Hom η R S) :
-    comp f (Hom.id R) = f := by
+theorem id_comp {η : Displayed.Hom D E} (f : Displayed.Over.Hom η R S) :
+    comp f (Displayed.Over.Hom.id R) = f := by
   ext s d r
   rfl
 
 theorem comp_assoc {η : Displayed.Hom D E} {θ : Displayed.Hom E F}
     {ι : Displayed.Hom F G}
-    {U : OverShape.{uA, uB, v, w₄, w₅} G}
-    (h : Hom ι T U) (g : Hom θ S T) (f : Hom η R S) :
+    {U : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w₄, w₅} G}
+    (h : Displayed.Over.Hom ι T U) (g : Displayed.Over.Hom θ S T)
+    (f : Displayed.Over.Hom η R S) :
     comp h (comp g f) = comp (comp h g) f := by
   ext s d r
   rfl
@@ -393,109 +411,115 @@ theorem comp_assoc {η : Displayed.Hom D E} {θ : Displayed.Hom E F}
 end Hom
 
 /-- Map displayed-over data by a displayed-over morphism. -/
-def map {η : Displayed.Hom D E} (f : Hom η R S) :
+def map {η : Displayed.Hom D E} (f : Displayed.Over.Hom η R S) :
     (s : FreeM P α) →
     (d : Displayed D s) →
-    Over R s d →
-    Over S s (η s d)
+    _root_.PFunctor.FreeM.Displayed.Over R s d →
+    _root_.PFunctor.FreeM.Displayed.Over S s (η s d)
   | s, d, r => f s d r
 
 @[simp]
-theorem map_apply {η : Displayed.Hom D E} (f : Hom η R S)
-    (s : FreeM P α) (d : Displayed D s) (r : Over R s d) :
+theorem map_apply {η : Displayed.Hom D E} (f : Displayed.Over.Hom η R S)
+    (s : FreeM P α) (d : Displayed D s) (r : _root_.PFunctor.FreeM.Displayed.Over R s d) :
     map f s d r = f s d r :=
   rfl
 
 @[simp]
-theorem map_id (s : FreeM P α) (d : Displayed D s) (r : Over R s d) :
-    map (Hom.id R) s d r = r :=
+theorem map_id (s : FreeM P α) (d : Displayed D s)
+    (r : _root_.PFunctor.FreeM.Displayed.Over R s d) :
+    map (Displayed.Over.Hom.id R) s d r = r :=
   rfl
 
 @[simp]
 theorem map_comp {η : Displayed.Hom D E} {θ : Displayed.Hom E F}
-    (g : Hom θ S T) (f : Hom η R S)
-    (s : FreeM P α) (d : Displayed D s) (r : Over R s d) :
-    map (Hom.comp g f) s d r = map g s (η s d) (map f s d r) :=
+    (g : Displayed.Over.Hom θ S T) (f : Displayed.Over.Hom η R S)
+    (s : FreeM P α) (d : Displayed D s) (r : _root_.PFunctor.FreeM.Displayed.Over R s d) :
+    map (Displayed.Over.Hom.comp g f) s d r = map g s (η s d) (map f s d r) :=
   rfl
 
 /--
-A constructor-local morphism between displayed-over families over the same base
-displayed family.
+A constructor-local fiber map between dependent displayed algebras over the
+same base displayed algebra.
 
-This is the local recursion principle for maps that change only the over-layer
-data and keep the base displayed data fixed.
+This is transformation data for recursively mapping only the over-layer while
+keeping the base displayed data fixed. `FiberLocalMap.toHom` interprets it as a
+genuine tree-indexed `Displayed.Over.Hom`.
 -/
-structure FiberLocalHom
-    (R : OverShape.{uA, uB, v, w, w₅} D)
-    (S : OverShape.{uA, uB, v, w, w₆} D) where
+structure FiberLocalMap
+    (R : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w, w₅} D)
+    (S : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w, w₆} D) where
   /-- The action on leaf fibers, mapping `R.leaf` to `S.leaf` over the same base leaf data. -/
   mapLeaf : (x : α) → (d : D.leaf x) → R.leaf x d → S.leaf x d
   /-- The action on one node layer, mapping `R.node` to `S.node` over the same base node data,
   given the already-mapped child data. -/
-  mapChild :
+  mapNode :
     (a : P.A) →
-    (child : (b : P.B a) → Sort w) →
-    (overR : (b : P.B a) → child b → Sort w₅) →
-    (overS : (b : P.B a) → child b → Sort w₆) →
-    ((b : P.B a) → (d : child b) → overR b d → overS b d) →
-    (d : D.node a child) →
-    R.node a child overR d →
-    S.node a child overS d
+    (children : (b : P.B a) → Sort w) →
+    (sourceOver : (b : P.B a) → children b → Sort w₅) →
+    (targetOver : (b : P.B a) → children b → Sort w₆) →
+    ((b : P.B a) → (d : children b) → sourceOver b d → targetOver b d) →
+    (d : D.node a children) →
+    R.node a children sourceOver d →
+    S.node a children targetOver d
 
-namespace FiberLocalHom
+namespace FiberLocalMap
 
 variable
-    {R' : OverShape.{uA, uB, v, w, w₅} D}
-    {S' : OverShape.{uA, uB, v, w, w₆} D}
+    {R' : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w, w₅} D}
+    {S' : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w, w₆} D}
 
-/-- The recursive function underlying `FiberLocalHom.toHom`. -/
-def toHomFun (η : FiberLocalHom R' S') :
+/-- The recursive function underlying `FiberLocalMap.toHom`. -/
+def toHomFun (η : FiberLocalMap R' S') :
     (s : FreeM P α) →
     (d : Displayed D s) →
-    Over R' s d →
-    Over S' s d
+    _root_.PFunctor.FreeM.Displayed.Over R' s d →
+    _root_.PFunctor.FreeM.Displayed.Over S' s d
   | .pure x, d, r => η.mapLeaf x d r
   | .liftBind a rest, d, r =>
-      η.mapChild a (fun b => Displayed D (rest b))
-        (fun b d => Over R' (rest b) d)
-        (fun b d => Over S' (rest b) d)
+      η.mapNode a (fun b => Displayed D (rest b))
+        (fun b d => _root_.PFunctor.FreeM.Displayed.Over R' (rest b) d)
+        (fun b d => _root_.PFunctor.FreeM.Displayed.Over S' (rest b) d)
         (fun b d => toHomFun η (rest b) d) d r
 
-/-- Interpret a constructor-local fiber morphism as a displayed-over morphism. -/
-def toHom (η : FiberLocalHom R' S') : Hom Displayed.Hom.id R' S' where
+/-- Interpret a constructor-local fiber map as a displayed-over morphism. -/
+def toHom (η : FiberLocalMap R' S') :
+    Displayed.Over.Hom (Displayed.Hom.id (D := D)) R' S' where
   toFun := toHomFun η
 
 @[simp]
-theorem toHom_pure (η : FiberLocalHom R' S') (x : α)
+theorem toHom_pure (η : FiberLocalMap R' S') (x : α)
     (d : D.leaf x) (r : R'.leaf x d) :
     η.toHom (pure x) d r = η.mapLeaf x d r :=
   rfl
 
 @[simp]
-theorem toHom_lift_bind (η : FiberLocalHom R' S')
+theorem toHom_liftBind (η : FiberLocalMap R' S')
     (a : P.A) (rest : P.B a → FreeM P α)
     (d : D.node a (fun b => Displayed D (rest b)))
     (r : R'.node a (fun b => Displayed D (rest b))
-      (fun b d => Over R' (rest b) d) d) :
+      (fun b d => _root_.PFunctor.FreeM.Displayed.Over R' (rest b) d) d) :
     η.toHom ((FreeM.lift a).bind rest) d r =
-      η.mapChild a (fun b => Displayed D (rest b))
-        (fun b d => Over R' (rest b) d)
-        (fun b d => Over S' (rest b) d)
+      η.mapNode a (fun b => Displayed D (rest b))
+        (fun b d => _root_.PFunctor.FreeM.Displayed.Over R' (rest b) d)
+        (fun b d => _root_.PFunctor.FreeM.Displayed.Over S' (rest b) d)
         (fun b d => η.toHom (rest b) d) d r :=
   rfl
 
-end FiberLocalHom
+end FiberLocalMap
 
 /--
-A constructor-local morphism between displayed-over families, lying over a
-constructor-local morphism between their base displayed families.
+A constructor-local map between dependent displayed algebras, lying over a
+constructor-local map between their base displayed algebras.
+
+Its interpretation by `Over.LocalMap.toHom` is a genuine tree-indexed
+`Displayed.Over.Hom` over the interpreted base map.
 -/
-structure LocalHom
-    {D : Shape.{uA, uB, v, w} P α}
-    {E : Shape.{uA, uB, v, w₂} P α}
-    (η : Displayed.LocalHom D E)
-    (R : OverShape.{uA, uB, v, w, w₅} D)
-    (S : OverShape.{uA, uB, v, w₂, w₆} E) where
+structure LocalMap
+    {D : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w} P α}
+    {E : _root_.PFunctor.FreeM.Displayed.Algebra.{uA, uB, v, w₂} P α}
+    (η : Displayed.LocalMap D E)
+    (R : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w, w₅} D)
+    (S : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w₂, w₆} E) where
   /-- The action on leaf fibers, mapping `R.leaf` to `S.leaf` over the base leaf morphism
   `η.mapLeaf`. -/
   mapLeaf :
@@ -504,67 +528,69 @@ structure LocalHom
     R.leaf x d →
     S.leaf x (η.mapLeaf x d)
   /-- The action on one node layer, mapping `R.node` to `S.node` over the base node morphism
-  `η.mapChild`, given the already-mapped child data. -/
-  mapChild :
+  `η.mapNode`, given the already-mapped child data. -/
+  mapNode :
     (a : P.A) →
-    (childD : (b : P.B a) → Sort w) →
-    (childE : (b : P.B a) → Sort w₂) →
-    (baseChild : (b : P.B a) → childD b → childE b) →
-    (overR : (b : P.B a) → childD b → Sort w₅) →
-    (overS : (b : P.B a) → childE b → Sort w₆) →
-    ((b : P.B a) → (d : childD b) → overR b d → overS b (baseChild b d)) →
-    (d : D.node a childD) →
-    R.node a childD overR d →
-    S.node a childE overS (η.mapChild a childD childE baseChild d)
+    (sourceChildren : (b : P.B a) → Sort w) →
+    (targetChildren : (b : P.B a) → Sort w₂) →
+    (mapChild : (b : P.B a) → sourceChildren b → targetChildren b) →
+    (sourceOver : (b : P.B a) → sourceChildren b → Sort w₅) →
+    (targetOver : (b : P.B a) → targetChildren b → Sort w₆) →
+    ((b : P.B a) → (d : sourceChildren b) →
+      sourceOver b d → targetOver b (mapChild b d)) →
+    (d : D.node a sourceChildren) →
+    R.node a sourceChildren sourceOver d →
+    S.node a targetChildren targetOver
+      (η.mapNode a sourceChildren targetChildren mapChild d)
 
-namespace LocalHom
+namespace LocalMap
 
-/-- The recursive function underlying `Over.LocalHom.toHom`. -/
+/-- The recursive function underlying `Over.LocalMap.toHom`. -/
 def toHomFun
-    {η : Displayed.LocalHom D E} (φ : LocalHom η R S) :
+    {η : Displayed.LocalMap D E} (φ : LocalMap η R S) :
     (s : FreeM P α) →
     (d : Displayed D s) →
-    Over R s d →
-    Over S s (η.toHom s d)
+    _root_.PFunctor.FreeM.Displayed.Over R s d →
+    _root_.PFunctor.FreeM.Displayed.Over S s (η.toHom s d)
   | .pure x, d, r => φ.mapLeaf x d r
   | .liftBind a rest, d, r =>
-      φ.mapChild a (fun b => Displayed D (rest b))
+      φ.mapNode a (fun b => Displayed D (rest b))
         (fun b => Displayed E (rest b))
         (fun b => η.toHom (rest b))
-        (fun b d => Over R (rest b) d)
-        (fun b d => Over S (rest b) d)
+        (fun b d => _root_.PFunctor.FreeM.Displayed.Over R (rest b) d)
+        (fun b d => _root_.PFunctor.FreeM.Displayed.Over S (rest b) d)
         (fun b d => toHomFun φ (rest b) d) d r
 
 /--
-Interpret a constructor-local over morphism as a displayed-over morphism over
+Interpret a constructor-local over map as a displayed-over morphism over
 the interpreted base morphism.
 -/
-def toHom {η : Displayed.LocalHom D E} (φ : LocalHom η R S) :
-    Hom η.toHom R S where
+def toHom {η : Displayed.LocalMap D E} (φ : LocalMap η R S) :
+    Displayed.Over.Hom η.toHom R S where
   toFun := toHomFun φ
 
 @[simp]
-theorem toHom_pure {η : Displayed.LocalHom D E} (φ : LocalHom η R S)
+theorem toHom_pure {η : Displayed.LocalMap D E} (φ : LocalMap η R S)
     (x : α) (d : D.leaf x) (r : R.leaf x d) :
     φ.toHom (pure x) d r = φ.mapLeaf x d r :=
   rfl
 
 @[simp]
-theorem toHom_lift_bind {η : Displayed.LocalHom D E} (φ : LocalHom η R S)
+theorem toHom_liftBind {η : Displayed.LocalMap D E} (φ : LocalMap η R S)
     (a : P.A) (rest : P.B a → FreeM P α)
     (d : D.node a (fun b => Displayed D (rest b)))
     (r : R.node a (fun b => Displayed D (rest b))
-      (fun b d => Over R (rest b) d) d) :
+      (fun b d => _root_.PFunctor.FreeM.Displayed.Over R (rest b) d) d) :
     φ.toHom ((FreeM.lift a).bind rest) d r =
-      φ.mapChild a (fun b => Displayed D (rest b))
+      φ.mapNode a (fun b => Displayed D (rest b))
         (fun b => Displayed E (rest b))
         (fun b => η.toHom (rest b))
-        (fun b d => Over R (rest b) d)
-        (fun b d => Over S (rest b) d)
+        (fun b d => _root_.PFunctor.FreeM.Displayed.Over R (rest b) d)
+        (fun b d => _root_.PFunctor.FreeM.Displayed.Over S (rest b) d)
         (fun b d => φ.toHom (rest b) d) d r :=
   rfl
 
-end LocalHom
+end LocalMap
 
 end Over
 

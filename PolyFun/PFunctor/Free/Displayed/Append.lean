@@ -118,9 +118,9 @@ theorem map_append {Γ : P.A → Type w₂}
         (fun path₁ => Decoration.Over.map η (s₂ path₁) (d₂ path₁) (r₂ path₁))
   | .pure _, _, _, _, _, _ => rfl
   | .liftBind a rest, s₂, ⟨γ, dRest⟩, d₂, ⟨fd, rRest⟩, r₂ => by
-      simp only [liftBind_eq, FreeM.append_lift_bind, Decoration.Over.append,
-        Decoration.Over.map, Decoration.Over.mapLocalHom,
-        Displayed.Over.FiberLocalHom.toHom_lift_bind]
+      simp only [FreeM.liftBind_eq, FreeM.append_liftBind, Decoration.Over.append,
+        Decoration.Over.map, Decoration.Over.fiberLocalMap,
+        Displayed.Over.FiberLocalMap.toHom_liftBind]
       congr 1; funext b
       exact map_append η (rest b) (fun path => s₂ ⟨b, path⟩)
         (dRest b) (fun path => d₂ ⟨b, path⟩) (rRest b)
@@ -139,8 +139,8 @@ theorem map_append {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
         (fun path₁ => Decoration.map f (s₂ path₁) (d₂ path₁))
   | .pure _, _, _, _ => rfl
   | .liftBind a rest, s₂, ⟨γ, dRest⟩, d₂ => by
-      simp only [liftBind_eq, FreeM.append_lift_bind, Decoration.append, Decoration.map,
-        Decoration.mapLocalHom, Displayed.LocalHom.toHom_lift_bind]
+      simp only [FreeM.liftBind_eq, FreeM.append_liftBind, Decoration.append, Decoration.map,
+        Decoration.localMap, Displayed.LocalMap.toHom_liftBind]
       congr 1; funext b
       exact map_append f (rest b) (fun path => s₂ ⟨b, path⟩)
         (dRest b) (fun path => d₂ ⟨b, path⟩)
