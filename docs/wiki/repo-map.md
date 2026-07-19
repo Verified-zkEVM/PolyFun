@@ -121,6 +121,16 @@ PFunctor/Dynamical/Simulation
   -> PFunctor/Dynamical/Responder/VerifiedPresentation
 PFunctor/{Display/Lens, Dynamical/Responder/VerifiedPresentation}
   -> PFunctor/Dynamical/Responder/Lens
+PFunctor/{Parallel, Dynamical/Responder}
+  -> PFunctor/Dynamical/Responder/Parallel
+PFunctor/{Display/Parallel, Dynamical/Responder/Display,
+  Dynamical/Responder/Parallel}
+  -> PFunctor/Dynamical/Responder/Parallel/Display
+PFunctor/{Dynamical/Responder/Behavior,
+  Dynamical/Responder/Parallel/Display}
+  -> PFunctor/Dynamical/Responder/Parallel/Behavior
+PFunctor/{Dynamical/Responder/Parallel/Behavior, Free/Parallel}
+  -> PFunctor/Dynamical/Responder/Parallel/Compatibility
 PFunctor/{Display/Category, PatternRunsOnMatter/Applications,
   Dynamical/Responder/Behavior} -> PFunctor/PatternRunsOnMatter/Display
 
