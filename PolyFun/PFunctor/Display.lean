@@ -14,12 +14,13 @@ public import PolyFun.PFunctor.Display.Free
 public import PolyFun.PFunctor.Display.Handler
 public import PolyFun.PFunctor.Display.Handler.Sigma
 public import PolyFun.PFunctor.Display.Indexed
+public import PolyFun.PFunctor.Display.Lens
 
 /-!
 # Polynomial displays
 
 This umbrella imports the intrinsic one-step display definition, displayed
 coalgebras, chart and indexed-polynomial comparisons, and free-tree
-substitution and displayed-handler API, including indexed coproducts of
-displayed handlers.
+substitution and displayed-handler API, including fiberwise lenses and indexed
+coproducts of displayed handlers.
 -/

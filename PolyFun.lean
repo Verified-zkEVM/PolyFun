@@ -133,6 +133,7 @@ import PolyFun.PFunctor.Display.Free
 import PolyFun.PFunctor.Display.Handler
 import PolyFun.PFunctor.Display.Handler.Sigma
 import PolyFun.PFunctor.Display.Indexed
+import PolyFun.PFunctor.Display.Lens
 import PolyFun.PFunctor.Display.M
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
