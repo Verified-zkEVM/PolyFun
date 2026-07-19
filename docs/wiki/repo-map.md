@@ -56,6 +56,7 @@ PFunctor/{Display/Lens, Display/Parallel, Free/Parallel}
   -> PFunctor/Display/Parallel/Lens
 PFunctor/{Display/Handler, Display/Parallel, Free/Parallel}
   -> PFunctor/Display/Parallel/Free
+PFunctor/{Display/Parallel/Free, Wiring} -> PFunctor/Wiring/Parallel
 PFunctor/{Display/Handler, Free/Universal} -> PFunctor/Display/Category
 PFunctor/Free/Basic
   -> PFunctor/Free/Displayed
@@ -143,6 +144,9 @@ PFunctor/{Display/Parallel/Lens,
   -> PFunctor/Dynamical/Responder/Parallel/VerifiedCoherence
 PFunctor/{Display/Category, PatternRunsOnMatter/Applications,
   Dynamical/Responder/Behavior} -> PFunctor/PatternRunsOnMatter/Display
+PFunctor/{PatternRunsOnMatter/Display,
+  Dynamical/Responder/Parallel/Compatibility}
+  -> PFunctor/PatternRunsOnMatter/Parallel
 
   (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
    for RunN and IOMachine, PFunctor/InternalHom for Responder, and

@@ -204,6 +204,7 @@ import PolyFun.PFunctor.PatternRunsOnMatter.Display
 import PolyFun.PFunctor.PatternRunsOnMatter.Dynamical
 import PolyFun.PFunctor.PatternRunsOnMatter.Module
 import PolyFun.PFunctor.PatternRunsOnMatter.Operational
+import PolyFun.PFunctor.PatternRunsOnMatter.Parallel
 import PolyFun.PFunctor.PatternRunsOnMatter.Universal
 import PolyFun.PFunctor.Resumption
 import PolyFun.PFunctor.SubstMonoid
@@ -211,3 +212,4 @@ import PolyFun.PFunctor.SubstMonoid.Convolution
 import PolyFun.PFunctor.SubstMonoid.Extension
 import PolyFun.PFunctor.Trace
 import PolyFun.PFunctor.Wiring
+import PolyFun.PFunctor.Wiring.Parallel

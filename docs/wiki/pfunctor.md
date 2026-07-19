@@ -155,6 +155,7 @@ carrier varies.
 | [`PolyFun/PFunctor/Free/Parallel.lean`](../../PolyFun/PFunctor/Free/Parallel.lean) | Parallel polynomial lens maps and coherence, free-program parallel execution, and parallel free handlers. |
 | [`PolyFun/PFunctor/Display/Parallel/Lens.lean`](../../PolyFun/PFunctor/Display/Parallel/Lens.lean) | Displayed lifts of parallel lens maps, units, symmetry, associativity, naturality, and coherence. |
 | [`PolyFun/PFunctor/Display/Parallel/Free.lean`](../../PolyFun/PFunctor/Display/Parallel/Free.lean) | Proof-relevant parallel composition for displayed free programs and displayed handlers. |
+| [`PolyFun/PFunctor/Wiring/Parallel.lean`](../../PolyFun/PFunctor/Wiring/Parallel.lean) | Independent parallel evaluation of recursive wirings, with duplicated external resources and a displayed lift. |
 | [`PolyFun/PFunctor/Display/Category.lean`](../../PolyFun/PFunctor/Display/Category.lean) | Structural equivalence between free handlers and lenses into `FreeP`, plus compatibility with the existing free-polynomial fold. |
 | [`PolyFun/PFunctor/Dynamical/Responder/Display.lean`](../../PolyFun/PFunctor/Dynamical/Responder/Display.lean) | The responder display, its forgetful chart, and the equivalence between displayed responder coalgebras and the paper's local dependent-Mealy obligation. The projection is not generally a lens because a bare query does not supply the required precondition witness. |
 | [`PolyFun/PFunctor/Dynamical/Responder/Reindex.lean`](../../PolyFun/PFunctor/Dynamical/Responder/Reindex.lean) | Universe-polymorphic finite free-program execution against responders; contravariant responder reindexing; proof-relevant displayed execution and coalgebra reindexing; transported identity, composition, substitution, and execution-fusion laws. |
@@ -218,6 +219,7 @@ displayed families, roll bounds) on top of the upstream type.
 | [`PolyFun/PFunctor/PatternRunsOnMatter/Dynamical.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Dynamical.lean) | Object-labelled execution on cofree behavior, reached-state semantics, observational/simulation invariance, and exact finite-game compatibility. |
 | [`PolyFun/PFunctor/PatternRunsOnMatter/Applications.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Applications.lean) | The Section 4 generic interaction composite, internal-hom evaluation and Equation (6), plus behavior and strong-simulation bridges. |
 | [`PolyFun/PFunctor/PatternRunsOnMatter/Display.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Display.lean) | Identification of responder and state-free handler reindexing with evaluated `runAgainstSystem`, including returned-state equality and transport of proof-relevant displayed coalgebra/behavior evidence. Raw `runOnSystem` is only the preceding Xi synchronization stage. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Parallel.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Parallel.lean) | Agreement of parallel Pattern-Runs-on-Matter reconstruction with componentwise responder reindexing. |
 | [`PolyFun/PFunctor/Trace.lean`](../../PolyFun/PFunctor/Trace.lean) | Polynomial-trace machinery shared between `PFunctor` and downstream layers. |
 
 ### Control helpers
