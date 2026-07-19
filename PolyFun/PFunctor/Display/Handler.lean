@@ -93,6 +93,30 @@ theorem liftM_liftBind
         (fun b e => S.liftM T (rest b) (children b e) f df) :=
   rfl
 
+/-- Extending displayed handlers respects pointwise-compatible replacement of
+the underlying handler. The transport is forced by the equality of the base
+handlers. -/
+theorem liftM_congr
+    {Q : PFunctor.{uA', uB'}}
+    (S : Display.{uA, uB, uC, uD} P)
+    (T : Display.{uA', uB', uC', uD'} Q)
+    {E : Type uB} {F : E → Type uF}
+    (t : FreeM P E)
+    (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
+    {f g : (a : P.A) → FreeM Q (P.B a)}
+    (h : f = g)
+    (df : Handler S T f) (dg : Handler S T g)
+    (hd : (a : P.A) → (c : S.position a) →
+      T.transport (S.direction a c) (congrFun h a) (df a c) = dg a c) :
+    T.transport F (congrArg (t.liftM ·) h) (S.liftM T t d f df) =
+      S.liftM T t d g dg := by
+  subst g
+  have hdf : df = dg := by
+    funext a c
+    simpa using hd a c
+  subst dg
+  rfl
+
 namespace Handler
 
 /-- The identity displayed handler: retain every displayed position and pass
