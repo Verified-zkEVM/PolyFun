@@ -122,6 +122,7 @@ import PolyFun.PFunctor.Cofree.Polynomial
 import PolyFun.PFunctor.Cofree.Universal
 import PolyFun.PFunctor.Comonoid
 import PolyFun.PFunctor.Comonoid.Category
+import PolyFun.PFunctor.Comonoid.Tensor
 import PolyFun.PFunctor.Display
 import PolyFun.PFunctor.Display.Basic
 import PolyFun.PFunctor.Display.Chart
@@ -181,6 +182,7 @@ import PolyFun.PFunctor.M
 import PolyFun.PFunctor.M.Vertex
 import PolyFun.PFunctor.Resumption
 import PolyFun.PFunctor.SubstMonoid
+import PolyFun.PFunctor.SubstMonoid.Convolution
 import PolyFun.PFunctor.SubstMonoid.Extension
 import PolyFun.PFunctor.Trace
 import PolyFun.PFunctor.Wiring

@@ -154,6 +154,18 @@ def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunc
 
 end Equiv
 
+/-- Cancel postcomposition with the forward lens of a lens equivalence. -/
+theorem cancel_toLens {P : PFunctor.{uA₁, uB₁}}
+    {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
+    (e : P ≃ₗ Q) {f g : Lens R P}
+    (h : e.toLens ∘ₗ f = e.toLens ∘ₗ g) : f = g := by
+  calc
+    f = e.invLens ∘ₗ (e.toLens ∘ₗ f) := by
+      rw [← comp_assoc, e.left_inv, id_comp]
+    _ = e.invLens ∘ₗ (e.toLens ∘ₗ g) :=
+      congrArg (e.invLens ∘ₗ ·) h
+    _ = g := by rw [← comp_assoc, e.left_inv, id_comp]
+
 /-- The (unique) initial lens from the zero functor to any functor `P`. -/
 def initial {P : PFunctor.{uA, uB}} : Lens 0 P :=
   PEmpty.elim ⇆ fun a => PEmpty.elim a
@@ -765,6 +777,47 @@ def sumTensorDistrib :
   right_inv := by ext qprp <;> cases qprp <;> rfl
 
 end Equiv
+
+/-- The unique comparison between two possibly differently instantiated
+copies of the common tensor/composition unit `X`. -/
+def unitComparison : Lens X.{uA₁, uB₁} X.{uA₂, uB₂} :=
+  Lens.fromX PUnit.unit
+
+/-- Naturality of the left tensor unitor. The unit component is the canonical
+comparison between the independently instantiated source and target copies of
+`X`. -/
+theorem xTensor_natural
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (f : Lens P Q) :
+    f ∘ₗ (Equiv.xTensor (P := P)).toLens =
+      (Equiv.xTensor (P := Q)).toLens ∘ₗ
+        ((unitComparison : Lens X.{uA₁, uB₁} X.{uA₂, uB₂}) ⊗ₗ f) := by
+  rfl
+
+/-- Naturality of the right tensor unitor. The unit component is the canonical
+comparison between the independently instantiated source and target copies of
+`X`. -/
+theorem tensorX_natural
+    {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (f : Lens P Q) :
+    f ∘ₗ (Equiv.tensorX (P := P)).toLens =
+      (Equiv.tensorX (P := Q)).toLens ∘ₗ
+        (f ⊗ₗ
+          (unitComparison : Lens X.{uA₁, uB₁} X.{uA₂, uB₂})) := by
+  rfl
+
+/-- Naturality of the tensor associator across lenses whose source and target
+polynomials may occupy six independent universe pairs. -/
+theorem tensorAssoc_natural
+    {P₁ : PFunctor.{uA₁, uB₁}} {P₂ : PFunctor.{uA₂, uB₂}}
+    {Q₁ : PFunctor.{uA₃, uB₃}} {Q₂ : PFunctor.{uA₄, uB₄}}
+    {R₁ : PFunctor.{uA₅, uB₅}} {R₂ : PFunctor.{uA₆, uB₆}}
+    (f : Lens P₁ P₂) (g : Lens Q₁ Q₂) (h : Lens R₁ R₂) :
+    (f ⊗ₗ (g ⊗ₗ h)) ∘ₗ
+        (Equiv.tensorAssoc (P := P₁) (Q := Q₁) (R := R₁)).toLens =
+      (Equiv.tensorAssoc (P := P₂) (Q := Q₂) (R := R₂)).toLens ∘ₗ
+        ((f ⊗ₗ g) ⊗ₗ h) := by
+  rfl
 
 end Tensor
 
