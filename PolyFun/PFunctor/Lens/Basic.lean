@@ -720,6 +720,21 @@ def tensorAssoc : (P ⊗ Q) ⊗ R ≃ₗ P ⊗ (Q ⊗ R) where
   left_inv := rfl
   right_inv := rfl
 
+@[simp]
+theorem tensorAssoc_toFunA (position : ((P ⊗ Q) ⊗ R).A) :
+    (tensorAssoc (P := P) (Q := Q) (R := R)).toLens.toFunA position =
+      (position.1.1, (position.1.2, position.2)) :=
+  rfl
+
+@[simp]
+theorem tensorAssoc_toFunB (position : ((P ⊗ Q) ⊗ R).A)
+    (direction : (P ⊗ (Q ⊗ R)).B
+      ((tensorAssoc (P := P) (Q := Q) (R := R)).toLens.toFunA position)) :
+    (tensorAssoc (P := P) (Q := Q) (R := R)).toLens.toFunB
+        position direction =
+      ((direction.1, direction.2.1), direction.2.2) :=
+  rfl
+
 /-- Tensor product with `X` is identity (right) -/
 def tensorX : P ⊗ X ≃ₗ P where
   toLens := Prod.fst ⇆ fun _ => (·, PUnit.unit)

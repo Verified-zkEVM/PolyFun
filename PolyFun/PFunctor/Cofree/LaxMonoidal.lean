@@ -97,6 +97,120 @@ theorem cogenerator_comp_laxTensor
   exact restrict_extend (Comonoid.tensor (comonoid P) (comonoid Q))
     (cogenerator P ⊗ₗ cogenerator Q)
 
+/-! ## Executable equations -/
+
+theorem laxUnit_head :
+    M.head ((laxUnit.{uA, uB}).toFunA PUnit.unit) = PUnit.unit :=
+  rfl
+
+theorem laxUnit_children :
+    M.children ((laxUnit.{uA, uB}).toFunA PUnit.unit) PUnit.unit =
+      (laxUnit.{uA, uB}).toFunA PUnit.unit := by
+  change M.children (unfoldShape _ _ _) _ = unfoldShape _ _ _
+  rw [children_unfoldShape]
+  rfl
+
+@[simp]
+theorem laxUnit_toFunB
+    (vertex : M.Vertex ((laxUnit.{uA, uB}).toFunA PUnit.unit)) :
+    (laxUnit.{uA, uB}).toFunB PUnit.unit vertex = PUnit.unit :=
+  Subsingleton.elim _ _
+
+@[simp]
+theorem laxTensor_head (P : PFunctor.{uA₁, uB₁})
+    (Q : PFunctor.{uA₂, uB₂})
+    (left : (CofreeP P).A) (right : (CofreeP Q).A) :
+    M.head ((laxTensor P Q).toFunA (left, right)) =
+      (M.head left, M.head right) :=
+  rfl
+
+@[simp]
+theorem laxTensor_children (P : PFunctor.{uA₁, uB₁})
+    (Q : PFunctor.{uA₂, uB₂})
+    (left : (CofreeP P).A) (right : (CofreeP Q).A)
+    (direction : P.B (M.head left) × Q.B (M.head right)) :
+    M.children ((laxTensor P Q).toFunA (left, right)) direction =
+      (laxTensor P Q).toFunA
+        (M.children left direction.1, M.children right direction.2) := by
+  change M.children (unfoldShape _ _ _) _ = unfoldShape _ _ _
+  rw [children_unfoldShape]
+  rfl
+
+@[simp]
+theorem laxTensor_toFunB_root (P : PFunctor.{uA₁, uB₁})
+    (Q : PFunctor.{uA₂, uB₂})
+    (left : (CofreeP P).A) (right : (CofreeP Q).A) :
+    (laxTensor P Q).toFunB (left, right)
+        (.root ((laxTensor P Q).toFunA (left, right))) =
+      (.root left, .root right) := by
+  change unfoldDirection _ _ _ (.root _) = _
+  rw [unfoldDirection_root]
+  rfl
+
+/-- Low-level recurrence for pulling a non-root vertex back through the
+cofree laxator. Its explicit cast records the definitional mismatch between
+the actual child of the unfolded tree and the unfolding of the two selected
+children. Most consumers should use `laxTensor_childObj`, which packages and
+hides this transport. -/
+theorem laxTensor_toFunB_child (P : PFunctor.{uA₁, uB₁})
+    (Q : PFunctor.{uA₂, uB₂})
+    (left : (CofreeP P).A) (right : (CofreeP Q).A)
+    (direction : P.B (M.head left) × Q.B (M.head right))
+    (next : M.Vertex
+      (M.children ((laxTensor P Q).toFunA (left, right)) direction)) :
+    (laxTensor P Q).toFunB (left, right) (.child direction next) =
+      let childEq := laxTensor_children P Q left right direction
+      let pulled := (laxTensor P Q).toFunB
+        (M.children left direction.1, M.children right direction.2)
+        (cast (congrArg M.Vertex childEq) next)
+      (.child direction.1 pulled.1, .child direction.2 pulled.2) := by
+  change unfoldDirection
+    (Comonoid.tensor (comonoid P) (comonoid Q))
+    (cogenerator P ⊗ₗ cogenerator Q)
+    (left, right) (.child direction next) = _
+  rw [unfoldDirection.eq_def]
+  rfl
+
+/-- The synchronized child of the cofree laxator, packaged with its complete
+backward vertex map. This is the stable, cast-free rewriting boundary for
+consumers that recurse through `laxTensor`. -/
+theorem laxTensor_childObj (P : PFunctor.{uA₁, uB₁})
+    (Q : PFunctor.{uA₂, uB₂})
+    (left : (CofreeP P).A) (right : (CofreeP Q).A)
+    (direction : P.B (M.head left) × Q.B (M.head right)) :
+    let combined := (laxTensor P Q).toFunA (left, right)
+    let mappedChild := Lens.mapObj (laxTensor P Q)
+      (⟨(M.children left direction.1,
+          M.children right direction.2), id⟩ :
+        (CofreeP P ⊗ CofreeP Q).Obj
+          (M.Vertex (M.children left direction.1) ×
+            M.Vertex (M.children right direction.2)))
+    (⟨M.children combined direction, fun next =>
+        (laxTensor P Q).toFunB (left, right) (.child direction next)⟩ :
+      (CofreeP (P ⊗ Q)).Obj (M.Vertex left × M.Vertex right)) =
+    ⟨mappedChild.1, fun next =>
+      let pulled := mappedChild.2 next
+      (.child direction.1 pulled.1, .child direction.2 pulled.2)⟩ := by
+  dsimp only
+  let childEq := laxTensor_children P Q left right direction
+  apply Sigma.ext childEq
+  apply Function.hfunext (congrArg M.Vertex childEq)
+  intro leftVertex rightVertex hVertex
+  have hcast : cast (congrArg M.Vertex childEq) leftVertex = rightVertex :=
+    (cast_eq_iff_heq).2 hVertex
+  subst rightVertex
+  apply heq_of_eq
+  change (laxTensor P Q).toFunB
+      ((left, right) : (CofreeP P ⊗ CofreeP Q).A)
+      (.child direction leftVertex) =
+    let pulled := (laxTensor P Q).toFunB
+      ((M.children left direction.1,
+        M.children right direction.2) :
+        (CofreeP P ⊗ CofreeP Q).A)
+      (cast (congrArg M.Vertex childEq) leftVertex)
+    (.child direction.1 pulled.1, .child direction.2 pulled.2)
+  exact laxTensor_toFunB_child P Q left right direction leftVertex
+
 /-! ## Naturality -/
 
 /-- The binary comparison is natural in both generator polynomials.  Each

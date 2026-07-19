@@ -181,6 +181,9 @@ import PolyFun.PFunctor.Lens.Factorization
 import PolyFun.PFunctor.Lens.State
 import PolyFun.PFunctor.M
 import PolyFun.PFunctor.M.Vertex
+import PolyFun.PFunctor.PatternRunsOnMatter.Basic
+import PolyFun.PFunctor.PatternRunsOnMatter.Module
+import PolyFun.PFunctor.PatternRunsOnMatter.Universal
 import PolyFun.PFunctor.Resumption
 import PolyFun.PFunctor.SubstMonoid
 import PolyFun.PFunctor.SubstMonoid.Convolution

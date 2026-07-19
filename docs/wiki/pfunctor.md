@@ -193,7 +193,10 @@ displayed families, roll bounds) on top of the upstream type.
 | [`PolyFun/PFunctor/Cofree/Polynomial.lean`](../../PolyFun/PFunctor/Cofree/Polynomial.lean) | `CofreeP P`, whose positions are potentially infinite `P`-trees and whose directions are finite rooted vertices; its extension equivalence with `CofreeC P`, functorial action on lenses, and substitution-comonoid structure. Its carrier uses `max uA uB` for both polynomial universes because a vertex stores directions along an ambient `M P` tree. |
 | [`PolyFun/PFunctor/Cofree/Universal.lean`](../../PolyFun/PFunctor/Cofree/Universal.lean) | Generic coiteration and the cofree-comonoid universal property `Comonoid.Hom C (CofreeP.comonoid P) ≃ Lens C.carrier P`, with explicit naturality in both variables. The generic unfolding keeps the comonoid and generator universe pairs independent; the hom-set packaging specializes `C` to the homogeneous `max uA uB` universe pair required by the existing `Comonoid.Hom`. This is unbundled adjunction data, not a `CategoryTheory.Adjunction`. |
 | [`PolyFun/PFunctor/Cofree/FiniteProjection.lean`](../../PolyFun/PFunctor/Cofree/FiniteProjection.lean) | Universe-polymorphic structural finite projections `projectionN P n : CofreeP P ⇆ compNth P n`, their exact backward-map depth semantics and low-stage unitors, and the homogeneous algebraic bridge yielding the arbitrary-retrofunctor and cofree-extension forms of Proposition 8.49. Additive splitting (Equation 8.32) is deferred until its required composition-power reassociation equivalence is available. |
-| [`PolyFun/PFunctor/Cofree/LaxMonoidal.lean`](../../PolyFun/PFunctor/Cofree/LaxMonoidal.lean) | The cofree functor's unit comparison `y ⇆ CofreeP y` and synchronized-tree laxator `CofreeP P ⊗ CofreeP Q ⇆ CofreeP (P ⊗ Q)`, packaged as retrofunctors and equipped with generator equations, fixed-universe categorical naturality, and the two unit and associativity laws. This is Proposition 8.79 in the current Spivak–Niu edition (Proposition 8.81 in the earlier-edition notes). Cross-universe naturality needs a heterogeneous retrofunctor-law API; abstract monoidal-functor packaging and the Libkind–Spivak `FreeP` module action remain downstream. |
+| [`PolyFun/PFunctor/Cofree/LaxMonoidal.lean`](../../PolyFun/PFunctor/Cofree/LaxMonoidal.lean) | The cofree functor's unit comparison `y ⇆ CofreeP y` and synchronized-tree laxator `CofreeP P ⊗ CofreeP Q ⇆ CofreeP (P ⊗ Q)`, packaged as retrofunctors and equipped with generator equations, fixed-universe categorical naturality, and the two unit and associativity laws. This is Proposition 8.79 in the current Spivak–Niu edition (Proposition 8.81 in the earlier-edition notes). Cross-universe naturality needs a heterogeneous retrofunctor-law API; abstract monoidal-functor packaging remains downstream. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Basic.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Basic.lean) | The fully heterogeneous executable traversal `FreeP.runOn : FreeP P ⊗ CofreeP Q ⇆ FreeP (P ⊗ Q)`, including the complete backward map from output paths to pattern paths and finite matter vertices, and covariance in both generators. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Universal.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Universal.lean) | The paper's curried convolution construction `FreeP.xi` and its equality with the independently executable traversal. For `Q : PFunctor.{qA,qB}`, the homogeneous free-extension API requires only `P`'s direction universe to be `max qA qB`; their position universes remain independent. |
+| [`PolyFun/PFunctor/PatternRunsOnMatter/Module.lean`](../../PolyFun/PFunctor/PatternRunsOnMatter/Module.lean) | The concrete right-module unit and associativity laws for the Libkind--Spivak interaction. |
 | [`PolyFun/PFunctor/Trace.lean`](../../PolyFun/PFunctor/Trace.lean) | Polynomial-trace machinery shared between `PFunctor` and downstream layers. |
 
 ### Control helpers
@@ -232,9 +235,11 @@ provides the reusable monad / comonad / coalgebra plumbing. See
   monoidal coherence equations without installing an abstract monoidal-functor
   instance. PolyFun separately formalizes
   `LawfulMonad (FreeM P)` and `LawfulComonad (CofreeC F)`; those type-level
-  structures are not the paper's polynomial module action
-  `FreeP p ⊗ CofreeP q → FreeP (p ⊗ q)`. That module-action layer is a
-  later slice of the formalization.
+  structures are not the paper's polynomial module action. The latter is
+  `FreeP.runOn : FreeP p ⊗ CofreeP q ⇆ FreeP (p ⊗ q)`: it executes a
+  finite pattern against potentially infinite matter, is natural in both
+  inputs, agrees with the paper's convolution/free-universal construction
+  `FreeP.xi`, and satisfies the concrete unit and associativity equations.
 - `Lens P Q` and `Chart P Q` are the two natural categorical morphisms
   between polynomial functors. Lenses go `forward on positions, backward
   on directions`; charts go forward on both. Both categories are useful
