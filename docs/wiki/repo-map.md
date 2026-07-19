@@ -49,6 +49,7 @@ PFunctor/{Handler, Free/Basic} -> PFunctor/Handler/Free
 PFunctor/{Display/Free, Handler/Free} -> PFunctor/Display/Handler
 PFunctor/Display/{Chart, Handler} -> PFunctor/Display/Lens
 PFunctor/{Display/Handler, Free/Universal} -> PFunctor/Display/Category
+PFunctor/Equiv/Basic -> PFunctor/Parallel -> PFunctor/Display/Parallel
 PFunctor/Free/Basic
   -> PFunctor/Free/Displayed
   -> PFunctor/Free/{Path, Displayed/Decoration}
