@@ -92,6 +92,37 @@ theorem decode_encode : (s : FreeM P α) → decode (encode s) = s
       funext b
       exact decode_encode (rest b)
 
+/-- Collapse a free polynomial over the identity polynomial `X` by selecting
+the sole direction at every node of its underlying unary tree. -/
+def collapseUnit : Lens (FreeP X.{uA, uB}) X.{uA, uB} where
+  toFunA _ := PUnit.unit
+  toFunB tree _ :=
+    FreeM.Path.ofHandler (fun _ => PUnit.unit) tree
+
+/-- The payload selected by `collapseUnit` is the leaf read by
+`FreeM.collapseUnit` after decoding. -/
+theorem collapseUnit_mapObj {E : Type v}
+    (x : (FreeP X.{uA, uB}).Obj E) :
+    (Lens.mapObj collapseUnit x).2 PUnit.unit =
+      FreeM.collapseUnit (FreeP.decode x) := by
+  rcases x with ⟨tree, label⟩
+  induction tree with
+  | pure value =>
+      cases value
+      rfl
+  | liftBind operation next ih =>
+      cases operation
+      change label ⟨PUnit.unit,
+          FreeM.Path.ofHandler (fun _ => PUnit.unit)
+            (next PUnit.unit)⟩ = _
+      change label ⟨PUnit.unit,
+          FreeM.Path.ofHandler (fun _ => PUnit.unit)
+            (next PUnit.unit)⟩ =
+        FreeM.collapseUnit
+          (FreeP.decodeAt (next PUnit.unit)
+            (fun path => label ⟨PUnit.unit, path⟩))
+      exact ih PUnit.unit (fun path => label ⟨PUnit.unit, path⟩)
+
 /-- Constructing a node from the childwise restrictions of a path labelling
 recovers the original labelled node. -/
 theorem node_paths (a : P.A)
