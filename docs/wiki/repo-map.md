@@ -47,6 +47,7 @@ PFunctor/Display/Basic
 IPFunctor/M + PFunctor/Display/Indexed -> PFunctor/Display/M
 PFunctor/{Handler, Free/Basic} -> PFunctor/Handler/Free
 PFunctor/{Display/Free, Handler/Free} -> PFunctor/Display/Handler
+PFunctor/Display/{Chart, Handler} -> PFunctor/Display/Lens
 PFunctor/{Display/Handler, Free/Universal} -> PFunctor/Display/Category
 PFunctor/Free/Basic
   -> PFunctor/Free/Displayed

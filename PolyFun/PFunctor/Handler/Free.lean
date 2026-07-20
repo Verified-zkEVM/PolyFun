@@ -28,6 +28,24 @@ namespace Handler
 def id (P : PFunctor.{uA, u}) : Handler (FreeM P) P :=
   fun a => FreeM.lift a
 
+/-- Regard a polynomial lens as the one-operation free handler that issues
+the mapped operation and translates its answer through the lens. -/
+def ofLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
+    (f : Lens P Q) : Handler (FreeM Q) P :=
+  fun a => FreeM.liftBind (f.toFunA a) fun answer =>
+    FreeM.pure (f.toFunB a answer)
+
+@[simp] theorem ofLens_apply
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
+    (f : Lens P Q) (a : P.A) :
+    ofLens f a = FreeM.liftBind (f.toFunA a) fun answer =>
+      FreeM.pure (f.toFunB a answer) :=
+  rfl
+
+@[simp] theorem ofLens_id (P : PFunctor.{uA, u}) :
+    ofLens (Lens.id P) = id P :=
+  rfl
+
 /-- Kleisli composition of free handlers, in categorical order:
 `second.comp first` first interprets by `first`, then by `second`. The source
 and intermediate direction universes agree because `FreeM.liftM` requires
@@ -44,6 +62,15 @@ theorem comp_apply {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
     (second : Handler (FreeM R) Q) (first : Handler (FreeM Q) P)
     (a : P.A) :
     second.comp first a = (first a).liftM second :=
+  rfl
+
+/-- The one-operation handler embedding preserves lens composition. -/
+theorem ofLens_comp
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {R : PFunctor.{uA'', u'}}
+    (second : Lens Q R) (first : Lens P Q) :
+    ofLens (second ∘ₗ first) = (ofLens second).comp (ofLens first) := by
+  funext operation
   rfl
 
 @[simp]
