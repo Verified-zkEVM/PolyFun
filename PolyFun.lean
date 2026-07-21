@@ -135,6 +135,7 @@ import PolyFun.PFunctor.Display.Handler.Sigma
 import PolyFun.PFunctor.Display.Indexed
 import PolyFun.PFunctor.Display.Lens
 import PolyFun.PFunctor.Display.M
+import PolyFun.PFunctor.Display.Parallel
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Bisimulation
@@ -185,6 +186,7 @@ import PolyFun.PFunctor.Lens.Factorization
 import PolyFun.PFunctor.Lens.State
 import PolyFun.PFunctor.M
 import PolyFun.PFunctor.M.Vertex
+import PolyFun.PFunctor.Parallel
 import PolyFun.PFunctor.PatternRunsOnMatter.Applications
 import PolyFun.PFunctor.PatternRunsOnMatter.Basic
 import PolyFun.PFunctor.PatternRunsOnMatter.Display

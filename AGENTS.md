@@ -106,6 +106,7 @@ PFunctor/{Display/Free, Handler/Free}
   → PFunctor/Display/Handler → PFunctor/Display/Handler/Sigma
   → PFunctor/Wiring
 PFunctor/Display/{Chart, Handler} → PFunctor/Display/Lens
+PFunctor/Equiv/Basic → PFunctor/Parallel → PFunctor/Display/Parallel
 PFunctor/{Display/Handler, Free/Universal} → PFunctor/Display/Category
 PFunctor/Free/Basic
   → PFunctor/Free/Displayed
