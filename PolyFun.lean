@@ -148,7 +148,9 @@ import PolyFun.PFunctor.Dynamical.Refinement
 import PolyFun.PFunctor.Dynamical.Responder
 import PolyFun.PFunctor.Dynamical.Responder.Behavior
 import PolyFun.PFunctor.Dynamical.Responder.Display
+import PolyFun.PFunctor.Dynamical.Responder.Lens
 import PolyFun.PFunctor.Dynamical.Responder.Reindex
+import PolyFun.PFunctor.Dynamical.Responder.VerifiedPresentation
 import PolyFun.PFunctor.Dynamical.Run
 import PolyFun.PFunctor.Dynamical.RunN
 import PolyFun.PFunctor.Dynamical.Safety
