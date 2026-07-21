@@ -46,10 +46,17 @@ PFunctor/Display/Basic
   -> PFunctor/Display/{Chart, Coalgebra, Indexed, Free}
 IPFunctor/M + PFunctor/Display/Indexed -> PFunctor/Display/M
 PFunctor/{Handler, Free/Basic} -> PFunctor/Handler/Free
-PFunctor/{Display/Free, Handler/Free} -> PFunctor/Display/Handler
+PFunctor/{Display/Free, Handler/Free}
+  -> PFunctor/Display/Handler -> PFunctor/Display/Handler/Sigma
+  -> PFunctor/Wiring
 PFunctor/Display/{Chart, Handler} -> PFunctor/Display/Lens
-PFunctor/{Display/Handler, Free/Universal} -> PFunctor/Display/Category
 PFunctor/Equiv/Basic -> PFunctor/Parallel -> PFunctor/Display/Parallel
+PFunctor/{Handler/Free, Parallel} -> PFunctor/Free/Parallel
+PFunctor/{Display/Lens, Display/Parallel, Free/Parallel}
+  -> PFunctor/Display/Parallel/Lens
+PFunctor/{Display/Handler, Display/Parallel, Free/Parallel}
+  -> PFunctor/Display/Parallel/Free
+PFunctor/{Display/Handler, Free/Universal} -> PFunctor/Display/Category
 PFunctor/Free/Basic
   -> PFunctor/Free/Displayed
   -> PFunctor/Free/{Path, Displayed/Decoration}

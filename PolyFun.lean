@@ -136,6 +136,8 @@ import PolyFun.PFunctor.Display.Indexed
 import PolyFun.PFunctor.Display.Lens
 import PolyFun.PFunctor.Display.M
 import PolyFun.PFunctor.Display.Parallel
+import PolyFun.PFunctor.Display.Parallel.Free
+import PolyFun.PFunctor.Display.Parallel.Lens
 import PolyFun.PFunctor.Dynamical.Basic
 import PolyFun.PFunctor.Dynamical.Behavior
 import PolyFun.PFunctor.Dynamical.Bisimulation
@@ -168,6 +170,7 @@ import PolyFun.PFunctor.Free.Displayed.Append
 import PolyFun.PFunctor.Free.Displayed.Cursor
 import PolyFun.PFunctor.Free.Displayed.Decoration
 import PolyFun.PFunctor.Free.Displayed.StateChain
+import PolyFun.PFunctor.Free.Parallel
 import PolyFun.PFunctor.Free.Path
 import PolyFun.PFunctor.Free.Path.Execution
 import PolyFun.PFunctor.Free.Polynomial
