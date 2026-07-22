@@ -8,6 +8,7 @@ module
 
 public import PolyFun.PFunctor.Display.Handler
 public import PolyFun.PFunctor.Dynamical.Responder.Display
+public import PolyFun.PFunctor.Handler.Stateful
 
 /-!
 # Reindexing responders along free handlers
@@ -101,6 +102,15 @@ theorem runFree_eq_liftM
   | pure value => rfl
   | lift_bind query next ih =>
       exact ih (R.answer state query) (R.next state query)
+
+/-- Structural responder execution is the pure specialization of effectful
+stateful-handler execution. -/
+theorem runFree_eq_statefulRun
+    {Q : PFunctor.{uA', uB}} {State : Type uB}
+    (R : Responder State Q) {E : Type uB}
+    (program : FreeM Q E) (state : State) :
+    R.runFree program state = R.toStateHandler.run program state :=
+  R.runFree_eq_liftM program state
 
 /-- Transport dependent result and state evidence along equality of execution
 results. This names the equality plumbing used by displayed execution laws. -/
