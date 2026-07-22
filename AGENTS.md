@@ -125,6 +125,8 @@ PFunctor/Free/Basic
   → PFunctor/Free/Cursor/Fork
 PFunctor/{Resumption, Free/Basic} → PFunctor/Free/Resumption
 PFunctor/{Bound, Free/Resumption} → PFunctor/Resumption/Truncate
+PFunctor/Dynamical/DynComputation + PFunctor/{Bound, Handler, Resumption/Truncate}
+  → PFunctor/Dynamical/DynComputation/Bounded
 
 PFunctor/Lens/{Basic, Cartesian, State}
   → PFunctor/Lens/{Composite, Distributivity, Factorization, Duoidal}

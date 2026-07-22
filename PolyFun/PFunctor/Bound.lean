@@ -31,7 +31,7 @@ witnesses the equivalence by `Iff.rfl`.
 
 @[expose] public section
 
-universe v uA uB
+universe v w uA uB
 
 namespace PFunctor.FreeM
 
@@ -162,7 +162,7 @@ under `generalizing b₁`:
   the roll valid;
 * `h_cost` — `cost` distributes left and right over `combine` on validated
   budgets. -/
-lemma isRollBound_bind {oa : FreeM P α} {ob : α → FreeM P β}
+lemma isRollBound_bind {γ : Type w} {oa : FreeM P α} {ob : α → FreeM P γ}
     {canRoll : P.A → B → Prop} {cost : P.A → B → B}
     (combine : B → B → B) {b₁ b₂ : B}
     (h_can : ∀ a b₁' b₂' b, canRoll a b → canRoll a (combine b₁' b) ∧
@@ -172,18 +172,17 @@ lemma isRollBound_bind {oa : FreeM P α} {ob : α → FreeM P β}
       cost a (combine b b₂') = combine (cost a b) b₂')
     (h₁ : IsRollBound oa b₁ canRoll cost)
     (h₂ : ∀ x, IsRollBound (ob x) b₂ canRoll cost) :
-    IsRollBound (oa >>= ob) (combine b₁ b₂) canRoll cost := by
+    IsRollBound (FreeM.bind oa ob) (combine b₁ b₂) canRoll cost := by
   induction oa using FreeM.induction generalizing b₁ with
   | pure x =>
-      simp only [monad_bind_def]
+      change IsRollBound (ob x) (combine b₁ b₂) canRoll cost
       exact IsRollBound.proj (combine b₁)
         (fun a b hcan => (h_can a b₁ b₂ b hcan).1)
         (fun a b hcan => (h_cost a b₁ b₂ b hcan).1)
         (h₂ x)
   | lift_bind a r ih =>
       rw [isRollBound_lift_bind_iff] at h₁
-      simp only [monad_bind_def, liftBind_bind]
-      rw [isRollBound_lift_bind_iff]
+      rw [FreeM.liftBind_bind, isRollBound_lift_bind_iff]
       refine ⟨(h_can a b₁ b₂ b₁ h₁.1).2, fun y => ?_⟩
       have hrec := ih y (h₁.2 y)
       rw [(h_cost a b₁ b₂ b₁ h₁.1).2]
@@ -242,12 +241,18 @@ lemma IsTotalRollBound.mono {oa : FreeM P α} {n₁ n₂ : ℕ}
       exact ⟨Nat.lt_of_lt_of_le h.1 hle,
         fun y => ih y (h.2 y) (Nat.sub_le_sub_right hle 1)⟩
 
-/-- Total roll bounds add under monadic sequencing. -/
-lemma isTotalRollBound_bind {oa : FreeM P α} {ob : α → FreeM P β}
-    {n₁ n₂ : ℕ} (h₁ : IsTotalRollBound oa n₁)
+/-- Total roll bounds add under monadic sequencing. This uses the named
+`FreeM.bind`, whose result may live in an independent universe; in the
+homogeneous specialization it is definitionally the typeclass bind. -/
+lemma isTotalRollBound_bind {γ : Type w} {oa : FreeM P α}
+    {ob : α → FreeM P γ} {n₁ n₂ : ℕ} (h₁ : IsTotalRollBound oa n₁)
     (h₂ : ∀ x, IsTotalRollBound (ob x) n₂) :
-    IsTotalRollBound (oa >>= ob) (n₁ + n₂) := by
-  refine isRollBound_bind (fun a b => a + b) ?_ ?_ h₁ h₂ <;> grind
+    IsTotalRollBound (FreeM.bind oa ob) (n₁ + n₂) := by
+  refine isRollBound_bind (fun a b => a + b) ?_ ?_ h₁ h₂
+  · intro _ _ _ _ h
+    constructor <;> omega
+  · intro _ _ _ _ h
+    constructor <;> omega
 
 /-- Total roll bounds add under applicative sequencing. -/
 lemma isTotalRollBound_seq {og : FreeM P (α → β)} {oa : FreeM P α}
