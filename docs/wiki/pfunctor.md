@@ -165,6 +165,8 @@ carrier varies.
 | [`PolyFun/PFunctor/Dynamical/Responder/Parallel/Display.lean`](../../PolyFun/PFunctor/Dynamical/Responder/Parallel/Display.lean) | Proof-relevant coproduct and parallel responder coalgebras, including branchwise obligation equations. |
 | [`PolyFun/PFunctor/Dynamical/Responder/Parallel/Behavior.lean`](../../PolyFun/PFunctor/Dynamical/Responder/Parallel/Behavior.lean) | Ordinary and verified state-free coproduct/parallel behavior, with exact answer, postcondition, and continuation equations. |
 | [`PolyFun/PFunctor/Dynamical/Responder/Parallel/Compatibility.lean`](../../PolyFun/PFunctor/Dynamical/Responder/Parallel/Compatibility.lean) | Compatibility of sum restriction, free execution, and handler reindexing with parallel responders. |
+| [`PolyFun/PFunctor/Dynamical/Responder/Parallel/VerifiedPresentation.lean`](../../PolyFun/PFunctor/Dynamical/Responder/Parallel/VerifiedPresentation.lean) | Componentwise parallel composition of verified presentation homomorphisms, with identity and interchange laws. |
+| [`PolyFun/PFunctor/Dynamical/Responder/Parallel/Coherence.lean`](../../PolyFun/PFunctor/Dynamical/Responder/Parallel/Coherence.lean) | Ordinary state-free parallel behavior coherence under symmetry, units, and associativity. |
 
 Displayed responder coalgebras preserve proof-relevant evidence over one
 responder. They are distinct from `DynSystem.SafetyRefinement`, whose policy is
