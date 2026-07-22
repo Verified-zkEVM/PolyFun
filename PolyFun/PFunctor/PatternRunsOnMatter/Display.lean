@@ -228,9 +228,9 @@ theorem runAgainstDisplayed_eq_reindexCoalgebra
           state witness query contract) :=
   rfl
 
-/-- The postcondition exposed by state-free verified reindexing is the
+/-- The postcondition exposed by state-free displayed reindexing is the
 postcondition obtained from evaluated Pattern Runs on Matter. -/
-theorem respondDisplayed_reindexVerifiedBehavior_post_runAgainst
+theorem respondDisplayed_reindexDisplayedBehavior_post_runAgainst
     (S : Display.{uA, uB, uC, uD} P)
     (f : Handler (FreeM Q) P)
     (displayedF : Display.Handler S T f)
@@ -238,7 +238,7 @@ theorem respondDisplayed_reindexVerifiedBehavior_post_runAgainst
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (query : P.A) (contract : S.position query) :
     (respondDisplayed S
-      (reindexVerifiedBehavior S T f displayedF behavior displayedBehavior)
+      (reindexDisplayedBehavior S T f displayedF behavior displayedBehavior)
       query contract).1 =
       (transportRunEvidence (S.direction query contract)
         (Display.M (Display.responder T))
@@ -247,14 +247,14 @@ theorem respondDisplayed_reindexVerifiedBehavior_post_runAgainst
         (runAgainstDisplayed T (Responder.terminal (P := Q))
           (Display.Coalgebra.terminal (Display.responder T))
           (displayedF query contract) behavior displayedBehavior)).1 := by
-  rw [respondDisplayed_reindexVerifiedBehavior_post]
+  rw [respondDisplayed_reindexDisplayedBehavior_post]
   rw [runAgainstDisplayed_eq_runFreeDisplayed]
 
-/-- The continuation exposed by state-free verified reindexing is recursively
+/-- The continuation exposed by state-free displayed reindexing is recursively
 reindexed from the target continuation carried by evaluated Pattern Runs on
 Matter.  The ordinary result transport is explicit; the proof-relevant
 continuation itself is not truncated or identified by proof irrelevance. -/
-theorem respondDisplayed_reindexVerifiedBehavior_next_runAgainst
+theorem respondDisplayed_reindexDisplayedBehavior_next_runAgainst
     (S : Display.{uA, uB, uC, uD} P)
     (f : Handler (FreeM Q) P)
     (displayedF : Display.Handler S T f)
@@ -274,9 +274,9 @@ theorem respondDisplayed_reindexVerifiedBehavior_next_runAgainst
         (behavior_child
           (reindex f (Responder.terminal (P := Q))) behavior query)
         (respondDisplayed S
-          (reindexVerifiedBehavior S T f displayedF behavior
+          (reindexDisplayedBehavior S T f displayedF behavior
             displayedBehavior) query contract).2 =
-      reindexVerifiedBehavior S T f displayedF
+      reindexDisplayedBehavior S T f displayedF
         result.2 displayedResult.2 := by
   let alternativeEvidence :=
     runAgainstDisplayed T (Responder.terminal (P := Q))
@@ -307,7 +307,7 @@ theorem respondDisplayed_reindexVerifiedBehavior_next_runAgainst
         (Display.Coalgebra.terminal (Display.responder T))
         (displayedF query contract) behavior displayedBehavior by
       exact hEvidence]
-  exact respondDisplayed_reindexVerifiedBehavior_next S T f displayedF
+  exact respondDisplayed_reindexDisplayedBehavior_next S T f displayedF
     behavior displayedBehavior query contract
 
 end Displayed

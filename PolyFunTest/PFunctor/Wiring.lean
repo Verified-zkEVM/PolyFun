@@ -131,19 +131,19 @@ example : program =
         Wiring.eval implementation (children port)) :=
   rfl
 
-def verifiedProgram :=
+def displayedProgram :=
   Wiring.evalDisplayed domDisplay codDisplay inputDisplay
     implementation displayedImplementation displayedWiring () ()
 
 /-- The base response selects the immediate-return branch, while its supplied
 proof witness becomes the leaf evidence. -/
 example (evidence : Bool) :
-    (verifiedProgram.2 false evidence).down = evidence :=
+    (displayedProgram.2 false evidence).down = evidence :=
   rfl
 
 /-- The other response selects the recursively wired zero-arity box. -/
 example (evidence : Bool) :
-    (verifiedProgram.2 true evidence).down = false :=
+    (displayedProgram.2 true evidence).down = false :=
   by
     change false = false
     rfl
@@ -184,7 +184,7 @@ example :
       Wiring.eval implementation substitutedWiring () :=
   Wiring.eval_substitute implementation replacement wiring ()
 
-def verifiedSubstituted :=
+def displayedSubstituted :=
   Wiring.evalDisplayed domDisplay codDisplay inputDisplay
     implementation displayedImplementation substitutedDisplayed () ()
 
@@ -198,13 +198,13 @@ example :
             implementation displayedImplementation (displayedReplacement i))).comp
           (Wiring.evalDisplayed domDisplay codDisplay inputDisplay
             implementation displayedImplementation displayedWiring)) () ()) =
-      verifiedSubstituted :=
+      displayedSubstituted :=
   Wiring.evalDisplayed_substitute domDisplay codDisplay inputDisplay inputDisplay
     implementation displayedImplementation replacement displayedReplacement
     displayedWiring () ()
 
 example (evidence : Bool) :
-    (verifiedSubstituted.2 false evidence).down = evidence :=
+    (displayedSubstituted.2 false evidence).down = evidence :=
   rfl
 
 /-! The indexed handler combinator also covers nullary and singleton sums. -/

@@ -95,8 +95,9 @@ deliberately outside the `lake lint` scope.
 
 - [`../../.github/workflows/ci.yml`](../../.github/workflows/ci.yml): runs
   three independent jobs on every push to `main` and on pull requests — a
-  `build` job (`lake build --wfail` + `./scripts/validate.sh`), a `lint` job
-  (`lake lint`, the environment linters), and a `test` job (`lake test`, the
+  `build` job (`./scripts/validate.sh`, which includes
+  `lake build --wfail`), a `lint` job (`lake lint`, the environment linters),
+  and a `test` job (`lake test`, the
   `PolyFunTest` library). All builds pass `--wfail`, so any compiler or
   `mathlibStandardSet` warning fails CI rather than slipping through. The
   `build` job is a required status check on `main`.

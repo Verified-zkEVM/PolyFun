@@ -336,16 +336,7 @@ theorem runOn_natural
             ((FreeP P ⊗ CofreeP Q).B input)) := by
     rintro ⟨pattern, matter⟩
     exact runObj_natural f g pattern matter
-  let hA : ∀ input, lhs.toFunA input = rhs.toFunA input :=
-    fun input => congrArg Sigma.fst (hobj input)
-  refine Lens.ext lhs rhs hA ?_
-  intro input
-  apply eq_of_heq
-  have hraw : lhs.toFunB input ≍ rhs.toFunB input :=
-    (Sigma.ext_iff.mp (hobj input)).2
-  have hcast : (hA input ▸ rhs.toFunB input) ≍ rhs.toFunB input :=
-    eqRec_heq_self _ _
-  exact hraw.trans hcast.symm
+  exact Lens.ext_mapObj lhs rhs hobj
 
 end FreeP
 end PFunctor

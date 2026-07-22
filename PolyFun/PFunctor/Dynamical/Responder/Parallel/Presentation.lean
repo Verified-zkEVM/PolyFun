@@ -6,13 +6,13 @@ Authors: Quang Dao
 
 module
 
-public import PolyFun.PFunctor.Dynamical.Responder.VerifiedPresentation
+public import PolyFun.PFunctor.Dynamical.Responder.Presentation
 public import PolyFun.PFunctor.Dynamical.Responder.Parallel.Behavior
 
 /-!
-# Parallel composition of verified responder presentations
+# Parallel composition of displayed responder presentations
 
-Verified presentation homomorphisms compose componentwise under lockstep
+Displayed presentation homomorphisms compose componentwise under lockstep
 parallel. This proof-relevant bifunctoriality is distinct from unrestricted
 parallel composition of free handlers, which would require a Kleisli
 interchange law.
@@ -44,9 +44,9 @@ private theorem prod_heq
 
 universe uS₁ uS₂ uT₁ uT₂ uI₁ uI₂ uJ₁ uJ₂ uK₁ uK₂ uL₁ uL₂
 
-namespace VerifiedPresentationHom
+namespace PresentationHom
 
-/-- Componentwise parallel composition of verified presentation
+/-- Componentwise parallel composition of displayed presentation
 homomorphisms. Unlike arbitrary free-handler parallel composition, this is
 available without an interchange hypothesis: lockstep parallel combines the
 two one-step coalgebra squares branchwise. -/
@@ -71,11 +71,11 @@ def parallel
       target₁.out TargetWitness₁}
     {displayedTarget₂ : Display.Coalgebra (Display.responder T)
       target₂.out TargetWitness₂}
-    (f : VerifiedPresentationHom S source₁ SourceWitness₁ displayedSource₁
+    (f : PresentationHom S source₁ SourceWitness₁ displayedSource₁
       target₁ TargetWitness₁ displayedTarget₁)
-    (g : VerifiedPresentationHom T source₂ SourceWitness₂ displayedSource₂
+    (g : PresentationHom T source₂ SourceWitness₂ displayedSource₂
       target₂ TargetWitness₂ displayedTarget₂) :
-    VerifiedPresentationHom (Display.parallelSum S T)
+    PresentationHom (Display.parallelSum S T)
       (Responder.parallel source₁ source₂)
       (fun state => SourceWitness₁ state.1 × SourceWitness₂ state.2)
       (parallelCoalgebra source₁ source₂ SourceWitness₁ SourceWitness₂
@@ -91,7 +91,7 @@ def parallel
     intro state witness
     have hf := f.map_step state.1 witness.1
     have hg := g.map_step state.2 witness.2
-    dsimp [verifiedTotalStep, totalMap] at hf hg ⊢
+    dsimp [displayedTotalStep, totalMap] at hf hg ⊢
     apply Sigma.ext_iff.mpr
     constructor
     · apply Sigma.ext_iff.mpr
@@ -220,8 +220,8 @@ def parallel
     {dS₂ : Display.Coalgebra (Display.responder T) source₂.out SourceWitness₂}
     {dT₁ : Display.Coalgebra (Display.responder S) target₁.out TargetWitness₁}
     {dT₂ : Display.Coalgebra (Display.responder T) target₂.out TargetWitness₂}
-    (f : VerifiedPresentationHom S source₁ SourceWitness₁ dS₁ target₁ TargetWitness₁ dT₁)
-    (g : VerifiedPresentationHom T source₂ SourceWitness₂ dS₂ target₂ TargetWitness₂ dT₂)
+    (f : PresentationHom S source₁ SourceWitness₁ dS₁ target₁ TargetWitness₁ dT₁)
+    (g : PresentationHom T source₂ SourceWitness₂ dS₂ target₂ TargetWitness₂ dT₂)
     (state : SourceState₁ × SourceState₂) :
     (f.parallel g).toState state = (f.toState state.1, g.toState state.2) := rfl
 
@@ -240,8 +240,8 @@ def parallel
     {dS₂ : Display.Coalgebra (Display.responder T) source₂.out SourceWitness₂}
     {dT₁ : Display.Coalgebra (Display.responder S) target₁.out TargetWitness₁}
     {dT₂ : Display.Coalgebra (Display.responder T) target₂.out TargetWitness₂}
-    (f : VerifiedPresentationHom S source₁ SourceWitness₁ dS₁ target₁ TargetWitness₁ dT₁)
-    (g : VerifiedPresentationHom T source₂ SourceWitness₂ dS₂ target₂ TargetWitness₂ dT₂)
+    (f : PresentationHom S source₁ SourceWitness₁ dS₁ target₁ TargetWitness₁ dT₁)
+    (g : PresentationHom T source₂ SourceWitness₂ dS₂ target₂ TargetWitness₂ dT₂)
     (state : SourceState₁ × SourceState₂)
     (witness : SourceWitness₁ state.1 × SourceWitness₂ state.2) :
     (f.parallel g).toWitness state witness =
@@ -259,12 +259,12 @@ def parallel
       source₁.out Witness₁}
     {displayed₂ : Display.Coalgebra (Display.responder T)
       source₂.out Witness₂} :
-    (VerifiedPresentationHom.id (S := S) (source := source₁)
+    (PresentationHom.id (S := S) (source := source₁)
       (SourceWitness := Witness₁) (displayedSource := displayed₁)).parallel
-      (VerifiedPresentationHom.id (S := T) (source := source₂)
+      (PresentationHom.id (S := T) (source := source₂)
         (SourceWitness := Witness₂) (displayedSource := displayed₂)) =
-      VerifiedPresentationHom.id := by
-  apply VerifiedPresentationHom.ext
+      PresentationHom.id := by
+  apply PresentationHom.ext
   · rfl
   · rfl
 
@@ -300,21 +300,21 @@ theorem parallel_comp
       final₁.out FinalWitness₁}
     {displayedFinal₂ : Display.Coalgebra (Display.responder T)
       final₂.out FinalWitness₂}
-    (first₁ : VerifiedPresentationHom S source₁ SourceWitness₁
+    (first₁ : PresentationHom S source₁ SourceWitness₁
       displayedSource₁ middle₁ MiddleWitness₁ displayedMiddle₁)
-    (first₂ : VerifiedPresentationHom T source₂ SourceWitness₂
+    (first₂ : PresentationHom T source₂ SourceWitness₂
       displayedSource₂ middle₂ MiddleWitness₂ displayedMiddle₂)
-    (second₁ : VerifiedPresentationHom S middle₁ MiddleWitness₁
+    (second₁ : PresentationHom S middle₁ MiddleWitness₁
       displayedMiddle₁ final₁ FinalWitness₁ displayedFinal₁)
-    (second₂ : VerifiedPresentationHom T middle₂ MiddleWitness₂
+    (second₂ : PresentationHom T middle₂ MiddleWitness₂
       displayedMiddle₂ final₂ FinalWitness₂ displayedFinal₂) :
     (second₁.parallel second₂).comp (first₁.parallel first₂) =
       (second₁.comp first₁).parallel (second₂.comp first₂) := by
-  apply VerifiedPresentationHom.ext
+  apply PresentationHom.ext
   · rfl
   · rfl
 
-end VerifiedPresentationHom
+end PresentationHom
 
 end Responder
 end PFunctor

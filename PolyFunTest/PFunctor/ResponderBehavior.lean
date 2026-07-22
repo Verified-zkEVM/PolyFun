@@ -69,7 +69,7 @@ def obligation :
     ⟨directionFromNat precondition state (invariantVal state witness),
       invariantFromNat (!state) (invariantVal state witness + 1)⟩
 
-def verified :
+def displayed :
     Display.Coalgebra (Display.responder contract) responder.out Invariant :=
   (Display.responderCoalgebraEquiv contract responder Invariant).symm obligation
 
@@ -77,8 +77,8 @@ def initialWitness : Invariant false := invariantFromNat false 1
 
 def behavior := responder.behavior false
 
-def verifiedBehavior :=
-  Responder.verifiedBehavior contract responder Invariant verified
+def toDisplayedBehavior :=
+  Responder.toDisplayedBehavior contract responder Invariant displayed
     false initialWitness
 
 example : behavior.head.toFunB query PUnit.unit = false := by
@@ -86,39 +86,39 @@ example : behavior.head.toFunB query PUnit.unit = false := by
   rfl
 
 example : directionVal false false
-    (Responder.respondDisplayed contract verifiedBehavior query false).1 = 1 := by
+    (Responder.respondDisplayed contract toDisplayedBehavior query false).1 = 1 := by
   change directionVal false false
     (Responder.respondDisplayed contract
-      (Responder.verifiedBehavior contract responder Invariant verified
+      (Responder.toDisplayedBehavior contract responder Invariant displayed
         false initialWitness) query false).1 = 1
-  rw [Responder.respondDisplayed_verifiedBehavior_post]
+  rw [Responder.respondDisplayed_toDisplayedBehavior_post]
   rfl
 
 /-! Changing only the supplied precondition selects the `Fin 3` branch.  This
 would not typecheck if state-free behavior erased answer-dependent evidence. -/
 example : directionVal true false
-    (Responder.respondDisplayed contract verifiedBehavior query true).1 = 1 := by
+    (Responder.respondDisplayed contract toDisplayedBehavior query true).1 = 1 := by
   change directionVal true false
     (Responder.respondDisplayed contract
-      (Responder.verifiedBehavior contract responder Invariant verified
+      (Responder.toDisplayedBehavior contract responder Invariant displayed
         false initialWitness) query true).1 = 1
-  rw [Responder.respondDisplayed_verifiedBehavior_post]
+  rw [Responder.respondDisplayed_toDisplayedBehavior_post]
   rfl
 
 example :
     Display.M.transport (Responder.behavior_child responder false ())
-        (Responder.respondDisplayed contract verifiedBehavior query false).2 =
-      Responder.verifiedBehavior contract responder Invariant verified
+        (Responder.respondDisplayed contract toDisplayedBehavior query false).2 =
+      Responder.toDisplayedBehavior contract responder Invariant displayed
         (responder.next false query)
         ((Display.responderCoalgebraEquiv contract responder Invariant)
-          verified false initialWitness query false).2 := by
+          displayed false initialWitness query false).2 := by
   change Display.M.transport
       (Responder.behavior_child responder false query)
       (Responder.respondDisplayed contract
-        (Responder.verifiedBehavior contract responder Invariant verified
+        (Responder.toDisplayedBehavior contract responder Invariant displayed
           false initialWitness) query false).2 = _
   exact
-    Responder.respondDisplayed_verifiedBehavior_next contract responder Invariant verified
+    Responder.respondDisplayed_toDisplayedBehavior_next contract responder Invariant displayed
       false initialWitness query false
 
 def oneCall : Handler (FreeM Interface) Interface :=
@@ -132,9 +132,9 @@ def displayedOneCall : Display.Handler contract contract oneCall :=
     ⟨precondition, fun answer evidence =>
       contract.leaf (contract.direction query precondition) answer evidence⟩
 
-def reindexedVerifiedBehavior :=
-  Responder.reindexVerifiedBehavior contract contract oneCall displayedOneCall
-    behavior verifiedBehavior
+def reindexedDisplayedBehavior :=
+  Responder.reindexDisplayedBehavior contract contract oneCall displayedOneCall
+    behavior toDisplayedBehavior
 
 example : Responder.reindexBehavior oneCall behavior =
     (Responder.reindexViaRunAgainst oneCall
@@ -144,7 +144,7 @@ example : Responder.reindexBehavior oneCall behavior =
 def directDisplayedStep :=
   Responder.runFreeDisplayed contract (Responder.terminal (P := Interface))
     (Display.Coalgebra.terminal (Display.responder contract))
-    (displayedOneCall query false) behavior verifiedBehavior
+    (displayedOneCall query false) behavior toDisplayedBehavior
 
 def runAgainstDisplayedStep :=
   Responder.transportRunEvidence (contract.direction query false)
@@ -154,7 +154,7 @@ def runAgainstDisplayedStep :=
     (Responder.runAgainstDisplayed contract
       (Responder.terminal (P := Interface))
       (Display.Coalgebra.terminal (Display.responder contract))
-      (displayedOneCall query false) behavior verifiedBehavior)
+      (displayedOneCall query false) behavior toDisplayedBehavior)
 
 /-! The direct displayed execution and the coinductive reindexed `respondDisplayed` side
 are observed separately, so changing the semantic equation and implementation
@@ -163,30 +163,30 @@ in lockstep does not preserve both canaries. -/
 example : directionVal false false directDisplayedStep.1 = 1 := by
   change directionVal false false
     (Responder.respondDisplayed contract
-      (Responder.verifiedBehavior contract responder Invariant verified
+      (Responder.toDisplayedBehavior contract responder Invariant displayed
         false initialWitness) query false).1 = 1
-  rw [Responder.respondDisplayed_verifiedBehavior_post]
+  rw [Responder.respondDisplayed_toDisplayedBehavior_post]
   rfl
 
 example : directionVal false false
-    (Responder.respondDisplayed contract reindexedVerifiedBehavior query false).1 = 1 := by
+    (Responder.respondDisplayed contract reindexedDisplayedBehavior query false).1 = 1 := by
   change directionVal false false
     (Responder.respondDisplayed contract
-      (Responder.reindexVerifiedBehavior contract contract oneCall
-        displayedOneCall behavior verifiedBehavior) query false).1 = 1
-  rw [Responder.respondDisplayed_reindexVerifiedBehavior_post]
+      (Responder.reindexDisplayedBehavior contract contract oneCall
+        displayedOneCall behavior toDisplayedBehavior) query false).1 = 1
+  rw [Responder.respondDisplayed_reindexDisplayedBehavior_post]
   exact show directionVal false false directDisplayedStep.1 = 1 from by
     change directionVal false false
       (Responder.respondDisplayed contract
-        (Responder.verifiedBehavior contract responder Invariant verified
+        (Responder.toDisplayedBehavior contract responder Invariant displayed
           false initialWitness) query false).1 = 1
-    rw [Responder.respondDisplayed_verifiedBehavior_post]
+    rw [Responder.respondDisplayed_toDisplayedBehavior_post]
     rfl
 
 /-- The state-free proof-relevant postcondition is supplied by evaluated
 Pattern Runs on Matter, not merely by the raw Xi synchronization tree. -/
 example :
-    (Responder.respondDisplayed contract reindexedVerifiedBehavior query false).1 =
+    (Responder.respondDisplayed contract reindexedDisplayedBehavior query false).1 =
       (Responder.transportRunEvidence (contract.direction query false)
         (Display.M (Display.responder contract))
         (Responder.runAgainstResult_eq_runFree
@@ -194,22 +194,22 @@ example :
         (Responder.runAgainstDisplayed contract
           (Responder.terminal (P := Interface))
           (Display.Coalgebra.terminal (Display.responder contract))
-          (displayedOneCall query false) behavior verifiedBehavior)).1 :=
-  Responder.respondDisplayed_reindexVerifiedBehavior_post_runAgainst contract contract
-    oneCall displayedOneCall behavior verifiedBehavior query false
+          (displayedOneCall query false) behavior toDisplayedBehavior)).1 :=
+  Responder.respondDisplayed_reindexDisplayedBehavior_post_runAgainst contract contract
+    oneCall displayedOneCall behavior toDisplayedBehavior query false
 
 example :
     Display.M.transport
         (Responder.behavior_child
           (Responder.reindex oneCall
             (Responder.terminal (P := Interface))) behavior query)
-        (Responder.respondDisplayed contract reindexedVerifiedBehavior query false).2 =
-      Responder.reindexVerifiedBehavior contract contract oneCall
+        (Responder.respondDisplayed contract reindexedDisplayedBehavior query false).2 =
+      Responder.reindexDisplayedBehavior contract contract oneCall
         displayedOneCall
         ((Responder.terminal (P := Interface)).runFree
           (oneCall query) behavior).2 directDisplayedStep.2 := by
-  exact Responder.respondDisplayed_reindexVerifiedBehavior_next contract contract
-    oneCall displayedOneCall behavior verifiedBehavior query false
+  exact Responder.respondDisplayed_reindexDisplayedBehavior_next contract contract
+    oneCall displayedOneCall behavior toDisplayedBehavior query false
 
 /-- The evaluated Pattern-Runs-on-Matter continuation bridge is exercised
 directly, rather than only through its `runFreeDisplayed` predecessor. -/
@@ -218,21 +218,21 @@ example :
         (Responder.behavior_child
           (Responder.reindex oneCall
             (Responder.terminal (P := Interface))) behavior query)
-        (Responder.respondDisplayed contract reindexedVerifiedBehavior query false).2 =
-      Responder.reindexVerifiedBehavior contract contract oneCall
+        (Responder.respondDisplayed contract reindexedDisplayedBehavior query false).2 =
+      Responder.reindexDisplayedBehavior contract contract oneCall
         displayedOneCall
         ((Responder.terminal (P := Interface)).runFree
           (oneCall query) behavior).2 runAgainstDisplayedStep.2 := by
   exact
-    Responder.respondDisplayed_reindexVerifiedBehavior_next_runAgainst contract contract
-      oneCall displayedOneCall behavior verifiedBehavior query false
+    Responder.respondDisplayed_reindexDisplayedBehavior_next_runAgainst contract contract
+      oneCall displayedOneCall behavior toDisplayedBehavior query false
 
 def firstRunAgainstContinuation :
     Display.M (Display.responder contract)
       (Responder.reindexBehavior oneCall
         ((Responder.terminal (P := Interface)).runFree
           (oneCall query) behavior).2) :=
-  Responder.reindexVerifiedBehavior contract contract oneCall displayedOneCall
+  Responder.reindexDisplayedBehavior contract contract oneCall displayedOneCall
     ((Responder.terminal (P := Interface)).runFree
       (oneCall query) behavior).2 runAgainstDisplayedStep.2
 
@@ -244,10 +244,10 @@ example : directionVal true true
     Responder.runAgainstDisplayed_eq_runFreeDisplayed contract
       (Responder.terminal (P := Interface))
       (Display.Coalgebra.terminal (Display.responder contract))
-      (displayedOneCall query false) behavior verifiedBehavior
+      (displayedOneCall query false) behavior toDisplayedBehavior
   change directionVal true true
     (Responder.respondDisplayed contract
-      (Responder.reindexVerifiedBehavior contract contract oneCall
+      (Responder.reindexDisplayedBehavior contract contract oneCall
         displayedOneCall
         ((Responder.terminal (P := Interface)).runFree
           (oneCall query) behavior).2 runAgainstDisplayedStep.2)
@@ -264,9 +264,9 @@ def firstReindexedContinuation :
     (Responder.behavior_child
       (Responder.reindex oneCall (Responder.terminal (P := Interface)))
       behavior query)
-    (Responder.respondDisplayed contract reindexedVerifiedBehavior query false).2
+    (Responder.respondDisplayed contract reindexedDisplayedBehavior query false).2
 
-/-! The continuation produced by verified reindexing is itself executed for a
+/-! The continuation produced by displayed reindexing is itself executed for a
 second step. This catches a reindexer that returns a stale or copied original
 continuation even when its one-step equation is changed in lockstep. -/
 example : directionVal true true
@@ -278,45 +278,45 @@ example : directionVal true true
           (Responder.reindex oneCall
             (Responder.terminal (P := Interface))) behavior query)
         (Responder.respondDisplayed contract
-          (Responder.reindexVerifiedBehavior contract contract oneCall
-            displayedOneCall behavior verifiedBehavior) query false).2)
+          (Responder.reindexDisplayedBehavior contract contract oneCall
+            displayedOneCall behavior toDisplayedBehavior) query false).2)
       query true).1 = 0
-  rw [Responder.respondDisplayed_reindexVerifiedBehavior_next]
+  rw [Responder.respondDisplayed_reindexDisplayedBehavior_next]
   rfl
 
-def firstVerifiedContinuation :
+def firstDisplayedContinuation :
     Display.M (Display.responder contract) (responder.behavior true) :=
   Display.M.transport (Responder.behavior_child responder false query)
-    (Responder.respondDisplayed contract verifiedBehavior query false).2
+    (Responder.respondDisplayed contract toDisplayedBehavior query false).2
 
 /-! This unfolds the continuation returned by the first `respondDisplayed` call and then
 observes its next answer-dependent postcondition. It is independent of the
 one-step continuation equality above. -/
 example : directionVal true true
-    (Responder.respondDisplayed contract firstVerifiedContinuation query true).1 = 0 := by
+    (Responder.respondDisplayed contract firstDisplayedContinuation query true).1 = 0 := by
   change directionVal true true
     (Responder.respondDisplayed contract
       (Display.M.transport (Responder.behavior_child responder false query)
         (Responder.respondDisplayed contract
-          (Responder.verifiedBehavior contract responder Invariant verified
+          (Responder.toDisplayedBehavior contract responder Invariant displayed
             false initialWitness) query false).2) query true).1 = 0
-  rw [Responder.respondDisplayed_verifiedBehavior_next]
-  rw [Responder.respondDisplayed_verifiedBehavior_post]
+  rw [Responder.respondDisplayed_toDisplayedBehavior_next]
+  rw [Responder.respondDisplayed_toDisplayedBehavior_post]
   rfl
 
-/-! Re-coinducing a verified behavior from its own destructor gives a second
+/-! Re-coinducing a displayed behavior from its own destructor gives a second
 presentation of the same displayed tree.  The following two canaries exercise
 the generic displayed and responder-observation bisimulation interfaces
 directly; their child obligations reject a copied or stale continuation. -/
 
-def recoinducedVerifiedBehavior :
+def recoinducedDisplayedBehavior :
     Display.M (Display.responder contract) behavior :=
   Display.M.corec (Display.M (Display.responder contract))
-    (fun _ displayed => Display.M.dest displayed) behavior verifiedBehavior
+    (fun _ displayed => Display.M.dest displayed) behavior toDisplayedBehavior
 
 /-- Direct producer canary for `Display.M.bisim`, using the original displayed
 tree and the distinct corecursive presentation generated by its destructor. -/
-example : verifiedBehavior = recoinducedVerifiedBehavior := by
+example : toDisplayedBehavior = recoinducedDisplayedBehavior := by
   let step := fun
       (current : PFunctor.M (Interface ⊸ X))
       (displayed : Display.M (Display.responder contract) current) =>
@@ -341,12 +341,12 @@ example : verifiedBehavior = recoinducedVerifiedBehavior := by
       rfl
     · intro direction precondition
       exact ⟨source.child direction precondition, rfl, rfl⟩
-  · exact ⟨verifiedBehavior, rfl, rfl⟩
+  · exact ⟨toDisplayedBehavior, rfl, rfl⟩
 
 /-- Direct producer canary for the responder-shaped bisimulation.  Equality of
 the answer-dependent evidence and recursive selection of the matching child
 are both exposed through `respondDisplayed`. -/
-example : verifiedBehavior = recoinducedVerifiedBehavior := by
+example : toDisplayedBehavior = recoinducedDisplayedBehavior := by
   let step := fun
       (current : PFunctor.M (Interface ⊸ X))
       (displayed : Display.M (Display.responder contract) current) =>
@@ -378,7 +378,7 @@ example : verifiedBehavior = recoinducedVerifiedBehavior := by
       rw [Responder.respondDisplayed_next, Responder.respondDisplayed_next]
       exact congrArg
         (fun node => node.2 ⟨currentQuery, PUnit.unit⟩ precondition) hDest
-  · exact ⟨verifiedBehavior, rfl, rfl⟩
+  · exact ⟨toDisplayedBehavior, rfl, rfl⟩
 
 example :
     Responder.reindexBehavior oneCall (responder.behavior false) =
@@ -396,37 +396,37 @@ example : Responder.reindexBehavior (Handler.id Interface) behavior = behavior :
 
 example :
     Display.M.transport (Responder.reindexBehavior_id behavior)
-        (Responder.reindexVerifiedBehavior contract contract
+        (Responder.reindexDisplayedBehavior contract contract
           (Handler.id Interface) (Display.Handler.id contract)
-          behavior verifiedBehavior) = verifiedBehavior :=
-  Responder.reindexVerifiedBehavior_id contract behavior verifiedBehavior
+          behavior toDisplayedBehavior) = toDisplayedBehavior :=
+  Responder.reindexDisplayedBehavior_id contract behavior toDisplayedBehavior
 
 example :
     Display.M.transport
         (Responder.reindexBehavior_comp oneCall oneCall behavior)
-        (Responder.reindexVerifiedBehavior contract contract oneCall
+        (Responder.reindexDisplayedBehavior contract contract oneCall
           displayedOneCall (Responder.reindexBehavior oneCall behavior)
-          reindexedVerifiedBehavior) =
-      Responder.reindexVerifiedBehavior contract contract
+          reindexedDisplayedBehavior) =
+      Responder.reindexDisplayedBehavior contract contract
         (oneCall.comp oneCall) (displayedOneCall.comp displayedOneCall)
-        behavior verifiedBehavior :=
-  Responder.reindexVerifiedBehavior_comp contract contract contract
-    oneCall displayedOneCall oneCall displayedOneCall behavior verifiedBehavior
+        behavior toDisplayedBehavior :=
+  Responder.reindexDisplayedBehavior_comp contract contract contract
+    oneCall displayedOneCall oneCall displayedOneCall behavior toDisplayedBehavior
 
 example :
     (Display.M.destEquiv (S := Display.responder contract)
       (tree := behavior)).symm
-        (Display.M.dest verifiedBehavior) = verifiedBehavior :=
-  Display.M.mk_dest verifiedBehavior
+        (Display.M.dest toDisplayedBehavior) = toDisplayedBehavior :=
+  Display.M.mk_dest toDisplayedBehavior
 
 example :
     (Display.M.transportEquiv (S := Display.responder contract)
       (show behavior = behavior from rfl)).symm
         (Display.M.transportEquiv (S := Display.responder contract)
-          (show behavior = behavior from rfl) verifiedBehavior) =
-      verifiedBehavior :=
+          (show behavior = behavior from rfl) toDisplayedBehavior) =
+      toDisplayedBehavior :=
   (Display.M.transportEquiv (S := Display.responder contract)
-    (show behavior = behavior from rfl)).left_inv verifiedBehavior
+    (show behavior = behavior from rfl)).left_inv toDisplayedBehavior
 
 /-! Branch count is independently observable: one query returns the initial
 answer, while the explicit two-query handler returns the answer after one
@@ -560,7 +560,7 @@ def displayedMProducer
     (tree : PFunctor.M P) (state : X tree) : Display.M S tree :=
   Display.M.corec X step tree state
 
-def verifiedBehaviorProducer
+def toDisplayedBehaviorProducer
     {P : PFunctor.{uA, uB}}
     (S : Display.{uA, uB, uC, uD} P)
     {State : Type uS} (R : Responder State P)
@@ -568,7 +568,7 @@ def verifiedBehaviorProducer
     (displayedR : Display.Coalgebra (Display.responder S) R.out I)
     (state : State) (witness : I state) :
     Display.M (Display.responder S) (R.behavior state) :=
-  Responder.verifiedBehavior S R I displayedR state witness
+  Responder.toDisplayedBehavior S R I displayedR state witness
 
 def reindexBehaviorProducer
     {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
@@ -577,7 +577,7 @@ def reindexBehaviorProducer
     PFunctor.M (P ⊸ X.{uA, uB}) :=
   Responder.reindexBehavior f behavior
 
-def reindexVerifiedBehaviorProducer
+def reindexDisplayedBehaviorProducer
     {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
     (T : Display.{uA', uB', uC', uD'} Q)
@@ -585,7 +585,7 @@ def reindexVerifiedBehaviorProducer
     (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior) :
     Display.M (Display.responder S) (Responder.reindexBehavior f behavior) :=
-  Responder.reindexVerifiedBehavior S T f df behavior displayedBehavior
+  Responder.reindexDisplayedBehavior S T f df behavior displayedBehavior
 
 /-- The final target response universe remains independent in ordinary
 state-free reindexing composition. -/
@@ -599,9 +599,9 @@ theorem reindexBehaviorCompProducer
       Responder.reindexBehavior (second.comp first) behavior :=
   Responder.reindexBehavior_comp second first behavior
 
-/-- The verified composition law has the same independent final-target
+/-- The displayed composition law has the same independent final-target
 response universe as its base-handler and coalgebra composition laws. -/
-theorem reindexVerifiedBehaviorCompProducer
+theorem reindexDisplayedBehaviorCompProducer
     {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB}}
     {R : PFunctor.{uA'', uB''}}
     (S : Display.{uA, uB, uC, uD} P)
@@ -613,13 +613,13 @@ theorem reindexVerifiedBehaviorCompProducer
     (displayedBehavior : Display.M (Display.responder U) behavior) :
     Display.M.transport
         (Responder.reindexBehavior_comp second first behavior)
-        (Responder.reindexVerifiedBehavior S T first dfirst
+        (Responder.reindexDisplayedBehavior S T first dfirst
           (Responder.reindexBehavior second behavior)
-          (Responder.reindexVerifiedBehavior T U second dsecond
+          (Responder.reindexDisplayedBehavior T U second dsecond
             behavior displayedBehavior)) =
-      Responder.reindexVerifiedBehavior S U (second.comp first)
+      Responder.reindexDisplayedBehavior S U (second.comp first)
         (dsecond.comp dfirst) behavior displayedBehavior :=
-  Responder.reindexVerifiedBehavior_comp S T U second dsecond first dfirst
+  Responder.reindexDisplayedBehavior_comp S T U second dsecond first dfirst
     behavior displayedBehavior
 
 end Universes

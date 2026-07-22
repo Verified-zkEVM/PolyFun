@@ -6,7 +6,7 @@ Authors: Quang Dao
 
 module
 
-public import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedCoherence
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel.DisplayedCoherence
 
 /-!
 # Regression tests for proof-relevant parallel coherence
@@ -18,7 +18,7 @@ erasing or swapping displayed evidence.
 
 @[expose] public section
 
-namespace PFunctor.ParallelVerifiedCoherenceCanary
+namespace PFunctor.ParallelDisplayedCoherenceCanary
 
 abbrev Left : PFunctor.{0, 0} := ⟨Bool, fun _ => Bool⟩
 
@@ -64,23 +64,23 @@ def rightCoalgebra :
     rightResponder rightInvariant).symm fun state _ _ _ => by
       exact ⟨rightPost state, ⟨rfl⟩⟩
 
-def leftVerified :
+def leftDisplayed :
     Display.M (Display.responder leftDisplay) (leftResponder.behavior 0) :=
-  Responder.verifiedBehavior leftDisplay leftResponder leftInvariant
+  Responder.toDisplayedBehavior leftDisplay leftResponder leftInvariant
     leftCoalgebra 0 ⟨0, Nat.zero_lt_succ _⟩
 
-def rightVerified :
+def rightDisplayed :
     Display.M (Display.responder rightDisplay) (rightResponder.behavior 5) :=
-  Responder.verifiedBehavior rightDisplay rightResponder rightInvariant
+  Responder.toDisplayedBehavior rightDisplay rightResponder rightInvariant
     rightCoalgebra 5 ⟨rfl⟩
 
-def parallelVerified :
+def parallelDisplayed :
     Display.M (Display.responder (Display.parallelSum leftDisplay rightDisplay))
       (Responder.parallelBehavior
         (leftResponder.behavior 0) (rightResponder.behavior 5)) :=
-  Responder.parallelVerifiedBehavior leftDisplay rightDisplay
-    (leftResponder.behavior 0) leftVerified
-    (rightResponder.behavior 5) rightVerified
+  Responder.parallelDisplayedBehavior leftDisplay rightDisplay
+    (leftResponder.behavior 0) leftDisplayed
+    (rightResponder.behavior 5) rightDisplayed
 
 def leftContract : leftDisplay.position true := by
   change Nat
@@ -92,7 +92,7 @@ def rightContract : rightDisplay.position PUnit.unit :=
 example :
     (Responder.respondDisplayed
       (Display.parallelSum leftDisplay rightDisplay)
-      parallelVerified (.both true PUnit.unit)
+      parallelDisplayed (.both true PUnit.unit)
       (leftContract, rightContract)).1 =
         (leftPost false, rightPost 5) := by
   rfl
@@ -101,64 +101,64 @@ example :
     Display.M.transport
         (Responder.mapBehavior_parallel_comm
           (leftResponder.behavior 0) (rightResponder.behavior 5))
-      (Responder.mapVerifiedBehavior
+      (Responder.mapDisplayedBehavior
         (Display.Lens.parallelSumComm leftDisplay rightDisplay)
         (Responder.parallelBehavior
           (rightResponder.behavior 5) (leftResponder.behavior 0))
-        (Responder.parallelVerifiedBehavior rightDisplay leftDisplay
-          (rightResponder.behavior 5) rightVerified
-          (leftResponder.behavior 0) leftVerified)) =
-      parallelVerified :=
-  Responder.mapVerifiedBehavior_parallel_comm _ _ _ _ _ _
+        (Responder.parallelDisplayedBehavior rightDisplay leftDisplay
+          (rightResponder.behavior 5) rightDisplayed
+          (leftResponder.behavior 0) leftDisplayed)) =
+      parallelDisplayed :=
+  Responder.mapDisplayedBehavior_parallel_comm _ _ _ _ _ _
 
 example :
     Display.M.transport
         (Responder.mapBehavior_parallel_zero_right (leftResponder.behavior 0))
-      (Responder.mapVerifiedBehavior
+      (Responder.mapDisplayedBehavior
         (Display.Lens.parallelSumZero leftDisplay)
-        (leftResponder.behavior 0) leftVerified) =
-      Responder.parallelVerifiedBehavior leftDisplay Display.zero
-        (leftResponder.behavior 0) leftVerified
-        Responder.zeroBehavior Responder.zeroVerifiedBehavior :=
-  Responder.mapVerifiedBehavior_parallel_zero_right _ _ _
+        (leftResponder.behavior 0) leftDisplayed) =
+      Responder.parallelDisplayedBehavior leftDisplay Display.zero
+        (leftResponder.behavior 0) leftDisplayed
+        Responder.zeroBehavior Responder.zeroDisplayedBehavior :=
+  Responder.mapDisplayedBehavior_parallel_zero_right _ _ _
 
 example :
     Display.M.transport
         (Responder.mapBehavior_parallel_zero_left (leftResponder.behavior 0))
-      (Responder.mapVerifiedBehavior
+      (Responder.mapDisplayedBehavior
         (Display.Lens.zeroParallelSum leftDisplay)
-        (leftResponder.behavior 0) leftVerified) =
-      Responder.parallelVerifiedBehavior Display.zero leftDisplay
-        Responder.zeroBehavior Responder.zeroVerifiedBehavior
-        (leftResponder.behavior 0) leftVerified :=
-  Responder.mapVerifiedBehavior_parallel_zero_left _ _ _
+        (leftResponder.behavior 0) leftDisplayed) =
+      Responder.parallelDisplayedBehavior Display.zero leftDisplay
+        Responder.zeroBehavior Responder.zeroDisplayedBehavior
+        (leftResponder.behavior 0) leftDisplayed :=
+  Responder.mapDisplayedBehavior_parallel_zero_left _ _ _
 
 example :
     Display.M.transport
         (Responder.mapBehavior_parallel_assoc
           (leftResponder.behavior 0) (rightResponder.behavior 5)
           (leftResponder.behavior 0))
-      (Responder.mapVerifiedBehavior
+      (Responder.mapDisplayedBehavior
         (Display.Lens.parallelSumAssoc leftDisplay rightDisplay leftDisplay)
         (Responder.parallelBehavior (leftResponder.behavior 0)
           (Responder.parallelBehavior
             (rightResponder.behavior 5) (leftResponder.behavior 0)))
-        (Responder.parallelVerifiedBehavior leftDisplay
+        (Responder.parallelDisplayedBehavior leftDisplay
           (Display.parallelSum rightDisplay leftDisplay)
-          (leftResponder.behavior 0) leftVerified
+          (leftResponder.behavior 0) leftDisplayed
           (Responder.parallelBehavior
             (rightResponder.behavior 5) (leftResponder.behavior 0))
-          (Responder.parallelVerifiedBehavior rightDisplay leftDisplay
-            (rightResponder.behavior 5) rightVerified
-            (leftResponder.behavior 0) leftVerified))) =
-      Responder.parallelVerifiedBehavior
+          (Responder.parallelDisplayedBehavior rightDisplay leftDisplay
+            (rightResponder.behavior 5) rightDisplayed
+            (leftResponder.behavior 0) leftDisplayed))) =
+      Responder.parallelDisplayedBehavior
         (Display.parallelSum leftDisplay rightDisplay) leftDisplay
         (Responder.parallelBehavior
           (leftResponder.behavior 0) (rightResponder.behavior 5))
-        (Responder.parallelVerifiedBehavior leftDisplay rightDisplay
-          (leftResponder.behavior 0) leftVerified
-          (rightResponder.behavior 5) rightVerified)
-        (leftResponder.behavior 0) leftVerified :=
-  Responder.mapVerifiedBehavior_parallel_assoc _ _ _ _ _ _ _ _ _
+        (Responder.parallelDisplayedBehavior leftDisplay rightDisplay
+          (leftResponder.behavior 0) leftDisplayed
+          (rightResponder.behavior 5) rightDisplayed)
+        (leftResponder.behavior 0) leftDisplayed :=
+  Responder.mapDisplayedBehavior_parallel_assoc _ _ _ _ _ _ _ _ _
 
-end PFunctor.ParallelVerifiedCoherenceCanary
+end PFunctor.ParallelDisplayedCoherenceCanary

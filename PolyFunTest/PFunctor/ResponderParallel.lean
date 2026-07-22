@@ -306,37 +306,37 @@ example :
       (.both true PUnit.unit) (leftContractTrue, rightContract) =
         ((leftPost false, rightPost 5), (leftWitness1, rightWitness15)) := rfl
 
-def dependentLeftVerifiedBehavior :=
-  Responder.verifiedBehavior dependentLeftDisplay leftResponder
+def dependentLeftDisplayedBehavior :=
+  Responder.toDisplayedBehavior dependentLeftDisplay leftResponder
     dependentLeftInvariant dependentLeftCoalgebra 0 leftWitness0
 
-def dependentRightVerifiedBehavior :=
-  Responder.verifiedBehavior dependentRightDisplay rightResponder
+def dependentRightDisplayedBehavior :=
+  Responder.toDisplayedBehavior dependentRightDisplay rightResponder
     dependentRightInvariant dependentRightCoalgebra 5 rightWitness5
 
-def dependentSumVerifiedBehavior :=
-  Responder.sumVerifiedBehavior dependentLeftDisplay dependentRightDisplay
-    (leftResponder.behavior 0) dependentLeftVerifiedBehavior
-    (rightResponder.behavior 5) dependentRightVerifiedBehavior
+def dependentSumDisplayedBehavior :=
+  Responder.sumDisplayedBehavior dependentLeftDisplay dependentRightDisplay
+    (leftResponder.behavior 0) dependentLeftDisplayedBehavior
+    (rightResponder.behavior 5) dependentRightDisplayedBehavior
 
-def dependentParallelVerifiedBehavior :=
-  Responder.parallelVerifiedBehavior dependentLeftDisplay dependentRightDisplay
-    (leftResponder.behavior 0) dependentLeftVerifiedBehavior
-    (rightResponder.behavior 5) dependentRightVerifiedBehavior
+def dependentParallelDisplayedBehavior :=
+  Responder.parallelDisplayedBehavior dependentLeftDisplay dependentRightDisplay
+    (leftResponder.behavior 0) dependentLeftDisplayedBehavior
+    (rightResponder.behavior 5) dependentRightDisplayedBehavior
 
-example : dependentSumVerifiedBehavior.head (.inl true)
+example : dependentSumDisplayedBehavior.head (.inl true)
     (ULift.up leftContractTrue) = ULift.up (leftPost false) := rfl
 
-example : dependentSumVerifiedBehavior.head (.inr PUnit.unit)
+example : dependentSumDisplayedBehavior.head (.inr PUnit.unit)
     (ULift.up rightContract) = ULift.up (rightPost 5) := rfl
 
-example : dependentParallelVerifiedBehavior.head (.left true)
+example : dependentParallelDisplayedBehavior.head (.left true)
     (ULift.up leftContractTrue) = ULift.up (leftPost false) := rfl
 
-example : dependentParallelVerifiedBehavior.head (.right PUnit.unit)
+example : dependentParallelDisplayedBehavior.head (.right PUnit.unit)
     (ULift.up rightContract) = ULift.up (rightPost 5) := rfl
 
-example : dependentParallelVerifiedBehavior.head (.both true PUnit.unit)
+example : dependentParallelDisplayedBehavior.head (.both true PUnit.unit)
     (leftContractTrue, rightContract) = (leftPost false, rightPost 5) := rfl
 
 example :
@@ -344,7 +344,7 @@ example :
       (Display.parallelSum dependentLeftDisplay dependentRightDisplay)
       (Responder.respondDisplayed
         (Display.parallelSum dependentLeftDisplay dependentRightDisplay)
-        dependentParallelVerifiedBehavior (.left true)
+        dependentParallelDisplayedBehavior (.left true)
         (ULift.up leftContractTrue)).2
       (.right PUnit.unit) (ULift.up rightContract)).1 =
         ULift.up (rightPost 5) := rfl
@@ -354,7 +354,7 @@ example :
       (Display.parallelSum dependentLeftDisplay dependentRightDisplay)
       (Responder.respondDisplayed
         (Display.parallelSum dependentLeftDisplay dependentRightDisplay)
-        dependentParallelVerifiedBehavior (.right PUnit.unit)
+        dependentParallelDisplayedBehavior (.right PUnit.unit)
         (ULift.up rightContract)).2
       (.right PUnit.unit) (ULift.up rightContract)).1 =
         ULift.up (rightPost 15) := rfl
@@ -364,7 +364,7 @@ example :
       (Display.parallelSum dependentLeftDisplay dependentRightDisplay)
       (Responder.respondDisplayed
         (Display.parallelSum dependentLeftDisplay dependentRightDisplay)
-        dependentParallelVerifiedBehavior (.both true PUnit.unit)
+        dependentParallelDisplayedBehavior (.both true PUnit.unit)
         (leftContractTrue, rightContract)).2
       (.right PUnit.unit) (ULift.up rightContract)).1 =
         ULift.up (rightPost 15) := rfl
@@ -414,7 +414,7 @@ def parallelBehavior
       PFunctor.M ((P ∥ Q) ⊸ X.{max uA₁ uA₂, uB}) :=
   Responder.parallelBehavior
 
-def parallelVerifiedBehavior
+def parallelDisplayedBehavior
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
@@ -424,9 +424,9 @@ def parallelVerifiedBehavior
     (dRight : Display.M (Display.responder T) right) :
     Display.M (Display.responder (Display.parallelSum S T))
       (Responder.parallelBehavior left right) :=
-  Responder.parallelVerifiedBehavior S T left dLeft right dRight
+  Responder.parallelDisplayedBehavior S T left dLeft right dRight
 
-def sumVerifiedBehavior
+def sumDisplayedBehavior
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
@@ -436,7 +436,7 @@ def sumVerifiedBehavior
     (dRight : Display.M (Display.responder T) right) :
     Display.M (Display.responder (Display.sum S T))
       (Responder.sumBehavior left right) :=
-  Responder.sumVerifiedBehavior S T left dLeft right dRight
+  Responder.sumDisplayedBehavior S T left dLeft right dRight
 
 theorem runFreeParallel
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}

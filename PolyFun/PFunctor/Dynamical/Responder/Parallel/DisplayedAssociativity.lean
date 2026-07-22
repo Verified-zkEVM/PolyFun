@@ -8,12 +8,12 @@ module
 
 public import PolyFun.PFunctor.Display.Parallel.Lens
 public import PolyFun.PFunctor.Dynamical.Responder.Parallel.Coherence
-public import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedPresentation
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel.Presentation
 
 /-!
-# Associativity of verified parallel responder behavior
+# Associativity of displayed parallel responder behavior
 
-The displayed parallel associator is realized first between explicit verified
+The displayed parallel associator is realized first between explicit displayed
 responder presentations, then transported to the canonical state-free API.
 The public theorem exposes only the ordinary named associativity equality.
 -/
@@ -28,14 +28,14 @@ namespace Responder
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 
 
-/-- The displayed associator is a verified presentation homomorphism between
+/-- The displayed associator is a displayed presentation homomorphism between
 the two raw three-responder presentations. -/
-private def parallelAssocVerifiedPresentationHom
+private def parallelAssocPresentationHom
     {R : PFunctor.{uA₃, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (U : Display.{uA₃, uB, uC₃, uD₃} R) :
-    VerifiedPresentationHom
+    PresentationHom
       (Display.parallelSum (Display.parallelSum S T) U)
       (Responder.parallel
         (Responder.parallel (Responder.terminal (P := P))
@@ -124,22 +124,18 @@ private def parallelAssocVerifiedPresentationHom
         | right operation => rfl
         | both operation rightOperation => cases operation <;> rfl)
       ((left, middle), right)
-    dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply Sigma.ext_iff.mpr
-    constructor
-    · apply Sigma.ext_iff.mpr
-      constructor
-      · exact hBase
-      · apply Function.hfunext rfl
-        intro operation operation' hOperation
-        cases hOperation
-        apply Function.hfunext rfl
-        intro contract contract' hContract
-        cases hContract
-        cases operation with
-        | left operation => cases operation <;> rfl
-        | right operation => rfl
-        | both operation rightOperation => cases operation <;> rfl
+    dsimp [displayedTotalStep, PresentationHom.totalMap]
+    apply displayedTotalStepObj_ext _ _ _ hBase
+    · apply Function.hfunext rfl
+      intro operation operation' hOperation
+      cases hOperation
+      apply Function.hfunext rfl
+      intro contract contract' hContract
+      cases hContract
+      cases operation with
+      | left operation => cases operation <;> rfl
+      | right operation => rfl
+      | both operation rightOperation => cases operation <;> rfl
     · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder
@@ -173,12 +169,12 @@ private def parallelAssocRightPresentationHom
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (U : Display.{uA₃, uB, uC₃, uD₃} R) :=
-  VerifiedPresentationHom.parallel
-    (VerifiedPresentationHom.id (S := S)
+  PresentationHom.parallel
+    (PresentationHom.id (S := S)
       (source := Responder.terminal (P := P))
       (SourceWitness := Display.M (Display.responder S))
       (displayedSource := Display.Coalgebra.terminal (Display.responder S)))
-    (VerifiedPresentationHom.toTerminal (Display.parallelSum T U)
+    (PresentationHom.toTerminal (Display.parallelSum T U)
       (Responder.parallel (Responder.terminal (P := Q))
         (Responder.terminal (P := R)))
       (fun state => Display.M (Display.responder T) state.1 ×
@@ -197,8 +193,8 @@ private def parallelAssocLeftPresentationHom
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (U : Display.{uA₃, uB, uC₃, uD₃} R) :=
-  VerifiedPresentationHom.parallel
-    (VerifiedPresentationHom.toTerminal (Display.parallelSum S T)
+  PresentationHom.parallel
+    (PresentationHom.toTerminal (Display.parallelSum S T)
       (Responder.parallel (Responder.terminal (P := P))
         (Responder.terminal (P := Q)))
       (fun state => Display.M (Display.responder S) state.1 ×
@@ -209,14 +205,14 @@ private def parallelAssocLeftPresentationHom
         (Display.M (Display.responder T))
         (Display.Coalgebra.terminal (Display.responder S))
         (Display.Coalgebra.terminal (Display.responder T))))
-    (VerifiedPresentationHom.id (S := U)
+    (PresentationHom.id (S := U)
       (source := Responder.terminal (P := R))
       (SourceWitness := Display.M (Display.responder U))
       (displayedSource := Display.Coalgebra.terminal (Display.responder U)))
 
-/-- Verified parallel behavior associates after the single canonical
+/-- Displayed parallel behavior associates after the single canonical
 transport along the ordinary associator law. -/
-theorem mapVerifiedBehavior_parallel_assoc
+theorem mapDisplayedBehavior_parallel_assoc
     {R : PFunctor.{uA₃, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
@@ -228,15 +224,15 @@ theorem mapVerifiedBehavior_parallel_assoc
     (right : PFunctor.M (R ⊸ X.{uA₃, uB}))
     (displayedRight : Display.M (Display.responder U) right) :
     Display.M.transport (mapBehavior_parallel_assoc left middle right)
-        (mapVerifiedBehavior (Display.Lens.parallelSumAssoc S T U)
+        (mapDisplayedBehavior (Display.Lens.parallelSumAssoc S T U)
           (parallelBehavior left (parallelBehavior middle right))
-          (parallelVerifiedBehavior S (Display.parallelSum T U)
+          (parallelDisplayedBehavior S (Display.parallelSum T U)
             left displayedLeft (parallelBehavior middle right)
-            (parallelVerifiedBehavior T U middle displayedMiddle
+            (parallelDisplayedBehavior T U middle displayedMiddle
               right displayedRight))) =
-      parallelVerifiedBehavior (Display.parallelSum S T) U
+      parallelDisplayedBehavior (Display.parallelSum S T) U
         (parallelBehavior left middle)
-        (parallelVerifiedBehavior S T left displayedLeft middle displayedMiddle)
+        (parallelDisplayedBehavior S T left displayedLeft middle displayedMiddle)
         right displayedRight := by
   let pResponder := Responder.terminal (P := P)
   let qResponder := Responder.terminal (P := Q)
@@ -281,23 +277,23 @@ theorem mapVerifiedBehavior_parallel_assoc
       (Display.Coalgebra.terminal (Display.responder S))
       (Display.Coalgebra.terminal (Display.responder T)))
     (Display.Coalgebra.terminal (Display.responder U))
-  let sourceDisplayed := parallelVerifiedBehavior S
+  let sourceDisplayed := parallelDisplayedBehavior S
     (Display.parallelSum T U) left displayedLeft
     (parallelBehavior middle right)
-    (parallelVerifiedBehavior T U middle displayedMiddle right displayedRight)
-  let rawRightDisplayed := verifiedBehavior
+    (parallelDisplayedBehavior T U middle displayedMiddle right displayedRight)
+  let rawRightDisplayed := toDisplayedBehavior
     (Display.parallelSum S (Display.parallelSum T U))
     rawRight rawRightWitness displayedRawRight
     (left, (middle, right))
     (displayedLeft, (displayedMiddle, displayedRight))
-  let rawLeftDisplayed := verifiedBehavior
+  let rawLeftDisplayed := toDisplayedBehavior
     (Display.parallelSum (Display.parallelSum S T) U)
     rawLeft rawLeftWitness displayedRawLeft
     ((left, middle), right)
     ((displayedLeft, displayedMiddle), displayedRight)
-  let publicLeftDisplayed := parallelVerifiedBehavior
+  let publicLeftDisplayed := parallelDisplayedBehavior
     (Display.parallelSum S T) U (parallelBehavior left middle)
-    (parallelVerifiedBehavior S T left displayedLeft middle displayedMiddle)
+    (parallelDisplayedBehavior S T left displayedLeft middle displayedMiddle)
     right displayedRight
   let rightEq :=
     (parallelAssocRightPresentationHom S T U).behavior_eq
@@ -305,32 +301,32 @@ theorem mapVerifiedBehavior_parallel_assoc
       (displayedLeft, (displayedMiddle, displayedRight))
   have hRight : Display.M.transport rightEq sourceDisplayed =
       rawRightDisplayed := by
-    have h := (parallelAssocRightPresentationHom S T U).verifiedBehavior_naturality
+    have h := (parallelAssocRightPresentationHom S T U).toDisplayedBehavior_naturality
         (left, (middle, right))
         (displayedLeft, (displayedMiddle, displayedRight))
     change Display.M.transport _ sourceDisplayed = rawRightDisplayed at h
     exact (Display.M.transport_proof_irrel rightEq _ sourceDisplayed).trans h
-  let mappedPublic := mapVerifiedBehavior
+  let mappedPublic := mapDisplayedBehavior
     (Display.Lens.parallelSumAssoc S T U) _ sourceDisplayed
-  let mappedRawInput := mapVerifiedBehavior
+  let mappedRawInput := mapDisplayedBehavior
     (Display.Lens.parallelSumAssoc S T U) _ rawRightDisplayed
   let mappedRightEq := congrArg
     (mapBehavior (PFunctor.Lens.parallelSumAssoc P Q R)) rightEq
   have hMappedRight : Display.M.transport mappedRightEq mappedPublic =
       mappedRawInput := by
     calc
-      _ = mapVerifiedBehavior (Display.Lens.parallelSumAssoc S T U) _
+      _ = mapDisplayedBehavior (Display.Lens.parallelSumAssoc S T U) _
           (Display.M.transport rightEq sourceDisplayed) :=
-        mapVerifiedBehavior_transport
+        mapDisplayedBehavior_transport
           (Display.Lens.parallelSumAssoc S T U) rightEq sourceDisplayed
       _ = mappedRawInput := congrArg
-        (mapVerifiedBehavior (Display.Lens.parallelSumAssoc S T U) _)
+        (mapDisplayedBehavior (Display.Lens.parallelSumAssoc S T U) _)
         hRight
   let handler := PFunctor.Handler.ofLens
     (PFunctor.Lens.parallelSumAssoc P Q R)
   let presentationEq := reindexBehavior_behavior handler rawRight
     (left, (middle, right))
-  let rawMapped := verifiedBehavior
+  let rawMapped := toDisplayedBehavior
     (Display.parallelSum (Display.parallelSum S T) U)
     (Responder.reindex handler rawRight) rawRightWitness
     (Responder.reindexCoalgebra
@@ -342,14 +338,14 @@ theorem mapVerifiedBehavior_parallel_assoc
     (displayedLeft, (displayedMiddle, displayedRight))
   have hPresentation : Display.M.transport presentationEq mappedRawInput =
       rawMapped := by
-    exact reindexVerifiedBehavior_verifiedBehavior handler
+    exact reindexDisplayedBehavior_toDisplayedBehavior handler
       (Display.Lens.parallelSumAssoc S T U).toHandler rawRight
       rawRightWitness displayedRawRight _ _
-  let rawEq := (parallelAssocVerifiedPresentationHom S T U).behavior_eq
+  let rawEq := (parallelAssocPresentationHom S T U).behavior_eq
     ((left, middle), right)
     ((displayedLeft, displayedMiddle), displayedRight)
   have hRaw : Display.M.transport rawEq rawMapped = rawLeftDisplayed := by
-    have h := (parallelAssocVerifiedPresentationHom S T U).verifiedBehavior_naturality
+    have h := (parallelAssocPresentationHom S T U).toDisplayedBehavior_naturality
         ((left, middle), right)
         ((displayedLeft, displayedMiddle), displayedRight)
     change Display.M.transport _ rawMapped = rawLeftDisplayed at h
@@ -360,7 +356,7 @@ theorem mapVerifiedBehavior_parallel_assoc
       ((displayedLeft, displayedMiddle), displayedRight)
   have hLeft : Display.M.transport leftEq publicLeftDisplayed =
       rawLeftDisplayed := by
-    have h := (parallelAssocLeftPresentationHom S T U).verifiedBehavior_naturality
+    have h := (parallelAssocLeftPresentationHom S T U).toDisplayedBehavior_naturality
         ((left, middle), right)
         ((displayedLeft, displayedMiddle), displayedRight)
     change Display.M.transport _ publicLeftDisplayed = rawLeftDisplayed at h

@@ -7,13 +7,13 @@ Authors: Quang Dao
 module
 
 public import PolyFun.PFunctor.Display.Lens
-public import PolyFun.PFunctor.Dynamical.Responder.VerifiedPresentation
+public import PolyFun.PFunctor.Dynamical.Responder.Presentation
 
 /-!
 # Reindexing state-free responder behavior by polynomial lenses
 
 Polynomial lenses embed as one-operation free handlers. This module specializes
-ordinary and verified state-free handler reindexing to that one-step layer,
+ordinary and displayed state-free handler reindexing to that one-step layer,
 with exact postcondition and continuation equations.
 -/
 
@@ -81,8 +81,8 @@ theorem mapBehavior_comp
   unfold mapBehavior
   rw [reindexBehavior_comp, ← PFunctor.Handler.ofLens_comp]
 
-/-- Reindex verified state-free behavior along a displayed polynomial lens. -/
-def mapVerifiedBehavior
+/-- Reindex displayed state-free behavior along a displayed polynomial lens. -/
+def mapDisplayedBehavior
     {S : Display.{uA₁, uB₁, uC₁, uD₁} P}
     {T : Display.{uA₂, uB₂, uC₂, uD₂} Q}
     {f : PFunctor.Lens P Q}
@@ -90,12 +90,12 @@ def mapVerifiedBehavior
     (behavior : PFunctor.M (Q ⊸ X.{uA₂, uB₂}))
     (displayedBehavior : Display.M (Display.responder T) behavior) :
     Display.M (Display.responder S) (mapBehavior f behavior) :=
-  reindexVerifiedBehavior S T (PFunctor.Handler.ofLens f)
+  reindexDisplayedBehavior S T (PFunctor.Handler.ofLens f)
     (df.toHandler) behavior displayedBehavior
 
-/-- Reindexing verified behavior commutes with transport of the underlying
+/-- Reindexing displayed behavior commutes with transport of the underlying
 ordinary behavior. -/
-theorem mapVerifiedBehavior_transport
+theorem mapDisplayedBehavior_transport
     {R : PFunctor.{uA₂, uB₂}}
     {S : Display.{uA₁, uB₁, uC₁, uD₁} P}
     {T : Display.{uA₂, uB₂, uC₂, uD₂} R}
@@ -103,26 +103,26 @@ theorem mapVerifiedBehavior_transport
     {first second : PFunctor.M (R ⊸ X.{uA₂, uB₂})}
     (h : first = second) (displayed : Display.M (Display.responder T) first) :
     Display.M.transport (congrArg (mapBehavior f) h)
-        (mapVerifiedBehavior df first displayed) =
-      mapVerifiedBehavior df second (Display.M.transport h displayed) := by
+        (mapDisplayedBehavior df first displayed) =
+      mapDisplayedBehavior df second (Display.M.transport h displayed) := by
   cases h
   rw [Display.M.transport_rfl, Display.M.transport_rfl]
 
-/-- Verified one-step behavior reindexing preserves the identity lens, after
+/-- Displayed one-step behavior reindexing preserves the identity lens, after
 the canonical equality of the underlying ordinary behaviors. -/
-@[simp] theorem mapVerifiedBehavior_id
+@[simp] theorem mapDisplayedBehavior_id
     {S : Display.{uA₁, uB₁, uC₁, uD₁} P}
     (behavior : PFunctor.M (P ⊸ X.{uA₁, uB₁}))
     (displayedBehavior : Display.M (Display.responder S) behavior) :
     Display.M.transport (mapBehavior_id behavior)
-        (mapVerifiedBehavior (Display.Lens.id S)
+        (mapDisplayedBehavior (Display.Lens.id S)
           behavior displayedBehavior) =
       displayedBehavior :=
-  reindexVerifiedBehavior_id S behavior displayedBehavior
+  reindexDisplayedBehavior_id S behavior displayedBehavior
 
-/-- Verified one-step behavior reindexing respects lens composition, with a
+/-- Displayed one-step behavior reindexing respects lens composition, with a
 single transport along the ordinary behavior-composition law. -/
-theorem mapVerifiedBehavior_comp
+theorem mapDisplayedBehavior_comp
     {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}}
     {R : PFunctor.{uA₃, uB₃}}
     {S : Display.{uA₁, uB₁, uC₁, uD₁} P}
@@ -135,9 +135,9 @@ theorem mapVerifiedBehavior_comp
     (behavior : PFunctor.M (R ⊸ X.{uA₃, uB₃}))
     (displayedBehavior : Display.M (Display.responder U) behavior) :
     Display.M.transport (mapBehavior_comp firstBase secondBase behavior)
-        (mapVerifiedBehavior first (mapBehavior secondBase behavior)
-          (mapVerifiedBehavior second behavior displayedBehavior)) =
-      mapVerifiedBehavior (Display.Lens.comp second first)
+        (mapDisplayedBehavior first (mapBehavior secondBase behavior)
+          (mapDisplayedBehavior second behavior displayedBehavior)) =
+      mapDisplayedBehavior (Display.Lens.comp second first)
         behavior displayedBehavior := by
   let firstHandler := PFunctor.Handler.ofLens firstBase
   let secondHandler := PFunctor.Handler.ofLens secondBase
@@ -160,20 +160,20 @@ theorem mapVerifiedBehavior_comp
   rw [← Display.M.transport_trans]
   change Display.M.transport handlerBehaviorEq.symm
       (Display.M.transport nestedEq
-        (reindexVerifiedBehavior S T firstHandler first.toHandler
+        (reindexDisplayedBehavior S T firstHandler first.toHandler
           (reindexBehavior secondHandler behavior)
-          (reindexVerifiedBehavior T U secondHandler second.toHandler
+          (reindexDisplayedBehavior T U secondHandler second.toHandler
             behavior displayedBehavior))) = _
-  rw [reindexVerifiedBehavior_comp S T U
+  rw [reindexDisplayedBehavior_comp S T U
     secondHandler second.toHandler firstHandler first.toHandler
     behavior displayedBehavior]
-  exact reindexVerifiedBehavior_congr S U handlerEq.symm
+  exact reindexDisplayedBehavior_congr S U handlerEq.symm
     (second.toHandler.comp first.toHandler)
     (Display.Lens.comp second first).toHandler
     (Display.Lens.toHandler_comp_symm second first)
     behavior displayedBehavior
 
-theorem respondDisplayed_mapVerifiedBehavior_post
+theorem respondDisplayed_mapDisplayedBehavior_post
     {S : Display.{uA₁, uB₁, uC₁, uD₁} P}
     {T : Display.{uA₂, uB₂, uC₂, uD₂} Q}
     {f : PFunctor.Lens P Q}
@@ -181,21 +181,21 @@ theorem respondDisplayed_mapVerifiedBehavior_post
     (behavior : PFunctor.M (Q ⊸ X.{uA₂, uB₂}))
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (operation : P.A) (contract : S.position operation) :
-    (respondDisplayed S (mapVerifiedBehavior df behavior displayedBehavior)
+    (respondDisplayed S (mapDisplayedBehavior df behavior displayedBehavior)
       operation contract).1 =
       df.toDirection operation contract
         ((Responder.terminal (P := Q)).answer behavior
           (f.toFunA operation))
         (respondDisplayed T displayedBehavior (f.toFunA operation)
           (df.toPosition operation contract)).1 := by
-  exact (respondDisplayed_reindexVerifiedBehavior_post S T
+  exact (respondDisplayed_reindexDisplayedBehavior_post S T
     (PFunctor.Handler.ofLens f) (df.toHandler)
     behavior displayedBehavior operation contract).trans
       (congrArg Prod.fst
         (runFreeDisplayed_ofLens df behavior displayedBehavior
           operation contract))
 
-theorem respondDisplayed_mapVerifiedBehavior_next
+theorem respondDisplayed_mapDisplayedBehavior_next
     {S : Display.{uA₁, uB₁, uC₁, uD₁} P}
     {T : Display.{uA₂, uB₂, uC₂, uD₂} Q}
     {f : PFunctor.Lens P Q}
@@ -207,18 +207,18 @@ theorem respondDisplayed_mapVerifiedBehavior_next
         (behavior_child
           (Responder.reindex (PFunctor.Handler.ofLens f)
             (Responder.terminal (P := Q))) behavior operation)
-        (respondDisplayed S (mapVerifiedBehavior df behavior displayedBehavior)
+        (respondDisplayed S (mapDisplayedBehavior df behavior displayedBehavior)
           operation contract).2 =
-      mapVerifiedBehavior df
+      mapDisplayedBehavior df
         ((Responder.terminal (P := Q)).runFree
           (PFunctor.Handler.ofLens f operation) behavior).2
         (respondDisplayed T displayedBehavior (f.toFunA operation)
           (df.toPosition operation contract)).2 := by
-  have h := respondDisplayed_reindexVerifiedBehavior_next S T
+  have h := respondDisplayed_reindexDisplayedBehavior_next S T
     (PFunctor.Handler.ofLens f) (df.toHandler)
     behavior displayedBehavior operation contract
   rw [runFreeDisplayed_ofLens] at h
-  unfold mapVerifiedBehavior mapBehavior
+  unfold mapDisplayedBehavior mapBehavior
   exact h
 
 end Responder

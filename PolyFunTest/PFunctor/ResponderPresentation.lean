@@ -9,7 +9,7 @@ module
 public import PolyFun.PFunctor.Dynamical.Responder.Lens
 
 /-!
-# Regression tests for verified responder presentations
+# Regression tests for displayed responder presentations
 
 The examples exercise presentation identity/composition/terminal semantics,
 nonidentity lens reindexing, proof-relevant state-free transport, and
@@ -18,7 +18,7 @@ independent source/target response universes.
 
 @[expose] public section
 
-namespace PFunctor.ResponderVerifiedPresentationCanary
+namespace PFunctor.ResponderPresentationCanary
 
 universe uA uB uC uD uA' uB' uC' uD' uS uI
 
@@ -29,7 +29,7 @@ def mapBehavior
     PFunctor.M (P ⊸ X.{uA, uB}) :=
   Responder.mapBehavior base behavior
 
-def mapVerifiedBehavior
+def mapDisplayedBehavior
     {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB', uC', uD'} Q}
@@ -37,7 +37,7 @@ def mapVerifiedBehavior
     (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior) :
     Display.M (Display.responder S) (Responder.mapBehavior base behavior) :=
-  Responder.mapVerifiedBehavior displayedLens behavior displayedBehavior
+  Responder.mapDisplayedBehavior displayedLens behavior displayedBehavior
 
 def reindexPresentation
     {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
@@ -49,7 +49,7 @@ def reindexPresentation
     (Invariant : State → Type uI)
     (displayedTarget :
       Display.Coalgebra (Display.responder T) target.out Invariant) :=
-  Responder.reindexVerifiedPresentationHom base displayedHandler
+  Responder.reindexPresentationHom base displayedHandler
     target Invariant displayedTarget
 
 abbrev Interface : PFunctor.{0, 0} := ⟨PUnit, fun _ => Nat⟩
@@ -63,23 +63,23 @@ abbrev contract : Display Interface where
 
 def Invariant (_ : Nat) : Type := PUnit
 
-def verified :
+def displayed :
     Display.Coalgebra (Display.responder contract) responder.out Invariant :=
   (Display.responderCoalgebraEquiv contract responder Invariant).symm fun
     _ _ _ _ => ⟨false, PUnit.unit⟩
 
-def verifiedBehavior :
+def toDisplayedBehavior :
     Display.M (Display.responder contract) (responder.behavior 5) :=
-  Responder.verifiedBehavior contract responder Invariant verified 5 PUnit.unit
+  Responder.toDisplayedBehavior contract responder Invariant displayed 5 PUnit.unit
 
 def presentationId :
-    Responder.VerifiedPresentationHom contract
-      responder Invariant verified responder Invariant verified :=
-  Responder.VerifiedPresentationHom.id
+    Responder.PresentationHom contract
+      responder Invariant displayed responder Invariant displayed :=
+  Responder.PresentationHom.id
 
 def toTerminal :=
-  Responder.VerifiedPresentationHom.toTerminal contract
-    responder Invariant verified
+  Responder.PresentationHom.toTerminal contract
+    responder Invariant displayed
 
 example : presentationId.toState 5 = 5 :=
   rfl
@@ -97,7 +97,7 @@ example :
 
 example :
     (toTerminal.comp presentationId).toWitness 5 PUnit.unit =
-      verifiedBehavior :=
+      toDisplayedBehavior :=
   rfl
 
 abbrev succLens : Lens Interface Interface where
@@ -117,10 +117,10 @@ example : displayedSucc.toDirection PUnit.unit "state" 4 false = true :=
 def mappedBehavior :=
   Responder.mapBehavior succLens (responder.behavior 5)
 
-def mappedVerifiedBehavior :
+def mappedDisplayedBehavior :
     Display.M (Display.responder contract) mappedBehavior :=
-  Responder.mapVerifiedBehavior displayedSucc
-    (responder.behavior 5) verifiedBehavior
+  Responder.mapDisplayedBehavior displayedSucc
+    (responder.behavior 5) toDisplayedBehavior
 
 /-- The backward action of the ordinary lens is observable in the answer. -/
 example : (Responder.terminal (P := Interface)).answer
@@ -130,7 +130,7 @@ example : (Responder.terminal (P := Interface)).answer
 /-- The backward action of the displayed lens is observable in the returned
 postcondition. -/
 example :
-    (Responder.respondDisplayed contract mappedVerifiedBehavior
+    (Responder.respondDisplayed contract mappedDisplayedBehavior
       PUnit.unit "state").1 = true :=
   rfl
 
@@ -142,12 +142,12 @@ example : (Responder.terminal (P := Interface)).answer
 
 example :
     (Responder.respondDisplayed contract
-      (Responder.respondDisplayed contract mappedVerifiedBehavior
+      (Responder.respondDisplayed contract mappedDisplayedBehavior
         PUnit.unit "state").2 PUnit.unit "next").1 = true :=
   rfl
 
 /-- The terminal presentation witness exposes the independently expected
-verified postcondition, rather than merely its definitional carrier. -/
+displayed postcondition, rather than merely its definitional carrier. -/
 example :
     (Responder.respondDisplayed contract (toTerminal.toWitness 5 PUnit.unit)
       PUnit.unit "state").1 = false :=
@@ -156,21 +156,21 @@ example :
 example :
     Display.M.transport
         (Responder.mapBehavior_id (responder.behavior 5))
-      (Responder.mapVerifiedBehavior (Display.Lens.id contract)
-        (responder.behavior 5) verifiedBehavior) =
-      verifiedBehavior :=
-  Responder.mapVerifiedBehavior_id _ _
+      (Responder.mapDisplayedBehavior (Display.Lens.id contract)
+        (responder.behavior 5) toDisplayedBehavior) =
+      toDisplayedBehavior :=
+  Responder.mapDisplayedBehavior_id _ _
 
 example :
     Display.M.transport
         (Responder.mapBehavior_comp succLens succLens (responder.behavior 5))
-      (Responder.mapVerifiedBehavior displayedSucc
+      (Responder.mapDisplayedBehavior displayedSucc
         (Responder.mapBehavior succLens (responder.behavior 5))
-        (Responder.mapVerifiedBehavior displayedSucc
-          (responder.behavior 5) verifiedBehavior)) =
-      Responder.mapVerifiedBehavior
+        (Responder.mapDisplayedBehavior displayedSucc
+          (responder.behavior 5) toDisplayedBehavior)) =
+      Responder.mapDisplayedBehavior
         (Display.Lens.comp displayedSucc displayedSucc)
-        (responder.behavior 5) verifiedBehavior :=
-  Responder.mapVerifiedBehavior_comp _ _ _ _
+        (responder.behavior 5) toDisplayedBehavior :=
+  Responder.mapDisplayedBehavior_comp _ _ _ _
 
-end PFunctor.ResponderVerifiedPresentationCanary
+end PFunctor.ResponderPresentationCanary

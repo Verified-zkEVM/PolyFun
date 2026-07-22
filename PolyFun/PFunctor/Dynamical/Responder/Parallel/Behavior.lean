@@ -14,7 +14,7 @@ public import PolyFun.PFunctor.Dynamical.Responder.Parallel.Display
 
 Parallel state-free behavior is obtained canonically by running the parallel
 product of the two terminal responders from the pair of input behaviors.
-Verified parallel behavior is the corresponding terminal semantics of
+Displayed parallel behavior is the corresponding terminal semantics of
 `Responder.parallelCoalgebra`.  This presentation makes the one-sided
 state-freezing behavior explicit; the construction is not merely the lax
 tensor map on cofree polynomials.
@@ -241,8 +241,35 @@ theorem parallelBehavior_child_both
   rw [behavior_child]
   rfl
 
-/-- Coproduct composition of state-free verified responder behaviors. -/
-def sumVerifiedBehavior
+/-! ## Canonical proof-relevant terminal presentations -/
+
+/-- The displayed coproduct coalgebra on the canonical state-free responder
+presentations. Naming this recurring presentation keeps the public behavior
+API independent of its expanded terminal-state implementation. -/
+def terminalSumCoalgebra
+    (S : Display.{uA₁, uB, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB, uC₂, uD₂} Q) :=
+  sumCoalgebra (Responder.terminal (P := P))
+    (Responder.terminal (P := Q))
+    (Display.M (Display.responder S))
+    (Display.M (Display.responder T))
+    (Display.Coalgebra.terminal (Display.responder S))
+    (Display.Coalgebra.terminal (Display.responder T))
+
+/-- The displayed lockstep coalgebra on the canonical state-free responder
+presentations. -/
+def terminalParallelCoalgebra
+    (S : Display.{uA₁, uB, uC₁, uD₁} P)
+    (T : Display.{uA₂, uB, uC₂, uD₂} Q) :=
+  parallelCoalgebra (Responder.terminal (P := P))
+    (Responder.terminal (P := Q))
+    (Display.M (Display.responder S))
+    (Display.M (Display.responder T))
+    (Display.Coalgebra.terminal (Display.responder S))
+    (Display.Coalgebra.terminal (Display.responder T))
+
+/-- Coproduct composition of state-free displayed responder behaviors. -/
+def sumDisplayedBehavior
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -251,20 +278,15 @@ def sumVerifiedBehavior
     (displayedRight : Display.M (Display.responder T) right) :
     Display.M (Display.responder (Display.sum S T))
       (sumBehavior left right) :=
-  verifiedBehavior (Display.sum S T)
+  toDisplayedBehavior (Display.sum S T)
     (Responder.sum (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
       Display.M (Display.responder T) state.2)
-    (sumCoalgebra (Responder.terminal (P := P))
-      (Responder.terminal (P := Q))
-      (Display.M (Display.responder S))
-      (Display.M (Display.responder T))
-      (Display.Coalgebra.terminal (Display.responder S))
-      (Display.Coalgebra.terminal (Display.responder T)))
+    (terminalSumCoalgebra S T)
     (left, right) (displayedLeft, displayedRight)
 
-@[simp] theorem respondDisplayed_sumVerifiedBehavior_post_inl
+@[simp] theorem respondDisplayed_sumDisplayedBehavior_post_inl
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -272,24 +294,19 @@ def sumVerifiedBehavior
     (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (a : P.A) (contract : S.position a) :
-    (sumVerifiedBehavior S T left displayedLeft right displayedRight).head
+    (sumDisplayedBehavior S T left displayedLeft right displayedRight).head
         (.inl a) (ULift.up contract) =
       ULift.up (displayedLeft.head a contract) := by
-  exact (respondDisplayed_verifiedBehavior_post (Display.sum S T)
+  exact (respondDisplayed_toDisplayedBehavior_post (Display.sum S T)
     (Responder.sum (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
       Display.M (Display.responder T) state.2)
-    (sumCoalgebra (Responder.terminal (P := P))
-      (Responder.terminal (P := Q))
-      (Display.M (Display.responder S))
-      (Display.M (Display.responder T))
-      (Display.Coalgebra.terminal (Display.responder S))
-      (Display.Coalgebra.terminal (Display.responder T)))
+    (terminalSumCoalgebra S T)
     (left, right) (displayedLeft, displayedRight)
     (Sum.inl a : (PFunctor.sum P Q).A) (ULift.up contract)).trans rfl
 
-@[simp] theorem respondDisplayed_sumVerifiedBehavior_post_inr
+@[simp] theorem respondDisplayed_sumDisplayedBehavior_post_inr
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -297,27 +314,22 @@ def sumVerifiedBehavior
     (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (b : Q.A) (contract : T.position b) :
-    (sumVerifiedBehavior S T left displayedLeft right displayedRight).head
+    (sumDisplayedBehavior S T left displayedLeft right displayedRight).head
         (.inr b) (ULift.up contract) =
       ULift.up (displayedRight.head b contract) := by
-  exact (respondDisplayed_verifiedBehavior_post (Display.sum S T)
+  exact (respondDisplayed_toDisplayedBehavior_post (Display.sum S T)
     (Responder.sum (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
       Display.M (Display.responder T) state.2)
-    (sumCoalgebra (Responder.terminal (P := P))
-      (Responder.terminal (P := Q))
-      (Display.M (Display.responder S))
-      (Display.M (Display.responder T))
-      (Display.Coalgebra.terminal (Display.responder S))
-      (Display.Coalgebra.terminal (Display.responder T)))
+    (terminalSumCoalgebra S T)
     (left, right) (displayedLeft, displayedRight)
     (Sum.inr b : (PFunctor.sum P Q).A) (ULift.up contract)).trans rfl
 
-/-- Exact continuation observation for verified coproduct behavior.  The two
+/-- Exact continuation observation for displayed coproduct behavior.  The two
 `sumCoalgebra_obligation_*` equations specialize its witness to the selected
 branch and show that the unselected witness is frozen. -/
-theorem respondDisplayed_sumVerifiedBehavior_next
+theorem respondDisplayed_sumDisplayedBehavior_next
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -331,19 +343,14 @@ theorem respondDisplayed_sumVerifiedBehavior_next
           (Responder.sum (Responder.terminal (P := P))
             (Responder.terminal (P := Q))) (left, right) query)
         (respondDisplayed (Display.sum S T)
-          (sumVerifiedBehavior S T left displayedLeft right displayedRight)
+          (sumDisplayedBehavior S T left displayedLeft right displayedRight)
           query contract).2 =
-      verifiedBehavior (Display.sum S T)
+      toDisplayedBehavior (Display.sum S T)
         (Responder.sum (Responder.terminal (P := P))
           (Responder.terminal (P := Q)))
         (fun state => Display.M (Display.responder S) state.1 ×
           Display.M (Display.responder T) state.2)
-        (sumCoalgebra (Responder.terminal (P := P))
-          (Responder.terminal (P := Q))
-          (Display.M (Display.responder S))
-          (Display.M (Display.responder T))
-          (Display.Coalgebra.terminal (Display.responder S))
-          (Display.Coalgebra.terminal (Display.responder T)))
+        (terminalSumCoalgebra S T)
         ((Responder.sum (Responder.terminal (P := P))
           (Responder.terminal (P := Q))).next (left, right) query)
         (((Display.responderCoalgebraEquiv (Display.sum S T)
@@ -351,28 +358,18 @@ theorem respondDisplayed_sumVerifiedBehavior_next
             (Responder.terminal (P := Q)))
           (fun state => Display.M (Display.responder S) state.1 ×
             Display.M (Display.responder T) state.2))
-          (sumCoalgebra (Responder.terminal (P := P))
-            (Responder.terminal (P := Q))
-            (Display.M (Display.responder S))
-            (Display.M (Display.responder T))
-            (Display.Coalgebra.terminal (Display.responder S))
-            (Display.Coalgebra.terminal (Display.responder T)))
+          (terminalSumCoalgebra S T)
           (left, right) (displayedLeft, displayedRight) query contract).2) := by
-  exact respondDisplayed_verifiedBehavior_next (Display.sum S T)
+  exact respondDisplayed_toDisplayedBehavior_next (Display.sum S T)
     (Responder.sum (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
       Display.M (Display.responder T) state.2)
-    (sumCoalgebra (Responder.terminal (P := P))
-      (Responder.terminal (P := Q))
-      (Display.M (Display.responder S))
-      (Display.M (Display.responder T))
-      (Display.Coalgebra.terminal (Display.responder S))
-      (Display.Coalgebra.terminal (Display.responder T)))
+    (terminalSumCoalgebra S T)
     (left, right) (displayedLeft, displayedRight) query contract
 
-/-- Parallel composition of state-free verified responder behaviors. -/
-def parallelVerifiedBehavior
+/-- Parallel composition of state-free displayed responder behaviors. -/
+def parallelDisplayedBehavior
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -381,20 +378,15 @@ def parallelVerifiedBehavior
     (displayedRight : Display.M (Display.responder T) right) :
     Display.M (Display.responder (Display.parallelSum S T))
       (parallelBehavior left right) :=
-  verifiedBehavior (Display.parallelSum S T)
+  toDisplayedBehavior (Display.parallelSum S T)
     (Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
       Display.M (Display.responder T) state.2)
-    (parallelCoalgebra (Responder.terminal (P := P))
-      (Responder.terminal (P := Q))
-      (Display.M (Display.responder S))
-      (Display.M (Display.responder T))
-      (Display.Coalgebra.terminal (Display.responder S))
-      (Display.Coalgebra.terminal (Display.responder T)))
+    (terminalParallelCoalgebra S T)
     (left, right) (displayedLeft, displayedRight)
 
-@[simp] theorem respondDisplayed_parallelVerifiedBehavior_post_left
+@[simp] theorem respondDisplayed_parallelDisplayedBehavior_post_left
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -402,24 +394,19 @@ def parallelVerifiedBehavior
     (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (a : P.A) (contract : S.position a) :
-    (parallelVerifiedBehavior S T left displayedLeft right displayedRight).head
+    (parallelDisplayedBehavior S T left displayedLeft right displayedRight).head
         (.left a) (ULift.up contract) =
       ULift.up (displayedLeft.head a contract) := by
-  exact (respondDisplayed_verifiedBehavior_post (Display.parallelSum S T)
+  exact (respondDisplayed_toDisplayedBehavior_post (Display.parallelSum S T)
     (Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
       Display.M (Display.responder T) state.2)
-    (parallelCoalgebra (Responder.terminal (P := P))
-      (Responder.terminal (P := Q))
-      (Display.M (Display.responder S))
-      (Display.M (Display.responder T))
-      (Display.Coalgebra.terminal (Display.responder S))
-      (Display.Coalgebra.terminal (Display.responder T)))
+    (terminalParallelCoalgebra S T)
     (left, right) (displayedLeft, displayedRight)
     (ParallelChoice.left a : (P ∥ Q).A) (ULift.up contract)).trans rfl
 
-@[simp] theorem respondDisplayed_parallelVerifiedBehavior_post_right
+@[simp] theorem respondDisplayed_parallelDisplayedBehavior_post_right
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -427,24 +414,19 @@ def parallelVerifiedBehavior
     (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (b : Q.A) (contract : T.position b) :
-    (parallelVerifiedBehavior S T left displayedLeft right displayedRight).head
+    (parallelDisplayedBehavior S T left displayedLeft right displayedRight).head
         (.right b) (ULift.up contract) =
       ULift.up (displayedRight.head b contract) := by
-  exact (respondDisplayed_verifiedBehavior_post (Display.parallelSum S T)
+  exact (respondDisplayed_toDisplayedBehavior_post (Display.parallelSum S T)
     (Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
       Display.M (Display.responder T) state.2)
-    (parallelCoalgebra (Responder.terminal (P := P))
-      (Responder.terminal (P := Q))
-      (Display.M (Display.responder S))
-      (Display.M (Display.responder T))
-      (Display.Coalgebra.terminal (Display.responder S))
-      (Display.Coalgebra.terminal (Display.responder T)))
+    (terminalParallelCoalgebra S T)
     (left, right) (displayedLeft, displayedRight)
     (ParallelChoice.right b : (P ∥ Q).A) (ULift.up contract)).trans rfl
 
-@[simp] theorem respondDisplayed_parallelVerifiedBehavior_post_both
+@[simp] theorem respondDisplayed_parallelDisplayedBehavior_post_both
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -453,26 +435,21 @@ def parallelVerifiedBehavior
     (displayedRight : Display.M (Display.responder T) right)
     (a : P.A) (b : Q.A)
     (leftContract : S.position a) (rightContract : T.position b) :
-    (parallelVerifiedBehavior S T left displayedLeft right displayedRight).head
+    (parallelDisplayedBehavior S T left displayedLeft right displayedRight).head
         (.both a b) (leftContract, rightContract) =
       (displayedLeft.head a leftContract,
         displayedRight.head b rightContract) := by
-  exact (respondDisplayed_verifiedBehavior_post (Display.parallelSum S T)
+  exact (respondDisplayed_toDisplayedBehavior_post (Display.parallelSum S T)
     (Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
       Display.M (Display.responder T) state.2)
-    (parallelCoalgebra (Responder.terminal (P := P))
-      (Responder.terminal (P := Q))
-      (Display.M (Display.responder S))
-      (Display.M (Display.responder T))
-      (Display.Coalgebra.terminal (Display.responder S))
-      (Display.Coalgebra.terminal (Display.responder T)))
+    (terminalParallelCoalgebra S T)
     (left, right) (displayedLeft, displayedRight)
     (ParallelChoice.both a b : (P ∥ Q).A)
     (leftContract, rightContract)).trans rfl
 
-theorem respondDisplayed_parallelVerifiedBehavior_next_left
+theorem respondDisplayed_parallelDisplayedBehavior_next_left
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -486,19 +463,14 @@ theorem respondDisplayed_parallelVerifiedBehavior_next_left
             (Responder.terminal (P := Q)))
           (left, right) (ParallelChoice.left a : (P ∥ Q).A))
         (respondDisplayed (Display.parallelSum S T)
-          (parallelVerifiedBehavior S T left displayedLeft right displayedRight)
+          (parallelDisplayedBehavior S T left displayedLeft right displayedRight)
           (.left a) (ULift.up contract)).2 =
-      verifiedBehavior (Display.parallelSum S T)
+      toDisplayedBehavior (Display.parallelSum S T)
         (Responder.parallel (Responder.terminal (P := P))
           (Responder.terminal (P := Q)))
         (fun state => Display.M (Display.responder S) state.1 ×
           Display.M (Display.responder T) state.2)
-        (parallelCoalgebra (Responder.terminal (P := P))
-          (Responder.terminal (P := Q))
-          (Display.M (Display.responder S))
-          (Display.M (Display.responder T))
-          (Display.Coalgebra.terminal (Display.responder S))
-          (Display.Coalgebra.terminal (Display.responder T)))
+        (terminalParallelCoalgebra S T)
         ((Responder.parallel (Responder.terminal (P := P))
           (Responder.terminal (P := Q))).next (left, right) (.left a))
         (((Display.responderCoalgebraEquiv (Display.parallelSum S T)
@@ -506,32 +478,22 @@ theorem respondDisplayed_parallelVerifiedBehavior_next_left
             (Responder.terminal (P := Q)))
           (fun state => Display.M (Display.responder S) state.1 ×
             Display.M (Display.responder T) state.2))
-          (parallelCoalgebra (Responder.terminal (P := P))
-            (Responder.terminal (P := Q))
-            (Display.M (Display.responder S))
-            (Display.M (Display.responder T))
-            (Display.Coalgebra.terminal (Display.responder S))
-            (Display.Coalgebra.terminal (Display.responder T)))
+          (terminalParallelCoalgebra S T)
           (left, right) (displayedLeft, displayedRight)
           (ParallelChoice.left a : (P ∥ Q).A) (ULift.up contract)).2) := by
-  exact respondDisplayed_verifiedBehavior_next (Display.parallelSum S T)
+  exact respondDisplayed_toDisplayedBehavior_next (Display.parallelSum S T)
     (Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
       Display.M (Display.responder T) state.2)
-    (parallelCoalgebra (Responder.terminal (P := P))
-      (Responder.terminal (P := Q))
-      (Display.M (Display.responder S))
-      (Display.M (Display.responder T))
-      (Display.Coalgebra.terminal (Display.responder S))
-      (Display.Coalgebra.terminal (Display.responder T)))
+    (terminalParallelCoalgebra S T)
     (left, right) (displayedLeft, displayedRight)
     (ParallelChoice.left a : (P ∥ Q).A) (ULift.up contract)
 
-/-- Generic continuation observation for verified parallel behavior.  Together
+/-- Generic continuation observation for displayed parallel behavior.  Together
 with the three `parallelCoalgebra_obligation_*` equations, this covers the
 left, right, and simultaneous branches without exposing the corecursor. -/
-theorem respondDisplayed_parallelVerifiedBehavior_next
+theorem respondDisplayed_parallelDisplayedBehavior_next
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -545,19 +507,14 @@ theorem respondDisplayed_parallelVerifiedBehavior_next
           (Responder.parallel (Responder.terminal (P := P))
             (Responder.terminal (P := Q))) (left, right) query)
         (respondDisplayed (Display.parallelSum S T)
-          (parallelVerifiedBehavior S T left displayedLeft right displayedRight)
+          (parallelDisplayedBehavior S T left displayedLeft right displayedRight)
           query contract).2 =
-      verifiedBehavior (Display.parallelSum S T)
+      toDisplayedBehavior (Display.parallelSum S T)
         (Responder.parallel (Responder.terminal (P := P))
           (Responder.terminal (P := Q)))
         (fun state => Display.M (Display.responder S) state.1 ×
           Display.M (Display.responder T) state.2)
-        (parallelCoalgebra (Responder.terminal (P := P))
-          (Responder.terminal (P := Q))
-          (Display.M (Display.responder S))
-          (Display.M (Display.responder T))
-          (Display.Coalgebra.terminal (Display.responder S))
-          (Display.Coalgebra.terminal (Display.responder T)))
+        (terminalParallelCoalgebra S T)
         ((Responder.parallel (Responder.terminal (P := P))
           (Responder.terminal (P := Q))).next (left, right) query)
         (((Display.responderCoalgebraEquiv (Display.parallelSum S T)
@@ -565,30 +522,20 @@ theorem respondDisplayed_parallelVerifiedBehavior_next
             (Responder.terminal (P := Q)))
           (fun state => Display.M (Display.responder S) state.1 ×
             Display.M (Display.responder T) state.2))
-          (parallelCoalgebra (Responder.terminal (P := P))
-            (Responder.terminal (P := Q))
-            (Display.M (Display.responder S))
-            (Display.M (Display.responder T))
-            (Display.Coalgebra.terminal (Display.responder S))
-            (Display.Coalgebra.terminal (Display.responder T)))
+          (terminalParallelCoalgebra S T)
           (left, right) (displayedLeft, displayedRight)
           query contract).2) := by
-  exact respondDisplayed_verifiedBehavior_next (Display.parallelSum S T)
+  exact respondDisplayed_toDisplayedBehavior_next (Display.parallelSum S T)
     (Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
       Display.M (Display.responder T) state.2)
-    (parallelCoalgebra (Responder.terminal (P := P))
-      (Responder.terminal (P := Q))
-      (Display.M (Display.responder S))
-      (Display.M (Display.responder T))
-      (Display.Coalgebra.terminal (Display.responder S))
-      (Display.Coalgebra.terminal (Display.responder T)))
+    (terminalParallelCoalgebra S T)
     (left, right) (displayedLeft, displayedRight) query contract
 
 /-- Forget proof-relevant evidence while retaining the intrinsically indexed
 ordinary behavior. -/
-def verifiedBehaviorBase
+def displayedBehaviorBase
     {R : PFunctor.{uA₁, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} R)
     (behavior : PFunctor.M (R ⊸ X.{uA₁, uB}))
@@ -597,16 +544,16 @@ def verifiedBehaviorBase
 
 /-- The displayed-to-base projection is strictly compatible with parallel
 composition; the ordinary behavior is the index of the displayed one. -/
-@[simp] theorem verifiedBehaviorBase_parallel
+@[simp] theorem displayedBehaviorBase_parallel
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
     (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right) :
-    verifiedBehaviorBase (Display.parallelSum S T)
+    displayedBehaviorBase (Display.parallelSum S T)
         (parallelBehavior left right)
-        (parallelVerifiedBehavior S T left displayedLeft right displayedRight) =
+        (parallelDisplayedBehavior S T left displayedLeft right displayedRight) =
       parallelBehavior left right :=
   rfl
 

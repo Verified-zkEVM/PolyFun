@@ -6,8 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.IPFunctor.Free.Basic
-public import Lean.Elab.Do
-meta import Lean.Parser.Do
+public import PolyFun.IPFunctor.Notation.Common
 
 /-!
 # `do`-notation for `IPFunctor.FreeM`
@@ -249,21 +248,7 @@ the builtin, which fails informatively. The simple underscore form
 -/
 @[doElem_elab Lean.Parser.Term.doLetArrow]
 meta def elabFreeMLetArrow : DoElab := fun stx dec => do
-  unless (← isFreeMMonad? (← read).monadInfo.m).isSome do throwUnsupportedSyntax
-  let `(doLetArrow| let $[mut%$mutTk?]? $decl) := stx | throwUnsupportedSyntax
-  if mutTk?.isSome then throwUnsupportedSyntax
-  match decl with
-  | `(doIdDecl| $x:ident $[: $xType?]? ← $rhs) =>
-    let xType ← Term.elabType (xType?.getD (Lean.mkHole x))
-    elabDoElem rhs <| .mk (kind := dec.kind) x.getId xType do
-      Term.addLocalVarInfo x (← getFVarFromUserName x.getId)
-      dec.continueWithUnit
-  | `(doPatDecl| _%$pat ← $rhs) =>
-    -- The simple underscore case: introduce a fresh name and discard it.
-    let x := mkIdentFrom pat (← mkFreshUserName `__x)
-    let xType ← Term.elabType (Lean.mkHole x)
-    elabDoElem rhs <| .mk (kind := dec.kind) x.getId xType do
-      dec.continueWithUnit
-  | _ => throwUnsupportedSyntax
+  IPFunctor.DoNotation.elabLetArrow
+    (fun m => return (← isFreeMMonad? m).isSome) stx dec
 
 end IPFunctor.FreeMNotation

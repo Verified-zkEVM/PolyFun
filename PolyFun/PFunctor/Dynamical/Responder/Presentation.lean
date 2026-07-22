@@ -9,12 +9,26 @@ module
 public import PolyFun.PFunctor.Dynamical.Responder.Behavior
 
 /-!
-# Proof-relevant responder presentations
+# Witness-preserving responder presentations
 
-A `VerifiedPresentationHom` preserves the totalized one-step semantics of a
-responder together with its dependent invariant witness. This module owns the
-generic identity, composition, terminal-semantics, and verified-reindexing
-principles; lens-specific specializations live in `Responder.Lens`.
+A `PresentationHom` preserves the totalized one-step semantics of a responder
+together with its dependent witness. This module owns the generic identity,
+composition, terminal-semantics, and displayed-reindexing principles;
+lens-specific specializations live in `Responder.Lens`.
+
+The terminology is structural. A
+`Display.Coalgebra (Display.responder S) R.out I` supplies, for every responder
+state and current witness in `I`, the displayed response and next-state witness
+required by `S`. `toDisplayedBehavior` coinduces that local data into an
+inhabitant of `Display.M (Display.responder S) (R.behavior state)`, and a
+`PresentationHom` maps between two such state-and-witness presentations while
+commuting with their complete one-step data.
+
+Neither `S` nor `I` is restricted to propositions. Applications may interpret
+them as preconditions, postconditions, and invariants, in which case these
+objects can witness a verification result. They may instead carry traces,
+resources, logical relations, or other `Type`-valued annotations. The public
+names therefore say **displayed** or **witness-preserving**, not **verified**.
 -/
 
 @[expose] public section
@@ -27,9 +41,10 @@ namespace Responder
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB'}}
 
 
-/-- One proof-relevant responder step on the total state-and-witness
-presentation. -/
-def verifiedTotalStep
+/-- One witness-preserving responder step on the total state-and-witness
+presentation. The result packages the ordinary behavior, current displayed
+postcondition data, next responder state, and preserved next-state witness. -/
+def displayedTotalStep
     {RPoly : PFunctor.{uA₃, uB}}
     (S : Display.{uA₃, uB, uC₃, uD₃} RPoly)
     {State : Type uC₂} (R : Responder State RPoly)
@@ -49,19 +64,39 @@ def verifiedTotalStep
               exact ⟨R.next state query,
                 (obligation query precondition).2⟩⟩
 
-/-- Sigma-erasing a verified behavior is the ordinary behavior of its total
+/-- Extensionality for a totalized displayed responder step. Separating the
+ordinary behavior, displayed postcondition, and continuation components keeps
+dependent `Sigma`/`HEq` plumbing out of presentation and coherence proofs. -/
+theorem displayedTotalStepObj_ext
+    {RPoly : PFunctor.{uA₃, uB}}
+    (S : Display.{uA₃, uB, uC₃, uD₃} RPoly)
+    {X : Type uC₄}
+    (left right :
+      (Display.mStep (Display.responder S)).sigmaPFunctor.Obj X)
+    (hBehavior : left.1.1 = right.1.1)
+    (hPostcondition : HEq left.1.2 right.1.2)
+    (hContinuation : HEq left.2 right.2) :
+    left = right := by
+  rcases left with ⟨⟨leftBehavior, leftPostcondition⟩, leftContinuation⟩
+  rcases right with ⟨⟨rightBehavior, rightPostcondition⟩, rightContinuation⟩
+  cases hBehavior
+  cases hPostcondition
+  cases hContinuation
+  rfl
+
+/-- Sigma-erasing a displayed behavior is the ordinary behavior of its total
 state-and-witness presentation. -/
-theorem toM_verifiedBehavior_eq_corec
+theorem toM_toDisplayedBehavior_eq_corec
     {RPoly : PFunctor.{uA₃, uB}}
     (S : Display.{uA₃, uB, uC₃, uD₃} RPoly)
     {State : Type uC₂} (R : Responder State RPoly)
     (I : State → Type uD₂)
     (displayedR : Display.Coalgebra (Display.responder S) R.out I)
     (state : State) (witness : I state) :
-    (verifiedBehavior S R I displayedR state witness).toM =
-      PFunctor.M.corec (verifiedTotalStep S R I displayedR)
+    (toDisplayedBehavior S R I displayedR state witness).toM =
+      PFunctor.M.corec (displayedTotalStep S R I displayedR)
         ⟨state, witness⟩ := by
-  simp only [verifiedBehavior, Display.Coalgebra.toM, Display.M.corec,
+  simp only [toDisplayedBehavior, Display.Coalgebra.toM, Display.M.corec,
     IPFunctor.IM.toM_corec]
   let presentedTotalStep := IPFunctor.IM.totalStep
     (fun tree state =>
@@ -72,14 +107,14 @@ theorem toM_verifiedBehavior_eq_corec
       (direct : Σ state, I state) =>
     presented.2.1 = direct.1 ∧ HEq presented.2.2.2 direct.2
   apply PFunctor.M.corec_eq_corec presentedTotalStep
-    (verifiedTotalStep S R I displayedR) relation
+    (displayedTotalStep S R I displayedR) relation
   · exact ⟨rfl, heq_of_eq rfl⟩
   · rintro ⟨tree, ⟨current, ⟨⟨hCurrent⟩, currentWitness⟩⟩⟩
       ⟨direct, directWitness⟩ ⟨hState, hWitness⟩
     cases hState
     cases hWitness
     cases hCurrent
-    dsimp [presentedTotalStep, verifiedTotalStep,
+    dsimp [presentedTotalStep, displayedTotalStep,
       IPFunctor.IM.totalStep, Display.Coalgebra.presentedStep,
       Display.M.stepEquiv]
     refine ⟨_, _, _, rfl, rfl, ?_⟩
@@ -88,15 +123,15 @@ theorem toM_verifiedBehavior_eq_corec
     cases trivialDirection
     exact ⟨rfl, heq_of_eq rfl⟩
 
-/-- A homomorphism between proof-relevant responder presentations. The state
+/-- A homomorphism between witness-preserving responder presentations. The state
 and witness maps remain split so the latter visibly respects its dependent
 state index; an arbitrary homomorphism of total sigma coalgebras would erase
 that useful presentation structure. The sole law says that mapping a source
 state and witness commutes with the complete totalized
-verified step.  Because answers, postconditions, next states, and next
+witness-preserving step. Because answers, postconditions, next states, and next
 witnesses are packaged together, the law requires neither `HEq` nor exposed
 casts. -/
-structure VerifiedPresentationHom
+structure PresentationHom
     {RPoly : PFunctor.{uA₃, uB}}
     (S : Display.{uA₃, uB, uC₃, uD₃} RPoly)
     {SourceState : Type uC₁} (source : Responder SourceState RPoly)
@@ -113,16 +148,16 @@ structure VerifiedPresentationHom
   toWitness : (state : SourceState) →
     SourceWitness state → TargetWitness (toState state)
   map_step : ∀ state witness,
-    verifiedTotalStep S target TargetWitness displayedTarget
+    displayedTotalStep S target TargetWitness displayedTarget
         ⟨toState state, toWitness state witness⟩ =
       (Display.mStep (Display.responder S)).sigmaPFunctor.map
         (fun stateAndWitness =>
           ⟨toState stateAndWitness.1,
             toWitness stateAndWitness.1 stateAndWitness.2⟩)
-        (verifiedTotalStep S source SourceWitness displayedSource
+        (displayedTotalStep S source SourceWitness displayedSource
           ⟨state, witness⟩)
 
-namespace VerifiedPresentationHom
+namespace PresentationHom
 
 variable
     {RPoly : PFunctor.{uA₃, uB}}
@@ -138,7 +173,7 @@ variable
 
 /-- The induced map on total state-and-witness sigma types. -/
 def totalMap
-    (f : VerifiedPresentationHom S source SourceWitness displayedSource
+    (f : PresentationHom S source SourceWitness displayedSource
       target TargetWitness displayedTarget) :
     (Σ state, SourceWitness state) →
       (Σ state, TargetWitness state)
@@ -157,7 +192,7 @@ def transportToWitness
 /-- Presentation homomorphisms are determined by their state and dependent
 witness maps; preservation proofs are propositionally irrelevant. -/
 @[ext (iff := false)] theorem ext
-    (f g : VerifiedPresentationHom S source SourceWitness displayedSource
+    (f g : PresentationHom S source SourceWitness displayedSource
       target TargetWitness displayedTarget)
     (hState : f.toState = g.toState)
     (hWitness : transportToWitness hState f.toWitness = g.toWitness) :
@@ -172,8 +207,8 @@ witness maps; preservation proofs are propositionally irrelevant. -/
           subst gWitness
           rfl
 
-/-- Identity homomorphism of a verified responder presentation. -/
-def id : VerifiedPresentationHom S source SourceWitness displayedSource
+/-- Identity homomorphism of a displayed responder presentation. -/
+def id : PresentationHom S source SourceWitness displayedSource
     source SourceWitness displayedSource where
   toState := _root_.id
   toWitness := fun _ => _root_.id
@@ -181,7 +216,7 @@ def id : VerifiedPresentationHom S source SourceWitness displayedSource
     intro state witness
     rfl
 
-/-- Composition of verified presentation homomorphisms. -/
+/-- Composition of displayed presentation homomorphisms. -/
 def comp
     {MiddleState : Type uC₂} {middle : Responder MiddleState RPoly}
     {MiddleWitness : MiddleState → Type uD₂}
@@ -191,11 +226,11 @@ def comp
     {FinalWitness : FinalState → Type uD₄}
     {displayedFinal : Display.Coalgebra (Display.responder S)
       final.out FinalWitness}
-    (second : VerifiedPresentationHom S middle MiddleWitness
+    (second : PresentationHom S middle MiddleWitness
       displayedMiddle final FinalWitness displayedFinal)
-    (first : VerifiedPresentationHom S source SourceWitness displayedSource
+    (first : PresentationHom S source SourceWitness displayedSource
       middle MiddleWitness displayedMiddle) :
-    VerifiedPresentationHom S source SourceWitness displayedSource
+    PresentationHom S source SourceWitness displayedSource
       final FinalWitness displayedFinal where
   toState state := second.toState (first.toState state)
   toWitness state witness :=
@@ -206,13 +241,13 @@ def comp
     rfl
 
 @[simp] theorem id_toState (state : SourceState) :
-    (id : VerifiedPresentationHom S source SourceWitness displayedSource
+    (id : PresentationHom S source SourceWitness displayedSource
       source SourceWitness displayedSource).toState state = state :=
   rfl
 
 @[simp] theorem id_toWitness (state : SourceState)
     (witness : SourceWitness state) :
-    (id : VerifiedPresentationHom S source SourceWitness displayedSource
+    (id : PresentationHom S source SourceWitness displayedSource
       source SourceWitness displayedSource).toWitness state witness = witness :=
   rfl
 
@@ -225,9 +260,9 @@ def comp
     {FinalWitness : FinalState → Type uD₄}
     {displayedFinal : Display.Coalgebra (Display.responder S)
       final.out FinalWitness}
-    (second : VerifiedPresentationHom S middle MiddleWitness
+    (second : PresentationHom S middle MiddleWitness
       displayedMiddle final FinalWitness displayedFinal)
-    (first : VerifiedPresentationHom S source SourceWitness displayedSource
+    (first : PresentationHom S source SourceWitness displayedSource
       middle MiddleWitness displayedMiddle) (state : SourceState) :
     (second.comp first).toState state =
       second.toState (first.toState state) :=
@@ -242,9 +277,9 @@ def comp
     {FinalWitness : FinalState → Type uD₄}
     {displayedFinal : Display.Coalgebra (Display.responder S)
       final.out FinalWitness}
-    (second : VerifiedPresentationHom S middle MiddleWitness
+    (second : PresentationHom S middle MiddleWitness
       displayedMiddle final FinalWitness displayedFinal)
-    (first : VerifiedPresentationHom S source SourceWitness displayedSource
+    (first : PresentationHom S source SourceWitness displayedSource
       middle MiddleWitness displayedMiddle)
     (state : SourceState) (witness : SourceWitness state) :
     (second.comp first).toWitness state witness =
@@ -253,7 +288,7 @@ def comp
   rfl
 
 @[simp] theorem id_comp
-    (f : VerifiedPresentationHom S source SourceWitness displayedSource
+    (f : PresentationHom S source SourceWitness displayedSource
       target TargetWitness displayedTarget) :
     id.comp f = f := by
   apply ext
@@ -261,7 +296,7 @@ def comp
   · rfl
 
 @[simp] theorem comp_id
-    (f : VerifiedPresentationHom S source SourceWitness displayedSource
+    (f : PresentationHom S source SourceWitness displayedSource
       target TargetWitness displayedTarget) :
     f.comp id = f := by
   apply ext
@@ -281,88 +316,84 @@ theorem comp_assoc
     {FinalWitness : FinalState → Type uD₅}
     {displayedFinal : Display.Coalgebra (Display.responder S)
       final.out FinalWitness}
-    (third : VerifiedPresentationHom S next NextWitness displayedNext
+    (third : PresentationHom S next NextWitness displayedNext
       final FinalWitness displayedFinal)
-    (second : VerifiedPresentationHom S middle MiddleWitness
+    (second : PresentationHom S middle MiddleWitness
       displayedMiddle next NextWitness displayedNext)
-    (first : VerifiedPresentationHom S source SourceWitness displayedSource
+    (first : PresentationHom S source SourceWitness displayedSource
       middle MiddleWitness displayedMiddle) :
     (third.comp second).comp first = third.comp (second.comp first) := by
   apply ext
   · rfl
   · rfl
 
-/-- Map any verified responder presentation to its terminal state-free
+/-- Map any displayed responder presentation to its terminal state-free
 semantics. This is the reusable boundary between state-presented and
-state-free verified behavior. -/
+state-free displayed behavior. -/
 def toTerminal
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     {State : Type uC₂} (R : Responder State P)
     (I : State → Type uD₂)
     (displayedR : Display.Coalgebra (Display.responder S) R.out I) :
-    VerifiedPresentationHom S R I displayedR
+    PresentationHom S R I displayedR
       (Responder.terminal (P := P))
       (Display.M (Display.responder S))
       (Display.Coalgebra.terminal (Display.responder S)) where
   toState state := R.behavior state
   toWitness state witness :=
-    verifiedBehavior S R I displayedR state witness
+    toDisplayedBehavior S R I displayedR state witness
   map_step := by
     intro state witness
     have hBase :
         (Responder.terminal (P := P)).behavior (R.behavior state) =
           R.behavior state := by simp
-    dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply Sigma.ext_iff.mpr
-    constructor
-    · apply Sigma.ext_iff.mpr
-      constructor
-      · exact hBase
-      · apply Function.hfunext rfl
-        intro query query' hQuery
-        cases hQuery
-        apply Function.hfunext rfl
-        intro precondition precondition' hPrecondition
-        cases hPrecondition
-        let targetResult := (Responder.terminal (P := P)).runFree
-          ((Handler.id P) query) (R.behavior state)
-        let sourceResult := R.runFree ((Handler.id P) query) state
-        let presentedResult : P.B query × PFunctor.M (P ⊸ X.{uA₁, uB}) :=
-          ⟨sourceResult.1, R.behavior sourceResult.2⟩
-        let targetEvidence := runFreeDisplayed S
-          (Responder.terminal (P := P))
-          (Display.Coalgebra.terminal (Display.responder S))
-          ((Display.Handler.id S) query precondition) (R.behavior state)
-          (verifiedBehavior S R I displayedR state witness)
-        let sourceEvidence := runFreeDisplayed S R displayedR
-          ((Display.Handler.id S) query precondition) state witness
-        let mappedEvidence : S.direction query precondition
-              presentedResult.1 ×
-            Display.M (Display.responder S) presentedResult.2 :=
-          ⟨sourceEvidence.1,
-            verifiedBehavior S R I displayedR sourceResult.2
-              sourceEvidence.2⟩
-        let presentationEq :=
-          runFree_terminal R ((Handler.id P) query) state
-        let Evidence := fun result : P.B query ×
-            PFunctor.M (P ⊸ X.{uA₁, uB}) =>
-          S.direction query precondition result.1 ×
-            Display.M (Display.responder S) result.2
-        have hEvidence :
-            transportRunEvidence (S.direction query precondition)
-                (Display.M (Display.responder S)) presentationEq
-                targetEvidence = mappedEvidence := by
-          exact runFreeDisplayed_verifiedBehavior S R I displayedR
-            ((Handler.id P) query) ((Display.Handler.id S) query precondition)
-            state witness
-        have hSigma :
-            (⟨targetResult, targetEvidence⟩ : Σ result, Evidence result) =
-              ⟨presentedResult, mappedEvidence⟩ := by
-          apply Sigma.ext presentationEq
-          exact (transportRunEvidence_heq _ _ presentationEq
-            targetEvidence).symm.trans (heq_of_eq hEvidence)
-        exact congr_arg_heq
-          (fun result : Σ result, Evidence result => result.2.1) hSigma
+    dsimp [displayedTotalStep, PresentationHom.totalMap]
+    apply displayedTotalStepObj_ext _ _ _ hBase
+    · apply Function.hfunext rfl
+      intro query query' hQuery
+      cases hQuery
+      apply Function.hfunext rfl
+      intro precondition precondition' hPrecondition
+      cases hPrecondition
+      let targetResult := (Responder.terminal (P := P)).runFree
+        ((Handler.id P) query) (R.behavior state)
+      let sourceResult := R.runFree ((Handler.id P) query) state
+      let presentedResult : P.B query × PFunctor.M (P ⊸ X.{uA₁, uB}) :=
+        ⟨sourceResult.1, R.behavior sourceResult.2⟩
+      let targetEvidence := runFreeDisplayed S
+        (Responder.terminal (P := P))
+        (Display.Coalgebra.terminal (Display.responder S))
+        ((Display.Handler.id S) query precondition) (R.behavior state)
+        (toDisplayedBehavior S R I displayedR state witness)
+      let sourceEvidence := runFreeDisplayed S R displayedR
+        ((Display.Handler.id S) query precondition) state witness
+      let mappedEvidence : S.direction query precondition
+            presentedResult.1 ×
+          Display.M (Display.responder S) presentedResult.2 :=
+        ⟨sourceEvidence.1,
+          toDisplayedBehavior S R I displayedR sourceResult.2
+            sourceEvidence.2⟩
+      let presentationEq :=
+        runFree_terminal R ((Handler.id P) query) state
+      let Evidence := fun result : P.B query ×
+          PFunctor.M (P ⊸ X.{uA₁, uB}) =>
+        S.direction query precondition result.1 ×
+          Display.M (Display.responder S) result.2
+      have hEvidence :
+          transportRunEvidence (S.direction query precondition)
+              (Display.M (Display.responder S)) presentationEq
+              targetEvidence = mappedEvidence := by
+        exact runFreeDisplayed_toDisplayedBehavior S R I displayedR
+          ((Handler.id P) query) ((Display.Handler.id S) query precondition)
+          state witness
+      have hSigma :
+          (⟨targetResult, targetEvidence⟩ : Σ result, Evidence result) =
+            ⟨presentedResult, mappedEvidence⟩ := by
+        apply Sigma.ext presentationEq
+        exact (transportRunEvidence_heq _ _ presentationEq
+          targetEvidence).symm.trans (heq_of_eq hEvidence)
+      exact congr_arg_heq
+        (fun result : Σ result, Evidence result => result.2.1) hSigma
     · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder S)).sigmaPFunctor.B
@@ -385,14 +416,14 @@ def toTerminal
             (Responder.terminal (P := P))
             (Display.Coalgebra.terminal (Display.responder S))
             ((Display.Handler.id S) query precondition) (R.behavior state)
-            (verifiedBehavior S R I displayedR state witness)
+            (toDisplayedBehavior S R I displayedR state witness)
           let sourceEvidence := runFreeDisplayed S R displayedR
             ((Display.Handler.id S) query precondition) state witness
           let mappedEvidence : S.direction query precondition
                 presentedResult.1 ×
               Display.M (Display.responder S) presentedResult.2 :=
             ⟨sourceEvidence.1,
-              verifiedBehavior S R I displayedR sourceResult.2
+              toDisplayedBehavior S R I displayedR sourceResult.2
                 sourceEvidence.2⟩
           let presentationEq :=
             runFree_terminal R ((Handler.id P) query) state
@@ -404,7 +435,7 @@ def toTerminal
               transportRunEvidence (S.direction query precondition)
                   (Display.M (Display.responder S)) presentationEq
                   targetEvidence = mappedEvidence := by
-            exact runFreeDisplayed_verifiedBehavior S R I displayedR
+            exact runFreeDisplayed_toDisplayedBehavior S R I displayedR
               ((Handler.id P) query) ((Display.Handler.id S) query precondition)
               state witness
           have hSigma :
@@ -428,14 +459,14 @@ def toTerminal
           (Responder.terminal (P := P))
           (Display.Coalgebra.terminal (Display.responder S))
           ((Display.Handler.id S) query precondition) (R.behavior state)
-          (verifiedBehavior S R I displayedR state witness)
+          (toDisplayedBehavior S R I displayedR state witness)
         let sourceEvidence := runFreeDisplayed S R displayedR
           ((Display.Handler.id S) query precondition) state witness
         let mappedEvidence : S.direction query precondition
               presentedResult.1 ×
             Display.M (Display.responder S) presentedResult.2 :=
           ⟨sourceEvidence.1,
-            verifiedBehavior S R I displayedR sourceResult.2
+            toDisplayedBehavior S R I displayedR sourceResult.2
               sourceEvidence.2⟩
         let presentationEq :=
           runFree_terminal R ((Handler.id P) query) state
@@ -447,7 +478,7 @@ def toTerminal
             transportRunEvidence (S.direction query precondition)
                 (Display.M (Display.responder S)) presentationEq
                 targetEvidence = mappedEvidence := by
-          exact runFreeDisplayed_verifiedBehavior S R I displayedR
+          exact runFreeDisplayed_toDisplayedBehavior S R I displayedR
             ((Handler.id P) query) ((Display.Handler.id S) query precondition)
             state witness
         have hSigma :
@@ -461,37 +492,37 @@ def toTerminal
             (⟨result.1.2, result.2.2⟩ :
               Σ behavior, Display.M (Display.responder S) behavior)) hSigma
 
-/-- The base behavior equality carried by a verified presentation
+/-- The base behavior equality carried by a displayed presentation
 homomorphism. -/
 theorem behavior_eq
-    (f : VerifiedPresentationHom S source SourceWitness displayedSource
+    (f : PresentationHom S source SourceWitness displayedSource
       target TargetWitness displayedTarget)
     (state : SourceState) (witness : SourceWitness state) :
     target.behavior (f.toState state) = source.behavior state :=
   congrArg (fun node => node.1.1) (f.map_step state witness)
 
-/-- Verified terminal semantics is natural under a verified presentation
+/-- Displayed terminal semantics is natural under a displayed presentation
 homomorphism. -/
-theorem verifiedBehavior_naturality
-    (f : VerifiedPresentationHom S source SourceWitness displayedSource
+theorem toDisplayedBehavior_naturality
+    (f : PresentationHom S source SourceWitness displayedSource
       target TargetWitness displayedTarget)
     (state : SourceState) (witness : SourceWitness state) :
     Display.M.transport (f.behavior_eq state witness)
-        (verifiedBehavior S target TargetWitness displayedTarget
+        (toDisplayedBehavior S target TargetWitness displayedTarget
           (f.toState state) (f.toWitness state witness)) =
-      verifiedBehavior S source SourceWitness displayedSource
+      toDisplayedBehavior S source SourceWitness displayedSource
         state witness := by
   apply IPFunctor.IM.ext
   rw [Display.M.toM_transport]
-  rw [toM_verifiedBehavior_eq_corec,
-    toM_verifiedBehavior_eq_corec]
+  rw [toM_toDisplayedBehavior_eq_corec,
+    toM_toDisplayedBehavior_eq_corec]
   let relation := fun
       (targetState : Σ state, TargetWitness state)
       (sourceState : Σ state, SourceWitness state) =>
     targetState = f.totalMap sourceState
   apply PFunctor.M.corec_eq_corec
-    (verifiedTotalStep S target TargetWitness displayedTarget)
-    (verifiedTotalStep S source SourceWitness displayedSource)
+    (displayedTotalStep S target TargetWitness displayedTarget)
+    (displayedTotalStep S source SourceWitness displayedSource)
     relation
   · rfl
   · intro targetState sourceState hState
@@ -499,18 +530,18 @@ theorem verifiedBehavior_naturality
     rcases sourceState with ⟨current, currentWitness⟩
     dsimp [totalMap]
     rw [f.map_step]
-    rcases hStep : verifiedTotalStep S source SourceWitness
+    rcases hStep : displayedTotalStep S source SourceWitness
       displayedSource ⟨current, currentWitness⟩ with
       ⟨shape, children⟩
     refine ⟨shape, _, children, rfl, rfl, ?_⟩
     intro direction
     rfl
 
-end VerifiedPresentationHom
+end PresentationHom
 
-/-- Presenting a reindexed verified responder through terminal state-free
-semantics is a verified presentation homomorphism. -/
-def reindexVerifiedPresentationHom
+/-- Presenting a reindexed displayed responder through terminal state-free
+semantics is a displayed presentation homomorphism. -/
+def reindexPresentationHom
     {S : Display.{uA₁, uB, uC₁, uD₁} P}
     {T : Display.{uA₂, uB', uC₂, uD₂} Q}
     (f : PFunctor.Handler (PFunctor.FreeM Q) P)
@@ -518,7 +549,7 @@ def reindexVerifiedPresentationHom
     {State : Type uC₃} (R : Responder State Q)
     (I : State → Type uD₃)
     (displayedR : Display.Coalgebra (Display.responder T) R.out I) :
-    VerifiedPresentationHom S
+    PresentationHom S
       (Responder.reindex f R) I
       (Responder.reindexCoalgebra S T f df R displayedR)
       (Responder.reindex f (Responder.terminal (P := Q)))
@@ -527,7 +558,7 @@ def reindexVerifiedPresentationHom
         (Responder.terminal (P := Q))
         (Display.Coalgebra.terminal (Display.responder T))) where
   toState state := R.behavior state
-  toWitness state witness := verifiedBehavior T R I displayedR state witness
+  toWitness state witness := toDisplayedBehavior T R I displayedR state witness
   map_step := by
     intro state witness
     have hBase :
@@ -539,56 +570,52 @@ def reindexVerifiedPresentationHom
           rw [← reindexBehavior_behavior]
           simp
         _ = _ := reindexBehavior_behavior f R state
-    dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply Sigma.ext_iff.mpr
-    constructor
-    · apply Sigma.ext_iff.mpr
-      constructor
-      · exact hBase
-      · apply Function.hfunext rfl
-        intro query query' hQuery
-        cases hQuery
-        apply Function.hfunext rfl
-        intro precondition precondition' hPrecondition
-        cases hPrecondition
-        let targetResult := (Responder.terminal (P := Q)).runFree
-          (f query) (R.behavior state)
-        let sourceResult := R.runFree (f query) state
-        let presentedResult : P.B query ×
-            PFunctor.M (Q ⊸ X.{uA₂, uB'}) :=
-          ⟨sourceResult.1, R.behavior sourceResult.2⟩
-        let targetEvidence := runFreeDisplayed T
-          (Responder.terminal (P := Q))
-          (Display.Coalgebra.terminal (Display.responder T))
-          (df query precondition) (R.behavior state)
-          (verifiedBehavior T R I displayedR state witness)
-        let sourceEvidence := runFreeDisplayed T R displayedR
-          (df query precondition) state witness
-        let mappedEvidence :
-            S.direction query precondition presentedResult.1 ×
-              Display.M (Display.responder T) presentedResult.2 :=
-          ⟨sourceEvidence.1,
-            verifiedBehavior T R I displayedR sourceResult.2
-              sourceEvidence.2⟩
-        let presentationEq := runFree_terminal R (f query) state
-        let Evidence := fun result : P.B query ×
-            PFunctor.M (Q ⊸ X.{uA₂, uB'}) =>
-          S.direction query precondition result.1 ×
-            Display.M (Display.responder T) result.2
-        have hEvidence :
-            transportRunEvidence (S.direction query precondition)
-                (Display.M (Display.responder T)) presentationEq
-                targetEvidence = mappedEvidence := by
-          exact runFreeDisplayed_verifiedBehavior T R I displayedR
-            (f query) (df query precondition) state witness
-        have hSigma :
-            (⟨targetResult, targetEvidence⟩ : Σ result, Evidence result) =
-              ⟨presentedResult, mappedEvidence⟩ := by
-          apply Sigma.ext presentationEq
-          exact (transportRunEvidence_heq _ _ presentationEq
-            targetEvidence).symm.trans (heq_of_eq hEvidence)
-        exact congr_arg_heq
-          (fun result : Σ result, Evidence result => result.2.1) hSigma
+    dsimp [displayedTotalStep, PresentationHom.totalMap]
+    apply displayedTotalStepObj_ext _ _ _ hBase
+    · apply Function.hfunext rfl
+      intro query query' hQuery
+      cases hQuery
+      apply Function.hfunext rfl
+      intro precondition precondition' hPrecondition
+      cases hPrecondition
+      let targetResult := (Responder.terminal (P := Q)).runFree
+        (f query) (R.behavior state)
+      let sourceResult := R.runFree (f query) state
+      let presentedResult : P.B query ×
+          PFunctor.M (Q ⊸ X.{uA₂, uB'}) :=
+        ⟨sourceResult.1, R.behavior sourceResult.2⟩
+      let targetEvidence := runFreeDisplayed T
+        (Responder.terminal (P := Q))
+        (Display.Coalgebra.terminal (Display.responder T))
+        (df query precondition) (R.behavior state)
+        (toDisplayedBehavior T R I displayedR state witness)
+      let sourceEvidence := runFreeDisplayed T R displayedR
+        (df query precondition) state witness
+      let mappedEvidence :
+          S.direction query precondition presentedResult.1 ×
+            Display.M (Display.responder T) presentedResult.2 :=
+        ⟨sourceEvidence.1,
+          toDisplayedBehavior T R I displayedR sourceResult.2
+            sourceEvidence.2⟩
+      let presentationEq := runFree_terminal R (f query) state
+      let Evidence := fun result : P.B query ×
+          PFunctor.M (Q ⊸ X.{uA₂, uB'}) =>
+        S.direction query precondition result.1 ×
+          Display.M (Display.responder T) result.2
+      have hEvidence :
+          transportRunEvidence (S.direction query precondition)
+              (Display.M (Display.responder T)) presentationEq
+              targetEvidence = mappedEvidence := by
+        exact runFreeDisplayed_toDisplayedBehavior T R I displayedR
+          (f query) (df query precondition) state witness
+      have hSigma :
+          (⟨targetResult, targetEvidence⟩ : Σ result, Evidence result) =
+            ⟨presentedResult, mappedEvidence⟩ := by
+        apply Sigma.ext presentationEq
+        exact (transportRunEvidence_heq _ _ presentationEq
+          targetEvidence).symm.trans (heq_of_eq hEvidence)
+      exact congr_arg_heq
+        (fun result : Σ result, Evidence result => result.2.1) hSigma
     · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder S)).sigmaPFunctor.B
@@ -611,14 +638,14 @@ def reindexVerifiedPresentationHom
             (Responder.terminal (P := Q))
             (Display.Coalgebra.terminal (Display.responder T))
             (df query precondition) (R.behavior state)
-            (verifiedBehavior T R I displayedR state witness)
+            (toDisplayedBehavior T R I displayedR state witness)
           let sourceEvidence := runFreeDisplayed T R displayedR
             (df query precondition) state witness
           let mappedEvidence :
               S.direction query precondition presentedResult.1 ×
                 Display.M (Display.responder T) presentedResult.2 :=
             ⟨sourceEvidence.1,
-              verifiedBehavior T R I displayedR sourceResult.2
+              toDisplayedBehavior T R I displayedR sourceResult.2
                 sourceEvidence.2⟩
           let presentationEq := runFree_terminal R (f query) state
           let Evidence := fun result : P.B query ×
@@ -629,7 +656,7 @@ def reindexVerifiedPresentationHom
               transportRunEvidence (S.direction query precondition)
                   (Display.M (Display.responder T)) presentationEq
                   targetEvidence = mappedEvidence := by
-            exact runFreeDisplayed_verifiedBehavior T R I displayedR
+            exact runFreeDisplayed_toDisplayedBehavior T R I displayedR
               (f query) (df query precondition) state witness
           have hSigma :
               (⟨targetResult, targetEvidence⟩ : Σ result, Evidence result) =
@@ -653,14 +680,14 @@ def reindexVerifiedPresentationHom
           (Responder.terminal (P := Q))
           (Display.Coalgebra.terminal (Display.responder T))
           (df query precondition) (R.behavior state)
-          (verifiedBehavior T R I displayedR state witness)
+          (toDisplayedBehavior T R I displayedR state witness)
         let sourceEvidence := runFreeDisplayed T R displayedR
           (df query precondition) state witness
         let mappedEvidence :
             S.direction query precondition presentedResult.1 ×
               Display.M (Display.responder T) presentedResult.2 :=
           ⟨sourceEvidence.1,
-            verifiedBehavior T R I displayedR sourceResult.2
+            toDisplayedBehavior T R I displayedR sourceResult.2
               sourceEvidence.2⟩
         let presentationEq := runFree_terminal R (f query) state
         let Evidence := fun result : P.B query ×
@@ -671,7 +698,7 @@ def reindexVerifiedPresentationHom
             transportRunEvidence (S.direction query precondition)
                 (Display.M (Display.responder T)) presentationEq
                 targetEvidence = mappedEvidence := by
-          exact runFreeDisplayed_verifiedBehavior T R I displayedR
+          exact runFreeDisplayed_toDisplayedBehavior T R I displayedR
             (f query) (df query precondition) state witness
         have hSigma :
             (⟨targetResult, targetEvidence⟩ : Σ result, Evidence result) =
@@ -684,9 +711,9 @@ def reindexVerifiedPresentationHom
             (⟨result.1.2, result.2.2⟩ :
               Σ behavior, Display.M (Display.responder T) behavior)) hSigma
 
-/-- State-free verified reindexing agrees with reindexing the presenting
-verified responder, after the ordinary presentation equality. -/
-theorem reindexVerifiedBehavior_verifiedBehavior
+/-- State-free displayed reindexing agrees with reindexing the presenting
+displayed responder, after the ordinary presentation equality. -/
+theorem reindexDisplayedBehavior_toDisplayedBehavior
     {S : Display.{uA₁, uB, uC₁, uD₁} P}
     {T : Display.{uA₂, uB', uC₂, uD₂} Q}
     (f : PFunctor.Handler (PFunctor.FreeM Q) P)
@@ -696,21 +723,21 @@ theorem reindexVerifiedBehavior_verifiedBehavior
     (displayedR : Display.Coalgebra (Display.responder T) R.out I)
     (state : State) (witness : I state) :
     Display.M.transport (reindexBehavior_behavior f R state)
-        (reindexVerifiedBehavior S T f df (R.behavior state)
-          (verifiedBehavior T R I displayedR state witness)) =
-      verifiedBehavior S (Responder.reindex f R) I
+        (reindexDisplayedBehavior S T f df (R.behavior state)
+          (toDisplayedBehavior T R I displayedR state witness)) =
+      toDisplayedBehavior S (Responder.reindex f R) I
         (Responder.reindexCoalgebra S T f df R displayedR)
         state witness := by
-  have h := (reindexVerifiedPresentationHom f df R I displayedR).verifiedBehavior_naturality
+  have h := (reindexPresentationHom f df R I displayedR).toDisplayedBehavior_naturality
     state witness
   change Display.M.transport _
-      (reindexVerifiedBehavior S T f df (R.behavior state)
-        (verifiedBehavior T R I displayedR state witness)) = _ at h
+      (reindexDisplayedBehavior S T f df (R.behavior state)
+        (toDisplayedBehavior T R I displayedR state witness)) = _ at h
   exact (Display.M.transport_proof_irrel
-    ((reindexVerifiedPresentationHom f df R I displayedR).behavior_eq state witness)
+    ((reindexPresentationHom f df R I displayedR).behavior_eq state witness)
     (reindexBehavior_behavior f R state)
-    (reindexVerifiedBehavior S T f df (R.behavior state)
-      (verifiedBehavior T R I displayedR state witness))).symm.trans h
+    (reindexDisplayedBehavior S T f df (R.behavior state)
+      (toDisplayedBehavior T R I displayedR state witness))).symm.trans h
 
 end Responder
 end PFunctor

@@ -21,6 +21,7 @@ import PolyFun.IPFunctor.Free.Indexed
 import PolyFun.IPFunctor.Lens.Basic
 import PolyFun.IPFunctor.M
 import PolyFun.IPFunctor.Notation
+import PolyFun.IPFunctor.Notation.Common
 import PolyFun.IPFunctor.Notation.Deterministic
 import PolyFun.IPFunctor.Notation.Indexed
 import PolyFun.ITree.Basic
@@ -160,11 +161,11 @@ import PolyFun.PFunctor.Dynamical.Responder.Parallel.Behavior
 import PolyFun.PFunctor.Dynamical.Responder.Parallel.Coherence
 import PolyFun.PFunctor.Dynamical.Responder.Parallel.Compatibility
 import PolyFun.PFunctor.Dynamical.Responder.Parallel.Display
-import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedAssociativity
-import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedCoherence
-import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedPresentation
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.DisplayedAssociativity
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.DisplayedCoherence
+import PolyFun.PFunctor.Dynamical.Responder.Parallel.Presentation
+import PolyFun.PFunctor.Dynamical.Responder.Presentation
 import PolyFun.PFunctor.Dynamical.Responder.Reindex
-import PolyFun.PFunctor.Dynamical.Responder.VerifiedPresentation
 import PolyFun.PFunctor.Dynamical.Run
 import PolyFun.PFunctor.Dynamical.RunN
 import PolyFun.PFunctor.Dynamical.Safety
