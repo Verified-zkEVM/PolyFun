@@ -33,6 +33,16 @@ abbrev Handler (m : Type u → Type v) (q : PFunctor.{uA, u}) :=
 
 namespace Handler
 
+/-- An effectful stateful handler for `q`: on each position it reads a state,
+performs effects in `m`, and returns a direction together with the next state.
+
+This is a transparent name for `Handler (StateT S m) q`, so it introduces no
+new data or laws. At `m := Id` it is the pure Kleisli--Mealy presentation used
+by `Responder.equivStateHandler`. -/
+abbrev Stateful (m : Type u → Type v) (S : Type u)
+    (q : PFunctor.{uA, u}) :=
+  Handler (StateT S m) q
+
 /-- Combine monadic handlers for an indexed family into a handler for its
 indexed coproduct. -/
 def sigma {I : Type uI} {P : I → PFunctor.{uA, u}}

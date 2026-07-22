@@ -140,12 +140,14 @@ theorem kleisliIterate_succ (h : Handler m q) (A : DynSystem S q) (n : ℕ) (s :
 
 /-- One step of a system driven by a *stateful* handler: the handler threads its
 own state `σ` alongside the system's, handler state first in the pair. -/
-def stepWith (h : Handler (StateT σ m) q) (A : DynSystem S q) (p : σ × S) : m (σ × S) :=
+def stepWith (h : Handler.Stateful m σ q) (A : DynSystem S q)
+    (p : σ × S) : m (σ × S) :=
   (fun dt => (dt.2, A.update p.2 dt.1)) <$> h (A.expose p.2) p.1
 
 /-- `n` steps of a system against a stateful handler, threading the handler
 state. -/
-def iterWith (h : Handler (StateT σ m) q) (A : DynSystem S q) : ℕ → σ × S → m (σ × S)
+def iterWith (h : Handler.Stateful m σ q) (A : DynSystem S q) :
+    ℕ → σ × S → m (σ × S)
   | 0, p => pure p
   | n + 1, p => stepWith h A p >>= iterWith h A n
 

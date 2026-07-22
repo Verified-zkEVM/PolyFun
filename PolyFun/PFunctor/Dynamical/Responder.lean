@@ -28,9 +28,8 @@ trivial). The dynamical accessors under responder names are
 A responder is the deterministic challenger side of a game before Kleisli
 weighting: wiring it against an adversary along `Lens.eval` closes the system
 (`DynSystem.game` / `DynSystem.closedGame`). The `equivStateHandler` bridge
-identifies responders with handlers in the state monad `StateT S Id` — Mealy
-machines in Kleisli form — of which VCVio's `ProbResponder` (the `WireK` layer)
-is the bundled probabilistic `m := SPMF` sibling.
+identifies responders with `Handler.Stateful Id S q`, the pure specialization
+of PolyFun's effectful Mealy interface `Handler.Stateful m S q`.
 -/
 
 @[expose] public section
@@ -144,8 +143,9 @@ end Responder
 A responder with states `S` is the same data as a handler in the state monad
 `StateT S Id`, i.e. a Mealy machine `(a : q.A) → S → q.B a × S` in Kleisli form.
 The direction universe is pinned to the state's (`q : PFunctor.{uA, u}`,
-`S : Type u`) so the state monad applies. VCVio's `ProbResponder` is the bundled
-probabilistic `m := SPMF` sibling of this bridge. -/
+`S : Type u`) so the state monad applies. General effects belong to the
+unbundled `Handler.Stateful m S q` interface rather than to `Responder`, whose
+dynamical-system representation is intrinsically deterministic. -/
 
 namespace Responder
 
@@ -155,17 +155,17 @@ variable {q : PFunctor.{uA, u}} {S : Type u}
 
 /-- Read a responder as a stateful handler: answer the query from the current
 state and thread the next state. -/
-def toStateHandler (R : Responder S q) : Handler (StateT S Id) q :=
+def toStateHandler (R : Responder S q) : Handler.Stateful Id S q :=
   fun a s => (R.answer s a, R.next s a)
 
 /-- Bundle a stateful handler as a responder. -/
-def ofStateHandler (h : Handler (StateT S Id) q) : Responder S q :=
+def ofStateHandler (h : Handler.Stateful Id S q) : Responder S q :=
   mk' (fun s a => (h a s).1) (fun s a => (h a s).2)
 
 /-- The **Kleisli–Mealy bridge**: responders with states `S` for `q` are exactly
-the stateful handlers in `StateT S Id`, with both round-trips definitional.
-VCVio's `ProbResponder` is the bundled `m := SPMF` sibling of this equivalence. -/
-def equivStateHandler : Responder S q ≃ Handler (StateT S Id) q where
+the pure stateful handlers `Handler.Stateful Id S q`, with both round-trips
+definitional. -/
+def equivStateHandler : Responder S q ≃ Handler.Stateful Id S q where
   toFun := toStateHandler
   invFun := ofStateHandler
   left_inv _ := rfl
@@ -174,7 +174,7 @@ def equivStateHandler : Responder S q ≃ Handler (StateT S Id) q where
 @[simp] theorem equivStateHandler_apply (R : Responder S q) :
     equivStateHandler R = R.toStateHandler := rfl
 
-@[simp] theorem equivStateHandler_symm_apply (h : Handler (StateT S Id) q) :
+@[simp] theorem equivStateHandler_symm_apply (h : Handler.Stateful Id S q) :
     equivStateHandler.symm h = ofStateHandler h := rfl
 
 end KleisliMealy
