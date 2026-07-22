@@ -125,21 +125,17 @@ private def parallelAssocVerifiedPresentationHom
         | both operation rightOperation => cases operation <;> rfl)
       ((left, middle), right)
     dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply Sigma.ext_iff.mpr
-    constructor
-    · apply Sigma.ext_iff.mpr
-      constructor
-      · exact hBase
-      · apply Function.hfunext rfl
-        intro operation operation' hOperation
-        cases hOperation
-        apply Function.hfunext rfl
-        intro contract contract' hContract
-        cases hContract
-        cases operation with
-        | left operation => cases operation <;> rfl
-        | right operation => rfl
-        | both operation rightOperation => cases operation <;> rfl
+    apply verifiedTotalStepObj_ext _ _ _ hBase
+    · apply Function.hfunext rfl
+      intro operation operation' hOperation
+      cases hOperation
+      apply Function.hfunext rfl
+      intro contract contract' hContract
+      cases hContract
+      cases operation with
+      | left operation => cases operation <;> rfl
+      | right operation => rfl
+      | both operation rightOperation => cases operation <;> rfl
     · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder

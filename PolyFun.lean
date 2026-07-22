@@ -21,6 +21,7 @@ import PolyFun.IPFunctor.Free.Indexed
 import PolyFun.IPFunctor.Lens.Basic
 import PolyFun.IPFunctor.M
 import PolyFun.IPFunctor.Notation
+import PolyFun.IPFunctor.Notation.Common
 import PolyFun.IPFunctor.Notation.Deterministic
 import PolyFun.IPFunctor.Notation.Indexed
 import PolyFun.ITree.Basic

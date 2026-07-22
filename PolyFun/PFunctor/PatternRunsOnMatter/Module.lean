@@ -156,16 +156,7 @@ theorem runOn_unit (P : PFunctor.{u, u}) :
     rintro ⟨pattern, xPosition⟩
     cases xPosition
     exact unitObj P pattern
-  let hA : ∀ input, lhs.toFunA input = rhs.toFunA input :=
-    fun input => congrArg Sigma.fst (hobj input)
-  refine Lens.ext lhs rhs hA ?_
-  intro input
-  apply eq_of_heq
-  have hraw : lhs.toFunB input ≍ rhs.toFunB input :=
-    (Sigma.ext_iff.mp (hobj input)).2
-  have hcast : (hA input ▸ rhs.toFunB input) ≍ rhs.toFunB input :=
-    eqRec_heq_self _ _
-  exact hraw.trans hcast.symm
+  exact Lens.ext_mapObj lhs rhs hobj
 
 /-- Right-unit coherence for the universal interaction. -/
 theorem xi_unit (P : PFunctor.{u, u}) :
@@ -348,16 +339,7 @@ theorem runOn_assoc (P Q R : PFunctor.{u, u}) :
           (fun pulled => ((runObj pattern matterQ).2 pulled.1, pulled.2))
           (runObj (runObj pattern matterQ).1 matterR))
     exact runObj_assoc P Q R pattern matterQ matterR
-  let hA : ∀ input, lhs.toFunA input = rhs.toFunA input :=
-    fun input => congrArg Sigma.fst (hobj input)
-  refine Lens.ext lhs rhs hA ?_
-  intro input
-  apply eq_of_heq
-  have hraw : lhs.toFunB input ≍ rhs.toFunB input :=
-    (Sigma.ext_iff.mp (hobj input)).2
-  have hcast : (hA input ▸ rhs.toFunB input) ≍ rhs.toFunB input :=
-    eqRec_heq_self _ _
-  exact hraw.trans hcast.symm
+  exact Lens.ext_mapObj lhs rhs hobj
 
 /-- Associativity coherence for the universal interaction. -/
 theorem xi_assoc (P Q R : PFunctor.{u, u}) :

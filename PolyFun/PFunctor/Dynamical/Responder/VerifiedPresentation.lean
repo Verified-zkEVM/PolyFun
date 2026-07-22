@@ -9,12 +9,25 @@ module
 public import PolyFun.PFunctor.Dynamical.Responder.Behavior
 
 /-!
-# Proof-relevant responder presentations
+# Witness-preserving responder presentations
 
 A `VerifiedPresentationHom` preserves the totalized one-step semantics of a
 responder together with its dependent invariant witness. This module owns the
 generic identity, composition, terminal-semantics, and verified-reindexing
 principles; lens-specific specializations live in `Responder.Lens`.
+
+Here **verified** has a deliberately local meaning: a
+`Display.Coalgebra (Display.responder S) R.out I` supplies, for every responder
+state and current witness in `I`, the postcondition data and next-state witness
+required by the display `S`. It does not assert that the implementation was
+produced by a verifier, that the responder satisfies an external safety or
+security policy, or that its ordinary behavior is correct against a separate
+specification.
+
+The same layer can therefore be read neutrally as a **proof-relevant**,
+**displayed**, or **witness-preserving presentation** layer. The exported
+`Verified*` names are retained for API stability; docstrings use the neutral
+terms whenever they describe the underlying mathematical objects.
 -/
 
 @[expose] public section
@@ -27,8 +40,9 @@ namespace Responder
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB'}}
 
 
-/-- One proof-relevant responder step on the total state-and-witness
-presentation. -/
+/-- One witness-preserving responder step on the total state-and-witness
+presentation. The result packages the ordinary behavior, current displayed
+postcondition data, next responder state, and preserved next-state witness. -/
 def verifiedTotalStep
     {RPoly : PFunctor.{uA₃, uB}}
     (S : Display.{uA₃, uB, uC₃, uD₃} RPoly)
@@ -48,6 +62,26 @@ def verifiedTotalStep
               cases trivialDirection
               exact ⟨R.next state query,
                 (obligation query precondition).2⟩⟩
+
+/-- Extensionality for a totalized displayed responder step. Separating the
+ordinary behavior, displayed postcondition, and continuation components keeps
+dependent `Sigma`/`HEq` plumbing out of presentation and coherence proofs. -/
+theorem verifiedTotalStepObj_ext
+    {RPoly : PFunctor.{uA₃, uB}}
+    (S : Display.{uA₃, uB, uC₃, uD₃} RPoly)
+    {X : Type uC₄}
+    (left right :
+      (Display.mStep (Display.responder S)).sigmaPFunctor.Obj X)
+    (hBehavior : left.1.1 = right.1.1)
+    (hPostcondition : HEq left.1.2 right.1.2)
+    (hContinuation : HEq left.2 right.2) :
+    left = right := by
+  rcases left with ⟨⟨leftBehavior, leftPostcondition⟩, leftContinuation⟩
+  rcases right with ⟨⟨rightBehavior, rightPostcondition⟩, rightContinuation⟩
+  cases hBehavior
+  cases hPostcondition
+  cases hContinuation
+  rfl
 
 /-- Sigma-erasing a verified behavior is the ordinary behavior of its total
 state-and-witness presentation. -/
@@ -88,12 +122,12 @@ theorem toM_verifiedBehavior_eq_corec
     cases trivialDirection
     exact ⟨rfl, heq_of_eq rfl⟩
 
-/-- A homomorphism between proof-relevant responder presentations. The state
+/-- A homomorphism between witness-preserving responder presentations. The state
 and witness maps remain split so the latter visibly respects its dependent
 state index; an arbitrary homomorphism of total sigma coalgebras would erase
 that useful presentation structure. The sole law says that mapping a source
 state and witness commutes with the complete totalized
-verified step.  Because answers, postconditions, next states, and next
+witness-preserving step. Because answers, postconditions, next states, and next
 witnesses are packaged together, the law requires neither `HEq` nor exposed
 casts. -/
 structure VerifiedPresentationHom
@@ -313,56 +347,52 @@ def toTerminal
         (Responder.terminal (P := P)).behavior (R.behavior state) =
           R.behavior state := by simp
     dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply Sigma.ext_iff.mpr
-    constructor
-    · apply Sigma.ext_iff.mpr
-      constructor
-      · exact hBase
-      · apply Function.hfunext rfl
-        intro query query' hQuery
-        cases hQuery
-        apply Function.hfunext rfl
-        intro precondition precondition' hPrecondition
-        cases hPrecondition
-        let targetResult := (Responder.terminal (P := P)).runFree
-          ((Handler.id P) query) (R.behavior state)
-        let sourceResult := R.runFree ((Handler.id P) query) state
-        let presentedResult : P.B query × PFunctor.M (P ⊸ X.{uA₁, uB}) :=
-          ⟨sourceResult.1, R.behavior sourceResult.2⟩
-        let targetEvidence := runFreeDisplayed S
-          (Responder.terminal (P := P))
-          (Display.Coalgebra.terminal (Display.responder S))
-          ((Display.Handler.id S) query precondition) (R.behavior state)
-          (verifiedBehavior S R I displayedR state witness)
-        let sourceEvidence := runFreeDisplayed S R displayedR
-          ((Display.Handler.id S) query precondition) state witness
-        let mappedEvidence : S.direction query precondition
-              presentedResult.1 ×
-            Display.M (Display.responder S) presentedResult.2 :=
-          ⟨sourceEvidence.1,
-            verifiedBehavior S R I displayedR sourceResult.2
-              sourceEvidence.2⟩
-        let presentationEq :=
-          runFree_terminal R ((Handler.id P) query) state
-        let Evidence := fun result : P.B query ×
-            PFunctor.M (P ⊸ X.{uA₁, uB}) =>
-          S.direction query precondition result.1 ×
-            Display.M (Display.responder S) result.2
-        have hEvidence :
-            transportRunEvidence (S.direction query precondition)
-                (Display.M (Display.responder S)) presentationEq
-                targetEvidence = mappedEvidence := by
-          exact runFreeDisplayed_verifiedBehavior S R I displayedR
-            ((Handler.id P) query) ((Display.Handler.id S) query precondition)
-            state witness
-        have hSigma :
-            (⟨targetResult, targetEvidence⟩ : Σ result, Evidence result) =
-              ⟨presentedResult, mappedEvidence⟩ := by
-          apply Sigma.ext presentationEq
-          exact (transportRunEvidence_heq _ _ presentationEq
-            targetEvidence).symm.trans (heq_of_eq hEvidence)
-        exact congr_arg_heq
-          (fun result : Σ result, Evidence result => result.2.1) hSigma
+    apply verifiedTotalStepObj_ext _ _ _ hBase
+    · apply Function.hfunext rfl
+      intro query query' hQuery
+      cases hQuery
+      apply Function.hfunext rfl
+      intro precondition precondition' hPrecondition
+      cases hPrecondition
+      let targetResult := (Responder.terminal (P := P)).runFree
+        ((Handler.id P) query) (R.behavior state)
+      let sourceResult := R.runFree ((Handler.id P) query) state
+      let presentedResult : P.B query × PFunctor.M (P ⊸ X.{uA₁, uB}) :=
+        ⟨sourceResult.1, R.behavior sourceResult.2⟩
+      let targetEvidence := runFreeDisplayed S
+        (Responder.terminal (P := P))
+        (Display.Coalgebra.terminal (Display.responder S))
+        ((Display.Handler.id S) query precondition) (R.behavior state)
+        (verifiedBehavior S R I displayedR state witness)
+      let sourceEvidence := runFreeDisplayed S R displayedR
+        ((Display.Handler.id S) query precondition) state witness
+      let mappedEvidence : S.direction query precondition
+            presentedResult.1 ×
+          Display.M (Display.responder S) presentedResult.2 :=
+        ⟨sourceEvidence.1,
+          verifiedBehavior S R I displayedR sourceResult.2
+            sourceEvidence.2⟩
+      let presentationEq :=
+        runFree_terminal R ((Handler.id P) query) state
+      let Evidence := fun result : P.B query ×
+          PFunctor.M (P ⊸ X.{uA₁, uB}) =>
+        S.direction query precondition result.1 ×
+          Display.M (Display.responder S) result.2
+      have hEvidence :
+          transportRunEvidence (S.direction query precondition)
+              (Display.M (Display.responder S)) presentationEq
+              targetEvidence = mappedEvidence := by
+        exact runFreeDisplayed_verifiedBehavior S R I displayedR
+          ((Handler.id P) query) ((Display.Handler.id S) query precondition)
+          state witness
+      have hSigma :
+          (⟨targetResult, targetEvidence⟩ : Σ result, Evidence result) =
+            ⟨presentedResult, mappedEvidence⟩ := by
+        apply Sigma.ext presentationEq
+        exact (transportRunEvidence_heq _ _ presentationEq
+          targetEvidence).symm.trans (heq_of_eq hEvidence)
+      exact congr_arg_heq
+        (fun result : Σ result, Evidence result => result.2.1) hSigma
     · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder S)).sigmaPFunctor.B
@@ -540,55 +570,51 @@ def reindexVerifiedPresentationHom
           simp
         _ = _ := reindexBehavior_behavior f R state
     dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply Sigma.ext_iff.mpr
-    constructor
-    · apply Sigma.ext_iff.mpr
-      constructor
-      · exact hBase
-      · apply Function.hfunext rfl
-        intro query query' hQuery
-        cases hQuery
-        apply Function.hfunext rfl
-        intro precondition precondition' hPrecondition
-        cases hPrecondition
-        let targetResult := (Responder.terminal (P := Q)).runFree
-          (f query) (R.behavior state)
-        let sourceResult := R.runFree (f query) state
-        let presentedResult : P.B query ×
-            PFunctor.M (Q ⊸ X.{uA₂, uB'}) :=
-          ⟨sourceResult.1, R.behavior sourceResult.2⟩
-        let targetEvidence := runFreeDisplayed T
-          (Responder.terminal (P := Q))
-          (Display.Coalgebra.terminal (Display.responder T))
-          (df query precondition) (R.behavior state)
-          (verifiedBehavior T R I displayedR state witness)
-        let sourceEvidence := runFreeDisplayed T R displayedR
-          (df query precondition) state witness
-        let mappedEvidence :
-            S.direction query precondition presentedResult.1 ×
-              Display.M (Display.responder T) presentedResult.2 :=
-          ⟨sourceEvidence.1,
-            verifiedBehavior T R I displayedR sourceResult.2
-              sourceEvidence.2⟩
-        let presentationEq := runFree_terminal R (f query) state
-        let Evidence := fun result : P.B query ×
-            PFunctor.M (Q ⊸ X.{uA₂, uB'}) =>
-          S.direction query precondition result.1 ×
-            Display.M (Display.responder T) result.2
-        have hEvidence :
-            transportRunEvidence (S.direction query precondition)
-                (Display.M (Display.responder T)) presentationEq
-                targetEvidence = mappedEvidence := by
-          exact runFreeDisplayed_verifiedBehavior T R I displayedR
-            (f query) (df query precondition) state witness
-        have hSigma :
-            (⟨targetResult, targetEvidence⟩ : Σ result, Evidence result) =
-              ⟨presentedResult, mappedEvidence⟩ := by
-          apply Sigma.ext presentationEq
-          exact (transportRunEvidence_heq _ _ presentationEq
-            targetEvidence).symm.trans (heq_of_eq hEvidence)
-        exact congr_arg_heq
-          (fun result : Σ result, Evidence result => result.2.1) hSigma
+    apply verifiedTotalStepObj_ext _ _ _ hBase
+    · apply Function.hfunext rfl
+      intro query query' hQuery
+      cases hQuery
+      apply Function.hfunext rfl
+      intro precondition precondition' hPrecondition
+      cases hPrecondition
+      let targetResult := (Responder.terminal (P := Q)).runFree
+        (f query) (R.behavior state)
+      let sourceResult := R.runFree (f query) state
+      let presentedResult : P.B query ×
+          PFunctor.M (Q ⊸ X.{uA₂, uB'}) :=
+        ⟨sourceResult.1, R.behavior sourceResult.2⟩
+      let targetEvidence := runFreeDisplayed T
+        (Responder.terminal (P := Q))
+        (Display.Coalgebra.terminal (Display.responder T))
+        (df query precondition) (R.behavior state)
+        (verifiedBehavior T R I displayedR state witness)
+      let sourceEvidence := runFreeDisplayed T R displayedR
+        (df query precondition) state witness
+      let mappedEvidence :
+          S.direction query precondition presentedResult.1 ×
+            Display.M (Display.responder T) presentedResult.2 :=
+        ⟨sourceEvidence.1,
+          verifiedBehavior T R I displayedR sourceResult.2
+            sourceEvidence.2⟩
+      let presentationEq := runFree_terminal R (f query) state
+      let Evidence := fun result : P.B query ×
+          PFunctor.M (Q ⊸ X.{uA₂, uB'}) =>
+        S.direction query precondition result.1 ×
+          Display.M (Display.responder T) result.2
+      have hEvidence :
+          transportRunEvidence (S.direction query precondition)
+              (Display.M (Display.responder T)) presentationEq
+              targetEvidence = mappedEvidence := by
+        exact runFreeDisplayed_verifiedBehavior T R I displayedR
+          (f query) (df query precondition) state witness
+      have hSigma :
+          (⟨targetResult, targetEvidence⟩ : Σ result, Evidence result) =
+            ⟨presentedResult, mappedEvidence⟩ := by
+        apply Sigma.ext presentationEq
+        exact (transportRunEvidence_heq _ _ presentationEq
+          targetEvidence).symm.trans (heq_of_eq hEvidence)
+      exact congr_arg_heq
+        (fun result : Σ result, Evidence result => result.2.1) hSigma
     · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder S)).sigmaPFunctor.B

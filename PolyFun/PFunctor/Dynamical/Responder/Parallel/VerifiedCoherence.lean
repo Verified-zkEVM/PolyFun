@@ -85,18 +85,14 @@ private def parallelCommVerifiedPresentationHom
         cases operation <;> rfl)
       (left, right)
     dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply Sigma.ext_iff.mpr
-    constructor
-    · apply Sigma.ext_iff.mpr
-      constructor
-      · exact hBase
-      · apply Function.hfunext rfl
-        intro operation operation' hOperation
-        cases hOperation
-        apply Function.hfunext rfl
-        intro contract contract' hContract
-        cases hContract
-        cases operation <;> rfl
+    apply verifiedTotalStepObj_ext _ _ _ hBase
+    · apply Function.hfunext rfl
+      intro operation operation' hOperation
+      cases hOperation
+      apply Function.hfunext rfl
+      intro contract contract' hContract
+      cases hContract
+      cases operation <;> rfl
     · apply Function.hfunext
       · apply congrArg
           (Display.mStep
@@ -246,21 +242,17 @@ private def parallelZeroRightVerifiedPresentationHom
         | both operation impossible => exact PEmpty.elim impossible)
       (left, PUnit.unit)
     dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply Sigma.ext_iff.mpr
-    constructor
-    · apply Sigma.ext_iff.mpr
-      constructor
-      · exact hBase
-      · apply Function.hfunext rfl
-        intro operation operation' hOperation
-        cases hOperation
-        apply Function.hfunext rfl
-        intro contract contract' hContract
-        cases hContract
-        cases operation with
-        | left operation => rfl
-        | right impossible => exact PEmpty.elim impossible
-        | both operation impossible => exact PEmpty.elim impossible
+    apply verifiedTotalStepObj_ext _ _ _ hBase
+    · apply Function.hfunext rfl
+      intro operation operation' hOperation
+      cases hOperation
+      apply Function.hfunext rfl
+      intro contract contract' hContract
+      cases hContract
+      cases operation with
+      | left operation => rfl
+      | right impossible => exact PEmpty.elim impossible
+      | both operation impossible => exact PEmpty.elim impossible
     · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder
@@ -403,21 +395,17 @@ private def parallelZeroRightPresentationHom
         | both operation impossible => exact PEmpty.elim impossible)
       (left, PUnit.unit)
     dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply Sigma.ext_iff.mpr
-    constructor
-    · apply Sigma.ext_iff.mpr
-      constructor
-      · exact hBase
-      · apply Function.hfunext rfl
-        intro operation operation' hOperation
-        cases hOperation
-        apply Function.hfunext rfl
-        intro contract contract' hContract
-        cases hContract
-        cases operation with
-        | left operation => rfl
-        | right impossible => exact PEmpty.elim impossible
-        | both operation impossible => exact PEmpty.elim impossible
+    apply verifiedTotalStepObj_ext _ _ _ hBase
+    · apply Function.hfunext rfl
+      intro operation operation' hOperation
+      cases hOperation
+      apply Function.hfunext rfl
+      intro contract contract' hContract
+      cases hContract
+      cases operation with
+      | left operation => rfl
+      | right impossible => exact PEmpty.elim impossible
+      | both operation impossible => exact PEmpty.elim impossible
     · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder
@@ -545,21 +533,17 @@ private def parallelZeroLeftVerifiedPresentationHom
         | both impossible operation => exact PEmpty.elim impossible)
       (PUnit.unit, right)
     dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply Sigma.ext_iff.mpr
-    constructor
-    · apply Sigma.ext_iff.mpr
-      constructor
-      · exact hBase
-      · apply Function.hfunext rfl
-        intro operation operation' hOperation
-        cases hOperation
-        apply Function.hfunext rfl
-        intro contract contract' hContract
-        cases hContract
-        cases operation with
-        | left impossible => exact PEmpty.elim impossible
-        | right operation => rfl
-        | both impossible operation => exact PEmpty.elim impossible
+    apply verifiedTotalStepObj_ext _ _ _ hBase
+    · apply Function.hfunext rfl
+      intro operation operation' hOperation
+      cases hOperation
+      apply Function.hfunext rfl
+      intro contract contract' hContract
+      cases hContract
+      cases operation with
+      | left impossible => exact PEmpty.elim impossible
+      | right operation => rfl
+      | both impossible operation => exact PEmpty.elim impossible
     · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder
@@ -706,21 +690,17 @@ private def parallelZeroLeftPresentationHom
         | both impossible operation => exact PEmpty.elim impossible)
       (PUnit.unit, right)
     dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply Sigma.ext_iff.mpr
-    constructor
-    · apply Sigma.ext_iff.mpr
-      constructor
-      · exact hBase
-      · apply Function.hfunext rfl
-        intro operation operation' hOperation
-        cases hOperation
-        apply Function.hfunext rfl
-        intro contract contract' hContract
-        cases hContract
-        cases operation with
-        | left impossible => exact PEmpty.elim impossible
-        | right operation => rfl
-        | both impossible operation => exact PEmpty.elim impossible
+    apply verifiedTotalStepObj_ext _ _ _ hBase
+    · apply Function.hfunext rfl
+      intro operation operation' hOperation
+      cases hOperation
+      apply Function.hfunext rfl
+      intro contract contract' hContract
+      cases hContract
+      cases operation with
+      | left impossible => exact PEmpty.elim impossible
+      | right operation => rfl
+      | both impossible operation => exact PEmpty.elim impossible
     · apply Function.hfunext
       · apply congrArg
           (Display.mStep (Display.responder

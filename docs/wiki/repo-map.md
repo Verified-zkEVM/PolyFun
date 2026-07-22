@@ -42,6 +42,8 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   -> PFunctor/Resumption
 Logic/HEq + PFunctor/{M, Lens/Basic} -> PFunctor/M/Vertex
 IPFunctor/Basic + PFunctor/M/Vertex -> IPFunctor/M
+IPFunctor/Free/{Basic, Indexed} + IPFunctor/Notation/Common
+  -> IPFunctor/Notation + IPFunctor/Notation/{Indexed, Deterministic}
 PFunctor/Display/Basic
   -> PFunctor/Display/{Chart, Coalgebra, Indexed, Free}
 IPFunctor/M + PFunctor/Display/Indexed -> PFunctor/Display/M
