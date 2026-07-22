@@ -191,6 +191,8 @@ import PolyFun.PFunctor.Free.Resumption
 import PolyFun.PFunctor.Free.Universal
 import PolyFun.PFunctor.Handler
 import PolyFun.PFunctor.Handler.Free
+import PolyFun.PFunctor.Handler.Normalization
+import PolyFun.PFunctor.Handler.Normalization.Attr
 import PolyFun.PFunctor.Handler.Stateful
 import PolyFun.PFunctor.InternalHom
 import PolyFun.PFunctor.Lens.Basic
