@@ -514,9 +514,11 @@ consequences:
 
 `TypeTree.Fintype` in
 [`PolyFun/Interaction/Basic/TypeTreeFintype.lean`](../../PolyFun/Interaction/Basic/TypeTreeFintype.lean)
-is the per-tree ornament (recursive `Fintype` + `Nonempty` for every
-move type) that lets users recover canonical uniform samplers
-(`Sampler.uniformI`) without writing one by hand.
+is the recursive finiteness ornament for every move type;
+`TypeTree.Nonempty` independently records that every move type is nonempty.
+Downstream uniform samplers require both properties. Keeping them separate
+matches `PFunctor.Fintype` and does not treat finite branching as evidence that
+a move is available.
 
 PolyFun deliberately stops here: anything that requires a probability
 monad (e.g. `processSemanticsProbComp`), an oracle simulation
@@ -575,8 +577,8 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Ownership.lean` | `LocalView` / `LocalRunner` builders for `SyntaxOver` |
 | `MonadDecoration.lean` | `MonadDecoration`, `Strategy.withMonads`, `runWithMonads` |
 | `BundledMonad.lean` | `BundledMonad` (monad packaged for inductive data) |
-| `Sampler.lean` | `TypeTree.Sampler m spec := Decoration (fun X => m X) spec`, `samplePath`, `Sampler.interleave`, `Sampler.uniformI` |
-| `TypeTreeFintype.lean` | `TypeTree.Fintype` per-tree ornament; enables canonical `Sampler.uniformI` |
+| `Sampler.lean` | `TypeTree.Sampler m tree := Decoration (fun X => m X) tree`, `samplePath`, `Sampler.interleave` |
+| `TypeTreeFintype.lean` | Universe-polymorphic `TypeTree.Fintype` and `TypeTree.Nonempty` branching ornaments |
 
 ### `TwoParty/`
 
