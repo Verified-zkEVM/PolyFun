@@ -13,10 +13,12 @@ public import PolyFun.PFunctor.Lens.Composite
 
 Regression tests: the `game` / `closedGame` step equations and the
 responder eta canaries hold by `rfl`, `stepWith` at `m := Id` is the closed
-game's step, a concrete counting-responder game runs by `rfl`, the Moore
-win-bit game is the `monomial Bool PUnit` instance of `game`, and a
-deterministic PrivK-shaped `game₂` (challenger as a composite lens,
-adversary via `orderPair`) computes one composite step by `rfl`.
+game's step, the query-conditioned `DynComputation` run law specializes to a
+nontrivial responder with the answer/state pair in the intended order, a
+concrete counting-responder game runs by `rfl`, the Moore win-bit game is the
+`monomial Bool PUnit` instance of `game`, and a deterministic PrivK-shaped
+`game₂` (challenger as a composite lens, adversary via `orderPair`) computes one
+composite step by `rfl`.
 -/
 
 @[expose] public section
@@ -75,6 +77,58 @@ example (R : Responder T q) (A : DynSystem S q) (p : T × S) :
       = (DynSystem.closedGame R A).step p := rfl
 
 end Canaries
+
+/-! ## Returning computations against responders -/
+
+/-- One visible `true` query whose answer becomes the terminal result. -/
+def responderQueryComputation :
+    DynSystem.DynComputation (monomial Bool Nat) PUnit Nat where
+  State := Option Nat
+  toDynSystem :=
+    (fun
+      | none => Sum.inr true
+      | some value => Sum.inl value) ⇆
+    fun
+      | none => fun answer => some answer
+      | some _ => PEmpty.elim
+  init := fun _ => none
+
+/-- On the exposed `true` query, answer with `state + 10` and advance the
+responder state by one. The two components are deliberately distinguishable. -/
+def answerAndAdvanceResponder : Responder Nat (monomial Bool Nat) :=
+  Responder.mk' (fun state query => Bool.rec (state + 20) (state + 10) query)
+    (fun state query => Bool.rec (state + 2) (state + 1) query)
+
+@[simp] theorem answerAndAdvanceResponder_answer_true (state : Nat) :
+    answerAndAdvanceResponder.answer state true = state + 10 := rfl
+
+@[simp] theorem answerAndAdvanceResponder_next_true (state : Nat) :
+    answerAndAdvanceResponder.next state true = state + 1 := rfl
+
+def answerAndAdvanceHandler :
+    Handler (StateT Nat (Id.{0})) (monomial Bool Nat) :=
+  answerAndAdvanceResponder.toStateHandler
+
+def responderQueryRun (fuel : Nat) (state : Option Nat) :
+    StateT Nat (Id.{0}) (Option Nat) :=
+  responderQueryComputation.{0}.runWith answerAndAdvanceHandler fuel state
+
+/-- The query-branch run law exposed through `Game` selects the computation's
+answer-indexed continuation and threads the responder's next state. Writing the
+right-hand side explicitly makes an answer/state swap fail this canary. -/
+example (fuel responderState : Nat) :
+    (responderQueryRun (fuel + 1) none).run responderState =
+      (responderQueryRun fuel (some (responderState + 10))).run
+        (responderState + 1) := by
+  unfold responderQueryRun
+  rw [responderQueryComputation.runWith_query_succ_stateT
+    answerAndAdvanceHandler fuel none true
+    (fun answer => some answer) rfl responderState]
+  rw [show answerAndAdvanceHandler true responderState =
+    (responderState + 10, responderState + 1) by rfl]
+  change (responderQueryComputation.runWith answerAndAdvanceHandler fuel
+    (some (responderState + 10))).run (responderState + 1) = _
+  rfl
 
 /-! ## A concrete closed game: counting responder vs doubling adversary -/
 

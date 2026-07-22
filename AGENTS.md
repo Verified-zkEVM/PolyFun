@@ -165,7 +165,7 @@ PFunctor/PatternRunsOnMatter/{Module, Dynamical} + PFunctor/Dynamical/Bisimulati
 
 PFunctor/{Lens, Cofree, M} + Control/Coalgebra
   → PFunctor/Dynamical/{Basic, Safety, Combinators, Run, Speedup, Trajectory}
-  → PFunctor/Dynamical/{Behavior, Simulation, RunN, DynComputation, IOMachine}
+  → PFunctor/Dynamical/{Behavior, Simulation, RunN, DynComputation}
   → PFunctor/Dynamical/Bisimulation   (also imports Control/Bisimulation)
   → PFunctor/Dynamical/{Refinement, Responder, Game}
 PFunctor/{Cofree/Universal, Dynamical/Trajectory}
@@ -208,9 +208,10 @@ PFunctor/{PatternRunsOnMatter/Display,
   Dynamical/Responder/Parallel/Compatibility}
   → PFunctor/PatternRunsOnMatter/Parallel
 
-  (Dynamical also draws on PFunctor/Comonoid and PFunctor/Free/Basic
-   for RunN and IOMachine, PFunctor/InternalHom for Responder, and
-   PFunctor/Lens/Duoidal for Game. Responder/Display additionally imports
+  (Dynamical also draws on PFunctor/Comonoid for RunN,
+   PFunctor/{Free/Basic, Resumption} for DynComputation,
+   PFunctor/InternalHom for Responder, and PFunctor/Lens/Duoidal for Game.
+   Responder/Display additionally imports
    PFunctor/Display/{Chart, Coalgebra}; Responder/Reindex additionally imports
    PFunctor/Display/Handler; Responder/Behavior additionally imports
    IPFunctor/M, PFunctor/Display/M, and Dynamical/Simulation.)

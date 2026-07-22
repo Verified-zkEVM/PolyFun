@@ -30,6 +30,11 @@ def boundedUniverseCanary {p : PFunctor.{uA, uB}} {α : Type uα}
     (k : ℕ) (state : M.State) : FreeM p (Option β) :=
   M.unroll k state
 
+def closedTrajectoryUniverseCanary {α : Type uα} {β : Type uβ}
+    (M : DynComputation.{uState} X.{uA, uB} α β)
+    (state : M.State) (k : ℕ) : M.State :=
+  M.closedStutterIterate state k
+
 theorem boundedSeqUniverseCanary {p : PFunctor.{uA, uB}} {α : Type uα}
     {β : Type uβ} {γ : Type uγ} (M₁ : DynComputation.{uState} p α β)
     (M₂ : DynComputation.{uState₂} p β γ) (program₁ : α → FreeM p β)
@@ -119,6 +124,79 @@ example : ¬emptyDirectionMachine.ResolvesIn 0 (emptyDirectionMachine.init ()) :
 example : emptyDirectionMachine.ResolvesIn 1 (emptyDirectionMachine.init ()) := by
   rw [emptyDirectionMachine.resolvesIn_query_succ_iff 0 _ () _ rfl]
   exact fun direction => Empty.elim direction
+
+/-! ## Closed deterministic trajectories -/
+
+/-- One Collatz step. The small trajectory below is used only as an executable
+closed-system canary; no global Collatz termination claim is made. -/
+def collatzNext (n : ℕ) : ℕ :=
+  if n % 2 = 0 then n / 2 else 3 * n + 1
+
+/-- The return-or-query view of the Collatz producer. -/
+def collatzView (n : ℕ) : ℕ ⊕ X.{0, 0}.Obj ℕ :=
+  if n = 1 then Sum.inl n
+  else Sum.inr ⟨PUnit.unit, fun _ => collatzNext n⟩
+
+/-- The polynomial coalgebra step corresponding to `collatzView`. -/
+def collatzOut (n : ℕ) : (C.{0, 0} ℕ + X.{0, 0}).Obj ℕ :=
+  Resumption.pack (collatzView n)
+
+/-- A closed deterministic Collatz producer that returns at `1` and otherwise
+makes the unique `X` query before advancing. -/
+def collatzMachine : DynComputation X.{0, 0} ℕ ℕ where
+  State := ℕ
+  toDynSystem := (fun n => (collatzOut n).1) ⇆ fun n => (collatzOut n).2
+  init := id
+
+@[simp] theorem init_collatzMachine (n : ℕ) : collatzMachine.init n = n := rfl
+
+@[simp] theorem view_collatzMachine (n : ℕ) :
+    collatzMachine.view n = collatzView n := by
+  change Resumption.unpack (collatzOut n) = collatzView n
+  exact Resumption.unpack_pack (collatzView n)
+
+@[simp] theorem closedStutterStep_collatzMachine (n : ℕ) :
+    collatzMachine.closedStutterStep n =
+      if n = 1 then n else collatzNext n := by
+  by_cases h : n = 1 <;> simp [closedStutterStep, collatzView, h]
+
+example : collatzMachine.view (collatzMachine.init 1) = Sum.inl 1 := by
+  simp [collatzView]
+  rfl
+
+example : collatzMachine.closedStutterStep (collatzMachine.init 1) =
+    collatzMachine.init 1 := by
+  simp
+
+example : collatzMachine.closedStutterIterate (collatzMachine.init 6) 8 =
+    collatzMachine.init 1 := by
+  norm_num [closedStutterIterate, collatzNext]
+
+theorem collatz_resolvesIn_eight :
+    collatzMachine.ResolvesIn 8 (collatzMachine.init 6) := by
+  norm_num [ResolvesIn, collatzView, collatzNext]
+
+example : collatzMachine.ResolvesIn 8 (collatzMachine.init 6) := by
+  rw [collatzMachine.resolvesIn_iff_exists_le_closedStutterIterate_return]
+  refine ⟨8, le_rfl, 1, ?_⟩
+  norm_num [closedStutterIterate, collatzView, collatzNext]
+  rfl
+
+example : ∃ j ≤ 8, ∃ value,
+    collatzMachine.view
+      (collatzMachine.closedStutterIterate (collatzMachine.init 6) j) =
+        Sum.inl value :=
+  (collatzMachine.resolvesIn_iff_exists_le_closedStutterIterate_return 8 _).mp
+    collatz_resolvesIn_eight
+
+example : ¬collatzMachine.ResolvesIn 7 (collatzMachine.init 6) := by
+  norm_num [ResolvesIn, collatzView, collatzNext]
+
+example : ∃ k, collatzMachine.ResolvesIn k (collatzMachine.init 6) := by
+  rw [collatzMachine.exists_resolvesIn_iff_exists_closedStutterIterate_return]
+  refine ⟨8, 1, ?_⟩
+  norm_num [closedStutterIterate, collatzView, collatzNext]
+  rfl
 
 /-! ## Bounded simulation -/
 

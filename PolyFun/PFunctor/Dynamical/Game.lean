@@ -6,7 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Dynamical.Responder
-public import PolyFun.PFunctor.Dynamical.IOMachine
+public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 public import PolyFun.PFunctor.Dynamical.Combinators
 public import PolyFun.PFunctor.Lens.Duoidal
 
@@ -32,9 +32,10 @@ Monadic runs against handlers are provided in two strengths: `kleisliStep` /
 first in the pair. The two agree along `StateT.lift` (`stepWith_lift`), and at
 `m := Id` a responder's handler recovers the closed game
 (`stepWith_toStateHandler`). The load-bearing export is
-`IOMachine.runWith_run_succ_of_output_eq_none`, the machine-vs-responder
-step law that unrolls a machine's fuelled `runWith` through `stepWith` of its
-dynamical core.
+`DynComputation.runWith_query_succ_stateT`: under an explicit visible-query
+view, it unrolls one unit of fuel through the stateful handler and threads the
+answer and handler state into the residual computation. The query hypothesis
+is essential because a returned computation state has no query transition.
 
 Two-phase (commit-then-guess) games arrive by substitution: `Lens.eval₂` runs
 two evaluations in sequence after reshuffling along the duoidal interchange
@@ -193,32 +194,6 @@ theorem iterWith_toStateHandler (R : Responder σ q) (A : DynSystem S q) (n : �
 end Kleisli
 
 end DynSystem
-
-/-! ## The machine-vs-responder step law -/
-
-namespace DynSystem.IOMachine
-
-section RunBridge
-
-variable {q : PFunctor.{uA, u}} {α β : Type u} {σ : Type u} {m : Type u → Type v} [Monad m]
-
-/-- **The machine-vs-responder step law**: on an unresolved state, one unit of
-fuel of a machine's `runWith` against a stateful handler — read in
-state-transformer form — is one `DynSystem.stepWith` of the machine's dynamical
-core, bound into the rest of the run. Downstream machine-game step lemmas are
-instances of this law at concrete monads (`m := SPMF` for VCVio's wiring). -/
-theorem runWith_run_succ_of_output_eq_none [LawfulMonad m] (M : DynSystem.IOMachine q α β)
-    (h : Handler (StateT σ m) q) {s : M.State} (hs : M.output s = none) (k : ℕ) (t : σ) :
-    (M.runWith h (k + 1) s).run t
-      = DynSystem.stepWith h M.toDynSystem (t, s) >>=
-          fun p => (M.runWith h k p.2).run p.1 := by
-  rw [M.runWith_succ_of_output_eq_none h hs k]
-  simp only [DynSystem.stepWith, bind_map_left]
-  rfl
-
-end RunBridge
-
-end DynSystem.IOMachine
 
 /-! ## Two-phase games
 

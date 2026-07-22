@@ -19,10 +19,12 @@ There are two orthogonal meanings of “compose”.
    the duoidal maps organize interfaces. A lens into a substitution composite
    is inspected directly through `l.compOuter`, `l.compInner`, and
    `l.compPullback`; no parallel `CompTriple` representation is needed.
-2. **Program composition over a fixed interface.** `FreeM.append` grafts one
-   interaction tree into another. `IOMachine.seqComp` runs one pointed
-   machine until it returns an intermediate value and then initializes the
-   next machine. This is Kleisli composition, not lens composition.
+2. **Program composition over a fixed interface.** `FreeM.append` grafts a
+   path-indexed continuation onto a well-founded interaction tree; ordinary
+   `FreeM.bind` is its output-indexed specialization. `DynComputation.seqComp`
+   runs one returning computation until it produces an intermediate value and
+   then initializes the next computation. Its denotation is resumption bind,
+   not lens composition.
 
 The distinction matters because `seqComp` cannot be encoded merely as a lens
 into `q ◃ r`:
@@ -31,20 +33,23 @@ into `q ◃ r`:
   of a substitution composite contain dependent data from both phases;
 - the handoff occurs after an unbounded, dynamically determined number of
   interface steps;
-- the handoff is silent and depends on `init` and `output`, data absent from a
-  bare `DynSystem` lens;
+- the handoff is silent and depends on `init` and a terminal return view, data
+  absent from a bare `DynSystem` lens;
 - both phases use the same external interface rather than producing a static
   composite interface.
 
-The current bridge between machine and program presentations is
-`IOMachine.toComp`. Its run semantics is the fold
-`runWith = FreeM.liftM ∘ toComp`. Under a `ResolvesIn` certificate, the
-fuel-exact `runWithInput_seqComp` theorem says that machine sequencing denotes
-the corresponding `OptionT` Kleisli composition at the summed budget. Without
-that termination witness, a fixed-fuel statement is false because fuel is
-threaded continuously through the handoff. Once both denotations exist, their
-Kleisli composition associates by the monad laws even though nested sum state
-types do not associate definitionally.
+The current bridge between coinductive and well-founded program presentations is
+`DynComputation.unroll`, which is exactly `Resumption.truncate` on the hidden
+state's behavior. Its interpreted execution is the fold
+`runWith = FreeM.liftM ∘ unroll`. Under `ResolvesIn` certificates for both
+phases, `runWithInput_seqComp` says that sequencing denotes the corresponding
+`OptionT`-shaped Kleisli composition at the summed budget. Without those
+certificates, a fixed-fuel statement is false because fuel is threaded
+continuously through the handoff. At the qualitative layer,
+`toFreeMFrom_seqComp_inl` identifies extraction from accessible phase-one
+states with literal `FreeM.bind`. Sequential computation laws are stated in
+`ObsEq`: denotations associate by resumption monad laws even though nested sum
+state types do not associate definitionally.
 
 ## What has already unified cleanly
 
@@ -77,7 +82,8 @@ an untested generic layer. The generic construction earns its place only when
 it makes an existing consumer simpler. In particular, it should eventually
 explain rather than obscure:
 
-- the relation between `FreeM.append` and `IOMachine.seqComp`;
+- the output-indexed overlap between `FreeM.append`, `FreeM.bind`, and
+  extracted `DynComputation.seqComp`;
 - the shared wiring core behind UC `par`, `wire`, and `plug`;
 - `DynSystem` behavior as the mate into the cofree comonoid;
 - fixed finite runs (`nStep`) as projections of the same behavior.
@@ -93,12 +99,15 @@ concrete category example rather than testing only the abstract structure.
 
 ### 2. Program-axis bridge — completed at finite fuel
 
-`runWithInput_seqComp` proves the certified finite-fuel Kleisli equation, and
-`run_seqComp_eq_append` identifies its free syntax with `FreeM.append` through
-`append_output_eq_bind`. The raw type `FreeM p (Option β)` already is the
+`runWithInput_seqComp` proves the certified finite-fuel Kleisli equation.
+Qualitatively, `toFreeMFrom_seqComp_inl` gives literal `FreeM.bind` for the
+program extracted from accessibility proofs. Separately,
+`FreeM.append_output_eq_bind` identifies output-indexed path grafting with
+ordinary bind. The raw type `FreeM p (Option β)` already is the
 `OptionT (FreeM p)` representation at the value level, so an additional
-wrapper would add no laws or eliminators. The theorem equates denotations and
-does not identify the machines' incompatible nested-sum state presentations.
+wrapper would add no laws or eliminators. These theorems equate executions or
+extracted programs; they do not identify computations' incompatible
+nested-sum hidden-state presentations.
 
 ### 3. Cofree comonoid and mate
 
