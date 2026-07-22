@@ -47,6 +47,7 @@ import PolyFun.ITree.Unfold
 import PolyFun.Interaction.Basic.Append
 import PolyFun.Interaction.Basic.BundledMonad
 import PolyFun.Interaction.Basic.Chain
+import PolyFun.Interaction.Basic.Chain.Append
 import PolyFun.Interaction.Basic.Decoration
 import PolyFun.Interaction.Basic.Interaction
 import PolyFun.Interaction.Basic.MonadDecoration

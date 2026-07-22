@@ -44,6 +44,31 @@ abbrev Strategy.Plain (m : Type u → Type u)
   StrategyOver (Strategy.syntax m) (PUnit.unit : PUnit.{u+1}) spec
     (Decoration.empty.{u, u} spec) Output
 
+/-- Transport a plain strategy across equality of its type tree and a
+pointwise identification of the correspondingly transported output family.
+
+The explicit family equality keeps dependent path transport localized here;
+callers do not need to unfold the `StrategyOver` representation. -/
+def Strategy.castSpec {m : Type u → Type u} {source target : TypeTree}
+    {Source : Path source → Type u} {Target : Path target → Type u}
+    (hSpec : source = target)
+    (hOutput : (path : Path target) →
+      Source (Equiv.cast (congrArg Path hSpec).symm path) = Target path)
+    (strategy : Strategy.Plain m source Source) :
+    Strategy.Plain m target Target := by
+  subst target
+  have hFamily : Source = Target := by
+    funext path
+    simpa using hOutput path
+  subst Target
+  exact strategy
+
+@[simp]
+theorem Strategy.castSpec_rfl {m : Type u → Type u} {spec : TypeTree}
+    {Output : Path spec → Type u} (strategy : Strategy.Plain m spec Output) :
+    Strategy.castSpec rfl (fun _ => rfl) strategy = strategy :=
+  rfl
+
 /-- One-step execution law for ordinary one-player strategies. -/
 def Strategy.interaction (m : Type u → Type u) [Monad m] :
     InteractionOver

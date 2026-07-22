@@ -33,6 +33,8 @@ specialization.
 * `Chain.replicate` — constant rounds (recovers `TypeTree.replicate`).
 * `Chain.ofStateChain` — finite unfold of a stage-indexed coalgebra.
 * `Chain.ofStateMachine` — homogeneous-state specialization.
+* `Chain.outputFamily` / `Chain.strategyComp` — dependent state and strategy
+  composition along every round.
 
 ## Three composition mechanisms
 
@@ -205,6 +207,21 @@ def outputFamily
       PFunctor.FreeM.Path.liftAppend spec (fun tr₁ => toTypeTree n (cont tr₁))
         (fun tr₁ tr₂ => outputFamily Family n (cont tr₁) tr₂)
         tr
+
+/-- `outputFamily` ultimately evaluates the family at the unique zero-round
+chain. Intermediate chain indices describe the state threaded between rounds;
+after a complete path no rounds remain. -/
+theorem outputFamily_eq_terminal
+    (Family : {n : Nat} → Chain n → Type u) :
+    (n : Nat) → (c : Chain n) → (path : Path (toTypeTree n c)) →
+    outputFamily Family n c path = @Family 0 PUnit.unit
+  | 0, ⟨⟩, _ => rfl
+  | n + 1, ⟨spec, cont⟩, path => by
+      simp only [outputFamily]
+      rw [PFunctor.FreeM.Path.liftAppend_congr spec _ _ _
+        (fun first rest => outputFamily_eq_terminal Family n (cont first) rest)]
+      exact PFunctor.FreeM.Path.liftAppend_const (@Family 0 PUnit.unit)
+        spec _ path
 
 /-- Compose strategies along a chain with a path-dependent output family. The step
 function sees the current round tree packaged as the remaining chain, and returns the next
