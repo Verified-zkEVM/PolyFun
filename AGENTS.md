@@ -124,6 +124,7 @@ PFunctor/Free/Basic
   → PFunctor/Free/Cursor/Occurrence
   → PFunctor/Free/Cursor/Fork
 PFunctor/{Resumption, Free/Basic} → PFunctor/Free/Resumption
+PFunctor/{Bound, Free/Resumption} → PFunctor/Resumption/Truncate
 
 PFunctor/Lens/{Basic, Cartesian, State}
   → PFunctor/Lens/{Composite, Distributivity, Factorization, Duoidal}

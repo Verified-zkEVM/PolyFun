@@ -68,6 +68,7 @@ PFunctor/Free/Basic
   -> PFunctor/Free/Cursor/Occurrence
   -> PFunctor/Free/Cursor/Fork
 PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption
+PFunctor/{Bound, Free/Resumption} -> PFunctor/Resumption/Truncate
 
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   (free-standing helpers, depended on by both PFunctor and ITree)
