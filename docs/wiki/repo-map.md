@@ -154,6 +154,7 @@ PFunctor/{PatternRunsOnMatter/Display,
 
 PFunctor/Free -> ITree/{Basic, Construct, Handler, Rec,
                         Events, Sim, Bisim, Trace}
+PFunctor/Free/Resumption + ITree/Sim/Facts -> ITree/Resumption
 PFunctor/Dynamical + ITree/Basic -> ITree/Unfold
 
 PFunctor/Free + Control -> Interaction/Basic/{TypeTree, Node, Decoration,
