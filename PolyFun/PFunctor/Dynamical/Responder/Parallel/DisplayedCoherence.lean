@@ -6,12 +6,12 @@ Authors: Quang Dao
 
 module
 
-public import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedAssociativity
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel.DisplayedAssociativity
 
 /-!
-# Proof-relevant coherence of verified parallel responder behavior
+# Proof-relevant coherence of displayed parallel responder behavior
 
-Verified presentation homomorphisms lift the ordinary parallel unit, symmetry,
+Displayed presentation homomorphisms lift the ordinary parallel unit, symmetry,
 and associativity laws to `Type`-valued displayed responder evidence. Internal
 raw responder presentations are reconciled with the canonical state-free API;
 only the canonical zero evidence and final transported laws are public.
@@ -27,12 +27,12 @@ namespace Responder
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 
 
-/-- The displayed braiding is a verified presentation homomorphism between
+/-- The displayed braiding is a displayed presentation homomorphism between
 the two raw parallel responder presentations. -/
-private def parallelCommVerifiedPresentationHom
+private def parallelCommPresentationHom
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
-    VerifiedPresentationHom (Display.parallelSum S T)
+    PresentationHom (Display.parallelSum S T)
       (Responder.parallel (Responder.terminal (P := P))
         (Responder.terminal (P := Q)))
       (fun state => Display.M (Display.responder S) state.1 ×
@@ -84,8 +84,8 @@ private def parallelCommVerifiedPresentationHom
         rw [Responder.next_reindex, runFree_ofLens]
         cases operation <;> rfl)
       (left, right)
-    dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply verifiedTotalStepObj_ext _ _ _ hBase
+    dsimp [displayedTotalStep, PresentationHom.totalMap]
+    apply displayedTotalStepObj_ext _ _ _ hBase
     · apply Function.hfunext rfl
       intro operation operation' hOperation
       cases hOperation
@@ -113,7 +113,7 @@ private def parallelCommVerifiedPresentationHom
         cases trivialDirection
         cases operation <;> rfl
 
-private theorem verifiedBehavior_parallel_comm_presented
+private theorem displayedBehavior_parallel_comm_presented
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -121,9 +121,9 @@ private theorem verifiedBehavior_parallel_comm_presented
     (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right) :
     Display.M.transport
-        ((parallelCommVerifiedPresentationHom S T).behavior_eq
+        ((parallelCommPresentationHom S T).behavior_eq
           (left, right) (displayedLeft, displayedRight))
-        (verifiedBehavior (Display.parallelSum S T)
+        (toDisplayedBehavior (Display.parallelSum S T)
           (Responder.reindex
             (PFunctor.Handler.ofLens (PFunctor.Lens.parallelSumComm P Q))
             (Responder.parallel (Responder.terminal (P := Q))
@@ -143,8 +143,8 @@ private theorem verifiedBehavior_parallel_comm_presented
               (Display.Coalgebra.terminal (Display.responder T))
               (Display.Coalgebra.terminal (Display.responder S))))
           (right, left) (displayedRight, displayedLeft)) =
-      parallelVerifiedBehavior S T left displayedLeft right displayedRight := by
-  exact (parallelCommVerifiedPresentationHom S T).verifiedBehavior_naturality
+      parallelDisplayedBehavior S T left displayedLeft right displayedRight := by
+  exact (parallelCommPresentationHom S T).toDisplayedBehavior_naturality
     (left, right) (displayedLeft, displayedRight)
 
 
@@ -163,24 +163,24 @@ def zeroDisplayedCoalgebra :
     (fun _ => PUnit.{1})).symm
     fun _ _ query => PEmpty.elim query
 
-/-- Canonical verified behavior of the empty interface. -/
-def zeroVerifiedBehavior :
+/-- Canonical displayed behavior of the empty interface. -/
+def zeroDisplayedBehavior :
     Display.M
       (Display.responder (Display.zero :
         Display (0 : PFunctor.{uA₁, uB})))
       ((Responder.zero : Responder PUnit.{1}
         (0 : PFunctor.{uA₁, uB})).behavior PUnit.unit) :=
-  verifiedBehavior
+  toDisplayedBehavior
     (Display.zero : Display (0 : PFunctor.{uA₁, uB}))
     (Responder.zero : Responder PUnit.{1}
       (0 : PFunctor.{uA₁, uB}))
     (fun _ => PUnit.{1}) zeroDisplayedCoalgebra PUnit.unit PUnit.unit
 
-/-- The displayed right unitor is a verified presentation homomorphism
+/-- The displayed right unitor is a displayed presentation homomorphism
 between raw responder presentations. -/
-private def parallelZeroRightVerifiedPresentationHom
+private def parallelZeroRightUnitorPresentationHom
     (S : Display.{uA₁, uB, uC₁, uD₁} P) :
-    VerifiedPresentationHom
+    PresentationHom
       (Display.parallelSum S
         (Display.zero : Display (0 : PFunctor.{uA₂, uB})))
       (Responder.parallel (Responder.terminal (P := P))
@@ -241,8 +241,8 @@ private def parallelZeroRightVerifiedPresentationHom
         | right impossible => exact PEmpty.elim impossible
         | both operation impossible => exact PEmpty.elim impossible)
       (left, PUnit.unit)
-    dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply verifiedTotalStepObj_ext _ _ _ hBase
+    dsimp [displayedTotalStep, PresentationHom.totalMap]
+    apply displayedTotalStepObj_ext _ _ _ hBase
     · apply Function.hfunext rfl
       intro operation operation' hOperation
       cases hOperation
@@ -281,14 +281,14 @@ private def parallelZeroRightVerifiedPresentationHom
         | right impossible => exact PEmpty.elim impossible
         | both operation impossible => exact PEmpty.elim impossible
 
-private theorem verifiedBehavior_parallel_zero_right_presented
+private theorem displayedBehavior_parallel_zero_right_presented
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left) :
     Display.M.transport
-        ((parallelZeroRightVerifiedPresentationHom S).behavior_eq
+        ((parallelZeroRightUnitorPresentationHom S).behavior_eq
           (left, PUnit.unit) (displayedLeft, PUnit.unit))
-        (verifiedBehavior
+        (toDisplayedBehavior
           (Display.parallelSum S
             (Display.zero : Display (0 : PFunctor.{uA₂, uB})))
           (Responder.reindex
@@ -307,7 +307,7 @@ private theorem verifiedBehavior_parallel_zero_right_presented
             (Responder.terminal (P := P))
             (Display.Coalgebra.terminal (Display.responder S)))
           left displayedLeft) =
-      verifiedBehavior
+      toDisplayedBehavior
         (Display.parallelSum S
           (Display.zero : Display (0 : PFunctor.{uA₂, uB})))
         (Responder.parallel (Responder.terminal (P := P))
@@ -321,18 +321,18 @@ private theorem verifiedBehavior_parallel_zero_right_presented
           (Display.Coalgebra.terminal (Display.responder S))
           zeroDisplayedCoalgebra)
         (left, PUnit.unit) (displayedLeft, PUnit.unit) := by
-  exact (parallelZeroRightVerifiedPresentationHom S).verifiedBehavior_naturality
+  exact (parallelZeroRightUnitorPresentationHom S).toDisplayedBehavior_naturality
     (left, PUnit.unit) (displayedLeft, PUnit.unit)
 
 /-- Replacing the operational presentation of the empty responder by its
-terminal state-free presentation preserves the complete verified parallel
+terminal state-free presentation preserves the complete displayed parallel
 step.  This is the second presentation map needed by the public right-unit
-law: `parallelVerifiedBehavior` uses terminal presentations on both sides,
-whereas `parallelZeroRightVerifiedPresentationHom` deliberately exposes the raw
+law: `parallelDisplayedBehavior` uses terminal presentations on both sides,
+whereas `parallelZeroRightUnitorPresentationHom` deliberately exposes the raw
 empty responder. -/
-private def parallelZeroRightPresentationHom
+private def parallelZeroRightTerminalPresentationHom
     (S : Display.{uA₁, uB, uC₁, uD₁} P) :
-    VerifiedPresentationHom
+    PresentationHom
       (Display.parallelSum S
         (Display.zero : Display (0 : PFunctor.{uA₂, uB})))
       (Responder.parallel (Responder.terminal (P := P))
@@ -365,7 +365,7 @@ private def parallelZeroRightPresentationHom
   toState state := (state.1,
     (Responder.zero : Responder PUnit.{1}
       (0 : PFunctor.{uA₂, uB})).behavior state.2)
-  toWitness _ witness := (witness.1, zeroVerifiedBehavior)
+  toWitness _ witness := (witness.1, zeroDisplayedBehavior)
   map_step := by
     intro state witness
     rcases state with ⟨left, emptyState⟩
@@ -394,8 +394,8 @@ private def parallelZeroRightPresentationHom
         | right impossible => exact PEmpty.elim impossible
         | both operation impossible => exact PEmpty.elim impossible)
       (left, PUnit.unit)
-    dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply verifiedTotalStepObj_ext _ _ _ hBase
+    dsimp [displayedTotalStep, PresentationHom.totalMap]
+    apply displayedTotalStepObj_ext _ _ _ hBase
     · apply Function.hfunext rfl
       intro operation operation' hOperation
       cases hOperation
@@ -434,20 +434,20 @@ private def parallelZeroRightPresentationHom
         | right impossible => exact PEmpty.elim impossible
         | both operation impossible => exact PEmpty.elim impossible
 
-private theorem verifiedBehavior_parallel_zero_right_presentation
+private theorem displayedBehavior_parallel_zero_right_presentation
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left) :
     Display.M.transport
-        ((parallelZeroRightPresentationHom S).behavior_eq
+        ((parallelZeroRightTerminalPresentationHom S).behavior_eq
           (left, PUnit.unit) (displayedLeft, PUnit.unit))
-        (parallelVerifiedBehavior S
+        (parallelDisplayedBehavior S
           (Display.zero : Display (0 : PFunctor.{uA₂, uB}))
           left displayedLeft
           ((Responder.zero : Responder PUnit.{1}
             (0 : PFunctor.{uA₂, uB})).behavior PUnit.unit)
-          zeroVerifiedBehavior) =
-      verifiedBehavior
+          zeroDisplayedBehavior) =
+      toDisplayedBehavior
         (Display.parallelSum S
           (Display.zero : Display (0 : PFunctor.{uA₂, uB})))
         (Responder.parallel (Responder.terminal (P := P))
@@ -461,14 +461,14 @@ private theorem verifiedBehavior_parallel_zero_right_presentation
           (Display.Coalgebra.terminal (Display.responder S))
           zeroDisplayedCoalgebra)
         (left, PUnit.unit) (displayedLeft, PUnit.unit) := by
-  exact (parallelZeroRightPresentationHom S).verifiedBehavior_naturality
+  exact (parallelZeroRightTerminalPresentationHom S).toDisplayedBehavior_naturality
     (left, PUnit.unit) (displayedLeft, PUnit.unit)
 
-/-- The displayed left unitor as a verified map between raw responder
+/-- The displayed left unitor as a displayed map between raw responder
 presentations. -/
-private def parallelZeroLeftVerifiedPresentationHom
+private def parallelZeroLeftUnitorPresentationHom
     (S : Display.{uA₁, uB, uC₁, uD₁} P) :
-    VerifiedPresentationHom
+    PresentationHom
       (Display.parallelSum
         (Display.zero : Display (0 : PFunctor.{uA₂, uB})) S)
       (Responder.parallel
@@ -532,8 +532,8 @@ private def parallelZeroLeftVerifiedPresentationHom
         | right operation => rfl
         | both impossible operation => exact PEmpty.elim impossible)
       (PUnit.unit, right)
-    dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply verifiedTotalStepObj_ext _ _ _ hBase
+    dsimp [displayedTotalStep, PresentationHom.totalMap]
+    apply displayedTotalStepObj_ext _ _ _ hBase
     · apply Function.hfunext rfl
       intro operation operation' hOperation
       cases hOperation
@@ -572,14 +572,14 @@ private def parallelZeroLeftVerifiedPresentationHom
         | right operation => rfl
         | both impossible operation => exact PEmpty.elim impossible
 
-private theorem verifiedBehavior_parallel_zero_left_presented
+private theorem displayedBehavior_parallel_zero_left_presented
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (right : PFunctor.M (P ⊸ X.{uA₁, uB}))
     (displayedRight : Display.M (Display.responder S) right) :
     Display.M.transport
-        ((parallelZeroLeftVerifiedPresentationHom S).behavior_eq
+        ((parallelZeroLeftUnitorPresentationHom S).behavior_eq
           (PUnit.unit, right) (PUnit.unit, displayedRight))
-        (verifiedBehavior
+        (toDisplayedBehavior
           (Display.parallelSum
             (Display.zero : Display (0 : PFunctor.{uA₂, uB})) S)
           (Responder.reindex
@@ -598,7 +598,7 @@ private theorem verifiedBehavior_parallel_zero_left_presented
             (Responder.terminal (P := P))
             (Display.Coalgebra.terminal (Display.responder S)))
           right displayedRight) =
-      verifiedBehavior
+      toDisplayedBehavior
         (Display.parallelSum
           (Display.zero : Display (0 : PFunctor.{uA₂, uB})) S)
         (Responder.parallel
@@ -614,14 +614,14 @@ private theorem verifiedBehavior_parallel_zero_left_presented
           zeroDisplayedCoalgebra
           (Display.Coalgebra.terminal (Display.responder S)))
         (PUnit.unit, right) (PUnit.unit, displayedRight) := by
-  exact (parallelZeroLeftVerifiedPresentationHom S).verifiedBehavior_naturality
+  exact (parallelZeroLeftUnitorPresentationHom S).toDisplayedBehavior_naturality
     (PUnit.unit, right) (PUnit.unit, displayedRight)
 
 /-- Presentation change from the raw empty responder on the left to the
-terminal empty behavior used by `parallelVerifiedBehavior`. -/
-private def parallelZeroLeftPresentationHom
+terminal empty behavior used by `parallelDisplayedBehavior`. -/
+private def parallelZeroLeftTerminalPresentationHom
     (S : Display.{uA₁, uB, uC₁, uD₁} P) :
-    VerifiedPresentationHom
+    PresentationHom
       (Display.parallelSum
         (Display.zero : Display (0 : PFunctor.{uA₂, uB})) S)
       (Responder.parallel
@@ -658,7 +658,7 @@ private def parallelZeroLeftPresentationHom
   toState state :=
     ((Responder.zero : Responder PUnit.{1}
       (0 : PFunctor.{uA₂, uB})).behavior state.1, state.2)
-  toWitness _ witness := (zeroVerifiedBehavior, witness.2)
+  toWitness _ witness := (zeroDisplayedBehavior, witness.2)
   map_step := by
     intro state witness
     rcases state with ⟨emptyState, right⟩
@@ -689,8 +689,8 @@ private def parallelZeroLeftPresentationHom
         | right operation => rfl
         | both impossible operation => exact PEmpty.elim impossible)
       (PUnit.unit, right)
-    dsimp [verifiedTotalStep, VerifiedPresentationHom.totalMap]
-    apply verifiedTotalStepObj_ext _ _ _ hBase
+    dsimp [displayedTotalStep, PresentationHom.totalMap]
+    apply displayedTotalStepObj_ext _ _ _ hBase
     · apply Function.hfunext rfl
       intro operation operation' hOperation
       cases hOperation
@@ -729,19 +729,19 @@ private def parallelZeroLeftPresentationHom
         | right operation => rfl
         | both impossible operation => exact PEmpty.elim impossible
 
-private theorem verifiedBehavior_parallel_zero_left_presentation
+private theorem displayedBehavior_parallel_zero_left_presentation
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (right : PFunctor.M (P ⊸ X.{uA₁, uB}))
     (displayedRight : Display.M (Display.responder S) right) :
     Display.M.transport
-        ((parallelZeroLeftPresentationHom S).behavior_eq
+        ((parallelZeroLeftTerminalPresentationHom S).behavior_eq
           (PUnit.unit, right) (PUnit.unit, displayedRight))
-        (parallelVerifiedBehavior
+        (parallelDisplayedBehavior
           (Display.zero : Display (0 : PFunctor.{uA₂, uB})) S
           ((Responder.zero : Responder PUnit.{1}
             (0 : PFunctor.{uA₂, uB})).behavior PUnit.unit)
-          zeroVerifiedBehavior right displayedRight) =
-      verifiedBehavior
+          zeroDisplayedBehavior right displayedRight) =
+      toDisplayedBehavior
         (Display.parallelSum
           (Display.zero : Display (0 : PFunctor.{uA₂, uB})) S)
         (Responder.parallel
@@ -757,13 +757,13 @@ private theorem verifiedBehavior_parallel_zero_left_presentation
           zeroDisplayedCoalgebra
           (Display.Coalgebra.terminal (Display.responder S)))
         (PUnit.unit, right) (PUnit.unit, displayedRight) := by
-  exact (parallelZeroLeftPresentationHom S).verifiedBehavior_naturality
+  exact (parallelZeroLeftTerminalPresentationHom S).toDisplayedBehavior_naturality
       (PUnit.unit, right) (PUnit.unit, displayedRight)
 
 
-/-- Verified parallel behavior is symmetric after the single canonical
+/-- Displayed parallel behavior is symmetric after the single canonical
 transport along the ordinary braiding law. -/
-theorem mapVerifiedBehavior_parallel_comm
+theorem mapDisplayedBehavior_parallel_comm
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
@@ -771,11 +771,11 @@ theorem mapVerifiedBehavior_parallel_comm
     (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right) :
     Display.M.transport (mapBehavior_parallel_comm left right)
-        (mapVerifiedBehavior (Display.Lens.parallelSumComm S T)
+        (mapDisplayedBehavior (Display.Lens.parallelSumComm S T)
           (parallelBehavior right left)
-          (parallelVerifiedBehavior T S right displayedRight
+          (parallelDisplayedBehavior T S right displayedRight
             left displayedLeft)) =
-      parallelVerifiedBehavior S T left displayedLeft right displayedRight := by
+      parallelDisplayedBehavior S T left displayedLeft right displayedRight := by
   let swapped := Responder.parallel (Responder.terminal (P := Q))
     (Responder.terminal (P := P))
   let swappedWitness := fun state :
@@ -789,12 +789,12 @@ theorem mapVerifiedBehavior_parallel_comm
     (Display.M (Display.responder S))
     (Display.Coalgebra.terminal (Display.responder T))
     (Display.Coalgebra.terminal (Display.responder S))
-  let sourceDisplayed := parallelVerifiedBehavior T S right displayedRight
+  let sourceDisplayed := parallelDisplayedBehavior T S right displayedRight
     left displayedLeft
-  let mappedDisplayed := mapVerifiedBehavior
+  let mappedDisplayed := mapDisplayedBehavior
     (Display.Lens.parallelSumComm S T)
     (parallelBehavior right left) sourceDisplayed
-  let rawMapped := verifiedBehavior (Display.parallelSum S T)
+  let rawMapped := toDisplayedBehavior (Display.parallelSum S T)
     (Responder.reindex
       (PFunctor.Handler.ofLens (PFunctor.Lens.parallelSumComm P Q)) swapped)
     swappedWitness
@@ -809,20 +809,20 @@ theorem mapVerifiedBehavior_parallel_comm
     swapped (right, left)
   have hPresentation :
       Display.M.transport presentationEq mappedDisplayed = rawMapped := by
-    exact reindexVerifiedBehavior_verifiedBehavior
+    exact reindexDisplayedBehavior_toDisplayedBehavior
       (PFunctor.Handler.ofLens (PFunctor.Lens.parallelSumComm P Q))
       (Display.Lens.parallelSumComm S T).toHandler
       swapped swappedWitness displayedSwapped
       (right, left) (displayedRight, displayedLeft)
-  let rawEq := (parallelCommVerifiedPresentationHom S T).behavior_eq
+  let rawEq := (parallelCommPresentationHom S T).behavior_eq
     (left, right) (displayedLeft, displayedRight)
   have hRaw : Display.M.transport rawEq rawMapped =
-      parallelVerifiedBehavior S T left displayedLeft right displayedRight := by
-    exact verifiedBehavior_parallel_comm_presented S T
+      parallelDisplayedBehavior S T left displayedLeft right displayedRight := by
+    exact displayedBehavior_parallel_comm_presented S T
       left displayedLeft right displayedRight
   have hChain :
       Display.M.transport (presentationEq.trans rawEq) mappedDisplayed =
-        parallelVerifiedBehavior S T left displayedLeft right displayedRight := by
+        parallelDisplayedBehavior S T left displayedLeft right displayedRight := by
     calc
       Display.M.transport (presentationEq.trans rawEq) mappedDisplayed =
           Display.M.transport rawEq
@@ -835,24 +835,24 @@ theorem mapVerifiedBehavior_parallel_comm
     (mapBehavior_parallel_comm left right)
     (presentationEq.trans rawEq) mappedDisplayed).trans hChain
 
-/-- The empty displayed interface is a right unit for verified state-free
+/-- The empty displayed interface is a right unit for displayed state-free
 parallel behavior.  The statement exposes only the canonical ordinary
 right-unitor equality; the proof factors through the raw empty-responder
 presentation and discharges both presentation changes internally. -/
-theorem mapVerifiedBehavior_parallel_zero_right
+theorem mapDisplayedBehavior_parallel_zero_right
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left) :
     Display.M.transport (mapBehavior_parallel_zero_right left)
-        (mapVerifiedBehavior (Display.Lens.parallelSumZero S)
+        (mapDisplayedBehavior (Display.Lens.parallelSumZero S)
           left displayedLeft) =
-      parallelVerifiedBehavior S
+      parallelDisplayedBehavior S
         (Display.zero : Display.{uA₂, uB, uC₂, uD₂}
           (0 : PFunctor.{uA₂, uB}))
         left displayedLeft
         ((Responder.zero : Responder PUnit.{1}
           (0 : PFunctor.{uA₂, uB})).behavior PUnit.unit)
-        zeroVerifiedBehavior := by
+        zeroDisplayedBehavior := by
   let empty := (Responder.zero : Responder PUnit.{1}
     (0 : PFunctor.{uA₂, uB}))
   let raw := Responder.parallel (Responder.terminal (P := P)) empty
@@ -864,9 +864,9 @@ theorem mapVerifiedBehavior_parallel_zero_right
     (Display.M (Display.responder S)) (fun _ => PUnit)
     (Display.Coalgebra.terminal (Display.responder S))
     zeroDisplayedCoalgebra
-  let mappedDisplayed := mapVerifiedBehavior
+  let mappedDisplayed := mapDisplayedBehavior
     (Display.Lens.parallelSumZero S) left displayedLeft
-  let rawMapped := verifiedBehavior
+  let rawMapped := toDisplayedBehavior
     (Display.parallelSum S
       (Display.zero : Display.{uA₂, uB, uC₂, uD₂}
         (0 : PFunctor.{uA₂, uB})))
@@ -887,16 +887,16 @@ theorem mapVerifiedBehavior_parallel_zero_right
       (Responder.terminal (P := P))
       (Display.Coalgebra.terminal (Display.responder S)))
     left displayedLeft
-  let rawDisplayed := verifiedBehavior
+  let rawDisplayed := toDisplayedBehavior
     (Display.parallelSum S
       (Display.zero : Display.{uA₂, uB, uC₂, uD₂}
         (0 : PFunctor.{uA₂, uB})))
     raw rawWitness displayedRaw
     (left, PUnit.unit) (displayedLeft, PUnit.unit)
-  let publicDisplayed := parallelVerifiedBehavior S
+  let publicDisplayed := parallelDisplayedBehavior S
     (Display.zero : Display.{uA₂, uB, uC₂, uD₂}
       (0 : PFunctor.{uA₂, uB}))
-    left displayedLeft (empty.behavior PUnit.unit) zeroVerifiedBehavior
+    left displayedLeft (empty.behavior PUnit.unit) zeroDisplayedBehavior
   let presentationEq :
       mapBehavior
           (PFunctor.Lens.parallelSumZero P :
@@ -920,20 +920,20 @@ theorem mapVerifiedBehavior_parallel_zero_right
     exact (Display.M.transport_proof_irrel presentationEq rfl
       mappedDisplayed).trans (Display.M.transport_rfl mappedDisplayed)
   let rawEq :=
-    (parallelZeroRightVerifiedPresentationHom.{uA₁, uA₂, uB, uC₁, uD₁,
+    (parallelZeroRightUnitorPresentationHom.{uA₁, uA₂, uB, uC₁, uD₁,
       uC₂, uD₂}
       S).behavior_eq
     (left, PUnit.unit) (displayedLeft, PUnit.unit)
   have hRaw : Display.M.transport rawEq rawMapped = rawDisplayed := by
-    exact verifiedBehavior_parallel_zero_right_presented.{uA₁, uA₂, uB,
+    exact displayedBehavior_parallel_zero_right_presented.{uA₁, uA₂, uB,
       uC₁, uD₁, uC₂, uD₂, 0, 0} S left displayedLeft
   let terminalEq :=
-    (parallelZeroRightPresentationHom.{uA₁, uA₂, uB,
+    (parallelZeroRightTerminalPresentationHom.{uA₁, uA₂, uB,
       uC₁, uD₁, uC₂, uD₂} S).behavior_eq
       (left, PUnit.unit) (displayedLeft, PUnit.unit)
   have hTerminal :
       Display.M.transport terminalEq publicDisplayed = rawDisplayed := by
-    exact verifiedBehavior_parallel_zero_right_presentation.{uA₁, uA₂,
+    exact displayedBehavior_parallel_zero_right_presentation.{uA₁, uA₂,
       uB, uC₁, uD₁, uC₂, uD₂, 0, 0} S left displayedLeft
   have hRawToPublic :
       Display.M.transport terminalEq.symm rawDisplayed = publicDisplayed := by
@@ -976,21 +976,21 @@ theorem mapVerifiedBehavior_parallel_zero_right
     ((presentationEq.trans rawEq).trans terminalEq.symm)
     mappedDisplayed).trans hChain
 
-/-- The empty displayed interface is a left unit for verified state-free
+/-- The empty displayed interface is a left unit for displayed state-free
 parallel behavior. -/
-theorem mapVerifiedBehavior_parallel_zero_left
+theorem mapDisplayedBehavior_parallel_zero_left
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (right : PFunctor.M (P ⊸ X.{uA₁, uB}))
     (displayedRight : Display.M (Display.responder S) right) :
     Display.M.transport (mapBehavior_parallel_zero_left right)
-        (mapVerifiedBehavior (Display.Lens.zeroParallelSum S)
+        (mapDisplayedBehavior (Display.Lens.zeroParallelSum S)
           right displayedRight) =
-      parallelVerifiedBehavior
+      parallelDisplayedBehavior
         (Display.zero : Display.{uA₂, uB, uC₂, uD₂}
           (0 : PFunctor.{uA₂, uB})) S
         ((Responder.zero : Responder PUnit.{1}
           (0 : PFunctor.{uA₂, uB})).behavior PUnit.unit)
-        zeroVerifiedBehavior right displayedRight := by
+        zeroDisplayedBehavior right displayedRight := by
   let empty := (Responder.zero : Responder PUnit.{1}
     (0 : PFunctor.{uA₂, uB}))
   let raw := Responder.parallel empty (Responder.terminal (P := P))
@@ -1002,9 +1002,9 @@ theorem mapVerifiedBehavior_parallel_zero_left
     (fun _ => PUnit) (Display.M (Display.responder S))
     zeroDisplayedCoalgebra
     (Display.Coalgebra.terminal (Display.responder S))
-  let mappedDisplayed := mapVerifiedBehavior
+  let mappedDisplayed := mapDisplayedBehavior
     (Display.Lens.zeroParallelSum S) right displayedRight
-  let rawMapped := verifiedBehavior
+  let rawMapped := toDisplayedBehavior
     (Display.parallelSum
       (Display.zero : Display.{uA₂, uB, uC₂, uD₂}
         (0 : PFunctor.{uA₂, uB})) S)
@@ -1025,16 +1025,16 @@ theorem mapVerifiedBehavior_parallel_zero_left
       (Responder.terminal (P := P))
       (Display.Coalgebra.terminal (Display.responder S)))
     right displayedRight
-  let rawDisplayed := verifiedBehavior
+  let rawDisplayed := toDisplayedBehavior
     (Display.parallelSum
       (Display.zero : Display.{uA₂, uB, uC₂, uD₂}
         (0 : PFunctor.{uA₂, uB})) S)
     raw rawWitness displayedRaw
     (PUnit.unit, right) (PUnit.unit, displayedRight)
-  let publicDisplayed := parallelVerifiedBehavior
+  let publicDisplayed := parallelDisplayedBehavior
     (Display.zero : Display.{uA₂, uB, uC₂, uD₂}
       (0 : PFunctor.{uA₂, uB})) S
-    (empty.behavior PUnit.unit) zeroVerifiedBehavior right displayedRight
+    (empty.behavior PUnit.unit) zeroDisplayedBehavior right displayedRight
   let presentationEq :
       mapBehavior
           (PFunctor.Lens.zeroParallelSum P :
@@ -1058,19 +1058,19 @@ theorem mapVerifiedBehavior_parallel_zero_left
     exact (Display.M.transport_proof_irrel presentationEq rfl
       mappedDisplayed).trans (Display.M.transport_rfl mappedDisplayed)
   let rawEq :=
-    (parallelZeroLeftVerifiedPresentationHom.{uA₁, uA₂, uB, uC₁, uD₁,
+    (parallelZeroLeftUnitorPresentationHom.{uA₁, uA₂, uB, uC₁, uD₁,
       uC₂, uD₂} S).behavior_eq
       (PUnit.unit, right) (PUnit.unit, displayedRight)
   have hRaw : Display.M.transport rawEq rawMapped = rawDisplayed := by
-    exact verifiedBehavior_parallel_zero_left_presented.{uA₁, uA₂, uB,
+    exact displayedBehavior_parallel_zero_left_presented.{uA₁, uA₂, uB,
       uC₁, uD₁, uC₂, uD₂, 0, 0} S right displayedRight
   let terminalEq :=
-    (parallelZeroLeftPresentationHom.{uA₁, uA₂, uB,
+    (parallelZeroLeftTerminalPresentationHom.{uA₁, uA₂, uB,
       uC₁, uD₁, uC₂, uD₂} S).behavior_eq
       (PUnit.unit, right) (PUnit.unit, displayedRight)
   have hTerminal :
       Display.M.transport terminalEq publicDisplayed = rawDisplayed := by
-    exact verifiedBehavior_parallel_zero_left_presentation.{uA₁, uA₂,
+    exact displayedBehavior_parallel_zero_left_presentation.{uA₁, uA₂,
       uB, uC₁, uD₁, uC₂, uD₂, 0, 0} S right displayedRight
   have hRawToPublic :
       Display.M.transport terminalEq.symm rawDisplayed = publicDisplayed := by

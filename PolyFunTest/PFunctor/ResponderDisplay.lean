@@ -77,17 +77,17 @@ def localStep (state : Nat) (witness : Invariant state) :
 
 /-- The same local obligation, transported through the canonical equivalence,
 is a generic displayed coalgebra over the existing responder's `out` map. -/
-def verified :
+def displayed :
     Coalgebra (responder contract) system.out Invariant :=
   (responderCoalgebraEquiv contract system Invariant).symm localStep
 
 example (state : Nat) (witness : Invariant state) :
-    (responderCoalgebraEquiv contract system Invariant verified) state witness =
+    (responderCoalgebraEquiv contract system Invariant displayed) state witness =
       localStep state witness := by
-  simp [verified]
+  simp [displayed]
 
 example (state : Nat) (witness : Invariant state) :
-    (((responderCoalgebraEquiv contract system Invariant verified) state witness
+    (((responderCoalgebraEquiv contract system Invariant displayed) state witness
       Query.choice ⟨0, by decide⟩).2).val = witness.val := by
   rfl
 
@@ -128,7 +128,7 @@ example (answerSection : (Unary ⊸ X).A) :
     (responder emptyPrecondition).position answerSection :=
   fun _ c => PEmpty.elim c
 
-/-- The recursively verified continuation may depend on the supplied
+/-- The recursively displayed continuation may depend on the supplied
 pre-witness, even though its base next state does not. -/
 def booleanPrecondition : Display Unary where
   position _ := Bool
@@ -142,17 +142,17 @@ def booleanObligation :
       (a : PUnit) → (precondition : Bool) → PUnit × Bool :=
   fun _ _ _ precondition => ⟨PUnit.unit, precondition⟩
 
-def booleanVerified :
+def booleanDisplayed :
     Coalgebra (responder booleanPrecondition) booleanSystem.out (fun _ => Bool) :=
   (responderCoalgebraEquiv booleanPrecondition booleanSystem (fun _ => Bool)).symm
     booleanObligation
 
 example (witness : Bool) :
-    (booleanVerified PUnit.unit witness).2 ⟨PUnit.unit, PUnit.unit⟩ false = false :=
+    (booleanDisplayed PUnit.unit witness).2 ⟨PUnit.unit, PUnit.unit⟩ false = false :=
   rfl
 
 example (witness : Bool) :
-    (booleanVerified PUnit.unit witness).2 ⟨PUnit.unit, PUnit.unit⟩ true = true :=
+    (booleanDisplayed PUnit.unit witness).2 ⟨PUnit.unit, PUnit.unit⟩ true = true :=
   rfl
 
 universe uA uB uC uD uE uF

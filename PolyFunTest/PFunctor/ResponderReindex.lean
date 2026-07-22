@@ -69,7 +69,7 @@ def targetObligation :
       (invariantVal state witness + directionVal precondition
         (target.answer state query) post)⟩
 
-def verifiedTarget :
+def displayedTarget :
     Display.Coalgebra (Display.responder contract) target.out Invariant :=
   (Display.responderCoalgebraEquiv contract target Invariant).symm
     targetObligation
@@ -157,30 +157,30 @@ def initialWitness : Invariant false :=
   invariantFromNat false 1
 
 def displayedExecution :=
-  Responder.runFreeDisplayed contract target verifiedTarget
+  Responder.runFreeDisplayed contract target displayedTarget
     (displayedTwoCalls () false) false initialWitness
 
 def patternDisplayedExecution :=
-  Responder.runAgainstDisplayed contract target verifiedTarget
+  Responder.runAgainstDisplayed contract target displayedTarget
     (displayedTwoCalls () false) false initialWitness
 
-def verifiedSource :=
+def displayedSource :=
   Responder.reindexCoalgebra contract contract twoCalls displayedTwoCalls
-    target verifiedTarget
+    target displayedTarget
 
 def transportedCoalgebraExecution :=
   Responder.transportRunEvidence (contract.direction () false) Invariant
     (Responder.runAgainstResult_eq_runFree
       target (twoCalls ()) false).symm
     ((Display.responderCoalgebraEquiv contract source Invariant)
-      verifiedSource false initialWitness () false)
+      displayedSource false initialWitness () false)
 
-/-- The state-presented verified action is directly the transported
+/-- The state-presented displayed action is directly the transported
 displayed responder-reindexing obligation, with nonconstant postcondition and
 state-invariant evidence. -/
 example : patternDisplayedExecution = transportedCoalgebraExecution :=
   Responder.runAgainstDisplayed_eq_reindexCoalgebra contract contract
-    twoCalls displayedTwoCalls target verifiedTarget false initialWitness
+    twoCalls displayedTwoCalls target displayedTarget false initialWitness
     () false
 
 /-- Both proof-relevant components survive transport through the G5
@@ -191,7 +191,7 @@ example :
           target (twoCalls ()) false)
         patternDisplayedExecution = displayedExecution :=
   Responder.runAgainstDisplayed_eq_runFreeDisplayed contract target
-    verifiedTarget (displayedTwoCalls () false) false initialWitness
+    displayedTarget (displayedTwoCalls () false) false initialWitness
 
 example : directionVal false (target.runFree (twoCalls ()) false).1
     displayedExecution.1 = 1 :=
@@ -207,7 +207,7 @@ example : directionVal false (target.runFree (twoCalls ()) false).1
       transportedCoalgebraExecution).1 = 1 := by
   rw [← show patternDisplayedExecution = transportedCoalgebraExecution from
     Responder.runAgainstDisplayed_eq_reindexCoalgebra contract contract
-      twoCalls displayedTwoCalls target verifiedTarget false initialWitness
+      twoCalls displayedTwoCalls target displayedTarget false initialWitness
       () false]
   unfold patternDisplayedExecution
   rw [Responder.runAgainstDisplayed_eq_runFreeDisplayed]
@@ -219,7 +219,7 @@ example : invariantVal (target.runFree (twoCalls ()) false).2
       transportedCoalgebraExecution).2 = 0 := by
   rw [← show patternDisplayedExecution = transportedCoalgebraExecution from
     Responder.runAgainstDisplayed_eq_reindexCoalgebra contract contract
-      twoCalls displayedTwoCalls target verifiedTarget false initialWitness
+      twoCalls displayedTwoCalls target displayedTarget false initialWitness
       () false]
   unfold patternDisplayedExecution
   rw [Responder.runAgainstDisplayed_eq_runFreeDisplayed]
@@ -227,12 +227,12 @@ example : invariantVal (target.runFree (twoCalls ()) false).2
 
 example : directionVal false (source.answer false ())
     ((Display.responderCoalgebraEquiv contract source Invariant)
-      verifiedSource false initialWitness () false).1 = 1 :=
+      displayedSource false initialWitness () false).1 = 1 :=
   rfl
 
 example : invariantVal (source.next false ())
     ((Display.responderCoalgebraEquiv contract source Invariant)
-      verifiedSource false initialWitness () false).2 = 0 :=
+      displayedSource false initialWitness () false).2 = 0 :=
   rfl
 
 example :
@@ -276,11 +276,11 @@ example :
     (Display.responderCoalgebraEquiv contract
       (Responder.reindex (Handler.id Interface) target) Invariant
       (Responder.reindexCoalgebra contract contract (Handler.id Interface)
-        (Display.Handler.id contract) target verifiedTarget)
+        (Display.Handler.id contract) target displayedTarget)
       false initialWitness () false) =
-    (Display.responderCoalgebraEquiv contract target Invariant verifiedTarget
+    (Display.responderCoalgebraEquiv contract target Invariant displayedTarget
       false initialWitness () false) :=
-  Responder.reindexCoalgebra_id_obligation contract target verifiedTarget
+  Responder.reindexCoalgebra_id_obligation contract target displayedTarget
     false initialWitness () false
 
 /-- The transport-sensitive displayed execution theorem is exercised directly
@@ -291,13 +291,13 @@ example :
         (Responder.runFreeDisplayed contract
           (Responder.reindex negateCall target)
           (Responder.reindexCoalgebra contract contract negateCall
-            displayedNegateCall target verifiedTarget)
+            displayedNegateCall target displayedTarget)
           (displayedTwoCalls () false) false initialWitness) =
-      Responder.runFreeDisplayed contract target verifiedTarget
+      Responder.runFreeDisplayed contract target displayedTarget
         (contract.liftM contract (twoCalls ()) (displayedTwoCalls () false)
           negateCall displayedNegateCall) false initialWitness :=
   Responder.runFreeDisplayed_reindex contract contract negateCall
-    displayedNegateCall target verifiedTarget (twoCalls ())
+    displayedNegateCall target displayedTarget (twoCalls ())
     (displayedTwoCalls () false) false initialWitness
 
 /-! Observe both proof-relevant components of the transported fusion result,
@@ -311,11 +311,11 @@ def displayedFusionLeft :=
       (Responder.runFreeDisplayed contract
         (Responder.reindex negateCall target)
         (Responder.reindexCoalgebra contract contract negateCall
-          displayedNegateCall target verifiedTarget)
+          displayedNegateCall target displayedTarget)
         (displayedTwoCalls () false) false initialWitness)
 
 def displayedFusionRight :=
-  Responder.runFreeDisplayed contract target verifiedTarget
+  Responder.runFreeDisplayed contract target displayedTarget
     (contract.liftM contract (twoCalls ()) (displayedTwoCalls () false)
       negateCall displayedNegateCall) false initialWitness
 
@@ -350,17 +350,17 @@ example :
           (Responder.reindexCoalgebra contract contract twoCalls
             displayedTwoCalls (Responder.reindex negateCall target)
             (Responder.reindexCoalgebra contract contract negateCall
-              displayedNegateCall target verifiedTarget))
+              displayedNegateCall target displayedTarget))
           false initialWitness () false) =
       (Display.responderCoalgebraEquiv contract
         (Responder.reindex (negateCall.comp twoCalls) target) Invariant)
         (Responder.reindexCoalgebra contract contract
           (negateCall.comp twoCalls)
-          (displayedNegateCall.comp displayedTwoCalls) target verifiedTarget)
+          (displayedNegateCall.comp displayedTwoCalls) target displayedTarget)
         false initialWitness () false :=
   Responder.reindexCoalgebra_comp_obligation contract contract contract
     twoCalls displayedTwoCalls negateCall displayedNegateCall target
-    verifiedTarget false initialWitness () false
+    displayedTarget false initialWitness () false
 
 /-! Producer-level canaries preserve all compatible universe separation. -/
 

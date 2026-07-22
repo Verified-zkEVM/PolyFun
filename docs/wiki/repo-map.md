@@ -126,8 +126,8 @@ PFunctor/Display/Coalgebra + PFunctor/Dynamical/Responder
   -> PFunctor/Dynamical/Responder/Behavior
 PFunctor/Dynamical/Simulation
   -> PFunctor/Dynamical/Responder/Behavior
-  -> PFunctor/Dynamical/Responder/VerifiedPresentation
-PFunctor/{Display/Lens, Dynamical/Responder/VerifiedPresentation}
+  -> PFunctor/Dynamical/Responder/Presentation
+PFunctor/{Display/Lens, Dynamical/Responder/Presentation}
   -> PFunctor/Dynamical/Responder/Lens
 PFunctor/{Parallel, Dynamical/Responder}
   -> PFunctor/Dynamical/Responder/Parallel
@@ -139,16 +139,16 @@ PFunctor/{Dynamical/Responder/Behavior,
   -> PFunctor/Dynamical/Responder/Parallel/Behavior
 PFunctor/{Dynamical/Responder/Parallel/Behavior, Free/Parallel}
   -> PFunctor/Dynamical/Responder/Parallel/Compatibility
-PFunctor/Dynamical/Responder/{VerifiedPresentation, Parallel/Behavior}
-  -> PFunctor/Dynamical/Responder/Parallel/VerifiedPresentation
+PFunctor/Dynamical/Responder/{Presentation, Parallel/Behavior}
+  -> PFunctor/Dynamical/Responder/Parallel/Presentation
 PFunctor/{Free/Parallel, Dynamical/Responder/Lens,
   Dynamical/Responder/Parallel/Behavior}
   -> PFunctor/Dynamical/Responder/Parallel/Coherence
 PFunctor/{Display/Parallel/Lens,
   Dynamical/Responder/Parallel/Coherence,
-  Dynamical/Responder/Parallel/VerifiedPresentation}
-  -> PFunctor/Dynamical/Responder/Parallel/VerifiedAssociativity
-  -> PFunctor/Dynamical/Responder/Parallel/VerifiedCoherence
+  Dynamical/Responder/Parallel/Presentation}
+  -> PFunctor/Dynamical/Responder/Parallel/DisplayedAssociativity
+  -> PFunctor/Dynamical/Responder/Parallel/DisplayedCoherence
 PFunctor/{Display/Category, PatternRunsOnMatter/Applications,
   Dynamical/Responder/Behavior} -> PFunctor/PatternRunsOnMatter/Display
 PFunctor/{PatternRunsOnMatter/Display,

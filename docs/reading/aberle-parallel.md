@@ -27,6 +27,13 @@ universe; their position universes remain independent.
 
 ## Displays and programs
 
+The paper uses dependent polynomials as specifications and consequently calls
+implementations carrying their evidence verified. PolyFun keeps the underlying
+construction more general: a `Display` and its witnesses are `Type`-valued and
+need not denote a correctness predicate. The library therefore uses
+`displayed` for the generic data and reserves `verified` for applications that
+identify a separate specification and explain what the evidence proves.
+
 An arbitrary display over `P ∥ Q` has three independently chosen components:
 a display over `P`, a display over `Q`, and a display over `P ⊗ Q` for the
 joint branch. `Display.parallelSumComponents S T U` constructs this general
@@ -76,7 +83,7 @@ Thus the paper's fully monoidal handler interpretation requires an additional
 synchronization, commutativity, or scheduling discipline; it does not follow
 for arbitrary `FreeM` handlers from the lockstep definition alone.
 
-## Responders and verified behavior
+## Responders and displayed behavior
 
 The paper's binary coproduct machine is the one-sided restriction of this
 structure, not another meaning of parallel. `Lens.sumToParallel` embeds
@@ -85,7 +92,7 @@ structure, not another meaning of parallel. `Lens.sumToParallel` embeds
 `Responder.sum` implementation has definitionally exact branch equations;
 `sum_eq_reindex_parallel` proves that it agrees with reindexing
 `Responder.parallel` along the canonical lens. `sumCoalgebra`, `sumBehavior`,
-and `sumVerifiedBehavior` provide the corresponding state-presented,
+and `sumDisplayedBehavior` provide the corresponding state-presented,
 state-free, and proof-relevant closures. Their equations show both which
 component advances and that the other state and invariant witness are frozen.
 
@@ -98,12 +105,12 @@ State-free behavior is obtained by running the parallel product of the two
 terminal responders from a pair of behavior trees. This is deliberately not
 presented as merely `CofreeP.laxTensor`: the synchronized joint component is
 tensor-like, but the one-sided branches must retain the inactive behavior.
-`parallelVerifiedBehavior` applies terminal displayed semantics to the same
+`parallelDisplayedBehavior` applies terminal displayed semantics to the same
 coalgebra construction.
 
 The nullary case needs no second paper-named alias: the existing
 `Responder.zero`, `zeroBehavior`, `zeroDisplayedCoalgebra`, and
-`zeroVerifiedBehavior` already give the unique empty-interface responder and
+`zeroDisplayedBehavior` already give the unique empty-interface responder and
 its proof-relevant state-free semantics. Together, binary coproduct closure and
 these existing zero constructions cover the machine operations used in the
 Agda development without duplicating the library's structural vocabulary.
@@ -125,5 +132,5 @@ the corresponding displayed handler.
 
 This layer does **not** claim that arbitrary recursive `Wiring` is race-free.
 Such a theorem needs an affine/ownership discipline controlling shared inputs;
-the one-or-both interface and verified responder closure alone do not provide
+the one-or-both interface and displayed responder closure alone do not provide
 that hypothesis.

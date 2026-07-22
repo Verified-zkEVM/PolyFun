@@ -12,7 +12,7 @@ public import PolyFun.PFunctor.Lens.Factorization
 
 Regression tests: every lens factors as vertical-then-cartesian recovering the
 original, the two legs land in their classes, and a concrete cartesian lens
-(`inl`) is verified vertical exactly when its position map is a bijection.
+(`inl`) is displayed vertical exactly when its position map is a bijection.
 -/
 
 @[expose] public section

@@ -21,7 +21,7 @@ against a proof-relevant responder coalgebra.
 These are the state-presented PolyFun forms of `run-mealy`, `prog→mealy`,
 `run-mealyD`, and `prog→mealyD` in Aberlé's *Compositional Program Verification
 with Polynomial Functors in Dependent Type Theory* ([Abe26] in
-`REFERENCES.md`). No new Mealy or verified-machine record is introduced.
+`REFERENCES.md`). No new Mealy or dependent-machine record is introduced.
 
 Responder execution is defined by structural recursion, so its state and leaf
 universes are independent of the interface-direction universe.  This matters

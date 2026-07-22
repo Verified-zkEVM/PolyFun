@@ -23,7 +23,7 @@ every query/pre-witness pair.
 
 This is the intrinsic PolyFun form of the paper's dependent Mealy contract. It
 uses the existing `Responder` / `DynSystem` state presentation and the generic
-`Display.Coalgebra`; it does not introduce another verified-machine record.
+`Display.Coalgebra`; it does not introduce another dependent-machine record.
 
 This notion is not `DynSystem.SafetyRefinement`. A displayed responder
 coalgebra preserves proof-relevant data over one system's states and answers;
@@ -49,7 +49,7 @@ variable {P : PFunctor.{uA, uB}}
 Above an answer-section `answer : (P ⊸ X).A`, a displayed position sends every
 query and precondition witness to answer-dependent postcondition evidence.
 The displayed direction remembers the supplied precondition witness, because
-the recursively verified continuation may depend on it. -/
+the displayed continuation may depend on it. -/
 def responder (S : Display.{uA, uB, uC, uD} P) :
     Display.{max uA uB, max uA uB, max uA uC uD, uC}
       (P ⊸ X.{uA, uB}) where

@@ -16,7 +16,7 @@ public import PolyFun.PFunctor.Free.Parallel
 The separable display operation follows the symmetric-monoidal structure of
 parallel sum.  This file lifts the base bifunctor, unitors, braiding, and
 associator to `Display.Lens`; their `toHandler` maps are the corresponding
-displayed structural handlers used by verified behavior.
+structural handlers used by displayed behaviors.
 -/
 
 @[expose] public section

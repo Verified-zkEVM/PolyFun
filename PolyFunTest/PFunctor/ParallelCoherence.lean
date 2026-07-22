@@ -7,13 +7,13 @@ Authors: Quang Dao
 module
 
 public import PolyFun.PFunctor.Dynamical.Responder.Parallel.Coherence
-public import PolyFun.PFunctor.Dynamical.Responder.Parallel.VerifiedPresentation
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel.Presentation
 
 /-!
 # Regression tests for parallel presentation and behavior coherence
 
 These examples observe componentwise state/witness maps and pin the symmetry,
-unit, associativity, and interchange interfaces used by later verified
+unit, associativity, and interchange interfaces used by later displayed
 coherence.
 -/
 
@@ -32,19 +32,19 @@ abbrev contract : Display Interface where
 
 def Invariant (_ : Nat) : Type := PUnit
 
-def verified :
+def displayed :
     Display.Coalgebra (Display.responder contract) responder.out Invariant :=
   (Display.responderCoalgebraEquiv contract responder Invariant).symm
     fun _ _ _ _ => ⟨false, PUnit.unit⟩
 
 def presentationId :
-    Responder.VerifiedPresentationHom contract
-      responder Invariant verified responder Invariant verified :=
-  Responder.VerifiedPresentationHom.id
+    Responder.PresentationHom contract
+      responder Invariant displayed responder Invariant displayed :=
+  Responder.PresentationHom.id
 
 def toTerminal :=
-  Responder.VerifiedPresentationHom.toTerminal contract
-    responder Invariant verified
+  Responder.PresentationHom.toTerminal contract
+    responder Invariant displayed
 
 def mixedParallel := toTerminal.parallel presentationId
 
@@ -62,15 +62,15 @@ example :
   rfl
 
 example : presentationId.parallel presentationId =
-    Responder.VerifiedPresentationHom.id :=
-  Responder.VerifiedPresentationHom.parallel_id
+    Responder.PresentationHom.id :=
+  Responder.PresentationHom.parallel_id
 
 example :
     (toTerminal.parallel presentationId).comp
         (presentationId.parallel presentationId) =
       (toTerminal.comp presentationId).parallel
         (presentationId.comp presentationId) :=
-  Responder.VerifiedPresentationHom.parallel_comp _ _ _ _
+  Responder.PresentationHom.parallel_comp _ _ _ _
 
 def leftBehavior := responder.behavior 5
 
