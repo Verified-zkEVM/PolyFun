@@ -5,6 +5,7 @@ Authors: Quang Dao
 -/
 import PolyFun.Interaction.Basic.Chain
 import PolyFun.Interaction.Basic.Telescope
+import PolyFun.Interaction.Basic.TypeTreeFintype
 
 /-!
 # Polynomial normalization regression tests
@@ -15,6 +16,23 @@ canonical polynomial structures used by their implementations.
 
 namespace Interaction
 namespace TypeTree
+
+/-! ## Branching properties remain separate and universe-polymorphic -/
+
+private abbrev FiniteEmptyTree : TypeTree := .node Empty fun x => nomatch x
+
+example : TypeTree.Fintype FiniteEmptyTree :=
+  .node inferInstance fun x => nomatch x
+
+example : ¬ TypeTree.Nonempty FiniteEmptyTree := by
+  intro h
+  exact h.rootNonempty.elim fun x => nomatch x
+
+private abbrev HigherTree : TypeTree.{1} := .node (ULift (Fin 2)) fun _ => .done
+
+example : TypeTree.Fintype HigherTree := inferInstance
+
+example : TypeTree.Nonempty HigherTree := inferInstance
 
 /-! ## Type trees are the free substitution monoid -/
 
