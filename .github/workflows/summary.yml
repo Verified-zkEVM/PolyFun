@@ -1,8 +1,12 @@
 name: 'PR Summary'
 
+# Summary runs on every PR update (open + each new commit). It is SAFE under
+# pull_request_target — the OpenRouter secret and write token are in scope even
+# for fork PRs — because it never builds or executes PR code: it reads the diff
+# and committed source as data, and reads its policy file from the BASE ref (S4).
 on:
   pull_request_target:
-    types: [opened, synchronize]
+    types: [opened, synchronize, reopened]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -16,35 +20,14 @@ permissions:
 jobs:
   summarize:
     runs-on: ubuntu-latest
-    # Skip when no provider API key is configured. This keeps the workflow
-    # green-by-skip until a `GEMINI_API_KEY` (or other provider key) is
-    # provisioned as a repository secret. Once a key exists, this guard lets
-    # the job run; otherwise the summarize action would fail with
-    # `API_KEY not set`.
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]' }}
     steps:
-      - name: Skip if API key missing
-        id: gate
-        env:
-          API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          if [[ -z "${API_KEY}" ]]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::GEMINI_API_KEY secret is not set; skipping PR summary."
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
       - name: Generate PR Summary
-        if: steps.gate.outputs.skip == 'false'
-        uses: alexanderlhicks/lean-summary-workflow@main
+        uses: alexanderlhicks/lean4repo-utils/summary@0.3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          api_key: ${{ secrets.GEMINI_API_KEY }}
-          provider: gemini  # or: anthropic, openai
-          model: gemini-3-flash-preview  # or: claude-sonnet-4-6, gpt-5.4-mini
+          api_key: ${{ secrets.OPENROUTER_KEY }}
           github_repository: ${{ github.repository }}
           pr_number: ${{ github.event.pull_request.number }}
-          # Optional:
-          additional_instructions_path: 'CONTRIBUTING.md'
           validate_title: 'true'
-          # upstream_path: 'ToMathlib/'
+          # Default model (deepseek/deepseek-v4-flash). additional_instructions_path
+          # defaults to CONTRIBUTING.md (read from the base ref) when unset.
