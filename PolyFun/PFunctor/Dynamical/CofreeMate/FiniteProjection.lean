@@ -13,7 +13,7 @@ public import PolyFun.PFunctor.Dynamical.RunN
 # Finite projections of dynamical-system cofree mates
 
 The cofree mate of a dynamical system contains its entire infinite behavior
-tree.  Composing that mate with `CofreeP.projectionN P n` recovers exactly the
+tree. Composing that mate with `CofreeP.projectionN P n` recovers exactly the
 existing finite `n`-step system `DynSystem.nStep`.
 -/
 
@@ -25,10 +25,9 @@ namespace PFunctor
 namespace DynSystem
 
 /-- Projecting a dynamical system's cofree mate to depth `n` is its `n`-step
-run.  This is the dynamical-system specialization of Spivak--Niu Proposition
+run. This is the dynamical-system specialization of Spivak--Niu Proposition
 8.49. -/
-theorem cofreeMate_comp_projectionN
-    {S : Type u} {P : PFunctor.{u, u}}
+theorem cofreeMate_comp_projectionN {S : Type u} {P : PFunctor.{u, u}}
     (system : DynSystem S P) (n : ℕ) :
     system.cofreeMate.toLens ⨟ CofreeP.projectionN P n =
       system.nStep n := by
@@ -44,10 +43,8 @@ theorem cofreeMate_comp_projectionN_two
     (system.cofreeMate.toLens ⨟ CofreeP.projectionN P 2) ⨟
         (Lens.id P ◃ₗ Lens.Equiv.compX.toLens) =
       system.twoStep := by
-  have hprojection := congrArg
-    (fun lens => (Lens.id P ◃ₗ Lens.Equiv.compX.toLens) ∘ₗ lens)
-    (cofreeMate_comp_projectionN system 2)
-  exact hprojection.trans (nStep_two_eq_twoStep system)
+  exact (congrArg (fun lens => (Lens.id P ◃ₗ Lens.Equiv.compX.toLens) ∘ₗ lens)
+    (cofreeMate_comp_projectionN system 2)).trans (nStep_two_eq_twoStep system)
 
 end DynSystem
 end PFunctor

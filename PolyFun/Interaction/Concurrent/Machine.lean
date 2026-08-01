@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Devon Tuma
 -/
 import PolyFun.Interaction.Concurrent.Process
-import Batteries.Tactic.Lint
 
 /-!
 # State-indexed concurrent machines
@@ -68,23 +67,20 @@ abbrev Enabled {S : Type v} (machine : Machine.{u, v} S) (σ : S) : Type u :=
 
 /-- The successor state produced by choosing an enabled event at a state: the
 machine's transition function. -/
-abbrev step {S : Type v} (machine : Machine.{u, v} S) (σ : S)
-    (e : machine.Enabled σ) : S :=
+abbrev step {S : Type v} (machine : Machine.{u, v} S) (σ : S) (e : machine.Enabled σ) : S :=
   machine.update σ e
 
 /-- Build a machine from its state set, enabled-event family, and successor
 function, using the classical field names. -/
-def mk' (State : Type v) (Enabled : State → Type u)
-    (step : (σ : State) → Enabled σ → State) : Machine.{u, v} State :=
+def mk' (State : Type v) (Enabled : State → Type u) (step : (σ : State) → Enabled σ → State) :
+    Machine.{u, v} State :=
   Enabled ⇆ step
 
 @[simp] theorem enabled_mk' (State : Type v) (Enabled : State → Type u)
-    (step : (σ : State) → Enabled σ → State) :
-    (mk' State Enabled step).Enabled = Enabled := rfl
+    (step : (σ : State) → Enabled σ → State) : (mk' State Enabled step).Enabled = Enabled := rfl
 
 @[simp] theorem step_mk' (State : Type v) (Enabled : State → Type u)
-    (step : (σ : State) → Enabled σ → State) :
-    (mk' State Enabled step).step = step := rfl
+    (step : (σ : State) → Enabled σ → State) : (mk' State Enabled step).step = step := rfl
 
 set_option linter.checkUnivs false in
 /--
@@ -108,8 +104,7 @@ step inside the richer interaction semantics.
 models to the more general process-centered concurrent layer.
 -/
 def toProcess {Party : Type u} {S : Type v} (machine : Machine S)
-    (semantics : (σ : S) → NodeProfile Party (machine.Enabled σ)) :
-    Process S Party :=
+    (semantics : (σ : S) → NodeProfile Party (machine.Enabled σ)) : Process S Party :=
   ProcessOver.ofStep S fun σ =>
     { tree := .node (machine.Enabled σ) (fun _ => .done)
       semantics := ⟨semantics σ, fun _ => PUnit.unit⟩
@@ -121,8 +116,7 @@ Lift `Machine.toProcess` from bare dynamics to `Process.SafetySpec` by reusing
 the same initial-state, assumption, and safety predicates.
 -/
 def SafetySpec.toProcess {Party : Type u} (system : Machine.SafetySpec)
-    (semantics : (σ : system.State) →
-      NodeProfile Party (system.toDynSystem.expose σ)) :
+    (semantics : (σ : system.State) → NodeProfile Party (system.toDynSystem.expose σ)) :
     Process.SafetySpec Party :=
   { system with toMachine :=
       { system.toMachine with

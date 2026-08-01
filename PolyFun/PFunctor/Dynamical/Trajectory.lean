@@ -110,15 +110,13 @@ def ObsEq {S₁ : Type u₁} {S₂ : Type u₂} (s₁ : DynSystem S₁ p) (s₂ 
 @[refl] theorem ObsEq.refl (s : DynSystem S p) (st : S) : ObsEq s s st st := rfl
 
 /-- Observational equivalence is symmetric. -/
-@[symm] theorem ObsEq.symm {S₁ : Type u₁} {S₂ : Type u₂}
-    {s₁ : DynSystem S₁ p} {s₂ : DynSystem S₂ p} {st₁ : S₁} {st₂ : S₂}
-    (h : ObsEq s₁ s₂ st₁ st₂) : ObsEq s₂ s₁ st₂ st₁ := Eq.symm h
+@[symm] theorem ObsEq.symm {S₁ : Type u₁} {S₂ : Type u₂} {s₁ : DynSystem S₁ p} {s₂ : DynSystem S₂ p}
+    {st₁ : S₁} {st₂ : S₂} (h : ObsEq s₁ s₂ st₁ st₂) : ObsEq s₂ s₁ st₂ st₁ := Eq.symm h
 
 /-- Observational equivalence is transitive. -/
 @[trans]
-theorem ObsEq.trans {S₁ : Type u₁} {S₂ : Type u₂} {S₃ : Type u₃}
-    {s₁ : DynSystem S₁ p} {s₂ : DynSystem S₂ p} {s₃ : DynSystem S₃ p}
-    {st₁ : S₁} {st₂ : S₂} {st₃ : S₃}
+theorem ObsEq.trans {S₁ : Type u₁} {S₂ : Type u₂} {S₃ : Type u₃} {s₁ : DynSystem S₁ p}
+    {s₂ : DynSystem S₂ p} {s₃ : DynSystem S₃ p} {st₁ : S₁} {st₂ : S₂} {st₃ : S₃}
     (h₁₂ : ObsEq s₁ s₂ st₁ st₂) (h₂₃ : ObsEq s₂ s₃ st₂ st₃) :
     ObsEq s₁ s₃ st₁ st₃ := Eq.trans h₁₂ h₂₃
 

@@ -45,8 +45,7 @@ example : forkAt ExampleOp.target nestedProgram 0 =
   forkAt_eq_locateAndForkAt ExampleOp.target nestedProgram 0
 
 /-- Reject equal focused answers and retain observably different forks. -/
-def classifyDifferent (view : ForkView ExampleOp.target nestedProgram 0) :
-    Option (Nat × Nat) :=
+def classifyDifferent (view : ForkView ExampleOp.target nestedProgram 0) : Option (Nat × Nat) :=
   if view.firstAnswer = view.secondAnswer then none
   else some (output nestedProgram view.firstPath,
     output nestedProgram view.secondPath)

@@ -24,11 +24,8 @@ universe uA uB uC uD uA' uB' uC' uD'
 
 /-- A displayed lens retains independent universes for both base interfaces
 and both displayed fibers. -/
-def heterogeneous
-    {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
-    {S : Display.{uA, uB, uC, uD} P}
-    {T : Display.{uA', uB', uC', uD'} Q}
-    (base : Lens P Q)
+def heterogeneous {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}} {S : Display.{uA, uB, uC, uD} P}
+    {T : Display.{uA', uB', uC', uD'} Q} (base : Lens P Q)
     (toPosition : (a : P.A) → S.position a → T.position (base.toFunA a))
     (toDirection : (a : P.A) → (c : S.position a) →
       (answer : Q.B (base.toFunA a)) →
@@ -37,18 +34,13 @@ def heterogeneous
     Display.Lens S T base :=
   ⟨toPosition, toDirection⟩
 
-def heterogeneousTotal
-    {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
-    {S : Display.{uA, uB, uC, uD} P}
-    {T : Display.{uA', uB', uC', uD'} Q}
-    {base : Lens P Q} (displayed : Display.Lens S T base) :
-    Lens S.total T.total :=
+def heterogeneousTotal {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
+    {S : Display.{uA, uB, uC, uD} P} {T : Display.{uA', uB', uC', uD'} Q}
+    {base : Lens P Q} (displayed : Display.Lens S T base) : Lens S.total T.total :=
   displayed.toTotal
 
-def heterogeneousHandler
-    {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
-    {S : Display.{uA, uB, uC, uD} P}
-    {T : Display.{uA', uB', uC', uD'} Q}
+def heterogeneousHandler {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
+    {S : Display.{uA, uB, uC, uD} P} {T : Display.{uA', uB', uC', uD'} Q}
     {base : Lens P Q} (displayed : Display.Lens S T base) :
     Display.Handler S T (Handler.ofLens base) :=
   displayed.toHandler
@@ -85,19 +77,16 @@ example : displayed.toDirection true true 3 4 = true :=
 example : displayed.toDirection false false 2 3 = false :=
   rfl
 
-example : displayed.toTotal.toFunA ⟨true, true⟩ =
-    ⟨PUnit.unit, "true"⟩ :=
+example : displayed.toTotal.toFunA ⟨true, true⟩ = ⟨PUnit.unit, "true"⟩ :=
   rfl
 
-example : displayed.toTotal.toFunB ⟨true, true⟩ ⟨3, 4⟩ =
-    ⟨false, true⟩ :=
+example : displayed.toTotal.toFunB ⟨true, true⟩ ⟨3, 4⟩ = ⟨false, true⟩ :=
   rfl
 
 example : ((displayed.toHandler true true).2 3 4).down = true :=
   rfl
 
-example :
-    Display.Handler.transport rfl displayed.toHandler = displayed.toHandler := by
-  simp
+example : Display.Handler.transport rfl displayed.toHandler = displayed.toHandler :=
+  rfl
 
 end PFunctor.DisplayLensCanary

@@ -184,11 +184,7 @@ private theorem corec_iter_simulateStep_bind_pureInl
   rcases hu : PFunctor.M.dest u with ⟨sh, c⟩
   cases sh with
   | pure r =>
-      have hu_eq : u = pure r := by
-        apply PFunctor.M.eq_of_dest_eq; rw [hu]
-        change (⟨.pure r, c⟩ : (Poly F γ).Obj _) = ⟨.pure r, PEmpty.elim⟩
-        congr 1; funext z; exact z.elim
-      subst hu_eq
+      obtain rfl := eq_pure_of_dest hu
       rw [bind_pure_left, bind_pure_left]
       refine ⟨.step,
         fun _ => PFunctor.M.corec (iterStep (simulateStep h)) (simulateStep h (k r)),
@@ -250,11 +246,7 @@ theorem TauSteps.simulate {E : PFunctor.{uEA, uEB}}
   induction ht with
   | refl _ => exact .refl _
   | @step t _ c ht _ ih =>
-      have ht_eq : t = ITree.step (c PUnit.unit) := by
-        apply PFunctor.M.eq_of_dest_eq
-        change shape' t = shape' (ITree.step (c PUnit.unit))
-        rw [ht, shape'_step]
-      subst t
+      obtain rfl := eq_step_of_dest ht
       rw [simulate_step_eq]
       exact TauSteps.step (fun _ => ITree.simulate h (c PUnit.unit))
         (shape'_step _) ih
@@ -280,31 +272,15 @@ theorem simulate_weakBisimRel {E : PFunctor.{uEA, uEB}}
   · obtain ⟨t', s', ht, hs, M⟩ := hts.dest
     cases M with
     | pure r r' hrr ht' hs' =>
-        have ht_eq : t' = pure r := by
-          apply PFunctor.M.eq_of_dest_eq
-          change shape' t' = shape' (pure r)
-          exact ht'.trans (shape'_pure r).symm
-        have hs_eq : s' = pure r' := by
-          apply PFunctor.M.eq_of_dest_eq
-          change shape' s' = shape' (pure r')
-          exact hs'.trans (shape'_pure r').symm
-        subst ht_eq
-        subst hs_eq
+        obtain rfl := eq_pure_of_dest ht'
+        obtain rfl := eq_pure_of_dest hs'
         refine ⟨pure r, pure r', ?_, ?_,
           MatchRel.pure r r' hrr (shape'_pure r) (shape'_pure r')⟩
         · simpa only [simulate_pure] using ht.simulate h
         · simpa only [simulate_pure] using hs.simulate h
     | tau ct cs ht' hs' hcont =>
-        have ht_eq : t' = step (ct PUnit.unit) := by
-          apply PFunctor.M.eq_of_dest_eq
-          change shape' t' = shape' (step (ct PUnit.unit))
-          rw [ht', shape'_step]
-        have hs_eq : s' = step (cs PUnit.unit) := by
-          apply PFunctor.M.eq_of_dest_eq
-          change shape' s' = shape' (step (cs PUnit.unit))
-          rw [hs', shape'_step]
-        subst ht_eq
-        subst hs_eq
+        obtain rfl := eq_step_of_dest ht'
+        obtain rfl := eq_step_of_dest hs'
         refine ⟨step (simulate h (ct PUnit.unit)),
           step (simulate h (cs PUnit.unit)), ?_, ?_, ?_⟩
         · simpa only [simulate_step_eq] using ht.simulate h
@@ -312,30 +288,15 @@ theorem simulate_weakBisimRel {E : PFunctor.{uEA, uEB}}
         · exact MatchRel.tau _ _ (shape'_step _) (shape'_step _)
             (Or.inl ⟨ct PUnit.unit, cs PUnit.unit, hcont, rfl, rfl⟩)
     | query a c c' ht' hs' hcont =>
-        have ht_eq : t' = query a c := by
-          apply PFunctor.M.eq_of_dest_eq
-          change shape' t' = shape' (query a c)
-          exact ht'.trans (shape'_query a c).symm
-        have hs_eq : s' = query a c' := by
-          apply PFunctor.M.eq_of_dest_eq
-          change shape' s' = shape' (query a c')
-          exact hs'.trans (shape'_query a c').symm
-        subst ht_eq
-        subst hs_eq
+        obtain rfl := eq_query_of_dest ht'
+        obtain rfl := eq_query_of_dest hs'
         have ht_sim := ht.simulate h
         have hs_sim := hs.simulate h
         rw [simulate_query_eq_bind] at ht_sim hs_sim
         rcases hu : PFunctor.M.dest (h a) with ⟨sh, cu⟩
         cases sh with
         | pure b =>
-            have hu_eq : h a = pure b := by
-              apply PFunctor.M.eq_of_dest_eq
-              rw [hu]
-              change (⟨.pure b, cu⟩ : (Poly F (E.B a)).Obj _) =
-                ⟨.pure b, PEmpty.elim⟩
-              congr 1
-              funext z
-              exact z.elim
+            have hu_eq : h a = pure b := eq_pure_of_dest hu
             rw [hu_eq, bind_pure_left] at ht_sim hs_sim
             refine ⟨step (simulate h (c b)), step (simulate h (c' b)),
               ht_sim, hs_sim, ?_⟩
@@ -359,15 +320,7 @@ theorem simulate_weakBisimRel {E : PFunctor.{uEA, uEB}}
   · rcases hu : PFunctor.M.dest u with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have hu_eq : u = pure r := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [hu]
-          change (⟨.pure r, c⟩ : (Poly F γ).Obj _) =
-            ⟨.pure r, PEmpty.elim⟩
-          congr 1
-          funext z
-          exact z.elim
-        subst hu_eq
+        obtain rfl := eq_pure_of_dest hu
         rw [bind_pure_left, bind_pure_left]
         refine ⟨step (simulate h (k r)), step (simulate h (k' r)),
           .refl _, .refl _, ?_⟩
@@ -403,26 +356,18 @@ theorem simulate_id {E : PFunctor.{uEA, uEB}} {α : Type uα}
   rcases hy : PFunctor.M.dest y with ⟨sh, c⟩
   cases sh with
   | pure r =>
-      have hy_eq : y = pure r := by
-        apply PFunctor.M.eq_of_dest_eq; rw [hy]
-        change (⟨.pure r, c⟩ : (Poly E α).Obj _) = ⟨.pure r, PEmpty.elim⟩
-        congr 1; funext z; exact z.elim
-      subst hy_eq
+      obtain rfl := eq_pure_of_dest hy
       rw [simulate_pure] at hxx'
       exact ⟨pure r, pure r, hxx', .refl _,
         Match.pure r (shape'_pure r) (shape'_pure r)⟩
   | step =>
-      have hy_eq : y = step (c PUnit.unit) := by
-        apply PFunctor.M.eq_of_dest_eq; rw [hy]; rfl
-      subst hy_eq
+      obtain rfl := eq_step_of_dest hy
       rw [simulate_step_eq] at hxx'
       refine ⟨step (simulate (Handler.id E) (c PUnit.unit)), step (c PUnit.unit),
         hxx', .refl _, ?_⟩
       exact Match.tau _ _ (shape'_step _) (shape'_step _) (Or.inl rfl)
   | query a =>
-      have hy_eq : y = query a c := by
-        apply PFunctor.M.eq_of_dest_eq; rw [hy]; rfl
-      subst hy_eq
+      obtain rfl := eq_query_of_dest hy
       rw [simulate_query_eq_bind,
           show (Handler.id E) a = query a pure from rfl,
           bind_query] at hxx'
@@ -493,11 +438,7 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
     rcases ht : PFunctor.M.dest t with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have ht_eq : t = pure r := by
-          apply PFunctor.M.eq_of_dest_eq; rw [ht]
-          change (⟨.pure r, c⟩ : (Poly E α).Obj _) = ⟨.pure r, PEmpty.elim⟩
-          congr 1; funext z; exact z.elim
-        subst ht_eq
+        obtain rfl := eq_pure_of_dest ht
         rw [bind_pure_left, simulate_pure, bind_pure_left]
         rcases hkr : PFunctor.M.dest (simulate h (k r)) with ⟨sh', c'⟩
         refine ⟨simulate h (k r), simulate h (k r), .refl _, .refl _, ?_⟩
@@ -510,9 +451,7 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
         | step => exact Match.tau c' c' hkr hkr (Or.inl rfl)
         | query a' => exact Match.query a' c' c' hkr hkr (fun _ => Or.inl rfl)
     | step =>
-        have ht_eq : t = step (c PUnit.unit) := by
-          apply PFunctor.M.eq_of_dest_eq; rw [ht]; rfl
-        subst ht_eq
+        obtain rfl := eq_step_of_dest ht
         rw [bind_step, simulate_step_eq, simulate_step_eq, bind_step]
         refine ⟨step (simulate h (bind (c PUnit.unit) k)),
           step (bind (simulate h (c PUnit.unit)) (fun a => simulate h (k a))),
@@ -520,20 +459,14 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
         refine Match.tau _ _ (shape'_step _) (shape'_step _) ?_
         exact Or.inr (Or.inl ⟨c PUnit.unit, rfl, rfl⟩)
     | query a_E =>
-        have ht_eq : t = query a_E c := by
-          apply PFunctor.M.eq_of_dest_eq; rw [ht]; rfl
-        subst ht_eq
+        obtain rfl := eq_query_of_dest ht
         rw [bind_query, simulate_query_eq_bind, simulate_query_eq_bind,
             bind_assoc]
         simp only [bind_step]
         rcases hH : PFunctor.M.dest (h a_E) with ⟨sh', c'⟩
         cases sh' with
         | pure r =>
-            have hH_eq : h a_E = pure r := by
-              apply PFunctor.M.eq_of_dest_eq; rw [hH]
-              change (⟨.pure r, c'⟩ : (Poly F (E.B a_E)).Obj _) =
-                ⟨.pure r, PEmpty.elim⟩
-              congr 1; funext z; exact z.elim
+            have hH_eq : h a_E = pure r := eq_pure_of_dest hH
             rw [hH_eq, bind_pure_left, bind_pure_left]
             refine ⟨step (simulate h (bind (c r) k)),
               step (bind (simulate h (c r)) (fun a => simulate h (k a))),
@@ -541,8 +474,7 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
             refine Match.tau _ _ (shape'_step _) (shape'_step _) ?_
             exact Or.inr (Or.inl ⟨c r, rfl, rfl⟩)
         | step =>
-            have hH_eq : h a_E = step (c' PUnit.unit) := by
-              apply PFunctor.M.eq_of_dest_eq; rw [hH]; rfl
+            have hH_eq : h a_E = step (c' PUnit.unit) := eq_step_of_dest hH
             rw [hH_eq, bind_step, bind_step]
             refine ⟨step (bind (c' PUnit.unit)
                 (fun b => step (simulate h (bind (c b) k)))),
@@ -553,8 +485,7 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
             refine Match.tau _ _ (shape'_step _) (shape'_step _) ?_
             exact Or.inr (Or.inr ⟨E.B a_E, c' PUnit.unit, c, rfl, rfl⟩)
         | query a_F =>
-            have hH_eq : h a_E = query a_F c' := by
-              apply PFunctor.M.eq_of_dest_eq; rw [hH]; rfl
+            have hH_eq : h a_E = query a_F c' := eq_query_of_dest hH
             rw [hH_eq, bind_query, bind_query]
             refine ⟨query a_F (fun b' => bind (c' b')
                 (fun b => step (simulate h (bind (c b) k)))),
@@ -569,11 +500,7 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
     rcases hu : PFunctor.M.dest u with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have hu_eq : u = pure r := by
-          apply PFunctor.M.eq_of_dest_eq; rw [hu]
-          change (⟨.pure r, c⟩ : (Poly F γ).Obj _) = ⟨.pure r, PEmpty.elim⟩
-          congr 1; funext z; exact z.elim
-        subst hu_eq
+        obtain rfl := eq_pure_of_dest hu
         rw [bind_pure_left, bind_pure_left]
         refine ⟨step (simulate h (bind (f r) k)),
           step (bind (simulate h (f r)) (fun a => simulate h (k a))),
@@ -581,9 +508,7 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
         refine Match.tau _ _ (shape'_step _) (shape'_step _) ?_
         exact Or.inr (Or.inl ⟨f r, rfl, rfl⟩)
     | step =>
-        have hu_eq : u = step (c PUnit.unit) := by
-          apply PFunctor.M.eq_of_dest_eq; rw [hu]; rfl
-        subst hu_eq
+        obtain rfl := eq_step_of_dest hu
         rw [bind_step, bind_step]
         refine ⟨step (bind (c PUnit.unit)
             (fun b => step (simulate h (bind (f b) k)))),
@@ -594,9 +519,7 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
         refine Match.tau _ _ (shape'_step _) (shape'_step _) ?_
         exact Or.inr (Or.inr ⟨γ, c PUnit.unit, f, rfl, rfl⟩)
     | query a_F =>
-        have hu_eq : u = query a_F c := by
-          apply PFunctor.M.eq_of_dest_eq; rw [hu]; rfl
-        subst hu_eq
+        obtain rfl := eq_query_of_dest hu
         rw [bind_query, bind_query]
         refine ⟨query a_F (fun b' => bind (c b')
             (fun b => step (simulate h (bind (f b) k)))),
@@ -645,24 +568,12 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
   · rcases ht : PFunctor.M.dest t with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have ht_eq : t = pure r := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [ht]
-          change (⟨.pure r, c⟩ : (Poly E α).Obj _) =
-            ⟨.pure r, PEmpty.elim⟩
-          congr 1
-          funext z
-          exact z.elim
-        subst ht_eq
+        obtain rfl := eq_pure_of_dest ht
         rw [simulate_pure, simulate_pure, simulate_pure]
         exact ⟨pure r, pure r, .refl _, .refl _,
           Match.pure r (shape'_pure r) (shape'_pure r)⟩
     | step =>
-        have ht_eq : t = step (c PUnit.unit) := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [ht]
-          rfl
-        subst ht_eq
+        obtain rfl := eq_step_of_dest ht
         rw [simulate_step_eq, simulate_step_eq, simulate_step_eq]
         refine ⟨step (simulate outer (simulate inner (c PUnit.unit))),
           step (simulate (outer.comp inner) (c PUnit.unit)),
@@ -670,24 +581,13 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
         exact Match.tau _ _ (shape'_step _) (shape'_step _)
           (Or.inl ⟨c PUnit.unit, rfl, rfl⟩)
     | query a =>
-        have ht_eq : t = query a c := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [ht]
-          rfl
-        subst ht_eq
+        obtain rfl := eq_query_of_dest ht
         rw [simulate_query_eq_bind inner, simulate_query_eq_bind (outer.comp inner),
           Handler.comp_apply]
         rcases hu : PFunctor.M.dest (inner a) with ⟨sh, cu⟩
         cases sh with
         | pure r =>
-            have hu_eq : inner a = pure r := by
-              apply PFunctor.M.eq_of_dest_eq
-              rw [hu]
-              change (⟨.pure r, cu⟩ : (Poly F (E.B a)).Obj _) =
-                ⟨.pure r, PEmpty.elim⟩
-              congr 1
-              funext z
-              exact z.elim
+            have hu_eq : inner a = pure r := eq_pure_of_dest hu
             rw [hu_eq, bind_pure_left, simulate_step_eq, simulate_pure,
               bind_pure_left]
             refine ⟨step (simulate outer (simulate inner (c r))),
@@ -695,10 +595,7 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
             exact Match.tau _ _ (shape'_step _) (shape'_step _)
               (Or.inl ⟨c r, rfl, rfl⟩)
         | step =>
-            have hu_eq : inner a = step (cu PUnit.unit) := by
-              apply PFunctor.M.eq_of_dest_eq
-              rw [hu]
-              rfl
+            have hu_eq : inner a = step (cu PUnit.unit) := eq_step_of_dest hu
             rw [hu_eq, bind_step, simulate_step_eq, simulate_step_eq, bind_step]
             refine ⟨step (simulate outer
                 (bind (cu PUnit.unit)
@@ -709,24 +606,14 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
             exact Match.tau _ _ (shape'_step _) (shape'_step _)
               (Or.inr (Or.inl ⟨E.B a, cu PUnit.unit, c, rfl, rfl⟩))
         | query a_F =>
-            have hu_eq : inner a = query a_F cu := by
-              apply PFunctor.M.eq_of_dest_eq
-              rw [hu]
-              rfl
+            have hu_eq : inner a = query a_F cu := eq_query_of_dest hu
             rw [hu_eq, bind_query, simulate_query_eq_bind,
               simulate_query_eq_bind, bind_assoc]
             simp only [bind_step]
             rcases hw : PFunctor.M.dest (outer a_F) with ⟨sh, cw⟩
             cases sh with
             | pure z =>
-                have hw_eq : outer a_F = pure z := by
-                  apply PFunctor.M.eq_of_dest_eq
-                  rw [hw]
-                  change (⟨.pure z, cw⟩ : (Poly G (F.B a_F)).Obj _) =
-                    ⟨.pure z, PEmpty.elim⟩
-                  congr 1
-                  funext e
-                  exact e.elim
+                have hw_eq : outer a_F = pure z := eq_pure_of_dest hw
                 rw [hw_eq, bind_pure_left, bind_pure_left]
                 refine ⟨step (simulate outer
                     (bind (cu z) (fun b => step (simulate inner (c b))))),
@@ -762,26 +649,14 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
   · rcases hu : PFunctor.M.dest u with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have hu_eq : u = pure r := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [hu]
-          change (⟨.pure r, c⟩ : (Poly F γ).Obj _) =
-            ⟨.pure r, PEmpty.elim⟩
-          congr 1
-          funext z
-          exact z.elim
-        subst hu_eq
+        obtain rfl := eq_pure_of_dest hu
         rw [bind_pure_left, simulate_step_eq, simulate_pure, bind_pure_left]
         refine ⟨step (simulate outer (simulate inner (k r))),
           step (simulate (outer.comp inner) (k r)), .refl _, .refl _, ?_⟩
         exact Match.tau _ _ (shape'_step _) (shape'_step _)
           (Or.inl ⟨k r, rfl, rfl⟩)
     | step =>
-        have hu_eq : u = step (c PUnit.unit) := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [hu]
-          rfl
-        subst hu_eq
+        obtain rfl := eq_step_of_dest hu
         rw [bind_step, simulate_step_eq, simulate_step_eq, bind_step]
         refine ⟨step (simulate outer
             (bind (c PUnit.unit) (fun b => step (simulate inner (k b))))),
@@ -791,25 +666,14 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
         exact Match.tau _ _ (shape'_step _) (shape'_step _)
           (Or.inr (Or.inl ⟨γ, c PUnit.unit, k, rfl, rfl⟩))
     | query a =>
-        have hu_eq : u = query a c := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [hu]
-          rfl
-        subst hu_eq
+        obtain rfl := eq_query_of_dest hu
         rw [bind_query, simulate_query_eq_bind, simulate_query_eq_bind,
           bind_assoc]
         simp only [bind_step]
         rcases hw : PFunctor.M.dest (outer a) with ⟨sh, cw⟩
         cases sh with
         | pure z =>
-            have hw_eq : outer a = pure z := by
-              apply PFunctor.M.eq_of_dest_eq
-              rw [hw]
-              change (⟨.pure z, cw⟩ : (Poly G (F.B a)).Obj _) =
-                ⟨.pure z, PEmpty.elim⟩
-              congr 1
-              funext e
-              exact e.elim
+            have hw_eq : outer a = pure z := eq_pure_of_dest hw
             rw [hw_eq, bind_pure_left, bind_pure_left]
             refine ⟨step (simulate outer
                 (bind (c z) (fun b => step (simulate inner (k b))))),
@@ -842,15 +706,7 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
   · rcases hw : PFunctor.M.dest w with ⟨sh, c⟩
     cases sh with
     | pure z =>
-        have hw_eq : w = pure z := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [hw]
-          change (⟨.pure z, c⟩ : (Poly G δ).Obj _) =
-            ⟨.pure z, PEmpty.elim⟩
-          congr 1
-          funext e
-          exact e.elim
-        subst hw_eq
+        obtain rfl := eq_pure_of_dest hw
         rw [bind_pure_left, bind_pure_left]
         refine ⟨step (simulate outer
             (bind (q z) (fun b => step (simulate inner (k b))))),
@@ -1033,18 +889,12 @@ theorem mapSpec_bind {E : PFunctor.{uEA, uEB}}
   · rcases h : PFunctor.M.dest t with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have ht : t = pure r := by
-          apply PFunctor.M.eq_of_dest_eq; rw [h]
-          change (⟨.pure r, c⟩ : (Poly E α).Obj _) = ⟨.pure r, PEmpty.elim⟩
-          congr 1; funext z; exact z.elim
-        subst ht
+        obtain rfl := eq_pure_of_dest h
         rw [bind_pure_left, mapSpec_pure, bind_pure_left]
         rcases hk : PFunctor.M.dest (mapSpec φ (k r)) with ⟨sh', c'⟩
         exact ⟨sh', c', c', rfl, rfl, fun _ => Or.inl rfl⟩
     | step =>
-        have ht : t = step (c PUnit.unit) := by
-          apply PFunctor.M.eq_of_dest_eq; rw [h]; rfl
-        subst ht
+        obtain rfl := eq_step_of_dest h
         rw [bind_step, mapSpec_step, mapSpec_step, bind_step]
         refine ⟨.step,
           fun _ => mapSpec φ (bind (c PUnit.unit) k),
@@ -1052,9 +902,7 @@ theorem mapSpec_bind {E : PFunctor.{uEA, uEB}}
           shape'_step _, shape'_step _,
           fun _ => Or.inr ⟨c PUnit.unit, rfl, rfl⟩⟩
     | query a =>
-        have ht : t = query a c := by
-          apply PFunctor.M.eq_of_dest_eq; rw [h]; rfl
-        subst ht
+        obtain rfl := eq_query_of_dest h
         rw [bind_query, mapSpec_query, mapSpec_query, bind_query]
         refine ⟨.query (φ.toFunA a),
           fun b => mapSpec φ (bind (c (φ.toFunB a b)) k),
@@ -1132,12 +980,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
                 ⟨.step, fun _ => PFunctor.M.corec (iterStep body) (body j)⟩ :=
               dest_corec_iterStep_pure_inl body t j c h
             have hMt : mapSpec φ t = pure (.inl j) := by
-              have ht : t = pure (.inl j) := by
-                apply PFunctor.M.eq_of_dest_eq; rw [h]
-                change (⟨.pure (.inl j), c⟩ : (Poly E (β ⊕ α)).Obj _) =
-                  ⟨.pure (.inl j), PEmpty.elim⟩
-                congr 1; funext z; exact z.elim
-              rw [ht, mapSpec_pure]
+              rw [eq_pure_of_dest h, mapSpec_pure]
             have hR : PFunctor.M.dest
                 (PFunctor.M.corec
                   (iterStep (fun j => mapSpec φ (body j))) (mapSpec φ t)) =
@@ -1161,12 +1004,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
                 ⟨.pure r, PEmpty.elim⟩ :=
               dest_corec_iterStep_pure_inr body t r c h
             have hMt : mapSpec φ t = pure (.inr r) := by
-              have ht : t = pure (.inr r) := by
-                apply PFunctor.M.eq_of_dest_eq; rw [h]
-                change (⟨.pure (.inr r), c⟩ : (Poly E (β ⊕ α)).Obj _) =
-                  ⟨.pure (.inr r), PEmpty.elim⟩
-                congr 1; funext z; exact z.elim
-              rw [ht, mapSpec_pure]
+              rw [eq_pure_of_dest h, mapSpec_pure]
             have hR : PFunctor.M.dest
                 (PFunctor.M.corec
                   (iterStep (fun j => mapSpec φ (body j))) (mapSpec φ t)) =
@@ -1187,9 +1025,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
             ⟨.step, fun u => PFunctor.M.corec (iterStep body) (c u)⟩ :=
           dest_corec_iterStep_step body t c h
         have hMt : mapSpec φ t = step (mapSpec φ (c PUnit.unit)) := by
-          have ht : t = step (c PUnit.unit) := by
-            apply PFunctor.M.eq_of_dest_eq; rw [h]; rfl
-          rw [ht, mapSpec_step]
+          rw [eq_step_of_dest h, mapSpec_step]
         have hR : PFunctor.M.dest
             (PFunctor.M.corec
               (iterStep (fun j => mapSpec φ (body j))) (mapSpec φ t)) =
@@ -1215,9 +1051,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
           dest_corec_iterStep_query body t a c h
         have hMt : mapSpec φ t =
             query (φ.toFunA a) (fun b => mapSpec φ (c (φ.toFunB a b))) := by
-          have ht : t = query a c := by
-            apply PFunctor.M.eq_of_dest_eq; rw [h]; rfl
-          rw [ht, mapSpec_query]
+          rw [eq_query_of_dest h, mapSpec_query]
         have hR : PFunctor.M.dest
             (PFunctor.M.corec
               (iterStep (fun j => mapSpec φ (body j))) (mapSpec φ t)) =
@@ -1302,19 +1136,13 @@ theorem simulate_ofLens {E : PFunctor.{uEA, uEB}}
   rcases ht : PFunctor.M.dest t with ⟨sh, c⟩
   cases sh with
   | pure r =>
-      have ht_eq : t = pure r := by
-        apply PFunctor.M.eq_of_dest_eq; rw [ht]
-        change (⟨.pure r, c⟩ : (Poly E α).Obj _) = ⟨.pure r, PEmpty.elim⟩
-        congr 1; funext z; exact z.elim
-      subst ht_eq
+      obtain rfl := eq_pure_of_dest ht
       rw [simulate_pure] at hxx'
       rw [mapSpec_pure]
       exact ⟨pure r, pure r, hxx', .refl _,
         Match.pure r (shape'_pure r) (shape'_pure r)⟩
   | step =>
-      have ht_eq : t = step (c PUnit.unit) := by
-        apply PFunctor.M.eq_of_dest_eq; rw [ht]; rfl
-      subst ht_eq
+      obtain rfl := eq_step_of_dest ht
       rw [simulate_step_eq] at hxx'
       rw [mapSpec_step]
       refine ⟨step (simulate (Handler.ofLens φ) (c PUnit.unit)),
@@ -1322,9 +1150,7 @@ theorem simulate_ofLens {E : PFunctor.{uEA, uEB}}
       refine Match.tau _ _ (shape'_step _) (shape'_step _) ?_
       exact Or.inl ⟨c PUnit.unit, rfl, rfl⟩
   | query a =>
-      have ht_eq : t = query a c := by
-        apply PFunctor.M.eq_of_dest_eq; rw [ht]; rfl
-      subst ht_eq
+      obtain rfl := eq_query_of_dest ht
       rw [simulate_query_eq_bind,
           show (Handler.ofLens φ) a =
             query (φ.toFunA a) (fun b => pure (φ.toFunB a b)) from rfl,

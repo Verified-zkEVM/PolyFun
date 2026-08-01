@@ -257,8 +257,7 @@ theorem mapBase_id {Γ : P.A → Type w₂} {A : (a : P.A) → Γ a → Type w�
       cases hby
       exact mapBase_id (rest b) (dRest b) (rRest b)
 
-theorem mapBase_comp
-    {Γ : P.A → Type w₂} {Δ : P.A → Type w₃} {Λ : P.A → Type w₄}
+theorem mapBase_comp {Γ : P.A → Type w₂} {Δ : P.A → Type w₃} {Λ : P.A → Type w₄}
     {A : (a : P.A) → Γ a → Type w₅}
     {B : (a : P.A) → Δ a → Type w₅}
     {C : (a : P.A) → Λ a → Type w₅}
@@ -296,8 +295,7 @@ def ofOver {Γ : P.A → Type w₂} {A : (a : P.A) → Γ a → Type w₃} :
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨a, rRest⟩ =>
       ⟨⟨γ, a⟩, fun b => ofOver (rest b) (dRest b) (rRest b)⟩
 
-theorem map_ofOver
-    {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
+theorem map_ofOver {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
     {A : (a : P.A) → Γ a → Type w₄}
     {B : (a : P.A) → Δ a → Type w₅}
     (f : ∀ a, Γ a → Δ a)

@@ -3,8 +3,9 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
 import Mathlib.Data.Fintype.Basic
+
+import PolyFun.Interaction.Basic.TypeTree
 
 /-!
 # Branching ornaments on interaction type trees

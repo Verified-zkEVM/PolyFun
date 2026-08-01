@@ -162,7 +162,7 @@ theorem iterWith_succ (h : Handler (StateT σ m) q) (A : DynSystem S q) (n : ℕ
 theorem stepWith_lift [LawfulMonad m] (h₀ : Handler m q) (A : DynSystem S q) (p : σ × S) :
     stepWith (fun a => StateT.lift (h₀ a)) A p
       = (fun s' => (p.1, s')) <$> kleisliStep h₀ A p.2 := by
-  simp only [stepWith, kleisliStep, StateT.lift, map_eq_pure_bind, bind_assoc, pure_bind]
+  simp [stepWith, kleisliStep, StateT.lift]
 
 /-- A lifted stateless handler runs as `kleisliIterate` does, carrying the
 handler state unchanged. -/

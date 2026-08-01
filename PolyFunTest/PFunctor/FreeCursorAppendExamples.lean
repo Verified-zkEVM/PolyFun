@@ -20,14 +20,11 @@ open Displayed
 def suffix (path : Path program) : FreeM Interface Nat :=
   FreeM.liftBind .finish fun _ => pure (100 + output program path)
 
-def leftJoined : Cursor (FreeM.append program suffix) :=
-  internal.liftAppend suffix
+def leftJoined : Cursor (FreeM.append program suffix) := internal.liftAppend suffix
 
-def truePath : Path program :=
-  ⟨true, selectedIndex, PUnit.unit, ⟨⟩⟩
+def truePath : Path program := ⟨true, selectedIndex, PUnit.unit, ⟨⟩⟩
 
-def rightRoot : Cursor (suffix truePath) :=
-  Cursor.root (suffix truePath)
+def rightRoot : Cursor (suffix truePath) := Cursor.root (suffix truePath)
 
 def rightJoined : Cursor (FreeM.append program suffix) :=
   Cursor.joinRight program suffix truePath rightRoot
@@ -71,8 +68,7 @@ def suffixPath : Path (suffix truePath) := ⟨PUnit.unit, ⟨⟩⟩
 
 example : leftJoined.length = 1 := rfl
 
-example : leftJoined.trace =
-    [⟨Command.choose, true⟩] := rfl
+example : leftJoined.trace = [⟨Command.choose, true⟩] := rfl
 
 example : rightJoined.trace =
     [⟨Command.choose, true⟩, ⟨Command.index, selectedIndex⟩,

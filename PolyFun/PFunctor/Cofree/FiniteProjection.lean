@@ -105,14 +105,14 @@ theorem projectionN_zero (P : PFunctor.{u, u}) :
 right-hand composition unit.  The unitor is necessary because
 `compNth P 1 = P ◃ X`, not `P`. -/
 theorem projectionN_one_comp_compX (P : PFunctor.{uA, uB}) :
-    projectionN P 1 ⨟ Lens.Equiv.compX.toLens = cogenerator P := by
+    projectionN P 1 ⨟ Lens.Equiv.compX.toLens = cogenerator P :=
   rfl
 
 /-- The second finite projection agrees with one comultiplication followed by
 the cogenerator on both components, after removing the innermost right unit. -/
 theorem projectionN_two_comp_compX (P : PFunctor.{uA, uB}) :
     projectionN P 2 ⨟ (Lens.id P ◃ₗ Lens.Equiv.compX.toLens) =
-      comult ⨟ (cogenerator P ◃ₗ cogenerator P) := by
+      comult ⨟ (cogenerator P ◃ₗ cogenerator P) :=
   rfl
 
 /-! ## Algebraic characterization and Proposition 8.49 -/

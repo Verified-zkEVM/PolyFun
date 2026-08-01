@@ -69,9 +69,7 @@ theorem ofLens_comp
     {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
     {R : PFunctor.{uA'', u'}}
     (second : Lens Q R) (first : Lens P Q) :
-    ofLens (second ∘ₗ first) = (ofLens second).comp (ofLens first) := by
-  funext operation
-  rfl
+    ofLens (second ∘ₗ first) = (ofLens second).comp (ofLens first) := rfl
 
 @[simp]
 theorem id_comp {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}

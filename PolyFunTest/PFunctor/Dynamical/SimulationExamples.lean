@@ -186,9 +186,7 @@ example (D : DynSystem S p) :
 example (D : DynSystem S p) :
     DynSystem.StepRel.reverse
         (DynSystem.StepRel.comp DynSystem.StepRel.top (DynSystem.StepRel.id D)) =
-      (DynSystem.StepRel.top : DynSystem.StepRel D D) := by
-  rw [DynSystem.StepRel.reverse_comp]
-  simp
+      (DynSystem.StepRel.top : DynSystem.StepRel D D) := by simp
 
 /-- Mutual refinements can weaken both endpoint matching relations together. -/
 example (D : DynSystem S p) :

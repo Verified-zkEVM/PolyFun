@@ -30,8 +30,7 @@ namespace SubstMonoid
 kept as a named type constructor so its monad instance determines the source
 substitution monoid unambiguously. -/
 @[reducible]
-def Extension (M : SubstMonoid.{uA, uB}) (α : Type uB) :
-    Type (max uA uB) :=
+def Extension (M : SubstMonoid.{uA, uB}) (α : Type uB) : Type (max uA uB) :=
   M.carrier.Obj α
 
 namespace Extension
@@ -44,8 +43,7 @@ def pure {α : Type uB} (x : α) : Extension M α :=
     (⟨PUnit.unit, fun _ => x⟩ : X.{max uA uB, uB}.Obj α)
 
 /-- The extension-level bind induced by polynomial substitution. -/
-def bind {α β : Type uB} (x : Extension M α)
-    (f : α → Extension M β) : Extension M β :=
+def bind {α β : Type uB} (x : Extension M α) (f : α → Extension M β) : Extension M β :=
   Lens.mapObj M.mult
     (⟨⟨x.1, fun d => (f (x.2 d)).1⟩,
       fun direction => (f (x.2 direction.1)).2 direction.2⟩ :
@@ -56,52 +54,39 @@ instance instMonad : Monad (Extension M) where
   bind := bind M
 
 @[simp]
-theorem pure_def {α : Type uB} (x : α) :
-    (Pure.pure x : Extension M α) = pure M x :=
+theorem pure_def {α : Type uB} (x : α) : (Pure.pure x : Extension M α) = pure M x :=
   rfl
 
 @[simp]
-theorem bind_def {α β : Type uB} (x : Extension M α)
-    (f : α → Extension M β) : x >>= f = bind M x f :=
+theorem bind_def {α β : Type uB} (x : Extension M α) (f : α → Extension M β) :
+    x >>= f = bind M x f :=
   rfl
 
-theorem pure_bind {α β : Type uB} (x : α)
-    (f : α → Extension M β) :
-    (Pure.pure x : Extension M α) >>= f = f x := by
-  have h := congrArg (fun lens => Lens.mapObj lens (f x)) M.unit_left
-  exact h
+theorem pure_bind {α β : Type uB} (x : α) (f : α → Extension M β) :
+    (Pure.pure x : Extension M α) >>= f = f x :=
+  congrArg (fun lens => Lens.mapObj lens (f x)) M.unit_left
 
 theorem bind_pure {α : Type uB} (x : Extension M α) :
-    x >>= (fun y => (Pure.pure y : Extension M α)) = x := by
-  have h := congrArg (fun lens => Lens.mapObj lens x) M.unit_right
-  exact h
+    x >>= (fun y => (Pure.pure y : Extension M α)) = x :=
+  congrArg (fun lens => Lens.mapObj lens x) M.unit_right
 
-theorem bind_assoc {α β γ : Type uB} (x : Extension M α)
-    (f : α → Extension M β) (g : β → Extension M γ) :
-    (x >>= f) >>= g = x >>= fun y => f y >>= g := by
+theorem bind_assoc {α β γ : Type uB} (x : Extension M α) (f : α → Extension M β)
+    (g : β → Extension M γ) : (x >>= f) >>= g = x >>= fun y => f y >>= g :=
   let source : ((M.carrier ◃ M.carrier) ◃ M.carrier).Obj γ :=
     ⟨⟨⟨x.1, fun d => (f (x.2 d)).1⟩,
         fun direction => (g ((f (x.2 direction.1)).2 direction.2)).1⟩,
       fun direction =>
         (g ((f (x.2 direction.1.1)).2 direction.1.2)).2 direction.2⟩
-  have h := congrArg (fun lens => Lens.mapObj lens source) M.assoc
-  exact h
+  congrArg (fun lens => Lens.mapObj lens source) M.assoc
 
 instance instLawfulMonad : LawfulMonad (Extension M) := LawfulMonad.mk'
   (bind_pure_comp := by
     intro α β f x
-    have h := congrArg
-      (fun lens => Lens.mapObj lens
-        (⟨x.1, f ∘ x.2⟩ : M.carrier.Obj β))
-      M.unit_right
-    exact h)
-  (id_map := by intros; rfl)
-  (pure_bind := by
-    intro α β x f
-    exact pure_bind M x f)
-  (bind_assoc := by
-    intro α β γ x f g
-    exact bind_assoc M x f g)
+    exact congrArg
+      (fun lens => Lens.mapObj lens (⟨x.1, f ∘ x.2⟩ : M.carrier.Obj β)) M.unit_right)
+  (id_map := fun _ => rfl)
+  (pure_bind := pure_bind M)
+  (bind_assoc := bind_assoc M)
 
 end Extension
 
@@ -111,23 +96,19 @@ variable {M N : SubstMonoid.{uA, uB}}
 
 /-- A substitution-monoid homomorphism induces a monad homomorphism between
 the extensions of its carrier polynomials. -/
-def toMonadHom (f : SubstMonoid.Hom M N) :
-    (Extension M) →ᵐ (Extension N) where
+def toMonadHom (f : SubstMonoid.Hom M N) : (Extension M) →ᵐ (Extension N) where
   toFun _ := Lens.mapObj f.toLens
-  toFun_pure' x := by
-    have h := congrArg (fun lens => Lens.mapObj lens
+  toFun_pure' x :=
+    congrArg (fun lens => Lens.mapObj lens
       (⟨PUnit.unit, fun _ => x⟩ : X.{max uA uB, uB}.Obj _)) f.map_unit
-    exact h
-  toFun_bind' x k := by
+  toFun_bind' x k :=
     let source : (M.carrier ◃ M.carrier).Obj _ :=
       ⟨⟨x.1, fun d => (k (x.2 d)).1⟩,
         fun direction => (k (x.2 direction.1)).2 direction.2⟩
-    have h := congrArg (fun lens => Lens.mapObj lens source) f.map_mult
-    exact h
+    congrArg (fun lens => Lens.mapObj lens source) f.map_mult
 
 @[simp]
-theorem toMonadHom_apply (f : SubstMonoid.Hom M N) {α : Type uB}
-    (x : Extension M α) :
+theorem toMonadHom_apply (f : SubstMonoid.Hom M N) {α : Type uB} (x : Extension M α) :
     f.toMonadHom x = Lens.mapObj f.toLens x :=
   rfl
 

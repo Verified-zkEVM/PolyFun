@@ -77,10 +77,8 @@ theorem children_mapLens (l : Lens P Q) (tree : M P)
     M.children (mapLens l tree) direction =
       mapLens l (M.children tree (pullDirection l tree direction)) := by
   have h := dest_mapLens l tree
-  have hA := congrArg Sigma.fst h
-  have hB := (Sigma.ext_iff.mp h).2
-  cases hA
-  exact congrFun (eq_of_heq hB) direction
+  cases congrArg Sigma.fst h
+  exact congrFun (eq_of_heq (Sigma.ext_iff.mp h).2) direction
 
 @[simp]
 theorem mapLens_id (tree : M P) : mapLens (Lens.id P) tree = tree := by
@@ -104,8 +102,8 @@ theorem mapLens_comp {R : PFunctor.{uA₃, uB₃}} (g : Lens Q R)
   · simp only [Lens.mapObj]
     rfl
   · have hmapped : M.dest (mapLens f source) =
-        Q.map (mapLens f) (Lens.mapObj f (M.dest source)) := by
-      exact M.dest_corec _ _
+        Q.map (mapLens f) (Lens.mapObj f (M.dest source)) :=
+      M.dest_corec _ _
     rw [hmapped, hsource]
     rfl
 
@@ -213,6 +211,12 @@ theorem castEquiv_symm_apply {t t' : M P} (h : t = t')
     castEquiv h.symm (castEquiv h vertex) = vertex := by
   subst t'
   rfl
+
+/-- Transporting a vertex along a tree equality is heterogeneously equal to the
+original vertex. -/
+theorem castEquiv_heq {t t' : M P} (h : t = t') (vertex : Vertex t) :
+    castEquiv h vertex ≍ vertex :=
+  cast_heq (congrArg Vertex h) vertex
 
 /-- The rooted subtree selected by a finite vertex. -/
 def subtree : {t : M P} → Vertex t → M P
@@ -388,20 +392,16 @@ theorem splitAt_depth {t : M P} (vertex : Vertex t) :
             Σ initial : Vertex _, Vertex (subtree initial))) ih
 
 /-- Descend one additional edge from an already selected vertex. -/
-def descend {t : M P} (vertex : Vertex t)
-    (direction : P.B (M.head (subtree vertex))) : Vertex t :=
+def descend {t : M P} (vertex : Vertex t) (direction : P.B (M.head (subtree vertex))) : Vertex t :=
   append vertex (.child direction (.root (M.children (subtree vertex) direction)))
 
 @[simp]
-theorem subtree_descend {t : M P} (vertex : Vertex t)
-    (direction : P.B (M.head (subtree vertex))) :
-    subtree (descend vertex direction) =
-      M.children (subtree vertex) direction := by
+theorem subtree_descend {t : M P} (vertex : Vertex t) (direction : P.B (M.head (subtree vertex))) :
+    subtree (descend vertex direction) = M.children (subtree vertex) direction := by
   simp [descend]
 
 @[simp]
-theorem depth_descend {t : M P} (vertex : Vertex t)
-    (direction : P.B (M.head (subtree vertex))) :
+theorem depth_descend {t : M P} (vertex : Vertex t) (direction : P.B (M.head (subtree vertex))) :
     depth (descend vertex direction) = depth vertex + 1 := by
   simp [descend]
 

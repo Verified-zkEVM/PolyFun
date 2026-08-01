@@ -33,16 +33,13 @@ abbrev succLens : Lens Q Q where
   toFunA _ := PUnit.unit
   toFunB _ answer := answer + 1
 
-example : (Lens.parallelSumMap flipLens succLens).toFunA (.left true) =
-    .left false :=
+example : (Lens.parallelSumMap flipLens succLens).toFunA (.left true) = .left false :=
   rfl
 
-example : (Lens.parallelSumMap flipLens succLens).toFunA (.right PUnit.unit) =
-    .right PUnit.unit :=
+example : (Lens.parallelSumMap flipLens succLens).toFunA (.right PUnit.unit) = .right PUnit.unit :=
   rfl
 
-example : (Lens.parallelSumMap flipLens succLens).toFunB
-    (.left true) false = true :=
+example : (Lens.parallelSumMap flipLens succLens).toFunB (.left true) false = true :=
   rfl
 
 def mappedRightAnswer :
@@ -145,16 +142,13 @@ abbrev observedSucc :
 
 def observedMap := Display.Lens.parallelSumMap observedFlip observedSucc
 
-example : observedMap.toPosition (.left true) (ULift.up false) =
-    ULift.up true :=
+example : observedMap.toPosition (.left true) (ULift.up false) = ULift.up true :=
   rfl
 
-example : observedMap.toPosition (.right PUnit.unit) (ULift.up "q") =
-    ULift.up "q!" :=
+example : observedMap.toPosition (.right PUnit.unit) (ULift.up "q") = ULift.up "q!" :=
   rfl
 
-example : observedMap.toPosition (.both true PUnit.unit) (false, "q") =
-    (true, "q!") :=
+example : observedMap.toPosition (.both true PUnit.unit) (false, "q") = (true, "q!") :=
   rfl
 
 example : observedMap.toDirection (.left true) (ULift.up false)
@@ -290,8 +284,6 @@ theorem handler_parallel_comp_fails :
       Handler.parallel (secondLeft.comp firstLeft)
         (secondRight.comp firstRight) := by
   intro equality
-  have rootEquality := congrArg rootOperation
-    (congrFun equality (ParallelChoice.both false false))
-  cases rootEquality
+  cases congrArg rootOperation (congrFun equality (ParallelChoice.both false false))
 
 end PFunctor.ParallelFreeCanary

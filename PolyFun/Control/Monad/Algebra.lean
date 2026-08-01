@@ -83,8 +83,7 @@ theorem μ_bind (x : m α) (f g : α → m l) (h : ∀ a, MAlgOrdered.μ (f a) =
 @[simp]
 theorem wp_pure [LawfulMonad m] (x : α) (post : α → l) :
     wp (pure x : m α) post = post x := by
-  unfold wp
-  simp [MAlgOrdered.μ_pure]
+  simp [wp, MAlgOrdered.μ_pure]
 
 theorem wp_bind [LawfulMonad m] (x : m α) (f : α → m β) (post : β → l) :
     wp (x >>= f) post = wp x (fun a => wp (f a) post) := by

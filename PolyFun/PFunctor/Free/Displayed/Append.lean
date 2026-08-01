@@ -51,8 +51,7 @@ theorem append_pure {Γ : P.A → Type w₂} (x : α)
   rfl
 
 @[simp, freeM_unfold]
-theorem append_liftBind {Γ : P.A → Type w₂}
-    (a : P.A) (rest : P.B a → FreeM P α)
+theorem append_liftBind {Γ : P.A → Type w₂} (a : P.A) (rest : P.B a → FreeM P α)
     (d₁ : Decoration Γ (FreeM.liftBind a rest))
     (s₂ : Path (FreeM.liftBind a rest) → FreeM P β)
     (d₂ : (path₁ : Path (FreeM.liftBind a rest)) → Decoration Γ (s₂ path₁)) :

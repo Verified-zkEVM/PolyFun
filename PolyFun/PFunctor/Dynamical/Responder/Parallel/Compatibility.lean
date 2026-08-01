@@ -30,11 +30,8 @@ variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 
 /-- Coproduct composition is the one-sided restriction of parallel
 composition along the canonical lens from `P + Q` to `P ∥ Q`. -/
-theorem sum_eq_reindex_parallel
-    (left : Responder State₁ P) (right : Responder State₂ Q) :
-    sum left right =
-      reindex (Handler.ofLens (Lens.sumToParallel P Q))
-        (parallel left right) := by
+theorem sum_eq_reindex_parallel (left : Responder State₁ P) (right : Responder State₂ Q) :
+    sum left right = reindex (Handler.ofLens (Lens.sumToParallel P Q)) (parallel left right) := by
   apply Responder.ext
   · intro state query
     cases query <;> rfl
@@ -42,8 +39,7 @@ theorem sum_eq_reindex_parallel
     cases query <;> rfl
 
 /-- Running a left-embedded program advances only the left responder. -/
-theorem runFree_left (left : Responder State₁ P)
-    (right : Responder State₂ Q) {E : Type uE}
+theorem runFree_left (left : Responder State₁ P) (right : Responder State₂ Q) {E : Type uE}
     (program : FreeM P E) (leftState : State₁) (rightState : State₂) :
     (parallel left right).runFree (FreeM.left (Q := Q) program)
         (leftState, rightState) =
@@ -55,8 +51,7 @@ theorem runFree_left (left : Responder State₁ P)
       exact ih (left.answer leftState query) (left.next leftState query)
 
 /-- Running a right-embedded program advances only the right responder. -/
-theorem runFree_right (left : Responder State₁ P)
-    (right : Responder State₂ Q) {E : Type uE}
+theorem runFree_right (left : Responder State₁ P) (right : Responder State₂ Q) {E : Type uE}
     (program : FreeM Q E) (leftState : State₁) (rightState : State₂) :
     (parallel left right).runFree (FreeM.right (P := P) program)
         (leftState, rightState) =
@@ -69,10 +64,9 @@ theorem runFree_right (left : Responder State₁ P)
 
 /-- Running lockstep free programs against parallel responders equals the pair
 of the component runs, including their final states. -/
-theorem runFree_parallel (left : Responder State₁ P)
-    (right : Responder State₂ Q) {E : Type uE} {F : Type uF}
-    (leftProgram : FreeM P E) (rightProgram : FreeM Q F)
-    (leftState : State₁) (rightState : State₂) :
+theorem runFree_parallel (left : Responder State₁ P) (right : Responder State₂ Q) {E : Type uE}
+    {F : Type uF} (leftProgram : FreeM P E) (rightProgram : FreeM Q F) (leftState : State₁)
+    (rightState : State₂) :
     (parallel left right).runFree
         (FreeM.parallel leftProgram rightProgram) (leftState, rightState) =
       let leftResult := left.runFree leftProgram leftState
@@ -95,10 +89,8 @@ theorem runFree_parallel (left : Responder State₁ P)
             (left.next leftState query) (right.next rightState rightQuery)
 
 /-- Reindexing parallel responders by parallel handlers is componentwise. -/
-theorem reindex_parallel
-    {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
-    (leftHandler : Handler (FreeM P) R)
-    (rightHandler : Handler (FreeM Q) V)
+theorem reindex_parallel {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
+    (leftHandler : Handler (FreeM P) R) (rightHandler : Handler (FreeM Q) V)
     (left : Responder State₁ P) (right : Responder State₂ Q) :
     reindex (Handler.parallel leftHandler rightHandler)
         (parallel left right) =

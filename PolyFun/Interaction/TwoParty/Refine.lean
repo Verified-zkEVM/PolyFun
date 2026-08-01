@@ -3,12 +3,13 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
+import Mathlib.Logic.Equiv.Defs
+
 import PolyFun.Interaction.Basic.Append
 import PolyFun.Interaction.Basic.Replicate
-import PolyFun.Interaction.TwoParty.Role
-import PolyFun.Interaction.TwoParty.Decoration
-import Mathlib.Logic.Equiv.Defs
 import PolyFun.Interaction.Basic.StateChain
+import PolyFun.Interaction.TwoParty.Decoration
+import PolyFun.Interaction.TwoParty.Role
 
 /-!
 # Role-aware refinement and bridge to `Decoration.Over`

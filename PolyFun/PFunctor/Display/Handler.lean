@@ -135,26 +135,22 @@ first handler returns a tree whose leaves are source responses and whose nodes
 are intermediate operations. The final target's response universe remains
 independent. -/
 def comp
-    {Q : PFunctor.{uA', uB}}
-    {R : PFunctor.{uA'', uB'}}
+    {Q : PFunctor.{uA', uB}} {R : PFunctor.{uA'', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
     {U : Display.{uA'', uB', uC'', uD''} R}
-    {f : (a : P.A) → FreeM Q (P.B a)}
-    {g : (a : Q.A) → FreeM R (Q.B a)}
+    {f : (a : P.A) → FreeM Q (P.B a)} {g : (a : Q.A) → FreeM R (Q.B a)}
     (second : Handler T U g) (first : Handler S T f) :
     Handler S U (PFunctor.Handler.comp g f) :=
   fun a c => T.liftM U (f a) (first a c) g second
 
 @[simp]
 theorem comp_apply
-    {Q : PFunctor.{uA', uB}}
-    {R : PFunctor.{uA'', uB'}}
+    {Q : PFunctor.{uA', uB}} {R : PFunctor.{uA'', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
     {U : Display.{uA'', uB', uC'', uD''} R}
-    {f : (a : P.A) → FreeM Q (P.B a)}
-    {g : (a : Q.A) → FreeM R (Q.B a)}
+    {f : (a : P.A) → FreeM Q (P.B a)} {g : (a : Q.A) → FreeM R (Q.B a)}
     (second : Handler T U g) (first : Handler S T f)
     (a : P.A) (c : S.position a) :
     second.comp first a c = T.liftM U (f a) (first a c) g second :=
@@ -162,11 +158,11 @@ theorem comp_apply
 
 end Handler
 
-private theorem liftMIdEq {E : Type uB} :
+private theorem liftM_id_eq {E : Type uB} :
     (t : FreeM P E) → t.liftM (fun a => FreeM.lift a) = t
   | .pure _ => rfl
   | .liftBind a rest =>
-      congrArg (FreeM.liftBind a) (funext fun b => liftMIdEq (rest b))
+      congrArg (FreeM.liftBind a) (funext fun b => liftM_id_eq (rest b))
 
 /-- Extending the identity displayed handler is the identity on displayed
 free trees, after transport along the corresponding base-tree identity law. -/
@@ -186,22 +182,22 @@ theorem liftM_id
       simp only [FreeM.pure_bind] at children
       rw [S.transport_proof_irrel F
         (FreeM.liftM_lift_eq_self ((FreeM.lift a).bind rest))
-        (liftMIdEq ((FreeM.lift a).bind rest))]
-      change S.transport F (liftMIdEq (FreeM.liftBind a rest))
+        (liftM_id_eq ((FreeM.lift a).bind rest))]
+      change S.transport F (liftM_id_eq (FreeM.liftBind a rest))
           ⟨c, fun b e =>
             S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
               (Handler.id S)⟩ = ⟨c, children⟩
       have htransport :
-          S.transport F (liftMIdEq (FreeM.liftBind a rest))
+          S.transport F (liftM_id_eq (FreeM.liftBind a rest))
               ⟨c, fun b e =>
                 S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
                   (Handler.id S)⟩ =
             ⟨c, fun b e =>
-              S.transport F (liftMIdEq (rest b))
+              S.transport F (liftM_id_eq (rest b))
                 (S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
                   (Handler.id S))⟩ := by
         convert S.transport_liftBind F a
-          (funext fun b => liftMIdEq (rest b)) c
+          (funext fun b => liftM_id_eq (rest b)) c
           (fun b e =>
             S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
               (Handler.id S)) using 1
@@ -210,11 +206,11 @@ theorem liftM_id
       rw [htransport]
       congr
       funext b e
-      rw [S.transport_proof_irrel F (liftMIdEq (rest b))
+      rw [S.transport_proof_irrel F (liftM_id_eq (rest b))
         (FreeM.liftM_lift_eq_self (rest b))]
       exact ih b (children b e)
 
-private theorem liftMBindEq
+private theorem liftM_bind_eq
     {Q : PFunctor.{uA', uB'}}
     {E E' : Type uB}
     (f : (a : P.A) → FreeM Q (P.B a)) (g : E → FreeM P E') :
@@ -223,7 +219,7 @@ private theorem liftMBindEq
   | .pure _ => rfl
   | .liftBind a rest =>
       (congrArg (FreeM.bind (f a))
-        (funext fun b => liftMBindEq f g (rest b))).trans
+        (funext fun b => liftM_bind_eq f g (rest b))).trans
       (FreeM.bind_assoc (f a) (fun b => (rest b).liftM f)
         (fun x => (g x).liftM f)).symm
 
@@ -254,12 +250,12 @@ theorem liftM_bind
       simp only [FreeM.pure_bind] at children
       rw [T.transport_proof_irrel G
         (FreeM.liftM_bind f ((FreeM.lift a).bind rest) g)
-        (liftMBindEq f g ((FreeM.lift a).bind rest))]
+        (liftM_bind_eq f g ((FreeM.lift a).bind rest))]
       let k : P.B a → FreeM Q E := fun b => (rest b).liftM f
       let h : E → FreeM Q E' := fun x => (g x).liftM f
       let childEq : (fun b => ((rest b).bind g).liftM f) =
           (fun b => (k b).bind h) :=
-        funext fun b => liftMBindEq f g (rest b)
+        funext fun b => liftM_bind_eq f g (rest b)
       change T.transport G
           ((congrArg (FreeM.bind (f a)) childEq).trans
             (FreeM.bind_assoc (f a) k h).symm)
@@ -312,9 +308,8 @@ theorem liftM_bind
           (fun b e => S.liftM T (rest b) (children b e) f df) h
           (fun x dx => S.liftM T (g x) (dg x dx) f df)
 
-private theorem liftMCompEq
-    {Q : PFunctor.{uA', uB}}
-    {R : PFunctor.{uA'', uB'}}
+private theorem liftM_comp_eq
+    {Q : PFunctor.{uA', uB}} {R : PFunctor.{uA'', uB'}}
     {E : Type uB}
     (first : (a : P.A) → FreeM Q (P.B a))
     (second : (a : Q.A) → FreeM R (Q.B a)) :
@@ -325,13 +320,12 @@ private theorem liftMCompEq
   | .liftBind a rest =>
       (FreeM.liftM_bind second (first a) (fun b => (rest b).liftM first)).trans
       (congrArg (FreeM.bind ((first a).liftM second))
-        (funext fun b => liftMCompEq first second (rest b)))
+        (funext fun b => liftM_comp_eq first second (rest b)))
 
 /-- Extending two displayed handlers in sequence agrees with extending their
 displayed Kleisli composite, after transport along `FreeM.liftM_comp`. -/
 theorem liftM_comp
-    {Q : PFunctor.{uA', uB}}
-    {R : PFunctor.{uA'', uB'}}
+    {Q : PFunctor.{uA', uB}} {R : PFunctor.{uA'', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
     (T : Display.{uA', uB, uC', uD'} Q)
     (U : Display.{uA'', uB', uC'', uD''} R)
@@ -357,11 +351,11 @@ theorem liftM_comp
       simp only [FreeM.pure_bind] at children
       rw [U.transport_proof_irrel F
         (FreeM.liftM_comp ((FreeM.lift a).bind rest) first second)
-        (liftMCompEq first second ((FreeM.lift a).bind rest))]
+        (liftM_comp_eq first second ((FreeM.lift a).bind rest))]
       let k : P.B a → FreeM Q E := fun b => (rest b).liftM first
       let childEq : (fun b => (k b).liftM second) =
           (fun b => (rest b).liftM fun a => (first a).liftM second) :=
-        funext fun b => liftMCompEq first second (rest b)
+        funext fun b => liftM_comp_eq first second (rest b)
       change U.transport F
           ((FreeM.liftM_bind second (first a) k).trans
             (congrArg (FreeM.bind ((first a).liftM second)) childEq))
@@ -453,9 +447,7 @@ theorem comp_id_apply
 /-- Associativity for displayed handler composition, stated pointwise with
 the base free-monad composition equality made explicit. -/
 theorem comp_assoc_apply
-    {Q : PFunctor.{uA', uB}}
-    {R : PFunctor.{uA'', uB}}
-    {V : PFunctor.{uA''', uB'}}
+    {Q : PFunctor.{uA', uB}} {R : PFunctor.{uA'', uB}} {V : PFunctor.{uA''', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
     {U : Display.{uA'', uB, uC'', uD''} R}
@@ -537,8 +529,7 @@ theorem id_comp
     transport (PFunctor.Handler.id_comp f)
         ((Display.Handler.id T).comp first) = first := by
   funext operation displayedPosition
-  rw [transport_apply]
-  rw [T.transport_proof_irrel (S.direction operation displayedPosition)
+  rw [transport_apply, T.transport_proof_irrel (S.direction operation displayedPosition)
     (congrFun (PFunctor.Handler.id_comp f) operation)
     (FreeM.liftM_lift_eq_self (f operation))]
   exact id_comp_apply first operation displayedPosition
@@ -553,23 +544,19 @@ theorem comp_id
     transport (PFunctor.Handler.comp_id f)
         (first.comp (Display.Handler.id S)) = first := by
   funext operation displayedPosition
-  rw [transport_apply]
-  rw [T.transport_proof_irrel (S.direction operation displayedPosition)
+  rw [transport_apply, T.transport_proof_irrel (S.direction operation displayedPosition)
     (congrFun (PFunctor.Handler.comp_id f) operation)
     (FreeM.liftM_lift f operation)]
   exact comp_id_apply first operation displayedPosition
 
 /-- Displayed associativity over ordinary handler associativity. -/
 theorem comp_assoc
-    {Q : PFunctor.{uA', uB}}
-    {R : PFunctor.{uA'', uB}}
-    {V : PFunctor.{uA''', uB'}}
+    {Q : PFunctor.{uA', uB}} {R : PFunctor.{uA'', uB}} {V : PFunctor.{uA''', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
     {U : Display.{uA'', uB, uC'', uD''} R}
     {W : Display.{uA''', uB', uC''', uD'''} V}
-    {f : PFunctor.Handler (FreeM Q) P}
-    {g : PFunctor.Handler (FreeM R) Q}
+    {f : PFunctor.Handler (FreeM Q) P} {g : PFunctor.Handler (FreeM R) Q}
     {h : PFunctor.Handler (FreeM V) R}
     (first : Display.Handler S T f)
     (second : Display.Handler T U g)

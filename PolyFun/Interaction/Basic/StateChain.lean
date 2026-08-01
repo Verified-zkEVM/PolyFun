@@ -29,22 +29,19 @@ namespace TypeTree
 
 /-- `n`-stage dependent composition: run `spec i s`, then advance to state
 `advance i s tr` and repeat for `n` total stages. -/
-abbrev stateChain (Stage : Nat → Type u)
-    (spec : (i : Nat) → Stage i → TypeTree)
+abbrev stateChain (Stage : Nat → Type u) (spec : (i : Nat) → Stage i → TypeTree)
     (advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)) :
     (n : Nat) → (i : Nat) → Stage i → TypeTree :=
   PFunctor.FreeM.stateChain (P := TypeTree.basePFunctor) (α := PUnit.{u+1})
     PUnit.unit Stage spec advance
 
 @[grind =]
-theorem stateChain_zero (Stage : Nat → Type u)
-    (spec : (i : Nat) → Stage i → TypeTree)
+theorem stateChain_zero (Stage : Nat → Type u) (spec : (i : Nat) → Stage i → TypeTree)
     (advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1))
     (i : Nat) (s : Stage i) :
     PFunctor.FreeM.stateChain PUnit.unit Stage spec advance 0 i s = TypeTree.done := rfl
 
-theorem stateChain_succ (Stage : Nat → Type u)
-    (spec : (i : Nat) → Stage i → TypeTree)
+theorem stateChain_succ (Stage : Nat → Type u) (spec : (i : Nat) → Stage i → TypeTree)
     (advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1))
     (n : Nat) (i : Nat) (s : Stage i) :
     PFunctor.FreeM.stateChain PUnit.unit Stage spec advance (n + 1) i s =
@@ -66,8 +63,7 @@ theorem replicate_eq_stateChain (spec : TypeTree) (n : Nat) (i : Nat) :
 
 /-- Decompose a `(n+1)`-stage state chain path into the first-stage path and
 the remainder. Specialization of `PFunctor.FreeM.Path.split` to the state chain structure. -/
-def Path.stateChainSplit
-    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
+def Path.stateChainSplit {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
     (n : Nat) (i : Nat) (s : Stage i) :
     Path (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance (n + 1) i s) →
@@ -81,8 +77,7 @@ def Path.stateChainSplit
 /-- Combine a first-stage path with a remainder state chain path into a
 `(n+1)`-stage state chain path. Specialization of `PFunctor.FreeM.Path.append` to
 state chains. -/
-def Path.stateChainAppend
-    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
+def Path.stateChainAppend {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
     (n : Nat) (i : Nat) (s : Stage i)
     (tr₁ : Path (spec i s))
@@ -113,8 +108,7 @@ theorem Path.stateChainSplit_stateChainAppend
 /-- Dependent telescope of per-stage paths: a sequence of individual-stage
 paths where each stage determines the next via `advance`. Mirrors `TypeTree.stateChain`
 at the path level. -/
-def Path.stateChain (Stage : Nat → Type u)
-    (spec : (i : Nat) → Stage i → TypeTree)
+def Path.stateChain (Stage : Nat → Type u) (spec : (i : Nat) → Stage i → TypeTree)
     (advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)) :
     (n : Nat) → (i : Nat) → (s : Stage i) → Type u
   | 0, _, _ => PUnit
@@ -125,8 +119,7 @@ def Path.stateChain (Stage : Nat → Type u)
 /-- Flatten a path telescope into the combined state chain path,
 concatenating each per-stage path via `Path.stateChainAppend`.
 The n-ary analog of `PFunctor.FreeM.Path.append`, mirroring `List.join`. -/
-def Path.stateChainJoin (Stage : Nat → Type u)
-    (spec : (i : Nat) → Stage i → TypeTree)
+def Path.stateChainJoin (Stage : Nat → Type u) (spec : (i : Nat) → Stage i → TypeTree)
     (advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)) :
     (n : Nat) → (i : Nat) → (s : Stage i) →
     Path.stateChain Stage spec advance n i s →
@@ -138,8 +131,7 @@ def Path.stateChainJoin (Stage : Nat → Type u)
 
 /-- Decompose a combined state chain path into a telescope of per-stage
 paths. Inverse of `Path.stateChainJoin`. -/
-def Path.stateChainUnjoin (Stage : Nat → Type u)
-    (spec : (i : Nat) → Stage i → TypeTree)
+def Path.stateChainUnjoin (Stage : Nat → Type u) (spec : (i : Nat) → Stage i → TypeTree)
     (advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)) :
     (n : Nat) → (i : Nat) → (s : Stage i) →
     Path (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i s) →
@@ -184,8 +176,7 @@ theorem Path.stateChainJoin_unjoin
 state chain path. Uses `PFunctor.FreeM.Path.liftAppend` at each stage, ensuring that
 `stateChainLiftJoin ... F (stateChainJoin ... trs)` reduces **definitionally**
 to `F trs`. -/
-def Path.stateChainLiftJoin (Stage : Nat → Type u)
-    (spec : (i : Nat) → Stage i → TypeTree)
+def Path.stateChainLiftJoin (Stage : Nat → Type u) (spec : (i : Nat) → Stage i → TypeTree)
     (advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)) :
     (n : Nat) → (i : Nat) → (s : Stage i) →
     (Path.stateChain Stage spec advance n i s → Type u) →

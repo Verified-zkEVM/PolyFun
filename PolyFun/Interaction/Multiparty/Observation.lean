@@ -3,9 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
-import Mathlib.Order.Lattice
 import Mathlib.Order.BoundedOrder.Basic
+import Mathlib.Order.Lattice
+
+import PolyFun.Interaction.Basic.TypeTree
 
 /-!
 # Observations: the information lattice of a single move
@@ -184,8 +185,8 @@ def Refines (k₁ k₂ : Observation X) : Prop :=
 @[refl] theorem Refines.refl (k : Observation X) : k.Refines k :=
   ⟨id, fun _ => rfl⟩
 
-theorem Refines.trans {k₁ k₂ k₃ : Observation X}
-    (h₁₂ : k₁.Refines k₂) (h₂₃ : k₂.Refines k₃) : k₁.Refines k₃ := by
+theorem Refines.trans {k₁ k₂ k₃ : Observation X} (h₁₂ : k₁.Refines k₂)
+    (h₂₃ : k₂.Refines k₃) : k₁.Refines k₃ := by
   obtain ⟨f, hf⟩ := h₁₂
   obtain ⟨g, hg⟩ := h₂₃
   exact ⟨f ∘ g, fun x => (hf x).trans (congrArg f (hg x))⟩
@@ -220,13 +221,11 @@ theorem refines_combine_right (k₁ k₂ : Observation X) : k₂.Refines (combin
 
 /-- `combine` is the least upper bound for `Refines`: any kernel `k` that is
 refined by both `k₁` and `k₂` is refined by `combine k₁ k₂`. -/
-theorem combine_refines_of {k k₁ k₂ : Observation X}
-    (h₁ : k₁.Refines k) (h₂ : k₂.Refines k) : (combine k₁ k₂).Refines k := by
+theorem combine_refines_of {k k₁ k₂ : Observation X} (h₁ : k₁.Refines k)
+    (h₂ : k₂.Refines k) : (combine k₁ k₂).Refines k := by
   obtain ⟨f₁, hf₁⟩ := h₁
   obtain ⟨f₂, hf₂⟩ := h₂
-  refine ⟨fun y => (f₁ y, f₂ y), fun x => ?_⟩
-  change (k₁.2 x, k₂.2 x) = (f₁ (k.2 x), f₂ (k.2 x))
-  rw [hf₁, hf₂]
+  exact ⟨fun y => (f₁ y, f₂ y), fun x => Prod.ext (hf₁ x) (hf₂ x)⟩
 
 /--
 `k.postcomp f` post-composes the projection of `k` with `f : k.1 → Y`,

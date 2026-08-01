@@ -70,8 +70,7 @@ def twoStage :
 /-- Convolution multiplication preserves outer-before-inner word order. -/
 example :
     (convolutionMultRaw (stateComonoid ThreeState) wordMonoid).toFunA
-      (twoStage, source) = [false, true] := by
-  rfl
+      (twoStage, source) = [false, true] := rfl
 
 /-- The complete backward result records the matter positions used by the
 outer and inner internal-hom lenses and threads the state to `final`.
@@ -79,37 +78,32 @@ Reversing or duplicating either stage changes this result. -/
 example :
     (convolutionMultRaw (stateComonoid ThreeState) wordMonoid).toFunB
       (twoStage, source) PUnit.unit =
-        (⟨⟨source, PUnit.unit⟩, ⟨middle, PUnit.unit⟩⟩, final) := by
-  rfl
+        (⟨⟨source, PUnit.unit⟩, ⟨middle, PUnit.unit⟩⟩, final) := rfl
 
 /-- Starting at `middle` must select the decoy continuation. This rules out an
 implementation that ignores the dependent continuation and always uses
 `inner`. -/
 example :
     (convolutionMultRaw (stateComonoid ThreeState) wordMonoid).toFunA
-      (twoStage, middle) = [false, true, false] := by
-  rfl
+      (twoStage, middle) = [false, true, false] := rfl
 
 /-- The alternate branch is also observable in the complete backward result:
 the decoy receives `middle` and returns `source`. -/
 example :
     (convolutionMultRaw (stateComonoid ThreeState) wordMonoid).toFunB
       (twoStage, middle) PUnit.unit =
-        (⟨⟨middle, PUnit.unit⟩, ⟨middle, PUnit.unit⟩⟩, source) := by
-  rfl
+        (⟨⟨middle, PUnit.unit⟩, ⟨middle, PUnit.unit⟩⟩, source) := rfl
 
 /-- The raw convolution unit emits the empty word. -/
 example :
     (convolutionUnitRaw (stateComonoid ThreeState) wordMonoid).toFunA
-      (PUnit.unit, source) = [] := by
-  rfl
+      (PUnit.unit, source) = [] := rfl
 
 /-- The raw convolution unit follows the identity transition selected by the
 comonoid counit. -/
 example :
     ((convolutionUnitRaw (stateComonoid ThreeState) wordMonoid).toFunB
-      (PUnit.unit, source) PUnit.unit).2 = source := by
-  rfl
+      (PUnit.unit, source) PUnit.unit).2 = source := rfl
 
 /-- The comonoid and target monoid may use four independent universes. -/
 example (C : Comonoid.{cA, cB}) (M : SubstMonoid.{mA, mB}) :
@@ -119,8 +113,7 @@ example (C : Comonoid.{cA, cB}) (M : SubstMonoid.{mA, mB}) :
 /-- The independently universe-polymorphic construction returns the expected
 internal-hom carrier. -/
 example (C : Comonoid.{cA, cB}) (M : SubstMonoid.{mA, mB}) :
-    (convolution C M).carrier = ihom C.carrier M.carrier := by
-  simp
+    (convolution C M).carrier = ihom C.carrier M.carrier := rfl
 
 /-- The exported multiplication equation exposes the exact uncurried
 semantics. -/

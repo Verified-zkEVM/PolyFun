@@ -9,6 +9,8 @@ module
 public import PolyFun.PFunctor.PatternRunsOnMatter.Display
 
 /-!
+# Responder reindexing worked examples
+
 Worked examples for base and proof-relevant responder reindexing. Contract
 evidence depends on both the supplied precondition and actual answer; invariant
 evidence is state-indexed data and affects the next witness.
@@ -29,9 +31,7 @@ def contract : Display Interface where
 def directionVal (expected answer : Bool)
     (evidence : contract.direction () expected answer) : Nat := by
   change (if expected = answer then Fin 2 else Fin 3) at evidence
-  split at evidence
-  · exact evidence.val
-  · exact evidence.val
+  split at evidence <;> exact evidence.val
 
 def directionFromNat (expected answer : Bool) (value : Nat) :
     contract.direction () expected answer := by
@@ -47,9 +47,7 @@ def Invariant (state : Bool) := if state then Fin 2 else Fin 3
 
 def invariantVal (state : Bool) (witness : Invariant state) : Nat := by
   simp only [Invariant] at witness
-  split at witness
-  · exact witness.val
-  · exact witness.val
+  split at witness <;> exact witness.val
 
 def invariantFromNat (state : Bool) (value : Nat) : Invariant state := by
   simp only [Invariant]

@@ -74,14 +74,13 @@ theorem unboundedDepth_countdown_terminates (n : Nat) :
       exact unboundedDepth.terminatesFrom_return _ ()
         unboundedDepth_view_zero
   | succ n ih =>
-      apply (unboundedDepth.terminatesFrom_query_iff _ PUnit.unit
-        (fun _ => some n) (unboundedDepth_view_succ n)).mpr
-      exact fun _ => ih
+      exact (unboundedDepth.terminatesFrom_query_iff _ PUnit.unit
+        (fun _ => some n) (unboundedDepth_view_succ n)).mpr fun _ => ih
 
-theorem unboundedDepth_terminates : unboundedDepth.TerminatesFrom none := by
-  apply (unboundedDepth.terminatesFrom_query_iff _ PUnit.unit
+theorem unboundedDepth_terminates : unboundedDepth.TerminatesFrom none :=
+  (unboundedDepth.terminatesFrom_query_iff _ PUnit.unit
     (fun answer => some answer) unboundedDepth_view_root).mpr
-  exact unboundedDepth_countdown_terminates
+    unboundedDepth_countdown_terminates
 
 theorem unboundedDepth_countdown_not_resolves (k : Nat) :
     ¬unboundedDepth.ResolvesIn k (some (k + 1)) := by
@@ -175,9 +174,8 @@ def terminalSecond : DynComputation natQuery Unit Nat :=
   ofFn fun _ => 7
 
 theorem terminalSecond_terminates (input : Unit) :
-    terminalSecond.TerminatesFrom (terminalSecond.init input) := by
-  apply terminalSecond.terminatesFrom_return _ 7
-  rfl
+    terminalSecond.TerminatesFrom (terminalSecond.init input) :=
+  terminalSecond.terminatesFrom_return _ 7 rfl
 
 theorem unboundedThenTerminal_terminates :
     (unboundedDepth.seqComp terminalSecond).TerminatesFrom

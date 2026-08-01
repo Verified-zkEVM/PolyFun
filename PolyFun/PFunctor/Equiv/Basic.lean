@@ -216,22 +216,14 @@ def sumSigmaDistrib (F : I → PFunctor.{uA₂, uB₁}) [Unique I] :
     invFun := fun
       | ⟨_, Sum.inl pa⟩ => Sum.inl pa
       | ⟨i, Sum.inr fa⟩ => Sum.inr ⟨i, fa⟩
-    left_inv := by
-      intro a
-      rcases a with pa | ⟨i, fa⟩
-      · rfl
-      · rfl
+    left_inv := by rintro (pa | ⟨i, fa⟩) <;> rfl
     right_inv := by
-      intro a
-      rcases a with ⟨i, pa | fa⟩
+      rintro ⟨i, pa | fa⟩
       · cases (Unique.eq_default i)
         rfl
       · rfl
   }
-  equivB := fun a => by
-    rcases a with pa | ⟨i, fa⟩
-    · exact _root_.Equiv.refl _
-    · exact _root_.Equiv.refl _
+  equivB := fun a => by rcases a with pa | ⟨i, fa⟩ <;> exact _root_.Equiv.refl _
 
 /-- Right distributivity of sum over sigma. -/
 def sigmaSumDistrib (F : I → PFunctor.{uA₂, uB₁}) [Unique I] :
@@ -244,23 +236,15 @@ def sigmaSumDistrib (F : I → PFunctor.{uA₂, uB₁}) [Unique I] :
     invFun := fun
       | ⟨i, Sum.inl fa⟩ => Sum.inl ⟨i, fa⟩
       | ⟨_, Sum.inr pa⟩ => Sum.inr pa
-    left_inv := by
-      intro a
-      rcases a with ⟨i, fa⟩ | pa
-      · rfl
-      · rfl
+    left_inv := by rintro (⟨i, fa⟩ | pa) <;> rfl
     right_inv := by
-      intro a
-      rcases a with ⟨i, fa | pa⟩
+      rintro ⟨i, fa | pa⟩
       · rfl
       · cases (Unique.eq_default i)
         rfl
   }
   -- exact (_root_.Equiv.sumSigmaDistrib _).symm
-  equivB := fun a => by
-    rcases a with ⟨i, fa⟩ | pa
-    · exact _root_.Equiv.refl _
-    · exact _root_.Equiv.refl _
+  equivB := fun a => by rcases a with ⟨i, fa⟩ | pa <;> exact _root_.Equiv.refl _
 
 /-- Left distributivity of product over sigma. -/
 def prodSigmaDistrib : (P * sigma F : PFunctor.{max uA₁ uA₂ v, max uB₁ uB₂}) ≃ₚ
@@ -388,8 +372,7 @@ def piCompDistrib {I : Type v} (F : I → PFunctor.{uA₁, uB₁})
 def piPUnit (P : PFunctor.{uA, uB}) :
     pi (fun (_ : PUnit) => P) ≃ₚ P where
   equivA := _root_.Equiv.punitArrowEquiv P.A
-  equivB := fun f => by
-    exact _root_.Equiv.uniqueSigma (fun i : PUnit => P.B (f i))
+  equivB := fun f => _root_.Equiv.uniqueSigma (fun i : PUnit => P.B (f i))
 
 end Pi
 

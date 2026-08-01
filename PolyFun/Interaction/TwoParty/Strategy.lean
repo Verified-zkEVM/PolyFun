@@ -3,15 +3,15 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Basic.Syntax
-import PolyFun.Interaction.Basic.Ownership
 import PolyFun.Interaction.Basic.Interaction
 import PolyFun.Interaction.Basic.MonadDecoration
+import PolyFun.Interaction.Basic.Ownership
+import PolyFun.Interaction.Basic.Shape
+import PolyFun.Interaction.Basic.Syntax
+import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.TwoParty.Decoration
 import PolyFun.Interaction.TwoParty.Syntax
-import PolyFun.Interaction.Basic.Shape
 
 /-!
 # Role-dependent strategies and counterparts
@@ -510,7 +510,7 @@ theorem _root_.Interaction.InteractionOver.TwoParty.run_paired_done
       (I := InteractionOver.TwoParty.pairedTypeTree m) (spec := TypeTree.done) (ctxs := PUnit.unit)
       (participantProfile outP outC) collectParticipantOutputs =
       (pure ⟨⟨⟩, outP, outC⟩ :
-        m ((tr : PFunctor.FreeM.Path TypeTree.done) × OutputP tr × OutputC tr)) := by
+        m ((tr : PFunctor.FreeM.Path TypeTree.done) × OutputP tr × OutputC tr)) :=
   rfl
 
 @[simp]
@@ -702,7 +702,7 @@ theorem run_done {m : Type u → Type u} [Monad m]
     (outP : OutputP ⟨⟩) (outC : OutputC ⟨⟩) :
     run .done PUnit.unit outP outC =
       (pure ⟨⟨⟩, outP, outC⟩ :
-        m ((tr : PFunctor.FreeM.Path TypeTree.done) × OutputP tr × OutputC tr)) := by
+        m ((tr : PFunctor.FreeM.Path TypeTree.done) × OutputP tr × OutputC tr)) :=
   rfl
 
 @[simp]

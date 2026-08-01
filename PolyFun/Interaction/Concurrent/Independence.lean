@@ -124,17 +124,14 @@ then the transported `event₂` yields the same residual spec as performing
 `event₂` first and then the transported `event₁`.
 -/
 theorem diamond :
-    {S : Spec} → {event₁ event₂ : Front S} →
-      (h : Independent event₁ event₂) →
+    {S : Spec} → {event₁ event₂ : Front S} → (h : Independent event₁ event₂) →
       residual (afterLeft h) = residual (afterRight h)
   | .par _ _, .left _, .right _, .left_right _ _ => rfl
   | .par _ _, .right _, .left _, .right_left _ _ => rfl
-  | .par _ rightSpec, .left _event₁, .left _event₂, .left h => by
-        simpa [afterLeft, afterRight, residual] using
-          congrArg (fun s => Spec.par s rightSpec) (diamond h)
-  | .par leftSpec _, .right _event₁, .right _event₂, .right h => by
-        simpa [afterLeft, afterRight, residual] using
-          congrArg (fun s => Spec.par leftSpec s) (diamond h)
+  | .par _ rightSpec, .left _event₁, .left _event₂, .left h =>
+      congrArg (fun s => Spec.par s rightSpec) (diamond h)
+  | .par leftSpec _, .right _event₁, .right _event₂, .right h =>
+      congrArg (fun s => Spec.par leftSpec s) (diamond h)
 
 end Independent
 end Concurrent

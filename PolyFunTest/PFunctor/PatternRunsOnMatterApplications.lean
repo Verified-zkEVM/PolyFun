@@ -60,8 +60,7 @@ def outputLabels : FreeM OutputP PUnit → List Nat
 /-- The Moore output is observed before consuming the current input. -/
 example : outputLabels
     (runCounter.toFunA (inputPattern, trueCounter.behavior 0)) =
-      [0, 1, 1] := by
-  rfl
+      [0, 1, 1] := rfl
 
 def outputPath : FreeM.Path
     (runCounter.toFunA (inputPattern, trueCounter.behavior 0)) :=
@@ -81,14 +80,12 @@ directions, and proves that matter advances at every synchronized node. -/
 example :
     let pulled := runCounter.toFunB
       (inputPattern, trueCounter.behavior 0) outputPath
-    matterInputs pulled.2 = [true, false, true] := by
-  rfl
+    matterInputs pulled.2 = [true, false, true] := rfl
 
 example :
     let pulled := runCounter.toFunB
       (inputPattern, trueCounter.behavior 0) outputPath
-    patternPathLength pulled.1 = 3 ∧ M.Vertex.depth pulled.2 = 3 := by
-  exact ⟨rfl, rfl⟩
+    patternPathLength pulled.1 = 3 ∧ M.Vertex.depth pulled.2 = 3 := ⟨rfl, rfl⟩
 
 end PFunctor.PatternRunsMooreTest
 
@@ -126,8 +123,7 @@ def leafValue : {tree : FreeM GameP (Bool × Bool)} →
 
 /-- The two distinct response directions exercise both challenger updates and
 the identity/flip pullbacks. A swapped update yields a different leaf. -/
-example : leafValue gamePath = (false, true) := by
-  rfl
+example : leafValue gamePath = (false, true) := rfl
 
 /-- The object-level pattern executor and the existing game wiring agree for
 the same nontrivial two-round run. -/
@@ -139,7 +135,6 @@ example :
 /-- Pin the pattern-first symmetry in the Section 4 evaluation boundary. -/
 example :
     (FreeP.evaluation GameP GameP).toFunB (true, flipLens) false =
-      (true, ⟨true, false⟩) := by
-  rfl
+      (true, ⟨true, false⟩) := rfl
 
 end PFunctor.PatternRunsGameTest

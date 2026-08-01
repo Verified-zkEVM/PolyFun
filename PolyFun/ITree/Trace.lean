@@ -35,8 +35,7 @@ variable {F : PFunctor.{uFA, uFB}} {α : Type uα}
 
 /-- A visible ITree observation: a completed event/reply interaction or a
 terminal return. -/
-inductive Observation (F : PFunctor.{uFA, uFB}) (α : Type uα) :
-    Type (max uFA uFB uα) where
+inductive Observation (F : PFunctor.{uFA, uFB}) (α : Type uα) : Type (max uFA uFB uα) where
   | event (a : F.A) (reply : F.B a) : Observation F α
   | ret (result : α) : Observation F α
 
@@ -56,15 +55,13 @@ inductive LTSMove (F : PFunctor.{uFA, uFB}) (α : Type uα) :
 namespace LTSMove
 
 /-- State reached by one ITree LTS move. -/
-def next : {state : Option (ITree F α)} → LTSMove F α state →
-    Option (ITree F α)
+def next : {state : Option (ITree F α)} → LTSMove F α state → Option (ITree F α)
   | _, .step _ c _ => some (c PUnit.unit)
   | _, .event _ _ c _ reply => some (c reply)
   | _, .ret _ _ _ => none
 
 /-- Optional label of one ITree LTS move. -/
-def label : {state : Option (ITree F α)} → LTSMove F α state →
-    Option (Observation F α)
+def label : {state : Option (ITree F α)} → LTSMove F α state → Option (Observation F α)
   | _, .step _ _ _ => none
   | _, .event _ a _ _ reply => some (.event a reply)
   | _, .ret _ result _ => some (.ret result)
@@ -74,8 +71,7 @@ end LTSMove
 /-- The labelled transition system derived from an interaction tree.
 Silent steps are labelled `none`; completed event/reply interactions and
 terminal returns are visible observations. -/
-def toLTS (F : PFunctor.{uFA, uFB}) (α : Type uα) :
-    Control.LTS (Observation F α) where
+def toLTS (F : PFunctor.{uFA, uFB}) (α : Type uα) : Control.LTS (Observation F α) where
   State := Option (ITree F α)
   Move := LTSMove F α
   next := fun _ move => move.next

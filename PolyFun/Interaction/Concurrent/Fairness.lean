@@ -46,32 +46,19 @@ indices. -/
 def InfinitelyOften (P : Nat → Prop) : Prop :=
   ∀ N, ∃ n, N ≤ n ∧ P n
 
-theorem always_mono {P Q : Nat → Prop}
-    (himp : ∀ n, P n → Q n) :
-    Always P → Always Q := by
-  intro hP n
-  exact himp n (hP n)
+theorem always_mono {P Q : Nat → Prop} (himp : ∀ n, P n → Q n) : Always P → Always Q :=
+  fun hP n => himp n (hP n)
 
-theorem eventually_mono {P Q : Nat → Prop}
-    (himp : ∀ n, P n → Q n) :
-    Eventually P → Eventually Q := by
-  rintro ⟨n, hP⟩
-  exact ⟨n, himp n hP⟩
+theorem eventually_mono {P Q : Nat → Prop} (himp : ∀ n, P n → Q n) : Eventually P → Eventually Q :=
+  fun h => h.imp himp
 
-theorem eventuallyAlways_mono {P Q : Nat → Prop}
-    (himp : ∀ n, P n → Q n) :
-    EventuallyAlways P → EventuallyAlways Q := by
-  rintro ⟨N, hP⟩
-  refine ⟨N, ?_⟩
-  intro n hn
-  exact himp n (hP n hn)
+theorem eventuallyAlways_mono {P Q : Nat → Prop} (himp : ∀ n, P n → Q n) :
+    EventuallyAlways P → EventuallyAlways Q :=
+  fun ⟨N, hP⟩ => ⟨N, fun n hn => himp n (hP n hn)⟩
 
-theorem infinitelyOften_mono {P Q : Nat → Prop}
-    (himp : ∀ n, P n → Q n) :
-    InfinitelyOften P → InfinitelyOften Q := by
-  intro hP N
-  rcases hP N with ⟨n, hn, hPn⟩
-  exact ⟨n, hn, himp n hPn⟩
+theorem infinitelyOften_mono {P Q : Nat → Prop} (himp : ∀ n, P n → Q n) :
+    InfinitelyOften P → InfinitelyOften Q :=
+  fun hP N => (hP N).imp fun n h => ⟨h.1, himp n h.2⟩
 
 end Run
 
@@ -82,11 +69,8 @@ namespace Ticketed
 complete path of the current process step whose stable ticket is
 `ticket`.
 -/
-def enabledAt
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    (ticketed : ProcessOver.Ticketed Γ)
-    (run : ProcessOver.Run ticketed.toProcess)
-    (ticket : ticketed.Ticket) (n : Nat) : Prop :=
+def enabledAt {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} (ticketed : ProcessOver.Ticketed Γ)
+    (run : ProcessOver.Run ticketed.toProcess) (ticket : ticketed.Ticket) (n : Nat) : Prop :=
   ∃ tr : (ticketed.toProcess.step (run.state n)).tree.Path,
     ticketed.ticket (run.state n) tr = ticket
 
@@ -94,11 +78,8 @@ def enabledAt
 `firedAt ticketed run ticket n` means that the actual path chosen by the
 run at time `n` has stable ticket `ticket`.
 -/
-def firedAt
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    (ticketed : ProcessOver.Ticketed Γ)
-    (run : ProcessOver.Run ticketed.toProcess)
-    (ticket : ticketed.Ticket) (n : Nat) : Prop :=
+def firedAt {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} (ticketed : ProcessOver.Ticketed Γ)
+    (run : ProcessOver.Run ticketed.toProcess) (ticket : ticketed.Ticket) (n : Nat) : Prop :=
   ticketed.ticket (run.state n) (run.path n) = ticket
 
 /--
@@ -106,11 +87,8 @@ Weak fairness for one ticket:
 if the ticket is continuously enabled from some point onward, then it fires
 infinitely often.
 -/
-def WeakFairOn
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    (ticketed : ProcessOver.Ticketed Γ)
-    (run : ProcessOver.Run ticketed.toProcess)
-    (ticket : ticketed.Ticket) : Prop :=
+def WeakFairOn {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} (ticketed : ProcessOver.Ticketed Γ)
+    (run : ProcessOver.Run ticketed.toProcess) (ticket : ticketed.Ticket) : Prop :=
   ProcessOver.Run.EventuallyAlways (enabledAt ticketed run ticket) →
     ProcessOver.Run.InfinitelyOften (firedAt ticketed run ticket)
 
@@ -118,39 +96,29 @@ def WeakFairOn
 Strong fairness for one ticket:
 if the ticket is enabled infinitely often, then it is fired infinitely often.
 -/
-def StrongFairOn
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    (ticketed : ProcessOver.Ticketed Γ)
-    (run : ProcessOver.Run ticketed.toProcess)
-    (ticket : ticketed.Ticket) : Prop :=
+def StrongFairOn {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} (ticketed : ProcessOver.Ticketed Γ)
+    (run : ProcessOver.Run ticketed.toProcess) (ticket : ticketed.Ticket) : Prop :=
   ProcessOver.Run.InfinitelyOften (enabledAt ticketed run ticket) →
     ProcessOver.Run.InfinitelyOften (firedAt ticketed run ticket)
 
 /-- A run is weakly fair when every ticket is weakly fair. -/
-def WeakFair
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    (ticketed : ProcessOver.Ticketed Γ)
+def WeakFair {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} (ticketed : ProcessOver.Ticketed Γ)
     (run : ProcessOver.Run ticketed.toProcess) : Prop :=
   ∀ ticket, WeakFairOn ticketed run ticket
 
 /-- A run is strongly fair when every ticket is strongly fair. -/
-def StrongFair
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    (ticketed : ProcessOver.Ticketed Γ)
+def StrongFair {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} (ticketed : ProcessOver.Ticketed Γ)
     (run : ProcessOver.Run ticketed.toProcess) : Prop :=
   ∀ ticket, StrongFairOn ticketed run ticket
 
 /--
 The actually fired ticket at time `n` is always enabled at time `n`.
 -/
-theorem fired_implies_enabled
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    (ticketed : ProcessOver.Ticketed Γ)
-    (run : ProcessOver.Run ticketed.toProcess)
+theorem fired_implies_enabled {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    (ticketed : ProcessOver.Ticketed Γ) (run : ProcessOver.Run ticketed.toProcess)
     (ticket : ticketed.Ticket) (n : Nat) :
-    firedAt ticketed run ticket n → enabledAt ticketed run ticket n := by
-  intro hfired
-  exact ⟨run.path n, hfired⟩
+    firedAt ticketed run ticket n → enabledAt ticketed run ticket n :=
+  fun hfired => ⟨run.path n, hfired⟩
 
 end Ticketed
 end ProcessOver
@@ -196,26 +164,22 @@ namespace Ticketed
 
 /-- The closed-world specialization of `enabledAt`. -/
 abbrev enabledAt {Party : Type u} (ticketed : Process.Ticketed Party)
-    (run : Process.Run ticketed.toProcess)
-    (ticket : ticketed.Ticket) (n : Nat) : Prop :=
+    (run : Process.Run ticketed.toProcess) (ticket : ticketed.Ticket) (n : Nat) : Prop :=
   ProcessOver.Ticketed.enabledAt ticketed run ticket n
 
 /-- The closed-world specialization of `firedAt`. -/
 abbrev firedAt {Party : Type u} (ticketed : Process.Ticketed Party)
-    (run : Process.Run ticketed.toProcess)
-    (ticket : ticketed.Ticket) (n : Nat) : Prop :=
+    (run : Process.Run ticketed.toProcess) (ticket : ticketed.Ticket) (n : Nat) : Prop :=
   ProcessOver.Ticketed.firedAt ticketed run ticket n
 
 /-- The closed-world specialization of weak fairness for one ticket. -/
 abbrev WeakFairOn {Party : Type u} (ticketed : Process.Ticketed Party)
-    (run : Process.Run ticketed.toProcess)
-    (ticket : ticketed.Ticket) : Prop :=
+    (run : Process.Run ticketed.toProcess) (ticket : ticketed.Ticket) : Prop :=
   ProcessOver.Ticketed.WeakFairOn ticketed run ticket
 
 /-- The closed-world specialization of strong fairness for one ticket. -/
 abbrev StrongFairOn {Party : Type u} (ticketed : Process.Ticketed Party)
-    (run : Process.Run ticketed.toProcess)
-    (ticket : ticketed.Ticket) : Prop :=
+    (run : Process.Run ticketed.toProcess) (ticket : ticketed.Ticket) : Prop :=
   ProcessOver.Ticketed.StrongFairOn ticketed run ticket
 
 /-- The closed-world specialization of weak fairness. -/
@@ -229,8 +193,7 @@ abbrev StrongFair {Party : Type u} (ticketed : Process.Ticketed Party)
   ProcessOver.Ticketed.StrongFair ticketed run
 
 theorem fired_implies_enabled {Party : Type u} (ticketed : Process.Ticketed Party)
-    (run : Process.Run ticketed.toProcess)
-    (ticket : ticketed.Ticket) (n : Nat) :
+    (run : Process.Run ticketed.toProcess) (ticket : ticketed.Ticket) (n : Nat) :
     firedAt ticketed run ticket n → enabledAt ticketed run ticket n :=
   ProcessOver.Ticketed.fired_implies_enabled ticketed run ticket n
 

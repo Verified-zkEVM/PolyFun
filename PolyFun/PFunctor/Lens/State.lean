@@ -208,39 +208,30 @@ export IsGetPut (put_get)
 export IsPutPut (put_put)
 
 instance id_isVeryWellBehaved : IsVeryWellBehaved (State.id σ) where
-  get_put := by intro _ _; rfl
-  put_get := by intro _; rfl
-  put_put := by intro _ _ _; rfl
+  get_put _ _ := rfl
+  put_get _ := rfl
+  put_put _ _ _ := rfl
 
 instance fst_isVeryWellBehaved : IsVeryWellBehaved (fst σ τ) where
-  get_put := by intro _ _; rfl
-  put_get := by intro _; rfl
-  put_put := by intro _ _ _; rfl
+  get_put _ _ := rfl
+  put_get _ := rfl
+  put_put _ _ _ := rfl
 
 instance snd_isVeryWellBehaved : IsVeryWellBehaved (snd σ τ) where
-  get_put := by intro _ _; rfl
-  put_get := by intro _; rfl
-  put_put := by intro _ _ _; rfl
+  get_put _ _ := rfl
+  put_get _ := rfl
+  put_put _ _ _ := rfl
 
-instance comp_isPutGet (L₂ : State τ υ) (L₁ : State σ τ)
-    [IsPutGet L₂] [IsPutGet L₁] :
+instance comp_isPutGet (L₂ : State τ υ) (L₁ : State σ τ) [IsPutGet L₂] [IsPutGet L₁] :
     IsPutGet (L₂.comp L₁) where
-  get_put := by
-    intro s u
-    simp only [comp_get, comp_put]
-    rw [get_put, get_put]
+  get_put s u := by simp only [comp_get, comp_put, get_put]
 
-instance comp_isGetPut (L₂ : State τ υ) (L₁ : State σ τ)
-    [IsGetPut L₂] [IsGetPut L₁] :
+instance comp_isGetPut (L₂ : State τ υ) (L₁ : State σ τ) [IsGetPut L₂] [IsGetPut L₁] :
     IsGetPut (L₂.comp L₁) where
-  put_get := by
-    intro s
-    simp only [comp_get, comp_put]
-    rw [put_get, put_get]
+  put_get s := by simp only [comp_get, comp_put, put_get]
 
-instance comp_isWellBehaved (L₂ : State τ υ) (L₁ : State σ τ)
-    [IsWellBehaved L₂] [IsWellBehaved L₁] :
-    IsWellBehaved (L₂.comp L₁) where
+instance comp_isWellBehaved (L₂ : State τ υ) (L₁ : State σ τ) [IsWellBehaved L₂]
+    [IsWellBehaved L₁] : IsWellBehaved (L₂.comp L₁) where
 
 /-!
 `PutPut` is intentionally not given as a generic composition instance here.
@@ -274,14 +265,12 @@ theorem IsSeparated.symm {L : State σ σ₁} {R : State σ σ₂}
     [h : IsSeparated L R] : IsSeparated R L where
   left_get_put_right := h.right_get_put_left
   right_get_put_left := h.left_get_put_right
-  put_comm := by
-    intro s r l
-    exact (h.put_comm s l r).symm
+  put_comm s r l := (h.put_comm s l r).symm
 
 instance fst_snd_isSeparated : IsSeparated (fst σ τ) (snd σ τ) where
-  left_get_put_right := by intro _ _; rfl
-  right_get_put_left := by intro _ _; rfl
-  put_comm := by intro _ _ _; rfl
+  left_get_put_right _ _ := rfl
+  right_get_put_left _ _ := rfl
+  put_comm _ _ _ := rfl
 
 instance snd_fst_isSeparated : IsSeparated (snd σ τ) (fst σ τ) :=
   IsSeparated.symm

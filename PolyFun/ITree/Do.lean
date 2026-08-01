@@ -51,7 +51,7 @@ def forInLoop {F : PFunctor.{uA, uB}} {β : Type uβ} (_ : Lean.Loop) (init : β
   iter (fun state => do
     match ← body () state with
     | .done result => pure (.inr result)
-        | .yield next => pure (.inl next)) init
+    | .yield next => pure (.inl next)) init
 
 /-- Expose the `ITree.iter` selected by `forInLoop`. -/
 theorem forInLoop_eq_iter {F : PFunctor.{uA, uB}} {β : Type uβ}

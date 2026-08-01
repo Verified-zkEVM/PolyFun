@@ -45,18 +45,13 @@ abbrev Stateful (m : Type u → Type v) (S : Type u)
 
 /-- Combine monadic handlers for an indexed family into a handler for its
 indexed coproduct. -/
-def sigma {I : Type uI} {P : I → PFunctor.{uA, u}}
-    {m : Type u → Type v}
-    (f : (i : I) → PFunctor.Handler m (P i)) :
-    PFunctor.Handler m (PFunctor.sigma P) :=
+def sigma {I : Type uI} {P : I → PFunctor.{uA, u}} {m : Type u → Type v}
+    (f : (i : I) → PFunctor.Handler m (P i)) : PFunctor.Handler m (PFunctor.sigma P) :=
   fun a => f a.1 a.2
 
 @[simp]
-theorem sigma_apply {I : Type uI} {P : I → PFunctor.{uA, u}}
-    {m : Type u → Type v}
-    (f : (i : I) → PFunctor.Handler m (P i))
-    (i : I) (a : (P i).A) :
-    sigma f ⟨i, a⟩ = f i a :=
+theorem sigma_apply {I : Type uI} {P : I → PFunctor.{uA, u}} {m : Type u → Type v}
+    (f : (i : I) → PFunctor.Handler m (P i)) (i : I) (a : (P i).A) : sigma f ⟨i, a⟩ = f i a :=
   rfl
 
 end Handler

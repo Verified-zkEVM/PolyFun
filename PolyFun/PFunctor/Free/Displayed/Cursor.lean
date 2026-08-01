@@ -81,8 +81,7 @@ theorem restrictSpine_root (projection : Displayed.Algebra.ChildProjection D)
 
 @[simp]
 theorem restrictSpine_down (projection : Displayed.Algebra.ChildProjection D)
-    {a : P.A} {next : P.B a → FreeM P α}
-    {residual : FreeM P α} (answer : P.B a)
+    {a : P.A} {next : P.B a → FreeM P α} {residual : FreeM P α} (answer : P.B a)
     (tail : Cursor.Spine (next answer) residual)
     (d : Displayed D (FreeM.liftBind a next)) :
     restrictSpine projection (.down answer tail) d =
@@ -116,8 +115,7 @@ theorem restrict_root (projection : Displayed.Algebra.ChildProjection D)
 
 @[simp]
 theorem restrict_down (projection : Displayed.Algebra.ChildProjection D)
-    {a : P.A} {next : P.B a → FreeM P α}
-    (answer : P.B a) (tail : Cursor (next answer))
+    {a : P.A} {next : P.B a → FreeM P α} (answer : P.B a) (tail : Cursor (next answer))
     (d : Displayed D (FreeM.liftBind a next)) :
     restrict projection (Cursor.down answer tail) d =
       restrict projection tail
@@ -160,8 +158,7 @@ theorem restrictSpine_root (base : Displayed.Algebra.ChildProjection D)
 @[simp]
 theorem restrictSpine_down (base : Displayed.Algebra.ChildProjection D)
     (projection : Displayed.Over.Algebra.ChildProjection base R)
-    {a : P.A} {next : P.B a → FreeM P α}
-    {residual : FreeM P α} (answer : P.B a)
+    {a : P.A} {next : P.B a → FreeM P α} {residual : FreeM P α} (answer : P.B a)
     (tail : Cursor.Spine (next answer) residual)
     (d : Displayed D (FreeM.liftBind a next))
     (r : Over R (FreeM.liftBind a next) d) :
@@ -208,8 +205,7 @@ theorem restrict_root (base : Displayed.Algebra.ChildProjection D)
 @[simp]
 theorem restrict_down (base : Displayed.Algebra.ChildProjection D)
     (projection : Displayed.Over.Algebra.ChildProjection base R)
-    {a : P.A} {next : P.B a → FreeM P α}
-    (answer : P.B a) (tail : Cursor (next answer))
+    {a : P.A} {next : P.B a → FreeM P α} (answer : P.B a) (tail : Cursor (next answer))
     (d : Displayed D (FreeM.liftBind a next))
     (r : Over R (FreeM.liftBind a next) d) :
     restrict base projection (Cursor.down answer tail) d r =
@@ -361,9 +357,8 @@ theorem toOver_restrict
     toOver cursor.residual (Decoration.restrict cursor d) =
       ⟨Decoration.restrict cursor (toOver program d).1,
         Decoration.Over.restrict cursor (toOver program d).1 (toOver program d).2⟩ := by
-  rw [← ofOver_toOver program d, restrict_ofOver, toOver_ofOver]
-  have h := toOver_ofOver program (toOver program d).1 (toOver program d).2
-  rw [h]
+  rw [← ofOver_toOver program d, restrict_ofOver, toOver_ofOver,
+    toOver_ofOver program (toOver program d).1 (toOver program d).2]
 
 end Decoration
 
