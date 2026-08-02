@@ -3,8 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Node
-import PolyFun.Interaction.Basic.Syntax
+
+module
+
+import all PolyFun.Interaction.Basic.Syntax
+public import PolyFun.Interaction.Basic.Node
+public import PolyFun.Interaction.Basic.Syntax
 
 /-!
 # Functorial local syntax over interaction trees
@@ -32,6 +36,8 @@ refinement of syntax, with plain `Shape` recovered as the trivial-context
 specialization. This differs from `Decoration.Over`, which is literally
 dependent data over a fixed base decoration value.
 -/
+
+public section
 
 universe a vΓ vΔ vΛ w uA uB uA₂ uB₂
 
@@ -82,6 +88,7 @@ Restrict a participant-indexed shape to one fixed agent.
 The resulting singleton-agent shape has the same node objects and continuation
 map as `shape` at `agent`; the dummy `PUnit` agent argument is ignored.
 -/
+@[expose]
 def forAgent (shape : ShapeOver l Agent Γ) (agent : Agent) :
     ShapeOver l PUnit Γ where
   toSyntaxOver := SyntaxOver.forAgent shape.toSyntaxOver agent
@@ -91,6 +98,7 @@ def forAgent (shape : ShapeOver l Agent Γ) (agent : Agent) :
 Reindex a functorial local syntax object contravariantly along a node metadata
 map.
 -/
+@[expose]
 def comap {Δ : P.A → Type vΔ}
     (f : ∀ pos, Γ pos → Δ pos) (shape : ShapeOver l Agent Δ) :
     ShapeOver l Agent Γ where

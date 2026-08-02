@@ -3,8 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Basic.Shape
+
+module
+
+import all PolyFun.Interaction.Basic.Shape
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Basic.Shape
 
 /-!
 # Whole-tree strategies over interaction syntax
@@ -14,6 +18,8 @@ This file turns local syntax into whole-tree strategy families. It sits after
 continuation reindexing, and `StrategyOver` recursively interprets that syntax
 over an entire `FreeM` tree.
 -/
+
+public section
 
 universe u a vΓ vΔ w uA uB uA₂ uB₂ t
 
@@ -34,6 +40,7 @@ At leaves it returns the output family. At a control node it presents the local
 node object supplied by `syn`, whose continuation family is recursively the
 strategy for the abstract branch selected by the lens.
 -/
+@[expose]
 def StrategyOver {l : PFunctor.Lens P Q}
     (syn : SyntaxOver l Agent Γ) :
     (agent : Agent) →

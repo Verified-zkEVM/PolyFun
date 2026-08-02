@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Execution
-import PolyFun.PFunctor.Dynamical.Run
+
+module
+
+public import PolyFun.Interaction.Concurrent.Execution
+public import PolyFun.PFunctor.Dynamical.Run
 
 /-!
 # Finite prefixes and infinite runs of dynamic concurrent processes
@@ -22,6 +25,8 @@ reasoning about ongoing concurrent behavior.
 The closed-world `Process` API is recovered as a specialization of these
 generic definitions.
 -/
+
+public section
 
 universe u v w w₂ w₃
 
@@ -50,6 +55,7 @@ namespace Prefix
 The sequence of current controlling parties exposed by a finite prefix after
 projecting the generic context into `StepContext`.
 -/
+@[expose]
 def currentControllers
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
@@ -64,6 +70,7 @@ def currentControllers
 The sequence of full controller paths exposed by a finite prefix after
 projecting the generic context into `StepContext`.
 -/
+@[expose]
 def controllerPaths
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
@@ -235,6 +242,7 @@ def currentController?
 
 /-- The current controlling parties exposed along the first `n` executed steps
 of the run `run`. -/
+@[expose]
 def currentControllersUpTo
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
@@ -258,6 +266,7 @@ def controllerPath
 
 /-- The full controller paths exposed along the first `n` executed steps of the
 run `run`. -/
+@[expose]
 def controllerPathsUpTo
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u}
@@ -463,6 +472,7 @@ namespace Prefix
 
 /-- The sequence of current controlling parties exposed by a finite closed-world
 prefix. -/
+@[expose]
 def currentControllers {Party : Type u} {P : Type v} {process : Process P Party} :
     {p : process.Proc} → {n : Nat} → Prefix process p n → List (Option Party)
   | _, _, .nil => []
@@ -471,6 +481,7 @@ def currentControllers {Party : Type u} {P : Type v} {process : Process P Party}
 
 /-- The sequence of full controller paths exposed by a finite closed-world
 prefix. -/
+@[expose]
 def controllerPaths {Party : Type u} {P : Type v} {process : Process P Party} :
     {p : process.Proc} → {n : Nat} → Prefix process p n → List (List Party)
   | _, _, .nil => []
@@ -562,6 +573,7 @@ def currentController? {Party : Type u} {P : Type v} {process : Process P Party}
 
 /-- The current controlling parties exposed along the first `n` executed steps
 of a closed-world run. -/
+@[expose]
 def currentControllersUpTo {Party : Type u} {P : Type v} {process : Process P Party}
     (run : Run process) : Nat → List (Option Party)
   | 0 => []
@@ -574,6 +586,7 @@ def controllerPath {Party : Type u} {P : Type v} {process : Process P Party}
 
 /-- The full controller paths exposed along the first `n` executed steps of a
 closed-world run. -/
+@[expose]
 def controllerPathsUpTo {Party : Type u} {P : Type v} {process : Process P Party}
     (run : Run process) : Nat → List (List Party)
   | 0 => []

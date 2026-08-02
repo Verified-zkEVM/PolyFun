@@ -3,9 +3,13 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Liveness
-import PolyFun.Interaction.Concurrent.Observation
-import PolyFun.PFunctor.Dynamical.Refinement
+
+module
+
+import all PolyFun.Interaction.Concurrent.Liveness
+public import PolyFun.Interaction.Concurrent.Liveness
+public import PolyFun.Interaction.Concurrent.Observation
+public import PolyFun.PFunctor.Dynamical.Refinement
 
 /-!
 # Forward refinement for dynamic concurrent processes
@@ -37,6 +41,8 @@ processes directly. This file adds the path-flavoured vocabulary
 (`admissible_mapRun`), the observation-preservation corollaries for the
 concrete `StepRel`s, and the top-level `safe_of_satisfies` transfer.
 -/
+
+public section
 
 universe u v w w₂ w₃
 

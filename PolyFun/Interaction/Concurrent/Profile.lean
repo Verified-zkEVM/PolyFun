@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Frontier
-import PolyFun.Interaction.Multiparty.Core
+
+module
+
+public import PolyFun.Interaction.Concurrent.Frontier
+public import PolyFun.Interaction.Multiparty.Core
 
 /-!
 # Per-party observation profiles for concurrent interaction
@@ -39,6 +42,8 @@ It does **not** yet introduce:
 
 Those later layers can build on this structural profile API.
 -/
+
+public section
 
 universe u
 
@@ -105,6 +110,7 @@ At a parallel node, current observations are a sum: a scheduled frontier event
 comes from the left or the right component, and the observation records which
 side fired together with the observation from that side.
 -/
+@[expose]
 def ObsType {Party : Type u} (me : Party) :
     {S : Spec} → Profile Party S → Type u
   | .done, .done => PUnit
@@ -121,6 +127,7 @@ This is computed structurally:
 * at a parallel node, tag observations by whether the event came from the left
   or right concurrent component.
 -/
+@[expose]
 def observe {Party : Type u} (me : Party) :
     {S : Spec} → (profile : Profile Party S) → (event : Front S) → ObsType me profile
   | .done, .done, event => nomatch event

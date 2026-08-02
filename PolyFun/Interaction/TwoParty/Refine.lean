@@ -3,13 +3,16 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import Mathlib.Logic.Equiv.Defs
 
-import PolyFun.Interaction.Basic.Append
-import PolyFun.Interaction.Basic.Replicate
-import PolyFun.Interaction.Basic.StateChain
-import PolyFun.Interaction.TwoParty.Decoration
-import PolyFun.Interaction.TwoParty.Role
+module
+
+public import Mathlib.Logic.Equiv.Defs
+
+public import PolyFun.Interaction.Basic.Append
+public import PolyFun.Interaction.Basic.Replicate
+public import PolyFun.Interaction.Basic.StateChain
+public import PolyFun.Interaction.TwoParty.Decoration
+public import PolyFun.Interaction.TwoParty.Role
 
 /-!
 # Role-aware refinement and bridge to `Decoration.Over`
@@ -18,6 +21,8 @@ import PolyFun.Interaction.TwoParty.Role
 to `Decoration.Over` with fiber `Role.SenderData` is an equivalence; `map` laws commute with
 `append`, `replicate`, and `stateChain`.
 -/
+
+public section
 
 universe u v w w₂
 
@@ -28,7 +33,7 @@ namespace TwoParty
 open TwoParty
 
 /-- Role-aware displayed data: `S X` at sender nodes; `∀` recursion at receiver nodes. -/
-@[reducible] def Role.Refine (S : Type u → Type v) :
+@[expose, reducible] def Role.Refine (S : Type u → Type v) :
     (spec : TypeTree.{u}) → RoleDecoration spec → Type (max u v)
   | .done, _ => PUnit
   | .node X rest, ⟨.sender, rRest⟩ =>
@@ -50,6 +55,7 @@ def map {S : Type u → Type v} {T : Type u → Type w}
       fun x => map f (rest x) (rRest x) (rr x)
 
 /-- Append refinements over appended role decorations. -/
+@[expose]
 def append {S : Type u → Type v}
     {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
     {r₁ : RoleDecoration s₁}
@@ -95,6 +101,7 @@ end Role.Refine
 namespace Role
 
 /-- Fiber `S X` at sender and `PUnit` at receiver (for the `Decoration.Over` bridge). -/
+@[expose]
 def SenderData (S : Type u → Type v) (X : Type u) : Role → Type v
   | .sender => S X
   | .receiver => PUnit
@@ -204,6 +211,7 @@ theorem map_stateChain {S T : Type u → Type v} (f : ∀ X, S X → T X)
 /-- Present a role refinement as a displayed decoration, attaching the sender
 data at each node to the underlying role decoration. Inverse to
 `ofDecorationOver`. -/
+@[expose]
 def toDecorationOver {S : Type u → Type v} :
     (spec : TypeTree) → (roles : RoleDecoration spec) →
     Role.Refine S spec roles →
@@ -216,6 +224,7 @@ def toDecorationOver {S : Type u → Type v} :
 
 /-- Recover a role refinement from a displayed decoration carrying the sender
 data over the role decoration. Inverse to `toDecorationOver`. -/
+@[expose]
 def ofDecorationOver {S : Type u → Type v} :
     (spec : TypeTree) → (roles : RoleDecoration spec) →
     Decoration.Over (fun _ => Role) (fun X r => Role.SenderData S X r) spec roles →

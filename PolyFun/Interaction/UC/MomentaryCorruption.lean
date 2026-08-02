@@ -3,10 +3,13 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.CorruptionModel
-import PolyFun.Interaction.UC.EnvAction
-import PolyFun.Interaction.UC.EnvOpenProcess
-import PolyFun.Interaction.UC.MachineId
+
+module
+
+public import PolyFun.Interaction.UC.CorruptionModel
+public import PolyFun.Interaction.UC.EnvAction
+public import PolyFun.Interaction.UC.EnvOpenProcess
+public import PolyFun.Interaction.UC.MachineId
 
 /-!
 # Momentary corruption: the CJSV22 corruption model
@@ -82,6 +85,8 @@ The deterministic state updates require `[DecidableEq Sid]
 themselves do not.
 -/
 
+public section
+
 universe v w'
 
 namespace Interaction
@@ -119,6 +124,7 @@ namespace Alphabet
 variable {Sid Pid : Type}
 
 /-- The machine targeted by an event. -/
+@[expose]
 def target : Alphabet Sid Pid → MachineId Sid Pid
   | .compromise m => m
   | .refresh m    => m
@@ -190,6 +196,7 @@ variable {Sid Pid : Type}
 The fully-honest initial state: nothing corrupted, nothing
 compromised, every machine at epoch zero.
 -/
+@[expose]
 def init : State Sid Pid := {}
 
 instance : Inhabited (State Sid Pid) := ⟨init⟩
@@ -214,6 +221,7 @@ This is a deterministic update, so the value lives in the
 underlying `State`; the canonical `EnvAction` reaction wraps it
 via `pure`.
 -/
+@[expose]
 def applyCompromise (m : MachineId Sid Pid) (cs : State Sid Pid) : State Sid Pid where
   corrupted := Function.update cs.corrupted m true
   compromised := fun m' e' =>
@@ -230,6 +238,7 @@ this is the structural ingredient that lets the model derive PCS
 (post-compromise security) as a healing theorem rather than as an
 axiom.
 -/
+@[expose]
 def applyRefresh (m : MachineId Sid Pid) (cs : State Sid Pid) : State Sid Pid where
   corrupted := Function.update cs.corrupted m false
   compromised := cs.compromised
@@ -304,12 +313,14 @@ The reaction is monad-parametric: any `[Pure m]` works, and
 deterministic protocols typically use `m := Id` while crypto-flavored
 consumers instantiate `m := ProbComp`.
 -/
+@[expose]
 def react (s : Alphabet Sid Pid) (cs : State Sid Pid) : m (State Sid Pid) :=
   match s with
   | .compromise m₀ => pure (State.applyCompromise m₀ cs)
   | .refresh m₀    => pure (State.applyRefresh m₀ cs)
 
 /-- The canonical momentary-corruption `EnvAction`. -/
+@[expose]
 def envAction : EnvAction m (Alphabet Sid Pid) (State Sid Pid) where
   react := react
 
@@ -332,6 +343,7 @@ the `CorruptionModel` API — for instance, when stating a lemma
 that is generic over corruption models but instantiated to the
 momentary case at a use site.
 -/
+@[expose]
 def model (Sid Pid : Type) [DecidableEq Sid] [DecidableEq Pid] (m : Type → Type w') [Pure m] :
     CorruptionModel m where
   Event := Alphabet Sid Pid
@@ -378,6 +390,7 @@ non-trivial leakage function that depends on the protocol state)
 build their `EnvOpenProcess` directly with a bespoke `EnvAction`
 rather than going through this wrapping.
 -/
+@[expose]
 def MachineProcess.withMomentaryCorruption
     {Sid Pid : Type} {m : Type → Type w'} [Pure m] {Δ : PortBoundary}
     [DecidableEq Sid] [DecidableEq Pid]

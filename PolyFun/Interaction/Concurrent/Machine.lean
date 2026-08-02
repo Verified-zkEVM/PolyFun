@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao, Devon Tuma
 -/
-import PolyFun.Interaction.Concurrent.Process
+
+module
+
+public import PolyFun.Interaction.Concurrent.Process
 
 /-!
 # State-indexed concurrent machines
@@ -35,6 +38,8 @@ embeds machine semantics into the general `Concurrent.Process` core.
 This is the natural frontend for transition-system style models, including
 state-heavy distributed and cryptographic protocol semantics.
 -/
+
+public section
 
 universe u v
 
@@ -72,6 +77,7 @@ abbrev step {S : Type v} (machine : Machine.{u, v} S) (σ : S) (e : machine.Enab
 
 /-- Build a machine from its state set, enabled-event family, and successor
 function, using the classical field names. -/
+@[expose]
 def mk' (State : Type v) (Enabled : State → Type u) (step : (σ : State) → Enabled σ → State) :
     Machine.{u, v} State :=
   Enabled ⇆ step

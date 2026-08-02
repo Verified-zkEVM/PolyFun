@@ -3,9 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.BundledMonad
-import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Basic.Interaction
+
+module
+
+public import PolyFun.Interaction.Basic.BundledMonad
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Basic.Interaction
 
 /-!
 # Per-node monad decorations
@@ -19,6 +22,8 @@ Use it directly with `StrategyOver` for whole-tree strategies and with
 `InteractionOver.run` through `Strategy.monadicInteraction` for execution in an
 ambient monad.
 -/
+
+public section
 
 universe u uA uB t
 
@@ -42,6 +47,7 @@ bundled monad.
 This is the bridge between ordinary single-monad strategies and strategies
 whose node effects are described by a `MonadDecoration`.
 -/
+@[expose]
 def constant (bm : BundledMonad.{u, u}) :
     (s : PFunctor.FreeM P α) → MonadDecoration.{u} s
   | .pure _ => PUnit.unit
@@ -55,6 +61,7 @@ At each internal node it gives a lift from the source bundled monad to the
 target bundled monad, together with recursive lifts for every continuation
 subtree.
 -/
+@[expose]
 def Hom :
     (s : PFunctor.FreeM P α) → MonadDecoration.{u} s →
       MonadDecoration.{u} s → Type (max uB (u + 1))
@@ -66,6 +73,7 @@ def Hom :
 namespace Hom
 
 /-- Identity homomorphism on a monad decoration. -/
+@[expose]
 def id :
     (s : PFunctor.FreeM P α) → (md : MonadDecoration.{u} s) →
       Hom s md md
@@ -131,6 +139,7 @@ end MonadDecoration
 
 At each node the strategy chooses a move `x` immediately, then supplies the
 continuation in the `BundledMonad` stored by the node decoration. -/
+@[expose]
 def Strategy.monadicSyntax :
     SyntaxOver
       (PFunctor.Lens.id TypeTree.basePFunctor) PUnit (fun (_ : Type u) => BundledMonad.{u, u}) where

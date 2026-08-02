@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.OpenTheory
+
+module
+
+public import PolyFun.Interaction.UC.OpenTheory
 
 /-!
 # Raw syntax trees for open composition
@@ -32,6 +35,8 @@ The quotient of `Raw` by the `OpenTheory` equations is defined in
   equations and closed under all constructors.
 * `Raw.setoid`: packages `Raw.Equiv` as a `Setoid`.
 -/
+
+public section
 
 universe u
 
@@ -93,6 +98,7 @@ This is structural recursion: each constructor maps to the corresponding
 `OpenTheory` operation. The target theory need not be lawful; lawfulness is
 only required when reasoning about equivalence of interpretations.
 -/
+@[expose]
 def interpret {Atom : PortBoundary → Type u} {Δ : PortBoundary} (e : Raw Atom Δ) (T : OpenTheory)
     (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ)
     (idWireVal : ∀ (Γ : PortBoundary),

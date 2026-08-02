@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.StateChain
+
+module
+
+public import PolyFun.Interaction.Basic.StateChain
 
 /-!
 # Finite final-sequence approximants (`TypeTree.Chain`)
@@ -54,6 +57,8 @@ The `GrowingMessages` section builds a protocol whose message type grows
 at each step (`Fin 1`, `Fin 2`, …) without mentioning any state type.
 -/
 
+public section
+
 universe u
 
 namespace Interaction
@@ -65,6 +70,7 @@ from the terminal object `PUnit`.
 At a successor level this reduces definitionally to a current `TypeTree` paired
 with one remaining chain for each of its paths. `succEquiv` identifies
 that presentation with `TypeTree.stepPoly.Obj (Chain n)`. -/
+@[expose]
 def Chain : Nat → Type (u + 1)
   | 0 => PUnit
   | n + 1 => (spec : TypeTree) × (Path spec → Chain n)
@@ -83,6 +89,7 @@ def succEquiv (n : Nat) :
 /-- Flatten a finite approximant into a concrete `TypeTree` by iterating the
 multiplication of `TypeTree.substMonoid`. This multiplication is definitionally
 dependent `PFunctor.FreeM.append`. -/
+@[expose]
 def toTypeTree : (n : Nat) → Chain n → TypeTree
   | 0, _ => .done
   | n + 1, ⟨spec, cont⟩ =>
@@ -199,6 +206,7 @@ theorem splitPath_appendPath (n : Nat) (c : Chain (n + 1))
 /-- Output family for strategy composition along a chain. This is the intrinsic analog of
 `Path.stateChainFamily`: a family on the remaining chain is lifted to a family on
 paths of the flattened `TypeTree`. -/
+@[expose]
 def outputFamily
     (Family : {n : Nat} → Chain n → Type u) :
     (n : Nat) → (c : Chain n) → Path (toTypeTree n c) → Type u

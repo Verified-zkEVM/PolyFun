@@ -3,7 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Chain.Append
+
+module
+
+import all PolyFun.Interaction.Basic.Chain
+import all PolyFun.Interaction.Basic.Chain.Append
+public import PolyFun.Interaction.Basic.Chain.Append
 
 /-!
 # Dependent chain-concatenation regression tests
@@ -15,52 +20,54 @@ and flattened units, boundary path and output-family transport, strategy
 composition, and typed three-stage reassociation.
 -/
 
+@[expose] public section
+
 namespace Interaction
 namespace TypeTree
 namespace ChainAppendExamples
 
-private def prefixTree : TypeTree :=
+def prefixTree : TypeTree :=
   .node Bool fun _ => .done
 
-private def prefixChain : Chain 1 :=
+def prefixChain : Chain 1 :=
   ⟨prefixTree, fun _ => ⟨⟩⟩
 
-private def middleTree (path : Path (Chain.toTypeTree 1 prefixChain)) : TypeTree :=
+def middleTree (path : Path (Chain.toTypeTree 1 prefixChain)) : TypeTree :=
   .node (Fin (bif path.1 then 2 else 3)) fun _ => .done
 
-private def middle (path : Path (Chain.toTypeTree 1 prefixChain)) : Chain 1 :=
+def middle (path : Path (Chain.toTypeTree 1 prefixChain)) : Chain 1 :=
   ⟨middleTree path, fun _ => ⟨⟩⟩
 
-private def finalArity
+def finalArity
     (path : Path (Chain.toTypeTree (1 + 1) (Chain.then prefixChain middle))) : Nat :=
   let pieces := Chain.splitThenPath prefixChain middle path
   (bif pieces.1.1 then 10 else 20) + pieces.2.1.val + 1
 
-private def finalTree
+def finalTree
     (path : Path (Chain.toTypeTree (1 + 1) (Chain.then prefixChain middle))) : TypeTree :=
   .node (Fin (finalArity path)) fun _ => .done
 
-private def final
+def final
     (path : Path (Chain.toTypeTree (1 + 1) (Chain.then prefixChain middle))) : Chain 1 :=
   ⟨finalTree path, fun _ => ⟨⟩⟩
 
-private def prefixPath : Path (Chain.toTypeTree 1 prefixChain) :=
+def prefixPath : Path (Chain.toTypeTree 1 prefixChain) :=
   ⟨true, ⟨⟩⟩
 
-private def middlePath : Path (Chain.toTypeTree 1 (middle prefixPath)) :=
+def middlePath : Path (Chain.toTypeTree 1 (middle prefixPath)) :=
   ⟨(1 : Fin 2), ⟨⟩⟩
 
-private def combinedPath :
+def combinedPath :
     Path (Chain.toTypeTree (1 + 1) (Chain.then prefixChain middle)) :=
   Chain.appendThenPath prefixChain middle prefixPath middlePath
 
-private def otherPrefixPath : Path (Chain.toTypeTree 1 prefixChain) :=
+def otherPrefixPath : Path (Chain.toTypeTree 1 prefixChain) :=
   ⟨false, ⟨⟩⟩
 
-private def otherMiddlePath : Path (Chain.toTypeTree 1 (middle otherPrefixPath)) :=
+def otherMiddlePath : Path (Chain.toTypeTree 1 (middle otherPrefixPath)) :=
   ⟨(2 : Fin 3), ⟨⟩⟩
 
-private def otherCombinedPath :
+def otherCombinedPath :
     Path (Chain.toTypeTree (1 + 1) (Chain.then prefixChain middle)) :=
   Chain.appendThenPath prefixChain middle otherPrefixPath otherMiddlePath
 
@@ -81,19 +88,19 @@ example : Chain.appendThenPath prefixChain middle
 
 /-! ## Strategy composition across the chain boundary -/
 
-private def boundaryFamily (path : Path (Chain.toTypeTree 1 prefixChain))
+def boundaryFamily (path : Path (Chain.toTypeTree 1 prefixChain))
     (suffix : Path (Chain.toTypeTree 1 (middle path))) : Type :=
   Fin ((bif path.1 then 10 else 20) + suffix.1.val + 1)
 
-private def prefixStrategy : Strategy.Plain Id (Chain.toTypeTree 1 prefixChain) (fun _ => PUnit) :=
+def prefixStrategy : Strategy.Plain Id (Chain.toTypeTree 1 prefixChain) (fun _ => PUnit) :=
   ⟨true, ⟨⟩⟩
 
-private def suffixStrategy : (path : Path (Chain.toTypeTree 1 prefixChain)) → PUnit →
+def suffixStrategy : (path : Path (Chain.toTypeTree 1 prefixChain)) → PUnit →
     Id (Strategy.Plain Id (Chain.toTypeTree 1 (middle path)) (boundaryFamily path))
   | ⟨true, ⟨⟩⟩, _ => ⟨(1 : Fin 2), (0 : Fin 12)⟩
   | ⟨false, ⟨⟩⟩, _ => ⟨(2 : Fin 3), (0 : Fin 23)⟩
 
-private def composedStrategy : Strategy.Plain Id
+def composedStrategy : Strategy.Plain Id
     (Chain.toTypeTree (1 + 1) (Chain.then prefixChain middle))
     (Chain.liftThen prefixChain middle boundaryFamily) :=
   Chain.strategyCompThen prefixChain middle prefixStrategy suffixStrategy

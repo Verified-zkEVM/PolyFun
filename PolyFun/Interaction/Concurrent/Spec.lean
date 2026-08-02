@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
+
+module
+
+public import PolyFun.Interaction.Basic.TypeTree
 
 /-!
 # Concurrent interaction specifications
@@ -33,6 +36,8 @@ The guiding idea is the same as in the sequential layer:
 the "state" of a concurrent interaction is its current residual continuation,
 not an external mutable store.
 -/
+
+public section
 
 universe u
 
@@ -80,6 +85,7 @@ Unlike syntactic equality with `.done`, this detects quiescent residuals such
 as `.par .done .done`, which expose no frontier events even though they are not
 literally the terminal constructor.
 -/
+@[expose]
 def isLive : Concurrent.Spec → Bool
   | .done => false
   | .node _ _ => true
@@ -92,6 +98,7 @@ one-thread fragment with no use of `par`.
 This is the canonical embedding of sequential type trees into the concurrent
 source language.
 -/
+@[expose]
 def ofSequential : Interaction.TypeTree → Concurrent.Spec
   | .done => .done
   | .node Moves rest => .node Moves (fun x => ofSequential (rest x))

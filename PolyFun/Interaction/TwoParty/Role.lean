@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
 
+module
+
 /-!
 # Sender / receiver roles
 
@@ -11,6 +13,8 @@ Authors: Quang Dao
 `Action` and `Dual` package the active/passive node shapes for the focal side
 and its environment; `interact` runs one round.
 -/
+
+public section
 
 universe u
 
@@ -31,6 +35,7 @@ def swap : Role → Role
 
 /-- Focal party's action type: when acting, the focal party may use effects to
 choose the next move itself; when observing, it responds to any received move. -/
+@[expose]
 def Action (role : Role) (m : Type u → Type u) (X : Type u) (Cont : X → Type u) : Type u :=
   match role with
   | .sender => m ((x : X) × Cont x)
@@ -38,6 +43,7 @@ def Action (role : Role) (m : Type u → Type u) (X : Type u) (Cont : X → Type
 
 /-- Environment / dual view: sender branch observes the chosen move and may
 continue effectfully; receiver branch samples the move and continuation. -/
+@[expose]
 def Dual (role : Role) (m : Type u → Type u) (X : Type u) (Cont : X → Type u) : Type u :=
   match role with
   | .sender => (x : X) → m (Cont x)

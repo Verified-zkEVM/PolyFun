@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Multiparty.Core
+
+module
+
+public import PolyFun.Interaction.Multiparty.Core
 
 /-!
 # Per-party local-view profiles for multiparty interaction
@@ -21,6 +24,8 @@ This is the most direct structured way to describe multiparty nodes with:
 * parties that observe only a kernel of the move (`ViewMode.react ⟨..⟩`); and
 * parties that observe nothing at all (`ViewMode.hidden`).
 -/
+
+public section
 
 universe u
 

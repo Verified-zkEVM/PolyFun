@@ -3,18 +3,41 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Equivalence
-import PolyFun.Interaction.Concurrent.Execution
-import PolyFun.Interaction.Concurrent.Fairness
-import PolyFun.Interaction.Concurrent.Independence
-import PolyFun.Interaction.Concurrent.Interleaving
-import PolyFun.Interaction.Concurrent.Liveness
-import PolyFun.Interaction.Concurrent.Machine
-import PolyFun.Interaction.Concurrent.Observation
-import PolyFun.Interaction.Concurrent.Policy
-import PolyFun.Interaction.Concurrent.Refinement
-import PolyFun.Interaction.Concurrent.Run
-import PolyFun.Interaction.Concurrent.Tree
+
+module
+
+import all PolyFun.Interaction.Concurrent.Spec
+import all PolyFun.Interaction.Concurrent.Frontier
+import all PolyFun.Interaction.Concurrent.Control
+import all PolyFun.Interaction.Concurrent.Independence
+import all PolyFun.Interaction.Concurrent.Trace
+import all PolyFun.Interaction.Concurrent.Interleaving
+import all PolyFun.Interaction.Concurrent.Process
+import all PolyFun.Interaction.Concurrent.Profile
+import all PolyFun.Interaction.Concurrent.Current
+import all PolyFun.Interaction.Concurrent.Machine
+import all PolyFun.Interaction.Concurrent.Execution
+import all PolyFun.Interaction.Concurrent.Policy
+import all PolyFun.Interaction.Concurrent.Tree
+import all PolyFun.Interaction.Concurrent.Run
+import all PolyFun.Interaction.Concurrent.Fairness
+import all PolyFun.Interaction.Concurrent.Liveness
+import all PolyFun.Interaction.Concurrent.Observation
+import all PolyFun.Interaction.Concurrent.Refinement
+import all PolyFun.Interaction.Concurrent.MutualSafetyRefinement
+import all PolyFun.Interaction.Concurrent.Equivalence
+public import PolyFun.Interaction.Concurrent.Equivalence
+public import PolyFun.Interaction.Concurrent.Execution
+public import PolyFun.Interaction.Concurrent.Fairness
+public import PolyFun.Interaction.Concurrent.Independence
+public import PolyFun.Interaction.Concurrent.Interleaving
+public import PolyFun.Interaction.Concurrent.Liveness
+public import PolyFun.Interaction.Concurrent.Machine
+public import PolyFun.Interaction.Concurrent.Observation
+public import PolyFun.Interaction.Concurrent.Policy
+public import PolyFun.Interaction.Concurrent.Refinement
+public import PolyFun.Interaction.Concurrent.Run
+public import PolyFun.Interaction.Concurrent.Tree
 
 /-!
 # Concurrent interaction examples
@@ -35,6 +58,8 @@ The examples are intentionally focused on:
 They are meant to exercise the current expressivity surface before later layers
 such as fairness or richer execution semantics are added.
 -/
+
+@[expose] public section
 
 universe u
 

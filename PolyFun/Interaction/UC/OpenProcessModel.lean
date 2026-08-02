@@ -3,8 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.OpenProcess
-import PolyFun.Interaction.UC.OpenTheory
+
+module
+
+import all PolyFun.Interaction.UC.OpenProcess
+public import PolyFun.Interaction.UC.OpenProcess
+public import PolyFun.Interaction.UC.OpenTheory
 
 /-!
 # Concrete `OpenTheory` model backed by `OpenProcess m`
@@ -38,6 +42,8 @@ that carry a per-step nodewise-monadic sampler in the intermediate monad
   the scheduler-interleaving pattern.
 -/
 
+public section
+
 universe u v w w'
 
 namespace Interaction
@@ -52,8 +58,9 @@ variable (Party : Type u)
 variable (m : Type w → Type w')
 variable (schedulerSampler : m (ULift.{w, 0} Bool))
 
-/-- The hidden scheduler node shared by `par`, `wire`, and `plug`. -/
-private def schedulerNode (Δ : PortBoundary) :
+/-- The canonical internal scheduler node shared by `par`, `wire`, and `plug`. -/
+@[expose]
+def schedulerNode (Δ : PortBoundary) :
     OpenNodeProfile.{u, w} Party Δ (ULift.{w, 0} Bool) where
   controllers := fun _ => []
   views := fun _ => .hidden
@@ -70,6 +77,7 @@ The concrete open-composition theory backed by `OpenProcess m`.
   appropriate context morphisms and thread the shared `schedulerSampler`
   through `TypeTree.Sampler.interleave`.
 -/
+@[expose]
 def openTheory : OpenTheory where
   Obj Δ := OpenProcess.{u, v, w, w'} m Party Δ
   map φ p := p.mapBoundary φ

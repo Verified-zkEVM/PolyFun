@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Update PolyFun.lean with all imports.
+# Update PolyFun.lean with all public imports.
 # This script only considers tracked files. New PolyFun/**/*.lean files
 # must be staged first.
 
@@ -36,11 +36,16 @@ cleanup() {
 }
 trap cleanup EXIT
 
-git ls-files -- 'PolyFun/*.lean' \
-  | LC_ALL=C sort \
-  | sed 's/\.lean//;s,/,.,g;s/^/import /' > "$tmp_file"
+{
+  echo "module"
+  echo ""
+  git ls-files -- 'PolyFun/*.lean' \
+    | LC_ALL=C sort \
+    | sed 's/\.lean//;s,/,.,g;s/^/public import /'
+} > "$tmp_file"
 
 mv "$tmp_file" PolyFun.lean
 trap - EXIT
 
-echo "✓ PolyFun.lean updated with $(wc -l < PolyFun.lean) imports"
+import_count="$(grep -c '^public import ' PolyFun.lean)"
+echo "✓ PolyFun.lean updated with $import_count public imports"

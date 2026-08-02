@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Execution
+
+module
+
+public import PolyFun.Interaction.Concurrent.Execution
 
 /-!
 # Executable step policies for dynamic concurrent processes
@@ -20,6 +23,8 @@ step by step.
 The closed-world `Process` API is recovered as a specialization of these
 generic definitions.
 -/
+
+public section
 
 universe u v w w₂ w₃
 
@@ -119,6 +124,7 @@ namespace Trace
 `respects policy trace` checks whether every step of the finite process
 execution `trace` satisfies the executable step policy `policy`.
 -/
+@[expose]
 def respects
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}

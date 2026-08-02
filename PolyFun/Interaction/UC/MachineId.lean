@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.OpenProcess
+
+module
+
+public import PolyFun.Interaction.UC.OpenProcess
 
 /-!
 # Machine identity for UC composition
@@ -64,6 +67,8 @@ against the runtime. Consumers that need the contract enforced should
 filter incoming routed packets explicitly through `allowed` at the
 appropriate boundary surface.
 -/
+
+public section
 
 universe u v w w'
 
@@ -190,7 +195,7 @@ Useful for protocols whose security does not depend on per-machine input
 filtering, and as the canonical baseline against which more restrictive
 instances are compared.
 -/
-@[reducible]
+@[expose, reducible]
 def allowAll (P : OpenProcess.{u, v, w, w'} m Party Δ) : HasAccessControl P where
   allowed _ := true
 
@@ -213,7 +218,7 @@ senders whose session identifier is also `s`. Combined with a sender-aware
 emit (delivered by F2), this recovers the full structural same-session
 discipline.
 -/
-@[reducible]
+@[expose, reducible]
 def MachineProcess.allowSameSession
     {Sid Pid : Type u} {m : Type w → Type w'} {Δ : PortBoundary} [DecidableEq Sid]
     (owner : MachineId Sid Pid)

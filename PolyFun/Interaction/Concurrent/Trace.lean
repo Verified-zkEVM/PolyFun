@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Frontier
+
+module
+
+public import PolyFun.Interaction.Concurrent.Frontier
 
 /-!
 # Structural frontier traces
@@ -29,6 +32,8 @@ If a later true-concurrency layer adds independence or partial-order
 semantics, those refinements should be layered over these structural
 linearizations rather than replacing the basic tree frontend story here.
 -/
+
+public section
 
 universe u
 
@@ -67,6 +72,7 @@ def doneOfNotLive {S : Spec} (h : S.isLive = false) : Trace S :=
   .done (isEmpty_of_not_live h)
 
 /-- The number of frontier events in a finite concurrent trace. -/
+@[expose]
 def length : {S : Spec} → Trace S → Nat
   | _, .done _ => 0
   | _, .step _ tail => tail.length.succ

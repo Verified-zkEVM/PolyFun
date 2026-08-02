@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.OpenTheory
+
+module
+
+public import PolyFun.Interaction.UC.OpenTheory
 
 /-!
 # Tagless-final free model of open composition
@@ -22,6 +25,8 @@ its lawfulness reduces immediately to the target theory's laws.
 See `OpenSyntax.Expr` for the quotiented initial model that supports
 pattern matching and inspection.
 -/
+
+public section
 
 universe u
 
@@ -80,6 +85,7 @@ theorem ext {Atom : PortBoundary → Type u} {Δ : PortBoundary} {W₁ W₂ : In
 /--
 Inject a primitive open component into the tagless-final syntax.
 -/
+@[expose]
 def atom {Atom : PortBoundary → Type u} {Δ : PortBoundary} : Atom Δ → Interp Atom Δ
   | a => ⟨fun _ _ interp => interp a⟩
 
@@ -93,6 +99,7 @@ theorem interpret_atom {Atom : PortBoundary → Type u} {Δ : PortBoundary} (a :
 /--
 Adapt the exposed boundary of a tagless-final expression.
 -/
+@[expose]
 def map {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary} (f : PortBoundary.Hom Δ₁ Δ₂) :
     Interp Atom Δ₁ → Interp Atom Δ₂
   | W => ⟨fun T hT interp => T.map f (W.run T hT interp)⟩
@@ -107,6 +114,7 @@ theorem interpret_map {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBounda
 /--
 Place two tagless-final expressions side by side.
 -/
+@[expose]
 def par {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary} :
     Interp Atom Δ₁ → Interp Atom Δ₂ → Interp Atom (PortBoundary.tensor Δ₁ Δ₂)
   | W₁, W₂ => ⟨fun T hT interp =>
@@ -123,6 +131,7 @@ theorem interpret_par {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBounda
 /--
 Connect one shared boundary between two tagless-final expressions.
 -/
+@[expose]
 def wire {Atom : PortBoundary → Type u} {Δ₁ Γ Δ₂ : PortBoundary} :
     Interp Atom (PortBoundary.tensor Δ₁ Γ) →
     Interp Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) →
@@ -143,6 +152,7 @@ theorem interpret_wire {Atom : PortBoundary → Type u} {Δ₁ Γ Δ₂ : PortBo
 /--
 Close a tagless-final expression against a matching context.
 -/
+@[expose]
 def plug {Atom : PortBoundary → Type u} {Δ : PortBoundary} :
     Interp Atom Δ → Interp Atom (PortBoundary.swap Δ) → Interp Atom (PortBoundary.empty)
   | W, K => ⟨fun T hT interp =>
@@ -159,6 +169,7 @@ theorem interpret_plug {Atom : PortBoundary → Type u} {Δ : PortBoundary} (W :
 /--
 The monoidal unit (closed system with no boundary).
 -/
+@[expose]
 def unit {Atom : PortBoundary → Type u} : Interp Atom PortBoundary.empty :=
   ⟨fun _ hCC _ => OpenTheory.HasUnit.unit
     (self := hCC.toIsCompactClosed.toIsTraced.toIsMonoidal.toHasUnit)⟩
@@ -172,6 +183,7 @@ theorem interpret_unit {Atom : PortBoundary → Type u} (T : OpenTheory.{max (u 
 /--
 The identity wire (coevaluation) on boundary `Γ`.
 -/
+@[expose]
 def idWire {Atom : PortBoundary → Type u} (Γ : PortBoundary) :
     Interp Atom (PortBoundary.tensor (PortBoundary.swap Γ) Γ) :=
   ⟨fun _ hCC _ => OpenTheory.HasIdWire.idWire

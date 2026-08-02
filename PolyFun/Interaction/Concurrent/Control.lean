@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Frontier
+
+module
+
+public import PolyFun.Interaction.Concurrent.Frontier
 
 /-!
 # Scheduler and control ownership for concurrent interaction
@@ -40,6 +43,8 @@ This is intentionally a control/ownership layer only.
 It does **not** yet prescribe how those parties compute their choices or how
 local endpoint programs should be assembled from that ownership data.
 -/
+
+public section
 
 universe u
 
@@ -87,6 +92,7 @@ This mirrors the residual concurrent spec structurally:
 * atomic node control follows the chosen payload branch;
 * parallel control updates only the side from which the event came.
 -/
+@[expose]
 def residual {Party : Type u} :
     {S : Spec} → Control Party S → (event : Front S) → Control Party (Concurrent.residual event)
   | .done, .done, event => nomatch event
@@ -106,6 +112,7 @@ empty:
 * an atomic node is live;
 * a parallel control tree is live iff either side is live.
 -/
+@[expose]
 def isLive {Party : Type u} : {S : Spec} → Control Party S → Bool
   | .done, .done => false
   | .node _ _, .node _ _ => true
@@ -121,6 +128,7 @@ This returns:
 
 So this records *frontier scheduling ownership*, not payload ownership.
 -/
+@[expose]
 def scheduler? {Party : Type u} : {S : Spec} → Control Party S → Option Party
   | .done, .done => none
   | .node _ _, .node _ _ => none
@@ -141,6 +149,7 @@ This may be:
 So `current?` collapses scheduler choice and payload choice into the one party
 who is currently in control of progress.
 -/
+@[expose]
 def current? {Party : Type u} : {S : Spec} → Control Party S → Option Party
   | .done, .done => none
   | .node _ _, .node owner _ => some owner
@@ -165,6 +174,7 @@ This distinction matters after residual steps such as `.par .done right`,
 where control should immediately collapse to the right subtree rather than
 crediting a vacuous scheduler choice.
 -/
+@[expose]
 def controllers {Party : Type u} :
     {S : Spec} → Control Party S → (event : Front S) → List Party
   | .done, .done, event => nomatch event

@@ -3,16 +3,25 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
-import PolyFun.Interaction.TwoParty.Role
-import PolyFun.Interaction.TwoParty.Decoration
-import PolyFun.Interaction.TwoParty.Strategy
+
+module
+
+import all PolyFun.Interaction.Basic.TypeTree
+import all PolyFun.Interaction.TwoParty.Role
+import all PolyFun.Interaction.TwoParty.Decoration
+import all PolyFun.Interaction.TwoParty.Strategy
+public import PolyFun.Interaction.Basic.TypeTree
+public import PolyFun.Interaction.TwoParty.Role
+public import PolyFun.Interaction.TwoParty.Decoration
+public import PolyFun.Interaction.TwoParty.Strategy
 
 /-!
 # Examples: computing paired two-party strategy types
 
 Small hand-crafted specs show how role-dependent strategy types unfold.
 -/
+
+@[expose] public section
 
 universe u
 
@@ -23,8 +32,8 @@ section Examples
 variable (m : Type u → Type u) [Monad m]
 variable (T U : Type u) (α : Type u)
 
-private def exSpec := TypeTree.node T fun _ => .node U fun _ => .done
-private def exRoles : TwoParty.RoleDecoration (exSpec T U) :=
+def exSpec := TypeTree.node T fun _ => .node U fun _ => .done
+def exRoles : TwoParty.RoleDecoration (exSpec T U) :=
   ⟨.sender, fun _ => ⟨.receiver, fun _ => ⟨⟩⟩⟩
 
 example : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) TwoParty.Participant.focal

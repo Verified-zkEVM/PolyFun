@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Frontier
+
+module
+
+public import PolyFun.Interaction.Concurrent.Frontier
 
 /-!
 # Independence and commuting concurrent events
@@ -32,6 +35,8 @@ This is intentionally the minimal true-concurrency layer.
 It does not yet quotient traces by independence, attach fairness assumptions,
 or introduce richer partial-order objects such as pomsets or event structures.
 -/
+
+public section
 
 universe u
 
@@ -95,6 +100,7 @@ the left-hand event of the independence witness `h`.
 So if `h : Independent event₁ event₂`, then `afterLeft h` is an enabled
 frontier event of the residual spec `residual event₁`.
 -/
+@[expose]
 def afterLeft {S : Spec} {event₁ event₂ : Front S} :
     Independent event₁ event₂ → Front (residual event₁)
   | .left_right _ eventRight => .right eventRight
@@ -109,6 +115,7 @@ the right-hand event of the independence witness `h`.
 So if `h : Independent event₁ event₂`, then `afterRight h` is an enabled
 frontier event of the residual spec `residual event₂`.
 -/
+@[expose]
 def afterRight {S : Spec} {event₁ event₂ : Front S} :
     Independent event₁ event₂ → Front (residual event₂)
   | .left_right eventLeft _ => .left eventLeft

@@ -3,11 +3,16 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Append
-import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Basic.TypeTree
-import PolyFun.Interaction.TwoParty.Decoration
-import PolyFun.Interaction.TwoParty.Role
+
+module
+
+import all PolyFun.Interaction.TwoParty.Decoration
+import all PolyFun.Interaction.TwoParty.Role
+public import PolyFun.Interaction.Basic.Append
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Basic.TypeTree
+public import PolyFun.Interaction.TwoParty.Decoration
+public import PolyFun.Interaction.TwoParty.Role
 
 /-!
 # Swapping roles
@@ -15,6 +20,8 @@ import PolyFun.Interaction.TwoParty.Role
 Involutivity of `Role.swap`, compatibility with `RoleDecoration.map`, and interaction with
 appended role decorations.
 -/
+
+public section
 
 universe u
 

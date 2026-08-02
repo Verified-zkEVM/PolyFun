@@ -1,223 +1,225 @@
-import PolyFun.Control.Bisimulation
-import PolyFun.Control.Coalgebra
-import PolyFun.Control.Comonad.Basic
-import PolyFun.Control.Comonad.Instances
-import PolyFun.Control.LTS.Trace
-import PolyFun.Control.Lawful.Basic
-import PolyFun.Control.Monad.Algebra
-import PolyFun.Control.Monad.Equiv
-import PolyFun.Control.Monad.Free
-import PolyFun.Control.Monad.FreeCont
-import PolyFun.Control.Monad.Hom
-import PolyFun.Control.Monad.Indexed
-import PolyFun.Control.Monad.Iter
-import PolyFun.Control.Trace
-import PolyFun.IPFunctor.Basic
-import PolyFun.IPFunctor.Chart.Basic
-import PolyFun.IPFunctor.Equiv.Basic
-import PolyFun.IPFunctor.Free.Basic
-import PolyFun.IPFunctor.Free.Family
-import PolyFun.IPFunctor.Free.Indexed
-import PolyFun.IPFunctor.Lens.Basic
-import PolyFun.IPFunctor.M
-import PolyFun.IPFunctor.Notation
-import PolyFun.IPFunctor.Notation.Common
-import PolyFun.IPFunctor.Notation.Deterministic
-import PolyFun.IPFunctor.Notation.Indexed
-import PolyFun.ITree.Basic
-import PolyFun.ITree.Bisim.Bind
-import PolyFun.ITree.Bisim.CrossSignature
-import PolyFun.ITree.Bisim.Defs
-import PolyFun.ITree.Bisim.Equiv
-import PolyFun.ITree.Bisim.Iter
-import PolyFun.ITree.Construct
-import PolyFun.ITree.Do
-import PolyFun.ITree.Events.Exception
-import PolyFun.ITree.Events.ExceptionFacts
-import PolyFun.ITree.Events.State
-import PolyFun.ITree.Events.StateFacts
-import PolyFun.ITree.Handler
-import PolyFun.ITree.Rec
-import PolyFun.ITree.Rec.Facts
-import PolyFun.ITree.Resumption
-import PolyFun.ITree.Sim.CrossSignature
-import PolyFun.ITree.Sim.Defs
-import PolyFun.ITree.Sim.Facts
-import PolyFun.ITree.Trace
-import PolyFun.ITree.Unfold
-import PolyFun.Interaction.Basic.Append
-import PolyFun.Interaction.Basic.BundledMonad
-import PolyFun.Interaction.Basic.Chain
-import PolyFun.Interaction.Basic.Chain.Append
-import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Basic.Interaction
-import PolyFun.Interaction.Basic.MonadDecoration
-import PolyFun.Interaction.Basic.Node
-import PolyFun.Interaction.Basic.Ownership
-import PolyFun.Interaction.Basic.Replicate
-import PolyFun.Interaction.Basic.Sampler
-import PolyFun.Interaction.Basic.Shape
-import PolyFun.Interaction.Basic.StateChain
-import PolyFun.Interaction.Basic.Strategy
-import PolyFun.Interaction.Basic.StrategyOver
-import PolyFun.Interaction.Basic.Syntax
-import PolyFun.Interaction.Basic.Telescope
-import PolyFun.Interaction.Basic.TypeTree
-import PolyFun.Interaction.Basic.TypeTreeFintype
-import PolyFun.Interaction.Concurrent.Control
-import PolyFun.Interaction.Concurrent.Current
-import PolyFun.Interaction.Concurrent.Equivalence
-import PolyFun.Interaction.Concurrent.Execution
-import PolyFun.Interaction.Concurrent.Fairness
-import PolyFun.Interaction.Concurrent.Frontier
-import PolyFun.Interaction.Concurrent.Independence
-import PolyFun.Interaction.Concurrent.Interleaving
-import PolyFun.Interaction.Concurrent.Liveness
-import PolyFun.Interaction.Concurrent.Machine
-import PolyFun.Interaction.Concurrent.MutualSafetyRefinement
-import PolyFun.Interaction.Concurrent.Observation
-import PolyFun.Interaction.Concurrent.Policy
-import PolyFun.Interaction.Concurrent.Process
-import PolyFun.Interaction.Concurrent.Profile
-import PolyFun.Interaction.Concurrent.Refinement
-import PolyFun.Interaction.Concurrent.Run
-import PolyFun.Interaction.Concurrent.Spec
-import PolyFun.Interaction.Concurrent.Trace
-import PolyFun.Interaction.Concurrent.Tree
-import PolyFun.Interaction.Multiparty.Broadcast
-import PolyFun.Interaction.Multiparty.Core
-import PolyFun.Interaction.Multiparty.Directed
-import PolyFun.Interaction.Multiparty.Observation
-import PolyFun.Interaction.Multiparty.ObservationProfile
-import PolyFun.Interaction.Multiparty.Profile
-import PolyFun.Interaction.TwoParty.Compose
-import PolyFun.Interaction.TwoParty.Decoration
-import PolyFun.Interaction.TwoParty.Refine
-import PolyFun.Interaction.TwoParty.Role
-import PolyFun.Interaction.TwoParty.Strategy
-import PolyFun.Interaction.TwoParty.Swap
-import PolyFun.Interaction.TwoParty.Syntax
-import PolyFun.Interaction.UC.CorruptionModel
-import PolyFun.Interaction.UC.Emulates
-import PolyFun.Interaction.UC.EnvAction
-import PolyFun.Interaction.UC.EnvOpenProcess
-import PolyFun.Interaction.UC.Interface
-import PolyFun.Interaction.UC.Leakage
-import PolyFun.Interaction.UC.MachineId
-import PolyFun.Interaction.UC.MomentaryCorruption
-import PolyFun.Interaction.UC.Notation
-import PolyFun.Interaction.UC.OpenProcess
-import PolyFun.Interaction.UC.OpenProcessModel
-import PolyFun.Interaction.UC.OpenSyntax.Expr
-import PolyFun.Interaction.UC.OpenSyntax.Interp
-import PolyFun.Interaction.UC.OpenSyntax.Raw
-import PolyFun.Interaction.UC.OpenTheory
-import PolyFun.Logic.HEq
-import PolyFun.PFunctor.Adjunctions
-import PolyFun.PFunctor.Basic
-import PolyFun.PFunctor.Bound
-import PolyFun.PFunctor.CartesianClosed
-import PolyFun.PFunctor.Category
-import PolyFun.PFunctor.Chart.Basic
-import PolyFun.PFunctor.Cofree
-import PolyFun.PFunctor.Cofree.FiniteProjection
-import PolyFun.PFunctor.Cofree.LaxMonoidal
-import PolyFun.PFunctor.Cofree.Polynomial
-import PolyFun.PFunctor.Cofree.Universal
-import PolyFun.PFunctor.Comonoid
-import PolyFun.PFunctor.Comonoid.Category
-import PolyFun.PFunctor.Comonoid.Tensor
-import PolyFun.PFunctor.Display
-import PolyFun.PFunctor.Display.Basic
-import PolyFun.PFunctor.Display.Category
-import PolyFun.PFunctor.Display.Chart
-import PolyFun.PFunctor.Display.Coalgebra
-import PolyFun.PFunctor.Display.Free
-import PolyFun.PFunctor.Display.Handler
-import PolyFun.PFunctor.Display.Handler.Sigma
-import PolyFun.PFunctor.Display.Indexed
-import PolyFun.PFunctor.Display.Lens
-import PolyFun.PFunctor.Display.M
-import PolyFun.PFunctor.Display.Parallel
-import PolyFun.PFunctor.Display.Parallel.Free
-import PolyFun.PFunctor.Display.Parallel.Lens
-import PolyFun.PFunctor.Dynamical.Basic
-import PolyFun.PFunctor.Dynamical.Behavior
-import PolyFun.PFunctor.Dynamical.Bisimulation
-import PolyFun.PFunctor.Dynamical.CofreeMate
-import PolyFun.PFunctor.Dynamical.CofreeMate.FiniteProjection
-import PolyFun.PFunctor.Dynamical.Combinators
-import PolyFun.PFunctor.Dynamical.DynComputation
-import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
-import PolyFun.PFunctor.Dynamical.DynComputation.Termination
-import PolyFun.PFunctor.Dynamical.Game
-import PolyFun.PFunctor.Dynamical.Refinement
-import PolyFun.PFunctor.Dynamical.Responder
-import PolyFun.PFunctor.Dynamical.Responder.Behavior
-import PolyFun.PFunctor.Dynamical.Responder.Display
-import PolyFun.PFunctor.Dynamical.Responder.Lens
-import PolyFun.PFunctor.Dynamical.Responder.Parallel
-import PolyFun.PFunctor.Dynamical.Responder.Parallel.Behavior
-import PolyFun.PFunctor.Dynamical.Responder.Parallel.Coherence
-import PolyFun.PFunctor.Dynamical.Responder.Parallel.Compatibility
-import PolyFun.PFunctor.Dynamical.Responder.Parallel.Display
-import PolyFun.PFunctor.Dynamical.Responder.Parallel.DisplayedAssociativity
-import PolyFun.PFunctor.Dynamical.Responder.Parallel.DisplayedCoherence
-import PolyFun.PFunctor.Dynamical.Responder.Parallel.Presentation
-import PolyFun.PFunctor.Dynamical.Responder.Presentation
-import PolyFun.PFunctor.Dynamical.Responder.Reindex
-import PolyFun.PFunctor.Dynamical.Run
-import PolyFun.PFunctor.Dynamical.RunN
-import PolyFun.PFunctor.Dynamical.Safety
-import PolyFun.PFunctor.Dynamical.Simulation
-import PolyFun.PFunctor.Dynamical.Trajectory
-import PolyFun.PFunctor.Equiv.Basic
-import PolyFun.PFunctor.Free.Basic
-import PolyFun.PFunctor.Free.Cursor
-import PolyFun.PFunctor.Free.Cursor.Append
-import PolyFun.PFunctor.Free.Cursor.Fork
-import PolyFun.PFunctor.Free.Cursor.Occurrence
-import PolyFun.PFunctor.Free.Displayed
-import PolyFun.PFunctor.Free.Displayed.Append
-import PolyFun.PFunctor.Free.Displayed.Cursor
-import PolyFun.PFunctor.Free.Displayed.Decoration
-import PolyFun.PFunctor.Free.Displayed.StateChain
-import PolyFun.PFunctor.Free.Parallel
-import PolyFun.PFunctor.Free.Path
-import PolyFun.PFunctor.Free.Path.Execution
-import PolyFun.PFunctor.Free.Polynomial
-import PolyFun.PFunctor.Free.Replicate
-import PolyFun.PFunctor.Free.Resumption
-import PolyFun.PFunctor.Free.Universal
-import PolyFun.PFunctor.Handler
-import PolyFun.PFunctor.Handler.Free
-import PolyFun.PFunctor.Handler.Normalization
-import PolyFun.PFunctor.Handler.Normalization.Attr
-import PolyFun.PFunctor.Handler.Stateful
-import PolyFun.PFunctor.InternalHom
-import PolyFun.PFunctor.Lens.Basic
-import PolyFun.PFunctor.Lens.Cartesian
-import PolyFun.PFunctor.Lens.Composite
-import PolyFun.PFunctor.Lens.Distributivity
-import PolyFun.PFunctor.Lens.Duoidal
-import PolyFun.PFunctor.Lens.Factorization
-import PolyFun.PFunctor.Lens.State
-import PolyFun.PFunctor.M
-import PolyFun.PFunctor.M.Vertex
-import PolyFun.PFunctor.Parallel
-import PolyFun.PFunctor.PatternRunsOnMatter.Applications
-import PolyFun.PFunctor.PatternRunsOnMatter.Basic
-import PolyFun.PFunctor.PatternRunsOnMatter.Display
-import PolyFun.PFunctor.PatternRunsOnMatter.Dynamical
-import PolyFun.PFunctor.PatternRunsOnMatter.Module
-import PolyFun.PFunctor.PatternRunsOnMatter.Operational
-import PolyFun.PFunctor.PatternRunsOnMatter.Parallel
-import PolyFun.PFunctor.PatternRunsOnMatter.Universal
-import PolyFun.PFunctor.Resumption
-import PolyFun.PFunctor.Resumption.Truncate
-import PolyFun.PFunctor.SubstMonoid
-import PolyFun.PFunctor.SubstMonoid.Convolution
-import PolyFun.PFunctor.SubstMonoid.Extension
-import PolyFun.PFunctor.Trace
-import PolyFun.PFunctor.Wiring
-import PolyFun.PFunctor.Wiring.Parallel
+module
+
+public import PolyFun.Control.Bisimulation
+public import PolyFun.Control.Coalgebra
+public import PolyFun.Control.Comonad.Basic
+public import PolyFun.Control.Comonad.Instances
+public import PolyFun.Control.LTS.Trace
+public import PolyFun.Control.Lawful.Basic
+public import PolyFun.Control.Monad.Algebra
+public import PolyFun.Control.Monad.Equiv
+public import PolyFun.Control.Monad.Free
+public import PolyFun.Control.Monad.FreeCont
+public import PolyFun.Control.Monad.Hom
+public import PolyFun.Control.Monad.Indexed
+public import PolyFun.Control.Monad.Iter
+public import PolyFun.Control.Trace
+public import PolyFun.IPFunctor.Basic
+public import PolyFun.IPFunctor.Chart.Basic
+public import PolyFun.IPFunctor.Equiv.Basic
+public import PolyFun.IPFunctor.Free.Basic
+public import PolyFun.IPFunctor.Free.Family
+public import PolyFun.IPFunctor.Free.Indexed
+public import PolyFun.IPFunctor.Lens.Basic
+public import PolyFun.IPFunctor.M
+public import PolyFun.IPFunctor.Notation
+public import PolyFun.IPFunctor.Notation.Common
+public import PolyFun.IPFunctor.Notation.Deterministic
+public import PolyFun.IPFunctor.Notation.Indexed
+public import PolyFun.ITree.Basic
+public import PolyFun.ITree.Bisim.Bind
+public import PolyFun.ITree.Bisim.CrossSignature
+public import PolyFun.ITree.Bisim.Defs
+public import PolyFun.ITree.Bisim.Equiv
+public import PolyFun.ITree.Bisim.Iter
+public import PolyFun.ITree.Construct
+public import PolyFun.ITree.Do
+public import PolyFun.ITree.Events.Exception
+public import PolyFun.ITree.Events.ExceptionFacts
+public import PolyFun.ITree.Events.State
+public import PolyFun.ITree.Events.StateFacts
+public import PolyFun.ITree.Handler
+public import PolyFun.ITree.Rec
+public import PolyFun.ITree.Rec.Facts
+public import PolyFun.ITree.Resumption
+public import PolyFun.ITree.Sim.CrossSignature
+public import PolyFun.ITree.Sim.Defs
+public import PolyFun.ITree.Sim.Facts
+public import PolyFun.ITree.Trace
+public import PolyFun.ITree.Unfold
+public import PolyFun.Interaction.Basic.Append
+public import PolyFun.Interaction.Basic.BundledMonad
+public import PolyFun.Interaction.Basic.Chain
+public import PolyFun.Interaction.Basic.Chain.Append
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Basic.Interaction
+public import PolyFun.Interaction.Basic.MonadDecoration
+public import PolyFun.Interaction.Basic.Node
+public import PolyFun.Interaction.Basic.Ownership
+public import PolyFun.Interaction.Basic.Replicate
+public import PolyFun.Interaction.Basic.Sampler
+public import PolyFun.Interaction.Basic.Shape
+public import PolyFun.Interaction.Basic.StateChain
+public import PolyFun.Interaction.Basic.Strategy
+public import PolyFun.Interaction.Basic.StrategyOver
+public import PolyFun.Interaction.Basic.Syntax
+public import PolyFun.Interaction.Basic.Telescope
+public import PolyFun.Interaction.Basic.TypeTree
+public import PolyFun.Interaction.Basic.TypeTreeFintype
+public import PolyFun.Interaction.Concurrent.Control
+public import PolyFun.Interaction.Concurrent.Current
+public import PolyFun.Interaction.Concurrent.Equivalence
+public import PolyFun.Interaction.Concurrent.Execution
+public import PolyFun.Interaction.Concurrent.Fairness
+public import PolyFun.Interaction.Concurrent.Frontier
+public import PolyFun.Interaction.Concurrent.Independence
+public import PolyFun.Interaction.Concurrent.Interleaving
+public import PolyFun.Interaction.Concurrent.Liveness
+public import PolyFun.Interaction.Concurrent.Machine
+public import PolyFun.Interaction.Concurrent.MutualSafetyRefinement
+public import PolyFun.Interaction.Concurrent.Observation
+public import PolyFun.Interaction.Concurrent.Policy
+public import PolyFun.Interaction.Concurrent.Process
+public import PolyFun.Interaction.Concurrent.Profile
+public import PolyFun.Interaction.Concurrent.Refinement
+public import PolyFun.Interaction.Concurrent.Run
+public import PolyFun.Interaction.Concurrent.Spec
+public import PolyFun.Interaction.Concurrent.Trace
+public import PolyFun.Interaction.Concurrent.Tree
+public import PolyFun.Interaction.Multiparty.Broadcast
+public import PolyFun.Interaction.Multiparty.Core
+public import PolyFun.Interaction.Multiparty.Directed
+public import PolyFun.Interaction.Multiparty.Observation
+public import PolyFun.Interaction.Multiparty.ObservationProfile
+public import PolyFun.Interaction.Multiparty.Profile
+public import PolyFun.Interaction.TwoParty.Compose
+public import PolyFun.Interaction.TwoParty.Decoration
+public import PolyFun.Interaction.TwoParty.Refine
+public import PolyFun.Interaction.TwoParty.Role
+public import PolyFun.Interaction.TwoParty.Strategy
+public import PolyFun.Interaction.TwoParty.Swap
+public import PolyFun.Interaction.TwoParty.Syntax
+public import PolyFun.Interaction.UC.CorruptionModel
+public import PolyFun.Interaction.UC.Emulates
+public import PolyFun.Interaction.UC.EnvAction
+public import PolyFun.Interaction.UC.EnvOpenProcess
+public import PolyFun.Interaction.UC.Interface
+public import PolyFun.Interaction.UC.Leakage
+public import PolyFun.Interaction.UC.MachineId
+public import PolyFun.Interaction.UC.MomentaryCorruption
+public import PolyFun.Interaction.UC.Notation
+public import PolyFun.Interaction.UC.OpenProcess
+public import PolyFun.Interaction.UC.OpenProcessModel
+public import PolyFun.Interaction.UC.OpenSyntax.Expr
+public import PolyFun.Interaction.UC.OpenSyntax.Interp
+public import PolyFun.Interaction.UC.OpenSyntax.Raw
+public import PolyFun.Interaction.UC.OpenTheory
+public import PolyFun.Logic.HEq
+public import PolyFun.PFunctor.Adjunctions
+public import PolyFun.PFunctor.Basic
+public import PolyFun.PFunctor.Bound
+public import PolyFun.PFunctor.CartesianClosed
+public import PolyFun.PFunctor.Category
+public import PolyFun.PFunctor.Chart.Basic
+public import PolyFun.PFunctor.Cofree
+public import PolyFun.PFunctor.Cofree.FiniteProjection
+public import PolyFun.PFunctor.Cofree.LaxMonoidal
+public import PolyFun.PFunctor.Cofree.Polynomial
+public import PolyFun.PFunctor.Cofree.Universal
+public import PolyFun.PFunctor.Comonoid
+public import PolyFun.PFunctor.Comonoid.Category
+public import PolyFun.PFunctor.Comonoid.Tensor
+public import PolyFun.PFunctor.Display
+public import PolyFun.PFunctor.Display.Basic
+public import PolyFun.PFunctor.Display.Category
+public import PolyFun.PFunctor.Display.Chart
+public import PolyFun.PFunctor.Display.Coalgebra
+public import PolyFun.PFunctor.Display.Free
+public import PolyFun.PFunctor.Display.Handler
+public import PolyFun.PFunctor.Display.Handler.Sigma
+public import PolyFun.PFunctor.Display.Indexed
+public import PolyFun.PFunctor.Display.Lens
+public import PolyFun.PFunctor.Display.M
+public import PolyFun.PFunctor.Display.Parallel
+public import PolyFun.PFunctor.Display.Parallel.Free
+public import PolyFun.PFunctor.Display.Parallel.Lens
+public import PolyFun.PFunctor.Dynamical.Basic
+public import PolyFun.PFunctor.Dynamical.Behavior
+public import PolyFun.PFunctor.Dynamical.Bisimulation
+public import PolyFun.PFunctor.Dynamical.CofreeMate
+public import PolyFun.PFunctor.Dynamical.CofreeMate.FiniteProjection
+public import PolyFun.PFunctor.Dynamical.Combinators
+public import PolyFun.PFunctor.Dynamical.DynComputation
+public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
+public import PolyFun.PFunctor.Dynamical.DynComputation.Termination
+public import PolyFun.PFunctor.Dynamical.Game
+public import PolyFun.PFunctor.Dynamical.Refinement
+public import PolyFun.PFunctor.Dynamical.Responder
+public import PolyFun.PFunctor.Dynamical.Responder.Behavior
+public import PolyFun.PFunctor.Dynamical.Responder.Display
+public import PolyFun.PFunctor.Dynamical.Responder.Lens
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel.Behavior
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel.Coherence
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel.Compatibility
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel.Display
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel.DisplayedAssociativity
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel.DisplayedCoherence
+public import PolyFun.PFunctor.Dynamical.Responder.Parallel.Presentation
+public import PolyFun.PFunctor.Dynamical.Responder.Presentation
+public import PolyFun.PFunctor.Dynamical.Responder.Reindex
+public import PolyFun.PFunctor.Dynamical.Run
+public import PolyFun.PFunctor.Dynamical.RunN
+public import PolyFun.PFunctor.Dynamical.Safety
+public import PolyFun.PFunctor.Dynamical.Simulation
+public import PolyFun.PFunctor.Dynamical.Trajectory
+public import PolyFun.PFunctor.Equiv.Basic
+public import PolyFun.PFunctor.Free.Basic
+public import PolyFun.PFunctor.Free.Cursor
+public import PolyFun.PFunctor.Free.Cursor.Append
+public import PolyFun.PFunctor.Free.Cursor.Fork
+public import PolyFun.PFunctor.Free.Cursor.Occurrence
+public import PolyFun.PFunctor.Free.Displayed
+public import PolyFun.PFunctor.Free.Displayed.Append
+public import PolyFun.PFunctor.Free.Displayed.Cursor
+public import PolyFun.PFunctor.Free.Displayed.Decoration
+public import PolyFun.PFunctor.Free.Displayed.StateChain
+public import PolyFun.PFunctor.Free.Parallel
+public import PolyFun.PFunctor.Free.Path
+public import PolyFun.PFunctor.Free.Path.Execution
+public import PolyFun.PFunctor.Free.Polynomial
+public import PolyFun.PFunctor.Free.Replicate
+public import PolyFun.PFunctor.Free.Resumption
+public import PolyFun.PFunctor.Free.Universal
+public import PolyFun.PFunctor.Handler
+public import PolyFun.PFunctor.Handler.Free
+public import PolyFun.PFunctor.Handler.Normalization
+public import PolyFun.PFunctor.Handler.Normalization.Attr
+public import PolyFun.PFunctor.Handler.Stateful
+public import PolyFun.PFunctor.InternalHom
+public import PolyFun.PFunctor.Lens.Basic
+public import PolyFun.PFunctor.Lens.Cartesian
+public import PolyFun.PFunctor.Lens.Composite
+public import PolyFun.PFunctor.Lens.Distributivity
+public import PolyFun.PFunctor.Lens.Duoidal
+public import PolyFun.PFunctor.Lens.Factorization
+public import PolyFun.PFunctor.Lens.State
+public import PolyFun.PFunctor.M
+public import PolyFun.PFunctor.M.Vertex
+public import PolyFun.PFunctor.Parallel
+public import PolyFun.PFunctor.PatternRunsOnMatter.Applications
+public import PolyFun.PFunctor.PatternRunsOnMatter.Basic
+public import PolyFun.PFunctor.PatternRunsOnMatter.Display
+public import PolyFun.PFunctor.PatternRunsOnMatter.Dynamical
+public import PolyFun.PFunctor.PatternRunsOnMatter.Module
+public import PolyFun.PFunctor.PatternRunsOnMatter.Operational
+public import PolyFun.PFunctor.PatternRunsOnMatter.Parallel
+public import PolyFun.PFunctor.PatternRunsOnMatter.Universal
+public import PolyFun.PFunctor.Resumption
+public import PolyFun.PFunctor.Resumption.Truncate
+public import PolyFun.PFunctor.SubstMonoid
+public import PolyFun.PFunctor.SubstMonoid.Convolution
+public import PolyFun.PFunctor.SubstMonoid.Extension
+public import PolyFun.PFunctor.Trace
+public import PolyFun.PFunctor.Wiring
+public import PolyFun.PFunctor.Wiring.Parallel

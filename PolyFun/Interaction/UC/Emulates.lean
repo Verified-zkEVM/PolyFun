@@ -3,7 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.OpenTheory
+
+module
+
+import all PolyFun.Interaction.UC.Interface
+public import PolyFun.Interaction.UC.OpenTheory
 
 /-!
 # Contextual emulation and UC security
@@ -70,6 +74,8 @@ because the triangle inequality only gives `2ε`) cannot be packaged as
 distance is closed under sums and is a genuine equivalence), not at the
 fixed-`ε` level.
 -/
+
+public section
 
 universe u
 

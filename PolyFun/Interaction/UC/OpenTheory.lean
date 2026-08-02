@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.Interface
+
+module
+
+public import PolyFun.Interaction.UC.Interface
 
 /-!
 # Open composition algebra with monoidal coherence
@@ -65,6 +68,8 @@ process-backed `openTheory` in `OpenProcessModel.lean` instantiates only
 `IsLawful`; its monoidal coherence and snake equations hold up to
 `OpenProcessActivationEquiv`, not strict equality.
 -/
+
+public section
 
 universe u
 

@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.OpenSyntax.Expr
+
+module
+
+public import PolyFun.Interaction.UC.OpenSyntax.Expr
 
 /-!
 # UC composition notation
@@ -46,6 +49,8 @@ Precedence ensures natural parenthesization:
 * `Γᵛ ⊗ᵇ Δ` = `tensor (swap Γ) Δ` (postfix `ᵛ` at max precedence)
 * `(Δ₁ ⊗ᵇ Δ₂)ᵛ` = `swap (tensor Δ₁ Δ₂)` (parentheses required)
 -/
+
+public section
 
 namespace Interaction.UC
 

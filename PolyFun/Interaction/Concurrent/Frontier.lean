@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Spec
+
+module
+
+public import PolyFun.Interaction.Concurrent.Spec
 
 /-!
 # Frontiers and residual concurrent interaction
@@ -28,6 +31,8 @@ recursive alias into `PEmpty` and `Sum`. This keeps the scheduler-facing API
 close to the source syntax and preserves direct pattern matching and
 definitional computation for `residual`.
 -/
+
+public section
 
 universe u
 
@@ -69,6 +74,7 @@ The equations are definitionally the expected ones:
 
 This is the primary execution primitive for schedulers, adversaries, and traces.
 -/
+@[expose]
 def residual : {S : Spec} → Front S → Spec
   | .done, event => nomatch event
   | .node _ rest, .move x => rest x

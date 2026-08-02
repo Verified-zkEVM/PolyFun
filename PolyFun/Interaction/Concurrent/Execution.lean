@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Process
+
+module
+
+public import PolyFun.Interaction.Concurrent.Process
 
 /-!
 # Finite executions of dynamic concurrent processes
@@ -28,6 +31,8 @@ This file therefore provides two parallel views of finite execution:
 The closed-world `Process` API is recovered as a specialization of these
 generic definitions.
 -/
+
+public section
 
 universe u v w w₂ w₃
 
@@ -83,6 +88,7 @@ namespace Observed
 /--
 The number of visited nodes recorded by an observed sequential path.
 -/
+@[expose]
 def length {Party : Type u} [DecidableEq Party] {me : Party} :
     {spec : Interaction.TypeTree.{w}} →
       {semantics : PFunctor.FreeM.Displayed.Decoration (P := TypeTree.basePFunctor)
@@ -206,6 +212,7 @@ inductive Trace
 namespace Trace
 
 /-- The number of process steps recorded by a finite execution trace. -/
+@[expose]
 def length
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ} :
@@ -320,6 +327,7 @@ inductive ObservedTrace
 namespace ObservedTrace
 
 /-- The number of process steps recorded by an observed trace. -/
+@[expose]
 def length
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u} [DecidableEq Party]
