@@ -162,11 +162,8 @@ alternatives. Registered as the default `cases` eliminator so that
 `cases s with | done => ... | node X rest => ...` works transparently
 on top of the polynomial substrate. -/
 @[elab_as_elim, cases_eliminator]
-def casesOn {motive : TypeTree → Sort*}
-    (s : TypeTree)
-    (done : motive TypeTree.done)
-    (node : (X : Type u) → (rest : X → TypeTree) → motive (TypeTree.node X rest)) :
-    motive s :=
+def casesOn {motive : TypeTree → Sort*} (s : TypeTree) (done : motive TypeTree.done)
+    (node : (X : Type u) → (rest : X → TypeTree) → motive (TypeTree.node X rest)) : motive s :=
   match s with
   | .done => done
   | .node X rest => node X rest
@@ -177,12 +174,9 @@ continuation in the `node` case. Registered as the default `induction`
 eliminator so that `induction s with | done => ... | node X rest ih => ...`
 works transparently on top of the polynomial substrate. -/
 @[elab_as_elim, induction_eliminator]
-def recOn {motive : TypeTree → Sort*}
-    (s : TypeTree)
-    (done : motive TypeTree.done)
+def recOn {motive : TypeTree → Sort*} (s : TypeTree) (done : motive TypeTree.done)
     (node : (X : Type u) → (rest : X → TypeTree) →
-        ((x : X) → motive (rest x)) → motive (TypeTree.node X rest)) :
-    motive s :=
+        ((x : X) → motive (rest x)) → motive (TypeTree.node X rest)) : motive s :=
   match s with
   | .done => done
   | .node X rest => node X rest (fun x => recOn (rest x) done node)
@@ -212,19 +206,17 @@ complete path of an outer tree. -/
 abbrev substMonoid : PFunctor.SubstMonoid.{u + 1, u} :=
   PFunctor.FreeP.substMonoid TypeTree.basePFunctor
 
-theorem substMonoid_unit_toFunA (x : PUnit) :
-    TypeTree.substMonoid.unit.toFunA x = TypeTree.done :=
+theorem substMonoid_unit_toFunA (x : PUnit) : TypeTree.substMonoid.unit.toFunA x = TypeTree.done :=
   rfl
 
 @[simp]
-theorem substMonoid_mult_toFunA (spec : TypeTree)
-    (next : Path spec → TypeTree) :
+theorem substMonoid_mult_toFunA (spec : TypeTree) (next : Path spec → TypeTree) :
     TypeTree.substMonoid.mult.toFunA ⟨spec, next⟩ = spec.append next :=
   rfl
 
 @[simp]
-theorem substMonoid_mult_toFunB (spec : TypeTree)
-    (next : Path spec → TypeTree) (tr : Path (spec.append next)) :
+theorem substMonoid_mult_toFunB (spec : TypeTree) (next : Path spec → TypeTree)
+    (tr : Path (spec.append next)) :
     TypeTree.substMonoid.mult.toFunB ⟨spec, next⟩ tr =
       PFunctor.FreeM.Path.split spec next tr :=
   rfl

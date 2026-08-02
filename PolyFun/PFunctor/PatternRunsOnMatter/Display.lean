@@ -199,8 +199,7 @@ theorem runAgainstDisplayed_eq_runFreeDisplayed
         (runAgainstDisplayed T R displayedR displayedProgram state witness) =
       runFreeDisplayed T R displayedR displayedProgram state witness := by
   unfold runAgainstDisplayed
-  rw [transportRunEvidence_trans]
-  rw [transportRunEvidence_proof_irrel F I
+  rw [transportRunEvidence_trans, transportRunEvidence_proof_irrel F I
     ((runAgainstResult_eq_runFree R program state).symm.trans
       (runAgainstResult_eq_runFree R program state)) rfl]
   rfl

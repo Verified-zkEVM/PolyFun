@@ -176,9 +176,8 @@ namespace StepRel
 /--
 Match two paths by equality of their current controlling parties.
 -/
-def byController {Party : Type u} {P₁ P₂ : Type v}
-    {left : Process P₁ Party} {right : Process P₂ Party} :
-    StepRel left right :=
+def byController {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party}
+    {right : Process P₂ Party} : StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     (left.step pL).currentController? trL = (right.step pR).currentController? trR
 
@@ -194,8 +193,7 @@ def byPath {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {ri
 Match two paths by equality of stable external event labels.
 -/
 def byEvent {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
-    {Event : Type w}
-    (eventL : left.EventMap Event) (eventR : right.EventMap Event) :
+    {Event : Type w} (eventL : left.EventMap Event) (eventR : right.EventMap Event) :
     StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     eventL pL trL = eventR pR trR
@@ -204,8 +202,7 @@ def byEvent {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {r
 Match two paths by equality of stable tickets.
 -/
 def byTicket {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
-    {Ticket : Type w}
-    (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket) :
+    {Ticket : Type w} (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket) :
     StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     ticketL pL trL = ticketR pR trR
@@ -454,12 +451,7 @@ theorem relUpTo_of_pointwise {Party : Type u}
   | zero =>
       trivial
   | succ n ih =>
-      refine ⟨?_, ?_⟩
-      · exact hrel 0
-      · exact ih leftRun.tail rightRun.tail
-          (by
-            intro k
-            exact hrel k.succ)
+      exact ⟨hrel 0, ih leftRun.tail rightRun.tail fun k => hrel k.succ⟩
 
 /-- Pointwise path matching implies full run matching. -/
 theorem rel_of_pointwise {Party : Type u}

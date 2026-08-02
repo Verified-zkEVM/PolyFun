@@ -67,13 +67,11 @@ def IsCartesian (l : Lens P Q) : Prop :=
 namespace IsCartesian
 
 @[simp]
-theorem id (P : PFunctor.{uA, uB}) : (Lens.id P).IsCartesian := fun _ =>
-  Function.bijective_id
+theorem id (P : PFunctor.{uA, uB}) : (Lens.id P).IsCartesian := fun _ => Function.bijective_id
 
 theorem comp {l₁ : Lens Q R} {l₂ : Lens P Q}
     (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) :
-    (l₁ ∘ₗ l₂).IsCartesian := fun a =>
-  (h₂ a).comp (h₁ (l₂.toFunA a))
+    (l₁ ∘ₗ l₂).IsCartesian := fun a => (h₂ a).comp (h₁ (l₂.toFunA a))
 
 end IsCartesian
 
@@ -137,8 +135,7 @@ def sigmaInj {I : Type v} {F : I → PFunctor.{uA, uB}} (j : I) :
 namespace IsCartesian
 
 theorem sigmaInj {I : Type v} {F : I → PFunctor.{uA, uB}} (j : I) :
-    (Lens.sigmaInj (F := F) j).IsCartesian := fun _ =>
-  Function.bijective_id
+    (Lens.sigmaInj (F := F) j).IsCartesian := fun _ => Function.bijective_id
 
 end IsCartesian
 

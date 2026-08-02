@@ -144,19 +144,17 @@ type are equal. -/
 @[grind =] lemma mmap_bind (F : m →ᵐ n) (mx : m α) (my : α → m β) :
     F (mx >>= my) = F mx >>= fun x => F (my x) := by grind
 
-@[simp, grind =] lemma mmap_map [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n)
-    (x : m α) (g : α → β) : F (g <$> x) = g <$> F x := by simp [monad_norm]
+@[simp, grind =] lemma mmap_map [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n) (x : m α) (g : α → β) :
+    F (g <$> x) = g <$> F x := by simp [monad_norm]
 
-@[simp] lemma mmap_seq [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n)
-    (x : m (α → β)) (y : m α) : F (x <*> y) = F x <*> F y := by simp [monad_norm]
+@[simp] lemma mmap_seq [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n) (x : m (α → β)) (y : m α) :
+    F (x <*> y) = F x <*> F y := by simp [monad_norm]
 
-@[simp] lemma mmap_seqLeft [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n)
-    (x : m α) (y : m β) : F (x <* y) = F x <* F y := by
-  simp [seqLeft_eq]
+@[simp] lemma mmap_seqLeft [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n) (x : m α) (y : m β) :
+    F (x <* y) = F x <* F y := by simp [seqLeft_eq]
 
-@[simp] lemma mmap_seqRight [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n)
-    (x : m α) (y : m β) : F (x *> y) = F x *> F y := by
-  simp [seqRight_eq]
+@[simp] lemma mmap_seqRight [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n) (x : m α) (y : m β) :
+    F (x *> y) = F x *> F y := by simp [seqRight_eq]
 
 /-- Construct a `MonadHom` from a lawful monad lift. -/
 def ofLift (m : Type u → Type v) (n : Type u → Type w) [Monad m] [Monad n]
@@ -188,13 +186,12 @@ infixr:90 " ∘ₘ "  => MonadHom.comp
 @[simp, grind =] lemma comp_apply (G : n →ᵐ n') (F : m →ᵐ n) (x : m α) :
     (G ∘ₘ F) x = G (F x) := rfl
 
-@[simp, grind =] lemma comp_id (F : m →ᵐ n) : F.comp (MonadHom.id m) = F := by aesop
+@[simp, grind =] lemma comp_id (F : m →ᵐ n) : F.comp (MonadHom.id m) = F := rfl
 
-@[simp, grind =] lemma id_comp (F : m →ᵐ n) : (MonadHom.id n).comp F = F := by aesop
+@[simp, grind =] lemma id_comp (F : m →ᵐ n) : (MonadHom.id n).comp F = F := rfl
 
-@[grind =]
-lemma comp_assoc (H : n' →ᵐ n'') (G : n →ᵐ n') (F : m →ᵐ n) :
-    (H ∘ₘ G) ∘ₘ F = H ∘ₘ (G ∘ₘ F) := by aesop
+@[grind =] lemma comp_assoc (H : n' →ᵐ n'') (G : n →ᵐ n') (F : m →ᵐ n) :
+    (H ∘ₘ G) ∘ₘ F = H ∘ₘ (G ∘ₘ F) := rfl
 
 /-- `pure`/`return` lawfully embed the `Id` monad into any lawful monad. -/
 protected def pure (m) [Monad m] [LawfulMonad m] : Id →ᵐ m where

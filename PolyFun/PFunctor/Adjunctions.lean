@@ -78,10 +78,7 @@ def homFromZero : Lens (0 : PFunctor.{uA₁, uB₁}) p ≃ PUnit where
 def homToOne : Lens p (1 : PFunctor.{uA₁, uB₁}) ≃ PUnit where
   toFun _ := PUnit.unit
   invFun _ := Lens.terminal
-  left_inv l := by
-    refine Lens.ext _ _ (fun a => rfl) (fun a => ?_)
-    funext d
-    exact d.elim
+  left_inv _ := Lens.ext _ _ (fun _ => rfl) fun _ => funext fun d => d.elim
   right_inv _ := rfl
 
 /-- **Representability of `y`** (Spivak–Niu Thm 5.4, `Poly(y, q) ≅ q(1)`). A
@@ -99,10 +96,7 @@ positions `p.A → A`; its backward map is forced since `C A` has no directions.
 def homToConst {A : Type uA₂} : Lens p (C A : PFunctor.{uA₂, uB₁}) ≃ (p.A → A) where
   toFun l := l.toFunA
   invFun := Lens.toConst
-  left_inv l := by
-    refine Lens.ext _ _ (fun a => rfl) (fun a => ?_)
-    funext d
-    exact d.elim
+  left_inv _ := Lens.ext _ _ (fun _ => rfl) fun _ => funext fun d => d.elim
   right_inv _ := rfl
 
 /-- **Principal monomial hom-iso** (Spivak–Niu Cor 5.15, at exponent `PUnit`).
@@ -121,6 +115,8 @@ def homToLinear {A : Type uA₂} :
 
 namespace Lens
 
+variable {q : PFunctor.{uA₁, uB₁}} {r : PFunctor.{uA₂, uB₂}}
+
 /-- The canonical lens `p(1)y ⇆ p` from the linear, position-only shadow of a
 polynomial into the polynomial itself. It preserves positions and forgets the
 chosen direction. -/
@@ -136,47 +132,32 @@ def positionCounit (p : PFunctor.{uA, uB}) : Lens (linear p.A) p :=
 
 /-- Restrict a lens out of `p ⊗ q` to the view where the `q` factor retains
 only its positions. -/
-def tensorLeftView {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}} (l : Lens (p ⊗ q) r) :
-    Lens (p ⊗ linear q.A) r :=
+def tensorLeftView (l : Lens (p ⊗ q) r) : Lens (p ⊗ linear q.A) r :=
   l ∘ₗ (Lens.id p ⊗ₗ positionCounit q)
 
-@[simp] theorem tensorLeftView_toFunA
-    {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}} (l : Lens (p ⊗ q) r) (pq : p.A × q.A) :
+@[simp] theorem tensorLeftView_toFunA (l : Lens (p ⊗ q) r) (pq : p.A × q.A) :
     (tensorLeftView l).toFunA pq = l.toFunA pq := rfl
 
-@[simp] theorem tensorLeftView_toFunB
-    {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}} (l : Lens (p ⊗ q) r) (pq : p.A × q.A)
+@[simp] theorem tensorLeftView_toFunB (l : Lens (p ⊗ q) r) (pq : p.A × q.A)
     (d : r.B (l.toFunA pq)) :
     (tensorLeftView l).toFunB pq d = ((l.toFunB pq d).1, PUnit.unit) := rfl
 
 /-- Restrict a lens out of `p ⊗ q` to the view where the `p` factor retains
 only its positions. -/
-def tensorRightView {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}} (l : Lens (p ⊗ q) r) :
-    Lens (linear p.A ⊗ q) r :=
+def tensorRightView (l : Lens (p ⊗ q) r) : Lens (linear p.A ⊗ q) r :=
   l ∘ₗ (positionCounit p ⊗ₗ Lens.id q)
 
-@[simp] theorem tensorRightView_toFunA
-    {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}} (l : Lens (p ⊗ q) r) (pq : p.A × q.A) :
+@[simp] theorem tensorRightView_toFunA (l : Lens (p ⊗ q) r) (pq : p.A × q.A) :
     (tensorRightView l).toFunA pq = l.toFunA pq := rfl
 
-@[simp] theorem tensorRightView_toFunB
-    {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}} (l : Lens (p ⊗ q) r) (pq : p.A × q.A)
+@[simp] theorem tensorRightView_toFunB (l : Lens (p ⊗ q) r) (pq : p.A × q.A)
     (d : r.B (l.toFunA pq)) :
     (tensorRightView l).toFunB pq d = (PUnit.unit, (l.toFunB pq d).2) := rfl
 
 /-- Glue two one-sided lenses whose position maps agree into a lens
 `p ⊗ q ⇆ r` (Spivak–Niu Proposition 5.49). The result reuses the ordinary
 `Lens` representation: no parallel “tensor views” structure is introduced. -/
-def tensorGlue {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}}
-    (left : Lens (p ⊗ linear q.A) r)
-    (right : Lens (linear p.A ⊗ q) r)
+def tensorGlue (left : Lens (p ⊗ linear q.A) r) (right : Lens (linear p.A ⊗ q) r)
     (positions : left.toFunA = right.toFunA) : Lens (p ⊗ q) r := by
   rcases left with ⟨leftA, leftB⟩
   rcases right with ⟨rightA, rightB⟩
@@ -184,12 +165,9 @@ def tensorGlue {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
   subst rightA
   exact leftA ⇆ fun pq d => ((leftB pq d).1, (rightB pq d).2)
 
-@[simp] theorem tensorGlue_toFunA
-    {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}}
-    (left : Lens (p ⊗ linear q.A) r)
-    (right : Lens (linear p.A ⊗ q) r)
-    (positions : left.toFunA = right.toFunA) (pq : p.A × q.A) :
+@[simp] theorem tensorGlue_toFunA (left : Lens (p ⊗ linear q.A) r)
+    (right : Lens (linear p.A ⊗ q) r) (positions : left.toFunA = right.toFunA)
+    (pq : p.A × q.A) :
     (tensorGlue left right positions).toFunA pq = left.toFunA pq := by
   rcases left with ⟨leftA, leftB⟩
   rcases right with ⟨rightA, rightB⟩
@@ -197,13 +175,9 @@ def tensorGlue {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
   subst rightA
   rfl
 
-@[simp] theorem tensorGlue_toFunB_fst
-    {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}}
-    (left : Lens (p ⊗ linear q.A) r)
-    (right : Lens (linear p.A ⊗ q) r)
-    (positions : left.toFunA = right.toFunA) (pq : p.A × q.A)
-    (d : r.B ((tensorGlue left right positions).toFunA pq)) :
+@[simp] theorem tensorGlue_toFunB_fst (left : Lens (p ⊗ linear q.A) r)
+    (right : Lens (linear p.A ⊗ q) r) (positions : left.toFunA = right.toFunA)
+    (pq : p.A × q.A) (d : r.B ((tensorGlue left right positions).toFunA pq)) :
     ((tensorGlue left right positions).toFunB pq d).1 =
       (left.toFunB pq (tensorGlue_toFunA left right positions pq ▸ d)).1 := by
   rcases left with ⟨leftA, leftB⟩
@@ -212,13 +186,9 @@ def tensorGlue {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
   subst rightA
   rfl
 
-@[simp] theorem tensorGlue_toFunB_snd
-    {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}}
-    (left : Lens (p ⊗ linear q.A) r)
-    (right : Lens (linear p.A ⊗ q) r)
-    (positions : left.toFunA = right.toFunA) (pq : p.A × q.A)
-    (d : r.B ((tensorGlue left right positions).toFunA pq)) :
+@[simp] theorem tensorGlue_toFunB_snd (left : Lens (p ⊗ linear q.A) r)
+    (right : Lens (linear p.A ⊗ q) r) (positions : left.toFunA = right.toFunA)
+    (pq : p.A × q.A) (d : r.B ((tensorGlue left right positions).toFunA pq)) :
     ((tensorGlue left right positions).toFunB pq d).2 =
       (right.toFunB pq (positions ▸ tensorGlue_toFunA left right positions pq ▸ d)).2 := by
   rcases left with ⟨leftA, leftB⟩
@@ -228,12 +198,8 @@ def tensorGlue {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
   rfl
 
 /-- The left view of a glued lens is the supplied left lens. -/
-@[simp] theorem tensorLeftView_tensorGlue
-    {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}}
-    (left : Lens (p ⊗ linear q.A) r)
-    (right : Lens (linear p.A ⊗ q) r)
-    (positions : left.toFunA = right.toFunA) :
+@[simp] theorem tensorLeftView_tensorGlue (left : Lens (p ⊗ linear q.A) r)
+    (right : Lens (linear p.A ⊗ q) r) (positions : left.toFunA = right.toFunA) :
     tensorLeftView (tensorGlue left right positions) = left := by
   rcases left with ⟨leftA, leftB⟩
   rcases right with ⟨rightA, rightB⟩
@@ -246,12 +212,8 @@ def tensorGlue {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
   · exact Subsingleton.elim _ _
 
 /-- The right view of a glued lens is the supplied right lens. -/
-@[simp] theorem tensorRightView_tensorGlue
-    {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}}
-    (left : Lens (p ⊗ linear q.A) r)
-    (right : Lens (linear p.A ⊗ q) r)
-    (positions : left.toFunA = right.toFunA) :
+@[simp] theorem tensorRightView_tensorGlue (left : Lens (p ⊗ linear q.A) r)
+    (right : Lens (linear p.A ⊗ q) r) (positions : left.toFunA = right.toFunA) :
     tensorRightView (tensorGlue left right positions) = right := by
   rcases left with ⟨leftA, leftB⟩
   rcases right with ⟨rightA, rightB⟩
@@ -264,10 +226,7 @@ def tensorGlue {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
   · rfl
 
 /-- Gluing the two canonical one-sided views of a lens recovers that lens. -/
-@[simp] theorem tensorGlue_leftView_rightView
-    {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}}
-    (l : Lens (p ⊗ q) r) :
+@[simp] theorem tensorGlue_leftView_rightView (l : Lens (p ⊗ q) r) :
     tensorGlue (tensorLeftView l) (tensorRightView l) rfl = l := by
   refine Lens.ext _ _ (fun _ => rfl) (fun pq => ?_)
   funext d
@@ -277,9 +236,7 @@ def tensorGlue {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
 tensor are exactly pairs of ordinary one-sided lenses whose position maps
 agree. The compatibility object is written inline as a subtype, rather than
 bundled into a second representation equivalent to `Lens (p ⊗ q) r`. -/
-def tensorGlueEquiv {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₁, uB₁}}
-    {r : PFunctor.{uA₂, uB₂}} :
-    Lens (p ⊗ q) r ≃
+def tensorGlueEquiv : Lens (p ⊗ q) r ≃
       { views : Lens (p ⊗ linear q.A) r × Lens (linear p.A ⊗ q) r //
         views.1.toFunA = views.2.toFunA } where
   toFun l := ⟨(tensorLeftView l, tensorRightView l), rfl⟩

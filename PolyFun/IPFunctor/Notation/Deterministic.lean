@@ -90,8 +90,7 @@ continuation is elaborated at `FreeM P (next s a) β`, where `next s a`
 comes from the `DeterministicTransitions P` instance — no universal
 quantification, so subsequent steps can be state-specific.
 -/
-meta def mkBindLiftA
-    (dec : DoElemCont) (lvls : List Level)
+meta def mkBindLiftA (dec : DoElemCont) (lvls : List Level)
     (I P s aShape detInst : Expr) : DoElabM Expr := do
   -- `DeterministicTransitions` is declared over `IPFunctor I J` (4 universes uI uJ uA uB).
   -- The `FreeM` universes are [uI, uA, uB, v]; for the endomorphic case `Endo I = IPFunctor I I`,

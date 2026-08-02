@@ -42,8 +42,7 @@ reducible-transparency `whnf` does not unfold the head — keeping `IPFunctor.Fr
 the dispatch handle. The body is `IFreeM P (fun _ => α) s`, and at default transparency the
 two are definitionally equal, which is what the equation-lemma `rfl` proofs in this file rely
 on. -/
-def FreeM (P : Endo.{uI, uA, uB} I) (s : I) (α : Type v) :
-    Type (max uI uA uB (v + 1)) :=
+def FreeM (P : Endo.{uI, uA, uB} I) (s : I) (α : Type v) : Type (max uI uA uB (v + 1)) :=
   IFreeM P (fun _ => α) s
 
 namespace FreeM
@@ -60,8 +59,7 @@ def pure (s : I) {α} (x : α) : FreeM P s α := IFreeM.pure (s := s) (X := fun 
 for each branch determined by `P.src`. Tagged `@[match_pattern]`; plain `def` (same reasoning
 as `FreeM.pure`). -/
 @[match_pattern]
-def liftBind (s : I) {α} (a : P.A s) (r : (b : P.B s a) → FreeM P (P.src s a b) α) :
-    FreeM P s α :=
+def liftBind (s : I) {α} (a : P.A s) (r : (b : P.B s a) → FreeM P (P.src s a b) α) : FreeM P s α :=
   IFreeM.liftBind (X := fun _ => α) a r
 
 instance (s : I) : Pure (FreeM P s) where
@@ -87,8 +85,7 @@ is `IFreeM.bind` specialized to the constant family. -/
 
 /-- State-polymorphic bind on `FreeM P`. Specializes `IFreeM.bind` to the constant family. -/
 @[always_inline, inline]
-protected def bind {s : I} (x : FreeM P s α) (g : (s' : I) → α → FreeM P s' β) :
-    FreeM P s β :=
+protected def bind {s : I} (x : FreeM P s α) (g : (s' : I) → α → FreeM P s' β) : FreeM P s β :=
   IFreeM.bind x g
 
 @[simp]
@@ -134,8 +131,7 @@ lemma bindLiftA_eq [det : IPFunctor.DeterministicTransitions P]
 
 /-! ## Injectivity -/
 
-lemma pure_inj (s : I) (x y : α) :
-    FreeM.pure (P := P) s x = FreeM.pure s y ↔ x = y :=
+lemma pure_inj (s : I) (x y : α) : FreeM.pure (P := P) s x = FreeM.pure s y ↔ x = y :=
   IFreeM.pure_inj (P := P) (X := fun _ => α) (s := s) x y
 
 @[simp]
@@ -182,7 +178,7 @@ instance (s : I) : LawfulFunctor (P.FreeM s) where
   comp_map f g x := by
     induction x using IFreeM.inductionOn with
     | pure _ _ => rfl
-    | liftBind _ _ _ ih => exact congrArg _ (funext (fun b => ih b))
+    | liftBind _ _ _ ih => exact congrArg _ (funext ih)
 
 /-! ## Induction principles -/
 
@@ -249,12 +245,10 @@ protected def mapM [Pure m] [Bind m] (h : (s : I) → (a : P.A s) → m (P.B s a
 variable [Monad m] (h : (s : I) → (a : P.A s) → m (P.B s a))
 
 @[simp]
-lemma mapM_pure (s : I) (x : α) :
-    (FreeM.pure (P := P) s x).mapM h = Pure.pure x := rfl
+lemma mapM_pure (s : I) (x : α) : (FreeM.pure (P := P) s x).mapM h = Pure.pure x := rfl
 
 @[simp]
-lemma mapM_pure' (s : I) (x : α) :
-    (Pure.pure x : FreeM P s α).mapM h = Pure.pure x := rfl
+lemma mapM_pure' (s : I) (x : α) : (Pure.pure x : FreeM P s α).mapM h = Pure.pure x := rfl
 
 @[simp]
 lemma mapM_liftBind (s : I) (a : P.A s) (r : (b : P.B s a) → FreeM P (P.src s a b) α) :
@@ -266,13 +260,11 @@ lemma mapM_liftObj [LawfulMonad m] (s : I) (x : P.Obj (fun _ => α) s) :
 
 variable [LawfulMonad m]
 
-lemma mapM_lift (s : I) (a : P.A s) :
-    (FreeM.lift s a).mapM h = h s a := by
+lemma mapM_lift (s : I) (a : P.A s) : (FreeM.lift s a).mapM h = h s a := by
   simp [FreeM.mapM, IFreeM.mapM]
 
 @[simp]
-lemma mapM_map (s : I) (x : FreeM P s α) (f : α → β) :
-    (f <$> x).mapM h = f <$> x.mapM h := by
+lemma mapM_map (s : I) (x : FreeM P s α) (f : α → β) : (f <$> x).mapM h = f <$> x.mapM h := by
   change (FreeM.map s f x).mapM h = f <$> x.mapM h
   induction x using IFreeM.inductionOn with
   | pure _ _ => simp [FreeM.map, FreeM.mapM, IFreeM.imap, IFreeM.mapM]
@@ -347,8 +339,7 @@ lemma erase_punit_liftObj (x : Q.Obj (fun _ => α) PUnit.unit) :
       x.2 <$> PFunctor.FreeM.lift (P := Q.toPFunctor) x.1 := rfl
 
 lemma erase_punit_lift (a : Q.A PUnit.unit) :
-    erase Q PUnit.unit (FreeM.lift PUnit.unit a) =
-      PFunctor.FreeM.lift (P := Q.toPFunctor) a := rfl
+    erase Q PUnit.unit (FreeM.lift PUnit.unit a) = PFunctor.FreeM.lift (P := Q.toPFunctor) a := rfl
 
 end erasePUnit
 

@@ -40,8 +40,8 @@ def vertexLabel : M.Vertex binaryTree → Nat
 def labelledTree : (CofreeP binaryP).Obj Nat :=
   ⟨binaryTree, vertexLabel⟩
 
-example : CofreeC.head (CofreeP.decode labelledTree) = 3 := by
-  exact congrArg Prod.fst (CofreeP.head_decode labelledTree)
+example : CofreeC.head (CofreeP.decode labelledTree) = 3 :=
+  congrArg Prod.fst (CofreeP.head_decode labelledTree)
 
 /-- Decoding the `true` child exposes its distinct label. -/
 example : CofreeC.head

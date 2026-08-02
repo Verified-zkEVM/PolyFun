@@ -54,14 +54,11 @@ protected def id (P : IPFunctor.{uI, uJ, uA, uB} I J) : Chart P P where
 
 /-- Composition of charts in function-composition order: `c ∘c c'` applies `c'` first,
 then `c`. -/
-def comp {P : IPFunctor.{uI, uJ, uA₁, uB₁} I J}
-    {Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J}
-    {R : IPFunctor.{uI, uJ, uA₃, uB₃} I J}
-    (c : Chart Q R) (c' : Chart P Q) : Chart P R where
+def comp {P : IPFunctor.{uI, uJ, uA₁, uB₁} I J} {Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J}
+    {R : IPFunctor.{uI, uJ, uA₃, uB₃} I J} (c : Chart Q R) (c' : Chart P Q) : Chart P R where
   toFunA j := c.toFunA j ∘ c'.toFunA j
   toFunB j a := c.toFunB j (c'.toFunA j a) ∘ c'.toFunB j a
-  src_eq j a b := by
-    simp only [Function.comp_apply, c.src_eq, c'.src_eq]
+  src_eq j a b := by simp [c.src_eq, c'.src_eq]
 
 @[inherit_doc] scoped infixl:75 " ∘c " => IPFunctor.Chart.comp
 

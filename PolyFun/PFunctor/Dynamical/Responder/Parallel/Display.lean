@@ -6,7 +6,6 @@ Authors: Quang Dao
 
 module
 
-
 public import PolyFun.PFunctor.Display.Parallel
 public import PolyFun.PFunctor.Dynamical.Responder.Display
 public import PolyFun.PFunctor.Dynamical.Responder.Parallel
@@ -32,8 +31,7 @@ variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 /-- Coproduct closure of proof-relevant responder coalgebras.  The selected
 component advances while the other component and its witness are frozen. -/
 def sumCoalgebra
-    {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {S : Display.{uA₁, uB, uC₁, uD₁} P} {T : Display.{uA₂, uB, uC₂, uD₂} Q}
     (left : Responder State₁ P) (right : Responder State₂ Q)
     (I : State₁ → Type uI) (J : State₂ → Type uJ)
     (displayedLeft : Display.Coalgebra (Display.responder S) left.out I)
@@ -57,8 +55,7 @@ def sumCoalgebra
 
 @[simp]
 theorem sumCoalgebra_obligation_inl
-    {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {S : Display.{uA₁, uB, uC₁, uD₁} P} {T : Display.{uA₂, uB, uC₂, uD₂} Q}
     (left : Responder State₁ P) (right : Responder State₂ Q)
     (I : State₁ → Type uI) (J : State₂ → Type uJ)
     (displayedLeft : Display.Coalgebra (Display.responder S) left.out I)
@@ -76,8 +73,7 @@ theorem sumCoalgebra_obligation_inl
 
 @[simp]
 theorem sumCoalgebra_obligation_inr
-    {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {S : Display.{uA₁, uB, uC₁, uD₁} P} {T : Display.{uA₂, uB, uC₂, uD₂} Q}
     (left : Responder State₁ P) (right : Responder State₂ Q)
     (I : State₁ → Type uI) (J : State₂ → Type uJ)
     (displayedLeft : Display.Coalgebra (Display.responder S) left.out I)
@@ -96,8 +92,7 @@ theorem sumCoalgebra_obligation_inr
 /-- Parallel closure of proof-relevant responder coalgebras for the separable
 parallel display. -/
 def parallelCoalgebra
-    {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {S : Display.{uA₁, uB, uC₁, uD₁} P} {T : Display.{uA₂, uB, uC₂, uD₂} Q}
     (left : Responder State₁ P) (right : Responder State₂ Q)
     (I : State₁ → Type uI) (J : State₂ → Type uJ)
     (displayedLeft : Display.Coalgebra (Display.responder S) left.out I)
@@ -127,8 +122,7 @@ def parallelCoalgebra
 
 @[simp]
 theorem parallelCoalgebra_obligation_left
-    {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {S : Display.{uA₁, uB, uC₁, uD₁} P} {T : Display.{uA₂, uB, uC₂, uD₂} Q}
     (left : Responder State₁ P) (right : Responder State₂ Q)
     (I : State₁ → Type uI) (J : State₂ → Type uJ)
     (displayedLeft : Display.Coalgebra (Display.responder S) left.out I)
@@ -147,8 +141,7 @@ theorem parallelCoalgebra_obligation_left
 
 @[simp]
 theorem parallelCoalgebra_obligation_right
-    {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {S : Display.{uA₁, uB, uC₁, uD₁} P} {T : Display.{uA₂, uB, uC₂, uD₂} Q}
     (left : Responder State₁ P) (right : Responder State₂ Q)
     (I : State₁ → Type uI) (J : State₂ → Type uJ)
     (displayedLeft : Display.Coalgebra (Display.responder S) left.out I)
@@ -167,8 +160,7 @@ theorem parallelCoalgebra_obligation_right
 
 @[simp]
 theorem parallelCoalgebra_obligation_both
-    {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {S : Display.{uA₁, uB, uC₁, uD₁} P} {T : Display.{uA₂, uB, uC₂, uD₂} Q}
     (left : Responder State₁ P) (right : Responder State₂ Q)
     (I : State₁ → Type uI) (J : State₂ → Type uJ)
     (displayedLeft : Display.Coalgebra (Display.responder S) left.out I)

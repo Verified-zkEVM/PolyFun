@@ -88,18 +88,14 @@ def comap {Δ : P.A → Type vΔ} {syn : SyntaxOver l Agent Δ}
 theorem comap_id
     {m : Type (max uB₂ a w) → Type (max uB₂ a w)}
     (I : InteractionOver l Agent Γ syn m) :
-    comap (fun _ γ => γ) I = I := by
-  cases I
-  rfl
+    comap (fun _ γ => γ) I = I := rfl
 
 theorem comap_comp {Δ : P.A → Type vΔ} {Λ : P.A → Type vΛ}
     {syn : SyntaxOver l Agent Λ}
     {m : Type (max uB₂ a w) → Type (max uB₂ a w)}
     (I : InteractionOver l Agent Λ syn m)
     (g : ∀ pos, Δ pos → Λ pos) (f : ∀ pos, Γ pos → Δ pos) :
-    comap f (comap g I) = comap (fun pos => g pos ∘ f pos) I := by
-  cases I
-  rfl
+    comap f (comap g I) = comap (fun pos => g pos ∘ f pos) I := rfl
 
 /--
 Run a whole lens-executed protocol from a profile of local participant

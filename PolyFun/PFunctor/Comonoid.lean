@@ -272,7 +272,7 @@ def ofStateLens (L : Lens.State S T) [L.IsVeryWellBehaved] :
     funext _
     exact Lens.State.put_get (L := L) s
   map_comult := by
-    let hA : ∀ s, ((stateComonoid T).comult ∘ₗ L).toFunA s =
+    have hA : ∀ s, ((stateComonoid T).comult ∘ₗ L).toFunA s =
         ((L ◃ₗ L) ∘ₗ (stateComonoid S).comult).toFunA s := fun s => by
       apply Sigma.ext
       · rfl
@@ -285,8 +285,8 @@ def ofStateLens (L : Lens.State S T) [L.IsVeryWellBehaved] :
       funext d
       exact (Lens.State.put_put (L := L) s d.1 d.2).symm
     have hcast : (hA s ▸ ((L ◃ₗ L) ∘ₗ (stateComonoid S).comult).toFunB s) ≍
-        ((L ◃ₗ L) ∘ₗ (stateComonoid S).comult).toFunB s := by
-      exact eqRec_heq_self _ _
+        ((L ◃ₗ L) ∘ₗ (stateComonoid S).comult).toFunB s :=
+      eqRec_heq_self _ _
     exact (heq_of_eq hraw).trans hcast.symm
 
 @[simp] theorem ofStateLens_toLens (L : Lens.State S T) [L.IsVeryWellBehaved] :
@@ -297,15 +297,9 @@ the three very-well-behaved lens laws. -/
 theorem stateLens_isVeryWellBehaved
     (F : Comonoid.Hom (stateComonoid S) (stateComonoid T)) :
     Lens.State.IsVeryWellBehaved (show Lens.State S T from F.toLens) where
-  get_put s t := by
-    have h := congrArg (fun l => (l.toFunA s).2 t) F.map_comult
-    exact h.symm
-  put_get s := by
-    have h := congrArg (fun l => l.toFunB s PUnit.unit) F.map_counit
-    exact h
-  put_put s t₁ t₂ := by
-    have h := congrArg (fun l => l.toFunB s ⟨t₁, t₂⟩) F.map_comult
-    exact h.symm
+  get_put s t := (congrArg (fun l => (l.toFunA s).2 t) F.map_comult).symm
+  put_get s := congrArg (fun l => l.toFunB s PUnit.unit) F.map_counit
+  put_put s t₁ t₂ := (congrArg (fun l => l.toFunB s ⟨t₁, t₂⟩) F.map_comult).symm
 
 /-- Retrofunctors between state comonoids are equivalent to ordinary state
 lenses equipped with the very-well-behaved laws. The subtype records genuine
@@ -316,13 +310,11 @@ def stateLensEquiv :
     Comonoid.Hom (stateComonoid S) (stateComonoid T) ≃
       { L : Lens.State S T // L.IsVeryWellBehaved } where
   toFun F := ⟨show Lens.State S T from F.toLens, stateLens_isVeryWellBehaved F⟩
-  invFun L := by
-    letI : L.1.IsVeryWellBehaved := L.2
-    exact ofStateLens L.1
-  left_inv F := Hom.ext _ _ rfl
-  right_inv L := by
-    apply Subtype.ext
-    rfl
+  invFun L :=
+    have : L.1.IsVeryWellBehaved := L.2
+    ofStateLens L.1
+  left_inv _ := Hom.ext _ _ rfl
+  right_inv _ := Subtype.ext rfl
 
 @[simp] theorem stateLensEquiv_apply_val
     (F : Comonoid.Hom (stateComonoid S) (stateComonoid T)) :

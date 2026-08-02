@@ -132,9 +132,7 @@ private theorem unitObj (P : PFunctor.{u, u})
             (PUnit.unit : X.{u, u}.A) pulled.2)) =
       (fun pulled => (pulled.1, PUnit.unit)) := by
     funext pulled
-    apply Prod.ext
-    · rfl
-    · exact CofreeP.laxUnit_toFunB pulled.2
+    exact Prod.ext rfl (CofreeP.laxUnit_toFunB pulled.2)
   rw [hlabel]
   exact runObj_unit P pattern
 

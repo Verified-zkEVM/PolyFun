@@ -36,9 +36,7 @@ example (h : OpenProcessActivationEquiv p₁ p₂) :
 example : OpenProcessActivationEquiv p₁ p₁ := by rfl
 
 example (h : OpenProcessActivationEquiv p₁ p₂) :
-    OpenProcessActivationEquiv p₂ p₁ := by
-  symm
-  exact h
+    OpenProcessActivationEquiv p₂ p₁ := h.symm
 
 /-- A path proved silent receives the generic silent label. -/
 example (s : p₁.Proc) (tr : (p₁.step s).tree.Path)

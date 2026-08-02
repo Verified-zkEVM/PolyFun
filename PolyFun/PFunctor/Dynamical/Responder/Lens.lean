@@ -55,8 +55,7 @@ displayed lens. -/
           (respondDisplayed T displayedBehavior (f.toFunA operation)
             (df.toPosition operation contract)).1,
         (respondDisplayed T displayedBehavior (f.toFunA operation)
-          (df.toPosition operation contract)).2⟩ := by
-  rfl
+          (df.toPosition operation contract)).2⟩ := rfl
 
 /-- Reindex a state-free behavior along a one-step polynomial lens. -/
 def mapBehavior (f : PFunctor.Lens P Q)

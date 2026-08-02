@@ -59,15 +59,13 @@ def runObj : (pattern : (FreeP P).A) → (matter : (CofreeP Q).A) →
               M.Vertex.child direction.2 pulled.2⟩)
           (runObj (rest direction.1) (M.children tree direction.2))
 
-theorem runObj_pure (value : PUnit.{pB + 1})
-    (matter : (CofreeP Q).A) :
+theorem runObj_pure (value : PUnit.{pB + 1}) (matter : (CofreeP Q).A) :
     runObj (P := P) (FreeM.pure value) matter =
       ⟨FreeM.pure PUnit.unit,
         fun _ => ⟨PUnit.unit, M.Vertex.root matter⟩⟩ :=
   rfl
 
-theorem runObj_liftBind (a : P.A)
-    (rest : P.B a → FreeM P PUnit.{pB + 1})
+theorem runObj_liftBind (a : P.A) (rest : P.B a → FreeM P PUnit.{pB + 1})
     (matter : (CofreeP Q).A) :
     runObj (FreeM.liftBind a rest) matter =
       FreeP.node (P := P ⊗ Q) (a, M.head matter) (fun direction =>
@@ -93,16 +91,15 @@ def runLabeled {α : Type v} (pattern : (FreeP P).A)
 
 /-- A terminated pattern returns its leaf together with the label at the root
 of the matter object. -/
-theorem runLabeled_pure {α : Type v} (value : PUnit.{pB + 1})
-    (matter : (CofreeP Q).Obj α) :
+theorem runLabeled_pure {α : Type v} (value : PUnit.{pB + 1}) (matter : (CofreeP Q).Obj α) :
     runLabeled (P := P) (FreeM.pure value) matter =
       ⟨FreeM.pure PUnit.unit, fun _ => (PUnit.unit, matter.2 (.root _))⟩ :=
   rfl
 
 /-- Recursive equation for running a labelled matter object through one
 pattern node. -/
-theorem runLabeled_liftBind {α : Type v} (a : P.A)
-    (rest : P.B a → (FreeP P).A) (matter : (CofreeP Q).Obj α) :
+theorem runLabeled_liftBind {α : Type v} (a : P.A) (rest : P.B a → (FreeP P).A)
+    (matter : (CofreeP Q).Obj α) :
     runLabeled (FreeM.liftBind a rest) matter =
       FreeP.node (P := P ⊗ Q) (a, M.head matter.1) (fun direction =>
         FreeP.relabel
@@ -117,8 +114,7 @@ theorem runLabeled_liftBind {α : Type v} (a : P.A)
 /-- Running the shape of a labelled free node ignores its leaf labels and
 recurses on the child shapes. -/
 @[simp]
-theorem runObj_node {α : Type v} (a : P.A)
-    (children : P.B a → (FreeP P).Obj α)
+theorem runObj_node {α : Type v} (a : P.A) (children : P.B a → (FreeP P).Obj α)
     (matter : (CofreeP Q).A) :
     runObj (FreeP.node a children).1 matter =
       FreeP.node (P := P ⊗ Q) (a, M.head matter) (fun direction =>
@@ -157,32 +153,28 @@ theorem runOn_toFunB (pattern : (FreeP P).A) (matter : (CofreeP Q).A)
 leaf carries both the original pattern result and the label at the reached
 matter vertex. This is the type-level consumer boundary behind operational
 applications; `runObj` remains the lower-level path/vertex kernel. -/
-def runObjects {α : Type v} {β : Type w}
-    (pattern : (FreeP P).Obj α) (matter : (CofreeP Q).Obj β) :
+def runObjects {α : Type v} {β : Type w} (pattern : (FreeP P).Obj α) (matter : (CofreeP Q).Obj β) :
     (FreeP (P ⊗ Q)).Obj (α × β) :=
   Lens.mapObj (runOn P Q)
     ⟨(pattern.1, matter.1), fun direction =>
       (pattern.2 direction.1, matter.2 direction.2)⟩
 
 @[simp]
-theorem runObjects_shape {α : Type v} {β : Type w}
-    (pattern : (FreeP P).Obj α) (matter : (CofreeP Q).Obj β) :
-    (runObjects pattern matter).1 = (runObj pattern.1 matter.1).1 :=
+theorem runObjects_shape {α : Type v} {β : Type w} (pattern : (FreeP P).Obj α)
+    (matter : (CofreeP Q).Obj β) : (runObjects pattern matter).1 = (runObj pattern.1 matter.1).1 :=
   rfl
 
 /-- The output label is obtained by pulling the complete output path back to
 the source pattern path and matter vertex, then reading both source labels. -/
-theorem runObjects_label {α : Type v} {β : Type w}
-    (pattern : (FreeP P).Obj α) (matter : (CofreeP Q).Obj β)
-    (path : FreeM.Path (runObjects pattern matter).1) :
+theorem runObjects_label {α : Type v} {β : Type w} (pattern : (FreeP P).Obj α)
+    (matter : (CofreeP Q).Obj β) (path : FreeM.Path (runObjects pattern matter).1) :
     (runObjects pattern matter).2 path =
       let pulled := (runObj pattern.1 matter.1).2 path
       (pattern.2 pulled.1, matter.2 pulled.2) :=
   rfl
 
 /-- Recursive normal form for labelled object execution. -/
-def runObjectsTree {α : Type v} {β : Type w} :
-    FreeM P α → (CofreeP Q).Obj β → FreeM (P ⊗ Q) (α × β)
+def runObjectsTree {α : Type v} {β : Type w} : FreeM P α → (CofreeP Q).Obj β → FreeM (P ⊗ Q) (α × β)
   | .pure value, matter => .pure (value, matter.2 (.root matter.1))
   | .liftBind operation next, matter =>
       .liftBind (operation, M.head matter.1) fun direction =>
@@ -190,8 +182,8 @@ def runObjectsTree {α : Type v} {β : Type w} :
           (CofreeP.childObj matter direction.2)
 
 /-- Decoding labelled object execution computes by synchronized recursion. -/
-theorem decode_runObjects_encode {α : Type v} {β : Type w}
-    (pattern : FreeM P α) (matter : (CofreeP Q).Obj β) :
+theorem decode_runObjects_encode {α : Type v} {β : Type w} (pattern : FreeM P α)
+    (matter : (CofreeP Q).Obj β) :
     FreeP.decode (runObjects (FreeP.encode pattern) matter) =
       runObjectsTree pattern matter := by
   induction pattern generalizing matter with
@@ -207,8 +199,7 @@ theorem decode_runObjects_encode {α : Type v} {β : Type w}
 /-- Packaged operational naturality, including the complete dependent
 backward map. Mapping both generators before execution agrees with executing
 first and mapping the synchronized output. -/
-theorem runObj_natural
-    {P' : PFunctor.{pA', pB'}} {Q' : PFunctor.{qA', qB'}}
+theorem runObj_natural {P' : PFunctor.{pA', pB'}} {Q' : PFunctor.{qA', qB'}}
     (f : Lens P P') (g : Lens Q Q')
     (pattern : (FreeP P).A) (matter : (CofreeP Q).A) :
     FreeP.relabel
@@ -320,8 +311,7 @@ theorem runObj_natural
 
 /-- The Libkind--Spivak interaction is covariant in both the pattern and
 matter generators. All eight source and target universes remain independent. -/
-theorem runOn_natural
-    {P' : PFunctor.{pA', pB'}} {Q' : PFunctor.{qA', qB'}}
+theorem runOn_natural {P' : PFunctor.{pA', pB'}} {Q' : PFunctor.{qA', qB'}}
     (f : Lens P P') (g : Lens Q Q') :
     runOn P' Q' ∘ₗ (FreeP.map f ⊗ₗ CofreeP.map g) =
       FreeP.map (f ⊗ₗ g) ∘ₗ runOn P Q := by

@@ -129,7 +129,7 @@ def rootLabel {P : PFunctor} {α : Type} : FreeM P α → Option P.A
 in the advertised tensor order. -/
 example : rootLabel
     ((FreeP.runOn patternP matterP).toFunA (oneNode, matter)) =
-      some (false, .initial) := by
+      some (false, .initial) :=
   rfl
 
 /-- One synchronized step pairs the two root labels and preserves the order
@@ -137,7 +137,7 @@ of the pattern and matter directions in the backward result. -/
 example :
     (FreeP.runOn patternP matterP).toFunB
       (oneNode, matter) oneNodeOutputPath =
-      (⟨true, ⟨⟩⟩, .child 2 (.root _)) := by
+      (⟨true, ⟨⟩⟩, .child 2 (.root _)) :=
   rfl
 
 /-- A leaf pattern terminates immediately and returns the unadvanced matter
@@ -165,13 +165,12 @@ def expectedMatterVertex : M.Vertex matter :=
 the correct factor order. -/
 example :
     (FreeP.runOn patternP matterP).toFunB (pattern, matter) outputPath =
-      (expectedPatternPath, expectedMatterVertex) := by
+      (expectedPatternPath, expectedMatterVertex) :=
   rfl
 
 /-- The synchronized traversal consumes exactly two matter edges before the
 finite pattern terminates. -/
-example : M.Vertex.depth expectedMatterVertex = 2 := by
-  rfl
+example : M.Vertex.depth expectedMatterVertex = 2 := rfl
 
 /-- Change both operation labels and pull target branches back through a
 nonidentity permutation. -/
@@ -251,9 +250,9 @@ example :
 
 /-- Both generator-level direction rotations used by the depth-two mapped
 path are pinned independently. -/
-example : matterRotate.toFunB .initial 2 = 0 := by rfl
+example : matterRotate.toFunB .initial 2 = 0 := rfl
 
-example : matterRotate.toFunB .afterZero 0 = 1 := by rfl
+example : matterRotate.toFunB .afterZero 0 = 1 := rfl
 
 def mappedMatter : (CofreeP matterP).A :=
   (CofreeP.map matterRotate).toFunA matter
@@ -328,12 +327,11 @@ example :
     ((FreeP.map (Lens.Equiv.tensorX (P := patternP)).toLens ∘ₗ
         FreeP.runOn patternP X) ∘ₗ
         (Lens.id (FreeP patternP) ⊗ₗ CofreeP.laxUnit)).toFunA
-        (pattern, PUnit.unit) = pattern := by
-  have h := congrArg
+        (pattern, PUnit.unit) = pattern :=
+  congrArg
     (fun lens : Lens (FreeP patternP ⊗ X) (FreeP patternP) =>
       lens.toFunA (pattern, PUnit.unit))
     (FreeP.runOn_unit patternP)
-  exact h
 
 def unitAction : Lens (FreeP patternP ⊗ X.{0, 0}) (FreeP patternP) :=
   (FreeP.map (Lens.Equiv.tensorX (P := patternP)).toLens ∘ₗ
@@ -344,7 +342,7 @@ def unitAction : Lens (FreeP patternP ⊗ X.{0, 0}) (FreeP patternP) :=
 backward map, including the unit direction discarded by tensor unitor. -/
 example :
     unitAction.toFunB (pattern, PUnit.unit) expectedPatternPath =
-      (expectedPatternPath, PUnit.unit) := by
+      (expectedPatternPath, PUnit.unit) :=
   rfl
 
 abbrev auxiliaryP : PFunctor := ⟨Bool, fun _ => Bool⟩
@@ -446,7 +444,7 @@ theorem synchronizedBackwardDirections :
 
 /-- The two parenthesizations compute the same depth-two output position. -/
 example : assocLhs.toFunA ((pattern, matter), auxiliaryMatter) =
-    assocRhs.toFunA ((pattern, matter), auxiliaryMatter) := by
+    assocRhs.toFunA ((pattern, matter), auxiliaryMatter) :=
   rfl
 
 def assocLhsOutputPath : FreeM.Path
@@ -479,7 +477,7 @@ example :
     assocRhs.toFunB ((pattern, matter), auxiliaryMatter)
         assocOutputPath =
       ((expectedPatternPath, expectedMatterVertex),
-        expectedAuxiliaryVertex) := by
+        expectedAuxiliaryVertex) :=
   rfl
 
 end PatternRunsOnMatterTest

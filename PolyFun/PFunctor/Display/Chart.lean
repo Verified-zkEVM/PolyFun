@@ -146,13 +146,9 @@ def ofChartEquiv {Q : PFunctor.{uA', uB'}} (f : Chart Q P) :
   toChart := ofChartSource f
   invChart := ofChartLift f
   left_inv := by
-    ext ac bd
-    · rcases ac with ⟨a, q, hq⟩
-      cases hq
-      rfl
-    · rcases ac with ⟨a, q, hq⟩
-      cases hq
-      rcases bd with ⟨b, d, hd⟩
+    ext ac bd <;> obtain ⟨a, q, hq⟩ := ac <;> cases hq
+    · rfl
+    · obtain ⟨b, d, hd⟩ := bd
       cases hd
       rfl
   right_inv := rfl

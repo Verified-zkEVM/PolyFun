@@ -40,16 +40,13 @@ def toResumption : FreeM p α → Resumption p α
       Resumption.query position fun direction => toResumption (next direction) := rfl
 
 theorem dest_toResumption_pure (value : α) :
-    Resumption.dest (toResumption (pure value : FreeM p α)) = Sum.inl value := by
-  simp
+    Resumption.dest (toResumption (pure value : FreeM p α)) = Sum.inl value := rfl
 
 theorem dest_toResumption_liftBind (position : p.A)
     (next : p.B position → FreeM p α) :
     Resumption.dest (toResumption (FreeM.liftBind position next)) =
       Sum.inr ⟨position, fun direction => toResumption (next direction)⟩ := by
-  change Resumption.dest
-      (Resumption.query position fun direction => toResumption (next direction)) = _
-  exact Resumption.dest_query position fun direction => toResumption (next direction)
+  rw [FreeM.liftBind_eq, toResumption_liftBind, Resumption.dest_query]
 
 @[simp] theorem toResumption_bind (program : FreeM p α) (k : α → FreeM p β) :
     toResumption (FreeM.bind program k) =

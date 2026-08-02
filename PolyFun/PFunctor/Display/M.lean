@@ -330,8 +330,7 @@ theorem bisim
 /-- Two displayed corecursors are equal when a fiberwise relation on their
 seed states matches one-step displayed shapes and all corresponding children.
 This is the seed-level form of displayed coinduction. -/
-theorem corec_eq_corec
-    (X : PFunctor.M P → Type uX) (Y : PFunctor.M P → Type uY)
+theorem corec_eq_corec (X : PFunctor.M P → Type uX) (Y : PFunctor.M P → Type uY)
     (stepX : (tree : PFunctor.M P) → X tree →
       S.Obj X (PFunctor.M.dest tree))
     (stepY : (tree : PFunctor.M P) → Y tree →

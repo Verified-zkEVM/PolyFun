@@ -10,7 +10,22 @@ public import Mathlib.Data.Stream.Init
 public import Batteries.Data.List.Basic
 import Batteries.Tactic.Lint
 
-/-! # Instances of Comonads -/
+/-!
+# Instances of Comonads
+
+Comonad, `Coapplicative`, and lawfulness instances for a range of concrete functors,
+together with two comonad transformers and Day convolution.
+
+## Main definitions
+
+* `NonEmptyList`: a list with a distinguished head, carrying the non-empty-tails comonad.
+* `List.Zipper`: a list with a distinguished focus, carrying the zipper comonad.
+* `EnvT`, `StoreT`: the environment and store comonad transformers over a base comonad.
+* `Day`: the Day convolution of two endofunctors.
+
+The identity functor `Id`, products `Prod ε`, and streams `Stream'` also receive their
+comonad instances here.
+-/
 
 @[expose] public section
 
@@ -93,9 +108,9 @@ instance : LawfulCoapplicative (Prod ε) where
   coseq_assoc := by
     intros α β γ wa wb wc
     apply Prod.ext
-    · -- Goal: (map (Equiv.prodAssoc α β γ) (coseq (coseq wa wb) wc)).1 = (coseq wa (coseq wb wc)).1
+    · -- first component: the shared environment
       simp only [coseq, Functor.map]
-    · -- Goal: (map (Equiv.prodAssoc α β γ) (coseq (coseq wa wb) wc)).2 = (coseq wa (coseq wb wc)).2
+    · -- second component: the reassociated values
       simp only [coseq, Functor.map, Equiv.prodAssoc_apply]
   map_coseq := by
     intro _ _ _ _ f g wa wb
@@ -179,7 +194,7 @@ instance : Extract Stream' where
   extract := Stream'.head
 
 instance : Extend Stream' where
-  extend s f := fun n => f (Stream'.drop n s) -- Correct definition
+  extend s f := fun n => f (Stream'.drop n s)
 
 instance : Coseq Stream' where
   coseq := Stream'.zip Prod.mk -- Provide Prod.mk
@@ -252,7 +267,7 @@ variable {α β γ : Type u}
 -- Helper theorem for LawfulFunctor
 theorem map_map (g : α → β) (h : β → γ) (nel : NonEmptyList α) :
     map h (map g nel) = map (h ∘ g) nel := by
-  cases nel; simp [map, List.map_map, Function.comp_apply]
+  cases nel; simp [map, List.map_map]
 
 instance : Functor NonEmptyList where
   map := NonEmptyList.map
@@ -272,7 +287,7 @@ instance : Coapplicative NonEmptyList where
 instance : Comonad NonEmptyList where
   -- Uses Coapplicative and Extend defined above
 
--- Lawfulness Proofs (Sketch - may require more detailed proofs)
+-- Lawfulness proofs for NonEmptyList
 
 instance : LawfulFunctor NonEmptyList where
   id_map := by
@@ -345,7 +360,7 @@ theorem tails_map (f : α → β) (nel : NonEmptyList α) :
   simp only [tails, map]; congr 1
   exact filterMap_fromList?_tails_map_list f t
 
-theorem fft_fft_eq_map_tails (l : List α) :
+theorem filterMap_fromList?_tails_tails (l : List α) :
     List.filterMap NonEmptyList.fromList? (List.tails
       (List.filterMap NonEmptyList.fromList? (List.tails l))) =
     List.map tails (List.filterMap NonEmptyList.fromList? (List.tails l)) := by
@@ -356,7 +371,7 @@ theorem fft_fft_eq_map_tails (l : List α) :
 theorem tails_tails (nel : NonEmptyList α) : tails (tails nel) = map tails (tails nel) := by
   obtain ⟨h, t⟩ := nel
   simp only [tails, map]; congr 1
-  exact fft_fft_eq_map_tails t
+  exact filterMap_fromList?_tails_tails t
 
 instance : LawfulComonad NonEmptyList where
   map_eq_extend_extract := by
@@ -537,7 +552,7 @@ instance : Coapplicative Zipper where
 instance : Comonad Zipper where
   -- Uses Coapplicative and Extend defined above
 
--- Lawfulness Proofs (Sketch - Require Zipper API and proofs)
+-- Lawfulness proofs for List.Zipper
 
 instance : LawfulFunctor Zipper where
   id_map := by intro _ ⟨l, f, r⟩; simp [Functor.map, map]
@@ -666,7 +681,7 @@ instance instComonad [Comonad w] : Comonad (EnvT e w) where
   -- Uses instCoapplicative and instExtend defined above
   -- map uses default implementation: extend envt (fun wa => f (extract wa))
 
--- Lawfulness (Sketch - requires proofs based on w's lawfulness)
+-- Lawfulness proofs, derived from the base comonad `w`
 
 instance instLawfulFunctor [Comonad w] [LawfulFunctor w] : LawfulFunctor (EnvT e w) where
   id_map := by intros α wa; cases wa; simp [Functor.map, id_map]
@@ -753,7 +768,7 @@ instance instCoapplicative [Comonad w] : Coapplicative (StoreT s w) where
 instance instComonad [Comonad w] : Comonad (StoreT s w) where
   -- Uses instCoapplicative and instExtend defined above
 
--- Lawfulness (Sketch - requires proofs based on w's lawfulness)
+-- Lawfulness proofs, derived from the base comonad `w`
 
 instance instLawfulFunctor [Comonad w] [LawfulFunctor w] : LawfulFunctor (StoreT s w) where
   id_map := by intros α wa; cases wa; simp [Functor.map]

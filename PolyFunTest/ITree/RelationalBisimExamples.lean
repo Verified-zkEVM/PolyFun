@@ -55,9 +55,8 @@ example (r : α) :
   WeakBisim.pure_not_diverge r
 
 example (r : α) :
-    ¬ WeakBisim (ITree.diverge (F := F)) (ITree.pure (F := F) r) := by
-  intro h
-  exact WeakBisim.pure_not_diverge r h.symm
+    ¬ WeakBisim (ITree.diverge (F := F)) (ITree.pure (F := F) r) :=
+  fun h => WeakBisim.pure_not_diverge r h.symm
 
 example (RR : α → β → Prop) (SS : γ → δ → Prop)
     {left : ITree F α} {right : ITree F β}
@@ -91,8 +90,8 @@ def leftTree : ITree EmptySpec Bool :=
 def rightTree : ITree EmptySpec Nat :=
   ITree.pure 1
 
-theorem leftTree_rightTree : WeakBisimRel SourceRel leftTree rightTree := by
-  exact WeakBisimRel.step_left (WeakBisimRel.pure ⟨rfl, rfl⟩)
+theorem leftTree_rightTree : WeakBisimRel SourceRel leftTree rightTree :=
+  WeakBisimRel.step_left (WeakBisimRel.pure ⟨rfl, rfl⟩)
 
 def leftCont (flag : Bool) : ITree EmptySpec String :=
   ITree.pure (if flag then "accepted" else "rejected")

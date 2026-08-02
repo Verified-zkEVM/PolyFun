@@ -357,8 +357,7 @@ theorem length_done
     {P : Type v} {process : ProcessOver P Γ} {p : process.Proc}
     {h : (process.step p).tree.Path → False} :
     length (ObservedTrace.done
-      (me := me) (resolve := resolve) (process := process) (p := p) (h := h)) = 0 := by
-  rfl
+      (me := me) (resolve := resolve) (process := process) (p := p) (h := h)) = 0 := rfl
 
 @[simp, grind =]
 theorem length_step
@@ -371,8 +370,7 @@ theorem length_step
     (obs : StepOver.ObservedPath me resolve (process.step p) tr)
     (rest : ObservedTrace me resolve process tail) :
     length (.step obs rest : ObservedTrace me resolve process
-      (.step tr tail : Trace process p)) = rest.length.succ := by
-  rfl
+      (.step tr tail : Trace process p)) = rest.length.succ := rfl
 
 /--
 The canonical observed process trace has the same number of process steps as
@@ -492,8 +490,7 @@ theorem length_done {Party : Type u} [DecidableEq Party]
       (resolve := Interaction.TypeTree.Node.ContextHom.id (StepContext Party))
       (process := process)
       (p := p)
-      (h := h)) = 0 := by
-  rfl
+      (h := h)) = 0 := rfl
 
 @[grind =]
 theorem length_step {Party : Type u} [DecidableEq Party]
@@ -505,8 +502,7 @@ theorem length_step {Party : Type u} [DecidableEq Party]
       (process.step p) tr)
     (rest : ObservedTrace me process tail) :
     length (.step obs rest : ObservedTrace me process
-      (.step tr tail : Process.Trace process p)) = rest.length.succ := by
-  rfl
+      (.step tr tail : Process.Trace process p)) = rest.length.succ := rfl
 
 /--
 The canonical observed closed-world trace has the same number of process steps

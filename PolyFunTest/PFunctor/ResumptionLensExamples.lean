@@ -89,8 +89,8 @@ def visibleLoop (seed : Bool) : Resumption source Nat :=
 example (seed : Bool) :
     Resumption.dest (visibleLoop seed) =
       Sum.map (fun value : Nat => value)
-        (source.map (Resumption.corec loopStep)) (loopStep seed) := by
-  exact Resumption.dest_corec loopStep seed
+        (source.map (Resumption.corec loopStep)) (loopStep seed) :=
+  Resumption.dest_corec loopStep seed
 
 example (f : Bool → Resumption source Nat)
     (hf : ∀ seed, Resumption.dest (f seed) =

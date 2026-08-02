@@ -89,15 +89,13 @@ example (C : Comonoid.{uA₁, uB₁}) :
 
 /-- The associator remains heterogeneous in all three input universe pairs,
 and exposes both directions without transports. -/
-example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂})
-    (E : Comonoid.{uA₃, uB₃}) :
+example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) (E : Comonoid.{uA₃, uB₃}) :
     (Comonoid.tensorAssocIso C D E).hom.toLens =
       (Lens.Equiv.tensorAssoc
         (P := C.carrier) (Q := D.carrier) (R := E.carrier)).toLens := by
   simp
 
-example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂})
-    (E : Comonoid.{uA₃, uB₃}) :
+example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) (E : Comonoid.{uA₃, uB₃}) :
     (Comonoid.tensorAssocIso C D E).inv.toLens =
       (Lens.Equiv.tensorAssoc
         (P := C.carrier) (Q := D.carrier) (R := E.carrier)).invLens := by
@@ -109,41 +107,39 @@ example (C : Comonoid.{uA₁, uB₁}) :
     (Comonoid.tensorUnitLeftIso C).hom.comp
         (Comonoid.tensorUnitLeftIso C).inv =
       Comonoid.Hom.id
-        (Comonoid.tensor (Comonoid.unit.{uA₁, uB₁}) C) := by
-  exact (Comonoid.tensorUnitLeftIso C).hom_inv_id
+        (Comonoid.tensor (Comonoid.unit.{uA₁, uB₁}) C) :=
+  (Comonoid.tensorUnitLeftIso C).hom_inv_id
 
 example (C : Comonoid.{uA₁, uB₁}) :
     (Comonoid.tensorUnitLeftIso C).inv.comp
         (Comonoid.tensorUnitLeftIso C).hom =
-      Comonoid.Hom.id C := by
-  exact (Comonoid.tensorUnitLeftIso C).inv_hom_id
+      Comonoid.Hom.id C :=
+  (Comonoid.tensorUnitLeftIso C).inv_hom_id
 
 example (C : Comonoid.{uA₁, uB₁}) :
     (Comonoid.tensorUnitRightIso C).inv.comp
         (Comonoid.tensorUnitRightIso C).hom =
-      Comonoid.Hom.id C := by
-  exact (Comonoid.tensorUnitRightIso C).inv_hom_id
+      Comonoid.Hom.id C :=
+  (Comonoid.tensorUnitRightIso C).inv_hom_id
 
 example (C : Comonoid.{uA₁, uB₁}) :
     (Comonoid.tensorUnitRightIso C).hom.comp
         (Comonoid.tensorUnitRightIso C).inv =
       Comonoid.Hom.id
-        (Comonoid.tensor C (Comonoid.unit.{uA₁, uB₁})) := by
-  exact (Comonoid.tensorUnitRightIso C).hom_inv_id
+        (Comonoid.tensor C (Comonoid.unit.{uA₁, uB₁})) :=
+  (Comonoid.tensorUnitRightIso C).hom_inv_id
 
-example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂})
-    (E : Comonoid.{uA₃, uB₃}) :
+example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) (E : Comonoid.{uA₃, uB₃}) :
     (Comonoid.tensorAssocIso C D E).hom.comp
         (Comonoid.tensorAssocIso C D E).inv =
-      Comonoid.Hom.id (Comonoid.tensor (Comonoid.tensor C D) E) := by
-  exact (Comonoid.tensorAssocIso C D E).hom_inv_id
+      Comonoid.Hom.id (Comonoid.tensor (Comonoid.tensor C D) E) :=
+  (Comonoid.tensorAssocIso C D E).hom_inv_id
 
-example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂})
-    (E : Comonoid.{uA₃, uB₃}) :
+example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) (E : Comonoid.{uA₃, uB₃}) :
     (Comonoid.tensorAssocIso C D E).inv.comp
         (Comonoid.tensorAssocIso C D E).hom =
-      Comonoid.Hom.id (Comonoid.tensor C (Comonoid.tensor D E)) := by
-  exact (Comonoid.tensorAssocIso C D E).inv_hom_id
+      Comonoid.Hom.id (Comonoid.tensor C (Comonoid.tensor D E)) :=
+  (Comonoid.tensorAssocIso C D E).inv_hom_id
 
 /-- Tensor products of retrofunctors retain the componentwise lens, identity,
 and diagrammatic composition laws. -/
@@ -203,23 +199,13 @@ def listMonoidComonoid : Comonoid where
           (show List Bool from directions.2))
   counit_left := by
     refine Lens.ext _ _ (fun _ => rfl) (fun _ => ?_)
-    funext direction
-    exact List.nil_append direction
+    exact funext List.nil_append
   counit_right := by
     refine Lens.ext _ _ (fun _ => rfl) (fun _ => ?_)
-    funext direction
-    exact List.append_nil direction
+    exact funext List.append_nil
   coassoc := by
     refine Lens.ext _ _ (fun _ => rfl) (fun _ => ?_)
-    funext direction
-    change
-      ((show List Bool from direction.1) ++
-        (show List Bool from direction.2.1)) ++
-          (show List Bool from direction.2.2) =
-        (show List Bool from direction.1) ++
-          ((show List Bool from direction.2.1) ++
-            (show List Bool from direction.2.2))
-    exact List.append_assoc direction.1 direction.2.1 direction.2.2
+    exact funext fun d => List.append_assoc d.1 d.2.1 d.2.2
 
 /-! ## Observable coherence maps -/
 
@@ -278,9 +264,7 @@ example :
 /-- A tensor of state-lens retrofunctors updates both hidden state components
 independently. -/
 def fstTensorHom : Comonoid.Hom
-    (Comonoid.tensor
-      (stateComonoid (ThreeState × Bool))
-      (stateComonoid (Bool × Nat)))
+    (Comonoid.tensor (stateComonoid (ThreeState × Bool)) (stateComonoid (Bool × Nat)))
     (Comonoid.tensor (stateComonoid ThreeState) (stateComonoid Bool)) :=
   Comonoid.Hom.tensor
     (Comonoid.Hom.ofStateLens (Lens.State.fst ThreeState Bool))

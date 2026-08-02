@@ -95,14 +95,13 @@ namespace MachineId
 
 variable {Sid Pid : Type u}
 
-theorem ext_iff {m₁ m₂ : MachineId Sid Pid} :
-    m₁ = m₂ ↔ m₁.sid = m₂.sid ∧ m₁.pid = m₂.pid := by
+theorem ext_iff {m₁ m₂ : MachineId Sid Pid} : m₁ = m₂ ↔ m₁.sid = m₂.sid ∧ m₁.pid = m₂.pid := by
   cases m₁; cases m₂; simp
 
 @[ext]
-theorem ext {m₁ m₂ : MachineId Sid Pid}
-    (hsid : m₁.sid = m₂.sid) (hpid : m₁.pid = m₂.pid) : m₁ = m₂ := by
-  rw [ext_iff]; exact ⟨hsid, hpid⟩
+theorem ext {m₁ m₂ : MachineId Sid Pid} (hsid : m₁.sid = m₂.sid) (hpid : m₁.pid = m₂.pid) :
+    m₁ = m₂ :=
+  ext_iff.mpr ⟨hsid, hpid⟩
 
 /--
 Two machines belong to the same protocol session iff their session identifiers
@@ -116,8 +115,7 @@ def sameSession [DecidableEq Sid] (m₁ m₂ : MachineId Sid Pid) : Bool :=
   decide (m₁.sid = m₂.sid)
 
 @[simp]
-theorem sameSession_self [DecidableEq Sid] (m : MachineId Sid Pid) :
-    m.sameSession m = true := by
+theorem sameSession_self [DecidableEq Sid] (m : MachineId Sid Pid) : m.sameSession m = true := by
   simp [sameSession]
 
 theorem sameSession_iff [DecidableEq Sid] (m₁ m₂ : MachineId Sid Pid) :
@@ -197,8 +195,7 @@ def allowAll (P : OpenProcess.{u, v, w, w'} m Party Δ) : HasAccessControl P whe
   allowed _ := true
 
 @[simp]
-theorem allowed_allowAll
-    (P : OpenProcess.{u, v, w, w'} m Party Δ)
+theorem allowed_allowAll (P : OpenProcess.{u, v, w, w'} m Party Δ)
     (rp : Interface.RoutedPacket Δ.In Party) :
     (HasAccessControl.allowAll P).allowed rp = true := rfl
 
@@ -243,8 +240,7 @@ This is the per-move check used by `DecorationSessionCoherentAt`: at the
 node where `x` is chosen, every machine credited as a controller of `x`
 must share the protocol's session identifier.
 -/
-def OpenNodeProfile.SessionCoherentAtMove
-    {Sid Pid : Type u} {Δ : PortBoundary} {X : Type w}
+def OpenNodeProfile.SessionCoherentAtMove {Sid Pid : Type u} {Δ : PortBoundary} {X : Type w}
     (sid : Sid) (ons : OpenNodeProfile (MachineId Sid Pid) Δ X)
     (x : X) : Prop :=
   ∀ m ∈ ons.controllers x, m.sid = sid
@@ -260,8 +256,7 @@ This is the recursive companion to
 through the decoration tree and accumulates the per-node coherence
 checks.
 -/
-def DecorationSessionCoherentAt
-    {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid) :
+def DecorationSessionCoherentAt {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid) :
     {spec : Interaction.TypeTree.{w}} →
     PFunctor.FreeM.Displayed.Decoration
       (P := TypeTree.basePFunctor) (α := PUnit.{w + 1})
@@ -291,8 +286,7 @@ def MachineProcess.SubroutineRespectingAt
     DecorationSessionCoherentAt sid (P.step s).semantics tr
 
 @[simp]
-theorem DecorationSessionCoherentAt_done
-    {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid)
+theorem DecorationSessionCoherentAt_done {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid)
     (d : PFunctor.FreeM.Displayed.Decoration
       (P := TypeTree.basePFunctor) (α := PUnit.{w + 1})
       (OpenNodeContext.{u, w} (MachineId Sid Pid) Δ) TypeTree.done)
@@ -301,8 +295,7 @@ theorem DecorationSessionCoherentAt_done
   trivial
 
 @[simp]
-theorem DecorationSessionCoherentAt_node
-    {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid)
+theorem DecorationSessionCoherentAt_node {Sid Pid : Type u} {Δ : PortBoundary} (sid : Sid)
     {Moves : Type w} {residual : Moves → Interaction.TypeTree.{w}}
     (d : PFunctor.FreeM.Displayed.Decoration
       (P := TypeTree.basePFunctor) (α := PUnit.{w + 1})

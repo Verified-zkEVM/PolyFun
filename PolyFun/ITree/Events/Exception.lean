@@ -52,8 +52,7 @@ end ExceptE
 
 /-- One productive layer of exception interpretation. A thrown exception has
 no continuation and becomes an immediate `Except.error` leaf. -/
-def interpExceptStep {ε : Type uε} {E : PFunctor.{uEA, uB}}
-    {α : Type uα}
+def interpExceptStep {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
     (t : ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :
     (Poly E (Except ε α)).Obj
       (ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :=
@@ -65,15 +64,13 @@ def interpExceptStep {ε : Type uε} {E : PFunctor.{uEA, uB}}
 
 /-- Eliminate exception events from `t`, returning either the first thrown
 exception or the ordinary result. External events remain visible. -/
-def interpExcept {ε : Type uε} {E : PFunctor.{uEA, uB}}
-    {α : Type uα}
+def interpExcept {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
     (t : ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :
     ITree E (Except ε α) :=
   PFunctor.M.corec interpExceptStep t
 
 /-- Conventional runner name for `interpExcept`. -/
-def runExcept {ε : Type uε} {E : PFunctor.{uEA, uB}}
-    {α : Type uα}
+def runExcept {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
     (t : ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :
     ITree E (Except ε α) :=
   interpExcept t

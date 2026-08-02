@@ -98,12 +98,11 @@ def stopWiring :
 
 def stopDisplayed :
     Wiring.Displayed domDisplay codDisplay inputDisplay
-      stopWiring contract :=
-  by
-    unfold stopWiring
-    exact .box Box.stop
-      (fun port : Arity Box.stop => PEmpty.elim port)
-      (fun port : Arity Box.stop => PEmpty.elim port)
+      stopWiring contract := by
+  unfold stopWiring
+  exact .box Box.stop
+    (fun port : Arity Box.stop => PEmpty.elim port)
+    (fun port : Arity Box.stop => PEmpty.elim port)
 
 def children : (port : Arity .choose) →
     Wiring Box Arity Dom Cod Bool (fun _ => Interface) (Dom .choose port)

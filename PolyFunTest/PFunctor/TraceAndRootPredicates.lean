@@ -20,8 +20,7 @@ variable {P : PFunctor.{uA, uB}} {α : Type v}
 
 /-- The trace predicate accepts genuinely dependent direction fibers without
 requiring decidable equality on positions. -/
-example (allowed : (a : P.A) → Set (P.B a)) (a : P.A) (b : P.B a)
-    (tail : TraceList P) :
+example (allowed : (a : P.A) → Set (P.B a)) (a : P.A) (b : P.B a) (tail : TraceList P) :
     TraceList.DirectionsWithin allowed (⟨a, b⟩ :: tail) ↔
       b ∈ allowed a ∧ TraceList.DirectionsWithin allowed tail := by
   simp

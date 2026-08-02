@@ -163,8 +163,7 @@ so the universal-quantification limit doesn't bite. -/
 example :
     IPFunctor.FreeM.erase demoQ PUnit.unit
         (do let k := 17; pure k : IPFunctor.FreeM demoQ PUnit.unit Nat)
-    = PFunctor.FreeM.pure (P := demoQ.toPFunctor) 17 := by
-  rfl
+    = PFunctor.FreeM.pure (P := demoQ.toPFunctor) 17 := rfl
 
 section Regression
 

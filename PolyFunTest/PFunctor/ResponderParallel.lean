@@ -37,24 +37,16 @@ def leftProgram : FreeM Left Bool :=
 def rightProgram : FreeM Right Nat :=
   FreeM.liftBind PUnit.unit FreeM.pure
 
-example :
-    (Responder.sum leftResponder rightResponder).answer (0, 5) (.inl true) =
-      false :=
+example : (Responder.sum leftResponder rightResponder).answer (0, 5) (.inl true) = false :=
   rfl
 
-example :
-    (Responder.sum leftResponder rightResponder).next (0, 5) (.inl true) =
-      (1, 5) :=
+example : (Responder.sum leftResponder rightResponder).next (0, 5) (.inl true) = (1, 5) :=
   rfl
 
-example :
-    (Responder.sum leftResponder rightResponder).next
-      (0, 5) (.inr PUnit.unit) = (0, 15) :=
+example : (Responder.sum leftResponder rightResponder).next (0, 5) (.inr PUnit.unit) = (0, 15) :=
   rfl
 
-example :
-    (Responder.parallel leftResponder rightResponder).next
-      (0, 5) (.left true) = (1, 5) :=
+example : (Responder.parallel leftResponder rightResponder).next (0, 5) (.left true) = (1, 5) :=
   rfl
 
 example :
@@ -180,13 +172,10 @@ def reindexedParallel :=
 
 example : reindexedParallel.answer (0, 5) (.left true) = false := rfl
 example : reindexedParallel.next (0, 5) (.left true) = (1, 5) := rfl
-example : (show Nat from
-    reindexedParallel.answer (0, 5) (.right PUnit.unit)) = 20 := rfl
+example : (show Nat from reindexedParallel.answer (0, 5) (.right PUnit.unit)) = 20 := rfl
 example : reindexedParallel.next (0, 5) (.right PUnit.unit) = (0, 25) := rfl
-example : reindexedParallel.answer (0, 5) (.both true PUnit.unit) =
-    (false, 20) := rfl
-example : reindexedParallel.next (0, 5) (.both true PUnit.unit) =
-    (1, 25) := rfl
+example : reindexedParallel.answer (0, 5) (.both true PUnit.unit) = (false, 20) := rfl
+example : reindexedParallel.next (0, 5) (.both true PUnit.unit) = (1, 25) := rfl
 
 def parallelRestrictedToSum :=
   Responder.reindex (Handler.ofLens (Lens.sumToParallel Left Right))
@@ -194,8 +183,7 @@ def parallelRestrictedToSum :=
 
 example : parallelRestrictedToSum.answer (0, 5) (.inl true) = false := rfl
 example : parallelRestrictedToSum.next (0, 5) (.inl true) = (1, 5) := rfl
-example : (show Nat from
-    parallelRestrictedToSum.answer (0, 5) (.inr PUnit.unit)) = 5 := rfl
+example : (show Nat from parallelRestrictedToSum.answer (0, 5) (.inr PUnit.unit)) = 5 := rfl
 example : parallelRestrictedToSum.next (0, 5) (.inr PUnit.unit) = (0, 15) := rfl
 example : Responder.sum leftResponder rightResponder = parallelRestrictedToSum :=
   Responder.sum_eq_reindex_parallel leftResponder rightResponder
@@ -217,9 +205,7 @@ def leftPost (answer : Bool) : if answer then Fin 2 else Fin 3 := by
 def rightPost (answer : Nat) : Fin (answer + 1) :=
   ⟨0, Nat.zero_lt_succ _⟩
 
-def leftContractTrue : dependentLeftDisplay.position true := by
-  change Nat
-  exact 5
+def leftContractTrue : dependentLeftDisplay.position true := (5 : Nat)
 def leftContractFalse : dependentLeftDisplay.position false := true
 def rightContract : dependentRightDisplay.position PUnit.unit := "right"
 
@@ -230,9 +216,8 @@ def dependentLeftCoalgebra :
     Display.Coalgebra (Display.responder dependentLeftDisplay)
       leftResponder.out dependentLeftInvariant :=
   (Display.responderCoalgebraEquiv dependentLeftDisplay
-    leftResponder dependentLeftInvariant).symm fun state _ operation _ => by
-      refine ⟨?_, ⟨0, Nat.zero_lt_succ _⟩⟩
-      exact leftPost (!operation)
+    leftResponder dependentLeftInvariant).symm fun _ _ operation _ =>
+      ⟨leftPost (!operation), ⟨0, Nat.zero_lt_succ _⟩⟩
 
 def dependentRightCoalgebra :
     Display.Coalgebra (Display.responder dependentRightDisplay)

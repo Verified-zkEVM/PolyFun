@@ -198,11 +198,10 @@ theorem laxTensor_oneLayer (left : M leftP) (right : M rightP)
     (CofreeP.laxTensor leftP rightP).toFunB (left, right)
         (.child direction (.root _)) =
       (.child direction.1 (.root _), .child direction.2 (.root _)) := by
-  have h := congrArg
+  exact congrArg
     (fun lens : Lens (CofreeP leftP ⊗ CofreeP rightP) (leftP ⊗ rightP) =>
       lens.toFunB (left, right) direction)
     (CofreeP.cogenerator_comp_laxTensor leftP rightP)
-  exact h
 
 /-- The first edge of the decisive synchronized path. -/
 def synchronizedOuter : M.Vertex synchronizedTree :=
@@ -240,7 +239,7 @@ def synchronizedDirection :
 used by the executable behavior test. -/
 example :
     (CofreeP.projectionN (leftP ⊗ rightP) 2).toFunB
-      synchronizedTree synchronizedDirection = synchronizedVertex := by
+      synchronizedTree synchronizedDirection = synchronizedVertex :=
   rfl
 
 /-- The backward map preserves both component sequences in outer-to-inner
@@ -298,8 +297,7 @@ def unitDepthTwo : M.Vertex unitTree :=
   .child PUnit.unit
     (.child PUnit.unit (.root _))
 
-example : CofreeP.laxUnit.toFunB PUnit.unit unitDepthTwo = PUnit.unit := by
-  rfl
+example : CofreeP.laxUnit.toFunB PUnit.unit unitDepthTwo = PUnit.unit := rfl
 
 end CofreeLaxMonoidalTest
 end PFunctor

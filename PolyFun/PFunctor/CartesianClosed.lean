@@ -80,8 +80,7 @@ At each input position `a : q.A`, the component lens sends `pa : p.A` to the
 `r`-position `l.toFunA (pa, a)`, with branch data recording, for each
 `r`-direction, whether `l` sent it to the `p`-factor (`PUnit`, kept internal) or
 the `q`-factor (`q.B a`). The backward map reads a `p`-direction back off `l`. -/
-def curry {p q r : PFunctor.{uA, uB}}
-    (l : Lens (p * q) r) : Lens p (exp r q) :=
+def curry {p q r : PFunctor.{uA, uB}} (l : Lens (p * q) r) : Lens p (exp r q) :=
   Lens.piForall (fun a =>
     { toFunA := fun pa => ⟨l.toFunA (pa, a),
         fun d => Sum.map (fun _ => PUnit.unit) id (l.toFunB (pa, a) d)⟩
@@ -96,8 +95,7 @@ def curry {p q r : PFunctor.{uA, uB}}
 /-- Transpose of a lens `p ⇆ exp r q` back to a lens `p * q ⇆ r` (the backward
 direction of the cartesian exponential adjunction), obtained by pairing with
 `q` and post-composing with evaluation. -/
-def uncurry {p q r : PFunctor.{uA, uB}}
-    (g : Lens p (exp r q)) : Lens (p * q) r :=
+def uncurry {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) : Lens (p * q) r :=
   eval ∘ₗ (g ×ₗ Lens.id q)
 
 @[simp, grind =]
@@ -132,30 +130,22 @@ theorem curry_uncurry_toFunA {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) 
   refine Sigma.ext rfl (heq_of_eq ?_)
   funext d
   dsimp only
-  split <;> rename_i heq
-  · conv_rhs => rw [heq]
-    rfl
-  · conv_rhs => rw [heq]
-    rfl
+  split <;> rename_i heq <;> (conv_rhs => rw [heq]) <;> rfl
 
 /-! The reverse round-trip needs two small transport facts. Keeping them
 private makes the proof explicit without exposing implementation-specific casts
 as part of the cartesian-closed API. -/
 
-private lemma transported_dependent_apply {ι : Type u} {γ : Type v} (F : ι → Type w)
-    {a b : ι} (h : a = b) (f : F a → γ) (x : F a) (y : F b)
-    (hy : cast (congrArg F h) x = y) :
+private lemma transported_dependent_apply {ι : Type u} {γ : Type v} (F : ι → Type w) {a b : ι}
+    (h : a = b) (f : F a → γ) (x : F a) (y : F b) (hy : cast (congrArg F h) x = y) :
     Eq.rec (motive := fun b (_ : a = b) => F b → γ) f h y = f x := by
   have hyx : y ≍ x := (heq_of_eq hy.symm).trans (cast_heq (congrArg F h) x)
   apply congr_heq ?_ hyx
   convert eqRec_heq (φ := fun b => F b → γ) h f using 1
 
-private lemma cast_exp_direction_of_inl {q r : PFunctor.{uA, uB}}
-    {f f' : (exp r q).A} (h : f = f') {i : q.A}
-    {d : r.B (f i).1} {d' : r.B (f' i).1}
-    {bd : (X + C (q.B i)).B ((f i).2 d)}
-    {bd' : (X + C (q.B i)).B ((f' i).2 d')}
-    (hd : d ≍ d') (hb : (f i).2 d = Sum.inl PUnit.unit) :
+private lemma cast_exp_direction_of_inl {q r : PFunctor.{uA, uB}} {f f' : (exp r q).A} (h : f = f')
+    {i : q.A} {d : r.B (f i).1} {d' : r.B (f' i).1} {bd : (X + C (q.B i)).B ((f i).2 d)}
+    {bd' : (X + C (q.B i)).B ((f' i).2 d')} (hd : d ≍ d') (hb : (f i).2 d = Sum.inl PUnit.unit) :
     cast (congrArg (exp r q).B h) ⟨i, d, bd⟩ = ⟨i, d', bd'⟩ := by
   apply eq_of_heq
   refine (cast_heq (congrArg (exp r q).B h) ⟨i, d, bd⟩).trans ?_
@@ -206,8 +196,7 @@ theorem curry_uncurry {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) :
     exact hempty.elim
 
 /-- The cartesian exponential adjunction as an equivalence of lens types. -/
-def curryEquiv {p q r : PFunctor.{uA, uB}} :
-    Lens (p * q) r ≃ Lens p (exp r q) where
+def curryEquiv {p q r : PFunctor.{uA, uB}} : Lens (p * q) r ≃ Lens p (exp r q) where
   toFun := curry
   invFun := uncurry
   left_inv := uncurry_curry

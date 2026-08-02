@@ -404,11 +404,7 @@ def sumZero :
   toChart := Chart.sumPair (Chart.id P) Chart.initial
   invChart := Chart.inl
   left_inv := by
-    ext a <;> rcases a with a | a
-    · rfl
-    · exact PEmpty.elim a
-    · rfl
-    · exact PEmpty.elim a
+    ext a <;> rcases a with a | a <;> first | rfl | exact PEmpty.elim a
   right_inv := by ext <;> rfl
 
 /-- Coproduct with `0` is identity (left) -/
@@ -417,11 +413,7 @@ def zeroSum :
   toChart := Chart.sumPair Chart.initial (Chart.id P)
   invChart := Chart.inr
   left_inv := by
-    ext a <;> rcases a with a | a
-    · exact PEmpty.elim a
-    · rfl
-    · exact PEmpty.elim a
-    · rfl
+    ext a <;> rcases a with a | a <;> first | rfl | exact PEmpty.elim a
   right_inv := by ext <;> rfl
 
 /-- Coproduct preserves equivalences: `P ≃c P' → Q ≃c Q' → P + Q ≃c P' + Q'`. -/
@@ -457,10 +449,7 @@ theorem snd_comp_tensorMap (c₁ : Chart P R) (c₂ : Chart Q W) :
 
 theorem tensorMap_comp_tensorPair (c₁ : Chart Q W) (c₂ : Chart R S)
     (f : Chart P Q) (g : Chart P R) :
-    (c₁ ⊗c c₂) ∘c Chart.tensorPair f g = Chart.tensorPair (c₁ ∘c f) (c₂ ∘c g) := by
-  ext _ _
-  · rfl
-  · rfl
+    (c₁ ⊗c c₂) ∘c Chart.tensorPair f g = Chart.tensorPair (c₁ ∘c f) (c₂ ∘c g) := rfl
 
 @[simp]
 theorem fst_comp_tensorPair (f : Chart P Q) (g : Chart P R) :
@@ -471,10 +460,7 @@ theorem snd_comp_tensorPair (f : Chart P Q) (g : Chart P R) :
     Chart.snd ∘c Chart.tensorPair f g = g := rfl
 
 theorem comp_fst_snd (h : Chart.{uA₁, uB₁, max uA₂ uA₃, max uB₂ uB₃} P (Q ⊗ R)) :
-    Chart.tensorPair (Chart.fst ∘c h) (Chart.snd ∘c h) = h := by
-  ext _ _
-  · rfl
-  · rfl
+    Chart.tensorPair (Chart.fst ∘c h) (Chart.snd ∘c h) = h := rfl
 
 @[simp]
 theorem tensorMap_id : (Chart.id P) ⊗c (Chart.id Q) = Chart.id (P ⊗ Q) := rfl
@@ -491,10 +477,7 @@ theorem tensorMap_comp_tensorMap
 
 @[simp]
 theorem tensorPair_fst_snd : Chart.tensorPair Chart.fst Chart.snd =
-    Chart.id.{max uA₁ uA₂, max uB₁ uB₂} (P ⊗ Q) := by
-  ext _ _
-  · rfl
-  · rfl
+    Chart.id.{max uA₁ uA₂, max uB₁ uB₂} (P ⊗ Q) := rfl
 
 namespace Equiv
 
@@ -859,7 +842,7 @@ def piUnit {P : PFunctor.{uA, uB}} : pi (fun (_ : PUnit) => P) ≃c P where
 /-- Pi of a family of zero functors over an inhabited type is the zero functor. -/
 def piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0) :
     pi F ≃c 0 := by
-  letI : IsEmpty (pi F).A := by
+  have : IsEmpty (pi F).A := by
     refine ⟨fun f => ?_⟩
     have hf : (F default).A := f default
     rw [F_zero (default : I)] at hf

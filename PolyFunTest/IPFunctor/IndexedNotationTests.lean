@@ -42,7 +42,7 @@ def flip₂ : IPFunctor.FreeM₂ demoP false true Unit :=
 
 /-- The "read" action as a two-index tree: stays at `true`. -/
 def read₂ : IPFunctor.FreeM₂ demoP true true Nat :=
-  IPFunctor.FreeM₂.liftBind () (fun n => IPFunctor.FreeM₂.pure n)
+  IPFunctor.FreeM₂.liftBind () IPFunctor.FreeM₂.pure
 
 /-! ### Positive tests — chains of any length compose. -/
 
@@ -102,9 +102,8 @@ def demoQ : IPFunctor.Endo PUnit where
   src _ _ _ := PUnit.unit
 
 /-- A single-step action lifting the shape `b : Bool`. -/
-def stepQ (b : Bool) :
-    IPFunctor.FreeM₂ demoQ PUnit.unit PUnit.unit Nat :=
-  IPFunctor.FreeM₂.liftBind b (fun n => IPFunctor.FreeM₂.pure n)
+def stepQ (b : Bool) : IPFunctor.FreeM₂ demoQ PUnit.unit PUnit.unit Nat :=
+  IPFunctor.FreeM₂.liftBind b IPFunctor.FreeM₂.pure
 
 /-- A two-step `do`-tree on `FreeM₂ demoQ`. -/
 def twoStep : IPFunctor.FreeM₂ demoQ PUnit.unit PUnit.unit Nat := do
@@ -128,7 +127,7 @@ example :
     IPFunctor.FreeM.erase demoQ PUnit.unit twoStep.toFreeM
     = PFunctor.FreeM.liftBind (P := demoQ.toPFunctor) true (fun n : Nat =>
         PFunctor.FreeM.liftBind false (fun m : Nat =>
-          PFunctor.FreeM.pure (n + m))) := by
+          PFunctor.FreeM.pure (n + m))) :=
   rfl
 
 -- `simp` collapses the erased one-step tree using the `erase_punit_*` /
@@ -136,13 +135,13 @@ example :
 example :
     IPFunctor.FreeM.erase demoQ PUnit.unit oneStep.toFreeM
     = PFunctor.FreeM.liftBind (P := demoQ.toPFunctor) true (fun n : Nat =>
-        PFunctor.FreeM.pure (n + 1)) := by
+        PFunctor.FreeM.pure (n + 1)) :=
   rfl
 
 -- A pure-only do-block erases to a pure leaf.
 example :
     IPFunctor.FreeM.erase demoQ PUnit.unit purely.toFreeM
-    = PFunctor.FreeM.pure (P := demoQ.toPFunctor) 42 := by
+    = PFunctor.FreeM.pure (P := demoQ.toPFunctor) 42 :=
   rfl
 
 -- `simp` (rather than `rfl`) drives the same reduction via the

@@ -334,9 +334,9 @@ theorem step_absorb_right {eventRel : EventSignatureRel E F} {resultRel : α →
     rcases TauSteps.step_cases c' hstep' hs with hs_eq | hs_strict
     · subst hs_eq
       cases M with
-      | pure _ _ _ _ hs_bad => exfalso; rw [hstep'] at hs_bad; cases hs_bad
+      | pure _ _ _ _ hs_bad => rw [hstep'] at hs_bad; cases hs_bad
       | query _ _ _ _ _ _ hs_bad _ =>
-          exfalso; rw [hstep'] at hs_bad; cases hs_bad
+          rw [hstep'] at hs_bad; cases hs_bad
       | tau ct cs ht_a hs_a hr =>
           have hcc : cs = c' := TauSteps.cont_eq hs_a hstep'
           subst hcc
@@ -364,9 +364,9 @@ theorem step_absorb_right {eventRel : EventSignatureRel E F} {resultRel : α →
                     ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩
                   exact CrossSignatureWeakBisim.HeadMatch.pure x r hxy hX' hsh'
               | query _ _ _ _ _ _ hY' _ =>
-                  exfalso; rw [hY'] at hsh'; cases hsh'
+                  rw [hY'] at hsh'; cases hsh'
               | tau _ _ _ hY' _ =>
-                  exfalso; rw [hY'] at hsh'; cases hsh'
+                  rw [hY'] at hsh'; cases hsh'
           | step =>
               refine ⟨a', cs PUnit.unit, ha, .refl _, ?_⟩
               refine CrossSignatureWeakBisim.HeadMatch.tau ct cc ht_a hsh ?_
@@ -377,7 +377,7 @@ theorem step_absorb_right {eventRel : EventSignatureRel E F} {resultRel : α →
                 TauSteps.rigid_of_query eventF cc hsh hY
               subst hYeq
               cases MXY with
-              | pure _ _ _ _ hY' => exfalso; rw [hY'] at hsh; cases hsh
+              | pure _ _ _ _ hY' => rw [hY'] at hsh; cases hsh
               | query eventE eventF' hevents cX cY hX' hY' hcont =>
                   have heq : (⟨Shape.query eventF', cY⟩ :
                       (Poly F β).Obj (ITree F β)) =
@@ -392,7 +392,7 @@ theorem step_absorb_right {eventRel : EventSignatureRel E F} {resultRel : α →
                   exact CrossSignatureWeakBisim.HeadMatch.query
                     eventE eventF hevents cX cc hX' hsh
                     (fun x y hxy => Or.inl (hcont x y hxy))
-              | tau _ _ _ hY' _ => exfalso; rw [hY'] at hsh; cases hsh
+              | tau _ _ _ hY' _ => rw [hY'] at hsh; cases hsh
     · exact ⟨a', s₁, ha, hs_strict,
         M.mono (fun _ _ hxy => Or.inl hxy)⟩
 
@@ -483,8 +483,7 @@ theorem matchRel_to_identity_headMatch
       refine .query a a rfl ct cs ht hs ?_
       intro x y hxy
       change HEq x y at hxy
-      have : x = y := eq_of_heq hxy
-      subst y
+      obtain rfl := eq_of_heq hxy
       exact hcont x
   | tau ct cs ht hs hcont => exact .tau ct cs ht hs hcont
 
@@ -541,8 +540,7 @@ theorem bind {resultRel : α → β → Prop} {outputRel : γ → δ → Prop}
           apply PFunctor.M.eq_of_dest_eq
           change shape' v' = shape' (ITree.pure y)
           exact hv'.trans (shape'_pure y).symm
-        subst hut
-        subst hvt
+        subst hut hvt
         obtain ⟨x', y', hx, hy, hm⟩ := (continuations_related x y hxy).dest
         refine ⟨x', y', ?_, ?_, hm.mono (fun _ _ h => Or.inr h)⟩
         · have huf : TauSteps (ITree.bind u f) (f x) := by

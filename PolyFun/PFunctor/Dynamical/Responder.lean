@@ -80,8 +80,7 @@ between the responder-state and interface-direction universes. -/
 @[ext]
 theorem ext (R R' : Responder S q)
     (hAnswer : ∀ state query, R.answer state query = R'.answer state query)
-    (hNext : ∀ state query, R.next state query = R'.next state query) :
-    R = R' := by
+    (hNext : ∀ state query, R.next state query = R'.next state query) : R = R' := by
   rcases R with ⟨expose, update⟩
   rcases R' with ⟨expose', update'⟩
   have hExpose : expose = expose' := by
@@ -98,8 +97,7 @@ theorem ext (R R' : Responder S q)
   subst expose'
   congr
   funext state direction
-  rcases direction with ⟨query, trivialDirection⟩
-  cases trivialDirection
+  obtain ⟨query, ⟨⟩⟩ := direction
   exact hNext state query
 
 @[simp] theorem expose_mk' (ans : (s : S) → (a : q.A) → q.B a) (nxt : S → q.A → S)
@@ -114,8 +112,7 @@ theorem answer_eq_committed (R : Responder S q) (s : S) (a : q.A) :
 
 /-- A responder's raw lens update reads only the query component of a direction —
 the `X`-component is trivial. Definitional, by sigma and unit eta. -/
-@[simp] theorem update_eq_next (R : Responder S q) (s : S)
-    (d : (q ⊸ X).B (DynSystem.expose R s)) :
+@[simp] theorem update_eq_next (R : Responder S q) (s : S) (d : (q ⊸ X).B (DynSystem.expose R s)) :
     DynSystem.update R s d = R.next s d.1 := rfl
 
 /-! ## Stateless responders -/

@@ -6,7 +6,6 @@ Authors: Quang Dao
 
 module
 
-
 public import PolyFun.PFunctor.Display.Basic
 public import PolyFun.PFunctor.Display.Chart
 public import PolyFun.PFunctor.Display.Coalgebra

@@ -55,8 +55,7 @@ example (l : Lens qBool (1 : PFunctor.{0, 0})) : l = Lens.terminal := by
 example : homFromX (p := qBool) (Lens.fromX true) = true := rfl
 
 /-- The inverse builds the constant-position lens. -/
-example :
-    (homFromX (p := qBool)).symm false = Lens.fromX false := rfl
+example : (homFromX (p := qBool)).symm false = Lens.fromX false := rfl
 
 /-- Round-trip through a position is the identity. -/
 example (a : qBool.A) : homFromX (p := qBool) ((homFromX (p := qBool)).symm a) = a := rfl
@@ -65,12 +64,10 @@ example (a : qBool.A) : homFromX (p := qBool) ((homFromX (p := qBool)).symm a) =
 
 /-- The forward map is exactly the position map `toFunA`, checked concretely
 on `Bool.toNat`. -/
-example :
-    homToConst (Lens.toConst Bool.toNat : Lens qBool (C Nat)) = Bool.toNat := rfl
+example : homToConst (Lens.toConst Bool.toNat : Lens qBool (C Nat)) = Bool.toNat := rfl
 
 /-- The forward map is exactly the position map `toFunA`, for an arbitrary map. -/
-example (f : qBool.A → Nat) :
-    homToConst (Lens.toConst f : Lens qBool (C Nat)) = f := rfl
+example (f : qBool.A → Nat) : homToConst (Lens.toConst f : Lens qBool (C Nat)) = f := rfl
 
 /-- The inverse installs the empty backward map. -/
 example (f : Bool → Nat) : ((homToConst (p := qBool) (A := Nat)).symm f).toFunA = f := rfl

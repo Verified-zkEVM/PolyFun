@@ -31,8 +31,7 @@ universe uS uA uB uα
 namespace PFunctor
 namespace DynSystem
 
-variable {S : Type uS} {P : PFunctor.{uA, uB}}
-  {α : Type uα}
+variable {S : Type uS} {P : PFunctor.{uA, uB}} {α : Type uα}
 
 /-! ## Generic coiteration and behavior -/
 
@@ -43,15 +42,13 @@ interface universes remain independent because this theorem does not package a
 reducing to the selected direction (up to proof-irrelevant dependent casts),
 exactly as `Lens.fixState` does. -/
 theorem unfoldShape_stateComonoid (system : DynSystem S P) :
-    CofreeP.unfoldShape (stateComonoid S) system = system.behavior :=
-  rfl
+    CofreeP.unfoldShape (stateComonoid S) system = system.behavior := rfl
 
 /-! ## Vertex-labeled mate semantics -/
 
 /-- The infinite trajectory of a dynamical system with every reached state
 labeled by `label`. -/
-def labeledTrajectory (system : DynSystem S P) (label : S → α)
-    (state : S) : CofreeC P α :=
+def labeledTrajectory (system : DynSystem S P) (label : S → α) (state : S) : CofreeC P α :=
   M.corec
     (fun current =>
       ⟨(label current, system.expose current),
@@ -59,22 +56,19 @@ def labeledTrajectory (system : DynSystem S P) (label : S → α)
     state
 
 /-- One-step unfolding of a labeled trajectory. -/
-theorem dest_labeledTrajectory (system : DynSystem S P)
-    (label : S → α) (state : S) :
+theorem dest_labeledTrajectory (system : DynSystem S P) (label : S → α) (state : S) :
     M.dest (labeledTrajectory system label state) =
       ⟨(label state, system.expose state), fun direction =>
         labeledTrajectory system label (system.update state direction)⟩ := by
   simp only [labeledTrajectory, M.dest_corec_apply]
 
 @[simp]
-theorem head_labeledTrajectory (system : DynSystem S P)
-    (label : S → α) (state : S) :
+theorem head_labeledTrajectory (system : DynSystem S P) (label : S → α) (state : S) :
     CofreeC.head (labeledTrajectory system label state) = label state := by
   simp only [CofreeC.head, dest_labeledTrajectory]
 
 @[simp]
-theorem tail_labeledTrajectory (system : DynSystem S P)
-    (label : S → α) (state : S) :
+theorem tail_labeledTrajectory (system : DynSystem S P) (label : S → α) (state : S) :
     CofreeC.tail (labeledTrajectory system label state) =
       ⟨system.expose state, fun direction =>
         labeledTrajectory system label (system.update state direction)⟩ := by
@@ -85,20 +79,17 @@ theorem tail_labeledTrajectory (system : DynSystem S P)
 /-- Apply the generic coiterated mate lens to an initial state carrying an
 arbitrary state labeling. Its shape records behavior and its label at a
 finite vertex records `label` applied to the state reached there. -/
-def mateObj (system : DynSystem S P) (state : S)
-    (label : S → α) : (CofreeP P).Obj α :=
+def mateObj (system : DynSystem S P) (state : S) (label : S → α) : (CofreeP P).Obj α :=
   Lens.mapObj (CofreeP.unfoldLens (stateComonoid S) system)
     (⟨state, label⟩ : (selfMonomial S).Obj α)
 
 /-- The unlabeled shape underlying `mateObj` is the existing behavior tree. -/
 @[simp]
-theorem mateObj_shape (system : DynSystem S P) (state : S)
-    (label : S → α) :
+theorem mateObj_shape (system : DynSystem S P) (state : S) (label : S → α) :
     (mateObj system state label).1 = system.behavior state :=
   congrFun (unfoldShape_stateComonoid system) state
 
-private theorem unfoldDirection_stateComonoid_child
-    (system : DynSystem S P) (state : S)
+private theorem unfoldDirection_stateComonoid_child (system : DynSystem S P) (state : S)
     (direction : P.B (M.head
       (CofreeP.unfoldShape (stateComonoid S) system state)))
     (next : M.Vertex
@@ -119,8 +110,7 @@ private theorem unfoldDirection_stateComonoid_child
 state by exactly the selected direction, while preserving the state labeling.
 The cast only transports across the definitional presentation of the unfolded
 behavior tree. -/
-theorem mateObj_child
-    (system : DynSystem S P) (state : S) (label : S → α)
+theorem mateObj_child (system : DynSystem S P) (state : S) (label : S → α)
     (direction : P.B (M.head (mateObj system state label).1)) :
     CofreeP.childObj (mateObj system state label) direction =
       mateObj system (system.update state
@@ -146,8 +136,7 @@ theorem mateObj_child
         (cast (congrArg M.Vertex childEq) leftVertex))
   rw [unfoldDirection_stateComonoid_child]
 
-private theorem decodeStep_mateObj
-    (system : DynSystem S P) (state : S) (label : S → α) :
+private theorem decodeStep_mateObj (system : DynSystem S P) (state : S) (label : S → α) :
     CofreeP.decodeStep (mateObj system state label) =
       ⟨(label state, system.expose state), fun direction =>
         mateObj system (system.update state direction) label⟩ := by
@@ -190,8 +179,7 @@ private theorem decodeStep_mateObj
 the trajectory labeled by `label` applied to the states reached at its finite
 vertices. -/
 @[simp]
-theorem decode_mateObj
-    (system : DynSystem S P) (state : S) (label : S → α) :
+theorem decode_mateObj (system : DynSystem S P) (state : S) (label : S → α) :
     CofreeP.decode (mateObj system state label) =
       labeledTrajectory system label state := by
   change M.corec CofreeP.decodeStep (mateObj system state label) =
@@ -237,9 +225,7 @@ def cofreeMate (system : DynSystem S P) :
   CofreeP.extend (stateComonoid S) system
 
 theorem cofreeMate_toLens (system : DynSystem S P) :
-    system.cofreeMate.toLens =
-      CofreeP.unfoldLens (stateComonoid S) system :=
-  rfl
+    system.cofreeMate.toLens = CofreeP.unfoldLens (stateComonoid S) system := rfl
 
 /-- The mate's object map is the existing terminal-coalgebra behavior. -/
 theorem cofreeMate_toFunA (system : DynSystem S P) :
@@ -248,8 +234,7 @@ theorem cofreeMate_toFunA (system : DynSystem S P) :
 
 /-- The mate's dependent backward map pulls a finite behavior vertex back to
 the state reached at that vertex. -/
-theorem cofreeMate_toFunB (system : DynSystem S P)
-    (state : S)
+theorem cofreeMate_toFunB (system : DynSystem S P) (state : S)
     (vertex : M.Vertex (system.cofreeMate.toLens.toFunA state)) :
     system.cofreeMate.toLens.toFunB state vertex =
       CofreeP.unfoldDirection (stateComonoid S) system state vertex :=
@@ -278,8 +263,7 @@ theorem cofreeMate_unique (system : DynSystem S P)
 
 /-- The existing cofree trajectory is the mate's behavior shape labeled by
 the position exposed at every state. -/
-theorem trajectory_eq_selfLabel_cofreeMate
-    (system : DynSystem S P) (state : S) :
+theorem trajectory_eq_selfLabel_cofreeMate (system : DynSystem S P) (state : S) :
     system.trajectory state =
       M.selfLabel (system.cofreeMate.toLens.toFunA state) := by
   rw [cofreeMate_toFunA]

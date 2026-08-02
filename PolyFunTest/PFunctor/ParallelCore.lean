@@ -151,7 +151,7 @@ example :
 example (e : (Display.parallelSum leftDisplay rightDisplay).direction
     (.both true 2) (true, 1) (false, "a")) : False := by
   change PEmpty × PUnit at e
-  exact PEmpty.elim e.1
+  exact e.1.elim
 
 universe uA₁ uA₂ uB uC₁ uD₁ uC₂ uD₂ uC₃ uD₃
 

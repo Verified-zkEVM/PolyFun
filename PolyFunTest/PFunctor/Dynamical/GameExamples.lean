@@ -81,8 +81,7 @@ end Canaries
 /-! ## Returning computations against responders -/
 
 /-- One visible `true` query whose answer becomes the terminal result. -/
-def responderQueryComputation :
-    DynSystem.DynComputation (monomial Bool Nat) PUnit Nat where
+def responderQueryComputation : DynSystem.DynComputation (monomial Bool Nat) PUnit Nat where
   State := Option Nat
   toDynSystem :=
     (fun
@@ -105,12 +104,10 @@ def answerAndAdvanceResponder : Responder Nat (monomial Bool Nat) :=
 @[simp] theorem answerAndAdvanceResponder_next_true (state : Nat) :
     answerAndAdvanceResponder.next state true = state + 1 := rfl
 
-def answerAndAdvanceHandler :
-    Handler (StateT Nat (Id.{0})) (monomial Bool Nat) :=
+def answerAndAdvanceHandler : Handler (StateT Nat (Id.{0})) (monomial Bool Nat) :=
   answerAndAdvanceResponder.toStateHandler
 
-def responderQueryRun (fuel : Nat) (state : Option Nat) :
-    StateT Nat (Id.{0}) (Option Nat) :=
+def responderQueryRun (fuel : Nat) (state : Option Nat) : StateT Nat (Id.{0}) (Option Nat) :=
   responderQueryComputation.{0}.runWith answerAndAdvanceHandler fuel state
 
 /-- The query-branch run law exposed through `Game` selects the computation's
@@ -124,10 +121,6 @@ example (fuel responderState : Nat) :
   rw [responderQueryComputation.runWith_query_succ_stateT
     answerAndAdvanceHandler fuel none true
     (fun answer => some answer) rfl responderState]
-  rw [show answerAndAdvanceHandler true responderState =
-    (responderState + 10, responderState + 1) by rfl]
-  change (responderQueryComputation.runWith answerAndAdvanceHandler fuel
-    (some (responderState + 10))).run (responderState + 1) = _
   rfl
 
 /-! ## A concrete closed game: counting responder vs doubling adversary -/
@@ -179,9 +172,8 @@ cannot see the ciphertext within the composite step, as documented there. -/
 
 /-- The PrivK challenger, from its destructor triple: state is the secret bit
 `b`; commit phase answers `m_b`; guess phase exposes `guess == b`. -/
-def privKChallenger :
-    DynSystem Bool ((monomial (Bool × Bool) Bool ⊸ X.{0, 0})
-      ◃ (monomial Bool PUnit ⊸ monomial Bool PUnit)) :=
+def privKChallenger : DynSystem Bool ((monomial (Bool × Bool) Bool ⊸ X.{0, 0})
+    ◃ (monomial Bool PUnit ⊸ monomial Bool PUnit)) :=
   (fun b =>
     ⟨sectionLens (fun mm => cond b mm.2 mm.1),
       fun _ => (fun (guess : Bool) => guess == b) ⇆ (fun _ _ => PUnit.unit)⟩) ⇆

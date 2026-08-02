@@ -344,9 +344,7 @@ def jointComponent
     (left : Display.{uA₁, uB, uC, uD} P)
     (right : Display.{uA₂, uB, uC, uD} Q)
     (joint : Display.{max uA₁ uA₂, uB, uC, uD} (P ⊗ Q)) :
-    jointComponent (parallelSumComponents left right joint) = joint := by
-  cases joint
-  rfl
+    jointComponent (parallelSumComponents left right joint) = joint := rfl
 
 /-- Reassembling the three restrictions of an arbitrary parallel display
 recovers the original display.  Together with the component simplification

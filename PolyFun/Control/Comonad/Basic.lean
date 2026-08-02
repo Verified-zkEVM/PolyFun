@@ -98,7 +98,7 @@ class Comonad (w : Type u → Type v) extends Coapplicative w, Extend w where
       This yields `w (α × β)` as required. -/
   coseq wa wb := extend wa (fun wa' => (extract wa', extract wb))
 
--- Lawful Hierarchy --
+/-! ## Lawful hierarchy -/
 
 /-- Lawful `Coapplicative` functor. Dual to `LawfulApplicative`. -/
 class LawfulCoapplicative (w : Type u → Type v) [Coapplicative w] extends LawfulFunctor w where
@@ -139,7 +139,7 @@ class LawfulComonad (w : Type u → Type v) [Comonad w] extends LawfulCoapplicat
 
 export LawfulComonad (map_eq_extend_extract extend_extract extract_extend extend_assoc)
 
--- Theorems derived from lawful classes --
+/-! ## Theorems derived from lawful classes -/
 
 section LawfulnessProofs
 variable {w : Type u → Type v} [Comonad w] [LawfulComonad w]
@@ -151,15 +151,16 @@ theorem comonad_id_map {α : Type u} (wa : w α) : Functor.map id wa = wa :=
     Functor.map (f ∘ g) wa = Functor.map f (Functor.map g wa) :=
   comp_map g f wa
 
--- Proof for extract_map
 @[simp] theorem extract_map {α β : Type u} (f : α → β) (wa : w α) :
-  extract (Functor.map f wa) = f (extract wa) := by
+    extract (Functor.map f wa) = f (extract wa) := by
   rw [map_eq_extend_extract, extract_extend, Function.comp_apply]
 
 end LawfulnessProofs
 
+/-! ## Duplicate and derived laws
 
--- Define duplicate and derived laws (require w : Type u → Type u)
+These require `w : Type u → Type u`, so the comonadic context can be nested. -/
+
 section Duplicate
 variable {w : Type u → Type u} [Comonad w]
 

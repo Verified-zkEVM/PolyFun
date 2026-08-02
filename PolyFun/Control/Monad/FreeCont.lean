@@ -8,7 +8,6 @@ module
 public import PolyFun.Control.Monad.Free
 public import PolyFun.PFunctor.Free.Basic
 public import Mathlib.Control.Monad.Cont
-public import Mathlib
 
 /-!
 # Continuation-passing (Church-encoded) free monads
@@ -92,8 +91,7 @@ inductive FreeM (f : Type v → Type w) (α : Type u) where
 
 /-- `bind` runs the first computation; when it produces a value, we run the second computation
     with the *same* effect handler and *same* final continuation. -/
-@[inline] def bind (x : FreeContT f m α) (g : α → FreeContT f m β) :
-    FreeContT f m β :=
+@[inline] def bind (x : FreeContT f m α) (g : α → FreeContT f m β) : FreeContT f m β :=
   fun handleEff handlePure => x handleEff (fun a => g a handleEff handlePure)
 
 /-- Lift a monadic computation to the free transformer monad, via sequencing with the pure
@@ -125,7 +123,7 @@ instance [Monad m] [LawfulMonad m] : LawfulMonadLift m (FreeContT f m) where
     change ((Pure.pure a : m α) >>= handlePure) = handlePure a
     simp
   monadLift_bind := by
-    intros α β ma g
+    intro α β ma g
     dsimp [instMonadLift, instMonad]
     funext r _ handlePure
     change (ma >>= g) >>= handlePure = ma >>= fun x => g x >>= handlePure
@@ -153,17 +151,15 @@ lemma Cslib.FreeM.toFreeM_toFreeContM (x : Cslib.FreeM f α) :
       rw [← Cslib.FreeM.liftBind_eq]
       dsimp only [Cslib.FreeM.toFreeContM, FreeContM.toFreeM]
       congr
-      funext b
-      exact ih b
+      exact funext ih
 
 /-- `Cslib.FreeM.toFreeContM` is a section of `FreeContM.toFreeM`. -/
 lemma Cslib.FreeM.toFreeContM_leftInverse :
     Function.LeftInverse
       (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeM x)
       (fun x : Cslib.FreeM f α =>
-        (Cslib.FreeM.toFreeContM x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α)) := by
-  intro x
-  exact Cslib.FreeM.toFreeM_toFreeContM x
+        (Cslib.FreeM.toFreeContM x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α)) :=
+  fun x => Cslib.FreeM.toFreeM_toFreeContM x
 
 /-- The inductive-to-Church map is injective. -/
 lemma Cslib.FreeM.toFreeContM_injective :
@@ -175,6 +171,5 @@ lemma Cslib.FreeM.toFreeContM_injective :
 /-- The Church-to-inductive map is surjective. -/
 lemma FreeContM.toFreeM_surjective :
     Function.Surjective
-      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeM x) := by
-  intro x
-  exact ⟨Cslib.FreeM.toFreeContM x, Cslib.FreeM.toFreeM_toFreeContM x⟩
+      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeM x) :=
+  fun x => ⟨Cslib.FreeM.toFreeContM x, Cslib.FreeM.toFreeM_toFreeContM x⟩

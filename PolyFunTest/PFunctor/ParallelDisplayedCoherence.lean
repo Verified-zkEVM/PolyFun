@@ -61,8 +61,7 @@ def rightCoalgebra :
     Display.Coalgebra (Display.responder rightDisplay)
       rightResponder.out rightInvariant :=
   (Display.responderCoalgebraEquiv rightDisplay
-    rightResponder rightInvariant).symm fun state _ _ _ => by
-      exact ⟨rightPost state, ⟨rfl⟩⟩
+    rightResponder rightInvariant).symm fun state _ _ _ => ⟨rightPost state, ⟨rfl⟩⟩
 
 def leftDisplayed :
     Display.M (Display.responder leftDisplay) (leftResponder.behavior 0) :=
@@ -94,8 +93,7 @@ example :
       (Display.parallelSum leftDisplay rightDisplay)
       parallelDisplayed (.both true PUnit.unit)
       (leftContract, rightContract)).1 =
-        (leftPost false, rightPost 5) := by
-  rfl
+        (leftPost false, rightPost 5) := rfl
 
 example :
     Display.M.transport
