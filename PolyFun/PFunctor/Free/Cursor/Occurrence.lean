@@ -55,9 +55,8 @@ def resume : {program : FreeM P α} → {n : Nat} →
 
 /-- The generic cursor underlying an occurrence context. Its residual is the
 selected target node, before any answer at that node has been chosen. -/
-def toSpine : {program : FreeM P α} → {n : Nat} →
-    (occ : Occurrence target program n) →
-      Cursor.Spine program (FreeM.liftBind target occ.resume)
+def toSpine : {program : FreeM P α} → {n : Nat} → (occ : Occurrence target program n) →
+    Cursor.Spine program (FreeM.liftBind target occ.resume)
   | _, _, .here next => .root (FreeM.liftBind target next)
   | _, _, .stepSame answer tail => .down answer tail.toSpine
   | _, _, .stepOther _ answer tail => .down answer tail.toSpine
@@ -96,8 +95,7 @@ def plug (occ : Occurrence target program n) (answer : P.B target)
     (Occurrence.stepOther hne prefixAnswer tail).plug answer suffix =
       ⟨prefixAnswer, tail.plug answer suffix⟩ := rfl
 
-@[simp] theorem before_count [DecidableEq P.A]
-    (occ : Occurrence target program n) :
+@[simp] theorem before_count [DecidableEq P.A] (occ : Occurrence target program n) :
     occurrences target occ.before = n := by
   induction occ with
   | here => rfl
@@ -359,8 +357,7 @@ theorem valid_prependOther {a : P.A} {next : P.B a → FreeM P α}
   | found occurrence => trivial
 
 omit [DecidableEq P.A] in
-theorem completeFork_prependSame
-    {next : P.B target → FreeM P α} (answer : P.B target) {n : Nat}
+theorem completeFork_prependSame {next : P.B target → FreeM P α} (answer : P.B target) {n : Nat}
     (result : Split target (next answer) n) :
     completeFork (prependSame answer result) =
       FreeM.map (Option.map (ForkView.prependSame answer)) (completeFork result) := by
@@ -382,8 +379,7 @@ theorem completeFork_prependSame
       rfl
 
 omit [DecidableEq P.A] in
-theorem completeFork_prependOther
-    {a : P.A} {next : P.B a → FreeM P α} (hne : a ≠ target)
+theorem completeFork_prependOther {a : P.A} {next : P.B a → FreeM P α} (hne : a ≠ target)
     (answer : P.B a) {n : Nat} (result : Split target (next answer) n) :
     completeFork (prependOther hne answer result) =
       FreeM.map (Option.map (ForkView.prependOther hne answer)) (completeFork result) := by
@@ -496,8 +492,7 @@ def splitAtValid [DecidableEq P.A] (target : P.A) :
               Split.valid_prependOther h answer result.1 result.2⟩)
             (splitAtValid target (next answer) n)
 
-@[simp] theorem splitAtValid_pure [DecidableEq P.A] (target : P.A)
-    (value : α) (n : Nat) :
+@[simp] theorem splitAtValid_pure [DecidableEq P.A] (target : P.A) (value : α) (n : Nat) :
     splitAtValid target (pure value : FreeM P α) n =
       pure ⟨.missing ⟨⟩, Nat.zero_le n⟩ := rfl
 
@@ -533,9 +528,8 @@ theorem splitAtValid_liftBind_other [DecidableEq P.A] {target a : P.A}
 
 /-- Splitting at an occurrence and completing the result recovers the original
 path-producing execution exactly. -/
-theorem splitAt_bind_complete [DecidableEq P.A] (target : P.A) :
-    (program : FreeM P α) → (n : Nat) →
-      FreeM.bind (splitAt target program n) Split.complete = withPath program := by
+theorem splitAt_bind_complete [DecidableEq P.A] (target : P.A) : (program : FreeM P α) → (n : Nat) →
+    FreeM.bind (splitAt target program n) Split.complete = withPath program := by
   intro program
   induction program with
   | pure value =>
@@ -589,10 +583,8 @@ theorem splitAt_bind_complete [DecidableEq P.A] (target : P.A) :
         rw [bind_map_right, ih answer n]
 
 /-- Erasing validity certificates from `splitAtValid` recovers `splitAt`. -/
-theorem map_val_splitAtValid [DecidableEq P.A] (target : P.A) :
-    (program : FreeM P α) → (n : Nat) →
-      FreeM.map Subtype.val (splitAtValid target program n) =
-        splitAt target program n := by
+theorem map_val_splitAtValid [DecidableEq P.A] (target : P.A) : (program : FreeM P α) → (n : Nat) →
+    FreeM.map Subtype.val (splitAtValid target program n) = splitAt target program n := by
   intro program
   induction program with
   | pure value =>
@@ -661,8 +653,7 @@ theorem splitAtValid_bind_completeFork [DecidableEq P.A] (target : P.A)
 @[simp] theorem forkAt_pure [DecidableEq P.A] (target : P.A) (value : α) (n : Nat) :
     forkAt target (pure value : FreeM P α) n = pure none := rfl
 
-theorem forkAt_liftBind_same_zero [DecidableEq P.A] (target : P.A)
-    (next : P.B target → FreeM P α) :
+theorem forkAt_liftBind_same_zero [DecidableEq P.A] (target : P.A) (next : P.B target → FreeM P α) :
     forkAt target (FreeM.liftBind target next) 0 =
       Split.completeFork (.found (.here next)) := by
   simp [forkAt, splitAt]

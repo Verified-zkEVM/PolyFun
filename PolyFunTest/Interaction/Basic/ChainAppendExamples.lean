@@ -65,12 +65,10 @@ private def otherCombinedPath :
   Chain.appendThenPath prefixChain middle otherPrefixPath otherMiddlePath
 
 example : Chain.splitThenPath prefixChain middle combinedPath =
-    ⟨prefixPath, middlePath⟩ := by
-  simp [combinedPath]
+    ⟨prefixPath, middlePath⟩ := by simp [combinedPath]
 
 example : Chain.splitThenPath prefixChain middle otherCombinedPath =
-    ⟨otherPrefixPath, otherMiddlePath⟩ := by
-  simp [otherCombinedPath]
+    ⟨otherPrefixPath, otherMiddlePath⟩ := by simp [otherCombinedPath]
 
 example : finalArity combinedPath = 12 := rfl
 
@@ -83,26 +81,21 @@ example : Chain.appendThenPath prefixChain middle
 
 /-! ## Strategy composition across the chain boundary -/
 
-private def boundaryFamily
-    (path : Path (Chain.toTypeTree 1 prefixChain))
+private def boundaryFamily (path : Path (Chain.toTypeTree 1 prefixChain))
     (suffix : Path (Chain.toTypeTree 1 (middle path))) : Type :=
   Fin ((bif path.1 then 10 else 20) + suffix.1.val + 1)
 
-private def prefixStrategy :
-    Strategy.Plain Id (Chain.toTypeTree 1 prefixChain) (fun _ => PUnit) :=
+private def prefixStrategy : Strategy.Plain Id (Chain.toTypeTree 1 prefixChain) (fun _ => PUnit) :=
   ⟨true, ⟨⟩⟩
 
-private def suffixStrategy :
-    (path : Path (Chain.toTypeTree 1 prefixChain)) → PUnit →
-      Id (Strategy.Plain Id (Chain.toTypeTree 1 (middle path))
-        (boundaryFamily path))
+private def suffixStrategy : (path : Path (Chain.toTypeTree 1 prefixChain)) → PUnit →
+    Id (Strategy.Plain Id (Chain.toTypeTree 1 (middle path)) (boundaryFamily path))
   | ⟨true, ⟨⟩⟩, _ => ⟨(1 : Fin 2), (0 : Fin 12)⟩
   | ⟨false, ⟨⟩⟩, _ => ⟨(2 : Fin 3), (0 : Fin 23)⟩
 
-private def composedStrategy :
-    Strategy.Plain Id
-      (Chain.toTypeTree (1 + 1) (Chain.then prefixChain middle))
-      (Chain.liftThen prefixChain middle boundaryFamily) :=
+private def composedStrategy : Strategy.Plain Id
+    (Chain.toTypeTree (1 + 1) (Chain.then prefixChain middle))
+    (Chain.liftThen prefixChain middle boundaryFamily) :=
   Chain.strategyCompThen prefixChain middle prefixStrategy suffixStrategy
 
 /-- The chain-specific strategy combinator preserves the dependent prefix and
@@ -110,39 +103,29 @@ suffix choices in the path returned by execution. -/
 example :
     (Strategy.run
       (Chain.toTypeTree (1 + 1) (Chain.then prefixChain middle))
-      composedStrategy).1 = combinedPath :=
-  rfl
+      composedStrategy).1 = combinedPath := rfl
 
 /-- The dependent output type computes through the joined boundary path. -/
 example :
     (Strategy.run
       (Chain.toTypeTree (1 + 1) (Chain.then prefixChain middle))
-      composedStrategy).2 = (0 : Fin 12) :=
-  rfl
+      composedStrategy).2 = (0 : Fin 12) := rfl
 
 example :
     Chain.liftThen prefixChain middle boundaryFamily combinedPath = Fin 12 := by
-  rw [show combinedPath =
-    Chain.appendThenPath prefixChain middle prefixPath middlePath from rfl]
-  simp [boundaryFamily, prefixPath, middlePath]
+  simp [combinedPath, boundaryFamily, prefixPath, middlePath]
 
-example
-    (Family : {rounds : Nat} → Chain rounds → Type) :
+example (Family : {rounds : Nat} → Chain rounds → Type) :
     Chain.outputFamily Family (1 + 1) (Chain.then prefixChain middle)
         combinedPath =
       Chain.outputFamily Family 1 (middle prefixPath) middlePath := by
-  rw [Chain.outputFamily_then]
-  change Chain.outputFamily Family 1
-      (middle (Chain.splitThenPath prefixChain middle combinedPath).1)
-      (Chain.splitThenPath prefixChain middle combinedPath).2 = _
-  rw [show combinedPath =
-    Chain.appendThenPath prefixChain middle prefixPath middlePath from rfl]
-  rw [Chain.splitThenPath_appendThenPath]
+  rw [Chain.outputFamily_then,
+    show combinedPath = Chain.appendThenPath prefixChain middle prefixPath middlePath from rfl,
+    Chain.splitThenPath_appendThenPath]
 
 example : Chain.toTypeTree (1 + 1) (Chain.then prefixChain middle) =
     (Chain.toTypeTree 1 prefixChain).append
-      (fun path => Chain.toTypeTree 1 (middle path)) :=
-  Chain.toTypeTree_then prefixChain middle
+      (fun path => Chain.toTypeTree 1 (middle path)) := Chain.toTypeTree_then prefixChain middle
 
 example : Chain.toTypeTree (0 + 1)
       (Chain.then (⟨⟩ : Chain 0) (fun _ => prefixChain)) =

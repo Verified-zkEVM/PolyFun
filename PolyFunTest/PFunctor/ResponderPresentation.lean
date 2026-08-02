@@ -22,11 +22,8 @@ namespace PFunctor.ResponderPresentationCanary
 
 universe uA uB uC uD uA' uB' uC' uD' uS uI
 
-def mapBehavior
-    {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
-    (base : Lens P Q)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'})) :
-    PFunctor.M (P ⊸ X.{uA, uB}) :=
+def mapBehavior {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}} (base : Lens P Q)
+    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'})) : PFunctor.M (P ⊸ X.{uA, uB}) :=
   Responder.mapBehavior base behavior
 
 def mapDisplayedBehavior
@@ -81,19 +78,13 @@ def toTerminal :=
   Responder.PresentationHom.toTerminal contract
     responder Invariant displayed
 
-example : presentationId.toState 5 = 5 :=
-  rfl
+example : presentationId.toState 5 = 5 := rfl
 
-example : presentationId.toWitness 5 PUnit.unit = PUnit.unit :=
-  rfl
+example : presentationId.toWitness 5 PUnit.unit = PUnit.unit := rfl
 
-example :
-    (presentationId.comp presentationId).toState 5 = 5 :=
-  rfl
+example : (presentationId.comp presentationId).toState 5 = 5 := rfl
 
-example :
-    (toTerminal.comp presentationId).toState 5 = responder.behavior 5 :=
-  rfl
+example : (toTerminal.comp presentationId).toState 5 = responder.behavior 5 := rfl
 
 example :
     (toTerminal.comp presentationId).toWitness 5 PUnit.unit =
@@ -108,11 +99,9 @@ abbrev displayedSucc : Display.Lens contract contract succLens where
   toPosition _ evidence := evidence ++ "!"
   toDirection _ _ _ direction := !direction
 
-example : displayedSucc.toPosition PUnit.unit "state" = "state!" :=
-  rfl
+example : displayedSucc.toPosition PUnit.unit "state" = "state!" := rfl
 
-example : displayedSucc.toDirection PUnit.unit "state" 4 false = true :=
-  rfl
+example : displayedSucc.toDirection PUnit.unit "state" 4 false = true := rfl
 
 def mappedBehavior :=
   Responder.mapBehavior succLens (responder.behavior 5)
@@ -123,9 +112,7 @@ def mappedDisplayedBehavior :
     (responder.behavior 5) toDisplayedBehavior
 
 /-- The backward action of the ordinary lens is observable in the answer. -/
-example : (Responder.terminal (P := Interface)).answer
-    mappedBehavior PUnit.unit = 6 :=
-  rfl
+example : (Responder.terminal (P := Interface)).answer mappedBehavior PUnit.unit = 6 := rfl
 
 /-- The backward action of the displayed lens is observable in the returned
 postcondition. -/
@@ -137,8 +124,7 @@ example :
 /-- The mapped continuation advances the underlying presentation to state
 `15`; observing it through the same lens therefore returns `16`. -/
 example : (Responder.terminal (P := Interface)).answer
-    (mappedBehavior.children ⟨PUnit.unit, PUnit.unit⟩) PUnit.unit = 16 :=
-  rfl
+    (mappedBehavior.children ⟨PUnit.unit, PUnit.unit⟩) PUnit.unit = 16 := rfl
 
 example :
     (Responder.respondDisplayed contract
@@ -150,8 +136,7 @@ example :
 displayed postcondition, rather than merely its definitional carrier. -/
 example :
     (Responder.respondDisplayed contract (toTerminal.toWitness 5 PUnit.unit)
-      PUnit.unit "state").1 = false :=
-  rfl
+      PUnit.unit "state").1 = false := rfl
 
 example :
     Display.M.transport

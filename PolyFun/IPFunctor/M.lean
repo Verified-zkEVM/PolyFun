@@ -227,7 +227,7 @@ theorem corecTree_vertex
 theorem corecTree_wellIndexed
     (step : (i : I) → X i → P.Obj X i) (seed : Σ i, X i) :
     WellIndexed P (PFunctor.M.corec (totalStep (P := P) step) seed) :=
-  fun vertex => corecTree_vertex (P := P) step seed rfl vertex
+  corecTree_vertex (P := P) step seed rfl
 
 /-- Corecursor into the indexed final coalgebra. -/
 def corec (step : (i : I) → X i → P.Obj X i) (i : I) (state : X i) :
@@ -316,11 +316,8 @@ theorem corec_unique (step : (i : I) → X i → P.Obj X i)
 @[simp]
 theorem corec_dest (tree : IM P i) :
     corec (P := P) (fun _ next => dest next) i tree = tree := by
-  have h := corec_unique (P := P)
-    (fun j (next : IM P j) => dest next)
-    (fun _ next => next) (by
-      intro _ next
-      exact (P.map_id next.dest).symm)
+  have h := corec_unique (P := P) (fun _ next => dest next) (fun _ next => next)
+    (fun _ next => (P.map_id next.dest).symm)
   exact congrFun (congrFun h i) tree |>.symm
 
 end Corec

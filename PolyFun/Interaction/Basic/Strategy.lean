@@ -117,11 +117,8 @@ theorem Strategy.mapOutput_id {m : Type u → Type u} [Functor m] [LawfulFunctor
     rcases σ with ⟨x, cont⟩
     simp only [Strategy.mapOutput]
     congr 1
-    have hid : ∀ s : Strategy.Plain m (rest x) (fun p => A ⟨x, p⟩),
-        mapOutput (fun (p : Path (rest x)) (y : A ⟨x, p⟩) => y) s = s :=
-      fun s => ih x s
     calc (mapOutput (fun (p : Path (rest x)) (y : A ⟨x, p⟩) => y) ·) <$> cont
-        = id <$> cont := by congr 1; funext s; exact hid s
+        = id <$> cont := by congr 1; funext s; exact ih x s
       _ = cont := LawfulFunctor.id_map cont
 
 /-- `mapOutput` respects composition of output maps (needs a lawful functor). -/
@@ -137,18 +134,11 @@ theorem Strategy.mapOutput_comp
     rcases σ with ⟨x, cont⟩
     simp only [Strategy.mapOutput]
     congr 1
-    have hcomp : ∀ s : Strategy.Plain m (rest x) (fun p => A ⟨x, p⟩),
-        @mapOutput m _ (rest x) (fun p => A ⟨x, p⟩) (fun p => C ⟨x, p⟩)
-            (fun p y => g ⟨x, p⟩ (f ⟨x, p⟩ y)) s =
-          (@mapOutput m _ (rest x) (fun p => B ⟨x, p⟩) (fun p => C ⟨x, p⟩)
-              (fun p y => g ⟨x, p⟩ y) ∘
-            @mapOutput m _ (rest x) (fun p => A ⟨x, p⟩) (fun p => B ⟨x, p⟩)
-              (fun p y => f ⟨x, p⟩ y)) s :=
-      fun s => ih x (fun p y => g ⟨x, p⟩ y) (fun p y => f ⟨x, p⟩ y) s
     calc (mapOutput (fun (p : Path (rest x)) (y : A ⟨x, p⟩) => g ⟨x, p⟩ (f ⟨x, p⟩ y)) ·)
               <$> cont
         = ((mapOutput (fun p y => g ⟨x, p⟩ y) ·) ∘ (mapOutput (fun p y => f ⟨x, p⟩ y) ·))
-              <$> cont := by congr 1; funext s; exact hcomp s
+              <$> cont := by
+            congr 1; funext s; exact ih x (fun p y => g ⟨x, p⟩ y) (fun p y => f ⟨x, p⟩ y) s
       _ = (mapOutput (fun p y => g ⟨x, p⟩ y) ·) <$>
             ((mapOutput (fun p y => f ⟨x, p⟩ y) ·) <$> cont) := by
             rw [LawfulFunctor.comp_map]

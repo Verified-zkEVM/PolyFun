@@ -25,8 +25,7 @@ namespace PFunctor
 
 namespace DynSystem.DynComputation
 
-variable {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
-  {γ : Type uγ}
+variable {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type uγ}
 
 /-! ## Query accessibility -/
 
@@ -71,8 +70,8 @@ theorem terminatesFrom_query_iff (M : DynComputation.{u} p α β)
     constructor
     rintro child ⟨position', next', direction, hquery, rfl⟩
     have hquery' :
-        (⟨position', next'⟩ : p.Obj M.State) = ⟨position, next⟩ := by
-      exact Sum.inr_injective (hquery.symm.trans hview)
+        (⟨position', next'⟩ : p.Obj M.State) = ⟨position, next⟩ :=
+      Sum.inr_injective (hquery.symm.trans hview)
     cases hquery'
     exact h direction
 

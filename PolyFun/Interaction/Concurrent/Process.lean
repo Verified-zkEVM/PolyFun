@@ -372,9 +372,7 @@ the selected subprocess's step protocol runs with its decoration mapped into
 -/
 def interleave
     {P₁ P₂ : Type v}
-    {Γ₁ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Γ₂ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Γ₁ Γ₂ Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (p₁ : ProcessOver.{v, w, w₂} P₁ Γ₁)
     (p₂ : ProcessOver.{v, w, w₂} P₂ Γ₂)
     (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Δ)
@@ -415,9 +413,8 @@ theorem mapContext_interleave
   congr 1
   simp only [PFunctor.FreeM.liftBind_eq]
   rw [PFunctor.FreeM.Displayed.Decoration.map_liftBind]
-  dsimp only
   congr 1; funext ⟨b⟩
-  cases b <;> dsimp
+  cases b
   · exact PFunctor.FreeM.Displayed.Decoration.map_comp
         (P := Interaction.TypeTree.basePFunctor) (α := PUnit.{w+1})
         g f₂ _ _
@@ -446,7 +443,7 @@ theorem interleave_mapContext
   dsimp only [ofStep, PFunctor.DynSystem.expose_mk', PFunctor.DynSystem.update_mk']
   congr 1
   · congr 1; funext ⟨b⟩
-    cases b <;> dsimp
+    cases b
     · exact PFunctor.FreeM.Displayed.Decoration.map_comp
         (P := Interaction.TypeTree.basePFunctor) (α := PUnit.{w+1})
         f₂ g₂ _ _
@@ -517,9 +514,7 @@ and a path of that node projects back to the chosen side's path.
 (`interleave_eq_wrap_choiceProd`).
 -/
 def interleaveLens
-    {Γ₁ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Γ₂ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Γ₁ Γ₂ Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Δ)
     (f₂ : Interaction.TypeTree.Node.ContextHom Γ₂ Δ)
     (schedulerCtx : Δ (ULift.{w} Bool)) :
@@ -542,9 +537,7 @@ asynchronous choice `choiceProd` of the two processes, wrapped along the
 scheduler wiring lens `interleaveLens`. -/
 theorem interleave_eq_wrap_choiceProd
     {P₁ P₂ : Type v}
-    {Γ₁ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Γ₂ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Γ₁ Γ₂ Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (p₁ : ProcessOver.{v, w, w₂} P₁ Γ₁)
     (p₂ : ProcessOver.{v, w, w₂} P₂ Γ₂)
     (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Δ)

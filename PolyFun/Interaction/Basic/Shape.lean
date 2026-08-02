@@ -33,14 +33,13 @@ specialization. This differs from `Decoration.Over`, which is literally
 dependent data over a fixed base decoration value.
 -/
 
-universe u a vΓ vΔ vΛ w uA uB uA₂ uB₂ t
+universe a vΓ vΔ vΛ w uA uB uA₂ uB₂
 
 namespace Interaction
 
 open PFunctor
 
 variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}}
-variable {α : Type t}
 
 /--
 `ShapeOver l Agent Γ` is functorial local syntax over an arbitrary control

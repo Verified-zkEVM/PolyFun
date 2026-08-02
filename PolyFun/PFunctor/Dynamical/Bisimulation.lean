@@ -58,8 +58,7 @@ def toLTS (D : DynSystem S p) : Control.LTS (Σ a : p.A, Option (p.B a)) where
   next s mv := mv.elim s (D.update s)
   label s mv := some ⟨D.expose s, mv⟩
 
-@[simp] theorem toLTS_label (D : DynSystem S p) (s : S)
-    (mv : Option (p.B (D.expose s))) :
+@[simp] theorem toLTS_label (D : DynSystem S p) (s : S) (mv : Option (p.B (D.expose s))) :
     (D.toLTS).label s mv = some ⟨D.expose s, mv⟩ := rfl
 
 @[simp] theorem toLTS_next_none (D : DynSystem S p) (s : S) :
@@ -73,28 +72,22 @@ after transporting `d` along the position equality, literally `some (hh ▸ d)`.
 Universally quantifying the positions lets `cases hh` discharge the transport.
 A small private helper for the dependent bookkeeping in
 `isSimulation_of_isStrongSimulation`. -/
-private theorem move_eq_of_heq {a b : p.A} (hh : a = b)
-    {μ : Option (p.B b)} {d : p.B a} (hmv : HEq μ (some d)) :
-    μ = some (hh ▸ d) := by
+private theorem move_eq_of_heq {a b : p.A} (hh : a = b) {μ : Option (p.B b)} {d : p.B a}
+    (hmv : HEq μ (some d)) : μ = some (hh ▸ d) := by
   cases hh; exact eq_of_heq hmv
 
 private theorem option_none_heq {a b : p.A} (h : a = b) :
-    HEq (none : Option (p.B b)) (none : Option (p.B a)) := by
-  cases h
-  rfl
+    HEq (none : Option (p.B b)) (none : Option (p.B a)) := by cases h; rfl
 
 private theorem option_some_cast_heq {a b : p.A} (h : a = b) (d : p.B a) :
-    HEq (some (h ▸ d) : Option (p.B b)) (some d : Option (p.B a)) := by
-  cases h
-  rfl
+    HEq (some (h ▸ d) : Option (p.B b)) (some d : Option (p.B a)) := by cases h; rfl
 
 /-- A strong LTS simulation between the encodings of two dynamical systems is
 exactly enough to build the library's synchronized `DynSystem.IsSimulation`.
 The artificial `none` self-loop forces equality of exposed positions; a
 `some d` move then gives the matching update. -/
-theorem isSimulation_of_isStrongSimulation
-    {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p} {rel : S₁ → S₂ → Prop}
-    (h : Control.IsStrongSimulation D₁.toLTS D₂.toLTS rel) :
+theorem isSimulation_of_isStrongSimulation {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p}
+    {rel : S₁ → S₂ → Prop} (h : Control.IsStrongSimulation D₁.toLTS D₂.toLTS rel) :
     DynSystem.IsSimulation D₁ D₂ rel where
   expose_eq := by
     intro s₁ s₂ hrel
@@ -120,9 +113,8 @@ theorem isSimulation_of_isStrongSimulation
 simulation of the labelled encodings. Thus `toLTS` neither loses nor adds
 simulation obligations: its position self-loop and direction moves encode the
 two fields of `DynSystem.IsSimulation` exactly. -/
-theorem isStrongSimulation_of_isSimulation
-    {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p} {rel : S₁ → S₂ → Prop}
-    (h : DynSystem.IsSimulation D₁ D₂ rel) :
+theorem isStrongSimulation_of_isSimulation {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p}
+    {rel : S₁ → S₂ → Prop} (h : DynSystem.IsSimulation D₁ D₂ rel) :
     Control.IsStrongSimulation D₁.toLTS D₂.toLTS rel := by
   rintro s₁ s₂ hrel label t₁ ⟨move₁, hlabel, hnext⟩
   have hexpose := h.expose_eq hrel
@@ -132,24 +124,22 @@ theorem isStrongSimulation_of_isSimulation
   | none =>
       have hlabelNone :
           some (⟨D₂.expose s₂, none⟩ : Σ a : p.A, Option (p.B a)) =
-            some (⟨D₁.expose s₁, none⟩ : Σ a : p.A, Option (p.B a)) := by
-        exact congrArg some (Sigma.ext hexpose.symm (option_none_heq hexpose))
+            some (⟨D₁.expose s₁, none⟩ : Σ a : p.A, Option (p.B a)) :=
+        congrArg some (Sigma.ext hexpose.symm (option_none_heq hexpose))
       exact ⟨s₂, ⟨none, hlabelNone, rfl⟩, hrel⟩
   | some d =>
       let d₂ := hexpose ▸ d
       have hlabelSome :
           some (⟨D₂.expose s₂, some d₂⟩ : Σ a : p.A, Option (p.B a)) =
-            some (⟨D₁.expose s₁, some d⟩ : Σ a : p.A, Option (p.B a)) := by
-        exact congrArg some
-          (Sigma.ext hexpose.symm (option_some_cast_heq hexpose d))
+            some (⟨D₁.expose s₁, some d⟩ : Σ a : p.A, Option (p.B a)) :=
+        congrArg some (Sigma.ext hexpose.symm (option_some_cast_heq hexpose d))
       exact ⟨D₂.update s₂ d₂, ⟨some d₂, hlabelSome, rfl⟩, h.update_rel hrel d⟩
 
 /-- The generic strong-simulation condition on `toLTS` is logically
 equivalent to the native synchronized simulation condition. -/
-theorem isStrongSimulation_toLTS_iff_isSimulation
-    {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p} {rel : S₁ → S₂ → Prop} :
-    Control.IsStrongSimulation D₁.toLTS D₂.toLTS rel ↔
-      DynSystem.IsSimulation D₁ D₂ rel :=
+theorem isStrongSimulation_toLTS_iff_isSimulation {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p}
+    {rel : S₁ → S₂ → Prop} :
+    Control.IsStrongSimulation D₁.toLTS D₂.toLTS rel ↔ DynSystem.IsSimulation D₁ D₂ rel :=
   ⟨isSimulation_of_isStrongSimulation, isStrongSimulation_of_isSimulation⟩
 
 /-- Strong simulation of the induced labelled transition systems preserves

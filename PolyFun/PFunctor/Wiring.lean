@@ -233,14 +233,10 @@ identity substitution. -/
 theorem substitute_id
     {output : PFunctor.{uA, uB}}
     (wiring : Wiring Boxes Arity Dom Cod Inputs inputInterface output) :
-    substitute (fun i => Wiring.input i) wiring = wiring := by
+    substitute Wiring.input wiring = wiring := by
   induction wiring with
   | input i => rfl
-  | box b children ih =>
-      simp only [substitute_box]
-      congr
-      funext port
-      exact ih port
+  | box b children ih => simp only [substitute_box, ih]
 
 /-- Successive wiring substitutions agree with their pointwise composite. -/
 theorem substitute_assoc
@@ -256,11 +252,7 @@ theorem substitute_assoc
       substitute (fun i => substitute second (first i)) wiring := by
   induction wiring with
   | input i => rfl
-  | box b children ih =>
-      simp only [substitute_box]
-      congr
-      funext port
-      exact ih port
+  | box b children ih => simp only [substitute_box, ih]
 
 namespace Displayed
 

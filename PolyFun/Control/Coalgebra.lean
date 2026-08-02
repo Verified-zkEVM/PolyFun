@@ -91,15 +91,13 @@ def id : Coalg.Hom F S₁ S₁ where
   comm := by funext x; simp [Function.comp, id_map]
 
 /-- Composition of coalgebra morphisms. -/
-def comp (g : Coalg.Hom F S₂ S₃) (f : Coalg.Hom F S₁ S₂) :
-    Coalg.Hom F S₁ S₃ where
+def comp (g : Coalg.Hom F S₂ S₃) (f : Coalg.Hom F S₁ S₂) : Coalg.Hom F S₁ S₃ where
   toFun := g.toFun ∘ f.toFun
   comm := by
     funext x
-    simp only [Function.comp_apply]
     have hf := congrFun f.comm x
     have hg := congrFun g.comm (f.toFun x)
-    simp only [Function.comp_apply] at hf hg
+    simp only [Function.comp_apply] at hf hg ⊢
     rw [comp_map, hf, hg]
 
 @[simp]

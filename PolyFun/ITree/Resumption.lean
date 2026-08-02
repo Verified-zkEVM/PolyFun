@@ -29,8 +29,7 @@ variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
 /-! ## Embedding into interaction trees -/
 
 /-- One-step ITree coalgebra corresponding to a resumption return/query view. -/
-def toITreeStep (computation : Resumption p β) :
-    (ITree.Poly p β).Obj (Resumption p β) :=
+def toITreeStep (computation : Resumption p β) : (ITree.Poly p β).Obj (Resumption p β) :=
   match dest computation with
   | Sum.inl value => ⟨.pure value, PEmpty.elim⟩
   | Sum.inr ⟨position, next⟩ => ⟨.query position, next⟩
@@ -74,15 +73,13 @@ def toITree (computation : Resumption p β) : ITree p β :=
     ITree.shape' (ITree.pure value)
   rw [shape'_toITree, dest_pure, ITree.shape'_pure]
 
-@[simp] theorem toITree_query (position : p.A)
-    (next : p.B position → Resumption p β) :
+@[simp] theorem toITree_query (position : p.A) (next : p.B position → Resumption p β) :
     toITree (query position next) =
       ITree.query position (fun direction => toITree (next direction)) := by
   apply M.eq_of_dest_eq
   simp
 
-theorem toITree_bind (computation : Resumption p α)
-    (k : α → Resumption p β) :
+theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β) :
     toITree (bind computation k) =
       ITree.bind (toITree computation) (fun value => toITree (k value)) := by
   refine M.bisim
@@ -122,8 +119,7 @@ theorem toITree_bind (computation : Resumption p α)
   rw [toITree_bind]
   simp
 
-@[simp] theorem toITree_mapLens (lens : Lens p q)
-    (computation : Resumption p β) :
+@[simp] theorem toITree_mapLens (lens : Lens p q) (computation : Resumption p β) :
     toITree (mapLens lens computation) = ITree.mapSpec lens (toITree computation) := by
   refine M.bisim
     (fun left right : ITree q β => ∃ source : Resumption p β,
@@ -170,9 +166,8 @@ def TauFreeF (R : _root_.ITree p β → Prop) (tree : _root_.ITree p β) : Prop 
   | ⟨.step, _⟩ => False
   | ⟨.query _, next⟩ => ∀ direction, R (next direction)
 
-theorem TauFreeF.mono {R S : _root_.ITree p β → Prop}
-    (hRS : ∀ {tree}, R tree → S tree) {tree : _root_.ITree p β}
-    (h : TauFreeF R tree) : TauFreeF S tree := by
+theorem TauFreeF.mono {R S : _root_.ITree p β → Prop} (hRS : ∀ {tree}, R tree → S tree)
+    {tree : _root_.ITree p β} (h : TauFreeF R tree) : TauFreeF S tree := by
   rcases hshape : shape' tree with ⟨shape, next⟩
   unfold TauFreeF at h ⊢
   rw [hshape] at h ⊢
@@ -196,16 +191,14 @@ theorem TauFree.coinduct (R : _root_.ITree p β → Prop)
   ⟨R, closed, h⟩
 
 /-- Unfold one layer of the tau-free greatest invariant. -/
-theorem TauFree.unfold {tree : _root_.ITree p β} (h : TauFree tree) :
-    TauFreeF TauFree tree := by
+theorem TauFree.unfold {tree : _root_.ITree p β} (h : TauFree tree) : TauFreeF TauFree tree := by
   rcases h with ⟨R, closed, htree⟩
   apply TauFreeF.mono (S := TauFree) (h := closed htree)
   intro current hcurrent
   exact ⟨R, closed, hcurrent⟩
 
 /-- Fold one tau-free layer into the greatest invariant. -/
-theorem TauFree.fold {tree : _root_.ITree p β}
-    (h : TauFreeF TauFree tree) : TauFree tree := by
+theorem TauFree.fold {tree : _root_.ITree p β} (h : TauFreeF TauFree tree) : TauFree tree := by
   let R : _root_.ITree p β → Prop := fun current => current = tree ∨ TauFree current
   apply TauFree.coinduct R
   · intro current hcurrent
@@ -214,13 +207,11 @@ theorem TauFree.fold {tree : _root_.ITree p β}
     · exact TauFreeF.mono (fun hchild => Or.inr hchild) hcurrent.unfold
   · exact Or.inl rfl
 
-@[simp] theorem tauFree_pure (value : β) :
-    TauFree (ITree.pure (F := p) value) := by
+@[simp] theorem tauFree_pure (value : β) : TauFree (ITree.pure (F := p) value) := by
   apply TauFree.fold
   simp [TauFreeF]
 
-@[simp] theorem tauFree_query (position : p.A)
-    (next : p.B position → _root_.ITree p β) :
+@[simp] theorem tauFree_query (position : p.A) (next : p.B position → _root_.ITree p β) :
     TauFree (ITree.query position next) ↔ ∀ direction, TauFree (next direction) := by
   constructor
   · intro h
@@ -229,29 +220,20 @@ theorem TauFree.fold {tree : _root_.ITree p β}
     apply TauFree.fold
     simpa [TauFreeF]
 
-theorem not_tauFree_step (tree : _root_.ITree p β) :
-    ¬ TauFree (ITree.step tree) := by
+theorem not_tauFree_step (tree : _root_.ITree p β) : ¬ TauFree (ITree.step tree) := by
   intro h
   simpa [TauFreeF] using h.unfold
 
 /-- A tau-free tree observed as a query has tau-free children. -/
 theorem TauFree.of_shape'_query {tree : _root_.ITree p β} {position : p.A}
-    {next : p.B position → _root_.ITree p β}
-    (hshape : shape' tree = ⟨.query position, next⟩) (h : TauFree tree) :
-    ∀ direction, TauFree (next direction) := by
-  have hunfold := h.unfold
-  unfold TauFreeF at hunfold
-  rw [hshape] at hunfold
-  exact hunfold
+    {next : p.B position → _root_.ITree p β} (hshape : shape' tree = ⟨.query position, next⟩)
+    (h : TauFree tree) : ∀ direction, TauFree (next direction) := by
+  simpa only [TauFreeF, hshape] using h.unfold
 
 /-- A tau-free tree cannot be observed as a silent step. -/
-theorem TauFree.not_of_shape'_step {tree : _root_.ITree p β}
-    {next : PUnit → _root_.ITree p β}
+theorem TauFree.not_of_shape'_step {tree : _root_.ITree p β} {next : PUnit → _root_.ITree p β}
     (hshape : shape' tree = ⟨.step, next⟩) (h : TauFree tree) : False := by
-  have hunfold := h.unfold
-  unfold TauFreeF at hunfold
-  rw [hshape] at hunfold
-  exact hunfold
+  simpa only [TauFreeF, hshape] using h.unfold
 
 end ITree
 
@@ -307,8 +289,7 @@ def ofTauFreeStep (state : {tree : _root_.ITree p β // ITree.TauFree tree}) :
   ofTauFreeHead (tauFreeHead state)
 
 /-- Remove the impossible tau case from a tau-free interaction tree. -/
-def ofTauFreeITree
-    (state : {tree : _root_.ITree p β // ITree.TauFree tree}) : Resumption p β :=
+def ofTauFreeITree (state : {tree : _root_.ITree p β // ITree.TauFree tree}) : Resumption p β :=
   corec ofTauFreeStep state
 
 theorem ofTauFreeStep_of_shape'_pure

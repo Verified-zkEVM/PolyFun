@@ -56,8 +56,7 @@ example (h : Handler (StateT Nat Id) q) :
 /-- The forward direction of the bridge answers from the state and threads the
 next state, i.e. it is a Mealy step in Kleisli form. -/
 example (s : Nat) (a : PUnit) :
-    echoResponder.toStateHandler a s = (echoResponder.answer s a, echoResponder.next s a) :=
-  rfl
+    echoResponder.toStateHandler a s = (echoResponder.answer s a, echoResponder.next s a) := rfl
 
 end Responder.Examples
 end PFunctor

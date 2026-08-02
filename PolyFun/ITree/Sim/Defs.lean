@@ -94,18 +94,15 @@ def mapSpecStep (φ : PFunctor.Lens E F) (t : ITree E α) : (Poly F α).Obj (ITr
   | ⟨.query a, c⟩ => ⟨.query (φ.toFunA a), fun b => c (φ.toFunB a b)⟩
 
 @[simp] theorem mapSpecStep_pure (φ : PFunctor.Lens E F) (r : α) :
-    mapSpecStep (α := α) φ (pure (F := E) r) = ⟨.pure r, PEmpty.elim⟩ := by
-  simp [mapSpecStep]
+    mapSpecStep (α := α) φ (pure (F := E) r) = ⟨.pure r, PEmpty.elim⟩ := rfl
 
 @[simp] theorem mapSpecStep_step (φ : PFunctor.Lens E F) (t : ITree E α) :
-    mapSpecStep φ (step t) = ⟨.step, fun _ => t⟩ := by
-  simp [mapSpecStep]
+    mapSpecStep φ (step t) = ⟨.step, fun _ => t⟩ := rfl
 
 @[simp] theorem mapSpecStep_query (φ : PFunctor.Lens E F) (a : E.A)
     (k : E.B a → ITree E α) :
     mapSpecStep (α := α) φ (query a k) =
-      ⟨.query (φ.toFunA a), fun b => k (φ.toFunB a b)⟩ := by
-  simp [mapSpecStep]
+      ⟨.query (φ.toFunA a), fun b => k (φ.toFunB a b)⟩ := rfl
 
 /-- Apply a polynomial-functor lens `φ : PFunctor.Lens E F` to every event
 of an interaction tree, leaving the leaves and silent steps untouched.

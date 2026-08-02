@@ -92,8 +92,7 @@ position of the composition unit. -/
 `compNth p 2 = p ◃ (p ◃ y)` collapses to `twoStep`'s binary composite `p ◃ p`
 after the inner unitor `compX` (`p ◃ y ≅ p`). -/
 theorem nStep_two_eq_twoStep (φ : DynSystem S p) :
-    φ.nStep 2 ⨟ (Lens.id p ◃ₗ Lens.Equiv.compX.toLens) = φ.twoStep := by
-  rfl
+    φ.nStep 2 ⨟ (Lens.id p ◃ₗ Lens.Equiv.compX.toLens) = φ.twoStep := rfl
 
 end
 

@@ -65,8 +65,7 @@ four arguments together with the universe levels on the `FreeM₂` constant;
 otherwise `none`. Returning the levels here avoids a second `whnf` +
 `getAppFn` walk in the elaborators that consume the detector's output.
 -/
-meta def isFreeM₂Monad? (m : Expr) :
-    MetaM (Option (Expr × Expr × Expr × Expr × List Level)) := do
+meta def isFreeM₂Monad? (m : Expr) : MetaM (Option (Expr × Expr × Expr × Expr × List Level)) := do
   -- Reducible-transparency `whnf` so the plain-`def` `FreeM₂` head is preserved without being
   -- unfolded into the underlying `IFreeM` form.
   let m ← Meta.withTransparency .reducible <| whnf m
@@ -87,8 +86,7 @@ binder. The continuation is elaborated at `FreeM₂ P tStep uOuter β`,
 where `uOuter` is the do-block's overall post-state extracted from the
 monadic context.
 -/
-meta def mkBindFreeM₂
-    (dec : DoElemCont) (lvls : List Level) (I P s tStep uOuter e : Expr) :
+meta def mkBindFreeM₂ (dec : DoElemCont) (lvls : List Level) (I P s tStep uOuter e : Expr) :
     DoElabM Expr := do
   let xType := dec.resultType
   let declKind := Lean.LocalDeclKind.ofBinderName dec.resultName

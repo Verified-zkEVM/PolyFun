@@ -3,8 +3,8 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Ownership
 import PolyFun.Interaction.Basic.Interaction
+import PolyFun.Interaction.Basic.Ownership
 import PolyFun.Interaction.Basic.Shape
 import PolyFun.Interaction.TwoParty.Decoration
 import PolyFun.Interaction.TwoParty.Role
@@ -129,18 +129,14 @@ def _root_.Interaction.InteractionOver.TwoParty.paired
 
 /-- Two-party monadic syntax over an arbitrary lens-executed control tree. -/
 def _root_.Interaction.SyntaxOver.TwoParty.monadic
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w}) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w}) :
     SyntaxOver l Participant (fun _ : P.A => Role) :=
   Ownership.monadicSyntax l (fun role agent => perspective role agent)
     (fun {pos} role agent => monad pos role agent)
 
 /-- Functorial shape for two-party monadic syntax over a lens-executed tree. -/
 def _root_.Interaction.ShapeOver.TwoParty.monadic
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w}) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w}) :
     Interaction.ShapeOver l Participant (fun _ : P.A => Role) where
   toSyntaxOver := SyntaxOver.TwoParty.monadic l monad
   map := fun {agent} {pos} {γ} {A} {B} f node =>
@@ -319,11 +315,8 @@ end PublicCoinCounterpart
 
 @[simp]
 theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_focal_sender
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w})
-    (pos : P.A)
-    (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w})
+    (pos : P.A) (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
     (SyntaxOver.TwoParty.monadic l monad).Node Participant.focal pos Role.sender Cont =
       (monad pos Role.sender Participant.focal).M
         ((d : Q.B (l.toFunA pos)) × Cont d) :=
@@ -331,11 +324,8 @@ theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_focal_sender
 
 @[simp]
 theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_counterpart_sender
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w})
-    (pos : P.A)
-    (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w})
+    (pos : P.A) (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
     (SyntaxOver.TwoParty.monadic l monad).Node Participant.counterpart pos Role.sender Cont =
       ((d : Q.B (l.toFunA pos)) →
         (monad pos Role.sender Participant.counterpart).M (Cont d)) :=
@@ -343,11 +333,8 @@ theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_counterpart_sender
 
 @[simp]
 theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_focal_receiver
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w})
-    (pos : P.A)
-    (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w})
+    (pos : P.A) (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
     (SyntaxOver.TwoParty.monadic l monad).Node Participant.focal pos Role.receiver Cont =
       ((d : Q.B (l.toFunA pos)) →
         (monad pos Role.receiver Participant.focal).M (Cont d)) :=
@@ -355,11 +342,8 @@ theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_focal_receiver
 
 @[simp]
 theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_counterpart_receiver
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w})
-    (pos : P.A)
-    (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w})
+    (pos : P.A) (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
     (SyntaxOver.TwoParty.monadic l monad).Node Participant.counterpart pos Role.receiver Cont =
       (monad pos Role.receiver Participant.counterpart).M
         ((d : Q.B (l.toFunA pos)) × Cont d) :=

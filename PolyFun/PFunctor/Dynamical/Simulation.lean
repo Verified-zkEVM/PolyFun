@@ -65,7 +65,7 @@ theorem behavior_eq_of_isSimulation {D₁ : DynSystem S₁ p} {D₂ : DynSystem 
   refine M.corec_eq_corec D₁.out D₂.out R s₁ s₂ h (fun x y hxy => ?_)
   have he : D₁.expose x = D₂.expose y := hsim.expose_eq hxy
   refine ⟨D₁.expose x, D₁.update x, fun d => D₂.update y (he ▸ d), rfl, ?_,
-    fun d => hsim.update_rel hxy d⟩
+    hsim.update_rel hxy⟩
   simp only [DynSystem.out]
   refine Sigma.ext he.symm (Function.hfunext (congrArg p.B he.symm) fun a a' hab => ?_)
   exact heq_of_eq (congrArg (D₂.update y) (eq_of_heq (hab.trans (eqRec_heq he a').symm)))

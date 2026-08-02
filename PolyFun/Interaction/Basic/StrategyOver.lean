@@ -3,8 +3,8 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Shape
 import PolyFun.Interaction.Basic.Decoration
+import PolyFun.Interaction.Basic.Shape
 
 /-!
 # Whole-tree strategies over interaction syntax
@@ -301,10 +301,8 @@ theorem family_comap {Δ : P.A → Type vΔ}
     (ctxs : Decoration Γ spec) →
     {Out : PFunctor.FreeM.PathAlong l spec → Type w} →
     StrategyOver (ShapeOver.comap f shape).toSyntaxOver agent spec ctxs Out =
-      StrategyOver shape.toSyntaxOver agent spec (Decoration.map f spec ctxs) Out := by
-  intro agent spec ctxs Out
-  exact (StrategyOver.comap shape.toSyntaxOver f
-    (agent := agent) (spec := spec) (ctxs := ctxs) (Out := Out))
+      StrategyOver shape.toSyntaxOver agent spec (Decoration.map f spec ctxs) Out :=
+  StrategyOver.comap shape.toSyntaxOver f
 
 end ShapeOver
 

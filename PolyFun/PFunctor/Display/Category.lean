@@ -70,26 +70,20 @@ def freeLensEquiv {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}} :
         (FreeP Q).Obj (P.B operation))
 
 @[simp]
-theorem freeLensEquiv_apply
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
-    (f : Handler (FreeM Q) P) :
-    freeLensEquiv f = toFreeLens f :=
+theorem freeLensEquiv_apply {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
+    (f : Handler (FreeM Q) P) : freeLensEquiv f = toFreeLens f :=
   rfl
 
 @[simp]
-theorem freeLensEquiv_symm_apply
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
-    (lens : Lens P (FreeP Q)) :
-    freeLensEquiv.symm lens = ofFreeLens lens :=
+theorem freeLensEquiv_symm_apply {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
+    (lens : Lens P (FreeP Q)) : freeLensEquiv.symm lens = ofFreeLens lens :=
   rfl
 
 @[simp]
 theorem toFreeLens_id (P : PFunctor.{uA, u}) :
-    toFreeLens (Handler.id P) = FreeP.generator P := by
-  rfl
+    toFreeLens (Handler.id P) = FreeP.generator P := rfl
 
-private theorem decode_extension_bind
-    {R : PFunctor.{u, u}} {E F : Type u}
+private theorem decode_extension_bind {R : PFunctor.{u, u}} {E F : Type u}
     (x : SubstMonoid.Extension (FreeP.substMonoid R) E)
     (f : E → SubstMonoid.Extension (FreeP.substMonoid R) F) :
     FreeP.decode
@@ -101,8 +95,7 @@ private theorem decode_extension_bind
   change FreeP.decode (Lens.mapObj (FreeP.mult (P := R)) source) = _
   rw [FreeP.decode_mult]
   have hnest : FreeP.nest source =
-      FreeP.relabel (fun value => FreeP.decode (f value)) x := by
-    rfl
+      FreeP.relabel (fun value => FreeP.decode (f value)) x := rfl
   rw [hnest, FreeP.decode_relabel]
   let g := fun value => FreeP.decode (f value)
   calc
@@ -114,12 +107,9 @@ private theorem decode_extension_bind
     _ = FreeM.bind (FreeP.decode x)
           (fun value => FreeM.bind (FreeM.pure (g value)) _root_.id) :=
       FreeM.bind_assoc _ _ _
-    _ = FreeM.bind (FreeP.decode x) g := by
-      rfl
+    _ = FreeM.bind (FreeP.decode x) g := rfl
 
-private theorem liftM_encode
-    {Q R : PFunctor.{u, u}}
-    (second : Handler (FreeM R) Q) {E : Type u}
+private theorem liftM_encode {Q R : PFunctor.{u, u}} (second : Handler (FreeM R) Q) {E : Type u}
     (program : FreeM Q E) :
     FreeM.liftM
         (m := SubstMonoid.Extension (FreeP.substMonoid R))
@@ -138,12 +128,10 @@ private theorem liftM_encode
       have hleft : FreeM.liftM extHandler ((FreeM.lift query).bind next) =
           SubstMonoid.Extension.bind (FreeP.substMonoid R)
             (FreeP.encode (second query)) (fun direction =>
-              FreeM.liftM extHandler (next direction)) := by
-        rfl
+              FreeM.liftM extHandler (next direction)) := rfl
       have hright : FreeM.liftM second ((FreeM.lift query).bind next) =
           FreeM.bind (second query)
-            (fun direction => FreeM.liftM second (next direction)) := by
-        rfl
+            (fun direction => FreeM.liftM second (next direction)) := rfl
       change FreeP.decode (FreeM.liftM extHandler
           ((FreeM.lift query).bind next)) =
         FreeP.decode (FreeP.encode
@@ -155,9 +143,7 @@ private theorem liftM_encode
       funext direction
       rw [ih direction, FreeP.decode_encode]
 
-private theorem foldObjAt_encode
-    {Q R : PFunctor.{u, u}}
-    (second : Handler (FreeM R) Q) {E : Type u}
+private theorem foldObjAt_encode {Q R : PFunctor.{u, u}} (second : Handler (FreeM R) Q) {E : Type u}
     (program : FreeM Q E) :
     FreeP.foldObjAt (FreeP.substMonoid R) (toFreeLens second)
         (FreeP.encode program).1 (FreeP.encode program).2 =
@@ -172,15 +158,13 @@ existing universal free-polynomial fold followed by ordinary lens
 composition.  This theorem is stated in the homogeneous categorical fragment
 required by `FreeP.substMonoid`; the structural equivalence itself above is
 fully heterogeneous in position universes. -/
-theorem toFreeLens_comp
-    {P Q R : PFunctor.{u, u}}
+theorem toFreeLens_comp {P Q R : PFunctor.{u, u}}
     (second : Handler (FreeM R) Q) (first : Handler (FreeM Q) P) :
     toFreeLens (second.comp first) =
       FreeP.foldLens (FreeP.substMonoid R) (toFreeLens second) ∘ₗ
         toFreeLens first := by
   apply Lens.ext_mapObj
   intro operation
-  change FreeP.encode ((first operation).liftM second) = _
   change FreeP.encode ((first operation).liftM second) =
     Lens.mapObj
       (FreeP.foldLens (FreeP.substMonoid R) (toFreeLens second))

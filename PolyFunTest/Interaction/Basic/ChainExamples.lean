@@ -76,8 +76,7 @@ private def secondRound : Path branchingRound → TypeTree
   | ⟨false, ⟨i, ⟨⟩⟩⟩ => .node (Fin (i.val + 2)) fun _ => .done
 
 /-- The third round depends on the full two-round path prefix. -/
-private def thirdRound :
-    (tr₁ : Path branchingRound) → Path (secondRound tr₁) → TypeTree
+private def thirdRound : (tr₁ : Path branchingRound) → Path (secondRound tr₁) → TypeTree
   | ⟨true, ⟨(n : Nat), ⟨⟩⟩⟩, ⟨k, ⟨⟩⟩ => .node (Fin (n + k.val + 1)) fun _ => .done
   | ⟨false, ⟨i, ⟨⟩⟩⟩, ⟨k, ⟨⟩⟩ => .node (Fin (i.val + k.val + 2)) fun _ => .done
 
@@ -118,8 +117,7 @@ example (i : Fin 2) :
 /-! ## Dependent strategy composition over the prefix-dependent example -/
 
 /-- Pure strategy that follows a prescribed path and returns a chosen leaf output. -/
-private def scriptStrategy :
-    (spec : TypeTree) → (tr : Path spec) → {Output : Path spec → Type u} →
+private def scriptStrategy : (spec : TypeTree) → (tr : Path spec) → {Output : Path spec → Type u} →
     Output tr → Strategy.Plain Id spec Output
   | .done, _, _, out => out
   | .node _ rest, ⟨x, trRest⟩, _, out => ⟨x, scriptStrategy (rest x) trRest out⟩
@@ -130,8 +128,7 @@ private abbrev ReplayState {n : Nat} (c : Chain.{0} n) : Type :=
 
 /-- One dependent step: split the remaining flattened path into this round and the tail,
 play the current round verbatim, and return the tail path. -/
-private def replayStep {n : Nat} (c : Chain.{0} (n + 1))
-    (tr : ReplayState c) :
+private def replayStep {n : Nat} (c : Chain.{0} (n + 1)) (tr : ReplayState c) :
     Id (Strategy.Plain Id c.1 (fun tr₁ => ReplayState (c.2 tr₁))) :=
   let ⟨tr₁, trRest⟩ := Chain.splitPath n c tr
   scriptStrategy c.1 tr₁ trRest
@@ -155,8 +152,7 @@ private def trueReplayPath (n : Nat) (k : Fin (n + 1)) (j : Fin (n + k.val + 1))
       (Chain.appendPath 0 c₃ tr₃ ⟨⟩))
 
 /-- A concrete `false`-branch path for the prefix-dependent chain. -/
-private def falseReplayPath (i : Fin 2) (k : Fin (i.val + 2))
-    (j : Fin (i.val + k.val + 2)) :
+private def falseReplayPath (i : Fin 2) (k : Fin (i.val + 2)) (j : Fin (i.val + k.val + 2)) :
     Path (Chain.toTypeTree 3 prefixDependent) := by
   let tr₁ : Path branchingRound := ⟨false, ⟨i, ⟨⟩⟩⟩
   let c₂ := prefixDependent.2 tr₁

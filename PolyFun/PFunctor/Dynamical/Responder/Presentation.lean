@@ -212,9 +212,7 @@ def id : PresentationHom S source SourceWitness displayedSource
     source SourceWitness displayedSource where
   toState := _root_.id
   toWitness := fun _ => _root_.id
-  map_step := by
-    intro state witness
-    rfl
+  map_step _ _ := rfl
 
 /-- Composition of displayed presentation homomorphisms. -/
 def comp
@@ -291,17 +289,13 @@ def comp
     (f : PresentationHom S source SourceWitness displayedSource
       target TargetWitness displayedTarget) :
     id.comp f = f := by
-  apply ext
-  · rfl
-  · rfl
+  apply ext <;> rfl
 
 @[simp] theorem comp_id
     (f : PresentationHom S source SourceWitness displayedSource
       target TargetWitness displayedTarget) :
     f.comp id = f := by
-  apply ext
-  · rfl
-  · rfl
+  apply ext <;> rfl
 
 theorem comp_assoc
     {MiddleState : Type uC₂} {middle : Responder MiddleState RPoly}
@@ -323,9 +317,7 @@ theorem comp_assoc
     (first : PresentationHom S source SourceWitness displayedSource
       middle MiddleWitness displayedMiddle) :
     (third.comp second).comp first = third.comp (second.comp first) := by
-  apply ext
-  · rfl
-  · rfl
+  apply ext <;> rfl
 
 /-- Map any displayed responder presentation to its terminal state-free
 semantics. This is the reusable boundary between state-presented and

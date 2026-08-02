@@ -48,13 +48,11 @@ def leftMap {K : E → Type uH} (mapLeaf : (x : E) → I x → K x)
       ⟨ULift.up c, fun answer evidence =>
         leftMap mapLeaf (next answer) (children answer evidence.down)⟩
 
-@[simp] theorem leftMap_pure {K : E → Type uH}
-    (mapLeaf : (x : E) → I x → K x) (x : E) (dx : I x) :
+@[simp] theorem leftMap_pure {K : E → Type uH} (mapLeaf : (x : E) → I x → K x) (x : E) (dx : I x) :
     leftMap (S := S) (T := T) mapLeaf (pure x) (S.leaf I x dx) =
       (Display.parallelSum S T).leaf K x (mapLeaf x dx) := rfl
 
-@[simp] theorem leftMap_liftBind {K : E → Type uH}
-    (mapLeaf : (x : E) → I x → K x) (a : P.A)
+@[simp] theorem leftMap_liftBind {K : E → Type uH} (mapLeaf : (x : E) → I x → K x) (a : P.A)
     (next : P.B a → FreeM P E) (c : S.position a)
     (children : (answer : P.B a) → S.direction a c answer →
       FreeM.Displayed (S.toDisplayedAlgebra I) (next answer)) :
@@ -85,13 +83,11 @@ def rightMap {K : E → Type uH} (mapLeaf : (x : E) → I x → K x)
       ⟨ULift.up c, fun answer evidence =>
         rightMap mapLeaf (next answer) (children answer evidence.down)⟩
 
-@[simp] theorem rightMap_pure {K : E → Type uH}
-    (mapLeaf : (x : E) → I x → K x) (x : E) (dx : I x) :
+@[simp] theorem rightMap_pure {K : E → Type uH} (mapLeaf : (x : E) → I x → K x) (x : E) (dx : I x) :
     rightMap (S := S) (T := T) mapLeaf (pure x) (T.leaf I x dx) =
       (Display.parallelSum S T).leaf K x (mapLeaf x dx) := rfl
 
-@[simp] theorem rightMap_liftBind {K : E → Type uH}
-    (mapLeaf : (x : E) → I x → K x) (b : Q.A)
+@[simp] theorem rightMap_liftBind {K : E → Type uH} (mapLeaf : (x : E) → I x → K x) (b : Q.A)
     (next : Q.B b → FreeM Q E) (c : T.position b)
     (children : (answer : Q.B b) → T.direction b c answer →
       FreeM.Displayed (T.toDisplayedAlgebra I) (next answer)) :
@@ -127,8 +123,7 @@ def parallelAfterLeftReturn (x : E) (dx : I x)
         parallelAfterLeftReturn x dx (next answer)
           (children answer evidence.down)⟩
 
-@[simp] theorem parallelAfterLeftReturn_pure
-    (x : E) (dx : I x) (y : V) (dy : J y) :
+@[simp] theorem parallelAfterLeftReturn_pure (x : E) (dx : I x) (y : V) (dy : J y) :
     parallelAfterLeftReturn (S := S) (T := T) x dx (pure y)
         (T.leaf J y dy) =
       (Display.parallelSum S T).leaf
@@ -169,8 +164,7 @@ def parallel (leftProgram : FreeM P E) (rightProgram : FreeM Q V)
               (childrenP answer.1 evidence.1)
               (childrenQ answer.2 evidence.2)⟩
 
-@[simp] theorem parallel_pure_pure
-    (x : E) (dx : I x) (y : V) (dy : J y) :
+@[simp] theorem parallel_pure_pure (x : E) (dx : I x) (y : V) (dy : J y) :
     parallel (S := S) (T := T) (pure x) (pure y)
         (S.leaf I x dx) (T.leaf J y dy) =
       (Display.parallelSum S T).leaf
@@ -221,14 +215,10 @@ namespace Handler
 
 /-- Displayed lift of pointwise parallel handler composition. -/
 def parallel
-    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
-    {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
-    {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
-    {U : Display.{uA₃, uB, uC₃, uD₃} R}
-    {W : Display.{uA₄, uB, uC₄, uD₄} V}
-    {leftHandler : PFunctor.Handler (FreeM R) P}
-    {rightHandler : PFunctor.Handler (FreeM V) Q}
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB}}
+    {V : PFunctor.{uA₄, uB}} {S : Display.{uA₁, uB, uC₁, uD₁} P} {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {U : Display.{uA₃, uB, uC₃, uD₃} R} {W : Display.{uA₄, uB, uC₄, uD₄} V}
+    {leftHandler : PFunctor.Handler (FreeM R) P} {rightHandler : PFunctor.Handler (FreeM V) Q}
     (displayedLeft : Display.Handler S U leftHandler)
     (displayedRight : Display.Handler T W rightHandler) :
     Display.Handler (Display.parallelSum S T) (Display.parallelSum U W)
@@ -245,14 +235,10 @@ def parallel
         (displayedRight b contract.2)
 
 @[simp] theorem parallel_left
-    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
-    {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
-    {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
-    {U : Display.{uA₃, uB, uC₃, uD₃} R}
-    {W : Display.{uA₄, uB, uC₄, uD₄} V}
-    {leftHandler : PFunctor.Handler (FreeM R) P}
-    {rightHandler : PFunctor.Handler (FreeM V) Q}
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB}}
+    {V : PFunctor.{uA₄, uB}} {S : Display.{uA₁, uB, uC₁, uD₁} P} {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {U : Display.{uA₃, uB, uC₃, uD₃} R} {W : Display.{uA₄, uB, uC₄, uD₄} V}
+    {leftHandler : PFunctor.Handler (FreeM R) P} {rightHandler : PFunctor.Handler (FreeM V) Q}
     (displayedLeft : Display.Handler S U leftHandler)
     (displayedRight : Display.Handler T W rightHandler)
     (a : P.A) (contract : S.position a) :
@@ -261,14 +247,10 @@ def parallel
         (displayedLeft a contract) := rfl
 
 @[simp] theorem parallel_right
-    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
-    {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
-    {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
-    {U : Display.{uA₃, uB, uC₃, uD₃} R}
-    {W : Display.{uA₄, uB, uC₄, uD₄} V}
-    {leftHandler : PFunctor.Handler (FreeM R) P}
-    {rightHandler : PFunctor.Handler (FreeM V) Q}
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB}}
+    {V : PFunctor.{uA₄, uB}} {S : Display.{uA₁, uB, uC₁, uD₁} P} {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {U : Display.{uA₃, uB, uC₃, uD₃} R} {W : Display.{uA₄, uB, uC₄, uD₄} V}
+    {leftHandler : PFunctor.Handler (FreeM R) P} {rightHandler : PFunctor.Handler (FreeM V) Q}
     (displayedLeft : Display.Handler S U leftHandler)
     (displayedRight : Display.Handler T W rightHandler)
     (b : Q.A) (contract : T.position b) :
@@ -277,14 +259,10 @@ def parallel
         (displayedRight b contract) := rfl
 
 @[simp] theorem parallel_both
-    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
-    {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
-    {S : Display.{uA₁, uB, uC₁, uD₁} P}
-    {T : Display.{uA₂, uB, uC₂, uD₂} Q}
-    {U : Display.{uA₃, uB, uC₃, uD₃} R}
-    {W : Display.{uA₄, uB, uC₄, uD₄} V}
-    {leftHandler : PFunctor.Handler (FreeM R) P}
-    {rightHandler : PFunctor.Handler (FreeM V) Q}
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB}}
+    {V : PFunctor.{uA₄, uB}} {S : Display.{uA₁, uB, uC₁, uD₁} P} {T : Display.{uA₂, uB, uC₂, uD₂} Q}
+    {U : Display.{uA₃, uB, uC₃, uD₃} R} {W : Display.{uA₄, uB, uC₄, uD₄} V}
+    {leftHandler : PFunctor.Handler (FreeM R) P} {rightHandler : PFunctor.Handler (FreeM V) Q}
     (displayedLeft : Display.Handler S U leftHandler)
     (displayedRight : Display.Handler T W rightHandler)
     (a : P.A) (b : Q.A)
@@ -296,12 +274,9 @@ def parallel
 
 /-- Parallel composition preserves displayed identity handlers, after the
 ordinary parallel-identity equation aligns their base-handler indices. -/
-@[simp] theorem parallel_id
-    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
-    (S : Display.{uA₁, uB, uC₁, uD₁} P)
-    (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
-    transport (PFunctor.Handler.parallel_id P Q)
-        (parallel (id S) (id T)) =
+@[simp] theorem parallel_id {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P) (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
+    transport (PFunctor.Handler.parallel_id P Q) (parallel (id S) (id T)) =
       id (Display.parallelSum S T) := by
   funext operation contract
   rw [transport_apply]

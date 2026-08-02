@@ -219,11 +219,7 @@ theorem runFree_reindex (f : Handler (FreeM Q) P)
 @[simp]
 theorem reindex_id (R : Responder State P) :
     reindex (Handler.id P) R = R := by
-  apply Responder.ext
-  · intro state query
-    rfl
-  · intro state query
-    rfl
+  apply Responder.ext <;> intro state query <;> rfl
 
 /-- Responder reindexing is contravariantly functorial in categorical
 free-handler composition order. -/
@@ -234,11 +230,9 @@ theorem reindex_comp
     (first : Handler (FreeM Q) P)
     (R : Responder State RPoly) :
     reindex first (reindex second R) = reindex (second.comp first) R := by
-  apply Responder.ext
-  · intro state query
-    exact congrArg Prod.fst (runFree_reindex second R (first query) state)
-  · intro state query
-    exact congrArg Prod.snd (runFree_reindex second R (first query) state)
+  apply Responder.ext <;> intro state query
+  · exact congrArg Prod.fst (runFree_reindex second R (first query) state)
+  · exact congrArg Prod.snd (runFree_reindex second R (first query) state)
 
 section Displayed
 

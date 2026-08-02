@@ -19,8 +19,8 @@ namespace PFunctor.FreeM.ResumptionExamples
 example {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
     (program : FreeM p α) (k : α → FreeM p β) :
     toResumption (FreeM.bind program k) =
-      Resumption.bind (toResumption program) (fun value => toResumption (k value)) := by
-  exact toResumption_bind program k
+      Resumption.bind (toResumption program) (fun value => toResumption (k value)) :=
+  toResumption_bind program k
 
 inductive Command
   | choose
@@ -68,7 +68,7 @@ example (k : Nat → FreeM Interface Nat) :
   simp only [toResumptionHom_apply, toResumption_bind]
 
 example (f : Nat → Nat) :
-    toResumption (FreeM.map f program) = Resumption.map f (toResumption program) := by
-  exact toResumption_map f program
+    toResumption (FreeM.map f program) = Resumption.map f (toResumption program) :=
+  toResumption_map f program
 
 end PFunctor.FreeM.ResumptionExamples

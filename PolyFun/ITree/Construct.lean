@@ -104,27 +104,15 @@ def take : Nat → ITree F α → ITree F α
 
 @[simp] theorem take_step (n : Nat) (t : ITree F α) :
     take (n + 1) (step t) = take n t := by
-  change (match shape' (step t) with
-      | ⟨.step, c⟩ => take n (c PUnit.unit)
-      | ⟨.pure _, _⟩ => step t
-      | ⟨.query _, _⟩ => step t) = take n t
-  rw [shape'_step]
+  rw [take, shape'_step]
 
 @[simp] theorem take_pure (n : Nat) (r : α) :
     take (n + 1) (pure (F := F) r) = pure r := by
-  change (match shape' (pure (F := F) r) with
-      | ⟨.step, c⟩ => take n (c PUnit.unit)
-      | ⟨.pure _, _⟩ => pure r
-      | ⟨.query _, _⟩ => pure r) = pure r
-  rw [shape'_pure]
+  rw [take, shape'_pure]
 
 @[simp] theorem take_query (n : Nat) (a : F.A) (k : F.B a → ITree F α) :
     take (n + 1) (query a k) = query a k := by
-  change (match shape' (query a k) with
-      | ⟨.step, c⟩ => take n (c PUnit.unit)
-      | ⟨.pure _, _⟩ => query a k
-      | ⟨.query _, _⟩ => query a k) = query a k
-  rw [shape'_query]
+  rw [take, shape'_query]
 
 /-! ### `Functor.map` agrees with `ITree.map`
 

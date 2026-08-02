@@ -208,7 +208,6 @@ theorem Context.prodMap_id {Γ : Context.{u, v}} {Δ : Context.{u, w}} :
     Context.prodMap (ContextHom.id Γ) (ContextHom.id Δ) =
       ContextHom.id (Context.prod Γ Δ) := by
   funext X p
-  cases p
   rfl
 
 theorem Context.prodMap_comp
@@ -220,7 +219,6 @@ theorem Context.prodMap_comp
     ContextHom.comp (Context.prodMap g₁ g₂) (Context.prodMap f₁ f₂) =
       Context.prodMap (ContextHom.comp g₁ f₁) (ContextHom.comp g₂ f₂) := by
   funext X p
-  cases p
   rfl
 
 /-
@@ -346,7 +344,6 @@ theorem SchemaMap.extend_id
     {Γ : Context} {S : Schema Γ} {A : ∀ X, Γ X → Type v} :
     SchemaMap.extend (SchemaMap.id S) (fun _ _ x => x) = SchemaMap.id (S.extend A) := by
   funext X x
-  cases x
   rfl
 
 theorem SchemaMap.extend_comp
@@ -362,7 +359,6 @@ theorem SchemaMap.extend_comp
       SchemaMap.extend (SchemaMap.comp g f)
         (fun X γ => gOver X (f X γ) ∘ fOver X γ) := by
   funext X x
-  cases x
   rfl
 
 /--

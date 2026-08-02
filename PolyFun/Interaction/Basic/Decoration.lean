@@ -220,7 +220,8 @@ theorem Decoration.map_ofOver
       Decoration.ofOver B spec
         (Decoration.map f spec d)
         (Decoration.Over.mapBase f g spec d r) :=
-  PFunctor.FreeM.Displayed.Decoration.map_ofOver (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) f g
+  PFunctor.FreeM.Displayed.Decoration.map_ofOver
+    (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) f g
 
 /--
 Unpack a decoration of the extended context `Γ.extend A` into:

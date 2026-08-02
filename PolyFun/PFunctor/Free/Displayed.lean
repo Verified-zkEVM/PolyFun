@@ -245,19 +245,16 @@ theorem comp_apply (g : Hom E F) (f : Hom D E)
 
 @[simp]
 theorem comp_id (f : Hom D E) :
-    comp Hom.id f = f := by
-  ext s d
+    comp Hom.id f = f :=
   rfl
 
 @[simp]
 theorem id_comp (f : Hom D E) :
-    comp f Hom.id = f := by
-  ext s d
+    comp f Hom.id = f :=
   rfl
 
 theorem comp_assoc (h : Hom F G) (g : Hom E F) (f : Hom D E) :
-    comp h (comp g f) = comp (comp h g) f := by
-  ext s d
+    comp h (comp g f) = comp (comp h g) f :=
   rfl
 
 end Hom
@@ -389,14 +386,12 @@ theorem comp_apply {η : Displayed.Hom D E} {θ : Displayed.Hom E F}
 
 @[simp]
 theorem comp_id {η : Displayed.Hom D E} (f : Displayed.Over.Hom η R S) :
-    comp (Displayed.Over.Hom.id S) f = f := by
-  ext s d r
+    comp (Displayed.Over.Hom.id S) f = f :=
   rfl
 
 @[simp]
 theorem id_comp {η : Displayed.Hom D E} (f : Displayed.Over.Hom η R S) :
-    comp f (Displayed.Over.Hom.id R) = f := by
-  ext s d r
+    comp f (Displayed.Over.Hom.id R) = f :=
   rfl
 
 theorem comp_assoc {η : Displayed.Hom D E} {θ : Displayed.Hom E F}
@@ -404,8 +399,7 @@ theorem comp_assoc {η : Displayed.Hom D E} {θ : Displayed.Hom E F}
     {U : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w₄, w₅} G}
     (h : Displayed.Over.Hom ι T U) (g : Displayed.Over.Hom θ S T)
     (f : Displayed.Over.Hom η R S) :
-    comp h (comp g f) = comp (comp h g) f := by
-  ext s d r
+    comp h (comp g f) = comp (comp h g) f :=
   rfl
 
 end Hom

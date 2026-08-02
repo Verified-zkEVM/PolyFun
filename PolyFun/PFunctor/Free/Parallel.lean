@@ -101,9 +101,7 @@ def parallelSumMap
 @[simp] theorem parallelSumMap_id
     (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
     parallelSumMap (Lens.id P) (Lens.id Q) = Lens.id (P ∥ Q) := by
-  ext operation answer
-  · cases operation <;> rfl
-  · cases operation <;> rfl
+  ext operation answer <;> cases operation <;> rfl
 
 theorem parallelSumMap_comp
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
@@ -115,9 +113,7 @@ theorem parallelSumMap_comp
         parallelSumMap firstLeft firstRight =
       parallelSumMap (secondLeft ∘ₗ firstLeft)
         (secondRight ∘ₗ firstRight) := by
-  ext operation answer
-  · cases operation <;> rfl
-  · cases operation <;> rfl
+  ext operation answer <;> cases operation <;> rfl
 
 /-- Embed the left interface into its one-or-both parallel sum. -/
 def parallelSumLeft (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
@@ -218,9 +214,7 @@ def parallelSumAssoc
 @[simp] theorem parallelSumComm_involutive
     (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
     parallelSumComm Q P ∘ₗ parallelSumComm P Q = Lens.id (P ∥ Q) := by
-  ext operation answer
-  · cases operation <;> rfl
-  · cases operation <;> rfl
+  ext operation answer <;> cases operation <;> rfl
 
 theorem parallelSumComm_natural
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
@@ -228,9 +222,7 @@ theorem parallelSumComm_natural
     (left : Lens P R) (right : Lens Q V) :
     parallelSumComm R V ∘ₗ parallelSumMap left right =
       parallelSumMap right left ∘ₗ parallelSumComm P Q := by
-  ext operation answer
-  · cases operation <;> rfl
-  · cases operation <;> rfl
+  ext operation answer <;> cases operation <;> rfl
 
 /-- Naturality of the right unitor. -/
 theorem parallelSumZero_natural
@@ -243,11 +235,8 @@ theorem parallelSumZero_natural
         (parallelSumZero P :
           Lens (P ∥ (0 : PFunctor.{uA₄, uB})) P) := by
   ext operation answer
-  · cases operation with
-    | left operation => rfl
-    | right operation => exact PEmpty.elim operation
-    | both leftOperation rightOperation => exact PEmpty.elim rightOperation
-  · cases operation with
+  all_goals
+    cases operation with
     | left operation => rfl
     | right operation => exact PEmpty.elim operation
     | both leftOperation rightOperation => exact PEmpty.elim rightOperation
@@ -263,11 +252,8 @@ theorem zeroParallelSum_natural
         (zeroParallelSum P :
           Lens ((0 : PFunctor.{uA₄, uB}) ∥ P) P) := by
   ext operation answer
-  · cases operation with
-    | left operation => exact PEmpty.elim operation
-    | right operation => rfl
-    | both leftOperation rightOperation => exact PEmpty.elim leftOperation
-  · cases operation with
+  all_goals
+    cases operation with
     | left operation => exact PEmpty.elim operation
     | right operation => rfl
     | both leftOperation rightOperation => exact PEmpty.elim leftOperation
@@ -283,11 +269,8 @@ theorem parallelSumAssoc_natural
       parallelSumMap left (parallelSumMap middle right) ∘ₗ
         parallelSumAssoc P Q R := by
   ext operation answer
-  · cases operation with
-    | left operation => cases operation <;> rfl
-    | right operation => rfl
-    | both operation rightOperation => cases operation <;> rfl
-  · cases operation with
+  all_goals
+    cases operation with
     | left operation => cases operation <;> rfl
     | right operation => rfl
     | both operation rightOperation => cases operation <;> rfl
@@ -678,7 +661,6 @@ namespace Handler
     parallel (Handler.id P) (Handler.id Q) = Handler.id (P ∥ Q) := by
   funext operation
   cases operation <;> rfl
-
 
 end Handler
 

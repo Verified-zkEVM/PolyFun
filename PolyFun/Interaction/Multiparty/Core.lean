@@ -3,9 +3,9 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.Basic.Decoration
 import PolyFun.Interaction.Basic.StrategyOver
+import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.Multiparty.Observation
 
 /-!
@@ -326,8 +326,7 @@ its endpoint with `Observation.Action` can equivalently work with
     (m : Type u → Type u) (Cont : X → Type u) :
     ViewMode.Action (.react k) m Cont
       = Observation.Action k m Cont := by
-  rcases k with ⟨_, _⟩
-  rfl
+  rcases k with ⟨_, _⟩; rfl
 
 end ViewMode
 

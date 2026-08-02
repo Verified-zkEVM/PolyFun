@@ -30,8 +30,7 @@ example := Lens.Equiv.sumCompDistrib (P := (X : PFunctor.{0, 0})) (Q := X) (R :=
 example := Lens.sigmaCompDistrib (P := (X : PFunctor.{0, 0})) (F := fun _ : Bool => X)
 
 /-- **(6.51)** at a `Bool`-indexed product of `X`s. -/
-example := Lens.Equiv.piCompDistrib
-  (P := (X : PFunctor.{0, 0})) (F := fun _ : Bool => X)
+example := Lens.Equiv.piCompDistrib (P := (X : PFunctor.{0, 0})) (F := fun _ : Bool => X)
 
 /-- The indexed-product distributivity equivalence round-trips positions. -/
 example (x : ((pi (fun _ : Bool => X.{0, 0})) ◃ X).A) :
@@ -42,8 +41,7 @@ example (x : ((pi (fun _ : Bool => X.{0, 0})) ◃ X).A) :
 example := Lens.Equiv.prodCompDistrib (P := (X : PFunctor.{0, 0})) (Q := X) (R := X)
 
 /-- **(6.49)** at `(X + 1) * X ◃ 1`. -/
-example :=
-  Lens.Equiv.prodCompDistrib (P := (X + 1 : PFunctor.{0, 0})) (Q := X) (R := 1)
+example := Lens.Equiv.prodCompDistrib (P := (X + 1 : PFunctor.{0, 0})) (Q := X) (R := 1)
 
 /-- **Ex. 6.55** at `C Bool * X ◃ X`. -/
 example := Lens.Equiv.scalarCompDistrib (A := Bool) (p := (X : PFunctor.{0, 0})) (q := X)

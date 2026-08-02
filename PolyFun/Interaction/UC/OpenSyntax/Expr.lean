@@ -3,8 +3,8 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.OpenSyntax.Raw
 import PolyFun.Interaction.UC.OpenSyntax.Interp
+import PolyFun.Interaction.UC.OpenSyntax.Raw
 
 /-!
 # Quotiented free model of open composition
@@ -395,12 +395,8 @@ theorem toInterp_plug {Atom : PortBoundary → Type u} {Δ : PortBoundary}
 @[simp]
 theorem toInterp_unit {Atom : PortBoundary → Type u} :
     (Expr.unit : Expr Atom _).toInterp = Interp.unit := by
-  have h : (Expr.unit : Expr Atom _).toInterp =
-      (⟨fun T hCC interp =>
-        (Raw.unit (Atom := Atom)).interpret T interp hCC.idWire⟩ :
-        Interp Atom _) := rfl
-  rw [h]
   ext T hT interp
+  change (Raw.unit (Atom := Atom)).interpret T interp hT.idWire = _
   simp [Raw.interpret, Interp.unit, OpenTheory.unit_eq]
 
 end Expr

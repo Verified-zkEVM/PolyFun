@@ -95,17 +95,11 @@ def comap {Δ : P.A → Type vΔ}
   Node agent pos γ Cont := syn.Node agent pos (f pos γ) Cont
 
 @[simp]
-theorem comap_id (syn : SyntaxOver l Agent Γ) :
-    comap (fun _ γ => γ) syn = syn := by
-  cases syn
-  rfl
+theorem comap_id (syn : SyntaxOver l Agent Γ) : comap (fun _ γ => γ) syn = syn := rfl
 
 theorem comap_comp {Δ : P.A → Type vΔ} {Λ : P.A → Type vΛ}
-    (syn : SyntaxOver l Agent Λ)
-    (g : ∀ pos, Δ pos → Λ pos) (f : ∀ pos, Γ pos → Δ pos) :
-    comap f (comap g syn) = comap (fun pos => g pos ∘ f pos) syn := by
-  cases syn
-  rfl
+    (syn : SyntaxOver l Agent Λ) (g : ∀ pos, Δ pos → Λ pos) (f : ∀ pos, Γ pos → Δ pos) :
+    comap f (comap g syn) = comap (fun pos => g pos ∘ f pos) syn := rfl
 
 /--
 Restrict a participant-indexed syntax to one fixed agent.
@@ -136,8 +130,7 @@ all.
 -- `Syntax`'s universes are the independent agent universe and the `TypeTree`
 -- position / node-context metadata universes of the underlying `SyntaxOver`;
 -- kept separate for generality.
-abbrev Syntax
-    (Agent : Type a) :=
+abbrev Syntax (Agent : Type a) :=
   SyntaxOver (PFunctor.Lens.id TypeTree.basePFunctor) Agent Node.Context.empty
 
 end TypeTree

@@ -53,7 +53,7 @@ def toITree {S : Type uS} {p : PFunctor.{uA, uB}} (s : DynSystem S p) :
 tree: the two coinductive semantics agree. -/
 theorem toITree_eq_toITree_behavior {S : Type uS} {p : PFunctor.{uA, uB}}
     (s : DynSystem S p) (st : S) : s.toITree st = M.toITree (s.behavior st) := by
-  refine congrFun (Eq.symm (M.corec_unique _ (fun st => M.toITree (s.behavior st)) ?_)) st
+  refine congrFun (M.corec_unique _ (fun st => M.toITree (s.behavior st)) ?_).symm st
   intro st
   simp only [M.toITree, M.dest_corec_apply]
   rfl

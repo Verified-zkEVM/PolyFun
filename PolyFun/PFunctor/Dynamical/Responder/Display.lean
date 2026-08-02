@@ -6,7 +6,6 @@ Authors: Quang Dao
 
 module
 
-
 public import PolyFun.PFunctor.Display.Chart
 public import PolyFun.PFunctor.Display.Coalgebra
 public import PolyFun.PFunctor.Dynamical.Responder
@@ -51,26 +50,22 @@ query and precondition witness to answer-dependent postcondition evidence.
 The displayed direction remembers the supplied precondition witness, because
 the displayed continuation may depend on it. -/
 def responder (S : Display.{uA, uB, uC, uD} P) :
-    Display.{max uA uB, max uA uB, max uA uC uD, uC}
-      (P ⊸ X.{uA, uB}) where
+    Display.{max uA uB, max uA uB, max uA uC uD, uC} (P ⊸ X.{uA, uB}) where
   position answer :=
     (a : P.A) → (c : S.position a) →
       S.direction a c (answer.toFunB a PUnit.unit)
   direction _answer _contract query := S.position query.1
 
 @[simp]
-theorem responder_position (S : Display.{uA, uB, uC, uD} P)
-    (answer : (P ⊸ X.{uA, uB}).A) :
+theorem responder_position (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ X.{uA, uB}).A) :
     (responder S).position answer =
       ((a : P.A) → (c : S.position a) →
         S.direction a c (answer.toFunB a PUnit.unit)) :=
   rfl
 
 @[simp]
-theorem responder_direction (S : Display.{uA, uB, uC, uD} P)
-    (answer : (P ⊸ X.{uA, uB}).A)
-    (contract : (responder S).position answer)
-    (query : (P ⊸ X.{uA, uB}).B answer) :
+theorem responder_direction (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ X.{uA, uB}).A)
+    (contract : (responder S).position answer) (query : (P ⊸ X.{uA, uB}).B answer) :
     (responder S).direction answer contract query = S.position query.1 :=
   rfl
 
@@ -80,17 +75,14 @@ def responderChart (S : Display.{uA, uB, uC, uD} P) :
   (responder S).forget
 
 @[simp]
-theorem responderChart_toFunA (S : Display.{uA, uB, uC, uD} P)
-    (answer : (P ⊸ X.{uA, uB}).A)
+theorem responderChart_toFunA (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ X.{uA, uB}).A)
     (contract : (responder S).position answer) :
     (responderChart S).toFunA ⟨answer, contract⟩ = answer :=
   rfl
 
 @[simp]
-theorem responderChart_toFunB (S : Display.{uA, uB, uC, uD} P)
-    (answer : (P ⊸ X.{uA, uB}).A)
-    (contract : (responder S).position answer)
-    (query : (P ⊸ X.{uA, uB}).B answer)
+theorem responderChart_toFunB (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ X.{uA, uB}).A)
+    (contract : (responder S).position answer) (query : (P ⊸ X.{uA, uB}).B answer)
     (precondition : (responder S).direction answer contract query) :
     (responderChart S).toFunB ⟨answer, contract⟩ ⟨query, precondition⟩ = query :=
   rfl
@@ -101,9 +93,8 @@ Mealy application obligation.
 This is the object-action form of the paper's dependent Mealy application
 obligation. The equivalence is stated for the existing `Responder` coalgebra
 map `R.out`; no duplicate displayed dynamical-system structure is introduced. -/
-def responderCoalgebraEquiv
-    (S : Display.{uA, uB, uC, uD} P)
-    {C : Type uE} (R : Responder C P) (F : C → Type uF) :
+def responderCoalgebraEquiv (S : Display.{uA, uB, uC, uD} P) {C : Type uE} (R : Responder C P)
+    (F : C → Type uF) :
     Coalgebra (responder S) R.out F ≃
       ((state : C) → F state → (a : P.A) → (c : S.position a) →
         S.direction a c (R.answer state a) × F (R.next state a)) where
@@ -115,15 +106,13 @@ def responderCoalgebraEquiv
       | ⟨a, PUnit.unit⟩, c => (obligation state witness a c).2⟩
   left_inv displayed := by
     funext state witness
-    apply Sigma.ext rfl
     rfl
   right_inv obligation := by
     funext state witness a c
     rfl
 
 @[simp]
-theorem responderCoalgebraEquiv_postcondition
-    (S : Display.{uA, uB, uC, uD} P)
+theorem responderCoalgebraEquiv_postcondition (S : Display.{uA, uB, uC, uD} P)
     {C : Type uE} (R : Responder C P) (F : C → Type uF)
     (displayed : Coalgebra (responder S) R.out F)
     (state : C) (witness : F state) (a : P.A) (c : S.position a) :
@@ -132,8 +121,7 @@ theorem responderCoalgebraEquiv_postcondition
   rfl
 
 @[simp]
-theorem responderCoalgebraEquiv_next
-    (S : Display.{uA, uB, uC, uD} P)
+theorem responderCoalgebraEquiv_next (S : Display.{uA, uB, uC, uD} P)
     {C : Type uE} (R : Responder C P) (F : C → Type uF)
     (displayed : Coalgebra (responder S) R.out F)
     (state : C) (witness : F state) (a : P.A) (c : S.position a) :
@@ -142,8 +130,7 @@ theorem responderCoalgebraEquiv_next
   rfl
 
 @[simp]
-theorem responderCoalgebraEquiv_symm_postcondition
-    (S : Display.{uA, uB, uC, uD} P)
+theorem responderCoalgebraEquiv_symm_postcondition (S : Display.{uA, uB, uC, uD} P)
     {C : Type uE} (R : Responder C P) (F : C → Type uF)
     (obligation :
       (state : C) → F state → (a : P.A) → (c : S.position a) →
@@ -154,8 +141,7 @@ theorem responderCoalgebraEquiv_symm_postcondition
   rfl
 
 @[simp]
-theorem responderCoalgebraEquiv_symm_next
-    (S : Display.{uA, uB, uC, uD} P)
+theorem responderCoalgebraEquiv_symm_next (S : Display.{uA, uB, uC, uD} P)
     {C : Type uE} (R : Responder C P) (F : C → Type uF)
     (obligation :
       (state : C) → F state → (a : P.A) → (c : S.position a) →

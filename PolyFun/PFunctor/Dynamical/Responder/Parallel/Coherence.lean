@@ -29,18 +29,15 @@ namespace Responder
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 
 /-- The empty state-free responder behavior. -/
-def zeroBehavior :
-    PFunctor.M ((0 : PFunctor.{uA₁, uB}) ⊸ X.{uA₁, uB}) :=
+def zeroBehavior : PFunctor.M ((0 : PFunctor.{uA₁, uB}) ⊸ X.{uA₁, uB}) :=
   (Responder.zero : Responder PUnit.{1} (0 : PFunctor.{uA₁, uB})).behavior
     PUnit.unit
 
 /-- Parallel behavior is symmetric after reindexing by the interface
 braiding. -/
-theorem mapBehavior_parallel_comm
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+theorem mapBehavior_parallel_comm (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
     (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) :
-    mapBehavior (PFunctor.Lens.parallelSumComm P Q)
-        (parallelBehavior right left) =
+    mapBehavior (PFunctor.Lens.parallelSumComm P Q) (parallelBehavior right left) =
       parallelBehavior left right := by
   let swapped := Responder.parallel (Responder.terminal (P := Q))
     (Responder.terminal (P := P))
@@ -69,15 +66,11 @@ theorem mapBehavior_parallel_comm
 
 /-- The right zero interface is a unit for state-free parallel behavior after
 reindexing by the structural unitor. -/
-theorem mapBehavior_parallel_zero_right
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) :
-    mapBehavior
-        (PFunctor.Lens.parallelSumZero P :
-          PFunctor.Lens (P ∥ (0 : PFunctor.{uA₂, uB})) P)
-        left =
-      parallelBehavior left
-        (zeroBehavior : PFunctor.M
-          ((0 : PFunctor.{uA₂, uB}) ⊸ X.{uA₂, uB})) := by
+theorem mapBehavior_parallel_zero_right (left : PFunctor.M (P ⊸ X.{uA₁, uB})) :
+    mapBehavior (PFunctor.Lens.parallelSumZero P :
+        PFunctor.Lens (P ∥ (0 : PFunctor.{uA₂, uB})) P) left =
+      parallelBehavior left (zeroBehavior : PFunctor.M
+        ((0 : PFunctor.{uA₂, uB}) ⊸ X.{uA₂, uB})) := by
   let base := Responder.terminal (P := P)
   let empty := (Responder.zero :
     Responder PUnit.{1} (0 : PFunctor.{uA₂, uB}))
@@ -95,14 +88,14 @@ theorem mapBehavior_parallel_zero_right
       rw [Responder.answer_reindex, runFree_ofLens]
       cases operation with
       | left operation => rfl
-      | right impossible => exact PEmpty.elim impossible
-      | both operation impossible => exact PEmpty.elim impossible
+      | right impossible => exact impossible.elim
+      | both operation impossible => exact impossible.elim
     · intro state operation
       rw [Responder.next_reindex, runFree_ofLens]
       cases operation with
       | left operation => rfl
-      | right impossible => exact PEmpty.elim impossible
-      | both operation impossible => exact PEmpty.elim impossible
+      | right impossible => exact impossible.elim
+      | both operation impossible => exact impossible.elim
   let terminalParallel := Responder.parallel base
     (Responder.terminal (P := (0 : PFunctor.{uA₂, uB})))
   have hPresentation : parallel.behavior (left, PUnit.unit) =
@@ -113,13 +106,13 @@ theorem mapBehavior_parallel_zero_right
     · intro state operation
       cases operation with
       | left operation => rfl
-      | right impossible => exact PEmpty.elim impossible
-      | both operation impossible => exact PEmpty.elim impossible
+      | right impossible => exact impossible.elim
+      | both operation impossible => exact impossible.elim
     · intro state operation
       cases operation with
       | left operation => rfl
-      | right impossible => exact PEmpty.elim impossible
-      | both operation impossible => exact PEmpty.elim impossible
+      | right impossible => exact impossible.elim
+      | both operation impossible => exact impossible.elim
   calc
     mapBehavior
         (PFunctor.Lens.parallelSumZero P :
@@ -144,15 +137,11 @@ theorem mapBehavior_parallel_zero_right
 
 /-- The left zero interface is a unit for state-free parallel behavior after
 reindexing by the structural unitor. -/
-theorem mapBehavior_parallel_zero_left
-    (right : PFunctor.M (P ⊸ X.{uA₁, uB})) :
-    mapBehavior
-        (PFunctor.Lens.zeroParallelSum P :
-          PFunctor.Lens ((0 : PFunctor.{uA₂, uB}) ∥ P) P)
-        right =
-      parallelBehavior
-        (zeroBehavior : PFunctor.M
-          ((0 : PFunctor.{uA₂, uB}) ⊸ X.{uA₂, uB})) right := by
+theorem mapBehavior_parallel_zero_left (right : PFunctor.M (P ⊸ X.{uA₁, uB})) :
+    mapBehavior (PFunctor.Lens.zeroParallelSum P :
+        PFunctor.Lens ((0 : PFunctor.{uA₂, uB}) ∥ P) P) right =
+      parallelBehavior (zeroBehavior : PFunctor.M
+        ((0 : PFunctor.{uA₂, uB}) ⊸ X.{uA₂, uB})) right := by
   let base := Responder.terminal (P := P)
   let empty := (Responder.zero :
     Responder PUnit.{1} (0 : PFunctor.{uA₂, uB}))
@@ -168,15 +157,15 @@ theorem mapBehavior_parallel_zero_left
     · intro state operation
       rw [Responder.answer_reindex, runFree_ofLens]
       cases operation with
-      | left impossible => exact PEmpty.elim impossible
+      | left impossible => exact impossible.elim
       | right operation => rfl
-      | both impossible operation => exact PEmpty.elim impossible
+      | both impossible operation => exact impossible.elim
     · intro state operation
       rw [Responder.next_reindex, runFree_ofLens]
       cases operation with
-      | left impossible => exact PEmpty.elim impossible
+      | left impossible => exact impossible.elim
       | right operation => rfl
-      | both impossible operation => exact PEmpty.elim impossible
+      | both impossible operation => exact impossible.elim
   let terminalParallel := Responder.parallel
     (Responder.terminal (P := (0 : PFunctor.{uA₂, uB}))) base
   have hPresentation : parallel.behavior (PUnit.unit, right) =
@@ -186,14 +175,14 @@ theorem mapBehavior_parallel_zero_left
       (empty.behavior PUnit.unit, right)
     · intro state operation
       cases operation with
-      | left impossible => exact PEmpty.elim impossible
+      | left impossible => exact impossible.elim
       | right operation => rfl
-      | both impossible operation => exact PEmpty.elim impossible
+      | both impossible operation => exact impossible.elim
     · intro state operation
       cases operation with
-      | left impossible => exact PEmpty.elim impossible
+      | left impossible => exact impossible.elim
       | right operation => rfl
-      | both impossible operation => exact PEmpty.elim impossible
+      | both impossible operation => exact impossible.elim
   calc
     mapBehavior
         (PFunctor.Lens.zeroParallelSum P :
@@ -217,11 +206,8 @@ theorem mapBehavior_parallel_zero_left
 
 /-- Parallel state-free behavior associates after reindexing by the interface
 associator. -/
-theorem mapBehavior_parallel_assoc
-    {R : PFunctor.{uA₃, uB}}
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (middle : PFunctor.M (Q ⊸ X.{uA₂, uB}))
-    (right : PFunctor.M (R ⊸ X.{uA₃, uB})) :
+theorem mapBehavior_parallel_assoc {R : PFunctor.{uA₃, uB}} (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (middle : PFunctor.M (Q ⊸ X.{uA₂, uB})) (right : PFunctor.M (R ⊸ X.{uA₃, uB})) :
     mapBehavior (PFunctor.Lens.parallelSumAssoc P Q R)
         (parallelBehavior left (parallelBehavior middle right)) =
       parallelBehavior (parallelBehavior left middle) right := by
@@ -298,9 +284,9 @@ theorem mapBehavior_parallel_assoc
     mapBehavior (PFunctor.Lens.parallelSumAssoc P Q R)
         (parallelBehavior left (parallelBehavior middle right)) =
       mapBehavior (PFunctor.Lens.parallelSumAssoc P Q R)
-        (rightAssociated.behavior (left, (middle, right))) := by
-          exact congrArg (mapBehavior
-            (PFunctor.Lens.parallelSumAssoc P Q R)) hRightPresentation
+        (rightAssociated.behavior (left, (middle, right))) :=
+      congrArg (mapBehavior (PFunctor.Lens.parallelSumAssoc P Q R))
+        hRightPresentation
     _ =
       mapped.behavior (reassocState ((left, middle), right)) :=
         reindexBehavior_behavior

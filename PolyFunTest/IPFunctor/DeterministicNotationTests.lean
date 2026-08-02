@@ -102,8 +102,7 @@ instance instDemoQ : IPFunctor.DeterministicTransitions demoQ where
   spec _ _ _ := rfl
 
 /-- A `lift`-style step at the unit state. -/
-@[reducible] def stepQ (b : Bool) :
-    IPFunctor.FreeM demoQ PUnit.unit Nat :=
+@[reducible] def stepQ (b : Bool) : IPFunctor.FreeM demoQ PUnit.unit Nat :=
   IPFunctor.FreeM.lift PUnit.unit b
 
 /-- A two-step `do`-tree on `FreeM demoQ`, using the deterministic elaborator. -/
@@ -116,8 +115,7 @@ example :
     IPFunctor.FreeM.erase demoQ PUnit.unit twoStepDet
     = PFunctor.FreeM.liftBind (P := demoQ.toPFunctor) true (fun n : Nat =>
         PFunctor.FreeM.liftBind false (fun m : Nat =>
-          PFunctor.FreeM.pure (n + m))) := by
-  rfl
+          PFunctor.FreeM.pure (n + m))) := rfl
 
 /-! ### Regression — non-`FreeM` monads still elaborate via fall-through. -/
 

@@ -66,12 +66,7 @@ def pack {X : Type uX} : β ⊕ p.Obj X → (C.{uβ, uB} β + p).Obj X
     pack (unpack step) = step := by
   rcases step with ⟨shape, next⟩
   cases shape with
-  | inl value =>
-      apply Sigma.ext
-      · rfl
-      · apply heq_of_eq
-        funext direction
-        exact PEmpty.elim direction
+  | inl value => exact Sigma.ext rfl (heq_of_eq (funext fun d => d.elim))
   | inr position => rfl
 
 /-- The extension of `C β + p` is equivalent to the computational
@@ -94,11 +89,7 @@ theorem pack_sum_map {X : Type uX} {Y : Type uY} (f : X → Y)
     pack (Sum.map (fun value : β => value) (p.map f) step) =
       (C.{uβ, uB} β + p).map f (pack step) := by
   rcases step with value | ⟨position, next⟩
-  · apply Sigma.ext
-    · rfl
-    · apply heq_of_eq
-      funext direction
-      exact PEmpty.elim direction
+  · exact Sigma.ext rfl (heq_of_eq (funext fun d => d.elim))
   · rfl
 
 /-! ## Constructors, destructor, and corecursor -/
@@ -200,7 +191,7 @@ theorem bisim (R : Resumption p β → Resumption p β → Prop)
       refine ⟨Sum.inl value, PEmpty.elim, PEmpty.elim, ?_, ?_, fun direction => ?_⟩
       · rw [← pack_dest, left_dest, pack_inl]
       · rw [← pack_dest, right_dest, pack_inl]
-      · exact PEmpty.elim direction
+      · exact direction.elim
   | query position left_next right_next left_dest right_dest next_rel =>
       refine ⟨Sum.inr position, left_next, right_next, ?_, ?_, next_rel⟩
       · rw [← pack_dest, left_dest, pack_inr]
@@ -272,7 +263,7 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
       simp only [dest_corec, bindStep, h, Sum.map_inl]
     · rw [← pack_dest, ← pack_inl]
       exact congrArg pack h
-    · exact PEmpty.elim direction
+    · exact direction.elim
   · refine ⟨Sum.inr position,
       fun direction => corec (bindStep k) (Sum.inr (next direction)),
       next, ?_, ?_, fun direction => rfl⟩
@@ -330,7 +321,7 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
       simp [dest_bind, h]
     · rw [← pack_dest, ← pack_inl]
       exact congrArg pack h
-    · exact PEmpty.elim direction
+    · exact direction.elim
   · refine ⟨Sum.inr position, (fun direction => bind (next direction) pure), next,
       ?_, ?_, fun direction => ⟨next direction, rfl, rfl⟩⟩
     · rw [← pack_dest, ← pack_inr]

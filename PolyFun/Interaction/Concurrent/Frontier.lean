@@ -85,20 +85,10 @@ theorem isEmpty_of_not_live : {S : Spec} → S.isLive = false → Front S → Fa
   | .done, _, event => nomatch event
   | .node _ _, h, _ => by cases h
   | .par left right, h, event => by
-      match hLeft : left.isLive with
-      | true =>
-          match hRight : right.isLive with
-          | true => simp [Spec.isLive, hLeft, hRight] at h
-          | false => simp [Spec.isLive, hLeft, hRight] at h
-      | false =>
-          match hRight : right.isLive with
-          | true => simp [Spec.isLive, hLeft, hRight] at h
-          | false =>
-              let leftEmpty : Front left → False := isEmpty_of_not_live hLeft
-              let rightEmpty : Front right → False := isEmpty_of_not_live hRight
-              exact match event with
-              | .left event => leftEmpty event
-              | .right event => rightEmpty event
+      simp only [Spec.isLive_par, Bool.or_eq_false_iff] at h
+      exact match event with
+        | .left event => isEmpty_of_not_live h.1 event
+        | .right event => isEmpty_of_not_live h.2 event
 
 @[simp, grind =]
 theorem residual_move {Moves : Type u} {rest : Moves → Spec} (x : Moves) :

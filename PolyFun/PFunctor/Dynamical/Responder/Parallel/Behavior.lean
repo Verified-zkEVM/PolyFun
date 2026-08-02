@@ -32,8 +32,7 @@ variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 /-- Coproduct composition of state-free responder behaviors.  A query selects
 one component and leaves the other component unchanged. -/
 def sumBehavior
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) :
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) :
     PFunctor.M (PFunctor.sum P Q ⊸ X.{max uA₁ uA₂, uB}) :=
   (Responder.sum (Responder.terminal (P := P))
     (Responder.terminal (P := Q))).behavior (left, right)
@@ -52,16 +51,13 @@ theorem sum_behavior
     terminalSum.behavior (left.behavior state.1, right.behavior state.2)
   symm
   apply behavior_eq_of_responderMap terminalSum (Responder.sum left right)
-    (fun current => (left.behavior current.1, right.behavior current.2))
-  · intro current operation
-    cases operation <;> simp [terminalSum]
-  · intro current operation
-    cases operation <;> simp [terminalSum]
+    (fun current => (left.behavior current.1, right.behavior current.2)) <;>
+    · intro current operation
+      cases operation <;> simp [terminalSum]
 
 @[simp]
 theorem sumBehavior_answer_inl
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
     (Responder.terminal (P := PFunctor.sum P Q)).answer
         (sumBehavior left right) (.inl a) =
       (Responder.terminal (P := P)).answer left a := by
@@ -74,8 +70,7 @@ theorem sumBehavior_answer_inl
 
 @[simp]
 theorem sumBehavior_answer_inr
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
     (Responder.terminal (P := PFunctor.sum P Q)).answer
         (sumBehavior left right) (.inr b) =
       (Responder.terminal (P := Q)).answer right b := by
@@ -88,8 +83,7 @@ theorem sumBehavior_answer_inr
 
 @[simp]
 theorem sumBehavior_child_inl
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
     (sumBehavior left right).children
         ⟨(Sum.inl a : (PFunctor.sum P Q).A), PUnit.unit⟩ =
       sumBehavior (left.children ⟨a, PUnit.unit⟩) right := by
@@ -102,8 +96,7 @@ theorem sumBehavior_child_inl
 
 @[simp]
 theorem sumBehavior_child_inr
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
     (sumBehavior left right).children
         ⟨(Sum.inr b : (PFunctor.sum P Q).A), PUnit.unit⟩ =
       sumBehavior left (right.children ⟨b, PUnit.unit⟩) := by
@@ -116,8 +109,7 @@ theorem sumBehavior_child_inr
 
 /-- Parallel composition of state-free responder behaviors. -/
 def parallelBehavior
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) :
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) :
     PFunctor.M ((P ∥ Q) ⊸ X.{max uA₁ uA₂, uB}) :=
   (Responder.parallel (Responder.terminal (P := P))
     (Responder.terminal (P := Q))).behavior (left, right)
@@ -138,16 +130,13 @@ theorem parallel_behavior
   symm
   apply behavior_eq_of_responderMap terminalParallel
     (Responder.parallel left right)
-    (fun current => (left.behavior current.1, right.behavior current.2))
-  · intro current operation
-    cases operation <;> simp [terminalParallel]
-  · intro current operation
-    cases operation <;> simp [terminalParallel]
+    (fun current => (left.behavior current.1, right.behavior current.2)) <;>
+    · intro current operation
+      cases operation <;> simp [terminalParallel]
 
 @[simp]
 theorem parallelBehavior_answer_left
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
     (Responder.terminal (P := P ∥ Q)).answer
         (parallelBehavior left right)
         (ParallelChoice.left a : (P ∥ Q).A) =
@@ -162,8 +151,7 @@ theorem parallelBehavior_answer_left
 
 @[simp]
 theorem parallelBehavior_answer_right
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
     (Responder.terminal (P := P ∥ Q)).answer
         (parallelBehavior left right)
         (ParallelChoice.right b : (P ∥ Q).A) =
@@ -178,8 +166,7 @@ theorem parallelBehavior_answer_right
 
 @[simp]
 theorem parallelBehavior_answer_both
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
     (a : P.A) (b : Q.A) :
     (Responder.terminal (P := P ∥ Q)).answer
         (parallelBehavior left right)
@@ -196,8 +183,7 @@ theorem parallelBehavior_answer_both
 
 @[simp]
 theorem parallelBehavior_child_left
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
     (parallelBehavior left right).children
         ⟨(ParallelChoice.left a : (P ∥ Q).A), PUnit.unit⟩ =
       parallelBehavior
@@ -211,8 +197,7 @@ theorem parallelBehavior_child_left
 
 @[simp]
 theorem parallelBehavior_child_right
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
     (parallelBehavior left right).children
         ⟨(ParallelChoice.right b : (P ∥ Q).A), PUnit.unit⟩ =
       parallelBehavior left
@@ -226,8 +211,7 @@ theorem parallelBehavior_child_right
 
 @[simp]
 theorem parallelBehavior_child_both
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
     (a : P.A) (b : Q.A) :
     (parallelBehavior left right).children
         ⟨(ParallelChoice.both a b : (P ∥ Q).A), PUnit.unit⟩ =

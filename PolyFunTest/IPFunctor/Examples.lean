@@ -195,8 +195,7 @@ example :
         (P := proto.sigmaPFunctor) ⟨.opn, ()⟩ (fun _ =>
       PFunctor.FreeM.liftBind ⟨.counting, ()⟩ (fun a : Nat =>
         PFunctor.FreeM.liftBind ⟨.counting, ()⟩ (fun b : Nat =>
-          PFunctor.FreeM.pure (a + b)))) := by
-  rfl
+          PFunctor.FreeM.pure (a + b)))) := rfl
 
 /-! ## `PFunctor.FreeM.equivWOfIsEmpty` round-trip
 

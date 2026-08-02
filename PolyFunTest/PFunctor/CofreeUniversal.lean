@@ -100,9 +100,8 @@ def branchingLens : Lens (stateComonoid ThreeState).carrier binaryP where
 def branchingTree : M binaryP :=
   CofreeP.unfoldShape (stateComonoid ThreeState) branchingLens .source
 
-example : M.head branchingTree = false := by
-  exact CofreeP.head_unfoldShape
-    (stateComonoid ThreeState) branchingLens .source
+example : M.head branchingTree = false :=
+  CofreeP.head_unfoldShape (stateComonoid ThreeState) branchingLens .source
 
 /-- The `false` branch enters `middle`, whose label is observably `true`. -/
 example : M.head (M.children branchingTree false) = true := by

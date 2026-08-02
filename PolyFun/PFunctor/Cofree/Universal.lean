@@ -44,8 +44,7 @@ def cogenerator (P : PFunctor.{uA, uB}) : Lens (CofreeP P) P where
     .child direction (.root (M.children tree direction))
 
 @[simp]
-theorem cogenerator_toFunA (tree : M P) :
-    (cogenerator P).toFunA tree = M.head tree :=
+theorem cogenerator_toFunA (tree : M P) : (cogenerator P).toFunA tree = M.head tree :=
   rfl
 
 @[simp]
@@ -88,8 +87,7 @@ theorem cogenerator_comp_map {Q : PFunctor.{uA₂, uB₂}}
 
 /-- The categorical identity of a cofree tree is its root vertex. -/
 @[simp]
-theorem comonoid_identity (tree : M P) :
-    Comonoid.identity (comonoid P) tree = .root tree :=
+theorem comonoid_identity (tree : M P) : Comonoid.identity (comonoid P) tree = .root tree :=
   rfl
 
 /-- The categorical target of a cofree vertex is its selected subtree. -/
@@ -386,19 +384,13 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
         Comonoid.target_compose C object first rest
       have hvertices : compositeVertex ≍ finalVertex := by
         have hcomposite : compositeVertex ≍ suffix :=
-          by
-            unfold compositeVertex M.Vertex.castEquiv
-            exact cast_heq (congrArg M.Vertex compositeSubtreeEq) suffix
+          M.Vertex.castEquiv_heq compositeSubtreeEq suffix
         have hfinal : finalVertex ≍ suffix' :=
-          by
-            unfold finalVertex M.Vertex.castEquiv
-            exact cast_heq (congrArg M.Vertex
-              (subtree_unfoldShape C lens
-                (Comonoid.target C object first) next')) suffix'
+          M.Vertex.castEquiv_heq
+            (subtree_unfoldShape C lens (Comonoid.target C object first) next')
+            suffix'
         have hsuffix : suffix' ≍ suffix :=
-          by
-            unfold suffix' M.Vertex.castEquiv
-            exact cast_heq (congrArg M.Vertex subtreeEq.symm) suffix
+          M.Vertex.castEquiv_heq subtreeEq.symm suffix
         exact hcomposite.trans (hfinal.trans hsuffix).symm
       have harrows :
           unfoldDirection C lens compositeTarget compositeVertex ≍
@@ -408,10 +400,9 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
           unfoldDirection C lens compositeTarget compositeVertex =
             cast (congrArg C.carrier.B htarget.symm)
               (unfoldDirection C lens final finalVertex) := by
-        apply eq_of_heq
-        exact harrows.trans
+        exact eq_of_heq (harrows.trans
           (cast_heq (congrArg C.carrier.B htarget.symm)
-            (unfoldDirection C lens final finalVertex)).symm
+            (unfoldDirection C lens final finalVertex)).symm)
       have hnormalized :
           unfoldDirection C lens object
               (M.Vertex.append (.child direction next) suffix) =
@@ -676,8 +667,7 @@ private theorem unfoldDirection_restrict
       let rootDirection :=
         unfoldRootDirection C (restrict C hom) object direction
       let first := hom.toLens.toFunB object firstVertex
-      have hfirst : rootDirection = first := by
-        rfl
+      have hfirst : rootDirection = first := rfl
       let childEq := children_unfoldShape C (restrict C hom) object direction
       let nativeNext := M.Vertex.castEquiv childEq next
       let nextObject := Comonoid.target C object rootDirection
@@ -692,21 +682,13 @@ private theorem unfoldDirection_restrict
       have hnextObject : nextObject = homNextObject :=
         congrArg (Comonoid.target C object) hfirst
       have hvertices : ihVertex ≍ homNext := by
-        have hih : ihVertex ≍ nativeNext := by
-          unfold ihVertex M.Vertex.castEquiv
-          exact cast_heq (congrArg M.Vertex
-            (unfoldShape_restrict C hom nextObject)) nativeNext
-        have hnative : nativeNext ≍ next := by
-          unfold nativeNext M.Vertex.castEquiv
-          exact cast_heq (congrArg M.Vertex childEq) next
-        have hmapped : mappedNext ≍ next := by
-          unfold mappedNext M.Vertex.castEquiv
-          exact cast_heq (congrArg M.Vertex
-            (M.children_castDirection shapeEq direction)) next
-        have hhom : homNext ≍ mappedNext := by
-          unfold homNext M.Vertex.castEquiv
-          exact cast_heq (congrArg M.Vertex
-            (hom.map_target object firstVertex).symm) mappedNext
+        have hih : ihVertex ≍ nativeNext :=
+          M.Vertex.castEquiv_heq (unfoldShape_restrict C hom nextObject) nativeNext
+        have hnative : nativeNext ≍ next := M.Vertex.castEquiv_heq childEq next
+        have hmapped : mappedNext ≍ next :=
+          M.Vertex.castEquiv_heq (M.children_castDirection shapeEq direction) next
+        have hhom : homNext ≍ mappedNext :=
+          M.Vertex.castEquiv_heq (hom.map_target object firstVertex).symm mappedNext
         exact (hih.trans hnative).trans (hhom.trans hmapped).symm
       have hhomDirections :
           hom.toLens.toFunB nextObject ihVertex ≍
@@ -794,8 +776,7 @@ theorem extend_restrict
         M.Vertex.castEquiv (hA object) vertex = vertex' :=
       (cast_eq_iff_heq).2 hvertex
     subst vertex'
-    apply heq_of_eq
-    exact unfoldDirection_restrict C hom object vertex
+    exact heq_of_eq (unfoldDirection_restrict C hom object vertex)
   have htransport :
       (hA object ▸ hom.toLens.toFunB object) ≍
         hom.toLens.toFunB object :=
@@ -819,8 +800,7 @@ theorem hom_ext_cogenerator
     {f g : Comonoid.Hom C (comonoid P)}
     (h : cogenerator P ∘ₗ f.toLens = cogenerator P ∘ₗ g.toLens) :
     f = g := by
-  apply (homEquiv (P := P) C).injective
-  exact h
+  exact (homEquiv (P := P) C).injective h
 
 /-- The cofree hom-set equivalence is natural in its source comonoid. -/
 theorem homEquiv_naturality_left
