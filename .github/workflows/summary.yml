@@ -18,8 +18,11 @@ permissions:
   issues: read
 
 jobs:
-  summarize:
+  check-openrouter-key:
+    name: Check OpenRouter key
     runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.openrouter.outputs.configured }}
     steps:
       - name: Check OpenRouter API key
         id: openrouter
@@ -28,13 +31,17 @@ jobs:
         run: |
           if [[ -z "$OPENROUTER_KEY" ]]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::OPENROUTER_KEY is not configured; PR summary was not run."
+            echo "::warning::OPENROUTER_KEY is not configured; PR summary will be skipped."
           else
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
 
+  summarize:
+    needs: check-openrouter-key
+    if: needs.check-openrouter-key.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    steps:
       - name: Generate PR Summary
-        if: steps.openrouter.outputs.configured == 'true'
         uses: alexanderlhicks/lean4repo-utils/summary@0.3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

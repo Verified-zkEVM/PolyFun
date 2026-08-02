@@ -117,8 +117,8 @@ deliberately outside the `lake lint` scope.
   docstrings).
 - [`../../.github/workflows/summary.yml`](../../.github/workflows/summary.yml):
   optional AI-generated PR summary; gated on the `OPENROUTER_KEY` repository
-  secret. The summary action is skipped with a workflow warning if the secret
-  is not set, without failing CI.
+  secret. A preflight check emits a workflow warning if the secret is not set,
+  and the summary job is marked skipped without blocking the PR.
 - [`../../.github/workflows/release-tag.yml`](../../.github/workflows/release-tag.yml),
   [`../../.github/workflows/update.yml`](../../.github/workflows/update.yml),
   [`../../.github/workflows/review.yml`](../../.github/workflows/review.yml):
