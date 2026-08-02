@@ -23,9 +23,11 @@ local validation. By default it runs:
 
 1. `lake build --wfail` (warnings — including `mathlibStandardSet` style
    warnings — are hard failures, matching CI)
-2. `./scripts/check-imports.sh` (umbrella `PolyFun.lean` matches the
+2. `./scripts/check-modules.sh` (all Lean sources use module mode and the
+   Interaction public-scope policy is respected)
+3. `./scripts/check-imports.sh` (umbrella `PolyFun.lean` matches the
    tracked source tree)
-3. `python3 ./scripts/check-docs-integrity.py` (CLAUDE.md symlink and
+4. `python3 ./scripts/check-docs-integrity.py` (CLAUDE.md symlink and
    tracked-markdown link resolution)
 
 ## Validation By Change Type
@@ -68,6 +70,7 @@ issue:
 
 ```bash
 lake build
+./scripts/check-modules.sh
 ./scripts/check-imports.sh
 python3 ./scripts/check-docs-integrity.py
 ```

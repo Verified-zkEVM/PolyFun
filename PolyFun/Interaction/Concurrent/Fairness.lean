@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Run
+
+module
+
+public import PolyFun.Interaction.Concurrent.Run
 
 /-!
 # Fairness of dynamic concurrent runs
@@ -20,6 +23,8 @@ same protocol.
 The closed-world `Process` API is recovered as a specialization of these
 generic definitions.
 -/
+
+public section
 
 universe u v w w₂ w₃
 

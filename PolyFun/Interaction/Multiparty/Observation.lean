@@ -3,10 +3,13 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import Mathlib.Order.BoundedOrder.Basic
-import Mathlib.Order.Lattice
 
-import PolyFun.Interaction.Basic.TypeTree
+module
+
+public import Mathlib.Order.BoundedOrder.Basic
+public import Mathlib.Order.Lattice
+
+public import PolyFun.Interaction.Basic.TypeTree
 
 /-!
 # Observations: the information lattice of a single move
@@ -99,6 +102,8 @@ operational refinement and its `rfl`-friendly action shapes live in
 `Multiparty/Core.lean` (`ViewMode`); this file only knows the universal form.
 -/
 
+public section
+
 universe u v
 
 namespace Interaction
@@ -116,7 +121,7 @@ this exposes `Observation X` as the index type
 polynomial functor: the universal "observations of `X`" container. An
 element of the polynomial is precisely a chosen codomain together with a
 projection from `X` into it. -/
-@[reducible]
+@[expose, reducible]
 def basePFunctor (X : Type u) : PFunctor.{u + 1, u} where
   A := Type u
   B := (X → ·)

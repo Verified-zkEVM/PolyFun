@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Multiparty.Profile
+
+module
+
+public import PolyFun.Interaction.Multiparty.Profile
 
 /-!
 # Observation-form profiles for compositional reasoning about disclosure
@@ -59,6 +62,8 @@ the joint indistinguishability relation, and the underlying `Refines` is
 only a preorder (not antisymmetric).
 -/
 
+public section
+
 universe u v
 
 namespace Interaction
@@ -107,6 +112,7 @@ either build a mixed profile that uses `ViewMode` directly for those
 parties, or compose the observation profile with a separate operational
 decoration downstream.
 -/
+@[expose]
 def toViewProfile (k : ObservationProfile Party X) : ViewProfile Party X :=
   fun p => Observation.toViewMode (k p)
 

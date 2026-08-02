@@ -5,7 +5,7 @@ Edit the source of truth, not the output.
 | Path | What it is | Edit directly? | Source of truth / refresh path |
 | --- | --- | --- | --- |
 | `CLAUDE.md` | compatibility symlink | No | Edit `AGENTS.md` |
-| `PolyFun.lean` | generated umbrella imports | No | `./scripts/update-lib.sh` or `./scripts/check-imports.sh` |
+| `PolyFun.lean` | generated module with umbrella public imports | No | `./scripts/update-lib.sh` or `./scripts/check-imports.sh` |
 | `.lake/` | build artifacts and cache | No | `lake build`, `lake exe cache get` |
 | `lake-manifest.json` | resolved dependency lockfile | Manual edits unsafe | `lake update` (or the `update.yml` workflow) |
 
@@ -13,7 +13,8 @@ Edit the source of truth, not the output.
 
 - `./scripts/update-lib.sh` only uses tracked `PolyFun/**/*.lean` files and
   fails fast if untracked Lean files would be skipped. Stage new files
-  first, then rerun.
+  first, then rerun. It emits a `module` command followed by sorted
+  `public import` commands so importing `PolyFun` re-exports the library API.
 - `./scripts/check-imports.sh` is the lightweight read-only check used in
   CI: it regenerates `PolyFun.lean` to a temp file and diffs against the
   committed copy.

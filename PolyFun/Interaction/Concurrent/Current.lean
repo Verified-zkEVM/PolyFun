@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Control
-import PolyFun.Interaction.Concurrent.Profile
+
+module
+
+public import PolyFun.Interaction.Concurrent.Control
+public import PolyFun.Interaction.Concurrent.Profile
 
 /-!
 # Current local views of concurrent frontier events
@@ -35,6 +38,8 @@ At a `par` node, this means:
 So this file gives the first true "who chooses what next, and what does everyone
 else learn?" interface for the concurrent layer.
 -/
+
+public section
 
 universe u
 

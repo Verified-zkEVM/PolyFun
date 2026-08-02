@@ -3,9 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Basic.Strategy
-import PolyFun.PFunctor.Free.Displayed.Append
+
+module
+
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Basic.Strategy
+public import PolyFun.PFunctor.Free.Displayed.Append
 
 /-!
 # Dependent append of interaction type trees
@@ -21,6 +24,8 @@ algebra around this operation:
   `Strategy.compFlat` (flat output via `PFunctor.FreeM.Path.append`).
 - **Decoration / refinement append** and their naturality lemmas.
 -/
+
+public section
 
 universe u v w w₂
 
@@ -39,6 +44,7 @@ output and produces a second-phase strategy whose output family is `F tr₁`.
 This is the preferred composition form: `liftAppend` ensures the output type
 reduces definitionally when combined with `PFunctor.FreeM.Path.append`, which is essential
 for dependent chain composition (see `Strategy.stateChainComp`). -/
+@[expose]
 def Strategy.comp {m : Type u → Type u} [Monad m] :
     (s₁ : TypeTree) → (s₂ : PFunctor.FreeM.Path s₁ → TypeTree) →
     {Mid : PFunctor.FreeM.Path s₁ → Type u} →

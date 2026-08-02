@@ -115,11 +115,32 @@ When in doubt, prefer:
 - For ordinary Lean source files, use this prologue layout:
   1. copyright / license / authors header
   2. one blank line
-  3. imports
+  3. the `module` command
   4. one blank line
-  5. module docstring
+  5. imports
+  6. one blank line
+  7. module docstring
 
   Keep exactly one blank line between these blocks.
+
+## Module Scopes And Public APIs
+
+Every tracked Lean source in `PolyFun/` and `PolyFunTest/` uses module mode.
+Production modules normally place their exported declarations in a
+`public section`. Test and worked-example modules normally use
+`@[expose] public section`: their definitional regression checks intentionally
+normalize local fixtures, while remaining outside the production library.
+
+- Use `public import` only when declarations from the imported module occur in
+  this module's public signatures or are intentionally re-exported.
+- Use plain `import` for implementation-only dependencies.
+- Use `import all` before the corresponding regular or public import when
+  proofs need opaque declaration bodies from another module.
+- Prefer `@[expose]` on individual definitions whose reduction is part of the
+  public API. Do not use `@[expose] public section` in `PolyFun/Interaction/`.
+
+Run `./scripts/check-modules.sh` after changing module scopes. The full
+validation wrapper runs this check automatically.
 
 ### Section Headers Within A File
 

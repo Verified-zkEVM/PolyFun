@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Append
-import PolyFun.PFunctor.Free.Replicate
+
+module
+
+public import PolyFun.Interaction.Basic.Append
+public import PolyFun.PFunctor.Free.Replicate
 
 /-!
 # `TypeTree.replicate` and path operations
@@ -13,6 +16,8 @@ Non-dependent `n`-fold append of the same type tree, with `Path.replicateJoin` /
 replicated decorations/refinements, and `Strategy.iterate`. This is the uniform special case of
 `TypeTree.stateChain` (see `PolyFun.Interaction.Basic.StateChain`).
 -/
+
+public section
 
 universe u v w
 

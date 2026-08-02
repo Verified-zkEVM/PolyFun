@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Refinement
+
+module
+
+public import PolyFun.Interaction.Concurrent.Refinement
 
 /-!
 # MutualSafetyRefinement for dynamic concurrent processes
@@ -30,6 +33,8 @@ the generic dynamical-system notions at the step polynomial. This file adds
 fairness-aware safety-transport theorems phrased through
 `ProcessOver.SafetySpec.Satisfies`.
 -/
+
+public section
 
 universe u v w w₂ w₃
 

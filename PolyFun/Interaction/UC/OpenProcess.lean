@@ -3,12 +3,16 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.PFunctor.Trace
-import PolyFun.Control.Bisimulation
-import PolyFun.Interaction.Basic.Sampler
-import PolyFun.Interaction.Concurrent.Process
-import PolyFun.Interaction.UC.Interface
-import Batteries.Tactic.Lint
+
+module
+
+import all PolyFun.Interaction.UC.Interface
+public import PolyFun.PFunctor.Trace
+public import PolyFun.Control.Bisimulation
+public import PolyFun.Interaction.Basic.Sampler
+public import PolyFun.Interaction.Concurrent.Process
+public import PolyFun.Interaction.UC.Interface
+public import Batteries.Tactic.Lint
 
 /-!
 # Open concurrent processes with boundary traffic
@@ -56,6 +60,8 @@ decorated step path. It is structural only: routing, buffering, and
 probabilistic execution belong to downstream runtime interpreters.
 -/
 
+public section
+
 universe u v v₁ v₂ v₃ w w'
 
 namespace Interaction
@@ -101,6 +107,7 @@ namespace BoundaryAction
 /--
 A purely internal node: not externally activated and no outbound packets.
 -/
+@[expose]
 def internal (Δ : PortBoundary) (X : Type w) : BoundaryAction Δ X where
   isActivated := false
   emit := 1
@@ -125,6 +132,7 @@ The activation flag is preserved (it does not depend on the boundary
 presentation). The emitted-trace is pushed forward along the output chart
 `φ.onOut` via `PFunctor.Trace.mapChart`.
 -/
+@[expose]
 def mapBoundary {Δ₁ Δ₂ : PortBoundary} {X : Type w}
     (φ : PortBoundary.Hom Δ₁ Δ₂) (b : BoundaryAction Δ₁ X) : BoundaryAction Δ₂ X where
   isActivated := b.isActivated
@@ -214,6 +222,7 @@ This is used by `plug` to internalize all boundary interactions. The
 emitted-trace is the monoid unit `1`, which is definitionally the constant-`[]`
 trace.
 -/
+@[expose]
 def closed {Δ : PortBoundary} {X : Type w} (b : BoundaryAction Δ X) :
     BoundaryAction PortBoundary.empty X where
   isActivated := b.isActivated
@@ -383,6 +392,7 @@ abbrev productView (Party : Type u) (Δ : PortBoundary) : TypeTree.Node.Context.
 /--
 Forward direction of the polynomial-product bridge: read off the
 `(NodeProfile, BoundaryAction)` pair from an `OpenNodeProfile`. -/
+@[expose]
 def toProductView (Party : Type u) (Δ : PortBoundary) : TypeTree.Node.ContextHom
       (OpenNodeContext Party Δ : TypeTree.Node.Context.{w}) (productView.{u, w} Party Δ) :=
   fun _ ons => (ons.toNodeProfile, ons.boundary)
@@ -390,6 +400,7 @@ def toProductView (Party : Type u) (Δ : PortBoundary) : TypeTree.Node.ContextHo
 /--
 Inverse direction of the polynomial-product bridge: reassemble an
 `OpenNodeProfile` from a `(NodeProfile, BoundaryAction)` pair. -/
+@[expose]
 def ofProductView (Party : Type u) (Δ : PortBoundary) : TypeTree.Node.ContextHom
       (productView.{u, w} Party Δ) (OpenNodeContext Party Δ : TypeTree.Node.Context.{w}) :=
   fun _ p => { toNodeProfile := p.1, boundary := p.2 }
@@ -417,6 +428,7 @@ The forgetful map from the open-world context to the closed-world context.
 This drops the `BoundaryAction` and retains only the `NodeProfile`
 (controllers and local views).
 -/
+@[expose]
 def forget (Party : Type u) (Δ : PortBoundary) : TypeTree.Node.ContextHom
       (OpenNodeContext Party Δ : TypeTree.Node.Context.{w}) (StepContext Party) :=
   fun _ ons => ons.toNodeProfile
@@ -426,6 +438,7 @@ The embedding from the closed-world context into the open-world context.
 
 This marks every node as purely internal (no boundary traffic).
 -/
+@[expose]
 def embed (Party : Type u) (Δ : PortBoundary) : TypeTree.Node.ContextHom (StepContext Party)
       (OpenNodeContext Party Δ : TypeTree.Node.Context.{w}) :=
   fun _ ns => .ofClosed ns
@@ -436,6 +449,7 @@ The context hom induced by a boundary adaptation.
 This transforms every node's boundary action along `φ` while preserving
 the closed-world node semantics.
 -/
+@[expose]
 def map (Party : Type u) {Δ₁ Δ₂ : PortBoundary} (φ : PortBoundary.Hom Δ₁ Δ₂) :
     TypeTree.Node.ContextHom (OpenNodeContext Party Δ₁ : TypeTree.Node.Context.{w})
       (OpenNodeContext Party Δ₂ : TypeTree.Node.Context.{w}) :=
@@ -578,7 +592,10 @@ theorem forget_eq_prodFst_comp_toProductView (Party : Type u) (Δ : PortBoundary
     forget.{u, w} Party Δ = TypeTree.Node.ContextHom.comp
         (TypeTree.Node.Context.prodFst (StepContext Party)
           (fun X : Type w => BoundaryAction Δ X))
-        (toProductView Party Δ) := rfl
+        (toProductView Party Δ) := by
+  funext X ons
+  cases ons
+  rfl
 
 /-- `embed` is the pairing of the identity on `StepContext` with the
 constant `internal` boundary action, transported back along the bridge. -/
@@ -586,7 +603,10 @@ theorem embed_eq_ofProductView_comp_prodPair (Party : Type u) (Δ : PortBoundary
     embed.{u, w} Party Δ = TypeTree.Node.ContextHom.comp (ofProductView Party Δ)
         (TypeTree.Node.Context.prodPair
           (TypeTree.Node.ContextHom.id (StepContext Party))
-          (fun X _ => BoundaryAction.internal Δ X)) := rfl
+          (fun X _ => BoundaryAction.internal Δ X)) := by
+  funext X node
+  cases node
+  rfl
 
 /-- `map φ` factors as the polynomial-product map of the identity on
 `StepContext` and the boundary-action transport
@@ -599,7 +619,10 @@ theorem map_eq_ofProductView_comp_prodMap_comp_toProductView
           (TypeTree.Node.Context.prodMap
             (TypeTree.Node.ContextHom.id (StepContext Party))
             (fun X (b : BoundaryAction Δ₁ X) => b.mapBoundary φ)))
-        (toProductView Party Δ₁) := rfl
+        (toProductView Party Δ₁) := by
+  funext X ons
+  cases ons
+  rfl
 
 end OpenNodeContext
 
@@ -687,7 +710,7 @@ namespace OpenProcess
 /-- Structural projection onto the underlying `ProcessOver`, dropping
 the per-state sampler. The closed-world `ProcessOver` lemmas from
 `Concurrent/Process.lean` apply through this projection. -/
-@[reducible]
+@[expose, reducible]
 def toProcess {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
     (op : OpenProcess.{u, v, w, w'} m Party Δ) :
     ProcessOver op.Proc (OpenNodeContext.{u, w} Party Δ) :=
@@ -731,6 +754,7 @@ packets, preserving activation flags) while leaving the process structure,
 closed-world node semantics, and per-step samplers unchanged. The sampler
 carries over verbatim because `StepOver.mapContext` preserves `step.tree`.
 -/
+@[expose]
 def mapBoundary {m : Type w → Type w'} {Party : Type u} {Δ₁ Δ₂ : PortBoundary}
     (φ : PortBoundary.Hom Δ₁ Δ₂) (op : OpenProcess.{u, v, w, w'} m Party Δ₁) :
     OpenProcess.{u, v, w, w'} m Party Δ₂ where
@@ -843,6 +867,7 @@ observation is whether a complete path is externally activated. Silent
 paths receive label `none`; every activated path receives the
 single visible label `some ()`. Packet/action identity and sampler effects are
 deliberately absent from this structural observation. -/
+@[expose]
 noncomputable def OpenProcess.activationLTS
     {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
     (p : OpenProcess.{u, v, w, w'} m Party Δ) : Control.LTS Unit := by

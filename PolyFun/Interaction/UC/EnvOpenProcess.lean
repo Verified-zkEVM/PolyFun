@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.OpenProcess
-import PolyFun.Interaction.UC.EnvAction
+
+module
+
+public import PolyFun.Interaction.UC.OpenProcess
+public import PolyFun.Interaction.UC.EnvAction
 
 /-!
 # Open processes paired with an environment-event channel
@@ -79,6 +82,8 @@ The canonical CJSV22 instantiation `MomentaryCorruption.Process`
 value) lives in `MomentaryCorruption.lean`.
 -/
 
+public section
+
 universe u uE v w w'
 
 namespace Interaction
@@ -129,7 +134,7 @@ Forget the environment channel and view as a plain `OpenProcess`.
 This is the canonical projection: it drops the env action and retains
 only the open-process boundary surface.
 -/
-@[reducible]
+@[expose, reducible]
 def toOpenProcess (E : EnvOpenProcess.{u, uE, v, w, w'} m Party Δ Event State) :
     OpenProcess.{u, v, w, w'} m Party Δ := E.process
 
@@ -140,6 +145,7 @@ underlying `EnvAction.react`.
 Provided as a top-level projection so that downstream consumers can
 write `E.react e s` without unfolding the wrapper.
 -/
+@[expose]
 def react (E : EnvOpenProcess.{u, uE, v, w, w'} m Party Δ Event State)
     (e : Event) (s : State) : m State :=
   E.envAction.react e s
@@ -158,6 +164,7 @@ events ever fire.
 This is the canonical no-op wrapping: every existing `OpenProcess`
 embeds into `EnvOpenProcess _ _ Empty State` for any `State`.
 -/
+@[expose]
 def ofOpenProcess (P : OpenProcess.{u, v, w, w'} m Party Δ) (S : Type w) :
     EnvOpenProcess.{u, 0, v, w, w'} m Party Δ Empty S where
   process := P
@@ -179,6 +186,7 @@ Useful when a process needs to participate in a non-trivial alphabet
 (so its env-channel slot must be inhabited at the chosen `Event` /
 `State` types) but its own state is unaffected by every event.
 -/
+@[expose]
 def passive (P : OpenProcess.{u, v, w, w'} m Party Δ) (Event : Type uE) (S : Type w) :
     EnvOpenProcess.{u, uE, v, w, w'} m Party Δ Event S where
   process := P
@@ -211,6 +219,7 @@ tracks broadcast events).
 
 The underlying open process is unchanged.
 -/
+@[expose]
 def comapEvent {Event' : Type uE} (g : Event → Event')
     (E : EnvOpenProcess.{u, uE, v, w, w'} m Party Δ Event' State) :
     EnvOpenProcess.{u, uE, v, w, w'} m Party Δ Event State where
@@ -246,6 +255,7 @@ Used when the same open process needs to be paired with a different env
 channel (e.g. lifting from the canonical `MomentaryCorruption.react`
 reaction to a richer simulator-controlled reaction with its own state).
 -/
+@[expose]
 def withEnvAction {Event' : Type uE} {State' : Type w}
     (E : EnvOpenProcess.{u, uE, v, w, w'} m Party Δ Event State)
     (ea : EnvAction m Event' State') :
@@ -277,6 +287,7 @@ The env action is independent of the port boundary, so it is carried
 through unchanged. This is the env-channel-aware analogue of
 `OpenProcess.mapBoundary`.
 -/
+@[expose]
 def mapBoundary {Δ₁ Δ₂ : PortBoundary} (φ : PortBoundary.Hom Δ₁ Δ₂)
     (E : EnvOpenProcess.{u, uE, v, w, w'} m Party Δ₁ Event State) :
     EnvOpenProcess.{u, uE, v, w, w'} m Party Δ₂ Event State where

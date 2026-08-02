@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.BundledMonad
-import PolyFun.Interaction.Basic.Syntax
+
+module
+
+public import PolyFun.Interaction.Basic.BundledMonad
+public import PolyFun.Interaction.Basic.Syntax
 
 /-!
 # Ownership-profile local syntax builders
@@ -23,6 +26,8 @@ In particular, this layer is useful for two-party and multiparty interaction
 models where every node has one acting party and the other parties follow the
 chosen move with their passive continuations.
 -/
+
+public section
 
 universe u a vΓ
 
@@ -55,6 +60,7 @@ structure LocalView (Move : Type uB₂) where
   other : (Move → Type w) → Type w
 
 /-- Select the local node shape determined by an ownership perspective. -/
+@[expose]
 def LocalView.node {Move : Type uB₂} (view : LocalView.{uB₂, w} Move) :
     Perspective → (Move → Type w) → Type w
   | .owner, Cont => view.own Cont
@@ -86,6 +92,7 @@ def syntaxOver (perspective : {pos : P.A} → Γ pos → Agent → Perspective)
     (view γ agent).node (perspective γ agent) Cont
 
 /-- Monadic owner/passive syntax over a lens-executed tree. -/
+@[expose]
 def monadicSyntax (perspective : {pos : P.A} → Γ pos → Agent → Perspective)
     (monad : {pos : P.A} → Γ pos → Agent → BundledMonad.{max uB₂ w, max uB₂ w}) :
     SyntaxOver l Agent Γ where
@@ -128,6 +135,7 @@ structure LocalView (X : Type u) where
   other : (X → Type u) → Type u
 
 /-- Select the local node shape determined by an ownership perspective. -/
+@[expose]
 def LocalView.node {X : Type u} (view : LocalView X) : Perspective → (X → Type u) → Type u
   | .owner, Cont => view.own Cont
   | .observer, Cont => view.other Cont
@@ -184,6 +192,7 @@ def syntaxOver (perspective : ∀ {X}, Γ X → Agent → Perspective)
     (view γ agent).node (perspective γ agent) Cont
 
 /-- Monadic owner/passive syntax over plain `TypeTree` trees. -/
+@[expose]
 def monadicSyntax (perspective : ∀ {X}, Γ X → Agent → Perspective)
     (monad : ∀ {X}, Γ X → Agent → BundledMonad.{u, u}) :
     SyntaxOver (PFunctor.Lens.id TypeTree.basePFunctor) Agent Γ where

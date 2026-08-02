@@ -3,10 +3,13 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.PFunctor.Chart.Basic
-import PolyFun.PFunctor.Equiv.Basic
-import PolyFun.PFunctor.Lens.Basic
-import Batteries.Tactic.Lint
+
+module
+
+public import PolyFun.PFunctor.Chart.Basic
+public import PolyFun.PFunctor.Equiv.Basic
+public import PolyFun.PFunctor.Lens.Basic
+public import Batteries.Tactic.Lint
 
 /-!
 # UC interfaces and open boundaries
@@ -75,6 +78,8 @@ re-introducing their own packet/interface vocabulary.
   Interaction — the composition product, charts, lenses, and monoidal
   structures on polynomial functors used throughout this file
 -/
+
+public section
 
 universe uA uB vA vB wA wB
 
@@ -514,6 +519,7 @@ Left inclusion into a disjoint sum of interfaces.
 
 Maps a packet on `I₁` to the left summand of `sum I₁ I₂`.
 -/
+@[expose]
 def inl (I₁ : Interface.{uA, uB}) (I₂ : Interface.{vA, uB}) : Hom I₁ (Interface.sum I₁ I₂) where
   toFunA := Sum.inl
   toFunB _ m := m
@@ -523,6 +529,7 @@ Right inclusion into a disjoint sum of interfaces.
 
 Maps a packet on `I₂` to the right summand of `sum I₁ I₂`.
 -/
+@[expose]
 def inr (I₁ : Interface.{uA, uB}) (I₂ : Interface.{vA, uB}) : Hom I₂ (Interface.sum I₁ I₂) where
   toFunA := Sum.inr
   toFunB _ m := m
@@ -733,6 +740,7 @@ namespace PortBoundary
 /--
 The empty open boundary: no inputs and no outputs.
 -/
+@[expose]
 def empty : PortBoundary :=
   ⟨Interface.empty, Interface.empty⟩
 
@@ -742,6 +750,7 @@ Swap the direction of a boundary.
 This is the structural operation underlying plugging:
 the outputs expected by one side become inputs for the other, and vice versa.
 -/
+@[expose]
 def swap (Δ : PortBoundary) : PortBoundary :=
   ⟨Δ.Out, Δ.In⟩
 
@@ -751,6 +760,7 @@ Side-by-side composition of open boundaries.
 Inputs and outputs are combined by disjoint sum, so the resulting boundary
 exposes both components in parallel.
 -/
+@[expose]
 def tensor (Δ₁ Δ₂ : PortBoundary) : PortBoundary :=
   ⟨Interface.sum Δ₁.In Δ₂.In, Interface.sum Δ₁.Out Δ₂.Out⟩
 
@@ -796,6 +806,7 @@ Combine two boundary adaptations side by side.
 This is the boundary-level companion to `PortBoundary.tensor`: the left and
 right adaptations act independently on the corresponding summands.
 -/
+@[expose]
 def tensor {Δ₁ Δ₂ Δ₁' Δ₂' : PortBoundary} (f₁ : Hom Δ₁ Δ₁') (f₂ : Hom Δ₂ Δ₂') :
     Hom (PortBoundary.tensor Δ₁ Δ₂) (PortBoundary.tensor Δ₁' Δ₂') where
   onIn := Interface.Hom.sum f₁.onIn f₂.onIn
@@ -807,12 +818,14 @@ Swap the direction of a boundary adaptation.
 This is the structural boundary-level counterpart of `PortBoundary.swap`:
 incoming and outgoing interface maps exchange roles.
 -/
+@[expose]
 def swap {Δ₁ Δ₂ : PortBoundary} (f : Hom Δ₁ Δ₂) :
     Hom (PortBoundary.swap Δ₂) (PortBoundary.swap Δ₁) where
   onIn := f.onOut
   onOut := f.onIn
 
 /-- The identity boundary adaptation. -/
+@[expose]
 def id (Δ : PortBoundary) : Hom Δ Δ where
   onIn := Interface.Hom.id Δ.In
   onOut := Interface.Hom.id Δ.Out
@@ -822,6 +835,7 @@ Compose two boundary adaptations.
 
 `comp g f` first adapts `Δ₁` to `Δ₂`, then adapts `Δ₂` to `Δ₃`.
 -/
+@[expose]
 def comp {Δ₁ Δ₂ Δ₃ : PortBoundary} (g : Hom Δ₂ Δ₃) (f : Hom Δ₁ Δ₂) : Hom Δ₁ Δ₃ where
   onIn := Interface.Hom.comp f.onIn g.onIn
   onOut := Interface.Hom.comp g.onOut f.onOut

@@ -3,7 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.MutualSafetyRefinement
+
+module
+
+import all PolyFun.Interaction.Concurrent.Observation
+public import PolyFun.Interaction.Concurrent.MutualSafetyRefinement
 
 /-!
 # Common concurrent equivalence notions
@@ -33,6 +37,8 @@ generic simulation-level `DynSystem.ForwardSimulation.*_mapRun`, specialized at
 observations directly from an equivalence without first projecting a forward
 simulation.
 -/
+
+public section
 
 universe u v w
 

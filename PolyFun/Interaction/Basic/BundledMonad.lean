@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
 
+module
+
 import Batteries.Tactic.Lint
 
 /-!
@@ -13,6 +15,8 @@ import Batteries.Tactic.Lint
 stored inside inductive types (e.g. per-node monad decorations) where typeclass inference is not
 available. This module is independent of `Interaction.TypeTree`.
 -/
+
+public section
 
 universe u v
 

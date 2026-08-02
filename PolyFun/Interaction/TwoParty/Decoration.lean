@@ -3,11 +3,15 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
-import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Basic.MonadDecoration
-import PolyFun.Interaction.TwoParty.Role
-import Batteries.Tactic.Lint
+
+module
+
+import all PolyFun.Interaction.Basic.MonadDecoration
+public import PolyFun.Interaction.Basic.TypeTree
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Basic.MonadDecoration
+public import PolyFun.Interaction.TwoParty.Role
+public import Batteries.Tactic.Lint
 
 /-!
 # Role decorations and common role-based node contexts
@@ -32,6 +36,8 @@ realized node contexts, because `BundledMonad` lives in a higher universe than `
 These contexts are ordinary inputs to `StrategyOver`: roles say who owns the
 move, and monad decorations say which node effect is used by each participant.
 -/
+
+public section
 
 universe u uA uB t
 
@@ -99,6 +105,7 @@ def RoleDecorationOver.swap {s : PFunctor.FreeM P α} (roles : RoleDecorationOve
 namespace RoleDecorationOver
 
 /-- View a generic monad decoration as one displayed layer over a role decoration. -/
+@[expose]
 def monadsOver :
     (s : PFunctor.FreeM P α) → (roles : RoleDecorationOver (P := P) s) →
     (md : MonadDecoration (P := P) (α := α) s) →
@@ -229,6 +236,7 @@ def RoleDecoration.swap {spec : TypeTree} (roles : RoleDecoration spec) :
 namespace RoleDecoration
 
 /-- View a plain monad decoration as one displayed layer over an existing role decoration. -/
+@[expose]
 def monadsOver :
     (spec : TypeTree.{u}) → (roles : RoleDecoration spec) → (md : TypeTree.MonadDecoration spec) →
     Decoration.Over (fun _ => Role) (fun _ (_ : Role) => BundledMonad.{u, u}) spec roles
@@ -237,6 +245,7 @@ def monadsOver :
       ⟨bm, fun x => monadsOver (rest x) (rRest x) (mRest x)⟩
 
 /-- Pack roles together with one bundled monad per node into `RoleMonadContext`. -/
+@[expose]
 def withMonads {spec : TypeTree.{u}}
     (roles : RoleDecoration spec) (md : TypeTree.MonadDecoration spec) :
     Decoration RoleMonadContext spec :=
@@ -253,6 +262,9 @@ theorem withMonads_constant_eq_map
       Decoration.map (RoleContext.withMonad bm) spec roles
   | .done, _ => rfl
   | .node _ rest, ⟨role, rRest⟩ => by
+      simp only [RoleDecoration.withMonads, RoleDecoration.monadsOver,
+        TypeTree.MonadDecoration.constant, MonadDecoration.constant,
+        Decoration.ofOver]
       change
         (⟨⟨role, bm⟩,
           fun x =>

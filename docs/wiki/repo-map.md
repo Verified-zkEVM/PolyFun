@@ -188,6 +188,12 @@ Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
 `PolyFun.lean` is a generated umbrella import file, not a hand-maintained
 module index. See [`generated-files.md`](generated-files.md).
 
+Every Lean source uses module mode. The arrows above describe dependency
+direction; a `public import` additionally records that the lower module is
+part of the importing module's API surface. Within `Interaction/`, exported
+declarations live in `public section`, implementation dependencies stay as
+plain imports, and reducibility is exposed declaration-by-declaration.
+
 ## Where To Start By Task
 
 - Working on the polynomial-functor substrate (positions / directions,

@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.PFunctor.Free.Polynomial
+
+module
+
+public import PolyFun.PFunctor.Free.Polynomial
 
 /-!
 # Interaction type trees and paths
@@ -86,6 +89,8 @@ representation.
 * McBride (2010); Dagand–McBride (2014), displayed algebras / ornaments
 -/
 
+public section
+
 universe u
 
 namespace Interaction
@@ -101,7 +106,7 @@ participant chooses a value of some move type, and the continuation is
 selected by that value". It is independent of payload data, controller
 attribution, and execution semantics; those layers refine the same
 polynomial via `Decoration`, `NodeProfile`, and `StepOver`. -/
-@[reducible]
+@[expose, reducible]
 def basePFunctor : PFunctor.{u+1, u} where
   A := Type u
   B := id
@@ -144,7 +149,7 @@ namespace TypeTree
 This is `PFunctor.FreeM.pure ()` at the polynomial substrate; the
 `@[match_pattern]` attribute makes it usable both as a constructor
 term and as a `match` pattern. -/
-@[match_pattern, reducible]
+@[expose, match_pattern, reducible]
 def done : TypeTree := PFunctor.FreeM.pure PUnit.unit
 
 /-- A round of interaction: a value of type `Moves` is exchanged, then
@@ -153,7 +158,7 @@ the protocol continues with `rest x` depending on the chosen move `x`.
 This is `PFunctor.FreeM.liftBind Moves rest` at the polynomial substrate;
 the `@[match_pattern]` attribute makes it usable both as a constructor
 term and as a `match` pattern. -/
-@[match_pattern, reducible]
+@[expose, match_pattern, reducible]
 def node (Moves : Type u) (rest : Moves → TypeTree) : TypeTree :=
   PFunctor.FreeM.liftBind Moves rest
 

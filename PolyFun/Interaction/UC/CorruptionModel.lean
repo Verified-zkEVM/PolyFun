@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.EnvOpenProcess
+
+module
+
+public import PolyFun.Interaction.UC.EnvOpenProcess
 
 /-!
 # Corruption models as bundled environment alphabets
@@ -74,6 +77,8 @@ proof / lemma that is generic over the corruption model" — declare
 `(M : CorruptionModel)` and use `M.Event`, `M.State`, `M.envAction`,
 `M.Process Party Δ`.
 -/
+
+public section
 
 universe u v w'
 

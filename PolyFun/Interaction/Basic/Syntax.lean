@@ -3,9 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
-import PolyFun.Interaction.Basic.Node
-import Batteries.Tactic.Lint
+
+module
+
+public import PolyFun.Interaction.Basic.TypeTree
+public import PolyFun.Interaction.Basic.Node
+public import Batteries.Tactic.Lint
 
 /-!
 # Generic local syntax over interaction trees
@@ -45,6 +48,8 @@ Naming note:
 to signal that it is the functorial refinement of syntax, with continuation
 reindexing available as part of the interface.
 -/
+
+public section
 
 universe u a vΓ vΔ vΛ w uA uB uA₂ uB₂ t
 
@@ -89,6 +94,7 @@ Reindex a local syntax object contravariantly along a node metadata map.
 If `f : Γ → Δ`, then any syntax over `Δ` can be viewed as syntax over `Γ` by
 translating the local metadata value before passing it to the original syntax.
 -/
+@[expose]
 def comap {Δ : P.A → Type vΔ}
     (f : ∀ pos, Γ pos → Δ pos) (syn : SyntaxOver l Agent Δ) :
     SyntaxOver l Agent Γ where
@@ -107,6 +113,7 @@ Restrict a participant-indexed syntax to one fixed agent.
 The resulting singleton-agent syntax has the same node objects as `syn` at
 `agent`; the dummy `PUnit` agent argument is ignored.
 -/
+@[expose]
 def forAgent (syn : SyntaxOver l Agent Γ) (agent : Agent) :
     SyntaxOver l PUnit Γ where
   Node _ pos γ Cont := syn.Node agent pos γ Cont

@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Node
-import PolyFun.Interaction.Basic.StrategyOver
+
+module
+
+public import PolyFun.Interaction.Basic.Node
+public import PolyFun.Interaction.Basic.StrategyOver
 
 /-!
 # Generic local execution laws over interaction trees
@@ -29,6 +32,8 @@ Naming note:
 it is the generalized execution notion over node-local data, while
 `Interaction` names the plain specialization with trivial node data.
 -/
+
+public section
 
 universe u a vΓ vΔ vΛ w uA uB uA₂ uB₂ t
 
@@ -78,6 +83,7 @@ Reindex a local execution law contravariantly along a node metadata map.
 If `f : Γ → Δ`, then an execution law for `Δ`-metadata can be reused on
 `Γ`-metadata by first viewing local syntax through `SyntaxOver.comap f`.
 -/
+@[expose]
 def comap {Δ : P.A → Type vΔ} {syn : SyntaxOver l Agent Δ}
     {m : Type (max uB₂ a w) → Type (max uB₂ a w)}
     (f : ∀ pos, Γ pos → Δ pos) (I : InteractionOver l Agent Δ syn m) :
@@ -147,6 +153,7 @@ The local execution structure is the generic `InteractionOver`; this facade only
 keeps the plain-tree path recursion definitionally clean for computation
 lemmas.
 -/
+@[expose]
 def runTypeTree
     [Monad m]
     {spec : TypeTree}

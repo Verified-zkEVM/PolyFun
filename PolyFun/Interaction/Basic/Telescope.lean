@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Append
+
+module
+
+public import PolyFun.Interaction.Basic.Append
 
 /-!
 # Well-founded stopping trees (`TypeTree.Telescope`)
@@ -40,6 +43,8 @@ initial-algebra universal property. `toTypeTree` is the fold into the algebra
 * Hancock–Setzer (2000), recursion over interaction interfaces.
 * Spivak–Niu (2024), polynomial functors as the algebra of interaction.
 -/
+
+public section
 
 universe u v
 
@@ -79,6 +84,7 @@ abbrev extend (s : St)
 
 /-- The `TypeTree`-valued algebra interpreting a stopping leaf as the substitution
 unit and a transition layer as substitution multiplication. -/
+@[expose]
 def toTypeTreeAlgebra :
     PFunctor.FreeM.StoppingTree.Algebra
       (Obs := fun s => Path (round s)) (step := step) (fun _ => TypeTree) where
@@ -87,6 +93,7 @@ def toTypeTreeAlgebra :
 
 /-- Fold a `Telescope` into a concrete `TypeTree` using the canonical substitution
 monoid: `done` is its unit and `extend` is its multiplication/append. -/
+@[expose]
 def toTypeTree : {s : St} → Telescope round step s → TypeTree :=
   PFunctor.FreeM.StoppingTree.fold toTypeTreeAlgebra
 

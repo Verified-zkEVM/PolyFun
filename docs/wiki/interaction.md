@@ -57,6 +57,13 @@ Dependencies flow downward: `Concurrent/` may import `Multiparty/` and
 `Basic/`; `TwoParty/` and `Multiparty/` import only `Basic/`; `UC/` is
 above all of them.
 
+The source modules make this boundary machine-checkable. Public declarations
+are grouped in `public section`; dependencies appearing in their signatures
+use `public import`, while implementation-only dependencies remain private.
+Definitions are `@[expose]` only when downstream computation or definitional
+equality is an intentional part of the API. Proof modules use `import all`
+when they need opaque bodies without widening the exported reducer surface.
+
 ## Core concepts: TypeTree, Node, Party, Profile
 
 Before reading any one file, it helps to fix four words. They are the

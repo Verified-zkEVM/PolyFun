@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Replicate
-import PolyFun.PFunctor.Free.Displayed.StateChain
+
+module
+
+public import PolyFun.Interaction.Basic.Replicate
+public import PolyFun.PFunctor.Free.Displayed.StateChain
 
 /-!
 # State-indexed dependent chains (`TypeTree.stateChain`)
@@ -21,6 +24,8 @@ This file provides the type-tree-level state chain (`TypeTree.stateChain`), a pa
 For the primary (stateless, continuation-style) chain API see `TypeTree.Chain` in
 `PolyFun.Interaction.Basic.Chain`.
 -/
+
+public section
 
 universe u v w
 
@@ -108,6 +113,7 @@ theorem Path.stateChainSplit_stateChainAppend
 /-- Dependent telescope of per-stage paths: a sequence of individual-stage
 paths where each stage determines the next via `advance`. Mirrors `TypeTree.stateChain`
 at the path level. -/
+@[expose]
 def Path.stateChain (Stage : Nat → Type u) (spec : (i : Nat) → Stage i → TypeTree)
     (advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)) :
     (n : Nat) → (i : Nat) → (s : Stage i) → Type u
@@ -243,6 +249,7 @@ at each step. Reduces **definitionally** when the path is built via
 
 This is the canonical output type for `Strategy.stateChainComp` and
 `StrategyOver.TwoParty.Counterpart.stateChainComp`. -/
+@[expose]
 def PFunctor.FreeM.Path.stateChainFamily
     {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
