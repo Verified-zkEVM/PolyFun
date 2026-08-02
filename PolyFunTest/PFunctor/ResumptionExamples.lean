@@ -49,28 +49,28 @@ example {α : Type uα} (computation : Resumption p α)
   bind computation k
 
 example (position : p.A) :
-    dest (lift position) = Sum.inr ⟨position, pure⟩ := by
-  exact dest_lift position
+    dest (lift position) = Sum.inr ⟨position, pure⟩ :=
+  dest_lift position
 
 example {α : Type uα} (value : α) (k : α → Resumption p β) :
-    bind (pure value) k = k value := by
-  exact bind_pure_left value k
+    bind (pure value) k = k value :=
+  bind_pure_left value k
 
 example {α : Type uα} (position : p.A)
     (next : p.B position → Resumption p α) (k : α → Resumption p β) :
     bind (query position next) k =
-      query position (fun direction => bind (next direction) k) := by
-  exact bind_query position next k
+      query position (fun direction => bind (next direction) k) :=
+  bind_query position next k
 
 example {α : Type uα} (computation : Resumption p α) :
-    bind computation pure = computation := by
-  exact bind_pure_right computation
+    bind computation pure = computation :=
+  bind_pure_right computation
 
 example {α : Type uα} {γ : Type uγ} (computation : Resumption p α)
     (k : α → Resumption p β) (k' : β → Resumption p γ) :
     bind (bind computation k) k' =
-      bind computation (fun value => bind (k value) k') := by
-  exact bind_assoc computation k k'
+      bind computation (fun value => bind (k value) k') :=
+  bind_assoc computation k k'
 
 /-- The ordinary same-universe specialization exposes a lawful monad. -/
 example {p : PFunctor.{uA, uB}} {α β : Type uX}

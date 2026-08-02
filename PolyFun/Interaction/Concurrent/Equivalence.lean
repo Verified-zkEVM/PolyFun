@@ -44,8 +44,7 @@ namespace Equivalence
 `Controller left right` means that `left` and `right` are mutually safety-refining while
 preserving the current controlling party chosen at each executed step.
 -/
-abbrev Controller {Party : Type u}
-    (left right : Process.SafetySpec Party) :=
+abbrev Controller {Party : Type u} (left right : Process.SafetySpec Party) :=
   Refinement.MutualSafetyRefinement left right
     Observation.Process.StepRel.byController
     (Observation.Process.StepRel.byController
@@ -55,8 +54,7 @@ abbrev Controller {Party : Type u}
 `ControllerPath left right` means that `left` and `right` are mutually safety-refining while
 preserving the full controller path of each executed step.
 -/
-abbrev ControllerPath {Party : Type u}
-    (left right : Process.SafetySpec Party) :=
+abbrev ControllerPath {Party : Type u} (left right : Process.SafetySpec Party) :=
   Refinement.MutualSafetyRefinement left right
     Observation.Process.StepRel.byPath
     (Observation.Process.StepRel.byPath
@@ -67,10 +65,8 @@ abbrev ControllerPath {Party : Type u}
 mutually safety-refining while preserving the stable external event label attached to each
 complete step path.
 -/
-abbrev Trace {Party : Type u} {Event : Type w}
-    (left right : Process.SafetySpec Party)
-    (eventLeft : left.toProcess.EventMap Event)
-    (eventRight : right.toProcess.EventMap Event) :=
+abbrev Trace {Party : Type u} {Event : Type w} (left right : Process.SafetySpec Party)
+    (eventLeft : left.toProcess.EventMap Event) (eventRight : right.toProcess.EventMap Event) :=
   Refinement.MutualSafetyRefinement left right
     (Observation.Process.StepRel.byEvent eventLeft eventRight)
     (Observation.Process.StepRel.byEvent
@@ -81,8 +77,7 @@ abbrev Trace {Party : Type u} {Event : Type w}
 mutually safety-refining while preserving the stable tickets attached to complete step
 paths.
 -/
-abbrev Ticket {Party : Type u} {TicketTy : Type w}
-    (left right : Process.SafetySpec Party)
+abbrev Ticket {Party : Type u} {TicketTy : Type w} (left right : Process.SafetySpec Party)
     (ticketLeft : left.toProcess.Tickets TicketTy)
     (ticketRight : right.toProcess.Tickets TicketTy) :=
   Refinement.MutualSafetyRefinement left right
@@ -95,8 +90,7 @@ abbrev Ticket {Party : Type u} {TicketTy : Type w}
 preserving the packed local observations exposed to the fixed party `me` at
 every executed step.
 -/
-abbrev Observation {Party : Type u} [DecidableEq Party]
-    (me : Party)
+abbrev Observation {Party : Type u} [DecidableEq Party] (me : Party)
     (left right : Process.SafetySpec Party) :=
   Refinement.MutualSafetyRefinement left right
     (Observation.Process.StepRel.byObservation me)
@@ -107,8 +101,7 @@ namespace Controller
 
 /-- Controller equivalence is reflexive. -/
 @[refl]
-def refl {Party : Type u} (system : Process.SafetySpec Party) :
-    Controller system system :=
+def refl {Party : Type u} (system : Process.SafetySpec Party) : Controller system system :=
   PFunctor.DynSystem.MutualSafetyRefinement.refl system
     Observation.Process.StepRel.byController
     Observation.Process.StepRel.byController
@@ -123,27 +116,17 @@ def symm {Party : Type u} {left right : Process.SafetySpec Party}
 /-- Controller equivalence is transitive. -/
 @[trans]
 def trans {Party : Type u} {left middle right : Process.SafetySpec Party}
-    (first : Controller left middle) (second : Controller middle right) :
-    Controller left right :=
+    (first : Controller left middle) (second : Controller middle right) : Controller left right :=
   PFunctor.DynSystem.MutualSafetyRefinement.trans first second
-    (by
-      rintro ⟨pLeft, trLeft⟩ ⟨pRight, trRight⟩
-        ⟨⟨pMiddle, trMiddle⟩, hFirst, hSecond⟩
-      exact hFirst.trans hSecond)
-    (by
-      rintro ⟨pRight, trRight⟩ ⟨pLeft, trLeft⟩
-        ⟨⟨pMiddle, trMiddle⟩, hSecond, hFirst⟩
-      exact hSecond.trans hFirst)
+    (fun _ _ ⟨_, hFirst, hSecond⟩ => hFirst.trans hSecond)
+    (fun _ _ ⟨_, hSecond, hFirst⟩ => hSecond.trans hFirst)
 
 /--
 Along the forward direction of a controller equivalence, the current controller
 sequence of every finite run prefix is preserved.
 -/
-theorem currentControllersUpTo_eq {Party : Type u}
-    {left right : Process.SafetySpec Party}
-    (equiv : Controller left right)
-    (run : Process.Run left.toProcess)
-    {pRight : right.Proc}
+theorem currentControllersUpTo_eq {Party : Type u} {left right : Process.SafetySpec Party}
+    (equiv : Controller left right) (run : Process.Run left.toProcess) {pRight : right.Proc}
     (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
     Process.Run.currentControllersUpTo run n =
       Process.Run.currentControllersUpTo (equiv.forth.mapRun run hrel) n :=
@@ -155,8 +138,7 @@ namespace ControllerPath
 
 /-- Controller-path equivalence is reflexive. -/
 @[refl]
-def refl {Party : Type u} (system : Process.SafetySpec Party) :
-    ControllerPath system system :=
+def refl {Party : Type u} (system : Process.SafetySpec Party) : ControllerPath system system :=
   PFunctor.DynSystem.MutualSafetyRefinement.refl system
     Observation.Process.StepRel.byPath
     Observation.Process.StepRel.byPath
@@ -174,24 +156,15 @@ def trans {Party : Type u} {left middle right : Process.SafetySpec Party}
     (first : ControllerPath left middle) (second : ControllerPath middle right) :
     ControllerPath left right :=
   PFunctor.DynSystem.MutualSafetyRefinement.trans first second
-    (by
-      rintro ⟨pLeft, trLeft⟩ ⟨pRight, trRight⟩
-        ⟨⟨pMiddle, trMiddle⟩, hFirst, hSecond⟩
-      exact hFirst.trans hSecond)
-    (by
-      rintro ⟨pRight, trRight⟩ ⟨pLeft, trLeft⟩
-        ⟨⟨pMiddle, trMiddle⟩, hSecond, hFirst⟩
-      exact hSecond.trans hFirst)
+    (fun _ _ ⟨_, hFirst, hSecond⟩ => hFirst.trans hSecond)
+    (fun _ _ ⟨_, hSecond, hFirst⟩ => hSecond.trans hFirst)
 
 /--
 Along the forward direction of a controller-path equivalence, the full
 controller-path sequence of every finite run prefix is preserved.
 -/
-theorem controllerPathsUpTo_eq {Party : Type u}
-    {left right : Process.SafetySpec Party}
-    (equiv : ControllerPath left right)
-    (run : Process.Run left.toProcess)
-    {pRight : right.Proc}
+theorem controllerPathsUpTo_eq {Party : Type u} {left right : Process.SafetySpec Party}
+    (equiv : ControllerPath left right) (run : Process.Run left.toProcess) {pRight : right.Proc}
     (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
     Process.Run.controllerPathsUpTo run n =
       Process.Run.controllerPathsUpTo (equiv.forth.mapRun run hrel) n :=
@@ -203,8 +176,7 @@ namespace Trace
 
 /-- Trace equivalence is reflexive for any fixed event map. -/
 @[refl]
-def refl {Party : Type u} {Event : Type w}
-    (system : Process.SafetySpec Party)
+def refl {Party : Type u} {Event : Type w} (system : Process.SafetySpec Party)
     (event : system.toProcess.EventMap Event) : Trace system system event event :=
   PFunctor.DynSystem.MutualSafetyRefinement.refl system
     (Observation.Process.StepRel.byEvent event event)
@@ -213,46 +185,29 @@ def refl {Party : Type u} {Event : Type w}
 
 /-- Trace equivalence is symmetric. -/
 @[symm]
-def symm {Party : Type u} {Event : Type w}
-    {left right : Process.SafetySpec Party}
-    {eventLeft : left.toProcess.EventMap Event}
-    {eventRight : right.toProcess.EventMap Event}
-    (equiv : Trace left right eventLeft eventRight) :
-    Trace right left eventRight eventLeft :=
+def symm {Party : Type u} {Event : Type w} {left right : Process.SafetySpec Party}
+    {eventLeft : left.toProcess.EventMap Event} {eventRight : right.toProcess.EventMap Event}
+    (equiv : Trace left right eventLeft eventRight) : Trace right left eventRight eventLeft :=
   PFunctor.DynSystem.MutualSafetyRefinement.symm equiv
 
 /-- Trace equivalence is transitive through a shared middle event map. -/
 @[trans]
-def trans {Party : Type u} {Event : Type w}
-    {left middle right : Process.SafetySpec Party}
-    {eventLeft : left.toProcess.EventMap Event}
-    {eventMiddle : middle.toProcess.EventMap Event}
-    {eventRight : right.toProcess.EventMap Event}
-    (first : Trace left middle eventLeft eventMiddle)
-    (second : Trace middle right eventMiddle eventRight) :
-    Trace left right eventLeft eventRight :=
+def trans {Party : Type u} {Event : Type w} {left middle right : Process.SafetySpec Party}
+    {eventLeft : left.toProcess.EventMap Event} {eventMiddle : middle.toProcess.EventMap Event}
+    {eventRight : right.toProcess.EventMap Event} (first : Trace left middle eventLeft eventMiddle)
+    (second : Trace middle right eventMiddle eventRight) : Trace left right eventLeft eventRight :=
   PFunctor.DynSystem.MutualSafetyRefinement.trans first second
-    (by
-      rintro ⟨pLeft, trLeft⟩ ⟨pRight, trRight⟩
-        ⟨⟨pMiddle, trMiddle⟩, hFirst, hSecond⟩
-      exact hFirst.trans hSecond)
-    (by
-      rintro ⟨pRight, trRight⟩ ⟨pLeft, trLeft⟩
-        ⟨⟨pMiddle, trMiddle⟩, hSecond, hFirst⟩
-      exact hSecond.trans hFirst)
+    (fun _ _ ⟨_, hFirst, hSecond⟩ => hFirst.trans hSecond)
+    (fun _ _ ⟨_, hSecond, hFirst⟩ => hSecond.trans hFirst)
 
 /--
 Along the forward direction of a trace equivalence, the stable event trace of
 every finite run prefix is preserved.
 -/
-theorem eventsUpTo_eq {Party : Type u} {Event : Type w}
-    {left right : Process.SafetySpec Party}
-    {eventLeft : left.toProcess.EventMap Event}
-    {eventRight : right.toProcess.EventMap Event}
-    (equiv : Trace left right eventLeft eventRight)
-    (run : Process.Run left.toProcess)
-    {pRight : right.Proc}
-    (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
+theorem eventsUpTo_eq {Party : Type u} {Event : Type w} {left right : Process.SafetySpec Party}
+    {eventLeft : left.toProcess.EventMap Event} {eventRight : right.toProcess.EventMap Event}
+    (equiv : Trace left right eventLeft eventRight) (run : Process.Run left.toProcess)
+    {pRight : right.Proc} (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
     Process.Run.eventsUpTo eventLeft run n =
       Process.Run.eventsUpTo eventRight (equiv.forth.mapRun run hrel) n :=
   Refinement.SafetyRefinement.eventsUpTo_mapRun equiv.forth run hrel n
@@ -263,8 +218,7 @@ namespace Ticket
 
 /-- Ticket equivalence is reflexive for any fixed ticket map. -/
 @[refl]
-def refl {Party : Type u} {TicketTy : Type w}
-    (system : Process.SafetySpec Party)
+def refl {Party : Type u} {TicketTy : Type w} (system : Process.SafetySpec Party)
     (ticket : system.toProcess.Tickets TicketTy) : Ticket system system ticket ticket :=
   PFunctor.DynSystem.MutualSafetyRefinement.refl system
     (Observation.Process.StepRel.byTicket ticket ticket)
@@ -273,18 +227,14 @@ def refl {Party : Type u} {TicketTy : Type w}
 
 /-- Ticket equivalence is symmetric. -/
 @[symm]
-def symm {Party : Type u} {TicketTy : Type w}
-    {left right : Process.SafetySpec Party}
-    {ticketLeft : left.toProcess.Tickets TicketTy}
-    {ticketRight : right.toProcess.Tickets TicketTy}
-    (equiv : Ticket left right ticketLeft ticketRight) :
-    Ticket right left ticketRight ticketLeft :=
+def symm {Party : Type u} {TicketTy : Type w} {left right : Process.SafetySpec Party}
+    {ticketLeft : left.toProcess.Tickets TicketTy} {ticketRight : right.toProcess.Tickets TicketTy}
+    (equiv : Ticket left right ticketLeft ticketRight) : Ticket right left ticketRight ticketLeft :=
   PFunctor.DynSystem.MutualSafetyRefinement.symm equiv
 
 /-- Ticket equivalence is transitive through a shared middle ticket map. -/
 @[trans]
-def trans {Party : Type u} {TicketTy : Type w}
-    {left middle right : Process.SafetySpec Party}
+def trans {Party : Type u} {TicketTy : Type w} {left middle right : Process.SafetySpec Party}
     {ticketLeft : left.toProcess.Tickets TicketTy}
     {ticketMiddle : middle.toProcess.Tickets TicketTy}
     {ticketRight : right.toProcess.Tickets TicketTy}
@@ -292,27 +242,17 @@ def trans {Party : Type u} {TicketTy : Type w}
     (second : Ticket middle right ticketMiddle ticketRight) :
     Ticket left right ticketLeft ticketRight :=
   PFunctor.DynSystem.MutualSafetyRefinement.trans first second
-    (by
-      rintro ⟨pLeft, trLeft⟩ ⟨pRight, trRight⟩
-        ⟨⟨pMiddle, trMiddle⟩, hFirst, hSecond⟩
-      exact hFirst.trans hSecond)
-    (by
-      rintro ⟨pRight, trRight⟩ ⟨pLeft, trLeft⟩
-        ⟨⟨pMiddle, trMiddle⟩, hSecond, hFirst⟩
-      exact hSecond.trans hFirst)
+    (fun _ _ ⟨_, hFirst, hSecond⟩ => hFirst.trans hSecond)
+    (fun _ _ ⟨_, hSecond, hFirst⟩ => hSecond.trans hFirst)
 
 /--
 Along the forward direction of a ticket equivalence, the stable ticket
 sequence of every finite run prefix is preserved.
 -/
-theorem ticketsUpTo_eq {Party : Type u} {TicketTy : Type w}
-    {left right : Process.SafetySpec Party}
-    {ticketLeft : left.toProcess.Tickets TicketTy}
-    {ticketRight : right.toProcess.Tickets TicketTy}
-    (equiv : Ticket left right ticketLeft ticketRight)
-    (run : Process.Run left.toProcess)
-    {pRight : right.Proc}
-    (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
+theorem ticketsUpTo_eq {Party : Type u} {TicketTy : Type w} {left right : Process.SafetySpec Party}
+    {ticketLeft : left.toProcess.Tickets TicketTy} {ticketRight : right.toProcess.Tickets TicketTy}
+    (equiv : Ticket left right ticketLeft ticketRight) (run : Process.Run left.toProcess)
+    {pRight : right.Proc} (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
     Process.Run.ticketsUpTo ticketLeft run n =
       Process.Run.ticketsUpTo ticketRight (equiv.forth.mapRun run hrel) n :=
   Refinement.SafetyRefinement.ticketsUpTo_mapRun equiv.forth run hrel n
@@ -332,37 +272,26 @@ def refl {Party : Type u} [DecidableEq Party] (me : Party)
 
 /-- Observational equivalence for one party is symmetric. -/
 @[symm]
-def symm {Party : Type u} [DecidableEq Party] (me : Party)
-    {left right : Process.SafetySpec Party}
+def symm {Party : Type u} [DecidableEq Party] (me : Party) {left right : Process.SafetySpec Party}
     (equiv : Observation me left right) : Observation me right left :=
   PFunctor.DynSystem.MutualSafetyRefinement.symm equiv
 
 /-- Observational equivalence for one party is transitive. -/
 @[trans]
 def trans {Party : Type u} [DecidableEq Party] (me : Party)
-    {left middle right : Process.SafetySpec Party}
-    (first : Observation me left middle) (second : Observation me middle right) :
-    Observation me left right :=
+    {left middle right : Process.SafetySpec Party} (first : Observation me left middle)
+    (second : Observation me middle right) : Observation me left right :=
   PFunctor.DynSystem.MutualSafetyRefinement.trans first second
-    (by
-      rintro ⟨pLeft, trLeft⟩ ⟨pRight, trRight⟩
-        ⟨⟨pMiddle, trMiddle⟩, hFirst, hSecond⟩
-      exact hFirst.trans hSecond)
-    (by
-      rintro ⟨pRight, trRight⟩ ⟨pLeft, trLeft⟩
-        ⟨⟨pMiddle, trMiddle⟩, hSecond, hFirst⟩
-      exact hSecond.trans hFirst)
+    (fun _ _ ⟨_, hFirst, hSecond⟩ => hFirst.trans hSecond)
+    (fun _ _ ⟨_, hSecond, hFirst⟩ => hSecond.trans hFirst)
 
 /--
 Along the forward direction of an observational equivalence, the packed local
 observations of the chosen party are preserved on every finite run prefix.
 -/
-theorem observationsUpTo_eq {Party : Type u} [DecidableEq Party]
-    (me : Party)
-    {left right : Process.SafetySpec Party}
-    (equiv : Observation me left right)
-    (run : Process.Run left.toProcess)
-    {pRight : right.Proc}
+theorem observationsUpTo_eq {Party : Type u} [DecidableEq Party] (me : Party)
+    {left right : Process.SafetySpec Party} (equiv : Observation me left right)
+    (run : Process.Run left.toProcess) {pRight : right.Proc}
     (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
     Observation.Process.Run.observationsUpTo me run n =
       Observation.Process.Run.observationsUpTo me (equiv.forth.mapRun run hrel) n :=

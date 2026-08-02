@@ -151,29 +151,21 @@ remains accessible via `shape'`. -/
 def shape (t : ITree F α) : Shape F α :=
   (shape' t).1
 
-@[simp] theorem shape'_pure (r : α) :
-    shape' (pure (F := F) r) = ⟨.pure r, PEmpty.elim⟩ :=
+@[simp] theorem shape'_pure (r : α) : shape' (pure (F := F) r) = ⟨.pure r, PEmpty.elim⟩ :=
   PFunctor.M.dest_mk _
 
-@[simp] theorem shape'_step (t : ITree F α) :
-    shape' (step t) = ⟨.step, fun _ => t⟩ :=
+@[simp] theorem shape'_step (t : ITree F α) : shape' (step t) = ⟨.step, fun _ => t⟩ :=
   PFunctor.M.dest_mk _
 
 @[simp] theorem shape'_query (a : F.A) (k : F.B a → ITree F α) :
     shape' (query a k) = ⟨.query a, k⟩ :=
   PFunctor.M.dest_mk _
 
-@[simp] theorem shape_pure (r : α) :
-    shape (pure (F := F) r) = .pure r := by
-  unfold shape; rw [shape'_pure]
+@[simp] theorem shape_pure (r : α) : shape (pure (F := F) r) = .pure r := rfl
 
-@[simp] theorem shape_step (t : ITree F α) :
-    shape (step t) = .step := by
-  unfold shape; rw [shape'_step]
+@[simp] theorem shape_step (t : ITree F α) : shape (step t) = .step := rfl
 
-@[simp] theorem shape_query (a : F.A) (k : F.B a → ITree F α) :
-    shape (query a k) = .query a := by
-  unfold shape; rw [shape'_query]
+@[simp] theorem shape_query (a : F.A) (k : F.B a → ITree F α) : shape (query a k) = .query a := rfl
 
 /-- Recover an ITree from its one-step shape together with the continuation
 data. The composition `ofShape ∘ shape' = id` and `shape' ∘ ofShape = id`
@@ -184,8 +176,40 @@ def ofShape (sh : (Poly F α).Obj (ITree F α)) : ITree F α :=
 @[simp] theorem shape'_ofShape (sh : (Poly F α).Obj (ITree F α)) :
     shape' (ofShape sh) = sh := PFunctor.M.dest_mk sh
 
-@[simp] theorem ofShape_shape' (t : ITree F α) :
-    ofShape (shape' t) = t := PFunctor.M.mk_dest t
+@[simp] theorem ofShape_shape' (t : ITree F α) : ofShape (shape' t) = t := PFunctor.M.mk_dest t
+
+/-! ### Destructor-injectivity helpers
+
+Recover an ITree from a computed one-step `PFunctor.M.dest`. These package the
+`PFunctor.M.eq_of_dest_eq` inversion that coinductive proofs invoke on each
+head-shape branch after `rcases`/`cases` on the shape. -/
+
+/-- A tree whose `PFunctor.M.dest` exposes a `.pure` head is that pure leaf. The
+direction continuation over the empty fiber is irrelevant. -/
+theorem eq_pure_of_dest {t : ITree F α} {r : α} {c : (Poly F α).B (.pure r) → ITree F α}
+    (h : PFunctor.M.dest t = ⟨.pure r, c⟩) : t = pure r := by
+  apply PFunctor.M.eq_of_dest_eq
+  rw [h]
+  change (⟨.pure r, c⟩ : (Poly F α).Obj _) = ⟨.pure r, PEmpty.elim⟩
+  congr 1
+  funext z
+  exact z.elim
+
+/-- A tree whose `PFunctor.M.dest` exposes a `.step` head is a silent step in
+front of its unique subtree. -/
+theorem eq_step_of_dest {t : ITree F α} {c : (Poly F α).B .step → ITree F α}
+    (h : PFunctor.M.dest t = ⟨.step, c⟩) : t = step (c PUnit.unit) := by
+  apply PFunctor.M.eq_of_dest_eq
+  rw [h]
+  rfl
+
+/-- A tree whose `PFunctor.M.dest` exposes a `.query a` head is that visible
+query with its continuation. -/
+theorem eq_query_of_dest {t : ITree F α} {a : F.A} {c : (Poly F α).B (.query a) → ITree F α}
+    (h : PFunctor.M.dest t = ⟨.query a, c⟩) : t = query a c := by
+  apply PFunctor.M.eq_of_dest_eq
+  rw [h]
+  rfl
 
 /-! ### Monadic bind via `M.corec`
 
@@ -209,8 +233,7 @@ def bindStep (k : α → ITree F β) :
       match PFunctor.M.dest u with
       | ⟨s, c⟩ => ⟨s, fun b => .inr (c b)⟩
 
-theorem bindStep_inl (k : α → ITree F β) (t : ITree F α) :
-    bindStep k (.inl t) =
+theorem bindStep_inl (k : α → ITree F β) (t : ITree F α) : bindStep k (.inl t) =
       (match PFunctor.M.dest t with
         | ⟨.pure r, _⟩ =>
             match PFunctor.M.dest (k r) with
@@ -218,8 +241,7 @@ theorem bindStep_inl (k : α → ITree F β) (t : ITree F α) :
         | ⟨.step, c⟩ => ⟨.step, fun _ => .inl (c PUnit.unit)⟩
         | ⟨.query a, c⟩ => ⟨.query a, fun b => .inl (c b)⟩) := rfl
 
-theorem bindStep_inr (k : α → ITree F β) (u : ITree F β) :
-    bindStep k (.inr u) =
+theorem bindStep_inr (k : α → ITree F β) (u : ITree F β) : bindStep k (.inr u) =
       (match PFunctor.M.dest u with
         | ⟨s, c⟩ => ⟨s, fun b => .inr (c b)⟩) := rfl
 
@@ -287,16 +309,12 @@ These match Coq's `Core/ITreeDefinition.v:208-217` (`unfold_bind`,
 theory (`bind_pure_left`, `bind_assoc`, `iter_unfold`, …) requires
 bisimulation reasoning and lives in `PolyFun.ITree.Bisim.*`. -/
 
-@[simp] theorem shape'_bind (t : ITree F α) (k : α → ITree F β) :
-    shape' (bind t k) =
+@[simp] theorem shape'_bind (t : ITree F α) (k : α → ITree F β) : shape' (bind t k) =
       PFunctor.M.dest (PFunctor.M.corec (bindStep k) (.inl t)) := rfl
 
-@[simp] theorem shape'_iter (body : β → ITree F (β ⊕ α)) (init : β) :
-    shape' (iter body init) =
+@[simp] theorem shape'_iter (body : β → ITree F (β ⊕ α)) (init : β) : shape' (iter body init) =
       PFunctor.M.dest (PFunctor.M.corec (iterStep body) (body init)) := rfl
 
-@[simp] theorem shape_lift (a : F.A) :
-    shape (lift (F := F) a) = .query a := by
-  unfold lift; rw [shape_query]
+@[simp] theorem shape_lift (a : F.A) : shape (lift (F := F) a) = .query a := rfl
 
 end ITree

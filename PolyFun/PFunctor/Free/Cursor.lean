@@ -59,9 +59,7 @@ theorem comp_root (spine : Spine program residual) :
     spine.comp (Spine.root residual) = spine := by
   induction spine with
   | root => rfl
-  | down answer tail ih =>
-      change Spine.down answer (tail.comp (Spine.root _)) = Spine.down answer tail
-      rw [ih]
+  | down answer tail ih => rw [comp, ih]
 
 @[simp]
 theorem comp_assoc (first : Spine program middle)
@@ -69,10 +67,7 @@ theorem comp_assoc (first : Spine program middle)
     (first.comp second).comp third = first.comp (second.comp third) := by
   induction first with
   | root => rfl
-  | down answer tail ih =>
-      change Spine.down answer ((tail.comp second).comp third) =
-        Spine.down answer (tail.comp (second.comp third))
-      rw [ih]
+  | down answer tail ih => simp only [comp, ih]
 
 /-- Number of edges in a cursor spine. -/
 def length : {program residual : FreeM P α} → Spine program residual → Nat
@@ -98,8 +93,7 @@ theorem length_comp (first : Spine program middle)
   induction first with
   | root => simp only [comp, length, Nat.zero_add]
   | down answer tail ih =>
-      change (tail.comp second).length + 1 = tail.length + 1 + second.length
-      rw [ih]
+      simp only [comp, length, ih]
       omega
 
 /-- Erased events visited by a cursor spine. -/
@@ -127,9 +121,7 @@ theorem trace_comp (first : Spine program middle)
   induction first with
   | root => rfl
   | down answer tail ih =>
-      change (⟨_, answer⟩ : P.Idx) :: (tail.comp second).trace =
-        List.append ((⟨_, answer⟩ : P.Idx) :: tail.trace) second.trace
-      rw [ih]
+      simp only [comp, trace, ih]
       rfl
 
 theorem length_eq_trace_length (spine : Spine program residual) :
@@ -137,9 +129,8 @@ theorem length_eq_trace_length (spine : Spine program residual) :
   induction spine with
   | root => rfl
   | down answer tail ih =>
-      change tail.length + 1 = FreeMonoid.length (_ :: tail.trace)
-      change tail.length + 1 = FreeMonoid.length tail.trace + 1
-      rw [ih]
+      simp only [length, trace, ih]
+      rfl
 
 /-- Plug a complete path through the residual back through a cursor spine. -/
 def plug : {program residual : FreeM P α} →
@@ -591,6 +582,18 @@ theorem pathOfTerminal_terminalOfPath :
         Path (FreeM.liftBind a next)) = ⟨answer, tail⟩
       rw [pathOfTerminal_terminalOfPath]
 
+theorem terminal_output_eq_path_output (terminal : Terminal program) :
+    terminal.output = output program (pathOfTerminal terminal) := by
+  change terminal.output = output program (terminal.cursor.plug terminal.residualPath)
+  rw [output_plug]
+  cases terminal with
+  | mk cursor leaf residual_eq =>
+      cases cursor with
+      | mk residual spine =>
+          dsimp at residual_eq ⊢
+          subst residual
+          rfl
+
 @[simp]
 theorem terminalOfPath_pathOfTerminal :
     (terminal : Terminal program) →
@@ -604,15 +607,7 @@ theorem terminalOfPath_pathOfTerminal :
   have output_eq :
       (terminalOfPath program (pathOfTerminal terminal)).output = terminal.output := by
     rw [terminalOfPath_output]
-    change output program (terminal.cursor.plug terminal.residualPath) = terminal.output
-    rw [output_plug]
-    cases terminal with
-    | mk cursor leaf residual_eq =>
-        cases cursor with
-        | mk residual spine =>
-            dsimp at residual_eq ⊢
-            subst residual
-            rfl
+    exact (terminal_output_eq_path_output terminal).symm
   exact Terminal.ext cursor_eq output_eq
 
 /-- Terminal cursors are equivalent to complete paths. -/
@@ -621,18 +616,6 @@ def terminalEquivPath (program : FreeM P α) : Terminal program ≃ Path program
   invFun := terminalOfPath program
   left_inv := terminalOfPath_pathOfTerminal
   right_inv := pathOfTerminal_terminalOfPath program
-
-theorem terminal_output_eq_path_output (terminal : Terminal program) :
-    terminal.output = output program (pathOfTerminal terminal) := by
-  change terminal.output = output program (terminal.cursor.plug terminal.residualPath)
-  rw [output_plug]
-  cases terminal with
-  | mk cursor leaf residual_eq =>
-      cases cursor with
-      | mk residual spine =>
-          dsimp at residual_eq ⊢
-          subst residual
-          rfl
 
 end Cursor
 

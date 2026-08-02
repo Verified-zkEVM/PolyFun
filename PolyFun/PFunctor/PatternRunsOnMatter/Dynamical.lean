@@ -94,8 +94,8 @@ theorem runOnSystem_toFunA_eq_of_obsEq
     (h : DynSystem.ObsEq system₁ system₂ state₁ state₂)
     (pattern : (FreeP P).A) :
     (runOnSystem P system₁).toFunA (pattern, state₁) =
-      (runOnSystem P system₂).toFunA (pattern, state₂) := by
-  exact congrArg (fun matter => (runObj pattern matter).1) h
+      (runOnSystem P system₂).toFunA (pattern, state₂) :=
+  congrArg (fun matter => (runObj pattern matter).1) h
 
 /-- A synchronized dynamical-system simulation therefore preserves every
 finite pattern's synchronized output shape. -/

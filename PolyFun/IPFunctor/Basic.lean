@@ -124,9 +124,7 @@ theorem map_snd (P : IPFunctor I J) {X : I → Type uX} {Y : I → Type uY}
 
 @[simp]
 theorem map_id (P : IPFunctor I J) {X : I → Type uX} {j : J}
-    (x : P.Obj X j) : P.map (fun _ => id) x = x := by
-  rcases x with ⟨shape, children⟩
-  rfl
+    (x : P.Obj X j) : P.map (fun _ => id) x = x := rfl
 
 @[simp]
 theorem map_comp (P : IPFunctor I J)

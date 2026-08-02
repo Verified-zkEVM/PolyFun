@@ -46,8 +46,7 @@ namespace FreeP
 
 /-- The one-generator synchronized step, curried into the convolution
 carrier. -/
-def xiGenerator (P : PFunctor.{pA, max qA qB})
-    (Q : PFunctor.{qA, qB}) :
+def xiGenerator (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB}) :
     Lens P (SubstMonoid.convolution (CofreeP.comonoid Q)
       (FreeP.substMonoid (P ⊗ Q))).carrier :=
   Lens.curry (FreeP.generator (P ⊗ Q) ∘ₗ
@@ -55,8 +54,7 @@ def xiGenerator (P : PFunctor.{pA, max qA qB})
 
 /-- The substitution-monoid homomorphism induced from the synchronized
 generator by the free universal property. -/
-def xiHom (P : PFunctor.{pA, max qA qB})
-    (Q : PFunctor.{qA, qB}) :
+def xiHom (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB}) :
     SubstMonoid.Hom (FreeP.substMonoid P)
       (SubstMonoid.convolution (CofreeP.comonoid Q)
         (FreeP.substMonoid (P ⊗ Q))) :=
@@ -64,35 +62,29 @@ def xiHom (P : PFunctor.{pA, max qA qB})
 
 /-- The Libkind--Spivak interaction obtained by uncurrying the universal
 substitution-monoid homomorphism. -/
-def xi (P : PFunctor.{pA, max qA qB})
-    (Q : PFunctor.{qA, qB}) :
+def xi (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB}) :
     Lens (FreeP P ⊗ CofreeP Q) (FreeP (P ⊗ Q)) :=
   Lens.uncurry (xiHom P Q).toLens
 
 /-- Running a one-node pattern is exactly the synchronized generator step.
 This operational equation is fully heterogeneous. -/
-theorem runOn_comp_generator (P : PFunctor.{pA, pB})
-    (Q : PFunctor.{qA, qB}) :
+theorem runOn_comp_generator (P : PFunctor.{pA, pB}) (Q : PFunctor.{qA, qB}) :
     runOn P Q ∘ₗ
         (FreeP.generator P ⊗ₗ Lens.id (CofreeP Q)) =
       FreeP.generator (P ⊗ Q) ∘ₗ
-        (Lens.id P ⊗ₗ CofreeP.cogenerator Q) := by
-  rfl
+        (Lens.id P ⊗ₗ CofreeP.cogenerator Q) := rfl
 
 /-- The universal interaction restricts to the synchronized generator step. -/
-theorem xi_comp_generator (P : PFunctor.{pA, max qA qB})
-    (Q : PFunctor.{qA, qB}) :
+theorem xi_comp_generator (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB}) :
     xi P Q ∘ₗ
         (FreeP.generator P ⊗ₗ Lens.id (CofreeP Q)) =
       FreeP.generator (P ⊗ Q) ∘ₗ
-        (Lens.id P ⊗ₗ CofreeP.cogenerator Q) := by
-  rfl
+        (Lens.id P ⊗ₗ CofreeP.cogenerator Q) := rfl
 
 /-- Strong operational characterization of the universal interaction.
 It identifies the complete output object, including the backward map from
 output paths to source pattern paths and matter vertices. -/
-theorem runObj_eq_xi_mapObj (P : PFunctor.{pA, max qA qB})
-    (Q : PFunctor.{qA, qB})
+theorem runObj_eq_xi_mapObj (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB})
     (pattern : (FreeP P).A) (matter : (CofreeP Q).A) :
     runObj pattern matter =
       Lens.mapObj (xi P Q)
@@ -134,14 +126,12 @@ theorem runObj_eq_xi_mapObj (P : PFunctor.{pA, max qA qB})
             (⟨(FreeM.liftBind a rest, matter), id⟩ :
               (FreeP P ⊗ CofreeP Q).Obj
                 (FreeM.Path (FreeM.liftBind a rest) ×
-                  M.Vertex matter)) := by
-        rfl
+                  M.Vertex matter)) := rfl
       exact hfirst.trans hsecond
 
 /-- The executable synchronized traversal is exactly the paper's
 internal-hom/convolution construction. -/
-theorem runOn_eq_xi (P : PFunctor.{pA, max qA qB})
-    (Q : PFunctor.{qA, qB}) :
+theorem runOn_eq_xi (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB}) :
     runOn P Q = xi P Q := by
   let hA : ∀ input,
       (runOn P Q).toFunA input = (xi P Q).toFunA input :=
@@ -162,11 +152,8 @@ theorem runOn_eq_xi (P : PFunctor.{pA, max qA qB})
 
 /-- The universal interaction is natural in both generators at the minimal
 direction-universe ceilings required by its convolution construction. -/
-theorem xi_natural
-    {P : PFunctor.{pA, max qA qB}}
-    {P' : PFunctor.{pA', max qA' qB'}}
-    {Q : PFunctor.{qA, qB}} {Q' : PFunctor.{qA', qB'}}
-    (f : Lens P P') (g : Lens Q Q') :
+theorem xi_natural {P : PFunctor.{pA, max qA qB}} {P' : PFunctor.{pA', max qA' qB'}}
+    {Q : PFunctor.{qA, qB}} {Q' : PFunctor.{qA', qB'}} (f : Lens P P') (g : Lens Q Q') :
     xi P' Q' ∘ₗ (FreeP.map f ⊗ₗ CofreeP.map g) =
       FreeP.map (f ⊗ₗ g) ∘ₗ xi P Q := by
   rw [← runOn_eq_xi P' Q', ← runOn_eq_xi P Q]

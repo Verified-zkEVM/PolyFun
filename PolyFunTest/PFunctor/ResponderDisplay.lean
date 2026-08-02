@@ -6,7 +6,6 @@ Authors: Quang Dao
 
 module
 
-
 public import PolyFun.PFunctor.Dynamical.Responder.Display
 
 /-!

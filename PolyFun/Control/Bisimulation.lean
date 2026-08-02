@@ -6,7 +6,6 @@ Authors: Devon Tuma
 module
 
 public import Mathlib.Logic.Relation
-import Batteries.Tactic.Lint
 
 /-!
 # Simulation and bisimulation for labelled transition systems

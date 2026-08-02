@@ -74,8 +74,7 @@ the polynomial extension `P.Obj E`.
 
 The displayed position is paired with one recursive child for every displayed
 direction above every base direction. -/
-def Obj (S : Display.{uA, uB, uC, uD} P) {E : Type uE}
-    (F : E → Type uF) (x : P.Obj E) :=
+def Obj (S : Display.{uA, uB, uC, uD} P) {E : Type uE} (F : E → Type uF) (x : P.Obj E) :=
   Sigma fun c : S.position x.1 =>
     (b : P.B x.1) → S.direction x.1 c b → F (x.2 b)
 
@@ -93,8 +92,7 @@ variable {S : Display.{uA, uB, uC, uD} P}
 variable {E : Type uE} {F : E → Type uF} {G : E → Type uG}
 
 /-- Map a display fiber pointwise along a map of the leaf family. -/
-def map (f : (e : E) → F e → G e) (x : P.Obj E) :
-    S.Obj F x → S.Obj G x
+def map (f : (e : E) → F e → G e) (x : P.Obj E) : S.Obj F x → S.Obj G x
   | ⟨c, children⟩ => ⟨c, fun b d => f (x.2 b) (children b d)⟩
 
 @[simp]
@@ -108,17 +106,13 @@ theorem map_apply (f : (e : E) → F e → G e) (x : P.Obj E)
 @[simp]
 theorem map_id (x : P.Obj E) (d : S.Obj F x) :
     map (fun _ y => y) x d = d := by
-  cases d with
-  | mk c children =>
-      congr
+  cases d; rfl
 
 theorem map_comp {H : E → Type uI}
     (g : (e : E) → G e → H e) (f : (e : E) → F e → G e)
     (x : P.Obj E) (d : S.Obj F x) :
     map g x (map f x d) = map (fun e y => g e (f e y)) x d := by
-  cases d with
-  | mk c children =>
-      congr
+  cases d; rfl
 
 end Obj
 

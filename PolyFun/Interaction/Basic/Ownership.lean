@@ -61,8 +61,7 @@ def LocalView.node {Move : Type uB₂} (view : LocalView.{uB₂, w} Move) :
   | .observer, Cont => view.other Cont
 
 /-- The standard monadic owner/passive local view. -/
-def LocalView.monadic (bm : BundledMonad.{w, w}) (Move : Type w) :
-    LocalView.{w, w} Move where
+def LocalView.monadic (bm : BundledMonad.{w, w}) (Move : Type w) : LocalView.{w, w} Move where
   own Cont := bm.M ((d : Move) × Cont d)
   other Cont := (d : Move) → bm.M (Cont d)
 
@@ -70,8 +69,7 @@ def LocalView.monadic (bm : BundledMonad.{w, w}) (Move : Type w) :
 Public-coin owner/passive local view, exposing the owned sampler separately
 from its continuation family.
 -/
-def LocalView.publicCoin (bm : BundledMonad.{w, w}) (Move : Type w) :
-    LocalView.{w, w} Move where
+def LocalView.publicCoin (bm : BundledMonad.{w, w}) (Move : Type w) : LocalView.{w, w} Move where
   own Cont := bm.M Move × ((d : Move) → Cont d)
   other Cont := (d : Move) → bm.M (Cont d)
 
@@ -81,21 +79,15 @@ variable {Agent : Type a} {Γ : P.A → Type vΓ}
 Build lens-indexed local syntax from a node-local ownership profile and
 participant-local views.
 -/
-def syntaxOver
-    (perspective : {pos : P.A} → Γ pos → Agent → Perspective)
-    (view :
-      {pos : P.A} → (γ : Γ pos) → Agent →
-        LocalView.{uB₂, w} (Q.B (l.toFunA pos))) :
+def syntaxOver (perspective : {pos : P.A} → Γ pos → Agent → Perspective)
+    (view : {pos : P.A} → (γ : Γ pos) → Agent → LocalView.{uB₂, w} (Q.B (l.toFunA pos))) :
     SyntaxOver l Agent Γ where
   Node agent _ γ Cont :=
     (view γ agent).node (perspective γ agent) Cont
 
 /-- Monadic owner/passive syntax over a lens-executed tree. -/
-def monadicSyntax
-    (perspective : {pos : P.A} → Γ pos → Agent → Perspective)
-    (monad :
-      {pos : P.A} → Γ pos → Agent →
-        BundledMonad.{max uB₂ w, max uB₂ w}) :
+def monadicSyntax (perspective : {pos : P.A} → Γ pos → Agent → Perspective)
+    (monad : {pos : P.A} → Γ pos → Agent → BundledMonad.{max uB₂ w, max uB₂ w}) :
     SyntaxOver l Agent Γ where
   Node agent pos γ Cont :=
     match perspective γ agent with
@@ -136,8 +128,7 @@ structure LocalView (X : Type u) where
   other : (X → Type u) → Type u
 
 /-- Select the local node shape determined by an ownership perspective. -/
-def LocalView.node {X : Type u} (view : LocalView X) :
-    Perspective → (X → Type u) → Type u
+def LocalView.node {X : Type u} (view : LocalView X) : Perspective → (X → Type u) → Type u
   | .owner, Cont => view.own Cont
   | .observer, Cont => view.other Cont
 
@@ -147,8 +138,7 @@ The standard monadic owner/passive local view.
 Owners produce an effectful move and continuation. Observers react
 effectfully to every possible move.
 -/
-def LocalView.monadic (bm : BundledMonad.{u, u}) (X : Type u) :
-    LocalView X where
+def LocalView.monadic (bm : BundledMonad.{u, u}) (X : Type u) : LocalView X where
   own Cont := bm.M ((x : X) × Cont x)
   other Cont := (x : X) → bm.M (Cont x)
 
@@ -159,8 +149,7 @@ The observing side has the same shape as in `LocalView.monadic`. The owning
 side exposes the sampler separately from the continuation family, so replay can
 ignore the sampler and follow a prescribed public move.
 -/
-def LocalView.publicCoin (bm : BundledMonad.{u, u}) (X : Type u) :
-    LocalView X where
+def LocalView.publicCoin (bm : BundledMonad.{u, u}) (X : Type u) : LocalView X where
   own Cont := bm.M X × ((x : X) → Cont x)
   other Cont := (x : X) → bm.M (Cont x)
 
@@ -173,20 +162,11 @@ It explains:
   continuation;
 * how a passive node follows a move chosen elsewhere.
 -/
-structure LocalRunner
-    (m : Type u → Type u)
-    {X : Type u}
-    (V : LocalView X) where
+structure LocalRunner (m : Type u → Type u) {X : Type u} (V : LocalView X) where
   /-- Execute an owned node, producing the chosen move and continuation. -/
-  runOwn :
-    {Cont : X → Type u} →
-    V.own Cont →
-    m ((x : X) × Cont x)
+  runOwn : {Cont : X → Type u} → V.own Cont → m ((x : X) × Cont x)
   /-- Execute a passive node after the owner has chosen move `x`. -/
-  runOther :
-    {Cont : X → Type u} →
-    V.other Cont →
-    (x : X) → m (Cont x)
+  runOther : {Cont : X → Type u} → V.other Cont → (x : X) → m (Cont x)
 
 /--
 Build a `SyntaxOver` from a node-local ownership profile and participant-local
@@ -197,16 +177,14 @@ node metadata and agent constructors. This keeps owner/observer node shapes in
 the definitional hot path and avoids equality tests such as
 `if agent = owner γ`.
 -/
-def syntaxOver
-    (perspective : ∀ {X}, Γ X → Agent → Perspective)
+def syntaxOver (perspective : ∀ {X}, Γ X → Agent → Perspective)
     (view : ∀ {X}, (γ : Γ X) → Agent → LocalView X) :
     SyntaxOver (PFunctor.Lens.id TypeTree.basePFunctor) Agent Γ where
   Node agent _ γ Cont :=
     (view γ agent).node (perspective γ agent) Cont
 
 /-- Monadic owner/passive syntax over plain `TypeTree` trees. -/
-def monadicSyntax
-    (perspective : ∀ {X}, Γ X → Agent → Perspective)
+def monadicSyntax (perspective : ∀ {X}, Γ X → Agent → Perspective)
     (monad : ∀ {X}, Γ X → Agent → BundledMonad.{u, u}) :
     SyntaxOver (PFunctor.Lens.id TypeTree.basePFunctor) Agent Γ where
   Node agent X γ Cont :=

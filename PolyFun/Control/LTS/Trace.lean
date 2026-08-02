@@ -106,11 +106,8 @@ theorem traces_eq
     {s₁ : L₁.State} {s₂ : L₂.State} (hrel : rel s₁ s₂) :
     L₁.traces s₁ = L₂.traces s₂ := by
   ext observations
-  constructor
-  · intro htrace
-    exact IsWeakSimulation.traces_subset bisimulation.forward hrel htrace
-  · intro htrace
-    exact IsWeakSimulation.traces_subset bisimulation.backward hrel htrace
+  exact ⟨fun h => IsWeakSimulation.traces_subset bisimulation.forward hrel h,
+    fun h => IsWeakSimulation.traces_subset bisimulation.backward hrel h⟩
 
 end IsWeakBisimulation
 

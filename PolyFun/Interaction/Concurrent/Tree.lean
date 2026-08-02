@@ -102,8 +102,8 @@ def toProcess {Party : Type u} [DecidableEq Party] : Process (State Party) Party
 
 /-- Package one structural residual state as the initial state of the tree
 frontend process. -/
-def init {Party : Type u} {spec : Concurrent.Spec}
-    (control : Control Party spec) (profile : Profile Party spec) : State Party :=
+def init {Party : Type u} {spec : Concurrent.Spec} (control : Control Party spec)
+    (profile : Profile Party spec) : State Party :=
   { spec := spec, control := control, profile := profile }
 
 /--

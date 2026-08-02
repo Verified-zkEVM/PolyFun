@@ -92,11 +92,7 @@ def ofFn (f : α → β) : DynComputation.{uβ} p α β where
   apply M.eq_of_dest_eq
   unfold denote Resumption.pure ofFn
   rw [DynSystem.dest_behavior, M.dest_mk]
-  apply Sigma.ext
-  · rfl
-  · apply heq_of_eq
-    funext direction
-    exact PEmpty.elim direction
+  exact Sigma.ext rfl (heq_of_eq (funext (PEmpty.elim ·)))
 
 /-- The `Pure` operation is the input-independent specialization of `ofFn`. -/
 instance : Pure (DynComputation.{uβ} p α) where
@@ -337,60 +333,35 @@ def dimap {γ : Type uγ} {δ : Type uδ} (M : DynComputation.{u} p α β)
 private theorem mapResultLift_id :
     mapResultLift (p := p) (id : β → β) =
       Lens.id.{max uβ uA, uB} (C.{uβ, uB} β + p) := by
-  refine Lens.ext _ _ (fun position => by cases position <;> rfl) ?_
-  intro position
-  cases position with
-  | inl value =>
-      funext direction
-      exact PEmpty.elim direction
-  | inr position => rfl
+  refine Lens.ext _ _ (fun position => by cases position <;> rfl)
+    (fun position => by cases position <;> [exact funext (·.elim); rfl])
 
 private theorem mapResultLift_comp {γ : Type uγ} {δ : Type uδ}
     (f : β → γ) (g : γ → δ) :
     Lens.comp (mapResultLift (p := p) g) (mapResultLift (p := p) f) =
       mapResultLift (p := p) (g ∘ f) := by
-  refine Lens.ext _ _ (fun position => by cases position <;> rfl) ?_
-  intro position
-  cases position with
-  | inl value =>
-      funext direction
-      exact PEmpty.elim direction
-  | inr position => rfl
+  refine Lens.ext _ _ (fun position => by cases position <;> rfl)
+    (fun position => by cases position <;> [exact funext (·.elim); rfl])
 
 private theorem wrapLift_id :
     wrapLift (β := β) (Lens.id p) =
       Lens.id.{max uβ uA, uB} (C.{uβ, uB} β + p) := by
-  refine Lens.ext _ _ (fun position => by cases position <;> rfl) ?_
-  intro position
-  cases position with
-  | inl value =>
-      funext direction
-      exact PEmpty.elim direction
-  | inr position => rfl
+  refine Lens.ext _ _ (fun position => by cases position <;> rfl)
+    (fun position => by cases position <;> [exact funext (·.elim); rfl])
 
 private theorem wrapLift_comp {q : PFunctor.{uA₂, uB₂}}
     {r : PFunctor.{uγ, uδ}} (lens₁ : Lens p q) (lens₂ : Lens q r) :
     Lens.comp (wrapLift (β := β) lens₂) (wrapLift (β := β) lens₁) =
       wrapLift (β := β) (lens₂ ∘ₗ lens₁) := by
-  refine Lens.ext _ _ (fun position => by cases position <;> rfl) ?_
-  intro position
-  cases position with
-  | inl value =>
-      funext direction
-      exact PEmpty.elim direction
-  | inr position => rfl
+  refine Lens.ext _ _ (fun position => by cases position <;> rfl)
+    (fun position => by cases position <;> [exact funext (·.elim); rfl])
 
 private theorem mapResultLift_wrapLift {q : PFunctor.{uA₂, uB₂}}
     {γ : Type uγ} (f : β → γ) (lens : Lens p q) :
     Lens.comp (wrapLift (β := γ) lens) (mapResultLift (p := p) f) =
       Lens.comp (mapResultLift (p := q) f) (wrapLift (β := β) lens) := by
-  refine Lens.ext _ _ (fun position => by cases position <;> rfl) ?_
-  intro position
-  cases position with
-  | inl value =>
-      funext direction
-      exact PEmpty.elim direction
-  | inr position => rfl
+  refine Lens.ext _ _ (fun position => by cases position <;> rfl)
+    (fun position => by cases position <;> [exact funext (·.elim); rfl])
 
 @[simp] theorem contramapInput_id (M : DynComputation.{u} p α β) :
     M.contramapInput id = M := by
@@ -403,121 +374,54 @@ private theorem mapResultLift_wrapLift {q : PFunctor.{uA₂, uB₂}}
 
 @[simp] theorem mapResult_id (M : DynComputation.{u} p α β) :
     M.mapResult id = M := by
-  cases M with
-  | mk machine init =>
-      cases machine with
-      | mk State system =>
-          unfold mapResult
-          have hsystem : Lens.comp (mapResultLift (p := p) (id : β → β)) system =
-              system := by
-            calc
-              _ = Lens.comp (Lens.id.{max uβ uA, uB}
-                    (C.{uβ, uB} β + p)) system :=
-                congrArg (fun lifted => Lens.comp lifted system) mapResultLift_id
-              _ = system := rfl
-          change ({ State := State
-                    toDynSystem := Lens.comp (mapResultLift (p := p) id) system
-                    init := init } : DynComputation p α β) =
-            { State := State, toDynSystem := system, init := init }
-          rw [hsystem]
+  change ({ State := M.State
+            toDynSystem := Lens.comp (mapResultLift (p := p) (id : β → β)) M.toDynSystem
+            init := M.init } : DynComputation p α β) = M
+  rw [mapResultLift_id, Lens.id_comp]
 
 @[simp] theorem mapResult_comp {γ : Type uγ} {δ : Type uδ}
     (M : DynComputation.{u} p α β) (f : β → γ) (g : γ → δ) :
     (M.mapResult f).mapResult g = M.mapResult (g ∘ f) := by
-  cases M with
-  | mk machine init =>
-      cases machine with
-      | mk State system =>
-          have hsystem : Lens.comp (mapResultLift (p := p) g)
-              (Lens.comp (mapResultLift (p := p) f) system) =
-              Lens.comp (mapResultLift (p := p) (g ∘ f)) system := by
-            calc
-              _ = Lens.comp
-                    (Lens.comp (mapResultLift (p := p) g) (mapResultLift (p := p) f))
-                    system := rfl
-              _ = _ := congrArg (fun lifted => Lens.comp lifted system)
-                (mapResultLift_comp f g)
-          change ({ State := State
-                    toDynSystem := Lens.comp (mapResultLift (p := p) g)
-                      (Lens.comp (mapResultLift (p := p) f) system)
-                    init := init } : DynComputation p α δ) =
-            { State := State
-              toDynSystem := Lens.comp (mapResultLift (p := p) (g ∘ f)) system
-              init := init }
-          rw [hsystem]
+  change ({ State := M.State
+            toDynSystem := Lens.comp (Lens.comp (mapResultLift (p := p) g)
+              (mapResultLift (p := p) f)) M.toDynSystem
+            init := M.init } : DynComputation p α δ) =
+    { State := M.State
+      toDynSystem := Lens.comp (mapResultLift (p := p) (g ∘ f)) M.toDynSystem
+      init := M.init }
+  rw [mapResultLift_comp]
 
 @[simp] theorem wrap_id (M : DynComputation.{u} p α β) :
     M.wrap (Lens.id p) = M := by
-  cases M with
-  | mk machine init =>
-      cases machine with
-      | mk State system =>
-          have hsystem : Lens.comp (wrapLift (β := β) (Lens.id p)) system = system := by
-            calc
-              _ = Lens.comp (Lens.id.{max uβ uA, uB} (C.{uβ, uB} β + p)) system :=
-                congrArg (fun lifted => Lens.comp lifted system) wrapLift_id
-              _ = system := rfl
-          change ({ State := State
-                    toDynSystem := Lens.comp (wrapLift (β := β) (Lens.id p)) system
-                    init := init } : DynComputation p α β) =
-            { State := State, toDynSystem := system, init := init }
-          rw [hsystem]
+  change ({ State := M.State
+            toDynSystem := Lens.comp (wrapLift (β := β) (Lens.id p)) M.toDynSystem
+            init := M.init } : DynComputation p α β) = M
+  rw [wrapLift_id, Lens.id_comp]
 
 @[simp] theorem wrap_comp {q : PFunctor.{uA₂, uB₂}} {r : PFunctor.{uγ, uδ}}
     (M : DynComputation.{u} p α β) (lens₁ : Lens p q) (lens₂ : Lens q r) :
     (M.wrap lens₁).wrap lens₂ = M.wrap (Lens.comp lens₂ lens₁) := by
-  cases M with
-  | mk machine init =>
-      cases machine with
-      | mk State system =>
-          have hsystem : Lens.comp (wrapLift (β := β) lens₂)
-              (Lens.comp (wrapLift (β := β) lens₁) system) =
-              Lens.comp (wrapLift (β := β) (Lens.comp lens₂ lens₁)) system := by
-            calc
-              _ = Lens.comp
-                    (Lens.comp (wrapLift (β := β) lens₂) (wrapLift (β := β) lens₁))
-                    system := rfl
-              _ = _ := congrArg (fun lifted => Lens.comp lifted system)
-                (wrapLift_comp lens₁ lens₂)
-          change ({ State := State
-                    toDynSystem := Lens.comp (wrapLift (β := β) lens₂)
-                      (Lens.comp (wrapLift (β := β) lens₁) system)
-                    init := init } : DynComputation r α β) =
-            { State := State
-              toDynSystem := Lens.comp
-                (wrapLift (β := β) (Lens.comp lens₂ lens₁)) system
-              init := init }
-          rw [hsystem]
+  change ({ State := M.State
+            toDynSystem := Lens.comp (Lens.comp (wrapLift (β := β) lens₂)
+              (wrapLift (β := β) lens₁)) M.toDynSystem
+            init := M.init } : DynComputation r α β) =
+    { State := M.State
+      toDynSystem := Lens.comp (wrapLift (β := β) (Lens.comp lens₂ lens₁)) M.toDynSystem
+      init := M.init }
+  rw [wrapLift_comp]
 
 theorem mapResult_wrap {q : PFunctor.{uA₂, uB₂}} {γ : Type uγ}
     (M : DynComputation.{u} p α β) (f : β → γ) (lens : Lens p q) :
     (M.mapResult f).wrap lens = (M.wrap lens).mapResult f := by
-  cases M with
-  | mk machine init =>
-      cases machine with
-      | mk State system =>
-          have hsystem : Lens.comp (wrapLift (β := γ) lens)
-              (Lens.comp (mapResultLift (p := p) f) system) =
-              Lens.comp (mapResultLift (p := q) f)
-                (Lens.comp (wrapLift (β := β) lens) system) := by
-            calc
-              _ = Lens.comp
-                    (Lens.comp (wrapLift (β := γ) lens) (mapResultLift (p := p) f))
-                    system := rfl
-              _ = Lens.comp
-                    (Lens.comp (mapResultLift (p := q) f) (wrapLift (β := β) lens))
-                    system := congrArg (fun lifted => Lens.comp lifted system)
-                      (mapResultLift_wrapLift f lens)
-              _ = _ := rfl
-          change ({ State := State
-                    toDynSystem := Lens.comp (wrapLift (β := γ) lens)
-                      (Lens.comp (mapResultLift (p := p) f) system)
-                    init := init } : DynComputation q α γ) =
-            { State := State
-              toDynSystem := Lens.comp (mapResultLift (p := q) f)
-                (Lens.comp (wrapLift (β := β) lens) system)
-              init := init }
-          rw [hsystem]
+  change ({ State := M.State
+            toDynSystem := Lens.comp (Lens.comp (wrapLift (β := γ) lens)
+              (mapResultLift (p := p) f)) M.toDynSystem
+            init := M.init } : DynComputation q α γ) =
+    { State := M.State
+      toDynSystem := Lens.comp (Lens.comp (mapResultLift (p := q) f)
+        (wrapLift (β := β) lens)) M.toDynSystem
+      init := M.init }
+  rw [mapResultLift_wrapLift]
 
 @[simp] theorem dimap_id (M : DynComputation.{u} p α β) :
     M.dimap id id = M := by
@@ -656,33 +560,18 @@ private theorem seqCompSem_coalg {γ : Type uγ}
           rw [h₂]
           simp only [seqCompSem, Resumption.dest_bind, dest_behavior_view, h₁,
             dest_denote, h₂, Sum.map_inl, Sum.map_inr, PFunctor.map_eq]
-          apply congrArg Sum.inr
-          apply Sigma.ext
-          · rfl
-          · apply heq_of_eq
-            funext direction
-            rfl
+          rfl
       · rw [seqComp_view_inl, h₁]
         simp only [seqCompSem, Resumption.dest_bind, dest_behavior_view, h₁,
           Sum.map_inr, PFunctor.map_eq]
-        apply congrArg Sum.inr
-        apply Sigma.ext
-        · rfl
-        · apply heq_of_eq
-          funext direction
-          rfl
+        rfl
   | inr state₂ =>
       rcases h₂ : M₂.view state₂ with result | ⟨position, next⟩
       · rw [seqComp_view_inr, h₂]
         simp only [seqCompSem, dest_behavior_view, h₂, Sum.map_inl]
       · rw [seqComp_view_inr, h₂]
         simp only [seqCompSem, dest_behavior_view, h₂, Sum.map_inr, PFunctor.map_eq]
-        apply congrArg Sum.inr
-        apply Sigma.ext
-        · rfl
-        · apply heq_of_eq
-          funext direction
-          rfl
+        rfl
 
 /-- State-level semantics of sequential composition. Phase-one states denote
 resumption bind; phase-two states denote the second computation directly. -/
@@ -840,11 +729,7 @@ program. -/
         simp only [FreeM.toResumption, Resumption.pure, M.dest_mk]
         change ⟨Sum.inl value, PEmpty.elim⟩ =
           (C β + p).map FreeM.toResumption ⟨Sum.inl value, PEmpty.elim⟩
-        apply Sigma.ext
-        · rfl
-        · apply heq_of_eq
-          funext direction
-          exact PEmpty.elim direction
+        exact Sigma.ext rfl (heq_of_eq (funext (PEmpty.elim ·)))
     | liftBind position next =>
         simp only [FreeM.toResumption, Resumption.query, M.dest_mk]
         change ⟨Sum.inr position, fun direction => FreeM.toResumption (next direction)⟩ =

@@ -71,7 +71,7 @@ theorem rigid_of_pure {t t' : ITree F α} (r : α)
     (h : TauSteps t t') : t' = t := by
   cases h with
   | refl _ => rfl
-  | step c hstep _ => exfalso; rw [ht] at hstep; cases hstep
+  | step c hstep _ => rw [ht] at hstep; cases hstep
 
 /-- If `t` has a query head, then `TauSteps t t'` forces `t' = t`. -/
 theorem rigid_of_query {t t' : ITree F α} (a : F.A) (c : F.B a → ITree F α)
@@ -79,7 +79,7 @@ theorem rigid_of_query {t t' : ITree F α} (a : F.A) (c : F.B a → ITree F α)
     (h : TauSteps t t') : t' = t := by
   cases h with
   | refl _ => rfl
-  | step c' hstep _ => exfalso; rw [ht] at hstep; cases hstep
+  | step c' hstep _ => rw [ht] at hstep; cases hstep
 
 /-- Determinism of τ-stripping on a step-headed tree: a stripping from
 a step-headed tree either does nothing or proceeds through the unique
@@ -96,8 +96,8 @@ theorem step_cases {t t' : ITree F α} (c : PUnit.{uFB + 1} → ITree F α)
 
 private theorem diverge_target_eq_aux {source t : ITree F α}
     (hsource : source = diverge) (h : TauSteps source t) :
-    t = diverge := by
-  exact TauSteps.rec
+    t = diverge :=
+  TauSteps.rec
     (motive := fun initial target _ =>
       initial = diverge → target = diverge)
     (fun _ hs => hs)
@@ -215,8 +215,8 @@ theorem step_absorb_right {RR : α → β → Prop}
     rcases TauSteps.step_cases c' hstep' hs with hs_eq | hs_strict
     · subst hs_eq
       cases M with
-      | pure _ _ _ _ hs_bad => exfalso; rw [hstep'] at hs_bad; cases hs_bad
-      | query _ _ _ _ hs_bad _ => exfalso; rw [hstep'] at hs_bad; cases hs_bad
+      | pure _ _ _ _ hs_bad => rw [hstep'] at hs_bad; cases hs_bad
+      | query _ _ _ _ hs_bad _ => rw [hstep'] at hs_bad; cases hs_bad
       | tau ct cs ht_a hs_a hr =>
           have hcc : cs = c' := TauSteps.cont_eq hs_a hstep'
           subst hcc
@@ -244,9 +244,9 @@ theorem step_absorb_right {RR : α → β → Prop}
                     ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩
                   exact MatchRel.pure x r hxy hX' hsh'
               | query _ _ _ _ hY' _ =>
-                  exfalso; rw [hY'] at hsh'; cases hsh'
+                  rw [hY'] at hsh'; cases hsh'
               | tau _ _ _ hY' _ =>
-                  exfalso; rw [hY'] at hsh'; cases hsh'
+                  rw [hY'] at hsh'; cases hsh'
           | step =>
               refine ⟨a', cs PUnit.unit, ha, .refl _, ?_⟩
               refine MatchRel.tau ct cc ht_a hsh ?_
@@ -258,7 +258,7 @@ theorem step_absorb_right {RR : α → β → Prop}
               subst hYeq
               cases MXY with
               | pure _ _ _ _ hY' =>
-                  exfalso; rw [hY'] at hsh; cases hsh
+                  rw [hY'] at hsh; cases hsh
               | query q' cX cY hX' hY' hcont =>
                   have heq : (⟨Shape.query q', cY⟩ :
                       (Poly F β).Obj (ITree F β)) =
@@ -272,7 +272,7 @@ theorem step_absorb_right {RR : α → β → Prop}
                   exact MatchRel.query q' cX cY hX' hsh
                     (fun reply => Or.inl (hcont reply))
               | tau _ _ _ hY' _ =>
-                  exfalso; rw [hY'] at hsh; cases hsh
+                  rw [hY'] at hsh; cases hsh
     · exact ⟨a', s₁, ha, hs_strict,
         M.mono (fun _ _ hxy => Or.inl hxy)⟩
 
@@ -311,8 +311,8 @@ theorem advance_right {RR : α → β → Prop}
   | refl z => exact ⟨x, z, .refl _, .refl _, headMatch⟩
   | @step _ z₂' c hz hr _ =>
       cases headMatch with
-      | pure _ _ _ _ hp => exfalso; rw [hp] at hz; cases hz
-      | query _ _ _ _ hq _ => exfalso; rw [hq] at hz; cases hz
+      | pure _ _ _ _ hp => rw [hp] at hz; cases hz
+      | query _ _ _ _ hq _ => rw [hq] at hz; cases hz
       | tau ct cs hx hz' hrel =>
           have hcc : cs = c := TauSteps.cont_eq hz' hz
           subst hcc
@@ -334,8 +334,8 @@ theorem advance_left {RR : α → β → Prop}
   | refl x => exact ⟨x, z, .refl _, .refl _, headMatch⟩
   | @step _ x₂' c hx hr _ =>
       cases headMatch with
-      | pure _ _ _ hp _ => exfalso; rw [hp] at hx; cases hx
-      | query _ _ _ hp _ _ => exfalso; rw [hp] at hx; cases hx
+      | pure _ _ _ hp _ => rw [hp] at hx; cases hx
+      | query _ _ _ hp _ _ => rw [hp] at hx; cases hx
       | tau ct cs hx' hz hrel =>
           have hcc : c = ct := TauSteps.cont_eq hx hx'
           subst hcc
@@ -364,11 +364,11 @@ theorem comp_aligned {γ : Type uγ} {RR : α → β → Prop} {SS : β → γ �
           have hyy : y = y' := Shape.pure.inj (Sigma.mk.inj heq).1
           subst y'
           exact .pure x z ⟨y, hxy, hyz⟩ hleft hright
-      | query _ _ _ hbad _ _ => exfalso; rw [hmiddle] at hbad; cases hbad
-      | tau _ _ hbad _ _ => exfalso; rw [hmiddle] at hbad; cases hbad
+      | query _ _ _ hbad _ _ => rw [hmiddle] at hbad; cases hbad
+      | tau _ _ hbad _ _ => rw [hmiddle] at hbad; cases hbad
   | query event cLeft cMiddle hleft hmiddle hcont =>
       cases second with
-      | pure _ _ _ hbad _ => exfalso; rw [hmiddle] at hbad; cases hbad
+      | pure _ _ _ hbad _ => rw [hmiddle] at hbad; cases hbad
       | query event' cMiddle' cRight hmiddle' hright hcont' =>
           have heq : (⟨Shape.query event, cMiddle⟩ :
               (Poly F β).Obj (ITree F β)) =
@@ -379,11 +379,11 @@ theorem comp_aligned {γ : Type uγ} {RR : α → β → Prop} {SS : β → γ �
           subst cMiddle'
           exact .query event cLeft cRight hleft hright
             (fun reply => ⟨cMiddle reply, hcont reply, hcont' reply⟩)
-      | tau _ _ hbad _ _ => exfalso; rw [hmiddle] at hbad; cases hbad
+      | tau _ _ hbad _ _ => rw [hmiddle] at hbad; cases hbad
   | tau cLeft cMiddle hleft hmiddle hcont =>
       cases second with
-      | pure _ _ _ hbad _ => exfalso; rw [hmiddle] at hbad; cases hbad
-      | query _ _ _ hbad _ _ => exfalso; rw [hmiddle] at hbad; cases hbad
+      | pure _ _ _ hbad _ => rw [hmiddle] at hbad; cases hbad
+      | query _ _ _ hbad _ _ => rw [hmiddle] at hbad; cases hbad
       | tau cMiddle' cRight hmiddle' hright hcont' =>
           have hc : cMiddle' = cMiddle := TauSteps.cont_eq hmiddle' hmiddle
           exact .tau cLeft cRight hleft hright
@@ -445,8 +445,8 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                       ha.trans (ha'.trans ((TauSteps.one ca Ha).trans hX)),
                       hd.trans hd', ?_⟩
                     exact MatchRel.pure x z ⟨y, hxy, hyz⟩ HX Hd''
-                | query _ _ _ _ HY _ => exfalso; rw [HY] at Hb''; cases Hb''
-                | tau _ _ _ HY _ => exfalso; rw [HY] at Hb''; cases Hb''
+                | query _ _ _ _ HY _ => rw [HY] at Hb''; cases Hb''
+                | tau _ _ _ HY _ => rw [HY] at Hb''; cases Hb''
             | query event cMiddle cRight Hb'' Hd'' hBD =>
                 have hAC : WeakBisimRel RR (ca PUnit.unit) b'' :=
                   absorb_tauSteps_right hAB hrest
@@ -455,7 +455,7 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                   TauSteps.rigid_of_query event cMiddle Hb'' hY
                 subst hYeq
                 cases MXY with
-                | pure _ _ _ _ HY => exfalso; rw [HY] at Hb''; cases Hb''
+                | pure _ _ _ _ HY => rw [HY] at Hb''; cases Hb''
                 | query event' cLeft cMiddle' HX HY hAC' =>
                     have heq : (⟨Shape.query event', cMiddle'⟩ :
                         (Poly F β).Obj (ITree F β)) =
@@ -470,7 +470,7 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                       hd.trans hd', ?_⟩
                     exact MatchRel.query event cLeft cRight HX Hd''
                       (fun reply => ⟨cMiddle reply, hAC' reply, hBD reply⟩)
-                | tau _ _ _ HY _ => exfalso; rw [HY] at Hb''; cases Hb''
+                | tau _ _ _ HY _ => rw [HY] at Hb''; cases Hb''
             | tau cMiddle cRight Hb'' Hd'' hBD =>
                 refine ⟨a'', d'', ha.trans ha', hd.trans hd', ?_⟩
                 refine MatchRel.tau ca cRight Ha Hd'' ?_
@@ -513,8 +513,8 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                     refine ⟨a'', Y, ha.trans ha',
                       hd.trans (hd'.trans ((TauSteps.one cd Hd).trans hY)), ?_⟩
                     exact MatchRel.pure x z ⟨y, hxy, hyz⟩ Ha HY
-                | query _ _ _ HX _ _ => exfalso; rw [HX] at Hb''; cases Hb''
-                | tau _ _ HX _ _ => exfalso; rw [HX] at Hb''; cases Hb''
+                | query _ _ _ HX _ _ => rw [HX] at Hb''; cases Hb''
+                | tau _ _ HX _ _ => rw [HX] at Hb''; cases Hb''
             | query event cLeft cMiddle Ha Hb'' hAB =>
                 have hBD' : WeakBisimRel SS b'' (cd PUnit.unit) :=
                   tauSteps_left hBD hrest
@@ -523,7 +523,7 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                   TauSteps.rigid_of_query event cMiddle Hb'' hX
                 subst hXeq
                 cases MXY with
-                | pure _ _ _ HX _ => exfalso; rw [HX] at Hb''; cases Hb''
+                | pure _ _ _ HX _ => rw [HX] at Hb''; cases Hb''
                 | query event' cMiddle' cRight HX HY hBD' =>
                     have heq : (⟨Shape.query event', cMiddle'⟩ :
                         (Poly F β).Obj (ITree F β)) =
@@ -537,7 +537,7 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                       hd.trans (hd'.trans ((TauSteps.one cd Hd).trans hY)), ?_⟩
                     exact MatchRel.query event cLeft cRight Ha HY
                       (fun reply => ⟨cMiddle reply, hAB reply, hBD' reply⟩)
-                | tau _ _ HX _ _ => exfalso; rw [HX] at Hb''; cases Hb''
+                | tau _ _ HX _ _ => rw [HX] at Hb''; cases Hb''
             | tau cLeft cMiddle Ha Hb'' hAB =>
                 refine ⟨a'', d'', ha.trans ha', hd.trans hd', ?_⟩
                 refine MatchRel.tau cLeft cd Ha Hd ?_
@@ -588,8 +588,8 @@ theorem pure_not_diverge (r : α) :
   | query a => exact Match.query a c c hsh hsh (fun _ => rfl)
 
 /-- Symmetry: weak bisimilarity is symmetric. -/
-@[symm] theorem symm {t s : ITree F α} (h : t ≈ s) : s ≈ t := by
-  exact (WeakBisimRel.symm h).mono_result (fun _ _ hEq => hEq.symm)
+@[symm] theorem symm {t s : ITree F α} (h : t ≈ s) : s ≈ t :=
+  (WeakBisimRel.symm h).mono_result (fun _ _ hEq => hEq.symm)
 
 /-! ### τ-absorption lemmas
 
@@ -630,8 +630,8 @@ theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α
   rcases TauSteps.step_cases c' hstep' hs with hs_eq | hs_strict
   · subst hs_eq
     cases M with
-    | pure _ _ hs_bad => exfalso; rw [hstep'] at hs_bad; cases hs_bad
-    | query _ _ _ _ hs_bad _ => exfalso; rw [hstep'] at hs_bad; cases hs_bad
+    | pure _ _ hs_bad => rw [hstep'] at hs_bad; cases hs_bad
+    | query _ _ _ _ hs_bad _ => rw [hstep'] at hs_bad; cases hs_bad
     | tau ct cs ht_a hs_a hr_weak =>
         have hcc : cs = c' := TauSteps.cont_eq hs_a hstep'
         subst hcc
@@ -656,9 +656,9 @@ theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α
                     ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩
                 exact Match.pure r' ht_X hshc_rw
             | query _ _ _ _ hs_Y _ =>
-                exfalso; rw [hs_Y] at hshc_rw; cases hshc_rw
+                rw [hs_Y] at hshc_rw; cases hshc_rw
             | tau _ _ _ hs_Y _ =>
-                exfalso; rw [hs_Y] at hshc_rw; cases hshc_rw
+                rw [hs_Y] at hshc_rw; cases hshc_rw
         | step =>
             have hshc_rw : shape' (cs PUnit.unit) = ⟨Shape.step, c_cc⟩ := hshc
             refine ⟨a', cs PUnit.unit, ha, .refl _, ?_⟩
@@ -673,7 +673,7 @@ theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α
             subst hY_eq
             cases MxY with
             | pure _ _ hs_Y =>
-                exfalso; rw [hs_Y] at hshc_rw; cases hshc_rw
+                rw [hs_Y] at hshc_rw; cases hshc_rw
             | query qa' c_X c_Y ht_X hs_Y hcc_XY =>
                 have hEq : (⟨Shape.query qa', c_Y⟩ :
                     (Poly F α).Obj (ITree F α)) =
@@ -688,7 +688,7 @@ theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α
                 intro b
                 exact Or.inl (hcc_XY b)
             | tau _ _ _ hs_Y _ =>
-                exfalso; rw [hs_Y] at hshc_rw; cases hshc_rw
+                rw [hs_Y] at hshc_rw; cases hshc_rw
   · refine ⟨a', s₁, ha, hs_strict, ?_⟩
     exact M.mono (fun _ _ hxy => Or.inl hxy)
 
@@ -744,8 +744,8 @@ theorem Match.advance_right {x z1 z2 : ITree F α}
   | refl t => exact ⟨x, t, .refl _, .refl _, Ma⟩
   | @step _ z2' c Hz1 hr _ =>
       cases Ma with
-      | pure _ _ Hp => exfalso; rw [Hp] at Hz1; cases Hz1
-      | query _ _ _ _ Hq _ => exfalso; rw [Hq] at Hz1; cases Hz1
+      | pure _ _ Hp => rw [Hp] at Hz1; cases Hz1
+      | query _ _ _ _ Hq _ => rw [Hq] at Hz1; cases Hz1
       | tau ct cs Hx_a Hz1_s hBisim =>
           have hcc : cs = c := TauSteps.cont_eq Hz1_s Hz1
           subst hcc
@@ -766,8 +766,8 @@ theorem Match.advance_left {c1 c2 y : ITree F α}
   | refl t => exact ⟨t, y, .refl _, .refl _, Mb⟩
   | @step _ c2' c Hc1 hr _ =>
       cases Mb with
-      | pure _ Hp _ => exfalso; rw [Hp] at Hc1; cases Hc1
-      | query _ _ _ Hq _ _ => exfalso; rw [Hq] at Hc1; cases Hc1
+      | pure _ Hp _ => rw [Hp] at Hc1; cases Hc1
+      | query _ _ _ Hq _ _ => rw [Hq] at Hc1; cases Hc1
       | tau ct cs Hc1_s Hy_s hBisim =>
           have hcc : c = ct := TauSteps.cont_eq Hc1 Hc1_s
           subst hcc
@@ -793,11 +793,11 @@ theorem Match.trans_aligned {c a_1 b_1 : ITree F α}
           have hrr : r = r' := Shape.pure.inj (Sigma.mk.inj heq).1
           subst hrr
           exact .pure r Ha Hb
-      | query _ _ _ Hc' _ _ => exfalso; rw [Hc] at Hc'; cases Hc'
-      | tau _ _ Hc' _ _ => exfalso; rw [Hc] at Hc'; cases Hc'
+      | query _ _ _ Hc' _ _ => rw [Hc] at Hc'; cases Hc'
+      | tau _ _ Hc' _ _ => rw [Hc] at Hc'; cases Hc'
   | query q ca ca' Ha Hc h =>
       cases Mb with
-      | pure _ Hc' _ => exfalso; rw [Hc] at Hc'; cases Hc'
+      | pure _ Hc' _ => rw [Hc] at Hc'; cases Hc'
       | query q' cc cb Hc' Hb h' =>
           have heq : (⟨.query q, ca'⟩ : (Poly F α).Obj _) =
               ⟨.query q', cc⟩ := Hc.symm.trans Hc'
@@ -805,11 +805,11 @@ theorem Match.trans_aligned {c a_1 b_1 : ITree F α}
           subst hqq
           have hcc : ca' = cc := eq_of_heq (Sigma.mk.inj heq).2
           exact .query q ca cb Ha Hb (fun b => ⟨ca' b, h b, hcc.symm ▸ h' b⟩)
-      | tau _ _ Hc' _ _ => exfalso; rw [Hc] at Hc'; cases Hc'
+      | tau _ _ Hc' _ _ => rw [Hc] at Hc'; cases Hc'
   | tau ct cs Ha Hc h =>
       cases Mb with
-      | pure _ Hc' _ => exfalso; rw [Hc] at Hc'; cases Hc'
-      | query _ _ _ Hc' _ _ => exfalso; rw [Hc] at Hc'; cases Hc'
+      | pure _ Hc' _ => rw [Hc] at Hc'; cases Hc'
+      | query _ _ _ Hc' _ _ => rw [Hc] at Hc'; cases Hc'
       | tau cs' cb Hc' Hb h' =>
           have hss : cs' = cs := TauSteps.cont_eq Hc' Hc
           exact .tau ct cb Ha Hb ⟨cs PUnit.unit, h, hss ▸ h'⟩
@@ -889,8 +889,8 @@ Case analysis on the head of `c'` via `Ma'`:
                       ha.trans (ha'.trans ((TauSteps.one ct Ha'').trans hX)),
                       hb.trans hb'', ?_⟩
                     exact Match.pure r'' HX (hrr ▸ Hb'')
-                | query _ _ _ _ HY _ => exfalso; rw [HY] at Hc''; cases Hc''
-                | tau _ _ _ HY _ => exfalso; rw [HY] at Hc''; cases Hc''
+                | query _ _ _ _ HY _ => rw [HY] at Hc''; cases Hc''
+                | tau _ _ _ HY _ => rw [HY] at Hc''; cases Hc''
             | query q_outer cq_outer cq'_outer Hc'' Hb'' hq =>
                 have hRB : WeakBisim (ct PUnit.unit) c'' :=
                   absorb_tauSteps_right h_a hrest
@@ -898,7 +898,7 @@ Case analysis on the head of `c'` via `Ma'`:
                 have hYc : Y = c'' := TauSteps.rigid_of_query q_outer cq_outer Hc'' hY
                 subst hYc
                 cases MXY with
-                | pure _ _ HY => exfalso; rw [HY] at Hc''; cases Hc''
+                | pure _ _ HY => rw [HY] at Hc''; cases Hc''
                 | query q'' cq_a cq_b HX HY h_q =>
                     have heq : (⟨Shape.query q'', cq_b⟩ :
                         (Poly F α).Obj (ITree F α)) =
@@ -914,7 +914,7 @@ Case analysis on the head of `c'` via `Ma'`:
                     refine Match.query q'' cq_a cq'_outer HX Hb'' ?_
                     intro b
                     exact ⟨cq_b b, h_q b, hq b⟩
-                | tau _ _ _ HY _ => exfalso; rw [HY] at Hc''; cases Hc''
+                | tau _ _ _ HY _ => rw [HY] at Hc''; cases Hc''
             | tau ct'' cs'' Hc'' Hb'' h_b =>
                 refine ⟨a'', b'', ha.trans ha', hb.trans hb'', ?_⟩
                 refine Match.tau ct cs'' Ha'' Hb'' ?_
@@ -958,8 +958,8 @@ Case analysis on the head of `c'` via `Ma'`:
                       hb.trans (hb'.trans ((TauSteps.one cs Hb'').trans hY)),
                       ?_⟩
                     exact Match.pure r'' (hrr ▸ Ha'') HY
-                | query _ _ _ HX _ _ => exfalso; rw [HX] at Hc''; cases Hc''
-                | tau _ _ HX _ _ => exfalso; rw [HX] at Hc''; cases Hc''
+                | query _ _ _ HX _ _ => rw [HX] at Hc''; cases Hc''
+                | tau _ _ HX _ _ => rw [HX] at Hc''; cases Hc''
             | query q_a cq_outer cq'_outer Ha'' Hc'' hq =>
                 have hRB : WeakBisim c'' (cs PUnit.unit) :=
                   tauSteps_weakBisim_left h_b hrest
@@ -967,7 +967,7 @@ Case analysis on the head of `c'` via `Ma'`:
                 have hXc : X = c'' := TauSteps.rigid_of_query q_a cq'_outer Hc'' hX
                 subst hXc
                 cases MXY with
-                | pure _ HX _ => exfalso; rw [HX] at Hc''; cases Hc''
+                | pure _ HX _ => rw [HX] at Hc''; cases Hc''
                 | query q'' cq_a cq_b HX HY h_q =>
                     have heq : (⟨Shape.query q'', cq_a⟩ :
                         (Poly F α).Obj (ITree F α)) =
@@ -982,7 +982,7 @@ Case analysis on the head of `c'` via `Ma'`:
                     refine Match.query q'' cq_outer cq_b Ha'' HY ?_
                     intro b
                     exact ⟨cq_a b, hq b, h_q b⟩
-                | tau _ _ HX _ _ => exfalso; rw [HX] at Hc''; cases Hc''
+                | tau _ _ HX _ _ => rw [HX] at Hc''; cases Hc''
             | tau ct'' cs'' Ha'' Hc'' h_a =>
                 refine ⟨a'', b'', ha.trans ha'', hb.trans hb', ?_⟩
                 refine Match.tau ct'' cs Ha'' Hb'' ?_

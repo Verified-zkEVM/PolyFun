@@ -185,22 +185,18 @@ layer uses it to lift the canonical `MomentaryCorruption.react` over
 state-bundled `MachineProcess`es.
 -/
 def liftState [Monad m] {Event : Type u} {X Y : Type v}
-    (π : Y → X) (ι : X → Y → Y) (e : EnvAction m Event X) :
-    EnvAction m Event Y where
+    (π : Y → X) (ι : X → Y → Y) (e : EnvAction m Event X) : EnvAction m Event Y where
   react s y := do
     let x' ← e.react s (π y)
     return ι x' y
 
 @[simp]
-theorem comap_id [Pure m] (e : EnvAction m Event X) :
-    comap (id : Event → Event) e = e := by
-  ext s x; rfl
+theorem comap_id [Pure m] (e : EnvAction m Event X) : comap (id : Event → Event) e = e := rfl
 
 @[simp]
 theorem comap_comap [Pure m] {Event Event' Event'' : Type u} {X : Type v}
     (h : Event → Event') (g : Event' → Event'') (e : EnvAction m Event'' X) :
-    comap h (comap g e) = comap (g ∘ h) e := by
-  ext s x; rfl
+    comap h (comap g e) = comap (g ∘ h) e := rfl
 
 @[simp]
 theorem passive_react [Pure m] (Event : Type u) (X : Type v) (s : Event) (x : X) :

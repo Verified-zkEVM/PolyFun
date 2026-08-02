@@ -75,9 +75,7 @@ def ofLens (φ : PFunctor.Lens E F) : Handler E F :=
   fun a => query (φ.toFunA a) (fun b => pure (φ.toFunB a b))
 
 @[simp] theorem ofLens_id (E : PFunctor.{uEA, uEB}) :
-    ofLens (PFunctor.Lens.id E) = id E := by
-  funext a
-  rfl
+    ofLens (PFunctor.Lens.id E) = id E := rfl
 
 /-! ### Coproduct routing -/
 
@@ -108,9 +106,7 @@ lenses. -/
 theorem case_ofLens {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uEB}}
     (left : PFunctor.Lens E G) (right : PFunctor.Lens F G) :
     case_ (ofLens left) (ofLens right) =
-      ofLens (PFunctor.Lens.sumPair left right) := by
-  funext a
-  cases a <;> rfl
+      ofLens (PFunctor.Lens.sumPair left right) := by funext a; cases a <;> rfl
 
 end Handler
 

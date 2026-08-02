@@ -194,10 +194,7 @@ theorem map_stateChain {Γ : P.A → Type w₂}
           (Decoration.Over.append (rDeco i state) _) = _
       rw [Decoration.Over.map_append η (s i state) _
             (deco i state) _ (rDeco i state) _]
-      refine congrArg
-        (Decoration.Over.append
-          (Decoration.Over.map η (s i state) (deco i state) (rDeco i state))) ?_
-      funext path
+      congr 1; funext path
       exact map_stateChain η rDeco n (i + 1) (advance i state path)
 
 end Over

@@ -44,8 +44,8 @@ The bundled value `MomentaryCorruption.model Sid Pid` is a
   counter.
 * **`State.applyCompromise` / `State.applyRefresh`** — the
   canonical deterministic updates triggered by alphabet events.
-* **`react`** — the `Alphabet → State → ProbComp State` reaction
-  driving the model's `EnvAction`.
+* **`react`** — the monad-parametric `Alphabet → State → m State`
+  reaction driving the model's `EnvAction`.
 * **`envAction`** — the canonical `EnvAction Alphabet State` for
   the model.
 * **`model Sid Pid`** — the bundled `CorruptionModel` value.
@@ -57,11 +57,11 @@ The bundled value `MomentaryCorruption.model Sid Pid` is a
 
 ## Universe constraint
 
-`Sid` and `Pid` live in `Type` (i.e. `Type 0`) because `State`
-participates in `ProbComp`-valued reactions and
-`ProbComp : Type → Type`. Concrete protocol identity types
-(`ℕ`, `String`, etc.) all satisfy this bound. The two `OpenProcess`
-universes `(v, w)` are exposed.
+`Sid` and `Pid` live in `Type` (i.e. `Type 0`) because
+`State Sid Pid` is fed to the reaction monad `m : Type → Type w'`,
+whose argument must live in `Type 0`. Concrete protocol identity
+types (`ℕ`, `String`, etc.) all satisfy this bound. The two
+`OpenProcess` universes `(v, w')` are exposed.
 
 ## Additive design
 
@@ -82,7 +82,7 @@ The deterministic state updates require `[DecidableEq Sid]
 themselves do not.
 -/
 
-universe v w w'
+universe v w'
 
 namespace Interaction
 namespace UC
@@ -214,8 +214,7 @@ This is a deterministic update, so the value lives in the
 underlying `State`; the canonical `EnvAction` reaction wraps it
 via `pure`.
 -/
-def applyCompromise
-    (m : MachineId Sid Pid) (cs : State Sid Pid) : State Sid Pid where
+def applyCompromise (m : MachineId Sid Pid) (cs : State Sid Pid) : State Sid Pid where
   corrupted := Function.update cs.corrupted m true
   compromised := fun m' e' =>
     cs.compromised m' e' || (decide (m = m') && decide (e' = cs.epoch m))
@@ -231,14 +230,12 @@ this is the structural ingredient that lets the model derive PCS
 (post-compromise security) as a healing theorem rather than as an
 axiom.
 -/
-def applyRefresh
-    (m : MachineId Sid Pid) (cs : State Sid Pid) : State Sid Pid where
+def applyRefresh (m : MachineId Sid Pid) (cs : State Sid Pid) : State Sid Pid where
   corrupted := Function.update cs.corrupted m false
   compromised := cs.compromised
   epoch := Function.update cs.epoch m (cs.epoch m + 1)
 
-@[simp] theorem corrupted_applyCompromise_self
-    (m : MachineId Sid Pid) (cs : State Sid Pid) :
+@[simp] theorem corrupted_applyCompromise_self (m : MachineId Sid Pid) (cs : State Sid Pid) :
     (applyCompromise m cs).corrupted m = true := by
   simp [applyCompromise]
 
@@ -247,8 +244,7 @@ theorem corrupted_applyCompromise_of_ne
     (applyCompromise m cs).corrupted m' = cs.corrupted m' := by
   simp [applyCompromise, Function.update_of_ne h]
 
-@[simp] theorem corrupted_applyRefresh_self
-    (m : MachineId Sid Pid) (cs : State Sid Pid) :
+@[simp] theorem corrupted_applyRefresh_self (m : MachineId Sid Pid) (cs : State Sid Pid) :
     (applyRefresh m cs).corrupted m = false := by
   simp [applyRefresh]
 
@@ -257,22 +253,18 @@ theorem corrupted_applyRefresh_of_ne
     (applyRefresh m cs).corrupted m' = cs.corrupted m' := by
   simp [applyRefresh, Function.update_of_ne h]
 
-@[simp] theorem epoch_applyCompromise
-    (m : MachineId Sid Pid) (cs : State Sid Pid) :
+@[simp] theorem epoch_applyCompromise (m : MachineId Sid Pid) (cs : State Sid Pid) :
     (applyCompromise m cs).epoch = cs.epoch := rfl
 
-@[simp] theorem epoch_applyRefresh_self
-    (m : MachineId Sid Pid) (cs : State Sid Pid) :
+@[simp] theorem epoch_applyRefresh_self (m : MachineId Sid Pid) (cs : State Sid Pid) :
     (applyRefresh m cs).epoch m = cs.epoch m + 1 := by
   simp [applyRefresh]
 
-theorem epoch_applyRefresh_of_ne
-    {m m' : MachineId Sid Pid} (h : m' ≠ m) (cs : State Sid Pid) :
+theorem epoch_applyRefresh_of_ne {m m' : MachineId Sid Pid} (h : m' ≠ m) (cs : State Sid Pid) :
     (applyRefresh m cs).epoch m' = cs.epoch m' := by
   simp [applyRefresh, Function.update_of_ne h]
 
-theorem compromised_applyCompromise_self_currentEpoch
-    (m : MachineId Sid Pid) (cs : State Sid Pid) :
+theorem compromised_applyCompromise_self_currentEpoch (m : MachineId Sid Pid) (cs : State Sid Pid) :
     (applyCompromise m cs).compromised m (cs.epoch m) = true := by
   simp [applyCompromise]
 
@@ -282,16 +274,13 @@ it stays in the adversary's view. This is the structural fact that
 makes PCS (post-compromise security) about *future* epochs rather
 than about un-leaking past ones.
 -/
-theorem compromised_applyCompromise_of_compromised
-    {cs : State Sid Pid} {m : MachineId Sid Pid}
-    {m' : MachineId Sid Pid} {e : Epoch}
-    (h : cs.compromised m' e = true) :
+theorem compromised_applyCompromise_of_compromised {cs : State Sid Pid} {m : MachineId Sid Pid}
+    {m' : MachineId Sid Pid} {e : Epoch} (h : cs.compromised m' e = true) :
     (applyCompromise m cs).compromised m' e = true := by
   simp [applyCompromise, h]
 
 /-- `refresh` preserves all past compromise flags. -/
-@[simp] theorem compromised_applyRefresh
-    (m : MachineId Sid Pid) (cs : State Sid Pid) :
+@[simp] theorem compromised_applyRefresh (m : MachineId Sid Pid) (cs : State Sid Pid) :
     (applyRefresh m cs).compromised = cs.compromised := rfl
 
 end State
@@ -315,9 +304,7 @@ The reaction is monad-parametric: any `[Pure m]` works, and
 deterministic protocols typically use `m := Id` while crypto-flavored
 consumers instantiate `m := ProbComp`.
 -/
-def react
-    (s : Alphabet Sid Pid) (cs : State Sid Pid) :
-    m (State Sid Pid) :=
+def react (s : Alphabet Sid Pid) (cs : State Sid Pid) : m (State Sid Pid) :=
   match s with
   | .compromise m₀ => pure (State.applyCompromise m₀ cs)
   | .refresh m₀    => pure (State.applyRefresh m₀ cs)
@@ -326,13 +313,11 @@ def react
 def envAction : EnvAction m (Alphabet Sid Pid) (State Sid Pid) where
   react := react
 
-@[simp] theorem react_compromise
-    (m₀ : MachineId Sid Pid) (cs : State Sid Pid) :
+@[simp] theorem react_compromise (m₀ : MachineId Sid Pid) (cs : State Sid Pid) :
     (react (m := m) (.compromise m₀) cs) =
       (pure (State.applyCompromise m₀ cs) : m (State Sid Pid)) := rfl
 
-@[simp] theorem react_refresh
-    (m₀ : MachineId Sid Pid) (cs : State Sid Pid) :
+@[simp] theorem react_refresh (m₀ : MachineId Sid Pid) (cs : State Sid Pid) :
     (react (m := m) (.refresh m₀) cs) =
       (pure (State.applyRefresh m₀ cs) : m (State Sid Pid)) := rfl
 
@@ -347,21 +332,17 @@ the `CorruptionModel` API — for instance, when stating a lemma
 that is generic over corruption models but instantiated to the
 momentary case at a use site.
 -/
-def model (Sid Pid : Type) [DecidableEq Sid] [DecidableEq Pid]
-    (m : Type → Type w') [Pure m] :
+def model (Sid Pid : Type) [DecidableEq Sid] [DecidableEq Pid] (m : Type → Type w') [Pure m] :
     CorruptionModel m where
   Event := Alphabet Sid Pid
   State := State Sid Pid
   envAction := envAction
 
-@[simp] theorem model_Event :
-    (model Sid Pid m).Event = Alphabet Sid Pid := rfl
+@[simp] theorem model_Event : (model Sid Pid m).Event = Alphabet Sid Pid := rfl
 
-@[simp] theorem model_State :
-    (model Sid Pid m).State = State Sid Pid := rfl
+@[simp] theorem model_State : (model Sid Pid m).State = State Sid Pid := rfl
 
-@[simp] theorem model_envAction :
-    (model Sid Pid m).envAction = envAction := rfl
+@[simp] theorem model_envAction : (model Sid Pid m).envAction = envAction := rfl
 
 /-! ## Canonical corruption-aware open process -/
 
@@ -410,14 +391,10 @@ namespace MachineProcess
 variable {Sid Pid : Type} {m : Type → Type w'} [Pure m] {Δ : PortBoundary}
   [DecidableEq Sid] [DecidableEq Pid]
 
-@[simp]
-theorem process_withMomentaryCorruption
-    (P : MachineProcess.{0, v, 0, w'} Sid Pid m Δ) :
+@[simp] theorem process_withMomentaryCorruption (P : MachineProcess.{0, v, 0, w'} Sid Pid m Δ) :
     P.withMomentaryCorruption.process = P := rfl
 
-@[simp]
-theorem envAction_withMomentaryCorruption
-    (P : MachineProcess.{0, v, 0, w'} Sid Pid m Δ) :
+@[simp] theorem envAction_withMomentaryCorruption (P : MachineProcess.{0, v, 0, w'} Sid Pid m Δ) :
     P.withMomentaryCorruption.envAction = MomentaryCorruption.envAction := rfl
 
 @[simp]

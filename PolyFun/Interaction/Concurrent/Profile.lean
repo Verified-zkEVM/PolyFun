@@ -3,8 +3,8 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Multiparty.Core
 import PolyFun.Interaction.Concurrent.Frontier
+import PolyFun.Interaction.Multiparty.Core
 
 /-!
 # Per-party observation profiles for concurrent interaction
@@ -148,8 +148,7 @@ def frontierView {Party : Type u} (me : Party) :
   | .done, .done => .hidden
   | .node _ _, .node views _ =>
       match views me with
-      | .pick => .observe
-      | .observe => .observe
+      | .pick | .observe => .observe
       | .hidden => .hidden
       | .react ⟨Obs, toObs⟩ =>
           .react ⟨PLift Obs, fun

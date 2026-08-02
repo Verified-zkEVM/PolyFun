@@ -100,24 +100,7 @@ private lemma isRollBound_congr_aux
     (hcan : ∀ (a : P.A) (b : B), canRoll₁ a b ↔ canRoll₂ a b)
     (hcost : ∀ (a : P.A) (b : B), cost₁ a b = cost₂ a b) :
     ∀ {b : B}, oa.IsRollBound b canRoll₁ cost₁ ↔ oa.IsRollBound b canRoll₂ cost₂ := by
-  induction oa using FreeM.induction with
-  | pure _ =>
-      intro b
-      simp
-  | lift_bind a r ih =>
-      intro b
-      rw [isRollBound_lift_bind_iff, isRollBound_lift_bind_iff]
-      constructor
-      · intro h
-        refine ⟨(hcan a b).1 h.1, fun y => ?_⟩
-        have hy : IsRollBound (r y) (cost₁ a b) canRoll₂ cost₂ :=
-          (ih y (b := cost₁ a b)).1 (h.2 y)
-        simpa [hcost a b] using hy
-      · intro h
-        refine ⟨(hcan a b).2 h.1, fun y => ?_⟩
-        have hy : IsRollBound (r y) (cost₁ a b) canRoll₂ cost₂ := by
-          simpa [hcost a b] using h.2 y
-        exact (ih y (b := cost₁ a b)).2 hy
+  induction oa using FreeM.induction <;> intro b <;> grind
 
 lemma isRollBound_congr
     {oa : FreeM P α} {b : B}
@@ -248,11 +231,7 @@ lemma isTotalRollBound_bind {γ : Type w} {oa : FreeM P α}
     {ob : α → FreeM P γ} {n₁ n₂ : ℕ} (h₁ : IsTotalRollBound oa n₁)
     (h₂ : ∀ x, IsTotalRollBound (ob x) n₂) :
     IsTotalRollBound (FreeM.bind oa ob) (n₁ + n₂) := by
-  refine isRollBound_bind (fun a b => a + b) ?_ ?_ h₁ h₂
-  · intro _ _ _ _ h
-    constructor <;> omega
-  · intro _ _ _ _ h
-    constructor <;> omega
+  refine isRollBound_bind (fun a b => a + b) ?_ ?_ h₁ h₂ <;> grind
 
 /-- Total roll bounds add under applicative sequencing. -/
 lemma isTotalRollBound_seq {og : FreeM P (α → β)} {oa : FreeM P α}

@@ -37,9 +37,7 @@ An element stores its universal elimination principle: for every lawful target
 open theory `T` and every atom interpretation, it produces an object of
 boundary `Δ` in `T`.
 -/
-structure Interp
-    (Atom : PortBoundary → Type u)
-    (Δ : PortBoundary) where
+structure Interp (Atom : PortBoundary → Type u) (Δ : PortBoundary) where
   /--
   Interpret the free expression in an arbitrary target theory with the full
   plug-wire factorization structure.
@@ -58,14 +56,9 @@ plug-wire factorization structure.
 
 This is just the `run` field restated as a named eliminator.
 -/
-abbrev interpret
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
-    (W : Interp Atom Δ)
-    (T : OpenTheory.{max (u + 1) 3})
-    (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
-    T.Obj Δ :=
+abbrev interpret {Atom : PortBoundary → Type u} {Δ : PortBoundary} (W : Interp Atom Δ)
+    (T : OpenTheory.{max (u + 1) 3}) (hT : OpenTheory.HasPlugWireFactor T)
+    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) : T.Obj Δ :=
   W.run T hT interp
 
 /--
@@ -73,16 +66,10 @@ Two tagless-final expressions are equal when they have the same interpretation
 in every lawful target theory.
 -/
 @[ext]
-theorem ext
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
-    {W₁ W₂ : Interp Atom Δ}
-    (h :
-      ∀ (T : OpenTheory.{max (u + 1) 3})
-        (hT : OpenTheory.HasPlugWireFactor T)
+theorem ext {Atom : PortBoundary → Type u} {Δ : PortBoundary} {W₁ W₂ : Interp Atom Δ}
+    (h : ∀ (T : OpenTheory.{max (u + 1) 3}) (hT : OpenTheory.HasPlugWireFactor T)
         (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ),
-          W₁.run T hT interp = W₂.run T hT interp) :
-    W₁ = W₂ := by
+        W₁.run T hT interp = W₂.run T hT interp) : W₁ = W₂ := by
   cases W₁
   cases W₂
   simp only at h
@@ -93,19 +80,12 @@ theorem ext
 /--
 Inject a primitive open component into the tagless-final syntax.
 -/
-def atom
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary} :
-    Atom Δ → Interp Atom Δ
+def atom {Atom : PortBoundary → Type u} {Δ : PortBoundary} : Atom Δ → Interp Atom Δ
   | a => ⟨fun _ _ interp => interp a⟩
 
 @[simp]
-theorem interpret_atom
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
-    (a : Atom Δ)
-    (T : OpenTheory.{max (u + 1) 3})
-    (hT : OpenTheory.HasPlugWireFactor T)
+theorem interpret_atom {Atom : PortBoundary → Type u} {Δ : PortBoundary} (a : Atom Δ)
+    (T : OpenTheory.{max (u + 1) 3}) (hT : OpenTheory.HasPlugWireFactor T)
     (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
     (atom a).interpret T hT interp = interp a :=
   rfl
@@ -113,46 +93,29 @@ theorem interpret_atom
 /--
 Adapt the exposed boundary of a tagless-final expression.
 -/
-def map
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Δ₂ : PortBoundary}
-    (f : PortBoundary.Hom Δ₁ Δ₂) :
+def map {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary} (f : PortBoundary.Hom Δ₁ Δ₂) :
     Interp Atom Δ₁ → Interp Atom Δ₂
   | W => ⟨fun T hT interp => T.map f (W.run T hT interp)⟩
 
 @[simp]
-theorem interpret_map
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Δ₂ : PortBoundary}
-    (f : PortBoundary.Hom Δ₁ Δ₂)
-    (W : Interp Atom Δ₁)
-    (T : OpenTheory.{max (u + 1) 3})
-    (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+theorem interpret_map {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
+    (f : PortBoundary.Hom Δ₁ Δ₂) (W : Interp Atom Δ₁) (T : OpenTheory.{max (u + 1) 3})
+    (hT : OpenTheory.HasPlugWireFactor T) (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
     (map f W).interpret T hT interp = T.map f (W.interpret T hT interp) :=
   rfl
 
 /--
 Place two tagless-final expressions side by side.
 -/
-def par
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Δ₂ : PortBoundary} :
-    Interp Atom Δ₁ →
-    Interp Atom Δ₂ →
-    Interp Atom (PortBoundary.tensor Δ₁ Δ₂)
+def par {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary} :
+    Interp Atom Δ₁ → Interp Atom Δ₂ → Interp Atom (PortBoundary.tensor Δ₁ Δ₂)
   | W₁, W₂ => ⟨fun T hT interp =>
     T.par (W₁.run T hT interp) (W₂.run T hT interp)⟩
 
 @[simp]
-theorem interpret_par
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Δ₂ : PortBoundary}
-    (W₁ : Interp Atom Δ₁)
-    (W₂ : Interp Atom Δ₂)
-    (T : OpenTheory.{max (u + 1) 3})
-    (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+theorem interpret_par {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
+    (W₁ : Interp Atom Δ₁) (W₂ : Interp Atom Δ₂) (T : OpenTheory.{max (u + 1) 3})
+    (hT : OpenTheory.HasPlugWireFactor T) (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
     (par W₁ W₂).interpret T hT interp =
       T.par (W₁.interpret T hT interp) (W₂.interpret T hT interp) :=
   rfl
@@ -160,9 +123,7 @@ theorem interpret_par
 /--
 Connect one shared boundary between two tagless-final expressions.
 -/
-def wire
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Γ Δ₂ : PortBoundary} :
+def wire {Atom : PortBoundary → Type u} {Δ₁ Γ Δ₂ : PortBoundary} :
     Interp Atom (PortBoundary.tensor Δ₁ Γ) →
     Interp Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) →
     Interp Atom (PortBoundary.tensor Δ₁ Δ₂)
@@ -170,13 +131,10 @@ def wire
     T.wire (W₁.run T hT interp) (W₂.run T hT interp)⟩
 
 @[simp]
-theorem interpret_wire
-    {Atom : PortBoundary → Type u}
-    {Δ₁ Γ Δ₂ : PortBoundary}
+theorem interpret_wire {Atom : PortBoundary → Type u} {Δ₁ Γ Δ₂ : PortBoundary}
     (W₁ : Interp Atom (PortBoundary.tensor Δ₁ Γ))
     (W₂ : Interp Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
-    (T : OpenTheory.{max (u + 1) 3})
-    (hT : OpenTheory.HasPlugWireFactor T)
+    (T : OpenTheory.{max (u + 1) 3}) (hT : OpenTheory.HasPlugWireFactor T)
     (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
     (wire W₁ W₂).interpret T hT interp =
       T.wire (W₁.interpret T hT interp) (W₂.interpret T hT interp) :=
@@ -185,24 +143,15 @@ theorem interpret_wire
 /--
 Close a tagless-final expression against a matching context.
 -/
-def plug
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary} :
-    Interp Atom Δ →
-    Interp Atom (PortBoundary.swap Δ) →
-    Interp Atom (PortBoundary.empty)
+def plug {Atom : PortBoundary → Type u} {Δ : PortBoundary} :
+    Interp Atom Δ → Interp Atom (PortBoundary.swap Δ) → Interp Atom (PortBoundary.empty)
   | W, K => ⟨fun T hT interp =>
     T.plug (W.run T hT interp) (K.run T hT interp)⟩
 
 @[simp]
-theorem interpret_plug
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
-    (W : Interp Atom Δ)
-    (K : Interp Atom (PortBoundary.swap Δ))
-    (T : OpenTheory.{max (u + 1) 3})
-    (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+theorem interpret_plug {Atom : PortBoundary → Type u} {Δ : PortBoundary} (W : Interp Atom Δ)
+    (K : Interp Atom (PortBoundary.swap Δ)) (T : OpenTheory.{max (u + 1) 3})
+    (hT : OpenTheory.HasPlugWireFactor T) (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
     (plug W K).interpret T hT interp =
       T.plug (W.interpret T hT interp) (K.interpret T hT interp) :=
   rfl
@@ -210,57 +159,42 @@ theorem interpret_plug
 /--
 The monoidal unit (closed system with no boundary).
 -/
-def unit
-    {Atom : PortBoundary → Type u} :
-    Interp Atom PortBoundary.empty :=
+def unit {Atom : PortBoundary → Type u} : Interp Atom PortBoundary.empty :=
   ⟨fun _ hCC _ => OpenTheory.HasUnit.unit
     (self := hCC.toIsCompactClosed.toIsTraced.toIsMonoidal.toHasUnit)⟩
 
 @[simp]
-theorem interpret_unit
-    {Atom : PortBoundary → Type u}
-    (T : OpenTheory.{max (u + 1) 3})
-    (hT : OpenTheory.HasPlugWireFactor T)
-    (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
-    (unit : Interp Atom _).interpret T hT interp =
-      OpenTheory.HasUnit.unit (T := T) :=
+theorem interpret_unit {Atom : PortBoundary → Type u} (T : OpenTheory.{max (u + 1) 3})
+    (hT : OpenTheory.HasPlugWireFactor T) (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
+    (unit : Interp Atom _).interpret T hT interp = OpenTheory.HasUnit.unit (T := T) :=
   rfl
 
 /--
 The identity wire (coevaluation) on boundary `Γ`.
 -/
-def idWire
-    {Atom : PortBoundary → Type u}
-    (Γ : PortBoundary) :
+def idWire {Atom : PortBoundary → Type u} (Γ : PortBoundary) :
     Interp Atom (PortBoundary.tensor (PortBoundary.swap Γ) Γ) :=
   ⟨fun _ hCC _ => OpenTheory.HasIdWire.idWire
     (self := hCC.toIsCompactClosed.toHasIdWire) Γ⟩
 
 @[simp]
-theorem interpret_idWire
-    {Atom : PortBoundary → Type u}
-    (Γ : PortBoundary)
-    (T : OpenTheory.{max (u + 1) 3})
-    (hT : OpenTheory.HasPlugWireFactor T)
+theorem interpret_idWire {Atom : PortBoundary → Type u} (Γ : PortBoundary)
+    (T : OpenTheory.{max (u + 1) 3}) (hT : OpenTheory.HasPlugWireFactor T)
     (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
-    (idWire Γ : Interp Atom _).interpret T hT interp =
-      OpenTheory.HasIdWire.idWire (T := T) Γ :=
+    (idWire Γ : Interp Atom _).interpret T hT interp = OpenTheory.HasIdWire.idWire (T := T) Γ :=
   rfl
 
 /--
 The free lawful `OpenTheory` generated by tagless-final expressions over `Atom`.
 -/
-abbrev theory
-    (Atom : PortBoundary → Type u) :
-    OpenTheory.{max (u + 2) 4} where
+abbrev theory (Atom : PortBoundary → Type u) : OpenTheory.{max (u + 2) 4} where
   Obj := Interp Atom
   map := Interp.map
   par := Interp.par
   wire := Interp.wire
   plug := Interp.plug
 
-instance lawfulMap
-    (Atom : PortBoundary → Type u) :
+instance lawfulMap (Atom : PortBoundary → Type u) :
     OpenTheory.IsLawfulMap (Interp.theory Atom) where
   map_id := by
     intro Δ W
@@ -268,7 +202,7 @@ instance lawfulMap
     change Interp.map (PortBoundary.Hom.id Δ) W = W
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simp [Interp.map]
   map_comp := by
     intro Δ₁ Δ₂ Δ₃ g f W
@@ -276,12 +210,11 @@ instance lawfulMap
     change Interp.map (PortBoundary.Hom.comp g f) W = Interp.map g (Interp.map f W)
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simpa [Interp.map] using
       OpenTheory.map_comp (T := T) g f (W.run T hT interp)
 
-instance lawfulPar
-    (Atom : PortBoundary → Type u) :
+instance lawfulPar (Atom : PortBoundary → Type u) :
     OpenTheory.IsLawfulPar (Interp.theory Atom) where
   map_id := OpenTheory.IsLawfulMap.map_id (T := Interp.theory Atom)
   map_comp := OpenTheory.IsLawfulMap.map_comp (T := Interp.theory Atom)
@@ -294,12 +227,11 @@ instance lawfulPar
         Interp.par (Interp.map f₁ W₁) (Interp.map f₂ W₂)
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simpa [Interp.map, Interp.par] using
       OpenTheory.map_par (T := T) f₁ f₂ (W₁.run T hT interp) (W₂.run T hT interp)
 
-instance lawfulWire
-    (Atom : PortBoundary → Type u) :
+instance lawfulWire (Atom : PortBoundary → Type u) :
     OpenTheory.IsLawfulWire (Interp.theory Atom) where
   map_id := OpenTheory.IsLawfulMap.map_id (T := Interp.theory Atom)
   map_comp := OpenTheory.IsLawfulMap.map_comp (T := Interp.theory Atom)
@@ -318,12 +250,11 @@ instance lawfulWire
             W₂)
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simpa [Interp.map, Interp.wire] using
       OpenTheory.map_wire (T := T) f₁ f₂ (W₁.run T hT interp) (W₂.run T hT interp)
 
-instance lawfulPlug
-    (Atom : PortBoundary → Type u) :
+instance lawfulPlug (Atom : PortBoundary → Type u) :
     OpenTheory.IsLawfulPlug (Interp.theory Atom) where
   map_id := OpenTheory.IsLawfulMap.map_id (T := Interp.theory Atom)
   map_comp := OpenTheory.IsLawfulMap.map_comp (T := Interp.theory Atom)
@@ -336,26 +267,20 @@ instance lawfulPlug
         Interp.plug W (Interp.map (PortBoundary.Hom.swap f) K)
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simpa [Interp.map, Interp.plug] using
       OpenTheory.map_plug (T := T) f (W.run T hT interp) (K.run T hT interp)
 
-instance lawful
-    (Atom : PortBoundary → Type u) :
-    OpenTheory.IsLawful (Interp.theory Atom) where
+instance lawful (Atom : PortBoundary → Type u) : OpenTheory.IsLawful (Interp.theory Atom) where
 
-instance hasUnit
-    (Atom : PortBoundary → Type u) :
-    OpenTheory.HasUnit (Interp.theory Atom) where
+instance hasUnit (Atom : PortBoundary → Type u) : OpenTheory.HasUnit (Interp.theory Atom) where
   unit := Interp.unit
 
-instance hasIdWire
-    (Atom : PortBoundary → Type u) :
+instance hasIdWire (Atom : PortBoundary → Type u) :
     OpenTheory.HasIdWire (Interp.theory Atom) where
   idWire := Interp.idWire
 
-instance isMonoidal
-    (Atom : PortBoundary → Type u) :
+instance isMonoidal (Atom : PortBoundary → Type u) :
     OpenTheory.IsMonoidal (Interp.theory Atom) where
   par_assoc := by
     intro Δ₁ Δ₂ Δ₃ W₁ W₂ W₃
@@ -368,7 +293,7 @@ instance isMonoidal
       Interp.par W₁ (Interp.par W₂ W₃)
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simpa [Interp.map, Interp.par] using
       OpenTheory.par_assoc (T := T) (W₁.run T hT interp)
         (W₂.run T hT interp) (W₃.run T hT interp)
@@ -382,7 +307,7 @@ instance isMonoidal
       Interp.par W₂ W₁
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simpa [Interp.map, Interp.par] using
       OpenTheory.par_comm (T := T) (W₁.run T hT interp) (W₂.run T hT interp)
   par_leftUnit := by
@@ -393,7 +318,7 @@ instance isMonoidal
         (Interp.par Interp.unit W) = W
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simp [Interp.map, Interp.par, Interp.unit]
   par_rightUnit := by
     intro Δ W
@@ -403,17 +328,16 @@ instance isMonoidal
         (Interp.par W Interp.unit) = W
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simp [Interp.map, Interp.par, Interp.unit]
 
-instance isTraced
-    (Atom : PortBoundary → Type u) :
+instance isTraced (Atom : PortBoundary → Type u) :
     OpenTheory.IsTraced (Interp.theory Atom) where
   wire_assoc := by
     intro Δ₁ Γ₁ Γ₂ Δ₃ W₁ W₂ W₃
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simp only [Interp.wire]
     exact OpenTheory.wire_assoc (T := T)
       (W₁.run T hT interp) (W₂.run T hT interp) (W₃.run T hT interp)
@@ -421,7 +345,7 @@ instance isTraced
     intro Δ₁ Δ₂ Γ Δ₃ W₁ W₂ W₃
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simp only [Interp.wire, Interp.map, Interp.par]
     exact OpenTheory.wire_par_superpose (T := T)
       (W₁.run T hT interp) (W₂.run T hT interp) (W₃.run T hT interp)
@@ -429,13 +353,12 @@ instance isTraced
     intro Δ₁ Γ Δ₂ W₁ W₂
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simp only [Interp.wire, Interp.map]
     exact OpenTheory.wire_comm (T := T)
       (W₁.run T hT interp) (W₂.run T hT interp)
 
-instance isCompactClosed
-    (Atom : PortBoundary → Type u) :
+instance isCompactClosed (Atom : PortBoundary → Type u) :
     OpenTheory.IsCompactClosed (Interp.theory Atom) where
   wire_idWire := by
     intro Γ Δ₂ W₂
@@ -444,7 +367,7 @@ instance isCompactClosed
       Interp.wire (Interp.idWire Γ) W₂ = W₂
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simp [Interp.wire, Interp.idWire]
   wire_idWire_right := by
     intro Γ Δ₁ W₁
@@ -453,7 +376,7 @@ instance isCompactClosed
       Interp.wire W₁ (Interp.idWire Γ) = W₁
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simp [Interp.wire, Interp.idWire]
   unit_eq := by
     change
@@ -462,12 +385,10 @@ instance isCompactClosed
         (Interp.idWire PortBoundary.empty)
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
     simp only [Interp.unit, Interp.map, Interp.idWire]
-    exact OpenTheory.unit_eq (T := T)
+    exact @OpenTheory.unit_eq T hT.toIsCompactClosed
 
-instance hasPlugWireFactor
-    (Atom : PortBoundary → Type u) :
+instance hasPlugWireFactor (Atom : PortBoundary → Type u) :
     OpenTheory.HasPlugWireFactor (Interp.theory Atom) where
   plug_eq_wire := by
     intro Δ W K
@@ -482,14 +403,14 @@ instance hasPlugWireFactor
               (PortBoundary.swap Δ)).symm.toHom K))
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simp [Interp.plug, Interp.map, Interp.wire,
       OpenTheory.plug_eq_wire (T := T) (W.run T hT interp) (K.run T hT interp)]
   plug_par_left := by
     intro Δ₁ Δ₂ W₁ W₂ K
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simp only [Interp.plug, Interp.par, Interp.map, Interp.wire]
     exact OpenTheory.plug_par_left (T := T)
       (W₁.run T hT interp) (W₂.run T hT interp) (K.run T hT interp)
@@ -497,7 +418,7 @@ instance hasPlugWireFactor
     intro Δ₁ Γ Δ₂ W₁ W₂ K
     refine Interp.ext ?_
     intro T hT interp
-    letI : OpenTheory.HasPlugWireFactor T := hT
+    have : OpenTheory.HasPlugWireFactor T := hT
     simp only [Interp.plug, Interp.wire, Interp.map]
     exact OpenTheory.plug_wire_left (T := T)
       (W₁.run T hT interp) (W₂.run T hT interp) (K.run T hT interp)

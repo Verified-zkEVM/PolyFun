@@ -105,8 +105,7 @@ theorem tail_cons (a : P.A) (rest : P.B a → FreeM P α) (b : P.B a)
 @[simp]
 theorem cons_head_tail (a : P.A) (rest : P.B a → FreeM P α)
     (path : Path (FreeM.liftBind a rest)) :
-    cons a rest (head a rest path) (tail a rest path) = path := by
-  rcases path with ⟨b, path⟩
+    cons a rest (head a rest path) (tail a rest path) = path :=
   rfl
 
 end Path
@@ -416,9 +415,7 @@ the entire path; this theorem identifies their exact overlap. -/
   | pure x => rfl
   | lift_bind a rest ih =>
       simp only [monad_bind_def, liftBind_bind]
-      apply congrArg (FreeM.liftBind a)
-      funext b
-      exact ih b
+      exact congrArg (FreeM.liftBind a) (funext ih)
 
 namespace Path
 
@@ -1099,10 +1096,7 @@ theorem eq_fold {Carrier : St → Type t}
   | _, .done s => hDone s
   | _, .extend s cont => by
       rw [hExtend]
-      simp only [fold]
-      congr 1
-      funext obs
-      exact eq_fold alg f hDone hExtend (cont obs)
+      exact congrArg (alg.extend s) (funext fun obs => eq_fold alg f hDone hExtend (cont obs))
 
 end StoppingTree
 

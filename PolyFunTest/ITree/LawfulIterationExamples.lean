@@ -36,11 +36,7 @@ def oneRestart : Bool → ITree EmptySpec (Bool ⊕ Nat)
 branches: one restart contributes exactly one productivity guard. -/
 example : ITree.iter oneRestart false =
     ITree.step (ITree.pure (F := EmptySpec) 7) := by
-  rw [ITree.iter_unfold, oneRestart, ITree.bind_pure_left]
-  change ITree.step (ITree.iter oneRestart true) =
-    ITree.step (ITree.pure (F := EmptySpec) 7)
-  congr 1
-  rw [ITree.iter_unfold, oneRestart, ITree.bind_pure_left]
+  grind [ITree.iter_unfold, oneRestart, ITree.bind_pure_left]
 
 example {α β : Type uα}
     (body : β → ITree F (β ⊕ α)) (init : β) :

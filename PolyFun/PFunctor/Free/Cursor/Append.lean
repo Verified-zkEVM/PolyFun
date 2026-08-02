@@ -123,8 +123,8 @@ theorem joinRight_comp : (program : FreeM P α) →
     joinRight program suffix path (first.comp second) =
       (joinRight program suffix path first).comp second
   | .pure _, _, ⟨⟩, _, _, _, _ => rfl
-  | .liftBind _ next, suffix, ⟨answer, path⟩, _, _, first, second => by
-      exact congrArg (Spine.down answer)
+  | .liftBind _ next, suffix, ⟨answer, path⟩, _, _, first, second =>
+      congrArg (Spine.down answer)
         (joinRight_comp (next answer) (fun tail => suffix ⟨answer, tail⟩)
           path first second)
 
@@ -148,8 +148,8 @@ theorem plug_joinRight : (program : FreeM P α) →
     (spine.joinRight program suffix path).plug tail =
       Path.append program suffix path (spine.plug tail)
   | .pure _, _, ⟨⟩, _, _, _ => rfl
-  | .liftBind _ next, suffix, ⟨answer, path⟩, _, spine, tail => by
-      exact congrArg
+  | .liftBind _ next, suffix, ⟨answer, path⟩, _, spine, tail =>
+      congrArg
         (fun rest => (⟨answer, rest⟩ : Path (FreeM.append (.liftBind _ next) suffix)))
         (plug_joinRight (next answer) (fun rest => suffix ⟨answer, rest⟩)
           path spine tail)
@@ -417,8 +417,7 @@ theorem split_liftAppend_of_isNode {program : FreeM P α}
               ((⟨residual, tail⟩ : Cursor (next answer)).liftAppend
                 (fun path => suffix ⟨answer, path⟩))) =
           .left (Cursor.down (next := next) answer ⟨residual, tail⟩) isNode
-      rw [split_down]
-      rw [ih (fun path => suffix ⟨answer, path⟩) isNode]
+      rw [split_down, ih (fun path => suffix ⟨answer, path⟩) isNode]
       rfl
 
 theorem split_joinRight : (program : FreeM P α) →
@@ -428,8 +427,8 @@ theorem split_joinRight : (program : FreeM P α) →
       .right path cursor
   | .pure _, _, ⟨⟩, _ => rfl
   | .liftBind _ next, suffix, ⟨answer, path⟩, cursor => by
-      rw [joinRight_liftBind, split_down]
-      rw [split_joinRight (next answer) (fun tail => suffix ⟨answer, tail⟩)]
+      rw [joinRight_liftBind, split_down,
+        split_joinRight (next answer) (fun tail => suffix ⟨answer, tail⟩)]
       rfl
 
 @[simp]
@@ -448,8 +447,8 @@ theorem joinRight_ofPath : (program : FreeM P α) →
       Cursor.ofPath (FreeM.append program suffix)
         (Path.append program suffix path suffixPath)
   | .pure _, _, ⟨⟩, _ => rfl
-  | .liftBind _ next, suffix, ⟨answer, path⟩, suffixPath => by
-      exact congrArg
+  | .liftBind _ next, suffix, ⟨answer, path⟩, suffixPath =>
+      congrArg
         (fun cursor => Cursor.down
           (next := fun b => FreeM.append (next b)
             (fun tail => suffix ⟨b, tail⟩)) answer cursor)

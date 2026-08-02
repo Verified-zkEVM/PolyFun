@@ -39,7 +39,6 @@ namespace Interaction
 open PFunctor.FreeM.Displayed (Decoration)
 namespace TwoParty
 
-open TwoParty
 open PFunctor
 
 variable {P : PFunctor.{uA, uB}} {α : Type t}
@@ -147,12 +146,8 @@ theorem withPairedMonads_map_fst :
   | .liftBind _ rest, ⟨role, rRest⟩, ⟨bmS, mRestS⟩, ⟨bmC, mRestC⟩ => by
       simp only [withPairedMonads, withMonads, monadsOver, pairedMonadsOver,
         Decoration.ofOver]
-      apply Prod.ext
-      · rfl
-      funext b
-      exact withPairedMonads_map_fst
-        (s := rest b) (roles := rRest b)
-        (stratDeco := mRestS b) (cptDeco := mRestC b)
+      exact Prod.ext rfl (funext fun b => withPairedMonads_map_fst
+        (s := rest b) (roles := rRest b) (stratDeco := mRestS b) (cptDeco := mRestC b))
 
 @[simp]
 theorem withPairedMonads_map_snd :
@@ -165,12 +160,8 @@ theorem withPairedMonads_map_snd :
   | .liftBind _ rest, ⟨role, rRest⟩, ⟨bmS, mRestS⟩, ⟨bmC, mRestC⟩ => by
       simp only [withPairedMonads, withMonads, monadsOver, pairedMonadsOver,
         Decoration.ofOver]
-      apply Prod.ext
-      · rfl
-      funext b
-      exact withPairedMonads_map_snd
-        (s := rest b) (roles := rRest b)
-        (stratDeco := mRestS b) (cptDeco := mRestC b)
+      exact Prod.ext rfl (funext fun b => withPairedMonads_map_snd
+        (s := rest b) (roles := rRest b) (stratDeco := mRestS b) (cptDeco := mRestC b))
 
 end RoleDecorationOver
 
@@ -303,12 +294,8 @@ theorem withPairedMonads_map_fst :
       simp only [RoleDecoration.withPairedMonads, RoleDecoration.withMonads,
         RoleDecoration.monadsOver, RoleDecoration.pairedMonadsOver,
         RolePairedMonadContext.fst]
-      apply Prod.ext
-      · rfl
-      funext x
-      exact withPairedMonads_map_fst
-        (spec := rest x) (roles := rRest x)
-        (stratDeco := mRestS x) (cptDeco := mRestC x)
+      exact Prod.ext rfl (funext fun x => withPairedMonads_map_fst
+        (spec := rest x) (roles := rRest x) (stratDeco := mRestS x) (cptDeco := mRestC x))
 
 @[simp]
 theorem withPairedMonads_map_snd :
@@ -322,12 +309,8 @@ theorem withPairedMonads_map_snd :
       simp only [RoleDecoration.withPairedMonads, RoleDecoration.withMonads,
         RoleDecoration.monadsOver, RoleDecoration.pairedMonadsOver,
         RolePairedMonadContext.snd]
-      apply Prod.ext
-      · rfl
-      funext x
-      exact withPairedMonads_map_snd
-        (spec := rest x) (roles := rRest x)
-        (stratDeco := mRestS x) (cptDeco := mRestC x)
+      exact Prod.ext rfl (funext fun x => withPairedMonads_map_snd
+        (spec := rest x) (roles := rRest x) (stratDeco := mRestS x) (cptDeco := mRestC x))
 
 end RoleDecoration
 

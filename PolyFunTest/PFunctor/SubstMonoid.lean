@@ -48,20 +48,19 @@ def wordMonoid : SubstMonoid where
     intro a
     exact Subsingleton.elim _ _
   unit_right := by
-    apply Lens.ext _ _ (fun a => List.append_nil a)
+    apply Lens.ext _ _ List.append_nil
     intro a
     exact Subsingleton.elim _ _
   assoc := by
     let hA : ∀ a : ((wordP ◃ wordP) ◃ wordP).A,
         (wordMult ∘ₗ (wordMult ◃ₗ Lens.id wordP)).toFunA a =
           (wordMult ∘ₗ (Lens.id wordP ◃ₗ wordMult) ∘ₗ
-            Lens.Equiv.compAssoc.toLens).toFunA a := fun a => by
-      exact List.append_assoc a.1.1 (a.1.2 PUnit.unit)
-        (a.2 ⟨PUnit.unit, PUnit.unit⟩)
+            Lens.Equiv.compAssoc.toLens).toFunA a := fun a =>
+      List.append_assoc a.1.1 (a.1.2 PUnit.unit) (a.2 ⟨PUnit.unit, PUnit.unit⟩)
     apply Lens.ext _ _ hA
     intro a
     funext d
-    letI : Subsingleton (((wordP ◃ wordP) ◃ wordP).B a) :=
+    have : Subsingleton (((wordP ◃ wordP) ◃ wordP).B a) :=
       ⟨fun x y => by
         rcases x with ⟨⟨x₁, x₂⟩, x₃⟩
         rcases y with ⟨⟨y₁, y₂⟩, y₃⟩
@@ -89,12 +88,12 @@ def wordMapHom (f : Bool → List Bool) :
     let hA : ∀ a : (wordP ◃ wordP).A,
         ((List.flatMap f ⇆ fun _ d => d) ∘ₗ wordMult).toFunA a =
           (wordMult ∘ₗ ((List.flatMap f ⇆ fun _ d => d) ◃ₗ
-            (List.flatMap f ⇆ fun _ d => d))).toFunA a := fun a => by
-      exact List.flatMap_append
+            (List.flatMap f ⇆ fun _ d => d))).toFunA a := fun _ =>
+      List.flatMap_append
     apply Lens.ext _ _ hA
     intro a
     funext d
-    letI : Subsingleton ((wordP ◃ wordP).B a) :=
+    have : Subsingleton ((wordP ◃ wordP).B a) :=
       ⟨fun x y => by
         rcases x with ⟨x₁, x₂⟩
         rcases y with ⟨y₁, y₂⟩

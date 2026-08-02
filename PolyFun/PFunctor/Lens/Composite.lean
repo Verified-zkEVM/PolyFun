@@ -6,7 +6,6 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Lens.Basic
-import Batteries.Tactic.Lint
 
 /-!
 # Lenses into composites, and the composition-power of a lens
@@ -89,9 +88,7 @@ composite is the composite of the two `n`-fold maps. -/
     compNthMap (l₁ ∘ₗ l₂) n = compNthMap l₁ n ∘ₗ compNthMap l₂ n := by
   induction n with
   | zero => simp [compNthMap]
-  | succ n ih =>
-      rw [compNthMap_succ, compNthMap_succ, compNthMap_succ, ih]
-      exact compMap_comp l₂ (compNthMap l₂ n) l₁ (compNthMap l₁ n)
+  | succ n ih => simp [compNthMap_succ, ih, compMap_comp]
 
 end Lens
 

@@ -33,8 +33,7 @@ universe uA uB uA₁ uA₂ uA₃
 namespace PFunctor
 
 /-- A choice of a left value, a right value, or both values simultaneously. -/
-inductive ParallelChoice (A : Type uA₁) (B : Type uA₂) :
-    Type (max uA₁ uA₂) where
+inductive ParallelChoice (A : Type uA₁) (B : Type uA₂) : Type (max uA₁ uA₂) where
   | left (value : A)
   | right (value : B)
   | both (left : A) (right : B)
@@ -44,8 +43,7 @@ namespace ParallelChoice
 
 /-- `ParallelChoice A B` is the direct presentation of
 `A + B + (A × B)`. -/
-def sumProdEquiv (A : Type uA₁) (B : Type uA₂) :
-    ParallelChoice A B ≃ Sum (Sum A B) (A × B) where
+def sumProdEquiv (A : Type uA₁) (B : Type uA₂) : ParallelChoice A B ≃ Sum (Sum A B) (A × B) where
   toFun
     | .left a => .inl (.inl a)
     | .right b => .inl (.inr b)
@@ -60,8 +58,7 @@ def sumProdEquiv (A : Type uA₁) (B : Type uA₂) :
     | .inl (.inl _) | .inl (.inr _) | .inr (_, _) => rfl
 
 /-- Symmetry of one-or-both choices. -/
-def comm (A : Type uA₁) (B : Type uA₂) :
-    ParallelChoice A B ≃ ParallelChoice B A where
+def comm (A : Type uA₁) (B : Type uA₂) : ParallelChoice A B ≃ ParallelChoice B A where
   toFun
     | .left a => .right a
     | .right b => .left b
@@ -77,9 +74,8 @@ def comm (A : Type uA₁) (B : Type uA₂) :
 
 /-- Associativity of one-or-both choices.  Both sides encode the seven
 nonempty subsets of three components. -/
-def assoc (A : Type uA₁) (B : Type uA₂) (C : Type uA₃) :
-    ParallelChoice (ParallelChoice A B) C ≃
-      ParallelChoice A (ParallelChoice B C) where
+def assoc (A : Type uA₁) (B : Type uA₂) (C : Type uA₃) : ParallelChoice (ParallelChoice A B) C ≃
+    ParallelChoice A (ParallelChoice B C) where
   toFun
     | .left (.left a) => .left a
     | .left (.right b) => .right (.left b)
@@ -110,8 +106,7 @@ end ParallelChoice
 /-- The parallel sum of polynomial interfaces: a position calls the left
 interface, the right interface, or both simultaneously; the response type is
 respectively the left response, right response, or their product. -/
-def parallelSum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
-    PFunctor.{max uA₁ uA₂, uB} where
+def parallelSum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max uA₁ uA₂, uB} where
   A := ParallelChoice P.A Q.A
   B
     | .left a => P.B a
@@ -121,29 +116,22 @@ def parallelSum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
 @[inherit_doc] scoped[PFunctor] infixr:62 " ∥ " => parallelSum
 
 @[simp]
-theorem parallelSum_B_left (P : PFunctor.{uA₁, uB})
-    (Q : PFunctor.{uA₂, uB}) (a : P.A) :
-    (P ∥ Q).B (.left a) = P.B a :=
-  rfl
+theorem parallelSum_B_left (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : P.A) :
+    (P ∥ Q).B (.left a) = P.B a := rfl
 
 @[simp]
-theorem parallelSum_B_right (P : PFunctor.{uA₁, uB})
-    (Q : PFunctor.{uA₂, uB}) (b : Q.A) :
-    (P ∥ Q).B (.right b) = Q.B b :=
-  rfl
+theorem parallelSum_B_right (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (b : Q.A) :
+    (P ∥ Q).B (.right b) = Q.B b := rfl
 
 @[simp]
-theorem parallelSum_B_both (P : PFunctor.{uA₁, uB})
-    (Q : PFunctor.{uA₂, uB}) (a : P.A) (b : Q.A) :
-    (P ∥ Q).B (.both a b) = (P.B a × Q.B b) :=
-  rfl
+theorem parallelSum_B_both (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : P.A) (b : Q.A) :
+    (P ∥ Q).B (.both a b) = (P.B a × Q.B b) := rfl
 
 namespace Equiv
 
 /-- The parallel sum decomposes as the coproduct of the two one-sided cases
 and the joint Dirichlet-tensor case. -/
-def parallelSumDecomposition
-    (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
+def parallelSumDecomposition (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
     (P ∥ Q : PFunctor.{max uA₁ uA₂, uB}) ≃ₚ
       ((P + Q) + (P ⊗ Q) : PFunctor.{max uA₁ uA₂, uB}) where
   equivA := ParallelChoice.sumProdEquiv P.A Q.A
@@ -151,9 +139,7 @@ def parallelSumDecomposition
     | .left _ | .right _ | .both _ _ => _root_.Equiv.refl _
 
 /-- The zero polynomial is the right unit for parallel sum. -/
-def parallelSumZero
-    (P : PFunctor.{uA₁, uB}) :
-    (P ∥ (0 : PFunctor.{uA₂, uB})) ≃ₚ P where
+def parallelSumZero (P : PFunctor.{uA₁, uB}) : (P ∥ (0 : PFunctor.{uA₂, uB})) ≃ₚ P where
   equivA :=
     { toFun := fun
         | .left a => a
@@ -171,9 +157,7 @@ def parallelSumZero
     | .both _ b => PEmpty.elim b
 
 /-- The zero polynomial is the left unit for parallel sum. -/
-def zeroParallelSum
-    (P : PFunctor.{uA₁, uB}) :
-    ((0 : PFunctor.{uA₂, uB}) ∥ P) ≃ₚ P where
+def zeroParallelSum (P : PFunctor.{uA₁, uB}) : ((0 : PFunctor.{uA₂, uB}) ∥ P) ≃ₚ P where
   equivA :=
     { toFun := fun
         | .left a => PEmpty.elim a
@@ -191,18 +175,14 @@ def zeroParallelSum
     | .both a _ => PEmpty.elim a
 
 /-- Symmetry of parallel sum. -/
-def parallelSumComm
-    (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
-    (P ∥ Q) ≃ₚ (Q ∥ P) where
+def parallelSumComm (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : (P ∥ Q) ≃ₚ (Q ∥ P) where
   equivA := ParallelChoice.comm P.A Q.A
   equivB
     | .left _ | .right _ => _root_.Equiv.refl _
     | .both _ _ => _root_.Equiv.prodComm _ _
 
 /-- Associativity of parallel sum. -/
-def parallelSumAssoc
-    (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB})
-    (R : PFunctor.{uA₃, uB}) :
+def parallelSumAssoc (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (R : PFunctor.{uA₃, uB}) :
     ((P ∥ Q) ∥ R) ≃ₚ (P ∥ (Q ∥ R)) where
   equivA := ParallelChoice.assoc P.A Q.A R.A
   equivB

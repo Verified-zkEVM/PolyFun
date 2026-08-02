@@ -112,15 +112,13 @@ class LawfulMonadIter (m : Type u → Type v) [Monad m] [LawfulMonad m]
         | .inl next => iterM body next
         | .inr result => pure result)
   /-- Naturality in the output, also called the parameter identity. -/
-  iter_natural {α β γ : Type u} (body : β → m (β ⊕ α))
-      (k : α → m γ) (init : β) :
+  iter_natural {α β γ : Type u} (body : β → m (β ⊕ α)) (k : α → m γ) (init : β) :
     Eqv (iterM body init >>= k)
       (iterM (fun b => body b >>= fun
         | .inl next => pure (.inl next)
         | .inr result => k result >>= fun value => pure (.inr value)) init)
   /-- Dinaturality in the loop state, also called the composition identity. -/
-  iter_dinatural {α β γ : Type u} (f : α → m (β ⊕ γ))
-      (g : β → m (α ⊕ γ)) (init : α) :
+  iter_dinatural {α β γ : Type u} (f : α → m (β ⊕ γ)) (g : β → m (α ⊕ γ)) (init : α) :
     Eqv
       (iterM (fun a => f a >>= fun
         | .inl b => g b
@@ -131,8 +129,7 @@ class LawfulMonadIter (m : Type u → Type v) [Monad m] [LawfulMonad m]
             | .inr result => pure (.inr result)) b
         | .inr result => pure result)
   /-- Codiagonal / double-dagger law: two nested loops flatten to one. -/
-  iter_codiagonal {α β : Type u} (body : α → m (α ⊕ (α ⊕ β)))
-      (init : α) :
+  iter_codiagonal {α β : Type u} (body : α → m (α ⊕ (α ⊕ β))) (init : α) :
     Eqv (iterM (iterM body) init)
       (iterM (fun a => body a >>= fun
         | .inl next => pure (.inl next)

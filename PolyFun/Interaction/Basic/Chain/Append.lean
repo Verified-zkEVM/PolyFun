@@ -79,8 +79,6 @@ theorem toTypeTree_then : {m n : Nat} → (c : Chain m) →
       (toTypeTree m c).append (fun path => toTypeTree n (k path))
   | 0, n, ⟨⟩, k => by
       simp only [Chain.then, toTypeTree_castRounds, toTypeTree_zero]
-      change toTypeTree n (k ⟨⟩) =
-        (fun path => toTypeTree n (k path)) ⟨⟩
       rfl
   | m + 1, n, ⟨tree, cont⟩, k => by
       simp only [Chain.then, toTypeTree_castRounds, toTypeTree,
@@ -224,8 +222,8 @@ theorem liftThen_eq_liftAppend_cast {m n : Nat} (c : Chain m)
     liftThen c k Family combined =
       PFunctor.FreeM.Path.liftAppend (toTypeTree m c)
         (fun path => toTypeTree n (k path)) Family
-        (Equiv.cast (congrArg Path (toTypeTree_then c k)) combined) := by
-  exact (PFunctor.FreeM.Path.liftAppend_split (toTypeTree m c)
+        (Equiv.cast (congrArg Path (toTypeTree_then c k)) combined) :=
+  (PFunctor.FreeM.Path.liftAppend_split (toTypeTree m c)
     (fun path => toTypeTree n (k path)) Family
     (Equiv.cast (congrArg Path (toTypeTree_then c k)) combined)).symm
 

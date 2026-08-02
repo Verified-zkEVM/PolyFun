@@ -157,22 +157,12 @@ def comp {S₃ : Type u₃} {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem S₃
 @[simp] theorem comp_id (rel : StepRel s₁ s₂) :
     comp rel (id s₂) = rel := by
   funext step₁ step₂
-  apply propext
-  constructor
-  · rintro ⟨middle, hrel, rfl⟩
-    exact hrel
-  · intro hrel
-    exact ⟨step₂, hrel, rfl⟩
+  simp [comp, id]
 
 @[simp] theorem id_comp (rel : StepRel s₁ s₂) :
     comp (id s₁) rel = rel := by
   funext step₁ step₂
-  apply propext
-  constructor
-  · rintro ⟨middle, rfl, hrel⟩
-    exact hrel
-  · intro hrel
-    exact ⟨step₁, rfl, hrel⟩
+  simp [comp, id]
 
 /-- Relational composition of concrete-step relations is associative. -/
 theorem comp_assoc {S₃ : Type u₃} {S₄ : Type u₄}
@@ -181,12 +171,7 @@ theorem comp_assoc {S₃ : Type u₃} {S₄ : Type u₄}
     (first : StepRel s₁ s₂) (second : StepRel s₂ s₃) (third : StepRel s₃ s₄) :
     comp (comp first second) third = comp first (comp second third) := by
   funext step₁ step₄
-  apply propext
-  constructor
-  · rintro ⟨step₃, ⟨step₂, hFirst, hSecond⟩, hThird⟩
-    exact ⟨step₂, hFirst, step₃, hSecond, hThird⟩
-  · rintro ⟨step₂, hFirst, step₃, hSecond, hThird⟩
-    exact ⟨step₃, ⟨step₂, hFirst, hSecond⟩, hThird⟩
+  grind [comp]
 
 /-- The permissive relation accepting every pair of concrete steps. -/
 def top : StepRel s₁ s₂ := fun _ _ => True
@@ -214,12 +199,7 @@ theorem reverse_comp {S₃ : Type u₃} {r : PFunctor.{uA₃, uB₃}} {s₃ : Dy
     (first : StepRel s₁ s₂) (second : StepRel s₂ s₃) :
     reverse (comp first second) = comp (reverse second) (reverse first) := by
   funext step₃ step₁
-  apply propext
-  constructor
-  · rintro ⟨step₂, hFirst, hSecond⟩
-    exact ⟨step₂, hSecond, hFirst⟩
-  · rintro ⟨step₂, hSecond, hFirst⟩
-    exact ⟨step₂, hFirst, hSecond⟩
+  simp [reverse, comp, and_comm]
 
 /-- Conjunction of step relations. -/
 def inter (first second : StepRel s₁ s₂) : StepRel s₁ s₂ :=

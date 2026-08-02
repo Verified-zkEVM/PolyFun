@@ -74,16 +74,16 @@ def extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) : CofreeC 
   induction t using PFunctor.M.casesOn' with
   | _ a g =>
       cases a
-      simp [extendF, extract, head]
+      simp only [extendF, extract, head, M.dest_mk]
       rfl
 
 @[simp] theorem dest_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     M.dest (extend t f) = (constProd F β).map (fun x => extend x f) (extendF f t) := by
-  simp only [extend]; exact (M.dest_corec (P := constProd F β) (g := extendF f) t)
+  simp only [extend]; exact M.dest_corec (P := constProd F β) (g := extendF f) t
 
 theorem dest_extend_eq {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     M.dest (extend t f) = ⟨(f t, (M.dest t).1.2), (fun x => extend x f) ∘ (M.dest t).2⟩ := by
-  simp [extendF, PFunctor.map_eq]
+  simp only [dest_extend, extendF, PFunctor.map_eq]
   rfl
 
 @[simp] theorem head_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
@@ -94,7 +94,7 @@ theorem dest_extend_eq {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β
     tail (extend t f) = F.map (fun x => extend x f) (tail t) := by
   unfold tail
   rw [dest_extend]
-  simp [extendF, PFunctor.map_eq]
+  simp only [extendF, PFunctor.map_eq]
   rfl
 
 instance : Comonad (CofreeC F) where
@@ -104,12 +104,12 @@ instance : Comonad (CofreeC F) where
 @[simp] theorem extend_extract (t : CofreeC F α) : extend t extract = t := by
   let h : CofreeC F α → CofreeC F α := fun x => extend x extract
   have h_corec : h = M.corec (F := constProd F α) M.dest := by
-    apply (M.corec_unique (P := constProd F α) (g := M.dest) (f := h))
+    apply M.corec_unique (P := constProd F α) (g := M.dest) (f := h)
     intro x
-    simp [h, dest_extend (t := x) (f := extract)]
+    simp only [dest_extend, extendF_extract, h]
     rfl
   have hid_corec : (id : CofreeC F α → CofreeC F α) = M.corec (F := constProd F α) M.dest := by
-    apply (M.corec_unique (P := constProd F α) (g := M.dest) (f := id))
+    apply M.corec_unique (P := constProd F α) (g := M.dest) (f := id)
     intro x
     simp [PFunctor.id_map (P := constProd F α) (x := M.dest x)]
   have h_eq_id : h = id := by rw [h_corec, hid_corec]
@@ -126,8 +126,8 @@ instance : Comonad (CofreeC F) where
   let r : CofreeC F α → CofreeC F γ := fun x => extend x (fun y => g (extend y f))
   have hr_corec : r = M.corec (F := constProd F γ) (extendF (fun y => g (extend y f))) := rfl
   have hl_corec : l = M.corec (F := constProd F γ) (extendF (fun y => g (extend y f))) := by
-    apply (M.corec_unique (P := constProd F γ)
-      (g := extendF (fun y => g (extend y f))) (f := l))
+    apply M.corec_unique (P := constProd F γ)
+      (g := extendF (fun y => g (extend y f))) (f := l)
     intro x
     change M.dest (extend (extend x f) g) =
       (constProd F γ).map l (extendF (fun y => g (extend y f)) x)
@@ -179,8 +179,6 @@ instance : LawfulComonad (CofreeC F) where
   extend_assoc := by
     intro α β γ t f g
     exact CofreeC.extend_assoc t f g
---  'map_const', 'id_map', 'comp_map', 'coseqLeft_eq', 'coseqRight_eq', 'coseq_assoc',
---  'map_eq_extend_extract', 'extend_extract', 'extract_extend', 'extend_assoc'
 
 end CofreeC
 

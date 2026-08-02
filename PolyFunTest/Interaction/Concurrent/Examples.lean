@@ -3,18 +3,18 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Execution
 import PolyFun.Interaction.Concurrent.Equivalence
+import PolyFun.Interaction.Concurrent.Execution
 import PolyFun.Interaction.Concurrent.Fairness
-import PolyFun.Interaction.Concurrent.Interleaving
 import PolyFun.Interaction.Concurrent.Independence
+import PolyFun.Interaction.Concurrent.Interleaving
 import PolyFun.Interaction.Concurrent.Liveness
+import PolyFun.Interaction.Concurrent.Machine
 import PolyFun.Interaction.Concurrent.Observation
 import PolyFun.Interaction.Concurrent.Policy
 import PolyFun.Interaction.Concurrent.Refinement
 import PolyFun.Interaction.Concurrent.Run
 import PolyFun.Interaction.Concurrent.Tree
-import PolyFun.Interaction.Concurrent.Machine
 
 /-!
 # Concurrent interaction examples
@@ -151,8 +151,7 @@ example : Current.controller? inFlightControl = some .adv := rfl
 example : Current.scheduler? inFlightControl = some .adv := rfl
 
 example :
-    Current.view Party.adv inFlightControl inFlightProfile = Multiparty.ViewMode.pick := by
-  rfl
+    Current.view Party.adv inFlightControl inFlightProfile = Multiparty.ViewMode.pick := rfl
 
 example :
     Current.observe Party.adv inFlightControl inFlightProfile
@@ -175,12 +174,10 @@ example : Current.controller? afterDelivery = some .bob := rfl
 example : Current.scheduler? afterDelivery = none := rfl
 
 example :
-    Current.view Party.bob afterDelivery afterDeliveryProfile = Multiparty.ViewMode.pick := by
-  rfl
+    Current.view Party.bob afterDelivery afterDeliveryProfile = Multiparty.ViewMode.pick := rfl
 
 example :
-    Current.view Party.adv afterDelivery afterDeliveryProfile = Multiparty.ViewMode.hidden := by
-  rfl
+    Current.view Party.adv afterDelivery afterDeliveryProfile = Multiparty.ViewMode.hidden := rfl
 
 example :
     Current.observe Party.adv afterDelivery afterDeliveryProfile (.right (.move false)) =

@@ -119,8 +119,7 @@ theorem children_decode (x : (CofreeP P).Obj α)
     (direction : P.B (M.head x.1)) :
     M.children (decode x) (toDecodeDirection x direction) =
       decode (childObj x direction) := by
-  have hChildren := (Sigma.ext_iff.mp (dest_decode x)).2
-  exact congr_heq hChildren (cast_heq _ direction)
+  exact congr_heq (Sigma.ext_iff.mp (dest_decode x)).2 (cast_heq _ direction)
 
 @[simp]
 theorem forgetLabels_toFunB (shape : (constProd P α).A)
@@ -278,8 +277,7 @@ private theorem encode_decode_label (x : (CofreeP P).Obj α)
                 (erase_decode (childObj x direction)).symm) next :=
             (cast_heq _ next).trans (cast_heq _ next).symm
           have happ := congr_heq hfunctions hvertices
-          apply eq_of_heq
-          exact heq_of_eq happ
+          exact happ
         _ = labels (.child direction next) := by
           simpa only [x, childObj] using
             ih (fun vertex => labels (.child direction vertex))

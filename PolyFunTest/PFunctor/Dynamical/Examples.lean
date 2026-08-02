@@ -128,33 +128,28 @@ example : (counter.streamRun (0 : ℕ) fun _ => 2).eventsUpTo parityEvent 2 = [t
 example : ((counter.feedback fun _ => 1).iterateRun (0 : ℕ)).state 5 = (5 : ℕ) := rfl
 
 /-- Every run of a Moore machine is its input-driven state stream. -/
-example (r : DynSystem.Run counter) (n : ℕ) :
-    r.state n = counter.stateStream r.initial r.dir n :=
+example (r : DynSystem.Run counter) (n : ℕ) : r.state n = counter.stateStream r.initial r.dir n :=
   counter.state_eq_stateStream r n
 
 /-- Zero-step reachability is reflexive. -/
 example : toggle.ReachableIn 0 (3 : ℕ) (3 : ℕ) := .refl toggle (3 : ℕ)
 
 /-- Two increments reach `5` from `3` in two steps. -/
-example : toggle.ReachableIn 2 (3 : ℕ) (5 : ℕ) :=
-  .step true (.step true (.refl toggle (5 : ℕ)))
+example : toggle.ReachableIn 2 (3 : ℕ) (5 : ℕ) := .step true (.step true (.refl toggle (5 : ℕ)))
 
 /-! ## Asynchronous choice -/
 
 /-- One `choiceProd` step advances exactly the chosen side. -/
-example :
-    (counter.choiceProd counter).update ((0 : ℕ), (5 : ℕ)) (.inl (3 : ℕ))
-      = ((3 : ℕ), (5 : ℕ)) := rfl
+example : (counter.choiceProd counter).update ((0 : ℕ), (5 : ℕ)) (.inl (3 : ℕ))
+    = ((3 : ℕ), (5 : ℕ)) := rfl
 
-example :
-    (counter.choiceProd counter).update ((0 : ℕ), (5 : ℕ)) (.inr (7 : ℕ))
-      = ((0 : ℕ), (12 : ℕ)) := rfl
+example : (counter.choiceProd counter).update ((0 : ℕ), (5 : ℕ)) (.inr (7 : ℕ))
+    = ((0 : ℕ), (12 : ℕ)) := rfl
 
 /-! ## Behavior trees and ITree unfolding -/
 
 /-- The defining equation of the terminal-coalgebra behavior. -/
-example : M.dest (counter.behavior (2 : ℕ))
-    = ⟨(2 : ℕ), fun (i : ℕ) => counter.behavior (2 + i)⟩ :=
+example : M.dest (counter.behavior (2 : ℕ)) = ⟨(2 : ℕ), fun (i : ℕ) => counter.behavior (2 + i)⟩ :=
   counter.dest_behavior (2 : ℕ)
 
 /-- Observational equivalence is reflexive by definition. -/

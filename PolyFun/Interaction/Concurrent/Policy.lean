@@ -134,9 +134,8 @@ theorem respects_top
     {p : process.Proc} (trace : Trace process p) :
     respects StepPolicy.top trace = true := by
   induction trace with
-  | done h => rfl
-  | step tr tail ih =>
-      simp [Trace.respects, StepPolicy.top, ih]
+  | done _ => rfl
+  | step tr tail ih => simp [Trace.respects, StepPolicy.top, ih]
 
 end Trace
 

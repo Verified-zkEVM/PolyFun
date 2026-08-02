@@ -3,14 +3,14 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
+import Mathlib.Control.Monad.Basic
+import Mathlib.Data.Sigma.Basic
+import PolyFun.Control.Lawful.Basic
 import PolyFun.Interaction.Basic.Append
 import PolyFun.Interaction.Basic.Replicate
+import PolyFun.Interaction.Basic.StateChain
 import PolyFun.Interaction.TwoParty.Decoration
 import PolyFun.Interaction.TwoParty.Strategy
-import Mathlib.Control.Monad.Basic
-import PolyFun.Control.Lawful.Basic
-import Mathlib.Data.Sigma.Basic
-import PolyFun.Interaction.Basic.StateChain
 
 /-!
 # Composing two-party protocols
@@ -28,12 +28,11 @@ family on the combined path.
 
 open LawfulMonad
 
-universe u v
+universe u
 
 namespace Interaction
 namespace TwoParty
 
-variable {m : Type u → Type u}
 open TwoParty
 
 /-- A lawful monad whose independent effects may be swapped.

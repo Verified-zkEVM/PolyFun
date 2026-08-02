@@ -40,8 +40,7 @@ variable {I : Type uI}
 /-- The state-indexed free monad over an endomorphic `IPFunctor`. The return family
 `X : I → Type v` is state-indexed, so each leaf carries a value of type `X s` at its own
 leaf state `s`. -/
-inductive IFreeM (P : Endo.{uI, uA, uB} I) (X : I → Type v) :
-    I → Type (max uI uA uB (v + 1))
+inductive IFreeM (P : Endo.{uI, uA, uB} I) (X : I → Type v) : I → Type (max uI uA uB (v + 1))
   /-- A pure leaf at state `s` carrying a value of type `X s`. -/
   | pure {s : I} (x : X s) : IFreeM P X s
   /-- Roll a shape at state `s` into a continuation, with each branch landing at the
@@ -90,18 +89,12 @@ lemma imap_liftBind (f : ∀ s, X s → Y s) {s : I} (a : P.A s)
 /-! ## Injectivity -/
 
 lemma pure_inj {s : I} (x y : X s) :
-    IFreeM.pure (P := P) x = IFreeM.pure y ↔ x = y := by
-  refine ⟨?_, fun h => by rw [h]⟩
-  intro h; cases h; rfl
+    IFreeM.pure (P := P) x = IFreeM.pure y ↔ x = y := by simp
 
 lemma liftBind_inj {s : I} (a a' : P.A s)
     (r : (b : P.B s a) → IFreeM P X (P.src s a b))
     (r' : (b : P.B s a') → IFreeM P X (P.src s a' b)) :
-    IFreeM.liftBind a r = IFreeM.liftBind a' r' ↔ ∃ h : a = a', h ▸ r = r' := by
-  by_cases ha : a = a'
-  · subst ha; simp
-  · refine ⟨fun h => ?_, fun ⟨h, _⟩ => absurd h ha⟩
-    cases h; exact (ha rfl).elim
+    IFreeM.liftBind a r = IFreeM.liftBind a' r' ↔ ∃ h : a = a', h ▸ r = r' := by grind
 
 /-! ## Induction principles
 

@@ -51,13 +51,11 @@ def terminalSystem : DynSystem (PFunctor.M P) P :=
   (fun tree => tree.head) ⇆ (fun tree => tree.children)
 
 @[simp]
-theorem terminalSystem_out (tree : PFunctor.M P) :
-    terminalSystem.out tree = PFunctor.M.dest tree :=
+theorem terminalSystem_out (tree : PFunctor.M P) : terminalSystem.out tree = PFunctor.M.dest tree :=
   rfl
 
 @[simp]
-theorem terminalSystem_behavior (tree : PFunctor.M P) :
-    terminalSystem.behavior tree = tree :=
+theorem terminalSystem_behavior (tree : PFunctor.M P) : terminalSystem.behavior tree = tree :=
   PFunctor.M.corec_dest tree
 
 end M
@@ -183,14 +181,12 @@ def terminal : Responder (PFunctor.M (P ⊸ X.{uA, uB})) P :=
   PFunctor.M.terminalSystem
 
 @[simp]
-theorem terminal_behavior (tree : PFunctor.M (P ⊸ X.{uA, uB})) :
-    terminal.behavior tree = tree :=
+theorem terminal_behavior (tree : PFunctor.M (P ⊸ X.{uA, uB})) : terminal.behavior tree = tree :=
   PFunctor.M.terminalSystem_behavior tree
 
 /-- The child of a presented responder behavior after a query is the behavior
 of the presented responder's next state. -/
-theorem behavior_child (R : Responder State P)
-    (state : State) (query : P.A) :
+theorem behavior_child (R : Responder State P) (state : State) (query : P.A) :
     PFunctor.M.children (R.behavior state) ⟨query, PUnit.unit⟩ =
       R.behavior (R.next state query) := by
   change
@@ -199,8 +195,7 @@ theorem behavior_child (R : Responder State P)
   rfl
 
 @[simp]
-theorem terminal_answer_behavior (R : Responder State P)
-    (state : State) (query : P.A) :
+theorem terminal_answer_behavior (R : Responder State P) (state : State) (query : P.A) :
     (terminal (P := P)).answer (R.behavior state) query =
       R.answer state query := by
   change
@@ -209,8 +204,7 @@ theorem terminal_answer_behavior (R : Responder State P)
   rfl
 
 @[simp]
-theorem terminal_next_behavior (R : Responder State P)
-    (state : State) (query : P.A) :
+theorem terminal_next_behavior (R : Responder State P) (state : State) (query : P.A) :
     (terminal (P := P)).next (R.behavior state) query =
       R.behavior (R.next state query) := by
   change
@@ -472,8 +466,7 @@ def reindexBehavior (f : Handler (FreeM Q) P)
 
 /-- State-free behavior reindexing is invariant under equality of its free
 handler. -/
-theorem reindexBehavior_congr
-    {f g : Handler (FreeM Q) P} (h : f = g)
+theorem reindexBehavior_congr {f g : Handler (FreeM Q) P} (h : f = g)
     (behavior : PFunctor.M (Q ⊸ X.{uA', uB'})) :
     reindexBehavior f behavior = reindexBehavior g behavior :=
   congrArg (fun handler => reindexBehavior handler behavior) h
@@ -519,8 +512,7 @@ theorem reindexBehavior_behavior (f : Handler (FreeM Q) P)
     (DynSystem.behavior_unique (Responder.reindex f R) presented hOut) state
 
 @[simp]
-theorem reindexBehavior_id
-    (behavior : PFunctor.M (P ⊸ X.{uA, uB})) :
+theorem reindexBehavior_id (behavior : PFunctor.M (P ⊸ X.{uA, uB})) :
     reindexBehavior (Handler.id P) behavior = behavior := by
   calc
     reindexBehavior (Handler.id P) behavior =

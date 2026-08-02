@@ -246,8 +246,8 @@ noncomputable def verticalCartesianDiagonal
   apply Lens.ext _ _ hA
   intro p
   apply eq_of_heq
-  have hp : c.toFunA (f.toFunA p) = g.toFunA (v.toFunA p) := by
-    exact congrFun (congrArg Lens.toFunA comm) p
+  have hp : c.toFunA (f.toFunA p) = g.toFunA (v.toFunA p) :=
+    congrFun (congrArg Lens.toFunA comm) p
   let e := cartesianDirectionEquiv c hc (f.toFunA p)
   have hnorm : (verticalCartesianDiagonal v f c g hv hc comm ∘ₗ v).toFunB p ≍
       v.toFunB p ∘ fun rb => g.toFunB (v.toFunA p) (hp ▸ e.symm rb) := by
@@ -275,8 +275,7 @@ noncomputable def verticalCartesianDiagonal
     have harg : e.symm rb ≍ hp ▸ e.symm rb := (eqRec_heq _ _).symm
     have hsquare := congr_heq hfun harg
     simpa [comp, Function.comp_apply, e] using hsquare.symm
-  have hcast : (hA p ▸ f.toFunB p) ≍ f.toFunB p := by
-    exact eqRec_heq_self _ _
+  have hcast : (hA p ▸ f.toFunB p) ≍ f.toFunB p := eqRec_heq_self _ _
   exact hnorm.trans ((heq_of_eq hnormEq).trans hcast.symm)
 
 /-- The canonical diagonal fills the right triangle. -/
@@ -352,8 +351,7 @@ private theorem eq_of_comp_cartesian_eq_of_toFunA_eq
       congr_arg_heq Sigma.snd hout
     have happ := congr_heq hfun hs
     simpa [comp, Function.comp_apply] using happ
-  have hcast : (hA p ▸ l₂.toFunB p) ≍ l₂.toFunB p := by
-    exact eqRec_heq_self _ _
+  have hcast : (hA p ▸ l₂.toFunB p) ≍ l₂.toFunB p := eqRec_heq_self _ _
   exact hcancel.trans hcast.symm
 
 /-- The vertical/cartesian diagonal is unique. Consequently the bundled type

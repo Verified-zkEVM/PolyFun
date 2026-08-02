@@ -131,9 +131,8 @@ theorem one {t : ITree F α} (c : PUnit.{uFB + 1} → ITree F α)
 
 /-- The `.step` relation is deterministic on step-headed trees. -/
 theorem cont_eq {t : ITree F α} {c c' : PUnit.{uFB + 1} → ITree F α}
-    (h : shape' t = ⟨.step, c⟩) (h' : shape' t = ⟨.step, c'⟩) : c = c' := by
-  have hmk := h.symm.trans h'
-  exact eq_of_heq (Sigma.mk.inj hmk).2
+    (h : shape' t = ⟨.step, c⟩) (h' : shape' t = ⟨.step, c'⟩) : c = c' :=
+  eq_of_heq (Sigma.mk.inj (h.symm.trans h')).2
 
 /-- `TauSteps` is linear: any two strippings from the same tree are
 comparable. Uses determinism of `shape'`. -/
@@ -411,8 +410,8 @@ theorem coinduct (R : ITree F α → ITree F α → Prop)
   WeakBisimRel.coinduct Eq R (fun a b hR => (h a b hR).toWeakBisimRelF) hab
 
 /-- `WeakBisim` is closed under `WeakBisimF`. -/
-theorem unfold {t s : ITree F α} (h : t ≈ s) : WeakBisimF WeakBisim t s := by
-  exact (WeakBisimRel.unfold h).toWeakBisimF
+theorem unfold {t s : ITree F α} (h : t ≈ s) : WeakBisimF WeakBisim t s :=
+  (WeakBisimRel.unfold h).toWeakBisimF
 
 /-- Extract the stripped-heads match witness. -/
 theorem dest {t s : ITree F α} (h : t ≈ s) :

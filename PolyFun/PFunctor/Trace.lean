@@ -83,15 +83,13 @@ def DirectionsWithin {P : PFunctor.{uA, uB}}
   ∀ event ∈ events, event.2 ∈ allowed event.1
 
 @[simp]
-theorem directionsWithin_nil {P : PFunctor.{uA, uB}}
-    (allowed : (a : P.A) → Set (P.B a)) :
+theorem directionsWithin_nil {P : PFunctor.{uA, uB}} (allowed : (a : P.A) → Set (P.B a)) :
     DirectionsWithin allowed ([] : TraceList P) :=
   fun _ event_mem => absurd event_mem List.not_mem_nil
 
 @[simp]
 theorem directionsWithin_cons {P : PFunctor.{uA, uB}}
-    (allowed : (a : P.A) → Set (P.B a)) (event : P.Idx)
-    (events : TraceList P) :
+    (allowed : (a : P.A) → Set (P.B a)) (event : P.Idx) (events : TraceList P) :
     DirectionsWithin allowed (event :: events) ↔
       event.2 ∈ allowed event.1 ∧ DirectionsWithin allowed events :=
   List.forall_mem_cons
@@ -112,8 +110,7 @@ def getAt? {P : PFunctor.{uA, uB}} [DecidableEq P.A]
       | ⟨a, _⟩ :: tail, n + 1 =>
           if a = target then getAt? tail target n else getAt? tail target (n + 1)
 
-@[simp] theorem getAt?_nil {P : PFunctor.{uA, uB}} [DecidableEq P.A]
-    (target : P.A) (n : Nat) :
+@[simp] theorem getAt?_nil {P : PFunctor.{uA, uB}} [DecidableEq P.A] (target : P.A) (n : Nat) :
     getAt? ([] : TraceList P) target n = none := rfl
 
 @[simp] theorem getAt?_cons_self_zero {P : PFunctor.{uA, uB}} [DecidableEq P.A]
@@ -133,8 +130,7 @@ def getAt? {P : PFunctor.{uA, uB}} [DecidableEq P.A]
   cases n <;> simp [getAt?, hne]
 
 /-- A dependent trace lookup succeeds exactly for the counted occurrences. -/
-@[simp] theorem getAt?_isSome_iff_lt_occurrences
-    {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+@[simp] theorem getAt?_isSome_iff_lt_occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (events : TraceList P) (target : P.A) (n : Nat) :
     (getAt? events target n).isSome ↔ n < occurrences target events := by
   induction events generalizing n with
@@ -147,8 +143,7 @@ def getAt? {P : PFunctor.{uA, uB}} [DecidableEq P.A]
       · simp [occurrences, h, ih]
 
 /-- The event following a prefix is found at the prefix's occurrence count. -/
-theorem getAt?_append_self_occurrences
-    {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+theorem getAt?_append_self_occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (before after : TraceList P) (target : P.A) (answer : P.B target) :
     getAt? (List.append before ((show P.Idx from ⟨target, answer⟩) :: after)) target
       (occurrences target before) = some answer := by
@@ -197,21 +192,18 @@ property.  Every valuation `φ : Idx P → ω` extends uniquely to a monoid
 homomorphism `FreeMonoid (Idx P) →* ω`; `toMonoid φ` post-composes a `P`-trace
 with that hom.
 -/
-def toMonoid {ω : Type w} [Monoid ω] (φ : Idx P → ω) :
-    Trace P X → Control.Trace ω X :=
+def toMonoid {ω : Type w} [Monoid ω] (φ : Idx P → ω) : Trace P X → Control.Trace ω X :=
   Control.Trace.map (FreeMonoid.lift φ)
 
 /-! ### Pointwise behaviour -/
 
-@[simp] theorem mapPartial_apply (f : Idx P → Option (Idx Q)) (t : Trace P X)
-    (x : X) :
+@[simp] theorem mapPartial_apply (f : Idx P → Option (Idx Q)) (t : Trace P X) (x : X) :
     mapPartial f t x = List.filterMap f (t x) := rfl
 
 @[simp] theorem mapChart_apply (φ : Chart P Q) (t : Trace P X) (x : X) :
     mapChart φ t x = (t x).filterMap (fun i => some (Chart.mapIdx φ i)) := rfl
 
-@[simp] theorem toMonoid_apply {ω : Type w} [Monoid ω] (φ : Idx P → ω)
-    (t : Trace P X) (x : X) :
+@[simp] theorem toMonoid_apply {ω : Type w} [Monoid ω] (φ : Idx P → ω) (t : Trace P X) (x : X) :
     toMonoid φ t x = FreeMonoid.lift φ (t x) := rfl
 
 /-! ### Functoriality of `mapPartial` and `mapChart` -/
@@ -221,15 +213,13 @@ def toMonoid {ω : Type w} [Monoid ω] (φ : Idx P → ω) :
   funext x
   exact List.filterMap_some
 
-theorem mapPartial_comp (g : Idx Q → Option (Idx R))
-    (f : Idx P → Option (Idx Q)) (t : Trace P X) :
+theorem mapPartial_comp (g : Idx Q → Option (Idx R)) (f : Idx P → Option (Idx Q)) (t : Trace P X) :
     mapPartial g (mapPartial f t) = mapPartial (fun i => (f i).bind g) t := by
   funext x
   exact List.filterMap_filterMap
 
-@[simp] theorem mapChart_id (t : Trace P X) : mapChart (Chart.id P) t = t := by
-  change mapPartial (fun i => some (Chart.mapIdx (Chart.id P) i)) t = t
-  exact mapPartial_some t
+@[simp] theorem mapChart_id (t : Trace P X) : mapChart (Chart.id P) t = t :=
+  mapPartial_some t
 
 @[simp] theorem mapChart_comp (g : Chart Q R) (f : Chart P Q) (t : Trace P X) :
     mapChart (g ∘c f) t = mapChart g (mapChart f t) := by

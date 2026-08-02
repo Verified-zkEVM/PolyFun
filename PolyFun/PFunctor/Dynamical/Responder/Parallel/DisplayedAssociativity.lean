@@ -164,10 +164,8 @@ private def parallelAssocPresentationHom
 
 /-- Present a raw right-associated parallel responder by terminalizing its
 inner parallel component. -/
-private def parallelAssocRightPresentationHom
-    {R : PFunctor.{uA₃, uB}}
-    (S : Display.{uA₁, uB, uC₁, uD₁} P)
-    (T : Display.{uA₂, uB, uC₂, uD₂} Q)
+private def parallelAssocRightPresentationHom {R : PFunctor.{uA₃, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P) (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (U : Display.{uA₃, uB, uC₃, uD₃} R) :=
   PresentationHom.parallel
     (PresentationHom.id (S := S)
@@ -188,10 +186,8 @@ private def parallelAssocRightPresentationHom
 
 /-- Present a raw left-associated parallel responder by terminalizing its
 inner parallel component. -/
-private def parallelAssocLeftPresentationHom
-    {R : PFunctor.{uA₃, uB}}
-    (S : Display.{uA₁, uB, uC₁, uD₁} P)
-    (T : Display.{uA₂, uB, uC₂, uD₂} Q)
+private def parallelAssocLeftPresentationHom {R : PFunctor.{uA₃, uB}}
+    (S : Display.{uA₁, uB, uC₁, uD₁} P) (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (U : Display.{uA₃, uB, uC₃, uD₃} R) :=
   PresentationHom.parallel
     (PresentationHom.toTerminal (Display.parallelSum S T)
@@ -217,8 +213,7 @@ theorem mapDisplayedBehavior_parallel_assoc
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (U : Display.{uA₃, uB, uC₃, uD₃} R)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (displayedLeft : Display.M (Display.responder S) left)
+    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (displayedLeft : Display.M (Display.responder S) left)
     (middle : PFunctor.M (Q ⊸ X.{uA₂, uB}))
     (displayedMiddle : Display.M (Display.responder T) middle)
     (right : PFunctor.M (R ⊸ X.{uA₃, uB}))

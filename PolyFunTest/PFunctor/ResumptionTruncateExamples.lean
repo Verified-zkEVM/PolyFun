@@ -24,15 +24,12 @@ def truncateUniverseCanary {p : PFunctor.{uA, uB}} {β : Type uβ}
 def oneQueryTree : Resumption X Nat :=
   query PUnit.unit fun _ => pure 7
 
-example : truncate 0 oneQueryTree = FreeM.pure none := by
-  simp [oneQueryTree]
+example : truncate 0 oneQueryTree = FreeM.pure none := by simp [oneQueryTree]
 
 example : truncate 1 oneQueryTree =
-    FreeM.liftBind PUnit.unit fun _ => FreeM.pure (some 7) := by
-  simp [oneQueryTree]
+    FreeM.liftBind PUnit.unit fun _ => FreeM.pure (some 7) := by simp [oneQueryTree]
 
-example : (truncate 1 oneQueryTree).IsTotalRollBound 1 :=
-  isTotalRollBound_truncate 1 oneQueryTree
+example : (truncate 1 oneQueryTree).IsTotalRollBound 1 := isTotalRollBound_truncate 1 oneQueryTree
 
 /-- A nontrivial interface whose two answers select different continuations. -/
 def branchP : PFunctor.{0, 0} := monomial Bool Bool
@@ -54,8 +51,7 @@ def twoLevelTree : Resumption branchP Nat :=
   unfold twoLevelTree twoLevelProgram
   exact FreeM.dest_toResumption_liftBind (p := branchP) false secondProgram
 
-example : truncate 0 twoLevelTree = FreeM.pure none := by
-  rw [truncate_zero, dest_twoLevelTree]
+example : truncate 0 twoLevelTree = FreeM.pure none := by rw [truncate_zero, dest_twoLevelTree]
 
 /-- At one query, the short branch returns while the long branch has an
 observable cutoff leaf. -/
@@ -73,7 +69,6 @@ example : truncate 1 twoLevelTree =
       rw [truncate_zero]
       unfold secondProgram
       rw [FreeM.dest_toResumption_liftBind]
-      change FreeM.pure none = FreeM.pure none
       rfl
 
 theorem twoLevelProgram_bound : twoLevelProgram.IsTotalRollBound 2 := by

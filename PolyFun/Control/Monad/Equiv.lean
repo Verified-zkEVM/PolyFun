@@ -57,8 +57,8 @@ instance : Coe (NatEquiv m n) (NatHom n m) where
 def refl (m : Type u → Type v) : NatEquiv m m where
   toFun := id
   invFun := id
-  left_inv := by intros; simp [Function.LeftInverse, id]
-  right_inv := by intros; simp [Function.RightInverse, Function.LeftInverse, id]
+  left_inv _ := rfl
+  right_inv _ := rfl
 
 /-- The inverse of a natural equivalence between `m` and `n`. -/
 def symm (e : NatEquiv m n) : NatEquiv n m where
@@ -107,11 +107,8 @@ lemma map_pure (f : PureEquiv m n) {α : Type u} (x : α) :
 
 @[simp]
 lemma map_pure_inv (f : PureEquiv m n) {α : Type u} (x : α) :
-    f.invFun (pure x) = (pure x : m α) := by
-  have h1 : f.toFun (f.invFun (pure x)) = pure x := f.right_inv (pure x)
-  have h2 : f.toFun (pure x) = pure x := f.map_pure' x
-  have h3 : f.toFun (f.invFun (pure x)) = f.toFun (pure x) := by rw [h1, h2]
-  exact Function.LeftInverse.injective f.left_inv h3
+    f.invFun (pure x) = (pure x : m α) :=
+  f.left_inv.injective <| by rw [f.right_inv, f.map_pure']
 
 end PureEquiv
 
@@ -137,21 +134,12 @@ lemma map_bind (f : BindEquiv m n) {α β : Type u} (x : m α) (y : α → m β)
 
 @[simp]
 lemma map_bind_inv (f : BindEquiv m n) {α β : Type u} (x : n α) (y : α → n β) :
-    f.invFun (x >>= y) = f.invFun x >>= (fun a => f.invFun (y a)) := by
-  -- We'll show f.toFun applied to both sides gives the same result
-  have h1 : f.toFun (f.invFun (x >>= y)) = x >>= y := f.right_inv (x >>= y)
-  have h2 : f.toFun (f.invFun x >>= (fun a => f.invFun (y a))) =
-            f.toFun (f.invFun x) >>= (fun a => f.toFun (f.invFun (y a))) := f.map_bind' _ _
-  have h3 : f.toFun (f.invFun x) = x := f.right_inv x
-  have h4 : ∀ a, f.toFun (f.invFun (y a)) = y a := fun a => f.right_inv (y a)
-  have h5 : f.toFun (f.invFun x >>= (fun a => f.invFun (y a))) = x >>= y := by
-    rw [h2, h3]
-    congr 1
-    ext a
-    exact h4 a
-  have h6 : f.toFun (f.invFun (x >>= y)) = f.toFun (f.invFun x >>= (fun a => f.invFun (y a))) := by
-    rw [h1, h5]
-  exact Function.LeftInverse.injective f.left_inv h6
+    f.invFun (x >>= y) = f.invFun x >>= (fun a => f.invFun (y a)) :=
+  -- `f.toFun` is injective, and it sends both sides to `x >>= y`.
+  f.left_inv.injective <| by
+    rw [f.right_inv, f.map_bind', f.right_inv]
+    congr 1 with a
+    rw [f.right_inv]
 
 end BindEquiv
 

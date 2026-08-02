@@ -54,16 +54,16 @@ This definition is written by pattern matching, rather than by equality tests,
 so that endpoint types reduce definitionally in examples.
 -/
 def resolveBroadcastFor (me owner : ThreeParty) {X : Type u} : ViewMode X :=
-      match me, owner with
-      | .prover, .prover => .pick
-      | .prover, .verifier => .observe
-      | .prover, .extractor => .observe
-      | .verifier, .prover => .observe
-      | .verifier, .verifier => .pick
-      | .verifier, .extractor => .observe
-      | .extractor, .prover => .observe
-      | .extractor, .verifier => .observe
-      | .extractor, .extractor => .pick
+  match me, owner with
+  | .prover, .prover => .pick
+  | .prover, .verifier => .observe
+  | .prover, .extractor => .observe
+  | .verifier, .prover => .observe
+  | .verifier, .verifier => .pick
+  | .verifier, .extractor => .observe
+  | .extractor, .prover => .observe
+  | .extractor, .verifier => .observe
+  | .extractor, .extractor => .pick
 
 /--
 `resolveDirectedFor me src dst` is the local-view projection of the directed
@@ -78,16 +78,16 @@ As in the broadcast model, this resolver is defined by pattern matching, so
 that local endpoint types unfold definitionally.
 -/
 def resolveDirectedFor (me src dst : ThreeParty) {X : Type u} : ViewMode X :=
-      match me, src, dst with
-      | .prover, .prover, _ => .pick
-      | .prover, _, .prover => .observe
-      | .prover, _, _ => .hidden
-      | .verifier, .verifier, _ => .pick
-      | .verifier, _, .verifier => .observe
-      | .verifier, _, _ => .hidden
-      | .extractor, .extractor, _ => .pick
-      | .extractor, _, .extractor => .observe
-      | .extractor, _, _ => .hidden
+  match me, src, dst with
+  | .prover, .prover, _ => .pick
+  | .prover, _, .prover => .observe
+  | .prover, _, _ => .hidden
+  | .verifier, .verifier, _ => .pick
+  | .verifier, _, .verifier => .observe
+  | .verifier, _, _ => .hidden
+  | .extractor, .extractor, _ => .pick
+  | .extractor, _, .extractor => .observe
+  | .extractor, _, _ => .hidden
 
 end ThreeParty
 
@@ -516,12 +516,7 @@ example :
       (resolve := TypeTree.Node.ContextHom.id (fun X : Type u => ViewMode X))
       (TypeTree.node Secret fun _ => .done) (aliceAfterSelfCorruptionViews Secret)
       (fun _ => α)
-    = ((_ : Secret) → m α) := by
-  unfold Multiparty.Strategy
-  change StrategyOver (Multiparty.localSyntax m) PUnit.unit
-    (TypeTree.node Secret fun _ => .done) (aliceAfterSelfCorruptionViews Secret)
-    (fun _ => α) = ((_ : Secret) → m α)
-  rfl
+    = ((_ : Secret) → m α) := rfl
 
 /--
 If Bob is corrupted instead, Alice is hidden from the same second-step node.
@@ -531,12 +526,7 @@ example :
       (resolve := TypeTree.Node.ContextHom.id (fun X : Type u => ViewMode X))
       (TypeTree.node Secret fun _ => .done) (aliceAfterBobCorruptionViews Secret)
       (fun _ => α)
-    = m ((_ : Secret) → α) := by
-  unfold Multiparty.Strategy
-  change StrategyOver (Multiparty.localSyntax m) PUnit.unit
-    (TypeTree.node Secret fun _ => .done) (aliceAfterBobCorruptionViews Secret)
-    (fun _ => α) = m ((_ : Secret) → α)
-  rfl
+    = m ((_ : Secret) → α) := rfl
 
 /--
 The monitor learns the public corruption decision but is hidden from the later

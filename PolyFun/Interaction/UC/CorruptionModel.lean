@@ -75,7 +75,7 @@ proof / lemma that is generic over the corruption model" — declare
 `M.Process Party Δ`.
 -/
 
-universe u v w w'
+universe u v w'
 
 namespace Interaction
 namespace UC
@@ -110,14 +110,14 @@ fixing the env-channel slot to `M.envAction`'s `(Event, State)`. The
 underlying open process is supplied by the user; the model determines
 how environment events update the bookkeeping state.
 
-The two `OpenProcess` universes `(v, w)` (process state and move
-spaces) are exposed; `Party` is whatever the user pairs the model
-with. For the canonical `MomentaryCorruption` instantiation, `Party`
-will be `MachineId Sid Pid` and the model fixes
+The `OpenProcess` process-state universe `v` is exposed; the move
+space is fixed to `Type` (matching `M.State`). `Party` is whatever
+the user pairs the model with. For the canonical `MomentaryCorruption`
+instantiation, `Party` will be `MachineId Sid Pid` and the model fixes
 `Event := MomentaryCorruption.Alphabet Sid Pid`.
 -/
-abbrev Process {m : Type → Type w'} [Pure m] (M : CorruptionModel m)
-    (Party : Type u) (Δ : PortBoundary) :=
+abbrev Process {m : Type → Type w'} [Pure m] (M : CorruptionModel m) (Party : Type u)
+    (Δ : PortBoundary) :=
   EnvOpenProcess.{u, 0, v, 0, w'} m Party Δ M.Event M.State
 
 end CorruptionModel
