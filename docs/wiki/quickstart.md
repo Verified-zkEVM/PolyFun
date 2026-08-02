@@ -116,8 +116,9 @@ deliberately outside the `lake lint` scope.
   Mathlib text style linter: copyright headers, line length, module
   docstrings).
 - [`../../.github/workflows/summary.yml`](../../.github/workflows/summary.yml):
-  optional AI-generated PR summary; gated on `GEMINI_API_KEY` repository
-  secret. Skipped (with a notice) if the secret is not set.
+  optional AI-generated PR summary; gated on the `OPENROUTER_KEY` repository
+  secret. The summary action is skipped with a workflow warning if the secret
+  is not set, without failing CI.
 - [`../../.github/workflows/release-tag.yml`](../../.github/workflows/release-tag.yml),
   [`../../.github/workflows/update.yml`](../../.github/workflows/update.yml),
   [`../../.github/workflows/review.yml`](../../.github/workflows/review.yml):
