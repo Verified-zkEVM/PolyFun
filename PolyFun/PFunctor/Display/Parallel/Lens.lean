@@ -221,12 +221,12 @@ def parallelSumZero
       (PFunctor.Lens.parallelSumZero P) where
   toPosition
     | .left _, contract => contract.down
-    | .right operation, _ => PEmpty.elim operation
-    | .both _ operation, _ => PEmpty.elim operation
+    | .right operation, _ => operation.elim
+    | .both _ operation, _ => operation.elim
   toDirection
     | .left _, _, _, direction => ULift.up direction
-    | .right operation, _, _, _ => PEmpty.elim operation
-    | .both _ operation, _, _, _ => PEmpty.elim operation
+    | .right operation, _, _, _ => operation.elim
+    | .both _ operation, _, _, _ => operation.elim
 
 @[simp] theorem parallelSumZero_toPosition
     {P : PFunctor.{uA₁, uB}}
@@ -251,13 +251,13 @@ def zeroParallelSum
     Display.Lens (Display.parallelSum Display.zero S) S
       (PFunctor.Lens.zeroParallelSum P) where
   toPosition
-    | .left operation, _ => PEmpty.elim operation
+    | .left operation, _ => operation.elim
     | .right _, contract => contract.down
-    | .both operation _, _ => PEmpty.elim operation
+    | .both operation _, _ => operation.elim
   toDirection
-    | .left operation, _, _, _ => PEmpty.elim operation
+    | .left operation, _, _, _ => operation.elim
     | .right _, _, _, direction => ULift.up direction
-    | .both operation _, _, _, _ => PEmpty.elim operation
+    | .both operation _, _, _, _ => operation.elim
 
 @[simp] theorem zeroParallelSum_toPosition
     {P : PFunctor.{uA₁, uB}}
@@ -590,8 +590,8 @@ theorem parallelSumZero_natural_total
   rintro ⟨operation, contract⟩
   cases operation with
   | left _ => rfl
-  | right impossible => exact PEmpty.elim impossible
-  | both _ impossible => exact PEmpty.elim impossible
+  | right impossible => exact impossible.elim
+  | both _ impossible => exact impossible.elim
 
 theorem parallelSumZero_natural
     {P : PFunctor.{uA₁, uB}} {R : PFunctor.{uA₂, uB}}
@@ -618,9 +618,9 @@ theorem zeroParallelSum_natural_total
   apply PFunctor.Lens.ext_mapObj
   rintro ⟨operation, contract⟩
   cases operation with
-  | left impossible => exact PEmpty.elim impossible
+  | left impossible => exact impossible.elim
   | right _ => rfl
-  | both impossible _ => exact PEmpty.elim impossible
+  | both impossible _ => exact impossible.elim
 
 theorem zeroParallelSum_natural
     {P : PFunctor.{uA₁, uB}} {R : PFunctor.{uA₂, uB}}
@@ -802,14 +802,14 @@ theorem parallelSum_triangle_total
   | left pz =>
       cases pz with
       | left _ => rfl
-      | right impossible => exact PEmpty.elim impossible
-      | both _ impossible => exact PEmpty.elim impossible
+      | right impossible => exact impossible.elim
+      | both _ impossible => exact impossible.elim
   | right _ => rfl
   | both pz _ =>
       cases pz with
       | left _ => rfl
-      | right impossible => exact PEmpty.elim impossible
-      | both _ impossible => exact PEmpty.elim impossible
+      | right impossible => exact impossible.elim
+      | both _ impossible => exact impossible.elim
 
 theorem parallelSum_triangle
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}

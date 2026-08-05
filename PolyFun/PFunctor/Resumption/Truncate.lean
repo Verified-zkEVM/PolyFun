@@ -57,8 +57,7 @@ theorem truncate_succ (k : ℕ) (computation : Resumption p β) :
     truncate k (pure (p := p) result) = FreeM.pure (some result) := by
   cases k <;> rfl
 
-@[simp] theorem truncate_query_zero (position : p.A)
-    (next : p.B position → Resumption p β) :
+@[simp] theorem truncate_query_zero (position : p.A) (next : p.B position → Resumption p β) :
     truncate 0 (query position next) = FreeM.pure none := rfl
 
 @[simp] theorem truncate_query_succ (k : ℕ) (position : p.A)
@@ -86,8 +85,7 @@ theorem isTotalRollBound_truncate (k : ℕ) (computation : Resumption p β) :
 /-- Truncation succeeds with exactly the option-lift of `program` iff the
 resumption is that well-founded program's embedding and every branch of the program
 fits within the fuel budget. -/
-theorem truncate_eq_map_some_iff (k : ℕ) (computation : Resumption p β)
-    (program : FreeM p β) :
+theorem truncate_eq_map_some_iff (k : ℕ) (computation : Resumption p β) (program : FreeM p β) :
     truncate k computation = FreeM.map some program ↔
       computation = FreeM.toResumption program ∧
         program.IsTotalRollBound k := by
@@ -188,10 +186,8 @@ theorem truncate_toResumption_eq_map_some {program : FreeM p β} {k : ℕ}
 /-- Once truncation has recovered a well-founded program, any larger fuel budget
 recovers the same program. This is the valid monotonicity law; raw truncations
 need not be equal before all cutoff leaves disappear. -/
-theorem truncate_eq_map_some_of_le {j k : ℕ} {computation : Resumption p β}
-    {program : FreeM p β}
-    (htruncate : truncate j computation = FreeM.map some program)
-    (hjk : j ≤ k) :
+theorem truncate_eq_map_some_of_le {j k : ℕ} {computation : Resumption p β} {program : FreeM p β}
+    (htruncate : truncate j computation = FreeM.map some program) (hjk : j ≤ k) :
     truncate k computation = FreeM.map some program := by
   have hcharacterized :=
     (truncate_eq_map_some_iff j computation program).1 htruncate

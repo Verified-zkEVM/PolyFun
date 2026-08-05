@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Node
-import PolyFun.Interaction.Basic.StrategyOver
+
+module
+
+public import PolyFun.Interaction.Basic.Node
+public import PolyFun.Interaction.Basic.StrategyOver
 
 /-!
 # Generic local execution laws over interaction trees
@@ -29,6 +32,8 @@ Naming note:
 it is the generalized execution notion over node-local data, while
 `Interaction` names the plain specialization with trivial node data.
 -/
+
+public section
 
 universe u a vΓ vΔ vΛ w uA uB uA₂ uB₂ t
 
@@ -78,6 +83,7 @@ Reindex a local execution law contravariantly along a node metadata map.
 If `f : Γ → Δ`, then an execution law for `Δ`-metadata can be reused on
 `Γ`-metadata by first viewing local syntax through `SyntaxOver.comap f`.
 -/
+@[expose]
 def comap {Δ : P.A → Type vΔ} {syn : SyntaxOver l Agent Δ}
     {m : Type (max uB₂ a w) → Type (max uB₂ a w)}
     (f : ∀ pos, Γ pos → Δ pos) (I : InteractionOver l Agent Δ syn m) :
@@ -88,18 +94,14 @@ def comap {Δ : P.A → Type vΔ} {syn : SyntaxOver l Agent Δ}
 theorem comap_id
     {m : Type (max uB₂ a w) → Type (max uB₂ a w)}
     (I : InteractionOver l Agent Γ syn m) :
-    comap (fun _ γ => γ) I = I := by
-  cases I
-  rfl
+    comap (fun _ γ => γ) I = I := rfl
 
 theorem comap_comp {Δ : P.A → Type vΔ} {Λ : P.A → Type vΛ}
     {syn : SyntaxOver l Agent Λ}
     {m : Type (max uB₂ a w) → Type (max uB₂ a w)}
     (I : InteractionOver l Agent Λ syn m)
     (g : ∀ pos, Δ pos → Λ pos) (f : ∀ pos, Γ pos → Δ pos) :
-    comap f (comap g I) = comap (fun pos => g pos ∘ f pos) I := by
-  cases I
-  rfl
+    comap f (comap g I) = comap (fun pos => g pos ∘ f pos) I := rfl
 
 /--
 Run a whole lens-executed protocol from a profile of local participant
@@ -151,6 +153,7 @@ The local execution structure is the generic `InteractionOver`; this facade only
 keeps the plain-tree path recursion definitionally clean for computation
 lemmas.
 -/
+@[expose]
 def runTypeTree
     [Monad m]
     {spec : TypeTree}

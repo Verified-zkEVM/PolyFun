@@ -3,9 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-
 module
-
 
 public import PolyFun.PFunctor.Display.Basic
 
@@ -44,8 +42,7 @@ For each base state `c` and current witness `F c`, the result chooses displayed
 position data for `step c` and recursively supplies witnesses over all
 displayed directions. -/
 abbrev Coalgebra (S : Display.{uA, uB, uC, uD} P)
-    {C : Type uE} (step : C → P.Obj C) (F : C → Type uF) :
-    Type (max uE uF uC uD uB) :=
+    {C : Type uE} (step : C → P.Obj C) (F : C → Type uF) : Type (max uE uF uC uD uB) :=
   (c : C) → F c → S.Obj F (step c)
 
 end Display

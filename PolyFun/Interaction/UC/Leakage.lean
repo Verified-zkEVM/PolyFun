@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
 
+module
+
 /-!
 # Leakage observation models
 
@@ -64,6 +66,8 @@ adversary blind). Forcing every protocol to declare what it leaks
 turns the equivocability obligation into a missing-instance error
 rather than a meta-theoretic side condition.
 -/
+
+public section
 
 universe u
 

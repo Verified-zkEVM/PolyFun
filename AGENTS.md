@@ -97,6 +97,13 @@ Update that map when a change adds a module or changes an import boundary.
 New files must respect the documented DAG. Re-exports through
 `PolyFun.lean` are auto-generated; do not hand-edit.
 
+All Lean sources use module mode. In production files, make the intended API
+explicit with `public section` and expose individual reducer bodies only when
+downstream definitional equality needs them. Use `public import` for public
+signature dependencies, plain `import` for implementation details, and
+`import all` for proof modules that need opaque bodies. Broad
+`@[expose] public section` scopes are forbidden in `PolyFun/Interaction/`.
+
 ## Attribution, Headers, And Docstrings
 
 Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) for the repo's explicit
@@ -113,7 +120,8 @@ attribution policy.
 - New Lean files should use the standard copyright / license /
   authors header and a module docstring.
 - For ordinary Lean source files, use the standard prologue layout:
-  header, blank line, imports, blank line, module docstring.
+  header, blank line, `module`, blank line, imports, blank line, module
+  docstring.
 - Docstrings must be intrinsic and descriptive. Cross-reference live
   sibling definitions when helpful, but do not mention removed or
   renamed declarations, change history, or reactive wording such as

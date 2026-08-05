@@ -38,36 +38,35 @@ section Orthogonality
 variable {R S : PFunctor.{u, u}}
 
 /-- Every vertical-left/cartesian-right commutative square has a diagonal. -/
-example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
-    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
+example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVertical)
+    (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
     Nonempty (Lens.DiagonalFiller v f c g) :=
   Lens.exists_verticalCartesianDiagonal v f c g hv hc comm
 
 /-- Both triangle equations are available directly from the bundled filler. -/
-example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
-    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
+example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVertical)
+    (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
     let d := Lens.verticalCartesianFiller v f c g hv hc comm
-    d.diagonal ∘ₗ v = f ∧ c ∘ₗ d.diagonal = g := by
-  exact ⟨(Lens.verticalCartesianFiller v f c g hv hc comm).comp_left,
+    d.diagonal ∘ₗ v = f ∧ c ∘ₗ d.diagonal = g :=
+  ⟨(Lens.verticalCartesianFiller v f c g hv hc comm).comp_left,
     (Lens.verticalCartesianFiller v f c g hv hc comm).comp_right⟩
 
 /-- The canonical diagonal triangles are simp-normal forms. -/
-example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
-    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
+example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVertical)
+    (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
     Lens.verticalCartesianDiagonal v f c g hv hc comm ∘ₗ v = f ∧
       c ∘ₗ Lens.verticalCartesianDiagonal v f c g hv hc comm = g := by
   simp
 
 /-- The diagonal is unique, not merely chosen. -/
-example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
-    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v)
-    (d : Lens.DiagonalFiller v f c g) :
+example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVertical)
+    (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) (d : Lens.DiagonalFiller v f c g) :
     d.diagonal = Lens.verticalCartesianDiagonal v f c g hv hc comm :=
   Lens.verticalCartesianDiagonal_unique v f c g hv hc comm d
 
 /-- Equivalently, the bundled filler type is a subsingleton. -/
-example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
-    (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
+example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVertical)
+    (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
     Subsingleton (Lens.DiagonalFiller v f c g) :=
   Lens.subsingleton_verticalCartesianFillers v f c g hv hc comm
 

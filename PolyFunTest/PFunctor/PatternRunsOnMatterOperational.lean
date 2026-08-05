@@ -42,7 +42,7 @@ def deterministicHandler : Handler Id (PatternP ⊗ MatterP) :=
 the dependent pattern-path/matter-vertex result. -/
 example : FreeP.runWithHandler deterministicHandler pattern matter =
     (⟨true, ⟨true, ⟨⟩⟩⟩,
-      .child 2 (.child 2 (.root _))) := by
+      .child 2 (.child 2 (.root _))) :=
   rfl
 
 def leafLabels : FreeM (PatternP ⊗ MatterP)

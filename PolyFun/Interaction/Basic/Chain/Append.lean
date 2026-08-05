@@ -3,7 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Chain
+
+module
+
+import all PolyFun.Interaction.Basic.Chain
+public import PolyFun.Interaction.Basic.Chain
 
 /-!
 # Dependent concatenation of finite interaction chains
@@ -28,6 +32,8 @@ while `toTypeTree` is its operational interpretation; consumers therefore use
 the stable operational equality `toTypeTree_then_assoc`.
 -/
 
+public section
+
 universe u
 
 namespace Interaction
@@ -35,12 +41,13 @@ namespace TypeTree
 namespace Chain
 
 /-- Transport a chain across an equality of its round count. -/
+@[expose]
 def castRounds {m n : Nat} (h : m = n) (c : Chain m) : Chain n :=
   h ▸ c
 
 @[simp]
 theorem castRounds_rfl {m : Nat} (c : Chain m) : castRounds rfl c = c :=
-  rfl
+  by rfl
 
 @[simp]
 theorem castRounds_symm {m n : Nat} (h : m = n) (c : Chain m) :
@@ -63,6 +70,7 @@ theorem toTypeTree_castRounds {m n : Nat} (h : m = n) (c : Chain m) :
   rfl
 
 /-- Append a path-dependent `n`-round suffix to an `m`-round prefix chain. -/
+@[expose]
 def «then» : {m n : Nat} → (c : Chain m) →
     (Path (toTypeTree m c) → Chain n) → Chain (m + n)
   | 0, n, _, k => castRounds (Nat.zero_add n).symm (k ⟨⟩)
@@ -79,8 +87,6 @@ theorem toTypeTree_then : {m n : Nat} → (c : Chain m) →
       (toTypeTree m c).append (fun path => toTypeTree n (k path))
   | 0, n, ⟨⟩, k => by
       simp only [Chain.then, toTypeTree_castRounds, toTypeTree_zero]
-      change toTypeTree n (k ⟨⟩) =
-        (fun path => toTypeTree n (k path)) ⟨⟩
       rfl
   | m + 1, n, ⟨tree, cont⟩, k => by
       simp only [Chain.then, toTypeTree_castRounds, toTypeTree,
@@ -188,13 +194,14 @@ theorem appendThenPath_eq_cast_append {m n : Nat} (c : Chain m)
       Equiv.cast (congrArg Path (toTypeTree_then c k)).symm
         (PFunctor.FreeM.Path.append (toTypeTree m c)
           (fun path => toTypeTree n (k path)) path suffix) :=
-  rfl
+  by rfl
 
 /-! ## Dependent output families and strategies -/
 
 /-- Lift a family indexed separately by a prefix path and its selected suffix
 path to a family on paths through the concatenated chain. This is the
 chain-boundary counterpart of `PFunctor.FreeM.Path.liftAppend`. -/
+@[expose]
 def liftThen {m n : Nat} (c : Chain m)
     (k : Path (toTypeTree m c) → Chain n)
     (Family : (path : Path (toTypeTree m c)) →
@@ -224,8 +231,8 @@ theorem liftThen_eq_liftAppend_cast {m n : Nat} (c : Chain m)
     liftThen c k Family combined =
       PFunctor.FreeM.Path.liftAppend (toTypeTree m c)
         (fun path => toTypeTree n (k path)) Family
-        (Equiv.cast (congrArg Path (toTypeTree_then c k)) combined) := by
-  exact (PFunctor.FreeM.Path.liftAppend_split (toTypeTree m c)
+        (Equiv.cast (congrArg Path (toTypeTree_then c k)) combined) :=
+  (PFunctor.FreeM.Path.liftAppend_split (toTypeTree m c)
     (fun path => toTypeTree n (k path)) Family
     (Equiv.cast (congrArg Path (toTypeTree_then c k)) combined)).symm
 

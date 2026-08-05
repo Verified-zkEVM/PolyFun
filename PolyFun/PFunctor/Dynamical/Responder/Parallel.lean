@@ -35,8 +35,7 @@ variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 /-- Coproduct composition of responders.  Each query selects exactly one
 responder, and the unselected state is frozen. -/
 def sum (left : Responder State₁ P) (right : Responder State₂ Q) :
-    Responder.{max uS₁ uS₂, max uA₁ uA₂, uB}
-      (State₁ × State₂) (P + Q) :=
+    Responder.{max uS₁ uS₂, max uA₁ uA₂, uB} (State₁ × State₂) (P + Q) :=
   Responder.mk'
     (fun state query => match query with
       | .inl a => left.answer state.1 a
@@ -46,29 +45,27 @@ def sum (left : Responder State₁ P) (right : Responder State₂ Q) :
       | .inr b => (state.1, right.next state.2 b))
 
 @[simp]
-theorem sum_answer_inl (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂) (a : P.A) :
+theorem sum_answer_inl (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (a : P.A) :
     (sum left right).answer state (.inl a) = left.answer state.1 a :=
   rfl
 
 @[simp]
-theorem sum_answer_inr (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂) (b : Q.A) :
+theorem sum_answer_inr (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (b : Q.A) :
     (sum left right).answer state (.inr b) = right.answer state.2 b :=
   rfl
 
 @[simp]
-theorem sum_next_inl (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂) (a : P.A) :
-    (sum left right).next state (.inl a) =
-      (left.next state.1 a, state.2) :=
+theorem sum_next_inl (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (a : P.A) :
+    (sum left right).next state (.inl a) = (left.next state.1 a, state.2) :=
   rfl
 
 @[simp]
-theorem sum_next_inr (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂) (b : Q.A) :
-    (sum left right).next state (.inr b) =
-      (state.1, right.next state.2 b) :=
+theorem sum_next_inr (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (b : Q.A) :
+    (sum left right).next state (.inr b) = (state.1, right.next state.2 b) :=
   rfl
 
 /-- Parallel composition of responders.  The inactive state is frozen in a
@@ -86,43 +83,39 @@ def parallel (left : Responder State₁ P) (right : Responder State₂ Q) :
       | .both a b => (left.next state.1 a, right.next state.2 b))
 
 @[simp]
-theorem parallel_answer_left (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂) (a : P.A) :
+theorem parallel_answer_left (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (a : P.A) :
     (parallel left right).answer state (.left a) = left.answer state.1 a :=
   rfl
 
 @[simp]
-theorem parallel_answer_right (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂) (b : Q.A) :
+theorem parallel_answer_right (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (b : Q.A) :
     (parallel left right).answer state (.right b) = right.answer state.2 b :=
   rfl
 
 @[simp]
-theorem parallel_answer_both (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂)
-    (a : P.A) (b : Q.A) :
+theorem parallel_answer_both (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (a : P.A) (b : Q.A) :
     (parallel left right).answer state (.both a b) =
       (left.answer state.1 a, right.answer state.2 b) :=
   rfl
 
 @[simp]
-theorem parallel_next_left (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂) (a : P.A) :
-    (parallel left right).next state (.left a) =
-      (left.next state.1 a, state.2) :=
+theorem parallel_next_left (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (a : P.A) :
+    (parallel left right).next state (.left a) = (left.next state.1 a, state.2) :=
   rfl
 
 @[simp]
-theorem parallel_next_right (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂) (b : Q.A) :
-    (parallel left right).next state (.right b) =
-      (state.1, right.next state.2 b) :=
+theorem parallel_next_right (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (b : Q.A) :
+    (parallel left right).next state (.right b) = (state.1, right.next state.2 b) :=
   rfl
 
 @[simp]
-theorem parallel_next_both (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂)
-    (a : P.A) (b : Q.A) :
+theorem parallel_next_both (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (a : P.A) (b : Q.A) :
     (parallel left right).next state (.both a b) =
       (left.next state.1 a, right.next state.2 b) :=
   rfl
@@ -136,9 +129,8 @@ def zero : Responder PUnit (0 : PFunctor.{uA₁, uB}) :=
 
 /-- Parallel answers commute under the explicit interface braiding and state
 swap. -/
-theorem parallel_answer_comm (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂)
-    (operation : (P ∥ Q).A) :
+theorem parallel_answer_comm (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (operation : (P ∥ Q).A) :
     (parallel right left).answer (state.2, state.1)
         ((PFunctor.Equiv.parallelSumComm P Q).equivA operation) =
       (PFunctor.Equiv.parallelSumComm P Q).equivB operation
@@ -146,9 +138,8 @@ theorem parallel_answer_comm (left : Responder State₁ P)
   cases operation <;> rfl
 
 /-- Parallel next states commute under interface and state swaps. -/
-theorem parallel_next_comm (left : Responder State₁ P)
-    (right : Responder State₂ Q) (state : State₁ × State₂)
-    (operation : (P ∥ Q).A) :
+theorem parallel_next_comm (left : Responder State₁ P) (right : Responder State₂ Q)
+    (state : State₁ × State₂) (operation : (P ∥ Q).A) :
     (parallel right left).next (state.2, state.1)
         ((PFunctor.Equiv.parallelSumComm P Q).equivA operation) =
       ((parallel left right).next state operation).swap := by
@@ -156,12 +147,9 @@ theorem parallel_next_comm (left : Responder State₁ P)
 
 /-- Parallel answers associate under the explicit interface associator and
 the corresponding reassociation of states and answers. -/
-theorem parallel_answer_assoc
-    {R : PFunctor.{uA₃, uB}} {State₃ : Type uS₃}
-    (left : Responder State₁ P) (middle : Responder State₂ Q)
-    (right : Responder State₃ R)
-    (state : (State₁ × State₂) × State₃)
-    (operation : ((P ∥ Q) ∥ R).A) :
+theorem parallel_answer_assoc {R : PFunctor.{uA₃, uB}} {State₃ : Type uS₃}
+    (left : Responder State₁ P) (middle : Responder State₂ Q) (right : Responder State₃ R)
+    (state : (State₁ × State₂) × State₃) (operation : ((P ∥ Q) ∥ R).A) :
     (parallel left (parallel middle right)).answer
         (state.1.1, (state.1.2, state.2))
         ((PFunctor.Equiv.parallelSumAssoc P Q R).equivA operation) =
@@ -174,12 +162,9 @@ theorem parallel_answer_assoc
 
 /-- Parallel next states associate under the explicit interface and state
 associators. -/
-theorem parallel_next_assoc
-    {R : PFunctor.{uA₃, uB}} {State₃ : Type uS₃}
-    (left : Responder State₁ P) (middle : Responder State₂ Q)
-    (right : Responder State₃ R)
-    (state : (State₁ × State₂) × State₃)
-    (operation : ((P ∥ Q) ∥ R).A) :
+theorem parallel_next_assoc {R : PFunctor.{uA₃, uB}} {State₃ : Type uS₃}
+    (left : Responder State₁ P) (middle : Responder State₂ Q) (right : Responder State₃ R)
+    (state : (State₁ × State₂) × State₃) (operation : ((P ∥ Q) ∥ R).A) :
     (parallel left (parallel middle right)).next
         (state.1.1, (state.1.2, state.2))
         ((PFunctor.Equiv.parallelSumAssoc P Q R).equivA operation) =
@@ -190,8 +175,8 @@ theorem parallel_next_assoc
   | right operation => rfl
   | both operation rightOperation => cases operation <;> rfl
 
-theorem parallel_answer_zero_right (left : Responder State₁ P)
-    (state : State₁) (operation : (P ∥ (0 : PFunctor.{uA₂, uB})).A) :
+theorem parallel_answer_zero_right (left : Responder State₁ P) (state : State₁)
+    (operation : (P ∥ (0 : PFunctor.{uA₂, uB})).A) :
     left.answer state
         ((PFunctor.Equiv.parallelSumZero P).equivA operation) =
       (PFunctor.Equiv.parallelSumZero P).equivB operation
@@ -201,8 +186,8 @@ theorem parallel_answer_zero_right (left : Responder State₁ P)
   | right operation => exact PEmpty.elim operation
   | both leftOperation rightOperation => exact PEmpty.elim rightOperation
 
-theorem parallel_next_zero_right (left : Responder State₁ P)
-    (state : State₁) (operation : (P ∥ (0 : PFunctor.{uA₂, uB})).A) :
+theorem parallel_next_zero_right (left : Responder State₁ P) (state : State₁)
+    (operation : (P ∥ (0 : PFunctor.{uA₂, uB})).A) :
     ((parallel left Responder.zero).next (state, PUnit.unit) operation).1 =
       left.next state
         ((PFunctor.Equiv.parallelSumZero P).equivA operation) := by
@@ -211,8 +196,8 @@ theorem parallel_next_zero_right (left : Responder State₁ P)
   | right operation => exact PEmpty.elim operation
   | both leftOperation rightOperation => exact PEmpty.elim rightOperation
 
-theorem parallel_answer_zero_left (right : Responder State₂ Q)
-    (state : State₂) (operation : ((0 : PFunctor.{uA₁, uB}) ∥ Q).A) :
+theorem parallel_answer_zero_left (right : Responder State₂ Q) (state : State₂)
+    (operation : ((0 : PFunctor.{uA₁, uB}) ∥ Q).A) :
     right.answer state
         ((PFunctor.Equiv.zeroParallelSum Q).equivA operation) =
       (PFunctor.Equiv.zeroParallelSum Q).equivB operation
@@ -222,8 +207,8 @@ theorem parallel_answer_zero_left (right : Responder State₂ Q)
   | right operation => rfl
   | both leftOperation rightOperation => exact PEmpty.elim leftOperation
 
-theorem parallel_next_zero_left (right : Responder State₂ Q)
-    (state : State₂) (operation : ((0 : PFunctor.{uA₁, uB}) ∥ Q).A) :
+theorem parallel_next_zero_left (right : Responder State₂ Q) (state : State₂)
+    (operation : ((0 : PFunctor.{uA₁, uB}) ∥ Q).A) :
     ((parallel Responder.zero right).next (PUnit.unit, state) operation).2 =
       right.next state
         ((PFunctor.Equiv.zeroParallelSum Q).equivA operation) := by

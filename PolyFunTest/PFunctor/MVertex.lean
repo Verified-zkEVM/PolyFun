@@ -43,10 +43,8 @@ theorem children_binaryTreeAt (history : List Bool) (direction : Bool) :
     M.children (binaryTreeAt history) direction =
       binaryTreeAt (direction :: history) := by
   have h := M.dest_corec_apply binaryStep history
-  have hA := congrArg Sigma.fst h
-  have hB := (Sigma.ext_iff.mp h).2
-  cases hA
-  exact congrFun (eq_of_heq hB) direction
+  cases congrArg Sigma.fst h
+  exact congrFun (eq_of_heq (Sigma.ext_iff.mp h).2) direction
 
 /-- A path that first selects `true`, then `false`. -/
 def depthTwo : M.Vertex binaryTree :=

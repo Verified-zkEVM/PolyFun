@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Independence
-import PolyFun.Interaction.Concurrent.Trace
+
+module
+
+public import PolyFun.Interaction.Concurrent.Independence
+public import PolyFun.Interaction.Concurrent.Trace
 
 /-!
 # Interleaving equivalence of concurrent traces
@@ -31,6 +34,8 @@ normal forms, or more elaborate partial-order objects; it only records the
 standard commuting conversion at the trace level.
 -/
 
+public section
+
 universe u
 
 namespace Interaction
@@ -45,6 +50,7 @@ This is the trace-level cast operation needed when two independent frontier
 events commute and therefore produce definitionally different but propositionally
 equal residual specs.
 -/
+@[expose]
 def cast {S T : Spec} (h : S = T) (trace : Trace S) : Trace T :=
   h ▸ trace
 

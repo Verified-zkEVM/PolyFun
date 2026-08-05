@@ -29,22 +29,16 @@ section Basic
 instance instZeroPFunctor : Zero PFunctor.{uA, uB} where
   zero := ⟨PEmpty, fun _ => PEmpty⟩
 
--- protected lemma zero_def : (0 : PFunctor) = PFunctor.zero := rfl
-
 /-- The unit polynomial functor, defined as `A = PUnit` and `B _ = PEmpty`, is the identity with
   respect to product (up to equivalence) -/
 instance instOnePFunctor : One PFunctor.{uA, uB} where
   one := ⟨PUnit, fun _ => PEmpty⟩
 
--- protected lemma one_def : (1 : PFunctor) = PFunctor.one := rfl
-
 /-- The variable `y` polynomial functor. This is the unit for composition. -/
 def y : PFunctor.{uA, uB} :=
   ⟨PUnit, fun _ => PUnit⟩
 
--- instance : IsEmpty zero.A := inferInstanceAs (IsEmpty PEmpty)
 instance : IsEmpty (A 0) := inferInstanceAs (IsEmpty PEmpty)
--- instance : Unique one.A := inferInstanceAs (Unique PUnit)
 instance instUniqueAOfNatOne : Unique (A 1) := inferInstanceAs (Unique PUnit)
 instance : Unique y.A := inferInstanceAs (Unique PUnit)
 
@@ -122,8 +116,6 @@ instance {β} : Unique (A (purePower β)) := inferInstanceAs (Unique PUnit)
 @[simp] lemma univ_A : univ.{u}.A = Type u := rfl
 lemma univ_B (T : Type u) : univ.{u}.B T = T := rfl
 
--- end Basic
-
 section Sum
 
 /-- The sum (coproduct) of two polynomial functors `P` and `Q`, written as `P + Q`.
@@ -131,8 +123,7 @@ section Sum
 Defined as the sum of the head types and the sum case analysis for the child types.
 
 Note: requires the `B` universe levels to be the same. -/
-def sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
-    PFunctor.{max uA₁ uA₂, uB} :=
+def sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max uA₁ uA₂, uB} :=
   ⟨P.A ⊕ Q.A, Sum.elim P.B Q.B⟩
 
 /-- Addition of polynomial functors, defined as the sum construction. -/
@@ -242,7 +233,7 @@ protected class Fintype (P : PFunctor.{uA, uB}) where
 instance {P : PFunctor.{uA, uB}} [inst : P.Fintype] : PFunctor.Fintype (PFunctor.ulift P) where
   fintypeB := fun a => by
     unfold PFunctor.ulift
-    haveI : Fintype (P.B (ULift.down a)) := inst.fintypeB (ULift.down a)
+    have : Fintype (P.B (ULift.down a)) := inst.fintypeB (ULift.down a)
     infer_instance
 
 @[simp]
@@ -268,7 +259,7 @@ instance {P : PFunctor.{uA, uB}} [inst : P.Inhabited] :
     PFunctor.Inhabited (PFunctor.ulift P) where
   inhabitedB := fun a => by
     unfold PFunctor.ulift
-    haveI : Inhabited (P.B (ULift.down a)) := inst.inhabitedB (ULift.down a)
+    have : Inhabited (P.B (ULift.down a)) := inst.inhabitedB (ULift.down a)
     infer_instance
 
 @[simp]

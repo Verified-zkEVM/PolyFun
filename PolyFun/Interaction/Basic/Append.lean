@@ -3,9 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Basic.Strategy
-import PolyFun.PFunctor.Free.Displayed.Append
+
+module
+
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Basic.Strategy
+public import PolyFun.PFunctor.Free.Displayed.Append
 
 /-!
 # Dependent append of interaction type trees
@@ -21,6 +24,8 @@ algebra around this operation:
   `Strategy.compFlat` (flat output via `PFunctor.FreeM.Path.append`).
 - **Decoration / refinement append** and their naturality lemmas.
 -/
+
+public section
 
 universe u v w w₂
 
@@ -39,6 +44,7 @@ output and produces a second-phase strategy whose output family is `F tr₁`.
 This is the preferred composition form: `liftAppend` ensures the output type
 reduces definitionally when combined with `PFunctor.FreeM.Path.append`, which is essential
 for dependent chain composition (see `Strategy.stateChainComp`). -/
+@[expose]
 def Strategy.comp {m : Type u → Type u} [Monad m] :
     (s₁ : TypeTree) → (s₂ : PFunctor.FreeM.Path s₁ → TypeTree) →
     {Mid : PFunctor.FreeM.Path s₁ → Type u} →
@@ -89,8 +95,7 @@ def Strategy.splitPrefix {m : Type u → Type u} [Functor m] :
 /-- Concatenate per-node labels along `PFunctor.FreeM.append`. -/
 abbrev Decoration.append {S : Type u → Type v}
     {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
-    (d₁ : Decoration S s₁)
-    (d₂ : (tr₁ : PFunctor.FreeM.Path s₁) → Decoration S (s₂ tr₁)) :
+    (d₁ : Decoration S s₁) (d₂ : (tr₁ : PFunctor.FreeM.Path s₁) → Decoration S (s₂ tr₁)) :
     Decoration S (s₁.append s₂) :=
   PFunctor.FreeM.Displayed.Decoration.append (P := TypeTree.basePFunctor)
     (α := PUnit.{u+1}) (β := PUnit.{u+1}) d₁ d₂
@@ -99,8 +104,7 @@ abbrev Decoration.append {S : Type u → Type v}
 base decorations. -/
 abbrev Decoration.Over.append {L : Type u → Type v} {F : ∀ X, L X → Type w}
     {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
-    {d₁ : Decoration L s₁}
-    {d₂ : (tr₁ : PFunctor.FreeM.Path s₁) → Decoration L (s₂ tr₁)}
+    {d₁ : Decoration L s₁} {d₂ : (tr₁ : PFunctor.FreeM.Path s₁) → Decoration L (s₂ tr₁)}
     (r₁ : Decoration.Over F s₁ d₁)
     (r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → Decoration.Over F (s₂ tr₁) (d₂ tr₁)) :
     Decoration.Over F (s₁.append s₂) (d₁.append d₂) :=
@@ -111,8 +115,7 @@ abbrev Decoration.Over.append {L : Type u → Type v} {F : ∀ X, L X → Type w
 theorem Decoration.Over.map_append {L : Type u → Type v} {F G : ∀ X, L X → Type w}
     (η : ∀ X l, F X l → G X l)
     (s₁ : TypeTree) (s₂ : PFunctor.FreeM.Path s₁ → TypeTree)
-    (d₁ : Decoration L s₁)
-    (d₂ : (tr₁ : PFunctor.FreeM.Path s₁) → Decoration L (s₂ tr₁))
+    (d₁ : Decoration L s₁) (d₂ : (tr₁ : PFunctor.FreeM.Path s₁) → Decoration L (s₂ tr₁))
     (r₁ : Decoration.Over F s₁ d₁)
     (r₂ : (tr₁ : PFunctor.FreeM.Path s₁) → Decoration.Over F (s₂ tr₁) (d₂ tr₁)) :
     Decoration.Over.map η (s₁.append s₂) (d₁.append d₂) (Over.append r₁ r₂) =
@@ -125,8 +128,7 @@ theorem Decoration.Over.map_append {L : Type u → Type v} {F G : ∀ X, L X →
 theorem Decoration.map_append {S : Type u → Type v} {T : Type u → Type w}
     (f : ∀ X, S X → T X)
     (s₁ : TypeTree) (s₂ : PFunctor.FreeM.Path s₁ → TypeTree)
-    (d₁ : Decoration S s₁)
-    (d₂ : (tr₁ : PFunctor.FreeM.Path s₁) → Decoration S (s₂ tr₁)) :
+    (d₁ : Decoration S s₁) (d₂ : (tr₁ : PFunctor.FreeM.Path s₁) → Decoration S (s₂ tr₁)) :
     Decoration.map f (s₁.append s₂) (d₁.append d₂) =
       (Decoration.map f s₁ d₁).append (fun tr₁ => Decoration.map f (s₂ tr₁) (d₂ tr₁)) :=
   PFunctor.FreeM.Displayed.Decoration.map_append (P := TypeTree.basePFunctor)

@@ -3,14 +3,17 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
-import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Multiparty.Core
-import PolyFun.PFunctor.Dynamical.Combinators
-import PolyFun.PFunctor.Dynamical.Safety
-import PolyFun.PFunctor.Dynamical.Trajectory
-import Mathlib.Data.PFunctor.Univariate.M
-import Batteries.Tactic.Lint
+
+module
+
+public import PolyFun.Interaction.Basic.TypeTree
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Multiparty.Core
+public import PolyFun.PFunctor.Dynamical.Combinators
+public import PolyFun.PFunctor.Dynamical.Safety
+public import PolyFun.PFunctor.Dynamical.Trajectory
+public import Mathlib.Data.PFunctor.Univariate.M
+public import Batteries.Tactic.Lint
 
 /-!
 # Dynamic concurrent processes
@@ -46,6 +49,8 @@ This design stays continuation-first, but is more general than the structural
 tree frontend: cyclic or unbounded behavior is represented by the residual
 state type, while each individual step remains a finite `Interaction.TypeTree`.
 -/
+
+public section
 
 universe u v w w₂ w₃
 
@@ -183,6 +188,7 @@ Map the node-local context carried by a step along a realized context morphism.
 This changes only the metadata decorating the step protocol. The underlying
 sequential interaction tree and the continuation `next` are left unchanged.
 -/
+@[expose]
 def mapContext
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
@@ -233,7 +239,7 @@ A direction over such a position is a complete path of `tree`.
 Up to `Interaction.TypeTree.decoratedEquiv`, positions are exactly
 `Interaction.TypeTree.Decorated Γ`, the free term of `Γ.toPFunctor` at the
 unit payload. -/
-@[reducible]
+@[expose, reducible]
 def toPFunctor (Γ : Interaction.TypeTree.Node.Context.{w, w₂}) :
     PFunctor.{max (w+1) w₂, w} where
   A := Σ tree : Interaction.TypeTree.{w}, PFunctor.FreeM.Displayed.Decoration Γ tree
@@ -245,13 +251,13 @@ the step-over structure as a polynomial application.
 The forward direction regroups the `(tree, semantics, next)` fields into
 the polynomial form `(position, continuation)`, and the inverse unpacks
 them again. Both roundtrips are definitionally `rfl`. -/
-@[simps]
+@[expose, simps]
 def equivObj {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} {P : Type v} :
     StepOver.{v, w, w₂} Γ P ≃ (StepOver.toPFunctor Γ).Obj P where
   toFun s := ⟨⟨s.tree, s.semantics⟩, s.next⟩
-  invFun := fun ⟨⟨spec, semantics⟩, next⟩ => ⟨spec, semantics, next⟩
+  invFun s := ⟨s.1.1, s.1.2, s.2⟩
   left_inv _ := rfl
-  right_inv := fun ⟨⟨_, _⟩, _⟩ => rfl
+  right_inv _ := rfl
 
 /-- The position type of `StepOver.toPFunctor Γ` is the same data as a
 `Γ`-decorated type tree, via `Interaction.TypeTree.decoratedEquiv`. This is the
@@ -307,7 +313,7 @@ abbrev Proc {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
 the next state: the `StepOver`-shaped view of the coalgebra structure map.
 
 Reducible so that it unfolds during unification and instance search. -/
-@[reducible]
+@[expose, reducible]
 def step {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (process : ProcessOver.{v, w, w₂} P Γ) (p : process.Proc) :
     StepOver Γ process.Proc :=
@@ -318,7 +324,7 @@ the `StepOver`-shaped constructor inverse to `ProcessOver.step`; both round
 trips hold definitionally (`step_ofStep`, `ofStep_step`).
 
 Reducible so that it unfolds during unification and instance search. -/
-@[reducible]
+@[expose, reducible]
 def ofStep {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (Proc : Type v) (step : Proc → StepOver Γ Proc) : ProcessOver.{v, w, w₂} Proc Γ :=
   PFunctor.DynSystem.mk'
@@ -350,6 +356,7 @@ morphism.
 This changes only the metadata exposed at each step. The residual state space
 and transition structure are preserved.
 -/
+@[expose]
 def mapContext
     {P : Type v}
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
@@ -370,11 +377,10 @@ At each step, a scheduler node chooses left (`true`) or right (`false`), then
 the selected subprocess's step protocol runs with its decoration mapped into
 `Δ`. Only the selected component of the product state advances.
 -/
+@[expose]
 def interleave
     {P₁ P₂ : Type v}
-    {Γ₁ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Γ₂ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Γ₁ Γ₂ Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (p₁ : ProcessOver.{v, w, w₂} P₁ Γ₁)
     (p₂ : ProcessOver.{v, w, w₂} P₂ Γ₂)
     (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Δ)
@@ -415,9 +421,8 @@ theorem mapContext_interleave
   congr 1
   simp only [PFunctor.FreeM.liftBind_eq]
   rw [PFunctor.FreeM.Displayed.Decoration.map_liftBind]
-  dsimp only
   congr 1; funext ⟨b⟩
-  cases b <;> dsimp
+  cases b
   · exact PFunctor.FreeM.Displayed.Decoration.map_comp
         (P := Interaction.TypeTree.basePFunctor) (α := PUnit.{w+1})
         g f₂ _ _
@@ -446,7 +451,7 @@ theorem interleave_mapContext
   dsimp only [ofStep, PFunctor.DynSystem.expose_mk', PFunctor.DynSystem.update_mk']
   congr 1
   · congr 1; funext ⟨b⟩
-    cases b <;> dsimp
+    cases b
     · exact PFunctor.FreeM.Displayed.Decoration.map_comp
         (P := Interaction.TypeTree.basePFunctor) (α := PUnit.{w+1})
         f₂ g₂ _ _
@@ -517,9 +522,7 @@ and a path of that node projects back to the chosen side's path.
 (`interleave_eq_wrap_choiceProd`).
 -/
 def interleaveLens
-    {Γ₁ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Γ₂ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Γ₁ Γ₂ Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Δ)
     (f₂ : Interaction.TypeTree.Node.ContextHom Γ₂ Δ)
     (schedulerCtx : Δ (ULift.{w} Bool)) :
@@ -542,9 +545,7 @@ asynchronous choice `choiceProd` of the two processes, wrapped along the
 scheduler wiring lens `interleaveLens`. -/
 theorem interleave_eq_wrap_choiceProd
     {P₁ P₂ : Type v}
-    {Γ₁ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Γ₂ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Γ₁ Γ₂ Δ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (p₁ : ProcessOver.{v, w, w₂} P₁ Γ₁)
     (p₂ : ProcessOver.{v, w, w₂} P₂ Γ₂)
     (f₁ : Interaction.TypeTree.Node.ContextHom Γ₁ Δ)

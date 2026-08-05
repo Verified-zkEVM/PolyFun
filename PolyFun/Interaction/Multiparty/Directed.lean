@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Multiparty.Core
+
+module
+
+public import PolyFun.Interaction.Multiparty.Core
 
 /-!
 # Directed point-to-point multiparty interaction
@@ -23,6 +26,8 @@ Unlike the broadcast model, only one non-sender party receives the chosen move,
 and the remaining parties need not even learn which branch was taken at that
 step.
 -/
+
+public section
 
 universe u
 

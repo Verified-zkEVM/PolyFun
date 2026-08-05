@@ -3,11 +3,14 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Ownership
-import PolyFun.Interaction.Basic.Interaction
-import PolyFun.Interaction.Basic.Shape
-import PolyFun.Interaction.TwoParty.Decoration
-import PolyFun.Interaction.TwoParty.Role
+
+module
+
+public import PolyFun.Interaction.Basic.Interaction
+public import PolyFun.Interaction.Basic.Ownership
+public import PolyFun.Interaction.Basic.Shape
+public import PolyFun.Interaction.TwoParty.Decoration
+public import PolyFun.Interaction.TwoParty.Role
 
 /-!
 # Two-party syntax over lens-executed trees
@@ -19,7 +22,7 @@ It intentionally does not define another recursive strategy hierarchy:
 whole-tree participant types are always obtained from `StrategyOver`.
 -/
 
-@[expose] public section
+public section
 
 universe u uA uB uA₂ uB₂ w
 
@@ -38,6 +41,7 @@ inductive Participant : Type u where
   deriving DecidableEq
 
 /-- Ownership perspective induced by a sender/receiver role. -/
+@[expose]
 def perspective : Role → Participant → Ownership.Perspective
   | .sender, .focal => .owner
   | .sender, .counterpart => .observer
@@ -45,6 +49,7 @@ def perspective : Role → Participant → Ownership.Perspective
   | .receiver, .counterpart => .owner
 
 /-- TypeTree-facing form of `perspective`, using the plain `TypeTree.Ownership` perspective type. -/
+@[expose]
 def typeTreePerspective (role : Role) (agent : Participant) : TypeTree.Ownership.Perspective :=
   match perspective role agent with
   | .owner => .owner
@@ -56,6 +61,7 @@ by an unbundled effect-like type constructor.
 This is weaker than `SyntaxOver.TwoParty.monadic`: it records the same owner/observer node
 shapes but does not require a `Monad` instance for `m`. Execution laws can add
 that instance only at the point where effects are actually run. -/
+@[expose]
 def _root_.Interaction.SyntaxOver.TwoParty.paired (m : Type uB₂ → Type uB₂) :
     SyntaxOver l Participant (fun _ : P.A => Role) where
   Node agent pos role Cont :=
@@ -66,6 +72,7 @@ def _root_.Interaction.SyntaxOver.TwoParty.paired (m : Type uB₂ → Type uB₂
     | .counterpart, .receiver => m ((d : Q.B (l.toFunA pos)) × Cont d)
 
 /-- Functorial shape for `SyntaxOver.TwoParty.paired`. -/
+@[expose]
 def _root_.Interaction.ShapeOver.TwoParty.paired (m : Type uB₂ → Type uB₂) [Functor m] :
     Interaction.ShapeOver l Participant (fun _ : P.A => Role) where
   toSyntaxOver := (SyntaxOver.TwoParty.paired l m :
@@ -96,6 +103,7 @@ def _root_.Interaction.ShapeOver.TwoParty.paired (m : Type uB₂ → Type uB₂)
 At sender nodes, the focal participant chooses the runtime direction. At
 receiver nodes, the counterpart chooses it. The other participant follows the
 chosen direction with its observer continuation. -/
+@[expose]
 def _root_.Interaction.InteractionOver.TwoParty.paired
     (m : Type uB₂ → Type uB₂) [Monad m] :
     InteractionOver l Participant.{uB₂} (fun _ : P.A => Role)
@@ -128,19 +136,16 @@ def _root_.Interaction.InteractionOver.TwoParty.paired
           | .counterpart => cCont)
 
 /-- Two-party monadic syntax over an arbitrary lens-executed control tree. -/
+@[expose]
 def _root_.Interaction.SyntaxOver.TwoParty.monadic
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w}) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w}) :
     SyntaxOver l Participant (fun _ : P.A => Role) :=
   Ownership.monadicSyntax l (fun role agent => perspective role agent)
     (fun {pos} role agent => monad pos role agent)
 
 /-- Functorial shape for two-party monadic syntax over a lens-executed tree. -/
 def _root_.Interaction.ShapeOver.TwoParty.monadic
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w}) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w}) :
     Interaction.ShapeOver l Participant (fun _ : P.A => Role) where
   toSyntaxOver := SyntaxOver.TwoParty.monadic l monad
   map := fun {agent} {pos} {γ} {A} {B} f node =>
@@ -183,6 +188,7 @@ def _root_.Interaction.ShapeOver.TwoParty.monadic
               ((d : Q.B (l.toFunA pos)) × B d))
 
 /-- Two-party syntax over a paired focal/counterpart monad context. -/
+@[expose]
 def _root_.Interaction.SyntaxOver.TwoParty.pairedMonadic :
     SyntaxOver l Participant
       (RolePairedMonadContextOver.{uB₂, uA, uB} P) where
@@ -198,6 +204,7 @@ def _root_.Interaction.SyntaxOver.TwoParty.pairedMonadic :
         bmC.M ((d : Q.B (l.toFunA pos)) × Cont d)
 
 /-- Functorial shape for `SyntaxOver.TwoParty.pairedMonadic`. -/
+@[expose]
 def _root_.Interaction.ShapeOver.TwoParty.pairedMonadic :
     Interaction.ShapeOver l Participant
       (RolePairedMonadContextOver.{uB₂, uA, uB} P) where
@@ -268,6 +275,7 @@ Sender nodes observe the focal side's move. Receiver nodes expose the sampler
 and challenge-indexed continuation separately, which supports replay against a
 prescribed public path.
 -/
+@[expose]
 def _root_.Interaction.SyntaxOver.TwoParty.PublicCoinCounterpart.counterpart
     (m : Type uB₂ → Type uB₂) :
     SyntaxOver l PUnit (fun _ : P.A => Role) where
@@ -319,11 +327,8 @@ end PublicCoinCounterpart
 
 @[simp]
 theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_focal_sender
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w})
-    (pos : P.A)
-    (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w})
+    (pos : P.A) (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
     (SyntaxOver.TwoParty.monadic l monad).Node Participant.focal pos Role.sender Cont =
       (monad pos Role.sender Participant.focal).M
         ((d : Q.B (l.toFunA pos)) × Cont d) :=
@@ -331,11 +336,8 @@ theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_focal_sender
 
 @[simp]
 theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_counterpart_sender
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w})
-    (pos : P.A)
-    (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w})
+    (pos : P.A) (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
     (SyntaxOver.TwoParty.monadic l monad).Node Participant.counterpart pos Role.sender Cont =
       ((d : Q.B (l.toFunA pos)) →
         (monad pos Role.sender Participant.counterpart).M (Cont d)) :=
@@ -343,11 +345,8 @@ theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_counterpart_sender
 
 @[simp]
 theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_focal_receiver
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w})
-    (pos : P.A)
-    (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w})
+    (pos : P.A) (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
     (SyntaxOver.TwoParty.monadic l monad).Node Participant.focal pos Role.receiver Cont =
       ((d : Q.B (l.toFunA pos)) →
         (monad pos Role.receiver Participant.focal).M (Cont d)) :=
@@ -355,11 +354,8 @@ theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_focal_receiver
 
 @[simp]
 theorem _root_.Interaction.SyntaxOver.TwoParty.monadic_counterpart_receiver
-    (monad :
-      (pos : P.A) → Role → Participant →
-        BundledMonad.{max uB₂ w, max uB₂ w})
-    (pos : P.A)
-    (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
+    (monad : (pos : P.A) → Role → Participant → BundledMonad.{max uB₂ w, max uB₂ w})
+    (pos : P.A) (Cont : Q.B (l.toFunA pos) → Type (max uB₂ w)) :
     (SyntaxOver.TwoParty.monadic l monad).Node Participant.counterpart pos Role.receiver Cont =
       (monad pos Role.receiver Participant.counterpart).M
         ((d : Q.B (l.toFunA pos)) × Cont d) :=

@@ -8,7 +8,15 @@ module
 
 public import PolyFun.PFunctor.Display
 
-/-! Worked examples for polynomial displays and their free extension. -/
+/-!
+# Worked examples for polynomial displays
+
+Exercises the displayed extension of `FreeM` over a polynomial `Display`:
+displayed bind, handler identity and composition, sum / sigma / chart-fiber
+constructions, and universe-polymorphic smoke tests. Several contracts are
+deliberately non-constant in every local index, so that a wrong branch
+selection breaks elaboration.
+-/
 
 @[expose] public section
 
@@ -25,8 +33,7 @@ def contract : Display.{0, 0, 0, 0} Unary where
 def oneStep : FreeM Unary Nat :=
   .liftBind true fun _ => .pure 7
 
-def oneStepData :
-    FreeM.Displayed (contract.toDisplayedAlgebra fun _ : Nat => PUnit.{1}) oneStep :=
+def oneStepData : FreeM.Displayed (contract.toDisplayedAlgebra fun _ : Nat => PUnit.{1}) oneStep :=
   ⟨.unit, fun _ _ => contract.leaf (fun _ : Nat => PUnit.{1}) 7 .unit⟩
 
 example :
@@ -35,13 +42,12 @@ example :
       ⟨.unit, fun _ _ => contract.leaf (fun _ : Nat => PUnit.{1}) 8 .unit⟩ :=
   rfl
 
-def identityHandler :
-    Handler contract contract (fun a => FreeM.lift a) :=
+def identityHandler : Handler contract contract (fun a => FreeM.lift a) :=
   Handler.id contract
 
 example :
     contract.liftM contract oneStep oneStepData
-      (fun a => FreeM.lift a) identityHandler = oneStepData := by
+      (fun a => FreeM.lift a) identityHandler = oneStepData :=
   rfl
 
 /-! The following example is deliberately non-constant in every local index:
@@ -84,7 +90,7 @@ example (b : Fin 2)
     (direction : dependentContract.direction (.query 2) ⟨2, by omega⟩ b) :
     (Obj.map (S := dependentContract) (fun _ n => n + 1)
       dependentObj dependentObjData).2 b direction =
-      b.val + direction.val + 1 := by
+      b.val + direction.val + 1 :=
   rfl
 
 def predicateContract : Display Dependent :=
@@ -95,8 +101,7 @@ def predicateContract : Display Dependent :=
 def predicatePosition : predicateContract.position (.query 2) :=
   ⟨rfl⟩
 
-def predicateDirection (b : Fin 2) :
-    predicateContract.direction (.query 2) predicatePosition b :=
+def predicateDirection (b : Fin 2) : predicateContract.direction (.query 2) predicatePosition b :=
   ⟨b.isLt⟩
 
 example : predicatePosition.down = (rfl : 2 = 2) := rfl
@@ -114,12 +119,10 @@ def contractFamily : Bool → Display Dependent
 
 /- These witnesses are kept separate so swapping the `sigma`, `sum.inl`, or
 `sum.inr` display branch breaks elaboration or the projection tests. -/
-def sigmaLeftPosition :
-    (Display.sigma contractFamily).position ⟨false, .query 2⟩ :=
+def sigmaLeftPosition : (Display.sigma contractFamily).position ⟨false, .query 2⟩ :=
   ⟨2, by omega⟩
 
-def sigmaRightPosition :
-    (Display.sigma contractFamily).position ⟨true, .query 2⟩ :=
+def sigmaRightPosition : (Display.sigma contractFamily).position ⟨true, .query 2⟩ :=
   true
 
 def sigmaLeftDirection (b : Fin 2) :
@@ -137,12 +140,10 @@ example : sigmaRightPosition = true := rfl
 example (b : Fin 2) : (sigmaLeftDirection b).val = 2 := rfl
 example (b : Fin 2) : (sigmaRightDirection b).val = 2 := rfl
 
-def sumLeftPosition :
-    (dependentContract.sum alternateContract).position (.inl (.query 2)) :=
+def sumLeftPosition : (dependentContract.sum alternateContract).position (.inl (.query 2)) :=
   ULift.up ⟨2, by omega⟩
 
-def sumRightPosition :
-    (dependentContract.sum alternateContract).position (.inr (.query 2)) :=
+def sumRightPosition : (dependentContract.sum alternateContract).position (.inr (.query 2)) :=
   ULift.up true
 
 def sumLeftDirection (b : Fin 2) :
@@ -170,12 +171,10 @@ example : dependentContract.forget.toFunA totalPosition = .query 2 := rfl
 example : dependentContract.forget.toFunB totalPosition totalDirection =
     (⟨1, by omega⟩ : Fin 2) := rfl
 
-def chartFiberPosition :
-    (Display.ofChart dependentContract.forget).total.A :=
+def chartFiberPosition : (Display.ofChart dependentContract.forget).total.A :=
   ⟨.query 2, ⟨totalPosition, rfl⟩⟩
 
-def chartFiberDirection :
-    (Display.ofChart dependentContract.forget).total.B chartFiberPosition :=
+def chartFiberDirection : (Display.ofChart dependentContract.forget).total.B chartFiberPosition :=
   ⟨⟨1, by omega⟩, ⟨totalDirection, rfl⟩⟩
 
 /- Exercise both chart-equivalence directions and both position/direction
@@ -197,8 +196,7 @@ example :
     (Display.ofChartEquiv dependentContract.forget).invChart.toFunB
       totalPosition totalDirection = chartFiberDirection := rfl
 
-def indexedObjData :
-    (dependentContract.action Nat).Obj (fun _ : Nat => Nat) dependentObj :=
+def indexedObjData : (dependentContract.action Nat).Obj (fun _ : Nat => Nat) dependentObj :=
   ⟨⟨2, by omega⟩, fun direction => direction.1.val + direction.2.val⟩
 
 example (b : Fin 2)
@@ -230,7 +228,7 @@ example :
         dependentContract.leaf (fun _ : Nat => Nat) (n + 10) (evidence + 1)) =
       ⟨⟨2, by omega⟩, fun b direction =>
         dependentContract.leaf (fun _ : Nat => Nat) (b.val + 10)
-          (b.val + direction.val + 1)⟩ := by
+          (b.val + direction.val + 1)⟩ :=
   rfl
 
 example :
@@ -291,14 +289,12 @@ def firstProgram (a : HandlerSource.A) : FreeM HandlerMiddle (HandlerSource.B a)
 def secondProgram (a : HandlerMiddle.A) : FreeM HandlerTarget (HandlerMiddle.B a) :=
   FreeM.lift (P := HandlerTarget) (a + 100)
 
-def firstDisplayedHandler :
-    Handler sourceDisplay middleDisplay firstProgram :=
+def firstDisplayedHandler : Handler sourceDisplay middleDisplay firstProgram :=
   fun a c =>
     ⟨c + 1, fun _ _ =>
       sourceDisplay.leaf (sourceDisplay.direction a c) .unit .unit⟩
 
-def secondDisplayedHandler :
-    Handler middleDisplay targetDisplay secondProgram :=
+def secondDisplayedHandler : Handler middleDisplay targetDisplay secondProgram :=
   fun a c =>
     ⟨c * 2, fun _ _ =>
       middleDisplay.leaf (middleDisplay.direction a c) .unit .unit⟩
@@ -311,7 +307,7 @@ def composedDisplayedHandler :
 example :
     composedDisplayedHandler true 3 =
       ⟨8, fun _ _ =>
-        targetDisplay.leaf (sourceDisplay.direction true 3) .unit .unit⟩ := by
+        targetDisplay.leaf (sourceDisplay.direction true 3) .unit .unit⟩ :=
   rfl
 
 end PFunctor.Display.Example
@@ -384,12 +380,10 @@ abbrev largeResponseDisplay : Display.{0, 1, 0, 0} LargeResponseInterface where
   position _ := PUnit
   direction _ _ _ := PUnit
 
-def heterogeneousProgram (_ : SmallResponseInterface.A) :
-    FreeM LargeResponseInterface Bool :=
+def heterogeneousProgram (_ : SmallResponseInterface.A) : FreeM LargeResponseInterface Bool :=
   .pure true
 
-def heterogeneousHandler :
-    Handler smallResponseDisplay largeResponseDisplay heterogeneousProgram :=
+def heterogeneousHandler : Handler smallResponseDisplay largeResponseDisplay heterogeneousProgram :=
   fun _ _ => largeResponseDisplay.leaf (fun _ : Bool => Nat) true 7
 
 example :

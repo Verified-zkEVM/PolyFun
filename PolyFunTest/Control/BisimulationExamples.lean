@@ -95,8 +95,7 @@ private theorem post_silentSteps_start {s : Phase}
 
 example : ¬ postSilentLTS.DelayStep .start (some true) .done := by
   rintro ⟨mid, hsilent, hvis⟩
-  have : mid = .start := post_silentSteps_start hsilent
-  subst mid
+  obtain rfl := post_silentSteps_start hsilent
   obtain ⟨move, _, hnext⟩ := hvis
   cases move
   contradiction

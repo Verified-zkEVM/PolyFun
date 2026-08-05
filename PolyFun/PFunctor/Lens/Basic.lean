@@ -79,11 +79,8 @@ theorem mapObj_comp {P : PFunctor.{uA₁, uB₁}}
 /-- Two lenses are equal when they act equally on every source position
 equipped with its identity direction labelling. This packages the dependent
 position equality and direction-map transport needed by `Lens.ext`. -/
-theorem ext_mapObj {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
-    (l₁ l₂ : Lens P Q)
-    (h : ∀ a, mapObj l₁ (⟨a, id⟩ : P.Obj (P.B a)) =
-      mapObj l₂ ⟨a, id⟩) :
-    l₁ = l₂ := by
+theorem ext_mapObj {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l₁ l₂ : Lens P Q)
+    (h : ∀ a, mapObj l₁ (⟨a, id⟩ : P.Obj (P.B a)) = mapObj l₂ ⟨a, id⟩) : l₁ = l₂ := by
   let hA : ∀ a, l₁.toFunA a = l₂.toFunA a :=
     fun a => congrArg Sigma.fst (h a)
   refine Lens.ext _ _ hA ?_
@@ -155,10 +152,8 @@ def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunc
 end Equiv
 
 /-- Cancel postcomposition with the forward lens of a lens equivalence. -/
-theorem cancel_toLens {P : PFunctor.{uA₁, uB₁}}
-    {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
-    (e : P ≃ₗ Q) {f g : Lens R P}
-    (h : e.toLens ∘ₗ f = e.toLens ∘ₗ g) : f = g := by
+theorem cancel_toLens {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
+    (e : P ≃ₗ Q) {f g : Lens R P} (h : e.toLens ∘ₗ f = e.toLens ∘ₗ g) : f = g := by
   calc
     f = e.invLens ∘ₗ (e.toLens ∘ₗ f) := by
       rw [← comp_assoc, e.left_inv, id_comp]
@@ -368,9 +363,8 @@ theorem sumMap_comp_inl (l₁ : Lens P R) (l₂ : Lens Q W) :
 theorem sumMap_comp_inr (l₁ : Lens P R) (l₂ : Lens Q W) :
     ((l₁ ⊎ₗ l₂) ∘ₗ Lens.inr) = (Lens.inr ∘ₗ l₂) := rfl
 
-theorem sumPair_comp_sumMap (l₁ : Lens P R) (l₂ : Lens Q W)
-    (f : Lens R X) (g : Lens W X) :
-  Lens.sumPair f g ∘ₗ (l₁ ⊎ₗ l₂) = Lens.sumPair (f ∘ₗ l₁) (g ∘ₗ l₂) := by
+theorem sumPair_comp_sumMap (l₁ : Lens P R) (l₂ : Lens Q W) (f : Lens R X) (g : Lens W X) :
+    Lens.sumPair f g ∘ₗ (l₁ ⊎ₗ l₂) = Lens.sumPair (f ∘ₗ l₁) (g ∘ₗ l₂) := by
   ext a <;> rcases a with a | a <;> rfl
 
 @[simp]
@@ -950,7 +944,7 @@ def piUnit {P : PFunctor.{u}} : pi (fun (_ : PUnit) => P) ≃ₗ P where
 /-- Pi of a family of zero functors over an inhabited type is the zero functor. -/
 def piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0) :
     pi F ≃ₗ 0 := by
-  letI : IsEmpty (pi F).A := by
+  have : IsEmpty (pi F).A := by
     refine ⟨fun f => ?_⟩
     have hf : (F default).A := f default
     rw [F_zero (default : I)] at hf

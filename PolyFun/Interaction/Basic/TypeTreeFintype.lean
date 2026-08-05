@@ -3,8 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
-import Mathlib.Data.Fintype.Basic
+
+module
+
+public import Mathlib.Data.Fintype.Basic
+
+public import PolyFun.Interaction.Basic.TypeTree
 
 /-!
 # Branching ornaments on interaction type trees
@@ -22,6 +26,8 @@ Together, `TypeTree.Fintype tree` and `TypeTree.Nonempty tree` provide the
 assumptions needed by downstream uniform samplers. PolyFun itself remains
 independent of any probability monad.
 -/
+
+public section
 
 universe u
 
@@ -53,14 +59,14 @@ instance instNode {X : Type u} [hFin : Fintype X]
   .node hFin hRec
 
 /-- Extract the `Fintype` instance for the move space of the root node. -/
-@[reducible]
+@[expose, reducible]
 def rootFintype {X : Type u} {rest : X → TypeTree.{u}}
     (h : TypeTree.Fintype (TypeTree.node X rest)) : Fintype X :=
   match h with
   | .node hFin _ => hFin
 
 /-- Extract the ornament for every continuation of the root node. -/
-@[reducible]
+@[expose, reducible]
 def rest {X : Type u} {rest : X → TypeTree.{u}}
     (h : TypeTree.Fintype (TypeTree.node X rest)) : ∀ x, TypeTree.Fintype (rest x) :=
   match h with

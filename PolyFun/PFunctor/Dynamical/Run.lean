@@ -421,8 +421,7 @@ theorem state_eq_iterate (s : Closed S) (run : DynSystem.Run s) (n : ℕ) :
   induction n with
   | zero => rfl
   | succ n ih =>
-    have h : run.state (n + 1) = s.step (run.state n) := run.next_state n
-    rw [h, ih]
+    rw [run.next_state n, ih]
     exact (Function.iterate_succ_apply' s.step n run.initial).symm
 
 end Closed

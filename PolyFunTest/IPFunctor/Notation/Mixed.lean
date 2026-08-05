@@ -58,7 +58,7 @@ def flip₂ : IPFunctor.FreeM₂ demoP false true Unit :=
   IPFunctor.FreeM₂.liftBind () (fun _ => IPFunctor.FreeM₂.pure ())
 
 def read₂ : IPFunctor.FreeM₂ demoP true true Nat :=
-  IPFunctor.FreeM₂.liftBind () (fun n => IPFunctor.FreeM₂.pure n)
+  IPFunctor.FreeM₂.liftBind () IPFunctor.FreeM₂.pure
 
 /-! ### Single-index `IPFunctor.FreeM` with the polymorphic-tail restriction. -/
 

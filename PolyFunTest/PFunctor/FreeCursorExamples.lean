@@ -94,8 +94,8 @@ example : Path.trace program truePath = trueLeaf.trace := by
   rw [Cursor.trace_plug]
   rfl
 
-example : FreeM.map (output program) (withPath program) = program := by
-  exact map_output_withPath program
+example : FreeM.map (output program) (withPath program) = program :=
+  map_output_withPath program
 
 example : Cursor.ofPath program truePath = trueLeaf := rfl
 
@@ -124,15 +124,15 @@ example : Cursor.terminalEquivPath program trueTerminal = truePath := by
 /-! The producer tests below name the public algebraic laws explicitly, so
 their availability and simp orientation remain part of the regression surface. -/
 
-example : (Cursor.root program).comp internal = internal := by
-  exact Cursor.root_comp internal
+example : (Cursor.root program).comp internal = internal :=
+  Cursor.root_comp internal
 
-example : internal.comp (Cursor.root internal.residual) = internal := by
-  exact Cursor.comp_root internal
+example : internal.comp (Cursor.root internal.residual) = internal :=
+  Cursor.comp_root internal
 
 example : (internal.comp indexEdge.toCursor).comp unitEdge.toCursor =
-    internal.comp (indexEdge.toCursor.comp unitEdge.toCursor) := by
-  exact Cursor.comp_assoc internal indexEdge.toCursor unitEdge.toCursor
+    internal.comp (indexEdge.toCursor.comp unitEdge.toCursor) :=
+  Cursor.comp_assoc internal indexEdge.toCursor unitEdge.toCursor
 
 example : trueLeaf.length = internal.length + indexEdge.toCursor.length +
     unitEdge.toCursor.length := by
@@ -145,11 +145,11 @@ example : trueLeaf.trace =
 
 example (path : Path unitEdge.residual) :
     (afterIndexCursor.comp unitEdge.toCursor).plug path =
-      afterIndexCursor.plug (unitEdge.toCursor.plug path) := by
-  exact Cursor.plug_comp afterIndexCursor unitEdge.toCursor path
+      afterIndexCursor.plug (unitEdge.toCursor.plug path) :=
+  Cursor.plug_comp afterIndexCursor unitEdge.toCursor path
 
-example : trueLeaf.length = FreeMonoid.length trueLeaf.trace := by
-  exact Cursor.length_eq_trace_length trueLeaf
+example : trueLeaf.length = FreeMonoid.length trueLeaf.trace :=
+  Cursor.length_eq_trace_length trueLeaf
 
 /-- The witness retains the continuation, rather than merely comparing lengths. -/
 def extendsInternal : Cursor.Extends internal trueLeaf where

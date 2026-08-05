@@ -32,23 +32,21 @@ open CofreeUniversalTest
 
 /-- Generic coiteration identifies with behavior while the state and both
 interface universes remain independent. -/
-example (P : PFunctor.{uA, uB}) (S : Type uS)
-    (system : DynSystem S P) :
+example (P : PFunctor.{uA, uB}) (S : Type uS) (system : DynSystem S P) :
     CofreeP.unfoldShape (stateComonoid S) system = system.behavior :=
   DynSystem.unfoldShape_stateComonoid system
 
 /-- Vertex-labelled mate objects and their decoding keep the label universe
 independent as well. -/
-example (P : PFunctor.{uA, uB}) (S : Type uS) (α : Type uα)
-    (system : DynSystem S P) (state : S) (label : S → α) :
+example (P : PFunctor.{uA, uB}) (S : Type uS) (α : Type uα) (system : DynSystem S P) (state : S)
+    (label : S → α) :
     CofreeP.decode (DynSystem.mateObj system state label) =
       DynSystem.labeledTrajectory system label state :=
   DynSystem.decode_mateObj system state label
 
 /-- The full retrofunctor mate is packaged at the homogeneous maximum required
 by the current `Comonoid.Hom` API. -/
-example (P : PFunctor.{uA, uB}) (S : Type (max uA uB))
-    (system : DynSystem S P) :
+example (P : PFunctor.{uA, uB}) (S : Type (max uA uB)) (system : DynSystem S P) :
     Comonoid.Hom (stateComonoid S) (CofreeP.comonoid P) :=
   system.cofreeMate
 
@@ -63,8 +61,7 @@ def stateCode : ThreeState → Nat
   | .final => 2
 
 def labeledBehavior : CofreeC binaryP Nat :=
-  CofreeP.decode
-    (DynSystem.mateObj branchingSystem ThreeState.source stateCode)
+  CofreeP.decode (DynSystem.mateObj branchingSystem ThreeState.source stateCode)
 
 /-- Decoding observes the initial state's label at the root. -/
 example : CofreeC.head labeledBehavior = 0 := by
@@ -77,16 +74,14 @@ example : CofreeC.head ((CofreeC.tail labeledBehavior).2 false) = 1 := by
 
 /-- Following false and then true reaches the final state, whose distinct label
 pins the same outer-then-inner order as the full retrofunctor test below. -/
-example : CofreeC.head
-    ((CofreeC.tail ((CofreeC.tail labeledBehavior).2 false)).2 true) = 2 := by
+example : CofreeC.head ((CofreeC.tail ((CofreeC.tail labeledBehavior).2 false)).2 true) = 2 := by
   simp [labeledBehavior, stateCode, branchingSystem, branchingLens,
     DynSystem.update]
 
 /-- The exposed-position labelling specializes directly to the established
 trajectory. -/
 example : CofreeP.decode
-    (DynSystem.mateObj branchingSystem ThreeState.source
-      branchingSystem.expose) =
+    (DynSystem.mateObj branchingSystem ThreeState.source branchingSystem.expose) =
     branchingSystem.trajectory .source := by
   rw [DynSystem.decode_mateObj, DynSystem.labeledTrajectory_expose]
 
@@ -96,8 +91,7 @@ def behaviorTree : M binaryP :=
 example : behaviorTree = branchingSystem.behavior .source := by
   unfold behaviorTree
   rw [DynSystem.cofreeMate_toLens]
-  exact congrFun
-    (DynSystem.unfoldShape_stateComonoid branchingSystem) ThreeState.source
+  exact congrFun (DynSystem.unfoldShape_stateComonoid branchingSystem) ThreeState.source
 
 def falseVertex : M.Vertex behaviorTree :=
   .child false (.root _)
@@ -107,17 +101,14 @@ def trueVertex : M.Vertex behaviorTree :=
 
 def falseTarget : ThreeState :=
   Comonoid.target (stateComonoid ThreeState) ThreeState.source
-    (branchingSystem.cofreeMate.toLens.toFunB
-      ThreeState.source falseVertex)
+    (branchingSystem.cofreeMate.toLens.toFunB ThreeState.source falseVertex)
 
-def nextTrueVertex : M.Vertex
-    (branchingSystem.cofreeMate.toLens.toFunA falseTarget) :=
+def nextTrueVertex : M.Vertex (branchingSystem.cofreeMate.toLens.toFunA falseTarget) :=
   .child true (.root _)
 
 def innerTrueVertex : M.Vertex (M.Vertex.subtree falseVertex) :=
   cast (congrArg M.Vertex
-    (branchingSystem.cofreeMate.map_target
-      ThreeState.source falseVertex)) nextTrueVertex
+    (branchingSystem.cofreeMate.map_target ThreeState.source falseVertex)) nextTrueVertex
 
 def falseThenTrueVertex : M.Vertex behaviorTree :=
   M.Vertex.append falseVertex innerTrueVertex
@@ -146,8 +137,7 @@ example : branchingSystem.cofreeMate.toLens.toFunB .source
 
 /-- The `false` branch reaches the observably distinct middle state. -/
 theorem cofreeMate_falseVertex :
-    branchingSystem.cofreeMate.toLens.toFunB .source falseVertex =
-    .middle := by
+    branchingSystem.cofreeMate.toLens.toFunB .source falseVertex = .middle := by
   change (CofreeP.restrict (stateComonoid ThreeState)
     branchingSystem.cofreeMate).toFunB .source false = .middle
   rw [DynSystem.restrict_cofreeMate]
@@ -161,8 +151,7 @@ theorem falseTarget_eq_middle : falseTarget = ThreeState.middle := by
 /-- The `true` branch reaches the final state rather than reversing the branch
 labels. -/
 theorem cofreeMate_trueVertex :
-    branchingSystem.cofreeMate.toLens.toFunB .source trueVertex =
-    .final := by
+    branchingSystem.cofreeMate.toLens.toFunB .source trueVertex = .final := by
   change (CofreeP.restrict (stateComonoid ThreeState)
     branchingSystem.cofreeMate).toFunB .source true = .final
   rw [DynSystem.restrict_cofreeMate]

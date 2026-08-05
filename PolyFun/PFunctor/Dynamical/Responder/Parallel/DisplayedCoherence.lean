@@ -147,7 +147,6 @@ private theorem displayedBehavior_parallel_comm_presented
   exact (parallelCommPresentationHom S T).toDisplayedBehavior_naturality
     (left, right) (displayedLeft, displayedRight)
 
-
 /-- The unique proof-relevant coalgebra over the empty responder. -/
 def zeroDisplayedCoalgebra :
     Display.Coalgebra
@@ -161,7 +160,7 @@ def zeroDisplayedCoalgebra :
     (Responder.zero : Responder PUnit.{1}
       (0 : PFunctor.{uA₁, uB}))
     (fun _ => PUnit.{1})).symm
-    fun _ _ query => PEmpty.elim query
+    fun _ _ query => query.elim
 
 /-- Canonical displayed behavior of the empty interface. -/
 def zeroDisplayedBehavior :
@@ -231,15 +230,15 @@ private def parallelZeroRightUnitorPresentationHom
         rw [Responder.answer_reindex, runFree_ofLens]
         cases operation with
         | left operation => rfl
-        | right impossible => exact PEmpty.elim impossible
-        | both operation impossible => exact PEmpty.elim impossible)
+        | right impossible => exact impossible.elim
+        | both operation impossible => exact impossible.elim)
       (by
         intro state operation
         rw [Responder.next_reindex, runFree_ofLens]
         cases operation with
         | left operation => rfl
-        | right impossible => exact PEmpty.elim impossible
-        | both operation impossible => exact PEmpty.elim impossible)
+        | right impossible => exact impossible.elim
+        | both operation impossible => exact impossible.elim)
       (left, PUnit.unit)
     dsimp [displayedTotalStep, PresentationHom.totalMap]
     apply displayedTotalStepObj_ext _ _ _ hBase
@@ -270,16 +269,16 @@ private def parallelZeroRightUnitorPresentationHom
           cases hContract
           cases operation with
           | left operation => rfl
-          | right impossible => exact PEmpty.elim impossible
-          | both operation impossible => exact PEmpty.elim impossible
+          | right impossible => exact impossible.elim
+          | both operation impossible => exact impossible.elim
       · intro direction direction' hDirection
         cases hDirection
         rcases direction with ⟨⟨operation, trivialDirection⟩, contract⟩
         cases trivialDirection
         cases operation with
         | left operation => rfl
-        | right impossible => exact PEmpty.elim impossible
-        | both operation impossible => exact PEmpty.elim impossible
+        | right impossible => exact impossible.elim
+        | both operation impossible => exact impossible.elim
 
 private theorem displayedBehavior_parallel_zero_right_presented
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
@@ -385,14 +384,14 @@ private def parallelZeroRightTerminalPresentationHom
         intro state operation
         cases operation with
         | left operation => rfl
-        | right impossible => exact PEmpty.elim impossible
-        | both operation impossible => exact PEmpty.elim impossible)
+        | right impossible => exact impossible.elim
+        | both operation impossible => exact impossible.elim)
       (by
         intro state operation
         cases operation with
         | left operation => rfl
-        | right impossible => exact PEmpty.elim impossible
-        | both operation impossible => exact PEmpty.elim impossible)
+        | right impossible => exact impossible.elim
+        | both operation impossible => exact impossible.elim)
       (left, PUnit.unit)
     dsimp [displayedTotalStep, PresentationHom.totalMap]
     apply displayedTotalStepObj_ext _ _ _ hBase
@@ -423,16 +422,16 @@ private def parallelZeroRightTerminalPresentationHom
           cases hContract
           cases operation with
           | left operation => rfl
-          | right impossible => exact PEmpty.elim impossible
-          | both operation impossible => exact PEmpty.elim impossible
+          | right impossible => exact impossible.elim
+          | both operation impossible => exact impossible.elim
       · intro direction direction' hDirection
         cases hDirection
         rcases direction with ⟨⟨operation, trivialDirection⟩, contract⟩
         cases trivialDirection
         cases operation with
         | left operation => rfl
-        | right impossible => exact PEmpty.elim impossible
-        | both operation impossible => exact PEmpty.elim impossible
+        | right impossible => exact impossible.elim
+        | both operation impossible => exact impossible.elim
 
 private theorem displayedBehavior_parallel_zero_right_presentation
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
@@ -521,16 +520,16 @@ private def parallelZeroLeftUnitorPresentationHom
         intro state operation
         rw [Responder.answer_reindex, runFree_ofLens]
         cases operation with
-        | left impossible => exact PEmpty.elim impossible
+        | left impossible => exact impossible.elim
         | right operation => rfl
-        | both impossible operation => exact PEmpty.elim impossible)
+        | both impossible operation => exact impossible.elim)
       (by
         intro state operation
         rw [Responder.next_reindex, runFree_ofLens]
         cases operation with
-        | left impossible => exact PEmpty.elim impossible
+        | left impossible => exact impossible.elim
         | right operation => rfl
-        | both impossible operation => exact PEmpty.elim impossible)
+        | both impossible operation => exact impossible.elim)
       (PUnit.unit, right)
     dsimp [displayedTotalStep, PresentationHom.totalMap]
     apply displayedTotalStepObj_ext _ _ _ hBase
@@ -560,17 +559,17 @@ private def parallelZeroLeftUnitorPresentationHom
           intro contract contract' hContract
           cases hContract
           cases operation with
-          | left impossible => exact PEmpty.elim impossible
+          | left impossible => exact impossible.elim
           | right operation => rfl
-          | both impossible operation => exact PEmpty.elim impossible
+          | both impossible operation => exact impossible.elim
       · intro direction direction' hDirection
         cases hDirection
         rcases direction with ⟨⟨operation, trivialDirection⟩, contract⟩
         cases trivialDirection
         cases operation with
-        | left impossible => exact PEmpty.elim impossible
+        | left impossible => exact impossible.elim
         | right operation => rfl
-        | both impossible operation => exact PEmpty.elim impossible
+        | both impossible operation => exact impossible.elim
 
 private theorem displayedBehavior_parallel_zero_left_presented
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
@@ -679,15 +678,15 @@ private def parallelZeroLeftTerminalPresentationHom
       (by
         intro state operation
         cases operation with
-        | left impossible => exact PEmpty.elim impossible
+        | left impossible => exact impossible.elim
         | right operation => rfl
-        | both impossible operation => exact PEmpty.elim impossible)
+        | both impossible operation => exact impossible.elim)
       (by
         intro state operation
         cases operation with
-        | left impossible => exact PEmpty.elim impossible
+        | left impossible => exact impossible.elim
         | right operation => rfl
-        | both impossible operation => exact PEmpty.elim impossible)
+        | both impossible operation => exact impossible.elim)
       (PUnit.unit, right)
     dsimp [displayedTotalStep, PresentationHom.totalMap]
     apply displayedTotalStepObj_ext _ _ _ hBase
@@ -717,17 +716,17 @@ private def parallelZeroLeftTerminalPresentationHom
           intro contract contract' hContract
           cases hContract
           cases operation with
-          | left impossible => exact PEmpty.elim impossible
+          | left impossible => exact impossible.elim
           | right operation => rfl
-          | both impossible operation => exact PEmpty.elim impossible
+          | both impossible operation => exact impossible.elim
       · intro direction direction' hDirection
         cases hDirection
         rcases direction with ⟨⟨operation, trivialDirection⟩, contract⟩
         cases trivialDirection
         cases operation with
-        | left impossible => exact PEmpty.elim impossible
+        | left impossible => exact impossible.elim
         | right operation => rfl
-        | both impossible operation => exact PEmpty.elim impossible
+        | both impossible operation => exact impossible.elim
 
 private theorem displayedBehavior_parallel_zero_left_presentation
     (S : Display.{uA₁, uB, uC₁, uD₁} P)

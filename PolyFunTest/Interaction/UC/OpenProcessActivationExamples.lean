@@ -3,7 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.OpenProcess
+
+module
+
+import all PolyFun.Interaction.UC.OpenProcess
+public import PolyFun.Interaction.UC.OpenProcess
 
 /-!
 # Activation-labelled open-process examples
@@ -12,6 +16,8 @@ Regression checks that the open-process coherence relation is the generic
 delay-bisimulation notion, including across independent process-state
 universes, and therefore inherits the standard delay-to-weak inclusion.
 -/
+
+@[expose] public section
 
 universe u v₁ v₂ w w'
 
@@ -36,9 +42,7 @@ example (h : OpenProcessActivationEquiv p₁ p₂) :
 example : OpenProcessActivationEquiv p₁ p₁ := by rfl
 
 example (h : OpenProcessActivationEquiv p₁ p₂) :
-    OpenProcessActivationEquiv p₂ p₁ := by
-  symm
-  exact h
+    OpenProcessActivationEquiv p₂ p₁ := h.symm
 
 /-- A path proved silent receives the generic silent label. -/
 example (s : p₁.Proc) (tr : (p₁.step s).tree.Path)

@@ -3,7 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Chain
+
+module
+
+import all PolyFun.Interaction.Basic.Chain
+public import PolyFun.Interaction.Basic.Chain
 
 /-!
 # Worked examples for continuation-style chains (`TypeTree.Chain`)
@@ -14,6 +18,8 @@ and double as regression tests: a chain whose per-round message type grows with
 the round index, a chain with genuine path-prefix dependence, and
 dependent strategy composition (`replay`) over the prefix-dependent example.
 -/
+
+@[expose] public section
 
 universe u
 
@@ -27,7 +33,7 @@ section GrowingMessages
 
 /-- A protocol where round `k` exchanges a value from `Fin (k + 1)`.
 No state type — the dependency is baked directly into the chain. -/
-private def growingChain : (n : Nat) → (k : Nat) → Chain.{0} n
+def growingChain : (n : Nat) → (k : Nat) → Chain.{0} n
   | 0, _ => ⟨⟩
   | n + 1, k => ⟨.node (Fin (k + 1)) fun _ => .done,
                   fun _ => growingChain n (k + 1)⟩
@@ -47,7 +53,7 @@ example : Path (Chain.toTypeTree 2 (growingChain 2 0)) =
 
 /-- A fully literal 3-round protocol — no parameters, no recursion,
 no state. Just data. -/
-private def threeRoundsLiteral : Chain.{0} 3 :=
+def threeRoundsLiteral : Chain.{0} 3 :=
   ⟨.node (Fin 1) fun _ => .done, fun _ =>
     ⟨.node (Fin 2) fun _ => .done, fun _ =>
       ⟨.node (Fin 3) fun _ => .done, fun _ => ⟨⟩⟩⟩⟩
@@ -63,7 +69,7 @@ end GrowingMessages
 section PrefixDependent
 
 /-- First round branches and exposes branch-specific data to later rounds. -/
-private def branchingRound : TypeTree :=
+def branchingRound : TypeTree :=
   .node Bool fun b =>
     if b then
       .node Nat fun _ => .done
@@ -71,18 +77,17 @@ private def branchingRound : TypeTree :=
       .node (Fin 2) fun _ => .done
 
 /-- The second round depends on the full first-round path. -/
-private def secondRound : Path branchingRound → TypeTree
+def secondRound : Path branchingRound → TypeTree
   | ⟨true, ⟨(n : Nat), ⟨⟩⟩⟩ => .node (Fin (n + 1)) fun _ => .done
   | ⟨false, ⟨i, ⟨⟩⟩⟩ => .node (Fin (i.val + 2)) fun _ => .done
 
 /-- The third round depends on the full two-round path prefix. -/
-private def thirdRound :
-    (tr₁ : Path branchingRound) → Path (secondRound tr₁) → TypeTree
+def thirdRound : (tr₁ : Path branchingRound) → Path (secondRound tr₁) → TypeTree
   | ⟨true, ⟨(n : Nat), ⟨⟩⟩⟩, ⟨k, ⟨⟩⟩ => .node (Fin (n + k.val + 1)) fun _ => .done
   | ⟨false, ⟨i, ⟨⟩⟩⟩, ⟨k, ⟨⟩⟩ => .node (Fin (i.val + k.val + 2)) fun _ => .done
 
 /-- A three-round chain whose final move type genuinely depends on the prefix path. -/
-private def prefixDependent : Chain.{0} 3 :=
+def prefixDependent : Chain.{0} 3 :=
   ⟨branchingRound, fun tr₁ =>
     ⟨secondRound tr₁, fun tr₂ =>
       ⟨thirdRound tr₁ tr₂, fun _ => ⟨⟩⟩⟩⟩
@@ -118,32 +123,30 @@ example (i : Fin 2) :
 /-! ## Dependent strategy composition over the prefix-dependent example -/
 
 /-- Pure strategy that follows a prescribed path and returns a chosen leaf output. -/
-private def scriptStrategy :
-    (spec : TypeTree) → (tr : Path spec) → {Output : Path spec → Type u} →
+def scriptStrategy : (spec : TypeTree) → (tr : Path spec) → {Output : Path spec → Type u} →
     Output tr → Strategy.Plain Id spec Output
   | .done, _, _, out => out
   | .node _ rest, ⟨x, trRest⟩, _, out => ⟨x, scriptStrategy (rest x) trRest out⟩
 
 /-- Carry the flattened path of the remaining chain as the dependent state. -/
-private abbrev ReplayState {n : Nat} (c : Chain.{0} n) : Type :=
+abbrev ReplayState {n : Nat} (c : Chain.{0} n) : Type :=
   Path (Chain.toTypeTree n c)
 
 /-- One dependent step: split the remaining flattened path into this round and the tail,
 play the current round verbatim, and return the tail path. -/
-private def replayStep {n : Nat} (c : Chain.{0} (n + 1))
-    (tr : ReplayState c) :
+def replayStep {n : Nat} (c : Chain.{0} (n + 1)) (tr : ReplayState c) :
     Id (Strategy.Plain Id c.1 (fun tr₁ => ReplayState (c.2 tr₁))) :=
   let ⟨tr₁, trRest⟩ := Chain.splitPath n c tr
   scriptStrategy c.1 tr₁ trRest
 
 /-- Replay a full flattened path using the intrinsic dependent strategy combinator. -/
-private def replayStrategy (n : Nat) (c : Chain.{0} n) (tr : ReplayState c) :
+def replayStrategy (n : Nat) (c : Chain.{0} n) (tr : ReplayState c) :
     Strategy.Plain Id (Chain.toTypeTree n c)
       (Chain.outputFamily (Family := fun {_} c => ReplayState c) n c) :=
   Chain.strategyComp (Family := fun {_} c => ReplayState c) replayStep n c tr
 
 /-- A concrete `true`-branch path for the prefix-dependent chain. -/
-private def trueReplayPath (n : Nat) (k : Fin (n + 1)) (j : Fin (n + k.val + 1)) :
+def trueReplayPath (n : Nat) (k : Fin (n + 1)) (j : Fin (n + k.val + 1)) :
     Path (Chain.toTypeTree 3 prefixDependent) := by
   let tr₁ : Path branchingRound := ⟨true, ⟨n, ⟨⟩⟩⟩
   let c₂ := prefixDependent.2 tr₁
@@ -155,8 +158,7 @@ private def trueReplayPath (n : Nat) (k : Fin (n + 1)) (j : Fin (n + k.val + 1))
       (Chain.appendPath 0 c₃ tr₃ ⟨⟩))
 
 /-- A concrete `false`-branch path for the prefix-dependent chain. -/
-private def falseReplayPath (i : Fin 2) (k : Fin (i.val + 2))
-    (j : Fin (i.val + k.val + 2)) :
+def falseReplayPath (i : Fin 2) (k : Fin (i.val + 2)) (j : Fin (i.val + k.val + 2)) :
     Path (Chain.toTypeTree 3 prefixDependent) := by
   let tr₁ : Path branchingRound := ⟨false, ⟨i, ⟨⟩⟩⟩
   let c₂ := prefixDependent.2 tr₁

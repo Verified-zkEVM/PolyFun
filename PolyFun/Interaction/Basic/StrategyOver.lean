@@ -3,8 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Shape
-import PolyFun.Interaction.Basic.Decoration
+
+module
+
+import all PolyFun.Interaction.Basic.Shape
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Basic.Shape
 
 /-!
 # Whole-tree strategies over interaction syntax
@@ -14,6 +18,8 @@ This file turns local syntax into whole-tree strategy families. It sits after
 continuation reindexing, and `StrategyOver` recursively interprets that syntax
 over an entire `FreeM` tree.
 -/
+
+public section
 
 universe u a vΓ vΔ w uA uB uA₂ uB₂ t
 
@@ -34,6 +40,7 @@ At leaves it returns the output family. At a control node it presents the local
 node object supplied by `syn`, whose continuation family is recursively the
 strategy for the abstract branch selected by the lens.
 -/
+@[expose]
 def StrategyOver {l : PFunctor.Lens P Q}
     (syn : SyntaxOver l Agent Γ) :
     (agent : Agent) →
@@ -301,10 +308,8 @@ theorem family_comap {Δ : P.A → Type vΔ}
     (ctxs : Decoration Γ spec) →
     {Out : PFunctor.FreeM.PathAlong l spec → Type w} →
     StrategyOver (ShapeOver.comap f shape).toSyntaxOver agent spec ctxs Out =
-      StrategyOver shape.toSyntaxOver agent spec (Decoration.map f spec ctxs) Out := by
-  intro agent spec ctxs Out
-  exact (StrategyOver.comap shape.toSyntaxOver f
-    (agent := agent) (spec := spec) (ctxs := ctxs) (Out := Out))
+      StrategyOver shape.toSyntaxOver agent spec (Decoration.map f spec ctxs) Out :=
+  StrategyOver.comap shape.toSyntaxOver f
 
 end ShapeOver
 

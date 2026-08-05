@@ -3,9 +3,17 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Multiparty.Broadcast
-import PolyFun.Interaction.Multiparty.Directed
-import PolyFun.Interaction.Multiparty.Profile
+
+module
+
+import all PolyFun.Interaction.Multiparty.Observation
+import all PolyFun.Interaction.Multiparty.Core
+import all PolyFun.Interaction.Multiparty.Broadcast
+import all PolyFun.Interaction.Multiparty.Directed
+import all PolyFun.Interaction.Multiparty.Profile
+public import PolyFun.Interaction.Multiparty.Broadcast
+public import PolyFun.Interaction.Multiparty.Directed
+public import PolyFun.Interaction.Multiparty.Profile
 
 /-!
 # Examples: multiparty endpoints with local views
@@ -27,6 +35,8 @@ The examples are written using pattern-matching resolvers rather than equality
 tests. This is deliberate: for concrete finite party types, it keeps the local
 endpoint types definitionally transparent.
 -/
+
+@[expose] public section
 
 universe u
 
@@ -54,16 +64,16 @@ This definition is written by pattern matching, rather than by equality tests,
 so that endpoint types reduce definitionally in examples.
 -/
 def resolveBroadcastFor (me owner : ThreeParty) {X : Type u} : ViewMode X :=
-      match me, owner with
-      | .prover, .prover => .pick
-      | .prover, .verifier => .observe
-      | .prover, .extractor => .observe
-      | .verifier, .prover => .observe
-      | .verifier, .verifier => .pick
-      | .verifier, .extractor => .observe
-      | .extractor, .prover => .observe
-      | .extractor, .verifier => .observe
-      | .extractor, .extractor => .pick
+  match me, owner with
+  | .prover, .prover => .pick
+  | .prover, .verifier => .observe
+  | .prover, .extractor => .observe
+  | .verifier, .prover => .observe
+  | .verifier, .verifier => .pick
+  | .verifier, .extractor => .observe
+  | .extractor, .prover => .observe
+  | .extractor, .verifier => .observe
+  | .extractor, .extractor => .pick
 
 /--
 `resolveDirectedFor me src dst` is the local-view projection of the directed
@@ -78,16 +88,16 @@ As in the broadcast model, this resolver is defined by pattern matching, so
 that local endpoint types unfold definitionally.
 -/
 def resolveDirectedFor (me src dst : ThreeParty) {X : Type u} : ViewMode X :=
-      match me, src, dst with
-      | .prover, .prover, _ => .pick
-      | .prover, _, .prover => .observe
-      | .prover, _, _ => .hidden
-      | .verifier, .verifier, _ => .pick
-      | .verifier, _, .verifier => .observe
-      | .verifier, _, _ => .hidden
-      | .extractor, .extractor, _ => .pick
-      | .extractor, _, .extractor => .observe
-      | .extractor, _, _ => .hidden
+  match me, src, dst with
+  | .prover, .prover, _ => .pick
+  | .prover, _, .prover => .observe
+  | .prover, _, _ => .hidden
+  | .verifier, .verifier, _ => .pick
+  | .verifier, _, .verifier => .observe
+  | .verifier, _, _ => .hidden
+  | .extractor, .extractor, _ => .pick
+  | .extractor, _, .extractor => .observe
+  | .extractor, _, _ => .hidden
 
 end ThreeParty
 
@@ -99,13 +109,13 @@ variable (ExtractedWit : Type u)
 
 /-- TypeTree for a one-round knowledge-soundness interaction:
 message, challenge, witness output, decision, extraction. -/
-private def ksSpec : TypeTree :=
+def ksSpec : TypeTree :=
   TypeTree.node Msg fun _ => .node Chal fun _ => .node WitOut fun _ =>
   .node Decision fun _ => .node ExtractedWit fun _ => .done
 
 /-- Acting parties for the knowledge-soundness interaction in the broadcast
 model. -/
-private def ksParties :
+def ksParties :
     Broadcast.PartyDecoration ThreeParty
       (ksSpec Msg Chal WitOut Decision ExtractedWit) :=
   ⟨.prover, fun _ => ⟨.verifier, fun _ => ⟨.prover, fun _ =>
@@ -154,11 +164,11 @@ variable (m : Type u → Type u) [Monad m] (α : Type u)
 
 /-- A tiny two-step protocol used to demonstrate the directed model:
 `prover → verifier`, then `verifier → extractor`. -/
-private def directedSpec : TypeTree :=
+def directedSpec : TypeTree :=
   TypeTree.node Msg fun _ => .node Ack fun _ => .done
 
 /-- Directed sender/receiver labels for `directedSpec`. -/
-private def directedEdges :
+def directedEdges :
     Directed.EdgeDecoration ThreeParty (directedSpec Msg Ack) :=
   ⟨(.prover, .verifier), fun _ => ⟨(.verifier, .extractor), fun _ => ⟨⟩⟩⟩
 
@@ -202,13 +212,13 @@ variable (Flag : Type u)
 variable (m : Type u → Type u) [Monad m] (α : Type u)
 
 /-- A one-step scheduled event with a public tag and a private payload. -/
-private def scheduledSpec : TypeTree :=
+def scheduledSpec : TypeTree :=
   TypeTree.node (Flag × Msg) fun _ => .done
 
 /-- Per-party local views of the scheduled event:
 the adversary chooses, the recipient observes the full event, the auditor
 learns only the public tag, and the outsider learns nothing. -/
-private def scheduledViews :
+def scheduledViews :
     Profile.Decoration ScheduleParty (scheduledSpec Msg Flag) :=
   ⟨(fun
       | .adversary => .pick
@@ -295,7 +305,7 @@ Bob's local observation of a network action.
 Bob learns the payload exactly in the branches where Bob receives a delivery,
 and otherwise learns only that no payload was received by Bob.
 -/
-private def bobObservation : NetworkAction Msg → Option Msg
+def bobObservation : NetworkAction Msg → Option Msg
   | .drop => none
   | .deliverBob msg => some msg
   | .deliverCarol _ => none
@@ -306,7 +316,7 @@ Carol's local observation of a network action.
 
 This is dual to Bob's observation.
 -/
-private def carolObservation : NetworkAction Msg → Option Msg
+def carolObservation : NetworkAction Msg → Option Msg
   | .drop => none
   | .deliverBob _ => none
   | .deliverCarol msg => some msg
@@ -318,7 +328,7 @@ The public scheduling summary seen by an external auditor.
 The auditor learns which delivery pattern occurred, but never learns the
 payload.
 -/
-private def deliverySummary : NetworkAction Msg → DeliverySummary
+def deliverySummary : NetworkAction Msg → DeliverySummary
   | .drop => .none
   | .deliverBob _ => .bob
   | .deliverCarol _ => .carol
@@ -327,7 +337,7 @@ private def deliverySummary : NetworkAction Msg → DeliverySummary
 /--
 A one-step adversarially scheduled delivery action.
 -/
-private def networkSpec : TypeTree :=
+def networkSpec : TypeTree :=
   TypeTree.node (NetworkAction Msg) fun _ => .done
 
 /--
@@ -339,7 +349,7 @@ This single node already captures several adversarial powers:
 * the auditor learns only the public delivery pattern; and
 * the outsider learns nothing at all.
 -/
-private def networkViews :
+def networkViews :
     Profile.Decoration DeliveryParty (networkSpec Msg) :=
   ⟨(fun
       | .adversary => .pick
@@ -419,7 +429,7 @@ The first move is the adversary's corruption decision. The second move is a
 post-corruption secret-bearing action whose local visibility depends on the
 chosen corruption target.
 -/
-private def corruptionSpec : TypeTree :=
+def corruptionSpec : TypeTree :=
   TypeTree.node CorruptionTarget fun _ => .node Secret fun _ => .done
 
 /--
@@ -435,7 +445,7 @@ This exhibits a key adversarial feature of the framework:
 the local views at later nodes can depend definitionally on earlier
 adversarially chosen moves.
 -/
-private def corruptionViews :
+def corruptionViews :
     Profile.Decoration CorruptionParty (corruptionSpec Secret) :=
   ⟨(fun
       | .adversary => .pick
@@ -462,7 +472,7 @@ to the adversary.
 It is written explicitly so that the resulting endpoint computation reduces by
 `rfl`.
 -/
-private def corruptionAdversaryViews :
+def corruptionAdversaryViews :
     PFunctor.FreeM.Displayed.Decoration (fun X : Type u => ViewMode X) (corruptionSpec Secret) :=
   ⟨.pick, fun _ => ⟨.pick, fun _ => ⟨⟩⟩⟩
 
@@ -473,7 +483,7 @@ to the external monitor.
 The monitor learns the public corruption decision but is hidden from the later
 secret-bearing move in every branch.
 -/
-private def corruptionMonitorViews :
+def corruptionMonitorViews :
     PFunctor.FreeM.Displayed.Decoration (fun X : Type u => ViewMode X) (corruptionSpec Secret) :=
   ⟨.observe, fun _ => ⟨.hidden, fun _ => ⟨⟩⟩⟩
 
@@ -481,7 +491,7 @@ private def corruptionMonitorViews :
 The post-corruption secret-bearing node viewed from the branch where Alice is
 the corrupted party.
 -/
-private def aliceAfterSelfCorruptionViews :
+def aliceAfterSelfCorruptionViews :
     PFunctor.FreeM.Displayed.Decoration (fun X : Type u => ViewMode X)
       (TypeTree.node Secret fun _ => .done) :=
   ⟨.observe, fun _ => ⟨⟩⟩
@@ -490,7 +500,7 @@ private def aliceAfterSelfCorruptionViews :
 The same post-corruption secret-bearing node viewed from the branch where Bob
 is corrupted instead, so Alice is hidden from the move.
 -/
-private def aliceAfterBobCorruptionViews :
+def aliceAfterBobCorruptionViews :
     PFunctor.FreeM.Displayed.Decoration (fun X : Type u => ViewMode X)
       (TypeTree.node Secret fun _ => .done) :=
   ⟨.hidden, fun _ => ⟨⟩⟩
@@ -516,12 +526,7 @@ example :
       (resolve := TypeTree.Node.ContextHom.id (fun X : Type u => ViewMode X))
       (TypeTree.node Secret fun _ => .done) (aliceAfterSelfCorruptionViews Secret)
       (fun _ => α)
-    = ((_ : Secret) → m α) := by
-  unfold Multiparty.Strategy
-  change StrategyOver (Multiparty.localSyntax m) PUnit.unit
-    (TypeTree.node Secret fun _ => .done) (aliceAfterSelfCorruptionViews Secret)
-    (fun _ => α) = ((_ : Secret) → m α)
-  rfl
+    = ((_ : Secret) → m α) := rfl
 
 /--
 If Bob is corrupted instead, Alice is hidden from the same second-step node.
@@ -531,12 +536,7 @@ example :
       (resolve := TypeTree.Node.ContextHom.id (fun X : Type u => ViewMode X))
       (TypeTree.node Secret fun _ => .done) (aliceAfterBobCorruptionViews Secret)
       (fun _ => α)
-    = m ((_ : Secret) → α) := by
-  unfold Multiparty.Strategy
-  change StrategyOver (Multiparty.localSyntax m) PUnit.unit
-    (TypeTree.node Secret fun _ => .done) (aliceAfterBobCorruptionViews Secret)
-    (fun _ => α) = m ((_ : Secret) → α)
-  rfl
+    = m ((_ : Secret) → α) := rfl
 
 /--
 The monitor learns the public corruption decision but is hidden from the later

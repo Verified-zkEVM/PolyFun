@@ -3,11 +3,15 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
-import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Basic.MonadDecoration
-import PolyFun.Interaction.TwoParty.Role
-import Batteries.Tactic.Lint
+
+module
+
+import all PolyFun.Interaction.Basic.MonadDecoration
+public import PolyFun.Interaction.Basic.TypeTree
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Basic.MonadDecoration
+public import PolyFun.Interaction.TwoParty.Role
+public import Batteries.Tactic.Lint
 
 /-!
 # Role decorations and common role-based node contexts
@@ -33,13 +37,14 @@ These contexts are ordinary inputs to `StrategyOver`: roles say who owns the
 move, and monad decorations say which node effect is used by each participant.
 -/
 
+public section
+
 universe u uA uB t
 
 namespace Interaction
 open PFunctor.FreeM.Displayed (Decoration)
 namespace TwoParty
 
-open TwoParty
 open PFunctor
 
 variable {P : PFunctor.{uA, uB}} {α : Type t}
@@ -100,6 +105,7 @@ def RoleDecorationOver.swap {s : PFunctor.FreeM P α} (roles : RoleDecorationOve
 namespace RoleDecorationOver
 
 /-- View a generic monad decoration as one displayed layer over a role decoration. -/
+@[expose]
 def monadsOver :
     (s : PFunctor.FreeM P α) → (roles : RoleDecorationOver (P := P) s) →
     (md : MonadDecoration (P := P) (α := α) s) →
@@ -147,12 +153,8 @@ theorem withPairedMonads_map_fst :
   | .liftBind _ rest, ⟨role, rRest⟩, ⟨bmS, mRestS⟩, ⟨bmC, mRestC⟩ => by
       simp only [withPairedMonads, withMonads, monadsOver, pairedMonadsOver,
         Decoration.ofOver]
-      apply Prod.ext
-      · rfl
-      funext b
-      exact withPairedMonads_map_fst
-        (s := rest b) (roles := rRest b)
-        (stratDeco := mRestS b) (cptDeco := mRestC b)
+      exact Prod.ext rfl (funext fun b => withPairedMonads_map_fst
+        (s := rest b) (roles := rRest b) (stratDeco := mRestS b) (cptDeco := mRestC b))
 
 @[simp]
 theorem withPairedMonads_map_snd :
@@ -165,12 +167,8 @@ theorem withPairedMonads_map_snd :
   | .liftBind _ rest, ⟨role, rRest⟩, ⟨bmS, mRestS⟩, ⟨bmC, mRestC⟩ => by
       simp only [withPairedMonads, withMonads, monadsOver, pairedMonadsOver,
         Decoration.ofOver]
-      apply Prod.ext
-      · rfl
-      funext b
-      exact withPairedMonads_map_snd
-        (s := rest b) (roles := rRest b)
-        (stratDeco := mRestS b) (cptDeco := mRestC b)
+      exact Prod.ext rfl (funext fun b => withPairedMonads_map_snd
+        (s := rest b) (roles := rRest b) (stratDeco := mRestS b) (cptDeco := mRestC b))
 
 end RoleDecorationOver
 
@@ -238,6 +236,7 @@ def RoleDecoration.swap {spec : TypeTree} (roles : RoleDecoration spec) :
 namespace RoleDecoration
 
 /-- View a plain monad decoration as one displayed layer over an existing role decoration. -/
+@[expose]
 def monadsOver :
     (spec : TypeTree.{u}) → (roles : RoleDecoration spec) → (md : TypeTree.MonadDecoration spec) →
     Decoration.Over (fun _ => Role) (fun _ (_ : Role) => BundledMonad.{u, u}) spec roles
@@ -246,6 +245,7 @@ def monadsOver :
       ⟨bm, fun x => monadsOver (rest x) (rRest x) (mRest x)⟩
 
 /-- Pack roles together with one bundled monad per node into `RoleMonadContext`. -/
+@[expose]
 def withMonads {spec : TypeTree.{u}}
     (roles : RoleDecoration spec) (md : TypeTree.MonadDecoration spec) :
     Decoration RoleMonadContext spec :=
@@ -262,6 +262,9 @@ theorem withMonads_constant_eq_map
       Decoration.map (RoleContext.withMonad bm) spec roles
   | .done, _ => rfl
   | .node _ rest, ⟨role, rRest⟩ => by
+      simp only [RoleDecoration.withMonads, RoleDecoration.monadsOver,
+        TypeTree.MonadDecoration.constant, MonadDecoration.constant,
+        Decoration.ofOver]
       change
         (⟨⟨role, bm⟩,
           fun x =>
@@ -303,12 +306,8 @@ theorem withPairedMonads_map_fst :
       simp only [RoleDecoration.withPairedMonads, RoleDecoration.withMonads,
         RoleDecoration.monadsOver, RoleDecoration.pairedMonadsOver,
         RolePairedMonadContext.fst]
-      apply Prod.ext
-      · rfl
-      funext x
-      exact withPairedMonads_map_fst
-        (spec := rest x) (roles := rRest x)
-        (stratDeco := mRestS x) (cptDeco := mRestC x)
+      exact Prod.ext rfl (funext fun x => withPairedMonads_map_fst
+        (spec := rest x) (roles := rRest x) (stratDeco := mRestS x) (cptDeco := mRestC x))
 
 @[simp]
 theorem withPairedMonads_map_snd :
@@ -322,12 +321,8 @@ theorem withPairedMonads_map_snd :
       simp only [RoleDecoration.withPairedMonads, RoleDecoration.withMonads,
         RoleDecoration.monadsOver, RoleDecoration.pairedMonadsOver,
         RolePairedMonadContext.snd]
-      apply Prod.ext
-      · rfl
-      funext x
-      exact withPairedMonads_map_snd
-        (spec := rest x) (roles := rRest x)
-        (stratDeco := mRestS x) (cptDeco := mRestC x)
+      exact Prod.ext rfl (funext fun x => withPairedMonads_map_snd
+        (spec := rest x) (roles := rRest x) (stratDeco := mRestS x) (cptDeco := mRestC x))
 
 end RoleDecoration
 

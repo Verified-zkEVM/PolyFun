@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.PFunctor.Free.Polynomial
+
+module
+
+public import PolyFun.PFunctor.Free.Polynomial
 
 /-!
 # Interaction type trees and paths
@@ -86,6 +89,8 @@ representation.
 * McBride (2010); Dagand–McBride (2014), displayed algebras / ornaments
 -/
 
+public section
+
 universe u
 
 namespace Interaction
@@ -101,7 +106,7 @@ participant chooses a value of some move type, and the continuation is
 selected by that value". It is independent of payload data, controller
 attribution, and execution semantics; those layers refine the same
 polynomial via `Decoration`, `NodeProfile`, and `StepOver`. -/
-@[reducible]
+@[expose, reducible]
 def basePFunctor : PFunctor.{u+1, u} where
   A := Type u
   B := id
@@ -144,7 +149,7 @@ namespace TypeTree
 This is `PFunctor.FreeM.pure ()` at the polynomial substrate; the
 `@[match_pattern]` attribute makes it usable both as a constructor
 term and as a `match` pattern. -/
-@[match_pattern, reducible]
+@[expose, match_pattern, reducible]
 def done : TypeTree := PFunctor.FreeM.pure PUnit.unit
 
 /-- A round of interaction: a value of type `Moves` is exchanged, then
@@ -153,7 +158,7 @@ the protocol continues with `rest x` depending on the chosen move `x`.
 This is `PFunctor.FreeM.liftBind Moves rest` at the polynomial substrate;
 the `@[match_pattern]` attribute makes it usable both as a constructor
 term and as a `match` pattern. -/
-@[match_pattern, reducible]
+@[expose, match_pattern, reducible]
 def node (Moves : Type u) (rest : Moves → TypeTree) : TypeTree :=
   PFunctor.FreeM.liftBind Moves rest
 
@@ -162,11 +167,8 @@ alternatives. Registered as the default `cases` eliminator so that
 `cases s with | done => ... | node X rest => ...` works transparently
 on top of the polynomial substrate. -/
 @[elab_as_elim, cases_eliminator]
-def casesOn {motive : TypeTree → Sort*}
-    (s : TypeTree)
-    (done : motive TypeTree.done)
-    (node : (X : Type u) → (rest : X → TypeTree) → motive (TypeTree.node X rest)) :
-    motive s :=
+def casesOn {motive : TypeTree → Sort*} (s : TypeTree) (done : motive TypeTree.done)
+    (node : (X : Type u) → (rest : X → TypeTree) → motive (TypeTree.node X rest)) : motive s :=
   match s with
   | .done => done
   | .node X rest => node X rest
@@ -177,12 +179,9 @@ continuation in the `node` case. Registered as the default `induction`
 eliminator so that `induction s with | done => ... | node X rest ih => ...`
 works transparently on top of the polynomial substrate. -/
 @[elab_as_elim, induction_eliminator]
-def recOn {motive : TypeTree → Sort*}
-    (s : TypeTree)
-    (done : motive TypeTree.done)
+def recOn {motive : TypeTree → Sort*} (s : TypeTree) (done : motive TypeTree.done)
     (node : (X : Type u) → (rest : X → TypeTree) →
-        ((x : X) → motive (rest x)) → motive (TypeTree.node X rest)) :
-    motive s :=
+        ((x : X) → motive (rest x)) → motive (TypeTree.node X rest)) : motive s :=
   match s with
   | .done => done
   | .node X rest => node X rest (fun x => recOn (rest x) done node)
@@ -212,19 +211,17 @@ complete path of an outer tree. -/
 abbrev substMonoid : PFunctor.SubstMonoid.{u + 1, u} :=
   PFunctor.FreeP.substMonoid TypeTree.basePFunctor
 
-theorem substMonoid_unit_toFunA (x : PUnit) :
-    TypeTree.substMonoid.unit.toFunA x = TypeTree.done :=
+theorem substMonoid_unit_toFunA (x : PUnit) : TypeTree.substMonoid.unit.toFunA x = TypeTree.done :=
   rfl
 
 @[simp]
-theorem substMonoid_mult_toFunA (spec : TypeTree)
-    (next : Path spec → TypeTree) :
+theorem substMonoid_mult_toFunA (spec : TypeTree) (next : Path spec → TypeTree) :
     TypeTree.substMonoid.mult.toFunA ⟨spec, next⟩ = spec.append next :=
   rfl
 
 @[simp]
-theorem substMonoid_mult_toFunB (spec : TypeTree)
-    (next : Path spec → TypeTree) (tr : Path (spec.append next)) :
+theorem substMonoid_mult_toFunB (spec : TypeTree) (next : Path spec → TypeTree)
+    (tr : Path (spec.append next)) :
     TypeTree.substMonoid.mult.toFunB ⟨spec, next⟩ tr =
       PFunctor.FreeM.Path.split spec next tr :=
   rfl

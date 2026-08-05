@@ -3,10 +3,14 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
-import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Basic.StrategyOver
-import PolyFun.Interaction.Multiparty.Observation
+
+module
+
+import all PolyFun.Interaction.Multiparty.Observation
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Basic.StrategyOver
+public import PolyFun.Interaction.Basic.TypeTree
+public import PolyFun.Interaction.Multiparty.Observation
 
 /-!
 # View modes: per-participant local-view shapes for multiparty interactions
@@ -128,6 +132,8 @@ structure. The multiparty layer only describes how one fixed participant
 locally sees each node of such a type tree.
 -/
 
+public section
+
 universe u v
 
 namespace Interaction
@@ -207,6 +213,7 @@ Reading by cases:
 This packages the information content of a `ViewMode` independently from the
 more structured endpoint semantics of `ViewMode.Action`.
 -/
+@[expose]
 def ObsType {X : Type u} : ViewMode X → Type u
   | .pick => X
   | .observe => X
@@ -223,6 +230,7 @@ information that is revealed:
 * `hidden` reveals nothing;
 * `react ⟨_, toObs⟩` reveals `toObs x`.
 -/
+@[expose]
 def obsOf {X : Type u} : (view : ViewMode X) → X → view.ObsType
   | .pick, x => x
   | .observe, x => x
@@ -248,6 +256,7 @@ Interpretation by cases:
 This is the native multiparty analogue of `Interaction.Role.Action` from the
 two-party layer, extended by hidden and partial-observation cases.
 -/
+@[expose]
 def Action {X : Type u} (view : ViewMode X) (m : Type u → Type u)
     (Cont : X → Type u) : Type u :=
   match view with
@@ -274,6 +283,7 @@ in observation content. The "this party authors the move" semantics that one
 might expect from `.pick` lives instead in
 `Concurrent.NodeAuthority.controllers`.
 -/
+@[expose]
 def toObservation {X : Type u} : ViewMode X → Observation X
   | .pick => Observation.top X
   | .observe => Observation.top X
@@ -326,8 +336,7 @@ its endpoint with `Observation.Action` can equivalently work with
     (m : Type u → Type u) (Cont : X → Type u) :
     ViewMode.Action (.react k) m Cont
       = Observation.Action k m Cont := by
-  rcases k with ⟨_, _⟩
-  rfl
+  rcases k with ⟨_, _⟩; rfl
 
 end ViewMode
 
@@ -345,6 +354,7 @@ corresponding `.react` (those constructors carry operational shape
 information that the kernel form deliberately discards, but their
 information content is preserved as `Observation.top` / `Observation.bot`).
 -/
+@[expose]
 def toViewMode {X : Type u} (k : Observation X) : ViewMode X :=
   .react k
 

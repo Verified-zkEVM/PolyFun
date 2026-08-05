@@ -83,18 +83,18 @@ realization. -/
 def oneQuery (_ : Unit) : FreeM X Nat :=
   FreeM.liftBind PUnit.unit fun _ => pure 7
 
-example : (ofFreeM oneQuery).denote () = FreeM.toResumption (oneQuery ()) := by
-  exact denote_ofFreeM oneQuery ()
+example : (ofFreeM oneQuery).denote () = FreeM.toResumption (oneQuery ()) :=
+  denote_ofFreeM oneQuery ()
 
 example :
     (ofResumption fun input => FreeM.toResumption (oneQuery input)).denote () =
-      FreeM.toResumption (oneQuery ()) := by
-  exact denote_ofResumption _ ()
+      FreeM.toResumption (oneQuery ()) :=
+  denote_ofResumption _ ()
 
 open scoped PFunctor.DynComputation
 
-example : ofFreeM oneQuery ⊨ oneQuery := by
-  exact implements_ofFreeM oneQuery
+example : ofFreeM oneQuery ⊨ oneQuery :=
+  implements_ofFreeM oneQuery
 
 /-- A noncanonical realization uses `Bool` states instead of residual programs. -/
 def boolRealization : DynComputation X Unit Nat where
@@ -439,12 +439,12 @@ example : ObsEq
   simp [sourceMachine, sourceTree, lossyLens, lossySource]
 
 example : (ofFreeM oneQuery).mapResult (· + 1) ⊨
-    (fun input => FreeM.map (· + 1) (oneQuery input)) := by
-  exact (implements_ofFreeM oneQuery).mapResult (· + 1)
+    (fun input => FreeM.map (· + 1) (oneQuery input)) :=
+  (implements_ofFreeM oneQuery).mapResult (· + 1)
 
 example : (ofFreeM oneQuery).wrap (Lens.id X) ⊨
-    (fun input => (oneQuery input).mapLens (Lens.id X)) := by
-  exact (implements_ofFreeM oneQuery).wrap (Lens.id X)
+    (fun input => (oneQuery input).mapLens (Lens.id X)) :=
+  (implements_ofFreeM oneQuery).wrap (Lens.id X)
 
 /-! ## Semantic transport producer canaries -/
 

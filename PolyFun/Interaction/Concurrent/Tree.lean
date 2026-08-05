@@ -3,9 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Current
-import PolyFun.Interaction.Concurrent.Execution
-import PolyFun.Interaction.Concurrent.Trace
+
+module
+
+public import PolyFun.Interaction.Concurrent.Current
+public import PolyFun.Interaction.Concurrent.Execution
+public import PolyFun.Interaction.Concurrent.Trace
 
 /-!
 # Structural-tree frontend for dynamic processes
@@ -26,6 +29,8 @@ single move type `Front S`, but its node semantics record:
 So the structural tree language remains an important source language, but the
 dynamic process core is now the semantic center.
 -/
+
+public section
 
 universe u
 
@@ -59,6 +64,7 @@ controller-path contribution of each move is exactly
 `Control.controllers st.control`, and the local view of that move is exactly
 `Current.view me st.control st.profile`.
 -/
+@[expose]
 def currentStep {Party : Type u} [DecidableEq Party] (st : State Party) :
     Step Party (State Party) :=
   { tree := .node (Front st.spec) (fun _ => .done)
@@ -84,6 +90,7 @@ def eventOfPath {Party : Type u} [DecidableEq Party] (st : State Party) :
 `pathOfEvent st event` re-expresses a structural frontier event as the
 corresponding one-step process path.
 -/
+@[expose]
 def pathOfEvent {Party : Type u} [DecidableEq Party] (st : State Party) :
     Front st.spec → PFunctor.FreeM.Path st.currentStep.tree
   | event => ⟨event, PUnit.unit⟩
@@ -97,13 +104,14 @@ end State
 Each process state is one packaged structural residual state, and each process
 step is the current frontier interaction produced by `State.currentStep`.
 -/
+@[expose]
 def toProcess {Party : Type u} [DecidableEq Party] : Process (State Party) Party :=
   ProcessOver.ofStep (State Party) State.currentStep
 
 /-- Package one structural residual state as the initial state of the tree
 frontend process. -/
-def init {Party : Type u} {spec : Concurrent.Spec}
-    (control : Control Party spec) (profile : Profile Party spec) : State Party :=
+def init {Party : Type u} {spec : Concurrent.Spec} (control : Control Party spec)
+    (profile : Profile Party spec) : State Party :=
   { spec := spec, control := control, profile := profile }
 
 /--

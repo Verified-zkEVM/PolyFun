@@ -165,11 +165,7 @@ theorem bind_assoc (t : ITree F α) (k : α → ITree F β) (k' : β → ITree F
     rcases h : PFunctor.M.dest s with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have hs : s = pure r := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [h]
-          change (⟨.pure r, c⟩ : (Poly F β).Obj _) = ⟨.pure r, PEmpty.elim⟩
-          congr 1; funext z; exact z.elim
+        have hs : s = pure r := eq_pure_of_dest h
         clear h
         subst hs
         rw [bind_pure_left]
@@ -190,11 +186,7 @@ theorem bind_assoc (t : ITree F α) (k : α → ITree F β) (k' : β → ITree F
     rcases h : PFunctor.M.dest t with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have ht : t = pure r := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [h]
-          change (⟨.pure r, c⟩ : (Poly F α).Obj _) = ⟨.pure r, PEmpty.elim⟩
-          congr 1; funext z; exact z.elim
+        have ht : t = pure r := eq_pure_of_dest h
         clear h
         subst ht
         rw [bind_pure_left, bind_pure_left]
@@ -262,12 +254,7 @@ theorem iter_unfold (body : β → ITree F (β ⊕ α)) (init : β) :
     | pure rj =>
         cases rj with
         | inl j =>
-            have ht : t = pure (.inl j) := by
-              apply PFunctor.M.eq_of_dest_eq
-              rw [h]
-              change (⟨.pure (.inl j), c⟩ : (Poly F (β ⊕ α)).Obj _) =
-                  ⟨.pure (.inl j), PEmpty.elim⟩
-              congr 1; funext z; exact z.elim
+            have ht : t = pure (.inl j) := eq_pure_of_dest h
             clear h
             subst ht
             refine ⟨.step, fun _ => iter body j, fun _ => iter body j,
@@ -282,12 +269,7 @@ theorem iter_unfold (body : β → ITree F (β ⊕ α)) (init : β) :
               rw [hkk]
               exact shape'_step _
         | inr r =>
-            have ht : t = pure (.inr r) := by
-              apply PFunctor.M.eq_of_dest_eq
-              rw [h]
-              change (⟨.pure (.inr r), c⟩ : (Poly F (β ⊕ α)).Obj _) =
-                  ⟨.pure (.inr r), PEmpty.elim⟩
-              congr 1; funext z; exact z.elim
+            have ht : t = pure (.inr r) := eq_pure_of_dest h
             clear h
             subst ht
             refine ⟨.pure r, PEmpty.elim, PEmpty.elim, ?_, ?_, fun b => b.elim⟩
@@ -450,11 +432,7 @@ theorem iter_bind (body : β → ITree F (β ⊕ α)) (k : α → ITree F γ) (i
     cases sh with
     | pure rj =>
         -- Promote `t` to literally `pure rj` via funext on `PEmpty`.
-        have ht : t = pure rj := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [h]
-          change (⟨.pure rj, c⟩ : (Poly F (β ⊕ α)).Obj _) = ⟨.pure rj, PEmpty.elim⟩
-          congr 1; funext z; exact z.elim
+        have ht : t = pure rj := eq_pure_of_dest h
         clear h
         subst ht
         rw [bind_pure_left]

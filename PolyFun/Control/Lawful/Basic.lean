@@ -49,8 +49,7 @@ theorem bind_pure_sigma_mk {α : Type u} {β : α → Type u} (x : α)
     (do
       let rest ← action
       pure (Sigma.mk x rest)) = pure (Sigma.mk x tail) := by
-  rw [h]
-  simp
+  simp [h]
 
 theorem do_pure_bind_sigma {α : Type u} {β : α → Type u} {γ : Type u}
     (x : α) (tail : β x) (k : ((x : α) × β x) → m γ) :

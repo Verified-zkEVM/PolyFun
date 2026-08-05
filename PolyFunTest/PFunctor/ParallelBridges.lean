@@ -35,13 +35,11 @@ def Inputs := PUnit
 
 def inputInterface (_ : Inputs) : PFunctor := Step
 
-def implementation (box : Boxes) :
-    (operation : (Cod box).A) →
-      FreeM (PFunctor.sigma (Dom box)) ((Cod box).B operation) :=
+def implementation (box : Boxes) : (operation : (Cod box).A) →
+    FreeM (PFunctor.sigma (Dom box)) ((Cod box).B operation) :=
   nomatch box
 
-def inputWiring :
-    Wiring Boxes Arity Dom Cod Inputs inputInterface Step :=
+def inputWiring : Wiring Boxes Arity Dom Cod Inputs inputInterface Step :=
   .input PUnit.unit
 
 def rootOperation {E : Type} :
@@ -100,7 +98,7 @@ example :
 
 universe uA₁ uA₂ uB uS₁ uS₂
 
-theorem reindexViaRunAgainstParallel
+theorem reindexViaRunAgainst_parallel
     {P R : PFunctor.{uA₁, uB}} {Q V : PFunctor.{uA₂, uB}}
     {LeftState : Type uS₁} {RightState : Type uS₂}
     (leftHandler : Handler (FreeM P) R)

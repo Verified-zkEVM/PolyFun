@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.OpenTheory
+
+module
+
+public import PolyFun.Interaction.UC.OpenTheory
 
 /-!
 # Raw syntax trees for open composition
@@ -32,6 +35,8 @@ The quotient of `Raw` by the `OpenTheory` equations is defined in
   equations and closed under all constructors.
 * `Raw.setoid`: packages `Raw.Equiv` as a `Setoid`.
 -/
+
+public section
 
 universe u
 
@@ -93,15 +98,11 @@ This is structural recursion: each constructor maps to the corresponding
 `OpenTheory` operation. The target theory need not be lawful; lawfulness is
 only required when reasoning about equivalence of interpretations.
 -/
-def interpret
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
-    (e : Raw Atom Δ)
-    (T : OpenTheory)
+@[expose]
+def interpret {Atom : PortBoundary → Type u} {Δ : PortBoundary} (e : Raw Atom Δ) (T : OpenTheory)
     (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ)
     (idWireVal : ∀ (Γ : PortBoundary),
-      T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Γ)) :
-    T.Obj Δ :=
+      T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Γ)) : T.Obj Δ :=
   match e with
   | .atom a => interp a
   | .map f e => T.map f (e.interpret T interp idWireVal)
@@ -119,35 +120,25 @@ variable {Atom : PortBoundary → Type u} {T : OpenTheory}
       T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Γ)}
 
 @[simp]
-theorem interpret_atom
-    {Δ : PortBoundary}
-    (a : Atom Δ) :
+theorem interpret_atom {Δ : PortBoundary} (a : Atom Δ) :
     (Raw.atom a).interpret T interp idWireVal = interp a :=
   rfl
 
 @[simp]
-theorem interpret_map
-    {Δ₁ Δ₂ : PortBoundary}
-    (f : PortBoundary.Hom Δ₁ Δ₂)
-    (e : Raw Atom Δ₁) :
+theorem interpret_map {Δ₁ Δ₂ : PortBoundary} (f : PortBoundary.Hom Δ₁ Δ₂) (e : Raw Atom Δ₁) :
     (Raw.map f e).interpret T interp idWireVal =
       T.map f (e.interpret T interp idWireVal) :=
   rfl
 
 @[simp]
-theorem interpret_par
-    {Δ₁ Δ₂ : PortBoundary}
-    (e₁ : Raw Atom Δ₁)
-    (e₂ : Raw Atom Δ₂) :
+theorem interpret_par {Δ₁ Δ₂ : PortBoundary} (e₁ : Raw Atom Δ₁) (e₂ : Raw Atom Δ₂) :
     (Raw.par e₁ e₂).interpret T interp idWireVal =
       T.par (e₁.interpret T interp idWireVal)
         (e₂.interpret T interp idWireVal) :=
   rfl
 
 @[simp]
-theorem interpret_wire
-    {Δ₁ Γ Δ₂ : PortBoundary}
-    (e₁ : Raw Atom (PortBoundary.tensor Δ₁ Γ))
+theorem interpret_wire {Δ₁ Γ Δ₂ : PortBoundary} (e₁ : Raw Atom (PortBoundary.tensor Δ₁ Γ))
     (e₂ : Raw Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
     (Raw.wire e₁ e₂).interpret T interp idWireVal =
       T.wire (e₁.interpret T interp idWireVal)
@@ -155,10 +146,8 @@ theorem interpret_wire
   rfl
 
 @[simp]
-theorem interpret_idWire
-    (Γ : PortBoundary) :
-    (Raw.idWire Γ : Raw Atom _).interpret T interp idWireVal =
-      idWireVal Γ :=
+theorem interpret_idWire (Γ : PortBoundary) :
+    (Raw.idWire Γ : Raw Atom _).interpret T interp idWireVal = idWireVal Γ :=
   rfl
 
 /--
@@ -329,13 +318,8 @@ inductive Equiv {Atom : PortBoundary → Type u} :
 /--
 Equivalent raw expressions interpret the same way in any lawful `OpenTheory`.
 -/
-theorem Equiv.interpret_eq
-    {Atom : PortBoundary → Type u}
-    {Δ : PortBoundary}
-    {e₁ e₂ : Raw Atom Δ}
-    (h : Equiv e₁ e₂)
-    (T : OpenTheory)
-    [OpenTheory.HasPlugWireFactor T]
+theorem Equiv.interpret_eq {Atom : PortBoundary → Type u} {Δ : PortBoundary} {e₁ e₂ : Raw Atom Δ}
+    (h : Equiv e₁ e₂) (T : OpenTheory) [OpenTheory.HasPlugWireFactor T]
     (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
     e₁.interpret T interp OpenTheory.HasIdWire.idWire =
       e₂.interpret T interp OpenTheory.HasIdWire.idWire := by

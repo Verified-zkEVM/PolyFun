@@ -3,7 +3,13 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Interaction
+
+module
+
+import all PolyFun.Interaction.Basic.Decoration
+import all PolyFun.Interaction.Basic.StrategyOver
+import all PolyFun.PFunctor.Free.Displayed.Decoration
+public import PolyFun.Interaction.Basic.Interaction
 
 /-!
 # One-player strategies
@@ -21,6 +27,8 @@ Dependent sequential composition `Strategy.comp` requires `PFunctor.FreeM.append
 `PolyFun.Interaction.Basic.Append`.
 -/
 
+public section
+
 universe u
 
 namespace Interaction
@@ -33,6 +41,7 @@ variable {m : Type u → Type u}
 
 At each node the strategy chooses a move `x` and provides the continuation in
 the ambient monad `m`. -/
+@[expose]
 def Strategy.syntax (m : Type u → Type u) :
     SyntaxOver
       (PFunctor.Lens.id TypeTree.basePFunctor) PUnit.{u+1} Node.Context.empty.{u, u} where
@@ -49,6 +58,7 @@ pointwise identification of the correspondingly transported output family.
 
 The explicit family equality keeps dependent path transport localized here;
 callers do not need to unfold the `StrategyOver` representation. -/
+@[expose]
 def Strategy.castSpec {m : Type u → Type u} {source target : TypeTree}
     {Source : Path source → Type u} {Target : Path target → Type u}
     (hSpec : source = target)
@@ -70,6 +80,7 @@ theorem Strategy.castSpec_rfl {m : Type u → Type u} {spec : TypeTree}
   rfl
 
 /-- One-step execution law for ordinary one-player strategies. -/
+@[expose]
 def Strategy.interaction (m : Type u → Type u) [Monad m] :
     InteractionOver
       (PFunctor.Lens.id TypeTree.basePFunctor) PUnit Node.Context.empty (Strategy.syntax m) m where
@@ -79,6 +90,7 @@ def Strategy.interaction (m : Type u → Type u) [Monad m] :
     k node.1 (fun _ => next)
 
 /-- Run the strategy, returning the full path and the dependent output. -/
+@[expose]
 def Strategy.run {m : Type u → Type u} [Monad m] :
     (spec : TypeTree) → {Output : Path spec → Type u} →
     Strategy.Plain m spec Output → m ((tr : Path spec) × Output tr)
@@ -117,11 +129,8 @@ theorem Strategy.mapOutput_id {m : Type u → Type u} [Functor m] [LawfulFunctor
     rcases σ with ⟨x, cont⟩
     simp only [Strategy.mapOutput]
     congr 1
-    have hid : ∀ s : Strategy.Plain m (rest x) (fun p => A ⟨x, p⟩),
-        mapOutput (fun (p : Path (rest x)) (y : A ⟨x, p⟩) => y) s = s :=
-      fun s => ih x s
     calc (mapOutput (fun (p : Path (rest x)) (y : A ⟨x, p⟩) => y) ·) <$> cont
-        = id <$> cont := by congr 1; funext s; exact hid s
+        = id <$> cont := by congr 1; funext s; exact ih x s
       _ = cont := LawfulFunctor.id_map cont
 
 /-- `mapOutput` respects composition of output maps (needs a lawful functor). -/
@@ -137,18 +146,11 @@ theorem Strategy.mapOutput_comp
     rcases σ with ⟨x, cont⟩
     simp only [Strategy.mapOutput]
     congr 1
-    have hcomp : ∀ s : Strategy.Plain m (rest x) (fun p => A ⟨x, p⟩),
-        @mapOutput m _ (rest x) (fun p => A ⟨x, p⟩) (fun p => C ⟨x, p⟩)
-            (fun p y => g ⟨x, p⟩ (f ⟨x, p⟩ y)) s =
-          (@mapOutput m _ (rest x) (fun p => B ⟨x, p⟩) (fun p => C ⟨x, p⟩)
-              (fun p y => g ⟨x, p⟩ y) ∘
-            @mapOutput m _ (rest x) (fun p => A ⟨x, p⟩) (fun p => B ⟨x, p⟩)
-              (fun p y => f ⟨x, p⟩ y)) s :=
-      fun s => ih x (fun p y => g ⟨x, p⟩ y) (fun p y => f ⟨x, p⟩ y) s
     calc (mapOutput (fun (p : Path (rest x)) (y : A ⟨x, p⟩) => g ⟨x, p⟩ (f ⟨x, p⟩ y)) ·)
               <$> cont
         = ((mapOutput (fun p y => g ⟨x, p⟩ y) ·) ∘ (mapOutput (fun p y => f ⟨x, p⟩ y) ·))
-              <$> cont := by congr 1; funext s; exact hcomp s
+              <$> cont := by
+            congr 1; funext s; exact ih x (fun p y => g ⟨x, p⟩ y) (fun p y => f ⟨x, p⟩ y) s
       _ = (mapOutput (fun p y => g ⟨x, p⟩ y) ·) <$>
             ((mapOutput (fun p y => f ⟨x, p⟩ y) ·) <$> cont) := by
             rw [LawfulFunctor.comp_map]

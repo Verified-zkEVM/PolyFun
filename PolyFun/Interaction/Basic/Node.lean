@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.PFunctor.Free.Basic
-import Batteries.Tactic.Lint
+
+module
+
+public import PolyFun.PFunctor.Free.Basic
+public import Batteries.Tactic.Lint
 
 /-!
 # Node-local contexts and schemas
@@ -52,6 +55,8 @@ so a decoration by that context provides both pieces of node-local data as one
 semantic object.
 -/
 
+public section
+
 universe u v w w₂ w₃
 
 namespace Interaction
@@ -82,9 +87,11 @@ right notion of morphism for realized node contexts, and it is what
 abbrev ContextHom (Γ : Type u → Type v) (Δ : Type u → Type w) := ∀ X, Γ X → Δ X
 
 /-- Identity morphism on a realized node context. -/
+@[expose]
 def ContextHom.id (Γ : Context) : ContextHom Γ Γ := fun _ x => x
 
 /-- Composition of realized node-context morphisms. -/
+@[expose]
 def ContextHom.comp {Γ : Type u → Type v} {Δ : Type u → Type w} {Λ : Type u → Type w₂}
     (g : ContextHom Δ Λ) (f : ContextHom Γ Δ) : ContextHom Γ Λ :=
   fun X => g X ∘ f X
@@ -95,6 +102,7 @@ The empty node context, carrying no information at any node.
 This is the neutral context used by the plain `Shape` / `Interaction`
 specializations.
 -/
+@[expose]
 def Context.empty : Context := fun _ => PUnit
 
 /--
@@ -113,7 +121,7 @@ recursion of `PFunctor.FreeM.Displayed.Decoration`: a decorated type tree is a f
 of this polynomial, and the existing `Decoration Γ tree` is exactly its fiber
 over the underlying `tree : TypeTree`.
 -/
-@[reducible]
+@[expose, reducible]
 def Context.toPFunctor (Γ : Context.{u, v}) : PFunctor.{max (u+1) v, u} where
   A := Σ X : Type u, Γ X
   B := Sigma.fst
@@ -129,6 +137,7 @@ The new field is allowed to live in a different universe from the existing
 context. This keeps `Context.extend` flexible even though `Schema` itself uses
 one fixed universe parameter for its staged fields.
 -/
+@[expose]
 def Context.extend (Γ : Type u → Type v) (A : ∀ X, Γ X → Type w) : Type u → Type (max v w) :=
   fun X => Σ γ : Γ X, A X γ
 
@@ -138,6 +147,7 @@ Forget the most recently added field of an extended node context.
 This is the canonical projection from `Context.extend Γ A` back to its base
 context `Γ`.
 -/
+@[expose]
 def Context.extendFst (Γ : Type u → Type v) (A : ∀ X, Γ X → Type w) :
     ContextHom (Context.extend Γ A) Γ :=
   fun _ => Sigma.fst
@@ -147,6 +157,7 @@ Map one extended node context to another by:
 * mapping the base context with `f`, and
 * mapping the new dependent field with `g`.
 -/
+@[expose]
 def Context.extendMap
     {Γ : Type u → Type v} {Δ : Type u → Type w}
     {A : ∀ X, Γ X → Type w₂} {B : ∀ X, Δ X → Type w₃}
@@ -171,16 +182,19 @@ genuinely depends on the first. -/
 /--
 The non-dependent product of two realized node contexts. At each move space
 `X`, the value type is `Γ X × Δ X`. -/
+@[expose]
 def Context.prod (Γ : Type u → Type v) (Δ : Type u → Type w) :
     Type u → Type (max v w) :=
   fun X => Γ X × Δ X
 
 /-- First projection out of the non-dependent context product. -/
+@[expose]
 def Context.prodFst (Γ : Type u → Type v) (Δ : Type u → Type w) :
     ContextHom (Context.prod Γ Δ) Γ :=
   fun _ p => p.1
 
 /-- Second projection out of the non-dependent context product. -/
+@[expose]
 def Context.prodSnd (Γ : Type u → Type v) (Δ : Type u → Type w) :
     ContextHom (Context.prod Γ Δ) Δ :=
   fun _ p => p.2
@@ -188,6 +202,7 @@ def Context.prodSnd (Γ : Type u → Type v) (Δ : Type u → Type w) :
 /--
 Pair two context morphisms into a single morphism into the product context.
 This is the universal property of the non-dependent context product. -/
+@[expose]
 def Context.prodPair
     {Γ : Type u → Type v} {Δ₁ : Type u → Type w} {Δ₂ : Type u → Type w₂}
     (f : ContextHom Γ Δ₁) (g : ContextHom Γ Δ₂) :
@@ -196,6 +211,7 @@ def Context.prodPair
 
 /--
 Map both factors of a non-dependent context product. -/
+@[expose]
 def Context.prodMap
     {Γ₁ : Type u → Type v} {Γ₂ : Type u → Type w}
     {Δ₁ : Type u → Type w₂} {Δ₂ : Type u → Type w₃}
@@ -208,7 +224,6 @@ theorem Context.prodMap_id {Γ : Context.{u, v}} {Δ : Context.{u, w}} :
     Context.prodMap (ContextHom.id Γ) (ContextHom.id Δ) =
       ContextHom.id (Context.prod Γ Δ) := by
   funext X p
-  cases p
   rfl
 
 theorem Context.prodMap_comp
@@ -220,7 +235,6 @@ theorem Context.prodMap_comp
     ContextHom.comp (Context.prodMap g₁ g₂) (Context.prodMap f₁ f₂) =
       Context.prodMap (ContextHom.comp g₁ f₁) (ContextHom.comp g₂ f₂) := by
   funext X p
-  cases p
   rfl
 
 /-
@@ -301,6 +315,7 @@ abbrev SchemaMap {Γ Δ : Context} (S : Schema Γ) (T : Schema Δ) :=
   ContextHom S.toContext T.toContext
 
 /-- Identity schema morphism. -/
+@[expose]
 def SchemaMap.id {Γ : Context} (S : Schema Γ) : SchemaMap S S :=
   ContextHom.id _
 
@@ -313,6 +328,7 @@ abbrev SchemaMap.ofContextHom
     (f : ContextHom Γ Δ) : SchemaMap S T := f
 
 /-- Composition of schema morphisms. -/
+@[expose]
 def SchemaMap.comp {Γ Δ Λ : Context}
     {S : Schema Γ} {T : Schema Δ} {U : Schema Λ}
     (g : SchemaMap T U) (f : SchemaMap S T) : SchemaMap S U :=
@@ -332,6 +348,7 @@ If `f : SchemaMap S T` maps the base contexts and `g` maps the newly added
 field over each base value, then `SchemaMap.extend f g` is the induced schema
 morphism between the corresponding one-step schema extensions.
 -/
+@[expose]
 def SchemaMap.extend
     {Γ Δ : Context}
     {S : Schema Γ} {T : Schema Δ}
@@ -346,7 +363,6 @@ theorem SchemaMap.extend_id
     {Γ : Context} {S : Schema Γ} {A : ∀ X, Γ X → Type v} :
     SchemaMap.extend (SchemaMap.id S) (fun _ _ x => x) = SchemaMap.id (S.extend A) := by
   funext X x
-  cases x
   rfl
 
 theorem SchemaMap.extend_comp
@@ -362,7 +378,6 @@ theorem SchemaMap.extend_comp
       SchemaMap.extend (SchemaMap.comp g f)
         (fun X γ => gOver X (f X γ) ∘ fOver X γ) := by
   funext X x
-  cases x
   rfl
 
 /--
@@ -401,6 +416,7 @@ The realized context morphism induced by a schema prefix.
 
 This forgets exactly the fields appended after the prefix `S`.
 -/
+@[expose]
 def Prefix.toContextHom :
     {Γ Δ : Context.{u, v}} → {S : Schema Γ} → {T : Schema Δ} →
     Schema.Prefix S T → ContextHom T.toContext S.toContext

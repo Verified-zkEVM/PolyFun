@@ -27,8 +27,7 @@ namespace ComonoidCategoryTest
 example (C : Comonoid.{uA, uB}) (c : C.carrier.A) : C.carrier.B c :=
   Comonoid.identity C c
 
-example (C : Comonoid.{uA, uB}) (c : C.carrier.A)
-    (d : C.carrier.B c) : C.carrier.A :=
+example (C : Comonoid.{uA, uB}) (c : C.carrier.A) (d : C.carrier.B c) : C.carrier.A :=
   Comonoid.target C c d
 
 example (C : Comonoid.{uA, uB}) :
@@ -37,12 +36,10 @@ example (C : Comonoid.{uA, uB}) :
         Function.Bijective (Comonoid.target C c) :=
   Comonoid.isStateSystem_iff_target_bijective C
 
-example (C : Comonoid.{uA, uB}) (c : C.carrier.A) :
-    C.comult.toFunA c = ⟨c, Comonoid.target C c⟩ :=
+example (C : Comonoid.{uA, uB}) (c : C.carrier.A) : C.comult.toFunA c = ⟨c, Comonoid.target C c⟩ :=
   Comonoid.comultPosition_eq C c
 
-example (C : Comonoid.{uA, uB}) (c : C.carrier.A)
-    (d : C.carrier.B c)
+example (C : Comonoid.{uA, uB}) (c : C.carrier.A) (d : C.carrier.B c)
     (e : C.carrier.B (Comonoid.target C c d)) : C.carrier.B c :=
   Comonoid.compose C c d e
 
@@ -50,8 +47,7 @@ example (C : Comonoid.{uA, uB}) (c : C.carrier.A) :
     Comonoid.target C c (Comonoid.identity C c) = c :=
   Comonoid.target_identity C c
 
-example (C : Comonoid.{uA, uB}) (c : C.carrier.A)
-    (d : C.carrier.B c) :
+example (C : Comonoid.{uA, uB}) (c : C.carrier.A) (d : C.carrier.B c) :
     Comonoid.compose C c d
         (Comonoid.identity C (Comonoid.target C c d)) = d :=
   Comonoid.compose_identity_right C c d
@@ -89,8 +85,7 @@ example (C : Comonoid.{uA, uB}) (c : C.carrier.A)
         (Comonoid.compose C (Comonoid.target C c d) e f) :=
   Comonoid.compose_assoc C c d e f
 
-example {C D : Comonoid.{uA, uB}} (F : Comonoid.Hom C D)
-    (c : C.carrier.A) :
+example {C D : Comonoid.{uA, uB}} (F : Comonoid.Hom C D) (c : C.carrier.A) :
     F.toLens.toFunB c
         (Comonoid.identity D (F.toLens.toFunA c)) =
       Comonoid.identity C c :=
@@ -167,25 +162,11 @@ def listMonoidComonoid : Comonoid where
       (fun _ directions =>
         (show List Bool from directions.1) ++
           (show List Bool from directions.2))
-  counit_left := by
-    refine Lens.ext _ _ (fun _ => rfl) (fun _ => ?_)
-    funext direction
-    exact List.nil_append direction
-  counit_right := by
-    refine Lens.ext _ _ (fun _ => rfl) (fun _ => ?_)
-    funext direction
-    exact List.append_nil direction
-  coassoc := by
-    refine Lens.ext _ _ (fun _ => rfl) (fun _ => ?_)
-    funext direction
-    change
-      ((show List Bool from direction.1) ++
-        (show List Bool from direction.2.1)) ++
-          (show List Bool from direction.2.2) =
-        (show List Bool from direction.1) ++
-          ((show List Bool from direction.2.1) ++
-            (show List Bool from direction.2.2))
-    exact List.append_assoc direction.1 direction.2.1 direction.2.2
+  counit_left := Lens.ext _ _ (fun _ => rfl) fun _ => funext List.nil_append
+  counit_right := Lens.ext _ _ (fun _ => rfl) fun _ => funext List.append_nil
+  coassoc := Lens.ext _ _ (fun _ => rfl) fun _ =>
+    funext fun direction =>
+      List.append_assoc direction.1 direction.2.1 direction.2.2
 
 /-- In the contractible state category, the identity outgoing arrow names the
 current state. -/

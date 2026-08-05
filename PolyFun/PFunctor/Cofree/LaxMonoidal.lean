@@ -62,8 +62,8 @@ comparison. -/
 theorem cogenerator_comp_laxUnit :
     cogenerator X.{uA, uB} ∘ₗ laxUnit.{uA, uB} =
       (Lens.unitComparison :
-        Lens X.{max uA uB, max uA uB} X.{uA, uB}) := by
-  exact restrict_extend (Comonoid.unit.{max uA uB, max uA uB})
+        Lens X.{max uA uB, max uA uB} X.{uA, uB}) :=
+  restrict_extend (Comonoid.unit.{max uA uB, max uA uB})
     (Lens.unitComparison :
       Lens X.{max uA uB, max uA uB} X.{uA, uB})
 
@@ -93,8 +93,8 @@ tensor of the two cogenerators. -/
 theorem cogenerator_comp_laxTensor
     (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
     cogenerator (P ⊗ Q) ∘ₗ laxTensor P Q =
-      cogenerator P ⊗ₗ cogenerator Q := by
-  exact restrict_extend (Comonoid.tensor (comonoid P) (comonoid Q))
+      cogenerator P ⊗ₗ cogenerator Q :=
+  restrict_extend (Comonoid.tensor (comonoid P) (comonoid Q))
     (cogenerator P ⊗ₗ cogenerator Q)
 
 /-! ## Executable equations -/
@@ -260,8 +260,8 @@ theorem laxTensor_natural
     {P P' : PFunctor.{uA₁, uB₁}} {Q Q' : PFunctor.{uA₂, uB₂}}
     (f : Lens P P') (g : Lens Q Q') :
     laxTensor P' Q' ∘ₗ (map f ⊗ₗ map g) =
-      map (f ⊗ₗ g) ∘ₗ laxTensor P Q := by
-  exact congrArg Comonoid.Hom.toLens (laxTensorHom_natural f g)
+      map (f ⊗ₗ g) ∘ₗ laxTensor P Q :=
+  congrArg Comonoid.Hom.toLens (laxTensorHom_natural f g)
 
 /-! ## Lax-monoidal coherence -/
 
@@ -437,16 +437,16 @@ theorem laxTensor_unit_left (P : PFunctor.{uA, uB}) :
     map ((Lens.Equiv.xTensor (P := P)).toLens) ∘ₗ
         laxTensor X.{uA, uB} P ∘ₗ
         (laxUnit.{uA, uB} ⊗ₗ Lens.id (CofreeP P)) =
-      (Lens.Equiv.xTensor (P := CofreeP P)).toLens := by
-  exact congrArg Comonoid.Hom.toLens (laxTensorHom_unit_left P)
+      (Lens.Equiv.xTensor (P := CofreeP P)).toLens :=
+  congrArg Comonoid.Hom.toLens (laxTensorHom_unit_left P)
 
 /-- Lens-level right-unit coherence. -/
 theorem laxTensor_unit_right (P : PFunctor.{uA, uB}) :
     map ((Lens.Equiv.tensorX (P := P)).toLens) ∘ₗ
         laxTensor P X.{uA, uB} ∘ₗ
         (Lens.id (CofreeP P) ⊗ₗ laxUnit.{uA, uB}) =
-      (Lens.Equiv.tensorX (P := CofreeP P)).toLens := by
-  exact congrArg Comonoid.Hom.toLens (laxTensorHom_unit_right P)
+      (Lens.Equiv.tensorX (P := CofreeP P)).toLens :=
+  congrArg Comonoid.Hom.toLens (laxTensorHom_unit_right P)
 
 /-- Lens-level associativity coherence. -/
 theorem laxTensor_assoc
@@ -458,8 +458,8 @@ theorem laxTensor_assoc
           (P := CofreeP P) (Q := CofreeP Q) (R := CofreeP R)).toLens =
       map ((Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens) ∘ₗ
         laxTensor (P ⊗ Q) R ∘ₗ
-        (laxTensor P Q ⊗ₗ Lens.id (CofreeP R)) := by
-  exact congrArg Comonoid.Hom.toLens (laxTensorHom_assoc P Q R)
+        (laxTensor P Q ⊗ₗ Lens.id (CofreeP R)) :=
+  congrArg Comonoid.Hom.toLens (laxTensorHom_assoc P Q R)
 
 end CofreeP
 end PFunctor

@@ -21,14 +21,14 @@ trap restore_original EXIT
 
 ./scripts/update-lib.sh
 
-if git diff --quiet -- PolyFun.lean; then
+if cmp -s "$backup_file" PolyFun.lean; then
   echo "✓ All imports are up to date!"
   exit 0
 fi
 
 echo "❌ Import file is out of date!"
 echo "Differences found:"
-git diff -- PolyFun.lean
+diff -u "$backup_file" PolyFun.lean || true
 echo ""
 echo "To fix this, run: ./scripts/update-lib.sh"
 exit 1

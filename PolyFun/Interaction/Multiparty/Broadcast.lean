@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Multiparty.Core
+
+module
+
+public import PolyFun.Interaction.Multiparty.Core
 
 /-!
 # Broadcast / public-path multiparty interaction
@@ -24,6 +27,8 @@ For concrete finite party types, resolvers are intended to be written by
 pattern matching. This preserves the strongest definitional behavior of the
 resulting endpoint types.
 -/
+
+public section
 
 universe u
 

@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Refinement
+
+module
+
+public import PolyFun.Interaction.Concurrent.Refinement
 
 /-!
 # MutualSafetyRefinement for dynamic concurrent processes
@@ -31,6 +34,8 @@ fairness-aware safety-transport theorems phrased through
 `ProcessOver.SafetySpec.Satisfies`.
 -/
 
+public section
+
 universe u v w w₂ w₃
 
 namespace Interaction
@@ -46,13 +51,10 @@ So "backward simulation" is only a change of viewpoint, not a second primitive
 notion.
 -/
 abbrev ReverseSafetyRefinement
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
-    (impl : ProcessOver.SafetySpec Γ)
-    (spec : ProcessOver.SafetySpec Δ)
-    (matchStep :
-      ProcessOver.StepRel impl.toProcess spec.toProcess :=
-        ProcessOver.StepRel.top) :=
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
+    (impl : ProcessOver.SafetySpec Γ) (spec : ProcessOver.SafetySpec Δ)
+    (matchStep : ProcessOver.StepRel impl.toProcess spec.toProcess :=
+      ProcessOver.StepRel.top) :=
   PFunctor.DynSystem.ReverseSafetyRefinement impl spec matchStep
 
 /--
@@ -66,16 +68,12 @@ This is a process-level mutual-refinement witness: each side can match the
 other's executions while preserving the chosen step relation.
 -/
 abbrev MutualSafetyRefinement
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
-    (left : ProcessOver.SafetySpec Γ)
-    (right : ProcessOver.SafetySpec Δ)
-    (matchForth :
-      ProcessOver.StepRel left.toProcess right.toProcess :=
-        ProcessOver.StepRel.top)
-    (matchBack :
-      ProcessOver.StepRel right.toProcess left.toProcess :=
-        ProcessOver.StepRel.reverse matchForth) :=
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
+    (left : ProcessOver.SafetySpec Γ) (right : ProcessOver.SafetySpec Δ)
+    (matchForth : ProcessOver.StepRel left.toProcess right.toProcess :=
+      ProcessOver.StepRel.top)
+    (matchBack : ProcessOver.StepRel right.toProcess left.toProcess :=
+      ProcessOver.StepRel.reverse matchForth) :=
   PFunctor.DynSystem.MutualSafetyRefinement left right matchForth matchBack
 
 namespace MutualSafetyRefinement
@@ -87,20 +85,16 @@ assuming the chosen fairness predicates transfer along the forward direction.
 This is the "use the right-hand system as the proof-oriented model" direction.
 -/
 theorem left_safe_of_satisfies
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {left : ProcessOver.SafetySpec Γ} {right : ProcessOver.SafetySpec Δ}
-    {matchForth :
-      ProcessOver.StepRel left.toProcess right.toProcess}
-    {matchBack :
-      ProcessOver.StepRel right.toProcess left.toProcess}
+    {matchForth : ProcessOver.StepRel left.toProcess right.toProcess}
+    {matchBack : ProcessOver.StepRel right.toProcess left.toProcess}
     (both : MutualSafetyRefinement left right matchForth matchBack)
     (fairLeft : ProcessOver.Run.Pred left.toProcess)
     (fairRight : ProcessOver.Run.Pred right.toProcess)
-    (hfair :
-      ∀ (run : ProcessOver.Run left.toProcess) {pRight : right.Proc},
-        (hrel : both.forth.stateRel run.initial pRight) →
-          fairLeft run → fairRight (both.forth.mapRun run hrel))
+    (hfair : ∀ (run : ProcessOver.Run left.toProcess) {pRight : right.Proc},
+      (hrel : both.forth.stateRel run.initial pRight) →
+        fairLeft run → fairRight (both.forth.mapRun run hrel))
     (hright : ProcessOver.SafetySpec.Satisfies right fairRight
       (ProcessOver.SafetySpec.Safe right)) :
     ProcessOver.SafetySpec.Satisfies left fairLeft (ProcessOver.SafetySpec.Safe left) :=
@@ -114,20 +108,16 @@ assuming the chosen fairness predicates transfer along the backward direction.
 This is the same transport principle in the opposite direction.
 -/
 theorem right_safe_of_satisfies
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {left : ProcessOver.SafetySpec Γ} {right : ProcessOver.SafetySpec Δ}
-    {matchForth :
-      ProcessOver.StepRel left.toProcess right.toProcess}
-    {matchBack :
-      ProcessOver.StepRel right.toProcess left.toProcess}
+    {matchForth : ProcessOver.StepRel left.toProcess right.toProcess}
+    {matchBack : ProcessOver.StepRel right.toProcess left.toProcess}
     (both : MutualSafetyRefinement left right matchForth matchBack)
     (fairLeft : ProcessOver.Run.Pred left.toProcess)
     (fairRight : ProcessOver.Run.Pred right.toProcess)
-    (hfair :
-      ∀ (run : ProcessOver.Run right.toProcess) {pLeft : left.Proc},
-        (hrel : both.back.stateRel run.initial pLeft) →
-          fairRight run → fairLeft (both.back.mapRun run hrel))
+    (hfair : ∀ (run : ProcessOver.Run right.toProcess) {pLeft : left.Proc},
+      (hrel : both.back.stateRel run.initial pLeft) →
+        fairRight run → fairLeft (both.back.mapRun run hrel))
     (hleft : ProcessOver.SafetySpec.Satisfies left fairLeft (ProcessOver.SafetySpec.Safe left)) :
     ProcessOver.SafetySpec.Satisfies right fairRight (ProcessOver.SafetySpec.Safe right) :=
   SafetyRefinement.safe_of_satisfies both.back fairRight fairLeft hfair hleft
@@ -140,29 +130,23 @@ So once fairness transport is established, either side of a mutual safety refine
 used as the proof-oriented presentation of the protocol.
 -/
 theorem safe_iff_of_satisfies
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {left : ProcessOver.SafetySpec Γ} {right : ProcessOver.SafetySpec Δ}
-    {matchForth :
-      ProcessOver.StepRel left.toProcess right.toProcess}
-    {matchBack :
-      ProcessOver.StepRel right.toProcess left.toProcess}
+    {matchForth : ProcessOver.StepRel left.toProcess right.toProcess}
+    {matchBack : ProcessOver.StepRel right.toProcess left.toProcess}
     (both : MutualSafetyRefinement left right matchForth matchBack)
     (fairLeft : ProcessOver.Run.Pred left.toProcess)
     (fairRight : ProcessOver.Run.Pred right.toProcess)
-    (hfairLeft :
-      ∀ (run : ProcessOver.Run left.toProcess) {pRight : right.Proc},
-        (hrel : both.forth.stateRel run.initial pRight) →
-          fairLeft run → fairRight (both.forth.mapRun run hrel))
-    (hfairRight :
-      ∀ (run : ProcessOver.Run right.toProcess) {pLeft : left.Proc},
-        (hrel : both.back.stateRel run.initial pLeft) →
-          fairRight run → fairLeft (both.back.mapRun run hrel)) :
+    (hfairLeft : ∀ (run : ProcessOver.Run left.toProcess) {pRight : right.Proc},
+      (hrel : both.forth.stateRel run.initial pRight) →
+        fairLeft run → fairRight (both.forth.mapRun run hrel))
+    (hfairRight : ∀ (run : ProcessOver.Run right.toProcess) {pLeft : left.Proc},
+      (hrel : both.back.stateRel run.initial pLeft) →
+        fairRight run → fairLeft (both.back.mapRun run hrel)) :
     ProcessOver.SafetySpec.Satisfies left fairLeft (ProcessOver.SafetySpec.Safe left) ↔
-      ProcessOver.SafetySpec.Satisfies right fairRight (ProcessOver.SafetySpec.Safe right) := by
-  constructor
-  · exact right_safe_of_satisfies both fairLeft fairRight hfairRight
-  · exact left_safe_of_satisfies both fairLeft fairRight hfairLeft
+      ProcessOver.SafetySpec.Satisfies right fairRight (ProcessOver.SafetySpec.Safe right) :=
+  ⟨right_safe_of_satisfies both fairLeft fairRight hfairRight,
+    left_safe_of_satisfies both fairLeft fairRight hfairLeft⟩
 
 end MutualSafetyRefinement
 

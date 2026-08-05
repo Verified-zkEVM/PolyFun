@@ -3,7 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Run
+
+module
+
+import all PolyFun.Interaction.Concurrent.Process
+import all PolyFun.Interaction.Concurrent.Run
+public import PolyFun.Interaction.Concurrent.Run
 
 /-!
 # Observation equivalence for concurrent processes
@@ -27,6 +32,8 @@ The resulting API provides:
 
 This is the comparison layer later used by refinement and equivalence results.
 -/
+
+public section
 
 universe u v w
 
@@ -148,9 +155,7 @@ theorem rel_cast {Party : Type u}
     (hL : pL = pL') (hR : pR = pR')
     (leftPrefix : Process.Prefix left pL n)
     (rightPrefix : Process.Prefix right pR n) :
-    Rel rel
-      (cast (by cases hL; rfl) leftPrefix)
-      (cast (by cases hR; rfl) rightPrefix) ↔
+    Rel rel (hL ▸ leftPrefix) (hR ▸ rightPrefix) ↔
       Rel rel leftPrefix rightPrefix := by
   cases hL
   cases hR
@@ -176,9 +181,8 @@ namespace StepRel
 /--
 Match two paths by equality of their current controlling parties.
 -/
-def byController {Party : Type u} {P₁ P₂ : Type v}
-    {left : Process P₁ Party} {right : Process P₂ Party} :
-    StepRel left right :=
+def byController {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party}
+    {right : Process P₂ Party} : StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     (left.step pL).currentController? trL = (right.step pR).currentController? trR
 
@@ -194,8 +198,7 @@ def byPath {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {ri
 Match two paths by equality of stable external event labels.
 -/
 def byEvent {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
-    {Event : Type w}
-    (eventL : left.EventMap Event) (eventR : right.EventMap Event) :
+    {Event : Type w} (eventL : left.EventMap Event) (eventR : right.EventMap Event) :
     StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     eventL pL trL = eventR pR trR
@@ -203,9 +206,9 @@ def byEvent {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {r
 /--
 Match two paths by equality of stable tickets.
 -/
+@[expose]
 def byTicket {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
-    {Ticket : Type w}
-    (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket) :
+    {Ticket : Type w} (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket) :
     StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     ticketL pL trL = ticketR pR trR
@@ -216,6 +219,7 @@ to one fixed party.
 This is the relation that identifies executions that are observationally
 indistinguishable to `me` at the step level.
 -/
+@[expose]
 def byObservation {Party : Type u} [DecidableEq Party]
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} (me : Party) :
     StepRel left right :=
@@ -454,12 +458,7 @@ theorem relUpTo_of_pointwise {Party : Type u}
   | zero =>
       trivial
   | succ n ih =>
-      refine ⟨?_, ?_⟩
-      · exact hrel 0
-      · exact ih leftRun.tail rightRun.tail
-          (by
-            intro k
-            exact hrel k.succ)
+      exact ⟨hrel 0, ih leftRun.tail rightRun.tail fun k => hrel k.succ⟩
 
 /-- Pointwise path matching implies full run matching. -/
 theorem rel_of_pointwise {Party : Type u}

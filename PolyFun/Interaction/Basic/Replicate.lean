@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Append
-import PolyFun.PFunctor.Free.Replicate
+
+module
+
+public import PolyFun.Interaction.Basic.Append
+public import PolyFun.PFunctor.Free.Replicate
 
 /-!
 # `TypeTree.replicate` and path operations
@@ -13,6 +16,8 @@ Non-dependent `n`-fold append of the same type tree, with `Path.replicateJoin` /
 replicated decorations/refinements, and `Strategy.iterate`. This is the uniform special case of
 `TypeTree.stateChain` (see `PolyFun.Interaction.Basic.StateChain`).
 -/
+
+public section
 
 universe u v w
 
@@ -30,21 +35,18 @@ theorem replicate_succ (spec : TypeTree) (n : Nat) :
 
 /-- Prepend one path to a length-`n` replicated tail. -/
 abbrev Path.replicateCons (spec : TypeTree) (n : Nat) :
-    Path spec → Path (spec.replicate n) →
-    Path (spec.replicate (n + 1)) :=
+    Path spec → Path (spec.replicate n) → Path (spec.replicate (n + 1)) :=
   PFunctor.FreeM.Path.append spec (fun _ => spec.replicate n)
 
 /-- Split the head round from a length-`(n+1)` replicated path. -/
 abbrev Path.replicateUncons (spec : TypeTree) (n : Nat) :
-    Path (spec.replicate (n + 1)) →
-    Path spec × Path (spec.replicate n) :=
+    Path (spec.replicate (n + 1)) → Path spec × Path (spec.replicate n) :=
   fun tr =>
     let ⟨hd, tl⟩ := PFunctor.FreeM.Path.split spec (fun _ => spec.replicate n) tr
     (hd, tl)
 
 /-- Combine `n` paths of `spec` into one of `spec.replicate n`. -/
-def Path.replicateJoin (spec : TypeTree) :
-    (n : Nat) → (Fin n → Path spec) → Path (spec.replicate n)
+def Path.replicateJoin (spec : TypeTree) : (n : Nat) → (Fin n → Path spec) → Path (spec.replicate n)
   | 0, _ => ⟨⟩
   | n + 1, trs =>
       PFunctor.FreeM.Path.append spec (fun _ => spec.replicate n)
@@ -90,9 +92,7 @@ theorem Path.replicateJoin_replicateSplit (spec : TypeTree) (n : Nat)
     (tr : Path (spec.replicate n)) :
     Path.replicateJoin spec n (Path.replicateSplit spec n tr) = tr := by
   induction n with
-  | zero =>
-    cases tr
-    rfl
+  | zero => cases tr; rfl
   | succ n ih =>
     let hd := (PFunctor.FreeM.Path.split spec (fun _ => spec.replicate n) tr).1
     let tl := (PFunctor.FreeM.Path.split spec (fun _ => spec.replicate n) tr).2
@@ -113,9 +113,8 @@ theorem Path.replicateJoin_replicateSplit (spec : TypeTree) (n : Nat)
 variable {S : Type u → Type v}
 
 /-- Replicate a decoration `n` times along `TypeTree.replicate`. -/
-abbrev Decoration.replicate {S : Type u → Type v}
-    {spec : TypeTree} (d : Decoration S spec) : (n : Nat) →
-    Decoration S (spec.replicate n) :=
+abbrev Decoration.replicate {S : Type u → Type v} {spec : TypeTree} (d : Decoration S spec) :
+    (n : Nat) → Decoration S (spec.replicate n) :=
   PFunctor.FreeM.Displayed.Decoration.replicate (P := TypeTree.basePFunctor)
     (α := PUnit.{u+1}) (a := PUnit.unit) d
 

@@ -200,7 +200,7 @@ theorem liftMHom_unique (F : FreeM P →ᵐ m) (h : ∀ a, F (FreeM.lift a) = s 
     change F (FreeM.liftBind a r) = FreeM.liftM s (FreeM.liftBind a r)
     rw [show (FreeM.liftBind a r : FreeM P β) = FreeM.lift a >>= r from rfl,
       MonadHom.mmap_bind, h, FreeM.liftM_lift_bind]
-    exact bind_congr fun d => ih d
+    exact bind_congr ih
 
 omit [LawfulMonad m] [LawfulMonad n] in
 /-- **Naturality of the fold along a monad morphism**: pushing a monad morphism `φ : m →ᵐ n` through

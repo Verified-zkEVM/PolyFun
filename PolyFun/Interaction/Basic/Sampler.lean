@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Decoration
+
+module
+
+public import PolyFun.Interaction.Basic.Decoration
 
 /-!
 # Monadic samplers on interaction type trees
@@ -27,6 +30,8 @@ and the sampler's decoration values live at `Type w'`. Probability-monad-specifi
 constructions (e.g., `Sampler.uniform` over a `TypeTree.Fintype` ornament) live in
 the runtime layer where `ProbComp` is in scope.
 -/
+
+public section
 
 universe w w'
 

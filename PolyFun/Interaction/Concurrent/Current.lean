@@ -3,8 +3,11 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Control
-import PolyFun.Interaction.Concurrent.Profile
+
+module
+
+public import PolyFun.Interaction.Concurrent.Control
+public import PolyFun.Interaction.Concurrent.Profile
 
 /-!
 # Current local views of concurrent frontier events
@@ -36,6 +39,8 @@ So this file gives the first true "who chooses what next, and what does everyone
 else learn?" interface for the concurrent layer.
 -/
 
+public section
+
 universe u
 
 namespace Interaction
@@ -61,7 +66,7 @@ This packages the fact that `Control.isLive` is the control-side decision
 procedure for whether a concurrent spec still exposes any enabled frontier
 event.
 -/
-private theorem frontIsEmptyOfNotLive {Party : Type u} :
+private theorem isEmpty_front_of_isLive_eq_false {Party : Type u} :
     {S : Spec} → (control : Control Party S) → control.isLive = false → IsEmpty (Front S)
   | .done, .done, _ => ⟨fun event => nomatch event⟩
   | .node _ _, .node _ _, h => by cases h
@@ -75,8 +80,10 @@ private theorem frontIsEmptyOfNotLive {Party : Type u} :
           match hRight : rightControl.isLive with
           | true => simp [Control.isLive, hLeft, hRight] at h
           | false =>
-              let leftEmpty : IsEmpty (Front _) := frontIsEmptyOfNotLive leftControl hLeft
-              let rightEmpty : IsEmpty (Front _) := frontIsEmptyOfNotLive rightControl hRight
+              let leftEmpty : IsEmpty (Front _) :=
+                isEmpty_front_of_isLive_eq_false leftControl hLeft
+              let rightEmpty : IsEmpty (Front _) :=
+                isEmpty_front_of_isLive_eq_false rightControl hRight
               exact ⟨fun
                 | .left event => leftEmpty.false event
                 | .right event => rightEmpty.false event⟩
@@ -146,12 +153,14 @@ def view {Party : Type u} [DecidableEq Party] (me : Party) :
           | true =>
               if me = scheduler then .pick else Profile.frontierView me profile
           | false =>
-              let rightEmpty : IsEmpty (Front right) := frontIsEmptyOfNotLive rightControl hRight
+              let rightEmpty : IsEmpty (Front right) :=
+                isEmpty_front_of_isLive_eq_false rightControl hRight
               liftLeftView rightEmpty (view me leftControl leftProfile)
       | false =>
           match rightControl.isLive with
           | true =>
-              let leftEmpty : IsEmpty (Front left) := frontIsEmptyOfNotLive leftControl hLeft
+              let leftEmpty : IsEmpty (Front left) :=
+                isEmpty_front_of_isLive_eq_false leftControl hLeft
               liftRightView leftEmpty (view me rightControl rightProfile)
           | false => .hidden
 
@@ -161,8 +170,8 @@ available to the fixed party `me` for the next frontier event.
 
 This is just the observation type of `Current.view me control profile`.
 -/
-abbrev ObsType {Party : Type u} [DecidableEq Party] (me : Party)
-    {S : Spec} (control : Control Party S) (profile : Profile Party S) : Type (u + 1) :=
+abbrev ObsType {Party : Type u} [DecidableEq Party] (me : Party) {S : Spec}
+    (control : Control Party S) (profile : Profile Party S) : Type (u + 1) :=
   (view me control profile).ObsType
 
 /--

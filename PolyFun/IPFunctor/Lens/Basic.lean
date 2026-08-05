@@ -35,8 +35,7 @@ variable {I : Type uI} {J : Type uJ}
 
 /-- A **lens** between indexed polynomial functors `P Q : IPFunctor I J`: a forward map on
 positions, a backward map on responses, and the source-index preservation law `src_eq`. -/
-structure Lens (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J)
-                (Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J) where
+structure Lens (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J) (Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J) where
   /-- Forward map on positions, indexed by the output index `j : J`. -/
   toFunA : ∀ j, P.A j → Q.A j
   /-- Backward map on responses: a `Q`-response at `toFunA j a` pulls back to a `P`-response
@@ -55,14 +54,12 @@ protected def id (P : IPFunctor.{uI, uJ, uA, uB} I J) : Lens P P where
 
 /-- Composition of lenses in function-composition order: `l ∘ₗ l'` applies `l'` first,
 then `l`. -/
-def comp {P : IPFunctor.{uI, uJ, uA₁, uB₁} I J}
-    {Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J}
-    {R : IPFunctor.{uI, uJ, uA₃, uB₃} I J}
-    (l : Lens Q R) (l' : Lens P Q) : Lens P R where
+def comp {P : IPFunctor.{uI, uJ, uA₁, uB₁} I J} {Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J}
+    {R : IPFunctor.{uI, uJ, uA₃, uB₃} I J} (l : Lens Q R) (l' : Lens P Q) : Lens P R where
   toFunA j := l.toFunA j ∘ l'.toFunA j
   toFunB j a := l'.toFunB j a ∘ l.toFunB j (l'.toFunA j a)
   src_eq j a d := by
-    simp only [Function.comp_apply, l'.src_eq, l.src_eq]
+    simp [l'.src_eq, l.src_eq]
 
 @[inherit_doc] scoped infixl:75 " ∘ₗ " => IPFunctor.Lens.comp
 
@@ -85,8 +82,7 @@ theorem comp_assoc (l : Lens R S) (l' : Lens Q R) (l'' : Lens P Q) :
 /-- A structural equivalence in the lens category: a pair of lenses that compose to identity
 in both directions. -/
 @[ext]
-structure Equiv (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J)
-                (Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J) where
+structure Equiv (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J) (Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J) where
   /-- The forward lens. -/
   toLens : Lens P Q
   /-- The inverse lens. -/

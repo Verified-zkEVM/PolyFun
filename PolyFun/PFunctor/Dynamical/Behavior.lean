@@ -52,8 +52,8 @@ def feedbackStream (f : O → I) (m : MooreMachine S O I) (st : S) (n : ℕ) : O
 /-- The closed-loop output stream advances by feeding the current output back as the
 next input. -/
 theorem feedbackStream_succ (f : O → I) (m : MooreMachine S O I) (st : S) (n : ℕ) :
-    m.feedbackStream f st (n + 1) = m.feedbackStream f (m.transition st (f (m.output st))) n := by
-  simp only [feedbackStream, Function.iterate_succ_apply, feedbackStep]
+    m.feedbackStream f st (n + 1) = m.feedbackStream f (m.transition st (f (m.output st))) n :=
+  rfl
 
 /-- The trajectory spine of the closed-loop system is the iterate of its states:
 the closed system's "matter" is exactly its state stream. -/

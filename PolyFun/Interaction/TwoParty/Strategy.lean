@@ -3,15 +3,23 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.TypeTree
-import PolyFun.Interaction.Basic.Decoration
-import PolyFun.Interaction.Basic.Syntax
-import PolyFun.Interaction.Basic.Ownership
-import PolyFun.Interaction.Basic.Interaction
-import PolyFun.Interaction.Basic.MonadDecoration
-import PolyFun.Interaction.TwoParty.Decoration
-import PolyFun.Interaction.TwoParty.Syntax
-import PolyFun.Interaction.Basic.Shape
+
+module
+
+import all PolyFun.Interaction.Basic.Interaction
+import all PolyFun.Interaction.Basic.Ownership
+import all PolyFun.Interaction.Basic.StrategyOver
+import all PolyFun.Interaction.TwoParty.Decoration
+import all PolyFun.Interaction.TwoParty.Syntax
+public import PolyFun.Interaction.Basic.Decoration
+public import PolyFun.Interaction.Basic.Interaction
+public import PolyFun.Interaction.Basic.MonadDecoration
+public import PolyFun.Interaction.Basic.Ownership
+public import PolyFun.Interaction.Basic.Shape
+public import PolyFun.Interaction.Basic.Syntax
+public import PolyFun.Interaction.Basic.TypeTree
+public import PolyFun.Interaction.TwoParty.Decoration
+public import PolyFun.Interaction.TwoParty.Syntax
 
 /-!
 # Role-dependent strategies and counterparts
@@ -38,6 +46,8 @@ This is the structure needed for replay against a prescribed public path
 while keeping execution itself in the ordinary two-party model.
 -/
 
+public section
+
 universe u
 
 namespace Interaction
@@ -49,6 +59,7 @@ open TwoParty
 
 /-- The ordinary paired two-party local syntax specialized to plain type trees,
 using the identity lens on `TypeTree.basePFunctor` and roles as node metadata. -/
+@[expose]
 def _root_.Interaction.SyntaxOver.TwoParty.pairedTypeTree (m : Type u → Type u) :
     SyntaxOver
       (PFunctor.Lens.id TypeTree.basePFunctor) Participant.{u} (fun _ => Role) :=
@@ -96,6 +107,7 @@ theorem _root_.Interaction.SyntaxOver.TwoParty.pairedTypeTree_eq_ownerBased
         simp [PFunctor.Lens.id, TypeTree.Ownership.LocalView.node, perspective, typeTreePerspective]
 
 /-- Functorial shape for the ordinary paired two-party syntax over plain type trees. -/
+@[expose]
 def _root_.Interaction.ShapeOver.TwoParty.pairedTypeTree (m : Type u → Type u) [Functor m] :
     ShapeOver
       (PFunctor.Lens.id TypeTree.basePFunctor) Participant.{u} (fun _ => Role) :=
@@ -109,6 +121,7 @@ supplies the move and continuation, while the focal participant observes it.
 Together with `InteractionOver.run`, this is the canonical whole-protocol runner
 for two-party role-decorated strategies.
 -/
+@[expose]
 def _root_.Interaction.InteractionOver.TwoParty.pairedTypeTree (m : Type u → Type u) [Monad m] :
     InteractionOver
       (PFunctor.Lens.id TypeTree.basePFunctor) Participant.{u} (fun _ => Role)
@@ -118,12 +131,14 @@ def _root_.Interaction.InteractionOver.TwoParty.pairedTypeTree (m : Type u → T
 /-- The paired role/monad two-party local syntax specialized to plain type trees,
 using the identity lens on `TypeTree.basePFunctor` and `RolePairedMonadContext`
 as node metadata. -/
+@[expose]
 def _root_.Interaction.SyntaxOver.TwoParty.pairedMonadicTypeTree :
     SyntaxOver
       (PFunctor.Lens.id TypeTree.basePFunctor) Participant.{u} RolePairedMonadContext :=
   SyntaxOver.TwoParty.pairedMonadic (PFunctor.Lens.id TypeTree.basePFunctor)
 
 /-- Functorial shape for paired role/monad two-party syntax over plain type trees. -/
+@[expose]
 def _root_.Interaction.ShapeOver.TwoParty.pairedMonadicTypeTree :
     ShapeOver
       (PFunctor.Lens.id TypeTree.basePFunctor) Participant.{u} RolePairedMonadContext :=
@@ -137,6 +152,7 @@ At sender nodes the focal participant owns the move and returns a message
 together with the continuation in the node monad. At receiver nodes it observes
 the counterpart's message and returns the continuation in the node monad.
 -/
+@[expose]
 def _root_.Interaction.SyntaxOver.TwoParty.Focal.monadicTypeTree :
     SyntaxOver
       (PFunctor.Lens.id TypeTree.basePFunctor) PUnit RoleMonadContext :=
@@ -152,6 +168,7 @@ The local node syntax is `SyntaxOver.TwoParty.Focal.monadicTypeTree`; the map op
 only recursive continuations, leaving the role, node monad, and selected move
 unchanged.
 -/
+@[expose]
 def _root_.Interaction.ShapeOver.TwoParty.Focal.monadicTypeTree :
     ShapeOver
       (PFunctor.Lens.id TypeTree.basePFunctor) PUnit RoleMonadContext :=
@@ -167,6 +184,7 @@ At sender nodes the counterpart observes the focal participant's move. At
 receiver nodes it owns the move and returns a message together with the
 continuation in the node monad.
 -/
+@[expose]
 def _root_.Interaction.SyntaxOver.TwoParty.Counterpart.monadicTypeTree :
     SyntaxOver
       (PFunctor.Lens.id TypeTree.basePFunctor) PUnit RoleMonadContext :=
@@ -182,6 +200,7 @@ The local node syntax is `SyntaxOver.TwoParty.Counterpart.monadicTypeTree`; the 
 transports only recursive continuations, preserving the role, node monad, and
 message/challenge choice.
 -/
+@[expose]
 def _root_.Interaction.ShapeOver.TwoParty.Counterpart.monadicTypeTree :
     ShapeOver
       (PFunctor.Lens.id TypeTree.basePFunctor) PUnit RoleMonadContext :=
@@ -305,6 +324,7 @@ separately.
 
 This is exactly the extra structure needed to replay a prescribed path
 through the verifier. -/
+@[expose]
 def counterpartSyntax (m : Type u → Type u) :
     SyntaxOver
       (PFunctor.Lens.id TypeTree.basePFunctor) PUnit (fun _ => Role) :=
@@ -451,6 +471,7 @@ The focal participant carries `OutputP`, while the counterpart carries
 `OutputC`. Naming this family gives the runner, profiles, and computation
 rules a single canonical shape for participant outputs, which keeps dependent
 function arguments definitionally aligned. -/
+@[expose]
 def participantOutputFamily
     {spec : TypeTree} (OutputP OutputC : PFunctor.FreeM.Path spec → Type u)
     (agent : Participant.{u}) (tr : PFunctor.FreeM.Path spec) : Type u :=
@@ -460,6 +481,7 @@ def participantOutputFamily
 
 /-- Collect the two participant-indexed outputs into the result pair of a
 two-party run. -/
+@[expose]
 def collectParticipantOutputs
     {spec : TypeTree} {OutputP OutputC : PFunctor.FreeM.Path spec → Type u} :
     (tr : PFunctor.FreeM.Path spec) →
@@ -469,6 +491,7 @@ def collectParticipantOutputs
 
 /-- Assemble the focal strategy and counterpart strategy into a
 participant-indexed profile for the generic runner. -/
+@[expose]
 def participantProfile
     {m : Type u → Type u} {spec : TypeTree} {roles : RoleDecoration spec}
     {OutputP OutputC : PFunctor.FreeM.Path spec → Type u}
@@ -488,6 +511,7 @@ This is the generic `InteractionOver.run` specialized to
 `SyntaxOver.TwoParty.pairedTypeTree`, with the two participant fibers assembled
 by `participantProfile` and collected by `collectParticipantOutputs`.
 -/
+@[expose]
 def run {m : Type u → Type u} [Monad m]
     (spec : TypeTree) (roles : RoleDecoration spec)
     {OutputP : PFunctor.FreeM.Path spec → Type u}
@@ -510,7 +534,7 @@ theorem _root_.Interaction.InteractionOver.TwoParty.run_paired_done
       (I := InteractionOver.TwoParty.pairedTypeTree m) (spec := TypeTree.done) (ctxs := PUnit.unit)
       (participantProfile outP outC) collectParticipantOutputs =
       (pure ⟨⟨⟩, outP, outC⟩ :
-        m ((tr : PFunctor.FreeM.Path TypeTree.done) × OutputP tr × OutputC tr)) := by
+        m ((tr : PFunctor.FreeM.Path TypeTree.done) × OutputP tr × OutputC tr)) :=
   rfl
 
 @[simp]
@@ -702,7 +726,7 @@ theorem run_done {m : Type u → Type u} [Monad m]
     (outP : OutputP ⟨⟩) (outC : OutputC ⟨⟩) :
     run .done PUnit.unit outP outC =
       (pure ⟨⟨⟩, outP, outC⟩ :
-        m ((tr : PFunctor.FreeM.Path TypeTree.done) × OutputP tr × OutputC tr)) := by
+        m ((tr : PFunctor.FreeM.Path TypeTree.done) × OutputP tr × OutputC tr)) :=
   rfl
 
 @[simp]
@@ -790,6 +814,7 @@ def _root_.Interaction.StrategyOver.TwoParty.Focal.ofConstantMonads
 View an ordinary single-monad role strategy as a strategy over a constant monad
 decoration.
 -/
+@[expose]
 def _root_.Interaction.StrategyOver.TwoParty.Focal.toConstantMonadsHom
     {m : Type u → Type u} [Monad m] [LawfulFunctor m] :
     StrategyOver.ShapeContextHom

@@ -25,22 +25,18 @@ example : emptyReturn.run 0 4 = FreeM.pure (some 5) := by
 
 universe uA uB uα uβ uγ uState uState₂
 
-def boundedUniverseCanary {p : PFunctor.{uA, uB}} {α : Type uα}
-    {β : Type uβ} (M : DynComputation.{uState} p α β)
-    (k : ℕ) (state : M.State) : FreeM p (Option β) :=
+def boundedUniverseCanary {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
+    (M : DynComputation.{uState} p α β) (k : ℕ) (state : M.State) : FreeM p (Option β) :=
   M.unroll k state
 
 def closedTrajectoryUniverseCanary {α : Type uα} {β : Type uβ}
-    (M : DynComputation.{uState} X.{uA, uB} α β)
-    (state : M.State) (k : ℕ) : M.State :=
+    (M : DynComputation.{uState} X.{uA, uB} α β) (state : M.State) (k : ℕ) : M.State :=
   M.closedStutterIterate state k
 
-theorem boundedSeqUniverseCanary {p : PFunctor.{uA, uB}} {α : Type uα}
-    {β : Type uβ} {γ : Type uγ} (M₁ : DynComputation.{uState} p α β)
-    (M₂ : DynComputation.{uState₂} p β γ) (program₁ : α → FreeM p β)
-    (program₂ : β → FreeM p γ) (k₁ k₂ : ℕ)
-    (h₁ : M₁.ImplementsWithin program₁ k₁)
-    (h₂ : M₂.ImplementsWithin program₂ k₂) :
+theorem boundedSeqUniverseCanary {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type uγ}
+    (M₁ : DynComputation.{uState} p α β) (M₂ : DynComputation.{uState₂} p β γ)
+    (program₁ : α → FreeM p β) (program₂ : β → FreeM p γ) (k₁ k₂ : ℕ)
+    (h₁ : M₁.ImplementsWithin program₁ k₁) (h₂ : M₂.ImplementsWithin program₂ k₂) :
     (M₁.seqComp M₂).ImplementsWithin
       (fun input => FreeM.bind (program₁ input) program₂) (k₁ + k₂) :=
   h₁.seqComp h₂
@@ -214,8 +210,7 @@ def boolRealization : DynComputation branchP Unit Nat where
 def constantBranchProgram (_ : Unit) : FreeM branchP Nat :=
   FreeM.liftBind false fun _ => pure 10
 
-theorem constantBranchProgram_bound :
-    (constantBranchProgram ()).IsTotalRollBound 1 := by
+theorem constantBranchProgram_bound : (constantBranchProgram ()).IsTotalRollBound 1 := by
   unfold branchP
   rw [show constantBranchProgram () =
       FreeM.liftBind false (fun _ : Bool => pure 10) from rfl,
@@ -270,8 +265,7 @@ theorem firstProgram_bound : (firstProgram ()).IsTotalRollBound 1 := by
     FreeM.isTotalRollBound_lift_bind_iff]
   exact ⟨by omega, fun _ => by simp⟩
 
-theorem secondProgram_bound (first : Bool) :
-    (secondProgram first).IsTotalRollBound 1 := by
+theorem secondProgram_bound (first : Bool) : (secondProgram first).IsTotalRollBound 1 := by
   unfold branchP
   rw [show secondProgram first = FreeM.liftBind first (fun answer : Bool =>
       pure (if first = true then if answer = true then 11 else 12

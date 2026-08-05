@@ -3,9 +3,12 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Node
-import PolyFun.Interaction.Basic.TypeTree
-import PolyFun.PFunctor.Free.Displayed.Decoration
+
+module
+
+public import PolyFun.Interaction.Basic.Node
+public import PolyFun.Interaction.Basic.TypeTree
+public import PolyFun.PFunctor.Free.Displayed.Decoration
 
 /-!
 # Decorations and dependent decorations (`Over`)
@@ -86,6 +89,8 @@ right object when shape and metadata vary together (e.g. for the polynomial
 coalgebraic semantics of `ProcessOver`).
 -/
 
+public section
+
 universe u v w w₂ w₃ w₄ w₅
 
 namespace Interaction
@@ -97,6 +102,7 @@ abbrev Decoration (Γ : Node.Context.{u, v}) (spec : TypeTree) : Type (max u v) 
   PFunctor.FreeM.Displayed.Decoration (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) Γ spec
 
 /-- The unique decoration by the empty node context. -/
+@[expose]
 def Decoration.empty : (spec : TypeTree) → Decoration Node.Context.empty spec
   | .done => PUnit.unit
   | .node _ rest => ⟨PUnit.unit, fun x => Decoration.empty (rest x)⟩
@@ -220,7 +226,8 @@ theorem Decoration.map_ofOver
       Decoration.ofOver B spec
         (Decoration.map f spec d)
         (Decoration.Over.mapBase f g spec d r) :=
-  PFunctor.FreeM.Displayed.Decoration.map_ofOver (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) f g
+  PFunctor.FreeM.Displayed.Decoration.map_ofOver
+    (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) f g
 
 /--
 Unpack a decoration of the extended context `Γ.extend A` into:
@@ -283,6 +290,7 @@ monads gives `Decorated.shape`. The fiber of `shape` over a fixed
 This is the free monad on `Γ.toPFunctor` at the unit payload. Equivalently
 (by `decoratedEquiv`), it bundles a tree shape `spec : TypeTree` together
 with a `Decoration Γ spec` on it. -/
+@[expose]
 def Decorated (Γ : Node.Context.{u, v}) : Type (max (u+1) v) :=
   PFunctor.FreeM Γ.toPFunctor PUnit.{u+1}
 
@@ -294,6 +302,7 @@ variable {Γ : Node.Context.{u, v}}
 tree shape. This is the lift to free monads of the polynomial lens
 `Γ.toPFunctor → TypeTree.basePFunctor` whose position map is `Sigma.fst` and
 whose child map is the identity. -/
+@[expose]
 def shape : Decorated Γ → TypeTree.{u}
   | .pure _ => TypeTree.done
   | .liftBind ⟨X, _⟩ rest => TypeTree.node X (fun x => Decorated.shape (rest x))
@@ -301,12 +310,14 @@ def shape : Decorated Γ → TypeTree.{u}
 /-- Read off the per-node `Γ`-decoration of a decorated type tree, indexed by
 the tree's underlying `shape`. Together with `shape`, this exhibits the
 fiberwise structure of `Decorated Γ` over `TypeTree`. -/
+@[expose]
 def decoration : (ds : Decorated Γ) → Decoration Γ (Decorated.shape ds)
   | .pure _ => PUnit.unit
   | .liftBind ⟨_, γ⟩ rest => ⟨γ, fun x => Decorated.decoration (rest x)⟩
 
 /-- Pack a tree shape together with a `Γ`-decoration on it into a single
 decorated type tree. Inverse to the pair `(shape, decoration)`. -/
+@[expose]
 def mk : (spec : TypeTree.{u}) → Decoration Γ spec → Decorated Γ
   | .done, _ => PFunctor.FreeM.pure PUnit.unit
   | .node X rest, ⟨γ, dRest⟩ =>

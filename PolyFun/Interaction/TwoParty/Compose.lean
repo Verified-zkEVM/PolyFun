@@ -3,14 +3,18 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Basic.Append
-import PolyFun.Interaction.Basic.Replicate
-import PolyFun.Interaction.TwoParty.Decoration
-import PolyFun.Interaction.TwoParty.Strategy
-import Mathlib.Control.Monad.Basic
-import PolyFun.Control.Lawful.Basic
-import Mathlib.Data.Sigma.Basic
-import PolyFun.Interaction.Basic.StateChain
+
+module
+
+import all PolyFun.Interaction.TwoParty.Decoration
+public import Mathlib.Control.Monad.Basic
+public import Mathlib.Data.Sigma.Basic
+public import PolyFun.Control.Lawful.Basic
+public import PolyFun.Interaction.Basic.Append
+public import PolyFun.Interaction.Basic.Replicate
+public import PolyFun.Interaction.Basic.StateChain
+public import PolyFun.Interaction.TwoParty.Decoration
+public import PolyFun.Interaction.TwoParty.Strategy
 
 /-!
 # Composing two-party protocols
@@ -26,14 +30,15 @@ for the output type (factored form). The flat variants (`compFlat`,
 family on the combined path.
 -/
 
+public section
+
 open LawfulMonad
 
-universe u v
+universe u
 
 namespace Interaction
 namespace TwoParty
 
-variable {m : Type u → Type u}
 open TwoParty
 
 /-- A lawful monad whose independent effects may be swapped.

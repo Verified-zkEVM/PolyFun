@@ -3,8 +3,13 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.UC.OpenSyntax.Raw
-import PolyFun.Interaction.UC.OpenSyntax.Interp
+
+module
+
+import all PolyFun.Interaction.UC.OpenSyntax.Interp
+import all PolyFun.Interaction.UC.OpenSyntax.Raw
+public import PolyFun.Interaction.UC.OpenSyntax.Interp
+public import PolyFun.Interaction.UC.OpenSyntax.Raw
 
 /-!
 # Quotiented free model of open composition
@@ -31,6 +36,8 @@ construction: each law holds because it is a constructor of `Raw.Equiv`.
 * `Expr.toInterp`: embedding into the tagless-final `Interp` model.
 -/
 
+public section
+
 universe u
 
 namespace Interaction
@@ -48,6 +55,7 @@ laws, so it forms a lawful `OpenTheory`.
 For pattern matching on the underlying syntax, project to `Raw` via
 `Expr.liftOn` or work with `Raw` directly.
 -/
+@[expose]
 def Expr (Atom : PortBoundary → Type u) (Δ : PortBoundary) : Type (u + 1) :=
   Quotient (Raw.setoid Atom Δ)
 
@@ -56,6 +64,7 @@ namespace Expr
 /--
 Project a raw expression into the quotiented `Expr`.
 -/
+@[expose]
 def mk {Atom : PortBoundary → Type u} {Δ : PortBoundary}
     (e : Raw Atom Δ) : Expr Atom Δ :=
   Quotient.mk _ e
@@ -63,6 +72,7 @@ def mk {Atom : PortBoundary → Type u} {Δ : PortBoundary}
 /--
 Inject a primitive open component.
 -/
+@[expose]
 def atom {Atom : PortBoundary → Type u} {Δ : PortBoundary}
     (a : Atom Δ) : Expr Atom Δ :=
   mk (.atom a)
@@ -70,6 +80,7 @@ def atom {Atom : PortBoundary → Type u} {Δ : PortBoundary}
 /--
 Adapt the exposed boundary along a structural morphism.
 -/
+@[expose]
 def map {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
     (f : PortBoundary.Hom Δ₁ Δ₂)
     (e : Expr Atom Δ₁) : Expr Atom Δ₂ :=
@@ -79,6 +90,7 @@ def map {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
 /--
 Place two open systems side by side.
 -/
+@[expose]
 def par {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
     (e₁ : Expr Atom Δ₁) (e₂ : Expr Atom Δ₂) :
     Expr Atom (PortBoundary.tensor Δ₁ Δ₂) :=
@@ -88,6 +100,7 @@ def par {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
 /--
 Connect one shared boundary between two open systems.
 -/
+@[expose]
 def wire {Atom : PortBoundary → Type u} {Δ₁ Γ Δ₂ : PortBoundary}
     (e₁ : Expr Atom (PortBoundary.tensor Δ₁ Γ))
     (e₂ : Expr Atom (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
@@ -98,6 +111,7 @@ def wire {Atom : PortBoundary → Type u} {Δ₁ Γ Δ₂ : PortBoundary}
 /--
 The identity wire (coevaluation) on boundary `Γ`.
 -/
+@[expose]
 def idWire {Atom : PortBoundary → Type u} (Γ : PortBoundary) :
     Expr Atom (PortBoundary.tensor (PortBoundary.swap Γ) Γ) :=
   mk (.idWire Γ)
@@ -106,6 +120,7 @@ def idWire {Atom : PortBoundary → Type u} (Γ : PortBoundary) :
 Close an open system against a matching context.
 Derived from `wire` and `map`, mirroring `Raw.plug`.
 -/
+@[expose]
 def plug {Atom : PortBoundary → Type u} {Δ : PortBoundary}
     (e : Expr Atom Δ) (k : Expr Atom (PortBoundary.swap Δ)) :
     Expr Atom PortBoundary.empty :=
@@ -119,6 +134,7 @@ def plug {Atom : PortBoundary → Type u} {Δ : PortBoundary}
 The monoidal unit (closed system with no boundary).
 Derived from `idWire` and `map`, mirroring `Raw.unit`.
 -/
+@[expose]
 def unit {Atom : PortBoundary → Type u} : Expr Atom PortBoundary.empty :=
   Expr.map (PortBoundary.Equiv.tensorEmptyLeft PortBoundary.empty).toHom
     (Expr.idWire PortBoundary.empty)
@@ -130,6 +146,7 @@ plug-wire factorization structure.
 Well-defined on the quotient because `Raw.Equiv.interpret_eq` shows that
 equivalent raw expressions interpret the same way in any such theory.
 -/
+@[expose]
 def interpret {Atom : PortBoundary → Type u} {Δ : PortBoundary}
     (e : Expr Atom Δ)
     (T : OpenTheory)
@@ -334,6 +351,7 @@ Well-defined on the quotient because equivalent raw expressions interpret the
 same way in every compact closed theory (which is exactly what `Interp.ext`
 requires).
 -/
+@[expose]
 def toInterp {Atom : PortBoundary → Type u} {Δ : PortBoundary}
     (e : Expr Atom Δ) : Interp Atom Δ :=
   Quotient.liftOn e
@@ -395,12 +413,8 @@ theorem toInterp_plug {Atom : PortBoundary → Type u} {Δ : PortBoundary}
 @[simp]
 theorem toInterp_unit {Atom : PortBoundary → Type u} :
     (Expr.unit : Expr Atom _).toInterp = Interp.unit := by
-  have h : (Expr.unit : Expr Atom _).toInterp =
-      (⟨fun T hCC interp =>
-        (Raw.unit (Atom := Atom)).interpret T interp hCC.idWire⟩ :
-        Interp Atom _) := rfl
-  rw [h]
   ext T hT interp
+  change (Raw.unit (Atom := Atom)).interpret T interp hT.idWire = _
   simp [Raw.interpret, Interp.unit, OpenTheory.unit_eq]
 
 end Expr

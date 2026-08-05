@@ -16,6 +16,7 @@ Usage: ./scripts/validate.sh [--lint] [--test]
 
 Default checks:
   - lake build
+  - ./scripts/check-modules.sh
   - ./scripts/check-imports.sh
   - python3 ./scripts/check-docs-integrity.py
 
@@ -47,6 +48,10 @@ done
 
 echo "# Building project"
 lake build --wfail
+
+echo ""
+echo "# Checking module scopes"
+./scripts/check-modules.sh
 
 echo ""
 echo "# Checking umbrella imports"

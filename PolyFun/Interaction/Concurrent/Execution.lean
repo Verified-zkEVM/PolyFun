@@ -3,7 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Quang Dao
 -/
-import PolyFun.Interaction.Concurrent.Process
+
+module
+
+public import PolyFun.Interaction.Concurrent.Process
 
 /-!
 # Finite executions of dynamic concurrent processes
@@ -28,6 +31,8 @@ This file therefore provides two parallel views of finite execution:
 The closed-world `Process` API is recovered as a specialization of these
 generic definitions.
 -/
+
+public section
 
 universe u v w w₂ w₃
 
@@ -83,6 +88,7 @@ namespace Observed
 /--
 The number of visited nodes recorded by an observed sequential path.
 -/
+@[expose]
 def length {Party : Type u} [DecidableEq Party] {me : Party} :
     {spec : Interaction.TypeTree.{w}} →
       {semantics : PFunctor.FreeM.Displayed.Decoration (P := TypeTree.basePFunctor)
@@ -206,6 +212,7 @@ inductive Trace
 namespace Trace
 
 /-- The number of process steps recorded by a finite execution trace. -/
+@[expose]
 def length
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ} :
@@ -320,6 +327,7 @@ inductive ObservedTrace
 namespace ObservedTrace
 
 /-- The number of process steps recorded by an observed trace. -/
+@[expose]
 def length
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Party : Type u} [DecidableEq Party]
@@ -357,8 +365,7 @@ theorem length_done
     {P : Type v} {process : ProcessOver P Γ} {p : process.Proc}
     {h : (process.step p).tree.Path → False} :
     length (ObservedTrace.done
-      (me := me) (resolve := resolve) (process := process) (p := p) (h := h)) = 0 := by
-  rfl
+      (me := me) (resolve := resolve) (process := process) (p := p) (h := h)) = 0 := rfl
 
 @[simp, grind =]
 theorem length_step
@@ -371,8 +378,7 @@ theorem length_step
     (obs : StepOver.ObservedPath me resolve (process.step p) tr)
     (rest : ObservedTrace me resolve process tail) :
     length (.step obs rest : ObservedTrace me resolve process
-      (.step tr tail : Trace process p)) = rest.length.succ := by
-  rfl
+      (.step tr tail : Trace process p)) = rest.length.succ := rfl
 
 /--
 The canonical observed process trace has the same number of process steps as
@@ -492,8 +498,7 @@ theorem length_done {Party : Type u} [DecidableEq Party]
       (resolve := Interaction.TypeTree.Node.ContextHom.id (StepContext Party))
       (process := process)
       (p := p)
-      (h := h)) = 0 := by
-  rfl
+      (h := h)) = 0 := rfl
 
 @[grind =]
 theorem length_step {Party : Type u} [DecidableEq Party]
@@ -505,8 +510,7 @@ theorem length_step {Party : Type u} [DecidableEq Party]
       (process.step p) tr)
     (rest : ObservedTrace me process tail) :
     length (.step obs rest : ObservedTrace me process
-      (.step tr tail : Process.Trace process p)) = rest.length.succ := by
-  rfl
+      (.step tr tail : Process.Trace process p)) = rest.length.succ := rfl
 
 /--
 The canonical observed closed-world trace has the same number of process steps
