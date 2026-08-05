@@ -81,6 +81,16 @@ and depend on this library.
     realizability, or a connection to `CorruptionModel`; those require explicit
     downstream bridges. *Generic only* — security-flavored UC layers
     (computational equivalence, asymptotic security) live in VCVio.
+- `PolyFun/Realizability/`: step classes (`StepClass` — a wide subcategory of
+  `Type u` presented by a representation structure on types and an
+  admissibility predicate on functions; with products, sums and distributivity
+  it is exactly a distributive category) and realizability of `FreeM` program
+  families by `DynComputation` machines whose first-order step maps are
+  admissible. Closed under `ofFn`, input precomposition, result
+  postcomposition, `bind`, interface transport, and class refinement.
+  Instances: unconstrained, finite-state, Mathlib-`Computable`, and a bridge
+  from any class of word functions. *Generic only* — cost measures and
+  concrete complexity classes live downstream.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
   algebra, monad iter / hom, lawful re-exports).
@@ -237,6 +247,8 @@ too specific or too changeable to keep at the repo root.
 - [`docs/wiki/itree.md`](docs/wiki/itree.md): interaction trees layer.
 - [`docs/wiki/interaction.md`](docs/wiki/interaction.md): generic interaction
   framework (`TypeTree`, two-party, multiparty, concurrent, UC).
+- [`docs/wiki/realizability.md`](docs/wiki/realizability.md): step classes and
+  realizability of free programs by admissible state machines.
 - [`docs/wiki/notation.md`](docs/wiki/notation.md): notation reference (UC
   composition operators).
 - [`docs/wiki/gotchas.md`](docs/wiki/gotchas.md): recurring traps and

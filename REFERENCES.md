@@ -70,8 +70,9 @@ free-monad-as-module-over-cofree-comonad structure made explicit (a module
 action, not an adjunction).
 
 Used in: `PolyFun/PFunctor/SubstMonoid.lean`,
-`PolyFun/PFunctor/Free/Path.lean`, and
-`PolyFun/PFunctor/PatternRunsOnMatter/`.
+`PolyFun/PFunctor/Free/Path.lean`,
+`PolyFun/PFunctor/PatternRunsOnMatter/`, and
+`PolyFun/Realizability/Basic.lean`.
 
 ### XZHHMPZ20 — Xia, Zakowski, He, Hur, Malecha, Pierce, Zdancewic, *Interaction Trees*
 
@@ -135,7 +136,8 @@ arXiv:2604.01303, 2026.
 Dependent polynomials over a base polynomial, their free displayed extension,
 displayed handlers, and compositional verification applications.
 
-Used in: `PolyFun/PFunctor/Display/`.
+Used in: `PolyFun/PFunctor/Display/`,
+`PolyFun/Realizability/Basic.lean`.
 
 ### Spi12 — Spivak, *Functorial data migration*
 
@@ -162,3 +164,231 @@ lens layer in `PolyFun/PFunctor/Lens/` makes dependent.
 
 Used in: `PolyFun/PFunctor/Lens/State.lean`,
 `PolyFun/PFunctor/Lens/Basic.lean`.
+
+## Realizability citations
+
+The realizability layer in `PolyFun/Realizability/` recombines pieces owned by
+four separate communities; these are the canonical sources for each. No single
+source states the combination — a machine realization whose *structure maps* are
+constrained by an abstract predicate — so the layer's docstrings cite the
+ingredients rather than claiming a name for the whole.
+
+### AM74 — Arbib and Manes, *Machines in a category*
+
+Michael A. Arbib and Ernest G. Manes.
+*Machines in a Category: An Expository Introduction*.
+*SIAM Review* 16(2):163–192, 1974.
+DOI: <https://doi.org/10.1137/1016026>
+
+A machine in an arbitrary category as an initialization / transition / readout
+triple, and its induced behaviour. The `expose` / `update` / readout triple of a
+`DynComputation` is an Arbib–Manes machine for the one-step polynomial functor;
+what the realizability layer adds is that the structure maps must lie in a
+distinguished class. Companion sources for "realization is universal": Goguen
+1972/73 and Naudé, *Universal realization*, JCSS 19(3), 1979.
+
+Used in: `PolyFun/Realizability/Basic.lean`.
+
+### AMMS13 — Adámek, Milius, Moss, Sousa, *Well-pointed coalgebras*
+
+Jiří Adámek, Stefan Milius, Lawrence S. Moss, and Lurdes Sousa.
+*Well-Pointed Coalgebras*.
+*Logical Methods in Computer Science* 9(3), 2013.
+arXiv:1305.0576
+
+The coalgebraic use of the word *realization*: a pointed coalgebra realizes the
+corresponding element of the terminal coalgebra, and the well-pointed coalgebras
+are exactly the minimal realizations. This is the realizability predicate of
+`PolyFun/Realizability/` with the admissibility constraint removed.
+
+Used in: `PolyFun/Realizability/Basic.lean`.
+
+### PR89 — Pnueli and Rosner, *On the synthesis of a reactive module*
+
+Amir Pnueli and Roni Rosner.
+*On the Synthesis of a Reactive Module*.
+In *Principles of Programming Languages* (POPL), 1989.
+DOI: <https://doi.org/10.1145/75277.75293>
+
+*Realizability* as the existence of a finite-state machine meeting a
+specification — the reading recovered by `StepClass.finite`, for which
+`IsFiniteStateRealizable` is provided as the community's name. Ancestor: Church,
+*Applications of recursive arithmetic to the problem of circuit synthesis*, 1963.
+
+Used in: `PolyFun/Realizability/Instances.lean`.
+
+### Uus15 — Uustalu, *Stateful runners of effectful computations*
+
+Tarmo Uustalu.
+*Stateful Runners of Effectful Computations*.
+*Mathematical Foundations of Programming Semantics* XXXI,
+*Electronic Notes in Theoretical Computer Science* 319:403–421, 2015.
+DOI: <https://doi.org/10.1016/j.entcs.2015.12.024>
+
+A stateful runner of `T`-computations is exactly a comodel, i.e. a coalgebra of
+the corresponding comonad. This is why a `p`-coalgebra with state `S` *is* a way
+of running every `FreeM p` program in `S`, and hence why realizability is a
+statement about coalgebras. See also Katsumata, Rivas, and Uustalu,
+*Interaction laws of monads and comonads*, LICS 2020 (arXiv:1912.13477).
+
+Used in: `PolyFun/Realizability/Basic.lean`.
+
+### PM15 — Petcher and Morrisett, *The Foundational Cryptography Framework*
+
+Adam Petcher and Greg Morrisett.
+*The Foundational Cryptography Framework*.
+In *Principles of Security and Trust* (POST/ESOP), LNCS 9036, 2015.
+arXiv:1410.3735
+
+Security definitions parameterized by an *admissibility predicate* naming the
+class of allowed adversaries, over a free-monad-shaped computation type. This is
+the design precedent for taking the resource bound as a predicate on the
+implementation rather than as a measure on runs, and the source of the
+`admissible` / `_mem` vocabulary used throughout the layer.
+
+Used in: `PolyFun/Realizability/StepClass.lean`.
+
+### Blum67 — Blum, *A machine-independent theory of complexity*
+
+Manuel Blum.
+*A Machine-Independent Theory of the Complexity of Recursive Functions*.
+*Journal of the ACM* 14(2):322–336, 1967.
+DOI: <https://doi.org/10.1145/321386.321395>
+
+Complexity measures axiomatized rather than fixed, with a complexity class as
+"there exists a program from an enumeration satisfying a resource predicate" —
+the same existential shape as `IsRealizableBy`, but quantifying over a Gödel
+numbering of programs rather than over machines with constrained structure maps.
+
+Used in: `PolyFun/Realizability/Basic.lean`.
+
+### GHP09 — Ghani, Hancock, Pattinson, *Representations of stream processors*
+
+Neil Ghani, Peter Hancock, and Dirk Pattinson.
+*Representations of Stream Processors Using Nested Fixed Points*.
+*Logical Methods in Computer Science* 5(3:9), 2009.
+arXiv:0905.4813
+
+Continuous and computable functions on final coalgebras represented by an
+alternating `νX.μY.` fixpoint — a machine whose individual steps are finite
+well-founded programs. This is the known special case of admissible
+realizability at the class "given by a finite `FreeM` term".
+
+Used in: `PolyFun/Realizability/Basic.lean`.
+
+## Distributive-category citations
+
+The closure structure a step class needs — finite products, finite coproducts, and
+distributivity — is exactly a distributive category. These are the canonical
+sources for the concept and for the complexity-theory vocabulary it replaces.
+
+### Coc93 — Cockett, *Introduction to distributive categories*
+
+J. Robin B. Cockett.
+*Introduction to Distributive Categories*.
+*Mathematical Structures in Computer Science* 3(3):277–307, 1993.
+DOI: <https://doi.org/10.1017/S0960129500000232>
+
+The definition: a category with finite products and binary coproducts in which the
+canonical map has an inverse. Also the distributive / recognizable / extensive /
+familial hierarchy, and the theorem that the distributive completion of a
+cartesian category is its coproduct completion.
+
+`PFunctor.StepClass.IsDistributive` axiomatizes the inverse direction; the
+canonical (cogap) direction is derivable from products and sums alone and ships as
+`StepClass.codistrib_mem`, so the two together give Cockett's axiom verbatim. Only
+the binary case is required here. Compare
+`Mathlib.CategoryTheory.IsCartesianDistributive`, which states the axiom in the
+cogap orientation.
+
+Used in: `PolyFun/Realizability/StepClass.lean`.
+
+### CLW93 — Carboni, Lack, Walters, *Extensive and distributive categories*
+
+Aurelio Carboni, Stephen Lack, and R. F. C. Walters.
+*Introduction to Extensive and Distributive Categories*.
+*Journal of Pure and Applied Algebra* 84(2):145–158, 1993.
+DOI: <https://doi.org/10.1016/0022-4049(93)90035-R>
+
+Disentangles distributivity from extensivity, which had been conflated. Includes
+the nullary clause `0 ≅ A × 0` that full finite distributivity also demands and
+that this layer deliberately omits, extensivity being a statement about pullbacks
+that a class of resource-bounded functions has no business claiming.
+
+Textbook companion: R. F. C. Walters, *Categories and Computer Science*,
+Cambridge Computer Science Texts 28, CUP, 1991 — the treatment that made
+distributive categories the CS-facing default.
+
+Used in: `PolyFun/Realizability/StepClass.lean`.
+
+### CF92 — Cockett and Fukushima, *About Charity*
+
+J. Robin B. Cockett and Tom Fukushima.
+*About Charity*.
+Yellow Series Report 92/480/18, Department of Computer Science,
+University of Calgary, 1992.
+
+The internal language of distributive categories, as a programming language, and
+the source of the reading this layer uses: distributivity is what makes *proof by
+case analysis* available. `IsDistributive.elimCtx_mem` — case analysis in a
+context — is that reading made into the working lemma. Companion:
+Cockett and Spencer, *Strong categorical datatypes II: A term logic for
+categorical programming*, TCS 139(1–2):69–113, 1995.
+
+Used in: `PolyFun/Realizability/StepClass.lean`.
+
+### CDGH12 — Cockett, Díaz-Boïls, Gallagher, Hrubeš, *Timed sets*
+
+J. Robin B. Cockett, Joaquín Díaz-Boïls, Jonathan Gallagher, and Pavel Hrubeš.
+*Timed Sets, Functional Complexity, and Computability*.
+*Electronic Notes in Theoretical Computer Science* 286:117–137, 2012 (MFPS XXVIII).
+DOI: <https://doi.org/10.1016/j.entcs.2012.08.009>
+
+Categories of timed sets modulo a complexity order form distributive restriction
+categories, with PTIME and LOGSPACE as worked examples. The closest existing
+statement that a complexity class *is* a distributive category, and hence the
+nearest prior art for treating a resource-bounded function class as one.
+
+Used in: `docs/wiki/realizability.md`.
+
+### CH08 — Cockett and Hofstra, *Introduction to Turing categories*
+
+J. Robin B. Cockett and Pieter J. W. Hofstra.
+*Introduction to Turing Categories*.
+*Annals of Pure and Applied Logic* 156(2–3):183–209, 2008.
+DOI: <https://doi.org/10.1016/j.apal.2008.04.005>
+
+Axioms for when a class of total maps is the total-map subcategory of a Turing
+category, instantiated at LINTIME, PTIME, and EXPTIME. This is the precedent for
+presenting a complexity class as a cartesian category with a faithful functor to
+`Set` — and, by omission, evidence that the coproduct and distributivity
+requirements here are not inherited from that tradition: the Turing-category
+axioms mention neither, using two disjoint points of a universal object as a
+hand-rolled stand-in for `1 ⊕ 1`.
+
+Companion: Cockett, Hofstra, and Hrubeš, *Total maps of Turing categories*,
+ENTCS 308:129–146, 2014.
+
+Used in: `docs/wiki/realizability.md`.
+
+### Clo99 — Clote, *Computation models and function algebras*
+
+Peter Clote.
+*Computation Models and Function Algebras*.
+In *Handbook of Computability Theory* (E. R. Griffor, ed.),
+Studies in Logic and the Foundations of Mathematics 140,
+Elsevier, 1999, pp. 589–681.
+DOI: <https://doi.org/10.1016/S0049-237X(99)80033-0>
+
+The complexity-native vocabulary for a class of functions closed under
+composition: a *function algebra*. Foundational instances: Cobham, *The intrinsic
+computational difficulty of functions*, 1965 (FP by bounded recursion on
+notation), and Bellantoni and Cook, *A new recursion-theoretic characterization of
+the polytime functions*, Computational Complexity 2:97–110, 1992.
+
+Function algebras are single-sorted, so branching enters as a *base function*
+(`caseBit`, Bellantoni–Cook's `C`) and distributivity is invisible in that
+tradition. Making the axiom visible is a consequence of this layer being
+multi-sorted and representation-indexed.
+
+Used in: `docs/wiki/realizability.md`.

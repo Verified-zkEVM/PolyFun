@@ -22,6 +22,8 @@ PolyFun/
     Multiparty/      per-party local view modes, observation kernels
     Concurrent/      structural and dynamic concurrent semantics
     UC/              open-process / open-theory layer (no security content)
+  Realizability/     step classes and realizability of free programs by
+                     machines whose transition functions are admissible
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
                      Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace)
   Logic/             small logic helpers (HEq)
@@ -199,6 +201,14 @@ Interaction/UC/OpenProcessModel -> Interaction/UC/OpenProcessFactorization
   (a structural result about OpenProcessActivationEquiv only; Emulates is
    model-agnostic and must not reach OpenProcess, so promoting these laws to a
    packet- or sampler-aware observation belongs above both and is not in tree)
+
+PFunctor/Basic -> Realizability/StepClass
+PFunctor/Dynamical/DynComputation/Bounded -> Realizability/Machine
+Realizability/{StepClass, Machine} -> Realizability/Basic
+  -> Realizability/Closure
+  -> Realizability/Instances
+  (Instances additionally draws on Mathlib's Computability and Fintype layers;
+   nothing under PFunctor/, ITree/, or Interaction/ depends on Realizability/)
 ```
 
 `PolyFun.lean` is a generated umbrella import file, not a hand-maintained
