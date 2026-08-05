@@ -31,7 +31,7 @@ witnesses the equivalence by `Iff.rfl`.
 
 @[expose] public section
 
-universe v w uA uB
+universe v w uA uB uA₂ uB₂
 
 namespace PFunctor.FreeM
 
@@ -239,5 +239,19 @@ lemma isTotalRollBound_seq {og : FreeM P (α → β)} {oa : FreeM P α}
     (h₂ : IsTotalRollBound oa n₂) :
     IsTotalRollBound (og <*> oa) (n₁ + n₂) := by
   refine isRollBound_seq (fun a b => a + b) ?_ ?_ h₁ h₂ <;> grind
+
+/-- Interface transport along a lens preserves total roll bounds. A lens relabels
+positions and reindexes directions, leaving the branching structure — and hence the
+number of rolls along each branch — untouched. -/
+lemma isTotalRollBound_mapLens {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
+    (oa : FreeM P α) {n : ℕ} (h : oa.IsTotalRollBound n) :
+    (oa.mapLens l).IsTotalRollBound n := by
+  induction oa generalizing n with
+  | pure x => simp
+  | lift_bind a cont ih =>
+      rw [isTotalRollBound_lift_bind_iff] at h
+      rw [FreeM.mapLens_lift_bind, FreeM.liftBind_eq,
+        isTotalRollBound_lift_bind_iff]
+      exact ⟨h.1, fun d => ih _ (h.2 _)⟩
 
 end PFunctor.FreeM
