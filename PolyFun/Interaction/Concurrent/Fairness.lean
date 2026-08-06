@@ -46,10 +46,22 @@ forever. -/
 def EventuallyAlways (P : Nat → Prop) : Prop :=
   ∃ N, ∀ n, N ≤ n → P n
 
+/-- Characterize eventual persistence by a cutoff after which the property
+holds at every later index. -/
+theorem eventuallyAlways_iff {P : Nat → Prop} :
+    EventuallyAlways P ↔ ∃ N, ∀ n, N ≤ n → P n :=
+  Iff.rfl
+
 /-- `InfinitelyOften P` means that `P` holds at arbitrarily late time
 indices. -/
 def InfinitelyOften (P : Nat → Prop) : Prop :=
   ∀ N, ∃ n, N ≤ n ∧ P n
+
+/-- Characterize infinite recurrence by the existence of a witness at or
+after every requested index. -/
+theorem infinitelyOften_iff {P : Nat → Prop} :
+    InfinitelyOften P ↔ ∀ N, ∃ n, N ≤ n ∧ P n :=
+  Iff.rfl
 
 theorem always_mono {P Q : Nat → Prop} (himp : ∀ n, P n → Q n) : Always P → Always Q :=
   fun hP n => himp n (hP n)
