@@ -55,10 +55,27 @@ isos, asymptotic computational indistinguishability) supply their own
 * `Emulates.plug_compose`: both protocol and environment emulation
   compose to yield observational equivalence of the closed systems.
 
-These rely on structural factorization lemmas
-(`close_par_left`, `close_par_right`, `close_wire_left`,
-`close_wire_right`, `plug_comm`) that capture monoidal coherence
-identities, derived from the `CompactClosed` axioms.
+These take their structural input from the observation rather than from the
+theory, through two classes:
+
+* `Observation.RespectsPlugComm Obs` says `Obs` cannot see a closed system's
+  two halves exchanging roles. `plug_right` and `plug_compose` need only this.
+* `Observation.RespectsFactorization Obs` extends it with the `Obs.rel`
+  readings of `close_par_left`, `close_par_right`, `close_wire_left`, and
+  `close_wire_right`, and is what the `par` and `wire` theorems need.
+
+A theory with strict compact-closed structure satisfies both for *every*
+observation, via `respectsFactorization_of_hasPlugWireFactor`, so the free
+models (`Expr.theory`, `Interp.theory`) are unaffected. Stating the laws on
+the observation is what lets a model whose coherences hold only up to a
+quotient — the process-backed `openTheory`, whose composites differ by
+scheduler nodes — participate at all.
+
+Note that `Emulates · · Obs`, read as a family indexed by boundary, is itself
+closed under exactly these motions: `par_compose` and `wire_left` are the
+parallel and sequential closure conditions one would assume of an abstract
+indistinguishability relation. The classes make that closure the interface
+instead of a consequence.
 
 ## Design note: why `Observation` requires a full `Equivalence`
 
@@ -167,49 +184,6 @@ immediate from the definition.
 theorem plug_invariance {Δ : PortBoundary} {Obs : Observation T} {real ideal : T.Obj Δ}
     (h : Emulates real ideal Obs) (K : T.Plug Δ) : Obs.rel (T.close real K) (T.close ideal K) :=
   h.compare K
-
-/-! ### Composition up to a plug-commutation observation
-
-The `plug`-composition theorems below (`plug_right`, `plug_compose`) are stated
-for theories with the full compact-closed `HasPlugWireFactor` structure, which
-provides `plug_comm` as a strict equality. The concrete process model
-`openTheory` is *not* `HasPlugWireFactor` on the nose — its coherences hold only
-up to coarse activation equivalence — so those theorems do not apply to it
-directly.
-
-The `_of_observes_plug_comm` variants replace the strict-equality dependency with a single
-hypothesis: that `plug` commutes *up to the observation `Obs`*. The
-`HasPlugWireFactor` versions are the special case where `Obs`-commutation is
-`plug_comm` composed with reflexivity. A concrete model must supply an
-observation that retains the events its security statement intends to expose;
-a scheduler-only structural relation is not sufficient by itself. -/
-
-/-- `Obs.rel`-relative `plug_right`: given that `plug` commutes up to the
-observation `Obs`, replacing the plug (environment) while keeping the protocol
-`W` fixed preserves the observation. No compact-closed structure is required. -/
-theorem plug_right_of_observes_plug_comm {Δ : PortBoundary} {Obs : Observation T}
-    (hcomm : ∀ (W : T.Obj Δ) (K : T.Obj (PortBoundary.swap Δ)),
-      Obs.rel (T.plug W K) (T.plug K W))
-    (W : T.Obj Δ) {K₁ K₂ : T.Obj (PortBoundary.swap Δ)} (hK : Emulates K₁ K₂ Obs) :
-    Obs.rel (T.close W K₁) (T.close W K₂) :=
-  Obs.equiv.trans (hcomm W K₁)
-    (Obs.equiv.trans (hK.compare W) (Obs.equiv.symm (hcomm W K₂)))
-
-/-- `Obs.rel`-relative **UC `plug`-composition**: if the protocol emulates its
-ideal and the environment emulates its ideal, and `plug` commutes up to the
-observation `Obs`, then the closed real-world execution is `Obs`-related to the
-closed ideal-world execution. The proof is the standard hybrid through
-`T.close ideal K_real`: `plug_invariance` (same environment, different protocol,
-needs no structure) then `plug_right_of_observes_plug_comm` (same protocol, different
-environment). -/
-theorem plug_compose_of_observes_plug_comm {Δ : PortBoundary} {Obs : Observation T}
-    (hcomm : ∀ (W : T.Obj Δ) (K : T.Obj (PortBoundary.swap Δ)),
-      Obs.rel (T.plug W K) (T.plug K W))
-    {real ideal : T.Obj Δ} {K_real K_ideal : T.Obj (PortBoundary.swap Δ)}
-    (hProt : Emulates real ideal Obs) (hEnv : Emulates K_real K_ideal Obs) :
-    Obs.rel (T.close real K_real) (T.close ideal K_ideal) :=
-  Obs.equiv.trans (hProt.plug_invariance K_real)
-    (plug_right_of_observes_plug_comm hcomm ideal hEnv)
 
 end Emulates
 
@@ -365,31 +339,116 @@ theorem OpenTheory.plug_comm {Δ : PortBoundary} (W : T.Obj Δ) (K : T.Obj (Port
 
 end Factorization
 
+/-! ## Observation-level factorization laws
+
+The composition theorems below all move a component across the divide between
+the system under test and its context. In a theory with strict compact-closed
+structure that motion is an equality — `close_par_left` and its siblings — so
+the theorems can rewrite with it. The concrete process model `openTheory` does
+not have those equalities on the nose: every binary composition prepends a
+scheduler node, so regrouping one is a delay bisimulation rather than an
+identity.
+
+The classes here name the same motions as properties of the *observation*
+instead of the theory. A model that cannot offer strict coherence can still
+offer an observation coarse enough not to see the regrouping, and then earns
+the full composition suite. Strict coherence is the degenerate case, recorded
+by `respectsFactorization_of_hasPlugWireFactor`, so nothing that holds today
+is lost.
+
+Splitting the laws across two classes follows the same principle as the
+`IsMonoidal → IsTraced → IsCompactClosed` chain in `OpenTheory`: a model
+declares exactly the strength it can honestly satisfy. `RespectsPlugComm`
+alone already supports `Emulates.plug_right` and `Emulates.plug_compose`.
+-/
+
+/--
+`Obs.RespectsPlugComm` states that `Obs` cannot distinguish a closed system
+from the same system with the roles of its two halves exchanged.
+
+This is the weaker of the two layers, and the one a scheduler-quotienting
+observation can supply without any monoidal coherence. It is exactly what
+`Emulates.plug_right` and `Emulates.plug_compose` consume.
+-/
+class Observation.RespectsPlugComm {T : OpenTheory.{u}} (Obs : Observation T) : Prop where
+  /-- Exchanging a system with its context is invisible to `Obs`. -/
+  plug_comm : ∀ {Δ : PortBoundary} (W : T.Obj Δ) (K : T.Obj (PortBoundary.swap Δ)),
+    Obs.rel (T.plug W K) (T.plug K W)
+
+/--
+`Obs.RespectsFactorization` states that `Obs` additionally cannot see one
+component of a `par` or `wire` composite being absorbed into the context.
+
+These are the `Obs.rel` readings of `close_par_left`, `close_par_right`,
+`close_wire_left`, and `close_wire_right`. Together with the inherited
+`plug_comm` they are the whole structural input to the UC composition
+theorems, which is why the theorems below take this class rather than
+`OpenTheory.HasPlugWireFactor`.
+
+Deliberately *not* an extension of `OpenTheory.IsCompactClosed`: the concrete
+process model has neither a `HasUnit` nor a `HasIdWire` instance, and
+requiring them here would put the class out of its reach for no gain.
+-/
+class Observation.RespectsFactorization {T : OpenTheory.{u}} (Obs : Observation T) : Prop
+    extends Obs.RespectsPlugComm where
+  /-- Absorbing the right component of a `par` into the context is invisible
+  to `Obs`. -/
+  close_par_left : ∀ {Δ₁ Δ₂ : PortBoundary} (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂)
+      (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)),
+    Obs.rel (T.close (T.par W₁ W₂) K) (T.close W₁ (T.parContextLeft W₂ K))
+  /-- Absorbing the left component of a `par` into the context is invisible
+  to `Obs`. -/
+  close_par_right : ∀ {Δ₁ Δ₂ : PortBoundary} (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂)
+      (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)),
+    Obs.rel (T.close (T.par W₁ W₂) K) (T.close W₂ (T.parContextRight W₁ K))
+  /-- Absorbing the right factor of a `wire` into the context is invisible to
+  `Obs`. -/
+  close_wire_left : ∀ {Δ₁ Γ Δ₂ : PortBoundary} (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
+      (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
+      (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)),
+    Obs.rel (T.close (T.wire W₁ W₂) K) (T.close W₁ (T.wireContextLeft W₂ K))
+  /-- Absorbing the left factor of a `wire` into the context is invisible to
+  `Obs`. -/
+  close_wire_right : ∀ {Δ₁ Γ Δ₂ : PortBoundary} (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
+      (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
+      (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)),
+    Obs.rel (T.close (T.wire W₁ W₂) K) (T.close W₂ (T.wireContextRight W₁ K))
+
+/-- Every observation over a theory with strict plug/wire factorization
+respects that factorization, since each law holds as an equality and `Obs.rel`
+is reflexive. This keeps the free syntax models on the full composition
+suite. -/
+instance respectsFactorization_of_hasPlugWireFactor [OpenTheory.HasPlugWireFactor T]
+    (Obs : Observation T) : Obs.RespectsFactorization where
+  plug_comm W K := by rw [OpenTheory.plug_comm]; exact Obs.equiv.refl _
+  close_par_left W₁ W₂ K := by rw [OpenTheory.close_par_left]; exact Obs.equiv.refl _
+  close_par_right W₁ W₂ K := by rw [OpenTheory.close_par_right]; exact Obs.equiv.refl _
+  close_wire_left W₁ W₂ K := by rw [OpenTheory.close_wire_left]; exact Obs.equiv.refl _
+  close_wire_right W₁ W₂ K := by rw [OpenTheory.close_wire_right]; exact Obs.equiv.refl _
+
 /-! ## UC composition theorems -/
 
 namespace Emulates
 
-variable [OpenTheory.HasPlugWireFactor T]
-
 /-- Replacing the left component of a parallel composition preserves
 emulation, with the right component and environment held fixed. -/
-theorem par_left {Δ₁ Δ₂ : PortBoundary} {Obs : Observation T} {real₁ ideal₁ : T.Obj Δ₁}
-    (h₁ : Emulates real₁ ideal₁ Obs) (W₂ : T.Obj Δ₂) :
+theorem par_left {Δ₁ Δ₂ : PortBoundary} {Obs : Observation T} [Obs.RespectsFactorization]
+    {real₁ ideal₁ : T.Obj Δ₁} (h₁ : Emulates real₁ ideal₁ Obs) (W₂ : T.Obj Δ₂) :
     Emulates (T.par real₁ W₂) (T.par ideal₁ W₂) Obs :=
-  ⟨fun K => by
-    rw [OpenTheory.close_par_left real₁ W₂ K,
-        OpenTheory.close_par_left ideal₁ W₂ K]
-    exact h₁.compare _⟩
+  ⟨fun K => Obs.equiv.trans
+    (Observation.RespectsFactorization.close_par_left real₁ W₂ K)
+    (Obs.equiv.trans (h₁.compare _)
+      (Obs.equiv.symm (Observation.RespectsFactorization.close_par_left ideal₁ W₂ K)))⟩
 
 /-- Replacing the right component of a parallel composition preserves
 emulation, with the left component and environment held fixed. -/
-theorem par_right {Δ₁ Δ₂ : PortBoundary} {Obs : Observation T} (W₁ : T.Obj Δ₁)
-    {real₂ ideal₂ : T.Obj Δ₂} (h₂ : Emulates real₂ ideal₂ Obs) :
+theorem par_right {Δ₁ Δ₂ : PortBoundary} {Obs : Observation T} [Obs.RespectsFactorization]
+    (W₁ : T.Obj Δ₁) {real₂ ideal₂ : T.Obj Δ₂} (h₂ : Emulates real₂ ideal₂ Obs) :
     Emulates (T.par W₁ real₂) (T.par W₁ ideal₂) Obs :=
-  ⟨fun K => by
-    rw [OpenTheory.close_par_right W₁ real₂ K,
-        OpenTheory.close_par_right W₁ ideal₂ K]
-    exact h₂.compare _⟩
+  ⟨fun K => Obs.equiv.trans
+    (Observation.RespectsFactorization.close_par_right W₁ real₂ K)
+    (Obs.equiv.trans (h₂.compare _)
+      (Obs.equiv.symm (Observation.RespectsFactorization.close_par_right W₁ ideal₂ K)))⟩
 
 /-- **UC composition theorem for `par`**: if each component emulates its
 ideal, then their parallel composition emulates the parallel composition
@@ -398,34 +457,35 @@ of ideals.
 The proof uses a hybrid argument through `T.par ideal₁ real₂`, with
 each step reducing to emulation of a single component via
 `close_par_left` / `close_par_right`. -/
-theorem par_compose {Δ₁ Δ₂ : PortBoundary} {Obs : Observation T} {real₁ ideal₁ : T.Obj Δ₁}
+theorem par_compose {Δ₁ Δ₂ : PortBoundary} {Obs : Observation T} [Obs.RespectsFactorization]
+    {real₁ ideal₁ : T.Obj Δ₁}
     {real₂ ideal₂ : T.Obj Δ₂} (h₁ : Emulates real₁ ideal₁ Obs) (h₂ : Emulates real₂ ideal₂ Obs) :
     Emulates (T.par real₁ real₂) (T.par ideal₁ ideal₂) Obs :=
   Emulates.trans (par_left h₁ real₂) (par_right ideal₁ h₂)
 
 /-- Replacing the left factor of a wiring preserves emulation. -/
-theorem wire_left {Δ₁ Γ Δ₂ : PortBoundary} {Obs : Observation T}
+theorem wire_left {Δ₁ Γ Δ₂ : PortBoundary} {Obs : Observation T} [Obs.RespectsFactorization]
     {real₁ ideal₁ : T.Obj (PortBoundary.tensor Δ₁ Γ)} (h₁ : Emulates real₁ ideal₁ Obs)
     (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
     Emulates (T.wire real₁ W₂) (T.wire ideal₁ W₂) Obs :=
-  ⟨fun K => by
-    rw [OpenTheory.close_wire_left real₁ W₂ K,
-        OpenTheory.close_wire_left ideal₁ W₂ K]
-    exact h₁.compare _⟩
+  ⟨fun K => Obs.equiv.trans
+    (Observation.RespectsFactorization.close_wire_left real₁ W₂ K)
+    (Obs.equiv.trans (h₁.compare _)
+      (Obs.equiv.symm (Observation.RespectsFactorization.close_wire_left ideal₁ W₂ K)))⟩
 
 /-- Replacing the right factor of a wiring preserves emulation. -/
-theorem wire_right {Δ₁ Γ Δ₂ : PortBoundary} {Obs : Observation T}
+theorem wire_right {Δ₁ Γ Δ₂ : PortBoundary} {Obs : Observation T} [Obs.RespectsFactorization]
     (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
     {real₂ ideal₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)}
     (h₂ : Emulates real₂ ideal₂ Obs) : Emulates (T.wire W₁ real₂) (T.wire W₁ ideal₂) Obs :=
-  ⟨fun K => by
-    rw [OpenTheory.close_wire_right W₁ real₂ K,
-        OpenTheory.close_wire_right W₁ ideal₂ K]
-    exact h₂.compare _⟩
+  ⟨fun K => Obs.equiv.trans
+    (Observation.RespectsFactorization.close_wire_right W₁ real₂ K)
+    (Obs.equiv.trans (h₂.compare _)
+      (Obs.equiv.symm (Observation.RespectsFactorization.close_wire_right W₁ ideal₂ K)))⟩
 
 /-- **UC composition theorem for `wire`**: if each factor emulates its
 ideal, then their wired composition emulates the wired ideal. -/
-theorem wire_compose {Δ₁ Γ Δ₂ : PortBoundary} {Obs : Observation T}
+theorem wire_compose {Δ₁ Γ Δ₂ : PortBoundary} {Obs : Observation T} [Obs.RespectsFactorization]
     {real₁ ideal₁ : T.Obj (PortBoundary.tensor Δ₁ Γ)}
     {real₂ ideal₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)}
     (h₁ : Emulates real₁ ideal₁ Obs) (h₂ : Emulates real₂ ideal₂ Obs) :
@@ -434,13 +494,16 @@ theorem wire_compose {Δ₁ Γ Δ₂ : PortBoundary} {Obs : Observation T}
 
 /-- Replacing the plug (environment) while keeping the protocol fixed
 preserves observational equivalence, using `plug_comm` to swap
-the protocol/environment roles. -/
-theorem plug_right {Δ : PortBoundary} {Obs : Observation T} (W : T.Obj Δ)
-    {K₁ K₂ : T.Obj (PortBoundary.swap Δ)} (hK : Emulates K₁ K₂ Obs) :
-    Obs.rel (T.close W K₁) (T.close W K₂) := by
-  simp only [OpenTheory.close, OpenTheory.plug_comm W K₁,
-    OpenTheory.plug_comm W K₂]
-  exact hK.compare W
+the protocol/environment roles.
+
+Only `RespectsPlugComm` is needed: no factorization of `par` or `wire` is
+involved. -/
+theorem plug_right {Δ : PortBoundary} {Obs : Observation T} [Obs.RespectsPlugComm]
+    (W : T.Obj Δ) {K₁ K₂ : T.Obj (PortBoundary.swap Δ)} (hK : Emulates K₁ K₂ Obs) :
+    Obs.rel (T.close W K₁) (T.close W K₂) :=
+  Obs.equiv.trans (Observation.RespectsPlugComm.plug_comm W K₁)
+    (Obs.equiv.trans (hK.compare W)
+      (Obs.equiv.symm (Observation.RespectsPlugComm.plug_comm W K₂)))
 
 /-- **UC composition theorem for `plug`**: if the protocol emulates its
 ideal and the environment emulates its ideal, then the closed real-world
@@ -450,7 +513,8 @@ execution.
 The proof uses a hybrid through `T.close ideal K_real`:
 step 1 is `plug_invariance` (same environment, different protocol) and
 step 2 is `plug_right` (same protocol, different environment). -/
-theorem plug_compose {Δ : PortBoundary} {Obs : Observation T} {real ideal : T.Obj Δ}
+theorem plug_compose {Δ : PortBoundary} {Obs : Observation T} [Obs.RespectsPlugComm]
+    {real ideal : T.Obj Δ}
     {K_real K_ideal : T.Obj (PortBoundary.swap Δ)} (hProt : Emulates real ideal Obs)
     (hEnv : Emulates K_real K_ideal Obs) : Obs.rel (T.close real K_real) (T.close ideal K_ideal) :=
   Obs.equiv.trans
