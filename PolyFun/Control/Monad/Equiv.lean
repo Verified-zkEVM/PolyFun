@@ -13,8 +13,6 @@ public import Mathlib.Logic.Function.Defs
 
 This file defines equivalences or isomorphisms between monads, which consists of a pair of monad
 morphisms that are inverses of each other.
-
-TODO: extends the hierarchy with type classes such as `{Nat/Pure/Bind/Monad}EquivClass`
 -/
 
 @[expose] public section

@@ -118,10 +118,8 @@ deliberately outside the `lake lint` scope.
   runs the community `leanprover-community/lint-style-action` (the Lean-based
   Mathlib text style linter: copyright headers, line length, module
   docstrings).
-- [`../../.github/workflows/summary.yml`](../../.github/workflows/summary.yml):
-  optional AI-generated PR summary; gated on the `OPENROUTER_KEY` repository
-  secret. A preflight check emits a workflow warning if the secret is not set,
-  and the summary job is marked skipped without blocking the PR.
+- [`../../.github/workflows/docs.yml`](../../.github/workflows/docs.yml):
+  builds and publishes searchable API documentation from `main`.
 - [`../../.github/workflows/release-tag.yml`](../../.github/workflows/release-tag.yml)
   and [`../../.github/workflows/review.yml`](../../.github/workflows/review.yml):
   release tagging and review helper workflows ported from

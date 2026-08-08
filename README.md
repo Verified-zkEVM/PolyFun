@@ -42,11 +42,34 @@ lake exe cache get
 lake build
 ```
 
-Requires the toolchain pinned in [`lean-toolchain`](lean-toolchain), along with
-[`mathlib v4.32.0`](https://github.com/leanprover-community/mathlib4) and [`cslib v4.32.0`](https://github.com/leanprover/cslib).
+The repository pins Lean in [`lean-toolchain`](lean-toolchain) and pins Mathlib
+and cslib in [`lakefile.toml`](lakefile.toml). Keep all three versions in sync.
+
+## Example
+
+The following file defines a constant polynomial functor and checks one of its
+basic laws:
+
+```lean
+import PolyFun.PFunctor.Basic
+
+open scoped PFunctor
+
+#check PFunctor.C Nat
+
+example : PFunctor.C PUnit = 1 := PFunctor.C_unit
+```
+
+Save it as `Main.lean` in the repository root and run:
+
+```bash
+lake env lean Main.lean
+```
 
 ## Documentation
 
+- [Generated API documentation](https://verified-zkevm.github.io/PolyFun/docs/):
+  searchable documentation for public declarations.
 - [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md): one-screen guide for
   human and AI contributors. Symlinked.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): style, naming, attribution, and large-
