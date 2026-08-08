@@ -206,9 +206,10 @@ checks that it is up to date. Stage new files first;
 
 ### 17. Lean toolchain and Mathlib version must stay in sync
 
-Both currently `v4.29.0`. When upgrading, update both
-[`lean-toolchain`](../../lean-toolchain) and the `require mathlib` line
-in [`lakefile.toml`](../../lakefile.toml) simultaneously.
+Lean, Mathlib, and cslib must use the same release. When upgrading, update
+[`lean-toolchain`](../../lean-toolchain) and both dependency pins in
+[`lakefile.toml`](../../lakefile.toml). Then run `lake update` and validate the
+result.
 
 ### 18. Use public references in shared docs
 
