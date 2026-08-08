@@ -7,7 +7,7 @@ Edit the source of truth, not the output.
 | `CLAUDE.md` | compatibility symlink | No | Edit `AGENTS.md` |
 | `PolyFun.lean` | generated module with umbrella public imports | No | `./scripts/update-lib.sh` or `./scripts/check-imports.sh` |
 | `.lake/` | build artifacts and cache | No | `lake build`, `lake exe cache get` |
-| `lake-manifest.json` | resolved dependency lockfile | Manual edits unsafe | `lake update` (or the `update.yml` workflow) |
+| `lake-manifest.json` | resolved dependency lockfile | Manual edits unsafe | Update `lean-toolchain` and both dependency pins in `lakefile.toml`, then run `lake update` |
 
 ## Important Notes
 
