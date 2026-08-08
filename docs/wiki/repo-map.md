@@ -184,7 +184,9 @@ Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    EnvOpenProcess, CorruptionModel,
                                    MomentaryCorruption, Leakage}
 
-Interaction/UC/{Emulates, OpenProcessModel} -> Interaction/UC/OpenProcessEmulates
+Interaction/UC/OpenProcessModel -> Interaction/UC/OpenProcessFactorization
+Interaction/UC/{Emulates, OpenProcessFactorization}
+  -> Interaction/UC/OpenProcessEmulates
   (Emulates is model-agnostic and must not reach OpenProcess; the bridge that
    equips the concrete openTheory with observation-level composition laws
    therefore sits above both)

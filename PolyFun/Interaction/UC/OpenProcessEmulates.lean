@@ -6,16 +6,19 @@ Authors: Devon Tuma
 
 module
 
+import all PolyFun.Interaction.UC.OpenProcess
+import all PolyFun.Interaction.UC.OpenTheory
+import all PolyFun.Interaction.UC.Emulates
 public import PolyFun.Interaction.UC.Emulates
-public import PolyFun.Interaction.UC.OpenProcessModel
+public import PolyFun.Interaction.UC.OpenProcessFactorization
 
 /-!
 # Observations on the process model that ignore scheduling
 
 `Emulates`' composition theorems take their structural input from the
 observation, through `Observation.RespectsPlugComm` and
-`Observation.RespectsFactorization`. This file supplies those instances for
-the process-backed `openTheory`, which cannot supply the strict
+`Observation.RespectsFactorization`. This file supplies both for the
+process-backed `openTheory`, which cannot supply the strict
 `OpenTheory.HasPlugWireFactor` structure: every binary composition prepends a
 scheduler node, so regrouping one is a delay bisimulation rather than an
 identity.
@@ -35,24 +38,17 @@ downstream where probability lives) is expected to satisfy it because the
 scheduler nodes introduced by composition are internal, hence never activated,
 and so should be invisible to any reasonable notion of what a network does.
 
+Given that bound, the four factorization laws proved in
+`OpenProcessFactorization.lean` transport onto `Obs`, and the process model
+earns the whole UC composition suite: `Emulates.par_compose`,
+`wire_compose`, `plug_compose`, and their one-sided variants.
+
 ## Main definitions
 
 * `Observation.IsSchedulingInsensitive Obs`: activation-equivalent closed
   processes are `Obs`-related.
-* `respectsPlugComm_of_isSchedulingInsensitive`: such an observation respects
-  plug commutation, so `Emulates.plug_right` and `Emulates.plug_compose` apply
-  to `openTheory`.
-
-## What is still missing
-
-`Observation.RespectsFactorization` needs the `par` and `wire` factorization
-laws, and those have no activation-equivalence counterpart yet: of the three
-`OpenTheory.HasPlugWireFactor` fields only `plug_eq_wire` is covered, by
-`openTheory_plug_eq_wire_activation_equiv`, while `plug_par_left` and
-`plug_wire_left` are unproved for this model (as are all three `IsTraced`
-laws, which would be the categorical route to them). Until they exist the
-process model supports the `plug` half of the composition suite but not the
-`par` and `wire` half.
+* `respectsPlugComm_of_isSchedulingInsensitive` and
+  `respectsFactorization_of_isSchedulingInsensitive`: the resulting instances.
 -/
 
 public section
@@ -98,6 +94,34 @@ instance respectsPlugComm_of_isSchedulingInsensitive
   plug_comm W K :=
     Observation.IsSchedulingInsensitive.rel_of_activationEquiv
       (openTheory_plug_comm_activation_equiv Party m schedulerSampler W K)
+
+/--
+A scheduling-insensitive observation on the process model respects the whole
+plug/wire factorization, transporting the four laws of
+`OpenProcessFactorization.lean` along the bound.
+
+With this instance the process model satisfies the same interface as the free
+syntax models, so `Emulates.par_compose`, `Emulates.wire_compose`, and their
+one-sided variants apply to it — despite `openTheory` having no
+`OpenTheory.HasPlugWireFactor` instance, and indeed no `HasUnit` or
+`HasIdWire` instance either.
+-/
+instance respectsFactorization_of_isSchedulingInsensitive
+    (Obs : Observation (openTheory.{u, v, w, w'} Party m schedulerSampler))
+    [Observation.IsSchedulingInsensitive Obs] : Obs.RespectsFactorization where
+  __ := respectsPlugComm_of_isSchedulingInsensitive Obs
+  close_par_left W₁ W₂ K :=
+    Observation.IsSchedulingInsensitive.rel_of_activationEquiv
+      (openTheory_plug_par_left_activation_equiv Party m schedulerSampler W₁ W₂ K)
+  close_par_right W₁ W₂ K :=
+    Observation.IsSchedulingInsensitive.rel_of_activationEquiv
+      (openTheory_plug_par_right_activation_equiv Party m schedulerSampler W₁ W₂ K)
+  close_wire_left W₁ W₂ K :=
+    Observation.IsSchedulingInsensitive.rel_of_activationEquiv
+      (openTheory_plug_wire_left_activation_equiv Party m schedulerSampler W₁ W₂ K)
+  close_wire_right W₁ W₂ K :=
+    Observation.IsSchedulingInsensitive.rel_of_activationEquiv
+      (openTheory_plug_wire_right_activation_equiv Party m schedulerSampler W₁ W₂ K)
 
 end UC
 end Interaction

@@ -70,7 +70,7 @@ example {Δ : PortBoundary}
 
 end FreeModel
 
-/-! ### The process model reaches the `plug` half -/
+/-! ### The process model reaches the whole suite -/
 
 section ProcessModel
 
@@ -82,6 +82,32 @@ variable {Party : Type u} {m : Type w → Type w'} {schedulerSampler : m (ULift.
 commutation, without any `OpenTheory.HasPlugWireFactor` instance — which
 `openTheory` does not have. -/
 example : Obs.RespectsPlugComm := inferInstance
+
+/-- It respects the full factorization too, so the process model meets the
+same interface as the free syntax models. Note `openTheory` has neither a
+`HasUnit` nor a `HasIdWire` instance, let alone `HasPlugWireFactor`. -/
+example : Obs.RespectsFactorization := inferInstance
+
+/-- **UC composition for `par` on the concrete process model.** This is the
+statement the abstract layer was built for and could not previously reach. -/
+example {Δ₁ Δ₂ : PortBoundary}
+    {real₁ ideal₁ : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ₁}
+    {real₂ ideal₂ : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ₂}
+    (h₁ : Emulates real₁ ideal₁ Obs) (h₂ : Emulates real₂ ideal₂ Obs) :
+    Emulates ((openTheory.{u, v, w, w'} Party m schedulerSampler).par real₁ real₂)
+      ((openTheory.{u, v, w, w'} Party m schedulerSampler).par ideal₁ ideal₂) Obs :=
+  Emulates.par_compose h₁ h₂
+
+/-- **UC composition for `wire` on the concrete process model.** -/
+example {Δ₁ Γ Δ₂ : PortBoundary}
+    {real₁ ideal₁ :
+      (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj (PortBoundary.tensor Δ₁ Γ)}
+    {real₂ ideal₂ : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj
+      (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)}
+    (h₁ : Emulates real₁ ideal₁ Obs) (h₂ : Emulates real₂ ideal₂ Obs) :
+    Emulates ((openTheory.{u, v, w, w'} Party m schedulerSampler).wire real₁ real₂)
+      ((openTheory.{u, v, w, w'} Party m schedulerSampler).wire ideal₁ ideal₂) Obs :=
+  Emulates.wire_compose h₁ h₂
 
 /-- Consequently `Emulates.plug_compose` applies to the process model. This is
 the statement that was previously out of reach: the composition theorems were
