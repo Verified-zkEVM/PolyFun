@@ -186,6 +186,9 @@ lake exe cache get && lake build
 
 After adding new `.lean` files: `./scripts/update-lib.sh`.
 For routine local validation: `./scripts/validate.sh`.
+When filling or adding a `sorry` (or anything that must stay axiom-clean):
+`./scripts/validate.sh --axioms`, refreshing `scripts/axiom_baseline.json` with
+`lake exe axiomsweep --update-baseline` when the change is intentional.
 
 Environment linters and the test library have Lake drivers:
 
