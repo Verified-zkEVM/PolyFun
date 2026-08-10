@@ -67,6 +67,7 @@ variable (body : ∀ a : D.A,
   have hstep : mutualRecStep body (query (.inl d) k) =
       ⟨.step, fun _ => bind (body d) k⟩ := by
     simp [mutualRecStep]
+    rfl
   apply PFunctor.M.eq_of_dest_eq
   rw [interpMrec, PFunctor.M.dest_corec_eq _ _ hstep]
   unfold ITree.step
@@ -80,6 +81,7 @@ variable (body : ∀ a : D.A,
   have hstep : mutualRecStep body (query (.inr e) k) =
       ⟨.query e, k⟩ := by
     simp [mutualRecStep]
+    rfl
   apply PFunctor.M.eq_of_dest_eq
   rw [interpMrec, PFunctor.M.dest_corec_eq _ _ hstep]
   unfold ITree.query
@@ -134,16 +136,21 @@ theorem interpMrec_bind
     | query event =>
         cases event with
         | inl d =>
-            change D.B d →
-              ITree (D + E : PFunctor.{max uDA uEA, uB}) α at c
             have ht : t = query (Sum.inl d) c := by
               apply PFunctor.M.eq_of_dest_eq
               rw [h]
               rfl
-            subst ht
-            clear h
-            rw [bind_query, interpMrec_query_recursive,
-              interpMrec_query_recursive, bind_step]
+            rw [ht, bind_query]
+            have hleft : interpMrec body (query
+                (Sum.inl d : (D + E : PFunctor.{max uDA uEA, uB}).A)
+                (fun b => bind (c b) k)) =
+                step (interpMrec body (bind (body d) (fun b => bind (c b) k))) :=
+              interpMrec_query_recursive body d _
+            have hright : interpMrec body (query
+                (Sum.inl d : (D + E : PFunctor.{max uDA uEA, uB}).A) c) =
+                step (interpMrec body (bind (body d) c)) :=
+              interpMrec_query_recursive body d c
+            rw [hleft, hright, bind_step]
             have hassoc :
                 bind (body d) (fun b => bind (c b) k) =
                   bind (bind (body d) c) k :=
@@ -156,16 +163,21 @@ theorem interpMrec_bind
               fun _ => Or.inr ⟨bind (body d) c,
                 congrArg (interpMrec body) hassoc, rfl⟩⟩
         | inr e =>
-            change E.B e →
-              ITree (D + E : PFunctor.{max uDA uEA, uB}) α at c
             have ht : t = query (Sum.inr e) c := by
               apply PFunctor.M.eq_of_dest_eq
               rw [h]
               rfl
-            subst ht
-            clear h
-            rw [bind_query, interpMrec_query_external,
-              interpMrec_query_external, bind_query]
+            rw [ht, bind_query]
+            have hleft : interpMrec body (query
+                (Sum.inr e : (D + E : PFunctor.{max uDA uEA, uB}).A)
+                (fun b => bind (c b) k)) =
+                query e (fun b => interpMrec body (bind (c b) k)) :=
+              interpMrec_query_external body e _
+            have hright : interpMrec body (query
+                (Sum.inr e : (D + E : PFunctor.{max uDA uEA, uB}).A) c) =
+                query e (fun b => interpMrec body (c b)) :=
+              interpMrec_query_external body e c
+            rw [hleft, hright, bind_query]
             exact ⟨.query e,
               fun b => interpMrec body (bind (c b) k),
               fun b => bind (interpMrec body (c b)) next,
@@ -239,16 +251,32 @@ theorem mapSpec_interpMrec {G : PFunctor.{uGA, uB}}
               apply PFunctor.M.eq_of_dest_eq
               rw [h]
               rfl
-            subst ht
-            clear h
+            rw [ht]
             have hmap :
                 mapSpec sumLens (bind (body d) c) =
                   bind (mappedBody d) (fun b => mapSpec sumLens (c b)) := by
               simpa only [mappedBody] using
                 mapSpec_bind (α := D.B d) (β := α) sumLens (body d) c
-            rw [interpMrec_query_recursive, mapSpec_step, mapSpec_query]
-            dsimp [sumLens, PFunctor.Lens.sumMap, PFunctor.Lens.id]
-            rw [interpMrec_query_recursive]
+            have hinterp : interpMrec body (query
+                (Sum.inl d : (D + E : PFunctor.{max uDA uEA, uB}).A) c) =
+                step (interpMrec body (bind (body d) c)) :=
+              interpMrec_query_recursive body d c
+            have hspec : mapSpec sumLens (query
+                (Sum.inl d : (D + E : PFunctor.{max uDA uEA, uB}).A) c) =
+                query (F := (D + G : PFunctor.{max uDA uGA, uB})) (α := α)
+                  (Sum.inl d : (D + G : PFunctor.{max uDA uGA, uB}).A)
+                  (fun b : D.B d => mapSpec sumLens (c b)) := by
+              convert mapSpec_query sumLens
+                (Sum.inl d : (D + E : PFunctor.{max uDA uEA, uB}).A) c using 1 <;>
+                simp [sumLens, PFunctor.Lens.sumMap, PFunctor.Lens.id]
+              all_goals rfl
+            have hinterp' : interpMrec mappedBody (query
+                (Sum.inl d : (D + G : PFunctor.{max uDA uGA, uB}).A)
+                (fun b : D.B d => mapSpec sumLens (c b))) =
+                step (interpMrec mappedBody
+                  (bind (mappedBody d) (fun b : D.B d => mapSpec sumLens (c b)))) :=
+              interpMrec_query_recursive mappedBody d _
+            rw [hinterp, mapSpec_step, hspec, hinterp']
             exact ⟨.step,
               fun _ => mapSpec φ (interpMrec body (bind (body d) c)),
               fun _ => interpMrec mappedBody
@@ -265,11 +293,31 @@ theorem mapSpec_interpMrec {G : PFunctor.{uGA, uB}}
               apply PFunctor.M.eq_of_dest_eq
               rw [h]
               rfl
-            subst ht
-            clear h
-            rw [interpMrec_query_external, mapSpec_query, mapSpec_query]
-            dsimp [sumLens, PFunctor.Lens.sumMap, PFunctor.Lens.id]
-            rw [interpMrec_query_external]
+            rw [ht]
+            have hinterp : interpMrec body (query
+                (Sum.inr e : (D + E : PFunctor.{max uDA uEA, uB}).A) c) =
+                query e (fun b => interpMrec body (c b)) :=
+              interpMrec_query_external body e c
+            have hspec : mapSpec sumLens (query
+                (Sum.inr e : (D + E : PFunctor.{max uDA uEA, uB}).A) c) =
+                query (F := (D + G : PFunctor.{max uDA uGA, uB})) (α := α)
+                  (Sum.inr (φ.toFunA e) :
+                  (D + G : PFunctor.{max uDA uGA, uB}).A)
+                  (fun b : G.B (φ.toFunA e) =>
+                    mapSpec sumLens (c (φ.toFunB e b))) := by
+              convert mapSpec_query sumLens
+                (Sum.inr e : (D + E : PFunctor.{max uDA uEA, uB}).A) c using 1 <;>
+                simp [sumLens, PFunctor.Lens.sumMap, PFunctor.Lens.id]
+              all_goals rfl
+            have hinterp' : interpMrec mappedBody (query
+                (Sum.inr (φ.toFunA e) :
+                  (D + G : PFunctor.{max uDA uGA, uB}).A)
+                (fun b : G.B (φ.toFunA e) =>
+                  mapSpec sumLens (c (φ.toFunB e b)))) =
+                query (φ.toFunA e) (fun b => interpMrec mappedBody
+                  (mapSpec sumLens (c (φ.toFunB e b)))) :=
+              interpMrec_query_external mappedBody (φ.toFunA e) _
+            rw [hinterp, mapSpec_query, hspec, hinterp']
             exact ⟨.query (φ.toFunA e),
               fun b => mapSpec φ
                 (interpMrec body (c (φ.toFunB e b))),
@@ -284,6 +332,7 @@ theorem mapSpec_interpMrec {G : PFunctor.{uGA, uB}}
 ITree simulation. Recursive events invoke `mutualRec body`; external events
 are forwarded unchanged. This is the polynomial-functor counterpart of the
 upstream ITree handler `mrecursive`. -/
+@[reducible]
 def recursiveHandler :
     Handler (D + E : PFunctor.{max uDA uEA, uB}) E :=
   Handler.case_ (mutualRec body) (Handler.id E)
@@ -298,35 +347,80 @@ def recursiveHandler :
 handler up to the productivity guard inserted by `interpMrec`. -/
 theorem interpMrec_lift_inl (d : D.A) :
     WeakBisim
-      (interpMrec body
+      (show ITree E (D.B d) from interpMrec body
         (lift (F := (D + E : PFunctor.{max uDA uEA, uB})) (.inl d)))
       (recursiveHandler body (.inl d)) := by
+  change WeakBisim
+    (interpMrec body
+      (lift (F := (D + E : PFunctor.{max uDA uEA, uB})) (.inl d)))
+    (mutualRec body d)
   have hbind :
       bind (body d)
           (fun b : D.B d =>
             pure (F := (D + E : PFunctor.{max uDA uEA, uB})) b) =
         body d :=
     bind_pure_right (body d)
-  rw [lift, interpMrec_query_recursive]
-  change WeakBisim
-    (step (interpMrec body
-      (bind (body d) (fun b : D.B d =>
-        pure (F := (D + E : PFunctor.{max uDA uEA, uB})) b))))
-    (mutualRec body d)
-  rw [hbind]
-  exact step_weakBisim _
+  have hlift :
+      (lift (F := (D + E : PFunctor.{max uDA uEA, uB})) (.inl d) :
+        ITree (D + E : PFunctor.{max uDA uEA, uB}) (D.B d)) =
+      query (F := (D + E : PFunctor.{max uDA uEA, uB})) (α := D.B d)
+        (.inl d) (fun b : D.B d => pure b) := rfl
+  have hinterp : interpMrec body
+      (query (F := (D + E : PFunctor.{max uDA uEA, uB})) (α := D.B d)
+        (.inl d) (fun b : D.B d => pure b)) =
+      step (interpMrec body (bind (body d) (fun b : D.B d => pure b))) :=
+    interpMrec_query_recursive body d _
+  have heq : interpMrec body
+      (lift (F := (D + E : PFunctor.{max uDA uEA, uB})) (.inl d) :
+        ITree (D + E : PFunctor.{max uDA uEA, uB}) (D.B d)) =
+      step (interpMrec body (bind (body d) (fun b : D.B d =>
+        pure (F := (D + E : PFunctor.{max uDA uEA, uB})) b))) :=
+    (congrArg (interpMrec body) hlift).trans hinterp
+  have hfinal : interpMrec body
+      (lift (F := (D + E : PFunctor.{max uDA uEA, uB})) (.inl d) :
+        ITree (D + E : PFunctor.{max uDA uEA, uB}) (D.B d)) =
+      step (mutualRec body d) := by
+    calc
+      _ = step (interpMrec body (bind (body d) (fun b : D.B d =>
+          pure (F := (D + E : PFunctor.{max uDA uEA, uB})) b))) := heq
+      _ = step (mutualRec body d) := congrArg step (congrArg (interpMrec body) hbind)
+  exact hfinal.symm ▸ step_weakBisim _
 
 /-- Interpreting a lifted external event forwards it through the canonical
 recursive handler. The trees are equal before promotion to weak
 bisimulation. -/
 theorem interpMrec_lift_inr (e : E.A) :
     WeakBisim
-      (interpMrec body
+      (show ITree E (E.B e) from interpMrec body
         (lift (F := (D + E : PFunctor.{max uDA uEA, uB})) (.inr e)))
       (recursiveHandler body (.inr e)) := by
-  rw [lift, interpMrec_query_external, recursiveHandler_inr]
-  simp only [interpMrec_pure, Handler.id, lift]
-  exact WeakBisim.refl _
+  change WeakBisim
+    (interpMrec body
+      (lift (F := (D + E : PFunctor.{max uDA uEA, uB})) (.inr e)))
+    (Handler.id E e)
+  have hlift :
+      (lift (F := (D + E : PFunctor.{max uDA uEA, uB})) (.inr e) :
+        ITree (D + E : PFunctor.{max uDA uEA, uB}) (E.B e)) =
+      query (F := (D + E : PFunctor.{max uDA uEA, uB})) (α := E.B e)
+        (.inr e) (fun b : E.B e => pure b) := rfl
+  have hinterp : interpMrec body
+      (query (F := (D + E : PFunctor.{max uDA uEA, uB})) (α := E.B e)
+        (.inr e) (fun b : E.B e => pure b)) =
+      query e (fun b : E.B e => interpMrec body (pure b)) :=
+    interpMrec_query_external body e _
+  have heq : interpMrec body
+      (lift (F := (D + E : PFunctor.{max uDA uEA, uB})) (.inr e) :
+        ITree (D + E : PFunctor.{max uDA uEA, uB}) (E.B e)) =
+      query e (fun b : E.B e => interpMrec body (pure b)) :=
+    (congrArg (interpMrec body) hlift).trans hinterp
+  have hfinal : interpMrec body
+      (lift (F := (D + E : PFunctor.{max uDA uEA, uB})) (.inr e) :
+        ITree (D + E : PFunctor.{max uDA uEA, uB}) (E.B e)) =
+      Handler.id E e := by
+    calc
+      _ = query e (fun b : E.B e => interpMrec body (pure b)) := heq
+      _ = Handler.id E e := by simp [Handler.id, lift]
+  exact hfinal.symm ▸ WeakBisim.refl _
 
 /-- Definition bridge: `mutualRec` is the recursive interpreter applied to
 one body invocation. The guarded recursive-query equation is

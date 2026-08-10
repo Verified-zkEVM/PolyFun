@@ -136,7 +136,7 @@ def ihomSumAEquiv (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
   left_inv f := Lens.comp_inl_inr f
   right_inv p := by
     obtain ⟨a, b⟩ := p
-    simp only [Lens.sumPair_comp_inl, Lens.sumPair_comp_inr]
+    exact congrArg₂ Prod.mk (Lens.sumPair_comp_inl a b) (Lens.sumPair_comp_inr a b)
 
 /-- The position bijection together with the fiber splitting, packaged as a
 `PFunctor.Equiv`: over a lens `f : q₁ + q₂ ⇆ r` the sigma of `r`-directions over

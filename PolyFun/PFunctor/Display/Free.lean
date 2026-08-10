@@ -6,6 +6,8 @@ Authors: Quang Dao
 
 module
 
+import all PolyFun.PFunctor.Display.Basic
+import all PolyFun.PFunctor.Free.Displayed
 public import PolyFun.PFunctor.Display.Basic
 public import PolyFun.PFunctor.Free.Displayed
 
@@ -235,9 +237,6 @@ theorem bind_leaf (S : Display.{uA, uB, uC, uD} P)
       rcases d with ⟨c, children⟩
       simp only [FreeM.pure_bind] at children
       simp only [bind_liftBind]
-      rw [S.transport_proof_irrel F
-        (FreeM.bind_pure ((FreeM.lift a).bind rest))
-        (bind_pure_eq ((FreeM.lift a).bind rest))]
       change S.transport F (bind_pure_eq (FreeM.liftBind a rest))
           ⟨c, fun b e =>
             S.bind (rest b) (children b e) FreeM.pure fun x dx =>

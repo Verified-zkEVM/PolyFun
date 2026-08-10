@@ -5,6 +5,7 @@ Authors: Quang Dao
 -/
 module
 
+import all PolyFun.PFunctor.Free.Displayed
 public import PolyFun.PFunctor.Free.Displayed
 
 /-!
@@ -301,6 +302,7 @@ theorem mapLensPathToPathAlong_toMapLensPath (l : Lens P Q) :
   | .liftBind a rest, ⟨d, path⟩ => by
       simp [pathAlongToMapLensPath, mapLensPathToPathAlong, -liftBind_eq,
         mapLensPathToPathAlong_toMapLensPath l (rest (l.toFunB a d)) path]
+      rfl
 
 @[simp]
 theorem pathAlongToMapLensPath_toPathAlong (l : Lens P Q) :
@@ -310,6 +312,7 @@ theorem pathAlongToMapLensPath_toPathAlong (l : Lens P Q) :
   | .liftBind a rest, ⟨d, path⟩ => by
       simp [pathAlongToMapLensPath, mapLensPathToPathAlong, -liftBind_eq,
         pathAlongToMapLensPath_toPathAlong l (rest (l.toFunB a d)) path]
+      rfl
 
 @[simp]
 theorem output_mapLens_pathAlongToMapLensPath (l : Lens P Q) :
@@ -887,7 +890,10 @@ theorem split_append {β : Type t} (l : Lens P Q) :
   | .pure _, _, ⟨⟩, _ => rfl
   | .liftBind a rest, s₂, ⟨d, path₁⟩, path₂ => by
       simp only [append, split]
-      rw [split_append]
+      have hsplit := split_append l (rest (l.toFunB a d))
+        (fun path => s₂ (show Path (FreeM.liftBind a rest) from
+          ⟨l.toFunB a d, path⟩)) path₁ path₂
+      rw [hsplit]
 
 /-- Appending the components produced by `split` recovers the original runtime path. -/
 @[simp]

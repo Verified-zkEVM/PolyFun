@@ -37,6 +37,9 @@ namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {α β γ : Type v}
 
+set_option allowUnsafeReducibility true in
+attribute [reducible] PFunctor.FreeM.bind
+
 /-- Test only the root of a free polynomial tree.
 
 A leaf demands `leafPred` of its result, while an internal node demands

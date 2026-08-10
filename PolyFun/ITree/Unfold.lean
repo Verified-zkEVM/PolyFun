@@ -5,6 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
+import all PolyFun.ITree.Basic
 public import PolyFun.ITree.Basic
 public import PolyFun.PFunctor.Dynamical.Trajectory
 
@@ -47,15 +48,27 @@ def toITree {S : Type uS} {p : PFunctor.{uA, uB}} (s : DynSystem S p) :
     (s : DynSystem S p) (st : S) :
     M.dest (s.toITree st)
       = ⟨.query (s.expose st), fun d => s.toITree (s.update st d)⟩ := by
-  simp only [toITree, M.dest_corec_apply]
+  let g : S → (ITree.Poly p PEmpty) S :=
+    fun st => ⟨.query (s.expose st), fun d => s.update st d⟩
+  change M.dest (M.corec g st) =
+    ⟨.query (s.expose st), fun d => M.corec g (s.update st d)⟩
+  rw [M.dest_corec_apply]
 
 /-- Unfolding a system into an ITree is the query-embedding of its behavior
 tree: the two coinductive semantics agree. -/
 theorem toITree_eq_toITree_behavior {S : Type uS} {p : PFunctor.{uA, uB}}
-    (s : DynSystem S p) (st : S) : s.toITree st = M.toITree (s.behavior st) := by
+    (s : DynSystem S p) (st : S) :
+    s.toITree st = M.toITree (s.behavior st) := by
   refine congrFun (M.corec_unique _ (fun st => M.toITree (s.behavior st)) ?_).symm st
   intro st
-  simp only [M.toITree, M.dest_corec_apply]
+  let g : M p → (ITree.Poly p PEmpty) (M p) :=
+    fun t => ⟨.query (M.dest t).1, (M.dest t).2⟩
+  change M.dest (M.corec g (s.behavior st)) = _
+  have hg : g (s.behavior st) =
+      ⟨.query (s.expose st), fun d => s.behavior (s.update st d)⟩ := by
+    dsimp only [g]
+    rw [DynSystem.dest_behavior]
+  rw [M.dest_corec_eq g _ hg]
   rfl
 
 end DynSystem

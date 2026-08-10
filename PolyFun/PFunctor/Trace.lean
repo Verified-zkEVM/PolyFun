@@ -8,6 +8,8 @@ module
 public import Mathlib.Algebra.FreeMonoid.Basic
 public import PolyFun.Control.Trace
 public import PolyFun.PFunctor.Chart.Basic
+import all Mathlib.Algebra.FreeMonoid.Basic
+import all Mathlib.Data.PFunctor.Univariate.Basic
 
 /-!
 # Traces of polynomial-functor events
@@ -68,10 +70,27 @@ The free monoid on `P`-events.  Definitionally `FreeMonoid (Idx P)`, which
 in turn is reducibly `List (Idx P)`.  This is the universal carrier for
 "finite ordered logs of `P`-events".
 -/
-@[reducible] def TraceList (P : PFunctor.{uA, uB}) : Type max uA uB :=
-  FreeMonoid (Idx P)
+abbrev TraceList (P : PFunctor.{uA, uB}) : Type max uA uB :=
+  List (Idx P)
 
 namespace TraceList
+
+instance {P : PFunctor.{uA, uB}} : Monoid (TraceList P) where
+  one := []
+  mul := List.append
+  one_mul := List.nil_append
+  mul_one := List.append_nil
+  mul_assoc := List.append_assoc
+
+/-- Fold a trace list into a monoid by multiplying its mapped events in order. -/
+def lift {P : PFunctor.{uA, uB}} {ω : Type w} [Monoid ω] (φ : P.Idx → ω) :
+    TraceList P →* ω where
+  toFun events := (events.map φ).prod
+  map_one' := rfl
+  map_mul' left right := by
+    change (List.map φ (left ++ right)).prod =
+      (List.map φ left).prod * (List.map φ right).prod
+    rw [List.map_append, List.prod_append]
 
 /-- Every event in a trace carries a direction allowed at its position.
 
@@ -95,38 +114,71 @@ theorem directionsWithin_cons {P : PFunctor.{uA, uB}}
   List.forall_mem_cons
 
 /-- Number of events at a given position in an erased execution trace. -/
-def occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
-    (target : P.A) (events : TraceList P) : Nat :=
-  events.countP fun (event : P.Idx) => event.1 = target
+def occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A] (target : P.A) :
+    TraceList P → Nat
+  | [] => 0
+  | ⟨a, _⟩ :: tail =>
+      if a = target then occurrences target tail + 1 else occurrences target tail
+
+theorem occurrences_cons {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (event : P.Idx) (tail : TraceList P) (target : P.A) :
+    occurrences target (event :: tail) =
+      if event.1 = target then occurrences target tail + 1 else occurrences target tail := by
+  rcases event with ⟨a, answer⟩
+  rfl
+
+@[simp] theorem occurrences_cons_self {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (target : P.A) (answer : P.B target) (tail : TraceList P) :
+    occurrences target (⟨target, answer⟩ :: tail) =
+      occurrences target tail + 1 := by
+  simp [occurrences]
+
+@[simp] theorem occurrences_cons_of_ne {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    {a target : P.A} (hne : a ≠ target) (answer : P.B a) (tail : TraceList P) :
+    occurrences target (⟨a, answer⟩ :: tail) =
+      occurrences target tail := by
+  simp [occurrences, hne]
 
 /-- The answer carried by the `n`-th event at `target`, if that occurrence exists. -/
-def getAt? {P : PFunctor.{uA, uB}} [DecidableEq P.A]
-    (events : TraceList P) (target : P.A) : Nat → Option (P.B target)
-  | n =>
-      match events, n with
-      | [], _ => none
-      | ⟨a, answer⟩ :: tail, 0 =>
-          if h : a = target then some (h ▸ answer) else getAt? tail target 0
-      | ⟨a, _⟩ :: tail, n + 1 =>
-          if a = target then getAt? tail target n else getAt? tail target (n + 1)
+def getAt? {P : PFunctor.{uA, uB}} [DecidableEq P.A] :
+    (events : TraceList P) → (target : P.A) → Nat → Option (P.B target)
+  | [], _, _ => none
+  | ⟨a, answer⟩ :: tail, target, 0 =>
+      if h : a = target then some (h ▸ answer) else getAt? tail target 0
+  | ⟨a, _⟩ :: tail, target, n + 1 =>
+      if a = target then getAt? tail target n else getAt? tail target (n + 1)
+
+theorem getAt?_cons_zero {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (event : P.Idx) (tail : TraceList P) (target : P.A) :
+    getAt? (event :: tail) target 0 =
+      if h : event.1 = target then some (h ▸ event.2) else getAt? tail target 0 := by
+  rcases event with ⟨a, answer⟩
+  rfl
+
+theorem getAt?_cons_succ {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (event : P.Idx) (tail : TraceList P) (target : P.A) (n : Nat) :
+    getAt? (event :: tail) target (n + 1) =
+      if event.1 = target then getAt? tail target n else getAt? tail target (n + 1) := by
+  rcases event with ⟨a, answer⟩
+  rfl
 
 @[simp] theorem getAt?_nil {P : PFunctor.{uA, uB}} [DecidableEq P.A] (target : P.A) (n : Nat) :
     getAt? ([] : TraceList P) target n = none := rfl
 
 @[simp] theorem getAt?_cons_self_zero {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (target : P.A) (answer : P.B target) (tail : TraceList P) :
-    getAt? ((show P.Idx from ⟨target, answer⟩) :: tail) target 0 = some answer := by
+    getAt? (⟨target, answer⟩ :: tail) target 0 = some answer := by
   simp [getAt?]
 
 @[simp] theorem getAt?_cons_self_succ {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (target : P.A) (answer : P.B target) (tail : TraceList P) (n : Nat) :
-    getAt? ((show P.Idx from ⟨target, answer⟩) :: tail) target (n + 1) =
+    getAt? (⟨target, answer⟩ :: tail) target (n + 1) =
       getAt? tail target n := by
   simp [getAt?]
 
 @[simp] theorem getAt?_cons_of_ne {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     {a target : P.A} (hne : a ≠ target) (answer : P.B a) (tail : TraceList P) (n : Nat) :
-    getAt? ((show P.Idx from ⟨a, answer⟩) :: tail) target n = getAt? tail target n := by
+    getAt? (⟨a, answer⟩ :: tail) target n = getAt? tail target n := by
   cases n <;> simp [getAt?, hne]
 
 /-- A dependent trace lookup succeeds exactly for the counted occurrences. -/
@@ -136,25 +188,46 @@ def getAt? {P : PFunctor.{uA, uB}} [DecidableEq P.A]
   induction events generalizing n with
   | nil => simp [occurrences]
   | cons event tail ih =>
-      rcases event with ⟨a, answer⟩
-      by_cases h : a = target
-      · subst a
-        cases n <;> simp [occurrences, ih]
-      · simp [occurrences, h, ih]
+      by_cases h : event.1 = target
+      · cases n with
+        | zero =>
+            rw [getAt?_cons_zero, occurrences_cons, dif_pos h, if_pos h]
+            simp
+        | succ n =>
+            rw [getAt?_cons_succ, occurrences_cons, if_pos h, if_pos h]
+            simpa using ih n
+      · cases n with
+        | zero =>
+            rw [getAt?_cons_zero, occurrences_cons, dif_neg h, if_neg h]
+            exact ih 0
+        | succ n =>
+            rw [getAt?_cons_succ, occurrences_cons, if_neg h, if_neg h]
+            exact ih (n + 1)
 
 /-- The event following a prefix is found at the prefix's occurrence count. -/
 theorem getAt?_append_self_occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (before after : TraceList P) (target : P.A) (answer : P.B target) :
-    getAt? (List.append before ((show P.Idx from ⟨target, answer⟩) :: after)) target
+    getAt? (List.append before (⟨target, answer⟩ :: after)) target
       (occurrences target before) = some answer := by
+  let targetEvent : P.Idx := ⟨target, answer⟩
+  change getAt? (List.append before (targetEvent :: after)) target
+      (occurrences target before) = some answer
   induction before with
-  | nil => simp [occurrences]
+  | nil => exact getAt?_cons_self_zero target answer after
   | cons event before ih =>
-      rcases event with ⟨a, prefixAnswer⟩
-      by_cases h : a = target
-      · subst a
-        simpa [occurrences] using ih
-      · simpa [occurrences, h] using ih
+      change getAt? (event :: (before ++ targetEvent :: after)) target
+          (occurrences target (event :: before)) = some answer
+      by_cases h : event.1 = target
+      · rw [occurrences_cons, if_pos h, getAt?_cons_succ, if_pos h]
+        exact ih
+      · rw [occurrences_cons, if_neg h]
+        cases hocc : occurrences target before with
+        | zero =>
+            rw [getAt?_cons_zero, dif_neg h]
+            simpa [hocc] using ih
+        | succ n =>
+            rw [getAt?_cons_succ, if_neg h]
+            simpa [hocc] using ih
 
 end TraceList
 
@@ -193,7 +266,7 @@ homomorphism `FreeMonoid (Idx P) →* ω`; `toMonoid φ` post-composes a `P`-tra
 with that hom.
 -/
 def toMonoid {ω : Type w} [Monoid ω] (φ : Idx P → ω) : Trace P X → Control.Trace ω X :=
-  Control.Trace.map (FreeMonoid.lift φ)
+  Control.Trace.map (TraceList.lift φ)
 
 /-! ### Pointwise behaviour -/
 
@@ -204,7 +277,7 @@ def toMonoid {ω : Type w} [Monoid ω] (φ : Idx P → ω) : Trace P X → Contr
     mapChart φ t x = (t x).filterMap (fun i => some (Chart.mapIdx φ i)) := rfl
 
 @[simp] theorem toMonoid_apply {ω : Type w} [Monoid ω] (φ : Idx P → ω) (t : Trace P X) (x : X) :
-    toMonoid φ t x = FreeMonoid.lift φ (t x) := rfl
+    toMonoid φ t x = (List.map φ (t x)).prod := rfl
 
 /-! ### Functoriality of `mapPartial` and `mapChart` -/
 
@@ -252,12 +325,10 @@ naturality square. -/
     (φ : Chart P Q) (t : Trace P X) :
     toMonoid ψ (mapChart φ t) = toMonoid (ψ ∘ Chart.mapIdx φ) t := by
   funext x
-  change FreeMonoid.lift ψ
-      (FreeMonoid.ofList ((t x).filterMap (some ∘ Chart.mapIdx φ))) =
-        FreeMonoid.lift (ψ ∘ Chart.mapIdx φ) (t x)
-  rw [List.filterMap_eq_map (f := Chart.mapIdx φ),
-    FreeMonoid.lift_ofList, FreeMonoid.lift_apply, List.map_map]
-  rfl
+  change (List.map ψ ((t x).filterMap (some ∘ Chart.mapIdx φ))).prod =
+    (List.map (ψ ∘ Chart.mapIdx φ) (t x)).prod
+  rw [List.filterMap_eq_map (f := Chart.mapIdx φ)]
+  rw [List.map_map]
 
 end Trace
 

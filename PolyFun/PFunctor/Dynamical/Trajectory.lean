@@ -63,7 +63,11 @@ are the exposed position, and the children are the successor trajectories. -/
 theorem dest_trajectory (s : DynSystem S p) (st : S) :
     M.dest (trajectory s st)
       = ⟨(s.expose st, s.expose st), fun d => trajectory s (s.update st d)⟩ := by
-  simp only [trajectory, M.dest_corec_apply]
+  let g : S → constProd p p.A S :=
+    fun state => ⟨(s.expose state, s.expose state), fun d => s.update state d⟩
+  change M.dest (M.corec g st) =
+    ⟨(s.expose st, s.expose st), fun d => M.corec g (s.update st d)⟩
+  rw [M.dest_corec_apply]
 
 @[simp] theorem head_trajectory (s : DynSystem S p) (st : S) :
     (trajectory s st).head = s.expose st := by
@@ -71,7 +75,7 @@ theorem dest_trajectory (s : DynSystem S p) (st : S) :
 
 @[simp] theorem tail_trajectory (s : DynSystem S p) (st : S) :
     (trajectory s st).tail = ⟨s.expose st, fun d => trajectory s (s.update st d)⟩ := by
-  simp only [CofreeC.tail]; rw [dest_trajectory]; rfl
+  simp only [CofreeC.tail]; rw [dest_trajectory]
 
 /-! ## Terminal-coalgebra behavior
 
@@ -126,7 +130,7 @@ theorem trajectory_eq_selfLabel_behavior (s : DynSystem S p) (st : S) :
     s.trajectory st = M.selfLabel (s.behavior st) := by
   refine congrFun (Eq.symm (M.corec_unique _ (fun st => M.selfLabel (s.behavior st)) ?_)) st
   intro st
-  simp only [M.selfLabel, M.dest_corec_apply]
+  simp only [M.selfLabel]
   rfl
 
 /-! ## Closed-system spine

@@ -5,6 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
+import all PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Basic
 
 /-!
@@ -57,6 +58,10 @@ namespace PFunctor
 
 namespace CartesianClosed
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] PFunctor.monomial PFunctor.X PFunctor.prod
+  PFunctor.instHMulPFunctor PFunctor.instMulPFunctor PFunctor.pi PFunctor.exp PFunctor.comp
+
 /-- The evaluation lens `exp r q * q ⇆ r`, the counit of the cartesian
 exponential adjunction (Spivak–Niu Example 5.32).
 
@@ -107,6 +112,7 @@ theorem uncurry_curry {p q r : PFunctor.{uA, uB}} (l : Lens (p * q) r) :
     intro a
     obtain ⟨pa, qa⟩ := a
     funext d
+    change r.B (l.toFunA (pa, qa)) at d
     dsimp only [uncurry, eval, curry, Lens.comp, Lens.prodMap, Lens.piForall, Lens.id,
       Function.comp_apply, id_eq] at d ⊢
     split <;> rename_i heq

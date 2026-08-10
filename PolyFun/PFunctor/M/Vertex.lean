@@ -294,7 +294,7 @@ theorem depth_append {t : M P} (initial : Vertex t)
       simp only [append_root, depth_root, Nat.zero_add]
       rfl
   | .child direction next =>
-      simp only [append_child, depth_child]
+      change depth (append next suffix) + 1 = depth next + 1 + depth suffix
       rw [depth_append next suffix]
       exact Nat.add_right_comm (depth next) (depth suffix) 1
 
