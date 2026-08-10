@@ -49,3 +49,11 @@ name = "PolyFun"
 name = "PolyFunTest"
 globs = ["PolyFunTest.+"]
 leanOptions = { weak.linter.style.header = false }
+
+# Kernel-level axiom / sorry accounting; see scripts/AxiomSweep.lean.
+# Runtime-imports the built PolyFun oleans, so run it after `lake build`.
+[[lean_exe]]
+name = "axiomsweep"
+srcDir = "scripts"
+root = "AxiomSweep"
+supportInterpreter = true

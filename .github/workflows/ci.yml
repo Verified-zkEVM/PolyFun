@@ -51,6 +51,13 @@ jobs:
       - name: Run validation wrapper
         run: ./scripts/validate.sh
 
+      # Report-only during the initial soak; flip to enforcing by dropping the
+      # trailing `|| echo ...` once the baseline has survived a few PRs.
+      - name: Axiom sweep (report-only)
+        run: |
+          lake exe axiomsweep --check || \
+            echo "::warning::axiomsweep found new axiom/sorry taint (report-only during soak)"
+
       - name: Save Lean cache
         if: success() && steps.lake-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
