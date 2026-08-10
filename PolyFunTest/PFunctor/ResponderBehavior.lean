@@ -18,9 +18,17 @@ is checked after transport along the ordinary behavior-child equation.
 
 namespace PFunctor.ResponderBehaviorExample
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] PFunctor.X PFunctor.monomial PFunctor.ihom
+  PFunctor.DynSystem.out PFunctor.DynSystem.expose PFunctor.DynSystem.update
+  PFunctor.M.terminalSystem PFunctor.Responder.terminal
+
 def Interface : PFunctor where
   A := Unit
   B := fun _ => Bool
+
+set_option allowUnsafeReducibility true in
+attribute [local reducible] Interface
 
 def query : Interface.A := ()
 
@@ -28,9 +36,12 @@ def contract : Display Interface where
   position _ := Bool
   direction _ expected answer := if expected = answer then Fin 2 else Fin 3
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] contract
+
 def directionFromNat (expected answer : Bool) (value : Nat) :
     contract.direction () expected answer := by
-  simp only [contract]
+  simp only
   split
   · exact ⟨value % 2, Nat.mod_lt _ (by decide)⟩
   · exact ⟨value % 3, Nat.mod_lt _ (by decide)⟩
@@ -80,6 +91,9 @@ def behavior := responder.behavior false
 def toDisplayedBehavior :=
   Responder.toDisplayedBehavior contract responder Invariant displayed
     false initialWitness
+
+set_option allowUnsafeReducibility true in
+attribute [local reducible] behavior toDisplayedBehavior
 
 example : behavior.head.toFunB query PUnit.unit = false := by
   change responder.answer false query = false

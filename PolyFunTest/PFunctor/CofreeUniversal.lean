@@ -155,10 +155,11 @@ example : listTree =
 
 /-- The root path is the identity arrow, hence the empty list. -/
 example : listExtension.toLens.toFunB listObject (.root listTree) = [] := by
-  calc
-    _ = Comonoid.identity boolListComonoid listObject := by
-      simpa [listTree] using listExtension.map_identity listObject
-    _ = [] := rfl
+  have h : listExtension.toLens.toFunB listObject (.root listTree) =
+      Comonoid.identity boolListComonoid listObject := by
+    rw [← CofreeP.comonoid_identity]
+    exact listExtension.map_identity listObject
+  exact h.trans rfl
 
 /-- Every one-edge path pulls back to the corresponding singleton arrow. -/
 theorem listExtension_oneLayer (object : boolListComonoid.carrier.A)
@@ -211,8 +212,6 @@ example : listExtension.toLens.toFunB listObject falseThenTrueVertex =
   rw [hfirst]
   change [false] ++ _ = [false] ++ [true]
   congr 1
-  apply htailAny
-  exact (cast_heq _ innerTrueVertex).trans hraw
 
 /-! ## Universal-property round trips -/
 

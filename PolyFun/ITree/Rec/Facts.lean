@@ -267,8 +267,8 @@ theorem mapSpec_interpMrec {G : PFunctor.{uGA, uB}}
                   (Sum.inl d : (D + G : PFunctor.{max uDA uGA, uB}).A)
                   (fun b : D.B d => mapSpec sumLens (c b)) := by
               convert mapSpec_query sumLens
-                (Sum.inl d : (D + E : PFunctor.{max uDA uEA, uB}).A) c using 1 <;>
-                simp [sumLens, PFunctor.Lens.sumMap, PFunctor.Lens.id]
+                (Sum.inl d : (D + E : PFunctor.{max uDA uEA, uB}).A) c using 1
+              all_goals simp [sumLens, PFunctor.Lens.sumMap, PFunctor.Lens.id]
               all_goals rfl
             have hinterp' : interpMrec mappedBody (query
                 (Sum.inl d : (D + G : PFunctor.{max uDA uGA, uB}).A)
@@ -306,8 +306,8 @@ theorem mapSpec_interpMrec {G : PFunctor.{uGA, uB}}
                   (fun b : G.B (φ.toFunA e) =>
                     mapSpec sumLens (c (φ.toFunB e b))) := by
               convert mapSpec_query sumLens
-                (Sum.inr e : (D + E : PFunctor.{max uDA uEA, uB}).A) c using 1 <;>
-                simp [sumLens, PFunctor.Lens.sumMap, PFunctor.Lens.id]
+                (Sum.inr e : (D + E : PFunctor.{max uDA uEA, uB}).A) c using 1
+              all_goals simp [sumLens, PFunctor.Lens.sumMap, PFunctor.Lens.id]
               all_goals rfl
             have hinterp' : interpMrec mappedBody (query
                 (Sum.inr (φ.toFunA e) :

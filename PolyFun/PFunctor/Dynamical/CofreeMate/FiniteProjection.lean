@@ -34,7 +34,6 @@ theorem cofreeMate_comp_projectionN {S : Type u} {P : PFunctor.{u, u}}
   change (CofreeP.extend (stateComonoid S) system).toLens ⨟
       CofreeP.projectionN P n = system.nStep n
   rw [CofreeP.extend_comp_projectionN, nStep_eq]
-  rfl
 
 /-- At depth two, finite projection recovers the established two-step system
 after removing the innermost right composition unit. -/

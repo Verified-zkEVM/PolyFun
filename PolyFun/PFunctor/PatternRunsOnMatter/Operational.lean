@@ -24,6 +24,9 @@ universe pA pB qA qB u v
 
 namespace PFunctor.FreeP
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] PFunctor.tensor
+
 variable {P : PFunctor.{pA, pB}} {Q : PFunctor.{qA, qB}}
 
 /-- Decode the synchronized object produced by `runObj` into an ordinary

@@ -337,6 +337,7 @@ def objEquiv : (CofreeP P).Obj α ≃ CofreeC P α where
 
 /-- Map cofree-polynomial trees covariantly along a generating lens and pull
 their finite vertices back contravariantly. -/
+@[reducible]
 def map {Q : PFunctor.{uA₂, uB₂}} (lens : Lens P Q) :
     Lens (CofreeP P) (CofreeP Q) where
   toFunA := M.mapLens lens

@@ -84,7 +84,7 @@ def extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) : CofreeC 
 
 theorem dest_extend_eq {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     M.dest (extend t f) = ⟨(f t, (M.dest t).1.2), (fun x => extend x f) ∘ (M.dest t).2⟩ := by
-  simp only [dest_extend, extendF, PFunctor.map_eq]
+  simp only [dest_extend, extendF]
   rfl
 
 @[simp] theorem head_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :

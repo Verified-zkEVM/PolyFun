@@ -61,10 +61,6 @@ def toITree (computation : Resumption p β) : ITree p β :=
       unfold toITreeStep
       rw [h]
     rw [M.dest_corec_eq toITreeStep computation hstep]
-    apply Sigma.ext
-    · rfl
-    · apply heq_of_eq
-      rfl
 
 @[simp] theorem toITree_pure (value : β) :
     toITree (pure (p := p) value) = ITree.pure value := by

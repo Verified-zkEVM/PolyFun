@@ -40,16 +40,21 @@ namespace Interaction
 namespace TypeTree
 namespace Chain
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] PFunctor.FreeP.substMonoid PFunctor.FreeP.mult
+  TypeTree.Chain toTypeTree
+
 /-- Transport a chain across an equality of its round count. -/
 @[expose]
 def castRounds {m n : Nat} (h : m = n) (c : Chain m) : Chain n :=
   h ▸ c
 
-@[simp]
+set_option allowUnsafeReducibility true in
+attribute [local reducible] castRounds
+
 theorem castRounds_rfl {m : Nat} (c : Chain m) : castRounds rfl c = c :=
   by rfl
 
-@[simp]
 theorem castRounds_symm {m n : Nat} (h : m = n) (c : Chain m) :
     castRounds h.symm (castRounds h c) = c := by
   subst n
@@ -63,7 +68,6 @@ theorem castRounds_trans {m n p : Nat} (h : m = n) (h' : n = p)
   rfl
 
 /-- Transporting the round count does not change the flattened type tree. -/
-@[simp]
 theorem toTypeTree_castRounds {m n : Nat} (h : m = n) (c : Chain m) :
     toTypeTree n (castRounds h c) = toTypeTree m c := by
   subst n
@@ -86,11 +90,11 @@ theorem toTypeTree_then : {m n : Nat} → (c : Chain m) →
     toTypeTree (m + n) (Chain.then c k) =
       (toTypeTree m c).append (fun path => toTypeTree n (k path))
   | 0, n, ⟨⟩, k => by
-      simp only [Chain.then, toTypeTree_castRounds, toTypeTree_zero]
-      rfl
+      simp only [Chain.then, toTypeTree_castRounds]
   | m + 1, n, ⟨tree, cont⟩, k => by
-      simp only [Chain.then, toTypeTree_castRounds, toTypeTree,
-        TypeTree.substMonoid_mult_toFunA]
+      simp only [Chain.then]
+      rw [toTypeTree_castRounds]
+      simp only [toTypeTree]
       rw [PFunctor.FreeM.Path.append_tree_assoc]
       congr 1
       funext path
@@ -101,7 +105,6 @@ theorem toTypeTree_then : {m n : Nat} → (c : Chain m) →
 
 /-- An empty prefix is a left unit for `Chain.then` already at the
 round-indexed presentation level. -/
-@[simp]
 theorem then_zero_left {n : Nat} (c : Chain 0)
     (k : Path (toTypeTree 0 c) → Chain n) :
     castRounds (Nat.zero_add n) (Chain.then c k) = k ⟨⟩ := by
@@ -128,7 +131,6 @@ theorem toTypeTree_then_zero_left {n : Nat} (c : Chain 0)
     (k : Path (toTypeTree 0 c) → Chain n) :
     toTypeTree (0 + n) (Chain.then c k) = toTypeTree n (k ⟨⟩) := by
   rw [toTypeTree_then]
-  rfl
 
 /-- An empty suffix is a right unit for `Chain.then` after flattening. -/
 theorem toTypeTree_then_zero_right {m : Nat} (c : Chain m)

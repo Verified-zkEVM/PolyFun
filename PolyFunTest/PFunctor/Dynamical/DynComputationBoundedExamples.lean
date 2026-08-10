@@ -15,6 +15,9 @@ open PFunctor
 
 namespace PFunctor.DynSystem.DynComputation
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] PFunctor.X PFunctor.monomial FreeM.IsTotalRollBound
+
 /-! ## Boundary behavior and universes -/
 
 def emptyReturn : DynComputation (0 : PFunctor.{0, 0}) Nat Nat :=
@@ -154,7 +157,7 @@ def collatzMachine : DynComputation X.{0, 0} ℕ ℕ where
 @[simp] theorem closedStutterStep_collatzMachine (n : ℕ) :
     collatzMachine.closedStutterStep n =
       if n = 1 then n else collatzNext n := by
-  by_cases h : n = 1 <;> simp [closedStutterStep, collatzView, h]
+  by_cases h : n = 1 <;> simp [closedStutterStep, collatzView, h] <;> rfl
 
 example : collatzMachine.view (collatzMachine.init 1) = Sum.inl 1 := by
   simp [collatzView]
@@ -163,10 +166,12 @@ example : collatzMachine.view (collatzMachine.init 1) = Sum.inl 1 := by
 example : collatzMachine.closedStutterStep (collatzMachine.init 1) =
     collatzMachine.init 1 := by
   simp
+  rfl
 
 example : collatzMachine.closedStutterIterate (collatzMachine.init 6) 8 =
     collatzMachine.init 1 := by
-  norm_num [closedStutterIterate, collatzNext]
+  norm_num [closedStutterIterate, Function.iterate_succ_apply, collatzNext]
+  rfl
 
 theorem collatz_resolvesIn_eight :
     collatzMachine.ResolvesIn 8 (collatzMachine.init 6) := by

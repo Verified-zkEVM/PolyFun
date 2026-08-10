@@ -40,6 +40,9 @@ the fixed-universe categorical module laws live in downstream modules.
 universe pA pB pA' pB' qA qB qA' qB' v w
 
 namespace PFunctor
+
+set_option allowUnsafeReducibility true in
+attribute [local reducible] PFunctor.tensor
 namespace FreeP
 
 variable {P : PFunctor.{pA, pB}} {Q : PFunctor.{qA, qB}}
@@ -231,7 +234,7 @@ theorem runObj_natural {P' : PFunctor.{pA', pB'}} {Q' : PFunctor.{qA', qB'}}
       have hhead := M.head_mapLens g matter
       cases hhead
       simp only [FreeP.map_toFunA, FreeP.mapShape, CofreeP.map_toFunA,
-        FreeM.mapLens, FreeM.map, runObj, FreeP.relabel_node,
+        FreeM.map, runObj, FreeP.relabel_node,
         FreeP.mapObj_node]
       congr 1
       funext direction

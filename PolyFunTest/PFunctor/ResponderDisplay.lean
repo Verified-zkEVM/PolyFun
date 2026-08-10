@@ -30,6 +30,9 @@ def Interface : PFunctor where
   A := Query
   B := Response
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] Response Interface
+
 /-- Contract positions depend on the query, and postcondition evidence depends
 on both the chosen contract position and the actual response. -/
 def contract : Display Interface where
@@ -39,6 +42,9 @@ def contract : Display Interface where
   direction
     | .bit, expected, answer => if expected = answer then Fin 2 else PUnit
     | .choice, bound, answer => Fin (bound.val + answer.val + 1)
+
+set_option allowUnsafeReducibility true in
+attribute [local reducible] contract
 
 def answer (state : Nat) : (a : Query) → Response a
   | .bit => state % 2 == 0
@@ -58,7 +64,7 @@ def answerContract (state : Nat) :
     (a : Query) → (c : contract.position a) →
       contract.direction a c (system.answer state a)
   | .bit, expected => by
-      simp only [contract]
+      simp only
       split
       · exact 0
       · exact PUnit.unit

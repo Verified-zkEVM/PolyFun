@@ -52,6 +52,7 @@ namespace Displayed
 variable {P : PFunctor.{u, v}} {α : Type w}
 
 /-- Displayed algebra for node-local metadata over a polynomial tree. -/
+@[reducible]
 def Decoration.algebra (Γ : P.A → Type w₂) :
     Displayed.Algebra P α where
   leaf := fun _ => PUnit.{max v w₂ + 1}
@@ -72,6 +73,7 @@ Dependent displayed algebra over a polynomial decoration.
 At a node with base metadata `γ : Γ a`, the over-layer stores data in
 `F a γ` and recursively stores over-data over each decorated child.
 -/
+@[reducible]
 def Decoration.Over.algebra (Γ : P.A → Type w₂) (F : (a : P.A) → Γ a → Type w₃) :
     Over.Algebra (Decoration.algebra (P := P) (α := α) Γ) where
   leaf := fun _ _ => PUnit.{max v w₃ + 1}
@@ -252,8 +254,7 @@ theorem mapBase_id {Γ : P.A → Type w₂} {A : (a : P.A) → Γ a → Type w�
     HEq (mapBase (fun _ γ => γ) (fun _ _ x => x) s d r) r
   | .pure _, ⟨⟩, ⟨⟩ => HEq.rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨a, rRest⟩ => by
-      simp only [mapBase, baseLocalMap,
-        Displayed.Over.LocalMap.toHom_liftBind]
+      simp only [mapBase, baseLocalMap]
       refine Prod.mk_heq ?_
       refine Function.hfunext rfl ?_
       intro b y hby
@@ -277,8 +278,7 @@ theorem mapBase_comp {Γ : P.A → Type w₂} {Δ : P.A → Type w₃} {Λ : P.A
         (fun a γ => gOver a (f a γ) ∘ fOver a γ) s d r)
   | .pure _, ⟨⟩, ⟨⟩ => HEq.rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨a, rRest⟩ => by
-      simp only [mapBase, baseLocalMap,
-        Displayed.Over.LocalMap.toHom_liftBind]
+      simp only [mapBase, baseLocalMap]
       refine Prod.mk_heq ?_
       refine Function.hfunext rfl ?_
       intro b y hby

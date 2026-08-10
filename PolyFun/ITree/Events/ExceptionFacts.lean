@@ -33,7 +33,7 @@ variable {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
       (pure (F := (ExceptE.{uε, uB} ε + E :
         PFunctor.{max uε uEA, uB})) r) =
       ⟨.pure (.ok r), PEmpty.elim⟩ := by
-    simp [interpExceptStep] <;> rfl
+    simp [interpExceptStep]
   apply PFunctor.M.eq_of_dest_eq
   rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
   change _ = shape' (pure (Except.ok r))
@@ -48,7 +48,7 @@ variable {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
     interpExcept (step t) = step (interpExcept t) := by
   have hstep : interpExceptStep (step t) =
       ⟨.step, fun _ => t⟩ := by
-    simp [interpExceptStep] <;> rfl
+    simp [interpExceptStep]
   apply PFunctor.M.eq_of_dest_eq
   rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
   change _ = shape' (step (interpExcept t))
@@ -61,7 +61,7 @@ variable {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
     interpExcept (query (.inl e) k) = pure (.error e) := by
   have hstep : interpExceptStep (query (.inl e) k) =
       ⟨.pure (.error e), PEmpty.elim⟩ := by
-    simp [interpExceptStep] <;> rfl
+    simp [interpExceptStep]; rfl
   apply PFunctor.M.eq_of_dest_eq
   rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
   change _ = shape' (pure (Except.error e))
@@ -77,7 +77,7 @@ variable {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
       query e (fun b => interpExcept (k b)) := by
   have hstep : interpExceptStep (query (.inr e) k) =
       ⟨.query e, k⟩ := by
-    simp [interpExceptStep] <;> rfl
+    simp [interpExceptStep]; rfl
   apply PFunctor.M.eq_of_dest_eq
   rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
   change _ = shape' (query e (fun b => interpExcept (k b)))

@@ -66,6 +66,7 @@ variable {P : PFunctor.{uA, uB}} {α : Type v}
 variable {Q : PFunctor.{uA₂, uB₂}}
 
 /-- Displayed algebra for canonical root-to-leaf paths. -/
+@[reducible]
 def Path.algebra (P : PFunctor.{uA, uB}) (α : Type v) :
     Displayed.Algebra.{uA, uB, v, uB+1} P α where
   leaf := fun _ => PUnit.{uB+1}
@@ -118,6 +119,7 @@ end Path
 This is the displayed family over the source control tree whose node directions
 come from the runtime polynomial `Q`. A runtime direction
 `d : Q.B (l.toFunA a)` selects the source branch `l.toFunB a d`. -/
+@[reducible]
 def PathAlong.algebra (l : Lens P Q) :
     Displayed.Algebra.{uA, uB, v, uB₂+1} P α where
   leaf := fun _ => PUnit.{uB₂+1}
@@ -302,7 +304,6 @@ theorem mapLensPathToPathAlong_toMapLensPath (l : Lens P Q) :
   | .liftBind a rest, ⟨d, path⟩ => by
       simp [pathAlongToMapLensPath, mapLensPathToPathAlong, -liftBind_eq,
         mapLensPathToPathAlong_toMapLensPath l (rest (l.toFunB a d)) path]
-      rfl
 
 @[simp]
 theorem pathAlongToMapLensPath_toPathAlong (l : Lens P Q) :
@@ -312,7 +313,6 @@ theorem pathAlongToMapLensPath_toPathAlong (l : Lens P Q) :
   | .liftBind a rest, ⟨d, path⟩ => by
       simp [pathAlongToMapLensPath, mapLensPathToPathAlong, -liftBind_eq,
         pathAlongToMapLensPath_toPathAlong l (rest (l.toFunB a d)) path]
-      rfl
 
 @[simp]
 theorem output_mapLens_pathAlongToMapLensPath (l : Lens P Q) :
@@ -389,6 +389,7 @@ theorem Path.pullMap_lift_bind {β : Type t} (f : α → β) (a : P.A)
   rfl
 
 /-- Dependent sequential composition for `FreeM` trees using canonical paths. -/
+@[reducible]
 def append {β : Type t} :
     (s₁ : FreeM P α) →
     (Path s₁ → FreeM P β) →

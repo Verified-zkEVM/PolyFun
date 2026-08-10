@@ -28,6 +28,14 @@ universe pA₁ pB₁ qA₁ qB₁ rA₁ rB₁
 namespace PFunctor
 namespace CofreeLaxMonoidalTest
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] PFunctor.X PFunctor.monomial PFunctor.tensor
+  Comonoid.unit Comonoid.tensor Comonoid.Hom.ofCategoryLaws CofreeP.comonoid
+  CofreeP.cogenerator Lens.tensorMap CofreeP.unfoldShape
+  CofreeP.unfoldRootDirection CofreeP.unfoldDirection CofreeP.unfoldLens
+  CofreeP.extend CofreeP.laxUnitHom CofreeP.laxUnit CofreeP.laxTensorHom
+  CofreeP.laxTensor
+
 /-! ## Universe and theorem-surface canaries -/
 
 /-- The unit comparison preserves the generator's independent position and
@@ -186,9 +194,9 @@ example :
           (Comonoid.tensor (CofreeP.comonoid leftP)
             (CofreeP.comonoid rightP))
           (leftTree, rightTree) := by
-      simpa [synchronizedTree] using
-        (CofreeP.laxTensorHom leftP rightP).map_identity
-          (leftTree, rightTree)
+      rw [← CofreeP.comonoid_identity]
+      exact (CofreeP.laxTensorHom leftP rightP).map_identity
+        (leftTree, rightTree)
     _ = (.root leftTree, .root rightTree) := rfl
 
 /-- One synchronized edge pulls back to the matching edge in each source

@@ -291,7 +291,7 @@ theorem depth_append {t : M P} (initial : Vertex t)
     depth (append initial suffix) = depth initial + depth suffix := by
   match initial with
   | .root _ =>
-      simp only [append_root, depth_root, Nat.zero_add]
+      simp only [depth_root, Nat.zero_add]
       rfl
   | .child direction next =>
       change depth (append next suffix) + 1 = depth next + 1 + depth suffix

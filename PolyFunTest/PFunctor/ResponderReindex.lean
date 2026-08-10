@@ -24,9 +24,15 @@ def Interface : PFunctor where
   A := Unit
   B := fun _ => Bool
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] Interface
+
 def contract : Display Interface where
   position _ := Bool
   direction _ expected answer := if expected = answer then Fin 2 else Fin 3
+
+set_option allowUnsafeReducibility true in
+attribute [local reducible] contract
 
 def directionVal (expected answer : Bool)
     (evidence : contract.direction () expected answer) : Nat := by
@@ -35,7 +41,7 @@ def directionVal (expected answer : Bool)
 
 def directionFromNat (expected answer : Bool) (value : Nat) :
     contract.direction () expected answer := by
-  simp only [contract]
+  simp only
   split
   · exact ⟨value % 2, Nat.mod_lt _ (by decide)⟩
   · exact ⟨value % 3, Nat.mod_lt _ (by decide)⟩

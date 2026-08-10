@@ -52,6 +52,11 @@ namespace UC
 
 open Concurrent
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] PFunctor.DynSystem.expose PFunctor.DynSystem.update
+  PFunctor.DynSystem.mk' Concurrent.ProcessOver.interleave OpenProcess.mapBoundary
+  OpenProcess.interleave
+
 section Model
 
 variable (Party : Type u)
@@ -648,7 +653,7 @@ theorem openTheory_par_left_unit_activation_equiv
     rw [isSilentStep_mapBoundary_iff] at hvisible
     match b with
     | true =>
-      exact absurd (by simp [IsSilentStep, ProcessOver.interleave,
+      exact absurd (by simp [IsSilentStep,
         IsSilentDecoration, schedulerNode,
         BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
     | false =>
@@ -708,7 +713,7 @@ theorem openTheory_par_right_unit_activation_equiv
       intro X ons
       simp [OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor]
     | false =>
-      exact absurd (by simp [IsSilentStep, ProcessOver.interleave,
+      exact absurd (by simp [IsSilentStep,
         IsSilentDecoration, schedulerNode,
         BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
   · intro tr₂ hsilent
@@ -766,7 +771,7 @@ theorem openTheory_wire_id_wire_activation_equiv
   · intro ⟨⟨b⟩, rest⟩ hvisible
     match b with
     | true =>
-      exact absurd (by simp [IsSilentStep, ProcessOver.interleave,
+      exact absurd (by simp [IsSilentStep,
         IsSilentDecoration, schedulerNode,
         BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
     | false =>
@@ -822,7 +827,7 @@ theorem openTheory_wire_id_wire_right_activation_equiv
       intro X ons
       simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
     | false =>
-      exact absurd (by simp [IsSilentStep, ProcessOver.interleave,
+      exact absurd (by simp [IsSilentStep,
         IsSilentDecoration, schedulerNode,
         BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
   · intro tr₂ hsilent

@@ -62,6 +62,7 @@ def toSpine : {program : FreeM P α} → {n : Nat} → (occ : Occurrence target 
   | _, _, .stepOther _ answer tail => .down answer tail.toSpine
 
 /-- Forget occurrence counting while retaining its typed structural prefix. -/
+@[reducible]
 def toCursor (occ : Occurrence target program n) : Cursor program :=
   ⟨FreeM.liftBind target occ.resume, occ.toSpine⟩
 
@@ -102,9 +103,8 @@ def plug (occ : Occurrence target program n) (answer : P.B target)
   | stepSame answer tail ih =>
       change occurrences target
         ((⟨target, answer⟩ : P.Idx) :: tail.before) = _
-      rw [occurrences, List.countP_cons_of_pos (by simp)]
-      change occurrences target tail.before + 1 = _
-      rw [ih]
+      simp only [occurrences, ih]
+      rw [if_pos trivial]
   | stepOther hne answer tail ih =>
       change occurrences target
         ((⟨_, answer⟩ : P.Idx) :: tail.before) = _

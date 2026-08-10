@@ -707,6 +707,10 @@ structure OpenProcess (m : Type w → Type w') (Party : Type u) (Δ : PortBounda
 
 namespace OpenProcess
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] PFunctor.FreeM.Displayed.Decoration.localMap
+  PFunctor.FreeM.Displayed.LocalMap.toHom PFunctor.FreeM.Displayed.LocalMap.toHomFun
+
 /-- Structural projection onto the underlying `ProcessOver`, dropping
 the per-state sampler. The closed-world `ProcessOver` lemmas from
 `Concurrent/Process.lean` apply through this projection. -/
@@ -844,11 +848,15 @@ theorem isSilentDecoration_iff_map {Party : Type u} {Δ₁ Δ₂ : PortBoundary}
     simp only [IsSilentDecoration, Decoration.map]
     constructor
     · rintro ⟨h1, h2⟩
+      change (f _ ons).boundary.isActivated = false at h1
       exact ⟨by rwa [hAct] at h1,
         (isSilentDecoration_iff_map f hAct (drest x) tr).mp h2⟩
     · rintro ⟨h1, h2⟩
-      exact ⟨by rwa [hAct],
-        (isSilentDecoration_iff_map f hAct (drest x) tr).mpr h2⟩
+      constructor
+      · change (f _ ons).boundary.isActivated = false
+        rwa [hAct]
+      · exact
+          (isSilentDecoration_iff_map f hAct (drest x) tr).mpr h2
 
 /-- `IsSilentStep` is invariant under `OpenProcess.mapBoundary`: remapping
 the boundary does not change which paths are silent, because all

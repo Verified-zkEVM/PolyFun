@@ -369,9 +369,9 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
           (congrFun childrenEq d)) innerLeft = innerRight := by
       rw [hAtDirection]
       rw [cast_comp_direction]
-      dsimp only [innerRight]
-      congr 1
-      · rw [cast_cast]
+      · dsimp only [innerRight]
+        congr 1
+        rw [cast_cast]
         exact cast_eq _ _
       · change leftTargets d = rightTargets d
         exact targetEq d

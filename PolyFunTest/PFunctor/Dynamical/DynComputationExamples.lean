@@ -219,8 +219,11 @@ example (f g : Nat → Nat) :
       emptyOfFn.contramapInput (f ∘ g) :=
   contramapInput_comp emptyOfFn f g
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] emptyOfFn ofFn mapResult in
 example : (emptyOfFn.mapResult (· % 2)).view (emptyOfFn.init 4) = Sum.inl 1 := by
   simp [emptyOfFn]
+  rfl
 
 example : (querying.mapResult (· + 1)).view (querying.init ()) =
     Sum.inr ⟨PUnit.unit, fun _ => querying.init ()⟩ := by
@@ -282,6 +285,10 @@ def branchMachine : DynComputation branchSource Unit Nat where
       | true => PEmpty.elim
   init := fun _ => false
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] PFunctor.monomial branchSource branchTarget branchFinal
+  branchLens branchLens₂ branchMachine wrap seqComp
+
 def handoffResult (answer : Bool) : Nat := if answer = true then 11 else 7
 
 /-- A second phase whose initial view is a branch-sensitive query. -/
@@ -300,6 +307,9 @@ def handoffSecond : DynComputation branchSource Bool Nat where
 
 def handoffFirst : DynComputation branchSource Unit Bool :=
   ofFn fun _ => true
+
+set_option allowUnsafeReducibility true in
+attribute [local reducible] handoffFirst handoffSecond
 
 /-- A returned intermediate value exposes the second phase's actual query in
 the same view, with its continuation tagged as phase two. -/
@@ -334,6 +344,9 @@ def answerFirst : DynComputation branchSource Unit Bool where
 
 def answerSecond : DynComputation branchSource Bool Nat :=
   ofFn fun answer => if answer then 1 else 2
+
+set_option allowUnsafeReducibility true in
+attribute [local reducible] answerFirst answerSecond
 
 /-- A first-phase answer stays tagged as phase one until its returned value is
 observed; the very next view is the corresponding second-phase initial view. -/
@@ -416,6 +429,9 @@ def sourceTree (trueResult : Nat) : Resumption lossySource Nat :=
 
 def sourceMachine (trueResult : Nat) : DynComputation lossySource Unit Nat :=
   ofResumption fun _ => sourceTree trueResult
+
+set_option allowUnsafeReducibility true in
+attribute [local reducible] PFunctor.X lossySource lossyLens sourceTree sourceMachine
 
 def observeTrueResult (tree : Resumption lossySource Nat) : Option Nat :=
   match Resumption.dest tree with

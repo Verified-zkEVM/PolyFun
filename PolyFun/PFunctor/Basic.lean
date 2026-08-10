@@ -68,8 +68,9 @@ def linear (A : Type uA) : PFunctor.{uA, uB} :=
   A X^ PUnit
 
 /-- The self monomial polynomial functor `P(X) = S X^ S` -/
+@[reducible]
 def selfMonomial (S : Type uA) : PFunctor.{uA, uA} :=
-  S X^ S
+  { A := S, B := fun _ => S }
 
 /-- The pure power polynomial functor `P(X) = X^ B` -/
 def purePower (B : Type uB) : PFunctor.{uA, uB} :=

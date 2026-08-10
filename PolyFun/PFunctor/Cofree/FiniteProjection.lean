@@ -33,6 +33,9 @@ universe uA uB u
 namespace PFunctor
 namespace CofreeP
 
+set_option allowUnsafeReducibility true in
+attribute [local reducible] M.Vertex.depth
+
 /-! ## Structural finite projections -/
 
 /-- The depth-`n` finite projection of a cofree polynomial tree.
@@ -41,6 +44,7 @@ At depth zero it keeps only the composition unit and pulls its unique
 direction back to the root.  At a successor depth it exposes the root layer
 and recursively projects each child subtree.  Consequently every composite
 direction pulls back to a vertex of exactly depth `n`. -/
+@[reducible]
 def projectionN (P : PFunctor.{uA, uB}) : (n : ℕ) →
     Lens (CofreeP P) (compNth P n)
   | 0 =>
@@ -87,16 +91,18 @@ theorem depth_projectionN_toFunB (P : PFunctor.{uA, uB}) :
         (compNth P n).B ((projectionN P n).toFunA tree)) →
       M.Vertex.depth ((projectionN P n).toFunB tree direction) = n
   | 0, tree, direction => by
-      simp only [projectionN_zero_toFunB, M.Vertex.depth_root]
+      rfl
   | n + 1, tree, direction => by
-      simp only [projectionN_succ_toFunB, M.Vertex.depth_child,
-        depth_projectionN_toFunB P n]
+      change M.Vertex.depth ((projectionN P n).toFunB
+        (M.children tree direction.1) direction.2) + 1 = n + 1
+      exact congrArg (fun depth => depth + 1)
+        (depth_projectionN_toFunB P n
+          (M.children tree direction.1) direction.2)
 
 /-! ## Low-depth coherence -/
 
 /-- In the homogeneous universe boundary, the zero-stage projection is the
 cofree counit. -/
-@[simp]
 theorem projectionN_zero (P : PFunctor.{u, u}) :
     projectionN P 0 = counit :=
   rfl

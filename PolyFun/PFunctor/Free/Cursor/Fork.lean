@@ -155,6 +155,7 @@ theorem locateAt?_completion_path [DecidableEq P.A]
   induction occ with
   | here next =>
       rcases completion with ⟨answer, suffix⟩
+      change Path (next answer) at suffix
       change locateAt? target (FreeM.liftBind target next)
           ⟨answer, suffix⟩ 0 = _
       rw [locateAt?_liftBind_same_zero]
@@ -198,6 +199,7 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
                 (⟨target, answer⟩ :: Path.trace (next answer) suffix)
             rw [locateAt?_liftBind_same_zero]
             simp [occurrences]
+            rfl
         | succ n =>
             change (locateAt? target (FreeM.liftBind target next)
               (⟨answer, suffix⟩ : Path (FreeM.liftBind target next)) (n + 1)).isSome ↔
