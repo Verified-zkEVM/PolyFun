@@ -130,7 +130,7 @@ theorem toTypeTree_then_zero_left {n : Nat} (c : Chain 0)
     toTypeTree (0 + n) (Chain.then c k) = toTypeTree n (k ⟨⟩) := by
   cases c
   rw [toTypeTree_then]
-  simp only [toTypeTree_zero]
+  rfl
 
 /-- An empty suffix is a right unit for `Chain.then` after flattening. -/
 theorem toTypeTree_then_zero_right {m : Nat} (c : Chain m)

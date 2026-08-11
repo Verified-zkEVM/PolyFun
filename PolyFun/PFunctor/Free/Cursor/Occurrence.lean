@@ -62,7 +62,7 @@ def toSpine : {program : FreeM P α} → {n : Nat} → (occ : Occurrence target 
   | _, _, .stepOther _ answer tail => .down answer tail.toSpine
 
 /-- Forget occurrence counting while retaining its typed structural prefix. -/
-@[reducible]
+@[implicit_reducible]
 def toCursor (occ : Occurrence target program n) : Cursor program :=
   ⟨FreeM.liftBind target occ.resume, occ.toSpine⟩
 
@@ -103,6 +103,9 @@ def plug (occ : Occurrence target program n) (answer : P.B target)
   | stepSame answer tail ih =>
       change occurrences target
         ((⟨target, answer⟩ : P.Idx) :: tail.before) = _
+      -- Lean 4.33: unfolding `occurrences` now exposes the `countP` `if`
+      -- directly, so the cons step is discharged by `if_pos` instead of
+      -- `List.countP_cons_of_pos`.
       simp only [occurrences, ih]
       rw [if_pos trivial]
   | stepOther hne answer tail ih =>

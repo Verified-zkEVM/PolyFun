@@ -45,7 +45,7 @@ theorem ext {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l₁ l�
   simpa using funext h₂
 
 /-- The identity lens -/
-@[reducible]
+@[implicit_reducible]
 protected def id (P : PFunctor.{uA, uB}) : Lens P P where
   toFunA := id
   toFunB := fun _ => id
@@ -299,7 +299,7 @@ def compMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFu
       ⟨pb, qc⟩)
 
 /-- Apply lenses to both sides of a tensor / parallel product: `l₁ ⊗ₗ l₂ : (P ⊗ Q ⇆ R ⊗ W)` -/
-@[reducible]
+@[implicit_reducible]
 def tensorMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     {W : PFunctor.{uA₄, uB₄}} (l₁ : Lens P R) (l₂ : Lens Q W) :
     Lens.{max uA₁ uA₂, max uB₁ uB₂, max uA₃ uA₄, max uB₃ uB₄} (P ⊗ Q) (R ⊗ W) :=

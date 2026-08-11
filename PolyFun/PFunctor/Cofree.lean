@@ -89,8 +89,7 @@ theorem dest_extend_eq {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β
 
 @[simp] theorem head_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     head (extend t f) = f t := by
-  unfold head
-  rw [dest_extend_eq]
+  simp [head, extendF]
 
 @[simp] theorem tail_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     tail (extend t f) = F.map (fun x => extend x f) (tail t) := by
@@ -108,8 +107,7 @@ instance : Comonad (CofreeC F) where
   have h_corec : h = M.corec (F := constProd F α) M.dest := by
     apply M.corec_unique (P := constProd F α) (g := M.dest) (f := h)
     intro x
-    simp only [dest_extend, h]
-    rfl
+    simp only [dest_extend, extendF_extract, h]
   have hid_corec : (id : CofreeC F α → CofreeC F α) = M.corec (F := constProd F α) M.dest := by
     apply M.corec_unique (P := constProd F α) (g := M.dest) (f := id)
     intro x

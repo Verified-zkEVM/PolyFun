@@ -58,8 +58,13 @@ namespace PFunctor
 
 namespace CartesianClosed
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the exponential-adjunction equations below rewrite through the cartesian
+product and exponential constructions there. `implicit_reducible` (unlike
+`reducible`) keeps them opaque to simp and typeclass resolution, and needs
+no `allowUnsafeReducibility`. -/
 attribute [local implicit_reducible] PFunctor.monomial PFunctor.X PFunctor.prod
-  PFunctor.pi PFunctor.exp PFunctor.comp
+  PFunctor.instHMulPFunctor PFunctor.instMulPFunctor PFunctor.pi PFunctor.exp PFunctor.comp
 
 /-- The evaluation lens `exp r q * q ⇆ r`, the counit of the cartesian
 exponential adjunction (Spivak–Niu Example 5.32).
@@ -111,18 +116,17 @@ theorem uncurry_curry {p q r : PFunctor.{uA, uB}} (l : Lens (p * q) r) :
     intro a
     obtain ⟨pa, qa⟩ := a
     funext d
-    change r.B (l.toFunA (pa, qa)) at d
     dsimp only [uncurry, eval, curry, Lens.comp, Lens.prodMap, Lens.piForall, Lens.id,
-      Function.comp_apply, id_eq] at d ⊢
+      Function.comp, Function.comp_apply, id_eq] at d ⊢
     split <;> rename_i heq
-    · simp only [Sum.elim_inl, Function.comp_apply]
+    · simp only [Sum.elim_inl, Function.comp]
       split <;> rename_i heq2
       · exact heq2.symm
       · rw [heq2] at heq; simp at heq
-    · simp only [Sum.elim_inr, Function.comp_apply, id_eq]
+    · simp only [Sum.elim_inr, Function.comp, id_eq]
       cases hs : l.toFunB (pa, qa) d with
       | inl pb => rw [hs] at heq; simp at heq
-      | inr qb' => rw [hs] at heq; simp_all
+      | inr qb' => rw [hs] at heq; simp_all; rfl
 
 /-- Position-level reverse round-trip: `curry (uncurry g)` and `g` agree on
 positions. This is the position component of the adjunction unit-counit identity
@@ -131,7 +135,7 @@ theorem curry_uncurry_toFunA {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) 
     (curry (uncurry g)).toFunA = g.toFunA := by
   funext pa a
   dsimp only [curry, uncurry, eval, Lens.comp, Lens.prodMap, Lens.piForall, Lens.id,
-    Function.comp_apply, id_eq]
+    Function.comp, Function.comp_apply, id_eq]
   refine Sigma.ext rfl (heq_of_eq ?_)
   funext d
   dsimp only
@@ -187,6 +191,10 @@ uncurried lens recovers the original lens. -/
 @[simp, grind =]
 theorem curry_uncurry {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) :
     curry (uncurry g) = g := by
+  -- Lean 4.33: the original transport through `transported_dependent_apply`
+  -- leaves a final goal that is no longer type-correct at implicit
+  -- transparency, defeating `grind`; the round-trip is instead established
+  -- componentwise through heterogeneous extensionality.
   apply Lens.ext_heq
   · exact curry_uncurry_toFunA g
   · apply Function.hfunext rfl
@@ -213,9 +221,9 @@ theorem curry_uncurry {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) :
       split <;> rename_i value hh
       · have hpb : value = pb := Sum.inl.inj (hh.symm.trans hs)
         dsimp only [uncurry, eval, Lens.comp, Lens.prodMap, Lens.id,
-          Function.comp_apply, id_eq] at hs
+          Function.comp, Function.comp_apply, id_eq] at hs
         split at hs <;> rename_i heval
-        · simp only [Sum.elim_inl, Function.comp_apply] at hs
+        · simp only [Sum.elim_inl] at hs
           have hp := Sum.inl.inj hs
           apply heq_of_eq
           rw [hpb, ← hp]
@@ -231,7 +239,7 @@ theorem curry_uncurry {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) :
           let e : (X + C (q.B iNew)).B ((g.toFunA pa iNew).2 dOld) ≃ PUnit :=
             _root_.Equiv.cast (congrArg (X + C (q.B iNew)).B heval)
           exact heq_of_eq (e.injective (Subsingleton.elim _ _))
-        · simp only [Sum.elim_inr, Function.comp_apply, id_eq] at hs
+        · simp only [Sum.elim_inr] at hs
           contradiction
       · cases hh.symm.trans hs
     | inr qi =>

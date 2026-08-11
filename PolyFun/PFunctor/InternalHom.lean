@@ -124,6 +124,11 @@ add). The target is therefore the categorical product `*`, not the tensor `⊗`:
 the tensor combines directions multiplicatively and does not match the
 coproduct-shaped fibers here. -/
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the coproduct-splitting equations below rewrite lenses stored as `ihom`
+positions, so `ihom` must unfold there for the rewrites to type-check. -/
+attribute [local implicit_reducible] ihom
+
 /-- The positions of `[q₁ + q₂, r]` split as a product: a lens `q₁ + q₂ ⇆ r` is
 exactly a pair of lenses `(q₁ ⇆ r, q₂ ⇆ r)`, by the universal property of the
 coproduct. This is the position component of `ihomSum`, and equally identifies
@@ -136,7 +141,7 @@ def ihomSumAEquiv (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
   left_inv f := Lens.comp_inl_inr f
   right_inv p := by
     obtain ⟨a, b⟩ := p
-    exact congrArg₂ Prod.mk (Lens.sumPair_comp_inl a b) (Lens.sumPair_comp_inr a b)
+    simp only [Lens.sumPair_comp_inl, Lens.sumPair_comp_inr]
 
 /-- The position bijection together with the fiber splitting, packaged as a
 `PFunctor.Equiv`: over a lens `f : q₁ + q₂ ⇆ r` the sigma of `r`-directions over

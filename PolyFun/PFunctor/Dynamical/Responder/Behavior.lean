@@ -1044,7 +1044,9 @@ theorem reindexDisplayedBehavior_comp
         have hCompositeToM' :=
           (Display.M.toM_transport (S := Display.responder S) _ _).symm.trans hCompositeToM
         change (respondDisplayed S composite query precondition).2.toM = _
-        simpa only [Display.Handler.comp_apply, Handler.comp_apply,
+        -- Lean 4.33: `Display.Handler.comp` is only `implicit_reducible`, so
+        -- its unfolding is spelled out for `simp` here.
+        simpa only [Display.Handler.comp, Display.Handler.comp_apply, Handler.comp_apply,
           compositeResult, compositeEvidence, composite, terminalR, terminalD]
           using hCompositeToM'
   · exact ⟨behavior, displayedBehavior, rfl, rfl⟩
