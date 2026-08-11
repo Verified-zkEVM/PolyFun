@@ -48,6 +48,11 @@ universe uA uB uC uD uE uE' uE'' uF uG uH
 namespace PFunctor
 namespace Display
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+transporting displayed trees along `FreeM.bind_pure` / `FreeM.bind_assoc`
+needs `FreeM.bind` and `FreeM.map` to unfold there. -/
+attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.map
+
 variable {P : PFunctor.{uA, uB}}
 
 /-- Embed a one-step polynomial display into the generic displayed algebra over

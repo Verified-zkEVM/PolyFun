@@ -315,16 +315,12 @@ theorem unroll_eq_map_some_of_resolvesIn {M : DynComputation.{u} p α β} :
       ∃ program : FreeM p β, M.unroll k state = FreeM.map some program
   | 0, state, h => by
       obtain ⟨value, hview⟩ := (M.resolvesIn_zero state).mp h
-      exact ⟨FreeM.pure value, by
-        rw [unroll_return M 0 state value hview, ← FreeM.bind_pure_comp]
-        exact (FreeM.pure_bind value (FreeM.pure ∘ some)).symm⟩
+      exact ⟨FreeM.pure value, by rw [unroll_return M 0 state value hview]; rfl⟩
   | k + 1, state, h => by
       cases hview : M.view state with
       | inl value =>
           exact ⟨FreeM.pure value,
-            by rw [unroll_return M (k + 1) state value hview,
-              ← FreeM.bind_pure_comp]
-               exact (FreeM.pure_bind value (FreeM.pure ∘ some)).symm⟩
+            by rw [unroll_return M (k + 1) state value hview]; rfl⟩
       | inr query =>
           rcases query with ⟨position, next⟩
           have hnext : ∀ direction, M.ResolvesIn k (next direction) :=
@@ -645,8 +641,7 @@ theorem unroll_seqComp_inl_of_resolvesIn {γ : Type uγ}
       simp only [Nat.zero_add]
       rw [unroll_seqComp_inl_of_return M₁ M₂ k₂ state₁ value hview,
         M₁.unroll_return 0 state₁ value hview]
-      symm
-      apply FreeM.pure_bind
+      rfl
   | succ k₁ ih =>
       cases hview : M₁.view state₁ with
       | inl value =>

@@ -27,6 +27,11 @@ attribute [local implicit_reducible] PFunctor.Obj
 
 open PFunctor.TraceList
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+rewriting `locateAt?` goals whose `Path` indices sit over `FreeM.liftBind`
+trees needs `FreeM.bind` and `FreeM.map` to unfold there. -/
+attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.map
+
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
 /-! ## Locating an occurrence on an existing path -/
