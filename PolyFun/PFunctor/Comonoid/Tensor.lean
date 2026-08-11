@@ -42,6 +42,7 @@ namespace Comonoid
 /-- The composition unit `X` as a composition comonoid.  Its counit and
 comultiplication are the canonical maps between universe-instantiated copies
 of `X`; all of its arrows are the unique unit arrow. -/
+@[reducible]
 def unit : Comonoid.{uA, uB} where
   carrier := X
   counit := Lens.unitComparison
@@ -127,6 +128,7 @@ private theorem tensorComult_assoc_right_factor (C : Comonoid.{uA₁, uB₁})
 /-- The tensor product of two comonoids in `(Poly, ◃, y)`.  The construction
 is heterogeneous in both input universe pairs and lands at their componentwise
 maximum. -/
+@[reducible]
 def tensor (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
     Comonoid.{max uA₁ uA₂, max uB₁ uB₂} where
   carrier := C.carrier ⊗ D.carrier

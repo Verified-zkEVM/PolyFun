@@ -21,6 +21,8 @@ universe uA uB uA₂ uB₂ uA₃ uB₃
 namespace PFunctor
 namespace CofreePolynomialTest
 
+attribute [local implicit_reducible] M.Vertex.append M.Vertex.subtree M.children
+
 /-- A binary signature whose positions and directions are both bits. -/
 abbrev binaryP : PFunctor := ⟨Bool, fun _ => Bool⟩
 

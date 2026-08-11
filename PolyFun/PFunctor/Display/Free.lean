@@ -6,6 +6,8 @@ Authors: Quang Dao
 
 module
 
+import all PolyFun.PFunctor.Display.Basic
+import all PolyFun.PFunctor.Free.Displayed
 public import PolyFun.PFunctor.Display.Basic
 public import PolyFun.PFunctor.Free.Displayed
 
@@ -38,6 +40,8 @@ a duplicate spelling of the existing displayed-family definitions.
 -/
 
 @[expose] public section
+
+attribute [local implicit_reducible] PFunctor.Obj
 
 universe uA uB uC uD uE uE' uE'' uF uG uH
 
@@ -235,9 +239,6 @@ theorem bind_leaf (S : Display.{uA, uB, uC, uD} P)
       rcases d with ⟨c, children⟩
       simp only [FreeM.pure_bind] at children
       simp only [bind_liftBind]
-      rw [S.transport_proof_irrel F
-        (FreeM.bind_pure ((FreeM.lift a).bind rest))
-        (bind_pure_eq ((FreeM.lift a).bind rest))]
       change S.transport F (bind_pure_eq (FreeM.liftBind a rest))
           ⟨c, fun b e =>
             S.bind (rest b) (children b e) FreeM.pure fun x dx =>
@@ -256,8 +257,7 @@ theorem bind_leaf (S : Display.{uA, uB, uC, uD} P)
           (fun b e =>
             S.bind (rest b) (children b e) FreeM.pure fun x dx =>
               S.leaf F x dx) using 1
-        all_goals simp [FreeM.liftBind_eq]
-        all_goals congr
+        rfl
       rw [htransport]
       congr
       funext b e
@@ -311,8 +311,7 @@ theorem bind_assoc (S : Display.{uA, uB, uC, uD} P)
           (fun b e =>
             S.bind ((rest b).bind g)
               (S.bind (rest b) (children b e) g dg) h dh) using 1
-        all_goals simp [FreeM.liftBind_eq]
-        all_goals congr
+        rfl
       rw [htransport]
       congr
       funext b e

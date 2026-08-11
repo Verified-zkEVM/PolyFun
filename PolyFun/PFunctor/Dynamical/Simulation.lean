@@ -99,21 +99,27 @@ theorem isSimulation_graph_coalgHom {S₂' : Type u₁}
     {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂' p} :
     letI := D₁.coalg
     letI := D₂.coalg
-    ∀ f : Coalg.Hom p.Obj S₁ S₂', IsSimulation D₁ D₂ (fun st₁ st₂ => f st₁ = st₂) := by
-  letI := D₁.coalg
-  letI := D₂.coalg
-  exact fun f => isSimulation_graph f fun st => (congrFun f.comm st).symm
+    ∀ f : @Coalg.Hom p.Obj (PFunctor.instFunctorObj p) S₁ S₂' D₁.coalg D₂.coalg,
+      IsSimulation D₁ D₂ (fun st₁ st₂ => f st₁ = st₂) := by
+  let functor : Functor p.Obj := PFunctor.instFunctorObj p
+  exact fun f =>
+    let toFun := @Coalg.Hom.toFun p.Obj functor S₁ S₂' D₁.coalg D₂.coalg f
+    let comm := @Coalg.Hom.comm p.Obj functor S₁ S₂' D₁.coalg D₂.coalg f
+    isSimulation_graph toFun fun st => (congrFun comm st).symm
 
 /-- Coalgebra morphisms preserve behaviour trees. -/
 theorem behavior_coalgHom {S₂' : Type u₁}
     {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂' p} :
     letI := D₁.coalg
     letI := D₂.coalg
-    ∀ f : Coalg.Hom p.Obj S₁ S₂', ∀ st : S₁, D₂.behavior (f st) = D₁.behavior st := by
-  letI := D₁.coalg
-  letI := D₂.coalg
+    ∀ f : @Coalg.Hom p.Obj (PFunctor.instFunctorObj p) S₁ S₂' D₁.coalg D₂.coalg,
+      ∀ st : S₁, D₂.behavior (f st) = D₁.behavior st := by
+  let functor : Functor p.Obj := PFunctor.instFunctorObj p
   exact fun f st =>
-    (behavior_eq_of_isSimulation (isSimulation_graph_coalgHom f) rfl).symm
+    let toFun := @Coalg.Hom.toFun p.Obj functor S₁ S₂' D₁.coalg D₂.coalg f
+    let comm := @Coalg.Hom.comm p.Obj functor S₁ S₂' D₁.coalg D₂.coalg f
+    (behavior_eq_of_isSimulation
+      (isSimulation_graph toFun fun state => (congrFun comm state).symm) rfl).symm
 
 end DynSystem
 

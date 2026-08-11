@@ -38,6 +38,8 @@ universe u u' uA uA' uA'' uA''' uC uD uC' uD' uC'' uD'' uC''' uD'''
 namespace PFunctor
 namespace Handler
 
+attribute [local implicit_reducible] PFunctor.Obj FreeP.substMonoid
+
 /-- Package a free handler as the corresponding lens into the free
 polynomial.  The forward map is the erased program shape and the backward map
 reads the label at the selected complete path. -/

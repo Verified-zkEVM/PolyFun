@@ -12,18 +12,31 @@ public import PolyFun.PFunctor.Trace
 
 @[expose] public section
 
-universe uA uB v
+universe uA uB v w
 
 namespace PFunctor.PredicateExamples
 
+attribute [local implicit_reducible] PFunctor.Idx
+
 variable {P : PFunctor.{uA, uB}} {α : Type v}
+
+/-- Polynomial object application retains its canonical functor instance. -/
+example : Functor P.Obj := inferInstance
+
+/-- Trace lists retain the cancellation structure of the free monoid. -/
+example : CancelMonoid (TraceList P) := inferInstance
+
+/-- Trace lists expose the free-monoid universal property. -/
+example {ω : Type w} [Monoid ω] :
+    (P.Idx → ω) ≃ (TraceList P →* ω) :=
+  FreeMonoid.lift
 
 /-- The trace predicate accepts genuinely dependent direction fibers without
 requiring decidable equality on positions. -/
 example (allowed : (a : P.A) → Set (P.B a)) (a : P.A) (b : P.B a) (tail : TraceList P) :
     TraceList.DirectionsWithin allowed (⟨a, b⟩ :: tail) ↔
       b ∈ allowed a ∧ TraceList.DirectionsWithin allowed tail := by
-  simp
+  exact TraceList.directionsWithin_cons allowed ⟨a, b⟩ tail
 
 /-- Root satisfaction distinguishes leaves from exposed positions. -/
 example (positionPred : P.A → Prop) (leafPred : α → Prop) (result : α) :

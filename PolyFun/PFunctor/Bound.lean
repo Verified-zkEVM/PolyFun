@@ -100,7 +100,20 @@ private lemma isRollBound_congr_aux
     (hcan : ∀ (a : P.A) (b : B), canRoll₁ a b ↔ canRoll₂ a b)
     (hcost : ∀ (a : P.A) (b : B), cost₁ a b = cost₂ a b) :
     ∀ {b : B}, oa.IsRollBound b canRoll₁ cost₁ ↔ oa.IsRollBound b canRoll₂ cost₂ := by
-  induction oa using FreeM.induction <;> intro b <;> grind
+  induction oa using FreeM.induction with
+  | pure _ => intro; simp only [isRollBound_pure]
+  | lift_bind a cont ih =>
+      intro b
+      rw [isRollBound_lift_bind_iff, isRollBound_lift_bind_iff]
+      constructor
+      · rintro ⟨ha, hcont⟩
+        refine ⟨(hcan a b).mp ha, fun y => ?_⟩
+        rw [← hcost a b]
+        exact (ih y).mp (hcont y)
+      · rintro ⟨ha, hcont⟩
+        refine ⟨(hcan a b).mpr ha, fun y => ?_⟩
+        rw [hcost a b]
+        exact (ih y).mpr (hcont y)
 
 lemma isRollBound_congr
     {oa : FreeM P α} {b : B}

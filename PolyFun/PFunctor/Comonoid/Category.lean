@@ -5,6 +5,7 @@ Authors: Quang Dao
 -/
 module
 
+import all PolyFun.PFunctor.Comonoid
 public import PolyFun.PFunctor.Comonoid
 
 /-!
@@ -154,6 +155,7 @@ def compose (c : C.carrier.A) (d : C.carrier.B c)
     compose (stateComonoid S) state first second = second :=
   rfl
 
+@[reducible]
 private def normalizedComult : Lens C.carrier (C.carrier ◃ C.carrier) where
   toFunA c := ⟨c, target C c⟩
   toFunB c direction := compose C c direction.1 direction.2
@@ -366,17 +368,13 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
         cast (congrArg (C.carrier ◃ C.carrier).B
           (congrFun childrenEq d)) innerLeft = innerRight := by
       rw [hAtDirection]
-      calc
-        _ =
-            (⟨e, cast (congrArg C.carrier.B
-              (congrFun (targetEq d) e)) innerLeft.2⟩ :
-              (C.carrier ◃ C.carrier).B (rightChildren d)) :=
-          cast_comp_direction
-            (P := C.carrier) (Q := C.carrier)
-            (target C c d) (targetEq d) e innerLeft.2
-        _ = innerRight := by
-          rw [hAtTarget]
-          simp [innerLeft, innerRight]
+      rw [cast_comp_direction]
+      · dsimp only [innerRight]
+        congr 1
+        rw [cast_cast]
+        exact cast_eq _ _
+      · change leftTargets d = rightTargets d
+        exact targetEq d
     calc
       _ =
           (⟨d, cast (congrArg (C.carrier ◃ C.carrier).B

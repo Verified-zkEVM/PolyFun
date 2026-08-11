@@ -50,6 +50,7 @@ Concretely, for each event name `a : E.A` we choose an interaction tree of
 type `ITree F (E.B a)` returning the answer expected by the source signature.
 
 This is the Lean version of Coq's `Handler E F := E ~> itree F`. -/
+@[reducible]
 def Handler (E : PFunctor.{uEA, uEB}) (F : PFunctor.{uFA, uFB}) :
     Type (max uEA uEB uFA uFB) :=
   ∀ a : E.A, ITree F (E.B a)
@@ -61,6 +62,7 @@ variable {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
 
 /-- The trivial handler that interprets each `E`-event as itself, i.e. the
 single-step `lift` from `PolyFun.ITree.Basic`. -/
+@[reducible]
 def id (E : PFunctor.{uEA, uEB}) : Handler E E :=
   fun a => lift a
 

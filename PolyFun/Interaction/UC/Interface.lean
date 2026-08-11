@@ -750,7 +750,7 @@ Swap the direction of a boundary.
 This is the structural operation underlying plugging:
 the outputs expected by one side become inputs for the other, and vice versa.
 -/
-@[expose]
+@[expose, reducible]
 def swap (Δ : PortBoundary) : PortBoundary :=
   ⟨Δ.Out, Δ.In⟩
 
@@ -760,7 +760,7 @@ Side-by-side composition of open boundaries.
 Inputs and outputs are combined by disjoint sum, so the resulting boundary
 exposes both components in parallel.
 -/
-@[expose]
+@[expose, reducible]
 def tensor (Δ₁ Δ₂ : PortBoundary) : PortBoundary :=
   ⟨Interface.sum Δ₁.In Δ₂.In, Interface.sum Δ₁.Out Δ₂.Out⟩
 
@@ -863,7 +863,6 @@ theorem tensor_id {Δ₁ Δ₂ : PortBoundary} :
   cases Δ₁
   cases Δ₂
   simp [tensor, id, Interface.Hom.sum_id]
-  constructor <;> rfl
 
 theorem tensor_comp {Δ₁ Δ₂ Δ₃ Δ₄ Δ₁' Δ₂' : PortBoundary} (g₁ : Hom Δ₁' Δ₃) (f₁ : Hom Δ₁ Δ₁')
     (g₂ : Hom Δ₂' Δ₄) (f₂ : Hom Δ₂ Δ₂') :
@@ -873,7 +872,6 @@ theorem tensor_comp {Δ₁ Δ₂ Δ₃ Δ₄ Δ₁' Δ₂' : PortBoundary} (g₁
   cases g₁
   cases g₂
   simp only [tensor, comp, Interface.Hom.sum_comp]
-  rfl
 
 @[simp]
 theorem swap_id {Δ : PortBoundary} : swap (id Δ) = id (PortBoundary.swap Δ) := by

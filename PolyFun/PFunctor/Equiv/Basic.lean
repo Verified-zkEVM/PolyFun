@@ -167,9 +167,7 @@ def sumProdDistrib (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₁}) (
   equivB := fun
     | ⟨.inl _, _⟩ | ⟨.inr _, _⟩ => _root_.Equiv.refl _
 
-/-- Product distributes over sum: `P * (Q + R) ≃ₚ (P * Q) + (P * R)`
-
-TODO: define in terms of `sumProdDistrib` -/
+/-- Product distributes over sum: `P * (Q + R) ≃ₚ (P * Q) + (P * R)` -/
 @[simps]
 def prodSumDistrib (R : PFunctor.{uA₃, uB₂}) :
     (P * (Q + R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) ≃ₚ
@@ -414,8 +412,6 @@ def uliftUliftEquiv : P.ulift.ulift ≃ₚ P.ulift :=
     }
   }
 
--- TODO: find better ways to annotate universe levels
-
 /-- Universe lifting commutes with sum -/
 def uliftSumEquiv (Q : PFunctor.{uA₂, uB₁}) :
     (PFunctor.ulift.{_, _, u, v} (P + Q : PFunctor.{max uA₁ uA₂, uB₁})) ≃ₚ
@@ -628,7 +624,16 @@ def compAssoc : (P ◃ Q) ◃ R ≃ₚ P ◃ (Q ◃ R) where
       rintro ⟨⟨pa, qf⟩, rf⟩
       simp [comp]
     right_inv := by
-      rintro ⟨pa, g⟩; simp [comp]
+      rintro ⟨pa, g⟩
+      simp only [comp]
+      apply Sigma.ext rfl
+      apply heq_of_eq
+      funext pb
+      rcases g pb with ⟨qa, qf⟩
+      apply Sigma.ext rfl
+      apply heq_of_eq
+      funext qb
+      rfl
   }
   equivB := fun ⟨⟨pa, qf⟩, rf⟩ =>
     _root_.Equiv.sigmaAssoc (fun pb qb => R.B (rf ⟨pb, qb⟩))

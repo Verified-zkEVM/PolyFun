@@ -726,11 +726,13 @@ theorem reindexDisplayedBehavior_id
           (Handler.id P) (Display.Handler.id S) current displayed
           query precondition
         have hToM := congrArg IPFunctor.IM.toM hNext
+        have hToM' :=
+          (Display.M.toM_transport (S := Display.responder S) _ _).symm.trans hToM
         unfold leftChildren
         rw [hDirection_rfl]
         change
           (respondDisplayed S reindexed query precondition).2.toM = _
-        simpa only [Display.M.toM_transport] using hToM
+        simpa only [reindexed, result, displayedResult] using hToM'
       · have hObligation := reindexCoalgebra_id_obligation S
           (Responder.terminal (P := P))
           (Display.Coalgebra.terminal (Display.responder S))
@@ -1020,11 +1022,13 @@ theorem reindexDisplayedBehavior_comp
         have hOuterNext := respondDisplayed_reindexDisplayedBehavior_next S T first dfirst
           (reindexBehavior second current) middle query precondition
         have hOuterToM := congrArg IPFunctor.IM.toM hOuterNext
+        have hOuterToM' :=
+          (Display.M.toM_transport (S := Display.responder S) _ _).symm.trans hOuterToM
         calc
           (respondDisplayed S sequential query precondition).2.toM =
               (reindexDisplayedBehavior S T first dfirst
                 outerResult.2 outerEvidence.2).toM := by
-            simpa only [Display.M.toM_transport] using hOuterToM
+            simpa only [sequential, outerResult, outerEvidence] using hOuterToM'
           _ = (reindexDisplayedBehavior S T first dfirst
                 (reindexBehavior second stateRun.2)
                 (reindexDisplayedBehavior T U second dsecond
@@ -1037,9 +1041,12 @@ theorem reindexDisplayedBehavior_comp
           (second.comp first) (dsecond.comp dfirst)
           current displayed query precondition
         have hCompositeToM := congrArg IPFunctor.IM.toM hCompositeNext
+        have hCompositeToM' :=
+          (Display.M.toM_transport (S := Display.responder S) _ _).symm.trans hCompositeToM
         change (respondDisplayed S composite query precondition).2.toM = _
-        simpa [Display.M.toM_transport, compositeResult, compositeEvidence,
-          composite, terminalR, terminalD] using hCompositeToM
+        simpa only [Display.Handler.comp_apply, Handler.comp_apply,
+          compositeResult, compositeEvidence, composite, terminalR, terminalD]
+          using hCompositeToM'
   · exact ⟨behavior, displayedBehavior, rfl, rfl⟩
 
 end Responder

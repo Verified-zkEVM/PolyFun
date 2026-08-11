@@ -263,7 +263,7 @@ theorem withMonads_constant_eq_map
   | .done, _ => rfl
   | .node _ rest, ⟨role, rRest⟩ => by
       simp only [RoleDecoration.withMonads, RoleDecoration.monadsOver,
-        TypeTree.MonadDecoration.constant, MonadDecoration.constant,
+        MonadDecoration.constant,
         Decoration.ofOver]
       change
         (⟨⟨role, bm⟩,

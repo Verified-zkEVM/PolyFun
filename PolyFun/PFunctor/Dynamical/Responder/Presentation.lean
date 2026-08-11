@@ -96,8 +96,7 @@ theorem toM_toDisplayedBehavior_eq_corec
     (toDisplayedBehavior S R I displayedR state witness).toM =
       PFunctor.M.corec (displayedTotalStep S R I displayedR)
         ⟨state, witness⟩ := by
-  simp only [toDisplayedBehavior, Display.Coalgebra.toM, Display.M.corec,
-    IPFunctor.IM.toM_corec]
+  simp only [toDisplayedBehavior, Display.Coalgebra.toM, Display.M.corec]
   let presentedTotalStep := IPFunctor.IM.totalStep
     (fun tree state =>
       (Display.M.stepEquiv (Display.Coalgebra.Presented R I) tree).symm

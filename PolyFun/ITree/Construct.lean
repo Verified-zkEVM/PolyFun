@@ -52,9 +52,11 @@ def diverge : ITree F α :=
 
 @[simp] theorem shape'_diverge :
     shape' (diverge (F := F) (α := α)) = ⟨.step, fun _ => diverge⟩ := by
-  unfold shape' diverge
-  rw [PFunctor.M.dest_corec_eq _ _ rfl]
-  rfl
+  let g : PUnit.{uB + 1} → (Poly F α) PUnit.{uB + 1} :=
+    fun _ => ⟨.step, fun _ => PUnit.unit⟩
+  change PFunctor.M.dest (PFunctor.M.corec g PUnit.unit) =
+    ⟨.step, fun _ => PFunctor.M.corec g PUnit.unit⟩
+  rw [PFunctor.M.dest_corec_apply]
 
 @[simp] theorem shape_diverge :
     shape (diverge (F := F) (α := α)) = .step := by

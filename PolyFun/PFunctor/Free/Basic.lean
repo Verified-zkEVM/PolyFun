@@ -109,6 +109,7 @@ polynomial `Q` is the concrete/runtime interface. At each `P`-node, the lens
 chooses a `Q`-position by `toFunA`; when runtime supplies a `Q`-direction,
 `toFunB` maps it back to the corresponding `P`-direction selecting the
 control continuation. -/
+@[reducible]
 protected def mapLens (l : Lens P Q) : FreeM P α → FreeM Q α
   | .pure x => .pure x
   | .liftBind a rest => .liftBind (l.toFunA a) fun d =>

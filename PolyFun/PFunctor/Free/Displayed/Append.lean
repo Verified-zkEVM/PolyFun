@@ -32,6 +32,7 @@ namespace Decoration
 variable {P : PFunctor.{u, v}} {α : Type w} {β : Type w₄}
 
 /-- Concatenate per-node metadata along `FreeM.append`. -/
+@[reducible]
 def append {Γ : P.A → Type w₂}
     {s₁ : FreeM P α} {s₂ : Path s₁ → FreeM P β}
     (d₁ : Decoration Γ s₁)
@@ -50,7 +51,7 @@ theorem append_pure {Γ : P.A → Type w₂} (x : α)
     append d₁ d₂ = d₂ ⟨⟩ :=
   rfl
 
-@[simp, freeM_unfold]
+@[freeM_unfold]
 theorem append_liftBind {Γ : P.A → Type w₂} (a : P.A) (rest : P.B a → FreeM P α)
     (d₁ : Decoration Γ (FreeM.liftBind a rest))
     (s₂ : Path (FreeM.liftBind a rest) → FreeM P β)
@@ -63,6 +64,7 @@ namespace Over
 
 /-- Concatenate dependent over-decorations along `FreeM.append`, over an
 appended base decoration. -/
+@[reducible]
 def append {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Type w₃}
     {s₁ : FreeM P α} {s₂ : Path s₁ → FreeM P β}
     {d₁ : Decoration Γ s₁}
@@ -88,7 +90,7 @@ theorem append_pure {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Type w�
       r₁ r₂ = r₂ ⟨⟩ :=
   rfl
 
-@[simp, freeM_unfold]
+@[freeM_unfold]
 theorem append_liftBind {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Type w₃}
     (a : P.A) (rest : P.B a → FreeM P α)
     (d₁ : Decoration Γ (FreeM.liftBind a rest))
@@ -117,9 +119,15 @@ theorem map_append {Γ : P.A → Type w₂}
         (fun path₁ => Decoration.Over.map η (s₂ path₁) (d₂ path₁) (r₂ path₁))
   | .pure _, _, _, _, _, _ => rfl
   | .liftBind a rest, s₂, ⟨γ, dRest⟩, d₂, ⟨fd, rRest⟩, r₂ => by
-      simp only [FreeM.liftBind_eq, FreeM.append_liftBind, Decoration.Over.append,
-        Decoration.Over.map, Decoration.Over.fiberLocalMap,
-        Displayed.Over.FiberLocalMap.toHom_liftBind]
+      change
+        (η a γ fd, fun b => Decoration.Over.map η
+          (FreeM.append (rest b) (fun path => s₂ ⟨b, path⟩))
+          (Decoration.append (dRest b) (fun path => d₂ ⟨b, path⟩))
+          (Decoration.Over.append (rRest b) (fun path => r₂ ⟨b, path⟩))) =
+        (η a γ fd, fun b => Decoration.Over.append
+          (Decoration.Over.map η (rest b) (dRest b) (rRest b))
+          (fun path => Decoration.Over.map η (s₂ ⟨b, path⟩)
+            (d₂ ⟨b, path⟩) (r₂ ⟨b, path⟩)))
       congr 1; funext b
       exact map_append η (rest b) (fun path => s₂ ⟨b, path⟩)
         (dRest b) (fun path => d₂ ⟨b, path⟩) (rRest b)
@@ -138,8 +146,13 @@ theorem map_append {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
         (fun path₁ => Decoration.map f (s₂ path₁) (d₂ path₁))
   | .pure _, _, _, _ => rfl
   | .liftBind a rest, s₂, ⟨γ, dRest⟩, d₂ => by
-      simp only [FreeM.liftBind_eq, FreeM.append_liftBind, Decoration.append, Decoration.map,
-        Decoration.localMap, Displayed.LocalMap.toHom_liftBind]
+      change
+        (f a γ, fun b => Decoration.map f
+          (FreeM.append (rest b) (fun path => s₂ ⟨b, path⟩))
+          (Decoration.append (dRest b) (fun path => d₂ ⟨b, path⟩))) =
+        (f a γ, fun b => Decoration.append
+          (Decoration.map f (rest b) (dRest b))
+          (fun path => Decoration.map f (s₂ ⟨b, path⟩) (d₂ ⟨b, path⟩)))
       congr 1; funext b
       exact map_append f (rest b) (fun path => s₂ ⟨b, path⟩)
         (dRest b) (fun path => d₂ ⟨b, path⟩)

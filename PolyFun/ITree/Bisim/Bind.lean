@@ -107,16 +107,19 @@ theorem bind_pure_right (t : ITree F α) :
                 fun _ => Or.inl rfl⟩
         unfold bindStep
         simp only [hdest]
+        rfl
     | query a =>
         refine ⟨.query a, fun b => Sum.inl (c b), c, ?_, rfl,
                 fun _ => Or.inl rfl⟩
         unfold bindStep
         simp only [hdest]
+        rfl
   · rcases h : PFunctor.M.dest u with ⟨sh, c⟩
     have hdest : PFunctor.M.dest u = ⟨sh, c⟩ := h
     refine ⟨sh, fun b => Sum.inr (c b), c, ?_, rfl, fun _ => Or.inr rfl⟩
     unfold bindStep
     simp only [hdest]
+    rfl
 
 /-- Compute one `M.dest` step of `bind` whose head is a step. -/
 theorem dest_bind_step (k : α → ITree F β) (t : ITree F α)
@@ -501,9 +504,10 @@ theorem iter_bind (body : β → ITree F (β ⊕ α)) (k : α → ITree F γ) (i
           fun _ => PFunctor.M.corec (iterStep newBody)
             (bind (c PUnit.unit) wrapper),
           ?_, ?_, fun _ => Or.inl ⟨c PUnit.unit, rfl, rfl⟩⟩
-        · rw [bind, PFunctor.M.dest_corec_apply, bindStep_inl,
-              PFunctor.M.dest_corec_apply, iterStep, h]
-          rfl
+        · have hL : PFunctor.M.dest (PFunctor.M.corec (iterStep body) t) =
+              ⟨.step, fun _ => PFunctor.M.corec (iterStep body) (c PUnit.unit)⟩ := by
+            rw [PFunctor.M.dest_corec_apply, iterStep, h]
+          exact dest_bind_step k _ _ hL
         · have hdest_bind : PFunctor.M.dest (bind t wrapper) =
               ⟨.step, fun _ => bind (c PUnit.unit) wrapper⟩ := dest_bind_step wrapper t c h
           rw [PFunctor.M.dest_corec_apply, iterStep, hdest_bind]
@@ -512,9 +516,10 @@ theorem iter_bind (body : β → ITree F (β ⊕ α)) (k : α → ITree F γ) (i
           fun b => bind (PFunctor.M.corec (iterStep body) (c b)) k,
           fun b => PFunctor.M.corec (iterStep newBody) (bind (c b) wrapper),
           ?_, ?_, fun b => Or.inl ⟨c b, rfl, rfl⟩⟩
-        · rw [bind, PFunctor.M.dest_corec_apply, bindStep_inl,
-              PFunctor.M.dest_corec_apply, iterStep, h]
-          rfl
+        · have hL : PFunctor.M.dest (PFunctor.M.corec (iterStep body) t) =
+              ⟨.query a, fun b => PFunctor.M.corec (iterStep body) (c b)⟩ := by
+            rw [PFunctor.M.dest_corec_apply, iterStep, h]
+          exact dest_bind_query k _ a _ hL
         · have hdest_bind : PFunctor.M.dest (bind t wrapper) =
               ⟨.query a, fun b => bind (c b) wrapper⟩ := dest_bind_query wrapper t a c h
           rw [PFunctor.M.dest_corec_apply, iterStep, hdest_bind]

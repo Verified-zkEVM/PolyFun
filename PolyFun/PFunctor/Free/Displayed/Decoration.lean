@@ -52,6 +52,7 @@ namespace Displayed
 variable {P : PFunctor.{u, v}} {α : Type w}
 
 /-- Displayed algebra for node-local metadata over a polynomial tree. -/
+@[reducible]
 def Decoration.algebra (Γ : P.A → Type w₂) :
     Displayed.Algebra P α where
   leaf := fun _ => PUnit.{max v w₂ + 1}
@@ -72,6 +73,7 @@ Dependent displayed algebra over a polynomial decoration.
 At a node with base metadata `γ : Γ a`, the over-layer stores data in
 `F a γ` and recursively stores over-data over each decorated child.
 -/
+@[reducible]
 def Decoration.Over.algebra (Γ : P.A → Type w₂) (F : (a : P.A) → Γ a → Type w₃) :
     Over.Algebra (Decoration.algebra (P := P) (α := α) Γ) where
   leaf := fun _ _ => PUnit.{max v w₃ + 1}
@@ -144,7 +146,7 @@ theorem map_id {Γ : P.A → Type w₂} :
     map (fun _ γ => γ) s d = d
   | .pure _, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩ => by
-      simp only [FreeM.liftBind_eq, map_liftBind]
+      change (γ, fun b => map (fun _ γ => γ) (rest b) (dRest b)) = (γ, dRest)
       congr 1
       funext b
       exact map_id (rest b) (dRest b)
@@ -155,7 +157,8 @@ theorem map_comp {Γ : P.A → Type w₂} {Δ : P.A → Type w₃} {Λ : P.A →
     map g s (map f s d) = map (fun a => g a ∘ f a) s d
   | .pure _, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩ => by
-      simp only [FreeM.liftBind_eq, map_liftBind]
+      change (g _ (f _ γ), fun b => map g (rest b) (map f (rest b) (dRest b))) =
+        ((g _ ∘ f _) γ, fun b => map (fun a => g a ∘ f a) (rest b) (dRest b))
       congr 1
       funext b
       exact map_comp g f (rest b) (dRest b)
@@ -190,8 +193,8 @@ theorem map_id {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Type w₃} :
     map (fun _ _ x => x) s d r = r
   | .pure _, ⟨⟩, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨fd, rRest⟩ => by
-      simp only [FreeM.liftBind_eq, map, fiberLocalMap,
-        Displayed.Over.FiberLocalMap.toHom_liftBind]
+      change (fd, fun b => map (fun _ _ x => x) (rest b) (dRest b) (rRest b)) =
+        (fd, rRest)
       congr 1
       funext b
       exact map_id (rest b) (dRest b) (rRest b)
@@ -207,8 +210,10 @@ theorem map_comp {Γ : P.A → Type w₂}
       map (fun a γ => g a γ ∘ f a γ) s d r
   | .pure _, ⟨⟩, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨fd, rRest⟩ => by
-      simp only [FreeM.liftBind_eq, map, fiberLocalMap,
-        Displayed.Over.FiberLocalMap.toHom_liftBind]
+      change (g _ _ (f _ _ fd), fun b =>
+          map g (rest b) (dRest b) (map f (rest b) (dRest b) (rRest b))) =
+        ((g _ _ ∘ f _ _) fd, fun b =>
+          map (fun a γ => g a γ ∘ f a γ) (rest b) (dRest b) (rRest b))
       congr 1
       funext b
       exact map_comp g f (rest b) (dRest b) (rRest b)
@@ -249,8 +254,7 @@ theorem mapBase_id {Γ : P.A → Type w₂} {A : (a : P.A) → Γ a → Type w�
     HEq (mapBase (fun _ γ => γ) (fun _ _ x => x) s d r) r
   | .pure _, ⟨⟩, ⟨⟩ => HEq.rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨a, rRest⟩ => by
-      simp only [FreeM.liftBind_eq, mapBase, baseLocalMap,
-        Displayed.Over.LocalMap.toHom_liftBind]
+      simp only [mapBase, baseLocalMap]
       refine Prod.mk_heq ?_
       refine Function.hfunext rfl ?_
       intro b y hby
@@ -274,8 +278,7 @@ theorem mapBase_comp {Γ : P.A → Type w₂} {Δ : P.A → Type w₃} {Λ : P.A
         (fun a γ => gOver a (f a γ) ∘ fOver a γ) s d r)
   | .pure _, ⟨⟩, ⟨⟩ => HEq.rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨a, rRest⟩ => by
-      simp only [FreeM.liftBind_eq, mapBase, baseLocalMap,
-        Displayed.Over.LocalMap.toHom_liftBind]
+      simp only [mapBase, baseLocalMap]
       refine Prod.mk_heq ?_
       refine Function.hfunext rfl ?_
       intro b y hby
