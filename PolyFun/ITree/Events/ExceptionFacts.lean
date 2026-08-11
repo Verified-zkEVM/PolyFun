@@ -5,7 +5,6 @@ Authors: Quang Dao
 -/
 module
 
-import all PolyFun.ITree.Events.Exception
 public import PolyFun.ITree.Events.Exception
 public import PolyFun.ITree.Bisim.Bind
 
@@ -26,6 +25,13 @@ namespace ITree
 
 variable {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the proofs below need `(ExceptE ε + E).B (.inl e)` to unfold to `PEmpty`
+there, which goes through the sum functor's `Sum.elim` child family.
+`implicit_reducible` restores that without touching simp or typeclass
+resolution. -/
+attribute [local implicit_reducible] Sum.elim
+
 @[simp] theorem interpExcept_pure (r : α) :
     interpExcept (ε := ε) (E := E)
       (pure (F := (ExceptE.{uε, uB} ε + E :
@@ -38,8 +44,8 @@ variable {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
     simp [interpExceptStep]
   apply PFunctor.M.eq_of_dest_eq
   rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
-  change _ = shape' (pure (Except.ok r))
-  rw [shape'_pure]
+  unfold ITree.pure
+  rw [PFunctor.M.dest_mk]
   congr 1
   funext b
   exact b.elim
@@ -53,8 +59,8 @@ variable {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
     simp [interpExceptStep]
   apply PFunctor.M.eq_of_dest_eq
   rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
-  change _ = shape' (step (interpExcept t))
-  rw [shape'_step]
+  unfold ITree.step
+  rw [PFunctor.M.dest_mk]
   rfl
 
 @[simp] theorem interpExcept_throw (e : ε)
@@ -63,11 +69,11 @@ variable {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
     interpExcept (query (.inl e) k) = pure (.error e) := by
   have hstep : interpExceptStep (query (.inl e) k) =
       ⟨.pure (.error e), PEmpty.elim⟩ := by
-    simp [interpExceptStep]; rfl
+    simp [interpExceptStep]
   apply PFunctor.M.eq_of_dest_eq
   rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
-  change _ = shape' (pure (Except.error e))
-  rw [shape'_pure]
+  unfold ITree.pure
+  rw [PFunctor.M.dest_mk]
   congr 1
   funext b
   exact b.elim
@@ -79,11 +85,11 @@ variable {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
       query e (fun b => interpExcept (k b)) := by
   have hstep : interpExceptStep (query (.inr e) k) =
       ⟨.query e, k⟩ := by
-    simp [interpExceptStep]; rfl
+    simp [interpExceptStep]
   apply PFunctor.M.eq_of_dest_eq
   rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
-  change _ = shape' (query e (fun b => interpExcept (k b)))
-  rw [shape'_query]
+  unfold ITree.query
+  rw [PFunctor.M.dest_mk]
   rfl
 
 /-- Exception interpretation is the canonical exception-transformer monad
@@ -125,7 +131,8 @@ theorem interpExcept_bind
           congr 1
           funext z
           exact z.elim
-        rw [ht, bind_pure_left, interpExcept_pure, bind_pure_left]
+        subst ht
+        rw [bind_pure_left, interpExcept_pure, bind_pure_left]
         rcases hk : PFunctor.M.dest (interpExcept (k r)) with ⟨sh', c'⟩
         exact ⟨sh', c', c', rfl, rfl, fun _ => Or.inl rfl⟩
     | step =>
@@ -133,7 +140,8 @@ theorem interpExcept_bind
           apply PFunctor.M.eq_of_dest_eq
           rw [h]
           rfl
-        rw [ht, bind_step, interpExcept_step, interpExcept_step, bind_step]
+        subst ht
+        rw [bind_step, interpExcept_step, interpExcept_step, bind_step]
         exact ⟨.step,
           fun _ => interpExcept (bind (c PUnit.unit) k),
           fun _ => bind (interpExcept (c PUnit.unit)) next,
@@ -142,44 +150,36 @@ theorem interpExcept_bind
     | query event =>
         cases event with
         | inl e =>
+            change PEmpty.{uB + 1} → ITree
+              (ExceptE.{uε, uB} ε + E :
+                PFunctor.{max uε uEA, uB}) α at c
             have ht : t = query
                 (Sum.inl e : (ExceptE.{uε, uB} ε + E :
                   PFunctor.{max uε uEA, uB}).A) c := by
               apply PFunctor.M.eq_of_dest_eq
               rw [h]
               rfl
-            rw [ht, bind_query]
-            have hleft : interpExcept (query
-                (Sum.inl e : (ExceptE.{uε, uB} ε + E :
-                  PFunctor.{max uε uEA, uB}).A) (fun b => bind (c b) k)) =
-                pure (Except.error e) := interpExcept_throw e _
-            have hright : interpExcept (query
-                (Sum.inl e : (ExceptE.{uε, uB} ε + E :
-                  PFunctor.{max uε uEA, uB}).A) c) =
-                pure (Except.error e) := interpExcept_throw e c
-            rw [hleft, hright, bind_pure_left]
+            subst ht
+            clear h
+            rw [bind_query, interpExcept_throw,
+              interpExcept_throw, bind_pure_left]
             rcases hp : PFunctor.M.dest
                 (pure (F := E) (Except.error e : Except ε β)) with ⟨sh', c'⟩
             exact ⟨sh', c', c', rfl, rfl, fun _ => Or.inl rfl⟩
         | inr e =>
+            change E.B e → ITree
+              (ExceptE.{uε, uB} ε + E :
+                PFunctor.{max uε uEA, uB}) α at c
             have ht : t = query
                 (Sum.inr e : (ExceptE.{uε, uB} ε + E :
                   PFunctor.{max uε uEA, uB}).A) c := by
               apply PFunctor.M.eq_of_dest_eq
               rw [h]
               rfl
-            rw [ht, bind_query]
-            have hleft : interpExcept (query
-                (Sum.inr e : (ExceptE.{uε, uB} ε + E :
-                  PFunctor.{max uε uEA, uB}).A) (fun b => bind (c b) k)) =
-                query e (fun b => interpExcept (bind (c b) k)) :=
-              interpExcept_query_external e _
-            have hright : interpExcept (query
-                (Sum.inr e : (ExceptE.{uε, uB} ε + E :
-                  PFunctor.{max uε uEA, uB}).A) c) =
-                query e (fun b => interpExcept (c b)) :=
-              interpExcept_query_external e c
-            rw [hleft, hright, bind_query]
+            subst ht
+            clear h
+            rw [bind_query, interpExcept_query_external,
+              interpExcept_query_external, bind_query]
             exact ⟨.query e,
               fun b => interpExcept (bind (c b) k),
               fun b => bind (interpExcept (c b)) next,

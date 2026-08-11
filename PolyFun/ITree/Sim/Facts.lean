@@ -5,7 +5,6 @@ Authors: Quang Dao
 -/
 module
 
-import all PolyFun.ITree.Sim.Defs
 public import PolyFun.ITree.Sim.Defs
 public import PolyFun.ITree.Bisim.Bind
 
