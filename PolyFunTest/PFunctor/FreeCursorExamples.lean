@@ -16,9 +16,10 @@ universe uA uB v
 namespace PFunctor.FreeM.CursorExamples
 
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the cursor examples below unfold these constants there. -/
+the cursor examples below unfold these constants there, and the trace
+examples cross the `TraceList` carrier (reducibly `FreeMonoid (Idx _)`). -/
 attribute [local implicit_reducible] FreeM.Cursor.plug FreeM.Cursor.trace
-  FreeM.Path.trace
+  FreeM.Path.trace FreeMonoid PFunctor.Idx
 
 /-- Cursor construction keeps all three relevant universes independent. -/
 example {P : PFunctor.{uA, uB}} {α : Type v} (program : FreeM P α) :

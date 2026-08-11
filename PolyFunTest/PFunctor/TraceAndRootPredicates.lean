@@ -38,7 +38,7 @@ requiring decidable equality on positions. -/
 example (allowed : (a : P.A) → Set (P.B a)) (a : P.A) (b : P.B a) (tail : TraceList P) :
     TraceList.DirectionsWithin allowed (⟨a, b⟩ :: tail) ↔
       b ∈ allowed a ∧ TraceList.DirectionsWithin allowed tail := by
-  exact TraceList.directionsWithin_cons allowed ⟨a, b⟩ tail
+  simp
 
 /-- Root satisfaction distinguishes leaves from exposed positions. -/
 example (positionPred : P.A → Prop) (leafPred : α → Prop) (result : α) :

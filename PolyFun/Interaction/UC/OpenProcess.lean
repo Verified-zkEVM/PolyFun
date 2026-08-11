@@ -106,6 +106,13 @@ structure BoundaryAction (Δ : PortBoundary) (X : Type w) where
 
 namespace BoundaryAction
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the wiring lemmas below rewrite `List.filterMap` chains over `TraceList`
+carriers (reducibly `FreeMonoid (Idx _)`) there. `implicit_reducible` (unlike
+`reducible`) stays invisible to simp and instance search, and needs no
+`allowUnsafeReducibility`. -/
+attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
+
 /--
 A purely internal node: not externally activated and no outbound packets.
 -/

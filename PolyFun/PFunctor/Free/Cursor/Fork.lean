@@ -29,8 +29,11 @@ open PFunctor.TraceList
 
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
 rewriting `locateAt?` goals whose `Path` indices sit over `FreeM.liftBind`
-trees needs `FreeM.bind` and `FreeM.map` to unfold there. -/
+trees needs `FreeM.bind` and `FreeM.map` to unfold there, and the
+occurrence-counting goals rewrite `List.countP` over `Idx`-typed events
+inside the `TraceList` carrier (reducibly `FreeMonoid (Idx _)`). -/
 attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.map
+  FreeMonoid PFunctor.Idx
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
