@@ -33,6 +33,7 @@ namespace ITree
 family is `throw e` for `e : ε`; the answer type `PEmpty` reflects the fact
 that a thrown exception never returns. The error, empty-answer, and eventual
 computation-result universes are independent. -/
+@[reducible]
 def ExceptE (ε : Type uε) : PFunctor.{uε, uB} where
   A := ε
   B _ := PEmpty.{uB + 1}

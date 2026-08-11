@@ -15,6 +15,9 @@ universe uA uB v
 
 namespace PFunctor.FreeM.CursorExamples
 
+attribute [local implicit_reducible] FreeM.Cursor.plug FreeM.Cursor.trace
+  FreeM.Path.trace
+
 /-- Cursor construction keeps all three relevant universes independent. -/
 example {P : PFunctor.{uA, uB}} {α : Type v} (program : FreeM P α) :
     Cursor program :=
@@ -71,6 +74,9 @@ def unitEdge : Cursor.Edge afterIndexCursor.residual :=
 def trueLeaf : Cursor program :=
   afterIndexCursor.comp unitEdge.toCursor
 
+attribute [local implicit_reducible] Interface Answer afterIndex afterChoice program internal
+  indexEdge afterIndexCursor unitEdge trueLeaf
+
 example : trueLeaf.residual = FreeM.pure 11 := rfl
 
 example : trueLeaf.length = 3 := rfl
@@ -91,8 +97,7 @@ example : internal.plug (⟨selectedIndex, PUnit.unit, ⟨⟩⟩ : Path internal
 example : Path.trace program truePath = trueLeaf.trace := by
   change Path.trace program
       (trueLeaf.plug (⟨⟩ : Path trueLeaf.residual)) = trueLeaf.trace
-  rw [Cursor.trace_plug]
-  rfl
+  exact (Cursor.trace_plug trueLeaf (⟨⟩ : Path trueLeaf.residual)).trans (by rfl)
 
 example : FreeM.map (output program) (withPath program) = program :=
   map_output_withPath program
@@ -111,15 +116,18 @@ example : falseTerminal.output = 7 := rfl
 
 example : trueTerminal.output ≠ falseTerminal.output := by decide
 
-example : Cursor.pathOfTerminal trueTerminal = truePath := by simp [trueTerminal]
+example : Cursor.pathOfTerminal trueTerminal = truePath :=
+  Cursor.pathOfTerminal_terminalOfPath program truePath
 
-example : Cursor.pathOfTerminal falseTerminal = falsePath := by simp [falseTerminal]
+example : Cursor.pathOfTerminal falseTerminal = falsePath :=
+  Cursor.pathOfTerminal_terminalOfPath program falsePath
 
 example : Cursor.terminalOfPath program (Cursor.pathOfTerminal trueTerminal) =
-    trueTerminal := by simp
+    trueTerminal := Cursor.terminalOfPath_pathOfTerminal trueTerminal
 
 example : Cursor.terminalEquivPath program trueTerminal = truePath := by
-  simp [Cursor.terminalEquivPath, trueTerminal]
+  change Cursor.pathOfTerminal trueTerminal = truePath
+  exact Cursor.pathOfTerminal_terminalOfPath program truePath
 
 /-! The producer tests below name the public algebraic laws explicitly, so
 their availability and simp orientation remain part of the regression surface. -/
@@ -142,6 +150,7 @@ example : trueLeaf.trace =
     List.append (List.append internal.trace indexEdge.toCursor.trace)
       unitEdge.toCursor.trace := by
   simp only [trueLeaf, afterIndexCursor, Cursor.trace_comp]
+  rfl
 
 example (path : Path unitEdge.residual) :
     (afterIndexCursor.comp unitEdge.toCursor).plug path =

@@ -35,15 +35,14 @@ theorem Role.swap_swap (r : Role) : r.swap.swap = r := by cases r <;> rfl
 
 @[simp, grind =]
 theorem RoleDecoration.swap_swap : (spec : TypeTree) → (roles : RoleDecoration spec) →
-    roles.swap.swap = roles
-  | .done, _ => rfl
-  | .node _ rest, ⟨r, rRest⟩ => by
-      simp only [RoleDecoration.swap, PFunctor.FreeM.liftBind_eq]
-      rw [PFunctor.FreeM.Displayed.Decoration.map_liftBind,
-        PFunctor.FreeM.Displayed.Decoration.map_liftBind]
-      simp only [Role.swap_swap]
-      congr 1; funext x
-      exact RoleDecoration.swap_swap (rest x) (rRest x)
+    roles.swap.swap = roles := by
+  intro spec roles
+  unfold RoleDecoration.swap
+  rw [PFunctor.FreeM.Displayed.Decoration.map_comp]
+  rw [show (fun _ => Role.swap ∘ Role.swap) = (fun _ r => r) by
+    funext _ r
+    exact Role.swap_swap r]
+  exact PFunctor.FreeM.Displayed.Decoration.map_id spec roles
 
 /-- Swapping commutes with appended role decorations. -/
 theorem RoleDecoration.swap_append {s₁ : TypeTree.{u}} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree.{u}}

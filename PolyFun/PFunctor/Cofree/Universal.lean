@@ -26,6 +26,8 @@ the common-maximum universe boundary currently required by `Comonoid.Hom`.
 
 @[expose] public section
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 universe uA uB uA₂ uB₂ uCA uCB
 
 namespace PFunctor
@@ -43,11 +45,13 @@ def cogenerator (P : PFunctor.{uA, uB}) : Lens (CofreeP P) P where
   toFunB tree direction :=
     .child direction (.root (M.children tree direction))
 
-@[simp]
+attribute [local implicit_reducible] cogenerator comonoid Comonoid.identity Comonoid.target
+  Comonoid.compose Lens.comp M.head M.children M.mapLens M.Vertex.subtree M.Vertex.append
+  M.Vertex.castEquiv M.Vertex.pullMapLens
+
 theorem cogenerator_toFunA (tree : M P) : (cogenerator P).toFunA tree = M.head tree :=
   rfl
 
-@[simp]
 theorem cogenerator_toFunB (tree : M P)
     (direction : P.B ((cogenerator P).toFunA tree)) :
     (cogenerator P).toFunB tree direction =
@@ -56,7 +60,6 @@ theorem cogenerator_toFunB (tree : M P)
 
 /-- The cofree generator projection is natural with respect to a generating
 lens, across independent source and target generator universes. -/
-@[simp]
 theorem cogenerator_comp_map {Q : PFunctor.{uA₂, uB₂}}
     (lens : Lens P Q) :
     cogenerator Q ∘ₗ map lens = lens ∘ₗ cogenerator P := by
@@ -78,20 +81,19 @@ theorem cogenerator_comp_map {Q : PFunctor.{uA₂, uB₂}}
     .child (lens.toFunB (M.head tree) direction)
       (.root (M.children tree
         (lens.toFunB (M.head tree) direction)))
-  rw [M.Vertex.pullMapLens_child,
-    M.Vertex.cast_root (M.children_mapLens lens tree direction),
-    M.Vertex.pullMapLens_root]
-  rfl
+  with_unfolding_all
+    rw [M.Vertex.pullMapLens_child,
+      M.Vertex.cast_root (M.children_mapLens lens tree direction),
+      M.Vertex.pullMapLens_root]
+    rfl
 
 /-! ## The outgoing category of the cofree comonoid -/
 
 /-- The categorical identity of a cofree tree is its root vertex. -/
-@[simp]
 theorem comonoid_identity (tree : M P) : Comonoid.identity (comonoid P) tree = .root tree :=
   rfl
 
 /-- The categorical target of a cofree vertex is its selected subtree. -/
-@[simp]
 theorem comonoid_target (tree : M P) (vertex : M.Vertex tree) :
     Comonoid.target (comonoid P) tree vertex =
       M.Vertex.subtree vertex :=
@@ -99,7 +101,6 @@ theorem comonoid_target (tree : M P) (vertex : M.Vertex tree) :
 
 /-- Categorical composition in the cofree comonoid is finite-vertex
 concatenation, in outer-then-inner path order. -/
-@[simp]
 theorem comonoid_compose (tree : M P) (first : M.Vertex tree)
     (second : M.Vertex (M.Vertex.subtree first)) :
     Comonoid.compose (comonoid P) tree first second =
@@ -110,6 +111,7 @@ variable (C : Comonoid.{uCA, uCB})
 
 /-- The cofree tree generated from an object of `C` by repeatedly applying
 the chosen generator lens. -/
+@[reducible]
 def unfoldShape (lens : Lens C.carrier P) (object : C.carrier.A) : M P :=
   M.corec
     (fun current =>
@@ -140,6 +142,7 @@ theorem head_unfoldShape (lens : Lens C.carrier P) (object : C.carrier.A) :
 
 /-- Pull a root direction of a coiterated tree back to the corresponding
 outgoing arrow of `C`. -/
+@[reducible]
 def unfoldRootDirection (lens : Lens C.carrier P)
     (object : C.carrier.A)
     (direction : P.B (M.head (unfoldShape C lens object))) :
@@ -169,6 +172,7 @@ theorem children_unfoldShape (lens : Lens C.carrier P)
 
 /-- Pull a finite vertex of a coiterated tree back to the composite outgoing
 arrow of `C` represented by that path. -/
+@[reducible]
 def unfoldDirection (lens : Lens C.carrier P) :
     (object : C.carrier.A) →
       M.Vertex (unfoldShape C lens object) → C.carrier.B object
@@ -348,7 +352,6 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
             Comonoid.compose C object (Comonoid.identity C object)
               (unfoldDirection C lens identityTarget canonicalVertex) :=
         compose_heq C object (heq_of_eq hdirection) htail
-      simp only [M.Vertex.append_root]
       exact (hcompose.trans (by
         rw [hcanonical]
         exact Comonoid.identity_compose C object
@@ -417,7 +420,7 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
                   (Comonoid.target C object first)
                   (M.Vertex.castEquiv childEq
                     (M.Vertex.append next suffix))) := by
-            rw [M.Vertex.append_child, unfoldDirection_child]
+            with_unfolding_all rw [M.Vertex.append_child, unfoldDirection_child]
           _ = Comonoid.compose C object first
                 (Comonoid.compose C (Comonoid.target C object first) rest
                   (unfoldDirection C lens final finalVertex)) := by
@@ -467,6 +470,7 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
       _ < M.Vertex.depth (.child direction next) := Nat.lt_succ_self _
 
 /-- The carrier lens obtained by coiteration. -/
+@[reducible]
 def unfoldLens (lens : Lens C.carrier P) :
     Lens C.carrier (CofreeP P) where
   toFunA := unfoldShape C lens
@@ -532,7 +536,6 @@ theorem extend_toLens
   rfl
 
 /-- Coiteration is split by the one-layer cogenerator. -/
-@[simp]
 theorem cogenerator_comp_unfoldLens (lens : Lens C.carrier P) :
     cogenerator P ∘ₗ unfoldLens C lens = lens := by
   let hA : ∀ object,
@@ -551,11 +554,12 @@ theorem cogenerator_comp_unfoldLens (lens : Lens C.carrier P) :
       (.child direction
         (.root (M.children (unfoldShape C lens object) direction))) =
     lens.toFunB object direction
-  rw [unfoldDirection_child,
-    M.Vertex.cast_root (children_unfoldShape C lens object direction),
-    unfoldDirection_root,
-    Comonoid.compose_identity_right]
-  rfl
+  with_unfolding_all
+    rw [unfoldDirection_child,
+      M.Vertex.cast_root (children_unfoldShape C lens object direction),
+      unfoldDirection_root,
+      Comonoid.compose_identity_right]
+    rfl
 
 /-- Restricting a cofree extension recovers its generator lens. -/
 @[simp]
@@ -577,11 +581,12 @@ private theorem hom_target_oneLayer
               (.root (M.children
                 (hom.toLens.toFunA object) direction))))) =
       M.children (hom.toLens.toFunA object) direction := by
-  simpa only [comonoid_target, M.Vertex.subtree_child,
-    M.Vertex.subtree_root] using
-    hom.map_target object
-      (.child direction
-        (.root (M.children (hom.toLens.toFunA object) direction)))
+  with_unfolding_all
+    simpa only [comonoid_target, M.Vertex.subtree_child,
+      M.Vertex.subtree_root] using
+      hom.map_target object
+        (.child direction
+          (.root (M.children (hom.toLens.toFunA object) direction)))
 
 /-- The object map of a retrofunctor into the cofree comonoid is the
 coiteration of its restriction to one-layer generators. -/
@@ -649,8 +654,9 @@ private theorem unfoldDirection_restrict
           unfoldDirection_root C (restrict C hom) object
         _ = hom.toLens.toFunB object
               (.root (hom.toLens.toFunA object)) := by
-          simpa only [comonoid_identity] using
-            (hom.map_identity object).symm
+          with_unfolding_all
+            simpa only [comonoid_identity] using
+              (hom.map_identity object).symm
         _ = hom.toLens.toFunB object
               (M.Vertex.castEquiv
                 (unfoldShape_restrict C hom object)
@@ -716,8 +722,9 @@ private theorem unfoldDirection_restrict
                 (hom.toLens.toFunB
                   (Comonoid.target C object
                     (hom.toLens.toFunB object firstVertex)) rawNext) := by
-          simpa only [comonoid_compose, rawNext] using
-            hom.map_compose object firstVertex mappedNext
+          with_unfolding_all
+            simpa only [comonoid_compose, rawNext] using
+              hom.map_compose object firstVertex mappedNext
         have hrawVertices : rawNext ≍ homNext :=
           (cast_heq _ mappedNext).trans (cast_heq _ mappedNext).symm
         have hrawDirections :
@@ -731,7 +738,7 @@ private theorem unfoldDirection_restrict
       have hmappedVertex :
           M.Vertex.castEquiv shapeEq (.child direction next) =
             M.Vertex.append firstVertex mappedNext := by
-        rw [M.Vertex.cast_child]
+        with_unfolding_all rw [M.Vertex.cast_child]
         rfl
       calc
         unfoldDirection C (restrict C hom) object
@@ -823,7 +830,7 @@ theorem homEquiv_naturality_right
       lens ∘ₗ homEquiv (P := P) C hom := by
   change cogenerator Q ∘ₗ (map lens ∘ₗ hom.toLens) =
     lens ∘ₗ (cogenerator P ∘ₗ hom.toLens)
-  rw [← Lens.comp_assoc, cogenerator_comp_map, Lens.comp_assoc]
+  with_unfolding_all rw [← Lens.comp_assoc, cogenerator_comp_map, Lens.comp_assoc]
 
 end CofreeP
 end PFunctor

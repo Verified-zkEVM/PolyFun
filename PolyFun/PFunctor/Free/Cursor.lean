@@ -22,6 +22,8 @@ attach protocol-specific meaning to the visited prefix.
 
 @[expose] public section
 
+attribute [local implicit_reducible] PFunctor.Obj FreeMonoid
+
 universe uA uB v
 
 namespace PFunctor.FreeM
@@ -424,7 +426,7 @@ theorem trace_eq (extension : Extends earlier later) :
     later.trace = List.append earlier.trace extension.continuation.trace :=
   calc
     later.trace = (earlier.comp extension.continuation).trace :=
-      congrArg trace extension.comp_eq.symm
+      congrArg Cursor.trace extension.comp_eq.symm
     _ = List.append earlier.trace extension.continuation.trace :=
       trace_comp earlier extension.continuation
 

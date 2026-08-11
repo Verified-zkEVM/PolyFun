@@ -61,10 +61,6 @@ def toITree (computation : Resumption p β) : ITree p β :=
       unfold toITreeStep
       rw [h]
     rw [M.dest_corec_eq toITreeStep computation hstep]
-    apply Sigma.ext
-    · rfl
-    · apply heq_of_eq
-      rfl
 
 @[simp] theorem toITree_pure (value : β) :
     toITree (pure (p := p) value) = ITree.pure value := by
@@ -78,6 +74,7 @@ def toITree (computation : Resumption p β) : ITree p β :=
       ITree.query position (fun direction => toITree (next direction)) := by
   apply M.eq_of_dest_eq
   simp
+  rfl
 
 theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β) :
     toITree (bind computation k) =

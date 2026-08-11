@@ -28,6 +28,8 @@ universe uA₁ uB₁ uC₁ uD₁ uA₂ uB₂ uC₂ uD₂
 namespace PFunctor
 namespace Display
 
+attribute [local implicit_reducible] Display.total
+
 /-- A fiberwise lift of an ordinary polynomial lens between two displays. -/
 structure Lens
     {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}

@@ -358,15 +358,12 @@ theorem mapDisplayedBehavior_parallel_assoc
     exact (Display.M.transport_proof_irrel leftEq _ publicLeftDisplayed).trans h
   have hRawToPublic : Display.M.transport leftEq.symm rawLeftDisplayed =
       publicLeftDisplayed := by
-    calc
-      _ = Display.M.transport leftEq.symm
-          (Display.M.transport leftEq publicLeftDisplayed) :=
-        congrArg (Display.M.transport leftEq.symm) hLeft.symm
-      _ = _ := Display.M.transport_symm_transport leftEq publicLeftDisplayed
+    exact (congrArg (Display.M.transport leftEq.symm) hLeft.symm).trans
+      (Display.M.transport_symm_transport leftEq publicLeftDisplayed)
   let chainEq := (((mappedRightEq.trans presentationEq).trans rawEq).trans
     leftEq.symm)
-  have hChain : Display.M.transport chainEq mappedPublic =
-      publicLeftDisplayed := by
+  have hChainToRaw : Display.M.transport chainEq mappedPublic =
+      Display.M.transport leftEq.symm rawLeftDisplayed := by
     calc
       _ = Display.M.transport leftEq.symm
           (Display.M.transport ((mappedRightEq.trans presentationEq).trans rawEq)
@@ -404,7 +401,8 @@ theorem mapDisplayedBehavior_parallel_assoc
             (Display.M.transport rawEq displayed)) hPresentation
       _ = Display.M.transport leftEq.symm rawLeftDisplayed := by
         exact congrArg (Display.M.transport leftEq.symm) hRaw
-      _ = publicLeftDisplayed := hRawToPublic
+  have hChain : Display.M.transport chainEq mappedPublic =
+      publicLeftDisplayed := hChainToRaw.trans hRawToPublic
   exact (Display.M.transport_proof_irrel
     (mapBehavior_parallel_assoc left middle right) chainEq mappedPublic).trans
     hChain

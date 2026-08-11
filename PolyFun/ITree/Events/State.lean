@@ -45,6 +45,7 @@ inductive StateE.Shape (σ : Type uσ) : Type uσ where
 * for `get` — `σ` (the value read);
 * for `put _` — `PUnit` (the unit return of an assignment).
 -/
+@[reducible]
 def StateE (σ : Type uσ) : PFunctor.{uσ, uσ} where
   A := StateE.Shape σ
   B
