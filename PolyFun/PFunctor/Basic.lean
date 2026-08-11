@@ -50,6 +50,7 @@ def monomial (A : Type uA) (B : Type uB) : PFunctor.{uA, uB} :=
 @[inherit_doc] scoped[PFunctor] infixr:80 " X^ " => monomial
 
 /-- The constant polynomial functor `P(X) = A X^ PEmpty` -/
+@[reducible]
 def C (A : Type uA) : PFunctor.{uA, uB} :=
   A X^ PEmpty
 
@@ -64,8 +65,9 @@ def linear (A : Type uA) : PFunctor.{uA, uB} :=
   A X^ PUnit
 
 /-- The self monomial polynomial functor `P(X) = S X^ S` -/
+@[reducible]
 def selfMonomial (S : Type uA) : PFunctor.{uA, uA} :=
-  S X^ S
+  { A := S, B := fun _ => S }
 
 /-- The pure power polynomial functor `P(X) = X^ B` -/
 def purePower (B : Type uB) : PFunctor.{uA, uB} :=
@@ -123,16 +125,16 @@ section Sum
 Defined as the sum of the head types and the sum case analysis for the child types.
 
 Note: requires the `B` universe levels to be the same. -/
-def sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max uA₁ uA₂, uB} :=
+abbrev sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max uA₁ uA₂, uB} :=
   ⟨P.A ⊕ Q.A, Sum.elim P.B Q.B⟩
 
 /-- Addition of polynomial functors, defined as the sum construction. -/
-instance instHAddPFunctor :
+@[reducible] instance instHAddPFunctor :
     HAdd PFunctor.{uA₁, uB} PFunctor.{uA₂, uB} PFunctor.{max uA₁ uA₂, uB} where
-  hAdd := sum
+  hAdd P Q := ⟨P.A ⊕ Q.A, Sum.elim P.B Q.B⟩
 
-instance instAddPFunctor : Add PFunctor.{uA, uB} where
-  add := sum
+@[reducible] instance instAddPFunctor : Add PFunctor.{uA, uB} where
+  add P Q := ⟨P.A ⊕ Q.A, Sum.elim P.B Q.B⟩
 
 lemma add_def (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
     P + Q = ⟨P.A ⊕ Q.A, Sum.elim P.B Q.B⟩ := rfl

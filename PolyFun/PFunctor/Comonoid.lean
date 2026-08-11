@@ -240,6 +240,7 @@ end Comonoid
 contractible groupoid on the state set `S`. Its comultiplication is the
 transition lens `Lens.fixState` (Example 6.44, `δ = (id, tgt, run)`) and its
 counit is the stay-put self-loop `s ↦ (⋆ ↦ s)`. -/
+@[reducible]
 def stateComonoid (S : Type u) : Comonoid.{u, u} where
   carrier := selfMonomial S
   counit := (fun _ => PUnit.unit) ⇆ (fun s _ => s)

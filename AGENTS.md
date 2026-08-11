@@ -205,8 +205,8 @@ listed declaration-by-declaration in `scripts/nolints.json`; regenerate that
 file with the Batteries `runLinter --update` driver when this surface changes,
 and review every new entry rather than treating the file as a blanket waiver.
 
-Lean toolchain, Mathlib, and cslib stay in sync (all currently `v4.32.0`).
-Files should stay under 1500 lines.
+Lean, Mathlib, and cslib stay in sync. The current versions are recorded in
+`lean-toolchain` and `lakefile.toml`. Files should stay under 1500 lines.
 
 ## Further Reading
 

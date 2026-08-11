@@ -16,9 +16,7 @@ equivalence of `B`-types compatible with the `A`-equivalence, and a source-index
 law `src_eq`.
 
 This is the indexed analogue of [`PFunctor.Equiv`](../../PFunctor/Equiv/Basic.lean). Like the
-non-indexed version, it is strictly stronger than the lens / chart equivalence: every
-`IPFunctor.Equiv` yields both an `IPFunctor.Lens.Equiv` and an `IPFunctor.Chart.Equiv` (those
-bridges are TODO and live alongside the operations they unblock).
+non-indexed version, it is strictly stronger than lens or chart equivalence.
 -/
 
 @[expose] public section

@@ -122,6 +122,7 @@ namespace Handler
 
 /-- The identity displayed handler: retain every displayed position and pass
 each displayed direction directly to the corresponding continuation. -/
+@[reducible]
 def id (S : Display.{uA, uB, uC, uD} P) :
     Handler S S (PFunctor.Handler.id P) :=
   fun a c =>
@@ -134,6 +135,7 @@ The source and intermediate interfaces share a response universe because the
 first handler returns a tree whose leaves are source responses and whose nodes
 are intermediate operations. The final target's response universe remains
 independent. -/
+@[reducible]
 def comp
     {Q : PFunctor.{uA', uB}} {R : PFunctor.{uA'', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
@@ -201,8 +203,8 @@ theorem liftM_id
           (fun b e =>
             S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
               (Handler.id S)) using 1
-        all_goals simp [FreeM.liftBind_eq]
-        all_goals congr
+        all_goals simp only [FreeM.liftBind_eq, FreeM.bind_eq_bind, FreeM.pure_bind]
+        all_goals exact Iff.rfl
       rw [htransport]
       congr
       funext b e

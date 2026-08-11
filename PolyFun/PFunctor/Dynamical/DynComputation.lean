@@ -28,6 +28,8 @@ and denotes exactly monadic bind on `Resumption`.
 
 @[expose] public section
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 universe u v w x uA uB uA₂ uB₂ uα uβ uγ uδ uε uζ
 
 namespace PFunctor
@@ -177,6 +179,7 @@ private def mapResultLift {γ : Type uγ} (f : β → γ) :
 
 /-- Map the returned value of a computation while preserving its hidden state
 and visible-query interface. -/
+@[reducible]
 def mapResult {γ : Type uγ} (M : DynComputation.{u} p α β) (f : β → γ) :
     DynComputation.{u} p α γ where
   State := M.State
@@ -240,6 +243,7 @@ private def wrapLift {q : PFunctor.{uA₂, uB₂}} (lens : Lens p q) :
 
 /-- Change a returning computation's visible-query interface along a lens while preserving its
 hidden state and return values. -/
+@[reducible]
 def wrap {q : PFunctor.{uA₂, uB₂}} (M : DynComputation.{u} p α β)
     (lens : Lens p q) : DynComputation.{u} q α β where
   State := M.State

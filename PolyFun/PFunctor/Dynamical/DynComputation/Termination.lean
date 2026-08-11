@@ -43,6 +43,8 @@ bound. -/
 def TerminatesFrom (M : DynComputation.{u} p α β) (state : M.State) : Prop :=
   Acc M.QueryChild state
 
+attribute [local implicit_reducible] TerminatesFrom
+
 theorem queryChild_of_view (M : DynComputation.{u} p α β)
     (state : M.State) (position : p.A) (next : p.B position → M.State)
     (direction : p.B position)
@@ -51,7 +53,7 @@ theorem queryChild_of_view (M : DynComputation.{u} p α β)
     M.QueryChild (next direction) state :=
   ⟨position, next, direction, hview, rfl⟩
 
-@[simp] theorem terminatesFrom_return (M : DynComputation.{u} p α β)
+theorem terminatesFrom_return (M : DynComputation.{u} p α β)
     (state : M.State) (value : β) (hview : M.view state = Sum.inl value) :
     M.TerminatesFrom state := by
   constructor
@@ -178,16 +180,15 @@ theorem behavior_eq_toResumption_toFreeMFrom
       cases hview : M.view state with
       | inl value =>
           apply Resumption.eq_of_dest_eq
-          rw [M.dest_behavior_view, hview,
+          with_unfolding_all rw [M.dest_behavior_view, hview,
             M.toFreeMFrom_return state _ value hview]
           rfl
       | inr query =>
           rcases query with ⟨position, next⟩
           apply Resumption.eq_of_dest_eq
-          rw [M.dest_behavior_view, hview,
+          with_unfolding_all rw [M.dest_behavior_view, hview,
             M.toFreeMFrom_query state _ position next hview]
-          simp only [Sum.map_inr, PFunctor.map_eq,
-            FreeM.dest_toResumption_liftBind]
+          simp only [FreeM.dest_toResumption_liftBind]
           apply congrArg Sum.inr
           apply Sigma.ext
           · rfl
@@ -273,7 +274,6 @@ theorem terminatesFrom_of_behavior_eq_toResumption
           rw [hview] at hleft
           have hdest' := hleft.symm.trans
             (hdest.trans (FreeM.dest_toResumption_liftBind position children))
-          simp only [Sum.map_inr, PFunctor.map_eq] at hdest'
           have hsigma := Sum.inr.inj hdest'
           have hposition : source = position := (Sigma.mk.inj hsigma).1
           subst position

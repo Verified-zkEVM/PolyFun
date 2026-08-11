@@ -127,6 +127,8 @@ theorem Strategy.mapOutput_id {m : Type u → Type u} [Functor m] [LawfulFunctor
   | done => rfl
   | node X rest ih =>
     rcases σ with ⟨x, cont⟩
+    simp only [PFunctor.Lens.id, id_eq] at cont
+    change m (Strategy.Plain m (rest x) (fun p => A ⟨x, p⟩)) at cont
     simp only [Strategy.mapOutput]
     congr 1
     calc (mapOutput (fun (p : Path (rest x)) (y : A ⟨x, p⟩) => y) ·) <$> cont
@@ -144,6 +146,8 @@ theorem Strategy.mapOutput_comp
   | done => rfl
   | node X rest ih =>
     rcases σ with ⟨x, cont⟩
+    simp only [PFunctor.Lens.id, id_eq] at cont
+    change m (Strategy.Plain m (rest x) (fun p => A ⟨x, p⟩)) at cont
     simp only [Strategy.mapOutput]
     congr 1
     calc (mapOutput (fun (p : Path (rest x)) (y : A ⟨x, p⟩) => g ⟨x, p⟩ (f ⟨x, p⟩ y)) ·)

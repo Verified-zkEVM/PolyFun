@@ -20,6 +20,8 @@ monads on types.
 
 @[expose] public section
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 universe uA uB
 
 namespace PFunctor
@@ -52,6 +54,7 @@ def bind {α β : Type uB} (x : Extension M α) (f : α → Extension M β) : Ex
 instance instMonad : Monad (Extension M) where
   pure := pure M
   bind := bind M
+  map f x := bind M x (fun y => pure M (f y))
 
 @[simp]
 theorem pure_def {α : Type uB} (x : α) : (Pure.pure x : Extension M α) = pure M x :=
@@ -82,9 +85,12 @@ theorem bind_assoc {α β γ : Type uB} (x : Extension M α) (f : α → Extensi
 instance instLawfulMonad : LawfulMonad (Extension M) := LawfulMonad.mk'
   (bind_pure_comp := by
     intro α β f x
-    exact congrArg
-      (fun lens => Lens.mapObj lens (⟨x.1, f ∘ x.2⟩ : M.carrier.Obj β)) M.unit_right)
-  (id_map := fun _ => rfl)
+    change bind M x (fun y => pure M (f y)) = bind M x (fun y => pure M (f y))
+    rfl)
+  (id_map := by
+    intro α x
+    change bind M x (fun y => pure M y) = x
+    exact bind_pure M x)
   (pure_bind := pure_bind M)
   (bind_assoc := bind_assoc M)
 

@@ -24,6 +24,8 @@ universe uS uA uB uα
 namespace PFunctor
 namespace CofreeMateTest
 
+attribute [local implicit_reducible] CofreeP.comonoid Comonoid.identity
+
 open ComonoidCategoryTest
 open CofreePolynomialTest
 open CofreeUniversalTest
@@ -131,8 +133,8 @@ example : branchingSystem.cofreeMate.toLens.toFunB .source
     branchingSystem.cofreeMate.toLens.toFunB .source
         (.root (branchingSystem.cofreeMate.toLens.toFunA .source)) =
         Comonoid.identity (stateComonoid ThreeState) .source := by
-      simpa only [CofreeP.comonoid_identity] using
-        branchingSystem.cofreeMate.map_identity ThreeState.source
+      rw [← CofreeP.comonoid_identity]
+      exact branchingSystem.cofreeMate.map_identity ThreeState.source
     _ = .source := rfl
 
 /-- The `false` branch reaches the observably distinct middle state. -/

@@ -5,6 +5,7 @@ Authors: Quang Dao
 -/
 module
 
+import all PolyFun.ITree.Events.State
 public import PolyFun.ITree.Events.State
 public import PolyFun.ITree.Bisim.Bind
 
@@ -16,6 +17,8 @@ and external events remain visible.
 -/
 
 @[expose] public section
+
+attribute [local implicit_reducible] PFunctor.Obj
 
 universe uσ uEA uα uβ
 
@@ -62,6 +65,7 @@ variable {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
         (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
       ⟨.step, fun _ => (s, k s)⟩ := by
     simp [interpStateStep]
+    rfl
   apply PFunctor.M.eq_of_dest_eq
   rw [interpState, PFunctor.M.dest_corec_eq _ _ hstep]
   unfold ITree.step
@@ -81,6 +85,7 @@ variable {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
           (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
       ⟨.step, fun _ => (s', k PUnit.unit)⟩ := by
     simp [interpStateStep]
+    rfl
   apply PFunctor.M.eq_of_dest_eq
   rw [interpState, PFunctor.M.dest_corec_eq _ _ hstep]
   unfold ITree.step
@@ -97,6 +102,7 @@ variable {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
       (Sum.inr e : (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
       ⟨.query e, fun b => (s, k b)⟩ := by
     simp [interpStateStep]
+    rfl
   apply PFunctor.M.eq_of_dest_eq
   rw [interpState, PFunctor.M.dest_corec_eq _ _ hstep]
   unfold ITree.query
@@ -228,18 +234,24 @@ theorem interpState_bind {β : Type uβ}
                   hLeft, hRight,
                   fun _ => Or.inr ⟨s', c PUnit.unit, rfl, rfl⟩⟩
         | inr e =>
-            change E.B e → ITree
-              (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α at c
             have ht : t = query
                 (Sum.inr e :
                   (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) c := by
               apply PFunctor.M.eq_of_dest_eq
               rw [h]
               rfl
-            subst ht
-            clear h
-            rw [bind_query, interpState_query_external,
-              interpState_query_external, bind_query]
+            rw [ht, bind_query]
+            have hleft : interpState (query
+                (Sum.inr e : (StateE σ + E :
+                  PFunctor.{max uσ uEA, uσ}).A) (fun b => bind (c b) k)) s =
+                query e (fun b => interpState (bind (c b) k) s) :=
+              interpState_query_external s e _
+            have hright : interpState (query
+                (Sum.inr e : (StateE σ + E :
+                  PFunctor.{max uσ uEA, uσ}).A) c) s =
+                query e (fun b => interpState (c b) s) :=
+              interpState_query_external s e c
+            rw [hleft, hright, bind_query]
             exact ⟨.query e,
               fun b => interpState (bind (c b) k) s,
               fun b => bind (interpState (c b) s) next,
