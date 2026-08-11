@@ -446,7 +446,10 @@ example : ObsEq
     ((sourceMachine 2).wrap lossyLens) := by
   intro input
   cases input
-  simp [sourceMachine, sourceTree, lossyLens, lossySource]
+  -- Lean 4.33: `DynComputation.wrap` is only `implicit_reducible`, so
+  -- `wrap_denote` is passed to `simp` explicitly.
+  simp [sourceMachine, sourceTree, lossyLens, lossySource,
+    DynComputation.wrap_denote]
 
 example : (ofFreeM oneQuery).mapResult (· + 1) ⊨
     (fun input => FreeM.map (· + 1) (oneQuery input)) :=
