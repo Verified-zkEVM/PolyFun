@@ -669,7 +669,7 @@ theorem OpenNodeContext.boundaryTrace_node {Party : Type u} {Δ : PortBoundary}
     (semantics : Decoration (OpenNodeContext.{u, w} Party Δ) (TypeTree.node X rest))
     (x : X) (path : TypeTree.Path (rest x)) :
     OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ)
-        (TypeTree.node X rest) semantics ⟨x, path⟩ =
+        (@PFunctor.FreeM.lift TypeTree.basePFunctor X >>= rest) semantics ⟨x, path⟩ =
       semantics.1.boundary.emit x *
         OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ)
           (rest x) (semantics.2 x) path := by

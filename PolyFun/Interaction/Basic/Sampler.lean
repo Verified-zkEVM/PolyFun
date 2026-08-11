@@ -86,7 +86,8 @@ theorem samplePath_done {m : Type w → Type w'} [Monad m]
 theorem samplePath_node {m : Type w → Type w'} [Monad m]
     {X : Type w} (rest : X → TypeTree.{w})
     (sampler : m X) (samplerRest : ∀ x, Sampler m (rest x)) :
-    samplePath (.node X rest) ⟨sampler, samplerRest⟩ = do
+    samplePath (@PFunctor.FreeM.lift TypeTree.basePFunctor X >>= rest)
+        ⟨sampler, samplerRest⟩ = do
       let x ← sampler
       let tr ← samplePath (rest x) (samplerRest x)
       return ⟨x, tr⟩ := by
