@@ -238,7 +238,7 @@ theorem interpret_unit {Atom : PortBoundary → Type u}
     (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
     (Expr.unit : Expr Atom _).interpret T interp =
       OpenTheory.HasUnit.unit (T := T) := by
-  simp only [Expr.unit, interpret_map]
+  simp only [Expr.unit]
   exact OpenTheory.unit_eq.symm
 
 /-! ## Lawful OpenTheory instance -/

@@ -115,6 +115,7 @@ universes. The resulting tree lives in `Type (max uA uB uα)`.
 
 This is the Lean / Mathlib analogue of Coq's `itree E R`
 (`InteractionTrees/theories/Core/ITreeDefinition.v`). -/
+@[reducible]
 def ITree (F : PFunctor.{uA, uB}) (α : Type uα) : Type (max uA uB uα) :=
   PFunctor.M (ITree.Poly F α)
 

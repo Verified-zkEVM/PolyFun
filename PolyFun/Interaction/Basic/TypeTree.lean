@@ -214,12 +214,10 @@ abbrev substMonoid : PFunctor.SubstMonoid.{u + 1, u} :=
 theorem substMonoid_unit_toFunA (x : PUnit) : TypeTree.substMonoid.unit.toFunA x = TypeTree.done :=
   rfl
 
-@[simp]
 theorem substMonoid_mult_toFunA (spec : TypeTree) (next : Path spec → TypeTree) :
     TypeTree.substMonoid.mult.toFunA ⟨spec, next⟩ = spec.append next :=
   rfl
 
-@[simp]
 theorem substMonoid_mult_toFunB (spec : TypeTree) (next : Path spec → TypeTree)
     (tr : Path (spec.append next)) :
     TypeTree.substMonoid.mult.toFunB ⟨spec, next⟩ tr =

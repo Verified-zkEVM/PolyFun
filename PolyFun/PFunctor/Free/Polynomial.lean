@@ -214,7 +214,7 @@ theorem decodeAt_append_split {α : Type uB}
       cases u
       rfl
   | .liftBind a rest =>
-      simp only [FreeM.append, decodeAt, FreeM.bind]
+      simp only [decodeAt, FreeM.bind]
       apply congrArg (FreeM.liftBind a)
       funext d
       exact (decodeAt_append_split (rest d)
@@ -236,6 +236,7 @@ def objEquiv : (FreeP P).Obj α ≃ FreeM P α where
 
 /-- Relabel the payload stored at every path of a `FreeP` object without
 changing its tree shape. -/
+@[reducible]
 def relabel {β : Type w} (f : α → β) (x : (FreeP P).Obj α) :
     (FreeP P).Obj β :=
   ⟨x.1, f ∘ x.2⟩
@@ -251,7 +252,7 @@ theorem decode_relabel {β : Type w} (f : α → β)
       cases value
       rfl
   | liftBind a rest ih =>
-      simp only [decode, decodeAt, relabel, Function.comp_apply, FreeM.map]
+      simp only [decode, decodeAt, Function.comp_apply, FreeM.map]
       apply congrArg (FreeM.liftBind a)
       funext direction
       exact ih direction
@@ -493,7 +494,7 @@ theorem decode_mult (x : (FreeP P ◃ FreeP P).Obj α) :
       rfl
   | liftBind a rest ih =>
       simp only [Lens.mapObj, mult, nest, decode, decodeAt, FreeM.append,
-        FreeM.bind, Function.comp_apply]
+        FreeM.bind]
       apply congrArg (FreeM.liftBind a)
       funext b
       exact ih b (fun path ↦ middle ⟨b, path⟩)

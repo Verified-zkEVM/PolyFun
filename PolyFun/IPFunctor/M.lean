@@ -6,6 +6,7 @@ Authors: Quang Dao
 
 module
 
+import all PolyFun.IPFunctor.Basic
 public import PolyFun.IPFunctor.Basic
 public import PolyFun.PFunctor.M.Vertex
 
@@ -23,6 +24,8 @@ in the underlying M-tree.
 -/
 
 @[expose] public section
+
+attribute [local implicit_reducible] PFunctor.Obj
 
 universe uI uA uB uX
 

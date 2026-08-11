@@ -30,6 +30,10 @@ universe u
 namespace PFunctor
 namespace FreeP
 
+attribute [local implicit_reducible] PFunctor.X PFunctor.monomial PFunctor.tensor FreeP.node
+  Comonoid.Hom.ofCategoryLaws CofreeP.comonoid CofreeP.cogenerator CofreeP.extend
+  CofreeP.laxTensorHom CofreeP.laxTensor
+
 private theorem runObj_unit (P : PFunctor.{u, u})
     (pattern : (FreeP P).A) :
     Lens.mapObj (FreeP.map (Lens.Equiv.tensorX (P := P)).toLens)
@@ -167,13 +171,13 @@ theorem xi_unit (P : PFunctor.{u, u}) :
 
 /-! ## Associativity -/
 
-private def vertexPairObj {Q R : PFunctor.{u, u}}
+@[reducible] private def vertexPairObj {Q R : PFunctor.{u, u}}
     (matterQ : (CofreeP Q).A) (matterR : (CofreeP R).A) :
     (CofreeP Q ⊗ CofreeP R).Obj
       (M.Vertex matterQ × M.Vertex matterR) :=
   ⟨(matterQ, matterR), id⟩
 
-private def laxTensorVertexObj {Q R : PFunctor.{u, u}}
+@[reducible] private def laxTensorVertexObj {Q R : PFunctor.{u, u}}
     (matterQ : (CofreeP Q).A) (matterR : (CofreeP R).A) :
     (CofreeP (Q ⊗ R)).Obj (M.Vertex matterQ × M.Vertex matterR) :=
   Lens.mapObj (CofreeP.laxTensor Q R) (vertexPairObj matterQ matterR)
@@ -228,7 +232,6 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
   | liftBind a rest ih =>
       rw [FreeP.runLabeled_liftBind, FreeP.relabel_node]
       simp only [runObj_liftBind, FreeP.relabel_relabel]
-      rw [FreeP.runObj_node]
       simp only [FreeP.mapObj_relabel]
       let rightChildren := fun direction :
           (P.B a × Q.B (M.head matterQ)) × R.B (M.head matterR) =>
@@ -255,6 +258,15 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
       have hmap := FreeP.mapObj_node
         (Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens
         ((a, M.head matterQ), M.head matterR) rightChildren
+      have hmap' :
+          Lens.mapObj (FreeP.map
+              (Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens)
+              (FreeP.node ((a, M.head matterQ), M.head matterR) rightChildren) =
+            FreeP.node (a, (M.head matterQ, M.head matterR)) (fun direction =>
+              Lens.mapObj (FreeP.map
+                  (Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens)
+                (rightChildren ((direction.1, direction.2.1), direction.2.2))) := by
+        rfl
       conv_rhs =>
         change FreeP.relabel _
           (Lens.mapObj (FreeP.map
@@ -262,36 +274,37 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
                 (P := P) (Q := Q) (R := R)).toLens)
             (FreeP.node ((a, M.head matterQ), M.head matterR)
               rightChildren))
-      rw [hmap]
+      rw [hmap']
       rw [FreeP.relabel_node]
+      have hhead : M.head (laxTensorVertexObj matterQ matterR).1 =
+          (M.head matterQ, M.head matterR) := by
+        exact CofreeP.laxTensor_head Q R matterQ matterR
+      cases hhead
       congr 1
       funext direction
-      let patternDirection := direction.1
-      let matterQDirection := direction.2.1
-      let matterRDirection := direction.2.2
+      change P.B a × (Q.B (M.head matterQ) × R.B (M.head matterR)) at direction
+      rcases direction with ⟨patternDirection, matterQDirection, matterRDirection⟩
       have hchild := laxTensorVertexObj_child Q R matterQ matterR
         (matterQDirection, matterRDirection)
       have hrun := congrArg (runLabeled (rest patternDirection)) hchild
-      dsimp only [patternDirection, matterQDirection,
-        matterRDirection] at hrun
-      simp only [Prod.eta] at hrun ⊢
-      rw [hrun]
+      refine (congrArg (FreeP.relabel (P := P ⊗ (Q ⊗ R)) _) hrun).trans ?_
       simp only [runLabeled, FreeP.relabel_relabel, Function.comp_def]
-      have ihChild := ih direction.1
-        (M.children matterQ direction.2.1)
-        (M.children matterR direction.2.2)
+      have ihChild := ih patternDirection
+        (M.children matterQ matterQDirection)
+        (M.children matterR matterRDirection)
       have wrapped := congrArg
         (FreeP.relabel (P := P ⊗ (Q ⊗ R))
           (fun pulled =>
-            ((FreeM.Path.cons a rest direction.1 pulled.1.1,
-                M.Vertex.child direction.2.1 pulled.1.2),
-              M.Vertex.child direction.2.2 pulled.2)))
+            ((FreeM.Path.cons a rest patternDirection pulled.1.1,
+                M.Vertex.child matterQDirection pulled.1.2),
+              M.Vertex.child matterRDirection pulled.2)))
         ihChild
       simpa only [runLabeled, FreeP.relabel_relabel,
         FreeP.mapObj_relabel, FreeP.relabel,
         Function.comp_def, laxTensorVertexObj, vertexPairObj,
         rightChildren, Lens.mapObj, Function.comp_apply, id_eq,
         Lens.Equiv.tensorAssoc_toFunA, Lens.Equiv.tensorAssoc_toFunB,
+        Equiv.prodAssoc_apply, Equiv.prodAssoc_symm_apply,
         FreeP.node, FreeM.Path.cons, FreeM.Path.head,
         FreeM.Path.tail] using wrapped
 

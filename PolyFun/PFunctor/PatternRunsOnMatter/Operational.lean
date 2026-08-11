@@ -24,6 +24,8 @@ universe pA pB qA qB u v
 
 namespace PFunctor.FreeP
 
+attribute [local implicit_reducible] PFunctor.tensor
+
 variable {P : PFunctor.{pA, pB}} {Q : PFunctor.{qA, qB}}
 
 /-- Decode the synchronized object produced by `runObj` into an ordinary

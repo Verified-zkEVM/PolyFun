@@ -209,7 +209,7 @@ def tensorGlue (left : Lens (p ⊗ linear q.A) r) (right : Lens (linear p.A ⊗ 
   funext d
   apply Prod.ext
   · rfl
-  · exact Subsingleton.elim _ _
+  · exact PUnit.ext _ _
 
 /-- The right view of a glued lens is the supplied right lens. -/
 @[simp] theorem tensorRightView_tensorGlue (left : Lens (p ⊗ linear q.A) r)
@@ -222,7 +222,7 @@ def tensorGlue (left : Lens (p ⊗ linear q.A) r) (right : Lens (linear p.A ⊗ 
   refine Lens.ext _ _ (fun _ => rfl) (fun pq => ?_)
   funext d
   apply Prod.ext
-  · exact Subsingleton.elim _ _
+  · exact PUnit.ext _ _
   · rfl
 
 /-- Gluing the two canonical one-sided views of a lens recovers that lens. -/

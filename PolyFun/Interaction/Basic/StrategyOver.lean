@@ -237,6 +237,7 @@ This is the recursive global form of the local `ShapeOver.map` field. The
 runtime path index is `PathAlong l spec`, so it applies equally to plain type trees
 and to control trees such as `Oracle.TypeTree` executed through a lens.
 -/
+@[reducible]
 def mapOutput
     (shape : ShapeOver l Agent Γ)
     {agent : Agent}

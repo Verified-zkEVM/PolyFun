@@ -120,7 +120,8 @@ example :
 
 example :
     Chain.liftThen prefixChain middle boundaryFamily combinedPath = Fin 12 := by
-  simp [combinedPath, boundaryFamily, prefixPath, middlePath]
+  simp [combinedPath, prefixPath, middlePath]
+  rfl
 
 example (Family : {rounds : Nat} → Chain rounds → Type) :
     Chain.outputFamily Family (1 + 1) (Chain.then prefixChain middle)

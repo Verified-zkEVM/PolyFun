@@ -6,6 +6,7 @@ Authors: Quang Dao
 
 module
 
+import all PolyFun.Interaction.UC.OpenTheory
 public import PolyFun.Interaction.UC.OpenTheory
 
 /-!

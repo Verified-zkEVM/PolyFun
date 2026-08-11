@@ -61,7 +61,7 @@ by an unbundled effect-like type constructor.
 This is weaker than `SyntaxOver.TwoParty.monadic`: it records the same owner/observer node
 shapes but does not require a `Monad` instance for `m`. Execution laws can add
 that instance only at the point where effects are actually run. -/
-@[expose]
+@[expose, reducible]
 def _root_.Interaction.SyntaxOver.TwoParty.paired (m : Type uB₂ → Type uB₂) :
     SyntaxOver l Participant (fun _ : P.A => Role) where
   Node agent pos role Cont :=
@@ -72,7 +72,7 @@ def _root_.Interaction.SyntaxOver.TwoParty.paired (m : Type uB₂ → Type uB₂
     | .counterpart, .receiver => m ((d : Q.B (l.toFunA pos)) × Cont d)
 
 /-- Functorial shape for `SyntaxOver.TwoParty.paired`. -/
-@[expose]
+@[expose, reducible]
 def _root_.Interaction.ShapeOver.TwoParty.paired (m : Type uB₂ → Type uB₂) [Functor m] :
     Interaction.ShapeOver l Participant (fun _ : P.A => Role) where
   toSyntaxOver := (SyntaxOver.TwoParty.paired l m :

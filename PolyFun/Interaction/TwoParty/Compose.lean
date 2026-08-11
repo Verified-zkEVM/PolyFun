@@ -41,6 +41,8 @@ namespace TwoParty
 
 open TwoParty
 
+attribute [local implicit_reducible] run InteractionOver.runTypeTree StrategyOver
+
 /-- A lawful monad whose independent effects may be swapped.
 
 This is the exact extra structure needed for the sequential-composition
@@ -175,7 +177,7 @@ private theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_eq_pure_
         rfl
     | .node X rest, ⟨.sender, rRest⟩ =>
         rw [StrategyOver.TwoParty.Focal.compFlat.eq_2]
-        refine congrArg pure ?_
+        congr 1
         apply bind_congr
         intro xc
         cases xc with
@@ -190,7 +192,7 @@ private theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_eq_pure_
             exact (congrArg (fun z => Sigma.mk x <$> z) hgo).trans (map_pure _ _)
     | .node _ rest, ⟨.receiver, rRest⟩ =>
         rw [StrategyOver.TwoParty.Focal.compFlat.eq_3]
-        refine congrArg pure ?_
+        congr 1
         funext x
         refine congrArg (fun k => strat₁ x >>= k) ?_
         funext next
@@ -260,8 +262,7 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_splitPrefix
         rw [StrategyOver.TwoParty.Focal.compFlat.eq_2,
           StrategyOver.TwoParty.Focal.splitPrefix.eq_2]
         refine congrArg pure ?_
-        simp only [bind_map_left]
-        calc
+        have hmain :
           (do
             let a ← strat
             let rest_1 ←
@@ -271,8 +272,7 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_splitPrefix
                   (r₁ := rRest a.1)
                   (r₂ := fun p => r₂ ⟨a.1, p⟩) a.2)
                 (fun _ strat₂ => pure strat₂)
-            pure ⟨a.1, rest_1⟩) =
-              strat >>= fun a => pure ⟨a.1, a.2⟩ := by
+            pure ⟨a.1, rest_1⟩) = strat >>= pure := by
                 refine congrArg (fun k => strat >>= k) ?_
                 funext xc
                 rcases xc with ⟨x, tail⟩
@@ -296,8 +296,8 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_splitPrefix
                   (action := StrategyOver.TwoParty.Focal.compFlat
                     (StrategyOver.TwoParty.Focal.splitPrefix tail)
                     (fun _ strat₂ => pure strat₂)) hgo
-          _ = strat := by
-                simp
+        refine (LawfulMonad.do_bind_map_left _ strat _).trans ?_
+        exact hmain.trans (bind_pure strat)
     | .node _ rest, ⟨.receiver, rRest⟩ =>
         refine congrArg pure ?_
         funext x
@@ -316,8 +316,10 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_splitPrefix
           exact go (rest x) (rRest x)
             (s₂ := fun p => s₂ ⟨x, p⟩)
             (r₂ := fun p => r₂ ⟨x, p⟩) next
-        simp only [bind_map_left, bind_pure] at *
-        exact hcont
+        refine (LawfulMonad.do_bind_map_left
+          (StrategyOver.TwoParty.Focal.splitPrefix (s₂ := fun p => s₂ ⟨x, p⟩)
+            (r₁ := rRest x) (r₂ := fun p => r₂ ⟨x, p⟩)) (strat x) _).trans ?_
+        exact hcont.trans (bind_pure (strat x))
   exact go s₁ r₁ strat
 
 /-- Compose counterparts along `PFunctor.FreeM.append` with a two-argument output family
@@ -525,16 +527,16 @@ theorem run_compFlat_appendFlat_pure
     match s₁, r₁ with
     | .done, r₁ =>
         cases r₁
-        simp [run_done, StrategyOver.TwoParty.Focal.compFlatPure,
-          StrategyOver.TwoParty.Counterpart.appendFlat.eq_1]
-        simp [TypeTree.done]
+        rw [@run_done m (inferInstanceAs (Monad m)) _ _ strat₁ cpt₁]
+        simp [monad_norm, StrategyOver.TwoParty.Focal.compFlatPure,
+          StrategyOver.TwoParty.Counterpart.appendFlat.eq_1, TypeTree.done]
     | .node X rest, ⟨.sender, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.compFlatPure,
           StrategyOver.TwoParty.Counterpart.appendFlat,
           PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
           run, InteractionOver.runTypeTree, InteractionOver.TwoParty.pairedTypeTree,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
-          participantOutputFamily, bind_assoc, pure_bind]
+          participantOutputFamily, monad_norm, id_eq]
         let mapStrat :
             ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
               (rest x) (rRest x) (fun tr => MidP ⟨x, tr⟩)) →
@@ -545,8 +547,6 @@ theorem run_compFlat_appendFlat_pure
               (fun tr => OutputP ⟨x, tr⟩)) :=
           fun a => ⟨a.1, StrategyOver.TwoParty.Focal.compFlatPure a.2
             (fun tr₁ mid => f ⟨a.1, tr₁⟩ mid)⟩
-        simp only [LawfulMonad.do_bind_pure_comp]
-        refine (bind_map_left mapStrat strat₁ _).trans ?_
         apply bind_congr
         intro xc
         cases xc with
@@ -561,7 +561,6 @@ theorem run_compFlat_appendFlat_pure
                   (fun tr => OutputC ⟨x, tr⟩) :=
               fun a => StrategyOver.TwoParty.Counterpart.appendFlat a
                 (fun p o => cpt₂ ⟨x, p⟩ o)
-            refine (bind_map_left mapCpt (cpt₁ x) _).trans ?_
             apply bind_congr
             intro cNext
             let addPrefix :
@@ -589,7 +588,7 @@ theorem run_compFlat_appendFlat_pure
           PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
           run, InteractionOver.runTypeTree, InteractionOver.TwoParty.pairedTypeTree,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
-          participantOutputFamily, bind_assoc, pure_bind]
+          participantOutputFamily, monad_norm, id_eq]
         let mapCpt :
             ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
               (rest x) (rRest x) (fun tr => MidC ⟨x, tr⟩)) →
@@ -600,8 +599,6 @@ theorem run_compFlat_appendFlat_pure
               (fun tr => OutputC ⟨x, tr⟩)) :=
           fun a => ⟨a.1, StrategyOver.TwoParty.Counterpart.appendFlat a.2
             (fun p o => cpt₂ ⟨a.1, p⟩ o)⟩
-        simp only [LawfulMonad.do_bind_pure_comp]
-        refine (bind_map_left mapCpt cpt₁ _).trans ?_
         apply bind_congr
         intro xc
         cases xc with
@@ -616,7 +613,6 @@ theorem run_compFlat_appendFlat_pure
                   (fun tr => OutputP ⟨x, tr⟩) :=
               fun a => StrategyOver.TwoParty.Focal.compFlatPure a
                 (fun tr₁ mid => f ⟨x, tr₁⟩ mid)
-            refine (bind_map_left mapStrat (strat₁ x) _).trans ?_
             apply bind_congr
             intro next
             let addPrefix :
@@ -701,9 +697,9 @@ theorem run_compFlat_appendFlat
     match s₁, r₁ with
     | .done, r₁ =>
         cases r₁
-        simp [run_done, StrategyOver.TwoParty.Focal.compFlat.eq_1,
-          StrategyOver.TwoParty.Counterpart.appendFlat.eq_1]
-        simp [TypeTree.done]
+        rw [@run_done m (inferInstanceAs (Monad m)) _ _ strat₁ cpt₁]
+        simp [monad_norm, StrategyOver.TwoParty.Focal.compFlat.eq_1,
+          StrategyOver.TwoParty.Counterpart.appendFlat.eq_1, TypeTree.done]
     | .node X rest, ⟨.sender, rRest⟩ =>
         simp only [StrategyOver.TwoParty.Focal.compFlat,
           StrategyOver.TwoParty.Counterpart.appendFlat,
@@ -712,18 +708,6 @@ theorem run_compFlat_appendFlat
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
           participantOutputFamily, LawfulMonad.do_bind_assoc,
           LawfulMonad.do_bind_pure_comp, pure_bind]
-        refine (LawfulMonad.do_bind_assoc strat₁
-          (fun xc =>
-            (fun restStrat =>
-              (⟨xc.1, restStrat⟩ :
-                (x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
-                  (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
-                  (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
-                    (fun path => r₂ ⟨x, path⟩))
-                  (fun tr => OutputP ⟨x, tr⟩))) <$>
-              StrategyOver.TwoParty.Focal.compFlat xc.2
-                (fun tr₁ mid => f ⟨xc.1, tr₁⟩ mid))
-          _).trans ?_
         apply bind_congr
         intro xc
         cases xc with
@@ -750,7 +734,7 @@ theorem run_compFlat_appendFlat
                     (fun path => r₂ ⟨x, path⟩))
                   (fun tr => OutputP ⟨x, tr⟩) :=
               fun restStrat => ⟨x, restStrat⟩
-            refine (bind_map_left mapStratTail
+            refine (LawfulMonad.do_bind_map_left mapStratTail
               (StrategyOver.TwoParty.Focal.compFlat next
                 (s₂ := fun path => s₂ ⟨x, path⟩)
                 (r₂ := fun path => r₂ ⟨x, path⟩)
@@ -793,7 +777,7 @@ theorem run_compFlat_appendFlat
                   g y
             change (do let a ← comp; let a₁ ← obs; k a a₁) = _
             refine (LawfulCommMonad.bind_comm comp obs k).trans ?_
-            refine (bind_map_left mapCpt (cpt₁ x) _).trans ?_
+            refine (LawfulMonad.do_bind_map_left mapCpt (cpt₁ x) _).trans ?_
             apply bind_congr
             intro cNext
             let addPrefix :
@@ -840,7 +824,7 @@ theorem run_compFlat_appendFlat
                     g (addPrefix y)) := by
                       apply bind_congr
                       intro strat
-                      exact bind_map_left addPrefix
+                      exact LawfulMonad.do_bind_map_left addPrefix
                         (run
                           (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                           (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
@@ -860,7 +844,7 @@ theorem run_compFlat_appendFlat
                   cNext
                   (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
                   (fun a => g (addPrefix a))
-                exact h.trans (bind_map_left
+                exact h.trans (LawfulMonad.do_bind_map_left
                   (fun a : (tr : PFunctor.FreeM.Path (rest x)) × MidP ⟨x, tr⟩ × MidC ⟨x, tr⟩ =>
                     (⟨⟨x, a.1⟩, a.2.1, a.2.2⟩ :
                       (tr : PFunctor.FreeM.Path (TypeTree.node X rest)) × MidP tr × MidC tr))
@@ -888,7 +872,7 @@ theorem run_compFlat_appendFlat
               (fun tr => OutputC ⟨x, tr⟩)) :=
           fun a => ⟨a.1, StrategyOver.TwoParty.Counterpart.appendFlat a.2
             (fun p o => cpt₂ ⟨a.1, p⟩ o)⟩
-        refine (bind_map_left mapCpt cpt₁ _).trans ?_
+        refine (LawfulMonad.do_bind_map_left mapCpt cpt₁ _).trans ?_
         apply bind_congr
         intro xc
         cases xc with
@@ -917,17 +901,6 @@ theorem run_compFlat_appendFlat
                   OutputP tr × OutputC tr) :=
               fun a => ⟨⟨x, a.1⟩, a.2.1, a.2.2⟩
             simp only [mapCpt]
-            refine (LawfulMonad.do_bind_assoc (strat₁ x) comp
-              (fun strat => do
-                let y ←
-                  addPrefix <$> run
-                    (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
-                    (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
-                      (fun path => r₂ ⟨x, path⟩))
-                    strat
-                    (StrategyOver.TwoParty.Counterpart.appendFlat cNext
-                      (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out))
-                g y)).trans ?_
             calc
               (do
                 let next ← strat₁ x
@@ -956,7 +929,7 @@ theorem run_compFlat_appendFlat
                       intro next
                       apply bind_congr
                       intro strat
-                      exact bind_map_left addPrefix
+                      exact LawfulMonad.do_bind_map_left addPrefix
                         (run
                           (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                           (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
@@ -1004,7 +977,8 @@ theorem run_compFlat_appendFlat
                               (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
                               (fun a => g (addPrefix a))
                   _ = _ := by
-                    exact (bind_map_left addPrefix₁ (run (rest x) (rRest x) next cNext)
+                    exact (LawfulMonad.do_bind_map_left addPrefix₁
+                      (run (rest x) (rRest x) next cNext)
                       (fun r₁ => do
                         let strat₂ ← f r₁.1 r₁.2.1
                         let r₂ ← run (s₂ r₁.1) (r₂ r₁.1) strat₂ (cpt₂ r₁.1 r₁.2.2)
