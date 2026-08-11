@@ -53,11 +53,12 @@ example : ¬ ITree.TauFree
   exact ITree.not_tauFree_step _ hchild
 
 /-- Nullary visible queries are accepted vacuously. -/
+-- Lean 4.33 unifies implicit arguments at implicit transparency; the example
+-- below needs `nullarySpec.B` to unfold there.
+@[implicit_reducible]
 def nullarySpec : PFunctor.{0, 0} where
   A := Unit
   B _ := PEmpty
-
-attribute [local implicit_reducible] nullarySpec
 
 example : ITree.TauFree
     (ITree.query (F := nullarySpec) () (fun direction =>

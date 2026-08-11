@@ -16,6 +16,8 @@ universe uA uB v w
 
 namespace PFunctor.PredicateExamples
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the predicate examples below unfold `PFunctor.Idx` there. -/
 attribute [local implicit_reducible] PFunctor.Idx
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}

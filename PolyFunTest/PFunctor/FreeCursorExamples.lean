@@ -15,6 +15,8 @@ universe uA uB v
 
 namespace PFunctor.FreeM.CursorExamples
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the cursor examples below unfold these constants there. -/
 attribute [local implicit_reducible] FreeM.Cursor.plug FreeM.Cursor.trace
   FreeM.Path.trace
 
@@ -74,8 +76,10 @@ def unitEdge : Cursor.Edge afterIndexCursor.residual :=
 def trueLeaf : Cursor program :=
   afterIndexCursor.comp unitEdge.toCursor
 
-attribute [local implicit_reducible] Interface Answer afterIndex afterChoice program internal
-  indexEdge afterIndexCursor unitEdge trueLeaf
+/- Lean 4.33: the examples below unfold this file's worked cursor data at
+implicit transparency. -/
+attribute [local implicit_reducible] Interface Answer afterIndex afterChoice program
+  internal indexEdge afterIndexCursor unitEdge trueLeaf
 
 example : trueLeaf.residual = FreeM.pure 11 := rfl
 
@@ -97,6 +101,8 @@ example : internal.plug (⟨selectedIndex, PUnit.unit, ⟨⟩⟩ : Path internal
 example : Path.trace program truePath = trueLeaf.trace := by
   change Path.trace program
       (trueLeaf.plug (⟨⟩ : Path trueLeaf.residual)) = trueLeaf.trace
+  -- Lean 4.33: `rw` rejects the changed target at implicit transparency, so
+  -- the law is applied as a term.
   exact (Cursor.trace_plug trueLeaf (⟨⟩ : Path trueLeaf.residual)).trans (by rfl)
 
 example : FreeM.map (output program) (withPath program) = program :=
@@ -116,18 +122,15 @@ example : falseTerminal.output = 7 := rfl
 
 example : trueTerminal.output ≠ falseTerminal.output := by decide
 
-example : Cursor.pathOfTerminal trueTerminal = truePath :=
-  Cursor.pathOfTerminal_terminalOfPath program truePath
+example : Cursor.pathOfTerminal trueTerminal = truePath := by simp [trueTerminal]
 
-example : Cursor.pathOfTerminal falseTerminal = falsePath :=
-  Cursor.pathOfTerminal_terminalOfPath program falsePath
+example : Cursor.pathOfTerminal falseTerminal = falsePath := by simp [falseTerminal]
 
 example : Cursor.terminalOfPath program (Cursor.pathOfTerminal trueTerminal) =
-    trueTerminal := Cursor.terminalOfPath_pathOfTerminal trueTerminal
+    trueTerminal := by simp
 
 example : Cursor.terminalEquivPath program trueTerminal = truePath := by
-  change Cursor.pathOfTerminal trueTerminal = truePath
-  exact Cursor.pathOfTerminal_terminalOfPath program truePath
+  simp [Cursor.terminalEquivPath, trueTerminal]
 
 /-! The producer tests below name the public algebraic laws explicitly, so
 their availability and simp orientation remain part of the regression surface. -/

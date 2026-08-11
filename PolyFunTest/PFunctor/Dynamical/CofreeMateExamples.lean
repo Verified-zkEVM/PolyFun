@@ -24,6 +24,8 @@ universe uS uA uB uα
 namespace PFunctor
 namespace CofreeMateTest
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the mate examples below unfold these constants there. -/
 attribute [local implicit_reducible] CofreeP.comonoid Comonoid.identity
 
 open ComonoidCategoryTest
@@ -133,8 +135,8 @@ example : branchingSystem.cofreeMate.toLens.toFunB .source
     branchingSystem.cofreeMate.toLens.toFunB .source
         (.root (branchingSystem.cofreeMate.toLens.toFunA .source)) =
         Comonoid.identity (stateComonoid ThreeState) .source := by
-      rw [← CofreeP.comonoid_identity]
-      exact branchingSystem.cofreeMate.map_identity ThreeState.source
+      simpa only [CofreeP.comonoid_identity] using
+        branchingSystem.cofreeMate.map_identity ThreeState.source
     _ = .source := rfl
 
 /-- The `false` branch reaches the observably distinct middle state. -/

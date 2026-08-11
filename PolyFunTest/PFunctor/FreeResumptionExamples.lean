@@ -53,6 +53,7 @@ example : Resumption.dest (toResumption program) =
 example : toResumption program ≠ toResumption (FreeM.pure 7) := by
   intro h
   have hdest := congrArg Resumption.dest h
+  -- Lean 4.33: `Resumption.dest_query` no longer fires here and is omitted.
   simp only [program, toResumption, Resumption.dest_pure] at hdest
   cases hdest
 

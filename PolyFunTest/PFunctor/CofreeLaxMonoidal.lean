@@ -28,9 +28,14 @@ universe pA₁ pB₁ qA₁ qB₁ rA₁ rB₁
 namespace PFunctor
 namespace CofreeLaxMonoidalTest
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the lax-monoidal examples below unfold these constants there.  The `unfold*`
+family, `Lens.tensorMap`, and the comonoid tensor and unit carry the attribute
+at their definition sites. -/
 attribute [local implicit_reducible] PFunctor.X PFunctor.monomial PFunctor.tensor
-  Comonoid.Hom.ofCategoryLaws CofreeP.comonoid CofreeP.cogenerator CofreeP.extend
-  CofreeP.laxUnitHom CofreeP.laxUnit CofreeP.laxTensorHom CofreeP.laxTensor
+  Comonoid.Hom.ofCategoryLaws CofreeP.comonoid CofreeP.cogenerator
+  CofreeP.extend CofreeP.laxUnitHom CofreeP.laxUnit CofreeP.laxTensorHom
+  CofreeP.laxTensor
 
 /-! ## Universe and theorem-surface canaries -/
 
@@ -190,9 +195,9 @@ example :
           (Comonoid.tensor (CofreeP.comonoid leftP)
             (CofreeP.comonoid rightP))
           (leftTree, rightTree) := by
-      rw [← CofreeP.comonoid_identity]
-      exact (CofreeP.laxTensorHom leftP rightP).map_identity
-        (leftTree, rightTree)
+      simpa [synchronizedTree] using
+        (CofreeP.laxTensorHom leftP rightP).map_identity
+          (leftTree, rightTree)
     _ = (.root leftTree, .root rightTree) := rfl
 
 /-- One synchronized edge pulls back to the matching edge in each source

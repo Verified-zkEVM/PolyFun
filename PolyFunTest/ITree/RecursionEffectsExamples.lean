@@ -19,6 +19,8 @@ and exception interpreters.
 
 namespace PolyFunTest.RecursionEffects
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the runner examples below unfold these interpreters there. -/
 attribute [local implicit_reducible] ITree.interpState ITree.runState ITree.interpExcept
   ITree.interpMrec ITree.fixRec ITree.CallE
 
@@ -27,11 +29,11 @@ open ITree
 inductive ExternalShape where
   | read
 
+-- Lean 4.33: the examples below unfold `External` at implicit transparency.
+@[implicit_reducible]
 def External : PFunctor where
   A := ExternalShape
   B _ := Nat
-
-attribute [local implicit_reducible] External
 
 def stateProgram : ITree (StateE Nat + External) Nat :=
   ITree.query (F := StateE Nat + External)
@@ -42,6 +44,8 @@ def stateProgram : ITree (StateE Nat + External) Nat :=
 
 example : runState stateProgram 4 =
     ITree.step (ITree.step (ITree.pure (F := External) (5, 4))) := by
+  -- Lean 4.33: simp no longer keys the state-interpreter equations to this
+  -- goal, so they are rewritten manually.
   rw [runState_eq_interpState]
   unfold stateProgram
   rw [interpState_get, interpState_put, interpState_pure]
@@ -67,6 +71,8 @@ def stateExternal : ITree (StateE Nat + External) Nat :=
 example : runState stateExternal 4 =
     ITree.query ExternalShape.read
       (fun n => ITree.pure (F := External) (4, n)) := by
+  -- Lean 4.33: simp no longer keys the state-interpreter equations to this
+  -- goal, so they are rewritten manually.
   rw [runState_eq_interpState]
   unfold stateExternal
   rw [interpState_query_external]
@@ -79,6 +85,8 @@ def throws : ITree (ExceptE String + External) Nat :=
 
 example : runExcept throws =
     ITree.pure (F := External) (Except.error "boom") := by
+  -- Lean 4.33: simp no longer keys the exception-interpreter equations to
+  -- this goal, so they are rewritten manually.
   rw [runExcept_eq_interpExcept]
   unfold throws
   rw [interpExcept_throw]
@@ -103,6 +111,8 @@ def succeeds : ITree (ExceptE String + External) Nat :=
 example : runExcept succeeds =
     ITree.query ExternalShape.read
       (fun n => ITree.pure (F := External) (Except.ok n)) := by
+  -- Lean 4.33: simp no longer keys the exception-interpreter equations to
+  -- this goal, so they are rewritten manually.
   rw [runExcept_eq_interpExcept]
   unfold succeeds
   rw [interpExcept_query_external]
@@ -120,14 +130,9 @@ example (n : Nat) :
       ITree.step (ITree.bind (fixRec countdownBody n)
         (fun r => ITree.pure (F := External) (r + 1))) := by
   rw [fixRec_eq_interpMrec]
-  rw [show countdownBody (n + 1) = ITree.query (F := CallE Nat Nat + External)
-      (Sum.inl n) (fun r : Nat => ITree.pure (r + 1)) from rfl]
-  rw [interpMrec_query_recursive]
-  congr 1
-  rw [interpMrec_bind, ← fixRec_eq_interpMrec]
-  apply congrArg (ITree.bind (fixRec countdownBody n))
-  funext a
-  rw [interpMrec_pure]
+  simp only [countdownBody, interpMrec_query_recursive, interpMrec_bind,
+    interpMrec_pure]
+  rfl
 
 example (n : Nat) :
     ITree.recursiveHandler (D := CallE Nat Nat) (E := External)
