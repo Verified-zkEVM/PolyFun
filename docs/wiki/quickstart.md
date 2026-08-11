@@ -118,20 +118,16 @@ deliberately outside the `lake lint` scope.
   runs the community `leanprover-community/lint-style-action` (the Lean-based
   Mathlib text style linter: copyright headers, line length, module
   docstrings).
-- [`../../.github/workflows/summary.yml`](../../.github/workflows/summary.yml):
-  optional AI-generated PR summary; gated on the `OPENROUTER_KEY` repository
-  secret. A preflight check emits a workflow warning if the secret is not set,
-  and the summary job is marked skipped without blocking the PR.
-- [`../../.github/workflows/release-tag.yml`](../../.github/workflows/release-tag.yml),
-  [`../../.github/workflows/update.yml`](../../.github/workflows/update.yml),
-  [`../../.github/workflows/review.yml`](../../.github/workflows/review.yml):
-  release tagging, dependency-update PRs, and review-helper workflows
-  ported from
+- [`../../.github/workflows/docs.yml`](../../.github/workflows/docs.yml):
+  builds and publishes searchable API documentation from `main`.
+- [`../../.github/workflows/release-tag.yml`](../../.github/workflows/release-tag.yml)
+  and [`../../.github/workflows/review.yml`](../../.github/workflows/review.yml):
+  release tagging and review helper workflows ported from
   [`Verified-zkEVM/ArkLib`](https://github.com/Verified-zkEVM/ArkLib).
 
 ## Toolchain
 
-Lean toolchain, Mathlib, and cslib stay in sync. All currently `v4.32.0`. When
-upgrading, update [`lean-toolchain`](../../lean-toolchain) and the
-`require mathlib` / `require cslib` pins in
-[`lakefile.toml`](../../lakefile.toml) simultaneously.
+Lean, Mathlib, and cslib stay in sync. To upgrade them, update
+[`lean-toolchain`](../../lean-toolchain) and both dependency pins in
+[`lakefile.toml`](../../lakefile.toml). Then run `lake update` and validate the
+result before opening a pull request.

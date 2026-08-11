@@ -5,6 +5,9 @@ Authors: Quang Dao
 -/
 module
 
+import all PolyFun.PFunctor.Cofree
+import all PolyFun.PFunctor.Comonoid
+import all PolyFun.PFunctor.M.Vertex
 public import PolyFun.PFunctor.Cofree
 public import PolyFun.PFunctor.Comonoid
 public import PolyFun.PFunctor.M.Vertex
@@ -61,11 +64,13 @@ def decode (x : (CofreeP P).Obj α) : CofreeC P α :=
   M.corec decodeStep x
 
 /-- Forget the label component of one `constProd P α` node. -/
+@[reducible]
 def forgetLabels (P : PFunctor.{uA, uB}) (α : Type v) :
     Lens (constProd P α) P :=
   Prod.snd ⇆ fun _ => id
 
 /-- Erase all labels from a type-level cofree tree. -/
+@[reducible]
 def erase (tree : CofreeC P α) : M P :=
   M.mapLens (forgetLabels P α) tree
 
@@ -332,6 +337,7 @@ def objEquiv : (CofreeP P).Obj α ≃ CofreeC P α where
 
 /-- Map cofree-polynomial trees covariantly along a generating lens and pull
 their finite vertices back contravariantly. -/
+@[reducible]
 def map {Q : PFunctor.{uA₂, uB₂}} (lens : Lens P Q) :
     Lens (CofreeP P) (CofreeP Q) where
   toFunA := M.mapLens lens
@@ -702,7 +708,8 @@ private theorem map_comult_obj {Q : PFunctor.{uA, uB}}
       (M.Vertex.pullMapLens lens
         (M.Vertex.subtree (M.Vertex.pullMapLens lens tree vertex))
         (M.Vertex.castEquiv (congrFun hChildren vertex) next))
-  rw [M.Vertex.pullMapLens_append]
+  simpa only [hChildren] using
+    M.Vertex.pullMapLens_append lens tree vertex next
 
 /-- Mapping cofree trees along a generating lens preserves vertex
 concatenation, hence cofree comultiplication. -/

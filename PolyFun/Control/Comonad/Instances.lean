@@ -247,6 +247,8 @@ instance : LawfulComonad Stream' where
       Function.comp_apply]
   extend_extract := by
     intros wa f
+    apply Stream'.ext
+    intro n
     simp [extend, extract, Stream'.head, Stream'.get, Stream'.drop]
   extract_extend := by
     intros wa
@@ -339,7 +341,7 @@ theorem filterMap_fromList?_tails_map (f : α → β) (l : List α) :
     List.map (fun nel : NonEmptyList α => f nel.head)
       (List.filterMap NonEmptyList.fromList? (List.tails l)) = List.map f l := by
   induction l with
-  | nil => simp [List.tails, fromList?]
+  | nil => rfl
   | cons h t ih => simp [List.tails, fromList?, ih]
 
 theorem filterMap_fromList?_tails_head (l : List α) :
@@ -351,7 +353,7 @@ theorem filterMap_fromList?_tails_map_list (f : α → β) (l : List α) :
     List.filterMap NonEmptyList.fromList? (List.tails (List.map f l)) =
     List.map (map f) (List.filterMap NonEmptyList.fromList? (List.tails l)) := by
   induction l with
-  | nil => simp [List.tails, fromList?]
+  | nil => rfl
   | cons h t ih => simp [List.tails, fromList?, map, ih]
 
 theorem tails_map (f : α → β) (nel : NonEmptyList α) :
@@ -365,7 +367,7 @@ theorem filterMap_fromList?_tails_tails (l : List α) :
       (List.filterMap NonEmptyList.fromList? (List.tails l))) =
     List.map tails (List.filterMap NonEmptyList.fromList? (List.tails l)) := by
   induction l with
-  | nil => simp [List.tails, fromList?]
+  | nil => rfl
   | cons h t ih => simp only [List.tails, List.filterMap, fromList?, List.map, tails, ih]
 
 theorem tails_tails (nel : NonEmptyList α) : tails (tails nel) = map tails (tails nel) := by

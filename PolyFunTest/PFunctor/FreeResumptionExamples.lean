@@ -53,8 +53,7 @@ example : Resumption.dest (toResumption program) =
 example : toResumption program ≠ toResumption (FreeM.pure 7) := by
   intro h
   have hdest := congrArg Resumption.dest h
-  simp only [program, toResumption, Resumption.dest_query,
-    Resumption.dest_pure] at hdest
+  simp only [program, toResumption, Resumption.dest_pure] at hdest
   cases hdest
 
 /-- The public injectivity theorem recovers the original dependent tree. -/

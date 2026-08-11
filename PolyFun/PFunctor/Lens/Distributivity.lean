@@ -83,6 +83,8 @@ def scalarCompDistrib {A : Type uA} {p : PFunctor.{uA₁, uB₁}} {q : PFunctor.
         | inr pb => rfl
       right_inv := fun _ => rfl }
   equivB := fun x =>
+    letI : IsEmpty ((i : (C A).B x.1.1) × q.B (x.2 (Sum.inl i))) :=
+      ⟨fun y => y.1.elim⟩
     (_root_.Equiv.sumSigmaDistrib (fun b => q.B (x.2 b))).trans
       (_root_.Equiv.sumCongr (_root_.Equiv.equivOfIsEmpty _ PEmpty) (_root_.Equiv.refl _))
 

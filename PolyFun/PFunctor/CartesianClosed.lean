@@ -5,6 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
+import all PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Basic
 
 /-!
@@ -57,6 +58,9 @@ namespace PFunctor
 
 namespace CartesianClosed
 
+attribute [local implicit_reducible] PFunctor.monomial PFunctor.X PFunctor.prod
+  PFunctor.pi PFunctor.exp PFunctor.comp
+
 /-- The evaluation lens `exp r q * q ⇆ r`, the counit of the cartesian
 exponential adjunction (Spivak–Niu Example 5.32).
 
@@ -107,6 +111,7 @@ theorem uncurry_curry {p q r : PFunctor.{uA, uB}} (l : Lens (p * q) r) :
     intro a
     obtain ⟨pa, qa⟩ := a
     funext d
+    change r.B (l.toFunA (pa, qa)) at d
     dsimp only [uncurry, eval, curry, Lens.comp, Lens.prodMap, Lens.piForall, Lens.id,
       Function.comp_apply, id_eq] at d ⊢
     split <;> rename_i heq
@@ -158,42 +163,86 @@ private lemma cast_exp_direction_of_inl {q r : PFunctor.{uA, uB}} {f f' : (exp r
   have hbd : bd = bd' := e.injective (Subsingleton.elim _ _)
   exact congrArg (fun z => (⟨i, ⟨d, z⟩⟩ : (exp r q).B f)) hbd
 
+private theorem Lens.ext_heq {p q : PFunctor} (l₁ l₂ : Lens p q)
+    (hA : l₁.toFunA = l₂.toFunA) (hB : l₁.toFunB ≍ l₂.toFunB) : l₁ = l₂ := by
+  cases l₁ with
+  | mk a₁ b₁ =>
+    cases l₂ with
+    | mk a₂ b₂ =>
+      dsimp only [Lens.toFunA, Lens.toFunB] at hA hB
+      cases hA
+      cases eq_of_heq hB
+      rfl
+
+private lemma exp_direction_components {q r : PFunctor} {f f' : (exp r q).A}
+    (h : f = f') {x : (exp r q).B f} {y : (exp r q).B f'} (hy : x ≍ y) :
+    x.1 = y.1 ∧ x.2.1 ≍ y.2.1 := by
+  cases h
+  have hxy : x = y := eq_of_heq hy
+  subst y
+  exact ⟨rfl, HEq.rfl⟩
+
 /-- Reverse round-trip of the cartesian exponential transpose: currying an
 uncurried lens recovers the original lens. -/
 @[simp, grind =]
 theorem curry_uncurry {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) :
     curry (uncurry g) = g := by
-  let hA : ∀ pa, (curry (uncurry g)).toFunA pa = g.toFunA pa :=
-    fun pa => congrFun (curry_uncurry_toFunA g) pa
-  apply Lens.ext _ _ hA
-  intro pa
-  funext yNew
-  obtain ⟨i, d, bdNew⟩ := yNew
-  have hpos := congrFun (congrFun (curry_uncurry_toFunA g) pa) i
-  have hbranches :
-      ((curry (uncurry g)).toFunA pa i).2 ≍ (g.toFunA pa i).2 :=
-    congr_arg_heq Sigma.snd hpos
-  have hbranch :
-      ((curry (uncurry g)).toFunA pa i).2 d = (g.toFunA pa i).2 d :=
-    congr_heq hbranches (HEq.refl d)
-  cases hb : (g.toFunA pa i).2 d with
-  | inl u =>
-    have hbOld : (g.toFunA pa i).2 d = Sum.inl PUnit.unit := by
-      exact hb.trans (congrArg Sum.inl (Subsingleton.elim u PUnit.unit))
-    let bdOld : (X + C (q.B i)).B ((g.toFunA pa i).2 d) :=
-      cast (congrArg (X + C (q.B i)).B hbOld.symm) PUnit.unit
-    let xOld : (exp r q).B (g.toFunA pa) := ⟨i, d, bdOld⟩
-    have hy : cast (congrArg (exp r q).B (hA pa).symm) xOld = ⟨i, d, bdNew⟩ :=
-      cast_exp_direction_of_inl (hA pa).symm (HEq.refl d) hbOld
-    rw [transported_dependent_apply (exp r q).B (hA pa).symm (g.toFunB pa)
-      xOld ⟨i, d, bdNew⟩ hy]
-    dsimp only [curry, uncurry, eval, Lens.comp, Lens.prodMap, Lens.piForall, Lens.id,
-      Function.comp_apply, id_eq]
-    grind
-  | inr qi =>
-    have hempty : PEmpty :=
-      cast (congrArg (X + C (q.B i)).B (hbranch.trans hb)) bdNew
-    exact hempty.elim
+  apply Lens.ext_heq
+  · exact curry_uncurry_toFunA g
+  · apply Function.hfunext rfl
+    intro pa pa' hpa
+    cases hpa
+    apply Function.hfunext (congrArg (exp r q).B (congrFun (curry_uncurry_toFunA g) pa))
+    intro yNew yOld hy
+    obtain ⟨iNew, dNew, bdNew⟩ := yNew
+    obtain ⟨iOld, dOld, bdOld⟩ := yOld
+    have hcomponents := exp_direction_components
+      (congrFun (curry_uncurry_toFunA g) pa) hy
+    have hi : iNew = iOld := hcomponents.1
+    subst iOld
+    have hd : dNew ≍ dOld := hcomponents.2
+    have hpos := congrFun (congrFun (curry_uncurry_toFunA g) pa) iNew
+    have hbranches := congr_arg_heq Sigma.snd hpos
+    have hbranch : ((curry (uncurry g)).toFunA pa iNew).2 dNew =
+        (g.toFunA pa iNew).2 dOld := congr_heq hbranches hd
+    have hdEq : dNew = dOld := eq_of_heq hd
+    subst dNew
+    cases hs : (uncurry g).toFunB (pa, iNew) dOld with
+    | inl pb =>
+      simp only [curry, Lens.piForall]
+      split <;> rename_i value hh
+      · have hpb : value = pb := Sum.inl.inj (hh.symm.trans hs)
+        dsimp only [uncurry, eval, Lens.comp, Lens.prodMap, Lens.id,
+          Function.comp_apply, id_eq] at hs
+        split at hs <;> rename_i heval
+        · simp only [Sum.elim_inl, Function.comp_apply] at hs
+          have hp := Sum.inl.inj hs
+          apply heq_of_eq
+          rw [hpb, ← hp]
+          apply congrArg (g.toFunB pa)
+          let xRoute : (exp r q).B (g.toFunA pa) :=
+            ⟨iNew, dOld, heval ▸ PUnit.unit⟩
+          let xOld : (exp r q).B (g.toFunA pa) := ⟨iNew, dOld, bdOld⟩
+          change xRoute = xOld
+          dsimp only [xRoute, xOld]
+          refine Sigma.ext rfl ?_
+          apply heq_of_eq
+          refine Sigma.ext rfl ?_
+          let e : (X + C (q.B iNew)).B ((g.toFunA pa iNew).2 dOld) ≃ PUnit :=
+            _root_.Equiv.cast (congrArg (X + C (q.B iNew)).B heval)
+          exact heq_of_eq (e.injective (Subsingleton.elim _ _))
+        · simp only [Sum.elim_inr, Function.comp_apply, id_eq] at hs
+          contradiction
+      · cases hh.symm.trans hs
+    | inr qi =>
+      have hnew : ((curry (uncurry g)).toFunA pa iNew).2 dOld = Sum.inr qi := by
+        change Sum.map (fun _ => PUnit.unit) id
+          ((uncurry g).toFunB (pa, iNew) dOld) = Sum.inr qi
+        rw [hs]
+        rfl
+      have hempty : PEmpty := cast
+        (congrArg (X + C (q.B iNew)).B hnew) bdNew
+      exact hempty.elim
 
 /-- The cartesian exponential adjunction as an equivalence of lens types. -/
 def curryEquiv {p q r : PFunctor.{uA, uB}} : Lens (p * q) r ≃ Lens p (exp r q) where

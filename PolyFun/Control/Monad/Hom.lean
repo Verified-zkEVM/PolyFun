@@ -15,9 +15,6 @@ public import Mathlib.CategoryTheory.Monad.Types
 Basic definitions of maps between monads parameterized over any possible output type.
 This is implemented with more constrained universes as `m ⟶ n` in mathlib category theory,
 but this gives definitions more standardized to a cs context.
-
-TODO: Evaluate more fine-grained `PureHom`/`BintHom`/etc, with `Class` versions as well.
-Probably should be in the context of upstreaming things.
 -/
 
 @[expose] public section

@@ -3,20 +3,8 @@ name: Lint Style
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    paths:
-      - "PolyFun/**/*.lean"
-      - "PolyFun.lean"
-      - "lakefile.toml"
-      - "scripts/nolints-style.txt"
-      - ".github/workflows/linting.yml"
   push:
     branches: [main]
-    paths:
-      - "PolyFun/**/*.lean"
-      - "PolyFun.lean"
-      - "lakefile.toml"
-      - "scripts/nolints-style.txt"
-      - ".github/workflows/linting.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

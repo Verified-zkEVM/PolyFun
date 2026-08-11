@@ -18,19 +18,25 @@ is checked after transport along the ordinary behavior-child equation.
 
 namespace PFunctor.ResponderBehaviorExample
 
+attribute [local implicit_reducible] PFunctor.X PFunctor.monomial PFunctor.ihom
+  PFunctor.DynSystem.out PFunctor.DynSystem.expose PFunctor.DynSystem.update
+  PFunctor.M.terminalSystem PFunctor.Responder.terminal
+
+@[reducible]
 def Interface : PFunctor where
   A := Unit
   B := fun _ => Bool
 
 def query : Interface.A := ()
 
+@[reducible]
 def contract : Display Interface where
   position _ := Bool
   direction _ expected answer := if expected = answer then Fin 2 else Fin 3
 
 def directionFromNat (expected answer : Bool) (value : Nat) :
     contract.direction () expected answer := by
-  simp only [contract]
+  simp only
   split
   · exact ⟨value % 2, Nat.mod_lt _ (by decide)⟩
   · exact ⟨value % 3, Nat.mod_lt _ (by decide)⟩
@@ -75,8 +81,10 @@ def displayed :
 
 def initialWitness : Invariant false := invariantFromNat false 1
 
+@[reducible]
 def behavior := responder.behavior false
 
+@[reducible]
 def toDisplayedBehavior :=
   Responder.toDisplayedBehavior contract responder Invariant displayed
     false initialWitness

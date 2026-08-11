@@ -31,6 +31,9 @@ universe uS uA uB uα
 namespace PFunctor
 namespace DynSystem
 
+attribute [local implicit_reducible] PFunctor.Obj Comonoid.identity Comonoid.target
+  Comonoid.compose
+
 variable {S : Type uS} {P : PFunctor.{uA, uB}} {α : Type uα}
 
 /-! ## Generic coiteration and behavior -/
@@ -60,7 +63,9 @@ theorem dest_labeledTrajectory (system : DynSystem S P) (label : S → α) (stat
     M.dest (labeledTrajectory system label state) =
       ⟨(label state, system.expose state), fun direction =>
         labeledTrajectory system label (system.update state direction)⟩ := by
-  simp only [labeledTrajectory, M.dest_corec_apply]
+  unfold labeledTrajectory
+  rw [M.dest_corec]
+  rfl
 
 @[simp]
 theorem head_labeledTrajectory (system : DynSystem S P) (label : S → α) (state : S) :
@@ -74,7 +79,6 @@ theorem tail_labeledTrajectory (system : DynSystem S P) (label : S → α) (stat
         labeledTrajectory system label (system.update state direction)⟩ := by
   simp only [CofreeC.tail]
   rw [dest_labeledTrajectory]
-  rfl
 
 /-- Apply the generic coiterated mate lens to an initial state carrying an
 arbitrary state labeling. Its shape records behavior and its label at a
@@ -103,8 +107,22 @@ private theorem unfoldDirection_stateComonoid_child (system : DynSystem S P) (st
         (cast (congrArg M.Vertex
           (CofreeP.children_unfoldShape
             (stateComonoid S) system state direction)) next) := by
-  rw [CofreeP.unfoldDirection.eq_def]
-  rfl
+  let childEq := CofreeP.children_unfoldShape
+    (stateComonoid S) system state direction
+  let leftVertex := M.Vertex.castEquiv childEq next
+  let rightVertex := cast (congrArg M.Vertex childEq) next
+  have hvertices : leftVertex = rightVertex := eq_of_heq
+    ((M.Vertex.castEquiv_heq childEq next).trans
+      (cast_heq (congrArg M.Vertex childEq) next).symm)
+  calc
+    _ = CofreeP.unfoldDirection (stateComonoid S) system
+        (CofreeP.unfoldRootDirection (stateComonoid S) system state direction)
+        leftVertex := by
+      simpa only [Comonoid.stateComonoid_compose, Comonoid.stateComonoid_target,
+        leftVertex, childEq] using CofreeP.unfoldDirection_child
+          (C := stateComonoid S) system state direction next
+    _ = _ := congrArg (CofreeP.unfoldDirection (stateComonoid S) system
+      (CofreeP.unfoldRootDirection (stateComonoid S) system state direction)) hvertices
 
 /-- Taking one child of the object-level dynamical mate advances the system
 state by exactly the selected direction, while preserving the state labeling.
@@ -134,7 +152,8 @@ theorem mateObj_child (system : DynSystem S P) (state : S) (label : S → α)
         (CofreeP.unfoldRootDirection
           (stateComonoid S) system state direction)
         (cast (congrArg M.Vertex childEq) leftVertex))
-  rw [unfoldDirection_stateComonoid_child]
+  exact congrArg label
+    (unfoldDirection_stateComonoid_child system state direction leftVertex)
 
 private theorem decodeStep_mateObj (system : DynSystem S P) (state : S) (label : S → α) :
     CofreeP.decodeStep (mateObj system state label) =
@@ -148,8 +167,9 @@ private theorem decodeStep_mateObj (system : DynSystem S P) (state : S) (label :
           (CofreeP.unfoldDirection (stateComonoid S) system state
             (.root (CofreeP.unfoldShape
               (stateComonoid S) system state))) = label state
-      rw [CofreeP.unfoldDirection_root]
-      rfl
+      exact congrArg label (by
+        simpa only [Comonoid.stateComonoid_identity] using
+          CofreeP.unfoldDirection_root (C := stateComonoid S) system state)
     · exact CofreeP.head_unfoldShape
         (stateComonoid S) system state
   apply Sigma.ext hPosition

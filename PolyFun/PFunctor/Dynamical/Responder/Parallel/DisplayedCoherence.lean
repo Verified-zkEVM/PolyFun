@@ -819,9 +819,9 @@ theorem mapDisplayedBehavior_parallel_comm
       parallelDisplayedBehavior S T left displayedLeft right displayedRight := by
     exact displayedBehavior_parallel_comm_presented S T
       left displayedLeft right displayedRight
-  have hChain :
+  have hChainToRaw :
       Display.M.transport (presentationEq.trans rawEq) mappedDisplayed =
-        parallelDisplayedBehavior S T left displayedLeft right displayedRight := by
+        Display.M.transport rawEq rawMapped := by
     calc
       Display.M.transport (presentationEq.trans rawEq) mappedDisplayed =
           Display.M.transport rawEq
@@ -829,7 +829,10 @@ theorem mapDisplayedBehavior_parallel_comm
         (Display.M.transport_trans presentationEq rawEq mappedDisplayed).symm
       _ = Display.M.transport rawEq rawMapped :=
         congrArg (Display.M.transport rawEq) hPresentation
-      _ = _ := hRaw
+  have hChain :
+      Display.M.transport (presentationEq.trans rawEq) mappedDisplayed =
+        parallelDisplayedBehavior S T left displayedLeft right displayedRight :=
+    hChainToRaw.trans hRaw
   exact (Display.M.transport_proof_irrel
     (mapBehavior_parallel_comm left right)
     (presentationEq.trans rawEq) mappedDisplayed).trans hChain
@@ -936,17 +939,12 @@ theorem mapDisplayedBehavior_parallel_zero_right
       uB, uC₁, uD₁, uC₂, uD₂, 0, 0} S left displayedLeft
   have hRawToPublic :
       Display.M.transport terminalEq.symm rawDisplayed = publicDisplayed := by
-    calc
-      Display.M.transport terminalEq.symm rawDisplayed =
-          Display.M.transport terminalEq.symm
-            (Display.M.transport terminalEq publicDisplayed) :=
-        congrArg (Display.M.transport terminalEq.symm) hTerminal.symm
-      _ = publicDisplayed :=
-        Display.M.transport_symm_transport terminalEq publicDisplayed
-  have hChain :
+    exact (congrArg (Display.M.transport terminalEq.symm) hTerminal.symm).trans
+      (Display.M.transport_symm_transport terminalEq publicDisplayed)
+  have hChainToRaw :
       Display.M.transport
           ((presentationEq.trans rawEq).trans terminalEq.symm)
-          mappedDisplayed = publicDisplayed := by
+          mappedDisplayed = Display.M.transport terminalEq.symm rawDisplayed := by
     calc
       Display.M.transport
           ((presentationEq.trans rawEq).trans terminalEq.symm)
@@ -969,7 +967,11 @@ theorem mapDisplayedBehavior_parallel_zero_right
             (Display.M.transport rawEq displayed)) hPresentation
       _ = Display.M.transport terminalEq.symm rawDisplayed :=
         congrArg (Display.M.transport terminalEq.symm) hRaw
-      _ = publicDisplayed := hRawToPublic
+  have hChain :
+      Display.M.transport
+          ((presentationEq.trans rawEq).trans terminalEq.symm)
+          mappedDisplayed = publicDisplayed :=
+    hChainToRaw.trans hRawToPublic
   exact (Display.M.transport_proof_irrel
     (mapBehavior_parallel_zero_right left)
     ((presentationEq.trans rawEq).trans terminalEq.symm)
@@ -1073,17 +1075,12 @@ theorem mapDisplayedBehavior_parallel_zero_left
       uB, uC₁, uD₁, uC₂, uD₂, 0, 0} S right displayedRight
   have hRawToPublic :
       Display.M.transport terminalEq.symm rawDisplayed = publicDisplayed := by
-    calc
-      Display.M.transport terminalEq.symm rawDisplayed =
-          Display.M.transport terminalEq.symm
-            (Display.M.transport terminalEq publicDisplayed) :=
-        congrArg (Display.M.transport terminalEq.symm) hTerminal.symm
-      _ = publicDisplayed :=
-        Display.M.transport_symm_transport terminalEq publicDisplayed
-  have hChain :
+    exact (congrArg (Display.M.transport terminalEq.symm) hTerminal.symm).trans
+      (Display.M.transport_symm_transport terminalEq publicDisplayed)
+  have hChainToRaw :
       Display.M.transport
           ((presentationEq.trans rawEq).trans terminalEq.symm)
-          mappedDisplayed = publicDisplayed := by
+          mappedDisplayed = Display.M.transport terminalEq.symm rawDisplayed := by
     calc
       Display.M.transport
           ((presentationEq.trans rawEq).trans terminalEq.symm)
@@ -1106,7 +1103,11 @@ theorem mapDisplayedBehavior_parallel_zero_left
             (Display.M.transport rawEq displayed)) hPresentation
       _ = Display.M.transport terminalEq.symm rawDisplayed :=
         congrArg (Display.M.transport terminalEq.symm) hRaw
-      _ = publicDisplayed := hRawToPublic
+  have hChain :
+      Display.M.transport
+          ((presentationEq.trans rawEq).trans terminalEq.symm)
+          mappedDisplayed = publicDisplayed :=
+    hChainToRaw.trans hRawToPublic
   exact (Display.M.transport_proof_irrel
     (mapBehavior_parallel_zero_left right)
     ((presentationEq.trans rawEq).trans terminalEq.symm)

@@ -98,6 +98,7 @@ example {p : PFunctor.{pA, pB}} (a : p.A) (d : p.B a) :
     (Lens.positionCounit p).toFunA a = a ∧
       (Lens.positionCounit p).toFunB a d = PUnit.unit := by
   simp
+  rfl
 
 example {p : PFunctor.{pA, pB}} {q : PFunctor.{qA, qB}}
     {r : PFunctor.{rA, rB}} (l : Lens (p ⊗ q) r) (pq : p.A × q.A)

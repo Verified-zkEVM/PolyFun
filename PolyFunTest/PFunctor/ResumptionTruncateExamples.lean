@@ -15,6 +15,8 @@ open PFunctor
 
 namespace PFunctor.Resumption
 
+attribute [local implicit_reducible] PFunctor.X PFunctor.monomial
+
 universe uA uB uβ
 
 def truncateUniverseCanary {p : PFunctor.{uA, uB}} {β : Type uβ}
@@ -33,6 +35,8 @@ example : (truncate 1 oneQueryTree).IsTotalRollBound 1 := isTotalRollBound_trunc
 
 /-- A nontrivial interface whose two answers select different continuations. -/
 def branchP : PFunctor.{0, 0} := monomial Bool Bool
+
+attribute [local implicit_reducible] branchP
 
 def secondProgram : Bool → FreeM branchP Nat
   | false => FreeM.pure 3
@@ -97,6 +101,8 @@ example : truncate 5 twoLevelTree = FreeM.map some twoLevelProgram :=
 /-- A query with no directions is a finite one-node program; its continuation
 obligation and its successful factorization are both vacuous. -/
 def emptyDirectionP : PFunctor.{0, 0} := monomial Unit PEmpty
+
+attribute [local implicit_reducible] emptyDirectionP
 
 def emptyDirectionProgram : FreeM emptyDirectionP Nat :=
   FreeM.liftBind () PEmpty.elim

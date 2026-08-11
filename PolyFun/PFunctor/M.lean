@@ -45,7 +45,7 @@ variable {P : PFunctor.{uA, uB}} {α : Type v}
 theorem eq_of_dest_eq {u v : M P} (h : M.dest u = M.dest v) : u = v := by
   rw [← M.mk_dest u, ← M.mk_dest v, h]
 
-@[simp] theorem dest_inj {u v : M P} : M.dest u = M.dest v ↔ u = v :=
+theorem dest_inj {u v : M P} : M.dest u = M.dest v ↔ u = v :=
   ⟨eq_of_dest_eq, fun h => h ▸ rfl⟩
 
 /-! ### Corec helpers -/

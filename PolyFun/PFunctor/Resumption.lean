@@ -5,6 +5,8 @@ Authors: Devon Tuma
 -/
 module
 
+import all PolyFun.PFunctor.Lens.Basic
+import all PolyFun.PFunctor.M
 public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.M
 
@@ -265,11 +267,11 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
       exact congrArg pack h
     · exact direction.elim
   · refine ⟨Sum.inr position,
-      fun direction => corec (bindStep k) (Sum.inr (next direction)),
+      (fun direction : p.B position => corec (bindStep k) (Sum.inr (next direction))),
       next, ?_, ?_, fun direction => rfl⟩
     · rw [← pack_dest, ← pack_inr]
       apply congrArg pack
-      simp only [dest_corec, bindStep, h, Sum.map_inr, PFunctor.map_eq]
+      simp only [dest_corec, bindStep, h]
       rfl
     · rw [← pack_dest, ← pack_inr]
       exact congrArg pack h
@@ -285,14 +287,14 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
   rcases h : dest computation with value | ⟨position, next⟩
   · rcases hk : dest (k value) with result | ⟨position, next⟩
     · simp [bindStep, h, hk]
-    · simp only [bindStep, h, hk, Sum.map_inr, PFunctor.map_eq]
+    · simp only [bindStep, h, hk]
       apply congrArg Sum.inr
       apply Sigma.ext
       · rfl
       · apply heq_of_eq
         funext direction
         exact corec_bindStep_inr k (next direction)
-  · simp only [bindStep, h, Sum.map_inr, PFunctor.map_eq]
+  · simp only [bindStep, h]
     rfl
 
 @[simp] theorem bind_pure_left (value : α) (k : α → Resumption p β) :
@@ -322,12 +324,11 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
     · rw [← pack_dest, ← pack_inl]
       exact congrArg pack h
     · exact direction.elim
-  · refine ⟨Sum.inr position, (fun direction => bind (next direction) pure), next,
+  · refine ⟨Sum.inr position, (fun direction : p.B position => bind (next direction) pure), next,
       ?_, ?_, fun direction => ⟨next direction, rfl, rfl⟩⟩
     · rw [← pack_dest, ← pack_inr]
       apply congrArg pack
       simp [dest_bind, h]
-      rfl
     · rw [← pack_dest, ← pack_inr]
       exact congrArg pack h
 
@@ -353,17 +354,15 @@ theorem bind_assoc (computation : Resumption p α) (k : α → Resumption p β)
       rcases hk : M.dest (bind (k value) k') with ⟨shape, next⟩
       exact ⟨shape, next, next, rfl, rfl, fun _ => Or.inl rfl⟩
     · refine ⟨Sum.inr position,
-        fun direction => bind (bind (next direction) k) k',
-        fun direction => bind (next direction) (fun value => bind (k value) k'),
+        (fun direction : p.B position => bind (bind (next direction) k) k'),
+        (fun direction : p.B position => bind (next direction) (fun value => bind (k value) k')),
         ?_, ?_, fun direction => Or.inr ⟨next direction, rfl, rfl⟩⟩
       · rw [← pack_dest, ← pack_inr]
         apply congrArg pack
         simp [dest_bind, h]
-        rfl
       · rw [← pack_dest, ← pack_inr]
         apply congrArg pack
         simp [dest_bind, h]
-        rfl
 
 @[simp] theorem map_pure (f : α → β) (value : α) :
     map f (pure (p := p) value) = pure (f value) := by
@@ -414,7 +413,7 @@ def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β 
   rw [dest_corec]
   rcases h : dest computation with value | ⟨position, next⟩
   · simp [mapLensStep, h]
-  · simp only [mapLensStep, h, Sum.map_inr, PFunctor.map_eq]
+  · simp only [mapLensStep, h]
     rfl
 
 @[simp] theorem mapLens_pure (lens : Lens p q) (value : β) :
