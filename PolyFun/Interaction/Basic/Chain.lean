@@ -59,6 +59,8 @@ at each step (`Fin 1`, `Fin 2`, …) without mentioning any state type.
 
 public section
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 universe u
 
 namespace Interaction
@@ -95,8 +97,7 @@ def toTypeTree : (n : Nat) → Chain n → TypeTree
   | n + 1, ⟨spec, cont⟩ =>
       TypeTree.substMonoid.mult.toFunA ⟨spec, fun tr => toTypeTree n (cont tr)⟩
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.FreeP.substMonoid PFunctor.FreeP.mult
+attribute [local implicit_reducible] PFunctor.FreeP.substMonoid PFunctor.FreeP.mult
 
 @[simp, grind =]
 theorem toTypeTree_zero (c : Chain 0) : toTypeTree 0 c = TypeTree.done := rfl
@@ -138,7 +139,10 @@ theorem toTypeTree_replicate (spec : TypeTree) :
   | 0 => rfl
   | n + 1 => by
       simp only [Chain.replicate, toTypeTree, PFunctor.FreeM.replicate]
-      congr 1; funext _; exact toTypeTree_replicate spec n
+      rw [TypeTree.substMonoid_mult_toFunA]
+      congr 1
+      funext _
+      exact toTypeTree_replicate spec n
 
 /-- Flattening the finite unfold of a stage-indexed coalgebra agrees with
 `TypeTree.stateChain`. -/
@@ -151,6 +155,7 @@ theorem toTypeTree_ofStateChain (Stage : Nat → Type u)
   | 0, _, _ => rfl
   | n + 1, i, s => by
       simp only [Chain.ofStateChain, toTypeTree, PFunctor.FreeM.stateChain]
+      rw [TypeTree.substMonoid_mult_toFunA]
       congr 1
       funext tr
       exact toTypeTree_ofStateChain Stage step next n (i + 1) (next i s tr)

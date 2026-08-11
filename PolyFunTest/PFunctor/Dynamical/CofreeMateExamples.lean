@@ -24,8 +24,7 @@ universe uS uA uB uα
 namespace PFunctor
 namespace CofreeMateTest
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] CofreeP.comonoid Comonoid.identity
+attribute [local implicit_reducible] CofreeP.comonoid Comonoid.identity
 
 open ComonoidCategoryTest
 open CofreePolynomialTest

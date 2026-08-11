@@ -23,6 +23,8 @@ universe uA uB v
 
 namespace PFunctor.FreeM.Cursor
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 open PFunctor.TraceList
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
@@ -189,6 +191,7 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
   | pure value => simp [occurrences]
   | lift_bind a next ih =>
       rcases path with ⟨answer, suffix⟩
+      change Path (next answer) at suffix
       by_cases h : a = target
       · subst a
         cases n with

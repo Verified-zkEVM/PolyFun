@@ -27,8 +27,7 @@ universe uA₁ uA₂ uB uC₁ uD₁ uC₂ uD₂
 namespace PFunctor
 namespace Responder
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.parallelSum
+attribute [local implicit_reducible] PFunctor.parallelSum
 
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 

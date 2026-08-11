@@ -76,7 +76,7 @@ def extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) : CofreeC 
   induction t using PFunctor.M.casesOn' with
   | _ a g =>
       cases a
-      simp only [extendF, extract, head, M.dest_mk]
+      rfl
 
 @[simp] theorem dest_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     M.dest (extend t f) = (constProd F β).map (fun x => extend x f) (extendF f t) := by

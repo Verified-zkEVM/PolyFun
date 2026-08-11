@@ -57,8 +57,7 @@ def nullarySpec : PFunctor.{0, 0} where
   A := Unit
   B _ := PEmpty
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] nullarySpec
+attribute [local implicit_reducible] nullarySpec
 
 example : ITree.TauFree
     (ITree.query (F := nullarySpec) () (fun direction =>

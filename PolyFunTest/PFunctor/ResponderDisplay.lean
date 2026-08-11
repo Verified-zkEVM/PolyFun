@@ -16,6 +16,8 @@ dependent data rather than propositions.
 
 @[expose] public section
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 namespace PFunctor.Display.ResponderExample
 
 inductive Query where
@@ -30,8 +32,7 @@ def Interface : PFunctor where
   A := Query
   B := Response
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] Response Interface
+attribute [local implicit_reducible] Response Interface
 
 /-- Contract positions depend on the query, and postcondition evidence depends
 on both the chosen contract position and the actual response. -/
@@ -43,8 +44,7 @@ def contract : Display Interface where
     | .bit, expected, answer => if expected = answer then Fin 2 else PUnit
     | .choice, bound, answer => Fin (bound.val + answer.val + 1)
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] contract
+attribute [local implicit_reducible] contract
 
 def answer (state : Nat) : (a : Query) → Response a
   | .bit => state % 2 == 0
@@ -64,7 +64,8 @@ def answerContract (state : Nat) :
     (a : Query) → (c : contract.position a) →
       contract.direction a c (system.answer state a)
   | .bit, expected => by
-      simp only
+      change Bool at expected
+      change if expected = (state % 2 == 0) then Fin 2 else PUnit
       split
       · exact 0
       · exact PUnit.unit
@@ -96,8 +97,7 @@ example (state : Nat) (witness : Invariant state) :
       Query.choice ⟨0, by decide⟩).2).val = witness.val := by
   rfl
 
-example :
-    answerContract 0 .bit true = (0 : Fin 2) :=
+example : (answerContract 0 .bit true).val = 0 := by
   rfl
 
 example (state : Nat) :

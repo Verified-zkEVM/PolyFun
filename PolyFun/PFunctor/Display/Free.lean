@@ -41,6 +41,8 @@ a duplicate spelling of the existing displayed-family definitions.
 
 @[expose] public section
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 universe uA uB uC uD uE uE' uE'' uF uG uH
 
 namespace PFunctor
@@ -255,6 +257,7 @@ theorem bind_leaf (S : Display.{uA, uB, uC, uD} P)
           (fun b e =>
             S.bind (rest b) (children b e) FreeM.pure fun x dx =>
               S.leaf F x dx) using 1
+        rfl
       rw [htransport]
       congr
       funext b e
@@ -308,6 +311,7 @@ theorem bind_assoc (S : Display.{uA, uB, uC, uD} P)
           (fun b e =>
             S.bind ((rest b).bind g)
               (S.bind (rest b) (children b e) g dg) h dh) using 1
+        rfl
       rw [htransport]
       congr
       funext b e

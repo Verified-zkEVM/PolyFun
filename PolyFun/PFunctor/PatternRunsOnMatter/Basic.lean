@@ -41,8 +41,8 @@ universe pA pB pA' pB' qA qB qA' qB' v w
 
 namespace PFunctor
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.tensor
+attribute [local implicit_reducible] PFunctor.tensor
+
 namespace FreeP
 
 variable {P : PFunctor.{pA, pB}} {Q : PFunctor.{qA, qB}}

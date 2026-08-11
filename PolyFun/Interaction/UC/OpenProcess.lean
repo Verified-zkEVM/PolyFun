@@ -62,6 +62,8 @@ probabilistic execution belong to downstream runtime interpreters.
 
 public section
 
+attribute [local implicit_reducible] PFunctor.Obj PFunctor.Idx FreeMonoid
+
 universe u v v₁ v₂ v₃ w w'
 
 namespace Interaction
@@ -264,10 +266,12 @@ theorem mapBoundary_wireLeft {Δ₁ Δ₁' Γ : PortBoundary} {Δ₂ Δ₂' : Po
   simp only [wireLeft, mapBoundary, PortBoundary.Hom.tensor, PortBoundary.Hom.id]
   congr 1
   funext x
-  simp only [PFunctor.Trace.mapChart_apply, PFunctor.Trace.mapPartial_apply,
-    List.filterMap_filterMap]
-  congr 1
-  funext ⟨pkt_port, pkt_msg⟩
+  apply FreeMonoid.toList.injective
+  dsimp only [FreeMonoid.toList]
+  simp only [PFunctor.Trace.mapChart_apply, PFunctor.Trace.mapPartial_apply]
+  rw [List.filterMap_filterMap, List.filterMap_filterMap]
+  apply List.filterMap_congr
+  intro ⟨pkt_port, pkt_msg⟩ _
   cases pkt_port <;> rfl
 
 @[simp]
@@ -281,10 +285,12 @@ theorem mapBoundary_wireRight {Δ₁ Δ₁' : PortBoundary} {Γ Δ₂ Δ₂' : P
   simp only [wireRight, mapBoundary, PortBoundary.Hom.tensor, PortBoundary.Hom.id]
   congr 1
   funext x
-  simp only [PFunctor.Trace.mapChart_apply, PFunctor.Trace.mapPartial_apply,
-    List.filterMap_filterMap]
-  congr 1
-  funext ⟨pkt_port, pkt_msg⟩
+  apply FreeMonoid.toList.injective
+  dsimp only [FreeMonoid.toList]
+  simp only [PFunctor.Trace.mapChart_apply, PFunctor.Trace.mapPartial_apply]
+  rw [List.filterMap_filterMap, List.filterMap_filterMap]
+  apply List.filterMap_congr
+  intro ⟨pkt_port, pkt_msg⟩ _
   cases pkt_port <;> rfl
 
 end BoundaryAction
@@ -707,8 +713,7 @@ structure OpenProcess (m : Type w → Type w') (Party : Type u) (Δ : PortBounda
 
 namespace OpenProcess
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.FreeM.Displayed.Decoration.localMap
+attribute [local implicit_reducible] PFunctor.FreeM.Displayed.Decoration.localMap
   PFunctor.FreeM.Displayed.LocalMap.toHom PFunctor.FreeM.Displayed.LocalMap.toHomFun
 
 /-- Structural projection onto the underlying `ProcessOver`, dropping

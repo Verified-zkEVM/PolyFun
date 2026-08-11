@@ -38,10 +38,9 @@ namespace PFunctor
 
 namespace Responder
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.X PFunctor.monomial PFunctor.ihom
-  PFunctor.DynSystem.out PFunctor.DynSystem.expose PFunctor.DynSystem.update
-  PFunctor.M.terminalSystem Responder.terminal
+attribute [local implicit_reducible] PFunctor.Obj PFunctor.X PFunctor.monomial
+  PFunctor.ihom PFunctor.DynSystem.out PFunctor.DynSystem.expose
+  PFunctor.DynSystem.update PFunctor.M.terminalSystem Responder.terminal
 
 variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
 variable {State : Type uS}

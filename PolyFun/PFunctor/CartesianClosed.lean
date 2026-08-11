@@ -58,9 +58,8 @@ namespace PFunctor
 
 namespace CartesianClosed
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.monomial PFunctor.X PFunctor.prod
-  PFunctor.instHMulPFunctor PFunctor.instMulPFunctor PFunctor.pi PFunctor.exp PFunctor.comp
+attribute [local implicit_reducible] PFunctor.monomial PFunctor.X PFunctor.prod
+  PFunctor.pi PFunctor.exp PFunctor.comp
 
 /-- The evaluation lens `exp r q * q ⇆ r`, the counit of the cartesian
 exponential adjunction (Spivak–Niu Example 5.32).

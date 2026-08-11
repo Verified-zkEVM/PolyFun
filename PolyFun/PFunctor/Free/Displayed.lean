@@ -464,9 +464,7 @@ variable
     {R' : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w, w₅} D}
     {S' : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w, w₆} D}
 
-set_option allowUnsafeReducibility true in
 /-- The recursive function underlying `FiberLocalMap.toHom`. -/
-@[reducible]
 def toHomFun (η : FiberLocalMap R' S') :
     (s : FreeM P α) →
     (d : Displayed D s) →

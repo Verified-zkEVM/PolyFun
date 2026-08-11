@@ -52,8 +52,7 @@ namespace UC
 
 open Concurrent
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.DynSystem.expose PFunctor.DynSystem.update
+attribute [local implicit_reducible] PFunctor.DynSystem.expose PFunctor.DynSystem.update
   PFunctor.DynSystem.mk' Concurrent.ProcessOver.interleave OpenProcess.mapBoundary
   OpenProcess.interleave
 
@@ -653,9 +652,9 @@ theorem openTheory_par_left_unit_activation_equiv
     rw [isSilentStep_mapBoundary_iff] at hvisible
     match b with
     | true =>
-      exact absurd (by simp [IsSilentStep,
-        IsSilentDecoration, schedulerNode,
-        BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
+      exact absurd (by
+        simp only [IsSilentStep, ProcessOver.interleave, Decoration.map]
+        exact ⟨rfl, trivial⟩) hvisible
     | false =>
       refine ⟨rest, fun h => hvisible ?_, rfl⟩
       simp only [IsSilentStep, ProcessOver.interleave, Decoration.map]
@@ -713,9 +712,9 @@ theorem openTheory_par_right_unit_activation_equiv
       intro X ons
       simp [OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor]
     | false =>
-      exact absurd (by simp [IsSilentStep,
-        IsSilentDecoration, schedulerNode,
-        BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
+      exact absurd (by
+        simp only [IsSilentStep, ProcessOver.interleave, Decoration.map]
+        exact ⟨rfl, trivial⟩) hvisible
   · intro tr₂ hsilent
     refine .inl ⟨⟨⟨true⟩, tr₂⟩, ?_, rfl⟩
     rw [isSilentStep_mapBoundary_iff]
@@ -771,9 +770,9 @@ theorem openTheory_wire_id_wire_activation_equiv
   · intro ⟨⟨b⟩, rest⟩ hvisible
     match b with
     | true =>
-      exact absurd (by simp [IsSilentStep,
-        IsSilentDecoration, schedulerNode,
-        BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
+      exact absurd (by
+        simp only [IsSilentStep, ProcessOver.interleave, Decoration.map]
+        exact ⟨rfl, trivial⟩) hvisible
     | false =>
       refine ⟨rest, fun h => hvisible ?_, rfl⟩
       simp only [IsSilentStep, ProcessOver.interleave, Decoration.map]
@@ -827,9 +826,9 @@ theorem openTheory_wire_id_wire_right_activation_equiv
       intro X ons
       simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
     | false =>
-      exact absurd (by simp [IsSilentStep,
-        IsSilentDecoration, schedulerNode,
-        BoundaryAction.internal, -PFunctor.FreeM.liftBind_eq]) hvisible
+      exact absurd (by
+        simp only [IsSilentStep, ProcessOver.interleave, Decoration.map]
+        exact ⟨rfl, trivial⟩) hvisible
   · intro tr₂ hsilent
     refine .inl ⟨⟨⟨true⟩, tr₂⟩, ?_, rfl⟩
     simp only [IsSilentStep, ProcessOver.interleave, Decoration.map]

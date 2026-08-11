@@ -31,10 +31,8 @@ universe uS uA uB uα
 namespace PFunctor
 namespace DynSystem
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] stateComonoid selfMonomial CofreeP.unfoldShape
-  CofreeP.unfoldRootDirection CofreeP.unfoldDirection CofreeP.unfoldLens
-  Comonoid.identity Comonoid.target Comonoid.compose
+attribute [local implicit_reducible] PFunctor.Obj Comonoid.identity Comonoid.target
+  Comonoid.compose
 
 variable {S : Type uS} {P : PFunctor.{uA, uB}} {α : Type uα}
 
@@ -65,7 +63,9 @@ theorem dest_labeledTrajectory (system : DynSystem S P) (label : S → α) (stat
     M.dest (labeledTrajectory system label state) =
       ⟨(label state, system.expose state), fun direction =>
         labeledTrajectory system label (system.update state direction)⟩ := by
-  simp only [labeledTrajectory, M.dest_corec_apply]
+  unfold labeledTrajectory
+  rw [M.dest_corec]
+  rfl
 
 @[simp]
 theorem head_labeledTrajectory (system : DynSystem S P) (label : S → α) (state : S) :

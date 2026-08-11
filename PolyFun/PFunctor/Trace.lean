@@ -65,32 +65,17 @@ universe uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ v w
 
 namespace PFunctor
 
+attribute [local implicit_reducible] FreeMonoid
+
 /--
 The free monoid on `P`-events.  Definitionally `FreeMonoid (Idx P)`, which
 in turn is reducibly `List (Idx P)`.  This is the universal carrier for
 "finite ordered logs of `P`-events".
 -/
-abbrev TraceList (P : PFunctor.{uA, uB}) : Type max uA uB :=
-  List (Idx P)
+@[reducible] def TraceList (P : PFunctor.{uA, uB}) : Type max uA uB :=
+  FreeMonoid (Idx P)
 
 namespace TraceList
-
-instance {P : PFunctor.{uA, uB}} : Monoid (TraceList P) where
-  one := []
-  mul := List.append
-  one_mul := List.nil_append
-  mul_one := List.append_nil
-  mul_assoc := List.append_assoc
-
-/-- Fold a trace list into a monoid by multiplying its mapped events in order. -/
-def lift {P : PFunctor.{uA, uB}} {ω : Type w} [Monoid ω] (φ : P.Idx → ω) :
-    TraceList P →* ω where
-  toFun events := (events.map φ).prod
-  map_one' := rfl
-  map_mul' left right := by
-    change (List.map φ (left ++ right)).prod =
-      (List.map φ left).prod * (List.map φ right).prod
-    rw [List.map_append, List.prod_append]
 
 /-- Every event in a trace carries a direction allowed at its position.
 
@@ -266,7 +251,7 @@ homomorphism `FreeMonoid (Idx P) →* ω`; `toMonoid φ` post-composes a `P`-tra
 with that hom.
 -/
 def toMonoid {ω : Type w} [Monoid ω] (φ : Idx P → ω) : Trace P X → Control.Trace ω X :=
-  Control.Trace.map (TraceList.lift φ)
+  Control.Trace.map (FreeMonoid.lift φ)
 
 /-! ### Pointwise behaviour -/
 
@@ -277,7 +262,7 @@ def toMonoid {ω : Type w} [Monoid ω] (φ : Idx P → ω) : Trace P X → Contr
     mapChart φ t x = (t x).filterMap (fun i => some (Chart.mapIdx φ i)) := rfl
 
 @[simp] theorem toMonoid_apply {ω : Type w} [Monoid ω] (φ : Idx P → ω) (t : Trace P X) (x : X) :
-    toMonoid φ t x = (List.map φ (t x)).prod := rfl
+    toMonoid φ t x = FreeMonoid.lift φ (t x) := rfl
 
 /-! ### Functoriality of `mapPartial` and `mapChart` -/
 
@@ -325,10 +310,12 @@ naturality square. -/
     (φ : Chart P Q) (t : Trace P X) :
     toMonoid ψ (mapChart φ t) = toMonoid (ψ ∘ Chart.mapIdx φ) t := by
   funext x
-  change (List.map ψ ((t x).filterMap (some ∘ Chart.mapIdx φ))).prod =
-    (List.map (ψ ∘ Chart.mapIdx φ) (t x)).prod
-  rw [List.filterMap_eq_map (f := Chart.mapIdx φ)]
-  rw [List.map_map]
+  change FreeMonoid.lift ψ
+      (FreeMonoid.ofList ((t x).filterMap (some ∘ Chart.mapIdx φ))) =
+        FreeMonoid.lift (ψ ∘ Chart.mapIdx φ) (t x)
+  rw [List.filterMap_eq_map (f := Chart.mapIdx φ),
+    FreeMonoid.lift_ofList, FreeMonoid.lift_apply, List.map_map]
+  rfl
 
 end Trace
 

@@ -15,8 +15,7 @@ open PFunctor
 
 namespace PFunctor.Resumption
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.X PFunctor.monomial
+attribute [local implicit_reducible] PFunctor.X PFunctor.monomial
 
 universe uA uB uβ
 
@@ -37,8 +36,7 @@ example : (truncate 1 oneQueryTree).IsTotalRollBound 1 := isTotalRollBound_trunc
 /-- A nontrivial interface whose two answers select different continuations. -/
 def branchP : PFunctor.{0, 0} := monomial Bool Bool
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] branchP
+attribute [local implicit_reducible] branchP
 
 def secondProgram : Bool → FreeM branchP Nat
   | false => FreeM.pure 3
@@ -104,8 +102,7 @@ example : truncate 5 twoLevelTree = FreeM.map some twoLevelProgram :=
 obligation and its successful factorization are both vacuous. -/
 def emptyDirectionP : PFunctor.{0, 0} := monomial Unit PEmpty
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] emptyDirectionP
+attribute [local implicit_reducible] emptyDirectionP
 
 def emptyDirectionProgram : FreeM emptyDirectionP Nat :=
   FreeM.liftBind () PEmpty.elim

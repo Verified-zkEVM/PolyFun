@@ -35,10 +35,8 @@ universe uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃
 namespace PFunctor
 namespace CofreeP
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.X PFunctor.monomial PFunctor.tensor Comonoid.unit
-  Comonoid.tensor Comonoid.Hom.ofCategoryLaws comonoid cogenerator Lens.tensorMap
-  unfoldShape unfoldRootDirection unfoldDirection unfoldLens extend
+attribute [local implicit_reducible] PFunctor.X PFunctor.monomial PFunctor.tensor
+  Comonoid.Hom.ofCategoryLaws comonoid cogenerator extend
 
 /-! ## Structure maps and generator equations -/
 
@@ -85,8 +83,7 @@ def laxTensor (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
     Lens (CofreeP P ⊗ CofreeP Q) (CofreeP (P ⊗ Q)) :=
   (laxTensorHom P Q).toLens
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] laxUnitHom laxUnit laxTensorHom laxTensor
+attribute [local implicit_reducible] laxUnitHom laxUnit laxTensorHom laxTensor
 
 theorem laxTensorHom_toLens
     (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
@@ -113,6 +110,7 @@ theorem laxUnit_children :
       (laxUnit.{uA, uB}).toFunA PUnit.unit := by
   change M.children (unfoldShape _ _ _) _ = unfoldShape _ _ _
   rw [children_unfoldShape]
+  rfl
 
 theorem laxUnit_toFunB
     (vertex : M.Vertex ((laxUnit.{uA, uB}).toFunA PUnit.unit)) :

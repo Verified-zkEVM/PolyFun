@@ -15,8 +15,7 @@ open PFunctor
 
 namespace PFunctor.DynSystem.DynComputation
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.X PFunctor.monomial FreeM.IsTotalRollBound
+attribute [local implicit_reducible] PFunctor.X PFunctor.monomial FreeM.IsTotalRollBound
 
 /-! ## Boundary behavior and universes -/
 

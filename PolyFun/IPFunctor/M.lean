@@ -25,6 +25,8 @@ in the underlying M-tree.
 
 @[expose] public section
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 universe uI uA uB uX
 
 namespace IPFunctor

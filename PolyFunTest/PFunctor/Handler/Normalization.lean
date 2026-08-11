@@ -21,8 +21,7 @@ changes the observed result.
 
 namespace PFunctor.Handler.Normalization.Examples
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.monomial
+attribute [local implicit_reducible] PFunctor.monomial
 
 abbrev Query : PFunctor.{0, 0} := monomial Bool Nat
 

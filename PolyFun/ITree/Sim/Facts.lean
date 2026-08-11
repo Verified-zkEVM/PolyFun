@@ -55,6 +55,8 @@ universe separation as the definitions.
 
 @[expose] public section
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 universe u uEA uEB uFA uFB uGA uGB uHA uHB uα uβ uγ
 
 namespace ITree

@@ -19,8 +19,7 @@ and exception interpreters.
 
 namespace PolyFunTest.RecursionEffects
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] ITree.interpState ITree.runState ITree.interpExcept
+attribute [local implicit_reducible] ITree.interpState ITree.runState ITree.interpExcept
   ITree.interpMrec ITree.fixRec ITree.CallE
 
 open ITree
@@ -32,8 +31,7 @@ def External : PFunctor where
   A := ExternalShape
   B _ := Nat
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] External
+attribute [local implicit_reducible] External
 
 def stateProgram : ITree (StateE Nat + External) Nat :=
   ITree.query (F := StateE Nat + External)

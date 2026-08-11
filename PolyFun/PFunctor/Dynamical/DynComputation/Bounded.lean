@@ -35,8 +35,7 @@ namespace PFunctor
 
 namespace DynSystem.DynComputation
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] DynComputation.seqComp
+attribute [local implicit_reducible] DynComputation.seqComp
 
 variable {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
 
@@ -103,7 +102,6 @@ theorem unroll_eq_truncate (M : DynComputation.{u} p α β)
       | inl value => rfl
       | inr query =>
           rcases query with ⟨position, next⟩
-          simp only [Sum.map_inr, PFunctor.map_eq]
           apply congrArg (FreeM.liftBind position)
           funext direction
           exact ih (next direction)
@@ -317,12 +315,16 @@ theorem unroll_eq_map_some_of_resolvesIn {M : DynComputation.{u} p α β} :
       ∃ program : FreeM p β, M.unroll k state = FreeM.map some program
   | 0, state, h => by
       obtain ⟨value, hview⟩ := (M.resolvesIn_zero state).mp h
-      exact ⟨FreeM.pure value, by rw [unroll_return M 0 state value hview]⟩
+      exact ⟨FreeM.pure value, by
+        rw [unroll_return M 0 state value hview, ← FreeM.bind_pure_comp]
+        exact (FreeM.pure_bind value (FreeM.pure ∘ some)).symm⟩
   | k + 1, state, h => by
       cases hview : M.view state with
       | inl value =>
           exact ⟨FreeM.pure value,
-            by rw [unroll_return M (k + 1) state value hview]⟩
+            by rw [unroll_return M (k + 1) state value hview,
+              ← FreeM.bind_pure_comp]
+               exact (FreeM.pure_bind value (FreeM.pure ∘ some)).symm⟩
       | inr query =>
           rcases query with ⟨position, next⟩
           have hnext : ∀ direction, M.ResolvesIn k (next direction) :=
@@ -525,7 +527,7 @@ theorem unroll_seqComp_inl_of_return {γ : Type uγ}
       rcases query with ⟨position, next⟩
       have hcomposite : (M₁.seqComp M₂).view (Sum.inl state₁) =
           Sum.inr ⟨position, fun direction => Sum.inr (next direction)⟩ := by
-        simp only [seqComp_view_inl, hview, hview₂, Sum.map_inr]
+        simp only [seqComp_view_inl, hview, hview₂]
         rfl
       cases k with
       | zero =>
@@ -643,6 +645,8 @@ theorem unroll_seqComp_inl_of_resolvesIn {γ : Type uγ}
       simp only [Nat.zero_add]
       rw [unroll_seqComp_inl_of_return M₁ M₂ k₂ state₁ value hview,
         M₁.unroll_return 0 state₁ value hview]
+      symm
+      apply FreeM.pure_bind
   | succ k₁ ih =>
       cases hview : M₁.view state₁ with
       | inl value =>

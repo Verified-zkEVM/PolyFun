@@ -28,13 +28,9 @@ universe pA₁ pB₁ qA₁ qB₁ rA₁ rB₁
 namespace PFunctor
 namespace CofreeLaxMonoidalTest
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.X PFunctor.monomial PFunctor.tensor
-  Comonoid.unit Comonoid.tensor Comonoid.Hom.ofCategoryLaws CofreeP.comonoid
-  CofreeP.cogenerator Lens.tensorMap CofreeP.unfoldShape
-  CofreeP.unfoldRootDirection CofreeP.unfoldDirection CofreeP.unfoldLens
-  CofreeP.extend CofreeP.laxUnitHom CofreeP.laxUnit CofreeP.laxTensorHom
-  CofreeP.laxTensor
+attribute [local implicit_reducible] PFunctor.X PFunctor.monomial PFunctor.tensor
+  Comonoid.Hom.ofCategoryLaws CofreeP.comonoid CofreeP.cogenerator CofreeP.extend
+  CofreeP.laxUnitHom CofreeP.laxUnit CofreeP.laxTensorHom CofreeP.laxTensor
 
 /-! ## Universe and theorem-surface canaries -/
 

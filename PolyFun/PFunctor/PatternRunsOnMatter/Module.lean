@@ -30,12 +30,9 @@ universe u
 namespace PFunctor
 namespace FreeP
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.X PFunctor.monomial PFunctor.tensor FreeP.node
-  FreeP.relabel Comonoid.tensor Comonoid.Hom.ofCategoryLaws CofreeP.comonoid
-  CofreeP.cogenerator CofreeP.unfoldShape CofreeP.unfoldRootDirection
-  CofreeP.unfoldDirection CofreeP.unfoldLens CofreeP.extend CofreeP.laxTensorHom
-  CofreeP.laxTensor
+attribute [local implicit_reducible] PFunctor.X PFunctor.monomial PFunctor.tensor FreeP.node
+  Comonoid.Hom.ofCategoryLaws CofreeP.comonoid CofreeP.cogenerator CofreeP.extend
+  CofreeP.laxTensorHom CofreeP.laxTensor
 
 private theorem runObj_unit (P : PFunctor.{u, u})
     (pattern : (FreeP P).A) :

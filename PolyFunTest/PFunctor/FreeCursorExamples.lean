@@ -15,8 +15,7 @@ universe uA uB v
 
 namespace PFunctor.FreeM.CursorExamples
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] FreeM.Cursor.plug FreeM.Cursor.trace
+attribute [local implicit_reducible] FreeM.Cursor.plug FreeM.Cursor.trace
   FreeM.Path.trace
 
 /-- Cursor construction keeps all three relevant universes independent. -/
@@ -75,8 +74,7 @@ def unitEdge : Cursor.Edge afterIndexCursor.residual :=
 def trueLeaf : Cursor program :=
   afterIndexCursor.comp unitEdge.toCursor
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] Interface Answer afterIndex afterChoice program internal
+attribute [local implicit_reducible] Interface Answer afterIndex afterChoice program internal
   indexEdge afterIndexCursor unitEdge trueLeaf
 
 example : trueLeaf.residual = FreeM.pure 11 := rfl
@@ -152,6 +150,7 @@ example : trueLeaf.trace =
     List.append (List.append internal.trace indexEdge.toCursor.trace)
       unitEdge.toCursor.trace := by
   simp only [trueLeaf, afterIndexCursor, Cursor.trace_comp]
+  rfl
 
 example (path : Path unitEdge.residual) :
     (afterIndexCursor.comp unitEdge.toCursor).plug path =

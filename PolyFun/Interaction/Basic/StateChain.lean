@@ -273,8 +273,7 @@ theorem PFunctor.FreeM.Path.stateChainFamily_zero
     (Family : (i : Nat) → Stage i → Type u) (i : Nat) (s : Stage i) (tr : PUnit) :
     PFunctor.FreeM.Path.stateChainFamily (advance := advance) Family 0 i s tr = Family i s := rfl
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] PFunctor.FreeM.stateChain
+attribute [local implicit_reducible] PFunctor.FreeM.stateChain
 
 /-- A constant family is unaffected by `stateChainFamily`. -/
 theorem PFunctor.FreeM.Path.stateChainFamily_const

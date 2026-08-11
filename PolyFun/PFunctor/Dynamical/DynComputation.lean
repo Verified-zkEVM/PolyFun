@@ -28,6 +28,8 @@ and denotes exactly monadic bind on `Resumption`.
 
 @[expose] public section
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 universe u v w x uA uB uA₂ uB₂ uα uβ uγ uδ uε uζ
 
 namespace PFunctor

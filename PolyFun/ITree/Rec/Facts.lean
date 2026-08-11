@@ -26,6 +26,8 @@ universe uDA uEA uGA uB uα uβ uCallA
 
 namespace ITree
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 variable {D : PFunctor.{uDA, uB}} {E : PFunctor.{uEA, uB}}
   {α : Type uα} {β : Type uβ}
 

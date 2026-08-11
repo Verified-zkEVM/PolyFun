@@ -28,8 +28,7 @@ universe uA₁ uB₁ uC₁ uD₁ uA₂ uB₂ uC₂ uD₂
 namespace PFunctor
 namespace Display
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] Display.total
+attribute [local implicit_reducible] Display.total
 
 /-- A fiberwise lift of an ordinary polynomial lens between two displays. -/
 structure Lens

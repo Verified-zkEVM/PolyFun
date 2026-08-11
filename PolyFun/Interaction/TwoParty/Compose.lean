@@ -41,9 +41,7 @@ namespace TwoParty
 
 open TwoParty
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] TypeTree.done run
-  InteractionOver.runTypeTree StrategyOver
+attribute [local implicit_reducible] run InteractionOver.runTypeTree StrategyOver
 
 /-- A lawful monad whose independent effects may be swapped.
 

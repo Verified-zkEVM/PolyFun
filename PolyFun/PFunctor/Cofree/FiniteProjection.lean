@@ -33,8 +33,7 @@ universe uA uB u
 namespace PFunctor
 namespace CofreeP
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] M.Vertex.depth
+attribute [local implicit_reducible] M.Vertex.depth
 
 /-! ## Structural finite projections -/
 

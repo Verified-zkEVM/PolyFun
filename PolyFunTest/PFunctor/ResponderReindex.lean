@@ -20,19 +20,15 @@ evidence is state-indexed data and affects the next witness.
 
 namespace PFunctor.ResponderReindexExample
 
+@[reducible]
 def Interface : PFunctor where
   A := Unit
   B := fun _ => Bool
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] Interface
-
+@[reducible]
 def contract : Display Interface where
   position _ := Bool
   direction _ expected answer := if expected = answer then Fin 2 else Fin 3
-
-set_option allowUnsafeReducibility true in
-attribute [local reducible] contract
 
 def directionVal (expected answer : Bool)
     (evidence : contract.direction () expected answer) : Nat := by

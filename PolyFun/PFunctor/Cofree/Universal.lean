@@ -26,6 +26,8 @@ the common-maximum universe boundary currently required by `Comonoid.Hom`.
 
 @[expose] public section
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 universe uA uB uA₂ uB₂ uCA uCB
 
 namespace PFunctor
@@ -43,8 +45,7 @@ def cogenerator (P : PFunctor.{uA, uB}) : Lens (CofreeP P) P where
   toFunB tree direction :=
     .child direction (.root (M.children tree direction))
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] cogenerator map comonoid Comonoid.identity Comonoid.target
+attribute [local implicit_reducible] cogenerator comonoid Comonoid.identity Comonoid.target
   Comonoid.compose Lens.comp M.head M.children M.mapLens M.Vertex.subtree M.Vertex.append
   M.Vertex.castEquiv M.Vertex.pullMapLens
 
@@ -190,9 +191,6 @@ decreasing_by
         M.Vertex.depth next := M.Vertex.depth_cast childEq next
     _ < M.Vertex.depth (.child direction next) := Nat.lt_succ_self _
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] unfoldShape unfoldRootDirection unfoldDirection
-
 @[simp]
 theorem unfoldDirection_root (lens : Lens C.carrier P)
     (object : C.carrier.A) :
@@ -249,7 +247,8 @@ theorem subtree_unfoldShape (lens : Lens C.carrier P) :
           (Comonoid.target C object
             (unfoldDirection C lens object vertex))
   | object, .root _ => by
-      with_unfolding_all rw [unfoldDirection_root, Comonoid.target_identity]
+      rw [unfoldDirection_root, Comonoid.target_identity]
+      rfl
   | object, .child direction next => by
       let first := unfoldRootDirection C lens object direction
       let childEq := children_unfoldShape C lens object direction
@@ -476,9 +475,6 @@ def unfoldLens (lens : Lens C.carrier P) :
     Lens C.carrier (CofreeP P) where
   toFunA := unfoldShape C lens
   toFunB := unfoldDirection C lens
-
-set_option allowUnsafeReducibility true in
-attribute [local reducible] unfoldLens
 
 @[simp]
 theorem unfoldLens_toFunA (lens : Lens C.carrier P)
@@ -743,6 +739,7 @@ private theorem unfoldDirection_restrict
           M.Vertex.castEquiv shapeEq (.child direction next) =
             M.Vertex.append firstVertex mappedNext := by
         with_unfolding_all rw [M.Vertex.cast_child]
+        rfl
       calc
         unfoldDirection C (restrict C hom) object
             (.child direction next) =

@@ -74,6 +74,7 @@ def toITree (computation : Resumption p β) : ITree p β :=
       ITree.query position (fun direction => toITree (next direction)) := by
   apply M.eq_of_dest_eq
   simp
+  rfl
 
 theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β) :
     toITree (bind computation k) =

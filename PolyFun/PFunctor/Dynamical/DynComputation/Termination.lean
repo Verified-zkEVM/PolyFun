@@ -43,8 +43,7 @@ bound. -/
 def TerminatesFrom (M : DynComputation.{u} p α β) (state : M.State) : Prop :=
   Acc M.QueryChild state
 
-set_option allowUnsafeReducibility true in
-attribute [local reducible] TerminatesFrom
+attribute [local implicit_reducible] TerminatesFrom
 
 theorem queryChild_of_view (M : DynComputation.{u} p α β)
     (state : M.State) (position : p.A) (next : p.B position → M.State)
@@ -189,8 +188,7 @@ theorem behavior_eq_toResumption_toFreeMFrom
           apply Resumption.eq_of_dest_eq
           with_unfolding_all rw [M.dest_behavior_view, hview,
             M.toFreeMFrom_query state _ position next hview]
-          simp only [Sum.map_inr, PFunctor.map_eq,
-            FreeM.dest_toResumption_liftBind]
+          simp only [FreeM.dest_toResumption_liftBind]
           apply congrArg Sum.inr
           apply Sigma.ext
           · rfl
@@ -276,7 +274,6 @@ theorem terminatesFrom_of_behavior_eq_toResumption
           rw [hview] at hleft
           have hdest' := hleft.symm.trans
             (hdest.trans (FreeM.dest_toResumption_liftBind position children))
-          simp only [Sum.map_inr, PFunctor.map_eq] at hdest'
           have hsigma := Sum.inr.inj hdest'
           have hposition : source = position := (Sigma.mk.inj hsigma).1
           subst position

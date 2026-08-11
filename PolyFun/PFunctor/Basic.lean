@@ -22,9 +22,6 @@ universe u v uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uA₄ uB₄ uA₅ uB₅ u
 
 namespace PFunctor
 
-set_option allowUnsafeReducibility true in
-attribute [reducible] PFunctor.Obj
-
 section Basic
 
 /-- The zero polynomial functor, defined as `A = PEmpty` and `B _ = PEmpty`, is the identity with

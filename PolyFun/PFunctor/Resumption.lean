@@ -271,7 +271,7 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
       next, ?_, ?_, fun direction => rfl⟩
     · rw [← pack_dest, ← pack_inr]
       apply congrArg pack
-      simp only [dest_corec, bindStep, h, Sum.map_inr, PFunctor.map_eq]
+      simp only [dest_corec, bindStep, h]
       rfl
     · rw [← pack_dest, ← pack_inr]
       exact congrArg pack h
@@ -287,14 +287,14 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
   rcases h : dest computation with value | ⟨position, next⟩
   · rcases hk : dest (k value) with result | ⟨position, next⟩
     · simp [bindStep, h, hk]
-    · simp only [bindStep, h, hk, Sum.map_inr, PFunctor.map_eq]
+    · simp only [bindStep, h, hk]
       apply congrArg Sum.inr
       apply Sigma.ext
       · rfl
       · apply heq_of_eq
         funext direction
         exact corec_bindStep_inr k (next direction)
-  · simp only [bindStep, h, Sum.map_inr, PFunctor.map_eq]
+  · simp only [bindStep, h]
     rfl
 
 @[simp] theorem bind_pure_left (value : α) (k : α → Resumption p β) :
@@ -413,7 +413,7 @@ def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β 
   rw [dest_corec]
   rcases h : dest computation with value | ⟨position, next⟩
   · simp [mapLensStep, h]
-  · simp only [mapLensStep, h, Sum.map_inr, PFunctor.map_eq]
+  · simp only [mapLensStep, h]
     rfl
 
 @[simp] theorem mapLens_pure (lens : Lens p q) (value : β) :
