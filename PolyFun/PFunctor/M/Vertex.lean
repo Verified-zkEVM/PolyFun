@@ -285,16 +285,20 @@ theorem subtree_append {t : M P} (initial : Vertex t)
   | .root _ => rfl
   | .child _ next => exact subtree_append next suffix
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the `append` equations below rewrite vertices indexed by `subtree`, which
+must unfold there for the rewrites to type-check. -/
+attribute [local implicit_reducible] subtree
+
 @[simp]
 theorem depth_append {t : M P} (initial : Vertex t)
     (suffix : Vertex (subtree initial)) :
     depth (append initial suffix) = depth initial + depth suffix := by
   match initial with
   | .root _ =>
-      simp only [depth_root, Nat.zero_add]
-      rfl
+      simp only [append_root, depth_root, Nat.zero_add]
   | .child direction next =>
-      change depth (append next suffix) + 1 = depth next + 1 + depth suffix
+      simp only [append_child, depth_child]
       rw [depth_append next suffix]
       exact Nat.add_right_comm (depth next) (depth suffix) 1
 

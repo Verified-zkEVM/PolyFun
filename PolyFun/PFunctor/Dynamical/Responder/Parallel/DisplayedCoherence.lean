@@ -819,6 +819,9 @@ theorem mapDisplayedBehavior_parallel_comm
       parallelDisplayedBehavior S T left displayedLeft right displayedRight := by
     exact displayedBehavior_parallel_comm_presented S T
       left displayedLeft right displayedRight
+  -- Lean 4.33: split from main's single calc; the `Trans` instance for chaining
+  -- compares defeq-only-equal index types too strictly, while term-level `.trans`
+  -- unifies at default transparency.
   have hChainToRaw :
       Display.M.transport (presentationEq.trans rawEq) mappedDisplayed =
         Display.M.transport rawEq rawMapped := by
@@ -937,6 +940,9 @@ theorem mapDisplayedBehavior_parallel_zero_right
       Display.M.transport terminalEq publicDisplayed = rawDisplayed := by
     exact displayedBehavior_parallel_zero_right_presentation.{uA₁, uA₂,
       uB, uC₁, uD₁, uC₂, uD₂, 0, 0} S left displayedLeft
+  -- Lean 4.33: split from main's single calc; the `Trans` instance for chaining
+  -- compares defeq-only-equal index types too strictly, while term-level `.trans`
+  -- unifies at default transparency.
   have hRawToPublic :
       Display.M.transport terminalEq.symm rawDisplayed = publicDisplayed := by
     exact (congrArg (Display.M.transport terminalEq.symm) hTerminal.symm).trans
@@ -1073,6 +1079,9 @@ theorem mapDisplayedBehavior_parallel_zero_left
       Display.M.transport terminalEq publicDisplayed = rawDisplayed := by
     exact displayedBehavior_parallel_zero_left_presentation.{uA₁, uA₂,
       uB, uC₁, uD₁, uC₂, uD₂, 0, 0} S right displayedRight
+  -- Lean 4.33: split from main's single calc; the `Trans` instance for chaining
+  -- compares defeq-only-equal index types too strictly, while term-level `.trans`
+  -- unifies at default transparency.
   have hRawToPublic :
       Display.M.transport terminalEq.symm rawDisplayed = publicDisplayed := by
     exact (congrArg (Display.M.transport terminalEq.symm) hTerminal.symm).trans

@@ -38,6 +38,12 @@ universe u u' uA uA' uA'' uA''' uC uD uC' uD' uC'' uD'' uC''' uD'''
 namespace PFunctor
 namespace Handler
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency,
+so rewriting through `Extension (FreeP.substMonoid R)` needs `substMonoid`
+(and `PFunctor.Obj` beneath it) to unfold there. `implicit_reducible`
+(not `reducible`) keeps the `substMonoid`-headed goals opaque to typeclass
+resolution, which must recover `Monad (Extension ?M)` without unfolding
+`?M`. -/
 attribute [local implicit_reducible] PFunctor.Obj FreeP.substMonoid
 
 /-- Package a free handler as the corresponding lens into the free

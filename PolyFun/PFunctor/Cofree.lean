@@ -108,8 +108,7 @@ instance : Comonad (CofreeC F) where
   have h_corec : h = M.corec (F := constProd F α) M.dest := by
     apply M.corec_unique (P := constProd F α) (g := M.dest) (f := h)
     intro x
-    simp only [dest_extend, h]
-    rfl
+    simp only [dest_extend, extendF_extract, h]
   have hid_corec : (id : CofreeC F α → CofreeC F α) = M.corec (F := constProd F α) M.dest := by
     apply M.corec_unique (P := constProd F α) (g := M.dest) (f := id)
     intro x
