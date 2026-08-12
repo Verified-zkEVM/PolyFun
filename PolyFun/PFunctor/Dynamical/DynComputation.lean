@@ -13,9 +13,9 @@ public import PolyFun.PFunctor.Free.Resumption
 
 A `DynComputation p α β` is a hidden-state realization of an `α`-indexed
 family of `Resumption p β` computations. Its underlying `Machine` runs over
-the return-or-query polynomial `C β + p`: a state either returns a value and
-has no directions, or exposes a visible `p`-query whose direction selects the
-next state.
+the operation-first polynomial `p + C β`: a state either exposes a visible
+`p`-query whose direction selects the next state, or returns a value and
+has no directions.
 
 Unlike a partial readout stored separately from the dynamics, this
 representation carries no unreachable `p`-interaction data at returned
@@ -40,7 +40,7 @@ namespace DynSystem
 are uniformly available as `.toDynSystem`, while `init` selects the
 initial state for each input. -/
 structure DynComputation (p : PFunctor.{uA, uB}) (α : Type uα) (β : Type uβ)
-    extends Machine.{u, max uβ uA, uB} (C.{uβ, uB} β + p) where
+    extends Machine.{u, max uβ uA, uB} (p + C.{uβ, uB} β) where
   /-- Where the computation starts, given an input. -/
   init : α → State
 
@@ -66,7 +66,7 @@ query continuation. -/
   unfold Resumption.dest view
   rw [DynSystem.dest_behavior]
   change Resumption.unpack
-      ((C.{uβ, uB} β + p).map M.toDynSystem.behavior
+      ((p + C.{uβ, uB} β).map M.toDynSystem.behavior
         (M.toDynSystem.out state)) = _
   exact Resumption.unpack_map _ _
 
@@ -75,7 +75,7 @@ query continuation. -/
 `C β`. -/
 def ofFn (f : α → β) : DynComputation.{uβ} p α β where
   State := β
-  toDynSystem := Sum.inl ⇆ fun _ => PEmpty.elim
+  toDynSystem := Sum.inr ⇆ fun _ => PEmpty.elim
   init := f
 
 @[simp] theorem ofFn_State (f : α → β) : (ofFn (p := p) f).State = β := rfl
@@ -174,8 +174,8 @@ def contramapInput {γ : Type uγ} (M : DynComputation.{u} p α β) (f : γ → 
 
 private def mapResultLift {γ : Type uγ} (f : β → γ) :
     Lens.{max uβ uA, uB, max uγ uA, uB}
-      (C.{uβ, uB} β + p) (C.{uγ, uB} γ + p) :=
-  Lens.sumMap (Lens.toConst f) (Lens.id p)
+      (p + C.{uβ, uB} β) (p + C.{uγ, uB} γ) :=
+  Lens.sumMap (Lens.id p) (Lens.toConst f)
 
 /-- Map the returned value of a computation while preserving its hidden state
 and visible-query interface. -/
@@ -184,7 +184,7 @@ def mapResult {γ : Type uγ} (M : DynComputation.{u} p α β) (f : β → γ) :
     DynComputation.{u} p α γ where
   State := M.State
   toDynSystem := Lens.comp
-    (Lens.sumMap (Lens.toConst f) (Lens.id p)) M.toDynSystem
+    (Lens.sumMap (Lens.id p) (Lens.toConst f)) M.toDynSystem
   init := M.init
 
 @[simp] theorem mapResult_view {γ : Type uγ} (f : β → γ)
@@ -197,7 +197,7 @@ def mapResult {γ : Type uγ} (M : DynComputation.{u} p α β) (f : β → γ) :
       (Lens.mapObj (mapResultLift f)
         (M.toDynSystem.out state)) = _
   rcases h : M.toDynSystem.out state with ⟨position, next⟩
-  rcases position with value | position <;> rfl
+  rcases position with position | value <;> rfl
 
 @[simp] theorem mapResult_State {γ : Type uγ} (f : β → γ)
     (M : DynComputation.{u} p α β) : (M.mapResult f).State = M.State := rfl
@@ -238,8 +238,8 @@ theorem behavior_mapResult {γ : Type uγ} (f : β → γ)
 
 private def wrapLift {q : PFunctor.{uA₂, uB₂}} (lens : Lens p q) :
     Lens.{max uβ uA, uB, max uβ uA₂, uB₂}
-      (C.{uβ, uB} β + p) (C.{uβ, uB₂} β + q) :=
-  Lens.sumMap (Lens.toConst (fun value : β => value)) lens
+      (p + C.{uβ, uB} β) (q + C.{uβ, uB₂} β) :=
+  Lens.sumMap lens (Lens.toConst (fun value : β => value))
 
 /-- Change a returning computation's visible-query interface along a lens while preserving its
 hidden state and return values. -/
@@ -248,7 +248,7 @@ def wrap {q : PFunctor.{uA₂, uB₂}} (M : DynComputation.{u} p α β)
     (lens : Lens p q) : DynComputation.{u} q α β where
   State := M.State
   toDynSystem := Lens.comp
-    (Lens.sumMap (Lens.toConst (fun value : β => value)) lens) M.toDynSystem
+    (Lens.sumMap lens (Lens.toConst (fun value : β => value))) M.toDynSystem
   init := M.init
 
 @[simp] theorem wrap_view {q : PFunctor.{uA₂, uB₂}} (lens : Lens p q)
@@ -263,7 +263,7 @@ def wrap {q : PFunctor.{uA₂, uB₂}} (M : DynComputation.{u} p α β)
       (Lens.mapObj (wrapLift lens)
         (M.toDynSystem.out state)) = _
   rcases h : M.toDynSystem.out state with ⟨position, next⟩
-  rcases position with value | position <;> rfl
+  rcases position with position | value <;> rfl
 
 @[simp] theorem wrap_State {q : PFunctor.{uA₂, uB₂}} (lens : Lens p q)
     (M : DynComputation.{u} p α β) : (M.wrap lens).State = M.State := rfl
@@ -325,7 +325,7 @@ def dimap {γ : Type uγ} {δ : Type uδ} (M : DynComputation.{u} p α β)
       (Lens.mapObj (mapResultLift g)
         (M.toDynSystem.out state)) = _
   rcases h : M.toDynSystem.out state with ⟨position, next⟩
-  rcases position with value | position <;> rfl
+  rcases position with position | value <;> rfl
 
 @[simp] theorem dimap_denote {γ : Type uγ} {δ : Type uδ} (f : γ → α) (g : β → δ)
     (M : DynComputation.{u} p α β) (input : γ) :
@@ -336,36 +336,36 @@ def dimap {γ : Type uγ} {δ : Type uδ} (M : DynComputation.{u} p α β)
 
 private theorem mapResultLift_id :
     mapResultLift (p := p) (id : β → β) =
-      Lens.id.{max uβ uA, uB} (C.{uβ, uB} β + p) := by
+      Lens.id.{max uβ uA, uB} (p + C.{uβ, uB} β) := by
   refine Lens.ext _ _ (fun position => by cases position <;> rfl)
-    (fun position => by cases position <;> [exact funext (·.elim); rfl])
+    (fun position => by cases position <;> [rfl; exact funext (·.elim)])
 
 private theorem mapResultLift_comp {γ : Type uγ} {δ : Type uδ}
     (f : β → γ) (g : γ → δ) :
     Lens.comp (mapResultLift (p := p) g) (mapResultLift (p := p) f) =
       mapResultLift (p := p) (g ∘ f) := by
   refine Lens.ext _ _ (fun position => by cases position <;> rfl)
-    (fun position => by cases position <;> [exact funext (·.elim); rfl])
+    (fun position => by cases position <;> [rfl; exact funext (·.elim)])
 
 private theorem wrapLift_id :
     wrapLift (β := β) (Lens.id p) =
-      Lens.id.{max uβ uA, uB} (C.{uβ, uB} β + p) := by
+      Lens.id.{max uβ uA, uB} (p + C.{uβ, uB} β) := by
   refine Lens.ext _ _ (fun position => by cases position <;> rfl)
-    (fun position => by cases position <;> [exact funext (·.elim); rfl])
+    (fun position => by cases position <;> [rfl; exact funext (·.elim)])
 
 private theorem wrapLift_comp {q : PFunctor.{uA₂, uB₂}}
     {r : PFunctor.{uγ, uδ}} (lens₁ : Lens p q) (lens₂ : Lens q r) :
     Lens.comp (wrapLift (β := β) lens₂) (wrapLift (β := β) lens₁) =
       wrapLift (β := β) (lens₂ ∘ₗ lens₁) := by
   refine Lens.ext _ _ (fun position => by cases position <;> rfl)
-    (fun position => by cases position <;> [exact funext (·.elim); rfl])
+    (fun position => by cases position <;> [rfl; exact funext (·.elim)])
 
 private theorem mapResultLift_wrapLift {q : PFunctor.{uA₂, uB₂}}
     {γ : Type uγ} (f : β → γ) (lens : Lens p q) :
     Lens.comp (wrapLift (β := γ) lens) (mapResultLift (p := p) f) =
       Lens.comp (mapResultLift (p := q) f) (wrapLift (β := β) lens) := by
   refine Lens.ext _ _ (fun position => by cases position <;> rfl)
-    (fun position => by cases position <;> [exact funext (·.elim); rfl])
+    (fun position => by cases position <;> [rfl; exact funext (·.elim)])
 
 @[simp] theorem contramapInput_id (M : DynComputation.{u} p α β) :
     M.contramapInput id = M := by
@@ -699,8 +699,8 @@ def ofFreeM (program : α → FreeM p β) : DynComputation p α β where
   State := FreeM p β
   toDynSystem :=
     (fun
-      | .pure value => Sum.inl value
-      | .liftBind position _ => Sum.inr position) ⇆
+      | .pure value => Sum.inr value
+      | .liftBind position _ => Sum.inl position) ⇆
     fun state => match state with
       | .pure _ => PEmpty.elim
       | .liftBind _ next => next
@@ -731,13 +731,13 @@ program. -/
     cases state with
     | pure value =>
         simp only [FreeM.toResumption, Resumption.pure, M.dest_mk]
-        change ⟨Sum.inl value, PEmpty.elim⟩ =
-          (C β + p).map FreeM.toResumption ⟨Sum.inl value, PEmpty.elim⟩
+        change ⟨Sum.inr value, PEmpty.elim⟩ =
+          (p + C β).map FreeM.toResumption ⟨Sum.inr value, PEmpty.elim⟩
         exact Sigma.ext rfl (heq_of_eq (funext (PEmpty.elim ·)))
     | liftBind position next =>
         simp only [FreeM.toResumption, Resumption.query, M.dest_mk]
-        change ⟨Sum.inr position, fun direction => FreeM.toResumption (next direction)⟩ =
-          (C β + p).map FreeM.toResumption ⟨Sum.inr position, next⟩
+        change ⟨Sum.inl position, fun direction => FreeM.toResumption (next direction)⟩ =
+          (p + C β).map FreeM.toResumption ⟨Sum.inl position, next⟩
         rfl
   exact (congrFun hsem (program input)).symm
 

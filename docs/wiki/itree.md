@@ -20,15 +20,17 @@ CoInductive itree (E : Type → Type) (R : Type) :=
 In Lean we model the event signature as a *polynomial functor*
 `F : PFunctor.{uA, uB}`: its positions are event names and its directions are
 answer types. The event-position, event-direction, and return universes are
-independent. ITrees themselves are the M-type (final coalgebra) of the one-step
-polynomial functor `Poly F α` whose positions are pure leaves, silent steps, or
-visible queries.
+independent. The raw carrier is the M-type (final coalgebra) of the
+operation-first polynomial `ITree.Poly F α := F + C α + X`. `ITree F α` is
+a one-field wrapper whose `toM`/`ofM` maps are definitionally inverse. The
+shape-indexed `ITree.ViewPoly F α` supplies the ergonomic pure/step/query view.
 
 For `α : Type uR`, the public universe contract is:
 
 ```lean
 ITree.Shape F α : Type (max uA uR)
 ITree.Poly F α  : PFunctor.{max uA uR, uB}
+ITree.ViewPoly F α : PFunctor.{max uA uR, uB}
 ITree F α       : Type (max uA uB uR)
 ```
 
@@ -49,7 +51,7 @@ step are lifted to `uB`; a visible query retains its original direction type.
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/ITree/Basic.lean`](../../PolyFun/ITree/Basic.lean) | `ITree F α` defined as `PFunctor.M (Poly F α)`, `Shape` (one-step view), smart constructors `pure` / `step` / `query`, mixed-universe named `bind`, `iter`, and the homogeneous `Monad` instance. |
+| [`PolyFun/ITree/Basic.lean`](../../PolyFun/ITree/Basic.lean) | `ITree.Poly F α := F + C α + X`; the one-field `ITree F α` wrapper with definitionally inverse `toM` / `ofM` and `equivM`; `Shape` / `ViewPoly` one-step views; smart constructors `pure` / `step` / `query`; mixed-universe named `bind`, `iter`, and the homogeneous `Monad` instance. |
 | [`PolyFun/ITree/Do.lean`](../../PolyFun/ITree/Do.lean) | Opt-in `open scoped ITree` integration that sends Lean `while` notation through productive `ITree.iter` instead of core partial `whileM`. |
 | [`PolyFun/ITree/Construct.lean`](../../PolyFun/ITree/Construct.lean) | Standard combinators: `diverge` (Coq `spin`), `forever`, mixed-universe `map` / `cat`, `ignore`, `burn`. Pure consequences of `bind` / `iter` / `M.corec`. |
 | [`PolyFun/ITree/Handler.lean`](../../PolyFun/ITree/Handler.lean) | Universe-polymorphic `Handler E F`: choice of an `F`-program for every `E`-event, with identity, lens promotion, and coproduct routing via `Handler.case_`. |

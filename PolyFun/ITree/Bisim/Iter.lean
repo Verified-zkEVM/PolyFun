@@ -32,13 +32,12 @@ private theorem bindGuarded_closure {F : PFunctor.{uFA, uFB}}
       (∃ x y, k b = step x ∧ l b = step y ∧ R x y) ∨
       (∃ r, k b = pure r ∧ l b = pure r))
     (u : ITree F β) : WeakBisimF R (bind u k) (bind u l) := by
-  rcases hu : PFunctor.M.dest u with ⟨sh, c⟩
+  rcases hu : ITree.shape' u with ⟨sh, c⟩
   cases sh with
   | pure b =>
       have hu_eq : u = pure b := by
-        apply PFunctor.M.eq_of_dest_eq
-        rw [hu]
-        change (⟨.pure b, c⟩ : (Poly F β).Obj _) = ⟨.pure b, PEmpty.elim⟩
+        apply eq_of_shape'_eq
+        rw [hu, shape'_pure]
         congr 1
         funext z
         exact z.elim
@@ -83,11 +82,11 @@ private theorem bindIterRel_closure {F : PFunctor.{uFA, uFB}}
       cases hxy with
       | @inl i j hij =>
           have hu_eq : u' = pure (Sum.inl i) := by
-            apply PFunctor.M.eq_of_dest_eq
+            apply eq_of_shape'_eq
             change shape' u' = shape' (pure (Sum.inl i))
             exact hu'.trans (shape'_pure (Sum.inl i)).symm
           have hv_eq : v' = pure (Sum.inl j) := by
-            apply PFunctor.M.eq_of_dest_eq
+            apply eq_of_shape'_eq
             change shape' v' = shape' (pure (Sum.inl j))
             exact hv'.trans (shape'_pure (Sum.inl j)).symm
           subst hu_eq
@@ -101,11 +100,11 @@ private theorem bindIterRel_closure {F : PFunctor.{uFA, uFB}}
               (hiter i j hij)
       | @inr r s hrs =>
           have hu_eq : u' = pure (Sum.inr r) := by
-            apply PFunctor.M.eq_of_dest_eq
+            apply eq_of_shape'_eq
             change shape' u' = shape' (pure (Sum.inr r))
             exact hu'.trans (shape'_pure (Sum.inr r)).symm
           have hv_eq : v' = pure (Sum.inr s) := by
-            apply PFunctor.M.eq_of_dest_eq
+            apply eq_of_shape'_eq
             change shape' v' = shape' (pure (Sum.inr s))
             exact hv'.trans (shape'_pure (Sum.inr s)).symm
           subst hu_eq

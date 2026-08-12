@@ -56,8 +56,7 @@ theorem mapSpec (φ : PFunctor.Lens E F) (t : ITree E α) :
   cases sh with
   | pure r =>
       have ht' : t = ITree.pure r := by
-        apply PFunctor.M.eq_of_dest_eq
-        change shape' t = shape' (ITree.pure r)
+        apply eq_of_shape'_eq
         rw [ht, shape'_pure]
         congr 1
         funext z
@@ -68,8 +67,7 @@ theorem mapSpec (φ : PFunctor.Lens E F) (t : ITree E α) :
         CrossSignatureWeakBisim.HeadMatch.pure r r rfl (shape'_pure r) (shape'_pure r)⟩
   | step =>
       have ht' : t = ITree.step (c PUnit.unit) := by
-        apply PFunctor.M.eq_of_dest_eq
-        change shape' t = shape' (ITree.step (c PUnit.unit))
+        apply eq_of_shape'_eq
         rw [ht, shape'_step]
       subst t
       rw [ITree.mapSpec_step]
@@ -78,8 +76,7 @@ theorem mapSpec (φ : PFunctor.Lens E F) (t : ITree E α) :
           ⟨c PUnit.unit, rfl, rfl⟩⟩
   | query a =>
       have ht' : t = ITree.query a c := by
-        apply PFunctor.M.eq_of_dest_eq
-        change shape' t = shape' (ITree.query a c)
+        apply eq_of_shape'_eq
         rw [ht, shape'_query]
       subst t
       rw [ITree.mapSpec_query]
