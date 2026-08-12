@@ -89,6 +89,37 @@ non-standard instances.
 `do_pure_bind`, `do_bind_pure`, `do_bind_assoc`, `do_bind_pure_comp`,
 `do_map_bind`, `do_bind_map_left`. All are `@[simp]`.
 
+### 8e. A predicate whose leading argument is implicit cannot be passed as an argument
+
+A parameter of type `∀ {Δ : PortBoundary}, F Δ → Prop` looks like the right
+way to write a boundary-indexed predicate, and it works fine as a *structure
+field* (`SubTheory.mem`, because `D.mem W` is a projection applied to a known
+`D`). It breaks as soon as such a predicate is **passed** somewhere: a term
+whose type starts with an implicit binder has that binder inserted eagerly, so
+the argument arrives eta-expanded as `fun {Δ} ↦ P (Δ := ?m)` and `?m` is never
+solved. Symptoms are "don't know how to synthesize implicit argument", motives
+printed with doubled binders (`fun {Δ} {Δ} ↦ ...`), and
+`Internal error in mkElimApp` from `induction`.
+
+**Fix**: make the index explicit in anything that gets passed —
+`∀ (Δ : PortBoundary), F Δ → Prop`. See `SubTheory.generated`'s generator
+argument in
+[`PolyFun/Interaction/UC/SubTheory.lean`](../../PolyFun/Interaction/UC/SubTheory.lean).
+The same applies to the carrier of an indexed family: `Atom` in
+`AllowedGen` / `atomSubTheory` is explicit because solving
+`?Atom ?Δ ≡ Atom Δ` is not a first-order problem.
+
+### 8f. `@[expose]` defs, or downstream modules cannot unfold them
+
+Under the module system a `def` in a `public section` still has an opaque
+body outside its own file unless it is `@[expose]`. A definition that
+downstream proofs are meant to *compute with* — a lattice element like
+`SubTheory.top`, an order like `SubTheory.le`, a generated construction —
+must carry the attribute, or the first cross-module `exact`/`rfl` against it
+fails with an unhelpful type mismatch. Lean warns when the attribute is
+redundant (instances are exposed by default), so add it and delete what it
+flags rather than guessing.
+
 ## Proof Patterns
 
 ### 8b. Keep one canonical concrete-step relation type
