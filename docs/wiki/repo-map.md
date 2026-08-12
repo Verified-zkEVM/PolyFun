@@ -184,6 +184,14 @@ Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    EnvOpenProcess, CorruptionModel,
                                    MomentaryCorruption, Leakage}
 
+Interaction/UC/OpenTheory -> Interaction/UC/SubTheory
+Interaction/UC/{Emulates, SubTheory} -> Interaction/UC/EmulatesWithin
+Interaction/UC/{OpenSyntax/Expr, SubTheory}
+  -> Interaction/UC/OpenSyntax/AtomSubTheory
+  (SubTheory is the allowed-systems predicate and depends on the algebra
+   alone; the residual-context lemmas that relativized emulation needs live
+   with EmulatesWithin because the context-formers are defined in Emulates)
+
 Interaction/UC/{Emulates, OpenProcessModel} -> Interaction/UC/OpenProcessEmulates
   (Emulates is model-agnostic and must not reach OpenProcess; the bridge that
    equips the concrete openTheory with observation-level composition laws
