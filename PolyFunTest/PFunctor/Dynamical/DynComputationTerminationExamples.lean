@@ -45,9 +45,9 @@ def unboundedDepth : DynComputation natQuery Unit Unit where
   State := Option Nat
   toDynSystem :=
     (fun
-      | none => Sum.inr PUnit.unit
-      | some 0 => Sum.inl ()
-      | some (_ + 1) => Sum.inr PUnit.unit) ⇆
+      | none => Sum.inl PUnit.unit
+      | some 0 => Sum.inr ()
+      | some (_ + 1) => Sum.inl PUnit.unit) ⇆
     fun
       | none => fun answer => some answer
       | some 0 => PEmpty.elim

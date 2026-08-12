@@ -10,7 +10,7 @@ public import PolyFun.ITree.Basic
 /-! # Standard ITree combinators
 
 Definitions of the standard interaction-tree combinators that depend only on
-`bind`, `iter`, the smart constructors, and `M.corec`. These are the Lean
+`bind`, `iter`, the smart constructors, and `ITree.corec`. These are the Lean
 analogues of Coq's `Core/ITreeDefinition.v` `spin`, `forever`, `burn` and the
 helpers in `Core/KTree.v` (`map`, `cat`, `ignore`).
 
@@ -42,7 +42,7 @@ namespace ITree
 variable {F : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type uγ}
 
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the `unfold`-style corecursor proof below exposes an `M.corec` step whose
+the `unfold`-style corecursor proof below exposes an `ITree.corec` step whose
 sigma-typed body only typechecks once `PFunctor.Obj` unfolds there.
 `implicit_reducible` restores that without touching simp or typeclass
 resolution. -/
@@ -53,14 +53,14 @@ attribute [local implicit_reducible] PFunctor.Obj
 /-- The diverging interaction tree, an infinite sequence of silent (`step`)
 nodes. (Coq `spin`.) -/
 def diverge : ITree F α :=
-  PFunctor.M.corec (F := Poly F α)
+  ITree.corec (F := F) (α := α)
     (fun (_ : PUnit.{uB + 1}) => ⟨.step, fun _ => PUnit.unit⟩)
     PUnit.unit
 
 @[simp] theorem shape'_diverge :
     shape' (diverge (F := F) (α := α)) = ⟨.step, fun _ => diverge⟩ := by
-  unfold shape' diverge
-  rw [PFunctor.M.dest_corec_eq _ _ rfl]
+  unfold diverge
+  rw [shape'_corec_eq _ _ rfl]
 
 @[simp] theorem shape_diverge :
     shape (diverge (F := F) (α := α)) = .step := by

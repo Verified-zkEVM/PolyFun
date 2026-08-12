@@ -40,10 +40,10 @@ attribute [local implicit_reducible] Sum.elim
       (s, pure (F := (StateE σ + E : PFunctor.{max uσ uEA, uσ})) r) =
       ⟨.pure (s, r), PEmpty.elim⟩ := by
     simp [interpStateStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpState, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpState, shape'_corec_eq _ _ hstep]
   unfold ITree.pure
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   congr 1
   funext b
   exact b.elim
@@ -54,10 +54,10 @@ attribute [local implicit_reducible] Sum.elim
   have hstep : interpStateStep (s, step t) =
       ⟨.step, fun _ => (s, t)⟩ := by
     simp [interpStateStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpState, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpState, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   rfl
 
 @[simp] theorem interpState_get (s : σ)
@@ -70,10 +70,10 @@ attribute [local implicit_reducible] Sum.elim
         (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
       ⟨.step, fun _ => (s, k s)⟩ := by
     simp [interpStateStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpState, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpState, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   rfl
 
 @[simp] theorem interpState_put (s s' : σ)
@@ -88,10 +88,10 @@ attribute [local implicit_reducible] Sum.elim
           (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
       ⟨.step, fun _ => (s', k PUnit.unit)⟩ := by
     simp [interpStateStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpState, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpState, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   rfl
 
 @[simp] theorem interpState_query_external (s : σ) (e : E.A)
@@ -104,10 +104,10 @@ attribute [local implicit_reducible] Sum.elim
       (Sum.inr e : (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
       ⟨.query e, fun b => (s, k b)⟩ := by
     simp [interpStateStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpState, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpState, shape'_corec_eq _ _ hstep]
   unfold ITree.query
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   rfl
 
 /-- State interpretation is the canonical state-transformer monad morphism. -/
@@ -119,7 +119,7 @@ theorem interpState_bind {β : Type uβ}
       bind (interpState t s) (fun p => interpState (k p.2) p.1) := by
   let next : σ × α → ITree E (σ × β) :=
     fun p => interpState (k p.2) p.1
-  refine PFunctor.M.bisim
+  refine ITree.bisim
     (fun (u v : ITree E (σ × β)) =>
       u = v ∨
       ∃ (s : σ)
@@ -128,27 +128,19 @@ theorem interpState_bind {β : Type uβ}
         v = bind (interpState t s) next)
     ?_ _ _ (Or.inr ⟨s, t, rfl, rfl⟩)
   rintro u v (rfl | ⟨s, t, rfl, rfl⟩)
-  · rcases h : PFunctor.M.dest u with ⟨sh, c⟩
+  · rcases h : ITree.shape' u with ⟨sh, c⟩
     exact ⟨sh, c, c, rfl, rfl, fun _ => Or.inl rfl⟩
-  · rcases h : PFunctor.M.dest t with ⟨sh, c⟩
+  · rcases h : ITree.shape' t with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have ht : t = pure r := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [h]
-          change (⟨.pure r, c⟩ :
-              (Poly (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α).Obj _) =
-            ⟨.pure r, PEmpty.elim⟩
-          congr 1
-          funext z
-          exact z.elim
+        have ht : t = pure r := eq_pure_of_dest h
         subst ht
         rw [bind_pure_left, interpState_pure, bind_pure_left]
-        rcases hk : PFunctor.M.dest (interpState (k r) s) with ⟨sh', c'⟩
+        rcases hk : ITree.shape' (interpState (k r) s) with ⟨sh', c'⟩
         exact ⟨sh', c', c', rfl, rfl, fun _ => Or.inl rfl⟩
     | step =>
         have ht : t = step (c PUnit.unit) := by
-          apply PFunctor.M.eq_of_dest_eq
+          apply eq_of_shape'_eq
           rw [h]
           rfl
         subst ht
@@ -168,7 +160,7 @@ theorem interpState_bind {β : Type uβ}
                 have ht : t = query
                     (Sum.inl StateE.Shape.get :
                       (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) c := by
-                  apply PFunctor.M.eq_of_dest_eq
+                  apply eq_of_shape'_eq
                   rw [h]
                   rfl
                 subst ht
@@ -176,19 +168,19 @@ theorem interpState_bind {β : Type uβ}
                 let getEvent :
                     (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A :=
                   Sum.inl StateE.Shape.get
-                have hLeft : PFunctor.M.dest
+                have hLeft : ITree.shape'
                     (interpState (bind (query getEvent c) k) s) =
                     ⟨.step, fun _ => interpState (bind (c s) k) s⟩ := by
-                  rw [interpState, PFunctor.M.dest_corec_apply]
+                  rw [interpState, shape'_corec_apply]
                   simp only [interpStateStep]
                   rfl
-                have hState : PFunctor.M.dest
+                have hState : ITree.shape'
                     (interpState (query getEvent c) s) =
                     ⟨.step, fun _ => interpState (c s) s⟩ := by
-                  rw [interpState, PFunctor.M.dest_corec_apply]
+                  rw [interpState, shape'_corec_apply]
                   simp only [interpStateStep]
                   rfl
-                have hRight : PFunctor.M.dest
+                have hRight : ITree.shape'
                     (bind (interpState (query getEvent c) s) next) =
                     ⟨.step, fun _ => bind (interpState (c s) s) next⟩ :=
                   dest_bind_step next _ _ hState
@@ -203,7 +195,7 @@ theorem interpState_bind {β : Type uβ}
                 have ht : t = query
                     (Sum.inl (StateE.Shape.put s') :
                       (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) c := by
-                  apply PFunctor.M.eq_of_dest_eq
+                  apply eq_of_shape'_eq
                   rw [h]
                   rfl
                 subst ht
@@ -211,20 +203,20 @@ theorem interpState_bind {β : Type uβ}
                 let putEvent :
                     (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A :=
                   Sum.inl (StateE.Shape.put s')
-                have hLeft : PFunctor.M.dest
+                have hLeft : ITree.shape'
                     (interpState (bind (query putEvent c) k) s) =
                     ⟨.step, fun _ =>
                       interpState (bind (c PUnit.unit) k) s'⟩ := by
-                  rw [interpState, PFunctor.M.dest_corec_apply]
+                  rw [interpState, shape'_corec_apply]
                   simp only [interpStateStep]
                   rfl
-                have hState : PFunctor.M.dest
+                have hState : ITree.shape'
                     (interpState (query putEvent c) s) =
                     ⟨.step, fun _ => interpState (c PUnit.unit) s'⟩ := by
-                  rw [interpState, PFunctor.M.dest_corec_apply]
+                  rw [interpState, shape'_corec_apply]
                   simp only [interpStateStep]
                   rfl
-                have hRight : PFunctor.M.dest
+                have hRight : ITree.shape'
                     (bind (interpState (query putEvent c) s) next) =
                     ⟨.step, fun _ =>
                       bind (interpState (c PUnit.unit) s') next⟩ :=
@@ -240,7 +232,7 @@ theorem interpState_bind {β : Type uβ}
             have ht : t = query
                 (Sum.inr e :
                   (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) c := by
-              apply PFunctor.M.eq_of_dest_eq
+              apply eq_of_shape'_eq
               rw [h]
               rfl
             subst ht

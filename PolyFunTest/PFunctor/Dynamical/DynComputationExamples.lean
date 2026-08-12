@@ -38,7 +38,7 @@ example : emptyPure = ofFn (fun _ : Nat => 5) := by
 /-- A computation that perpetually exposes the unique query of `X`. -/
 def querying : DynComputation.{0} X.{0, 0} Unit Nat where
   State := Unit
-  toDynSystem := (fun _ : Unit => Sum.inr PUnit.unit) ⇆ fun _ _ => ()
+  toDynSystem := (fun _ : Unit => Sum.inl PUnit.unit) ⇆ fun _ _ => ()
   init := id
 
 example : querying.view (querying.init ()) =
@@ -102,8 +102,8 @@ def boolRealization : DynComputation X Unit Nat where
   State := Bool
   toDynSystem :=
     (fun
-      | false => Sum.inr PUnit.unit
-      | true => Sum.inl (7 : Nat)) ⇆
+      | false => Sum.inl PUnit.unit
+      | true => Sum.inr (7 : Nat)) ⇆
     fun
       | false => fun _ => true
       | true => PEmpty.elim
@@ -279,8 +279,8 @@ def branchMachine : DynComputation branchSource Unit Nat where
   State := Bool
   toDynSystem :=
     (fun
-      | false => Sum.inr false
-      | true => Sum.inl (9 : Nat)) ⇆
+      | false => Sum.inl false
+      | true => Sum.inr (9 : Nat)) ⇆
     fun
       | false => fun answer => answer
       | true => PEmpty.elim
@@ -299,8 +299,8 @@ def handoffSecond : DynComputation branchSource Bool Nat where
   State := Bool ⊕ Nat
   toDynSystem :=
     (fun
-      | Sum.inl position => Sum.inr position
-      | Sum.inr result => Sum.inl result) ⇆
+      | Sum.inl position => Sum.inl position
+      | Sum.inr result => Sum.inr result) ⇆
     fun
       | Sum.inl _ => fun answer => by
           change Bool at answer
@@ -338,8 +338,8 @@ def answerFirst : DynComputation branchSource Unit Bool where
   State := Unit ⊕ Bool
   toDynSystem :=
     (fun
-      | Sum.inl _ => Sum.inr false
-      | Sum.inr value => Sum.inl value) ⇆
+      | Sum.inl _ => Sum.inl false
+      | Sum.inr value => Sum.inr value) ⇆
     fun
       | Sum.inl _ => fun answer => Sum.inr answer
       | Sum.inr _ => PEmpty.elim

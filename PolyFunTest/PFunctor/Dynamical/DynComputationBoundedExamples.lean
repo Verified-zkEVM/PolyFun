@@ -139,7 +139,7 @@ def collatzView (n : ℕ) : ℕ ⊕ X.{0, 0}.Obj ℕ :=
   else Sum.inr ⟨PUnit.unit, fun _ => collatzNext n⟩
 
 /-- The polynomial coalgebra step corresponding to `collatzView`. -/
-def collatzOut (n : ℕ) : (C.{0, 0} ℕ + X.{0, 0}).Obj ℕ :=
+def collatzOut (n : ℕ) : (X.{0, 0} + C.{0, 0} ℕ).Obj ℕ :=
   Resumption.pack (collatzView n)
 
 /-- A closed deterministic Collatz producer that returns at `1` and otherwise
@@ -211,8 +211,8 @@ def boolRealization : DynComputation branchP Unit Nat where
   State := Bool
   toDynSystem :=
     (fun
-      | false => Sum.inr false
-      | true => Sum.inl (10 : Nat)) ⇆
+      | false => Sum.inl false
+      | true => Sum.inr (10 : Nat)) ⇆
     fun
       | false => fun _ => true
       | true => PEmpty.elim
