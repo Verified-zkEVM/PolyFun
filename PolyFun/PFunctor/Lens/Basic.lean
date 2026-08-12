@@ -44,6 +44,20 @@ theorem ext {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l₁ l�
   simp_all only [mk.injEq, heq_eq_eq, true_and]
   simpa using funext h₂
 
+/-- Heterogeneous extensionality for lenses: equal position maps and
+heterogeneously equal direction maps identify two lenses. Useful when the
+direction families are equal only after rewriting along the position map. -/
+theorem ext_heq {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l₁ l₂ : Lens P Q)
+    (hA : l₁.toFunA = l₂.toFunA) (hB : l₁.toFunB ≍ l₂.toFunB) : l₁ = l₂ := by
+  cases l₁ with
+  | mk a₁ b₁ =>
+    cases l₂ with
+    | mk a₂ b₂ =>
+      dsimp only [Lens.toFunA, Lens.toFunB] at hA hB
+      cases hA
+      cases eq_of_heq hB
+      rfl
+
 /-- The identity lens -/
 @[implicit_reducible]
 protected def id (P : PFunctor.{uA, uB}) : Lens P P where

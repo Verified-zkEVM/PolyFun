@@ -167,17 +167,6 @@ private lemma cast_exp_direction_of_inl {q r : PFunctor.{uA, uB}} {f f' : (exp r
   have hbd : bd = bd' := e.injective (Subsingleton.elim _ _)
   exact congrArg (fun z => (⟨i, ⟨d, z⟩⟩ : (exp r q).B f)) hbd
 
-private theorem Lens.ext_heq {p q : PFunctor} (l₁ l₂ : Lens p q)
-    (hA : l₁.toFunA = l₂.toFunA) (hB : l₁.toFunB ≍ l₂.toFunB) : l₁ = l₂ := by
-  cases l₁ with
-  | mk a₁ b₁ =>
-    cases l₂ with
-    | mk a₂ b₂ =>
-      dsimp only [Lens.toFunA, Lens.toFunB] at hA hB
-      cases hA
-      cases eq_of_heq hB
-      rfl
-
 private lemma exp_direction_components {q r : PFunctor} {f f' : (exp r q).A}
     (h : f = f') {x : (exp r q).B f} {y : (exp r q).B f'} (hy : x ≍ y) :
     x.1 = y.1 ∧ x.2.1 ≍ y.2.1 := by
