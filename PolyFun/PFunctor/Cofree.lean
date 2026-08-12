@@ -89,7 +89,8 @@ theorem dest_extend_eq {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β
 
 @[simp] theorem head_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     head (extend t f) = f t := by
-  simp [head, extendF]
+  unfold head
+  rw [dest_extend_eq]
 
 @[simp] theorem tail_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     tail (extend t f) = F.map (fun x => extend x f) (tail t) := by

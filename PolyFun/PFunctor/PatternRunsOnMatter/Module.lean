@@ -37,9 +37,9 @@ cofree comparison retrofunctors there. `implicit_reducible` (unlike
 and needs no `allowUnsafeReducibility`. Constants already
 `implicit_reducible` at their definition sites (the `unfold*` family,
 `relabel`, `Comonoid.tensor`) are omitted. -/
-attribute [local implicit_reducible] PFunctor.X PFunctor.monomial PFunctor.tensor FreeP.node
-  Comonoid.Hom.ofCategoryLaws CofreeP.comonoid CofreeP.cogenerator CofreeP.extend
-  CofreeP.laxTensorHom CofreeP.laxTensor
+attribute [local implicit_reducible] PFunctor.Obj PFunctor.X PFunctor.monomial
+  PFunctor.tensor FreeP.node Comonoid.Hom.ofCategoryLaws CofreeP.comonoid
+  CofreeP.cogenerator CofreeP.extend CofreeP.laxTensorHom CofreeP.laxTensor
 
 private theorem runObj_unit (P : PFunctor.{u, u})
     (pattern : (FreeP P).A) :

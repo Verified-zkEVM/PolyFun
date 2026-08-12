@@ -54,7 +54,6 @@ def bind {α β : Type uB} (x : Extension M α) (f : α → Extension M β) : Ex
 instance instMonad : Monad (Extension M) where
   pure := pure M
   bind := bind M
-  map f x := bind M x (fun y => pure M (f y))
 
 @[simp]
 theorem pure_def {α : Type uB} (x : α) : (Pure.pure x : Extension M α) = pure M x :=

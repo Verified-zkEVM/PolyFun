@@ -28,6 +28,11 @@ universe uA uB uR uS
 
 namespace PFunctor
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the one-step unfolding equations below rewrite corecursive ITree objects
+there, so `P.Obj` must unfold to its sigma form in those checks. -/
+attribute [local implicit_reducible] PFunctor.Obj
+
 /-- Embed a `p`-behavior tree as an interaction tree over event signature `p`:
 every node becomes a visible `query` at its position, with the same children.
 The result never returns (`PEmpty` leaves) and takes no silent steps. The empty

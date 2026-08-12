@@ -262,7 +262,6 @@ theorem bind_leaf (S : Display.{uA, uB, uC, uD} P)
           (fun b e =>
             S.bind (rest b) (children b e) FreeM.pure fun x dx =>
               S.leaf F x dx) using 1
-        rfl
       rw [htransport]
       congr
       funext b e
@@ -316,7 +315,6 @@ theorem bind_assoc (S : Display.{uA, uB, uC, uD} P)
           (fun b e =>
             S.bind ((rest b).bind g)
               (S.bind (rest b) (children b e) g dg) h dh) using 1
-        rfl
       rw [htransport]
       congr
       funext b e

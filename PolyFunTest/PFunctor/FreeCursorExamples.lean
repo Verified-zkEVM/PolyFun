@@ -154,7 +154,6 @@ example : trueLeaf.trace =
     List.append (List.append internal.trace indexEdge.toCursor.trace)
       unitEdge.toCursor.trace := by
   simp only [trueLeaf, afterIndexCursor, Cursor.trace_comp]
-  rfl
 
 example (path : Path unitEdge.residual) :
     (afterIndexCursor.comp unitEdge.toCursor).plug path =
