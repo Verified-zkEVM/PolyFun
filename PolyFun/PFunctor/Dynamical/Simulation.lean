@@ -99,7 +99,7 @@ theorem isSimulation_graph_coalgHom {S₂' : Type u₁}
     {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂' p} :
     letI := D₁.coalg
     letI := D₂.coalg
-    ∀ f : @Coalg.Hom p.Obj (PFunctor.instFunctorObj p) S₁ S₂' D₁.coalg D₂.coalg,
+    ∀ f : Coalg.Hom p.Obj S₁ S₂',
       IsSimulation D₁ D₂ (fun st₁ st₂ => f st₁ = st₂) := by
   let _ := D₁.coalg
   let _ := D₂.coalg
@@ -110,7 +110,7 @@ theorem behavior_coalgHom {S₂' : Type u₁}
     {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂' p} :
     letI := D₁.coalg
     letI := D₂.coalg
-    ∀ f : @Coalg.Hom p.Obj (PFunctor.instFunctorObj p) S₁ S₂' D₁.coalg D₂.coalg,
+    ∀ f : Coalg.Hom p.Obj S₁ S₂',
       ∀ st : S₁, D₂.behavior (f st) = D₁.behavior st := by
   let _ := D₁.coalg
   let _ := D₂.coalg

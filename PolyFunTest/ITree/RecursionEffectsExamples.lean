@@ -44,11 +44,7 @@ def stateProgram : ITree (StateE Nat + External) Nat :=
 
 example : runState stateProgram 4 =
     ITree.step (ITree.step (ITree.pure (F := External) (5, 4))) := by
-  -- Lean 4.33: simp no longer keys the state-interpreter equations to this
-  -- goal, so they are rewritten manually.
-  rw [runState_eq_interpState]
-  unfold stateProgram
-  rw [interpState_get, interpState_put, interpState_pure]
+  simp [stateProgram]
 
 /-- The state bind law threads the updated state into the continuation while
 retaining the program's return value. -/
@@ -60,8 +56,7 @@ example : interpState
   simp only [interpState_pure]
   rw [show interpState stateProgram 4 =
     ITree.step (ITree.step (ITree.pure (F := External) (5, 4))) by
-      unfold stateProgram
-      rw [interpState_get, interpState_put, interpState_pure]]
+      simp [stateProgram]]
   rw [bind_step, bind_step, bind_pure_left]
 
 def stateExternal : ITree (StateE Nat + External) Nat :=
@@ -71,25 +66,14 @@ def stateExternal : ITree (StateE Nat + External) Nat :=
 example : runState stateExternal 4 =
     ITree.query ExternalShape.read
       (fun n => ITree.pure (F := External) (4, n)) := by
-  -- Lean 4.33: simp no longer keys the state-interpreter equations to this
-  -- goal, so they are rewritten manually.
-  rw [runState_eq_interpState]
-  unfold stateExternal
-  rw [interpState_query_external]
-  congr 1
-  funext n
-  rw [interpState_pure]
+  simp [stateExternal]
 
 def throws : ITree (ExceptE String + External) Nat :=
   ITree.query (F := ExceptE String + External) (Sum.inl "boom") PEmpty.elim
 
 example : runExcept throws =
     ITree.pure (F := External) (Except.error "boom") := by
-  -- Lean 4.33: simp no longer keys the exception-interpreter equations to
-  -- this goal, so they are rewritten manually.
-  rw [runExcept_eq_interpExcept]
-  unfold throws
-  rw [interpExcept_throw]
+  simp [throws]
 
 /-- The exception bind law bypasses a continuation after the first error. -/
 example : interpExcept
@@ -100,8 +84,7 @@ example : interpExcept
   simp only [interpExcept_pure]
   rw [show interpExcept throws =
     ITree.pure (F := External) (Except.error "boom") by
-      unfold throws
-      rw [interpExcept_throw]]
+      simp [throws]]
   rw [bind_pure_left]
 
 def succeeds : ITree (ExceptE String + External) Nat :=
@@ -111,14 +94,7 @@ def succeeds : ITree (ExceptE String + External) Nat :=
 example : runExcept succeeds =
     ITree.query ExternalShape.read
       (fun n => ITree.pure (F := External) (Except.ok n)) := by
-  -- Lean 4.33: simp no longer keys the exception-interpreter equations to
-  -- this goal, so they are rewritten manually.
-  rw [runExcept_eq_interpExcept]
-  unfold succeeds
-  rw [interpExcept_query_external]
-  congr 1
-  funext n
-  rw [interpExcept_pure]
+  simp [succeeds]
 
 def countdownBody : Nat → ITree (CallE Nat Nat + External) Nat
   | 0 => ITree.pure 0

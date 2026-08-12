@@ -63,8 +63,7 @@ attribute [local implicit_reducible] Sum.elim
 @[simp] theorem interpState_get (s : σ)
     (k : σ → ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :
     interpState (query
-      (Sum.inl StateE.Shape.get :
-        (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) s =
+      (Sum.inl (α := StateE.Shape σ) (β := E.A) StateE.Shape.get) k) s =
       step (interpState (k s) s) := by
   have hstep : interpStateStep (s, query
       (Sum.inl StateE.Shape.get :
@@ -81,8 +80,7 @@ attribute [local implicit_reducible] Sum.elim
     (k : PUnit.{uσ + 1} →
       ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :
     interpState (query
-      (Sum.inl (StateE.Shape.put s') :
-        (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) s =
+      (Sum.inl (α := StateE.Shape σ) (β := E.A) (StateE.Shape.put s')) k) s =
       step (interpState (k PUnit.unit) s') := by
   have hstep : interpStateStep
       (s, query
@@ -100,7 +98,7 @@ attribute [local implicit_reducible] Sum.elim
     (k : E.B e →
       ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :
     interpState (query
-      (Sum.inr e : (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) s =
+      (Sum.inr (α := StateE.Shape σ) (β := E.A) e) k) s =
       query e (fun b => interpState (k b) s) := by
   have hstep : interpStateStep (s, query
       (Sum.inr e : (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =

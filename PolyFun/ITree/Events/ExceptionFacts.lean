@@ -66,7 +66,7 @@ attribute [local implicit_reducible] Sum.elim
 @[simp] theorem interpExcept_throw (e : ε)
     (k : PEmpty.{uB + 1} →
       ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :
-    interpExcept (query (.inl e) k) = pure (.error e) := by
+    interpExcept (query (Sum.inl (α := ε) (β := E.A) e) k) = pure (.error e) := by
   have hstep : interpExceptStep (query (.inl e) k) =
       ⟨.pure (.error e), PEmpty.elim⟩ := by
     simp [interpExceptStep]
@@ -81,7 +81,7 @@ attribute [local implicit_reducible] Sum.elim
 @[simp] theorem interpExcept_query_external (e : E.A)
     (k : E.B e →
       ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :
-    interpExcept (query (.inr e) k) =
+    interpExcept (query (Sum.inr (α := ε) (β := E.A) e) k) =
       query e (fun b => interpExcept (k b)) := by
   have hstep : interpExceptStep (query (.inr e) k) =
       ⟨.query e, k⟩ := by
