@@ -61,7 +61,7 @@ by an unbundled effect-like type constructor.
 This is weaker than `SyntaxOver.TwoParty.monadic`: it records the same owner/observer node
 shapes but does not require a `Monad` instance for `m`. Execution laws can add
 that instance only at the point where effects are actually run. -/
-@[expose, reducible]
+@[expose, implicit_reducible]
 def _root_.Interaction.SyntaxOver.TwoParty.paired (m : Type uB₂ → Type uB₂) :
     SyntaxOver l Participant (fun _ : P.A => Role) where
   Node agent pos role Cont :=
@@ -72,7 +72,7 @@ def _root_.Interaction.SyntaxOver.TwoParty.paired (m : Type uB₂ → Type uB₂
     | .counterpart, .receiver => m ((d : Q.B (l.toFunA pos)) × Cont d)
 
 /-- Functorial shape for `SyntaxOver.TwoParty.paired`. -/
-@[expose, reducible]
+@[expose, implicit_reducible]
 def _root_.Interaction.ShapeOver.TwoParty.paired (m : Type uB₂ → Type uB₂) [Functor m] :
     Interaction.ShapeOver l Participant (fun _ : P.A => Role) where
   toSyntaxOver := (SyntaxOver.TwoParty.paired l m :
@@ -209,24 +209,23 @@ def _root_.Interaction.ShapeOver.TwoParty.pairedMonadic :
     Interaction.ShapeOver l Participant
       (RolePairedMonadContextOver.{uB₂, uA, uB} P) where
   toSyntaxOver := SyntaxOver.TwoParty.pairedMonadic l
+  -- The branch retypings below hold definitionally; binding `node` directly
+  -- (rather than via `simpa`) keeps the elaborated `map` cast-free, so
+  -- downstream `simp` unfoldings see no `Eq.mp` obstructions.
   map := fun {agent} {pos} {γ} {A} {B} f node =>
     match agent, γ with
     | Participant.focal, ⟨Role.sender, ⟨bmP, _⟩⟩ =>
-        let send : bmP.M ((d : Q.B (l.toFunA pos)) × A d) := by
-          simpa [SyntaxOver.TwoParty.pairedMonadic] using node
+        let send : bmP.M ((d : Q.B (l.toFunA pos)) × A d) := node
         ((fun da => ⟨da.1, f da.1 da.2⟩) <$> send :
           bmP.M ((d : Q.B (l.toFunA pos)) × B d))
     | Participant.focal, ⟨Role.receiver, ⟨bmP, _⟩⟩ =>
-        let observe : (d : Q.B (l.toFunA pos)) → bmP.M (A d) := by
-          simpa [SyntaxOver.TwoParty.pairedMonadic] using node
+        let observe : (d : Q.B (l.toFunA pos)) → bmP.M (A d) := node
         fun d => f d <$> observe d
     | Participant.counterpart, ⟨Role.sender, ⟨_, bmC⟩⟩ =>
-        let observe : (d : Q.B (l.toFunA pos)) → bmC.M (A d) := by
-          simpa [SyntaxOver.TwoParty.pairedMonadic] using node
+        let observe : (d : Q.B (l.toFunA pos)) → bmC.M (A d) := node
         fun d => f d <$> observe d
     | Participant.counterpart, ⟨Role.receiver, ⟨_, bmC⟩⟩ =>
-        let receive : bmC.M ((d : Q.B (l.toFunA pos)) × A d) := by
-          simpa [SyntaxOver.TwoParty.pairedMonadic] using node
+        let receive : bmC.M ((d : Q.B (l.toFunA pos)) × A d) := node
         ((fun da => ⟨da.1, f da.1 da.2⟩) <$> receive :
           bmC.M ((d : Q.B (l.toFunA pos)) × B d))
 

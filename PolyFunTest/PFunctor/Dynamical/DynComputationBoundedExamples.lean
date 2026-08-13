@@ -15,6 +15,8 @@ open PFunctor
 
 namespace PFunctor.DynSystem.DynComputation
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the boundary examples below unfold these constants there. -/
 attribute [local implicit_reducible] PFunctor.X PFunctor.monomial FreeM.IsTotalRollBound
 
 /-! ## Boundary behavior and universes -/
@@ -156,6 +158,7 @@ def collatzMachine : DynComputation X.{0, 0} ℕ ℕ where
 @[simp] theorem closedStutterStep_collatzMachine (n : ℕ) :
     collatzMachine.closedStutterStep n =
       if n = 1 then n else collatzNext n := by
+  -- Lean 4.33: simp stops at literal goals `1 = 1` here; close them with `rfl`.
   by_cases h : n = 1 <;> simp [closedStutterStep, collatzView, h] <;> rfl
 
 example : collatzMachine.view (collatzMachine.init 1) = Sum.inl 1 := by
@@ -164,11 +167,14 @@ example : collatzMachine.view (collatzMachine.init 1) = Sum.inl 1 := by
 
 example : collatzMachine.closedStutterStep (collatzMachine.init 1) =
     collatzMachine.init 1 := by
+  -- Lean 4.33: simp stops at the literal goal `1 = 1`; close it with `rfl`.
   simp
   rfl
 
 example : collatzMachine.closedStutterIterate (collatzMachine.init 6) 8 =
     collatzMachine.init 1 := by
+  -- Lean 4.33: `Function.iterate_succ_apply` no longer fires from `norm_num`'s
+  -- default simp set here, and the final step needs `rfl`.
   norm_num [closedStutterIterate, Function.iterate_succ_apply, collatzNext]
   rfl
 

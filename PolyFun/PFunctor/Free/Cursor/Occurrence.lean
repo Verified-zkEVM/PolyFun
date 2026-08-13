@@ -27,6 +27,13 @@ namespace PFunctor.FreeM.Cursor
 
 open PFunctor.TraceList
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the occurrence-counting proofs below rewrite `List.countP` over `Idx`-typed
+events inside the `TraceList` carrier (reducibly `FreeMonoid (Idx _)`) there.
+`implicit_reducible` (unlike `reducible`) stays invisible to simp and
+instance search, and needs no `allowUnsafeReducibility`. -/
+attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
+
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
 /-! ## Occurrence contexts and completions -/
@@ -62,7 +69,7 @@ def toSpine : {program : FreeM P α} → {n : Nat} → (occ : Occurrence target 
   | _, _, .stepOther _ answer tail => .down answer tail.toSpine
 
 /-- Forget occurrence counting while retaining its typed structural prefix. -/
-@[reducible]
+@[implicit_reducible]
 def toCursor (occ : Occurrence target program n) : Cursor program :=
   ⟨FreeM.liftBind target occ.resume, occ.toSpine⟩
 
@@ -103,8 +110,9 @@ def plug (occ : Occurrence target program n) (answer : P.B target)
   | stepSame answer tail ih =>
       change occurrences target
         ((⟨target, answer⟩ : P.Idx) :: tail.before) = _
-      simp only [occurrences, ih]
-      rw [if_pos trivial]
+      rw [occurrences, List.countP_cons_of_pos (by simp)]
+      change occurrences target tail.before + 1 = _
+      rw [ih]
   | stepOther hne answer tail ih =>
       change occurrences target
         ((⟨_, answer⟩ : P.Idx) :: tail.before) = _

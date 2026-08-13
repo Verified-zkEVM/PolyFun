@@ -273,6 +273,10 @@ theorem PFunctor.FreeM.Path.stateChainFamily_zero
     (Family : (i : Nat) → Stage i → Type u) (i : Nat) (s : Stage i) (tr : PUnit) :
     PFunctor.FreeM.Path.stateChainFamily (advance := advance) Family 0 i s tr = Family i s := rfl
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the path-family lemma below rewrites along a `stateChain` layer there.
+`implicit_reducible` (unlike `reducible`) stays invisible to simp
+validation and instance search. -/
 attribute [local implicit_reducible] PFunctor.FreeM.stateChain
 
 /-- A constant family is unaffected by `stateChainFamily`. -/

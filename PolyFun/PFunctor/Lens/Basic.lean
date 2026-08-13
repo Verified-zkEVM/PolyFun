@@ -44,8 +44,22 @@ theorem ext {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l₁ l�
   simp_all only [mk.injEq, heq_eq_eq, true_and]
   simpa using funext h₂
 
+/-- Heterogeneous extensionality for lenses: equal position maps and
+heterogeneously equal direction maps identify two lenses. Useful when the
+direction families are equal only after rewriting along the position map. -/
+theorem ext_heq {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l₁ l₂ : Lens P Q)
+    (hA : l₁.toFunA = l₂.toFunA) (hB : l₁.toFunB ≍ l₂.toFunB) : l₁ = l₂ := by
+  cases l₁ with
+  | mk a₁ b₁ =>
+    cases l₂ with
+    | mk a₂ b₂ =>
+      dsimp only [Lens.toFunA, Lens.toFunB] at hA hB
+      cases hA
+      cases eq_of_heq hB
+      rfl
+
 /-- The identity lens -/
-@[reducible]
+@[implicit_reducible]
 protected def id (P : PFunctor.{uA, uB}) : Lens P P where
   toFunA := id
   toFunB := fun _ => id
@@ -299,7 +313,7 @@ def compMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFu
       ⟨pb, qc⟩)
 
 /-- Apply lenses to both sides of a tensor / parallel product: `l₁ ⊗ₗ l₂ : (P ⊗ Q ⇆ R ⊗ W)` -/
-@[reducible]
+@[implicit_reducible]
 def tensorMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     {W : PFunctor.{uA₄, uB₄}} (l₁ : Lens P R) (l₂ : Lens Q W) :
     Lens.{max uA₁ uA₂, max uB₁ uB₂, max uA₃ uA₄, max uB₃ uB₄} (P ⊗ Q) (R ⊗ W) :=

@@ -24,18 +24,22 @@ inductive Query where
   | bit
   | choice
 
+-- Lean 4.33: the examples below unfold `Response` at implicit transparency.
+@[implicit_reducible]
 def Response : Query → Type
   | .bit => Bool
   | .choice => Fin 3
 
+-- Lean 4.33: the examples below unfold `Interface` at implicit transparency.
+@[implicit_reducible]
 def Interface : PFunctor where
   A := Query
   B := Response
 
-attribute [local implicit_reducible] Response Interface
-
 /-- Contract positions depend on the query, and postcondition evidence depends
 on both the chosen contract position and the actual response. -/
+-- Lean 4.33: the examples below unfold `contract` at implicit transparency.
+@[implicit_reducible]
 def contract : Display Interface where
   position
     | .bit => Bool
@@ -43,8 +47,6 @@ def contract : Display Interface where
   direction
     | .bit, expected, answer => if expected = answer then Fin 2 else PUnit
     | .choice, bound, answer => Fin (bound.val + answer.val + 1)
-
-attribute [local implicit_reducible] contract
 
 def answer (state : Nat) : (a : Query) → Response a
   | .bit => state % 2 == 0
@@ -64,8 +66,7 @@ def answerContract (state : Nat) :
     (a : Query) → (c : contract.position a) →
       contract.direction a c (system.answer state a)
   | .bit, expected => by
-      change Bool at expected
-      change if expected = (state % 2 == 0) then Fin 2 else PUnit
+      simp only [contract]
       split
       · exact 0
       · exact PUnit.unit

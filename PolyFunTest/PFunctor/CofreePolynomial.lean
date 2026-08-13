@@ -21,6 +21,8 @@ universe uA uB uA₂ uB₂ uA₃ uB₃
 namespace PFunctor
 namespace CofreePolynomialTest
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the vertex examples below unfold these constants there. -/
 attribute [local implicit_reducible] M.Vertex.append M.Vertex.subtree M.children
 
 /-- A binary signature whose positions and directions are both bits. -/
