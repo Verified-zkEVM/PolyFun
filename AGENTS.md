@@ -191,6 +191,10 @@ lake exe cache get && lake build
 
 After adding new `.lean` files: `./scripts/update-lib.sh`.
 For routine local validation: `./scripts/validate.sh`.
+For anything that must stay axiom-clean, run `./scripts/validate.sh --axioms`.
+PolyFun has a zero-debt baseline: do not add `sorry` or non-standard axioms to it.
+`lake exe axiomsweep --update-baseline` only rewrites the empty baseline after all
+taint has been removed; it refuses to record tainted declarations.
 
 Environment linters and the test library have Lake drivers:
 

@@ -47,6 +47,7 @@ IPFunctor/Free/{Basic, Indexed} + IPFunctor/Notation/Common
 PFunctor/Display/Basic
   -> PFunctor/Display/{Chart, Coalgebra, Indexed, Free}
 IPFunctor/M + PFunctor/Display/Indexed -> PFunctor/Display/M
+PFunctor/Handler -> PFunctor/Handler/Instrumentation
 PFunctor/{Handler, Free/Basic} -> PFunctor/Handler/Free
   -> PFunctor/Handler/Stateful -> PFunctor/Handler/Normalization/Attr
   -> PFunctor/Handler/Normalization
@@ -193,11 +194,6 @@ Interaction/UC/{OpenSyntax/Expr, SubTheory}
    Protocol membership, resource and realizability claims, and links to
    CorruptionModel require separate bridges. The residual-context lemmas live
    with EmulatesWithin because the context-formers are defined in Emulates.)
-
-Interaction/UC/{Emulates, OpenProcessModel} -> Interaction/UC/OpenProcessEmulates
-  (Emulates is model-agnostic and must not reach OpenProcess; the bridge that
-   equips the concrete openTheory with observation-level composition laws
-   therefore sits above both)
 ```
 
 `PolyFun.lean` is a generated umbrella import file, not a hand-maintained

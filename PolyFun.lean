@@ -110,7 +110,6 @@ public import PolyFun.Interaction.UC.MachineId
 public import PolyFun.Interaction.UC.MomentaryCorruption
 public import PolyFun.Interaction.UC.Notation
 public import PolyFun.Interaction.UC.OpenProcess
-public import PolyFun.Interaction.UC.OpenProcessEmulates
 public import PolyFun.Interaction.UC.OpenProcessModel
 public import PolyFun.Interaction.UC.OpenSyntax.AtomSubTheory
 public import PolyFun.Interaction.UC.OpenSyntax.Expr
@@ -197,6 +196,7 @@ public import PolyFun.PFunctor.Free.Resumption
 public import PolyFun.PFunctor.Free.Universal
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Free
+public import PolyFun.PFunctor.Handler.Instrumentation
 public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr
 public import PolyFun.PFunctor.Handler.Stateful
