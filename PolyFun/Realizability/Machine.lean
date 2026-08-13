@@ -61,6 +61,14 @@ universe u v w uA uB uA₂ uB₂ uα uβ uγ
 
 namespace PFunctor
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency; the
+step maps below move between `Obj` and its `Sigma` normal form (to reach the
+exposed position and its continuation) and between `Idx` and its `Sigma` normal
+form (to pair a position with a direction) there. Both are plain semireducible
+definitions in Mathlib; `implicit_reducible` (unlike `reducible`) keeps them
+opaque to simp and typeclass resolution, and needs no `allowUnsafeReducibility`. -/
+attribute [local implicit_reducible] PFunctor.Obj PFunctor.Idx
+
 namespace DynSystem.DynComputation
 
 variable {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
@@ -135,14 +143,14 @@ theorem update?_of_view_query [DecidableEq p.A] (M : DynComputation.{u} p α β)
     (direction : p.B position) :
     M.update? (state, ⟨position, direction⟩) = some (next direction) := by
   unfold update?; rw [hview]
-  simp only [Sum.elim_inr, dif_pos]
+  exact dif_pos rfl
 
 theorem update?_of_view_query_of_ne [DecidableEq p.A]
     (M : DynComputation.{u} p α β) {state : M.State} {query : p.Obj M.State}
     (hview : M.view state = Sum.inr query) {index : p.Idx}
     (hne : index.1 ≠ query.1) : M.update? (state, index) = none := by
   unfold update?; rw [hview]
-  simp only [Sum.elim_inr, dif_neg hne]
+  exact dif_neg hne
 
 /-- The total variant of the flattened transition: a mismatched tag or an already
 returned state leaves the state unchanged.
@@ -261,7 +269,6 @@ Every step map is shared definitionally by computations that share `toMachine`.
     (M.mapResult f).updateFlat step = M.updateFlat step := by
   unfold updateFlat
   rw [M.update?_mapResult f step]
-  rfl
 
 /-! ## Transport along interface transport -/
 
@@ -312,7 +319,6 @@ theorem update?_wrap {q : PFunctor.{uA₂, uB₂}} [DecidableEq p.A] [DecidableE
         rw [update?_of_view_query (M.wrap lens) hcomp idirection]
         change _ = Option.bind (dite _ _ _) _
         rw [dif_pos rfl, Option.bind_some, update?_of_view_query M hview]
-        rfl
       · rw [update?_of_view_query_of_ne (M.wrap lens) hcomp h]
         change none = Option.bind (dite _ _ _) _
         rw [dif_neg h]
@@ -433,7 +439,8 @@ Only the two uniform total-variant lemmas are kept below;
       rw [head_eq_inl_of_view M₁ hview, Sum.elim_inl]
       cases hview₂ : M₂.view (M₂.init value) with
       | inl result =>
-          rw [update?_of_view_return (M₁.seqComp M₂) (value := result)
+          rw [update?_of_view_return (M₁.seqComp M₂)
+              (state := Sum.inl state₁) (value := result)
               (by rw [seqComp_view_inl_of_return M₁ M₂ hview, hview₂]; rfl),
             update?_of_view_return M₂ hview₂]
           rfl

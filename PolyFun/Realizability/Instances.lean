@@ -123,7 +123,7 @@ instance : (finite.{u}).HasSum where
 
 instance : (finite.{u}).HasOption where
   option {A} a := by
-    letI : Fintype A := a
+    let : Fintype A := a
     exact (inferInstance : Fintype (Option A))
   omap_mem _ := True.intro
   none_mem _ _ := True.intro
@@ -143,12 +143,12 @@ def computable : StepClass.{u, u} where
   Str := Primcodable
   Hom {A B} a b f := @Computable A B a b f
   id_mem {A} a := by
-    letI : Primcodable A := a
+    let : Primcodable A := a
     exact Computable.id
   comp_mem {A B D} {a b d} {f g} hf hg := by
-    letI : Primcodable A := a
-    letI : Primcodable B := b
-    letI : Primcodable D := d
+    let : Primcodable A := a
+    let : Primcodable B := b
+    let : Primcodable D := d
     have hf' : Computable f := hf
     have hg' : Computable g := hg
     exact hg'.comp hf'
@@ -156,17 +156,17 @@ def computable : StepClass.{u, u} where
 instance : (computable.{u}).HasProd where
   prod {A B} a b := @Primcodable.prod A B a b
   fst_mem {A B} a b := by
-    letI : Primcodable A := a
-    letI : Primcodable B := b
+    let : Primcodable A := a
+    let : Primcodable B := b
     exact Computable.fst
   snd_mem {A B} a b := by
-    letI : Primcodable A := a
-    letI : Primcodable B := b
+    let : Primcodable A := a
+    let : Primcodable B := b
     exact Computable.snd
   pair_mem {A B D} {a b d} {f g} hf hg := by
-    letI : Primcodable A := a
-    letI : Primcodable B := b
-    letI : Primcodable D := d
+    let : Primcodable A := a
+    let : Primcodable B := b
+    let : Primcodable D := d
     have hf' : Computable f := hf
     have hg' : Computable g := hg
     exact hf'.pair hg'
@@ -174,17 +174,17 @@ instance : (computable.{u}).HasProd where
 instance : (computable.{u}).HasSum where
   sum {A B} a b := @Primcodable.sum A B a b
   inl_mem {A B} a b := by
-    letI : Primcodable A := a
-    letI : Primcodable B := b
+    let : Primcodable A := a
+    let : Primcodable B := b
     exact Primrec.sumInl.to_comp
   inr_mem {A B} a b := by
-    letI : Primcodable A := a
-    letI : Primcodable B := b
+    let : Primcodable A := a
+    let : Primcodable B := b
     exact Primrec.sumInr.to_comp
   elim_mem {A B D} {a b d} {f g} hf hg := by
-    letI : Primcodable A := a
-    letI : Primcodable B := b
-    letI : Primcodable D := d
+    let : Primcodable A := a
+    let : Primcodable B := b
+    let : Primcodable D := d
     have hf' : Computable f := hf
     have hg' : Computable g := hg
     refine Computable.of_eq (Computable.sumCasesOn Computable.id
@@ -195,21 +195,21 @@ instance : (computable.{u}).HasSum where
 instance : (computable.{u}).HasOption where
   option {A} a := @Primcodable.option A a
   omap_mem {A B} {a b} {f} hf := by
-    letI : Primcodable A := a
-    letI : Primcodable B := b
+    let : Primcodable A := a
+    let : Primcodable B := b
     have hf' : Computable f := hf
     refine Computable.of_eq
       (Computable.option_map Computable.id (hf'.comp Computable.snd).to₂) ?_
     intro x
     cases x <;> rfl
   none_mem {A B} a b := by
-    letI : Primcodable A := a
-    letI : Primcodable B := b
+    let : Primcodable A := a
+    let : Primcodable B := b
     exact Computable.const none
   obindCtx_mem {A B E} {a b e} {k} hk := by
-    letI : Primcodable A := a
-    letI : Primcodable B := b
-    letI : Primcodable E := e
+    let : Primcodable A := a
+    let : Primcodable B := b
+    let : Primcodable E := e
     have hk' : Computable k := hk
     refine Computable.of_eq
       (Computable.option_bind Computable.fst
@@ -222,9 +222,9 @@ instance : (computable.{u}).HasOption where
 are `α → β → σ` with `α` the ambient context — which is exactly distributivity. -/
 instance : (computable.{u}).IsDistributive where
   distrib_mem {A B I} a b i := by
-    letI : Primcodable A := a
-    letI : Primcodable B := b
-    letI : Primcodable I := i
+    let : Primcodable A := a
+    let : Primcodable B := b
+    let : Primcodable I := i
     refine Computable.of_eq (Computable.sumCasesOn Computable.fst
       (Primrec.sumInl.to_comp.comp (Computable.pair Computable.snd
         (Computable.snd.comp Computable.fst))).to₂
