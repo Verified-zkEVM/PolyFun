@@ -74,7 +74,12 @@ and depend on this library.
     interleaving, observation.
   - `UC/`: open-process / open-theory layer, structural composition
     (interfaces, par, wire, plug), corruption models, environment
-    actions, leakage. *Generic only* — security-flavored UC layers
+    actions, leakage, and composition-closed sub-theories (`SubTheory`, a
+    boundary-indexed membership predicate, with contextual emulation
+    relativized to its allowed closing contexts). This relativization does not
+    assert real/ideal protocol membership, resource bounds, simulator
+    realizability, or a connection to `CorruptionModel`; those require explicit
+    downstream bridges. *Generic only* — security-flavored UC layers
     (computational equivalence, asymptotic security) live in VCVio.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
