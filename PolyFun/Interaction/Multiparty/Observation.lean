@@ -163,6 +163,7 @@ variable {X : Type u}
 
 Every `Observation X` refines `Observation.top X`.
 -/
+@[expose]
 protected def top (X : Type u) : Observation X := ⟨X, id⟩
 
 /--
@@ -186,6 +187,12 @@ observers using `k₂` learn. This is the natural ordering in which
 -/
 def Refines (k₁ k₂ : Observation X) : Prop :=
   ∃ f : k₂.1 → k₁.1, ∀ x, k₁.2 x = f (k₂.2 x)
+
+/-- Observation refinement holds exactly when the first observation factors
+through the second by an explicit map. -/
+theorem refines_iff {k₁ k₂ : Observation X} :
+    k₁.Refines k₂ ↔ ∃ f : k₂.1 → k₁.1, ∀ x, k₁.2 x = f (k₂.2 x) :=
+  Iff.rfl
 
 @[refl] theorem Refines.refl (k : Observation X) : k.Refines k :=
   ⟨id, fun _ => rfl⟩

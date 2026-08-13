@@ -74,6 +74,40 @@ def samplePath {m : Type w → Type w'} [Monad m] :
       let tr ← samplePath (rest x) (sampRest x)
       return ⟨x, tr⟩
 
+/-- Sampling a completed interaction returns its unique empty path. -/
+@[simp]
+theorem samplePath_done {m : Type w → Type w'} [Monad m]
+    (sampler : Sampler m .done) :
+    samplePath .done sampler = pure ⟨⟩ := by
+  rfl
+
+/-! The raw and `TypeTree`-facing node equations are both public so callers can
+rewrite without depending on which transparent representation Lean exposes. -/
+
+/-- Sampling a raw free-monad node first samples its head value and then its
+dependent tail path. -/
+@[simp]
+theorem samplePath_lift_bind {m : Type w → Type w'} [Monad m]
+    {X : Type w} (rest : X → TypeTree.{w})
+    (sampler : m X) (samplerRest : ∀ x, Sampler m (rest x)) :
+    samplePath (@PFunctor.FreeM.lift TypeTree.basePFunctor X >>= rest)
+        ⟨sampler, samplerRest⟩ = do
+      let x ← sampler
+      let tr ← samplePath (rest x) (samplerRest x)
+      return ⟨x, tr⟩ := by
+  rfl
+
+/-- Sampling a `TypeTree.node` first samples its head value and then its
+dependent tail path. -/
+theorem samplePath_node {m : Type w → Type w'} [Monad m]
+    {X : Type w} (rest : X → TypeTree.{w})
+    (sampler : m X) (samplerRest : ∀ x, Sampler m (rest x)) :
+    samplePath (TypeTree.node X rest) ⟨sampler, samplerRest⟩ = do
+      let x ← sampler
+      let tr ← samplePath (rest x) (samplerRest x)
+      return ⟨x, tr⟩ := by
+  rfl
+
 /--
 Combine a scheduler sampler with two per-branch samplers into a sampler
 for the binary-choice interleaving tree
