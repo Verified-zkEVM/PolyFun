@@ -8,7 +8,7 @@ module
 
 import all PolyFun.Interaction.UC.EmulatesWithin
 public import PolyFun.Interaction.UC.EmulatesWithin
-public import PolyFun.Interaction.UC.OpenProcessEmulates
+public import PolyFun.Interaction.UC.OpenProcessModel
 public import PolyFun.Interaction.UC.OpenSyntax.AtomSubTheory
 
 /-!
@@ -143,16 +143,18 @@ end FreeModel
 
 /-! ### The relativized `plug` theorem on the process model
 
-`openTheory` has no strict factorization, so it reaches these through
-`Observation.IsSchedulingInsensitive` rather than
-`OpenTheory.HasPlugWireFactor`. -/
+`openTheory` has no `OpenTheory.HasPlugWireFactor` instance, so it cannot reach
+the relativized `plug` theorem by strict factorization. It reaches it from
+`Observation.RespectsPlugComm` alone, however that class is earned — which is
+the point of stating the structural input on the observation rather than on the
+theory. -/
 
 section ProcessModel
 
 variable (Party : Type u) (m : Type w → Type w') [Monad m]
     (schedulerSampler : m (ULift.{w, 0} Bool))
     (Obs : Observation (openTheory.{u, v, w, w'} Party m schedulerSampler))
-    [Observation.IsSchedulingInsensitive Obs]
+    [Obs.RespectsPlugComm]
     (D : SubTheory (openTheory.{u, v, w, w'} Party m schedulerSampler))
 
 example {Δ : PortBoundary}

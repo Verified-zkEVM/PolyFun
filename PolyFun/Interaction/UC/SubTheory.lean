@@ -55,9 +55,9 @@ member satisfies another sub-theory reduces to checking the generators.
 Resource witnesses, if introduced later, belong inside the proposition or in
 a separate realizability layer.
 
-The proposed `PFunctor.StepClass` and realizability layer are planned in
-PolyFun PR #113; they are not dependencies of this module. A future bridge may
-relate those classes to `SubTheory.mem` after their closure laws are available.
+Nothing in this module depends on a realizability layer. Should one exist, a
+bridge relating its admissibility classes to `SubTheory.mem` would need those
+classes' own closure laws first.
 
 `SubTheory` is also separate from `Interaction.UC.CorruptionModel`, which
 describes corruption events, states, and environment actions. Relating a
