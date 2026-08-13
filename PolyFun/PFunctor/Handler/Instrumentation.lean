@@ -50,8 +50,11 @@ theorem liftTarget_self (handler : Handler m P) :
 
 /-- Run an effect before handling each operation.
 
-The inserted effect is unconditional: it still runs when the underlying
-handler subsequently fails. Its result is discarded. -/
+The inserted effect is sequenced before the underlying handler. Whether its
+effects remain observable if that handler subsequently fails depends on the
+target monad's transformer order; for example, `WriterT` over `Option` discards
+the log together with a failed result. The inserted effect's value is
+discarded. -/
 def preInsert [Monad n] [MonadLiftT m n] {α : Type u}
     (handler : Handler m P) (before : P.A → n α) : Handler n P :=
   fun operation => before operation *> liftM (handler operation)

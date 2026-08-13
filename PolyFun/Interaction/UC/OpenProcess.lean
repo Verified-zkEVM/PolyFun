@@ -667,14 +667,32 @@ theorem OpenNodeContext.boundaryTrace_done {Party : Type u} {Δ : PortBoundary}
       (1 : PFunctor.TraceList Δ.Out) := by
   rfl
 
-/-- A node boundary trace emits the head action and continues along the chosen tail. -/
+/-! The raw and `TypeTree`-facing node equations are both public so callers can
+rewrite without depending on which transparent representation Lean exposes. -/
+
+/-- A raw free-monad node emits the head boundary action and continues along
+the chosen tail. -/
 @[simp]
-theorem OpenNodeContext.boundaryTrace_node {Party : Type u} {Δ : PortBoundary}
+theorem OpenNodeContext.boundaryTrace_lift_bind {Party : Type u} {Δ : PortBoundary}
     {X : Type w} (rest : X → TypeTree.{w})
     (semantics : Decoration (OpenNodeContext.{u, w} Party Δ) (TypeTree.node X rest))
     (x : X) (path : TypeTree.Path (rest x)) :
     OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ)
         (@PFunctor.FreeM.lift TypeTree.basePFunctor X >>= rest) semantics ⟨x, path⟩ =
+      semantics.1.boundary.emit x *
+        OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ)
+          (rest x) (semantics.2 x) path := by
+  rcases semantics with ⟨node, next⟩
+  rfl
+
+/-- A `TypeTree.node` emits the head boundary action and continues along the
+chosen tail. -/
+theorem OpenNodeContext.boundaryTrace_node {Party : Type u} {Δ : PortBoundary}
+    {X : Type w} (rest : X → TypeTree.{w})
+    (semantics : Decoration (OpenNodeContext.{u, w} Party Δ) (TypeTree.node X rest))
+    (x : X) (path : TypeTree.Path (rest x)) :
+    OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ)
+        (TypeTree.node X rest) semantics ⟨x, path⟩ =
       semantics.1.boundary.emit x *
         OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ)
           (rest x) (semantics.2 x) path := by
