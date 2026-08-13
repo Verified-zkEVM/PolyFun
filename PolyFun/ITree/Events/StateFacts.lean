@@ -5,7 +5,6 @@ Authors: Quang Dao
 -/
 module
 
-import all PolyFun.ITree.Events.State
 public import PolyFun.ITree.Events.State
 public import PolyFun.ITree.Bisim.Bind
 
@@ -25,6 +24,13 @@ universe uσ uEA uα uβ
 namespace ITree
 
 variable {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
+
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the proofs below need `(StateE σ + E).B` at `.inl`/`.inr` events to unfold
+there, which goes through the sum functor's `Sum.elim` child family.
+`implicit_reducible` restores that without touching simp or typeclass
+resolution. -/
+attribute [local implicit_reducible] Sum.elim
 
 @[simp] theorem interpState_pure (s : σ) (r : α) :
     interpState (E := E)
@@ -57,15 +63,13 @@ variable {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
 @[simp] theorem interpState_get (s : σ)
     (k : σ → ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :
     interpState (query
-      (Sum.inl StateE.Shape.get :
-        (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) s =
+      (Sum.inl (α := StateE.Shape σ) (β := E.A) StateE.Shape.get) k) s =
       step (interpState (k s) s) := by
   have hstep : interpStateStep (s, query
       (Sum.inl StateE.Shape.get :
         (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
       ⟨.step, fun _ => (s, k s)⟩ := by
     simp [interpStateStep]
-    rfl
   apply PFunctor.M.eq_of_dest_eq
   rw [interpState, PFunctor.M.dest_corec_eq _ _ hstep]
   unfold ITree.step
@@ -76,8 +80,7 @@ variable {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
     (k : PUnit.{uσ + 1} →
       ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :
     interpState (query
-      (Sum.inl (StateE.Shape.put s') :
-        (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) s =
+      (Sum.inl (α := StateE.Shape σ) (β := E.A) (StateE.Shape.put s')) k) s =
       step (interpState (k PUnit.unit) s') := by
   have hstep : interpStateStep
       (s, query
@@ -85,7 +88,6 @@ variable {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
           (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
       ⟨.step, fun _ => (s', k PUnit.unit)⟩ := by
     simp [interpStateStep]
-    rfl
   apply PFunctor.M.eq_of_dest_eq
   rw [interpState, PFunctor.M.dest_corec_eq _ _ hstep]
   unfold ITree.step
@@ -96,13 +98,12 @@ variable {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
     (k : E.B e →
       ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :
     interpState (query
-      (Sum.inr e : (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) s =
+      (Sum.inr (α := StateE.Shape σ) (β := E.A) e) k) s =
       query e (fun b => interpState (k b) s) := by
   have hstep : interpStateStep (s, query
       (Sum.inr e : (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
       ⟨.query e, fun b => (s, k b)⟩ := by
     simp [interpStateStep]
-    rfl
   apply PFunctor.M.eq_of_dest_eq
   rw [interpState, PFunctor.M.dest_corec_eq _ _ hstep]
   unfold ITree.query
@@ -234,24 +235,18 @@ theorem interpState_bind {β : Type uβ}
                   hLeft, hRight,
                   fun _ => Or.inr ⟨s', c PUnit.unit, rfl, rfl⟩⟩
         | inr e =>
+            change E.B e → ITree
+              (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α at c
             have ht : t = query
                 (Sum.inr e :
                   (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) c := by
               apply PFunctor.M.eq_of_dest_eq
               rw [h]
               rfl
-            rw [ht, bind_query]
-            have hleft : interpState (query
-                (Sum.inr e : (StateE σ + E :
-                  PFunctor.{max uσ uEA, uσ}).A) (fun b => bind (c b) k)) s =
-                query e (fun b => interpState (bind (c b) k) s) :=
-              interpState_query_external s e _
-            have hright : interpState (query
-                (Sum.inr e : (StateE σ + E :
-                  PFunctor.{max uσ uEA, uσ}).A) c) s =
-                query e (fun b => interpState (c b) s) :=
-              interpState_query_external s e c
-            rw [hleft, hright, bind_query]
+            subst ht
+            clear h
+            rw [bind_query, interpState_query_external,
+              interpState_query_external, bind_query]
             exact ⟨.query e,
               fun b => interpState (bind (c b) k) s,
               fun b => bind (interpState (c b) s) next,

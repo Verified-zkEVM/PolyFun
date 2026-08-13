@@ -726,6 +726,9 @@ theorem reindexDisplayedBehavior_id
           (Handler.id P) (Display.Handler.id S) current displayed
           query precondition
         have hToM := congrArg IPFunctor.IM.toM hNext
+        -- Lean 4.33: `simp only [Display.M.toM_transport]` no longer fires here
+        -- (simp validation is blind to `implicit_reducible` indices), so the
+        -- transport is peeled off by explicit `.trans` composition instead.
         have hToM' :=
           (Display.M.toM_transport (S := Display.responder S) _ _).symm.trans hToM
         unfold leftChildren
@@ -1022,6 +1025,9 @@ theorem reindexDisplayedBehavior_comp
         have hOuterNext := respondDisplayed_reindexDisplayedBehavior_next S T first dfirst
           (reindexBehavior second current) middle query precondition
         have hOuterToM := congrArg IPFunctor.IM.toM hOuterNext
+        -- Lean 4.33: `simp only [Display.M.toM_transport]` no longer fires here
+        -- (simp validation is blind to `implicit_reducible` indices), so the
+        -- transport is peeled off by explicit `.trans` composition instead.
         have hOuterToM' :=
           (Display.M.toM_transport (S := Display.responder S) _ _).symm.trans hOuterToM
         calc
@@ -1044,7 +1050,9 @@ theorem reindexDisplayedBehavior_comp
         have hCompositeToM' :=
           (Display.M.toM_transport (S := Display.responder S) _ _).symm.trans hCompositeToM
         change (respondDisplayed S composite query precondition).2.toM = _
-        simpa only [Display.Handler.comp_apply, Handler.comp_apply,
+        -- Lean 4.33: `Display.Handler.comp` is only `implicit_reducible`, so
+        -- its unfolding is spelled out for `simp` here.
+        simpa only [Display.Handler.comp, Display.Handler.comp_apply, Handler.comp_apply,
           compositeResult, compositeEvidence, composite, terminalR, terminalD]
           using hCompositeToM'
   · exact ⟨behavior, displayedBehavior, rfl, rfl⟩

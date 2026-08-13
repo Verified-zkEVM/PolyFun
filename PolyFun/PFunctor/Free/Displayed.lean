@@ -68,7 +68,7 @@ Evaluate a displayed algebra over a concrete `FreeM` tree.
 This generates the displayed fiber at every tree by recursion on the free
 polynomial structure.
 -/
-@[reducible]
+@[implicit_reducible]
 def Displayed (D : Displayed.Algebra P α) :
     FreeM P α → Sort w
   | .pure x => D.leaf x
@@ -114,7 +114,7 @@ Evaluate a dependent displayed algebra over concrete displayed data.
 This is the dependent analogue of `Displayed`: the base displayed data chooses
 which second-layer fiber is available at every node.
 -/
-@[reducible]
+@[implicit_reducible]
 def Over (E : Over.Algebra D) :
     (s : FreeM P α) → Displayed D s → Sort w₂
   | .pure x, d => E.leaf x d
@@ -465,6 +465,7 @@ variable
     {S' : _root_.PFunctor.FreeM.Displayed.Over.Algebra.{uA, uB, v, w, w₆} D}
 
 /-- The recursive function underlying `FiberLocalMap.toHom`. -/
+@[implicit_reducible]
 def toHomFun (η : FiberLocalMap R' S') :
     (s : FreeM P α) →
     (d : Displayed D s) →
@@ -478,7 +479,7 @@ def toHomFun (η : FiberLocalMap R' S') :
         (fun b d => toHomFun η (rest b) d) d r
 
 /-- Interpret a constructor-local fiber map as a displayed-over morphism. -/
-@[reducible]
+@[implicit_reducible]
 def toHom (η : FiberLocalMap R' S') :
     Displayed.Over.Hom (Displayed.Hom.id (D := D)) R' S' where
   toFun := toHomFun η

@@ -33,7 +33,14 @@ universe uA uB u
 namespace PFunctor
 namespace CofreeP
 
-attribute [local implicit_reducible] M.Vertex.depth
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the depth calculations below rewrite finite-projection directions whose
+types are indexed through `M.Vertex.depth`, `compNth`, and the composition
+product, which must unfold there for the rewrites to type-check.
+`implicit_reducible` (unlike `reducible`) keeps them opaque to simp and
+typeclass resolution, and needs no `allowUnsafeReducibility`. -/
+attribute [local implicit_reducible] M.Vertex.depth compNth PFunctor.comp
+  Lens.comp Lens.compMap cogenerator comult M.Vertex.subtree M.head M.children
 
 /-! ## Structural finite projections -/
 
@@ -43,7 +50,7 @@ At depth zero it keeps only the composition unit and pulls its unique
 direction back to the root.  At a successor depth it exposes the root layer
 and recursively projects each child subtree.  Consequently every composite
 direction pulls back to a vertex of exactly depth `n`. -/
-@[reducible]
+@[implicit_reducible]
 def projectionN (P : PFunctor.{uA, uB}) : (n : ℕ) →
     Lens (CofreeP P) (compNth P n)
   | 0 =>
@@ -90,18 +97,16 @@ theorem depth_projectionN_toFunB (P : PFunctor.{uA, uB}) :
         (compNth P n).B ((projectionN P n).toFunA tree)) →
       M.Vertex.depth ((projectionN P n).toFunB tree direction) = n
   | 0, tree, direction => by
-      rfl
+      simp only [projectionN_zero_toFunB, M.Vertex.depth_root]
   | n + 1, tree, direction => by
-      change M.Vertex.depth ((projectionN P n).toFunB
-        (M.children tree direction.1) direction.2) + 1 = n + 1
-      exact congrArg (fun depth => depth + 1)
-        (depth_projectionN_toFunB P n
-          (M.children tree direction.1) direction.2)
+      simp only [projectionN_succ_toFunB, M.Vertex.depth_child,
+        depth_projectionN_toFunB P n]
 
 /-! ## Low-depth coherence -/
 
 /-- In the homogeneous universe boundary, the zero-stage projection is the
 cofree counit. -/
+@[simp]
 theorem projectionN_zero (P : PFunctor.{u, u}) :
     projectionN P 0 = counit :=
   rfl

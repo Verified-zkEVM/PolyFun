@@ -35,6 +35,10 @@ namespace PFunctor
 
 namespace DynSystem.DynComputation
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the unrolling equations below rewrite through `seqComp` there.
+`implicit_reducible` (unlike `reducible`) leaves simp validation and instance
+resolution untouched, and needs no `allowUnsafeReducibility`. -/
 attribute [local implicit_reducible] DynComputation.seqComp
 
 variable {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
@@ -315,16 +319,12 @@ theorem unroll_eq_map_some_of_resolvesIn {M : DynComputation.{u} p α β} :
       ∃ program : FreeM p β, M.unroll k state = FreeM.map some program
   | 0, state, h => by
       obtain ⟨value, hview⟩ := (M.resolvesIn_zero state).mp h
-      exact ⟨FreeM.pure value, by
-        rw [unroll_return M 0 state value hview, ← FreeM.bind_pure_comp]
-        exact (FreeM.pure_bind value (FreeM.pure ∘ some)).symm⟩
+      exact ⟨FreeM.pure value, by rw [unroll_return M 0 state value hview]; rfl⟩
   | k + 1, state, h => by
       cases hview : M.view state with
       | inl value =>
           exact ⟨FreeM.pure value,
-            by rw [unroll_return M (k + 1) state value hview,
-              ← FreeM.bind_pure_comp]
-               exact (FreeM.pure_bind value (FreeM.pure ∘ some)).symm⟩
+            by rw [unroll_return M (k + 1) state value hview]; rfl⟩
       | inr query =>
           rcases query with ⟨position, next⟩
           have hnext : ∀ direction, M.ResolvesIn k (next direction) :=
@@ -472,6 +472,7 @@ theorem unroll_seqComp_inr {γ : Type uγ}
           have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
               Sum.inl result := by
             rw [seqComp_view_inr]
+            simp only [seqComp_State]
             rw [hview]
             rfl
           rw [(M₁.seqComp M₂).unroll_return 0 _ result hcomposite,
@@ -481,6 +482,7 @@ theorem unroll_seqComp_inr {γ : Type uγ}
           have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
               Sum.inr ⟨position, fun direction => Sum.inr (next direction)⟩ := by
             rw [seqComp_view_inr]
+            simp only [seqComp_State]
             rw [hview]
             rfl
           rw [(M₁.seqComp M₂).unroll_query_zero _ position _ hcomposite,
@@ -491,6 +493,7 @@ theorem unroll_seqComp_inr {γ : Type uγ}
           have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
               Sum.inl result := by
             rw [seqComp_view_inr]
+            simp only [seqComp_State]
             rw [hview]
             rfl
           rw [(M₁.seqComp M₂).unroll_return (k + 1) _ result hcomposite,
@@ -500,6 +503,7 @@ theorem unroll_seqComp_inr {γ : Type uγ}
           have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
               Sum.inr ⟨position, fun direction => Sum.inr (next direction)⟩ := by
             rw [seqComp_view_inr]
+            simp only [seqComp_State]
             rw [hview]
             rfl
           rw [(M₁.seqComp M₂).unroll_query_succ k _ position _ hcomposite,
@@ -520,14 +524,19 @@ theorem unroll_seqComp_inl_of_return {γ : Type uγ}
   | inl result =>
       have hcomposite : (M₁.seqComp M₂).view (Sum.inl state₁) =
           Sum.inl result := by
-        simp only [seqComp_view_inl, hview, hview₂, Sum.map_inl]
+        rw [seqComp_view_inl, hview]
+        simp only [seqComp_State]
+        rw [hview₂]
+        rfl
       rw [(M₁.seqComp M₂).unroll_return k _ result hcomposite,
         M₂.unroll_return k _ result hview₂]
   | inr query =>
       rcases query with ⟨position, next⟩
       have hcomposite : (M₁.seqComp M₂).view (Sum.inl state₁) =
           Sum.inr ⟨position, fun direction => Sum.inr (next direction)⟩ := by
-        simp only [seqComp_view_inl, hview, hview₂]
+        rw [seqComp_view_inl, hview]
+        simp only [seqComp_State]
+        rw [hview₂]
         rfl
       cases k with
       | zero =>
@@ -645,8 +654,7 @@ theorem unroll_seqComp_inl_of_resolvesIn {γ : Type uγ}
       simp only [Nat.zero_add]
       rw [unroll_seqComp_inl_of_return M₁ M₂ k₂ state₁ value hview,
         M₁.unroll_return 0 state₁ value hview]
-      symm
-      apply FreeM.pure_bind
+      rfl
   | succ k₁ ih =>
       cases hview : M₁.view state₁ with
       | inl value =>

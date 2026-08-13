@@ -142,6 +142,47 @@ normalize local fixtures, while remaining outside the production library.
 Run `./scripts/check-modules.sh` after changing module scopes. The full
 validation wrapper runs this check automatically.
 
+### Transparency Attributes
+
+Lean orders unfolding by transparency level (`reducible < instances <
+implicit < default < all`) and, since Lean 4.33, respects those levels
+strictly: assigned metavariable types are compared at *implicit*
+transparency, and typeclass resolution unfolds only up to *instances*
+transparency. A plain `def` no longer unfolds during unification in those
+positions. Choose the weakest attribute that fixes the failure:
+
+- **No attribute** is the normal state. Prefer an equation or simp lemma
+  over a transparency change when a proof merely rewrites through a
+  definition.
+- **`@[implicit_reducible]`** is the standard fix for Lean 4.33
+  unification failures (`rw` not finding a visible pattern, `subst`
+  motive errors, goals "not type-correct under the implicit transparency
+  level"). It unfolds during implicit-transparency checks only; simp
+  validation, simp and typeclass indexing are unaffected, so `rfl` simp
+  lemmas keyed on the definition stay valid. Per the core documentation
+  (`Init.MetaTypes`), operations occurring in type parameters should be
+  implicit-reducible as a basic rule.
+- **`@[instance_reducible]`** when *instance synthesis* must see through
+  the definition. This changes typeclass discrimination-tree indexing;
+  use it only for genuine instance-resolution failures.
+- **`@[reducible]`** only for thin type wrappers all automation should
+  index through (the `TypeTree.done` / `TypeTree.node` pattern). It
+  invalidates `rfl` simp lemmas whose head is the wrapper, and is never
+  appropriate on recursive functions.
+- **`attribute [local implicit_reducible] Foo.bar`** is the sanctioned,
+  option-free way to grant one file implicit-transparency access to an
+  imported declaration (including Mathlib/cslib ones). Add a short
+  comment naming the proofs that need it. `attribute [local reducible]`
+  on imported declarations requires `allowUnsafeReducibility` and is not
+  permitted.
+- **`set_option allowUnsafeReducibility true`** is reserved for a
+  *global* attribute on an imported declaration, always with a comment
+  justifying why a local attribute does not suffice and pointing at the
+  upstream fix. The option is currently unused: every override of an
+  imported declaration is a per-file `attribute [local implicit_reducible]`.
+- **`with_unfolding_all`** should not appear in new proofs; prefer
+  equation lemmas for well-founded or structural recursion.
+
 ### Section Headers Within A File
 
 Use Mathlib-style doc-comment section headers, **not** ASCII banners.

@@ -120,6 +120,8 @@ example :
 
 example :
     Chain.liftThen prefixChain middle boundaryFamily combinedPath = Fin 12 := by
+  -- Lean 4.33: simp stops before the final `liftThen` boundary reduction;
+  -- close it with `rfl`.
   simp [combinedPath, prefixPath, middlePath]
   rfl
 
