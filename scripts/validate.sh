@@ -24,7 +24,7 @@ Default checks:
 Optional checks:
   --lint    Run `lake lint` (Batteries environment linters)
   --test    Run `lake test` (builds the PolyFunTest library)
-  --axioms  Run `lake exe axiomsweep --check` (axiom/sorry regression gate)
+  --axioms  Test axiomsweep, then enforce the zero axiom/sorry-debt gate
 EOF
 }
 
@@ -80,7 +80,11 @@ fi
 
 if (( run_axioms )); then
   echo ""
-  echo "# Checking axiom/sorry regression baseline"
+  echo "# Testing the axiom sweep tool"
+  ./scripts/test-axiomsweep.sh
+
+  echo ""
+  echo "# Enforcing zero axiom/sorry debt"
   lake exe axiomsweep --check
 fi
 

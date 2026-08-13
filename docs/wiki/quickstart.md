@@ -57,13 +57,13 @@ untracked `PolyFun/**/*.lean` files are present.
 `--lint` adds `lake lint` (Batteries' environment linters: `docBlame`,
 `simpNF`, `checkUnivs`, …) to the convenience wrapper. `--test` adds
 `lake test` (builds the `PolyFunTest` library). `--axioms` adds
-`lake exe axiomsweep --check`: kernel-level axiom/`sorry` accounting for every
-`PolyFun.*` declaration, gated against the committed baseline
-`scripts/axiom_baseline.json` — it fails only on *new* `sorryAx` or
-non-standard-axiom taint (after intentionally adding or closing a `sorry`, run
-`lake exe axiomsweep --update-baseline` and commit the diff; CI runs the check
-report-only for now). The main CI `build` job runs
-`validate.sh` without these flags, but separate `lint` and `test` CI jobs run
+the executable fixture matrix and `lake exe axiomsweep --check`. The check scans
+every imported `PolyFun.*` declaration and fails on any `sorryAx` or non-standard
+axiom dependency. The committed `scripts/axiom_baseline.json` is a zero-debt
+policy, not an allowlist: both arrays must remain empty. Update mode refuses to
+record taint and is only useful for resetting a stale baseline after all debt is
+removed. The main CI `build` job runs `validate.sh --axioms`, so a taint finding
+fails CI. Separate `lint` and `test` CI jobs run
 `lake lint` / `lake test`, and the `linting.yml` workflow runs the text style
 lint, so treat all three as required for merge. Text style (copyright headers,
 line length, module docstrings) is additionally enforced at build time by the

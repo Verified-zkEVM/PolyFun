@@ -57,3 +57,10 @@ name = "axiomsweep"
 srcDir = "scripts"
 root = "AxiomSweep"
 supportInterpreter = true
+
+# Isolated executable fixtures for the axiom-sweep mutation matrix. This library is not
+# a default target and deliberately contains synthetic kernel taint.
+[[lean_lib]]
+name = "AxiomSweepTestFixtures"
+srcDir = "scripts"
+globs = ["AxiomSweepTestFixtures.+"]
