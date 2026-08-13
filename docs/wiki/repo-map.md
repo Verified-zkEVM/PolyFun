@@ -183,11 +183,6 @@ Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    Emulates, MachineId, EnvAction,
                                    EnvOpenProcess, CorruptionModel,
                                    MomentaryCorruption, Leakage}
-
-Interaction/UC/{Emulates, OpenProcessModel} -> Interaction/UC/OpenProcessEmulates
-  (Emulates is model-agnostic and must not reach OpenProcess; the bridge that
-   equips the concrete openTheory with observation-level composition laws
-   therefore sits above both)
 ```
 
 `PolyFun.lean` is a generated umbrella import file, not a hand-maintained

@@ -7,8 +7,9 @@ Authors: Devon Tuma
 module
 
 import all PolyFun.Interaction.UC.Emulates
+import all PolyFun.Interaction.UC.OpenProcessModel
 public import PolyFun.Interaction.UC.Emulates
-public import PolyFun.Interaction.UC.OpenProcessEmulates
+public import PolyFun.Interaction.UC.OpenProcessModel
 public import PolyFun.Interaction.UC.OpenSyntax.Expr
 
 /-!
@@ -16,8 +17,13 @@ public import PolyFun.Interaction.UC.OpenSyntax.Expr
 
 Regression checks that the UC composition theorems still reach the free
 syntax models through `respectsFactorization_of_hasPlugWireFactor`, and that
-the process-backed `openTheory` now reaches the `plug` half of the suite
-through `Observation.IsSchedulingInsensitive`.
+the process-backed `openTheory` reaches the `plug` half of the suite from an
+exact `Observation.RespectsPlugComm` assumption.
+
+The final canary uses syntactic equality as a concrete, nontrivial observation
+on closed processes. Two processes that differ only in `stepSampler` are
+activation equivalent but are not equal. This rejects any global bridge from
+the structural `OpenProcessActivationEquiv` relation to a security observation.
 -/
 
 @[expose] public section
@@ -70,22 +76,20 @@ example {Δ : PortBoundary}
 
 end FreeModel
 
-/-! ### The process model reaches the `plug` half -/
+/-! ### The process model consumes an exact plug-commutation law -/
 
 section ProcessModel
 
 variable {Party : Type u} {m : Type w → Type w'} {schedulerSampler : m (ULift.{w, 0} Bool)}
   (Obs : Observation (openTheory.{u, v, w, w'} Party m schedulerSampler))
-  [Observation.IsSchedulingInsensitive Obs]
+  [Obs.RespectsPlugComm]
 
-/-- A scheduling-insensitive observation on the process model respects plug
-commutation, without any `OpenTheory.HasPlugWireFactor` instance — which
-`openTheory` does not have. -/
+/-- The exact observation-level plug-commutation law is the complete structural
+assumption required by the `plug` composition theorems. -/
 example : Obs.RespectsPlugComm := inferInstance
 
-/-- Consequently `Emulates.plug_compose` applies to the process model. This is
-the statement that was previously out of reach: the composition theorems were
-gated on strict compact-closed structure that `openTheory` cannot supply. -/
+/-- `Emulates.plug_compose` applies to the process model without claiming that
+activation equivalence preserves security-visible data. -/
 example {Δ : PortBoundary}
     {real ideal : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ}
     {K_real K_ideal :
@@ -105,5 +109,47 @@ example {Δ : PortBoundary}
   Emulates.plug_right W hK
 
 end ProcessModel
+
+/-! ### Activation equivalence does not imply observation equivalence -/
+
+section ErasureCanary
+
+/-- A one-state closed process with one activated Boolean action. The sampler
+is the only component that depends on `sample`. -/
+def samplerProcess (sample : Bool) :
+    OpenProcess.{0, 0, 0, 0} Id PUnit PortBoundary.empty where
+  Proc := PUnit
+  step := fun _ =>
+    { tree := .node Bool fun _ => .done
+      semantics :=
+        ⟨{ controllers := fun _ => []
+           views := fun _ => .hidden
+           boundary := .activated PortBoundary.empty Bool },
+         fun _ => ⟨⟩⟩
+      next := fun _ => PUnit.unit }
+  stepSampler := fun _ => ⟨sample, fun _ => ⟨⟩⟩
+
+/-- Syntactic equality is a concrete observation that retains the full closed
+process, including its sampler. -/
+abbrev exactProcessObservation :
+    Observation (openTheory PUnit Id (ULift.up true)) :=
+  Observation.eq _
+
+/-- The activation-labelled transition systems do not depend on the sampler,
+so these processes are structurally activation equivalent. -/
+example : OpenProcessActivationEquiv (samplerProcess true) (samplerProcess false) := by
+  unfold OpenProcessActivationEquiv
+  exact Control.DelayBisimulationEquivalent.refl _
+
+/-- Exact observation distinguishes the two sampler choices. Together with
+the previous example, this rejects a bridge that erases `stepSampler`. -/
+example : ¬ exactProcessObservation.rel (samplerProcess true) (samplerProcess false) := by
+  intro h
+  injection h with _ _ hsampler
+  have hs := congrFun hsampler PUnit.unit
+  have hb := congrArg Prod.fst hs
+  exact Bool.noConfusion hb
+
+end ErasureCanary
 
 end Interaction.UC.EmulatesFactorizationExamples
