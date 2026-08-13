@@ -41,6 +41,13 @@ namespace ITree
 
 variable {F : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type uγ}
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the `unfold`-style corecursor proof below exposes an `M.corec` step whose
+sigma-typed body only typechecks once `PFunctor.Obj` unfolds there.
+`implicit_reducible` restores that without touching simp or typeclass
+resolution. -/
+attribute [local implicit_reducible] PFunctor.Obj
+
 /-! ### Diverging tree -/
 
 /-- The diverging interaction tree, an infinite sequence of silent (`step`)
@@ -52,11 +59,8 @@ def diverge : ITree F α :=
 
 @[simp] theorem shape'_diverge :
     shape' (diverge (F := F) (α := α)) = ⟨.step, fun _ => diverge⟩ := by
-  let g : PUnit.{uB + 1} → (Poly F α) PUnit.{uB + 1} :=
-    fun _ => ⟨.step, fun _ => PUnit.unit⟩
-  change PFunctor.M.dest (PFunctor.M.corec g PUnit.unit) =
-    ⟨.step, fun _ => PFunctor.M.corec g PUnit.unit⟩
-  rw [PFunctor.M.dest_corec_apply]
+  unfold shape' diverge
+  rw [PFunctor.M.dest_corec_eq _ _ rfl]
 
 @[simp] theorem shape_diverge :
     shape (diverge (F := F) (α := α)) = .step := by

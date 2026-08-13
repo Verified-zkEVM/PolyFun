@@ -31,8 +31,12 @@ universe uS uA uB uα
 namespace PFunctor
 namespace DynSystem
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the mate equations below rewrite through these constants there.
+`implicit_reducible` (unlike `reducible`) leaves simp validation and instance
+resolution untouched, and needs no `allowUnsafeReducibility`. -/
 attribute [local implicit_reducible] PFunctor.Obj Comonoid.identity Comonoid.target
-  Comonoid.compose
+  Comonoid.compose Lens.mapObj
 
 variable {S : Type uS} {P : PFunctor.{uA, uB}} {α : Type uα}
 
@@ -87,6 +91,9 @@ def mateObj (system : DynSystem S P) (state : S) (label : S → α) : (CofreeP P
   Lens.mapObj (CofreeP.unfoldLens (stateComonoid S) system)
     (⟨state, label⟩ : (selfMonomial S).Obj α)
 
+-- `mateObj_child` rewrites through `mateObj` in the type of a bound direction.
+attribute [local implicit_reducible] mateObj
+
 /-- The unlabeled shape underlying `mateObj` is the existing behavior tree. -/
 @[simp]
 theorem mateObj_shape (system : DynSystem S P) (state : S) (label : S → α) :
@@ -107,22 +114,8 @@ private theorem unfoldDirection_stateComonoid_child (system : DynSystem S P) (st
         (cast (congrArg M.Vertex
           (CofreeP.children_unfoldShape
             (stateComonoid S) system state direction)) next) := by
-  let childEq := CofreeP.children_unfoldShape
-    (stateComonoid S) system state direction
-  let leftVertex := M.Vertex.castEquiv childEq next
-  let rightVertex := cast (congrArg M.Vertex childEq) next
-  have hvertices : leftVertex = rightVertex := eq_of_heq
-    ((M.Vertex.castEquiv_heq childEq next).trans
-      (cast_heq (congrArg M.Vertex childEq) next).symm)
-  calc
-    _ = CofreeP.unfoldDirection (stateComonoid S) system
-        (CofreeP.unfoldRootDirection (stateComonoid S) system state direction)
-        leftVertex := by
-      simpa only [Comonoid.stateComonoid_compose, Comonoid.stateComonoid_target,
-        leftVertex, childEq] using CofreeP.unfoldDirection_child
-          (C := stateComonoid S) system state direction next
-    _ = _ := congrArg (CofreeP.unfoldDirection (stateComonoid S) system
-      (CofreeP.unfoldRootDirection (stateComonoid S) system state direction)) hvertices
+  rw [CofreeP.unfoldDirection.eq_def]
+  rfl
 
 /-- Taking one child of the object-level dynamical mate advances the system
 state by exactly the selected direction, while preserving the state labeling.
@@ -152,8 +145,7 @@ theorem mateObj_child (system : DynSystem S P) (state : S) (label : S → α)
         (CofreeP.unfoldRootDirection
           (stateComonoid S) system state direction)
         (cast (congrArg M.Vertex childEq) leftVertex))
-  exact congrArg label
-    (unfoldDirection_stateComonoid_child system state direction leftVertex)
+  rw [unfoldDirection_stateComonoid_child]
 
 private theorem decodeStep_mateObj (system : DynSystem S P) (state : S) (label : S → α) :
     CofreeP.decodeStep (mateObj system state label) =
@@ -167,9 +159,8 @@ private theorem decodeStep_mateObj (system : DynSystem S P) (state : S) (label :
           (CofreeP.unfoldDirection (stateComonoid S) system state
             (.root (CofreeP.unfoldShape
               (stateComonoid S) system state))) = label state
-      exact congrArg label (by
-        simpa only [Comonoid.stateComonoid_identity] using
-          CofreeP.unfoldDirection_root (C := stateComonoid S) system state)
+      rw [CofreeP.unfoldDirection_root]
+      rfl
     · exact CofreeP.head_unfoldShape
         (stateComonoid S) system state
   apply Sigma.ext hPosition

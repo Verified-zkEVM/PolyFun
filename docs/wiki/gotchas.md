@@ -59,6 +59,35 @@ aggressively. Use the canonical eliminators
 `Decoration` / `Path` analogues) rather than pattern matching on
 `PFunctor.FreeM.pure` / `liftBind` directly.
 
+### 6a. Transparency after Lean 4.33
+
+Lean 4.33 split the transparency ladder (`reducible < instances <
+implicit < default < all`) and compares assigned metavariable types at
+implicit transparency. Semireducible definitions no longer unfold during
+unification in `rw` / `simp` / `subst` / instance-argument positions.
+Symptoms and fixes (see the Transparency Attributes section of
+`CONTRIBUTING.md` for the policy):
+
+- `rw` "did not find an occurrence" though the pattern is visibly there,
+  or a goal is "not type-correct under the implicit transparency level"
+  → `@[implicit_reducible]` on the definition the implicit arguments go
+  through, or `attribute [local implicit_reducible]` (option-free) for
+  imported declarations.
+- "failed to synthesize instance" for an instance that clearly exists →
+  check first whether a `[local reducible]`-style attribute is
+  *over-unfolding* the goal (remove it); otherwise
+  `@[instance_reducible]` on the wrapper the goal's head hides behind.
+- A `rfl` simp lemma rejected as trivial → its LHS head was made
+  `@[reducible]`; demote the head to `@[implicit_reducible]` and the
+  lemma is valid again.
+- A simp lemma silently never fires → its statement may freeze an
+  unreduced projection into the discrimination-tree key (e.g. a
+  `Sum.inl` binder ascribed through `(P + Q).A`); restate the binder
+  with the reduced component types.
+- `calc` failing with a `Trans` instance error where a plain `.trans`
+  works → typeclass resolution runs below implicit transparency; keep
+  the term-level `.trans` form with a comment.
+
 ### 7. Universe polymorphism
 
 `PFunctor` carries two universe parameters `(uA, uB)`; `FreeM`,

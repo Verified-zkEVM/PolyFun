@@ -61,12 +61,19 @@ namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+rewriting path-indexed goals over `FreeM.liftBind` trees needs `FreeM.bind`
+to unfold there so that `(lift a).bind rest` and `liftBind a rest` agree;
+`projectPathAlong` must likewise unfold on `liftBind` scrutinees when
+runtime-path indices are compared. -/
+attribute [local implicit_reducible] PFunctor.FreeM.bind
+
 /-! ## Canonical paths -/
 
 variable {Q : PFunctor.{uA₂, uB₂}}
 
 /-- Displayed algebra for canonical root-to-leaf paths. -/
-@[reducible]
+@[implicit_reducible]
 def Path.algebra (P : PFunctor.{uA, uB}) (α : Type v) :
     Displayed.Algebra.{uA, uB, v, uB+1} P α where
   leaf := fun _ => PUnit.{uB+1}
@@ -119,7 +126,7 @@ end Path
 This is the displayed family over the source control tree whose node directions
 come from the runtime polynomial `Q`. A runtime direction
 `d : Q.B (l.toFunA a)` selects the source branch `l.toFunB a d`. -/
-@[reducible]
+@[implicit_reducible]
 def PathAlong.algebra (l : Lens P Q) :
     Displayed.Algebra.{uA, uB, v, uB₂+1} P α where
   leaf := fun _ => PUnit.{uB₂+1}
@@ -389,7 +396,7 @@ theorem Path.pullMap_lift_bind {β : Type t} (f : α → β) (a : P.A)
   rfl
 
 /-- Dependent sequential composition for `FreeM` trees using canonical paths. -/
-@[reducible]
+@[implicit_reducible]
 def append {β : Type t} :
     (s₁ : FreeM P α) →
     (Path s₁ → FreeM P β) →
@@ -863,6 +870,13 @@ def split {β : Type t} (l : Lens P Q) :
           path
       ⟨⟨d, splitRest.1⟩, splitRest.2⟩
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+relating source and runtime paths across `split`/`append` needs
+`projectPathAlong` (and the `LocalMap.toHom` machinery it elaborates to)
+to unfold there. -/
+attribute [local implicit_reducible] Displayed.LocalMap.toHom
+  Displayed.LocalMap.toHomFun projectPathAlongLocalMap projectPathAlong
+
 /-- `liftAppend` on an appended runtime path reduces to the original
 two-argument family. -/
 @[simp]
@@ -891,10 +905,7 @@ theorem split_append {β : Type t} (l : Lens P Q) :
   | .pure _, _, ⟨⟩, _ => rfl
   | .liftBind a rest, s₂, ⟨d, path₁⟩, path₂ => by
       simp only [append, split]
-      have hsplit := split_append l (rest (l.toFunB a d))
-        (fun path => s₂ (show Path (FreeM.liftBind a rest) from
-          ⟨l.toFunB a d, path⟩)) path₁ path₂
-      rw [hsplit]
+      rw [split_append]
 
 /-- Appending the components produced by `split` recovers the original runtime path. -/
 @[simp]

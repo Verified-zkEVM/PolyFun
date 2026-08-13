@@ -22,7 +22,12 @@ attach protocol-specific meaning to the visited prefix.
 
 @[expose] public section
 
-attribute [local implicit_reducible] PFunctor.Obj FreeMonoid
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the trace calc steps below move between the `TraceList` carrier (reducibly
+`FreeMonoid (Idx _)`) and its `List` normal form there. `implicit_reducible`
+(unlike `reducible`) stays invisible to simp and instance search, and needs
+no `allowUnsafeReducibility`. -/
+attribute [local implicit_reducible] PFunctor.Obj FreeMonoid PFunctor.Idx
 
 universe uA uB v
 

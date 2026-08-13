@@ -43,6 +43,10 @@ bound. -/
 def TerminatesFrom (M : DynComputation.{u} p α β) (state : M.State) : Prop :=
   Acc M.QueryChild state
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the recursion below rewrites through `TerminatesFrom` there.
+`implicit_reducible` (unlike `reducible`) leaves simp validation and instance
+resolution untouched, and needs no `allowUnsafeReducibility`. -/
 attribute [local implicit_reducible] TerminatesFrom
 
 theorem queryChild_of_view (M : DynComputation.{u} p α β)
@@ -53,7 +57,7 @@ theorem queryChild_of_view (M : DynComputation.{u} p α β)
     M.QueryChild (next direction) state :=
   ⟨position, next, direction, hview, rfl⟩
 
-theorem terminatesFrom_return (M : DynComputation.{u} p α β)
+@[simp] theorem terminatesFrom_return (M : DynComputation.{u} p α β)
     (state : M.State) (value : β) (hview : M.view state = Sum.inl value) :
     M.TerminatesFrom state := by
   constructor
@@ -180,13 +184,13 @@ theorem behavior_eq_toResumption_toFreeMFrom
       cases hview : M.view state with
       | inl value =>
           apply Resumption.eq_of_dest_eq
-          with_unfolding_all rw [M.dest_behavior_view, hview,
+          rw [M.dest_behavior_view, hview,
             M.toFreeMFrom_return state _ value hview]
           rfl
       | inr query =>
           rcases query with ⟨position, next⟩
           apply Resumption.eq_of_dest_eq
-          with_unfolding_all rw [M.dest_behavior_view, hview,
+          rw [M.dest_behavior_view, hview,
             M.toFreeMFrom_query state _ position next hview]
           simp only [FreeM.dest_toResumption_liftBind]
           apply congrArg Sum.inr

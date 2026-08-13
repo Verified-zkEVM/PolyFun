@@ -19,6 +19,8 @@ and exception interpreters.
 
 namespace PolyFunTest.RecursionEffects
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the runner examples below unfold these interpreters there. -/
 attribute [local implicit_reducible] ITree.interpState ITree.runState ITree.interpExcept
   ITree.interpMrec ITree.fixRec ITree.CallE
 
@@ -27,11 +29,11 @@ open ITree
 inductive ExternalShape where
   | read
 
+-- Lean 4.33: the examples below unfold `External` at implicit transparency.
+@[implicit_reducible]
 def External : PFunctor where
   A := ExternalShape
   B _ := Nat
-
-attribute [local implicit_reducible] External
 
 def stateProgram : ITree (StateE Nat + External) Nat :=
   ITree.query (F := StateE Nat + External)
@@ -42,9 +44,7 @@ def stateProgram : ITree (StateE Nat + External) Nat :=
 
 example : runState stateProgram 4 =
     ITree.step (ITree.step (ITree.pure (F := External) (5, 4))) := by
-  rw [runState_eq_interpState]
-  unfold stateProgram
-  rw [interpState_get, interpState_put, interpState_pure]
+  simp [stateProgram]
 
 /-- The state bind law threads the updated state into the continuation while
 retaining the program's return value. -/
@@ -56,8 +56,7 @@ example : interpState
   simp only [interpState_pure]
   rw [show interpState stateProgram 4 =
     ITree.step (ITree.step (ITree.pure (F := External) (5, 4))) by
-      unfold stateProgram
-      rw [interpState_get, interpState_put, interpState_pure]]
+      simp [stateProgram]]
   rw [bind_step, bind_step, bind_pure_left]
 
 def stateExternal : ITree (StateE Nat + External) Nat :=
@@ -67,21 +66,14 @@ def stateExternal : ITree (StateE Nat + External) Nat :=
 example : runState stateExternal 4 =
     ITree.query ExternalShape.read
       (fun n => ITree.pure (F := External) (4, n)) := by
-  rw [runState_eq_interpState]
-  unfold stateExternal
-  rw [interpState_query_external]
-  congr 1
-  funext n
-  rw [interpState_pure]
+  simp [stateExternal]
 
 def throws : ITree (ExceptE String + External) Nat :=
   ITree.query (F := ExceptE String + External) (Sum.inl "boom") PEmpty.elim
 
 example : runExcept throws =
     ITree.pure (F := External) (Except.error "boom") := by
-  rw [runExcept_eq_interpExcept]
-  unfold throws
-  rw [interpExcept_throw]
+  simp [throws]
 
 /-- The exception bind law bypasses a continuation after the first error. -/
 example : interpExcept
@@ -92,8 +84,7 @@ example : interpExcept
   simp only [interpExcept_pure]
   rw [show interpExcept throws =
     ITree.pure (F := External) (Except.error "boom") by
-      unfold throws
-      rw [interpExcept_throw]]
+      simp [throws]]
   rw [bind_pure_left]
 
 def succeeds : ITree (ExceptE String + External) Nat :=
@@ -103,12 +94,7 @@ def succeeds : ITree (ExceptE String + External) Nat :=
 example : runExcept succeeds =
     ITree.query ExternalShape.read
       (fun n => ITree.pure (F := External) (Except.ok n)) := by
-  rw [runExcept_eq_interpExcept]
-  unfold succeeds
-  rw [interpExcept_query_external]
-  congr 1
-  funext n
-  rw [interpExcept_pure]
+  simp [succeeds]
 
 def countdownBody : Nat → ITree (CallE Nat Nat + External) Nat
   | 0 => ITree.pure 0
@@ -120,14 +106,9 @@ example (n : Nat) :
       ITree.step (ITree.bind (fixRec countdownBody n)
         (fun r => ITree.pure (F := External) (r + 1))) := by
   rw [fixRec_eq_interpMrec]
-  rw [show countdownBody (n + 1) = ITree.query (F := CallE Nat Nat + External)
-      (Sum.inl n) (fun r : Nat => ITree.pure (r + 1)) from rfl]
-  rw [interpMrec_query_recursive]
-  congr 1
-  rw [interpMrec_bind, ← fixRec_eq_interpMrec]
-  apply congrArg (ITree.bind (fixRec countdownBody n))
-  funext a
-  rw [interpMrec_pure]
+  simp only [countdownBody, interpMrec_query_recursive, interpMrec_bind,
+    interpMrec_pure]
+  rfl
 
 example (n : Nat) :
     ITree.recursiveHandler (D := CallE Nat Nat) (E := External)

@@ -8,8 +8,6 @@ module
 public import Mathlib.Algebra.FreeMonoid.Basic
 public import PolyFun.Control.Trace
 public import PolyFun.PFunctor.Chart.Basic
-import all Mathlib.Algebra.FreeMonoid.Basic
-import all Mathlib.Data.PFunctor.Univariate.Basic
 
 /-!
 # Traces of polynomial-functor events
@@ -65,7 +63,13 @@ universe uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ v w
 
 namespace PFunctor
 
-attribute [local implicit_reducible] FreeMonoid
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the trace API below moves between `TraceList` and its `List` normal form and
+between `Idx` and its `Sigma` normal form there.  Mathlib's `FreeMonoid` and
+`Idx` are plain semireducible definitions; `implicit_reducible` (unlike
+`reducible`) keeps them opaque to simp and typeclass resolution, and needs no
+`allowUnsafeReducibility`. -/
+attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
 
 /--
 The free monoid on `P`-events.  Definitionally `FreeMonoid (Idx P)`, which
@@ -99,30 +103,9 @@ theorem directionsWithin_cons {P : PFunctor.{uA, uB}}
   List.forall_mem_cons
 
 /-- Number of events at a given position in an erased execution trace. -/
-def occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A] (target : P.A) :
-    TraceList P → Nat
-  | [] => 0
-  | ⟨a, _⟩ :: tail =>
-      if a = target then occurrences target tail + 1 else occurrences target tail
-
-theorem occurrences_cons {P : PFunctor.{uA, uB}} [DecidableEq P.A]
-    (event : P.Idx) (tail : TraceList P) (target : P.A) :
-    occurrences target (event :: tail) =
-      if event.1 = target then occurrences target tail + 1 else occurrences target tail := by
-  rcases event with ⟨a, answer⟩
-  rfl
-
-@[simp] theorem occurrences_cons_self {P : PFunctor.{uA, uB}} [DecidableEq P.A]
-    (target : P.A) (answer : P.B target) (tail : TraceList P) :
-    occurrences target (⟨target, answer⟩ :: tail) =
-      occurrences target tail + 1 := by
-  simp [occurrences]
-
-@[simp] theorem occurrences_cons_of_ne {P : PFunctor.{uA, uB}} [DecidableEq P.A]
-    {a target : P.A} (hne : a ≠ target) (answer : P.B a) (tail : TraceList P) :
-    occurrences target (⟨a, answer⟩ :: tail) =
-      occurrences target tail := by
-  simp [occurrences, hne]
+def occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (target : P.A) (events : TraceList P) : Nat :=
+  events.countP fun (event : P.Idx) => event.1 = target
 
 /-- The answer carried by the `n`-th event at `target`, if that occurrence exists. -/
 def getAt? {P : PFunctor.{uA, uB}} [DecidableEq P.A] :
@@ -173,46 +156,25 @@ theorem getAt?_cons_succ {P : PFunctor.{uA, uB}} [DecidableEq P.A]
   induction events generalizing n with
   | nil => simp [occurrences]
   | cons event tail ih =>
-      by_cases h : event.1 = target
-      · cases n with
-        | zero =>
-            rw [getAt?_cons_zero, occurrences_cons, dif_pos h, if_pos h]
-            simp
-        | succ n =>
-            rw [getAt?_cons_succ, occurrences_cons, if_pos h, if_pos h]
-            simpa using ih n
-      · cases n with
-        | zero =>
-            rw [getAt?_cons_zero, occurrences_cons, dif_neg h, if_neg h]
-            exact ih 0
-        | succ n =>
-            rw [getAt?_cons_succ, occurrences_cons, if_neg h, if_neg h]
-            exact ih (n + 1)
+      rcases event with ⟨a, answer⟩
+      by_cases h : a = target
+      · subst a
+        cases n <;> simp [occurrences, ih]
+      · simp [occurrences, h, ih]
 
 /-- The event following a prefix is found at the prefix's occurrence count. -/
 theorem getAt?_append_self_occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (before after : TraceList P) (target : P.A) (answer : P.B target) :
     getAt? (List.append before (⟨target, answer⟩ :: after)) target
       (occurrences target before) = some answer := by
-  let targetEvent : P.Idx := ⟨target, answer⟩
-  change getAt? (List.append before (targetEvent :: after)) target
-      (occurrences target before) = some answer
   induction before with
-  | nil => exact getAt?_cons_self_zero target answer after
+  | nil => simp [occurrences]
   | cons event before ih =>
-      change getAt? (event :: (before ++ targetEvent :: after)) target
-          (occurrences target (event :: before)) = some answer
-      by_cases h : event.1 = target
-      · rw [occurrences_cons, if_pos h, getAt?_cons_succ, if_pos h]
-        exact ih
-      · rw [occurrences_cons, if_neg h]
-        cases hocc : occurrences target before with
-        | zero =>
-            rw [getAt?_cons_zero, dif_neg h]
-            simpa [hocc] using ih
-        | succ n =>
-            rw [getAt?_cons_succ, if_neg h]
-            simpa [hocc] using ih
+      rcases event with ⟨a, prefixAnswer⟩
+      by_cases h : a = target
+      · subst a
+        simpa [occurrences] using ih
+      · simpa [occurrences, h] using ih
 
 end TraceList
 

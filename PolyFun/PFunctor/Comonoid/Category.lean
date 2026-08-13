@@ -155,7 +155,7 @@ def compose (c : C.carrier.A) (d : C.carrier.B c)
     compose (stateComonoid S) state first second = second :=
   rfl
 
-@[reducible]
+@[implicit_reducible]
 private def normalizedComult : Lens C.carrier (C.carrier ◃ C.carrier) where
   toFunA c := ⟨c, target C c⟩
   toFunB c direction := compose C c direction.1 direction.2
@@ -368,6 +368,10 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
         cast (congrArg (C.carrier ◃ C.carrier).B
           (congrFun childrenEq d)) innerLeft = innerRight := by
       rw [hAtDirection]
+      -- Lean 4.33: the original `calc` through `cast_comp_direction` no longer
+      -- elaborates (its intermediate type needs unfolding beyond implicit
+      -- transparency to pick the `Trans` instance), so the cast is discharged
+      -- by rewriting instead.
       rw [cast_comp_direction]
       · dsimp only [innerRight]
         congr 1
