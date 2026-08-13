@@ -12,16 +12,14 @@ public import PolyFun.Interaction.UC.OpenTheory
 # Sub-theories: which open systems a model allows
 
 An `OpenTheory` says how open systems may be combined. It does not say which
-open systems one is *allowed* to build. Every UC-style development needs that
-second notion: a corruption model is a restriction on the machines a real
-protocol may use, and an efficiency requirement is a restriction on the
-machines anyone may use at all.
+open systems belong to a chosen class. `SubTheory T` supplies that second,
+purely structural notion.
 
 `SubTheory T` is that notion. It is a boundary-indexed membership predicate
 on `T.Obj` together with proofs that membership survives the theory's
-operations. Nothing here mentions corruption, probability, or cost: those are
-instantiations, and the point of the abstraction is that they are the *same*
-instantiation mechanism.
+operations. Nothing here defines corruption, protocol membership, probability,
+cost, or realizability. A later bridge may instantiate `mem` with one of those
+notions after proving the required closure laws.
 
 ## Main definitions
 
@@ -32,42 +30,39 @@ instantiation mechanism.
   process model — which has no such factorization — must earn it.
 * `SubTheory.IsStructural D` says `D` contains the structural generators, the
   unit and the identity wires.
-* `SubTheory.top`, `SubTheory.inf`, and the order `≤`. `top` allows
+* The standard `PartialOrder`, `OrderTop`, and `SemilatticeInf` API. `top` allows
   everything, so every statement relativized to `top` is the unrelativized
-  statement. `inf` is how independent restrictions — a corruption model and an
-  efficiency class — combine into one allowed-systems predicate.
+  statement. `inf` combines independent composition-closed restrictions.
 * `SubTheory.generated G` is the smallest sub-theory containing the generators
   `G`, and `SubTheory.generated_le` is its induction principle.
+* `SubTheory.plugGenerated G` is the smallest plug-closed sub-theory containing
+  `G`, with induction principle `SubTheory.plugGenerated_le`.
 
 ## Why the closure fields are the interesting part
 
-Read `mem` as "is implementable within some fixed resource discipline". Then
-`mem_par` and `mem_wire` say that a network of implementable systems is itself
-implementable — the property that composable-security frameworks normally
-assume outright about their machine model, because it is stated globally over
-networks and there is no finite obligation to discharge. Here the network is
-built from four operations, so the assumption *is* four closure fields. That
-is the whole reason to make the allowed class a first-class object rather than
-a side condition.
+For any intended reading of `mem`, the closure fields state exactly what the
+formal object proves: membership survives `map`, `par`, and `wire`. Plug closure
+is an additional mixin. The abstraction does not itself justify a resource,
+efficiency, corruption, or realizability interpretation.
 
 `generated` and `generated_le` are the other half of the same idea. A protocol
 class defined by its generators is a `generated` sub-theory, so proving every
-member of it implementable reduces to proving the generators implementable and
-supplying the closure fields once.
+member satisfies another sub-theory reduces to checking the generators.
 
 ## Design notes
 
-`mem` is a `Prop`, not data. A resource-bounded instantiation carries its
-witness *inside* the proposition (`∃ a bound in the class, …`), exactly as
-`StepClass.Hom` does one level down in `PolyFun/Realizability/`; making
-membership proof-relevant would make `EmulatesWithin` proof-relevant too,
-which is wrong.
+`mem` is a `Prop`, not data, so relativized judgments remain proof-irrelevant.
+Resource witnesses, if introduced later, belong inside the proposition or in
+a separate realizability layer.
 
-`SubTheory` is deliberately the `OpenTheory`-level sibling of
-`PFunctor.StepClass`: a bundled predicate plus its closure proofs, passed
-explicitly rather than synthesized, with the optional structure split into
-mixins and an order along which results transport. The two are meant to meet
-at an instantiation of `mem` in terms of realizability, not to share code.
+The proposed `PFunctor.StepClass` and realizability layer are planned in
+PolyFun PR #113; they are not dependencies of this module. A future bridge may
+relate those classes to `SubTheory.mem` after their closure laws are available.
+
+`SubTheory` is also separate from `Interaction.UC.CorruptionModel`, which
+describes corruption events, states, and environment actions. Relating a
+corruption model to a class of allowed closing contexts or protocol systems is
+future work and requires an explicit bridge.
 -/
 
 public section
@@ -84,9 +79,9 @@ variable {T : OpenTheory.{u}}
 allowed, subject to those systems being closed under the theory's composition
 operations.
 
-This is the formal counterpart of the nested sub-categories a UC development
-fixes before stating any security property: one parameter naming the class of
-systems a real protocol may be assembled from.
+The same structure can describe allowed closing contexts or another
+composition-closed class. A judgment using `D` determines which role `D` plays;
+membership of real and ideal protocols is not part of this structure.
 
 Closure under `plug` is *not* a field; see `SubTheory.IsPlugClosed`.
 -/
@@ -193,6 +188,16 @@ theorem le_refl (D : SubTheory T) : D ≤ D := fun _ hW => hW
 theorem le_trans {D₁ D₂ D₃ : SubTheory T} (h₁₂ : D₁ ≤ D₂) (h₂₃ : D₂ ≤ D₃) : D₁ ≤ D₃ :=
   fun W hW => h₂₃ W (h₁₂ W hW)
 
+/-- Two sub-theories are equal when they allow exactly the same systems. -/
+@[ext]
+theorem ext {D₁ D₂ : SubTheory T}
+    (h : ∀ {Δ : PortBoundary} (W : T.Obj Δ), D₁.mem W ↔ D₂.mem W) : D₁ = D₂ := by
+  cases D₁
+  cases D₂
+  congr
+  funext Δ W
+  exact propext (h W)
+
 /-- Transfer membership upward along the order. -/
 theorem mem_of_le {D₁ D₂ : SubTheory T} (h : D₁ ≤ D₂) {Δ : PortBoundary} {W : T.Obj Δ}
     (hW : D₁.mem W) : D₂.mem W :=
@@ -222,16 +227,17 @@ instance isStructural_top (T : OpenTheory.{u}) [OpenTheory.HasUnit T] [OpenTheor
 
 theorem le_top (D : SubTheory T) : D ≤ top T := fun _ _ => trivial
 
+instance : Top (SubTheory T) := ⟨top T⟩
+
+instance : OrderTop (SubTheory T) where
+  le_top := le_top
+
 @[simp]
 theorem top_mem {Δ : PortBoundary} (W : T.Obj Δ) : (top T).mem W := trivial
 
 /--
-The intersection of two sub-theories.
-
-This is how independent restrictions combine. A corruption model and a
-resource bound are two unrelated reasons to disallow a system; their meet is
-the class of systems allowed for both reasons, and it is a sub-theory because
-each closure field holds componentwise.
+The intersection of two sub-theories. It combines independent
+composition-closed restrictions componentwise.
 -/
 @[expose]
 def inf (D₁ D₂ : SubTheory T) : SubTheory T where
@@ -261,19 +267,27 @@ theorem inf_le_right (D₁ D₂ : SubTheory T) : inf D₁ D₂ ≤ D₂ := fun _
 theorem le_inf {D D₁ D₂ : SubTheory T} (h₁ : D ≤ D₁) (h₂ : D ≤ D₂) : D ≤ inf D₁ D₂ :=
   fun W hW => ⟨h₁ W hW, h₂ W hW⟩
 
+instance : SemilatticeInf (SubTheory T) where
+  le_refl := le_refl
+  le_trans _ _ _ := le_trans
+  le_antisymm _ _ h₁₂ h₂₁ := ext fun W => ⟨h₁₂ W, h₂₁ W⟩
+  inf := inf
+  inf_le_left := inf_le_left
+  inf_le_right := inf_le_right
+  le_inf := fun D D₁ D₂ => le_inf (D := D) (D₁ := D₁) (D₂ := D₂)
+
 /-! ### The sub-theory generated by a set of generators -/
 
 /--
 `Generated T G W` says `W` can be assembled from generators satisfying `G`
-using only the operations of `T`.
+using the three operations required by `SubTheory`: `map`, `par`, and `wire`.
 
 This is the inductive counterpart of "the smallest sub-theory containing `G`",
 and it is the shape a protocol class actually takes in practice: one names the
 allowed building blocks and takes everything wired together from them.
 
-The `plug` constructor is included, so `SubTheory.generated G` is plug-closed
-unconditionally — no factorization law is needed to build a closed system, only
-to take one apart.
+This construction does not add `plug` closure. See `PlugGenerated` and
+`plugGenerated` for the least plug-closed variant.
 -/
 inductive Generated (T : OpenTheory.{u}) (G : ∀ (Δ : PortBoundary), T.Obj Δ → Prop) :
     {Δ : PortBoundary} → T.Obj Δ → Prop where
@@ -289,9 +303,6 @@ inductive Generated (T : OpenTheory.{u}) (G : ∀ (Δ : PortBoundary), T.Obj Δ 
   | wire {Δ₁ Γ Δ₂ : PortBoundary} {W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ)}
       {W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)} :
       Generated T G W₁ → Generated T G W₂ → Generated T G (T.wire W₁ W₂)
-  /-- Plugging generated systems together is generated. -/
-  | plug {Δ : PortBoundary} {W : T.Obj Δ} {K : T.Obj (PortBoundary.swap Δ)} :
-      Generated T G W → Generated T G K → Generated T G (T.plug W K)
 
 /--
 The smallest sub-theory whose members include every generator satisfying `G`.
@@ -311,10 +322,6 @@ def generated (T : OpenTheory.{u}) (G : ∀ (Δ : PortBoundary), T.Obj Δ → Pr
   mem_par h₁ h₂ := .par h₁ h₂
   mem_wire h₁ h₂ := .wire h₁ h₂
 
-instance isPlugClosed_generated (T : OpenTheory.{u})
-    (G : ∀ (Δ : PortBoundary), T.Obj Δ → Prop) : (generated T G).IsPlugClosed where
-  mem_plug h₁ h₂ := .plug h₁ h₂
-
 /-- Every generator belongs to the sub-theory it generates. -/
 theorem mem_generated_of_gen (T : OpenTheory.{u}) (G : ∀ (Δ : PortBoundary), T.Obj Δ → Prop)
     {Δ : PortBoundary} (W : T.Obj Δ) (hW : G Δ W) : (generated T G).mem W :=
@@ -328,13 +335,78 @@ generators is allowed by `D`. Contrapositively, this is the only way a
 generated class can fail a property closed under the operations: one of its
 generators must already fail it.
 
-Instantiating `D` at a resource-bounded class turns the usual "a network of
-efficient machines is efficient" assumption into a finite obligation — the
-generators, plus the four closure fields carried by `D` itself.
+The statement uses exactly the closure fields carried by `D`; it does not
+require plug closure because `generated` has the same map/par/wire signature as
+`SubTheory`.
 -/
 theorem generated_le {G : ∀ (Δ : PortBoundary), T.Obj Δ → Prop} (D : SubTheory T)
-    [D.IsPlugClosed] (hG : ∀ (Δ : PortBoundary) (W : T.Obj Δ), G Δ W → D.mem W) :
+    (hG : ∀ (Δ : PortBoundary) (W : T.Obj Δ), G Δ W → D.mem W) :
     generated T G ≤ D := by
+  intro Δ W hW
+  induction hW with
+  | base hg => exact hG _ _ hg
+  | map _ _ ih => exact D.mem_map _ ih
+  | par _ _ ih₁ ih₂ => exact D.mem_par ih₁ ih₂
+  | wire _ _ ih₁ ih₂ => exact D.mem_wire ih₁ ih₂
+
+/-- The generated sub-theory is monotone in its generators. -/
+theorem generated_mono {G₁ G₂ : ∀ (Δ : PortBoundary), T.Obj Δ → Prop}
+    (h : ∀ (Δ : PortBoundary) (W : T.Obj Δ), G₁ Δ W → G₂ Δ W) :
+    generated T G₁ ≤ generated T G₂ :=
+  generated_le _ fun Δ W hW => Generated.base (h Δ W hW)
+
+/-! ### The plug-closed sub-theory generated by a set of generators -/
+
+/--
+`PlugGenerated T G W` says `W` can be assembled from `G` using `map`, `par`,
+`wire`, and `plug`. It is the inductive membership predicate for the least
+plug-closed sub-theory containing `G`.
+-/
+inductive PlugGenerated (T : OpenTheory.{u})
+    (G : ∀ (Δ : PortBoundary), T.Obj Δ → Prop) :
+    {Δ : PortBoundary} → T.Obj Δ → Prop where
+  /-- A generator belongs to the plug-closed generated class. -/
+  | base {Δ : PortBoundary} {W : T.Obj Δ} : G Δ W → PlugGenerated T G W
+  /-- Boundary adaptation preserves plug-closed generated membership. -/
+  | map {Δ₁ Δ₂ : PortBoundary} {W : T.Obj Δ₁} (φ : PortBoundary.Hom Δ₁ Δ₂) :
+      PlugGenerated T G W → PlugGenerated T G (T.map φ W)
+  /-- Parallel composition preserves plug-closed generated membership. -/
+  | par {Δ₁ Δ₂ : PortBoundary} {W₁ : T.Obj Δ₁} {W₂ : T.Obj Δ₂} :
+      PlugGenerated T G W₁ → PlugGenerated T G W₂ → PlugGenerated T G (T.par W₁ W₂)
+  /-- Wiring preserves plug-closed generated membership. -/
+  | wire {Δ₁ Γ Δ₂ : PortBoundary} {W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ)}
+      {W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)} :
+      PlugGenerated T G W₁ → PlugGenerated T G W₂ → PlugGenerated T G (T.wire W₁ W₂)
+  /-- Plugging preserves plug-closed generated membership. -/
+  | plug {Δ : PortBoundary} {W : T.Obj Δ} {K : T.Obj (PortBoundary.swap Δ)} :
+      PlugGenerated T G W → PlugGenerated T G K → PlugGenerated T G (T.plug W K)
+
+/-- The least plug-closed sub-theory containing every generator satisfying `G`. -/
+@[expose]
+def plugGenerated (T : OpenTheory.{u})
+    (G : ∀ (Δ : PortBoundary), T.Obj Δ → Prop) : SubTheory T where
+  mem W := PlugGenerated T G W
+  mem_map φ h := .map φ h
+  mem_par h₁ h₂ := .par h₁ h₂
+  mem_wire h₁ h₂ := .wire h₁ h₂
+
+instance isPlugClosed_plugGenerated (T : OpenTheory.{u})
+    (G : ∀ (Δ : PortBoundary), T.Obj Δ → Prop) : (plugGenerated T G).IsPlugClosed where
+  mem_plug h₁ h₂ := .plug h₁ h₂
+
+/-- Every generator belongs to the plug-closed sub-theory it generates. -/
+theorem mem_plugGenerated_of_gen (T : OpenTheory.{u})
+    (G : ∀ (Δ : PortBoundary), T.Obj Δ → Prop) {Δ : PortBoundary}
+    (W : T.Obj Δ) (hW : G Δ W) : (plugGenerated T G).mem W :=
+  .base hW
+
+/--
+The universal property of `plugGenerated`: every plug-closed sub-theory that
+contains `G` contains the entire plug-closed generated class.
+-/
+theorem plugGenerated_le {G : ∀ (Δ : PortBoundary), T.Obj Δ → Prop} (D : SubTheory T)
+    [D.IsPlugClosed] (hG : ∀ (Δ : PortBoundary) (W : T.Obj Δ), G Δ W → D.mem W) :
+    plugGenerated T G ≤ D := by
   intro Δ W hW
   induction hW with
   | base hg => exact hG _ _ hg
@@ -343,11 +415,11 @@ theorem generated_le {G : ∀ (Δ : PortBoundary), T.Obj Δ → Prop} (D : SubTh
   | wire _ _ ih₁ ih₂ => exact D.mem_wire ih₁ ih₂
   | plug _ _ ih₁ ih₂ => exact IsPlugClosed.mem_plug ih₁ ih₂
 
-/-- The generated sub-theory is monotone in its generators. -/
-theorem generated_mono {G₁ G₂ : ∀ (Δ : PortBoundary), T.Obj Δ → Prop}
+/-- Plug-closed generation is monotone in its generators. -/
+theorem plugGenerated_mono {G₁ G₂ : ∀ (Δ : PortBoundary), T.Obj Δ → Prop}
     (h : ∀ (Δ : PortBoundary) (W : T.Obj Δ), G₁ Δ W → G₂ Δ W) :
-    generated T G₁ ≤ generated T G₂ :=
-  generated_le _ fun Δ W hW => Generated.base (h Δ W hW)
+    plugGenerated T G₁ ≤ plugGenerated T G₂ :=
+  plugGenerated_le _ fun Δ W hW => PlugGenerated.base (h Δ W hW)
 
 end SubTheory
 

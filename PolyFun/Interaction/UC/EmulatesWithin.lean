@@ -13,14 +13,12 @@ public import PolyFun.Interaction.UC.SubTheory
 /-!
 # Emulation relative to an allowed class of contexts
 
-`Emulates real ideal Obs` quantifies over *every* plug. That is the right
-judgment when the observation itself already encodes whatever restriction one
-wants on the environment, and the wrong one as soon as the restriction is a
-property of systems rather than of the relation — an efficiency bound being
-the standard example.
+`Emulates real ideal Obs` quantifies over *every* plug.
 
 `EmulatesWithin D real ideal Obs` restricts that quantifier to the plugs
-allowed by a `SubTheory D`.
+allowed by a `SubTheory D`. It does not assert that `real` or `ideal` belongs
+to `D`; those are separate protocol-membership obligations when a development
+needs them.
 
 ## Main definitions
 
@@ -30,8 +28,9 @@ allowed by a `SubTheory D`.
   because the four context-formers of `Emulates` are `map`/`wire` composites.
 * `EmulatesWithin D real ideal Obs`, and the composition suite relativized to
   it.
-* `UCSecureWithin`, whose simulator carries the additional obligation of
-  mapping allowed contexts to allowed contexts.
+* `SubTheory.PreservesAllowedness`, the exact closure obligation on a context
+  transformer.
+* `UCSecureWithin`, whose simulator must preserve allowedness.
 
 ## What relativizing costs, and why that is the point
 
@@ -47,13 +46,13 @@ Instantiating `D` at `SubTheory.top` discards every such hypothesis and
 recovers `Emulates` exactly (`emulatesWithin_top_iff`), so nothing in this
 file weakens what the unrelativized suite already proves.
 
-## Relation to the simulator
+## What simulator preservation says
 
-`UCSecureWithin` is where the relativization pays for itself most visibly.
-Its first conjunct says the simulator sends allowed contexts to allowed
-contexts. Under an efficiency instantiation that reads "the simulator is
-efficient", which is exactly the obligation simulation-based mechanizations
-normally leave to the metatheory.
+The first conjunct of `UCSecureWithin` says only that the selected simulator
+sends `D`-allowed contexts to `D`-allowed contexts. It does not supply an
+algorithm, a resource bound, a realizability witness, or an efficiency proof.
+Such a reading requires a separate bridge from `D.mem` to the relevant
+operational or cost model.
 -/
 
 public section
@@ -68,6 +67,12 @@ variable {T : OpenTheory.{u}}
 /-! ## Residual contexts stay allowed -/
 
 namespace SubTheory
+
+/-- A context transformer preserves membership in the allowed class `D`. -/
+@[expose]
+def PreservesAllowedness (D : SubTheory T) {Δ : PortBoundary}
+    (transform : T.Plug Δ → T.Plug Δ) : Prop :=
+  ∀ K : T.Plug Δ, D.mem K → D.mem (transform K)
 
 /-- Absorbing the right component of a `par` into an allowed plug yields an
 allowed plug, since `parContextLeft` is a `wire` followed by a `map`. -/
@@ -137,10 +142,8 @@ theorem trans {D : SubTheory T} {Δ : PortBoundary} {Obs : Observation T} {W₁ 
 /--
 Shrinking the allowed class weakens the judgment.
 
-Read the other way: a security claim proved against a large class of contexts
-holds against every smaller one, which is what makes an efficiency
-instantiation a *relaxation* of the unrestricted statement rather than a
-different claim.
+Read the other way: a claim proved against a large class of contexts holds
+against every smaller one.
 -/
 theorem mono {D₁ D₂ : SubTheory T} (hD : D₁ ≤ D₂) {Δ : PortBoundary} {Obs : Observation T}
     {real ideal : T.Obj Δ} (h : EmulatesWithin D₂ real ideal Obs) :
@@ -216,9 +219,9 @@ theorem par_right {D : SubTheory T} {Δ₁ Δ₂ : PortBoundary} {Obs : Observat
 /--
 **Relativized UC composition theorem for `par`.**
 
-Both ideal components must be allowed: the hybrid argument passes through
-`T.par ideal₁ real₂`, and each leg absorbs the *other* component into the
-context.
+The real right component and ideal left component must be allowed: the hybrid
+argument passes through `T.par ideal₁ real₂`, and each leg absorbs the other
+component into the context.
 -/
 theorem par_compose {D : SubTheory T} {Δ₁ Δ₂ : PortBoundary} {Obs : Observation T}
     [Obs.RespectsFactorization] {real₁ ideal₁ : T.Obj Δ₁} {real₂ ideal₂ : T.Obj Δ₂}
@@ -293,15 +296,14 @@ end EmulatesWithin
 existential simulator, relative to the allowed class `D`.
 
 Two things change relative to `UCSecure`. The context quantifier is cut down
-to `D`, and the simulator acquires an obligation: it must send allowed
-contexts to allowed contexts. Under a resource-bounded instantiation of `D`
-the second conjunct is the statement that the simulator is itself efficient —
-an obligation that is normally discharged informally, if at all.
+to `D`, and the selected simulator must satisfy
+`SubTheory.PreservesAllowedness D`. Neither protocol membership nor simulator
+realizability or efficiency follows from this definition.
 -/
 def UCSecureWithin (D : SubTheory T) {Δ : PortBoundary} (protocol ideal : T.Obj Δ)
     (Obs : Observation T) (SimSpace : Type*) (simulate : SimSpace → T.Plug Δ → T.Plug Δ) : Prop :=
   ∃ s : SimSpace,
-    (∀ K : T.Plug Δ, D.mem K → D.mem (simulate s K)) ∧
+    D.PreservesAllowedness (simulate s) ∧
     (∀ K : T.Plug Δ, D.mem K → Obs.rel (T.close protocol K) (T.close ideal (simulate s K)))
 
 /-- Relativized emulation implies relativized UC security with the identity

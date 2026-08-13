@@ -16,7 +16,7 @@ public import PolyFun.Interaction.UC.OpenSyntax.AtomSubTheory
 
 Checks that the allowed-systems layer behaves as intended:
 
-* the lattice operations synthesize their mixins,
+* the standard order operations and mixins synthesize,
 * relativizing to `SubTheory.top` recovers the unrelativized judgments,
 * the relativized composition suite elaborates on both the free syntax model
   and the process-backed `openTheory`,
@@ -36,6 +36,14 @@ section Lattice
 
 variable {T : OpenTheory.{u}} (D D₁ D₂ : SubTheory T)
 
+example : PartialOrder (SubTheory T) := inferInstance
+
+example : Top (SubTheory T) := inferInstance
+
+example : OrderTop (SubTheory T) := inferInstance
+
+example : SemilatticeInf (SubTheory T) := inferInstance
+
 /-- The class allowing everything is plug-closed without any assumption on the
 theory. -/
 example : (SubTheory.top T).IsPlugClosed := inferInstance
@@ -43,10 +51,9 @@ example : (SubTheory.top T).IsPlugClosed := inferInstance
 /-- A meet of plug-closed classes is plug-closed. -/
 example [D₁.IsPlugClosed] [D₂.IsPlugClosed] : (SubTheory.inf D₁ D₂).IsPlugClosed := inferInstance
 
-/-- A generated class is plug-closed unconditionally: building a closed system
-needs no factorization law. -/
+/-- Plug-closed generation is plug-closed without a factorization law. -/
 example (G : ∀ Δ : PortBoundary, T.Obj Δ → Prop) :
-    (SubTheory.generated T G).IsPlugClosed := inferInstance
+    (SubTheory.plugGenerated T G).IsPlugClosed := inferInstance
 
 /-- Strict plug/wire factorization gives *every* sub-theory plug-closure, so
 instance synthesis needs no help on a compact-closed theory. -/
@@ -58,6 +65,15 @@ example : SubTheory.inf D₁ D₂ ≤ D₁ := SubTheory.inf_le_left D₁ D₂
 
 /-- Everything is below the top class. -/
 example : D ≤ SubTheory.top T := SubTheory.le_top D
+
+/-- Standard notation reduces to the named constructions. -/
+example : (⊤ : SubTheory T) = SubTheory.top T := rfl
+
+example : D₁ ⊓ D₂ = SubTheory.inf D₁ D₂ := rfl
+
+/-- Mutual inclusion determines a sub-theory extensionally. -/
+example (h₁₂ : D₁ ≤ D₂) (h₂₁ : D₂ ≤ D₁) : D₁ = D₂ :=
+  SubTheory.ext fun W => ⟨h₁₂ W, h₂₁ W⟩
 
 end Lattice
 
@@ -170,6 +186,83 @@ def toyAllowed : ∀ {Δ : PortBoundary}, ToyAtom Δ → Prop
 /-- Abbreviation for the syntactic theory over the toy signature. -/
 abbrev ToyTheory : OpenTheory.{1} := OpenSyntax.Expr.theory ToyAtom
 
+/-- A quotient-respecting semantics that counts forbidden atoms. All boundary
+operations preserve or add counts, so the open-theory equations preserve the
+result. -/
+structure AtomCountObj (Δ : PortBoundary) where
+  count : Nat
+
+abbrev atomCountTheory : OpenTheory where
+  Obj := AtomCountObj
+  map := fun _ n => ⟨n.count⟩
+  par := fun n₁ n₂ => ⟨n₁.count + n₂.count⟩
+  wire := fun n₁ n₂ => ⟨n₁.count + n₂.count⟩
+  plug := fun n₁ n₂ => ⟨n₁.count + n₂.count⟩
+
+instance : OpenTheory.HasPlugWireFactor atomCountTheory where
+  map_id := by intro _ W; cases W; rfl
+  map_comp := by intro _ _ _ _ _ W; cases W; rfl
+  map_par := by intro _ _ _ _ _ _ W₁ W₂; cases W₁; cases W₂; rfl
+  map_wire := by intro _ _ _ _ _ _ _ W₁ W₂; cases W₁; cases W₂; rfl
+  map_plug := by intro _ _ _ W K; cases W; cases K; rfl
+  unit := ⟨0⟩
+  par_assoc := by
+    intro _ _ _ W₁ W₂ W₃
+    cases W₁; cases W₂; cases W₃
+    simp [atomCountTheory, Nat.add_assoc]
+  par_comm := by
+    intro _ _ W₁ W₂
+    cases W₁; cases W₂
+    simp [atomCountTheory, Nat.add_comm]
+  par_leftUnit := by intro _ W; cases W; simp [atomCountTheory]
+  par_rightUnit := by intro _ W; cases W; simp [atomCountTheory]
+  wire_assoc := by
+    intro _ _ _ _ W₁ W₂ W₃
+    cases W₁; cases W₂; cases W₃
+    simp [atomCountTheory, Nat.add_assoc]
+  wire_par_superpose := by
+    intro _ _ _ _ W₁ W₂ W₃
+    cases W₁; cases W₂; cases W₃
+    simp [atomCountTheory, Nat.add_assoc]
+  wire_comm := by
+    intro _ _ _ W₁ W₂
+    cases W₁; cases W₂
+    simp [atomCountTheory, Nat.add_comm]
+  idWire := fun _ => ⟨0⟩
+  wire_idWire := by intro _ _ W; cases W; simp [atomCountTheory]
+  wire_idWire_right := by intro _ _ W; cases W; simp [atomCountTheory]
+  unit_eq := rfl
+  plug_eq_wire := by intro _ W K; cases W; cases K; rfl
+  plug_par_left := by
+    intro _ _ W₁ W₂ K
+    cases W₁; cases W₂; cases K
+    simp [atomCountTheory, Nat.add_comm, Nat.add_left_comm]
+  plug_wire_left := by
+    intro _ _ _ W₁ W₂ K
+    cases W₁; cases W₂; cases K
+    simp [atomCountTheory, Nat.add_comm, Nat.add_left_comm]
+
+/-- Interpret allowed atoms as zero and forbidden atoms as one. -/
+def atomCount : ∀ {Δ : PortBoundary}, ToyAtom Δ → atomCountTheory.Obj Δ
+  | _, .good _ => ⟨0⟩
+  | _, .bad _ => ⟨1⟩
+
+/-- The zero-count sub-theory of the counting semantics. -/
+def zeroCountSubTheory : SubTheory atomCountTheory where
+  mem n := n.count = 0
+  mem_map _ h := h
+  mem_par h₁ h₂ := by simp [h₁, h₂]
+  mem_wire h₁ h₂ := by simp [h₁, h₂]
+
+instance : zeroCountSubTheory.IsStructural where
+  mem_unit := rfl
+  mem_idWire _ := rfl
+
+/-- Every atom accepted by `toyAllowed` has zero forbidden-atom count. -/
+theorem atomCount_eq_zero_of_allowed {Δ : PortBoundary} (a : ToyAtom Δ)
+    (ha : toyAllowed a) : zeroCountSubTheory.mem (atomCount a) := by
+  cases a <;> simp_all [toyAllowed, atomCount, zeroCountSubTheory]
+
 /-- The generated class is structural: it contains the unit and every identity
 wire, found by synthesis. -/
 example : (OpenSyntax.atomSubTheory ToyAtom toyAllowed).IsStructural := inferInstance
@@ -199,13 +292,51 @@ example (Δ : PortBoundary) :
     (OpenSyntax.atomSubTheory.mem_atom ToyAtom toyAllowed trivial)
     (OpenSyntax.atomSubTheory.mem_atom ToyAtom toyAllowed trivial)
 
-/-- The forbidden atom really is forbidden. -/
-example (Δ : PortBoundary) : ¬ toyAllowed (ToyAtom.bad Δ) := id
+/-- The forbidden atom is absent from the quotiented generated sub-theory, not
+only from the predicate on raw generators. -/
+example (Δ : PortBoundary) :
+    ¬(OpenSyntax.atomSubTheory ToyAtom toyAllowed).mem
+      (OpenSyntax.Expr.atom (ToyAtom.bad Δ)) := by
+  intro h
+  have hCount := OpenSyntax.mem_interpret_of_atoms ToyAtom toyAllowed
+    zeroCountSubTheory atomCount atomCount_eq_zero_of_allowed h
+  simp [zeroCountSubTheory, atomCount] at hCount
 
 /-- Allowing strictly more atoms gives a larger class. -/
 example : OpenSyntax.atomSubTheory ToyAtom toyAllowed ≤
     OpenSyntax.atomSubTheory ToyAtom (fun _ => True) :=
   OpenSyntax.atomSubTheory.mono ToyAtom fun _ _ => trivial
+
+/-! ### Restricted-context and simulator canaries -/
+
+/-- Antitonicity is exercised on a class that excludes `ToyAtom.bad`, rather
+than only on `SubTheory.top`. -/
+example {Δ : PortBoundary} {Obs : Observation ToyTheory} {real ideal : ToyTheory.Obj Δ}
+    (h : EmulatesWithin (OpenSyntax.atomSubTheory ToyAtom (fun _ => True)) real ideal Obs) :
+    EmulatesWithin (OpenSyntax.atomSubTheory ToyAtom toyAllowed) real ideal Obs :=
+  h.mono (OpenSyntax.atomSubTheory.mono ToyAtom fun _ _ => trivial)
+
+/-- Identity simulation preserves a genuinely restricted allowed class. -/
+example {Δ : PortBoundary} :
+    (OpenSyntax.atomSubTheory ToyAtom toyAllowed).PreservesAllowedness
+      (Δ := Δ) (fun K => K) :=
+  fun _ hK => hK
+
+/-- A simulator that replaces every allowed context with a forbidden atom does
+not preserve allowedness. -/
+example :
+    ¬(OpenSyntax.atomSubTheory ToyAtom toyAllowed).PreservesAllowedness
+      (Δ := PortBoundary.empty)
+      (fun _ => OpenSyntax.Expr.atom (ToyAtom.bad PortBoundary.empty)) := by
+  intro h
+  exact (show ¬(OpenSyntax.atomSubTheory ToyAtom toyAllowed).mem
+      (OpenSyntax.Expr.atom (ToyAtom.bad PortBoundary.empty)) by
+        intro hBad
+        have hCount := OpenSyntax.mem_interpret_of_atoms ToyAtom toyAllowed
+          zeroCountSubTheory atomCount atomCount_eq_zero_of_allowed hBad
+        simp [zeroCountSubTheory, atomCount] at hCount)
+    (h (OpenSyntax.Expr.atom (ToyAtom.good PortBoundary.empty))
+      (OpenSyntax.atomSubTheory.mem_atom ToyAtom toyAllowed trivial))
 
 /-- **The transfer theorem.** Interpreting a network of allowed atoms into any
 target class that accepts the allowed atoms lands inside that class. Taken at

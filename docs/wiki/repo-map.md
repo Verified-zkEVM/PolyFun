@@ -188,9 +188,11 @@ Interaction/UC/OpenTheory -> Interaction/UC/SubTheory
 Interaction/UC/{Emulates, SubTheory} -> Interaction/UC/EmulatesWithin
 Interaction/UC/{OpenSyntax/Expr, SubTheory}
   -> Interaction/UC/OpenSyntax/AtomSubTheory
-  (SubTheory is the allowed-systems predicate and depends on the algebra
-   alone; the residual-context lemmas that relativized emulation needs live
-   with EmulatesWithin because the context-formers are defined in Emulates)
+  (SubTheory is a structural membership predicate and depends on the algebra
+   alone; EmulatesWithin uses it specifically for allowed closing contexts.
+   Protocol membership, resource and realizability claims, and links to
+   CorruptionModel require separate bridges. The residual-context lemmas live
+   with EmulatesWithin because the context-formers are defined in Emulates.)
 
 Interaction/UC/{Emulates, OpenProcessModel} -> Interaction/UC/OpenProcessEmulates
   (Emulates is model-agnostic and must not reach OpenProcess; the bridge that
