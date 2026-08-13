@@ -47,6 +47,7 @@ IPFunctor/Free/{Basic, Indexed} + IPFunctor/Notation/Common
 PFunctor/Display/Basic
   -> PFunctor/Display/{Chart, Coalgebra, Indexed, Free}
 IPFunctor/M + PFunctor/Display/Indexed -> PFunctor/Display/M
+PFunctor/Handler -> PFunctor/Handler/Instrumentation
 PFunctor/{Handler, Free/Basic} -> PFunctor/Handler/Free
   -> PFunctor/Handler/Stateful -> PFunctor/Handler/Normalization/Attr
   -> PFunctor/Handler/Normalization

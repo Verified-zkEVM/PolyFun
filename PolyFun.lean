@@ -193,6 +193,7 @@ public import PolyFun.PFunctor.Free.Resumption
 public import PolyFun.PFunctor.Free.Universal
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Free
+public import PolyFun.PFunctor.Handler.Instrumentation
 public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr
 public import PolyFun.PFunctor.Handler.Stateful
