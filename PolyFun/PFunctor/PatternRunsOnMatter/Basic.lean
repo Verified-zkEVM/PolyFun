@@ -41,6 +41,11 @@ universe pA pB pA' pB' qA qB qA' qB' v w
 
 namespace PFunctor
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the synchronized-run definitions below rewrite through the tensor product
+there. `implicit_reducible` (unlike `reducible`) keeps `PFunctor.tensor`
+opaque to simp and typeclass resolution, and needs no
+`allowUnsafeReducibility`. -/
 attribute [local implicit_reducible] PFunctor.tensor
 
 namespace FreeP
@@ -234,7 +239,7 @@ theorem runObj_natural {P' : PFunctor.{pA', pB'}} {Q' : PFunctor.{qA', qB'}}
       have hhead := M.head_mapLens g matter
       cases hhead
       simp only [FreeP.map_toFunA, FreeP.mapShape, CofreeP.map_toFunA,
-        FreeM.map, runObj, FreeP.relabel_node,
+        FreeM.mapLens, FreeM.map, runObj, FreeP.relabel_node,
         FreeP.mapObj_node]
       congr 1
       funext direction

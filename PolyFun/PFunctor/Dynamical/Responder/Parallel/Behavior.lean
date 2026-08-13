@@ -27,6 +27,10 @@ universe uA₁ uA₂ uB uC₁ uD₁ uC₂ uD₂
 namespace PFunctor
 namespace Responder
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the parallel-behavior equations below rewrite through `parallelSum` there.
+`implicit_reducible` (unlike `reducible`) leaves simp validation and instance
+resolution untouched, and needs no `allowUnsafeReducibility`. -/
 attribute [local implicit_reducible] PFunctor.parallelSum
 
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
@@ -55,6 +59,8 @@ theorem sum_behavior
   apply behavior_eq_of_responderMap terminalSum (Responder.sum left right)
     (fun current => (left.behavior current.1, right.behavior current.2)) <;>
     · intro current operation
+      -- Lean 4.33: `parallelSum` is only `implicit_reducible`, so `simp`
+      -- leaves a residual goal that is closed by `rfl` up to defeq.
       cases operation <;> simp [terminalSum] <;> rfl
 
 @[simp]
@@ -67,7 +73,7 @@ theorem sumBehavior_answer_inl
     (Responder.terminal (P := PFunctor.sum P Q)).answer
       ((Responder.sum (Responder.terminal (P := P))
         (Responder.terminal (P := Q))).behavior (left, right)) (.inl a) = _
-  with_unfolding_all rw [terminal_answer_behavior]
+  rw [terminal_answer_behavior]
   rfl
 
 @[simp]
@@ -80,7 +86,7 @@ theorem sumBehavior_answer_inr
     (Responder.terminal (P := PFunctor.sum P Q)).answer
       ((Responder.sum (Responder.terminal (P := P))
         (Responder.terminal (P := Q))).behavior (left, right)) (.inr b) = _
-  with_unfolding_all rw [terminal_answer_behavior]
+  rw [terminal_answer_behavior]
   rfl
 
 @[simp]
@@ -136,6 +142,7 @@ theorem parallel_behavior
     · intro current operation
       cases operation <;> simp [terminalParallel]
 
+@[simp]
 theorem parallelBehavior_answer_left
     (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
     (Responder.terminal (P := P ∥ Q)).answer
@@ -147,9 +154,10 @@ theorem parallelBehavior_answer_left
       ((Responder.parallel (Responder.terminal (P := P))
         (Responder.terminal (P := Q))).behavior (left, right))
       (ParallelChoice.left a : (P ∥ Q).A) = _
-  with_unfolding_all rw [terminal_answer_behavior]
+  rw [terminal_answer_behavior]
   rfl
 
+@[simp]
 theorem parallelBehavior_answer_right
     (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
     (Responder.terminal (P := P ∥ Q)).answer
@@ -164,6 +172,7 @@ theorem parallelBehavior_answer_right
   rw [terminal_answer_behavior]
   rfl
 
+@[simp]
 theorem parallelBehavior_answer_both
     (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
     (a : P.A) (b : Q.A) :
@@ -191,7 +200,7 @@ theorem parallelBehavior_child_left
     ((Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q))).behavior (left, right)).children
         ⟨(ParallelChoice.left a : (P ∥ Q).A), PUnit.unit⟩ = _
-  with_unfolding_all rw [behavior_child]
+  rw [behavior_child]
   rfl
 
 @[simp]
@@ -205,7 +214,7 @@ theorem parallelBehavior_child_right
     ((Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q))).behavior (left, right)).children
         ⟨(ParallelChoice.right b : (P ∥ Q).A), PUnit.unit⟩ = _
-  with_unfolding_all rw [behavior_child]
+  rw [behavior_child]
   rfl
 
 @[simp]
@@ -221,7 +230,7 @@ theorem parallelBehavior_child_both
     ((Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q))).behavior (left, right)).children
         ⟨(ParallelChoice.both a b : (P ∥ Q).A), PUnit.unit⟩ = _
-  with_unfolding_all rw [behavior_child]
+  rw [behavior_child]
   rfl
 
 /-! ## Canonical proof-relevant terminal presentations -/

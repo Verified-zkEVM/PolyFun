@@ -50,14 +50,16 @@ example {S₁ : Type u} {S₂ : Type v} {D₁ : DynSystem S₁ p} {D₂ : DynSys
 structure is the system's own, supplied locally via `letI := D.coalg`. -/
 example (D : DynSystem S p) :
     letI := D.coalg
-    DynSystem.IsSimulation D D (fun s₁ s₂ => s₁ = s₂) :=
-  idSim D
+    DynSystem.IsSimulation D D (fun s₁ s₂ => Coalg.Hom.id (F := p.Obj) s₁ = s₂) :=
+  letI := D.coalg
+  DynSystem.isSimulation_graph_coalgHom (Coalg.Hom.id)
 
 /-- Coalgebra morphisms preserve behaviour trees. -/
 example (D : DynSystem S p) (s : S) :
     letI := D.coalg
-    D.behavior s = D.behavior s :=
-  rfl
+    D.behavior (Coalg.Hom.id (F := p.Obj) (S₁ := S) s) = D.behavior s :=
+  letI := D.coalg
+  DynSystem.behavior_coalgHom Coalg.Hom.id s
 
 /-- A step-synchronized simulation is an operational forward simulation at
 `StepRel.sync`. -/

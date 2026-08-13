@@ -25,7 +25,7 @@ namespace PFunctor
 namespace Handler
 
 /-- The identity free handler for a polynomial interface. -/
-@[reducible]
+@[implicit_reducible]
 def id (P : PFunctor.{uA, u}) : Handler (FreeM P) P :=
   fun a => FreeM.lift a
 
@@ -51,7 +51,7 @@ def ofLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
 `second.comp first` first interprets by `first`, then by `second`. The source
 and intermediate direction universes agree because `FreeM.liftM` requires
 them to; the final target direction universe remains independent. -/
-@[reducible]
+@[implicit_reducible]
 def comp {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
     {R : PFunctor.{uA'', u'}}
     (second : Handler (FreeM R) Q) (first : Handler (FreeM Q) P) :

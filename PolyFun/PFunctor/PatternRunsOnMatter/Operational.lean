@@ -24,6 +24,11 @@ universe pA pB qA qB u v
 
 namespace PFunctor.FreeP
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the synchronized-decoding equations below rewrite through the tensor product
+there. `implicit_reducible` (unlike `reducible`) keeps `PFunctor.tensor`
+opaque to simp and typeclass resolution, and needs no
+`allowUnsafeReducibility`. -/
 attribute [local implicit_reducible] PFunctor.tensor
 
 variable {P : PFunctor.{pA, pB}} {Q : PFunctor.{qA, qB}}

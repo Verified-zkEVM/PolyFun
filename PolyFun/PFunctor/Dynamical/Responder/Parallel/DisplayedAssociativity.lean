@@ -356,6 +356,9 @@ theorem mapDisplayedBehavior_parallel_assoc
         ((displayedLeft, displayedMiddle), displayedRight)
     change Display.M.transport _ publicLeftDisplayed = rawLeftDisplayed at h
     exact (Display.M.transport_proof_irrel leftEq _ publicLeftDisplayed).trans h
+  -- Lean 4.33: split from main's single calc; the `Trans` instance for chaining
+  -- compares defeq-only-equal index types too strictly, while term-level `.trans`
+  -- unifies at default transparency.
   have hRawToPublic : Display.M.transport leftEq.symm rawLeftDisplayed =
       publicLeftDisplayed := by
     exact (congrArg (Display.M.transport leftEq.symm) hLeft.symm).trans

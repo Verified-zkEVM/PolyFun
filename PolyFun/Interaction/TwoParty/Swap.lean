@@ -28,6 +28,11 @@ universe u
 namespace Interaction
 namespace TwoParty
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+rewriting decorated trees through `Decoration.map_liftBind` needs
+`FreeM.bind` and `FreeM.map` to unfold there. -/
+attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.map
+
 open TwoParty
 
 @[simp, grind =]

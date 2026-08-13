@@ -64,13 +64,13 @@ def decode (x : (CofreeP P).Obj α) : CofreeC P α :=
   M.corec decodeStep x
 
 /-- Forget the label component of one `constProd P α` node. -/
-@[reducible]
+@[implicit_reducible]
 def forgetLabels (P : PFunctor.{uA, uB}) (α : Type v) :
     Lens (constProd P α) P :=
   Prod.snd ⇆ fun _ => id
 
 /-- Erase all labels from a type-level cofree tree. -/
-@[reducible]
+@[implicit_reducible]
 def erase (tree : CofreeC P α) : M P :=
   M.mapLens (forgetLabels P α) tree
 
@@ -337,7 +337,7 @@ def objEquiv : (CofreeP P).Obj α ≃ CofreeC P α where
 
 /-- Map cofree-polynomial trees covariantly along a generating lens and pull
 their finite vertices back contravariantly. -/
-@[reducible]
+@[implicit_reducible]
 def map {Q : PFunctor.{uA₂, uB₂}} (lens : Lens P Q) :
     Lens (CofreeP P) (CofreeP Q) where
   toFunA := M.mapLens lens
@@ -631,6 +631,12 @@ private theorem cast_composite_direction {Q : PFunctor.{uA, uB}}
   subst h
   rfl
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the naturality equations below rewrite vertices indexed through `comonoid`
+comultiplication and lens composition, which must unfold there for the
+rewrites to type-check. -/
+attribute [local implicit_reducible] comonoid comult counit Lens.comp
+
 /-- Mapping cofree trees along a generating lens preserves the root counit.
 This theorem uses the common-generator-universe specialization chosen for
 `mapHom`; the underlying `CofreeP.map` remains heterogeneous. -/
@@ -708,8 +714,7 @@ private theorem map_comult_obj {Q : PFunctor.{uA, uB}}
       (M.Vertex.pullMapLens lens
         (M.Vertex.subtree (M.Vertex.pullMapLens lens tree vertex))
         (M.Vertex.castEquiv (congrFun hChildren vertex) next))
-  simpa only [hChildren] using
-    M.Vertex.pullMapLens_append lens tree vertex next
+  rw [M.Vertex.pullMapLens_append]
 
 /-- Mapping cofree trees along a generating lens preserves vertex
 concatenation, hence cofree comultiplication. -/

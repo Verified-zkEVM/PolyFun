@@ -62,6 +62,11 @@ probabilistic execution belong to downstream runtime interpreters.
 
 public section
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the wiring lemmas below rewrite `List.filterMap` chains over `TraceList`
+carriers (reducibly `FreeMonoid (Idx _)`) there. `implicit_reducible` (unlike
+`reducible`) stays invisible to simp and instance search, and needs no
+`allowUnsafeReducibility`. -/
 attribute [local implicit_reducible] PFunctor.Obj PFunctor.Idx FreeMonoid
 
 universe u v v₁ v₂ v₃ w w'
@@ -713,6 +718,10 @@ structure OpenProcess (m : Type w → Type w') (Party : Type u) (Δ : PortBounda
 
 namespace OpenProcess
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the boundary-remapping lemmas below rewrite through nodewise decoration maps
+there. `implicit_reducible` (unlike `reducible`) stays invisible to simp
+validation and instance search. -/
 attribute [local implicit_reducible] PFunctor.FreeM.Displayed.Decoration.localMap
   PFunctor.FreeM.Displayed.LocalMap.toHom PFunctor.FreeM.Displayed.LocalMap.toHomFun
 
@@ -853,15 +862,11 @@ theorem isSilentDecoration_iff_map {Party : Type u} {Δ₁ Δ₂ : PortBoundary}
     simp only [IsSilentDecoration, Decoration.map]
     constructor
     · rintro ⟨h1, h2⟩
-      change (f _ ons).boundary.isActivated = false at h1
       exact ⟨by rwa [hAct] at h1,
         (isSilentDecoration_iff_map f hAct (drest x) tr).mp h2⟩
     · rintro ⟨h1, h2⟩
-      constructor
-      · change (f _ ons).boundary.isActivated = false
-        rwa [hAct]
-      · exact
-          (isSilentDecoration_iff_map f hAct (drest x) tr).mpr h2
+      exact ⟨by rwa [hAct],
+        (isSilentDecoration_iff_map f hAct (drest x) tr).mpr h2⟩
 
 /-- `IsSilentStep` is invariant under `OpenProcess.mapBoundary`: remapping
 the boundary does not change which paths are silent, because all

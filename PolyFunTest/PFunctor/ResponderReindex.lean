@@ -20,12 +20,14 @@ evidence is state-indexed data and affects the next witness.
 
 namespace PFunctor.ResponderReindexExample
 
-@[reducible]
+-- Lean 4.33: the examples below unfold `Interface` at implicit transparency.
+@[implicit_reducible]
 def Interface : PFunctor where
   A := Unit
   B := fun _ => Bool
 
-@[reducible]
+-- Lean 4.33: the examples below unfold `contract` at implicit transparency.
+@[implicit_reducible]
 def contract : Display Interface where
   position _ := Bool
   direction _ expected answer := if expected = answer then Fin 2 else Fin 3
@@ -37,7 +39,7 @@ def directionVal (expected answer : Bool)
 
 def directionFromNat (expected answer : Bool) (value : Nat) :
     contract.direction () expected answer := by
-  simp only
+  simp only [contract]
   split
   · exact ⟨value % 2, Nat.mod_lt _ (by decide)⟩
   · exact ⟨value % 3, Nat.mod_lt _ (by decide)⟩

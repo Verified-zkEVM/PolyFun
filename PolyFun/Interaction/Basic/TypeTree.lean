@@ -214,10 +214,14 @@ abbrev substMonoid : PFunctor.SubstMonoid.{u + 1, u} :=
 theorem substMonoid_unit_toFunA (x : PUnit) : TypeTree.substMonoid.unit.toFunA x = TypeTree.done :=
   rfl
 
+-- Not `@[simp]`: `substMonoid` is a reducible `abbrev`, so the LHS
+-- dsimp-normalizes through the `FreeP.substMonoid` projection lemmas and the
+-- `simpNF` linter rejects the attribute. Used by name in `simp only` rewrites.
 theorem substMonoid_mult_toFunA (spec : TypeTree) (next : Path spec → TypeTree) :
     TypeTree.substMonoid.mult.toFunA ⟨spec, next⟩ = spec.append next :=
   rfl
 
+-- Not `@[simp]` for the same `simpNF` reason as `substMonoid_mult_toFunA`.
 theorem substMonoid_mult_toFunB (spec : TypeTree) (next : Path spec → TypeTree)
     (tr : Path (spec.append next)) :
     TypeTree.substMonoid.mult.toFunB ⟨spec, next⟩ tr =

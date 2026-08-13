@@ -155,6 +155,9 @@ example : listTree =
 
 /-- The root path is the identity arrow, hence the empty list. -/
 example : listExtension.toLens.toFunB listObject (.root listTree) = [] := by
+  -- Lean 4.33: `calc` cannot synthesize its `Trans` instance across the
+  -- list-monoid carrier at instance transparency, so `Eq.trans` is applied
+  -- directly.
   have h : listExtension.toLens.toFunB listObject (.root listTree) =
       Comonoid.identity boolListComonoid listObject := by
     rw [← CofreeP.comonoid_identity]

@@ -30,9 +30,16 @@ universe u
 namespace PFunctor
 namespace FreeP
 
-attribute [local implicit_reducible] PFunctor.X PFunctor.monomial PFunctor.tensor FreeP.node
-  Comonoid.Hom.ofCategoryLaws CofreeP.comonoid CofreeP.cogenerator CofreeP.extend
-  CofreeP.laxTensorHom CofreeP.laxTensor
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the module-law equations below rewrite through the tensor substrate and the
+cofree comparison retrofunctors there. `implicit_reducible` (unlike
+`reducible`) keeps these constants opaque to simp and typeclass resolution,
+and needs no `allowUnsafeReducibility`. Constants already
+`implicit_reducible` at their definition sites (the `unfold*` family,
+`relabel`, `Comonoid.tensor`) are omitted. -/
+attribute [local implicit_reducible] PFunctor.Obj PFunctor.X PFunctor.monomial
+  PFunctor.tensor FreeP.node Comonoid.Hom.ofCategoryLaws CofreeP.comonoid
+  CofreeP.cogenerator CofreeP.extend CofreeP.laxTensorHom CofreeP.laxTensor
 
 private theorem runObj_unit (P : PFunctor.{u, u})
     (pattern : (FreeP P).A) :
@@ -171,13 +178,13 @@ theorem xi_unit (P : PFunctor.{u, u}) :
 
 /-! ## Associativity -/
 
-@[reducible] private def vertexPairObj {Q R : PFunctor.{u, u}}
+@[implicit_reducible] private def vertexPairObj {Q R : PFunctor.{u, u}}
     (matterQ : (CofreeP Q).A) (matterR : (CofreeP R).A) :
     (CofreeP Q ⊗ CofreeP R).Obj
       (M.Vertex matterQ × M.Vertex matterR) :=
   ⟨(matterQ, matterR), id⟩
 
-@[reducible] private def laxTensorVertexObj {Q R : PFunctor.{u, u}}
+@[implicit_reducible] private def laxTensorVertexObj {Q R : PFunctor.{u, u}}
     (matterQ : (CofreeP Q).A) (matterR : (CofreeP R).A) :
     (CofreeP (Q ⊗ R)).Obj (M.Vertex matterQ × M.Vertex matterR) :=
   Lens.mapObj (CofreeP.laxTensor Q R) (vertexPairObj matterQ matterR)
@@ -232,6 +239,7 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
   | liftBind a rest ih =>
       rw [FreeP.runLabeled_liftBind, FreeP.relabel_node]
       simp only [runObj_liftBind, FreeP.relabel_relabel]
+      rw [FreeP.runObj_node]
       simp only [FreeP.mapObj_relabel]
       let rightChildren := fun direction :
           (P.B a × Q.B (M.head matterQ)) × R.B (M.head matterR) =>
@@ -258,6 +266,10 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
       have hmap := FreeP.mapObj_node
         (Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens
         ((a, M.head matterQ), M.head matterR) rightChildren
+      -- Lean 4.33: `M.head (laxTensorVertexObj ..)` is only propositionally
+      -- `(M.head matterQ, M.head matterR)` (`laxTensor_head`), which the
+      -- original rewrites relied on definitionally; the head equation is now
+      -- destructed explicitly before rewriting.
       have hmap' :
           Lens.mapObj (FreeP.map
               (Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens)
