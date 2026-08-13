@@ -351,10 +351,10 @@ identity.
 
 The classes here name the same motions as properties of the *observation*
 instead of the theory. A model that cannot offer strict coherence can still
-offer an observation coarse enough not to see the regrouping, and then earns
-the full composition suite. Strict coherence is the degenerate case, recorded
-by `respectsFactorization_of_hasPlugWireFactor`, so nothing that holds today
-is lost.
+prove these exact observation-level laws directly and then earns the full
+composition suite. Strict coherence is the degenerate case, recorded by
+`respectsFactorization_of_hasPlugWireFactor`, so nothing that holds today is
+lost.
 
 Splitting the laws across two classes follows the same principle as the
 `IsMonoidal → IsTraced → IsCompactClosed` chain in `OpenTheory`: a model
@@ -366,9 +366,11 @@ alone already supports `Emulates.plug_right` and `Emulates.plug_compose`.
 `Obs.RespectsPlugComm` states that `Obs` cannot distinguish a closed system
 from the same system with the roles of its two halves exchanged.
 
-This is the weaker of the two layers, and the one a scheduler-quotienting
-observation can supply without any monoidal coherence. It is exactly what
-`Emulates.plug_right` and `Emulates.plug_compose` consume.
+This is the weaker of the two layers. It is exactly what
+`Emulates.plug_right` and `Emulates.plug_compose` consume. For a process model,
+the proof must preserve every packet, action, sampler effect, or other datum
+that the observation exposes; a structural activation equivalence alone does
+not establish this law.
 -/
 class Observation.RespectsPlugComm {T : OpenTheory.{u}} (Obs : Observation T) : Prop where
   /-- Exchanging a system with its context is invisible to `Obs`. -/

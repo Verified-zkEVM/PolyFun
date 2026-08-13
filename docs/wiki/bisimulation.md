@@ -93,12 +93,12 @@ This observation is deliberately coarse. It does not retain packet/action
 identity or `stepSampler` effects, and is therefore **not** exported as a UC
 security `Observation`.
 
-The generic theorems `Emulates.plug_right_of_observes_plug_comm` and
-`plug_compose_of_observes_plug_comm` are still useful: a concrete security observation can
-apply them once it proves plug commutation while retaining the events and
-effects relevant to the security statement.
-`openTheory_plug_comm_activation_equiv` remains
-a structural coherence lemma, not an indistinguishability definition.
+The generic theorems `Emulates.plug_right` and `Emulates.plug_compose` require
+the exact class `Observation.RespectsPlugComm`. A concrete security observation
+can apply them once it proves plug commutation while retaining every event and
+effect relevant to the security statement. The structural theorem
+`openTheory_plug_comm_activation_equiv` does not supply that proof: it remains
+a scheduler-coherence lemma, not an indistinguishability definition.
 
 ## Naming rule
 

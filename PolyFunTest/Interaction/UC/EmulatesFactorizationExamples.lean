@@ -7,22 +7,31 @@ Authors: Devon Tuma
 module
 
 import all PolyFun.Interaction.UC.Emulates
-import all PolyFun.Interaction.Basic.Sampler
-import all PolyFun.Interaction.UC.OpenProcess
+import all PolyFun.Interaction.UC.OpenProcessModel
 import all PolyFun.Interaction.UC.OpenProcessFactorization
 public import PolyFun.Interaction.UC.Emulates
-public import PolyFun.Interaction.UC.OpenProcessEmulates
+public import PolyFun.Interaction.UC.OpenProcessModel
 public import PolyFun.Interaction.UC.OpenProcessFactorization
 public import PolyFun.Interaction.UC.OpenSyntax.Expr
 
 /-!
-# UC factorization examples
+# Observation-level factorization examples
 
 Regression checks that the UC composition theorems still reach the free
-syntax models through `respectsFactorization_of_hasPlugWireFactor`. For the
-process model, the examples pin the four structural activation-equivalence
-statements and their scheduler truth tables without promoting them to
-packet-, probability-, or sampler-aware observations.
+syntax models through `respectsFactorization_of_hasPlugWireFactor`, and that
+the process-backed `openTheory` reaches the `plug` half of the suite from an
+exact `Observation.RespectsPlugComm` assumption.
+
+Separately, the four structural factorization laws of
+`OpenProcessFactorization.lean` are pinned at their exact statements, together
+with the scheduler truth tables the proofs re-encode. Those are results about
+`OpenProcessActivationEquiv` alone and are deliberately not promoted to any
+observation here.
+
+The final canary uses syntactic equality as a concrete, nontrivial observation
+on closed processes. Two processes that differ only in `stepSampler` are
+activation equivalent but are not equal. This rejects any global bridge from
+the structural `OpenProcessActivationEquiv` relation to a security observation.
 -/
 
 @[expose] public section
@@ -75,9 +84,43 @@ example {Δ : PortBoundary}
 
 end FreeModel
 
-/-! ### Structural process-model factorization -/
+/-! ### The process model consumes an exact plug-commutation law -/
 
 section ProcessModel
+
+variable {Party : Type u} {m : Type w → Type w'} {schedulerSampler : m (ULift.{w, 0} Bool)}
+  (Obs : Observation (openTheory.{u, v, w, w'} Party m schedulerSampler))
+  [Obs.RespectsPlugComm]
+
+/-- The exact observation-level plug-commutation law is the complete structural
+assumption required by the `plug` composition theorems. -/
+example : Obs.RespectsPlugComm := inferInstance
+
+/-- `Emulates.plug_compose` applies to the process model without claiming that
+activation equivalence preserves security-visible data. -/
+example {Δ : PortBoundary}
+    {real ideal : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ}
+    {K_real K_ideal :
+      (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj (PortBoundary.swap Δ)}
+    (hProt : Emulates real ideal Obs) (hEnv : Emulates K_real K_ideal Obs) :
+    Obs.rel ((openTheory.{u, v, w, w'} Party m schedulerSampler).close real K_real)
+      ((openTheory.{u, v, w, w'} Party m schedulerSampler).close ideal K_ideal) :=
+  Emulates.plug_compose hProt hEnv
+
+/-- Replacing the environment alone likewise applies. -/
+example {Δ : PortBoundary}
+    (W : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ)
+    {K₁ K₂ : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj (PortBoundary.swap Δ)}
+    (hK : Emulates K₁ K₂ Obs) :
+    Obs.rel ((openTheory.{u, v, w, w'} Party m schedulerSampler).close W K₁)
+      ((openTheory.{u, v, w, w'} Party m schedulerSampler).close W K₂) :=
+  Emulates.plug_right W hK
+
+end ProcessModel
+
+/-! ### Structural factorization laws, stated on activation equivalence -/
+
+section StructuralFactorization
 
 variable {Party : Type u} {m : Type w → Type w'} {schedulerSampler : m (ULift.{w, 0} Bool)}
 
@@ -166,7 +209,7 @@ example {Δ₁ Γ Δ₂ : PortBoundary}
             W₁))) :=
   openTheory_plug_wire_right_activation_equiv Party m schedulerSampler W₁ W₂ K
 
-end ProcessModel
+end StructuralFactorization
 
 /-! ### Scheduler truth tables -/
 
@@ -205,36 +248,46 @@ example :
     [([true, true], [false, false]), ([true, false], [true]), ([false], [false, true])] :=
   rfl
 
-/-! ### Activation equivalence does not compare samplers -/
+/-! ### Activation equivalence does not imply observation equivalence -/
 
-def samplerTree : TypeTree :=
-  .node (ULift Bool) fun _ => .done
+section ErasureCanary
 
-def samplerStep : Concurrent.StepOver (OpenNodeContext Unit PortBoundary.empty) Unit where
-  tree := samplerTree
-  semantics := ⟨schedulerNode Unit PortBoundary.empty, fun _ => ⟨⟩⟩
-  next := fun _ => ()
+/-- A one-state closed process with one activated Boolean action. The sampler
+is the only component that depends on `sample`. -/
+def samplerProcess (sample : Bool) :
+    OpenProcess.{0, 0, 0, 0} Id PUnit PortBoundary.empty where
+  Proc := PUnit
+  step := fun _ =>
+    { tree := .node Bool fun _ => .done
+      semantics :=
+        ⟨{ controllers := fun _ => []
+           views := fun _ => .hidden
+           boundary := .activated PortBoundary.empty Bool },
+         fun _ => ⟨⟩⟩
+      next := fun _ => PUnit.unit }
+  stepSampler := fun _ => ⟨sample, fun _ => ⟨⟩⟩
 
-def samplerProcess (choice : Bool) : OpenProcess Id Unit PortBoundary.empty where
-  Proc := Unit
-  step := fun _ => samplerStep
-  stepSampler := fun _ => ⟨⟨choice⟩, fun _ => ⟨⟩⟩
+/-- Syntactic equality is a concrete observation that retains the full closed
+process, including its sampler. -/
+abbrev exactProcessObservation :
+    Observation (openTheory PUnit Id (ULift.up true)) :=
+  Observation.eq _
 
-/-- The activation LTS is definitionally identical even though the intrinsic
-samplers choose opposite branches. -/
-example : (samplerProcess true).activationLTS = (samplerProcess false).activationLTS := rfl
-
+/-- The activation-labelled transition systems do not depend on the sampler,
+so these processes are structurally activation equivalent. -/
 example : OpenProcessActivationEquiv (samplerProcess true) (samplerProcess false) := by
-  change Control.DelayBisimulationEquivalent
-    (samplerProcess true).activationLTS (samplerProcess false).activationLTS
-  rw [show (samplerProcess true).activationLTS =
-    (samplerProcess false).activationLTS from rfl]
+  unfold OpenProcessActivationEquiv
+  exact Control.DelayBisimulationEquivalent.refl _
 
-/-- A sampler-aware semantics distinguishes the same two processes directly. -/
-example : TypeTree.samplePath samplerTree ((samplerProcess true).stepSampler ()) =
-    pure ⟨⟨true⟩, ⟨⟩⟩ := rfl
+/-- Exact observation distinguishes the two sampler choices. Together with
+the previous example, this rejects a bridge that erases `stepSampler`. -/
+example : ¬ exactProcessObservation.rel (samplerProcess true) (samplerProcess false) := by
+  intro h
+  injection h with _ _ hsampler
+  have hs := congrFun hsampler PUnit.unit
+  have hb := congrArg Prod.fst hs
+  exact Bool.noConfusion hb
 
-example : TypeTree.samplePath samplerTree ((samplerProcess false).stepSampler ()) =
-    pure ⟨⟨false⟩, ⟨⟩⟩ := rfl
+end ErasureCanary
 
 end Interaction.UC.EmulatesFactorizationExamples

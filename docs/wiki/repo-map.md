@@ -185,11 +185,9 @@ Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    MomentaryCorruption, Leakage}
 
 Interaction/UC/OpenProcessModel -> Interaction/UC/OpenProcessFactorization
-Interaction/UC/{Emulates, OpenProcessModel} -> Interaction/UC/OpenProcessEmulates
-  (Emulates is model-agnostic and must not reach OpenProcess; the bridge that
-   equips the concrete openTheory with observation-level plug commutation
-   therefore sits above both; structural factorization remains separate until
-   a scheduler-aware semantic transport is proved)
+  (a structural result about OpenProcessActivationEquiv only; Emulates is
+   model-agnostic and must not reach OpenProcess, so promoting these laws to a
+   packet- or sampler-aware observation belongs above both and is not in tree)
 ```
 
 `PolyFun.lean` is a generated umbrella import file, not a hand-maintained

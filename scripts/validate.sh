@@ -9,10 +9,11 @@ cd "$REPO_ROOT"
 
 run_lint=0
 run_test=0
+run_axioms=0
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/validate.sh [--lint] [--test]
+Usage: ./scripts/validate.sh [--lint] [--test] [--axioms]
 
 Default checks:
   - lake build
@@ -21,8 +22,9 @@ Default checks:
   - python3 ./scripts/check-docs-integrity.py
 
 Optional checks:
-  --lint   Run `lake lint` (Batteries environment linters)
-  --test   Run `lake test` (builds the PolyFunTest library)
+  --lint    Run `lake lint` (Batteries environment linters)
+  --test    Run `lake test` (builds the PolyFunTest library)
+  --axioms  Test axiomsweep, then enforce the zero axiom/sorry-debt gate
 EOF
 }
 
@@ -33,6 +35,9 @@ for arg in "$@"; do
       ;;
     --test)
       run_test=1
+      ;;
+    --axioms)
+      run_axioms=1
       ;;
     -h|--help)
       usage
@@ -71,6 +76,16 @@ if (( run_test )); then
   echo ""
   echo "# Running test library (lake test)"
   lake test
+fi
+
+if (( run_axioms )); then
+  echo ""
+  echo "# Testing the axiom sweep tool"
+  ./scripts/test-axiomsweep.sh
+
+  echo ""
+  echo "# Enforcing zero axiom/sorry debt"
+  lake exe axiomsweep --check
 fi
 
 echo ""
