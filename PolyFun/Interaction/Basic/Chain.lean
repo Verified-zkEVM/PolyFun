@@ -97,7 +97,12 @@ def toTypeTree : (n : Nat) → Chain n → TypeTree
   | n + 1, ⟨spec, cont⟩ =>
       TypeTree.substMonoid.mult.toFunA ⟨spec, fun tr => toTypeTree n (cont tr)⟩
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the flattening lemmas below equate `toTypeTree` layers with `FreeM.append`
+through the substitution monoid there. `implicit_reducible` (unlike
+`reducible`) stays invisible to simp validation and instance search. -/
 attribute [local implicit_reducible] PFunctor.FreeP.substMonoid PFunctor.FreeP.mult
+  toTypeTree
 
 @[simp, grind =]
 theorem toTypeTree_zero (c : Chain 0) : toTypeTree 0 c = TypeTree.done := rfl
@@ -138,11 +143,9 @@ theorem toTypeTree_replicate (spec : TypeTree) :
     (n : Nat) → toTypeTree n (Chain.replicate spec n) = spec.replicate n
   | 0 => rfl
   | n + 1 => by
-      simp only [Chain.replicate, toTypeTree, PFunctor.FreeM.replicate]
-      rw [TypeTree.substMonoid_mult_toFunA]
-      congr 1
-      funext _
-      exact toTypeTree_replicate spec n
+      simp only [Chain.replicate, toTypeTree, TypeTree.substMonoid_mult_toFunA,
+        PFunctor.FreeM.replicate]
+      congr 1; funext _; exact toTypeTree_replicate spec n
 
 /-- Flattening the finite unfold of a stage-indexed coalgebra agrees with
 `TypeTree.stateChain`. -/
@@ -154,8 +157,8 @@ theorem toTypeTree_ofStateChain (Stage : Nat → Type u)
       PFunctor.FreeM.stateChain PUnit.unit Stage step next n i s
   | 0, _, _ => rfl
   | n + 1, i, s => by
-      simp only [Chain.ofStateChain, toTypeTree, PFunctor.FreeM.stateChain]
-      rw [TypeTree.substMonoid_mult_toFunA]
+      simp only [Chain.ofStateChain, toTypeTree, TypeTree.substMonoid_mult_toFunA,
+        PFunctor.FreeM.stateChain]
       congr 1
       funext tr
       exact toTypeTree_ofStateChain Stage step next n (i + 1) (next i s tr)
@@ -232,7 +235,6 @@ theorem outputFamily_eq_terminal
   | 0, ⟨⟩, _ => rfl
   | n + 1, ⟨spec, cont⟩, path => by
       simp only [outputFamily]
-      change Path (spec.append (fun first => toTypeTree n (cont first))) at path
       rw [PFunctor.FreeM.Path.liftAppend_congr spec _ _ _
         (fun first rest => outputFamily_eq_terminal Family n (cont first) rest)]
       exact PFunctor.FreeM.Path.liftAppend_const (@Family 0 PUnit.unit)

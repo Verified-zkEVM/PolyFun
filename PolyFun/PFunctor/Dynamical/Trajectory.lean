@@ -36,6 +36,11 @@ universe u u₁ u₂ u₃ uA uB w
 
 namespace PFunctor
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the trajectory unfolding equations below rewrite corecursive `constProd`
+objects there, so `P.Obj` must unfold to its sigma form in those checks. -/
+attribute [local implicit_reducible] PFunctor.Obj
+
 /-- The unique successor of a node in a unary (`X`-)cofree tree: read off the single
 child indexed by the lone direction `PUnit.unit`. -/
 def CofreeC.next {α : Type w} (t : CofreeC X.{uA, uB} α) : CofreeC X.{uA, uB} α :=
@@ -63,11 +68,7 @@ are the exposed position, and the children are the successor trajectories. -/
 theorem dest_trajectory (s : DynSystem S p) (st : S) :
     M.dest (trajectory s st)
       = ⟨(s.expose st, s.expose st), fun d => trajectory s (s.update st d)⟩ := by
-  let g : S → constProd p p.A S :=
-    fun state => ⟨(s.expose state, s.expose state), fun d => s.update state d⟩
-  change M.dest (M.corec g st) =
-    ⟨(s.expose st, s.expose st), fun d => M.corec g (s.update st d)⟩
-  rw [M.dest_corec_apply]
+  simp only [trajectory, M.dest_corec_apply]
 
 @[simp] theorem head_trajectory (s : DynSystem S p) (st : S) :
     (trajectory s st).head = s.expose st := by
@@ -130,7 +131,7 @@ theorem trajectory_eq_selfLabel_behavior (s : DynSystem S p) (st : S) :
     s.trajectory st = M.selfLabel (s.behavior st) := by
   refine congrFun (Eq.symm (M.corec_unique _ (fun st => M.selfLabel (s.behavior st)) ?_)) st
   intro st
-  simp only [M.selfLabel]
+  simp only [M.selfLabel, M.dest_corec_apply]
   rfl
 
 /-! ## Closed-system spine

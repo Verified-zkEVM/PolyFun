@@ -62,7 +62,7 @@ variable {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
 
 /-- The trivial handler that interprets each `E`-event as itself, i.e. the
 single-step `lift` from `PolyFun.ITree.Basic`. -/
-@[reducible]
+@[implicit_reducible]
 def id (E : PFunctor.{uEA, uEB}) : Handler E E :=
   fun a => lift a
 

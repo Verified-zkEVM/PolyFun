@@ -15,6 +15,8 @@ open PFunctor
 
 namespace PFunctor.Resumption
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the truncation examples below unfold these signatures there. -/
 attribute [local implicit_reducible] PFunctor.X PFunctor.monomial
 
 universe uA uB uβ
@@ -34,9 +36,10 @@ example : truncate 1 oneQueryTree =
 example : (truncate 1 oneQueryTree).IsTotalRollBound 1 := isTotalRollBound_truncate 1 oneQueryTree
 
 /-- A nontrivial interface whose two answers select different continuations. -/
+-- Lean 4.33: the truncation examples below unfold `branchP` at implicit
+-- transparency.
+@[implicit_reducible]
 def branchP : PFunctor.{0, 0} := monomial Bool Bool
-
-attribute [local implicit_reducible] branchP
 
 def secondProgram : Bool → FreeM branchP Nat
   | false => FreeM.pure 3
@@ -100,9 +103,10 @@ example : truncate 5 twoLevelTree = FreeM.map some twoLevelProgram :=
 
 /-- A query with no directions is a finite one-node program; its continuation
 obligation and its successful factorization are both vacuous. -/
+-- Lean 4.33: the vacuous-factorization examples below unfold
+-- `emptyDirectionP` at implicit transparency.
+@[implicit_reducible]
 def emptyDirectionP : PFunctor.{0, 0} := monomial Unit PEmpty
-
-attribute [local implicit_reducible] emptyDirectionP
 
 def emptyDirectionProgram : FreeM emptyDirectionP Nat :=
   FreeM.liftBind () PEmpty.elim

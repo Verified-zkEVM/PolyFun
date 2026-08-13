@@ -41,6 +41,10 @@ namespace TwoParty
 
 open TwoParty
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the sequential-composition lemmas below rewrite through the runner and the
+strategy family there. `implicit_reducible` (unlike `reducible`) stays
+invisible to simp validation and instance search. -/
 attribute [local implicit_reducible] run InteractionOver.runTypeTree StrategyOver
 
 /-- A lawful monad whose independent effects may be swapped.

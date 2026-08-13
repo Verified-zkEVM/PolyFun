@@ -21,6 +21,8 @@ changes the observed result.
 
 namespace PFunctor.Handler.Normalization.Examples
 
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the handler examples below unfold `monomial` there. -/
 attribute [local implicit_reducible] PFunctor.monomial
 
 abbrev Query : PFunctor.{0, 0} := monomial Bool Nat
@@ -47,7 +49,7 @@ example {m : Type → Type} [Monad m] [LawfulMonad m] {S α : Type}
     (query : Bool) (next : Nat → FreeM Query α) (state : S) :
     h.run (FreeM.lift query >>= next) state =
       (h query).run state >>= fun result => h.run (next result.1) result.2 := by
-  rw [Handler.Stateful.run_bind, Handler.Stateful.run_lift]
+  simp only [handler_nf]
 
 /-- Transformer run equations are part of the same explicit normal form. -/
 example {m : Type → Type} [Monad m] {S α β : Type} (x : StateT S m α)

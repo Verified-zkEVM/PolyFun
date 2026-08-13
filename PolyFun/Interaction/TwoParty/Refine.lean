@@ -304,6 +304,7 @@ theorem ofDecorationOver_map {S T : Type u → Type v} (f : ∀ X, S X → T X) 
   | .node _ rest, ⟨.sender, rRest⟩, ⟨s, rr⟩ => by
       simp only [ofDecorationOver, Decoration.Over.map,
         PFunctor.FreeM.Displayed.Decoration.Over.fiberLocalMap,
+        PFunctor.FreeM.Displayed.Over.FiberLocalMap.toHom,
         PFunctor.FreeM.Displayed.Over.FiberLocalMap.toHomFun, map]
       congr 1; funext x
       exact ofDecorationOver_map f (rest x) (rRest x) (rr x)
@@ -312,6 +313,7 @@ theorem ofDecorationOver_map {S T : Type u → Type v} (f : ∀ X, S X → T X) 
       funext x
       simp only [ofDecorationOver, Decoration.Over.map,
         PFunctor.FreeM.Displayed.Decoration.Over.fiberLocalMap,
+        PFunctor.FreeM.Displayed.Over.FiberLocalMap.toHom,
         PFunctor.FreeM.Displayed.Over.FiberLocalMap.toHomFun, map]
       exact ofDecorationOver_map f (rest x) (rRest x) (rr x)
 

@@ -236,7 +236,7 @@ def objEquiv : (FreeP P).Obj α ≃ FreeM P α where
 
 /-- Relabel the payload stored at every path of a `FreeP` object without
 changing its tree shape. -/
-@[reducible]
+@[implicit_reducible]
 def relabel {β : Type w} (f : α → β) (x : (FreeP P).Obj α) :
     (FreeP P).Obj β :=
   ⟨x.1, f ∘ x.2⟩
@@ -252,7 +252,7 @@ theorem decode_relabel {β : Type w} (f : α → β)
       cases value
       rfl
   | liftBind a rest ih =>
-      simp only [decode, decodeAt, Function.comp_apply, FreeM.map]
+      simp only [decode, decodeAt, relabel, Function.comp_apply, FreeM.map]
       apply congrArg (FreeM.liftBind a)
       funext direction
       exact ih direction

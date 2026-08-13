@@ -64,7 +64,12 @@ def X : PFunctor.{uA, uB} :=
 def linear (A : Type uA) : PFunctor.{uA, uB} :=
   A X^ PUnit
 
-/-- The self monomial polynomial functor `P(X) = S X^ S` -/
+/-- The self monomial polynomial functor `P(X) = S X^ S`.
+
+The body spells out the monomial rather than using `S X^ S` so that the
+head and child types are projections of an explicit structure literal at
+every transparency level; the mate-object equations in the dynamical
+layers rewrite through this carrier during implicit-transparency checks. -/
 @[reducible]
 def selfMonomial (S : Type uA) : PFunctor.{uA, uA} :=
   { A := S, B := fun _ => S }
@@ -131,10 +136,10 @@ abbrev sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max
 /-- Addition of polynomial functors, defined as the sum construction. -/
 @[reducible] instance instHAddPFunctor :
     HAdd PFunctor.{uA₁, uB} PFunctor.{uA₂, uB} PFunctor.{max uA₁ uA₂, uB} where
-  hAdd P Q := ⟨P.A ⊕ Q.A, Sum.elim P.B Q.B⟩
+  hAdd := sum
 
 @[reducible] instance instAddPFunctor : Add PFunctor.{uA, uB} where
-  add P Q := ⟨P.A ⊕ Q.A, Sum.elim P.B Q.B⟩
+  add := sum
 
 lemma add_def (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
     P + Q = ⟨P.A ⊕ Q.A, Sum.elim P.B Q.B⟩ := rfl
