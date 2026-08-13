@@ -184,6 +184,16 @@ Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    Emulates, MachineId, EnvAction,
                                    EnvOpenProcess, CorruptionModel,
                                    MomentaryCorruption, Leakage}
+
+Interaction/UC/OpenTheory -> Interaction/UC/SubTheory
+Interaction/UC/{Emulates, SubTheory} -> Interaction/UC/EmulatesWithin
+Interaction/UC/{OpenSyntax/Expr, SubTheory}
+  -> Interaction/UC/OpenSyntax/AtomSubTheory
+  (SubTheory is a structural membership predicate and depends on the algebra
+   alone; EmulatesWithin uses it specifically for allowed closing contexts.
+   Protocol membership, resource and realizability claims, and links to
+   CorruptionModel require separate bridges. The residual-context lemmas live
+   with EmulatesWithin because the context-formers are defined in Emulates.)
 ```
 
 `PolyFun.lean` is a generated umbrella import file, not a hand-maintained

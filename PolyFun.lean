@@ -101,6 +101,7 @@ public import PolyFun.Interaction.TwoParty.Swap
 public import PolyFun.Interaction.TwoParty.Syntax
 public import PolyFun.Interaction.UC.CorruptionModel
 public import PolyFun.Interaction.UC.Emulates
+public import PolyFun.Interaction.UC.EmulatesWithin
 public import PolyFun.Interaction.UC.EnvAction
 public import PolyFun.Interaction.UC.EnvOpenProcess
 public import PolyFun.Interaction.UC.Interface
@@ -110,10 +111,12 @@ public import PolyFun.Interaction.UC.MomentaryCorruption
 public import PolyFun.Interaction.UC.Notation
 public import PolyFun.Interaction.UC.OpenProcess
 public import PolyFun.Interaction.UC.OpenProcessModel
+public import PolyFun.Interaction.UC.OpenSyntax.AtomSubTheory
 public import PolyFun.Interaction.UC.OpenSyntax.Expr
 public import PolyFun.Interaction.UC.OpenSyntax.Interp
 public import PolyFun.Interaction.UC.OpenSyntax.Raw
 public import PolyFun.Interaction.UC.OpenTheory
+public import PolyFun.Interaction.UC.SubTheory
 public import PolyFun.Logic.HEq
 public import PolyFun.PFunctor.Adjunctions
 public import PolyFun.PFunctor.Basic
