@@ -657,6 +657,48 @@ def OpenNodeContext.boundaryTrace {Party : Type u} {Δ : PortBoundary} : (spec :
   | .node _ rest, ⟨node, next⟩, ⟨x, tr⟩ =>
       node.boundary.emit x * OpenNodeContext.boundaryTrace (rest x) (next x) tr
 
+/-- A completed open node contributes no boundary actions. -/
+@[simp]
+theorem OpenNodeContext.boundaryTrace_done {Party : Type u} {Δ : PortBoundary}
+    (semantics : Decoration (OpenNodeContext.{u, w} Party Δ)
+      (TypeTree.done : TypeTree.{w}))
+    (path : TypeTree.Path (TypeTree.done : TypeTree.{w})) :
+    OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ) TypeTree.done semantics path =
+      (1 : PFunctor.TraceList Δ.Out) := by
+  rfl
+
+/-! The raw and `TypeTree`-facing node equations are both public so callers can
+rewrite without depending on which transparent representation Lean exposes. -/
+
+/-- A raw free-monad node emits the head boundary action and continues along
+the chosen tail. -/
+@[simp]
+theorem OpenNodeContext.boundaryTrace_lift_bind {Party : Type u} {Δ : PortBoundary}
+    {X : Type w} (rest : X → TypeTree.{w})
+    (semantics : Decoration (OpenNodeContext.{u, w} Party Δ) (TypeTree.node X rest))
+    (x : X) (path : TypeTree.Path (rest x)) :
+    OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ)
+        (@PFunctor.FreeM.lift TypeTree.basePFunctor X >>= rest) semantics ⟨x, path⟩ =
+      semantics.1.boundary.emit x *
+        OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ)
+          (rest x) (semantics.2 x) path := by
+  rcases semantics with ⟨node, next⟩
+  rfl
+
+/-- A `TypeTree.node` emits the head boundary action and continues along the
+chosen tail. -/
+theorem OpenNodeContext.boundaryTrace_node {Party : Type u} {Δ : PortBoundary}
+    {X : Type w} (rest : X → TypeTree.{w})
+    (semantics : Decoration (OpenNodeContext.{u, w} Party Δ) (TypeTree.node X rest))
+    (x : X) (path : TypeTree.Path (rest x)) :
+    OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ)
+        (TypeTree.node X rest) semantics ⟨x, path⟩ =
+      semantics.1.boundary.emit x *
+        OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ)
+          (rest x) (semantics.2 x) path := by
+  rcases semantics with ⟨node, next⟩
+  rfl
+
 /--
 The open-world specialization of `StepOver`.
 
@@ -673,6 +715,12 @@ namespace OpenStep
 def boundaryTrace {Party : Type u} {Δ : PortBoundary} {P : Type v}
     (step : OpenStep Party Δ P) (tr : TypeTree.Path step.tree) : PFunctor.TraceList Δ.Out :=
   OpenNodeContext.boundaryTrace step.tree step.semantics tr
+
+/-- The boundary trace of an open step is the trace of its decorated interaction tree. -/
+theorem boundaryTrace_eq {Party : Type u} {Δ : PortBoundary} {P : Type v}
+    (step : OpenStep Party Δ P) (tr : TypeTree.Path step.tree) :
+    boundaryTrace step tr = OpenNodeContext.boundaryTrace step.tree step.semantics tr := by
+  rfl
 
 end OpenStep
 
