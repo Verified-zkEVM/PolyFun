@@ -49,7 +49,7 @@ jobs:
         run: lake exe cache get
 
       - name: Run validation wrapper
-        run: ./scripts/validate.sh
+        run: ./scripts/validate.sh --axioms
 
       - name: Save Lean cache
         if: success() && steps.lake-cache.outputs.cache-hit != 'true'
