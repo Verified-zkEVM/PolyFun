@@ -471,6 +471,19 @@ transition systems and is used to state structural laws for the concrete
 does not retain packet/action identity or sampler effects, so it is not a
 security observation.
 
+`OpenProcessFactorization.lean` proves the four left/right `par` and `wire`
+plug reassociations only at this structural layer. The reassociations change
+the nesting and number of scheduler choices along a path. A sampler-aware or
+probabilistic consumer must additionally transport those scheduler effects and
+prove that its concrete observation is invariant under the transport; the
+activation-equivalence theorems alone do not supply that semantic bridge.
+
+Implementation follow-up: the four proofs repeat the same nested-interleave
+decoration transport. The reusable abstraction belongs at the
+`OpenProcess.interleave` owner layer as a reassociation/permutation theorem;
+the factorization module records the finite scheduler truth tables until that
+owner-level lemma is available.
+
 `OpenSyntax/` provides three layers for free open-system expressions:
 
 - `Raw` is an inductive syntax tree whose constructors mirror the
@@ -515,9 +528,9 @@ consequences:
    scheduler nodes introduced by `par` / `wire` / `plug`) become
    parameters of the concrete model. Each combinator builds the new
    step's sampler via `TypeTree.Sampler.interleave` from its inputs'
-   samplers, so any law about `map` / `par` / `wire` / `plug` that holds
-   in the pure structural theory lifts to the monad-parametric one once
-   `schedulerSampler` is fixed.
+   samplers. This construction is compositional, but a structural law does not
+   automatically lift to sampler semantics: reassociation can change the order
+   or number of scheduler samples even when `schedulerSampler` is fixed.
 
 `TypeTree.Fintype` in
 [`PolyFun/Interaction/Basic/TypeTreeFintype.lean`](../../PolyFun/Interaction/Basic/TypeTreeFintype.lean)
@@ -650,8 +663,8 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `OpenProcess.lean` | `BoundaryAction`, `OpenNodeProfile`, `OpenNodeContext` (with polynomial-product bridge `productView` and structural `boundaryTrace`), `OpenProcess m Party Δ` (monad-parametric, with intrinsic `stepSampler`), `toProcess`, `OpenProcessActivationEquiv` |
 | `OpenProcessModel.lean` | `openTheory m Party schedulerSampler` (concrete model threading `TypeTree.Sampler` through `map` / `par` / `wire` / `plug`), `IsLawful`, monoidal / CC laws up to `OpenProcessActivationEquiv` |
 | `Emulates.lean` | `Observation`, `Emulates`, `UCSecure`. Contextual emulation and UC security stated abstractly over an `Observation` (an equivalence relation on closed systems), with no probability monad and no concrete security predicate. Composition takes its structural input from the observation via `Observation.RespectsPlugComm` / `Observation.RespectsFactorization`; strict `HasPlugWireFactor` theories satisfy both automatically. |
-| `OpenProcessFactorization.lean` | the four `plug` factorization laws for `openTheory` up to `OpenProcessActivationEquiv` (`openTheory_plug_{par,wire}_{left,right}_activation_equiv`), each an `of_step_match` bisimulation re-encoding a two-bit scheduler path as a one-bit one |
-| `OpenProcessEmulates.lean` | `Observation.IsSchedulingInsensitive` (an observation that cannot see activation-preserving scheduling structure) and the `RespectsPlugComm` / `RespectsFactorization` instances it yields for `openTheory`, transporting the activation-equivalence laws onto the abstract composition theorems |
+| `OpenProcessFactorization.lean` | the four structural `plug` factorization laws for `openTheory` up to `OpenProcessActivationEquiv` (`openTheory_plug_{par,wire}_{left,right}_activation_equiv`) and their executable scheduler truth tables; packet/sampler-aware promotion requires a separate scheduler-transport theorem |
+| `OpenProcessEmulates.lean` | the coarse `Observation.IsSchedulingInsensitive` hypothesis and the `RespectsPlugComm` instance it yields for `openTheory`; it does not derive sampler-aware factorization from activation equivalence |
 | `Notation.lean` | UC notation helpers (`∥`, `⊞`, `⊠`, `⊗ᵇ`, `ᵛ`); see [`notation.md`](notation.md) |
 | `MachineId.lean` | machine identifiers |
 | `EnvAction.lean` | environment actions, parametric over an arbitrary monad `m` (no probability dependency) |

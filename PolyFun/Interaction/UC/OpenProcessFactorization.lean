@@ -20,10 +20,12 @@ two sides of a factorization do not even give their step trees the same shape.
 
 They do agree up to `OpenProcessActivationEquiv`. The regrouping only moves
 `.internal` scheduler nodes, and `activationLTS` labels those silent, so the
-delay bisimulation absorbs them. This file proves the four laws, which is what
-lets a scheduling-insensitive observation satisfy
-`Observation.RespectsFactorization` and so hand the process model the UC
-composition theorems (see `OpenProcessEmulates.lean`).
+delay bisimulation absorbs them. This is a structural result only:
+`OpenProcessActivationEquiv` erases packet/action identity and `stepSampler`,
+and these proofs do not transport the nested scheduler samplers. A downstream
+packet-, probability-, or sampler-aware observation needs an additional
+scheduler-transport theorem and an observation-invariance proof before these
+laws imply its factorization laws.
 
 ## Main results
 
@@ -38,6 +40,14 @@ four step obligations re-encode a two-bit scheduler path as a one-bit one (or
 the reverse). The `_right` variants are not derived from the `_left` ones:
 that would need activation equivalence to be a congruence for `plug`, which is
 not currently available.
+
+`OpenProcessFactorization.sourceSchedule`, `leftSchedule`, and `rightSchedule`
+record the scheduler truth tables used by all four proofs. The proofs still
+repeat the decoration-transport argument.
+A reusable `OpenProcess.interleave` reassociation/permutation theorem belongs
+at the process owner layer; the current module keeps that missing abstraction
+visible instead of presenting the repeated proof shape as four independent
+arguments.
 -/
 
 public section
@@ -53,6 +63,38 @@ open Concurrent
 variable (Party : Type u)
 variable (m : Type w → Type w')
 variable (schedulerSampler : m (ULift.{w, 0} Bool))
+
+namespace OpenProcessFactorization
+
+/-- The component selected after flattening either side of a plug
+factorization. -/
+inductive Leaf where
+  | first
+  | second
+  | context
+  deriving DecidableEq, Repr
+
+/-- Scheduler choices on the source shape `plug (compose W₁ W₂) K`.
+The outer choice is listed first; the inner choice is present only when the
+composite is selected. -/
+def sourceSchedule : Leaf → List Bool
+  | .first => [true, true]
+  | .second => [true, false]
+  | .context => [false]
+
+/-- Scheduler choices after factoring through the first component. -/
+def leftSchedule : Leaf → List Bool
+  | .first => [true]
+  | .second => [false, false]
+  | .context => [false, true]
+
+/-- Scheduler choices after factoring through the second component. -/
+def rightSchedule : Leaf → List Bool
+  | .first => [false, false]
+  | .second => [true]
+  | .context => [false, true]
+
+end OpenProcessFactorization
 
 /-- Closing a parallel composition factors through its left component, up to
 activation equivalence: absorbing `W₂` into the context regroups the internal

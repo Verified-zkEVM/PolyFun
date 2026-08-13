@@ -7,17 +7,22 @@ Authors: Devon Tuma
 module
 
 import all PolyFun.Interaction.UC.Emulates
+import all PolyFun.Interaction.Basic.Sampler
+import all PolyFun.Interaction.UC.OpenProcess
+import all PolyFun.Interaction.UC.OpenProcessFactorization
 public import PolyFun.Interaction.UC.Emulates
 public import PolyFun.Interaction.UC.OpenProcessEmulates
+public import PolyFun.Interaction.UC.OpenProcessFactorization
 public import PolyFun.Interaction.UC.OpenSyntax.Expr
 
 /-!
-# Observation-level factorization examples
+# UC factorization examples
 
 Regression checks that the UC composition theorems still reach the free
-syntax models through `respectsFactorization_of_hasPlugWireFactor`, and that
-the process-backed `openTheory` now reaches the `plug` half of the suite
-through `Observation.IsSchedulingInsensitive`.
+syntax models through `respectsFactorization_of_hasPlugWireFactor`. For the
+process model, the examples pin the four structural activation-equivalence
+statements and their scheduler truth tables without promoting them to
+packet-, probability-, or sampler-aware observations.
 -/
 
 @[expose] public section
@@ -70,66 +75,166 @@ example {Δ : PortBoundary}
 
 end FreeModel
 
-/-! ### The process model reaches the whole suite -/
+/-! ### Structural process-model factorization -/
 
 section ProcessModel
 
 variable {Party : Type u} {m : Type w → Type w'} {schedulerSampler : m (ULift.{w, 0} Bool)}
-  (Obs : Observation (openTheory.{u, v, w, w'} Party m schedulerSampler))
-  [Observation.IsSchedulingInsensitive Obs]
 
-/-- A scheduling-insensitive observation on the process model respects plug
-commutation, without any `OpenTheory.HasPlugWireFactor` instance — which
-`openTheory` does not have. -/
-example : Obs.RespectsPlugComm := inferInstance
-
-/-- It respects the full factorization too, so the process model meets the
-same interface as the free syntax models. Note `openTheory` has neither a
-`HasUnit` nor a `HasIdWire` instance, let alone `HasPlugWireFactor`. -/
-example : Obs.RespectsFactorization := inferInstance
-
-/-- **UC composition for `par` on the concrete process model.** This is the
-statement the abstract layer was built for and could not previously reach. -/
+/-- The left parallel law retains its exact structural statement. -/
 example {Δ₁ Δ₂ : PortBoundary}
-    {real₁ ideal₁ : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ₁}
-    {real₂ ideal₂ : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ₂}
-    (h₁ : Emulates real₁ ideal₁ Obs) (h₂ : Emulates real₂ ideal₂ Obs) :
-    Emulates ((openTheory.{u, v, w, w'} Party m schedulerSampler).par real₁ real₂)
-      ((openTheory.{u, v, w, w'} Party m schedulerSampler).par ideal₁ ideal₂) Obs :=
-  Emulates.par_compose h₁ h₂
+    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
+    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+    (K : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :
+    OpenProcessActivationEquiv
+      ((openTheory Party m schedulerSampler).plug
+        ((openTheory Party m schedulerSampler).par W₁ W₂) K)
+      ((openTheory Party m schedulerSampler).plug W₁
+        (OpenProcess.mapBoundary
+          (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₁)).toHom
+          ((openTheory Party m schedulerSampler).wire
+            (Γ := PortBoundary.swap Δ₂)
+            (Δ₂ := PortBoundary.empty)
+            K
+            (OpenProcess.mapBoundary
+              (PortBoundary.Equiv.tensorEmptyRight Δ₂).symm.toHom W₂)))) :=
+  openTheory_plug_par_left_activation_equiv Party m schedulerSampler W₁ W₂ K
 
-/-- **UC composition for `wire` on the concrete process model.** -/
+/-- The right parallel law retains its exact structural statement. -/
+example {Δ₁ Δ₂ : PortBoundary}
+    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
+    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+    (K : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :
+    OpenProcessActivationEquiv
+      ((openTheory Party m schedulerSampler).plug
+        ((openTheory Party m schedulerSampler).par W₁ W₂) K)
+      ((openTheory Party m schedulerSampler).plug W₂
+        (OpenProcess.mapBoundary
+          (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₂)).toHom
+          ((openTheory Party m schedulerSampler).wire
+            (Γ := PortBoundary.swap Δ₁)
+            (Δ₂ := PortBoundary.empty)
+            (OpenProcess.mapBoundary
+              (PortBoundary.Equiv.tensorComm
+                (PortBoundary.swap Δ₁) (PortBoundary.swap Δ₂)).toHom K)
+            (OpenProcess.mapBoundary
+              (PortBoundary.Equiv.tensorEmptyRight Δ₁).symm.toHom W₁)))) :=
+  openTheory_plug_par_right_activation_equiv Party m schedulerSampler W₁ W₂ K
+
+/-- The left wired law retains its exact structural statement. -/
 example {Δ₁ Γ Δ₂ : PortBoundary}
-    {real₁ ideal₁ :
-      (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj (PortBoundary.tensor Δ₁ Γ)}
-    {real₂ ideal₂ : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj
-      (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)}
-    (h₁ : Emulates real₁ ideal₁ Obs) (h₂ : Emulates real₂ ideal₂ Obs) :
-    Emulates ((openTheory.{u, v, w, w'} Party m schedulerSampler).wire real₁ real₂)
-      ((openTheory.{u, v, w, w'} Party m schedulerSampler).wire ideal₁ ideal₂) Obs :=
-  Emulates.wire_compose h₁ h₂
+    (W₁ : OpenProcess.{u, v, w, w'} m Party (PortBoundary.tensor Δ₁ Γ))
+    (W₂ : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
+    (K : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :
+    OpenProcessActivationEquiv
+      ((openTheory Party m schedulerSampler).plug
+        ((openTheory Party m schedulerSampler).wire W₁ W₂) K)
+      ((openTheory Party m schedulerSampler).plug W₁
+        ((openTheory Party m schedulerSampler).wire
+          (Δ₁ := PortBoundary.swap Δ₁)
+          (Γ := PortBoundary.swap Δ₂)
+          (Δ₂ := PortBoundary.swap Γ)
+          K
+          (OpenProcess.mapBoundary
+            (PortBoundary.Equiv.tensorComm (PortBoundary.swap Γ) Δ₂).toHom W₂))) :=
+  openTheory_plug_wire_left_activation_equiv Party m schedulerSampler W₁ W₂ K
 
-/-- Consequently `Emulates.plug_compose` applies to the process model. This is
-the statement that was previously out of reach: the composition theorems were
-gated on strict compact-closed structure that `openTheory` cannot supply. -/
-example {Δ : PortBoundary}
-    {real ideal : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ}
-    {K_real K_ideal :
-      (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj (PortBoundary.swap Δ)}
-    (hProt : Emulates real ideal Obs) (hEnv : Emulates K_real K_ideal Obs) :
-    Obs.rel ((openTheory.{u, v, w, w'} Party m schedulerSampler).close real K_real)
-      ((openTheory.{u, v, w, w'} Party m schedulerSampler).close ideal K_ideal) :=
-  Emulates.plug_compose hProt hEnv
-
-/-- Replacing the environment alone likewise applies. -/
-example {Δ : PortBoundary}
-    (W : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ)
-    {K₁ K₂ : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj (PortBoundary.swap Δ)}
-    (hK : Emulates K₁ K₂ Obs) :
-    Obs.rel ((openTheory.{u, v, w, w'} Party m schedulerSampler).close W K₁)
-      ((openTheory.{u, v, w, w'} Party m schedulerSampler).close W K₂) :=
-  Emulates.plug_right W hK
+/-- The right wired law retains its exact structural statement. -/
+example {Δ₁ Γ Δ₂ : PortBoundary}
+    (W₁ : OpenProcess.{u, v, w, w'} m Party (PortBoundary.tensor Δ₁ Γ))
+    (W₂ : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
+    (K : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :
+    OpenProcessActivationEquiv
+      ((openTheory Party m schedulerSampler).plug
+        ((openTheory Party m schedulerSampler).wire W₁ W₂) K)
+      ((openTheory Party m schedulerSampler).plug W₂
+        (OpenProcess.mapBoundary
+          (PortBoundary.Equiv.tensorComm (PortBoundary.swap Δ₂) Γ).toHom
+          ((openTheory Party m schedulerSampler).wire
+            (Δ₁ := PortBoundary.swap Δ₂)
+            (Γ := PortBoundary.swap Δ₁)
+            (Δ₂ := Γ)
+            (OpenProcess.mapBoundary
+              (PortBoundary.Equiv.tensorComm
+                (PortBoundary.swap Δ₁) (PortBoundary.swap Δ₂)).toHom K)
+            W₁))) :=
+  openTheory_plug_wire_right_activation_equiv Party m schedulerSampler W₁ W₂ K
 
 end ProcessModel
+
+/-! ### Scheduler truth tables -/
+
+open OpenProcessFactorization
+
+/-- Direct canary for `openTheory_plug_par_left_activation_equiv`: its source
+and target schedules select the same three distinguishable leaves. -/
+example :
+    [ (sourceSchedule .first, leftSchedule .first),
+      (sourceSchedule .second, leftSchedule .second),
+      (sourceSchedule .context, leftSchedule .context) ] =
+    [([true, true], [true]), ([true, false], [false, false]), ([false], [false, true])] :=
+  rfl
+
+/-- Direct canary for `openTheory_plug_wire_left_activation_equiv`. -/
+example :
+    [ (sourceSchedule .first, leftSchedule .first),
+      (sourceSchedule .second, leftSchedule .second),
+      (sourceSchedule .context, leftSchedule .context) ] =
+    [([true, true], [true]), ([true, false], [false, false]), ([false], [false, true])] :=
+  rfl
+
+/-- Direct canary for `openTheory_plug_par_right_activation_equiv`. -/
+example :
+    [ (sourceSchedule .first, rightSchedule .first),
+      (sourceSchedule .second, rightSchedule .second),
+      (sourceSchedule .context, rightSchedule .context) ] =
+    [([true, true], [false, false]), ([true, false], [true]), ([false], [false, true])] :=
+  rfl
+
+/-- Direct canary for `openTheory_plug_wire_right_activation_equiv`. -/
+example :
+    [ (sourceSchedule .first, rightSchedule .first),
+      (sourceSchedule .second, rightSchedule .second),
+      (sourceSchedule .context, rightSchedule .context) ] =
+    [([true, true], [false, false]), ([true, false], [true]), ([false], [false, true])] :=
+  rfl
+
+/-! ### Activation equivalence does not compare samplers -/
+
+def samplerTree : TypeTree :=
+  .node (ULift Bool) fun _ => .done
+
+def samplerStep : Concurrent.StepOver (OpenNodeContext Unit PortBoundary.empty) Unit where
+  tree := samplerTree
+  semantics := ⟨schedulerNode Unit PortBoundary.empty, fun _ => ⟨⟩⟩
+  next := fun _ => ()
+
+def samplerProcess (choice : Bool) : OpenProcess Id Unit PortBoundary.empty where
+  Proc := Unit
+  step := fun _ => samplerStep
+  stepSampler := fun _ => ⟨⟨choice⟩, fun _ => ⟨⟩⟩
+
+/-- The activation LTS is definitionally identical even though the intrinsic
+samplers choose opposite branches. -/
+example : (samplerProcess true).activationLTS = (samplerProcess false).activationLTS := rfl
+
+example : OpenProcessActivationEquiv (samplerProcess true) (samplerProcess false) := by
+  change Control.DelayBisimulationEquivalent
+    (samplerProcess true).activationLTS (samplerProcess false).activationLTS
+  rw [show (samplerProcess true).activationLTS =
+    (samplerProcess false).activationLTS from rfl]
+
+/-- A sampler-aware semantics distinguishes the same two processes directly. -/
+example : TypeTree.samplePath samplerTree ((samplerProcess true).stepSampler ()) =
+    pure ⟨⟨true⟩, ⟨⟩⟩ := rfl
+
+example : TypeTree.samplePath samplerTree ((samplerProcess false).stepSampler ()) =
+    pure ⟨⟨false⟩, ⟨⟩⟩ := rfl
 
 end Interaction.UC.EmulatesFactorizationExamples
