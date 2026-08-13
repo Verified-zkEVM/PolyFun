@@ -194,6 +194,11 @@ Interaction/UC/{OpenSyntax/Expr, SubTheory}
    Protocol membership, resource and realizability claims, and links to
    CorruptionModel require separate bridges. The residual-context lemmas live
    with EmulatesWithin because the context-formers are defined in Emulates.)
+
+Interaction/UC/OpenProcessModel -> Interaction/UC/OpenProcessFactorization
+  (a structural result about OpenProcessActivationEquiv only; Emulates is
+   model-agnostic and must not reach OpenProcess, so promoting these laws to a
+   packet- or sampler-aware observation belongs above both and is not in tree)
 ```
 
 `PolyFun.lean` is a generated umbrella import file, not a hand-maintained

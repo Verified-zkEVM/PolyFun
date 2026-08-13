@@ -110,6 +110,7 @@ public import PolyFun.Interaction.UC.MachineId
 public import PolyFun.Interaction.UC.MomentaryCorruption
 public import PolyFun.Interaction.UC.Notation
 public import PolyFun.Interaction.UC.OpenProcess
+public import PolyFun.Interaction.UC.OpenProcessFactorization
 public import PolyFun.Interaction.UC.OpenProcessModel
 public import PolyFun.Interaction.UC.OpenSyntax.AtomSubTheory
 public import PolyFun.Interaction.UC.OpenSyntax.Expr

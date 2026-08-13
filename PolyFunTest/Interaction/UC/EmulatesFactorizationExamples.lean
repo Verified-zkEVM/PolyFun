@@ -8,8 +8,10 @@ module
 
 import all PolyFun.Interaction.UC.Emulates
 import all PolyFun.Interaction.UC.OpenProcessModel
+import all PolyFun.Interaction.UC.OpenProcessFactorization
 public import PolyFun.Interaction.UC.Emulates
 public import PolyFun.Interaction.UC.OpenProcessModel
+public import PolyFun.Interaction.UC.OpenProcessFactorization
 public import PolyFun.Interaction.UC.OpenSyntax.Expr
 
 /-!
@@ -19,6 +21,12 @@ Regression checks that the UC composition theorems still reach the free
 syntax models through `respectsFactorization_of_hasPlugWireFactor`, and that
 the process-backed `openTheory` reaches the `plug` half of the suite from an
 exact `Observation.RespectsPlugComm` assumption.
+
+Separately, the four structural factorization laws of
+`OpenProcessFactorization.lean` are pinned at their exact statements, together
+with the scheduler truth tables the proofs re-encode. Those are results about
+`OpenProcessActivationEquiv` alone and are deliberately not promoted to any
+observation here.
 
 The final canary uses syntactic equality as a concrete, nontrivial observation
 on closed processes. Two processes that differ only in `stepSampler` are
@@ -109,6 +117,136 @@ example {Δ : PortBoundary}
   Emulates.plug_right W hK
 
 end ProcessModel
+
+/-! ### Structural factorization laws, stated on activation equivalence -/
+
+section StructuralFactorization
+
+variable {Party : Type u} {m : Type w → Type w'} {schedulerSampler : m (ULift.{w, 0} Bool)}
+
+/-- The left parallel law retains its exact structural statement. -/
+example {Δ₁ Δ₂ : PortBoundary}
+    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
+    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+    (K : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :
+    OpenProcessActivationEquiv
+      ((openTheory Party m schedulerSampler).plug
+        ((openTheory Party m schedulerSampler).par W₁ W₂) K)
+      ((openTheory Party m schedulerSampler).plug W₁
+        (OpenProcess.mapBoundary
+          (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₁)).toHom
+          ((openTheory Party m schedulerSampler).wire
+            (Γ := PortBoundary.swap Δ₂)
+            (Δ₂ := PortBoundary.empty)
+            K
+            (OpenProcess.mapBoundary
+              (PortBoundary.Equiv.tensorEmptyRight Δ₂).symm.toHom W₂)))) :=
+  openTheory_plug_par_left_activation_equiv Party m schedulerSampler W₁ W₂ K
+
+/-- The right parallel law retains its exact structural statement. -/
+example {Δ₁ Δ₂ : PortBoundary}
+    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
+    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+    (K : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :
+    OpenProcessActivationEquiv
+      ((openTheory Party m schedulerSampler).plug
+        ((openTheory Party m schedulerSampler).par W₁ W₂) K)
+      ((openTheory Party m schedulerSampler).plug W₂
+        (OpenProcess.mapBoundary
+          (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₂)).toHom
+          ((openTheory Party m schedulerSampler).wire
+            (Γ := PortBoundary.swap Δ₁)
+            (Δ₂ := PortBoundary.empty)
+            (OpenProcess.mapBoundary
+              (PortBoundary.Equiv.tensorComm
+                (PortBoundary.swap Δ₁) (PortBoundary.swap Δ₂)).toHom K)
+            (OpenProcess.mapBoundary
+              (PortBoundary.Equiv.tensorEmptyRight Δ₁).symm.toHom W₁)))) :=
+  openTheory_plug_par_right_activation_equiv Party m schedulerSampler W₁ W₂ K
+
+/-- The left wired law retains its exact structural statement. -/
+example {Δ₁ Γ Δ₂ : PortBoundary}
+    (W₁ : OpenProcess.{u, v, w, w'} m Party (PortBoundary.tensor Δ₁ Γ))
+    (W₂ : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
+    (K : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :
+    OpenProcessActivationEquiv
+      ((openTheory Party m schedulerSampler).plug
+        ((openTheory Party m schedulerSampler).wire W₁ W₂) K)
+      ((openTheory Party m schedulerSampler).plug W₁
+        ((openTheory Party m schedulerSampler).wire
+          (Δ₁ := PortBoundary.swap Δ₁)
+          (Γ := PortBoundary.swap Δ₂)
+          (Δ₂ := PortBoundary.swap Γ)
+          K
+          (OpenProcess.mapBoundary
+            (PortBoundary.Equiv.tensorComm (PortBoundary.swap Γ) Δ₂).toHom W₂))) :=
+  openTheory_plug_wire_left_activation_equiv Party m schedulerSampler W₁ W₂ K
+
+/-- The right wired law retains its exact structural statement. -/
+example {Δ₁ Γ Δ₂ : PortBoundary}
+    (W₁ : OpenProcess.{u, v, w, w'} m Party (PortBoundary.tensor Δ₁ Γ))
+    (W₂ : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
+    (K : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :
+    OpenProcessActivationEquiv
+      ((openTheory Party m schedulerSampler).plug
+        ((openTheory Party m schedulerSampler).wire W₁ W₂) K)
+      ((openTheory Party m schedulerSampler).plug W₂
+        (OpenProcess.mapBoundary
+          (PortBoundary.Equiv.tensorComm (PortBoundary.swap Δ₂) Γ).toHom
+          ((openTheory Party m schedulerSampler).wire
+            (Δ₁ := PortBoundary.swap Δ₂)
+            (Γ := PortBoundary.swap Δ₁)
+            (Δ₂ := Γ)
+            (OpenProcess.mapBoundary
+              (PortBoundary.Equiv.tensorComm
+                (PortBoundary.swap Δ₁) (PortBoundary.swap Δ₂)).toHom K)
+            W₁))) :=
+  openTheory_plug_wire_right_activation_equiv Party m schedulerSampler W₁ W₂ K
+
+end StructuralFactorization
+
+/-! ### Scheduler truth tables -/
+
+open OpenProcessFactorization
+
+/-- Direct canary for `openTheory_plug_par_left_activation_equiv`: its source
+and target schedules select the same three distinguishable leaves. -/
+example :
+    [ (sourceSchedule .first, leftSchedule .first),
+      (sourceSchedule .second, leftSchedule .second),
+      (sourceSchedule .context, leftSchedule .context) ] =
+    [([true, true], [true]), ([true, false], [false, false]), ([false], [false, true])] :=
+  rfl
+
+/-- Direct canary for `openTheory_plug_wire_left_activation_equiv`. -/
+example :
+    [ (sourceSchedule .first, leftSchedule .first),
+      (sourceSchedule .second, leftSchedule .second),
+      (sourceSchedule .context, leftSchedule .context) ] =
+    [([true, true], [true]), ([true, false], [false, false]), ([false], [false, true])] :=
+  rfl
+
+/-- Direct canary for `openTheory_plug_par_right_activation_equiv`. -/
+example :
+    [ (sourceSchedule .first, rightSchedule .first),
+      (sourceSchedule .second, rightSchedule .second),
+      (sourceSchedule .context, rightSchedule .context) ] =
+    [([true, true], [false, false]), ([true, false], [true]), ([false], [false, true])] :=
+  rfl
+
+/-- Direct canary for `openTheory_plug_wire_right_activation_equiv`. -/
+example :
+    [ (sourceSchedule .first, rightSchedule .first),
+      (sourceSchedule .second, rightSchedule .second),
+      (sourceSchedule .context, rightSchedule .context) ] =
+    [([true, true], [false, false]), ([true, false], [true]), ([false], [false, true])] :=
+  rfl
 
 /-! ### Activation equivalence does not imply observation equivalence -/
 
