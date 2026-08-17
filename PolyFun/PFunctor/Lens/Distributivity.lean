@@ -18,7 +18,7 @@ Functors: A Mathematical Theory of Interaction*, Chapter 6.
 
 Substitution distributes over the various operations *on the left* — that is,
 in the outer position of `p ◃ r` — because at the level of the underlying
-endofunctors `(p ◃ r)(X) = p(r(X))` and `p ↦ p(r(X))` preserves sums and
+endofunctors `(p ◃ r)(y) = p(r(y))` and `p ↦ p(r(y))` preserves sums and
 products.
 
 * **Prop. 6.47 / (6.48)** `(p + q) ◃ r ≃ₗ (p ◃ r) + (q ◃ r)` is already available
@@ -137,7 +137,7 @@ sends each `a` to a function `p.B (toFunA a) → B`; bundling these pointwise gi
 an element of `p.Obj B = Σ x : p.A, (p.B x → B)`. Both round-trips hold
 definitionally. -/
 def homMonomialEquiv {A : Type uA} {B : Type uB} {p : PFunctor.{uA₂, uB₂}} :
-    Lens (monomial A B) p ≃ (A → p.Obj B) where
+    Lens (A y^ B) p ≃ (A → p.Obj B) where
   toFun := fun l a => ⟨l.toFunA a, l.toFunB a⟩
   invFun := fun g => (fun a => (g a).1) ⇆ (fun a => (g a).2)
   left_inv := fun _ => rfl

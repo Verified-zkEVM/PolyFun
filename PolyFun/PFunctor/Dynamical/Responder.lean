@@ -15,10 +15,10 @@ public import PolyFun.PFunctor.Dynamical.Basic
 A **responder** for an interface `q` receives `q`-positions (queries) and returns
 `q`-directions (answers), updating an internal state as it goes. Following
 Spivak–Niu, *Polynomial Functors: A Mathematical Theory of Interaction* (Ex 4.78),
-this is exactly a dynamical system over the internal hom `q ⊸ X`: by `ihom_X_A`
-the positions of `q ⊸ X` are the sections of `q`, so at each state the responder
-*commits* to an answer for every possible query, and a direction of `q ⊸ X` over
-a committed section carries only the query actually asked (its `X`-component is
+this is exactly a dynamical system over the internal hom `q ⊸ y`: by `ihom_y_A`
+the positions of `q ⊸ y` are the sections of `q`, so at each state the responder
+*commits* to an answer for every possible query, and a direction of `q ⊸ y` over
+a committed section carries only the query actually asked (its `y`-component is
 trivial). The dynamical accessors under responder names are
 
 * `Responder.committed : S → Section q` — the answer-section exposed at a state;
@@ -39,19 +39,19 @@ universe u v uA uB
 namespace PFunctor
 
 /-- A **responder** with states `S` for the interface `q`: a dynamical system over
-the internal hom `q ⊸ X` (Spivak–Niu Ex 4.78). By `ihom_X_A` its exposed
+the internal hom `q ⊸ y` (Spivak–Niu Ex 4.78). By `ihom_y_A` its exposed
 positions are the sections of `q` — at each state the responder commits to an
 answer for every possible query — and a direction over a committed section is
 just a query, so `update` evolves the state by the query heard. -/
 abbrev Responder (S : Type u) (q : PFunctor.{uA, uB}) : Type _ :=
-  DynSystem S (q ⊸ X.{uA, uB})
+  DynSystem S (q ⊸ y.{uA, uB})
 
 namespace Responder
 
 variable {S : Type u} {q : PFunctor.{uA, uB}}
 
 /-- The answer-section a responder commits to at state `s`: its exposed position,
-read as a `Section q` through `ihom_X_A`. -/
+read as a `Section q` through `ihom_y_A`. -/
 def committed (R : Responder S q) (s : S) : Section q :=
   DynSystem.expose R s
 
@@ -111,15 +111,15 @@ theorem answer_eq_committed (R : Responder S q) (s : S) (a : q.A) :
     R.answer s a = (R.committed s).toFunB a PUnit.unit := rfl
 
 /-- A responder's raw lens update reads only the query component of a direction —
-the `X`-component is trivial. Definitional, by sigma and unit eta. -/
-@[simp] theorem update_eq_next (R : Responder S q) (s : S) (d : (q ⊸ X).B (DynSystem.expose R s)) :
+the `y`-component is trivial. Definitional, by sigma and unit eta. -/
+@[simp] theorem update_eq_next (R : Responder S q) (s : S) (d : (q ⊸ y).B (DynSystem.expose R s)) :
     DynSystem.update R s d = R.next s d.1 := rfl
 
 /-! ## Stateless responders -/
 
 /-- The stateless responder answering along a fixed section of `q`. -/
 def ofSection (σ : Section q) : Responder PUnit.{v + 1} q :=
-  Lens.fromX σ
+  Lens.fromY σ
 
 @[simp] theorem committed_ofSection (σ : Section q) (s : PUnit.{v + 1}) :
     (ofSection σ).committed s = σ := rfl

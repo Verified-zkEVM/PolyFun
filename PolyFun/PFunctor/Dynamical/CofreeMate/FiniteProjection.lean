@@ -40,9 +40,9 @@ after removing the innermost right composition unit. -/
 theorem cofreeMate_comp_projectionN_two
     {S : Type u} {P : PFunctor.{u, u}} (system : DynSystem S P) :
     (system.cofreeMate.toLens ⨟ CofreeP.projectionN P 2) ⨟
-        (Lens.id P ◃ₗ Lens.Equiv.compX.toLens) =
+        (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) =
       system.twoStep := by
-  exact (congrArg (fun lens => (Lens.id P ◃ₗ Lens.Equiv.compX.toLens) ∘ₗ lens)
+  exact (congrArg (fun lens => (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ lens)
     (cofreeMate_comp_projectionN system 2)).trans (nStep_two_eq_twoStep system)
 
 end DynSystem

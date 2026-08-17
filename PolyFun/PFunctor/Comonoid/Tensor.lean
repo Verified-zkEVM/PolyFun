@@ -24,7 +24,7 @@ The counit uses `Lens.tensorUnitMap` to compare their independently instantiated
 copies of the composition unit with the unit at the componentwise maximum.
 Tensor products of retrofunctors are defined componentwise.
 
-The common composition unit `X` is packaged as `Comonoid.unit`.  The tensor
+The common composition unit `y` is packaged as `Comonoid.unit`.  The tensor
 left/right unitors and associator lift to `CategoryTheory.Iso`s of comonoids;
 their forward and inverse retrofunctors use exactly the corresponding
 polynomial-lens equivalences.
@@ -39,38 +39,38 @@ namespace Comonoid
 
 /-! ## The composition-unit comonoid -/
 
-/-- The composition unit `X` as a composition comonoid.  Its counit and
+/-- The composition unit `y` as a composition comonoid.  Its counit and
 comultiplication are the canonical maps between universe-instantiated copies
-of `X`; all of its arrows are the unique unit arrow. -/
+of `y`; all of its arrows are the unique unit arrow. -/
 @[reducible]
 def unit : Comonoid.{uA, uB} where
-  carrier := X
+  carrier := y
   counit := Lens.unitComparison
   comult := Lens.compUnitMap ∘ₗ
-    (Lens.unitComparison : Lens X.{uA, uB} X.{max uA uB, uB})
+    (Lens.unitComparison : Lens y.{uA, uB} y.{max uA uB, uB})
   counit_left := Lens.compUnitMap_counit_left
   counit_right := Lens.compUnitMap_counit_right
   coassoc := Lens.compUnitMap_coassoc.{uA, uB}
 
-@[simp] theorem unit_carrier : (unit.{uA, uB}).carrier = X := rfl
+@[simp] theorem unit_carrier : (unit.{uA, uB}).carrier = y := rfl
 
 /-- The counit of the composition-unit comonoid is the canonical comparison
 between its two universe instantiations. -/
 theorem unit_counit : (unit.{uA, uB}).counit = Lens.unitComparison := rfl
 
 /-- The comultiplication of the composition-unit comonoid is the canonical
-map `X ⇆ X ◃ X`, after comparing its source universe instantiation. -/
+map `y ⇆ y ◃ y`, after comparing its source universe instantiation. -/
 theorem unit_comult :
     (unit.{uA, uB}).comult =
       Lens.compUnitMap ∘ₗ
-        (Lens.unitComparison : Lens X.{uA, uB} X.{max uA uB, uB}) := rfl
+        (Lens.unitComparison : Lens y.{uA, uB} y.{max uA uB, uB}) := rfl
 
 /-! ## Tensor product -/
 
 /-- The counit of the tensor product of two composition comonoids. -/
 def tensorCounit (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
     Lens (C.carrier ⊗ D.carrier)
-      X.{max (max uA₁ uA₂) (max uB₁ uB₂), max uB₁ uB₂} :=
+      y.{max (max uA₁ uA₂) (max uB₁ uB₂), max uB₁ uB₂} :=
   Lens.tensorUnitMap ∘ₗ (C.counit ⊗ₗ D.counit)
 
 /-- The comultiplication of the tensor product of two composition comonoids. -/
@@ -82,22 +82,22 @@ def tensorComult (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
 
 private theorem tensorCounit_left_factor (C : Comonoid.{uA₁, uB₁})
     (D : Comonoid.{uA₂, uB₂}) :
-    Lens.Equiv.XComp.toLens ∘ₗ
+    Lens.Equiv.yComp.toLens ∘ₗ
         (tensorCounit C D ◃ₗ Lens.id (C.carrier ⊗ D.carrier)) ∘ₗ
         tensorComult C D =
-      ((Lens.Equiv.XComp.toLens ∘ₗ
+      ((Lens.Equiv.yComp.toLens ∘ₗ
           (C.counit ◃ₗ Lens.id C.carrier) ∘ₗ C.comult) ⊗ₗ
-        (Lens.Equiv.XComp.toLens ∘ₗ
+        (Lens.Equiv.yComp.toLens ∘ₗ
           (D.counit ◃ₗ Lens.id D.carrier) ∘ₗ D.comult)) := rfl
 
 private theorem tensorCounit_right_factor (C : Comonoid.{uA₁, uB₁})
     (D : Comonoid.{uA₂, uB₂}) :
-    Lens.Equiv.compX.toLens ∘ₗ
+    Lens.Equiv.compY.toLens ∘ₗ
         (Lens.id (C.carrier ⊗ D.carrier) ◃ₗ tensorCounit C D) ∘ₗ
         tensorComult C D =
-      ((Lens.Equiv.compX.toLens ∘ₗ
+      ((Lens.Equiv.compY.toLens ∘ₗ
           (Lens.id C.carrier ◃ₗ C.counit) ∘ₗ C.comult) ⊗ₗ
-        (Lens.Equiv.compX.toLens ∘ₗ
+        (Lens.Equiv.compY.toLens ∘ₗ
           (Lens.id D.carrier ◃ₗ D.counit) ∘ₗ D.comult)) := rfl
 
 private theorem tensorComult_assoc_left_factor (C : Comonoid.{uA₁, uB₁})
@@ -164,11 +164,11 @@ comonoids.  Both directions preserve identities and composition. -/
 def tensorUnitLeftIso (C : Comonoid.{uA, uB}) :
     CategoryTheory.Iso (tensor (unit.{uA, uB}) C) C where
   hom := {
-    toLens := (Lens.Equiv.xTensor (P := C.carrier)).toLens
+    toLens := (Lens.Equiv.yTensor (P := C.carrier)).toLens
     map_counit := rfl
     map_comult := rfl }
   inv := {
-    toLens := (Lens.Equiv.xTensor (P := C.carrier)).invLens
+    toLens := (Lens.Equiv.yTensor (P := C.carrier)).invLens
     map_counit := rfl
     map_comult := rfl }
   hom_inv_id := rfl
@@ -176,22 +176,22 @@ def tensorUnitLeftIso (C : Comonoid.{uA, uB}) :
 
 @[simp] theorem tensorUnitLeftIso_hom_toLens (C : Comonoid.{uA, uB}) :
     (tensorUnitLeftIso C).hom.toLens =
-      (Lens.Equiv.xTensor (P := C.carrier)).toLens := rfl
+      (Lens.Equiv.yTensor (P := C.carrier)).toLens := rfl
 
 @[simp] theorem tensorUnitLeftIso_inv_toLens (C : Comonoid.{uA, uB}) :
     (tensorUnitLeftIso C).inv.toLens =
-      (Lens.Equiv.xTensor (P := C.carrier)).invLens := rfl
+      (Lens.Equiv.yTensor (P := C.carrier)).invLens := rfl
 
 /-- The right tensor unitor, lifted from polynomial lenses to composition
 comonoids.  Both directions preserve identities and composition. -/
 def tensorUnitRightIso (C : Comonoid.{uA, uB}) :
     CategoryTheory.Iso (tensor C (unit.{uA, uB})) C where
   hom := {
-    toLens := (Lens.Equiv.tensorX (P := C.carrier)).toLens
+    toLens := (Lens.Equiv.tensorY (P := C.carrier)).toLens
     map_counit := rfl
     map_comult := rfl }
   inv := {
-    toLens := (Lens.Equiv.tensorX (P := C.carrier)).invLens
+    toLens := (Lens.Equiv.tensorY (P := C.carrier)).invLens
     map_counit := rfl
     map_comult := rfl }
   hom_inv_id := rfl
@@ -199,11 +199,11 @@ def tensorUnitRightIso (C : Comonoid.{uA, uB}) :
 
 @[simp] theorem tensorUnitRightIso_hom_toLens (C : Comonoid.{uA, uB}) :
     (tensorUnitRightIso C).hom.toLens =
-      (Lens.Equiv.tensorX (P := C.carrier)).toLens := rfl
+      (Lens.Equiv.tensorY (P := C.carrier)).toLens := rfl
 
 @[simp] theorem tensorUnitRightIso_inv_toLens (C : Comonoid.{uA, uB}) :
     (tensorUnitRightIso C).inv.toLens =
-      (Lens.Equiv.tensorX (P := C.carrier)).invLens := rfl
+      (Lens.Equiv.tensorY (P := C.carrier)).invLens := rfl
 
 /-- The tensor associator, lifted from polynomial lenses to composition
 comonoids.  The three input universe pairs remain independent. -/

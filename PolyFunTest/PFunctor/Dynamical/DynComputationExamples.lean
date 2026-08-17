@@ -35,8 +35,8 @@ example : emptyPure = ofFn (fun _ : Nat => 5) := by
   unfold emptyPure
   exact pure_eq_ofFn 5
 
-/-- A computation that perpetually exposes the unique query of `X`. -/
-def querying : DynComputation.{0} X.{0, 0} Unit Nat where
+/-- A computation that perpetually exposes the unique query of `y`. -/
+def querying : DynComputation.{0} y.{0, 0} Unit Nat where
   State := Unit
   toDynSystem := (fun _ : Unit => Sum.inl PUnit.unit) ⇆ fun _ _ => ()
   init := id
@@ -45,7 +45,7 @@ example : querying.view (querying.init ()) =
     Sum.inr ⟨PUnit.unit, fun _ => querying.init ()⟩ := rfl
 
 example : Resumption.dest (querying.denote ()) =
-    Sum.map (fun value : Nat => value) (X.map querying.toDynSystem.behavior)
+    Sum.map (fun value : Nat => value) (y.map querying.toDynSystem.behavior)
       (querying.view (querying.init ())) :=
   by simpa only using dest_denote querying ()
 
@@ -53,7 +53,7 @@ example : Resumption.dest (querying.denote ()) =
 
 /-- A resumption realization preserves both its state-level view and its
 state-free denotation. -/
-def realizedQuerying : DynComputation X Unit Nat :=
+def realizedQuerying : DynComputation y Unit Nat :=
   ofResumption fun _ => querying.denote ()
 
 example : realizedQuerying.view (realizedQuerying.init ()) =
@@ -81,7 +81,7 @@ example {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
 
 /-- A one-query finite program used to exercise the residual-program
 realization. -/
-def oneQuery (_ : Unit) : FreeM X Nat :=
+def oneQuery (_ : Unit) : FreeM y Nat :=
   FreeM.liftBind PUnit.unit fun _ => pure 7
 
 example : (ofFreeM oneQuery).denote () = FreeM.toResumption (oneQuery ()) :=
@@ -98,7 +98,7 @@ example : ofFreeM oneQuery ⊨ oneQuery :=
   implements_ofFreeM oneQuery
 
 /-- A noncanonical realization uses `Bool` states instead of residual programs. -/
-def boolRealization : DynComputation X Unit Nat where
+def boolRealization : DynComputation y Unit Nat where
   State := Bool
   toDynSystem :=
     (fun
@@ -110,7 +110,7 @@ def boolRealization : DynComputation X Unit Nat where
   init := fun _ => false
 
 /-- Relate the implementation states to the corresponding residual programs. -/
-inductive BoolResidual : Bool → FreeM X Nat → Prop
+inductive BoolResidual : Bool → FreeM y Nat → Prop
   | start : BoolResidual false (oneQuery ())
   | done : BoolResidual true (FreeM.pure 7)
 
@@ -167,7 +167,7 @@ example : (emptyOfFn.{0, 0}.seqComp emptyDouble).view
 example : (emptyOfFn.{0, 0}.seqComp emptyDouble).denote 4 = Resumption.pure 10 := by
   simp [emptyOfFn, emptyDouble]
 
-def plusOneProgram (value : Nat) : FreeM X Nat := pure (value + 1)
+def plusOneProgram (value : Nat) : FreeM y Nat := pure (value + 1)
 
 example : (ofFreeM oneQuery).seqComp (ofFreeM plusOneProgram) ⊨
     (fun input => FreeM.bind (oneQuery input) plusOneProgram) :=
@@ -176,25 +176,25 @@ example : (ofFreeM oneQuery).seqComp (ofFreeM plusOneProgram) ⊨
 /-- Composition congruence compares genuinely different hidden-state
 realizations on the first phase. -/
 example : ObsEq
-    (boolRealization.seqComp (ofFn (p := X) (· + 1)))
-    ((ofFreeM oneQuery).seqComp (ofFn (p := X) (· + 1))) :=
+    (boolRealization.seqComp (ofFn (p := y) (· + 1)))
+    ((ofFreeM oneQuery).seqComp (ofFn (p := y) (· + 1))) :=
   (ObsEq.of_implements boolImplements (implements_ofFreeM oneQuery)).seqComp
     (ObsEq.refl _)
 
 example : ObsEq
-    (((ofFreeM oneQuery).seqComp (ofFn (p := X) (· + 1))).seqComp
-      (ofFn (p := X) (· * 2)))
+    (((ofFreeM oneQuery).seqComp (ofFn (p := y) (· + 1))).seqComp
+      (ofFn (p := y) (· * 2)))
     ((ofFreeM oneQuery).seqComp
-      ((ofFn (p := X) (· + 1)).seqComp (ofFn (p := X) (· * 2)))) :=
+      ((ofFn (p := y) (· + 1)).seqComp (ofFn (p := y) (· * 2)))) :=
   seqComp_assoc_obsEq _ _ _
 
 example : ObsEq
-    ((ofFn (p := X) (fun _ : Unit => (3 : Nat))).seqComp (ofFreeM plusOneProgram))
+    ((ofFn (p := y) (fun _ : Unit => (3 : Nat))).seqComp (ofFreeM plusOneProgram))
     ((ofFreeM plusOneProgram).contramapInput (fun _ : Unit => (3 : Nat))) :=
   ofFn_seqComp_obsEq _ _
 
 example : ObsEq
-    ((ofFreeM oneQuery).seqComp (ofFn (p := X) (· + 1)))
+    ((ofFreeM oneQuery).seqComp (ofFn (p := y) (· + 1)))
     ((ofFreeM oneQuery).mapResult (· + 1)) :=
   seqComp_ofFn_obsEq _ _
 
@@ -249,11 +249,11 @@ example (f₁ g₁ f₂ g₂ : Nat → Nat) :
   dimap_comp emptyOfFn f₁ g₁ f₂ g₂
 
 /-- A branch-sensitive interface with a genuinely nonidentity answer map. -/
-def branchSource : PFunctor.{0, 0} := monomial Bool Bool
+def branchSource : PFunctor.{0, 0} := Bool y^ Bool
 
-def branchTarget : PFunctor.{0, 0} := monomial (Fin 2) (Fin 3)
+def branchTarget : PFunctor.{0, 0} := (Fin 2) y^ (Fin 3)
 
-def branchFinal : PFunctor.{0, 0} := monomial Bool Bool
+def branchFinal : PFunctor.{0, 0} := Bool y^ Bool
 
 def branchLens : Lens branchSource branchTarget where
   toFunA output := by
@@ -419,9 +419,9 @@ example : ObsEq
   simp [boolResult]
 
 /-- The outer interface can observe only the `false` source answer. -/
-def lossySource : PFunctor.{0, 0} := monomial Unit Bool
+def lossySource : PFunctor.{0, 0} := Unit y^ Bool
 
-def lossyLens : Lens lossySource X where
+def lossyLens : Lens lossySource y where
   toFunA _ := PUnit.unit
   toFunB _ _ := false
 
@@ -435,7 +435,7 @@ def sourceMachine (trueResult : Nat) : DynComputation lossySource Unit Nat :=
 
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
 the observation examples below unfold these constants there. -/
-attribute [local implicit_reducible] PFunctor.X lossySource lossyLens sourceTree
+attribute [local implicit_reducible] PFunctor.y lossySource lossyLens sourceTree
   sourceMachine
 
 def observeTrueResult (tree : Resumption lossySource Nat) : Option Nat :=
@@ -466,19 +466,19 @@ example : (ofFreeM oneQuery).mapResult (· + 1) ⊨
     (fun input => FreeM.map (· + 1) (oneQuery input)) :=
   (implements_ofFreeM oneQuery).mapResult (· + 1)
 
-example : (ofFreeM oneQuery).wrap (Lens.id X) ⊨
-    (fun input => (oneQuery input).mapLens (Lens.id X)) :=
-  (implements_ofFreeM oneQuery).wrap (Lens.id X)
+example : (ofFreeM oneQuery).wrap (Lens.id y) ⊨
+    (fun input => (oneQuery input).mapLens (Lens.id y)) :=
+  (implements_ofFreeM oneQuery).wrap (Lens.id y)
 
 /-! ## Semantic transport producer canaries -/
 
 /-- An input-dependent program makes input precomposition observable. -/
-def inputProgram (input : Nat) : FreeM X Nat :=
+def inputProgram (input : Nat) : FreeM y Nat :=
   FreeM.liftBind PUnit.unit fun _ => pure (input + 1)
 
-def inputFreeMachine : DynComputation X Nat Nat := ofFreeM inputProgram
+def inputFreeMachine : DynComputation y Nat Nat := ofFreeM inputProgram
 
-def inputResumptionMachine : DynComputation X Nat Nat :=
+def inputResumptionMachine : DynComputation y Nat Nat :=
   ofResumption fun input => FreeM.toResumption (inputProgram input)
 
 theorem inputMachinesObsEq : ObsEq inputFreeMachine inputResumptionMachine :=

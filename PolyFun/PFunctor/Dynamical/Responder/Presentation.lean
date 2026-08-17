@@ -70,9 +70,9 @@ dependent `Sigma`/`HEq` plumbing out of presentation and coherence proofs. -/
 theorem displayedTotalStepObj_ext
     {RPoly : PFunctor.{uA₃, uB}}
     (S : Display.{uA₃, uB, uC₃, uD₃} RPoly)
-    {X : Type uC₄}
+    {α : Type uC₄}
     (left right :
-      (Display.mStep (Display.responder S)).sigmaPFunctor.Obj X)
+      (Display.mStep (Display.responder S)).sigmaPFunctor.Obj α)
     (hBehavior : left.1.1 = right.1.1)
     (hPostcondition : HEq left.1.2 right.1.2)
     (hContinuation : HEq left.2 right.2) :
@@ -349,7 +349,7 @@ def toTerminal
       let targetResult := (Responder.terminal (P := P)).runFree
         ((Handler.id P) query) (R.behavior state)
       let sourceResult := R.runFree ((Handler.id P) query) state
-      let presentedResult : P.B query × PFunctor.M (P ⊸ X.{uA₁, uB}) :=
+      let presentedResult : P.B query × PFunctor.M (P ⊸ y.{uA₁, uB}) :=
         ⟨sourceResult.1, R.behavior sourceResult.2⟩
       let targetEvidence := runFreeDisplayed S
         (Responder.terminal (P := P))
@@ -367,7 +367,7 @@ def toTerminal
       let presentationEq :=
         runFree_terminal R ((Handler.id P) query) state
       let Evidence := fun result : P.B query ×
-          PFunctor.M (P ⊸ X.{uA₁, uB}) =>
+          PFunctor.M (P ⊸ y.{uA₁, uB}) =>
         S.direction query precondition result.1 ×
           Display.M (Display.responder S) result.2
       have hEvidence :
@@ -401,7 +401,7 @@ def toTerminal
             ((Handler.id P) query) (R.behavior state)
           let sourceResult := R.runFree ((Handler.id P) query) state
           let presentedResult : P.B query ×
-              PFunctor.M (P ⊸ X.{uA₁, uB}) :=
+              PFunctor.M (P ⊸ y.{uA₁, uB}) :=
             ⟨sourceResult.1, R.behavior sourceResult.2⟩
           let targetEvidence := runFreeDisplayed S
             (Responder.terminal (P := P))
@@ -419,7 +419,7 @@ def toTerminal
           let presentationEq :=
             runFree_terminal R ((Handler.id P) query) state
           let Evidence := fun result : P.B query ×
-              PFunctor.M (P ⊸ X.{uA₁, uB}) =>
+              PFunctor.M (P ⊸ y.{uA₁, uB}) =>
             S.direction query precondition result.1 ×
               Display.M (Display.responder S) result.2
           have hEvidence :
@@ -444,7 +444,7 @@ def toTerminal
         let targetResult := (Responder.terminal (P := P)).runFree
           ((Handler.id P) query) (R.behavior state)
         let sourceResult := R.runFree ((Handler.id P) query) state
-        let presentedResult : P.B query × PFunctor.M (P ⊸ X.{uA₁, uB}) :=
+        let presentedResult : P.B query × PFunctor.M (P ⊸ y.{uA₁, uB}) :=
           ⟨sourceResult.1, R.behavior sourceResult.2⟩
         let targetEvidence := runFreeDisplayed S
           (Responder.terminal (P := P))
@@ -462,7 +462,7 @@ def toTerminal
         let presentationEq :=
           runFree_terminal R ((Handler.id P) query) state
         let Evidence := fun result : P.B query ×
-            PFunctor.M (P ⊸ X.{uA₁, uB}) =>
+            PFunctor.M (P ⊸ y.{uA₁, uB}) =>
           S.direction query precondition result.1 ×
             Display.M (Display.responder S) result.2
         have hEvidence :
@@ -573,7 +573,7 @@ def reindexPresentationHom
         (f query) (R.behavior state)
       let sourceResult := R.runFree (f query) state
       let presentedResult : P.B query ×
-          PFunctor.M (Q ⊸ X.{uA₂, uB'}) :=
+          PFunctor.M (Q ⊸ y.{uA₂, uB'}) :=
         ⟨sourceResult.1, R.behavior sourceResult.2⟩
       let targetEvidence := runFreeDisplayed T
         (Responder.terminal (P := Q))
@@ -590,7 +590,7 @@ def reindexPresentationHom
             sourceEvidence.2⟩
       let presentationEq := runFree_terminal R (f query) state
       let Evidence := fun result : P.B query ×
-          PFunctor.M (Q ⊸ X.{uA₂, uB'}) =>
+          PFunctor.M (Q ⊸ y.{uA₂, uB'}) =>
         S.direction query precondition result.1 ×
           Display.M (Display.responder T) result.2
       have hEvidence :
@@ -623,7 +623,7 @@ def reindexPresentationHom
             (f query) (R.behavior state)
           let sourceResult := R.runFree (f query) state
           let presentedResult : P.B query ×
-              PFunctor.M (Q ⊸ X.{uA₂, uB'}) :=
+              PFunctor.M (Q ⊸ y.{uA₂, uB'}) :=
             ⟨sourceResult.1, R.behavior sourceResult.2⟩
           let targetEvidence := runFreeDisplayed T
             (Responder.terminal (P := Q))
@@ -640,7 +640,7 @@ def reindexPresentationHom
                 sourceEvidence.2⟩
           let presentationEq := runFree_terminal R (f query) state
           let Evidence := fun result : P.B query ×
-              PFunctor.M (Q ⊸ X.{uA₂, uB'}) =>
+              PFunctor.M (Q ⊸ y.{uA₂, uB'}) =>
             S.direction query precondition result.1 ×
               Display.M (Display.responder T) result.2
           have hEvidence :
@@ -665,7 +665,7 @@ def reindexPresentationHom
           (f query) (R.behavior state)
         let sourceResult := R.runFree (f query) state
         let presentedResult : P.B query ×
-            PFunctor.M (Q ⊸ X.{uA₂, uB'}) :=
+            PFunctor.M (Q ⊸ y.{uA₂, uB'}) :=
           ⟨sourceResult.1, R.behavior sourceResult.2⟩
         let targetEvidence := runFreeDisplayed T
           (Responder.terminal (P := Q))
@@ -682,7 +682,7 @@ def reindexPresentationHom
               sourceEvidence.2⟩
         let presentationEq := runFree_terminal R (f query) state
         let Evidence := fun result : P.B query ×
-            PFunctor.M (Q ⊸ X.{uA₂, uB'}) =>
+            PFunctor.M (Q ⊸ y.{uA₂, uB'}) =>
           S.direction query precondition result.1 ×
             Display.M (Display.responder T) result.2
         have hEvidence :

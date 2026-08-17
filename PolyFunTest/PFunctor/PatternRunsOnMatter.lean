@@ -68,15 +68,15 @@ example (P Q : PFunctor.{u, u}) :
   FreeP.runOn_eq_xi P Q
 
 example (P : PFunctor.{u, u}) :
-    (FreeP.map (Lens.Equiv.tensorX (P := P)).toLens ∘ₗ
-        FreeP.runOn P X.{u, u}) ∘ₗ
+    (FreeP.map (Lens.Equiv.tensorY (P := P)).toLens ∘ₗ
+        FreeP.runOn P y.{u, u}) ∘ₗ
         (Lens.id (FreeP P) ⊗ₗ CofreeP.laxUnit.{u, u}) =
-      (Lens.Equiv.tensorX (P := FreeP P)).toLens :=
+      (Lens.Equiv.tensorY (P := FreeP P)).toLens :=
   FreeP.runOn_unit P
 
 example (P Q R : PFunctor.{u, u}) :
     (FreeP.runOn P (Q ⊗ R) ∘ₗ
-        (Lens.id (FreeP P) ⊗ₗ CofreeP.laxTensor Q R)) ∘ₗ
+        (Lens.id (FreeP P) ⊗ₗ CofreeP.layTensor Q R)) ∘ₗ
         (Lens.Equiv.tensorAssoc
           (P := FreeP P) (Q := CofreeP Q)
           (R := CofreeP R)).toLens =
@@ -324,18 +324,18 @@ example :
 
 /-- Unit coherence is operationally nontrivial on the two-node pattern. -/
 example :
-    ((FreeP.map (Lens.Equiv.tensorX (P := patternP)).toLens ∘ₗ
-        FreeP.runOn patternP X) ∘ₗ
+    ((FreeP.map (Lens.Equiv.tensorY (P := patternP)).toLens ∘ₗ
+        FreeP.runOn patternP y) ∘ₗ
         (Lens.id (FreeP patternP) ⊗ₗ CofreeP.laxUnit)).toFunA
         (pattern, PUnit.unit) = pattern :=
   congrArg
-    (fun lens : Lens (FreeP patternP ⊗ X) (FreeP patternP) =>
+    (fun lens : Lens (FreeP patternP ⊗ y) (FreeP patternP) =>
       lens.toFunA (pattern, PUnit.unit))
     (FreeP.runOn_unit patternP)
 
-def unitAction : Lens (FreeP patternP ⊗ X.{0, 0}) (FreeP patternP) :=
-  (FreeP.map (Lens.Equiv.tensorX (P := patternP)).toLens ∘ₗ
-      FreeP.runOn patternP X) ∘ₗ
+def unitAction : Lens (FreeP patternP ⊗ y.{0, 0}) (FreeP patternP) :=
+  (FreeP.map (Lens.Equiv.tensorY (P := patternP)).toLens ∘ₗ
+      FreeP.runOn patternP y) ∘ₗ
     (Lens.id (FreeP patternP) ⊗ₗ CofreeP.laxUnit)
 
 /-- Unit coherence preserves a complete nonempty pattern path through the
@@ -358,7 +358,7 @@ def assocLhs :
       (FreeP (patternP ⊗ (matterP ⊗ auxiliaryP))) :=
   (FreeP.runOn patternP (matterP ⊗ auxiliaryP) ∘ₗ
       (Lens.id (FreeP patternP) ⊗ₗ
-        CofreeP.laxTensor matterP auxiliaryP)) ∘ₗ
+        CofreeP.layTensor matterP auxiliaryP)) ∘ₗ
     (Lens.Equiv.tensorAssoc
       (P := FreeP patternP) (Q := CofreeP matterP)
       (R := CofreeP auxiliaryP)).toLens
@@ -386,7 +386,7 @@ def auxiliaryDirections : {tree : (CofreeP auxiliaryP).A} →
   | _, .child direction next => direction :: auxiliaryDirections next
 
 def synchronizedMatter : (CofreeP (matterP ⊗ auxiliaryP)).A :=
-  (CofreeP.laxTensor matterP auxiliaryP).toFunA
+  (CofreeP.layTensor matterP auxiliaryP).toFunA
     (matter, auxiliaryMatter)
 
 def synchronizedDirection :
@@ -402,11 +402,11 @@ def synchronizedVertex : M.Vertex synchronizedMatter :=
 /-- The cofree laxator's finite projection independently exposes both
 component direction streams through its cast-free universal equation. -/
 theorem synchronizedBackwardDirections :
-    let pulled := (CofreeP.laxTensor matterP auxiliaryP).toFunB
+    let pulled := (CofreeP.layTensor matterP auxiliaryP).toFunB
       (matter, auxiliaryMatter) synchronizedVertex
     matterDirections pulled.1 = [2, 0] ∧
       auxiliaryDirections pulled.2 = [true, false] := by
-  let F := CofreeP.laxTensorHom matterP auxiliaryP
+  let F := CofreeP.layTensorHom matterP auxiliaryP
   have h := congrArg
     (fun lens : Lens
         ((CofreeP.comonoid matterP).tensor
@@ -428,14 +428,14 @@ theorem synchronizedBackwardDirections :
   have hauxiliary := congrArg (fun pair => auxiliaryDirections pair.2) h
   constructor
   · exact hmatter.trans (by
-      dsimp only [F, CofreeP.laxTensorHom]
+      dsimp only [F, CofreeP.layTensorHom]
       rw [CofreeP.restrict_extend]
       simp only [CofreeP.comonoid_carrier, Comonoid.tensor_carrier, compNth,
         Lens.compNthMap_succ, Lens.compNthMap_zero,
         Comonoid.comultN_succ, Comonoid.comultN_zero]
       rfl)
   · exact hauxiliary.trans (by
-      dsimp only [F, CofreeP.laxTensorHom]
+      dsimp only [F, CofreeP.layTensorHom]
       rw [CofreeP.restrict_extend]
       simp only [CofreeP.comonoid_carrier, Comonoid.tensor_carrier, compNth,
         Lens.compNthMap_succ, Lens.compNthMap_zero,
@@ -463,10 +463,10 @@ example :
   dsimp only [assocLhs, assocLhsOutputPath]
   change [false, true] = [false, true] ∧
     matterDirections
-        ((CofreeP.laxTensor matterP auxiliaryP).toFunB
+        ((CofreeP.layTensor matterP auxiliaryP).toFunB
           (matter, auxiliaryMatter) synchronizedVertex).1 = [2, 0] ∧
       auxiliaryDirections
-        ((CofreeP.laxTensor matterP auxiliaryP).toFunB
+        ((CofreeP.layTensor matterP auxiliaryP).toFunB
           (matter, auxiliaryMatter) synchronizedVertex).2 = [true, false]
   exact ⟨rfl, synchronizedBackwardDirections⟩
 

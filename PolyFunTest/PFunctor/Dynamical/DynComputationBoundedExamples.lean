@@ -18,7 +18,7 @@ namespace PFunctor.DynSystem.DynComputation
 
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
 the boundary examples below unfold these constants there. -/
-attribute [local implicit_reducible] PFunctor.X PFunctor.monomial FreeM.IsTotalRollBound
+attribute [local implicit_reducible] PFunctor.y PFunctor.monomial FreeM.IsTotalRollBound
 
 /-! ## Boundary behavior and universes -/
 
@@ -35,7 +35,7 @@ def boundedUniverseCanary {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ
   M.unroll k state
 
 def closedTrajectoryUniverseCanary {α : Type uα} {β : Type uβ}
-    (M : DynComputation.{uState} X.{uA, uB} α β) (state : M.State) (k : ℕ) : M.State :=
+    (M : DynComputation.{uState} y.{uA, uB} α β) (state : M.State) (k : ℕ) : M.State :=
   M.closedStutterIterate state k
 
 theorem boundedSeqUniverseCanary {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type uγ}
@@ -46,7 +46,7 @@ theorem boundedSeqUniverseCanary {p : PFunctor.{uA, uB}} {α : Type uα} {β : T
       (fun input => FreeM.bind (program₁ input) program₂) (k₁ + k₂) :=
   h₁.seqComp h₂
 
-abbrev branchP : PFunctor := monomial Bool Bool
+abbrev branchP : PFunctor := Bool y^ Bool
 
 def branchProgram (_ : Unit) : FreeM branchP Nat :=
   FreeM.liftBind false fun answer : Bool =>
@@ -110,7 +110,7 @@ example : ¬branchMachine.ImplementsWithin wrongBranchProgram 1 := by
 /-! An empty direction type makes a query branch vacuously resolve after one
 layer, while zero fuel still cuts it off. -/
 
-def emptyDirectionP : PFunctor := monomial Unit Empty
+def emptyDirectionP : PFunctor := Unit y^ Empty
 
 def emptyDirectionTree : Resumption emptyDirectionP Nat :=
   Resumption.query () fun direction => Empty.elim direction
@@ -134,17 +134,17 @@ def collatzNext (n : ℕ) : ℕ :=
   if n % 2 = 0 then n / 2 else 3 * n + 1
 
 /-- The return-or-query view of the Collatz producer. -/
-def collatzView (n : ℕ) : ℕ ⊕ X.{0, 0}.Obj ℕ :=
+def collatzView (n : ℕ) : ℕ ⊕ y.{0, 0}.Obj ℕ :=
   if n = 1 then Sum.inl n
   else Sum.inr ⟨PUnit.unit, fun _ => collatzNext n⟩
 
 /-- The polynomial coalgebra step corresponding to `collatzView`. -/
-def collatzOut (n : ℕ) : (X.{0, 0} + C.{0, 0} ℕ).Obj ℕ :=
+def collatzOut (n : ℕ) : (y.{0, 0} + C.{0, 0} ℕ).Obj ℕ :=
   Resumption.pack (collatzView n)
 
 /-- A closed deterministic Collatz producer that returns at `1` and otherwise
-makes the unique `X` query before advancing. -/
-def collatzMachine : DynComputation X.{0, 0} ℕ ℕ where
+makes the unique `y` query before advancing. -/
+def collatzMachine : DynComputation y.{0, 0} ℕ ℕ where
   State := ℕ
   toDynSystem := (fun n => (collatzOut n).1) ⇆ fun n => (collatzOut n).2
   init := id

@@ -216,7 +216,7 @@ example (P : PFunctor.{uA, uB}) :
       (Lens.comp (FreeP.substMonoid P).mult
         (Lens.compMap (FreeP.substMonoid P).unit
           (Lens.id (FreeP.substMonoid P).carrier)))
-      Lens.Equiv.XComp.invLens =
+      Lens.Equiv.yComp.invLens =
     Lens.id (FreeP.substMonoid P).carrier :=
   (FreeP.substMonoid P).unit_left
 

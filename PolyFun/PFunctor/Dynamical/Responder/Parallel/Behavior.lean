@@ -38,8 +38,8 @@ variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 /-- Coproduct composition of state-free responder behaviors.  A query selects
 one component and leaves the other component unchanged. -/
 def sumBehavior
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) :
-    PFunctor.M (PFunctor.sum P Q ⊸ X.{max uA₁ uA₂, uB}) :=
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) :
+    PFunctor.M (PFunctor.sum P Q ⊸ y.{max uA₁ uA₂, uB}) :=
   (Responder.sum (Responder.terminal (P := P))
     (Responder.terminal (P := Q))).behavior (left, right)
 
@@ -65,7 +65,7 @@ theorem sum_behavior
 
 @[simp]
 theorem sumBehavior_answer_inl
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (a : P.A) :
     (Responder.terminal (P := PFunctor.sum P Q)).answer
         (sumBehavior left right) (.inl a) =
       (Responder.terminal (P := P)).answer left a := by
@@ -78,7 +78,7 @@ theorem sumBehavior_answer_inl
 
 @[simp]
 theorem sumBehavior_answer_inr
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (b : Q.A) :
     (Responder.terminal (P := PFunctor.sum P Q)).answer
         (sumBehavior left right) (.inr b) =
       (Responder.terminal (P := Q)).answer right b := by
@@ -91,7 +91,7 @@ theorem sumBehavior_answer_inr
 
 @[simp]
 theorem sumBehavior_child_inl
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (a : P.A) :
     (sumBehavior left right).children
         ⟨(Sum.inl a : (PFunctor.sum P Q).A), PUnit.unit⟩ =
       sumBehavior (left.children ⟨a, PUnit.unit⟩) right := by
@@ -104,7 +104,7 @@ theorem sumBehavior_child_inl
 
 @[simp]
 theorem sumBehavior_child_inr
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (b : Q.A) :
     (sumBehavior left right).children
         ⟨(Sum.inr b : (PFunctor.sum P Q).A), PUnit.unit⟩ =
       sumBehavior left (right.children ⟨b, PUnit.unit⟩) := by
@@ -117,8 +117,8 @@ theorem sumBehavior_child_inr
 
 /-- Parallel composition of state-free responder behaviors. -/
 def parallelBehavior
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) :
-    PFunctor.M ((P ∥ Q) ⊸ X.{max uA₁ uA₂, uB}) :=
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) :
+    PFunctor.M ((P ∥ Q) ⊸ y.{max uA₁ uA₂, uB}) :=
   (Responder.parallel (Responder.terminal (P := P))
     (Responder.terminal (P := Q))).behavior (left, right)
 
@@ -144,7 +144,7 @@ theorem parallel_behavior
 
 @[simp]
 theorem parallelBehavior_answer_left
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (a : P.A) :
     (Responder.terminal (P := P ∥ Q)).answer
         (parallelBehavior left right)
         (ParallelChoice.left a : (P ∥ Q).A) =
@@ -159,7 +159,7 @@ theorem parallelBehavior_answer_left
 
 @[simp]
 theorem parallelBehavior_answer_right
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (b : Q.A) :
     (Responder.terminal (P := P ∥ Q)).answer
         (parallelBehavior left right)
         (ParallelChoice.right b : (P ∥ Q).A) =
@@ -174,7 +174,7 @@ theorem parallelBehavior_answer_right
 
 @[simp]
 theorem parallelBehavior_answer_both
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (a : P.A) (b : Q.A) :
     (Responder.terminal (P := P ∥ Q)).answer
         (parallelBehavior left right)
@@ -191,7 +191,7 @@ theorem parallelBehavior_answer_both
 
 @[simp]
 theorem parallelBehavior_child_left
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (a : P.A) :
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (a : P.A) :
     (parallelBehavior left right).children
         ⟨(ParallelChoice.left a : (P ∥ Q).A), PUnit.unit⟩ =
       parallelBehavior
@@ -205,7 +205,7 @@ theorem parallelBehavior_child_left
 
 @[simp]
 theorem parallelBehavior_child_right
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) (b : Q.A) :
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (b : Q.A) :
     (parallelBehavior left right).children
         ⟨(ParallelChoice.right b : (P ∥ Q).A), PUnit.unit⟩ =
       parallelBehavior left
@@ -219,7 +219,7 @@ theorem parallelBehavior_child_right
 
 @[simp]
 theorem parallelBehavior_child_both
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (a : P.A) (b : Q.A) :
     (parallelBehavior left right).children
         ⟨(ParallelChoice.both a b : (P ∥ Q).A), PUnit.unit⟩ =
@@ -264,9 +264,9 @@ def terminalParallelCoalgebra
 def sumDisplayedBehavior
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right) :
     Display.M (Display.responder (Display.sum S T))
       (sumBehavior left right) :=
@@ -281,9 +281,9 @@ def sumDisplayedBehavior
 @[simp] theorem respondDisplayed_sumDisplayedBehavior_post_inl
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (a : P.A) (contract : S.position a) :
     (sumDisplayedBehavior S T left displayedLeft right displayedRight).head
@@ -301,9 +301,9 @@ def sumDisplayedBehavior
 @[simp] theorem respondDisplayed_sumDisplayedBehavior_post_inr
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (b : Q.A) (contract : T.position b) :
     (sumDisplayedBehavior S T left displayedLeft right displayedRight).head
@@ -324,9 +324,9 @@ branch and show that the unselected witness is frozen. -/
 theorem respondDisplayed_sumDisplayedBehavior_next
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (query : (PFunctor.sum P Q).A)
     (contract : (Display.sum S T).position query) :
@@ -364,9 +364,9 @@ theorem respondDisplayed_sumDisplayedBehavior_next
 def parallelDisplayedBehavior
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right) :
     Display.M (Display.responder (Display.parallelSum S T))
       (parallelBehavior left right) :=
@@ -381,9 +381,9 @@ def parallelDisplayedBehavior
 @[simp] theorem respondDisplayed_parallelDisplayedBehavior_post_left
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (a : P.A) (contract : S.position a) :
     (parallelDisplayedBehavior S T left displayedLeft right displayedRight).head
@@ -401,9 +401,9 @@ def parallelDisplayedBehavior
 @[simp] theorem respondDisplayed_parallelDisplayedBehavior_post_right
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (b : Q.A) (contract : T.position b) :
     (parallelDisplayedBehavior S T left displayedLeft right displayedRight).head
@@ -421,9 +421,9 @@ def parallelDisplayedBehavior
 @[simp] theorem respondDisplayed_parallelDisplayedBehavior_post_both
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (a : P.A) (b : Q.A)
     (leftContract : S.position a) (rightContract : T.position b) :
@@ -444,9 +444,9 @@ def parallelDisplayedBehavior
 theorem respondDisplayed_parallelDisplayedBehavior_next_left
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (a : P.A) (contract : S.position a) :
     Display.M.transport
@@ -488,9 +488,9 @@ left, right, and simultaneous branches without exposing the corecursor. -/
 theorem respondDisplayed_parallelDisplayedBehavior_next
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
     (query : (P ∥ Q).A)
     (contract : (Display.parallelSum S T).position query) :
@@ -530,7 +530,7 @@ ordinary behavior. -/
 def displayedBehaviorBase
     {R : PFunctor.{uA₁, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} R)
-    (behavior : PFunctor.M (R ⊸ X.{uA₁, uB}))
+    (behavior : PFunctor.M (R ⊸ y.{uA₁, uB}))
     (_ : Display.M (Display.responder S) behavior) :=
   behavior
 
@@ -539,9 +539,9 @@ composition; the ordinary behavior is the index of the displayed one. -/
 @[simp] theorem displayedBehaviorBase_parallel
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right) :
     displayedBehaviorBase (Display.parallelSum S T)
         (parallelBehavior left right)

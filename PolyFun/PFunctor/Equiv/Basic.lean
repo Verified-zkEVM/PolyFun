@@ -469,13 +469,13 @@ def oneTensor : 1 ⊗ P ≃ₚ C P.A where
 
 /-- Tensor product with the functor Y on the right -/
 @[simps]
-def tensorX : P ⊗ X ≃ₚ P where
+def tensorY : P ⊗ y ≃ₚ P where
   equivA := _root_.Equiv.prodPUnit P.A
   equivB := fun a => _root_.Equiv.prodPUnit (P.B a.1)
 
 /-- Tensor product with the functor Y on the left -/
 @[simps]
-def xTensor : X ⊗ P ≃ₚ P where
+def yTensor : y ⊗ P ≃ₚ P where
   equivA := _root_.Equiv.punitProd P.A
   equivB := fun a => _root_.Equiv.punitProd (P.B a.2)
 
@@ -574,13 +574,13 @@ def compAssoc : (P ◃ Q) ◃ R ≃ₚ P ◃ (Q ◃ R) where
     _root_.Equiv.sigmaAssoc (fun pb qb => R.B (rf ⟨pb, qb⟩))
   -- Equiv.sigmaProdDistrib _ _
 
-/-- Composition with `X` is identity (right) -/
-def compX : P ◃ X ≃ₚ P where
+/-- Composition with `y` is identity (right) -/
+def compY : P ◃ y ≃ₚ P where
   equivA := Equiv.sigmaUnique P.A (fun a => P.B a → PUnit.{_ + 1})
   equivB := fun _ => _root_.Equiv.sigmaPUnit _
 
-/-- Composition with `X` is identity (left) -/
-def XComp : X ◃ P ≃ₚ P where
+/-- Composition with `y` is identity (left) -/
+def yComp : y ◃ P ≃ₚ P where
   equivA := (_root_.Equiv.uniqueSigma _).trans (Equiv.punitArrowEquiv P.A)
   equivB := fun _ => by exact _root_.Equiv.uniqueSigma _
 

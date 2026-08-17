@@ -38,13 +38,13 @@ example (P : PFunctor.{uA, uB}) (n : ℕ) (tree : M P)
   CofreeP.depth_projectionN_toFunB P n tree direction
 
 example (P : PFunctor.{uA, uB}) :
-    CofreeP.projectionN P 1 ⨟ Lens.Equiv.compX.toLens = CofreeP.cogenerator P :=
-  CofreeP.projectionN_one_comp_compX P
+    CofreeP.projectionN P 1 ⨟ Lens.Equiv.compY.toLens = CofreeP.cogenerator P :=
+  CofreeP.projectionN_one_comp_compY P
 
 example (P : PFunctor.{uA, uB}) :
-    CofreeP.projectionN P 2 ⨟ (Lens.id P ◃ₗ Lens.Equiv.compX.toLens) =
+    CofreeP.projectionN P 2 ⨟ (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) =
       CofreeP.comult ⨟ (CofreeP.cogenerator P ◃ₗ CofreeP.cogenerator P) :=
-  CofreeP.projectionN_two_comp_compX P
+  CofreeP.projectionN_two_comp_compY P
 
 /-! ## Concrete finite paths -/
 

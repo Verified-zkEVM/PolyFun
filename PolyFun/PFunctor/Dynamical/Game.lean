@@ -19,11 +19,11 @@ evaluation lens `Lens.eval : (q ⊸ r) ⊗ q ⟹ r` (`DynSystem.game`) yields a 
 system over the outer interface `r`; equivalently — definitionally — it is the
 uncurried challenger applied to the adversary (`game_eq_uncurry`), the
 tensor–hom adjunction in dynamical clothing. When the challenger is a
-`Responder` (`r = X`) the game is closed and runs autonomously
+`Responder` (`r = y`) the game is closed and runs autonomously
 (`DynSystem.closedGame`), the deterministic shadow of VCVio's `wireKStep`
 wiring. There is no separate scored-game structure: a win readout is a state (or
 Moore) readout on the closed run, and the win-bit form is the
-`r := monomial Bool PUnit` instance of `game`.
+`r := Bool y^ PUnit` instance of `game`.
 
 Monadic runs against handlers are provided in two strengths: `kleisliStep` /
 `kleisliIterate` drive a system with a stateless handler in a monad `m` (VCVio's
@@ -100,11 +100,11 @@ section Game
 
 variable {S : Type u} {T : Type v} {q : PFunctor.{uA, uB}}
 
-/-- Close a responder against an adversary: the `r = X` instance of `game` runs
+/-- Close a responder against an adversary: the `r = y` instance of `game` runs
 autonomously, so the pair steps by "adversary queries, responder answers". This
 is the deterministic shadow of VCVio's `wireKStep`; a win condition is a state
 readout on the closed run (for a Moore win bit, instantiate `game` at
-`r := monomial Bool PUnit` instead). -/
+`r := Bool y^ PUnit` instead). -/
 def closedGame (R : Responder S q) (adv : DynSystem T q) : Closed (S × T) :=
   game R adv
 

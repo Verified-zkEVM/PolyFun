@@ -28,7 +28,7 @@ example (φ : DynSystem S p) (n : ℕ) : DynSystem S (compNth p n) := φ.nStep n
 
 /-- `Run_2` collapses to `twoStep` after the inner unitor. -/
 example (φ : DynSystem S p) :
-    φ.nStep 2 ⨟ (Lens.id p ◃ₗ Lens.Equiv.compX.toLens) = φ.twoStep :=
+    φ.nStep 2 ⨟ (Lens.id p ◃ₗ Lens.Equiv.compY.toLens) = φ.twoStep :=
   DynSystem.nStep_two_eq_twoStep φ
 
 /-- `Run_0` performs no transition. -/

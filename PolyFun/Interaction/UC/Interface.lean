@@ -710,11 +710,11 @@ abbrev compAssoc (I : Interface.{uA, uB}) (J : Interface.{vA, vB}) (K : Interfac
 
 /-- `compUnit` is a right unit for composition. -/
 abbrev compUnitRight (I : Interface.{uA, uB}) : Equiv (Interface.comp I compUnit) I :=
-  PFunctor.Equiv.compX I
+  PFunctor.Equiv.compY I
 
 /-- `compUnit` is a left unit for composition. -/
 abbrev compUnitLeft (I : Interface.{uA, uB}) : Equiv (Interface.comp compUnit I) I :=
-  PFunctor.Equiv.XComp I
+  PFunctor.Equiv.yComp I
 
 end Equiv
 

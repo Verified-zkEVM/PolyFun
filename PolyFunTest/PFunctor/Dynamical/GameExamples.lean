@@ -16,7 +16,7 @@ responder eta canaries hold by `rfl`, `stepWith` at `m := Id` is the closed
 game's step, the query-conditioned `DynComputation` run law specializes to a
 nontrivial responder with the answer/state pair in the intended order, a
 concrete counting-responder game runs by `rfl`, the Moore win-bit game is the
-`monomial Bool PUnit` instance of `game`, and a deterministic PrivK-shaped
+`Bool y^ PUnit` instance of `game`, and a deterministic PrivK-shaped
 `game₂` (challenger as a composite lens, adversary via `orderPair`) computes one
 composite step by `rfl`.
 -/
@@ -58,7 +58,7 @@ example (chal : DynSystem S (q ⊸ r)) (adv : DynSystem T q) :
           Lens (selfMonomial S ⊗ selfMonomial T) r) := rfl
 
 /-- Eta canary: a responder's raw lens update reads only the query component. -/
-example (R : Responder S q) (s : S) (d : (q ⊸ X).B (DynSystem.expose R s)) :
+example (R : Responder S q) (s : S) (d : (q ⊸ y).B (DynSystem.expose R s)) :
     DynSystem.update R s d = R.next s d.1 := rfl
 
 /-- Eta canaries: the Kleisli–Mealy round-trips are definitional. -/
@@ -81,7 +81,7 @@ end Canaries
 /-! ## Returning computations against responders -/
 
 /-- One visible `true` query whose answer becomes the terminal result. -/
-def responderQueryComputation : DynSystem.DynComputation (monomial Bool Nat) PUnit Nat where
+def responderQueryComputation : DynSystem.DynComputation (Bool y^ Nat) PUnit Nat where
   State := Option Nat
   toDynSystem :=
     (fun
@@ -94,7 +94,7 @@ def responderQueryComputation : DynSystem.DynComputation (monomial Bool Nat) PUn
 
 /-- On the exposed `true` query, answer with `state + 10` and advance the
 responder state by one. The two components are deliberately distinguishable. -/
-def answerAndAdvanceResponder : Responder Nat (monomial Bool Nat) :=
+def answerAndAdvanceResponder : Responder Nat (Bool y^ Nat) :=
   Responder.mk' (fun state query => Bool.rec (state + 20) (state + 10) query)
     (fun state query => Bool.rec (state + 2) (state + 1) query)
 
@@ -104,7 +104,7 @@ def answerAndAdvanceResponder : Responder Nat (monomial Bool Nat) :=
 @[simp] theorem answerAndAdvanceResponder_next_true (state : Nat) :
     answerAndAdvanceResponder.next state true = state + 1 := rfl
 
-def answerAndAdvanceHandler : Handler (StateT Nat (Id.{0})) (monomial Bool Nat) :=
+def answerAndAdvanceHandler : Handler (StateT Nat (Id.{0})) (Bool y^ Nat) :=
   answerAndAdvanceResponder.toStateHandler
 
 def responderQueryRun (fuel : Nat) (state : Option Nat) : StateT Nat (Id.{0}) (Option Nat) :=
@@ -125,14 +125,14 @@ example (fuel responderState : Nat) :
 
 /-! ## A concrete closed game: counting responder vs doubling adversary -/
 
-/-- The counting responder over `ℕ X^ ℕ`: answers every query with its running
+/-- The counting responder over `ℕ y^ ℕ`: answers every query with its running
 count and increments it. -/
-def countingResponder : Responder ℕ (monomial ℕ ℕ) :=
+def countingResponder : Responder ℕ (ℕ y^ ℕ) :=
   Responder.mk' (fun s _ => s) (fun s _ => s + 1)
 
-/-- The doubling adversary over `ℕ X^ ℕ`: queries its state, stores double the
+/-- The doubling adversary over `ℕ y^ ℕ`: queries its state, stores double the
 answer it hears. -/
-def doublingAdversary : DynSystem ℕ (monomial ℕ ℕ) :=
+def doublingAdversary : DynSystem ℕ (ℕ y^ ℕ) :=
   id ⇆ fun _ (a : ℕ) => 2 * a
 
 /-- Three closed-game steps, computed by `rfl`:
@@ -140,14 +140,14 @@ def doublingAdversary : DynSystem ℕ (monomial ℕ ℕ) :=
 example : (DynSystem.closedGame countingResponder doublingAdversary).iterate (0, 5) 3
     = (3, 4) := rfl
 
-/-! ## The Moore win-bit game: `game` at `r := monomial Bool PUnit` -/
+/-! ## The Moore win-bit game: `game` at `r := Bool y^ PUnit` -/
 
 /-- A challenger with a Moore win bit: the adversary wins when its query matches
 the secret; every answer leaks the secret, and the secret never changes. -/
-def secretMatchChallenger : DynSystem ℕ (monomial ℕ ℕ ⊸ monomial Bool PUnit) :=
+def secretMatchChallenger : DynSystem ℕ (ℕ y^ ℕ ⊸ Bool y^ PUnit) :=
   (fun s => (fun (qy : ℕ) => qy == s) ⇆ fun _ _ => s) ⇆ fun s _ => s
 
-/-- The win-bit game *is* a Moore machine: `game` at `r := monomial Bool PUnit`
+/-- The win-bit game *is* a Moore machine: `game` at `r := Bool y^ PUnit`
 lands in `MooreMachine (S × T) Bool PUnit`, no scored-game structure needed. -/
 def secretMatchGame : MooreMachine (ℕ × ℕ) Bool PUnit :=
   DynSystem.game secretMatchChallenger doublingAdversary
@@ -163,32 +163,32 @@ example : (MooreMachine.feedback (fun _ => PUnit.unit) secretMatchGame).step (3,
 
 /-! ## A deterministic PrivK-shaped two-phase game
 
-Commit phase `(Bool × Bool) X^ Bool`: the adversary submits a message-bit pair
-and hears the "ciphertext" `m_b`. Guess phase `Bool X^ PUnit`: the adversary
-submits a guess and the outer interface `Bool X^ PUnit` exposes the win bit.
+Commit phase `(Bool × Bool) y^ Bool`: the adversary submits a message-bit pair
+and hears the "ciphertext" `m_b`. Guess phase `Bool y^ PUnit`: the adversary
+submits a guess and the outer interface `Bool y^ PUnit` exposes the win bit.
 The challenger is written directly as the corresponding composite lens, and
 the two single-phase adversaries are ordered by `orderPair` — so the guesser
 cannot see the ciphertext within the composite step, as documented there. -/
 
 /-- The PrivK challenger, from its destructor triple: state is the secret bit
 `b`; commit phase answers `m_b`; guess phase exposes `guess == b`. -/
-def privKChallenger : DynSystem Bool ((monomial (Bool × Bool) Bool ⊸ X.{0, 0})
-    ◃ (monomial Bool PUnit ⊸ monomial Bool PUnit)) :=
+def privKChallenger : DynSystem Bool (((Bool × Bool) y^ Bool ⊸ y.{0, 0})
+    ◃ (Bool y^ PUnit ⊸ Bool y^ PUnit)) :=
   (fun b =>
     ⟨sectionLens (fun mm => cond b mm.2 mm.1),
       fun _ => (fun (guess : Bool) => guess == b) ⇆ (fun _ _ => PUnit.unit)⟩) ⇆
     fun b _ => b
 
 /-- The commit-phase adversary: submits the fixed message pair `(false, true)`. -/
-def commitAdversary : DynSystem PUnit (monomial (Bool × Bool) Bool) :=
-  Lens.fromX (false, true)
+def commitAdversary : DynSystem PUnit ((Bool × Bool) y^ Bool) :=
+  Lens.fromY (false, true)
 
 /-- The guess-phase adversary: guesses its own (fixed) state bit. -/
-def guessAdversary : DynSystem Bool (monomial Bool PUnit) :=
+def guessAdversary : DynSystem Bool (Bool y^ PUnit) :=
   id ⇆ fun t _ => t
 
 /-- The full PrivK-shaped game: challenger against the ordered adversary pair. -/
-def privKGame : DynSystem (Bool × (PUnit × Bool)) (X.{0, 0} ◃ monomial Bool PUnit) :=
+def privKGame : DynSystem (Bool × (PUnit × Bool)) (y.{0, 0} ◃ Bool y^ PUnit) :=
   DynSystem.game₂ privKChallenger (DynSystem.orderPair commitAdversary guessAdversary)
 
 /-- With secret `true` and message pair `(false, true)`, guessing `true` wins:
