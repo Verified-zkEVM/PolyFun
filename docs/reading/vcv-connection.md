@@ -36,7 +36,7 @@ VCVio-side residue. The two are flagged in-source as un-unified siblings
 (`WireK.lean:42-44`); A1 is their common parent.
 
 **Status (2026-07-11): upstream half landed.** `Responder S q`
-(`PFunctor/Dynamical/Responder.lean`, systems over `q ⊸ X` with the
+(`PFunctor/Dynamical/Responder.lean`, systems over `q ⊸ y` with the
 Kleisli–Mealy `equivStateHandler` bridge), the game formers
 `DynSystem.game` / `closedGame` (`PFunctor/Dynamical/Game.lean`, wiring
 along `eval`, with `game_eq_uncurry` the adjunction reading), the monadic

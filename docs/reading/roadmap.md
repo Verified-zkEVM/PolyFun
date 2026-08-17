@@ -89,7 +89,7 @@ Landed 2026-07-10 (build + `lake lint` + `lake test` green, no `sorry`):
 
 - **A1 ✅** `PFunctor/InternalHom.lean`: `ihom q r` (positions = `Lens q r`),
   `eval`, `curry`/`uncurry`, `curryEquiv` (hom-set adjunction), `eval_comp_curry`
-  naturality, `ihomX` (`[y,r] ≅ r`), `ihom_X_A` (`[q,y]` positions = handlers).
+  naturality, `ihomY` (`[y,r] ≅ r`), `ihom_y_A` (`[q,y]` positions = handlers).
   *Deferred:* `ihom_sum`; the bundled Mathlib `MonoidalClosed` instance (no
   consumer needs it — PolyFun's monoidal layer is à-la-carte).
 - **A3 ✅ (core)** `PFunctor/Lens/Factorization.lean`: `IsVertical`
@@ -136,7 +136,7 @@ Landed 2026-07-10 (five parallel subagents; full `lake build` + `lake lint` +
   `curryEquiv` (namespaced `PFunctor.CartesianClosed`, mirroring
   Mathlib's `CartesianClosed`/`MonoidalClosed` split against the ⊗-side
   `Lens.curry`).
-- **A4 ✅** `PFunctor/Adjunctions.lean`: `homFromZero`/`homToOne`/`homFromX`/
+- **A4 ✅** `PFunctor/Adjunctions.lean`: `homFromZero`/`homToOne`/`homFromY`/
   `homToConst`/`homToLinear` (trivial-interface hom-set `≃`s, Thm 5.4 family).
   **A5 ✅ (binary)** — Proposition 5.49 tensor gluing is stated directly using
   two ordinary one-sided lenses plus equality of their position maps, with
@@ -207,7 +207,7 @@ consumers; they are natural follow-ons or Phase B/C prerequisites.
 Landed the K-L-prioritized machine spine (crypto-free):
 
 - **B1/B4 done** — `PFunctor.Comonoid` (Def 7.14) as an à-la-carte structure with
-  counit/comult and the three lens laws through `compX`/`XComp`/`compAssoc`
+  counit/comult and the three lens laws through `compY`/`yComp`/`compAssoc`
   (`PFunctor/Comonoid.lean`). `PFunctor/Comonoid/Category.lean` derives the
   extraction direction of the Ahman–Uustalu outgoing-arrow presentation—
   identity, target/codomain, composition, and all five category laws—directly
@@ -234,7 +234,7 @@ Landed the K-L-prioritized machine spine (crypto-free):
   resolution certificate. Deterministic `Option`/fuel canaries live in
   `DynComputationBoundedExamples.lean`. The ω-limit `ωSup` stays downstream
   (SPMF ωCPO).
-- For closed `X` computations, `closedStutterStep` follows the unique query
+- For closed `y` computations, `closedStutterStep` follows the unique query
   direction and leaves returned states fixed; `closedStutterIterate` then gives
   exact bounded and eventual resolution-as-reachability characterizations
   without inventing a terminal query transition.
@@ -598,8 +598,8 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   test.
 - 2026-07-11 (cont.): **Game-wiring package landed** (PR #20, the A1 payoff
   proper). Two new modules: `Dynamical/Responder.lean` (`Responder S q :=
-  DynSystem S (q ⊸ X)` — positions are committed answer-sections via
-  `ihom_X_A`; accessors `committed`/`answer`/`next`; the Kleisli–Mealy
+  DynSystem S (q ⊸ y)` — positions are committed answer-sections via
+  `ihom_y_A`; accessors `committed`/`answer`/`next`; the Kleisli–Mealy
   `equivStateHandler : Responder S q ≃ Handler (StateT S Id) q` with `rfl`
   round-trips) and `Dynamical/Game.lean` (`game := wire₂ (Lens.eval q r)`,
   `closedGame` its autonomous `r = X` instance, `game_eq_uncurry` the
