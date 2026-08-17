@@ -476,7 +476,7 @@ example
 
 def universeRunAgainstProgramObj {E : Type uV}
     (R : Responder State Q) (program : FreeM Q E) (state : State) :
-    (FreeP X.{uA', uB'}).Obj (E × State) :=
+    (FreeP y.{uA', uB'}).Obj (E × State) :=
   Responder.runAgainstProgramObj R program state
 
 def universeRunAgainstDisplayed

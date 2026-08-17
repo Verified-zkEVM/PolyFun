@@ -17,7 +17,7 @@ public import PolyFun.PFunctor.M.Vertex
 
 For a polynomial `P`, `CofreeP P` has potentially infinite `P`-trees as
 positions and finite rooted vertices of each tree as directions.  Labelling
-every finite vertex by `X` recovers the ordinary cofree comonad `CofreeC P X`.
+every finite vertex by `y` recovers the ordinary cofree comonad `CofreeC P y`.
 
 This is the direct M-type presentation of the cofree polynomial comonoid from
 Spivak–Niu, Chapter 8 (Definitions 8.2, Example 8.16, Propositions 8.18 and
@@ -458,7 +458,7 @@ theorem map_comp {R : PFunctor.{uA₃, uB₃}}
 /-! ## Substitution-comonoid structure -/
 
 /-- The counit selects the root vertex of an infinite tree. -/
-def counit : Lens (CofreeP P) X.{max uA uB, max uA uB} where
+def counit : Lens (CofreeP P) y.{max uA uB, max uA uB} where
   toFunA _ := PUnit.unit
   toFunB tree _ := .root tree
 
@@ -470,7 +470,7 @@ def comult : Lens (CofreeP P) (CofreeP P ◃ CofreeP P) where
 
 @[simp]
 theorem counit_toFunB (tree : (CofreeP P).A)
-    (direction : X.{max uA uB, max uA uB}.B
+    (direction : y.{max uA uB, max uA uB}.B
       ((counit (P := P)).toFunA tree)) :
     (counit (P := P)).toFunB tree direction = .root tree :=
   rfl
@@ -490,14 +490,14 @@ theorem comult_toFunB (tree : (CofreeP P).A)
   rfl
 
 theorem comult_counit_left :
-    Lens.Equiv.XComp.toLens ∘ₗ
+    Lens.Equiv.yComp.toLens ∘ₗ
         ((counit (P := P)) ◃ₗ Lens.id (CofreeP P)) ∘ₗ
       comult (P := P) =
     Lens.id (CofreeP P) :=
   rfl
 
 theorem comult_counit_right :
-    Lens.Equiv.compX.toLens ∘ₗ
+    Lens.Equiv.compY.toLens ∘ₗ
         (Lens.id (CofreeP P) ◃ₗ counit (P := P)) ∘ₗ
       comult (P := P) =
     Lens.id (CofreeP P) := by

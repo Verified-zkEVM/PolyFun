@@ -25,7 +25,7 @@ namespace PFunctor.Handler.Normalization.Examples
 the handler examples below unfold `monomial` there. -/
 attribute [local implicit_reducible] PFunctor.monomial
 
-abbrev Query : PFunctor.{0, 0} := monomial Bool Nat
+abbrev Query : PFunctor.{0, 0} := Bool y^ Nat
 
 def answerAndAdvance : Handler.Stateful Option Nat Query :=
   fun query state =>

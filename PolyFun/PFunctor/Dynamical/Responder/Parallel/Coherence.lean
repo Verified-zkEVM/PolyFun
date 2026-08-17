@@ -29,14 +29,14 @@ namespace Responder
 variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 
 /-- The empty state-free responder behavior. -/
-def zeroBehavior : PFunctor.M ((0 : PFunctor.{uA₁, uB}) ⊸ X.{uA₁, uB}) :=
+def zeroBehavior : PFunctor.M ((0 : PFunctor.{uA₁, uB}) ⊸ y.{uA₁, uB}) :=
   (Responder.zero : Responder PUnit.{1} (0 : PFunctor.{uA₁, uB})).behavior
     PUnit.unit
 
 /-- Parallel behavior is symmetric after reindexing by the interface
 braiding. -/
-theorem mapBehavior_parallel_comm (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB})) :
+theorem mapBehavior_parallel_comm (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) :
     mapBehavior (PFunctor.Lens.parallelSumComm P Q) (parallelBehavior right left) =
       parallelBehavior left right := by
   let swapped := Responder.parallel (Responder.terminal (P := Q))
@@ -66,11 +66,11 @@ theorem mapBehavior_parallel_comm (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
 
 /-- The right zero interface is a unit for state-free parallel behavior after
 reindexing by the structural unitor. -/
-theorem mapBehavior_parallel_zero_right (left : PFunctor.M (P ⊸ X.{uA₁, uB})) :
+theorem mapBehavior_parallel_zero_right (left : PFunctor.M (P ⊸ y.{uA₁, uB})) :
     mapBehavior (PFunctor.Lens.parallelSumZero P :
         PFunctor.Lens (P ∥ (0 : PFunctor.{uA₂, uB})) P) left =
       parallelBehavior left (zeroBehavior : PFunctor.M
-        ((0 : PFunctor.{uA₂, uB}) ⊸ X.{uA₂, uB})) := by
+        ((0 : PFunctor.{uA₂, uB}) ⊸ y.{uA₂, uB})) := by
   let base := Responder.terminal (P := P)
   let empty := (Responder.zero :
     Responder PUnit.{1} (0 : PFunctor.{uA₂, uB}))
@@ -133,15 +133,15 @@ theorem mapBehavior_parallel_zero_right (left : PFunctor.M (P ⊸ X.{uA₁, uB})
       hPresentation
     _ = parallelBehavior left
         (zeroBehavior : PFunctor.M
-          ((0 : PFunctor.{uA₂, uB}) ⊸ X.{uA₂, uB})) := rfl
+          ((0 : PFunctor.{uA₂, uB}) ⊸ y.{uA₂, uB})) := rfl
 
 /-- The left zero interface is a unit for state-free parallel behavior after
 reindexing by the structural unitor. -/
-theorem mapBehavior_parallel_zero_left (right : PFunctor.M (P ⊸ X.{uA₁, uB})) :
+theorem mapBehavior_parallel_zero_left (right : PFunctor.M (P ⊸ y.{uA₁, uB})) :
     mapBehavior (PFunctor.Lens.zeroParallelSum P :
         PFunctor.Lens ((0 : PFunctor.{uA₂, uB}) ∥ P) P) right =
       parallelBehavior (zeroBehavior : PFunctor.M
-        ((0 : PFunctor.{uA₂, uB}) ⊸ X.{uA₂, uB})) right := by
+        ((0 : PFunctor.{uA₂, uB}) ⊸ y.{uA₂, uB})) right := by
   let base := Responder.terminal (P := P)
   let empty := (Responder.zero :
     Responder PUnit.{1} (0 : PFunctor.{uA₂, uB}))
@@ -202,12 +202,12 @@ theorem mapBehavior_parallel_zero_left (right : PFunctor.M (P ⊸ X.{uA₁, uB})
       hPresentation
     _ = parallelBehavior
         (zeroBehavior : PFunctor.M
-          ((0 : PFunctor.{uA₂, uB}) ⊸ X.{uA₂, uB})) right := rfl
+          ((0 : PFunctor.{uA₂, uB}) ⊸ y.{uA₂, uB})) right := rfl
 
 /-- Parallel state-free behavior associates after reindexing by the interface
 associator. -/
-theorem mapBehavior_parallel_assoc {R : PFunctor.{uA₃, uB}} (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
-    (middle : PFunctor.M (Q ⊸ X.{uA₂, uB})) (right : PFunctor.M (R ⊸ X.{uA₃, uB})) :
+theorem mapBehavior_parallel_assoc {R : PFunctor.{uA₃, uB}} (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
+    (middle : PFunctor.M (Q ⊸ y.{uA₂, uB})) (right : PFunctor.M (R ⊸ y.{uA₃, uB})) :
     mapBehavior (PFunctor.Lens.parallelSumAssoc P Q R)
         (parallelBehavior left (parallelBehavior middle right)) =
       parallelBehavior (parallelBehavior left middle) right := by
@@ -222,12 +222,12 @@ theorem mapBehavior_parallel_assoc {R : PFunctor.{uA₃, uB}} (left : PFunctor.M
     (PFunctor.Handler.ofLens
       (PFunctor.Lens.parallelSumAssoc P Q R)) rightAssociated
   let reassocState :
-      ((PFunctor.M (P ⊸ X.{uA₁, uB}) ×
-          PFunctor.M (Q ⊸ X.{uA₂, uB})) ×
-        PFunctor.M (R ⊸ X.{uA₃, uB})) →
-      (PFunctor.M (P ⊸ X.{uA₁, uB}) ×
-        (PFunctor.M (Q ⊸ X.{uA₂, uB}) ×
-          PFunctor.M (R ⊸ X.{uA₃, uB}))) :=
+      ((PFunctor.M (P ⊸ y.{uA₁, uB}) ×
+          PFunctor.M (Q ⊸ y.{uA₂, uB})) ×
+        PFunctor.M (R ⊸ y.{uA₃, uB})) →
+      (PFunctor.M (P ⊸ y.{uA₁, uB}) ×
+        (PFunctor.M (Q ⊸ y.{uA₂, uB}) ×
+          PFunctor.M (R ⊸ y.{uA₃, uB}))) :=
     fun state => (state.1.1, (state.1.2, state.2))
   have hBehavior :
       mapped.behavior (reassocState ((left, middle), right)) =

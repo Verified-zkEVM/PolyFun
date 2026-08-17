@@ -22,7 +22,7 @@ namespace PFunctor
 namespace Responder.Examples
 
 /-- A query interface with a single query type answered by a natural number. -/
-abbrev q : PFunctor.{0, 0} := monomial PUnit Nat
+abbrev q : PFunctor.{0, 0} := PUnit y^ Nat
 
 /-- A responder that returns its state as the answer to every query and
 increments its state on each query. -/

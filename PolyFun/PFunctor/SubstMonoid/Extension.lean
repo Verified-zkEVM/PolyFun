@@ -42,7 +42,7 @@ variable (M : SubstMonoid.{uA, uB})
 /-- The extension-level unit induced by the polynomial unit lens. -/
 def pure {α : Type uB} (x : α) : Extension M α :=
   Lens.mapObj M.unit
-    (⟨PUnit.unit, fun _ => x⟩ : X.{max uA uB, uB}.Obj α)
+    (⟨PUnit.unit, fun _ => x⟩ : y.{max uA uB, uB}.Obj α)
 
 /-- The extension-level bind induced by polynomial substitution. -/
 def bind {α β : Type uB} (x : Extension M α) (f : α → Extension M β) : Extension M β :=
@@ -102,7 +102,7 @@ def toMonadHom (f : SubstMonoid.Hom M N) : (Extension M) →ᵐ (Extension N) wh
   toFun _ := Lens.mapObj f.toLens
   toFun_pure' x :=
     congrArg (fun lens => Lens.mapObj lens
-      (⟨PUnit.unit, fun _ => x⟩ : X.{max uA uB, uB}.Obj _)) f.map_unit
+      (⟨PUnit.unit, fun _ => x⟩ : y.{max uA uB, uB}.Obj _)) f.map_unit
   toFun_bind' x k :=
     let source : (M.carrier ◃ M.carrier).Obj _ :=
       ⟨⟨x.1, fun d => (k (x.2 d)).1⟩,

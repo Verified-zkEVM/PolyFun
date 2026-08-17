@@ -42,7 +42,7 @@ displayed lens. -/
     {T : Display.{uA₂, uB₂, uC₂, uD₂} Q}
     {f : PFunctor.Lens P Q}
     (df : Display.Lens S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA₂, uB₂}))
+    (behavior : PFunctor.M (Q ⊸ y.{uA₂, uB₂}))
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (operation : P.A) (contract : S.position operation) :
     runFreeDisplayed T (Responder.terminal (P := Q))
@@ -59,12 +59,12 @@ displayed lens. -/
 
 /-- Reindex a state-free behavior along a one-step polynomial lens. -/
 def mapBehavior (f : PFunctor.Lens P Q)
-    (behavior : PFunctor.M (Q ⊸ X.{uA₂, uB₂})) :
-    PFunctor.M (P ⊸ X.{uA₁, uB₁}) :=
+    (behavior : PFunctor.M (Q ⊸ y.{uA₂, uB₂})) :
+    PFunctor.M (P ⊸ y.{uA₁, uB₁}) :=
   reindexBehavior (PFunctor.Handler.ofLens f) behavior
 
 @[simp] theorem mapBehavior_id
-    (behavior : PFunctor.M (P ⊸ X.{uA₁, uB₁})) :
+    (behavior : PFunctor.M (P ⊸ y.{uA₁, uB₁})) :
     mapBehavior (PFunctor.Lens.id P) behavior = behavior := by
   unfold mapBehavior
   rw [PFunctor.Handler.ofLens_id, reindexBehavior_id]
@@ -74,7 +74,7 @@ theorem mapBehavior_comp
     {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}}
     {R : PFunctor.{uA₃, uB₃}}
     (first : PFunctor.Lens P Q) (second : PFunctor.Lens Q R)
-    (behavior : PFunctor.M (R ⊸ X.{uA₃, uB₃})) :
+    (behavior : PFunctor.M (R ⊸ y.{uA₃, uB₃})) :
     mapBehavior first (mapBehavior second behavior) =
       mapBehavior (second ∘ₗ first) behavior := by
   unfold mapBehavior
@@ -86,7 +86,7 @@ def mapDisplayedBehavior
     {T : Display.{uA₂, uB₂, uC₂, uD₂} Q}
     {f : PFunctor.Lens P Q}
     (df : Display.Lens S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA₂, uB₂}))
+    (behavior : PFunctor.M (Q ⊸ y.{uA₂, uB₂}))
     (displayedBehavior : Display.M (Display.responder T) behavior) :
     Display.M (Display.responder S) (mapBehavior f behavior) :=
   reindexDisplayedBehavior S T (PFunctor.Handler.ofLens f)
@@ -99,7 +99,7 @@ theorem mapDisplayedBehavior_transport
     {S : Display.{uA₁, uB₁, uC₁, uD₁} P}
     {T : Display.{uA₂, uB₂, uC₂, uD₂} R}
     {f : PFunctor.Lens P R} (df : Display.Lens S T f)
-    {first second : PFunctor.M (R ⊸ X.{uA₂, uB₂})}
+    {first second : PFunctor.M (R ⊸ y.{uA₂, uB₂})}
     (h : first = second) (displayed : Display.M (Display.responder T) first) :
     Display.M.transport (congrArg (mapBehavior f) h)
         (mapDisplayedBehavior df first displayed) =
@@ -111,7 +111,7 @@ theorem mapDisplayedBehavior_transport
 the canonical equality of the underlying ordinary behaviors. -/
 @[simp] theorem mapDisplayedBehavior_id
     {S : Display.{uA₁, uB₁, uC₁, uD₁} P}
-    (behavior : PFunctor.M (P ⊸ X.{uA₁, uB₁}))
+    (behavior : PFunctor.M (P ⊸ y.{uA₁, uB₁}))
     (displayedBehavior : Display.M (Display.responder S) behavior) :
     Display.M.transport (mapBehavior_id behavior)
         (mapDisplayedBehavior (Display.Lens.id S)
@@ -131,7 +131,7 @@ theorem mapDisplayedBehavior_comp
     {secondBase : PFunctor.Lens Q R}
     (first : Display.Lens S T firstBase)
     (second : Display.Lens T U secondBase)
-    (behavior : PFunctor.M (R ⊸ X.{uA₃, uB₃}))
+    (behavior : PFunctor.M (R ⊸ y.{uA₃, uB₃}))
     (displayedBehavior : Display.M (Display.responder U) behavior) :
     Display.M.transport (mapBehavior_comp firstBase secondBase behavior)
         (mapDisplayedBehavior first (mapBehavior secondBase behavior)
@@ -177,7 +177,7 @@ theorem respondDisplayed_mapDisplayedBehavior_post
     {T : Display.{uA₂, uB₂, uC₂, uD₂} Q}
     {f : PFunctor.Lens P Q}
     (df : Display.Lens S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA₂, uB₂}))
+    (behavior : PFunctor.M (Q ⊸ y.{uA₂, uB₂}))
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (operation : P.A) (contract : S.position operation) :
     (respondDisplayed S (mapDisplayedBehavior df behavior displayedBehavior)
@@ -199,7 +199,7 @@ theorem respondDisplayed_mapDisplayedBehavior_next
     {T : Display.{uA₂, uB₂, uC₂, uD₂} Q}
     {f : PFunctor.Lens P Q}
     (df : Display.Lens S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA₂, uB₂}))
+    (behavior : PFunctor.M (Q ⊸ y.{uA₂, uB₂}))
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (operation : P.A) (contract : S.position operation) :
     Display.M.transport

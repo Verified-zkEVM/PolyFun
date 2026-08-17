@@ -14,7 +14,7 @@ public import PolyFun.PFunctor.Dynamical.Simulation
 # State-free responder behavior
 
 An ordinary state-free responder behavior for `P` is already the terminal
-coalgebra `M (P ⊸ X)`; no paper-specific `Mealy` alias is introduced.  Given a
+coalgebra `M (P ⊸ y)`; no paper-specific `Mealy` alias is introduced.  Given a
 proof-relevant responder coalgebra, `Display.Coalgebra.toM` maps a state and
 its current witness into the greatest displayed fixed point over that ordinary
 behavior:
@@ -127,10 +127,10 @@ namespace Responder
 
 private theorem transport_ihom_direction_fst
     {R : PFunctor.{uA'', uB}}
-    {leftSection rightSection : (R ⊸ X.{uA'', uB}).A}
+    {leftSection rightSection : (R ⊸ y.{uA'', uB}).A}
     (h : leftSection = rightSection)
-    (direction : (R ⊸ X.{uA'', uB}).B leftSection) :
-    ((h ▸ direction : (R ⊸ X.{uA'', uB}).B rightSection)).1 =
+    (direction : (R ⊸ y.{uA'', uB}).B leftSection) :
+    ((h ▸ direction : (R ⊸ y.{uA'', uB}).B rightSection)).1 =
       direction.1 := by
   cases h
   rfl
@@ -177,11 +177,11 @@ variable {Q : PFunctor.{uA', uB'}}
 variable {State : Type uS}
 
 /-- The canonical responder whose states are state-free responder behaviors. -/
-def terminal : Responder (PFunctor.M (P ⊸ X.{uA, uB})) P :=
+def terminal : Responder (PFunctor.M (P ⊸ y.{uA, uB})) P :=
   PFunctor.M.terminalSystem
 
 @[simp]
-theorem terminal_behavior (tree : PFunctor.M (P ⊸ X.{uA, uB})) : terminal.behavior tree = tree :=
+theorem terminal_behavior (tree : PFunctor.M (P ⊸ y.{uA, uB})) : terminal.behavior tree = tree :=
   PFunctor.M.terminalSystem_behavior tree
 
 /-- The child of a presented responder behavior after a query is the behavior
@@ -238,7 +238,7 @@ precondition witness produce postcondition data and a displayed continuation
 over the selected ordinary behavior child. -/
 def respondDisplayedEquiv
     (S : Display.{uA, uB, uC, uD} P)
-    (behavior : PFunctor.M (P ⊸ X.{uA, uB})) :
+    (behavior : PFunctor.M (P ⊸ y.{uA, uB})) :
     Display.M (Display.responder S) behavior ≃
       ((query : P.A) → (precondition : S.position query) →
         S.direction query precondition
@@ -262,7 +262,7 @@ def respondDisplayedEquiv
 /-- Apply one coinductive displayed responder step. -/
 def respondDisplayed
     (S : Display.{uA, uB, uC, uD} P)
-    {behavior : PFunctor.M (P ⊸ X.{uA, uB})}
+    {behavior : PFunctor.M (P ⊸ y.{uA, uB})}
     (displayedBehavior : Display.M (Display.responder S) behavior)
     (query : P.A) (precondition : S.position query) :=
   respondDisplayedEquiv S behavior displayedBehavior query precondition
@@ -270,7 +270,7 @@ def respondDisplayed
 @[simp]
 theorem respondDisplayed_post
     (S : Display.{uA, uB, uC, uD} P)
-    {behavior : PFunctor.M (P ⊸ X.{uA, uB})}
+    {behavior : PFunctor.M (P ⊸ y.{uA, uB})}
     (displayedBehavior : Display.M (Display.responder S) behavior)
     (query : P.A) (precondition : S.position query) :
     (respondDisplayed S displayedBehavior query precondition).1 =
@@ -280,7 +280,7 @@ theorem respondDisplayed_post
 @[simp]
 theorem respondDisplayed_next
     (S : Display.{uA, uB, uC, uD} P)
-    {behavior : PFunctor.M (P ⊸ X.{uA, uB})}
+    {behavior : PFunctor.M (P ⊸ y.{uA, uB})}
     (displayedBehavior : Display.M (Display.responder S) behavior)
     (query : P.A) (precondition : S.position query) :
     (respondDisplayed S displayedBehavior query precondition).2 =
@@ -292,7 +292,7 @@ theorem respondDisplayed_next
 in the postcondition and continuation projections separately. -/
 theorem respondDisplayedEquiv_transport
     (S : Display.{uA, uB, uC, uD} P)
-    {left right : PFunctor.M (P ⊸ X.{uA, uB})}
+    {left right : PFunctor.M (P ⊸ y.{uA, uB})}
     (h : left = right)
     (displayedBehavior : Display.M (Display.responder S) left) :
     respondDisplayedEquiv S right (Display.M.transport h displayedBehavior) =
@@ -305,7 +305,7 @@ behaviors. Related values return the same evidence for every query and
 precondition and have related answer-selected continuations. -/
 def IsDisplayedResponseBisimulation
     (S : Display.{uA, uB, uC, uD} P)
-    (R : (behavior : PFunctor.M (P ⊸ X.{uA, uB})) →
+    (R : (behavior : PFunctor.M (P ⊸ y.{uA, uB})) →
       Display.M (Display.responder S) behavior →
       Display.M (Display.responder S) behavior → Prop) : Prop :=
   ∀ behavior left right, R behavior left right →
@@ -319,11 +319,11 @@ def IsDisplayedResponseBisimulation
 /-- Observation-shaped responder bisimulation implies equality. -/
 theorem respondDisplayed_bisim
     (S : Display.{uA, uB, uC, uD} P)
-    (R : (behavior : PFunctor.M (P ⊸ X.{uA, uB})) →
+    (R : (behavior : PFunctor.M (P ⊸ y.{uA, uB})) →
       Display.M (Display.responder S) behavior →
       Display.M (Display.responder S) behavior → Prop)
     (hR : IsDisplayedResponseBisimulation S R)
-    {behavior : PFunctor.M (P ⊸ X.{uA, uB})}
+    {behavior : PFunctor.M (P ⊸ y.{uA, uB})}
     {left right : Display.M (Display.responder S) behavior}
     (h : R behavior left right) : left = right := by
   apply Display.M.bisim R
@@ -460,14 +460,14 @@ theorem runFreeDisplayed_toDisplayedBehavior
 /-- Reindex a state-free responder behavior by using it as the state of the
 terminal responder and applying ordinary responder reindexing. -/
 def reindexBehavior (f : Handler (FreeM Q) P)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'})) :
-    PFunctor.M (P ⊸ X.{uA, uB}) :=
+    (behavior : PFunctor.M (Q ⊸ y.{uA', uB'})) :
+    PFunctor.M (P ⊸ y.{uA, uB}) :=
   (Responder.reindex f (Responder.terminal (P := Q))).behavior behavior
 
 /-- State-free behavior reindexing is invariant under equality of its free
 handler. -/
 theorem reindexBehavior_congr {f g : Handler (FreeM Q) P} (h : f = g)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'})) :
+    (behavior : PFunctor.M (Q ⊸ y.{uA', uB'})) :
     reindexBehavior f behavior = reindexBehavior g behavior :=
   congrArg (fun handler => reindexBehavior handler behavior) h
 
@@ -477,11 +477,11 @@ theorem reindexBehavior_behavior (f : Handler (FreeM Q) P)
     (R : Responder State Q) (state : State) :
     reindexBehavior f (R.behavior state) =
       (Responder.reindex f R).behavior state := by
-  let presented : State → PFunctor.M (P ⊸ X.{uA, uB}) :=
+  let presented : State → PFunctor.M (P ⊸ y.{uA, uB}) :=
     fun state => reindexBehavior f (R.behavior state)
   have hOut : ∀ state,
       PFunctor.M.dest (presented state) =
-        (P ⊸ X.{uA, uB}).map presented
+        (P ⊸ y.{uA, uB}).map presented
           ((Responder.reindex f R).out state) := by
     intro current
     rw [show presented current =
@@ -512,7 +512,7 @@ theorem reindexBehavior_behavior (f : Handler (FreeM Q) P)
     (DynSystem.behavior_unique (Responder.reindex f R) presented hOut) state
 
 @[simp]
-theorem reindexBehavior_id (behavior : PFunctor.M (P ⊸ X.{uA, uB})) :
+theorem reindexBehavior_id (behavior : PFunctor.M (P ⊸ y.{uA, uB})) :
     reindexBehavior (Handler.id P) behavior = behavior := by
   calc
     reindexBehavior (Handler.id P) behavior =
@@ -530,7 +530,7 @@ theorem reindexBehavior_comp
     {RPoly : PFunctor.{uA'', uB'}}
     (second : Handler (FreeM RPoly) Q)
     (first : Handler (FreeM Q) P)
-    (behavior : PFunctor.M (RPoly ⊸ X.{uA'', uB'})) :
+    (behavior : PFunctor.M (RPoly ⊸ y.{uA'', uB'})) :
     reindexBehavior first (reindexBehavior second behavior) =
       reindexBehavior (second.comp first) behavior := by
   calc
@@ -555,7 +555,7 @@ def reindexDisplayedBehavior
     (T : Display.{uA', uB', uC', uD'} Q)
     (f : Handler (FreeM Q) P)
     (displayedF : Display.Handler S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
+    (behavior : PFunctor.M (Q ⊸ y.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior) :
     Display.M (Display.responder S) (reindexBehavior f behavior) :=
   toDisplayedBehavior S
@@ -576,7 +576,7 @@ theorem reindexDisplayedBehavior_congr
     (displayedF : Display.Handler S T f)
     (displayedG : Display.Handler S T g)
     (displayedEq : Display.Handler.transport h displayedF = displayedG)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
+    (behavior : PFunctor.M (Q ⊸ y.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior) :
     Display.M.transport (reindexBehavior_congr h behavior)
         (reindexDisplayedBehavior S T f displayedF
@@ -595,7 +595,7 @@ theorem respondDisplayed_reindexDisplayedBehavior_post
     (T : Display.{uA', uB', uC', uD'} Q)
     (f : Handler (FreeM Q) P)
     (displayedF : Display.Handler S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
+    (behavior : PFunctor.M (Q ⊸ y.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (query : P.A) (precondition : S.position query) :
     (respondDisplayed S
@@ -624,7 +624,7 @@ theorem respondDisplayed_reindexDisplayedBehavior_next
     (T : Display.{uA', uB', uC', uD'} Q)
     (f : Handler (FreeM Q) P)
     (displayedF : Display.Handler S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
+    (behavior : PFunctor.M (Q ⊸ y.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (query : P.A) (precondition : S.position query) :
     let result := (Responder.terminal (P := Q)).runFree (f query) behavior
@@ -651,7 +651,7 @@ theorem respondDisplayed_reindexDisplayedBehavior_next
 after the canonical equality of the underlying ordinary behaviors. -/
 theorem reindexDisplayedBehavior_id
     (S : Display.{uA, uB, uC, uD} P)
-    (behavior : PFunctor.M (P ⊸ X.{uA, uB}))
+    (behavior : PFunctor.M (P ⊸ y.{uA, uB}))
     (displayedBehavior : Display.M (Display.responder S) behavior) :
     Display.M.transport (reindexBehavior_id behavior)
         (reindexDisplayedBehavior S S (Handler.id P)
@@ -756,7 +756,7 @@ theorem reindexDisplayedBehavior_comp
     (dsecond : Display.Handler T U second)
     (first : Handler (FreeM Q) P)
     (dfirst : Display.Handler S T first)
-    (behavior : PFunctor.M (RPoly ⊸ X.{uA'', uB'}))
+    (behavior : PFunctor.M (RPoly ⊸ y.{uA'', uB'}))
     (displayedBehavior : Display.M (Display.responder U) behavior) :
     Display.M.transport (reindexBehavior_comp second first behavior)
         (reindexDisplayedBehavior S T first dfirst
@@ -827,7 +827,7 @@ theorem reindexDisplayedBehavior_comp
         (first query) current
       let rightResult := terminalR.runFree ((first query).liftM second) current
       let Evidence := fun result :
-          P.B query × PFunctor.M (RPoly ⊸ X.{uA'', uB'}) =>
+          P.B query × PFunctor.M (RPoly ⊸ y.{uA'', uB'}) =>
         S.direction query precondition result.1 ×
           Display.M (Display.responder U) result.2
       have hSigma :
@@ -846,7 +846,7 @@ theorem reindexDisplayedBehavior_comp
         (first query) (reindexBehavior second current)
       let stateRun := secondR.runFree (first query) current
       let presentedResult :
-          P.B query × PFunctor.M (Q ⊸ X.{uA', uB}) :=
+          P.B query × PFunctor.M (Q ⊸ y.{uA', uB}) :=
         ⟨stateRun.1, secondR.behavior stateRun.2⟩
       let outerEvidence := runFreeDisplayed T
         (Responder.terminal (P := Q))
@@ -872,7 +872,7 @@ theorem reindexDisplayedBehavior_comp
           mappedStateEvidence
         exact h
       let PresentationEvidence := fun result :
-          P.B query × PFunctor.M (Q ⊸ X.{uA', uB}) =>
+          P.B query × PFunctor.M (Q ⊸ y.{uA', uB}) =>
         S.direction query precondition result.1 ×
           Display.M (Display.responder T) result.2
       have hPresentationSigma :
@@ -955,7 +955,7 @@ theorem reindexDisplayedBehavior_comp
       let stateEvidence := runFreeDisplayed T secondR secondD
         (dfirst query precondition) current displayed
       let presentedResult :
-          P.B query × PFunctor.M (Q ⊸ X.{uA', uB}) :=
+          P.B query × PFunctor.M (Q ⊸ y.{uA', uB}) :=
         ⟨stateRun.1, secondR.behavior stateRun.2⟩
       let mappedStateEvidence :
           S.direction query precondition presentedResult.1 ×
@@ -965,7 +965,7 @@ theorem reindexDisplayedBehavior_comp
             secondD stateRun.2 stateEvidence.2⟩
       let presentationEq := runFree_terminal secondR (first query) current
       let PresentationEvidence := fun result :
-          P.B query × PFunctor.M (Q ⊸ X.{uA', uB}) =>
+          P.B query × PFunctor.M (Q ⊸ y.{uA', uB}) =>
         S.direction query precondition result.1 ×
           Display.M (Display.responder T) result.2
       have hPresentation :
@@ -992,7 +992,7 @@ theorem reindexDisplayedBehavior_comp
         current displayed
       let runEq := runFree_reindex second terminalR (first query) current
       let StateEvidence := fun result :
-          P.B query × PFunctor.M (RPoly ⊸ X.{uA'', uB'}) =>
+          P.B query × PFunctor.M (RPoly ⊸ y.{uA'', uB'}) =>
         S.direction query precondition result.1 ×
           Display.M (Display.responder U) result.2
       have hState :

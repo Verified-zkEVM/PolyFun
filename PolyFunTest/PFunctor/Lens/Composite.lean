@@ -34,7 +34,7 @@ example (φ : Lens p (q ◃ r)) (i : p.A) (u : q.B (φ.compOuter i)) :
 example (φ : Lens p (q ◃ r)) (i : p.A) : φ.compPullback i = φ.toFunB i := rfl
 
 /-- The composition power unfolds to iterated `compMap`. -/
-example (l : Lens p q) : Lens.compNthMap l 2 = l ◃ₗ (l ◃ₗ Lens.id X) := rfl
+example (l : Lens p q) : Lens.compNthMap l 2 = l ◃ₗ (l ◃ₗ Lens.id y) := rfl
 
 /-- `compNthMap` of the identity is the identity. -/
 example (n : ℕ) : Lens.compNthMap (Lens.id p) n = Lens.id (compNth p n) :=

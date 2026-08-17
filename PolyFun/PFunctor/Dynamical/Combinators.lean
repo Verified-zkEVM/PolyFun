@@ -19,7 +19,7 @@ readings are recorded as derived `@[simp]` equations.
 
 * `DynSystem.wrap` — change the interface along a lens `p ⟹ q` (a *wrapper*,
   §4.3.3): literally `s ⨟ w`. Sections (§4.3.4) are the special case where the
-  outer interface is `X`.
+  outer interface is `y`.
 * `DynSystem.close` / `MooreMachine.feedback` — close a system off with a section
   `(a : p.A) → p.B a` (§4.3.4); for a Moore machine the section is a feedback map
   `O → I`, yielding an autonomous closed system.
@@ -74,7 +74,7 @@ theorem wrap_eq_comp (w : Lens p q) (s : DynSystem S p) : wrap w s = s ⨟ w := 
 /-! ## Sections close systems (§4.3.4) -/
 
 /-- Close a system off with a section `σ : (a : p.A) → p.B a` (Niu–Spivak §4.3.4):
-wrap the interface along the section lens `p ⟹ X`, leaving a closed system whose
+wrap the interface along the section lens `p ⟹ y`, leaving a closed system whose
 single available direction at each state is the one `σ` selects. -/
 def close (σ : (a : p.A) → p.B a) (s : DynSystem S p) : Closed S :=
   wrap (sectionLens σ) s
@@ -166,7 +166,7 @@ variable {S : Type u} {O : Type uO} {I : Type uI}
 
 /-- Close a Moore machine into an autonomous (closed) system by feeding its output
 back as its next input through `f : O → I` (Niu–Spivak §4.3.4). A section of the
-Moore interface `O X^ I` is exactly such a function, so this is `DynSystem.close`.
+Moore interface `O y^ I` is exactly such a function, so this is `DynSystem.close`.
 The closed-loop state set is unchanged, so `m.output` still reads each state. -/
 def feedback (f : O → I) (m : MooreMachine S O I) : Closed S := DynSystem.close f m
 

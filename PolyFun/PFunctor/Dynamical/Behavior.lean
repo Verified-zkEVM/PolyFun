@@ -37,7 +37,7 @@ variable {S : Type u} {O : Type uO} {I : Type uI}
 /-- The closed-loop transition: advance the state by feeding the current output back
 through `f` as the next input. This is definitionally `(feedback f m).step` (see
 `feedback_step`); it is phrased directly on `m` so the resulting stream's universes do
-not depend on the phantom direction universe of the closed interface `X`. -/
+not depend on the phantom direction universe of the closed interface `y`. -/
 def feedbackStep (f : O → I) (m : MooreMachine S O I) (st : S) : S :=
   m.transition st (f (m.output st))
 

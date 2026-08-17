@@ -213,10 +213,10 @@ theorem mapDisplayedBehavior_parallel_assoc
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (U : Display.{uA₃, uB, uC₃, uD₃} R)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB})) (displayedLeft : Display.M (Display.responder S) left)
-    (middle : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (displayedLeft : Display.M (Display.responder S) left)
+    (middle : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedMiddle : Display.M (Display.responder T) middle)
-    (right : PFunctor.M (R ⊸ X.{uA₃, uB}))
+    (right : PFunctor.M (R ⊸ y.{uA₃, uB}))
     (displayedRight : Display.M (Display.responder U) right) :
     Display.M.transport (mapBehavior_parallel_assoc left middle right)
         (mapDisplayedBehavior (Display.Lens.parallelSumAssoc S T U)
@@ -237,16 +237,16 @@ theorem mapDisplayedBehavior_parallel_assoc
   let rawLeft := Responder.parallel
     (Responder.parallel pResponder qResponder) rResponder
   let rawRightWitness := fun state :
-      PFunctor.M (P ⊸ X.{uA₁, uB}) ×
-        (PFunctor.M (Q ⊸ X.{uA₂, uB}) ×
-          PFunctor.M (R ⊸ X.{uA₃, uB})) =>
+      PFunctor.M (P ⊸ y.{uA₁, uB}) ×
+        (PFunctor.M (Q ⊸ y.{uA₂, uB}) ×
+          PFunctor.M (R ⊸ y.{uA₃, uB})) =>
     Display.M (Display.responder S) state.1 ×
       (Display.M (Display.responder T) state.2.1 ×
         Display.M (Display.responder U) state.2.2)
   let rawLeftWitness := fun state :
-      (PFunctor.M (P ⊸ X.{uA₁, uB}) ×
-        PFunctor.M (Q ⊸ X.{uA₂, uB})) ×
-          PFunctor.M (R ⊸ X.{uA₃, uB}) =>
+      (PFunctor.M (P ⊸ y.{uA₁, uB}) ×
+        PFunctor.M (Q ⊸ y.{uA₂, uB})) ×
+          PFunctor.M (R ⊸ y.{uA₃, uB}) =>
     (Display.M (Display.responder S) state.1.1 ×
       Display.M (Display.responder T) state.1.2) ×
         Display.M (Display.responder U) state.2

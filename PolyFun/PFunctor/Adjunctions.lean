@@ -13,7 +13,7 @@ public import PolyFun.PFunctor.Lens.Basic
 This file records the "trivial interface" hom-set equivalences of Spivak–Niu
 *Polynomial Functors: A Mathematical Theory of Interaction* (Cambridge University
 Press, 2025), §5.1. Each computes the set of lenses out of, or into, one of the
-distinguished polynomial functors `0`, `1`, `X = y`, a constant `C A`, or a
+distinguished polynomial functors `0`, `1`, `y = y`, a constant `C A`, or a
 linear `linear A` by a concrete data type. These are the hom-isomorphisms
 witnessing the adjoint quadruple `linear ⊣ (−)(1) ⊣ C ⊣ (−)(0)` together with
 the sections/principal-monomial refinements.
@@ -24,7 +24,7 @@ the sections/principal-monomial refinements.
 * `homToOne` — `1` is terminal in `Poly`: the lens `p ⇆ 1` is unique,
   `Lens p 1 ≃ PUnit`. (The `I = PUnit` case of `Poly(q, I) ≅ Set(q(1), I)`
   from Thm 5.4.)
-* `homFromX` — a lens `y ⇆ p` is a position of `p`, `Lens X p ≃ p.A`. This is
+* `homFromY` — a lens `y ⇆ p` is a position of `p`, `Lens y p ≃ p.A`. This is
   the counit of `linear ⊣ (−)(1)`, i.e. `Poly(y, q) ≅ q(1)` (Thm 5.4).
 * `homToConst` — a lens `p ⇆ C A` is a map of positions `p.A → A`,
   `Lens p (C A) ≃ (p.A → A)`, i.e. `Poly(q, I) ≅ Set(q(1), I)` (Thm 5.4;
@@ -45,7 +45,7 @@ These hom-isomorphisms are reference API: book-completeness formalizations of
 the §5.1 trivial-interface adjunctions, staged for downstream (VCVio)
 consumers and exercised in `PolyFunTest/PFunctor/Adjunctions.lean`.
 
-Both directions of `homFromX` and `homToLinear` hold definitionally
+Both directions of `homFromY` and `homToLinear` hold definitionally
 (`PUnit`/`Prod` eta), so their inverse laws are `rfl`. The three equivalences
 touching an empty direction type (`homFromZero`, `homToOne`, `homToConst`)
 need a `funext` into the empty type for one inverse law.
@@ -82,11 +82,11 @@ def homToOne : Lens p (1 : PFunctor.{uA₁, uB₁}) ≃ PUnit where
   right_inv _ := rfl
 
 /-- **Representability of `y`** (Spivak–Niu Thm 5.4, `Poly(y, q) ≅ q(1)`). A
-lens `X ⇆ p` picks a single position of `p` via `toFunA PUnit.unit`, and its
-`toFunB` is forced (every direction of `X` is `PUnit.unit`). -/
-def homFromX : Lens X.{uA₁, uB₁} p ≃ p.A where
+lens `y ⇆ p` picks a single position of `p` via `toFunA PUnit.unit`, and its
+`toFunB` is forced (every direction of `y` is `PUnit.unit`). -/
+def homFromY : Lens y.{uA₁, uB₁} p ≃ p.A where
   toFun l := l.toFunA PUnit.unit
-  invFun := Lens.fromX
+  invFun := Lens.fromY
   left_inv _ := rfl
   right_inv _ := rfl
 

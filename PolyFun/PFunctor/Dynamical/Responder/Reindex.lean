@@ -26,7 +26,7 @@ with Polynomial Functors in Dependent Type Theory* ([Abe26] in
 
 Responder execution is defined by structural recursion, so its state and leaf
 universes are independent of the interface-direction universe.  This matters
-for terminal-coalgebra states such as `M (Q ⊸ X)`, whose universe also contains
+for terminal-coalgebra states such as `M (Q ⊸ y)`, whose universe also contains
 the interface-position universe.  The existing `Responder.equivStateHandler`
 bridge remains available in the homogeneous fragment where state and response
 types share a universe; it is not used to restrict the core execution API.

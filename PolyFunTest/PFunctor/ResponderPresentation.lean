@@ -23,7 +23,7 @@ namespace PFunctor.ResponderPresentationCanary
 universe uA uB uC uD uA' uB' uC' uD' uS uI
 
 def mapBehavior {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}} (base : Lens P Q)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'})) : PFunctor.M (P ⊸ X.{uA, uB}) :=
+    (behavior : PFunctor.M (Q ⊸ y.{uA', uB'})) : PFunctor.M (P ⊸ y.{uA, uB}) :=
   Responder.mapBehavior base behavior
 
 def mapDisplayedBehavior
@@ -31,7 +31,7 @@ def mapDisplayedBehavior
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB', uC', uD'} Q}
     {base : Lens P Q} (displayedLens : Display.Lens S T base)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
+    (behavior : PFunctor.M (Q ⊸ y.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior) :
     Display.M (Display.responder S) (Responder.mapBehavior base behavior) :=
   Responder.mapDisplayedBehavior displayedLens behavior displayedBehavior

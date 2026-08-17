@@ -41,9 +41,9 @@ the trajectory unfolding equations below rewrite corecursive `constProd`
 objects there, so `P.Obj` must unfold to its sigma form in those checks. -/
 attribute [local implicit_reducible] PFunctor.Obj
 
-/-- The unique successor of a node in a unary (`X`-)cofree tree: read off the single
+/-- The unique successor of a node in a unary (`y`-)cofree tree: read off the single
 child indexed by the lone direction `PUnit.unit`. -/
-def CofreeC.next {α : Type w} (t : CofreeC X.{uA, uB} α) : CofreeC X.{uA, uB} α :=
+def CofreeC.next {α : Type w} (t : CofreeC y.{uA, uB} α) : CofreeC y.{uA, uB} α :=
   t.tail.2 PUnit.unit
 
 /-- Relabel a `p`-tree into the cofree tree whose label at each node is that node's
@@ -136,7 +136,7 @@ theorem trajectory_eq_selfLabel_behavior (s : DynSystem S p) (st : S) :
 
 /-! ## Closed-system spine
 
-A closed system's interface is `X`, whose lone direction gives every cofree node a
+A closed system's interface is `y`, whose lone direction gives every cofree node a
 single successor `CofreeC.next`. Iterating it traces the system's spine, which is
 exactly the `iterate` of its states. -/
 

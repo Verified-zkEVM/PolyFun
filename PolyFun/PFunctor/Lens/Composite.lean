@@ -68,10 +68,10 @@ def compPullback (l : Lens p (q ◃ r)) (i : p.A) :
 /-- The `n`-fold composition power of a lens: `l^{◃n} : compNth p n ⇆ compNth q n`
 (Spivak–Niu §6.1.4). Built by iterating `compMap` (`◃ₗ`). -/
 def compNthMap (l : Lens p q) : (n : ℕ) → Lens (compNth p n) (compNth q n)
-  | 0 => Lens.id X
+  | 0 => Lens.id y
   | n + 1 => l ◃ₗ compNthMap l n
 
-@[simp] theorem compNthMap_zero (l : Lens p q) : compNthMap l 0 = Lens.id X := rfl
+@[simp] theorem compNthMap_zero (l : Lens p q) : compNthMap l 0 = Lens.id y := rfl
 
 @[simp] theorem compNthMap_succ (l : Lens p q) (n : ℕ) :
     compNthMap l (n + 1) = l ◃ₗ compNthMap l n := rfl
