@@ -226,6 +226,7 @@ public import PolyFun.PFunctor.SubstMonoid
 public import PolyFun.PFunctor.SubstMonoid.Convolution
 public import PolyFun.PFunctor.SubstMonoid.Extension
 public import PolyFun.PFunctor.Supply
+public import PolyFun.PFunctor.Supply.Trace
 public import PolyFun.PFunctor.Trace
 public import PolyFun.PFunctor.Wiring
 public import PolyFun.PFunctor.Wiring.Parallel
