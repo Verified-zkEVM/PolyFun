@@ -120,6 +120,14 @@ theorem mapLens_pure (l : Lens P Q) (x : α) :
     (pure x : FreeM P α).mapLens l = FreeM.pure x :=
   rfl
 
+/-- Interface transport exposes the `liftBind` constructor without requiring
+clients to unfold its compatibility presentation as `lift` followed by `bind`. -/
+@[simp]
+theorem mapLens_liftBind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α) :
+    (FreeM.liftBind a rest).mapLens l =
+      FreeM.liftBind (l.toFunA a) (fun d ↦ (rest (l.toFunB a d)).mapLens l) :=
+  rfl
+
 @[simp]
 theorem mapLens_lift_bind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α) :
     ((FreeM.lift a).bind rest).mapLens l =

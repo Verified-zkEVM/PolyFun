@@ -120,24 +120,25 @@ theorem unroll_wrap {q : PFunctor.{uA₂, uB₂}} (M : DynComputation.{u} p α �
       | inl value =>
           rw [M.unroll_return 0 state value hview,
             (M.wrap lens).unroll_return 0 state value (by simp [hview])]
-          rfl
+          exact (FreeM.mapLens_pure lens (some value)).symm
       | inr query =>
           obtain ⟨position, next⟩ := query
           rw [M.unroll_query_zero state position next hview,
             (M.wrap lens).unroll_query_zero state (lens.toFunA position)
               (fun direction => next (lens.toFunB position direction)) (by simp [hview])]
-          rfl
+          exact (FreeM.mapLens_pure lens none).symm
   | succ k ih =>
       cases hview : M.view state with
       | inl value =>
           rw [M.unroll_return (k + 1) state value hview,
             (M.wrap lens).unroll_return (k + 1) state value (by simp [hview])]
-          rfl
+          exact (FreeM.mapLens_pure lens (some value)).symm
       | inr query =>
           obtain ⟨position, next⟩ := query
           rw [M.unroll_query_succ k state position next hview,
             (M.wrap lens).unroll_query_succ k state (lens.toFunA position)
               (fun direction => next (lens.toFunB position direction)) (by simp [hview])]
+          rw [FreeM.mapLens_liftBind]
           exact congrArg (FreeM.liftBind (lens.toFunA position))
             (funext fun direction => ih (next (lens.toFunB position direction)))
 

@@ -26,6 +26,14 @@ namespace PolyFunTest.ModuleAPI.PFunctor
 open _root_.PFunctor
 
 example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}}
+    {α : Type uα} (lens : Lens P Q) (position : P.A)
+    (next : P.B position → FreeM P α) :
+    FreeM.mapLens lens (FreeM.liftBind position next) =
+      FreeM.liftBind (lens.toFunA position)
+        (fun direction ↦ FreeM.mapLens lens (next (lens.toFunB position direction))) :=
+  FreeM.mapLens_liftBind lens position next
+
+example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}}
     {α : Type uα} {β : Type uβ}
     (M : DynSystem.DynComputation.{u} P α β) (lens : Lens P Q)
     (k : Nat) (state : M.State) :
