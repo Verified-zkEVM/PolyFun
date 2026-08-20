@@ -12,7 +12,7 @@ public import PolyFun.ITree.Sim.Facts
 
 Characteristic equations for `ITree.interpMrec`, `ITree.mutualRec`, and
 `ITree.fixRec`. The one-step equations are exact because `interpMrec` is a
-direct `PFunctor.M.corec`; recursive calls are guarded by one silent step and
+direct `ITree.corec`; recursive calls are guarded by one silent step and
 external events remain visible.
 
 The algebraic laws follow `Interp/RecursionFacts.v` from the Rocq ITree
@@ -49,10 +49,10 @@ attribute [local implicit_reducible] Sum.elim
           (pure (F := (D + E : PFunctor.{max uDA uEA, uB})) r) =
         ⟨.pure r, PEmpty.elim⟩ := by
     simp [mutualRecStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpMrec, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpMrec, shape'_corec_eq _ _ hstep]
   unfold ITree.pure
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   congr 1
   funext b
   exact b.elim
@@ -63,10 +63,10 @@ attribute [local implicit_reducible] Sum.elim
   have hstep : mutualRecStep body (step t) =
       ⟨.step, fun _ => t⟩ := by
     simp [mutualRecStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpMrec, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpMrec, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   rfl
 
 @[simp] theorem interpMrec_query_recursive (d : D.A)
@@ -76,10 +76,10 @@ attribute [local implicit_reducible] Sum.elim
   have hstep : mutualRecStep body (query (.inl d) k) =
       ⟨.step, fun _ => bind (body d) k⟩ := by
     simp [mutualRecStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpMrec, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpMrec, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   rfl
 
 @[simp] theorem interpMrec_query_external (e : E.A)
@@ -89,10 +89,10 @@ attribute [local implicit_reducible] Sum.elim
   have hstep : mutualRecStep body (query (.inr e) k) =
       ⟨.query e, k⟩ := by
     simp [mutualRecStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpMrec, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpMrec, shape'_corec_eq _ _ hstep]
   unfold ITree.query
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   rfl
 
 /-- Recursive interpretation is a monad morphism: it commutes with bind
@@ -103,34 +103,26 @@ theorem interpMrec_bind
     interpMrec body (bind t k) =
       bind (interpMrec body t) (fun a => interpMrec body (k a)) := by
   let next : α → ITree E β := fun a => interpMrec body (k a)
-  refine PFunctor.M.bisim
+  refine ITree.bisim
     (fun (u v : ITree E β) =>
       u = v ∨ ∃ t : ITree (D + E : PFunctor.{max uDA uEA, uB}) α,
         u = interpMrec body (bind t k) ∧
         v = bind (interpMrec body t) next)
     ?_ _ _ (Or.inr ⟨t, rfl, rfl⟩)
   rintro u v (rfl | ⟨t, rfl, rfl⟩)
-  · rcases h : PFunctor.M.dest u with ⟨sh, c⟩
+  · rcases h : ITree.shape' u with ⟨sh, c⟩
     exact ⟨sh, c, c, rfl, rfl, fun _ => Or.inl rfl⟩
-  · rcases h : PFunctor.M.dest t with ⟨sh, c⟩
+  · rcases h : ITree.shape' t with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have ht : t = pure r := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [h]
-          change (⟨.pure r, c⟩ :
-              (Poly (D + E : PFunctor.{max uDA uEA, uB}) α).Obj _) =
-            ⟨.pure r, PEmpty.elim⟩
-          congr 1
-          funext z
-          exact z.elim
+        have ht : t = pure r := eq_pure_of_dest h
         subst ht
         rw [bind_pure_left, interpMrec_pure, bind_pure_left]
         rcases hk : shape' (interpMrec body (k r)) with ⟨sh', c'⟩
-        exact ⟨sh', c', c', hk, hk, fun _ => Or.inl rfl⟩
+        exact ⟨sh', c', c', rfl, rfl, fun _ => Or.inl rfl⟩
     | step =>
         have ht : t = step (c PUnit.unit) := by
-          apply PFunctor.M.eq_of_dest_eq
+          apply eq_of_shape'_eq
           rw [h]
           rfl
         subst ht
@@ -146,7 +138,7 @@ theorem interpMrec_bind
             change D.B d →
               ITree (D + E : PFunctor.{max uDA uEA, uB}) α at c
             have ht : t = query (Sum.inl d) c := by
-              apply PFunctor.M.eq_of_dest_eq
+              apply eq_of_shape'_eq
               rw [h]
               rfl
             subst ht
@@ -168,7 +160,7 @@ theorem interpMrec_bind
             change E.B e →
               ITree (D + E : PFunctor.{max uDA uEA, uB}) α at c
             have ht : t = query (Sum.inr e) c := by
-              apply PFunctor.M.eq_of_dest_eq
+              apply eq_of_shape'_eq
               rw [h]
               rfl
             subst ht
@@ -199,7 +191,7 @@ theorem mapSpec_interpMrec {G : PFunctor.{uGA, uB}}
   let mappedBody : ∀ d : D.A,
       ITree (D + G : PFunctor.{max uDA uGA, uB}) (D.B d) :=
     fun d => mapSpec sumLens (body d)
-  refine PFunctor.M.bisim
+  refine ITree.bisim
     (fun (u v : ITree G α) =>
       u = v ∨
       ∃ t : ITree (D + E : PFunctor.{max uDA uEA, uB}) α,
@@ -207,27 +199,19 @@ theorem mapSpec_interpMrec {G : PFunctor.{uGA, uB}}
         v = interpMrec mappedBody (mapSpec sumLens t))
     ?_ _ _ (Or.inr ⟨t, rfl, rfl⟩)
   rintro u v (rfl | ⟨t, rfl, rfl⟩)
-  · rcases h : PFunctor.M.dest u with ⟨sh, c⟩
+  · rcases h : ITree.shape' u with ⟨sh, c⟩
     exact ⟨sh, c, c, rfl, rfl, fun _ => Or.inl rfl⟩
-  · rcases h : PFunctor.M.dest t with ⟨sh, c⟩
+  · rcases h : ITree.shape' t with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have ht : t = pure r := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [h]
-          change (⟨.pure r, c⟩ :
-              (Poly (D + E : PFunctor.{max uDA uEA, uB}) α).Obj _) =
-            ⟨.pure r, PEmpty.elim⟩
-          congr 1
-          funext z
-          exact z.elim
+        have ht : t = pure r := eq_pure_of_dest h
         subst ht
         rw [interpMrec_pure, mapSpec_pure, mapSpec_pure, interpMrec_pure]
         exact ⟨.pure r, PEmpty.elim, PEmpty.elim,
           shape'_pure _, shape'_pure _, fun z => z.elim⟩
     | step =>
         have ht : t = step (c PUnit.unit) := by
-          apply PFunctor.M.eq_of_dest_eq
+          apply eq_of_shape'_eq
           rw [h]
           rfl
         subst ht
@@ -245,7 +229,7 @@ theorem mapSpec_interpMrec {G : PFunctor.{uGA, uB}}
             have ht : t = query
                 (Sum.inl d :
                   (D + E : PFunctor.{max uDA uEA, uB}).A) c := by
-              apply PFunctor.M.eq_of_dest_eq
+              apply eq_of_shape'_eq
               rw [h]
               rfl
             subst ht
@@ -271,7 +255,7 @@ theorem mapSpec_interpMrec {G : PFunctor.{uGA, uB}}
             have ht : t = query
                 (Sum.inr e :
                   (D + E : PFunctor.{max uDA uEA, uB}).A) c := by
-              apply PFunctor.M.eq_of_dest_eq
+              apply eq_of_shape'_eq
               rw [h]
               rfl
             subst ht

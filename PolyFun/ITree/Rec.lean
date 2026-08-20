@@ -18,7 +18,7 @@ Semantically, a body `body : Handler D (D + E)` describes "one layer" of a
 potentially recursive procedure: it may emit `D`-calls (recursive) or
 `E`-calls (external). `mutualRec body` returns a `Handler D E` that folds
 the recursion away while leaving every external `E`-event intact. The
-implementation is a single `PFunctor.M.corec` over `ITree (D + E)`, with
+implementation is a single `ITree.corec` over `ITree (D + E)`, with
 each recursive `D`-event replaced by one silent `step` followed by
 `bind (body d) continuation`. The silent step is what makes the corec
 productive.
@@ -78,13 +78,13 @@ The four cases mirror the ITree shape constructors:
 * `.query (.inr e) c` — emit `.query e` with the same continuation.
 
 The `.step` inserted in the `.inl` case is what keeps the enclosing
-`PFunctor.M.corec` productive even in the presence of unbounded recursive
+`ITree.corec` productive even in the presence of unbounded recursive
 calls. -/
 def mutualRecStep {D : PFunctor.{uDA, uB}} {E : PFunctor.{uEA, uB}} {α : Type uα}
     (body : ∀ a : D.A, ITree (D + E : PFunctor.{max uDA uEA, uB}) (D.B a))
     (u : ITree (D + E : PFunctor.{max uDA uEA, uB}) α) :
-    (Poly E α).Obj (ITree (D + E : PFunctor.{max uDA uEA, uB}) α) :=
-  match PFunctor.M.dest u with
+    (ViewPoly E α).Obj (ITree (D + E : PFunctor.{max uDA uEA, uB}) α) :=
+  match ITree.shape' u with
   | ⟨.pure r, _⟩ => ⟨.pure r, PEmpty.elim⟩
   | ⟨.step, c⟩ => ⟨.step, fun _ => c PUnit.unit⟩
   | ⟨.query (.inl d), c⟩ => ⟨.step, fun _ => bind (body d) c⟩
@@ -95,7 +95,7 @@ def mutualRecStep {D : PFunctor.{uDA, uB}} {E : PFunctor.{uEA, uB}} {α : Type u
 def interpMrec {D : PFunctor.{uDA, uB}} {E : PFunctor.{uEA, uB}} {α : Type uα}
     (body : ∀ a : D.A, ITree (D + E : PFunctor.{max uDA uEA, uB}) (D.B a))
     (u : ITree (D + E : PFunctor.{max uDA uEA, uB}) α) : ITree E α :=
-  PFunctor.M.corec (mutualRecStep body) u
+  ITree.corec (mutualRecStep body) u
 
 /-- `ITree.mutualRec body req` interprets a `D`-request `req` by repeatedly
 invoking `body : Handler D (D + E)`. Each recursive `D`-call in the body is

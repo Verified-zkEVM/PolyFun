@@ -186,7 +186,7 @@ theorem weakBisim_isWeakSimulation :
               subst label
               subst target
               have ht : t = step (c PUnit.unit) := by
-                apply PFunctor.M.eq_of_dest_eq
+                apply eq_of_shape'_eq
                 exact head.trans (shape'_step (c PUnit.unit)).symm
               rw [ht] at hrel
               have hcont : WeakBisim (c PUnit.unit) s :=
@@ -202,7 +202,7 @@ theorem weakBisim_isWeakSimulation :
               | pure observed htMatch hsMatch =>
                   have heq :
                       (⟨Shape.pure observed, PEmpty.elim⟩ :
-                        (Poly F α).Obj (ITree F α)) =
+                        (ViewPoly F α).Obj (ITree F α)) =
                       ⟨Shape.pure result, PEmpty.elim⟩ :=
                     htMatch.symm.trans head
                   have hresult : observed = result :=
@@ -234,7 +234,7 @@ theorem weakBisim_isWeakSimulation :
               | query observed ct cs htMatch hsMatch hcont =>
                   have heq :
                       (⟨Shape.query observed, ct⟩ :
-                        (Poly F α).Obj (ITree F α)) =
+                        (ViewPoly F α).Obj (ITree F α)) =
                       ⟨Shape.query a, c⟩ := htMatch.symm.trans head
                   have ha : observed = a :=
                     Shape.query.inj (Sigma.mk.inj heq).1
