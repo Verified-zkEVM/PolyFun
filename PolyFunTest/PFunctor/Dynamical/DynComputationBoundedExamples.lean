@@ -6,6 +6,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
+import Mathlib.Tactic.NormNum
 
 /-! # Bounded returning-computation examples -/
 

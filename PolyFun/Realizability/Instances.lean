@@ -7,6 +7,7 @@ module
 
 public import PolyFun.Realizability.Basic
 public import Mathlib.Computability.Partrec
+public import Mathlib.Data.Fintype.Option
 public import Mathlib.Data.Fintype.Prod
 public import Mathlib.Data.Fintype.Sum
 
