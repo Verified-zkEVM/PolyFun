@@ -128,7 +128,7 @@ def sigmaRightPosition : (Display.sigma contractFamily).position ⟨true, .query
 def sigmaLeftDirection (b : Fin 2) :
     (Display.sigma contractFamily).direction ⟨false, .query 2⟩
       sigmaLeftPosition b :=
-  ⟨2, by simp [sigmaLeftPosition]⟩
+  ⟨2, by simp [sigmaLeftPosition]; omega⟩
 
 def sigmaRightDirection (b : Fin 2) :
     (Display.sigma contractFamily).direction ⟨true, .query 2⟩

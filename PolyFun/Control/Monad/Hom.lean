@@ -5,9 +5,8 @@ Authors: Devon Tuma
 -/
 module
 
-public import Mathlib.Probability.ProbabilityMassFunction.Monad
+public import Mathlib.Control.Monad.Basic
 public import PolyFun.Control.Monad.Algebra
-public import Mathlib.CategoryTheory.Monad.Types
 
 /-!
 # Morphisms Between Monads
@@ -145,7 +144,7 @@ type are equal. -/
     F (g <$> x) = g <$> F x := by simp [monad_norm]
 
 @[simp] lemma mmap_seq [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n) (x : m (α → β)) (y : m α) :
-    F (x <*> y) = F x <*> F y := by simp [monad_norm]
+    F (x <*> y) = F x <*> F y := by simp [seq_eq_bind_map, F.mmap_bind, F.mmap_map]
 
 @[simp] lemma mmap_seqLeft [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n) (x : m α) (y : m β) :
     F (x <* y) = F x <* F y := by simp [seqLeft_eq]
