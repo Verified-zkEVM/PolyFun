@@ -129,7 +129,9 @@ def update? [DecidableEq p.A] (M : DynComputation p α β) :
 ```
 
 `head` is not a new definition — it is *definitionally* the position map of the
-machine's underlying lens. That is why it transports so well:
+machine's underlying lens. The public transport laws record the following
+equalities; bare definitional checks in the owner module additionally guard their
+implementation:
 
 | Operation | Effect on `head` | Holds by |
 | --- | --- | --- |
@@ -142,15 +144,14 @@ machine's underlying lens. That is why it transports so well:
 convention at resolved states, and that convention breaks compositionality:
 `(M.wrap lens).expose` is *not* `lens.toFunA ∘ M.expose`, because the two
 disagree exactly at resolved states. `head` has no such wart. `output`, `expose`,
-and `stepD` are still provided, as the derived accessors a machine-facing cost
-model consumes.
+and `stepD` remain available as derived compatibility and execution accessors;
+they are not the canonical cost boundary.
 
 **`update?` is partial, and that is load-bearing.** `none` means the pair is not a
 step the machine can take: the state has already returned, or the answer is tagged
-with a position the machine is not exposing. The total variant `updateFlat`
-(retained, derived as `(update? step).getD step.1`, because that is the shape a
-machine-facing cost model wants) does **not** compose across a state coproduct with
-a handoff:
+with a position the machine is not exposing. The total compatibility variant
+`updateFlat`, derived as `(update? step).getD step.1`, does **not** compose across
+a state coproduct with a handoff:
 
 | answer tag | composite `updateFlat` | `Sum.inr (M₂.updateFlat (M₂.init v, i))` |
 | --- | --- | --- |
@@ -173,9 +174,9 @@ plus `init` constrains the machine, not a lossy projection of it.
 **Spell the step maps with combinators, never `match`.** `Sum.elim`,
 `Option.getLeft?`, `Sigma.fst`, and `dite` all reduce by congruence over the
 shared `view`. An auto-generated matcher instead abstracts the computation and
-blocks unification across distinct input types, which would cost the `rfl`
-transport above. `PolyFunTest/Realizability/Examples.lean` pins those `rfl`s so a
-regression fails the test build.
+blocks unification across distinct input types. Owner-module definitional
+canaries pin the intended representation sharing; downstream proofs should use
+the corresponding public equations rather than depend on reducer alignment.
 
 ## The Boundary Is A Parameter, Never An Existential
 
@@ -208,11 +209,29 @@ def IsRealizableWithin (C) (bd) (program : α → FreeM p β) (k : ℕ) : Prop :
 ```
 
 A `Realization` bundles a machine, a representation of its hidden state, and
-three admissibility proofs — for `init`, `head`, and `updateFlat`. Constraining
+three admissibility proofs — for `init`, `head`, and partial `update?`. Constraining
 `init` is what forbids smuggling precomputed advice into the initial state.
 
 `IsRealizableWithin.isTotalRollBound` extracts a bound on the *program*'s query
 depth from the machine, and `IsRealizableWithin.isRealizableBy` drops the budget.
+
+### Contract for a quantitative refinement
+
+The qualitative layer proves which first-order maps compose; it does not infer a
+total running-time bound from a query budget. A cost-bearing refinement must
+therefore keep four obligations explicit:
+
+1. charge initialization, `head`, and each enabled `update?` separately;
+2. accumulate the size of reachable states, rather than assume query count bounds
+   the cost of carrying or growing them;
+3. transport costs only across pinned boundary representations with an explicit
+   admissible translation and invariance theorem; and
+4. retain a word-level encode/decode retraction when a concrete complexity class
+   is used, so injectivity alone cannot hide non-computable advice in an encoding.
+
+These are client obligations rather than extra fields of `IsRealizableWithin`:
+the latter intentionally remains a qualitative admissibility predicate plus a
+visible-query bound.
 
 ## Universe Discipline
 

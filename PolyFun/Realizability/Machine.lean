@@ -38,10 +38,13 @@ run semantics never feeds a direction at a position other than the exposed one, 
 the flattening carries no coherence side conditions — the only cost is
 `DecidableEq p.A`.
 
-`updateFlat`, `output`, `expose`, and `stepD` are the derived accessors a
-machine-facing cost model consumes: a total state-to-state transition, an optional
-readout, a total query selector, and the deterministic one-step transition against
-a fixed pure handler.
+`updateFlat`, `output`, `expose`, and `stepD` are derived compatibility accessors:
+a total state-to-state transition, an optional readout, a total query selector,
+and the deterministic one-step transition against a fixed pure handler. They are
+useful for execution and legacy clients, but they are not the compositional
+resource boundary. A quantitative realization should cost `head` and the partial
+`update?` directly, so junk inputs and already-returned states cannot acquire a
+conventional total-step cost.
 
 `ofStep_step_eq_of_flat_eq` records that the presentation is faithful: a step
 function is determined by the `head` and `update?` it induces, so constraining
@@ -121,8 +124,8 @@ exposing. `some state'` means the answer is one the computation is waiting for a
 `state'` is where it goes.
 
 Partiality is what makes the flattening compositional. The total variant
-`updateFlat` collapses `none` to the unchanged state, which suits a cost model
-that wants a plain state-to-state map, but does not compose across a state
+`updateFlat` collapses `none` to the unchanged state, which supplies a convenient
+plain state-to-state compatibility map, but does not compose across a state
 coproduct with a handoff: at a left state whose intermediate value has been handed
 over, the composite stays in the left summand on a mismatched tag while the second
 phase alone would stay at its own initial state. With `none` both are `none`. -/
@@ -155,9 +158,10 @@ theorem update?_of_view_query_of_ne [DecidableEq p.A]
 /-- The total variant of the flattened transition: a mismatched tag or an already
 returned state leaves the state unchanged.
 
-This is the shape a machine-facing cost model wants, since it is a plain
-state-to-state map. It is derived from `update?`, so the two never disagree about
-which answers are steps. -/
+It is derived from `update?`, so the two never disagree about which answers are
+steps. Quantitative and compositional clients should nevertheless charge
+`update?`: the `getD` convention deliberately erases whether a tagged answer was
+an enabled transition. -/
 def updateFlat [DecidableEq p.A] (M : DynComputation.{u} p α β)
     (step : M.State × p.Idx) : M.State :=
   (M.update? step).getD step.1

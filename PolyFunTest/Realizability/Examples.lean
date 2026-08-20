@@ -12,12 +12,12 @@ public import PolyFun.Realizability.Instances
 # Worked examples of admissible realizability
 
 A hand-built two-state machine realizing a one-query program, checked against the
-finite step class, plus smoke tests pinning the definitional behaviour the
-closure theory relies on:
+finite step class, plus smoke tests pinning the owner-module definitional
+behaviour behind the public closure laws:
 
 * the flat step maps of `ofStep` read back exactly the supplied step function;
-* replacing the initialization leaves every step map alone *by `rfl`*, which is
-  what makes `IsRealizableBy.precomp` free;
+* replacing the initialization leaves every step map definitionally unchanged,
+  which is the implementation invariant exposed by the `setInit` laws;
 * two one-query programs compose under `bind`, with budgets adding, and the
   composite transition satisfies an equation unconditional in the answer index;
 * `StepClass.computable.Hom` really is Mathlib's `Computable`;
@@ -175,9 +175,9 @@ example :
 
 /-! ## Replacing the initialization is definitionally transparent
 
-These are the `rfl` checks that make `precomp` free: a machine and its
-reinitialization share every step map on the nose. If a `match` ever creeps into
-one of the step-map definitions, these break.
+These owner-module definitional checks guard the implementation invariant behind
+`precomp`: a machine and its reinitialization share every step map on the nose.
+Ordinary-import clients consume the named transport laws instead.
 -/
 
 section SetInit
