@@ -23,7 +23,7 @@ while IFS= read -r file; do
   fi
 done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 
-if rg -n '@\[expose\][[:space:]]+public section' PolyFun/Interaction --glob '*.lean'; then
+if grep -rEn --include='*.lean' '@\[expose\][[:space:]]+public section' PolyFun/Interaction; then
   echo "ERROR: Broad exposed public sections are forbidden in PolyFun/Interaction." >&2
   echo "Expose individual definitions, or use 'import all' in proof modules." >&2
   status=1
