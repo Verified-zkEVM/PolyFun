@@ -182,20 +182,7 @@ unchanged: the two computations share `toMachine`, hence share their views. -/
 theorem unroll_setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
     (g : γ → M.State) (k : ℕ) (state : M.State) :
     (M.setInit g).unroll k state = M.unroll k state := by
-  induction k generalizing state with
-  | zero =>
-      rw [unroll_zero (M.setInit g) state, unroll_zero M state, setInit_view]
-      cases hview : M.view state with
-      | inl value => rfl
-      | inr query => rfl
-  | succ k ih =>
-      rw [unroll_succ (M.setInit g) k state, unroll_succ M k state, setInit_view]
-      cases hview : M.view state with
-      | inl value => rfl
-      | inr query =>
-          rcases query with ⟨position, next⟩
-          exact congrArg (FreeM.liftBind position)
-            (funext fun direction => ih (next direction))
+  rw [(M.setInit g).unroll_eq_truncate, M.unroll_eq_truncate, setInit_behavior]
 
 theorem run_setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
     (g : γ → M.State) (k : ℕ) (input : γ) :
@@ -209,16 +196,28 @@ theorem run_setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
       FreeM.map (Option.map f) (M.unroll k state) := by
   induction k generalizing state with
   | zero =>
-      rw [unroll_zero (M.mapResult f) state, unroll_zero M state, mapResult_view]
       cases hview : M.view state with
-      | inl value => rfl
-      | inr query => rfl
+      | inl value =>
+          rw [M.unroll_return 0 state value hview,
+            (M.mapResult f).unroll_return 0 state (f value) (by simp [hview])]
+          exact (FreeM.map_pure (Option.map f) (some value)).symm
+      | inr query =>
+          obtain ⟨position, next⟩ := query
+          rw [M.unroll_query_zero state position next hview,
+            (M.mapResult f).unroll_query_zero state position next (by simp [hview])]
+          simpa only [Option.map_none] using
+            (FreeM.map_pure (P := p) (Option.map f) none).symm
   | succ k ih =>
-      rw [unroll_succ (M.mapResult f) k state, unroll_succ M k state, mapResult_view]
       cases hview : M.view state with
-      | inl value => rfl
+      | inl value =>
+          rw [M.unroll_return (k + 1) state value hview,
+            (M.mapResult f).unroll_return (k + 1) state (f value) (by simp [hview])]
+          exact (FreeM.map_pure (Option.map f) (some value)).symm
       | inr query =>
           rcases query with ⟨position, next⟩
+          rw [M.unroll_query_succ k state position next hview,
+            (M.mapResult f).unroll_query_succ k state position next (by simp [hview])]
+          rw [FreeM.map_liftBind]
           exact congrArg (FreeM.liftBind position)
             (funext fun direction => ih (next direction))
 

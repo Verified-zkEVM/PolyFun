@@ -204,7 +204,7 @@ displayed families, roll bounds) on top of the upstream type.
 
 | File | Purpose |
 |------|---------|
-| [`PolyFun/PFunctor/Free/Basic.lean`](../../PolyFun/PFunctor/Free/Basic.lean) | Re-exports cslib's `FreeM P α` (`pure` / `liftBind`) and canonical `liftM` evaluator; adds `mapLens` with public equations for both constructors, `liftMHom` naturality, arbitrary-monad handler fusion, and `toW` / `ofW` / `equivWOfIsEmpty`. |
+| [`PolyFun/PFunctor/Free/Basic.lean`](../../PolyFun/PFunctor/Free/Basic.lean) | Re-exports cslib's `FreeM P α` (`pure` / `liftBind`) and canonical `liftM` evaluator; exposes constructor equations for `map` and `mapLens`, and adds `liftMHom` naturality, arbitrary-monad handler fusion, and `toW` / `ofW` / `equivWOfIsEmpty`. |
 | [`PolyFun/PFunctor/Free/Resumption.lean`](../../PolyFun/PFunctor/Free/Resumption.lean) | Injective monad-hom embedding `FreeM.toResumption`, with constructor, bind, map, and `mapLens` naturality laws. Kept separate to preserve the base `Resumption` import layer. |
 | [`PolyFun/PFunctor/Free/Path.lean`](../../PolyFun/PFunctor/Free/Path.lean) | `FreeM.Path s` (explicit polynomial direction at every node), `PathAlong`, `output`, `append`, the generic `StoppingTree` initial algebra, and its canonical-path `Telescope` specialization. |
 | [`PolyFun/PFunctor/Free/Path/Execution.lean`](../../PolyFun/PFunctor/Free/Path/Execution.lean) | Structural `withPath` execution, erased `Path.trace`, and the exact recovery law `map_output_withPath`. |

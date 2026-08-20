@@ -190,6 +190,12 @@ computations sharing `toMachine` share every derived step map definitionally. -/
     (g : γ → M.State) (state : M.State) :
     (M.setInit g).view state = M.view state := rfl
 
+/-- Replacing initialization leaves the state-indexed behavior unchanged. -/
+@[simp] theorem setInit_behavior {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (g : γ → M.State) (state : M.State) :
+    (M.setInit g).toDynSystem.behavior state = M.toDynSystem.behavior state :=
+  rfl
+
 @[simp] theorem setInit_denote {γ : Type uγ} (M : DynComputation.{u} p α β)
     (g : γ → M.State) (input : γ) :
     (M.setInit g).denote input = M.toDynSystem.behavior (g input) := rfl
