@@ -308,6 +308,9 @@ typeclasses, so `⊤`, `⊥`, `≤`, `⊔` work directly:
 `Refines` is only a *preorder* (mutual refinement permits codomain
 bijections), so `Observation X` carries `Preorder`, `OrderTop`,
 `OrderBot`, and `Max` instances but not `PartialOrder` / `SemilatticeSup`.
+The factorization predicate itself is exposed so an ordinary-import consumer
+can prove `k₁ ≤ k₂` directly as `⟨factor, proof⟩`; the named `refines_iff`
+remains available when an explicit rewrite boundary is preferable.
 Profile-level order theory comes through Mathlib's `Pi` instances on
 `ObservationProfile Party X = Party → Observation X` for free.
 
@@ -412,7 +415,9 @@ current-step interface.
 ### Fairness, safety, liveness
 
 `Fairness.lean` defines weak and strong fairness over stable ticket
-systems. `Liveness.lean` provides temporal predicates (`AlwaysState`,
+systems, including the generic implication from strong to weak fairness and
+the temporal fact that eventual persistence implies infinite recurrence.
+`Liveness.lean` provides temporal predicates (`AlwaysState`,
 `EventuallyState`, `InfinitelyOftenState`) and safety / admissibility
 under fairness.
 

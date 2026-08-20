@@ -63,6 +63,13 @@ theorem infinitelyOften_iff {P : Nat → Prop} :
     InfinitelyOften P ↔ ∀ N, ∃ n, N ≤ n ∧ P n :=
   Iff.rfl
 
+/-- A property that eventually holds forever also holds infinitely often. -/
+theorem infinitelyOften_of_eventuallyAlways {P : Nat → Prop} :
+    EventuallyAlways P → InfinitelyOften P := by
+  rw [eventuallyAlways_iff, infinitelyOften_iff]
+  rintro ⟨N, hN⟩ N'
+  exact ⟨max N N', le_max_right _ _, hN _ (le_max_left _ _)⟩
+
 theorem always_mono {P Q : Nat → Prop} (himp : ∀ n, P n → Q n) : Always P → Always Q :=
   fun hP n => himp n (hP n)
 
@@ -136,6 +143,19 @@ theorem fired_implies_enabled {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (ticket : ticketed.Ticket) (n : Nat) :
     firedAt ticketed run ticket n → enabledAt ticketed run ticket n :=
   fun hfired => ⟨run.path n, hfired⟩
+
+/-- Strong fairness for one ticket implies weak fairness for that ticket. -/
+theorem weakFairOn_of_strongFairOn {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    (ticketed : ProcessOver.Ticketed Γ) (run : ProcessOver.Run ticketed.toProcess)
+    (ticket : ticketed.Ticket) :
+    StrongFairOn ticketed run ticket → WeakFairOn ticketed run ticket :=
+  fun hStrong hEventually => hStrong (Run.infinitelyOften_of_eventuallyAlways hEventually)
+
+/-- Strong fairness for every ticket implies weak fairness for every ticket. -/
+theorem weakFair_of_strongFair {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    (ticketed : ProcessOver.Ticketed Γ) (run : ProcessOver.Run ticketed.toProcess) :
+    StrongFair ticketed run → WeakFair ticketed run :=
+  fun hStrong ticket => weakFairOn_of_strongFairOn ticketed run ticket (hStrong ticket)
 
 end Ticketed
 end ProcessOver
@@ -213,6 +233,18 @@ theorem fired_implies_enabled {Party : Type u} (ticketed : Process.Ticketed Part
     (run : Process.Run ticketed.toProcess) (ticket : ticketed.Ticket) (n : Nat) :
     firedAt ticketed run ticket n → enabledAt ticketed run ticket n :=
   ProcessOver.Ticketed.fired_implies_enabled ticketed run ticket n
+
+/-- Strong fairness for one closed-process ticket implies weak fairness for it. -/
+theorem weakFairOn_of_strongFairOn {Party : Type u} (ticketed : Process.Ticketed Party)
+    (run : Process.Run ticketed.toProcess) (ticket : ticketed.Ticket) :
+    StrongFairOn ticketed run ticket → WeakFairOn ticketed run ticket :=
+  ProcessOver.Ticketed.weakFairOn_of_strongFairOn ticketed run ticket
+
+/-- Strong fairness for a closed-process run implies weak fairness. -/
+theorem weakFair_of_strongFair {Party : Type u} (ticketed : Process.Ticketed Party)
+    (run : Process.Run ticketed.toProcess) :
+    StrongFair ticketed run → WeakFair ticketed run :=
+  ProcessOver.Ticketed.weakFair_of_strongFair ticketed run
 
 end Ticketed
 end Process

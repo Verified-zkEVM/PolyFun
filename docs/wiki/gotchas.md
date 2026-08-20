@@ -149,6 +149,14 @@ fails with an unhelpful type mismatch. Lean warns when the attribute is
 redundant (instances are exposed by default), so add it and delete what it
 flags rather than guessing.
 
+A public characterization theorem does not necessarily preserve constructor
+notation. For example, `Refines k₁ k₂ ↔ ∃ f, ...` permits rewriting while an
+ordinary-import proof `⟨f, h⟩ : Refines k₁ k₂` still needs the predicate body
+or an explicit introduction theorem. If the literal witness shape is part of
+the documented API, expose that predicate narrowly and add an ordinary-import
+canary for the exact spelling, as in
+[`PolyFunTest/ModuleAPI/Interaction.lean`](../../PolyFunTest/ModuleAPI/Interaction.lean).
+
 ## Proof Patterns
 
 ### 8b. Keep one canonical concrete-step relation type
