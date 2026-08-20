@@ -47,8 +47,8 @@ pair of the convolution carrier. Tensoring with `C` may enlarge the direction
 universe from `max cA mB` to `max cA cB mB`. -/
 private def actionUnit (C : Comonoid.{cA, cB})
     (_M : SubstMonoid.{mA, mB}) :
-    Lens (X.{max cA cB mA mB, max cA mB} ⊗ C.carrier)
-      X.{max cA cB mA mB, max cA cB mB} :=
+    Lens (y.{max cA cB mA mB, max cA mB} ⊗ C.carrier)
+      y.{max cA cB mA mB, max cA cB mB} :=
   (fun _ => PUnit.unit) ⇆
     (fun pos _ => (PUnit.unit, C.counit.toFunB pos.2 PUnit.unit))
 
@@ -90,11 +90,11 @@ private theorem action_assoc (C : Comonoid.{cA, cB})
 
 /-- The unique lens from the post-action composition unit to the universe
 instance required by `M.unit`. It carries no mathematical data; it only
-compares two copies of `X`. -/
+compares two copies of `y`. -/
 private def compositionUnitMap (_C : Comonoid.{cA, cB})
     (_M : SubstMonoid.{mA, mB}) :
-    Lens X.{max cA cB mA mB, max cA cB mB}
-      X.{max mA mB, mB} :=
+    Lens y.{max cA cB mA mB, max cA cB mB}
+      y.{max mA mB, mB} :=
   Lens.unitComparison
 
 /-! ## Raw convolution operations -/
@@ -106,11 +106,11 @@ copies `compositionUnitMap` and `actionUnit`; the copies must remain
 definitionally identical to those helpers. -/
 def convolutionUnitRaw (C : Comonoid.{cA, cB})
     (M : SubstMonoid.{mA, mB}) :
-    Lens (X.{max cA cB mA mB, max cA mB} ⊗ C.carrier)
+    Lens (y.{max cA cB mA mB, max cA mB} ⊗ C.carrier)
       M.carrier :=
   M.unit ∘ₗ
-    (show Lens X.{max cA cB mA mB, max cA cB mB}
-        X.{max mA mB, mB} from Lens.unitComparison) ∘ₗ
+    (show Lens y.{max cA cB mA mB, max cA cB mB}
+        y.{max mA mB, mB} from Lens.unitComparison) ∘ₗ
     ((fun _ => PUnit.unit) ⇆
       (fun pos _ => (PUnit.unit, C.counit.toFunB pos.2 PUnit.unit)))
 
@@ -137,15 +137,15 @@ private theorem unit_left_factor (C : Comonoid.{cA, cB})
     (M : SubstMonoid.{mA, mB}) :
     ((compositionUnitMap C M ∘ₗ actionUnit C M) ◃ₗ
         Lens.eval C.carrier M.carrier) ∘ₗ
-        actionMap C X (ihom C.carrier M.carrier) ∘ₗ
-        (Lens.Equiv.XComp.invLens ⊗ₗ Lens.id C.carrier) =
-      Lens.Equiv.XComp.invLens ∘ₗ
+        actionMap C y (ihom C.carrier M.carrier) ∘ₗ
+        (Lens.Equiv.yComp.invLens ⊗ₗ Lens.id C.carrier) =
+      Lens.Equiv.yComp.invLens ∘ₗ
         Lens.eval C.carrier M.carrier := by
-  apply Lens.cancel_toLens Lens.Equiv.XComp
+  apply Lens.cancel_toLens Lens.Equiv.yComp
   change
     Lens.eval C.carrier M.carrier ∘ₗ
         (Lens.id (ihom C.carrier M.carrier) ⊗ₗ
-          (Lens.Equiv.XComp.toLens ∘ₗ
+          (Lens.Equiv.yComp.toLens ∘ₗ
             (C.counit ◃ₗ Lens.id C.carrier) ∘ₗ C.comult)) =
       Lens.eval C.carrier M.carrier
   rw [C.counit_left, Lens.tensorMap_id, Lens.comp_id]
@@ -154,15 +154,15 @@ private theorem unit_right_factor (C : Comonoid.{cA, cB})
     (M : SubstMonoid.{mA, mB}) :
     (Lens.eval C.carrier M.carrier ◃ₗ
         (compositionUnitMap C M ∘ₗ actionUnit C M)) ∘ₗ
-        actionMap C (ihom C.carrier M.carrier) X ∘ₗ
-        (Lens.Equiv.compX.invLens ⊗ₗ Lens.id C.carrier) =
-      Lens.Equiv.compX.invLens ∘ₗ
+        actionMap C (ihom C.carrier M.carrier) y ∘ₗ
+        (Lens.Equiv.compY.invLens ⊗ₗ Lens.id C.carrier) =
+      Lens.Equiv.compY.invLens ∘ₗ
         Lens.eval C.carrier M.carrier := by
-  apply Lens.cancel_toLens Lens.Equiv.compX
+  apply Lens.cancel_toLens Lens.Equiv.compY
   change
     Lens.eval C.carrier M.carrier ∘ₗ
         (Lens.id (ihom C.carrier M.carrier) ⊗ₗ
-          (Lens.Equiv.compX.toLens ∘ₗ
+          (Lens.Equiv.compY.toLens ∘ₗ
             (Lens.id C.carrier ◃ₗ C.counit) ∘ₗ C.comult)) =
       Lens.eval C.carrier M.carrier
   rw [C.counit_right, Lens.tensorMap_id, Lens.comp_id]
@@ -247,16 +247,16 @@ def convolution (C : Comonoid.{cA, cB}) (M : SubstMonoid.{mA, mB}) :
       convolutionMultRaw C M ∘ₗ
           (((Lens.curry (convolutionUnitRaw C M) ◃ₗ
               Lens.id (ihom C.carrier M.carrier)) ∘ₗ
-            Lens.Equiv.XComp.invLens) ⊗ₗ Lens.id C.carrier) =
+            Lens.Equiv.yComp.invLens) ⊗ₗ Lens.id C.carrier) =
         Lens.eval C.carrier M.carrier
     calc
       _ = M.mult ∘ₗ (M.unit ◃ₗ Lens.id M.carrier) ∘ₗ
           (((compositionUnitMap C M ∘ₗ actionUnit C M) ◃ₗ
               Lens.eval C.carrier M.carrier) ∘ₗ
-            actionMap C X (ihom C.carrier M.carrier) ∘ₗ
-            (Lens.Equiv.XComp.invLens ⊗ₗ Lens.id C.carrier)) := rfl
+            actionMap C y (ihom C.carrier M.carrier) ∘ₗ
+            (Lens.Equiv.yComp.invLens ⊗ₗ Lens.id C.carrier)) := rfl
       _ = M.mult ∘ₗ (M.unit ◃ₗ Lens.id M.carrier) ∘ₗ
-          Lens.Equiv.XComp.invLens ∘ₗ
+          Lens.Equiv.yComp.invLens ∘ₗ
           Lens.eval C.carrier M.carrier := by
         rw [unit_left_factor]
         rfl
@@ -269,16 +269,16 @@ def convolution (C : Comonoid.{cA, cB}) (M : SubstMonoid.{mA, mB}) :
       convolutionMultRaw C M ∘ₗ
           (((Lens.id (ihom C.carrier M.carrier) ◃ₗ
               Lens.curry (convolutionUnitRaw C M)) ∘ₗ
-            Lens.Equiv.compX.invLens) ⊗ₗ Lens.id C.carrier) =
+            Lens.Equiv.compY.invLens) ⊗ₗ Lens.id C.carrier) =
         Lens.eval C.carrier M.carrier
     calc
       _ = M.mult ∘ₗ (Lens.id M.carrier ◃ₗ M.unit) ∘ₗ
           ((Lens.eval C.carrier M.carrier ◃ₗ
               (compositionUnitMap C M ∘ₗ actionUnit C M)) ∘ₗ
-            actionMap C (ihom C.carrier M.carrier) X ∘ₗ
-            (Lens.Equiv.compX.invLens ⊗ₗ Lens.id C.carrier)) := rfl
+            actionMap C (ihom C.carrier M.carrier) y ∘ₗ
+            (Lens.Equiv.compY.invLens ⊗ₗ Lens.id C.carrier)) := rfl
       _ = M.mult ∘ₗ (Lens.id M.carrier ◃ₗ M.unit) ∘ₗ
-          Lens.Equiv.compX.invLens ∘ₗ
+          Lens.Equiv.compY.invLens ∘ₗ
           Lens.eval C.carrier M.carrier := by
         rw [unit_right_factor]
         rfl

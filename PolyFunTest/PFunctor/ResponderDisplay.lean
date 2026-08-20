@@ -106,9 +106,9 @@ example (state : Nat) :
   rfl
 
 example
-    (answerSection : (Interface ⊸ X).A)
+    (answerSection : (Interface ⊸ y).A)
     (evidence : (responder contract).position answerSection)
-    (query : (Interface ⊸ X).B answerSection)
+    (query : (Interface ⊸ y).B answerSection)
     (precondition : contract.position query.1) :
     (responderChart contract).toFunB ⟨answerSection, evidence⟩
       ⟨query, precondition⟩ = query :=
@@ -130,7 +130,7 @@ def emptyPrecondition : Display Unary where
   position _ := PEmpty
   direction _ c := PEmpty.elim c
 
-example (answerSection : (Unary ⊸ X).A) :
+example (answerSection : (Unary ⊸ y).A) :
     (responder emptyPrecondition).position answerSection :=
   fun _ c => PEmpty.elim c
 

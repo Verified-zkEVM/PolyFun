@@ -21,7 +21,7 @@ objects, the directions are the outgoing morphisms, `ε` picks the identities, a
 `δ` is composition.
 
 Counitality and coassociativity are lens equations, phrased through the unitor and
-associator equivalences `compX` / `XComp` / `compAssoc` (`PFunctor.Lens.Equiv`).
+associator equivalences `compY` / `yComp` / `compAssoc` (`PFunctor.Lens.Equiv`).
 A comonoid is *data*, not a predicate: one carrier can admit many comonoid
 structures (Spivak–Niu Ex 7.39), so the laws are fields, not a `Prop`-class.
 
@@ -55,7 +55,7 @@ set_option linter.checkUnivs false in
 /-- A **comonoid** in the composition-monoidal category `(Poly, ◃, y)`
 (Spivak–Niu Def 7.14): a carrier `c`, a counit `ε : c ⇆ y`, and a
 comultiplication `δ : c ⇆ c ◃ c` satisfying left/right counitality and
-coassociativity as lens equations (through the unitors `XComp` / `compX` and the
+coassociativity as lens equations (through the unitors `yComp` / `compY` and the
 associator `compAssoc`). This is the polynomial encoding of a small category. -/
 -- The carrier's position and direction universes are independent; `checkUnivs`
 -- sees only their joint contribution to the structure's resulting sort.
@@ -64,14 +64,14 @@ structure Comonoid where
   carrier : PFunctor.{uA, uB}
   /-- The counit `ε : c ⇆ y` — selects the identity morphisms. Its universe
   instance agrees with the zeroth composition power of `carrier`. -/
-  counit : Lens carrier X.{max uA uB, uB}
+  counit : Lens carrier y.{max uA uB, uB}
   /-- The comultiplication `δ : c ⇆ c ◃ c` — the composition operation. -/
   comult : Lens carrier (carrier ◃ carrier)
   /-- Left counitality: `λ ∘ (ε ◃ id) ∘ δ = id`. -/
-  counit_left : Lens.Equiv.XComp.toLens ∘ₗ (counit ◃ₗ Lens.id carrier) ∘ₗ comult
+  counit_left : Lens.Equiv.yComp.toLens ∘ₗ (counit ◃ₗ Lens.id carrier) ∘ₗ comult
       = Lens.id carrier
   /-- Right counitality: `ρ ∘ (id ◃ ε) ∘ δ = id`. -/
-  counit_right : Lens.Equiv.compX.toLens ∘ₗ (Lens.id carrier ◃ₗ counit) ∘ₗ comult
+  counit_right : Lens.Equiv.compY.toLens ∘ₗ (Lens.id carrier ◃ₗ counit) ∘ₗ comult
       = Lens.id carrier
   /-- Coassociativity: `α ∘ (δ ◃ id) ∘ δ = (id ◃ δ) ∘ δ`. -/
   coassoc : Lens.Equiv.compAssoc.toLens ∘ₗ (comult ◃ₗ Lens.id carrier) ∘ₗ comult

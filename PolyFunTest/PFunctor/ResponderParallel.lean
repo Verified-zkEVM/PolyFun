@@ -394,18 +394,18 @@ def parallelCoalgebra
 
 def parallelBehavior
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
-    PFunctor.M (P ⊸ X.{uA₁, uB}) →
-    PFunctor.M (Q ⊸ X.{uA₂, uB}) →
-      PFunctor.M ((P ∥ Q) ⊸ X.{max uA₁ uA₂, uB}) :=
+    PFunctor.M (P ⊸ y.{uA₁, uB}) →
+    PFunctor.M (Q ⊸ y.{uA₂, uB}) →
+      PFunctor.M ((P ∥ Q) ⊸ y.{max uA₁ uA₂, uB}) :=
   Responder.parallelBehavior
 
 def parallelDisplayedBehavior
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (dLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (dRight : Display.M (Display.responder T) right) :
     Display.M (Display.responder (Display.parallelSum S T))
       (Responder.parallelBehavior left right) :=
@@ -415,9 +415,9 @@ def sumDisplayedBehavior
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (dLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (dRight : Display.M (Display.responder T) right) :
     Display.M (Display.responder (Display.sum S T))
       (Responder.sumBehavior left right) :=

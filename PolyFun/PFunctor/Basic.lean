@@ -6,6 +6,7 @@ Authors: Quang Dao
 module
 
 public import Mathlib.Data.PFunctor.Multivariate.Basic
+public import Mathlib.Util.Notation3
 
 /-!
   # Polynomial Functors, Lens, and Charts
@@ -34,7 +35,9 @@ instance instZeroPFunctor : Zero PFunctor.{uA, uB} where
 instance instOnePFunctor : One PFunctor.{uA, uB} where
   one := ⟨PUnit, fun _ => PEmpty⟩
 
-/-- The variable `y` polynomial functor. This is the unit for composition. -/
+/-- The variable (or identity) polynomial functor `y`, with a single position and a single
+direction. Under the Yoneda reading `y = y^ PUnit` is the representable on a point; it is the
+unit for both composition `◃` and the tensor product `⊗` (up to equivalence). -/
 def y : PFunctor.{uA, uB} :=
   ⟨PUnit, fun _ => PUnit⟩
 
@@ -42,31 +45,25 @@ instance : IsEmpty (A 0) := inferInstanceAs (IsEmpty PEmpty)
 instance instUniqueAOfNatOne : Unique (A 1) := inferInstanceAs (Unique PUnit)
 instance : Unique y.A := inferInstanceAs (Unique PUnit)
 
-/-- The monomial functor, also written `P(X) = A X^ B`, has `A` as its head type and the constant
+/-- The monomial functor `A y^ B` has `A` as its head type and the constant
   family `B_a = B` as the child type for each each shape `a : A` . -/
 def monomial (A : Type uA) (B : Type uB) : PFunctor.{uA, uB} :=
   ⟨A, fun _ => B⟩
 
-@[inherit_doc] scoped[PFunctor] infixr:80 " X^ " => monomial
+@[inherit_doc] scoped[PFunctor] infixr:82 " y^ " => monomial
 
-/-- The constant polynomial functor `P(X) = A X^ PEmpty` -/
+/-- The constant polynomial functor `A y^ PEmpty` -/
 @[reducible]
 def C (A : Type uA) : PFunctor.{uA, uB} :=
-  A X^ PEmpty
+  A y^ PEmpty
 
-/-- The variable (or indeterminate) polynomial functor `X`, defined as `P(X) = PUnit X^ PUnit`.
-
-This is the identity with respect to tensor product and composition (up to equivalence). -/
-def X : PFunctor.{uA, uB} :=
-  PUnit X^ PUnit
-
-/-- The linear polynomial functor `P(X) = A X` -/
+/-- The linear polynomial functor `A y^ PUnit` -/
 def linear (A : Type uA) : PFunctor.{uA, uB} :=
-  A X^ PUnit
+  A y^ PUnit
 
-/-- The self monomial polynomial functor `P(X) = S X^ S`.
+/-- The self monomial polynomial functor `S y^ S`.
 
-The body spells out the monomial rather than using `S X^ S` so that the
+The body spells out the monomial rather than using `S y^ S` so that the
 head and child types are projections of an explicit structure literal at
 every transparency level; the mate-object equations in the dynamical
 layers rewrite through this carrier during implicit-transparency checks. -/
@@ -74,14 +71,16 @@ layers rewrite through this carrier during implicit-transparency checks. -/
 def selfMonomial (S : Type uA) : PFunctor.{uA, uA} :=
   { A := S, B := fun _ => S }
 
-/-- The pure power polynomial functor `P(X) = X^ B` -/
+/-- The pure power polynomial functor `y^ B`, the representable on the type `B`. -/
 def purePower (B : Type uB) : PFunctor.{uA, uB} :=
-  PUnit X^ B
+  PUnit y^ B
 
-/-- A polynomial functor is representable if it is equivalent to `X^A` for some type `A`. -/
+/-- A polynomial functor is representable if it is equivalent to `y^ A` for some type `A`. -/
 alias representable := purePower
 
-/-- The **universe polynomial functor** `P(X) = Σ (T : Type u), X^ T`: positions are types,
+@[inherit_doc purePower] scoped[PFunctor] notation:100 "y^" B:100 => purePower B
+
+/-- The **universe polynomial functor** `Σ (T : Type u), y^ T`: positions are types,
 and the directions at a position `T` are its elements. Its extension `univ.Obj S` is
 `Σ (T : Type u), T → S`, so a dynamical system over `univ` is a transition system that
 exposes at each state the type of its currently enabled events; see `PFunctor.DynSystem`.
@@ -95,8 +94,7 @@ def univ : PFunctor.{u + 1, u} :=
 section Coprod
 instance {a} : IsEmpty (B 1 a) := inferInstanceAs (IsEmpty PEmpty)
 instance {α} (a : α) : IsEmpty (B (C α) a) := inferInstanceAs (IsEmpty PEmpty)
-instance : Unique (A X) := inferInstanceAs (Unique PUnit)
-instance {a} : Unique (B X a) := inferInstanceAs (Unique PUnit)
+instance {a} : Unique (B y a) := inferInstanceAs (Unique PUnit)
 instance {α} (a : α) : Unique (B (linear α) a) := inferInstanceAs (Unique PUnit)
 instance {β} : Unique (A (purePower β)) := inferInstanceAs (Unique PUnit)
 
@@ -106,19 +104,19 @@ instance {β} : Unique (A (purePower β)) := inferInstanceAs (Unique PUnit)
 @[simp] lemma C_A (A : Type u) : (C A).A = A := rfl
 @[simp] lemma C_B (A : Type u) (a : (C A).A) : (C A).B a = PEmpty := rfl
 
-@[simp] lemma X_A : X.A = PUnit := rfl
-@[simp] lemma X_B (a : X.A) : X.B a = PUnit := rfl
+@[simp] lemma y_A : y.A = PUnit := rfl
+@[simp] lemma y_B (a : y.A) : y.B a = PUnit := rfl
 
 @[simp] lemma linear_A (A : Type u) : (linear A).A = A := rfl
 @[simp] lemma linear_B (A : Type u) (a : (linear A).A) : (linear A).B a = PUnit := rfl
 
 @[simp] lemma selfMonomial_A (S : Type u) : (selfMonomial S).A = S := rfl
 @[simp] lemma selfMonomial_B (S : Type u) (a : (selfMonomial S).A) : (selfMonomial S).B a = S := rfl
-@[simp] lemma selfMonomial_unit : selfMonomial PUnit = X := rfl
+@[simp] lemma selfMonomial_unit : selfMonomial PUnit = y := rfl
 
 @[simp] lemma purePower_A (B : Type u) : (purePower B).A = PUnit := rfl
 @[simp] lemma purePower_B (B : Type u) (a : (purePower B).A) : (purePower B).B a = B := rfl
-@[simp] lemma purePower_unit : purePower PUnit = X := rfl
+@[simp] lemma purePower_unit : purePower PUnit = y := rfl
 
 @[simp] lemma univ_A : univ.{u}.A = Type u := rfl
 lemma univ_B (T : Type u) : univ.{u}.B T = T := rfl
@@ -151,7 +149,8 @@ alias coprod := sum
 def sigma {I : Type v} (F : I → PFunctor.{uA, uB}) : PFunctor.{max uA v, uB} :=
   ⟨Σ i, (F i).A, fun ⟨i, a⟩ => (F i).B a⟩
 
--- macro "Σₚ" xs:Lean.explicitBinders ", " b:term : term => Lean.expandExplicitBinders ``sigma xs b
+/-- `Σₚ i, F i` is the indexed sum `PFunctor.sigma F` of a family of polynomial functors. -/
+scoped notation3 "Σₚ "(...)", "F:60:(scoped f => PFunctor.sigma f) => F
 
 end Sum
 
@@ -176,6 +175,9 @@ instance instMulPFunctor : Mul PFunctor.{uA, uB} where
 def pi {I : Type v} (F : I → PFunctor.{uA, uB}) : PFunctor.{max uA v, max uB v} :=
   ⟨(i : I) → (F i).A, fun f => Σ i, (F i).B (f i)⟩
 
+/-- `Πₚ i, F i` is the indexed product `PFunctor.pi F` of a family of polynomial functors. -/
+scoped notation3 "Πₚ "(...)", "F:60:(scoped f => PFunctor.pi f) => F
+
 end Prod
 
 section Tensor
@@ -190,8 +192,8 @@ def tensor (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
 /-- Infix notation for tensor product `P ⊗ Q` -/
 scoped[PFunctor] infixl:70 " ⊗ " => tensor
 
-/-- The unit for the tensor product `Y` -/
-alias tensorUnit := X
+/-- The unit for the tensor product, the variable `y` -/
+alias tensorUnit := y
 
 end Tensor
 
@@ -200,17 +202,16 @@ section Comp
 /-- Infix notation for `PFunctor.comp P Q` -/
 scoped[PFunctor] infixl:80 " ◃ " => PFunctor.comp
 
-/-- The unit for composition `Y` -/
-alias compUnit := X
+/-- The unit for composition, the variable `y` -/
+alias compUnit := y
 
-/-- Repeated composition `P ◃ P ◃ ... ◃ P` (n times). -/
+/-- The composition power `P ◃^ n`, the `n`-fold composite `P ◃ P ◃ ... ◃ P`. -/
 @[simp]
 def compNth (P : PFunctor.{uA, uB}) : Nat → PFunctor.{max uA uB, uB}
-  | 0 => X
+  | 0 => y
   | Nat.succ n => P ◃ compNth P n
 
-instance instNatPowPFunctor : NatPow PFunctor.{max uA uB, uB} where
-  pow := compNth
+@[inherit_doc] scoped[PFunctor] infixl:85 " ◃^ " => compNth
 
 end Comp
 
@@ -224,7 +225,7 @@ end ULift
 
 /-- Exponential of polynomial functors `P ^ Q` -/
 def exp (P Q : PFunctor.{uA, uB}) : PFunctor.{max uA uB, max uA uB} :=
-  pi (fun a => P ◃ (X + C (Q.B a)))
+  pi (fun a => P ◃ (y + C (Q.B a)))
 
 instance instHPowPFunctor :
     HPow PFunctor.{uA, uB} PFunctor.{uA, uB} PFunctor.{max uA uB, max uA uB} where
@@ -477,8 +478,8 @@ theorem ext {P Q : PFunctor.{uA, uB}} (h : P.A = Q.A) (h' : ∀ a, P.B a = Q.B (
   cases P; cases Q; simp only [mk.injEq] at h h' ⊢; subst h;
   simp_all only [heq_eq_eq, true_and]; funext; exact h' _
 
-lemma X_eq_linear_pUnit : X = linear PUnit := rfl
-lemma X_eq_purePower_pUnit : X = purePower PUnit := rfl
+lemma y_eq_linear_pUnit : y = linear PUnit := rfl
+lemma y_eq_purePower_pUnit : y = purePower PUnit := rfl
 
 section ULift
 

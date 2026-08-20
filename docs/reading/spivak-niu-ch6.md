@@ -4,7 +4,7 @@ Deep-read notes for Chapter 6 (book pp. 177–224; PDF pages = book + 12).
 Statements keep the book's numbering so claims are checkable against the PDF.
 PolyFun anchors use current declaration names (verified 2026-07-10).
 
-Book notation ↔ PolyFun: `y` ↔ `X`; `p ◁ q` ↔ `P ◃ Q` (`PFunctor.comp`);
+Book notation ↔ PolyFun: `p ◁ q` ↔ `P ◃ Q` (`PFunctor.comp`);
 lens `⇆`; horizontal product of lenses `f ◁ g` ↔ `Lens.compMap` (`◃ₗ`).
 
 ## 6.1 Definition and basic structure
@@ -13,7 +13,7 @@ lens `⇆`; horizontal product of lenses `f ◁ g` ↔ `Lens.compMap` (`◃ₗ`)
   again polynomial, with formula
   `p ◁ q ≅ Σ_{i∈p(1)} Σ_{j̄ : p[i]→q(1)} y^{Σ_{a∈p[i]} q[j̄(a)]}` (6.7).
   `(Poly, y, ◁)` is monoidal. PolyFun: `PFunctor.comp`, `compNth`,
-  `Lens.compAssoc`, `Lens.compX` — objects and equivalences present.
+  `Lens.compAssoc`, `Lens.compY` — objects and equivalences present.
 - **Positions/directions (6.16)–(6.17).**
   `(p◁q)(1) ≅ Σ_{i∈p(1)} Set(p[i], q(1))`; a direction at `(i, j̄)` is a pair
   `(a, b)` with `a ∈ p[i]`, `b ∈ q[j̄(a)]`. Matches PolyFun's `comp` fields

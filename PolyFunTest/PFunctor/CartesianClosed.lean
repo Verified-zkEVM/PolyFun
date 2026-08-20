@@ -60,23 +60,23 @@ example (g : Lens p (exp r q)) : curryEquiv.symm g = uncurry g := rfl
 
 /-- `eval` typechecks on concrete monomials, e.g. `exp (C Bool) (Bool y^ Bool)`. -/
 example :
-    Lens (exp (C.{0, 0} Bool) (Bool X^ Bool : PFunctor.{0, 0}) *
-      (Bool X^ Bool : PFunctor.{0, 0})) (C.{0, 0} Bool) :=
+    Lens (exp (C.{0, 0} Bool) (Bool y^ Bool : PFunctor.{0, 0}) *
+      (Bool y^ Bool : PFunctor.{0, 0})) (C.{0, 0} Bool) :=
   eval
 
-/-- The exponential of the identity `X` by `X` supports evaluation. -/
-example : Lens (exp X.{0, 0} X.{0, 0} * X.{0, 0}) X.{0, 0} := eval
+/-- The exponential of the identity `y` by `y` supports evaluation. -/
+example : Lens (exp y.{0, 0} y.{0, 0} * y.{0, 0}) y.{0, 0} := eval
 
-/-- Currying a concrete handler `X * X ⇆ X` lands in `X ⇆ exp X X`. -/
-example (l : Lens (X.{0, 0} * X.{0, 0}) X.{0, 0}) : Lens X.{0, 0} (exp X.{0, 0} X.{0, 0}) :=
+/-- Currying a concrete handler `y * y ⇆ y` lands in `y ⇆ exp y y`. -/
+example (l : Lens (y.{0, 0} * y.{0, 0}) y.{0, 0}) : Lens y.{0, 0} (exp y.{0, 0} y.{0, 0}) :=
   curry l
 
 /-- Forward round-trip on a concrete lens. -/
-example (l : Lens (X.{0, 0} * X.{0, 0}) X.{0, 0}) : uncurry (curry l) = l :=
+example (l : Lens (y.{0, 0} * y.{0, 0}) y.{0, 0}) : uncurry (curry l) = l :=
   uncurry_curry l
 
 /-- Reverse round-trip on a concrete lens. -/
-example (g : Lens X.{0, 0} (exp X.{0, 0} X.{0, 0})) : curry (uncurry g) = g :=
+example (g : Lens y.{0, 0} (exp y.{0, 0} y.{0, 0})) : curry (uncurry g) = g :=
   curry_uncurry g
 
 end PFunctor

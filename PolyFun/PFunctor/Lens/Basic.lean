@@ -188,16 +188,16 @@ alias fromZero := initial
 alias toOne := terminal
 
 /-- Construct a lens from the variable polynomial by selecting a position. The
-backward map is uniquely determined by the unit direction of `X`. -/
-def fromX {P : PFunctor.{uA, uB}} (a : P.A) : Lens X.{uA₁, uB₁} P :=
+backward map is uniquely determined by the unit direction of `y`. -/
+def fromY {P : PFunctor.{uA, uB}} (a : P.A) : Lens y.{uA₁, uB₁} P :=
   (fun _ => a) ⇆ fun _ _ => PUnit.unit
 
-@[simp] theorem fromX_toFunA {P : PFunctor.{uA, uB}} (a : P.A) (u : PUnit) :
-    (fromX a : Lens X.{uA₁, uB₁} P).toFunA u = a := rfl
+@[simp] theorem fromY_toFunA {P : PFunctor.{uA, uB}} (a : P.A) (u : PUnit) :
+    (fromY a : Lens y.{uA₁, uB₁} P).toFunA u = a := rfl
 
-@[simp] theorem fromX_toFunB {P : PFunctor.{uA, uB}} (a : P.A) (u : PUnit)
+@[simp] theorem fromY_toFunB {P : PFunctor.{uA, uB}} (a : P.A) (u : PUnit)
     (d : P.B a) :
-    (fromX a : Lens X.{uA₁, uB₁} P).toFunB u d = PUnit.unit := rfl
+    (fromY a : Lens y.{uA₁, uB₁} P).toFunB u d = PUnit.unit := rfl
 
 /-- Construct a lens into a constant polynomial from its position map. The
 backward map is uniquely determined by the empty direction type. -/
@@ -320,20 +320,20 @@ def tensorMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : P
   Prod.map l₁.toFunA l₂.toFunA ⇆
     fun (pa, qa) => Prod.map (l₁.toFunB pa) (l₂.toFunB qa)
 
-/-- Lens to introduce `X` on the right: `P → P ◃ X` -/
-def tildeR {P : PFunctor.{uA, uB}} : Lens P (P ◃ X) :=
+/-- Lens to introduce `y` on the right: `P → P ◃ y` -/
+def tildeR {P : PFunctor.{uA, uB}} : Lens P (P ◃ y) :=
   (fun a => ⟨a, fun _ => PUnit.unit⟩) ⇆ (fun _a => fun ⟨b, _⟩ => b)
 
-/-- Lens to introduce `X` on the left: `P → X ◃ P` -/
-def tildeL {P : PFunctor.{uA, uB}} : Lens P (X ◃ P) :=
+/-- Lens to introduce `y` on the left: `P → y ◃ P` -/
+def tildeL {P : PFunctor.{uA, uB}} : Lens P (y ◃ P) :=
   (fun a => ⟨PUnit.unit, fun _ => a⟩) ⇆ (fun _a => fun ⟨_, b⟩ => b)
 
-/-- Lens from `P ◃ X` to `P` -/
-def invTildeR {P : PFunctor.{uA, uB}} : Lens (P ◃ X) P :=
+/-- Lens from `P ◃ y` to `P` -/
+def invTildeR {P : PFunctor.{uA, uB}} : Lens (P ◃ y) P :=
   (fun a => a.1) ⇆ (fun _ b => ⟨b, PUnit.unit⟩)
 
-/-- Lens from `X ◃ P` to `P` -/
-def invTildeL {P : PFunctor.{uA, uB}} : Lens (X ◃ P) P :=
+/-- Lens from `y ◃ P` to `P` -/
+def invTildeL {P : PFunctor.{uA, uB}} : Lens (y ◃ P) P :=
   (fun ⟨_, f⟩ => f PUnit.unit) ⇆ (fun _ b => ⟨PUnit.unit, b⟩)
 
 @[inherit_doc] infixl:75 " ◃ₗ " => compMap
@@ -346,11 +346,11 @@ notation "[" l₁ "," l₂ "]ₗ" => sumPair l₁ l₂
 notation "⟨" l₁ "," l₂ "⟩ₗ" => prodPair l₁ l₂
 
 set_option linter.checkUnivs false in
-/-- The type of lenses from a polynomial functor `P` to `X` -/
+/-- The type of lenses from a polynomial functor `P` to `y` -/
 -- `Lens.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
 -- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
 def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
-  Lens P X.{uA₁, uB₁}
+  Lens P y.{uA₁, uB₁}
 
 /-- The transition lens `δ : Sy^S ⇆ Sy^S ◃ Sy^S` on the self-monomial state
 polynomial (Spivak–Niu Example 6.44): `δ = (id, tgt, run)` remembers the start
@@ -369,7 +369,7 @@ section Coprod
 
 -- Note the universe levels for `uB` in order to apply coproduct / sum
 variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}}
-  {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₃}} {X : PFunctor.{uA₅, uB₅}}
+  {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₃}} {V : PFunctor.{uA₅, uB₅}}
 
 @[simp]
 theorem sumMap_comp_inl (l₁ : Lens P R) (l₂ : Lens Q W) :
@@ -379,7 +379,7 @@ theorem sumMap_comp_inl (l₁ : Lens P R) (l₂ : Lens Q W) :
 theorem sumMap_comp_inr (l₁ : Lens P R) (l₂ : Lens Q W) :
     ((l₁ ⊎ₗ l₂) ∘ₗ Lens.inr) = (Lens.inr ∘ₗ l₂) := rfl
 
-theorem sumPair_comp_sumMap (l₁ : Lens P R) (l₂ : Lens Q W) (f : Lens R X) (g : Lens W X) :
+theorem sumPair_comp_sumMap (l₁ : Lens P R) (l₂ : Lens Q W) (f : Lens R V) (g : Lens W V) :
     Lens.sumPair f g ∘ₗ (l₁ ⊎ₗ l₂) = Lens.sumPair (f ∘ₗ l₁) (g ∘ₗ l₂) := by
   ext a <;> rcases a with a | a <;> rfl
 
@@ -480,7 +480,7 @@ end Coprod
 section Prod
 
 variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
-  {W : PFunctor.{uA₄, uB₄}} {X : PFunctor.{uA₅, uB₅}}
+  {W : PFunctor.{uA₄, uB₄}} {V : PFunctor.{uA₅, uB₅}}
 
 @[simp]
 theorem fst_comp_prodMap (l₁ : Lens P R) (l₂ : Lens Q W) :
@@ -490,7 +490,7 @@ theorem fst_comp_prodMap (l₁ : Lens P R) (l₂ : Lens Q W) :
 theorem snd_comp_prodMap (l₁ : Lens P R) (l₂ : Lens Q W) :
     Lens.snd ∘ₗ (l₁ ×ₗ l₂) = l₂ ∘ₗ Lens.snd := rfl
 
-theorem prodMap_comp_prodPair (l₁ : Lens Q W) (l₂ : Lens R X) (f : Lens P Q) (g : Lens P R) :
+theorem prodMap_comp_prodPair (l₁ : Lens Q W) (l₂ : Lens R V) (f : Lens P Q) (g : Lens P R) :
     (l₁ ×ₗ l₂) ∘ₗ Lens.prodPair f g = Lens.prodPair (l₁ ∘ₗ f) (l₂ ∘ₗ g) := by
   ext a x
   · rfl
@@ -666,15 +666,15 @@ def compAssoc : (P ◃ Q) ◃ R ≃ₗ P ◃ (Q ◃ R) where
   left_inv := rfl
   right_inv := rfl
 
-/-- Composition with `X` is identity (right) -/
-def compX : P ◃ X ≃ₗ P where
+/-- Composition with `y` is identity (right) -/
+def compY : P ◃ y ≃ₗ P where
   toLens := invTildeR
   invLens := tildeR
   left_inv := rfl
   right_inv := rfl
 
-/-- Composition with `X` is identity (left) -/
-def XComp : X ◃ P ≃ₗ P where
+/-- Composition with `y` is identity (left) -/
+def yComp : y ◃ P ≃ₗ P where
   toLens := invTildeL
   invLens := tildeL
   left_inv := rfl
@@ -745,15 +745,15 @@ theorem tensorAssoc_toFunB (position : ((P ⊗ Q) ⊗ R).A)
       ((direction.1, direction.2.1), direction.2.2) :=
   rfl
 
-/-- Tensor product with `X` is identity (right) -/
-def tensorX : P ⊗ X ≃ₗ P where
+/-- Tensor product with `y` is identity (right) -/
+def tensorY : P ⊗ y ≃ₗ P where
   toLens := Prod.fst ⇆ fun _ => (·, PUnit.unit)
   invLens := (·, PUnit.unit) ⇆ fun _ => Prod.fst
   left_inv := rfl
   right_inv := rfl
 
-/-- Tensor product with `X` is identity (left) -/
-def xTensor : X ⊗ P ≃ₗ P where
+/-- Tensor product with `y` is identity (left) -/
+def yTensor : y ⊗ P ≃ₗ P where
   toLens := Prod.snd ⇆ fun _ => (PUnit.unit, ·)
   invLens := (PUnit.unit, ·) ⇆ fun _ => Prod.snd
   left_inv := rfl
@@ -804,31 +804,31 @@ def sumTensorDistrib :
 end Equiv
 
 /-- The unique comparison between two possibly differently instantiated
-copies of the common tensor/composition unit `X`. -/
-def unitComparison : Lens X.{uA₁, uB₁} X.{uA₂, uB₂} :=
-  Lens.fromX PUnit.unit
+copies of the common tensor/composition unit `y`. -/
+def unitComparison : Lens y.{uA₁, uB₁} y.{uA₂, uB₂} :=
+  Lens.fromY PUnit.unit
 
 /-- Naturality of the left tensor unitor. The unit component is the canonical
 comparison between the independently instantiated source and target copies of
-`X`. -/
-theorem xTensor_natural
+`y`. -/
+theorem yTensor_natural
     {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
     (f : Lens P Q) :
-    f ∘ₗ (Equiv.xTensor (P := P)).toLens =
-      (Equiv.xTensor (P := Q)).toLens ∘ₗ
-        ((unitComparison : Lens X.{uA₁, uB₁} X.{uA₂, uB₂}) ⊗ₗ f) := by
+    f ∘ₗ (Equiv.yTensor (P := P)).toLens =
+      (Equiv.yTensor (P := Q)).toLens ∘ₗ
+        ((unitComparison : Lens y.{uA₁, uB₁} y.{uA₂, uB₂}) ⊗ₗ f) := by
   rfl
 
 /-- Naturality of the right tensor unitor. The unit component is the canonical
 comparison between the independently instantiated source and target copies of
-`X`. -/
-theorem tensorX_natural
+`y`. -/
+theorem tensorY_natural
     {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
     (f : Lens P Q) :
-    f ∘ₗ (Equiv.tensorX (P := P)).toLens =
-      (Equiv.tensorX (P := Q)).toLens ∘ₗ
+    f ∘ₗ (Equiv.tensorY (P := P)).toLens =
+      (Equiv.tensorY (P := Q)).toLens ∘ₗ
         (f ⊗ₗ
-          (unitComparison : Lens X.{uA₁, uB₁} X.{uA₂, uB₂})) := by
+          (unitComparison : Lens y.{uA₁, uB₁} y.{uA₂, uB₂})) := by
   rfl
 
 /-- Naturality of the tensor associator across lenses whose source and target

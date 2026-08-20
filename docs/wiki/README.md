@@ -52,8 +52,9 @@ See the *Wiki Maintenance Contract* section in
 - [`bisimulation.md`](bisimulation.md): glossary of the bisimulation and
   behavioural-equivalence notions (strong / delay / weak), the generic
   `Control.LTS` framework, and how the ITree, dynamical, and UC layers relate.
-- [`notation.md`](notation.md): notation reference. Currently scoped to UC
-  composition (`∥`, `⊞`, `⊠`) and boundary tensor / swap.
+- [`notation.md`](notation.md): notation reference — the book-style
+  polynomial surface (`y^`, `◃`, `◃^`, `⊗`, `⊸`, `Σₚ` / `Πₚ`) and the UC
+  composition operators (`∥`, `⊞`, `⊠`) with boundary tensor / swap.
 - [`gotchas.md`](gotchas.md): recurring Lean traps and PolyFun-specific
   pitfalls.
 

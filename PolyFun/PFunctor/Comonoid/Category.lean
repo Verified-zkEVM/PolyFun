@@ -170,13 +170,13 @@ private theorem normalizedComult_eq : normalizedComult C = C.comult := by
   rfl
 
 private theorem normalized_counit_right :
-    Lens.Equiv.compX.toLens ∘ₗ
+    Lens.Equiv.compY.toLens ∘ₗ
         (Lens.id C.carrier ◃ₗ C.counit) ∘ₗ normalizedComult C =
       Lens.id C.carrier := by
   simpa only [normalizedComult_eq] using C.counit_right
 
 private theorem normalized_counit_left :
-    Lens.Equiv.XComp.toLens ∘ₗ
+    Lens.Equiv.yComp.toLens ∘ₗ
         (C.counit ◃ₗ Lens.id C.carrier) ∘ₗ normalizedComult C =
       Lens.id C.carrier := by
   simpa only [normalizedComult_eq] using C.counit_left
@@ -211,7 +211,7 @@ arrow unchanged. -/
 theorem compose_identity_right (c : C.carrier.A) (d : C.carrier.B c) :
     compose C c d (identity C (target C c d)) = d := by
   change
-    (Lens.Equiv.compX.toLens ∘ₗ
+    (Lens.Equiv.compY.toLens ∘ₗ
         (Lens.id C.carrier ◃ₗ C.counit) ∘ₗ
       normalizedComult C).toFunB c d = d
   exact lens_toFunB_apply_eq_of_eq (normalized_counit_right C) c d

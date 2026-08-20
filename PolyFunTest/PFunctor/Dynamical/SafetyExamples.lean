@@ -20,11 +20,11 @@ namespace PFunctor
 namespace DynSystem.Examples
 
 /-- A two-state system over the terminal interface. -/
-def toggle : DynSystem Bool X.{0, 0} :=
+def toggle : DynSystem Bool y.{0, 0} :=
   (fun _ => PUnit.unit) ⇆ fun state _ => !state
 
 /-- A safety problem with one initial state and default-true policy predicates. -/
-def toggleSafety : DynSystem.SafetySpec X.{0, 0} where
+def toggleSafety : DynSystem.SafetySpec y.{0, 0} where
   State := Bool
   toDynSystem := toggle
   init state := state = false
@@ -37,7 +37,7 @@ example (state : Bool) :
 example (state : Bool) : toggleSafety.toDynSystem.update state PUnit.unit = !state := rfl
 
 /-- Event labels may expose stable information about the source transition. -/
-def toggleLabeled : DynSystem.Labeled X.{0, 0} where
+def toggleLabeled : DynSystem.Labeled y.{0, 0} where
   State := Bool
   toDynSystem := toggle
   Event := Bool
@@ -46,7 +46,7 @@ def toggleLabeled : DynSystem.Labeled X.{0, 0} where
 example (state : Bool) : toggleLabeled.event state PUnit.unit = state := rfl
 
 /-- Tickets may identify scheduling obligations independently of directions. -/
-def toggleTicketed : DynSystem.Ticketed X.{0, 0} where
+def toggleTicketed : DynSystem.Ticketed y.{0, 0} where
   State := Bool
   toDynSystem := toggle
   Ticket := Unit

@@ -22,7 +22,7 @@ an observed result.
 namespace PFunctor.Handler.Stateful.Examples
 
 /-- Two query positions, both answered by natural numbers. -/
-abbrev Q : PFunctor.{0, 0} := monomial Bool Nat
+abbrev Q : PFunctor.{0, 0} := Bool y^ Nat
 
 /-- On `true`, answer with `state + 10` and advance by one; on `false`, answer
 with `state + 20` and advance by two. -/
@@ -58,7 +58,7 @@ example : ((Handler.Stateful.lift constantAnswer :
   rfl
 
 /-- A source query implemented by the two-query target program. -/
-abbrev P : PFunctor.{0, 0} := monomial PUnit (Nat × Nat)
+abbrev P : PFunctor.{0, 0} := PUnit y^ (Nat × Nat)
 
 def implementP : Handler (FreeM Q) P :=
   fun _ => twoQueries
@@ -95,7 +95,7 @@ example (R : Responder Nat Q) (program : FreeM Q Nat) (state : Nat) :
   rw [Responder.runFree_eq_statefulRun]
 
 /-- Query positions may live in a higher universe than directions and state. -/
-example : Handler.Stateful Option Nat (monomial (Type 0) Nat) :=
+example : Handler.Stateful Option Nat ((Type 0) y^ Nat) :=
   fun _ state => some (state, state + 1)
 
 end PFunctor.Handler.Stateful.Examples

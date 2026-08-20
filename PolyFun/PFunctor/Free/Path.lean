@@ -166,20 +166,20 @@ theorem Path.ofHandler_liftBind (choose : (a : P.A) → P.B a)
   rfl
 
 /-- Read the leaf selected by the unique direction of every node in a free
-tree over the identity polynomial `X`. -/
-def collapseUnit (tree : FreeM X.{uA, uB} α) : α :=
+tree over the identity polynomial `y`. -/
+def collapseUnit (tree : FreeM y.{uA, uB} α) : α :=
   output tree (Path.ofHandler (fun _ => PUnit.unit) tree)
 
 @[simp]
 theorem collapseUnit_pure (value : α) :
-    collapseUnit (pure value : FreeM X.{uA, uB} α) = value :=
+    collapseUnit (pure value : FreeM y.{uA, uB} α) = value :=
   rfl
 
 @[simp]
 theorem collapseUnit_liftBind
-    (next : PUnit.{uB + 1} → FreeM X.{uA, uB} α) :
+    (next : PUnit.{uB + 1} → FreeM y.{uA, uB} α) :
     collapseUnit
-        ((FreeM.lift (P := X.{uA, uB}) PUnit.unit).bind next) =
+        ((FreeM.lift (P := y.{uA, uB}) PUnit.unit).bind next) =
       collapseUnit (next PUnit.unit) :=
   rfl
 
@@ -1070,7 +1070,7 @@ namespace StoppingTree
 variable {St : Type z} {Obs : St → Type w} {step : (s : St) → Obs s → St}
 
 /-- An algebra for the indexed polynomial
-`X ↦ (fun s => PUnit ⊕ ((obs : Obs s) → X (step s obs)))`.
+`y ↦ (fun s => PUnit ⊕ ((obs : Obs s) → y (step s obs)))`.
 
 `StoppingTree` is its initial algebra: `fold` below is the unique algebra
 homomorphism into any such carrier family. -/

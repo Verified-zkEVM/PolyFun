@@ -38,7 +38,7 @@ example (P : PFunctor.{u, u}) (S : Type u)
 example (P : PFunctor.{u, u}) (S : Type u)
     (system : DynSystem S P) :
     (system.cofreeMate.toLens ⨟ CofreeP.projectionN P 2) ⨟
-        (Lens.id P ◃ₗ Lens.Equiv.compX.toLens) =
+        (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) =
       system.twoStep :=
   DynSystem.cofreeMate_comp_projectionN_two system
 
@@ -63,7 +63,7 @@ example : (branchingSystem.cofreeMate.toLens ⨟
 two-step system after applying the inner right unitor. -/
 example : ((branchingSystem.cofreeMate.toLens ⨟
       CofreeP.projectionN binaryP 2) ⨟
-        (Lens.id binaryP ◃ₗ Lens.Equiv.compX.toLens)).toFunB
+        (Lens.id binaryP ◃ₗ Lens.Equiv.compY.toLens)).toFunB
       .source ⟨false, true⟩ = ThreeState.final := by
   rw [DynSystem.cofreeMate_comp_projectionN_two]
   rfl
