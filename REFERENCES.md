@@ -150,6 +150,90 @@ schema/context distinction underlies node-context schemas.
 
 Used in: `PolyFun/Interaction/Basic/Node.lean`.
 
+### FKKKT26 — Farshim, Karvonen, Knispel, Kohlweiss, Tyagi, *UC, Categorically*
+
+Pooya Farshim, Martti Karvonen, André Knispel, Markulf Kohlweiss, and
+Shravan Tyagi.
+*UC, Categorically: Rigorous Diagrammatic Proofs*.
+Cryptology ePrint Archive, Report 2026/1605; arXiv:2608.04521, 2026.
+
+A categorical account of static/simple universal composability in which
+computational indistinguishability is an equivalence on resources closed
+under sequential and parallel composition. It supplies the external
+instantiation contract tracked in `docs/wiki/uc.md`; probability and
+efficiency remain downstream obligations.
+
+Used in: `docs/wiki/uc.md`.
+
+### CSV19 — Canetti, Stoughton, Varia, *EasyUC*
+
+Ran Canetti, Alley Stoughton, and Mayank Varia.
+*EasyUC: Using EasyCrypt to Mechanize Proofs of Universally Composable
+Security*.
+IEEE Computer Security Foundations Symposium (CSF), pp. 167–183, 2019.
+DOI: <https://doi.org/10.1109/CSF.2019.00019>; ePrint 2019/582.
+
+An EasyCrypt realization of a restricted UC model and a composed secure
+messaging case study. Its experience with routing boilerplate and the mismatch
+between procedure calls and coroutine communication informs the typed-boundary
+and control-transfer requirements in the UC audit.
+
+Used in: `docs/wiki/uc.md`.
+
+### KTR20 — Küsters, Tuengerthal, Rausch, *The IITM Model*
+
+Ralf Küsters, Max Tuengerthal, and Daniel Rausch.
+*The IITM Model: A Simple and Expressive Model for Universal Composability*.
+*Journal of Cryptology* 33, pp. 1461–1584, 2020.
+DOI: <https://doi.org/10.1007/s00145-020-09352-1>.
+
+A UC model with named tapes, explicit environmental boundedness, dummy
+forwarding, and theorems relating networks of IITMs to single machines. It is
+the main comparison point for the efficiency and addressing obligations that
+PolyFun deliberately leaves to an instantiation.
+
+Used in: `docs/wiki/uc.md`.
+
+### HARM+23 — Haselwarter et al., *SSProve*
+
+Philipp G. Haselwarter, Exequiel Rivas, Antoine Van Muylder, Théo
+Winterhalter, Carmine Abate, Nikolaj Sidorenco, Cătălin Hrițcu, Kenji
+Maillard, and Bas Spitters.
+*SSProve: A Foundational Framework for Modular Cryptographic Proofs in Coq*.
+*ACM Transactions on Programming Languages and Systems* 45(3), 2023.
+DOI: <https://doi.org/10.1145/3594735>; ePrint 2021/397.
+
+Free-monad cryptographic packages, sequential and parallel composition, and
+machine-checked algebraic package laws connected to a probabilistic relational
+program logic.
+
+Used in: `docs/wiki/uc.md`.
+
+### LS25-N — Larsen and Schürmann, *Nominal State-Separating Proofs*
+
+Markus Krabbe Larsen and Carsten Schürmann.
+*Nominal State-Separating Proofs*.
+IEEE Computer Security Foundations Symposium (CSF), 2025; ePrint 2025/598.
+
+A nominal extension of SSProve in which packages receive local state-name
+spaces and composition automatically avoids capture. It makes explicit the
+modularity cost of globally named mutable state.
+
+Used in: `docs/wiki/uc.md`.
+
+### PKWC24 — Patrignani, Künnemann, Wahby, Cecchetti, *Universal Composability Is Robust Compilation*
+
+Marco Patrignani, Robert Künnemann, Riad S. Wahby, and Ethan Cecchetti.
+*Universal Composability Is Robust Compilation*.
+*ACM Transactions on Programming Languages and Systems* 46(4), Article 13,
+pp. 1–64, 2024. DOI: <https://doi.org/10.1145/3698234>;
+arXiv:1910.08634.
+
+An axiomatic comparison between UC and robust compilation, including explicit
+interface and composition requirements and mechanized symbolic case studies.
+
+Used in: `docs/wiki/uc.md`.
+
 ### FGMPS07 — Foster, Greenwald, Moore, Pierce, Schmitt, *Combinators for bidirectional tree transformations*
 
 J. Nathan Foster, Michael B. Greenwald, Jonathan T. Moore,

@@ -1,5 +1,8 @@
 # Interaction Framework
 
+For the UC paper-to-code ledger, observation boundary, and precise
+PolyFun/VCVio ownership split, see [`uc.md`](uc.md).
+
 General-purpose protocol interaction theory: sequential type trees, two-party
 roles, multiparty local views, and concurrent process semantics. PolyFun's
 [`PolyFun/Interaction/`](../../PolyFun/Interaction/) is intentionally

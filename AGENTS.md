@@ -249,6 +249,8 @@ too specific or too changeable to keep at the repo root.
   framework (`TypeTree`, two-party, multiparty, concurrent, UC).
 - [`docs/wiki/realizability.md`](docs/wiki/realizability.md): step classes and
   realizability of free programs by admissible state machines.
+- [`docs/wiki/uc.md`](docs/wiki/uc.md): UC semantic contract, paper-to-code
+  ledger, observation boundaries, and the PolyFun/VCVio split.
 - [`docs/wiki/notation.md`](docs/wiki/notation.md): notation reference (UC
   composition operators).
 - [`docs/wiki/gotchas.md`](docs/wiki/gotchas.md): recurring traps and

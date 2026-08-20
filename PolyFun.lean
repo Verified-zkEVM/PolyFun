@@ -117,6 +117,7 @@ public import PolyFun.Interaction.UC.OpenSyntax.Expr
 public import PolyFun.Interaction.UC.OpenSyntax.Interp
 public import PolyFun.Interaction.UC.OpenSyntax.Raw
 public import PolyFun.Interaction.UC.OpenTheory
+public import PolyFun.Interaction.UC.OpenTheory.Family
 public import PolyFun.Interaction.UC.SubTheory
 public import PolyFun.Logic.HEq
 public import PolyFun.PFunctor.Adjunctions

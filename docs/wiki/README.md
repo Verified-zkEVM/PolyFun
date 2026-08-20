@@ -49,6 +49,8 @@ See the *Wiki Maintenance Contract* section in
 - [`realizability.md`](realizability.md): realizability of free programs by
   state machines whose transition functions satisfy a given predicate
   (`StepClass`, `Realization`, `IsRealizableBy`).
+- [`uc.md`](uc.md): UC semantic contract, paper-to-code traceability ledger,
+  observation boundaries, and PolyFun/VCVio ownership split.
 
 ## Cross-Cutting Notes
 
@@ -73,6 +75,7 @@ See the *Wiki Maintenance Contract* section in
   - `itree.md` for interaction trees, bisimulation, and handlers.
   - `interaction.md` for the interaction framework above `FreeM`.
   - `realizability.md` for step classes and machine realizability.
+  - `uc.md` for the UC semantic contract and external-model alignment.
   - `notation.md` for notation cross-references.
   - `gotchas.md` for recurring traps.
 - Add new pages when a recurring topic no longer fits cleanly in an existing
