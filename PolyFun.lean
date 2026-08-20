@@ -4,6 +4,7 @@ public import PolyFun.Control.Bisimulation
 public import PolyFun.Control.Coalgebra
 public import PolyFun.Control.Comonad.Basic
 public import PolyFun.Control.Comonad.Instances
+public import PolyFun.Control.Do.Basic
 public import PolyFun.Control.LTS.Trace
 public import PolyFun.Control.Lawful.Basic
 public import PolyFun.Control.Monad.Algebra
@@ -191,6 +192,7 @@ public import PolyFun.PFunctor.Free.Displayed.Append
 public import PolyFun.PFunctor.Free.Displayed.Cursor
 public import PolyFun.PFunctor.Free.Displayed.Decoration
 public import PolyFun.PFunctor.Free.Displayed.StateChain
+public import PolyFun.PFunctor.Free.Do
 public import PolyFun.PFunctor.Free.Parallel
 public import PolyFun.PFunctor.Free.Path
 public import PolyFun.PFunctor.Free.Path.Execution
@@ -199,6 +201,7 @@ public import PolyFun.PFunctor.Free.Replicate
 public import PolyFun.PFunctor.Free.Resumption
 public import PolyFun.PFunctor.Free.Support
 public import PolyFun.PFunctor.Free.Universal
+public import PolyFun.PFunctor.Free.WP
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Free
 public import PolyFun.PFunctor.Handler.Instrumentation
