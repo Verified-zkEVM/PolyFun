@@ -185,6 +185,7 @@ Equivalently, every `k₂`-indistinguishability class is a union of
 observers using `k₂` learn. This is the natural ordering in which
 `Observation.bot` is least and `Observation.top` is greatest.
 -/
+@[expose]
 def Refines (k₁ k₂ : Observation X) : Prop :=
   ∃ f : k₂.1 → k₁.1, ∀ x, k₁.2 x = f (k₂.2 x)
 
