@@ -346,7 +346,9 @@ canonical `FreeM` interpretation.
     specification language for them. The bet: VCVio's Loom-style
     `wp`/`Triple` layer (`Control/Monad/Algebra`) is a fragment of that
     internal logic. Highest-value research track; natural paper-3
-    companion.
+    companion. The implemented program-logic kernel this would interpret
+    is surveyed in
+    [`program-logic-landscape.md`](program-logic-landscape.md).
   - *Q5 — ⊗-monoids in Cat♯*: grounded by Prop 8.77 in the current
     edition (Prop 8.79 in earlier-edition notes; ⊗ on Cat♯ =
     products of categories, built from the duoidal lens). ⊗-monoids =
