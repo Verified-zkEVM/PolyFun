@@ -207,8 +207,7 @@ Interaction/UC/OpenProcessModel -> Interaction/UC/OpenProcessFactorization
 PFunctor/Basic -> Realizability/StepClass
 PFunctor/Dynamical/DynComputation/Bounded -> Realizability/Machine
 Realizability/{StepClass, Machine} -> Realizability/Basic
-  -> Realizability/Closure
-  -> Realizability/Instances
+Realizability/Basic -> Realizability/{Closure, Instances, Representation}
   (Instances additionally draws on Mathlib's Computability and Fintype layers;
    nothing under PFunctor/, ITree/, or Interaction/ depends on Realizability/)
 ```

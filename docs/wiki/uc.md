@@ -116,7 +116,10 @@ sequential bind remains expressible. State growth must either be charged
 additively or be restricted by an explicit cap whose completeness cost is
 documented. Boundary encodings additionally need polynomial translation
 invariance and a word-level coding retraction; injectivity alone is not a
-complexity-invariant interface.
+complexity-invariant interface. The generic certificates are
+`StepClass.PolyTranslatable`, `Boundary.PolyTranslatable`, and
+`StepClass.PolyCodable`; a VCVio complexity class must instantiate their
+admissibility fields quantitatively.
 
 ## Related-Model Lessons
 
