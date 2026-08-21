@@ -46,9 +46,12 @@ Two traps worth recording for whoever repeats this:
   `nightly-2026-01-22` toolchain reports `4.28.0-nightly` — **older** than the v4.33.0
   pin. Check `bin/lean --version`, not the directory name. The correct local proxy for
   upstream HEAD is the newest `vX.Y.0-rc*` toolchain present.
-- Absence is harder to establish than presence. Claims of "nothing upstream has this"
-  below come from grepping the full pinned trees for the *class/def keyword*, not just
-  the name PolyFun happens to use.
+- Absence is harder to establish than presence, and it is where the first guess is
+  most often wrong. For *abstractions*, claims of "nothing upstream has this" below
+  come from grepping the full pinned trees for the class/def keyword, not just the
+  name PolyFun happens to use. For individual *lemmas*, they come from running
+  `exact?` against full Mathlib on the exact statement — a lemma that "looks like it
+  must exist" repeatedly turned out not to.
 
 ## Ledger
 
@@ -60,7 +63,6 @@ Two traps worth recording for whoever repeats this:
 | `Interaction/Concurrent/Fairness.lean`, `Liveness.lean` — the `Always` / `Eventually` / `EventuallyAlways` / `InfinitelyOften` block | `Filter.atTop` | yes |
 | `Control/Trace.lean` `mapHom` | `MonoidHom.compLeft`, `Mathlib/Algebra/Group/Pi/Lemmas.lean` | yes |
 | `Control/Monad/Hom.lean` | `LawfulMonadLift` / `LawfulMonadLiftT`, `Init/Control/Lawful/MonadLift/` | yes |
-| `Logic/HEq.lean` | `Init/Core.lean` (`eqRec_heq`, `eqRec_heq_iff`, `heq_of_eqRec_eq`), `Mathlib/Logic/Basic.lean` (`congr_arg_heq`), `Mathlib/Data/Subtype.lean` (`heq_iff_coe_eq`) | yes |
 
 #### Transition systems
 
@@ -167,14 +169,25 @@ with this family rather than ignore it. This is the substance of issue #118.
 cslib is already PolyFun's upstreaming channel: the `PFunctor` basic API is being moved
 there, and cslib's `PFunctor.FreeM` is the free monad PolyFun builds on.
 
-- **cslib**: delay bisimulation over `LTS`.
+- **cslib**: delay bisimulation over `LTS` (see above). Also
+  `Cslib.LTS.Bisimilarity.symm`, which is stated for a single state type while its
+  weak counterpart `WeakBisimilarity.symm` is cross-type — PolyFun needs the
+  cross-type, cross-universe form in both flavours, so that one does not transport.
 - **Batteries**: a bundled `MonadHom`, matching the in-flight draft.
 - **Lean core**: `MonadAttach (Except ε)`, which core lacks entirely; and the
   `MonadAttach (ExceptT ε m)` universe bug, which forces a single-universe alias in the
   support layer.
-- **Mathlib**: whichever of `Logic/HEq.lean`'s two lemmas survive checking against
-  `eqRec_heq_iff` and `congr_arg_heq`. The file's own docstring already says they
-  "belong in Mathlib".
+- **Mathlib**: the small helpers below. Each was checked with `exact?` against full
+  Mathlib and **none** is subsumed, so they are contributions rather than reuse — the
+  opposite of the first guess, which is why the check matters:
+  - `Logic/HEq.lean`'s `dependent_apply_heq` and `Prod.mk_heq`. Neighbours exist
+    (`congr_arg_heq`, `eqRec_heq_iff`, `Subtype.heq_iff_coe_eq`) but neither lemma
+    follows from them by `exact?`. The file's own docstring already says they "belong
+    in Mathlib".
+  - `List.take_set_self` / `List.drop_set_self` (`PFunctor/Supply.lean`), against the
+    Batteries/Mathlib `List.set` API.
+  - `heq_forall_iff` and `instIsEmptySigma`, currently parked in `section find_home`
+    blocks in `PFunctor/Lens/Basic.lean` and `PFunctor/Equiv/Basic.lean`.
 
 ### Track — heading into core, not ready to adopt
 
