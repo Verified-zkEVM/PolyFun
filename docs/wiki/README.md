@@ -62,6 +62,16 @@ See the *Wiki Maintenance Contract* section in
 - [`gotchas.md`](gotchas.md): recurring Lean traps and PolyFun-specific
   pitfalls.
 
+## Design Notes
+
+Longer-form design and reading notes live in [`../reading/`](../reading/). The
+one with repo-wide scope:
+
+- [`../reading/upstream-alignment.md`](../reading/upstream-alignment.md): ledger
+  of PolyFun's generic machinery against Lean core, Batteries, Mathlib, and
+  cslib, with an adopt / keep / upstream / track verdict per abstraction. Re-run
+  the survey when the toolchain pin moves.
+
 ## Maintenance Contract
 
 - [`AGENTS.md`](../../AGENTS.md) is the canonical root guide.
