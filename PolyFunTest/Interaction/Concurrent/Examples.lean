@@ -459,13 +459,17 @@ example :
 
 example :
     Process.Ticketed.WeakFairOn loopTicketed trueRun true := by
-  intro _ N
+  intro _
+  rw [ProcessOver.Run.infinitelyOften_iff]
+  intro N
   refine ⟨N, Nat.le_refl _, ?_⟩
   simp [ProcessOver.Ticketed.firedAt, loopTicketed, trueRun]
 
 example :
     Process.Ticketed.StrongFairOn loopTicketed trueRun true := by
-  intro _ N
+  intro _
+  rw [ProcessOver.Run.infinitelyOften_iff]
+  intro N
   refine ⟨N, Nat.le_refl _, ?_⟩
   simp [ProcessOver.Ticketed.firedAt, loopTicketed, trueRun]
 
