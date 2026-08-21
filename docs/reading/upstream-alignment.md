@@ -173,6 +173,9 @@ there, and cslib's `PFunctor.FreeM` is the free monad PolyFun builds on.
   `Cslib.LTS.Bisimilarity.symm`, which is stated for a single state type while its
   weak counterpart `WeakBisimilarity.symm` is cross-type — PolyFun needs the
   cross-type, cross-universe form in both flavours, so that one does not transport.
+  And `instance : HasTau (Option α) := ⟨.none⟩`, which cslib has but only inside
+  `Computability/Automata/EpsilonNA/Basic.lean`; it belongs next to `HasTau` itself,
+  so that reaching it does not mean importing the ε-NFA development.
 - **Batteries**: a bundled `MonadHom`, matching the in-flight draft.
 - **Lean core**: `MonadAttach (Except ε)`, which core lacks entirely; and the
   `MonadAttach (ExceptT ε m)` universe bug, which forces a single-universe alias in the
