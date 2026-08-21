@@ -95,7 +95,11 @@ and depend on this library.
   and concrete complexity classes live downstream.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
-  algebra, monad iter / hom, lawful re-exports).
+  algebra, monad iter / hom, lawful re-exports), plus the program-logic
+  kernel: ordered monad algebras (`Monad/Algebra`, unary and relational),
+  exact monadic support over core's `MonadAttach` with the always/never
+  judgments (`Monad/Support`), and
+  the core-`Std.Do` quarantine root (`Do/Basic`).
 - `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
   silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
@@ -194,6 +198,11 @@ Structures use UpperCamelCase: `PFunctor`, `TypeTree`, `Decoration`,
    `./scripts/update-lib.sh`.
 7. **Do not introduce `sorry` or `admit` in finished work.** Use `stop`
    only when explicitly preserving partial proof work during a refactor.
+8. **`Std.Tactic.Do` imports are quarantined.** Only
+   `PolyFun/Control/Do/Basic.lean`, `PolyFun/PFunctor/Free/Do.lean`, and
+   `PolyFunTest/Do/` may import core `Std.Do` / `mvcgen`, and they export
+   constructions (`def`s and `scoped` instances), never global `WP`
+   instances. See `docs/wiki/program-logic.md`.
 
 ## Building
 
@@ -249,6 +258,9 @@ too specific or too changeable to keep at the repo root.
 - [`docs/wiki/itree.md`](docs/wiki/itree.md): interaction trees layer.
 - [`docs/wiki/interaction.md`](docs/wiki/interaction.md): generic interaction
   framework (`TypeTree`, two-party, multiparty, concurrent, UC).
+- [`docs/wiki/program-logic.md`](docs/wiki/program-logic.md): the
+  program-logic kernel (ordered monad algebras, exact monadic support, free-monad
+  wp, `Std.Do` quarantine).
 - [`docs/wiki/realizability.md`](docs/wiki/realizability.md): step classes and
   realizability of free programs by admissible state machines.
 - [`docs/wiki/uc.md`](docs/wiki/uc.md): UC semantic contract, paper-to-code

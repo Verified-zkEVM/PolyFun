@@ -25,7 +25,9 @@ PolyFun/
   Realizability/     step classes and realizability of free programs by
                      machines whose transition functions are admissible
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
-                     Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace)
+                     Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace),
+                     the program-logic kernel (Monad/{Algebra, Support}),
+                     and the core-Std.Do quarantine root (Do/Basic)
   Logic/             small logic helpers (HEq)
 
 docs/wiki/           agent-facing notes (this directory)
@@ -84,12 +86,19 @@ PFunctor/Dynamical/DynComputation/Bounded
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   (free-standing helpers, depended on by both PFunctor and ITree)
 
+Control/Monad/Algebra -> Control/Monad/Algebra/Relational
+Control/Monad/Support -> Control/Do/Basic  (also imports Std.Tactic.Do; see
+  the quarantine rule in program-logic.md)
+
 PFunctor/Lens/{Basic, Cartesian, State}
   -> PFunctor/Lens/{Composite, Distributivity, Factorization, Duoidal}
   -> PFunctor/{InternalHom, CartesianClosed, Adjunctions, Comonoid}
 
 PFunctor/Lens/Basic -> PFunctor/SubstMonoid
 PFunctor/{Free/Path, SubstMonoid} -> PFunctor/Free/Polynomial
+PFunctor/{Free/Path} + Control/Monad/Support -> PFunctor/Free/Support
+PFunctor/{Free/Support, Handler} -> PFunctor/Free/WP
+Control/Do/Basic + PFunctor/Free/WP -> PFunctor/Free/Do
 PFunctor/Comonoid -> PFunctor/Comonoid/Category
 PFunctor/{Comonoid, Lens/Duoidal} -> PFunctor/Comonoid/Tensor
 PFunctor/{SubstMonoid, Comonoid, InternalHom, Lens/Duoidal}
@@ -238,6 +247,10 @@ plain imports, and reducibility is exposed declaration-by-declaration.
   [`interaction.md`](interaction.md).
 - Adding monad / comonad helpers, lawful re-exports, or free-monad
   algebra: start in `PolyFun/Control/`.
+- Program-logic work (`MAlgOrdered`, `MAlgRelOrdered`, `ExactMonadAttach`,
+  `wpFold`, `Std.Do` bridges): start with
+  [`program-logic.md`](program-logic.md); definitions live under
+  `PolyFun/Control/Monad/` and `PolyFun/PFunctor/Free/{Support, WP, Do}.lean`.
 - Updating notation: start in `PolyFun/Interaction/UC/Notation.lean`. See
   [`notation.md`](notation.md).
 

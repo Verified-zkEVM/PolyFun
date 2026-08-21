@@ -57,8 +57,12 @@ See the *Wiki Maintenance Contract* section in
 - [`bisimulation.md`](bisimulation.md): glossary of the bisimulation and
   behavioural-equivalence notions (strong / delay / weak), the generic
   `Control.LTS` framework, and how the ITree, dynamical, and UC layers relate.
+- [`program-logic.md`](program-logic.md): the program-logic kernel
+  (`MAlgOrdered`, relational algebras, exact monadic support and the always/never
+  judgments, free-monad wp, and the core-`Std.Do` quarantine).
 - [`notation.md`](notation.md): notation reference. Currently scoped to UC
-  composition (`∥`, `⊞`, `⊠`) and boundary tensor / swap.
+  composition (`∥`, `⊞`, `⊠`), boundary tensor / swap, and the scoped
+  satisfaction judgments (`⊨`, `⊨ₐ`, `⊨ₛ`, `⊭`).
 - [`gotchas.md`](gotchas.md): recurring Lean traps and PolyFun-specific
   pitfalls.
 
