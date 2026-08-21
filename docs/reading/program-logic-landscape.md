@@ -46,17 +46,23 @@ substrates; core `Std.Do` is used only behind a two-file quarantine.
   `rwp`/`RelWP`/`Triple`, asynchronous bind rules, `StrictBind`, `Anchored`),
   upstreamed from VCVio's `ToMathlib/Control/Monad/RelationalAlgebra.lean`
   (near-verbatim; three unused `LawfulMonad` binders dropped).
-- `Control/Monad/Support.lean` — `MonadSupport`: a monad with a canonical
-  set-valued support, bundled as a monad morphism `supportHom : m →ᵐ SetM` into
-  Mathlib's powerset monad (there is **no** upstream abstraction for this; the
-  ad-hoc idiom is `[MonadLiftT m SetM]`, with documented diamond pitfalls).
-  `supportM`, the `AllOutputs`/`SomeOutput`/`NoOutput` judgments with scoped
-  `⊨ₐ`/`⊨ₛ`/`⊭` notation, the demonic `MAlgOrdered m Prop` instance, and
-  failure-transformer instances. `StateT`/`ReaderT` deliberately have no
-  instance (union over initial states is not a monad morphism).
-- `PFunctor/Free/Support.lean` — the canonical `MonadSupport (FreeM P)`:
-  fold every operation to `Set.univ`; coherence with `Free/Path.lean`
-  (`supportM_eq_range_output`).
+- `Control/Monad/Support.lean` — the support layer, built on Lean core's
+  `MonadAttach` (shipped since v4.28; `CanReturn` *is* the support predicate).
+  Core proves only the elimination half of the theory, and provably cannot prove
+  the rest — a monad with `CanReturn := False` satisfies `LawfulMonadAttach` —
+  so PolyFun contributes `ExactMonadAttach`, the two introduction rules, plus
+  `MonadAttach.support` (the `Set`-valued view), the
+  `AllOutputs`/`SomeOutput`/`NoOutput` judgments with scoped `⊨ₐ`/`⊨ₛ`/`⊭`
+  notation, and the demonic `MAlgOrdered m Prop` instance. Core supplies the
+  `Id`/`Option`/`OptionT`/`ExceptT`/`StateT`/`ReaderT` instances; PolyFun adds
+  `Except` and `SetM` (absent upstream) and a universe alias working around
+  core's `max`-joined `ExceptT` declaration. `StateT`/`ReaderT` keep core's
+  canonical support but are correctly not `ExactMonadAttach`.
+- `PFunctor/Free/Support.lean` — `MonadAttach`/`ExactMonadAttach` for `FreeM P`
+  with a computable, axiom-free `attach` (so `MonadAttach.pbind` is available for
+  well-founded recursion); structural equations hold by `rfl`; coherence with
+  `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold
+  (`support_eq_liftM_univ`).
 - `PFunctor/Free/WP.lean` — `OpSpec` per-operation predicate-transformer
   specs; the syntactic fold `FreeM.wpFold` with `demonic`/`angelic` `Prop`
   specs; `OpSpec.toMAlgOrdered`; the semantic `FreeM.wpVia` through a
@@ -64,7 +70,9 @@ substrates; core `Std.Do` is used only behind a two-file quarantine.
   engine behind VCVio's `HandlerSpecs` pattern); coherence of demonic/angelic
   folds with `AllOutputs`/`SomeOutput`.
 - `Control/Do/Basic.lean` + `PFunctor/Free/Do.lean` — the core-`Std.Do`
-  quarantine: `MonadHom.transportWP(Monad)`, `MonadSupport.toWP(Monad)`,
+  quarantine: `MonadHom.transportWP(Monad)`, `MonadAttach.toWP(Monad)`,
+  `toWPSound` plus `support_subset_of_wp`/`allOutputs_of_wp` (any `WPSound`
+  triple becomes a support fact),
   scoped demonic `WP (FreeM P) .pure` instances, and the `Spec.lift` `@[spec]`
   lemma; `mvcgen` decomposes `do`-programs over `FreeM` with uninterpreted
   operations (`PolyFunTest/Do/FreeM.lean` proves this in CI). Only these two
@@ -82,11 +90,18 @@ downstream registrations on reducible unfoldings such as `OracleComp`).
 
 1. Replace `ToMathlib/Control/Monad/RelationalAlgebra.lean` with the PolyFun
    import.
-2. Re-derive `support` from `MonadSupport` (its `instMonadLiftTSetM` becomes
-   `MonadSupport.toMonadLiftT`; `allOutputsSatisfy`/`someOutputSatisfies`
-   become deprecated aliases of `AllOutputs`/`SomeOutput` during migration),
-   and `HoarePropTriple.instMAlgOrdered` from the generic demonic instance.
-3. Re-derive `instWPOracleComp` from `MonadSupport.toWP` and
+2. Re-derive `support` as `export MonadAttach (support)` — that single line keeps
+   all 1403 `support` occurrences and 212 `support_*` lemma names. `OracleComp`
+   (= `OptionT (FreeM …)`) gets `MonadAttach`/`ExactMonadAttach` by pure instance
+   composition, needing *no* VCVio-side instance; only `PMF` (via
+   `PMF.bindOnSupport`, which is exactly `pbind`), `SPMF`, and `FinRatPMF.Raw`
+   need real work, all probability-side. `allOutputsSatisfy`/`someOutputSatisfies`
+   become deprecated aliases of `AllOutputs`/`SomeOutput` during migration, and
+   `HoarePropTriple.instMAlgOrdered` follows from the generic demonic instance.
+   Guards: core's `StateT`/`ReaderT` instances make `support` typecheck on stacks
+   where `CellRef.lean`/`WriterCost.lean` mean the per-run support, and
+   `MonadAttach.trivial` must never be let in.
+3. Re-derive `instWPOracleComp` from `MonadAttach.toWP` and
    `simulateQ_triple_preserves_invariant`-style facts from
    `wpFold_le_wpVia`; keep `wpProp_iff_forall_support` as the only
    probability-touching step, and `wp_eq_mAlgOrdered_wp` as the rfl regression
@@ -94,7 +109,7 @@ downstream registrations on reducible unfoldings such as `OracleComp`).
 
 Acceptance targets: VCVio's support instances become one-liners; ArkLib (once
 its pin catches up) can delete `ToVCVio/DistEq.lean`, derive its Merkle
-`NeverFail` calculus from `supportM_bind`-shaped rules, and state
+`NeverFail` calculus from `support_bind`-shaped rules, and state
 `append_completeness` against a future generic approximate-triple algebra
 (`pre ≤ wp x post + ε` over a lattice-with-addition carrier — sketched, not yet
 implemented).

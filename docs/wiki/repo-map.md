@@ -87,7 +87,6 @@ Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   (free-standing helpers, depended on by both PFunctor and ITree)
 
 Control/Monad/Algebra -> Control/Monad/Algebra/Relational
-Control/Monad/Hom -> Control/Monad/Support
 Control/Monad/Support -> Control/Do/Basic  (also imports Std.Tactic.Do; see
   the quarantine rule in program-logic.md)
 
@@ -248,7 +247,7 @@ plain imports, and reducibility is exposed declaration-by-declaration.
   [`interaction.md`](interaction.md).
 - Adding monad / comonad helpers, lawful re-exports, or free-monad
   algebra: start in `PolyFun/Control/`.
-- Program-logic work (`MAlgOrdered`, `MAlgRelOrdered`, `MonadSupport`,
+- Program-logic work (`MAlgOrdered`, `MAlgRelOrdered`, `ExactMonadAttach`,
   `wpFold`, `Std.Do` bridges): start with
   [`program-logic.md`](program-logic.md); definitions live under
   `PolyFun/Control/Monad/` and `PolyFun/PFunctor/Free/{Support, WP, Do}.lean`.

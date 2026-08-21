@@ -97,7 +97,8 @@ and depend on this library.
   required by the above (coalgebra, comonad, free / freecont monad
   algebra, monad iter / hom, lawful re-exports), plus the program-logic
   kernel: ordered monad algebras (`Monad/Algebra`, unary and relational),
-  `MonadSupport` with the always/never judgments (`Monad/Support`), and
+  exact monadic support over core's `MonadAttach` with the always/never
+  judgments (`Monad/Support`), and
   the core-`Std.Do` quarantine root (`Do/Basic`).
 - `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
   silent/visible `Control.LTS` layer and preservation by weak simulation.
@@ -258,7 +259,7 @@ too specific or too changeable to keep at the repo root.
 - [`docs/wiki/interaction.md`](docs/wiki/interaction.md): generic interaction
   framework (`TypeTree`, two-party, multiparty, concurrent, UC).
 - [`docs/wiki/program-logic.md`](docs/wiki/program-logic.md): the
-  program-logic kernel (ordered monad algebras, `MonadSupport`, free-monad
+  program-logic kernel (ordered monad algebras, exact monadic support, free-monad
   wp, `Std.Do` quarantine).
 - [`docs/wiki/realizability.md`](docs/wiki/realizability.md): step classes and
   realizability of free programs by admissible state machines.
