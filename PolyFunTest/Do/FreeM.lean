@@ -52,3 +52,23 @@ example : ⦃⌜True⌝⦄ flipNot ⦃⇓ r => ⌜r = true ∨ r = false⌝⦄ :
   mvcgen [flipNot]
   intro a
   cases a <;> simp
+
+/-! ## From weakest preconditions back to supports
+
+`WPSound` closes the loop: a triple discharged by `mvcgen` becomes a fact about
+the program's possible outputs, with no further reasoning about the tree. -/
+
+/-- An `mvcgen`-discharged triple converts into a support fact. -/
+example (a : Bool) (h : MonadAttach.CanReturn flipTwo a) : a = true ∨ a = false := by
+  refine WPSound.of_wp_canReturn (m := PFunctor.FreeM coinP)
+    (P := fun b => b = true ∨ b = false) h ?_
+  mvcgen [flipTwo]
+  intro x y
+  cases x && y <;> simp
+
+/-- The same, phrased as the "always" judgment over the support. -/
+example : MonadAttach.AllOutputs (fun b => b = true ∨ b = false) flipTwo := by
+  refine MonadAttach.allOutputs_of_wp ?_
+  mvcgen [flipTwo]
+  intro x y
+  cases x && y <;> simp

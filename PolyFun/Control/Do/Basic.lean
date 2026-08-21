@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import Std.Tactic.Do
+public import PolyFun.Control.Monad.Hom
 public import PolyFun.Control.Monad.Support
 
 /-!
@@ -22,13 +23,26 @@ It provides constructions — deliberately not instances — that transport core
 * `MonadHom.transportWP` / `MonadHom.transportWPMonad` pull a `WP`/`WPMonad`
   structure back along a monad morphism `F : m →ᵐ n`, so a monad that interprets
   into an `mvcgen`-ready stack inherits its predicate-transformer semantics.
-* `MonadSupport.toWP` / `MonadSupport.toWPMonad` give any supported monad the
-  demonic (almost-sure) interpretation at the `.pure` post shape: `wp x Q` holds
-  when every possible output of `x` satisfies `Q`.
+* `MonadAttach.toWP` / `MonadAttach.toWPMonad` give any monad with exact support
+  the demonic (almost-sure) interpretation at the `.pure` post shape: `wp x Q`
+  holds when every possible output of `x` satisfies `Q`. `MonadAttach.toWPSound`
+  proves that interpretation sound in core's sense, with `attach` supplying the
+  `Ensures` witness.
+* `MonadAttach.support_subset_of_wp` / `allOutputs_of_wp` go the other way: *any*
+  `WPSound` predicate-transformer semantics bounds the support, so an
+  `mvcgen`-discharged triple becomes a support fact in one step. These need only
+  `LawfulMonadAttach`, so they also apply to `StateT`/`ReaderT`/`EStateM`, where
+  `ExactMonadAttach` is unavailable.
 
 Downstream libraries choose where to register these (scoped or local); a global
 instance here would clash with registrations on reducible unfoldings of the same
 monads downstream.
+
+This file depends on `Std.Do.Internal.Ensures` only through `WPSound`'s own field
+type. Reasoning here goes through `WPSound.of_wp_canReturn`, which lives in the
+stable `Std.Do` namespace; core's `Internal.MayReturn.canReturn_eq` (which proves
+`CanReturn` *is* the intrinsic strongest postcondition) is cited but not depended
+upon.
 -/
 
 @[expose] public section
@@ -66,10 +80,14 @@ def transportWPMonad (F : m →ᵐ n) [LawfulMonad m] [WPMonad n ps] : WPMonad m
 
 end MonadHom
 
-namespace MonadSupport
+namespace MonadAttach
 
-variable {m : Type u → Type v} [Monad m] [MonadSupport m]
+section Demonic
 
+variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m]
+  [ExactMonadAttach m]
+
+omit [Monad m] [LawfulMonad m] [ExactMonadAttach m] in
 theorem allOutputs_postCond_and {α : Type u} (x : m α)
     (Q₁ Q₂ : PostCond α .pure) :
     AllOutputs (fun a => ((Q₁.and Q₂).1 a).down) x ↔
@@ -87,12 +105,12 @@ def toWP : WP m .pure where
       conjunctiveRaw := fun Q₁ Q₂ =>
         SPred.pure_congr (allOutputs_postCond_and x Q₁ Q₂) }
 
-/-- The demonic interpretation is a `WPMonad` for any lawful supported monad.
+/-- The demonic interpretation is a `WPMonad` whenever the support is exact.
 Not an instance. -/
 @[instance_reducible]
-def toWPMonad [LawfulMonad m] : WPMonad m .pure where
+def toWPMonad : WPMonad m .pure where
   toLawfulMonad := inferInstance
-  toWP := MonadSupport.toWP
+  toWP := MonadAttach.toWP
   wp_pure a := by
     ext Q
     exact allOutputs_pure _ a
@@ -100,4 +118,52 @@ def toWPMonad [LawfulMonad m] : WPMonad m .pure where
     ext Q
     exact allOutputs_bind _ x f
 
-end MonadSupport
+/-! ### Soundness in core's sense
+
+`attach` is exactly the witness `Std.Do`'s `Ensures` asks for: decorate the
+computation's results with their reachability proofs, then re-tag those proofs
+with the postcondition, which the "always" judgment supplies pointwise. -/
+
+omit [MonadAttach m] [ExactMonadAttach m] in
+theorem erasesTo_of_map_eq {α : Type u} {P : α → Prop} {y : m (Subtype P)} {x : m α}
+    (h : Subtype.val <$> y = x) : Std.Do.Internal.ErasesTo y x :=
+  ⟨fun {_} k => by rw [← h, bind_map_left]⟩
+
+/-- An "always" judgment yields the `Ensures` witness core's soundness class wants. -/
+theorem ensures_of_allOutputs {α : Type u} {x : m α} {P : α → Prop}
+    (h : AllOutputs P x) : Std.Do.Internal.Ensures P x :=
+  ⟨⟨(fun z : Subtype (CanReturn x) => (⟨z.1, h z.1 z.2⟩ : Subtype P)) <$> MonadAttach.attach x,
+    erasesTo_of_map_eq (by rw [Functor.map_map]; exact WeaklyLawfulMonadAttach.map_attach)⟩⟩
+
+/-- The demonic interpretation is sound in core's sense. Not an instance. -/
+theorem toWPSound : letI := toWP (m := m); WPSound m .pure :=
+  letI := toWP (m := m)
+  { ensures_of_wp := fun {_ _ _} hwp => ensures_of_allOutputs (hwp True.intro) }
+
+end Demonic
+
+/-! ### From weakest preconditions back to supports
+
+The converse direction needs no exactness — only that `CanReturn` is the strongest
+postcondition — so it applies to every monad core equips, including the stateful
+ones where `ExactMonadAttach` fails. -/
+
+section OfWP
+
+variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m]
+  [LawfulMonadAttach m] {ps : PostShape.{u}} [WP m ps] [WPSound m ps]
+
+/-- Any `WPSound` predicate-transformer semantics bounds the support. -/
+theorem support_subset_of_wp {α : Type u} {x : m α} {P : α → Prop}
+    (h : ⊢ₛ wp⟦x⟧ (⇓?a => ⌜P a⌝)) : support x ⊆ {a | P a} :=
+  fun _ hcan => WPSound.of_wp_canReturn (P := P) hcan h
+
+/-- The "always" phrasing of `support_subset_of_wp`: a weakest-precondition proof
+discharges the almost-sure judgment. -/
+theorem allOutputs_of_wp {α : Type u} {x : m α} {P : α → Prop}
+    (h : ⊢ₛ wp⟦x⟧ (⇓?a => ⌜P a⌝)) : AllOutputs P x :=
+  fun _ hcan => WPSound.of_wp_canReturn (P := P) hcan h
+
+end OfWP
+
+end MonadAttach

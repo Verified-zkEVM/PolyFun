@@ -207,6 +207,8 @@ end wpVia
 
 section Support
 
+open MonadAttach
+
 variable {α : Type uB}
 
 /-- The demonic fold is the "always" judgment over the canonical support. -/

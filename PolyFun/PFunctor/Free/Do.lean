@@ -20,7 +20,7 @@ semantics in two ways:
   `MonadHom.transportWPMonad`. Registration is left to the caller.
 * **Demonically, with operations uninterpreted**: the *scoped* instances
   `instWPAll` / `instWPMonadAll` interpret `wp⟦x⟧ Q` as "every possible output of
-  `x` satisfies `Q`" (the `MonadSupport.toWP` structure at the `.pure` post
+  `x` satisfies `Q`" (the `MonadAttach.toWP` structure at the `.pure` post
   shape). Under `open scoped PFunctor.FreeM.DemonicWP`, the `mvcgen` tactic
   decomposes `do`-programs over `FreeM P`, with `Spec.lift` providing the
   verification condition for an uninterpreted operation: all of its responses
@@ -50,14 +50,21 @@ def wpMonadOfHandler {n : Type uB → Type w} {ps : PostShape.{uB}} [Monad n]
 
 namespace DemonicWP
 
+open MonadAttach
+
 /-- Demonic (all-outputs) predicate-transformer semantics for free programs with
 uninterpreted operations, at the `.pure` post shape. -/
 scoped instance instWPAll : WP (FreeM P) .pure :=
-  MonadSupport.toWP
+  MonadAttach.toWP
 
 /-- The demonic semantics respects the monad structure. -/
 scoped instance instWPMonadAll : WPMonad (FreeM P) .pure :=
-  MonadSupport.toWPMonad
+  MonadAttach.toWPMonad
+
+/-- The demonic semantics is sound in core's sense, so an `mvcgen`-discharged
+triple converts to a support fact via `WPSound.of_wp_canReturn`. -/
+scoped instance instWPSoundAll : WPSound (FreeM P) .pure :=
+  MonadAttach.toWPSound
 
 variable {α : Type uB}
 
