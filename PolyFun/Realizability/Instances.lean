@@ -306,9 +306,11 @@ structure WordDistrib {W : Type u} (Q : (W → W) → Prop) (P : WordPairing Q)
 /-- The step class built from a class `Q` of word functions on `W` that contains
 the identity and is closed under composition.
 
-A type is representable by an injective encoding into `W` — injectivity is the
-only semantic demand, exactly as for a raw bit encoding — and a function is
-admissible when some `Q`-function intertwines the encodings. -/
+A type is representable by an injective encoding into `W` and a function is
+admissible when some `Q`-function intertwines the encodings. This is intentionally
+the raw bridge: security-sensitive boundaries need a separately pinned
+admissible encode/decode retraction, since injectivity alone does not make the
+representation complexity-invariant. -/
 def ofWordClass (W : Type u) (Q : (W → W) → Prop) (hid : Q id)
     (hcomp : ∀ {f g : W → W}, Q f → Q g → Q (g ∘ f)) : StepClass.{u, u} where
   Str A := { encode : A → W // Function.Injective encode }

@@ -235,4 +235,5 @@ public import PolyFun.Realizability.Basic
 public import PolyFun.Realizability.Closure
 public import PolyFun.Realizability.Instances
 public import PolyFun.Realizability.Machine
+public import PolyFun.Realizability.Representation
 public import PolyFun.Realizability.StepClass

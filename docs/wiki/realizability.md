@@ -17,7 +17,7 @@ finite-state realizability, machines with computable transitions, and — the
 motivating case downstream — the polynomial-time adversary model used in
 cryptography.
 
-## The Four Modules
+## The Five Modules
 
 ```text
 PolyFun/Realizability/
@@ -30,6 +30,9 @@ PolyFun/Realizability/
   Closure.lean      closure under ofFn, precomp, mapResult, seqComp (bind),
                     wrap (interface transport), and class refinement
   Instances.lean    unconstrained, finite, computable, WordClass
+  Representation.lean
+                    mutual translation and invariance of representations;
+                    admissible word encode/decode retractions
 ```
 
 `Machine.lean` and `StepClass.lean` are independent; `Basic.lean` joins them.
@@ -233,6 +236,31 @@ These are client obligations rather than extra fields of `IsRealizableWithin`:
 the latter intentionally remains a qualitative admissibility predicate plus a
 visible-query bound.
 
+## Representation Invariance And Codability
+
+`StepClass.PolyTranslatable a b` contains admissibility proofs for the identity
+in both directions between two representations of the same type. Its `hom_iff`
+theorem makes admissibility invariant under translated source and target
+representations. Products, sums, and optional-value representations inherit the
+certificate componentwise.
+
+`Boundary.PolyTranslatable` applies that condition to the input, result,
+position, and tagged-answer representations. The theorems
+`isRealizableBy_iff_of_boundary_polyTranslatable` and
+`isRealizableWithin_iff_of_boundary_polyTranslatable` transport one machine
+witness in both directions without changing its hidden-state representation or
+query budget. This is the explicit invariance theorem needed before replacing a
+pinned cryptographic boundary encoding.
+
+`StepClass.PolyCodable word rep` is stronger than an injective bit encoding. It
+contains a semantic `CodeRetract` with `decode (encode value) = some value`, an
+admissibility proof for the encoder, and an admissibility proof for the partial
+decoder. Consequently the encoder is injective, but an injective function whose
+range cannot be decoded in the ambient class does not qualify. `CodeRetract`
+constructors build product, sum, option, and dependent-sigma codes from explicit
+word pairing/tagging codecs; admissibility remains a separate proof so a
+concrete complexity library must expose the operations it actually closes.
+
 ## Universe Discipline
 
 `StepClass.Str` speaks about types in a single universe, so the realizability
@@ -256,8 +284,11 @@ def ofWordClass (W : Type u) (Q : (W → W) → Prop) (hid : Q id)
   Hom eA eB f := ∃ q, Q q ∧ ∀ x, q (eA.1 x) = eB.1 (f x)
 ```
 
-Injectivity of the encoding is the only semantic demand, exactly as for a raw bit
-encoding.
+Injectivity is deliberately the only demand of this low-level bridge, exactly as
+for a raw bit encoding. A cryptographic boundary must additionally pin a
+`PolyCodable` certificate (or an equivalent canonical-code theorem); existential
+choice of this raw representation would permit an injective encoding with no
+admissible decoder.
 
 Products and sums are *not* automatic. They need a pairing codec and a tagging
 scheme whose operations the word class admits, supplied as `WordPairing` and

@@ -89,6 +89,24 @@ theorem Hom.congr {A B : Type u} {a : C.Str A} {b : C.Str B} {f g : A → B}
     (h : C.Hom a b f) (hfg : ∀ x, f x = g x) : C.Hom a b g := by
   rwa [← funext hfg]
 
+/-- Change the source representation along an admissible identity map.
+
+This law hides the normalization of `f ∘ id` at the `StepClass` boundary, so
+clients transporting a morphism do not depend on the reducibility of function
+composition. -/
+theorem Hom.precomp_id {A B : Type u} {a a' : C.Str A} {b : C.Str B}
+    {f : A → B} (hf : C.Hom a b f) (hid : C.Hom a' a id) : C.Hom a' b f :=
+  (C.comp_mem hid hf).congr (fun _ ↦ rfl)
+
+/-- Change the target representation along an admissible identity map.
+
+This law hides the normalization of `id ∘ f` at the `StepClass` boundary, so
+clients transporting a morphism do not depend on the reducibility of function
+composition. -/
+theorem Hom.postcomp_id {A B : Type u} {a : C.Str A} {b b' : C.Str B}
+    {f : A → B} (hf : C.Hom a b f) (hid : C.Hom b b' id) : C.Hom a b' f :=
+  (C.comp_mem hf hid).congr (fun _ ↦ rfl)
+
 /-! ## Products -/
 
 /-- A step class with admissible binary products.
@@ -118,6 +136,16 @@ theorem HasProd.map_mem [P : C.HasProd] {A B A' B' : Type u} {a : C.Str A}
   intro x
   cases x
   rfl
+
+/-- Admissible identity maps act componentwise on a product while denoting the
+identity on the underlying product type. -/
+theorem HasProd.map_id_mem [P : C.HasProd] {A B : Type u} {a a' : C.Str A}
+    {b b' : C.Str B} (ha : C.Hom a a' id) (hb : C.Hom b b' id) :
+    C.Hom (P.prod a b) (P.prod a' b') id :=
+  (P.map_mem ha hb).congr (by
+    intro value
+    cases value
+    rfl)
 
 /-- Pairing an admissible function with a fixed second component. -/
 theorem HasProd.pairRight_mem [P : C.HasProd] {A B D : Type u} {a : C.Str A}
@@ -189,6 +217,15 @@ theorem HasSum.map_mem [S : C.HasSum] {A B A' B' : Type u} {a : C.Str A}
   intro x
   cases x <;> rfl
 
+/-- Admissible identity maps act componentwise on a sum while denoting the
+identity on the underlying sum type. -/
+theorem HasSum.map_id_mem [S : C.HasSum] {A B : Type u} {a a' : C.Str A}
+    {b b' : C.Str B} (ha : C.Hom a a' id) (hb : C.Hom b b' id) :
+    C.Hom (S.sum a b) (S.sum a' b') id :=
+  (S.map_mem ha hb).congr (by
+    intro value
+    cases value <;> rfl)
+
 /-! ## Optional values -/
 
 /-- A step class with admissible optional values.
@@ -221,6 +258,15 @@ class HasOption (C : StepClass.{u, v}) [P : C.HasProd] where
   obindCtx_mem : ∀ {A B E : Type u} {a : C.Str A} {b : C.Str B} {e : C.Str E}
     {k : A × E → Option B}, C.Hom (P.prod a e) (option b) k →
       C.Hom (P.prod (option a) e) (option b) fun y => y.1.bind fun j => k (j, y.2)
+
+/-- An admissible identity map acts on optional values while denoting the
+identity on the underlying optional-value type. -/
+theorem HasOption.map_id_mem [C.HasProd] [O : C.HasOption] {A : Type u}
+    {a a' : C.Str A} (ha : C.Hom a a' id) :
+    C.Hom (O.option a) (O.option a') id :=
+  (O.omap_mem ha).congr (by
+    intro value
+    cases value <;> rfl)
 
 /-! ## Distributivity -/
 
