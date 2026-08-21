@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Bisimulation
+public import PolyFun.Control.LTS.Trace
 
 /-!
 # Examples for labelled-transition bisimulation
@@ -180,5 +181,55 @@ example : plainLTS.DelayStep () (some true) () :=
 
 example : plainLTS.WeakStep () (some true) () :=
   ((show plainLTS.Step () (some true) () from ⟨(), rfl, rfl⟩).delay).weak
+
+/-! ## The cslib bridge
+
+These are the canaries for `Control.LTS.toLts`: the step-level correspondences
+must stay definitional, and the relation-level ones must carry concrete facts in
+both directions.
+-/
+
+/-- A transition of the projection is a transition, definitionally. -/
+example : plainLTS.toLts.Tr () (some true) () ↔ plainLTS.Step () (some true) () := Iff.rfl
+
+/-- A silent closure is cslib's `τ`-closure, definitionally. -/
+example : idleLTS.toLts.τSTr () () ↔ idleLTS.SilentSteps () () := Iff.rfl
+
+/-- The silent idle move is a genuine `τ`-transition of the projection. -/
+example : idleLTS.toLts.Tr () Cslib.HasTau.τ () := ⟨false, rfl, rfl⟩
+
+/-- A weak transition is cslib's saturated transition. -/
+example : idleLTS.toLts.STr () (some true) () :=
+  idleLTS.sTr_toLts_iff.mpr
+    ((show idleLTS.Step () (some true) () from ⟨true, rfl, rfl⟩).delay).weak
+
+/-- Weak bisimilarity transports onto cslib's. -/
+example : Cslib.LTS.WeakBisimilarity idleLTS.toLts plainLTS.toLts () () :=
+  weakBisimilar_iff.mp idle_weak_plain_state
+
+/-- Strong bisimilarity transports in both directions. -/
+example : Cslib.LTS.Bisimilarity plainLTS.toLts plainLTS.toLts () () :=
+  strongBisimilar_iff.mp (StrongBisimilar.refl plainLTS ())
+
+example : StrongBisimilar plainLTS plainLTS () () :=
+  strongBisimilar_iff.mpr (Cslib.LTS.HomBisimilarity.refl (lts := plainLTS.toLts) ())
+
+/-- Weak bisimulation here is cslib's single-challenge weak bisimulation, and
+hence -- by Sangiorgi 4.2.10, proved upstream -- bisimulation of the saturated
+systems. -/
+example {rel : Unit → Unit → Prop} (h : IsWeakBisimulation idleLTS plainLTS rel) :
+    Cslib.LTS.IsWeakBisimulation idleLTS.toLts plainLTS.toLts rel :=
+  isWeakBisimulation_iff.mp h
+
+/-- Bisimilarity is itself a bisimulation. -/
+example : IsStrongBisimulation plainLTS plainLTS (StrongBisimilar plainLTS plainLTS) :=
+  StrongBisimilar.isStrongBisimulation plainLTS plainLTS
+
+/-- A visible trace tags to the corresponding cslib trace of the saturated
+system. -/
+example : [some true] ∈ plainLTS.toLts.saturate.traces () := by
+  refine (plainLTS.mem_traces_iff_mem_toLts (observations := [true])).mp ⟨(), ?_⟩
+  exact .cons ((show plainLTS.Step () (some true) () from ⟨(), rfl, rfl⟩).delay).weak
+    (LTS.WeakTrace.nil (L := plainLTS) ())
 
 end Control.BisimulationExamples

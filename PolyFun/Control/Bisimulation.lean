@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import Mathlib.Logic.Relation
+public import Cslib.Foundations.Semantics.LTS.Bisimulation
 
 /-!
 # Simulation and bisimulation for labelled transition systems
@@ -37,6 +38,25 @@ The matching transitions are:
 The closure lemmas below make the inclusions
 `strong ⊆ delay ⊆ weak` and composition of simulations reusable by
 downstream models.
+
+## Relation to `Cslib.LTS`
+
+This `LTS` is *move-indexed*: a state exposes a type of moves, each with a
+target and a label.  That is the polynomial-coalgebra presentation, and it is
+what lets `DynSystem` and `ITree` adapt into this layer.  cslib's `Cslib.LTS` is
+*relation-indexed*: a single `Tr : State → Label → State → Prop`.
+
+`LTS.toLts` projects the former onto the latter and `Option Obs` supplies the
+silent label through `Cslib.HasTau`, after which cslib's development applies
+verbatim: `SilentSteps` is its `τSTr`, `WeakStep` is its saturated transition
+`STr`, and the strong and weak simulation and bisimulation notions here agree
+with `Cslib.LTS.IsSimulation`, `IsBisimulation`, `IsSWBisimulation`, and
+`WeakBisimilarity` on the projection.  The `Relation to cslib` section at the
+end of this file records those correspondences and derives the consequences
+that cslib proves and this file does not, in particular that bisimilarity is
+itself the largest bisimulation.
+
+The *delay* spectrum has no cslib counterpart and is developed here.
 -/
 
 @[expose] public section
@@ -674,5 +694,193 @@ itself. -/
     exact ⟨s₁, s₂, h₁₂, h₂₃⟩
 
 end WeakBisimulationEquivalent
+
+/-! ## Relation to cslib
+
+`LTS.toLts` is the projection onto `Cslib.LTS`; every correspondence below is
+stated against it.  The step-level ones are definitional, and the
+relation-level ones transport cslib's theory onto the notions defined above.
+-/
+
+section Cslib
+
+/-- `none` is the silent label, so an optionally-observed transition system is a
+cslib transition system with a distinguished `τ`.
+
+cslib declares this same instance, but inside
+`Cslib/Computability/Automata/EpsilonNA/Basic.lean`, where it is reachable only
+by importing the ε-NFA development. Repeating it here is cheaper than taking
+that dependency, and the two agree definitionally, so having both in scope is
+harmless. It belongs next to `HasTau` itself upstream. -/
+instance instHasTauOption : Cslib.HasTau (Option Obs) := ⟨none⟩
+
+@[simp] theorem hasTau_option_τ : (Cslib.HasTau.τ : Option Obs) = none := rfl
+
+/-- The relation-indexed transition system underlying a move-indexed one:
+forget which move justified a transition and keep only that one exists. -/
+def LTS.toLts (L : LTS.{uObs, uState, uMove} Obs) : Cslib.LTS L.State (Option Obs) :=
+  ⟨L.Step⟩
+
+variable (L : LTS.{uObs, uState, uMove} Obs)
+
+@[simp] theorem LTS.toLts_tr {s t : L.State} {label : Option Obs} :
+    L.toLts.Tr s label t ↔ L.Step s label t := Iff.rfl
+
+/-- The silent closure is cslib's `τ`-closure. -/
+@[simp] theorem LTS.τSTr_toLts {s t : L.State} :
+    L.toLts.τSTr s t ↔ L.SilentSteps s t := Iff.rfl
+
+/-- A weak transition is cslib's saturated transition.  The two definitions
+differ in shape — one is a match on the label, the other an inductive — but
+describe the same relation. -/
+theorem LTS.sTr_toLts_iff {s t : L.State} {label : Option Obs} :
+    L.toLts.STr s label t ↔ L.WeakStep s label t := by
+  constructor
+  · rintro (_ | ⟨hpre, hstep, hpost⟩)
+    · exact Relation.ReflTransGen.refl
+    · cases label with
+      | none => exact (hpre.trans (Relation.ReflTransGen.single hstep)).trans hpost
+      | some obs => exact ⟨_, _, hpre, hstep, hpost⟩
+  · intro h
+    cases label with
+    | none =>
+        induction h with
+        | refl => exact .refl
+        | tail _ hlast ih =>
+            cases ih with
+            | refl => exact .tr Relation.ReflTransGen.refl hlast Relation.ReflTransGen.refl
+            | tr hpre hstep hpost =>
+                exact .tr hpre hstep (hpost.trans (Relation.ReflTransGen.single hlast))
+    | some obs =>
+        obtain ⟨before, after, hpre, hvis, hpost⟩ := h
+        exact .tr hpre hvis hpost
+
+/-- Saturating the projection exposes exactly the weak transitions. -/
+theorem LTS.saturate_toLts_tr_iff {s t : L.State} {label : Option Obs} :
+    L.toLts.saturate.Tr s label t ↔ L.WeakStep s label t := L.sTr_toLts_iff
+
+variable {L}
+
+/-! ### Correspondence of the strong spectrum -/
+
+theorem isStrongSimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
+    IsStrongSimulation L₁ L₂ rel ↔ Cslib.LTS.IsSimulation L₁.toLts L₂.toLts rel :=
+  ⟨fun h _ _ hrel _ _ hstep => h hrel hstep,
+    fun h _ _ hrel _ _ hstep => h _ _ hrel _ _ hstep⟩
+
+theorem isStrongBisimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
+    IsStrongBisimulation L₁ L₂ rel ↔ Cslib.LTS.IsBisimulation L₁.toLts L₂.toLts rel := by
+  constructor
+  · exact fun h _ _ hrel _ =>
+      ⟨fun _ hstep => h.forward hrel hstep, fun _ hstep => h.backward hrel hstep⟩
+  · intro h
+    constructor
+    · intro s₁ s₂ hrel label t₁ hstep
+      exact (h hrel label).1 t₁ hstep
+    · intro s₂ s₁ hrel label t₂ hstep
+      exact (h hrel label).2 t₂ hstep
+
+theorem strongBisimilar_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {s₁ : L₁.State} {s₂ : L₂.State} :
+    StrongBisimilar L₁ L₂ s₁ s₂ ↔ Cslib.LTS.Bisimilarity L₁.toLts L₂.toLts s₁ s₂ :=
+  ⟨fun ⟨rel, hb, hrel⟩ => ⟨rel, hrel, isStrongBisimulation_iff.mp hb⟩,
+    fun ⟨rel, hrel, hb⟩ => ⟨rel, isStrongBisimulation_iff.mpr hb, hrel⟩⟩
+
+/-! ### Correspondence of the weak spectrum -/
+
+theorem isWeakSimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
+    IsWeakSimulation L₁ L₂ rel ↔
+      Cslib.LTS.IsSimulation L₁.toLts L₂.toLts.saturate rel := by
+  constructor
+  · exact fun h _ _ hrel _ _ hstep =>
+      let ⟨t₂, hw, hr⟩ := h hrel hstep
+      ⟨t₂, L₂.sTr_toLts_iff.mpr hw, hr⟩
+  · exact fun h _ _ hrel _ _ hstep =>
+      let ⟨t₂, hs, hr⟩ := h _ _ hrel _ _ hstep
+      ⟨t₂, L₂.sTr_toLts_iff.mp hs, hr⟩
+
+/-- The weak bisimulations of this file are cslib's *sw*-bisimulations: the
+challenge is a single transition and the answer a weak one. -/
+theorem isWeakBisimulation_iff_isSWBisimulation {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
+    IsWeakBisimulation L₁ L₂ rel ↔ Cslib.LTS.IsSWBisimulation L₁.toLts L₂.toLts rel := by
+  constructor
+  · refine fun h _ _ hrel _ => ⟨fun _ hstep => ?_, fun _ hstep => ?_⟩
+    · obtain ⟨t₂, hw, hr⟩ := h.forward hrel hstep
+      exact ⟨t₂, L₂.sTr_toLts_iff.mpr hw, hr⟩
+    · obtain ⟨t₁, hw, hr⟩ := h.backward hrel hstep
+      exact ⟨t₁, L₁.sTr_toLts_iff.mpr hw, hr⟩
+  · intro h
+    constructor
+    · intro s₁ s₂ hrel label t₁ hstep
+      obtain ⟨t₂, hs, hr⟩ := (h hrel label).1 t₁ hstep
+      exact ⟨t₂, L₂.sTr_toLts_iff.mp hs, hr⟩
+    · intro s₂ s₁ hrel label t₂ hstep
+      obtain ⟨t₁, hs, hr⟩ := (h hrel label).2 t₂ hstep
+      exact ⟨t₁, L₁.sTr_toLts_iff.mp hs, hr⟩
+
+/-- Weak bisimulation in the single-challenge sense of this file coincides with
+bisimulation of the saturated systems.  This is Sangiorgi's Lemma 4.2.10, proved
+in cslib and transported here. -/
+theorem isWeakBisimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
+    IsWeakBisimulation L₁ L₂ rel ↔ Cslib.LTS.IsWeakBisimulation L₁.toLts L₂.toLts rel :=
+  isWeakBisimulation_iff_isSWBisimulation.trans
+    Cslib.LTS.isWeakBisimulation_iff_isSWBisimulation.symm
+
+theorem weakBisimilar_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {s₁ : L₁.State} {s₂ : L₂.State} :
+    WeakBisimilar L₁ L₂ s₁ s₂ ↔ Cslib.LTS.WeakBisimilarity L₁.toLts L₂.toLts s₁ s₂ :=
+  ⟨fun ⟨rel, hb, hrel⟩ => ⟨rel, hrel, isWeakBisimulation_iff.mp hb⟩,
+    fun ⟨rel, hrel, hb⟩ => ⟨rel, isWeakBisimulation_iff.mpr hb, hrel⟩⟩
+
+/-! ### Bisimilarity as the largest bisimulation
+
+cslib proves these for its own notions (`Bisimilarity.isBisimulation`,
+`IsBisimulation.le_bisimilarity`, `Bisimilarity.gfp`); the correspondences above
+make them available here, but stating them directly is shorter than
+transporting.  This file did not previously record them.
+-/
+
+/-- Strong bisimilarity is itself a strong bisimulation. -/
+theorem StrongBisimilar.isStrongBisimulation (L₁ : LTS.{uObs, uState₁, uMove₁} Obs)
+    (L₂ : LTS.{uObs, uState₂, uMove₂} Obs) :
+    IsStrongBisimulation L₁ L₂ (StrongBisimilar L₁ L₂) := by
+  constructor
+  · rintro s₁ s₂ ⟨rel, hb, hrel⟩ label t₁ hstep
+    obtain ⟨t₂, hstep₂, hrel₂⟩ := hb.forward hrel hstep
+    exact ⟨t₂, hstep₂, rel, hb, hrel₂⟩
+  · rintro s₂ s₁ ⟨rel, hb, hrel⟩ label t₂ hstep
+    obtain ⟨t₁, hstep₁, hrel₁⟩ := hb.backward hrel hstep
+    exact ⟨t₁, hstep₁, rel, hb, hrel₁⟩
+
+/-- Weak bisimilarity is itself a weak bisimulation. -/
+theorem WeakBisimilar.isWeakBisimulation (L₁ : LTS.{uObs, uState₁, uMove₁} Obs)
+    (L₂ : LTS.{uObs, uState₂, uMove₂} Obs) :
+    IsWeakBisimulation L₁ L₂ (WeakBisimilar L₁ L₂) := by
+  constructor
+  · rintro s₁ s₂ ⟨rel, hb, hrel⟩ label t₁ hstep
+    obtain ⟨t₂, hstep₂, hrel₂⟩ := hb.forward hrel hstep
+    exact ⟨t₂, hstep₂, rel, hb, hrel₂⟩
+  · rintro s₂ s₁ ⟨rel, hb, hrel⟩ label t₂ hstep
+    obtain ⟨t₁, hstep₁, hrel₁⟩ := hb.backward hrel hstep
+    exact ⟨t₁, hstep₁, rel, hb, hrel₁⟩
+
+/-- Strong bisimilarity is the largest strong bisimulation. -/
+theorem IsStrongBisimulation.le_strongBisimilar {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop}
+    (h : IsStrongBisimulation L₁ L₂ rel) {s₁ : L₁.State} {s₂ : L₂.State} (hrel : rel s₁ s₂) :
+    StrongBisimilar L₁ L₂ s₁ s₂ := ⟨rel, h, hrel⟩
+
+/-- Weak bisimilarity is the largest weak bisimulation. -/
+theorem IsWeakBisimulation.le_weakBisimilar {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop}
+    (h : IsWeakBisimulation L₁ L₂ rel) {s₁ : L₁.State} {s₂ : L₂.State} (hrel : rel s₁ s₂) :
+    WeakBisimilar L₁ L₂ s₁ s₂ := ⟨rel, h, hrel⟩
+
+end Cslib
 
 end Control
