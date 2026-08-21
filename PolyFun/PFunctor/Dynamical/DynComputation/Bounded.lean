@@ -164,6 +164,74 @@ theorem isTotalRollBound_unroll (M : DynComputation.{u} p α β)
   rw [unroll_eq_truncate]
   exact Resumption.isTotalRollBound_truncate k (M.toDynSystem.behavior state)
 
+/-! ## Transport of bounded unrolling
+
+Bounded unrolling commutes with each of the three reindexings of a returning
+computation: replacing the initialization leaves it untouched, mapping the
+returned value maps the optional result, and interface transport along a lens
+transports the resulting syntax along the same lens.
+
+The `setInit` and `mapResult` proofs are fuel inductions rather than definitional
+equalities, because `unroll` is defined by cases on the computation's one-step
+view and so does not reduce until that view is exposed. Interface transport uses
+the public `unroll_wrap` law above.
+-/
+
+/-- Replacing the initialization map leaves bounded unrolling from a hidden state
+unchanged: the two computations share `toMachine`, hence share their views. -/
+theorem unroll_setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (g : γ → M.State) (k : ℕ) (state : M.State) :
+    (M.setInit g).unroll k state = M.unroll k state := by
+  rw [(M.setInit g).unroll_eq_truncate, M.unroll_eq_truncate, setInit_behavior]
+
+theorem run_setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (g : γ → M.State) (k : ℕ) (input : γ) :
+    (M.setInit g).run k input = M.unroll k (g input) :=
+  M.unroll_setInit g k (g input)
+
+/-- Mapping returned values maps the optional result of a bounded unrolling. -/
+@[simp] theorem unroll_mapResult {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (f : β → γ) (k : ℕ) (state : M.State) :
+    (M.mapResult f).unroll k state =
+      FreeM.map (Option.map f) (M.unroll k state) := by
+  induction k generalizing state with
+  | zero =>
+      cases hview : M.view state with
+      | inl value =>
+          rw [M.unroll_return 0 state value hview,
+            (M.mapResult f).unroll_return 0 state (f value) (by simp [hview])]
+          exact (FreeM.map_pure (Option.map f) (some value)).symm
+      | inr query =>
+          obtain ⟨position, next⟩ := query
+          rw [M.unroll_query_zero state position next hview,
+            (M.mapResult f).unroll_query_zero state position next (by simp [hview])]
+          simpa only [Option.map_none] using
+            (FreeM.map_pure (P := p) (Option.map f) none).symm
+  | succ k ih =>
+      cases hview : M.view state with
+      | inl value =>
+          rw [M.unroll_return (k + 1) state value hview,
+            (M.mapResult f).unroll_return (k + 1) state (f value) (by simp [hview])]
+          exact (FreeM.map_pure (Option.map f) (some value)).symm
+      | inr query =>
+          rcases query with ⟨position, next⟩
+          rw [M.unroll_query_succ k state position next hview,
+            (M.mapResult f).unroll_query_succ k state position next (by simp [hview])]
+          rw [FreeM.map_liftBind]
+          exact congrArg (FreeM.liftBind position)
+            (funext fun direction => ih (next direction))
+
+@[simp] theorem run_mapResult {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (f : β → γ) (k : ℕ) (input : α) :
+    (M.mapResult f).run k input = FreeM.map (Option.map f) (M.run k input) :=
+  M.unroll_mapResult f k (M.init input)
+
+/-- Running after interface transport is the transported original run. -/
+@[simp] theorem run_wrap {q : PFunctor.{uA₂, uB₂}} (M : DynComputation.{u} p α β)
+    (lens : Lens p q) (k : ℕ) (input : α) :
+    (M.wrap lens).run k input = (M.run k input).mapLens lens :=
+  M.unroll_wrap lens k (M.init input)
+
 /-! ## Resolution within a uniform query budget -/
 
 /-- Every answer branch from `state` returns within `k` visible queries. -/

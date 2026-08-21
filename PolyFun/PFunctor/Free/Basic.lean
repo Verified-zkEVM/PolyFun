@@ -37,6 +37,21 @@ namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {α β γ : Type v}
 
+/-! ## Public constructor equations -/
+
+/-- Mapping a value through a leaf is visible through an ordinary module import. -/
+theorem map_pure {X : Type uβ} {Y : Type uγ} (f : X → Y) (x : X) :
+    FreeM.map (P := P) f (FreeM.pure x) = FreeM.pure (f x) :=
+  rfl
+
+/-- Mapping a value through a query preserves its position and maps every
+continuation. -/
+theorem map_liftBind {X : Type uβ} {Y : Type uγ} (f : X → Y)
+    (a : P.A) (rest : P.B a → FreeM P X) :
+    FreeM.map f (FreeM.liftBind a rest) =
+      FreeM.liftBind a (fun direction ↦ FreeM.map f (rest direction)) :=
+  rfl
+
 /-- Test only the root of a free polynomial tree.
 
 A leaf demands `leafPred` of its result, while an internal node demands

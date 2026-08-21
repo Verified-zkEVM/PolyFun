@@ -46,6 +46,9 @@ See the *Wiki Maintenance Contract* section in
 - [`interaction.md`](interaction.md): the generic interaction framework
   (sequential `TypeTree`, two-party, multiparty local views, concurrent
   processes, UC open systems).
+- [`realizability.md`](realizability.md): realizability of free programs by
+  state machines whose transition functions satisfy a given predicate
+  (`StepClass`, `Realization`, `IsRealizableBy`).
 
 ## Cross-Cutting Notes
 
@@ -69,6 +72,7 @@ See the *Wiki Maintenance Contract* section in
   - `ipfunctor.md` for the state-indexed `IPFunctor` / `FreeM` / `FreeM₂` substrate.
   - `itree.md` for interaction trees, bisimulation, and handlers.
   - `interaction.md` for the interaction framework above `FreeM`.
+  - `realizability.md` for step classes and machine realizability.
   - `notation.md` for notation cross-references.
   - `gotchas.md` for recurring traps.
 - Add new pages when a recurring topic no longer fits cleanly in an existing

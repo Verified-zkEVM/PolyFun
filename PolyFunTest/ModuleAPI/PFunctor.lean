@@ -25,6 +25,12 @@ namespace PolyFunTest.ModuleAPI.PFunctor
 
 open _root_.PFunctor
 
+example {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
+    (f : α → β) (position : P.A) (next : P.B position → FreeM P α) :
+    FreeM.map f (FreeM.liftBind position next) =
+      FreeM.liftBind position (fun direction ↦ FreeM.map f (next direction)) :=
+  FreeM.map_liftBind f position next
+
 example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}}
     {α : Type uα} (lens : Lens P Q) (position : P.A)
     (next : P.B position → FreeM P α) :

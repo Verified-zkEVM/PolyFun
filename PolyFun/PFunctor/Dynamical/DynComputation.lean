@@ -172,6 +172,38 @@ def contramapInput {γ : Type uγ} (M : DynComputation.{u} p α β) (f : γ → 
     (M : DynComputation.{u} p α β) (input : γ) :
     (M.contramapInput f).denote input = M.denote (f input) := rfl
 
+/-- Replace a returning computation's initialization map, possibly changing the
+input type, while keeping its dynamics untouched. Reducible so that the state
+type, one-step views, and behaviors of `M.setInit g` reduce to those of `M`:
+computations sharing `toMachine` share every derived step map definitionally. -/
+@[reducible] def setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (g : γ → M.State) : DynComputation.{u} p γ β :=
+  ⟨M.toMachine, g⟩
+
+@[simp] theorem setInit_State {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (g : γ → M.State) : (M.setInit g).State = M.State := rfl
+
+@[simp] theorem setInit_init {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (g : γ → M.State) (input : γ) : (M.setInit g).init input = g input := rfl
+
+@[simp] theorem setInit_view {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (g : γ → M.State) (state : M.State) :
+    (M.setInit g).view state = M.view state := rfl
+
+/-- Replacing initialization leaves the state-indexed behavior unchanged. -/
+@[simp] theorem setInit_behavior {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (g : γ → M.State) (state : M.State) :
+    (M.setInit g).toDynSystem.behavior state = M.toDynSystem.behavior state :=
+  rfl
+
+@[simp] theorem setInit_denote {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (g : γ → M.State) (input : γ) :
+    (M.setInit g).denote input = M.toDynSystem.behavior (g input) := rfl
+
+/-- Reindexing inputs is exactly precomposing the initialization map. -/
+theorem contramapInput_eq_setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
+    (f : γ → α) : M.contramapInput f = M.setInit (M.init ∘ f) := rfl
+
 private def mapResultLift {γ : Type uγ} (f : β → γ) :
     Lens.{max uβ uA, uB, max uγ uA, uB}
       (C.{uβ, uB} β + p) (C.{uγ, uB} γ + p) :=
@@ -663,6 +695,36 @@ theorem seqComp_ofFn_obsEq {γ : Type uγ} (M : DynComputation.{u} p α β)
   apply congrArg (Resumption.bind (M.denote input))
   funext value
   exact denote_ofFn f value
+
+/-! ## Realizations from a raw step function -/
+
+/-- Realize a returning computation from a one-step transition — returning either
+a value or a visible query with an explicit state-valued continuation — together
+with an initialization.
+
+This is the primary constructor for a hand-built machine: the supplied step
+function is exactly what `view` reads back, so no repackaging is visible to the
+caller. Reducible, so the state type and one-step views of a computation built
+this way are transparently those of the supplied data. -/
+@[reducible] def ofStep {S : Type u} (stepFn : S → β ⊕ p.Obj S) (init : α → S) :
+    DynComputation.{u} p α β where
+  State := S
+  toDynSystem :=
+    (fun state => (Resumption.pack (β := β) (stepFn state)).1) ⇆
+      fun state => (Resumption.pack (β := β) (stepFn state)).2
+  init := init
+
+@[simp] theorem ofStep_State {S : Type u} (stepFn : S → β ⊕ p.Obj S)
+    (init : α → S) : (ofStep (p := p) stepFn init).State = S := rfl
+
+@[simp] theorem ofStep_init {S : Type u} (stepFn : S → β ⊕ p.Obj S)
+    (init : α → S) (input : α) :
+    (ofStep (p := p) stepFn init).init input = init input := rfl
+
+@[simp] theorem view_ofStep {S : Type u} (stepFn : S → β ⊕ p.Obj S)
+    (init : α → S) (state : S) :
+    (ofStep (p := p) stepFn init).view state = stepFn state :=
+  Resumption.unpack_pack (stepFn state)
 
 /-! ## Resumption realizations -/
 
