@@ -60,7 +60,7 @@ See the *Wiki Maintenance Contract* section in
   behavioural-equivalence notions (strong / delay / weak), the generic
   `Control.LTS` framework, and how the ITree, dynamical, and UC layers relate.
 - [`program-logic.md`](program-logic.md): the program-logic kernel
-  (`MAlgOrdered`, relational algebras, `MonadSupport` and the always/never
+  (`MAlgOrdered`, relational algebras, exact monadic support and the always/never
   judgments, free-monad wp, and the core-`Std.Do` quarantine).
 - [`notation.md`](notation.md): notation reference. Currently scoped to UC
   composition (`∥`, `⊞`, `⊠`), boundary tensor / swap, and the scoped

@@ -259,7 +259,7 @@ too specific or too changeable to keep at the repo root.
 - [`docs/wiki/interaction.md`](docs/wiki/interaction.md): generic interaction
   framework (`TypeTree`, two-party, multiparty, concurrent, UC).
 - [`docs/wiki/program-logic.md`](docs/wiki/program-logic.md): the
-  program-logic kernel (ordered monad algebras, `MonadSupport`, free-monad
+  program-logic kernel (ordered monad algebras, exact monadic support, free-monad
   wp, `Std.Do` quarantine).
 - [`docs/wiki/realizability.md`](docs/wiki/realizability.md): step classes and
   realizability of free programs by admissible state machines.
