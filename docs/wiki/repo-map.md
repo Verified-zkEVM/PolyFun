@@ -188,6 +188,8 @@ Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    MomentaryCorruption, Leakage}
 
 Interaction/UC/OpenTheory -> Interaction/UC/SubTheory
+Interaction/UC/{OpenTheory, SubTheory}
+  -> Interaction/UC/OpenTheory/Family
 Interaction/UC/{Emulates, SubTheory} -> Interaction/UC/EmulatesWithin
 Interaction/UC/{OpenSyntax/Expr, SubTheory}
   -> Interaction/UC/OpenSyntax/AtomSubTheory
