@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Dynamical.DynComputation
+import Mathlib.Tactic.NormNum
 
 /-! # Returning dynamical computation examples -/
 
