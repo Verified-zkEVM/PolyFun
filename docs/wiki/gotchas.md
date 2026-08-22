@@ -115,8 +115,8 @@ non-standard instances.
 **Fix**: Use the restated lemmas in
 [`PolyFun/Control/Lawful/Basic.lean`](../../PolyFun/Control/Lawful/Basic.lean)
 (namespace `LawfulMonad`):
-`do_pure_bind`, `do_bind_pure`, `do_bind_assoc`, `do_bind_pure_comp`,
-`do_map_bind`, `do_bind_map_left`. All are `@[simp]`.
+`do_bind_assoc`, `do_bind_pure_comp`, `do_bind_map_left`, and the dependent-pair
+specialization `bind_pure_sigma_mk`.
 
 ### 8e. A predicate whose leading argument is implicit cannot be passed as an argument
 

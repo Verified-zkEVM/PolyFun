@@ -44,7 +44,6 @@
  ["topNamespace", "LawfulMonad.bind_pure_sigma_mk"],
  ["topNamespace", "LawfulMonad.do_bind_assoc"],
  ["topNamespace", "LawfulMonad.do_bind_map_left"],
- ["topNamespace", "LawfulMonad.do_bind_pure"],
  ["topNamespace", "LawfulMonad.do_bind_pure_comp"],
  ["topNamespace", "LawfulMonadAlgebra.mk"],
  ["topNamespace", "LawfulMonadAlgebra.monadAlg_bind"],
