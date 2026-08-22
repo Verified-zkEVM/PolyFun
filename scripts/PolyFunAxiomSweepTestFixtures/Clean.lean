@@ -9,10 +9,10 @@ module
 
 public section
 
-namespace AxiomSweepTestFixtures.Clean
+namespace PolyFunAxiomSweepTestFixtures.Clean
 
 def base : Nat := 7
 
 def transitive : Nat := base + 1
 
-end AxiomSweepTestFixtures.Clean
+end PolyFunAxiomSweepTestFixtures.Clean

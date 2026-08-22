@@ -50,17 +50,24 @@ name = "PolyFunTest"
 globs = ["PolyFunTest.+"]
 leanOptions = { weak.linter.style.header = false }
 
-# Kernel-level axiom / sorry accounting; see scripts/AxiomSweep.lean.
+# Kernel-level axiom / sorry accounting; see scripts/PolyFunAxiomSweep.lean.
 # Runtime-imports the built PolyFun oleans, so run it after `lake build`.
 [[lean_exe]]
-name = "axiomsweep"
+name = "polyfun-axiomsweep"
 srcDir = "scripts"
-root = "AxiomSweep"
+root = "PolyFunAxiomSweep"
 supportInterpreter = true
 
 # Isolated executable fixtures for the axiom-sweep mutation matrix. This library is not
 # a default target and deliberately contains synthetic kernel taint.
+#
+# Package-prefixed on purpose. Lake gives every package's targets a flat namespace in the
+# build graph, so a generically named library, executable, or module root here collides with
+# the identically named one in any downstream package that ships its own axiom sweep — and
+# both VCVio and ArkLib do. A collision makes `--root <Fixtures>.Tainted` ambiguous, which
+# either fails a downstream fixture matrix or, worse, sweeps the wrong package's fixtures.
+# Keep the `PolyFun` prefix on anything a dependent project is likely to name the same way.
 [[lean_lib]]
-name = "AxiomSweepTestFixtures"
+name = "PolyFunAxiomSweepTestFixtures"
 srcDir = "scripts"
-globs = ["AxiomSweepTestFixtures.+"]
+globs = ["PolyFunAxiomSweepTestFixtures.+"]

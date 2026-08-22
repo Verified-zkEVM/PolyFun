@@ -9,10 +9,10 @@ module
 
 public section
 
-namespace AxiomSweepTestFixtures.Tainted
+namespace PolyFunAxiomSweepTestFixtures.Tainted
 
 opaque directSorry : Nat := sorryAx Nat true
 
 def transitiveSorry : Nat := directSorry
 
-end AxiomSweepTestFixtures.Tainted
+end PolyFunAxiomSweepTestFixtures.Tainted
