@@ -257,6 +257,8 @@ too specific or too changeable to keep at the repo root.
   composition operators).
 - [`docs/wiki/gotchas.md`](docs/wiki/gotchas.md): recurring traps and
   troubleshooting.
+- [`docs/wiki/review-hardening.md`](docs/wiki/review-hardening.md): required
+  API, mathematical, adversarial, lint, and content-control review passes.
 
 ### Wiki Maintenance Contract
 
