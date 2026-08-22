@@ -7,6 +7,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.Interaction.Concurrent.Run
+public import Mathlib.Order.Filter.AtTopBot.Basic
 
 /-!
 # Safety and liveness predicates over concurrent runs
@@ -70,12 +71,23 @@ def EventuallyState
   ∃ n, P (run.state n)
 
 /-- `InfinitelyOftenState P run` means that `P` holds at arbitrarily late
-states of `run`. -/
+states of `run`: the state predicate holds frequently with respect to
+`Filter.atTop`.  This is the same encoding the temporal operators in
+`Concurrent/Fairness.lean` use. -/
 def InfinitelyOftenState
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     (P : StatePred process) (run : ProcessOver.Run process) : Prop :=
-  ∀ N, ∃ n, N ≤ n ∧ P (run.state n)
+  ∃ᶠ n in Filter.atTop, P (run.state n)
+
+/-- Characterize infinite recurrence of a state predicate by a witness at or
+after every requested index. -/
+theorem infinitelyOftenState_iff
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {P : Type v} {process : ProcessOver P Γ}
+    {P : StatePred process} {run : ProcessOver.Run process} :
+    InfinitelyOftenState P run ↔ ∀ N, ∃ n, N ≤ n ∧ P (run.state n) :=
+  Filter.frequently_atTop
 
 /-- Monotonicity of `AlwaysState`. -/
 theorem alwaysState_mono
@@ -104,10 +116,8 @@ theorem infinitelyOftenState_mono
     {P Q : StatePred process}
     (himp : ∀ p, P p → Q p) :
     ∀ {run : ProcessOver.Run process},
-      InfinitelyOftenState P run → InfinitelyOftenState Q run := by
-  intro run hP N
-  rcases hP N with ⟨n, hn, hPn⟩
-  exact ⟨n, hn, himp _ hPn⟩
+      InfinitelyOftenState P run → InfinitelyOftenState Q run :=
+  fun hP => hP.mono fun _ h => himp _ h
 
 end Run
 

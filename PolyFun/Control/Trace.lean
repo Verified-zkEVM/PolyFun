@@ -6,6 +6,7 @@ Authors: Quang Dao
 module
 
 public import Mathlib.Algebra.Group.Pi.Basic
+public import Mathlib.Algebra.Group.Pi.Lemmas
 public import Mathlib.Algebra.Group.Hom.Defs
 
 /-!
@@ -131,13 +132,14 @@ Bundle `map φ` as a monoid homomorphism on the trace monoid.
 
 This is the manifest algebraic content of `map`: post-composing a trace with
 a monoid hom is itself a monoid hom on the pointwise-monoid `Trace ω X`.
--/
-@[simps]
-def mapHom [Monoid ω] [Monoid ω'] (φ : ω →* ω') :
-    Trace ω X →* Trace ω' X where
-  toFun := map φ
-  map_one' := map_one φ
-  map_mul' := map_mul φ
+Because `Trace ω X` is reducibly the Pi type `X → ω`, this is Mathlib's
+`MonoidHom.compLeft`, which needs only `MulOneClass`. -/
+def mapHom [MulOneClass ω] [MulOneClass ω'] (φ : ω →* ω') :
+    Trace ω X →* Trace ω' X :=
+  φ.compLeft X
+
+@[simp] theorem mapHom_apply [MulOneClass ω] [MulOneClass ω'] (φ : ω →* ω') (t : Trace ω X) :
+    mapHom φ t = map φ t := rfl
 
 end Trace
 

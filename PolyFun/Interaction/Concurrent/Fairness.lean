@@ -7,6 +7,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.Interaction.Concurrent.Run
+public import Mathlib.Order.Filter.AtTopBot.Basic
 
 /-!
 # Fairness of dynamic concurrent runs
@@ -34,6 +35,16 @@ namespace Concurrent
 namespace ProcessOver
 namespace Run
 
+/-! ## Temporal operators
+
+The two persistence operators are Mathlib's filter quantifiers at
+`Filter.atTop`: "from some time onward" is `∀ᶠ`, and "at arbitrarily late
+times" is `∃ᶠ`.  Defining them that way rather than by hand makes the whole
+`Filter` API — monotonicity, closure under conjunction, the interaction of the
+two quantifiers — available to fairness and liveness arguments.  cslib's
+`ωSequence` temporal layer uses the same encoding.
+-/
+
 /-- `Always P` means that the temporal property `P` holds at every time
 index. -/
 def Always (P : Nat → Prop) : Prop := ∀ n, P n
@@ -42,33 +53,29 @@ def Always (P : Nat → Prop) : Prop := ∀ n, P n
 def Eventually (P : Nat → Prop) : Prop := ∃ n, P n
 
 /-- `EventuallyAlways P` means that from some time onward, `P` keeps holding
-forever. -/
-def EventuallyAlways (P : Nat → Prop) : Prop :=
-  ∃ N, ∀ n, N ≤ n → P n
+forever: `P` holds eventually with respect to `Filter.atTop`. -/
+def EventuallyAlways (P : Nat → Prop) : Prop := ∀ᶠ n in Filter.atTop, P n
+
+/-- `InfinitelyOften P` means that `P` holds at arbitrarily late time indices:
+`P` holds frequently with respect to `Filter.atTop`. -/
+def InfinitelyOften (P : Nat → Prop) : Prop := ∃ᶠ n in Filter.atTop, P n
 
 /-- Characterize eventual persistence by a cutoff after which the property
 holds at every later index. -/
 theorem eventuallyAlways_iff {P : Nat → Prop} :
     EventuallyAlways P ↔ ∃ N, ∀ n, N ≤ n → P n :=
-  Iff.rfl
-
-/-- `InfinitelyOften P` means that `P` holds at arbitrarily late time
-indices. -/
-def InfinitelyOften (P : Nat → Prop) : Prop :=
-  ∀ N, ∃ n, N ≤ n ∧ P n
+  Filter.eventually_atTop
 
 /-- Characterize infinite recurrence by the existence of a witness at or
 after every requested index. -/
 theorem infinitelyOften_iff {P : Nat → Prop} :
     InfinitelyOften P ↔ ∀ N, ∃ n, N ≤ n ∧ P n :=
-  Iff.rfl
+  Filter.frequently_atTop
 
 /-- A property that eventually holds forever also holds infinitely often. -/
 theorem infinitelyOften_of_eventuallyAlways {P : Nat → Prop} :
-    EventuallyAlways P → InfinitelyOften P := by
-  rw [eventuallyAlways_iff, infinitelyOften_iff]
-  rintro ⟨N, hN⟩ N'
-  exact ⟨max N N', le_max_right _ _, hN _ (le_max_left _ _)⟩
+    EventuallyAlways P → InfinitelyOften P :=
+  Filter.Eventually.frequently
 
 theorem always_mono {P Q : Nat → Prop} (himp : ∀ n, P n → Q n) : Always P → Always Q :=
   fun hP n => himp n (hP n)
@@ -78,11 +85,11 @@ theorem eventually_mono {P Q : Nat → Prop} (himp : ∀ n, P n → Q n) : Event
 
 theorem eventuallyAlways_mono {P Q : Nat → Prop} (himp : ∀ n, P n → Q n) :
     EventuallyAlways P → EventuallyAlways Q :=
-  fun ⟨N, hP⟩ => ⟨N, fun n hn => himp n (hP n hn)⟩
+  fun hP => hP.mono himp
 
 theorem infinitelyOften_mono {P Q : Nat → Prop} (himp : ∀ n, P n → Q n) :
     InfinitelyOften P → InfinitelyOften Q :=
-  fun hP N => (hP N).imp fun n h => ⟨h.1, himp n h.2⟩
+  fun hP => hP.mono himp
 
 end Run
 
