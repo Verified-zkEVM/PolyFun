@@ -54,6 +54,8 @@ See the *Wiki Maintenance Contract* section in
 
 ## Cross-Cutting Notes
 
+- [`review-hardening.md`](review-hardening.md): required migration, API,
+  mathematical, adversarial, lint, and content-control review passes.
 - [`bisimulation.md`](bisimulation.md): glossary of the bisimulation and
   behavioural-equivalence notions (strong / delay / weak), the generic
   `Control.LTS` framework, and how the ITree, dynamical, and UC layers relate.
@@ -86,6 +88,7 @@ one with repo-wide scope:
   - `interaction.md` for the interaction framework above `FreeM`.
   - `realizability.md` for step classes and machine realizability.
   - `uc.md` for the UC semantic contract and external-model alignment.
+  - `review-hardening.md` for the repository-wide review and hardening standard.
   - `notation.md` for notation cross-references.
   - `gotchas.md` for recurring traps.
 - Add new pages when a recurring topic no longer fits cleanly in an existing
