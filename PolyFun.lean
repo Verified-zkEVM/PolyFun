@@ -7,7 +7,6 @@ public import PolyFun.Control.Comonad.Instances
 public import PolyFun.Control.LTS.Trace
 public import PolyFun.Control.Lawful.Basic
 public import PolyFun.Control.Monad.Algebra
-public import PolyFun.Control.Monad.Equiv
 public import PolyFun.Control.Monad.Free
 public import PolyFun.Control.Monad.FreeCont
 public import PolyFun.Control.Monad.Hom
