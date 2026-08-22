@@ -244,7 +244,7 @@ provides the reusable monad / comonad / coalgebra plumbing. See
 [`PolyFun/Control/`](../../PolyFun/Control/) for the full inventory:
 `Coalgebra` (the `Coalg` class: every `DynSystem S p` yields a `Coalg p.Obj S` via `DynSystem.coalg`),
 `Comonad/{Basic, Instances}`, `Lawful/Basic`,
-`Monad/{Algebra, Equiv, Free, FreeCont, Hom, Iter}`, `Trace`.
+`Monad/{Algebra, Equiv, Free, Hom, Iter}`, `Trace`.
 
 ## Mental model
 

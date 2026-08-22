@@ -9,7 +9,6 @@ public import PolyFun.Control.Lawful.Basic
 public import PolyFun.Control.Monad.Algebra
 public import PolyFun.Control.Monad.Equiv
 public import PolyFun.Control.Monad.Free
-public import PolyFun.Control.Monad.FreeCont
 public import PolyFun.Control.Monad.Hom
 public import PolyFun.Control.Monad.Indexed
 public import PolyFun.Control.Monad.Iter
