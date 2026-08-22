@@ -31,10 +31,10 @@ A source-level `sorry` grep is the complementary check for the first two.
 Modes (run after `lake build`):
 
 ```
-lake exe axiomsweep                     # summary only
-lake exe axiomsweep --out report.json   # also write the full per-declaration report
-lake exe axiomsweep --check             # gate against scripts/axiom_baseline.json
-lake exe axiomsweep --update-baseline   # reset the baseline after all taint is removed
+lake exe polyfun-axiomsweep                     # summary only
+lake exe polyfun-axiomsweep --out report.json   # also write the full per-declaration report
+lake exe polyfun-axiomsweep --check             # gate against scripts/axiom_baseline.json
+lake exe polyfun-axiomsweep --update-baseline   # reset the baseline after all taint is removed
 ```
 
 The committed baseline (`scripts/axiom_baseline.json`) is an explicit, machine-checked
@@ -292,7 +292,7 @@ def parseArgs : List String → Config → Except String Config
   | "--root" :: mod :: rest, cfg =>
     parseArgs rest { cfg with roots := cfg.roots.push mod.toName }
   | arg :: _, _ => .error s!"axiomsweep: unknown or incomplete argument: {arg}\n\
-      usage: lake exe axiomsweep [--out FILE] [--check] [--update-baseline] \
+      usage: lake exe polyfun-axiomsweep [--out FILE] [--check] [--update-baseline] \
       [--baseline FILE] [--root MOD]*\n      (--check and --update-baseline are mutually exclusive)"
 
 end AxiomSweep

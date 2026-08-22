@@ -57,7 +57,7 @@ untracked `PolyFun/**/*.lean` files are present.
 `--lint` adds `lake lint` (Batteries' environment linters: `docBlame`,
 `simpNF`, `checkUnivs`, …) to the convenience wrapper. `--test` adds
 `lake test` (builds the `PolyFunTest` library). `--axioms` adds
-the executable fixture matrix and `lake exe axiomsweep --check`. The check scans
+the executable fixture matrix and `lake exe polyfun-axiomsweep --check`. The check scans
 every imported `PolyFun.*` declaration and fails on any `sorryAx` or non-standard
 axiom dependency. The committed `scripts/axiom_baseline.json` is a zero-debt
 policy, not an allowlist: both arrays must remain empty. Update mode refuses to

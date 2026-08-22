@@ -9,10 +9,10 @@ module
 
 public section
 
-namespace AxiomSweepTestFixtures.Tainted
+namespace PolyFunAxiomSweepTestFixtures.Tainted
 
 axiom typeIndex : Nat
 
 axiom axiomInType : Fin (typeIndex + 1)
 
-end AxiomSweepTestFixtures.Tainted
+end PolyFunAxiomSweepTestFixtures.Tainted
