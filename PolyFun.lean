@@ -12,6 +12,7 @@ public import PolyFun.Control.Monad.FreeCont
 public import PolyFun.Control.Monad.Hom
 public import PolyFun.Control.Monad.Indexed
 public import PolyFun.Control.Monad.Iter
+public import PolyFun.Control.Monad.Support
 public import PolyFun.Control.Trace
 public import PolyFun.IPFunctor.Basic
 public import PolyFun.IPFunctor.Chart.Basic
@@ -194,6 +195,7 @@ public import PolyFun.PFunctor.Free.Path.Execution
 public import PolyFun.PFunctor.Free.Polynomial
 public import PolyFun.PFunctor.Free.Replicate
 public import PolyFun.PFunctor.Free.Resumption
+public import PolyFun.PFunctor.Free.Support
 public import PolyFun.PFunctor.Free.Universal
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Free
