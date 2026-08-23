@@ -38,7 +38,7 @@ every node becomes a visible `query` at its position, with the same children.
 The result never returns (`PEmpty` leaves) and takes no silent steps. The empty
 return type may live in a universe independent of both universes of `p`. -/
 def M.toITree {p : PFunctor.{uA, uB}} : M p → ITree p PEmpty.{uR + 1} :=
-  M.corec fun t => ⟨.query (M.dest t).1, (M.dest t).2⟩
+  ITree.corec fun t => ⟨.query (M.dest t).1, (M.dest t).2⟩
 
 namespace DynSystem
 
@@ -46,21 +46,21 @@ namespace DynSystem
 position forever, transitioning along each answer. -/
 def toITree {S : Type uS} {p : PFunctor.{uA, uB}} (s : DynSystem S p) :
     S → ITree p PEmpty.{uR + 1} :=
-  M.corec fun st => ⟨.query (s.expose st), fun d => s.update st d⟩
+  ITree.corec fun st => ⟨.query (s.expose st), fun d => s.update st d⟩
 
-@[simp] theorem dest_toITree {S : Type uS} {p : PFunctor.{uA, uB}}
+@[simp] theorem shape'_toITree {S : Type uS} {p : PFunctor.{uA, uB}}
     (s : DynSystem S p) (st : S) :
-    M.dest (s.toITree st)
+    ITree.shape' (s.toITree st)
       = ⟨.query (s.expose st), fun d => s.toITree (s.update st d)⟩ := by
-  simp only [toITree, M.dest_corec_apply]
+  simp only [toITree, ITree.shape'_corec_apply]
 
 /-- Unfolding a system into an ITree is the query-embedding of its behavior
 tree: the two coinductive semantics agree. -/
 theorem toITree_eq_toITree_behavior {S : Type uS} {p : PFunctor.{uA, uB}}
     (s : DynSystem S p) (st : S) : s.toITree st = M.toITree (s.behavior st) := by
-  refine congrFun (M.corec_unique _ (fun st => M.toITree (s.behavior st)) ?_).symm st
+  refine congrFun (ITree.corec_unique _ (fun st => M.toITree (s.behavior st)) ?_).symm st
   intro st
-  simp only [M.toITree, M.dest_corec_apply]
+  simp only [M.toITree, ITree.shape'_corec_apply]
   rfl
 
 end DynSystem

@@ -315,7 +315,7 @@ theorem IsRealizableBy.wrap {lens : Lens p q}
   · refine (C.comp_mem R.head_mem
       (S.map_mem (C.id_mem bd.out) hlens.onPos)).congr ?_
     intro state
-    rfl
+    exact (head_wrap R.machine lens state).symm
   · refine (C.comp_mem
       (P.withInput_mem (C.comp_mem (P.pairRight_mem R.head_mem) hlens.onPull))
       (StepClass.HasOption.obindCtx_mem

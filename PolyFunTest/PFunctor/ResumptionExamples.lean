@@ -23,9 +23,24 @@ example (step : β ⊕ p.Obj X) :
     viewEquiv (viewEquiv.symm step) = step := by
   simp
 
-example (step : (C.{uβ, uB} β + p).Obj X) :
+example (step : (p + C.{uβ, uB} β).Obj X) :
     viewEquiv.symm (viewEquiv step) = step := by
   simp
+
+/-- Return and query views inject into the expected operation-first raw
+summands, with the query continuation left attached to its operation. -/
+example (value : β) :
+    pack (Sum.inl value : β ⊕ p.Obj X) = ⟨Sum.inr value, PEmpty.elim⟩ := by
+  rfl
+
+example (position : p.A) (onAnswer : p.B position → X) :
+    pack (Sum.inr ⟨position, onAnswer⟩ : β ⊕ p.Obj X) =
+      ⟨Sum.inl position, onAnswer⟩ := by
+  rfl
+
+/-- The raw resumption carrier uses the same operation-first convention as
+the interaction-tree carrier. -/
+example : Resumption p β = M.{max uA uβ, uB} (p + C.{uβ, uB} β) := rfl
 
 /-- Corecursion does not couple the seed universe to either universe of the
 polynomial or to the return-value universe. -/
