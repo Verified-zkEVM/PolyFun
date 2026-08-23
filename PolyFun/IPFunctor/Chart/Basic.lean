@@ -46,6 +46,23 @@ structure Chart (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J)
 
 namespace Chart
 
+/-- Two indexed charts are equal when their position maps agree pointwise and
+their response maps agree after transport along that position equality. -/
+@[ext (iff := false)]
+theorem ext {P : IPFunctor.{uI, uJ, uA₁, uB₁} I J}
+    {Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J} (c₁ c₂ : Chart P Q)
+    (hA : ∀ j a, c₁.toFunA j a = c₂.toFunA j a)
+    (hB : ∀ j a, c₁.toFunB j a = (hA j a) ▸ c₂.toFunB j a) : c₁ = c₂ := by
+  rcases c₁ with ⟨toFunA₁, toFunB₁, src_eq₁⟩
+  rcases c₂ with ⟨toFunA₂, toFunB₂, src_eq₂⟩
+  have h : toFunA₁ = toFunA₂ := funext fun j => funext (hA j)
+  subst h
+  have h' : toFunB₁ = toFunB₂ := by
+    funext j a
+    simpa using hB j a
+  subst h'
+  rfl
+
 /-- The identity chart. -/
 protected def id (P : IPFunctor.{uI, uJ, uA, uB} I J) : Chart P P where
   toFunA _ := id

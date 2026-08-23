@@ -97,32 +97,6 @@ def trans (e₁ : P ≃ₚ Q) (e₂ : Q ≃ₚ R) : P ≃ₚ R where
 
 /-! ## Lens and chart equivalences -/
 
-private theorem lens_ext (l₁ l₂ : Lens P Q)
-    (hA : ∀ j a, l₁.toFunA j a = l₂.toFunA j a)
-    (hB : ∀ j a, l₁.toFunB j a = (hA j a) ▸ l₂.toFunB j a) : l₁ = l₂ := by
-  rcases l₁ with ⟨toFunA₁, toFunB₁, src_eq₁⟩
-  rcases l₂ with ⟨toFunA₂, toFunB₂, src_eq₂⟩
-  have h : toFunA₁ = toFunA₂ := funext fun j => funext (hA j)
-  subst h
-  have h' : toFunB₁ = toFunB₂ := by
-    funext j a
-    simpa using hB j a
-  subst h'
-  rfl
-
-private theorem chart_ext (c₁ c₂ : Chart P Q)
-    (hA : ∀ j a, c₁.toFunA j a = c₂.toFunA j a)
-    (hB : ∀ j a, c₁.toFunB j a = (hA j a) ▸ c₂.toFunB j a) : c₁ = c₂ := by
-  rcases c₁ with ⟨toFunA₁, toFunB₁, src_eq₁⟩
-  rcases c₂ with ⟨toFunA₂, toFunB₂, src_eq₂⟩
-  have h : toFunA₁ = toFunA₂ := funext fun j => funext (hA j)
-  subst h
-  have h' : toFunB₁ = toFunB₂ := by
-    funext j a
-    simpa using hB j a
-  subst h'
-  rfl
-
 /-- The lens underlying a structural equivalence. Positions move forward through
 `equivA`, while responses pull back through the inverse of `equivB`. -/
 def toLens (e : P ≃ₚ Q) : Lens P Q where
@@ -198,7 +172,7 @@ is the identity indexed lens. -/
 @[simp]
 theorem symm_toLens_comp_toLens (e : P ≃ₚ Q) :
     Lens.comp e.symm.toLens e.toLens = Lens.id P := by
-  refine lens_ext _ _ (fun j a => by
+  refine Lens.ext _ _ (fun j a => by
     change (e.symm.equivA j) (e.equivA j a) = a
     exact (e.equivA j).symm_apply_apply a) ?_
   intro j a
@@ -215,7 +189,7 @@ equivalence is the identity indexed lens. -/
 @[simp]
 theorem toLens_comp_symm_toLens (e : P ≃ₚ Q) :
     Lens.comp e.toLens e.symm.toLens = Lens.id Q := by
-  refine lens_ext _ _ (fun j a => by
+  refine Lens.ext _ _ (fun j a => by
     change (e.equivA j) (e.symm.equivA j a) = a
     exact (e.equivA j).apply_symm_apply a) ?_
   intro j a
@@ -301,7 +275,7 @@ is the identity indexed chart. -/
 @[simp]
 theorem symm_toChart_comp_toChart (e : P ≃ₚ Q) :
     Chart.comp e.symm.toChart e.toChart = Chart.id P := by
-  refine chart_ext _ _ (fun j a => by
+  refine Chart.ext _ _ (fun j a => by
     change (e.symm.equivA j) (e.equivA j a) = a
     exact (e.equivA j).symm_apply_apply a) ?_
   intro j a
@@ -315,7 +289,7 @@ structural equivalence is the identity indexed chart. -/
 @[simp]
 theorem toChart_comp_symm_toChart (e : P ≃ₚ Q) :
     Chart.comp e.toChart e.symm.toChart = Chart.id Q := by
-  refine chart_ext _ _ (fun j a => by
+  refine Chart.ext _ _ (fun j a => by
     change (e.equivA j) (e.symm.equivA j a) = a
     exact (e.equivA j).apply_symm_apply a) ?_
   intro j a
