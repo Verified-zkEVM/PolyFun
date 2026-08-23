@@ -244,7 +244,10 @@ provides the reusable monad / comonad / coalgebra plumbing. See
 [`PolyFun/Control/`](../../PolyFun/Control/) for the full inventory:
 `Coalgebra` (the `Coalg` class: every `DynSystem S p` yields a `Coalg p.Obj S` via `DynSystem.coalg`),
 `Comonad/{Basic, Instances}`, `Lawful/Basic`,
-`Monad/{Algebra, Equiv, Free, FreeCont, Hom, Iter}`, `Trace`.
+`Monad/{Algebra, Equiv, Free, FreeCont, Hom, Iter}`, `Trace`. `FreeCont`
+provides the one-field Church-encoded free transformer: effect requests and
+base-monad actions compose through its CPS `run`, while its bridge to upstream
+`Cslib.FreeM` is a retraction rather than an equivalence.
 
 ## Mental model
 

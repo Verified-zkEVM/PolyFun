@@ -6,98 +6,102 @@ Authors: Quang Dao
 module
 
 public import PolyFun.Control.Monad.Free
-public import PolyFun.PFunctor.Free.Basic
 public import Mathlib.Control.Monad.Cont
 
 /-!
-# Continuation-passing (Church-encoded) free monads
+# Continuation-passing free monad transformer
 
-Church / CPS encodings of the freer monad and freer monad transformer as
-interpreters into a continuation monad `ContT`, an alternative to the inductive
-`Cslib.FreeM`.
+`FreeContT f m` is the Church / CPS encoding of the freer monad transformer
+over an effect signature `f` and base monad `m`. It stores its universal
+continuation-based eliminator rather than an inspectable syntax tree:
 
-* `FreeContT f m` / `FreeContM f` — the freer monad transformer and monad over an
-  arbitrary effect signature `f : Type z → Type y`.
-* `PFunctor.FreeContT P m` / `PFunctor.FreeContM P` — the variants over a
-  polynomial functor `P`, which do not raise universe levels.
+```lean
+{r : Type u} →
+  ({x : Type z} → f x → (x → m r) → m r) →
+  (α → m r) → m r
+```
 
-See `PFunctor.FreeM` for the inductive polynomial free monad.
+The one-field structure keeps the CPS representation abstract enough for Lean
+to recognize `FreeContT f m` as a monad application. `FreeContT.liftBind` and
+`FreeContT.liftF` inject signature operations, while `MonadLift` injects base
+monad computations. This makes the representation useful for direct
+composition and interpretation; use `Cslib.FreeM` when programs must instead
+be inspected or analyzed structurally.
+
+Lean does not supply the parametricity principle needed to prove that every
+inhabitant of this rank-2 type comes from inductive free syntax. Accordingly,
+the conversions with `Cslib.FreeM` below form only an inductive-to-CPS-to-
+inductive round trip, not an equivalence.
 -/
 
 @[expose] public section
 
 universe u v w y z
 
-/-- Church-encoded freer monad transformer, expressed as interpreter for continuation.
+/-- Church-encoded freer monad transformer.
 
-When unfolded (recall that `ContT r m α = (α → m r) → m r`), it takes the form:
-```
-{r : Type u} → (handleEff : {x : Type z} → f x → (x → m r) → m r) → (handlePure : α → m r) → m r
-```
+An inhabitant interprets effect requests and pure results into `ContT r m` for
+every result type `r`. Bind is therefore continuation composition and does not
+traverse an intermediate syntax tree. -/
+structure FreeContT (f : Type z → Type y) (m : Type u → Type v) (α : Type w) :
+    Type (max (u + 1) v w y (z + 1)) where
+  /-- Eliminate a Church-encoded computation with an effect handler and final
+  continuation. -/
+  run : {r : Type u} → ({x : Type z} → f x → ContT r m x) → ContT r m α
 
-Compare this to the inductive definition, which has two constructors:
-- `pure : α → Cslib.FreeM f α`
-- `liftBind : f β → (β → Cslib.FreeM f α) → Cslib.FreeM f α`
--/
-def FreeContT (f : Type z → Type y) (m : Type u → Type v) (α : Type w) :
-    Type (max (u + 1) v w y (z + 1)) :=
-  {r : Type u} → ({x : Type z} → f x → ContT r m x) → ContT r m α
-
-/-- Church-encoded freer monad, expressed as interpreter for continuation.
-
-When unfolded, it takes the form:
-```
-{r : Type u} → (handleEff : {x : Type z} → f x → (x → r) → r) → (handlePure : α → r) → r
-```
-
-Compare this to the inductive definition, which has two constructors:
-- `pure : α → Cslib.FreeM f α`
-- `liftBind : f β → (β → Cslib.FreeM f α) → Cslib.FreeM f α` -/
-def FreeContM (f : Type z → Type y) (α : Type w) : Type (max (u + 1) w y (z + 1)) :=
-  FreeContT f Id.{u} α
-
-/-- Church-encoded freer monad transformer from a polynomial functor.
-Does not raise universe levels. -/
-def PFunctor.FreeContT (P : PFunctor.{z, y}) (m : Type u → Type v) (α : Type w) :
-    Type (max (u + 1) v w y z) :=
-  {r : Type u} → ((a : P.A) → ContT r m (P.B a)) → ContT r m α
-
-/-- Church-encoded freer monad from a polynomial functor. -/
-def PFunctor.FreeContM (P : PFunctor.{z, y}) (α : Type w) : Type _ :=
-  FreeContT P Id.{u} α
-
-variable {f : Type z → Type y} {m : Type u → Type v} {α β : Type w}
+/-- Church-encoded freer monad, obtained by specializing the base monad to
+`Id`. -/
+abbrev FreeContM (f : Type z → Type y) (α : Type w) := FreeContT f Id.{u} α
 
 namespace FreeContT
 
-@[simp]
-lemma def_eq : FreeContT f m α =
-    ({r : Type u} → ({x : Type z} → f x → (x → m r) → m r) → (α → m r) → m r) := rfl
+variable {f : Type z → Type y} {m : Type u → Type v} {α β : Type w}
 
-@[simp]
-lemma FreeContM.def_eq : FreeContM.{u, w, y, z} f α =
-    ({r : Type u} → ({x : Type z} → f x → (x → r) → r) → (α → r) → r) := rfl
+/-- Church-encoded computations are equal when all their eliminations agree. -/
+@[ext]
+theorem ext {x y : FreeContT f m α}
+    (h : ∀ (r : Type u) (handleEff : {x : Type z} → f x → ContT r m x)
+      (handlePure : α → m r), x.run handleEff handlePure = y.run handleEff handlePure) :
+    x = y := by
+  cases x with
+  | mk x =>
+    cases y with
+    | mk y =>
+      congr
+      funext r handleEff handlePure
+      exact h r handleEff handlePure
 
-/-- The inductive free monad over `f`: a computation is either a pure value or an effect `f β`
-paired with a continuation consuming its result. The Church-encoded `FreeContT` is the
-continuation-passing counterpart of this datatype. -/
-inductive FreeM (f : Type v → Type w) (α : Type u) where
-  | pure (a : α) : FreeM f α
-  | roll {β : Type v} (x : f β) (k : β → FreeM f α) : FreeM f α
+/-- Feed a pure value directly to the final continuation. -/
+@[inline]
+def pure (a : α) : FreeContT f m α :=
+  ⟨fun _ handlePure => handlePure a⟩
 
-/-- `pure` just feeds the value to the pure continuation. -/
-@[inline] def pure (a : α) : FreeContT f m α :=
-  fun _ handlePure => handlePure a
+/-- Inject an effect request together with its continuation.
 
-/-- `bind` runs the first computation; when it produces a value, we run the second computation
-    with the *same* effect handler and *same* final continuation. -/
-@[inline] def bind (x : FreeContT f m α) (g : α → FreeContT f m β) : FreeContT f m β :=
-  fun handleEff handlePure => x handleEff (fun a => g a handleEff handlePure)
+Unlike monadic bind, the request result and final result may live in different
+universes. This mirrors `Cslib.FreeM.liftBind`. -/
+@[inline]
+def liftBind {ι : Type z} (op : f ι) (next : ι → FreeContT f m α) : FreeContT f m α :=
+  ⟨fun handleEff handlePure =>
+    handleEff op fun result => (next result).run handleEff handlePure⟩
 
-/-- Lift a monadic computation to the free transformer monad, via sequencing with the pure
-  continuation. -/
-@[inline] def lift [Bind m] {α : Type u} (x : m α) : FreeContT f m α :=
-  fun _ handlePure => x >>= handlePure
+/-- Inject one effect request into the Church-encoded transformer. -/
+@[inline]
+def liftF {ι : Type z} (op : f ι) : FreeContT f m ι :=
+  ⟨fun handleEff handlePure => handleEff op handlePure⟩
+
+/-- Sequence two Church-encoded computations by composing their final
+continuations. -/
+@[inline]
+def bind (x : FreeContT f m α) (g : α → FreeContT f m β) : FreeContT f m β :=
+  ⟨fun handleEff handlePure =>
+    x.run handleEff fun a => (g a).run handleEff handlePure⟩
+
+/-- Lift a base-monad computation by sequencing it with the final
+continuation. -/
+@[inline]
+def lift [Bind m] {α : Type u} (x : m α) : FreeContT f m α :=
+  ⟨fun _ handlePure => x >>= handlePure⟩
 
 /-- `FreeContT f m` is a monad for arbitrary `f` and `m`. -/
 instance instMonad : Monad (FreeContT f m) where
@@ -106,70 +110,120 @@ instance instMonad : Monad (FreeContT f m) where
 
 /-- `FreeContT f m` is a lawful monad for arbitrary `f` and `m`. -/
 instance instLawfulMonad : LawfulMonad (FreeContT f m) := LawfulMonad.mk'
-  (id_map := by intros; rfl)
+  (id_map := by intros; apply ext; intros; rfl)
   (pure_bind := by intros; rfl)
   (bind_assoc := by intros; rfl)
 
-/-- We can always lift a monadic computation to the free transformer monad. -/
+/-- Lift computations from the base monad into the Church-encoded
+transformer. -/
 instance instMonadLift [Bind m] : MonadLift m (FreeContT f m) where
   monadLift := lift
 
-/-- The lift from `m` to `FreeContT f m` is a lawful monad lift, assuming `m` is a lawful monad. -/
+/-- Base-monad lifting preserves `pure` and `bind`. -/
 instance [Monad m] [LawfulMonad m] : LawfulMonadLift m (FreeContT f m) where
   monadLift_pure := by
     intro α a
-    dsimp [instMonadLift, instMonad]
-    funext r _ handlePure
+    apply ext
+    intro r handleEff handlePure
     change ((Pure.pure a : m α) >>= handlePure) = handlePure a
     simp
   monadLift_bind := by
     intro α β ma g
-    dsimp [instMonadLift, instMonad]
-    funext r _ handlePure
+    apply ext
+    intro r handleEff handlePure
     change (ma >>= g) >>= handlePure = ma >>= fun x => g x >>= handlePure
     exact LawfulMonad.bind_assoc (m := m) (x := ma) (f := g) (g := handlePure)
 
-end FreeContT
-
-/-- Convert free monads from inductive style to continuation-passing style. -/
-def Cslib.FreeM.toFreeContM : Cslib.FreeM f α → FreeContM f α :=
-  fun x => match x with
-    | Cslib.FreeM.pure a => fun _ handlePure => handlePure a
-    | Cslib.FreeM.liftBind x k => fun handleEff handlePure =>
-      handleEff x (fun a => Cslib.FreeM.toFreeContM (k a) handleEff handlePure)
-
-/-- Convert free monads from continuation-passing style to inductive style. -/
-def FreeContM.toFreeM : FreeContM f α → Cslib.FreeM f α :=
-  fun x => x Cslib.FreeM.liftBind Cslib.FreeM.pure
+/-- In a common result universe, `liftBind` is effect injection followed by
+monadic bind. -/
+@[simp]
+theorem liftBind_eq {ι β : Type z} (op : f ι) (next : ι → FreeContT f m β) :
+    liftBind op next = bind (liftF op) next :=
+  rfl
 
 @[simp]
-lemma Cslib.FreeM.toFreeM_toFreeContM (x : Cslib.FreeM f α) :
+theorem run_pure {r : Type u} (a : α)
+    (handleEff : {x : Type z} → f x → ContT r m x) (handlePure : α → m r) :
+    (pure a : FreeContT f m α).run handleEff handlePure = handlePure a :=
+  rfl
+
+@[simp]
+theorem run_liftBind {r : Type u} {ι : Type z} (op : f ι)
+    (next : ι → FreeContT f m α) (handleEff : {x : Type z} → f x → ContT r m x)
+    (handlePure : α → m r) :
+    (liftBind op next).run handleEff handlePure =
+      handleEff op fun result => (next result).run handleEff handlePure :=
+  rfl
+
+@[simp]
+theorem run_liftF {r : Type u} {ι : Type z} (op : f ι)
+    (handleEff : {x : Type z} → f x → ContT r m x) (handlePure : ι → m r) :
+    (liftF op : FreeContT f m ι).run handleEff handlePure = handleEff op handlePure :=
+  rfl
+
+@[simp]
+theorem run_bind {r : Type u} (x : FreeContT f m α) (g : α → FreeContT f m β)
+    (handleEff : {x : Type z} → f x → ContT r m x) (handlePure : β → m r) :
+    (x >>= g).run handleEff handlePure =
+      x.run handleEff fun a => (g a).run handleEff handlePure :=
+  rfl
+
+@[simp]
+theorem run_lift [Bind m] {r α : Type u} (x : m α)
+    (handleEff : {x : Type z} → f x → ContT r m x) (handlePure : α → m r) :
+    (lift x : FreeContT f m α).run handleEff handlePure = x >>= handlePure :=
+  rfl
+
+end FreeContT
+
+variable {f : Type z → Type y} {α : Type w}
+
+/-- Convert inductive free syntax to continuation-passing form. -/
+def Cslib.FreeM.toFreeContM : Cslib.FreeM f α → FreeContM f α
+  | .pure a => FreeContT.pure a
+  | .liftBind op next =>
+      FreeContT.liftBind op fun result => Cslib.FreeM.toFreeContM (next result)
+
+/-- Reify a Church-encoded free monad into inductive `Cslib.FreeM` syntax. -/
+def FreeContM.toFreeM : FreeContM f α → Cslib.FreeM f α :=
+  fun x => x.run Cslib.FreeM.liftBind Cslib.FreeM.pure
+
+@[simp]
+theorem Cslib.FreeM.toFreeContM_pure (a : α) :
+    Cslib.FreeM.toFreeContM (pure a : Cslib.FreeM f α) = FreeContT.pure a :=
+  rfl
+
+@[simp]
+theorem Cslib.FreeM.toFreeContM_liftBind {ι : Type z} (op : f ι)
+    (next : ι → Cslib.FreeM f α) :
+    Cslib.FreeM.toFreeContM ((Cslib.FreeM.lift op).bind next) =
+      FreeContT.liftBind op fun result => Cslib.FreeM.toFreeContM (next result) :=
+  rfl
+
+@[simp]
+theorem FreeContM.toFreeM_pure (a : α) :
+    FreeContM.toFreeM
+        (FreeContT.pure a : FreeContM.{max (max y (z + 1)) w} f α) =
+      Cslib.FreeM.pure a :=
+  rfl
+
+@[simp]
+theorem FreeContM.toFreeM_liftBind {ι : Type z} (op : f ι)
+    (next : ι → FreeContM.{max (max y (z + 1)) w} f α) :
+    FreeContM.toFreeM (FreeContT.liftBind op next) =
+      Cslib.FreeM.liftBind op fun result => FreeContM.toFreeM (next result) :=
+  rfl
+
+/-- Reifying inductive syntax after Church encoding recovers the original
+tree. The reverse composite is intentionally not claimed without a
+parametricity hypothesis. -/
+@[simp]
+theorem Cslib.FreeM.toFreeM_toFreeContM (x : Cslib.FreeM f α) :
     FreeContM.toFreeM (Cslib.FreeM.toFreeContM x) = x := by
   induction x with
-    | pure a => rfl
-    | lift_bind x k ih =>
+  | pure a => rfl
+  | lift_bind op next ih =>
       rw [← Cslib.FreeM.liftBind_eq]
-      dsimp only [Cslib.FreeM.toFreeContM, FreeContM.toFreeM]
+      dsimp only [Cslib.FreeM.toFreeContM, FreeContM.toFreeM, FreeContT.liftBind]
       congr
       exact funext ih
-
-/-- `Cslib.FreeM.toFreeContM` is a section of `FreeContM.toFreeM`. -/
-lemma Cslib.FreeM.toFreeContM_leftInverse :
-    Function.LeftInverse
-      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeM x)
-      (fun x : Cslib.FreeM f α =>
-        (Cslib.FreeM.toFreeContM x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α)) :=
-  fun x => Cslib.FreeM.toFreeM_toFreeContM x
-
-/-- The inductive-to-Church map is injective. -/
-lemma Cslib.FreeM.toFreeContM_injective :
-    Function.Injective
-      (fun x : Cslib.FreeM f α =>
-        (Cslib.FreeM.toFreeContM x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α)) :=
-  (Cslib.FreeM.toFreeContM_leftInverse (f := f) (α := α)).injective
-
-/-- The Church-to-inductive map is surjective. -/
-lemma FreeContM.toFreeM_surjective :
-    Function.Surjective
-      (fun x : FreeContM.{max (max y (z + 1)) w, w, y, z} f α => FreeContM.toFreeM x) :=
-  fun x => ⟨Cslib.FreeM.toFreeContM x, Cslib.FreeM.toFreeM_toFreeContM x⟩
