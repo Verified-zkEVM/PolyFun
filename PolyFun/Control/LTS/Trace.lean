@@ -55,6 +55,38 @@ def traces (s : L.State) : Set (List Obs) :=
 @[simp] theorem nil_mem_traces (s : L.State) : [] ∈ L.traces s :=
   ⟨s, .nil s⟩
 
+/-! ## Relation to cslib
+
+`WeakTrace` records only the *visible* observations, so it is a `List Obs`,
+whereas a cslib multi-step transition is labelled by a `List Label` that may
+still mention the silent label.  Tagging every observation recovers the cslib
+trace of the saturated system: a visible trace `[o₁, …, oₙ]` here is the
+multi-step trace `[some o₁, …, some oₙ]` there.
+-/
+
+/-- A finite visible trace is a multi-step transition of the saturated
+projection whose labels are all visible. -/
+theorem weakTrace_iff_mTr {s t : L.State} {observations : List Obs} :
+    L.WeakTrace s observations t ↔
+      L.toLts.saturate.MTr s (observations.map some) t := by
+  constructor
+  · intro h
+    induction h with
+    | nil _ => exact .refl
+    | cons head _ ih => exact .stepL (L.sTr_toLts_iff.mpr head) ih
+  · intro h
+    induction observations generalizing s with
+    | nil => cases h; exact .nil _
+    | cons obs rest ih =>
+        rcases h with _ | ⟨hhead, htail⟩
+        exact .cons (L.sTr_toLts_iff.mp hhead) (ih htail)
+
+/-- Membership in the visible trace set, transported to cslib's trace set. -/
+theorem mem_traces_iff_mem_toLts {s : L.State} {observations : List Obs} :
+    observations ∈ L.traces s ↔
+      observations.map some ∈ L.toLts.saturate.traces s :=
+  ⟨fun ⟨t, h⟩ => ⟨t, L.weakTrace_iff_mTr.mp h⟩, fun ⟨t, h⟩ => ⟨t, L.weakTrace_iff_mTr.mpr h⟩⟩
+
 end Control.LTS
 
 namespace Control

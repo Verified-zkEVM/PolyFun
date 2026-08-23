@@ -36,6 +36,50 @@ Closure lemmas lift simulations across silent/delay/weak paths, and the
 inclusions `strong ⊆ delay ⊆ weak` are explicit. State and move universes are
 independent on the two sides.
 
+### Relation to cslib
+
+The *theory* of these notions is cslib's, not PolyFun's. `Control.LTS` is
+move-indexed — a state exposes a type of moves, each with a target and a label —
+which is the polynomial-coalgebra presentation and is what lets `DynSystem` and
+`ITree` adapt into this layer. cslib's `Cslib.LTS` is relation-indexed. `Step`
+projects one onto the other:
+
+```lean
+instance : Cslib.HasTau (Option Obs) := ⟨none⟩
+def Control.LTS.toLts (L : LTS Obs) : Cslib.LTS L.State (Option Obs) := ⟨L.Step⟩
+```
+
+Two step-level correspondences are definitional (`toLts_tr`, `τSTr_toLts`): a
+silent closure *is* cslib's `τSTr`. `sTr_toLts_iff` identifies `WeakStep` with
+cslib's saturated transition `STr`, and the relation-level correspondences
+follow:
+
+| PolyFun | cslib |
+|---|---|
+| `IsStrongSimulation` | `IsSimulation` on `toLts` |
+| `IsStrongBisimulation` | `IsBisimulation` on `toLts` |
+| `StrongBisimilar` | `Bisimilarity` on `toLts` |
+| `IsWeakSimulation` | `IsSimulation` into `toLts.saturate` |
+| `IsWeakBisimulation` | `IsSWBisimulation`, hence `IsWeakBisimulation` |
+| `WeakBisimilar` | `WeakBisimilarity` |
+| `LTS.WeakTrace s obs t` | `MTr` of `toLts.saturate` at `obs.map some` |
+
+The weak entry is the substantive one. PolyFun's weak bisimulation issues a
+*single* transition as the challenge and answers with a weak one — which is
+exactly cslib's `IsSWBisimulation`, not its `IsWeakBisimulation` (bisimulation
+of the saturated systems). That the two agree is Sangiorgi's Lemma 4.2.10,
+proved in cslib and transported by `isWeakBisimulation_iff`. PolyFun never
+proved it.
+
+`WeakTrace` records only the *visible* observations, so it is a `List Obs` where
+a cslib trace is a `List Label`; tagging each observation with `some` recovers
+the cslib trace of the saturated system.
+
+**The delay spectrum has no cslib counterpart** and is developed in PolyFun. It
+is load-bearing — `OpenProcessActivationEquiv` is delay bisimulation, not weak —
+so it is the clearest upstream contribution candidate. See
+[`../reading/upstream-alignment.md`](../reading/upstream-alignment.md).
+
 ## Dynamical systems
 
 `DynSystem.behavior : S → M p` is the unique map into the terminal

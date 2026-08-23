@@ -5,16 +5,74 @@ Authors: Devon Tuma
 -/
 module
 
-public import Mathlib.Probability.ProbabilityMassFunction.Monad
+public import Mathlib.Control.Monad.Basic
 public import PolyFun.Control.Monad.Algebra
-public import Mathlib.CategoryTheory.Monad.Types
 
 /-!
 # Morphisms Between Monads
 
-Basic definitions of maps between monads parameterized over any possible output type.
-This is implemented with more constrained universes as `m ⟶ n` in mathlib category theory,
-but this gives definitions more standardized to a cs context.
+A morphism of monads is a family `m α → n α`, natural in `α`, preserving `pure`
+and `bind`.  There are two useful presentations, and this file is deliberate
+about which one it owns.
+
+## Unbundled: Lean core
+
+When the morphism is *canonical* for the pair `(m, n)` and should be found by
+instance search, it belongs to core's lifting hierarchy: `MonadLift` /
+`MonadLiftT` supply the map and `LawfulMonadLift` / `LawfulMonadLiftT`
+(`Init/Control/Lawful/MonadLift/`) supply exactly the two laws above.  Core
+carries instances for the standard transformer stack and a `liftM_*` simp set,
+so nothing of that shape should be re-derived here.
+
+## Bundled: this file
+
+When the morphism is *data* — chosen at the call site, passed around, composed,
+or mapped over — instance search is the wrong mechanism and a first-class arrow
+is needed.  Core has no bundled form, so `MonadHom` (notation `m →ᵐ n`) is that
+arrow, with `MonadHom.comp` (`∘ₘ`), `MonadHom.id`, and `StateT.mapHom` for
+transporting one along a transformer.  `NatHom` is the underlying natural
+transformation without the laws; `PFunctor.FreeM.liftMHom'` consumes it
+directly.
+
+`MonadHom.ofLift` is the bridge: any lawful lift induces a bundled morphism.
+There is deliberately no converse instance — turning an arbitrary `MonadHom`
+into a `MonadLift` would make instance search pick between morphisms that are
+genuinely different maps.
+
+## Why there is no `PureHom` / `BindHom` hierarchy
+
+Mathlib splits `OneHom` from `MulHom` (and `ZeroHom` from `AddHom`) because those
+component morphisms are useful independently, and because many richer morphism
+types share their laws through the corresponding `HomClass` hierarchy.  The
+old sketches in this file proposed the analogous `PureHom`, `BindHom`, and
+`MonadHomClass`, but PolyFun, VCVio, and ArkLib have no consumer of either
+partial morphism.  A `PureHom` would only preserve a pointing; a `BindHom`
+would only become meaningful after choosing laws for a non-unital semimonad.
+Neither abstraction exists in this stack.
+
+The neighbouring upstream APIs make the same atomic choice.  Lean v4.34's
+`LawfulMonadLift(T)` packages the `pure` and `bind` laws together, and mathlib's
+categorical `MonadHom` packages compatibility with both the unit and
+multiplication.  Batteries adds orthogonal preservation laws, such as
+`LawfulAlternativeLift`, alongside a monad lift rather than splitting its two
+monad laws.
+
+A family-aware analogue of `FunLike` may become worthwhile once multiple
+bundled morphism types need common lemmas.  The previous
+`(α : Type u) → FunLike F (m α) (n α)` sketch did not provide one coherent
+function-like view of the whole polymorphic family, and there is only one such
+arrow type today.  The decision is therefore to keep `MonadHom` atomic and not
+add speculative component structures or hom classes.  A real pointed-functor,
+semimonad, or second bundled-morphism consumer should reopen that decision and
+arrive with the corresponding laws and generic tests.
+
+The unused `MonadEquiv` module is omitted for the same reason.  If a consumer
+needs monad equivalences, the minimal design is two inverse `MonadHom`s, not a
+parallel hierarchy of unused `PureEquiv` and `BindEquiv` structures.
+
+Mathlib's `CategoryTheory.MonadHom` is a third presentation, at restricted
+universes and in the categorical idiom; the `Type`-level form here is what the
+free-monad and interaction layers actually consume.
 -/
 
 @[expose] public section
@@ -33,21 +91,10 @@ structure NatHom (m : Type u → Type v) (n : Type u → Type w) where
 instance : CoeFun (NatHom m n) (fun _f => {α : Type u} → m α → n α) where
   coe f {α} x := f.toFun α x
 
--- /-- A natural morphism / transformation that preserves the `pure` operation. -/
--- structure PureHom (m : Type u → Type v) [Pure m] (n : Type u → Type w) [Pure n]
---     extends NatHom m n where
---   toFun_pure' {α : Type u} (x : α) : toFun (pure x) = (pure x : n α)
-
--- /-- A natural morphism / transformation that preserves the `bind` operation. -/
--- structure BindHom (m : Type u → Type v) [Bind m] (n : Type u → Type w) [Bind n]
---     extends NatHom m n where
---   toFun_bind' {α β : Type u} (x : m α) (y : α → m β) :
---     toFun β (x >>= y) = toFun α x >>= toFun β ∘ y
-
 /-- A `MonadHom m n` bundles a monad map `m ⟶ n` (represented as a `NatHom`) with proofs that
 it respects the `bind` and `pure` operations in the underlying monad. -/
 @[ext] structure MonadHom (m : Type u → Type v) [Pure m] [Bind m]
-    (n : Type u → Type w) [Pure n] [Bind n] extends NatHom m n where --, PureHom m n, BindHom m n
+    (n : Type u → Type w) [Pure n] [Bind n] extends NatHom m n where
   toFun_pure' {α} (x : α) : toFun α (pure x) = pure x
   toFun_bind' {α β} (x : m α) (y : α → m β) :
     toFun β (x >>= y) = toFun α x >>= fun x => toFun β (y x)
@@ -56,71 +103,10 @@ it respects the `bind` and `pure` operations in the underlying monad. -/
 
 attribute [simp, grind =] MonadHom.toFun_pure' MonadHom.toFun_bind'
 
-/-- `f mx` notation for `NatHom m n` applied to an element of `m α`, with implicit `α` inferred. -/
+/-- `F mx` notation for `m →ᵐ n` applied to an element of `m α`, with implicit `α` inferred. -/
 instance {m : Type u → Type v} [Pure m] [Bind m] {n : Type u → Type w} [Pure n] [Bind n] :
     CoeFun (m →ᵐ n) (fun _f => {α : Type u} → m α → n α) where
   coe f {α} x := f.toFun α x
-
-/-- Similar to `AddHomClass` but for `MonadHom`. This becomes more important if we start defining
-a hierarchy of these types (e.g. for `AlternativeMonad`s).
-Note that getting `FunLike` to work has some `outParam` challenges, may not be workable. -/
-class MonadHomClass (F : Type _)
-    (m : outParam (Type u → Type v)) [Monad m]
-    (n : outParam (Type u → Type w)) [Monad n]
-    [hf : (α : Type u) → FunLike F (m α) (n α)] where
-  map_pure {α} (x : α) (f : F) : (f : m α → n α) (pure x : m α) = pure x
-  map_bind {α β} (x : m α) (y : α → m β) (f : F) :
-    (f : m β → n β) (x >>= y) = (f : m α → n α) x >>= f ∘ y
-
--- namespace MonadHomClass
-
--- variable {F : Type _}
---   {m : outParam (Type u → Type v)} [Monad m]
---   {n : outParam (Type u → Type w)} [Monad n]
---   [hf : (α : Type u) → FunLike F (m α) (n α)]
-
--- @[simp] lemma mmap_pure [hf : (α : Type u) → FunLike F (m α) (n α)]
---     (f : F) [@MonadHomClass F m _ n _ hf]
---     (x : α) : F α (pure x) = pure x :=
---   MonadHomClass.map_pure x
-
--- -- dt: should we be using `F ∘ my`?
--- @[simp] lemma mmap_bind (F : (α : Type u) → m α → n α) [MonadHomClass m n F]
---     (mx : m α) (my : α → m β) : F β (mx >>= my) = F α mx >>= fun x => F β (my x) :=
---   MonadHomClass.map_bind mx my
-
--- @[simp] lemma mmap_map [LawfulMonad m] [LawfulMonad n] (F : (α : Type u) → m α → n α)
---     [MonadHomClass m n F] (x : m α) (g : α → β) : F β (g <$> x) = g <$> F α x := by
---   simp [map_eq_bind_pure_comp]
-
--- @[simp] lemma mmap_seq [LawfulMonad m] [LawfulMonad n] (F : (α : Type u) → m α → n α)
---     [MonadHomClass m n F] (x : m (α → β)) (y : m α) : F β (x <*> y) = F _ x <*> F α y := by
---   simp [seq_eq_bind_map]
-
--- @[simp] lemma mmap_seqLeft [LawfulMonad m] [LawfulMonad n] (F : (α : Type u) → m α → n α)
---     [MonadHomClass m n F] (x : m α) (y : m β) : F α (x <* y) = F α x <* F β y := by
---   simp [seqLeft_eq]
-
--- @[simp] lemma mmap_seqRight [LawfulMonad m] [LawfulMonad n] (F : (α : Type u) → m α → n α)
---     [MonadHomClass m n F] (x : m α) (y : m β) : F β (x *> y) = F α x *> F β y := by
---   simp [seqRight_eq]
-
--- instance ofLawfulMonadLiftT {m n : Type u → Type _} [Monad m] [Monad n]
---     [MonadLiftT m n] [LawfulMonadLiftT m n] : MonadHomClass m n (@liftM m n _) where
---   map_pure := by aesop
---   map_bind := by aesop
-
--- instance {m : Type u → Type _} [Monad m] : MonadHomClass m m (fun _ => id) where
---   map_pure := by aesop
---   map_bind := by aesop
-
--- instance {m n n' : Type u → Type _} [Monad m] [Monad n] [Monad n']
---     (f : (α : Type u) → m α → n α) (g : (α : Type u) → n α → n' α)
---     [MonadHomClass m n f] [MonadHomClass n n' g] : MonadHomClass m n' (fun α => g α ∘ f α) where
---   map_pure := by aesop
---   map_bind := by aesop
-
--- end MonadHomClass
 
 namespace MonadHom
 
@@ -137,7 +123,6 @@ type are equal. -/
 
 @[grind =] lemma mmap_pure (F : m →ᵐ n) (x : α) : F (pure x) = pure x := by grind
 
--- dt: should we be using `F ∘ my`?
 @[grind =] lemma mmap_bind (F : m →ᵐ n) (mx : m α) (my : α → m β) :
     F (mx >>= my) = F mx >>= fun x => F (my x) := by grind
 
@@ -145,7 +130,7 @@ type are equal. -/
     F (g <$> x) = g <$> F x := by simp [monad_norm]
 
 @[simp] lemma mmap_seq [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n) (x : m (α → β)) (y : m α) :
-    F (x <*> y) = F x <*> F y := by simp [monad_norm]
+    F (x <*> y) = F x <*> F y := by simp [seq_eq_bind_map, F.mmap_bind, F.mmap_map]
 
 @[simp] lemma mmap_seqLeft [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n) (x : m α) (y : m β) :
     F (x <* y) = F x <* F y := by simp [seqLeft_eq]

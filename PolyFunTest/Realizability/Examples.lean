@@ -7,6 +7,7 @@ module
 
 public import PolyFun.Realizability.Closure
 public import PolyFun.Realizability.Instances
+public import Mathlib.Data.Fintype.Sigma
 
 /-!
 # Worked examples of admissible realizability

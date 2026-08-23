@@ -83,6 +83,9 @@ PFunctor/Dynamical/DynComputation/Bounded
 
 Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   (free-standing helpers, depended on by both PFunctor and ITree)
+  Control/Bisimulation additionally imports cslib
+  (Cslib.Foundations.Semantics.LTS.Bisimulation): the transition-system theory
+  is cslib's, reached through `Control.LTS.toLts`.
 
 PFunctor/Lens/{Basic, Cartesian, State}
   -> PFunctor/Lens/{Composite, Distributivity, Factorization, Duoidal}
