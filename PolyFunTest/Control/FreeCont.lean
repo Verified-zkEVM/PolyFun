@@ -36,11 +36,48 @@ def askHandler {α : Type} : Ask α → ContT Nat Option α
 example : program.run askHandler some = some 5 :=
   rfl
 
+/-- Lifting a failing base computation does not bypass the base monad or call
+the final continuation. -/
+def failedProgram : FreeContT Ask Option Nat :=
+  monadLift none
+
+example : failedProgram.run askHandler some = none :=
+  rfl
+
+/-- A Boolean-valued operation used to ensure `liftBind` preserves and invokes
+its response-dependent continuation. -/
+inductive Choose : Type → Type where
+  | choose : Choose Bool
+
+/-- The two responses take observably different continuation branches. -/
+def branchProgram : FreeContM Choose Nat :=
+  FreeContT.liftBind Choose.choose fun answer =>
+    FreeContT.pure (if answer then 7 else 11)
+
+/-- Interpret `Choose` with a fixed response. -/
+def chooseHandler (answer : Bool) {α : Type} : Choose α → ContT Nat Id α
+  | .choose => fun next => next answer
+
+example : branchProgram.run (chooseHandler true) id = 7 :=
+  rfl
+
+example : branchProgram.run (chooseHandler false) id = 11 :=
+  rfl
+
 /-- A one-node inductive program used to pin the upstream bridge. -/
 def sampleSyntax : Cslib.FreeM Ask Nat :=
   Cslib.FreeM.lift Ask.ask
 
 example : FreeContM.toFreeM (Cslib.FreeM.toFreeContM sampleSyntax) = sampleSyntax := by
+  simp
+
+/-- The syntax bridge also preserves response-dependent continuations, rather
+than only the one-node identity continuation above. -/
+def branchingSyntax : Cslib.FreeM Choose Nat :=
+  Cslib.FreeM.liftBind Choose.choose fun answer =>
+    pure (if answer then 7 else 11)
+
+example : FreeContM.toFreeM (Cslib.FreeM.toFreeContM branchingSyntax) = branchingSyntax := by
   simp
 
 end PolyFunTest.FreeCont
