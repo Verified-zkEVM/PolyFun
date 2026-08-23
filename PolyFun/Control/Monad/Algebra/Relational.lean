@@ -18,16 +18,17 @@ This file introduces a two-monad relational analogue of `MAlgOrdered`:
 * Asynchronous (one-sided) bind rules `relWP_bind_left_le` / `relWP_bind_right_le`
   and their `Triple` forms, recovering Maillard et al.'s asynchronous shapes.
 * Structural pure rules for `if`, `dite`, `Option.elim`, `Sum.elim`.
-* Side-lifting instances for heterogeneous stacks (`StateT`, `OptionT`, `ExceptT`).
+* Named side lifts for heterogeneous stacks (`StateT`, `OptionT`, `ExceptT`).
 * `StrictBind` subclass capturing strict relational effect observations
   (in the sense of Maillard et al.) together with `StateT` lifts that preserve it.
 
 The framework is the predicate-transformer specialization of Maillard et al.'s
 *simple framework* (POPL 2020, §2): the relational specification monad is fixed
 to `(α → β → l) → l` and the relational effect observation is inlined as the
-`rwp` field. Everything here is stated against abstract lawful monads and an
-abstract ordered carrier; concrete instantiations (for example coupling-based
-probabilistic carriers) live in downstream libraries.
+`rwp` field. Everything here is stated against abstract monads, adding
+lawfulness only to rules that use monad equalities, and an abstract ordered
+carrier; concrete instantiations (for example coupling-based probabilistic
+carriers) live in downstream libraries.
 
 Attribution:
 - Loom repository: https://github.com/verse-lab/loom
@@ -264,8 +265,13 @@ variable {m₁ : Type u → Type v₁} {m₂ : Type u → Type v₂} {l : Type u
 variable [Monad m₁] [Monad m₂] [LawfulMonad m₁] [LawfulMonad m₂] [Preorder l]
 variable [MAlgRelOrdered m₁ m₂ l]
 
-/-- Left `StateT` lift for heterogeneous relational algebras. -/
-noncomputable instance instStateTLeft (σ : Type u) :
+/-- Left `StateT` lift for heterogeneous relational algebras.
+
+This is a named definition rather than a global instance: registering both
+left and right lifts creates inequivalent instance paths when both sides use
+the same transformer. -/
+@[instance_reducible]
+noncomputable def stateTLeft (σ : Type u) :
     MAlgRelOrdered (StateT σ m₁) m₂ (σ → l) where
   rwp x y post := fun s =>
     MAlgRelOrdered.rwp (x.run s) y (fun xs b => post xs.1 b xs.2)
@@ -283,8 +289,10 @@ noncomputable instance instStateTLeft (σ : Type u) :
         (f := fun xs => (f xs.1).run xs.2) (g := g)
         (post := fun zs d => post zs.1 d zs.2))
 
-/-- Right `StateT` lift for heterogeneous relational algebras. -/
-noncomputable instance instStateTRight (σ : Type u) :
+/-- Right `StateT` lift for heterogeneous relational algebras. See
+`stateTLeft` for why transformer-side choices are explicit. -/
+@[instance_reducible]
+noncomputable def stateTRight (σ : Type u) :
     MAlgRelOrdered m₁ (StateT σ m₂) (σ → l) where
   rwp x y post := fun s =>
     MAlgRelOrdered.rwp x (y.run s) (fun a ys => post a ys.1 ys.2)
@@ -302,9 +310,11 @@ noncomputable instance instStateTRight (σ : Type u) :
         (f := f) (g := fun ys => (g ys.1).run ys.2)
         (post := fun c td => post c td.1 td.2))
 
-/-- Two-sided `StateT` instance: both sides carry their own state.
-The postcondition takes both output values and both final states. -/
-noncomputable instance instStateTBoth (σ₁ σ₂ : Type u) :
+/-- Two-sided `StateT` lift: both sides carry their own state.
+The postcondition takes both output values and both final states. This named
+definition fixes their order explicitly. -/
+@[instance_reducible]
+noncomputable def stateTBoth (σ₁ σ₂ : Type u) :
     MAlgRelOrdered (StateT σ₁ m₁) (StateT σ₂ m₂) (σ₁ → σ₂ → l) where
   rwp x y post := fun s₁ s₂ =>
     MAlgRelOrdered.rwp (x.run s₁) (y.run s₂)
@@ -332,8 +342,10 @@ variable {m₁ : Type u → Type v₁} {m₂ : Type u → Type v₂} {l : Type u
 variable [Monad m₁] [Monad m₂] [LawfulMonad m₁] [LawfulMonad m₂] [Preorder l] [OrderBot l]
 variable [MAlgRelOrdered m₁ m₂ l]
 
-/-- Right `OptionT` lift (interpreting `none` as `⊥`). -/
-noncomputable instance instOptionTRight :
+/-- Right `OptionT` lift (interpreting `none` as `⊥`). Explicit rather than
+global to avoid left/right transformer diamonds. -/
+@[instance_reducible]
+noncomputable def optionTRight :
     MAlgRelOrdered m₁ (OptionT m₂) l where
   rwp x y post :=
     MAlgRelOrdered.rwp x y.run (fun a ob =>
@@ -376,8 +388,10 @@ noncomputable instance instOptionTRight :
           (MAlgRelOrdered.rwp_bind_le (m₁ := m₁) (m₂ := m₂) (l := l)
             x y.run f gRun collapse)
 
-/-- Left `OptionT` lift (interpreting `none` as `⊥`). -/
-noncomputable instance instOptionTLeft :
+/-- Left `OptionT` lift (interpreting `none` as `⊥`). Explicit rather than
+global to avoid left/right transformer diamonds. -/
+@[instance_reducible]
+noncomputable def optionTLeft :
     MAlgRelOrdered (OptionT m₁) m₂ l where
   rwp x y post :=
     MAlgRelOrdered.rwp x.run y (fun oa b =>
@@ -430,8 +444,10 @@ noncomputable instance instOptionTLeft :
           (MAlgRelOrdered.rwp_bind_le (m₁ := m₁) (m₂ := m₂) (l := l)
             x.run y fRun g collapse)
 
-/-- Right `ExceptT` lift (interpreting exceptions as `⊥`). -/
-noncomputable instance instExceptTRight (ε : Type u) :
+/-- Right `ExceptT` lift (interpreting exceptions as `⊥`). Explicit rather
+than global to avoid left/right transformer diamonds. -/
+@[instance_reducible]
+noncomputable def exceptTRight (ε : Type u) :
     MAlgRelOrdered m₁ (ExceptT ε m₂) l where
   rwp x y post :=
     MAlgRelOrdered.rwp x y.run (fun a eb =>
@@ -477,8 +493,10 @@ noncomputable instance instExceptTRight (ε : Type u) :
           x y.run f gRun collapse using 1
         all_goals rfl
 
-/-- Left `ExceptT` lift (interpreting exceptions as `⊥`). -/
-noncomputable instance instExceptTLeft (ε : Type u) :
+/-- Left `ExceptT` lift (interpreting exceptions as `⊥`). Explicit rather
+than global to avoid left/right transformer diamonds. -/
+@[instance_reducible]
+noncomputable def exceptTLeft (ε : Type u) :
     MAlgRelOrdered (ExceptT ε m₁) m₂ l where
   rwp x y post :=
     MAlgRelOrdered.rwp x.run y (fun ea b =>
@@ -576,36 +594,57 @@ variable {m₁ : Type u → Type v₁} {m₂ : Type u → Type v₂} {l : Type u
 variable [Monad m₁] [Monad m₂] [LawfulMonad m₁] [LawfulMonad m₂] [Preorder l]
 variable [MAlgRelOrdered m₁ m₂ l]
 
-/-- Strictness lifts through the left `StateT` instance. -/
-instance instStrictBindStateTLeft [StrictBind m₁ m₂ l] (σ : Type u) :
-    StrictBind (StateT σ m₁) m₂ (σ → l) where
-  rwp_bind {_ _ _ _} x y f g post := by
-    funext s
-    have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
-      (x := x.run s) (y := y) (f := fun xs => (f xs.1).run xs.2) (g := g)
-      (post := fun zs d => post zs.1 d zs.2)
-    convert h using 1 <;> rfl
+/-! The strictness witnesses below are definitions, rather than theorems, so
+callers can install the matching named algebra/witness pair as local instances. -/
 
-/-- Strictness lifts through the right `StateT` instance. -/
-instance instStrictBindStateTRight [StrictBind m₁ m₂ l] (σ : Type u) :
-    StrictBind m₁ (StateT σ m₂) (σ → l) where
-  rwp_bind {_ _ _ _} x y f g post := by
-    funext s
-    have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
-      (x := x) (y := y.run s) (f := f) (g := fun ys => (g ys.1).run ys.2)
-      (post := fun c td => post c td.1 td.2)
-    convert h using 1 <;> rfl
+set_option linter.defProp false in
+set_option linter.style.haveILetI false in
+/-- Strictness lifts through the named left `StateT` algebra. -/
+@[instance_reducible]
+noncomputable def strictBindStateTLeft [StrictBind m₁ m₂ l] (σ : Type u) :
+    letI := stateTLeft (m₁ := m₁) (m₂ := m₂) (l := l) σ
+    StrictBind (StateT σ m₁) m₂ (σ → l) := by
+  letI := stateTLeft (m₁ := m₁) (m₂ := m₂) (l := l) σ
+  refine { rwp_bind := ?_ }
+  intro α β γ δ x y f g post
+  funext s
+  have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
+    (x := x.run s) (y := y) (f := fun xs => (f xs.1).run xs.2) (g := g)
+    (post := fun zs d => post zs.1 d zs.2)
+  convert h using 1 <;> rfl
 
-/-- Strictness lifts through the two-sided `StateT` instance. -/
-instance instStrictBindStateTBoth [StrictBind m₁ m₂ l] (σ₁ σ₂ : Type u) :
-    StrictBind (StateT σ₁ m₁) (StateT σ₂ m₂) (σ₁ → σ₂ → l) where
-  rwp_bind {_ _ _ _} x y f g post := by
-    funext s₁ s₂
-    have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
-      (x := x.run s₁) (y := y.run s₂)
-      (f := fun p₁ => (f p₁.1).run p₁.2) (g := fun p₂ => (g p₂.1).run p₂.2)
-      (post := fun p₁ p₂ => post p₁.1 p₂.1 p₁.2 p₂.2)
-    convert h using 1 <;> rfl
+set_option linter.defProp false in
+set_option linter.style.haveILetI false in
+/-- Strictness lifts through the named right `StateT` algebra. -/
+@[instance_reducible]
+noncomputable def strictBindStateTRight [StrictBind m₁ m₂ l] (σ : Type u) :
+    letI := stateTRight (m₁ := m₁) (m₂ := m₂) (l := l) σ
+    StrictBind m₁ (StateT σ m₂) (σ → l) := by
+  letI := stateTRight (m₁ := m₁) (m₂ := m₂) (l := l) σ
+  refine { rwp_bind := ?_ }
+  intro α β γ δ x y f g post
+  funext s
+  have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
+    (x := x) (y := y.run s) (f := f) (g := fun ys => (g ys.1).run ys.2)
+    (post := fun c td => post c td.1 td.2)
+  convert h using 1 <;> rfl
+
+set_option linter.defProp false in
+set_option linter.style.haveILetI false in
+/-- Strictness lifts through the named two-sided `StateT` algebra. -/
+@[instance_reducible]
+noncomputable def strictBindStateTBoth [StrictBind m₁ m₂ l] (σ₁ σ₂ : Type u) :
+    letI := stateTBoth (m₁ := m₁) (m₂ := m₂) (l := l) σ₁ σ₂
+    StrictBind (StateT σ₁ m₁) (StateT σ₂ m₂) (σ₁ → σ₂ → l) := by
+  letI := stateTBoth (m₁ := m₁) (m₂ := m₂) (l := l) σ₁ σ₂
+  refine { rwp_bind := ?_ }
+  intro α β γ δ x y f g post
+  funext s₁ s₂
+  have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
+    (x := x.run s₁) (y := y.run s₂)
+    (f := fun p₁ => (f p₁.1).run p₁.2) (g := fun p₂ => (g p₂.1).run p₂.2)
+    (post := fun p₁ p₂ => post p₁.1 p₂.1 p₁.2 p₂.2)
+  convert h using 1 <;> rfl
 
 end StrictBindInstances
 
@@ -622,7 +661,7 @@ freeze the relational `rwp` to the underlying unary `wp` at one of the two corne
 recovering Maillard et al.'s "two unary triples + a relational triple" pattern from
 [*The Next 700 Relational Program Logics*, POPL 2020] without committing to the full
 relative-monad machinery. They are precisely the ingredient missing from the lossy
-exception lifts (see `instExceptTLeft` / `instExceptTRight` above): once anchored, one
+exception lifts (see `exceptTLeft` / `exceptTRight` above): once anchored, one
 can derive *honest exception* combinators `wpExc` (unary) and `rwpExc` (relational)
 that track success and failure separately rather than collapsing failures to `⊥`.
 

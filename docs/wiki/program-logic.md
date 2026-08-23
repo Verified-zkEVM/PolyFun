@@ -11,8 +11,8 @@ migration sketch live in
 | Module | Content |
 |---|---|
 | `PolyFun/Control/Monad/Algebra.lean` | `MAlgOrdered m l`: ordered monad algebras over a complete lattice, with `wp`, `Triple`, the structural rule set, `StateT`/`ReaderT`/`ExceptT`/`OptionT` lifts, and the honest two-postcondition `wpExc`/`wpOpt` |
-| `PolyFun/Control/Monad/Algebra/Relational.lean` | `MAlgRelOrdered m₁ m₂ l`: relational `rwp`/`RelWP`/`Triple`, asynchronous one-sided bind rules, structural pure rules, side-lifts, and the `StrictBind` / `Anchored` subclasses (Maillard et al. POPL 2020 shapes) |
-| `PolyFun/Control/Monad/Support.lean` | `ExactMonadAttach m`: the introduction rules core omits for `MonadAttach.CanReturn`; `MonadAttach.support`; the `AllOutputs`/`SomeOutput`/`NoOutput` judgments and scoped `⊨ₐ`/`⊨ₛ`/`⊭` notation; the demonic `MAlgOrdered m Prop` instance; instances for `Except`/`SetM` (absent upstream) and the `ExceptT` universe alias |
+| `PolyFun/Control/Monad/Algebra/Relational.lean` | `MAlgRelOrdered m₁ m₂ l`: relational `rwp`/`RelWP`/`Triple`, asynchronous one-sided bind rules, structural pure rules, explicit named side lifts, and the `StrictBind` / `Anchored` subclasses (Maillard et al. POPL 2020 shapes) |
+| `PolyFun/Control/Monad/Support.lean` | `ExactMonadAttach m`: the introduction rules core omits for `MonadAttach.CanReturn`; `MonadAttach.support`; the `AllOutputs`/`SomeOutput`/`NoOutput` judgments and scoped `⊨ₐ`/`⊨ₛ`/`⊭` notation; the named demonic `MAlgOrdered m Prop` choice; instances for `Except`/`SetM` (absent upstream) and the `ExceptT` universe alias |
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); `OpSpec.toMAlgOrdered`; semantic `FreeM.wpVia` through a `Handler`; soundness `wpFold_le_wpVia`/`wpFold_eq_wpVia` |
 | `PolyFun/Control/Do/Basic.lean` | Core-`Std.Do` transports: `MonadHom.transportWP(Monad)` along a monad morphism, `MonadAttach.toWP(Monad)` demonically at `.pure`, `toWPSound` for core-sense soundness, and `support_subset_of_wp`/`allOutputs_of_wp` turning any `WPSound` triple into a support fact |
@@ -71,6 +71,13 @@ both introduction rules fail there. Reason per run instead, via
 `mem_support_stateT_iff`. Oracle- and state-relative supports belong at the
 specification layer (`PFunctor/Free/WP.lean`), which indexes the notion by a
 per-operation answer assignment.
+
+The support-based `MAlgOrdered m Prop` and relational transformer lifts are
+explicit named definitions, not unrestricted global instances. This keeps
+support partial correctness distinct from the existing failure-as-`⊥`
+`OptionT`/`ExceptT` algebras and prevents inequivalent left/right transformer
+instance paths. Install the intended algebra locally at each verification
+boundary.
 
 ## The `Std.Do` quarantine
 

@@ -53,7 +53,7 @@ substrates; core `Std.Do` is used only behind a two-file quarantine.
   so PolyFun contributes `ExactMonadAttach`, the two introduction rules, plus
   `MonadAttach.support` (the `Set`-valued view), the
   `AllOutputs`/`SomeOutput`/`NoOutput` judgments with scoped `⊨ₐ`/`⊨ₛ`/`⊭`
-  notation, and the demonic `MAlgOrdered m Prop` instance. Core supplies the
+  notation, and the named demonic `MAlgOrdered m Prop` choice. Core supplies the
   `Id`/`Option`/`OptionT`/`ExceptT`/`StateT`/`ReaderT` instances; PolyFun adds
   `Except` and `SetM` (absent upstream) and a universe alias working around
   core's `max`-joined `ExceptT` declaration. `StateT`/`ReaderT` keep core's
@@ -97,7 +97,8 @@ downstream registrations on reducible unfoldings such as `OracleComp`).
    `PMF.bindOnSupport`, which is exactly `pbind`), `SPMF`, and `FinRatPMF.Raw`
    need real work, all probability-side. `allOutputsSatisfy`/`someOutputSatisfies`
    become deprecated aliases of `AllOutputs`/`SomeOutput` during migration, and
-   `HoarePropTriple.instMAlgOrdered` follows from the generic demonic instance.
+   `HoarePropTriple.instMAlgOrdered` can select the generic demonic definition
+   explicitly.
    Guards: core's `StateT`/`ReaderT` instances make `support` typecheck on stacks
    where `CellRef.lean`/`WriterCost.lean` mean the per-run support, and
    `MonadAttach.trivial` must never be let in.
