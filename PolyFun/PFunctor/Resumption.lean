@@ -16,7 +16,7 @@ public import PolyFun.PFunctor.M
 A `Resumption p β` is a possibly infinite, tau-free computation that either
 returns a value in `β` or exposes a visible query from `p` and continues from
 the selected direction. It is the M-type of the return-or-query polynomial
-`C β + p`, the coinductive counterpart of `FreeM p β`.
+`p + C β`, the coinductive counterpart of `FreeM p β`.
 
 The named `map` and `bind` operations are maximally universe-polymorphic in
 their source and target result types. The `Monad` and `LawfulMonad` instances
@@ -33,7 +33,7 @@ namespace PFunctor
 /-- A possibly infinite, tau-free computation that returns a `β` or performs a
 visible query from `p`. -/
 abbrev Resumption (p : PFunctor.{uA, uB}) (β : Type uβ) :=
-  M.{max uβ uA, uB} (C.{uβ, uB} β + p)
+  M.{max uβ uA, uB} (p + C.{uβ, uB} β)
 
 namespace Resumption
 
@@ -41,22 +41,22 @@ variable {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type uγ}
 
 /-! ## One-step views -/
 
-/-- Reassociate the extension of `C β + p` into the computational
+/-- Reassociate the extension of `p + C β` into the computational
 return-or-query view. -/
-def unpack {X : Type uX} : (C.{uβ, uB} β + p).Obj X → β ⊕ p.Obj X
-  | ⟨Sum.inl value, _⟩ => Sum.inl value
-  | ⟨Sum.inr position, next⟩ => Sum.inr ⟨position, next⟩
+def unpack {X : Type uX} : (p + C.{uβ, uB} β).Obj X → β ⊕ p.Obj X
+  | ⟨Sum.inl position, next⟩ => Sum.inr ⟨position, next⟩
+  | ⟨Sum.inr value, _⟩ => Sum.inl value
 
-/-- Repack a computational return-or-query view as an extension of `C β + p`. -/
-def pack {X : Type uX} : β ⊕ p.Obj X → (C.{uβ, uB} β + p).Obj X
-  | Sum.inl value => ⟨Sum.inl value, PEmpty.elim⟩
-  | Sum.inr ⟨position, next⟩ => ⟨Sum.inr position, next⟩
+/-- Repack a computational return-or-query view as an extension of `p + C β`. -/
+def pack {X : Type uX} : β ⊕ p.Obj X → (p + C.{uβ, uB} β).Obj X
+  | Sum.inl value => ⟨Sum.inr value, PEmpty.elim⟩
+  | Sum.inr ⟨position, next⟩ => ⟨Sum.inl position, next⟩
 
 @[simp] theorem pack_inl {X : Type uX} (value : β) :
-    pack (p := p) (X := X) (Sum.inl value) = ⟨Sum.inl value, PEmpty.elim⟩ := rfl
+    pack (p := p) (X := X) (Sum.inl value) = ⟨Sum.inr value, PEmpty.elim⟩ := rfl
 
 @[simp] theorem pack_inr {X : Type uX} (position : p.A) (next : p.B position → X) :
-    pack (Sum.inr ⟨position, next⟩ : β ⊕ p.Obj X) = ⟨Sum.inr position, next⟩ := rfl
+    pack (Sum.inr ⟨position, next⟩ : β ⊕ p.Obj X) = ⟨Sum.inl position, next⟩ := rfl
 
 @[simp] theorem unpack_pack {X : Type uX} (step : β ⊕ p.Obj X) :
     unpack (pack step) = step := by
@@ -64,24 +64,24 @@ def pack {X : Type uX} : β ⊕ p.Obj X → (C.{uβ, uB} β + p).Obj X
   | inl _ => rfl
   | inr step => rcases step with ⟨_, _⟩; rfl
 
-@[simp] theorem pack_unpack {X : Type uX} (step : (C.{uβ, uB} β + p).Obj X) :
+@[simp] theorem pack_unpack {X : Type uX} (step : (p + C.{uβ, uB} β).Obj X) :
     pack (unpack step) = step := by
   rcases step with ⟨shape, next⟩
   cases shape with
-  | inl value => exact Sigma.ext rfl (heq_of_eq (funext fun d => d.elim))
-  | inr position => rfl
+  | inl position => rfl
+  | inr value => exact Sigma.ext rfl (heq_of_eq (funext fun d => d.elim))
 
-/-- The extension of `C β + p` is equivalent to the computational
+/-- The extension of `p + C β` is equivalent to the computational
 return-or-query view. -/
-def viewEquiv {X : Type uX} : (C.{uβ, uB} β + p).Obj X ≃ β ⊕ p.Obj X where
+def viewEquiv {X : Type uX} : (p + C.{uβ, uB} β).Obj X ≃ β ⊕ p.Obj X where
   toFun := unpack
   invFun := pack
   left_inv := pack_unpack
   right_inv := unpack_pack
 
 @[simp] theorem unpack_map {X : Type uX} {Y : Type uY} (f : X → Y)
-    (step : (C.{uβ, uB} β + p).Obj X) :
-    unpack ((C.{uβ, uB} β + p).map f step) =
+    (step : (p + C.{uβ, uB} β).Obj X) :
+    unpack ((p + C.{uβ, uB} β).map f step) =
       Sum.map (fun value : β => value) (p.map f) (unpack step) := by
   rcases step with ⟨shape, next⟩
   cases shape <;> rfl
@@ -89,7 +89,7 @@ def viewEquiv {X : Type uX} : (C.{uβ, uB} β + p).Obj X ≃ β ⊕ p.Obj X wher
 theorem pack_sum_map {X : Type uX} {Y : Type uY} (f : X → Y)
     (step : β ⊕ p.Obj X) :
     pack (Sum.map (fun value : β => value) (p.map f) step) =
-      (C.{uβ, uB} β + p).map f (pack step) := by
+      (p + C.{uβ, uB} β).map f (pack step) := by
   rcases step with value | ⟨position, next⟩
   · exact Sigma.ext rfl (heq_of_eq (funext fun d => d.elim))
   · rfl
@@ -182,7 +182,7 @@ theorem HeadMatch.mono {R S : Resumption p β → Resumption p β → Prop}
         (fun direction => hRS (next_rel direction))
 
 /-- Computational-view bisimulation principle for resumptions. Clients need
-not expose the implementation polynomial `C β + p` or use raw `M.bisim`. -/
+not expose the implementation polynomial `p + C β` or use raw `M.bisim`. -/
 theorem bisim (R : Resumption p β → Resumption p β → Prop)
     (step : ∀ left right, R left right → HeadMatch R left right)
     {left right : Resumption p β} (h : R left right) : left = right := by
@@ -190,12 +190,12 @@ theorem bisim (R : Resumption p β → Resumption p β → Prop)
   intro currentLeft currentRight hrel
   cases step currentLeft currentRight hrel with
   | pure value left_dest right_dest =>
-      refine ⟨Sum.inl value, PEmpty.elim, PEmpty.elim, ?_, ?_, fun direction => ?_⟩
+      refine ⟨Sum.inr value, PEmpty.elim, PEmpty.elim, ?_, ?_, fun direction => ?_⟩
       · rw [← pack_dest, left_dest, pack_inl]
       · rw [← pack_dest, right_dest, pack_inl]
       · exact direction.elim
   | query position left_next right_next left_dest right_dest next_rel =>
-      refine ⟨Sum.inr position, left_next, right_next, ?_, ?_, next_rel⟩
+      refine ⟨Sum.inl position, left_next, right_next, ?_, ?_, next_rel⟩
       · rw [← pack_dest, left_dest, pack_inr]
       · rw [← pack_dest, right_dest, pack_inr]
 
@@ -259,14 +259,14 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
     (fun left right => left = corec (bindStep k) (Sum.inr right)) ?_ _ _ rfl
   rintro left right rfl
   rcases h : dest right with result | ⟨position, next⟩
-  · refine ⟨Sum.inl result, PEmpty.elim, PEmpty.elim, ?_, ?_, fun direction => ?_⟩
+  · refine ⟨Sum.inr result, PEmpty.elim, PEmpty.elim, ?_, ?_, fun direction => ?_⟩
     · rw [← pack_dest, ← pack_inl]
       apply congrArg pack
       simp only [dest_corec, bindStep, h, Sum.map_inl]
     · rw [← pack_dest, ← pack_inl]
       exact congrArg pack h
     · exact direction.elim
-  · refine ⟨Sum.inr position,
+  · refine ⟨Sum.inl position,
       (fun direction : p.B position => corec (bindStep k) (Sum.inr (next direction))),
       next, ?_, ?_, fun direction => rfl⟩
     · rw [← pack_dest, ← pack_inr]
@@ -317,14 +317,14 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
   rintro left right ⟨source, hleft, hright⟩
   rw [hleft, hright]
   rcases h : dest source with value | ⟨position, next⟩
-  · refine ⟨Sum.inl value, PEmpty.elim, PEmpty.elim, ?_, ?_, fun direction => ?_⟩
+  · refine ⟨Sum.inr value, PEmpty.elim, PEmpty.elim, ?_, ?_, fun direction => ?_⟩
     · rw [← pack_dest, ← pack_inl]
       apply congrArg pack
       simp [dest_bind, h]
     · rw [← pack_dest, ← pack_inl]
       exact congrArg pack h
     · exact direction.elim
-  · refine ⟨Sum.inr position, (fun direction : p.B position => bind (next direction) pure), next,
+  · refine ⟨Sum.inl position, (fun direction : p.B position => bind (next direction) pure), next,
       ?_, ?_, fun direction => ⟨next direction, rfl, rfl⟩⟩
     · rw [← pack_dest, ← pack_inr]
       apply congrArg pack
@@ -353,7 +353,7 @@ theorem bind_assoc (computation : Resumption p α) (k : α → Resumption p β)
       simp only [bind_pure_left]
       rcases hk : M.dest (bind (k value) k') with ⟨shape, next⟩
       exact ⟨shape, next, next, rfl, rfl, fun _ => Or.inl rfl⟩
-    · refine ⟨Sum.inr position,
+    · refine ⟨Sum.inl position,
         (fun direction : p.B position => bind (bind (next direction) k) k'),
         (fun direction : p.B position => bind (next direction) (fun value => bind (k value) k')),
         ?_, ?_, fun direction => Or.inr ⟨next direction, rfl, rfl⟩⟩

@@ -85,8 +85,8 @@ def responderQueryComputation : DynSystem.DynComputation (monomial Bool Nat) PUn
   State := Option Nat
   toDynSystem :=
     (fun
-      | none => Sum.inr true
-      | some value => Sum.inl value) ⇆
+      | none => Sum.inl true
+      | some value => Sum.inr value) ⇆
     fun
       | none => fun answer => some answer
       | some _ => PEmpty.elim

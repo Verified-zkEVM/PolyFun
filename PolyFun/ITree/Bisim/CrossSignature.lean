@@ -356,7 +356,7 @@ theorem step_absorb_right {eventRel : EventSignatureRel E F} {resultRel : α →
               cases MXY with
               | pure x y hxy hX' hY' =>
                   have heq : (⟨Shape.pure y, PEmpty.elim⟩ :
-                      (Poly F β).Obj (ITree F β)) =
+                      (ViewPoly F β).Obj (ITree F β)) =
                       ⟨Shape.pure r, PEmpty.elim⟩ := hY'.symm.trans hsh'
                   have hyr : y = r := Shape.pure.inj (Sigma.mk.inj heq).1
                   subst y
@@ -380,7 +380,7 @@ theorem step_absorb_right {eventRel : EventSignatureRel E F} {resultRel : α →
               | pure _ _ _ _ hY' => rw [hY'] at hsh; cases hsh
               | query eventE eventF' hevents cX cY hX' hY' hcont =>
                   have heq : (⟨Shape.query eventF', cY⟩ :
-                      (Poly F β).Obj (ITree F β)) =
+                      (ViewPoly F β).Obj (ITree F β)) =
                       ⟨Shape.query eventF, cc⟩ := hY'.symm.trans hsh
                   have hevent : eventF' = eventF :=
                     Shape.query.inj (Sigma.mk.inj heq).1
@@ -533,12 +533,10 @@ theorem bind {resultRel : α → β → Prop} {outputRel : γ → δ → Prop}
     cases hm with
     | pure x y hxy hu' hv' =>
         have hut : u' = ITree.pure x := by
-          apply PFunctor.M.eq_of_dest_eq
-          change shape' u' = shape' (ITree.pure x)
+          apply eq_of_shape'_eq
           exact hu'.trans (shape'_pure x).symm
         have hvt : v' = ITree.pure y := by
-          apply PFunctor.M.eq_of_dest_eq
-          change shape' v' = shape' (ITree.pure y)
+          apply eq_of_shape'_eq
           exact hv'.trans (shape'_pure y).symm
         subst hut hvt
         obtain ⟨x', y', hx, hy, hm⟩ := (continuations_related x y hxy).dest

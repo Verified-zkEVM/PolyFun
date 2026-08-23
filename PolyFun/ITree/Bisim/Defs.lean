@@ -74,9 +74,9 @@ variable {F : PFunctor.{uFA, uFB}} {α : Type uα} {β : Type uβ}
 /-! ### Strong bisimulation -/
 
 /-- Strong bisimulation on interaction trees. Two ITrees are strongly
-bisimilar iff they are equal as elements of the M-type `PFunctor.M (Poly F α)`,
-which by `PFunctor.M.bisim` is the same as having matching one-step shapes
-with pointwise-bisimilar continuations. -/
+bisimilar iff they are equal as wrapped elements of
+`PFunctor.M (ITree.Poly F α)`. By `ITree.bisim`, this is the same as having
+matching `ViewPoly` one-step shapes with pointwise-bisimilar continuations. -/
 @[reducible]
 def Bisim (t s : ITree F α) : Prop := t = s
 
@@ -93,7 +93,7 @@ variable {t s u : ITree F α}
 @[trans] theorem trans' (h₁ : t ≅ s) (h₂ : s ≅ u) : t ≅ u := Eq.trans h₁ h₂
 
 /-- One-step characterisation: two ITrees are strongly bisimilar iff their
-`shape'` agrees. Provable by `PFunctor.M.bisim`. -/
+`shape'` agrees. Provable by `ITree.bisim`. -/
 theorem dest (h : t ≅ s) : shape' t = shape' s := by
   cases h; rfl
 

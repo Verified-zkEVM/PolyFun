@@ -236,7 +236,7 @@ theorem step_absorb_right {RR : α → β → Prop}
               cases MXY with
               | pure x y hxy hX' hY' =>
                   have heq : (⟨Shape.pure y, PEmpty.elim⟩ :
-                      (Poly F β).Obj (ITree F β)) =
+                      (ViewPoly F β).Obj (ITree F β)) =
                       ⟨Shape.pure r, PEmpty.elim⟩ := hY'.symm.trans hsh'
                   have hyr : y = r := Shape.pure.inj (Sigma.mk.inj heq).1
                   subst y
@@ -261,7 +261,7 @@ theorem step_absorb_right {RR : α → β → Prop}
                   rw [hY'] at hsh; cases hsh
               | query q' cX cY hX' hY' hcont =>
                   have heq : (⟨Shape.query q', cY⟩ :
-                      (Poly F β).Obj (ITree F β)) =
+                      (ViewPoly F β).Obj (ITree F β)) =
                       ⟨Shape.query q, cc⟩ := hY'.symm.trans hsh
                   have hqq : q' = q := Shape.query.inj (Sigma.mk.inj heq).1
                   subst hqq
@@ -359,7 +359,7 @@ theorem comp_aligned {γ : Type uγ} {RR : α → β → Prop} {SS : β → γ �
       cases second with
       | pure y' z hyz hmiddle' hright =>
           have heq : (⟨Shape.pure y, PEmpty.elim⟩ :
-              (Poly F β).Obj (ITree F β)) =
+              (ViewPoly F β).Obj (ITree F β)) =
               ⟨Shape.pure y', PEmpty.elim⟩ := hmiddle.symm.trans hmiddle'
           have hyy : y = y' := Shape.pure.inj (Sigma.mk.inj heq).1
           subst y'
@@ -371,7 +371,7 @@ theorem comp_aligned {γ : Type uγ} {RR : α → β → Prop} {SS : β → γ �
       | pure _ _ _ hbad _ => rw [hmiddle] at hbad; cases hbad
       | query event' cMiddle' cRight hmiddle' hright hcont' =>
           have heq : (⟨Shape.query event, cMiddle⟩ :
-              (Poly F β).Obj (ITree F β)) =
+              (ViewPoly F β).Obj (ITree F β)) =
               ⟨Shape.query event', cMiddle'⟩ := hmiddle.symm.trans hmiddle'
           have hevent : event = event' := Shape.query.inj (Sigma.mk.inj heq).1
           subst event'
@@ -437,7 +437,7 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                 cases MXY with
                 | pure x y' hxy HX HY =>
                     have heq : (⟨Shape.pure y', PEmpty.elim⟩ :
-                        (Poly F β).Obj (ITree F β)) =
+                        (ViewPoly F β).Obj (ITree F β)) =
                         ⟨Shape.pure y, PEmpty.elim⟩ := HY.symm.trans Hb''
                     have hyy : y' = y := Shape.pure.inj (Sigma.mk.inj heq).1
                     subst y'
@@ -458,7 +458,7 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                 | pure _ _ _ _ HY => rw [HY] at Hb''; cases Hb''
                 | query event' cLeft cMiddle' HX HY hAC' =>
                     have heq : (⟨Shape.query event', cMiddle'⟩ :
-                        (Poly F β).Obj (ITree F β)) =
+                        (ViewPoly F β).Obj (ITree F β)) =
                         ⟨Shape.query event, cMiddle⟩ := HY.symm.trans Hb''
                     have hevent : event' = event :=
                       Shape.query.inj (Sigma.mk.inj heq).1
@@ -506,7 +506,7 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                 cases MXY with
                 | pure y' z hyz HX HY =>
                     have heq : (⟨Shape.pure y', PEmpty.elim⟩ :
-                        (Poly F β).Obj (ITree F β)) =
+                        (ViewPoly F β).Obj (ITree F β)) =
                         ⟨Shape.pure y, PEmpty.elim⟩ := HX.symm.trans Hb''
                     have hyy : y' = y := Shape.pure.inj (Sigma.mk.inj heq).1
                     subst y'
@@ -526,7 +526,7 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                 | pure _ _ _ HX _ => rw [HX] at Hb''; cases Hb''
                 | query event' cMiddle' cRight HX HY hBD' =>
                     have heq : (⟨Shape.query event', cMiddle'⟩ :
-                        (Poly F β).Obj (ITree F β)) =
+                        (ViewPoly F β).Obj (ITree F β)) =
                         ⟨Shape.query event, cMiddle⟩ := HX.symm.trans Hb''
                     have hevent : event' = event :=
                       Shape.query.inj (Sigma.mk.inj heq).1
@@ -648,7 +648,7 @@ theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α
             cases MxY with
             | pure r' ht_X hs_Y =>
                 have hEq1 : (⟨Shape.pure r', PEmpty.elim⟩ :
-                    (Poly F α).Obj (ITree F α)) =
+                    (ViewPoly F α).Obj (ITree F α)) =
                   ⟨Shape.pure r, PEmpty.elim⟩ := hs_Y.symm.trans hshc_rw
                 have hrr : r' = r := Shape.pure.inj (Sigma.mk.inj hEq1).1
                 subst hrr
@@ -676,7 +676,7 @@ theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α
                 rw [hs_Y] at hshc_rw; cases hshc_rw
             | query qa' c_X c_Y ht_X hs_Y hcc_XY =>
                 have hEq : (⟨Shape.query qa', c_Y⟩ :
-                    (Poly F α).Obj (ITree F α)) =
+                    (ViewPoly F α).Obj (ITree F α)) =
                   ⟨Shape.query qa, c_cc⟩ := hs_Y.symm.trans hshc_rw
                 have hqq : qa' = qa := Shape.query.inj (Sigma.mk.inj hEq).1
                 subst hqq
@@ -788,7 +788,7 @@ theorem Match.trans_aligned {c a_1 b_1 : ITree F α}
   | pure r Ha Hc =>
       cases Mb with
       | pure r' Hc' Hb =>
-          have heq : (⟨.pure r, PEmpty.elim⟩ : (Poly F α).Obj _) =
+          have heq : (⟨.pure r, PEmpty.elim⟩ : (ViewPoly F α).Obj _) =
               ⟨.pure r', PEmpty.elim⟩ := Hc.symm.trans Hc'
           have hrr : r = r' := Shape.pure.inj (Sigma.mk.inj heq).1
           subst hrr
@@ -799,7 +799,7 @@ theorem Match.trans_aligned {c a_1 b_1 : ITree F α}
       cases Mb with
       | pure _ Hc' _ => rw [Hc] at Hc'; cases Hc'
       | query q' cc cb Hc' Hb h' =>
-          have heq : (⟨.query q, ca'⟩ : (Poly F α).Obj _) =
+          have heq : (⟨.query q, ca'⟩ : (ViewPoly F α).Obj _) =
               ⟨.query q', cc⟩ := Hc.symm.trans Hc'
           have hqq : q = q' := Shape.query.inj (Sigma.mk.inj heq).1
           subst hqq
@@ -882,7 +882,7 @@ Case analysis on the head of `c'` via `Ma'`:
                 cases MXY with
                 | pure r'' HX HY =>
                     have heq : (⟨Shape.pure r'', PEmpty.elim⟩ :
-                        (Poly F α).Obj (ITree F α)) =
+                        (ViewPoly F α).Obj (ITree F α)) =
                         ⟨Shape.pure r', PEmpty.elim⟩ := HY.symm.trans Hc''
                     have hrr : r' = r'' := (Shape.pure.inj (Sigma.mk.inj heq).1).symm
                     refine ⟨X, b'',
@@ -901,7 +901,7 @@ Case analysis on the head of `c'` via `Ma'`:
                 | pure _ _ HY => rw [HY] at Hc''; cases Hc''
                 | query q'' cq_a cq_b HX HY h_q =>
                     have heq : (⟨Shape.query q'', cq_b⟩ :
-                        (Poly F α).Obj (ITree F α)) =
+                        (ViewPoly F α).Obj (ITree F α)) =
                         ⟨Shape.query q_outer, cq_outer⟩ := HY.symm.trans Hc''
                     have hqq : q'' = q_outer :=
                       Shape.query.inj (Sigma.mk.inj heq).1
@@ -951,7 +951,7 @@ Case analysis on the head of `c'` via `Ma'`:
                 cases MXY with
                 | pure r'' HX HY =>
                     have heq : (⟨Shape.pure r'', PEmpty.elim⟩ :
-                        (Poly F α).Obj (ITree F α)) =
+                        (ViewPoly F α).Obj (ITree F α)) =
                         ⟨Shape.pure r', PEmpty.elim⟩ := HX.symm.trans Hc''
                     have hrr : r' = r'' := (Shape.pure.inj (Sigma.mk.inj heq).1).symm
                     refine ⟨a'', Y, ha.trans ha'',
@@ -970,7 +970,7 @@ Case analysis on the head of `c'` via `Ma'`:
                 | pure _ HX _ => rw [HX] at Hc''; cases Hc''
                 | query q'' cq_a cq_b HX HY h_q =>
                     have heq : (⟨Shape.query q'', cq_a⟩ :
-                        (Poly F α).Obj (ITree F α)) =
+                        (ViewPoly F α).Obj (ITree F α)) =
                         ⟨Shape.query q_a, cq'_outer⟩ := HX.symm.trans Hc''
                     have hqq : q'' = q_a := Shape.query.inj (Sigma.mk.inj heq).1
                     subst hqq

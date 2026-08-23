@@ -18,7 +18,8 @@ first-order maps between plain types:
 
 * `head : State → β ⊕ p.A` — the one-step readout: the value returned at a
   resolved state, or the query position exposed at an unresolved one. This is
-  *definitionally* the position map of the computation's underlying lens.
+  the computational-view reordering of the position map of the computation's
+  operation-first underlying lens.
 * `update? : State × p.Idx → Option State` — the continuation, flattened onto the
   whole index space `p.Idx = Σ a, p.B a`. `none` means the pair is not a step the
   computation can take: the state has already returned, or the answer is tagged
@@ -81,26 +82,30 @@ variable {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
 /-- The one-step readout of a returning computation: the value returned at a
 resolved state, or the query position exposed at an unresolved one.
 
-This is exactly the position map of the computation's underlying lens, so
-computations sharing `toMachine` share it definitionally, and interface or
-result transport act on it by plain post-composition. -/
+This is the computational readout of `view`: the operation-first raw carrier
+stores positions as `p.A ⊕ β`, while clients observe returns first as
+`β ⊕ p.A`. Computations sharing `toMachine` still share this map
+definitionally, and interface or result transport act on it by plain
+post-composition. -/
 def head (M : DynComputation.{u} p α β) : M.State → β ⊕ p.A :=
-  M.toDynSystem.expose
-
-theorem head_def (M : DynComputation.{u} p α β) (state : M.State) :
-    M.head state = M.toDynSystem.expose state := rfl
+  fun state => Sum.map id Sigma.fst (M.view state)
 
 private theorem sumMap_fst_unpack {X : Type w}
-    (step : (C.{uβ, uB} β + p).Obj X) :
-    Sum.map id Sigma.fst (Resumption.unpack (β := β) step) = step.1 := by
+    (step : (p + C.{uβ, uB} β).Obj X) :
+    Sum.map id Sigma.fst (Resumption.unpack (β := β) step) = step.1.swap := by
   rcases step with ⟨position, next⟩
   cases position <;> rfl
+
+theorem head_def (M : DynComputation.{u} p α β) (state : M.State) :
+    M.head state = (M.toDynSystem.expose state).swap := by
+  change Sum.map id Sigma.fst (Resumption.unpack (M.toDynSystem.out state)) = _
+  exact sumMap_fst_unpack (M.toDynSystem.out state)
 
 /-- The readout is the position component of the one-step view: it forgets the
 continuation and keeps the returned value or the exposed position. -/
 theorem head_eq_sumMap_view (M : DynComputation.{u} p α β) (state : M.State) :
     M.head state = Sum.map id Sigma.fst (M.view state) :=
-  (sumMap_fst_unpack (M.toDynSystem.out state)).symm
+  rfl
 
 theorem head_eq_inl_of_view (M : DynComputation.{u} p α β)
     {state : M.State} {value : β} (hview : M.view state = Sum.inl value) :
@@ -257,7 +262,10 @@ Every step map is shared definitionally by computations that share `toMachine`.
 
 @[simp] theorem head_mapResult {γ : Type uγ} (M : DynComputation.{u} p α β)
     (f : β → γ) (state : M.State) :
-    (M.mapResult f).head state = Sum.map f id (M.head state) := rfl
+    (M.mapResult f).head state = Sum.map f id (M.head state) := by
+  unfold head
+  rw [mapResult_view]
+  cases M.view state <;> rfl
 
 @[simp] theorem update?_mapResult [DecidableEq p.A] {γ : Type uγ}
     (M : DynComputation.{u} p α β) (f : β → γ) (step : M.State × p.Idx) :
@@ -278,7 +286,10 @@ Every step map is shared definitionally by computations that share `toMachine`.
 
 @[simp] theorem head_wrap {q : PFunctor.{uA₂, uB₂}} (M : DynComputation.{u} p α β)
     (lens : Lens p q) (state : M.State) :
-    (M.wrap lens).head state = Sum.map id lens.toFunA (M.head state) := rfl
+    (M.wrap lens).head state = Sum.map id lens.toFunA (M.head state) := by
+  unfold head
+  rw [wrap_view]
+  cases M.view state <;> rfl
 
 /-- The flattened index pullback of a lens, absorbing the resolved case: an answer
 at the position the lens exposes for `a` is pulled back to an answer at `a`, while

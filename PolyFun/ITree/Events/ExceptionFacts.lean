@@ -42,10 +42,10 @@ attribute [local implicit_reducible] Sum.elim
         PFunctor.{max uε uEA, uB})) r) =
       ⟨.pure (.ok r), PEmpty.elim⟩ := by
     simp [interpExceptStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpExcept, shape'_corec_eq _ _ hstep]
   unfold ITree.pure
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   congr 1
   funext b
   exact b.elim
@@ -57,10 +57,10 @@ attribute [local implicit_reducible] Sum.elim
   have hstep : interpExceptStep (step t) =
       ⟨.step, fun _ => t⟩ := by
     simp [interpExceptStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpExcept, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   rfl
 
 @[simp] theorem interpExcept_throw (e : ε)
@@ -70,10 +70,10 @@ attribute [local implicit_reducible] Sum.elim
   have hstep : interpExceptStep (query (.inl e) k) =
       ⟨.pure (.error e), PEmpty.elim⟩ := by
     simp [interpExceptStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpExcept, shape'_corec_eq _ _ hstep]
   unfold ITree.pure
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   congr 1
   funext b
   exact b.elim
@@ -86,10 +86,10 @@ attribute [local implicit_reducible] Sum.elim
   have hstep : interpExceptStep (query (.inr e) k) =
       ⟨.query e, k⟩ := by
     simp [interpExceptStep]
-  apply PFunctor.M.eq_of_dest_eq
-  rw [interpExcept, PFunctor.M.dest_corec_eq _ _ hstep]
+  apply eq_of_shape'_eq
+  rw [interpExcept, shape'_corec_eq _ _ hstep]
   unfold ITree.query
-  rw [PFunctor.M.dest_mk]
+  rw [ITree.shape'_mk]
   rfl
 
 /-- Exception interpretation is the canonical exception-transformer monad
@@ -107,7 +107,7 @@ theorem interpExcept_bind
   let next : Except ε α → ITree E (Except ε β)
     | .error e => pure (.error e)
     | .ok a => interpExcept (k a)
-  refine PFunctor.M.bisim
+  refine ITree.bisim
     (fun (u v : ITree E (Except ε β)) =>
       u = v ∨
       ∃ t : ITree (ExceptE.{uε, uB} ε + E :
@@ -116,28 +116,19 @@ theorem interpExcept_bind
         v = bind (interpExcept t) next)
     ?_ _ _ (Or.inr ⟨t, rfl, rfl⟩)
   rintro u v (rfl | ⟨t, rfl, rfl⟩)
-  · rcases h : PFunctor.M.dest u with ⟨sh, c⟩
+  · rcases h : ITree.shape' u with ⟨sh, c⟩
     exact ⟨sh, c, c, rfl, rfl, fun _ => Or.inl rfl⟩
-  · rcases h : PFunctor.M.dest t with ⟨sh, c⟩
+  · rcases h : ITree.shape' t with ⟨sh, c⟩
     cases sh with
     | pure r =>
-        have ht : t = pure r := by
-          apply PFunctor.M.eq_of_dest_eq
-          rw [h]
-          change (⟨.pure r, c⟩ :
-              (Poly (ExceptE.{uε, uB} ε + E :
-                PFunctor.{max uε uEA, uB}) α).Obj _) =
-            ⟨.pure r, PEmpty.elim⟩
-          congr 1
-          funext z
-          exact z.elim
+        have ht : t = pure r := eq_pure_of_dest h
         subst ht
         rw [bind_pure_left, interpExcept_pure, bind_pure_left]
-        rcases hk : PFunctor.M.dest (interpExcept (k r)) with ⟨sh', c'⟩
+        rcases hk : ITree.shape' (interpExcept (k r)) with ⟨sh', c'⟩
         exact ⟨sh', c', c', rfl, rfl, fun _ => Or.inl rfl⟩
     | step =>
         have ht : t = step (c PUnit.unit) := by
-          apply PFunctor.M.eq_of_dest_eq
+          apply eq_of_shape'_eq
           rw [h]
           rfl
         subst ht
@@ -156,14 +147,14 @@ theorem interpExcept_bind
             have ht : t = query
                 (Sum.inl e : (ExceptE.{uε, uB} ε + E :
                   PFunctor.{max uε uEA, uB}).A) c := by
-              apply PFunctor.M.eq_of_dest_eq
+              apply eq_of_shape'_eq
               rw [h]
               rfl
             subst ht
             clear h
             rw [bind_query, interpExcept_throw,
               interpExcept_throw, bind_pure_left]
-            rcases hp : PFunctor.M.dest
+            rcases hp : ITree.shape'
                 (pure (F := E) (Except.error e : Except ε β)) with ⟨sh', c'⟩
             exact ⟨sh', c', c', rfl, rfl, fun _ => Or.inl rfl⟩
         | inr e =>
@@ -173,7 +164,7 @@ theorem interpExcept_bind
             have ht : t = query
                 (Sum.inr e : (ExceptE.{uε, uB} ε + E :
                   PFunctor.{max uε uEA, uB}).A) c := by
-              apply PFunctor.M.eq_of_dest_eq
+              apply eq_of_shape'_eq
               rw [h]
               rfl
             subst ht

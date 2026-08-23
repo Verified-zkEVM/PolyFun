@@ -26,17 +26,19 @@ namespace PFunctor.Resumption
 variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
   {α : Type uα} {β : Type uβ} {γ : Type uγ}
 
+attribute [local implicit_reducible] PFunctor.Obj
+
 /-! ## Embedding into interaction trees -/
 
 /-- One-step ITree coalgebra corresponding to a resumption return/query view. -/
-def toITreeStep (computation : Resumption p β) : (ITree.Poly p β).Obj (Resumption p β) :=
+def toITreeStep (computation : Resumption p β) : (ITree.ViewPoly p β).Obj (Resumption p β) :=
   match dest computation with
   | Sum.inl value => ⟨.pure value, PEmpty.elim⟩
   | Sum.inr ⟨position, next⟩ => ⟨.query position, next⟩
 
 /-- Embed a resumption as an interaction tree without inserting tau steps. -/
 def toITree (computation : Resumption p β) : ITree p β :=
-  M.corec toITreeStep computation
+  ITree.corec toITreeStep computation
 
 @[simp] theorem shape'_toITree (computation : Resumption p β) :
     ITree.shape' (toITree computation) =
@@ -44,42 +46,35 @@ def toITree (computation : Resumption p β) : ITree p β :=
       | Sum.inl value => ⟨.pure value, PEmpty.elim⟩
       | Sum.inr ⟨position, next⟩ =>
           ⟨.query position, fun direction => toITree (next direction)⟩ := by
-  unfold toITree ITree.shape'
+  unfold toITree
+  rw [ITree.shape'_corec_apply]
+  unfold toITreeStep
   rcases h : dest computation with value | ⟨position, next⟩
-  · have hstep : toITreeStep computation =
-        (⟨.pure value, PEmpty.elim⟩ : (ITree.Poly p β).Obj (Resumption p β)) := by
-      unfold toITreeStep
-      rw [h]
-    rw [M.dest_corec_eq toITreeStep computation hstep]
+  · change (⟨.pure value, fun direction =>
+        ITree.corec toITreeStep (PEmpty.elim direction)⟩ :
+      (ITree.ViewPoly p β).Obj (ITree p β)) = ⟨.pure value, PEmpty.elim⟩
     apply Sigma.ext
     · rfl
     · apply heq_of_eq
       funext direction
       exact PEmpty.elim direction
-  · have hstep : toITreeStep computation =
-        (⟨.query position, next⟩ : (ITree.Poly p β).Obj (Resumption p β)) := by
-      unfold toITreeStep
-      rw [h]
-    rw [M.dest_corec_eq toITreeStep computation hstep]
+  · rfl
 
 @[simp] theorem toITree_pure (value : β) :
     toITree (pure (p := p) value) = ITree.pure value := by
-  apply M.eq_of_dest_eq
-  change ITree.shape' (toITree (pure (p := p) value)) =
-    ITree.shape' (ITree.pure value)
+  apply ITree.eq_of_shape'_eq
   rw [shape'_toITree, dest_pure, ITree.shape'_pure]
 
 @[simp] theorem toITree_query (position : p.A) (next : p.B position → Resumption p β) :
     toITree (query position next) =
       ITree.query position (fun direction => toITree (next direction)) := by
-  apply M.eq_of_dest_eq
+  apply ITree.eq_of_shape'_eq
   simp
-  rfl
 
 theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β) :
     toITree (bind computation k) =
       ITree.bind (toITree computation) (fun value => toITree (k value)) := by
-  refine M.bisim
+  refine ITree.bisim
     (fun left right : ITree p β => left = right ∨ ∃ source : Resumption p α,
       left = toITree (bind source k) ∧
       right = ITree.bind (toITree source) (fun value => toITree (k value)))
@@ -87,7 +82,7 @@ theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β
   rintro left right (hEq | ⟨source, hleft, hright⟩)
   · subst left
     rcases h : ITree.shape' right with ⟨shape, next⟩
-    exact ⟨shape, next, next, h, h, fun _ => Or.inl rfl⟩
+    exact ⟨shape, next, next, rfl, rfl, fun _ => Or.inl rfl⟩
   · subst left
     subst right
     rcases h : dest source with value | ⟨position, next⟩
@@ -97,7 +92,7 @@ theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β
       subst source
       simp only [bind_pure_left, toITree_pure, ITree.bind_pure_left]
       rcases hk : ITree.shape' (toITree (k value)) with ⟨shape, next⟩
-      exact ⟨shape, next, next, hk, hk, fun _ => Or.inl rfl⟩
+      exact ⟨shape, next, next, rfl, rfl, fun _ => Or.inl rfl⟩
     · have hsource : source = query position next := by
         apply eq_of_dest_eq
         simpa using h
@@ -118,7 +113,7 @@ theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β
 
 @[simp] theorem toITree_mapLens (lens : Lens p q) (computation : Resumption p β) :
     toITree (mapLens lens computation) = ITree.mapSpec lens (toITree computation) := by
-  refine M.bisim
+  refine ITree.bisim
     (fun left right : ITree q β => ∃ source : Resumption p β,
       left = toITree (mapLens lens source) ∧
       right = ITree.mapSpec lens (toITree source))
@@ -254,7 +249,7 @@ variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
   · exact ⟨computation, rfl⟩
 
 /-- The proof carried by one tau-free observation. -/
-def TauFreeLayer (observed : (ITree.Poly p β).Obj (_root_.ITree p β)) : Prop :=
+def TauFreeLayer (observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β)) : Prop :=
   match observed with
   | ⟨.pure _, _⟩ => True
   | ⟨.step, _⟩ => False
@@ -262,13 +257,13 @@ def TauFreeLayer (observed : (ITree.Poly p β).Obj (_root_.ITree p β)) : Prop :
 
 /-- Package a tau-free tree's observation with its one-layer invariant. -/
 def tauFreeHead (state : {tree : _root_.ITree p β // ITree.TauFree tree}) :
-    Σ' observed : (ITree.Poly p β).Obj (_root_.ITree p β), TauFreeLayer observed :=
+    Σ' observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β), TauFreeLayer observed :=
   ⟨ITree.shape' state.1, by
     simpa [TauFreeLayer, ITree.TauFreeF] using state.2.unfold⟩
 
 /-- Decode a proof-carrying tau-free observation into a resumption layer. -/
 def ofTauFreeHead
-    (head : Σ' observed : (ITree.Poly p β).Obj (_root_.ITree p β), TauFreeLayer observed) :
+    (head : Σ' observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β), TauFreeLayer observed) :
     β ⊕ p.Obj {tree : _root_.ITree p β // ITree.TauFree tree} :=
   match head with
   | ⟨⟨.pure value, _⟩, _⟩ => Sum.inl value
@@ -296,7 +291,7 @@ theorem ofTauFreeStep_of_shape'_pure
     ofTauFreeStep state = Sum.inl value := by
   have hhead : tauFreeHead state =
       (⟨⟨.pure value, next⟩, trivial⟩ :
-        Σ' observed : (ITree.Poly p β).Obj (_root_.ITree p β), TauFreeLayer observed) := by
+        Σ' observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β), TauFreeLayer observed) := by
     exact PSigma.mk.inj_iff.mpr ⟨hshape, proof_irrel_heq _ _⟩
   rw [ofTauFreeStep, hhead]
   rfl
@@ -310,7 +305,7 @@ theorem ofTauFreeStep_of_shape'_query
   have hhead : tauFreeHead state =
       (⟨⟨.query position, next⟩,
         fun direction => state.2.of_shape'_query hshape direction⟩ :
-        Σ' observed : (ITree.Poly p β).Obj (_root_.ITree p β), TauFreeLayer observed) := by
+        Σ' observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β), TauFreeLayer observed) := by
     exact PSigma.mk.inj_iff.mpr ⟨hshape, proof_irrel_heq _ _⟩
   rw [ofTauFreeStep, hhead]
   rfl
@@ -324,7 +319,7 @@ theorem ofTauFreeStep_of_shape'_query
 theorem toITree_ofTauFreeITree
     (state : {tree : _root_.ITree p β // ITree.TauFree tree}) :
     toITree (ofTauFreeITree state) = state.1 := by
-  refine M.bisim
+  refine ITree.bisim
     (fun left right : _root_.ITree p β => ∃ current,
       left = toITree (ofTauFreeITree current) ∧ right = current.1)
     ?_ _ _ ⟨state, rfl, rfl⟩
@@ -334,9 +329,8 @@ theorem toITree_ofTauFreeITree
   rcases hshape : ITree.shape' current.1 with ⟨shape, next⟩
   cases shape with
   | pure value =>
-      refine ⟨.pure value, PEmpty.elim, next, ?_, hshape, fun direction => ?_⟩
-      · change ITree.shape' (toITree (ofTauFreeITree current)) = _
-        rw [shape'_toITree, dest_ofTauFreeITree]
+      refine ⟨.pure value, PEmpty.elim, next, ?_, rfl, fun direction => ?_⟩
+      · rw [shape'_toITree, dest_ofTauFreeITree]
         rw [ofTauFreeStep_of_shape'_pure current value next hshape]
         rfl
       · exact PEmpty.elim direction
@@ -349,9 +343,8 @@ theorem toITree_ofTauFreeITree
       refine ⟨.query position,
         fun direction => toITree
           (ofTauFreeITree ⟨next direction, hchildren direction⟩),
-        next, ?_, hshape, ?_⟩
-      · change ITree.shape' (toITree (ofTauFreeITree current)) = _
-        rw [shape'_toITree, dest_ofTauFreeITree]
+        next, ?_, rfl, ?_⟩
+      · rw [shape'_toITree, dest_ofTauFreeITree]
         rw [ofTauFreeStep_of_shape'_query current position next hshape]
         rfl
       · exact fun direction =>
