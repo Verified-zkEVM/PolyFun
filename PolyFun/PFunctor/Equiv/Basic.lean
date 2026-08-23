@@ -168,7 +168,6 @@ def sumProdDistrib (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₁}) (
     | ⟨.inl _, _⟩ | ⟨.inr _, _⟩ => _root_.Equiv.refl _
 
 /-- Product distributes over sum: `P * (Q + R) ≃ₚ (P * Q) + (P * R)` -/
-@[simps]
 def prodSumDistrib (R : PFunctor.{uA₃, uB₂}) :
     (P * (Q + R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) ≃ₚ
     ((P * Q) + (P * R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) where
@@ -188,6 +187,15 @@ def prodSumDistrib (R : PFunctor.{uA₃, uB₂}) :
         commSum).equivA
   equivB := fun
     | ⟨_, .inl _⟩ | ⟨_, .inr _⟩ => _root_.Equiv.refl _
+
+@[simp, backward_defeq]
+theorem prodSumDistrib_equivA (R : PFunctor.{uA₃, uB₂}) :
+    (prodSumDistrib P Q R).equivA = _root_.Equiv.prodSumDistrib P.A Q.A R.A := rfl
+
+@[simp, backward_defeq]
+theorem prodSumDistrib_equivB (R : PFunctor.{uA₃, uB₂}) (a : (P * (Q + R)).A) :
+    (prodSumDistrib P Q R).equivB a = match a with
+      | ⟨_, .inl _⟩ | ⟨_, .inr _⟩ => _root_.Equiv.refl _ := rfl
 
 end Prod
 
