@@ -27,6 +27,17 @@ example (step : (p + C.{uβ, uB} β).Obj X) :
     viewEquiv.symm (viewEquiv step) = step := by
   simp
 
+/-- Return and query views inject into the expected operation-first raw
+summands, with the query continuation left attached to its operation. -/
+example (value : β) :
+    pack (Sum.inl value : β ⊕ p.Obj X) = ⟨Sum.inr value, PEmpty.elim⟩ := by
+  rfl
+
+example (position : p.A) (onAnswer : p.B position → X) :
+    pack (Sum.inr ⟨position, onAnswer⟩ : β ⊕ p.Obj X) =
+      ⟨Sum.inl position, onAnswer⟩ := by
+  rfl
+
 /-- The raw resumption carrier uses the same operation-first convention as
 the interaction-tree carrier. -/
 example : Resumption p β = M.{max uA uβ, uB} (p + C.{uβ, uB} β) := rfl
