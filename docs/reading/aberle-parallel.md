@@ -103,7 +103,7 @@ proof-relevant invariants are preserved for `Display.parallelSum`.
 
 State-free behavior is obtained by running the parallel product of the two
 terminal responders from a pair of behavior trees. This is deliberately not
-presented as merely `CofreeP.layTensor`: the synchronized joint component is
+presented as merely `CofreeP.laxTensor`: the synchronized joint component is
 tensor-like, but the one-sided branches must retain the inactive behavior.
 `parallelDisplayedBehavior` applies terminal displayed semantics to the same
 coalgebra construction.

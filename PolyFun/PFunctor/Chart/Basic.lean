@@ -514,6 +514,9 @@ def yTensor : y ⊗ P ≃c P where
   left_inv := rfl
   right_inv := rfl
 
+@[deprecated (since := "2026-08-17")] alias tensorX := tensorY
+@[deprecated (since := "2026-08-17")] alias xTensor := yTensor
+
 /-- Tensor product with `0` is zero (left) -/
 def zeroTensor : 0 ⊗ P ≃c 0 where
   toChart := (fun a => PEmpty.elim a.1) ⇉ fun a => PEmpty.elim a.1

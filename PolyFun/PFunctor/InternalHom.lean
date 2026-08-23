@@ -107,10 +107,14 @@ def ihomY (r : PFunctor.{uA, uB}) : ihom y r ≃ₗ r where
   left_inv := rfl
   right_inv := rfl
 
+@[deprecated (since := "2026-08-17")] alias ihomX := ihomY
+
 /-- The positions of `[q, y]` are the sections (handlers) of `q`, i.e. the
 lenses `q ⇆ y = enclose q`. -/
 theorem ihom_y_A (q : PFunctor.{uA, uB}) :
     (ihom q y.{uA, uB}).A = Lens q y.{uA, uB} := rfl
+
+@[deprecated (since := "2026-08-17")] alias ihom_X_A := ihom_y_A
 
 /-! ## The internal hom of a coproduct
 

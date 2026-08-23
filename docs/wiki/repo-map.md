@@ -118,7 +118,8 @@ PFunctor/{Cofree/Universal, Comonoid/Tensor}
   -> PFunctor/Cofree/LaxMonoidal
 PFunctor/{Basic, Equiv/Basic, Lens/Basic, Chart/Basic, InternalHom,
   Adjunctions, Cofree/FiniteProjection}
-  -> PFunctor/Deprecated  (transitional X-spelling compatibility surface)
+  -> PFunctor/Deprecated  (aggregate import for module-owned transitional
+     X-spelling compatibility)
 PFunctor/{Free/Polynomial, Cofree/Polynomial}
   -> PFunctor/PatternRunsOnMatter/Basic
 PFunctor/{PatternRunsOnMatter/Basic, Free/Universal,

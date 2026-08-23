@@ -41,6 +41,9 @@ unit for both composition `◃` and the tensor product `⊗` (up to equivalence)
 def y : PFunctor.{uA, uB} :=
   ⟨PUnit, fun _ => PUnit⟩
 
+/-- Deprecated compatibility name for the variable polynomial. -/
+@[deprecated (since := "2026-08-17")] alias X := y
+
 instance : IsEmpty (A 0) := inferInstanceAs (IsEmpty PEmpty)
 instance instUniqueAOfNatOne : Unique (A 1) := inferInstanceAs (Unique PUnit)
 instance : Unique y.A := inferInstanceAs (Unique PUnit)
@@ -51,6 +54,15 @@ def monomial (A : Type uA) (B : Type uB) : PFunctor.{uA, uB} :=
   ⟨A, fun _ => B⟩
 
 @[inherit_doc] scoped[PFunctor] infixr:82 " y^ " => monomial
+
+/-- Parse-only compatibility spelling of the monomial `A y^ B`.
+
+Kept in this foundational module so direct importers of `PFunctor.Basic` or
+`PFunctor.Lens.Basic` continue to elaborate while migrating to `y^`. -/
+scoped syntax:82 term:83 " X^ " term:82 : term
+
+scoped macro_rules
+  | `($A X^ $B) => `(PFunctor.monomial $A $B)
 
 /-- The constant polynomial functor `A y^ PEmpty` -/
 @[reducible]
@@ -106,6 +118,9 @@ instance {β} : Unique (A (purePower β)) := inferInstanceAs (Unique PUnit)
 
 @[simp] lemma y_A : y.A = PUnit := rfl
 @[simp] lemma y_B (a : y.A) : y.B a = PUnit := rfl
+
+@[deprecated (since := "2026-08-17")] alias X_A := y_A
+@[deprecated (since := "2026-08-17")] alias X_B := y_B
 
 @[simp] lemma linear_A (A : Type u) : (linear A).A = A := rfl
 @[simp] lemma linear_B (A : Type u) (a : (linear A).A) : (linear A).B a = PUnit := rfl
@@ -212,6 +227,11 @@ def compNth (P : PFunctor.{uA, uB}) : Nat → PFunctor.{max uA uB, uB}
   | Nat.succ n => P ◃ compNth P n
 
 @[inherit_doc] scoped[PFunctor] infixl:85 " ◃^ " => compNth
+
+/-- Compatibility instance for the former `p ^ n` composition-power spelling.
+The canonical notation is `p ◃^ n`. -/
+instance instNatPowPFunctor : NatPow PFunctor.{max uA uB, uB} where
+  pow := compNth
 
 end Comp
 
@@ -480,6 +500,9 @@ theorem ext {P Q : PFunctor.{uA, uB}} (h : P.A = Q.A) (h' : ∀ a, P.B a = Q.B (
 
 lemma y_eq_linear_pUnit : y = linear PUnit := rfl
 lemma y_eq_purePower_pUnit : y = purePower PUnit := rfl
+
+@[deprecated (since := "2026-08-17")] alias X_eq_linear_pUnit := y_eq_linear_pUnit
+@[deprecated (since := "2026-08-17")] alias X_eq_purePower_pUnit := y_eq_purePower_pUnit
 
 section ULift
 

@@ -77,7 +77,7 @@ theorem cogenerator_comp_laxUnit :
 
 /-- The binary lax-monoidal comparison retrofunctor, obtained by cofreely
 extending the tensor of the two cogenerator lenses. -/
-def layTensorHom (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
+def laxTensorHom (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
     Comonoid.Hom
       (Comonoid.tensor (comonoid P) (comonoid Q))
       (comonoid (P ⊗ Q)) :=
@@ -85,26 +85,26 @@ def layTensorHom (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
     (cogenerator P ⊗ₗ cogenerator Q)
 
 /-- The underlying lens of the binary lax-monoidal comparison. -/
-def layTensor (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
+def laxTensor (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
     Lens (CofreeP P ⊗ CofreeP Q) (CofreeP (P ⊗ Q)) :=
-  (layTensorHom P Q).toLens
+  (laxTensorHom P Q).toLens
 
 /- Lean 4.33: the comparison retrofunctors themselves must likewise unfold
 during implicit-transparency defeq checks below. -/
-attribute [local implicit_reducible] laxUnitHom laxUnit layTensorHom layTensor
+attribute [local implicit_reducible] laxUnitHom laxUnit laxTensorHom laxTensor
 
 @[simp]
-theorem layTensorHom_toLens
+theorem laxTensorHom_toLens
     (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
-    (layTensorHom P Q).toLens = layTensor P Q :=
+    (laxTensorHom P Q).toLens = laxTensor P Q :=
   rfl
 
 /-- Projecting the binary comparison to one generator layer recovers the
 tensor of the two cogenerators. -/
 @[simp]
-theorem cogenerator_comp_layTensor
+theorem cogenerator_comp_laxTensor
     (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
-    cogenerator (P ⊗ Q) ∘ₗ layTensor P Q =
+    cogenerator (P ⊗ Q) ∘ₗ laxTensor P Q =
       cogenerator P ⊗ₗ cogenerator Q :=
   restrict_extend (Comonoid.tensor (comonoid P) (comonoid Q))
     (cogenerator P ⊗ₗ cogenerator Q)
@@ -129,20 +129,20 @@ theorem laxUnit_toFunB
   Subsingleton.elim _ _
 
 @[simp]
-theorem layTensor_head (P : PFunctor.{uA₁, uB₁})
+theorem laxTensor_head (P : PFunctor.{uA₁, uB₁})
     (Q : PFunctor.{uA₂, uB₂})
     (left : (CofreeP P).A) (right : (CofreeP Q).A) :
-    M.head ((layTensor P Q).toFunA (left, right)) =
+    M.head ((laxTensor P Q).toFunA (left, right)) =
       (M.head left, M.head right) :=
   rfl
 
 @[simp]
-theorem layTensor_children (P : PFunctor.{uA₁, uB₁})
+theorem laxTensor_children (P : PFunctor.{uA₁, uB₁})
     (Q : PFunctor.{uA₂, uB₂})
     (left : (CofreeP P).A) (right : (CofreeP Q).A)
     (direction : P.B (M.head left) × Q.B (M.head right)) :
-    M.children ((layTensor P Q).toFunA (left, right)) direction =
-      (layTensor P Q).toFunA
+    M.children ((laxTensor P Q).toFunA (left, right)) direction =
+      (laxTensor P Q).toFunA
         (M.children left direction.1, M.children right direction.2) := by
   -- Lean 4.33: the direction transported across `head_unfoldShape` fails the
   -- implicit-transparency check of a `rw`, so the recurrence is applied as an
@@ -152,11 +152,11 @@ theorem layTensor_children (P : PFunctor.{uA₁, uB₁})
     (cogenerator P ⊗ₗ cogenerator Q) (left, right) direction
 
 @[simp]
-theorem layTensor_toFunB_root (P : PFunctor.{uA₁, uB₁})
+theorem laxTensor_toFunB_root (P : PFunctor.{uA₁, uB₁})
     (Q : PFunctor.{uA₂, uB₂})
     (left : (CofreeP P).A) (right : (CofreeP Q).A) :
-    (layTensor P Q).toFunB (left, right)
-        (.root ((layTensor P Q).toFunA (left, right))) =
+    (laxTensor P Q).toFunB (left, right)
+        (.root ((laxTensor P Q).toFunA (left, right))) =
       (.root left, .root right) := by
   -- Lean 4.33: as above, the root direction is produced by an explicit term.
   exact unfoldDirection_root
@@ -166,17 +166,17 @@ theorem layTensor_toFunB_root (P : PFunctor.{uA₁, uB₁})
 /-- Low-level recurrence for pulling a non-root vertex back through the
 cofree laxator. Its explicit cast records the definitional mismatch between
 the actual child of the unfolded tree and the unfolding of the two selected
-children. Most consumers should use `layTensor_childObj`, which packages and
+children. Most consumers should use `laxTensor_childObj`, which packages and
 hides this transport. -/
-theorem layTensor_toFunB_child (P : PFunctor.{uA₁, uB₁})
+theorem laxTensor_toFunB_child (P : PFunctor.{uA₁, uB₁})
     (Q : PFunctor.{uA₂, uB₂})
     (left : (CofreeP P).A) (right : (CofreeP Q).A)
     (direction : P.B (M.head left) × Q.B (M.head right))
     (next : M.Vertex
-      (M.children ((layTensor P Q).toFunA (left, right)) direction)) :
-    (layTensor P Q).toFunB (left, right) (.child direction next) =
-      let childEq := layTensor_children P Q left right direction
-      let pulled := (layTensor P Q).toFunB
+      (M.children ((laxTensor P Q).toFunA (left, right)) direction)) :
+    (laxTensor P Q).toFunB (left, right) (.child direction next) =
+      let childEq := laxTensor_children P Q left right direction
+      let pulled := (laxTensor P Q).toFunB
         (M.children left direction.1, M.children right direction.2)
         (cast (congrArg M.Vertex childEq) next)
       (.child direction.1 pulled.1, .child direction.2 pulled.2) := by
@@ -189,26 +189,26 @@ theorem layTensor_toFunB_child (P : PFunctor.{uA₁, uB₁})
 
 /-- The synchronized child of the cofree laxator, packaged with its complete
 backward vertex map. This is the stable, cast-free rewriting boundary for
-consumers that recurse through `layTensor`. -/
-theorem layTensor_childObj (P : PFunctor.{uA₁, uB₁})
+consumers that recurse through `laxTensor`. -/
+theorem laxTensor_childObj (P : PFunctor.{uA₁, uB₁})
     (Q : PFunctor.{uA₂, uB₂})
     (left : (CofreeP P).A) (right : (CofreeP Q).A)
     (direction : P.B (M.head left) × Q.B (M.head right)) :
-    let combined := (layTensor P Q).toFunA (left, right)
-    let mappedChild := Lens.mapObj (layTensor P Q)
+    let combined := (laxTensor P Q).toFunA (left, right)
+    let mappedChild := Lens.mapObj (laxTensor P Q)
       (⟨(M.children left direction.1,
           M.children right direction.2), id⟩ :
         (CofreeP P ⊗ CofreeP Q).Obj
           (M.Vertex (M.children left direction.1) ×
             M.Vertex (M.children right direction.2)))
     (⟨M.children combined direction, fun next =>
-        (layTensor P Q).toFunB (left, right) (.child direction next)⟩ :
+        (laxTensor P Q).toFunB (left, right) (.child direction next)⟩ :
       (CofreeP (P ⊗ Q)).Obj (M.Vertex left × M.Vertex right)) =
     ⟨mappedChild.1, fun next =>
       let pulled := mappedChild.2 next
       (.child direction.1 pulled.1, .child direction.2 pulled.2)⟩ := by
   dsimp only
-  let childEq := layTensor_children P Q left right direction
+  let childEq := laxTensor_children P Q left right direction
   apply Sigma.ext childEq
   apply Function.hfunext (congrArg M.Vertex childEq)
   intro leftVertex rightVertex hVertex
@@ -216,39 +216,39 @@ theorem layTensor_childObj (P : PFunctor.{uA₁, uB₁})
     (cast_eq_iff_heq).2 hVertex
   subst rightVertex
   apply heq_of_eq
-  change (layTensor P Q).toFunB
+  change (laxTensor P Q).toFunB
       ((left, right) : (CofreeP P ⊗ CofreeP Q).A)
       (.child direction leftVertex) =
-    let pulled := (layTensor P Q).toFunB
+    let pulled := (laxTensor P Q).toFunB
       ((M.children left direction.1,
         M.children right direction.2) :
         (CofreeP P ⊗ CofreeP Q).A)
       (cast (congrArg M.Vertex childEq) leftVertex)
     (.child direction.1 pulled.1, .child direction.2 pulled.2)
-  exact layTensor_toFunB_child P Q left right direction leftVertex
+  exact laxTensor_toFunB_child P Q left right direction leftVertex
 
 /-! ## Naturality -/
 
 /-- The binary comparison is natural in both generator polynomials.  Each
 source/target pair shares only the universe pair required by `mapHom`; the two
 tensor factors remain independent. -/
-theorem layTensorHom_natural
+theorem laxTensorHom_natural
     {P P' : PFunctor.{uA₁, uB₁}} {Q Q' : PFunctor.{uA₂, uB₂}}
     (f : Lens P P') (g : Lens Q Q') :
     (Comonoid.Hom.tensor (mapHom f) (mapHom g)).comp
-        (layTensorHom P' Q') =
-      (layTensorHom P Q).comp (mapHom (f ⊗ₗ g)) := by
+        (laxTensorHom P' Q') =
+      (laxTensorHom P Q).comp (mapHom (f ⊗ₗ g)) := by
   apply hom_ext_cogenerator
   simp only [Comonoid.Hom.comp_toLens, Comonoid.Hom.tensor_toLens,
-    mapHom_toLens, layTensorHom_toLens]
+    mapHom_toLens, laxTensorHom_toLens]
   calc
     cogenerator (P' ⊗ Q') ∘ₗ
-          (layTensor P' Q' ∘ₗ (map f ⊗ₗ map g)) =
-        (cogenerator (P' ⊗ Q') ∘ₗ layTensor P' Q') ∘ₗ
+          (laxTensor P' Q' ∘ₗ (map f ⊗ₗ map g)) =
+        (cogenerator (P' ⊗ Q') ∘ₗ laxTensor P' Q') ∘ₗ
           (map f ⊗ₗ map g) :=
       (Lens.comp_assoc _ _ _).symm
     _ = (cogenerator P' ⊗ₗ cogenerator Q') ∘ₗ
-          (map f ⊗ₗ map g) := by rw [cogenerator_comp_layTensor]
+          (map f ⊗ₗ map g) := by rw [cogenerator_comp_laxTensor]
     _ = (cogenerator P' ∘ₗ map f) ⊗ₗ
           (cogenerator Q' ∘ₗ map g) :=
       (Lens.tensorMap_comp _ _ _ _).symm
@@ -258,60 +258,60 @@ theorem layTensorHom_natural
     _ = (f ⊗ₗ g) ∘ₗ (cogenerator P ⊗ₗ cogenerator Q) :=
       Lens.tensorMap_comp _ _ _ _
     _ = (f ⊗ₗ g) ∘ₗ
-          (cogenerator (P ⊗ Q) ∘ₗ layTensor P Q) := by
-      rw [cogenerator_comp_layTensor]
-    _ = ((f ⊗ₗ g) ∘ₗ cogenerator (P ⊗ Q)) ∘ₗ layTensor P Q :=
+          (cogenerator (P ⊗ Q) ∘ₗ laxTensor P Q) := by
+      rw [cogenerator_comp_laxTensor]
+    _ = ((f ⊗ₗ g) ∘ₗ cogenerator (P ⊗ Q)) ∘ₗ laxTensor P Q :=
       (Lens.comp_assoc _ _ _).symm
     _ = (cogenerator (P' ⊗ Q') ∘ₗ map (f ⊗ₗ g)) ∘ₗ
-          layTensor P Q := by rw [cogenerator_comp_map]
+          laxTensor P Q := by rw [cogenerator_comp_map]
     _ = cogenerator (P' ⊗ Q') ∘ₗ
-          (map (f ⊗ₗ g) ∘ₗ layTensor P Q) :=
+          (map (f ⊗ₗ g) ∘ₗ laxTensor P Q) :=
       Lens.comp_assoc _ _ _
 
 /-- Lens-level naturality of the binary lax-monoidal comparison inside each
 fixed-universe polynomial category.  Cross-universe naturality requires a
 heterogeneous retrofunctor-law API beyond the homogeneous `Comonoid.Hom`
 boundary. -/
-theorem layTensor_natural
+theorem laxTensor_natural
     {P P' : PFunctor.{uA₁, uB₁}} {Q Q' : PFunctor.{uA₂, uB₂}}
     (f : Lens P P') (g : Lens Q Q') :
-    layTensor P' Q' ∘ₗ (map f ⊗ₗ map g) =
-      map (f ⊗ₗ g) ∘ₗ layTensor P Q :=
-  congrArg Comonoid.Hom.toLens (layTensorHom_natural f g)
+    laxTensor P' Q' ∘ₗ (map f ⊗ₗ map g) =
+      map (f ⊗ₗ g) ∘ₗ laxTensor P Q :=
+  congrArg Comonoid.Hom.toLens (laxTensorHom_natural f g)
 
 /-! ## Lax-monoidal coherence -/
 
 /-- Left-unit coherence for the lax-monoidal comparison, at the level of
 retrofunctors. -/
-theorem layTensorHom_unit_left (P : PFunctor.{uA, uB}) :
+theorem laxTensorHom_unit_left (P : PFunctor.{uA, uB}) :
     ((Comonoid.Hom.tensor laxUnitHom.{uA, uB}
         (Comonoid.Hom.id (comonoid P))).comp
-      (layTensorHom y.{uA, uB} P)).comp
+      (laxTensorHom y.{uA, uB} P)).comp
         (mapHom (Lens.Equiv.yTensor (P := P)).toLens) =
       (Comonoid.tensorUnitLeftIso (comonoid P)).hom := by
   apply hom_ext_cogenerator
   simp only [Comonoid.Hom.comp_toLens, Comonoid.Hom.tensor_toLens,
-    Comonoid.Hom.id_toLens, mapHom_toLens, layTensorHom_toLens,
+    Comonoid.Hom.id_toLens, mapHom_toLens, laxTensorHom_toLens,
     laxUnitHom_toLens, Comonoid.tensorUnitLeftIso_hom_toLens]
   calc
     cogenerator P ∘ₗ
           (map ((Lens.Equiv.yTensor (P := P)).toLens) ∘ₗ
-            (layTensor y.{uA, uB} P ∘ₗ
+            (laxTensor y.{uA, uB} P ∘ₗ
               (laxUnit.{uA, uB} ⊗ₗ Lens.id (CofreeP P)))) =
         ((Lens.Equiv.yTensor (P := P)).toLens ∘ₗ
           cogenerator (y.{uA, uB} ⊗ P)) ∘ₗ
-            (layTensor y.{uA, uB} P ∘ₗ
+            (laxTensor y.{uA, uB} P ∘ₗ
               (laxUnit.{uA, uB} ⊗ₗ Lens.id (CofreeP P))) := by
       rw [← Lens.comp_assoc, cogenerator_comp_map]
     _ = (Lens.Equiv.yTensor (P := P)).toLens ∘ₗ
           ((cogenerator (y.{uA, uB} ⊗ P) ∘ₗ
-              layTensor y.{uA, uB} P) ∘ₗ
+              laxTensor y.{uA, uB} P) ∘ₗ
             (laxUnit.{uA, uB} ⊗ₗ Lens.id (CofreeP P))) := by
       simp only [Lens.comp_assoc]
     _ = (Lens.Equiv.yTensor (P := P)).toLens ∘ₗ
           ((cogenerator y.{uA, uB} ⊗ₗ cogenerator P) ∘ₗ
             (laxUnit.{uA, uB} ⊗ₗ Lens.id (CofreeP P))) := by
-      rw [cogenerator_comp_layTensor]
+      rw [cogenerator_comp_laxTensor]
     _ = (Lens.Equiv.yTensor (P := P)).toLens ∘ₗ
           ((cogenerator y.{uA, uB} ∘ₗ laxUnit.{uA, uB}) ⊗ₗ
             (cogenerator P ∘ₗ Lens.id (CofreeP P))) := by
@@ -327,35 +327,35 @@ theorem layTensorHom_unit_left (P : PFunctor.{uA, uB}) :
 
 /-- Right-unit coherence for the lax-monoidal comparison, at the level of
 retrofunctors. -/
-theorem layTensorHom_unit_right (P : PFunctor.{uA, uB}) :
+theorem laxTensorHom_unit_right (P : PFunctor.{uA, uB}) :
     ((Comonoid.Hom.tensor (Comonoid.Hom.id (comonoid P))
         laxUnitHom.{uA, uB}).comp
-      (layTensorHom P y.{uA, uB})).comp
+      (laxTensorHom P y.{uA, uB})).comp
         (mapHom (Lens.Equiv.tensorY (P := P)).toLens) =
       (Comonoid.tensorUnitRightIso (comonoid P)).hom := by
   apply hom_ext_cogenerator
   simp only [Comonoid.Hom.comp_toLens, Comonoid.Hom.tensor_toLens,
-    Comonoid.Hom.id_toLens, mapHom_toLens, layTensorHom_toLens,
+    Comonoid.Hom.id_toLens, mapHom_toLens, laxTensorHom_toLens,
     laxUnitHom_toLens, Comonoid.tensorUnitRightIso_hom_toLens]
   calc
     cogenerator P ∘ₗ
           (map ((Lens.Equiv.tensorY (P := P)).toLens) ∘ₗ
-            (layTensor P y.{uA, uB} ∘ₗ
+            (laxTensor P y.{uA, uB} ∘ₗ
               (Lens.id (CofreeP P) ⊗ₗ laxUnit.{uA, uB}))) =
         ((Lens.Equiv.tensorY (P := P)).toLens ∘ₗ
           cogenerator (P ⊗ y.{uA, uB})) ∘ₗ
-            (layTensor P y.{uA, uB} ∘ₗ
+            (laxTensor P y.{uA, uB} ∘ₗ
               (Lens.id (CofreeP P) ⊗ₗ laxUnit.{uA, uB})) := by
       rw [← Lens.comp_assoc, cogenerator_comp_map]
     _ = (Lens.Equiv.tensorY (P := P)).toLens ∘ₗ
           ((cogenerator (P ⊗ y.{uA, uB}) ∘ₗ
-              layTensor P y.{uA, uB}) ∘ₗ
+              laxTensor P y.{uA, uB}) ∘ₗ
             (Lens.id (CofreeP P) ⊗ₗ laxUnit.{uA, uB})) := by
       simp only [Lens.comp_assoc]
     _ = (Lens.Equiv.tensorY (P := P)).toLens ∘ₗ
           ((cogenerator P ⊗ₗ cogenerator y.{uA, uB}) ∘ₗ
             (Lens.id (CofreeP P) ⊗ₗ laxUnit.{uA, uB})) := by
-      rw [cogenerator_comp_layTensor]
+      rw [cogenerator_comp_laxTensor]
     _ = (Lens.Equiv.tensorY (P := P)).toLens ∘ₗ
           ((cogenerator P ∘ₗ Lens.id (CofreeP P)) ⊗ₗ
             (cogenerator y.{uA, uB} ∘ₗ laxUnit.{uA, uB})) := by
@@ -371,26 +371,26 @@ theorem layTensorHom_unit_right (P : PFunctor.{uA, uB}) :
 
 /-- Associativity coherence for the lax-monoidal comparison, at the level of
 retrofunctors. -/
-theorem layTensorHom_assoc
+theorem laxTensorHom_assoc
     (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂})
     (R : PFunctor.{uA₃, uB₃}) :
     (((Comonoid.tensorAssocIso (comonoid P) (comonoid Q) (comonoid R)).hom.comp
         (Comonoid.Hom.tensor (Comonoid.Hom.id (comonoid P))
-          (layTensorHom Q R))).comp
-      (layTensorHom P (Q ⊗ R))) =
-    (((Comonoid.Hom.tensor (layTensorHom P Q)
+          (laxTensorHom Q R))).comp
+      (laxTensorHom P (Q ⊗ R))) =
+    (((Comonoid.Hom.tensor (laxTensorHom P Q)
         (Comonoid.Hom.id (comonoid R))).comp
-      (layTensorHom (P ⊗ Q) R)).comp
+      (laxTensorHom (P ⊗ Q) R)).comp
         (mapHom (Lens.Equiv.tensorAssoc
           (P := P) (Q := Q) (R := R)).toLens)) := by
   apply hom_ext_cogenerator
   simp only [Comonoid.Hom.comp_toLens, Comonoid.Hom.tensor_toLens,
-    Comonoid.Hom.id_toLens, mapHom_toLens, layTensorHom_toLens,
+    Comonoid.Hom.id_toLens, mapHom_toLens, laxTensorHom_toLens,
     Comonoid.tensorAssocIso_hom_toLens]
   calc
     cogenerator (P ⊗ (Q ⊗ R)) ∘ₗ
-          (layTensor P (Q ⊗ R) ∘ₗ
-            ((Lens.id (CofreeP P) ⊗ₗ layTensor Q R) ∘ₗ
+          (laxTensor P (Q ⊗ R) ∘ₗ
+            ((Lens.id (CofreeP P) ⊗ₗ laxTensor Q R) ∘ₗ
               (Lens.Equiv.tensorAssoc
                 (P := CofreeP P) (Q := CofreeP Q)
                 (R := CofreeP R)).toLens)) =
@@ -398,84 +398,84 @@ theorem layTensorHom_assoc
           (Lens.Equiv.tensorAssoc
             (P := CofreeP P) (Q := CofreeP Q)
             (R := CofreeP R)).toLens := by
-      rw [← Lens.comp_assoc, cogenerator_comp_layTensor,
+      rw [← Lens.comp_assoc, cogenerator_comp_laxTensor,
         ← Lens.comp_assoc, ← Lens.tensorMap_comp]
-      simp only [cogenerator_comp_layTensor, Lens.comp_id]
+      simp only [cogenerator_comp_laxTensor, Lens.comp_id]
     _ = (Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens ∘ₗ
           ((cogenerator P ⊗ₗ cogenerator Q) ⊗ₗ cogenerator R) :=
       Lens.tensorAssoc_natural (cogenerator P) (cogenerator Q) (cogenerator R)
     _ = (Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens ∘ₗ
           (cogenerator ((P ⊗ Q) ⊗ R) ∘ₗ
-            (layTensor (P ⊗ Q) R ∘ₗ
-              (layTensor P Q ⊗ₗ Lens.id (CofreeP R)))) := by
+            (laxTensor (P ⊗ Q) R ∘ₗ
+              (laxTensor P Q ⊗ₗ Lens.id (CofreeP R)))) := by
       apply congrArg (fun lens =>
         (Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens ∘ₗ lens)
       calc
         (cogenerator P ⊗ₗ cogenerator Q) ⊗ₗ cogenerator R =
-            (cogenerator (P ⊗ Q) ∘ₗ layTensor P Q) ⊗ₗ
+            (cogenerator (P ⊗ Q) ∘ₗ laxTensor P Q) ⊗ₗ
               (cogenerator R ∘ₗ Lens.id (CofreeP R)) := by
-          rw [cogenerator_comp_layTensor]
+          rw [cogenerator_comp_laxTensor]
           simp only [Lens.comp_id]
         _ = (cogenerator (P ⊗ Q) ⊗ₗ cogenerator R) ∘ₗ
-              (layTensor P Q ⊗ₗ Lens.id (CofreeP R)) :=
+              (laxTensor P Q ⊗ₗ Lens.id (CofreeP R)) :=
           Lens.tensorMap_comp _ _ _ _
         _ = (cogenerator ((P ⊗ Q) ⊗ R) ∘ₗ
-              layTensor (P ⊗ Q) R) ∘ₗ
-              (layTensor P Q ⊗ₗ Lens.id (CofreeP R)) := by
-          rw [cogenerator_comp_layTensor]
+              laxTensor (P ⊗ Q) R) ∘ₗ
+              (laxTensor P Q ⊗ₗ Lens.id (CofreeP R)) := by
+          rw [cogenerator_comp_laxTensor]
         _ = cogenerator ((P ⊗ Q) ⊗ R) ∘ₗ
-              (layTensor (P ⊗ Q) R ∘ₗ
-                (layTensor P Q ⊗ₗ Lens.id (CofreeP R))) :=
+              (laxTensor (P ⊗ Q) R ∘ₗ
+                (laxTensor P Q ⊗ₗ Lens.id (CofreeP R))) :=
           Lens.comp_assoc _ _ _
     _ = cogenerator (P ⊗ (Q ⊗ R)) ∘ₗ
           (map ((Lens.Equiv.tensorAssoc
               (P := P) (Q := Q) (R := R)).toLens) ∘ₗ
-            (layTensor (P ⊗ Q) R ∘ₗ
-              (layTensor P Q ⊗ₗ Lens.id (CofreeP R)))) := by
+            (laxTensor (P ⊗ Q) R ∘ₗ
+              (laxTensor P Q ⊗ₗ Lens.id (CofreeP R)))) := by
       calc
         _ = ((Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens ∘ₗ
               cogenerator ((P ⊗ Q) ⊗ R)) ∘ₗ
-              (layTensor (P ⊗ Q) R ∘ₗ
-                (layTensor P Q ⊗ₗ Lens.id (CofreeP R))) :=
+              (laxTensor (P ⊗ Q) R ∘ₗ
+                (laxTensor P Q ⊗ₗ Lens.id (CofreeP R))) :=
           (Lens.comp_assoc _ _ _).symm
         _ = (cogenerator (P ⊗ (Q ⊗ R)) ∘ₗ
               map ((Lens.Equiv.tensorAssoc
                 (P := P) (Q := Q) (R := R)).toLens)) ∘ₗ
-              (layTensor (P ⊗ Q) R ∘ₗ
-                (layTensor P Q ⊗ₗ Lens.id (CofreeP R))) := by
+              (laxTensor (P ⊗ Q) R ∘ₗ
+                (laxTensor P Q ⊗ₗ Lens.id (CofreeP R))) := by
           rw [cogenerator_comp_map]
         _ = _ := Lens.comp_assoc _ _ _
 
 /-! ### Consumer-facing lens equations -/
 
 /-- Lens-level left-unit coherence. -/
-theorem layTensor_unit_left (P : PFunctor.{uA, uB}) :
+theorem laxTensor_unit_left (P : PFunctor.{uA, uB}) :
     map ((Lens.Equiv.yTensor (P := P)).toLens) ∘ₗ
-        layTensor y.{uA, uB} P ∘ₗ
+        laxTensor y.{uA, uB} P ∘ₗ
         (laxUnit.{uA, uB} ⊗ₗ Lens.id (CofreeP P)) =
       (Lens.Equiv.yTensor (P := CofreeP P)).toLens :=
-  congrArg Comonoid.Hom.toLens (layTensorHom_unit_left P)
+  congrArg Comonoid.Hom.toLens (laxTensorHom_unit_left P)
 
 /-- Lens-level right-unit coherence. -/
-theorem layTensor_unit_right (P : PFunctor.{uA, uB}) :
+theorem laxTensor_unit_right (P : PFunctor.{uA, uB}) :
     map ((Lens.Equiv.tensorY (P := P)).toLens) ∘ₗ
-        layTensor P y.{uA, uB} ∘ₗ
+        laxTensor P y.{uA, uB} ∘ₗ
         (Lens.id (CofreeP P) ⊗ₗ laxUnit.{uA, uB}) =
       (Lens.Equiv.tensorY (P := CofreeP P)).toLens :=
-  congrArg Comonoid.Hom.toLens (layTensorHom_unit_right P)
+  congrArg Comonoid.Hom.toLens (laxTensorHom_unit_right P)
 
 /-- Lens-level associativity coherence. -/
-theorem layTensor_assoc
+theorem laxTensor_assoc
     (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂})
     (R : PFunctor.{uA₃, uB₃}) :
-    layTensor P (Q ⊗ R) ∘ₗ
-        (Lens.id (CofreeP P) ⊗ₗ layTensor Q R) ∘ₗ
+    laxTensor P (Q ⊗ R) ∘ₗ
+        (Lens.id (CofreeP P) ⊗ₗ laxTensor Q R) ∘ₗ
         (Lens.Equiv.tensorAssoc
           (P := CofreeP P) (Q := CofreeP Q) (R := CofreeP R)).toLens =
       map ((Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens) ∘ₗ
-        layTensor (P ⊗ Q) R ∘ₗ
-        (layTensor P Q ⊗ₗ Lens.id (CofreeP R)) :=
-  congrArg Comonoid.Hom.toLens (layTensorHom_assoc P Q R)
+        laxTensor (P ⊗ Q) R ∘ₗ
+        (laxTensor P Q ⊗ₗ Lens.id (CofreeP R)) :=
+  congrArg Comonoid.Hom.toLens (laxTensorHom_assoc P Q R)
 
 end CofreeP
 end PFunctor

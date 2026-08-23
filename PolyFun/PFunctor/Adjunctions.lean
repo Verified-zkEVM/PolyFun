@@ -90,6 +90,8 @@ def homFromY : Lens y.{uA₁, uB₁} p ≃ p.A where
   left_inv _ := rfl
   right_inv _ := rfl
 
+@[deprecated (since := "2026-08-17")] alias homFromX := homFromY
+
 /-- **Constants are right adjoint on positions** (Spivak–Niu Thm 5.4,
 `Poly(q, I) ≅ Set(q(1), I)`). A lens `p ⇆ C A` is exactly a function on
 positions `p.A → A`; its backward map is forced since `C A` has no directions. -/

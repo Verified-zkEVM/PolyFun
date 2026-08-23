@@ -34,8 +34,8 @@ family, `Lens.tensorMap`, and the comonoid tensor and unit carry the attribute
 at their definition sites. -/
 attribute [local implicit_reducible] PFunctor.y PFunctor.monomial PFunctor.tensor
   Comonoid.Hom.ofCategoryLaws CofreeP.comonoid CofreeP.cogenerator
-  CofreeP.extend CofreeP.laxUnitHom CofreeP.laxUnit CofreeP.layTensorHom
-  CofreeP.layTensor
+  CofreeP.extend CofreeP.laxUnitHom CofreeP.laxUnit CofreeP.laxTensorHom
+  CofreeP.laxTensor
 
 /-! ## Universe and theorem-surface canaries -/
 
@@ -49,7 +49,7 @@ example :
 /-- The binary laxator leaves both input universe pairs independent. -/
 example (P : PFunctor.{pA₁, pB₁}) (Q : PFunctor.{qA₁, qB₁}) :
     Lens (CofreeP P ⊗ CofreeP Q) (CofreeP (P ⊗ Q)) :=
-  CofreeP.layTensor P Q
+  CofreeP.laxTensor P Q
 
 /-- Naturality is nontrivial in both factors while retaining separate
 universe pairs for the two functor arguments. -/
@@ -57,41 +57,41 @@ example
     {P₁ P₂ : PFunctor.{pA₁, pB₁}}
     {Q₁ Q₂ : PFunctor.{qA₁, qB₁}}
     (f : Lens P₁ P₂) (g : Lens Q₁ Q₂) :
-    CofreeP.layTensor P₂ Q₂ ∘ₗ
+    CofreeP.laxTensor P₂ Q₂ ∘ₗ
         (CofreeP.map f ⊗ₗ CofreeP.map g) =
-      CofreeP.map (f ⊗ₗ g) ∘ₗ CofreeP.layTensor P₁ Q₁ :=
-  CofreeP.layTensor_natural f g
+      CofreeP.map (f ⊗ₗ g) ∘ₗ CofreeP.laxTensor P₁ Q₁ :=
+  CofreeP.laxTensor_natural f g
 
 /-- Left- and right-unit coherence do not identify the generator's position
 and direction universes. -/
 example (P : PFunctor.{pA₁, pB₁}) :
     CofreeP.map (Lens.Equiv.yTensor (P := P)).toLens ∘ₗ
-        CofreeP.layTensor y.{pA₁, pB₁} P ∘ₗ
+        CofreeP.laxTensor y.{pA₁, pB₁} P ∘ₗ
         (CofreeP.laxUnit.{pA₁, pB₁} ⊗ₗ Lens.id (CofreeP P)) =
       (Lens.Equiv.yTensor (P := CofreeP P)).toLens :=
-  CofreeP.layTensor_unit_left P
+  CofreeP.laxTensor_unit_left P
 
 example (P : PFunctor.{pA₁, pB₁}) :
     CofreeP.map (Lens.Equiv.tensorY (P := P)).toLens ∘ₗ
-        CofreeP.layTensor P y.{pA₁, pB₁} ∘ₗ
+        CofreeP.laxTensor P y.{pA₁, pB₁} ∘ₗ
         (Lens.id (CofreeP P) ⊗ₗ CofreeP.laxUnit.{pA₁, pB₁}) =
       (Lens.Equiv.tensorY (P := CofreeP P)).toLens :=
-  CofreeP.layTensor_unit_right P
+  CofreeP.laxTensor_unit_right P
 
 /-- Associativity retains all six position/direction universes belonging to
 the three independent polynomial arguments. -/
 example
     (P : PFunctor.{pA₁, pB₁}) (Q : PFunctor.{qA₁, qB₁})
     (R : PFunctor.{rA₁, rB₁}) :
-    CofreeP.layTensor P (Q ⊗ R) ∘ₗ
-        (Lens.id (CofreeP P) ⊗ₗ CofreeP.layTensor Q R) ∘ₗ
+    CofreeP.laxTensor P (Q ⊗ R) ∘ₗ
+        (Lens.id (CofreeP P) ⊗ₗ CofreeP.laxTensor Q R) ∘ₗ
         (Lens.Equiv.tensorAssoc
           (P := CofreeP P) (Q := CofreeP Q) (R := CofreeP R)).toLens =
       CofreeP.map
           (Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens ∘ₗ
-        CofreeP.layTensor (P ⊗ Q) R ∘ₗ
-        (CofreeP.layTensor P Q ⊗ₗ Lens.id (CofreeP R)) :=
-  CofreeP.layTensor_assoc P Q R
+        CofreeP.laxTensor (P ⊗ Q) R ∘ₗ
+        (CofreeP.laxTensor P Q ⊗ₗ Lens.id (CofreeP R)) :=
+  CofreeP.laxTensor_assoc P Q R
 
 /-! ## Observable synchronized trees -/
 
@@ -127,12 +127,12 @@ def leftFlip : Lens leftP leftP where
 /-- Naturality is exercised with an actual nonidentity map in the left factor,
 not only with abstract lens variables. -/
 example :
-    CofreeP.layTensor leftP rightP ∘ₗ
+    CofreeP.laxTensor leftP rightP ∘ₗ
         (CofreeP.map leftFlip ⊗ₗ
           CofreeP.map (Lens.id rightP)) =
       CofreeP.map (leftFlip ⊗ₗ Lens.id rightP) ∘ₗ
-        CofreeP.layTensor leftP rightP :=
-  CofreeP.layTensor_natural leftFlip (Lens.id rightP)
+        CofreeP.laxTensor leftP rightP :=
+  CofreeP.laxTensor_natural leftFlip (Lens.id rightP)
 
 def leftStep (history : List Bool) : leftP (List Bool) :=
   ⟨match history.head? with
@@ -171,7 +171,7 @@ example :
 /-- The synchronized tree advances the two inputs only along paired
 directions. -/
 def synchronizedTree : M (leftP ⊗ rightP) :=
-  (CofreeP.layTensor leftP rightP).toFunA (leftTree, rightTree)
+  (CofreeP.laxTensor leftP rightP).toFunA (leftTree, rightTree)
 
 /-- The two different root-label types and values make factor order visible. -/
 example : M.head synchronizedTree = (.initial, .initial) := by
@@ -187,7 +187,7 @@ example : M.head synchronizedTree = (.initial, .initial) := by
 /-- Pulling back the synchronized root returns both source roots, not a copied
 or swapped component. -/
 example :
-    (CofreeP.layTensor leftP rightP).toFunB
+    (CofreeP.laxTensor leftP rightP).toFunB
         (leftTree, rightTree) (.root synchronizedTree) =
       (.root leftTree, .root rightTree) := by
   calc
@@ -196,21 +196,21 @@ example :
             (CofreeP.comonoid rightP))
           (leftTree, rightTree) := by
       simpa [synchronizedTree] using
-        (CofreeP.layTensorHom leftP rightP).map_identity
+        (CofreeP.laxTensorHom leftP rightP).map_identity
           (leftTree, rightTree)
     _ = (.root leftTree, .root rightTree) := rfl
 
 /-- One synchronized edge pulls back to the matching edge in each source
 tree.  This is the executable content of the laxator's generator equation. -/
-theorem layTensor_oneLayer (left : M leftP) (right : M rightP)
+theorem laxTensor_oneLayer (left : M leftP) (right : M rightP)
     (direction : Bool × Fin 3) :
-    (CofreeP.layTensor leftP rightP).toFunB (left, right)
+    (CofreeP.laxTensor leftP rightP).toFunB (left, right)
         (.child direction (.root _)) =
       (.child direction.1 (.root _), .child direction.2 (.root _)) := by
   exact congrArg
     (fun lens : Lens (CofreeP leftP ⊗ CofreeP rightP) (leftP ⊗ rightP) =>
       lens.toFunB (left, right) direction)
-    (CofreeP.cogenerator_comp_layTensor leftP rightP)
+    (CofreeP.cogenerator_comp_laxTensor leftP rightP)
 
 /-- The first edge of the decisive synchronized path. -/
 def synchronizedOuter : M.Vertex synchronizedTree :=
@@ -255,13 +255,13 @@ example :
 order.  This detects swapped factors, copied directions, reversed paths, and
 an implementation that only handles the root or first layer. -/
 example :
-    let pulled := (CofreeP.layTensor leftP rightP).toFunB
+    let pulled := (CofreeP.laxTensor leftP rightP).toFunB
       (leftTree, rightTree)
       ((CofreeP.projectionN (leftP ⊗ rightP) 2).toFunB
         synchronizedTree synchronizedDirection)
     leftDirections pulled.1 = [false, true] ∧
       rightDirections pulled.2 = [2, 0] := by
-  let F := CofreeP.layTensorHom leftP rightP
+  let F := CofreeP.laxTensorHom leftP rightP
   have h := congrArg
     (fun lens : Lens
         ((CofreeP.comonoid leftP).tensor (CofreeP.comonoid rightP)).carrier
@@ -280,14 +280,14 @@ example :
   have hright := congrArg (fun pair => rightDirections pair.2) h
   constructor
   · exact hleft.trans (by
-      dsimp only [F, CofreeP.layTensorHom]
+      dsimp only [F, CofreeP.laxTensorHom]
       rw [CofreeP.restrict_extend]
       simp only [CofreeP.comonoid_carrier, Comonoid.tensor_carrier, compNth,
         Lens.compNthMap_succ, Lens.compNthMap_zero,
         Comonoid.comultN_succ, Comonoid.comultN_zero]
       rfl)
   · exact hright.trans (by
-      dsimp only [F, CofreeP.layTensorHom]
+      dsimp only [F, CofreeP.laxTensorHom]
       rw [CofreeP.restrict_extend]
       simp only [CofreeP.comonoid_carrier, Comonoid.tensor_carrier, compNth,
         Lens.compNthMap_succ, Lens.compNthMap_zero,

@@ -34,7 +34,7 @@ not merely on forward shapes.
 | Equation (1), Section 3.2 | `FreeP.runOn`, `FreeP.xi`, `FreeP.runOn_eq_xi` |
 | Proposition 3.3 | `FreeP.runOn_natural` |
 | Theorem 3.4 | `FreeP.runOn_unit`, `FreeP.runOn_assoc` |
-| Appendix C.1 | `CofreeP.laxUnit`, `CofreeP.layTensor`, and coherence laws |
+| Appendix C.1 | `CofreeP.laxUnit`, `CofreeP.laxTensor`, and coherence laws |
 | Substitution compatibility implicit in the universal construction | `FreeP.runOn_preserves_substitution`, `FreeP.runTree_append` |
 | Section 4 generic schema `m p ⊗ c q → m r` | `FreeP.runThrough` |
 | Section 4 internal-hom evaluation | `FreeP.evaluation`, `FreeP.runAgainst` |

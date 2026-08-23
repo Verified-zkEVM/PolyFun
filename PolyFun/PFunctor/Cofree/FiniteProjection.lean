@@ -125,6 +125,11 @@ theorem projectionN_two_comp_compY (P : PFunctor.{uA, uB}) :
       comult ⨟ (cogenerator P ◃ₗ cogenerator P) :=
   rfl
 
+@[deprecated (since := "2026-08-17")] alias projectionN_one_comp_compX :=
+  projectionN_one_comp_compY
+@[deprecated (since := "2026-08-17")] alias projectionN_two_comp_compX :=
+  projectionN_two_comp_compY
+
 /-! ## Algebraic characterization and Proposition 8.49 -/
 
 /-- At the homogeneous universe boundary, structural finite projection is

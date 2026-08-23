@@ -39,7 +39,7 @@ and needs no `allowUnsafeReducibility`. Constants already
 `relabel`, `Comonoid.tensor`) are omitted. -/
 attribute [local implicit_reducible] PFunctor.Obj PFunctor.y PFunctor.monomial
   PFunctor.tensor FreeP.node Comonoid.Hom.ofCategoryLaws CofreeP.comonoid
-  CofreeP.cogenerator CofreeP.extend CofreeP.layTensorHom CofreeP.layTensor
+  CofreeP.cogenerator CofreeP.extend CofreeP.laxTensorHom CofreeP.laxTensor
 
 private theorem runObj_unit (P : PFunctor.{u, u})
     (pattern : (FreeP P).A) :
@@ -184,19 +184,19 @@ theorem xi_unit (P : PFunctor.{u, u}) :
       (M.Vertex matterQ × M.Vertex matterR) :=
   ⟨(matterQ, matterR), id⟩
 
-@[implicit_reducible] private def layTensorVertexObj {Q R : PFunctor.{u, u}}
+@[implicit_reducible] private def laxTensorVertexObj {Q R : PFunctor.{u, u}}
     (matterQ : (CofreeP Q).A) (matterR : (CofreeP R).A) :
     (CofreeP (Q ⊗ R)).Obj (M.Vertex matterQ × M.Vertex matterR) :=
-  Lens.mapObj (CofreeP.layTensor Q R) (vertexPairObj matterQ matterR)
+  Lens.mapObj (CofreeP.laxTensor Q R) (vertexPairObj matterQ matterR)
 
-private theorem layTensorVertexObj_child (Q R : PFunctor.{u, u})
+private theorem laxTensorVertexObj_child (Q R : PFunctor.{u, u})
     (matterQ : (CofreeP Q).A) (matterR : (CofreeP R).A)
     (direction : Q.B (M.head matterQ) × R.B (M.head matterR)) :
-    (⟨M.children (layTensorVertexObj matterQ matterR).1 direction,
-        fun next => (layTensorVertexObj matterQ matterR).2
+    (⟨M.children (laxTensorVertexObj matterQ matterR).1 direction,
+        fun next => (laxTensorVertexObj matterQ matterR).2
           (.child direction next)⟩ :
       (CofreeP (Q ⊗ R)).Obj (M.Vertex matterQ × M.Vertex matterR)) =
-    let mappedChild := Lens.mapObj (CofreeP.layTensor Q R)
+    let mappedChild := Lens.mapObj (CofreeP.laxTensor Q R)
       (⟨(M.children matterQ direction.1,
           M.children matterR direction.2), id⟩ :
         (CofreeP Q ⊗ CofreeP R).Obj
@@ -205,15 +205,15 @@ private theorem layTensorVertexObj_child (Q R : PFunctor.{u, u})
     ⟨mappedChild.1, fun next =>
       let pulled := mappedChild.2 next
       (.child direction.1 pulled.1, .child direction.2 pulled.2)⟩ := by
-  simpa only [layTensorVertexObj, vertexPairObj, Lens.mapObj,
+  simpa only [laxTensorVertexObj, vertexPairObj, Lens.mapObj,
     Function.comp_apply, id_eq] using
-    CofreeP.layTensor_childObj Q R matterQ matterR direction
+    CofreeP.laxTensor_childObj Q R matterQ matterR direction
 
 private theorem runObj_assoc (P Q R : PFunctor.{u, u})
     (pattern : (FreeP P).A) (matterQ : (CofreeP Q).A)
     (matterR : (CofreeP R).A) :
     FreeP.relabel (fun pulled => ((pulled.1, pulled.2.1), pulled.2.2))
-      (runLabeled pattern (layTensorVertexObj matterQ matterR)) =
+      (runLabeled pattern (laxTensorVertexObj matterQ matterR)) =
       Lens.mapObj (FreeP.map
           (Lens.Equiv.tensorAssoc
             (P := P) (Q := Q) (R := R)).toLens)
@@ -225,16 +225,16 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
       cases value
       change (⟨FreeM.pure PUnit.unit, fun _ =>
         ((PUnit.unit,
-          ((CofreeP.layTensor Q R).toFunB (matterQ, matterR)
-            (.root ((CofreeP.layTensor Q R).toFunA
+          ((CofreeP.laxTensor Q R).toFunB (matterQ, matterR)
+            (.root ((CofreeP.laxTensor Q R).toFunA
               (matterQ, matterR)))).1),
-          ((CofreeP.layTensor Q R).toFunB (matterQ, matterR)
-            (.root ((CofreeP.layTensor Q R).toFunA
+          ((CofreeP.laxTensor Q R).toFunB (matterQ, matterR)
+            (.root ((CofreeP.laxTensor Q R).toFunA
               (matterQ, matterR)))).2)⟩ :
         (FreeP (P ⊗ (Q ⊗ R))).Obj
           ((FreeM.Path (FreeM.pure PUnit.unit) × M.Vertex matterQ) ×
             M.Vertex matterR)) = _
-      rw [CofreeP.layTensor_toFunB_root]
+      rw [CofreeP.laxTensor_toFunB_root]
       rfl
   | liftBind a rest ih =>
       rw [FreeP.runLabeled_liftBind, FreeP.relabel_node]
@@ -266,8 +266,8 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
       have hmap := FreeP.mapObj_node
         (Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens
         ((a, M.head matterQ), M.head matterR) rightChildren
-      -- Lean 4.33: `M.head (layTensorVertexObj ..)` is only propositionally
-      -- `(M.head matterQ, M.head matterR)` (`layTensor_head`), which the
+      -- Lean 4.33: `M.head (laxTensorVertexObj ..)` is only propositionally
+      -- `(M.head matterQ, M.head matterR)` (`laxTensor_head`), which the
       -- original rewrites relied on definitionally; the head equation is now
       -- destructed explicitly before rewriting.
       have hmap' :
@@ -288,15 +288,15 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
               rightChildren))
       rw [hmap']
       rw [FreeP.relabel_node]
-      have hhead : M.head (layTensorVertexObj matterQ matterR).1 =
+      have hhead : M.head (laxTensorVertexObj matterQ matterR).1 =
           (M.head matterQ, M.head matterR) := by
-        exact CofreeP.layTensor_head Q R matterQ matterR
+        exact CofreeP.laxTensor_head Q R matterQ matterR
       cases hhead
       congr 1
       funext direction
       change P.B a × (Q.B (M.head matterQ) × R.B (M.head matterR)) at direction
       rcases direction with ⟨patternDirection, matterQDirection, matterRDirection⟩
-      have hchild := layTensorVertexObj_child Q R matterQ matterR
+      have hchild := laxTensorVertexObj_child Q R matterQ matterR
         (matterQDirection, matterRDirection)
       have hrun := congrArg (runLabeled (rest patternDirection)) hchild
       refine (congrArg (FreeP.relabel (P := P ⊗ (Q ⊗ R)) _) hrun).trans ?_
@@ -313,7 +313,7 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
         ihChild
       simpa only [runLabeled, FreeP.relabel_relabel,
         FreeP.mapObj_relabel, FreeP.relabel,
-        Function.comp_def, layTensorVertexObj, vertexPairObj,
+        Function.comp_def, laxTensorVertexObj, vertexPairObj,
         rightChildren, Lens.mapObj, Function.comp_apply, id_eq,
         Lens.Equiv.tensorAssoc_toFunA, Lens.Equiv.tensorAssoc_toFunB,
         Equiv.prodAssoc_apply, Equiv.prodAssoc_symm_apply,
@@ -323,7 +323,7 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
 /-- Associativity coherence for the executable pattern action. -/
 theorem runOn_assoc (P Q R : PFunctor.{u, u}) :
     (runOn P (Q ⊗ R) ∘ₗ
-        (Lens.id (FreeP P) ⊗ₗ CofreeP.layTensor Q R)) ∘ₗ
+        (Lens.id (FreeP P) ⊗ₗ CofreeP.laxTensor Q R)) ∘ₗ
         (Lens.Equiv.tensorAssoc
           (P := FreeP P) (Q := CofreeP Q)
           (R := CofreeP R)).toLens =
@@ -334,7 +334,7 @@ theorem runOn_assoc (P Q R : PFunctor.{u, u}) :
         (runOn P Q ⊗ₗ Lens.id (CofreeP R)) := by
   let lhs :=
     (runOn P (Q ⊗ R) ∘ₗ
-        (Lens.id (FreeP P) ⊗ₗ CofreeP.layTensor Q R)) ∘ₗ
+        (Lens.id (FreeP P) ⊗ₗ CofreeP.laxTensor Q R)) ∘ₗ
       (Lens.Equiv.tensorAssoc
         (P := FreeP P) (Q := CofreeP Q)
         (R := CofreeP R)).toLens
@@ -354,7 +354,7 @@ theorem runOn_assoc (P Q R : PFunctor.{u, u}) :
     rintro ⟨⟨pattern, matterQ⟩, matterR⟩
     change FreeP.relabel
         (fun pulled => ((pulled.1, pulled.2.1), pulled.2.2))
-        (runLabeled pattern (layTensorVertexObj matterQ matterR)) =
+        (runLabeled pattern (laxTensorVertexObj matterQ matterR)) =
       Lens.mapObj (FreeP.map
           (Lens.Equiv.tensorAssoc
             (P := P) (Q := Q) (R := R)).toLens)
@@ -367,7 +367,7 @@ theorem runOn_assoc (P Q R : PFunctor.{u, u}) :
 /-- Associativity coherence for the universal interaction. -/
 theorem xi_assoc (P Q R : PFunctor.{u, u}) :
     (xi P (Q ⊗ R) ∘ₗ
-        (Lens.id (FreeP P) ⊗ₗ CofreeP.layTensor Q R)) ∘ₗ
+        (Lens.id (FreeP P) ⊗ₗ CofreeP.laxTensor Q R)) ∘ₗ
         (Lens.Equiv.tensorAssoc
           (P := FreeP P) (Q := CofreeP Q)
           (R := CofreeP R)).toLens =

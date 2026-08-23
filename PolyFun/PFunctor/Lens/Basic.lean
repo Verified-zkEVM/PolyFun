@@ -199,6 +199,10 @@ def fromY {P : PFunctor.{uA, uB}} (a : P.A) : Lens y.{uA₁, uB₁} P :=
     (d : P.B a) :
     (fromY a : Lens y.{uA₁, uB₁} P).toFunB u d = PUnit.unit := rfl
 
+@[deprecated (since := "2026-08-17")] alias fromX := fromY
+@[deprecated (since := "2026-08-17")] alias fromX_toFunA := fromY_toFunA
+@[deprecated (since := "2026-08-17")] alias fromX_toFunB := fromY_toFunB
+
 /-- Construct a lens into a constant polynomial from its position map. The
 backward map is uniquely determined by the empty direction type. -/
 def toConst {P : PFunctor.{uA, uB}} {A : Type uA₂} (f : P.A → A) :
@@ -680,6 +684,9 @@ def yComp : y ◃ P ≃ₗ P where
   left_inv := rfl
   right_inv := rfl
 
+@[deprecated (since := "2026-08-17")] alias compX := compY
+@[deprecated (since := "2026-08-17")] alias XComp := yComp
+
 /-- Distributivity of composition over coproduct on the right -/
 def sumCompDistrib {R : PFunctor.{uA₃, uB₂}} :
     Lens.Equiv.{max uA₁ uA₂ uA₃ uB₂, max uB₁ uB₂, max uA₁ uA₂ uA₃ uB₂, max uB₁ uB₂}
@@ -759,6 +766,9 @@ def yTensor : y ⊗ P ≃ₗ P where
   left_inv := rfl
   right_inv := rfl
 
+@[deprecated (since := "2026-08-17")] alias tensorX := tensorY
+@[deprecated (since := "2026-08-17")] alias xTensor := yTensor
+
 /-- Tensor product with `0` is zero (left) -/
 def zeroTensor : 0 ⊗ P ≃ₗ 0 where
   toLens := (fun a => PEmpty.elim a.1) ⇆ fun _ => PEmpty.elim
@@ -830,6 +840,9 @@ theorem tensorY_natural
         (f ⊗ₗ
           (unitComparison : Lens y.{uA₁, uB₁} y.{uA₂, uB₂})) := by
   rfl
+
+@[deprecated (since := "2026-08-17")] alias xTensor_natural := yTensor_natural
+@[deprecated (since := "2026-08-17")] alias tensorX_natural := tensorY_natural
 
 /-- Naturality of the tensor associator across lenses whose source and target
 polynomials may occupy six independent universe pairs. -/
