@@ -481,6 +481,10 @@ def yTensor : y ⊗ P ≃ₚ P where
 
 @[deprecated (since := "2026-08-17")] alias tensorX := tensorY
 @[deprecated (since := "2026-08-17")] alias xTensor := yTensor
+@[deprecated (since := "2026-08-17")] alias tensorX_equivA := tensorY_equivA
+@[deprecated (since := "2026-08-17")] alias tensorX_equivB := tensorY_equivB
+@[deprecated (since := "2026-08-17")] alias xTensor_equivA := yTensor_equivA
+@[deprecated (since := "2026-08-17")] alias xTensor_equivB := yTensor_equivB
 
 /-- Tensor product of polynomial functors is commutative up to equivalence -/
 @[simps]
