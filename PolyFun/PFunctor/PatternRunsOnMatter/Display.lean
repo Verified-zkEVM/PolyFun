@@ -17,7 +17,7 @@ This file identifies the responder semantics used by polynomial displays with
 the existing Pattern-Runs-on-Matter action.  A free handler is first encoded
 as a lens into `FreeP`; its finite program runs against the responder system;
 the synchronized nodes are evaluated through the internal hom; and the
-resulting `FreeP X` tree is collapsed along its unique path.
+resulting `FreeP y` tree is collapsed along its unique path.
 
 The evaluation step is essential.  Raw `FreeP.runOnSystem` only constructs
 the Xi synchronization tree and retains paired pattern/matter nodes.  The
@@ -43,7 +43,7 @@ the responder equations below rewrite through the internal-hom display and
 the terminal dynamical system there. `implicit_reducible` (unlike
 `reducible`) keeps these constants opaque to simp and typeclass resolution,
 and needs no `allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] PFunctor.Obj PFunctor.X PFunctor.monomial
+attribute [local implicit_reducible] PFunctor.Obj PFunctor.y PFunctor.monomial
   PFunctor.ihom PFunctor.DynSystem.out PFunctor.DynSystem.expose
   PFunctor.DynSystem.update PFunctor.M.terminalSystem Responder.terminal
 
@@ -55,8 +55,8 @@ program against a responder state.  Its payload records the returned value
 and the responder state reached at the selected complete path. -/
 def runAgainstProgramObj {E : Type uV}
     (R : Responder State Q) (program : FreeM Q E) (state : State) :
-    (FreeP X.{uA', uB'}).Obj (E × State) :=
-  Lens.mapObj (FreeP.runAgainstSystem Q X.{uA', uB'} R)
+    (FreeP y.{uA', uB'}).Obj (E × State) :=
+  Lens.mapObj (FreeP.runAgainstSystem Q y.{uA', uB'} R)
     ⟨((FreeP.encode program).1, state), fun direction =>
       ((FreeP.encode program).2 direction.1, direction.2)⟩
 
@@ -66,7 +66,7 @@ theorem decode_runAgainstProgramObj {E : Type uV}
     (R : Responder State Q) (program : FreeM Q E) (state : State) :
     FreeP.decode (runAgainstProgramObj R program state) =
       (R.runPattern program state).mapLens
-        (FreeP.evaluation Q X.{uA', uB'}) := by
+        (FreeP.evaluation Q y.{uA', uB'}) := by
   unfold runAgainstProgramObj FreeP.runAgainstSystem
   rw [Lens.mapObj_comp, FreeP.decode_map]
   rfl
@@ -77,7 +77,7 @@ theorem collapseUnit_runPattern {E : Type uV}
     (R : Responder State Q) (program : FreeM Q E) (state : State) :
     FreeM.collapseUnit
         ((R.runPattern program state).mapLens
-          (FreeP.evaluation Q X.{uA', uB'})) =
+          (FreeP.evaluation Q y.{uA', uB'})) =
       R.runFree program state := by
   induction program generalizing state with
   | pure value =>
@@ -86,18 +86,18 @@ theorem collapseUnit_runPattern {E : Type uV}
   | lift_bind query next ih =>
       change FreeM.collapseUnit
           ((R.runPattern (.liftBind query next) state).mapLens
-            (FreeP.evaluation Q X.{uA', uB'})) =
+            (FreeP.evaluation Q y.{uA', uB'})) =
         R.runFree (.liftBind query next) state
       rw [DynSystem.runPattern_liftBind]
       change FreeM.collapseUnit
           (FreeM.liftBind PUnit.unit (fun _ =>
             (R.runPattern (next (R.answer state query))
               (R.next state query)).mapLens
-                (FreeP.evaluation Q X.{uA', uB'}))) = _
+                (FreeP.evaluation Q y.{uA', uB'}))) = _
       change FreeM.collapseUnit
         ((R.runPattern (next (R.answer state query))
           (R.next state query)).mapLens
-            (FreeP.evaluation Q X.{uA', uB'})) = _
+            (FreeP.evaluation Q y.{uA', uB'})) = _
       exact ih (R.answer state query) (R.next state query)
 
 /-- The result payload of the complete evaluated pattern action. -/
@@ -118,12 +118,12 @@ theorem runAgainstResult_eq_runFree {E : Type uV}
 
 /-- Reconstruct responder reindexing categorically: encode the handler as a
 free-polynomial lens, run it against the responder, evaluate synchronized
-nodes, and collapse the resulting free `X`-tree.
+nodes, and collapse the resulting free `y`-tree.
 
 This comparison is stated in the homogeneous interface-universe fragment
 because `Responder State P` and `Responder State Q` instantiate their terminal
 identity polynomials in the universes of `P` and `Q`, while the final
-`FreeP.collapseUnit` expects one fixed instantiation of `X`. The structural
+`FreeP.collapseUnit` expects one fixed instantiation of `y`. The structural
 handler/lens equivalence and target-only evaluated APIs above do not require
 this restriction. -/
 def reindexViaRunAgainst
@@ -132,7 +132,7 @@ def reindexViaRunAgainst
     Responder State P :=
   Lens.curry
     (FreeP.collapseUnit ∘ₗ
-      (FreeP.runAgainstSystem Q X.{uA, uB} R ∘ₗ
+      (FreeP.runAgainstSystem Q y.{uA, uB} R ∘ₗ
         ((Handler.toFreeLens f ⊗ₗ Lens.id (selfMonomial State)) ∘ₗ
           (Lens.Equiv.tensorComm (selfMonomial State) P).toLens)))
 
@@ -164,7 +164,7 @@ evaluated Pattern-Runs-on-Matter reconstruction. -/
 theorem reindexBehavior_eq_runAgainst
     {P Q : PFunctor.{uA, uB}}
     (f : Handler (FreeM Q) P)
-    (behavior : PFunctor.M (Q ⊸ X.{uA, uB})) :
+    (behavior : PFunctor.M (Q ⊸ y.{uA, uB})) :
     reindexBehavior f behavior =
       (reindexViaRunAgainst f (Responder.terminal (P := Q))).behavior
         behavior := by
@@ -242,7 +242,7 @@ theorem respondDisplayed_reindexDisplayedBehavior_post_runAgainst
     (S : Display.{uA, uB, uC, uD} P)
     (f : Handler (FreeM Q) P)
     (displayedF : Display.Handler S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
+    (behavior : PFunctor.M (Q ⊸ y.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (query : P.A) (contract : S.position query) :
     (respondDisplayed S
@@ -266,7 +266,7 @@ theorem respondDisplayed_reindexDisplayedBehavior_next_runAgainst
     (S : Display.{uA, uB, uC, uD} P)
     (f : Handler (FreeM Q) P)
     (displayedF : Display.Handler S T f)
-    (behavior : PFunctor.M (Q ⊸ X.{uA', uB'}))
+    (behavior : PFunctor.M (Q ⊸ y.{uA', uB'}))
     (displayedBehavior : Display.M (Display.responder T) behavior)
     (query : P.A) (contract : S.position query) :
     let result := (Responder.terminal (P := Q)).runFree (f query) behavior

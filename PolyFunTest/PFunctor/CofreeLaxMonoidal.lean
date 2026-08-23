@@ -32,7 +32,7 @@ namespace CofreeLaxMonoidalTest
 the lax-monoidal examples below unfold these constants there.  The `unfold*`
 family, `Lens.tensorMap`, and the comonoid tensor and unit carry the attribute
 at their definition sites. -/
-attribute [local implicit_reducible] PFunctor.X PFunctor.monomial PFunctor.tensor
+attribute [local implicit_reducible] PFunctor.y PFunctor.monomial PFunctor.tensor
   Comonoid.Hom.ofCategoryLaws CofreeP.comonoid CofreeP.cogenerator
   CofreeP.extend CofreeP.laxUnitHom CofreeP.laxUnit CofreeP.laxTensorHom
   CofreeP.laxTensor
@@ -42,8 +42,8 @@ attribute [local implicit_reducible] PFunctor.X PFunctor.monomial PFunctor.tenso
 /-- The unit comparison preserves the generator's independent position and
 direction universes and lands in the diagonal universe of `CofreeP`. -/
 example :
-    Lens X.{max pA₁ pB₁, max pA₁ pB₁}
-      (CofreeP X.{pA₁, pB₁}) :=
+    Lens y.{max pA₁ pB₁, max pA₁ pB₁}
+      (CofreeP y.{pA₁, pB₁}) :=
   CofreeP.laxUnit
 
 /-- The binary laxator leaves both input universe pairs independent. -/
@@ -65,17 +65,17 @@ example
 /-- Left- and right-unit coherence do not identify the generator's position
 and direction universes. -/
 example (P : PFunctor.{pA₁, pB₁}) :
-    CofreeP.map (Lens.Equiv.xTensor (P := P)).toLens ∘ₗ
-        CofreeP.laxTensor X.{pA₁, pB₁} P ∘ₗ
+    CofreeP.map (Lens.Equiv.yTensor (P := P)).toLens ∘ₗ
+        CofreeP.laxTensor y.{pA₁, pB₁} P ∘ₗ
         (CofreeP.laxUnit.{pA₁, pB₁} ⊗ₗ Lens.id (CofreeP P)) =
-      (Lens.Equiv.xTensor (P := CofreeP P)).toLens :=
+      (Lens.Equiv.yTensor (P := CofreeP P)).toLens :=
   CofreeP.laxTensor_unit_left P
 
 example (P : PFunctor.{pA₁, pB₁}) :
-    CofreeP.map (Lens.Equiv.tensorX (P := P)).toLens ∘ₗ
-        CofreeP.laxTensor P X.{pA₁, pB₁} ∘ₗ
+    CofreeP.map (Lens.Equiv.tensorY (P := P)).toLens ∘ₗ
+        CofreeP.laxTensor P y.{pA₁, pB₁} ∘ₗ
         (Lens.id (CofreeP P) ⊗ₗ CofreeP.laxUnit.{pA₁, pB₁}) =
-      (Lens.Equiv.tensorX (P := CofreeP P)).toLens :=
+      (Lens.Equiv.tensorY (P := CofreeP P)).toLens :=
   CofreeP.laxTensor_unit_right P
 
 /-- Associativity retains all six position/direction universes belonging to
@@ -296,7 +296,7 @@ example :
 
 /-! ## Observable lax unit -/
 
-def unitTree : M X :=
+def unitTree : M y :=
   CofreeP.laxUnit.toFunA PUnit.unit
 
 /-- A non-root unit vertex is an elaboration and totality canary for finite

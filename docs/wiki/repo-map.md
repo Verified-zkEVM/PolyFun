@@ -116,6 +116,10 @@ PFunctor/{Cofree/Polynomial, Comonoid/Category}
   -> PFunctor/Cofree/FiniteProjection
 PFunctor/{Cofree/Universal, Comonoid/Tensor}
   -> PFunctor/Cofree/LaxMonoidal
+PFunctor/{Basic, Equiv/Basic, Lens/Basic, Chart/Basic, InternalHom,
+  Adjunctions, Cofree/FiniteProjection}
+  -> PFunctor/Deprecated  (aggregate import for module-owned transitional
+     X-spelling compatibility)
 PFunctor/{Free/Polynomial, Cofree/Polynomial}
   -> PFunctor/PatternRunsOnMatter/Basic
 PFunctor/{PatternRunsOnMatter/Basic, Free/Universal,

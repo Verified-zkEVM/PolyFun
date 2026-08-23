@@ -155,7 +155,7 @@ inductive ThreeState where
 test-local comonoid makes composition order observable independently of arrow
 targets: the composite of `first` and `second` is `first ++ second`. -/
 def listMonoidComonoid : Comonoid where
-  carrier := purePower (List Bool)
+  carrier := y^ (List Bool)
   counit := (fun _ => PUnit.unit) ⇆ (fun _ _ => [])
   comult :=
     (fun _ => ⟨PUnit.unit, fun _ => PUnit.unit⟩) ⇆

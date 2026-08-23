@@ -286,24 +286,24 @@ theorem ResolvesIn.mono {M : DynComputation.{u} p α β}
 
 /-! ## Closed deterministic trajectories -/
 
-/-- Advance a returning computation over the closed interface `X` by one
+/-- Advance a returning computation over the closed interface `y` by one
 query. A returned state explicitly stutters: it has no query continuation to
 follow, so this total state function leaves it unchanged. -/
-def closedStutterStep (M : DynComputation.{u} X.{uA, uB} α β)
+def closedStutterStep (M : DynComputation.{u} y.{uA, uB} α β)
     (state : M.State) : M.State :=
   match M.view state with
   | Sum.inl _ => state
   | Sum.inr ⟨_, next⟩ => next PUnit.unit
 
 @[simp] theorem closedStutterStep_return
-    (M : DynComputation.{u} X.{uA, uB} α β) (state : M.State)
+    (M : DynComputation.{u} y.{uA, uB} α β) (state : M.State)
     (value : β) (hview : M.view state = Sum.inl value) :
     M.closedStutterStep state = state := by
   simp [closedStutterStep, hview]
 
 theorem closedStutterStep_query
-    (M : DynComputation.{u} X.{uA, uB} α β) (state : M.State)
-    (position : X.{uA, uB}.A) (next : X.{uA, uB}.B position → M.State)
+    (M : DynComputation.{u} y.{uA, uB} α β) (state : M.State)
+    (position : y.{uA, uB}.A) (next : y.{uA, uB}.B position → M.State)
     (hview : M.view state = Sum.inr ⟨position, next⟩) :
     M.closedStutterStep state = next PUnit.unit := by
   simp [closedStutterStep, hview]
@@ -311,16 +311,16 @@ theorem closedStutterStep_query
 /-- The closed deterministic trajectory obtained by iterating
 `closedStutterStep`. It follows the unique direction at query states and
 remains at the first returned state. -/
-def closedStutterIterate (M : DynComputation.{u} X.{uA, uB} α β)
+def closedStutterIterate (M : DynComputation.{u} y.{uA, uB} α β)
     (state : M.State) (n : ℕ) : M.State :=
   M.closedStutterStep^[n] state
 
 @[simp] theorem closedStutterIterate_zero
-    (M : DynComputation.{u} X.{uA, uB} α β) (state : M.State) :
+    (M : DynComputation.{u} y.{uA, uB} α β) (state : M.State) :
     M.closedStutterIterate state 0 = state := rfl
 
 theorem closedStutterIterate_succ
-    (M : DynComputation.{u} X.{uA, uB} α β) (state : M.State) (n : ℕ) :
+    (M : DynComputation.{u} y.{uA, uB} α β) (state : M.State) (n : ℕ) :
     M.closedStutterIterate state (n + 1) =
       M.closedStutterIterate (M.closedStutterStep state) n := rfl
 
@@ -329,7 +329,7 @@ when its stuttering trajectory reaches a returned state among its first `k`
 steps. The trajectory stutters only after return; those later witnesses do not
 represent additional queries. -/
 theorem resolvesIn_iff_exists_le_closedStutterIterate_return
-    (M : DynComputation.{u} X.{uA, uB} α β) (k : ℕ) (state : M.State) :
+    (M : DynComputation.{u} y.{uA, uB} α β) (k : ℕ) (state : M.State) :
     M.ResolvesIn k state ↔
       ∃ j ≤ k, ∃ value, M.view (M.closedStutterIterate state j) = Sum.inl value := by
   induction k generalizing state with
@@ -368,7 +368,7 @@ theorem resolvesIn_iff_exists_le_closedStutterIterate_return
 /-- A closed deterministic computation eventually resolves exactly when its
 stuttering trajectory reaches a returned state. -/
 theorem exists_resolvesIn_iff_exists_closedStutterIterate_return
-    (M : DynComputation.{u} X.{uA, uB} α β) (state : M.State) :
+    (M : DynComputation.{u} y.{uA, uB} α β) (state : M.State) :
     (∃ k, M.ResolvesIn k state) ↔
       ∃ j value, M.view (M.closedStutterIterate state j) = Sum.inl value := by
   constructor

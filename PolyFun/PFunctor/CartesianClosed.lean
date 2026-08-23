@@ -16,7 +16,7 @@ exponential transpose, following Spivak–Niu
 *Polynomial Functors* (Theorem 5.31, Example 5.32).
 
 The exponential object used here is the `PFunctor.exp` of `PFunctor.Basic`,
-namely `exp r q = ∏_{a : q.A} r ◃ (X + C (q.B a))`. This is the **cartesian**
+namely `exp r q = ∏_{a : q.A} r ◃ (y + C (q.B a))`. This is the **cartesian**
 exponential: it is the right adjoint to the categorical product functor
 `- * q`, so lenses `p * q ⇆ r` correspond to lenses `p ⇆ exp r q`.
 
@@ -63,7 +63,7 @@ the exponential-adjunction equations below rewrite through the cartesian
 product and exponential constructions there. `implicit_reducible` (unlike
 `reducible`) keeps them opaque to simp and typeclass resolution, and needs
 no `allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] PFunctor.monomial PFunctor.X PFunctor.prod
+attribute [local implicit_reducible] PFunctor.monomial PFunctor.y PFunctor.prod
   PFunctor.instHMulPFunctor PFunctor.instMulPFunctor PFunctor.pi PFunctor.exp PFunctor.comp
 
 /-- The evaluation lens `exp r q * q ⇆ r`, the counit of the cartesian
@@ -98,7 +98,7 @@ def curry {p q r : PFunctor.{uA, uB}} (l : Lens (p * q) r) : Lens p (exp r q) :=
         | Sum.inl pb => pb
         | Sum.inr _ =>
             (cast (congrArg
-              (fun s => (X + C (q.B a)).B (Sum.map (fun _ => PUnit.unit) id s)) hh)
+              (fun s => (y + C (q.B a)).B (Sum.map (fun _ => PUnit.unit) id s)) hh)
               dx.2 : PEmpty).elim })
 
 /-- Transpose of a lens `p ⇆ exp r q` back to a lens `p * q ⇆ r` (the backward
@@ -153,8 +153,8 @@ private lemma transported_dependent_apply {ι : Type u} {γ : Type v} (F : ι �
   convert eqRec_heq (φ := fun b => F b → γ) h f using 1
 
 private lemma cast_exp_direction_of_inl {q r : PFunctor.{uA, uB}} {f f' : (exp r q).A} (h : f = f')
-    {i : q.A} {d : r.B (f i).1} {d' : r.B (f' i).1} {bd : (X + C (q.B i)).B ((f i).2 d)}
-    {bd' : (X + C (q.B i)).B ((f' i).2 d')} (hd : d ≍ d') (hb : (f i).2 d = Sum.inl PUnit.unit) :
+    {i : q.A} {d : r.B (f i).1} {d' : r.B (f' i).1} {bd : (y + C (q.B i)).B ((f i).2 d)}
+    {bd' : (y + C (q.B i)).B ((f' i).2 d')} (hd : d ≍ d') (hb : (f i).2 d = Sum.inl PUnit.unit) :
     cast (congrArg (exp r q).B h) ⟨i, d, bd⟩ = ⟨i, d', bd'⟩ := by
   apply eq_of_heq
   refine (cast_heq (congrArg (exp r q).B h) ⟨i, d, bd⟩).trans ?_
@@ -162,8 +162,8 @@ private lemma cast_exp_direction_of_inl {q r : PFunctor.{uA, uB}} {f f' : (exp r
   have hdd : d = d' := eq_of_heq hd
   subst d'
   apply heq_of_eq
-  let e : (X + C (q.B i)).B ((f i).2 d) ≃ PUnit :=
-    _root_.Equiv.cast (congrArg (X + C (q.B i)).B hb)
+  let e : (y + C (q.B i)).B ((f i).2 d) ≃ PUnit :=
+    _root_.Equiv.cast (congrArg (y + C (q.B i)).B hb)
   have hbd : bd = bd' := e.injective (Subsingleton.elim _ _)
   exact congrArg (fun z => (⟨i, ⟨d, z⟩⟩ : (exp r q).B f)) hbd
 
@@ -225,8 +225,8 @@ theorem curry_uncurry {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) :
           refine Sigma.ext rfl ?_
           apply heq_of_eq
           refine Sigma.ext rfl ?_
-          let e : (X + C (q.B iNew)).B ((g.toFunA pa iNew).2 dOld) ≃ PUnit :=
-            _root_.Equiv.cast (congrArg (X + C (q.B iNew)).B heval)
+          let e : (y + C (q.B iNew)).B ((g.toFunA pa iNew).2 dOld) ≃ PUnit :=
+            _root_.Equiv.cast (congrArg (y + C (q.B iNew)).B heval)
           exact heq_of_eq (e.injective (Subsingleton.elim _ _))
         · simp only [Sum.elim_inr] at hs
           contradiction
@@ -238,7 +238,7 @@ theorem curry_uncurry {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) :
         rw [hs]
         rfl
       have hempty : PEmpty := cast
-        (congrArg (X + C (q.B iNew)).B hnew) bdNew
+        (congrArg (y + C (q.B iNew)).B hnew) bdNew
       exact hempty.elim
 
 /-- The cartesian exponential adjunction as an equivalence of lens types. -/

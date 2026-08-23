@@ -116,9 +116,9 @@ private def parallelCommPresentationHom
 private theorem displayedBehavior_parallel_comm_presented
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right) :
     Display.M.transport
         ((parallelCommPresentationHom S T).behavior_eq
@@ -282,7 +282,7 @@ private def parallelZeroRightUnitorPresentationHom
 
 private theorem displayedBehavior_parallel_zero_right_presented
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left) :
     Display.M.transport
         ((parallelZeroRightUnitorPresentationHom S).behavior_eq
@@ -435,7 +435,7 @@ private def parallelZeroRightTerminalPresentationHom
 
 private theorem displayedBehavior_parallel_zero_right_presentation
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left) :
     Display.M.transport
         ((parallelZeroRightTerminalPresentationHom S).behavior_eq
@@ -573,7 +573,7 @@ private def parallelZeroLeftUnitorPresentationHom
 
 private theorem displayedBehavior_parallel_zero_left_presented
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
-    (right : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (right : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedRight : Display.M (Display.responder S) right) :
     Display.M.transport
         ((parallelZeroLeftUnitorPresentationHom S).behavior_eq
@@ -730,7 +730,7 @@ private def parallelZeroLeftTerminalPresentationHom
 
 private theorem displayedBehavior_parallel_zero_left_presentation
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
-    (right : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (right : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedRight : Display.M (Display.responder S) right) :
     Display.M.transport
         ((parallelZeroLeftTerminalPresentationHom S).behavior_eq
@@ -765,9 +765,9 @@ transport along the ordinary braiding law. -/
 theorem mapDisplayedBehavior_parallel_comm
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left)
-    (right : PFunctor.M (Q ⊸ X.{uA₂, uB}))
+    (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right) :
     Display.M.transport (mapBehavior_parallel_comm left right)
         (mapDisplayedBehavior (Display.Lens.parallelSumComm S T)
@@ -778,8 +778,8 @@ theorem mapDisplayedBehavior_parallel_comm
   let swapped := Responder.parallel (Responder.terminal (P := Q))
     (Responder.terminal (P := P))
   let swappedWitness := fun state :
-      PFunctor.M (Q ⊸ X.{uA₂, uB}) ×
-        PFunctor.M (P ⊸ X.{uA₁, uB}) =>
+      PFunctor.M (Q ⊸ y.{uA₂, uB}) ×
+        PFunctor.M (P ⊸ y.{uA₁, uB}) =>
     Display.M (Display.responder T) state.1 ×
       Display.M (Display.responder S) state.2
   let displayedSwapped := parallelCoalgebra
@@ -846,7 +846,7 @@ right-unitor equality; the proof factors through the raw empty-responder
 presentation and discharges both presentation changes internally. -/
 theorem mapDisplayedBehavior_parallel_zero_right
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
-    (left : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (left : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedLeft : Display.M (Display.responder S) left) :
     Display.M.transport (mapBehavior_parallel_zero_right left)
         (mapDisplayedBehavior (Display.Lens.parallelSumZero S)
@@ -862,7 +862,7 @@ theorem mapDisplayedBehavior_parallel_zero_right
     (0 : PFunctor.{uA₂, uB}))
   let raw := Responder.parallel (Responder.terminal (P := P)) empty
   let rawWitness := fun state :
-      PFunctor.M (P ⊸ X.{uA₁, uB}) × PUnit =>
+      PFunctor.M (P ⊸ y.{uA₁, uB}) × PUnit =>
     Display.M (Display.responder S) state.1 × PUnit
   let displayedRaw := parallelCoalgebra
     (Responder.terminal (P := P)) empty
@@ -987,7 +987,7 @@ theorem mapDisplayedBehavior_parallel_zero_right
 parallel behavior. -/
 theorem mapDisplayedBehavior_parallel_zero_left
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
-    (right : PFunctor.M (P ⊸ X.{uA₁, uB}))
+    (right : PFunctor.M (P ⊸ y.{uA₁, uB}))
     (displayedRight : Display.M (Display.responder S) right) :
     Display.M.transport (mapBehavior_parallel_zero_left right)
         (mapDisplayedBehavior (Display.Lens.zeroParallelSum S)
@@ -1002,7 +1002,7 @@ theorem mapDisplayedBehavior_parallel_zero_left
     (0 : PFunctor.{uA₂, uB}))
   let raw := Responder.parallel empty (Responder.terminal (P := P))
   let rawWitness := fun state :
-      PUnit × PFunctor.M (P ⊸ X.{uA₁, uB}) =>
+      PUnit × PFunctor.M (P ⊸ y.{uA₁, uB}) =>
     PUnit × Display.M (Display.responder S) state.2
   let displayedRaw := parallelCoalgebra empty
     (Responder.terminal (P := P))

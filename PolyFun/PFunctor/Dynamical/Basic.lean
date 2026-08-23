@@ -14,7 +14,7 @@ import Batteries.Tactic.Lint
 
 Following Niu–Spivak, *Polynomial Functors: A Mathematical Theory of Interaction*
 (Chapter 4), a **`p`-dynamical system with states `S`** *is* a dependent lens out
-of the self-monomial state polynomial: `DynSystem S p` is definitionally
+of the self-state y^ polynomial: `DynSystem S p` is definitionally
 `Lens (selfMonomial S) p`, so the entire `PFunctor.Lens` combinator library
 applies to dynamical systems on the nose — wrapping a system along a wiring lens
 is literally lens composition. The lens's position map is the system's `expose`
@@ -28,7 +28,7 @@ coalgebras of polynomial functors.
 
 * `PFunctor.DynSystem S p` — a `p`-dynamical system with state set `S`, i.e. a
   lens `selfMonomial S ⟹ p`.
-* `PFunctor.MooreMachine S O I` — the special case over the interface `O X^ I`
+* `PFunctor.MooreMachine S O I` — the special case over the interface `O y^ I`
   (output set `O`, input set `I`), recovering classical Moore machines.
 * `PFunctor.DeterministicAutomaton O I` — a Moore machine with a distinguished start state.
 
@@ -243,11 +243,11 @@ end DynSystem
 /-! ## Moore machines and deterministic automata -/
 
 /-- A **Moore machine** with states `S`, output set `O` and input set `I`: a
-dynamical system over the interface `monomial O I = O X^ I`. Unpacking,
+dynamical system over the monomial interface `O y^ I`. Unpacking,
 `expose : S → O` is the Moore output and `update : S → I → S` is the transition
 function (Niu–Spivak §4.1). -/
 abbrev MooreMachine (S : Type u) (O : Type uO) (I : Type uI) : Type _ :=
-  DynSystem S (monomial O I)
+  DynSystem S (O y^ I)
 
 namespace MooreMachine
 
@@ -297,29 +297,29 @@ end DeterministicAutomaton
 
 /-! ## Closed systems, points, and sections -/
 
-/-- A **point** of an interface `p` is a lens `X ⟹ p` (the book's `y ⟹ p`): it
+/-- A **point** of an interface `p` is a lens `y ⟹ p` (the book's `y ⟹ p`): it
 picks a position and discards directions, so `Point p ≅ p.A`. It is the data of a
 generalized element of the interface, not enough on its own to close a system. -/
-abbrev Point (p : PFunctor.{uA, uB}) : Type _ := Lens X.{uA, uB} p
+abbrev Point (p : PFunctor.{uA, uB}) : Type _ := Lens y.{uA, uB} p
 
-/-- A **section** of an interface `p` is a lens `p ⟹ X` (the book's `p ⟹ y`),
+/-- A **section** of an interface `p` is a lens `p ⟹ y` (the book's `p ⟹ y`),
 equivalently a dependent section `(a : p.A) → p.B a` choosing a direction at every
 position. Composing a section after a system's interface lens closes the system off
 (Niu–Spivak §4.3.4); see `DynSystem.close`. This is `Lens.enclose p` with the unit's
 universes instantiated at those of `p`. -/
-abbrev Section (p : PFunctor.{uA, uB}) : Type _ := Lens p X.{uA, uB}
+abbrev Section (p : PFunctor.{uA, uB}) : Type _ := Lens p y.{uA, uB}
 
-/-- The section `p ⟹ X` picking the direction `σ a` at each position `a`. Unpacking
+/-- The section `p ⟹ y` picking the direction `σ a` at each position `a`. Unpacking
 a `Section p`, the position map is trivial and the direction map is `σ`. -/
 def sectionLens {p : PFunctor.{uA, uB}} (σ : (a : p.A) → p.B a) : Section p :=
   Lens.toLinear (fun _ => PUnit.unit) σ
 
 set_option linter.checkUnivs false in
-/-- A **closed** dynamical system on states `S` is an `X`-system: its interface is
+/-- A **closed** dynamical system on states `S` is a `y`-system: its interface is
 the composition unit, so the dynamics reduce to a pure state endofunction. -/
 -- `Closed`'s universes are the composition-unit interface's independent position (`uA`) and
 -- direction (`uB`) universes; kept separate for generality.
-abbrev Closed (S : Type u) : Type _ := DynSystem S X.{uA, uB}
+abbrev Closed (S : Type u) : Type _ := DynSystem S y.{uA, uB}
 
 namespace Closed
 

@@ -37,18 +37,18 @@ cofree comparison retrofunctors there. `implicit_reducible` (unlike
 and needs no `allowUnsafeReducibility`. Constants already
 `implicit_reducible` at their definition sites (the `unfold*` family,
 `relabel`, `Comonoid.tensor`) are omitted. -/
-attribute [local implicit_reducible] PFunctor.Obj PFunctor.X PFunctor.monomial
+attribute [local implicit_reducible] PFunctor.Obj PFunctor.y PFunctor.monomial
   PFunctor.tensor FreeP.node Comonoid.Hom.ofCategoryLaws CofreeP.comonoid
   CofreeP.cogenerator CofreeP.extend CofreeP.laxTensorHom CofreeP.laxTensor
 
 private theorem runObj_unit (P : PFunctor.{u, u})
     (pattern : (FreeP P).A) :
-    Lens.mapObj (FreeP.map (Lens.Equiv.tensorX (P := P)).toLens)
+    Lens.mapObj (FreeP.map (Lens.Equiv.tensorY (P := P)).toLens)
         (FreeP.relabel
           (fun pulled => (pulled.1, PUnit.unit))
           (runObj pattern
             ((CofreeP.laxUnit.{u, u}).toFunA
-              (PUnit.unit : X.{u, u}.A)))) =
+              (PUnit.unit : y.{u, u}.A)))) =
       (⟨pattern, fun path => (path, PUnit.unit)⟩ :
         (FreeP P).Obj (FreeM.Path pattern × PUnit.{u + 1})) := by
   induction pattern with
@@ -62,37 +62,37 @@ private theorem runObj_unit (P : PFunctor.{u, u})
       funext direction
       change P.B a at direction
       change Lens.mapObj (FreeP.map
-          (Lens.Equiv.tensorX (P := P)).toLens)
+          (Lens.Equiv.tensorY (P := P)).toLens)
           (FreeP.relabel (fun pulled => (pulled.1, PUnit.unit))
             (FreeP.relabel
               (fun pulled =>
                 (FreeM.Path.cons a rest direction pulled.1,
                   M.Vertex.child
                     (t := (CofreeP.laxUnit.{u, u}).toFunA
-                      (PUnit.unit : X.{u, u}.A))
+                      (PUnit.unit : y.{u, u}.A))
                     PUnit.unit pulled.2))
               (runObj (rest direction)
                 (M.children
                   ((CofreeP.laxUnit.{u, u}).toFunA
-                    (PUnit.unit : X.{u, u}.A)) PUnit.unit)))) = _
+                    (PUnit.unit : y.{u, u}.A)) PUnit.unit)))) = _
       rw [FreeP.relabel_relabel, FreeP.mapObj_relabel]
       change FreeP.relabel
           (fun pulled =>
             (FreeM.Path.cons a rest direction pulled.1, PUnit.unit))
           (Lens.mapObj (FreeP.map
-              (Lens.Equiv.tensorX (P := P)).toLens)
+              (Lens.Equiv.tensorY (P := P)).toLens)
             (runObj (rest direction)
               (M.children
                 ((CofreeP.laxUnit.{u, u}).toFunA
-                  (PUnit.unit : X.{u, u}.A)) PUnit.unit))) = _
+                  (PUnit.unit : y.{u, u}.A)) PUnit.unit))) = _
       rw [CofreeP.laxUnit_children]
       have ih' :
           FreeP.relabel (fun pulled => (pulled.1, PUnit.unit))
               (Lens.mapObj (FreeP.map
-                (Lens.Equiv.tensorX (P := P)).toLens)
+                (Lens.Equiv.tensorY (P := P)).toLens)
                 (runObj (rest direction)
                   ((CofreeP.laxUnit.{u, u}).toFunA
-                    (PUnit.unit : X.{u, u}.A)))) =
+                    (PUnit.unit : y.{u, u}.A)))) =
             (⟨rest direction, fun path => (path, PUnit.unit)⟩ :
               (FreeP P).Obj
                 (FreeM.Path (rest direction) × PUnit.{u + 1})) := by
@@ -107,40 +107,40 @@ private theorem runObj_unit (P : PFunctor.{u, u})
         FreeP.relabel, Function.comp_def] using hi
 
 private def unitLhs (P : PFunctor.{u, u}) :
-    Lens (FreeP P ⊗ X.{u, u}) (FreeP P) :=
-  (FreeP.map (Lens.Equiv.tensorX (P := P)).toLens ∘ₗ
-      runOn P X.{u, u}) ∘ₗ
+    Lens (FreeP P ⊗ y.{u, u}) (FreeP P) :=
+  (FreeP.map (Lens.Equiv.tensorY (P := P)).toLens ∘ₗ
+      runOn P y.{u, u}) ∘ₗ
     (Lens.id (FreeP P) ⊗ₗ CofreeP.laxUnit.{u, u})
 
 private theorem unitObj (P : PFunctor.{u, u})
     (pattern : (FreeP P).A) :
     Lens.mapObj (unitLhs P)
-        (⟨(pattern, (PUnit.unit : X.{u, u}.A)), id⟩ :
-          (FreeP P ⊗ X.{u, u}).Obj
+        (⟨(pattern, (PUnit.unit : y.{u, u}.A)), id⟩ :
+          (FreeP P ⊗ y.{u, u}).Obj
             (FreeM.Path pattern × PUnit.{u + 1})) =
-      Lens.mapObj (Lens.Equiv.tensorX (P := FreeP P)).toLens
-        (⟨(pattern, (PUnit.unit : X.{u, u}.A)), id⟩ :
-          (FreeP P ⊗ X.{u, u}).Obj
+      Lens.mapObj (Lens.Equiv.tensorY (P := FreeP P)).toLens
+        (⟨(pattern, (PUnit.unit : y.{u, u}.A)), id⟩ :
+          (FreeP P ⊗ y.{u, u}).Obj
             (FreeM.Path pattern × PUnit.{u + 1})) := by
   change Lens.mapObj (FreeP.map
-      (Lens.Equiv.tensorX (P := P)).toLens)
+      (Lens.Equiv.tensorY (P := P)).toLens)
       (FreeP.relabel
         (fun pulled =>
           (pulled.1,
             (CofreeP.laxUnit.{u, u}).toFunB
-              (PUnit.unit : X.{u, u}.A) pulled.2))
+              (PUnit.unit : y.{u, u}.A) pulled.2))
         (runObj pattern
           ((CofreeP.laxUnit.{u, u}).toFunA
-            (PUnit.unit : X.{u, u}.A)))) =
+            (PUnit.unit : y.{u, u}.A)))) =
     (⟨pattern, fun path => (path, PUnit.unit)⟩ :
       (FreeP P).Obj (FreeM.Path pattern × PUnit.{u + 1}))
   have hlabel :
       (fun pulled : FreeM.Path pattern ×
           M.Vertex ((CofreeP.laxUnit.{u, u}).toFunA
-            (PUnit.unit : X.{u, u}.A)) =>
+            (PUnit.unit : y.{u, u}.A)) =>
         (pulled.1,
           (CofreeP.laxUnit.{u, u}).toFunB
-            (PUnit.unit : X.{u, u}.A) pulled.2)) =
+            (PUnit.unit : y.{u, u}.A) pulled.2)) =
       (fun pulled => (pulled.1, PUnit.unit)) := by
     funext pulled
     exact Prod.ext rfl (CofreeP.laxUnit_toFunB pulled.2)
@@ -149,19 +149,19 @@ private theorem unitObj (P : PFunctor.{u, u})
 
 /-- Right-unit coherence for the executable pattern action. -/
 theorem runOn_unit (P : PFunctor.{u, u}) :
-    (FreeP.map (Lens.Equiv.tensorX (P := P)).toLens ∘ₗ
-        runOn P X.{u, u}) ∘ₗ
+    (FreeP.map (Lens.Equiv.tensorY (P := P)).toLens ∘ₗ
+        runOn P y.{u, u}) ∘ₗ
         (Lens.id (FreeP P) ⊗ₗ CofreeP.laxUnit.{u, u}) =
-      (Lens.Equiv.tensorX (P := FreeP P)).toLens := by
+      (Lens.Equiv.tensorY (P := FreeP P)).toLens := by
   let lhs := unitLhs P
-  let rhs := (Lens.Equiv.tensorX (P := FreeP P)).toLens
-  have hobj : ∀ input : (FreeP P ⊗ X.{u, u}).A,
+  let rhs := (Lens.Equiv.tensorY (P := FreeP P)).toLens
+  have hobj : ∀ input : (FreeP P ⊗ y.{u, u}).A,
       Lens.mapObj lhs
-          (⟨input, id⟩ : (FreeP P ⊗ X.{u, u}).Obj
-            ((FreeP P ⊗ X.{u, u}).B input)) =
+          (⟨input, id⟩ : (FreeP P ⊗ y.{u, u}).Obj
+            ((FreeP P ⊗ y.{u, u}).B input)) =
         Lens.mapObj rhs
-          (⟨input, id⟩ : (FreeP P ⊗ X.{u, u}).Obj
-            ((FreeP P ⊗ X.{u, u}).B input)) := by
+          (⟨input, id⟩ : (FreeP P ⊗ y.{u, u}).Obj
+            ((FreeP P ⊗ y.{u, u}).B input)) := by
     rintro ⟨pattern, xPosition⟩
     cases xPosition
     exact unitObj P pattern
@@ -169,11 +169,11 @@ theorem runOn_unit (P : PFunctor.{u, u}) :
 
 /-- Right-unit coherence for the universal interaction. -/
 theorem xi_unit (P : PFunctor.{u, u}) :
-    (FreeP.map (Lens.Equiv.tensorX (P := P)).toLens ∘ₗ
-        xi P X.{u, u}) ∘ₗ
+    (FreeP.map (Lens.Equiv.tensorY (P := P)).toLens ∘ₗ
+        xi P y.{u, u}) ∘ₗ
         (Lens.id (FreeP P) ⊗ₗ CofreeP.laxUnit.{u, u}) =
-      (Lens.Equiv.tensorX (P := FreeP P)).toLens := by
-  rw [← runOn_eq_xi P X.{u, u}]
+      (Lens.Equiv.tensorY (P := FreeP P)).toLens := by
+  rw [← runOn_eq_xi P y.{u, u}]
   exact runOn_unit P
 
 /-! ## Associativity -/

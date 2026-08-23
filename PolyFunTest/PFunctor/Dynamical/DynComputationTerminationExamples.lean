@@ -37,7 +37,7 @@ theorem terminationSemanticsUniverseCanary {p : PFunctor.{uA, uB}}
       FreeM.toResumption (terminationUniverseCanary M state termination) :=
   M.behavior_eq_toResumption_toFreeMFrom state termination
 
-abbrev natQuery : PFunctor.{0, 0} := purePower Nat
+abbrev natQuery : PFunctor.{0, 0} := y^ Nat
 
 /-- A root query selects a countdown length. Countdown queries ignore their
 answers and decrease the counter; zero returns. -/

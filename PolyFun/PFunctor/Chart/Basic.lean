@@ -29,7 +29,7 @@ category that is isomorphic to the arrow category `Set^→` (squares
 |--------------|------------------------------------------|----------------------------------|
 | Coproduct    | `+`                                      | `+` (same)                       |
 | Product      | `*` (positions ×, directions ⊕)          | `⊗` (positions ×, directions ×)  |
-| Terminal     | `1` (positions = 1, no directions)       | `X = y` (positions = 1, dir = 1) |
+| Terminal     | `1` (positions = 1, no directions)       | `y = y` (positions = 1, dir = 1) |
 | Composition  | `compMap` is natural                     | `compMap` is **not** natural     |
 | Sigma        | `sigmaExists`, `sigmaMap`                | `sigmaExists`, `sigmaMap`        |
 | Pi           | `piForall`, `piMap`                      | only `piMap`                     |
@@ -157,12 +157,12 @@ end Equiv
 def initial {P : PFunctor.{uA, uB}} : Chart 0 P :=
   PEmpty.elim ⇉ fun _ => PEmpty.elim
 
-/-- The (unique) terminal chart from any functor `P` to `X = y`.
+/-- The (unique) terminal chart from any functor `P` to `y = y`.
 
-`X` is the terminal object of the chart category — a single position with a
+`y` is the terminal object of the chart category — a single position with a
 single direction — corresponding to the identity arrow `1 → 1` in `Set^→`.
 This differs from the lens-side terminal `1` (positions `1`, no directions). -/
-def terminal {P : PFunctor.{uA, uB}} : Chart P X :=
+def terminal {P : PFunctor.{uA, uB}} : Chart P y :=
   (fun _ => PUnit.unit) ⇉ (fun _ _ => PUnit.unit)
 
 alias fromZero := initial
@@ -296,15 +296,15 @@ def mapIdx (φ : Chart P Q) (i : Idx P) : Idx Q :=
 /-! ### Special charts -/
 
 set_option linter.checkUnivs false in
-/-- The type of charts from a polynomial functor `P` to `X`.
+/-- The type of charts from a polynomial functor `P` to `y`.
 
-A chart `P → X` is equivalent to a function `(a : P.A) → P.B a → PUnit`,
+A chart `P → y` is equivalent to a function `(a : P.A) → P.B a → PUnit`,
 i.e. a boundary valuation that picks out a single direction at every
 position. Analogous to `Lens.enclose`. -/
 -- `Chart.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
 -- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
 def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
-  Chart P X.{uA₁, uB₁}
+  Chart P y.{uA₁, uB₁}
 
 /-! ### Notations for binary operations -/
 
@@ -500,19 +500,22 @@ def tensorAssoc : (P ⊗ Q) ⊗ R ≃c P ⊗ (Q ⊗ R) where
   left_inv := rfl
   right_inv := rfl
 
-/-- Tensor product with `X` is identity (right) -/
-def tensorX : P ⊗ X ≃c P where
+/-- Tensor product with `y` is identity (right) -/
+def tensorY : P ⊗ y ≃c P where
   toChart := Prod.fst ⇉ (fun _ => Prod.fst)
   invChart := (fun p => (p, PUnit.unit)) ⇉ (fun _ b => (b, PUnit.unit))
   left_inv := rfl
   right_inv := rfl
 
-/-- Tensor product with `X` is identity (left) -/
-def xTensor : X ⊗ P ≃c P where
+/-- Tensor product with `y` is identity (left) -/
+def yTensor : y ⊗ P ≃c P where
   toChart := Prod.snd ⇉ (fun _ => Prod.snd)
   invChart := (fun p => (PUnit.unit, p)) ⇉ (fun _ b => (PUnit.unit, b))
   left_inv := rfl
   right_inv := rfl
+
+@[deprecated (since := "2026-08-17")] alias tensorX := tensorY
+@[deprecated (since := "2026-08-17")] alias xTensor := yTensor
 
 /-- Tensor product with `0` is zero (left) -/
 def zeroTensor : 0 ⊗ P ≃c 0 where

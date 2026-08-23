@@ -118,7 +118,7 @@ Statements keep book numbering. Companions: `spivak-niu-ch6.md` (δ's origin),
 ## Takeaways for PolyFun / VCVio
 
 1. **B1/B2 design confirmed and sharpened.** `Comonoid` is a data-carrying
-   structure on `(Poly, X, ◃)` (structure not Prop-class: Ex 7.39 —
+   structure on `(Poly, y, ◃)` (structure not Prop-class: Ex 7.39 —
    carriers admit multiple structures); the state comonoid on
    `selfMonomial S` is the canonical instance; state systems are
    characterized *among* comonoids by bijective `cod` (Example 7.22) — a

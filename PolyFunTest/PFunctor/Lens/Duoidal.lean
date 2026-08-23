@@ -40,7 +40,7 @@ example : (purePower.{0, 0} Bool ⊗ purePower.{0, 0} (Fin 3)) ≃ₗ
 /-- The `By ⊗ p ≅ By ◃ p` catalogue isomorphism (linear factor on the left). -/
 example : (linear.{0, 0} Bool ⊗ purePower.{0, 0} (Fin 3)) ≃ₗ
     (linear.{0, 0} Bool ◃ purePower.{0, 0} (Fin 3)) :=
-  Lens.Equiv.linearTensor Bool (purePower (Fin 3))
+  Lens.Equiv.linearTensor Bool (y^ (Fin 3))
 
 /-- The `p ⊗ y^A ≅ p ◃ y^A` catalogue isomorphism (pure-power factor on the right). -/
 example : (linear.{0, 0} Bool ⊗ purePower.{0, 0} (Fin 3)) ≃ₗ
@@ -84,25 +84,25 @@ example (p p' q q' : PFunctor.{u, u}) :
   Lens.duoidalLens_isCartesian p p' q q'
 
 /-- The two unit-comparison maps preserve independent universe pairs. -/
-example : Lens X.{pA₁, pB₁} X.{qA₁, qB₁} :=
+example : Lens y.{pA₁, pB₁} y.{qA₁, qB₁} :=
   Lens.unitComparison
 
 /-- Tensor-unitor naturality leaves the source and target position and
 direction universes independent. -/
 example {p : PFunctor.{pA₁, pB₁}} {q : PFunctor.{qA₁, qB₁}}
     (f : Lens p q) :
-    f ∘ₗ (Lens.Equiv.xTensor (P := p)).toLens =
-      (Lens.Equiv.xTensor (P := q)).toLens ∘ₗ
-        ((Lens.unitComparison : Lens X.{pA₁, pB₁} X.{qA₁, qB₁}) ⊗ₗ f) :=
-  Lens.xTensor_natural f
+    f ∘ₗ (Lens.Equiv.yTensor (P := p)).toLens =
+      (Lens.Equiv.yTensor (P := q)).toLens ∘ₗ
+        ((Lens.unitComparison : Lens y.{pA₁, pB₁} y.{qA₁, qB₁}) ⊗ₗ f) :=
+  Lens.yTensor_natural f
 
 example {p : PFunctor.{pA₁, pB₁}} {q : PFunctor.{qA₁, qB₁}}
     (f : Lens p q) :
-    f ∘ₗ (Lens.Equiv.tensorX (P := p)).toLens =
-      (Lens.Equiv.tensorX (P := q)).toLens ∘ₗ
+    f ∘ₗ (Lens.Equiv.tensorY (P := p)).toLens =
+      (Lens.Equiv.tensorY (P := q)).toLens ∘ₗ
         (f ⊗ₗ
-          (Lens.unitComparison : Lens X.{pA₁, pB₁} X.{qA₁, qB₁})) :=
-  Lens.tensorX_natural f
+          (Lens.unitComparison : Lens y.{pA₁, pB₁} y.{qA₁, qB₁})) :=
+  Lens.tensorY_natural f
 
 /-- Tensor-associator naturality leaves all six polynomial universe pairs
 independent. -/
@@ -118,93 +118,93 @@ example
   Lens.tensorAssoc_natural f g h
 
 example :
-    Lens X.{max pA₁ qA₁ pB₁, max pB₁ qB₁}
-      (X.{pA₁, pB₁} ◃ X.{qA₁, qB₁}) :=
+    Lens y.{max pA₁ qA₁ pB₁, max pB₁ qB₁}
+      (y.{pA₁, pB₁} ◃ y.{qA₁, qB₁}) :=
   Lens.compUnitMap
 
 /-- The shared unit satisfies its tensor-monoid and composition-comonoid
 laws. -/
 example :
     (Lens.tensorUnitMap :
-        Lens (X.{pA₁, pB₁} ⊗ X.{pA₁, pB₁}) X.{pA₁, pB₁}) ∘ₗ
-      ((Lens.unitComparison : Lens X.{pA₁, pB₁} X.{pA₁, pB₁}) ⊗ₗ
-        Lens.id X.{pA₁, pB₁}) =
-      Lens.Equiv.xTensor.toLens :=
+        Lens (y.{pA₁, pB₁} ⊗ y.{pA₁, pB₁}) y.{pA₁, pB₁}) ∘ₗ
+      ((Lens.unitComparison : Lens y.{pA₁, pB₁} y.{pA₁, pB₁}) ⊗ₗ
+        Lens.id y.{pA₁, pB₁}) =
+      Lens.Equiv.yTensor.toLens :=
   Lens.tensorUnitMap_unit_left
 
 example :
     (Lens.tensorUnitMap :
-        Lens (X.{pA₁, pB₁} ⊗ X.{pA₁, pB₁}) X.{pA₁, pB₁}) ∘ₗ
-      (Lens.id X.{pA₁, pB₁} ⊗ₗ
-        (Lens.unitComparison : Lens X.{pA₁, pB₁} X.{pA₁, pB₁})) =
-      Lens.Equiv.tensorX.toLens :=
+        Lens (y.{pA₁, pB₁} ⊗ y.{pA₁, pB₁}) y.{pA₁, pB₁}) ∘ₗ
+      (Lens.id y.{pA₁, pB₁} ⊗ₗ
+        (Lens.unitComparison : Lens y.{pA₁, pB₁} y.{pA₁, pB₁})) =
+      Lens.Equiv.tensorY.toLens :=
   Lens.tensorUnitMap_unit_right
 
 example :
     (Lens.tensorUnitMap :
-        Lens (X.{pA₁, pB₁} ⊗ X.{pA₁, pB₁}) X.{pA₁, pB₁}) ∘ₗ
+        Lens (y.{pA₁, pB₁} ⊗ y.{pA₁, pB₁}) y.{pA₁, pB₁}) ∘ₗ
         ((Lens.tensorUnitMap :
-          Lens (X.{pA₁, pB₁} ⊗ X.{pA₁, pB₁}) X.{pA₁, pB₁}) ⊗ₗ
-          Lens.id X.{pA₁, pB₁}) =
+          Lens (y.{pA₁, pB₁} ⊗ y.{pA₁, pB₁}) y.{pA₁, pB₁}) ⊗ₗ
+          Lens.id y.{pA₁, pB₁}) =
       (Lens.tensorUnitMap :
-        Lens (X.{pA₁, pB₁} ⊗ X.{pA₁, pB₁}) X.{pA₁, pB₁}) ∘ₗ
-        (Lens.id X.{pA₁, pB₁} ⊗ₗ (Lens.tensorUnitMap :
-          Lens (X.{pA₁, pB₁} ⊗ X.{pA₁, pB₁}) X.{pA₁, pB₁})) ∘ₗ
+        Lens (y.{pA₁, pB₁} ⊗ y.{pA₁, pB₁}) y.{pA₁, pB₁}) ∘ₗ
+        (Lens.id y.{pA₁, pB₁} ⊗ₗ (Lens.tensorUnitMap :
+          Lens (y.{pA₁, pB₁} ⊗ y.{pA₁, pB₁}) y.{pA₁, pB₁})) ∘ₗ
         Lens.Equiv.tensorAssoc.toLens :=
   Lens.tensorUnitMap_assoc
 
 example :
-    (Lens.Equiv.XComp (P := X.{pA₁, pB₁})).toLens ∘ₗ
-        ((Lens.unitComparison : Lens X.{pA₁, pB₁} X.{pA₁, pB₁}) ◃ₗ
-          Lens.id X.{pA₁, pB₁}) ∘ₗ
+    (Lens.Equiv.yComp (P := y.{pA₁, pB₁})).toLens ∘ₗ
+        ((Lens.unitComparison : Lens y.{pA₁, pB₁} y.{pA₁, pB₁}) ◃ₗ
+          Lens.id y.{pA₁, pB₁}) ∘ₗ
         (Lens.compUnitMap ∘ₗ
           (Lens.unitComparison :
-            Lens X.{pA₁, pB₁} X.{max pA₁ pB₁, pB₁})) =
-      Lens.id X.{pA₁, pB₁} :=
+            Lens y.{pA₁, pB₁} y.{max pA₁ pB₁, pB₁})) =
+      Lens.id y.{pA₁, pB₁} :=
   Lens.compUnitMap_counit_left
 
 example :
-    (Lens.Equiv.compX (P := X.{pA₁, pB₁})).toLens ∘ₗ
-        (Lens.id X.{pA₁, pB₁} ◃ₗ
-          (Lens.unitComparison : Lens X.{pA₁, pB₁} X.{pA₁, pB₁})) ∘ₗ
+    (Lens.Equiv.compY (P := y.{pA₁, pB₁})).toLens ∘ₗ
+        (Lens.id y.{pA₁, pB₁} ◃ₗ
+          (Lens.unitComparison : Lens y.{pA₁, pB₁} y.{pA₁, pB₁})) ∘ₗ
         (Lens.compUnitMap ∘ₗ
           (Lens.unitComparison :
-            Lens X.{pA₁, pB₁} X.{max pA₁ pB₁, pB₁})) =
-      Lens.id X.{pA₁, pB₁} :=
+            Lens y.{pA₁, pB₁} y.{max pA₁ pB₁, pB₁})) =
+      Lens.id y.{pA₁, pB₁} :=
   Lens.compUnitMap_counit_right
 
 example :
-    (Lens.Equiv.compAssoc (P := X.{pA₁, pB₁})
-      (Q := X.{pA₁, pB₁}) (R := X.{pA₁, pB₁})).toLens ∘ₗ
+    (Lens.Equiv.compAssoc (P := y.{pA₁, pB₁})
+      (Q := y.{pA₁, pB₁}) (R := y.{pA₁, pB₁})).toLens ∘ₗ
         ((Lens.compUnitMap ∘ₗ
           (Lens.unitComparison :
-            Lens X.{pA₁, pB₁} X.{max pA₁ pB₁, pB₁})) ◃ₗ
-          Lens.id X.{pA₁, pB₁}) ∘ₗ
+            Lens y.{pA₁, pB₁} y.{max pA₁ pB₁, pB₁})) ◃ₗ
+          Lens.id y.{pA₁, pB₁}) ∘ₗ
         (Lens.compUnitMap ∘ₗ
           (Lens.unitComparison :
-            Lens X.{pA₁, pB₁} X.{max pA₁ pB₁, pB₁})) =
-      (Lens.id X.{pA₁, pB₁} ◃ₗ
+            Lens y.{pA₁, pB₁} y.{max pA₁ pB₁, pB₁})) =
+      (Lens.id y.{pA₁, pB₁} ◃ₗ
         (Lens.compUnitMap ∘ₗ
           (Lens.unitComparison :
-            Lens X.{pA₁, pB₁} X.{max pA₁ pB₁, pB₁}))) ∘ₗ
+            Lens y.{pA₁, pB₁} y.{max pA₁ pB₁, pB₁}))) ∘ₗ
         (Lens.compUnitMap ∘ₗ
           (Lens.unitComparison :
-            Lens X.{pA₁, pB₁} X.{max pA₁ pB₁, pB₁})) :=
+            Lens y.{pA₁, pB₁} y.{max pA₁ pB₁, pB₁})) :=
   Lens.compUnitMap_coassoc
 
 /-- The internal interchange unit laws preserve independent universe pairs. -/
 example (p : PFunctor.{pA₁, pB₁}) (q : PFunctor.{qA₁, qB₁}) :
-    Lens.Equiv.XComp.toLens ∘ₗ
+    Lens.Equiv.yComp.toLens ∘ₗ
         (Lens.tensorUnitMap ◃ₗ Lens.id (p ⊗ q)) ∘ₗ
-        Lens.duoidalLens X p X q =
-      (Lens.Equiv.XComp.toLens ⊗ₗ Lens.Equiv.XComp.toLens) :=
+        Lens.duoidalLens y p y q =
+      (Lens.Equiv.yComp.toLens ⊗ₗ Lens.Equiv.yComp.toLens) :=
   Lens.duoidalLens_comp_unit_left p q
 
 example (p : PFunctor.{pA₁, pB₁}) (q : PFunctor.{qA₁, qB₁}) :
-    Lens.Equiv.compX.toLens ∘ₗ
+    Lens.Equiv.compY.toLens ∘ₗ
         (Lens.id (p ⊗ q) ◃ₗ Lens.tensorUnitMap) ∘ₗ
-        Lens.duoidalLens p X q X =
-      (Lens.Equiv.compX.toLens ⊗ₗ Lens.Equiv.compX.toLens) :=
+        Lens.duoidalLens p y q y =
+      (Lens.Equiv.compY.toLens ⊗ₗ Lens.Equiv.compY.toLens) :=
   Lens.duoidalLens_comp_unit_right p q
 
 /-- Three-interchange associativity keeps all six polynomial universe pairs
@@ -238,17 +238,17 @@ example (p₁ : PFunctor.{pA₁, pB₁}) (p₂ : PFunctor.{pA₂, pB₂})
 
 /-- The external tensor-unit laws preserve independent universe pairs. -/
 example (p : PFunctor.{pA₁, pB₁}) (q : PFunctor.{qA₁, qB₁}) :
-    (Lens.Equiv.xTensor.toLens ◃ₗ Lens.Equiv.xTensor.toLens) ∘ₗ
-        Lens.duoidalLens X X p q ∘ₗ
+    (Lens.Equiv.yTensor.toLens ◃ₗ Lens.Equiv.yTensor.toLens) ∘ₗ
+        Lens.duoidalLens y y p q ∘ₗ
         (Lens.compUnitMap ⊗ₗ Lens.id (p ◃ q)) =
-      Lens.Equiv.xTensor.toLens :=
+      Lens.Equiv.yTensor.toLens :=
   Lens.duoidalLens_tensor_unit_left p q
 
 example (p : PFunctor.{pA₁, pB₁}) (q : PFunctor.{qA₁, qB₁}) :
-    (Lens.Equiv.tensorX.toLens ◃ₗ Lens.Equiv.tensorX.toLens) ∘ₗ
-        Lens.duoidalLens p q X X ∘ₗ
+    (Lens.Equiv.tensorY.toLens ◃ₗ Lens.Equiv.tensorY.toLens) ∘ₗ
+        Lens.duoidalLens p q y y ∘ₗ
         (Lens.id (p ◃ q) ⊗ₗ Lens.compUnitMap) =
-      Lens.Equiv.tensorX.toLens :=
+      Lens.Equiv.tensorY.toLens :=
   Lens.duoidalLens_tensor_unit_right p q
 
 /-! ## Observable coherence paths -/
@@ -257,34 +257,34 @@ example (p : PFunctor.{pA₁, pB₁}) (q : PFunctor.{qA₁, qB₁}) :
 distinguishable direction types. -/
 def compAssocLeft :
     Lens
-      (((purePower Bool ◃ purePower (Fin 3)) ◃ purePower String) ⊗
-        ((purePower (Fin 4) ◃ purePower Nat) ◃ purePower Char))
-      ((purePower Bool ⊗ purePower (Fin 4)) ◃
-        ((purePower (Fin 3) ⊗ purePower Nat) ◃
-          (purePower String ⊗ purePower Char))) :=
-  (Lens.id (purePower Bool ⊗ purePower (Fin 4)) ◃ₗ
-      Lens.duoidalLens (purePower (Fin 3)) (purePower String)
-        (purePower Nat) (purePower Char)) ∘ₗ
-    Lens.duoidalLens (purePower Bool)
-      (purePower (Fin 3) ◃ purePower String)
-      (purePower (Fin 4)) (purePower Nat ◃ purePower Char) ∘ₗ
+      (((y^ Bool ◃ y^ (Fin 3)) ◃ y^ String) ⊗
+        ((y^ (Fin 4) ◃ y^ Nat) ◃ y^ Char))
+      ((y^ Bool ⊗ y^ (Fin 4)) ◃
+        ((y^ (Fin 3) ⊗ y^ Nat) ◃
+          (y^ String ⊗ y^ Char))) :=
+  (Lens.id (y^ Bool ⊗ y^ (Fin 4)) ◃ₗ
+      Lens.duoidalLens (y^ (Fin 3)) (y^ String)
+        (y^ Nat) (y^ Char)) ∘ₗ
+    Lens.duoidalLens (y^ Bool)
+      (y^ (Fin 3) ◃ y^ String)
+      (y^ (Fin 4)) (y^ Nat ◃ y^ Char) ∘ₗ
     (Lens.Equiv.compAssoc.toLens ⊗ₗ Lens.Equiv.compAssoc.toLens)
 
 /-- The right-hand path of composition-associativity coherence. -/
 def compAssocRight :
     Lens
-      (((purePower Bool ◃ purePower (Fin 3)) ◃ purePower String) ⊗
-        ((purePower (Fin 4) ◃ purePower Nat) ◃ purePower Char))
-      ((purePower Bool ⊗ purePower (Fin 4)) ◃
-        ((purePower (Fin 3) ⊗ purePower Nat) ◃
-          (purePower String ⊗ purePower Char))) :=
+      (((y^ Bool ◃ y^ (Fin 3)) ◃ y^ String) ⊗
+        ((y^ (Fin 4) ◃ y^ Nat) ◃ y^ Char))
+      ((y^ Bool ⊗ y^ (Fin 4)) ◃
+        ((y^ (Fin 3) ⊗ y^ Nat) ◃
+          (y^ String ⊗ y^ Char))) :=
   Lens.Equiv.compAssoc.toLens ∘ₗ
-    (Lens.duoidalLens (purePower Bool) (purePower (Fin 3))
-        (purePower (Fin 4)) (purePower Nat) ◃ₗ
-      Lens.id (purePower String ⊗ purePower Char)) ∘ₗ
-    Lens.duoidalLens (purePower Bool ◃ purePower (Fin 3))
-      (purePower String) (purePower (Fin 4) ◃ purePower Nat)
-      (purePower Char)
+    (Lens.duoidalLens (y^ Bool) (y^ (Fin 3))
+        (y^ (Fin 4)) (y^ Nat) ◃ₗ
+      Lens.id (y^ String ⊗ y^ Char)) ∘ₗ
+    Lens.duoidalLens (y^ Bool ◃ y^ (Fin 3))
+      (y^ String) (y^ (Fin 4) ◃ y^ Nat)
+      (y^ Char)
 
 /-- Both composition-associativity paths preserve each protocol's three-phase
 direction order. -/
@@ -311,35 +311,35 @@ example :
 /-- The left-hand path of tensor-associativity coherence. -/
 def tensorAssocLeft :
     Lens
-      (((purePower Bool ◃ purePower (Fin 3)) ⊗
-          (purePower String ◃ purePower Nat)) ⊗
-        (purePower (Fin 4) ◃ purePower Char))
-      ((purePower Bool ⊗ (purePower String ⊗ purePower (Fin 4))) ◃
-        (purePower (Fin 3) ⊗ (purePower Nat ⊗ purePower Char))) :=
-  Lens.duoidalLens (purePower Bool) (purePower (Fin 3))
-      (purePower String ⊗ purePower (Fin 4))
-      (purePower Nat ⊗ purePower Char) ∘ₗ
-    (Lens.id (purePower Bool ◃ purePower (Fin 3)) ⊗ₗ
-      Lens.duoidalLens (purePower String) (purePower Nat)
-        (purePower (Fin 4)) (purePower Char)) ∘ₗ
+      (((y^ Bool ◃ y^ (Fin 3)) ⊗
+          (y^ String ◃ y^ Nat)) ⊗
+        (y^ (Fin 4) ◃ y^ Char))
+      ((y^ Bool ⊗ (y^ String ⊗ y^ (Fin 4))) ◃
+        (y^ (Fin 3) ⊗ (y^ Nat ⊗ y^ Char))) :=
+  Lens.duoidalLens (y^ Bool) (y^ (Fin 3))
+      (y^ String ⊗ y^ (Fin 4))
+      (y^ Nat ⊗ y^ Char) ∘ₗ
+    (Lens.id (y^ Bool ◃ y^ (Fin 3)) ⊗ₗ
+      Lens.duoidalLens (y^ String) (y^ Nat)
+        (y^ (Fin 4)) (y^ Char)) ∘ₗ
     Lens.Equiv.tensorAssoc.toLens
 
 /-- The right-hand path of tensor-associativity coherence. -/
 def tensorAssocRight :
     Lens
-      (((purePower Bool ◃ purePower (Fin 3)) ⊗
-          (purePower String ◃ purePower Nat)) ⊗
-        (purePower (Fin 4) ◃ purePower Char))
-      ((purePower Bool ⊗ (purePower String ⊗ purePower (Fin 4))) ◃
-        (purePower (Fin 3) ⊗ (purePower Nat ⊗ purePower Char))) :=
+      (((y^ Bool ◃ y^ (Fin 3)) ⊗
+          (y^ String ◃ y^ Nat)) ⊗
+        (y^ (Fin 4) ◃ y^ Char))
+      ((y^ Bool ⊗ (y^ String ⊗ y^ (Fin 4))) ◃
+        (y^ (Fin 3) ⊗ (y^ Nat ⊗ y^ Char))) :=
   (Lens.Equiv.tensorAssoc.toLens ◃ₗ Lens.Equiv.tensorAssoc.toLens) ∘ₗ
     Lens.duoidalLens
-      (purePower Bool ⊗ purePower String)
-      (purePower (Fin 3) ⊗ purePower Nat)
-      (purePower (Fin 4)) (purePower Char) ∘ₗ
-    (Lens.duoidalLens (purePower Bool) (purePower (Fin 3))
-      (purePower String) (purePower Nat) ⊗ₗ
-      Lens.id (purePower (Fin 4) ◃ purePower Char))
+      (y^ Bool ⊗ y^ String)
+      (y^ (Fin 3) ⊗ y^ Nat)
+      (y^ (Fin 4)) (y^ Char) ∘ₗ
+    (Lens.duoidalLens (y^ Bool) (y^ (Fin 3))
+      (y^ String) (y^ Nat) ⊗ₗ
+      Lens.id (y^ (Fin 4) ◃ y^ Char))
 
 /-- Both tensor-associativity paths preserve outer/inner pairing across all
 three parallel protocols. -/
@@ -367,10 +367,10 @@ example :
 
 /-- The external left-unit path preserves the nontrivial composite direction. -/
 example :
-    ((Lens.Equiv.xTensor.toLens ◃ₗ Lens.Equiv.xTensor.toLens) ∘ₗ
-      Lens.duoidalLens X X (purePower Bool) (purePower String) ∘ₗ
+    ((Lens.Equiv.yTensor.toLens ◃ₗ Lens.Equiv.yTensor.toLens) ∘ₗ
+      Lens.duoidalLens y y (y^ Bool) (y^ String) ∘ₗ
       (Lens.compUnitMap ⊗ₗ
-        Lens.id (purePower Bool ◃ purePower String))).toFunB
+        Lens.id (y^ Bool ◃ y^ String))).toFunB
       (PUnit.unit, ⟨PUnit.unit, fun _ => PUnit.unit⟩)
       ⟨true, "inner"⟩ =
       (PUnit.unit, ⟨true, "inner"⟩) :=
@@ -378,9 +378,9 @@ example :
 
 /-- The external right-unit path preserves the nontrivial composite direction. -/
 example :
-    ((Lens.Equiv.tensorX.toLens ◃ₗ Lens.Equiv.tensorX.toLens) ∘ₗ
-      Lens.duoidalLens (purePower Bool) (purePower String) X X ∘ₗ
-      (Lens.id (purePower Bool ◃ purePower String) ⊗ₗ
+    ((Lens.Equiv.tensorY.toLens ◃ₗ Lens.Equiv.tensorY.toLens) ∘ₗ
+      Lens.duoidalLens (y^ Bool) (y^ String) y y ∘ₗ
+      (Lens.id (y^ Bool ◃ y^ String) ⊗ₗ
         Lens.compUnitMap)).toFunB
       (⟨PUnit.unit, fun _ => PUnit.unit⟩, PUnit.unit)
       ⟨true, "inner"⟩ =
@@ -409,11 +409,11 @@ example (p p' q q' : PFunctor.{u, u}) :
 
 /-- Ordering agrees with both tensor/composition unitors. -/
 example (p : PFunctor.{u, u}) :
-    Lens.Equiv.compX.toLens ∘ₗ Lens.orderingLens p X = Lens.Equiv.tensorX.toLens :=
+    Lens.Equiv.compY.toLens ∘ₗ Lens.orderingLens p y = Lens.Equiv.tensorY.toLens :=
   Lens.orderingLens_unit_right p
 
 example (p : PFunctor.{u, u}) :
-    Lens.Equiv.XComp.toLens ∘ₗ Lens.orderingLens X p = Lens.Equiv.xTensor.toLens :=
+    Lens.Equiv.yComp.toLens ∘ₗ Lens.orderingLens y p = Lens.Equiv.yTensor.toLens :=
   Lens.orderingLens_unit_left p
 
 /-- The duoidal interchange lens typechecks on concrete small polynomials. -/

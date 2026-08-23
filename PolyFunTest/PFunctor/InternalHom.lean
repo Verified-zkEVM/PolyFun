@@ -11,7 +11,7 @@ public import PolyFun.PFunctor.InternalHom
 # Examples for the ⊗-internal hom
 
 Regression tests exercising `ihom`, `eval`, `curry`/`uncurry`, and the two
-special cases `[y, r] ≅ r` and `(ihom q X).A = Lens q X`.
+special cases `[y, r] ≅ r` and `(ihom q y).A = Lens q y`.
 -/
 
 @[expose] public section
@@ -29,10 +29,10 @@ example {p : PFunctor.{pA, pB}} {q : PFunctor.{qA, qB}}
     Lens (p ⊗ q) r ≃ Lens p (ihom q r) := Lens.curryEquiv
 
 /-- Positions of `[q, y]` are exactly the handlers `q ⇆ y`. -/
-example : (ihom q X.{u, u}).A = Lens q X.{u, u} := ihom_X_A q
+example : (ihom q y.{u, u}).A = Lens q y.{u, u} := ihom_y_A q
 
 /-- The tensor-unit law `[y, r] ≅ r` is realised as a lens equivalence. -/
-example : Nonempty (ihom X.{u, u} r ≃ₗ r) := ⟨ihomX r⟩
+example : Nonempty (ihom y.{u, u} r ≃ₗ r) := ⟨ihomY r⟩
 
 /-- `curry` and `uncurry` are mutually inverse. -/
 example (φ : Lens (p ⊗ q) r) : Lens.uncurry (Lens.curry φ) = φ := Lens.uncurry_curry φ

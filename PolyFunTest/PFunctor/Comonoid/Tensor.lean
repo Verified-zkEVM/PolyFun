@@ -48,10 +48,10 @@ example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
 /-! ## Unit and coherence canaries -/
 
 /-- The unit comonoid retains an independent position/direction universe pair,
-including when its structural maps compare different copies of `X`. -/
+including when its structural maps compare different copies of `y`. -/
 example : Comonoid.{uA₁, uB₁} := Comonoid.unit
 
-example : (Comonoid.unit.{uA₁, uB₁}).carrier = X := by
+example : (Comonoid.unit.{uA₁, uB₁}).carrier = y := by
   simp
 
 example :
@@ -61,30 +61,30 @@ example :
 example :
     (Comonoid.unit.{uA₁, uB₁}).comult =
       Lens.compUnitMap ∘ₗ
-        (Lens.unitComparison : Lens X.{uA₁, uB₁}
-          X.{max uA₁ uB₁, uB₁}) :=
+        (Lens.unitComparison : Lens y.{uA₁, uB₁}
+          y.{max uA₁ uB₁, uB₁}) :=
   Comonoid.unit_comult
 
 /-- Both directions of the tensor unitors are comonoid morphisms whose
 underlying maps are exactly the established polynomial-lens equivalences. -/
 example (C : Comonoid.{uA₁, uB₁}) :
     (Comonoid.tensorUnitLeftIso C).hom.toLens =
-      (Lens.Equiv.xTensor (P := C.carrier)).toLens := by
+      (Lens.Equiv.yTensor (P := C.carrier)).toLens := by
   simp
 
 example (C : Comonoid.{uA₁, uB₁}) :
     (Comonoid.tensorUnitLeftIso C).inv.toLens =
-      (Lens.Equiv.xTensor (P := C.carrier)).invLens := by
+      (Lens.Equiv.yTensor (P := C.carrier)).invLens := by
   simp
 
 example (C : Comonoid.{uA₁, uB₁}) :
     (Comonoid.tensorUnitRightIso C).hom.toLens =
-      (Lens.Equiv.tensorX (P := C.carrier)).toLens := by
+      (Lens.Equiv.tensorY (P := C.carrier)).toLens := by
   simp
 
 example (C : Comonoid.{uA₁, uB₁}) :
     (Comonoid.tensorUnitRightIso C).inv.toLens =
-      (Lens.Equiv.tensorX (P := C.carrier)).invLens := by
+      (Lens.Equiv.tensorY (P := C.carrier)).invLens := by
   simp
 
 /-- The associator remains heterogeneous in all three input universe pairs,
@@ -190,7 +190,7 @@ example :
 /-- A one-object category whose arrows are Boolean words under concatenation.
 Its noncommutative composition makes path order observable. -/
 def listMonoidComonoid : Comonoid where
-  carrier := purePower (List Bool)
+  carrier := y^ (List Bool)
   counit := (fun _ => PUnit.unit) ⇆ (fun _ _ => [])
   comult :=
     (fun _ => ⟨PUnit.unit, fun _ => PUnit.unit⟩) ⇆

@@ -17,7 +17,7 @@ namespace PFunctor.Resumption
 
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
 the truncation examples below unfold these signatures there. -/
-attribute [local implicit_reducible] PFunctor.X PFunctor.monomial
+attribute [local implicit_reducible] PFunctor.y PFunctor.monomial
 
 universe uA uB uβ
 
@@ -25,7 +25,7 @@ def truncateUniverseCanary {p : PFunctor.{uA, uB}} {β : Type uβ}
     (k : ℕ) (computation : Resumption p β) : FreeM p (Option β) :=
   truncate k computation
 
-def oneQueryTree : Resumption X Nat :=
+def oneQueryTree : Resumption y Nat :=
   query PUnit.unit fun _ => pure 7
 
 example : truncate 0 oneQueryTree = FreeM.pure none := by simp [oneQueryTree]
@@ -39,7 +39,7 @@ example : (truncate 1 oneQueryTree).IsTotalRollBound 1 := isTotalRollBound_trunc
 -- Lean 4.33: the truncation examples below unfold `branchP` at implicit
 -- transparency.
 @[implicit_reducible]
-def branchP : PFunctor.{0, 0} := monomial Bool Bool
+def branchP : PFunctor.{0, 0} := Bool y^ Bool
 
 def secondProgram : Bool → FreeM branchP Nat
   | false => FreeM.pure 3
@@ -106,7 +106,7 @@ obligation and its successful factorization are both vacuous. -/
 -- Lean 4.33: the vacuous-factorization examples below unfold
 -- `emptyDirectionP` at implicit transparency.
 @[implicit_reducible]
-def emptyDirectionP : PFunctor.{0, 0} := monomial Unit PEmpty
+def emptyDirectionP : PFunctor.{0, 0} := Unit y^ PEmpty
 
 def emptyDirectionProgram : FreeM emptyDirectionP Nat :=
   FreeM.liftBind () PEmpty.elim

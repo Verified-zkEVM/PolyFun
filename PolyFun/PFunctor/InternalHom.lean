@@ -28,8 +28,8 @@ is witnessed by the `curry` / `uncurry` bijection
 
 This is the object VCVio's `WireK`/`ProbResponder` wiring hand-rolls: wiring a
 challenger against a responder is exactly closing over `eval`. Two special cases
-tie the hom back to existing structure: `[y, r] ≅ r` (`ihomX`, the tensor-unit
-law) and `(ihom q X).A = Lens q X = enclose q` — the positions of `[q, y]` are
+tie the hom back to existing structure: `[y, r] ≅ r` (`ihomY`, the tensor-unit
+law) and `(ihom q y).A = Lens q y = enclose q` — the positions of `[q, y]` are
 the handlers (sections) of `q`.
 
 Note this is a *different* object from `PFunctor.exp` (`P ^ Q`, Spivak–Niu §5.3),
@@ -101,16 +101,20 @@ end Lens
 
 /-- The tensor-unit law `[y, r] ≅ r`: a lens `y ⇆ r` is a position of `r`, and a
 direction of `[y, r]` at that lens is a direction of `r`. -/
-def ihomX (r : PFunctor.{uA, uB}) : ihom X r ≃ₗ r where
+def ihomY (r : PFunctor.{uA, uB}) : ihom y r ≃ₗ r where
   toLens := (fun f => f.toFunA PUnit.unit) ⇆ (fun _f d => ⟨PUnit.unit, d⟩)
-  invLens := Lens.fromX ⇆ fun _ ⟨_, d⟩ => d
+  invLens := Lens.fromY ⇆ fun _ ⟨_, d⟩ => d
   left_inv := rfl
   right_inv := rfl
 
+@[deprecated (since := "2026-08-17")] alias ihomX := ihomY
+
 /-- The positions of `[q, y]` are the sections (handlers) of `q`, i.e. the
 lenses `q ⇆ y = enclose q`. -/
-theorem ihom_X_A (q : PFunctor.{uA, uB}) :
-    (ihom q X.{uA, uB}).A = Lens q X.{uA, uB} := rfl
+theorem ihom_y_A (q : PFunctor.{uA, uB}) :
+    (ihom q y.{uA, uB}).A = Lens q y.{uA, uB} := rfl
+
+@[deprecated (since := "2026-08-17")] alias ihom_X_A := ihom_y_A
 
 /-! ## The internal hom of a coproduct
 

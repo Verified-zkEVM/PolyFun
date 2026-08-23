@@ -62,9 +62,10 @@ See the *Wiki Maintenance Contract* section in
 - [`program-logic.md`](program-logic.md): the program-logic kernel
   (`MAlgOrdered`, relational algebras, exact monadic support and the always/never
   judgments, free-monad wp, and the core-`Std.Do` quarantine).
-- [`notation.md`](notation.md): notation reference. Currently scoped to UC
-  composition (`∥`, `⊞`, `⊠`), boundary tensor / swap, and the scoped
-  satisfaction judgments (`⊨`, `⊨ₐ`, `⊨ₛ`, `⊭`).
+- [`notation.md`](notation.md): notation reference — the book-style
+  polynomial surface (`y^`, `◃`, `◃^`, `⊗`, `⊸`, `Σₚ` / `Πₚ`) and the UC
+  composition operators (`∥`, `⊞`, `⊠`) with boundary tensor / swap and the
+  scoped satisfaction judgments (`⊨`, `⊨ₐ`, `⊨ₛ`, `⊭`).
 - [`gotchas.md`](gotchas.md): recurring Lean traps and PolyFun-specific
   pitfalls.
 

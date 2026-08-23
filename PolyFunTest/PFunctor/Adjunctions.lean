@@ -11,7 +11,7 @@ public import PolyFun.PFunctor.Adjunctions
 # Examples for the trivial-interface hom-set adjunctions
 
 Regression tests exercising the Spivak–Niu §5.1 hom-isomorphisms
-`homFromZero`, `homToOne`, `homFromX`, `homToConst`, and `homToLinear` on the
+`homFromZero`, `homToOne`, `homFromY`, `homToConst`, and `homToLinear` on the
 small concrete polynomial `qBool = Bool y^Bool`.
 -/
 
@@ -23,13 +23,13 @@ namespace PFunctor
 
 /-- A small concrete polynomial `Bool y^Bool` for the worked examples:
 positions and directions are both `Bool`. -/
-def qBool : PFunctor.{0, 0} := Bool X^ Bool
+def qBool : PFunctor.{0, 0} := Bool y^ Bool
 
 /-! ## The equivalences instantiate at the stated types -/
 
 example {p : PFunctor.{u, u}} : Lens (0 : PFunctor.{u, u}) p ≃ PUnit := homFromZero
 example {p : PFunctor.{u, u}} : Lens p (1 : PFunctor.{u, u}) ≃ PUnit := homToOne
-example {p : PFunctor.{u, u}} : Lens X.{u, u} p ≃ p.A := homFromX
+example {p : PFunctor.{u, u}} : Lens y.{u, u} p ≃ p.A := homFromY
 example {p : PFunctor.{u, u}} {A : Type u} : Lens p (C A) ≃ (p.A → A) := homToConst
 example {p : PFunctor.{u, u}} {A : Type u} :
     Lens p (linear A) ≃ ((p.A → A) × ((a : p.A) → p.B a)) := homToLinear
@@ -49,16 +49,16 @@ example (l : Lens qBool (1 : PFunctor.{0, 0})) : l = Lens.terminal := by
   · rfl
   · exact d.elim
 
-/-! ## `homFromX`: a lens `y ⇆ p` is a position -/
+/-! ## `homFromY`: a lens `y ⇆ p` is a position -/
 
 /-- The forward map reads off the chosen position. -/
-example : homFromX (p := qBool) (Lens.fromX true) = true := rfl
+example : homFromY (p := qBool) (Lens.fromY true) = true := rfl
 
 /-- The inverse builds the constant-position lens. -/
-example : (homFromX (p := qBool)).symm false = Lens.fromX false := rfl
+example : (homFromY (p := qBool)).symm false = Lens.fromY false := rfl
 
 /-- Round-trip through a position is the identity. -/
-example (a : qBool.A) : homFromX (p := qBool) ((homFromX (p := qBool)).symm a) = a := rfl
+example (a : qBool.A) : homFromY (p := qBool) ((homFromY (p := qBool)).symm a) = a := rfl
 
 /-! ## `homToConst`: a lens `p ⇆ C A` is a position map -/
 

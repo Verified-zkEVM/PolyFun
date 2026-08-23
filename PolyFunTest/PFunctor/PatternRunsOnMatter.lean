@@ -68,10 +68,10 @@ example (P Q : PFunctor.{u, u}) :
   FreeP.runOn_eq_xi P Q
 
 example (P : PFunctor.{u, u}) :
-    (FreeP.map (Lens.Equiv.tensorX (P := P)).toLens ∘ₗ
-        FreeP.runOn P X.{u, u}) ∘ₗ
+    (FreeP.map (Lens.Equiv.tensorY (P := P)).toLens ∘ₗ
+        FreeP.runOn P y.{u, u}) ∘ₗ
         (Lens.id (FreeP P) ⊗ₗ CofreeP.laxUnit.{u, u}) =
-      (Lens.Equiv.tensorX (P := FreeP P)).toLens :=
+      (Lens.Equiv.tensorY (P := FreeP P)).toLens :=
   FreeP.runOn_unit P
 
 example (P Q R : PFunctor.{u, u}) :
@@ -324,18 +324,18 @@ example :
 
 /-- Unit coherence is operationally nontrivial on the two-node pattern. -/
 example :
-    ((FreeP.map (Lens.Equiv.tensorX (P := patternP)).toLens ∘ₗ
-        FreeP.runOn patternP X) ∘ₗ
+    ((FreeP.map (Lens.Equiv.tensorY (P := patternP)).toLens ∘ₗ
+        FreeP.runOn patternP y) ∘ₗ
         (Lens.id (FreeP patternP) ⊗ₗ CofreeP.laxUnit)).toFunA
         (pattern, PUnit.unit) = pattern :=
   congrArg
-    (fun lens : Lens (FreeP patternP ⊗ X) (FreeP patternP) =>
+    (fun lens : Lens (FreeP patternP ⊗ y) (FreeP patternP) =>
       lens.toFunA (pattern, PUnit.unit))
     (FreeP.runOn_unit patternP)
 
-def unitAction : Lens (FreeP patternP ⊗ X.{0, 0}) (FreeP patternP) :=
-  (FreeP.map (Lens.Equiv.tensorX (P := patternP)).toLens ∘ₗ
-      FreeP.runOn patternP X) ∘ₗ
+def unitAction : Lens (FreeP patternP ⊗ y.{0, 0}) (FreeP patternP) :=
+  (FreeP.map (Lens.Equiv.tensorY (P := patternP)).toLens ∘ₗ
+      FreeP.runOn patternP y) ∘ₗ
     (Lens.id (FreeP patternP) ⊗ₗ CofreeP.laxUnit)
 
 /-- Unit coherence preserves a complete nonempty pattern path through the

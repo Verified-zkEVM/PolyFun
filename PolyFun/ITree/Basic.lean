@@ -29,7 +29,7 @@ In Lean we model the event signature as a *polynomial functor*
 answer types. The event-name, answer, and return universes are independent.
 For `α : Type uα`, the resulting tree lives in `Type (max uA uB uα)`.
 The raw carrier is the M-type (final coalgebra) of the operation-first sum
-`Poly F α := F + C α + X`. `ITree F α` is a one-field wrapper around that
+`Poly F α := F + C α + y`. `ITree F α` is a one-field wrapper around that
 carrier, with definitionally inverse `toM` and `ofM` maps. The separate
 `ViewPoly F α` presents its layers ergonomically as pure leaves, silent steps,
 or visible queries.
@@ -51,7 +51,7 @@ or visible queries.
 ## Main definitions
 
 * `ITree.Shape F α` — one-step view of an ITree node.
-* `ITree.Poly F α` — the raw polynomial `F + C α + X`.
+* `ITree.Poly F α` — the raw polynomial `F + C α + y`.
 * `ITree.ViewPoly F α` — the `Shape`-indexed ergonomic one-step view.
 * `ITree F α` — interaction trees over events `F` with leaves of type `α`.
 * `ITree.toM`, `ITree.ofM`, `ITree.equivM` — the raw-carrier equivalence.
@@ -112,22 +112,22 @@ def ViewPoly (F : PFunctor.{uA, uB}) (α : Type uα) : PFunctor.{max uA uα, uB}
 /-- The polynomial whose M-type is the raw carrier of `ITree F α`.
 
 Visible queries come first, return leaves second, and silent steps third. This
-is definitionally the polynomial expression `F + C α + X`. -/
+is definitionally the polynomial expression `F + C α + y`. -/
 @[reducible]
 def Poly (F : PFunctor.{uA, uB}) (α : Type uα) : PFunctor.{max uA uα, uB} :=
-  F + PFunctor.C α + PFunctor.X
+  F + PFunctor.C α + PFunctor.y
 
 /-! ### Raw/computational one-step conversion -/
 
 variable {F : PFunctor.{uA, uB}} {α : Type uα}
 
-/-- Repack an ergonomic `Shape`-based layer as a layer of `F + C α + X`. -/
+/-- Repack an ergonomic `Shape`-based layer as a layer of `F + C α + y`. -/
 def pack {X : Type uS} : (ViewPoly F α).Obj X → (Poly F α).Obj X
   | ⟨.pure value, _⟩ => ⟨.inl (.inr value), PEmpty.elim⟩
   | ⟨.step, next⟩ => ⟨.inr PUnit.unit, next⟩
   | ⟨.query position, next⟩ => ⟨.inl (.inl position), next⟩
 
-/-- Unpack a layer of `F + C α + X` into the ergonomic `Shape` view. -/
+/-- Unpack a layer of `F + C α + y` into the ergonomic `Shape` view. -/
 def unpack {X : Type uS} : (Poly F α).Obj X → (ViewPoly F α).Obj X
   | ⟨.inl (.inl position), next⟩ => ⟨.query position, next⟩
   | ⟨.inl (.inr value), _⟩ => ⟨.pure value, PEmpty.elim⟩
@@ -180,7 +180,7 @@ end ITree
 
 /-- Interaction trees over events `F : PFunctor.{uA, uB}` with leaves of type
 `α : Type uα`, represented by the final coalgebra (M-type) of
-`F + PFunctor.C α + PFunctor.X`.
+`F + PFunctor.C α + PFunctor.y`.
 
 Event names, event answers, and returned values may live in independent
 universes. The resulting tree lives in `Type (max uA uB uα)`.
@@ -214,7 +214,7 @@ theorem toM_injective : Function.Injective (toM : ITree F α → PFunctor.M (Pol
 @[ext] theorem ext {left right : ITree F α} (h : left.toM = right.toM) : left = right :=
   toM_injective h
 
-/-- The equivalence with the raw M-type of `F + C α + X`. Both round trips
+/-- The equivalence with the raw M-type of `F + C α + y`. Both round trips
 hold definitionally by structure eta. -/
 def equivM : ITree F α ≃ PFunctor.M (Poly F α) where
   toFun := toM

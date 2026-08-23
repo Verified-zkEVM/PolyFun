@@ -29,7 +29,7 @@ namespace SubstMonoidTest
 abbrev wordP : PFunctor := ⟨List Bool, fun _ => PUnit⟩
 
 /-- The empty word is the substitution unit. -/
-def wordUnit : Lens X wordP :=
+def wordUnit : Lens y wordP :=
   (fun _ => []) ⇆ (fun _ _ => PUnit.unit)
 
 /-- Substitution concatenates the outer label before the inner label. -/
@@ -133,7 +133,7 @@ example {M N O : SubstMonoid.{u, v}} (f : M ⟶ N) (g : N ⟶ O) :
 
 /-- Position and direction universes of substitution monoids are independent. -/
 example (M : SubstMonoid.{u, v}) : M.mult ∘ₗ
-    (M.unit ◃ₗ Lens.id M.carrier) ∘ₗ Lens.Equiv.XComp.invLens =
+    (M.unit ◃ₗ Lens.id M.carrier) ∘ₗ Lens.Equiv.yComp.invLens =
     Lens.id M.carrier := M.unit_left
 
 end SubstMonoidTest

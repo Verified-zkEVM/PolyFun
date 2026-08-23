@@ -13,8 +13,8 @@ public import PolyFun.PFunctor.SubstMonoid
 
 For a polynomial `p`, `FreeP p` is the polynomial whose positions are
 well-founded `p`-trees with unlabelled leaves and whose directions are complete
-root-to-leaf paths. Labelling every direction by `X` recovers the ordinary free
-monad `FreeM p X`.
+root-to-leaf paths. Labelling every direction by `y` recovers the ordinary free
+monad `FreeM p y`.
 
 This is the direct W-type presentation of the free polynomial monad in
 Libkind–Spivak, *Pattern Runs on Matter*. The paper constructs the same object
@@ -92,9 +92,9 @@ theorem decode_encode : (s : FreeM P α) → decode (encode s) = s
       funext b
       exact decode_encode (rest b)
 
-/-- Collapse a free polynomial over the identity polynomial `X` by selecting
+/-- Collapse a free polynomial over the identity polynomial `y` by selecting
 the sole direction at every node of its underlying unary tree. -/
-def collapseUnit : Lens (FreeP X.{uA, uB}) X.{uA, uB} where
+def collapseUnit : Lens (FreeP y.{uA, uB}) y.{uA, uB} where
   toFunA _ := PUnit.unit
   toFunB tree _ :=
     FreeM.Path.ofHandler (fun _ => PUnit.unit) tree
@@ -102,7 +102,7 @@ def collapseUnit : Lens (FreeP X.{uA, uB}) X.{uA, uB} where
 /-- The payload selected by `collapseUnit` is the leaf read by
 `FreeM.collapseUnit` after decoding. -/
 theorem collapseUnit_mapObj {E : Type v}
-    (x : (FreeP X.{uA, uB}).Obj E) :
+    (x : (FreeP y.{uA, uB}).Obj E) :
     (Lens.mapObj collapseUnit x).2 PUnit.unit =
       FreeM.collapseUnit (FreeP.decode x) := by
   rcases x with ⟨tree, label⟩
@@ -449,7 +449,7 @@ theorem map_comp (l₂ : Lens Q R) (l₁ : Lens P Q) :
 /-! ## Substitution-monoid structure -/
 
 /-- The unit of the free substitution monoid: the single unlabelled leaf. -/
-def unit : Lens X.{max uA uB, uB} (FreeP P) where
+def unit : Lens y.{max uA uB, uB} (FreeP P) where
   toFunA _ := .pure PUnit.unit
   toFunB _ _ := PUnit.unit
 
@@ -461,7 +461,7 @@ def mult : Lens (FreeP P ◃ FreeP P) (FreeP P) where
   toFunB x path := FreeM.Path.split x.1 x.2 path
 
 @[simp]
-theorem unit_toFunA (u : X.{max uA uB, uB}.A) :
+theorem unit_toFunA (u : y.{max uA uB, uB}.A) :
     (unit (P := P)).toFunA u = FreeM.pure PUnit.unit :=
   rfl
 
@@ -504,7 +504,7 @@ theorem mult_unit_left :
     Lens.comp
       (Lens.comp (mult (P := P))
         (Lens.compMap (unit (P := P)) (Lens.id (FreeP P))))
-      Lens.Equiv.XComp.invLens = Lens.id (FreeP P) :=
+      Lens.Equiv.yComp.invLens = Lens.id (FreeP P) :=
   rfl
 
 /-- Pointwise container form of right unitality for free-tree grafting. -/
@@ -513,7 +513,7 @@ theorem mult_unit_right_obj (s : (FreeP P).A) :
       Lens.comp
         (Lens.comp (mult (P := P))
           (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
-        Lens.Equiv.compX.invLens
+        Lens.Equiv.compY.invLens
     (⟨composite.toFunA s, composite.toFunB s⟩ :
       (FreeP P).Obj (FreeM.Path s)) = ⟨s, id⟩ := by
   dsimp only
@@ -532,7 +532,7 @@ theorem mult_unit_right_obj (s : (FreeP P).A) :
             Lens.comp
               (Lens.comp (mult (P := P))
                 (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
-              Lens.Equiv.compX.invLens
+              Lens.Equiv.compY.invLens
            (⟨composite.toFunA (rest b), composite.toFunB (rest b)⟩ :
              (FreeP P).Obj (FreeM.Path (rest b))))) =
         ⟨.liftBind a rest, id⟩
@@ -542,7 +542,7 @@ theorem mult_unit_right_obj (s : (FreeP P).A) :
               Lens.comp
                 (Lens.comp (mult (P := P))
                   (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
-                Lens.Equiv.compX.invLens
+                Lens.Equiv.compY.invLens
              (⟨composite.toFunA (rest b), composite.toFunB (rest b)⟩ :
                (FreeP P).Obj (FreeM.Path (rest b))))) =
           (fun b => (⟨rest b, FreeM.Path.cons a rest b⟩ :
@@ -557,7 +557,7 @@ theorem mult_unit_right :
     Lens.comp
       (Lens.comp (mult (P := P))
         (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
-      Lens.Equiv.compX.invLens = Lens.id (FreeP P) :=
+      Lens.Equiv.compY.invLens = Lens.id (FreeP P) :=
   Lens.ext_mapObj _ _ mult_unit_right_obj
 
 /-- The left-associated composite of free-tree multiplication. -/

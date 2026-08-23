@@ -14,7 +14,7 @@ public import PolyFun.PFunctor.Dynamical.Responder
 # Proof-relevant contracts for responders
 
 For a display `S` over an interface `P`, `Display.responder S` is the induced
-display over the responder interface `P ⊸ X`. A base position of `P ⊸ X` is an
+display over the responder interface `P ⊸ y`. A base position of `P ⊸ y` is an
 answer-section for `P`; a displayed position maps every query and admissible
 pre-witness to answer-dependent post-evidence. Its displayed direction is that
 pre-witness, so a displayed responder coalgebra must preserve its witness for
@@ -45,44 +45,44 @@ variable {P : PFunctor.{uA, uB}}
 
 /-- The responder display induced by a display over the query interface.
 
-Above an answer-section `answer : (P ⊸ X).A`, a displayed position sends every
+Above an answer-section `answer : (P ⊸ y).A`, a displayed position sends every
 query and precondition witness to answer-dependent postcondition evidence.
 The displayed direction remembers the supplied precondition witness, because
 the displayed continuation may depend on it. -/
 def responder (S : Display.{uA, uB, uC, uD} P) :
-    Display.{max uA uB, max uA uB, max uA uC uD, uC} (P ⊸ X.{uA, uB}) where
+    Display.{max uA uB, max uA uB, max uA uC uD, uC} (P ⊸ y.{uA, uB}) where
   position answer :=
     (a : P.A) → (c : S.position a) →
       S.direction a c (answer.toFunB a PUnit.unit)
   direction _answer _contract query := S.position query.1
 
 @[simp]
-theorem responder_position (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ X.{uA, uB}).A) :
+theorem responder_position (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ y.{uA, uB}).A) :
     (responder S).position answer =
       ((a : P.A) → (c : S.position a) →
         S.direction a c (answer.toFunB a PUnit.unit)) :=
   rfl
 
 @[simp]
-theorem responder_direction (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ X.{uA, uB}).A)
-    (contract : (responder S).position answer) (query : (P ⊸ X.{uA, uB}).B answer) :
+theorem responder_direction (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ y.{uA, uB}).A)
+    (contract : (responder S).position answer) (query : (P ⊸ y.{uA, uB}).B answer) :
     (responder S).direction answer contract query = S.position query.1 :=
   rfl
 
 /-- The canonical chart that forgets responder-contract evidence. -/
 def responderChart (S : Display.{uA, uB, uC, uD} P) :
-    Chart (responder S).total (P ⊸ X.{uA, uB}) :=
+    Chart (responder S).total (P ⊸ y.{uA, uB}) :=
   (responder S).forget
 
 @[simp]
-theorem responderChart_toFunA (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ X.{uA, uB}).A)
+theorem responderChart_toFunA (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ y.{uA, uB}).A)
     (contract : (responder S).position answer) :
     (responderChart S).toFunA ⟨answer, contract⟩ = answer :=
   rfl
 
 @[simp]
-theorem responderChart_toFunB (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ X.{uA, uB}).A)
-    (contract : (responder S).position answer) (query : (P ⊸ X.{uA, uB}).B answer)
+theorem responderChart_toFunB (S : Display.{uA, uB, uC, uD} P) (answer : (P ⊸ y.{uA, uB}).A)
+    (contract : (responder S).position answer) (query : (P ⊸ y.{uA, uB}).B answer)
     (precondition : (responder S).direction answer contract query) :
     (responderChart S).toFunB ⟨answer, contract⟩ ⟨query, precondition⟩ = query :=
   rfl

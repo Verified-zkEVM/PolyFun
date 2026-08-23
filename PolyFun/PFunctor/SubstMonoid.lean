@@ -52,7 +52,7 @@ set_option linter.checkUnivs false in
 /-- A monoid object in the composition-monoidal category `(Poly, ◃, y)`.
 
 The unit and multiplication are polynomial lenses. The laws use the explicit
-unitors `XComp` and `compX` and associator `compAssoc`; no ambient monoidal
+unitors `yComp` and `compY` and associator `compAssoc`; no ambient monoidal
 category instance is required. -/
 -- The carrier's position and direction universes are independent; `checkUnivs`
 -- sees only their joint contribution to the structure's resulting sort.
@@ -61,15 +61,15 @@ structure SubstMonoid where
   carrier : PFunctor.{uA, uB}
   /-- The unit `η : y ⇆ p`. Its universe instance agrees with the composition
   unit appearing beside `carrier ◃ carrier`. -/
-  unit : Lens X.{max uA uB, uB} carrier
+  unit : Lens y.{max uA uB, uB} carrier
   /-- The multiplication `μ : p ◃ p ⇆ p`. -/
   mult : Lens (carrier ◃ carrier) carrier
   /-- Left unitality: `μ ∘ (η ◃ id) ∘ λ⁻¹ = id`. -/
   unit_left : mult ∘ₗ (unit ◃ₗ Lens.id carrier) ∘ₗ
-      Lens.Equiv.XComp.invLens = Lens.id carrier
+      Lens.Equiv.yComp.invLens = Lens.id carrier
   /-- Right unitality: `μ ∘ (id ◃ η) ∘ ρ⁻¹ = id`. -/
   unit_right : mult ∘ₗ (Lens.id carrier ◃ₗ unit) ∘ₗ
-      Lens.Equiv.compX.invLens = Lens.id carrier
+      Lens.Equiv.compY.invLens = Lens.id carrier
   /-- Associativity: multiplying the outer pair or the inner pair agrees. -/
   assoc : mult ∘ₗ (mult ◃ₗ Lens.id carrier) =
       mult ∘ₗ (Lens.id carrier ◃ₗ mult) ∘ₗ Lens.Equiv.compAssoc.toLens
