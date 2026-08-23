@@ -168,13 +168,36 @@ def sumProdDistrib (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₁}) (
     | ⟨.inl _, _⟩ | ⟨.inr _, _⟩ => _root_.Equiv.refl _
 
 /-- Product distributes over sum: `P * (Q + R) ≃ₚ (P * Q) + (P * R)` -/
-@[simps]
 def prodSumDistrib (R : PFunctor.{uA₃, uB₂}) :
     (P * (Q + R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) ≃ₚ
-    ((P * Q) + (P * R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) where
-  equivA := _root_.Equiv.prodSumDistrib P.A Q.A R.A
-  equivB := fun
-    | ⟨_, .inl _⟩ | ⟨_, .inr _⟩ => _root_.Equiv.refl _
+    ((P * Q) + (P * R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) :=
+  let commSum :
+      ((Q * P) + (R * P) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) ≃ₚ
+      ((P * Q) + (P * R) : PFunctor.{max uA₁ uA₂ uA₃, max uB₁ uB₂}) := {
+    equivA := _root_.Equiv.sumCongr
+      (prodComm.{uA₂, uB₂, uA₁, uB₁} Q P).equivA
+      (prodComm.{uA₃, uB₂, uA₁, uB₁} R P).equivA
+    equivB := fun
+      | .inl a => (prodComm.{uA₂, uB₂, uA₁, uB₁} Q P).equivB a
+      | .inr a => (prodComm.{uA₃, uB₂, uA₁, uB₁} R P).equivB a
+  }
+  (prodComm.{max uA₂ uA₃, uB₂, uA₁, uB₁} (Q + R) P).symm.trans <|
+    (sumProdDistrib.{uA₂, uB₂, uA₃, uB₁, uA₁} Q R P).trans <|
+      commSum
+
+@[simp]
+theorem prodSumDistrib_equivA (R : PFunctor.{uA₃, uB₂}) :
+    (prodSumDistrib P Q R).equivA = _root_.Equiv.prodSumDistrib P.A Q.A R.A := rfl
+
+@[simp]
+theorem prodSumDistrib_equivB (R : PFunctor.{uA₃, uB₂}) (a : (P * (Q + R)).A) :
+    (prodSumDistrib P Q R).equivB a = match a with
+      | ⟨_, .inl _⟩ | ⟨_, .inr _⟩ => _root_.Equiv.refl _ := by
+  rcases a with ⟨pa, qa | ra⟩
+  all_goals
+    apply _root_.Equiv.ext
+    intro b
+    rcases b with b | b <;> rfl
 
 end Prod
 
