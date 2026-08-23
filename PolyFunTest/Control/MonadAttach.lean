@@ -96,7 +96,78 @@ example : PFunctor.FreeM coinP {b : Bool // CanReturn flipCoin b} :=
 example : PFunctor.FreeM coinP Bool :=
   MonadAttach.pbind flipCoin fun b (_ : CanReturn flipCoin b) => pure (!b)
 
+/-- Both responses of the Boolean query are reachable; this rejects support
+implementations that silently select one branch. -/
+example : true ∈ support flipCoin ∧ false ∈ support flipCoin := by
+  constructor <;> rw [flipCoin, PFunctor.FreeM.support_lift] <;> trivial
+
+/-- A false output of the answer-dependent two-query continuation is
+reachable (for example, choose `true` and then `false`). -/
+example : false ∈ support flipTwo := by
+  rw [show flipTwo = flipCoin >>= (fun a => flipCoin >>= fun b => pure (a && b)) from rfl,
+    mem_support_bind]
+  refine ⟨true, ?_, ?_⟩
+  · rw [flipCoin, PFunctor.FreeM.support_lift]
+    trivial
+  · rw [mem_support_bind]
+    refine ⟨false, ?_, by simp⟩
+    rw [flipCoin, PFunctor.FreeM.support_lift]
+    trivial
+
+/-- `attachSupp` preserves a branch-dependent tree after erasing the attached
+reachability proofs. -/
+example : Subtype.val <$> PFunctor.FreeM.attachSupp flipTwo = flipTwo :=
+  PFunctor.FreeM.map_attachSupp flipTwo
+
 end Judgments
+
+section BaseSupports
+
+/-- Failed optional computations have empty support. -/
+example : support (none : Option Bool) = ∅ := by
+  ext b
+  simp [support, CanReturn]
+
+/-- Exceptions likewise have empty support. -/
+example : support (.error () : Except Unit Bool) = ∅ := by
+  ext b
+  simp [support, CanReturn]
+
+/-- `SetM` support preserves every member rather than selecting one. -/
+def bothBools : SetM Bool := fun _ => True
+
+example : support bothBools = Set.univ :=
+  rfl
+
+/-- `OptionT` success and failure bind paths retain their intended supports. -/
+def optionSuccess : OptionT Id Bool := some true
+def optionFailure : OptionT Id Bool := none
+
+example : support (optionSuccess >>= fun b => pure (!b)) = {false} := by
+  change {b | some false = some b} = {false}
+  ext b
+  simp
+
+example : support (optionFailure >>= fun b => pure (!b)) = ∅ := by
+  change {b | (none : Option Bool) = some b} = ∅
+  ext b
+  simp
+
+/-- `ExceptT` success and failure bind paths retain their intended supports. -/
+def exceptSuccess : ExceptT Unit Id Bool := .ok true
+def exceptFailure : ExceptT Unit Id Bool := .error ()
+
+example : support (exceptSuccess >>= fun b => pure (!b)) = {false} := by
+  change {b | Except.ok false = Except.ok b} = {false}
+  ext b
+  simp
+
+example : support (exceptFailure >>= fun b => pure (!b)) = ∅ := by
+  change {b | (Except.error () : Except Unit Bool) = Except.ok b} = ∅
+  ext b
+  simp
+
+end BaseSupports
 
 section StatefulCounterexamples
 
@@ -145,15 +216,25 @@ section AlgebraSelection
 
 /-- A computation used to distinguish transformer failure semantics from
 support-based partial-correctness semantics. -/
-def noResult : OptionT Id Nat := ⟨none⟩
+def noResult : OptionT Id Nat := none
+
+section TransformerDefault
+
+local instance : MAlgOrdered Id Prop := mAlgOrderedPropDemonic
 
 /-- Installing the support algebra only on the base monad leaves PolyFun's
 existing `OptionT` algebra in charge, so `none` is failure (`⊥`). -/
-example :
-    letI := mAlgOrderedPropDemonic (m := Id)
-    ¬ MAlgOrdered.wp noResult (fun _ => True) := by
-  simp [MAlgOrdered.wp, noResult, MAlgOrdered.instOptionT, mAlgOrderedPropDemonic,
-    AllOutputs, support]
+example : ¬ MAlgOrdered.wp noResult (fun _ => True) := by
+  change ¬ MAlgOrdered.wpOpt noResult (fun _ => True) False
+  intro hw
+  have hEq :=
+    MAlgOrdered.wpOpt_fail (m := Id) (l := Prop) (α := Nat) (fun _ => True) False
+  have hw' : MAlgOrdered.wpOpt (OptionT.mk (pure none) : OptionT Id Nat)
+      (fun _ => True) False := by
+    exact hw
+  exact hEq.mp hw'
+
+end TransformerDefault
 
 /-- Installing support semantics explicitly on the transformer instead makes
 its empty support satisfy every postcondition vacuously. -/
