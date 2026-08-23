@@ -69,6 +69,14 @@ than via custom notation, to keep elaboration predictable. Specifically:
   abbreviates `DynComputation.Implements M program`. It is opt-in via
   `open scoped PFunctor.DynComputation`; the symbol deliberately says nothing
   about resource bounds.
+- Support satisfaction judgments, opt-in via `open scoped MonadAttach` for any
+  monad with a core `MonadAttach` instance: `x ⊨ₐ p` (`AllOutputs p x`, every
+  possible output satisfies `p`), `x ⊨ₛ p` (`SomeOutput p x`, some possible
+  output satisfies `p`), and `x ⊭ p` (`NoOutput p x`, no possible output
+  satisfies `p`; input `\nvDash`, U+22AD). All three are definitionally the
+  corresponding bounded quantifier over `MonadAttach.support x`, itself the
+  `Set`-valued view of core's `CanReturn`; see
+  [`program-logic.md`](program-logic.md).
 
 If you find yourself wishing for new notation in PolyFun, consider
 whether the underlying name suffices first: this library leans toward
