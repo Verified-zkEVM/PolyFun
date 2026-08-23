@@ -21,10 +21,10 @@ open scoped PFunctor
 
 namespace PFunctor.Lens
 
-set_option warningAsError false in
+set_option linter.deprecated false in
 example {P : PFunctor.{0, 0}} (a : P.A) : Lens X P := fromX a
 
-set_option warningAsError false in
+set_option linter.deprecated false in
 example {P : PFunctor.{0, 0}} : Lens.Equiv (P ◃ X) P := Lens.Equiv.compX
 
 end PFunctor.Lens
