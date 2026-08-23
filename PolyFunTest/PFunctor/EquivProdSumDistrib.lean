@@ -30,6 +30,20 @@ abbrev leftPosition : (P * (Q + R)).A := (Nat, Sum.inl true)
 
 abbrev rightPosition : (P * (Q + R)).A := (String, Sum.inr Type)
 
+@[simps (rhsMd := .default)]
+def wrapped :
+    (P * (Q + R) : PFunctor.{2, 1}) ≃ₚ
+    ((P * Q) + (P * R) : PFunctor.{2, 1}) :=
+  PFunctor.Equiv.prodSumDistrib P Q R
+
+#check wrapped_equivB
+
+/-! The wrapper canary rejects losing the producer's generated response projection metadata. -/
+
+example : wrapped.equivB leftPosition (Sum.inr Nat) = Sum.inr Nat := by
+  rw [wrapped_equivB]
+  rfl
+
 /-! The forward position canaries reject a swapped or collapsed sum branch. -/
 
 example :
