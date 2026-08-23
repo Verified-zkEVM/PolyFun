@@ -5,7 +5,8 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.IPFunctor.Basic
+public import PolyFun.IPFunctor.Chart.Basic
+public import PolyFun.IPFunctor.Lens.Basic
 
 /-!
 # Structural Equivalences Between Indexed Polynomial Functors
@@ -17,6 +18,10 @@ law `src_eq`.
 
 This is the indexed analogue of [`PFunctor.Equiv`](../../PFunctor/Equiv/Basic.lean). Like the
 non-indexed version, it is strictly stronger than lens or chart equivalence.
+
+Every structural equivalence has canonical images in the indexed lens and chart
+categories, exposed by `IPFunctor.Equiv.toLensEquiv` and
+`IPFunctor.Equiv.toChartEquiv`.
 -/
 
 @[expose] public section
@@ -89,6 +94,251 @@ def trans (e₁ : P ≃ₚ Q) (e₂ : Q ≃ₚ R) : P ≃ₚ R where
   equivB j a := (e₁.equivB j a).trans (e₂.equivB j (e₁.equivA j a))
   src_eq j a b :=
     (e₁.src_eq j a b).trans (e₂.src_eq j (e₁.equivA j a) (e₁.equivB j a b))
+
+/-! ## Lens and chart equivalences -/
+
+private theorem lens_ext (l₁ l₂ : Lens P Q)
+    (hA : ∀ j a, l₁.toFunA j a = l₂.toFunA j a)
+    (hB : ∀ j a, l₁.toFunB j a = (hA j a) ▸ l₂.toFunB j a) : l₁ = l₂ := by
+  rcases l₁ with ⟨toFunA₁, toFunB₁, src_eq₁⟩
+  rcases l₂ with ⟨toFunA₂, toFunB₂, src_eq₂⟩
+  have h : toFunA₁ = toFunA₂ := funext fun j => funext (hA j)
+  subst h
+  have h' : toFunB₁ = toFunB₂ := by
+    funext j a
+    simpa using hB j a
+  subst h'
+  rfl
+
+private theorem chart_ext (c₁ c₂ : Chart P Q)
+    (hA : ∀ j a, c₁.toFunA j a = c₂.toFunA j a)
+    (hB : ∀ j a, c₁.toFunB j a = (hA j a) ▸ c₂.toFunB j a) : c₁ = c₂ := by
+  rcases c₁ with ⟨toFunA₁, toFunB₁, src_eq₁⟩
+  rcases c₂ with ⟨toFunA₂, toFunB₂, src_eq₂⟩
+  have h : toFunA₁ = toFunA₂ := funext fun j => funext (hA j)
+  subst h
+  have h' : toFunB₁ = toFunB₂ := by
+    funext j a
+    simpa using hB j a
+  subst h'
+  rfl
+
+/-- The lens underlying a structural equivalence. Positions move forward through
+`equivA`, while responses pull back through the inverse of `equivB`. -/
+def toLens (e : P ≃ₚ Q) : Lens P Q where
+  toFunA j := e.equivA j
+  toFunB j a := (e.equivB j a).symm
+  src_eq j a d := by
+    simpa only [_root_.Equiv.apply_symm_apply] using
+      e.src_eq j a ((e.equivB j a).symm d)
+
+@[simp]
+theorem toLens_toFunA (e : P ≃ₚ Q) (j : J) (a : P.A j) :
+    e.toLens.toFunA j a = e.equivA j a := rfl
+
+@[simp]
+theorem toLens_toFunB (e : P ≃ₚ Q) (j : J) (a : P.A j)
+    (d : Q.B j (e.equivA j a)) :
+    e.toLens.toFunB j a d = (e.equivB j a).symm d := rfl
+
+@[simp]
+theorem toLens_refl (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J) :
+    (refl P).toLens = Lens.id P := rfl
+
+@[simp]
+theorem toLens_trans (e₁ : P ≃ₚ Q) (e₂ : Q ≃ₚ R) :
+    (e₁.trans e₂).toLens = Lens.comp e₂.toLens e₁.toLens := rfl
+
+private theorem equivB_symm_apply_of_eq (e : P ≃ₚ Q) (j : J)
+    {a a' : P.A j} (ha : e.equivA j a = e.equivA j a') (b : P.B j a') :
+    (e.equivB j a).symm
+        ((_root_.Equiv.cast (congrArg (Q.B j) ha)).symm ((e.equivB j a') b)) =
+      _root_.cast (congrArg (P.B j) ((e.equivA j).injective ha).symm) b := by
+  have ha' : a = a' := (e.equivA j).injective ha
+  cases ha'
+  simp
+
+private theorem equivB_symm_apply (e : P ≃ₚ Q) (j : J) (a : P.A j)
+    (b : P.B j ((e.equivA j).symm (e.equivA j a))) :
+    (e.equivB j a).symm ((e.symm.equivB j (e.equivA j a)).symm b) =
+      _root_.cast (congrArg (P.B j) ((e.equivA j).symm_apply_apply a)) b := by
+  have hEqA :
+      e.equivA j a = e.equivA j ((e.equivA j).symm (e.equivA j a)) := by
+    simp
+  simp only [IPFunctor.Equiv.symm]
+  exact equivB_symm_apply_of_eq (e := e) (j := j)
+    (a := a) (a' := (e.equivA j).symm (e.equivA j a))
+    (ha := hEqA) (b := b)
+
+private theorem symm_equivB_symm_apply (e : P ≃ₚ Q) (j : J) (a : Q.A j)
+    (b : Q.B j (e.equivA j ((e.equivA j).symm a))) :
+    (e.symm.equivB j a).symm ((e.equivB j ((e.equivA j).symm a)).symm b) =
+      _root_.cast (congrArg (Q.B j) ((e.equivA j).apply_symm_apply a)) b := by
+  change
+    ((_root_.Equiv.cast
+      (congrArg (Q.B j) ((_root_.Equiv.symm_apply_eq (e.equivA j)).mp rfl))).symm
+      ((e.equivB j ((e.equivA j).symm a))
+        ((e.equivB j ((e.equivA j).symm a)).symm b))) = _
+  rw [_root_.Equiv.apply_symm_apply (e.equivB j ((e.equivA j).symm a)) b]
+  change
+    _root_.cast
+        (congrArg (Q.B j) ((_root_.Equiv.symm_apply_eq (e.equivA j)).mp rfl)).symm b =
+      _root_.cast (congrArg (Q.B j) ((e.equivA j).apply_symm_apply a)) b
+  simp
+
+private theorem eqRec_id_apply {A : Sort*} {B : A → Sort*}
+    {a₁ a₀ : A} (h : a₁ = a₀) (x : B a₀) :
+    Eq.rec (motive := fun a _ => B a → B a₁) id h x =
+      _root_.cast (congrArg B h).symm x := by
+  cases h
+  rfl
+
+/-- Pulling responses back through a structural equivalence and its inverse
+is the identity indexed lens. -/
+@[simp]
+theorem symm_toLens_comp_toLens (e : P ≃ₚ Q) :
+    Lens.comp e.symm.toLens e.toLens = Lens.id P := by
+  refine lens_ext _ _ (fun j a => by
+    change (e.symm.equivA j) (e.equivA j a) = a
+    exact (e.equivA j).symm_apply_apply a) ?_
+  intro j a
+  funext b
+  simp only [Lens.comp, Lens.id, toLens, Function.comp_apply, id_eq]
+  have hb := equivB_symm_apply (e := e) (j := j) (a := a) (b := b)
+  have h₀ : a = (e.equivA j).symm (e.equivA j a) :=
+    ((e.equivA j).symm_apply_apply a).symm
+  have hr := eqRec_id_apply (B := P.B j) (h := h₀) (x := b)
+  exact hb.trans hr.symm
+
+/-- Pulling responses back through the inverse and then the original structural
+equivalence is the identity indexed lens. -/
+@[simp]
+theorem toLens_comp_symm_toLens (e : P ≃ₚ Q) :
+    Lens.comp e.toLens e.symm.toLens = Lens.id Q := by
+  refine lens_ext _ _ (fun j a => by
+    change (e.equivA j) (e.symm.equivA j a) = a
+    exact (e.equivA j).apply_symm_apply a) ?_
+  intro j a
+  funext b
+  simp only [Lens.comp, Lens.id, toLens, Function.comp_apply, id_eq]
+  have hb := symm_equivB_symm_apply (e := e) (j := j) (a := a) (b := b)
+  have h₀ : a = e.equivA j ((e.equivA j).symm a) :=
+    ((_root_.Equiv.symm_apply_eq (e.equivA j)).mp rfl)
+  have hr := eqRec_id_apply (B := Q.B j) (h := h₀) (x := b)
+  exact hb.trans hr.symm
+
+/-- Convert a structural equivalence to an isomorphism in the indexed lens
+category. -/
+def toLensEquiv (e : P ≃ₚ Q) : Lens.Equiv P Q where
+  toLens := e.toLens
+  invLens := e.symm.toLens
+  left_inv := symm_toLens_comp_toLens e
+  right_inv := toLens_comp_symm_toLens e
+
+@[simp]
+theorem toLensEquiv_toLens (e : P ≃ₚ Q) : e.toLensEquiv.toLens = e.toLens := rfl
+
+@[simp]
+theorem toLensEquiv_invLens (e : P ≃ₚ Q) : e.toLensEquiv.invLens = e.symm.toLens := rfl
+
+/-- The chart underlying a structural equivalence. Both positions and
+responses move forward through their fiberwise equivalences. -/
+def toChart (e : P ≃ₚ Q) : Chart P Q where
+  toFunA j := e.equivA j
+  toFunB j a := e.equivB j a
+  src_eq j a b := (e.src_eq j a b).symm
+
+@[simp]
+theorem toChart_toFunA (e : P ≃ₚ Q) (j : J) (a : P.A j) :
+    e.toChart.toFunA j a = e.equivA j a := rfl
+
+@[simp]
+theorem toChart_toFunB (e : P ≃ₚ Q) (j : J) (a : P.A j) (b : P.B j a) :
+    e.toChart.toFunB j a b = e.equivB j a b := rfl
+
+@[simp]
+theorem toChart_refl (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J) :
+    (refl P).toChart = Chart.id P := rfl
+
+@[simp]
+theorem toChart_trans (e₁ : P ≃ₚ Q) (e₂ : Q ≃ₚ R) :
+    (e₁.trans e₂).toChart = Chart.comp e₂.toChart e₁.toChart := rfl
+
+private theorem forward_equivB_roundtrip (e : P ≃ₚ Q) (j : J) (a : P.A j)
+    (b : P.B j a) :
+    e.symm.equivB j (e.equivA j a) (e.equivB j a b) =
+      _root_.cast
+        (congrArg (P.B j) ((e.equivA j).symm_apply_apply a).symm) b := by
+  change
+    (((_root_.Equiv.cast _).trans
+      (e.equivB j ((e.equivA j).symm (e.equivA j a))).symm) (e.equivB j a b)) = _
+  simp only [_root_.Equiv.trans_apply]
+  exact equivB_symm_apply_of_eq e j
+    (a := (e.equivA j).symm (e.equivA j a)) (a' := a)
+    (ha := (e.equivA j).apply_symm_apply _) (b := b)
+
+private theorem reverse_equivB_roundtrip (e : P ≃ₚ Q) (j : J) (a : Q.A j)
+    (b : Q.B j a) :
+    e.equivB j ((e.equivA j).symm a) (e.symm.equivB j a b) =
+      _root_.cast
+        (congrArg (Q.B j) ((e.equivA j).apply_symm_apply a).symm) b := by
+  change
+    (e.equivB j ((e.equivA j).symm a))
+      (((_root_.Equiv.cast _).trans
+        (e.equivB j ((e.equivA j).symm a)).symm) b) = _
+  simp [_root_.Equiv.trans_apply]
+
+private theorem eqRec_id_apply_codomain
+    {A : Sort*} {B : A → Sort*} {a₀ a₁ : A}
+    (h : a₀ = a₁) (x : B a₀) :
+    Eq.rec (motive := fun a _ => B a₀ → B a) id h x =
+      _root_.cast (congrArg B h) x := by
+  subst h
+  rfl
+
+/-- Pushing responses forward through a structural equivalence and its inverse
+is the identity indexed chart. -/
+@[simp]
+theorem symm_toChart_comp_toChart (e : P ≃ₚ Q) :
+    Chart.comp e.symm.toChart e.toChart = Chart.id P := by
+  refine chart_ext _ _ (fun j a => by
+    change (e.symm.equivA j) (e.equivA j a) = a
+    exact (e.equivA j).symm_apply_apply a) ?_
+  intro j a
+  funext b
+  simp only [Chart.comp, Chart.id, toChart, Function.comp_apply]
+  rw [forward_equivB_roundtrip]
+  exact (eqRec_id_apply_codomain ((e.equivA j).symm_apply_apply a).symm b).symm
+
+/-- Pushing responses forward through the inverse and then the original
+structural equivalence is the identity indexed chart. -/
+@[simp]
+theorem toChart_comp_symm_toChart (e : P ≃ₚ Q) :
+    Chart.comp e.toChart e.symm.toChart = Chart.id Q := by
+  refine chart_ext _ _ (fun j a => by
+    change (e.equivA j) (e.symm.equivA j a) = a
+    exact (e.equivA j).apply_symm_apply a) ?_
+  intro j a
+  funext b
+  simp only [Chart.comp, Chart.id, toChart, Function.comp_apply]
+  change e.equivB j ((e.equivA j).symm a) (e.symm.equivB j a b) = _
+  rw [reverse_equivB_roundtrip]
+  exact (eqRec_id_apply_codomain ((e.equivA j).apply_symm_apply a).symm b).symm
+
+/-- Convert a structural equivalence to an isomorphism in the indexed chart
+category. -/
+def toChartEquiv (e : P ≃ₚ Q) : Chart.Equiv P Q where
+  toChart := e.toChart
+  invChart := e.symm.toChart
+  left_inv := symm_toChart_comp_toChart e
+  right_inv := toChart_comp_symm_toChart e
+
+@[simp]
+theorem toChartEquiv_toChart (e : P ≃ₚ Q) : e.toChartEquiv.toChart = e.toChart := rfl
+
+@[simp]
+theorem toChartEquiv_invChart (e : P ≃ₚ Q) :
+    e.toChartEquiv.invChart = e.symm.toChart := rfl
 
 end Equiv
 

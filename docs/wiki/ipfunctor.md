@@ -190,9 +190,10 @@ equality of *index values*, not of types — so most concrete morphisms discharg
 it by `rfl`. Object maps along a lens / chart, however, may need to transport
 children through `src_eq` because they live in fibers over `src ...`.
 
-Only the core structure (identity, composition, `Equiv`) is provided today;
-the monoidal / distributive layer mirrored from `PFunctor.Lens` is a future
-addition.
+Structural equivalences convert canonically to both `Lens.Equiv` and
+`Chart.Equiv`, including identity, composition, inverse, and round-trip laws.
+The monoidal / distributive layer mirrored from `PFunctor.Lens` remains a
+future addition.
 
 ## Composition
 
