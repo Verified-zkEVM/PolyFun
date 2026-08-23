@@ -72,3 +72,19 @@ example : MonadAttach.AllOutputs (fun b => b = true ∨ b = false) flipTwo := by
   mvcgen [flipTwo]
   intro x y
   cases x && y <;> simp
+
+open PFunctor in
+/-- A query whose result is forced to `false`, giving a program-specific
+postcondition rather than a tautology over `Bool`. -/
+def maskFalse : FreeM coinP Bool := do
+  let a ← FreeM.lift (P := coinP) PUnit.unit
+  pure (a && false)
+
+/-- `WPSound` transports a nontrivial verification condition to every
+reachable result. -/
+example (a : Bool) (h : MonadAttach.CanReturn maskFalse a) : a = false := by
+  refine WPSound.of_wp_canReturn (m := PFunctor.FreeM coinP)
+    (P := fun b => b = false) h ?_
+  mvcgen [maskFalse]
+  intro response
+  cases response <;> simp
