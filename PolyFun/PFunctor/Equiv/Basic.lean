@@ -379,123 +379,37 @@ section ULift
 variable (P : PFunctor.{uA₁, uB₁})
 
 /-- Equivalence between a polynomial functor and its universe-lifted version -/
-def uliftEquiv : P ≃ₚ (P.ulift : PFunctor.{max uA₁ u, max uB₁ v}) :=
-  {
-    equivA := {
-      toFun := ULift.up
-      invFun := ULift.down
-      left_inv := by intro a; rfl
-      right_inv := by intro a; cases a; rfl
-    }
-    equivB := fun _ => {
-      toFun := ULift.up
-      invFun := ULift.down
-      left_inv := by intro b; rfl
-      right_inv := by intro b; cases b; rfl
-    }
-  }
+def uliftEquiv : P ≃ₚ (P.ulift : PFunctor.{max uA₁ u, max uB₁ v}) where
+  equivA := _root_.Equiv.ulift.symm
+  equivB := fun _ => _root_.Equiv.ulift.symm
 
 /-- Universe lifting is idempotent up to equivalence -/
-def uliftUliftEquiv : P.ulift.ulift ≃ₚ P.ulift :=
-  {
-    equivA := {
-      toFun := ULift.down
-      invFun := ULift.up
-      left_inv := by intro a; cases a; rfl
-      right_inv := by intro a; rfl
-    }
-    equivB := fun _ => {
-      toFun := ULift.down
-      invFun := ULift.up
-      left_inv := by intro b; cases b; rfl
-      right_inv := by intro b; rfl
-    }
-  }
+def uliftUliftEquiv : P.ulift.ulift ≃ₚ P.ulift where
+  equivA := _root_.Equiv.ulift
+  equivB := fun _ => _root_.Equiv.ulift
 
 /-- Universe lifting commutes with sum -/
 def uliftSumEquiv (Q : PFunctor.{uA₂, uB₁}) :
     (PFunctor.ulift.{_, _, u, v} (P + Q : PFunctor.{max uA₁ uA₂, uB₁})) ≃ₚ
-    ((PFunctor.ulift.{_, _, uA, uB} P : PFunctor.{max uA₁ uA, max uB₁ uB}) +
-      (Q.ulift : PFunctor.{max uA₂ uA', max uB₁ uB}) : PFunctor.{max uA₁ uA uA₂ uA', max uB₁ uB}) :=
-  {
-    equivA := {
-      toFun := fun a =>
-        match ULift.down a with
-        | Sum.inl pa => Sum.inl (ULift.up pa)
-        | Sum.inr qa => Sum.inr (ULift.up qa)
-      invFun := fun a =>
-        ULift.up <| match a with
-          | Sum.inl pa => Sum.inl (ULift.down pa)
-          | Sum.inr qa => Sum.inr (ULift.down qa)
-      left_inv := by
-        intro a
-        cases a with
-        | up s =>
-          cases s <;> rfl
-      right_inv := by
-        intro a
-        cases a <;> rfl
-    }
-    equivB := fun a => by
-      cases a with
-      | up s =>
-        cases s
-        · exact {
-            toFun := fun b => ULift.up (ULift.down b)
-            invFun := fun b => ULift.up (ULift.down b)
-            left_inv := by intro b; cases b; rfl
-            right_inv := by intro b; cases b; rfl
-          }
-        · exact {
-            toFun := fun b => ULift.up (ULift.down b)
-            invFun := fun b => ULift.up (ULift.down b)
-            left_inv := by intro b; cases b; rfl
-            right_inv := by intro b; cases b; rfl
-          }
-  }
+    (PFunctor.ulift.{_, _, uA, uB} P + PFunctor.ulift.{_, _, uA', uB} Q :
+      PFunctor.{max uA₁ uA uA₂ uA', max uB₁ uB}) where
+  equivA := _root_.Equiv.ulift.trans
+    (_root_.Equiv.sumCongr _root_.Equiv.ulift.symm _root_.Equiv.ulift.symm)
+  equivB := fun a => by
+    rcases a with ⟨a⟩
+    cases a <;> exact _root_.Equiv.ulift.trans _root_.Equiv.ulift.symm
 
 /-- Universe lifting commutes with product. -/
 def uliftProdEquiv (Q : PFunctor.{uA₂, uB₂}) :
     (PFunctor.ulift.{_, _, u, v} (P * Q : PFunctor.{max uA₁ uA₂, max uB₁ uB₂})) ≃ₚ
-      ((PFunctor.ulift.{_, _, uA, uB} P : PFunctor.{max uA₁ uA, max uB₁ uB}) *
-        (PFunctor.ulift.{_, _, uA', uB'} Q : PFunctor.{max uA₂ uA', max uB₂ uB'}) :
-          PFunctor.{max uA₁ uA₂ uA uA', max uB₁ uB₂ uB uB'}) :=
-  {
-    equivA := {
-      toFun := fun a => (ULift.up (ULift.down a).1, ULift.up (ULift.down a).2)
-      invFun := fun a => ULift.up (ULift.down a.1, ULift.down a.2)
-      left_inv := by
-        intro a
-        cases a
-        rfl
-      right_inv := by
-        intro a
-        rcases a with ⟨pa, qa⟩
-        cases pa
-        cases qa
-        rfl
-    }
-    equivB := fun a => by
-      cases a with
-      | up s =>
-        rcases s with ⟨pa, qa⟩
-        exact {
-          toFun := fun b => match ULift.down b with
-            | Sum.inl pb => Sum.inl (ULift.up pb)
-            | Sum.inr qb => Sum.inr (ULift.up qb)
-          invFun := fun b => ULift.up <| match b with
-            | Sum.inl pb => Sum.inl (ULift.down pb)
-            | Sum.inr qb => Sum.inr (ULift.down qb)
-          left_inv := by
-            intro b
-            cases b with
-            | up s =>
-              cases s <;> rfl
-          right_inv := by
-            intro b
-            cases b <;> rfl
-        }
-  }
+      (PFunctor.ulift.{_, _, uA, uB} P * PFunctor.ulift.{_, _, uA', uB'} Q :
+        PFunctor.{max uA₁ uA₂ uA uA', max uB₁ uB₂ uB uB'}) where
+  equivA := _root_.Equiv.ulift.trans
+    (_root_.Equiv.prodCongr _root_.Equiv.ulift.symm _root_.Equiv.ulift.symm)
+  equivB := fun a => by
+    rcases a with ⟨⟨_, _⟩⟩
+    exact _root_.Equiv.ulift.trans
+      (_root_.Equiv.sumCongr _root_.Equiv.ulift.symm _root_.Equiv.ulift.symm)
 
 end ULift
 
