@@ -46,6 +46,23 @@ structure Lens (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J) (Q : IPFunctor.{uI, uJ
 
 namespace Lens
 
+/-- Two indexed lenses are equal when their position maps agree pointwise and
+their response maps agree after transport along that position equality. -/
+@[ext (iff := false)]
+theorem ext {P : IPFunctor.{uI, uJ, uA₁, uB₁} I J}
+    {Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J} (l₁ l₂ : Lens P Q)
+    (hA : ∀ j a, l₁.toFunA j a = l₂.toFunA j a)
+    (hB : ∀ j a, l₁.toFunB j a = (hA j a) ▸ l₂.toFunB j a) : l₁ = l₂ := by
+  rcases l₁ with ⟨toFunA₁, toFunB₁, src_eq₁⟩
+  rcases l₂ with ⟨toFunA₂, toFunB₂, src_eq₂⟩
+  have h : toFunA₁ = toFunA₂ := funext fun j => funext (hA j)
+  subst h
+  have h' : toFunB₁ = toFunB₂ := by
+    funext j a
+    simpa using hB j a
+  subst h'
+  rfl
+
 /-- The identity lens. -/
 protected def id (P : IPFunctor.{uI, uJ, uA, uB} I J) : Lens P P where
   toFunA _ := id
