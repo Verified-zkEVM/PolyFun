@@ -31,21 +31,24 @@ Every claim below was checked against source on disk, not recalled.
 
 | Tree | Revision surveyed |
 |---|---|
-| Lean core | **v4.33.0** (the `lean-toolchain` pin), compared against v4.34.0-rc1 |
-| Mathlib | v4.33.0 (pinned), compared against `master` |
-| cslib | v4.33.0 (pinned), compared against `main` |
+| Lean core | **v4.33.0** (survey baseline), compared against v4.34.0-rc1 |
+| Mathlib | v4.33.0 (survey baseline), compared against `master` |
+| cslib | v4.33.0 (survey baseline), compared against `main` |
 | Batteries | `main` |
 
-Availability is always reported **at the pin**, because that is what PolyFun can
-actually use today. Where something exists only upstream of the pin, it is filed under
-*Track*, not *Adopt*.
+PolyFun now pins the synchronized v4.33.1 point releases. This comparison was not
+rerun for that toolchain-only update, so the table retains its exact v4.33.0 survey
+baseline.
+
+Availability is always reported **at the survey baseline**. Where something exists
+only upstream, it is filed under *Track*, not *Adopt*.
 
 Two traps worth recording for whoever repeats this:
 
 - A toolchain directory named `nightly-<later date>` is not necessarily newer. The
   `nightly-2026-01-22` toolchain reports `4.28.0-nightly` — **older** than the v4.33.0
-  pin. Check `bin/lean --version`, not the directory name. The correct local proxy for
-  upstream HEAD is the newest `vX.Y.0-rc*` toolchain present.
+  survey baseline. Check `bin/lean --version`, not the directory name. The correct
+  local proxy for upstream HEAD is the newest `vX.Y.0-rc*` toolchain present.
 - Absence is harder to establish than presence, and it is where the first guess is
   most often wrong. For *abstractions*, claims of "nothing upstream has this" below
   come from grepping the full pinned trees for the class/def keyword, not just the
@@ -196,7 +199,7 @@ there, and cslib's `PFunctor.FreeM` is the free monad PolyFun builds on.
 
 #### Core is absorbing Loom's weakest-precondition design
 
-At the v4.33.0 pin, `Std/Internal/Do/` already contains a lattice-generic
+At the v4.33.0 survey baseline, `Std/Internal/Do/` already contains a lattice-generic
 weakest-precondition stack:
 
 ```lean
@@ -235,7 +238,7 @@ exactly the drift that produced the `MonadSupport` situation.
 #### `mvcgen` is deprecated in favour of `vcgen`
 
 Upstream has marked `mvcgen` `@[deprecated]`, directing users to `vcgen`. **`vcgen`
-already exists at the v4.33.0 pin** (`Std/Tactic/Do/Syntax.lean`; it was renamed from
+already exists at the v4.33.0 survey baseline** (`Std/Tactic/Do/Syntax.lean`; it was renamed from
 the experimental `mvcgen'` in v4.33), so retargeting needs no toolchain bump.
 
 Relatedly, `Batteries.Classes.SatisfiesM` has been deprecated in favour of
