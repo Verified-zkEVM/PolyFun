@@ -55,7 +55,7 @@ end ExceptE
 no continuation and becomes an immediate `Except.error` leaf. -/
 def interpExceptStep {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
     (t : ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :
-    (Poly E (Except ε α)).Obj
+    (ViewPoly E (Except ε α)).Obj
       (ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :=
   match shape' t with
   | ⟨.pure r, _⟩ => ⟨.pure (.ok r), PEmpty.elim⟩
@@ -68,7 +68,7 @@ exception or the ordinary result. External events remain visible. -/
 def interpExcept {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
     (t : ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :
     ITree E (Except ε α) :=
-  PFunctor.M.corec interpExceptStep t
+  ITree.corec interpExceptStep t
 
 /-- Conventional runner name for `interpExcept`. -/
 def runExcept {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}

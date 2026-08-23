@@ -87,7 +87,7 @@ end Handler
 /-- Step transformer used by `mapSpec`. Given a polynomial-functor lens
 `φ : PFunctor.Lens E F` and the current ITree node, produce one node of the
 target ITree by relabelling the head event. -/
-def mapSpecStep (φ : PFunctor.Lens E F) (t : ITree E α) : (Poly F α).Obj (ITree E α) :=
+def mapSpecStep (φ : PFunctor.Lens E F) (t : ITree E α) : (ViewPoly F α).Obj (ITree E α) :=
   match shape' t with
   | ⟨.pure r, _⟩ => ⟨.pure r, PEmpty.elim⟩
   | ⟨.step, c⟩ => ⟨.step, fun _ => c PUnit.unit⟩
@@ -110,10 +110,10 @@ of an interaction tree, leaving the leaves and silent steps untouched.
 This is the Lean analogue of Coq's `translate (h : E ~> F) : itree E ~> itree F`.
 
 It coincides with `simulate (Handler.ofLens φ)` up to (weak) bisimulation;
-defining it directly via `M.corec` produces a strongly bisimilar but more
+defining it directly via `ITree.corec` produces a strongly bisimilar but more
 efficient implementation that does not insert the silent step that `iter`
 would otherwise add. -/
 def mapSpec (φ : PFunctor.Lens E F) : ITree E α → ITree F α :=
-  PFunctor.M.corec (F := Poly F α) (mapSpecStep φ)
+  ITree.corec (F := F) (mapSpecStep φ)
 
 end ITree

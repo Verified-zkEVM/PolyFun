@@ -72,7 +72,7 @@ the current state together with the source tree. State operations become
 silent steps, while external events remain visible. -/
 def interpStateStep {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
     (st : σ × ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :
-    (Poly E (σ × α)).Obj (σ × ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :=
+    (ViewPoly E (σ × α)).Obj (σ × ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :=
   match shape' st.2 with
   | ⟨.pure r, _⟩ => ⟨.pure (st.1, r), PEmpty.elim⟩
   | ⟨.step, c⟩ => ⟨.step, fun _ => (st.1, c PUnit.unit)⟩
@@ -91,7 +91,7 @@ signature uses the current homogeneous `PFunctor.sum`. The final result
 universe is independent. -/
 def interpState {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
     (t : ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) (s : σ) : ITree E (σ × α) :=
-  PFunctor.M.corec interpStateStep (s, t)
+  ITree.corec interpStateStep (s, t)
 
 /-- Conventional runner name for `interpState`. -/
 def runState {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
