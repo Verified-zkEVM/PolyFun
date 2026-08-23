@@ -135,7 +135,32 @@ variable {α : Type}
 
 /-- The "always" judgment is the trivial-precondition `Prop`-valued triple. -/
 example (x : m α) (p : α → Prop) :
+    letI := mAlgOrderedPropDemonic (m := m)
     MAlgOrdered.Triple (l := Prop) ⊤ x p ↔ (x ⊨ₐ p) :=
   triple_top_iff_allOutputs x p
 
 end TrivialTriple
+
+section AlgebraSelection
+
+/-- A computation used to distinguish transformer failure semantics from
+support-based partial-correctness semantics. -/
+def noResult : OptionT Id Nat := ⟨none⟩
+
+/-- Installing the support algebra only on the base monad leaves PolyFun's
+existing `OptionT` algebra in charge, so `none` is failure (`⊥`). -/
+example :
+    letI := mAlgOrderedPropDemonic (m := Id)
+    ¬ MAlgOrdered.wp noResult (fun _ => True) := by
+  simp [MAlgOrdered.wp, noResult, MAlgOrdered.instOptionT, mAlgOrderedPropDemonic,
+    AllOutputs, support]
+
+/-- Installing support semantics explicitly on the transformer instead makes
+its empty support satisfy every postcondition vacuously. -/
+example :
+    letI := mAlgOrderedPropDemonic (m := OptionT Id)
+    MAlgOrdered.wp noResult (fun _ => True) := by
+  rw [wp_iff_allOutputs]
+  exact fun _ _ => trivial
+
+end AlgebraSelection

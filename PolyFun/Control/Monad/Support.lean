@@ -35,8 +35,10 @@ introduction rules exclude the empty model. Between them the support is exact.
 
 `AllOutputs` induces the demonic `Prop`-carrier ordered monad algebra `MAlgOrdered m Prop`,
 identifying "always" with the trivial-precondition Hoare triple
-(`triple_top_iff_allOutputs`); `SomeOutput` gives the angelic companion
-(`mAlgOrderedPropAngelic`, not an instance, since the two share an instance head).
+(`triple_top_iff_allOutputs`); `SomeOutput` gives the angelic companion. Both
+algebras are named definitions rather than global instances: transformer
+algebras such as `MAlgOrdered.instOptionT` give failures a different meaning,
+so a generic global support instance would be incoherent with them.
 
 ## Scope
 
@@ -260,13 +262,20 @@ variable {m : Type → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactM
 variable {α : Type}
 
 /-- The demonic `Prop`-carrier ordered monad algebra of a monad with exact support:
-`μ` asserts that every possible output is a true proposition. -/
-instance instMAlgOrderedProp : MAlgOrdered m Prop where
+`μ` asserts that every possible output is a true proposition. This is deliberately
+not a global instance: for example, the existing `OptionT` algebra interprets
+`none` as `⊥`, whereas exact-support partial correctness interprets its empty
+support vacuously. Install this definition locally when support semantics is
+intended. -/
+@[instance_reducible]
+def mAlgOrderedPropDemonic : MAlgOrdered m Prop where
   μ x := AllOutputs id x
   μ_pure x := propext (allOutputs_pure id x)
   μ_bind_mono f g hfg x := by
     simp only [allOutputs_bind]
     exact fun h a ha => hfg a (h a ha)
+
+attribute [local instance] mAlgOrderedPropDemonic
 
 /-- Support-based characterization of the demonic `Prop`-valued weakest precondition. -/
 theorem wp_iff_forall_support (x : m α) (post : α → Prop) :
@@ -296,7 +305,7 @@ theorem triple_top_not_iff_noOutput (x : m α) (post : α → Prop) :
 
 /-- The angelic `Prop`-carrier ordered monad algebra: `μ` asserts that some possible output
 is a true proposition. Not an instance — it shares an instance head with the demonic
-`instMAlgOrderedProp`. -/
+`mAlgOrderedPropDemonic`. -/
 @[instance_reducible]
 def mAlgOrderedPropAngelic : MAlgOrdered m Prop where
   μ x := SomeOutput id x
