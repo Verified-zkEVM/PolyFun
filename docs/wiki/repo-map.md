@@ -25,7 +25,8 @@ PolyFun/
   Realizability/     step classes and realizability of free programs by
                      machines whose transition functions are admissible
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
-                     Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace)
+                     Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace),
+                     including exact monadic support (Monad/Support)
   Logic/             small logic helpers (HEq)
 
 docs/wiki/           agent-facing notes (this directory)
@@ -93,6 +94,7 @@ PFunctor/Lens/{Basic, Cartesian, State}
 
 PFunctor/Lens/Basic -> PFunctor/SubstMonoid
 PFunctor/{Free/Path, SubstMonoid} -> PFunctor/Free/Polynomial
+PFunctor/Free/Path + Control/Monad/Support -> PFunctor/Free/Support
 PFunctor/Comonoid -> PFunctor/Comonoid/Category
 PFunctor/{Comonoid, Lens/Duoidal} -> PFunctor/Comonoid/Tensor
 PFunctor/{SubstMonoid, Comonoid, InternalHom, Lens/Duoidal}
