@@ -95,7 +95,9 @@ and depend on this library.
   and concrete complexity classes live downstream.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
-  algebra, monad iter / hom, lawful re-exports).
+  algebra, monad iter / hom, lawful re-exports), plus exact monadic
+  support over core's `MonadAttach` and the always/some/never judgments
+  (`Monad/Support`).
 - `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
   silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
