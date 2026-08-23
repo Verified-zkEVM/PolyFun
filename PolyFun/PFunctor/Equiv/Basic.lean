@@ -182,7 +182,7 @@ def prodSumDistrib (R : PFunctor.{uA₃, uB₂}) :
         | .inl a => (prodComm.{uA₂, uB₂, uA₁, uB₁} Q P).equivB a
         | .inr a => (prodComm.{uA₃, uB₂, uA₁, uB₁} R P).equivB a
     }
-    ((prodComm.{max uA₂ uA₃, uB₂, uA₁, uB₁} (Q + R) P).symm.trans <|
+    ((prodComm.{uA₁, uB₁, max uA₂ uA₃, uB₂} P (Q + R)).trans <|
       (sumProdDistrib.{uA₂, uB₂, uA₃, uB₁, uA₁} Q R P).trans <|
         commSum).equivA
   equivB := fun
