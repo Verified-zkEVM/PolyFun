@@ -604,7 +604,7 @@ and axiom-count comparisons go in papers verbatim, favorable or not.
   `ihom_y_A`; accessors `committed`/`answer`/`next`; the Kleisli–Mealy
   `equivStateHandler : Responder S q ≃ Handler (StateT S Id) q` with `rfl`
   round-trips) and `Dynamical/Game.lean` (`game := wire₂ (Lens.eval q r)`,
-  `closedGame` its autonomous `r = X` instance, `game_eq_uncurry` the
+  `closedGame` its autonomous `r = y` instance, `game_eq_uncurry` the
   adjunction reading; monadic runs `kleisliStep`/`kleisliIterate` and the
   stateful-handler `stepWith`/`iterWith` with the responder/handler state
   *first* in the pair; the query-conditioned

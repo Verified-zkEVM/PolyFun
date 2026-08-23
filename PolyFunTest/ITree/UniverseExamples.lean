@@ -37,18 +37,18 @@ example : PFunctor.{max uA uR, uB} := ITree.Poly F R
 
 /-- The computational polynomial is definitionally the operation-first sum
 of visible events, pure returns, and silent steps. -/
-example : ITree.Poly F R = F + PFunctor.C R + PFunctor.X := rfl
+example : ITree.Poly F R = F + PFunctor.C R + PFunctor.y := rfl
 
 /-- The public tree type is equivalent to the raw M-type over that sum. -/
 example : ITree F R ≃ PFunctor.M.{max uA uR, uB}
-    (F + PFunctor.C.{uR, uB} R + PFunctor.X.{max uA uR, uB}) :=
+    (F + PFunctor.C.{uR, uB} R + PFunctor.y.{max uA uR, uB}) :=
   ITree.equivM
 
 /-- Both directions of the representation equivalence reduce definitionally. -/
 example (tree : ITree F R) : ITree.ofM tree.toM = tree := rfl
 
 example (tree : PFunctor.M.{max uA uR, uB}
-    (F + PFunctor.C.{uR, uB} R + PFunctor.X.{max uA uR, uB})) :
+    (F + PFunctor.C.{uR, uB} R + PFunctor.y.{max uA uR, uB})) :
     (ITree.ofM tree : ITree F R).toM = tree := rfl
 
 /-- The final coalgebra joins the two signature universes with the return
