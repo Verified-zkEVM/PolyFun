@@ -1,5 +1,6 @@
 module
 
+public import PolyFun.Complexity.SecondOrderPolynomial
 public import PolyFun.Control.Bisimulation
 public import PolyFun.Control.Coalgebra
 public import PolyFun.Control.Comonad.Basic
@@ -235,5 +236,9 @@ public import PolyFun.Realizability.Basic
 public import PolyFun.Realizability.Closure
 public import PolyFun.Realizability.Instances
 public import PolyFun.Realizability.Machine
+public import PolyFun.Realizability.Quantitative
+public import PolyFun.Realizability.Quantitative.Closure
+public import PolyFun.Realizability.Quantitative.Polynomial
+public import PolyFun.Realizability.Quantitative.WordClass
 public import PolyFun.Realizability.Representation
 public import PolyFun.Realizability.StepClass

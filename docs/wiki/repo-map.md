@@ -23,7 +23,9 @@ PolyFun/
     Concurrent/      structural and dynamic concurrent semantics
     UC/              open-process / open-theory layer (no security content)
   Realizability/     step classes and realizability of free programs by
-                     machines whose transition functions are admissible
+                     machines whose transition functions are admissible;
+                     executable quantitative realizers and syntactic run costs
+  Complexity/        generic resource-bound syntax (not a concrete complexity class)
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
                      Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace)
   Logic/             small logic helpers (HEq)
@@ -208,7 +210,16 @@ PFunctor/Basic -> Realizability/StepClass
 PFunctor/Dynamical/DynComputation/Bounded -> Realizability/Machine
 Realizability/{StepClass, Machine} -> Realizability/Basic
 Realizability/Basic -> Realizability/{Closure, Instances, Representation}
+Realizability/Basic -> Realizability/Quantitative
+Realizability/Quantitative -> Realizability/Quantitative/Closure
+{Complexity/SecondOrderPolynomial, Realizability/Quantitative/Closure}
+  -> Realizability/Quantitative/Polynomial
+Realizability/{Instances, Quantitative} -> Realizability/Quantitative/WordClass
+Mathlib/Order/Monotone/Basic -> Complexity/SecondOrderPolynomial
   (Instances additionally draws on Mathlib's Computability and Fintype layers;
+   Quantitative/Closure assembles executable structural code but asserts no
+   polynomial-time closure; Quantitative/Polynomial packages explicit
+   backend-relative polynomial certificates; Complexity contains syntax, not feasibility;
    nothing under PFunctor/, ITree/, or Interaction/ depends on Realizability/)
 ```
 
@@ -238,6 +249,10 @@ plain imports, and reducibility is exposed declaration-by-declaration.
   [`interaction.md`](interaction.md).
 - Adding monad / comonad helpers, lawful re-exports, or free-monad
   algebra: start in `PolyFun/Control/`.
+- Adding backend-relative code, exact interaction costs, or generic executable
+  closure operations: start in `PolyFun/Realizability/Quantitative.lean` and
+  `PolyFun/Realizability/Quantitative/Closure.lean`. Concrete complexity classes
+  and adequacy theorems belong downstream.
 - Updating notation: start in `PolyFun/Interaction/UC/Notation.lean`. See
   [`notation.md`](notation.md).
 
