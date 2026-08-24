@@ -23,4 +23,20 @@ namespace PFunctor
 example {q : PFunctor.{u, v}} {m : Type v → Type w}
     (h : (a : q.A) → m (q.B a)) : Handler m q := h
 
+/-! ## Coproduct transparency -/
+
+set_option linter.tacticCheckInstances true
+
+#guard_msgs in
+example {P Q R : PFunctor.{u, v}} (h : Handler Id ((P + Q) + R)) (q : Q.A)
+    (consume : Q.B q → Nat) :
+    consume (h (.inl (.inr q))) = consume (h (.inl (.inr q))) := by
+  rfl
+
+#guard_msgs in
+example {P Q R : PFunctor.{u, v}} (h : Handler Id ((P + Q) + R)) (r : R.A)
+    (consume : R.B r → Nat) :
+    consume (h (.inr r)) = consume (h (.inr r)) := by
+  rfl
+
 end PFunctor

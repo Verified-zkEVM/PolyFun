@@ -59,9 +59,7 @@ theorem sum_behavior
   apply behavior_eq_of_responderMap terminalSum (Responder.sum left right)
     (fun current => (left.behavior current.1, right.behavior current.2)) <;>
     · intro current operation
-      -- Lean 4.33: `parallelSum` is only `implicit_reducible`, so `simp`
-      -- leaves a residual goal that is closed by `rfl` up to defeq.
-      cases operation <;> simp [terminalSum] <;> rfl
+      cases operation <;> simp [terminalSum]
 
 @[simp]
 theorem sumBehavior_answer_inl

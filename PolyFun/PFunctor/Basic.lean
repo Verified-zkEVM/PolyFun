@@ -140,11 +140,25 @@ section Sum
 
 /-- The sum (coproduct) of two polynomial functors `P` and `Q`, written as `P + Q`.
 
-Defined as the sum of the head types and the sum case analysis for the child types.
+Defined as the sum of the head types and the dependent sum recursor for the child types. The
+recursor is written directly so that nested coproduct directions normalize at implicit
+transparency.
 
 Note: requires the `B` universe levels to be the same. -/
 abbrev sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max uA₁ uA₂, uB} :=
-  ⟨P.A ⊕ Q.A, Sum.elim P.B Q.B⟩
+  ⟨P.A ⊕ Q.A, @Sum.rec P.A Q.A (fun _ => Type uB) P.B Q.B⟩
+
+@[simp]
+lemma sum_A (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
+    (sum P Q).A = (P.A ⊕ Q.A) := rfl
+
+@[simp]
+lemma sum_B_inl (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : P.A) :
+    (sum P Q).B (.inl a) = P.B a := rfl
+
+@[simp]
+lemma sum_B_inr (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : Q.A) :
+    (sum P Q).B (.inr a) = Q.B a := rfl
 
 /-- Addition of polynomial functors, defined as the sum construction. -/
 @[reducible] instance instHAddPFunctor :
@@ -155,7 +169,7 @@ abbrev sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max
   add := sum
 
 lemma add_def (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
-    P + Q = ⟨P.A ⊕ Q.A, Sum.elim P.B Q.B⟩ := rfl
+    P + Q = ⟨P.A ⊕ Q.A, @Sum.rec P.A Q.A (fun _ => Type uB) P.B Q.B⟩ := rfl
 
 -- alias coprodUnit := zero
 alias coprod := sum
