@@ -285,8 +285,8 @@ theorem QuantitativeRealization.executionCost_toPrecomp_le
           simp only [Boundary.withInput_head]
           rw [hheadSize]
 
-/-- Input precomposition preserves restricted pathwise bounds, charging exactly the backend's
-certified initialization overhead on top of the source bound. -/
+/-- Input precomposition preserves restricted pathwise bounds, using the backend's certified
+upper bound for initialization overhead on top of the source bound. -/
 theorem QuantitativeRealization.RunsWithinUnder.precomp
     {R : QuantitativeRealization Q bd}
     {allows : ∀ position, p.B position → Prop} {bound : A → ExecutionCost}
