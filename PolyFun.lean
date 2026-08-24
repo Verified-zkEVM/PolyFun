@@ -249,6 +249,7 @@ public import PolyFun.Realizability.Closure
 public import PolyFun.Realizability.Instances
 public import PolyFun.Realizability.Machine
 public import PolyFun.Realizability.Quantitative
+public import PolyFun.Realizability.Quantitative.BoundedClosure
 public import PolyFun.Realizability.Quantitative.Closure
 public import PolyFun.Realizability.Quantitative.Polynomial
 public import PolyFun.Realizability.Quantitative.WordClass
