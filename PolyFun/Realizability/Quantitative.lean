@@ -511,6 +511,22 @@ def cost {start finish : R.machine.State} : ExecutionTrace R start finish → Ex
         ExecutionCost.query (Q.size bd.pos position)
           (Q.size bd.idx ⟨position, direction⟩) + cost tail
 
+/-- A trace starting at a returning state is empty: its final state is unchanged and it incurs no
+transition cost.
+
+This inversion principle keeps clients from having to eliminate an indexed `ExecutionTrace`
+directly, which is especially awkward when the starting state is definitionally hidden behind a
+concrete realization. -/
+theorem finish_eq_and_cost_eq_zero_of_view_return
+    {start finish : R.machine.State} (trace : ExecutionTrace R start finish)
+    {value : β} (view_eq : R.machine.view start = Sum.inl value) :
+    finish = start ∧ trace.cost = 0 := by
+  cases trace with
+  | nil => exact ⟨rfl, rfl⟩
+  | query query_eq direction tail =>
+      rw [view_eq] at query_eq
+      exact nomatch query_eq
+
 /-- Encoded traffic on one selected interface is at most the trace's total traffic. -/
 theorem interfaceTraffic_le_traffic_cost {label : Type*} [DecidableEq label]
     (labelOf : p.A → label) (interface : label)
