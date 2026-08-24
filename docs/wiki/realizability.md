@@ -39,6 +39,9 @@ PolyFun/Realizability/
   Quantitative/Closure.lean
                     executable product/sum/option/distributivity mixins;
                     ofFn, precomp, mapResult, unbounded seqComp, and lens transport
+  Quantitative/BoundedClosure.lean
+                    ranked termination/progress certificates; trace transport and
+                    restricted pathwise bounds for precomp and mapResult
   Quantitative/Polynomial.lean
                     first-order polynomial work/output certificates and an
                     explicit categorical/structural model bundle
@@ -281,6 +284,24 @@ result is intentionally only
 `IsQuantitativelyRealizableBy`: a backend may prove bounded or polynomial
 closure after supplying bounds for its structural realizers and size encodings,
 but the generic layer does not assume those bounds.
+
+`Quantitative/BoundedClosure.lean` provides `RankedRunCertificate`, whose
+natural-valued potential decreases on every allowed response and whose explicit
+progress field prevents an empty allowed-answer relation from proving
+termination vacuously. `RankedRunCertificate.runsWithinUnder` deliberately
+keeps its pathwise backend-cost premise separate from termination. Input
+precomposition transports traces in both directions and derives its additional
+work from `cost_compose_le`. Result postcomposition also transports source and
+target traces, but its bounded theorem consumes a `MapResultCostCertificate`:
+the assembled head code and changed output encoding must be compared pathwise
+with source execution plus an explicit overhead.
+
+There is no generic bounded `seqComp` theorem yet. Such a theorem requires a
+dependent split of a composite trace into first- and second-phase traces,
+including the no-silent-step handoff where the first second-phase query moves
+directly from a left state to a right state. The second-phase resource premise
+must then be uniform over all intermediate return values; a pointwise choice of
+machine or bound would not establish closure of one composed machine.
 
 `Quantitative/Polynomial.lean` supplies `FirstOrderPolynomial` and
 `PolyRealizer`, which retains one executable realizer plus work and encoded

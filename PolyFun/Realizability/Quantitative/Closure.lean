@@ -276,7 +276,7 @@ from `QuantitativeStepClass.cost_comp`; the head and update code are shared unch
 def precomp [Q.HasCategory] {D : Type u} {inputRep : C.Str D} {f : D → A}
     (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f) :
     QuantitativeRealization Q (bd.withInput inputRep) where
-  machine := R.machine.contramapInput f
+  machine := R.machine.setInit (R.machine.init ∘ f)
   state := R.state
   initCode := by
     change Q.Realizer inputRep R.state (R.machine.init ∘ f)
@@ -307,6 +307,39 @@ theorem cost_initCode_precomp [Q.HasCategory] [Q.HasExactCategory]
         Q.composeOverhead code R.initCode input := by
   change Q.cost (Q.compose code R.initCode) input = _
   exact Q.cost_comp code R.initCode input
+
+/-- Input precomposition leaves one-step readout work unchanged. -/
+@[simp] theorem cost_headCode_precomp [Q.HasCategory]
+    {D : Type u} {inputRep : C.Str D} {f : D → A}
+    (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
+    (state : R.machine.State) :
+    Q.cost (R.precomp code).headCode state = Q.cost R.headCode state :=
+  rfl
+
+/-- Input precomposition leaves enabled-transition work unchanged. -/
+@[simp] theorem cost_updateCode_precomp [Q.HasCategory]
+    {D : Type u} {inputRep : C.Str D} {f : D → A}
+    (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
+    (step : R.machine.State × p.Idx) :
+    Q.cost (R.precomp code).updateCode step = Q.cost R.updateCode step :=
+  rfl
+
+/-- Input precomposition leaves hidden-state encodings unchanged. -/
+@[simp] theorem size_state_precomp [Q.HasCategory]
+    {D : Type u} {inputRep : C.Str D} {f : D → A}
+    (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
+    (state : R.machine.State) :
+    Q.size (R.precomp code).state state = Q.size R.state state :=
+  rfl
+
+/-- Input precomposition leaves encoded one-step readout sizes unchanged. -/
+@[simp] theorem size_head_precomp [Q.HasCategory]
+    {D : Type u} {inputRep : C.Str D} {f : D → A}
+    (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
+    (state : R.machine.State) :
+    Q.size bd.head ((R.precomp code).machine.head state) =
+      Q.size bd.head (R.machine.head state) :=
+  rfl
 
 /-! ## Result postcomposition -/
 
@@ -476,7 +509,8 @@ theorem precomp [Q.HasCategory] {D : Type u} {inputRep : C.Str D} {f : D → A}
     IsQuantitativelyRealizableBy Q (bd.withInput inputRep) (program ∘ f) := by
   obtain ⟨R, hR⟩ := h
   refine ⟨R.precomp code, ?_⟩
-  change (R.machine.contramapInput f).Implements (program ∘ f)
+  change (R.machine.setInit (R.machine.init ∘ f)).Implements (program ∘ f)
+  rw [← R.machine.contramapInput_eq_setInit f]
   exact hR.contramapInput f
 
 /-- Quantitative realizability is closed under executable result postcomposition. -/

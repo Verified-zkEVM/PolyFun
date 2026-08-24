@@ -212,6 +212,7 @@ Realizability/{StepClass, Machine} -> Realizability/Basic
 Realizability/Basic -> Realizability/{Closure, Instances, Representation}
 Realizability/Basic -> Realizability/Quantitative
 Realizability/Quantitative -> Realizability/Quantitative/Closure
+Realizability/Quantitative/Closure -> Realizability/Quantitative/BoundedClosure
 {Complexity/SecondOrderPolynomial, Realizability/Quantitative/Closure}
   -> Realizability/Quantitative/Polynomial
 Realizability/{Instances, Quantitative} -> Realizability/Quantitative/WordClass
@@ -251,8 +252,10 @@ plain imports, and reducibility is exposed declaration-by-declaration.
   algebra: start in `PolyFun/Control/`.
 - Adding backend-relative code, exact interaction costs, or generic executable
   closure operations: start in `PolyFun/Realizability/Quantitative.lean` and
-  `PolyFun/Realizability/Quantitative/Closure.lean`. Concrete complexity classes
-  and adequacy theorems belong downstream.
+  `PolyFun/Realizability/Quantitative/Closure.lean`; for ranked termination,
+  trace transport, and restricted pathwise closure, continue with
+  `PolyFun/Realizability/Quantitative/BoundedClosure.lean`. Concrete complexity
+  classes and adequacy theorems belong downstream.
 - Updating notation: start in `PolyFun/Interaction/UC/Notation.lean`. See
   [`notation.md`](notation.md).
 
