@@ -80,6 +80,17 @@ variable {p : PFunctor.{u, u}} {α β : Type u}
 
 /-! ## The boundary of a realizability statement -/
 
+/-- The pinned representations of an interaction interface.
+
+Unlike a full `Boundary`, this data does not mention a program's input or returned-value types.
+Resource contracts and handler certificates can therefore be shared definitionally across input
+precomposition, result postcomposition, and sequential-composition boundaries. -/
+structure InterfaceBoundary (C : StepClass.{u, v}) (p : PFunctor.{u, u}) : Type v where
+  /-- Representation of the interface's query positions. -/
+  pos : C.Str p.A
+  /-- Representation of the interface's dependent index space. -/
+  idx : C.Str p.Idx
+
 /-- The pinned representations at the boundary of a realizability statement: the
 input type, the returned-value type, and the interface's query positions and
 index space.
@@ -100,6 +111,14 @@ structure Boundary (C : StepClass.{u, v}) (p : PFunctor.{u, u}) (α β : Type u)
 namespace Boundary
 
 variable {C : StepClass.{u, v}}
+
+/-- Forget a program boundary's input and output representations. -/
+def interface (bd : Boundary C p α β) : InterfaceBoundary C p :=
+  ⟨bd.pos, bd.idx⟩
+
+@[simp] theorem interface_pos (bd : Boundary C p α β) : bd.interface.pos = bd.pos := rfl
+
+@[simp] theorem interface_idx (bd : Boundary C p α β) : bd.interface.idx = bd.idx := rfl
 
 /-- The representation of a machine's one-step readout `β ⊕ p.A`, assembled from
 the result and position representations. -/

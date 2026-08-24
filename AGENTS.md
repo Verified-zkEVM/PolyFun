@@ -91,8 +91,9 @@ and depend on this library.
   Instances: unconstrained, finite-state, Mathlib-`Computable`, and a bridge
   from any class of word functions. `Representation.lean` supplies mutual
   admissible translation, boundary-level realizability invariance, and
-  admissible word encode/decode retractions. *Generic only* — cost measures
-  and concrete complexity classes live downstream.
+  admissible word encode/decode retractions. Generic quantitative realizability
+  and backend-relative trace accounting also live here. *Generic only* —
+  concrete machine adequacy and complexity classes live downstream.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
   algebra, monad iter / hom, lawful re-exports), plus the program-logic
