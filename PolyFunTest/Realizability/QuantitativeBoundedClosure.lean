@@ -13,8 +13,10 @@ public import PolyFun.Realizability.Quantitative.BoundedClosure
 # Bounded quantitative-closure checks
 
 Concrete checks for ranked termination, input precomposition, and result postcomposition. The
-fixture backend has zero local work and zero representation size, which keeps the proofs focused
-on syntactic control flow and the shape of the closure contracts.
+fixture backend assigns zero local work and zero representation size solely to exercise structural
+trace transport and theorem elaboration. It is not an operational complexity backend and is not
+evidence that any function is efficiently realizable. Application-level complexity tests must
+instead provide executable code and inequalities over that code's actual cost.
 -/
 
 public section
@@ -23,7 +25,7 @@ namespace PFunctor.QuantitativeBoundedClosureTest
 
 open DynSystem.DynComputation
 
-/-- Cost-free backend used to isolate the generic bounded-closure API. -/
+/-- Synthetic structural-smoke backend, explicitly excluded from complexity evidence. -/
 @[expose]
 def zeroBackend : QuantitativeStepClass.{0, 0, 0} StepClass.unconstrained.{0, 0} where
   Realizer _ _ _ := PUnit
