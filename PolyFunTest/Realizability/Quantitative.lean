@@ -88,6 +88,7 @@ theorem stuckRealization_not_runsWithinUnder_none :
   exact hfalse
 
 #check QuantitativeRealization.ExecutionTrace.Conforms
+#check QuantitativeRealization.ExecutionTrace.finish_eq_and_cost_eq_zero_of_view_return
 #check ResolvesInUnder
 #check QuantitativeRealization.TraceProgressUnder
 #check QuantitativeRealization.RunsWithinUnder
