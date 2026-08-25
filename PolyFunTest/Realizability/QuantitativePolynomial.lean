@@ -22,6 +22,7 @@ public section
 namespace PFunctor.QuantitativePolynomialTest
 
 open Complexity
+open DynSystem.DynComputation
 
 /-- A cost-free backend used to exercise polynomial certificate composition. -/
 @[expose]
@@ -115,6 +116,66 @@ def zeroStructural : zeroBackend.PolynomialStructuralClosure zeroKernel where
   optionPayloadSize _ := FirstOrderPolynomial.const 0
   size_option_get_le _ _ := le_rfl
 
+/-- A query interface with one position and no possible response. -/
+abbrev emptyResponse : PFunctor := PFunctor.mk PUnit fun _ ↦ PEmpty
+
+/-- Unit boundary used to exercise returned-output size recovery. -/
+abbrev unitBoundary : Boundary StepClass.unconstrained emptyResponse PUnit PUnit :=
+  Boundary.unconstrained emptyResponse PUnit PUnit
+
+/-- Structural sum-payload recovery yields a polynomial certificate without a global model. -/
+def zeroOutputSizeRecovery :
+    @QuantitativeStepClass.PolyOutputSizeRecovery StepClass.unconstrained zeroBackend
+      zeroKernel.cSum emptyResponse PUnit PUnit unitBoundary :=
+  zeroStructural.polyOutputSizeRecovery unitBoundary
+
+/-- The polynomial certificate projects to the monotone recovery interface used by trace bounds. -/
+example : QuantitativeRealization.OutputSizeRecovery (Q := zeroBackend)
+    (bd := unitBoundary) :=
+  zeroOutputSizeRecovery.toOutputSizeRecovery
+
+/-- A fixture whose every represented value has encoded size one. -/
+@[expose]
+def oneSizeBackend : QuantitativeStepClass StepClass.unconstrained where
+  Realizer _ _ _ := PUnit
+  size _ _ := 1
+  cost _ _ := 0
+  admissible _ := True.intro
+
+/-- Immediate-return realization over the nonzero-size fixture. -/
+@[expose]
+def oneSizeReturnRealization : QuantitativeRealization oneSizeBackend unitBoundary where
+  machine := ofFn (p := emptyResponse) id
+  state := PUnit.unit
+  initCode := PUnit.unit
+  headCode := PUnit.unit
+  updateCode := PUnit.unit
+
+/-- Identity growth honestly recovers the unit payload from its tagged readout. -/
+def oneSizeOutputRecovery : oneSizeBackend.PolyOutputSizeRecovery unitBoundary where
+  polynomial := FirstOrderPolynomial.input
+  output_le _ := le_rfl
+
+/-- The trace theorem charges the returned payload through the observed peak readout size. -/
+example (input : PUnit) :
+    oneSizeBackend.size unitBoundary.out input ≤
+      oneSizeOutputRecovery.polynomial.eval
+        (oneSizeReturnRealization.executionCost input
+          (.nil (oneSizeReturnRealization.machine.init input))).peakHeadSize :=
+  oneSizeReturnRealization.returnedSize_le_peakHeadSize
+    oneSizeOutputRecovery.toOutputSizeRecovery input
+      (.nil (oneSizeReturnRealization.machine.init input)) input rfl
+
+/-- A zero polynomial cannot certify a nonzero returned payload, preventing output construction
+from being treated as a free consequence of a short trace. -/
+theorem no_zero_output_recovery :
+    ¬ ∃ recovery : oneSizeBackend.PolyOutputSizeRecovery unitBoundary,
+      recovery.polynomial = FirstOrderPolynomial.const 0 := by
+  rintro ⟨recovery, hpolynomial⟩
+  have hsize := recovery.output_le PUnit.unit
+  rw [hpolynomial] at hsize
+  simp [oneSizeBackend] at hsize
+
 /-- Complete explicit polynomial model for the cost-free fixture. -/
 def zeroModel : zeroBackend.PolynomialModel where
   category := inferInstance
@@ -152,6 +213,9 @@ example (polynomial : Polynomial ℕ) (inputSize : ℕ) :
 #check QuantitativeStepClass.PolynomialCategory
 #check QuantitativeStepClass.StructuralKernel
 #check QuantitativeStepClass.PolynomialStructuralClosure
+#check QuantitativeStepClass.PolyOutputSizeRecovery
+#check QuantitativeStepClass.PolyOutputSizeRecovery.toOutputSizeRecovery
+#check QuantitativeStepClass.PolynomialStructuralClosure.polyOutputSizeRecovery
 #check QuantitativeStepClass.PolynomialModel
 #check FirstOrderPolynomial.pow
 #check FirstOrderPolynomial.ofNatPolynomial

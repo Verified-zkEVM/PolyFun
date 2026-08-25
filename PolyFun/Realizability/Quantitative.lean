@@ -237,15 +237,15 @@ instance : AddCommMonoid ExecutionCost where
     · exact Nat.zero_add cost.work
     · exact Nat.zero_add cost.queries
     · exact Nat.zero_add cost.traffic
-    · exact zero_max cost.peakStateSize
-    · exact zero_max cost.peakHeadSize
+    · exact Nat.max_eq_right (Nat.zero_le cost.peakStateSize)
+    · exact Nat.max_eq_right (Nat.zero_le cost.peakHeadSize)
   add_zero cost := by
     apply ExecutionCost.ext
     · exact Nat.add_zero cost.work
     · exact Nat.add_zero cost.queries
     · exact Nat.add_zero cost.traffic
-    · exact max_zero cost.peakStateSize
-    · exact max_zero cost.peakHeadSize
+    · exact Nat.max_eq_left (Nat.zero_le cost.peakStateSize)
+    · exact Nat.max_eq_left (Nat.zero_le cost.peakHeadSize)
   add_comm left right := by
     apply ExecutionCost.ext
     · exact Nat.add_comm left.work right.work
@@ -358,6 +358,16 @@ theorem add_le_add {actual₁ bound₁ actual₂ bound₂ : ExecutionCost}
     Nat.add_le_add h₁.2.2.1 h₂.2.2.1,
     max_le_max h₁.2.2.2.1 h₂.2.2.2.1,
     max_le_max h₁.2.2.2.2 h₂.2.2.2.2⟩
+
+/-- The zero resource record is below every resource record. -/
+theorem zero_le (cost : ExecutionCost) : 0 ≤ cost :=
+  ⟨Nat.zero_le cost.work, Nat.zero_le cost.queries, Nat.zero_le cost.traffic,
+    Nat.zero_le cost.peakStateSize, Nat.zero_le cost.peakHeadSize⟩
+
+/-- Adding nonnegative resources on the right can only enlarge a resource record. -/
+theorem le_add_right (left right : ExecutionCost) : left ≤ left + right := by
+  exact ⟨Nat.le_add_right .., Nat.le_add_right .., Nat.le_add_right ..,
+    Nat.le_max_left .., Nat.le_max_left ..⟩
 
 end ExecutionCost
 
@@ -626,6 +636,48 @@ def executionCost (R : QuantitativeRealization Q bd) (input : α)
     ExecutionCost.ofWork (Q.cost R.headCode finish) +
       ExecutionCost.observe (Q.size R.state finish)
         (Q.size bd.head (R.machine.head finish))
+
+/-- Recovery of a returned-value size from the encoded size of the tagged final readout.
+
+This is explicit boundary data because a representation of `β ⊕ p.A` need not expose the size of
+its left payload without an additional encoding law. The recovery function is required to be
+monotone so an observed final readout can be compared with the trace's `peakHeadSize`. -/
+structure OutputSizeRecovery where
+  /-- Upper bound on payload size as a function of tagged-readout size. -/
+  recover : ℕ → ℕ
+  /-- The recovery bound is monotone in the observed readout size. -/
+  monotone : Monotone recover
+  /-- Every returned payload obeys the selected recovery bound. -/
+  output_le : ∀ value : β,
+    Q.size bd.out value ≤ recover (Q.size bd.head (Sum.inl value))
+
+/-- The final readout size is one of the observations folded into `peakHeadSize`.
+
+This statement is independent of whether the final state returns or exposes another query. -/
+theorem finalHeadSize_le_peakHeadSize (R : QuantitativeRealization Q bd) (input : α)
+    {finish : R.machine.State}
+    (trace : ExecutionTrace R (R.machine.init input) finish) :
+    Q.size bd.head (R.machine.head finish) ≤
+      (R.executionCost input trace).peakHeadSize := by
+  simp only [executionCost, ExecutionCost.peakHeadSize_add,
+    ExecutionCost.peakHeadSize_observe]
+  omega
+
+/-- A returned value's encoded size is bounded by a monotone recovery of the execution trace's
+peak readout size.
+
+The resource record does not duplicate an output-size component: this theorem derives the bound
+from `peakHeadSize` and an explicit law for decoding the left payload of the boundary sum. -/
+theorem returnedSize_le_peakHeadSize (R : QuantitativeRealization Q bd)
+    (recovery : OutputSizeRecovery (Q := Q) (bd := bd)) (input : α)
+    {finish : R.machine.State}
+    (trace : ExecutionTrace R (R.machine.init input) finish) (value : β)
+    (view_eq : R.machine.view finish = Sum.inl value) :
+    Q.size bd.out value ≤ recovery.recover (R.executionCost input trace).peakHeadSize := by
+  apply (recovery.output_le value).trans
+  apply recovery.monotone
+  rw [← R.machine.head_eq_inl_of_view view_eq]
+  exact R.finalHeadSize_le_peakHeadSize input trace
 
 /-- Initialization and observation add no visible queries, so total query use
 remains the syntactic length of the execution prefix. -/

@@ -122,6 +122,7 @@ namespace PFunctor
 namespace QuantitativeStepClass
 
 open Complexity
+open DynSystem.DynComputation
 
 variable {C : StepClass.{u, v}} (Q : QuantitativeStepClass.{u, v, w} C)
 
@@ -217,6 +218,35 @@ def comp [Q.HasCategory] (category : Q.PolynomialCategory)
       (second.outputSize.eval_monotone (first.outputSize_le input))
 
 end PolyRealizer
+
+/-! ## Polynomial output-size recovery -/
+
+/-- A polynomial certificate for recovering a returned payload's encoded size from the encoded
+size of its tagged readout.
+
+This is intentionally boundary-local: it requires no global polynomial model and does not add a
+separate output-size field to `ExecutionCost`. -/
+structure PolyOutputSizeRecovery [C.HasSum] {p : PFunctor.{u, u}} {A B : Type u}
+    (bd : Boundary C p A B) where
+  /-- First-order polynomial bounding the returned payload size. -/
+  polynomial : FirstOrderPolynomial
+  /-- Every returned payload obeys the polynomial recovery bound. -/
+  output_le : ∀ value : B,
+    Q.size bd.out value ≤ polynomial.eval (Q.size bd.head (Sum.inl value))
+
+namespace PolyOutputSizeRecovery
+
+variable {Q} [C.HasSum] {p : PFunctor.{u, u}} {A B : Type u}
+  {bd : Boundary C p A B}
+
+/-- Forget that an output-size recovery function is represented by a first-order polynomial. -/
+def toOutputSizeRecovery (recovery : Q.PolyOutputSizeRecovery bd) :
+    QuantitativeRealization.OutputSizeRecovery (Q := Q) (bd := bd) where
+  recover := recovery.polynomial.eval
+  monotone := recovery.polynomial.eval_monotone
+  output_le := recovery.output_le
+
+end PolyOutputSizeRecovery
 
 /-! ## Explicit structural choices -/
 
@@ -337,6 +367,24 @@ structure PolynomialStructuralClosure [Q.HasCategory] (kernel : Q.StructuralKern
   size_option_get_le : ∀ {A : Type u} (a : C.Str A) (value : A),
     Q.size a value ≤
       (optionPayloadSize a).eval (Q.size (kernel.cOption.option a) (some value))
+
+namespace PolynomialStructuralClosure
+
+variable {Q} [Q.HasCategory] {kernel : Q.StructuralKernel}
+
+/-- Recover returned-value size from the tagged readout using the structural sum-payload
+polynomial. -/
+def polyOutputSizeRecovery (structural : Q.PolynomialStructuralClosure kernel)
+    {p : PFunctor.{u, u}} {A B : Type u} (bd : Boundary C p A B) :
+    @PolyOutputSizeRecovery C Q kernel.cSum p A B bd := by
+  letI := kernel.cProd
+  letI := kernel.cSum
+  letI := kernel.cOption
+  exact {
+    polynomial := structural.sumPayloadSize bd.out bd.pos
+    output_le := structural.size_sum_getLeft_le bd.out bd.pos }
+
+end PolynomialStructuralClosure
 
 /-- One explicit value collecting the categorical and structural polynomial interface.
 
