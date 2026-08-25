@@ -80,6 +80,7 @@ PFunctor/Free/Basic
   -> PFunctor/Free/Cursor/Append
   -> PFunctor/Free/Cursor/Occurrence
   -> PFunctor/Free/Cursor/Fork
+PFunctor/{Bound, Free/Path/Execution} -> PFunctor/Free/Path/Bounded
 PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption
 PFunctor/{Free/Resumption, M/WellFounded} -> PFunctor/Resumption/WellFounded
 PFunctor/{Resumption, M/Vertex} -> PFunctor/Resumption/Empty
