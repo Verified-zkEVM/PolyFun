@@ -105,6 +105,18 @@ def length : (program : FreeM P α) → Path program → Nat
     length ((FreeM.lift a).bind next) ⟨answer, tail⟩ =
       length (next answer) tail + 1 := rfl
 
+/-- Relabelling the leaves of a free program does not change the length of a
+path pulled back to the source program. -/
+@[simp] theorem length_pullMap {β : Type w} (f : α → β) :
+    (program : FreeM P α) → (path : Path (FreeM.map f program)) →
+      length program (Path.pullMap f program path) =
+        length (FreeM.map f program) path
+  | .pure _, _ => rfl
+  | .liftBind _ next, ⟨answer, tail⟩ => by
+      change length (next answer) (Path.pullMap f (next answer) tail) + 1 =
+        length (FreeM.map f (next answer)) tail + 1
+      exact congrArg (fun n => n + 1) (length_pullMap f (next answer) tail)
+
 /-- The typed path length agrees with the length of its erased event trace. -/
 theorem length_eq_trace_length (program : FreeM P α) (path : Path program) :
     length program path = (trace program path).length := by

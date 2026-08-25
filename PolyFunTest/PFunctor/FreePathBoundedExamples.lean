@@ -36,9 +36,19 @@ def shortPath : Path branchProgram :=
 def longPath : Path branchProgram :=
   ⟨true, false, ⟨⟩⟩
 
+def relabelledLongPath : Path (FreeM.map Nat.succ branchProgram) :=
+  ⟨true, false, ⟨⟩⟩
+
 example : Path.length branchProgram shortPath = 1 := rfl
 
 example : Path.length branchProgram longPath = 2 := rfl
+
+/-- Pulling a path through a leaf relabelling preserves its exact query
+length. -/
+example : Path.length branchProgram
+    (Path.pullMap Nat.succ branchProgram relabelledLongPath) = 2 := by
+  rw [Path.length_pullMap]
+  rfl
 
 /-- The nondependent projection reports the exact branch-dependent path
 length while retaining the original query structure. -/
