@@ -20,7 +20,7 @@ system's private operational state.
 
 @[expose] public section
 
-universe u v uA uI
+universe u v w uA uI
 
 namespace PFunctor
 
@@ -32,6 +32,34 @@ abbrev Handler (m : Type u → Type v) (q : PFunctor.{uA, u}) :=
   (a : q.A) → m (q.B a)
 
 namespace Handler
+
+/-- Postcompose every answer computation of a handler by a polymorphic map
+between target type constructors. No monad laws are needed for this basic
+change-of-target operation. -/
+def mapTarget {m : Type u → Type v} {n : Type u → Type w}
+    {q : PFunctor.{uA, u}} (transform : ∀ {α : Type u}, m α → n α)
+    (handler : PFunctor.Handler m q) : PFunctor.Handler n q :=
+  fun position => transform (handler position)
+
+@[simp] theorem mapTarget_apply {m : Type u → Type v} {n : Type u → Type w}
+    {q : PFunctor.{uA, u}} (transform : ∀ {α : Type u}, m α → n α)
+    (handler : PFunctor.Handler m q) (position : q.A) :
+    mapTarget transform handler position = transform (handler position) :=
+  rfl
+
+@[simp] theorem mapTarget_id {m : Type u → Type v}
+    {q : PFunctor.{uA, u}} (handler : PFunctor.Handler m q) :
+    mapTarget (fun computation => computation) handler = handler :=
+  rfl
+
+theorem mapTarget_comp {m : Type u → Type v} {n : Type u → Type w}
+    {o : Type u → Type uI} {q : PFunctor.{uA, u}}
+    (second : ∀ {α : Type u}, n α → o α)
+    (first : ∀ {α : Type u}, m α → n α)
+    (handler : PFunctor.Handler m q) :
+    mapTarget second (mapTarget first handler) =
+      mapTarget (fun computation => second (first computation)) handler :=
+  rfl
 
 /-- An effectful stateful handler for `q`: on each position it reads a state,
 performs effects in `m`, and returns a direction together with the next state.

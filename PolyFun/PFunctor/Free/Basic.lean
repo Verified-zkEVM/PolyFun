@@ -52,6 +52,65 @@ theorem map_liftBind {X : Type uβ} {Y : Type uγ} (f : X → Y)
       FreeM.liftBind a (fun direction ↦ FreeM.map f (rest direction)) :=
   rfl
 
+/-! ## Fixed-point presentation -/
+
+/-- Reinterpret a finite free program as the W-type of query-or-return
+nodes. Query nodes are the left summand and return nodes are nullary nodes in
+the constant right summand. -/
+def toWWithReturn : FreeM P α → (P + C.{v, uB} α).W
+  | .pure value => ⟨Sum.inr value, PEmpty.elim⟩
+  | .liftBind position next =>
+      ⟨Sum.inl position, fun direction => toWWithReturn (next direction)⟩
+
+/-- Decode the query-or-return W-type as a finite free program. -/
+def ofWWithReturn : (P + C.{v, uB} α).W → FreeM P α
+  | ⟨Sum.inl position, next⟩ =>
+      FreeM.liftBind position fun direction => ofWWithReturn (next direction)
+  | ⟨Sum.inr value, _⟩ => FreeM.pure value
+
+@[simp] theorem toWWithReturn_pure (value : α) :
+    toWWithReturn (pure value : FreeM P α) =
+      WType.mk (Sum.inr value) PEmpty.elim :=
+  rfl
+
+theorem toWWithReturn_liftBind (position : P.A)
+    (next : P.B position → FreeM P α) :
+    toWWithReturn (FreeM.liftBind position next) =
+      WType.mk (Sum.inl position) fun direction =>
+        toWWithReturn (next direction) :=
+  rfl
+
+@[simp] theorem ofWWithReturn_return (value : α)
+    (next : PEmpty → (P + C.{v, uB} α).W) :
+    ofWWithReturn (WType.mk (Sum.inr value) next) = FreeM.pure value :=
+  rfl
+
+@[simp] theorem ofWWithReturn_query (position : P.A)
+    (next : P.B position → (P + C.{v, uB} α).W) :
+    ofWWithReturn (WType.mk (Sum.inl position) next) =
+      FreeM.liftBind position fun direction => ofWWithReturn (next direction) :=
+  rfl
+
+/-- `FreeM P α` is the initial algebra, or W-type, for the polynomial
+`P + C α`. -/
+def equivWWithReturn : FreeM P α ≃ (P + C.{v, uB} α).W where
+  toFun := toWWithReturn
+  invFun := ofWWithReturn
+  left_inv program := by
+    induction program with
+    | pure value => rfl
+    | lift_bind position next ih =>
+        exact congrArg (FreeM.liftBind position) (funext ih)
+  right_inv tree := by
+    induction tree with
+    | mk shape next ih =>
+        cases shape with
+        | inl position =>
+            exact congrArg (WType.mk (Sum.inl position)) (funext ih)
+        | inr value =>
+            exact congrArg (WType.mk (Sum.inr value))
+              (funext fun direction => direction.elim)
+
 /-- Test only the root of a free polynomial tree.
 
 A leaf demands `leafPred` of its result, while an internal node demands
