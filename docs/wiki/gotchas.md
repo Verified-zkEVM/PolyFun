@@ -101,10 +101,10 @@ metavariables.
 resolve independently. Keep `α β : Type` (not `Type u`) when a single
 universe suffices.
 
-### 8. `do`-notation bind uses a different `Bind` instance (Lean 4.29+)
+### 8. `do`-notation bind uses a different `Bind` instance
 
-Lean 4.29 changed `do`-block elaboration so the desugared bind may use
-a `Bind` instance that differs syntactically from `Monad.toBind`. This
+Lean's `do`-block elaboration may use a `Bind` instance that differs
+syntactically from `Monad.toBind`. This
 means `pure_bind`, `bind_assoc`, and `bind_pure` won't fire via `simp`
 or `rw` on goals produced by `do` notation in special cases of more
 non-standard instances.

@@ -22,15 +22,15 @@ IPFunctor.FreeM.bind :
 
 The continuation must accept the per-leaf post-state `s'`, so a standard
 `Bind (IPFunctor.FreeM P s)` instance cannot express it. This file plugs
-into the Lean 4.29 extensible do-elaborator (`@[doElem_elab …]`) to make
+into Lean's extensible do-elaborator (`@[doElem_elab …]`) to make
 ordinary `do { let x ← e; … }` blocks elaborate to the right
 `IPFunctor.FreeM.bind`-tree, threading a fresh post-state through each step.
 
 ## Activating the new elaborator
 
-Lean 4.29 ships *two* `do` elaborators: the legacy one (active by default)
-and a new extensible one. Our overrides plug into the new one, so users
-must opt in by setting
+The pinned Lean toolchain ships *two* `do` elaborators: the legacy one
+(active by default) and a new extensible one. Our overrides plug into the new
+one, so users must opt in by setting
 
 ```
 set_option backward.do.legacy false

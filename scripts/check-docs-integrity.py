@@ -4,6 +4,9 @@
 Checks:
 1. `CLAUDE.md` exists and is a symlink to `AGENTS.md`.
 2. Local markdown links in tracked top-level docs and `docs/` resolve.
+3. Repository-rooted Lean paths in those documents resolve even when they
+   are written as code rather than markdown links.
+4. Every production and test Lean module has a module documentation comment.
 
 Exit code 0 if all checks pass, 1 otherwise.
 """
@@ -31,6 +34,9 @@ TRACKED_PATHS = [
 ]
 
 MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
+LEAN_PATH_RE = re.compile(
+    r"(?<![A-Za-z0-9_./])((?:PolyFun|PolyFunTest)/[A-Za-z0-9_./-]+\.lean)"
+)
 
 
 def tracked_markdown_files() -> list[Path]:
@@ -96,6 +102,27 @@ def check_markdown_links() -> list[str]:
     return errors
 
 
+def check_lean_paths() -> list[str]:
+    errors: list[str] = []
+    for doc_file in tracked_markdown_files():
+        text = doc_file.read_text()
+        for rel_path in sorted(set(LEAN_PATH_RE.findall(text))):
+            if not (REPO_ROOT / rel_path).exists():
+                rel_doc = doc_file.relative_to(REPO_ROOT)
+                errors.append(f"Missing Lean path in {rel_doc}: {rel_path}")
+    return errors
+
+
+def check_module_docstrings() -> list[str]:
+    errors: list[str] = []
+    for source_root in (REPO_ROOT / "PolyFun", REPO_ROOT / "PolyFunTest"):
+        for lean_file in source_root.rglob("*.lean"):
+            if "/-!" not in lean_file.read_text():
+                rel_path = lean_file.relative_to(REPO_ROOT)
+                errors.append(f"Missing module docstring: {rel_path}")
+    return errors
+
+
 def main() -> int:
     all_errors: list[str] = []
 
@@ -104,6 +131,12 @@ def main() -> int:
 
     print("Checking tracked markdown links...")
     all_errors.extend(check_markdown_links())
+
+    print("Checking repository-rooted Lean paths...")
+    all_errors.extend(check_lean_paths())
+
+    print("Checking Lean module docstrings...")
+    all_errors.extend(check_module_docstrings())
 
     if all_errors:
         print(f"\n{len(all_errors)} issue(s) found:\n")

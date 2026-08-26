@@ -2,7 +2,7 @@
 
 Three parallel files in
 [`PolyFun/IPFunctor/Notation/`](../../PolyFun/IPFunctor/Notation/) plug
-custom `@[doElem_elab]` overrides into Lean 4.29's extensible
+custom `@[doElem_elab]` overrides into Lean's extensible
 do-elaborator so that ordinary `do { let x ← e; … }` blocks elaborate
 to the right `bind`-trees over `IPFunctor.FreeM` and `IPFunctor.FreeM₂`.
 
