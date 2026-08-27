@@ -197,6 +197,94 @@ example {m : Type → Type v} [Monad m] [MonadAttach m] {σ α : Type} (x : Stat
     (a : α) : a ∈ support x ↔ ∃ s s', (a, s') ∈ support (x.run s) :=
   mem_support_stateT_iff
 
+/-! ### The indexed form repairs both failures
+
+The two failures above are failures of *flattening*, not of `StateT`: `CanReturn` picks an
+initial state existentially and picks it independently on each side of a `bind`. Indexing by
+the initial state removes that freedom, and both introduction rules come back. -/
+
+/-- The introduction rule the flattened support lacks. `StateT.supportFrom_bind` is an
+equation, so in particular the ⊇ direction holds: an outcome of the prefix followed by an
+outcome of the continuation *from the state the prefix produced* is an outcome of the bind.
+The flattened `canReturn_bind` above is exactly this with the two states decoupled. -/
+example {m : Type → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
+    {σ α β : Type} (s : σ) (x : StateT σ m α) (f : α → StateT σ m β)
+    {a : α} {s' : σ} {b : β} {s'' : σ}
+    (h : (a, s') ∈ StateT.supportFrom s x)
+    (h' : (b, s'') ∈ StateT.supportFrom s' (f a)) :
+    (b, s'') ∈ StateT.supportFrom s (x >>= f) := by
+  rw [StateT.supportFrom_bind]
+  exact Set.mem_biUnion h h'
+
+/-- On the very data that refutes `canReturn_bind`, the indexed law gives the right answer:
+the continuation is run only from `true`, the state the prefix actually produces, so the
+disagreeing value is not reachable. -/
+example : ((false, false) : Bool × Bool) ∉
+    StateT.supportFrom (m := Id) (σ := Bool) true (fun s => (s, s)) := fun h =>
+  Bool.noConfusion (congrArg Prod.fst (h : ((true, true) : Bool × Bool) = (false, false)))
+
+/-- The `pure` rule also comes back: there is no initial state to quantify over, because the
+initial state is an argument. Compare the `StateT Empty Id` failure above. -/
+example {m : Type → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
+    {σ α : Type} (s : σ) (a : α) :
+    StateT.supportFrom s (pure a : StateT σ m α) = {(a, s)} :=
+  StateT.supportFrom_pure s a
+
+/-! ### `ReaderT` fails for the same reason
+
+The `ReaderT` claim was previously asserted but not pinned. It fails only through the empty
+environment — with the same `r` threaded to both sides of a `bind`, the environment version
+of the composition rule is fine, which is why `ReaderT.supportAt_bind` needs no side
+condition. -/
+
+/-- `pure` has empty support over an empty environment: there is no environment to run in. -/
+example (a : Nat) : ¬ CanReturn (m := ReaderT Empty Id) (pure a) a := by
+  rintro ⟨r, -⟩
+  exact r.elim
+
+/-- Indexed by the environment, `pure` behaves. -/
+example {m : Type → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
+    {ρ α : Type} (r : ρ) (a : α) :
+    ReaderT.supportAt r (pure a : ReaderT ρ m α) = {a} :=
+  ReaderT.supportAt_pure r a
+
+/-! ### Why `ExactMonadAttach` has to exist
+
+`LawfulMonadAttach` bounds the support from one side only: every core law is an implication
+*out of* `CanReturn`, so a uniformly-`False` predicate satisfies all of them vacuously. The
+model below is the one the `ExactMonadAttach` docstring appeals to. Its mirror image is
+`MonadAttach.trivial`, whose `CanReturn` is uniformly `True` and which core itself documents
+as having no `LawfulMonadAttach` instance — so the two classes exclude the two degenerate
+models from opposite sides. -/
+
+/-- The constantly-`PUnit` monad, whose every law holds by `PUnit` eta. -/
+private def PUnitM (_ : Type) : Type := PUnit
+
+private instance : Monad PUnitM where
+  pure _ := PUnit.unit
+  bind _ _ := PUnit.unit
+
+private instance : LawfulMonad PUnitM :=
+  LawfulMonad.mk' _ (fun _ => rfl) (fun _ _ => rfl) (fun _ _ _ => rfl)
+
+/-- `CanReturn` uniformly `False` — no value is ever a possible output. -/
+private instance : MonadAttach PUnitM where
+  CanReturn _ _ := False
+  attach _ := PUnit.unit
+
+/-- And it is *lawful*: both fields are discharged without saying anything about outputs.
+This is why the introduction rules cannot be derived and must be assumed. -/
+private instance : LawfulMonadAttach PUnitM where
+  map_attach := rfl
+  canReturn_map_imp h := h.elim
+
+/-- The support of every computation in that model is empty, including `pure`. So
+`LawfulMonadAttach` alone does not pin the support: `ExactMonadAttach.canReturn_pure` is
+exactly what rules this out. -/
+example (a : Nat) : support (pure a : PUnitM Nat) = ∅ := rfl
+
+example (a : Nat) : ¬ CanReturn (pure a : PUnitM Nat) a := id
+
 end StatefulCounterexamples
 
 section TrivialTriple
