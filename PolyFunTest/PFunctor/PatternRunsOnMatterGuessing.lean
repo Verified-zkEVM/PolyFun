@@ -70,25 +70,44 @@ unconsumed suffix in the responder state. -/
 example :
     Responder.runAgainstResult inputResponder
         (guessUntil 7 4) [2, 4, 7, 9] =
-      (true, [9]) := by
-  rw [Responder.runAgainstResult_eq_runFree]
-  rfl
+      (true, [9]) := by rfl
 
 /-- An unsuccessful run consumes exactly its budget rather than the entire
 available stream. -/
 example :
     Responder.runAgainstResult inputResponder
         (guessUntil 7 3) [2, 4, 5, 9] =
-      (false, [9]) := by
-  rw [Responder.runAgainstResult_eq_runFree]
-  rfl
+      (false, [9]) := by rfl
 
 /-- A zero-read program terminates without advancing its matter. -/
 example :
     Responder.runAgainstResult inputResponder
         (guessUntil 7 0) [7, 9] =
-      (false, [7, 9]) := by
-  rw [Responder.runAgainstResult_eq_runFree]
-  rfl
+      (false, [7, 9]) := by rfl
+
+/-- The final permitted read still observes the target and consumes it. -/
+example :
+    Responder.runAgainstResult inputResponder
+        (guessUntil 7 3) [2, 4, 7, 9] =
+      (true, [9]) := by rfl
+
+/-- A target immediately beyond the budget remains unconsumed. -/
+example :
+    Responder.runAgainstResult inputResponder
+        (guessUntil 7 2) [2, 4, 7, 9] =
+      (false, [7, 9]) := by rfl
+
+/-- An exhausted responder supplies its documented default zero without
+advancing the empty input state. -/
+example :
+    Responder.runAgainstResult inputResponder
+        (guessUntil 0 1) [] =
+      (true, []) := by rfl
+
+/-- Surplus fuel cannot make an exhausted responder produce a nonzero target. -/
+example :
+    Responder.runAgainstResult inputResponder
+        (guessUntil 7 3) [] =
+      (false, []) := by rfl
 
 end PFunctor.PatternRunsOnMatterGuessing
