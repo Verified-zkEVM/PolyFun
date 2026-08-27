@@ -5,7 +5,7 @@ Authors: Quang Dao
 -/
 module
 
-public import Mathlib.Algebra.Group.Defs
+public import Mathlib.Init
 
 /-!
 # Indexed Monads (Atkey)
@@ -26,7 +26,7 @@ other in general. However:
 
 1. **Graded → Indexed (groups only)**: Given a graded monad `F : G → Type → Type` over a *group*
    `G`, we obtain an indexed monad `IxM i j α := F (i⁻¹ * j) α`. The group inverse is essential
-   for constructing `ipure` (which needs `i⁻¹ * i = 1`). See `GradedMonad.toIndexedMonad`.
+   for constructing `ipure` (which needs `i⁻¹ * i = 1`).
 
 2. **Trivial cases**: Every ordinary `Monad m` is both a `GradedMonad Unit (fun _ => m)` and an
    `IndexedMonad Unit (fun _ _ => m)`.

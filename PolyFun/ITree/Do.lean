@@ -11,7 +11,7 @@ public import PolyFun.ITree.Basic
 
 Lean elaborates `while` in a `do` block as iteration over `Lean.Loop`, selected
 through a `ForIn` instance. The generic `ForIn m Lean.Loop Unit` instance uses
-core `whileM`, whose partial recursion need not expose an `ITree` constructor
+core `repeatM`, whose partial recursion need not expose an `ITree` constructor
 before continuing the loop.
 
 Opening the `ITree` scope selects the instance in this file instead:

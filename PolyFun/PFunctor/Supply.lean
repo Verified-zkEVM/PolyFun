@@ -31,24 +31,6 @@ same run.
 
 universe uA uB v
 
-namespace List
-
-variable {α : Type*}
-
-/-- Replacing an entry does not disturb the entries before it. -/
-theorem take_set_self : ∀ (l : List α) (n : ℕ) (a : α), (l.set n a).take n = l.take n
-  | [], _, _ => by simp
-  | _ :: _, 0, _ => by simp
-  | _ :: l, n + 1, a => by simp [List.set, take_set_self l n a]
-
-/-- Replacing an entry does not disturb the entries after it. -/
-theorem drop_set_self : ∀ (l : List α) (n : ℕ) (a : α), (l.set n a).drop (n + 1) = l.drop (n + 1)
-  | [], _, _ => by simp
-  | _ :: _, 0, _ => by simp
-  | _ :: l, n + 1, a => by simp [List.set, drop_set_self l n a]
-
-end List
-
 namespace PFunctor
 
 /-- A positional answer supply for `P`: for each position, the answers to be handed out there, in
@@ -134,7 +116,7 @@ the same answers strictly before the substituted one. -/
 @[simp] lemma takeAt_setAt (s : Supply P) (a : P.A) (n : ℕ) (u : P.B a) :
     (s.setAt a n u).takeAt a n = s.takeAt a n := by
   ext b; by_cases hb : b = a
-  · subst hb; simp [List.take_set_self]
+  · subst hb; simp [List.take_set_of_le le_rfl]
   · simp [hb]
 
 /-- The substituted position carries the new answer. -/

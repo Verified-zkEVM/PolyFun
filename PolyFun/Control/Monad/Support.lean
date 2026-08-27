@@ -345,8 +345,9 @@ Core supplies `MonadAttach` and `LawfulMonadAttach` for `Id`, `Option`, `OptionT
 
 section Instances
 
-/-- Core provides no `MonadAttach (Except ε)`, only the transformer version; this mirrors
-core's `Option` instance. -/
+/-- Core provides no `MonadAttach (Except ε)` at this pin, only the transformer version; this
+mirrors core's `Option` instance. An identical declaration has landed upstream and ships in
+Lean v4.35, so delete this instance and the one below it at that toolchain bump. -/
 instance instMonadAttachExcept {ε : Type u} : MonadAttach (Except ε) where
   CanReturn x a := x = Except.ok a
   attach
