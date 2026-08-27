@@ -127,3 +127,41 @@ implemented).
 - The ε-additive approximate-triple algebra (ArkLib's sequencing blocker).
 - Optional `MonadFinSupport` (Finset-valued support, generalizing VCVio's
   `HasEvalFinset`).
+
+## The `SetM` migration contract
+
+`MonadAttach` is the canonical interface for reachability; the `MonadLiftT m SetM`
+spelling is a compatibility shim for a downstream still phrased that way. This section
+records what such a downstream needs, so the migration does not have to be re-derived.
+
+**What already exists here.** `MonadAttach.toMonadLiftT` / `toLawfulMonadLiftT`
+(`Control/Monad/Support.lean`) are the shim itself — deliberately not instances.
+`MonadAttach.SetM.support_eq_run` and `SetM.canReturn_iff` are the carrier bridges.
+`support_liftM_subset` plus `allOutputs_liftM` / `someOutput_of_someOutput_liftM` /
+`noOutput_liftM` are the generically-true half of lift transport.
+`PFunctor.FreeM.support_eq_liftM_univ` is the worked *introduction* instance — the half
+that is not generic, since nothing in `MonadLiftT`'s lawfulness says a lift preserves
+reachability.
+
+**Two real obstructions, both outside this repo.**
+
+1. **`MonadAttach PMF` and `MonadAttach SPMF` do not exist anywhere** — not in the
+   pinned Mathlib, not here, not downstream. Any bridge from a probability-flavoured
+   support to the attach-based one goes through them, so they are the pivotal missing
+   piece rather than a rename. `SPMF := OptionT PMF`, so a `MonadAttach PMF` yields
+   `SPMF` for free through core's `OptionT` instance; the work is `attach`, for which
+   `PMF.bindOnSupport` is the nearest primitive.
+2. **A consumer pinning a PolyFun release predating `Control/Monad/Support.lean`
+   cannot see any of this.** The whole layer landed after the `v4.33.2` tag. A tag bump
+   is a hard prerequisite, not a detail.
+
+**What will not migrate.** An answer-set-indexed support — the `supportWhen` shape,
+where a per-oracle answer assignment is supplied — needs `SetM` as a genuine monad and
+is a different notion from `MonadAttach.support`. Its home here is the specification
+layer (`PFunctor/Free/WP.lean`), which indexes by a per-operation answer assignment.
+
+**No boundary guard is proposed.** The probability layer's `PMF` guard justifies itself
+from the pinned tree, where Mathlib is dismantling `PMF` construction by construction.
+`SetM` is not being retired upstream at all, and PolyFun's own `SetM` surface is 17
+occurrences across three files. The direction is set by documentation and by which API
+new code is written against, not by CI.
