@@ -254,6 +254,22 @@ Interaction/UC/EmulatesWithin -> Interaction/UC/SecureEmulation
   (the existential-simulator judgment and its preorder; directional,
    unlike Emulates, and ordered per observation)
 
+Interaction/UC/OpenProcess -> Interaction/UC/OpenProcessSamplerEquiv
+  (packet- and sampler-aware strengthening of activation equivalence,
+   relative to an abstract relation family on m-computations; forgets onto
+   OpenProcessActivationEquiv)
+
+Interaction/UC/{OpenProcessModel, OpenProcessFactorization,
+                OpenProcessSamplerEquiv}
+  -> Interaction/UC/OpenProcessSamplerFactorization
+  (the five coherence laws at sampler equivalence, conditional on named
+   scheduler-transport hypotheses; the activation laws keep their direct
+   monad-free proofs)
+
+Interaction/UC/{Emulates, OpenProcessSamplerFactorization}
+  -> Interaction/UC/SamplerObservation
+  (sampler-invariant observations respect factorization; the canonical
+   sampler observation)
 Interaction/UC/{OpenProcessModel, SubTheory}
   + Realizability/{DynSystem, DynSystemClosure}
   -> Interaction/UC/Realizability

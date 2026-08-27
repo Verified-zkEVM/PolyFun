@@ -97,13 +97,36 @@ PolyFun internals.
 ## Instantiation Gates
 
 The process model supports a computational UC claim only after all of the
-following have named proofs:
+following have named proofs. The structural half of each gate is now a named
+PolyFun lemma over the abstract relation family `MonadRelFamily`
+(`OpenProcessSamplerEquiv`, `OpenProcessSamplerFactorization`,
+`SamplerObservation`); what remains downstream per gate is stated explicitly:
 
-1. scheduler reassociation transports the scheduler sampler;
-2. chosen initial states correspond across the structural factorization;
-3. the observer returns the same distribution on corresponding final states;
-4. packet and action identities exposed at the boundary are preserved;
-5. the resulting observation supplies `RespectsFactorization`.
+1. **Scheduler transport.** Reassociation does *not* preserve per-step
+   scheduling distributions (the source and factored composites select
+   `(first, second, context)` with genuinely different coin encodings —
+   `sourceSchedule` vs `leftSchedule`/`rightSchedule`), so the sampler-aware
+   coherence laws `openTheory_plug_{comm,par_left,par_right,wire_left,
+   wire_right}_sampler_equiv` are **conditional** on the transport facts
+   `R.rel (sourceDraw σ) (leftDraw σ)`, `R.rel (sourceDraw σ) (rightDraw σ)`,
+   and `R`-fairness `R.rel σ (schedulerFlip <$> σ)`. Downstream either proves
+   these for its relation family or carries them as standing hypotheses;
+   `MonadRelFamily.top` discharges them trivially at the cost of forgetting
+   sampler effects.
+2. **Initial-state correspondence.** The totality fields of
+   `OpenProcessSamplerEquiv` expose the regrouping bijection on states, so
+   corresponding initial states are chosen definitionally.
+3. **Observer adequacy.** The `hInv` premise of
+   `Observation.respectsFactorization_of_samplerInvariant`: the downstream
+   observation must be invariant under sampler equivalence at its relation
+   family. This is the downstream adequacy theorem and is not provable in
+   PolyFun by design.
+4. **Packet and action identity.** The boundary-trace and silence fields of
+   `IsSamplerBisimulation`; preserved by every coherence witness.
+5. **`RespectsFactorization`.** Supplied generically by
+   `Observation.respectsFactorization_of_samplerInvariant` from gates 1 and 3;
+   `Observation.sampler` is the canonical observation obtained this way, and
+   `Observation.activation` the unconditional monad-free coarsening.
 
 Efficiency is a separate gate. `StepClass` membership constrains which step
 functions are admissible but carries no quantitative total-cost bound.

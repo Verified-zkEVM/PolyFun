@@ -118,7 +118,17 @@ Landed downstream in `VCVio/Interaction/UC/ComputationalWithin.lean`:
 - top-subtheory reconciliation with the pre-existing unrestricted judgments;
 - fixed-bound and asymptotic parallel, wired, and plug composition.
 
-The remaining concrete step is `PPTProcessWitness` and `pptSubTheory`.
+**Landed in PolyFun (the structural observation bridge):** the sampler-aware
+coherence laws (`OpenProcessSamplerFactorization`, conditional on named
+scheduler-transport hypotheses over an abstract `MonadRelFamily`) and
+`Observation.respectsFactorization_of_samplerInvariant`
+(`SamplerObservation`). A distributional VCVio observation now obtains
+`RespectsFactorization` by supplying its relation family (equality of
+measure-valued `evalDist` denotations), the three scheduler-transport facts,
+and its sampler-equivalence invariance (adequacy) — see the gate map in
+`docs/wiki/uc.md`.
+
+The remaining concrete steps are `PPTProcessWitness` and `pptSubTheory`.
 
 One `PPTProcessWitness` must uniformly handle the security parameter plus
 encoded state/input. It combines a PolyFun structural realization with
