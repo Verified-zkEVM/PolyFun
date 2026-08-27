@@ -129,14 +129,26 @@ theorem erasesTo_of_map_eq {α : Type u} {P : α → Prop} {y : m (Subtype P)} {
     (h : Subtype.val <$> y = x) : Std.Do.Internal.ErasesTo y x :=
   ⟨fun {_} k => by rw [← h, bind_map_left]⟩
 
-/-- An "always" judgment yields the `Ensures` witness core's soundness class wants. -/
-theorem ensures_of_allOutputs {α : Type u} {x : m α} {P : α → Prop}
-    (h : AllOutputs P x) : Std.Do.Internal.Ensures P x :=
+omit [ExactMonadAttach m] in
+/-- An "always" judgment yields the `Ensures` witness core's soundness class wants.
+
+Stated at `WeaklyLawfulMonadAttach` rather than `ExactMonadAttach`: the witness is built
+from `attach` and its bind-faithfulness alone, and needs nothing about how possible
+outputs compose. That matters because `StateT`, `ReaderT`, and `EStateM` have the weak
+class but provably not the exact one. -/
+theorem ensures_of_allOutputs {α : Type u} [WeaklyLawfulMonadAttach m] {x : m α}
+    {P : α → Prop} (h : AllOutputs P x) : Std.Do.Internal.Ensures P x :=
   ⟨⟨(fun z : Subtype (CanReturn x) => (⟨z.1, h z.1 z.2⟩ : Subtype P)) <$> MonadAttach.attach x,
     erasesTo_of_map_eq (by rw [Functor.map_map]; exact WeaklyLawfulMonadAttach.map_attach)⟩⟩
 
-/-- The demonic interpretation is sound in core's sense. Not an instance. -/
-theorem toWPSound : letI := toWP (m := m); WPSound m .pure :=
+omit [ExactMonadAttach m] in
+/-- The demonic interpretation is sound in core's sense. Not an instance.
+
+Like `ensures_of_allOutputs` this needs only the weak class, so the *soundness* of the
+demonic reading is available for every monad core equips — including the stateful ones.
+What exactness buys is `toWPMonad`, i.e. the `wp_bind` law, not soundness. -/
+theorem toWPSound [WeaklyLawfulMonadAttach m] :
+    letI := toWP (m := m); WPSound m .pure :=
   letI := toWP (m := m)
   { ensures_of_wp := fun {_ _ _} hwp => ensures_of_allOutputs (hwp True.intro) }
 
