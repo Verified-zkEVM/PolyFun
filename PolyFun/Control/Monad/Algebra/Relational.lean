@@ -42,7 +42,7 @@ Attribution:
 
 @[expose] public section
 
-universe u v₁ v₂ v₃ v₄
+universe u v₁ v₂
 
 /-- Ordered relational monad algebra between two monads. -/
 class MAlgRelOrdered (m₁ : Type u → Type v₁) (m₂ : Type u → Type v₂) (l : Type u)
@@ -591,20 +591,18 @@ end StrictBind
 section StrictBindInstances
 
 variable {m₁ : Type u → Type v₁} {m₂ : Type u → Type v₂} {l : Type u}
-variable [Monad m₁] [Monad m₂] [LawfulMonad m₁] [LawfulMonad m₂] [Preorder l]
+variable [Monad m₁] [Monad m₂] [Preorder l]
 variable [MAlgRelOrdered m₁ m₂ l]
 
-/-! The strictness witnesses below are definitions, rather than theorems, so
-callers can install the matching named algebra/witness pair as local instances. -/
+/-! `StrictBind` is `Prop`-valued, so the witnesses below are theorems. Proof irrelevance
+means a theorem installs as a `local instance` just as a definition would; install the
+matching named algebra and its witness together at each verification boundary. -/
 
-set_option linter.defProp false in
-set_option linter.style.haveILetI false in
 /-- Strictness lifts through the named left `StateT` algebra. -/
-@[instance_reducible]
-noncomputable def strictBindStateTLeft [StrictBind m₁ m₂ l] (σ : Type u) :
+theorem strictBindStateTLeft [StrictBind m₁ m₂ l] (σ : Type u) :
     letI := stateTLeft (m₁ := m₁) (m₂ := m₂) (l := l) σ
     StrictBind (StateT σ m₁) m₂ (σ → l) := by
-  letI := stateTLeft (m₁ := m₁) (m₂ := m₂) (l := l) σ
+  let := stateTLeft (m₁ := m₁) (m₂ := m₂) (l := l) σ
   refine { rwp_bind := ?_ }
   intro α β γ δ x y f g post
   funext s
@@ -613,14 +611,11 @@ noncomputable def strictBindStateTLeft [StrictBind m₁ m₂ l] (σ : Type u) :
     (post := fun zs d => post zs.1 d zs.2)
   convert h using 1 <;> rfl
 
-set_option linter.defProp false in
-set_option linter.style.haveILetI false in
 /-- Strictness lifts through the named right `StateT` algebra. -/
-@[instance_reducible]
-noncomputable def strictBindStateTRight [StrictBind m₁ m₂ l] (σ : Type u) :
+theorem strictBindStateTRight [StrictBind m₁ m₂ l] (σ : Type u) :
     letI := stateTRight (m₁ := m₁) (m₂ := m₂) (l := l) σ
     StrictBind m₁ (StateT σ m₂) (σ → l) := by
-  letI := stateTRight (m₁ := m₁) (m₂ := m₂) (l := l) σ
+  let := stateTRight (m₁ := m₁) (m₂ := m₂) (l := l) σ
   refine { rwp_bind := ?_ }
   intro α β γ δ x y f g post
   funext s
@@ -629,14 +624,11 @@ noncomputable def strictBindStateTRight [StrictBind m₁ m₂ l] (σ : Type u) :
     (post := fun c td => post c td.1 td.2)
   convert h using 1 <;> rfl
 
-set_option linter.defProp false in
-set_option linter.style.haveILetI false in
 /-- Strictness lifts through the named two-sided `StateT` algebra. -/
-@[instance_reducible]
-noncomputable def strictBindStateTBoth [StrictBind m₁ m₂ l] (σ₁ σ₂ : Type u) :
+theorem strictBindStateTBoth [StrictBind m₁ m₂ l] (σ₁ σ₂ : Type u) :
     letI := stateTBoth (m₁ := m₁) (m₂ := m₂) (l := l) σ₁ σ₂
     StrictBind (StateT σ₁ m₁) (StateT σ₂ m₂) (σ₁ → σ₂ → l) := by
-  letI := stateTBoth (m₁ := m₁) (m₂ := m₂) (l := l) σ₁ σ₂
+  let := stateTBoth (m₁ := m₁) (m₂ := m₂) (l := l) σ₁ σ₂
   refine { rwp_bind := ?_ }
   intro α β γ δ x y f g post
   funext s₁ s₂

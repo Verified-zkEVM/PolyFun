@@ -12,7 +12,8 @@ public import Mathlib.Order.CompleteLattice.Basic
 
 This file contains two layers:
 
-1. A minimal `MonadAlgebra` interface used by existing `ToMathlib` files.
+1. A minimal `MonadAlgebra` interface: a structure map `m α → α`, made Eilenberg-Moore
+   by `LawfulMonadAlgebra`.
 2. A Loom-style ordered monad algebra interface `MAlgOrdered` with `wp`/`triple`.
 
 Public credit / attribution:
@@ -49,8 +50,6 @@ export LawfulMonadAlgebra (monadAlg_pure monadAlg_bind)
 attribute [simp] monadAlg_pure monadAlg_bind
 
 /-! ## Loom-style ordered monad algebras -/
-
-universe w
 
 /-- Ordered monad algebra interface used for quantitative WP/triple reasoning. -/
 class MAlgOrdered (m : Type u → Type v) (l : Type u) [Monad m] [CompleteLattice l] where

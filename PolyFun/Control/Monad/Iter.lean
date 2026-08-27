@@ -36,10 +36,12 @@ flip the convention; we stick with `inl = continue`, `inr = stop`.)
 
 ## Implementation notes
 
-Lean provides the function
-`whileM : (β → m (β ⊕ α)) → β → m α`, with the same branch
+Lean core provides the function
+`repeatM : (β → m (β ⊕ α)) → β → m α`, with the same branch
 convention as `iterM`, but not a typeclass or a corresponding lawful interface.
-Core `whileM` is implemented by partial recursion and requires `Nonempty α`.
+Core `repeatM` is implemented by partial recursion and requires `Nonempty α`;
+its unfolding lemma `repeatM_eq_of_monadTail` further requires the order-theoretic
+class `Lean.Order.MonadTail`.
 By contrast, `MonadIter` lets a monad select its own implementation and also
 supports empty result types, which are useful for non-returning resumptions.
 
@@ -50,7 +52,7 @@ bisimulation, rather than raw equality. `LawfulMonadIter` accordingly lets each
 instance select its semantic equivalence.
 
 Lean's `while` notation does not call `iterM` directly. It elaborates through
-`ForIn m Lean.Loop Unit`, whose generic instance uses core `whileM`. The module
+`ForIn m Lean.Loop Unit`, whose generic instance uses core `repeatM`. The module
 `PolyFun.ITree.Do` provides a scoped, `ITree`-specific `ForIn` instance backed
 by `ITree.iter`; users opt into that interpretation with `open scoped ITree`.
 -/
@@ -64,7 +66,7 @@ turning loop bodies of type `β → m (β ⊕ α)` into transformers of type
 `β → m α`. The operator should iterate the body, restarting on each
 `Sum.inl` and terminating on each `Sum.inr`.
 
-Unlike Lean's core `whileM`, the implementation is selected by the monad and
+Unlike Lean's core `repeatM`, the implementation is selected by the monad and
 the result type need not have a `Nonempty` instance. -/
 class MonadIter (m : Type u → Type v) where
   /-- Iterate `f`, restarting the loop on each `Sum.inl j` and terminating

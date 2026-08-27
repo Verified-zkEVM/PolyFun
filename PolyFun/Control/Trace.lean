@@ -36,7 +36,7 @@ Many bookkeeping / observation patterns share this exact shape:
 The monoid axioms are exactly what is needed to turn "one contribution per
 input" into a meaningful aggregate over a sequence of inputs.
 
-The companion file `ToMathlib/PFunctor/Trace.lean` specialises this at
+The companion file `PolyFun/PFunctor/Trace.lean` specialises this at
 `ω = FreeMonoid (Idx P)` for a polynomial functor `P`, recovering the
 universal "log of P-events" trace, together with a universal property
 `Trace P X → Control.Trace ω X` (`toMonoid`) coming from the free-monoid
@@ -60,7 +60,7 @@ can be exhibited as `Trace`-instances by `rfl`-clean abbreviations.
 
 @[expose] public section
 
-universe u u' u'' v w
+universe u u' u'' v
 
 namespace Control
 

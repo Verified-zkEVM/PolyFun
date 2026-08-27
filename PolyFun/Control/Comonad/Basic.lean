@@ -30,7 +30,7 @@ It follows the structure of the `Monad` hierarchy:
 
 @[expose] public section
 
-universe u v z
+universe u v
 
 /-- The `Extract` typeclass provides the `extract` operation, dual to `Pure.pure`. -/
 class Extract (w : Type u → Type v) where

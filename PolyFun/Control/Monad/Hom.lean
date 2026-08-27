@@ -6,7 +6,6 @@ Authors: Devon Tuma
 module
 
 public import Mathlib.Control.Monad.Basic
-public import PolyFun.Control.Monad.Algebra
 
 /-!
 # Morphisms Between Monads
@@ -77,7 +76,7 @@ free-monad and interaction layers actually consume.
 
 @[expose] public section
 
-universe u v w x y z
+universe u v w x y
 
 variable {m : Type u → Type v} {n : Type u → Type w}
 
@@ -119,7 +118,8 @@ variable {m : Type u → Type v} [Monad m]
 /-- Extensionality for monad homomorphisms: two morphisms agreeing on every argument at every
 type are equal. -/
 @[ext] protected theorem ext' {F G : m →ᵐ n}
-    (h : ∀ α (x : m α), F x = G x) : F = G := by aesop
+    (h : ∀ α (x : m α), F x = G x) : F = G :=
+  MonadHom.ext (funext fun α => funext fun x => h α x)
 
 @[grind =] lemma mmap_pure (F : m →ᵐ n) (x : α) : F (pure x) = pure x := by grind
 
