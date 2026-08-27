@@ -58,6 +58,9 @@ step are lifted to `uB`; a visible query retains its original direction type.
 | [`PolyFun/ITree/Sim/Defs.lean`](../../PolyFun/ITree/Sim/Defs.lean) | Universe-polymorphic `ITree.simulate` (interprets every event via a handler), `Handler.comp`, and `ITree.mapSpec` (pure event-renaming via a `PFunctor.Lens`). Coq `interp` analogue. |
 | [`PolyFun/ITree/Sim/Facts.lean`](../../PolyFun/ITree/Sim/Facts.lean) | Universe-polymorphic one-step, identity, relational congruence, bind, iteration, lens-composition, and handler-composition facts. `simulate_comp` identifies sequential and composite interpretation up to weak bisimulation; `Handler.comp_assoc_apply` gives pointwise associativity. |
 | [`PolyFun/ITree/Resumption.lean`](../../PolyFun/ITree/Resumption.lean) | Exact identification of `PFunctor.Resumption p β` with the tau-free fragment of `ITree p β`: greatest-invariant characterization, constructive proof-carrying inverse, packaged equivalence, and injectivity of the embedding. |
+| [`PolyFun/ITree/ResumptionWithTau.lean`](../../PolyFun/ITree/ResumptionWithTau.lean) | Exact equivalence `ITree P α ≃ Resumption (P + y) α`; the added unary `y` event is precisely `step`, with public pure/step/query equations and a commuting square for the general tau-free resumption embedding. |
+| [`PolyFun/ITree/Free.lean`](../../PolyFun/ITree/Free.lean) | Canonical injective monad-hom embedding `FreeM.toITree`, exact well-founded tau-free image criterion, compatibility with the unrestricted resumption-with-tau presentation, pointwise conversion of free handlers, and `liftM`/`simulate` fusion up to `WeakBisim`. |
+| [`PolyFun/ITree/PatternRunsOnMatter.lean`](../../PolyFun/ITree/PatternRunsOnMatter.lean) | ITree consumer boundary for synchronized finite `DynSystem.runPattern` results, retaining exact paired queries, reached-state returns, tau-freedom, and finiteness. |
 | [`PolyFun/ITree/Sim/CrossSignature.lean`](../../PolyFun/ITree/Sim/CrossSignature.lean) | Lens-specific bridge from core `CrossSignatureWeakBisim` to simulation: the dependent lens-graph relation and the theorem relating every tree to its `mapSpec` image. |
 | [`PolyFun/ITree/Rec.lean`](../../PolyFun/ITree/Rec.lean) | Universe-polymorphic `mutualRec`, `fixRec` recursive procedure-call combinators. `CallE α β : PFunctor.{uα,uβ}` separates call inputs from results; recursive coproducts retain only the equal reply-universe constraint of `PFunctor.sum`. |
 | [`PolyFun/ITree/Rec/Facts.lean`](../../PolyFun/ITree/Rec/Facts.lean) | Exact head equations for `interpMrec`, bind compatibility, external-event renaming naturality, and definition bridges for `mutualRec` / `fixRec`; `interpMrec_query_recursive` exposes the recursive-call guard. |
@@ -88,6 +91,11 @@ step are lifted to `uB`; a visible query retains its original direction type.
   steps, modulo coinductive equality". They give a single Lean datatype
   that uniformly models pure programs, programs with effects, recursive
   procedures, and partial / non-terminating computations.
+- The fixed-point bridge is explicit: `FreeM P α` is `W (P + C α)`;
+  `Resumption P α` is `M (P + C α)`; and `ITree P α` is equivalently
+  `Resumption (P + y) α`. Thus finite programs embed as the well-founded,
+  tau-free fragment, while arbitrary ITrees use the same resumption boundary
+  with `y` recording silent steps.
 - Lean's core `whileM` has the same continue/terminate protocol as `ITree.iter`
   but uses generic partial recursion and requires an inhabited result type.
   Import `PolyFun.ITree.Do` and write `open scoped ITree` to make `while`

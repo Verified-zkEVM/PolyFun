@@ -40,10 +40,13 @@ public import PolyFun.ITree.Events.Exception
 public import PolyFun.ITree.Events.ExceptionFacts
 public import PolyFun.ITree.Events.State
 public import PolyFun.ITree.Events.StateFacts
+public import PolyFun.ITree.Free
 public import PolyFun.ITree.Handler
+public import PolyFun.ITree.PatternRunsOnMatter
 public import PolyFun.ITree.Rec
 public import PolyFun.ITree.Rec.Facts
 public import PolyFun.ITree.Resumption
+public import PolyFun.ITree.ResumptionWithTau
 public import PolyFun.ITree.Sim.CrossSignature
 public import PolyFun.ITree.Sim.Defs
 public import PolyFun.ITree.Sim.Facts
@@ -218,6 +221,7 @@ public import PolyFun.PFunctor.Lens.Factorization
 public import PolyFun.PFunctor.Lens.State
 public import PolyFun.PFunctor.M
 public import PolyFun.PFunctor.M.Vertex
+public import PolyFun.PFunctor.M.WellFounded
 public import PolyFun.PFunctor.Parallel
 public import PolyFun.PFunctor.PatternRunsOnMatter.Applications
 public import PolyFun.PFunctor.PatternRunsOnMatter.Basic
@@ -228,7 +232,9 @@ public import PolyFun.PFunctor.PatternRunsOnMatter.Operational
 public import PolyFun.PFunctor.PatternRunsOnMatter.Parallel
 public import PolyFun.PFunctor.PatternRunsOnMatter.Universal
 public import PolyFun.PFunctor.Resumption
+public import PolyFun.PFunctor.Resumption.Empty
 public import PolyFun.PFunctor.Resumption.Truncate
+public import PolyFun.PFunctor.Resumption.WellFounded
 public import PolyFun.PFunctor.SubstMonoid
 public import PolyFun.PFunctor.SubstMonoid.Convolution
 public import PolyFun.PFunctor.SubstMonoid.Extension

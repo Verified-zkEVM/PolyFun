@@ -6,6 +6,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
+public import PolyFun.PFunctor.Resumption.WellFounded
 
 /-!
 # Qualitative termination of returning dynamical computations
@@ -302,6 +303,31 @@ theorem terminatesFrom_iff_exists_behavior_eq_toResumption
       M.behavior_eq_toResumption_toFreeMFrom state h⟩
   · rintro ⟨program, hsem⟩
     exact M.terminatesFrom_of_behavior_eq_toResumption program state hsem
+
+/-- The hidden-state accessibility predicate is exactly well-foundedness of
+the state-free resumption semantics. This removes the presentation witness
+from `terminatesFrom_iff_exists_behavior_eq_toResumption`. -/
+theorem terminatesFrom_iff_wellFounded_behavior
+    (M : DynComputation.{u} p α β) (state : M.State) :
+    M.TerminatesFrom state ↔
+      Resumption.WellFounded (M.toDynSystem.behavior state) := by
+  rw [M.terminatesFrom_iff_exists_behavior_eq_toResumption state,
+    ← FreeM.exists_toResumption_iff]
+  constructor <;> rintro ⟨program, equality⟩
+  · exact ⟨program, equality.symm⟩
+  · exact ⟨program, equality.symm⟩
+
+/-- Initial-state specialization of
+`terminatesFrom_iff_wellFounded_behavior`. -/
+theorem terminatesFrom_init_iff_wellFounded_denote
+    (M : DynComputation.{u} p α β) :
+    (∀ input, M.TerminatesFrom (M.init input)) ↔
+      ∀ input, Resumption.WellFounded (M.denote input) := by
+  constructor <;> intro hypothesis input
+  · exact (M.terminatesFrom_iff_wellFounded_behavior (M.init input)).mp
+      (hypothesis input)
+  · exact (M.terminatesFrom_iff_wellFounded_behavior (M.init input)).mpr
+      (hypothesis input)
 
 /-- Exact quantitative characterization of an extracted qualitative
 program. A qualitative proof alone need not supply any such `k`. -/

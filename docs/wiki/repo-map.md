@@ -46,6 +46,7 @@ PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   -> PFunctor/{Cofree, Trace}
   -> PFunctor/Resumption
 Logic/HEq + PFunctor/{M, Lens/Basic} -> PFunctor/M/Vertex
+PFunctor/M/Vertex -> PFunctor/M/WellFounded
 IPFunctor/Basic + PFunctor/M/Vertex -> IPFunctor/M
 IPFunctor/Free/{Basic, Indexed} + IPFunctor/Notation/Common
   -> IPFunctor/Notation + IPFunctor/Notation/{Indexed, Deterministic}
@@ -78,6 +79,8 @@ PFunctor/Free/Basic
   -> PFunctor/Free/Cursor/Occurrence
   -> PFunctor/Free/Cursor/Fork
 PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption
+PFunctor/{Free/Resumption, M/WellFounded} -> PFunctor/Resumption/WellFounded
+PFunctor/{Resumption, M/Vertex} -> PFunctor/Resumption/Empty
 PFunctor/{Bound, Free/Resumption} -> PFunctor/Resumption/Truncate
 PFunctor/Dynamical/DynComputation + PFunctor/{Bound, Handler, Resumption/Truncate}
   -> PFunctor/Dynamical/DynComputation/Bounded
@@ -184,7 +187,13 @@ PFunctor/{PatternRunsOnMatter/Display,
 PFunctor/Free -> ITree/{Basic, Construct, Handler, Rec,
                         Events, Sim, Bisim, Trace}
 PFunctor/Free/Resumption + ITree/Sim/Facts -> ITree/Resumption
-PFunctor/Dynamical + ITree/Basic -> ITree/Unfold
+ITree/Resumption + PFunctor/M/Vertex -> ITree/ResumptionWithTau
+ITree/ResumptionWithTau + PFunctor/{Handler/Free, Resumption/WellFounded}
+  -> ITree/Free
+ITree/Resumption + PFunctor/{Dynamical/Trajectory, Resumption/Empty}
+  -> ITree/Unfold
+ITree/Free + PFunctor/PatternRunsOnMatter/Dynamical
+  -> ITree/PatternRunsOnMatter
 
 PFunctor/Free + Control -> Interaction/Basic/{TypeTree, Node, Decoration,
                             Syntax, Shape, Interaction, Strategy,

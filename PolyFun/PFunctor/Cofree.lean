@@ -6,8 +6,8 @@ Authors: Quang Dao
 module
 
 public import PolyFun.Control.Comonad.Basic
-public import Mathlib.Data.PFunctor.Univariate.M
 public import PolyFun.PFunctor.Equiv.Basic
+public import PolyFun.PFunctor.M.Vertex
 
 /-! # Cofree Comonads
 
@@ -24,7 +24,7 @@ construction from `PFunctor`.
 
 @[expose] public section
 
-universe uA uB u v
+universe uA uB uA₂ uB₂ uA₃ uB₃ u v
 
 namespace PFunctor
 
@@ -55,6 +55,53 @@ def head (t : CofreeC F α) : α :=
 def tail (t : CofreeC F α) : F (CofreeC F α) :=
   let d := M.dest t       --  d : constProd F α (CofreeC F α)
   ⟨d.1.2, d.2⟩            -- drop the constant `α` stored in `d.1.1`
+
+/-! ## Naturality in the generating polynomial -/
+
+variable {G : PFunctor.{uA₂, uB₂}} {H : PFunctor.{uA₃, uB₃}}
+
+/-- Lift a lens between generating polynomials to their label-preserving
+cofree step polynomials. -/
+@[implicit_reducible]
+def constProdLens (lens : Lens F G) :
+    Lens (constProd F α) (constProd G α) where
+  toFunA shape := (shape.1, lens.toFunA shape.2)
+  toFunB shape := lens.toFunB shape.2
+
+/-- Transport a cofree tree covariantly along a lens of generating
+polynomials, preserving every node label. -/
+def mapLens (lens : Lens F G) (tree : CofreeC F α) : CofreeC G α :=
+  M.mapLens (constProdLens lens) tree
+
+@[simp] theorem head_mapLens (lens : Lens F G) (tree : CofreeC F α) :
+    head (mapLens lens tree) = head tree := by
+  unfold head mapLens
+  rw [M.dest_mapLens]
+  rfl
+
+/-- The tail of a transported cofree tree is obtained by transporting the
+root operation and recursively transporting its children. -/
+theorem tail_mapLens (lens : Lens F G) (tree : CofreeC F α) :
+    tail (mapLens lens tree) =
+      G.map (mapLens lens) (lens.mapObj (tail tree)) := by
+  unfold tail mapLens
+  rw [M.dest_mapLens]
+  rfl
+
+@[simp] theorem mapLens_id (tree : CofreeC F α) :
+    mapLens (Lens.id F) tree = tree := by
+  change M.mapLens (Lens.id (constProd F α)) tree = tree
+  exact M.mapLens_id tree
+
+@[simp] theorem mapLens_comp (second : Lens G H) (first : Lens F G)
+    (tree : CofreeC F α) :
+    mapLens second (mapLens first tree) =
+      mapLens (second ∘ₗ first) tree := by
+  change M.mapLens (constProdLens second)
+      (M.mapLens (constProdLens first) tree) =
+    M.mapLens (constProdLens (second ∘ₗ first)) tree
+  rw [← M.mapLens_comp]
+  rfl
 
 /-- Comonad counit: extract the label at the root of a cofree tree, i.e. its `head`. -/
 def extract (t : CofreeC F α) : α :=
