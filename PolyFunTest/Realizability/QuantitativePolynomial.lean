@@ -142,6 +142,132 @@ def oneSizeBackend : QuantitativeStepClass StepClass.unconstrained where
   cost _ _ := 0
   admissible _ := True.intro
 
+instance : oneSizeBackend.HasCategory where
+  identity _ := PUnit.unit
+  compose _ _ := PUnit.unit
+  composeOverhead _ _ _ := 0
+  cost_compose_le _ _ _ := le_rfl
+
+instance : oneSizeBackend.HasExactCategory where
+  cost_compose_eq _ _ _ := rfl
+
+instance : oneSizeBackend.HasProd where
+  fst _ _ := PUnit.unit
+  snd _ _ := PUnit.unit
+  pair _ _ := PUnit.unit
+
+instance : oneSizeBackend.HasSum where
+  inl _ _ := PUnit.unit
+  inr _ _ := PUnit.unit
+  elim _ _ := PUnit.unit
+
+instance : oneSizeBackend.HasOption where
+  map _ := PUnit.unit
+  none _ _ := PUnit.unit
+  bindContext _ := PUnit.unit
+
+instance : oneSizeBackend.IsDistributive where
+  distribute _ _ _ := PUnit.unit
+
+/-- Every function has zero work and constant-one output growth in the nonzero fixture. -/
+def onePolyRealizer {A B : Type} (a : StepClass.unconstrained.Str A)
+    (b : StepClass.unconstrained.Str B) (f : A → B) : oneSizeBackend.PolyRealizer a b f where
+  code := PUnit.unit
+  work := FirstOrderPolynomial.const 0
+  outputSize := FirstOrderPolynomial.const 1
+  work_le _ := le_rfl
+  outputSize_le _ := le_rfl
+
+/-- Polynomial category certificate for the nonzero fixture. -/
+def onePolynomialCategory : oneSizeBackend.PolynomialCategory where
+  identityWork _ := FirstOrderPolynomial.const 0
+  cost_identity_le _ _ := le_rfl
+  composeOverhead _ _ := FirstOrderPolynomial.const 0
+  composeOverhead_le _ _ _ := le_rfl
+
+/-- Explicit structural choices for the nonzero fixture. -/
+def oneKernel : oneSizeBackend.StructuralKernel where
+  cProd := inferInstance
+  cSum := inferInstance
+  cOption := inferInstance
+  cDistributive := inferInstance
+  qProd := inferInstance
+  qSum := inferInstance
+  qOption := inferInstance
+  qDistributive := inferInstance
+
+/-- Polynomial structural laws checked against genuinely nonzero encodings. -/
+def oneStructural : oneSizeBackend.PolynomialStructuralClosure oneKernel where
+  fst _ _ := onePolyRealizer _ _ Prod.fst
+  snd _ _ := onePolyRealizer _ _ Prod.snd
+  pair _ _ := onePolyRealizer _ _ _
+  inl _ _ := onePolyRealizer _ _ Sum.inl
+  inr _ _ := onePolyRealizer _ _ Sum.inr
+  elim _ _ := onePolyRealizer _ _ _
+  optionMap _ := onePolyRealizer _ _ _
+  optionNone _ _ := onePolyRealizer _ _ fun _ ↦ none
+  optionBindContext _ := onePolyRealizer _ _ _
+  distribute _ _ _ := onePolyRealizer _ _ _
+  prodSize _ _ := FirstOrderPolynomial.const 1
+  size_prod_le _ _ _ := le_rfl
+  prodLeftSize _ _ := FirstOrderPolynomial.const 1
+  size_prod_fst_le _ _ _ := le_rfl
+  prodRightSize _ _ := FirstOrderPolynomial.const 1
+  size_prod_snd_le _ _ _ := le_rfl
+  sumLeftSize _ _ := FirstOrderPolynomial.const 1
+  size_sum_inl_le _ _ _ := le_rfl
+  sumRightSize _ _ := FirstOrderPolynomial.const 1
+  size_sum_inr_le _ _ _ := le_rfl
+  sumPayloadSize _ _ := FirstOrderPolynomial.const 1
+  size_sum_getLeft_le _ _ _ := le_rfl
+  size_sum_getRight_le _ _ _ := le_rfl
+  optionSomeSize _ := FirstOrderPolynomial.const 1
+  size_option_some_le _ _ := le_rfl
+  optionPayloadSize _ := FirstOrderPolynomial.const 1
+  size_option_get_le _ _ := le_rfl
+
+/-- The pinned nonzero encoding of a binary unit sum. -/
+def oneSumRep : StepClass.unconstrained.Str (Unit ⊕ Unit) :=
+  oneKernel.{0, 0, 0}.cSum.sum PUnit.unit PUnit.unit
+
+/-- Left construction specialized enough to prevent implicit summand metavariables. -/
+def oneLeftConstruction : oneSizeBackend.PolyRealizer PUnit.unit oneSumRep
+    (Sum.inl : Unit → Unit ⊕ Unit) :=
+  oneStructural.{0, 0}.inl PUnit.unit PUnit.unit
+
+/-- Right construction specialized enough to prevent implicit summand metavariables. -/
+def oneRightConstruction : oneSizeBackend.PolyRealizer PUnit.unit oneSumRep
+    (Sum.inr : Unit → Unit ⊕ Unit) :=
+  oneStructural.{0, 0}.inr PUnit.unit PUnit.unit
+
+/-- Payload recovery polynomial for the pinned binary unit sum. -/
+def oneSumPayloadSize : FirstOrderPolynomial :=
+  oneStructural.{0, 0}.sumPayloadSize (A := Unit) (B := Unit) PUnit.unit PUnit.unit
+
+/-- Left structural construction has a valid nonzero output-size certificate. -/
+example (value : Unit) :
+    oneSizeBackend.size oneSumRep (Sum.inl value : Unit ⊕ Unit) ≤
+      oneLeftConstruction.outputSize.eval (oneSizeBackend.size PUnit.unit value) :=
+  oneLeftConstruction.outputSize_le value
+
+/-- Right structural construction has a valid nonzero output-size certificate. -/
+example (value : Unit) :
+    oneSizeBackend.size oneSumRep (Sum.inr value : Unit ⊕ Unit) ≤
+      oneRightConstruction.outputSize.eval (oneSizeBackend.size PUnit.unit value) :=
+  oneRightConstruction.outputSize_le value
+
+/-- A left payload cannot be hidden by the tagged nonzero encoding. -/
+example (value : Unit) : oneSizeBackend.size PUnit.unit value ≤
+    oneSumPayloadSize.eval
+      (oneSizeBackend.size oneSumRep (Sum.inl value : Unit ⊕ Unit)) :=
+  oneStructural.{0, 0}.size_sum_getLeft_le PUnit.unit PUnit.unit value
+
+/-- A right payload cannot be hidden by the tagged nonzero encoding. -/
+example (value : Unit) : oneSizeBackend.size PUnit.unit value ≤
+    oneSumPayloadSize.eval
+      (oneSizeBackend.size oneSumRep (Sum.inr value : Unit ⊕ Unit)) :=
+  oneStructural.{0, 0}.size_sum_getRight_le PUnit.unit PUnit.unit value
+
 /-- Immediate-return realization over the nonzero-size fixture. -/
 @[expose]
 def oneSizeReturnRealization : QuantitativeRealization oneSizeBackend unitBoundary where

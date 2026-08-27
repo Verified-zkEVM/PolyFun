@@ -980,15 +980,6 @@ theorem conforms_seqCompSource (R₁ : QuantitativeRealization Q bd)
     cases source with
     | fromLeft source => exact hsource
 
-/-- Specialize the arbitrary-state decomposition to a prefix already in phase two. -/
-def seqCompRightSource (R₁ : QuantitativeRealization Q bd)
-    (R₂ : QuantitativeRealization Q (bd.mid outRep)) {start : R₂.machine.State}
-    {finish : R₁.machine.State ⊕ R₂.machine.State}
-    (trace : (R₁.seqComp R₂).ExecutionTrace (Sum.inr start) finish) :
-    SeqCompRightTraceSource R₁ R₂ start finish :=
-  match seqCompAnySource R₁ R₂ trace with
-  | .fromRight source => source
-
 end QuantitativeRealization.ExecutionTrace
 
 /-- A uniform envelope for the second-phase bounds of every conformingly reachable handoff.

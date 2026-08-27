@@ -41,7 +41,7 @@ PolyFun/Realizability/
                     ofFn, precomp, mapResult, unbounded seqComp, and lens transport
   Quantitative/BoundedClosure.lean
                     ranked termination/progress certificates; trace transport and
-                    restricted pathwise bounds for precomp and mapResult
+                    restricted pathwise bounds for precomp, mapResult, and seqComp
   Quantitative/Polynomial.lean
                     first-order polynomial work/output certificates and an
                     explicit categorical/structural model bundle
@@ -296,12 +296,15 @@ target traces, but its bounded theorem consumes a `MapResultCostCertificate`:
 the assembled head code and changed output encoding must be compared pathwise
 with source execution plus an explicit overhead.
 
-There is no generic bounded `seqComp` theorem yet. Such a theorem requires a
-dependent split of a composite trace into first- and second-phase traces,
-including the no-silent-step handoff where the first second-phase query moves
-directly from a left state to a right state. The second-phase resource premise
-must then be uniform over all intermediate return values; a pointwise choice of
-machine or bound would not establish closure of one composed machine.
+Bounded `seqComp` splits every composite trace into exact first- and second-phase
+source traces, including the no-silent-step handoff where the first second-phase
+query moves directly from a left state to a right state. A
+`SeqCompHandoffBound` makes the second-phase premise uniform over every
+conformingly reachable intermediate return value, while a
+`SeqCompCostCertificate` accounts for the backend's structural composition
+overhead. Together they yield the generic bounded sequential-composition
+theorem without pretending that arbitrary unreachable values have small
+encodings.
 
 `Quantitative/Polynomial.lean` supplies `FirstOrderPolynomial` and
 `PolyRealizer`, which retains one executable realizer plus work and encoded
@@ -385,10 +388,10 @@ functions — is the in-repo instance that works today and exercises every mixin
 
 ## Known Gaps
 
-- **No cost-bearing layer.** `Hom` is `Prop`-valued, so nothing here measures
-  running time or description size. The successor layer needs `Hom` replaced by a
-  `Type`-valued witness field carrying measures in an ordered semiring, with
-  `size` additive under composition and `time` composing by substitution.
+- **No concrete machine-adequacy theorem.** `QuantitativeStepClass` retains
+  `Type`-valued executable witnesses, encoded sizes, and backend-relative costs,
+  but a concrete backend must still relate those costs to a standard operational
+  machine model before making a complexity-class claim.
 - **`ImplementsWithin` is pinned to a uniform `ℕ` budget.** `FreeM.IsRollBound`
   is already generic in the budget type; `ImplementsWithin` is not.
 - **No terminal or initial representation**, hence only binary distributivity and

@@ -42,7 +42,8 @@ systems, finite mathematics, and algebraic structures over parallel APIs.
 If a reusable result is genuinely absent, keep the local result narrow and
 record the upstream search and the condition under which the local declaration
 can be deleted. PolyFun remains the correct home for polynomial, interaction,
-and qualitative machine structure; probability, cost classes, and
+qualitative machine structure, and backend-relative quantitative accounting.
+Probability, concrete complexity-class and machine-adequacy claims, and
 cryptographic policy remain downstream.
 
 ## Hardening Checklist

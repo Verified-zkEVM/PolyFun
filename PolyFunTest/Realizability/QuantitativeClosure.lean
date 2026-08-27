@@ -87,6 +87,52 @@ example : IsQuantitativelyRealizableBy zeroBackend
     isQuantitativelyRealizableBy_ofFn PUnit.unit
   exact identityReturn.seqComp second
 
+/-! The lens regression uses a genuinely nonidentity position map. Besides checking that the
+executable evidence packages, the two reductions below pin the security-relevant tag check in
+`pullHeadIdx`: a matching answer is pulled back and a mismatched exposed position is rejected. -/
+
+/-- Two-position source interface for the lens canary. -/
+abbrev sourceInterface : PFunctor := PFunctor.mk Bool fun _ ↦ Bool
+
+/-- Natural-number-position target interface for the lens canary. -/
+abbrev targetInterface : PFunctor := PFunctor.mk Nat fun _ ↦ Bool
+
+/-- Relabel the two source positions as `0` and `1`. -/
+def relabelLens : Lens sourceInterface targetInterface where
+  toFunA value := if value then 1 else 0
+  toFunB _ direction := direction
+
+/-- Boundary for the nonidentity interface-transport canary. -/
+abbrev sourceBoundary : Boundary StepClass.unconstrained sourceInterface PUnit PUnit :=
+  Boundary.unconstrained sourceInterface PUnit PUnit
+
+/-- The cost-free backend carries executable evidence for both lens maps. -/
+def relabelLensAdmissible :
+    relabelLens.QuantitativelyAdmissible zeroBackend sourceBoundary PUnit.unit PUnit.unit where
+  onPos := PUnit.unit
+  onPull := PUnit.unit
+
+example : relabelLens.pullHeadIdx PUnit
+    (Sum.inr true, ⟨1, true⟩) = some ⟨true, true⟩ := by
+  rfl
+
+example : relabelLens.pullHeadIdx PUnit
+    (Sum.inr true, ⟨0, true⟩) = none := by
+  rfl
+
+/-- Immediate return over the source interface, used to execute `wrap`. -/
+def sourceReturn : QuantitativeRealization zeroBackend sourceBoundary :=
+  QuantitativeRealization.ofFn (f := id) PUnit.unit
+
+/-- The executable transport is accepted with the nonidentity lens evidence. -/
+def wrappedReturn : QuantitativeRealization zeroBackend
+    (sourceBoundary.withInterface (q := targetInterface) PUnit.unit PUnit.unit) :=
+  sourceReturn.wrap PUnit.unit PUnit.unit relabelLensAdmissible
+
+example : zeroBackend.cost wrappedReturn.initCode PUnit.unit = 0 := rfl
+
+example : zeroBackend.cost wrappedReturn.headCode PUnit.unit = 0 := rfl
+
 #check QuantitativeStepClass.HasProd.pairRight
 #check QuantitativeStepClass.HasSum.map
 #check QuantitativeStepClass.IsDistributive.elimContext
