@@ -173,6 +173,39 @@ theorem support_bind (x : m α) (f : α → m β) :
 theorem mem_support_pure {a b : α} : a ∈ support (pure b : m α) ↔ a = b := by
   simp
 
+/-! #### The structural laws on `CanReturn`
+
+The same three equations keyed on the reachability predicate rather than on set
+membership. `support_pure`/`support_bind`/`support_map` decompose a goal at the set
+level; these finish it pointwise, and they are what makes `CanReturn` a usable normal
+form rather than a dead end. Core supplies only the elimination halves
+(`eq_of_canReturn_pure`, `canReturn_bind_imp'`, `canReturn_map_imp'`); the
+introduction halves are exactly `ExactMonadAttach`'s two fields, so the equivalences
+need both classes.
+
+Their orientation matches the corresponding `mem_support_*` lemmas, so the two routes
+through the simp set — unfold membership first, or rewrite the set first — converge on
+the same normal form instead of racing. -/
+
+@[simp, grind =]
+theorem canReturn_pure_iff {a b : α} : CanReturn (pure b : m α) a ↔ a = b :=
+  ⟨fun h => (LawfulMonadAttach.eq_of_canReturn_pure h).symm,
+    fun h => by subst h; exact ExactMonadAttach.canReturn_pure _⟩
+
+@[simp, grind =]
+theorem canReturn_bind_iff {x : m α} {f : α → m β} {b : β} :
+    CanReturn (x >>= f) b ↔ ∃ a, CanReturn x a ∧ CanReturn (f a) b :=
+  ⟨LawfulMonadAttach.canReturn_bind_imp',
+    fun ⟨_, ha, hb⟩ => ExactMonadAttach.canReturn_bind ha hb⟩
+
+@[simp, grind =]
+theorem canReturn_map_iff {g : α → β} {x : m α} {b : β} :
+    CanReturn (g <$> x) b ↔ ∃ a, CanReturn x a ∧ g a = b :=
+  ⟨LawfulMonadAttach.canReturn_map_imp',
+    fun ⟨a, ha, hab⟩ => hab ▸ by
+      rw [← bind_pure_comp]
+      exact ExactMonadAttach.canReturn_bind ha (ExactMonadAttach.canReturn_pure _)⟩
+
 theorem mem_support_bind {x : m α} {f : α → m β} {b : β} :
     b ∈ support (x >>= f) ↔ ∃ a ∈ support x, b ∈ support (f a) := by
   simp
@@ -195,14 +228,20 @@ end Laws
 /-! ## Always / some / never output judgments -/
 
 /-- Every possible output of `x` satisfies `p` — the "always true" judgment.
-Definitionally the bounded quantifier `∀ a ∈ support x, p a`. -/
-def AllOutputs [MonadAttach m] (p : α → Prop) (x : m α) : Prop :=
-  ∀ a ∈ support x, p a
 
-/-- Some possible output of `x` satisfies `p`.
-Definitionally the bounded quantifier `∃ a ∈ support x, p a`. -/
+Stated over `CanReturn` rather than as a bounded quantifier over `support`, because the
+modality does not need a `Set`: it is `Prop`-valued and survives settings where the set
+of outputs is the wrong object, which is what happens for `StateT`. The two spellings
+are definitionally interchangeable — `allOutputs_iff_forall_support` and
+`allOutputs_iff_forall_canReturn` are both `Iff.rfl` — so nothing downstream has to
+choose. -/
+def AllOutputs [MonadAttach m] (p : α → Prop) (x : m α) : Prop :=
+  ∀ a, CanReturn x a → p a
+
+/-- Some possible output of `x` satisfies `p`. The angelic half of the pair; see
+`AllOutputs` for why it is stated over `CanReturn`. -/
 def SomeOutput [MonadAttach m] (p : α → Prop) (x : m α) : Prop :=
-  ∃ a ∈ support x, p a
+  ∃ a, CanReturn x a ∧ p a
 
 /-- No possible output of `x` satisfies `p` — the "never true" judgment. -/
 def NoOutput [MonadAttach m] (p : α → Prop) (x : m α) : Prop :=
@@ -503,8 +542,26 @@ end PropAlgebra
 
 /-! ## Recovering the `MonadLiftT` presentation
 
-Downstream libraries that phrase support as a monad lift into the powerset monad can
-register these; they are deliberately not instances, so that support reasoning does not
+`MonadAttach` is the canonical interface for reachability here: it is core's, it carries
+a lawfulness hierarchy, and core supplies instances for the transformers this library
+cares about. The `MonadLiftT m SetM` spelling below is a **compatibility shim for a
+downstream still phrased that way**, not the recommended API — register it locally when
+migrating, rather than building against it.
+
+Two things this does *not* say. `SetM` remains perfectly good as a **carrier**:
+`support : Set α` is unchanged, and `PFunctor.FreeM.support_eq_liftM_univ` — which
+genuinely folds into `SetM` as a monad — stays. What is being demoted is the lift as an
+*interface*. And unlike the probability layer's `PMF` retirement, there is no upstream
+force here: `SetM` is not being deprecated by Mathlib. This is a project standardizing
+on core's vocabulary, nothing more.
+
+One concrete argument for the direction, which is otherwise recorded nowhere:
+`support_eq_liftM_univ` is restricted to `{γ : Type uB}`, because `FreeM.liftM` pins the
+payload universe to the *direction* universe. `MonadAttach.support` on `FreeM P` carries
+no such restriction. The attach-based presentation is strictly more universe-polymorphic
+than the fold.
+
+The two declarations are deliberately not instances, so that support reasoning does not
 perturb monad-lift instance search. -/
 
 /-- The support map as a monad lift into `SetM`. Not an instance. -/

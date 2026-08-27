@@ -52,7 +52,9 @@ the `FreeM P` instance.
 For `[MonadAttach m]` and `x : m α` (`open scoped MonadAttach`):
 
 - `x ⊨ₐ p` (`AllOutputs p x`): every possible output satisfies `p` —
-  definitionally `∀ a ∈ support x, p a`.
+  definitionally `∀ a, CanReturn x a → p a`, and equally
+  `∀ a ∈ support x, p a`: the two spellings are interchangeable by `Iff.rfl`
+  (`allOutputs_iff_forall_canReturn`, `allOutputs_iff_forall_support`).
 - `x ⊨ₛ p` (`SomeOutput p x`): some possible output satisfies `p`.
 - `x ⊭ p` (`NoOutput p x`): no possible output satisfies `p`.
 
@@ -78,6 +80,24 @@ support partial correctness distinct from the existing failure-as-`⊥`
 `OptionT`/`ExceptT` algebras and prevents inequivalent left/right transformer
 instance paths. Install the intended algebra locally at each verification
 boundary.
+
+## Support: which interface is canonical
+
+`MonadAttach` is the canonical interface for reachability — it is core's, it carries a
+lawfulness hierarchy, and core supplies the transformer instances. The
+`MonadLiftT m SetM` presentation (`MonadAttach.toMonadLiftT`, deliberately not an
+instance) is a **compatibility shim for a downstream still phrased that way**, not the
+recommended API.
+
+`SetM` is fine as a *carrier*: `support : Set α` is unchanged, and
+`PFunctor.FreeM.support_eq_liftM_univ` — a genuine fold into `SetM`-as-monad — stays.
+What is demoted is the lift as an interface. Note this is a project standardization,
+**not** an upstream retirement: unlike `PMF` in the probability layer, `SetM` is not
+being deprecated by Mathlib, so there is no boundary guard and none is proposed.
+
+The migration contract for a downstream — what bridges exist, and the two real
+obstructions — is in
+[`docs/reading/program-logic-landscape.md`](../reading/program-logic-landscape.md).
 
 ## The `Std.Do` quarantine
 
