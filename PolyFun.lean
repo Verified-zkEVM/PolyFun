@@ -1,5 +1,6 @@
 module
 
+public import PolyFun.Complexity.SecondOrderPolynomial
 public import PolyFun.Control.Bisimulation
 public import PolyFun.Control.Coalgebra
 public import PolyFun.Control.Comonad.Basic
@@ -198,6 +199,7 @@ public import PolyFun.PFunctor.Free.Displayed.StateChain
 public import PolyFun.PFunctor.Free.Do
 public import PolyFun.PFunctor.Free.Parallel
 public import PolyFun.PFunctor.Free.Path
+public import PolyFun.PFunctor.Free.Path.Bounded
 public import PolyFun.PFunctor.Free.Path.Execution
 public import PolyFun.PFunctor.Free.Polynomial
 public import PolyFun.PFunctor.Free.Replicate
@@ -247,5 +249,10 @@ public import PolyFun.Realizability.Basic
 public import PolyFun.Realizability.Closure
 public import PolyFun.Realizability.Instances
 public import PolyFun.Realizability.Machine
+public import PolyFun.Realizability.Quantitative
+public import PolyFun.Realizability.Quantitative.BoundedClosure
+public import PolyFun.Realizability.Quantitative.Closure
+public import PolyFun.Realizability.Quantitative.Polynomial
+public import PolyFun.Realizability.Quantitative.WordClass
 public import PolyFun.Realizability.Representation
 public import PolyFun.Realizability.StepClass

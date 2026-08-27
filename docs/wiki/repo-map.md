@@ -23,7 +23,9 @@ PolyFun/
     Concurrent/      structural and dynamic concurrent semantics
     UC/              open-process / open-theory layer (no security content)
   Realizability/     step classes and realizability of free programs by
-                     machines whose transition functions are admissible
+                     machines whose transition functions are admissible;
+                     executable quantitative realizers and syntactic run costs
+  Complexity/        generic resource-bound syntax (not a concrete complexity class)
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
                      Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace),
                      including the program-logic kernel
@@ -78,6 +80,7 @@ PFunctor/Free/Basic
   -> PFunctor/Free/Cursor/Append
   -> PFunctor/Free/Cursor/Occurrence
   -> PFunctor/Free/Cursor/Fork
+PFunctor/{Bound, Free/Path/Execution} -> PFunctor/Free/Path/Bounded
 PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption
 PFunctor/{Free/Resumption, M/WellFounded} -> PFunctor/Resumption/WellFounded
 PFunctor/{Resumption, M/Vertex} -> PFunctor/Resumption/Empty
@@ -234,7 +237,17 @@ PFunctor/Basic -> Realizability/StepClass
 PFunctor/Dynamical/DynComputation/Bounded -> Realizability/Machine
 Realizability/{StepClass, Machine} -> Realizability/Basic
 Realizability/Basic -> Realizability/{Closure, Instances, Representation}
+Realizability/Basic -> Realizability/Quantitative
+Realizability/Quantitative -> Realizability/Quantitative/Closure
+Realizability/Quantitative/Closure -> Realizability/Quantitative/BoundedClosure
+{Complexity/SecondOrderPolynomial, Realizability/Quantitative/Closure}
+  -> Realizability/Quantitative/Polynomial
+Realizability/{Instances, Quantitative} -> Realizability/Quantitative/WordClass
+Mathlib/Order/Monotone/Basic -> Complexity/SecondOrderPolynomial
   (Instances additionally draws on Mathlib's Computability and Fintype layers;
+   Quantitative/Closure assembles executable structural code but asserts no
+   polynomial-time closure; Quantitative/Polynomial packages explicit
+   backend-relative polynomial certificates; Complexity contains syntax, not feasibility;
    nothing under PFunctor/, ITree/, or Interaction/ depends on Realizability/)
 ```
 
@@ -268,6 +281,12 @@ plain imports, and reducibility is exposed declaration-by-declaration.
   `wpFold`, `Std.Do` bridges): start with
   [`program-logic.md`](program-logic.md); definitions live under
   `PolyFun/Control/Monad/` and `PolyFun/PFunctor/Free/{Support, WP, Do}.lean`.
+- Adding backend-relative code, exact interaction costs, or generic executable
+  closure operations: start in `PolyFun/Realizability/Quantitative.lean` and
+  `PolyFun/Realizability/Quantitative/Closure.lean`; for ranked termination,
+  trace transport, and restricted pathwise closure, continue with
+  `PolyFun/Realizability/Quantitative/BoundedClosure.lean`. Concrete complexity
+  classes and adequacy theorems belong downstream.
 - Updating notation: start in `PolyFun/Interaction/UC/Notation.lean`. See
   [`notation.md`](notation.md).
 

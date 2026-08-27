@@ -251,6 +251,20 @@ Used in: `PolyFun/PFunctor/Lens/State.lean`,
 
 ## Realizability citations
 
+### KC96 — Kapron and Cook, *A new characterization of type-2 feasibility*
+
+Bruce M. Kapron and Stephen A. Cook.
+*A New Characterization of Type-2 Feasibility*.
+*SIAM Journal on Computing* 25(1):117–132, 1996.
+DOI: <https://doi.org/10.1137/S0097539794263452>
+
+Second-order polynomials with oracle-length applications, used here as syntax
+for bounds on adaptive open computations. PolyFun does not import the paper's
+machine-model feasibility claim; concrete backend adequacy remains an external
+obligation.
+
+Used in: `PolyFun/Complexity/SecondOrderPolynomial.lean`.
+
 The realizability layer in `PolyFun/Realizability/` recombines pieces owned by
 four separate communities; these are the canonical sources for each. No single
 source states the combination — a machine realization whose *structure maps* are

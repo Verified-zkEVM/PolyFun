@@ -24,6 +24,9 @@ namespace PFunctor.FreeM
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
+/- Lean compares path indices over `liftBind` at implicit transparency. -/
+attribute [local implicit_reducible] FreeM.bind FreeMonoid
+
 /-- Execute a free program while returning the typed path selected by the
 answers received during that execution. -/
 def withPath : (program : FreeM P α) → FreeM P (Path program)
@@ -89,6 +92,72 @@ def trace : (program : FreeM P α) → Path program → PFunctor.TraceList P
     trace ((FreeM.lift a).bind next) ⟨answer, tail⟩ =
       ⟨a, answer⟩ :: trace (next answer) tail := rfl
 
+/-- Number of operation-answer steps in a completed typed path. -/
+def length : (program : FreeM P α) → Path program → Nat
+  | .pure _, _ => 0
+  | .liftBind _ next, ⟨answer, tail⟩ => length (next answer) tail + 1
+
+@[simp] theorem length_pure (x : α) (path : Path (pure x : FreeM P α)) :
+    length (pure x) path = 0 := rfl
+
+@[simp] theorem length_liftBind (a : P.A) (next : P.B a → FreeM P α)
+    (answer : P.B a) (tail : Path (next answer)) :
+    length ((FreeM.lift a).bind next) ⟨answer, tail⟩ =
+      length (next answer) tail + 1 := rfl
+
+/-- Relabelling the leaves of a free program does not change the length of a
+path pulled back to the source program. -/
+@[simp] theorem length_pullMap {β : Type w} (f : α → β) :
+    (program : FreeM P α) → (path : Path (FreeM.map f program)) →
+      length program (Path.pullMap f program path) =
+        length (FreeM.map f program) path
+  | .pure _, _ => rfl
+  | .liftBind _ next, ⟨answer, tail⟩ => by
+      change length (next answer) (Path.pullMap f (next answer) tail) + 1 =
+        length (FreeM.map f (next answer)) tail + 1
+      exact congrArg (fun n => n + 1) (length_pullMap f (next answer) tail)
+
+/-- The typed path length agrees with the length of its erased event trace. -/
+theorem length_eq_trace_length (program : FreeM P α) (path : Path program) :
+    length program path = (trace program path).length := by
+  induction program with
+  | pure x => rfl
+  | lift_bind a next ih =>
+      rcases path with ⟨answer, tail⟩
+      change length (next answer) tail + 1 =
+        (trace (next answer) tail).length + 1
+      exact congrArg (fun n => n + 1) (ih answer tail)
+
 end Path
+
+/-- Execute a free program while retaining only the number of steps in its
+completed typed path. This is the nondependent length projection of
+`withPath`. -/
+def withPathLength (program : FreeM P α) : FreeM P Nat :=
+  FreeM.map (Path.length program) (withPath program)
+
+@[simp] theorem withPathLength_pure (x : α) :
+    withPathLength (pure x : FreeM P α) = pure 0 := rfl
+
+@[simp] theorem withPathLength_liftBind (a : P.A)
+    (next : P.B a → FreeM P α) :
+    withPathLength ((FreeM.lift a).bind next) =
+      FreeM.liftBind a fun answer =>
+        FreeM.map (fun length => length + 1) (withPathLength (next answer)) := by
+  unfold withPathLength
+  change FreeM.liftBind a (fun answer =>
+      FreeM.map (Path.length (FreeM.liftBind a next))
+        (FreeM.map (fun path : Path (next answer) =>
+          (⟨answer, path⟩ : Path (FreeM.liftBind a next)))
+          (withPath (next answer)))) =
+    FreeM.liftBind a (fun answer =>
+      FreeM.map (fun length => length + 1)
+        (FreeM.map (Path.length (next answer)) (withPath (next answer))))
+  apply congrArg (FreeM.liftBind a)
+  funext answer
+  rw [← FreeM.comp_map, ← FreeM.comp_map]
+  apply congrArg (fun f => FreeM.map f (withPath (next answer)))
+  funext tail
+  rfl
 
 end PFunctor.FreeM

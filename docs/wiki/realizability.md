@@ -11,13 +11,14 @@ layer:
 | *How* does a machine perform it? | `PFunctor.DynSystem.DynComputation p α β` |
 | Do the two agree (and within what budget)? | `Implements` / `ImplementsWithin` |
 | Is the machine's *machinery* allowed? | **this subtree** |
+| What exact backend work does its interaction prefix use? | `QuantitativeRealization` |
 
 Instantiating the predicate recovers a spectrum of notions from one definition:
 finite-state realizability, machines with computable transitions, and — the
 motivating case downstream — the polynomial-time adversary model used in
 cryptography.
 
-## The Five Modules
+## Module Map
 
 ```text
 PolyFun/Realizability/
@@ -33,6 +34,19 @@ PolyFun/Realizability/
   Representation.lean
                     mutual translation and invariance of representations;
                     admissible word encode/decode retractions
+  Quantitative.lean Type-valued executable realizers, local cost, optional
+                    categorical wiring, syntactic traces, and pathwise bounds
+  Quantitative/Closure.lean
+                    executable product/sum/option/distributivity mixins;
+                    ofFn, precomp, mapResult, unbounded seqComp, and lens transport
+  Quantitative/BoundedClosure.lean
+                    ranked termination/progress certificates; trace transport and
+                    restricted pathwise bounds for precomp, mapResult, and seqComp
+  Quantitative/Polynomial.lean
+                    first-order polynomial work/output certificates and an
+                    explicit categorical/structural model bundle
+  Quantitative/WordClass.lean
+                    lift costed word-function code through pinned encodings
 ```
 
 `Machine.lean` and `StepClass.lean` are independent; `Basic.lean` joins them.
@@ -52,10 +66,10 @@ A wide subcategory of `Type u`, presented pointwise. Two deliberate choices:
 - **`Str` is data, not a proposition.** A resource bound only makes sense
   relative to a chosen representation: "`f` runs in polynomial time" is a
   statement about encoded inputs, not about the bare function.
-- **`Hom` is a proposition.** The realizability layer only ever asks *whether* a
-  step map is admissible. A cost-bearing refinement — witnesses carrying
-  running-time and description-size measures — would replace it by a
-  `Type`-valued field. That refinement is deliberately not in this subtree.
+- **`Hom` is a proposition.** The qualitative realizability layer only asks
+  *whether* a step map is admissible. `QuantitativeStepClass` is a companion
+  refinement whose `Type`-valued `Realizer` retains executable evidence and
+  exact backend-relative cost while erasing back to `Hom`.
 
 `StepClass.Hom.congr` transports admissibility along pointwise equality of
 functions. It is the workhorse of the closure theory: a step map of a derived
@@ -218,23 +232,94 @@ three admissibility proofs — for `init`, `head`, and partial `update?`. Constr
 `IsRealizableWithin.isTotalRollBound` extracts a bound on the *program*'s query
 depth from the machine, and `IsRealizableWithin.isRealizableBy` drops the budget.
 
-### Contract for a quantitative refinement
+## Quantitative Realizability
 
-The qualitative layer proves which first-order maps compose; it does not infer a
-total running-time bound from a query budget. A cost-bearing refinement must
-therefore keep four obligations explicit:
+`QuantitativeStepClass C` retains executable evidence without declaring a
+complexity class:
 
-1. charge initialization, `head`, and each enabled `update?` separately;
-2. accumulate the size of reachable states, rather than assume query count bounds
-   the cost of carrying or growing them;
-3. transport costs only across pinned boundary representations with an explicit
-   admissible translation and invariance theorem; and
-4. retain a word-level encode/decode retraction when a concrete complexity class
-   is used, so injectivity alone cannot hide non-computable advice in an encoding.
+```lean
+structure QuantitativeStepClass (C : StepClass) where
+  Realizer : C.Str A → C.Str B → (A → B) → Type w
+  size : C.Str A → A → ℕ
+  cost : Realizer a b f → A → ℕ
+  admissible : Realizer a b f → C.Hom a b f
 
-These are client obligations rather than extra fields of `IsRealizableWithin`:
-the latter intentionally remains a qualitative admissibility predicate plus a
-visible-query bound.
+class QuantitativeStepClass.HasCategory (Q) where
+  identity : Realizer a a id
+  compose : Realizer a b f → Realizer b d g → Realizer a d (g ∘ f)
+  composeOverhead : … → A → ℕ
+  cost_compose_le : cost (compose rf rg) x ≤
+    cost rf x + cost rg (f x) + composeOverhead rf rg x
+
+class QuantitativeStepClass.HasExactCategory (Q) : Prop where
+  cost_compose_eq : cost (compose rf rg) x =
+    cost rf x + cost rg (f x) + composeOverhead rf rg x
+```
+
+The semantic function indexes its code, so correctness is intrinsic. Categorical
+wiring is optional: the generic closure API needs only a sound upper bound, while
+operational backends can retain their exact equation through `HasExactCategory`
+or the `ExactCategory` adapter. The cost remains relative to the chosen backend;
+an adequacy theorem must still connect that backend to a conventional Turing/RAM
+model before a downstream library calls the resulting bound polynomial time.
+
+`QuantitativeRealization` gives `init`, `head`, and enabled partial `update?`
+actual realizers. Its dependent `ExecutionTrace` records every typed
+query-answer edge. `executionCost` charges initialization once, every source
+readout and enabled update, the final readout, encoded boundary traffic, and
+peak state/readout sizes. `ExecutionTrace.Conforms allows` records that every
+answer in a prefix obeys a dependent relation. `RunsWithinUnder allows` combines
+a bound over conforming prefixes with `ResolvesInUnder` on allowed branches and
+`TraceProgressUnder` at every conformingly reachable state. The progress conjunct
+is separate because universal resolution is vacuous when the relation allows no
+answer. `RunsWithin` is the all-answers specialization. Filtered `queryCount` and
+`interfaceTraffic` are bounded for both restricted and unrestricted runs, so
+per-interface accounting cannot exceed the globally charged run.
+
+`Quantitative/Closure.lean` mirrors the four qualitative structural mixins with
+executable product, sum, option, and distributivity code. It constructs
+immediate-return, precomposed, result-mapped, and sequentially composed
+realizations, plus interface transport from executable lens maps. Its `seqComp`
+result is intentionally only
+`IsQuantitativelyRealizableBy`: a backend may prove bounded or polynomial
+closure after supplying bounds for its structural realizers and size encodings,
+but the generic layer does not assume those bounds.
+
+`Quantitative/BoundedClosure.lean` provides `RankedRunCertificate`, whose
+natural-valued potential decreases on every allowed response and whose explicit
+progress field prevents an empty allowed-answer relation from proving
+termination vacuously. `RankedRunCertificate.runsWithinUnder` deliberately
+keeps its pathwise backend-cost premise separate from termination. Input
+precomposition transports traces in both directions and derives its additional
+work from `cost_compose_le`. Result postcomposition also transports source and
+target traces, but its bounded theorem consumes a `MapResultCostCertificate`:
+the assembled head code and changed output encoding must be compared pathwise
+with source execution plus an explicit overhead.
+
+Bounded `seqComp` splits every composite trace into exact first- and second-phase
+source traces, including the no-silent-step handoff where the first second-phase
+query moves directly from a left state to a right state. A
+`SeqCompHandoffBound` makes the second-phase premise uniform over every
+conformingly reachable intermediate return value, while a
+`SeqCompCostCertificate` accounts for the backend's structural composition
+overhead. Together they yield the generic bounded sequential-composition
+theorem without pretending that arbitrary unreachable values have small
+encodings.
+
+`Quantitative/Polynomial.lean` supplies `FirstOrderPolynomial` and
+`PolyRealizer`, which retains one executable realizer plus work and encoded
+output-size polynomials. `PolynomialCategory` proves identity and composition,
+including an explicit polynomial for `composeOverhead`. `PolynomialModel` is an
+ordinary value collecting that category with a `StructuralKernel` and
+`PolynomialStructuralClosure`; it is deliberately not a global instance.
+Structural product, sum, and option encodings carry construction and payload
+recovery bounds in both directions.
+
+`QuantitativeWordClass` lifts code, size, and cost from a word-function backend
+through `WordClass` representations. Separate category adapters lift either a
+sound composition bound or the optional exact equation. As with the qualitative
+adapter, clients must pin decodable representations rather than existentially
+select arbitrary injections.
 
 ## Representation Invariance And Codability
 
@@ -303,10 +388,10 @@ functions — is the in-repo instance that works today and exercises every mixin
 
 ## Known Gaps
 
-- **No cost-bearing layer.** `Hom` is `Prop`-valued, so nothing here measures
-  running time or description size. The successor layer needs `Hom` replaced by a
-  `Type`-valued witness field carrying measures in an ordered semiring, with
-  `size` additive under composition and `time` composing by substitution.
+- **No concrete machine-adequacy theorem.** `QuantitativeStepClass` retains
+  `Type`-valued executable witnesses, encoded sizes, and backend-relative costs,
+  but a concrete backend must still relate those costs to a standard operational
+  machine model before making a complexity-class claim.
 - **`ImplementsWithin` is pinned to a uniform `ℕ` budget.** `FreeM.IsRollBound`
   is already generic in the budget type; `ImplementsWithin` is not.
 - **No terminal or initial representation**, hence only binary distributivity and
