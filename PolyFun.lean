@@ -124,6 +124,7 @@ public import PolyFun.Interaction.UC.OpenSyntax.Interp
 public import PolyFun.Interaction.UC.OpenSyntax.Raw
 public import PolyFun.Interaction.UC.OpenTheory
 public import PolyFun.Interaction.UC.OpenTheory.Family
+public import PolyFun.Interaction.UC.Realizability
 public import PolyFun.Interaction.UC.SubTheory
 public import PolyFun.Logic.HEq
 public import PolyFun.PFunctor.Adjunctions
@@ -248,6 +249,8 @@ public import PolyFun.PFunctor.Wiring
 public import PolyFun.PFunctor.Wiring.Parallel
 public import PolyFun.Realizability.Basic
 public import PolyFun.Realizability.Closure
+public import PolyFun.Realizability.DynSystem
+public import PolyFun.Realizability.DynSystemClosure
 public import PolyFun.Realizability.Instances
 public import PolyFun.Realizability.Machine
 public import PolyFun.Realizability.Quantitative

@@ -317,6 +317,11 @@ canonical `FreeM` interpretation.
 
 ### Phase D — comodules, bicomodules, research (Ch 8.3 + Ch 9)
 
+Phase D is no longer the immediate engineering path. The PPT-first UC sequence
+in [`uc-complexity-roadmap.md`](uc-complexity-roadmap.md) must reach its vertical
+OTP/ElGamal canaries before new D1--D4 infrastructure lands. The phase remains
+the intended later simplification route for behavior-level UC composition.
+
 - **D1** left/right comodules, bicomodules (Defs 8.83/8.86/8.98, laws
   (8.84)/(8.87)/(8.99)); `𝒞`-coalgebras = constant left comodules
   (Ex 8.85); left 𝒞-comodules ≃ functors `𝒞 → Poly` (Prop 8.90);

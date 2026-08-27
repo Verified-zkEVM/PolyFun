@@ -245,6 +245,20 @@ def toPFunctor (Γ : Interaction.TypeTree.Node.Context.{w, w₂}) :
   A := Σ tree : Interaction.TypeTree.{w}, PFunctor.FreeM.Displayed.Decoration Γ tree
   B := fun p => PFunctor.FreeM.Path p.1
 
+/-- The polynomial lens induced by mapping the metadata decorating every node
+of a step. Its position map applies `Decoration.map`; its direction pullback is
+the identity because the underlying type tree is unchanged. -/
+@[expose]
+def mapContextLens
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
+    (f : Interaction.TypeTree.Node.ContextHom Γ Δ) :
+    PFunctor.Lens (toPFunctor Γ) (toPFunctor Δ) where
+  toFunA position :=
+    ⟨position.1, PFunctor.FreeM.Displayed.Decoration.map
+      f position.1 position.2⟩
+  toFunB _ direction := direction
+
 /-- `StepOver Γ P` is exactly `(StepOver.toPFunctor Γ).Obj P`, exhibiting
 the step-over structure as a polynomial application.
 
@@ -364,6 +378,16 @@ def mapContext
     (f : Interaction.TypeTree.Node.ContextHom Γ Δ)
     (process : ProcessOver P Γ) : ProcessOver P Δ :=
   ofStep process.Proc fun p => (process.step p).mapContext f
+
+/-- Mapping a process context is exactly dynamical-system wrapping along the
+polynomial lens induced by the context morphism. -/
+theorem mapContext_eq_wrap
+    {P : Type v}
+    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
+    (f : Interaction.TypeTree.Node.ContextHom Γ Δ)
+    (process : ProcessOver P Γ) :
+    process.mapContext f = process.wrap (StepOver.mapContextLens f) := rfl
 
 /--
 Binary-choice interleaving of two processes with different node contexts.

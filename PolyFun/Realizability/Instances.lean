@@ -17,9 +17,11 @@ public import Mathlib.Data.Fintype.Sum
 Four instantiations of `PFunctor.StepClass`, in increasing order of content.
 
 * `StepClass.unconstrained` — every type is representable and every function
-  admissible. Realizability collapses to plain implementability, which
-  `isRealizableBy_unconstrained` confirms is never a real restriction. This is the
-  non-vacuity check for the whole layer.
+  admissible. Realizability collapses to plain implementability, which the two
+  non-vacuity checks confirm is never a real restriction:
+  `DynSystem.isRealizableBy_unconstrained` for arbitrary dynamical systems and
+  `DynSystem.DynComputation.isRealizableBy_unconstrained` for returning program
+  families.
 * `StepClass.finite` — a type is representable when it is finite. Realizability in
   this class is *finite-state realizability*, the notion Church's synthesis
   problem asks about and which Pnueli and Rosner (1989) made precise; see
@@ -63,7 +65,7 @@ yet.
 
 @[expose] public section
 
-universe u v
+universe u v s t
 
 namespace PFunctor
 
@@ -96,9 +98,17 @@ instance : (unconstrained.{u, v}).HasOption where
   omap_mem _ := True.intro
   none_mem _ _ := True.intro
   obindCtx_mem _ := True.intro
+  some_mem _ := True.intro
 
 instance : (unconstrained.{u, v}).IsDistributive where
   distrib_mem _ _ _ := True.intro
+
+-- Independent universes, as in `StepClass.HasULiftProd` itself.
+set_option linter.checkUnivs false in
+instance : (unconstrained.{max s t, v}).HasULiftProd.{s, t} where
+  uliftProd _ _ := PUnit.unit
+  up_mem _ _ := True.intro
+  down_mem _ _ := True.intro
 
 /-! ## The finite class -/
 
@@ -129,9 +139,22 @@ instance : (finite.{u}).HasOption where
   omap_mem _ := True.intro
   none_mem _ _ := True.intro
   obindCtx_mem _ := True.intro
+  some_mem _ := True.intro
 
 instance : (finite.{u}).IsDistributive where
   distrib_mem _ _ _ := True.intro
+
+-- Independent universes, as in `StepClass.HasULiftProd` itself.
+set_option linter.checkUnivs false in
+instance : (finite.{max s t}).HasULiftProd.{s, t} where
+  uliftProd {A B} a b := by
+    let : Fintype (ULift.{t} A) := a
+    let : Fintype (ULift.{t} B) := b
+    exact Fintype.ofEquiv (ULift.{t} A × ULift.{t} B)
+      ((_root_.Equiv.prodCongr _root_.Equiv.ulift _root_.Equiv.ulift).trans
+        _root_.Equiv.ulift.symm)
+  up_mem _ _ := True.intro
+  down_mem _ _ := True.intro
 
 /-! ## The computable class -/
 
@@ -218,6 +241,35 @@ instance : (computable.{u}).HasOption where
           (Computable.snd.comp Computable.fst))).to₂) ?_
     intro y
     cases y.1 <;> rfl
+  some_mem {A} a := by
+    let : Primcodable A := a
+    exact Computable.option_some
+
+-- Independent universes, as in `StepClass.HasULiftProd` itself.
+set_option linter.checkUnivs false in
+instance : (computable.{max s t}).HasULiftProd.{s, t} where
+  uliftProd {A B} a b := by
+    let : Primcodable (ULift.{t} A) := a
+    let : Primcodable (ULift.{t} B) := b
+    exact Primcodable.ofEquiv (ULift.{t} A × ULift.{t} B)
+      (_root_.Equiv.ulift.trans
+        (_root_.Equiv.prodCongr _root_.Equiv.ulift _root_.Equiv.ulift).symm)
+  up_mem {A B} a b := by
+    let : Primcodable (ULift.{t} A) := a
+    let : Primcodable (ULift.{t} B) := b
+    let e : ULift.{t} (A × B) ≃ ULift.{t} A × ULift.{t} B :=
+      _root_.Equiv.ulift.trans
+        (_root_.Equiv.prodCongr _root_.Equiv.ulift _root_.Equiv.ulift).symm
+    let : Primcodable (ULift.{t} (A × B)) := Primcodable.ofEquiv _ e
+    exact (Primrec.of_equiv_symm (e := e)).to_comp
+  down_mem {A B} a b := by
+    let : Primcodable (ULift.{t} A) := a
+    let : Primcodable (ULift.{t} B) := b
+    let e : ULift.{t} (A × B) ≃ ULift.{t} A × ULift.{t} B :=
+      _root_.Equiv.ulift.trans
+        (_root_.Equiv.prodCongr _root_.Equiv.ulift _root_.Equiv.ulift).symm
+    let : Primcodable (ULift.{t} (A × B)) := Primcodable.ofEquiv _ e
+    exact (Primrec.of_equiv (e := e)).to_comp
 
 /-- Mathlib's sum eliminator is already stated in *contextual* form — its branches
 are `α → β → σ` with `α` the ambient context — which is exactly distributivity. -/
@@ -426,6 +478,7 @@ instance WordClass.instHasOption : V.toStepClass.HasOption where
   none_mem a b :=
     ⟨fun _ => V.tagging.inr V.tagging.pt,
       V.comp_mem V.tagging.const_mem V.tagging.inr_mem, fun _ => rfl⟩
+  some_mem a := ⟨V.tagging.inl, V.tagging.inl_mem, fun _ => rfl⟩
   obindCtx_mem := by
     rintro A B E a b e k ⟨qk, hqk, hkEq⟩
     refine ⟨V.tagging.elim qk (fun _ => V.tagging.inr V.tagging.pt) ∘
@@ -469,11 +522,66 @@ end WordClassInstances
 
 end StepClass
 
+namespace DynSystem
+
+variable {p : PFunctor.{u, u}} {State : Type u}
+
+/-! ## Unconstrained dynamical systems
+
+This section mirrors the `DynSystem.DynComputation` non-vacuity block below for
+the non-returning realizability track; keep the two in sync. -/
+
+/-- The interface boundary carrying no representation information for an
+arbitrary dynamical system. -/
+def Boundary.unconstrained (p : PFunctor.{u, u}) :
+    Boundary StepClass.unconstrained.{u, v} p :=
+  ⟨PUnit.unit, PUnit.unit⟩
+
+/-- Every polynomial lens is admissible between unconstrained dynamical-system
+boundaries. Classical equality is used only to define the partial pullback on
+mismatched target-position tags. -/
+noncomputable def _root_.PFunctor.Lens.IsDynAdmissible.unconstrained
+    {p q : PFunctor.{u, u}} (lens : Lens p q) :
+    lens.IsDynAdmissible StepClass.unconstrained
+      (Boundary.unconstrained p) (Boundary.unconstrained q) := by
+  classical
+  refine ⟨True.intro, lens.pullPosIdx, True.intro, ?_⟩
+  intro position direction
+  simp [Lens.pullPosIdx]
+
+/-- Every dynamical system is structurally realizable in the unconstrained
+class.  Classical equality is used only to choose a partial extension on junk
+position tags; the class admits every function, and enabled transitions agree
+with the original system by construction. -/
+theorem isRealizableBy_unconstrained (system : DynSystem State p) :
+    IsRealizableBy StepClass.unconstrained.{u, v}
+      (Boundary.unconstrained p) system := by
+  classical
+  exact ⟨⟨PUnit.unit, True.intro, system.update?, True.intro,
+    system.update?_of_eq⟩⟩
+
+/-- Every choice-product lens is admissible between unconstrained boundaries.
+Classical equality is used only to define the partial routed pullback on
+mismatched target-position tags. -/
+noncomputable def _root_.PFunctor.Lens.IsChoiceAdmissible.unconstrained
+    {p q r : PFunctor.{u, u}} (lens : Lens (PFunctor.prod p q) r) :
+    lens.IsChoiceAdmissible StepClass.unconstrained.{u, v}
+      (Boundary.unconstrained p) (Boundary.unconstrained q)
+      (Boundary.unconstrained r) := by
+  classical
+  exact ⟨True.intro, lens.pullChoicePosIdx, True.intro,
+    lens.pullChoicePosIdx_enabled⟩
+
+end DynSystem
+
 namespace DynSystem.DynComputation
 
 variable {p : PFunctor.{u, u}} {α β : Type u}
 
-/-! ## Non-vacuity -/
+/-! ## Non-vacuity
+
+This section mirrors the `DynSystem` unconstrained block above for the
+returning realizability track; keep the two in sync. -/
 
 /-- The boundary carrying no information, over the unconstrained class. -/
 def Boundary.unconstrained (p : PFunctor.{u, u}) (α β : Type u) :

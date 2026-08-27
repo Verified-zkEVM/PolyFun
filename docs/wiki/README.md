@@ -56,6 +56,9 @@ See the *Wiki Maintenance Contract* section in
 
 - [`review-hardening.md`](review-hardening.md): required migration, API,
   mathematical, adversarial, lint, and content-control review passes.
+- [`module-api.md`](module-api.md): public-API policy under Lean's module
+  system — import choices, choosing the public reducer surface,
+  ordinary-import canaries, and the cross-package `import all` audit rule.
 - [`bisimulation.md`](bisimulation.md): glossary of the bisimulation and
   behavioural-equivalence notions (strong / delay / weak), the generic
   `Control.LTS` framework, and how the ITree, dynamical, and UC layers relate.

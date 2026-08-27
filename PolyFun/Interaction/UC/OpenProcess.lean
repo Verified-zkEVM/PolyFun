@@ -828,6 +828,16 @@ def mapBoundary {m : Type w → Type w'} {Party : Type u} {Δ₁ Δ₂ : PortBou
   step := fun s => (op.step s).mapContext (OpenNodeContext.map.{u, w} Party φ)
   stepSampler := op.stepSampler
 
+/-- Boundary adaptation is dynamical-system wrapping along the polynomial lens
+induced by the corresponding open-node context morphism. -/
+theorem toProcess_mapBoundary
+    {m : Type w → Type w'} {Party : Type u} {Δ₁ Δ₂ : PortBoundary}
+    (φ : PortBoundary.Hom Δ₁ Δ₂)
+    (op : OpenProcess.{u, v, w, w'} m Party Δ₁) :
+    (op.mapBoundary φ).toProcess =
+      op.toProcess.wrap
+        (StepOver.mapContextLens (OpenNodeContext.map.{u, w} Party φ)) := rfl
+
 /--
 Binary-choice interleaving of two open processes, targeting a common
 boundary `Δ` via structural injections `f₁`, `f₂` and a scheduling node
@@ -843,6 +853,7 @@ This is the single ingredient shared by `openTheory.par`, `openTheory.wire`,
 and `openTheory.plug`: those operations differ only in which injection
 pair `f₁`, `f₂` they supply.
 -/
+@[expose]
 def interleave {m : Type w → Type w'} {Party : Type u} {Δ₁ Δ₂ Δ : PortBoundary}
     (p₁ : OpenProcess.{u, v, w, w'} m Party Δ₁) (p₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
     (f₁ : TypeTree.Node.ContextHom
@@ -858,6 +869,23 @@ def interleave {m : Type w → Type w'} {Party : Type u} {Δ₁ Δ₂ Δ : PortB
   stepSampler := fun (s₁, s₂) =>
     TypeTree.Sampler.interleave schedulerSampler
       (p₁.stepSampler s₁) (p₂.stepSampler s₂)
+
+/-- Interleaving projects to the structural interleaving of the underlying
+closed-world processes, discarding only the assembled sampler. -/
+theorem toProcess_interleave
+    {m : Type w → Type w'} {Party : Type u} {Δ₁ Δ₂ Δ : PortBoundary}
+    (p₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
+    (p₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+    (f₁ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₁)
+      (OpenNodeContext.{u, w} Party Δ))
+    (f₂ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₂)
+      (OpenNodeContext.{u, w} Party Δ))
+    (schedulerCtx : OpenNodeContext.{u, w} Party Δ (ULift.{w, 0} Bool))
+    (schedulerSampler : m (ULift.{w, 0} Bool)) :
+    (p₁.interleave p₂ f₁ f₂ schedulerCtx schedulerSampler).toProcess =
+      p₁.toProcess.interleave p₂.toProcess f₁ f₂ schedulerCtx := rfl
 
 end OpenProcess
 
