@@ -190,7 +190,8 @@ PFunctor/Free/Resumption + ITree/Sim/Facts -> ITree/Resumption
 ITree/Resumption + PFunctor/M/Vertex -> ITree/ResumptionWithTau
 ITree/ResumptionWithTau + PFunctor/{Handler/Free, Resumption/WellFounded}
   -> ITree/Free
-PFunctor/Dynamical + ITree/Basic -> ITree/Unfold
+ITree/Resumption + PFunctor/{Dynamical/Trajectory, Resumption/Empty}
+  -> ITree/Unfold
 ITree/Free + PFunctor/PatternRunsOnMatter/Dynamical
   -> ITree/PatternRunsOnMatter
 

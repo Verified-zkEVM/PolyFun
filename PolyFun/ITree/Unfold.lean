@@ -5,8 +5,9 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.ITree.Basic
+public import PolyFun.ITree.Resumption
 public import PolyFun.PFunctor.Dynamical.Trajectory
+public import PolyFun.PFunctor.Resumption.Empty
 
 /-!
 # Unfolding dynamical systems into interaction trees
@@ -39,6 +40,32 @@ The result never returns (`PEmpty` leaves) and takes no silent steps. The empty
 return type may live in a universe independent of both universes of `p`. -/
 def M.toITree {p : PFunctor.{uA, uB}} : M p → ITree p PEmpty.{uR + 1} :=
   ITree.corec fun t => ⟨.query (M.dest t).1, (M.dest t).2⟩
+
+/-- The direct all-query ITree embedding of an M-tree agrees with first
+viewing the tree as an empty-valued resumption and then using the canonical
+tau-free resumption embedding. -/
+theorem M.toITree_eq_toITree_toEmptyResumption
+    {p : PFunctor.{uA, uB}} (tree : M p) :
+    M.toITree tree =
+      PFunctor.Resumption.toITree
+        (M.toEmptyResumption tree : Resumption p PEmpty.{uR + 1}) := by
+  refine ITree.bisim
+    (fun left right => ∃ source : M p,
+      left = M.toITree source ∧
+      right = PFunctor.Resumption.toITree
+        (M.toEmptyResumption source : Resumption p PEmpty.{uR + 1})) ?_
+      _ _ ⟨tree, rfl, rfl⟩
+  rintro left right ⟨source, rfl, rfl⟩
+  refine ⟨.query (M.head source),
+    (fun direction => M.toITree (M.children source direction)),
+    (fun direction => PFunctor.Resumption.toITree
+      (M.toEmptyResumption (M.children source direction) :
+        Resumption p PEmpty.{uR + 1})), ?_, ?_, fun direction => ?_⟩
+  · unfold M.toITree
+    rw [ITree.shape'_corec_apply]
+    rfl
+  · rw [PFunctor.Resumption.shape'_toITree, M.dest_toEmptyResumption]
+  · exact ⟨M.children source direction, rfl, rfl⟩
 
 namespace DynSystem
 

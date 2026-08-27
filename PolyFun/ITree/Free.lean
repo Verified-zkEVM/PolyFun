@@ -73,21 +73,8 @@ theorem toResumptionWithTau_toITree (program : FreeM E α) :
     ITree.toResumptionWithTau (toITree program) =
       Resumption.mapLens
         (Lens.inl (P := E) (Q := PFunctor.y.{uEA, uEB}))
-        (toResumption program) := by
-  induction program with
-  | pure value => simp
-  | lift_bind position next ih =>
-      change ITree.toResumptionWithTau
-          (toITree (FreeM.liftBind position next)) =
-        Resumption.mapLens
-          (Lens.inl (P := E) (Q := PFunctor.y.{uEA, uEB}))
-          (toResumption (FreeM.liftBind position next))
-      rw [toITree_liftBind, ITree.toResumptionWithTau_query,
-        FreeM.liftBind_eq, toResumption_liftBind,
-        Resumption.mapLens_query]
-      congr 1
-      funext direction
-      exact ih direction
+        (toResumption program) :=
+  ITree.toResumptionWithTau_toITree (toResumption program)
 
 theorem toITree_injective :
     Function.Injective (toITree (E := E) (α := α)) :=

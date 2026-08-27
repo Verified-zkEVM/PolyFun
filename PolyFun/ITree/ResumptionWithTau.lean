@@ -116,6 +116,39 @@ theorem dest_toResumptionWithTau (tree : _root_.ITree P α) :
   rw [dest_toResumptionWithTau, ITree.shape'_query,
     PFunctor.Resumption.dest_query]
 
+/-- Encoding the tau-free ITree associated to a resumption agrees with
+injecting its visible interface into the resumption-with-tau signature. This is
+the commuting square between the tau-free and unrestricted resumption views of
+an ITree. -/
+theorem toResumptionWithTau_toITree
+    (computation : PFunctor.Resumption P α) :
+    toResumptionWithTau (PFunctor.Resumption.toITree computation) =
+      PFunctor.Resumption.mapLens
+        (PFunctor.Lens.inl (P := P) (Q := PFunctor.y.{uA, uB}))
+        computation := by
+  apply PFunctor.Resumption.bisim
+    (fun left right => ∃ source : PFunctor.Resumption P α,
+      left = toResumptionWithTau (PFunctor.Resumption.toITree source) ∧
+      right = PFunctor.Resumption.mapLens
+        (PFunctor.Lens.inl (P := P) (Q := PFunctor.y.{uA, uB})) source)
+  · rintro left right ⟨source, rfl, rfl⟩
+    rcases hsource : PFunctor.Resumption.dest source with value | ⟨position, next⟩
+    · exact .pure value
+        (by rw [dest_toResumptionWithTau,
+          PFunctor.Resumption.shape'_toITree, hsource])
+        (by rw [PFunctor.Resumption.dest_mapLens, hsource])
+    · exact .query (Sum.inl position)
+        (fun direction => toResumptionWithTau
+          (PFunctor.Resumption.toITree (next direction)))
+        (fun direction => PFunctor.Resumption.mapLens
+          (PFunctor.Lens.inl (P := P) (Q := PFunctor.y.{uA, uB}))
+          (next direction))
+        (by rw [dest_toResumptionWithTau,
+          PFunctor.Resumption.shape'_toITree, hsource])
+        (by rw [PFunctor.Resumption.dest_mapLens, hsource]; rfl)
+        (fun direction => ⟨next direction, rfl, rfl⟩)
+  · exact ⟨computation, rfl, rfl⟩
+
 /-- Decode a resumption over `P + y`, interpreting the `y` event as a silent
 ITree step. -/
 def ofResumptionWithTau

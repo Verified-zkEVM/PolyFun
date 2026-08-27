@@ -37,6 +37,17 @@ def emptyResumptionPolyEquiv :
 def toEmptyResumption (tree : M P) : Resumption P PEmpty.{uR + 1} :=
   M.mapLens (emptyResumptionPolyEquiv (P := P)).invLens tree
 
+/-- The empty-resumption encoding preserves the current M-tree position and
+recursively encodes the child selected by each direction. -/
+@[simp] theorem dest_toEmptyResumption (tree : M P) :
+    Resumption.dest
+        (toEmptyResumption tree : Resumption P PEmpty.{uR + 1}) =
+      Sum.inr ⟨M.head tree, fun direction =>
+        toEmptyResumption (M.children tree direction)⟩ := by
+  unfold Resumption.dest toEmptyResumption
+  rw [M.dest_mapLens]
+  rfl
+
 /-- Forget the impossible return case of an empty-valued resumption. -/
 def ofEmptyResumption
     (computation : Resumption P PEmpty.{uR + 1}) : M P :=
