@@ -16,6 +16,7 @@ migration sketch live in
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); `OpSpec.toMAlgOrdered`; semantic `FreeM.wpVia` through a `Handler`; soundness `wpFold_le_wpVia`/`wpFold_eq_wpVia` |
 | `PolyFun/Control/Do/Basic.lean` | Core-`Std.Do` transports: `MonadHom.transportWP(Monad)` along a monad morphism, `MonadAttach.toWP(Monad)` demonically at `.pure`, `toWPSound` for core-sense soundness, and `support_subset_of_wp`/`allOutputs_of_wp` turning any `WPSound` triple into a support fact |
+| `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — the loop-invariant rule, stated as a `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
 | `PolyFun/PFunctor/Free/Do.lean` | Scoped demonic `WP (FreeM P) .pure` instances (`open scoped PFunctor.FreeM.DemonicWP`), `wpMonadOfHandler`, and the `Spec.lift` `@[spec]` lemma enabling `mvcgen` on free programs with uninterpreted operations |
 
 Worked examples: `PolyFunTest/Control/MonadAttach.lean` (judgments, notation,
@@ -109,6 +110,44 @@ everything they provide is a construction (`def`), not a global instance —
 global `WP` instances on `FreeM` would race downstream registrations on
 reducible unfoldings such as VCVio's `OracleComp`. The demonic instances are
 `scoped` under `PFunctor.FreeM.DemonicWP`.
+
+## The two upstream WP stacks
+
+Core ships **two** complete weakest-precondition stacks at the v4.33.1 pin, and PolyFun
+bridges the older one. Knowing which is which matters, because they differ on exactly the
+property that decides what PolyFun can express.
+
+| | `Std/Do/` (bridged here) | `Std/Internal/Do/` |
+|---|---|---|
+| Assertions | `SPred` / `PostShape` | any `Lean.Order.CompleteLattice` |
+| `WPMonad` bind law | equational (`wp_bind : … = …`) | inequational (`bind_le_wp_bind`) |
+| Conjunctivity | a **field of `PredTrans`**, bi-entailment | opt-in class `WPConjunctive`, one-directional |
+| Soundness | `WPSound`, via `Internal.Ensures` | — |
+| Also has | — | `WP.Frames`, `frameClosure`, `PreservesSup`, `RepeatInvariant` |
+| Visibility | public | `Internal` |
+
+**The conjunctivity field is why the WP bridge is demonic-only.** `Std.Do.PredTrans` requires
+`t (Q₁ ∧ₚ Q₂) ⊣⊢ₛ t Q₁ ∧ t Q₂`. `AllOutputs` distributes over `∧` in both directions, so
+`MonadAttach.toWP` discharges it. `SomeOutput` distributes only left-to-right — two different
+outputs may witness the two conjuncts separately — so there is no angelic `Std.Do.WP` at all.
+That is a structural obstruction, not an unwritten lemma;
+`PolyFunTest/Control/MonadAttach.lean` proves both directions and the failure. The angelic
+reading therefore lives at the `MAlgOrdered` level, whose `μ_bind_mono` asks only for
+monotonicity.
+
+**What changes upstream.** Beyond this pin, core promotes `Std.Internal.Do` verbatim to a
+public `Std.WP`, replaces `WPSound` with `Std.WP.LawfulWPMonadAttach` — whose one field
+concludes from a `MonadAttach.CanReturn` witness directly, dropping the `Ensures`
+formulation — and deprecates `mvcgen` in favour of `vcgen`. All three ship in **v4.35**, not
+v4.34. Two consequences for this layer: `support_subset_of_wp` / `allOutputs_of_wp` are
+already stated against `CanReturn`, so they carry over as a rename; and `WPConjunctive`
+being opt-in and one-directional is what would unblock an angelic bridge.
+
+`MAlgOrdered` is recognisably `Std.Internal.Do.WPMonad` minus exception postconditions — but
+over Mathlib's `CompleteLattice`, while every piece of core WP machinery is over
+`Lean.Order.CompleteLattice`, and the pinned Mathlib contains no bridge between the two
+hierarchies. Adopting core's stack means porting `MAlgOrdered` off Mathlib's order hierarchy.
+That cost is recorded here deliberately; it is not this layer's current direction.
 
 ## What stays downstream
 

@@ -391,3 +391,44 @@ example :
   exact fun _ _ => trivial
 
 end AlgebraSelection
+
+section AngelicNotConjunctive
+
+/-! ### Why there is no angelic `Std.Do.WP`
+
+`Std.Do.PredTrans` carries conjunctivity as a *structure field*, and as a bi-entailment:
+`t (Q₁ ∧ₚ Q₂) ⊣⊢ₛ t Q₁ ∧ t Q₂`. The demonic reading satisfies it in both directions, which
+is what lets `MonadAttach.toWP` build a `PredTrans` at all. The angelic reading satisfies
+only `→`: two *different* outputs may witness the two conjuncts separately, so nothing
+forces a single output to satisfy both.
+
+The consequence is structural rather than a gap in this development. The angelic
+interpretation cannot be a `Std.Do.WP`, so it stays at the `MAlgOrdered` level, whose
+`μ_bind_mono` asks only for monotonicity. Core's newer weakest-precondition stack drops
+conjunctivity from `PredTrans` and reintroduces it as an opt-in, one-directional
+`WPConjunctive`; the angelic reading is expressible against that stack. -/
+
+/-- The direction that does hold: an angelic conjunction splits. -/
+example {α : Type} (x : SetM α) (p q : α → Prop) (h : x ⊨ₛ fun a => p a ∧ q a) :
+    (x ⊨ₛ p) ∧ (x ⊨ₛ q) := by
+  obtain ⟨a, hcan, hp, hq⟩ := h
+  exact ⟨⟨a, hcan, hp⟩, ⟨a, hcan, hq⟩⟩
+
+/-- The direction that fails, and with it conjunctivity of the angelic transformer.
+Witness: `{0, 1}` has an output equal to `0` and an output equal to `1`, but none equal
+to both. -/
+example : ¬ (∀ {α : Type} (x : SetM α) (p q : α → Prop),
+    (x ⊨ₛ p) → (x ⊨ₛ q) → (x ⊨ₛ fun a => p a ∧ q a)) := by
+  intro h
+  obtain ⟨a, -, ha0, ha1⟩ :=
+    h (({0, 1} : Set ℕ) : SetM ℕ) (· = 0) (· = 1)
+      ⟨0, Or.inl rfl, rfl⟩ ⟨1, Or.inr rfl, rfl⟩
+  omega
+
+/-- The demonic reading, by contrast, distributes in both directions — this is the
+`conjunctiveRaw` field that `MonadAttach.toWP` discharges. -/
+example {α : Type} (x : SetM α) (p q : α → Prop) :
+    (x ⊨ₐ fun a => p a ∧ q a) ↔ (x ⊨ₐ p) ∧ (x ⊨ₐ q) :=
+  allOutputs_and p q x
+
+end AngelicNotConjunctive

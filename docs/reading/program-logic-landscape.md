@@ -122,8 +122,17 @@ implemented).
 - `Display`/wp adequacy: `Display.ofPredicates` sections versus `wpFold` of
   the induced spec — the intrinsic/extrinsic bridge (roadmap track D5).
 - ITree: no `WP` instance planned while `iter` is lawful only up to weak
-  bisimulation; the honest deliverables are wp-congruence under `WeakBisim`
-  and an invariant rule for the `ITree/Do.lean` `ForIn` loop.
+  bisimulation. The `ForIn` loop rule is now in place —
+  `ITree.forInLoop_weakBisim_of_invariant`, a bisimulation congruence carrying the
+  invariant inside the state relation, since `ITree` has no possible-output
+  predicate for a postcondition to range over. wp-congruence under `WeakBisim`
+  remains open.
+- The angelic WP bridge is **structurally blocked**, not merely unwritten.
+  `Std.Do.PredTrans` carries conjunctivity as a structure field, stated as a
+  bi-entailment; `AllOutputs` distributes over `∧` both ways but `SomeOutput` only
+  left-to-right, so there is no angelic `Std.Do.WP`. Core's newer stack makes
+  conjunctivity an opt-in, one-directional `WPConjunctive`, which would unblock it.
+  `PolyFunTest/Control/MonadAttach.lean` pins both directions and the failure.
 - The ε-additive approximate-triple algebra (ArkLib's sequencing blocker).
 - Optional `MonadFinSupport` (Finset-valued support, generalizing VCVio's
   `HasEvalFinset`).

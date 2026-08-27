@@ -5,7 +5,7 @@ Authors: Quang Dao
 -/
 module
 
-public import PolyFun.ITree.Basic
+public import PolyFun.ITree.Bisim.Iter
 
 /-! # Productive `while` loops for interaction trees
 
@@ -70,5 +70,42 @@ Lean's generic `ForIn m Lean.Loop Unit` instance only while the scope is open. -
 scoped instance (priority := high) instForInLoop {F : PFunctor.{uA, uB}} :
     ForIn (ITree F) Lean.Loop Unit where
   forIn := forInLoop
+
+/-! ## Reasoning about the loop
+
+`ITree.iter` is lawful only up to weak bisimulation, and `ITree` carries no
+possible-output predicate for a postcondition to range over, so the loop rule is
+stated as a bisimulation congruence rather than as a weakest-precondition
+instance. What it supplies is the usual licence to *assume* an invariant inside
+the body: a body may be replaced by one that is only correct on the states the
+loop can actually reach.
+
+The invariant travels inside the relation rather than as a separate hypothesis.
+Relating a `ForInStep` to itself *together with* `I` on its `yield` payload is
+what makes `iter_weakBisimRel`'s state relation `fun i j => i = j ∧ I i`
+inductive: the body hands back exactly the fact the next iteration needs.
+-/
+
+/-- Loop-invariant rule for `forInLoop`. If `I` holds of the initial state, and at
+every state satisfying `I` the two bodies are weakly bisimilar under a relation
+that additionally re-establishes `I` on each `yield`, then the two loops are
+weakly bisimilar.
+
+With `body₂ := body₁` this reads as invariant preservation; with the two distinct
+it licenses replacing a body by a simplification valid only under `I`. -/
+theorem forInLoop_weakBisim_of_invariant {F : PFunctor.{uA, uB}} {β : Type uβ}
+    (I : β → Prop) (loop : Lean.Loop) {init : β} (hinit : I init)
+    {body₁ body₂ : Unit → β → ITree F (ForInStep β)}
+    (hbody : ∀ b, I b →
+      WeakBisimRel (fun s s' => s = s' ∧ ∀ n, s = ForInStep.yield n → I n)
+        (body₁ () b) (body₂ () b)) :
+    WeakBisim (forInLoop loop init body₁) (forInLoop loop init body₂) := by
+  refine iter_weakBisimRel (RI := fun i j => i = j ∧ I i) (RR := Eq) ?_ ⟨rfl, hinit⟩
+  rintro i j ⟨rfl, hI⟩
+  refine bind_weakBisimRel (hbody i hI) ?_
+  rintro s s' ⟨rfl, hs⟩
+  cases s with
+  | done result => exact WeakBisimRel.pure (.inr rfl)
+  | yield next => exact WeakBisimRel.pure (.inl ⟨rfl, hs next rfl⟩)
 
 end ITree
