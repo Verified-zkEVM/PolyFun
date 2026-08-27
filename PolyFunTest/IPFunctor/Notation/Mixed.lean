@@ -27,8 +27,6 @@ rather than at downstream call sites.
 
 @[expose] public section
 
-set_option backward.do.legacy false
-
 namespace IPFunctorMixedNotationTests
 
 /-- Shared demo `IPFunctor.Endo` over `Bool`, identical to the per-file

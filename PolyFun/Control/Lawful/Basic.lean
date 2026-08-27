@@ -8,8 +8,8 @@ module
 /-!
 # Monad laws restated via `do` notation
 
-Lean 4.29 changed `do`-notation elaboration so that the desugared bind may use a `Bind`
-instance that differs syntactically from `Monad.toBind`. This prevents the standard
+Lean's `do`-notation elaboration may choose a `Bind` instance that differs syntactically
+from `Monad.toBind`. This prevents the standard
 `pure_bind`, `bind_assoc`, and `bind_pure` lemmas from matching `do`-block goals via
 `simp` or `rw`.
 

@@ -64,6 +64,7 @@ echo "# Checking umbrella imports"
 
 echo ""
 echo "# Checking docs integrity"
+python3 ./scripts/test-docs-integrity.py
 python3 ./scripts/check-docs-integrity.py
 
 if (( run_lint )); then

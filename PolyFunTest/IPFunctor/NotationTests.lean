@@ -24,8 +24,6 @@ would shadow).
 
 @[expose] public section
 
-set_option backward.do.legacy false
-
 namespace IPFunctorNotationTests
 
 /-- A tiny `IPFunctor.Endo` over `Bool`. At state `false` only a trivial "flip"

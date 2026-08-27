@@ -56,7 +56,7 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 | [`PolyFun/IPFunctor/Lens/Basic.lean`](../../PolyFun/IPFunctor/Lens/Basic.lean) | `IPFunctor.Lens P Q` — Cartesian lens between indexed polynomials with the source-index preservation law `src_eq`. Identity, composition, `Lens.Equiv`. |
 | [`PolyFun/IPFunctor/Chart/Basic.lean`](../../PolyFun/IPFunctor/Chart/Basic.lean) | `IPFunctor.Chart P Q` — covariant chart (dual to lens) with `src_eq` in the chart direction. Identity, composition, `Chart.Equiv`. |
 | [`PolyFun/IPFunctor/Equiv/Basic.lean`](../../PolyFun/IPFunctor/Equiv/Basic.lean) | `IPFunctor.Equiv P Q` (`≃ₚ`) — structural equivalence with fiberwise `A` / `B` equivalences plus `src_eq`. |
-| [`PolyFun/IPFunctor/Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | Lean 4.29 `@[doElem_elab]` overrides making ordinary `do { let x ← e; … }` elaborate to `IPFunctor.FreeM.bind`-trees. Custom diagnostics for state mismatches and non-polymorphic remainders. Opt in with `set_option backward.do.legacy false`. |
+| [`PolyFun/IPFunctor/Notation.lean`](../../PolyFun/IPFunctor/Notation.lean) | `@[doElem_elab]` overrides for the pinned Lean toolchain, making ordinary `do { let x ← e; … }` elaborate to `IPFunctor.FreeM.bind`-trees. Custom diagnostics for state mismatches and non-polymorphic remainders. |
 | [`PolyFun/IPFunctor/Notation/Indexed.lean`](../../PolyFun/IPFunctor/Notation/Indexed.lean) | `do`-notation for `IPFunctor.FreeM₂`. Statically-tracked intermediate states; chains of any length compose. Adds the `Pure (IPFunctor.FreeM₂ P s s)` instance. |
 | [`PolyFun/IPFunctor/Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `do`-notation for `IPFunctor.FreeM` with a `DeterministicTransitions P` class. Specializes `IPFunctor.FreeM.lift`-style steps to a concrete source index. |
 | [`PolyFunTest/IPFunctor/Examples.lean`](../../PolyFunTest/IPFunctor/Examples.lean) | Worked examples: a two-phase protocol compiled three ways (`IPFunctor.FreeM₂`, deterministic `IPFunctor.FreeM`, Σ-bundled erase via `toSigmaFreeM`), plus a `PFunctor.FreeM.equivW_of_isEmpty` round-trip. |
@@ -252,14 +252,15 @@ read the state back.
 
 ## `do`-notation flavors
 
-Three parallel `do`-notation files plug into Lean 4.29's extensible
+Three parallel `do`-notation files plug into Lean's extensible
 do-elaborator. See
 [`ipfunctor-do-notation.md`](ipfunctor-do-notation.md) for a worked
 walkthrough with a small two-phase-protocol example.
 
-All three require `set_option backward.do.legacy false` and check
-the expected monad type before activating, so other monads in the same file
-are unaffected.
+The extensible elaborator is the pinned toolchain's default, so no option is
+required. All three check the expected monad type before activating, leaving
+other monads in the same file unaffected. Setting `backward.do.legacy true`
+selects Lean's legacy elaborator and disables these extensions.
 
 The elaborator detectors use `Meta.withTransparency .reducible <| whnf m`
 so the `IPFunctor.FreeM` / `IPFunctor.FreeM₂` head — defined as a plain

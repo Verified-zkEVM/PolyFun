@@ -18,5 +18,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.12"
+      - name: Test docs integrity checker
+        run: python3 ./scripts/test-docs-integrity.py
       - name: Check docs integrity
         run: python3 ./scripts/check-docs-integrity.py

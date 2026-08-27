@@ -19,8 +19,6 @@ corresponding `PFunctor.FreeM` trees.
 
 @[expose] public section
 
-set_option backward.do.legacy false
-
 namespace IPFunctorFreeMDetNotationTests
 
 /-- The same demo `IPFunctor.Endo` as the other `Notation` files. Both states

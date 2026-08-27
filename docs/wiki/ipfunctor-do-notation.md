@@ -2,7 +2,7 @@
 
 Three parallel files in
 [`PolyFun/IPFunctor/Notation/`](../../PolyFun/IPFunctor/Notation/) plug
-custom `@[doElem_elab]` overrides into Lean 4.29's extensible
+custom `@[doElem_elab]` overrides into Lean's extensible
 do-elaborator so that ordinary `do { let x ← e; … }` blocks elaborate
 to the right `bind`-trees over `IPFunctor.FreeM` and `IPFunctor.FreeM₂`.
 
@@ -14,11 +14,10 @@ which serves as the live-Lean companion to this prose.
 
 ## Activation
 
-All three flavors require `set_option backward.do.legacy false` (or a
-project-wide entry in `[leanOptions]` of `lakefile.toml`). This switches
-Lean from the legacy do-elaborator to the new extensible one, which is
-where our overrides plug in. The flag is transitional; when upstream
-Lean retires it the lines come out.
+The extensible `do` elaborator is already the pinned Lean toolchain's default,
+so all three flavors work without an option. Setting
+`backward.do.legacy true` explicitly selects the legacy elaborator, where the
+custom overrides are unavailable.
 
 ## The three flavors at a glance
 
@@ -67,7 +66,6 @@ want the type to record the start and end phases.
 
 ```lean
 import PolyFun.IPFunctor.Notation.Indexed
-set_option backward.do.legacy false
 
 def init : IPFunctor.FreeM₂ proto Phase.opn Phase.counting Unit :=
   IPFunctor.FreeM₂.liftBind () (fun _ => IPFunctor.FreeM₂.pure ())
@@ -94,7 +92,6 @@ known post-state.
 
 ```lean
 import PolyFun.IPFunctor.Notation.Deterministic
-set_option backward.do.legacy false
 
 instance : IPFunctor.DeterministicTransitions proto where
   next
@@ -134,7 +131,6 @@ state-specific gets the *state mismatch* diagnostic.
 
 ```lean
 import PolyFun.IPFunctor.Notation
-set_option backward.do.legacy false
 
 example : IPFunctor.FreeM proto Phase.opn Unit := do
   let _ ← init

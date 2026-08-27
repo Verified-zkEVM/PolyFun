@@ -36,7 +36,7 @@ flip the convention; we stick with `inl = continue`, `inr = stop`.)
 
 ## Implementation notes
 
-Lean 4.32 provides the function
+Lean provides the function
 `whileM : (β → m (β ⊕ α)) → β → m α`, with the same branch
 convention as `iterM`, but not a typeclass or a corresponding lawful interface.
 Core `whileM` is implemented by partial recursion and requires `Nonempty α`.

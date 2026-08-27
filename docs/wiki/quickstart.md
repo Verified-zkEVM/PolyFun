@@ -27,8 +27,10 @@ local validation. By default it runs:
    Interaction public-scope policy is respected)
 3. `./scripts/check-imports.sh` (umbrella `PolyFun.lean` matches the
    tracked source tree)
-4. `python3 ./scripts/check-docs-integrity.py` (CLAUDE.md symlink and
-   tracked-markdown link resolution)
+4. `python3 ./scripts/test-docs-integrity.py` and
+   `python3 ./scripts/check-docs-integrity.py` (checker regression fixtures,
+   CLAUDE.md symlink, tracked-markdown links, repository-rooted Lean paths,
+   and module docstrings in their standard prologue position)
 
 ## Validation By Change Type
 
@@ -78,6 +80,7 @@ issue:
 lake build
 ./scripts/check-modules.sh
 ./scripts/check-imports.sh
+python3 ./scripts/test-docs-integrity.py
 python3 ./scripts/check-docs-integrity.py
 ```
 
@@ -114,12 +117,13 @@ deliberately outside the `lake lint` scope.
   checks that `PolyFun.lean` matches the tracked source tree. `Check
   Library File Imports` is a required status check on `main`.
 - [`../../.github/workflows/docs-integrity.yml`](../../.github/workflows/docs-integrity.yml):
-  runs `./scripts/check-docs-integrity.py` (CLAUDE.md symlink, tracked
-  markdown link resolution). `Check Docs Integrity` is a required status
-  check on `main`. This is the agent-documentation liveness check: any
-  PR that breaks an internal link in `AGENTS.md`, `README.md`,
-  `CONTRIBUTING.md`, `REFERENCES.md`, or any tracked page under `docs/`
-  will fail this job.
+  runs the checker's regression fixtures and `./scripts/check-docs-integrity.py`
+  (CLAUDE.md symlink, tracked markdown links, repository-rooted Lean paths,
+  and module docstrings). `Check Docs Integrity` is a required status check
+  on `main`. This is the agent-documentation liveness check: any PR that
+  breaks an internal link or documented Lean path in `AGENTS.md`, `README.md`,
+  `CONTRIBUTING.md`, `REFERENCES.md`, or a tracked page under `docs/`, or drops
+  a production/test module docstring from its prologue, will fail this job.
 - [`../../.github/workflows/linting.yml`](../../.github/workflows/linting.yml):
   runs the community `leanprover-community/lint-style-action` (the Lean-based
   Mathlib text style linter: copyright headers, line length, module

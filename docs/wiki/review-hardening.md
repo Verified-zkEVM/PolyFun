@@ -23,6 +23,14 @@ Every substantial pull request records four passes:
    simp orientation, environment linters, axiom cleanliness, generated files,
    and the accuracy of source or paper claims.
 
+The maintenance pass is source-backed: compare module docstrings and wiki
+claims to the declarations and imports that actually ship, then check the
+agent guide against the repository tree. Treat version-specific prose,
+repository-rooted paths written as code, and descriptions copied across a
+dependency boundary as likely drift points. `scripts/check-docs-integrity.py`
+checks both markdown links and repository-rooted Lean paths, but semantic
+accuracy still requires review.
+
 ## Upstream-First Mathematics
 
 Before adding a generic definition or lemma, search the pinned Lean core,
@@ -45,6 +53,9 @@ A merge-ready change must have:
 - minimal, correctly classified imports and no accidental transitive API;
 - an explicit public API delta, including removals and instance changes;
 - ordinary-import canaries for load-bearing public laws;
+- tests placed on the narrowest useful surface: ordinary-import canaries for
+  public API, focused proof regressions beside the owning subsystem, and
+  worked examples in `PolyFunTest/` rather than production modules;
 - minimized regressions for every discovered failure or counterexample;
 - satisfiable assumptions and statements that cover their documented scope;
 - Mathlib-style names, intrinsic docstrings, and lint-clean simp declarations;

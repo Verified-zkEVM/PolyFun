@@ -22,38 +22,20 @@ IPFunctor.FreeM.bind :
 
 The continuation must accept the per-leaf post-state `s'`, so a standard
 `Bind (IPFunctor.FreeM P s)` instance cannot express it. This file plugs
-into the Lean 4.29 extensible do-elaborator (`@[doElem_elab …]`) to make
+into Lean's extensible do-elaborator (`@[doElem_elab …]`) to make
 ordinary `do { let x ← e; … }` blocks elaborate to the right
 `IPFunctor.FreeM.bind`-tree, threading a fresh post-state through each step.
 
-## Activating the new elaborator
+## Elaborator selection
 
-Lean 4.29 ships *two* `do` elaborators: the legacy one (active by default)
-and a new extensible one. Our overrides plug into the new one, so users
-must opt in by setting
-
-```
-set_option backward.do.legacy false
-```
-
-at the top of any file that wants `do`-notation for `IPFunctor.FreeM`.
-To opt in *project-wide*, add the option to your `lakefile.toml`:
-
-```toml
-[leanOptions]
-backward.do.legacy = false
-```
+The pinned Lean toolchain ships both legacy and extensible `do` elaborators.
+The extensible elaborator is the default (`backward.do.legacy` is `false`), so
+no option is needed to use this module. Setting `backward.do.legacy true`
+selects the legacy elaborator, where these overrides are unavailable.
 
 Other monads in the same file continue to work — our elaborators check
 the expected type and `throwUnsupportedSyntax` for non-`IPFunctor.FreeM`
 monads, falling back to the builtin.
-
-**Roadmap.** `backward.do.legacy` is a transitional flag (note the
-`backward.` prefix). When upstream Lean flips the default to `false`
-and eventually retires the option, the `set_option` lines in the test
-sections of these files come out and the docstrings are updated. A
-`grep -rn 'backward.do.legacy' PolyFun/` finds every site that needs
-touching.
 
 ## Supported subset
 
