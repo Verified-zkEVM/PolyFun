@@ -287,6 +287,53 @@ example (a : Nat) : ¬ CanReturn (pure a : PUnitM Nat) a := id
 
 end StatefulCounterexamples
 
+section AutomationBattery
+
+/-! The living gate for the automation contract in `Control/Monad/Support.lean`. Each
+row is closed by a single terminal tactic, so a regression in either `simp` or `grind`
+surfaces here in isolation rather than inside a downstream proof. -/
+
+variable {m : Type → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
+
+-- Membership normalizes to `CanReturn`, then to a concrete equation, under both tactics.
+example (a b : Nat) : a ∈ support (pure b : Option Nat) ↔ a = b := by simp
+example (a b : Nat) : a ∈ support (pure b : Option Nat) ↔ a = b := by grind
+
+example (a : Nat) : support (some a) = {a} := by simp
+example (a : Nat) : support (some a) = {a} := by grind
+
+example : support (none : Option Nat) = ∅ := by simp
+example : support (none : Option Nat) = ∅ := by grind
+
+-- Set-level structure decomposes before pointwise unfolding.
+example (x : m Nat) (f : Nat → m Bool) :
+    support (x >>= f) = ⋃ a ∈ support x, support (f a) := by simp
+
+example (g : Nat → Bool) (x : m Nat) : support (g <$> x) = g '' support x := by simp
+
+-- The indexed layer computes too.
+example {σ : Type} (s : σ) (a : Nat) :
+    StateT.supportFrom s (pure a : StateT σ m Nat) = {(a, s)} := by simp
+
+example {σ : Type} (s : σ) (a : Nat) :
+    StateT.supportFrom s (pure a : StateT σ m Nat) = {(a, s)} := by grind
+
+-- The writer layer, which had no support at all before.
+example {ω : Type} [Monoid ω] (a : Nat) (w : ω) (x : WriterT ω m Nat)
+    (h : (a, w) ∈ support x.run) : a ∈ support x := by grind [mem_support_writerT_iff]
+
+/-! The support-quantifier characterizations are deliberately kept out of `grind`'s
+default set, so a naive `grind` on a support goal fails fast rather than saturating.
+They remain available by explicit opt-in. -/
+
+example (p : Nat → Prop) (x : m Nat) (h : ∀ a ∈ support x, p a) : AllOutputs p x := by
+  grind [allOutputs_iff_forall_support]
+
+example (p : Nat → Prop) (x : m Nat) (h : SomeOutput p x) : ¬ NoOutput p x := by
+  grind [not_noOutput_iff]
+
+end AutomationBattery
+
 section TrivialTriple
 
 variable {m : Type → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]

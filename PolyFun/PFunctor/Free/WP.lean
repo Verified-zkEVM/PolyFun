@@ -369,6 +369,60 @@ theorem wpFold_demonic_not_iff_noOutput (x : FreeM P α) (post : α → Prop) :
 
 end Support
 
+/-! ## Coherence with the interpreted program's support
+
+The section above relates the syntactic fold to the support of the *free tree*. This one
+closes the other half: it relates the semantic `wpVia` to the support of the *interpreted*
+program, which is what a handler-specification consumer actually reasons about.
+
+The carrier is `Prop`, so these live at the ground direction universe: `MAlgOrdered m l`
+forces `l : Type uB`, and `Prop : Type 0`. -/
+
+section SemanticSupport
+
+open MonadAttach
+
+variable {Q : PFunctor.{uA, 0}} {n : Type → Type w}
+  [Monad n] [LawfulMonad n] [MonadAttach n] [ExactMonadAttach n] {α : Type}
+
+attribute [local instance] MonadAttach.mAlgOrderedPropDemonic
+
+/-- **The semantic keystone.** `wpVia` is by definition the algebra's `wp` of the
+interpreted program, so under the demonic `Prop` algebra it *is* the "always" judgment on
+that program. One rewrite, but it is the step that turns every statement about `wpVia`
+into a statement about which outputs the interpreted program can actually return. -/
+theorem wpVia_demonic_iff_allOutputs (s : Handler n Q) (x : FreeM Q α) (post : α → Prop) :
+    wpVia s x post ↔ AllOutputs post (x.liftM s) :=
+  wp_iff_allOutputs _ post
+
+/-- The angelic companion. -/
+theorem wpVia_angelic_iff_someOutput (s : Handler n Q) (x : FreeM Q α) (post : α → Prop) :
+    letI := MonadAttach.mAlgOrderedPropAngelic (m := n)
+    wpVia s x post ↔ SomeOutput post (x.liftM s) :=
+  wp_angelic_iff_someOutput _ post
+
+/-- **Specs discharge support facts about the interpreted program.** Composing the
+keystone with `wpFold_le_wpVia`: a per-operation spec that under-approximates the
+handler's `wp` turns a syntactic fold into a guarantee about every output the handler
+can actually produce. This is the shape a handler-specification layer consumes. -/
+theorem allOutputs_liftM_of_wpFold {Φ : OpSpec Q Prop} (s : Handler n Q)
+    (h : ∀ (a : Q.A) (k : Q.B a → Prop), Φ a k ≤ MAlgOrdered.wp (s a) k)
+    (x : FreeM Q α) (post : α → Prop) (hx : wpFold Φ x post) :
+    AllOutputs post (x.liftM s) :=
+  (wpVia_demonic_iff_allOutputs s x post).mp (wpFold_le_wpVia s h x post hx)
+
+/-- The demonic fold at the *canonical* spec already implies the interpreted guarantee,
+whenever the handler validates that spec. Specializes the previous theorem to
+`OpSpec.demonic`, whose hypothesis says the handler's every answer is possible. -/
+theorem allOutputs_liftM_of_allOutputs (s : Handler n Q)
+    (h : ∀ (a : Q.A) (k : Q.B a → Prop), (∀ b, k b) → MAlgOrdered.wp (s a) k)
+    (x : FreeM Q α) (post : α → Prop) (hx : AllOutputs post x) :
+    AllOutputs post (x.liftM s) :=
+  allOutputs_liftM_of_wpFold s h x post
+    ((wpFold_demonic_iff_allOutputs x post).mpr hx)
+
+end SemanticSupport
+
 end FreeM
 
 end PFunctor

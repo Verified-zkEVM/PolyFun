@@ -62,7 +62,7 @@ non-trivially. CPS encodings such as `PolyFun.Control.Monad.FreeContT` therefore
 
 @[expose] public section
 
-universe u v
+universe u v w
 
 /-- A monad whose `MonadAttach.CanReturn` predicate is *exact*: besides being the strongest
 postcondition (`LawfulMonadAttach`), it is closed under the monad's introduction rules, so
@@ -94,10 +94,60 @@ def support [MonadAttach m] (x : m α) : Set α :=
 
 Stated as a simp lemma because `Set.ofPred` and `Set.Mem` are `implicit_reducible`: `rfl`
 and `exact` see through them, but `simp`'s reducible-transparency discharge does not. -/
-@[simp]
+@[simp, grind =]
 theorem mem_support [MonadAttach m] {x : m α} {a : α} :
     a ∈ support x ↔ CanReturn x a :=
   Iff.rfl
+
+/-! ### Automation contract
+
+Two normal forms, one per layer, chosen so the two do not fight:
+
+* **Membership normalizes to `CanReturn`.** `mem_support` is `@[simp, grind =]`, so
+  `a ∈ support x` becomes the atomic reachability predicate, and the per-monad
+  `canReturn_iff` lemmas take it the rest of the way to a concrete equation. Those
+  lemmas key on `CanReturn`, not on membership, precisely so that they extend the
+  chain rather than race `mem_support` for the same left-hand side.
+* **Set-level laws produce `support` terms.** `support_pure`, `support_bind`,
+  `support_map` are `@[simp]`, so a structural goal is first decomposed at the set
+  level and only then unfolded pointwise.
+
+`grind` tags go on the *directed, single-variable* bridges only: membership
+unfoldings and the closed-form supports of `pure`/`none`/`error`. The
+characterizations that quantify over the support — `support_eq_empty_iff`,
+`support_nonempty_iff`, and the `AllOutputs`/`SomeOutput` iffs — stay `@[simp]`-only.
+Those are saturation hazards: `grind` case-splits the iff, Skolemizes the support
+quantifier into a fresh witness, and the always-tagged `bind` expansions turn that
+witness back into more `support` terms with no finite grounding. A proof that needs
+one re-supplies it locally, as `grind [allOutputs_iff_forall_support]`.
+
+### Emptiness and branching
+
+These need no exactness: they are about the shape of the `Set`, not about how the
+monad's operations act on it. -/
+
+theorem support_eq_empty_iff [MonadAttach m] {x : m α} :
+    support x = ∅ ↔ ∀ a, ¬ CanReturn x a := by
+  rw [Set.eq_empty_iff_forall_notMem]
+  exact Iff.rfl
+
+theorem support_nonempty_iff [MonadAttach m] {x : m α} :
+    (support x).Nonempty ↔ ∃ a, CanReturn x a :=
+  Iff.rfl
+
+theorem not_mem_support_iff [MonadAttach m] {x : m α} {a : α} :
+    a ∉ support x ↔ ¬ CanReturn x a :=
+  Iff.rfl
+
+@[simp]
+theorem support_ite [MonadAttach m] (c : Prop) [Decidable c] (x y : m α) :
+    support (if c then x else y) = if c then support x else support y := by
+  split <;> rfl
+
+@[simp]
+theorem support_dite [MonadAttach m] (c : Prop) [Decidable c] (x : c → m α) (y : ¬ c → m α) :
+    support (if h : c then x h else y h) = if h : c then support (x h) else support (y h) := by
+  split <;> rfl
 
 section Laws
 
@@ -132,6 +182,13 @@ theorem support_map (g : α → β) (x : m α) : support (g <$> x) = g '' suppor
   rw [← bind_pure_comp, support_bind]
   ext b
   simp [eq_comm]
+
+@[simp]
+theorem support_seq (f : m (α → β)) (x : m α) :
+    support (f <*> x) = ⋃ g ∈ support f, g '' support x := by
+  rw [seq_eq_bind_map, support_bind]
+  simp only [support_map]
+
 
 end Laws
 
@@ -220,6 +277,81 @@ theorem someOutput_mono {p q : α → Prop} (h : ∀ a, p a → q a) {x : m α}
 theorem noOutput_mono {p q : α → Prop} (h : ∀ a, q a → p a) {x : m α}
     (hx : NoOutput p x) : NoOutput q x :=
   fun a ha hqa => hx a ha (h a hqa)
+
+/-! #### Negation
+
+The pair is dual: the demonic judgment is the negation of the angelic one at the
+negated predicate, and conversely. Only one direction of this was available before. -/
+
+theorem not_allOutputs_iff (p : α → Prop) (x : m α) :
+    ¬ AllOutputs p x ↔ SomeOutput (fun a => ¬ p a) x := by
+  simp only [AllOutputs, SomeOutput, not_forall]
+  exact ⟨fun ⟨a, ha⟩ => ⟨a, by simpa using ha⟩, fun ⟨a, ha, hna⟩ => ⟨a, by simp [ha, hna]⟩⟩
+
+theorem not_noOutput_iff (p : α → Prop) (x : m α) :
+    ¬ NoOutput p x ↔ SomeOutput p x := by
+  rw [NoOutput, not_allOutputs_iff]
+  exact ⟨fun h => h.imp fun _ ⟨ha, hp⟩ => ⟨ha, not_not.mp hp⟩,
+    fun h => h.imp fun _ ⟨ha, hp⟩ => ⟨ha, not_not.mpr hp⟩⟩
+
+theorem someOutput_iff_not_noOutput (p : α → Prop) (x : m α) :
+    SomeOutput p x ↔ ¬ NoOutput p x :=
+  (not_noOutput_iff p x).symm
+
+theorem noOutput_iff_allOutputs_not (p : α → Prop) (x : m α) :
+    NoOutput p x ↔ AllOutputs (fun a => ¬ p a) x :=
+  Iff.rfl
+
+/-! #### Disjunction, conjunction, and monotonicity in the computation
+
+`allOutputs_and` was already available; these complete the square. Note the
+directions: the demonic judgment distributes over `∧` and only absorbs `∨`, and the
+angelic one is the mirror image. -/
+
+theorem someOutput_or (p q : α → Prop) (x : m α) :
+    SomeOutput (fun a => p a ∨ q a) x ↔ SomeOutput p x ∨ SomeOutput q x := by
+  constructor
+  · rintro ⟨a, ha, hp | hq⟩
+    · exact Or.inl ⟨a, ha, hp⟩
+    · exact Or.inr ⟨a, ha, hq⟩
+  · rintro (⟨a, ha, hp⟩ | ⟨a, ha, hq⟩)
+    · exact ⟨a, ha, Or.inl hp⟩
+    · exact ⟨a, ha, Or.inr hq⟩
+
+theorem allOutputs_or_of_left {p q : α → Prop} {x : m α} (h : AllOutputs p x) :
+    AllOutputs (fun a => p a ∨ q a) x :=
+  fun a ha => Or.inl (h a ha)
+
+theorem someOutput_and_left {p q : α → Prop} {x : m α}
+    (h : SomeOutput (fun a => p a ∧ q a) x) : SomeOutput p x :=
+  h.imp fun _ ⟨ha, hpq⟩ => ⟨ha, hpq.1⟩
+
+/-- Monotonicity in the *computation*, not the predicate: a demonic obligation
+transfers to anything with a smaller support. `allOutputs_mono` varies only the
+predicate. -/
+theorem allOutputs_of_support_subset {p : α → Prop} {x y : m α}
+    (hsub : support x ⊆ support y) (h : AllOutputs p y) : AllOutputs p x :=
+  fun a ha => h a (hsub ha)
+
+theorem someOutput_of_support_subset {p : α → Prop} {x y : m α}
+    (hsub : support x ⊆ support y) (h : SomeOutput p x) : SomeOutput p y :=
+  h.imp fun _ ⟨ha, hp⟩ => ⟨hsub ha, hp⟩
+
+@[simp]
+theorem allOutputs_true (x : m α) : AllOutputs (fun _ => True) x :=
+  fun _ _ => trivial
+
+@[simp]
+theorem someOutput_false_iff (x : m α) : SomeOutput (fun _ => False) x ↔ False := by
+  simp [SomeOutput]
+
+theorem allOutputs_congr {p q : α → Prop} (h : ∀ a, p a ↔ q a) (x : m α) :
+    AllOutputs p x ↔ AllOutputs q x :=
+  ⟨allOutputs_mono fun a => (h a).mp, allOutputs_mono fun a => (h a).mpr⟩
+
+theorem someOutput_congr {p q : α → Prop} (h : ∀ a, p a ↔ q a) (x : m α) :
+    SomeOutput p x ↔ SomeOutput q x :=
+  ⟨someOutput_mono fun a => (h a).mp, someOutput_mono fun a => (h a).mpr⟩
 
 end Judgments
 
@@ -335,6 +467,38 @@ def mAlgOrderedPropAngelic : MAlgOrdered m Prop where
     simp only [someOutput_bind]
     exact fun ⟨a, ha, h⟩ => ⟨a, ha, hfg a h⟩
 
+section Angelic
+
+attribute [local instance] mAlgOrderedPropAngelic
+
+/-- Support-based characterization of the angelic `Prop`-valued weakest precondition —
+the mirror of `wp_iff_forall_support`. -/
+theorem wp_angelic_iff_exists_support (x : m α) (post : α → Prop) :
+    MAlgOrdered.wp (l := Prop) x post ↔ ∃ a ∈ support x, post a := by
+  change SomeOutput id (x >>= fun a => pure (post a)) ↔ _
+  rw [someOutput_bind]
+  exact ⟨fun ⟨a, ha, h⟩ => ⟨a, ha, (someOutput_pure id (post a)).mp h⟩,
+    fun ⟨a, ha, h⟩ => ⟨a, ha, (someOutput_pure id (post a)).mpr h⟩⟩
+
+/-- The angelic `Prop`-valued weakest precondition is the "sometimes" judgment. -/
+theorem wp_angelic_iff_someOutput (x : m α) (post : α → Prop) :
+    MAlgOrdered.wp (l := Prop) x post ↔ SomeOutput post x :=
+  wp_angelic_iff_exists_support x post
+
+/-- The trivial-precondition angelic triple is exactly the "sometimes" judgment — the
+mirror of `triple_top_iff_allOutputs`. -/
+theorem triple_top_iff_someOutput (x : m α) (post : α → Prop) :
+    MAlgOrdered.Triple (l := Prop) ⊤ x post ↔ SomeOutput post x := by
+  rw [MAlgOrdered.Triple, top_le_iff, ← wp_angelic_iff_someOutput x post]
+  exact ⟨fun h => h ▸ trivial, fun h => eq_true h⟩
+
+/-- Against a negated postcondition the angelic triple is the negation of "never". -/
+theorem triple_top_not_iff_not_noOutput (x : m α) (post : α → Prop) :
+    MAlgOrdered.Triple (l := Prop) ⊤ x (fun a => ¬ post a) ↔ ¬ AllOutputs post x := by
+  rw [triple_top_iff_someOutput, ← not_allOutputs_iff]
+
+end Angelic
+
 end PropAlgebra
 
 /-! ## Recovering the `MonadLiftT` presentation
@@ -357,6 +521,50 @@ theorem toLawfulMonadLiftT (m : Type u → Type v) [Monad m] [LawfulMonad m] [Mo
   letI := toMonadLiftT m
   { monadLift_pure := fun a => support_pure a
     monadLift_bind := fun x f => support_bind x f }
+
+/-! ## Transport along a monad lift
+
+Core proves the elimination half — lifting cannot *create* possible outputs — so a
+lift can only shrink the support, and a demonic obligation therefore transfers along
+it for free.
+
+The introduction half is **not** available generically, and cannot be: nothing in
+`MonadLiftT` or its lawfulness class says the lift preserves reachability, and a lift
+into a monad whose `CanReturn` is uniformly `False` satisfies every law while losing
+every output. A caller that needs `support (liftM x) = support x` must supply that
+equation for its particular lift; `FreeM`'s powerset fold
+(`PFunctor.FreeM.support_eq_liftM_univ`) is the worked instance. -/
+
+section Transport
+
+variable {m : Type u → Type v} {n : Type u → Type w} {α : Type u}
+variable [Monad m] [LawfulMonad m] [MonadAttach m] [LawfulMonadAttach m]
+variable [Monad n] [LawfulMonad n] [MonadAttach n] [LawfulMonadAttach n]
+variable [MonadLiftT m n] [LawfulMonadLiftT m n]
+
+/-- Lifting cannot create possible outputs. The set form of core's
+`LawfulMonadAttach.canReturn_liftM_imp'`. -/
+theorem support_liftM_subset (x : m α) : support (liftM x : n α) ⊆ support x :=
+  fun _ h => LawfulMonadAttach.canReturn_liftM_imp' h
+
+/-- A demonic guarantee survives lifting: the lifted computation has no outputs the
+original did not have, so a property of all of the original's outputs holds of all of
+the lift's. -/
+theorem allOutputs_liftM {p : α → Prop} {x : m α} (h : AllOutputs p x) :
+    AllOutputs p (liftM x : n α) :=
+  fun a ha => h a (support_liftM_subset x ha)
+
+/-- Dually, an angelic fact about the lift transfers back to the original. -/
+theorem someOutput_of_someOutput_liftM {p : α → Prop} {x : m α}
+    (h : SomeOutput p (liftM x : n α)) : SomeOutput p x :=
+  h.imp fun _ ⟨ha, hp⟩ => ⟨support_liftM_subset x ha, hp⟩
+
+/-- And a "never" guarantee survives lifting. -/
+theorem noOutput_liftM {p : α → Prop} {x : m α} (h : NoOutput p x) :
+    NoOutput p (liftM x : n α) :=
+  fun a ha => h a (support_liftM_subset x ha)
+
+end Transport
 
 /-! ## Base instances
 
@@ -454,6 +662,82 @@ instance instExactMonadAttachExceptT {ε : Type u} : ExactMonadAttach (ExceptT �
         | Except.error e => pure (Except.error e) := rfl
     rw [hrun]
     exact ExactMonadAttach.canReturn_bind (a := Except.ok a) h h'
+
+/-! ### Per-monad unfoldings
+
+Each base monad's `CanReturn` is a concrete predicate, so membership in its support
+has a concrete spelling. Every one of these is `Iff.rfl`; naming them keeps callers
+from reaching through `support` and `CanReturn` with `change`. -/
+
+section Unfoldings
+
+variable {α : Type u}
+
+@[simp, grind =]
+theorem Id.canReturn_iff {x : Id α} {a : α} : CanReturn x a ↔ x.run = a :=
+  Iff.rfl
+
+@[simp]
+theorem Id.support_eq_singleton (x : Id α) : support x = {x.run} := by
+  ext a
+  rw [mem_support, Id.canReturn_iff, Set.mem_singleton_iff]
+  exact eq_comm
+
+@[simp, grind =]
+theorem Option.canReturn_iff {x : Option α} {a : α} : CanReturn x a ↔ x = some a :=
+  Iff.rfl
+
+@[simp, grind =]
+theorem Option.support_some (a : α) : support (some a) = {a} := by
+  ext b
+  rw [mem_support, Option.canReturn_iff, Set.mem_singleton_iff]
+  exact ⟨fun h => (Option.some.inj h).symm, fun h => by rw [h]⟩
+
+@[simp, grind =]
+theorem Option.support_none : support (none : Option α) = ∅ := by
+  ext b
+  rw [mem_support, Option.canReturn_iff]
+  simp
+
+@[simp, grind =]
+theorem Except.canReturn_iff {ε : Type u} {x : Except ε α} {a : α} :
+    CanReturn x a ↔ x = Except.ok a :=
+  Iff.rfl
+
+@[simp, grind =]
+theorem Except.support_ok {ε : Type u} (a : α) : support (Except.ok a : Except ε α) = {a} := by
+  ext b
+  rw [mem_support, Except.canReturn_iff, Set.mem_singleton_iff]
+  exact ⟨fun h => (Except.ok.inj h).symm, fun h => by rw [h]⟩
+
+@[simp, grind =]
+theorem Except.support_error {ε : Type u} (e : ε) :
+    support (Except.error e : Except ε α) = ∅ := by
+  ext b
+  rw [mem_support, Except.canReturn_iff]
+  simp
+
+@[simp, grind =]
+theorem SetM.canReturn_iff {x : SetM α} {a : α} : CanReturn x a ↔ a ∈ SetM.run x :=
+  Iff.rfl
+
+@[simp]
+theorem SetM.support_eq_run (x : SetM α) : support x = SetM.run x :=
+  Set.ext fun _ => Iff.rfl
+
+variable {m : Type u → Type v} [Monad m] [MonadAttach m]
+
+@[simp, grind =]
+theorem OptionT.canReturn_iff {x : OptionT m α} {a : α} :
+    CanReturn x a ↔ some a ∈ support x.run :=
+  Iff.rfl
+
+@[simp, grind =]
+theorem ExceptT.canReturn_iff {ε : Type u} {x : ExceptT ε m α} {a : α} :
+    CanReturn x a ↔ Except.ok a ∈ support x.run :=
+  Iff.rfl
+
+end Unfoldings
 
 /-! ### The writer transformer
 
@@ -593,12 +877,12 @@ theorem ReaderT.mem_support_iff_exists_supportAt {ρ : Type u} {x : ReaderT ρ m
     a ∈ support x ↔ ∃ r, a ∈ ReaderT.supportAt r x :=
   Iff.rfl
 
-@[simp]
+@[simp, grind =]
 theorem StateT.supportFrom_pure {σ : Type u} (s : σ) (a : α) :
     StateT.supportFrom s (pure a : StateT σ m α) = {(a, s)} := by
   rw [StateT.supportFrom, StateT.run_pure, support_pure]
 
-@[simp]
+@[simp, grind =]
 theorem ReaderT.supportAt_pure {ρ : Type u} (r : ρ) (a : α) :
     ReaderT.supportAt r (pure a : ReaderT ρ m α) = {a} := by
   rw [ReaderT.supportAt, ReaderT.run_pure, support_pure]
