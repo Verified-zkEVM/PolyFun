@@ -105,11 +105,14 @@ public import PolyFun.Interaction.TwoParty.Role
 public import PolyFun.Interaction.TwoParty.Strategy
 public import PolyFun.Interaction.TwoParty.Swap
 public import PolyFun.Interaction.TwoParty.Syntax
+public import PolyFun.Interaction.UC.ActivationObservation
 public import PolyFun.Interaction.UC.CorruptionModel
+public import PolyFun.Interaction.UC.DummyAdversary
 public import PolyFun.Interaction.UC.Emulates
 public import PolyFun.Interaction.UC.EmulatesWithin
 public import PolyFun.Interaction.UC.EnvAction
 public import PolyFun.Interaction.UC.EnvOpenProcess
+public import PolyFun.Interaction.UC.GlobalSubroutine
 public import PolyFun.Interaction.UC.Interface
 public import PolyFun.Interaction.UC.Leakage
 public import PolyFun.Interaction.UC.MachineId
@@ -125,6 +128,7 @@ public import PolyFun.Interaction.UC.OpenSyntax.Raw
 public import PolyFun.Interaction.UC.OpenTheory
 public import PolyFun.Interaction.UC.OpenTheory.Family
 public import PolyFun.Interaction.UC.Realizability
+public import PolyFun.Interaction.UC.SecureEmulation
 public import PolyFun.Interaction.UC.SubTheory
 public import PolyFun.Logic.HEq
 public import PolyFun.PFunctor.Adjunctions

@@ -163,7 +163,9 @@ under sequential and parallel composition. It supplies the external
 instantiation contract tracked in `docs/wiki/uc.md`; probability and
 efficiency remain downstream obligations.
 
-Used in: `docs/wiki/uc.md`.
+Used in: `docs/wiki/uc.md`, `PolyFun/Interaction/UC/GlobalSubroutine.lean`,
+`PolyFun/Interaction/UC/SecureEmulation.lean`,
+`PolyFun/Interaction/UC/DummyAdversary.lean`.
 
 ### CSV19 — Canetti, Stoughton, Varia, *EasyUC*
 

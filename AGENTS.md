@@ -76,7 +76,9 @@ and depend on this library.
     (interfaces, par, wire, plug), corruption models, environment
     actions, leakage, and composition-closed sub-theories (`SubTheory`, a
     boundary-indexed membership predicate, with contextual emulation
-    relativized to its allowed closing contexts), plus a
+    relativized to its allowed closing contexts), a structural activation
+    observation carrying the composition suite over the process model,
+    global-subroutine emulation (UCGS-style composition via wire), plus a
     structural bridge from
     open-process realizability to direct or generated sub-theories. This bridge
     does not assert real/ideal protocol membership, quantitative resource
