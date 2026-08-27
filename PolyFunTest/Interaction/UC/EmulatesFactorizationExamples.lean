@@ -25,8 +25,10 @@ exact `Observation.RespectsPlugComm` assumption.
 Separately, the four structural factorization laws of
 `OpenProcessFactorization.lean` are pinned at their exact statements, together
 with the scheduler truth tables the proofs re-encode. Those are results about
-`OpenProcessActivationEquiv` alone and are deliberately not promoted to any
-observation here.
+`OpenProcessActivationEquiv` alone; their promotion to the *structural*
+observation `Observation.activation` lives in
+`PolyFun.Interaction.UC.ActivationObservation` and is exercised in
+`ActivationObservationExamples`, never as a security observation.
 
 The final canary uses syntactic equality as a concrete, nontrivial observation
 on closed processes. Two processes that differ only in `stepSampler` are

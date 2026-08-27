@@ -535,9 +535,10 @@ Both sides are already closed (`Obj empty`), so — unlike `par_comm` — no bou
 reshaping is needed; the witness swaps the two components of the product state
 and flips the internal scheduler branch. This structural coherence can support
 `Emulates.plug_compose` only through an observation that separately proves
-`Observation.RespectsPlugComm`. `OpenProcessActivationEquiv` is not itself
-promoted to a UC security observation: it
-does not retain packet/action identity or `stepSampler` semantics. -/
+`Observation.RespectsPlugComm`. `Observation.activation` packages
+`OpenProcessActivationEquiv` as exactly such a *structural* observation; it is
+not a security observation, since it does not retain packet/action identity or
+`stepSampler` semantics. -/
 theorem openTheory_plug_comm_activation_equiv
     {Δ : PortBoundary}
     (W : OpenProcess.{u, v, w, w'} m Party Δ)

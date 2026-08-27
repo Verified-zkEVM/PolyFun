@@ -235,8 +235,26 @@ Interaction/UC/{OpenSyntax/Expr, SubTheory}
 
 Interaction/UC/OpenProcessModel -> Interaction/UC/OpenProcessFactorization
   (a structural result about OpenProcessActivationEquiv only; Emulates is
-   model-agnostic and must not reach OpenProcess, so promoting these laws to a
-   packet- or sampler-aware observation belongs above both and is not in tree)
+   model-agnostic and must not reach OpenProcess, so observation-level
+   promotions of these laws live above both)
+
+Interaction/UC/{Emulates, OpenProcessFactorization}
+  -> Interaction/UC/ActivationObservation
+  (Observation.activation promotes activation equivalence to a structural
+   observation whose RespectsFactorization fields are the named
+   activation-equivalence theorems; a packet- or sampler-aware observation is
+   a separate, stronger construction and is not in tree)
+
+Interaction/UC/EmulatesWithin -> Interaction/UC/GlobalSubroutine
+  (emulation with a shared global resource stated via wire, with the
+   UCGS-style outer-composition theorem derived from the wire suite)
+
+Interaction/UC/EmulatesWithin -> Interaction/UC/SecureEmulation
+  (the existential-simulator judgment and its preorder; directional,
+   unlike Emulates, and ordered per observation)
+
+Interaction/UC/Emulates -> Interaction/UC/DummyAdversary
+  (dummy-adversary and split-mono reductions for compact-closed theories)
 
 Interaction/UC/{OpenProcessModel, SubTheory}
   + Realizability/{DynSystem, DynSystemClosure}
