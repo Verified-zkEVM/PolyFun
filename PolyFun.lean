@@ -120,6 +120,8 @@ public import PolyFun.Interaction.UC.Notation
 public import PolyFun.Interaction.UC.OpenProcess
 public import PolyFun.Interaction.UC.OpenProcessFactorization
 public import PolyFun.Interaction.UC.OpenProcessModel
+public import PolyFun.Interaction.UC.OpenProcessSamplerEquiv
+public import PolyFun.Interaction.UC.OpenProcessSamplerFactorization
 public import PolyFun.Interaction.UC.OpenSyntax.AtomSubTheory
 public import PolyFun.Interaction.UC.OpenSyntax.Expr
 public import PolyFun.Interaction.UC.OpenSyntax.Interp
@@ -127,6 +129,7 @@ public import PolyFun.Interaction.UC.OpenSyntax.Raw
 public import PolyFun.Interaction.UC.OpenTheory
 public import PolyFun.Interaction.UC.OpenTheory.Family
 public import PolyFun.Interaction.UC.Realizability
+public import PolyFun.Interaction.UC.SamplerObservation
 public import PolyFun.Interaction.UC.SecureEmulation
 public import PolyFun.Interaction.UC.SubTheory
 public import PolyFun.Logic.HEq
