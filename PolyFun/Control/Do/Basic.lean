@@ -38,11 +38,30 @@ Downstream libraries choose where to register these (scoped or local); a global
 instance here would clash with registrations on reducible unfoldings of the same
 monads downstream.
 
+The demonic reading is the *only* one expressible here, and the reason is
+structural. `Std.Do.PredTrans` carries conjunctivity as a structure field, stated
+as a bi-entailment `t (Q₁ ∧ₚ Q₂) ⊣⊢ₛ t Q₁ ∧ t Q₂`. `AllOutputs` distributes over
+`∧` in both directions, so `toWP` can discharge it; `SomeOutput` distributes only
+left-to-right, since two different outputs may witness the two conjuncts
+separately. There is therefore no angelic `Std.Do.WP`, and the angelic reading
+stays at the `MAlgOrdered` level, whose `μ_bind_mono` asks only for monotonicity.
+`PolyFunTest/Control/MonadAttach.lean` pins both directions and the failure.
+
 This file depends on `Std.Do.Internal.Ensures` only through `WPSound`'s own field
 type. Reasoning here goes through `WPSound.of_wp_canReturn`, which lives in the
 stable `Std.Do` namespace; core's `Internal.MayReturn.canReturn_eq` (which proves
 `CanReturn` *is* the intrinsic strongest postcondition) is cited but not depended
 upon.
+
+Both of those are on a known clock. Upstream of this pin, core promotes its
+lattice-generic `Std.Internal.Do` tree to a public `Std.WP` (shipping in v4.35,
+not v4.34), replaces `WPSound` with `Std.WP.LawfulWPMonadAttach` — whose single
+field concludes from a `MonadAttach.CanReturn` witness directly, dropping the
+`Ensures` formulation — and deprecates `mvcgen` in favour of `vcgen`. That stack
+also drops conjunctivity from `PredTrans`, re-introducing it as the opt-in,
+one-directional `WPConjunctive`, which is what would unblock an angelic bridge.
+The elimination direction below is already stated against `CanReturn`, so it
+carries over as a rename.
 -/
 
 @[expose] public section

@@ -100,4 +100,45 @@ the productive `ITree.iter` implementation. -/
 example (body : Unit → Nat → ITree EmptySpec (ForInStep Nat)) (init : Nat) :=
   ITree.forInLoop_eq_iter (F := EmptySpec) Lean.Loop.mk init body
 
+/-! ## The loop-invariant rule
+
+`ITree.iter` is lawful only up to weak bisimulation, so the rule is a bisimulation
+congruence: it licenses assuming an invariant while reasoning about the loop body.
+-/
+
+/-- Invariant preservation: taking the two bodies to be the same one, the rule reduces
+to "every `yield` re-establishes `I`". -/
+example (loop : Lean.Loop) :
+    ITree.WeakBisim (F := EmptySpec)
+      (ITree.forInLoop loop 0 fun _ n =>
+        ITree.pure (if n < 3 then .yield (n + 1) else .done n))
+      (ITree.forInLoop loop 0 fun _ n =>
+        ITree.pure (if n < 3 then .yield (n + 1) else .done n)) := by
+  refine ITree.forInLoop_weakBisim_of_invariant (fun n => n ≤ 3) loop (by omega) ?_
+  intro b hb
+  refine ITree.WeakBisimRel.pure ?_
+  by_cases h : b < 3
+  · rw [if_pos h]
+    exact ⟨rfl, fun n hn => by have := ForInStep.yield.inj hn; omega⟩
+  · rw [if_neg h]
+    exact ⟨rfl, fun n hn => by simp at hn⟩
+
+/-- Body replacement: once the loop maintains `n ≤ 3`, the guard `n < 100` is dead, so
+the simplified body yields a weakly bisimilar loop. The invariant is what makes this
+step legitimate — the two bodies genuinely disagree at `n = 100`. -/
+example (loop : Lean.Loop) :
+    ITree.WeakBisim (F := EmptySpec)
+      (ITree.forInLoop loop 0 fun _ n =>
+        ITree.pure (if n < 3 ∧ n < 100 then .yield (n + 1) else .done n))
+      (ITree.forInLoop loop 0 fun _ n =>
+        ITree.pure (if n < 3 then .yield (n + 1) else .done n)) := by
+  refine ITree.forInLoop_weakBisim_of_invariant (fun n => n ≤ 3) loop (by omega) ?_
+  intro b hb
+  refine ITree.WeakBisimRel.pure ?_
+  by_cases h : b < 3
+  · rw [if_pos (⟨h, by omega⟩ : b < 3 ∧ b < 100), if_pos h]
+    exact ⟨rfl, fun n hn => by have := ForInStep.yield.inj hn; omega⟩
+  · rw [if_neg (fun hc => h hc.1), if_neg h]
+    exact ⟨rfl, fun n hn => by simp at hn⟩
+
 end ITree.LawfulIterationExamples
