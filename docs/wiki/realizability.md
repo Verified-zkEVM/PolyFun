@@ -24,6 +24,8 @@ cryptography.
 PolyFun/Realizability/
   StepClass.lean    PFunctor.StepClass; HasProd / HasSum / HasOption /
                     IsDistributive mixins; the Distributive bundle; Refines
+  DynSystem.lean    universe-normalized realizability of arbitrary dynamical
+                    systems and admissible interface transport
   Machine.lean      the first-order step maps: head, update?, updateFlat,
                     output, expose, stepD, their transport lemmas, and
                     faithfulness of the flat presentation
@@ -54,6 +56,8 @@ PolyFun/Realizability/
 ```
 
 `Machine.lean` and `StepClass.lean` are independent; `Basic.lean` joins them.
+`DynSystem.lean` is the non-returning substrate used by the UC bridge; it is
+also re-exported by `Basic.lean`.
 
 ## `StepClass`: A Class Of Admissible Functions
 
@@ -88,10 +92,22 @@ hand.
 | `HasSum` | the core | the one-step readout lands in a sum |
 | `HasOption` | the core | the flattened transition is *partial* |
 | `IsDistributive` | `seqComp` only | case analysis in a context |
+| `HasULiftProd` | interleaving closure only | `ULift` regrouping of product states |
 
 They are kept out of `StepClass` so that a cost-bearing successor can require
 different structure, and split so that each theorem asks for exactly what it
 consumes.
+
+`HasOption` carries both ends of the optional interface: `none_mem` (the
+constantly-absent transition of a returned machine) and `some_mem` (wrapping a
+present value), and from `some_mem` with `obindCtx_mem` the derived
+`HasOption.omapCtx_mem` gives the *strength* of `Option` — acting on the
+present branch while retaining a context — which product-state machines need
+to step one component while freezing the other.  `HasULiftProd` is the one
+representation-level mixin: `Str (ULift A × ULift B)` and
+`Str (ULift (A × B))` represent different types, and no `Hom`-level axiom can
+convert representation data between types, so the regrouping used by
+universe-normalized composite states is its own obligation.
 
 ### It really is a distributive category
 
@@ -135,6 +151,26 @@ Cockett–Díaz-Boïls–Gallagher–Hrubeš (ENTCS 286, 2012), which exhibits P
 LOGSPACE that way.
 
 ## The First-Order Step Maps
+
+There are two related first-order boundaries.
+
+For an arbitrary `DynSystem`, `DynSystem.Realization` constrains `expose` and a
+chosen partial extension
+
+```lean
+update? : State × p.Idx → Option State
+```
+
+with a law saying that it returns the system's actual next state on every
+enabled direction. Its behavior on mismatched tags is deliberately
+unconstrained. This formulation does not require decidable equality on
+positions, which is essential for `ProcessOver`: its positions are decorated
+type trees containing types and functions. `DynSystem.ulift` first normalizes
+the state, position, and direction universes into the one universe represented
+by `StepClass`.
+
+For a returning `DynComputation`, the stronger canonical maps below remain the
+cost boundary used by free-program closure.
 
 `DynComputation`'s dynamics live in `view : State → β ⊕ p.Obj State`, whose
 second component stores a *function-valued* continuation and is *dependent* on
@@ -344,13 +380,20 @@ theorem makes admissibility invariant under translated source and target
 representations. Products, sums, and optional-value representations inherit the
 certificate componentwise.
 
-`Boundary.PolyTranslatable` applies that condition to the input, result,
-position, and tagged-answer representations. The theorems
+`DynComputation.Boundary.PolyTranslatable` applies that condition to the input,
+result, position, and tagged-answer representations. The theorems
 `isRealizableBy_iff_of_boundary_polyTranslatable` and
 `isRealizableWithin_iff_of_boundary_polyTranslatable` transport one machine
 witness in both directions without changing its hidden-state representation or
 query budget. This is the explicit invariance theorem needed before replacing a
 pinned cryptographic boundary encoding.
+
+`DynSystem.Boundary.PolyTranslatable` is the non-returning counterpart for the
+position and flattened-index representations used by open processes. Its
+`isRealizableBy_iff_of_boundary_polyTranslatable` theorem transports the chosen
+partial update extension and its enabled-step law unchanged. Since
+`OpenProcess.StructuralBoundary` is this boundary at a canonical universe lift,
+the same theorem supplies representation invariance for the UC bridge.
 
 `StepClass.PolyCodable word rep` is stronger than an injective bit encoding. It
 contains a semantic `CodeRetract` with `decode (encode value) = some value`, an
@@ -363,12 +406,20 @@ concrete complexity library must expose the operations it actually closes.
 
 ## Universe Discipline
 
-`StepClass.Str` speaks about types in a single universe, so the realizability
+`StepClass.Str` speaks about types in a single universe. The returning-program
 predicates are stated at `p : PFunctor.{u, u}` with `α β : Type u`, hence
 `State : Type u`. Then `p.A`, `p.Idx`, `β ⊕ p.A`, and `State × p.Idx` all live in
 `Type u`. The underlying `DynComputation` API stays fully universe-polymorphic;
-only this layer is pinned. Every intended instantiation target is monomorphic
-anyway.
+only this layer is pinned.
+
+Arbitrary dynamical systems use `DynSystem.ulift` instead. In particular,
+`OpenProcess.StructuralBoundary` lifts residual states, decorated step
+positions, and paths to `max u v (w + 1)` before applying a step class. The lift
+is explicit in the boundary type and therefore cannot conceal a representation
+change. `StepOver.mapContextLens` identifies context mapping with polynomial
+wrapping, `Lens.uliftMap` carries that lens through normalization, and
+`OpenProcess.IsStructurallyRealizableBy.mapBoundary` reduces boundary-map
+closure to one explicit `Lens.IsDynAdmissible` certificate.
 
 ## Instantiating With An External Complexity Class
 
@@ -407,6 +458,18 @@ functions — is the in-repo instance that works today and exercises every mixin
   `Type`-valued executable witnesses, encoded sizes, and backend-relative costs,
   but a concrete backend must still relate those costs to a standard operational
   machine model before making a complexity-class claim.
+- **Open-process closure is a certificate obligation.**
+  `OpenProcess.IsRealizabilityClosed` consists of four first-order lens
+  admissibility certificates at the pinned boundary family
+  (`structuralMapLens` plus the three `structuralInterleaveLens`
+  instantiations); the composite closure theorems `par_mem` / `wire_mem` /
+  `plug_mem` follow generically through the product-state combinator
+  `DynSystem.IsRealizableBy.ulift_wrapChoiceProd` in `DynSystemClosure.lean`.
+  Only the unconstrained canary instantiates the certificates in-tree; a
+  concrete machine class must prove its own. `generatedRealizableSubTheory`
+  records a composition derivation until that happens, and coincides with the
+   direct view under the contract
+   (`generatedRealizableSubTheory_eq_realizableSubTheory`).
 - **`ImplementsWithin` is pinned to a uniform `ℕ` budget.** `FreeM.IsRollBound`
   is already generic in the budget type; `ImplementsWithin` is not.
 - **No terminal or initial representation**, hence only binary distributivity and
@@ -414,8 +477,21 @@ functions — is the in-repo instance that works today and exercises every mixin
   every instance.
 - **Constant maps are not assumed admissible**, with one exception: `HasOption`
   asserts `none_mem`, because a machine that has returned takes no step and so has
-  a constantly-`none` transition. Everything else — `isRealizableBy_pure`, for
-  instance — takes constant-admissibility as a per-theorem hypothesis.
+  a constantly-`none` transition. (`some_mem` is not a constant: it wraps its
+  argument.) Everything else — `isRealizableBy_pure`, for instance — takes
+  constant-admissibility as a per-theorem hypothesis. The worked example
+  `PolyFunTest/Realizability/MapsToExamples.lean` builds the honest
+  set-preserving class (`Str := Set`, `Hom := Set.MapsTo`) with all mixins and
+  a negative admissibility example, confirming the framework restricts
+  something.
+- **The raw structural UC boundary is never finite or computable.**
+  `OpenProcess.StructuralPFunctor` positions are (lifts of) `Σ tree : TypeTree,
+  Decoration Γ tree`, and `TypeTree.node` quantifies over a whole type
+  universe, so no `Fintype` or `Primcodable` representation of the full pinned
+  `StructuralBoundary` exists. Honest quantitative UC instances therefore need
+  codable *sub-interface* boundaries — a lens onto a countable interface plus
+  `mapAdmissible` transport — which is part of the machine-substrate milestone
+  in [`uc-complexity-roadmap.md`](../reading/uc-complexity-roadmap.md).
 - **`Lens.IsAdmissible` has no `.id` and no `.comp`.** This is not an oversight:
   `pullHeadIdx` compares the incoming answer's tag against the position the lens
   exposes, so even the identity lens's pullback performs an equality test on

@@ -22,8 +22,8 @@ PolyFun/
     Multiparty/      per-party local view modes, observation kernels
     Concurrent/      structural and dynamic concurrent semantics
     UC/              open-process / open-theory layer (no security content)
-  Realizability/     step classes and realizability of free programs by
-                     machines whose transition functions are admissible;
+  Realizability/     step classes and realizability of dynamical systems and
+                     free programs by admissible first-order machines;
                      executable quantitative realizers and syntactic run costs
   Complexity/        generic resource-bound syntax (not a concrete complexity class)
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
@@ -238,9 +238,22 @@ Interaction/UC/OpenProcessModel -> Interaction/UC/OpenProcessFactorization
    model-agnostic and must not reach OpenProcess, so promoting these laws to a
    packet- or sampler-aware observation belongs above both and is not in tree)
 
+Interaction/UC/{OpenProcessModel, SubTheory}
+  + Realizability/{DynSystem, DynSystemClosure}
+  -> Interaction/UC/Realizability
+  (structural open-process realizability and composition-closed sub-theories,
+   with the composite closure theorems derived through the product-state
+   combinator; sampler cost and computational security remain downstream)
+
 PFunctor/Basic -> Realizability/StepClass
+PFunctor/Dynamical/Combinators + Realizability/StepClass
+  -> Realizability/DynSystem
+Realizability/DynSystem -> Realizability/DynSystemClosure
+  (closure of dynamical realizability under wrapped asynchronous choice;
+   the product-state combinator behind the UC composite closure theorems)
 PFunctor/Dynamical/DynComputation/Bounded -> Realizability/Machine
-Realizability/{StepClass, Machine} -> Realizability/Basic
+Realizability/{DynSystem, DynSystemClosure, StepClass, Machine}
+  -> Realizability/Basic
 Realizability/Basic -> Realizability/{Closure, Instances, Representation}
 Realizability/Basic -> Realizability/Quantitative
 Realizability/Quantitative -> Realizability/Quantitative/Closure
@@ -258,7 +271,9 @@ Mathlib/Order/Monotone/Basic -> Complexity/SecondOrderPolynomial
    backend-relative polynomial certificates; Quantitative/Resource adds
    response-relative second-order run contracts without naming a complexity class;
    Complexity contains syntax, not feasibility;
-   nothing under PFunctor/, ITree/, or Interaction/ depends on Realizability/)
+   only the explicit Interaction/UC/Realizability bridge crosses from the
+   interaction layer into Realizability/; nothing under PFunctor/ or ITree/
+   depends on Realizability/)
 ```
 
 `PolyFun.lean` is a generated umbrella import file, not a hand-maintained

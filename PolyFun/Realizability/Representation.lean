@@ -31,6 +31,11 @@ something else is determined by the ambient `StepClass`.
 constructors for products, sums, optional values, and dependent families.
 Their codecs are explicit because a bare word type carries no canonical
 pairing or tagging discipline.
+
+The certificates lift componentwise to both realizability boundaries:
+`DynSystem.DynComputation.Boundary.PolyTranslatable` for returning program
+families and `DynSystem.Boundary.PolyTranslatable` for arbitrary dynamical
+systems, each with its own realizability-invariance theorem.
 -/
 
 @[expose] public section
@@ -298,7 +303,11 @@ end PolyCodable
 
 end StepClass
 
-/-! ## Boundary translation and realizability invariance -/
+/-! ## Boundary translation and realizability invariance
+
+This section and the `DynSystem` boundary-translation section below are
+structural mirrors across the returning and non-returning realizability
+tracks; keep the two in sync. -/
 
 namespace DynSystem.DynComputation
 namespace Boundary
@@ -399,4 +408,87 @@ theorem isRealizableWithin_iff_of_boundary_polyTranslatable
     exact ⟨R.translateBoundary h.symm, hR⟩
 
 end DynSystem.DynComputation
+
+/-! ## Dynamical-system boundary translation
+
+This section mirrors the `DynSystem.DynComputation` boundary-translation
+section above for the non-returning realizability track; keep the two in
+sync. -/
+
+namespace DynSystem
+namespace Boundary
+
+variable {C : StepClass.{u, v}} {p : PFunctor.{u, u}}
+
+/-- Componentwise polynomial translatability of two dynamical-system
+realizability boundaries. -/
+structure PolyTranslatable (left right : Boundary C p) : Prop where
+  /-- Exposed-position representations translate in both directions. -/
+  pos : StepClass.PolyTranslatable left.pos right.pos
+  /-- Flattened-index representations translate in both directions. -/
+  idx : StepClass.PolyTranslatable left.idx right.idx
+
+namespace PolyTranslatable
+
+/-- Every dynamical-system boundary translates to itself. -/
+@[refl]
+theorem refl (bd : Boundary C p) : PolyTranslatable bd bd :=
+  ⟨StepClass.PolyTranslatable.refl bd.pos,
+    StepClass.PolyTranslatable.refl bd.idx⟩
+
+/-- Dynamical-system boundary translation is symmetric. -/
+@[symm]
+theorem symm {left right : Boundary C p}
+    (h : PolyTranslatable left right) : PolyTranslatable right left :=
+  ⟨h.pos.symm, h.idx.symm⟩
+
+/-- Dynamical-system boundary translations compose. -/
+@[trans]
+theorem trans {left middle right : Boundary C p}
+    (hlm : PolyTranslatable left middle) (hmr : PolyTranslatable middle right) :
+    PolyTranslatable left right :=
+  ⟨hlm.pos.trans hmr.pos, hlm.idx.trans hmr.idx⟩
+
+/-- Derived state-and-index representations translate componentwise while the
+chosen private-state representation stays fixed. -/
+theorem stateIdx [P : C.HasProd] {left right : Boundary C p}
+    (h : PolyTranslatable left right) {State : Type u} (state : C.Str State) :
+    StepClass.PolyTranslatable (left.stateIdx state) (right.stateIdx state) :=
+  (StepClass.PolyTranslatable.refl state).prod h.idx
+
+end PolyTranslatable
+
+end Boundary
+
+variable {C : StepClass.{u, v}} [P : C.HasProd] [O : C.HasOption]
+  {p : PFunctor.{u, u}} {State : Type u} {left right : Boundary C p}
+  {system : DynSystem State p}
+
+/-- Transport a dynamical-system realization across componentwise
+polynomially translatable boundary representations without changing its
+system, partial update, or private-state layout. -/
+def Realization.translateBoundary (h : left.PolyTranslatable right)
+    (R : Realization C left system) : Realization C right system where
+  state := R.state
+  expose_mem := ((StepClass.PolyTranslatable.refl R.state).hom_iff h.pos
+    system.expose).mp R.expose_mem
+  update? := R.update?
+  update_mem := ((h.stateIdx R.state).hom_iff
+    (StepClass.PolyTranslatable.refl (O.option R.state))
+    R.update?).mp R.update_mem
+  update?_enabled := R.update?_enabled
+
+/-- Structural realizability of a fixed dynamical system is invariant under
+componentwise polynomial translation of its pinned interface
+representations. -/
+theorem isRealizableBy_iff_of_boundary_polyTranslatable
+    (h : left.PolyTranslatable right) :
+    IsRealizableBy C left system ↔ IsRealizableBy C right system := by
+  constructor
+  · rintro ⟨R⟩
+    exact ⟨R.translateBoundary h⟩
+  · rintro ⟨R⟩
+    exact ⟨R.translateBoundary h.symm⟩
+
+end DynSystem
 end PFunctor

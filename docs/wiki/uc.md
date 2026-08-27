@@ -39,7 +39,7 @@ the activation-equivalence factorization theorems in
 | --- | --- | --- |
 | symmetric monoidal category `C` of interactive systems | `OpenTheory`, with `par`, `wire`, and a granular lawfulness ladder | Candidate model; the free syntax models satisfy the strict laws, while `openTheory` is only `IsLawful` |
 | backdoor category `C_bd` | adversarial ports can be represented by ordinary typed boundary components | Representation strategy only; no equivalence with the paper's backdoor construction or quotient is proved |
-| nested `D_real ⊆ D_bd` | ordered `SubTheory` values | Structural carrier available; no default membership predicate connects it to corruption, realizability, or efficiency |
+| nested `D_real ⊆ D_bd` | ordered `SubTheory` values | Structural carrier plus `realizableSubTheory` / `generatedRealizableSubTheory`; corruption and concrete efficiency still require explicit instances |
 | corruption restriction defining `D_real` | `CorruptionModel`, `MomentaryCorruption` | Vocabulary only; no bridge to `SubTheory.mem` |
 | resources/states | open objects closed against contexts | Conceptual correspondence; no translation theorem to the paper's state category |
 | Definition III.3 equivalence closed by composition | `Observation` plus `RespectsPlugComm` and `RespectsFactorization` | Structural interface implemented; equality is the only in-repo observation constructor |
@@ -47,7 +47,7 @@ the activation-equivalence factorization theorems in
 | Theorems III.11--III.12 composition | `Emulates{,Within}.{par,wire,plug}_compose` | Proved from observation-level laws |
 | Theorem III.7 and Lemma IV.3 dummy/mux | no generic dummy/mux theorem | Open |
 | Theorem III.14 global subroutines | no global-subroutine instantiation | Open |
-| Section IV-C efficient networks | `SubTheory` is the target interface; `Realizability/StepClass` is under review | Open; qualitative realizability is not a PPT or network-collapse theorem |
+| Section IV-C efficient networks | `OpenProcess.StructuralBoundary`, `IsRealizabilityClosed` (four lens certificates), and realizability sub-theories | Structural bridge implemented with composite closure derived generically through the product-state combinator; concrete PPT certificates and network-collapse theorems remain open |
 | Theorem IV.6 ITM translation | generic `Party`; optional `MachineId (sid,pid)` frontend | Open; identities are not part of core `OpenTheory` semantics |
 
 `Leakage` is deliberately absent from the `C_bd` row: snapshot leakage and an
@@ -110,9 +110,11 @@ Allowed PPT contexts require a family-level machine witness, canonical or
 provably translatable boundary encodings, state-size accounting, and closure
 under the structural compositions consumed by `SubTheory`.
 
-For the quantitative successor, the transition witness must be stated over
-the partial `update?` interface, not the junk-state convention `updateFlat`, so
-sequential bind remains expressible. State growth must either be charged
+For returning computations, the quantitative successor uses the canonical
+partial `update?`, not the junk-state convention `updateFlat`, so sequential
+bind remains expressible. General dynamical systems instead carry an admissible
+partial extension with an enabled-step correctness law; this avoids assuming
+decidable equality on decorated type-tree positions. State growth must either be charged
 additively or be restricted by an explicit cap whose completeness cost is
 documented. Boundary encodings additionally need polynomial translation
 invariance and a word-level coding retraction; injectivity alone is not a
@@ -120,6 +122,9 @@ complexity-invariant interface. The generic certificates are
 `StepClass.PolyTranslatable`, `Boundary.PolyTranslatable`, and
 `StepClass.PolyCodable`; a VCVio complexity class must instantiate their
 admissibility fields quantitatively.
+
+The coordinated milestone order and repository ownership are maintained in
+[`uc-complexity-roadmap.md`](../reading/uc-complexity-roadmap.md).
 
 ## Related-Model Lessons
 

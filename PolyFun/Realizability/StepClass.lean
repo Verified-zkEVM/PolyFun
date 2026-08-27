@@ -258,6 +258,11 @@ class HasOption (C : StepClass.{u, v}) [P : C.HasProd] where
   obindCtx_mem : ∀ {A B E : Type u} {a : C.Str A} {b : C.Str B} {e : C.Str E}
     {k : A × E → Option B}, C.Hom (P.prod a e) (option b) k →
       C.Hom (P.prod (option a) e) (option b) fun y => y.1.bind fun j => k (j, y.2)
+  /-- Wrapping a present value is admissible. Together with `obindCtx_mem` this
+  gives the strength of `Option` relative to the class
+  (`HasOption.omapCtx_mem`), which product-state machines need to step one
+  component while freezing the other. -/
+  some_mem : ∀ {A : Type u} (a : C.Str A), C.Hom a (option a) some
 
 /-- An admissible identity map acts on optional values while denoting the
 identity on the underlying optional-value type. -/
@@ -267,6 +272,20 @@ theorem HasOption.map_id_mem [C.HasProd] [O : C.HasOption] {A : Type u}
   (O.omap_mem ha).congr (by
     intro value
     cases value <;> rfl)
+
+/-- Admissible maps act on the present branch of an optional value while
+retaining a context: the strength of `Option` relative to the class.
+
+This is not derivable from `omap_mem` / `none_mem` / `obindCtx_mem` alone —
+none of those can produce a `some`-payload that depends on retained context —
+which is why `some_mem` is a primitive field. -/
+theorem HasOption.omapCtx_mem [P : C.HasProd] [O : C.HasOption]
+    {A B E : Type u} {a : C.Str A} {b : C.Str B} {e : C.Str E} {f : A × E → B}
+    (hf : C.Hom (P.prod a e) b f) :
+    C.Hom (P.prod (O.option a) e) (O.option b)
+      fun y => y.1.map fun j => f (j, y.2) :=
+  (O.obindCtx_mem (C.comp_mem hf (O.some_mem b))).congr fun y => by
+    cases y.1 <;> rfl
 
 /-! ## Distributivity -/
 
@@ -340,6 +359,38 @@ attribute [implicit_reducible, instance] Distributive.toHasProd
   Distributive.toHasSum Distributive.toHasOption
 
 attribute [instance] Distributive.toIsDistributive
+
+/-! ## Universe regrouping -/
+
+-- The represented universe `s` and lift universe `t` are independent
+-- parameters of the regrouping, which is used precisely where a lifted
+-- composite state must live in a universe above both components, as in
+-- `DynSystem.ulift`.  The explicit binder list pins the order `s, t, v`.
+set_option linter.checkUnivs false in
+/-- The class represents the `ULift` regrouping of binary products: from
+representations of the lifted factors, a representation of the lifted product
+with both canonical regrouping maps admissible.
+
+This cannot be an ordinary `Hom`-level axiom: `Str (ULift A × ULift B)` and
+`Str (ULift (A × B))` represent *different types*, and no admissibility law
+converts representation data between distinct types.  The mixin is consumed
+exactly once, to give the product-state machine of an interleaving the state
+type `ULift (S₁ × S₂)` that `DynSystem.ulift` assigns to it. -/
+class HasULiftProd.{s, t, v'} (C : StepClass.{max s t, v'}) [P : C.HasProd] where
+  /-- Representation of the lifted product from representations of the lifted
+  factors. -/
+  uliftProd : {A B : Type s} → C.Str (ULift.{t} A) → C.Str (ULift.{t} B) →
+    C.Str (ULift.{t} (A × B))
+  /-- Regrouping into the lifted product is admissible. -/
+  up_mem : ∀ {A B : Type s} (a : C.Str (ULift.{t} A))
+    (b : C.Str (ULift.{t} B)),
+    C.Hom (P.prod a b) (uliftProd a b)
+      fun x => ULift.up (x.1.down, x.2.down)
+  /-- Regrouping out of the lifted product is admissible. -/
+  down_mem : ∀ {A B : Type s} (a : C.Str (ULift.{t} A))
+    (b : C.Str (ULift.{t} B)),
+    C.Hom (uliftProd a b) (P.prod a b)
+      fun y => (ULift.up y.down.1, ULift.up y.down.2)
 
 /-! ## Refinement between classes -/
 

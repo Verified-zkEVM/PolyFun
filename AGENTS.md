@@ -76,18 +76,23 @@ and depend on this library.
     (interfaces, par, wire, plug), corruption models, environment
     actions, leakage, and composition-closed sub-theories (`SubTheory`, a
     boundary-indexed membership predicate, with contextual emulation
-    relativized to its allowed closing contexts). This relativization does not
-    assert real/ideal protocol membership, resource bounds, simulator
-    realizability, or a connection to `CorruptionModel`; those require explicit
-    downstream bridges. *Generic only* — security-flavored UC layers
+    relativized to its allowed closing contexts), plus a
+    structural bridge from
+    open-process realizability to direct or generated sub-theories. This bridge
+    does not assert real/ideal protocol membership, quantitative resource
+    bounds, sampler realizability, or a connection to `CorruptionModel`; those
+    require explicit downstream instances. *Generic only* — security-flavored UC layers
     (computational equivalence, asymptotic security) live in VCVio.
 - `PolyFun/Realizability/`: step classes (`StepClass` — a wide subcategory of
   `Type u` presented by a representation structure on types and an
   admissibility predicate on functions; with products, sums and distributivity
-  it is exactly a distributive category) and realizability of `FreeM` program
-  families by `DynComputation` machines whose first-order step maps are
-  admissible. Closed under `ofFn`, input precomposition, result
-  postcomposition, `bind`, interface transport, and class refinement.
+  it is exactly a distributive category), realizability of arbitrary
+  `DynSystem`s through an enabled-correct partial update extension, and
+  realizability of `FreeM` program families by `DynComputation` machines whose
+  first-order step maps are admissible. Closed under `ofFn`, input precomposition, result
+  postcomposition, `bind`, interface transport, wrapped asynchronous choice
+  (the product-state combinator behind UC composite closure), and class
+  refinement.
   Instances: unconstrained, finite-state, Mathlib-`Computable`, and a bridge
   from any class of word functions. `Representation.lean` supplies mutual
   admissible translation, boundary-level realizability invariance, and
@@ -272,6 +277,9 @@ too specific or too changeable to keep at the repo root.
   troubleshooting.
 - [`docs/wiki/review-hardening.md`](docs/wiki/review-hardening.md): required
   API, mathematical, adversarial, lint, and content-control review passes.
+- [`docs/wiki/module-api.md`](docs/wiki/module-api.md): public-API policy
+  under Lean's module system (import choices, reducer surfaces,
+  ordinary-import canaries, cross-package `import all` audit rule).
 
 ### Wiki Maintenance Contract
 
