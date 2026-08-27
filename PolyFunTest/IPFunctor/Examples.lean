@@ -51,8 +51,6 @@ W-type.
 
 @[expose] public section
 
-set_option backward.do.legacy false
-
 namespace IPFunctor.Examples
 
 /-! ## Two-phase protocol fixture -/

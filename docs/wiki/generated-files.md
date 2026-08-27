@@ -18,10 +18,13 @@ Edit the source of truth, not the output.
 - `./scripts/check-imports.sh` is the lightweight read-only check used in
   CI: it regenerates `PolyFun.lean` to a temp file and diffs against the
   committed copy.
-- `./scripts/check-docs-integrity.py` validates the CLAUDE.md symlink and
-  resolves all internal markdown links in tracked top-level docs and
-  `docs/`. Run it (or `./scripts/validate.sh`, which calls it) after any
-  doc rename, move, or deletion. CI runs this via
+- `./scripts/check-docs-integrity.py` validates the CLAUDE.md symlink,
+  resolves internal markdown links and repository-rooted Lean paths in tracked
+  top-level docs and `docs/`, and checks that production/test Lean files keep a
+  module docstring in the standard post-import prologue slot. Its regression
+  fixtures live in `./scripts/test-docs-integrity.py`; the validation wrapper
+  and CI run both scripts. Run them after any documentation or Lean-module
+  rename, move, addition, or deletion. CI runs this via
   [`../../.github/workflows/docs-integrity.yml`](../../.github/workflows/docs-integrity.yml).
 - If a path looks derived, confirm its source of truth before editing it.
 - The wiki itself is *not* generated. Keep it maintained with source changes;

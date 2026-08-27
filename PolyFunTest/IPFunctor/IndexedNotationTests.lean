@@ -19,8 +19,6 @@ trees to the corresponding `PFunctor.FreeM` trees.
 
 @[expose] public section
 
-set_option backward.do.legacy false
-
 namespace IPFunctorFreeM₂NotationTests
 
 /-- A tiny `IPFunctor.Endo` over `Bool`. State `false` lets you `flip` (→ `true`);

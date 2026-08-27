@@ -16,6 +16,7 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -35,7 +36,16 @@ TRACKED_PATHS = [
 
 MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 LEAN_PATH_RE = re.compile(
-    r"(?<![A-Za-z0-9_./])((?:PolyFun|PolyFunTest)/[A-Za-z0-9_./-]+\.lean)"
+    r"(?<![A-Za-z0-9_./])"
+    r"((?:PolyFun|PolyFunTest)/(?:"
+    r"[A-Za-z0-9_./-]+\.lean|"
+    r"[A-Za-z0-9_./-]*\{[A-Za-z0-9_./, -]+\}(?:[A-Za-z0-9_./-]*\.lean)?"
+    r"))"
+    r"(?![A-Za-z0-9_./-])"
+)
+MODULE_COMMAND_RE = re.compile(r"^module[ \t]*$", re.MULTILINE)
+IMPORT_COMMAND_RE = re.compile(
+    r"(?:(?:public|private|meta)[ \t]+)*import(?:[ \t]+all)?[ \t]+[^\n]+"
 )
 
 
@@ -102,22 +112,64 @@ def check_markdown_links() -> list[str]:
     return errors
 
 
+def expand_lean_path(expression: str) -> list[str]:
+    """Expand one literal or single-brace repository-rooted Lean path."""
+    if "{" not in expression:
+        return [expression]
+    prefix, choices_and_suffix = expression.split("{", 1)
+    choices, suffix = choices_and_suffix.split("}", 1)
+    return [prefix + choice.strip() + suffix for choice in choices.split(",")]
+
+
+def lean_paths(text: str) -> Iterator[str]:
+    """Yield every literal Lean path represented in documentation text."""
+    for expression in LEAN_PATH_RE.findall(text):
+        yield from expand_lean_path(expression)
+
+
+def missing_lean_paths(text: str, repo_root: Path = REPO_ROOT) -> list[str]:
+    """Return documented Lean paths that do not exist under ``repo_root``."""
+    return sorted(
+        rel_path
+        for rel_path in set(lean_paths(text))
+        if not (repo_root / rel_path).exists()
+    )
+
+
 def check_lean_paths() -> list[str]:
     errors: list[str] = []
     for doc_file in tracked_markdown_files():
         text = doc_file.read_text()
-        for rel_path in sorted(set(LEAN_PATH_RE.findall(text))):
-            if not (REPO_ROOT / rel_path).exists():
-                rel_doc = doc_file.relative_to(REPO_ROOT)
-                errors.append(f"Missing Lean path in {rel_doc}: {rel_path}")
+        for rel_path in missing_lean_paths(text):
+            rel_doc = doc_file.relative_to(REPO_ROOT)
+            errors.append(f"Missing Lean path in {rel_doc}: {rel_path}")
     return errors
+
+
+def has_module_docstring(text: str) -> bool:
+    """Check for a module docstring in the standard post-import prologue slot."""
+    module_match = MODULE_COMMAND_RE.search(text)
+    if module_match is None:
+        return False
+
+    offset = module_match.end()
+    while True:
+        whitespace = re.match(r"\s*", text[offset:])
+        assert whitespace is not None
+        offset += whitespace.end()
+        if text.startswith("/-!", offset):
+            return True
+        import_match = IMPORT_COMMAND_RE.match(text, offset)
+        if import_match is None:
+            return False
+        offset = import_match.end()
 
 
 def check_module_docstrings() -> list[str]:
     errors: list[str] = []
     for source_root in (REPO_ROOT / "PolyFun", REPO_ROOT / "PolyFunTest"):
         for lean_file in source_root.rglob("*.lean"):
-            if "/-!" not in lean_file.read_text():
+            if not has_module_docstring(lean_file.read_text()):
                 rel_path = lean_file.relative_to(REPO_ROOT)
                 errors.append(f"Missing module docstring: {rel_path}")
     return errors
