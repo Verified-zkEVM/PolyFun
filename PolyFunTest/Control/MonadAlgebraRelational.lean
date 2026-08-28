@@ -246,4 +246,32 @@ example : RelWP (m₁ := Id) (m₂ := ExceptT Unit Id) (2 : Nat) (pure 3)
 
 end RightExcept
 
+section HonestRelationalExceptions
+
+/-! `rwpExc` keeps the four success/failure combinations apart, where the `exceptTLeft` /
+`exceptTRight` lifts collapse failure to `⊥`. The `Anchored` instance above is what makes
+the collapse-to-unary laws available. -/
+
+/-- Both sides succeed: the postcondition is read at the two `ok` branches. -/
+example : rwpExc (m₁ := Id) (m₂ := Id) (ε₁ := Unit) (ε₂ := Unit)
+    (pure 2) (pure 3) (fun ea eb => ea = Except.ok 2 ∧ eb = Except.ok 3) :=
+  by simp
+
+/-- A thrown exception is *recorded*, not collapsed. Under the lossy `ExceptT` lifts this
+postcondition would be unreachable; here it is just the `error`/`ok` corner. -/
+example (e : Unit) : rwpExc (m₁ := Id) (m₂ := Id) (ε₂ := Unit)
+    (ExceptT.mk (pure (Except.error e)) : ExceptT Unit Id Nat) (pure 3)
+    (fun ea eb => ea = Except.error e ∧ eb = Except.ok 3) :=
+  by simp
+
+/-- Anchoring: with a pure left side, the relational statement becomes the unary `wpExc`
+of the right side. -/
+example (y : ExceptT Unit Id Nat) (post : Except Unit Nat → Except Unit Nat → Prop) :
+    rwpExc (m₁ := Id) (m₂ := Id) (pure 2 : ExceptT Unit Id Nat) y post =
+      MAlgOrdered.wpExc y (fun b => post (Except.ok 2) (Except.ok b))
+        (fun e => post (Except.ok 2) (Except.error e)) :=
+  rwpExc_pure_left 2 y post
+
+end HonestRelationalExceptions
+
 end PolyFunTest.MonadAlgebraRelational
