@@ -114,6 +114,7 @@ namespace Boundary
 variable {C : StepClass.{u, v}}
 
 /-- Forget a boundary's input and returned-value representations. -/
+@[implicit_reducible]
 def interface (bd : Boundary C p α β) : InterfaceBoundary C p :=
   ⟨bd.pos, bd.idx⟩
 
@@ -134,12 +135,14 @@ def stateIdx [P : C.HasProd] (bd : Boundary C p α β) {S : Type u}
 
 /-- Replace the input representation of a boundary, keeping the result and
 interface representations. -/
+@[implicit_reducible]
 def withInput {γ : Type u} (bd : Boundary C p α β) (inputRep : C.Str γ) :
     Boundary C p γ β :=
   ⟨inputRep, bd.out, bd.pos, bd.idx⟩
 
 /-- Replace the result representation of a boundary, keeping the input and
 interface representations. -/
+@[implicit_reducible]
 def withOut {γ : Type u} (bd : Boundary C p α β) (outRep : C.Str γ) :
     Boundary C p α γ :=
   ⟨bd.input, outRep, bd.pos, bd.idx⟩
@@ -164,6 +167,7 @@ equality between two boundaries would force `subst` transport at every use site;
 deriving the middle boundary makes every compatibility fact hold by `rfl`. The
 composite boundary of a sequential composition is then simply
 `bd.withOut outRep`. -/
+@[implicit_reducible]
 def mid {γ : Type u} (bd : Boundary C p α β) (outRep : C.Str γ) :
     Boundary C p β γ :=
   (bd.withOut outRep).withInput bd.out

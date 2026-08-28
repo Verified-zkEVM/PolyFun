@@ -298,9 +298,11 @@ def secondQueryRealization :
   updateCode := PUnit.unit
 
 /-- Exact envelope for either one-query phase under `unitCostBackend`. -/
+@[expose]
 def oneQueryBound : ExecutionCost := ⟨4, 1, 2, 1, 1⟩
 
 /-- Exact envelope for the two-query composite under `unitCostBackend`. -/
+@[expose]
 def twoQueryBound : ExecutionCost := ⟨6, 2, 4, 1, 1⟩
 
 /-- A concrete first-phase trace carrying an arbitrary typed Boolean answer. -/
@@ -344,6 +346,7 @@ example :
       (queryCrossingTrace true false) = twoQueryBound := rfl
 
 /-- Every well-typed Boolean response is admitted by the querying fixtures. -/
+@[expose]
 def allowsBool : ∀ position, boolResponse.B position → Prop := fun _ _ ↦ True
 
 /-- Transition work is exactly two units per typed query in `unitCostBackend`. -/
@@ -513,6 +516,7 @@ theorem secondQueryRunsWithin :
     exact ⟨false, trivial⟩
 
 /-- Every reached first-phase answer fits the uniform one-query envelope of phase two. -/
+@[expose]
 def queryHandoffBound :
     SeqCompHandoffBound firstQueryRealization allowsBool (fun _ ↦ oneQueryBound) where
   bound _ := oneQueryBound
@@ -526,6 +530,7 @@ The exact unit-cost formula and exact phase-source query accounting show that th
 already dominate the composite in all five resource components. A two-phase source pays for one
 additional initialization and final readout, while its query count and encoded traffic agree
 exactly with the composite prefix. -/
+@[expose]
 def querySeqCompCost :
     SeqCompCostCertificate firstQueryRealization secondQueryRealization allowsBool where
   overhead _ := 0
