@@ -204,6 +204,7 @@ public import PolyFun.PFunctor.Free.Path.Execution
 public import PolyFun.PFunctor.Free.Polynomial
 public import PolyFun.PFunctor.Free.Replicate
 public import PolyFun.PFunctor.Free.Resumption
+public import PolyFun.PFunctor.Free.Sigma
 public import PolyFun.PFunctor.Free.Support
 public import PolyFun.PFunctor.Free.Universal
 public import PolyFun.PFunctor.Free.WP
