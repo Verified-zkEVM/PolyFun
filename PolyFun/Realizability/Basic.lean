@@ -97,9 +97,29 @@ structure Boundary (C : StepClass.{u, v}) (p : PFunctor.{u, u}) (α β : Type u)
   /-- Representation of the interface's index space `Idx p = Σ a, p.B a`. -/
   idx : C.Str p.Idx
 
+/-- The interface portion of a realizability boundary, independent of a program's input and
+returned-value representations.
+
+This projection is useful when several programs share one response policy or resource contract.
+The position and index representations remain independent because a step class need not construct
+dependent-sum representations. -/
+structure InterfaceBoundary (C : StepClass.{u, v}) (p : PFunctor.{u, u}) : Type v where
+  /-- Representation of the interface's query positions. -/
+  pos : C.Str p.A
+  /-- Representation of the interface's dependent position-response index. -/
+  idx : C.Str p.Idx
+
 namespace Boundary
 
 variable {C : StepClass.{u, v}}
+
+/-- Forget a boundary's input and returned-value representations. -/
+def interface (bd : Boundary C p α β) : InterfaceBoundary C p :=
+  ⟨bd.pos, bd.idx⟩
+
+@[simp] theorem interface_pos (bd : Boundary C p α β) : bd.interface.pos = bd.pos := rfl
+
+@[simp] theorem interface_idx (bd : Boundary C p α β) : bd.interface.idx = bd.idx := rfl
 
 /-- The representation of a machine's one-step readout `β ⊕ p.A`, assembled from
 the result and position representations. -/
