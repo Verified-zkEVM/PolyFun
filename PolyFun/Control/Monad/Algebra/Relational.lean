@@ -653,9 +653,11 @@ freeze the relational `rwp` to the underlying unary `wp` at one of the two corne
 recovering Maillard et al.'s "two unary triples + a relational triple" pattern from
 [*The Next 700 Relational Program Logics*, POPL 2020] without committing to the full
 relative-monad machinery. They are precisely the ingredient missing from the lossy
-exception lifts (see `exceptTLeft` / `exceptTRight` above): once anchored, one
-can derive *honest exception* combinators `wpExc` (unary) and `rwpExc` (relational)
-that track success and failure separately rather than collapsing failures to `⊥`.
+exception lifts (see `exceptTLeft` / `exceptTRight` above), which collapse failure to
+`⊥`. The honest combinators that track success and failure separately are
+`MAlgOrdered.wpExc` (unary) and `rwpExc` (relational) below; anchoring is what lets
+`rwpExc_pure_left` / `rwpExc_pure_right` collapse the relational statement to the unary
+one once either side is a `pure`.
 
 Anchoring is independent of `StrictBind`. A coupling-based probabilistic carrier is
 anchored (Dirac couplings are unique) but is not strict, while a deterministic
@@ -699,5 +701,119 @@ theorem relWP_pure_right [Anchored m₁ m₂ l] (x : m₁ α) (b : β) (post : �
   Anchored.rwp_pure_right x b post
 
 end Anchored
+
+/-! ## Honest relational exception WP
+
+`rwpExc` is the relational sibling of `MAlgOrdered.wpExc`. It evaluates two `ExceptT`
+computations against a postcondition indexed by *both* result branches, so all four
+success/failure combinations are tracked separately, rather than collapsing failure to
+`⊥` the way the `exceptTLeft` / `exceptTRight` lifts above do.
+
+Like `wpExc` it is derived: it uses only the *base* relational algebra
+`MAlgRelOrdered m₁ m₂ l` on the underlying monads, never a lifted one. Under `Anchored`
+it collapses to the unary `wpExc` whenever one side is a `pure`, which is the payoff the
+anchoring axioms were introduced for.
+-/
+
+section Exc
+
+variable {m₁ : Type u → Type v₁} {m₂ : Type u → Type v₂} {l : Type u}
+variable [Monad m₁] [Monad m₂] [Preorder l] [MAlgRelOrdered m₁ m₂ l]
+variable {α β γ δ ε₁ ε₂ : Type u}
+
+/-- Relational weakest precondition for a pair of `ExceptT` computations, tracking the
+success and failure branches of both sides separately. -/
+def rwpExc (x : ExceptT ε₁ m₁ α) (y : ExceptT ε₂ m₂ β)
+    (post : Except ε₁ α → Except ε₂ β → l) : l :=
+  MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) x.run y.run post
+
+theorem rwpExc_def (x : ExceptT ε₁ m₁ α) (y : ExceptT ε₂ m₂ β)
+    (post : Except ε₁ α → Except ε₂ β → l) :
+    rwpExc x y post = MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) x.run y.run post :=
+  rfl
+
+/-- Both sides succeed. -/
+@[simp] theorem rwpExc_pure_pure (a : α) (b : β)
+    (post : Except ε₁ α → Except ε₂ β → l) :
+    rwpExc (pure a : ExceptT ε₁ m₁ α) (pure b : ExceptT ε₂ m₂ β) post =
+      post (Except.ok a) (Except.ok b) :=
+  MAlgRelOrdered.rwp_pure _ _ _
+
+/-- The left side throws while the right succeeds: the failure branch is *recorded*,
+not collapsed. -/
+@[simp] theorem rwpExc_throw_pure (e : ε₁) (b : β)
+    (post : Except ε₁ α → Except ε₂ β → l) :
+    rwpExc (ExceptT.mk (pure (Except.error e)) : ExceptT ε₁ m₁ α)
+      (pure b : ExceptT ε₂ m₂ β) post = post (Except.error e) (Except.ok b) :=
+  MAlgRelOrdered.rwp_pure _ _ _
+
+/-- The right side throws while the left succeeds. -/
+@[simp] theorem rwpExc_pure_throw (a : α) (e : ε₂)
+    (post : Except ε₁ α → Except ε₂ β → l) :
+    rwpExc (pure a : ExceptT ε₁ m₁ α)
+      (ExceptT.mk (pure (Except.error e)) : ExceptT ε₂ m₂ β) post =
+      post (Except.ok a) (Except.error e) :=
+  MAlgRelOrdered.rwp_pure _ _ _
+
+/-- Both sides throw. -/
+@[simp] theorem rwpExc_throw_throw (e₁ : ε₁) (e₂ : ε₂)
+    (post : Except ε₁ α → Except ε₂ β → l) :
+    rwpExc (ExceptT.mk (pure (Except.error e₁)) : ExceptT ε₁ m₁ α)
+      (ExceptT.mk (pure (Except.error e₂)) : ExceptT ε₂ m₂ β) post =
+      post (Except.error e₁) (Except.error e₂) :=
+  MAlgRelOrdered.rwp_pure _ _ _
+
+/-- Monotonicity in the four-branch postcondition. -/
+theorem rwpExc_mono {x : ExceptT ε₁ m₁ α} {y : ExceptT ε₂ m₂ β}
+    {post post' : Except ε₁ α → Except ε₂ β → l}
+    (hpost : ∀ ea eb, post ea eb ≤ post' ea eb) :
+    rwpExc x y post ≤ rwpExc x y post' :=
+  MAlgRelOrdered.rwp_mono hpost
+
+/-- Sequential composition, inherited from `rwp_bind_le`. The continuations run on the
+underlying monads, so the failure branches of `x` and `y` are threaded by the caller's
+postcondition rather than short-circuited here. -/
+theorem rwpExc_bind_le (x : ExceptT ε₁ m₁ α) (y : ExceptT ε₂ m₂ β)
+    (f : Except ε₁ α → m₁ (Except ε₁ γ)) (g : Except ε₂ β → m₂ (Except ε₂ δ))
+    (post : Except ε₁ γ → Except ε₂ δ → l) :
+    MAlgRelOrdered.rwp x.run y.run
+        (fun ea eb => MAlgRelOrdered.rwp (f ea) (g eb) post) ≤
+      MAlgRelOrdered.rwp (x.run >>= f) (y.run >>= g) post :=
+  MAlgRelOrdered.rwp_bind_le _ _ _ _ _
+
+end Exc
+
+section AnchoredExc
+
+variable {m₁ : Type u → Type v₁} {m₂ : Type u → Type v₂} {l : Type u}
+variable [Monad m₁] [Monad m₂] [CompleteLattice l] [MAlgRelOrdered m₁ m₂ l]
+variable [MAlgOrdered m₁ l] [MAlgOrdered m₂ l] [Anchored m₁ m₂ l]
+variable {α β ε₁ ε₂ : Type u}
+
+/-- Anchoring collapses `rwpExc` to the unary `wpExc` when the left side succeeds
+purely. This is the "two unary triples plus a relational triple" pattern: once one side
+is a Dirac, relational reasoning about exceptions becomes unary reasoning about them. -/
+theorem rwpExc_pure_left (a : α) (y : ExceptT ε₂ m₂ β)
+    (post : Except ε₁ α → Except ε₂ β → l) :
+    rwpExc (pure a : ExceptT ε₁ m₁ α) y post =
+      MAlgOrdered.wpExc y (fun b => post (Except.ok a) (Except.ok b))
+        (fun e => post (Except.ok a) (Except.error e)) := by
+  rw [rwpExc_def, ExceptT.run_pure, Anchored.rwp_pure_left]
+  congr 1
+  funext eb
+  cases eb <;> rfl
+
+/-- Anchoring on the right, symmetrically. -/
+theorem rwpExc_pure_right (x : ExceptT ε₁ m₁ α) (b : β)
+    (post : Except ε₁ α → Except ε₂ β → l) :
+    rwpExc x (pure b : ExceptT ε₂ m₂ β) post =
+      MAlgOrdered.wpExc x (fun a => post (Except.ok a) (Except.ok b))
+        (fun e => post (Except.error e) (Except.ok b)) := by
+  rw [rwpExc_def, ExceptT.run_pure, Anchored.rwp_pure_right]
+  congr 1
+  funext ea
+  cases ea <;> rfl
+
+end AnchoredExc
 
 end MAlgRelOrdered
