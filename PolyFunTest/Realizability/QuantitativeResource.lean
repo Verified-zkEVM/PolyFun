@@ -348,8 +348,10 @@ private example : firstPotentialCertificate.toRankedRunCertificate.rank none = 1
 private example : firstPotentialCertificate.toRankedRunCertificate.rank (some true) = 0 := rfl
 
 private def firstOutputRecovery : queryBackend.PolyOutputSizeRecovery queryBoundary where
-  polynomial := FirstOrderPolynomial.input
-  output_le _ := le_rfl
+  polynomial := .const 7
+  output_le _ := by
+    change 1 ≤ 7
+    omega
 
 private def oneQueryPolynomial : ExecutionCostPolynomial (ResponseModulus Bool) :=
   .const QuantitativeBoundedClosureTest.oneQueryBound
@@ -414,18 +416,25 @@ private noncomputable def secondWitness :
   outputRecovery := secondOutputRecovery
   runBound := secondRunBound
 
+/-- A strict handoff envelope, larger than either concrete one-query second-phase run. -/
+private def handoffBound : ExecutionCost := QuantitativeBoundedClosureTest.twoQueryBound
+
+/-- A still larger polynomial envelope, making `bound_le` orientation observable too. -/
+private def handoffPolynomialBound : ExecutionCost := ⟨8, 3, 6, 1, 1⟩
+
 private def handoffForModel (model : queryContract.Model) :
     SeqCompHandoffBound queryFirst model.resourceModel.allows
       (secondRunBound.bound model) := by
   exact
-    { bound := fun _ ↦ QuantitativeBoundedClosureTest.oneQueryBound
+    { bound := fun _ ↦ handoffBound
       returned_le := by
         intro input finish trace htrace value view_eq
-        exact (secondRunBound_bound model value).le }
+        rw [secondRunBound_bound]
+        rw [ExecutionCost.le_iff]
+        decide }
 
 private theorem handoffForModel_bound (model : queryContract.Model) (input : PUnit) :
-    (handoffForModel model).bound input =
-      QuantitativeBoundedClosureTest.oneQueryBound := by
+    (handoffForModel model).bound input = handoffBound := by
   rcases model with ⟨model, hmodel⟩
   change model = queryResponseModel at hmodel
   subst model
@@ -434,13 +443,25 @@ private theorem handoffForModel_bound (model : queryContract.Model) (input : PUn
 /-- The handoff envelope is oriented from reached first-phase answers to second-phase bounds. -/
 private def polynomialHandoff :
     PolynomialSeqCompHandoffBound queryFirst querySecond queryContract secondRunBound where
-  polynomial := oneQueryPolynomial
+  polynomial := .const handoffPolynomialBound
   certificate := handoffForModel
   bound_le := by
     intro model input
     rw [handoffForModel_bound]
-    simp only [oneQueryPolynomial, ExecutionCostPolynomial.eval_const]
-    exact le_rfl
+    simp only [ExecutionCostPolynomial.eval_const]
+    rw [ExecutionCost.le_iff]
+    decide
+
+private theorem polynomialHandoff_certificate_bound
+    (model : queryContract.Model) (input : PUnit) :
+    (polynomialHandoff.certificate model).bound input = handoffBound := by
+  change (handoffForModel model).bound input = handoffBound
+  exact handoffForModel_bound model input
+
+private theorem polynomialHandoff_eval (model : queryContract.Model) (input : PUnit) :
+    polynomialHandoff.polynomial.eval model.modulus
+      (queryBackend.size queryBoundary.input input) = handoffPolynomialBound := by
+  simp only [polynomialHandoff, ExecutionCostPolynomial.eval_const]
 
 private def seqCompCostForModel (model : queryContract.Model) :
     SeqCompCostCertificate queryFirst querySecond model.resourceModel.allows := by
@@ -474,9 +495,29 @@ private example : secondRunBound.bound queryModel true ≤
     (QuantitativeBoundedClosureTest.firstQueryTrace true)
     (QuantitativeBoundedClosureTest.firstQueryTrace true).conforms_all rfl
 
+/-- Reversing the reached-value handoff inequality is false on the concrete asymmetric bounds. -/
+private example : ¬ (polynomialHandoff.certificate queryModel).bound PUnit.unit ≤
+    secondRunBound.bound queryModel true := by
+  rw [polynomialHandoff_certificate_bound, secondRunBound_bound]
+  rw [ExecutionCost.le_iff]
+  decide
+
+/-- Reversing the polynomial-envelope inequality is independently false. -/
+private example : ¬ polynomialHandoff.polynomial.eval queryModel.modulus
+      (queryBackend.size queryBoundary.input PUnit.unit) ≤
+    (polynomialHandoff.certificate queryModel).bound PUnit.unit := by
+  rw [polynomialHandoff_eval, polynomialHandoff_certificate_bound]
+  rw [ExecutionCost.le_iff]
+  decide
+
 /-- Two one-query witnesses compose through the program-level `bind` constructor. -/
 private noncomputable def compositeWitness :=
   firstWitness.bind secondWitness polynomialHandoff polynomialSeqCompCost
+
+/-- Composition selects the second phase's recovery polynomial, not the distinguishable first. -/
+private example : firstWitness.outputRecovery.polynomial.eval 2 = 7 := rfl
+private example : secondWitness.outputRecovery.polynomial.eval 2 = 2 := rfl
+private example : compositeWitness.outputRecovery.polynomial.eval 2 = 2 := rfl
 
 /-- The composite returned-size theorem charges the final right-phase readout. -/
 private example : queryBackend.size (queryBoundary.withOut queryFinalRep).out 4 ≤
