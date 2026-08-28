@@ -107,4 +107,18 @@ theorem id_apply (x : S₁) : (Coalg.Hom.id : Coalg.Hom F S₁ S₁) x = x := rf
 theorem comp_apply (g : Coalg.Hom F S₂ S₃) (f : Coalg.Hom F S₁ S₂) (x : S₁) :
     (Coalg.Hom.comp g f) x = g (f x) := rfl
 
+/-! Coalgebra morphisms form a category, on the nose. These mirror `MonadHom.comp`'s
+laws in `PolyFun/Control/Monad/Hom.lean`: the two hom types are structurally identical —
+a carrier map plus a commutation proof — so their composition APIs should agree. -/
+
+@[simp]
+theorem comp_id (f : Coalg.Hom F S₁ S₂) : f.comp Coalg.Hom.id = f := rfl
+
+@[simp]
+theorem id_comp (f : Coalg.Hom F S₁ S₂) : Coalg.Hom.id.comp f = f := rfl
+
+theorem comp_assoc {S₄ : Type u} [Coalg F S₄]
+    (h : Coalg.Hom F S₃ S₄) (g : Coalg.Hom F S₂ S₃) (f : Coalg.Hom F S₁ S₂) :
+    (h.comp g).comp f = h.comp (g.comp f) := rfl
+
 end Coalg.Hom

@@ -207,3 +207,71 @@ omit [LawfulMonad m] [LawfulMonad n] in
     (StateT.mapHom φ x).run s = φ (x.run s) := rfl
 
 end StateT
+
+namespace ReaderT
+
+variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n]
+  [LawfulMonad m] [LawfulMonad n] {ρ α : Type u}
+
+/-- `ReaderT ρ` is functorial on monad morphisms, acting under the environment. -/
+def mapHom (φ : m →ᵐ n) : ReaderT ρ m →ᵐ ReaderT ρ n where
+  toFun _ x := ReaderT.mk fun r => φ (x.run r)
+  toFun_pure' a := by ext r; simp
+  toFun_bind' x y := by ext r; simp
+
+omit [LawfulMonad m] [LawfulMonad n] in
+@[simp] lemma run_mapHom (φ : m →ᵐ n) (x : ReaderT ρ m α) (r : ρ) :
+    (ReaderT.mapHom φ x).run r = φ (x.run r) := rfl
+
+end ReaderT
+
+namespace OptionT
+
+variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n]
+  [LawfulMonad m] [LawfulMonad n] {α : Type u}
+
+/-- `OptionT` is functorial on monad morphisms. The failure branch is preserved because a
+monad morphism commutes with `pure`, so `none` is carried to `none`. -/
+def mapHom (φ : m →ᵐ n) : OptionT m →ᵐ OptionT n where
+  toFun _ x := OptionT.mk (φ x.run)
+  toFun_pure' a := by
+    apply OptionT.ext
+    simp [OptionT.run_pure]
+  toFun_bind' x y := by
+    apply OptionT.ext
+    have h : ∀ a : Option _, φ (a.elim (pure none) fun b => (y b).run)
+        = a.elim (pure none) fun b => φ ((y b).run) := by
+      intro a; cases a <;> simp
+    simp only [OptionT.run_bind, OptionT.mk, Option.elimM, MonadHom.mmap_bind, h]
+    rfl
+
+omit [LawfulMonad m] [LawfulMonad n] in
+@[simp] lemma run_mapHom (φ : m →ᵐ n) (x : OptionT m α) :
+    (OptionT.mapHom φ x).run = φ x.run := rfl
+
+end OptionT
+
+namespace ExceptT
+
+variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n]
+  [LawfulMonad m] [LawfulMonad n] {ε α : Type u}
+
+/-- `ExceptT ε` is functorial on monad morphisms. As for `OptionT`, the error branch
+survives because a monad morphism preserves `pure`. -/
+def mapHom (φ : m →ᵐ n) : ExceptT ε m →ᵐ ExceptT ε n where
+  toFun _ x := ExceptT.mk (φ x.run)
+  toFun_pure' a := by
+    apply ExceptT.ext
+    simp [ExceptT.run_pure]
+  toFun_bind' x y := by
+    apply ExceptT.ext
+    simp only [ExceptT.run_bind, ExceptT.mk, MonadHom.mmap_bind]
+    exact bind_congr fun a => by cases a with
+      | error e => simp
+      | ok b => rfl
+
+omit [LawfulMonad m] [LawfulMonad n] in
+@[simp] lemma run_mapHom (φ : m →ᵐ n) (x : ExceptT ε m α) :
+    (ExceptT.mapHom φ x).run = φ x.run := rfl
+
+end ExceptT

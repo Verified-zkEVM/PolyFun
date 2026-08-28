@@ -6,6 +6,7 @@ Authors: Quang Dao
 module
 
 public import Mathlib.Order.CompleteLattice.Basic
+public import Mathlib.Control.Monad.Writer
 
 /-!
 # Monad algebras
@@ -160,7 +161,25 @@ theorem triple_bind [LawfulMonad m] {pre : l} {x : m α} {cut : α → l}
 
 end MAlgOrdered
 
-/-! ## Transformer lifting instances -/
+/-! ## Transformer lifting instances
+
+There is deliberately **no globally registered base instance**. The structure map
+`μ : m l → l` is a choice of semantics, not something a monad determines: on `FreeM P` it
+is a per-operation spec (`PFunctor.OpSpec.toMAlgOrdered` takes the spec and its
+monotonicity proof as arguments), and on a monad with exact support it is the demonic or
+the angelic reading. Nothing canonical exists to register.
+
+What is registered are the transformer *lifts* below. The intended pattern is to install
+the intended base algebra locally at a verification boundary and let the lifts compose
+above it; `PolyFunTest/Control/MonadAlgebra.lean` checks that each lift, and stacks of
+them, resolve by synthesis over one local base.
+
+The carriers follow the shape of what the transformer adds: `StateT`, `ReaderT`, and
+`WriterT` index the lattice by their state, environment, and accumulated log, while
+`ExceptT` and `OptionT` keep the base carrier and collapse failure to `⊥`. The collapsing
+pair loses the failure branch on purpose; `wpExc` / `wpOpt` below are the honest
+two-postcondition alternatives.
+-/
 
 namespace MAlgOrdered
 
@@ -267,6 +286,29 @@ attribute [instance] instExceptT
         x.run)
 
 attribute [instance] instOptionT
+
+/-- Lift an ordered monad algebra through `WriterT`, threading the accumulated log.
+
+The carrier is `ω → l` for the same reason `StateT`'s is `σ → l`: `bind` multiplies the
+prefix's log into the continuation's, so a postcondition that mentions the log has to be
+told what has already been written. Taking `ω → l` at the unit recovers the log-oblivious
+reading, so nothing is lost by indexing. -/
+@[implicit_reducible] noncomputable def instWriterT (ω : Type u) [Monoid ω] :
+    MAlgOrdered (WriterT ω m) (ω → l) where
+  μ x := fun w => MAlgOrdered.μ (x.run >>= fun p => pure (p.1 (w * p.2)))
+  μ_pure x := by
+    funext w
+    simp [MAlgOrdered.μ_pure]
+  μ_bind_mono f g hfg x := by
+    intro w
+    simp only [WriterT.run_bind, bind_assoc, map_eq_pure_bind, pure_bind]
+    exact MAlgOrdered.μ_bind_mono
+      (f := fun p => (f p.1).run >>= fun q => pure (q.1 (w * (p.2 * q.2))))
+      (g := fun p => (g p.1).run >>= fun q => pure (q.1 (w * (p.2 * q.2))))
+      (fun p => by simpa [mul_assoc] using (hfg p.1) (w * p.2))
+      x.run
+
+attribute [instance] instWriterT
 
 end MAlgOrdered
 
