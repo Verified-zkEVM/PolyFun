@@ -29,26 +29,35 @@ content, and as little else as it can get away with.**
 
 Every claim below was checked against source on disk, not recalled.
 
-| Tree | Revision surveyed |
-|---|---|
-| Lean core | **v4.33.0** (survey baseline), compared against v4.34.0-rc1 |
-| Mathlib | v4.33.0 (survey baseline), compared against `master` |
-| cslib | v4.33.0 (survey baseline), compared against `main` |
-| Batteries | `main` |
+| Tree | Revision surveyed | Compared against |
+|---|---|---|
+| Lean core | **v4.33.1** | `master` and `v4.34.0-rc2`, via the GitHub API |
+| Mathlib | v4.33.1 (`0df444a360`) | `origin/master` |
+| cslib | v4.33.1 (`98e395a7`) | `origin/main` |
+| Batteries | `4488d40d0` | `origin/main` + live GitHub search |
 
-PolyFun now pins the synchronized v4.33.1 point releases. This comparison was not
-rerun for that toolchain-only update, so the table retains its exact v4.33.0 survey
-baseline.
+Re-run at the v4.33.1 pin (2026-08). The previous baseline was v4.33.0, and the
+earlier hedge that a toolchain-only bump could not have invalidated anything is now
+**verified rather than assumed**: `diff -rq` over the two toolchains' `src/lean`
+trees exits clean across 2485 identical `.lean` files, `git diff --stat v4.33.0
+v4.33.1` in Mathlib touches only `lean-toolchain`, and in cslib only the manifest and
+toolchain files. So every stale row below is stale because the ledger was wrong when
+written, or because PolyFun moved — never because the pin moved.
 
 Availability is always reported **at the survey baseline**. Where something exists
 only upstream, it is filed under *Track*, not *Adopt*.
 
 Two traps worth recording for whoever repeats this:
 
-- A toolchain directory named `nightly-<later date>` is not necessarily newer. The
-  `nightly-2026-01-22` toolchain reports `4.28.0-nightly` — **older** than the v4.33.0
-  survey baseline. Check `bin/lean --version`, not the directory name. The correct
-  local proxy for upstream HEAD is the newest `vX.Y.0-rc*` toolchain present.
+- A toolchain directory named `nightly-<later date>` is not necessarily newer. Check
+  `bin/lean --version`, not the directory name.
+- **The "newest local `vX.Y.0-rc*` toolchain" proxy no longer works**, and following it
+  silently surveys the pin against itself. At this re-run the newest toolchain on disk
+  *was* the pin, and the `nightly-2026-01-22` directory the previous survey named does
+  not exist any more. Use the GitHub API (`gh api repos/leanprover/lean4/contents/...`
+  at an explicit `?ref=`) or a real clone. Pin comparisons must also name a *tag*:
+  several findings below are on `master` but absent from `v4.34.0-rc2`, so they ship in
+  v4.35 and a v4.34 bump would buy none of them.
 - Absence is harder to establish than presence, and it is where the first guess is
   most often wrong. For *abstractions*, claims of "nothing upstream has this" below
   come from grepping the full pinned trees for the class/def keyword, not just the
@@ -60,12 +69,13 @@ Two traps worth recording for whoever repeats this:
 
 ### Adopt — upstream owns it, PolyFun duplicates it
 
-| PolyFun | Upstream | At the pin? |
-|---|---|---|
-| `Control/Bisimulation.lean`, `Control/LTS/Trace.lean` | `Cslib.LTS` and its `Simulation` / `Bisimulation` / `HasTau` / `TraceEq` theory | yes |
-| `Interaction/Concurrent/Fairness.lean`, `Liveness.lean` — the `Always` / `Eventually` / `EventuallyAlways` / `InfinitelyOften` block | `Filter.atTop` | yes |
-| `Control/Trace.lean` `mapHom` | `MonoidHom.compLeft`, `Mathlib/Algebra/Group/Pi/Lemmas.lean` | yes |
-| `Control/Monad/Hom.lean` | `LawfulMonadLift` / `LawfulMonadLiftT`, `Init/Control/Lawful/MonadLift/` | yes |
+| PolyFun | Upstream | At the pin? | Status |
+|---|---|---|---|
+| `Control/Bisimulation.lean`, `Control/LTS/Trace.lean` | `Cslib.LTS` and its `Simulation` / `Bisimulation` / `HasTau` / `TraceEq` theory | yes | **partial** — the cslib bridge is in (`toLts`, `instHasTauOption`, the `↔`-correspondences), but the strong/weak spectrum is still redeveloped locally and `LTS/Trace.lean` still defines its own `WeakTrace` |
+| `Interaction/Concurrent/Fairness.lean`, `Liveness.lean` — the `Always` / `Eventually` / `EventuallyAlways` / `InfinitelyOften` block | `Filter.atTop` | yes | **done** |
+| `Control/Trace.lean` `mapHom` | `MonoidHom.compLeft`, `Mathlib/Algebra/Group/Pi/Lemmas.lean` | yes | **done** — `mapHom` is literally `φ.compLeft X` |
+| `PFunctor/Supply.lean` `List.take_set_self` / `drop_set_self` | `List.take_set_of_le` (`Init/Data/List/Nat/TakeDrop.lean:119`), `List.drop_set_of_lt` (`:375`) | yes | **done** — previously mis-filed under *Upstream*; both were already in core |
+| `Control/Monad/Hom.lean` | `LawfulMonadLift` / `LawfulMonadLiftT`, `Init/Control/Lawful/MonadLift/` | yes | **bridge, not adopt** — see below; core has no bundled monad hom, so `MonadHom` stays and `MonadHom.ofLift` connects it |
 
 #### Transition systems
 
@@ -154,7 +164,18 @@ with a transitive-closure variant `LawfulMonadLiftT`, instances for `StateT`,
 `ReaderT`, `OptionT`, `ExceptT`, `StateRefT'`, `StateCpsT`, `ExceptCpsT`, and
 reflexivity/transitivity instances. There is **no bundled** monad-hom structure in
 core, so PolyFun's `MonadHom` / `→ᵐ` is not redundant — but it should interoperate
-with this family rather than ignore it. This is the substance of issue #118.
+with this family rather than ignore it. This is the substance of issue #118, and is
+what `MonadHom.ofLift` now does. The Adopt row above is therefore mislabelled in
+spirit: the verdict is *keep and bridge*, not *adopt*.
+
+Mathlib does, however, have `MonadHom`'s **structural twin**, which the previous survey
+missed: `ApplicativeTransformation F G` (`Mathlib/Control/Traversable/Basic.lean:77`) is
+a bundled `app : ∀ α, F α → G α` with two preservation laws, a `CoeFun`, `@[ext]`,
+`idTransformation`, `comp`, `comp_assoc`, and a `@[functor_norm]` simp set — the same
+API shape at the same universe level, preserving `pure`+`seq` where `MonadHom`
+preserves `pure`+`bind`. It does not subsume `MonadHom`, but it is the naming and
+simp-set template to follow, and `Hom.lean`'s "neighbouring upstream APIs" paragraph
+should cite it alongside `LawfulMonadLift(T)` and Batteries' `LawfulAlternativeLift`.
 
 ### Keep — genuinely absent upstream
 
@@ -179,10 +200,18 @@ there, and cslib's `PFunctor.FreeM` is the free monad PolyFun builds on.
   And `instance : HasTau (Option α) := ⟨.none⟩`, which cslib has but only inside
   `Computability/Automata/EpsilonNA/Basic.lean`; it belongs next to `HasTau` itself,
   so that reaching it does not mean importing the ε-NFA development.
-- **Batteries**: a bundled `MonadHom`, matching the in-flight draft.
-- **Lean core**: `MonadAttach (Except ε)`, which core lacks entirely; and the
-  `MonadAttach (ExceptT ε m)` universe bug, which forces a single-universe alias in the
-  support layer.
+- ~~**Batteries**: a bundled `MonadHom`, matching the in-flight draft.~~ **Withdrawn —
+  no such draft could be found.** Four independent checks came back empty: `git grep`
+  across all 3840 refs of a Batteries clone, a GitHub issue/PR search, a GitHub code
+  search, and a scan of open PR titles. The only bundled `MonadHom` in the ecosystem is
+  Mathlib's categorical one. Treat this row as unfounded unless a link is produced.
+- **Lean core**: the `MonadAttach (ExceptT ε m)` universe bug, which forces a
+  single-universe alias in the support layer and is **not** fixed on `master`.
+  `MonadAttach (Except ε)` was also filed here; it has since landed upstream
+  character-for-character (`Init/Control/Except.lean:333` on `master`, absent from
+  `v4.34.0-rc2`, so shipping in **v4.35**). PolyFun's local instance is marked for
+  deletion at that bump; the `ExactMonadAttach (Except ε)` half stays, since core does
+  not ship the introduction rules.
 - **Mathlib**: the small helpers below. Each was checked with `exact?` against full
   Mathlib and **none** is subsumed, so they are contributions rather than reuse — the
   opposite of the first guess, which is why the check matters:
@@ -190,8 +219,6 @@ there, and cslib's `PFunctor.FreeM` is the free monad PolyFun builds on.
     (`congr_arg_heq`, `eqRec_heq_iff`, `Subtype.heq_iff_coe_eq`) but neither lemma
     follows from them by `exact?`. The file's own docstring already says they "belong
     in Mathlib".
-  - `List.take_set_self` / `List.drop_set_self` (`PFunctor/Supply.lean`), against the
-    Batteries/Mathlib `List.set` API.
   - `heq_forall_iff` and `instIsEmptySigma`, currently parked in `section find_home`
     blocks in `PFunctor/Lens/Basic.lean` and `PFunctor/Equiv/Basic.lean`.
 
@@ -199,8 +226,17 @@ there, and cslib's `PFunctor.FreeM` is the free monad PolyFun builds on.
 
 #### Core is absorbing Loom's weakest-precondition design
 
-At the v4.33.0 survey baseline, `Std/Internal/Do/` already contains a lattice-generic
-weakest-precondition stack:
+**There are two complete WP stacks at the pin, and PolyFun bridges the other one.** The
+tree described here is `Std/Internal/Do/`; the one `Control/Do/Basic.lean` and
+`PFunctor/Free/Do.lean` target is the public `Std/Do/`, which is `SPred`/`PostShape`-indexed
+and older. Confusing them is easy and consequential — they differ on conjunctivity, which
+decides what PolyFun can express. The comparison table and that consequence are in
+[`docs/wiki/program-logic.md`](../wiki/program-logic.md#the-two-upstream-wp-stacks); the
+short version is that `Std.Do.PredTrans` makes conjunctivity a *structure field* stated as a
+bi-entailment, which is why the demonic support reading has a `WP` instance and the angelic
+one provably cannot.
+
+At the pin, `Std/Internal/Do/` contains a lattice-generic weakest-precondition stack:
 
 ```lean
 -- Std/Internal/Do/Assertion.lean
@@ -215,7 +251,11 @@ class WP (Prog : Type u) (Value : outParam (Type v))
 
 together with `WP/Frame.lean`, `WP/Conjunctive.lean`, `Triple/`, and an `Order/`
 subtree. Upstream of the pin this whole tree was renamed out of `Internal` into a
-public `Std.WP` namespace and gained `Std.WP.LawfulWPMonadAttach`.
+public `Std.WP` namespace (#14783) and gained `Std.WP.LawfulWPMonadAttach` (#14801),
+whose single field concludes from a `MonadAttach.CanReturn` witness directly and which
+**drops the `Std.Do.Internal.Ensures` formulation** that `MonadAttach.toWPSound` is built
+on. Timing matters here: `src/Std/` at `v4.34.0-rc2` still has no `WP` directory, so all
+of this lands in **v4.35**, and a v4.34 bump buys none of it.
 
 This is structurally PolyFun's `MAlgOrdered` — a monotone predicate transformer into a
 complete lattice — and core's frame and conjunctivity layers sit where a relational
@@ -226,20 +266,28 @@ upstreamed into Lean core.
 
 **Verdict: track, do not adopt yet.** Three reasons:
 
-1. It is `Std.Internal` at the pin and public only upstream of it.
+1. It is `Std.Internal` at the pin and public only from v4.35.
 2. It is churning: several breaking refactors landed in the week this survey was
-   written.
+   written, and more since.
 3. It is built on `Lean.Order.CompleteLattice`, while `MAlgOrdered` uses Mathlib's.
-   Reconciling those is real work, not a rename.
+   Reconciling those is real work, not a rename — and the gap is total: `Lean.Order`
+   has **zero** occurrences anywhere in the pinned Mathlib. No instance, no coercion,
+   no bridge lemma. Adopting core's stack means porting `MAlgOrdered` off Mathlib's
+   order hierarchy. (`Lean.Order.PartialOrder` is on `Sort u` with `⊑` and no `LE`
+   superclass; its `CompleteLattice.sup` takes a *predicate* where Mathlib's `sSup`
+   takes a `Set`. Same data, no connective tissue. The `Std.Internal.Do` extension's
+   `scoped notation` for `⊓`/`⊔`/`⊤`/`⨅` also collides with Mathlib's.)
 
 Revisit after a toolchain bump. Recording the trajectory now is the point — this is
 exactly the drift that produced the `MonadSupport` situation.
 
 #### `mvcgen` is deprecated in favour of `vcgen`
 
-Upstream has marked `mvcgen` `@[deprecated]`, directing users to `vcgen`. **`vcgen`
-already exists at the v4.33.0 survey baseline** (`Std/Tactic/Do/Syntax.lean`; it was renamed from
-the experimental `mvcgen'` in v4.33), so retargeting needs no toolchain bump.
+Upstream marks `mvcgen` deprecated via `deprecated_syntax`, directing users to `vcgen`
+(#14874, `since := "2026-08-21"`). That deprecation is on `master` only — not at the pin,
+not in `v4.34.0-rc2` — so it is a **v4.35** item. But **`vcgen` itself already exists at
+the pin** (`Std/Tactic/Do/Syntax.lean:465`), so retargeting PolyFun's six `mvcgen`
+references needs no toolchain bump and can be done whenever convenient.
 
 Relatedly, `Batteries.Classes.SatisfiesM` has been deprecated in favour of
 `Std.Do.Triple`. The `SatisfiesM` / `MonadSatisfying` line — the other abstraction
@@ -251,13 +299,29 @@ PolyFun's support layer resembled — is superseded by core's `MonadAttach` plus
 `ITree/Bisim/Defs.lean` builds weak bisimulation as an explicit Tarski greatest
 fixpoint (`∃ R, R t s ∧ closure`), justified in its docstring by core's *syntactic*
 monotonicity checker. Core has since shipped a `coinductive` command for coinductive
-predicates, implemented via a reverse-implication order plus `partial_fixpoint`, and
-there is upstream work in progress on a strengthened coinduction rule (coinduction
-up-to) and on an explicit escape hatch for the monotonicity obligation when automation
-fails.
+predicates, implemented via a reverse-implication order plus `partial_fixpoint`. Note
+the command is **at the pin**, not only upstream — the previous "has since shipped"
+phrasing read as upstream-only.
 
-Both address the exact objection the docstring raises. This is worth re-evaluating once
-they land; it touches the whole bisimulation development, so it is not a small change.
+The two pieces of work-in-progress named previously have both **merged**: `monotonicity_by`
+on `coinductive` / `inductive` predicate declarations (#14861), and strong (co)induction
+principles for lattice-theoretic predicates — `strong_coinduct`, `strong_induct`,
+`strong_mutual_induct`, all derived from a strengthened Park theorem (#14855). Both are
+absent from `v4.34.0-rc2`, so again **v4.35**. Calibrate the payoff: `strong_coinduct` is
+up-to-*reflexivity* (the candidate is joined by disjunction with the predicate itself), not
+up-to-bisimilarity or a Pous-style companion — there is no compatibility class anywhere in
+core, so ITree's up-to techniques stay hand-rolled either way.
+
+At the pin there is also **no escape hatch for the `coinductive` command specifically**: the
+parser has no slot for one, so a declaration whose functor `Lean.Order.monotonicity` cannot
+handle must be written manually as `def … coinductive_fixpoint monotonicity …`. That is what
+#14861 fixes.
+
+Both address the objection `ITree/Bisim/Defs.lean`'s docstring raises. Worth re-evaluating at
+v4.35; it touches the whole bisimulation development, so it is not a small change. Note the
+alternative available *today*: Mathlib's `OrderHom.gfp` with `gfp_induction` (`Mathlib/Order/
+FixedPoints.lean`) is the same greatest-fixpoint theory on the relation lattice, and cslib
+already states `Bisimilarity.gfp` that way.
 
 #### cslib beyond the pin
 
@@ -267,8 +331,21 @@ decomposition — closed sets are safety, dense sets are liveness), and
 `Foundations/Data/OmegaSequence/Topology.lean`. Both overlap
 `Interaction/Concurrent/Liveness.lean`.
 
-One known breaking change to plan for: cslib changed `LTS.Execution` from a `Prop` to a
-`structure`.
+**Three** breaking changes to plan for at the next cslib bump, not the one previously
+recorded:
+
+1. `LTS.Execution` becomes a `structure` (fields `length` / `start` / `last` / `trans`)
+   instead of a `Prop`, and its attribute changes from `@[scoped grind =]` to
+   `@[scoped grind]`. Destructuring proofs break.
+2. `LTS.Deterministic` is refactored: the single field becomes
+   `∀ s, lts.DeterministicState s`, layered over new `DeterministicStateLabel` /
+   `DeterministicState`. Four renames follow, and the `Finite (lts.image s μ)` instance
+   becomes a theorem.
+3. `MapLabel.lean` is deleted in favour of a new `MapHom.lean`; `mapLabel` has no
+   successor of the same name.
+
+Still absent on `main`, so still genuine upstreaming targets: delay bisimulation, a
+well-placed `HasTau (Option α)`, and a cross-type `Bisimilarity.symm`.
 
 ## Unused surface
 
@@ -276,16 +353,44 @@ Not upstream duplicates, so secondary to this survey — but each deserves an ex
 verdict rather than being left to accrete. All are defining-file-only across `PolyFun/`
 and `PolyFunTest/`:
 
-| Surface | Note |
-|---|---|
-| `Control/Monad/Equiv.lean` — `NatEquiv` / `PureEquiv` / `BindEquiv` / `MonadEquiv` | Named by issue #118. |
-| `Control/Monad/FreeCont.lean` | Contains a *third* `inductive FreeM`, alongside `Cslib.FreeM` and `PFunctor.FreeM`. cslib's `Foundations/Control/Monad/Free/Effects.lean` already provides `ContF` / `FreeCont` with `callCC` and a `MonadCont` instance. |
-| `Control/Comonad/Instances.lean` — `NonEmptyList`, `List.Zipper`, `EnvT`, `StoreT`, `Day` | No upstream equivalents. `Day` convolution is real mathematical content; the list helpers are incidental. |
-| `Control/Monad/Hom.lean` `MonadHomClass` | Dead, with its whole namespace body commented out. |
-| `Control/Lawful/Basic.lean` | A `do`-elaboration workaround from Lean 4.29; six of its seven lemmas are unused. |
+**Every row of the previous version of this table was stale**, in both directions — two
+described files that no longer exist, one described contents that had been replaced, and
+one called a load-bearing file retirement-ready. The cause was grepping *import paths*
+rather than declaration names; a file can be imported and unused, or unimported and
+load-bearing through a re-export. Check declaration base names across `PolyFun/` and
+`PolyFunTest/`, excluding each declaration's own file, and separate "unused **and**
+untagged" (a real signal) from "unused but `@[simp]`/`@[grind]`-tagged" (automation
+leaves no textual trace).
 
-`MAlgOrdered`, `wpExc`, and `wpOpt` also read as unused, but are consumed by the
-in-flight program-logic work. They are not dead.
+| Surface | Lines | Verdict |
+|---|---:|---|
+| `Control/Comonad/Instances.lean` — `NonEmptyList`, `List.Zipper`, `EnvT`, `StoreT`, `Day` | 898 | **The one genuinely orphaned module**, and 16% of `Control/`. Note the split: the `Comonad` *class* is live via `PFunctor/Cofree.lean`; only the instances are stranded. `Day` also has `Comonad` but no `LawfulComonad`. Mathlib does have a *categorical* Day convolution (`CategoryTheory/Monoidal/DayConvolution.lean`), so "no upstream equivalents" was too strong. Open question: can `PFunctor.Comonoid` / `CofreeP` / `M.Vertex` become the consumer — `StoreT` is the lens comonad and `EnvT` the cofree-over-a-comonad — or should it be annotated as a standalone instance library? |
+| `Control/Monad/FreeCont.lean` | 229 | Test-only consumer. The previous note was wrong twice: the file has **no `inductive`** at all (it is a `structure FreeContT`, a Church/CPS encoding of the freer transformer over an arbitrary signature), and cslib's `FreeCont r := FreeM (ContF r)` is a free monad over a *continuation signature* — a different object, not the same construction. |
+| `Control/Monad/Iter.lean` — `MonadIter` | 152 | Class justified against upstream (core's `repeatM` is a function, not a class, is partial-recursive, and needs `[Nonempty β]`), but it has **no instances in its own file**; the only one in the repo is `ITree F`. Keep, and add instances. |
+| ~~`Control/Monad/Equiv.lean`~~ | — | **File deleted** (#143). No `MonadEquiv`, no `≃ᵐ`. |
+| ~~`Control/Monad/Hom.lean` `MonadHomClass`~~ | — | **Declaration removed** (#143). Six stale `scripts/nolints.json` entries referenced it. |
+| ~~`Control/Lawful/Basic.lean`~~ | 47 | **Load-bearing, not unused.** Pruned to four lemmas (#147), and `Interaction/TwoParty/Compose.lean` uses all four across ten-plus call sites. The open question is different: the file works around a **Lean 4.29** `do`-elaboration bug and all four lemmas now go through by `simp`, so check whether the bug is fixed and, if so, simplify the call sites rather than delete the file. |
+
+`MAlgOrdered` is no longer speculative — `PFunctor/Free/WP.lean` consumes it in ~15
+places. `wpOpt` is exercised only by a test. `wpExc` had **zero** consumers until
+`rwpExc` was written against it.
+
+## New candidates found at this re-run
+
+Not in the previous survey at all. Ranked by leverage.
+
+| Upstream | PolyFun counterpart | Verdict |
+|---|---|---|
+| `Lean.Order.MonadTail` + `repeatM_eq_of_monadTail` + `Loop.forIn_eq_of_monadTail` + ~40 `monotone_*` lemmas + the `monotonicity` tactic (`Init/Internal/Order/`) | `Control/Monad/Iter.lean`, `ITree/Do.lean` | **Track and instantiate.** PolyFun has *zero* references to `MonadTail`. It is not the same thing as `MonadIter` — order-theoretic rather than Elgot/Conway — so it does not displace it, but it is the class to *also* instantiate if `partial_fixpoint` is ever wanted in these monads, and its lemma library is free. `Internal`, so no stability promise. |
+| `Mathlib.Control.ULiftable` (`ULiftable`, `adaptUp`, `adaptDown`, instances for `Id`/`StateT`/`ReaderT`/`ContT`/`WriterT`/`Except`/`Option`) | the universe friction documented in `Control/Monad/Support.lean` and the `ExceptT` single-universe alias | **Adopt candidate.** Zero PolyFun references today. This is Mathlib's answer to "the same monad at two universes", which is exactly the recurring problem. |
+| `Mathlib.Control.Functor`'s `Liftp` / `Liftr` / `supp` | `MonadAttach.support` | **Cross-reference, do not adopt.** `Functor.supp` is the intersection of all predicates satisfying `Liftp`, not a `CanReturn` construction — a different definition of the same idea, which `Support.lean` should cite. |
+| `Mathlib.Control.Basic`'s `CommApplicative` | the interleaving / independence layer | Worth knowing it exists before hand-rolling "these effects commute". |
+| Core `LawfulMonad.mk'`, and the `bind_pure_comp` simp orientation | any local monadic simp set | **Hazard, not a duplicate.** Core orients `bind_pure_comp` left-to-right *into* `<$>`, so `Functor.map` is the normal form and `map_eq_pure_bind` is deliberately not `@[simp]`. A local simp set adding the reverse direction fights the default one. |
+
+Genuine gaps nobody upstream fills, so hand-rolling is unavoidable if they are needed:
+`LawfulAlternative` (absent from core *and* Mathlib), `LawfulMonadFunctor`,
+`LawfulMonadControl`, `LawfulMonadFinally`, and coinduction-up-to beyond core's new
+`strong_coinduct`.
 
 ## Related work
 
@@ -308,3 +413,21 @@ Where PolyFun sits relative to other Lean 4 projects in this space:
 Re-run this survey when the toolchain pin moves, and when it does, check in order:
 `Init/Control/`, `Std/Do/` and `Std/WP/`, `Cslib/Foundations/`, `Mathlib/Control/`.
 Those four are where the abstractions PolyFun cares about keep appearing.
+
+Two process lessons from this re-run, both of which cost more than the findings did:
+
+- **Re-verify every row; do not diff.** Six of 23 rows were wrong, in four different
+  directions — upstream gained it since, it was already in core, the adoption had
+  already been done, and the unused-surface rows were wrong in *both* directions. A
+  diff against the previous survey finds none of these, because the previous survey's
+  own text is the thing that is wrong. Reading this file as a to-do list today would
+  have produced four duplicate PRs and one unfounded one.
+- **The file's own standard is the right one and was not met**: *"A name is a
+  hypothesis; the declaration in the pinned tree is the evidence."* Extend it — an
+  *absence* claim needs a named search that came back empty, not a recollection. The
+  withdrawn Batteries `MonadHom` row is the case in point.
+
+Acted on in this cycle: the two core `List` lemmas adopted, the `Std.Do` quarantine
+given a CI check, the stale `whileM` / `GradedMonad` / `ToMathlib` / `rwpExc` references
+cleared, `MonadAttach (Except ε)` marked for deletion at v4.35, and the
+`MAlgOrdered` × `ExactMonadAttach` coverage gap on `WriterT` closed.
