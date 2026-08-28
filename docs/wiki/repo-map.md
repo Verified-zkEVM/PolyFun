@@ -242,12 +242,17 @@ Realizability/Quantitative -> Realizability/Quantitative/Closure
 Realizability/Quantitative/Closure -> Realizability/Quantitative/BoundedClosure
 {Complexity/SecondOrderPolynomial, Realizability/Quantitative/Closure}
   -> Realizability/Quantitative/Polynomial
+{Realizability/Quantitative/BoundedClosure,
+ Realizability/Quantitative/Polynomial}
+  -> Realizability/Quantitative/Resource
 Realizability/{Instances, Quantitative} -> Realizability/Quantitative/WordClass
 Mathlib/Order/Monotone/Basic -> Complexity/SecondOrderPolynomial
   (Instances additionally draws on Mathlib's Computability and Fintype layers;
    Quantitative/Closure assembles executable structural code but asserts no
    polynomial-time closure; Quantitative/Polynomial packages explicit
-   backend-relative polynomial certificates; Complexity contains syntax, not feasibility;
+   backend-relative polynomial certificates; Quantitative/Resource adds
+   response-relative second-order run contracts without naming a complexity class;
+   Complexity contains syntax, not feasibility;
    nothing under PFunctor/, ITree/, or Interaction/ depends on Realizability/)
 ```
 
