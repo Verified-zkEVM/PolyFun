@@ -333,6 +333,13 @@ def bound (certificate : PolynomialRunBound R contract) (model : contract.Model)
     input → ExecutionCost :=
   fun value ↦ certificate.polynomial.eval model.modulus (Q.size bd.input value)
 
+@[simp]
+theorem bound_apply (certificate : PolynomialRunBound R contract) (model : contract.Model)
+    (value : input) :
+    certificate.bound model value =
+      certificate.polynomial.eval model.modulus (Q.size bd.input value) := by
+  simp [bound]
+
 /-- Restate the certificate's pathwise theorem through its named input-indexed bound. -/
 theorem runsWithin_bound (certificate : PolynomialRunBound R contract)
     (model : contract.Model) :
@@ -573,12 +580,14 @@ end PureResourceCertificate
 namespace RankedResource
 
 /-- Cost of observing a state as the final state of an execution prefix. -/
+@[expose]
 def terminalCost (R : QuantitativeRealization Q bd) (state : R.machine.State) :
     ExecutionCost :=
   ExecutionCost.ofWork (Q.cost R.headCode state) +
     ExecutionCost.observe (Q.size R.state state) (Q.size bd.head (R.machine.head state))
 
 /-- Cost contributed by one enabled position-response transition. -/
+@[expose]
 def queryStepCost (R : QuantitativeRealization Q bd) (state : R.machine.State)
     (position : p.A) (direction : p.B position) : ExecutionCost :=
   ExecutionCost.ofWork (Q.cost R.headCode state) +
@@ -807,6 +816,7 @@ variable {program₁ : input → FreeM p output} {program₂ : output → FreeM 
 
 /-- Compose program witnesses along `FreeM.bind`, keeping semantic implementation separate from
 the resource decomposition certificates needed by the two execution phases. -/
+@[expose]
 def bind (first : PolynomialProgramWitness Q bd contract program₁)
     (second : PolynomialProgramWitness Q (bd.mid middleOut) contract program₂)
     (handoff : PolynomialSeqCompHandoffBound first.realization second.realization contract
