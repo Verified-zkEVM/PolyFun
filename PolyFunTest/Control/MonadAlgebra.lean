@@ -62,4 +62,24 @@ example (ω : Type) [Monoid ω] (w₀ : ω) (post : PUnit → ω → Prop) :
 
 end Behaviour
 
+section Automation
+
+/-! The `@[simp]` set drives `wp` inwards through program structure until it reaches
+leaves. These are the checks behind the automation contract in
+`PolyFun/Control/Monad/Algebra.lean`. -/
+
+/-- A compound `do` block normalizes down to the one leaf that is not a `pure`. -/
+example (g : Nat → Id Nat) (f : Nat → Nat) (post : Nat → Prop) :
+    wp (do let a ← (pure 1 : Id Nat); let b ← g a; pure (f b)) post =
+      wp (g 1) (fun b => post (f b)) := by
+  simp
+
+/-- `<$>` and `<*>` are eliminated too, so the fragment closed under `pure`, `>>=`,
+`<$>`, and `<*>` normalizes completely. -/
+example (x : Id Nat) (h : Id (Nat → Nat)) (post : Nat → Prop) :
+    wp (h <*> x) post = wp h (fun g => wp x (fun a => post (g a))) := by
+  simp
+
+end Automation
+
 end PolyFunTest.MonadAlgebraCoverage

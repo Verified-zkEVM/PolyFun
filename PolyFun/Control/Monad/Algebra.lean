@@ -50,7 +50,26 @@ export LawfulMonadAlgebra (monadAlg_pure monadAlg_bind)
 
 attribute [simp] monadAlg_pure monadAlg_bind
 
-/-! ## Loom-style ordered monad algebras -/
+/-! ## Loom-style ordered monad algebras
+
+### Automation contract
+
+The `@[simp]` set here drives `wp` *inwards* through program structure until it meets a
+leaf, mirroring the way core's monad simp set drives `bind` towards right-nested normal
+form. Four lemmas carry it — `wp_pure`, `wp_bind`, `wp_map`, `wp_seq` — and each strictly
+decreases the syntactic size of the program argument, so the set is terminating and
+confluent on the fragment built from `pure`, `>>=`, `<$>`, and `<*>`.
+
+Deliberately untagged: `wp_mono` and every `Triple` rule. They are not equations, and the
+`Triple` rules are directed reasoning steps a user chooses, not normalizations. `wpExc` /
+`wpOpt` keep their own leaf rules tagged but not their `_def` unfoldings, so goals stated
+in terms of the honest two-postcondition combinators are not silently collapsed back into
+the lossy `⊥`-based ones.
+
+No `grind` annotations. `wp_bind` introduces a fresh higher-order argument
+(`fun a => wp (f a) post`) on its right-hand side, which is exactly the shape that makes
+`grind` saturate; `simp`'s inside-out rewriting handles it without that risk.
+-/
 
 /-- Ordered monad algebra interface used for quantitative WP/triple reasoning. -/
 class MAlgOrdered (m : Type u → Type v) (l : Type u) [Monad m] [CompleteLattice l] where
@@ -85,6 +104,7 @@ theorem wp_pure [LawfulMonad m] (x : α) (post : α → l) :
     wp (pure x : m α) post = post x := by
   simp [wp, MAlgOrdered.μ_pure]
 
+@[simp]
 theorem wp_bind [LawfulMonad m] (x : m α) (f : α → m β) (post : β → l) :
     wp (x >>= f) post = wp x (fun a => wp (f a) post) := by
   unfold wp
@@ -108,12 +128,14 @@ theorem wp_mono (x : m α) {post post' : α → l} (h : ∀ a, post a ≤ post' 
     x
 
 /-- `wp` is functorial in the program return value. -/
+@[simp]
 theorem wp_map [LawfulMonad m] (f : α → β) (x : m α) (post : β → l) :
     wp (f <$> x) post = wp x (fun a => post (f a)) := by
   simpa [Functor.map, bind_pure_comp] using
     (wp_bind (m := m) (l := l) x (fun a => pure (f a)) post)
 
 /-- `wp` preserves applicative sequencing. -/
+@[simp]
 theorem wp_seq [LawfulMonad m] (f : m (α → β)) (x : m α) (post : β → l) :
     wp (f <*> x) post = wp f (fun g => wp x (fun a => post (g a))) := by
   rw [seq_eq_bind_map, wp_bind]

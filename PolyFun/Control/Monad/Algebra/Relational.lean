@@ -44,6 +44,26 @@ Attribution:
 
 universe u v₁ v₂
 
+/-! ### Automation contract
+
+The `@[simp]` set here is deliberately much thinner than the unary one in
+`PolyFun/Control/Monad/Algebra.lean`, and the reason is structural rather than an
+oversight: **the relational layer is inequational by design.** `MAlgRelOrdered`'s
+composition axiom is `rwp_bind_le`, an inequality, so the derived structural rules
+(`relWP_map_left`, `relWP_map_right`, `relWP_bind_left_le`, `relWP_bind_right_le`) are
+`≤` facts and cannot be rewrite rules at all. A relational logic that were equational at
+`bind` would be a strictly stronger assumption — which is precisely what `StrictBind`
+adds, and `relWP_bind` is tagged because under that class the law *is* an equation.
+
+So the equational content is: `relWP_pure` at the leaf, `relWP_bind` under `StrictBind`,
+and the four `rwpExc` corner rules. Everything else is a directed reasoning step the user
+chooses. Reaching for `simp` on a bare `RelWP` goal and finding nothing happens is the
+expected behaviour, not a missing lemma.
+
+No `grind` annotations, for the same reason as the unary layer: the bind rules introduce
+fresh higher-order arguments on the larger side.
+-/
+
 /-- Ordered relational monad algebra between two monads. -/
 class MAlgRelOrdered (m₁ : Type u → Type v₁) (m₂ : Type u → Type v₂) (l : Type u)
     [Monad m₁] [Monad m₂] [Preorder l] where
@@ -581,6 +601,7 @@ variable {α β γ δ : Type u}
 /-- Strict version of `relWP_bind_le`: under `StrictBind` the bind law is an
 equality, so the relational WP of a sequenced computation can be rewritten in
 either direction. -/
+@[simp]
 theorem relWP_bind [StrictBind m₁ m₂ l]
     (x : m₁ α) (y : m₂ β) (f : α → m₁ γ) (g : β → m₂ δ) (post : γ → δ → l) :
     RelWP x y (fun a b => RelWP (f a) (g b) post) = RelWP (x >>= f) (y >>= g) post :=
