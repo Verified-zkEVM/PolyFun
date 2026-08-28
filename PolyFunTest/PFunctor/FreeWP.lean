@@ -19,6 +19,8 @@ through a nontrivial handler.
 
 namespace PolyFunTest.FreeWP
 
+universe uA uB uX uY
+
 open PFunctor
 open PFunctor.FreeM
 open MonadAttach
@@ -111,6 +113,24 @@ example : SomeOutput (fun out => out = true) flipTwo := by
   exact ⟨true, true, rfl⟩
 
 /-! ## Admitted-response contracts -/
+
+/-! The map and bind laws retain independent source and target result
+universes, matching the underlying `FreeM` operations. -/
+
+example {P : PFunctor.{uA, uB}} {X : Type uX} {Y : Type uY}
+    (allows : (position : P.A) → P.B position → Prop)
+    (accept : Y → Prop) (function : X → Y) (program : FreeM P X) :
+    (FreeM.map function program).LeavesSatisfyUnder allows accept ↔
+      program.LeavesSatisfyUnder allows (accept ∘ function) :=
+  leavesSatisfyUnder_map_iff allows accept function program
+
+example {P : PFunctor.{uA, uB}} {X : Type uX} {Y : Type uY}
+    (allows : (position : P.A) → P.B position → Prop)
+    (accept : Y → Prop) (program : FreeM P X) (next : X → FreeM P Y) :
+    (FreeM.bind program next).LeavesSatisfyUnder allows accept ↔
+      program.LeavesSatisfyUnder allows
+        (fun result => (next result).LeavesSatisfyUnder allows accept) :=
+  leavesSatisfyUnder_bind_iff allows accept program next
 
 /-- Restricting the admitted answer set ignores a branch that would falsify
 the postcondition. -/
