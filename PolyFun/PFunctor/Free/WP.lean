@@ -39,7 +39,7 @@ syntactic wp theory agree.
 
 @[expose] public section
 
-universe uA uB uA₂ uB₂ v w
+universe uA uB uA₂ uB₂ uX uY v w
 
 namespace PFunctor
 
@@ -166,15 +166,16 @@ theorem LeavesSatisfyUnder.mono {allows : (a : P.A) → P.B a → Prop}
 
 /-- Mapping a function changes only the predicate imposed on returned leaves. -/
 theorem leavesSatisfyUnder_map_iff (allows : (a : P.A) → P.B a → Prop)
-    (accept : β → Prop) (function : α → β) (program : FreeM P α) :
-    (function <$> program).LeavesSatisfyUnder allows accept ↔
+    {X : Type uX} {Y : Type uY} (accept : Y → Prop) (function : X → Y)
+    (program : FreeM P X) :
+    (FreeM.map function program).LeavesSatisfyUnder allows accept ↔
       program.LeavesSatisfyUnder allows (accept ∘ function) := by
   induction program with
   | pure result => rfl
   | lift_bind position next ih =>
       change
         (∀ direction, allows position direction →
-          (function <$> next direction).LeavesSatisfyUnder allows accept) ↔
+          (FreeM.map function (next direction)).LeavesSatisfyUnder allows accept) ↔
         ∀ direction, allows position direction →
           (next direction).LeavesSatisfyUnder allows (accept ∘ function)
       exact forall_congr' fun direction =>
@@ -182,7 +183,8 @@ theorem leavesSatisfyUnder_map_iff (allows : (a : P.A) → P.B a → Prop)
 
 /-- Whole-tree result conformance composes through monadic sequencing. -/
 theorem leavesSatisfyUnder_bind_iff (allows : (a : P.A) → P.B a → Prop)
-    (accept : β → Prop) (program : FreeM P α) (next : α → FreeM P β) :
+    {X : Type uX} {Y : Type uY} (accept : Y → Prop) (program : FreeM P X)
+    (next : X → FreeM P Y) :
     (FreeM.bind program next).LeavesSatisfyUnder allows accept ↔
       program.LeavesSatisfyUnder allows
         (fun result => (next result).LeavesSatisfyUnder allows accept) := by
@@ -203,7 +205,12 @@ section FreeHandler
 variable {Q : PFunctor.{uA₂, uB₂}} {α : Type uB}
 
 /-- Interpreting a finite free program through leaf-conforming free handlers
-preserves its admitted-response leaf contract. -/
+preserves its admitted-response leaf contract.
+
+Unlike the map and bind laws above, the program result type shares the source
+interface's direction universe. This is exactly the homogeneous result
+constraint of the upstream `FreeM.liftM`; the target interface's position and
+direction universes remain independent. -/
 theorem leavesSatisfyUnder_liftM
     (handler : (position : P.A) → FreeM Q (P.B position))
     (outerAllows : (position : P.A) → P.B position → Prop)
