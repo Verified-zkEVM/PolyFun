@@ -291,4 +291,24 @@ example : rwpExc (m₁ := Id) (m₂ := Id)
 
 end HonestRelationalExceptions
 
+section Automation
+
+/-! The relational simp set is thin by design: `MAlgRelOrdered`'s composition axiom is
+an *inequality*, so the derived structural rules cannot be rewrite rules. What is
+equational is the leaf, the `StrictBind` bind law, and the `rwpExc` corners. -/
+
+/-- The leaf rule fires. -/
+example (post : Nat → Nat → Prop) (h : post 1 2) :
+    RelWP (m₁ := Id) (m₂ := Id) (pure 1) (pure 2) post := by
+  simpa using h
+
+/-- Under `StrictBind` the bind law is an equation, so `simp` decomposes a sequenced
+relational goal — which it cannot do without that class. -/
+example (f : Nat → Id Nat) (g : Nat → Id Nat) (post : Nat → Nat → Prop) :
+    RelWP (m₁ := Id) (m₂ := Id) ((pure 1 : Id Nat) >>= f) ((pure 2 : Id Nat) >>= g) post =
+      RelWP (f 1) (g 2) post := by
+  simp
+
+end Automation
+
 end PolyFunTest.MonadAlgebraRelational
