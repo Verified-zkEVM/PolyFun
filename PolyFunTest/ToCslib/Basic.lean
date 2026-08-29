@@ -39,3 +39,6 @@ example : Fintype.card (BitVec 2 → Bool) = 16 := by
 example (state : StrEncFam fun _ ↦ Bool) (parameter : ℕ) (value : Bool) :
     state.option.enc parameter none ≠ state.option.enc parameter (some value) := by
   simp
+
+example (input : List Bool) :
+    (EncPolyTime.appendBit id true).toFun input = input ++ [true] := rfl

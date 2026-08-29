@@ -8,6 +8,7 @@ module
 
 public import ToCslib.Computability.BitEncoding
 public import ToCslib.Computability.SingleTape.Counting
+public import ToCslib.Computability.SingleTape.Snoc
 public import ToCslib.Data.BitVec
 
 /-!
