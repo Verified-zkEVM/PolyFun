@@ -236,6 +236,33 @@ noncomputable def pairVar (s : StrEncFam σ) (e : BitEncFam β) : StrEncFam (fun
 @[simp] theorem pairVar_enc (s : StrEncFam σ) (e : BitEncFam β) (n : ℕ) (p : σ n × β n) :
     (s.pairVar e).enc n p = s.enc n p.1 ++ e.enc n p.2 := rfl
 
+/-- Optional values for a variable-width encoding: `false` represents `none`,
+while `true :: payload` represents `some payload`. -/
+noncomputable def option (s : StrEncFam σ) : StrEncFam (fun n => Option (σ n)) where
+  enc n
+    | none => [false]
+    | some value => true :: s.enc n value
+  enc_injective n left right equality := by
+    cases left <;> cases right <;> simp only [List.cons.injEq] at equality
+    · rfl
+    · exact absurd equality.1 (by simp)
+    · exact absurd equality.1 (by simp)
+    · exact congrArg some (s.enc_injective n equality.2)
+  bound := s.bound + .C 1
+  len_le n value := by
+    cases value with
+    | none => simp
+    | some value =>
+        have := s.len_le n value
+        simp only [List.length_cons, Polynomial.eval_add, Polynomial.eval_C]
+        omega
+
+@[simp] theorem option_enc_none (s : StrEncFam σ) (n : ℕ) :
+    s.option.enc n none = [false] := rfl
+
+@[simp] theorem option_enc_some (s : StrEncFam σ) (n : ℕ) (value : σ n) :
+    s.option.enc n (some value) = true :: s.enc n value := rfl
+
 /-- Tag-bit sum of raw string encodings: `false ::` the left payload, `true ::` the
 right payload. The state shape of a two-phase (`⊕`-state) machine. -/
 noncomputable def sum {τ : ℕ → Type u} (s₁ : StrEncFam σ) (s₂ : StrEncFam τ) :

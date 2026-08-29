@@ -35,3 +35,7 @@ example {n index : ℕ} (hindex : index < n) (bit : Bool) (value : BitVec n) :
 
 example : Fintype.card (BitVec 2 → Bool) = 16 := by
   simpa using card_bitVec_fun 2
+
+example (state : StrEncFam fun _ ↦ Bool) (parameter : ℕ) (value : Bool) :
+    state.option.enc parameter none ≠ state.option.enc parameter (some value) := by
+  simp
