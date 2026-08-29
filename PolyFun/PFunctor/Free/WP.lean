@@ -39,7 +39,7 @@ syntactic wp theory agree.
 
 @[expose] public section
 
-universe uA uB v w
+universe uA uB uA₂ uB₂ uX uY v w
 
 namespace PFunctor
 
@@ -64,6 +64,15 @@ guarantees only that *every* response satisfies the continuation. -/
 def demonic (P : PFunctor.{uA, uB}) : OpSpec P Prop :=
   fun _ k => ∀ b, k b
 
+/-- The demonic specification restricted to admitted responses: a call to `a`
+guarantees that every response satisfying `allows a` satisfies the continuation.
+
+This specification is intentionally a partial-correctness condition. If no
+response is admitted at a position, its obligation is vacuous; progress or
+non-vacuity must be supplied separately by an operational layer. -/
+def demonicUnder (allows : (a : P.A) → P.B a → Prop) : OpSpec P Prop :=
+  fun a k => ∀ b, allows a b → k b
+
 /-- The angelic ("some response") spec on the `Prop` carrier: a call to `a`
 guarantees that *some* response satisfies the continuation. -/
 def angelic (P : PFunctor.{uA, uB}) : OpSpec P Prop :=
@@ -71,6 +80,10 @@ def angelic (P : PFunctor.{uA, uB}) : OpSpec P Prop :=
 
 theorem demonic_mono : (demonic P).Mono :=
   fun _ _ _ h hk b => h b (hk b)
+
+theorem demonicUnder_mono (allows : (a : P.A) → P.B a → Prop) :
+    (demonicUnder allows).Mono :=
+  fun _ _ _ h hk b hb => h b (hk b hb)
 
 theorem angelic_mono : (angelic P).Mono :=
   fun _ _ _ h => fun ⟨b, hb⟩ => ⟨b, h b hb⟩
@@ -118,6 +131,111 @@ theorem wpFold_mono [Preorder l] {Φ : OpSpec P l} (hΦ : Φ.Mono) (x : FreeM P 
   induction x with
   | pure x => exact h x
   | lift_bind a r ih => exact hΦ a fun b => ih b
+
+/-! ## Admitted-response leaf contracts -/
+
+/-- Every leaf reachable by choosing admitted responses satisfies `accept`.
+
+This is the relation-restricted demonic weakest precondition, not a termination
+or progress assertion. In particular, a query with no admitted response
+satisfies every leaf contract vacuously. -/
+def LeavesSatisfyUnder (allows : (a : P.A) → P.B a → Prop) (accept : α → Prop) :
+    FreeM P α → Prop :=
+  fun program => wpFold (OpSpec.demonicUnder allows) program accept
+
+@[simp]
+theorem leavesSatisfyUnder_pure (allows : (a : P.A) → P.B a → Prop)
+    (accept : α → Prop) (result : α) :
+    (pure result : FreeM P α).LeavesSatisfyUnder allows accept ↔ accept result :=
+  Iff.rfl
+
+@[simp]
+theorem leavesSatisfyUnder_liftBind (allows : (a : P.A) → P.B a → Prop)
+    (accept : α → Prop) (position : P.A) (next : P.B position → FreeM P α) :
+    ((FreeM.lift position).bind next).LeavesSatisfyUnder allows accept ↔
+      ∀ direction, allows position direction →
+        (next direction).LeavesSatisfyUnder allows accept :=
+  Iff.rfl
+
+/-- Weakening the required leaf predicate preserves whole-tree conformance. -/
+theorem LeavesSatisfyUnder.mono {allows : (a : P.A) → P.B a → Prop}
+    {accept accept' : α → Prop} (haccept : ∀ result, accept result → accept' result)
+    {program : FreeM P α} (h : program.LeavesSatisfyUnder allows accept) :
+    program.LeavesSatisfyUnder allows accept' :=
+  wpFold_mono (OpSpec.demonicUnder_mono allows) program haccept h
+
+/-- Mapping a function changes only the predicate imposed on returned leaves. -/
+theorem leavesSatisfyUnder_map_iff (allows : (a : P.A) → P.B a → Prop)
+    {X : Type uX} {Y : Type uY} (accept : Y → Prop) (function : X → Y)
+    (program : FreeM P X) :
+    (FreeM.map function program).LeavesSatisfyUnder allows accept ↔
+      program.LeavesSatisfyUnder allows (accept ∘ function) := by
+  induction program with
+  | pure result => rfl
+  | lift_bind position next ih =>
+      change
+        (∀ direction, allows position direction →
+          (FreeM.map function (next direction)).LeavesSatisfyUnder allows accept) ↔
+        ∀ direction, allows position direction →
+          (next direction).LeavesSatisfyUnder allows (accept ∘ function)
+      exact forall_congr' fun direction =>
+        imp_congr_right fun _ => ih direction
+
+/-- Whole-tree result conformance composes through monadic sequencing. -/
+theorem leavesSatisfyUnder_bind_iff (allows : (a : P.A) → P.B a → Prop)
+    {X : Type uX} {Y : Type uY} (accept : Y → Prop) (program : FreeM P X)
+    (next : X → FreeM P Y) :
+    (FreeM.bind program next).LeavesSatisfyUnder allows accept ↔
+      program.LeavesSatisfyUnder allows
+        (fun result => (next result).LeavesSatisfyUnder allows accept) := by
+  induction program with
+  | pure result => rfl
+  | lift_bind position continuation ih =>
+      change
+        (∀ direction, allows position direction →
+          (FreeM.bind (continuation direction) next).LeavesSatisfyUnder allows accept) ↔
+        ∀ direction, allows position direction →
+          (continuation direction).LeavesSatisfyUnder allows
+            (fun result => (next result).LeavesSatisfyUnder allows accept)
+      exact forall_congr' fun direction =>
+        imp_congr_right fun _ => ih direction
+
+section FreeHandler
+
+variable {Q : PFunctor.{uA₂, uB₂}} {α : Type uB}
+
+/-- Interpreting a finite free program through leaf-conforming free handlers
+preserves its admitted-response leaf contract.
+
+Unlike the map and bind laws above, the program result type shares the source
+interface's direction universe. This is exactly the homogeneous result
+constraint of the upstream `FreeM.liftM`; the target interface's position and
+direction universes remain independent. -/
+theorem leavesSatisfyUnder_liftM
+    (handler : (position : P.A) → FreeM Q (P.B position))
+    (outerAllows : (position : P.A) → P.B position → Prop)
+    (innerAllows : (position : Q.A) → Q.B position → Prop)
+    (accept : α → Prop)
+    (hhandler : ∀ position,
+      (handler position).LeavesSatisfyUnder innerAllows (outerAllows position))
+    (program : FreeM P α)
+    (hprogram : program.LeavesSatisfyUnder outerAllows accept) :
+    (program.liftM handler).LeavesSatisfyUnder innerAllows accept := by
+  induction program with
+  | pure result => exact hprogram
+  | lift_bind position next ih =>
+      change
+        (handler position >>= fun direction =>
+          (next direction).liftM handler).LeavesSatisfyUnder innerAllows accept
+      change
+        (FreeM.bind (handler position)
+          (fun direction => (next direction).liftM handler)).LeavesSatisfyUnder
+          innerAllows accept
+      rw [leavesSatisfyUnder_bind_iff]
+      exact (hhandler position).mono fun direction hdirection =>
+        ih direction (hprogram direction hdirection)
+
+end FreeHandler
 
 /-! ## The induced ordered monad algebra -/
 
@@ -209,7 +327,20 @@ section Support
 
 open MonadAttach
 
-variable {α : Type uB}
+variable {α : Type v}
+
+/-- With every response admitted, the restricted leaf contract is the
+canonical all-outputs judgment. -/
+theorem leavesSatisfyUnder_all_iff_allOutputs (x : FreeM P α) (post : α → Prop) :
+    x.LeavesSatisfyUnder (fun _ _ => True) post ↔ AllOutputs post x := by
+  induction x with
+  | pure x => simp
+  | lift_bind a r ih =>
+      rw [leavesSatisfyUnder_liftBind]
+      rw [show ((FreeM.lift a).bind r : FreeM P α) = FreeM.liftBind a r from rfl,
+        allOutputs_liftBind]
+      simp only [true_implies]
+      exact forall_congr' fun b => ih b
 
 /-- The demonic fold is the "always" judgment over the canonical support. -/
 theorem wpFold_demonic_iff_allOutputs (x : FreeM P α) (post : α → Prop) :

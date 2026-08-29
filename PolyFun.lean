@@ -204,6 +204,7 @@ public import PolyFun.PFunctor.Free.Path.Execution
 public import PolyFun.PFunctor.Free.Polynomial
 public import PolyFun.PFunctor.Free.Replicate
 public import PolyFun.PFunctor.Free.Resumption
+public import PolyFun.PFunctor.Free.Sigma
 public import PolyFun.PFunctor.Free.Support
 public import PolyFun.PFunctor.Free.Universal
 public import PolyFun.PFunctor.Free.WP
@@ -253,6 +254,7 @@ public import PolyFun.Realizability.Quantitative
 public import PolyFun.Realizability.Quantitative.BoundedClosure
 public import PolyFun.Realizability.Quantitative.Closure
 public import PolyFun.Realizability.Quantitative.Polynomial
+public import PolyFun.Realizability.Quantitative.Resource
 public import PolyFun.Realizability.Quantitative.WordClass
 public import PolyFun.Realizability.Representation
 public import PolyFun.Realizability.StepClass

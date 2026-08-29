@@ -81,6 +81,7 @@ PFunctor/Free/Basic
   -> PFunctor/Free/Cursor/Occurrence
   -> PFunctor/Free/Cursor/Fork
 PFunctor/{Bound, Free/Path/Execution} -> PFunctor/Free/Path/Bounded
+PFunctor/{Free/Basic, Lens/Cartesian} -> PFunctor/Free/Sigma
 PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption
 PFunctor/{Free/Resumption, M/WellFounded} -> PFunctor/Resumption/WellFounded
 PFunctor/{Resumption, M/Vertex} -> PFunctor/Resumption/Empty
@@ -108,6 +109,7 @@ PFunctor/Lens/Basic -> PFunctor/SubstMonoid
 PFunctor/{Free/Path, SubstMonoid} -> PFunctor/Free/Polynomial
 PFunctor/Free/Path + Control/Monad/Support -> PFunctor/Free/Support
 PFunctor/{Free/Support, Handler} -> PFunctor/Free/WP
+  (demonic/angelic and admitted-response leaf contracts, including free-handler closure)
 Control/Do/Basic + PFunctor/Free/WP -> PFunctor/Free/Do
 PFunctor/Comonoid -> PFunctor/Comonoid/Category
 PFunctor/{Comonoid, Lens/Duoidal} -> PFunctor/Comonoid/Tensor
@@ -242,12 +244,17 @@ Realizability/Quantitative -> Realizability/Quantitative/Closure
 Realizability/Quantitative/Closure -> Realizability/Quantitative/BoundedClosure
 {Complexity/SecondOrderPolynomial, Realizability/Quantitative/Closure}
   -> Realizability/Quantitative/Polynomial
+{Realizability/Quantitative/BoundedClosure,
+ Realizability/Quantitative/Polynomial}
+  -> Realizability/Quantitative/Resource
 Realizability/{Instances, Quantitative} -> Realizability/Quantitative/WordClass
 Mathlib/Order/Monotone/Basic -> Complexity/SecondOrderPolynomial
   (Instances additionally draws on Mathlib's Computability and Fintype layers;
    Quantitative/Closure assembles executable structural code but asserts no
    polynomial-time closure; Quantitative/Polynomial packages explicit
-   backend-relative polynomial certificates; Complexity contains syntax, not feasibility;
+   backend-relative polynomial certificates; Quantitative/Resource adds
+   response-relative second-order run contracts without naming a complexity class;
+   Complexity contains syntax, not feasibility;
    nothing under PFunctor/, ITree/, or Interaction/ depends on Realizability/)
 ```
 

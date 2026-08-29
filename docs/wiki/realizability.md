@@ -45,6 +45,10 @@ PolyFun/Realizability/
   Quantitative/Polynomial.lean
                     first-order polynomial work/output certificates and an
                     explicit categorical/structural model bundle
+  Quantitative/Resource.lean
+                    response-size contracts; componentwise second-order cost
+                    polynomials; split run/program witnesses; pure, ranked-potential,
+                    and sequential-composition resource certificates
   Quantitative/WordClass.lean
                     lift costed word-function code through pinned encodings
 ```
@@ -314,6 +318,17 @@ ordinary value collecting that category with a `StructuralKernel` and
 `PolynomialStructuralClosure`; it is deliberately not a global instance.
 Structural product, sum, and option encodings carry construction and payload
 recovery bounds in both directions.
+
+`Quantitative/Resource.lean` adds the generic open-system resource boundary. A
+`ResponseResourceContract` pins how interface positions are labelled and which
+response environments are admissible; every admitted response is bounded by a
+monotone size modulus. `ExecutionCostPolynomial` places a second-order
+polynomial over each `ExecutionCost` component. The central split is deliberate:
+`PolynomialRunBound` bounds one selected realization without mentioning syntax,
+while `PolynomialProgramWitness` separately records `FreeM` implementation and
+returned-output recovery. Pure programs, ranked local potentials, and sequential
+composition have constructors that discharge the shared run-bound interface.
+These are backend-relative contracts, not a declaration of any complexity class.
 
 `QuantitativeWordClass` lifts code, size, and cost from a word-function backend
 through `WordClass` representations. Separate category adapters lift either a
