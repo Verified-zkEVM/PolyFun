@@ -189,6 +189,17 @@ noncomputable def totalTime (realization : Realization bd) : Polynomial ℕ :=
 noncomputable def descriptionSize (realization : Realization bd) : Polynomial ℕ :=
   realization.initCode.size + realization.headCode.size + realization.updateCode.size
 
+/-- The sum of the three concrete cslib machine state counts at a parameter is
+bounded by the advertised description-size polynomial. -/
+theorem totalDescriptionSize_le (realization : Realization bd) (n : ℕ) :
+    (realization.initCode.wit n).size + (realization.headCode.wit n).size +
+        (realization.updateCode.wit n).size ≤ realization.descriptionSize.eval n := by
+  have init_le := realization.initCode.size_le n
+  have head_le := realization.headCode.size_le n
+  have update_le := realization.updateCode.size_le n
+  simp only [descriptionSize, Polynomial.eval_add]
+  omega
+
 /-- The parameter-substituted initialization polynomial bounds the actual cslib
   machine on every pinned encoded input. -/
 theorem initTime_le (realization : Realization bd) (n : ℕ) (value : input n) :

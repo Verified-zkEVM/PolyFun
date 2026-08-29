@@ -83,6 +83,11 @@ example (n : ℕ) (value : Bool) :
         (boolBoundary.input.enc n value).length ≤ boolRealization.initTime.eval n :=
   boolRealization.initTime_le n value
 
+example (n : ℕ) :
+    (boolRealization.initCode.wit n).size + (boolRealization.headCode.wit n).size +
+        (boolRealization.updateCode.wit n).size ≤ boolRealization.descriptionSize.eval n :=
+  boolRealization.totalDescriptionSize_le n
+
 example (n : ℕ) (value : Bool) :
     (FreeM.pure value : (ConstBool n).FreeM Bool).IsTotalRollBound
       (boolRealization.rounds.eval n) :=
