@@ -329,7 +329,9 @@ Realizability/Quantitative/Closure -> Realizability/Quantitative/BoundedClosure
  Realizability/Quantitative/Polynomial}
   -> Realizability/Quantitative/Resource
 Realizability/{Instances, Quantitative} -> Realizability/Quantitative/WordClass
-{Realizability/Quantitative/Polynomial, ToCslib/Computability/BitEncoding}
+{Realizability/Quantitative, ToCslib/Computability/PolyTime}
+  -> PolyFunCslib/Backend
+{PolyFunCslib/Backend, ToCslib/Computability/BitEncoding}
   -> PolyFunCslib/PPoly
 Mathlib/Order/Monotone/Basic -> Complexity/SecondOrderPolynomial
   (Instances additionally draws on Mathlib's Computability and Fintype layers;
