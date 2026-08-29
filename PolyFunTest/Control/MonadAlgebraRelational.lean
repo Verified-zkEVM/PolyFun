@@ -294,19 +294,17 @@ end HonestRelationalExceptions
 section Automation
 
 /-! The relational simp set is thin by design: `MAlgRelOrdered`'s composition axiom is
-an *inequality*, so the derived structural rules cannot be rewrite rules. What is
-equational is the leaf, the `StrictBind` bind law, and the `rwpExc` corners. -/
+an *inequality*, so the derived structural rules cannot be rewrite rules. `StrictBind`
+is precisely what makes bind an equation that `simp` can use. -/
 
-/-- The leaf rule fires. -/
-example (post : Nat → Nat → Prop) (h : post 1 2) :
-    RelWP (m₁ := Id) (m₂ := Id) (pure 1) (pure 2) post := by
-  simpa using h
-
-/-- Under `StrictBind` the bind law is an equation, so `simp` decomposes a sequenced
-relational goal — which it cannot do without that class. -/
-example (f : Nat → Id Nat) (g : Nat → Id Nat) (post : Nat → Nat → Prop) :
-    RelWP (m₁ := Id) (m₂ := Id) ((pure 1 : Id Nat) >>= f) ((pure 2 : Id Nat) >>= g) post =
-      RelWP (f 1) (g 2) post := by
+/-- Abstract computations force this proof to use the new `relWP_bind` simp attribute;
+core's `pure_bind` rule cannot solve the goal first. -/
+example {m₁ m₂ : Type → Type} {l : Type} [Monad m₁] [Monad m₂] [Preorder l]
+    [MAlgRelOrdered m₁ m₂ l] [StrictBind m₁ m₂ l]
+    {α β γ δ : Type} (x : m₁ α) (y : m₂ β) (f : α → m₁ γ) (g : β → m₂ δ)
+    (post : γ → δ → l) :
+    RelWP (x >>= f) (y >>= g) post =
+      RelWP x y (fun a b => RelWP (f a) (g b) post) := by
   simp
 
 end Automation

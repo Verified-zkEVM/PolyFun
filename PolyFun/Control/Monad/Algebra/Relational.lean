@@ -55,10 +55,10 @@ composition axiom is `rwp_bind_le`, an inequality, so the derived structural rul
 `bind` would be a strictly stronger assumption — which is precisely what `StrictBind`
 adds, and `relWP_bind` is tagged because under that class the law *is* an equation.
 
-So the equational content is: `relWP_pure` at the leaf, `relWP_bind` under `StrictBind`,
-and the four `rwpExc` corner rules. Everything else is a directed reasoning step the user
-chooses. Reaching for `simp` on a bare `RelWP` goal and finding nothing happens is the
-expected behaviour, not a missing lemma.
+The deliberately tagged relational equations are `relWP_pure` at the leaf, `relWP_bind`
+under `StrictBind`, and the four `rwpExc` corner rules. The remaining structural rules are
+directed reasoning steps the user chooses. Reaching for `simp` on a bare `RelWP` goal and
+finding nothing happens is the expected behaviour, not a missing lemma.
 
 No `grind` annotations, for the same reason as the unary layer: the bind rules introduce
 fresh higher-order arguments on the larger side.

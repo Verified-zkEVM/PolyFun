@@ -57,8 +57,8 @@ attribute [simp] monadAlg_pure monadAlg_bind
 The `@[simp]` set here drives `wp` *inwards* through program structure until it meets a
 leaf, mirroring the way core's monad simp set drives `bind` towards right-nested normal
 form. Four lemmas carry it — `wp_pure`, `wp_bind`, `wp_map`, `wp_seq` — and each strictly
-decreases the syntactic size of the program argument, so the set is terminating and
-confluent on the fragment built from `pure`, `>>=`, `<$>`, and `<*>`.
+decreases the program argument to proper subprograms. Together they normalize the
+fragment built from `pure`, `>>=`, `<$>`, and `<*>`.
 
 Deliberately untagged: `wp_mono` and every `Triple` rule. They are not equations, and the
 `Triple` rules are directed reasoning steps a user chooses, not normalizations. `wpExc` /
