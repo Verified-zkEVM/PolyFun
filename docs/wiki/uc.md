@@ -42,7 +42,7 @@ the activation-equivalence factorization theorems in
 | nested `D_real ⊆ D_bd` | ordered `SubTheory` values | Structural carrier plus `realizableSubTheory` / `generatedRealizableSubTheory`; corruption and concrete efficiency still require explicit instances |
 | corruption restriction defining `D_real` | `CorruptionModel`, `MomentaryCorruption` | Vocabulary only; no bridge to `SubTheory.mem` |
 | resources/states | open objects closed against contexts | Conceptual correspondence; no translation theorem to the paper's state category |
-| Definition III.3 equivalence closed by composition | `Observation` plus `RespectsPlugComm` and `RespectsFactorization` | Structural interface implemented; in-repo constructors are equality and the structural `Observation.activation` (which satisfies `RespectsFactorization` over `openTheory` from the named activation-equivalence theorems); packet/sampler-aware observations remain open |
+| Definition III.3 equivalence closed by composition | `Observation` plus `RespectsPlugComm` and `RespectsFactorization` | Structural interface implemented; in-repo constructors are equality, coarse activation equivalence, and conditional sampled-path equivalence. A packet/action-aware or execution-distribution security observation remains open |
 | Definition III.4 secure emulation | `UCSecure`, `UCSecureWithin`, `SecurelyEmulates`, `SecurelyEmulatesWithin` | Context-transformer formulation implemented; no equivalence with the paper's resource/backdoor category or structural simulator morphisms is proved. `Emulates` is the stronger symmetric special case with the identity transformer |
 | Theorems III.11--III.12 composition | `Emulates{,Within}.{par,wire,plug}_compose` | Composition is proved only for the stronger symmetric `Emulates` relation. Transporting an existential simulator needs a structural simulator representation and remains open |
 | Theorem III.7 and Lemma IV.3 dummy/mux | no generic dummy/mux theorem | Open. Cancelling a strict identity wire is only a compact-closed equality and is not dummy-adversary completeness; a concrete mux/demux and structural secure-emulation layer are still missing |
@@ -97,8 +97,9 @@ PolyFun internals.
 ## Instantiation Gates
 
 The process model supports a computational UC claim only after all of the
-following have named proofs. The structural half of each gate is now a named
-PolyFun lemma over the abstract relation family `MonadRelFamily`
+following have named proofs. The scheduler obstruction and the conditional
+structural implications are now named PolyFun lemmas over the abstract
+relation family `MonadRelFamily`
 (`OpenProcessSamplerEquiv`, `OpenProcessSamplerFactorization`,
 `SamplerObservation`); what remains downstream per gate is stated explicitly:
 
@@ -112,7 +113,10 @@ PolyFun lemma over the abstract relation family `MonadRelFamily`
    and `R`-fairness `R.rel σ (schedulerFlip <$> σ)`. Downstream either proves
    these for its relation family or carries them as standing hypotheses;
    `MonadRelFamily.top` discharges them trivially at the cost of forgetting
-   sampler effects.
+   sampler effects. `MonadRelFamily.eq` does not generally discharge them;
+   even a deterministic identity-monad scheduler cannot satisfy both
+   reassociation facts. Equality of distributional denotations therefore
+   needs redesigned scheduler semantics or a deliberately coarser relation.
 2. **Initial-state correspondence.** The totality fields of
    `OpenProcessSamplerEquiv` expose the regrouping bijection on states, so
    corresponding initial states are chosen definitionally.
@@ -121,12 +125,16 @@ PolyFun lemma over the abstract relation family `MonadRelFamily`
    observation must be invariant under sampler equivalence at its relation
    family. This is the downstream adequacy theorem and is not provable in
    PolyFun by design.
-4. **Packet and action identity.** The boundary-trace and silence fields of
-   `IsSamplerBisimulation`; preserved by every coherence witness.
+4. **Packet and action adequacy.** `IsSamplerBisimulation` preserves silence
+   and external boundary traces for open processes, but `Observation` relates
+   closed processes, where those boundary traces are empty. Any claim about
+   internal packet/action identity must be proved as part of the downstream
+   `hInv` adequacy theorem.
 5. **`RespectsFactorization`.** Supplied generically by
    `Observation.respectsFactorization_of_samplerInvariant` from gates 1 and 3;
-   `Observation.sampler` is the canonical observation obtained this way, and
-   `Observation.activation` the unconditional monad-free coarsening.
+   `Observation.sampler` is the canonical sampled-path observation obtained
+   this way, and `Observation.activation` the unconditional monad-free
+   coarsening. Neither is itself a cryptographic security observation.
 
 Efficiency is a separate gate. `StepClass` membership constrains which step
 functions are admissible but carries no quantitative total-cost bound.

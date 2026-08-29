@@ -28,9 +28,11 @@ observation under `OpenProcessSamplerEquiv` — the downstream adequacy
 theorem.  Everything else is supplied here.
 
 `Observation.sampler` packages sampler equivalence itself as the canonical
-such observation; it retains packet identity and sampler effects up to `R`,
-and is still not a *security* observation — it compares single steps, not
-distributions over executions.
+such observation. It retains sampled-path effects up to `R`, but is still not
+a *security* observation: it compares single steps, not distributions over
+executions. Because observations relate closed processes, their boundary
+traces are empty; packet/action adequacy remains part of the downstream
+invariance theorem rather than being supplied by this observation.
 -/
 
 public section
@@ -76,7 +78,7 @@ theorem Observation.respectsFactorization_of_samplerInvariant
       hright W₁ W₂ K)
 
 /-- Sampler equivalence as an observation on the concrete open-process
-theory: the canonical packet- and sampler-aware structural observation. -/
+theory: the canonical sampler-aware structural observation. -/
 def Observation.sampler [Monad m] [LawfulMonad m] (R : MonadRelFamily m) :
     Observation (openTheory.{u, v, w, w'} Party m schedulerSampler) where
   rel := OpenProcessSamplerEquiv R

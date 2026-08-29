@@ -13,7 +13,7 @@ public import PolyFun.Interaction.UC.SamplerObservation
 
 Regression checks for the sampler-aware coherence laws and their observation
 bridge.  At `MonadRelFamily.top` every scheduler-transport hypothesis is
-trivial, so the packet-aware observation `Observation.sampler` obtains the
+trivial, so the sampler-blind strong observation `Observation.sampler` obtains the
 full factorization suite — and hence the whole `Emulates` composition suite —
 unconditionally.
 -/
@@ -39,7 +39,7 @@ example :
     (MonadRelFamily.top_rel _ _) (MonadRelFamily.top_rel _ _)
 
 /-- With the factorization laws in hand, the composition suite applies to the
-packet-aware observation over the concrete process model. -/
+strong path observation over the concrete process model. -/
 example {Δ₁ Δ₂ : PortBoundary}
     {real₁ ideal₁ : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ₁}
     {real₂ ideal₂ : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ₂}
@@ -55,35 +55,25 @@ example {Δ₁ Δ₂ : PortBoundary}
     (MonadRelFamily.top_rel _ _) (MonadRelFamily.top_rel _ _)
   Emulates.par_compose h₁ h₂
 
-/-- The five sampler-aware coherence laws are pinned at their statements. -/
-example {Δ : PortBoundary}
-    (W : OpenProcess.{u, v, w, w'} m Party Δ)
-    (K : OpenProcess.{u, v, w, w'} m Party (PortBoundary.swap Δ)) :
-    OpenProcessSamplerEquiv (MonadRelFamily.top m)
-      ((openTheory Party m schedulerSampler).plug W K)
-      ((openTheory Party m schedulerSampler).plug K W) :=
-  openTheory_plug_comm_sampler_equiv Party m schedulerSampler
-    (MonadRelFamily.top m) (MonadRelFamily.top_rel _ _) W K
-
-/-- Sampler-aware factorization forgets onto the activation-level law. -/
-example {Δ₁ Δ₂ : PortBoundary}
-    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
-    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
-    (K : OpenProcess.{u, v, w, w'} m Party
-      (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :
-    OpenProcessActivationEquiv
-      ((openTheory Party m schedulerSampler).plug
-        ((openTheory Party m schedulerSampler).par W₁ W₂) K)
-      ((openTheory Party m schedulerSampler).plug W₁
-        (OpenProcess.mapBoundary
-          (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₁)).toHom
-          ((openTheory Party m schedulerSampler).wire
-            (Γ := PortBoundary.swap Δ₂)
-            (Δ₂ := PortBoundary.empty)
-            K
-            (OpenProcess.mapBoundary
-              (PortBoundary.Equiv.tensorEmptyRight Δ₂).symm.toHom W₂)))) :=
-  (openTheory_plug_par_left_sampler_equiv Party m schedulerSampler
-    (MonadRelFamily.top m) (MonadRelFamily.top_rel _ _) W₁ W₂ K).toActivationEquiv
+/-- Exact computation equality cannot make both reassociations invisible even
+for a deterministic identity-monad scheduler. The transport facts are genuine
+semantic obligations, not routine congruence lemmas. -/
+example (σ : ULift.{w, 0} Bool) :
+    ¬ ((MonadRelFamily.eq Id).rel
+        (sourceDraw (m := Id) σ) (leftDraw (m := Id) σ) ∧
+      (MonadRelFamily.eq Id).rel
+        (sourceDraw (m := Id) σ) (rightDraw (m := Id) σ)) := by
+  obtain ⟨b⟩ := σ
+  cases b
+  · simp only [MonadRelFamily.eq_rel, sourceDraw_id_up_false,
+      leftDraw_id_up_false, rightDraw_id_up_false]
+    intro h
+    have : Leaf.context = Leaf.second := congrArg ULift.down h.1
+    contradiction
+  · simp only [MonadRelFamily.eq_rel, sourceDraw_id_up_true,
+      leftDraw_id_up_true, rightDraw_id_up_true, true_and]
+    intro h
+    have : Leaf.first = Leaf.second := congrArg ULift.down h
+    contradiction
 
 end Interaction.UC.SamplerFactorizationExamples

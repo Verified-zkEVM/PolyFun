@@ -12,17 +12,17 @@ public import PolyFun.Interaction.UC.OpenProcess
 /-!
 # Sampler-aware equivalence of open processes
 
-`OpenProcessActivationEquiv` deliberately erases packet identity and
-`stepSampler` effects, so no distributional observation can factor through it.
-This module defines the strengthening that retains both, relative to an
-abstract relation family on `m`-computations.
+`OpenProcessActivationEquiv` deliberately erases `stepSampler` effects and
+uses delay matching. This module defines a strong one-step strengthening that
+retains sampled-path effects, relative to an abstract relation family on
+`m`-computations.
 
 `MonadRelFamily m` axiomatizes what a downstream semantics must supply: a
 per-type equivalence on `m`-computations respecting `map` and one-sided
-`bind`.  PolyFun never names a concrete instance beyond `MonadRelFamily.top`;
-the intended downstream instantiation is equality of denotations (for example
-`R x y := evalDist x = evalDist y` for a measure-valued `evalDist`), for which
-every field holds.
+`bind`. `MonadRelFamily.eq` preserves exact computations and
+`MonadRelFamily.top` forgets sampler effects. A downstream relation may instead
+compare denotations (for example measure-valued semantics), provided it proves
+the same congruence laws.
 
 `IsSamplerBisimulation R p₁ p₂ rel` demands a *strong* step matching: related
 states carry a bijection of complete step paths preserving silence, boundary
@@ -70,9 +70,30 @@ structure MonadRelFamily (m : Type w → Type w') [Monad m] where
   bind_congr : ∀ {α β : Type w} {x y : m α} (f : α → m β),
     rel x y → rel (x >>= f) (y >>= f)
 
-/-- The everything-relation: forgetting sampler effects entirely.  At this
-instantiation the sampler-aware equivalence retains exactly packet identity
-over the activation notion. -/
+/-- Exact equality of monadic computations. Scheduler reassociation generally
+does not satisfy the transport hypotheses at this relation; it is the strict
+baseline against which weaker semantic relations can be compared. -/
+def MonadRelFamily.eq (m : Type w → Type w') [Monad m] : MonadRelFamily m where
+  rel := fun x y => x = y
+  refl _ := rfl
+  symm h := h.symm
+  trans hxy hyz := hxy.trans hyz
+  map_congr := by
+    intro _ _ f _ _ h
+    exact congrArg (fun z => f <$> z) h
+  bind_congr := by
+    intro _ _ _ _ f h
+    exact congrArg (fun z => z >>= f) h
+
+/-- The exact relation is computation equality. -/
+@[simp]
+theorem MonadRelFamily.eq_rel {m : Type w → Type w'} [Monad m]
+    {α : Type w} (x y : m α) : (MonadRelFamily.eq m).rel x y ↔ x = y :=
+  Iff.rfl
+
+/-- The everything-relation: forgetting sampler effects entirely. At this
+instantiation the equivalence still requires a one-to-one path matching,
+silence preservation, and boundary-trace preservation. -/
 def MonadRelFamily.top (m : Type w → Type w') [Monad m] : MonadRelFamily m where
   rel _ _ := True
   refl := by intros; trivial
