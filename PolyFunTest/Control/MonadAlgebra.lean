@@ -65,19 +65,17 @@ end Behaviour
 section Automation
 
 /-! The `@[simp]` set drives `wp` inwards through program structure until it reaches
-leaves. These are the checks behind the automation contract in
+leaves. This is the canary behind the automation contract in
 `PolyFun/Control/Monad/Algebra.lean`. -/
 
-/-- A compound `do` block normalizes down to the one leaf that is not a `pure`. -/
-example (g : Nat → Id Nat) (f : Nat → Nat) (post : Nat → Prop) :
-    wp (do let a ← (pure 1 : Id Nat); let b ← g a; pure (f b)) post =
-      wp (g 1) (fun b => post (f b)) := by
-  simp
-
-/-- `<$>` and `<*>` are eliminated too, so the fragment closed under `pure`, `>>=`,
-`<$>`, and `<*>` normalizes completely. -/
-example (x : Id Nat) (h : Id (Nat → Nat)) (post : Nat → Prop) :
-    wp (h <*> x) post = wp h (fun g => wp x (fun a => post (g a))) := by
+/-- On an abstract monad, one `simp` call must use `wp_map`, `wp_bind`, and `wp_seq` to
+reach the three opaque computation leaves; no definitional `Id` reduction can bypass the
+new attributes. -/
+example {m : Type → Type} [Monad m] [LawfulMonad m] [MAlgOrdered m Prop]
+    {α β γ δ : Type} (mf : m (α → β)) (x : m α) (k : β → m γ) (h : γ → δ)
+    (post : δ → Prop) :
+    wp (h <$> ((mf <*> x) >>= k)) post =
+      wp mf (fun f => wp x (fun a => wp (k (f a)) (fun c => post (h c)))) := by
   simp
 
 end Automation
