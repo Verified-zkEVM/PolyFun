@@ -53,7 +53,7 @@ bit-lengths the polynomial bounds speak about.
 
 @[expose] public section
 
-universe u
+universe u v w u' v'
 
 open Cslib.Turing.SingleTapeTM
 
@@ -119,7 +119,7 @@ structure BitEncFam (α : ℕ → Type u) : Type u where
 
 namespace BitEncFam
 
-variable {α β : ℕ → Type u}
+variable {α : ℕ → Type u} {β : ℕ → Type v}
 
 /-- Forget the fixed width, keeping the polynomial length bound. -/
 def toStrEncFam (e : BitEncFam α) : StrEncFam α where
@@ -220,7 +220,7 @@ end BitEncFam
 
 namespace StrEncFam
 
-variable {σ β : ℕ → Type u}
+variable {σ : ℕ → Type u} {β : ℕ → Type v}
 
 /-- Pair a variable-width encoding with a fixed-width one by append: injective because
 the fixed-width right component determines the split point from the right. This is the
@@ -268,7 +268,7 @@ noncomputable def option (s : StrEncFam σ) : StrEncFam (fun n => Option (σ n))
 
 /-- Tag-bit sum of raw string encodings: `false ::` the left payload, `true ::` the
 right payload. The state shape of a two-phase (`⊕`-state) machine. -/
-noncomputable def sum {τ : ℕ → Type u} (s₁ : StrEncFam σ) (s₂ : StrEncFam τ) :
+noncomputable def sum {τ : ℕ → Type v} (s₁ : StrEncFam σ) (s₂ : StrEncFam τ) :
     StrEncFam (fun n => σ n ⊕ τ n) where
   enc n := Sum.elim (fun x => false :: s₁.enc n x) (fun y => true :: s₂.enc n y)
   enc_injective n x y h := by
@@ -289,17 +289,17 @@ noncomputable def sum {τ : ℕ → Type u} (s₁ : StrEncFam σ) (s₂ : StrEnc
       simp only [Sum.elim_inr, List.length_cons, Polynomial.eval_add, Polynomial.eval_C]
       omega
 
-@[simp] theorem sum_enc_inl {τ : ℕ → Type u} (s₁ : StrEncFam σ) (s₂ : StrEncFam τ)
+@[simp] theorem sum_enc_inl {τ : ℕ → Type v} (s₁ : StrEncFam σ) (s₂ : StrEncFam τ)
     (n : ℕ) (x : σ n) : (s₁.sum s₂).enc n (Sum.inl x) = false :: s₁.enc n x := rfl
 
-@[simp] theorem sum_enc_inr {τ : ℕ → Type u} (s₁ : StrEncFam σ) (s₂ : StrEncFam τ)
+@[simp] theorem sum_enc_inr {τ : ℕ → Type v} (s₁ : StrEncFam σ) (s₂ : StrEncFam τ)
     (n : ℕ) (y : τ n) : (s₁.sum s₂).enc n (Sum.inr y) = true :: s₂.enc n y := rfl
 
 end StrEncFam
 
 namespace BitEncFam
 
-variable {γ : ℕ → Type u} {σ : ℕ → Type u}
+variable {γ : ℕ → Type u} {σ : ℕ → Type v}
 
 /-- Pair a fixed-width encoding on the left with a variable-width one on the right by
 append — the mirror of `StrEncFam.pairVar`. Injective because the fixed-width left
@@ -349,9 +349,9 @@ combinators compose them, and an adversary's four step functions each carry one.
 Like `EncPolyTime`, the structure imposes nothing on the encodings themselves; its
 certifying power comes from the call site pinning the injective families
 (`ToCslib.Computability.BitEncFam`, `ToCslib.Computability.StrEncFam`). -/
-structure EncPolyTimeFam {α β : ℕ → Type u}
+structure EncPolyTimeFam {α : ℕ → Type u} {β : ℕ → Type v}
     (ea : (n : ℕ) → α n → List Bool) (eb : (n : ℕ) → β n → List Bool)
-    (f : (n : ℕ) → α n → β n) : Type (u + 1) where
+    (f : (n : ℕ) → α n → β n) : Type (max (u + 1) (v + 1)) where
   /-- The machine witness at each parameter. -/
   wit : (n : ℕ) → EncPolyTime (ea n) (eb n) (f n)
   /-- Uniform polynomial bound on running times, in `n` plus the input length. -/
@@ -365,7 +365,7 @@ structure EncPolyTimeFam {α β : ℕ → Type u}
 
 namespace EncPolyTimeFam
 
-variable {α β γ : ℕ → Type u}
+variable {α : ℕ → Type u} {β : ℕ → Type v} {γ : ℕ → Type w}
   {ea : (n : ℕ) → α n → List Bool} {eb : (n : ℕ) → β n → List Bool}
   {ec : (n : ℕ) → γ n → List Bool}
 
@@ -373,7 +373,7 @@ variable {α β γ : ℕ → Type u}
 time polynomial, and advice bound are untouched (`EncPolyTime.recode` per parameter).
 The workhorse for pure re-bracketings of encoded data — `cons`/append associativity and
 pair/sum reshuffles cost no machine content. -/
-def recode {α' β' : ℕ → Type u} {ea' : (n : ℕ) → α' n → List Bool}
+def recode {α' : ℕ → Type u'} {β' : ℕ → Type v'} {ea' : (n : ℕ) → α' n → List Bool}
     {eb' : (n : ℕ) → β' n → List Bool} {f : (n : ℕ) → α n → β n}
     (h : EncPolyTimeFam ea eb f) (φ : (n : ℕ) → α' n → α n) (g : (n : ℕ) → α' n → β' n)
     (hin : ∀ n x, ea' n x = ea n (φ n x))

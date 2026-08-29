@@ -87,7 +87,7 @@ if (( run_axioms )); then
 
   echo ""
   echo "# Enforcing zero axiom/sorry debt"
-  lake exe polyfun-axiomsweep --check
+  lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --check
 fi
 
 echo ""

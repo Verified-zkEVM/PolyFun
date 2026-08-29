@@ -16,6 +16,6 @@ public import ToCslib.Data.BitVec
 
 This library contains reusable facts and constructions about cslib machines. It
 does not import PolyFun's realizability theory or any downstream oracle or
-cryptographic semantics. Backend adapters in `PolyFun.Realizability.Backend`
-may import these modules explicitly.
+cryptographic semantics. Optional backend libraries may import these modules
+explicitly without making cslib a dependency of generic PolyFun.
 -/

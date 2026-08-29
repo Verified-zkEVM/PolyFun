@@ -42,3 +42,22 @@ example (state : StrEncFam fun _ ↦ Bool) (parameter : ℕ) (value : Bool) :
 
 example (input : List Bool) :
     (EncPolyTime.appendBit id true).toFun input = input ++ [true] := rfl
+
+/-! Mixed-universe canaries: encoding products and machine families do not require
+their source and target families to live in the same universe. -/
+
+noncomputable example (lower : BitEncFam fun _ ↦ Bool)
+    (higher : BitEncFam fun _ ↦ ULift.{1} Bool) :
+    BitEncFam (fun _ ↦ Bool × ULift.{1} Bool) :=
+  lower.pair higher
+
+noncomputable example (lower : StrEncFam fun _ ↦ Bool)
+    (higher : BitEncFam fun _ ↦ ULift.{1} Bool) :
+    StrEncFam (fun _ ↦ Bool × ULift.{1} Bool) :=
+  lower.pairVar higher
+
+example {α : ℕ → Type} {β : ℕ → Type 1}
+    {ea : (n : ℕ) → α n → List Bool} {eb : (n : ℕ) → β n → List Bool}
+    {f : (n : ℕ) → α n → β n} (witness : EncPolyTimeFam ea eb f) :
+    EncPolyTimeFam ea eb f :=
+  witness
