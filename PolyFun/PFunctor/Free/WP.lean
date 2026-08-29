@@ -413,7 +413,9 @@ theorem allOutputs_liftM_of_wpFold {Φ : OpSpec Q Prop} (s : Handler n Q)
 
 /-- The demonic fold at the *canonical* spec already implies the interpreted guarantee,
 whenever the handler validates that spec. Specializes the previous theorem to
-`OpSpec.demonic`, whose hypothesis says the handler's every answer is possible. -/
+`OpSpec.demonic`: the handler must establish every postcondition that holds for all typed
+responses. This constrains its outputs to the operation's response type; it does not claim
+that the handler can produce every response. -/
 theorem allOutputs_liftM_of_allOutputs (s : Handler n Q)
     (h : ∀ (a : Q.A) (k : Q.B a → Prop), (∀ b, k b) → MAlgOrdered.wp (s a) k)
     (x : FreeM Q α) (post : α → Prop) (hx : AllOutputs post x) :

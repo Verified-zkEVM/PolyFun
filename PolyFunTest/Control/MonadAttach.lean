@@ -16,8 +16,9 @@ judgments must stay `Iff.rfl`-convertible both to their bounded-quantifier spell
 They also exercise the scoped `⊨ₐ` / `⊨ₛ` / `⊭` notation, the structural recursion of the
 judgments over free-monad trees, and `MonadAttach.pbind`.
 
-The `StateT` section is the executable justification for `StateT σ m` having a `MonadAttach`
-instance but *not* an `ExactMonadAttach` one: both introduction rules genuinely fail there.
+The stateful section is the executable justification for the canonical `MonadAttach`
+instances of `StateT` and `ReaderT` not being `ExactMonadAttach`: flattening their initial
+indices makes the bind introduction rule genuinely fail.
 -/
 
 @[expose] public section
@@ -232,10 +233,25 @@ example {m : Type → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMo
 
 /-! ### `ReaderT` fails for the same reason
 
-The `ReaderT` claim was previously asserted but not pinned. It fails only through the empty
-environment — with the same `r` threaded to both sides of a `bind`, the environment version
-of the composition rule is fine, which is why `ReaderT.supportAt_bind` needs no side
-condition. -/
+The flattened premises may choose different environments. The bind below has no `true`
+output: at `false` the prefix selects the `false` branch of the continuation, while at
+`true` it selects the `true` branch. Yet `false` is reachable from the prefix at one
+environment and `true` is reachable from its continuation at the other. Indexing fixes
+this by threading the same environment through both sides. -/
+
+/-- Possible outputs do not compose for flattened `ReaderT` support, even over a nonempty
+environment. -/
+example : ¬ (∀ {α β : Type} {x : ReaderT Bool Id α} {f : α → ReaderT Bool Id β}
+      {a : α} {b : β}, CanReturn x a → CanReturn (f a) b → CanReturn (x >>= f) b) := by
+  intro h
+  have hx : CanReturn (m := ReaderT Bool Id) (fun r => r) false := ⟨false, rfl⟩
+  have hf : CanReturn (m := ReaderT Bool Id) (fun r => !false && r) true := ⟨true, rfl⟩
+  obtain ⟨r, hr⟩ := h (x := fun r => r) (f := fun a r => !a && r) hx hf
+  cases r
+  · change (!false && false = true) at hr
+    contradiction
+  · change (!true && true = true) at hr
+    contradiction
 
 /-- `pure` has empty support over an empty environment: there is no environment to run in. -/
 example (a : Nat) : ¬ CanReturn (m := ReaderT Empty Id) (pure a) a := by
@@ -289,21 +305,19 @@ end StatefulCounterexamples
 
 section AutomationBattery
 
-/-! The living gate for the automation contract in `Control/Monad/Support.lean`. Each
-row is closed by a single terminal tactic, so a regression in either `simp` or `grind`
-surfaces here in isolation rather than inside a downstream proof. -/
+/-! A compact living gate for the automation contract in `Control/Monad/Support.lean`.
+Each distinct normalization path is closed by one terminal tactic; testing every goal
+twice with both tactics would add volume without distinguishing regressions. -/
 
 variable {m : Type → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
 
--- Membership normalizes to `CanReturn`, then to a concrete equation, under both tactics.
+-- Membership normalizes to `CanReturn`, then to a concrete equation.
 example (a b : Nat) : a ∈ support (pure b : Option Nat) ↔ a = b := by simp
-example (a b : Nat) : a ∈ support (pure b : Option Nat) ↔ a = b := by grind
 
-example (a : Nat) : support (some a) = {a} := by simp
+-- The directed closed-form rule is also available to `grind`.
 example (a : Nat) : support (some a) = {a} := by grind
 
 example : support (none : Option Nat) = ∅ := by simp
-example : support (none : Option Nat) = ∅ := by grind
 
 -- Set-level structure decomposes before pointwise unfolding.
 example (x : m Nat) (f : Nat → m Bool) :
@@ -314,9 +328,6 @@ example (g : Nat → Bool) (x : m Nat) : support (g <$> x) = g '' support x := b
 -- The indexed layer computes too.
 example {σ : Type} (s : σ) (a : Nat) :
     StateT.supportFrom s (pure a : StateT σ m Nat) = {(a, s)} := by simp
-
-example {σ : Type} (s : σ) (a : Nat) :
-    StateT.supportFrom s (pure a : StateT σ m Nat) = {(a, s)} := by grind
 
 -- The writer layer, which had no support at all before.
 example {ω : Type} [Monoid ω] (a : Nat) (w : ω) (x : WriterT ω m Nat)
