@@ -70,7 +70,7 @@ python3 ./scripts/check-docs-integrity.py
 if (( run_lint )); then
   echo ""
   echo "# Running environment linters (lake lint)"
-  lake build ToCslib
+  lake build ToCslib PolyFunCslib
   lake lint
 fi
 

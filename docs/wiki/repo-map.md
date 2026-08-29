@@ -25,7 +25,6 @@ PolyFun/
   Realizability/     step classes and realizability of dynamical systems and
                      free programs by admissible first-order machines;
                      executable quantitative realizers and syntactic run costs;
-    Backend/         optional concrete adapters, isolated from the generic core
   Complexity/        generic resource-bound syntax (not a concrete complexity class)
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
                      Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace),
@@ -36,6 +35,8 @@ PolyFun/
 
 ToCslib/             separate low-level extensions to the pinned cslib machine
                      API; imports cslib and Mathlib, never PolyFun
+PolyFunCslib/         optional cslib-backed PolyFun realizability adapter;
+                     excluded from the PolyFun umbrella
 
 docs/wiki/           agent-facing notes (this directory)
 scripts/             repo utilities (validate, lint, update-lib, port helpers)
@@ -329,7 +330,7 @@ Realizability/Quantitative/Closure -> Realizability/Quantitative/BoundedClosure
   -> Realizability/Quantitative/Resource
 Realizability/{Instances, Quantitative} -> Realizability/Quantitative/WordClass
 {Realizability/Quantitative/Polynomial, ToCslib/Computability/BitEncoding}
-  -> Realizability/Backend/Cslib/PPoly
+  -> PolyFunCslib/PPoly
 Mathlib/Order/Monotone/Basic -> Complexity/SecondOrderPolynomial
   (Instances additionally draws on Mathlib's Computability and Fintype layers;
    Quantitative/Closure assembles executable structural code but asserts no
@@ -377,7 +378,7 @@ plain imports, and reducibility is exposed declaration-by-declaration.
   `PolyFun/Realizability/Quantitative/Closure.lean`; for ranked termination,
   trace transport, and restricted pathwise closure, continue with
   `PolyFun/Realizability/Quantitative/BoundedClosure.lean`. Optional concrete
-  adapters live under `PolyFun/Realizability/Backend/`; cryptographic policy and
+  adapters live in separate library roots such as `PolyFunCslib/`; cryptographic policy and
   protocol-specific adequacy theorems belong downstream.
 - Updating notation: start in `PolyFun/Interaction/UC/Notation.lean`. See
   [`notation.md`](notation.md).

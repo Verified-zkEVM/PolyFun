@@ -260,7 +260,6 @@ public import PolyFun.PFunctor.Supply.Trace
 public import PolyFun.PFunctor.Trace
 public import PolyFun.PFunctor.Wiring
 public import PolyFun.PFunctor.Wiring.Parallel
-public import PolyFun.Realizability.Backend.Cslib.PPoly
 public import PolyFun.Realizability.Basic
 public import PolyFun.Realizability.Closure
 public import PolyFun.Realizability.DynSystem

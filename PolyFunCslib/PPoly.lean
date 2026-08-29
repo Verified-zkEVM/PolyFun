@@ -6,7 +6,7 @@ Authors: Devon Tuma, Quang Dao
 
 module
 
-public import PolyFun.Realizability.Quantitative.Polynomial
+public import PolyFun.Realizability.Machine
 public import ToCslib.Computability.BitEncoding
 
 /-!
@@ -138,7 +138,7 @@ noncomputable def descriptionSize (realization : Realization bd) : Polynomial �
   realization.initCode.size + realization.headCode.size + realization.updateCode.size
 
 /-- The parameter-substituted initialization polynomial bounds the actual cslib
-machine on every canonically encoded input. -/
+  machine on every pinned encoded input. -/
 theorem initTime_le (realization : Realization bd) (n : ℕ) (value : input n) :
     ((realization.initCode.wit n).time).eval (bd.input.enc n value).length ≤
       realization.initTime.eval n := by
@@ -174,6 +174,87 @@ theorem updateTime_le (realization : Realization bd) (n : ℕ)
   have stateLength := realization.state.len_le n step.1
   have indexWidth := bd.index.wid_le n
   omega
+
+/-! ## Pathwise total running time -/
+
+/-- A fully typed visible execution prefix of one family member. The constructor
+records only enabled transitions, so the cost below never charges the arbitrary
+`none` behavior of `update?` on a mismatched flattened index. -/
+inductive ExecutionTrace (realization : Realization bd) (n : ℕ) :
+    (realization.machine n).State → (realization.machine n).State → Type u where
+  | nil (state : (realization.machine n).State) : ExecutionTrace realization n state state
+  | query {state : (realization.machine n).State} {position : (p n).A}
+      {next : (p n).B position → (realization.machine n).State}
+      {finish : (realization.machine n).State}
+      (view_eq : (realization.machine n).view state = Sum.inr ⟨position, next⟩)
+      (direction : (p n).B position)
+      (tail : ExecutionTrace realization n (next direction) finish) :
+      ExecutionTrace realization n state finish
+
+namespace ExecutionTrace
+
+variable {realization : Realization bd} {n : ℕ}
+
+/-- Number of visible query-answer transitions in the prefix. -/
+def length {start finish : (realization.machine n).State} :
+    ExecutionTrace realization n start finish → ℕ
+  | .nil _ => 0
+  | .query _ _ tail => tail.length + 1
+
+/-- Actual cslib-machine work charged to the observations and enabled updates
+along a trace, including the final observation. -/
+noncomputable def work {start finish : (realization.machine n).State} :
+    ExecutionTrace realization n start finish → ℕ
+  | .nil state =>
+      ((realization.headCode.wit n).time).eval
+        (realization.state.enc n state).length
+  | .query (state := state) (position := position) _ direction tail =>
+      ((realization.headCode.wit n).time).eval
+          (realization.state.enc n state).length +
+        ((realization.updateCode.wit n).time).eval
+          ((realization.state.pairVar bd.index).enc n
+            (state, ⟨position, direction⟩)).length + tail.work
+
+/-- Every typed prefix is bounded by one observation per state and one update
+per visible transition. -/
+theorem work_le {start finish : (realization.machine n).State}
+    (trace : ExecutionTrace realization n start finish) :
+    trace.work ≤ (trace.length + 1) * realization.headTime.eval n +
+      trace.length * realization.updateTime.eval n := by
+  induction trace with
+  | nil state =>
+      simpa [work, length] using realization.headTime_le n state
+  | @query state position next finish view_eq direction tail induction =>
+      have headBound := realization.headTime_le n state
+      have updateBound := realization.updateTime_le n (state, ⟨position, direction⟩)
+      simp only [work, length]
+      calc
+        _ ≤ realization.headTime.eval n + realization.updateTime.eval n +
+            ((tail.length + 1) * realization.headTime.eval n +
+              tail.length * realization.updateTime.eval n) :=
+          Nat.add_le_add (Nat.add_le_add headBound updateBound) induction
+        _ = (tail.length + 1 + 1) * realization.headTime.eval n +
+            (tail.length + 1) * realization.updateTime.eval n := by ring
+
+/-- Initialization plus every typed prefix of at most the declared round budget
+is bounded by `totalTime`. This is the load-bearing whole-run P/poly theorem:
+local machine bounds are added along a path rather than polynomially composed. -/
+theorem runWork_le_totalTime (value : input n)
+    {finish : (realization.machine n).State}
+    (trace : ExecutionTrace realization n ((realization.machine n).init value) finish)
+    (roundBound : trace.length ≤ realization.rounds.eval n) :
+    ((realization.initCode.wit n).time).eval (bd.input.enc n value).length + trace.work ≤
+      realization.totalTime.eval n := by
+  have initBound := realization.initTime_le n value
+  have traceBound := trace.work_le
+  have headFactor : trace.length + 1 ≤ realization.rounds.eval n + 1 := by omega
+  have headBound := Nat.mul_le_mul_right (realization.headTime.eval n) headFactor
+  have updateBound := Nat.mul_le_mul_right (realization.updateTime.eval n) roundBound
+  rw [Realization.totalTime]
+  simp only [Polynomial.eval_add, Polynomial.eval_mul, Polynomial.eval_one]
+  omega
+
+end ExecutionTrace
 
 /-- Precompose the input of a realization with a supplied cslib machine family. -/
 noncomputable def precomp {nextInput : ℕ → Type u} (realization : Realization bd)
@@ -250,6 +331,36 @@ theorem isTotalRollBound (witness : Witness bd program) (n : ℕ) (value : input
   ((implementsWithin_iff_implements_and_bound
     (witness.realization.machine n) (program n)
       (witness.realization.rounds.eval n)).mp (witness.implements n)).2 value
+
+/-- A realization of an immediately returning program exposes that return at
+its initial state. This is the bridge from PolyFun's coinductive semantics to
+the first-order `headCode` consumed by machine-counting arguments. -/
+theorem head_init_eq_of_pure {function : (n : ℕ) → input n → output n}
+    (witness : Witness bd (fun n value ↦ FreeM.pure (function n value)))
+    (n : ℕ) (value : input n) :
+    (witness.realization.machine n).head
+        ((witness.realization.machine n).init value) = Sum.inl (function n value) := by
+  have implementation :=
+    ((implementsWithin_iff_implements_and_bound
+      (witness.realization.machine n) (fun value ↦ FreeM.pure (function n value))
+        (witness.realization.rounds.eval n)).mp (witness.implements n)).1 value
+  have firstStep := congrArg Resumption.dest implementation
+  rw [DynSystem.DynComputation.dest_denote] at firstStep
+  change Sum.map (fun result ↦ result)
+      ((p n).map (witness.realization.machine n).toDynSystem.behavior)
+        ((witness.realization.machine n).view
+          ((witness.realization.machine n).init value)) =
+      Sum.inl (function n value) at firstStep
+  cases viewEquation : (witness.realization.machine n).view
+      ((witness.realization.machine n).init value) with
+  | inl result =>
+      rw [viewEquation] at firstStep
+      simp only [Sum.map_inl, Sum.inl.injEq] at firstStep
+      simpa [firstStep] using
+        (witness.realization.machine n).head_eq_inl_of_view viewEquation
+  | inr query =>
+      rw [viewEquation] at firstStep
+      simp at firstStep
 
 end Witness
 

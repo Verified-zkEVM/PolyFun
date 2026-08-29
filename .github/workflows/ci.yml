@@ -93,7 +93,7 @@ jobs:
 
       - name: Run environment linters
         run: |
-          lake build ToCslib
+          lake build ToCslib PolyFunCslib
           lake lint
 
   test:
