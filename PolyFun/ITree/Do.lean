@@ -86,13 +86,14 @@ what makes `iter_weakBisimRel`'s state relation `fun i j => i = j ∧ I i`
 inductive: the body hands back exactly the fact the next iteration needs.
 -/
 
-/-- Loop-invariant rule for `forInLoop`. If `I` holds of the initial state, and at
+/-- Invariant-scoped congruence for `forInLoop`. If `I` holds of the initial state, and at
 every state satisfying `I` the two bodies are weakly bisimilar under a relation
 that additionally re-establishes `I` on each `yield`, then the two loops are
 weakly bisimilar.
 
-With `body₂ := body₁` this reads as invariant preservation; with the two distinct
-it licenses replacing a body by a simplification valid only under `I`. -/
+This licenses replacing a body by a simplification valid only under `I`. Preservation
+of `I` is a hypothesis used to keep the relational argument inductive, not a separate
+postcondition established by the conclusion. -/
 theorem forInLoop_weakBisim_of_invariant {F : PFunctor.{uA, uB}} {β : Type uβ}
     (I : β → Prop) (loop : Lean.Loop) {init : β} (hinit : I init)
     {body₁ body₂ : Unit → β → ITree F (ForInStep β)}

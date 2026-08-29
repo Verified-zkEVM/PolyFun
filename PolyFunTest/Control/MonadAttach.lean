@@ -405,8 +405,9 @@ forces a single output to satisfy both.
 The consequence is structural rather than a gap in this development. The angelic
 interpretation cannot be a `Std.Do.WP`, so it stays at the `MAlgOrdered` level, whose
 `μ_bind_mono` asks only for monotonicity. Core's newer weakest-precondition stack drops
-conjunctivity from `PredTrans` and reintroduces it as an opt-in, one-directional
-`WPConjunctive`; the angelic reading is expressible against that stack. -/
+conjunctivity from `PredTrans` and reintroduces it as an opt-in `WPConjunctive`.
+That optional class asks for exactly the direction refuted below; the angelic reading
+is expressible against the newer base `WP` only without such an instance. -/
 
 /-- The direction that does hold: an angelic conjunction splits. -/
 example {α : Type} (x : SetM α) (p q : α → Prop) (h : x ⊨ₛ fun a => p a ∧ q a) :

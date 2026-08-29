@@ -16,7 +16,7 @@ migration sketch live in
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); `OpSpec.toMAlgOrdered`; semantic `FreeM.wpVia` through a `Handler`; soundness `wpFold_le_wpVia`/`wpFold_eq_wpVia` |
 | `PolyFun/Control/Do/Basic.lean` | Core-`Std.Do` transports: `MonadHom.transportWP(Monad)` along a monad morphism, `MonadAttach.toWP(Monad)` demonically at `.pure`, `toWPSound` for core-sense soundness, and `support_subset_of_wp`/`allOutputs_of_wp` turning any `WPSound` triple into a support fact |
-| `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — the loop-invariant rule, stated as a `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
+| `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
 | `PolyFun/PFunctor/Free/Do.lean` | Scoped demonic `WP (FreeM P) .pure` instances (`open scoped PFunctor.FreeM.DemonicWP`), `wpMonadOfHandler`, and the `Spec.lift` `@[spec]` lemma enabling `mvcgen` on free programs with uninterpreted operations |
 
 Worked examples: `PolyFunTest/Control/MonadAttach.lean` (judgments, notation,
@@ -141,7 +141,9 @@ concludes from a `MonadAttach.CanReturn` witness directly, dropping the `Ensures
 formulation — and deprecates `mvcgen` in favour of `vcgen`. All three ship in **v4.35**, not
 v4.34. Two consequences for this layer: `support_subset_of_wp` / `allOutputs_of_wp` are
 already stated against `CanReturn`, so they carry over as a rename; and `WPConjunctive`
-being opt-in and one-directional is what would unblock an angelic bridge.
+being opt-in is what would unblock an angelic bridge. Its one law is exactly the reverse
+conjunction direction refuted by the test, so that bridge would not provide the optional
+class.
 
 `MAlgOrdered` is recognisably `Std.Internal.Do.WPMonad` minus exception postconditions — but
 over Mathlib's `CompleteLattice`, while every piece of core WP machinery is over
