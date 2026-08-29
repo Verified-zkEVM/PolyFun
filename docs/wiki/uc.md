@@ -122,7 +122,10 @@ relation family `MonadRelFamily`
    atomic frontier, binary nodes receive both subtree masses, and a downstream
    scheduler proves that all hierarchical three-way draws denote one flat
    choice. Probability and the concrete proportional scheduler remain VCVio
-   responsibilities.
+   responsibilities. `samplePath_interleave_assoc_left` and
+   `samplePath_interleave_assoc_right` lift the resulting coherence law through
+   arbitrary component samplers along the existing structural path
+   reassociations.
 2. **Initial-state correspondence.** The totality fields of
    `OpenProcessSamplerEquiv` expose the regrouping bijection on states, so
    corresponding initial states are chosen definitionally.
