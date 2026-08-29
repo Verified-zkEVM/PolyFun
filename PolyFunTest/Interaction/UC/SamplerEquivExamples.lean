@@ -40,9 +40,4 @@ example {R : MonadRelFamily m} {p₁ p₂ : OpenProcess.{u, v, w, w'} m Party Δ
     OpenProcessActivationEquiv p₁ p₂ :=
   h.toActivationEquiv
 
-/-- Reflexivity at the forgetful relation family. -/
-example (p : OpenProcess.{u, v, w, w'} m Party Δ) :
-    OpenProcessSamplerEquiv (MonadRelFamily.top m) p p :=
-  OpenProcessSamplerEquiv.refl p
-
 end Interaction.UC.SamplerEquivExamples

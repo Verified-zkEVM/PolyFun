@@ -17,14 +17,14 @@ public import PolyFun.Interaction.UC.OpenProcessSamplerEquiv
 # Sampler-aware coherence of the open-process theory
 
 The structural coherence laws of `openTheory` hold up to
-`OpenProcessActivationEquiv`, which erases packet identity and sampler
-effects.  This module strengthens them to `OpenProcessSamplerEquiv`, which
-retains both, **conditionally on named scheduler-transport hypotheses**: a
+`OpenProcessActivationEquiv`, which erases sampler effects and uses delay
+matching. This module strengthens them to `OpenProcessSamplerEquiv`, which
+retains sampled-path effects, **conditionally on named scheduler-transport hypotheses**: a
 single shared `schedulerSampler` does not preserve per-step scheduling
 distributions across reassociation, so each law takes exactly the
 `MonadRelFamily` fact about reassociated scheduler draws that it needs.
 `MonadRelFamily.top` discharges every such hypothesis trivially, recovering
-sampler-blind (but packet-aware) versions unconditionally.
+sampler-blind strong path equivalences unconditionally.
 
 The activation-equivalence laws in `OpenProcessModel` and
 `OpenProcessFactorization` keep their direct proofs rather than becoming
@@ -125,6 +125,7 @@ namespace OpenProcessFactorization
 
 /-- Draw a `Leaf` with the source-shaped coin encoding
 (`sourceSchedule`): the composite is selected first, then its component. -/
+@[expose]
 def sourceDraw {m : Type w → Type w'} [Monad m]
     (σ : m (ULift.{w, 0} Bool)) : m (ULift.{w, 0} Leaf) :=
   σ >>= fun b =>
@@ -136,6 +137,7 @@ def sourceDraw {m : Type w → Type w'} [Monad m]
     | ⟨false⟩ => pure ⟨.context⟩
 
 /-- Draw a `Leaf` with the left-factored coin encoding (`leftSchedule`). -/
+@[expose]
 def leftDraw {m : Type w → Type w'} [Monad m]
     (σ : m (ULift.{w, 0} Bool)) : m (ULift.{w, 0} Leaf) :=
   σ >>= fun b =>
@@ -147,6 +149,7 @@ def leftDraw {m : Type w → Type w'} [Monad m]
         | ⟨false⟩ => pure ⟨.second⟩
 
 /-- Draw a `Leaf` with the right-factored coin encoding (`rightSchedule`). -/
+@[expose]
 def rightDraw {m : Type w → Type w'} [Monad m]
     (σ : m (ULift.{w, 0} Bool)) : m (ULift.{w, 0} Leaf) :=
   σ >>= fun b =>
@@ -226,6 +229,33 @@ theorem rightDraw_bind {m : Type w → Type w'} [Monad m] [LawfulMonad m]
     cases bb' <;> simp only [pure_bind]
   · simp only [pure_bind]
 
+/-! The deterministic identity-monad cases make the reassociation obstruction
+directly executable for downstream users. -/
+
+@[simp] theorem sourceDraw_id_up_true :
+    sourceDraw (m := Id) (ULift.up true : ULift.{w, 0} Bool) =
+      ULift.up Leaf.first := rfl
+
+@[simp] theorem sourceDraw_id_up_false :
+    sourceDraw (m := Id) (ULift.up false : ULift.{w, 0} Bool) =
+      ULift.up Leaf.context := rfl
+
+@[simp] theorem leftDraw_id_up_true :
+    leftDraw (m := Id) (ULift.up true : ULift.{w, 0} Bool) =
+      ULift.up Leaf.first := rfl
+
+@[simp] theorem leftDraw_id_up_false :
+    leftDraw (m := Id) (ULift.up false : ULift.{w, 0} Bool) =
+      ULift.up Leaf.second := rfl
+
+@[simp] theorem rightDraw_id_up_true :
+    rightDraw (m := Id) (ULift.up true : ULift.{w, 0} Bool) =
+      ULift.up Leaf.second := rfl
+
+@[simp] theorem rightDraw_id_up_false :
+    rightDraw (m := Id) (ULift.up false : ULift.{w, 0} Bool) =
+      ULift.up Leaf.first := rfl
+
 end OpenProcessFactorization
 
 /-! ## Path re-encoding for the left par/wire factorizations -/
@@ -273,11 +303,11 @@ variable (Party : Type u) (m : Type w → Type w')
 
 /-- `plug` is commutative up to sampler equivalence, provided the scheduler is
 `R`-fair: closing a protocol against an environment and closing the
-environment against the protocol expose the same packets, the same silence
-structure, and `R`-related sampled paths, with the scheduler coin flipped.
+environment against the protocol have the same silence and boundary-trace
+structure and `R`-related sampled paths, with the scheduler coin flipped.
 
 At `R := MonadRelFamily.top` the fairness hypothesis is trivial and the
-statement is the packet-aware strengthening of
+statement is the strong path-matching refinement of
 `openTheory_plug_comm_activation_equiv`. -/
 theorem openTheory_plug_comm_sampler_equiv [Monad m] [LawfulMonad m]
     (R : MonadRelFamily m)

@@ -255,9 +255,9 @@ Interaction/UC/EmulatesWithin -> Interaction/UC/SecureEmulation
    unlike Emulates, and ordered per observation)
 
 Interaction/UC/OpenProcess -> Interaction/UC/OpenProcessSamplerEquiv
-  (packet- and sampler-aware strengthening of activation equivalence,
-   relative to an abstract relation family on m-computations; forgets onto
-   OpenProcessActivationEquiv)
+  (strong sampled-path strengthening of activation equivalence, relative to
+   an abstract relation family on m-computations; forgets onto
+   OpenProcessActivationEquiv, while packet/action adequacy remains separate)
 
 Interaction/UC/{OpenProcessModel, OpenProcessFactorization,
                 OpenProcessSamplerEquiv}
