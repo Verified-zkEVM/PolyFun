@@ -164,8 +164,7 @@ instantiation contract tracked in `docs/wiki/uc.md`; probability and
 efficiency remain downstream obligations.
 
 Used in: `docs/wiki/uc.md`, `PolyFun/Interaction/UC/GlobalSubroutine.lean`,
-`PolyFun/Interaction/UC/SecureEmulation.lean`,
-`PolyFun/Interaction/UC/DummyAdversary.lean`.
+`PolyFun/Interaction/UC/SecureEmulation.lean`.
 
 ### CSV19 — Canetti, Stoughton, Varia, *EasyUC*
 

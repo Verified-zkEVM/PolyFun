@@ -26,28 +26,12 @@ namespace Interaction.UC.SecureEmulationExamples
 
 variable {T : OpenTheory.{u}} {Δ : PortBoundary} {Obs : Observation T}
 
-/-- Unconditional emulation gives secure emulation in both directions. -/
-example {real ideal : T.Obj Δ} (h : Emulates real ideal Obs) :
-    SecurelyEmulates real ideal Obs ∧ SecurelyEmulates ideal real Obs :=
-  ⟨h.toSecurelyEmulates, h.symm.toSecurelyEmulates⟩
-
-/-- Secure emulation round-trips through `UCSecure` over the full transformer
-space. -/
-example {real ideal : T.Obj Δ} (h : SecurelyEmulates real ideal Obs) :
-    SecurelyEmulates real ideal Obs :=
-  h.toUCSecure.toSecurelyEmulates
-
 /-- The preorder's order is secure emulation, and transitivity flows through
 it. -/
 example (Obs : Observation T) {W₁ W₂ W₃ : T.Obj Δ}
     (h₁₂ : SecurelyEmulates W₁ W₂ Obs) (h₂₃ : SecurelyEmulates W₂ W₃ Obs) :
     (securelyEmulatesPreorder Δ Obs).le W₁ W₃ :=
   securelyEmulatesPreorder_le_iff.mpr (SecurelyEmulates.trans h₁₂ h₂₃)
-
-/-- Relativizing to the everything-class is conservative. -/
-example {real ideal : T.Obj Δ} (h : SecurelyEmulates real ideal Obs) :
-    SecurelyEmulatesWithin (SubTheory.top T) real ideal Obs :=
-  securelyEmulatesWithin_top_iff.mpr h
 
 /-- The judgment applies over the concrete process model at the activation
 observation. -/

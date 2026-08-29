@@ -245,16 +245,14 @@ Interaction/UC/{Emulates, OpenProcessFactorization}
    activation-equivalence theorems; a packet- or sampler-aware observation is
    a separate, stronger construction and is not in tree)
 
-Interaction/UC/EmulatesWithin -> Interaction/UC/GlobalSubroutine
-  (emulation with a shared global resource stated via wire, with the
-   UCGS-style outer-composition theorem derived from the wire suite)
+Interaction/UC/SecureEmulation -> Interaction/UC/GlobalSubroutine
+  (directional and unconditional emulation with a shared global resource;
+   outer composition is currently available only for the stronger
+   unconditional relation)
 
 Interaction/UC/EmulatesWithin -> Interaction/UC/SecureEmulation
   (the existential-simulator judgment and its preorder; directional,
    unlike Emulates, and ordered per observation)
-
-Interaction/UC/Emulates -> Interaction/UC/DummyAdversary
-  (dummy-adversary and split-mono reductions for compact-closed theories)
 
 Interaction/UC/{OpenProcessModel, SubTheory}
   + Realizability/{DynSystem, DynSystemClosure}

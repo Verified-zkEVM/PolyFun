@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Interaction.UC.EmulatesWithin
+public import PolyFun.Interaction.UC.SecureEmulation
 
 /-!
 # Emulation in the presence of a global subroutine
@@ -14,9 +14,11 @@ public import PolyFun.Interaction.UC.EmulatesWithin
 A *global* resource is one that both a protocol and the surrounding world may
 use: a shared clock, a common reference string, a global PKI.  Following
 Farshim–Karvonen–Knispel–Kohlweiss–Tyagi, *UC, Categorically* (ePrint
-2026/1605, Definition III.13), emulation with a global resource `G` is ordinary
-emulation of the wired composites: `real` emulates `ideal` with global `G`
-when `wire real G` emulates `wire ideal G`.
+2026/1605, Definition III.13), define secure emulation with a global resource
+by first composing both resources with the same global resource. This module
+provides that construction for PolyFun's context-transformer judgment as
+`SecurelyEmulatesWithGlobal`. It also provides the stronger, symmetric
+`EmulatesWithGlobal` judgment obtained by using unconditional `Emulates`.
 
 `OpenTheory.withGlobal` forms that composite: the protocol exposes an honest
 face `Δ` and a subroutine face `Γ`; the global resource consumes `Γ` and
@@ -25,12 +27,11 @@ exposes its remaining world-facing boundary `E`.  The paper's
 `OpenTheory`; the strict compact-closed reassociation between the two
 presentations is not asserted.
 
-The universal-composition theorem with global subroutines (Theorem III.14, the
-static-system UCGS theorem) then follows from the existing wire composition
-suite: an outer protocol wired onto the composite's honest face preserves
-emulation, with the global resource left in place.  This is exactly the
-paper's proof, which derives Theorem III.14 by applying the composition
-theorem to the `γ`-hybrid resources.
+The existing wire composition suite proves outer composition for the stronger
+`EmulatesWithGlobal` premise. This is a useful structural analogue of the
+static-system UCGS theorem, but it is not Theorem III.14: moving an arbitrary
+context-transformer simulator across `wire` requires a structural simulator
+representation that PolyFun does not yet have.
 
 Relativized variants restrict the closing contexts to a `SubTheory` and
 additionally require the wired-in systems to be allowed, mirroring
@@ -61,12 +62,22 @@ def OpenTheory.withGlobal {Δ Γ E : PortBoundary}
 presence of the shared global resource `G`: the two `G`-composites are
 contextually indistinguishable under `Obs`.
 
-This is Definition III.13 of *UC, Categorically*: emulation with a global
-resource is ordinary emulation of the wired composites. -/
+This is the unconditional-equivalence analogue of the paper's Definition
+III.13. For its directional context-transformer counterpart, use
+`SecurelyEmulatesWithGlobal`. -/
 def EmulatesWithGlobal {Δ Γ E : PortBoundary}
     (G : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) E))
     (real ideal : T.Obj (PortBoundary.tensor Δ Γ)) (Obs : Observation T) : Prop :=
   Emulates (T.withGlobal real G) (T.withGlobal ideal G) Obs
+
+/-- Directional secure emulation after composing both sides with the same
+global resource. This is PolyFun's context-transformer counterpart of
+Definition III.13 of *UC, Categorically*; no claim is made that the current
+`OpenTheory` objects are the paper's resource category. -/
+def SecurelyEmulatesWithGlobal {Δ Γ E : PortBoundary}
+    (G : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) E))
+    (real ideal : T.Obj (PortBoundary.tensor Δ Γ)) (Obs : Observation T) : Prop :=
+  SecurelyEmulates (T.withGlobal real G) (T.withGlobal ideal G) Obs
 
 namespace EmulatesWithGlobal
 
@@ -101,6 +112,16 @@ theorem Emulates.toEmulatesWithGlobal {Δ Γ E : PortBoundary} {Obs : Observatio
     EmulatesWithGlobal G real ideal Obs :=
   h.wire_left G
 
+/-- Unconditional equivalence with a global resource supplies directional
+secure emulation through the identity simulator. -/
+theorem EmulatesWithGlobal.toSecurelyEmulatesWithGlobal
+    {Δ Γ E : PortBoundary} {Obs : Observation T}
+    {G : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) E)}
+    {real ideal : T.Obj (PortBoundary.tensor Δ Γ)}
+    (h : EmulatesWithGlobal G real ideal Obs) :
+    SecurelyEmulatesWithGlobal G real ideal Obs :=
+  h.toSecurelyEmulates
+
 namespace EmulatesWithGlobal
 
 variable {Δ Γ E : PortBoundary} {Obs : Observation T}
@@ -116,10 +137,10 @@ theorem congr_global [Obs.RespectsFactorization]
   Emulates.trans (Emulates.wire_right real hG.symm)
     (Emulates.trans h (Emulates.wire_right ideal hG))
 
-/-- **Universal composition with global subroutines** (Theorem III.14 of
-*UC, Categorically*, the static-system UCGS theorem): an outer protocol `ρ`
-wired onto the honest face of the `G`-composite preserves emulation with the
-global resource left in place. -/
+/-- Outer composition for unconditional equivalence with a global resource.
+This has the shape of the static-system UCGS theorem, but assumes the stronger
+`EmulatesWithGlobal` relation; it does not establish Theorem III.14 for
+`SecurelyEmulatesWithGlobal`. -/
 theorem wire_outer [Obs.RespectsFactorization] {Δ' : PortBoundary}
     {real ideal : T.Obj (PortBoundary.tensor Δ Γ)}
     (ρ : T.Obj (PortBoundary.tensor Δ' (PortBoundary.swap Δ)))
