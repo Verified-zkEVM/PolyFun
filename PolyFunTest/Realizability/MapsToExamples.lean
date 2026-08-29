@@ -17,13 +17,15 @@ public import Mathlib.Data.Set.Function
 `OpenProcess.IsRealizabilityClosed` cannot show that the framework restricts
 anything.  This file builds the step class whose representations are sets and
 whose admissible maps are exactly the set-preserving functions
-(`Set.MapsTo`), checks by a negative example that admissibility genuinely
-fails for some maps, and instantiates the UC closure contract at the
-permissive all-sets boundary family.
+(`Set.MapsTo`), then checks by a negative example that admissibility genuinely
+fails for some maps.
 
-The class is honest but its chosen boundary family here is the permissive
-one; a restrictive boundary family would constrain which processes are
-realizable, exactly as a complexity class would.
+This is deliberately a canary for `StepClass.Hom`, not a non-vacuity theorem
+for open-process realizability. `Realization` existentially selects a private
+state representation, and a permissive all-sets boundary would make the UC
+closure instance trivial rather than demonstrate a restriction. A concrete
+machine class must separately rule out degenerate representations and prove
+the four boundary-lens certificates.
 -/
 
 @[expose] public section
@@ -44,10 +46,10 @@ def mapsTo : StepClass.{u, u} where
   comp_mem hf hg := hg.comp hf
 
 instance : (mapsTo.{u}).HasProd where
-  prod {A B} a b := Set.prod a b
-  fst_mem a b := fun _ hx => hx.1
-  snd_mem a b := fun _ hx => hx.2
-  pair_mem hf hg := fun x hx => ⟨hf hx, hg hx⟩
+  prod a b := Set.prod a b
+  fst_mem _a _b := fun _ hx => hx.1
+  snd_mem _a _b := fun _ hx => hx.2
+  pair_mem hf hg := fun _ hx => ⟨hf hx, hg hx⟩
 
 instance : (mapsTo.{u}).HasSum where
   sum {A B} a b :=

@@ -30,8 +30,8 @@ on the returning track.
 
 `IsRealizableBy.ulift_wrapChoiceProd` is the universe-normalized form consumed
 by the UC bridge: the operands and the composite are all `DynSystem.ulift`s,
-the certificate is stated for the regrouped lifted lens
-(`Lens.uliftProd ⨟ lens.uliftMap`), and the composite state representation
+the certificate is stated for the composition of `Lens.uliftProd` with
+`lens.uliftMap`, and the composite state representation
 `ULift (S × T)` is assembled with `StepClass.HasULiftProd`.
 -/
 
@@ -226,8 +226,8 @@ def Realization.choiceProd
 
 /-- Universe-normalized closure under a wrapped asynchronous choice: the form
 consumed by the UC bridge.  The operands and the composite are
-`DynSystem.ulift`s, the certificate is stated for the regrouped lifted lens
-`Lens.uliftProd ⨟ lens.uliftMap`, and the composite state representation
+`DynSystem.ulift`s, the certificate is stated for the composition of
+`Lens.uliftProd` with `lens.uliftMap`, and the composite state representation
 `ULift (S × T)` is assembled from the operand representations with
 `StepClass.HasULiftProd`. -/
 theorem IsRealizableBy.ulift_wrapChoiceProd
@@ -242,9 +242,10 @@ theorem IsRealizableBy.ulift_wrapChoiceProd
     {lens : Lens (PFunctor.prod p q) r}
     (h₁ : IsRealizableBy C left (DynSystem.ulift s))
     (h₂ : IsRealizableBy C right (DynSystem.ulift t))
-    (hlens : (Lens.uliftProd p q ⨟
+    (hlens : (Lens.comp
         lens.uliftMap.{uA, uB, uA, uB, max uS uB, max uS uA,
-          max uS uB, max uS uA}).IsChoiceAdmissible C left right target) :
+          max uS uB, max uS uA}
+        (Lens.uliftProd p q)).IsChoiceAdmissible C left right target) :
     IsRealizableBy C target (DynSystem.ulift ((s.choiceProd t).wrap lens)) := by
   obtain ⟨R₁⟩ := h₁
   obtain ⟨R₂⟩ := h₂
@@ -269,13 +270,13 @@ theorem IsRealizableBy.ulift_wrapChoiceProd
     update?_enabled := ?_ }⟩
   intro st direction
   change (PFunctor.ulift.{uA, uB, max uS uB, max uS uA} r).B
-    ((Lens.uliftProd p q ⨟ lens.uliftMap).toFunA
+    ((Lens.comp lens.uliftMap (Lens.uliftProd p q)).toFunA
       ((DynSystem.ulift s).expose (ULift.up st.down.1),
         (DynSystem.ulift t).expose (ULift.up st.down.2))) at direction
   change ((hlens.pull?
       (((DynSystem.ulift s).expose (ULift.up st.down.1),
           (DynSystem.ulift t).expose (ULift.up st.down.2)),
-        ⟨(Lens.uliftProd p q ⨟ lens.uliftMap).toFunA
+        ⟨(Lens.comp lens.uliftMap (Lens.uliftProd p q)).toFunA
           ((DynSystem.ulift s).expose (ULift.up st.down.1),
             (DynSystem.ulift t).expose (ULift.up st.down.2)),
           direction⟩)).bind fun i =>
@@ -294,7 +295,7 @@ theorem IsRealizableBy.ulift_wrapChoiceProd
         (lens.toFunB (s.expose st.down.1, t.expose st.down.2)
           direction.down)) := rfl
   rw [hRHS]
-  have hB' : (Lens.uliftProd p q ⨟ lens.uliftMap).toFunB
+  have hB' : (Lens.comp lens.uliftMap (Lens.uliftProd p q)).toFunB
       ((DynSystem.ulift s).expose (ULift.up st.down.1),
         (DynSystem.ulift t).expose (ULift.up st.down.2)) direction =
       (lens.toFunB (s.expose st.down.1, t.expose st.down.2)

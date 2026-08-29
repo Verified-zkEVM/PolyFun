@@ -74,6 +74,7 @@ abbrev StructuralBoundary
 /-- The lifted polynomial lens implementing adaptation of an open-process
 boundary. Concrete complexity classes prove its position map and partial
 direction pullback admissible at their chosen boundary encodings. -/
+@[expose]
 def structuralMapLens (Party : Type u) {Δ₁ Δ₂ : PortBoundary}
     (φ : PortBoundary.Hom Δ₁ Δ₂) :
     PFunctor.Lens
@@ -124,6 +125,7 @@ set_option linter.checkUnivs false in
 of open-process boundaries: the shared structural content of `openTheory.par`,
 `openTheory.wire`, and `openTheory.plug`, which differ only in the injection
 pair and scheduler node supplied. -/
+@[expose]
 def structuralInterleaveLens (Party : Type u) {Δ₁ Δ₂ Δ : PortBoundary}
     (f₁ : TypeTree.Node.ContextHom
       (OpenNodeContext.{u, w} Party Δ₁) (OpenNodeContext.{u, w} Party Δ))
@@ -134,8 +136,9 @@ def structuralInterleaveLens (Party : Type u) {Δ₁ Δ₂ Δ : PortBoundary}
       (PFunctor.prod (StructuralPFunctor.{u, v, w} Party Δ₁)
         (StructuralPFunctor.{u, v, w} Party Δ₂))
       (StructuralPFunctor.{u, v, w} Party Δ) :=
-  PFunctor.Lens.uliftProd _ _ ⨟
-    PFunctor.Lens.uliftMap (ProcessOver.interleaveLens f₁ f₂ schedulerCtx)
+  PFunctor.Lens.comp
+    (PFunctor.Lens.uliftMap (ProcessOver.interleaveLens f₁ f₂ schedulerCtx))
+    (PFunctor.Lens.uliftProd _ _)
 
 /-- The exact obligations needed for direct structural realizability to form a
 plug-closed UC sub-theory: first-order admissibility certificates for the

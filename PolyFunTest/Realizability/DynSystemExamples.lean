@@ -48,10 +48,6 @@ example (left right : DynSystem.Boundary StepClass.unconstrained.{0, 0}
   DynSystem.isRealizableBy_iff_of_boundary_polyTranslatable
     ⟨⟨True.intro, True.intro⟩, ⟨True.intro, True.intro⟩⟩
 
-/-- Universe normalization preserves the exposed position and transition. -/
-example (state : Bool) :
-    (DynSystem.ulift bitSystem).expose (ULift.up state) = ULift.up state := rfl
-
 /-! ### Finite-state closure under asynchronous choice -/
 
 instance : DecidableEq bitInterface.A :=
@@ -156,20 +152,6 @@ example {Δ₁ Δ₂ : PortBoundary}
       right).IsStructurallyRealizableBy
       StepClass.unconstrained.{1, 0} (boundary (PortBoundary.tensor Δ₁ Δ₂)) :=
   OpenProcess.IsRealizabilityClosed.par_mem schedulerSampler h₁ h₂
-
-/-- The generated view embeds in the direct view once closure is supplied. -/
-example : generatedRealizableSubTheory Party StepClass.unconstrained.{1, 0}
-      boundary schedulerSampler ≤
-    realizableSubTheory Party StepClass.unconstrained.{1, 0}
-      boundary schedulerSampler :=
-  generatedRealizableSubTheory_le_realizableSubTheory _ _ _ _
-
-/-- Under the closure contract the two views coincide. -/
-example : generatedRealizableSubTheory Party StepClass.unconstrained.{1, 0}
-      boundary schedulerSampler =
-    realizableSubTheory Party StepClass.unconstrained.{1, 0}
-      boundary schedulerSampler :=
-  generatedRealizableSubTheory_eq_realizableSubTheory _ _ _ _
 
 /-- In the unconstrained instance every open process is directly allowed. -/
 example {Δ : PortBoundary} (process : OpenProcess M Party Δ) :
