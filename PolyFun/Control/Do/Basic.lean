@@ -58,8 +58,10 @@ lattice-generic `Std.Internal.Do` tree to a public `Std.WP` (shipping in v4.35,
 not v4.34), replaces `WPSound` with `Std.WP.LawfulWPMonadAttach` — whose single
 field concludes from a `MonadAttach.CanReturn` witness directly, dropping the
 `Ensures` formulation — and deprecates `mvcgen` in favour of `vcgen`. That stack
-also drops conjunctivity from `PredTrans`, re-introducing it as the opt-in,
-one-directional `WPConjunctive`, which is what would unblock an angelic bridge.
+also drops conjunctivity from `PredTrans`, re-introducing it as the opt-in
+`WPConjunctive`. Its one direction is exactly the direction angelic support fails;
+an angelic bridge becomes possible because the class is optional and would
+deliberately not be instantiated.
 The elimination direction below is already stated against `CanReturn`, so it
 carries over as a rename.
 -/

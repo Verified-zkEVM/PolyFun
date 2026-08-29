@@ -200,8 +200,8 @@ ITree/Resumption + PFunctor/{Dynamical/Trajectory, Resumption/Empty}
 ITree/Free + PFunctor/PatternRunsOnMatter/Dynamical
   -> ITree/PatternRunsOnMatter
 ITree/Bisim/Iter -> ITree/Do
-  (the scoped productive `ForIn` instance and its loop-invariant rule; the rule
-   is a `WeakBisim` congruence, so `Do` sits above the bisimulation layer)
+  (the scoped productive `ForIn` instance and its invariant-scoped `WeakBisim`
+   congruence, so `Do` sits above the bisimulation layer)
 
 PFunctor/Free + Control -> Interaction/Basic/{TypeTree, Node, Decoration,
                             Syntax, Shape, Interaction, Strategy,

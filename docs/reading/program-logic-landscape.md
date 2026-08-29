@@ -131,7 +131,8 @@ implemented).
   `Std.Do.PredTrans` carries conjunctivity as a structure field, stated as a
   bi-entailment; `AllOutputs` distributes over `∧` both ways but `SomeOutput` only
   left-to-right, so there is no angelic `Std.Do.WP`. Core's newer stack makes
-  conjunctivity an opt-in, one-directional `WPConjunctive`, which would unblock it.
+  conjunctivity an opt-in `WPConjunctive`. That class asks for the direction angelic
+  support fails; optionality unblocks the base WP bridge, which must omit the class.
   `PolyFunTest/Control/MonadAttach.lean` pins both directions and the failure.
 - The ε-additive approximate-triple algebra (ArkLib's sequencing blocker).
 - Optional `MonadFinSupport` (Finset-valued support, generalizing VCVio's
