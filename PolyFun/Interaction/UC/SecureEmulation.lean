@@ -21,14 +21,14 @@ carries that simulator over an explicitly pinned parameter space;
 `SecurelyEmulates` is its fully existential form, quantifying over arbitrary
 context transformers.
 
-This existential form is what orders open systems.  Appendix A of
+This existential form gives a local preorder on open systems. Appendix A of
 Farshim–Karvonen–Knispel–Kohlweiss–Tyagi, *UC, Categorically* (ePrint
-2026/1605) observes that "`real` is securely emulated by `ideal`" is a
-preorder on resources — reflexive by the identity simulator, transitive by
-composing simulators — and assembles the category of resources and secure
-emulations from it by a Grothendieck construction.  `securelyEmulatesPreorder`
-packages the preorder; the Grothendieck packaging is deliberately not built
-until a consumer exists (see `docs/wiki/uc.md`).
+2026/1605) constructs a related preorder from structural secure-emulation
+morphisms between categorical resources. `securelyEmulatesPreorder` proves
+the preorder law for PolyFun's context-transformer judgment, but is not a
+formalization of the paper's Definition A.1: PolyFun has no translation from
+`OpenTheory` objects to that resource category and no structural simulator
+morphism in this layer.
 
 Monotonicity of `SecurelyEmulates` under `par` and `wire` is *not* provable in
 this context-transformer form: moving a simulator across a parallel
@@ -125,9 +125,10 @@ theorem SecurelyEmulates.toUCSecure {Δ : PortBoundary} {Obs : Observation T}
 /-- Secure emulation orders the open systems at a fixed boundary: `W₁ ≤ W₂`
 when `W₁` securely emulates `W₂` under `Obs`.
 
-Definition A.1 of *UC, Categorically*.  A definition rather than an
-instance: the order depends on the chosen observation, so no single instance
-on `T.Obj Δ` is canonical.  Instance-reducible so that a local
+This is the preorder induced by PolyFun's context-transformer judgment, not
+the resource preorder of Definition A.1 of *UC, Categorically*. A definition
+rather than an instance: the order depends on the chosen observation, so no
+single instance on `T.Obj Δ` is canonical. Instance-reducible so that a local
 `letI := securelyEmulatesPreorder Δ Obs` resolves `≤` through it. -/
 @[instance_reducible]
 def securelyEmulatesPreorder (Δ : PortBoundary) (Obs : Observation T) :

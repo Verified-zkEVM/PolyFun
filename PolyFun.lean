@@ -107,7 +107,6 @@ public import PolyFun.Interaction.TwoParty.Swap
 public import PolyFun.Interaction.TwoParty.Syntax
 public import PolyFun.Interaction.UC.ActivationObservation
 public import PolyFun.Interaction.UC.CorruptionModel
-public import PolyFun.Interaction.UC.DummyAdversary
 public import PolyFun.Interaction.UC.Emulates
 public import PolyFun.Interaction.UC.EmulatesWithin
 public import PolyFun.Interaction.UC.EnvAction
