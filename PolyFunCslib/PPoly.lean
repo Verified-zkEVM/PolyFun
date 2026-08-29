@@ -6,7 +6,7 @@ Authors: Devon Tuma, Quang Dao
 
 module
 
-public import PolyFun.Realizability.Machine
+public import PolyFunCslib.Backend
 public import ToCslib.Computability.BitEncoding
 
 /-!
@@ -59,6 +59,16 @@ noncomputable def head (bd : Boundary p input output) :
     StrEncFam fun n ↦ output n ⊕ (p n).A :=
   bd.output.toStrEncFam.sum bd.position.toStrEncFam
 
+/-- Specialize a parameterized pinned boundary to the generic PolyFun
+quantitative boundary at one security parameter. -/
+noncomputable def toGeneric (bd : Boundary p input output) (n : ℕ) :
+    DynSystem.DynComputation.Boundary CslibBackend.encodingStepClass
+      (p n) (input n) (output n) where
+  input := bd.input.enc n
+  out := bd.output.enc n
+  pos := bd.position.enc n
+  idx := bd.index.enc n
+
 /-- Replace the input representation. -/
 def withInput (bd : Boundary p input output) (encoding : BitEncFam nextOutput) :
     Boundary p nextOutput output :=
@@ -82,6 +92,37 @@ def withOutput (bd : Boundary p input output) (encoding : BitEncFam nextOutput) 
     (encoding : BitEncFam nextOutput) : (bd.withOutput encoding).input = bd.input := rfl
 
 end Boundary
+
+/-! ## Program progress -/
+
+/-- Every query in a finite free program has at least one typed answer, and the
+same holds recursively on every answer branch. This is separate from a
+branchwise query bound: universal branch obligations are vacuous at a query
+whose answer type is empty. -/
+def ProgramProgress {p : PFunctor.{u, u}} {result : Type u} : FreeM p result → Prop
+  | .pure _ => True
+  | .liftBind position next =>
+      Nonempty (p.B position) ∧ ∀ direction, ProgramProgress (next direction)
+
+theorem programProgress_pure {p : PFunctor.{u, u}} {result : Type u}
+    (value : result) : ProgramProgress (FreeM.pure (P := p) value) :=
+  trivial
+
+theorem programProgress_liftBind {p : PFunctor.{u, u}} {result : Type u}
+    (position : p.A) (next : p.B position → FreeM p result) :
+    ProgramProgress (FreeM.liftBind position next) ↔
+      Nonempty (p.B position) ∧ ∀ direction, ProgramProgress (next direction) :=
+  Iff.rfl
+
+/-- Mapping returned values preserves the reachable query tree and hence
+program progress. -/
+theorem ProgramProgress.map {p : PFunctor.{u, u}} {source target : Type u}
+    {program : FreeM p source} (progress : ProgramProgress program)
+    (function : source → target) : ProgramProgress (FreeM.map function program) := by
+  induction program with
+  | pure value => trivial
+  | lift_bind position next induction =>
+      exact ⟨progress.1, fun direction ↦ induction direction (progress.2 direction)⟩
 
 /-! ## Machine families -/
 
@@ -109,9 +150,20 @@ namespace Realization
 
 variable {bd : Boundary p input output}
 
-/-- One polynomial dominating the three local machine time bounds. -/
-noncomputable def localTime (realization : Realization bd) : Polynomial ℕ :=
-  realization.initCode.time + realization.headCode.time + realization.updateCode.time
+/-- One member of the family as an ordinary generic quantitative PolyFun
+realization. This is the canonical bridge through which trace, progress,
+traffic, peak-size, and closure APIs are consumed. -/
+noncomputable def toQuantitative (realization : Realization bd) (n : ℕ) :
+    DynSystem.DynComputation.QuantitativeRealization CslibBackend.quantitative
+      (bd.toGeneric n) where
+  machine := realization.machine n
+  state := realization.state.enc n
+  initCode := realization.initCode.wit n
+  headCode := realization.headCode.wit n
+  updateCode := (realization.updateCode.wit n).recode id
+    (realization.machine n).update? (fun _ ↦ rfl) (fun step ↦ by
+      change _ = realization.state.option.enc n ((realization.machine n).update? step)
+      cases value : (realization.machine n).update? step <;> rfl)
 
 /-- Initialization time after substituting the canonical input-width bound. -/
 noncomputable def initTime (realization : Realization bd) : Polynomial ℕ :=
@@ -175,86 +227,65 @@ theorem updateTime_le (realization : Realization bd) (n : ℕ)
   have indexWidth := bd.index.wid_le n
   omega
 
-/-! ## Pathwise total running time -/
+/-! ## Generic pathwise resource accounting -/
 
-/-- A fully typed visible execution prefix of one family member. The constructor
-records only enabled transitions, so the cost below never charges the arbitrary
-`none` behavior of `update?` on a mismatched flattened index. -/
-inductive ExecutionTrace (realization : Realization bd) (n : ℕ) :
-    (realization.machine n).State → (realization.machine n).State → Type u where
-  | nil (state : (realization.machine n).State) : ExecutionTrace realization n state state
-  | query {state : (realization.machine n).State} {position : (p n).A}
-      {next : (p n).B position → (realization.machine n).State}
-      {finish : (realization.machine n).State}
-      (view_eq : (realization.machine n).view state = Sum.inr ⟨position, next⟩)
-      (direction : (p n).B position)
-      (tail : ExecutionTrace realization n (next direction) finish) :
-      ExecutionTrace realization n state finish
+/-- The standard PolyFun quantitative trace for one member of the family. This
+alias deliberately exposes the generic trace API rather than maintaining a
+backend-specific parallel hierarchy. -/
+abbrev ExecutionTrace (realization : Realization bd) (n : ℕ) :=
+  (realization.toQuantitative n).ExecutionTrace
 
-namespace ExecutionTrace
+variable {n : ℕ}
 
-variable {realization : Realization bd} {n : ℕ}
-
-/-- Number of visible query-answer transitions in the prefix. -/
-def length {start finish : (realization.machine n).State} :
-    ExecutionTrace realization n start finish → ℕ
-  | .nil _ => 0
-  | .query _ _ tail => tail.length + 1
-
-/-- Actual cslib-machine work charged to the observations and enabled updates
-along a trace, including the final observation. -/
-noncomputable def work {start finish : (realization.machine n).State} :
-    ExecutionTrace realization n start finish → ℕ
-  | .nil state =>
-      ((realization.headCode.wit n).time).eval
-        (realization.state.enc n state).length
-  | .query (state := state) (position := position) _ direction tail =>
-      ((realization.headCode.wit n).time).eval
-          (realization.state.enc n state).length +
-        ((realization.updateCode.wit n).time).eval
-          ((realization.state.pairVar bd.index).enc n
-            (state, ⟨position, direction⟩)).length + tail.work
-
-/-- Every typed prefix is bounded by one observation per state and one update
-per visible transition. -/
-theorem work_le {start finish : (realization.machine n).State}
-    (trace : ExecutionTrace realization n start finish) :
-    trace.work ≤ (trace.length + 1) * realization.headTime.eval n +
+/-- The generic trace's cslib time-envelope charges, including its final head
+observation, are bounded by one observation per state and one enabled update per
+visible transition. -/
+theorem certifiedTimeCharge_le (realization : Realization bd)
+    {start finish : (realization.machine n).State}
+    (trace : DynSystem.DynComputation.QuantitativeRealization.ExecutionTrace
+      (realization.toQuantitative n) start finish) :
+    trace.cost.work +
+        CslibBackend.quantitative.cost
+          (realization.toQuantitative n).headCode finish ≤
+      (trace.length + 1) * realization.headTime.eval n +
       trace.length * realization.updateTime.eval n := by
-  induction trace with
-  | nil state =>
-      simpa [work, length] using realization.headTime_le n state
-  | @query state position next finish view_eq direction tail induction =>
-      have headBound := realization.headTime_le n state
-      have updateBound := realization.updateTime_le n (state, ⟨position, direction⟩)
-      simp only [work, length]
-      calc
-        _ ≤ realization.headTime.eval n + realization.updateTime.eval n +
-            ((tail.length + 1) * realization.headTime.eval n +
-              tail.length * realization.updateTime.eval n) :=
-          Nat.add_le_add (Nat.add_le_add headBound updateBound) induction
-        _ = (tail.length + 1 + 1) * realization.headTime.eval n +
-            (tail.length + 1) * realization.updateTime.eval n := by ring
+  apply CslibBackend.traceWork_add_finalHead_le
+  · intro state
+    change ((realization.headCode.wit n).time).eval
+      (realization.state.enc n state).length ≤ realization.headTime.eval n
+    exact realization.headTime_le n state
+  · intro step
+    change ((realization.updateCode.wit n).time).eval
+      ((realization.state.pairVar bd.index).enc n step).length ≤
+        realization.updateTime.eval n
+    exact realization.updateTime_le n step
 
-/-- Initialization plus every typed prefix of at most the declared round budget
-is bounded by `totalTime`. This is the load-bearing whole-run P/poly theorem:
-local machine bounds are added along a path rather than polynomially composed. -/
-theorem runWork_le_totalTime (value : input n)
+/-- The work component of PolyFun's generic `executionCost` is bounded by the
+family's declared total-time polynomial on every prefix within the round budget.
+The backend work metric is the cslib witness's certified time envelope. -/
+theorem executionWork_le_totalTime (realization : Realization bd) (value : input n)
     {finish : (realization.machine n).State}
     (trace : ExecutionTrace realization n ((realization.machine n).init value) finish)
     (roundBound : trace.length ≤ realization.rounds.eval n) :
-    ((realization.initCode.wit n).time).eval (bd.input.enc n value).length + trace.work ≤
+    ((realization.toQuantitative n).executionCost value trace).work ≤
       realization.totalTime.eval n := by
   have initBound := realization.initTime_le n value
-  have traceBound := trace.work_le
+  have traceBound := realization.certifiedTimeCharge_le trace
+  change trace.cost.work +
+        ((realization.headCode.wit n).time).eval
+          (realization.state.enc n finish).length ≤
+      (trace.length + 1) * realization.headTime.eval n +
+        trace.length * realization.updateTime.eval n at traceBound
   have headFactor : trace.length + 1 ≤ realization.rounds.eval n + 1 := by omega
   have headBound := Nat.mul_le_mul_right (realization.headTime.eval n) headFactor
   have updateBound := Nat.mul_le_mul_right (realization.updateTime.eval n) roundBound
+  change ((realization.initCode.wit n).time).eval (bd.input.enc n value).length +
+      trace.cost.work +
+        ((realization.headCode.wit n).time).eval
+          (realization.state.enc n finish).length ≤ realization.totalTime.eval n
   rw [Realization.totalTime]
   simp only [Polynomial.eval_add, Polynomial.eval_mul, Polynomial.eval_one]
   omega
-
-end ExecutionTrace
 
 /-- Precompose the input of a realization with a supplied cslib machine family. -/
 noncomputable def precomp {nextInput : ℕ → Type u} (realization : Realization bd)
@@ -307,6 +338,8 @@ structure Witness (bd : Boundary p input output)
   realization : Realization bd
   /-- The machines implement the programs within the polynomial round bound. -/
   implements : realization.Implements program
+  /-- Every syntactically reachable query has a possible typed response. -/
+  progress : ∀ n value, ProgramProgress (program n value)
 
 /-- Backend-relative non-uniform P/poly realizability at a pinned boundary. -/
 def IsPPolyBy (bd : Boundary p input output)
@@ -377,7 +410,10 @@ theorem congr (equality : ∀ n value, program n value = program' n value)
     realization := witness.realization
     implements := fun n value ↦ by
       rw [← equality n value]
-      exact witness.implements n value }⟩
+      exact witness.implements n value
+    progress := fun n value ↦ by
+      rw [← equality n value]
+      exact witness.progress n value }⟩
 
 /-- P/poly is closed under input precomposition when the input map carries a
 cslib family certificate. -/
@@ -388,7 +424,8 @@ theorem precomp {nextInput : ℕ → Type u} (certificate : IsPPolyBy bd program
   obtain ⟨witness⟩ := certificate
   refine ⟨{
     realization := witness.realization.precomp function encoding code
-    implements := fun n value ↦ ?_ }⟩
+    implements := fun n value ↦ ?_
+    progress := fun n value ↦ witness.progress n (function n value) }⟩
   change ((witness.realization.machine n).setInit fun value ↦
       (witness.realization.machine n).init (function n value)).unroll
         (witness.realization.rounds.eval n)
@@ -407,7 +444,9 @@ theorem mapResult {nextOutput : ℕ → Type u} (certificate : IsPPolyBy bd prog
   obtain ⟨witness⟩ := certificate
   refine ⟨{
     realization := witness.realization.mapResult function encoding headMapCode
-    implements := fun n value ↦ ?_ }⟩
+    implements := fun n value ↦ ?_
+    progress := fun n value ↦
+      (witness.progress n value).map (function n) }⟩
   have implementation := witness.implements n value
   change (witness.realization.machine n).unroll
       (witness.realization.rounds.eval n) ((witness.realization.machine n).init value) = _

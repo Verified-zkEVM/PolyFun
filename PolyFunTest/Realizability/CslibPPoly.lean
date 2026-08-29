@@ -73,6 +73,7 @@ noncomputable def boolWitness : Witness boolBoundary (fun _ value ↦ FreeM.pure
   realization := boolRealization
   implements _ value := by
     simp [boolRealization, boolMachine]
+  progress _ value := programProgress_pure value
 
 example : IsPPolyBy boolBoundary (fun _ value ↦ FreeM.pure value) :=
   ⟨boolWitness⟩
@@ -179,6 +180,9 @@ noncomputable def boolStepWitness : Witness boolStepBoundary boolQueryProgram wh
   implements n position := by
     simp only [boolStepRealization, Polynomial.eval_C]
     cases position <;> rfl
+  progress _ _ := by
+    rw [boolQueryProgram, programProgress_liftBind]
+    exact ⟨⟨false⟩, fun answer ↦ programProgress_pure answer⟩
 
 example : IsPPolyBy boolStepBoundary boolQueryProgram := ⟨boolStepWitness⟩
 
@@ -216,13 +220,12 @@ example (n : ℕ) (position answer : Bool) :
         (next := fun selected ↦ (position, some selected))
         (by change (boolStepMachine n).view (position, none) = _; rfl)
         answer (.nil _)
-    ((boolStepRealization.initCode.wit n).time).eval
-          (boolStepBoundary.input.enc n position).length + trace.work ≤
+    ((boolStepRealization.toQuantitative n).executionCost position trace).work ≤
         boolStepRealization.totalTime.eval n := by
   dsimp only
-  exact CslibPPoly.Realization.ExecutionTrace.runWork_le_totalTime
-    (realization := boolStepRealization) (n := n) position _ (by
-      simp [CslibPPoly.Realization.ExecutionTrace.length, boolStepRealization])
+  exact boolStepRealization.executionWork_le_totalTime position _ (by
+    simp [DynSystem.DynComputation.QuantitativeRealization.ExecutionTrace.length,
+      boolStepRealization])
 
 /-! The two closure canaries below use nontrivial maps. They ensure that both
 the certificate-level theorem and its encoded-machine plumbing elaborate. -/
@@ -253,5 +256,23 @@ example : IsPPolyBy boolStepBoundary (fun n value ↦
     FreeM.map (!·) (boolQueryProgram n value)) :=
   IsPPolyBy.mapResult ⟨boolStepWitness⟩ (fun _ value ↦ !value)
     BitEncFam.bool boolNegHeadCode
+
+/-! A positive round budget cannot disguise a stuck query with no answer. -/
+
+abbrev EmptyInteraction : PFunctor := PFunctor.mk PUnit fun _ ↦ PEmpty
+abbrev EmptyInteractionFam : ℕ → PFunctor := fun _ ↦ EmptyInteraction
+
+instance instDecidableEqEmptyInteractionFam :
+    (n : ℕ) → DecidableEq (EmptyInteractionFam n).A :=
+  fun _ ↦ inferInstanceAs (DecidableEq PUnit)
+
+def emptyQueryProgram (_n : ℕ) (_input : PUnit) : FreeM EmptyInteraction Bool :=
+  FreeM.liftBind PUnit.unit PEmpty.elim
+
+example (boundary : Boundary EmptyInteractionFam (fun _ ↦ PUnit) BoolFam) :
+    ¬ IsPPolyBy boundary emptyQueryProgram := by
+  rintro ⟨witness⟩
+  have progress := witness.progress 0 PUnit.unit
+  exact nomatch progress.1
 
 end PFunctor.CslibPPolyTest

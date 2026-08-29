@@ -6,6 +6,7 @@ Authors: Quang Dao
 
 module
 
+public import PolyFunCslib.Backend
 public import PolyFunCslib.Nontriviality
 public import PolyFunCslib.PPoly
 
