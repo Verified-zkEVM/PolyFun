@@ -100,8 +100,11 @@ and depend on this library.
   from any class of word functions. `Representation.lean` supplies mutual
   admissible translation, boundary-level realizability invariance, and
   admissible word encode/decode retractions. Generic quantitative realizability
-  and backend-relative trace accounting also live here. *Generic only* —
-  concrete machine adequacy and complexity classes live downstream.
+  and backend-relative trace accounting also live here. Optional concrete
+  realizability adapters are isolated under `Realizability/Backend/`; the cslib
+  P/poly adapter exposes a non-uniform, boundary-pinned certificate without
+  importing oracle, probability, or cryptographic policy. Named cryptographic
+  adversary classes and protocol-specific adequacy results remain downstream.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
   algebra, monad iter / hom, lawful re-exports), plus the program-logic

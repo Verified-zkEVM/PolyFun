@@ -24,7 +24,8 @@ PolyFun/
     UC/              open-process / open-theory layer (no security content)
   Realizability/     step classes and realizability of dynamical systems and
                      free programs by admissible first-order machines;
-                     executable quantitative realizers and syntactic run costs
+                     executable quantitative realizers and syntactic run costs;
+    Backend/         optional concrete adapters, isolated from the generic core
   Complexity/        generic resource-bound syntax (not a concrete complexity class)
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
                      Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace),
@@ -327,6 +328,8 @@ Realizability/Quantitative/Closure -> Realizability/Quantitative/BoundedClosure
  Realizability/Quantitative/Polynomial}
   -> Realizability/Quantitative/Resource
 Realizability/{Instances, Quantitative} -> Realizability/Quantitative/WordClass
+{Realizability/Quantitative/Polynomial, ToCslib/Computability/BitEncoding}
+  -> Realizability/Backend/Cslib/PPoly
 Mathlib/Order/Monotone/Basic -> Complexity/SecondOrderPolynomial
   (Instances additionally draws on Mathlib's Computability and Fintype layers;
    Quantitative/Closure assembles executable structural code but asserts no
@@ -373,8 +376,9 @@ plain imports, and reducibility is exposed declaration-by-declaration.
   closure operations: start in `PolyFun/Realizability/Quantitative.lean` and
   `PolyFun/Realizability/Quantitative/Closure.lean`; for ranked termination,
   trace transport, and restricted pathwise closure, continue with
-  `PolyFun/Realizability/Quantitative/BoundedClosure.lean`. Concrete complexity
-  classes and adequacy theorems belong downstream.
+  `PolyFun/Realizability/Quantitative/BoundedClosure.lean`. Optional concrete
+  adapters live under `PolyFun/Realizability/Backend/`; cryptographic policy and
+  protocol-specific adequacy theorems belong downstream.
 - Updating notation: start in `PolyFun/Interaction/UC/Notation.lean`. See
   [`notation.md`](notation.md).
 
