@@ -33,6 +33,9 @@ PolyFun/
                      quarantine root (Do/Basic)
   Logic/             small logic helpers (HEq)
 
+ToCslib/             separate low-level extensions to the pinned cslib machine
+                     API; imports cslib and Mathlib, never PolyFun
+
 docs/wiki/           agent-facing notes (this directory)
 scripts/             repo utilities (validate, lint, update-lib, port helpers)
 .github/workflows/   CI workflows
@@ -42,6 +45,15 @@ scripts/             repo utilities (validate, lint, update-lib, port helpers)
 
 Imports flow strictly downward, cycles are a build error. The DAG is also
 recorded in [`AGENTS.md`](../../AGENTS.md):
+
+`ToCslib` is a separate lower library rather than part of this DAG:
+
+```text
+Cslib + Mathlib -> ToCslib -> optional PolyFun backend adapters
+```
+
+It contains concrete machine constructions and lemmas, but no realizability,
+oracle, probability, or cryptographic policy.
 
 ```text
 PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
