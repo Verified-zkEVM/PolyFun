@@ -656,8 +656,8 @@ relative-monad machinery. They are precisely the ingredient missing from the los
 exception lifts (see `exceptTLeft` / `exceptTRight` above), which collapse failure to
 `⊥`. The honest combinators that track success and failure separately are
 `MAlgOrdered.wpExc` (unary) and `rwpExc` (relational) below; anchoring is what lets
-`rwpExc_pure_left` / `rwpExc_pure_right` collapse the relational statement to the unary
-one once either side is a `pure`.
+the `rwpExc_pure_*` and `rwpExc_throw_*` rules collapse the relational statement to the
+unary one once either underlying result is known purely.
 
 Anchoring is independent of `StrictBind`. A coupling-based probabilistic carrier is
 anchored (Dirac couplings are unique) but is not strict, while a deterministic
@@ -711,8 +711,9 @@ success/failure combinations are tracked separately, rather than collapsing fail
 
 Like `wpExc` it is derived: it uses only the *base* relational algebra
 `MAlgRelOrdered m₁ m₂ l` on the underlying monads, never a lifted one. Under `Anchored`
-it collapses to the unary `wpExc` whenever one side is a `pure`, which is the payoff the
-anchoring axioms were introduced for.
+it collapses to the unary `wpExc` whenever one side has a pure underlying result—either
+a success or an immediate failure—which is the payoff the anchoring axioms were
+introduced for.
 -/
 
 section Exc
@@ -770,15 +771,16 @@ theorem rwpExc_mono {x : ExceptT ε₁ m₁ α} {y : ExceptT ε₂ m₂ β}
     rwpExc x y post ≤ rwpExc x y post' :=
   MAlgRelOrdered.rwp_mono hpost
 
-/-- Sequential composition, inherited from `rwp_bind_le`. The continuations run on the
-underlying monads, so the failure branches of `x` and `y` are threaded by the caller's
-postcondition rather than short-circuited here. -/
+/-- Sequential composition for `ExceptT`, inherited from `rwp_bind_le`. The two
+continuations run only on successful results; an error on either side is propagated
+unchanged, exactly as it is by `ExceptT.bind`. -/
 theorem rwpExc_bind_le (x : ExceptT ε₁ m₁ α) (y : ExceptT ε₂ m₂ β)
-    (f : Except ε₁ α → m₁ (Except ε₁ γ)) (g : Except ε₂ β → m₂ (Except ε₂ δ))
+    (f : α → ExceptT ε₁ m₁ γ) (g : β → ExceptT ε₂ m₂ δ)
     (post : Except ε₁ γ → Except ε₂ δ → l) :
-    MAlgRelOrdered.rwp x.run y.run
-        (fun ea eb => MAlgRelOrdered.rwp (f ea) (g eb) post) ≤
-      MAlgRelOrdered.rwp (x.run >>= f) (y.run >>= g) post :=
+    rwpExc x y (fun ea eb =>
+        rwpExc (ExceptT.mk (ExceptT.bindCont f ea))
+          (ExceptT.mk (ExceptT.bindCont g eb)) post) ≤
+      rwpExc (x >>= f) (y >>= g) post :=
   MAlgRelOrdered.rwp_bind_le _ _ _ _ _
 
 end Exc
@@ -810,6 +812,30 @@ theorem rwpExc_pure_right (x : ExceptT ε₁ m₁ α) (b : β)
       MAlgOrdered.wpExc x (fun a => post (Except.ok a) (Except.ok b))
         (fun e => post (Except.error e) (Except.ok b)) := by
   rw [rwpExc_def, ExceptT.run_pure, Anchored.rwp_pure_right]
+  congr 1
+  funext ea
+  cases ea <;> rfl
+
+/-- Anchoring also collapses `rwpExc` when the left side throws immediately. -/
+theorem rwpExc_throw_left (e : ε₁) (y : ExceptT ε₂ m₂ β)
+    (post : Except ε₁ α → Except ε₂ β → l) :
+    rwpExc (ExceptT.mk (pure (Except.error e)) : ExceptT ε₁ m₁ α) y post =
+      MAlgOrdered.wpExc y (fun b => post (Except.error e) (Except.ok b))
+        (fun e' => post (Except.error e) (Except.error e')) := by
+  change MAlgRelOrdered.rwp (pure (Except.error e) : m₁ (Except ε₁ α)) y.run post = _
+  rw [Anchored.rwp_pure_left]
+  congr 1
+  funext eb
+  cases eb <;> rfl
+
+/-- Anchoring also collapses `rwpExc` when the right side throws immediately. -/
+theorem rwpExc_throw_right (x : ExceptT ε₁ m₁ α) (e : ε₂)
+    (post : Except ε₁ α → Except ε₂ β → l) :
+    rwpExc x (ExceptT.mk (pure (Except.error e)) : ExceptT ε₂ m₂ β) post =
+      MAlgOrdered.wpExc x (fun a => post (Except.ok a) (Except.error e))
+        (fun e' => post (Except.error e') (Except.error e)) := by
+  change MAlgRelOrdered.rwp x.run (pure (Except.error e) : m₂ (Except ε₂ β)) post = _
+  rw [Anchored.rwp_pure_right]
   congr 1
   funext ea
   cases ea <;> rfl

@@ -272,6 +272,23 @@ example (y : ExceptT Unit Id Nat) (post : Except Unit Nat → Except Unit Nat �
         (fun e => post (Except.ok 2) (Except.error e)) :=
   rwpExc_pure_left 2 y post
 
+/-- The relational bind rule preserves an existing error instead of running that
+side's continuation, while the successful side continues normally. -/
+example : rwpExc (m₁ := Id) (m₂ := Id)
+    ((ExceptT.mk (pure (Except.error "stop")) : ExceptT String Id Nat) >>=
+      fun _ => pure 99)
+    ((pure 3 : ExceptT Unit Id Nat) >>= fun n => pure (n + 1))
+    (fun ea eb => ea = Except.error "stop" ∧ eb = Except.ok 4) := by
+  have h := rwpExc_bind_le
+    (ExceptT.mk (pure (Except.error "stop")) : ExceptT String Id Nat)
+    (pure 3 : ExceptT Unit Id Nat) (fun _ => pure 99) (fun n => pure (n + 1))
+    (fun ea eb => ea = Except.error "stop" ∧ eb = Except.ok 4)
+  change _ → _ at h
+  apply h
+  change (Except.error "stop" : Except String Nat) = Except.error "stop" ∧
+    (Except.ok 4 : Except Unit Nat) = Except.ok 4
+  exact ⟨rfl, rfl⟩
+
 end HonestRelationalExceptions
 
 end PolyFunTest.MonadAlgebraRelational
