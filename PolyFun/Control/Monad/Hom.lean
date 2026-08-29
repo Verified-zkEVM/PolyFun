@@ -206,6 +206,23 @@ omit [LawfulMonad m] [LawfulMonad n] in
 @[simp] lemma run_mapHom (φ : m →ᵐ n) (x : StateT σ m α) (s : σ) :
     (StateT.mapHom φ x).run s = φ (x.run s) := rfl
 
+omit [LawfulMonad m] in
+@[simp] theorem mapHom_id :
+    StateT.mapHom (σ := σ) (MonadHom.id m) = MonadHom.id (StateT σ m) := by
+  apply MonadHom.ext'
+  intro α x
+  rfl
+
+variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
+
+omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
+@[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
+    StateT.mapHom (σ := σ) (G ∘ₘ F) =
+      StateT.mapHom (σ := σ) G ∘ₘ StateT.mapHom (σ := σ) F := by
+  apply MonadHom.ext'
+  intro α x
+  rfl
+
 end StateT
 
 namespace ReaderT
@@ -222,6 +239,23 @@ def mapHom (φ : m →ᵐ n) : ReaderT ρ m →ᵐ ReaderT ρ n where
 omit [LawfulMonad m] [LawfulMonad n] in
 @[simp] lemma run_mapHom (φ : m →ᵐ n) (x : ReaderT ρ m α) (r : ρ) :
     (ReaderT.mapHom φ x).run r = φ (x.run r) := rfl
+
+omit [LawfulMonad m] in
+@[simp] theorem mapHom_id :
+    ReaderT.mapHom (ρ := ρ) (MonadHom.id m) = MonadHom.id (ReaderT ρ m) := by
+  apply MonadHom.ext'
+  intro α x
+  rfl
+
+variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
+
+omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
+@[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
+    ReaderT.mapHom (ρ := ρ) (G ∘ₘ F) =
+      ReaderT.mapHom (ρ := ρ) G ∘ₘ ReaderT.mapHom (ρ := ρ) F := by
+  apply MonadHom.ext'
+  intro α x
+  rfl
 
 end ReaderT
 
@@ -249,6 +283,22 @@ omit [LawfulMonad m] [LawfulMonad n] in
 @[simp] lemma run_mapHom (φ : m →ᵐ n) (x : OptionT m α) :
     (OptionT.mapHom φ x).run = φ x.run := rfl
 
+omit [LawfulMonad m] in
+@[simp] theorem mapHom_id :
+    OptionT.mapHom (MonadHom.id m) = MonadHom.id (OptionT m) := by
+  apply MonadHom.ext'
+  intro α x
+  rfl
+
+variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
+
+omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
+@[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
+    OptionT.mapHom (G ∘ₘ F) = OptionT.mapHom G ∘ₘ OptionT.mapHom F := by
+  apply MonadHom.ext'
+  intro α x
+  rfl
+
 end OptionT
 
 namespace ExceptT
@@ -273,5 +323,22 @@ def mapHom (φ : m →ᵐ n) : ExceptT ε m →ᵐ ExceptT ε n where
 omit [LawfulMonad m] [LawfulMonad n] in
 @[simp] lemma run_mapHom (φ : m →ᵐ n) (x : ExceptT ε m α) :
     (ExceptT.mapHom φ x).run = φ x.run := rfl
+
+omit [LawfulMonad m] in
+@[simp] theorem mapHom_id :
+    ExceptT.mapHom (ε := ε) (MonadHom.id m) = MonadHom.id (ExceptT ε m) := by
+  apply MonadHom.ext'
+  intro α x
+  rfl
+
+variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
+
+omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
+@[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
+    ExceptT.mapHom (ε := ε) (G ∘ₘ F) =
+      ExceptT.mapHom (ε := ε) G ∘ₘ ExceptT.mapHom (ε := ε) F := by
+  apply MonadHom.ext'
+  intro α x
+  rfl
 
 end ExceptT
