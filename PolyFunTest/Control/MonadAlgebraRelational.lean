@@ -160,6 +160,65 @@ example : (RelWP (m₁ := StateT Bool Id) (m₂ := StateT Nat Id)
 
 end BothStates
 
+section Readers
+
+noncomputable local instance instLeftReader :
+    MAlgRelOrdered (ReaderT Bool Id) Id (Bool → Prop) :=
+  readerTLeft Bool
+
+noncomputable local instance instStrictLeftReader :
+    StrictBind (ReaderT Bool Id) Id (Bool → Prop) :=
+  strictBindReaderTLeft Bool
+
+#synth StrictBind (ReaderT Bool Id) Id (Bool → Prop)
+
+/-- A left reader exposes the environment used to select its result. -/
+example : (RelWP (m₁ := ReaderT Bool Id) (m₂ := Id) (l := Bool → Prop)
+    (fun flag => if flag then 7 else 11) (8 : Nat)
+    (fun left right env => left + 1 = right ∧ env = true)) true := by
+  change 7 + 1 = 8 ∧ true = true
+  decide
+
+end Readers
+
+section RightReader
+
+noncomputable local instance instRightReader :
+    MAlgRelOrdered Id (ReaderT Nat Id) (Nat → Prop) :=
+  readerTRight Nat
+
+noncomputable local instance instStrictRightReader :
+    StrictBind Id (ReaderT Nat Id) (Nat → Prop) :=
+  strictBindReaderTRight Nat
+
+#synth StrictBind Id (ReaderT Nat Id) (Nat → Prop)
+
+end RightReader
+
+section BothReaders
+
+noncomputable local instance instBothReaders :
+    MAlgRelOrdered (ReaderT Bool Id) (ReaderT Nat Id) (Bool → Nat → Prop) :=
+  readerTBoth Bool Nat
+
+noncomputable local instance instStrictBothReaders :
+    StrictBind (ReaderT Bool Id) (ReaderT Nat Id) (Bool → Nat → Prop) :=
+  strictBindReaderTBoth Bool Nat
+
+#synth StrictBind (ReaderT Bool Id) (ReaderT Nat Id) (Bool → Nat → Prop)
+
+/-- The two-sided lift exposes distinct left and right environments in that order. -/
+example : (RelWP (m₁ := ReaderT Bool Id) (m₂ := ReaderT Nat Id)
+    (l := Bool → Nat → Prop)
+    (fun leftEnv => if leftEnv then 4 else 0)
+    (fun rightEnv => rightEnv + 1)
+    (fun left right leftEnv rightEnv =>
+      left = 4 ∧ right = 6 ∧ leftEnv = true ∧ rightEnv = 5)) true 5 := by
+  change 4 = 4 ∧ 6 = 6 ∧ true = true ∧ 5 = 5
+  decide
+
+end BothReaders
+
 section RightOption
 
 noncomputable local instance instRightOption :
