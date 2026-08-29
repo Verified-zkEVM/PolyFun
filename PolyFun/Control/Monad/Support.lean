@@ -48,8 +48,10 @@ Support is a *value*-level notion here. Core states the limitation directly: `Ca
 about how the state of the monad changes". Concretely, `StateT σ m` and `ReaderT ρ m` do
 have `MonadAttach` instances — quantifying existentially over the initial state — and those
 supports are canonical, so the elimination theory applies. But `ExactMonadAttach` is *false*
-for them: possible outputs do not compose along `bind` when the continuation may observe a
-state the prefix did not produce. Reason about those per run instead, via
+for them: flattened premises may choose unrelated initial indices on the two sides of a
+`bind`. For `StateT` this can let the continuation observe a state the prefix did not
+produce; for `ReaderT` it can let the two premises use different environments. Reason about
+those per run instead, via
 `mem_support_stateT_iff` / `mem_support_readerT_iff`; `PolyFunTest` pins the failure with a
 counterexample. Oracle- and state-relative supports belong at the specification layer
 (`PolyFun.PFunctor.Free.WP`), which indexes the notion by a per-operation answer assignment.
@@ -230,11 +232,11 @@ end Laws
 /-- Every possible output of `x` satisfies `p` — the "always true" judgment.
 
 Stated over `CanReturn` rather than as a bounded quantifier over `support`, because the
-modality does not need a `Set`: it is `Prop`-valued and survives settings where the set
-of outputs is the wrong object, which is what happens for `StateT`. The two spellings
-are definitionally interchangeable — `allOutputs_iff_forall_support` and
-`allOutputs_iff_forall_canReturn` are both `Iff.rfl` — so nothing downstream has to
-choose. -/
+modality does not need to expose a `Set` in its interface. This makes the same shape easy
+to index when a flattened set of values is too coarse, as for `StateT`; the indexed
+carrier there is still the honest set of value/final-state pairs. The two unindexed
+spellings are definitionally interchangeable — `allOutputs_iff_forall_support` and
+`allOutputs_iff_forall_canReturn` are both `Iff.rfl` — so nothing downstream has to choose. -/
 def AllOutputs [MonadAttach m] (p : α → Prop) (x : m α) : Prop :=
   ∀ a, CanReturn x a → p a
 
@@ -282,9 +284,8 @@ output exactly when "some output equals it" holds.
 The two presentations of the layer meet here. `support` is the `Set`-valued carrier and
 `AllOutputs`/`SomeOutput` are the demonic and angelic modalities over it; this equation
 says nothing is lost by reading the carrier off the modality instead. The modality is the
-more general of the two — it is `Prop`-valued and so survives settings where a `Set` of
-outputs is the wrong object, which is exactly what happens for `StateT` (see
-`mem_support_stateT_iff` and the indexed section). It is also what the weakest-precondition
+more flexible presentation: its shape can be indexed when a flattened set of values is
+too coarse, as in the `StateT` section below. It is also what the weakest-precondition
 bridge consumes: `MonadAttach.toWP` is built from `AllOutputs`, not from `support`. -/
 theorem support_eq_setOf_someOutput (x : m α) :
     support x = {a | SomeOutput (· = a) x} :=
@@ -319,8 +320,8 @@ theorem noOutput_mono {p q : α → Prop} (h : ∀ a, q a → p a) {x : m α}
 
 /-! #### Negation
 
-The pair is dual: the demonic judgment is the negation of the angelic one at the
-negated predicate, and conversely. Only one direction of this was available before. -/
+Classically, the pair is dual: the demonic judgment is the negation of the angelic one
+at the negated predicate, and conversely. Only one direction was available before. -/
 
 theorem not_allOutputs_iff (p : α → Prop) (x : m α) :
     ¬ AllOutputs p x ↔ SomeOutput (fun a => ¬ p a) x := by
@@ -531,8 +532,9 @@ theorem triple_top_iff_someOutput (x : m α) (post : α → Prop) :
   rw [MAlgOrdered.Triple, top_le_iff, ← wp_angelic_iff_someOutput x post]
   exact ⟨fun h => h ▸ trivial, fun h => eq_true h⟩
 
-/-- Against a negated postcondition the angelic triple is the negation of "never". -/
-theorem triple_top_not_iff_not_noOutput (x : m α) (post : α → Prop) :
+/-- Against a negated postcondition the angelic triple says that the demonic guarantee
+does not hold. -/
+theorem triple_top_not_iff_not_allOutputs (x : m α) (post : α → Prop) :
     MAlgOrdered.Triple (l := Prop) ⊤ x (fun a => ¬ post a) ↔ ¬ AllOutputs post x := by
   rw [triple_top_iff_someOutput, ← not_allOutputs_iff]
 
@@ -867,8 +869,8 @@ end WriterT
 
 `StateT` and `ReaderT` do have core `MonadAttach` instances, existentially quantified over
 the initial state or environment, and those supports are canonical. They are *not*
-`ExactMonadAttach`: possible outputs do not compose along `bind`, because the continuation
-may observe a state the prefix never produced. Reason per run instead. -/
+`ExactMonadAttach`: possible outputs do not compose along `bind`, because its flattened
+premises may be witnessed at different initial indices. Reason per run instead. -/
 
 omit [LawfulMonad m] [ExactMonadAttach m] in
 theorem mem_support_stateT_iff {σ : Type u} {x : StateT σ m α} {a : α} :
@@ -1062,12 +1064,27 @@ theorem StateT.allOutputsFrom_mono {σ : Type u} {s : σ} {p q : α → σ → P
   fun r hr => h r.1 r.2 (hx r hr)
 
 omit [LawfulMonad m] [ExactMonadAttach m] in
-/-- Indexed demonic implies flattened demonic: if `p` holds of every outcome from every
-initial state, it holds of every possible output. The converse fails, which is the
-content of the `StateT` counterexamples. -/
+/-- Indexed demonic implies flattened demonic: if a value-only `p` holds of every outcome
+from every initial state, it holds of every possible output. -/
 theorem StateT.allOutputs_of_allOutputsFrom {σ : Type u} {p : α → Prop} {x : StateT σ m α}
     (h : ∀ s, StateT.AllOutputsFrom s (fun a _ => p a) x) : AllOutputs p x :=
   fun _ ⟨s, s', hs⟩ => h s (_, s') hs
+
+omit [LawfulMonad m] [ExactMonadAttach m] in
+/-- A flattened value-only guarantee holds at every initial state. Flattening loses the
+ability to mention the final state, but it loses nothing for postconditions on values
+alone. -/
+theorem StateT.allOutputsFrom_of_allOutputs {σ : Type u} {p : α → Prop} {x : StateT σ m α}
+    (h : AllOutputs p x) (s : σ) : StateT.AllOutputsFrom s (fun a _ => p a) x :=
+  fun q hq => h q.1 ⟨s, q.2, hq⟩
+
+omit [LawfulMonad m] [ExactMonadAttach m] in
+/-- For value-only postconditions, flattened demonic support is exactly the universal
+closure of the indexed judgment. -/
+theorem StateT.allOutputs_iff_forall_allOutputsFrom {σ : Type u} {p : α → Prop}
+    {x : StateT σ m α} :
+    AllOutputs p x ↔ ∀ s, StateT.AllOutputsFrom s (fun a _ => p a) x :=
+  ⟨fun h s => StateT.allOutputsFrom_of_allOutputs h s, StateT.allOutputs_of_allOutputsFrom⟩
 
 end Instances
 

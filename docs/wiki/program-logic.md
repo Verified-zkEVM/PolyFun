@@ -68,9 +68,10 @@ the demonic/angelic `wpFold` (`wpFold_demonic_iff_allOutputs`).
 `StateT` and `ReaderT` do carry core's canonical support — the union over initial
 states — so the elimination theory applies to them, but they are deliberately
 *not* `ExactMonadAttach`: possible outputs do not compose along `bind` when the
-continuation may observe a state the prefix never produced. The test suite proves
-both introduction rules fail there. Reason per run instead, via
-`mem_support_stateT_iff`. Oracle- and state-relative supports belong at the
+flattened premises choose unrelated initial indices. For `StateT`, the continuation
+may observe a state the prefix never produced; for `ReaderT`, the two premises may use
+different environments. The test suite pins both failures. Reason per run instead, via
+`StateT.supportFrom` and `ReaderT.supportAt`. Oracle- and state-relative supports belong at the
 specification layer (`PFunctor/Free/WP.lean`), which indexes the notion by a
 per-operation answer assignment.
 
