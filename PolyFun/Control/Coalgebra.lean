@@ -108,8 +108,9 @@ theorem comp_apply (g : Coalg.Hom F S₂ S₃) (f : Coalg.Hom F S₁ S₂) (x : 
     (Coalg.Hom.comp g f) x = g (f x) := rfl
 
 /-! Coalgebra morphisms form a category, on the nose. These mirror `MonadHom.comp`'s
-laws in `PolyFun/Control/Monad/Hom.lean`: the two hom types are structurally identical —
-a carrier map plus a commutation proof — so their composition APIs should agree. -/
+laws in `PolyFun/Control/Monad/Hom.lean`: both hom types compose their carrier maps
+pointwise and package the corresponding preservation laws, so their composition APIs
+should agree. -/
 
 @[simp]
 theorem comp_id (f : Coalg.Hom F S₁ S₂) : f.comp Coalg.Hom.id = f := rfl

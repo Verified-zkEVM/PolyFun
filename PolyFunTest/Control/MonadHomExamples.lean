@@ -70,4 +70,30 @@ example {n : Type u → Type w} [Monad n] [LawfulMonad n] {α σ : Type u}
 
 end Structure
 
+section TransformerMaps
+
+/-- A nonidentity target effect makes it observable that each transformer map acts on
+the underlying monad rather than merely repackaging its source representation. -/
+def idToOption : Id →ᵐ Option := MonadHom.pure Option
+
+/-- The environment still selects the source value before the underlying morphism runs. -/
+def branchReader : ReaderT Bool Id Nat :=
+  ReaderT.mk fun flag => if flag then 7 else 11
+
+example : (ReaderT.mapHom idToOption branchReader).run true = some 7 := rfl
+example : (ReaderT.mapHom idToOption branchReader).run false = some 11 := rfl
+
+/-- Source-level `none` remains a successful target effect carrying `none`; it is not
+confused with failure in the target `Option` monad. -/
+def absent : OptionT Id Nat := OptionT.mk none
+
+example : (OptionT.mapHom idToOption absent).run = some none := rfl
+
+/-- Likewise, an `ExceptT` error remains data inside the successful target effect. -/
+def rejected : ExceptT String Id Nat := ExceptT.mk (.error "rejected")
+
+example : (ExceptT.mapHom idToOption rejected).run = some (.error "rejected") := rfl
+
+end TransformerMaps
+
 end Control.MonadHomExamples
