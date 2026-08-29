@@ -10,17 +10,17 @@ public import Mathlib.Data.Nat.Bitwise
 public import Mathlib.Data.Nat.Log
 
 /-!
-# Canonical Fixed-Width Bit Encodings and Uniform Machine Families
+# Pinned Fixed-Width Bit Encodings and Uniform Machine Families
 
-The canonical boundary representation for the polynomial-time adversary model, and the
+The pinned boundary representation for the polynomial-time adversary model, and the
 reusable unit of machine-computability it consumes.
 
-## Why fixed canonical encodings
+## Why encodings must be pinned
 
 "Computable in polynomial time relative to *some* encoding" is vacuous: an encoding
 `enc x := std x ++ block (f x)` caches any function `f` inside the representation, and
 every machine witness degenerates to a projection. Polynomial time is only well-defined
-relative to a *fixed canonical* representation (syntactic frameworks fix one implicitly
+relative to a *fixed, trusted* representation (syntactic frameworks fix one implicitly
 through the programming language's value representation; a machine-grounded framework
 must fix it explicitly). This file provides that representation:
 
@@ -29,10 +29,11 @@ must fix it explicitly). This file provides that representation:
   notion, the representation freedom left to a machine's internal state.
 * `ToCslib.Computability.BitEncFam` — the *fixed-width* refinement: at each parameter every
   value encodes to exactly `wid n` bits, with `wid` polynomially bounded. This is the
-  canonical *boundary* representation for inputs, outputs, and oracle interfaces. The
-  polynomial width bound is the formal content of the Katz–Lindell `1^n` convention:
-  all game values at parameter `n` have `poly(n)`-length representations, so
-  "polynomial in `n`" and "polynomial in the input length" agree.
+  pinned *boundary* representation for inputs, outputs, and oracle interfaces. The
+  structure does not itself certify that an encoding is canonical: call sites must pin
+  a trusted constructor or an explicitly reviewed encoding. Its polynomial width bound
+  ensures every boundary value has `poly(n)` length; machine-family bounds charge `n`
+  separately and therefore do not require the input width to grow with `n`.
 * Constructors: `BitEncFam.const` (fixed-width binary index encoding of a finite type),
   `BitEncFam.bitVec`/`bitVecX` (raw bits), `BitEncFam.pair` (append — widths are fixed,
   so no tags or alphabets are needed), `BitEncFam.option` (tag bit plus padded payload),
@@ -92,14 +93,16 @@ structure StrEncFam (α : ℕ → Type u) : Type u where
   /-- All encodings respect the length bound. -/
   len_le : ∀ n x, (enc n x).length ≤ bound.eval n
 
-/-! ## Fixed-width canonical boundary encodings -/
+/-! ## Pinned fixed-width boundary encodings -/
 
-/-- A security-parameter-indexed family of **fixed-width** raw bit-string encodings:
-the canonical boundary representation. At parameter `n` every value encodes to exactly
+/-- A security-parameter-indexed family of **fixed-width** raw bit-string encodings.
+At parameter `n` every value encodes to exactly
 `wid n` bits, and `wid` is polynomially bounded — the formal content of the
-Katz–Lindell `1^n` convention. Fixed widths make pairing literal append and let the
-split point of any concatenation be recovered positionally, with no alphabets, tags,
-or self-delimiting machinery. -/
+security-parameter size convention used by this family model. Fixed widths make pairing
+literal append and let the split point of any concatenation be recovered positionally,
+with no alphabets, tags, or self-delimiting machinery. Fixed width alone does not rule
+out a malicious encoding that caches a function value; sound statements pin a trusted
+encoding rather than existentially selecting one. -/
 structure BitEncFam (α : ℕ → Type u) : Type u where
   /-- The exact encoded width at each parameter. -/
   wid : ℕ → ℕ

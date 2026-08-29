@@ -49,7 +49,7 @@ name = "PolyFun"
 name = "ToCslib"
 
 # Test / worked-example library. Built by `lake test`, kept out of the
-# `lake lint` scope (which lints only `PolyFun`). Glob-based, so no umbrella
+# `lake lint` scope (which lints `PolyFun` and `ToCslib`). Glob-based, so no umbrella
 # file is generated; the file-header style linter is relaxed on test files.
 [[lean_lib]]
 name = "PolyFunTest"

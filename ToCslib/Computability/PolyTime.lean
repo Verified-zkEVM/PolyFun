@@ -68,10 +68,11 @@ theorem PolyTimeComputable.monotone_normalize_timeBound {f : List Symbol → Lis
 
 /-- The description size of a machine witness over the two-symbol tape alphabet: its
 number of states. Over the fixed `Bool` alphabet the transition table has exactly three
-rows per state, so the state count measures the machine's description up to a constant
-factor — the "advice" of a non-uniform family, and the quantity the machine-counting
-bound `B` counts. Time bounds alone do not control it: a table machine looks up any
-function on a finite domain in linear time using one state per valid input.
+rows per state, and each target-state entry needs logarithmically many bits. Thus a
+polynomial state-count bound is polynomially equivalent to a conventional transition-
+table bit-size bound (rather than equal up to a constant factor). It is the advice
+measure counted by `B`. Time bounds alone do not control it: a table machine looks up
+any function on a finite domain in linear time using one state per valid input.
 
 Deliberately restricted to `Symbol := Bool`: over a family of growing alphabets the
 transition table has `Fintype.card Symbol + 1` rows per state, so a bare state count
