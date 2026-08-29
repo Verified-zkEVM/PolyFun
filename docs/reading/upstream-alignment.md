@@ -339,10 +339,12 @@ recorded:
    `@[scoped grind]`. Destructuring proofs break.
 2. `LTS.Deterministic` is refactored: the single field becomes
    `∀ s, lts.DeterministicState s`, layered over new `DeterministicStateLabel` /
-   `DeterministicState`. Four renames follow, and the `Finite (lts.image s μ)` instance
-   becomes a theorem.
-3. `MapLabel.lean` is deleted in favour of a new `MapHom.lean`; `mapLabel` has no
-   successor of the same name.
+   `DeterministicState`. Four helper names change. A named
+   `DeterministicStateLabel.finite_image` theorem is added, while the existing
+   `Finite (lts.image s μ)` instance remains and delegates to it.
+3. `MapLabel.lean` is deleted in favour of a new `MapHom.lean`, so direct imports of
+   the old module break. The `mapLabel` definition and its main lemmas survive in the
+   new module, reimplemented through the more general `Hom.lift` API.
 
 Still absent on `main`, so still genuine upstreaming targets: delay bisimulation, a
 well-placed `HasTau (Option α)`, and a cross-type `Bisimilarity.symm`.
@@ -350,8 +352,8 @@ well-placed `HasTau (Option α)`, and a cross-type `Bisimilarity.symm`.
 ## Unused surface
 
 Not upstream duplicates, so secondary to this survey — but each deserves an explicit
-verdict rather than being left to accrete. All are defining-file-only across `PolyFun/`
-and `PolyFunTest/`:
+verdict rather than being left to accrete. The declarations below have sparse or no
+*named* in-repo uses across `PolyFun/` and `PolyFunTest/`:
 
 **Every row of the previous version of this table was stale**, in both directions — two
 described files that no longer exist, one described contents that had been replaced, and
@@ -360,13 +362,16 @@ rather than declaration names; a file can be imported and unused, or unimported 
 load-bearing through a re-export. Check declaration base names across `PolyFun/` and
 `PolyFunTest/`, excluding each declaration's own file, and separate "unused **and**
 untagged" (a real signal) from "unused but `@[simp]`/`@[grind]`-tagged" (automation
-leaves no textual trace).
+leaves no textual trace). The same caveat applies more strongly to typeclass instances:
+instance synthesis leaves no textual reference at all. A declaration-name search can
+identify candidates, but cannot by itself establish that an instance-providing public
+module is orphaned or safe to remove.
 
 | Surface | Lines | Verdict |
 |---|---:|---|
-| `Control/Comonad/Instances.lean` — `NonEmptyList`, `List.Zipper`, `EnvT`, `StoreT`, `Day` | 898 | **The one genuinely orphaned module**, and 16% of `Control/`. Note the split: the `Comonad` *class* is live via `PFunctor/Cofree.lean`; only the instances are stranded. `Day` also has `Comonad` but no `LawfulComonad`. Mathlib does have a *categorical* Day convolution (`CategoryTheory/Monoidal/DayConvolution.lean`), so "no upstream equivalents" was too strong. Open question: can `PFunctor.Comonoid` / `CofreeP` / `M.Vertex` become the consumer — `StoreT` is the lens comonad and `EnvT` the cofree-over-a-comonad — or should it be annotated as a standalone instance library? |
+| `Control/Comonad/Instances.lean` — `NonEmptyList`, `List.Zipper`, `EnvT`, `StoreT`, `Day` | 898 | **No named in-repo consumer, but not proved orphaned.** It is publicly imported by `PolyFun.lean` and contributes 65 typeclass instances, so downstream and in-repo typeclass use is invisible to the textual scan. The `Comonad` *class* is independently live via `PFunctor/Cofree.lean`. `Day` has `Comonad` but no `LawfulComonad`; Mathlib also has a distinct categorical Day convolution (`CategoryTheory/Monoidal/DayConvolution.lean`). Before deletion, audit instance synthesis and public API compatibility. Otherwise document it explicitly as a standalone instance library. |
 | `Control/Monad/FreeCont.lean` | 229 | Test-only consumer. The previous note was wrong twice: the file has **no `inductive`** at all (it is a `structure FreeContT`, a Church/CPS encoding of the freer transformer over an arbitrary signature), and cslib's `FreeCont r := FreeM (ContF r)` is a free monad over a *continuation signature* — a different object, not the same construction. |
-| `Control/Monad/Iter.lean` — `MonadIter` | 152 | Class justified against upstream (core's `repeatM` is a function, not a class, is partial-recursive, and needs `[Nonempty β]`), but it has **no instances in its own file**; the only one in the repo is `ITree F`. Keep, and add instances. |
+| `Control/Monad/Iter.lean` — `MonadIter` | 152 | Class justified against upstream (core's `repeatM` is a function, not a class, is partial-recursive, and needs `[Nonempty β]`), but it has **no instances in its own file**; the only one in the repo is `ITree F`. Keep. Add another instance only with a chosen iteration semantics and proofs of the separate `LawfulMonadIter` laws; a generic monad need not support iteration. |
 | ~~`Control/Monad/Equiv.lean`~~ | — | **File deleted** (#143). No `MonadEquiv`, no `≃ᵐ`. |
 | ~~`Control/Monad/Hom.lean` `MonadHomClass`~~ | — | **Declaration removed** (#143). Six stale `scripts/nolints.json` entries referenced it. |
 | ~~`Control/Lawful/Basic.lean`~~ | 47 | **Load-bearing, not unused.** Pruned to four lemmas (#147), and `Interaction/TwoParty/Compose.lean` uses all four across ten-plus call sites. The open question is different: the file works around a **Lean 4.29** `do`-elaboration bug and all four lemmas now go through by `simp`, so check whether the bug is fixed and, if so, simplify the call sites rather than delete the file. |
@@ -382,9 +387,9 @@ Not in the previous survey at all. Ranked by leverage.
 | Upstream | PolyFun counterpart | Verdict |
 |---|---|---|
 | `Lean.Order.MonadTail` + `repeatM_eq_of_monadTail` + `Loop.forIn_eq_of_monadTail` + ~40 `monotone_*` lemmas + the `monotonicity` tactic (`Init/Internal/Order/`) | `Control/Monad/Iter.lean`, `ITree/Do.lean` | **Track and instantiate.** PolyFun has *zero* references to `MonadTail`. It is not the same thing as `MonadIter` — order-theoretic rather than Elgot/Conway — so it does not displace it, but it is the class to *also* instantiate if `partial_fixpoint` is ever wanted in these monads, and its lemma library is free. `Internal`, so no stability promise. |
-| `Mathlib.Control.ULiftable` (`ULiftable`, `adaptUp`, `adaptDown`, instances for `Id`/`StateT`/`ReaderT`/`ContT`/`WriterT`/`Except`/`Option`) | the universe friction documented in `Control/Monad/Support.lean` and the `ExceptT` single-universe alias | **Adopt candidate.** Zero PolyFun references today. This is Mathlib's answer to "the same monad at two universes", which is exactly the recurring problem. |
+| `Mathlib.Control.ULiftable` (`ULiftable`, `adaptUp`, `adaptDown`, instances for `Id`/`StateT`/`ReaderT`/`ContT`/`WriterT`/`Except`/`Option`) | the universe friction documented in `Control/Monad/Support.lean` and the `ExceptT` single-universe alias | **Investigate as a transport tool.** Zero PolyFun references today. It moves computations between universe instantiations, but it does not repair core's `MonadAttach (ExceptT ε m)` instance signature and ships no `ExceptT` lifting instance. The local single-universe alias therefore remains necessary unless a concrete bridge proves otherwise. |
 | `Mathlib.Control.Functor`'s `Liftp` / `Liftr` / `supp` | `MonadAttach.support` | **Cross-reference, do not adopt.** `Functor.supp` is the intersection of all predicates satisfying `Liftp`, not a `CanReturn` construction — a different definition of the same idea, which `Support.lean` should cite. |
-| `Mathlib.Control.Basic`'s `CommApplicative` | the interleaving / independence layer | Worth knowing it exists before hand-rolling "these effects commute". |
+| `Mathlib.Control.Basic`'s `CommApplicative` | the interleaving / independence layer | **Cross-reference only.** It commutes applicative effects extensionally; it does not by itself prove independence, fairness, or scheduler invariance for interleaved processes. Reuse it only where the process semantics reduces to that exact applicative law. |
 | Core `LawfulMonad.mk'`, and the `bind_pure_comp` simp orientation | any local monadic simp set | **Hazard, not a duplicate.** Core orients `bind_pure_comp` left-to-right *into* `<$>`, so `Functor.map` is the normal form and `map_eq_pure_bind` is deliberately not `@[simp]`. A local simp set adding the reverse direction fights the default one. |
 
 Genuine gaps nobody upstream fills, so hand-rolling is unavoidable if they are needed:
