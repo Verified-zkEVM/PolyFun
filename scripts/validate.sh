@@ -52,7 +52,7 @@ for arg in "$@"; do
 done
 
 echo "# Building project"
-lake build PolyFun ToCslib --wfail
+lake build PolyFun ToCslib PolyFunCslib --wfail
 
 echo ""
 echo "# Checking module scopes"
@@ -71,7 +71,7 @@ if (( run_lint )); then
   echo ""
   echo "# Running environment linters (lake lint)"
   lake lint
-  lake exe lint-style PolyFun ToCslib
+  lake exe lint-style PolyFun ToCslib PolyFunCslib
 fi
 
 if (( run_test )); then
@@ -84,7 +84,7 @@ fi
 if (( run_axioms )); then
   echo ""
   echo "# Building axiom sweep roots"
-  lake build PolyFun ToCslib --wfail
+  lake build PolyFun ToCslib PolyFunCslib --wfail
 
   echo ""
   echo "# Testing the axiom sweep tool"

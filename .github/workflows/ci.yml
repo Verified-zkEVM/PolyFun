@@ -89,7 +89,7 @@ jobs:
         run: lake exe cache get
 
       - name: Build production libraries
-        run: lake build PolyFun ToCslib --wfail
+        run: lake build PolyFun ToCslib PolyFunCslib --wfail
 
       - name: Run environment linters
         run: lake lint
