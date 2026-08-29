@@ -82,6 +82,10 @@ fi
 
 if (( run_axioms )); then
   echo ""
+  echo "# Building axiom sweep roots"
+  lake build PolyFun ToCslib
+
+  echo ""
   echo "# Testing the axiom sweep tool"
   ./scripts/test-axiomsweep.sh
 
