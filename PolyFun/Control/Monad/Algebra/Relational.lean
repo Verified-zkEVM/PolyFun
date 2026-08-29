@@ -18,9 +18,10 @@ This file introduces a two-monad relational analogue of `MAlgOrdered`:
 * Asynchronous (one-sided) bind rules `relWP_bind_left_le` / `relWP_bind_right_le`
   and their `Triple` forms, recovering Maillard et al.'s asynchronous shapes.
 * Structural pure rules for `if`, `dite`, `Option.elim`, `Sum.elim`.
-* Named side lifts for heterogeneous stacks (`StateT`, `OptionT`, `ExceptT`).
+* Named side lifts for heterogeneous stacks (`StateT`, `ReaderT`, `OptionT`, `ExceptT`).
 * `StrictBind` subclass capturing strict relational effect observations
-  (in the sense of Maillard et al.) together with `StateT` lifts that preserve it.
+  (in the sense of Maillard et al.) together with `StateT` and `ReaderT` lifts that
+  preserve it.
 
 The framework is the predicate-transformer specialization of Maillard et al.'s
 *simple framework* (POPL 2020, §2): the relational specification monad is fixed
@@ -354,6 +355,73 @@ noncomputable def stateTBoth (σ₁ σ₂ : Type u) :
         (f := fun p₁ => (f p₁.1).run p₁.2) (g := fun p₂ => (g p₂.1).run p₂.2)
         (post := fun p₁ p₂ => post p₁.1 p₂.1 p₁.2 p₂.2))
 
+/-- Left `ReaderT` lift for heterogeneous relational algebras.
+
+The environment is exposed in the carrier so the relational postcondition can depend
+on the environment used to run the left computation. As with the `StateT` lifts, this is
+named rather than globally registered to avoid inequivalent instance paths. -/
+@[instance_reducible]
+noncomputable def readerTLeft (ρ : Type u) :
+    MAlgRelOrdered (ReaderT ρ m₁) m₂ (ρ → l) where
+  rwp x y post := fun r =>
+    MAlgRelOrdered.rwp (x.run r) y (fun a b => post a b r)
+  rwp_pure a b post := by
+    funext r
+    simp [ReaderT.run_pure]
+  rwp_mono hpost := by
+    intro r
+    exact MAlgRelOrdered.rwp_mono (m₁ := m₁) (m₂ := m₂) (l := l)
+      (fun a b => hpost a b r)
+  rwp_bind_le x y f g post := by
+    intro r
+    simpa [ReaderT.run_bind] using
+      (MAlgRelOrdered.rwp_bind_le (m₁ := m₁) (m₂ := m₂) (l := l)
+        (x := x.run r) (y := y) (f := fun a => (f a).run r) (g := g)
+        (post := fun c d => post c d r))
+
+/-- Right `ReaderT` lift for heterogeneous relational algebras. See `readerTLeft` for
+why transformer-side choices are explicit. -/
+@[instance_reducible]
+noncomputable def readerTRight (ρ : Type u) :
+    MAlgRelOrdered m₁ (ReaderT ρ m₂) (ρ → l) where
+  rwp x y post := fun r =>
+    MAlgRelOrdered.rwp x (y.run r) (fun a b => post a b r)
+  rwp_pure a b post := by
+    funext r
+    simp [ReaderT.run_pure]
+  rwp_mono hpost := by
+    intro r
+    exact MAlgRelOrdered.rwp_mono (m₁ := m₁) (m₂ := m₂) (l := l)
+      (fun a b => hpost a b r)
+  rwp_bind_le x y f g post := by
+    intro r
+    simpa [ReaderT.run_bind] using
+      (MAlgRelOrdered.rwp_bind_le (m₁ := m₁) (m₂ := m₂) (l := l)
+        (x := x) (y := y.run r) (f := f) (g := fun b => (g b).run r)
+        (post := fun c d => post c d r))
+
+/-- Two-sided `ReaderT` lift: each computation is run in its own environment, and the
+postcondition can inspect both environments in left-to-right order. -/
+@[instance_reducible]
+noncomputable def readerTBoth (ρ₁ ρ₂ : Type u) :
+    MAlgRelOrdered (ReaderT ρ₁ m₁) (ReaderT ρ₂ m₂) (ρ₁ → ρ₂ → l) where
+  rwp x y post := fun r₁ r₂ =>
+    MAlgRelOrdered.rwp (x.run r₁) (y.run r₂) (fun a b => post a b r₁ r₂)
+  rwp_pure a b post := by
+    funext r₁ r₂
+    simp [ReaderT.run_pure]
+  rwp_mono hpost := by
+    intro r₁ r₂
+    exact MAlgRelOrdered.rwp_mono (m₁ := m₁) (m₂ := m₂) (l := l)
+      (fun a b => hpost a b r₁ r₂)
+  rwp_bind_le x y f g post := by
+    intro r₁ r₂
+    simpa [ReaderT.run_bind] using
+      (MAlgRelOrdered.rwp_bind_le (m₁ := m₁) (m₂ := m₂) (l := l)
+        (x := x.run r₁) (y := y.run r₂)
+        (f := fun a => (f a).run r₁) (g := fun b => (g b).run r₂)
+        (post := fun c d => post c d r₁ r₂))
+
 end Instances
 
 section FailureInstances
@@ -657,6 +725,46 @@ theorem strictBindStateTBoth [StrictBind m₁ m₂ l] (σ₁ σ₂ : Type u) :
     (x := x.run s₁) (y := y.run s₂)
     (f := fun p₁ => (f p₁.1).run p₁.2) (g := fun p₂ => (g p₂.1).run p₂.2)
     (post := fun p₁ p₂ => post p₁.1 p₂.1 p₁.2 p₂.2)
+  convert h using 1 <;> rfl
+
+/-- Strictness lifts through the named left `ReaderT` algebra. -/
+theorem strictBindReaderTLeft [StrictBind m₁ m₂ l] (ρ : Type u) :
+    letI := readerTLeft (m₁ := m₁) (m₂ := m₂) (l := l) ρ
+    StrictBind (ReaderT ρ m₁) m₂ (ρ → l) := by
+  let := readerTLeft (m₁ := m₁) (m₂ := m₂) (l := l) ρ
+  refine { rwp_bind := ?_ }
+  intro α β γ δ x y f g post
+  funext r
+  have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
+    (x := x.run r) (y := y) (f := fun a => (f a).run r) (g := g)
+    (post := fun c d => post c d r)
+  convert h using 1 <;> rfl
+
+/-- Strictness lifts through the named right `ReaderT` algebra. -/
+theorem strictBindReaderTRight [StrictBind m₁ m₂ l] (ρ : Type u) :
+    letI := readerTRight (m₁ := m₁) (m₂ := m₂) (l := l) ρ
+    StrictBind m₁ (ReaderT ρ m₂) (ρ → l) := by
+  let := readerTRight (m₁ := m₁) (m₂ := m₂) (l := l) ρ
+  refine { rwp_bind := ?_ }
+  intro α β γ δ x y f g post
+  funext r
+  have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
+    (x := x) (y := y.run r) (f := f) (g := fun b => (g b).run r)
+    (post := fun c d => post c d r)
+  convert h using 1 <;> rfl
+
+/-- Strictness lifts through the named two-sided `ReaderT` algebra. -/
+theorem strictBindReaderTBoth [StrictBind m₁ m₂ l] (ρ₁ ρ₂ : Type u) :
+    letI := readerTBoth (m₁ := m₁) (m₂ := m₂) (l := l) ρ₁ ρ₂
+    StrictBind (ReaderT ρ₁ m₁) (ReaderT ρ₂ m₂) (ρ₁ → ρ₂ → l) := by
+  let := readerTBoth (m₁ := m₁) (m₂ := m₂) (l := l) ρ₁ ρ₂
+  refine { rwp_bind := ?_ }
+  intro α β γ δ x y f g post
+  funext r₁ r₂
+  have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
+    (x := x.run r₁) (y := y.run r₂)
+    (f := fun a => (f a).run r₁) (g := fun b => (g b).run r₂)
+    (post := fun c d => post c d r₁ r₂)
   convert h using 1 <;> rfl
 
 end StrictBindInstances

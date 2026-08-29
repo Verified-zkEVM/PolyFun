@@ -11,7 +11,8 @@ migration sketch live in
 | Module | Content |
 |---|---|
 | `PolyFun/Control/Monad/Algebra.lean` | `MAlgOrdered m l`: ordered monad algebras over a complete lattice, with `wp`, `Triple`, the structural rule set, `StateT`/`ReaderT`/`ExceptT`/`OptionT` lifts, and the honest two-postcondition `wpExc`/`wpOpt` |
-| `PolyFun/Control/Monad/Algebra/Relational.lean` | `MAlgRelOrdered m₁ m₂ l`: relational `rwp`/`RelWP`/`Triple`, asynchronous one-sided bind rules, structural pure rules, explicit named side lifts, and the `StrictBind` / `Anchored` subclasses (Maillard et al. POPL 2020 shapes) |
+| `PolyFun/Control/Monad/Algebra/Relational.lean` | `MAlgRelOrdered m₁ m₂ l`: relational `rwp`/`RelWP`/`Triple`, asynchronous one-sided bind rules, structural pure rules, explicit named `StateT`/`ReaderT` side lifts, and the `StrictBind` / `Anchored` subclasses (Maillard et al. POPL 2020 shapes) |
+| `PolyFun/Control/Monad/Algebra/Relational/Support.lean` | Named demonic and angelic exact-support relational algebras; support characterizations; matching `StrictBind` and `Anchored` witnesses |
 | `PolyFun/Control/Monad/Support.lean` | `ExactMonadAttach m`: the introduction rules core omits for `MonadAttach.CanReturn`; `MonadAttach.support`; the `AllOutputs`/`SomeOutput`/`NoOutput` judgments and scoped `⊨ₐ`/`⊨ₛ`/`⊭` notation; the named demonic `MAlgOrdered m Prop` choice; instances for `Except`/`SetM` (absent upstream) and the `ExceptT` universe alias |
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); `OpSpec.toMAlgOrdered`; semantic `FreeM.wpVia` through a `Handler`; soundness `wpFold_le_wpVia`/`wpFold_eq_wpVia` |
@@ -76,12 +77,27 @@ different environments. The test suite pins both failures. Reason per run instea
 specification layer (`PFunctor/Free/WP.lean`), which indexes the notion by a
 per-operation answer assignment.
 
-The support-based `MAlgOrdered m Prop` and relational transformer lifts are
+The support-based unary and relational `Prop` algebras and the relational transformer lifts are
 explicit named definitions, not unrestricted global instances. This keeps
 support partial correctness distinct from the existing failure-as-`⊥`
 `OptionT`/`ExceptT` algebras and prevents inequivalent left/right transformer
-instance paths. Install the intended algebra locally at each verification
-boundary.
+instance paths. The demonic relational algebra quantifies over every pair in the
+two supports; the angelic algebra asks for one witnessing pair. Both satisfy
+`StrictBind` and are `Anchored` to the corresponding unary support algebra.
+Install the intended definitions and witnesses locally at each verification boundary.
+
+```lean
+local instance : MAlgOrdered m₁ Prop := MonadAttach.mAlgOrderedPropDemonic
+local instance : MAlgOrdered m₂ Prop := MonadAttach.mAlgOrderedPropDemonic
+local instance : MAlgRelOrdered m₁ m₂ Prop :=
+  MonadAttach.mAlgRelOrderedPropDemonic
+local instance : StrictBind m₁ m₂ Prop := MonadAttach.strictBindPropDemonic
+local instance : Anchored m₁ m₂ Prop := MonadAttach.anchoredPropDemonic
+```
+
+Use the `Angelic` definitions with the same pattern when existential support is
+the intended observation. `ReaderT` itself is not `ExactMonadAttach`; its named
+relational lifts instead reason at explicit left/right environments.
 
 ## Support: which interface is canonical
 

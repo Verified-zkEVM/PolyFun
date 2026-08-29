@@ -98,6 +98,9 @@ Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   is cslib's, reached through `Control.LTS.toLts`.
 
 Control/Monad/Algebra -> Control/Monad/Algebra/Relational
+Control/Monad/{Algebra/Relational, Support}
+  -> Control/Monad/Algebra/Relational/Support
+Control/Monad/Hom + Mathlib.Control.Monad.Writer -> Control/Monad/Hom/Writer
 Control/Monad/Support -> Control/Do/Basic  (also imports Std.Tactic.Do; see
   the quarantine rule in program-logic.md)
 

@@ -43,9 +43,14 @@ substrates; core `Std.Do` is used only behind a two-file quarantine.
 - `Control/Monad/Algebra.lean` — the pre-existing kernel: `MAlgOrdered`,
   `wp`/`Triple`, transformer lifts, honest `wpExc`/`wpOpt`.
 - `Control/Monad/Algebra/Relational.lean` — `MAlgRelOrdered` (relational
-  `rwp`/`RelWP`/`Triple`, asynchronous bind rules, `StrictBind`, `Anchored`),
+  `rwp`/`RelWP`/`Triple`, asynchronous bind rules, `StrictBind`, `Anchored`, and
+  named left/right/both `StateT` and `ReaderT` lifts preserving strict bind),
   upstreamed from VCVio's `ToMathlib/Control/Monad/RelationalAlgebra.lean`
   (near-verbatim; three unused `LawfulMonad` binders dropped).
+- `Control/Monad/Algebra/Relational/Support.lean` — production demonic and
+  angelic relations obtained from exact support. They quantify universally or
+  existentially over the cross product of the two supports, respectively, and
+  ship matching `StrictBind` and `Anchored` witnesses as opt-in definitions.
 - `Control/Monad/Support.lean` — the support layer, built on Lean core's
   `MonadAttach` (shipped since v4.28; `CanReturn` *is* the support predicate).
   Core proves only the elimination half of the theory, and provably cannot prove
@@ -127,12 +132,15 @@ implemented).
   invariant inside the state relation, since `ITree` has no possible-output
   predicate for a postcondition to range over. wp-congruence under `WeakBisim`
   remains open.
-- The angelic WP bridge is **structurally blocked**, not merely unwritten.
+- The public angelic WP bridge is **blocked at the current Lean 4.33.1 pin**, not
+  merely unwritten.
   `Std.Do.PredTrans` carries conjunctivity as a structure field, stated as a
   bi-entailment; `AllOutputs` distributes over `∧` both ways but `SomeOutput` only
   left-to-right, so there is no angelic `Std.Do.WP`. Core's newer stack makes
   conjunctivity an opt-in `WPConjunctive`. That class asks for the direction angelic
-  support fails; optionality unblocks the base WP bridge, which must omit the class.
+  support fails; optionality in the public Lean 4.35 `Std.WP` API unblocks the base
+  WP bridge, which must omit the class. PolyFun does not import the current pin's
+  `Std.Internal.Do` as a stopgap.
   `PolyFunTest/Control/MonadAttach.lean` pins both directions and the failure.
 - The ε-additive approximate-triple algebra (ArkLib's sequencing blocker).
 - Optional `MonadFinSupport` (Finset-valued support, generalizing VCVio's

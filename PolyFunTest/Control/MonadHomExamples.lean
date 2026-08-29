@@ -5,7 +5,8 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.Control.Monad.Hom
+public import Mathlib.Algebra.Group.Nat.Defs
+public import PolyFun.Control.Monad.Hom.Writer
 
 /-!
 # Examples for the monad-morphism hierarchy
@@ -93,6 +94,11 @@ example : (OptionT.mapHom idToOption absent).run = some none := rfl
 def rejected : ExceptT String Id Nat := ExceptT.mk (.error "rejected")
 
 example : (ExceptT.mapHom idToOption rejected).run = some (.error "rejected") := rfl
+
+/-- Writer output remains data while the underlying effect is transported. -/
+def logged : WriterT Nat Id Nat := WriterT.mk (7, 3)
+
+example : (WriterT.mapHom idToOption logged).run = some (7, 3) := rfl
 
 end TransformerMaps
 
