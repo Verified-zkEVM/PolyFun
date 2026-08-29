@@ -333,6 +333,8 @@ Realizability/{Instances, Quantitative} -> Realizability/Quantitative/WordClass
   -> PolyFunCslib/Backend
 {PolyFunCslib/Backend, ToCslib/Computability/BitEncoding}
   -> PolyFunCslib/PPoly
+{PolyFunCslib/PPoly, ToCslib/Computability/SingleTape/Counting}
+  -> PolyFunCslib/Nontriviality
 Mathlib/Order/Monotone/Basic -> Complexity/SecondOrderPolynomial
   (Instances additionally draws on Mathlib's Computability and Fintype layers;
    Quantitative/Closure assembles executable structural code but asserts no
