@@ -18,7 +18,7 @@ says that polynomially bounded non-uniform machine families cannot contain all
 families of Boolean predicates on `BitVec n`.
 -/
 
-@[expose] public section
+public section
 
 open Filter
 open ToCslib.Computability
@@ -76,9 +76,10 @@ theorem realizableLE_of_isPPolyBy_pure
     (certificate : IsPPolyBy coinBoundary
       (fun n value ↦ FreeM.pure (function n value))) :
     ∃ q : Polynomial ℕ, ∀ n, function n ∈ RealizableLE n (q.eval n) := by
-  obtain ⟨witness⟩ := certificate
+  obtain ⟨witness⟩ := certificate.toNonempty
   let outputCode := witness.realization.headCode.comp decodeCoinHeadCode
   refine ⟨witness.realization.initCode.size + outputCode.size, fun n ↦ ?_⟩
+  apply mem_realizableLE.mpr
   refine ⟨(witness.realization.machine n).State, witness.realization.state.enc n,
     (witness.realization.machine n).init,
     decodeCoinHead ∘ (witness.realization.machine n).head,

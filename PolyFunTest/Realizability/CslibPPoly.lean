@@ -52,15 +52,15 @@ noncomputable def boolRealization : CslibPPoly.Realization boolBoundary where
   machine := boolMachine
   rounds := 0
   state := BitEncFam.bool.toStrEncFam
-  initCode := .ofFintype BitEncFam.bool.enc_injective (fun _ ↦ id)
+  initCode := .ofFintype (eb := BitEncFam.bool.toStrEncFam.enc)
+    BitEncFam.bool.enc_injective (fun _ ↦ id)
     (.C 2) (fun _ ↦ by simp) BitEncFam.bool.widBound
     (fun n value ↦ (BitEncFam.bool.len_eq n value).le.trans (BitEncFam.bool.wid_le n))
-    BitEncFam.bool.widBound
-    (fun n value ↦ (BitEncFam.bool.len_eq n value).le.trans (BitEncFam.bool.wid_le n))
-  headCode := .ofFintype BitEncFam.bool.enc_injective
+    BitEncFam.bool.toStrEncFam.bound BitEncFam.bool.toStrEncFam.len_le
+  headCode := .ofFintype BitEncFam.bool.toStrEncFam.enc_injective
     (fun _ value ↦ Sum.inl value)
-    (.C 2) (fun _ ↦ by simp) BitEncFam.bool.widBound
-    (fun n value ↦ (BitEncFam.bool.len_eq n value).le.trans (BitEncFam.bool.wid_le n))
+    (.C 2) (fun _ ↦ by simp) BitEncFam.bool.toStrEncFam.bound
+    BitEncFam.bool.toStrEncFam.len_le
     boolBoundary.head.bound (fun n value ↦ boolBoundary.head.len_le n _)
   updateCode := (EncPolyTimeFam.const
       (BitEncFam.bool.toStrEncFam.pairVar boolBoundary.index).enc
@@ -71,12 +71,12 @@ noncomputable def boolRealization : CslibPPoly.Realization boolBoundary where
 
 noncomputable def boolWitness : Witness boolBoundary (fun _ value ↦ FreeM.pure value) where
   realization := boolRealization
-  implements _ value := by
+  implements := Realization.Implements.intro fun _ value ↦ by
     simp [boolRealization, boolMachine]
   progress _ value := programProgress_pure value
 
 example : IsPPolyBy boolBoundary (fun _ value ↦ FreeM.pure value) :=
-  ⟨boolWitness⟩
+  IsPPolyBy.intro boolWitness
 
 example (n : ℕ) (value : Bool) :
     ((boolRealization.initCode.wit n).time).eval
@@ -182,14 +182,14 @@ def boolQueryProgram (_n : ℕ) (position : Bool) : FreeM BoolInteraction Bool :
 
 noncomputable def boolStepWitness : Witness boolStepBoundary boolQueryProgram where
   realization := boolStepRealization
-  implements n position := by
+  implements := Realization.Implements.intro fun n position ↦ by
     simp only [boolStepRealization, Polynomial.eval_C]
     cases position <;> rfl
   progress _ _ := by
     rw [boolQueryProgram, programProgress_liftBind]
     exact ⟨⟨false⟩, fun answer ↦ programProgress_pure answer⟩
 
-example : IsPPolyBy boolStepBoundary boolQueryProgram := ⟨boolStepWitness⟩
+example : IsPPolyBy boolStepBoundary boolQueryProgram := IsPPolyBy.intro boolStepWitness
 
 example (position answer : Bool) :
     (boolStepMachine 0).update? ((position, none), ⟨position, answer⟩) =
@@ -245,8 +245,13 @@ noncomputable def boolNegCode :
     (fun n value ↦ (BitEncFam.bool.len_eq n (!value)).le.trans (BitEncFam.bool.wid_le n))
 
 example : IsPPolyBy boolStepBoundary (fun n value ↦ boolQueryProgram n (!value)) :=
-  IsPPolyBy.precomp ⟨boolStepWitness⟩ (fun _ value ↦ !value)
-    BitEncFam.bool boolNegCode
+  by
+    have code : EncPolyTimeFam boolStepBoundary.input.enc boolStepBoundary.input.enc
+        (fun _ value ↦ !value) := by
+      simpa [boolStepBoundary] using boolNegCode
+    simpa only [Boundary.withInput_self] using
+      IsPPolyBy.precomp (IsPPolyBy.intro boolStepWitness) (fun _ value ↦ !value)
+        boolStepBoundary.input code
 
 noncomputable def boolNegHeadCode :
     EncPolyTimeFam boolStepBoundary.head.enc boolStepBoundary.head.enc
@@ -259,8 +264,14 @@ noncomputable def boolNegHeadCode :
 
 example : IsPPolyBy boolStepBoundary (fun n value ↦
     FreeM.map (!·) (boolQueryProgram n value)) :=
-  IsPPolyBy.mapResult ⟨boolStepWitness⟩ (fun _ value ↦ !value)
-    BitEncFam.bool boolNegHeadCode
+  by
+    have code : EncPolyTimeFam boolStepBoundary.head.enc
+        (boolStepBoundary.withOutput boolStepBoundary.output).head.enc
+        (fun _ ↦ Sum.map (!·) id) := by
+      simpa only [Boundary.withOutput_self] using boolNegHeadCode
+    simpa only [Boundary.withOutput_self] using
+      IsPPolyBy.mapResult (IsPPolyBy.intro boolStepWitness) (fun _ value ↦ !value)
+        boolStepBoundary.output code
 
 /-! A positive round budget cannot disguise a stuck query with no answer. -/
 
@@ -276,8 +287,10 @@ def emptyQueryProgram (_n : ℕ) (_input : PUnit) : FreeM EmptyInteraction Bool 
 
 example (boundary : Boundary EmptyInteractionFam (fun _ ↦ PUnit) BoolFam) :
     ¬ IsPPolyBy boundary emptyQueryProgram := by
-  rintro ⟨witness⟩
+  intro certificate
+  obtain ⟨witness⟩ := certificate.toNonempty
   have progress := witness.progress 0 PUnit.unit
+  rw [emptyQueryProgram, programProgress_liftBind] at progress
   exact nomatch progress.1
 
 end PFunctor.CslibPPolyTest
