@@ -205,7 +205,7 @@ theorem run_setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
           obtain ⟨position, next⟩ := query
           rw [M.unroll_query_zero state position next hview,
             (M.mapResult f).unroll_query_zero state position next (by simp [hview])]
-          simpa only [Option.map_none] using
+          simpa only [Option.map_none, FreeM.pure_eq_pure] using
             (FreeM.map_pure (P := p) (Option.map f) none).symm
   | succ k ih =>
       cases hview : M.view state with

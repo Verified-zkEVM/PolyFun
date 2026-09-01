@@ -39,9 +39,11 @@ variable {P : PFunctor.{uA, uB}} {α β γ : Type v}
 
 /-! ## Public constructor equations -/
 
-/-- Mapping a value through a leaf is visible through an ordinary module import. -/
+/-- Mapping a value through a leaf is visible through an ordinary module import,
+with the leaf written using the public `Pure` operation. -/
+@[simp]
 theorem map_pure {X : Type uβ} {Y : Type uγ} (f : X → Y) (x : X) :
-    FreeM.map (P := P) f (FreeM.pure x) = FreeM.pure (f x) :=
+    FreeM.map (P := P) f (pure x : FreeM P X) = (pure (f x) : FreeM P Y) :=
   rfl
 
 /-- Mapping a value through a query preserves its position and maps every
@@ -50,6 +52,14 @@ theorem map_liftBind {X : Type uβ} {Y : Type uγ} (f : X → Y)
     (a : P.A) (rest : P.B a → FreeM P X) :
     FreeM.map f (FreeM.liftBind a rest) =
       FreeM.liftBind a (fun direction ↦ FreeM.map f (rest direction)) :=
+  rfl
+
+/-- Mapping through a query written as `lift` followed by `bind` maps every
+continuation without requiring clients to expose `liftBind`. -/
+theorem map_lift_bind {X : Type uβ} {Y : Type uγ} (f : X → Y)
+    (a : P.A) (rest : P.B a → FreeM P X) :
+    FreeM.map f ((FreeM.lift a).bind rest) =
+      (FreeM.lift a).bind (fun direction ↦ FreeM.map f (rest direction)) :=
   rfl
 
 /-! ## Fixed-point presentation -/
@@ -171,6 +181,13 @@ theorem bind_map_right {δ : Type uδ} {β : Type uβ} {γ : Type uγ}
       FreeM.map f (FreeM.bind mx g) := by
   simpa only [FreeM.bind_pure_comp] using
     (FreeM.bind_assoc mx g (pure ∘ f)).symm
+
+/-- Mapping after a free-monad bind distributes through its continuation. -/
+theorem map_bind {δ : Type uδ} {β : Type uβ} {γ : Type uγ}
+    (f : β → γ) (mx : FreeM P δ) (g : δ → FreeM P β) :
+    FreeM.map f (FreeM.bind mx g) =
+      FreeM.bind mx (fun x ↦ FreeM.map f (g x)) :=
+  (bind_map_right mx g f).symm
 
 section mapLens
 

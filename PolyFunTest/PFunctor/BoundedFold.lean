@@ -9,10 +9,10 @@ module
 public import PolyFun.PFunctor.Dynamical.DynComputation.BoundedFold
 
 /-!
-# Direct canaries for bounded interaction folds
+# Direct canaries for bounded realizations of free-monad folds
 
 The examples distinguish the generated two-query syntax and verify that the
-generic countdown-state machine supplies its public bounded-implementation proof.
+countdown-state machine realizes the corresponding `FreeM.foldr` program.
 -/
 
 @[expose] public section
@@ -22,23 +22,27 @@ namespace PFunctor.DynSystem.DynComputation
 /-- A Boolean-position, Boolean-answer test interface. -/
 abbrev boolInterface : PFunctor := PFunctor.mk Bool fun _ ↦ Bool
 
-example : boundedFoldProgram (p := boolInterface) false
-    (fun accumulator _ answer ↦ accumulator != answer) id 2 false =
-    FreeM.liftBind false fun first =>
-      FreeM.liftBind false fun second =>
-        FreeM.pure ((false != first) != second) := rfl
+example : FreeM.foldr (P := boolInterface) false
+    (fun accumulator _round answer ↦ accumulator != answer) id 2 false =
+    (FreeM.lift false).bind fun first =>
+      (FreeM.lift false).bind fun second =>
+        pure ((false != first) != second) := by
+  simp
 
-example : boundedFoldProgram (p := boolInterface) false
+example : FreeM.foldr (P := boolInterface) false
     (fun visited round _answer ↦ visited ++ [round]) id 2 [] =
-    FreeM.liftBind false fun _first ↦
-      FreeM.liftBind false fun _second ↦
-        FreeM.pure [1, 0] := rfl
+    (FreeM.lift false).bind fun _first ↦
+      (FreeM.lift false).bind fun _second ↦
+        pure [1, 0] := by
+  simp
 
 example :
     (boundedFold (p := boolInterface) false
       (fun accumulator _ answer ↦ accumulator != answer) id 2).ImplementsWithin
-      (fun initial => boundedFoldProgram false
-        (fun accumulator _ answer ↦ accumulator != answer) id 2 initial) 2 :=
+      (fun initial =>
+        FreeM.foldr false
+          (fun accumulator _round answer ↦ accumulator != answer)
+          id 2 initial) 2 :=
   implementsWithin_boundedFold (p := boolInterface) false
     (fun accumulator _ answer ↦ accumulator != answer) id 2
 
@@ -63,8 +67,9 @@ type makes later rounds unreachable. -/
 abbrev emptyInterface : PFunctor := PFunctor.mk PUnit fun _ ↦ PEmpty
 
 example :
-    (boundedFoldProgram (p := emptyInterface) PUnit.unit
-      (fun _accumulator _ answer ↦ answer.elim) id 2 false).IsTotalRollBound 1 := by
+    (FreeM.foldr (P := emptyInterface) PUnit.unit
+      (fun _accumulator _round answer ↦ answer.elim) id 2 false).IsTotalRollBound 1 := by
+  rw [FreeM.foldr_succ]
   exact ⟨Nat.succ_pos 0, fun answer ↦ nomatch answer⟩
 
 /-! Universe separation canary: positions/results remain small while answers
@@ -82,8 +87,8 @@ def largeReadout (state : ULift.{1, 0} Bool) : Bool := state.down
 example :
     (boundedFold (p := largeAnswerInterface) false
       largeStep largeReadout 1).ImplementsWithin
-      (fun initial ↦ boundedFoldProgram false
-        largeStep largeReadout 1 initial) 1 :=
+      (fun initial ↦
+        FreeM.foldr false largeStep largeReadout 1 initial) 1 :=
   implementsWithin_boundedFold (p := largeAnswerInterface) false
     largeStep largeReadout 1
 

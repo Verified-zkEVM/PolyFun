@@ -7,15 +7,16 @@ Authors: Devon Tuma, Quang Dao
 module
 
 public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
+public import PolyFun.PFunctor.Free.Fold
 
 /-!
-# Bounded folds over a fixed interaction position
+# Bounded realizations of finite free-monad folds
 
 Many finite interactive programs repeatedly ask the same typed query, fold each
-answer into an accumulator, and return a readout. This file packages that syntax,
-its countdown-state `DynComputation`, and a bounded-implementation theorem.
-It is generic in the polynomial functor and contains no oracle, probability, or
-complexity policy.
+answer into an accumulator, and return a final readout. `FreeM.foldr` packages
+that syntax; this file supplies the corresponding countdown-state
+`DynComputation` and its bounded-implementation theorem. It is generic in the
+polynomial functor and contains no oracle, probability, or complexity policy.
 -/
 
 @[expose] public section
@@ -23,48 +24,33 @@ complexity policy.
 universe uA uB uState uOutput
 
 namespace PFunctor
-namespace DynSystem.DynComputation
 
 variable {p : PFunctor.{uA, uB}} {state : Type uState} {output : Type uOutput}
 
-/-- Ask `position` along every available branch for up to `rounds` rounds,
-folding each answer into `accumulator`.
-The supplied index counts down: the first answer receives `rounds - 1` and the
-last answer receives `0`. -/
-def boundedFoldProgram (position : p.A)
-    (step : state → ℕ → p.B position → state) (readout : state → output) :
-    ℕ → state → FreeM p output
-  | 0, accumulator => FreeM.pure (readout accumulator)
-  | rounds + 1, accumulator =>
-      FreeM.liftBind position fun answer =>
-        boundedFoldProgram position step readout rounds (step accumulator rounds answer)
+namespace FreeM
 
-@[simp] theorem boundedFoldProgram_zero (position : p.A)
-    (step : state → ℕ → p.B position → state) (readout : state → output)
-    (accumulator : state) :
-    boundedFoldProgram position step readout 0 accumulator =
-      FreeM.pure (readout accumulator) := rfl
-
-@[simp] theorem boundedFoldProgram_succ (position : p.A)
-    (step : state → ℕ → p.B position → state) (readout : state → output)
-    (rounds : ℕ) (accumulator : state) :
-    boundedFoldProgram position step readout (rounds + 1) accumulator =
-      FreeM.liftBind position fun answer =>
-        boundedFoldProgram position step readout rounds (step accumulator rounds answer) := rfl
-
-/-- The construction parameter is a branchwise query upper bound. It need not
-be minimal when a reachable query has no possible answer. -/
-theorem isTotalRollBound_boundedFoldProgram (position : p.A)
-    (step : state → ℕ → p.B position → state) (readout : state → output)
-    (rounds : ℕ) (accumulator : state) :
-    (boundedFoldProgram position step readout rounds accumulator).IsTotalRollBound rounds := by
+/-- A right fold whose every step asks one fixed query has `rounds` as a
+branchwise query upper bound. The bound need not be minimal when a reachable
+query has no possible answer. -/
+theorem isTotalRollBound_foldr_lift (position : p.A)
+    (step : state → ℕ → p.B position → state)
+    (readout : state → output) (rounds : ℕ) (accumulator : state) :
+    (FreeM.foldr position step readout rounds accumulator).IsTotalRollBound rounds := by
   induction rounds generalizing accumulator with
-  | zero => trivial
+  | zero =>
+      rw [FreeM.foldr_zero]
+      exact FreeM.isTotalRollBound_pure (readout accumulator) 0
   | succ rounds induction =>
-    exact ⟨Nat.succ_pos rounds, fun answer ↦ induction (step accumulator rounds answer)⟩
+      rw [FreeM.foldr_succ]
+      simp only [← FreeM.liftBind_eq]
+      exact ⟨Nat.succ_pos rounds, fun answer ↦ induction (step accumulator rounds answer)⟩
 
-/-- A hidden-state machine for `boundedFoldProgram`. Its state is the remaining
-round counter paired with the accumulator. -/
+end FreeM
+
+namespace DynSystem.DynComputation
+
+/-- A hidden-state machine for a fixed-query `FreeM.foldr`. Its state is the
+remaining round counter paired with the accumulator. -/
 @[reducible] def boundedFold (position : p.A)
     (step : state → ℕ → p.B position → state) (readout : state → output)
     (rounds : ℕ) : DynComputation p state output :=
@@ -98,8 +84,9 @@ theorem view_boundedFold_succ (position : p.A)
           step current.2 ((current.1 : ℕ) - 1) answer)⟩ := by
   rw [view_ofStep, dif_neg notDone]
 
-/-- Unrolling from a state with `remaining` rounds gives the corresponding fold
-program whenever the supplied fuel is sufficient. -/
+/-- Unrolling from a state with `remaining` rounds gives the corresponding
+right fold followed by the final readout whenever the supplied fuel is
+sufficient. -/
 theorem unroll_boundedFold (position : p.A)
     (step : state → ℕ → p.B position → state) (readout : state → output)
     (rounds : ℕ) :
@@ -107,18 +94,19 @@ theorem unroll_boundedFold (position : p.A)
       remaining ≤ fuel →
       (boundedFold position step readout rounds).unroll fuel
           (⟨remaining, Nat.lt_succ_of_le withinRounds⟩, accumulator) =
-        FreeM.map some
-          (boundedFoldProgram position step readout remaining accumulator)
+        FreeM.foldr position step (some ∘ readout) remaining accumulator
   | 0, fuel, _, accumulator, _ => by
       rw [(boundedFold position step readout rounds).unroll_return fuel _
         (readout accumulator)
         (view_boundedFold_zero position step readout rounds rfl)]
-      rfl
+      simp only [FreeM.foldr_zero, Function.comp_apply, FreeM.pure_eq_pure]
   | remaining + 1, 0, _, _, enoughFuel => absurd enoughFuel (by omega)
   | remaining + 1, fuel + 1, withinRounds, accumulator, enoughFuel => by
       rw [(boundedFold position step readout rounds).unroll_query_succ fuel _
         position _ (view_boundedFold_succ position step readout rounds
-          (current := ⟨_, accumulator⟩) (by simp))]
+          (current := ⟨_, accumulator⟩) (by simp)),
+        FreeM.foldr_succ]
+      simp only [← FreeM.liftBind_eq]
       exact congrArg (FreeM.liftBind position)
         (funext fun answer =>
           unroll_boundedFold position step readout rounds remaining fuel
@@ -130,8 +118,10 @@ theorem implementsWithin_boundedFold (position : p.A)
     (step : state → ℕ → p.B position → state) (readout : state → output)
     (rounds : ℕ) :
     (boundedFold position step readout rounds).ImplementsWithin
-      (fun initial ↦ boundedFoldProgram position step readout rounds initial) rounds :=
-  fun initial => unroll_boundedFold position step readout rounds
+      (fun initial ↦ FreeM.foldr position step readout rounds initial) rounds := by
+  intro initial
+  rw [FreeM.map_foldr]
+  exact unroll_boundedFold position step readout rounds
     rounds rounds le_rfl initial le_rfl
 
 end DynSystem.DynComputation
