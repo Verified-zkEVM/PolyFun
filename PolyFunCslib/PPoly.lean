@@ -24,7 +24,7 @@ non-uniform. Boundary encodings remain pinned parameters and are never chosen
 existentially by the predicate.
 -/
 
-@[expose] public section
+public section
 
 universe u
 
@@ -69,6 +69,22 @@ noncomputable def toGeneric (bd : Boundary p input output) (n : ℕ) :
   pos := bd.position.enc n
   idx := bd.index.enc n
 
+@[simp] theorem toGeneric_input (bd : Boundary p input output) (n : ℕ) :
+    (bd.toGeneric n).input = bd.input.enc n := by
+  simp [toGeneric]
+
+@[simp] theorem toGeneric_out (bd : Boundary p input output) (n : ℕ) :
+    (bd.toGeneric n).out = bd.output.enc n := by
+  simp [toGeneric]
+
+@[simp] theorem toGeneric_pos (bd : Boundary p input output) (n : ℕ) :
+    (bd.toGeneric n).pos = bd.position.enc n := by
+  simp [toGeneric]
+
+@[simp] theorem toGeneric_idx (bd : Boundary p input output) (n : ℕ) :
+    (bd.toGeneric n).idx = bd.index.enc n := by
+  simp [toGeneric]
+
 /-- Replace the input representation. -/
 def withInput (bd : Boundary p input output) (encoding : BitEncFam nextOutput) :
     Boundary p nextOutput output :=
@@ -80,16 +96,67 @@ def withOutput (bd : Boundary p input output) (encoding : BitEncFam nextOutput) 
   ⟨bd.input, encoding, bd.position, bd.index⟩
 
 @[simp] theorem withInput_input (bd : Boundary p input output)
-    (encoding : BitEncFam nextOutput) : (bd.withInput encoding).input = encoding := rfl
+    (encoding : BitEncFam nextOutput) : (bd.withInput encoding).input = encoding := by
+  simp [withInput]
 
 @[simp] theorem withOutput_output (bd : Boundary p input output)
-    (encoding : BitEncFam nextOutput) : (bd.withOutput encoding).output = encoding := rfl
+    (encoding : BitEncFam nextOutput) : (bd.withOutput encoding).output = encoding := by
+  simp [withOutput]
 
 @[simp] theorem withInput_head (bd : Boundary p input output)
-    (encoding : BitEncFam nextOutput) : (bd.withInput encoding).head = bd.head := rfl
+    (encoding : BitEncFam nextOutput) : (bd.withInput encoding).head = bd.head := by
+  simp [head, withInput]
 
 @[simp] theorem withOutput_input (bd : Boundary p input output)
-    (encoding : BitEncFam nextOutput) : (bd.withOutput encoding).input = bd.input := rfl
+    (encoding : BitEncFam nextOutput) : (bd.withOutput encoding).input = bd.input := by
+  simp [withOutput]
+
+@[simp] theorem withInput_output (bd : Boundary p input output)
+    (encoding : BitEncFam nextOutput) : (bd.withInput encoding).output = bd.output := by
+  simp [withInput]
+
+@[simp] theorem withInput_position (bd : Boundary p input output)
+    (encoding : BitEncFam nextOutput) : (bd.withInput encoding).position = bd.position := by
+  simp [withInput]
+
+@[simp] theorem withInput_index (bd : Boundary p input output)
+    (encoding : BitEncFam nextOutput) : (bd.withInput encoding).index = bd.index := by
+  simp [withInput]
+
+@[simp] theorem withOutput_position (bd : Boundary p input output)
+    (encoding : BitEncFam nextOutput) : (bd.withOutput encoding).position = bd.position := by
+  simp [withOutput]
+
+@[simp] theorem withOutput_index (bd : Boundary p input output)
+    (encoding : BitEncFam nextOutput) : (bd.withOutput encoding).index = bd.index := by
+  simp [withOutput]
+
+@[simp] theorem withInput_self (bd : Boundary p input output) :
+    bd.withInput bd.input = bd := by
+  cases bd
+  simp [withInput]
+
+@[simp] theorem withOutput_self (bd : Boundary p input output) :
+    bd.withOutput bd.output = bd := by
+  cases bd
+  simp [withOutput]
+
+/-- The generic boundary's head representation is the parameterized head encoding. -/
+@[simp] theorem toGeneric_head (bd : Boundary p input output) (n : ℕ)
+    (value : output n ⊕ (p n).A) :
+    (bd.toGeneric n).head value = bd.head.enc n value := by
+  cases value <;>
+    simp [toGeneric, DynSystem.DynComputation.Boundary.head,
+      CslibBackend.encodingStepClass, head]
+
+/-- The generic boundary's transition-domain representation agrees with
+`StrEncFam.pairVar`. -/
+@[simp] theorem toGeneric_stateIdx {state : ℕ → Type u} (bd : Boundary p input output)
+    (encoding : StrEncFam state) (n : ℕ) (step : state n × (p n).Idx) :
+    (bd.toGeneric n).stateIdx (encoding.enc n) step =
+      (encoding.pairVar bd.index).enc n step := by
+  simp [toGeneric, DynSystem.DynComputation.Boundary.stateIdx,
+    CslibBackend.encodingStepClass]
 
 end Boundary
 
@@ -152,18 +219,69 @@ variable {bd : Boundary p input output}
 
 /-- One member of the family as an ordinary generic quantitative PolyFun
 realization. This is the canonical bridge through which trace, progress,
-traffic, peak-size, and closure APIs are consumed. -/
-noncomputable def toQuantitative (realization : Realization bd) (n : ℕ) :
+traffic, peak-size, and closure APIs are consumed.
+
+Its body is exposed because the generic trace API is dependently indexed by
+the realization's machine-state type: the bridge promises that projection is
+definitionally the original family member. Named projection and cost laws
+below provide the ordinary proof API. -/
+@[expose] noncomputable def toQuantitative (realization : Realization bd) (n : ℕ) :
     DynSystem.DynComputation.QuantitativeRealization CslibBackend.quantitative
       (bd.toGeneric n) where
   machine := realization.machine n
   state := realization.state.enc n
-  initCode := realization.initCode.wit n
-  headCode := realization.headCode.wit n
+  initCode := (realization.initCode.wit n).recode id
+    (realization.machine n).init (fun value ↦ by simp) (fun _ ↦ rfl)
+  headCode := (realization.headCode.wit n).recode id
+    (realization.machine n).head (fun _ ↦ rfl) (fun state ↦ by simp)
   updateCode := (realization.updateCode.wit n).recode id
-    (realization.machine n).update? (fun _ ↦ rfl) (fun step ↦ by
+    (realization.machine n).update? (fun step ↦ by simp) (fun step ↦ by
       change _ = realization.state.option.enc n ((realization.machine n).update? step)
-      cases value : (realization.machine n).update? step <;> rfl)
+      cases value : (realization.machine n).update? step <;>
+        simp [CslibBackend.encodingStepClass])
+
+@[simp] theorem toQuantitative_machine (realization : Realization bd) (n : ℕ) :
+    (realization.toQuantitative n).machine = realization.machine n := rfl
+
+@[simp] theorem toQuantitative_state (realization : Realization bd) (n : ℕ) :
+    (realization.toQuantitative n).state = realization.state.enc n := rfl
+
+/-- The generic bridge charges the original initialization code's time envelope. -/
+theorem toQuantitative_initCost (realization : Realization bd) (n : ℕ)
+    (value : input n) :
+    CslibBackend.quantitative.cost (realization.toQuantitative n).initCode value =
+      ((realization.initCode.wit n).time).eval (bd.input.enc n value).length := by
+  simp [toQuantitative]
+
+/-- The generic bridge charges the original observation code's time envelope. -/
+theorem toQuantitative_headCost (realization : Realization bd) (n : ℕ)
+    (state : (realization.machine n).State) :
+    CslibBackend.quantitative.cost (realization.toQuantitative n).headCode state =
+      ((realization.headCode.wit n).time).eval
+        (realization.state.enc n state).length := by
+  simp [toQuantitative]
+
+/-- The generic bridge charges the original transition code's time envelope. -/
+theorem toQuantitative_updateCost (realization : Realization bd) (n : ℕ)
+    (step : (realization.machine n).State × (p n).Idx) :
+    CslibBackend.quantitative.cost (realization.toQuantitative n).updateCode step =
+      ((realization.updateCode.wit n).time).eval
+        ((realization.state.pairVar bd.index).enc n step).length := by
+  simp [toQuantitative]
+
+/-- The work projection of generic execution cost uses the original three code
+families carried by the parameterized realization. -/
+@[simp] theorem toQuantitative_executionCost_work (realization : Realization bd)
+    (n : ℕ) (value : input n) {finish : (realization.machine n).State}
+    (trace : DynSystem.DynComputation.QuantitativeRealization.ExecutionTrace
+      (realization.toQuantitative n) ((realization.machine n).init value) finish) :
+    ((realization.toQuantitative n).executionCost value trace).work =
+      ((realization.initCode.wit n).time).eval (bd.input.enc n value).length +
+        trace.cost.work +
+          ((realization.headCode.wit n).time).eval
+            (realization.state.enc n finish).length := by
+  simp [DynSystem.DynComputation.QuantitativeRealization.executionCost,
+    toQuantitative]
 
 /-- Initialization time after substituting the canonical input-width bound. -/
 noncomputable def initTime (realization : Realization bd) : Polynomial ℕ :=
@@ -262,13 +380,12 @@ theorem certifiedTimeCharge_le (realization : Realization bd)
       trace.length * realization.updateTime.eval n := by
   apply CslibBackend.traceWork_add_finalHead_le
   · intro state
-    change ((realization.headCode.wit n).time).eval
-      (realization.state.enc n state).length ≤ realization.headTime.eval n
+    change (realization.machine n).State at state
+    rw [realization.toQuantitative_headCost]
     exact realization.headTime_le n state
   · intro step
-    change ((realization.updateCode.wit n).time).eval
-      ((realization.state.pairVar bd.index).enc n step).length ≤
-        realization.updateTime.eval n
+    change (realization.machine n).State × (p n).Idx at step
+    rw [realization.toQuantitative_updateCost]
     exact realization.updateTime_le n step
 
 /-- The work component of PolyFun's generic `executionCost` is bounded by the
@@ -282,14 +399,11 @@ theorem executionWork_le_totalTime (realization : Realization bd) (value : input
       realization.totalTime.eval n := by
   have initBound := realization.initTime_le n value
   have traceBound := realization.certifiedTimeCharge_le trace
-  change trace.cost.work +
-        ((realization.headCode.wit n).time).eval
-          (realization.state.enc n finish).length ≤
-      (trace.length + 1) * realization.headTime.eval n +
-        trace.length * realization.updateTime.eval n at traceBound
+  rw [realization.toQuantitative_headCost] at traceBound
   have headFactor : trace.length + 1 ≤ realization.rounds.eval n + 1 := by omega
   have headBound := Nat.mul_le_mul_right (realization.headTime.eval n) headFactor
   have updateBound := Nat.mul_le_mul_right (realization.updateTime.eval n) roundBound
+  rw [realization.toQuantitative_executionCost_work]
   change ((realization.initCode.wit n).time).eval (bd.input.enc n value).length +
       trace.cost.work +
         ((realization.headCode.wit n).time).eval
@@ -342,6 +456,34 @@ def Realization.Implements (realization : Realization bd)
     (program : (n : ℕ) → input n → FreeM (p n) (output n)) : Prop :=
   ∀ n, (realization.machine n).ImplementsWithin (program n) (realization.rounds.eval n)
 
+/-- Full characterization of family implementation at the declared round bound. -/
+theorem Realization.implements_iff (realization : Realization bd)
+    (program : (n : ℕ) → input n → FreeM (p n) (output n)) :
+    realization.Implements program ↔
+      ∀ n, (realization.machine n).ImplementsWithin
+        (program n) (realization.rounds.eval n) := by
+  simp [Realization.Implements]
+
+namespace Realization.Implements
+
+/-- Package pointwise implementations as a family implementation. -/
+theorem intro {realization : Realization bd}
+    {program : (n : ℕ) → input n → FreeM (p n) (output n)}
+    (implementation : ∀ n, (realization.machine n).ImplementsWithin
+      (program n) (realization.rounds.eval n)) :
+    realization.Implements program :=
+  (realization.implements_iff program).mpr implementation
+
+/-- Specialize a family implementation to one parameter. -/
+theorem apply {realization : Realization bd}
+    {program : (n : ℕ) → input n → FreeM (p n) (output n)}
+    (implementation : realization.Implements program) (n : ℕ) :
+    (realization.machine n).ImplementsWithin
+      (program n) (realization.rounds.eval n) :=
+  (realization.implements_iff program).mp implementation n
+
+end Realization.Implements
+
 /-- A non-uniform P/poly witness for a parameterized free-program family. -/
 structure Witness (bd : Boundary p input output)
     (program : (n : ℕ) → input n → FreeM (p n) (output n)) where
@@ -367,14 +509,14 @@ the witness round bound. -/
 theorem resolvesIn (witness : Witness bd program) (n : ℕ) (value : input n) :
     (witness.realization.machine n).ResolvesIn
       (witness.realization.rounds.eval n) ((witness.realization.machine n).init value) :=
-  (witness.implements n).resolvesIn value
+  (witness.implements.apply n).resolvesIn value
 
 /-- The implemented syntax itself has the polynomial total interaction bound. -/
 theorem isTotalRollBound (witness : Witness bd program) (n : ℕ) (value : input n) :
     (program n value).IsTotalRollBound (witness.realization.rounds.eval n) :=
   ((implementsWithin_iff_implements_and_bound
-    (witness.realization.machine n) (program n)
-      (witness.realization.rounds.eval n)).mp (witness.implements n)).2 value
+      (witness.realization.machine n) (program n)
+      (witness.realization.rounds.eval n)).mp (witness.implements.apply n)).2 value
 
 /-- A realization of an immediately returning program exposes that return at
 its initial state. This is the bridge from PolyFun's coinductive semantics to
@@ -387,7 +529,7 @@ theorem head_init_eq_of_pure {function : (n : ℕ) → input n → output n}
   have implementation :=
     ((implementsWithin_iff_implements_and_bound
       (witness.realization.machine n) (fun value ↦ FreeM.pure (function n value))
-        (witness.realization.rounds.eval n)).mp (witness.implements n)).1 value
+        (witness.realization.rounds.eval n)).mp (witness.implements.apply n)).1 value
   have firstStep := congrArg Resumption.dest implementation
   rw [DynSystem.DynComputation.dest_denote] at firstStep
   change Sum.map (fun result ↦ result)
@@ -413,18 +555,26 @@ namespace IsPPolyBy
 variable {bd : Boundary p input output}
   {program program' : (n : ℕ) → input n → FreeM (p n) (output n)}
 
+/-- Construct a P/poly certificate from its explicit witness. -/
+theorem intro (witness : Witness bd program) : IsPPolyBy bd program := by
+  simpa [CslibPPoly.IsPPolyBy] using (show Nonempty (Witness bd program) from ⟨witness⟩)
+
+/-- Recover the nonempty witness package carried by a P/poly certificate. -/
+theorem toNonempty (certificate : IsPPolyBy bd program) : Nonempty (Witness bd program) := by
+  simpa [CslibPPoly.IsPPolyBy] using certificate
+
 /-- Transport a P/poly certificate along pointwise program equality. -/
 theorem congr (equality : ∀ n value, program n value = program' n value)
     (certificate : IsPPolyBy bd program) : IsPPolyBy bd program' := by
-  obtain ⟨witness⟩ := certificate
-  exact ⟨{
+  obtain ⟨witness⟩ := certificate.toNonempty
+  exact intro {
     realization := witness.realization
-    implements := fun n value ↦ by
+    implements := Realization.Implements.intro fun n value ↦ by
       rw [← equality n value]
-      exact witness.implements n value
+      exact witness.implements.apply n value
     progress := fun n value ↦ by
       rw [← equality n value]
-      exact witness.progress n value }⟩
+      exact witness.progress n value }
 
 /-- P/poly is closed under input precomposition when the input map carries a
 cslib family certificate. -/
@@ -432,17 +582,18 @@ theorem precomp {nextInput : ℕ → Type u} (certificate : IsPPolyBy bd program
     (function : (n : ℕ) → nextInput n → input n) (encoding : BitEncFam nextInput)
     (code : EncPolyTimeFam encoding.enc bd.input.enc function) :
     IsPPolyBy (bd.withInput encoding) fun n value ↦ program n (function n value) := by
-  obtain ⟨witness⟩ := certificate
-  refine ⟨{
+  obtain ⟨witness⟩ := certificate.toNonempty
+  apply intro
+  refine {
     realization := witness.realization.precomp function encoding code
-    implements := fun n value ↦ ?_
-    progress := fun n value ↦ witness.progress n (function n value) }⟩
+    implements := Realization.Implements.intro fun n value ↦ ?_
+    progress := fun n value ↦ witness.progress n (function n value) }
   change ((witness.realization.machine n).setInit fun value ↦
       (witness.realization.machine n).init (function n value)).unroll
         (witness.realization.rounds.eval n)
         ((witness.realization.machine n).init (function n value)) = _
   rw [unroll_setInit]
-  exact witness.implements n (function n value)
+  exact witness.implements.apply n (function n value)
 
 /-- P/poly is closed under result mapping when the induced head map carries a
 cslib family certificate. -/
@@ -452,13 +603,14 @@ theorem mapResult {nextOutput : ℕ → Type u} (certificate : IsPPolyBy bd prog
       fun n ↦ Sum.map (function n) id) :
     IsPPolyBy (bd.withOutput encoding) fun n value ↦
       FreeM.map (function n) (program n value) := by
-  obtain ⟨witness⟩ := certificate
-  refine ⟨{
+  obtain ⟨witness⟩ := certificate.toNonempty
+  apply intro
+  refine {
     realization := witness.realization.mapResult function encoding headMapCode
-    implements := fun n value ↦ ?_
+    implements := Realization.Implements.intro fun n value ↦ ?_
     progress := fun n value ↦
-      (witness.progress n value).map (function n) }⟩
-  have implementation := witness.implements n value
+      (witness.progress n value).map (function n) }
+  have implementation := witness.implements.apply n value
   change (witness.realization.machine n).unroll
       (witness.realization.rounds.eval n) ((witness.realization.machine n).init value) = _
     at implementation

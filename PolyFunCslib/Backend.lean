@@ -22,7 +22,7 @@ purpose is to carry concrete encodings into the generic boundary and trace API.
 The quantitative realizer remains the load-bearing executable evidence.
 -/
 
-@[expose] public section
+public section
 
 universe u
 
@@ -31,27 +31,42 @@ namespace PFunctor.CslibBackend
 open ToCslib.Computability
 
 /-- Raw Boolean-string representations with unconstrained qualitative
-admissibility. Concrete quantitative morphisms still require cslib code. -/
-@[reducible] def encodingStepClass : StepClass.{u, u} where
+admissibility. Concrete quantitative morphisms still require cslib code.
+
+This definition is reducibly exposed so that `encodingStepClass.Str type`
+elaborates as the function type `type → List Bool` across module boundaries. -/
+@[expose, reducible] def encodingStepClass : StepClass.{u, u} where
   Str type := type → List Bool
   Hom _ _ _ := True
   id_mem _ := trivial
   comp_mem _ _ := trivial
 
-@[instance_reducible] instance : encodingStepClass.HasProd where
+@[instance_reducible] instance instHasProd : encodingStepClass.HasProd where
   prod left right value := left value.1 ++ right value.2
   fst_mem _ _ := trivial
   snd_mem _ _ := trivial
   pair_mem _ _ := trivial
 
-@[instance_reducible] instance : encodingStepClass.HasSum where
+@[simp] theorem prod_apply {A B : Type u} (left : A → List Bool)
+    (right : B → List Bool) (value : A × B) :
+    instHasProd.prod left right value = left value.1 ++ right value.2 := rfl
+
+@[instance_reducible] instance instHasSum : encodingStepClass.HasSum where
   sum left right := Sum.elim (fun value ↦ false :: left value)
     (fun value ↦ true :: right value)
   inl_mem _ _ := trivial
   inr_mem _ _ := trivial
   elim_mem _ _ := trivial
 
-@[instance_reducible] instance : encodingStepClass.HasOption where
+@[simp] theorem sum_inl {A B : Type u} (left : A → List Bool)
+    (right : B → List Bool) (value : A) :
+    instHasSum.sum left right (Sum.inl value) = false :: left value := rfl
+
+@[simp] theorem sum_inr {A B : Type u} (left : A → List Bool)
+    (right : B → List Bool) (value : B) :
+    instHasSum.sum left right (Sum.inr value) = true :: right value := rfl
+
+@[instance_reducible] instance instHasOption : encodingStepClass.HasOption where
   option encoding
     | none => [false]
     | some value => true :: encoding value
@@ -60,12 +75,22 @@ admissibility. Concrete quantitative morphisms still require cslib code. -/
   obindCtx_mem _ := trivial
   some_mem _ := trivial
 
+@[simp] theorem option_none {A : Type u} (encoding : A → List Bool) :
+    instHasOption.option encoding none = [false] := rfl
+
+@[simp] theorem option_some {A : Type u} (encoding : A → List Bool) (value : A) :
+    instHasOption.option encoding (some value) = true :: encoding value := rfl
+
 instance : encodingStepClass.IsDistributive where
   distrib_mem _ _ _ := trivial
 
 /-- Cslib single-tape code as a concrete quantitative backend. The work charge
-is a certified operational upper envelope, not an exact step counter. -/
-@[reducible] noncomputable def quantitative : QuantitativeStepClass encodingStepClass where
+is a certified operational upper envelope, not an exact step counter.
+
+This definition is reducibly exposed so that its generic `Realizer` family
+elaborates as `EncPolyTime`; the named size and cost laws below remain the proof
+API. -/
+@[expose, reducible] noncomputable def quantitative : QuantitativeStepClass encodingStepClass where
   Realizer source target function := EncPolyTime source target function
   size representation value := (representation value).length
   cost := @fun _ _ source _ _ code input ↦

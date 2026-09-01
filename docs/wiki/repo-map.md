@@ -24,7 +24,7 @@ PolyFun/
     UC/              open-process / open-theory layer (no security content)
   Realizability/     step classes and realizability of dynamical systems and
                      free programs by admissible first-order machines;
-                     executable quantitative realizers and syntactic run costs;
+                     executable quantitative realizers and syntactic run costs
   Complexity/        generic resource-bound syntax (not a concrete complexity class)
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
                      Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace),
@@ -382,8 +382,9 @@ plain imports, and reducibility is exposed declaration-by-declaration.
   `PolyFun/Realizability/Quantitative/Closure.lean`; for ranked termination,
   trace transport, and restricted pathwise closure, continue with
   `PolyFun/Realizability/Quantitative/BoundedClosure.lean`. Optional concrete
-  adapters live in separate library roots such as `PolyFunCslib/`; cryptographic policy and
-  protocol-specific adequacy theorems belong downstream.
+  adapters live in separate library roots such as `PolyFunCslib/`;
+  cryptographic policy and protocol-specific adequacy theorems belong
+  downstream.
 - Updating notation: start in `PolyFun/Interaction/UC/Notation.lean`. See
   [`notation.md`](notation.md).
 
