@@ -233,7 +233,7 @@ taint has been removed; it refuses to record tainted declarations.
 Environment linters and the test library have Lake drivers:
 
 ```bash
-lake lint   # Batteries runLinter over the PolyFun library
+lake lint   # Batteries runLinter over all production libraries
 lake test   # builds the PolyFunTest library
 ```
 

@@ -51,7 +51,7 @@ symbol relabeling — encodings are binary from the start, so encoded lengths ar
 bit-lengths the polynomial bounds speak about.
 -/
 
-@[expose] public section
+public section
 
 universe u v w u' v'
 
@@ -64,8 +64,14 @@ namespace ToCslib.Computability
 /-- The `w` low bits of `m`, least significant first. -/
 def natToBits (w m : ℕ) : List Bool := (List.range w).map m.testBit
 
-@[simp] theorem length_natToBits (w m : ℕ) : (natToBits w m).length = w := by
+/-- Characterize `natToBits` through the standard range-and-map construction. -/
+theorem natToBits_eq_map_range (w m : ℕ) :
+    natToBits w m = (List.range w).map m.testBit := by
   simp [natToBits]
+
+@[simp] theorem length_natToBits (w m : ℕ) : (natToBits w m).length = w := by
+  rw [natToBits_eq_map_range]
+  simp
 
 /-- Distinct numbers below `2 ^ w` have distinct `w`-bit strings. -/
 theorem natToBits_inj {w m₁ m₂ : ℕ} (h₁ : m₁ < 2 ^ w) (h₂ : m₂ < 2 ^ w)
@@ -128,9 +134,11 @@ def toStrEncFam (e : BitEncFam α) : StrEncFam α where
   bound := e.widBound
   len_le n x := (e.len_eq n x).le.trans (e.wid_le n)
 
-@[simp] theorem toStrEncFam_enc (e : BitEncFam α) : e.toStrEncFam.enc = e.enc := rfl
+@[simp] theorem toStrEncFam_enc (e : BitEncFam α) : e.toStrEncFam.enc = e.enc := by
+  simp [toStrEncFam]
 
-@[simp] theorem toStrEncFam_bound (e : BitEncFam α) : e.toStrEncFam.bound = e.widBound := rfl
+@[simp] theorem toStrEncFam_bound (e : BitEncFam α) : e.toStrEncFam.bound = e.widBound := by
+  simp [toStrEncFam]
 
 /-- The canonical encoding of a constant finite type: the fixed-width binary encoding
 of the enumeration index, width `⌈log₂ card γ⌉`. `Unit` gets width `0`, `Bool` width
@@ -225,7 +233,8 @@ variable {σ : ℕ → Type u} {β : ℕ → Type v}
 /-- Pair a variable-width encoding with a fixed-width one by append: injective because
 the fixed-width right component determines the split point from the right. This is the
 input shape of a machine's state/answer update. -/
-noncomputable def pairVar (s : StrEncFam σ) (e : BitEncFam β) : StrEncFam (fun n => σ n × β n) where
+noncomputable def pairVar (s : StrEncFam σ) (e : BitEncFam β) :
+    StrEncFam (fun n => σ n × β n) where
   enc n p := s.enc n p.1 ++ e.enc n p.2
   enc_injective n p q h := by
     obtain ⟨h₁, h₂⟩ := List.append_inj' h (by rw [e.len_eq, e.len_eq])
@@ -237,7 +246,8 @@ noncomputable def pairVar (s : StrEncFam σ) (e : BitEncFam β) : StrEncFam (fun
     simp only [Polynomial.eval_add]; omega
 
 @[simp] theorem pairVar_enc (s : StrEncFam σ) (e : BitEncFam β) (n : ℕ) (p : σ n × β n) :
-    (s.pairVar e).enc n p = s.enc n p.1 ++ e.enc n p.2 := rfl
+    (s.pairVar e).enc n p = s.enc n p.1 ++ e.enc n p.2 := by
+  simp [pairVar]
 
 /-- Optional values for a variable-width encoding: `false` represents `none`,
 while `true :: payload` represents `some payload`. -/
@@ -261,10 +271,12 @@ noncomputable def option (s : StrEncFam σ) : StrEncFam (fun n => Option (σ n))
         omega
 
 @[simp] theorem option_enc_none (s : StrEncFam σ) (n : ℕ) :
-    s.option.enc n none = [false] := rfl
+    s.option.enc n none = [false] := by
+  simp [option]
 
 @[simp] theorem option_enc_some (s : StrEncFam σ) (n : ℕ) (value : σ n) :
-    s.option.enc n (some value) = true :: s.enc n value := rfl
+    s.option.enc n (some value) = true :: s.enc n value := by
+  simp [option]
 
 /-- Tag-bit sum of raw string encodings: `false ::` the left payload, `true ::` the
 right payload. The state shape of a two-phase (`⊕`-state) machine. -/
@@ -290,10 +302,12 @@ noncomputable def sum {τ : ℕ → Type v} (s₁ : StrEncFam σ) (s₂ : StrEnc
       omega
 
 @[simp] theorem sum_enc_inl {τ : ℕ → Type v} (s₁ : StrEncFam σ) (s₂ : StrEncFam τ)
-    (n : ℕ) (x : σ n) : (s₁.sum s₂).enc n (Sum.inl x) = false :: s₁.enc n x := rfl
+    (n : ℕ) (x : σ n) : (s₁.sum s₂).enc n (Sum.inl x) = false :: s₁.enc n x := by
+  simp [sum]
 
 @[simp] theorem sum_enc_inr {τ : ℕ → Type v} (s₁ : StrEncFam σ) (s₂ : StrEncFam τ)
-    (n : ℕ) (y : τ n) : (s₁.sum s₂).enc n (Sum.inr y) = true :: s₂.enc n y := rfl
+    (n : ℕ) (y : τ n) : (s₁.sum s₂).enc n (Sum.inr y) = true :: s₂.enc n y := by
+  simp [sum]
 
 end StrEncFam
 
@@ -318,11 +332,13 @@ noncomputable def pairFix (e : BitEncFam γ) (s : StrEncFam σ) :
     simp only [Polynomial.eval_add]; omega
 
 @[simp] theorem pairFix_enc (e : BitEncFam γ) (s : StrEncFam σ) (n : ℕ) (p : γ n × σ n) :
-    (e.pairFix s).enc n p = e.enc n p.1 ++ s.enc n p.2 := rfl
+    (e.pairFix s).enc n p = e.enc n p.1 ++ s.enc n p.2 := by
+  simp [pairFix]
 
 /-- The all-zero padding block of a prescribed fixed width: a `PUnit` boundary whose
 encoding is `wid n` zero bits — the `none`-payload shape of `BitEncFam.option`. -/
-noncomputable def pad (w : ℕ → ℕ) (p : Polynomial ℕ) (hw : ∀ n, w n ≤ p.eval n) :
+noncomputable def pad (w : ℕ → ℕ) (p : Polynomial ℕ)
+    (hw : ∀ n, w n ≤ p.eval n) :
     BitEncFam (fun _ => PUnit.{u + 1}) where
   wid := w
   widBound := p
@@ -332,7 +348,8 @@ noncomputable def pad (w : ℕ → ℕ) (p : Polynomial ℕ) (hw : ∀ n, w n �
   enc_injective _ x y _ := by cases x; cases y; rfl
 
 @[simp] theorem pad_enc (w : ℕ → ℕ) (p : Polynomial ℕ) (hw : ∀ n, w n ≤ p.eval n)
-    (n : ℕ) (x : PUnit) : (pad w p hw).enc n x = List.replicate (w n) false := rfl
+    (n : ℕ) (x : PUnit) : (pad w p hw).enc n x = List.replicate (w n) false := by
+  simp [pad]
 
 end BitEncFam
 
@@ -381,9 +398,9 @@ def recode {α' : ℕ → Type u'} {β' : ℕ → Type v'} {ea' : (n : ℕ) → 
     EncPolyTimeFam ea' eb' g where
   wit n := (h.wit n).recode (φ n) (g n) (hin n) (hout n)
   time := h.time
-  time_le := h.time_le
+  time_le n k := by simpa only [EncPolyTime.time_recode] using h.time_le n k
   size := h.size
-  size_le := h.size_le
+  size_le n := by simpa only [EncPolyTime.size_recode] using h.size_le n
 
 /-- The identity family: one state, unit time. -/
 noncomputable def id (ea : (n : ℕ) → α n → List Bool) :
@@ -391,8 +408,7 @@ noncomputable def id (ea : (n : ℕ) → α n → List Bool) :
   wit n := .id (ea n)
   time := .C 1
   time_le n k := by
-    simp only [EncPolyTime.time, EncPolyTime.id, PolyTimeComputable.id, Polynomial.eval_one,
-      Polynomial.eval_C]
+    simp only [EncPolyTime.time_id, Polynomial.eval_C]
     exact le_rfl
   size := .C 1
   size_le n := by simp
@@ -403,7 +419,7 @@ def copy {f : (n : ℕ) → α n → β n} (h : EncPolyTimeFam ea eb f)
     EncPolyTimeFam ea eb f' where
   wit n := (h.wit n).copy (f' n) (hf n)
   time := h.time
-  time_le n k := by simpa [EncPolyTime.copy, EncPolyTime.time] using h.time_le n k
+  time_le n k := by simpa only [EncPolyTime.time_copy] using h.time_le n k
   size := h.size
   size_le n := by simpa using h.size_le n
 
@@ -439,7 +455,8 @@ noncomputable def comp {f : (n : ℕ) → α n → β n} {g : (n : ℕ) → β n
 
 /-- The constant family, from a length bound on the encoded constants: the machine
 erases its input and writes the constant. -/
-noncomputable def const (ea : (n : ℕ) → α n → List Bool) {eb : (n : ℕ) → β n → List Bool}
+noncomputable def const (ea : (n : ℕ) → α n → List Bool)
+    {eb : (n : ℕ) → β n → List Bool}
     (c : (n : ℕ) → β n) (B : Polynomial ℕ) (hB : ∀ n, (eb n (c n)).length ≤ B.eval n) :
     EncPolyTimeFam ea eb (fun n _ => c n) where
   wit n := .const (ea n) (eb n) (c n)
@@ -447,9 +464,8 @@ noncomputable def const (ea : (n : ℕ) → α n → List Bool) {eb : (n : ℕ) 
   time_le n k := by
     have hlen := hB n
     have hmono : B.eval n ≤ B.eval (n + k) := Polynomial.eval_le_eval (Nat.le_add_right n k)
-    change ((constPolyTimeComputable (eb n (c n))).poly).eval k ≤ _
-    simp only [constPolyTimeComputable, Polynomial.eval_add, Polynomial.eval_X,
-      Polynomial.eval_C]
+    rw [EncPolyTime.time_const]
+    simp only [Polynomial.eval_add, Polynomial.eval_X, Polynomial.eval_C]
     omega
   size := B + .C 2
   size_le n := by

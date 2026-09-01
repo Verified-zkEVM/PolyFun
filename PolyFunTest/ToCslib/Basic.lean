@@ -17,7 +17,9 @@ selection, and the cardinality used by the machine-counting argument.
 
 open ToCslib.Computability
 
-example : natToBits 3 5 = [true, false, true] := by decide
+example : natToBits 3 5 = [true, false, true] := by
+  rw [natToBits_eq_map_range]
+  decide
 
 example (bit : Bool) :
     let encoding : Bool → List Bool := fun value => [value]
@@ -41,7 +43,7 @@ example (state : StrEncFam fun _ ↦ Bool) (parameter : ℕ) (value : Bool) :
   simp
 
 example (input : List Bool) :
-    (EncPolyTime.appendBit id true).toFun input = input ++ [true] := rfl
+    (EncPolyTime.appendBit id true).toFun input = input ++ [true] := by simp
 
 /-! Mixed-universe canaries: encoding products and machine families do not require
 their source and target families to live in the same universe. -/

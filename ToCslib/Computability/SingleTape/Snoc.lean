@@ -17,7 +17,7 @@ bound for finite iteration; it makes no polynomial-time claim about an
 iteration count that grows with the security parameter.
 -/
 
-@[expose] public section
+public section
 
 namespace Cslib.Turing.SingleTapeTM
 
@@ -146,6 +146,7 @@ noncomputable def snocPolyTimeComputable (c : Bool) :
 /-- The append machine has two states. -/
 theorem size_snocPolyTimeComputable (c : Bool) :
     (snocPolyTimeComputable c).size ≤ 2 := by
+  rw [PolyTimeComputable.size_eq_card]
   change Fintype.card (Unit ⊕ Unit) ≤ 2
   simp
 
@@ -162,9 +163,19 @@ noncomputable def appendBit {σ : Type} (encoding : σ → List Bool) (c : Bool)
   polyTime := snocPolyTimeComputable c
   map_encode _ := rfl
 
+/-- The string function carried by `appendBit` appends the selected bit. -/
+@[simp] theorem appendBit_toFun {σ : Type} (encoding : σ → List Bool) (c : Bool)
+    (input : List Bool) :
+    (appendBit encoding c).toFun input = input ++ [c] := by
+  simp [appendBit]
+
 /-- The append witness uses at most two states. -/
 theorem size_appendBit {σ : Type} (encoding : σ → List Bool) (c : Bool) :
-    (appendBit encoding c).size ≤ 2 := size_snocPolyTimeComputable c
+    (appendBit encoding c).size ≤ 2 := by
+  rw [EncPolyTime.size_eq_card]
+  change Fintype.card (snocPolyTimeComputable c).tm.State ≤ 2
+  rw [← PolyTimeComputable.size_eq_card]
+  exact size_snocPolyTimeComputable c
 
 /-- A fixed finite iterate has description size at most one plus the sum of
 the step-machine sizes. This is description accounting only: composing a

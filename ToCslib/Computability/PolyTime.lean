@@ -37,7 +37,7 @@ every function on polynomially-encodable domains. Families must therefore bound
 non-uniform P/poly model.
 -/
 
-@[expose] public section
+public section
 
 universe u v w u' v'
 
@@ -81,8 +81,15 @@ hides `2 ^ n` advice bits in its transition row). -/
 def PolyTimeComputable.size {f : List Bool → List Bool}
     (h : PolyTimeComputable f) : ℕ := Fintype.card h.tm.State
 
+/-- The description size is the cardinality of the witness machine's state type. -/
+theorem PolyTimeComputable.size_eq_card {f : List Bool → List Bool}
+    (h : PolyTimeComputable f) : h.size = Fintype.card h.tm.State := by
+  simp [PolyTimeComputable.size]
+
 @[simp] theorem PolyTimeComputable.size_normalize {f : List Bool → List Bool}
-    (h : PolyTimeComputable f) : h.normalize.size = h.size := rfl
+    (h : PolyTimeComputable f) : h.normalize.size = h.size := by
+  simp [PolyTimeComputable.normalize, PolyTimeComputable.size]
+  rfl
 
 end Cslib.Turing.SingleTapeTM
 
@@ -121,6 +128,16 @@ witnesses indexed by a security parameter must bound this polynomially — the a
 bound of the non-uniform P/poly model; see the module docstring. -/
 def size {f : α → β} (h : EncPolyTime ea eb f) : ℕ := h.polyTime.size
 
+/-- The time accessor returns the polynomial carried by the underlying cslib witness. -/
+theorem time_eq_poly {f : α → β} (h : EncPolyTime ea eb f) :
+    h.time = h.polyTime.poly := by
+  simp [EncPolyTime.time]
+
+/-- The description size is the state count of the underlying cslib machine. -/
+theorem size_eq_card {f : α → β} (h : EncPolyTime ea eb f) :
+    h.size = Fintype.card h.polyTime.tm.State := by
+  rw [EncPolyTime.size, PolyTimeComputable.size_eq_card]
+
 /-- The identity function is polynomial-time computable relative to any encoding. -/
 noncomputable def id (ea : α → List Bool) : EncPolyTime ea ea _root_.id where
   toFun := _root_.id
@@ -131,8 +148,14 @@ noncomputable def id (ea : α → List Bool) : EncPolyTime ea ea _root_.id where
 @[simp] theorem size_id (ea : α → List Bool) : (EncPolyTime.id ea).size = 1 :=
   Fintype.card_punit
 
+/-- The identity witness has the constant unit time polynomial. -/
+@[simp] theorem time_id (ea : α → List Bool) :
+    (EncPolyTime.id ea).time = .C 1 := by
+  simp [EncPolyTime.id, EncPolyTime.time, PolyTimeComputable.id]
+
 /-- Transport a witness along a pointwise-equal function. -/
-def copy {f : α → β} (h : EncPolyTime ea eb f) (f' : α → β) (hf : ∀ a, f a = f' a) :
+def copy {f : α → β} (h : EncPolyTime ea eb f) (f' : α → β)
+    (hf : ∀ a, f a = f' a) :
     EncPolyTime ea eb f' where
   toFun := h.toFun
   polyTime := h.polyTime
@@ -140,14 +163,21 @@ def copy {f : α → β} (h : EncPolyTime ea eb f) (f' : α → β) (hf : ∀ a,
 
 /-- Transporting along a pointwise-equal function preserves the machine, hence the size. -/
 @[simp] theorem size_copy {f : α → β} (h : EncPolyTime ea eb f) (f' : α → β)
-    (hf : ∀ a, f a = f' a) : (h.copy f' hf).size = h.size := rfl
+    (hf : ∀ a, f a = f' a) : (h.copy f' hf).size = h.size := by
+  simp [EncPolyTime.copy, EncPolyTime.size]
+
+/-- Transporting along a pointwise-equal function preserves the time polynomial. -/
+@[simp] theorem time_copy {f : α → β} (h : EncPolyTime ea eb f) (f' : α → β)
+    (hf : ∀ a, f a = f' a) : (h.copy f' hf).time = h.time := by
+  simp [EncPolyTime.copy, EncPolyTime.time]
 
 /-- Transport a witness along string-equal encodings on both sides: if `ea'` encodes
 each `a'` exactly as `ea` encodes `φ a'`, and `eb'` encodes each `g a'` exactly as `eb`
 encodes `f (φ a')`, the same machine witnesses `g` relative to `ea'`/`eb'`. The machine,
 time, and size are untouched — this discharges pure re-bracketings and re-taggings of
 encoded data (`cons`/append associativity, pair/sum reshuffles) with no machine content. -/
-def recode {α' : Type u'} {β' : Type v'} {ea' : α' → List Bool} {eb' : β' → List Bool}
+def recode {α' : Type u'} {β' : Type v'} {ea' : α' → List Bool}
+    {eb' : β' → List Bool}
     {f : α → β} (h : EncPolyTime ea eb f) (φ : α' → α) (g : α' → β')
     (hin : ∀ a', ea' a' = ea (φ a')) (hout : ∀ a', eb' (g a') = eb (f (φ a'))) :
     EncPolyTime ea' eb' g where
@@ -159,13 +189,15 @@ def recode {α' : Type u'} {β' : Type v'} {ea' : α' → List Bool} {eb' : β' 
 @[simp] theorem time_recode {α' : Type u'} {β' : Type v'} {ea' : α' → List Bool}
     {eb' : β' → List Bool} {f : α → β} (h : EncPolyTime ea eb f) (φ : α' → α) (g : α' → β')
     (hin : ∀ a', ea' a' = ea (φ a')) (hout : ∀ a', eb' (g a') = eb (f (φ a'))) :
-    (h.recode φ g hin hout).time = h.time := rfl
+    (h.recode φ g hin hout).time = h.time := by
+  simp [EncPolyTime.recode, EncPolyTime.time]
 
 /-- Recoding preserves the machine, hence the description size. -/
 @[simp] theorem size_recode {α' : Type u'} {β' : Type v'} {ea' : α' → List Bool}
     {eb' : β' → List Bool} {f : α → β} (h : EncPolyTime ea eb f) (φ : α' → α) (g : α' → β')
     (hin : ∀ a', ea' a' = ea (φ a')) (hout : ∀ a', eb' (g a') = eb (f (φ a'))) :
-    (h.recode φ g hin hout).size = h.size := rfl
+    (h.recode φ g hin hout).size = h.size := by
+  simp [EncPolyTime.recode, EncPolyTime.size]
 
 /-- Composition of encoded polynomial-time witnesses, from Cslib's
 `PolyTimeComputable.comp`.
@@ -186,7 +218,9 @@ noncomputable def comp {f : α → β} {f' : β → γ}
 the second's evaluated at the first's output-length envelope `1 + X + h.time`. -/
 theorem comp_time {f : α → β} {f' : β → γ}
     (h : EncPolyTime ea eb f) (h' : EncPolyTime eb ec f') :
-    (h.comp h').time = h.time + h'.time.comp (1 + Polynomial.X + h.time) := rfl
+    (h.comp h').time = h.time + h'.time.comp (1 + Polynomial.X + h.time) := by
+  simp [EncPolyTime.comp, EncPolyTime.time, PolyTimeComputable.normalize]
+  rfl
 
 /-- Evaluation of the composed time bound: `h`'s cost at input length `k`, plus `h'`'s cost at the
 length `h`'s output can reach (`1 + k + h.time.eval k`). -/

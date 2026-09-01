@@ -42,7 +42,7 @@ The pieces, each isolated so the diagonalization argument reads as pure counting
   eventually (`ToCslib.Computability.exists_diagonal`).
 -/
 
-@[expose] public section
+public section
 
 open Filter Asymptotics
 
@@ -350,6 +350,16 @@ def RealizableLE (n d : ℕ) : Set (BitVec n → Bool) :=
         (_o : EncPolyTime es (BitEncFam.bool.option.enc n) output),
       _i.size ≤ d ∧ _o.size ≤ d ∧ ∀ x, output (init x) = some (g x)}
 
+/-- Full witness characterization of membership in `RealizableLE`. -/
+theorem mem_realizableLE {n d : ℕ} {g : BitVec n → Bool} :
+    g ∈ RealizableLE n d ↔
+      ∃ (σ : Type) (es : σ → List Bool) (init : BitVec n → σ)
+          (output : σ → Option Bool)
+          (_i : EncPolyTime (BitEncFam.bitVecX.enc n) es init)
+          (_o : EncPolyTime es (BitEncFam.bool.option.enc n) output),
+        _i.size ≤ d ∧ _o.size ≤ d ∧ ∀ x, output (init x) = some (g x) := by
+  simp [RealizableLE]
+
 /-- Realizability at a larger description size is a weaker requirement. -/
 theorem realizableLE_mono {n : ℕ} {d d' : ℕ} (h : d ≤ d') :
     RealizableLE n d ⊆ RealizableLE n d' := by
@@ -385,6 +395,7 @@ theorem exists_realizableLE_covering (n d : ℕ) :
   refine ⟨Finset.image (tablePairPred n d)
     (Finset.univ : Finset (TMTable d × TMTable d)), ?_, ?_⟩
   · rintro g ⟨σ, es, init, output, i, o, hi, ho, hg⟩
+    rw [EncPolyTime.size_eq_card] at hi ho
     obtain ⟨t₁, ht₁⟩ := exists_tmTable_of_card_le i.polyTime.tm (d := d) hi
     obtain ⟨t₂, ht₂⟩ := exists_tmTable_of_card_le o.polyTime.tm (d := d) ho
     refine Finset.mem_coe.mpr (Finset.mem_image.mpr ⟨(t₁, t₂), Finset.mem_univ _, ?_⟩)

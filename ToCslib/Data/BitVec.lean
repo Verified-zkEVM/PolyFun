@@ -18,7 +18,7 @@ arguments: sampling a uniform bitvector and reading its `i`-th bit is equivalent
 sampling a uniform bit and a uniform bitvector and overwriting the `i`-th bit.
 -/
 
-@[expose] public section
+public section
 
 namespace BitVec
 

@@ -41,7 +41,7 @@ would extend the generic witnesses beyond finite domains, stated in the raw-enco
 family form (`ToCslib.Computability.EncPolyTimeFam`) used by backend adapters.
 -/
 
-@[expose] public section
+public section
 
 universe u v
 
@@ -179,6 +179,7 @@ state plus one writing state per output symbol. Stated over `Bool`, the alphabet
 `PolyTimeComputable.size` is defined at. -/
 theorem size_constPolyTimeComputable_le (out : List Bool) :
     (constPolyTimeComputable out).size ≤ out.length + 2 := by
+  rw [PolyTimeComputable.size_eq_card]
   cases out with
   | nil =>
     change Fintype.card Unit ≤ 2
@@ -448,6 +449,23 @@ noncomputable def ofFintype {α : Type u} {β : Type v} [Fintype α]
       Function.partialInv_left hea]
     rfl
 
+/-- The exact time polynomial carried by a constant-function witness. -/
+@[simp] theorem time_const {α : Type u} {β : Type v} (ea : α → List Bool)
+    (eb : β → List Bool) (c : β) :
+    (const ea eb c).time = .X + .C ((eb c).length + 2) := by
+  rw [EncPolyTime.time_eq_poly]
+  rfl
+
+/-- The exact time polynomial carried by a finite-table witness. -/
+theorem time_ofFintype {α : Type u} {β : Type v} [Fintype α]
+    (ea : α → List Bool) (hea : Function.Injective ea) (eb : β → List Bool)
+    (f : α → β) :
+    (ofFintype ea hea eb f).time =
+      .X + .C (((Finset.univ.image ea).sup fun l =>
+        (((Function.partialInv ea l).map fun a => eb (f a)).getD []).length) + 1) := by
+  rw [EncPolyTime.time_eq_poly]
+  rfl
+
 /-- The finite-table witness runs in time linear in the input plus the longest encoded
 output: with a pointwise bound `B` on the output encodings, evaluation at `k` is at
 most `k + (B + 1)`. This is the shape that discharges the uniform per-step time bounds
@@ -456,23 +474,24 @@ theorem time_ofFintype_eval_le {α : Type u} {β : Type v} [Fintype α]
     {ea : α → List Bool} (hea : Function.Injective ea) {eb : β → List Bool}
     {f : α → β} {B : ℕ} (hB : ∀ a, (eb (f a)).length ≤ B) (k : ℕ) :
     (ofFintype ea hea eb f).time.eval k ≤ k + (B + 1) := by
-  have htime : (ofFintype ea hea eb f).time =
-      .X + .C (((Finset.univ.image ea).sup fun l =>
-        (((Function.partialInv ea l).map fun a => eb (f a)).getD []).length) + 1) := rfl
   have hsup : ((Finset.univ.image ea).sup fun l =>
       (((Function.partialInv ea l).map fun a => eb (f a)).getD []).length) ≤ B := by
     refine Finset.sup_le fun l hl => ?_
     obtain ⟨a, -, rfl⟩ := Finset.mem_image.mp hl
     rw [Function.partialInv_left hea]
     exact hB a
-  rw [htime, Polynomial.eval_add, Polynomial.eval_X, Polynomial.eval_C]
+  rw [time_ofFintype, Polynomial.eval_add, Polynomial.eval_X, Polynomial.eval_C]
   omega
 
 /-- The constant-function witness has at most `(eb c).length + 2` machine states. -/
 theorem size_const_le {α : Type u} {β : Type v} (ea : α → List Bool)
     (eb : β → List Bool) (c : β) :
-    (const ea eb c).size ≤ (eb c).length + 2 :=
-  Cslib.Turing.SingleTapeTM.size_constPolyTimeComputable_le (eb c)
+    (const ea eb c).size ≤ (eb c).length + 2 := by
+  rw [EncPolyTime.size_eq_card]
+  change Fintype.card
+    (Cslib.Turing.SingleTapeTM.constPolyTimeComputable (eb c)).tm.State ≤ _
+  rw [← Cslib.Turing.SingleTapeTM.PolyTimeComputable.size_eq_card]
+  exact Cslib.Turing.SingleTapeTM.size_constPolyTimeComputable_le (eb c)
 
 /-- The description size of the finite-table witness: the machine hard-codes the whole
 input/output table, so its state count grows with the **total encoded length of the
@@ -484,6 +503,7 @@ theorem size_ofFintype_le {α : Type u} {β : Type v} [Fintype α]
     (f : α → β) :
     (ofFintype ea hea eb f).size ≤
       (∑ a : α, ((ea a).length + 1)) + 1 + ∑ a : α, (eb (f a)).length := by
+  rw [EncPolyTime.size_eq_card]
   change Fintype.card (Cslib.Turing.SingleTapeTM.TableState (Finset.univ.image ea)
     fun l => ((Function.partialInv ea l).map fun a => eb (f a)).getD []) ≤ _
   rw [Cslib.Turing.SingleTapeTM.card_tableState]
