@@ -11,6 +11,7 @@ import PolyFun.Interaction.Concurrent.Fairness
 import PolyFun.Interaction.Multiparty.Observation
 import PolyFun.Interaction.UC.OpenProcess
 import PolyFun.Interaction.UC.ScheduledOpenProcessModel
+import PolyFun.Interaction.UC.ScheduledSamplerFactorization
 
 /-!
 # Ordinary-import canaries for the interaction API
@@ -103,5 +104,18 @@ example {m : Type w → Type w'} {Party : Type u}
     (UC.scheduledOpenTheory.{u, v, w, w'} Party m scheduler).Obj Δ =
       UC.ScheduledOpenProcess.{u, v, w, w'} m Party Δ := by
   rfl
+
+example {m : Type w → Type w'} [Monad m] [LawfulMonad m]
+    (scheduler : UC.BinaryScheduler m) (first second context : ℕ+)
+    {α : Type w} (continuation :
+      ULift.{w, 0} UC.OpenProcessFactorization.Leaf → m α) :
+    UC.BinaryScheduler.sourceDraw scheduler first second context >>= continuation =
+      scheduler (first + second) context >>= fun outer ↦
+        if outer.down then
+          scheduler first second >>= fun inner ↦
+            if inner.down then continuation ⟨.first⟩ else continuation ⟨.second⟩
+        else
+          continuation ⟨.context⟩ :=
+  UC.BinaryScheduler.sourceDraw_bind scheduler first second context continuation
 
 end PolyFunTest.ModuleAPI.Interaction

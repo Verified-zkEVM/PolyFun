@@ -39,7 +39,7 @@ namespace BinaryScheduler
 /-- Binding the source-shaped mass-aware draw against a continuation exposes
 the two scheduler calls used by the nested process sampler. -/
 theorem sourceDraw_bind {m : Type w → Type w'} [Monad m] [LawfulMonad m]
-    (scheduler : BinaryScheduler m) (first second context : ScheduleMass)
+    (scheduler : BinaryScheduler m) (first second context : ℕ+)
     {α : Type w} (h : ULift.{w, 0} Leaf → m α) :
     sourceDraw scheduler first second context >>= h =
       scheduler (first + second) context >>= fun outer =>
@@ -61,7 +61,7 @@ theorem sourceDraw_bind {m : Type w → Type w'} [Monad m] [LawfulMonad m]
 /-- Binding the left-factored mass-aware draw exposes the scheduler calls used
 by the left-reassociated process sampler. -/
 theorem leftDraw_bind {m : Type w → Type w'} [Monad m] [LawfulMonad m]
-    (scheduler : BinaryScheduler m) (first second context : ScheduleMass)
+    (scheduler : BinaryScheduler m) (first second context : ℕ+)
     {α : Type w} (h : ULift.{w, 0} Leaf → m α) :
     leftDraw scheduler first second context >>= h =
       scheduler first (context + second) >>= fun outer =>
@@ -83,7 +83,7 @@ theorem leftDraw_bind {m : Type w → Type w'} [Monad m] [LawfulMonad m]
 /-- Binding the right-factored mass-aware draw exposes the scheduler calls
 used by the right-reassociated process sampler. -/
 theorem rightDraw_bind {m : Type w → Type w'} [Monad m] [LawfulMonad m]
-    (scheduler : BinaryScheduler m) (first second context : ScheduleMass)
+    (scheduler : BinaryScheduler m) (first second context : ℕ+)
     {α : Type w} (h : ULift.{w, 0} Leaf → m α) :
     rightDraw scheduler first second context >>= h =
       scheduler second (context + first) >>= fun outer =>
@@ -111,7 +111,7 @@ applying the structural left-reassociation path equivalence. -/
 theorem samplePath_interleave_assoc_left {m : Type w → Type w'}
     [Monad m] [LawfulMonad m] (R : MonadRelFamily m)
     (scheduler : BinaryScheduler m) (coherent : scheduler.IsCoherent R)
-    (firstMass secondMass contextMass : ScheduleMass)
+    (firstMass secondMass contextMass : ℕ+)
     (firstTree secondTree contextTree : TypeTree.{w})
     (firstSampler : TypeTree.Sampler m firstTree)
     (secondSampler : TypeTree.Sampler m secondTree)
@@ -196,7 +196,7 @@ applying the structural right-reassociation path equivalence. -/
 theorem samplePath_interleave_assoc_right {m : Type w → Type w'}
     [Monad m] [LawfulMonad m] (R : MonadRelFamily m)
     (scheduler : BinaryScheduler m) (coherent : scheduler.IsCoherent R)
-    (firstMass secondMass contextMass : ScheduleMass)
+    (firstMass secondMass contextMass : ℕ+)
     (firstTree secondTree contextTree : TypeTree.{w})
     (firstSampler : TypeTree.Sampler m firstTree)
     (secondSampler : TypeTree.Sampler m secondTree)
