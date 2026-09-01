@@ -41,7 +41,7 @@ two component masses. -/
 structure ScheduledOpenProcess (m : Type w → Type w') (Party : Type u)
     (Delta : PortBoundary) where
   /-- Total mass of the atomic scheduler frontier represented by `process`. -/
-  mass : ScheduleMass
+  mass : ℕ+
   /-- The underlying open process and its protocol-local samplers. -/
   process : OpenProcess.{u, v, w, w'} m Party Delta
 
@@ -49,9 +49,21 @@ namespace ScheduledOpenProcess
 
 /-- Equip an open process with an explicit positive scheduler mass. -/
 def withMass {m : Type w → Type w'} {Party : Type u} {Delta : PortBoundary}
-    (mass : ScheduleMass) (process : OpenProcess.{u, v, w, w'} m Party Delta) :
+    (mass : ℕ+) (process : OpenProcess.{u, v, w, w'} m Party Delta) :
     ScheduledOpenProcess.{u, v, w, w'} m Party Delta :=
   ⟨mass, process⟩
+
+@[simp]
+theorem mass_withMass {m : Type w → Type w'} {Party : Type u} {Delta : PortBoundary}
+    (mass : ℕ+) (process : OpenProcess.{u, v, w, w'} m Party Delta) :
+    (withMass mass process).mass = mass :=
+  (rfl)
+
+@[simp]
+theorem process_withMass {m : Type w → Type w'} {Party : Type u} {Delta : PortBoundary}
+    (mass : ℕ+) (process : OpenProcess.{u, v, w, w'} m Party Delta) :
+    (withMass mass process).process = process :=
+  (rfl)
 
 /-- Equip an atomic open process with one scheduler slot. -/
 def atom {m : Type w → Type w'} {Party : Type u} {Delta : PortBoundary}
@@ -59,12 +71,38 @@ def atom {m : Type w → Type w'} {Party : Type u} {Delta : PortBoundary}
     ScheduledOpenProcess.{u, v, w, w'} m Party Delta :=
   withMass 1 process
 
+@[simp]
+theorem mass_atom {m : Type w → Type w'} {Party : Type u} {Delta : PortBoundary}
+    (process : OpenProcess.{u, v, w, w'} m Party Delta) :
+    (atom process).mass = 1 :=
+  (rfl)
+
+@[simp]
+theorem process_atom {m : Type w → Type w'} {Party : Type u} {Delta : PortBoundary}
+    (process : OpenProcess.{u, v, w, w'} m Party Delta) :
+    (atom process).process = process :=
+  (rfl)
+
 /-- Adapt the boundary while preserving scheduler mass. -/
 def mapBoundary {m : Type w → Type w'} {Party : Type u}
     {Delta₁ Delta₂ : PortBoundary} (phi : PortBoundary.Hom Delta₁ Delta₂)
     (process : ScheduledOpenProcess.{u, v, w, w'} m Party Delta₁) :
     ScheduledOpenProcess.{u, v, w, w'} m Party Delta₂ :=
   ⟨process.mass, process.process.mapBoundary phi⟩
+
+@[simp]
+theorem mass_mapBoundary {m : Type w → Type w'} {Party : Type u}
+    {Delta₁ Delta₂ : PortBoundary} (phi : PortBoundary.Hom Delta₁ Delta₂)
+    (process : ScheduledOpenProcess.{u, v, w, w'} m Party Delta₁) :
+    (process.mapBoundary phi).mass = process.mass :=
+  (rfl)
+
+@[simp]
+theorem process_mapBoundary {m : Type w → Type w'} {Party : Type u}
+    {Delta₁ Delta₂ : PortBoundary} (phi : PortBoundary.Hom Delta₁ Delta₂)
+    (process : ScheduledOpenProcess.{u, v, w, w'} m Party Delta₁) :
+    (process.mapBoundary phi).process = process.process.mapBoundary phi :=
+  (rfl)
 
 /-- Interleave two scheduled processes. The composite records their summed
 mass, and the root sampler receives both component masses. -/
@@ -83,11 +121,43 @@ def interleave {m : Type w → Type w'} {Party : Type u}
     left.process.interleave right.process leftMap rightMap schedulerCtx
       (scheduler left.mass right.mass)⟩
 
+@[simp]
+theorem mass_interleave {m : Type w → Type w'} {Party : Type u}
+    {Delta₁ Delta₂ Delta : PortBoundary}
+    (scheduler : BinaryScheduler m)
+    (left : ScheduledOpenProcess.{u, v, w, w'} m Party Delta₁)
+    (right : ScheduledOpenProcess.{u, v, w, w'} m Party Delta₂)
+    (leftMap : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Delta₁) (OpenNodeContext.{u, w} Party Delta))
+    (rightMap : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Delta₂) (OpenNodeContext.{u, w} Party Delta))
+    (schedulerCtx : OpenNodeContext.{u, w} Party Delta (ULift.{w, 0} Bool)) :
+    (left.interleave scheduler right leftMap rightMap schedulerCtx).mass =
+      left.mass + right.mass :=
+  (rfl)
+
+@[simp]
+theorem process_interleave {m : Type w → Type w'} {Party : Type u}
+    {Delta₁ Delta₂ Delta : PortBoundary}
+    (scheduler : BinaryScheduler m)
+    (left : ScheduledOpenProcess.{u, v, w, w'} m Party Delta₁)
+    (right : ScheduledOpenProcess.{u, v, w, w'} m Party Delta₂)
+    (leftMap : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Delta₁) (OpenNodeContext.{u, w} Party Delta))
+    (rightMap : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Delta₂) (OpenNodeContext.{u, w} Party Delta))
+    (schedulerCtx : OpenNodeContext.{u, w} Party Delta (ULift.{w, 0} Bool)) :
+    (left.interleave scheduler right leftMap rightMap schedulerCtx).process =
+      left.process.interleave right.process leftMap rightMap schedulerCtx
+        (scheduler left.mass right.mass) :=
+  (rfl)
+
 end ScheduledOpenProcess
 
 /-- The mass-aware open-composition theory. This is additive alongside the
 legacy `openTheory`: callers can migrate atoms with `ScheduledOpenProcess.atom`
 without changing `OpenProcess` itself. -/
+@[expose]
 def scheduledOpenTheory (Party : Type u) (m : Type w → Type w')
     (scheduler : BinaryScheduler m) : OpenTheory where
   Obj Delta := ScheduledOpenProcess.{u, v, w, w'} m Party Delta

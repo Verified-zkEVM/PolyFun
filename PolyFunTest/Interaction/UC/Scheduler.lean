@@ -21,7 +21,7 @@ namespace Interaction
 namespace UC
 
 def largerSide : BinaryScheduler Id :=
-  fun left right => ULift.up (decide (right.value ≤ left.value))
+  fun left right => ULift.up (decide (right ≤ left))
 
 theorem sourceDraw_largerSide_unit :
     BinaryScheduler.sourceDraw largerSide 1 1 1 =

@@ -117,7 +117,7 @@ relation family `MonadRelFamily`
    even a deterministic identity-monad scheduler cannot satisfy both
    reassociation facts. Equality of distributional denotations therefore
    needs redesigned scheduler semantics or a deliberately coarser relation.
-   `ScheduleMass`, `BinaryScheduler.IsFlat`, and `scheduledOpenTheory` provide
+   `PNat` frontier masses, `BinaryScheduler.IsFlat`, and `scheduledOpenTheory` provide
    the generic redesign boundary: compositions carry the total mass of their
    atomic frontier, binary nodes receive both subtree masses, and a downstream
    scheduler proves that all hierarchical three-way draws denote one flat
