@@ -273,6 +273,11 @@ Interaction/UC/{OpenProcessModel, Scheduler}
    additive mass-aware open-process theory; concrete proportional sampling
    and distributional adequacy remain downstream)
 
+Interaction/UC/{OpenProcessSamplerFactorization, Scheduler}
+  -> Interaction/UC/ScheduledSamplerFactorization
+  (the scheduler coherence law lifted through arbitrary component samplers
+   along the existing left/right structural path reassociations)
+
 Interaction/UC/{OpenProcessModel, OpenProcessFactorization,
                 OpenProcessSamplerEquiv}
   -> Interaction/UC/OpenProcessSamplerFactorization
