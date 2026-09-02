@@ -71,6 +71,7 @@ PFunctor/{Display/Handler, Display/Parallel, Free/Parallel}
   -> PFunctor/Display/Parallel/Free
 PFunctor/{Display/Parallel/Free, Wiring} -> PFunctor/Wiring/Parallel
 PFunctor/{Display/Handler, Free/Universal} -> PFunctor/Display/Category
+PFunctor/Free/Basic -> PFunctor/Free/Fold
 PFunctor/Free/Basic
   -> PFunctor/Free/Displayed
   -> PFunctor/Free/{Path, Displayed/Decoration}
@@ -88,6 +89,8 @@ PFunctor/{Resumption, M/Vertex} -> PFunctor/Resumption/Empty
 PFunctor/{Bound, Free/Resumption} -> PFunctor/Resumption/Truncate
 PFunctor/Dynamical/DynComputation + PFunctor/{Bound, Handler, Resumption/Truncate}
   -> PFunctor/Dynamical/DynComputation/Bounded
+PFunctor/{Free/Fold, Dynamical/DynComputation/Bounded}
+  -> PFunctor/Dynamical/DynComputation/BoundedFold
 PFunctor/Dynamical/DynComputation/Bounded
   -> PFunctor/Dynamical/DynComputation/Termination
 
