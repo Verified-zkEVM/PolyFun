@@ -117,6 +117,12 @@ relation family `MonadRelFamily`
    even a deterministic identity-monad scheduler cannot satisfy both
    reassociation facts. Equality of distributional denotations therefore
    needs redesigned scheduler semantics or a deliberately coarser relation.
+   `PNat` frontier masses, `BinaryScheduler.IsFlat`, and `scheduledOpenTheory` provide
+   the generic redesign boundary: compositions carry the total mass of their
+   atomic frontier, binary nodes receive both subtree masses, and a downstream
+   scheduler proves that all hierarchical three-way draws denote one flat
+   choice. Probability and the concrete proportional scheduler remain VCVio
+   responsibilities.
 2. **Initial-state correspondence.** The totality fields of
    `OpenProcessSamplerEquiv` expose the regrouping bijection on states, so
    corresponding initial states are chosen definitionally.

@@ -10,6 +10,7 @@ import PolyFun.Interaction.Basic.Sampler
 import PolyFun.Interaction.Concurrent.Fairness
 import PolyFun.Interaction.Multiparty.Observation
 import PolyFun.Interaction.UC.OpenProcess
+import PolyFun.Interaction.UC.ScheduledOpenProcessModel
 
 /-!
 # Ordinary-import canaries for the interaction API
@@ -21,7 +22,7 @@ ordinary imports. They mirror downstream uses that otherwise tend to reach for
 
 @[expose] public section
 
-universe u v w
+universe u v w w'
 
 namespace PolyFunTest.ModuleAPI.Interaction
 
@@ -78,5 +79,29 @@ example {Party : Type u} {Δ : UC.PortBoundary} {X : Type w}
         UC.OpenNodeContext.boundaryTrace (Party := Party) (Δ := Δ)
           (rest x) (semantics.2 x) path :=
   UC.OpenNodeContext.boundaryTrace_node rest semantics x path
+
+/-! ## Scheduled open processes -/
+
+example {m : Type w → Type w'} {Party : Type u} {Δ : UC.PortBoundary}
+    (mass : ℕ+) (process : UC.OpenProcess.{u, v, w, w'} m Party Δ) :
+    (UC.ScheduledOpenProcess.withMass mass process).mass = mass := by
+  simp
+
+example {m : Type w → Type w'} {Party : Type u} {Δ : UC.PortBoundary}
+    (process : UC.OpenProcess.{u, v, w, w'} m Party Δ) :
+    (UC.ScheduledOpenProcess.atom process).process = process := by
+  simp
+
+example {m : Type w → Type w'} {Party : Type u}
+    {Δ₁ Δ₂ : UC.PortBoundary} (phi : UC.PortBoundary.Hom Δ₁ Δ₂)
+    (process : UC.ScheduledOpenProcess.{u, v, w, w'} m Party Δ₁) :
+    (process.mapBoundary phi).mass = process.mass := by
+  simp
+
+example {m : Type w → Type w'} {Party : Type u}
+    (scheduler : UC.BinaryScheduler m) (Δ : UC.PortBoundary) :
+    (UC.scheduledOpenTheory.{u, v, w, w'} Party m scheduler).Obj Δ =
+      UC.ScheduledOpenProcess.{u, v, w, w'} m Party Δ := by
+  rfl
 
 end PolyFunTest.ModuleAPI.Interaction

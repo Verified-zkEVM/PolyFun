@@ -132,6 +132,8 @@ public import PolyFun.Interaction.UC.OpenTheory
 public import PolyFun.Interaction.UC.OpenTheory.Family
 public import PolyFun.Interaction.UC.Realizability
 public import PolyFun.Interaction.UC.SamplerObservation
+public import PolyFun.Interaction.UC.ScheduledOpenProcessModel
+public import PolyFun.Interaction.UC.Scheduler
 public import PolyFun.Interaction.UC.SecureEmulation
 public import PolyFun.Interaction.UC.SubTheory
 public import PolyFun.Logic.HEq

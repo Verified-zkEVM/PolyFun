@@ -265,6 +265,14 @@ Interaction/UC/OpenProcess -> Interaction/UC/OpenProcessSamplerEquiv
    an abstract relation family on m-computations; forgets onto
    OpenProcessActivationEquiv, while packet/action adequacy remains separate)
 
+Interaction/UC/{OpenProcessFactorization, OpenProcessSamplerEquiv}
+  -> Interaction/UC/Scheduler
+Interaction/UC/{OpenProcessModel, Scheduler}
+  -> Interaction/UC/ScheduledOpenProcessModel
+  (positive scheduler masses, the flat three-way coherence contract, and an
+   additive mass-aware open-process theory; concrete proportional sampling
+   and distributional adequacy remain downstream)
+
 Interaction/UC/{OpenProcessModel, OpenProcessFactorization,
                 OpenProcessSamplerEquiv}
   -> Interaction/UC/OpenProcessSamplerFactorization
