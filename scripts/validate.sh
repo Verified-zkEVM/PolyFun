@@ -70,7 +70,7 @@ python3 ./scripts/check-docs-integrity.py
 if (( run_lint )); then
   echo ""
   echo "# Running environment linters (lake lint)"
-  lake build ToCslib
+  lake build ToCslib PolyFunCslib
   lake lint
 fi
 
@@ -83,7 +83,7 @@ fi
 if (( run_axioms )); then
   echo ""
   echo "# Building axiom sweep roots"
-  lake build PolyFun ToCslib
+  lake build PolyFun ToCslib PolyFunCslib
 
   echo ""
   echo "# Testing the axiom sweep tool"
@@ -91,7 +91,7 @@ if (( run_axioms )); then
 
   echo ""
   echo "# Enforcing zero axiom/sorry debt"
-  lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --check
+  lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --root PolyFunCslib --check
 fi
 
 echo ""
