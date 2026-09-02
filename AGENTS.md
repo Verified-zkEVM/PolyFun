@@ -112,6 +112,10 @@ and depend on this library.
 - `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
   silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
+- `ToCslib/`: a separate low-level Lake library of reusable extensions to the
+  pinned cslib machine API. It imports cslib and Mathlib but never PolyFun,
+  oracle semantics, probability, or cryptography. Concrete PolyFun backend
+  adapters may import it explicitly; the generated `PolyFun` umbrella does not.
 - `PolyFunTest/`: separate test / worked-example library (glob
   `PolyFunTest.+`), built by `lake test` and kept out of the `lake lint`
   scope. Holds the dynamical / interaction worked examples and the
@@ -229,7 +233,7 @@ taint has been removed; it refuses to record tainted declarations.
 Environment linters and the test library have Lake drivers:
 
 ```bash
-lake lint   # Batteries runLinter over the PolyFun library
+lake lint   # Batteries runLinter over all production libraries
 lake test   # builds the PolyFunTest library
 ```
 

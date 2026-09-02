@@ -93,12 +93,13 @@ If you specifically need to regenerate `PolyFun.lean`, use:
 To run the environment linters or the test library on their own:
 
 ```bash
-lake lint   # Batteries runLinter over the PolyFun library
+lake lint   # Batteries runLinter over all production libraries
 lake test   # builds the PolyFunTest library (worked examples / regression tests)
 ```
 
 `lake lint` and `lake test` are wired in [`lakefile.toml`](../../lakefile.toml)
-via `lintDriver = "batteries/runLinter"` (with `lintDriverArgs = ["PolyFun"]`)
+via `lintDriver = "batteries/runLinter"` (with the production library roots in
+`lintDriverArgs`)
 and `testDriver = "PolyFunTest"`. The `PolyFunTest` library is glob-based
 (`PolyFunTest.+`), holds the worked examples and notation smoke tests, and is
 deliberately outside the `lake lint` scope.

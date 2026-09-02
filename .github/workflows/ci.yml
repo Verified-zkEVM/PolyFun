@@ -92,7 +92,9 @@ jobs:
         run: lake build --wfail
 
       - name: Run environment linters
-        run: lake lint
+        run: |
+          lake build ToCslib
+          lake lint
 
   test:
     name: Test

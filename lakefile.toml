@@ -1,12 +1,12 @@
 name = "PolyFun"
 defaultTargets = ["PolyFun"]
 
-# `lake lint` runs Batteries' environment linters over the `PolyFun` library.
+# `lake lint` runs Batteries' environment linters over both production libraries.
 # `lake test` builds the `PolyFunTest` library; any failing `example` /
 # `#guard` / `#eval` fails elaboration. This mirrors Mathlib and cslib, which
 # reuse `batteries/runLinter` rather than shipping a local runner.
 lintDriver = "batteries/runLinter"
-lintDriverArgs = ["PolyFun"]
+lintDriverArgs = ["PolyFun", "ToCslib"]
 testDriver = "PolyFunTest"
 
 [leanOptions]
@@ -42,8 +42,14 @@ rev = "v4.33.1"
 [[lean_lib]]
 name = "PolyFun"
 
+# Low-level extensions of the pinned cslib machine API. This target does not
+# import PolyFun and is intentionally separate from the generated `PolyFun`
+# umbrella; PolyFun backend adapters may import it explicitly.
+[[lean_lib]]
+name = "ToCslib"
+
 # Test / worked-example library. Built by `lake test`, kept out of the
-# `lake lint` scope (which lints only `PolyFun`). Glob-based, so no umbrella
+# `lake lint` scope (which lints `PolyFun` and `ToCslib`). Glob-based, so no umbrella
 # file is generated; the file-header style linter is relaxed on test files.
 [[lean_lib]]
 name = "PolyFunTest"
