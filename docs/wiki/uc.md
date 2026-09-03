@@ -37,7 +37,7 @@ the activation-equivalence factorization theorems in
 
 | Paper surface | PolyFun surface | Status |
 | --- | --- | --- |
-| symmetric monoidal category `C` of interactive systems | `OpenTheory`, with `par`, `wire`, and a granular lawfulness ladder | Candidate model; the free syntax models satisfy the strict laws, while `openTheory` is only `IsLawful`. `HasPlugFactorization` isolates the five factorization equalities the composition theorems consume; it is the strict target a process model can honestly aim for, since unit and snake laws fail at strong sampler equivalence |
+| symmetric monoidal category `C` of interactive systems | `OpenTheory`, with `par`, `wire`, and a granular lawfulness ladder | Candidate model; the free syntax models satisfy the strict laws, while `openTheory` is only `IsLawful` strictly and satisfies the monoidal, traced, and compact-closed laws up to `OpenProcessActivationEquiv`. `HasPlugFactorization` isolates the five factorization equalities the composition theorems consume; it is the strict target a process model can honestly aim for, since unit and snake laws fail at strong sampler equivalence |
 | backdoor category `C_bd` | adversarial ports can be represented by ordinary typed boundary components | Representation strategy only; no equivalence with the paper's backdoor construction or quotient is proved |
 | nested `D_real ⊆ D_bd` | ordered `SubTheory` values | Structural carrier plus `realizableSubTheory` / `generatedRealizableSubTheory`; corruption and concrete efficiency still require explicit instances |
 | corruption restriction defining `D_real` | `CorruptionModel`, `MomentaryCorruption` | Vocabulary only; no bridge to `SubTheory.mem` |
