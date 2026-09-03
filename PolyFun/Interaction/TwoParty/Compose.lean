@@ -9,7 +9,6 @@ module
 import all PolyFun.Interaction.TwoParty.Decoration
 public import Mathlib.Control.Monad.Basic
 public import Mathlib.Data.Sigma.Basic
-public import PolyFun.Control.Lawful.Basic
 public import PolyFun.Interaction.Basic.Append
 public import PolyFun.Interaction.Basic.Replicate
 public import PolyFun.Interaction.Basic.StateChain
@@ -295,12 +294,9 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_splitPrefix
                   go (rest x) (rRest x)
                     (s₂ := fun p => s₂ ⟨x, p⟩)
                     (r₂ := fun p => r₂ ⟨x, p⟩) tail
-                exact LawfulMonad.bind_pure_sigma_mk (m := m) (α := X) (β := Suffix)
-                  (x := x) (tail := tail)
-                  (action := StrategyOver.TwoParty.Focal.compFlat
-                    (StrategyOver.TwoParty.Focal.splitPrefix tail)
-                    (fun _ strat₂ => pure strat₂)) hgo
-        refine (LawfulMonad.do_bind_map_left _ strat _).trans ?_
+                exact (congrArg (fun a => (do let rest ← a; pure (Sigma.mk (β := Suffix) x rest)))
+                  hgo).trans (pure_bind tail _)
+        refine (bind_map_left _ strat _).trans ?_
         exact hmain.trans (bind_pure strat)
     | .node _ rest, ⟨.receiver, rRest⟩ =>
         refine congrArg pure ?_
@@ -320,7 +316,7 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_splitPrefix
           exact go (rest x) (rRest x)
             (s₂ := fun p => s₂ ⟨x, p⟩)
             (r₂ := fun p => r₂ ⟨x, p⟩) next
-        refine (LawfulMonad.do_bind_map_left
+        refine (bind_map_left
           (StrategyOver.TwoParty.Focal.splitPrefix (s₂ := fun p => s₂ ⟨x, p⟩)
             (r₁ := rRest x) (r₂ := fun p => r₂ ⟨x, p⟩)) (strat x) _).trans ?_
         exact hcont.trans (bind_pure (strat x))
@@ -710,8 +706,8 @@ theorem run_compFlat_appendFlat
           PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
           run, InteractionOver.runTypeTree, InteractionOver.TwoParty.pairedTypeTree,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
-          participantOutputFamily, LawfulMonad.do_bind_assoc,
-          LawfulMonad.do_bind_pure_comp, pure_bind]
+          participantOutputFamily, bind_assoc,
+          bind_pure_comp, pure_bind]
         apply bind_congr
         intro xc
         cases xc with
@@ -738,7 +734,7 @@ theorem run_compFlat_appendFlat
                     (fun path => r₂ ⟨x, path⟩))
                   (fun tr => OutputP ⟨x, tr⟩) :=
               fun restStrat => ⟨x, restStrat⟩
-            refine (LawfulMonad.do_bind_map_left mapStratTail
+            refine (bind_map_left mapStratTail
               (StrategyOver.TwoParty.Focal.compFlat next
                 (s₂ := fun path => s₂ ⟨x, path⟩)
                 (r₂ := fun path => r₂ ⟨x, path⟩)
@@ -781,7 +777,7 @@ theorem run_compFlat_appendFlat
                   g y
             change (do let a ← comp; let a₁ ← obs; k a a₁) = _
             refine (LawfulCommMonad.bind_comm comp obs k).trans ?_
-            refine (LawfulMonad.do_bind_map_left mapCpt (cpt₁ x) _).trans ?_
+            refine (bind_map_left mapCpt (cpt₁ x) _).trans ?_
             apply bind_congr
             intro cNext
             let addPrefix :
@@ -828,7 +824,7 @@ theorem run_compFlat_appendFlat
                     g (addPrefix y)) := by
                       apply bind_congr
                       intro strat
-                      exact LawfulMonad.do_bind_map_left addPrefix
+                      exact bind_map_left addPrefix
                         (run
                           (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                           (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
@@ -848,7 +844,7 @@ theorem run_compFlat_appendFlat
                   cNext
                   (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
                   (fun a => g (addPrefix a))
-                exact h.trans (LawfulMonad.do_bind_map_left
+                exact h.trans (bind_map_left
                   (fun a : (tr : PFunctor.FreeM.Path (rest x)) × MidP ⟨x, tr⟩ × MidC ⟨x, tr⟩ =>
                     (⟨⟨x, a.1⟩, a.2.1, a.2.2⟩ :
                       (tr : PFunctor.FreeM.Path (TypeTree.node X rest)) × MidP tr × MidC tr))
@@ -864,8 +860,8 @@ theorem run_compFlat_appendFlat
           PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
           run, InteractionOver.runTypeTree, InteractionOver.TwoParty.pairedTypeTree,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
-          participantOutputFamily, LawfulMonad.do_bind_assoc,
-          LawfulMonad.do_bind_pure_comp, pure_bind]
+          participantOutputFamily, bind_assoc,
+          bind_pure_comp, pure_bind]
         let mapCpt :
             ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
               (rest x) (rRest x) (fun tr => MidC ⟨x, tr⟩)) →
@@ -876,7 +872,7 @@ theorem run_compFlat_appendFlat
               (fun tr => OutputC ⟨x, tr⟩)) :=
           fun a => ⟨a.1, StrategyOver.TwoParty.Counterpart.appendFlat a.2
             (fun p o => cpt₂ ⟨a.1, p⟩ o)⟩
-        refine (LawfulMonad.do_bind_map_left mapCpt cpt₁ _).trans ?_
+        refine (bind_map_left mapCpt cpt₁ _).trans ?_
         apply bind_congr
         intro xc
         cases xc with
@@ -933,7 +929,7 @@ theorem run_compFlat_appendFlat
                       intro next
                       apply bind_congr
                       intro strat
-                      exact LawfulMonad.do_bind_map_left addPrefix
+                      exact bind_map_left addPrefix
                         (run
                           (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
                           (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
@@ -981,7 +977,7 @@ theorem run_compFlat_appendFlat
                               (fun tr₁ out => cpt₂ ⟨x, tr₁⟩ out)
                               (fun a => g (addPrefix a))
                   _ = _ := by
-                    exact (LawfulMonad.do_bind_map_left addPrefix₁
+                    exact (bind_map_left addPrefix₁
                       (run (rest x) (rRest x) next cNext)
                       (fun r₁ => do
                         let strat₂ ← f r₁.1 r₁.2.1

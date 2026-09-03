@@ -101,22 +101,19 @@ metavariables.
 resolve independently. Keep `α β : Type` (not `Type u`) when a single
 universe suffices.
 
-### 8. `do`-notation bind uses a different `Bind` instance
+### 8. `do`-notation goals take the standard monad laws directly
 
-Lean's `do`-block elaboration may use a `Bind` instance that differs
-syntactically from `Monad.toBind`. This
-means `pure_bind`, `bind_assoc`, and `bind_pure` won't fire via `simp`
-or `rw` on goals produced by `do` notation in special cases of more
-non-standard instances.
+The `Bind` instance a `do` block elaborates to is the one `Monad.toBind` provides, so
+core's `bind_assoc`, `bind_pure_comp`, and `bind_map_left` (the last two are themselves
+stated with `do`) close `do`-block goals by `exact`, and `simp` normalizes them. No
+restated `do` forms are needed; `PolyFunTest/Control/LawfulDo.lean` pins this, and the
+dependent-pair shape in two-party strategy composition
+(`(do let rest ← action; pure ⟨x, rest⟩) = pure ⟨x, tail⟩` from `action = pure tail`) is
+`(congrArg (fun a => do let rest ← a; pure ⟨x, rest⟩) h).trans (pure_bind _ _)`.
 
-**Symptom**: `simp [pure_bind]` or `rw [bind_assoc]` does nothing on a
-`do`-block goal.
-
-**Fix**: Use the restated lemmas in
-[`PolyFun/Control/Lawful/Basic.lean`](../../PolyFun/Control/Lawful/Basic.lean)
-(namespace `LawfulMonad`):
-`do_bind_assoc`, `do_bind_pure_comp`, `do_bind_map_left`, and the dependent-pair
-specialization `bind_pure_sigma_mk`.
+**Symptom** to watch for after a toolchain bump: `exact bind_assoc _ _ _` failing on a
+`do`-block goal with a `Bind` instance mismatch. That was a Lean 4.29 elaboration quirk;
+if it returns, restate the law at the call site rather than reviving a helper file.
 
 ### 8e. A predicate whose leading argument is implicit cannot be passed as an argument
 

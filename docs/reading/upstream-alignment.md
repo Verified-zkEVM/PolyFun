@@ -374,7 +374,7 @@ module is orphaned or safe to remove.
 | `Control/Monad/Iter.lean` — `MonadIter` | 152 | Class justified against upstream (core's `repeatM` is a function, not a class, is partial-recursive, and needs `[Nonempty β]`), but it has **no instances in its own file**; the only one in the repo is `ITree F`. Keep. Add another instance only with a chosen iteration semantics and proofs of the separate `LawfulMonadIter` laws; a generic monad need not support iteration. |
 | ~~`Control/Monad/Equiv.lean`~~ | — | **File deleted** (#143). No `MonadEquiv`, no `≃ᵐ`. |
 | ~~`Control/Monad/Hom.lean` `MonadHomClass`~~ | — | **Declaration removed** (#143). Six stale `scripts/nolints.json` entries referenced it. |
-| ~~`Control/Lawful/Basic.lean`~~ | 47 | **Load-bearing, not unused.** Pruned to four lemmas (#147), and `Interaction/TwoParty/Compose.lean` uses all four across ten-plus call sites. The open question is different: the file works around a **Lean 4.29** `do`-elaboration bug and all four lemmas now go through by `simp`, so check whether the bug is fixed and, if so, simplify the call sites rather than delete the file. |
+| ~~`Control/Lawful/Basic.lean`~~ | 47 | **Deleted.** It restated `bind_assoc` / `bind_pure_comp` / `bind_map_left` in `do` form around a **Lean 4.29** `do`-elaboration quirk that is gone: core's lemmas close the `do`-stated goals by `exact` (`PolyFunTest/Control/LawfulDo.lean` is the canary), and `Interaction/TwoParty/Compose.lean` uses them directly, with the dependent-pair shape as `congrArg … |>.trans (pure_bind _ _)`. |
 
 `MAlgOrdered` is no longer speculative — `PFunctor/Free/WP.lean` consumes it in ~15
 places. `wpOpt` is exercised only by a test. `wpExc` had **zero** consumers until
