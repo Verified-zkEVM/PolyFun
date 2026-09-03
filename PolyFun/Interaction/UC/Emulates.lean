@@ -6,8 +6,7 @@ Authors: Quang Dao
 
 module
 
-import all PolyFun.Interaction.UC.Interface
-public import PolyFun.Interaction.UC.OpenTheory
+public import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
 
 /-!
 # Contextual emulation and UC security
@@ -64,8 +63,9 @@ theory, through two classes:
   readings of `close_par_left`, `close_par_right`, `close_wire_left`, and
   `close_wire_right`, and is what the `par` and `wire` theorems need.
 
-A theory with strict compact-closed structure satisfies both for *every*
-observation, via `respectsFactorization_of_hasPlugWireFactor`, so the free
+A theory with plug factorization (`OpenTheory.HasPlugFactorization`, which
+every strict compact-closed theory has) satisfies both for *every*
+observation, via `respectsFactorization_of_hasPlugFactorization`, so the free
 models (`Expr.theory`, `Interp.theory`) are unaffected. Stating the laws on
 the observation is what lets a model whose coherences hold only up to a
 quotient — the process-backed `openTheory`, whose composites differ by
@@ -187,164 +187,13 @@ theorem plug_invariance {Δ : PortBoundary} {Obs : Observation T} {real ideal : 
 
 end Emulates
 
-/-! ## Structural factorization of `close` under composition -/
-
-section Factorization
-
-variable [OpenTheory.HasPlugWireFactor T]
-
-/-- The effective plug for the left component of a parallel composition.
-
-Given `W₂ : T.Obj Δ₂` and `K : T.Plug (tensor Δ₁ Δ₂)`, wire them
-together through the `Δ₂` boundary to obtain a plug for `Δ₁` alone. -/
-def OpenTheory.parContextLeft {Δ₁ Δ₂ : PortBoundary} (W₂ : T.Obj Δ₂)
-    (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) : T.Plug Δ₁ :=
-  T.mapEquiv (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₁))
-    (T.wire
-      (Γ := PortBoundary.swap Δ₂)
-      (Δ₂ := PortBoundary.empty)
-      K
-      (T.mapEquiv (PortBoundary.Equiv.tensorEmptyRight Δ₂).symm W₂))
-
-/-- The effective plug for the right component of a parallel composition.
-
-Given `W₁ : T.Obj Δ₁` and `K : T.Plug (tensor Δ₁ Δ₂)`, wire them
-together through the `Δ₁` boundary to obtain a plug for `Δ₂` alone. -/
-def OpenTheory.parContextRight {Δ₁ Δ₂ : PortBoundary} (W₁ : T.Obj Δ₁)
-    (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) : T.Plug Δ₂ :=
-  T.mapEquiv (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₂))
-    (T.wire
-      (Γ := PortBoundary.swap Δ₁)
-      (Δ₂ := PortBoundary.empty)
-      (T.mapEquiv
-        (PortBoundary.Equiv.tensorComm
-          (PortBoundary.swap Δ₁) (PortBoundary.swap Δ₂))
-        K)
-      (T.mapEquiv (PortBoundary.Equiv.tensorEmptyRight Δ₁).symm W₁))
-
-/-- Closing a parallel composition factors through the left component.
-
-This captures the string-diagram identity: plugging `par W₁ W₂` against
-`K` is the same as plugging `W₁` against the residual context formed by
-wiring `W₂` into `K`. -/
-theorem OpenTheory.close_par_left {Δ₁ Δ₂ : PortBoundary} (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂)
-    (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
-    T.close (T.par W₁ W₂) K = T.close W₁ (T.parContextLeft W₂ K) :=
-  OpenTheory.plug_par_left W₁ W₂ K
-
-/-- Closing a parallel composition factors through the right component. -/
-theorem OpenTheory.close_par_right {Δ₁ Δ₂ : PortBoundary} (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂)
-    (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
-    T.close (T.par W₁ W₂) K = T.close W₂ (T.parContextRight W₁ K) := by
-  simp only [OpenTheory.close]
-  rw [← OpenTheory.par_comm W₂ W₁, OpenTheory.map_plug, OpenTheory.plug_par_left]
-  unfold parContextRight
-  simp only [OpenTheory.mapEquiv]
-  congr 3
-
-/-- The effective plug for the left factor of a wiring.
-
-Given `W₂ : T.Obj (tensor (swap Γ) Δ₂)` and
-`K : T.Plug (tensor Δ₁ Δ₂)`, wire them together through the `Δ₂`
-boundary to obtain a plug for `tensor Δ₁ Γ`. -/
-def OpenTheory.wireContextLeft {Δ₁ Γ Δ₂ : PortBoundary}
-    (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
-    (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) : T.Plug (PortBoundary.tensor Δ₁ Γ) :=
-  T.wire
-    (Δ₁ := PortBoundary.swap Δ₁)
-    (Γ := PortBoundary.swap Δ₂)
-    (Δ₂ := PortBoundary.swap Γ)
-    K
-    (T.mapEquiv
-      (PortBoundary.Equiv.tensorComm (PortBoundary.swap Γ) Δ₂)
-      W₂)
-
-/-- The effective plug for the right factor of a wiring.
-
-Given `W₁ : T.Obj (tensor Δ₁ Γ)` and `K : T.Plug (tensor Δ₁ Δ₂)`,
-wire them together through the `Δ₁` boundary to obtain a plug for
-`tensor (swap Γ) Δ₂`. -/
-def OpenTheory.wireContextRight {Δ₁ Γ Δ₂ : PortBoundary} (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
-    (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
-    T.Plug (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) :=
-  T.mapEquiv
-    (PortBoundary.Equiv.tensorComm (PortBoundary.swap Δ₂) Γ)
-    (T.wire
-      (Δ₁ := PortBoundary.swap Δ₂)
-      (Γ := PortBoundary.swap Δ₁)
-      (Δ₂ := Γ)
-      (T.mapEquiv
-        (PortBoundary.Equiv.tensorComm
-          (PortBoundary.swap Δ₁) (PortBoundary.swap Δ₂))
-        K)
-      W₁)
-
-/-- Closing a wired composition factors through the left component. -/
-theorem OpenTheory.close_wire_left {Δ₁ Γ Δ₂ : PortBoundary} (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
-    (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
-    (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
-    T.close (T.wire W₁ W₂) K = T.close W₁ (T.wireContextLeft W₂ K) :=
-  OpenTheory.plug_wire_left W₁ W₂ K
-
-/-- Closing a wired composition factors through the right component. -/
-theorem OpenTheory.close_wire_right {Δ₁ Γ Δ₂ : PortBoundary} (W₁ : T.Obj (PortBoundary.tensor Δ₁ Γ))
-    (W₂ : T.Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
-    (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)) :
-    T.close (T.wire W₁ W₂) K = T.close W₂ (T.wireContextRight W₁ K) := by
-  simp only [OpenTheory.close]
-  rw [OpenTheory.wire_comm, OpenTheory.map_plug, OpenTheory.plug_wire_left,
-    OpenTheory.map_plug]
-  unfold wireContextRight
-  simp only [OpenTheory.mapEquiv]
-  congr 1
-  congr 1
-  rw [← OpenTheory.map_comp]
-  erw [PortBoundary.Equiv.tensorComm_comp_tensorComm Δ₁ Γ, OpenTheory.map_id]
-  rfl
-
-/-- `plug` is symmetric: the protocol and context roles are interchangeable.
-
-This follows from `plug_eq_wire` plus commutativity of `wire` via
-`par_comm`. -/
-theorem OpenTheory.plug_comm {Δ : PortBoundary} (W : T.Obj Δ) (K : T.Obj (PortBoundary.swap Δ)) :
-    T.plug W K = T.plug K W := by
-  rw [OpenTheory.plug_eq_wire W K, OpenTheory.plug_eq_wire K W,
-    OpenTheory.wire_comm]
-  congr 1
-  simp only [OpenTheory.mapEquiv]
-  rw [← OpenTheory.map_comp, ← OpenTheory.map_comp]
-  have hcomm : (PortBoundary.Equiv.tensorComm
-      PortBoundary.empty PortBoundary.empty).toHom =
-      PortBoundary.Hom.id _ := by
-    apply PortBoundary.Hom.ext <;>
-      exact PFunctor.Chart.ext _ _
-        (fun a => PEmpty.elim (Sum.elim id id a))
-        (fun a => PEmpty.elim (Sum.elim id id a))
-  rw [hcomm, OpenTheory.map_id]
-  congr 1 <;> congr 1 <;> apply PortBoundary.Hom.ext
-  all_goals
-    exact PFunctor.Chart.ext _ _
-      (fun a => by
-        first
-        | cases a with
-          | inl x => first | exact PEmpty.elim x | rfl
-          | inr x => first | exact PEmpty.elim x | rfl
-        | rfl)
-      (fun a => by
-        first
-        | cases a with
-          | inl x => first | exact PEmpty.elim x | rfl
-          | inr x => first | exact PEmpty.elim x | rfl
-        | rfl)
-
-end Factorization
 
 /-! ## Observation-level factorization laws
 
 The composition theorems below all move a component across the divide between
-the system under test and its context. In a theory with strict compact-closed
-structure that motion is an equality — `close_par_left` and its siblings — so
-the theorems can rewrite with it. The concrete process model `openTheory` does
+the system under test and its context. In a theory with plug factorization
+that motion is an equality — `close_par_left` and its siblings — so the
+theorems can rewrite with it. The concrete process model `openTheory` does
 not have those equalities on the nose: every binary composition prepends a
 scheduler node, so regrouping one is a delay bisimulation rather than an
 identity.
@@ -352,8 +201,8 @@ identity.
 The classes here name the same motions as properties of the *observation*
 instead of the theory. A model that cannot offer strict coherence can still
 prove these exact observation-level laws directly and then earns the full
-composition suite. Strict coherence is the degenerate case, recorded by
-`respectsFactorization_of_hasPlugWireFactor`, so nothing that holds today is
+composition suite. Strict factorization is the degenerate case, recorded by
+`respectsFactorization_of_hasPlugFactorization`, so nothing that holds today is
 lost.
 
 Splitting the laws across two classes follows the same principle as the
@@ -385,7 +234,7 @@ These are the `Obs.rel` readings of `close_par_left`, `close_par_right`,
 `close_wire_left`, and `close_wire_right`. Together with the inherited
 `plug_comm` they are the whole structural input to the UC composition
 theorems, which is why the theorems below take this class rather than
-`OpenTheory.HasPlugWireFactor`.
+`OpenTheory.HasPlugFactorization`.
 
 Deliberately *not* an extension of `OpenTheory.IsCompactClosed`: the concrete
 process model has neither a `HasUnit` nor a `HasIdWire` instance, and
@@ -416,11 +265,12 @@ class Observation.RespectsFactorization {T : OpenTheory.{u}} (Obs : Observation 
       (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)),
     Obs.rel (T.close (T.wire W₁ W₂) K) (T.close W₂ (T.wireContextRight W₁ K))
 
-/-- Every observation over a theory with strict plug/wire factorization
-respects that factorization, since each law holds as an equality and `Obs.rel`
-is reflexive. This keeps the free syntax models on the full composition
-suite. -/
-instance respectsFactorization_of_hasPlugWireFactor [OpenTheory.HasPlugWireFactor T]
+/-- Every observation over a theory with plug factorization respects it, since
+each law holds as an equality and `Obs.rel` is reflexive. Strict compact-closed
+theories, in particular the free syntax models, are instances through
+`OpenTheory.hasPlugFactorization_of_hasPlugWireFactor`, so they stay on the
+full composition suite. -/
+instance respectsFactorization_of_hasPlugFactorization [OpenTheory.HasPlugFactorization T]
     (Obs : Observation T) : Obs.RespectsFactorization where
   plug_comm W K := by rw [OpenTheory.plug_comm]; exact Obs.equiv.refl _
   close_par_left W₁ W₂ K := by rw [OpenTheory.close_par_left]; exact Obs.equiv.refl _
