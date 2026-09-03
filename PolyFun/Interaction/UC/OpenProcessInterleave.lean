@@ -47,6 +47,7 @@ namespace Interaction
 namespace UC
 
 open Concurrent
+open PFunctor.FreeM.Displayed (Decoration)
 
 /-! ## Activation-preserving context homs -/
 
@@ -105,6 +106,182 @@ theorem preservesActivation_close (Δ : PortBoundary) :
     PreservesActivation (OpenNodeContext.close.{u, w} Party Δ) := by
   intro X ons
   simp [OpenNodeContext.close, BoundaryAction.closed]
+
+/-! ## Internal nodes and trace relabelling
+
+The sampler-level coherence theorems compare boundary traces, so they need two
+finer pieces of data about a hom than activation preservation: whether a node
+is fully internal after the hom, and how the hom acts on emitted traces. -/
+
+/-- A node that is neither activated nor emits anything: the boundary action
+of a scheduler node after any of the theory's boundary adaptations. -/
+@[expose]
+def IsInternalNode {Δ : PortBoundary} {X : Type w} (c : OpenNodeContext.{u, w} Party Δ X) :
+    Prop :=
+  c.boundary = BoundaryAction.internal Δ X
+
+theorem IsInternalNode.isActivated {Δ : PortBoundary} {X : Type w}
+    {c : OpenNodeContext.{u, w} Party Δ X} (hc : IsInternalNode c) :
+    c.boundary.isActivated = false := by
+  rw [hc]; rfl
+
+theorem IsInternalNode.emit {Δ : PortBoundary} {X : Type w}
+    {c : OpenNodeContext.{u, w} Party Δ X} (hc : IsInternalNode c) (x : X) :
+    c.boundary.emit x = 1 := by
+  rw [hc]; rfl
+
+theorem IsInternalNode.map {Δ₁ Δ₂ : PortBoundary} {X : Type w}
+    {c : OpenNodeContext.{u, w} Party Δ₁ X} (hc : IsInternalNode c) (φ : PortBoundary.Hom Δ₁ Δ₂) :
+    IsInternalNode (OpenNodeContext.map Party φ X c) := by
+  unfold IsInternalNode at hc ⊢
+  simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary, hc, BoundaryAction.mapBoundary,
+    BoundaryAction.internal]
+
+theorem IsInternalNode.inlTensor {Δ₁ : PortBoundary} (Δ₂ : PortBoundary) {X : Type w}
+    {c : OpenNodeContext.{u, w} Party Δ₁ X} (hc : IsInternalNode c) :
+    IsInternalNode (OpenNodeContext.inlTensor Party Δ₁ Δ₂ X c) := by
+  unfold IsInternalNode at hc ⊢
+  simp [OpenNodeContext.inlTensor, hc, BoundaryAction.embedInlTensor, BoundaryAction.internal]
+
+theorem IsInternalNode.inrTensor (Δ₁ : PortBoundary) {Δ₂ : PortBoundary} {X : Type w}
+    {c : OpenNodeContext.{u, w} Party Δ₂ X} (hc : IsInternalNode c) :
+    IsInternalNode (OpenNodeContext.inrTensor Party Δ₁ Δ₂ X c) := by
+  unfold IsInternalNode at hc ⊢
+  simp [OpenNodeContext.inrTensor, hc, BoundaryAction.embedInrTensor, BoundaryAction.internal]
+
+theorem IsInternalNode.wireLeft {Δ₁ Γ : PortBoundary} (Δ₂ : PortBoundary) {X : Type w}
+    {c : OpenNodeContext.{u, w} Party (PortBoundary.tensor Δ₁ Γ) X} (hc : IsInternalNode c) :
+    IsInternalNode (OpenNodeContext.wireLeft Party Δ₁ Γ Δ₂ X c) := by
+  unfold IsInternalNode at hc ⊢
+  simp [OpenNodeContext.wireLeft, hc, BoundaryAction.wireLeft, BoundaryAction.internal]
+
+theorem IsInternalNode.wireRight (Δ₁ : PortBoundary) {Γ Δ₂ : PortBoundary} {X : Type w}
+    {c : OpenNodeContext.{u, w} Party (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) X}
+    (hc : IsInternalNode c) :
+    IsInternalNode (OpenNodeContext.wireRight Party Δ₁ Γ Δ₂ X c) := by
+  unfold IsInternalNode at hc ⊢
+  simp [OpenNodeContext.wireRight, hc, BoundaryAction.wireRight, BoundaryAction.internal]
+
+theorem IsInternalNode.close {Δ : PortBoundary} {X : Type w}
+    {c : OpenNodeContext.{u, w} Party Δ X} (hc : IsInternalNode c) :
+    IsInternalNode (OpenNodeContext.close Party Δ X c) := by
+  unfold IsInternalNode at hc ⊢
+  simp [OpenNodeContext.close, hc, BoundaryAction.closed, BoundaryAction.internal]
+
+/-- A hom **emits along** a partial relabelling `g` of output packets when it
+acts on every node's emitted trace by `g`. All of the theory's boundary
+adaptations do. -/
+@[expose]
+def EmitsAlong {Δ₁ Δ₂ : PortBoundary}
+    (h : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₁)
+      (OpenNodeContext.{u, w} Party Δ₂))
+    (g : PFunctor.Idx Δ₁.Out → Option (PFunctor.Idx Δ₂.Out)) : Prop :=
+  ∀ (X : Type w) (ons : OpenNodeContext Party Δ₁ X),
+    (h X ons).boundary.emit = PFunctor.Trace.mapPartial g ons.boundary.emit
+
+theorem emitsAlong_id (Δ : PortBoundary) :
+    EmitsAlong (TypeTree.Node.ContextHom.id (OpenNodeContext.{u, w} Party Δ))
+      (fun i => some i) := by
+  intro X ons
+  simp [TypeTree.Node.ContextHom.id]
+
+theorem EmitsAlong.comp {Δ₁ Δ₂ Δ₃ : PortBoundary}
+    {h₂ : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₂)
+      (OpenNodeContext.{u, w} Party Δ₃)}
+    {h₁ : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₁)
+      (OpenNodeContext.{u, w} Party Δ₂)}
+    {g₂ : PFunctor.Idx Δ₂.Out → Option (PFunctor.Idx Δ₃.Out)}
+    {g₁ : PFunctor.Idx Δ₁.Out → Option (PFunctor.Idx Δ₂.Out)}
+    (hh₂ : EmitsAlong h₂ g₂) (hh₁ : EmitsAlong h₁ g₁) :
+    EmitsAlong (TypeTree.Node.ContextHom.comp h₂ h₁) (fun i => (g₁ i).bind g₂) := by
+  intro X ons
+  change (h₂ X (h₁ X ons)).boundary.emit = _
+  rw [hh₂, hh₁, PFunctor.Trace.mapPartial_comp]
+
+theorem emitsAlong_map {Δ₁ Δ₂ : PortBoundary} (φ : PortBoundary.Hom Δ₁ Δ₂) :
+    EmitsAlong (OpenNodeContext.map.{u, w} Party φ)
+      (fun i => some (PFunctor.Chart.mapIdx φ.onOut i)) := by
+  intro X ons
+  simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary, BoundaryAction.mapBoundary,
+    PFunctor.Trace.mapChart]
+
+theorem emitsAlong_inlTensor (Δ₁ Δ₂ : PortBoundary) :
+    EmitsAlong (OpenNodeContext.inlTensor.{u, w} Party Δ₁ Δ₂)
+      (fun i => some (PFunctor.Chart.mapIdx (Interface.Hom.inl Δ₁.Out Δ₂.Out) i)) := by
+  intro X ons
+  simp [OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor, PFunctor.Trace.mapChart]
+
+theorem emitsAlong_inrTensor (Δ₁ Δ₂ : PortBoundary) :
+    EmitsAlong (OpenNodeContext.inrTensor.{u, w} Party Δ₁ Δ₂)
+      (fun i => some (PFunctor.Chart.mapIdx (Interface.Hom.inr Δ₁.Out Δ₂.Out) i)) := by
+  intro X ons
+  simp [OpenNodeContext.inrTensor, BoundaryAction.embedInrTensor, PFunctor.Trace.mapChart]
+
+theorem emitsAlong_wireLeft (Δ₁ Γ Δ₂ : PortBoundary) :
+    EmitsAlong (OpenNodeContext.wireLeft.{u, w} Party Δ₁ Γ Δ₂)
+      (fun
+        | ⟨Sum.inl a₁, m⟩ => some ⟨Sum.inl a₁, m⟩
+        | ⟨Sum.inr _, _⟩ => none) := by
+  intro X ons
+  simp only [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
+  exact congrArg (fun g => PFunctor.Trace.mapPartial g _)
+    (funext fun i => by rcases i with ⟨(_ | _), _⟩ <;> rfl)
+
+theorem emitsAlong_wireRight (Δ₁ Γ Δ₂ : PortBoundary) :
+    EmitsAlong (OpenNodeContext.wireRight.{u, w} Party Δ₁ Γ Δ₂)
+      (fun
+        | ⟨Sum.inl _, _⟩ => none
+        | ⟨Sum.inr a₂, m⟩ => some ⟨Sum.inr a₂, m⟩) := by
+  intro X ons
+  simp only [OpenNodeContext.wireRight, BoundaryAction.wireRight]
+  exact congrArg (fun g => PFunctor.Trace.mapPartial g _)
+    (funext fun i => by rcases i with ⟨(_ | _), _⟩ <;> rfl)
+
+theorem emitsAlong_close (Δ : PortBoundary) :
+    EmitsAlong (OpenNodeContext.close.{u, w} Party Δ) (fun _ => none) := by
+  intro X ons
+  funext x
+  simp only [OpenNodeContext.close, BoundaryAction.closed, PFunctor.Trace.mapPartial_apply]
+  exact (List.filterMap_eq_nil_iff.mpr fun _ _ => rfl).symm
+
+/-- Re-decorating a node applies the hom at the node and recursively below. -/
+theorem decoration_map_node {Δ₁ Δ₂ : PortBoundary}
+    (h : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₁)
+      (OpenNodeContext.{u, w} Party Δ₂))
+    {X : Type w} (rest : X → TypeTree.{w})
+    (d : Decoration (OpenNodeContext.{u, w} Party Δ₁) (TypeTree.node X rest)) :
+    Decoration.map h (TypeTree.node X rest) d =
+      ⟨h X d.1, fun x => Decoration.map h (rest x) (d.2 x)⟩ :=
+  rfl
+
+/-- Re-decorating twice is re-decorating along the composite. -/
+theorem decoration_map_map {Δ₁ Δ₂ Δ₃ : PortBoundary}
+    (g : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₂)
+      (OpenNodeContext.{u, w} Party Δ₃))
+    (f : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₁)
+      (OpenNodeContext.{u, w} Party Δ₂))
+    (spec : TypeTree.{w}) (d : Decoration (OpenNodeContext.{u, w} Party Δ₁) spec) :
+    Decoration.map g spec (Decoration.map f spec d) =
+      Decoration.map (TypeTree.Node.ContextHom.comp g f) spec d :=
+  TypeTree.Decoration.map_comp g f spec d
+
+/-- Boundary traces after a hom that emits along `g` are the `g`-relabelled
+traces. -/
+theorem boundaryTrace_map_of_emitsAlong {Δ₁ Δ₂ : PortBoundary}
+    {h : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₁)
+      (OpenNodeContext.{u, w} Party Δ₂)}
+    {g : PFunctor.Idx Δ₁.Out → Option (PFunctor.Idx Δ₂.Out)} (hg : EmitsAlong h g) :
+    ∀ {spec : TypeTree.{w}} (d : Decoration (OpenNodeContext.{u, w} Party Δ₁) spec)
+      (tr : spec.Path),
+      boundaryTrace spec (Decoration.map h spec d) tr =
+        PFunctor.TraceList.mapPartial g (boundaryTrace spec d tr)
+  | .done, _, _ => by
+    rw [boundaryTrace_done, boundaryTrace_done, PFunctor.TraceList.mapPartial_one]
+  | .node _ rest, d, ⟨x, tr⟩ => by
+    rw [decoration_map_node, boundaryTrace_node, boundaryTrace_node,
+      boundaryTrace_map_of_emitsAlong hg (d.2 x) tr, hg, PFunctor.TraceList.mapPartial_mul]
+    rfl
+
 
 end OpenNodeContext
 
