@@ -251,6 +251,12 @@ Interaction/UC/OpenProcess + Interaction/Concurrent/RoutedInterleave
    activation-preserving homs, routed interleaving with samplers, and the
    extensionality helpers the concrete model's naturality laws consume)
 
+Interaction/UC/OpenProcessInterleave -> Interaction/UC/OpenProcessCoherence
+  (silence of a composite step, the three coherence shapes — reassociation,
+   commutation, re-homing — with unit absorption, and the congruence of
+   activation equivalence under `interleave` and `mapHom`; every law of the
+   process model up to activation equivalence is an instance)
+
 Interaction/UC/OpenTheory -> Interaction/UC/OpenTheory/PlugFactorization
   -> Interaction/UC/{Emulates, OpenTheory/Family}
   (the residual-context formers and the five plug-factorization equalities

@@ -56,6 +56,7 @@ variable {Party : Type u}
 
 /-- A node-context hom preserves the activation flag of every node. Silence,
 and hence activation equivalence, is invariant under such homs. -/
+@[expose]
 def PreservesActivation {Δ₁ Δ₂ : PortBoundary}
     (h : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₁)
       (OpenNodeContext.{u, w} Party Δ₂)) : Prop :=
@@ -116,7 +117,8 @@ the equalities below rewrite through the interleaved dynamical model there.
 `implicit_reducible` (unlike `reducible`) stays invisible to simp validation and
 instance search. -/
 attribute [local implicit_reducible] PFunctor.DynSystem.expose PFunctor.DynSystem.update
-  PFunctor.DynSystem.mk' Concurrent.ProcessOver.interleaveRouted Concurrent.ProcessOver.mapContext
+  PFunctor.DynSystem.mk' Concurrent.ProcessOver.interleave Concurrent.ProcessOver.interleaveRouted
+  Concurrent.ProcessOver.mapContext OpenProcess.interleave
 
 /-! ## Extensionality -/
 
@@ -366,6 +368,102 @@ theorem mapBoundary_interleaveRouted {Δ₁ Δ₂ Δ Δ' : PortBoundary}
         (TypeTree.Node.ContextHom.comp (OpenNodeContext.map Party φ) f₂)
         (OpenNodeContext.map Party φ _ schedulerCtx) schedulerSampler route₁ route₂ :=
   mapHom_interleaveRouted p₁ p₂ f₁ f₂ schedulerCtx schedulerSampler route₁ route₂ _
+
+/-! ## Normalizing maps around plain interleavings -/
+
+/-- Re-decorating a plain interleaving post-composes both injections. -/
+theorem mapHom_interleave {Δ₁ Δ₂ Δ Δ' : PortBoundary}
+    (p₁ : OpenProcess.{u, v, w, w'} m Party Δ₁) (p₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+    (f₁ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₁)
+      (OpenNodeContext.{u, w} Party Δ))
+    (f₂ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₂)
+      (OpenNodeContext.{u, w} Party Δ))
+    (schedulerCtx : OpenNodeContext.{u, w} Party Δ (ULift.{w, 0} Bool))
+    (schedulerSampler : m (ULift.{w, 0} Bool))
+    (g : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ)
+      (OpenNodeContext.{u, w} Party Δ')) :
+    (p₁.interleave p₂ f₁ f₂ schedulerCtx schedulerSampler).mapHom g =
+      p₁.interleave p₂
+        (TypeTree.Node.ContextHom.comp g f₁) (TypeTree.Node.ContextHom.comp g f₂)
+        (g _ schedulerCtx) schedulerSampler := by
+  rw [interleave_eq_interleaveRouted, interleave_eq_interleaveRouted, mapHom_interleaveRouted]
+
+/-- Boundary adaptation of a plain interleaving post-composes both injections. -/
+theorem mapBoundary_interleave {Δ₁ Δ₂ Δ Δ' : PortBoundary}
+    (p₁ : OpenProcess.{u, v, w, w'} m Party Δ₁) (p₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+    (f₁ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₁)
+      (OpenNodeContext.{u, w} Party Δ))
+    (f₂ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₂)
+      (OpenNodeContext.{u, w} Party Δ))
+    (schedulerCtx : OpenNodeContext.{u, w} Party Δ (ULift.{w, 0} Bool))
+    (schedulerSampler : m (ULift.{w, 0} Bool)) (φ : PortBoundary.Hom Δ Δ') :
+    (p₁.interleave p₂ f₁ f₂ schedulerCtx schedulerSampler).mapBoundary φ =
+      p₁.interleave p₂
+        (TypeTree.Node.ContextHom.comp (OpenNodeContext.map Party φ) f₁)
+        (TypeTree.Node.ContextHom.comp (OpenNodeContext.map Party φ) f₂)
+        (OpenNodeContext.map Party φ _ schedulerCtx) schedulerSampler :=
+  mapHom_interleave p₁ p₂ f₁ f₂ schedulerCtx schedulerSampler _
+
+/-- Re-decorating the left operand before a plain interleaving pre-composes
+the left injection. -/
+theorem interleave_mapHom_left {Δ₁ Δ₁' Δ₂ Δ : PortBoundary}
+    (p₁ : OpenProcess.{u, v, w, w'} m Party Δ₁) (p₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+    (g₁ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₁)
+      (OpenNodeContext.{u, w} Party Δ₁'))
+    (f₁ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₁')
+      (OpenNodeContext.{u, w} Party Δ))
+    (f₂ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₂)
+      (OpenNodeContext.{u, w} Party Δ))
+    (schedulerCtx : OpenNodeContext.{u, w} Party Δ (ULift.{w, 0} Bool))
+    (schedulerSampler : m (ULift.{w, 0} Bool)) :
+    (p₁.mapHom g₁).interleave p₂ f₁ f₂ schedulerCtx schedulerSampler =
+      p₁.interleave p₂ (TypeTree.Node.ContextHom.comp f₁ g₁) f₂
+        schedulerCtx schedulerSampler := by
+  have hproc :
+      (p₁.toProcess.mapContext g₁).interleave p₂.toProcess f₁ f₂ schedulerCtx =
+        p₁.toProcess.interleave p₂.toProcess
+          (TypeTree.Node.ContextHom.comp f₁ g₁) f₂ schedulerCtx :=
+    ProcessOver.interleave_mapContext_left p₁.toProcess p₂.toProcess g₁ f₁ f₂ schedulerCtx
+  cases p₁ with | mk Proc₁ step₁ stepSampler₁ =>
+  cases p₂ with | mk Proc₂ step₂ stepSampler₂ =>
+  simp only [mapHom, interleave]
+  exact ext_of_step_eq (eq_of_heq (heq_step_of_processOver_eq hproc)) HEq.rfl
+
+/-- Re-decorating the right operand before a plain interleaving pre-composes
+the right injection. -/
+theorem interleave_mapHom_right {Δ₁ Δ₂ Δ₂' Δ : PortBoundary}
+    (p₁ : OpenProcess.{u, v, w, w'} m Party Δ₁) (p₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+    (g₂ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₂)
+      (OpenNodeContext.{u, w} Party Δ₂'))
+    (f₁ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₁)
+      (OpenNodeContext.{u, w} Party Δ))
+    (f₂ : TypeTree.Node.ContextHom
+      (OpenNodeContext.{u, w} Party Δ₂')
+      (OpenNodeContext.{u, w} Party Δ))
+    (schedulerCtx : OpenNodeContext.{u, w} Party Δ (ULift.{w, 0} Bool))
+    (schedulerSampler : m (ULift.{w, 0} Bool)) :
+    p₁.interleave (p₂.mapHom g₂) f₁ f₂ schedulerCtx schedulerSampler =
+      p₁.interleave p₂ f₁ (TypeTree.Node.ContextHom.comp f₂ g₂)
+        schedulerCtx schedulerSampler := by
+  have hproc :
+      p₁.toProcess.interleave (p₂.toProcess.mapContext g₂) f₁ f₂ schedulerCtx =
+        p₁.toProcess.interleave p₂.toProcess f₁
+          (TypeTree.Node.ContextHom.comp f₂ g₂) schedulerCtx :=
+    ProcessOver.interleave_mapContext_right p₁.toProcess p₂.toProcess g₂ f₁ f₂ schedulerCtx
+  cases p₁ with | mk Proc₁ step₁ stepSampler₁ =>
+  cases p₂ with | mk Proc₂ step₂ stepSampler₂ =>
+  simp only [mapHom, interleave]
+  exact ext_of_step_eq (eq_of_heq (heq_step_of_processOver_eq hproc)) HEq.rfl
 
 end OpenProcess
 
