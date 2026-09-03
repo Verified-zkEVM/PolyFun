@@ -299,6 +299,25 @@ unused; the same statement over a `def` interface, or over a generic `P`, matche
 unaffected. State canaries and downstream lemmas over a generic or `def`-declared interface, or
 rewrite explicitly, rather than "fixing" the lemma.
 
+### 11b. `vcgen` finds no spec unless the `Std.Internal.Do` root is imported
+
+`vcgen` consults the `@[spec]` database, and `Spec.bind` / `Spec.pure` live in
+`Std.Internal.Do.Triple.SpecLemmas`. A file that imports only `Std.Internal.Do.WP.Basic`
+(or reaches the stack through such a module) gets `No spec found for program …` on every
+`do` block, with an empty candidate list. Import the root `Std.Internal.Do`; the bridge
+modules under `PolyFun/Control/Monad/*/WP.lean` do so for this reason. A leaf with no
+registered specification is left as a verification condition with
+`vcgen -errorOnMissingSpec`.
+
+### 11c. Projections re-synthesize instance-implicit structure arguments
+
+`Triple`, `WPConjunctive`, and `LawfulWPMonadAttach` take their `WP` / `WPMonad` as
+instance-implicit parameters. Projecting (`h.le_wp`) or constructing (`⟨h⟩`, `refine ⟨…⟩`) a
+value whose interpretation is a *non-instance* construction (`MAlgOrdered.toWP α`,
+`MonadAttach.toWPMonadDemonic`) makes Lean synthesize the instance afresh and fail. Bind the
+construction first — `let inst := MAlgOrdered.toWP α` — so it is found as a local instance;
+`let`, not `have`, so it stays definitionally the term in the statement.
+
 ### 12. `Std.Do` imports are quarantined
 
 Only `PolyFun/Control/Do/Basic.lean`, `PolyFun/PFunctor/Free/Do.lean`, and
