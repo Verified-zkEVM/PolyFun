@@ -246,16 +246,18 @@ Interaction/Concurrent/Process -> Interaction/Concurrent/RoutedInterleave
 
 Interaction/UC/OpenProcess + Interaction/Concurrent/RoutedInterleave
   -> Interaction/UC/OpenProcessInterleave
-  -> Interaction/UC/OpenProcessModel
   (re-decoration of open processes along arbitrary node-context homs,
-   activation-preserving homs, routed interleaving with samplers, and the
-   extensionality helpers the concrete model's naturality laws consume)
+   activation-preserving homs, routed interleaving with samplers, the
+   normalization equalities pushing re-decoration into the injections, and
+   the extensionality helpers the concrete model's naturality laws consume)
 
-Interaction/UC/OpenProcessInterleave -> Interaction/UC/OpenProcessCoherence
+Interaction/UC/OpenProcessInterleave
+  -> Interaction/UC/OpenProcessCoherence
+  -> Interaction/UC/OpenProcessModel
   (silence of a composite step, the three coherence shapes — reassociation,
    commutation, re-homing — with unit absorption, and the congruence of
    activation equivalence under `interleave` and `mapHom`; every law of the
-   process model up to activation equivalence is an instance)
+   process model up to activation equivalence is one instance)
 
 Interaction/UC/OpenTheory -> Interaction/UC/OpenTheory/PlugFactorization
   -> Interaction/UC/{Emulates, OpenTheory/Family}

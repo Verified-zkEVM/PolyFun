@@ -162,6 +162,33 @@ example {m : Type → Type} {Party : Type} {Δ₁ Δ₂ Δ : UC.PortBoundary}
     UC.OpenProcessActivationEquiv (p₁.interleave p₂ f₁ f₂ c σ) (p₂.interleave p₁ g₁ g₂ d τ) :=
   UC.interleave_comm_activationEquiv p₁ p₂ σ τ hf₁ hf₂ hg₁ hg₂ hc hd
 
+/-! ## Traced laws of the process model -/
+
+example {m : Type → Type} {Party : Type} (σ : m (ULift Bool)) {Δ₁ Γ₁ Γ₂ Δ₃ : UC.PortBoundary}
+    (W₁ : UC.OpenProcess m Party (UC.PortBoundary.tensor Δ₁ Γ₁))
+    (W₂ : UC.OpenProcess m Party
+      (UC.PortBoundary.tensor (UC.PortBoundary.swap Γ₁) Γ₂))
+    (W₃ : UC.OpenProcess m Party
+      (UC.PortBoundary.tensor (UC.PortBoundary.swap Γ₂) Δ₃)) :
+    UC.OpenProcessActivationEquiv
+      ((UC.openTheory Party m σ).wire ((UC.openTheory Party m σ).wire W₁ W₂) W₃)
+      ((UC.openTheory Party m σ).wire W₁ ((UC.openTheory Party m σ).wire W₂ W₃)) :=
+  UC.openTheory_wire_assoc_activation_equiv Party m σ W₁ W₂ W₃
+
+example {m : Type → Type} {Party : Type} (σ : m (ULift Bool)) {Δ₁ Δ₂ Γ Δ₃ : UC.PortBoundary}
+    (W₁ : UC.OpenProcess m Party Δ₁)
+    (W₂ : UC.OpenProcess m Party (UC.PortBoundary.tensor Δ₂ Γ))
+    (W₃ : UC.OpenProcess m Party
+      (UC.PortBoundary.tensor (UC.PortBoundary.swap Γ) Δ₃)) :
+    UC.OpenProcessActivationEquiv
+      ((UC.openTheory Party m σ).wire
+        (UC.OpenProcess.mapBoundary (UC.PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Γ).symm.toHom
+          ((UC.openTheory Party m σ).par W₁ W₂))
+        W₃)
+      (UC.OpenProcess.mapBoundary (UC.PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃).symm.toHom
+        ((UC.openTheory Party m σ).par W₁ ((UC.openTheory Party m σ).wire W₂ W₃))) :=
+  UC.openTheory_wire_par_superpose_activation_equiv Party m σ W₁ W₂ W₃
+
 /-! ## Plug factorization laws -/
 
 example {T : UC.OpenTheory} [UC.OpenTheory.HasPlugFactorization T]
