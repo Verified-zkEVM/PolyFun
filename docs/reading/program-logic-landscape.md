@@ -36,7 +36,8 @@ quantitative carrier bridges to `MAlgOrdered` by `rfl`), and Bluebell's `wp` is
 a BI-valued sibling. PolyFun therefore owns the *handler/algebra-parameterized*
 theory over the polynomial substrate, and each downstream picks its carrier.
 PolyFun takes no Loom2 or Iris dependency and does not pick between the
-substrates; core `Std.Do` is used only behind a two-file quarantine.
+substrates; core's `Std.Do` / `Std.Internal.Do` stacks are used only behind the
+two-tier quarantine of `scripts/check-modules.sh`.
 
 ## The core (implemented)
 
@@ -74,9 +75,19 @@ substrates; core `Std.Do` is used only behind a two-file quarantine.
   `Handler`; soundness `wpFold_le_wpVia` / `wpFold_eq_wpVia` (the generic
   engine behind VCVio's `HandlerSpecs` pattern); coherence of demonic/angelic
   folds with `AllOutputs`/`SomeOutput`.
+- `Control/Monad/Algebra/WP.lean`, `Control/Monad/Support/WP.lean`,
+  `Control/Monad/Hom/WP.lean` — the bridges to core's lattice-generic stack
+  (`Std.Internal.Do`, public as `Std.WP` from v4.35, driven by `vcgen`):
+  `MAlgOrdered.toWPMonad` for Mathlib-lattice carriers, the demonic and angelic
+  `WPMonad` interpretations of exact support, conjunctivity of the demonic one,
+  `MonadAttach.LawfulWPMonadAttach` (core's `Std.WP.LawfulWPMonadAttach` from
+  v4.35) with `support_subset_of_wp` / `allOutputs_of_wp`, and transport along
+  monad morphisms (cslib's `IsMonadHom` or PolyFun's bundled `m →ᵐ n`). These are the
+  canonical interface; `PolyFunTest/Do/{Algebra,Support}.lean` run `vcgen`
+  through them.
 - `Control/Do/Basic.lean` + `PFunctor/Free/Do.lean` — the core-`Std.Do`
-  quarantine: `MonadHom.transportWP(Monad)`, `MonadAttach.toWP(Monad)`,
-  `toWPSound` plus `support_subset_of_wp`/`allOutputs_of_wp` (any `WPSound`
+  quarantine: `MonadHom.transportSPredWP(Monad)`, `MonadAttach.toWP(Monad)`,
+  `toWPSound` plus `support_subset_of_wpSPred`/`allOutputs_of_wpSPred` (any `WPSound`
   triple becomes a support fact),
   scoped demonic `WP (FreeM P) .pure` instances, and the `Spec.lift` `@[spec]`
   lemma; `mvcgen` decomposes `do`-programs over `FreeM` with uninterpreted
@@ -132,15 +143,15 @@ implemented).
   invariant inside the state relation, since `ITree` has no possible-output
   predicate for a postcondition to range over. wp-congruence under `WeakBisim`
   remains open.
-- The public angelic WP bridge is **blocked at the current Lean 4.34.0 pin**, not
+- The angelic WP bridge exists on the lattice-generic stack
+  (`MonadAttach.toWPMonadAngelic`); on the older `Std.Do` stack it is **blocked**, not
   merely unwritten.
   `Std.Do.PredTrans` carries conjunctivity as a structure field, stated as a
   bi-entailment; `AllOutputs` distributes over `∧` both ways but `SomeOutput` only
-  left-to-right, so there is no angelic `Std.Do.WP`. Core's newer stack makes
-  conjunctivity an opt-in `WPConjunctive`. That class asks for the direction angelic
-  support fails; optionality in the public Lean 4.35 `Std.WP` API unblocks the base
-  WP bridge, which must omit the class. PolyFun does not import the current pin's
-  `Std.Internal.Do` as a stopgap.
+  left-to-right, so there is no angelic `Std.Do.WP`. Core's lattice-generic stack
+  makes conjunctivity an opt-in `WPConjunctive`, which asks for the direction
+  angelic support fails, so the angelic bridge omits the class and only the
+  demonic one is conjunctive (`toWPMonadDemonic_wpConjunctive`).
   `PolyFunTest/Control/MonadAttach.lean` pins both directions and the failure.
 - The ε-additive approximate-triple algebra (ArkLib's sequencing blocker).
 - Optional `MonadFinSupport` (Finset-valued support, generalizing VCVio's
