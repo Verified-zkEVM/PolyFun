@@ -91,11 +91,11 @@ schema, and a per-event reaction. Concrete models (`MomentaryCorruption`,
 a future `StaticCorruption`, etc.) are values of this type.
 
 The three fields are independent of any particular party identity:
-`Event` and `State` may or may not be keyed by `MachineId`. A model
-that is, exposes `MachineId`-keyed events through its own concrete
+`Event` and `State` may or may not be keyed by a machine identity type.
+A model that is, exposes identity-keyed events through its own concrete
 `Event` constructor (e.g.
-`MomentaryCorruption.Alphabet.compromise (m : MachineId Sid Pid)`),
-not through a parameter on `CorruptionModel`.
+`MomentaryCorruption.Alphabet.compromise (m : M)`), not through a
+parameter on `CorruptionModel`.
 -/
 structure CorruptionModel (m : Type → Type w') [Pure m] where
   /-- The event alphabet recognised by the model. -/
@@ -118,8 +118,8 @@ how environment events update the bookkeeping state.
 The `OpenProcess` process-state universe `v` is exposed; the move
 space is fixed to `Type` (matching `M.State`). `Party` is whatever
 the user pairs the model with. For the canonical `MomentaryCorruption`
-instantiation, `Party` will be `MachineId Sid Pid` and the model fixes
-`Event := MomentaryCorruption.Alphabet Sid Pid`.
+instantiation, `Party` is the machine identity type `M` and the model
+fixes `Event := MomentaryCorruption.Alphabet M`.
 -/
 abbrev Process {m : Type → Type w'} [Pure m] (M : CorruptionModel m) (Party : Type u)
     (Δ : PortBoundary) :=

@@ -116,7 +116,6 @@ public import PolyFun.Interaction.UC.EnvOpenProcess
 public import PolyFun.Interaction.UC.GlobalSubroutine
 public import PolyFun.Interaction.UC.Interface
 public import PolyFun.Interaction.UC.Leakage
-public import PolyFun.Interaction.UC.MachineId
 public import PolyFun.Interaction.UC.MomentaryCorruption
 public import PolyFun.Interaction.UC.Notation
 public import PolyFun.Interaction.UC.OpenProcess
