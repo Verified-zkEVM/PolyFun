@@ -37,7 +37,7 @@ the activation-equivalence factorization theorems in
 
 | Paper surface | PolyFun surface | Status |
 | --- | --- | --- |
-| symmetric monoidal category `C` of interactive systems | `OpenTheory`, with `par`, `wire`, and a granular lawfulness ladder | Candidate model; the free syntax models satisfy the strict laws, while `openTheory` is only `IsLawful` strictly, satisfies the monoidal, traced, and compact-closed laws up to `OpenProcessActivationEquiv`, and satisfies `par_assoc`, `par_comm`, `wire_comm`, and the plug laws up to `OpenProcessSamplerEquiv R` under scheduler-transport hypotheses; unit and zig-zag laws have no sampler-level version. `HasPlugFactorization` isolates the five factorization equalities the composition theorems consume; it is the strict target a process model can honestly aim for, since unit and snake laws fail at strong sampler equivalence |
+| symmetric monoidal category `C` of interactive systems | `OpenTheory`, with `par`, `wire`, and a granular lawfulness ladder | Candidate model; the free syntax models satisfy the strict laws, while `openTheory` is only `IsLawful` strictly, satisfies the monoidal, traced, and compact-closed laws up to `OpenProcessActivationEquiv`, and satisfies `par_assoc`, `par_comm`, `wire_comm`, and the plug laws up to `OpenProcessSamplerEquiv R` under scheduler-transport hypotheses; unit and zig-zag laws have no sampler-level version. Its quotient by activation equivalence is a strict `HasPlugWireFactor` theory (`OpenProcessQuotient`). `HasPlugFactorization` isolates the five factorization equalities the composition theorems consume; it is the strict target a process model can honestly aim for, since unit and snake laws fail at strong sampler equivalence |
 | backdoor category `C_bd` | adversarial ports can be represented by ordinary typed boundary components | Representation strategy only; no equivalence with the paper's backdoor construction or quotient is proved |
 | nested `D_real ⊆ D_bd` | ordered `SubTheory` values | Structural carrier plus `realizableSubTheory` / `generatedRealizableSubTheory`; corruption and concrete efficiency still require explicit instances |
 | corruption restriction defining `D_real` | `CorruptionModel`, `MomentaryCorruption` | Vocabulary only; no bridge to `SubTheory.mem` |
@@ -64,16 +64,46 @@ pointwise membership, but polynomial-time membership will normally be a
 custom family-level predicate because one witness and one bound must control
 all security parameters.
 
+## Quotient Theories
+
+`OpenTheory.quotient T E` quotients a theory by a congruence
+`E : OpenTheory.Congruence T` (a setoid on each boundary's objects preserved by
+the operations). A theory whose coherence laws hold only up to `E` satisfies the
+laws modulo `E` (`IsLawfulMod E`, …, `HasPlugWireFactorMod E`,
+`HasPlugFactorizationMod E`), and each of those lifts to the strict class on
+the quotient; a strict theory satisfies every law modulo any congruence. The
+free syntax model is exactly this construction: `Expr.theory` is the quotient
+of `Raw.theory` by `Raw.congruence`, whose laws modulo the congruence are the
+constructors of `Raw.Equiv`.
+
+Observations cross the quotient by `Observation.comap` and
+`Observation.descend`; equality of classes pulls back to the congruence at the
+empty boundary (`Observation.comap_eq_rel`), and `Emulates.quotient_iff`
+identifies emulation of classes with emulation of representatives. Because
+`RespectsFactorization` pulls back along `comap`, a theory whose laws hold
+modulo `E` gets the whole `Emulates` composition suite at any observation that
+factors through its quotient, without carrying coherence hypotheses through
+every client. `OpenProcessQuotient` does this for the process models: the
+activation quotient `openTheory ⧸ activationCongruence` is a strict
+`HasPlugWireFactor` theory, the sampler quotient satisfies
+`HasPlugFactorization` under the three scheduler-transport facts, and the
+mass-aware sampler quotient (whose congruence also fixes scheduler mass)
+satisfies it under `BinaryScheduler.IsCoherent` alone. `Observation.activation`
+and `Observation.sampler` are the pull-backs of equality on the respective
+quotients.
+
 ## Long-Term Behavior Carrier
 
 The family construction does not choose between process presentations and an
 extensional behavior carrier. VCVio's long-term design proposes mapping open
 processes into cofree behavior and defining a lawful `OpenTheory` there, so
 coherence is proved once by finality instead of carried as activation
-equivalences through every client. `OpenTheory.pi`, `Observation`, and
-`EmulatesWithin` are intentionally parametric in that choice: the same
-asymptotic observation bridge should consume the behavior theory when it
-exists.
+equivalences through every client. Until that carrier exists, the quotient of
+the process model by its structural equivalence is the interim carrier: it is
+strictly lawful where the process model is lawful only up to equivalence.
+`OpenTheory.pi`, `Observation`, and `EmulatesWithin` are intentionally
+parametric in that choice: the same asymptotic observation bridge should
+consume the behavior theory when it exists.
 
 This is not a license to identify activation equivalence with distributional
 equivalence. The behavior map needs a named adequacy theorem into VCVio's

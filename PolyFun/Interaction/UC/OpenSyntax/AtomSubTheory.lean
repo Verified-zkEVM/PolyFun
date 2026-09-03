@@ -134,17 +134,30 @@ done once, in the induction principle.
 def interpretSubTheory (Atom : PortBoundary → Type u) {T : OpenTheory.{v}}
     [OpenTheory.HasPlugWireFactor T] (D : SubTheory T)
     (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) : SubTheory (Expr.theory Atom) where
-  mem e := D.mem (e.interpret T interp)
-  mem_map φ h := by simpa only [Expr.interpret_map] using D.mem_map φ h
-  mem_par h₁ h₂ := by simpa only [Expr.interpret_par] using D.mem_par h₁ h₂
-  mem_wire h₁ h₂ := by simpa only [Expr.interpret_wire] using D.mem_wire h₁ h₂
+  mem e := D.mem (Expr.interpret e T interp)
+  mem_map := by
+    intro Δ₁ Δ₂ W φ h
+    rw [Expr.theory_map, Expr.interpret_map φ W]
+    exact D.mem_map φ h
+  mem_par := by
+    intro Δ₁ Δ₂ W₁ W₂ h₁ h₂
+    rw [Expr.theory_par, Expr.interpret_par W₁ W₂]
+    exact D.mem_par h₁ h₂
+  mem_wire := by
+    intro Δ₁ Γ Δ₂ W₁ W₂ h₁ h₂
+    rw [Expr.theory_wire, Expr.interpret_wire W₁ W₂]
+    exact D.mem_wire h₁ h₂
 
 instance isPlugClosed_interpretSubTheory (Atom : PortBoundary → Type u) {T : OpenTheory.{v}}
     [OpenTheory.HasPlugWireFactor T] (D : SubTheory T)
     (interp : ∀ {Δ : PortBoundary}, Atom Δ → T.Obj Δ) :
     (interpretSubTheory Atom D interp).IsPlugClosed where
-  mem_plug h₁ h₂ := by
-    simpa only [Expr.interpret_plug] using SubTheory.IsPlugClosed.mem_plug h₁ h₂
+  mem_plug := by
+    intro Δ W K h₁ h₂
+    rw [Expr.theory_plug]
+    change D.mem (Expr.interpret (Expr.plug W K) T interp)
+    rw [Expr.interpret_plug W K]
+    exact SubTheory.IsPlugClosed.mem_plug h₁ h₂
 
 instance isStructural_interpretSubTheory (Atom : PortBoundary → Type u) {T : OpenTheory.{v}}
     [OpenTheory.HasPlugWireFactor T] (D : SubTheory T) [D.IsStructural]

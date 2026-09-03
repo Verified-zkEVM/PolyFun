@@ -278,6 +278,28 @@ instance respectsFactorization_of_hasPlugFactorization [OpenTheory.HasPlugFactor
   close_wire_left W₁ W₂ K := by rw [OpenTheory.close_wire_left]; exact Obs.equiv.refl _
   close_wire_right W₁ W₂ K := by rw [OpenTheory.close_wire_right]; exact Obs.equiv.refl _
 
+/-- Respecting plug commutation transfers along observations with the same
+relation. -/
+theorem Observation.RespectsPlugComm.of_rel_iff {Obs Obs' : Observation T}
+    [Obs'.RespectsPlugComm] (h : ∀ c₁ c₂ : T.Closed, Obs.rel c₁ c₂ ↔ Obs'.rel c₁ c₂) :
+    Obs.RespectsPlugComm where
+  plug_comm W K := (h _ _).mpr (Observation.RespectsPlugComm.plug_comm (Obs := Obs') W K)
+
+/-- Respecting factorization transfers along observations with the same
+relation. -/
+theorem Observation.RespectsFactorization.of_rel_iff {Obs Obs' : Observation T}
+    [Obs'.RespectsFactorization] (h : ∀ c₁ c₂ : T.Closed, Obs.rel c₁ c₂ ↔ Obs'.rel c₁ c₂) :
+    Obs.RespectsFactorization where
+  toRespectsPlugComm := Observation.RespectsPlugComm.of_rel_iff h
+  close_par_left W₁ W₂ K :=
+    (h _ _).mpr (Observation.RespectsFactorization.close_par_left (Obs := Obs') W₁ W₂ K)
+  close_par_right W₁ W₂ K :=
+    (h _ _).mpr (Observation.RespectsFactorization.close_par_right (Obs := Obs') W₁ W₂ K)
+  close_wire_left W₁ W₂ K :=
+    (h _ _).mpr (Observation.RespectsFactorization.close_wire_left (Obs := Obs') W₁ W₂ K)
+  close_wire_right W₁ W₂ K :=
+    (h _ _).mpr (Observation.RespectsFactorization.close_wire_right (Obs := Obs') W₁ W₂ K)
+
 /-! ## UC composition theorems -/
 
 namespace Emulates
