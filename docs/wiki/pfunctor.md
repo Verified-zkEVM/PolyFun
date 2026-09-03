@@ -203,10 +203,17 @@ supplies the inductive type (constructors `pure` / `liftBind`), the `bind` / `ma
 / `Monad` / `LawfulMonad` / `MonadLift` instances, the `@[induction_eliminator]
 induction` principle (non-pure case `lift_bind`), the shape lift `lift : P.A →
 FreeM (P.B a)` and object lift `liftObj : P.Obj α → FreeM α`, and the `liftM`
-interpreter with its `Interprets` universal property. PolyFun layers its own API
-(`mapLens`, `liftM` monad-hom and naturality lemmas, `toW` / `equivWOfIsEmpty`, paths,
-displayed families, indexed-family packing, weakest preconditions, roll bounds)
-on top of the upstream type.
+interpreter with its `Interprets` universal property. Between cslib and PolyFun sits
+`ToCslib/Data/PFunctor/Free/`, the staging area for cslib-bound additions: the
+opt-in normal-form case principle `FreeM.cases`, `map_pure` / `map_bind` and their
+constructor spellings, `bind_eq`, the catamorphism `foldFreeM` with `foldFreeM_unique`,
+handler fusion `liftM_comp`, the identity fold `liftM_lift_eq_self`, naturality
+`map_liftM` along any `pure`/`bind`-preserving function, and commutation of `liftM`
+with list loops (`liftM_forIn'`, `liftM_forM`, `liftM_foldlM`, `liftM_mapM`).
+`PolyFun.PFunctor.Free.Basic` re-exports it and layers PolyFun's own API
+(`mapLens`, the bundled `liftMHom` monad-hom and its universal property,
+`toW` / `equivWOfIsEmpty`, paths, displayed families, indexed-family packing,
+weakest preconditions, roll bounds) on top.
 
 | File | Purpose |
 |------|---------|

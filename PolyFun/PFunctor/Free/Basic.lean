@@ -8,13 +8,16 @@ module
 public import PolyFun.Control.Monad.Hom
 public import PolyFun.PFunctor.Basic
 public import PolyFun.PFunctor.Lens.Basic
-public import Cslib.Foundations.Data.PFunctor.Free
+public import ToCslib.Data.PFunctor.Free.Basic
 
 /-!
 # Free Monad of a Polynomial Functor
 
-We define the free monad on a **polynomial functor** (`PFunctor`), and prove some basic properties.
-
+PolyFun's layer over cslib's free monad `PFunctor.FreeM`: the W-type presentations, root
+predicates, transport along lenses, and the bundled monad-homomorphism form of `FreeM.liftM`
+with its universal property and naturality. The purely free-monadic lemmas that used to live
+here (`map_pure`, `map_bind`, `foldFreeM`, `liftM_comp`, `liftM_lift_eq_self`, …) are staged for
+cslib in `ToCslib.Data.PFunctor.Free.Basic`, which this module re-exports.
 -/
 
 @[expose] public section
@@ -36,31 +39,6 @@ namespace PFunctor
 namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {α β γ : Type v}
-
-/-! ## Public constructor equations -/
-
-/-- Mapping a value through a leaf is visible through an ordinary module import,
-with the leaf written using the public `Pure` operation. -/
-@[simp]
-theorem map_pure {X : Type uβ} {Y : Type uγ} (f : X → Y) (x : X) :
-    FreeM.map (P := P) f (pure x : FreeM P X) = (pure (f x) : FreeM P Y) :=
-  rfl
-
-/-- Mapping a value through a query preserves its position and maps every
-continuation. -/
-theorem map_liftBind {X : Type uβ} {Y : Type uγ} (f : X → Y)
-    (a : P.A) (rest : P.B a → FreeM P X) :
-    FreeM.map f (FreeM.liftBind a rest) =
-      FreeM.liftBind a (fun direction ↦ FreeM.map f (rest direction)) :=
-  rfl
-
-/-- Mapping through a query written as `lift` followed by `bind` maps every
-continuation without requiring clients to expose `liftBind`. -/
-theorem map_lift_bind {X : Type uβ} {Y : Type uγ} (f : X → Y)
-    (a : P.A) (rest : P.B a → FreeM P X) :
-    FreeM.map f ((FreeM.lift a).bind rest) =
-      (FreeM.lift a).bind (fun direction ↦ FreeM.map f (rest direction)) :=
-  rfl
 
 /-! ## Fixed-point presentation -/
 
@@ -170,24 +148,6 @@ def equivWOfIsEmpty [IsEmpty α] : FreeM P α ≃ P.W where
   right_inv w := by
     induction w with
     | mk a f ih => exact congrArg (WType.mk a) (funext ih)
-
-lemma monad_bind_def (x : FreeM P α) (g : α → FreeM P β) :
-    x >>= g = FreeM.bind x g := rfl
-
-/-- Mapping after a free-monad bind can be moved into each continuation. -/
-theorem bind_map_right {δ : Type uδ} {β : Type uβ} {γ : Type uγ}
-    (mx : FreeM P δ) (g : δ → FreeM P β) (f : β → γ) :
-    FreeM.bind mx (fun x => FreeM.map f (g x)) =
-      FreeM.map f (FreeM.bind mx g) := by
-  simpa only [FreeM.bind_pure_comp] using
-    (FreeM.bind_assoc mx g (pure ∘ f)).symm
-
-/-- Mapping after a free-monad bind distributes through its continuation. -/
-theorem map_bind {δ : Type uδ} {β : Type uβ} {γ : Type uγ}
-    (f : β → γ) (mx : FreeM P δ) (g : δ → FreeM P β) :
-    FreeM.map f (FreeM.bind mx g) =
-      FreeM.bind mx (fun x ↦ FreeM.map f (g x)) :=
-  (bind_map_right mx g f).symm
 
 section mapLens
 
@@ -307,10 +267,8 @@ omit [LawfulMonad m] [LawfulMonad n] in
 `FreeM.liftM s` is the fold of the post-composed handler `fun a => φ (s a)` — the value-level
 naturality square of the universal fold. -/
 @[simp] theorem liftM_natural (φ : m →ᵐ n) (x : FreeM P α) :
-    φ (FreeM.liftM s x) = FreeM.liftM (fun a => φ (s a)) x := by
-  induction x with
-  | pure x => exact φ.mmap_pure x
-  | lift_bind a r ih => simp [ih]
+    φ (FreeM.liftM s x) = FreeM.liftM (fun a => φ (s a)) x :=
+  FreeM.map_liftM (fun x => φ x) φ.mmap_pure φ.mmap_bind s x
 
 /-- Bundled form of `liftM_natural`: composing the fold monad-homomorphism `FreeM.liftMHom s` with
 a monad morphism `φ` is the fold of the post-composed handler. -/
@@ -342,38 +300,9 @@ section idFold
 
 variable {α : Type uB}
 
-/-- The fold with the canonical re-lifting handler `FreeM.lift` is the identity: interpreting each
-position back into the free monad recovers the tree (equivalently `FreeM.liftMHom FreeM.lift` is
-the identity homomorphism, `liftMHom_lift_eq_id`). The upstream form of `simulateQ` of the
-identity handler being the identity — a corollary of the universal property. -/
-@[simp] theorem liftM_lift_eq_self (x : FreeM P α) : FreeM.liftM FreeM.lift x = x := by
-  induction x with
-  | pure y => rfl
-  | lift_bind a r ih => simp [ih]
-
 theorem liftMHom_lift_eq_id :
     FreeM.liftMHom (P := P) (m := FreeM P) FreeM.lift = MonadHom.id (FreeM P) :=
   MonadHom.ext' fun _ x => by simp
-
-/-- Interpreting a free tree by a free handler and then interpreting the
-resulting free tree by an arbitrary monadic handler is the same as interpreting
-once by their pointwise Kleisli composite. -/
-theorem liftM_comp {Q : PFunctor.{uA₂, uB}} {m : Type uB → Type v}
-    [Monad m] [LawfulMonad m]
-    (x : FreeM P α)
-    (first : (a : P.A) → FreeM Q (P.B a))
-    (second : (a : Q.A) → m (Q.B a)) :
-    (x.liftM first).liftM second =
-      x.liftM (fun a => (first a).liftM second) := by
-  induction x with
-  | pure _ => rfl
-  | lift_bind a rest ih =>
-      change
-        ((first a >>= fun b => (rest b).liftM first).liftM second) =
-          (first a).liftM second >>= fun b =>
-            (rest b).liftM (fun a => (first a).liftM second)
-      rw [FreeM.liftM_bind]
-      exact congrArg (fun k => (first a).liftM second >>= k) (funext ih)
 
 end idFold
 

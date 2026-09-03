@@ -48,7 +48,8 @@ git add path/to/newfile.lean
 ```
 
 `./scripts/update-lib.sh` only considers tracked files, and fails fast if
-untracked `PolyFun/**/*.lean` files are present.
+untracked `PolyFun/**/*.lean` files are present; `./scripts/update-lib.sh ToCslib`
+does the same for the staging library's umbrella `ToCslib.lean`.
 
 ### Lean-heavy refactors or cleanup
 
@@ -84,10 +85,11 @@ python3 ./scripts/test-docs-integrity.py
 python3 ./scripts/check-docs-integrity.py
 ```
 
-If you specifically need to regenerate `PolyFun.lean`, use:
+If you specifically need to regenerate `PolyFun.lean` or `ToCslib.lean`, use:
 
 ```bash
 ./scripts/update-lib.sh
+./scripts/update-lib.sh ToCslib
 ```
 
 To run the environment linters or the test library on their own:

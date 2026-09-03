@@ -324,7 +324,7 @@ theorem map_completeFork_found (occurrence : Occurrence target program n)
           first := first
           second := second })) occurrence.complete := by
   rw [completeFork_found]
-  rw [← bind_map_right]
+  rw [map_bind]
   apply congrArg (FreeM.bind occurrence.complete)
   funext first
   rw [← FreeM.comp_map]
@@ -376,7 +376,7 @@ theorem completeFork_prependSame {next : P.B target → FreeM P α} (answer : P.
       simp only [Occurrence.resume, FreeM.map]
       apply congrArg (FreeM.liftBind target)
       funext firstAnswer
-      rw [← bind_map_right]
+      rw [map_bind]
       apply congrArg (FreeM.bind (withPath (occurrence.resume firstAnswer)))
       funext firstSuffix
       apply congrArg (FreeM.liftBind target)
@@ -398,7 +398,7 @@ theorem completeFork_prependOther {a : P.A} {next : P.B a → FreeM P α} (hne :
       simp only [Occurrence.resume, FreeM.map]
       apply congrArg (FreeM.liftBind target)
       funext firstAnswer
-      rw [← bind_map_right]
+      rw [map_bind]
       apply congrArg (FreeM.bind (withPath (occurrence.resume firstAnswer)))
       funext firstSuffix
       apply congrArg (FreeM.liftBind target)
@@ -572,7 +572,7 @@ theorem splitAt_bind_complete [DecidableEq P.A] (target : P.A) : (program : Free
             change FreeM.bind (splitAt a (next answer) n)
                 (fun result => FreeM.map addPrefix (Split.complete result)) =
               FreeM.map addPrefix (withPath (next answer))
-            rw [bind_map_right, ih answer n]
+            rw [← map_bind, ih answer n]
       · simp only [splitAt, dite_eq_right h, withPath]
         apply congrArg (FreeM.liftBind a)
         funext answer
@@ -588,7 +588,7 @@ theorem splitAt_bind_complete [DecidableEq P.A] (target : P.A) : (program : Free
         change FreeM.bind (splitAt target (next answer) n)
             (fun result => FreeM.map addPrefix (Split.complete result)) =
           FreeM.map addPrefix (withPath (next answer))
-        rw [bind_map_right, ih answer n]
+        rw [← map_bind, ih answer n]
 
 /-- Erasing validity certificates from `splitAtValid` recovers `splitAt`. -/
 theorem map_val_splitAtValid [DecidableEq P.A] (target : P.A) : (program : FreeM P α) → (n : Nat) →
@@ -683,7 +683,7 @@ theorem forkAt_liftBind_same_succ [DecidableEq P.A] (target : P.A)
       rw [← FreeM.bind_pure_comp, FreeM.bind_assoc]
       rfl]
   simp_rw [Split.completeFork_prependSame]
-  rw [bind_map_right]
+  rw [← map_bind]
 
 theorem forkAt_liftBind_other [DecidableEq P.A] {target a : P.A}
     (hne : a ≠ target) (next : P.B a → FreeM P α) (n : Nat) :
@@ -702,7 +702,7 @@ theorem forkAt_liftBind_other [DecidableEq P.A] {target a : P.A}
       rw [← FreeM.bind_pure_comp, FreeM.bind_assoc]
       rfl]
   simp_rw [Split.completeFork_prependOther]
-  rw [bind_map_right]
+  rw [← map_bind]
 
 
 end PFunctor.FreeM.Cursor

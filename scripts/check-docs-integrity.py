@@ -167,7 +167,7 @@ def has_module_docstring(text: str) -> bool:
 
 def check_module_docstrings() -> list[str]:
     errors: list[str] = []
-    for source_root in (REPO_ROOT / "PolyFun", REPO_ROOT / "PolyFunTest"):
+    for source_root in (REPO_ROOT / "PolyFun", REPO_ROOT / "ToCslib", REPO_ROOT / "PolyFunTest"):
         for lean_file in source_root.rglob("*.lean"):
             if not has_module_docstring(lean_file.read_text()):
                 rel_path = lean_file.relative_to(REPO_ROOT)

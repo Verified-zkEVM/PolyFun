@@ -33,8 +33,12 @@ PolyFun/
                      quarantine root (Do/Basic)
   Logic/             small logic helpers (HEq)
 
-ToCslib/             separate low-level extensions to the pinned cslib machine
-                     API; imports cslib and Mathlib, never PolyFun
+ToCslib/             lowest production layer, staging what PolyFun upstreams:
+                     cslib machine-API extensions (Computability/), free-monad
+                     additions (Data/PFunctor/Free/), loop transport and
+                     effect-free loop instances (Control/), and the Mathlib →
+                     core order bridge (Order/); imports core, cslib and
+                     Mathlib, never PolyFun or Std.Do
 
 docs/wiki/           agent-facing notes (this directory)
 scripts/             repo utilities (validate, lint, update-lib, port helpers)
@@ -46,14 +50,17 @@ scripts/             repo utilities (validate, lint, update-lib, port helpers)
 Imports flow strictly downward, cycles are a build error. The DAG is also
 recorded in [`AGENTS.md`](../../AGENTS.md):
 
-`ToCslib` is a separate lower library rather than part of this DAG:
+`ToCslib` is the lowest layer of this DAG:
 
 ```text
-Cslib + Mathlib -> ToCslib -> optional PolyFun backend adapters
+Cslib + Mathlib + core Std.Internal -> ToCslib -> PolyFun
 ```
 
-It contains concrete machine constructions and lemmas, but no realizability,
-oracle, probability, or cryptographic policy.
+`PolyFun/PFunctor/Free/Basic.lean` imports `ToCslib.Data.PFunctor.Free.Basic`
+and backend adapters import the machine modules; `ToCslib.Order.LeanOrder`
+is where the program-logic kernel picks up core's order hierarchy. `ToCslib` contains staged upstream
+material only: no realizability, oracle, probability, or cryptographic policy,
+and no `Std.Do` / `Std.Internal.Do` imports.
 
 ```text
 PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
