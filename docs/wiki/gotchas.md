@@ -155,6 +155,27 @@ the documented API, expose that predicate narrowly and add an ordinary-import
 canary for the exact spelling, as in
 [`PolyFunTest/ModuleAPI/Interaction.lean`](../../PolyFunTest/ModuleAPI/Interaction.lean).
 
+### 8g. Pattern-matching lambdas in statements are declaration-local
+
+A `fun | ⟨true⟩ => t₁ | ⟨false⟩ => t₂` inside a theorem statement elaborates to
+an auxiliary matcher constant owned by that declaration. Two statements that
+spell the same tree this way are definitionally but not syntactically equal, so
+`rw` and `simp` can fail to match one lemma against the other's goal even
+when `exact` succeeds.
+Name the shape once (`nestedLeftTree`, `factorLeftTree` in
+`OpenProcessSamplerCoherence`) and state every lemma with the abbreviation, or
+close the gap with `exact`/`change` inside the consuming proof. The same
+applies to `IsSilentStep`/`boundaryTrace` goals about composite steps: rewrite
+them with the branch lemmas (`isSilentStep_interleave_left_iff_decoration`,
+`boundaryTrace_interleave_left`) rather than unfolding `interleave` in place.
+
+Ordinary imports do not expose opaque definition bodies. Prove public
+equations in the owning module (where `rfl` may use the body), or use
+`import all` in an internal proof module. Consumers should use those equations;
+expose a definition only when its reduction is part of the intended API.
+`TypeTree.Sampler.interleave_eq` is an equation for an opaque definition, while
+the path re-encodings and nested draws expose their computation rules.
+
 ## Proof Patterns
 
 ### 8b. Keep one canonical concrete-step relation type

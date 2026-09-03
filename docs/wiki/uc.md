@@ -37,7 +37,7 @@ the activation-equivalence factorization theorems in
 
 | Paper surface | PolyFun surface | Status |
 | --- | --- | --- |
-| symmetric monoidal category `C` of interactive systems | `OpenTheory`, with `par`, `wire`, and a granular lawfulness ladder | Candidate model; the free syntax models satisfy the strict laws, while `openTheory` is only `IsLawful` strictly and satisfies the monoidal, traced, and compact-closed laws up to `OpenProcessActivationEquiv`. `HasPlugFactorization` isolates the five factorization equalities the composition theorems consume without requiring unit or identity-wire operations. No strict or sampler-aware factorization instance for the process model follows from activation equivalence |
+| symmetric monoidal category `C` of interactive systems | `OpenTheory`, with `par`, `wire`, and a granular lawfulness ladder | Candidate model; the free syntax models satisfy the strict laws, while `openTheory` is only `IsLawful` strictly and satisfies the monoidal, traced, and compact-closed laws up to `OpenProcessActivationEquiv`. `HasPlugFactorization` isolates the five factorization equalities the composition theorems consume without requiring unit or identity-wire operations. No strict or sampler-aware factorization instance for the process model follows from activation equivalence. The sampler-coherence layer proves `par_assoc`, `par_comm`, `wire_comm`, and the plug laws under explicit scheduler-transport hypotheses |
 | backdoor category `C_bd` | adversarial ports can be represented by ordinary typed boundary components | Representation strategy only; no equivalence with the paper's backdoor construction or quotient is proved |
 | nested `D_real ⊆ D_bd` | ordered `SubTheory` values | Structural carrier plus `realizableSubTheory` / `generatedRealizableSubTheory`; corruption and concrete efficiency still require explicit instances |
 | corruption restriction defining `D_real` | `CorruptionModel`, `MomentaryCorruption` | Vocabulary only; no bridge to `SubTheory.mem` |
@@ -151,13 +151,27 @@ relation family `MonadRelFamily`
    their atomic frontier, binary nodes receive both subtree masses, and a
    downstream scheduler proves that all hierarchical three-way draws denote
    one flat choice. Probability and the concrete proportional scheduler remain
-   VCVio responsibilities. `samplePath_interleave_assoc_left` and
-   `samplePath_interleave_assoc_right` lift the resulting coherence law through
-   arbitrary component samplers along the existing structural path
-   reassociations.
+   VCVio responsibilities. For the mass-aware theory `scheduledOpenTheory`,
+   `BinaryScheduler.IsCoherent` is the whole obligation:
+   `scheduledOpenTheory_plug_{comm,par_left,par_right,wire_left,wire_right}_sampler_equiv`
+   and `Observation.respectsFactorization_scheduledSampler` take coherence and
+   nothing else. Both theories' laws are instances of the sampler-level shapes
+   in `OpenProcessSamplerCoherence`, whose only transport hypothesis is that
+   the two nested scheduler draws of a regrouping are `R`-related; sampler
+   equivalence is moreover a congruence for the shared-sampler `openTheory`
+   operations. Its binary operations require right-continuation congruence
+   (`MonadRelFamily.IsBindCongr`); boundary mapping does not. These are laws
+   for a fixed scheduler draw. The scheduled observation compares underlying
+   processes and does not require equal masses; substitution under a
+   mass-sensitive scheduler needs matching masses or an additional transport
+   proof. `SamplerCoherenceExamples` instantiates coherence at exact equality
+   in Mathlib's `SetM`, where every branch is possible. No identity-monad
+   scheduler satisfies exact coherence, as `not_isCoherent_eq_id` shows.
 2. **Initial-state correspondence.** The totality fields of
-   `OpenProcessSamplerEquiv` expose the regrouping bijection on states, so
-   corresponding initial states are chosen definitionally.
+   `OpenProcessSamplerEquiv` guarantee related states in both directions; they
+   do not specify a chosen initial state. The regrouping proofs use component
+   permutations, which a downstream pointed model can use to establish its
+   initial-state correspondence.
 3. **Observer adequacy.** The `hInv` premise of
    `Observation.respectsFactorization_of_samplerInvariant`: the downstream
    observation must be invariant under sampler equivalence at its relation
