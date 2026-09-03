@@ -7,6 +7,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.Interaction.UC.OpenTheory
+public import PolyFun.Interaction.UC.OpenTheory.Quotient
 
 /-!
 # Raw syntax trees for open composition
@@ -376,6 +377,66 @@ instance setoid (Atom : PortBoundary → Type u) (Δ : PortBoundary) :
     Setoid (Raw Atom Δ) where
   r := Equiv
   iseqv := ⟨fun _ => .refl, fun h => .symm h, fun h₁ h₂ => .trans h₁ h₂⟩
+
+/-! ## The raw theory and its congruence
+
+The raw syntax is an open theory whose laws hold only up to `Raw.Equiv`. That
+relation is a congruence, and the laws modulo it are exactly the constructors
+of `Raw.Equiv`, so the quotient theory (`Expr.theory`) is strictly lawful by
+the generic lifting of `OpenTheory.quotient`. -/
+
+/-- The raw syntax as an open theory. Not lawful: its laws hold only up to
+`Raw.Equiv`. -/
+@[expose]
+def theory (Atom : PortBoundary → Type u) : OpenTheory.{u + 1} where
+  Obj := Raw Atom
+  map := Raw.map
+  par := Raw.par
+  wire := Raw.wire
+  plug := Raw.plug
+
+instance (Atom : PortBoundary → Type u) : OpenTheory.HasUnit (theory Atom) where
+  unit := Raw.unit
+
+instance (Atom : PortBoundary → Type u) : OpenTheory.HasIdWire (theory Atom) where
+  idWire := Raw.idWire
+
+/-- `Raw.Equiv` is a congruence on the raw theory: every operation is a
+constructor of the congruence closure. -/
+@[expose]
+def congruence (Atom : PortBoundary → Type u) : (theory Atom).Congruence where
+  setoid := Raw.setoid Atom
+  map_congr := by
+    intro _ _ φ _ _ h
+    exact Equiv.congr_map h
+  par_congr h₁ h₂ := Equiv.congr_par h₁ h₂
+  wire_congr h₁ h₂ := Equiv.congr_wire h₁ h₂
+  plug_congr h₁ h₂ :=
+    Equiv.congr_map (Equiv.congr_wire (Equiv.congr_map h₁) (Equiv.congr_map h₂))
+
+/-- Every law of the plug-wire ladder holds on raw syntax up to `Raw.Equiv`:
+each is a constructor, and the derived operations `unit` and `plug` are their
+defining expressions on the nose. -/
+instance (Atom : PortBoundary → Type u) :
+    OpenTheory.HasPlugWireFactorMod (congruence Atom) where
+  map_id _ := Equiv.map_id
+  map_comp _ _ _ := Equiv.map_comp
+  map_par _ _ _ _ := Equiv.map_par
+  map_wire _ _ _ _ := Equiv.map_wire
+  map_plug _ _ _ := Equiv.map_plug
+  par_assoc _ _ _ := Equiv.par_assoc
+  par_comm _ _ := Equiv.par_comm
+  par_leftUnit _ := Equiv.par_leftUnit
+  par_rightUnit _ := Equiv.par_rightUnit
+  wire_assoc _ _ _ := Equiv.wire_assoc
+  wire_par_superpose _ _ _ := Equiv.wire_par_superpose
+  wire_comm _ _ := Equiv.wire_comm
+  wire_idWire _ _ _ := Equiv.wire_idWire
+  wire_idWire_right _ _ _ := Equiv.wire_idWire_right
+  unit_eq := Equiv.refl
+  plug_eq_wire _ _ := Equiv.refl
+  plug_par_left _ _ _ := Equiv.plug_par_left
+  plug_wire_left _ _ _ := Equiv.plug_wire_left
 
 end Raw
 

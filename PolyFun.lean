@@ -111,6 +111,7 @@ public import PolyFun.Interaction.TwoParty.Syntax
 public import PolyFun.Interaction.UC.ActivationObservation
 public import PolyFun.Interaction.UC.CorruptionModel
 public import PolyFun.Interaction.UC.Emulates
+public import PolyFun.Interaction.UC.EmulatesQuotient
 public import PolyFun.Interaction.UC.EmulatesWithin
 public import PolyFun.Interaction.UC.EnvAction
 public import PolyFun.Interaction.UC.EnvOpenProcess
@@ -133,8 +134,10 @@ public import PolyFun.Interaction.UC.OpenSyntax.Expr
 public import PolyFun.Interaction.UC.OpenSyntax.Interp
 public import PolyFun.Interaction.UC.OpenSyntax.Raw
 public import PolyFun.Interaction.UC.OpenTheory
+public import PolyFun.Interaction.UC.OpenTheory.Congruence
 public import PolyFun.Interaction.UC.OpenTheory.Family
 public import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
+public import PolyFun.Interaction.UC.OpenTheory.Quotient
 public import PolyFun.Interaction.UC.Realizability
 public import PolyFun.Interaction.UC.SamplerObservation
 public import PolyFun.Interaction.UC.ScheduledOpenProcessModel

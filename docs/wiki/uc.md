@@ -64,16 +64,41 @@ pointwise membership, but polynomial-time membership will normally be a
 custom family-level predicate because one witness and one bound must control
 all security parameters.
 
+## Quotient Theories
+
+`OpenTheory.quotient T E` quotients a theory by a congruence
+`E : OpenTheory.Congruence T` (a setoid on each boundary's objects preserved by
+the operations). A theory whose coherence laws hold only up to `E` satisfies the
+laws modulo `E` (`IsLawfulMod E`, …, `HasPlugWireFactorMod E`,
+`HasPlugFactorizationMod E`), and each of those lifts to the strict class on
+the quotient; a strict theory satisfies every law modulo any congruence. The
+free syntax model is exactly this construction: `Expr.theory` is the quotient
+of `Raw.theory` by `Raw.congruence`, whose laws modulo the congruence are the
+constructors of `Raw.Equiv`.
+
+Observations cross the quotient by `Observation.comap` and
+`Observation.descend`; equality of classes pulls back to the congruence at the
+empty boundary (`Observation.comap_eq_rel`), and `Emulates.quotient_iff`
+identifies emulation of classes with emulation of representatives. Because
+`RespectsFactorization` pulls back along `comap`, a theory whose laws hold
+modulo `E` gets the whole `Emulates` composition suite at any observation that
+factors through its quotient, without carrying coherence hypotheses through
+every client. Making the process model's activation and sampler equivalences
+into congruences is the remaining step (the congruence theorems of
+`OpenProcessCoherence` and `OpenProcessSamplerCoherence` are the fields).
+
 ## Long-Term Behavior Carrier
 
 The family construction does not choose between process presentations and an
 extensional behavior carrier. VCVio's long-term design proposes mapping open
 processes into cofree behavior and defining a lawful `OpenTheory` there, so
 coherence is proved once by finality instead of carried as activation
-equivalences through every client. `OpenTheory.pi`, `Observation`, and
-`EmulatesWithin` are intentionally parametric in that choice: the same
-asymptotic observation bridge should consume the behavior theory when it
-exists.
+equivalences through every client. Until that carrier exists, the quotient of
+the process model by its structural equivalence is the interim carrier: it is
+strictly lawful where the process model is lawful only up to equivalence.
+`OpenTheory.pi`, `Observation`, and `EmulatesWithin` are intentionally
+parametric in that choice: the same asymptotic observation bridge should
+consume the behavior theory when it exists.
 
 This is not a license to identify activation equivalence with distributional
 equivalence. The behavior map needs a named adequacy theorem into VCVio's

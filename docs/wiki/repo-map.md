@@ -265,6 +265,19 @@ Interaction/UC/OpenTheory -> Interaction/UC/OpenTheory/PlugFactorization
    the composition theorems consume, as a class strictly weaker than
    HasPlugWireFactor; the honest strict target for process models)
 
+Interaction/UC/OpenTheory -> Interaction/UC/OpenTheory/Congruence
+Interaction/UC/OpenTheory/{Congruence, PlugFactorization}
+  -> Interaction/UC/OpenTheory/Quotient
+  -> Interaction/UC/OpenSyntax/Raw
+  (congruences on a theory, the quotient theory, the laws-modulo-a-congruence
+   classes and their lifting to strict classes on the quotient; the free
+   syntax model is the quotient of raw syntax by its congruence)
+
+Interaction/UC/{Emulates, OpenTheory/Quotient} -> Interaction/UC/EmulatesQuotient
+  (observations and emulation across a quotient; factorization pulls back
+   along `Observation.comap`, so the composition suite reaches any theory
+   whose laws hold modulo a congruence)
+
 Interaction/UC/OpenTheory -> Interaction/UC/SubTheory
 Interaction/UC/{OpenTheory, SubTheory}
   -> Interaction/UC/OpenTheory/Family
