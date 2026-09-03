@@ -194,7 +194,25 @@ should cite it alongside `LawfulMonadLift(T)` and Batteries' `LawfulAlternativeL
 ### Upstream — belongs elsewhere, PolyFun is the wrong home
 
 cslib is already PolyFun's upstreaming channel: the `PFunctor` basic API is being moved
-there, and cslib's `PFunctor.FreeM` is the free monad PolyFun builds on.
+there, and cslib's `PFunctor.FreeM` is the free monad PolyFun builds on. Material bound for
+cslib is staged in the `ToCslib/` library (see `docs/wiki/module-api.md`), which PolyFun imports
+as its lowest layer:
+
+| `ToCslib` module | Contents | Upstream target |
+|---|---|---|
+| `Data/PFunctor/Free/Basic.lean` | `map_pure`, `map_bind`, `liftM_lift_eq_self` | cslib#716 (open) |
+| `Data/PFunctor/Free/Basic.lean` | normal-form case principle `FreeM.cases` | cslib#731 (open) supplies a `cases_eliminator` |
+| `Data/PFunctor/Free/Basic.lean` | `bind_eq`, `map_liftBind`, `map_lift_bind`, `foldFreeM` + `foldFreeM_unique`, `liftM_comp`, `map_liftM` | new cslib PR |
+| `Data/PFunctor/Free/Loops.lean` | `liftM_forIn'` … `liftM_mapM` | new cslib PR |
+| `Control/Monad/HomTransport.lean` | hypothesis-form `map_listForM` / `map_listFoldlM` / `map_listMapM` | cslib#856 (open, as `IsMonadHom.map_list*`) |
+| `Control/Monad/HomTransport.lean` | `map_listForIn'`, `map_listForIn`, `map_forIn_of_pureForIn`, `map_functorMap` | new cslib PR alongside #856 |
+| `Control/ForIn.lean` | `PureForIn` / `PureForIn'` / `LawfulMemForInId` for `Option`, `Vector` | Lean core (`Std.Internal.ForIn`) |
+| `Order/LeanOrder.lean` | Mathlib `CompleteLattice` → `Lean.Order.CompleteLattice` | Mathlib or cslib |
+
+Not stageable downstream: the `liftBind` / `(lift a).bind` normal-form tax behind the seven
+`attribute [local implicit_reducible] PFunctor.FreeM.bind` sites needs `@[implicit_reducible]`
+at the definition in cslib, because Lean rejects global and `scoped` reducibility attributes on
+imported declarations (`Lean/ReducibilityAttrs.lean`). It rides on cslib#716 or #731.
 
 - **cslib**: delay bisimulation over `LTS` (see above). Also
   `Cslib.LTS.Bisimilarity.symm`, which is stated for a single state type while its

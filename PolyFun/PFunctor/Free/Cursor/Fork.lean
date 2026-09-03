@@ -531,7 +531,7 @@ theorem filterMapLocateAndForkAt_eq_bind_complete [DecidableEq P.A]
               first := located.completion
               second := second }) located.occurrence.complete := by
   unfold filterMapLocateAndForkAt locateAndForkAt
-  rw [← bind_map_right]
+  rw [map_bind]
   apply congrArg (FreeM.bind (withPath program))
   funext path
   rcases hlocate : locateAt? target program path n with _ | located
@@ -570,7 +570,7 @@ theorem locateAndForkAt_liftBind_same_succ [DecidableEq P.A] (target : P.A)
   rw [withPath_liftBind_bind]
   apply congrArg (FreeM.liftBind target)
   funext answer
-  rw [← bind_map_right]
+  rw [map_bind]
   apply congrArg (FreeM.bind (withPath (next answer)))
   funext suffix
   rw [locateAt?_liftBind_same_succ]
@@ -590,7 +590,7 @@ theorem locateAndForkAt_liftBind_other [DecidableEq P.A] {target a : P.A}
   rw [withPath_liftBind_bind]
   apply congrArg (FreeM.liftBind a)
   funext answer
-  rw [← bind_map_right]
+  rw [map_bind]
   apply congrArg (FreeM.bind (withPath (next answer)))
   funext suffix
   rw [locateAt?_liftBind_other hne]

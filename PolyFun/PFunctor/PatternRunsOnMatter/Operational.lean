@@ -102,7 +102,7 @@ theorem runTree_append
       change P.B a × Q.B (M.head matter) at direction
       rw [freeM_bind_map_left,
         ih direction.1 (fun path => next ⟨direction.1, path⟩)
-          (M.children matter direction.2), ← FreeM.bind_map_right]
+          (M.children matter direction.2), FreeM.map_bind]
       apply congrArg (FreeM.bind
         (runTree (rest direction.1) (M.children matter direction.2)))
       funext pulled
@@ -176,7 +176,7 @@ theorem runWithHandler_append [LawfulMonad m]
               (FreeM.Path.append pattern next pulled.1 inner.1,
                 M.Vertex.append pulled.2 inner.2) := by
   unfold runWithHandler
-  rw [runTree_append, ← FreeM.monad_bind_def, FreeM.liftM_bind]
+  rw [runTree_append, ← FreeM.bind_eq, FreeM.liftM_bind]
   apply bind_congr
   intro pulled
   change FreeM.liftM handler

@@ -288,6 +288,17 @@ path. Foundational citations live in
 those keys (`Hancock-Setzer`, `Spivak-Niu`, etc.) rather than copying
 prose.
 
+### 11a. `simp` lemmas over `FreeM` do not fire on reducible interfaces
+
+A lemma such as `PFunctor.FreeM.liftM_lift_bind` or `foldFreeM_lift_bind'` has the implicit
+response type `P.B a` inside its left-hand side (as the type argument of `>>=`), and `simp`'s
+discrimination tree indexes that argument as the projection `PFunctor.B`. On an interface declared
+with `abbrev` — `abbrev coinP : PFunctor := ⟨PUnit, fun _ => Bool⟩` — the goal's `coinP.B a`
+reduces to `Bool` while the tree is built, so the lemma is never retrieved and `simp` reports it
+unused; the same statement over a `def` interface, or over a generic `P`, matches. `rw` is
+unaffected. State canaries and downstream lemmas over a generic or `def`-declared interface, or
+rewrite explicitly, rather than "fixing" the lemma.
+
 ### 12. `Std.Do` imports are quarantined
 
 Only `PolyFun/Control/Do/Basic.lean`, `PolyFun/PFunctor/Free/Do.lean`, and

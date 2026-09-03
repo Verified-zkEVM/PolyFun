@@ -6,12 +6,14 @@ Edit the source of truth, not the output.
 | --- | --- | --- | --- |
 | `CLAUDE.md` | compatibility symlink | No | Edit `AGENTS.md` |
 | `PolyFun.lean` | generated module with umbrella public imports | No | `./scripts/update-lib.sh` or `./scripts/check-imports.sh` |
+| `ToCslib.lean` | generated umbrella for the staging library | No | `./scripts/update-lib.sh ToCslib` or `./scripts/check-imports.sh` |
 | `.lake/` | build artifacts and cache | No | `lake build`, `lake exe cache get` |
 | `lake-manifest.json` | resolved dependency lockfile | Manual edits unsafe | Update `lean-toolchain` and both dependency pins in `lakefile.toml`, then run `lake update` |
 
 ## Important Notes
 
-- `./scripts/update-lib.sh` only uses tracked `PolyFun/**/*.lean` files and
+- `./scripts/update-lib.sh [ToCslib]` only uses tracked `PolyFun/**/*.lean` (or
+  `ToCslib/**/*.lean`) files and
   fails fast if untracked Lean files would be skipped. Stage new files
   first, then rerun. It emits a `module` command followed by sorted
   `public import` commands so importing `PolyFun` re-exports the library API.

@@ -156,7 +156,7 @@ theorem foldObjAt_append_split {α : Type uB}
       foldObjAt M l s id >>= fun path =>
         foldObjAt M l (next path) (fun inner => label ⟨path, inner⟩) := by
   unfold foldObjAt
-  rw [decodeAt_append_split, ← FreeM.monad_bind_def, FreeM.liftM_bind]
+  rw [decodeAt_append_split, ← FreeM.bind_eq, FreeM.liftM_bind]
 
 /-- Pointwise container form of multiplication preservation by `foldLens`.
 Both the evaluated position and the reconstructed pair of source paths are

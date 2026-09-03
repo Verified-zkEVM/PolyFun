@@ -85,3 +85,25 @@ A theorem belongs in PolyFun only when its statement can avoid `OracleSpec`,
 probability, and cryptographic policy; otherwise route it one dependency level
 at a time (VCVio candidates stay in VCVio), so "upstreamable" does not
 collapse everything to the lowest dependency.
+
+## The `ToCslib` staging layer
+
+`ToCslib/` is the lowest production library. It holds what PolyFun intends to upstream, written
+so that the upstream pull request is a move rather than a rewrite:
+
+- every declaration lives in the namespace it will have upstream (`PFunctor.FreeM`, `Cslib`,
+  `Lean.Order`, `Std.Internal`), so cslib's `topNamespace` linter and downstream call sites do
+  not change when it lands;
+- a lemma that duplicates an open upstream pull request carries an `-- upstream:` comment
+  naming it (for example `cslib#716`, `cslib#856`) and copies that request's statement shape;
+  it is deleted when the request lands and the pin moves;
+- a lemma with no upstream twin yet is marked `-- upstream candidate`;
+- `ToCslib` imports core, cslib, and Mathlib only — never PolyFun, and never `Std.Do`,
+  `Std.Internal.Do`, or `Std.Tactic.Do` (`scripts/check-modules.sh` enforces this);
+- PolyFun modules import `ToCslib` modules directly (`public import`) and keep no local copy of
+  a lemma that lives there; ordinary-import canaries for the moved lemmas stay in
+  `PolyFunTest/ModuleAPI/`, and behavioural canaries in `PolyFunTest/ToCslib/`;
+- headers say `PolyFun Contributors` here and are rewritten to the individual authors at
+  upstream pull-request time, when the file also gains `import Cslib.Init` and a
+  `CslibTests/` entry.
+
