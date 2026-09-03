@@ -11,6 +11,7 @@ import PolyFun.Interaction.Concurrent.Fairness
 import PolyFun.Interaction.Multiparty.Observation
 import PolyFun.Interaction.UC.OpenProcess
 import PolyFun.Interaction.UC.OpenProcessInterleave
+import PolyFun.Interaction.UC.OpenProcessCoherence
 import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
 import PolyFun.Interaction.UC.ScheduledOpenProcessModel
 import PolyFun.Interaction.UC.ScheduledSamplerFactorization
@@ -142,6 +143,24 @@ example {m : Type → Type} {Party : Type} {Δ₁ Δ₂ : UC.PortBoundary}
     UC.IsSilentStep (op.mapHom (UC.OpenNodeContext.map Party φ)) s tr ↔
       UC.IsSilentStep op s tr :=
   UC.OpenProcess.isSilentStep_mapHom_iff (UC.OpenNodeContext.preservesActivation_map φ) op s tr
+
+/-! ## Coherence of interleaving -/
+
+example {m : Type → Type} {Party : Type} {Δ₁ Δ₂ Δ : UC.PortBoundary}
+    (p₁ : UC.OpenProcess m Party Δ₁) (p₂ : UC.OpenProcess m Party Δ₂)
+    {f₁ : TypeTree.Node.ContextHom (UC.OpenNodeContext Party Δ₁) (UC.OpenNodeContext Party Δ)}
+    {f₂ : TypeTree.Node.ContextHom (UC.OpenNodeContext Party Δ₂) (UC.OpenNodeContext Party Δ)}
+    {c : UC.OpenNodeContext Party Δ (ULift Bool)} (σ : m (ULift Bool))
+    {g₁ : TypeTree.Node.ContextHom (UC.OpenNodeContext Party Δ₂) (UC.OpenNodeContext Party Δ)}
+    {g₂ : TypeTree.Node.ContextHom (UC.OpenNodeContext Party Δ₁) (UC.OpenNodeContext Party Δ)}
+    {d : UC.OpenNodeContext Party Δ (ULift Bool)} (τ : m (ULift Bool))
+    (hf₁ : UC.OpenNodeContext.PreservesActivation f₁)
+    (hf₂ : UC.OpenNodeContext.PreservesActivation f₂)
+    (hg₁ : UC.OpenNodeContext.PreservesActivation g₁)
+    (hg₂ : UC.OpenNodeContext.PreservesActivation g₂)
+    (hc : c.boundary.isActivated = false) (hd : d.boundary.isActivated = false) :
+    UC.OpenProcessActivationEquiv (p₁.interleave p₂ f₁ f₂ c σ) (p₂.interleave p₁ g₁ g₂ d τ) :=
+  UC.interleave_comm_activationEquiv p₁ p₂ σ τ hf₁ hf₂ hg₁ hg₂ hc hd
 
 /-! ## Plug factorization laws -/
 

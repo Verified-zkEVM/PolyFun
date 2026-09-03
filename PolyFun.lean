@@ -119,6 +119,7 @@ public import PolyFun.Interaction.UC.Leakage
 public import PolyFun.Interaction.UC.MomentaryCorruption
 public import PolyFun.Interaction.UC.Notation
 public import PolyFun.Interaction.UC.OpenProcess
+public import PolyFun.Interaction.UC.OpenProcessCoherence
 public import PolyFun.Interaction.UC.OpenProcessFactorization
 public import PolyFun.Interaction.UC.OpenProcessInterleave
 public import PolyFun.Interaction.UC.OpenProcessModel
