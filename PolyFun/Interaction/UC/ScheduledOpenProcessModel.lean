@@ -86,6 +86,7 @@ theorem process_atom {m : Type w → Type w'} {Party : Type u} {Delta : PortBoun
   (rfl)
 
 /-- Adapt the boundary while preserving scheduler mass. -/
+@[expose]
 def mapBoundary {m : Type w → Type w'} {Party : Type u}
     {Delta₁ Delta₂ : PortBoundary} (phi : PortBoundary.Hom Delta₁ Delta₂)
     (process : ScheduledOpenProcess.{u, v, w, w'} m Party Delta₁) :
@@ -108,6 +109,7 @@ theorem process_mapBoundary {m : Type w → Type w'} {Party : Type u}
 
 /-- Interleave two scheduled processes. The composite records their summed
 mass, and the root sampler receives both component masses. -/
+@[expose]
 def interleave {m : Type w → Type w'} {Party : Type u}
     {Delta₁ Delta₂ Delta : PortBoundary}
     (scheduler : BinaryScheduler m)

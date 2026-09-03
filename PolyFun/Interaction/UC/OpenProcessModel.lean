@@ -478,6 +478,22 @@ def openTheoryIdWire (Γ : PortBoundary) :
       next := fun _ => PUnit.unit }
   stepSampler := fun _ => ⟨⟩
 
+instance : OpenTheory.HasUnit (openTheory.{u, v, w, w'} Party m schedulerSampler) where
+  unit := openTheoryUnit Party m
+
+instance : OpenTheory.HasIdWire (openTheory.{u, v, w, w'} Party m schedulerSampler) where
+  idWire := openTheoryIdWire Party m
+
+theorem openTheory_unit :
+    OpenTheory.HasUnit.unit (T := openTheory.{u, v, w, w'} Party m schedulerSampler) =
+      openTheoryUnit Party m :=
+  rfl
+
+theorem openTheory_idWire (Γ : PortBoundary) :
+    OpenTheory.HasIdWire.idWire (T := openTheory.{u, v, w, w'} Party m schedulerSampler) Γ =
+      openTheoryIdWire Party m Γ :=
+  rfl
+
 /-- Every step of the identity wire is silent. -/
 theorem openTheoryIdWire_isSilentStep (Γ : PortBoundary) (s : (openTheoryIdWire Party m Γ).Proc)
     (tr : ((openTheoryIdWire Party m Γ).step s).tree.Path) :

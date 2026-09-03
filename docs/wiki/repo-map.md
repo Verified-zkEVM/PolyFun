@@ -278,6 +278,16 @@ Interaction/UC/{Emulates, OpenTheory/Quotient} -> Interaction/UC/EmulatesQuotien
    along `Observation.comap`, so the composition suite reaches any theory
    whose laws hold modulo a congruence)
 
+Interaction/UC/{ActivationObservation, EmulatesQuotient,
+                OpenProcessSamplerFactorization, SamplerObservation,
+                ScheduledSamplerFactorization}
+  -> Interaction/UC/OpenProcessQuotient
+  (the activation and sampler congruences of the process models and their
+   quotients: strictly compact closed with plug-wire factorization for
+   activation, plug factorization for samplers under the transport facts or
+   scheduler coherence; the structural observations are pull-backs of
+   equality on the quotients)
+
 Interaction/UC/OpenTheory -> Interaction/UC/SubTheory
 Interaction/UC/{OpenTheory, SubTheory}
   -> Interaction/UC/OpenTheory/Family
