@@ -15,6 +15,7 @@ import PolyFun.Interaction.UC.OpenProcessCoherence
 import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
 import PolyFun.Interaction.UC.OpenTheory.Quotient
 import PolyFun.Interaction.UC.EmulatesQuotient
+import PolyFun.Interaction.UC.OpenProcessQuotient
 import PolyFun.Interaction.UC.ScheduledOpenProcessModel
 import PolyFun.Interaction.UC.ScheduledSamplerFactorization
 import PolyFun.Interaction.UC.OpenProcessSamplerCoherence
@@ -269,5 +270,27 @@ example {T : UC.OpenTheory} (E : UC.OpenTheory.Congruence T) {Δ : UC.PortBounda
     {real ideal : T.Obj Δ} {Obs : UC.Observation (T.quotient E)} :
     UC.Emulates (E.cls real) (E.cls ideal) Obs ↔ UC.Emulates real ideal (Obs.comap E) :=
   UC.Emulates.quotient_iff E
+
+/-! ## Quotients of the process model -/
+
+example {m : Type → Type} {Party : Type} (σ : m (ULift Bool)) :
+    UC.OpenTheory.HasPlugWireFactor
+      ((UC.openTheory Party m σ).quotient (UC.openTheory.activationCongruence Party m σ)) :=
+  inferInstance
+
+example {m : Type → Type} {Party : Type} (σ : m (ULift Bool))
+    (c₁ c₂ : (UC.openTheory Party m σ).Closed) :
+    (UC.Observation.activation Party m σ).rel c₁ c₂ ↔
+      ((UC.Observation.eq _).comap (UC.openTheory.activationCongruence Party m σ)).rel c₁ c₂ :=
+  UC.Observation.activation_rel_iff_comap Party m σ
+
+example {m : Type → Type} [Monad m] [LawfulMonad m] {Party : Type}
+    (scheduler : UC.BinaryScheduler m) (R : UC.MonadRelFamily m) [R.IsBindCongr]
+    (coherent : scheduler.IsCoherent R) :
+    UC.OpenTheory.HasPlugFactorization
+      ((UC.scheduledOpenTheory Party m scheduler).quotient
+        (UC.scheduledOpenTheory.samplerCongruence Party m scheduler R)) :=
+  UC.scheduledOpenTheory.hasPlugFactorization_quotient_samplerCongruence Party m scheduler R
+    coherent
 
 end PolyFunTest.ModuleAPI.Interaction
