@@ -20,9 +20,10 @@ migration sketch live in
 | `PolyFun/Control/Monad/Support/Loops.lean` | Invariant rules for `forIn'`/`forIn`/`foldlM`/`forM` over lists and `PureForIn` containers, for `AllOutputs` (from core's `Spec.*` under the demonic instance) and `SomeOutput` (angelic) |
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); `OpSpec.toMAlgOrdered`; semantic `FreeM.wpVia` through a `Handler`; soundness `wpFold_le_wpVia`/`wpFold_eq_wpVia` |
-| `PolyFun/Control/Do/Basic.lean` | Legacy core-`Std.Do` transports: `MonadHom.transportSPredWP(Monad)` along a monad morphism, `MonadAttach.toWP(Monad)` demonically at `.pure`, `toWPSound` for core-sense soundness, and `support_subset_of_wpSPred`/`allOutputs_of_wpSPred` turning any `WPSound` triple into a support fact |
+| `PolyFun/Control/Do/Spec.lean` | Tactic tier: `@[spec] Spec.forM_list` for `vcgen` |
+| `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`), `FreeM.wpMonadOfHandler` (transport along `liftMHom`), and `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad` |
 | `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
-| `PolyFun/PFunctor/Free/Do.lean` | Scoped demonic `WP (FreeM P) .pure` instances (`open scoped PFunctor.FreeM.DemonicWP`), `wpMonadOfHandler`, and the `Spec.lift` `@[spec]` lemma enabling `mvcgen` on free programs with uninterpreted operations |
+| `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.lift_angelic`, `Spec.lift_ofHandler` that let `vcgen` decompose free programs with uninterpreted operations |
 | `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as a core `Std.Internal.Do.WPMonad m l EPost.Nil` (through the `ToCslib.Order.LeanOrder` bridge), `wp` agreement by `rfl`, `toWP_triple_iff`, `wpConjunctiveOf`, and the transfer lemmas `top_eq_top` / `meet_eq_inf` / `join_eq_sup` between core's and Mathlib's lattice operations |
 | `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPMonadDemonic` / `toWPMonadAngelic`: the always/some judgments as `WPMonad m Prop EPost.Nil`; conjunctivity of the demonic reading; the `LawfulWPMonadAttach` mirror of Lean master's soundness class with its demonic instance; `support_subset_of_wp` / `allOutputs_of_wp` |
 | `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWP` / `transportWPMonad` / `transportWPMonadOf`: pulling a core `WPMonad` back along a (bundled or unbundled) monad morphism |
@@ -30,8 +31,9 @@ migration sketch live in
 | `PolyFun/Control/Do/Spec.lean` | `@[spec] Spec.forM_list`, the list loop core does not specify, for `vcgen` (tactic tier) |
 
 Worked examples: `PolyFunTest/Control/MonadAttach.lean` (judgments, notation,
-`Iff.rfl` transfer contract) and `PolyFunTest/Do/FreeM.lean` (`mvcgen` smoke
-tests).
+`Iff.rfl` transfer contract), `PolyFunTest/Do/FreeM.lean` and `PolyFunTest/Do/Loops.lean`
+(`vcgen` over free programs, with loops, branching, and `StateT`), and
+`PolyFunTest/Do/Transport.lean` (handler-relative interpretation).
 
 ## Relation to core `MonadAttach`
 
@@ -136,10 +138,11 @@ proof.
 | Construct | core `wp` / `Triple` (`vcgen`) | `AllOutputs` / `SomeOutput` / `support` | `MAlgOrdered.wp` | `MonadHom` | `wpFold` |
 |---|---|---|---|---|---|
 | `pure`, `>>=`, `<$>`, `<*>` | free | `Support.lean`, `Support/Structural.lean` | `Algebra.lean` | `Hom.lean` | `Free/WP.lean` |
+| `FreeM.lift a`, `FreeM.liftBind a r` | `Spec.lift`/`Spec.liftBind` (`Free/Do.lean`; tail position via `wp_apply_eq`, gotcha 11e) | `Free/Support.lean` (`allOutputs_lift`, `allOutputs_liftBind`) | via `OpSpec.toMAlgOrdered` | — | `wpFold_liftBind` |
 | `<*`, `*>` | free | `Support/Structural.lean` | `Algebra.lean` (`wp_seqLeft`/`wp_seqRight`) | `Hom.lean` | `Free/WP.lean` |
 | `if`, `if h :` | `vcgen` splits | `Support/Structural.lean` | `wp_ite`/`wp_dite` | `mmap_ite`/`mmap_dite` | `wpFold_ite`/`wpFold_dite` |
 | `match` on `Option`/`Sum` | `vcgen` splits | `*_option_elim`/`*_sum_elim` | `wp_option_elim`/`wp_sum_elim` | `mmap_option_elim`/`mmap_sum_elim` | `wpFold_option_elim`/`wpFold_sum_elim` |
-| `for` over `List`/`Array`/ranges/`Option`/`Vector` | free (`Spec.forIn'_list`, `forIn_pure` + `PureForIn`) | `Support/Loops.lean` | via the instance | `Hom/Loops.lean` | via `OpSpec.toWPMonad` (next PR) |
+| `for` over `List`/`Array`/ranges/`Option`/`Vector` | free (`Spec.forIn'_list`, `forIn_pure` + `PureForIn`) | `Support/Loops.lean` | via the instance | `Hom/Loops.lean` | via `OpSpec.toWPMonad` (`Free/WP/Upstream.lean`) |
 | `forM`, `foldlM` | `Spec.foldlM_list` free, `Spec.forM_list` in `Do/Spec.lean` | `Support/Loops.lean` | via the instance | `Hom/Loops.lean` | — |
 | `mapM` | — | — | — | `Hom/Loops.lean` | — |
 | early `return`/`break`/`continue` | `Invariant.withEarlyReturnNewDo` (core) | via the instance | — | — | — |
@@ -153,10 +156,12 @@ reports no applicable spec (see the landscape memo's follow-ups).
 
 ## The `Std.Do` quarantine
 
-Only `PolyFun/Control/Do/Basic.lean` and `PolyFun/PFunctor/Free/Do.lean` (and
-`PolyFunTest/Do/`) may import `Std.Do`, `Std.Internal.Do`, or `Std.Tactic.Do`;
-`scripts/check-modules.sh` enforces all three spellings. The quarantine keeps the
-dependency on the fast-moving upstream `mvcgen` / `vcgen` API confined to two files, and
+The definitions (`Std.Do`, `Std.Internal.Do`) may be imported by the program-logic kernel —
+`PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
+`PolyFun/ITree/Do.lean` — and by `PolyFunTest/Do/`; the tactics (`Std.Tactic.Do`) only by
+`PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`;
+`scripts/check-modules.sh` enforces both tiers. The quarantine keeps the dependency on the
+fast-moving upstream `vcgen` API confined, and
 everything they provide is a construction (`def`), not a global instance —
 global `WP` instances on `FreeM` would race downstream registrations on
 reducible unfoldings such as VCVio's `OracleComp`. The demonic instances are
@@ -165,10 +170,10 @@ reducible unfoldings such as VCVio's `OracleComp`. The demonic instances are
 ## The two upstream WP stacks
 
 Core ships **two** complete weakest-precondition stacks at the v4.34.0-rc2 pin. PolyFun's
-canonical interface is the lattice-generic one; the older SPred one is bridged only for the
-existing `mvcgen` smoke tests until the free-monad layer moves over.
+canonical interface is the lattice-generic one; nothing in PolyFun instantiates the older
+SPred one.
 
-| | `Std/Internal/Do/` (canonical here) | `Std/Do/` (legacy bridge) |
+| | `Std/Internal/Do/` (canonical here) | `Std/Do/` (not used) |
 |---|---|---|
 | Assertions | any `Lean.Order.CompleteLattice` (`Assertion`) | `SPred` / `PostShape` |
 | `WPMonad` bind law | inequational (`bind_le_wp_bind`) | equational (`wp_bind : … = …`) |
@@ -187,7 +192,7 @@ distributes over `∧` in one direction only, which is exactly why it has no `St
 a monad morphism. None of them is a global instance; install them `local` or `scoped` at the
 carrier (`PolyFunTest/Do/{Algebra,Support}.lean` show `vcgen` running through each).
 
-Three practical rules for writing against the canonical stack:
+Four practical rules for writing against the canonical stack:
 
 - Import the `Std.Internal.Do` **root** wherever a `vcgen` proof is expected: the `@[spec]`
   database (`Spec.bind`, `Spec.pure`, …) lives in `Std.Internal.Do.Triple.SpecLemmas`, and
@@ -199,6 +204,10 @@ Three practical rules for writing against the canonical stack:
 - Naming a theorem `Lean.Order.foo` elaborates it inside that namespace, activating core's
   scoped `⊤` / `⊓` / `⊔` and shadowing Mathlib's `le_top` / `le_inf`; keep transfer lemmas in
   a PolyFun namespace and qualify core's names.
+- `vcgen` matches `@[spec]` lemmas structurally on the program and its value type, so a spec
+  at a dependent value type (`Spec.lift` at `P.B a`) applies under `bind` but not to an
+  operation in tail position once the goal carries the normalized type; finish such goals
+  with `DemonicWP.wp_apply_eq` and `FreeM.allOutputs_lift` (gotcha 11e).
 
 **Renames at the v4.35 bump** (recorded so the migration is mechanical):
 `Std.Internal.Do` → `Std.WP`; `EPost.Nil` → `EStack⟨⟩` and `EPost.Cons eh et` → `eh × et`;

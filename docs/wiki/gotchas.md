@@ -326,14 +326,32 @@ pattern heads. Likewise `x <* y` and `x *> y` store `y` under the thunk `fun _ =
 pattern cannot bind. Such lemmas stay `@[simp]`; `grind` splits the `if` itself and reaches the
 applicative forms through `simp`'s normalization to `>>=`.
 
+### 11e. `vcgen` matches specs structurally, so dependent value types need care
+
+`vcgen` applies an `@[spec]` lemma by matching its `wp` pattern against the goal with a
+structural matcher (`Lean.Meta.Sym`); only instance arguments are compared with `isDefEq`. A
+spec whose value type is dependent, such as `PFunctor.FreeM.Spec.lift` at `P.B a`, therefore
+applies wherever the goal's value type is syntactically `P.B a` — under `bind`, where the type
+comes from the operation — but not to an operation in tail position, where the elaborated
+triple already carries the normalized type (`Bool` for an `abbrev` interface): the candidate is
+listed and rejected ("No spec applicable"). Registering the unfolding
+`FreeM.lift a = FreeM.liftBind a pure` as an equation spec does not help, because `Spec.pure`
+then meets the same mismatch on the continuation. Use `vcgen -errorOnMissingSpec` and finish
+the residual `wp` goal by rewriting with `DemonicWP.wp_apply_eq` and
+`FreeM.allOutputs_lift (P := …)`, naming the interface explicitly for the reason in 11a
+(`PolyFunTest/Do/Loops.lean`), or state the program over a generic interface so the value type
+stays `P.B a`.
+
 ### 12. `Std.Do` imports are quarantined
 
-Only `PolyFun/Control/Do/Basic.lean`, `PolyFun/PFunctor/Free/Do.lean`, and
-`PolyFunTest/Do/` may import `Std.Do`, `Std.Internal.Do`, or `Std.Tactic.Do`
-(core's two weakest-precondition stacks and the `mvcgen` / `vcgen` tactics). The
-upstream API is evolving quickly (`vcgen` on the `Std.Internal.Do` stack is
-replacing `mvcgen`, and that stack becomes a public `Std.WP` in v4.35), so the
-dependency stays confined to those files, and everything they export is a
+The definitions (`Std.Do`, `Std.Internal.Do`) may be imported only by the program-logic
+kernel (`PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
+`PolyFun/ITree/Do.lean`) and `PolyFunTest/Do/`; the tactics (`Std.Tactic.Do`, which also
+carries the `@[spec]` attribute syntax) only by `PolyFun/Control/Do/`,
+`PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`. The upstream API is evolving
+quickly (`vcgen` on the `Std.Internal.Do` stack is replacing `mvcgen`, and that stack
+becomes a public `Std.WP` in v4.35), so the dependency stays confined, and everything
+the fenced modules export is a
 construction (`def`), never a global instance: a global `Std.Do.WP` instance on
 `FreeM P` would race downstream registrations on reducible unfoldings such as
 oracle-computation types. Register the provided structures `scoped` or `local`

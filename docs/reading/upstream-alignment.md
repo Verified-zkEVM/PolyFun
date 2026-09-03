@@ -247,15 +247,18 @@ imported declarations (`Lean/ReducibilityAttrs.lean`). It rides on cslib#716 or 
 
 #### Core is absorbing Loom's weakest-precondition design
 
-**There are two complete WP stacks at the pin, and PolyFun bridges the other one.** The
-tree described here is `Std/Internal/Do/`; the one `Control/Do/Basic.lean` and
-`PFunctor/Free/Do.lean` target is the public `Std/Do/`, which is `SPred`/`PostShape`-indexed
-and older. Confusing them is easy and consequential — they differ on conjunctivity, which
-decides what PolyFun can express. The comparison table and that consequence are in
-[`docs/wiki/program-logic.md`](../wiki/program-logic.md#the-two-upstream-wp-stacks); the
-short version is that `Std.Do.PredTrans` makes conjunctivity a *structure field* stated as a
-bi-entailment, which is why the demonic support reading has a `WP` instance and the angelic
-one provably cannot.
+**There are two complete WP stacks at the pin, and PolyFun targets this one.** The tree
+described here is `Std/Internal/Do/`, which `vcgen` consumes and which becomes the public
+`Std.WP` in v4.35; the older public `Std/Do/` is `SPred`/`PostShape`-indexed and is what
+`mvcgen` consumes. PolyFun's kernel instances (`Control/Monad/{Algebra,Support,Hom}/WP.lean`,
+`PFunctor/Free/WP/Upstream.lean`, `PFunctor/Free/Do.lean`) all live on `Std/Internal/Do/`;
+nothing in PolyFun imports `Std.Do` for its own sake any more. Confusing the two is easy and
+consequential — they differ on conjunctivity, which decides what PolyFun can express. The
+comparison and that consequence are in
+[`docs/wiki/program-logic.md`](../wiki/program-logic.md); the short version is that
+`Std.Do.PredTrans` makes conjunctivity a *structure field* stated as a bi-entailment, so the
+angelic support reading could never be a `Std.Do` instance, whereas the inequational
+`Std.Internal.Do.WPMonad` admits both readings and records conjunctivity per program.
 
 At the pin, `Std/Internal/Do/` contains a lattice-generic weakest-precondition stack:
 
@@ -307,12 +310,13 @@ exactly the drift that produced the `MonadSupport` situation.
 Upstream marks `mvcgen` deprecated via `deprecated_syntax`, directing users to `vcgen`
 (#14874, `since := "2026-08-21"`). That deprecation is on `master` only — not at the
 `v4.34.0-rc2` pin — so it is a **v4.35** item. `vcgen` itself already exists at the pin
-(`Std/Tactic/Do/Syntax.lean:464`), **but it is not a drop-in replacement for PolyFun's
-`mvcgen` uses**: `vcgen` consumes `Std.Internal.Do.WPMonad` / `Std.Internal.Do.Triple`
-(`Lean/Elab/Tactic/Do/Internal/VCGen/Frontend.lean`), not the `Std.Do.WP` structures
-PolyFun's bridge provides. Retargeting therefore needs Internal-stack instances first, not a
-toolchain bump; the previous claim that it "needs no toolchain bump and can be done whenever
-convenient" was wrong on that point.
+(`Std/Tactic/Do/Syntax.lean:464`) and consumes `Std.Internal.Do.WPMonad` /
+`Std.Internal.Do.Triple` (`Lean/Elab/Tactic/Do/Internal/VCGen/Frontend.lean`), not the
+`Std.Do.WP` structures. PolyFun's kernel instantiates that stack directly
+(`Control/Monad/{Algebra,Support,Hom}/WP.lean`, `PFunctor/Free/WP/Upstream.lean`,
+`PFunctor/Free/Do.lean`) and every `PolyFunTest/Do/` file runs `vcgen`, so the deprecation
+has nothing left to migrate here; the earlier claim that retargeting "needs no toolchain
+bump" was wrong only in that the Internal-stack instances had to exist first.
 
 Relatedly, `Batteries.Classes.SatisfiesM` has been deprecated in favour of
 `Std.Do.Triple`. The `SatisfiesM` / `MonadSatisfying` line — the other abstraction
