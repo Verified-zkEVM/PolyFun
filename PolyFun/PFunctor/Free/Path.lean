@@ -573,7 +573,7 @@ the entire path; this theorem identifies their exact overlap. -/
   induction s with
   | pure x => rfl
   | lift_bind a rest ih =>
-      simp only [monad_bind_def]
+      simp only [bind_eq, liftBind_bind]
       exact congrArg (FreeM.liftBind a) (funext ih)
 
 namespace Path

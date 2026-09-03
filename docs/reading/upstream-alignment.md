@@ -211,7 +211,33 @@ should cite it alongside `LawfulMonadLift(T)` and Batteries' `LawfulAlternativeL
 ### Upstream — belongs elsewhere, PolyFun is the wrong home
 
 cslib is already PolyFun's upstreaming channel: the `PFunctor` basic API is being moved
-there, and cslib's `PFunctor.FreeM` is the free monad PolyFun builds on.
+there, and cslib's `PFunctor.FreeM` is the free monad PolyFun builds on. Material bound for
+cslib is staged in the `ToCslib/` library (see `docs/wiki/module-api.md`), which PolyFun imports
+as its lowest layer:
+
+| `ToCslib` module | Contents | Upstream target |
+|---|---|---|
+| `Data/PFunctor/Free/Basic.lean` | `lift_bind%` / `lift_bind'%` (normal form with the direction type unindexed) | new cslib PR (see the node normal form below) |
+| `Data/PFunctor/Free/Basic.lean` | `map_pure`, `map_bind`, `liftM_lift_eq_self` | upstream candidate (proposed in cslib#716, closed unmerged) |
+| `Data/PFunctor/Free/Basic.lean` | normal-form case principle `FreeM.cases` | cslib#731 (open) supplies a `cases_eliminator` |
+| `Data/PFunctor/Free/Basic.lean` | `bind_eq`, `map_lift_bind` / `functorMap_lift_bind` / `map_liftBind`, `foldFreeM` + `foldFreeM_unique`, `liftM_comp` | new cslib PR |
+| `Data/PFunctor/Free/Loops.lean` | `liftM_forIn'`, `liftM_forIn`, `liftM_forIn_of_pureForIn` (and `liftM_forM` / `liftM_foldlM` / `liftM_mapM` as restatements of cslib#856's `IsMonadHom.map_list*`) | new cslib PR |
+| `Control/Monad/HomTransport.lean` | `IsMonadHom.map_listForIn'`, `map_listForIn`, `map_forIn_of_pureForIn`, `map_forIn'_of_pureForIn'` | new cslib PR, next to `IsMonadHom/List.lean` |
+| `Control/ForIn.lean` | `PureForIn` / `PureForIn'` / `LawfulMemForInId` for `Option`, `Vector` | Lean core (`Std.Internal.ForIn`) |
+| `Order/LeanOrder.lean` | Mathlib `CompleteLattice` → `Lean.Order.CompleteLattice` | Mathlib or cslib |
+
+Landed at cslib `v4.34.0` and therefore deleted from the staging library: cslib#856
+(`IsMonadHom`, `IsMonadHom.map_listMapM` / `map_listForM` / `map_listFoldlM`,
+`isMonadHom_liftM`, and the naturality of `liftM` along a monad morphism,
+`IsMonadHom.map_pfunctorFreeMLiftM`). PolyFun's bundled `m →ᵐ n` reaches these through
+`MonadHom.isMonadHom` (`PolyFun/Control/Monad/Hom/IsMonadHom.lean`).
+
+Not stageable downstream: the node normal form inside type indices needs
+`@[implicit_reducible]` at the definitions of `FreeM.bind` / `FreeM.lift` in cslib, because Lean
+rejects global and `scoped` reducibility attributes on imported declarations
+(`Lean/ReducibilityAttrs.lean`); see the node normal form below. Until then the files that
+unify node indices carry `attribute [local implicit_reducible] PFunctor.FreeM.bind
+PFunctor.FreeM.lift`.
 
 - **cslib**: delay bisimulation over `LTS` (see above). Also
   `Cslib.LTS.Bisimilarity.symm`, which is stated for a single state type while its
@@ -376,7 +402,7 @@ well-placed `HasTau (Option α)`, and a cross-type `Bisimilarity.symm`.
 
 PolyFun follows upstream's simp normal form for an operation node, `(FreeM.lift a).bind k`
 (`FreeM.liftBind_eq`), and no longer pins a cslib fork that kept the constructor `liftBind`
-as the normal form; the conventions are recorded in `docs/wiki/pfunctor.md`. Three upstream
+as the normal form; the conventions are recorded in `docs/wiki/pfunctor.md`. Four upstream
 changes would remove the remaining friction, in decreasing order of importance:
 
 1. `@[implicit_reducible]` on `FreeM.bind`, `FreeM.lift` and `FreeM.map`. The node normal
@@ -394,6 +420,12 @@ changes would remove the remaining friction, in decreasing order of importance:
 3. Purity disequalities for the `>>=` spelling (`monadBind_eq_pure_iff` and
    `pure_eq_monadBind_iff` on the branch above), which `simp` needs to discharge matcher side
    conditions on a node in normal form.
+4. `no_index` on the direction type in cslib's own normal-form `simp` lemmas
+   (`liftM_lift_bind`, `liftM_lift`, `liftBind_bind`, `bind_eq_pure_iff`, …). The direction
+   type `P.B a` is an implicit type argument of the bind that the simplifier indexes, and on a
+   concrete polynomial it reduces (to `Bool` on `⟨PUnit, fun _ => Bool⟩`), so none of these
+   lemmas fire there — `PolyFunTest/ToCslib/Free.lean` pins the failure for `liftM_lift_bind`.
+   The staged `lift_bind%` / `lift_bind'%` elaborators are the proposed spelling.
 
 ## Unused surface
 

@@ -204,10 +204,21 @@ supplies the inductive type (constructors `pure` / `liftBind`), the `bind` / `ma
 / `Monad` / `LawfulMonad` / `MonadLift` instances, the `@[induction_eliminator]
 induction` principle (non-pure case `lift_bind`), the shape lift `lift : P.A →
 FreeM (P.B a)` and object lift `liftObj : P.Obj α → FreeM α`, and the `liftM`
-interpreter with its `Interprets` universal property. PolyFun layers its own API
-(`mapLens`, `liftM` monad-hom and naturality lemmas, `toW` / `equivWOfIsEmpty`, paths,
-displayed families, indexed-family packing, weakest preconditions, roll bounds)
-on top of the upstream type.
+interpreter with its `Interprets` universal property, the monad-morphism predicate
+`IsMonadHom` with `isMonadHom_liftM` and naturality `IsMonadHom.map_pfunctorFreeMLiftM`.
+Between cslib and PolyFun sits `ToCslib/Data/PFunctor/Free/`, the staging area for
+cslib-bound additions: the `lift_bind%` / `lift_bind'%` normal-form elaborators, the
+opt-in normal-form case principle `FreeM.cases`, `map_pure` / `map_bind`, the node maps
+`map_lift_bind` / `functorMap_lift_bind` and their constructor spellings, `bind_eq`, the
+catamorphism `foldFreeM` with `foldFreeM_unique`, handler fusion `liftM_comp`, the
+identity fold `liftM_lift_eq_self`, and commutation of `liftM` with loops
+(`liftM_forIn'`, `liftM_forIn`, `liftM_forIn_of_pureForIn`, and the `liftM_forM` /
+`liftM_foldlM` / `liftM_mapM` restatements of cslib's `IsMonadHom.map_list*`).
+`PolyFun.PFunctor.Free.Basic` re-exports it and layers PolyFun's own API
+(`mapLens`, the bundled `liftMHom` monad-hom with its universal property and
+`liftM_natural`, `toW` / `equivWOfIsEmpty`, paths, displayed families, indexed-family
+packing, weakest preconditions, roll bounds) on top; `PolyFun.Control.Monad.Hom.IsMonadHom`
+turns a bundled `m →ᵐ n` into cslib's predicate so its transport lemmas apply.
 
 ### The simp normal form of an operation node
 
@@ -225,8 +236,8 @@ survives only inside `match` arms and `cases` on a tree, exactly as `Nat.succ` d
 - Both normal forms carry the direction type `P.B a` as an implicit type argument of the bind,
   which the simplifier indexes and which reduces on concrete polynomials (`⟨I, D⟩`,
   `TypeTree.basePFunctor`). Normal-form `simp` lemmas are therefore written through the
-  `lift_bind% a k` / `lift_bind'% a k` elaborators of `PolyFun/PFunctor/Free/Basic.lean`, which
-  mark that argument `no_index`.
+  `lift_bind% a k` / `lift_bind'% a k` elaborators of `ToCslib/Data/PFunctor/Free/Basic.lean`,
+  which mark that argument `no_index`.
 - Families indexed by a tree (`Path`, `PathAlong`, `Displayed`) expose the node structure
   through an interface — `Path.cons` / `Path.head` / `Path.tail` and their `PathAlong`
   counterparts — and the observation equations (`output`, `trace`, `positions`, `length`,

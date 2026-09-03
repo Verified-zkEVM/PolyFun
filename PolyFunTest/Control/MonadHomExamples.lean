@@ -5,7 +5,9 @@ Authors: Devon Tuma
 -/
 module
 
+public import Cslib.Foundations.Control.Monad.IsMonadHom.List
 public import Mathlib.Algebra.Group.Nat.Defs
+public import PolyFun.Control.Monad.Hom.IsMonadHom
 public import PolyFun.Control.Monad.Hom.Writer
 
 /-!
@@ -14,7 +16,9 @@ public import PolyFun.Control.Monad.Hom.Writer
 These examples pin the division of labour documented in
 `PolyFun/Control/Monad/Hom.lean`: core's `MonadLift` / `LawfulMonadLift` family
 supplies the *unbundled*, instance-found morphisms, `MonadHom` supplies the
-*bundled* arrow, and `MonadHom.ofLift` is the only bridge between them.
+*bundled* arrow, and `MonadHom.ofLift` is the only bridge between them; cslib's
+`IsMonadHom` predicate is reached from the bundled arrow through
+`MonadHom.isMonadHom`.
 -/
 
 @[expose] public section
@@ -101,5 +105,16 @@ def logged : WriterT Nat Id Nat := WriterT.mk (7, 3)
 example : (WriterT.mapHom idToOption logged).run = some (7, 3) := rfl
 
 end TransformerMaps
+
+section Cslib
+
+/-- A bundled arrow satisfies cslib's predicate, so cslib's transport lemmas apply to it. -/
+example : Cslib.IsMonadHom Id Option fun {_} x => idToOption x := idToOption.isMonadHom
+
+example (l : List Nat) (f : Nat → Id Nat) :
+    idToOption (l.mapM f) = l.mapM fun a => idToOption (f a) :=
+  idToOption.isMonadHom.map_listMapM f l
+
+end Cslib
 
 end Control.MonadHomExamples

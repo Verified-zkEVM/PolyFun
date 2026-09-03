@@ -13,6 +13,7 @@ public import PolyFun.Control.Monad.Algebra.Relational.Support
 public import PolyFun.Control.Monad.Free
 public import PolyFun.Control.Monad.FreeCont
 public import PolyFun.Control.Monad.Hom
+public import PolyFun.Control.Monad.Hom.IsMonadHom
 public import PolyFun.Control.Monad.Hom.Writer
 public import PolyFun.Control.Monad.Indexed
 public import PolyFun.Control.Monad.Iter
