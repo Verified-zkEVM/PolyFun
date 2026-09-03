@@ -20,16 +20,15 @@ weak.linter.style.longFile = 1500
 linter.mathlibStandardSet = true
 linter.style.longFile = 1500
 
-# Pinned to Lean v4.33.1 (matches `lean-toolchain`).
+# Pinned to Lean v4.34.0-rc2 (matches `lean-toolchain`).
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.33.1"
+rev = "e06eff5f95374108acfaf19f1ff7473aa7771df2"
 
 [[require]]
 name = "cslib"
-git = "https://github.com/dtumad/cslib.git"
-rev = "268b2bb36c7ac161f3a95f97d5946097befcfdd1"
+path = "/private/tmp/uc-cslib-rc2-candidate-20260914"
 
 [[lean_lib]]
 name = "PolyFun"
