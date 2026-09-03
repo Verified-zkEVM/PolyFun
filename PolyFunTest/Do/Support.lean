@@ -7,7 +7,8 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Monad.Support.WP
-public import Std.Tactic.Do
+public import PolyFun.Control.Monad.Support.Instances
+public import PolyFun.Control.Do.Spec
 import Std.Do.Internal.Ensures
 import Mathlib.Data.ENat.Lattice
 
@@ -128,6 +129,62 @@ example : AllOutputs (fun r => r = 2 ∨ r = 3) choose12 := by
   refine allOutputs_of_wp ?_
   intro _
   simpa only [Lean.Order.ofProp_prop_eq] using choose12_spec.le_wp trivial
+
+/-- A `let mut` accumulator over a `for` loop. -/
+def sumList (xs : List Nat) : SetM Nat := do
+  let mut s := 0
+  for x in xs do
+    s := s + x
+  pure s
+
+/- `vcgen` reaches the loop through core's `Spec.forIn_list`; the invariant relates the
+accumulator to the elements consumed so far. -/
+/--
+warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
+-/
+#guard_msgs in
+theorem sumList_spec (xs : List Nat) : ⦃ True ⦄ sumList xs ⦃ fun r => r = xs.sum ⦄ := by
+  vcgen [sumList] invariants
+    · fun pref _ s => s = pref.sum
+  all_goals simp_all
+
+/-- The loop rule for the "always" judgment, stated without any triple. -/
+example (xs : List Nat) : AllOutputs (fun r => r = xs.sum) (sumList xs) := by
+  have := toWPMonadDemonic_lawfulWPMonadAttach (m := SetM)
+  refine allOutputs_of_wp ?_
+  intro _
+  simpa only [Lean.Order.ofProp_prop_eq] using (sumList_spec xs).le_wp trivial
+
+/-- A `forM` loop whose body is a nondeterministic choice constrained by the element. -/
+def checkAll (xs : List Nat) : SetM PUnit :=
+  forM xs fun x => (({x, x + 1} : Set Nat) : SetM Nat) *> pure ⟨⟩
+
+/- `forM` over a list has no specification in core; `PolyFun.Control.Do.Spec` supplies
+`Spec.forM_list`, whose `PUnit`-accumulator invariant `vcgen`'s `invariants` clause fills. The
+nondeterministic body has no registered specification and is left as a support fact. -/
+/--
+warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
+-/
+#guard_msgs in
+theorem checkAll_spec (xs : List Nat) : ⦃ True ⦄ checkAll xs ⦃ fun _ => True ⦄ := by
+  vcgen -errorOnMissingSpec [checkAll] invariants
+    · fun _ _ _ => True
+  all_goals simp
+
+/-- The same loop through the function `List.forM`. -/
+def checkAll' (xs : List Nat) : SetM PUnit :=
+  xs.forM fun x => (({x, x + 1} : Set Nat) : SetM Nat) *> pure ⟨⟩
+
+/- `Spec.forM_list` is stated on the class method `forM`, the simp normal form; the function
+spelling reaches it through `List.forM_eq_forM` in the unfolding list. -/
+/--
+warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
+-/
+#guard_msgs in
+theorem checkAll'_spec (xs : List Nat) : ⦃ True ⦄ checkAll' xs ⦃ fun _ => True ⦄ := by
+  vcgen -errorOnMissingSpec [checkAll', List.forM_eq_forM] invariants
+    · fun _ _ _ => True
+  all_goals simp
 
 /-- The demonic interpretation is conjunctive. -/
 example (x : SetM Nat) :
