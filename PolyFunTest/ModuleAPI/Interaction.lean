@@ -13,6 +13,8 @@ import PolyFun.Interaction.UC.OpenProcess
 import PolyFun.Interaction.UC.OpenProcessInterleave
 import PolyFun.Interaction.UC.OpenProcessCoherence
 import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
+import PolyFun.Interaction.UC.OpenTheory.Quotient
+import PolyFun.Interaction.UC.EmulatesQuotient
 import PolyFun.Interaction.UC.ScheduledOpenProcessModel
 import PolyFun.Interaction.UC.ScheduledSamplerFactorization
 import PolyFun.Interaction.UC.OpenProcessSamplerCoherence
@@ -251,5 +253,21 @@ example {T : UC.OpenTheory} [UC.OpenTheory.HasPlugFactorization T]
     {Δ : UC.PortBoundary} (W : T.Obj Δ) (K : T.Obj (UC.PortBoundary.swap Δ)) :
     T.plug W K = T.plug K W :=
   UC.OpenTheory.plug_comm W K
+
+/-! ## Quotient theories -/
+
+example {T : UC.OpenTheory} (E : UC.OpenTheory.Congruence T) {Δ : UC.PortBoundary}
+    {W W' : T.Obj Δ} : E.cls W = E.cls W' ↔ E.rel W W' :=
+  E.cls_eq_cls
+
+example {T : UC.OpenTheory} (E : UC.OpenTheory.Congruence T)
+    [UC.OpenTheory.HasPlugFactorizationMod E] :
+    UC.OpenTheory.HasPlugFactorization (T.quotient E) :=
+  inferInstance
+
+example {T : UC.OpenTheory} (E : UC.OpenTheory.Congruence T) {Δ : UC.PortBoundary}
+    {real ideal : T.Obj Δ} {Obs : UC.Observation (T.quotient E)} :
+    UC.Emulates (E.cls real) (E.cls ideal) Obs ↔ UC.Emulates real ideal (Obs.comap E) :=
+  UC.Emulates.quotient_iff E
 
 end PolyFunTest.ModuleAPI.Interaction
