@@ -131,7 +131,7 @@ lemma decFin_embFin {α : Type*} [Fintype α] {d : ℕ} (hd : Fintype.card α �
     (decFin (embFin hd s) : Option α) = some s := by
   have hlt : ((embFin hd s : Fin d) : ℕ) < Fintype.card α := by
     simp only [embFin, Fin.val_castLE]; exact (Fintype.equivFin α s).isLt
-  simp only [decFin, dif_pos hlt]
+  simp only [decFin, dite_eq_left hlt]
   congr 1
   apply (Fintype.equivFin α).symm_apply_eq.mpr
   apply Fin.ext
@@ -413,7 +413,7 @@ theorem exists_realizableLE_covering (n d : ℕ) :
         (reify t₁).Outputs (BitEncFam.bitVecX.enc n x) l₁ ∧
         (reify t₂).Outputs l₁ (BitEncFam.bool.option.enc n (some b)) :=
       ⟨g x, es (init x), hrun1, hrun2⟩
-    have hpick : tablePairPred n d (t₁, t₂) x = hex.choose := dif_pos hex
+    have hpick : tablePairPred n d (t₁, t₂) x = hex.choose := dite_eq_left hex
     rw [hpick]
     obtain ⟨l₁', hl1', hl2'⟩ := hex.choose_spec
     have hl1eq : l₁' = es (init x) := Outputs_unique _ hl1' hrun1
@@ -523,7 +523,7 @@ theorem exists_diagonal (S : (n : ℕ) → Finset (BitVec n → Bool))
     exact ⟨e, he⟩
   refine ⟨fun n => if h : (S n).card < 2 ^ (2 ^ n) then (key n h).choose else default, ?_⟩
   refine hS.mono fun n hn => ?_
-  simp only [dif_pos hn]
+  simp only [dite_eq_left hn]
   exact (key n hn).choose_spec
 
 end ToCslib.Computability

@@ -24,8 +24,10 @@ while IFS= read -r file; do
 done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 
 # The `Std.Do` quarantine (AGENTS.md gotcha 8, docs/wiki/program-logic.md): core's
-# weakest-precondition / `mvcgen` API moves fast, so only the bridge modules may depend on it.
-# Everything they export is a construction, never a global instance.
+# weakest-precondition / `mvcgen` / `vcgen` API moves fast, so only the bridge modules may depend
+# on it. The fence covers both stacks core ships, `Std.Do` and `Std.Internal.Do`, and the tactic
+# layer `Std.Tactic.Do`. Everything the bridge modules export is a construction, never a global
+# instance.
 std_do_allowed() {
   case "$1" in
     PolyFun/Control/Do/Basic.lean|PolyFun/PFunctor/Free/Do.lean|PolyFunTest/Do/*) return 0 ;;
@@ -33,12 +35,14 @@ std_do_allowed() {
   esac
 }
 
-std_do_import_pattern='^[[:space:]]*(public[[:space:]]+)?(meta[[:space:]]+)?import([[:space:]]+all)?[[:space:]]+Std\.(Tactic\.)?Do([[:space:]]*$|\.)'
+std_do_import_pattern='^[[:space:]]*(public[[:space:]]+)?(meta[[:space:]]+)?import([[:space:]]+all)?[[:space:]]+Std\.((Tactic|Internal)\.)?Do([[:space:]]*$|\.)'
 
 # Keep every supported import modifier covered: otherwise a valid Lean import form can bypass
 # the quarantine while the repository's existing files still leave this check green.
 for std_do_import in \
     'import Std.Do' \
+    'import Std.Internal.Do' \
+    'public import Std.Internal.Do.WP.Basic' \
     'public import Std.Tactic.Do' \
     'import all Std.Tactic.Do' \
     'public import all Std.Tactic.Do' \
@@ -55,7 +59,7 @@ done
 while IFS= read -r file; do
   if grep -qE "$std_do_import_pattern" "$file"; then
     if ! std_do_allowed "$file"; then
-      echo "ERROR: $file imports core Std.Do outside the quarantine." >&2
+      echo "ERROR: $file imports core Std.Do / Std.Internal.Do outside the quarantine." >&2
       echo "Only PolyFun/Control/Do/Basic.lean, PolyFun/PFunctor/Free/Do.lean, and" >&2
       echo "PolyFunTest/Do/ may depend on it. See AGENTS.md gotcha 8." >&2
       status=1

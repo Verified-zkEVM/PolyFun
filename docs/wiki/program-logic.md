@@ -120,8 +120,9 @@ obstructions — is in
 ## The `Std.Do` quarantine
 
 Only `PolyFun/Control/Do/Basic.lean` and `PolyFun/PFunctor/Free/Do.lean` (and
-`PolyFunTest/Do/`) may import `Std.Tactic.Do`. The quarantine keeps the
-dependency on the fast-moving upstream `mvcgen` API confined to two files, and
+`PolyFunTest/Do/`) may import `Std.Do`, `Std.Internal.Do`, or `Std.Tactic.Do`;
+`scripts/check-modules.sh` enforces all three spellings. The quarantine keeps the
+dependency on the fast-moving upstream `mvcgen` / `vcgen` API confined to two files, and
 everything they provide is a construction (`def`), not a global instance —
 global `WP` instances on `FreeM` would race downstream registrations on
 reducible unfoldings such as VCVio's `OracleComp`. The demonic instances are
@@ -129,7 +130,7 @@ reducible unfoldings such as VCVio's `OracleComp`. The demonic instances are
 
 ## The two upstream WP stacks
 
-Core ships **two** complete weakest-precondition stacks at the v4.33.1 pin, and PolyFun
+Core ships **two** complete weakest-precondition stacks at the v4.34.0-rc2 pin, and PolyFun
 bridges the older one. Knowing which is which matters, because they differ on exactly the
 property that decides what PolyFun can express.
 

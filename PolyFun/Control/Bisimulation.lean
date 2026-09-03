@@ -767,7 +767,7 @@ theorem isStrongSimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
     IsStrongSimulation L₁ L₂ rel ↔ Cslib.LTS.IsSimulation L₁.toLts L₂.toLts rel :=
   ⟨fun h _ _ hrel _ _ hstep => h hrel hstep,
-    fun h _ _ hrel _ _ hstep => h _ _ hrel _ _ hstep⟩
+    fun h _ _ hrel _ _ hstep => h hrel _ _ hstep⟩
 
 theorem isStrongBisimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
@@ -799,7 +799,7 @@ theorem isWeakSimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
       let ⟨t₂, hw, hr⟩ := h hrel hstep
       ⟨t₂, L₂.sTr_toLts_iff.mpr hw, hr⟩
   · exact fun h _ _ hrel _ _ hstep =>
-      let ⟨t₂, hs, hr⟩ := h _ _ hrel _ _ hstep
+      let ⟨t₂, hs, hr⟩ := h hrel _ _ hstep
       ⟨t₂, L₂.sTr_toLts_iff.mp hs, hr⟩
 
 /-- The weak bisimulations of this file are cslib's *sw*-bisimulations: the

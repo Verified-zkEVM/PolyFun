@@ -151,14 +151,14 @@ theorem update?_of_view_query [DecidableEq p.A] (M : DynComputation.{u} p α β)
     (direction : p.B position) :
     M.update? (state, ⟨position, direction⟩) = some (next direction) := by
   unfold update?; rw [hview]
-  exact dif_pos rfl
+  exact dite_eq_left rfl
 
 theorem update?_of_view_query_of_ne [DecidableEq p.A]
     (M : DynComputation.{u} p α β) {state : M.State} {query : p.Obj M.State}
     (hview : M.view state = Sum.inr query) {index : p.Idx}
     (hne : index.1 ≠ query.1) : M.update? (state, index) = none := by
   unfold update?; rw [hview]
-  exact dif_neg hne
+  exact dite_eq_right hne
 
 /-- The total variant of the flattened transition: a mismatched tag or an already
 returned state leaves the state unchanged.
@@ -333,10 +333,10 @@ theorem update?_wrap {q : PFunctor.{uA₂, uB₂}} [DecidableEq p.A] [DecidableE
       · subst h
         rw [update?_of_view_query (M.wrap lens) hcomp idirection]
         change _ = Option.bind (dite _ _ _) _
-        rw [dif_pos rfl, Option.bind_some, update?_of_view_query M hview]
+        rw [dite_eq_left rfl, Option.bind_some, update?_of_view_query M hview]
       · rw [update?_of_view_query_of_ne (M.wrap lens) hcomp h]
         change none = Option.bind (dite _ _ _) _
-        rw [dif_neg h]
+        rw [dite_eq_right h]
         rfl
 
 /-! ## The step maps of a sequential composition -/

@@ -211,11 +211,12 @@ Structures use UpperCamelCase: `PFunctor`, `TypeTree`, `Decoration`,
    `./scripts/update-lib.sh`.
 7. **Do not introduce `sorry` or `admit` in finished work.** Use `stop`
    only when explicitly preserving partial proof work during a refactor.
-8. **`Std.Tactic.Do` imports are quarantined.** Only
+8. **`Std.Do` imports are quarantined.** Only
    `PolyFun/Control/Do/Basic.lean`, `PolyFun/PFunctor/Free/Do.lean`, and
-   `PolyFunTest/Do/` may import core `Std.Do` / `mvcgen`, and they export
-   constructions (`def`s and `scoped` instances), never global `WP`
-   instances. See `docs/wiki/program-logic.md`.
+   `PolyFunTest/Do/` may import core `Std.Do`, `Std.Internal.Do`, or
+   `Std.Tactic.Do` (`mvcgen` / `vcgen`), and they export constructions
+   (`def`s and `scoped` instances), never global `WP` instances. See
+   `docs/wiki/program-logic.md`.
 
 ## Building
 
