@@ -130,6 +130,7 @@ public import PolyFun.Interaction.UC.OpenSyntax.Interp
 public import PolyFun.Interaction.UC.OpenSyntax.Raw
 public import PolyFun.Interaction.UC.OpenTheory
 public import PolyFun.Interaction.UC.OpenTheory.Family
+public import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
 public import PolyFun.Interaction.UC.Realizability
 public import PolyFun.Interaction.UC.SamplerObservation
 public import PolyFun.Interaction.UC.ScheduledOpenProcessModel

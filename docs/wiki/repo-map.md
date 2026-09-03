@@ -239,6 +239,12 @@ Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    EnvOpenProcess, CorruptionModel,
                                    MomentaryCorruption, Leakage}
 
+Interaction/UC/OpenTheory -> Interaction/UC/OpenTheory/PlugFactorization
+  -> Interaction/UC/{Emulates, OpenTheory/Family}
+  (the residual-context formers and the five plug-factorization equalities
+   the composition theorems consume, as a class strictly weaker than
+   HasPlugWireFactor; the honest strict target for process models)
+
 Interaction/UC/OpenTheory -> Interaction/UC/SubTheory
 Interaction/UC/{OpenTheory, SubTheory}
   -> Interaction/UC/OpenTheory/Family

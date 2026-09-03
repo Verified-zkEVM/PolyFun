@@ -6,6 +6,7 @@ Authors: Devon Tuma
 
 module
 
+public import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
 public import PolyFun.Interaction.UC.SubTheory
 
 /-!
@@ -125,6 +126,19 @@ instance {ι : Type v} {T : ι → UC.OpenTheory.{u}}
   wire_idWire_right _Γ _ W₁ :=
     funext fun i => OpenTheory.wire_idWire_right (T := T i) (W₁ i)
   unit_eq := funext fun i => OpenTheory.unit_eq (T := T i)
+
+instance {ι : Type v} {T : ι → UC.OpenTheory.{u}}
+    [∀ i, HasPlugFactorization (T i)] : HasPlugFactorization (pi T) where
+  toIsLawful := inferInstance
+  plug_comm W K := funext fun i => OpenTheory.plug_comm (T := T i) (W i) (K i)
+  close_par_left W₁ W₂ K :=
+    funext fun i => OpenTheory.close_par_left (T := T i) (W₁ i) (W₂ i) (K i)
+  close_par_right W₁ W₂ K :=
+    funext fun i => OpenTheory.close_par_right (T := T i) (W₁ i) (W₂ i) (K i)
+  close_wire_left W₁ W₂ K :=
+    funext fun i => OpenTheory.close_wire_left (T := T i) (W₁ i) (W₂ i) (K i)
+  close_wire_right W₁ W₂ K :=
+    funext fun i => OpenTheory.close_wire_right (T := T i) (W₁ i) (W₂ i) (K i)
 
 instance {ι : Type v} {T : ι → UC.OpenTheory.{u}}
     [∀ i, HasPlugWireFactor (T i)] : HasPlugWireFactor (pi T) where

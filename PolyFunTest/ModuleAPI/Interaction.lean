@@ -10,6 +10,7 @@ import PolyFun.Interaction.Basic.Sampler
 import PolyFun.Interaction.Concurrent.Fairness
 import PolyFun.Interaction.Multiparty.Observation
 import PolyFun.Interaction.UC.OpenProcess
+import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
 import PolyFun.Interaction.UC.ScheduledOpenProcessModel
 import PolyFun.Interaction.UC.ScheduledSamplerFactorization
 
@@ -117,5 +118,18 @@ example {m : Type w → Type w'} [Monad m] [LawfulMonad m]
         else
           continuation ⟨.context⟩ :=
   UC.BinaryScheduler.sourceDraw_bind scheduler first second context continuation
+
+/-! ## Plug factorization laws -/
+
+example {T : UC.OpenTheory} [UC.OpenTheory.HasPlugFactorization T]
+    {Δ₁ Δ₂ : UC.PortBoundary} (W₁ : T.Obj Δ₁) (W₂ : T.Obj Δ₂)
+    (K : T.Plug (UC.PortBoundary.tensor Δ₁ Δ₂)) :
+    T.close (T.par W₁ W₂) K = T.close W₁ (T.parContextLeft W₂ K) :=
+  UC.OpenTheory.close_par_left W₁ W₂ K
+
+example {T : UC.OpenTheory} [UC.OpenTheory.HasPlugFactorization T]
+    {Δ : UC.PortBoundary} (W : T.Obj Δ) (K : T.Obj (UC.PortBoundary.swap Δ)) :
+    T.plug W K = T.plug K W :=
+  UC.OpenTheory.plug_comm W K
 
 end PolyFunTest.ModuleAPI.Interaction
