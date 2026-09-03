@@ -36,8 +36,8 @@ quantitative carrier bridges to `MAlgOrdered` by `rfl`), and Bluebell's `wp` is
 a BI-valued sibling. PolyFun therefore owns the *handler/algebra-parameterized*
 theory over the polynomial substrate, and each downstream picks its carrier.
 PolyFun takes no Loom2 or Iris dependency and does not pick between the
-substrates; core's `Std.Do` / `Std.Internal.Do` stacks are used only behind the
-two-tier quarantine of `scripts/check-modules.sh`.
+substrates; core's `Std.Internal.Do` stack is the canonical interface, imported only inside
+the program-logic kernel (the two-tier quarantine of `scripts/check-modules.sh`).
 
 ## The core (implemented)
 
@@ -85,14 +85,10 @@ two-tier quarantine of `scripts/check-modules.sh`.
   monad morphisms (cslib's `IsMonadHom` or PolyFun's bundled `m →ᵐ n`). These are the
   canonical interface; `PolyFunTest/Do/{Algebra,Support}.lean` run `vcgen`
   through them.
-- `Control/Do/Basic.lean` + `PFunctor/Free/Do.lean` — the core-`Std.Do`
-  quarantine: `MonadHom.transportSPredWP(Monad)`, `MonadAttach.toWP(Monad)`,
-  `toWPSound` plus `support_subset_of_wpSPred`/`allOutputs_of_wpSPred` (any `WPSound`
-  triple becomes a support fact),
-  scoped demonic `WP (FreeM P) .pure` instances, and the `Spec.lift` `@[spec]`
-  lemma; `mvcgen` decomposes `do`-programs over `FreeM` with uninterpreted
-  operations (`PolyFunTest/Do/FreeM.lean` proves this in CI). Only these two
-  files (plus tests) may import `Std.Tactic.Do`.
+- `PFunctor/Free/WP/Upstream.lean` + `PFunctor/Free/Do.lean` — the free monad on the
+  canonical stack: `OpSpec.toWPMonad`, `FreeM.wpMonadOfHandler`, scoped demonic and
+  angelic instances with `@[spec]` rules for `lift` / `liftBind`, so `vcgen` decomposes
+  free programs (`PolyFunTest/Do/{FreeM,Loops,Transport}.lean`).
 
 ## Deliberately not in PolyFun
 
@@ -151,9 +147,14 @@ implemented).
   invariant inside the state relation, since `ITree` has no possible-output
   predicate for a postcondition to range over. wp-congruence under `WeakBisim`
   remains open.
-- The angelic WP bridge exists on the lattice-generic stack
-  (`MonadAttach.toWPMonadAngelic`); on the older `Std.Do` stack it is **blocked**, not
-  merely unwritten.
+- `vcgen` on dependent value types: core's `Sym` matcher compares the `Prog`/`Value` slots
+  of a spec structurally, so `Spec.lift` misses an operation in tail position once the goal's
+  value type is normalized (gotcha 12f). Worth raising upstream: matching those slots up to
+  reducible defeq, or reducing structure projections in `unfoldReducible`, would make
+  dependently typed operations first-class.
+- The angelic WP bridge exists only on the lattice-generic stack
+  (`MonadAttach.toWPMonadAngelic`, scoped as `PFunctor.FreeM.AngelicWP`); on the older
+  `Std.Do` stack it is **blocked**, not merely unwritten.
   `Std.Do.PredTrans` carries conjunctivity as a structure field, stated as a
   bi-entailment; `AllOutputs` distributes over `∧` both ways but `SomeOutput` only
   left-to-right, so there is no angelic `Std.Do.WP`. Core's lattice-generic stack

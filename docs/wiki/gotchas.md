@@ -403,3 +403,21 @@ statements at reducible or instance transparency and will not unfold `SetM`, so
 find an occurrence" on such a term even though `exact` / `refine` (default transparency) accept
 it. Give the literal a `SetM`-typed name (`def choose (x : Nat) : SetM Nat := {x, x + 1}`), or
 apply the lemma by term (`refine (allOutputs_bind _ _ _).mpr ?_`).
+
+### 12f. `vcgen` matches specs structurally, so dependent value types need care
+
+`vcgen` applies an `@[spec]` lemma by matching its `wp` pattern against the goal with a
+structural matcher (`Lean.Meta.Sym`); only instance arguments are compared with `isDefEq`. A
+spec whose value type is dependent, such as `PFunctor.FreeM.Spec.lift` at `P.B a`, therefore
+applies wherever the goal's value type is syntactically `P.B a` — under `bind`, where the type
+comes from the operation — but not to an operation in tail position, where the elaborated
+triple already carries the normalized type (`Bool` for an `abbrev` interface): the candidate is
+listed and rejected ("No spec applicable"). Registering the unfolding
+`FreeM.lift a = FreeM.liftBind a pure` as an equation spec does not help, because `Spec.pure`
+then meets the same mismatch on the continuation. Use `vcgen -errorOnMissingSpec` and finish
+the residual `wp` goal by rewriting with `DemonicWP.wp_apply_eq` and
+`FreeM.allOutputs_lift (P := …)`, naming the interface explicitly because its direction type
+has been reduced on the concrete polynomial (the same mechanism as 6b's `lift_bind%` bullet;
+`PolyFunTest/Do/Loops.lean`), or state the program over a generic interface so the value type
+stays `P.B a`. Downstream interfaces whose `P.B a` reduces to their own type (an oracle spec's
+range, say) need their own `Spec.query`-style rule at that type for the same reason.

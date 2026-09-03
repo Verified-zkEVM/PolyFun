@@ -270,18 +270,20 @@ PFunctor.FreeM.lift`.
 
 #### Core is absorbing Loom's weakest-precondition design — adopted, behind the quarantine
 
-**There are two complete WP stacks at the pin, and PolyFun now bridges both.** The tree
+**There are two complete WP stacks at the pin, and PolyFun targets this one.** The tree
 described here is `Std/Internal/Do/`, the lattice-generic stack that `vcgen` drives and that
-PolyFun's program-logic kernel targets through `Control/Monad/{Algebra,Support,Hom}/WP.lean`;
-the older public `Std/Do/` is `SPred`/`PostShape`-indexed and is what `Control/Do/Basic.lean`
-and `PFunctor/Free/Do.lean` still target for the `mvcgen` smoke tests. Confusing them is easy
-and consequential — they differ on conjunctivity, which decides what PolyFun can express. The
-comparison table and that consequence are in
+becomes the public `Std.WP` in v4.35; the older public `Std/Do/` is `SPred`/`PostShape`-indexed
+and is what `mvcgen` consumes. PolyFun's kernel instances (`Control/Monad/{Algebra,Support,Hom}/WP.lean`,
+`PFunctor/Free/WP/Upstream.lean`, `PFunctor/Free/Do.lean`) all live on `Std/Internal/Do/`;
+nothing in PolyFun imports `Std.Do` for its own sake (cslib's `IsMonadHom` module brings its
+`WP` classes in transitively). Confusing the two is easy and consequential — they differ on
+conjunctivity, which decides what PolyFun can express. The comparison table and that
+consequence are in
 [`docs/wiki/program-logic.md`](../wiki/program-logic.md#the-two-upstream-wp-stacks); the
 short version is that `Std.Do.PredTrans` makes conjunctivity a *structure field* stated as a
-bi-entailment, which is why the demonic support reading has a `Std.Do.WP` instance and the
-angelic one provably cannot, while the inequational `Std.Internal.Do.WPMonad` admits both
-readings (`MonadAttach.toWPMonadDemonic` / `toWPMonadAngelic`).
+bi-entailment, so the angelic support reading could never be a `Std.Do` instance, whereas the
+inequational `Std.Internal.Do.WPMonad` admits both readings (`MonadAttach.toWPMonadDemonic` /
+`toWPMonadAngelic`) and records conjunctivity per program.
 
 At the pin, `Std/Internal/Do/` contains:
 
@@ -332,19 +334,24 @@ Upstream marks `mvcgen` deprecated via `deprecated_syntax`, directing users to `
 (#14874, `since := "2026-08-21"`). That deprecation is on `master` only — not at the
 `v4.34.0` pin — so it is a **v4.35** item. `vcgen` itself already exists at the pin
 (`Std/Tactic/Do/Syntax.lean:464`) and consumes `Std.Internal.Do.WPMonad` /
-`Std.Internal.Do.Triple` (`Lean/Elab/Tactic/Do/Internal/VCGen/Frontend.lean`), which the
-bridges above provide, so it runs through PolyFun's semantics
-(`PolyFunTest/Do/{Algebra,Support}.lean`). It warns on every call (`mvcgen.warning`; behind
+`Std.Internal.Do.Triple` (`Lean/Elab/Tactic/Do/Internal/VCGen/Frontend.lean`), not the
+`Std.Do.WP` structures. PolyFun's kernel instantiates that stack directly
+(`Control/Monad/{Algebra,Support,Hom}/WP.lean`, `PFunctor/Free/WP/Upstream.lean`,
+`PFunctor/Free/Do.lean`) and every `PolyFunTest/Do/` file runs `vcgen`, so the deprecation
+has nothing left to migrate here. `vcgen` warns on every call (`mvcgen.warning`; behind
 `experimental.vcgen` from v4.35), so production proofs do not call it and the test canaries
-assert the warning with `#guard_msgs` under `--wfail`. The `mvcgen` smoke tests on the
-`Std.Do` bridge keep running until that bridge is retired.
+assert the warning with `#guard_msgs` under `--wfail`.
 
 Two gaps in the `@[spec]` database at the pin, both still present on `master`, are closed in
 `PolyFun/Control/Do/Spec.lean` and are upstream asks for `SpecLemmas.lean`: `try … catch`
 elaborates to `MonadExcept.tryCatch`, whose lifting rule `Spec.tryCatch_MonadExcept` core states
 but does not tag (its twin `Spec.throw_MonadExcept` is tagged), so every `try … catch` on a
 transformer stack stopped with "no spec found"; and `forM` over a list has no rule at all
-(`Spec.forM_list`, an `Invariant α PUnit Pred` rule in the shape of `Spec.forIn_list`).
+(`Spec.forM_list`, an `Invariant α PUnit Pred` rule in the shape of `Spec.forIn_list`). A third
+ask concerns the matcher rather than the database: `vcgen` compares a spec's program and value
+type structurally (`Lean.Meta.Sym`), so a rule at a dependent value type such as `P.B a` misses
+an operation in tail position once that type has been normalized (gotcha 12f); matching those
+slots up to reducible defeq would make dependently typed operations first-class.
 
 Relatedly, `Batteries.Classes.SatisfiesM` has been deprecated in favour of
 `Std.Do.Triple`. The `SatisfiesM` / `MonadSatisfying` line — the other abstraction
