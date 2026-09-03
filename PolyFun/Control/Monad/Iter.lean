@@ -40,7 +40,7 @@ Lean core provides the function
 `repeatM : (β → m (β ⊕ α)) → β → m α`, with the same branch
 convention as `iterM`, but not a typeclass or a corresponding lawful interface.
 Core `repeatM` is implemented by partial recursion and requires `Nonempty α`;
-its unfolding lemma `repeatM_eq_of_monadTail` further requires the order-theoretic
+its unfolding lemma `repeatM.Internal.eq_of_monadTail` further requires the order-theoretic
 class `Lean.Order.MonadTail`.
 By contrast, `MonadIter` lets a monad select its own implementation and also
 supports empty result types, which are useful for non-returning resumptions.

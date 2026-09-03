@@ -286,10 +286,10 @@ private lemma tableComputer_read_step (S : Finset (List Symbol))
   rw [← bitape_head_tail_eq_mk₁ t]
   by_cases h : l ∈ prefixClosure S
   · simp only [readState]
-    rw [dif_pos h]
+    rw [dite_eq_left h]
     rfl
   · simp only [readState]
-    rw [dif_neg h, dif_neg (append_not_mem_prefixClosure h b)]
+    rw [dite_eq_right h, dite_eq_right (append_not_mem_prefixClosure h b)]
     rfl
 
 private lemma tableComputer_read_steps (S : Finset (List Symbol))
@@ -314,10 +314,10 @@ private lemma tableComputer_blank_step (S : Finset (List Symbol))
   change (tableComputer S T).step _ = _
   by_cases h : l ∈ prefixClosure S
   · simp only [readState]
-    rw [dif_pos h]
+    rw [dite_eq_left h]
     rfl
   · simp only [readState, enterState]
-    rw [dif_neg h, dif_neg fun hS => h (subset_prefixClosure S hS)]
+    rw [dite_eq_right h, dite_eq_right fun hS => h (subset_prefixClosure S hS)]
     rfl
 
 private lemma tableComputer_write_steps (S : Finset (List Symbol))
@@ -351,11 +351,11 @@ private lemma tableComputer_finish_within (S : Finset (List Symbol))
   simp only [enterState] at h1
   by_cases hS : l ∈ S
   · by_cases hT : (T l).length = 0
-    · rw [dif_pos hS, dif_pos hT] at h1
-      rw [if_pos hS, List.length_eq_zero_iff.mp hT]
+    · rw [dite_eq_left hS, dite_eq_left hT] at h1
+      rw [ite_eq_left hS, List.length_eq_zero_iff.mp hT]
       exact RelatesWithinSteps.of_le (.single h1) (by omega)
-    · rw [dif_pos hS, dif_neg hT] at h1
-      rw [if_pos hS]
+    · rw [dite_eq_left hS, dite_eq_right hT] at h1
+      rw [ite_eq_left hS]
       have h2 := tableComputer_write_steps S T ⟨l, hS⟩ ((T l).length - 1)
         (by change (T l).length - 1 < (T l).length; omega)
       rw [show (T l).length - 1 + 1 = (T l).length from by omega,
@@ -366,8 +366,8 @@ private lemma tableComputer_finish_within (S : Finset (List Symbol))
       have hle : (T l).length ≤ S.sup fun s => (T s).length :=
         Finset.le_sup (f := fun s => (T s).length) hS
       omega
-  · rw [dif_neg hS] at h1
-    rw [if_neg hS]
+  · rw [dite_eq_right hS] at h1
+    rw [ite_eq_right hS]
     exact RelatesWithinSteps.of_le (.single h1) (by omega)
 
 /-! ### Assembly -/
@@ -445,7 +445,7 @@ noncomputable def ofFintype {α : Type u} {β : Type v} [Fintype α]
   polyTime := Cslib.Turing.SingleTapeTM.tablePolyTimeComputable (Finset.univ.image ea)
     fun l => ((Function.partialInv ea l).map fun a => eb (f a)).getD []
   map_encode a := by
-    rw [if_pos (Finset.mem_image_of_mem ea (Finset.mem_univ a)),
+    rw [ite_eq_left (Finset.mem_image_of_mem ea (Finset.mem_univ a)),
       Function.partialInv_left hea]
     rfl
 

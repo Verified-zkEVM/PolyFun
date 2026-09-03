@@ -529,7 +529,7 @@ theorem splitAtValid_liftBind_other [DecidableEq P.A] {target a : P.A}
             Split.valid_prependOther hne answer result.1 result.2⟩)
           (splitAtValid target (next answer) n) := by
   rw (occs := .pos [1]) [splitAtValid.eq_def]
-  simp only [dif_neg hne]
+  simp only [dite_eq_right hne]
 
 @[simp] theorem splitAt_pure [DecidableEq P.A] (target : P.A) (value : α) (n : Nat) :
     splitAt target (pure value : FreeM P α) n = pure (.missing ⟨⟩) := rfl
@@ -573,7 +573,7 @@ theorem splitAt_bind_complete [DecidableEq P.A] (target : P.A) : (program : Free
                 (fun result => FreeM.map addPrefix (Split.complete result)) =
               FreeM.map addPrefix (withPath (next answer))
             rw [bind_map_right, ih answer n]
-      · simp only [splitAt, dif_neg h, withPath]
+      · simp only [splitAt, dite_eq_right h, withPath]
         apply congrArg (FreeM.liftBind a)
         funext answer
         rw [show FreeM.bind (FreeM.map (Split.prependOther h answer)
@@ -620,7 +620,7 @@ theorem map_val_splitAtValid [DecidableEq P.A] (target : P.A) : (program : FreeM
               FreeM.map (Split.prependSame answer) (splitAt a (next answer) n)
             rw [FreeM.comp_map, ih answer n]
       · rw [splitAtValid_liftBind_other h]
-        simp only [splitAt, dif_neg h, FreeM.map]
+        simp only [splitAt, dite_eq_right h, FreeM.map]
         apply congrArg (FreeM.liftBind a)
         funext answer
         rw [← FreeM.comp_map]
@@ -692,7 +692,7 @@ theorem forkAt_liftBind_other [DecidableEq P.A] {target a : P.A}
         FreeM.map (Option.map (ForkView.prependOther hne answer))
           (forkAt target (next answer) n) := by
   unfold forkAt
-  simp only [splitAt, dif_neg hne]
+  simp only [splitAt, dite_eq_right hne]
   apply congrArg (FreeM.liftBind a)
   funext answer
   rw [show FreeM.bind (FreeM.map (Split.prependOther hne answer)

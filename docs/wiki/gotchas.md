@@ -288,11 +288,13 @@ path. Foundational citations live in
 those keys (`Hancock-Setzer`, `Spivak-Niu`, etc.) rather than copying
 prose.
 
-### 12. `Std.Tactic.Do` imports are quarantined
+### 12. `Std.Do` imports are quarantined
 
 Only `PolyFun/Control/Do/Basic.lean`, `PolyFun/PFunctor/Free/Do.lean`, and
-`PolyFunTest/Do/` may import `Std.Tactic.Do` (core `Std.Do` / `mvcgen`). The
-upstream API is evolving quickly (an `mvcgen'` rewrite is in progress), so the
+`PolyFunTest/Do/` may import `Std.Do`, `Std.Internal.Do`, or `Std.Tactic.Do`
+(core's two weakest-precondition stacks and the `mvcgen` / `vcgen` tactics). The
+upstream API is evolving quickly (`vcgen` on the `Std.Internal.Do` stack is
+replacing `mvcgen`, and that stack becomes a public `Std.WP` in v4.35), so the
 dependency stays confined to those files, and everything they export is a
 construction (`def`), never a global instance: a global `Std.Do.WP` instance on
 `FreeM P` would race downstream registrations on reducible unfoldings such as
