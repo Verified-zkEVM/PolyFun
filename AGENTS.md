@@ -107,8 +107,11 @@ and depend on this library.
   algebra, monad iter / hom, lawful re-exports), plus the program-logic
   kernel: ordered monad algebras (`Monad/Algebra`, unary and relational),
   exact monadic support over core's `MonadAttach` with the
-  always/some/never judgments (`Monad/Support`), and the core-`Std.Do`
-  quarantine root (`Do/Basic`).
+  always/some/never judgments (`Monad/Support`), their bridges to core's
+  lattice-generic `Std.Internal.Do` weakest-precondition stack
+  (`Monad/{Algebra,Support,Hom}/WP`: `toWPMonad`, demonic and angelic
+  interpretations, `vcgen`-ready), and the core-`Std.Do` quarantine root
+  (`Do/Basic`).
 - `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
   silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).

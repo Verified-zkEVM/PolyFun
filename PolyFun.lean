@@ -11,13 +11,16 @@ public import PolyFun.Control.Lawful.Basic
 public import PolyFun.Control.Monad.Algebra
 public import PolyFun.Control.Monad.Algebra.Relational
 public import PolyFun.Control.Monad.Algebra.Relational.Support
+public import PolyFun.Control.Monad.Algebra.WP
 public import PolyFun.Control.Monad.Free
 public import PolyFun.Control.Monad.FreeCont
 public import PolyFun.Control.Monad.Hom
+public import PolyFun.Control.Monad.Hom.WP
 public import PolyFun.Control.Monad.Hom.Writer
 public import PolyFun.Control.Monad.Indexed
 public import PolyFun.Control.Monad.Iter
 public import PolyFun.Control.Monad.Support
+public import PolyFun.Control.Monad.Support.WP
 public import PolyFun.Control.Trace
 public import PolyFun.IPFunctor.Basic
 public import PolyFun.IPFunctor.Chart.Basic

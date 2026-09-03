@@ -68,7 +68,7 @@ example (a : Bool) (h : MonadAttach.CanReturn flipTwo a) : a = true ∨ a = fals
 
 /-- The same, phrased as the "always" judgment over the support. -/
 example : MonadAttach.AllOutputs (fun b => b = true ∨ b = false) flipTwo := by
-  refine MonadAttach.allOutputs_of_wp ?_
+  refine MonadAttach.allOutputs_of_wpSPred ?_
   mvcgen [flipTwo]
   intro x y
   cases x && y <;> simp

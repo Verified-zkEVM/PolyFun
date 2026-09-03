@@ -74,9 +74,18 @@ substrates; core `Std.Do` is used only behind a two-file quarantine.
   `Handler`; soundness `wpFold_le_wpVia` / `wpFold_eq_wpVia` (the generic
   engine behind VCVio's `HandlerSpecs` pattern); coherence of demonic/angelic
   folds with `AllOutputs`/`SomeOutput`.
+- `Control/Monad/Algebra/WP.lean`, `Control/Monad/Support/WP.lean`,
+  `Control/Monad/Hom/WP.lean` — the bridges to core's lattice-generic stack
+  (`Std.Internal.Do`, public as `Std.WP` from v4.35, driven by `vcgen`):
+  `MAlgOrdered.toWPMonad` for Mathlib-lattice carriers, the demonic and angelic
+  `WPMonad` interpretations of exact support, conjunctivity of the demonic one,
+  a mirror of master's `LawfulWPMonadAttach` with `support_subset_of_wp` /
+  `allOutputs_of_wp`, and transport along monad morphisms. These are the
+  canonical interface; `PolyFunTest/Do/{Algebra,Support}.lean` run `vcgen`
+  through them.
 - `Control/Do/Basic.lean` + `PFunctor/Free/Do.lean` — the core-`Std.Do`
-  quarantine: `MonadHom.transportWP(Monad)`, `MonadAttach.toWP(Monad)`,
-  `toWPSound` plus `support_subset_of_wp`/`allOutputs_of_wp` (any `WPSound`
+  quarantine: `MonadHom.transportSPredWP(Monad)`, `MonadAttach.toWP(Monad)`,
+  `toWPSound` plus `support_subset_of_wpSPred`/`allOutputs_of_wpSPred` (any `WPSound`
   triple becomes a support fact),
   scoped demonic `WP (FreeM P) .pure` instances, and the `Spec.lift` `@[spec]`
   lemma; `mvcgen` decomposes `do`-programs over `FreeM` with uninterpreted
@@ -132,7 +141,8 @@ implemented).
   invariant inside the state relation, since `ITree` has no possible-output
   predicate for a postcondition to range over. wp-congruence under `WeakBisim`
   remains open.
-- The public angelic WP bridge is **blocked at the current Lean 4.34.0-rc2 pin**, not
+- The angelic WP bridge exists on the lattice-generic stack
+  (`MonadAttach.toWPMonadAngelic`); on the older `Std.Do` stack it is **blocked**, not
   merely unwritten.
   `Std.Do.PredTrans` carries conjunctivity as a structure field, stated as a
   bi-entailment; `AllOutputs` distributes over `∧` both ways but `SomeOutput` only

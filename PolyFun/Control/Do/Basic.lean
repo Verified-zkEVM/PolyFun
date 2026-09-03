@@ -20,7 +20,7 @@ evolving upstream API quarantined.
 It provides constructions — deliberately not instances — that transport core
 `Std.Do` structure onto PolyFun's monads:
 
-* `MonadHom.transportWP` / `MonadHom.transportWPMonad` pull a `WP`/`WPMonad`
+* `MonadHom.transportSPredWP` / `MonadHom.transportSPredWPMonad` pull a `WP`/`WPMonad`
   structure back along a monad morphism `F : m →ᵐ n`, so a monad that interprets
   into an `mvcgen`-ready stack inherits its predicate-transformer semantics.
 * `MonadAttach.toWP` / `MonadAttach.toWPMonad` give any monad with exact support
@@ -28,7 +28,7 @@ It provides constructions — deliberately not instances — that transport core
   holds when every possible output of `x` satisfies `Q`. `MonadAttach.toWPSound`
   proves that interpretation sound in core's sense, with `attach` supplying the
   `Ensures` witness.
-* `MonadAttach.support_subset_of_wp` / `allOutputs_of_wp` go the other way: *any*
+* `MonadAttach.support_subset_of_wpSPred` / `allOutputs_of_wpSPred` go the other way: *any*
   `WPSound` predicate-transformer semantics bounds the support, so an
   `mvcgen`-discharged triple becomes a support fact in one step. These need only
   `LawfulMonadAttach`, so they also apply to `StateT`/`ReaderT`/`EStateM`, where
@@ -81,15 +81,15 @@ variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n]
 `x : m α` by the predicate transformer of its image `F x`. Not an instance —
 downstream registers it at chosen carriers. -/
 @[instance_reducible]
-def transportWP (F : m →ᵐ n) [WP n ps] : WP m ps where
+def transportSPredWP (F : m →ᵐ n) [WP n ps] : WP m ps where
   wp x := WP.wp (F x)
 
 /-- The transported structure is a `WPMonad` whenever the target is and the
 source is a lawful monad. Not an instance. -/
 @[instance_reducible]
-def transportWPMonad (F : m →ᵐ n) [LawfulMonad m] [WPMonad n ps] : WPMonad m ps where
+def transportSPredWPMonad (F : m →ᵐ n) [LawfulMonad m] [WPMonad n ps] : WPMonad m ps where
   toLawfulMonad := inferInstance
-  toWP := F.transportWP
+  toWP := F.transportSPredWP
   wp_pure a := by
     change WP.wp (F (pure a)) = _
     rw [F.mmap_pure]
@@ -187,13 +187,13 @@ variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m]
   [LawfulMonadAttach m] {ps : PostShape.{u}} [WP m ps] [WPSound m ps]
 
 /-- Any `WPSound` predicate-transformer semantics bounds the support. -/
-theorem support_subset_of_wp {α : Type u} {x : m α} {P : α → Prop}
+theorem support_subset_of_wpSPred {α : Type u} {x : m α} {P : α → Prop}
     (h : ⊢ₛ wp⟦x⟧ (⇓?a => ⌜P a⌝)) : support x ⊆ {a | P a} :=
   fun _ hcan => WPSound.of_wp_canReturn (P := P) hcan h
 
-/-- The "always" phrasing of `support_subset_of_wp`: a weakest-precondition proof
+/-- The "always" phrasing of `support_subset_of_wpSPred`: a weakest-precondition proof
 discharges the almost-sure judgment. -/
-theorem allOutputs_of_wp {α : Type u} {x : m α} {P : α → Prop}
+theorem allOutputs_of_wpSPred {α : Type u} {x : m α} {P : α → Prop}
     (h : ⊢ₛ wp⟦x⟧ (⇓?a => ⌜P a⌝)) : AllOutputs P x :=
   fun _ hcan => WPSound.of_wp_canReturn (P := P) hcan h
 
