@@ -685,7 +685,6 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `OpenProcessSamplerFactorization.lean` | The five sampler-aware coherence laws `openTheory_plug_{comm,par_left,par_right,wire_left,wire_right}_sampler_equiv`, each conditional on its named scheduler-transport fact (`schedulerFlip`-fairness, `sourceDraw`/`leftDraw`/`rightDraw` relatedness); the path re-encodings `flipInterleavePathEquiv` / `parLeftPathEquiv` / `parRightPathEquiv`; and the sampling laws for the scheduler node. The activation-equivalence laws keep their direct monad-free proofs; these strengthen them for lawful monads. |
 | `SamplerObservation.lean` | `Observation.respectsFactorization_of_samplerInvariant` — any observation invariant under sampler equivalence respects plug commutation and factorization, given the transport facts — and the canonical sampled-path observation `Observation.sampler`. This exposes rather than solves the distributional scheduler obstruction: exact equality generally cannot prove the transport premises, and packet/action adequacy remains downstream. |
 | `Notation.lean` | UC notation helpers (`∥`, `⊞`, `⊠`, `⊗ᵇ`, `ᵛ`); see [`notation.md`](notation.md) |
-| `MachineId.lean` | machine identifiers |
 | `EnvAction.lean` | environment actions, parametric over an arbitrary monad `m` (no probability dependency) |
 | `EnvOpenProcess.lean` | open-process wrappers around `EnvAction`, also monad-parametric |
 | `CorruptionModel.lean` | corruption-model surface, parametric over `m` |

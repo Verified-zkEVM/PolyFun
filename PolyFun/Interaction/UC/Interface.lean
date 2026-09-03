@@ -288,9 +288,9 @@ end Hom
 
 `RoutedPacket` is the standard wire-level vocabulary for traffic that
 needs to remember its origin while flowing through composition operators.
-The sender type `M` is left abstract: the canonical instantiation is
-`M := MachineId Sid Pid` (CJSV22 §2.1), but the same wrapper supports
-other identity schemes (`Unit` for purely internal traffic, or any future
+The sender type `M` is left abstract: a `(sid, pid)` machine identity as
+in CJSV22 §2.1 is one instantiation, but the same wrapper supports other
+identity schemes (`Unit` for purely internal traffic, or any future
 protocol-descriptor variant).
 
 For a packet that has just been produced by a single machine, `sender` is

@@ -190,7 +190,7 @@ by reacting on the `X`-slice and re-installing the result.
 This is the structural lift used when corruption-aware reactions need
 to thread through richer per-step states; the `MomentaryCorruption`
 layer uses it to lift the canonical `MomentaryCorruption.react` over
-state-bundled `MachineProcess`es.
+state-bundled open processes.
 -/
 def liftState [Monad m] {Event : Type u} {X Y : Type v}
     (π : Y → X) (ι : X → Y → Y) (e : EnvAction m Event X) : EnvAction m Event Y where

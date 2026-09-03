@@ -48,7 +48,7 @@ the activation-equivalence factorization theorems in
 | Theorem III.7 and Lemma IV.3 dummy/mux | no generic dummy/mux theorem | Open. Cancelling a strict identity wire is only a compact-closed equality and is not dummy-adversary completeness; a concrete mux/demux and structural secure-emulation layer are still missing |
 | Theorem III.14 global subroutines | `OpenTheory.withGlobal`, `SecurelyEmulatesWithGlobal`, `EmulatesWithGlobal{,Within}` | The definition-level context-transformer counterpart is present. Outer composition is proved only for the stronger symmetric `EmulatesWithGlobal` premise, so the secure UCGS theorem remains open |
 | Section IV-C efficient networks | `OpenProcess.StructuralBoundary`, `IsRealizabilityClosed` (four lens certificates), and realizability sub-theories | Structural bridge implemented with composite closure derived generically through the product-state combinator; concrete PPT certificates and network-collapse theorems remain open |
-| Theorem IV.6 ITM translation | generic `Party`; optional `MachineId (sid,pid)` frontend | Open; identities are not part of core `OpenTheory` semantics |
+| Theorem IV.6 ITM translation | generic `Party`; no identity frontend | Open; identities are a translation surface, not part of core `OpenTheory` semantics, so no `(sid, pid)` addressing is built in |
 | Appendix A emulation preorder and Grothendieck SMC | `SecurelyEmulates`, `securelyEmulatesPreorder`, `SecurelyEmulatesWithin` | A preorder is proved for PolyFun's context-transformer judgment, not the paper's resource preorder. Structural simulator morphisms, `par`/`wire` monotonicity, the resource translation, and Grothendieck packaging remain open |
 
 `Leakage` is deliberately absent from the `C_bd` row: snapshot leakage and an
@@ -178,8 +178,8 @@ The coordinated milestone order and repository ownership are maintained in
   silently.
 - SSProve (HARM+23) demonstrates the value of proving package algebra once;
   Nominal SSProve (LS25-N) demonstrates the modularity cost of global, non-renamable state
-  names. `MachineId` is consequently an optional policy/translation surface,
-  not the identity notion of the structural core.
+  names. PolyFun consequently keeps machine identities out of the structural
+  core: `Party` is an abstract type and no addressing scheme is built in.
 - Robust-compilation accounts (PKWC24) derive UC composition and dummy results from
   explicit interface axioms. PolyFun follows the same audit discipline:
   abstractions are added when a theorem consumes them, and failed axioms get

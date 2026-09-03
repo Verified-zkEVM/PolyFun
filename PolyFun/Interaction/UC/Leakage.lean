@@ -80,8 +80,8 @@ projection** of the protocol state, fired at corruption time.
 
 * `State` — the live protocol state being projected.
 * `Party` — the party identity whose secrets are being leaked
-  (typically `MachineId Sid Pid` for CJSV22-style proofs, but the
-  class is intentionally agnostic).
+  (CJSV22-style proofs use `(sid, pid)` pairs, but the class is
+  intentionally agnostic).
 * `Leakage` — the projection's payload type.
 
 The class encodes the **snapshot leakage observer**: at the moment
@@ -96,7 +96,7 @@ functionally determines its leakage type: there is one canonical
 projection per protocol, and ambiguity should not arise during
 instance synthesis.
 
-The intended use is on `MachineProcess`-shaped state types: a real
+The intended use is on open-process state types: a real
 protocol supplies the natural projection (e.g. "current long-term
 secret + ratchet root for party `p`"); a simulator supplies a
 fabrication consistent with all prior leakages and the current

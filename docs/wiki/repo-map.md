@@ -235,7 +235,7 @@ Interaction/Basic + PFunctor/Dynamical -> Interaction/Concurrent
 Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    OpenProcess, OpenProcessModel,
                                    OpenTheory, OpenSyntax, Notation,
-                                   Emulates, MachineId, EnvAction,
+                                   Emulates, EnvAction,
                                    EnvOpenProcess, CorruptionModel,
                                    MomentaryCorruption, Leakage}
 

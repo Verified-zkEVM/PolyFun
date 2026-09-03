@@ -70,8 +70,8 @@ The composition operators (`par` / `wire` / `plug` lifted from
 `OpenTheory`) are intentionally **not** here: lifting them requires
 an explicit *combination strategy* for the env channels of the two
 sub-wrappers (broadcast vs targeted vs Kleisli-sequential), which is
-application-specific (Signal uses targeted routing keyed by
-`MachineId`; broadcast resets use product). The operators are best
+application-specific (Signal uses targeted routing keyed by machine
+identity; broadcast resets use product). The operators are best
 parameterized by the strategy rather than baked in. Composition,
 forwarding lemmas decomposing env reactions on composites, and the
 runtime integration that schedules env events alongside boundary
