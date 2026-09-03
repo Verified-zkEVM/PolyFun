@@ -112,8 +112,8 @@ and depend on this library.
   `Monad/Support/`), their bridges to core's
   lattice-generic `Std.Internal.Do` weakest-precondition stack
   (`Monad/{Algebra,Support,Hom}/WP`: `toWPMonad`, demonic and angelic
-  interpretations, `vcgen`-ready), and the core-`Std.Do` quarantine root
-  (`Do/Basic`).
+  interpretations, `vcgen`-ready), and the tactic-tier `vcgen` specifications
+  (`Do/Spec`).
 - `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
   silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).

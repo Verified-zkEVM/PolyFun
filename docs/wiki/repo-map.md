@@ -32,8 +32,7 @@ PolyFun/
                      (Monad/{Algebra, Support}, Support/{Instances, Indexed,
                      Structural, Loops}, Hom/Loops), its bridges to core's
                      lattice-generic WP stack (Monad/{Algebra, Support, Hom}/WP),
-                     the vcgen spec tier (Do/Spec) and the core-Std.Do
-                     quarantine root (Do/Basic)
+                     and the vcgen spec tier (Do/Spec)
   Logic/             small logic helpers (HEq)
 
 ToCslib/             lowest production layer, staging what PolyFun upstreams:
@@ -126,8 +125,10 @@ Control/Monad/Algebra -> Control/Monad/Algebra/Relational
 Control/Monad/{Algebra/Relational, Support}
   -> Control/Monad/Algebra/Relational/Support
 Control/Monad/Hom + Mathlib.Control.Monad.Writer -> Control/Monad/Hom/Writer
-Control/Monad/Support -> Control/Do/Basic  (also imports Std.Tactic.Do; see
-  the quarantine rule in program-logic.md)
+Control/Monad/{Algebra, Support, Hom} + Std.Internal.Do
+  -> Control/Monad/{Algebra/WP, Support/WP, Hom/WP}  (definition tier of the
+  quarantine rule in program-logic.md)
+Control/Monad/Support/WP -> Control/Do/Spec  (also imports Std.Tactic.Do)
 
 PFunctor/Lens/{Basic, Cartesian, State}
   -> PFunctor/Lens/{Composite, Distributivity, Factorization, Duoidal}
@@ -138,7 +139,9 @@ PFunctor/{Free/Path, SubstMonoid} -> PFunctor/Free/Polynomial
 PFunctor/Free/Path + Control/Monad/Support -> PFunctor/Free/Support
 PFunctor/{Free/Support, Handler} -> PFunctor/Free/WP
   (demonic/angelic and admitted-response leaf contracts, including free-handler closure)
-Control/Do/Basic + PFunctor/Free/WP -> PFunctor/Free/Do
+PFunctor/Free/WP + Control/Monad/{Algebra/WP, Hom/WP} -> PFunctor/Free/WP/Upstream
+PFunctor/Free/WP/Upstream + Control/Monad/Support/WP + Control/Do/Spec
+  -> PFunctor/Free/Do  (tactic tier of the quarantine rule)
 PFunctor/Comonoid -> PFunctor/Comonoid/Category
 PFunctor/{Comonoid, Lens/Duoidal} -> PFunctor/Comonoid/Tensor
 PFunctor/{SubstMonoid, Comonoid, InternalHom, Lens/Duoidal}

@@ -8,19 +8,20 @@ module
 public import PolyFun.PFunctor.Free.Do
 
 /-!
-# Nonidentity `Std.Do` transport canary
+# Handler-relative weakest preconditions of free programs
 
-This test installs handler-transported weakest-precondition semantics without
-opening the demonic scope. It ensures that transport follows the handler rather
-than silently selecting the free monad's all-responses interpretation.
+Interpreting through a handler installs the target monad's core interpretation on `FreeM P`
+along the fold: the resulting `wp` follows the handler, so it proves facts the demonic
+all-responses reading cannot.
 -/
 
 @[expose] public section
 
+set_option mvcgen.warning false
+
 namespace PolyFunTest.DoTransport
 
-open Std.Do
-open PFunctor
+open Std.Internal.Do PFunctor
 
 abbrev coinP : PFunctor.{0, 0} := ⟨PUnit, fun _ => Bool⟩
 
@@ -29,18 +30,22 @@ def flipTwo : FreeM coinP Bool := do
   let b ← FreeM.lift (P := coinP) PUnit.unit
   pure (a && b)
 
-/-- A nonidentity monad morphism: interpret every free query as `true` in `Id`. -/
+/-- A nonidentity handler: interpret every free query as `true` in `Id`. -/
 def chooseTrue : Handler Id coinP :=
   fun _ => true
 
-local instance instHandlerWP : WPMonad (FreeM coinP) .pure :=
+local instance instHandlerWP : WPMonad (FreeM coinP) Prop EPost.Nil :=
   FreeM.wpMonadOfHandler chooseTrue
 
-/-- The transported WP proves a handler-specific fact that the demonic
-all-responses semantics cannot prove. -/
-example : ⦃⌜True⌝⦄ flipTwo ⦃⇓ result => ⌜result = true⌝⦄ := by
-  change True → true && true = true
-  intro
+/-- The transported `wp` is the handler's, definitionally. -/
+example (post : Bool → Prop) :
+    wp flipTwo post Lean.Order.bot = wp (flipTwo.liftM chooseTrue) post Lean.Order.bot :=
+  rfl
+
+/-- A handler-specific fact that the demonic semantics cannot prove. -/
+example : ⦃ True ⦄ flipTwo ⦃ fun result => result = true ⦄ := by
+  refine ⟨fun _ => ?_⟩
+  change (true && true) = true
   rfl
 
 end PolyFunTest.DoTransport

@@ -5,7 +5,6 @@ public import PolyFun.Control.Bisimulation
 public import PolyFun.Control.Coalgebra
 public import PolyFun.Control.Comonad.Basic
 public import PolyFun.Control.Comonad.Instances
-public import PolyFun.Control.Do.Basic
 public import PolyFun.Control.Do.Spec
 public import PolyFun.Control.LTS.Trace
 public import PolyFun.Control.Lawful.Basic
@@ -231,6 +230,7 @@ public import PolyFun.PFunctor.Free.Sigma
 public import PolyFun.PFunctor.Free.Support
 public import PolyFun.PFunctor.Free.Universal
 public import PolyFun.PFunctor.Free.WP
+public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Free
 public import PolyFun.PFunctor.Handler.Instrumentation
