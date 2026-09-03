@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Interaction.UC.OpenProcessModel
+public import PolyFun.Interaction.UC.OpenProcessSamplerCoherence
 
 /-!
 # Plug factorization for the process model, up to activation equivalence
@@ -41,8 +42,9 @@ with the context, and the inner pair is commuted under
 composite under `OpenProcess.interleave_congr_left`.
 
 `OpenProcessFactorization.sourceSchedule`, `leftSchedule`, and `rightSchedule`
-record the scheduler truth tables of the two sides; the sampler-aware laws
-consume them.
+record the scheduler truth tables of the two sides, indexed by the leaf type
+`OpenProcessFactorization.Leaf` of `OpenProcessSamplerCoherence`; the
+sampler-aware laws consume them.
 -/
 
 public section
@@ -62,14 +64,6 @@ variable (m : Type w → Type w')
 variable (schedulerSampler : m (ULift.{w, 0} Bool))
 
 namespace OpenProcessFactorization
-
-/-- The component selected after flattening either side of a plug
-factorization. -/
-inductive Leaf where
-  | first
-  | second
-  | context
-  deriving DecidableEq, Repr
 
 /-- Scheduler choices on the source shape `plug (compose W₁ W₂) K`.
 The outer choice is listed first; the inner choice is present only when the

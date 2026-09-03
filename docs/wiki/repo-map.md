@@ -311,17 +311,30 @@ Interaction/UC/{OpenProcessModel, Scheduler}
    additive mass-aware open-process theory; concrete proportional sampling
    and distributional adequacy remain downstream)
 
-Interaction/UC/{OpenProcessSamplerFactorization, Scheduler}
-  -> Interaction/UC/ScheduledSamplerFactorization
-  (the scheduler coherence law lifted through arbitrary component samplers
-   along the existing left/right structural path reassociations)
+Interaction/UC/{OpenProcessCoherence, OpenProcessSamplerEquiv}
+  -> Interaction/UC/OpenProcessSamplerCoherence
+  -> Interaction/UC/OpenProcessFactorization
+  (the coherence shapes up to sampler equivalence — left/right plug
+   factorization, commutation, re-homing, derived reassociation — for
+   internal scheduler nodes and identically decorated leaves, with the nested
+   scheduler draws as the only transport hypothesis; the `IsBindCongr` mixin
+   and the congruence of sampler equivalence under `interleave` and `mapHom`;
+   the leaf type and path re-encodings the factorization files index by)
 
 Interaction/UC/{OpenProcessModel, OpenProcessFactorization,
-                OpenProcessSamplerEquiv}
+                OpenProcessSamplerCoherence}
   -> Interaction/UC/OpenProcessSamplerFactorization
-  (the five coherence laws at sampler equivalence, conditional on named
-   scheduler-transport hypotheses; the activation laws keep their direct
-   monad-free proofs)
+  (the five plug laws of `openTheory` at sampler equivalence, conditional on
+   named scheduler-transport hypotheses, and the congruence laws of the
+   theory; each one instance of a sampler-level shape)
+
+Interaction/UC/{OpenProcessSamplerFactorization, SamplerObservation,
+                Scheduler, ScheduledOpenProcessModel}
+  -> Interaction/UC/ScheduledSamplerFactorization
+  (`IsCoherent` in the form the shapes consume, the plug laws of
+   `scheduledOpenTheory` at sampler equivalence with coherence as the whole
+   obligation, and the scheduled sampler observation respecting
+   factorization)
 
 Interaction/UC/{Emulates, OpenProcessSamplerFactorization}
   -> Interaction/UC/SamplerObservation

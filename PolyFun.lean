@@ -125,6 +125,7 @@ public import PolyFun.Interaction.UC.OpenProcessCoherence
 public import PolyFun.Interaction.UC.OpenProcessFactorization
 public import PolyFun.Interaction.UC.OpenProcessInterleave
 public import PolyFun.Interaction.UC.OpenProcessModel
+public import PolyFun.Interaction.UC.OpenProcessSamplerCoherence
 public import PolyFun.Interaction.UC.OpenProcessSamplerEquiv
 public import PolyFun.Interaction.UC.OpenProcessSamplerFactorization
 public import PolyFun.Interaction.UC.OpenSyntax.AtomSubTheory

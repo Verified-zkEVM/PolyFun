@@ -176,6 +176,24 @@ theorem getAt?_append_self_occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
         simpa [occurrences] using ih
       · simpa [occurrences, h] using ih
 
+/-- Relabel-and-filter the events of a trace list along a partial map of
+indices: `List.filterMap` with the monoid structure of `TraceList` made
+explicit. `Trace.mapPartial` is this operation pointwise. -/
+def mapPartial {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (f : Idx P → Option (Idx Q)) (t : TraceList P) : TraceList Q :=
+  List.filterMap f t
+
+@[simp] theorem mapPartial_one {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (f : Idx P → Option (Idx Q)) : mapPartial f (1 : TraceList P) = 1 :=
+  rfl
+
+theorem mapPartial_mul {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (f : Idx P → Option (Idx Q)) (a b : TraceList P) :
+    mapPartial f (a * b) = mapPartial f a * mapPartial f b := by
+  change List.filterMap f (FreeMonoid.toList a ++ FreeMonoid.toList b) =
+    List.filterMap f a ++ List.filterMap f b
+  exact List.filterMap_append
+
 end TraceList
 
 /--

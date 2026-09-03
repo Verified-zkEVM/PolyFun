@@ -157,6 +157,24 @@ the documented API, expose that predicate narrowly and add an ordinary-import
 canary for the exact spelling, as in
 [`PolyFunTest/ModuleAPI/Interaction.lean`](../../PolyFunTest/ModuleAPI/Interaction.lean).
 
+### 8g. Pattern-matching lambdas in statements are declaration-local
+
+A `fun | ⟨true⟩ => t₁ | ⟨false⟩ => t₂` inside a theorem statement elaborates to
+an auxiliary matcher constant owned by that declaration. Two statements that
+spell the same tree this way are definitionally but not syntactically equal, so
+`rw` and `simp` with one lemma fail on the other's goal while `exact` succeeds.
+Name the shape once (`nestedLeftTree`, `factorLeftTree` in
+`OpenProcessSamplerCoherence`) and state every lemma with the abbreviation, or
+close the gap with `exact`/`change` inside the consuming proof. The same
+applies to `IsSilentStep`/`boundaryTrace` goals about composite steps: rewrite
+them with the branch lemmas (`isSilentStep_interleave_left_iff_decoration`,
+`boundaryTrace_interleave_left`) rather than unfolding `interleave` in place.
+
+Exported theorems cannot close goals by `rfl` through a non-exposed `def`, even
+in the defining module and even under `import all`: state the fact as an
+equation lemma of the def, or expose the def when it is data meant to compute
+(the path re-encodings and nested draws are `@[expose]` for this reason).
+
 ## Proof Patterns
 
 ### 8b. Keep one canonical concrete-step relation type

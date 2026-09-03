@@ -24,7 +24,9 @@ process APIs continue to apply. Unlike `openTheory`, however, the scheduler
 sampler at a composition node depends on the masses of both subtrees.
 `BinaryScheduler.IsFlat` is the scheduler contract needed by the separate
 sampler-factorization layer to prove that this choice is independent of how
-composition is parenthesized.
+composition is parenthesized. The theory is `IsLawful`: every naturality law
+is the corresponding `openTheory` law at the scheduler draw for the component
+masses, since boundary adaptation preserves mass.
 -/
 
 public section
@@ -199,6 +201,48 @@ instance lawfulMap_scheduledOpenTheory (Party : Type u) (m : Type w → Type w')
       · rfl
       · exact OpenTheory.IsLawfulMap.map_comp
           (T := openTheory Party m (scheduler mass mass)) g f process
+
+/-- Parallel composition in the mass-aware theory is natural in boundary
+adaptation: masses add on both sides, and the underlying process law is the
+`openTheory` law at the scheduler draw for the two component masses. -/
+instance lawfulPar_scheduledOpenTheory (Party : Type u) (m : Type w → Type w')
+    (scheduler : BinaryScheduler m) :
+    OpenTheory.IsLawfulPar
+      (scheduledOpenTheory.{u, v, w, w'} Party m scheduler) where
+  __ := lawfulMap_scheduledOpenTheory Party m scheduler
+  map_par f₁ f₂ W₁ W₂ := by
+    apply ScheduledOpenProcess.ext
+    · rfl
+    · exact OpenTheory.IsLawfulPar.map_par
+        (T := openTheory Party m (scheduler W₁.mass W₂.mass)) f₁ f₂ W₁.process W₂.process
+
+/-- Wiring in the mass-aware theory is natural in the still-exposed outer
+boundaries. -/
+instance lawfulWire_scheduledOpenTheory (Party : Type u) (m : Type w → Type w')
+    (scheduler : BinaryScheduler m) :
+    OpenTheory.IsLawfulWire
+      (scheduledOpenTheory.{u, v, w, w'} Party m scheduler) where
+  __ := lawfulMap_scheduledOpenTheory Party m scheduler
+  map_wire f₁ f₂ W₁ W₂ := by
+    apply ScheduledOpenProcess.ext
+    · rfl
+    · exact OpenTheory.IsLawfulWire.map_wire
+        (T := openTheory Party m (scheduler W₁.mass W₂.mass)) f₁ f₂ W₁.process W₂.process
+
+/-- Plugging in the mass-aware theory is natural in boundary adaptation. -/
+instance lawfulPlug_scheduledOpenTheory (Party : Type u) (m : Type w → Type w')
+    (scheduler : BinaryScheduler m) :
+    OpenTheory.IsLawfulPlug
+      (scheduledOpenTheory.{u, v, w, w'} Party m scheduler) where
+  __ := lawfulMap_scheduledOpenTheory Party m scheduler
+  map_plug f W K := by
+    apply ScheduledOpenProcess.ext
+    · rfl
+    · exact OpenTheory.IsLawfulPlug.map_plug
+        (T := openTheory Party m (scheduler W.mass K.mass)) f W.process K.process
+
+instance (Party : Type u) (m : Type w → Type w') (scheduler : BinaryScheduler m) :
+    OpenTheory.IsLawful (scheduledOpenTheory.{u, v, w, w'} Party m scheduler) where
 
 end UC
 end Interaction

@@ -127,7 +127,10 @@ computation equality, and generally equality of distributions for the current
 binary scheduler, does not satisfy all reassociation facts. A distributional
 VCVio observation obtains `RespectsFactorization` only after choosing scheduler
 semantics or a coarser relation that proves the three transport facts, plus its
-sampler-equivalence invariance (adequacy); see `docs/wiki/uc.md`.
+sampler-equivalence invariance (adequacy); see `docs/wiki/uc.md`. With the
+mass-aware `scheduledOpenTheory` (now `IsLawful`) the transport facts collapse
+to `BinaryScheduler.IsCoherent`, and `ScheduledSamplerFactorization` supplies
+the five plug laws and `Observation.scheduledSampler` from coherence alone.
 
 The remaining concrete steps are `PPTProcessWitness` and `pptSubTheory`.
 

@@ -37,7 +37,7 @@ the activation-equivalence factorization theorems in
 
 | Paper surface | PolyFun surface | Status |
 | --- | --- | --- |
-| symmetric monoidal category `C` of interactive systems | `OpenTheory`, with `par`, `wire`, and a granular lawfulness ladder | Candidate model; the free syntax models satisfy the strict laws, while `openTheory` is only `IsLawful` strictly and satisfies the monoidal, traced, and compact-closed laws up to `OpenProcessActivationEquiv`. `HasPlugFactorization` isolates the five factorization equalities the composition theorems consume; it is the strict target a process model can honestly aim for, since unit and snake laws fail at strong sampler equivalence |
+| symmetric monoidal category `C` of interactive systems | `OpenTheory`, with `par`, `wire`, and a granular lawfulness ladder | Candidate model; the free syntax models satisfy the strict laws, while `openTheory` is only `IsLawful` strictly, satisfies the monoidal, traced, and compact-closed laws up to `OpenProcessActivationEquiv`, and satisfies `par_assoc`, `par_comm`, `wire_comm`, and the plug laws up to `OpenProcessSamplerEquiv R` under scheduler-transport hypotheses; unit and zig-zag laws have no sampler-level version. `HasPlugFactorization` isolates the five factorization equalities the composition theorems consume; it is the strict target a process model can honestly aim for, since unit and snake laws fail at strong sampler equivalence |
 | backdoor category `C_bd` | adversarial ports can be represented by ordinary typed boundary components | Representation strategy only; no equivalence with the paper's backdoor construction or quotient is proved |
 | nested `D_real ⊆ D_bd` | ordered `SubTheory` values | Structural carrier plus `realizableSubTheory` / `generatedRealizableSubTheory`; corruption and concrete efficiency still require explicit instances |
 | corruption restriction defining `D_real` | `CorruptionModel`, `MomentaryCorruption` | Vocabulary only; no bridge to `SubTheory.mem` |
@@ -122,10 +122,15 @@ relation family `MonadRelFamily`
    their atomic frontier, binary nodes receive both subtree masses, and a
    downstream scheduler proves that all hierarchical three-way draws denote
    one flat choice. Probability and the concrete proportional scheduler remain
-   VCVio responsibilities. `samplePath_interleave_assoc_left` and
-   `samplePath_interleave_assoc_right` lift the resulting coherence law through
-   arbitrary component samplers along the existing structural path
-   reassociations.
+   VCVio responsibilities. For the mass-aware theory `scheduledOpenTheory`,
+   `BinaryScheduler.IsCoherent` is the whole obligation:
+   `scheduledOpenTheory_plug_{comm,par_left,par_right,wire_left,wire_right}_sampler_equiv`
+   and `Observation.respectsFactorization_scheduledSampler` take coherence and
+   nothing else. Both theories' laws are instances of the sampler-level shapes
+   in `OpenProcessSamplerCoherence`, whose only transport hypothesis is that
+   the two nested scheduler draws of a regrouping are `R`-related; sampler
+   equivalence is moreover a congruence for `map`/`par`/`wire`/`plug` once
+   `R` is bind-congruent on the right (`MonadRelFamily.IsBindCongr`).
 2. **Initial-state correspondence.** The totality fields of
    `OpenProcessSamplerEquiv` expose the regrouping bijection on states, so
    corresponding initial states are chosen definitionally.

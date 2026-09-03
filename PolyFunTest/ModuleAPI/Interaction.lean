@@ -15,6 +15,7 @@ import PolyFun.Interaction.UC.OpenProcessCoherence
 import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
 import PolyFun.Interaction.UC.ScheduledOpenProcessModel
 import PolyFun.Interaction.UC.ScheduledSamplerFactorization
+import PolyFun.Interaction.UC.OpenProcessSamplerCoherence
 
 /-!
 # Ordinary-import canaries for the interaction API
@@ -188,6 +189,55 @@ example {m : Type → Type} {Party : Type} (σ : m (ULift Bool)) {Δ₁ Δ₂ Γ
       (UC.OpenProcess.mapBoundary (UC.PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃).symm.toHom
         ((UC.openTheory Party m σ).par W₁ ((UC.openTheory Party m σ).wire W₂ W₃))) :=
   UC.openTheory_wire_par_superpose_activation_equiv Party m σ W₁ W₂ W₃
+
+/-! ## Sampler-level coherence -/
+
+example {m : Type → Type} [Monad m] [LawfulMonad m] (σOut σIn : m (ULift Bool)) {α : Type}
+    (h : ULift UC.OpenProcessFactorization.Leaf → m α) :
+    UC.nestedDrawLeft σOut σIn >>= h =
+      σOut >>= fun
+        | ⟨true⟩ => σIn >>= fun
+          | ⟨true⟩ => h ⟨.first⟩
+          | ⟨false⟩ => h ⟨.second⟩
+        | ⟨false⟩ => h ⟨.context⟩ :=
+  UC.nestedDrawLeft_bind σOut σIn h
+
+example {m : Type → Type} [Monad m] (R : UC.MonadRelFamily m) [R.IsBindCongr] {α β : Type}
+    (x : m α) {f g : α → m β} (h : ∀ a, R.rel (f a) (g a)) :
+    R.rel (x >>= f) (x >>= g) :=
+  R.bind_congr_right x h
+
+example {m : Type → Type} [Monad m] [LawfulMonad m] {Party : Type} {Δ₁ Δ₂ Δ : UC.PortBoundary}
+    (R : UC.MonadRelFamily m)
+    (p₁ : UC.OpenProcess m Party Δ₁) (p₂ : UC.OpenProcess m Party Δ₂)
+    {f₁ : TypeTree.Node.ContextHom (UC.OpenNodeContext Party Δ₁) (UC.OpenNodeContext Party Δ)}
+    {f₂ : TypeTree.Node.ContextHom (UC.OpenNodeContext Party Δ₂) (UC.OpenNodeContext Party Δ)}
+    {c : UC.OpenNodeContext Party Δ (ULift Bool)} (σ : m (ULift Bool))
+    {d : UC.OpenNodeContext Party Δ (ULift Bool)} (τ : m (ULift Bool))
+    (hc : UC.OpenNodeContext.IsInternalNode c) (hd : UC.OpenNodeContext.IsInternalNode d)
+    (hστ : R.rel (UC.schedulerFlip <$> σ) τ) :
+    UC.OpenProcessSamplerEquiv R (p₁.interleave p₂ f₁ f₂ c σ) (p₂.interleave p₁ f₂ f₁ d τ) :=
+  UC.interleave_comm_samplerEquiv R p₁ p₂ σ τ hc hd hστ
+
+example {m : Type → Type} [Monad m] [LawfulMonad m] {Party : Type}
+    (scheduler : UC.BinaryScheduler m) (R : UC.MonadRelFamily m)
+    (coherent : scheduler.IsCoherent R) :
+    (UC.Observation.scheduledSampler Party m scheduler R).RespectsFactorization :=
+  UC.Observation.respectsFactorization_scheduledSampler Party m scheduler R coherent
+
+example {m : Type → Type} [Monad m] [LawfulMonad m] {Party : Type} (σ : m (ULift Bool))
+    (R : UC.MonadRelFamily m) (hfair : R.rel σ (UC.schedulerFlip <$> σ))
+    {Δ₁ Γ Δ₂ : UC.PortBoundary}
+    (W₁ : UC.OpenProcess m Party (UC.PortBoundary.tensor Δ₁ Γ))
+    (W₂ : UC.OpenProcess m Party (UC.PortBoundary.tensor (UC.PortBoundary.swap Γ) Δ₂)) :
+    UC.OpenProcessSamplerEquiv R
+      ((UC.openTheory Party m σ).wire W₁ W₂)
+      (UC.OpenProcess.mapBoundary (UC.PortBoundary.Equiv.tensorComm Δ₂ Δ₁).toHom
+        ((UC.openTheory Party m σ).wire
+          (UC.OpenProcess.mapBoundary
+            (UC.PortBoundary.Equiv.tensorComm (UC.PortBoundary.swap Γ) Δ₂).toHom W₂)
+          (UC.OpenProcess.mapBoundary (UC.PortBoundary.Equiv.tensorComm Δ₁ Γ).toHom W₁))) :=
+  UC.openTheory_wire_comm_sampler_equiv Party m σ R hfair W₁ W₂
 
 /-! ## Plug factorization laws -/
 
