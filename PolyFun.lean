@@ -90,6 +90,7 @@ public import PolyFun.Interaction.Concurrent.Policy
 public import PolyFun.Interaction.Concurrent.Process
 public import PolyFun.Interaction.Concurrent.Profile
 public import PolyFun.Interaction.Concurrent.Refinement
+public import PolyFun.Interaction.Concurrent.RoutedInterleave
 public import PolyFun.Interaction.Concurrent.Run
 public import PolyFun.Interaction.Concurrent.Spec
 public import PolyFun.Interaction.Concurrent.Trace
@@ -120,7 +121,9 @@ public import PolyFun.Interaction.UC.MachineId
 public import PolyFun.Interaction.UC.MomentaryCorruption
 public import PolyFun.Interaction.UC.Notation
 public import PolyFun.Interaction.UC.OpenProcess
+public import PolyFun.Interaction.UC.OpenProcessCoherence
 public import PolyFun.Interaction.UC.OpenProcessFactorization
+public import PolyFun.Interaction.UC.OpenProcessInterleave
 public import PolyFun.Interaction.UC.OpenProcessModel
 public import PolyFun.Interaction.UC.OpenProcessSamplerEquiv
 public import PolyFun.Interaction.UC.OpenProcessSamplerFactorization
@@ -130,6 +133,7 @@ public import PolyFun.Interaction.UC.OpenSyntax.Interp
 public import PolyFun.Interaction.UC.OpenSyntax.Raw
 public import PolyFun.Interaction.UC.OpenTheory
 public import PolyFun.Interaction.UC.OpenTheory.Family
+public import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
 public import PolyFun.Interaction.UC.Realizability
 public import PolyFun.Interaction.UC.SamplerObservation
 public import PolyFun.Interaction.UC.ScheduledOpenProcessModel
