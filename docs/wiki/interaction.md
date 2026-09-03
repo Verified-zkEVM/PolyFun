@@ -408,6 +408,16 @@ two processes `p₁ : ProcessOver P₁ Γ₁`, `p₂ : ProcessOver P₂ Γ₂`,
 context morphisms into a target context `Δ`, and a scheduler decoration,
 it produces a `ProcessOver (P₁ × P₂) Δ` on the product state space.
 
+`ProcessOver.interleaveRouted` (`Concurrent/RoutedInterleave.lean`) keeps
+that shape and adds a routing hook: once the scheduled side completes a step
+path, a `Route` may update the other side's state from that path. With the
+trivial routes it is `interleave` definitionally, and the `mapContext`
+distribution laws hold verbatim because routes never see the decoration. The
+open-process lift with samplers is `OpenProcess.interleaveRouted`
+(`UC/OpenProcessInterleave.lean`); a communicating composition supplies routes
+that deliver the packets emitted along the path, which the structural
+`openTheory` composition erases.
+
 ### Control and observation
 
 `Control Party S` assigns ownership of payload moves and scheduling
@@ -646,6 +656,7 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Profile.lean` | `Profile`, `observe`, `residual`, `frontierView` |
 | `Current.lean` | `view`, `observe`, `residualView` |
 | `Process.lean` | `NodeAuthority`, `NodeView`, `NodeProfile`, `StepOver`, `ProcessOver` (= `DynSystem` of the step polynomial, state space as parameter; views `step` / `ofStep`), `Process`, `Functor (StepOver Γ)`, `interleave` / `interleaveLens` / `interleave_eq_wrap_choiceProd`, `Behavior`, metadata bundles as `DynSystem` instantiations |
+| `RoutedInterleave.lean` | `ProcessOver.Route`, `interleaveRouted` (interleaving with routing hooks), `interleave_eq_interleaveRouted`, and the `mapContext` distribution laws for the routed form |
 | `Tree.lean` | structural concurrent syntax → `Process` |
 | `Machine.lean` | `Machine` (= `DynSystem` at `PFunctor.univ`, state space as parameter), `Machine.{Enabled, step, mk', SafetySpec}`, `Machine.toProcess` |
 | `Execution.lean` | `Trace`, `ObservedTrace` for processes |
@@ -670,6 +681,7 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `OpenSyntax/Interp.lean` | `Interp` (tagless-final), granular `HasUnit` / `HasIdWire` / `IsMonoidal` / `IsTraced` / `IsCompactClosed` / `HasPlugWireFactor` instances |
 | `OpenSyntax/Expr.lean` | `Expr` (quotient of `Raw`), granular `OpenTheory` lawfulness instances, `Expr.toInterp` |
 | `OpenProcess.lean` | `BoundaryAction`, `OpenNodeProfile`, `OpenNodeContext` (with polynomial-product bridge `productView` and structural `boundaryTrace`), `OpenProcess m Party Δ` (monad-parametric, with intrinsic `stepSampler`), `toProcess`, `OpenProcessActivationEquiv` |
+| `OpenProcessInterleave.lean` | `OpenProcess.mapHom` (re-decoration along any node-context hom; `mapBoundary` is the boundary-morphism case), `OpenNodeContext.PreservesActivation` with instances for every structural hom, `isSilentStep_mapHom_iff`, `OpenProcess.Route` / `interleaveRouted` with samplers, `interleave_eq_interleaveRouted`, the `mapHom` distribution laws, and the public extensionality helpers `ext_of_step_eq` / `heq_step_of_processOver_eq` |
 | `OpenProcessModel.lean` | `openTheory m Party schedulerSampler` (concrete model threading `TypeTree.Sampler` through `map` / `par` / `wire` / `plug`), `IsLawful`, monoidal / CC laws up to `OpenProcessActivationEquiv` |
 | `Scheduler.lean` | Positive-natural (`PNat`) frontier masses, mass-aware `BinaryScheduler`, hierarchical source/left/right draws, and `BinaryScheduler.IsFlat` / `IsCoherent`. `IsFlat` requires every binary encoding of a three-component choice to agree with one direct flat choice relative to a downstream `MonadRelFamily`. |
 | `ScheduledOpenProcessModel.lean` | `ScheduledOpenProcess` and `scheduledOpenTheory`, the additive migration model that preserves positive frontier mass through `map` and adds it through `par` / `wire` / `plug`; each binary scheduler node receives the two subtree masses. |

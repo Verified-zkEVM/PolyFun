@@ -8,6 +8,7 @@ module
 
 import all PolyFun.Interaction.UC.OpenProcess
 public import PolyFun.Interaction.UC.OpenProcess
+public import PolyFun.Interaction.UC.OpenProcessInterleave
 public import PolyFun.Interaction.UC.OpenTheory
 
 /-!
@@ -132,34 +133,6 @@ instance lawfulMap_openTheory :
     exact congrArg₂ (StepOver.mk _)
       (PFunctor.FreeM.Displayed.Decoration.map_comp _ _ _ _).symm rfl
 
-/-- Extensionality for `OpenProcess` when both sides share the same
-residual state type `Proc` definitionally, the `step` fields are equal
-as functions, and the `stepSampler` fields are HEq (which reduces to
-literal equality once `step` agrees). -/
-private theorem OpenProcess.ext_of_step_eq
-    {m : Type w → Type w'} {Party : Type u} {Δ : PortBoundary}
-    {Proc : Type v}
-    {step₁ step₂ : Proc → StepOver (OpenNodeContext.{u, w} Party Δ) Proc}
-    {stepSampler₁ : ∀ s, TypeTree.Sampler.{w, w'} m (step₁ s).tree}
-    {stepSampler₂ : ∀ s, TypeTree.Sampler.{w, w'} m (step₂ s).tree}
-    (hstep : step₁ = step₂)
-    (hsampler : HEq stepSampler₁ stepSampler₂) :
-    (OpenProcess.mk Proc step₁ stepSampler₁ :
-      OpenProcess.{u, v, w, w'} m Party Δ) =
-      OpenProcess.mk Proc step₂ stepSampler₂ := by
-  subst hstep
-  cases hsampler
-  rfl
-
-/-- Derive step equality (as a function) from a `ProcessOver` equality
-between two processes on the same residual state space. -/
-private theorem heq_step_of_processOver_eq.{v₀, w₀, w₂}
-    {Proc : Type v₀} {Γ : Interaction.TypeTree.Node.Context.{w₀, w₂}}
-    {P₁ P₂ : Concurrent.ProcessOver.{v₀, w₀, w₂} Proc Γ}
-    (h : P₁ = P₂) :
-    HEq P₁.step P₂.step :=
-  h ▸ HEq.rfl
-
 instance lawfulPar_openTheory :
     OpenTheory.IsLawfulPar (openTheory.{u, v, w, w'} Party m schedulerSampler) where
   __ := lawfulMap_openTheory Party m schedulerSampler
@@ -197,7 +170,7 @@ instance lawfulPar_openTheory :
     cases W₂ with | mk Proc₂ step₂ stepSampler₂ =>
     simp only [OpenProcess.mapBoundary, OpenProcess.interleave]
     exact OpenProcess.ext_of_step_eq
-      (eq_of_heq (heq_step_of_processOver_eq hproc)) HEq.rfl
+      (eq_of_heq (OpenProcess.heq_step_of_processOver_eq hproc)) HEq.rfl
 
 instance lawfulWire_openTheory :
     OpenTheory.IsLawfulWire (openTheory.{u, v, w, w'} Party m schedulerSampler) where
@@ -238,7 +211,7 @@ instance lawfulWire_openTheory :
     cases W₂ with | mk Proc₂ step₂ stepSampler₂ =>
     simp only [OpenProcess.mapBoundary, OpenProcess.interleave]
     exact OpenProcess.ext_of_step_eq
-      (eq_of_heq (heq_step_of_processOver_eq hproc)) HEq.rfl
+      (eq_of_heq (OpenProcess.heq_step_of_processOver_eq hproc)) HEq.rfl
 
 instance lawfulPlug_openTheory :
     OpenTheory.IsLawfulPlug (openTheory.{u, v, w, w'} Party m schedulerSampler) where
@@ -269,7 +242,7 @@ instance lawfulPlug_openTheory :
     cases K with | mk ProcK stepK stepSamplerK =>
     simp only [OpenProcess.mapBoundary, OpenProcess.interleave]
     exact OpenProcess.ext_of_step_eq
-      (eq_of_heq (heq_step_of_processOver_eq hproc)) HEq.rfl
+      (eq_of_heq (OpenProcess.heq_step_of_processOver_eq hproc)) HEq.rfl
 
 instance : OpenTheory.IsLawful (openTheory.{u, v, w, w'} Party m schedulerSampler) where
 

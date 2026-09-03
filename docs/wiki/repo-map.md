@@ -239,6 +239,18 @@ Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    EnvOpenProcess, CorruptionModel,
                                    MomentaryCorruption, Leakage}
 
+Interaction/Concurrent/Process -> Interaction/Concurrent/RoutedInterleave
+  (binary interleaving with routing hooks: after the scheduled side steps, a
+   route may update the other side's state from the completed path; with
+   trivial routes it is `interleave` on the nose)
+
+Interaction/UC/OpenProcess + Interaction/Concurrent/RoutedInterleave
+  -> Interaction/UC/OpenProcessInterleave
+  -> Interaction/UC/OpenProcessModel
+  (re-decoration of open processes along arbitrary node-context homs,
+   activation-preserving homs, routed interleaving with samplers, and the
+   extensionality helpers the concrete model's naturality laws consume)
+
 Interaction/UC/OpenTheory -> Interaction/UC/OpenTheory/PlugFactorization
   -> Interaction/UC/{Emulates, OpenTheory/Family}
   (the residual-context formers and the five plug-factorization equalities

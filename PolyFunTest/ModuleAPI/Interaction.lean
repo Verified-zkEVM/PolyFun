@@ -10,6 +10,7 @@ import PolyFun.Interaction.Basic.Sampler
 import PolyFun.Interaction.Concurrent.Fairness
 import PolyFun.Interaction.Multiparty.Observation
 import PolyFun.Interaction.UC.OpenProcess
+import PolyFun.Interaction.UC.OpenProcessInterleave
 import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
 import PolyFun.Interaction.UC.ScheduledOpenProcessModel
 import PolyFun.Interaction.UC.ScheduledSamplerFactorization
@@ -118,6 +119,29 @@ example {m : Type w → Type w'} [Monad m] [LawfulMonad m]
         else
           continuation ⟨.context⟩ :=
   UC.BinaryScheduler.sourceDraw_bind scheduler first second context continuation
+
+/-! ## Routed interleaving and re-decoration -/
+
+example {m : Type → Type} {Party : Type} {Δ₁ Δ₂ Δ : UC.PortBoundary}
+    (p₁ : UC.OpenProcess m Party Δ₁) (p₂ : UC.OpenProcess m Party Δ₂)
+    (f₁ : TypeTree.Node.ContextHom (UC.OpenNodeContext Party Δ₁) (UC.OpenNodeContext Party Δ))
+    (f₂ : TypeTree.Node.ContextHom (UC.OpenNodeContext Party Δ₂) (UC.OpenNodeContext Party Δ))
+    (c : UC.OpenNodeContext Party Δ (ULift Bool)) (σ : m (ULift Bool)) :
+    p₁.interleave p₂ f₁ f₂ c σ =
+      p₁.interleaveRouted p₂ f₁ f₂ c σ (fun _ _ s => s) (fun _ _ s => s) :=
+  UC.OpenProcess.interleave_eq_interleaveRouted p₁ p₂ f₁ f₂ c σ
+
+example {m : Type → Type} {Party : Type} {Δ₁ Δ₂ : UC.PortBoundary}
+    (φ : UC.PortBoundary.Hom Δ₁ Δ₂) (op : UC.OpenProcess m Party Δ₁) :
+    op.mapBoundary φ = op.mapHom (UC.OpenNodeContext.map Party φ) :=
+  UC.OpenProcess.mapBoundary_eq_mapHom φ op
+
+example {m : Type → Type} {Party : Type} {Δ₁ Δ₂ : UC.PortBoundary}
+    (φ : UC.PortBoundary.Hom Δ₁ Δ₂) (op : UC.OpenProcess m Party Δ₁) (s : op.Proc)
+    (tr : (op.step s).tree.Path) :
+    UC.IsSilentStep (op.mapHom (UC.OpenNodeContext.map Party φ)) s tr ↔
+      UC.IsSilentStep op s tr :=
+  UC.OpenProcess.isSilentStep_mapHom_iff (UC.OpenNodeContext.preservesActivation_map φ) op s tr
 
 /-! ## Plug factorization laws -/
 
