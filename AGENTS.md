@@ -107,7 +107,9 @@ and depend on this library.
   algebra, monad iter / hom, lawful re-exports), plus the program-logic
   kernel: ordered monad algebras (`Monad/Algebra`, unary and relational),
   exact monadic support over core's `MonadAttach` with the
-  always/some/never judgments (`Monad/Support`), their bridges to core's
+  always/some/never judgments (`Monad/Support`, with instances, indexed
+  support, the structural `do`-fragment laws, and loop rules under
+  `Monad/Support/`), their bridges to core's
   lattice-generic `Std.Internal.Do` weakest-precondition stack
   (`Monad/{Algebra,Support,Hom}/WP`: `toWPMonad`, demonic and angelic
   interpretations, `vcgen`-ready), and the core-`Std.Do` quarantine root

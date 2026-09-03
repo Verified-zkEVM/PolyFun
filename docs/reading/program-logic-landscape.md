@@ -131,6 +131,13 @@ implemented).
 
 ## Open follow-ups
 
+- Relational loop rules: `MAlgRelOrdered` lockstep `forIn` / `forM` / `foldlM` rules under
+  `StrictBind`, mirroring core's `Spec.forIn'_list` induction; not yet written.
+- A `mapM` rule for the judgments (`Hom/Loops.lean` has the morphism form only).
+- `try/catch` through core's `ExceptT.instWPMonad` over a PolyFun base: `vcgen` reports
+  `No spec found for program tryCatch …` although `Spec.tryCatch_ExceptT` exists at the pin;
+  the instance path needs diagnosing before the canary lands.
+
 - Relational free-monad layer: a two-tree `rwpFold` giving
   `MAlgRelOrdered (FreeM P) (FreeM Q) l` from a relational op-spec.
 - `Display`/wp adequacy: `Display.ofPredicates` sections versus `wpFold` of

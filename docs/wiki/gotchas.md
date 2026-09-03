@@ -318,6 +318,14 @@ value whose interpretation is a *non-instance* construction (`MAlgOrdered.toWP �
 construction first — `let inst := MAlgOrdered.toWP α` — so it is found as a local instance;
 `let`, not `have`, so it stays definitionally the term in the statement.
 
+### 11d. `grind =` cannot index `ite`, `dite`, or thunked applicative operands
+
+`@[grind =]` rejects a lemma whose left-hand side is `f (if c then x else y)` ("invalid
+pattern"): `grind` reserves `ite` / `dite` for its own case splitting and will not use them as
+pattern heads. Likewise `x <* y` and `x *> y` store `y` under the thunk `fun _ => y`, which a
+pattern cannot bind. Such lemmas stay `@[simp]`; `grind` splits the `if` itself and reaches the
+applicative forms through `simp`'s normalization to `>>=`.
+
 ### 12. `Std.Do` imports are quarantined
 
 Only `PolyFun/Control/Do/Basic.lean`, `PolyFun/PFunctor/Free/Do.lean`, and

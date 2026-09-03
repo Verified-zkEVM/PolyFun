@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Monad.Support.WP
+public import PolyFun.Control.Monad.Support.Instances
 public import Std.Tactic.Do
 
 /-!
@@ -56,6 +57,27 @@ example : AllOutputs (fun r => r = 2 ∨ r = 3) choose12 := by
   refine allOutputs_of_wp ?_
   intro _
   simpa only [Lean.Order.ofProp_prop_eq] using choose12_spec.le_wp trivial
+
+/-- A `let mut` accumulator over a `for` loop. -/
+def sumList (xs : List Nat) : SetM Nat := do
+  let mut s := 0
+  for x in xs do
+    s := s + x
+  pure s
+
+/-- `vcgen` reaches the loop through core's `Spec.forIn_list`; the invariant relates the
+accumulator to the elements consumed so far. -/
+theorem sumList_spec (xs : List Nat) : ⦃ True ⦄ sumList xs ⦃ fun r => r = xs.sum ⦄ := by
+  vcgen [sumList] invariants
+    · fun pref _ s => s = pref.sum
+  all_goals simp_all
+
+/-- The loop rule for the "always" judgment, stated without any triple. -/
+example (xs : List Nat) : AllOutputs (fun r => r = xs.sum) (sumList xs) := by
+  have := toWPMonadDemonic_lawfulWPMonadAttach (m := SetM)
+  refine allOutputs_of_wp ?_
+  intro _
+  simpa only [Lean.Order.ofProp_prop_eq] using (sumList_spec xs).le_wp trivial
 
 /-- The demonic interpretation is conjunctive. -/
 example (x : SetM Nat) :
