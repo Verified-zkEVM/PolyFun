@@ -29,9 +29,11 @@ PolyFun/
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
                      Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace),
                      including the program-logic kernel
-                     (Monad/{Algebra, Support}), its bridges to core's
-                     lattice-generic WP stack (Monad/{Algebra, Support, Hom}/WP)
-                     and the core-Std.Do quarantine root (Do/Basic)
+                     (Monad/{Algebra, Support}, Support/{Instances, Indexed,
+                     Structural, Loops}, Hom/Loops), its bridges to core's
+                     lattice-generic WP stack (Monad/{Algebra, Support, Hom}/WP),
+                     the vcgen spec tier (Do/Spec) and the core-Std.Do
+                     quarantine root (Do/Basic)
   Logic/             small logic helpers (HEq)
 
 ToCslib/             lowest production layer, staging what PolyFun upstreams:

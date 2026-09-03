@@ -125,6 +125,62 @@ theorem wpFold_bind (Φ : OpSpec P l) (x : FreeM P α) (f : α → FreeM P β)
   | pure x => rfl
   | lift_bind a r ih => exact congrArg (Φ a) (funext fun b => ih b)
 
+/-! ### The rest of the `do` fragment
+
+`wpFold` is a fold, so every combinator `do`-notation elaborates to reduces to `wpFold_bind` and
+`wpFold_pure`; the equations below state the results directly so `simp` need not rediscover
+them. -/
+
+@[simp]
+theorem wpFold_map (Φ : OpSpec P l) (f : α → β) (x : FreeM P α) (post : β → l) :
+    wpFold Φ (f <$> x) post = wpFold Φ x fun a => post (f a) := by
+  induction x with
+  | pure a => rfl
+  | lift_bind a r ih => exact congrArg (Φ a) (funext fun b => ih b)
+
+@[simp]
+theorem wpFold_seq (Φ : OpSpec P l) (f : FreeM P (α → β)) (x : FreeM P α) (post : β → l) :
+    wpFold Φ (f <*> x) post = wpFold Φ f fun g => wpFold Φ x fun a => post (g a) := by
+  induction f with
+  | pure g => exact wpFold_map Φ g x post
+  | lift_bind a r ih => exact congrArg (Φ a) (funext fun b => ih b)
+
+@[simp]
+theorem wpFold_seqLeft (Φ : OpSpec P l) (x : FreeM P α) (y : FreeM P β) (post : α → l) :
+    wpFold Φ (x <* y) post = wpFold Φ x fun a => wpFold Φ y fun _ => post a := by
+  rw [seqLeft_eq_bind, wpFold_bind]
+  simp only [wpFold_bind, wpFold_pure]
+
+@[simp]
+theorem wpFold_seqRight (Φ : OpSpec P l) (x : FreeM P α) (y : FreeM P β) (post : β → l) :
+    wpFold Φ (x *> y) post = wpFold Φ x fun _ => wpFold Φ y post := by
+  rw [seqRight_eq_bind, wpFold_bind]
+
+@[simp]
+theorem wpFold_ite (Φ : OpSpec P l) (c : Prop) [Decidable c] (x y : FreeM P α) (post : α → l) :
+    wpFold Φ (if c then x else y) post = if c then wpFold Φ x post else wpFold Φ y post := by
+  split <;> rfl
+
+@[simp]
+theorem wpFold_dite (Φ : OpSpec P l) (c : Prop) [Decidable c] (x : c → FreeM P α)
+    (y : ¬ c → FreeM P α) (post : α → l) :
+    wpFold Φ (if h : c then x h else y h) post =
+      if h : c then wpFold Φ (x h) post else wpFold Φ (y h) post := by
+  split <;> rfl
+
+@[simp]
+theorem wpFold_option_elim {γ : Type uX} (Φ : OpSpec P l) (o : Option γ) (x : FreeM P α)
+    (f : γ → FreeM P α) (post : α → l) :
+    wpFold Φ (o.elim x f) post = o.elim (wpFold Φ x post) fun c => wpFold Φ (f c) post := by
+  cases o <;> rfl
+
+@[simp]
+theorem wpFold_sum_elim {γ : Type uX} {δ : Type uY} (Φ : OpSpec P l) (s : γ ⊕ δ)
+    (f : γ → FreeM P α) (g : δ → FreeM P α) (post : α → l) :
+    wpFold Φ (s.elim f g) post =
+      s.elim (fun c => wpFold Φ (f c) post) fun d => wpFold Φ (g d) post := by
+  cases s <;> rfl
+
 theorem wpFold_mono [Preorder l] {Φ : OpSpec P l} (hΦ : Φ.Mono) (x : FreeM P α)
     {post post' : α → l} (h : ∀ a, post a ≤ post' a) :
     wpFold Φ x post ≤ wpFold Φ x post' := by

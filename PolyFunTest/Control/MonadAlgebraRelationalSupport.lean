@@ -6,6 +6,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.Control.Monad.Algebra.Relational.Support
+public import PolyFun.Control.Monad.Support.Instances
 
 /-!
 # Exact-support relational algebra canaries

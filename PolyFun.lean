@@ -6,6 +6,7 @@ public import PolyFun.Control.Coalgebra
 public import PolyFun.Control.Comonad.Basic
 public import PolyFun.Control.Comonad.Instances
 public import PolyFun.Control.Do.Basic
+public import PolyFun.Control.Do.Spec
 public import PolyFun.Control.LTS.Trace
 public import PolyFun.Control.Lawful.Basic
 public import PolyFun.Control.Monad.Algebra
@@ -15,11 +16,16 @@ public import PolyFun.Control.Monad.Algebra.WP
 public import PolyFun.Control.Monad.Free
 public import PolyFun.Control.Monad.FreeCont
 public import PolyFun.Control.Monad.Hom
+public import PolyFun.Control.Monad.Hom.Loops
 public import PolyFun.Control.Monad.Hom.WP
 public import PolyFun.Control.Monad.Hom.Writer
 public import PolyFun.Control.Monad.Indexed
 public import PolyFun.Control.Monad.Iter
 public import PolyFun.Control.Monad.Support
+public import PolyFun.Control.Monad.Support.Indexed
+public import PolyFun.Control.Monad.Support.Instances
+public import PolyFun.Control.Monad.Support.Loops
+public import PolyFun.Control.Monad.Support.Structural
 public import PolyFun.Control.Monad.Support.WP
 public import PolyFun.Control.Trace
 public import PolyFun.IPFunctor.Basic
