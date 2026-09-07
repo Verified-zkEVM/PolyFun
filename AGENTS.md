@@ -242,11 +242,12 @@ Both run as independent CI jobs (`lint`, `test`) alongside `build`. Adding a
 per-declaration `@[nolint <linter>]` exception requires
 `import Batteries.Tactic.Lint` in that file.
 
-The cslib dependency registers its `topNamespace` environment linter. PolyFun's
-intentional root-level notation, typeclasses, and compatibility instances are
-listed declaration-by-declaration in `scripts/nolints.json`; regenerate that
-file with the Batteries `runLinter --update` driver when this surface changes,
-and review every new entry rather than treating the file as a blanket waiver.
+The pinned cslib `topNamespace` definition is not registered as an active
+linter. Use `python3 scripts/audit-linters.py` after a fresh production build
+to check actual registration, raw findings, and exception status. Do not run
+Batteries' `--update` blindly: the pinned runner overwrites the shared JSON
+file separately for each root. See [`docs/wiki/linting.md`](docs/wiki/linting.md)
+for the upstream comparison, safe exception maintenance, and category rollout.
 
 Lean, Mathlib, and cslib stay in sync. The current versions are recorded in
 `lean-toolchain` and `lakefile.toml`. Files should stay under 1500 lines.

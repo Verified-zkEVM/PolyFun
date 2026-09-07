@@ -19,3 +19,7 @@ jobs:
       - uses: leanprover-community/lint-style-action@a7e7428fa44f9635d6eb8e01919d16fd498d387a # 2025-08-18
         with:
           mode: check
+      # The action invokes lint-style with the default target (PolyFun).
+      # ToCslib is intentionally a separate, non-default production library.
+      - name: Lint auxiliary production library
+        run: lake exe lint-style ToCslib

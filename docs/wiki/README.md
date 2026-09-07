@@ -54,6 +54,9 @@ See the *Wiki Maintenance Contract* section in
 
 ## Cross-Cutting Notes
 
+- [`linting.md`](linting.md): effective linter coverage, upstream comparison,
+  exception accounting, and category cleanup.
+
 - [`review-hardening.md`](review-hardening.md): required migration, API,
   mathematical, adversarial, lint, and content-control review passes.
 - [`module-api.md`](module-api.md): public-API policy under Lean's module
