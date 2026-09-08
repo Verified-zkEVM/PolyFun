@@ -103,17 +103,18 @@ universe suffices.
 
 ### 8. `do`-notation goals take the standard monad laws directly
 
-The `Bind` instance a `do` block elaborates to is the one `Monad.toBind` provides, so
-core's `bind_assoc`, `bind_pure_comp`, and `bind_map_left` (the last two are themselves
-stated with `do`) close `do`-block goals by `exact`, and `simp` normalizes them. No
-restated `do` forms are needed; `PolyFunTest/Control/LawfulDo.lean` pins this, and the
-dependent-pair shape in two-party strategy composition
-(`(do let rest ← action; pure ⟨x, rest⟩) = pure ⟨x, tail⟩` from `action = pure tail`) is
-`(congrArg (fun a => do let rest ← a; pure ⟨x, rest⟩) h).trans (pure_bind _ _)`.
+Under `[Monad m] [LawfulMonad m]`, core's `bind_assoc`, `bind_pure_comp`, and
+`bind_map_left` prove the corresponding `do`-block goals directly, and `simp`
+normalizes them. The pinned core states these laws using `>>=`. The ordinary-import
+canaries in `PolyFunTest/Control/LawfulDo.lean` exercise their use with `do` notation
+through the public two-party composition module.
 
-**Symptom** to watch for after a toolchain bump: `exact bind_assoc _ _ _` failing on a
-`do`-block goal with a `Bind` instance mismatch. That was a Lean 4.29 elaboration quirk;
-if it returns, restate the law at the call site rather than reviving a helper file.
+The dependent-pair goal
+`(do let rest ← action; pure ⟨x, rest⟩) = pure ⟨x, tail⟩`
+follows from `h : action = pure tail` by `simp only [h, pure_bind]`.
+
+If a standard law fails to match a `do`-block goal, inspect the synthesized
+`Monad` and `Bind` instances and reduce the mismatch to a small local example.
 
 ### 8e. A predicate whose leading argument is implicit cannot be passed as an argument
 

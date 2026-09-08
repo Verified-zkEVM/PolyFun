@@ -3,18 +3,18 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Devon Tuma
 -/
+
 module
 
-import PolyFun.Control.Monad.Free
+import PolyFun.Interaction.TwoParty.Compose
 
 /-!
 # Monad laws against `do`-notation goals
 
-Canaries that core's `LawfulMonad` lemmas close goals stated with `do` notation directly:
-the `Bind` instance the `do` elaborator picks is the one `Monad.toBind` provides, so
-`bind_assoc`, `bind_pure_comp`, and `bind_map_left` apply by `exact`, and the dependent-pair
-shape used by two-party strategy composition (`PolyFun/Interaction/TwoParty/Compose.lean`)
-is one `simp only` step.
+Ordinary-import canaries for the standard monad laws used by two-party strategy
+composition. The goals quantify over an arbitrary lawful monad with independent
+universes. The associativity and mapped-bind laws apply directly to `do` forms;
+the dependent-pair goal follows from its equality hypothesis and `pure_bind`.
 -/
 
 @[expose] public section
