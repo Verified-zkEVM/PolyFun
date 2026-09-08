@@ -104,7 +104,7 @@ and depend on this library.
   concrete machine adequacy and complexity classes live downstream.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
-  algebra, monad iter / hom, lawful re-exports), plus the program-logic
+  algebra, monad iter / hom), plus the program-logic
   kernel: ordered monad algebras (`Monad/Algebra`, unary and relational),
   exact monadic support over core's `MonadAttach` with the
   always/some/never judgments (`Monad/Support`), and the core-`Std.Do`

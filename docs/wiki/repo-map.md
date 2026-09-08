@@ -27,7 +27,7 @@ PolyFun/
                      executable quantitative realizers and syntactic run costs
   Complexity/        generic resource-bound syntax (not a concrete complexity class)
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
-                     Comonad, Lawful, Free, Iter, Bisimulation, LTS/Trace),
+                     Comonad, Free, Iter, Bisimulation, LTS/Trace),
                      including the program-logic kernel
                      (Monad/{Algebra, Support}) and the core-Std.Do
                      quarantine root (Do/Basic)

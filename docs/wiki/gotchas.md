@@ -101,22 +101,20 @@ metavariables.
 resolve independently. Keep `α β : Type` (not `Type u`) when a single
 universe suffices.
 
-### 8. `do`-notation bind uses a different `Bind` instance
+### 8. `do`-notation goals take the standard monad laws directly
 
-Lean's `do`-block elaboration may use a `Bind` instance that differs
-syntactically from `Monad.toBind`. This
-means `pure_bind`, `bind_assoc`, and `bind_pure` won't fire via `simp`
-or `rw` on goals produced by `do` notation in special cases of more
-non-standard instances.
+Under `[Monad m] [LawfulMonad m]`, core's `bind_assoc`, `bind_pure_comp`, and
+`bind_map_left` prove the corresponding `do`-block goals directly, and `simp`
+normalizes them. The pinned core states these laws using `>>=`. The ordinary-import
+canaries in `PolyFunTest/Control/LawfulDo.lean` exercise their use with `do` notation
+through the public two-party composition module.
 
-**Symptom**: `simp [pure_bind]` or `rw [bind_assoc]` does nothing on a
-`do`-block goal.
+The dependent-pair goal
+`(do let rest ← action; pure ⟨x, rest⟩) = pure ⟨x, tail⟩`
+follows from `h : action = pure tail` by `simp only [h, pure_bind]`.
 
-**Fix**: Use the restated lemmas in
-[`PolyFun/Control/Lawful/Basic.lean`](../../PolyFun/Control/Lawful/Basic.lean)
-(namespace `LawfulMonad`):
-`do_bind_assoc`, `do_bind_pure_comp`, `do_bind_map_left`, and the dependent-pair
-specialization `bind_pure_sigma_mk`.
+If a standard law fails to match a `do`-block goal, inspect the synthesized
+`Monad` and `Bind` instances and reduce the mismatch to a small local example.
 
 ### 8e. A predicate whose leading argument is implicit cannot be passed as an argument
 
