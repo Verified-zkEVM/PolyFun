@@ -2,7 +2,7 @@
 
 This page is the traceability ledger for PolyFun's structural UC layer. Lean
 source remains authoritative. The external comparison target is Farshim,
-Karvonen, Knispel, Kohlweiss, and Tyagi, *UC, Categorically: Rigorous
+Karvonen, Knispel, Kohlweiss, and Wadler, *UC, Categorically: Rigorous
 Diagrammatic Proofs* (ePrint 2026/1605; arXiv:2608.04521).
 
 ## Scope And Dependency Boundary
@@ -48,11 +48,40 @@ the activation-equivalence factorization theorems in
 | Theorem III.7 and Lemma IV.3 dummy/mux | no generic dummy/mux theorem | Open. Cancelling a strict identity wire is only a compact-closed equality and is not dummy-adversary completeness; a concrete mux/demux and structural secure-emulation layer are still missing |
 | Theorem III.14 global subroutines | `OpenTheory.withGlobal`, `SecurelyEmulatesWithGlobal`, `EmulatesWithGlobal{,Within}` | The definition-level context-transformer counterpart is present. Outer composition is proved only for the stronger symmetric `EmulatesWithGlobal` premise, so the secure UCGS theorem remains open |
 | Section IV-C efficient networks | `OpenProcess.StructuralBoundary`, `IsRealizabilityClosed` (four lens certificates), and realizability sub-theories | Structural bridge implemented with composite closure derived generically through the product-state combinator; concrete PPT certificates and network-collapse theorems remain open |
-| Theorem IV.6 ITM translation | generic `Party`; optional `MachineId (sid,pid)` frontend | Open; identities are not part of core `OpenTheory` semantics |
+| Theorem IV.6 ITM translation | generic `Party`; no identity frontend | Open; identities are a translation surface, not part of core `OpenTheory` semantics, so no `(sid, pid)` addressing is built in |
 | Appendix A emulation preorder and Grothendieck SMC | `SecurelyEmulates`, `securelyEmulatesPreorder`, `SecurelyEmulatesWithin` | A preorder is proved for PolyFun's context-transformer judgment, not the paper's resource preorder. Structural simulator morphisms, `par`/`wire` monotonicity, the resource translation, and Grothendieck packaging remain open |
 
 `Leakage` is deliberately absent from the `C_bd` row: snapshot leakage and an
 explicit adversarial output interface are not interchangeable constructions.
+
+## Corruption Bookkeeping And Observation
+
+`MomentaryCorruption` uses an abstract identity type `M : Type`; pair identities
+are supplied as `M := Sid × Pid`. Decidable equality is needed by the updates
+and canonical reaction, while the alphabet, state, and process types do not
+require it.
+
+`compromise m` marks the current epoch and sets a current corruption flag.
+`refresh m` clears that flag and advances the counter, preserving every recorded
+compromise flag. Arbitrary `State M` values may already mark future epochs;
+properties of event histories need an invariant from `State.init`.
+
+`EnvOpenProcess` pairs a process with a reaction on a separate state. Its
+consumer connects those reactions to execution. `CorruptionModel.Process`
+fixes the event and state types, while each value still supplies its own
+reaction; `OpenProcess.withMomentaryCorruption` supplies the canonical one.
+
+`SnapshotLeakable` provides only a per-party projection. Consumers choose when
+to evaluate it and prove any relationship between observations, compromise
+flags, or simulator behavior. Neither it nor the bookkeeping updates establish
+leakage adequacy, key refresh, or post-compromise security. These are explicit
+downstream obligations in a concrete semantics, as illustrated by
+[CJSV22](../../REFERENCES.md#cjsv22--canetti-jain-swanberg-varia-end-to-end-secure-messaging).
+
+Ordinary-import examples in
+[`MomentaryCorruption.lean`](../../PolyFunTest/Interaction/UC/MomentaryCorruption.lean)
+check identity renaming, empty and pair identities, and the bookkeeping and
+projection contracts.
 
 ## Family Construction
 
@@ -178,8 +207,8 @@ The coordinated milestone order and repository ownership are maintained in
   silently.
 - SSProve (HARM+23) demonstrates the value of proving package algebra once;
   Nominal SSProve (LS25-N) demonstrates the modularity cost of global, non-renamable state
-  names. `MachineId` is consequently an optional policy/translation surface,
-  not the identity notion of the structural core.
+  names. PolyFun consequently keeps machine identities out of the structural
+  core: `Party` is an abstract type and no addressing scheme is built in.
 - Robust-compilation accounts (PKWC24) derive UC composition and dummy results from
   explicit interface axioms. PolyFun follows the same audit discipline:
   abstractions are added when a theorem consumes them, and failed axioms get

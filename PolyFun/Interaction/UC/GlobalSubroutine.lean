@@ -13,7 +13,7 @@ public import PolyFun.Interaction.UC.SecureEmulation
 
 A *global* resource is one that both a protocol and the surrounding world may
 use: a shared clock, a common reference string, a global PKI.  Following
-Farshim–Karvonen–Knispel–Kohlweiss–Tyagi, *UC, Categorically* (ePrint
+Farshim–Karvonen–Knispel–Kohlweiss–Wadler, *UC, Categorically* (ePrint
 2026/1605, Definition III.13), define secure emulation with a global resource
 by first composing both resources with the same global resource. This module
 provides that construction for PolyFun's context-transformer judgment as

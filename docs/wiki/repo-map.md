@@ -36,10 +36,18 @@ PolyFun/
 ToCslib/             separate low-level extensions to the pinned cslib machine
                      API; imports cslib and Mathlib, never PolyFun
 
+PolyFunTest/         tests and worked examples; imports PolyFun one-way,
+                     built by lake test
+
 docs/wiki/           agent-facing notes (this directory)
 scripts/             repo utilities (validate, lint, update-lib, port helpers)
 .github/workflows/   CI workflows
 ```
+
+For example, the ordinary-import corruption tests in
+[`PolyFunTest/Interaction/UC/MomentaryCorruption.lean`](../../PolyFunTest/Interaction/UC/MomentaryCorruption.lean)
+consume the production corruption and projection interfaces. This test module
+is built by `lake test` and adds no production import edge.
 
 ## Conceptual Layering
 
@@ -235,7 +243,7 @@ Interaction/Basic + PFunctor/Dynamical -> Interaction/Concurrent
 Interaction/{Concurrent, Basic} -> Interaction/UC/{Interface,
                                    OpenProcess, OpenProcessModel,
                                    OpenTheory, OpenSyntax, Notation,
-                                   Emulates, MachineId, EnvAction,
+                                   Emulates, EnvAction,
                                    EnvOpenProcess, CorruptionModel,
                                    MomentaryCorruption, Leakage}
 

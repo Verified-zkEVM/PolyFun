@@ -150,12 +150,13 @@ schema/context distinction underlies node-context schemas.
 
 Used in: `PolyFun/Interaction/Basic/Node.lean`.
 
-### FKKKT26 — Farshim, Karvonen, Knispel, Kohlweiss, Tyagi, *UC, Categorically*
+### FKKKW26 — Farshim, Karvonen, Knispel, Kohlweiss, Wadler, *UC, Categorically*
 
 Pooya Farshim, Martti Karvonen, André Knispel, Markulf Kohlweiss, and
-Shravan Tyagi.
+Philip Wadler.
 *UC, Categorically: Rigorous Diagrammatic Proofs*.
-Cryptology ePrint Archive, Report 2026/1605; arXiv:2608.04521, 2026.
+Cryptology ePrint Archive, [Report 2026/1605](https://eprint.iacr.org/2026/1605);
+[arXiv:2608.04521](https://arxiv.org/abs/2608.04521), 2026.
 
 A categorical account of static/simple universal composability in which
 computational indistinguishability is an equivalence on resources closed
@@ -165,6 +166,22 @@ efficiency remain downstream obligations.
 
 Used in: `docs/wiki/uc.md`, `PolyFun/Interaction/UC/GlobalSubroutine.lean`,
 `PolyFun/Interaction/UC/SecureEmulation.lean`.
+
+### CJSV22 — Canetti, Jain, Swanberg, Varia, *End-to-End Secure Messaging*
+
+Ran Canetti, Palak Jain, Marika Swanberg, and Mayank Varia.
+*Universally Composable End-to-End Secure Messaging*.
+CRYPTO 2022, pp. 3–33.
+DOI: <https://doi.org/10.1007/978-3-031-15979-4_1>;
+[full version, ePrint 2022/376](https://eprint.iacr.org/2022/376), revised 2023.
+
+A modular UC analysis of secure messaging with momentary state compromise
+and recovery through protocol-specific key evolution. It motivates the
+compromise/refresh vocabulary and snapshot projections; PolyFun's bookkeeping
+and projection interfaces alone establish no cryptographic guarantees.
+
+Used in: `PolyFun/Interaction/UC/MomentaryCorruption.lean`,
+`PolyFun/Interaction/UC/Leakage.lean`.
 
 ### CSV19 — Canetti, Stoughton, Varia, *EasyUC*
 

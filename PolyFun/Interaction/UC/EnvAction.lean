@@ -9,88 +9,25 @@ module
 import Mathlib.Init
 
 /-!
-# Environment-driven action alphabets
+# Environment-event reactions
 
-This file introduces `EnvAction m Event X`, a typed channel for
-environment-fired events that update a per-step state via reactions
-in an arbitrary monad `m`.
+`EnvAction m Event X` bundles a reaction `Event → X → m X`. Typical uses include
+compromise/refresh bookkeeping, resets, and clock updates. `EnvOpenProcess`
+pairs such a reaction with an open process's port boundary.
 
-## Why a separate channel from `BoundaryAction`
+The event alphabet and state are independent of ports. The consumer supplies
+routing, scheduling, and authority to issue events; the type itself imposes no
+access-control restriction or observation policy.
 
-`OpenProcess Party Δ` already has one effect channel: the
-**boundary**, carrying port traffic *between participants* (Alice
-sends a packet to the network, the network delivers to Bob). That
-channel is the natural home for everything routed through ports.
+The structure requires only `[Pure m]`, for the default reaction that preserves
+the state. `empty` handles an empty alphabet, `passive` preserves the state for
+any event, `comap` adapts an alphabet, and `liftState` lifts a reaction to a
+larger state using `[Monad m]`.
 
-But the environment can also act on a process directly, *without
-going through any port*. In CJSV22 §3.2 the canonical example is
-corruption: the environment may fire `compromise(m)` or
-`refresh(m)` for a machine `m`, and crucially the adversary cannot
-trigger this through Alice's input port. The same shape recurs
-elsewhere: a global broadcast reset, a time-advance pulse, an
-environment-controlled randomness reseed. None of these are
-port-routed; all of them update bookkeeping state that the
-adversary then observes.
-
-`EnvAction` gives that pattern a typed home:
-
-* `Event` is the alphabet of things the environment can fire (a
-  user-supplied sum type, e.g.
-  `compromise(m) | refresh(m) | broadcastReset`).
-* `X` is the bookkeeping state the events mutate (corruption flags,
-  epoch counters, broadcast clocks).
-* `react : Event → X → m X` is the per-event reaction, valued in
-  whatever monad `m` the consumer chose (the identity monad for
-  deterministic reactions, a probability monad for randomized ones,
-  etc.).
-
-Pairing an `OpenProcess` with an `EnvAction` then keeps the two
-channels structurally orthogonal: port traffic through
-`BoundaryAction`, environment effects through `EnvAction`. The
-pairing is `EnvOpenProcess` in `EnvOpenProcess.lean`.
-
-## "Env" vs "Event"
-
-The naming `EnvAction Event X` is asymmetric on purpose:
-
-* **`Env`** (in the type name) names *who* fires the action — the
-  environment, in the UC sense (one level above the adversary in
-  the CJSV22 universe; not adversary-accessible directly).
-* **`Event`** (the alphabet parameter) names *what* they fire.
-
-So `EnvAction m Event X` reads as "actions fired by the environment,
-drawn from the `Event` alphabet, mutating state of type `X` in
-monad `m`". The two `Env`/`Event` are not redundant: `Env` carries
-security-relevant routing info (env-only, not adversary-accessible),
-`Event` is just the algebra of messages.
-
-The alphabet parameter is named `Event` rather than the CJSV22-style
-`Σ` because `Σ` is a reserved Lean keyword (sigma types). The CSP /
-π-calculus convention "events" is also a more literal description of
-what the alphabet contains than the bare letter `Σ`.
-
-## Monad-parametric reactions
-
-`react` is `m X`-valued for an arbitrary monad `m`, so environment-
-driven state transitions can themselves be effectful in whatever way
-the consumer needs (deterministic via `Id`, probabilistic via a
-probability monad, oracle-using via a free interaction monad, etc.).
-Deterministic events use `pure ∘ update` and pay no extra cost.
-
-Crypto-flavored consumers (e.g. VCVio) instantiate `m := ProbComp`
-to recover the original probabilistic-corruption interface; this
-file itself depends only on `Pure` / `Monad` from `Mathlib.Init`.
-
-## Additive design
-
-`EnvAction` is intentionally **standalone**: it is *not* threaded
-into `OpenNodeProfile`. Existing `OpenProcess Party Δ`
-constructions are unaffected, and protocols that do not need
-environment-driven events incur zero cost. The corruption-aware
-wrapper that pairs an `OpenProcess` with a state-indexed
-`EnvAction` lives in `EnvOpenProcess.lean`; the canonical CJSV22
-instantiation (corruption with refresh-based healing) lives in
-`MomentaryCorruption.lean`.
+`MomentaryCorruption.envAction` in
+`PolyFun/Interaction/UC/MomentaryCorruption.lean` is one instance, with event
+type `MomentaryCorruption.Alphabet M` and state type `MomentaryCorruption.State M`.
+Its updates require decidable equality on `M`.
 -/
 
 public section
@@ -101,36 +38,9 @@ namespace Interaction
 namespace UC
 
 /--
-`EnvAction m Event X` is the per-event reaction of a per-step state
-`x : X` to environment events drawn from the alphabet `Event`,
-returning a value in monad `m`.
-
-`react : Event → X → m X` specifies how each event transforms the
-state. The default `react` is `fun _ x => pure x` (every event is a
-no-op), which keeps the empty alphabet `Event := Empty` trivially
-satisfiable; this default requires `[Pure m]`.
-
-Two concrete instantiations matter here:
-
-* `EnvAction m Empty X` — the trivial alphabet, used by every
-  protocol that doesn't participate in environment-driven corruption.
-  Costs nothing; the canonical inhabitant is `EnvAction.empty`.
-* `EnvAction m (MomentaryCorruption.Alphabet Sid Pid)
-  (MomentaryCorruption.State Sid Pid)` — the canonical CJSV22
-  instantiation, with the consumer choosing `m` (typically a
-  probability monad downstream).
-
-The structure is independent of the boundary `Δ` so that environment
-events are *not* keyed by port: an environment event acts on whatever
-`X`-typed slice of state the protocol exposes, with no dependence on
-which ports happen to be in scope.
-
-Categorically this is a **Kleisli Mealy machine**: an event-indexed state
-transition valued in the Kleisli category of `m`. It is intentionally not
-unified with `PFunctor.DynSystem` — dynamical systems are pure coalgebras
-`State → p.Obj State`, and identifying monadic transition systems with
-dynamical systems would require a monadic-dynamical abstraction (coalgebras of
-the composite `m ∘ p.Obj`) that the library does not yet provide.
+A reaction transforming an `X`-valued state for each event, with result in `m`.
+The default reaction returns the supplied state through `pure`. Both the event
+alphabet and state are independent of any port boundary or party type.
 -/
 @[ext]
 structure EnvAction (m : Type v → Type w) (Event : Type u) (X : Type v)
@@ -180,17 +90,9 @@ def comap [Pure m] {Event Event' : Type u} {X : Type v}
   react s x := e.react (g s) x
 
 /--
-Adapt the state of an environment-action along a state-projection.
-
-Given `e : EnvAction m Event X` and a projection `π : Y → X` together
-with a re-installation `ι : X → Y → Y` that re-installs the updated
-`X` slice into a larger state `Y`, the lifted action operates on `Y`
-by reacting on the `X`-slice and re-installing the result.
-
-This is the structural lift used when corruption-aware reactions need
-to thread through richer per-step states; the `MomentaryCorruption`
-layer uses it to lift the canonical `MomentaryCorruption.react` over
-state-bundled `MachineProcess`es.
+Lift a reaction to a larger state using a projection and an update function.
+For an event and state `y : Y`, react on `π y`, then return `ι x' y` for the
+resulting `x'`. Laws relating `π` and `ι` are separate assumptions when needed.
 -/
 def liftState [Monad m] {Event : Type u} {X Y : Type v}
     (π : Y → X) (ι : X → Y → Y) (e : EnvAction m Event X) : EnvAction m Event Y where

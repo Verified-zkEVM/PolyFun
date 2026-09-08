@@ -22,7 +22,7 @@ carries that simulator over an explicitly pinned parameter space;
 context transformers.
 
 This existential form gives a local preorder on open systems. Appendix A of
-Farshim–Karvonen–Knispel–Kohlweiss–Tyagi, *UC, Categorically* (ePrint
+Farshim–Karvonen–Knispel–Kohlweiss–Wadler, *UC, Categorically* (ePrint
 2026/1605) constructs a related preorder from structural secure-emulation
 morphisms between categorical resources. `securelyEmulatesPreorder` proves
 the preorder law for PolyFun's context-transformer judgment, but is not a

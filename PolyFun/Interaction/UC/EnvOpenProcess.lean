@@ -12,74 +12,21 @@ public import PolyFun.Interaction.UC.EnvAction
 /-!
 # Open processes paired with an environment-event channel
 
-This file introduces `EnvOpenProcess Party Δ Event State`, the
-structural pairing of an `OpenProcess Party Δ` (port-routed
-boundary channel) with an `EnvAction Event State` (environment-fired
-event channel). See `EnvAction.lean` for the motivation behind the
-two-channel split (port traffic through `BoundaryAction`,
-environment effects through `EnvAction`).
+`EnvOpenProcess m Party Δ Event State` bundles an `OpenProcess m Party Δ` with
+an `EnvAction m Event State`. Its `react` projection acts on the supplied
+`State`, independently of the process's internal state. A consumer provides any
+scheduling or state connection between environment reactions and process steps.
 
-## What the wrapper adds beyond `OpenProcess + EnvAction`
+The wrapper supports an empty alphabet (`ofOpenProcess`), a reaction that
+preserves state (`passive`), alphabet adaptation (`comapEvent`), reaction
+replacement (`withEnvAction`), and boundary adaptation (`mapBoundary`).
+Composition of reactions requires a consumer-selected combination strategy.
 
-The wrapper does two concrete jobs that an ad-hoc tuple does not:
-
-1. **Bundling.** A "process that has an environment channel" is a
-   *single value* you can pass around, return from a function, store
-   in a structure. Without the wrapper, every consumer would have
-   to re-tuple `(P : OpenProcess _ _, ea : EnvAction _ _)` at every
-   call site. Composition operators, runtime scheduling, security
-   games — they all need the pair to travel together.
-
-2. **An opt-in surface.** Existing `OpenProcess` values are
-   unchanged. A consumer that doesn't care about environment
-   actions never imports this file. A consumer that does, gets the
-   pair as a structure with a typed `react` projection. The env
-   channel is **additive** above `OpenProcess` and never threaded
-   into `OpenNodeProfile`, so adding it costs zero in the rest of
-   the framework.
-
-The alternative, threading the env-event alphabet `Σ` (with
-`Σ := Empty` default) directly through `OpenNodeProfile`, would
-touch every existing constructor and every activation-equivalence lemma in
-`OpenProcessModel.lean`. The wrapper achieves the same expressive
-power additively, with zero invasion.
-
-## Genericity
-
-The wrapper is intentionally **generic in `Event` and `State`**:
-the canonical CJSV22 instantiation
-(`Event := MomentaryCorruption.Alphabet Sid Pid`,
-`State := MomentaryCorruption.State Sid Pid`)
-is one consumer, but every other environment-driven effect
-(broadcast resets, time advance, side-channel reseed,
-environment-controlled randomness oracle) reuses the same wrapper
-with different `(Event, State)` instantiations.
-
-## What this file ships
-
-The **wrapper data layer** only:
-
-* `EnvOpenProcess` structure with `@[ext]`;
-* projections `toOpenProcess`, `react`;
-* canonical wrappings `ofOpenProcess` (empty alphabet) and
-  `passive` (alphabet acts as identity);
-* alphabet adaptation `comapEvent`, env-action replacement
-  `withEnvAction`, boundary adaptation `mapBoundary`.
-
-The composition operators (`par` / `wire` / `plug` lifted from
-`OpenTheory`) are intentionally **not** here: lifting them requires
-an explicit *combination strategy* for the env channels of the two
-sub-wrappers (broadcast vs targeted vs Kleisli-sequential), which is
-application-specific (Signal uses targeted routing keyed by
-`MachineId`; broadcast resets use product). The operators are best
-parameterized by the strategy rather than baked in. Composition,
-forwarding lemmas decomposing env reactions on composites, and the
-runtime integration that schedules env events alongside boundary
-ticks all live in subsequent files.
-
-The canonical CJSV22 instantiation `MomentaryCorruption.Process`
-(and the bundled `MomentaryCorruption.model : CorruptionModel`
-value) lives in `MomentaryCorruption.lean`.
+`MomentaryCorruption.Process M m Δ` specializes the wrapper with
+`Event := MomentaryCorruption.Alphabet M` and
+`State := MomentaryCorruption.State M`. Its canonical wrapper is
+`OpenProcess.withMomentaryCorruption`, defined in
+`PolyFun/Interaction/UC/MomentaryCorruption.lean`.
 -/
 
 public section
@@ -90,28 +37,15 @@ namespace Interaction
 namespace UC
 
 /--
-`EnvOpenProcess m Party Δ Event State` is an `OpenProcess m Party Δ`
-paired with an `EnvAction Event State` describing how an environment-side
-state of type `State` evolves under environment events drawn from `Event`.
+An open process and an independent environment-event reaction.
 
-The two fields encode orthogonal effect channels:
+`process` supplies the port boundary and process behavior; `envAction` describes
+how events update a separate state of type `State`. The wrapper carries no
+relation between that state and the internal state of `process`.
 
-* `process : OpenProcess m Party Δ` — the standard open-process boundary
-  surface, with its own controllers, views, per-step nodewise sampler,
-  and `BoundaryAction` for port traffic.
-* `envAction : EnvAction Event State` — an independent env-driven
-  channel for actions whose semantics are *not* port-routed (CJSV22
-  §3.2 corruption, broadcast resets, time advance).
-
-The state type `State` is constrained to `Type` (universe 0) to match
-the universe of `EnvAction.react`'s return type (`m State : Type`),
-which keeps boundary-channel and env-channel state aligned.
-
-Existing `OpenProcess` consumers are unaffected: nothing here is
-threaded into `OpenNodeProfile`. The wrapper is the structural
-foundation for corruption-aware composition and for the canonical
-CJSV22 instantiation `MomentaryCorruption.Process` in
-`MomentaryCorruption.lean`.
+The environment state lives in `Type w`, matching the input universe of
+`m : Type w → Type w'`. The party, event, and process-state universes remain
+independent.
 -/
 @[ext]
 structure EnvOpenProcess (m : Type w → Type w') [Pure m] (Party : Type u) (Δ : PortBoundary)
