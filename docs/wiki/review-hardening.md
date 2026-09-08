@@ -60,6 +60,8 @@ A merge-ready change must have:
 - minimized regressions for every discovered failure or counterexample;
 - satisfiable assumptions and statements that cover their documented scope;
 - Mathlib-style names, intrinsic docstrings, and lint-clean simp declarations;
+- any new scripts justified by a recurring library workflow under the
+  [repository script policy](../../CONTRIBUTING.md#repository-scripts);
 - no new `sorry`, `admit`, unsafe proof shortcut, or non-standard axiom;
 - explicit axiom checks for headline declarations; and
 - a final audit note saying what was attacked, what was hardened, and what

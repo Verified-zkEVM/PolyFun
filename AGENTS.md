@@ -242,12 +242,16 @@ Both run as independent CI jobs (`lint`, `test`) alongside `build`. Adding a
 per-declaration `@[nolint <linter>]` exception requires
 `import Batteries.Tactic.Lint` in that file.
 
-The pinned cslib `topNamespace` definition is not registered as an active
-linter. Use `python3 scripts/audit-linters.py` after a fresh production build
-to check actual registration, raw findings, and exception status. Do not run
+Use `lake lint -- --trace` after a fresh production build to inspect the
+checks that actually run. A linter definition alone does not establish
+registration: the pinned cslib `topNamespace` is not registered. Do not run
 Batteries' `--update` blindly: the pinned runner overwrites the shared JSON
 file separately for each root. See [`docs/wiki/linting.md`](docs/wiki/linting.md)
-for the upstream comparison, safe exception maintenance, and category rollout.
+for coverage and exception maintenance.
+
+Add repository scripts only for concrete, recurring library workflows, as
+specified in [Repository Scripts](CONTRIBUTING.md#repository-scripts).
+Keep temporary review probes and one-time audits outside the tracked tree.
 
 Lean, Mathlib, and cslib stay in sync. The current versions are recorded in
 `lean-toolchain` and `lakefile.toml`. Files should stay under 1500 lines.

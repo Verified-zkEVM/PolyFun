@@ -56,12 +56,11 @@ untracked `PolyFun/**/*.lean` files are present.
 ./scripts/validate.sh --lint --test
 ```
 
-`--lint` adds `lake lint` (Batteries' environment linters),
-`lake exe lint-style PolyFun ToCslib`, and linter regression checks to the wrapper.
+`--lint` adds `lake lint` (Batteries' environment linters) and
+`lake exe lint-style PolyFun ToCslib` to the wrapper.
 `checkUnivs` runs during elaboration, not in the environment runner.
-See [linting.md](linting.md) for the effective upstream comparison and
-read-only exception audit. `--test` adds
-`lake test` (builds the `PolyFunTest` library). `--axioms` adds
+See [linting.md](linting.md) for coverage and exception maintenance.
+`--test` builds `PolyFunTest` with warnings fatal and runs `lake test`. `--axioms` adds
 the executable fixture matrix and `lake exe polyfun-axiomsweep --check`. The check scans
 every imported `PolyFun.*` declaration and fails on any `sorryAx` or non-standard
 axiom dependency. The committed `scripts/axiom_baseline.json` is a zero-debt
@@ -70,7 +69,8 @@ record taint and is only useful for resetting a stale baseline after all debt is
 removed. The main CI `build` job runs `validate.sh --axioms`, so a taint finding
 fails CI. Separate `lint` and `test` CI jobs run
 `lake lint` / `lake test`, and the `linting.yml` workflow runs the text style
-lint, so treat all three as required for merge. Build-time `mathlibStandardSet` checks enforce headers, line length, and module
+lint, so treat all three as required for merge. Build-time `mathlibStandardSet`
+checks enforce headers, line length, and module
 docstrings. The standalone text checks additionally enforce Unicode and other
 source-text rules; they are not interchangeable.
 

@@ -54,8 +54,8 @@ See the *Wiki Maintenance Contract* section in
 
 ## Cross-Cutting Notes
 
-- [`linting.md`](linting.md): effective linter coverage, upstream comparison,
-  exception accounting, and category cleanup.
+- [`linting.md`](linting.md): linter commands, production-root coverage, and
+  exception maintenance.
 
 - [`review-hardening.md`](review-hardening.md): required migration, API,
   mathematical, adversarial, lint, and content-control review passes.

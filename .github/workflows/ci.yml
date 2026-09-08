@@ -88,14 +88,11 @@ jobs:
       - name: Fetch dependency cache
         run: lake exe cache get
 
-      - name: Build PolyFun
+      - name: Build production libraries
         run: lake build PolyFun ToCslib --wfail
 
       - name: Run environment linters
-        run: |
-          python3 scripts/test-linter-audit.py
-          python3 scripts/test-linter-coverage.py
-          lake lint
+        run: lake lint
 
   test:
     name: Test
