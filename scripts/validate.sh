@@ -22,7 +22,7 @@ Default checks:
   - python3 ./scripts/check-docs-integrity.py
 
 Optional checks:
-  --lint    Run `lake lint` (Batteries environment linters)
+  --lint    Run environment and text-style linters over PolyFun and ToCslib
   --test    Run `lake test` (builds the PolyFunTest library)
   --axioms  Test axiomsweep, then enforce the zero axiom/sorry-debt gate
 EOF
@@ -52,7 +52,7 @@ for arg in "$@"; do
 done
 
 echo "# Building project"
-lake build --wfail
+lake build PolyFun ToCslib --wfail
 
 echo ""
 echo "# Checking module scopes"
@@ -70,20 +70,21 @@ python3 ./scripts/check-docs-integrity.py
 if (( run_lint )); then
   echo ""
   echo "# Running environment linters (lake lint)"
-  lake build ToCslib
   lake lint
+  lake exe lint-style PolyFun ToCslib
 fi
 
 if (( run_test )); then
   echo ""
   echo "# Running test library (lake test)"
+  lake build PolyFunTest --wfail
   lake test
 fi
 
 if (( run_axioms )); then
   echo ""
   echo "# Building axiom sweep roots"
-  lake build PolyFun ToCslib
+  lake build PolyFun ToCslib --wfail
 
   echo ""
   echo "# Testing the axiom sweep tool"

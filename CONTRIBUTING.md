@@ -35,6 +35,19 @@ monad, oracle simulator, or security predicate, that's a smell — please
 parameterize over an arbitrary monad and let downstream consumers
 instantiate.
 
+## Repository Scripts
+
+Add a script only when it serves a concrete, recurring library development,
+validation, or maintenance workflow. The PR must identify that workflow,
+explain why an upstream command, Lake target, or existing script cannot
+reasonably provide it, and justify maintaining the additional code.
+
+Keep temporary review probes, migration experiments, and one-time audits
+outside the tracked repository. Record their findings and validation evidence
+in the PR, and put lasting guidance in the wiki. Tests for maintained
+repository behavior belong on the narrowest existing test surface; a useful
+review experiment alone does not justify a new script or CI job.
+
 ## Attribution And File Headers
 
 This repo uses explicit Lean file headers. Every Lean file under

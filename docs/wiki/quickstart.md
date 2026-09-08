@@ -21,7 +21,7 @@ lake exe cache get
 `./scripts/validate.sh` is the recommended convenience wrapper for routine
 local validation. By default it runs:
 
-1. `lake build --wfail` (warnings — including `mathlibStandardSet` style
+1. `lake build PolyFun ToCslib --wfail` (warnings — including `mathlibStandardSet` style
    warnings — are hard failures, matching CI)
 2. `./scripts/check-modules.sh` (all Lean sources use module mode and the
    Interaction public-scope policy is respected)
@@ -56,9 +56,11 @@ untracked `PolyFun/**/*.lean` files are present.
 ./scripts/validate.sh --lint --test
 ```
 
-`--lint` adds `lake lint` (Batteries' environment linters: `docBlame`,
-`simpNF`, `checkUnivs`, …) to the convenience wrapper. `--test` adds
-`lake test` (builds the `PolyFunTest` library). `--axioms` adds
+`--lint` adds `lake lint` (Batteries' environment linters) and
+`lake exe lint-style PolyFun ToCslib` to the wrapper.
+`checkUnivs` runs during elaboration, not in the environment runner.
+See [linting.md](linting.md) for coverage and exception maintenance.
+`--test` builds `PolyFunTest` with warnings fatal and runs `lake test`. `--axioms` adds
 the executable fixture matrix and `lake exe polyfun-axiomsweep --check`. The check scans
 every imported `PolyFun.*` declaration and fails on any `sorryAx` or non-standard
 axiom dependency. The committed `scripts/axiom_baseline.json` is a zero-debt
@@ -67,9 +69,10 @@ record taint and is only useful for resetting a stale baseline after all debt is
 removed. The main CI `build` job runs `validate.sh --axioms`, so a taint finding
 fails CI. Separate `lint` and `test` CI jobs run
 `lake lint` / `lake test`, and the `linting.yml` workflow runs the text style
-lint, so treat all three as required for merge. Text style (copyright headers,
-line length, module docstrings) is additionally enforced at build time by the
-`mathlibStandardSet` linters.
+lint, so treat all three as required for merge. Build-time `mathlibStandardSet`
+checks enforce headers, line length, and module
+docstrings. The standalone text checks additionally enforce Unicode and other
+source-text rules; they are not interchangeable.
 
 ## Optional Direct Commands
 
@@ -109,7 +112,7 @@ deliberately outside the `lake lint` scope.
 - [`../../.github/workflows/ci.yml`](../../.github/workflows/ci.yml): runs
   three independent jobs on every push to `main` and on pull requests — a
   `build` job (`./scripts/validate.sh`, which includes
-  `lake build --wfail`), a `lint` job (`lake lint`, the environment linters),
+  `lake build PolyFun ToCslib --wfail`), a `lint` job (`lake lint`, the environment linters),
   and a `test` job (`lake test`, the
   `PolyFunTest` library). All builds pass `--wfail`, so any compiler or
   `mathlibStandardSet` warning fails CI rather than slipping through. The
@@ -126,9 +129,8 @@ deliberately outside the `lake lint` scope.
   `CONTRIBUTING.md`, `REFERENCES.md`, or a tracked page under `docs/`, or drops
   a production/test module docstring from its prologue, will fail this job.
 - [`../../.github/workflows/linting.yml`](../../.github/workflows/linting.yml):
-  runs the community `leanprover-community/lint-style-action` (the Lean-based
-  Mathlib text style linter: copyright headers, line length, module
-  docstrings).
+  runs the community `leanprover-community/lint-style-action` on `PolyFun`,
+  then explicitly runs Mathlib text linting on `ToCslib`.
 - [`../../.github/workflows/docs.yml`](../../.github/workflows/docs.yml):
   builds and publishes searchable API documentation from `main`.
 - [`../../.github/workflows/release-tag.yml`](../../.github/workflows/release-tag.yml)
