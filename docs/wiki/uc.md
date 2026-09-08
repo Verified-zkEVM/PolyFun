@@ -2,7 +2,7 @@
 
 This page is the traceability ledger for PolyFun's structural UC layer. Lean
 source remains authoritative. The external comparison target is Farshim,
-Karvonen, Knispel, Kohlweiss, and Tyagi, *UC, Categorically: Rigorous
+Karvonen, Knispel, Kohlweiss, and Wadler, *UC, Categorically: Rigorous
 Diagrammatic Proofs* (ePrint 2026/1605; arXiv:2608.04521).
 
 ## Scope And Dependency Boundary
@@ -53,6 +53,35 @@ the activation-equivalence factorization theorems in
 
 `Leakage` is deliberately absent from the `C_bd` row: snapshot leakage and an
 explicit adversarial output interface are not interchangeable constructions.
+
+## Corruption Bookkeeping And Observation
+
+`MomentaryCorruption` uses an abstract identity type `M : Type`; pair identities
+are supplied as `M := Sid × Pid`. Decidable equality is needed by the updates
+and canonical reaction, while the alphabet, state, and process types do not
+require it.
+
+`compromise m` marks the current epoch and sets a current corruption flag.
+`refresh m` clears that flag and advances the counter, preserving every recorded
+compromise flag. Arbitrary `State M` values may already mark future epochs;
+properties of event histories need an invariant from `State.init`.
+
+`EnvOpenProcess` pairs a process with a reaction on a separate state. Its
+consumer connects those reactions to execution. `CorruptionModel.Process`
+fixes the event and state types, while each value still supplies its own
+reaction; `OpenProcess.withMomentaryCorruption` supplies the canonical one.
+
+`SnapshotLeakable` provides only a per-party projection. Consumers choose when
+to evaluate it and prove any relationship between observations, compromise
+flags, or simulator behavior. Neither it nor the bookkeeping updates establish
+leakage adequacy, key refresh, or post-compromise security. These are explicit
+downstream obligations in a concrete semantics, as illustrated by
+[CJSV22](../../REFERENCES.md#cjsv22--canetti-jain-swanberg-varia-end-to-end-secure-messaging).
+
+Ordinary-import examples in
+[`MomentaryCorruption.lean`](../../PolyFunTest/Interaction/UC/MomentaryCorruption.lean)
+check identity renaming, empty and pair identities, and the bookkeeping and
+projection contracts.
 
 ## Family Construction
 
