@@ -14,8 +14,9 @@ public import ToCslib.Data.BitVec
 /-!
 # Extensions of the pinned cslib machine library
 
-This library contains reusable facts and constructions about cslib machines. It
+This library contains local machine and complexity theory over cslib: encoded
+polynomial-time families, machine constructions, and counting separation. It
 does not import PolyFun's realizability theory or any downstream oracle or
 cryptographic semantics. Optional backend libraries may import these modules
-explicitly without making cslib a dependency of generic PolyFun.
+explicitly without adding concrete machine extensions to the generic PolyFun umbrella.
 -/

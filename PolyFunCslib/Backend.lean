@@ -123,46 +123,4 @@ noncomputable instance : quantitative.HasCategory where
     quantitative.cost code input = code.time.eval (sourceEncoding input).length :=
   rfl
 
-/-! ## Generic trace envelope -/
-
-variable {p : PFunctor.{u, u}} {input output : Type u} [DecidableEq p.A]
-  {boundary : DynSystem.DynComputation.Boundary encodingStepClass p input output}
-
-/-- If every head and enabled-transition code has a constant work envelope,
-the generic quantitative trace fold plus its final head is bounded additively. -/
-theorem traceWork_add_finalHead_le
-    (realization : DynSystem.DynComputation.QuantitativeRealization quantitative boundary)
-    (headBound updateBound : ℕ)
-    (head_le : ∀ state, quantitative.cost realization.headCode state ≤ headBound)
-    (update_le : ∀ step, quantitative.cost realization.updateCode step ≤ updateBound)
-    {start finish : realization.machine.State}
-    (trace : realization.ExecutionTrace start finish) :
-    trace.cost.work + quantitative.cost realization.headCode finish ≤
-      (trace.length + 1) * headBound + trace.length * updateBound := by
-  induction trace with
-  | nil state =>
-      simpa [DynSystem.DynComputation.QuantitativeRealization.ExecutionTrace.cost,
-        DynSystem.DynComputation.QuantitativeRealization.ExecutionTrace.length] using
-        head_le state
-  | @query state position next finish view_eq direction tail induction =>
-      have headAtState := head_le state
-      have updateAtState := update_le (state, ⟨position, direction⟩)
-      change realization.headCode.time.eval (realization.state state).length ≤ headBound
-        at headAtState
-      change realization.updateCode.time.eval
-          ((boundary.stateIdx realization.state) (state, ⟨position, direction⟩)).length ≤
-        updateBound at updateAtState
-      change tail.cost.work +
-          realization.headCode.time.eval (realization.state finish).length ≤
-        (tail.length + 1) * headBound + tail.length * updateBound at induction
-      simp only [DynSystem.DynComputation.QuantitativeRealization.ExecutionTrace.cost,
-        DynSystem.DynComputation.QuantitativeRealization.ExecutionTrace.length,
-        ExecutionCost.work_add, ExecutionCost.work_ofWork, ExecutionCost.work_observe,
-        ExecutionCost.work_query, Nat.add_zero]
-      calc
-        _ ≤ headBound + updateBound +
-            ((tail.length + 1) * headBound + tail.length * updateBound) := by omega
-        _ = (tail.length + 1 + 1) * headBound +
-            (tail.length + 1) * updateBound := by ring
-
 end PFunctor.CslibBackend

@@ -116,7 +116,9 @@ and depend on this library.
   silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
 - `ToCslib/`: a separate low-level Lake library of reusable extensions to the
-  pinned cslib machine API. It imports cslib and Mathlib but never PolyFun,
+  pinned cslib machine API, including local complexity theory while upstream
+  APIs stabilize: encoded polynomial-time families and machine-counting separation.
+  It imports cslib and Mathlib but never PolyFun,
   oracle semantics, probability, or cryptography. Concrete PolyFun backend
   adapters may import it explicitly; the generated `PolyFun` umbrella does not.
 - `PolyFunCslib/`: an optional adapter library combining generic PolyFun machines

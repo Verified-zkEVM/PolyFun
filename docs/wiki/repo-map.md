@@ -33,7 +33,7 @@ PolyFun/
                      quarantine root (Do/Basic)
   Logic/             small logic helpers (HEq)
 
-ToCslib/             separate low-level extensions to the pinned cslib machine
+ToCslib/             local machine and complexity theory over the pinned cslib
                      API; imports cslib and Mathlib, never PolyFun
 PolyFunCslib/         optional cslib-backed PolyFun realizability adapter;
                      excluded from the PolyFun umbrella
@@ -60,10 +60,15 @@ recorded in [`AGENTS.md`](../../AGENTS.md):
 
 ```text
 Cslib + Mathlib -> ToCslib -> optional PolyFun backend adapters
+ToCslib/Computability/PolyTime -> ToCslib/Computability/BitEncoding
+  -> ToCslib/Computability/SingleTape/Counting (nonuniform separation)
 ```
 
-It contains concrete machine constructions and lemmas, but no realizability,
-oracle, probability, or cryptographic policy.
+It contains concrete machine constructions, encoded polynomial-time families,
+and counting/diagonalization results. Complexity theory stays here while upstream
+APIs stabilize. It does not depend on PolyFun realizability, oracle semantics,
+probability, or cryptographic policy. `PolyFunCslib` contains the PolyFun-specific
+certificate and its bridge to the machine-counting separation theorem.
 
 ```text
 PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}

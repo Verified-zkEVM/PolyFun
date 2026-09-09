@@ -14,7 +14,8 @@ while IFS= read -r file; do
     echo "ERROR: $file does not enable module mode with a 'module' command." >&2
     status=1
   fi
-done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'PolyFunTest/*.lean')
+done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
+  'PolyFunCslib.lean' 'PolyFunCslib/*.lean' 'PolyFunTest/*.lean')
 
 while IFS= read -r file; do
   if ! grep -qx 'public section' "$file"; then
@@ -61,7 +62,8 @@ while IFS= read -r file; do
       status=1
     fi
   fi
-done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'PolyFunTest/*.lean')
+done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
+  'PolyFunCslib.lean' 'PolyFunCslib/*.lean' 'PolyFunTest/*.lean')
 
 if grep -rEn --include='*.lean' '@\[expose\][[:space:]]+public section' PolyFun/Interaction; then
   echo "ERROR: Broad exposed public sections are forbidden in PolyFun/Interaction." >&2

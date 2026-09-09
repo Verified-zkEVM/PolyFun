@@ -16,13 +16,13 @@ usage() {
 Usage: ./scripts/validate.sh [--lint] [--test] [--axioms]
 
 Default checks:
-  - lake build
+  - lake build PolyFun ToCslib PolyFunCslib --wfail
   - ./scripts/check-modules.sh
   - ./scripts/check-imports.sh
   - python3 ./scripts/check-docs-integrity.py
 
 Optional checks:
-  --lint    Run environment and text-style linters over PolyFun and ToCslib
+  --lint    Run environment and text-style linters over all production libraries
   --test    Run `lake test` (builds the PolyFunTest library)
   --axioms  Test axiomsweep, then enforce the zero axiom/sorry-debt gate
 EOF

@@ -42,7 +42,7 @@ rev = "v4.33.1"
 [[lean_lib]]
 name = "PolyFun"
 
-# Low-level extensions of the pinned cslib machine API. This target does not
+# Local machine and complexity theory over the pinned cslib API. This target does not
 # import PolyFun and is intentionally separate from the generated `PolyFun`
 # umbrella; PolyFun backend adapters may import it explicitly.
 [[lean_lib]]

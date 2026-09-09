@@ -6,7 +6,7 @@ Authors: Quang Dao
 
 module
 
-public import PolyFunCslib.PPoly
+public import PolyFunCslib.Nontriviality
 
 /-!
 # Direct canaries for the cslib-backed P/poly adapter
@@ -228,9 +228,7 @@ example (n : ℕ) (position answer : Bool) :
     ((boolStepRealization.toQuantitative n).executionCost position trace).work ≤
         boolStepRealization.totalTime.eval n := by
   dsimp only
-  exact boolStepRealization.executionWork_le_totalTime position _ (by
-    simp [DynSystem.DynComputation.QuantitativeRealization.ExecutionTrace.length,
-      boolStepRealization])
+  exact boolStepWitness.executionWork_le_totalTime n position _
 
 /-! The two closure canaries below use nontrivial maps. They ensure that both
 the certificate-level theorem and its encoded-machine plumbing elaborate. -/
@@ -292,5 +290,10 @@ example (boundary : Boundary EmptyInteractionFam (fun _ ↦ PUnit) BoolFam) :
   have progress := witness.progress 0 PUnit.unit
   rw [emptyQueryProgram, programProgress_liftBind] at progress
   exact nomatch progress.1
+
+/-- Nontriviality is available to ordinary consumers of the optional adapter. -/
+example : ∃ f : (n : ℕ) → BitVec n → Bool,
+    ¬ IsPPolyBy coinBoundary (fun n value ↦ FreeM.pure (f n value)) :=
+  exists_not_isPPolyBy_pure
 
 end PFunctor.CslibPPolyTest

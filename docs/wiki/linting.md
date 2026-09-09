@@ -4,28 +4,28 @@
 
 ```bash
 lake exe cache get
-lake build PolyFun ToCslib PolyFunTest --wfail
+lake build PolyFun ToCslib PolyFunCslib PolyFunTest --wfail
 lake lint -- --trace
-lake exe lint-style PolyFun ToCslib
+lake exe lint-style PolyFun ToCslib PolyFunCslib
 ```
 
 The convenience command `./scripts/validate.sh --lint --test --axioms` runs
-both production builds with warnings fatal, environment and text-style
+all production builds with warnings fatal, environment and text-style
 linting, the test library, and the integrity/axiom checks.
 
-`PolyFun` and `ToCslib` are separate production roots. Both must be named in
+`PolyFun`, `ToCslib`, and `PolyFunCslib` are separate production roots. All must be named in
 environment linting and standalone text linting. The default target is only
-`PolyFun`, so `lake exe lint-style` alone misses `ToCslib`. The style CI job
+`PolyFun`, so `lake exe lint-style` alone misses the other two roots. The style CI job
 uses the upstream action for the default target and an explicit command for
-the auxiliary root. Update coverage when adding another production library.
+the auxiliary roots. Update coverage when adding another production library.
 
 The checks serve different purposes:
 
 - Build-time linters include Mathlib's standard set and core's `checkUnivs`.
   `--wfail` makes their warnings fail the build.
-- `lake lint` uses Batteries' environment runner, with both production roots
+- `lake lint` uses Batteries' environment runner, with all production roots
   supplied by `lintDriverArgs`. `--trace` shows which checks actually run.
-- `lake exe lint-style PolyFun ToCslib` uses Mathlib's source-text checks,
+- `lake exe lint-style PolyFun ToCslib PolyFunCslib` uses Mathlib's source-text checks,
   including Unicode. Build-time checks do not cover every text-style rule.
 
 `PolyFunTest` is built with warnings fatal and excluded from production

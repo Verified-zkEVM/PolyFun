@@ -17,11 +17,12 @@ This module connects the parameter-indexed single-tape certificates in
 PolyFun's compositional first-order boundary: initialization, the combined
 return-or-query `head`, and the enabled partial transition `update?`.
 
-The predicate is named `IsPPolyBy`, rather than unqualified polynomial time or
-PPT. Its witness contains one cslib machine for each security parameter and a
-single polynomial bound on machine descriptions, so it is explicitly
-non-uniform. Boundary encodings remain pinned parameters and are never chosen
-existentially by the predicate.
+`IsPPolyBy` is a backend-relative, nonuniform certificate. Its witness contains
+three cslib machines per size parameter, with uniform polynomial bounds on their
+time envelopes and description sizes, hidden-state encoding lengths, and visible
+query rounds. Boundary encodings remain pinned parameters. The work bound charges
+the three local machines; it excludes the cost of producing external answers and
+does not assert equivalence to the circuit definition of P/poly.
 -/
 
 public section
@@ -60,7 +61,7 @@ noncomputable def head (bd : Boundary p input output) :
   bd.output.toStrEncFam.sum bd.position.toStrEncFam
 
 /-- Specialize a parameterized pinned boundary to the generic PolyFun
-quantitative boundary at one security parameter. -/
+quantitative boundary at one size parameter. -/
 noncomputable def toGeneric (bd : Boundary p input output) (n : ℕ) :
     DynSystem.DynComputation.Boundary CslibBackend.encodingStepClass
       (p n) (input n) (output n) where
@@ -197,9 +198,9 @@ variable [∀ n, DecidableEq (p n).A]
 
 /-- A family of PolyFun machines whose three compositional step maps are
 implemented by cslib single-tape machines with uniform time and description
-bounds. The polynomial `rounds` bounds visible interactions. -/
+bounds. The declared `rounds` budget is enforced by `Realization.Implements`. -/
 structure Realization (bd : Boundary p input output) where
-  /-- One returning dynamical computation per security parameter. -/
+  /-- One returning dynamical computation per size parameter. -/
   machine : (n : ℕ) → DynSystem.DynComputation (p n) (input n) (output n)
   /-- Uniform polynomial bound on visible interaction rounds. -/
   rounds : Polynomial ℕ
@@ -378,7 +379,7 @@ theorem certifiedTimeCharge_le (realization : Realization bd)
           (realization.toQuantitative n).headCode finish ≤
       (trace.length + 1) * realization.headTime.eval n +
       trace.length * realization.updateTime.eval n := by
-  apply CslibBackend.traceWork_add_finalHead_le
+  apply trace.work_cost_add_finalHead_le
   · intro state
     change (realization.machine n).State at state
     rw [realization.toQuantitative_headCost]
@@ -510,6 +511,16 @@ theorem resolvesIn (witness : Witness bd program) (n : ℕ) (value : input n) :
     (witness.realization.machine n).ResolvesIn
       (witness.realization.rounds.eval n) ((witness.realization.machine n).init value) :=
   (witness.implements.apply n).resolvesIn value
+
+/-- Every execution prefix of a certified program satisfies the declared work envelope. -/
+theorem executionWork_le_totalTime (witness : Witness bd program) (n : ℕ) (value : input n)
+    {finish : (witness.realization.machine n).State}
+    (trace : witness.realization.ExecutionTrace n
+      ((witness.realization.machine n).init value) finish) :
+    ((witness.realization.toQuantitative n).executionCost value trace).work ≤
+      witness.realization.totalTime.eval n :=
+  witness.realization.executionWork_le_totalTime value trace
+    (trace.length_le_of_resolvesIn (witness.resolvesIn n value))
 
 /-- The implemented syntax itself has the polynomial total interaction bound. -/
 theorem isTotalRollBound (witness : Witness bd program) (n : ℕ) (value : input n) :

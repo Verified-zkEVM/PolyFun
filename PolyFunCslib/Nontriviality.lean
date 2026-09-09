@@ -20,7 +20,6 @@ families of Boolean predicates on `BitVec n`.
 
 public section
 
-open Filter
 open ToCslib.Computability
 
 namespace PFunctor.CslibPPoly
@@ -94,48 +93,14 @@ theorem realizableLE_of_isPPolyBy_pure
     rw [Function.comp_apply, witness.head_init_eq_of_pure]
     rfl
 
-/-! ## Diagonalization -/
-
-private theorem existsDiagonalRealizable :
-    ∃ (function : (n : ℕ) → BitVec n → Bool)
-      (cover : (n : ℕ) → Finset (BitVec n → Bool)),
-      (∀ n, RealizableLE n (2 ^ (n / 4)) ⊆ ↑(cover n)) ∧
-        (∀ᶠ n in atTop, function n ∉ cover n) := by
-  classical
-  let cover : (n : ℕ) → Finset (BitVec n → Bool) :=
-    fun n ↦ (exists_realizableLE_covering n (2 ^ (n / 4))).choose
-  have covered : ∀ n, RealizableLE n (2 ^ (n / 4)) ⊆ ↑(cover n) := fun n ↦
-    (exists_realizableLE_covering n (2 ^ (n / 4))).choose_spec.1
-  have cardBound : ∀ n,
-      (cover n).card ≤ Cslib.Turing.SingleTapeTM.B (2 ^ (n / 4)) ^ 2 := fun n ↦
-    (exists_realizableLE_covering n (2 ^ (n / 4))).choose_spec.2
-  have coverSmall : ∀ᶠ n in atTop, (cover n).card < 2 ^ (2 ^ n) :=
-    eventually_count_lt.mono fun n bound ↦ lt_of_le_of_lt (cardBound n) bound
-  obtain ⟨function, misses⟩ := exists_diagonal cover coverSmall
-  exact ⟨function, cover, covered, misses⟩
-
-private theorem notRealizableOfDiagonal
-    {function : (n : ℕ) → BitVec n → Bool}
-    {cover : (n : ℕ) → Finset (BitVec n → Bool)}
-    (covered : ∀ n, RealizableLE n (2 ^ (n / 4)) ⊆ ↑(cover n))
-    (misses : ∀ᶠ n in atTop, function n ∉ cover n)
-    (q : Polynomial ℕ) (realizable : ∀ n, function n ∈ RealizableLE n (q.eval n)) :
-    False := by
-  have belongs : ∀ᶠ n in atTop, function n ∈ cover n :=
-    (eventually_poly_le q).mono fun n bound ↦
-      Finset.mem_coe.mp (covered n (realizableLE_mono bound (realizable n)))
-  obtain ⟨n, belongsAtN, missesAtN⟩ := (belongs.and misses).exists
-  exact missesAtN belongsAtN
-
 /-- There is a Boolean predicate family whose pure programs have no
 cslib-backed non-uniform P/poly certificate at the pinned coin boundary. -/
 theorem exists_not_isPPolyBy_pure :
     ∃ function : (n : ℕ) → BitVec n → Bool,
       ¬ IsPPolyBy coinBoundary
         (fun n value ↦ FreeM.pure (function n value)) := by
-  obtain ⟨function, cover, covered, misses⟩ := existsDiagonalRealizable
-  refine ⟨function, fun certificate ↦ ?_⟩
-  obtain ⟨q, realizable⟩ := realizableLE_of_isPPolyBy_pure certificate
-  exact notRealizableOfDiagonal covered misses q realizable
+  obtain ⟨function, notRealizable⟩ := exists_not_realizableLE_poly
+  exact ⟨function, fun certificate ↦
+    notRealizable (realizableLE_of_isPPolyBy_pure certificate)⟩
 
 end PFunctor.CslibPPoly

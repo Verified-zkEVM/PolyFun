@@ -20,6 +20,6 @@ jobs:
         with:
           mode: check
       # The action invokes lint-style with the default target (PolyFun).
-      # ToCslib is intentionally a separate, non-default production library.
-      - name: Lint auxiliary production library
-        run: lake exe lint-style ToCslib
+      # ToCslib and PolyFunCslib are separate, non-default production libraries.
+      - name: Lint auxiliary production libraries
+        run: lake exe lint-style ToCslib PolyFunCslib
