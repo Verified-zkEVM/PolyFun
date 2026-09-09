@@ -249,12 +249,13 @@ Both run as independent CI jobs (`lint`, `test`) alongside `build`. Adding a
 per-declaration `@[nolint <linter>]` exception requires
 `import Batteries.Tactic.Lint` in that file.
 
-Use `lake lint -- --trace` after a fresh production build to inspect the
-checks that actually run. A linter definition alone does not establish
-registration: the pinned cslib `topNamespace` is not registered. Do not run
-Batteries' `--update` blindly: the pinned runner overwrites the shared JSON
-file separately for each root. See [`docs/wiki/linting.md`](docs/wiki/linting.md)
-for coverage and exception maintenance.
+Lint policy follows Lean's built-in linters, Mathlib's `mathlibStandardSet` and
+text style checks, and Batteries' environment linters. Use `lake lint -- --trace`
+after a fresh production build to inspect the checks that actually run. The
+pinned cslib `topNamespace` checker is unregistered and outside this policy;
+namespace organization remains part of API review. Do not add a local replacement
+or namespace exceptions for its module-system limitations. See
+[`docs/wiki/linting.md`](docs/wiki/linting.md) for coverage and exception maintenance.
 
 Add repository scripts only for concrete, recurring library workflows, as
 specified in [Repository Scripts](CONTRIBUTING.md#repository-scripts).
