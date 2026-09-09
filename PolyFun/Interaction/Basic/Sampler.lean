@@ -114,7 +114,7 @@ for the binary-choice interleaving tree
 `TypeTree.node (ULift Bool) (fun ⟨true⟩ => spec₁ | ⟨false⟩ => spec₂)`.
 
 This is the sampling counterpart of `Concurrent.ProcessOver.interleave`:
-the scheduler flips a coin in `m` to pick a branch, and then the chosen
+the scheduler chooses a branch in `m`, and then the chosen
 branch's sampler runs to produce the remainder of the path.
 
 `openTheory m`'s `par`, `wire`, and `plug` all combine two open processes
@@ -132,6 +132,19 @@ def Sampler.interleave {m : Type w → Type w'}
   ⟨schedulerSampler, fun
     | ⟨true⟩ => sampler₁
     | ⟨false⟩ => sampler₂⟩
+
+/-- The interleaving sampler has the scheduler at its root and the selected
+component sampler in each branch. This equation supports evaluation through
+ordinary imports. -/
+theorem Sampler.interleave_eq {m : Type w → Type w'}
+    {spec₁ spec₂ : TypeTree.{w}}
+    (schedulerSampler : m (ULift.{w, 0} Bool))
+    (sampler₁ : Sampler m spec₁) (sampler₂ : Sampler m spec₂) :
+    Sampler.interleave schedulerSampler sampler₁ sampler₂ =
+      ⟨schedulerSampler, fun
+        | ⟨true⟩ => sampler₁
+        | ⟨false⟩ => sampler₂⟩ := by
+  rfl
 
 end TypeTree
 

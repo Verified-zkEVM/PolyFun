@@ -88,7 +88,7 @@ theorem interleave_eq_interleaveRouted
   rfl
 
 /-- Post-composing `mapContext g` distributes over `interleaveRouted`: the
-result is the same routed interleaving with each injection pre-composed by
+result is the same routed interleaving with each injection post-composed by
 `g`. Routes are untouched because they never see the decoration. -/
 theorem mapContext_interleaveRouted
     {P₁ P₂ : Type v}

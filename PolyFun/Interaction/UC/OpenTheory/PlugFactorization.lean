@@ -13,12 +13,18 @@ public import PolyFun.Interaction.UC.OpenTheory
 # Plug factorization
 
 The UC composition theorems move one component of a composite across the
-divide between the system under test and its closing context. In a theory
-with strict compact-closed structure that motion is an equality derived from
-`HasPlugWireFactor`. Concrete process models cannot honestly reach the unit
-and snake laws of that class: at strong sampler equivalence `interleave unit p`
-has one more path per step than `p`, so no path bijection exists. They can,
-however, validate the five equalities the composition theorems consume.
+divide between a component and its closing context. A theory with
+`HasPlugWireFactor` validates that motion as an equality. The composition
+proofs use these factorization equalities without using the unit or
+identity-wire operations of that class.
+
+For concrete processes, the observation matters. Interleaving two idle
+processes gives two complete step paths, while a single idle process has one.
+Thus even this finite unit example has no path bijection, as required by
+strong sampler equivalence, although it satisfies activation equivalence.
+Omitting unit and identity-wire requirements allows models to state
+factorization separately; it does not establish sampler-aware factorization
+for any particular model.
 
 `HasPlugFactorization` names exactly those five laws on top of `IsLawful`:
 `plug_comm` and the four residual-context factorizations `close_par_left`,
@@ -123,9 +129,10 @@ theorems consume: `plug` is symmetric, and closing a parallel or wired
 composite against a context factors through closing one component against
 the residual context formed by wiring the other component into the context.
 
-This is strictly weaker than `HasPlugWireFactor`: it asks for no unit, no
-identity wire, and no snake equation, which is what lets a process model whose
-coherences hold only up to a quotient declare exactly the strength it has.
+Unlike `HasPlugWireFactor`, this class requires no unit or identity-wire
+operation, and no unit or snake equation. It records equalities in `T.Obj`;
+observation-level factorization is expressed separately by
+`Observation.RespectsFactorization`.
 -/
 class HasPlugFactorization (T : UC.OpenTheory.{u}) : Prop extends IsLawful T where
   /-- The protocol and context roles of `plug` are interchangeable. -/
@@ -150,7 +157,7 @@ class HasPlugFactorization (T : UC.OpenTheory.{u}) : Prop extends IsLawful T whe
       (K : T.Plug (PortBoundary.tensor Δ₁ Δ₂)),
     T.close (T.wire W₁ W₂) K = T.close W₂ (T.wireContextRight W₁ K)
 
-/-! ## Strict compact-closed theories factor -/
+/-! ## Factorization from the plug-wire laws -/
 
 /-- Every theory with strict plug/wire factorization has plug factorization:
 the left laws are fields of `HasPlugWireFactor`, the right laws follow by

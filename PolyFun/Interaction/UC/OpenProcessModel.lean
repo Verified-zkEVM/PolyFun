@@ -46,7 +46,7 @@ that carry a per-step nodewise-monadic sampler in the intermediate monad
 ## Laws up to activation equivalence
 
 The model is `IsLawful` strictly. The monoidal, traced, and compact closed
-laws hold up to `OpenProcessActivationEquiv`, each as one instance of the
+laws hold up to `OpenProcessActivationEquiv`. Their interleaving proofs use the
 coherence shapes in `OpenProcessCoherence` (reassociation, commutation,
 re-homing, unit absorption) after the normalization equalities push boundary
 adaptation into the injections.
@@ -249,13 +249,14 @@ instance : OpenTheory.IsLawful (openTheory.{u, v, w, w'} Party m schedulerSample
 
 /-! ## Monoidal, traced, and compact closed laws up to activation equivalence
 
-Every law below is an instance of the coherence shapes in
+The interleaving laws below specialize the coherence shapes in
 `OpenProcessCoherence`: `simp only [openTheory]` exposes the nesting of
 `interleave`s, the normalization equalities `mapBoundary_interleave` and
 `interleave_mapHom_{left,right}` push boundary adaptation into the injections,
 and one of reassociation, commutation, re-homing, or unit absorption closes the
 goal. The scheduler nodes are silent by construction and every injection the
-theory uses preserves activation. -/
+theory uses preserves activation. Compatibility of the unit with the
+identity wire on the empty boundary is checked directly. -/
 
 open OpenNodeContext (preservesActivation_map preservesActivation_inlTensor
   preservesActivation_inrTensor preservesActivation_wireLeft preservesActivation_wireRight

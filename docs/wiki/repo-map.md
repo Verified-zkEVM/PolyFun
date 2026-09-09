@@ -277,8 +277,8 @@ Interaction/UC/OpenProcessInterleave
 Interaction/UC/OpenTheory -> Interaction/UC/OpenTheory/PlugFactorization
   -> Interaction/UC/{Emulates, OpenTheory/Family}
   (the residual-context formers and the five plug-factorization equalities
-   the composition theorems consume, as a class strictly weaker than
-   HasPlugWireFactor; the honest strict target for process models)
+   the composition theorems consume; HasPlugWireFactor supplies an instance,
+   but the class itself requires no unit or identity-wire operation)
 
 Interaction/UC/OpenTheory -> Interaction/UC/SubTheory
 Interaction/UC/{OpenTheory, SubTheory}

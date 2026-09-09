@@ -6,153 +6,60 @@ Authors: Devon Tuma
 
 module
 
-import all PolyFun.Interaction.UC.OpenProcess
 import all PolyFun.Interaction.UC.OpenProcessModel
+import all PolyFun.Interaction.UC.OpenProcessSamplerEquiv
 public import PolyFun.Interaction.UC.OpenProcessCoherence
 public import PolyFun.Interaction.UC.OpenProcessModel
-public import PolyFun.Interaction.UC.OpenProcessFactorization
+public import PolyFun.Interaction.UC.OpenProcessSamplerEquiv
 
 /-!
-# The generic coherence theorems recover the process-model laws
+# A finite boundary between activation and sampler equivalence
 
-Each law of `openTheory` up to activation equivalence is a nesting of
-`interleave`s with identical leaves. These checks re-derive four of the
-library's laws from the generic shapes in `OpenProcessCoherence`: after the
-normalization equalities push `mapBoundary` into the injections, each law is
-one shape theorem, possibly chained through a congruence. The factorization
-law `plug_par_left` is the model case: reassociation, then commutation of the
-inner pair under the congruence.
+Interleaving two idle processes is activation-equivalent to one idle process.
+The composite has two complete step paths, distinguished by the scheduler's
+choice, while one idle process has a single path. Therefore no strong sampler
+bisimulation can relate even one pair of their states, for any monad relation.
+This includes a deterministic scheduler that only samples one of the paths:
+strong sampler bisimulation requires a bijection of all structural paths.
+
+The proof inspects the model's unit and sampler-equivalence definitions.
+Ordinary-import coherence consumers are checked in `PolyFunTest.ModuleAPI.Interaction`.
 -/
-
-universe u v w w'
-
-namespace Interaction.UC.OpenProcessCoherenceExamples
-
-variable {m : Type w → Type w'} {Party : Type u} (schedulerSampler : m (ULift.{w, 0} Bool))
-
-open OpenProcess OpenNodeContext
-
-/-! The silence facts unfold non-exposed reducers, so they stay outside the
-public section. -/
-
-/-- Every scheduler node is silent, also after boundary adaptation. -/
-theorem schedulerNode_silent (Δ : PortBoundary) :
-    (schedulerNode Party Δ).boundary.isActivated = false := rfl
-
-theorem map_schedulerNode_silent {Δ Δ' : PortBoundary} (φ : PortBoundary.Hom Δ Δ') :
-    (OpenNodeContext.map.{u, w} Party φ _ (schedulerNode Party Δ)).boundary.isActivated = false :=
-  rfl
-
-/-- The unit's steps are all silent. -/
-theorem openTheoryUnit_silent (s : (openTheoryUnit Party m).Proc)
-    (tr : ((openTheoryUnit Party m).step s).tree.Path) :
-    IsSilentStep (openTheoryUnit.{u, v, w, w'} Party m) s tr :=
-  trivial
 
 public section
 
-/-- `par_assoc`, as reassociation of the normalized nestings. -/
-theorem par_assoc' {Δ₁ Δ₂ Δ₃ : PortBoundary}
-    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
-    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
-    (W₃ : OpenProcess.{u, v, w, w'} m Party Δ₃) :
-    OpenProcessActivationEquiv
-      (OpenProcess.mapBoundary
-        (PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃).toHom
-        ((openTheory Party m schedulerSampler).par
-          ((openTheory Party m schedulerSampler).par W₁ W₂) W₃))
-      ((openTheory Party m schedulerSampler).par W₁
-        ((openTheory Party m schedulerSampler).par W₂ W₃)) := by
-  simp only [openTheory]
-  rw [mapBoundary_interleave]
-  exact interleave_assoc_activationEquiv W₁ W₂ W₃ _ _ _ _
-    (preservesActivation_inlTensor Δ₁ Δ₂) (preservesActivation_inrTensor Δ₁ Δ₂)
-    ((preservesActivation_map _).comp (preservesActivation_inlTensor _ Δ₃))
-    ((preservesActivation_map _).comp (preservesActivation_inrTensor _ Δ₃))
-    (preservesActivation_inlTensor Δ₂ Δ₃) (preservesActivation_inrTensor Δ₂ Δ₃)
-    (preservesActivation_inlTensor Δ₁ _) (preservesActivation_inrTensor Δ₁ _)
-    (schedulerNode_silent _) (map_schedulerNode_silent _) (schedulerNode_silent _)
-    (schedulerNode_silent _)
+namespace PolyFunTest.Interaction.UC.OpenProcessCoherenceExamples
 
-/-- `par_comm`, as commutation of the normalized nesting. -/
-theorem par_comm' {Δ₁ Δ₂ : PortBoundary}
-    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
-    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂) :
-    OpenProcessActivationEquiv
-      (OpenProcess.mapBoundary
-        (PortBoundary.Equiv.tensorComm Δ₁ Δ₂).toHom
-        ((openTheory Party m schedulerSampler).par W₁ W₂))
-      ((openTheory Party m schedulerSampler).par W₂ W₁) := by
-  simp only [openTheory]
-  rw [mapBoundary_interleave]
-  exact interleave_comm_activationEquiv W₁ W₂ _ _
-    ((preservesActivation_map _).comp (preservesActivation_inlTensor Δ₁ Δ₂))
-    ((preservesActivation_map _).comp (preservesActivation_inrTensor Δ₁ Δ₂))
-    (preservesActivation_inlTensor Δ₂ Δ₁) (preservesActivation_inrTensor Δ₂ Δ₁)
-    (map_schedulerNode_silent _) (schedulerNode_silent _)
+open _root_.Interaction _root_.Interaction.UC
 
-/-- `par_leftUnit`, as left absorption of the silent unit. -/
-theorem par_left_unit' {Δ : PortBoundary} (W : OpenProcess.{u, v, w, w'} m Party Δ) :
-    OpenProcessActivationEquiv
-      (OpenProcess.mapBoundary
-        (PortBoundary.Equiv.tensorEmptyLeft Δ).toHom
-        ((openTheory Party m schedulerSampler).par
-          (openTheoryUnit Party m) W))
-      W := by
-  simp only [openTheory]
-  rw [mapBoundary_interleave]
-  have : Inhabited (openTheoryUnit.{u, v, w, w'} Party m).Proc := ⟨PUnit.unit⟩
-  exact interleave_unit_left_activationEquiv (openTheoryUnit Party m) W openTheoryUnit_silent
-    ((preservesActivation_map _).comp (preservesActivation_inlTensor _ Δ))
-    ((preservesActivation_map _).comp (preservesActivation_inrTensor _ Δ))
-    (map_schedulerNode_silent _) _
+/-- A one-state process with a completed step tree. -/
+abbrev idle := openTheoryUnit.{0, 0, 0, 0} PUnit Id
 
-/-- `plug_par_left`: reassociate, then commute the inner pair under the
-congruence. -/
-theorem plug_par_left' {Δ₁ Δ₂ : PortBoundary}
-    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
-    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
-    (K : OpenProcess.{u, v, w, w'} m Party (PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂))) :
-    OpenProcessActivationEquiv
-      ((openTheory Party m schedulerSampler).plug
-        ((openTheory Party m schedulerSampler).par W₁ W₂) K)
-      ((openTheory Party m schedulerSampler).plug W₁
-        (OpenProcess.mapBoundary
-          (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₁)).toHom
-          ((openTheory Party m schedulerSampler).wire
-            (Γ := PortBoundary.swap Δ₂)
-            (Δ₂ := PortBoundary.empty)
-            K
-            (OpenProcess.mapBoundary
-              (PortBoundary.Equiv.tensorEmptyRight Δ₂).symm.toHom W₂)))) := by
-  simp only [openTheory]
-  rw [mapBoundary_interleave, mapBoundary_eq_mapHom, interleave_mapHom_right]
-  have hF : PreservesActivation
-      ((OpenNodeContext.map.{u, w} Party
-        (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₁)).toHom).comp
-        (wireLeft Party (PortBoundary.swap Δ₁) (PortBoundary.swap Δ₂) PortBoundary.empty)) :=
-    (preservesActivation_map _).comp (preservesActivation_wireLeft _ _ _)
-  have hG : PreservesActivation
-      (((OpenNodeContext.map.{u, w} Party
-        (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₁)).toHom).comp
-        (wireRight Party (PortBoundary.swap Δ₁) (PortBoundary.swap Δ₂) PortBoundary.empty)).comp
-        (OpenNodeContext.map.{u, w} Party
-          (PortBoundary.Equiv.tensorEmptyRight Δ₂).symm.toHom)) :=
-    ((preservesActivation_map _).comp (preservesActivation_wireRight _ _ _)).comp
-      (preservesActivation_map _)
-  exact (interleave_assoc_activationEquiv W₁ W₂ K schedulerSampler schedulerSampler
-    schedulerSampler schedulerSampler
-    (preservesActivation_inlTensor Δ₁ Δ₂) (preservesActivation_inrTensor Δ₁ Δ₂)
-    (preservesActivation_close _) (preservesActivation_close _) hG hF
-    (preservesActivation_close Δ₁) (preservesActivation_close _)
-    (schedulerNode_silent _) (schedulerNode_silent _)
-    (map_schedulerNode_silent (PortBoundary.Equiv.tensorEmptyRight (PortBoundary.swap Δ₁)).toHom)
-    (schedulerNode_silent _)).trans
-    (interleave_congr_right W₁ _ (preservesActivation_close Δ₁)
-      (preservesActivation_close _) (schedulerNode_silent _) schedulerSampler
-      (interleave_comm_activationEquiv W₂ K schedulerSampler schedulerSampler hG hF hF hG
-        (map_schedulerNode_silent _) (map_schedulerNode_silent _)) schedulerSampler)
+/-- Two idle components with a deterministic scheduler. -/
+abbrev doubled := idle.interleave idle
+  (TypeTree.Node.ContextHom.id _) (TypeTree.Node.ContextHom.id _)
+  (schedulerNode PUnit PortBoundary.empty) ⟨true⟩
 
-end
+/-- Absorbing the silent component preserves activation behavior. -/
+theorem doubled_activationEquiv : OpenProcessActivationEquiv doubled idle := by
+  let : Inhabited idle.Proc := ⟨PUnit.unit⟩
+  exact interleave_unit_left_activationEquiv idle idle (openTheoryUnit_isSilentStep PUnit Id)
+    (OpenNodeContext.preservesActivation_id _) (OpenNodeContext.preservesActivation_id _)
+    (schedulerNode_isActivated PUnit _) _
 
-end Interaction.UC.OpenProcessCoherenceExamples
+/-- Two scheduler paths cannot be put in bijection with the unique idle path. -/
+private theorem no_path_equiv (s : doubled.Proc) (t : idle.Proc)
+    (e : (doubled.step s).tree.Path ≃ (idle.step t).tree.Path) : False := by
+  let : Subsingleton (idle.step t).tree.Path := inferInstanceAs (Subsingleton PUnit)
+  have heq := e.injective (Subsingleton.elim (e ⟨⟨true⟩, ⟨⟩⟩) (e ⟨⟨false⟩, ⟨⟩⟩))
+  have : true = false := congrArg (fun path => path.1.down) heq
+  cases this
+
+/-- Even the coarsest monad relation cannot supply the missing path bijection. -/
+example (R : MonadRelFamily Id) : ¬ OpenProcessSamplerEquiv R doubled idle := by
+  rintro ⟨rel, hsim, htotal, _⟩
+  obtain ⟨t, hrel⟩ := htotal (PUnit.unit, PUnit.unit)
+  obtain ⟨e, _⟩ := hsim.step_equiv _ t hrel
+  exact no_path_equiv _ t e
+
+end PolyFunTest.Interaction.UC.OpenProcessCoherenceExamples

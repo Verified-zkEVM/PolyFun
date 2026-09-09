@@ -473,11 +473,10 @@ Coherence (each subsequent class adds laws on top of the previous):
   commutativity, left / right unit laws via the `HasUnit` object).
 - `IsTraced`: Joyal-Street-Verity traced symmetric monoidal structure
   (`wire`-trace yanking, sliding, vanishing).
-- `IsCompactClosed`: compact closed structure (a `(Poly, ⊗)`-friendly
-  weakening; the strict snake equations are *not* asserted, since
-  `(Poly, ⊗)` is monoidal closed but not strictly compact closed; see
-  Spivak, *A reference for categorical structures on Poly*,
-  arXiv:2202.00534 §4.3).
+- `IsCompactClosed`: adds `HasIdWire`, the left and right identity-wire
+  equations (`wire_idWire`, `wire_idWire_right`), and compatibility with the
+  unit (`unit_eq`). These are laws of an `OpenTheory` model, not a claim that
+  the polynomial category itself has compact-closed structure.
 - `HasPlugWireFactor`: closure-factorization identities relating `plug`
   to `wire` (`plug_eq_wire`, `plug_par_left`, `plug_wire_left`).
 
@@ -496,11 +495,27 @@ probabilistic consumer must additionally transport those scheduler effects and
 prove that its concrete observation is invariant under the transport; the
 activation-equivalence theorems alone do not supply that semantic bridge.
 
-Implementation follow-up: the four proofs repeat the same nested-interleave
-decoration transport. The reusable abstraction belongs at the
-`OpenProcess.interleave` owner layer as a reassociation/permutation theorem;
-the factorization module records the finite scheduler truth tables until that
-owner-level lemma is available.
+`OpenProcessCoherence.lean` proves reassociation, commutation, changes of
+activation-preserving injections, silent-unit absorption, and congruence once
+for ordinary interleaving. The concrete model and factorization proofs
+specialize those theorems after normalization with `mapHom`.
+`OpenNodeContext.PreservesActivation` is a predicate with named proofs for the
+structural context homs. Arbitrary routes have the same step-silence equations,
+but are not covered by the interleaving coherence or congruence theorems.
+
+`OpenTheory.HasPlugFactorization` records `plug_comm` and the four `close_*`
+equalities on top of `IsLawful`, without requiring a unit or identity wire.
+`HasPlugWireFactor` supplies an instance, including for the free syntax models;
+`IsCompactClosed` alone does not supply the additional plug compatibility laws.
+The concrete process model instead supplies factorization at its activation
+observation. Interleaving two idle processes has two step paths, while one
+idle process has a single path, so even that finite example cannot satisfy
+the path-bijection requirement of strong sampler equivalence.
+
+`PolyFunTest/Interaction/UC/RoutedPlugExamples.lean` evaluates deterministic
+message delivery using ordinary imports: the selected queue emits an ordered
+batch, clears itself, and appends the batch to its peer. This is a generic
+routing example; protocol and security examples belong in VCVio.
 
 `OpenSyntax/` provides three layers for free open-system expressions:
 
@@ -615,7 +630,7 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Ownership.lean` | `LocalView` / `LocalRunner` builders for `SyntaxOver` |
 | `MonadDecoration.lean` | `MonadDecoration`, `Strategy.withMonads`, `runWithMonads` |
 | `BundledMonad.lean` | `BundledMonad` (monad packaged for inductive data) |
-| `Sampler.lean` | `TypeTree.Sampler m tree := Decoration (fun X => m X) tree`, `samplePath`, `Sampler.interleave` |
+| `Sampler.lean` | `TypeTree.Sampler m tree := Decoration (fun X => m X) tree`, `samplePath`, `Sampler.interleave`, and its public constructor equation `Sampler.interleave_eq` |
 | `TypeTreeFintype.lean` | Universe-polymorphic `TypeTree.Fintype` and `TypeTree.Nonempty` branching ornaments |
 
 ### `TwoParty/`
@@ -676,12 +691,12 @@ import PolyFun.Interaction.UC.OpenProcessModel
 |------|---------|
 | `Interface.lean` | `Interface`, `PortBoundary`, `Hom`, `Equiv`, `comp` / `compUnit`, tensor / swap |
 | `OpenTheory.lean` | `OpenTheory` algebra, `IsLawful`, `HasUnit`, `HasIdWire`, `IsMonoidal`, `IsTraced`, `IsCompactClosed`, `HasPlugWireFactor` |
-| `OpenTheory/PlugFactorization.lean` | `parContextLeft` / `parContextRight` / `wireContextLeft` / `wireContextRight` (residual contexts, plain `map`/`wire` composites) and `HasPlugFactorization`: `plug_comm` plus the four `close_*` factorization equalities on top of `IsLawful`, strictly weaker than `HasPlugWireFactor` (every strict compact-closed theory is an instance). This is all the composition theorems consume, and the honest strict target for process models, which cannot reach unit or snake laws at strong sampler equivalence. |
+| `OpenTheory/PlugFactorization.lean` | `parContextLeft` / `parContextRight` / `wireContextLeft` / `wireContextRight` (residual contexts, plain `map`/`wire` composites) and `HasPlugFactorization`: `plug_comm` plus the four `close_*` factorization equalities on top of `IsLawful`, without unit or identity-wire requirements; `HasPlugWireFactor` supplies an instance. These are equalities in the theory's carrier, distinct from observation-level factorization. |
 | `OpenSyntax/Raw.lean` | `Raw` syntax tree, `Raw.interpret`, `Raw.Equiv` (incl. monoidal / traced / CC equations) |
 | `OpenSyntax/Interp.lean` | `Interp` (tagless-final), granular `HasUnit` / `HasIdWire` / `IsMonoidal` / `IsTraced` / `IsCompactClosed` / `HasPlugWireFactor` instances |
 | `OpenSyntax/Expr.lean` | `Expr` (quotient of `Raw`), granular `OpenTheory` lawfulness instances, `Expr.toInterp` |
 | `OpenProcess.lean` | `BoundaryAction`, `OpenNodeProfile`, `OpenNodeContext` (with polynomial-product bridge `productView` and structural `boundaryTrace`), `OpenProcess m Party Δ` (monad-parametric, with intrinsic `stepSampler`), `toProcess`, `OpenProcessActivationEquiv` |
-| `OpenProcessInterleave.lean` | `OpenProcess.mapHom` (re-decoration along any node-context hom; `mapBoundary` is the boundary-morphism case), `OpenNodeContext.PreservesActivation` with instances for every structural hom, `isSilentStep_mapHom_iff`, `OpenProcess.Route` / `interleaveRouted` with samplers, `interleave_eq_interleaveRouted`, the `mapHom` distribution laws, and the public extensionality helpers `ext_of_step_eq` / `heq_step_of_processOver_eq` |
+| `OpenProcessInterleave.lean` | `OpenProcess.mapHom` (re-decoration along any node-context hom; `mapBoundary` is the boundary-morphism case), `OpenNodeContext.PreservesActivation` with named proofs for the structural homs, `isSilentStep_mapHom_iff`, `OpenProcess.Route` / `interleaveRouted` with samplers, `interleave_eq_interleaveRouted`, the `mapHom` distribution laws, and the public extensionality helpers `ext_of_step_eq` / `heq_step_of_processOver_eq` |
 | `OpenProcessCoherence.lean` | `isSilentStep_interleave_{left,right}_iff`, the generic shapes `interleave_assoc_activationEquiv` / `interleave_comm_activationEquiv` / `interleave_rehome_activationEquiv` / `interleave_unit_{left,right}_activationEquiv` for arbitrary activation-preserving injections and silent scheduler nodes, and the congruences `interleave_congr_{left,right}` / `mapHom_congr` (activation equivalence is preserved by interleaving and re-decoration). Structural coherence only; nothing here sees packets or samplers. |
 | `OpenProcessModel.lean` | `openTheory m Party schedulerSampler` (concrete model threading `TypeTree.Sampler` through `map` / `par` / `wire` / `plug`), `IsLawful`, and every monoidal, traced, and compact-closed law up to `OpenProcessActivationEquiv` (`openTheory_{par_assoc,par_comm,plug_comm,wire_assoc,wire_par_superpose,wire_comm,par_left_unit,par_right_unit,wire_id_wire,wire_id_wire_right,plug_eq_wire,unit_eq}_activation_equiv`), each one instance of the `OpenProcessCoherence` shapes after normalization |
 | `Scheduler.lean` | Positive-natural (`PNat`) frontier masses, mass-aware `BinaryScheduler`, hierarchical source/left/right draws, and `BinaryScheduler.IsFlat` / `IsCoherent`. `IsFlat` requires every binary encoding of a three-component choice to agree with one direct flat choice relative to a downstream `MonadRelFamily`. |

@@ -63,8 +63,8 @@ theory, through two classes:
   readings of `close_par_left`, `close_par_right`, `close_wire_left`, and
   `close_wire_right`, and is what the `par` and `wire` theorems need.
 
-A theory with plug factorization (`OpenTheory.HasPlugFactorization`, which
-every strict compact-closed theory has) satisfies both for *every*
+A theory with plug factorization (`OpenTheory.HasPlugFactorization`, supplied
+in particular by `OpenTheory.HasPlugWireFactor`) satisfies both for *every*
 observation, via `respectsFactorization_of_hasPlugFactorization`, so the free
 models (`Expr.theory`, `Interp.theory`) are unaffected. Stating the laws on
 the observation is what lets a model whose coherences hold only up to a
@@ -266,8 +266,8 @@ class Observation.RespectsFactorization {T : OpenTheory.{u}} (Obs : Observation 
     Obs.rel (T.close (T.wire W₁ W₂) K) (T.close W₂ (T.wireContextRight W₁ K))
 
 /-- Every observation over a theory with plug factorization respects it, since
-each law holds as an equality and `Obs.rel` is reflexive. Strict compact-closed
-theories, in particular the free syntax models, are instances through
+each law holds as an equality and `Obs.rel` is reflexive. Theories with
+`HasPlugWireFactor`, including the free syntax models, are instances through
 `OpenTheory.hasPlugFactorization_of_hasPlugWireFactor`, so they stay on the
 full composition suite. -/
 instance respectsFactorization_of_hasPlugFactorization [OpenTheory.HasPlugFactorization T]

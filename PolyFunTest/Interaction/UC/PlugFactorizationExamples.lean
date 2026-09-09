@@ -30,7 +30,7 @@ open OpenSyntax
 
 variable {Atom : PortBoundary → Type u}
 
-/-- The free model has plug factorization through strict compact closure. -/
+/-- The free model has plug factorization through its plug-wire laws. -/
 example : OpenTheory.HasPlugFactorization (Expr.theory Atom) := inferInstance
 
 /-- Families of factoring theories factor pointwise. -/

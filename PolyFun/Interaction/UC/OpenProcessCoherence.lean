@@ -12,18 +12,17 @@ public import PolyFun.Interaction.UC.OpenProcessInterleave
 /-!
 # Coherence of interleaving up to activation equivalence
 
-Every coherence law of the process-backed open theories compares two ways of
-nesting `OpenProcess.interleave` around the same component processes. This
-module proves those comparisons once, for arbitrary activation-preserving
-context homs and silent scheduler nodes, so that each concrete law is an
-instance.
+This module compares nestings of `OpenProcess.interleave` for arbitrary
+activation-preserving context homs and silent scheduler nodes. The concrete
+process model specializes these comparisons to its boundary maps and wiring
+operations.
 
 * `isSilentStep_interleaveRouted_left_iff` / `_right_iff` characterize silence
   of a composite step by silence of the scheduled component's step.
 * `interleave_assoc_activationEquiv`, `interleave_comm_activationEquiv`,
   `interleave_rehome_activationEquiv`, and
-  `interleave_unit_left_activationEquiv` / `_right_` are the three shapes
-  behind every law: regrouping three components, swapping two, changing the
+  `interleave_unit_left_activationEquiv` / `_right_` cover regrouping three
+  components, swapping two, changing the
   homs and scheduler node of a fixed nesting, and absorbing a component all
   of whose steps are silent.
 * `interleave_congr_left` / `_right` and `mapHom_congr` make activation
@@ -31,8 +30,9 @@ instance.
   lets the shapes be chained through nested positions.
 
 Activation equivalence erases packets and samplers, so these are structural
-coherence facts, not security statements; the sampler-aware strengthening
-lives separately.
+coherence facts. Sampler-aware strengthening lives separately. The silence
+lemmas cover arbitrary routes; the coherence and congruence theorems concern
+ordinary interleaving, where a step leaves the other component's state fixed.
 -/
 
 public section
@@ -593,7 +593,7 @@ theorem OpenProcess.activationLTS_delayStep_interleave_right
     exact ⟨(s₁, mid), activationLTS_silentSteps_interleave_right p₁ p₂ hf₂ hc σ s₁ hs,
       activationLTS_step_interleave_right p₁ p₂ hf₂ hc σ s₁ hv⟩
 
-/-- Every step of the composite is a step of exactly one component. -/
+/-- Every composite step comes from a component step with the other state fixed. -/
 theorem OpenProcess.activationLTS_step_interleave_cases
     (hf₁ : OpenNodeContext.PreservesActivation f₁)
     (hf₂ : OpenNodeContext.PreservesActivation f₂)
