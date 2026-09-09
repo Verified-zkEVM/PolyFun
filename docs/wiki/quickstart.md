@@ -79,6 +79,10 @@ have type `Type (max u v)` even though its fields require independent universes.
 Such declarations keep a documented, declaration-scoped exception. Do not
 identify the universes or add dummy arguments just to satisfy this heuristic.
 
+Compatibility tests that intentionally use deprecated declarations assert the
+expected diagnostics with strict `#guard_msgs`. Keep the warning enabled so
+unexpected diagnostics or a missing deprecation warning fail the test.
+
 ## Optional Direct Commands
 
 You can still run the underlying pieces directly when debugging a specific

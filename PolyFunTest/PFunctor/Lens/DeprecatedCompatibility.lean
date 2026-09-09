@@ -21,10 +21,20 @@ open scoped PFunctor
 
 namespace PFunctor.Lens
 
-set_option linter.deprecated false in
+/--
+warning: `PFunctor.X` has been deprecated: Use `PFunctor.y` instead
+---
+warning: `PFunctor.Lens.fromX` has been deprecated: Use `PFunctor.Lens.fromY` instead
+-/
+#guard_msgs in
 example {P : PFunctor.{0, 0}} (a : P.A) : Lens X P := fromX a
 
-set_option linter.deprecated false in
+/--
+warning: `PFunctor.X` has been deprecated: Use `PFunctor.y` instead
+---
+warning: `PFunctor.Lens.Equiv.compX` has been deprecated: Use `PFunctor.Lens.Equiv.compY` instead
+-/
+#guard_msgs in
 example {P : PFunctor.{0, 0}} : Lens.Equiv (P ◃ X) P := Lens.Equiv.compX
 
 end PFunctor.Lens
