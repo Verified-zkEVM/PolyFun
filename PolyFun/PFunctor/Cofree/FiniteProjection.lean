@@ -115,14 +115,14 @@ theorem projectionN_zero (P : PFunctor.{u, u}) :
 right-hand composition unit.  The unitor is necessary because
 `compNth P 1 = P ◃ y`, not `P`. -/
 theorem projectionN_one_comp_compY (P : PFunctor.{uA, uB}) :
-    projectionN P 1 ⨟ Lens.Equiv.compY.toLens = cogenerator P :=
+    Lens.Equiv.compY.toLens ∘ₗ projectionN P 1 = cogenerator P :=
   rfl
 
 /-- The second finite projection agrees with one comultiplication followed by
 the cogenerator on both components, after removing the innermost right unit. -/
 theorem projectionN_two_comp_compY (P : PFunctor.{uA, uB}) :
-    projectionN P 2 ⨟ (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) =
-      comult ⨟ (cogenerator P ◃ₗ cogenerator P) :=
+    (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ projectionN P 2 =
+      (cogenerator P ◃ₗ cogenerator P) ∘ₗ comult :=
   rfl
 
 @[deprecated (since := "2026-08-17")] alias projectionN_one_comp_compX :=
@@ -187,8 +187,8 @@ one-layer restriction of the retrofunctor on the right. -/
 theorem hom_comp_projectionN
     {P : PFunctor.{u, u}} {C : Comonoid.{u, u}}
     (hom : Comonoid.Hom C (comonoid P)) (n : ℕ) :
-    hom.toLens ⨟ projectionN P n =
-      C.comultN n ⨟ (restrict C hom).compNthMap n := by
+    projectionN P n ∘ₗ hom.toLens =
+      (restrict C hom).compNthMap n ∘ₗ C.comultN n := by
   rw [projectionN_eq_comultN_compNthMap]
   change ((cogenerator P).compNthMap n ∘ₗ
       (comonoid P).comultN n) ∘ₗ hom.toLens = _
@@ -215,8 +215,8 @@ generator lens to depth `n` is its `n`-step run. -/
 theorem extend_comp_projectionN
     {P : PFunctor.{u, u}} (C : Comonoid.{u, u})
     (lens : Lens C.carrier P) (n : ℕ) :
-    (extend C lens).toLens ⨟ projectionN P n =
-      C.comultN n ⨟ lens.compNthMap n := by
+    projectionN P n ∘ₗ (extend C lens).toLens =
+      lens.compNthMap n ∘ₗ C.comultN n := by
   simpa only [restrict_extend] using
     hom_comp_projectionN (extend C lens) n
 

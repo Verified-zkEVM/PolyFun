@@ -18,7 +18,7 @@ categorical product is the lens pairing — and the dynamical `expose` / `update
 readings are recorded as derived `@[simp]` equations.
 
 * `DynSystem.wrap` — change the interface along a lens `p ⟹ q` (a *wrapper*,
-  §4.3.3): literally `s ⨟ w`. Sections (§4.3.4) are the special case where the
+  §4.3.3): literally `w ∘ₗ s`. Sections (§4.3.4) are the special case where the
   outer interface is `y`.
 * `DynSystem.close` / `MooreMachine.feedback` — close a system off with a section
   `(a : p.A) → p.B a` (§4.3.4); for a Moore machine the section is a feedback map
@@ -32,7 +32,7 @@ readings are recorded as derived `@[simp]` equations.
   advances exactly one side.
 * `Wiring₂` / `DynSystem.wire₂` — a *wiring diagram* (§4.4) is a lens between the
   juxtaposed interfaces and an outer interface; installing systems into it is
-  "tensor, then wrap": `(s ⊗ₗ t) ⨟ w`.
+  "tensor, then wrap": `w ∘ₗ (s ⊗ₗ t)`.
 -/
 
 @[expose] public section
@@ -54,8 +54,8 @@ variable {S : Type u} {T : Type v}
 variable {p : PFunctor.{uA₁, uB₁}} {q : PFunctor.{uA₂, uB₂}} {r : PFunctor.{uA₃, uB₃}}
 
 /-- Change the interface of a system along a lens `w : p ⟹ q` (Niu–Spivak
-§4.3.3): the *wrapper* is literally diagrammatic lens composition `s ⨟ w`. -/
-def wrap (w : Lens p q) (s : DynSystem S p) : DynSystem S q := s ⨟ w
+§4.3.3): the *wrapper* is literally diagrammatic lens composition `w ∘ₗ s`. -/
+def wrap (w : Lens p q) (s : DynSystem S p) : DynSystem S q := w ∘ₗ s
 
 @[simp] theorem wrap_expose (w : Lens p q) (s : DynSystem S p) (st : S) :
     (wrap w s).expose st = w.toFunA (s.expose st) := rfl
@@ -64,12 +64,12 @@ def wrap (w : Lens p q) (s : DynSystem S p) : DynSystem S q := s ⨟ w
     (d : q.B ((wrap w s).expose st)) :
     (wrap w s).update st d = s.update st (w.toFunB (s.expose st) d) := rfl
 
-theorem wrap_eq_comp (w : Lens p q) (s : DynSystem S p) : wrap w s = s ⨟ w := rfl
+theorem wrap_eq_comp (w : Lens p q) (s : DynSystem S p) : wrap w s = w ∘ₗ s := rfl
 
 @[simp] theorem wrap_id (s : DynSystem S p) : wrap (Lens.id p) s = s := rfl
 
 @[simp] theorem wrap_comp (w₂ : Lens q r) (w₁ : Lens p q) (s : DynSystem S p) :
-    wrap w₂ (wrap w₁ s) = wrap (w₁ ⨟ w₂) s := rfl
+    wrap w₂ (wrap w₁ s) = wrap (w₂ ∘ₗ w₁) s := rfl
 
 /-! ## Sections close systems (§4.3.4) -/
 
@@ -83,7 +83,7 @@ def close (σ : (a : p.A) → p.B a) (s : DynSystem S p) : Closed S :=
     (close σ s).step st = s.update st (σ (s.expose st)) := rfl
 
 theorem close_eq_comp (σ : (a : p.A) → p.B a) (s : DynSystem S p) :
-    close σ s = s ⨟ sectionLens σ := rfl
+    close σ s = sectionLens σ ∘ₗ s := rfl
 
 /-! ## Parallel product (§4.3.2) -/
 
@@ -148,13 +148,13 @@ abbrev Wiring₂ (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) (r 
     Type _ := Lens (p ⊗ q) r
 
 /-- Install two systems into a wiring diagram: juxtapose them with `tensor`, then
-wrap along the diagram lens — literally `(s ⊗ₗ t) ⨟ w`. -/
+wrap along the diagram lens — literally `w ∘ₗ (s ⊗ₗ t)`. -/
 def wire₂ (w : Wiring₂ p q r) (s : DynSystem S p) (t : DynSystem T q) :
     DynSystem (S × T) r :=
   wrap w (s.tensor t)
 
 theorem wire₂_eq_comp (w : Wiring₂ p q r) (s : DynSystem S p) (t : DynSystem T q) :
-    wire₂ w s t = (s ⊗ₗ t) ⨟ w := rfl
+    wire₂ w s t = w ∘ₗ (s ⊗ₗ t) := rfl
 
 end DynSystem
 

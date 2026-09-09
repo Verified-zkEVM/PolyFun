@@ -54,7 +54,7 @@ example (R : Responder S q) (adv : DynSystem T q) (s : S) (t : T) :
 /-- The game former is the uncurried challenger (tensor–hom adjunction). -/
 example (chal : DynSystem S (q ⊸ r)) (adv : DynSystem T q) :
     DynSystem.game chal adv
-      = ((Lens.id (selfMonomial S) ⊗ₗ adv) ⨟ Lens.uncurry chal :
+      = (Lens.uncurry chal ∘ₗ (Lens.id (selfMonomial S) ⊗ₗ adv) :
           Lens (selfMonomial S ⊗ selfMonomial T) r) := rfl
 
 /-- Eta canary: a responder's raw lens update reads only the query component. -/

@@ -91,7 +91,7 @@ challenger's state universe identified with the interface universes, as
 `Lens.uncurry` requires. -/
 theorem game_eq_uncurry {S : Type u} {T : Type v} {q r : PFunctor.{u, u}}
     (chal : DynSystem S (q ⊸ r)) (adv : DynSystem T q) :
-    game chal adv = ((Lens.id (selfMonomial S) ⊗ₗ adv) ⨟ Lens.uncurry chal :
+    game chal adv = (Lens.uncurry chal ∘ₗ (Lens.id (selfMonomial S) ⊗ₗ adv) :
       Lens (selfMonomial S ⊗ selfMonomial T) r) := rfl
 
 /-! ## Closed games -/
@@ -212,7 +212,7 @@ Eq 6.86), so the phase-one pair and phase-two pair each meet in an evaluation
 lens (Ex 4.78), run in sequence. -/
 def eval₂ (q₁ r₁ q₂ r₂ : PFunctor.{uA, uB}) :
     Lens (((q₁ ⊸ r₁) ◃ (q₂ ⊸ r₂)) ⊗ (q₁ ◃ q₂)) (r₁ ◃ r₂) :=
-  duoidalLens (q₁ ⊸ r₁) (q₂ ⊸ r₂) q₁ q₂ ⨟ (eval q₁ r₁ ◃ₗ eval q₂ r₂)
+  (eval q₁ r₁ ◃ₗ eval q₂ r₂) ∘ₗ duoidalLens (q₁ ⊸ r₁) (q₂ ⊸ r₂) q₁ q₂
 
 end Lens
 

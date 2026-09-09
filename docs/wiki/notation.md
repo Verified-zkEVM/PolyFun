@@ -94,15 +94,14 @@ Conventions and glyph rationale:
   `PolyFun/PFunctor/Dynamical/{Responder, Game}.lean` are dynamical
   systems over `q ⊸ y` and `q ⊸ r`; the positions of `q ⊸ r` are the
   lenses `q ⇆ r` (Spivak–Niu Ex 4.78).
-- Diagrammatic composition `f ⨟ g` (input `\;;`, U+2A1F) applies `f` first
-  and then `g`. It is available for lenses (`l₁ ⨟ l₂ = l₂ ∘ₗ l₁`), charts
-  (`c₁ ⨟ c₂ = c₂ ∘c c₁`), and lens-defined dynamical systems. The `\;;`
-  translation is a PolyFun workspace setting in
-  [`.vscode/settings.json`](../../.vscode/settings.json), rather than a
-  built-in Lean input abbreviation. Sequential returning computations use the
-  named operation `DynComputation.seqComp`; there is no overloaded machine
-  notation for it, and its associativity law is observational (`ObsEq`) rather
-  than structural equality of nested sum-state representations.
+- Lens composition `g ∘ₗ f` applies `f` first and then `g`. Chart composition
+  uses `g ∘c f`. The same lens notation applies to lens-defined dynamical
+  systems. In the book and reading notes, diagrammatic `f ⨟ g` denotes this
+  same order. To migrate that spelling in Lean code, reverse the operands and
+  preserve grouping: `(f ⨟ g) ⨟ h` becomes `h ∘ₗ (g ∘ₗ f)` for lenses.
+  Sequential returning computations use the named operation
+  `DynComputation.seqComp`; its associativity law is observational (`ObsEq`)
+  rather than structural equality of nested sum-state representations.
 - Qualitative program implementation `M ⊨ program` (input `\models`, U+22A8)
   abbreviates `DynComputation.Implements M program`. It is opt-in via
   `open scoped PFunctor.DynComputation`; the symbol deliberately says nothing
@@ -120,5 +119,4 @@ New notation should follow the same pattern: scoped to the owning
 namespace, declared next to the definition it abbreviates, with the
 named form remaining the canonical API. Custom operator clusters are
 reserved for the polynomial algebra above, the UC-composition algebra,
-and the book-order composition of lenses, charts, and lens-defined
-systems.
+and composition of lenses, charts, and lens-defined systems.

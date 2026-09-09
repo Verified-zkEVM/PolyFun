@@ -271,10 +271,10 @@ example :
   dsimp only
   change
     leftDirections
-        ((F.toLens ⨟ CofreeP.projectionN (leftP ⊗ rightP) 2).toFunB
+        ((CofreeP.projectionN (leftP ⊗ rightP) 2 ∘ₗ F.toLens).toFunB
           (leftTree, rightTree) synchronizedDirection).1 = [false, true] ∧
       rightDirections
-        ((F.toLens ⨟ CofreeP.projectionN (leftP ⊗ rightP) 2).toFunB
+        ((CofreeP.projectionN (leftP ⊗ rightP) 2 ∘ₗ F.toLens).toFunB
           (leftTree, rightTree) synchronizedDirection).2 = [2, 0]
   have hleft := congrArg (fun pair => leftDirections pair.1) h
   have hright := congrArg (fun pair => rightDirections pair.2) h
