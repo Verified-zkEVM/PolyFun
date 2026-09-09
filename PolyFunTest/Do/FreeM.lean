@@ -15,11 +15,12 @@ over `FreeM P` with uninterpreted operations, under the scoped demonic
 weakest-precondition instances of `PolyFun.PFunctor.Free.Do`. Each query is
 discharged through the registered `Spec.lift` specification: an uninterpreted
 operation guarantees its postcondition for every possible response.
+
+Each proof asserts the experimental-tactic diagnostic with `#guard_msgs`,
+keeping `mvcgen.warning` enabled.
 -/
 
 @[expose] public section
-
-set_option mvcgen.warning false
 
 open Std.Do
 open scoped PFunctor.FreeM.DemonicWP
@@ -34,8 +35,12 @@ def flipTwo : FreeM coinP Bool := do
   let b ← FreeM.lift (P := coinP) PUnit.unit
   pure (a && b)
 
-/-- `mvcgen` decomposes a two-query bind chain; the leaf VCs quantify over each
+/- `mvcgen` decomposes a two-query bind chain; the leaf VCs quantify over each
 uninterpreted response. -/
+/--
+warning: The `mvcgen` tactic is experimental and still under development. Avoid using it in production projects.
+-/
+#guard_msgs in
 example : ⦃⌜True⌝⦄ flipTwo ⦃⇓ r => ⌜r = true ∨ r = false⌝⦄ := by
   mvcgen [flipTwo]
   intro a b
@@ -47,7 +52,11 @@ def flipNot : FreeM coinP Bool := do
   let a ← FreeM.lift (P := coinP) PUnit.unit
   pure (!a)
 
-/-- The postcondition can depend on the (universally quantified) response. -/
+/- The postcondition can depend on the (universally quantified) response. -/
+/--
+warning: The `mvcgen` tactic is experimental and still under development. Avoid using it in production projects.
+-/
+#guard_msgs in
 example : ⦃⌜True⌝⦄ flipNot ⦃⇓ r => ⌜r = true ∨ r = false⌝⦄ := by
   mvcgen [flipNot]
   intro a
@@ -58,7 +67,11 @@ example : ⦃⌜True⌝⦄ flipNot ⦃⇓ r => ⌜r = true ∨ r = false⌝⦄ :
 `WPSound` closes the loop: a triple discharged by `mvcgen` becomes a fact about
 the program's possible outputs, with no further reasoning about the tree. -/
 
-/-- An `mvcgen`-discharged triple converts into a support fact. -/
+/- An `mvcgen`-discharged triple converts into a support fact. -/
+/--
+warning: The `mvcgen` tactic is experimental and still under development. Avoid using it in production projects.
+-/
+#guard_msgs in
 example (a : Bool) (h : MonadAttach.CanReturn flipTwo a) : a = true ∨ a = false := by
   refine WPSound.of_wp_canReturn (m := PFunctor.FreeM coinP)
     (P := fun b => b = true ∨ b = false) h ?_
@@ -66,7 +79,11 @@ example (a : Bool) (h : MonadAttach.CanReturn flipTwo a) : a = true ∨ a = fals
   intro x y
   cases x && y <;> simp
 
-/-- The same, phrased as the "always" judgment over the support. -/
+/- The same, phrased as the "always" judgment over the support. -/
+/--
+warning: The `mvcgen` tactic is experimental and still under development. Avoid using it in production projects.
+-/
+#guard_msgs in
 example : MonadAttach.AllOutputs (fun b => b = true ∨ b = false) flipTwo := by
   refine MonadAttach.allOutputs_of_wp ?_
   mvcgen [flipTwo]
@@ -80,8 +97,12 @@ def maskFalse : FreeM coinP Bool := do
   let a ← FreeM.lift (P := coinP) PUnit.unit
   pure (a && false)
 
-/-- `WPSound` transports a nontrivial verification condition to every
+/- `WPSound` transports a nontrivial verification condition to every
 reachable result. -/
+/--
+warning: The `mvcgen` tactic is experimental and still under development. Avoid using it in production projects.
+-/
+#guard_msgs in
 example (a : Bool) (h : MonadAttach.CanReturn maskFalse a) : a = false := by
   refine WPSound.of_wp_canReturn (m := PFunctor.FreeM coinP)
     (P := fun b => b = false) h ?_
