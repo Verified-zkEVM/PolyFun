@@ -34,8 +34,12 @@ case where input and output indices coincide. Free monads, indexed monads, and
 `do`-notation only make sense in the endomorphic case (a free monad arises from
 an endofunctor, not an arbitrary functor between family categories).
 
-When `J` has only one element, `IPFunctor I J` further collapses to a `PFunctor`
-via `IPFunctor.toPFunctor` (after fixing `J` to its default element).
+With `[Unique J]`, `IPFunctor.toPFunctor` (definitionally `fiberPFunctor`)
+selects the unique output fiber and forgets its source-index map. The conversion
+does not require `[Unique I]`. That assumption belongs to
+`IPFunctor.toPFunctor_injective`, which proves that the conversion loses no
+information when both index types are unique. Free-tree erasure still requires
+`[Unique I]` to identify the source indices of continuations.
 
 References:
 [`REFERENCES.md`](../../REFERENCES.md). Hancock-Setzer 2000,

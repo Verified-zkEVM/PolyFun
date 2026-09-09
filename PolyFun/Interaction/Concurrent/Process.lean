@@ -13,8 +13,6 @@ public import PolyFun.PFunctor.Dynamical.Combinators
 public import PolyFun.PFunctor.Dynamical.Safety
 public import PolyFun.PFunctor.Dynamical.Trajectory
 public import Mathlib.Data.PFunctor.Univariate.M
-public import Batteries.Tactic.Lint
-
 /-!
 # Dynamic concurrent processes
 
@@ -318,7 +316,6 @@ namespace ProcessOver
 exposed under its dynamical name for dot notation at use sites. -/
 -- The process argument exists only to support dot notation; the state space is
 -- fully determined by the parameter `P`.
-@[nolint unusedArguments]
 abbrev Proc {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (_process : ProcessOver.{v, w, w₂} P Γ) : Type v :=
   P
