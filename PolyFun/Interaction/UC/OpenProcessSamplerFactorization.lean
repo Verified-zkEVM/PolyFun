@@ -6,11 +6,10 @@ Authors: Devon Tuma
 
 module
 
-import all PolyFun.Interaction.Basic.Sampler
-import all PolyFun.Interaction.UC.OpenProcessModel
-import all PolyFun.Interaction.UC.OpenProcessSamplerEquiv
+import all PolyFun.Interaction.UC.OpenProcess
 public import PolyFun.Interaction.UC.OpenProcessFactorization
 public import PolyFun.Interaction.UC.OpenProcessModel
+public import PolyFun.Interaction.UC.OpenProcessSamplerCoherence
 public import PolyFun.Interaction.UC.OpenProcessSamplerEquiv
 
 /-!
@@ -18,22 +17,29 @@ public import PolyFun.Interaction.UC.OpenProcessSamplerEquiv
 
 The structural coherence laws of `openTheory` hold up to
 `OpenProcessActivationEquiv`, which erases sampler effects and uses delay
-matching. This module strengthens them to `OpenProcessSamplerEquiv`, which
-retains sampled-path effects, **conditionally on named scheduler-transport hypotheses**: a
-single shared `schedulerSampler` does not preserve per-step scheduling
-distributions across reassociation, so each law takes exactly the
-`MonadRelFamily` fact about reassociated scheduler draws that it needs.
-`MonadRelFamily.top` discharges every such hypothesis trivially, recovering
-sampler-blind strong path equivalences unconditionally.
+matching. This module strengthens the plug laws to `OpenProcessSamplerEquiv`,
+which retains sampled-path effects, **conditionally on named
+scheduler-transport hypotheses**: a single shared `schedulerSampler` does not
+preserve per-step scheduling distributions across reassociation, so each law
+takes exactly the `MonadRelFamily` fact about reassociated scheduler draws
+that it needs. `MonadRelFamily.top` discharges every such hypothesis
+trivially, recovering sampler-blind strong path equivalences unconditionally.
+
+Each law is one instance of the shapes in `OpenProcessSamplerCoherence`: after
+the normalization equalities push boundary adaptation into the injections, the
+composite injections of every leaf agree on both sides — everything is closed,
+so only activation survives — and the scheduler nodes are internal.
+
+`plug` commutation needs the scheduler to be `R`-fair: flipping the scheduler
+coin must be invisible to the relation family
+(`R.rel schedulerSampler (schedulerFlip <$> schedulerSampler)`). The
+factorizations need the source-shaped draw `sourceDraw` to be related to the
+left- or right-factored draw.
 
 The activation-equivalence laws in `OpenProcessModel` and
 `OpenProcessFactorization` keep their direct proofs rather than becoming
 corollaries: they hold for an arbitrary `m` with no `Monad` instance, while
 sampled paths — and hence this module — require `[Monad m] [LawfulMonad m]`.
-
-`plug` commutation needs the scheduler to be `R`-fair: flipping the scheduler
-coin must be invisible to the relation family
-(`R.rel schedulerSampler (schedulerFlip <$> schedulerSampler)`).
 -/
 
 public section
@@ -44,20 +50,6 @@ namespace Interaction
 namespace UC
 
 open Concurrent
-
-/-! ## Scheduler re-encodings -/
-
-/-- Negate a lifted scheduler coin: the path re-encoding of `plug`
-commutation. -/
-@[expose]
-def schedulerFlip : ULift.{w, 0} Bool → ULift.{w, 0} Bool :=
-  fun b => ULift.up !b.down
-
-@[simp] theorem schedulerFlip_up_true :
-    schedulerFlip.{w} (ULift.up true) = ULift.up false := rfl
-
-@[simp] theorem schedulerFlip_up_false :
-    schedulerFlip.{w} (ULift.up false) = ULift.up true := rfl
 
 /-! ## The empty boundary carries no traffic -/
 
@@ -70,55 +62,6 @@ theorem traceList_interface_empty_eq
   | ⟨a, _⟩ :: _, _ => a.elim
   | [], ⟨a, _⟩ :: _ => a.elim
 
-/-! ## Path re-encoding and sampling laws for the scheduler node -/
-
-/-- Flip the scheduler coin at the root of a binary-choice interleaving tree,
-exchanging the two branches. -/
-def flipInterleavePathEquiv (t₁ t₂ : TypeTree.{w}) :
-    TypeTree.Path (TypeTree.node (ULift.{w, 0} Bool) fun
-      | ⟨true⟩ => t₁
-      | ⟨false⟩ => t₂) ≃
-    TypeTree.Path (TypeTree.node (ULift.{w, 0} Bool) fun
-      | ⟨true⟩ => t₂
-      | ⟨false⟩ => t₁) where
-  toFun := fun
-    | ⟨⟨true⟩, tr⟩ => ⟨⟨false⟩, tr⟩
-    | ⟨⟨false⟩, tr⟩ => ⟨⟨true⟩, tr⟩
-  invFun := fun
-    | ⟨⟨true⟩, tr⟩ => ⟨⟨false⟩, tr⟩
-    | ⟨⟨false⟩, tr⟩ => ⟨⟨true⟩, tr⟩
-  left_inv := by rintro ⟨⟨b⟩, tr⟩; cases b <;> rfl
-  right_inv := by rintro ⟨⟨b⟩, tr⟩; cases b <;> rfl
-
-/-- Flipping the scheduler coin of an interleaved sample is sampling the
-branch-swapped interleave under the flipped scheduler draw. -/
-theorem samplePath_interleave_flip {m : Type w → Type w'}
-    [Monad m] [LawfulMonad m] {spec₁ spec₂ : TypeTree.{w}}
-    (σ : m (ULift.{w, 0} Bool))
-    (samp₁ : TypeTree.Sampler m spec₁) (samp₂ : TypeTree.Sampler m spec₂) :
-    (fun tr => flipInterleavePathEquiv spec₁ spec₂ tr) <$>
-        TypeTree.samplePath _ (TypeTree.Sampler.interleave σ samp₁ samp₂) =
-      TypeTree.samplePath _
-        (TypeTree.Sampler.interleave (schedulerFlip <$> σ) samp₂ samp₁) := by
-  simp only [TypeTree.Sampler.interleave, TypeTree.samplePath, map_bind,
-    bind_map_left]
-  refine bind_congr fun b => ?_
-  obtain ⟨bb⟩ := b
-  cases bb <;> simp only [map_pure] <;> rfl
-
-/-- Interleaved samples with the same branch samplers and `R`-related
-scheduler draws are `R`-related. -/
-theorem samplePath_interleave_congr_scheduler {m : Type w → Type w'}
-    [Monad m] (R : MonadRelFamily m)
-    {spec₁ spec₂ : TypeTree.{w}} {σ σ' : m (ULift.{w, 0} Bool)}
-    (h : R.rel σ' σ)
-    (samp₁ : TypeTree.Sampler m spec₁) (samp₂ : TypeTree.Sampler m spec₂) :
-    R.rel
-      (TypeTree.samplePath _ (TypeTree.Sampler.interleave σ' samp₁ samp₂))
-      (TypeTree.samplePath _ (TypeTree.Sampler.interleave σ samp₁ samp₂)) := by
-  simp only [TypeTree.Sampler.interleave, TypeTree.samplePath]
-  exact R.bind_congr _ h
-
 /-! ## Scheduler draws for the factorization reassociations -/
 
 namespace OpenProcessFactorization
@@ -128,37 +71,19 @@ namespace OpenProcessFactorization
 @[expose]
 def sourceDraw {m : Type w → Type w'} [Monad m]
     (σ : m (ULift.{w, 0} Bool)) : m (ULift.{w, 0} Leaf) :=
-  σ >>= fun b =>
-    match b with
-    | ⟨true⟩ => σ >>= fun b' =>
-        match b' with
-        | ⟨true⟩ => pure ⟨.first⟩
-        | ⟨false⟩ => pure ⟨.second⟩
-    | ⟨false⟩ => pure ⟨.context⟩
+  nestedDrawLeft σ σ
 
 /-- Draw a `Leaf` with the left-factored coin encoding (`leftSchedule`). -/
 @[expose]
 def leftDraw {m : Type w → Type w'} [Monad m]
     (σ : m (ULift.{w, 0} Bool)) : m (ULift.{w, 0} Leaf) :=
-  σ >>= fun b =>
-    match b with
-    | ⟨true⟩ => pure ⟨.first⟩
-    | ⟨false⟩ => σ >>= fun b' =>
-        match b' with
-        | ⟨true⟩ => pure ⟨.context⟩
-        | ⟨false⟩ => pure ⟨.second⟩
+  nestedDrawFactorLeft σ σ
 
 /-- Draw a `Leaf` with the right-factored coin encoding (`rightSchedule`). -/
 @[expose]
 def rightDraw {m : Type w → Type w'} [Monad m]
     (σ : m (ULift.{w, 0} Bool)) : m (ULift.{w, 0} Leaf) :=
-  σ >>= fun b =>
-    match b with
-    | ⟨true⟩ => pure ⟨.second⟩
-    | ⟨false⟩ => σ >>= fun b' =>
-        match b' with
-        | ⟨true⟩ => pure ⟨.context⟩
-        | ⟨false⟩ => pure ⟨.first⟩
+  nestedDrawFactorRight σ σ
 
 /-- Binding a source draw against a per-leaf continuation is the flattened
 two-coin computation. -/
@@ -172,16 +97,8 @@ theorem sourceDraw_bind {m : Type w → Type w'} [Monad m] [LawfulMonad m]
             match b' with
             | ⟨true⟩ => h ⟨.first⟩
             | ⟨false⟩ => h ⟨.second⟩
-        | ⟨false⟩ => h ⟨.context⟩ := by
-  simp only [sourceDraw, bind_assoc]
-  refine bind_congr fun b => ?_
-  obtain ⟨bb⟩ := b
-  cases bb
-  · simp only [pure_bind]
-  · simp only [bind_assoc]
-    refine bind_congr fun b' => ?_
-    obtain ⟨bb'⟩ := b'
-    cases bb' <;> simp only [pure_bind]
+        | ⟨false⟩ => h ⟨.context⟩ :=
+  nestedDrawLeft_bind σ σ h
 
 /-- Binding a left-factored draw against a per-leaf continuation is the
 flattened two-coin computation. -/
@@ -195,16 +112,8 @@ theorem leftDraw_bind {m : Type w → Type w'} [Monad m] [LawfulMonad m]
         | ⟨false⟩ => σ >>= fun b' =>
             match b' with
             | ⟨true⟩ => h ⟨.context⟩
-            | ⟨false⟩ => h ⟨.second⟩ := by
-  simp only [leftDraw, bind_assoc]
-  refine bind_congr fun b => ?_
-  obtain ⟨bb⟩ := b
-  cases bb
-  · simp only [bind_assoc]
-    refine bind_congr fun b' => ?_
-    obtain ⟨bb'⟩ := b'
-    cases bb' <;> simp only [pure_bind]
-  · simp only [pure_bind]
+            | ⟨false⟩ => h ⟨.second⟩ :=
+  nestedDrawFactorLeft_bind σ σ h
 
 /-- Binding a right-factored draw against a per-leaf continuation is the
 flattened two-coin computation. -/
@@ -218,16 +127,8 @@ theorem rightDraw_bind {m : Type w → Type w'} [Monad m] [LawfulMonad m]
         | ⟨false⟩ => σ >>= fun b' =>
             match b' with
             | ⟨true⟩ => h ⟨.context⟩
-            | ⟨false⟩ => h ⟨.first⟩ := by
-  simp only [rightDraw, bind_assoc]
-  refine bind_congr fun b => ?_
-  obtain ⟨bb⟩ := b
-  cases bb
-  · simp only [bind_assoc]
-    refine bind_congr fun b' => ?_
-    obtain ⟨bb'⟩ := b'
-    cases bb' <;> simp only [pure_bind]
-  · simp only [pure_bind]
+            | ⟨false⟩ => h ⟨.first⟩ :=
+  nestedDrawFactorRight_bind σ σ h
 
 /-! The deterministic identity-monad cases make the reassociation obstruction
 directly executable for downstream users. -/
@@ -258,46 +159,272 @@ directly executable for downstream users. -/
 
 end OpenProcessFactorization
 
-/-! ## Path re-encoding for the left par/wire factorizations -/
+/-! ## Closed composites of the theory's injections
 
-/-- Regroup the nested scheduler coins of `plug (par/wire ⋯) K` onto the
-left-factored shape: the first component keeps a single `true` coin, the
-second component moves under two `false` coins, and the context moves under
-`false, true`. -/
-def parLeftPathEquiv (t₁ t₂ tk : TypeTree.{w}) :
-    TypeTree.Path (TypeTree.node (ULift.{w, 0} Bool) fun
-      | ⟨true⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-        | ⟨true⟩ => t₁
-        | ⟨false⟩ => t₂
-      | ⟨false⟩ => tk) ≃
-    TypeTree.Path (TypeTree.node (ULift.{w, 0} Bool) fun
-      | ⟨true⟩ => t₁
-      | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-        | ⟨true⟩ => tk
-        | ⟨false⟩ => t₂) where
-  toFun := fun
-    | ⟨⟨true⟩, ⟨⟨true⟩, tr⟩⟩ => ⟨⟨true⟩, tr⟩
-    | ⟨⟨true⟩, ⟨⟨false⟩, tr⟩⟩ => ⟨⟨false⟩, ⟨⟨false⟩, tr⟩⟩
-    | ⟨⟨false⟩, tr⟩ => ⟨⟨false⟩, ⟨⟨true⟩, tr⟩⟩
-  invFun := fun
-    | ⟨⟨true⟩, tr⟩ => ⟨⟨true⟩, ⟨⟨true⟩, tr⟩⟩
-    | ⟨⟨false⟩, ⟨⟨true⟩, tr⟩⟩ => ⟨⟨false⟩, tr⟩
-    | ⟨⟨false⟩, ⟨⟨false⟩, tr⟩⟩ => ⟨⟨true⟩, ⟨⟨false⟩, tr⟩⟩
-  left_inv := by
-    rintro ⟨⟨b⟩, tr⟩
-    cases b
-    · rfl
-    · obtain ⟨⟨b'⟩, tr'⟩ := tr
-      cases b' <;> rfl
-  right_inv := by
-    rintro ⟨⟨b⟩, tr⟩
-    cases b
-    · obtain ⟨⟨b'⟩, tr'⟩ := tr
-      cases b' <;> rfl
-    · rfl
+Every injection used by `openTheory` keeps the closed-world node data and the
+activation flag. A closing context therefore decorates a leaf identically
+whichever adaptations precede it, which is what the sampler-level shapes ask
+of the two sides of a plug factorization. -/
+
+section ClosedComposites
+
+variable (Party : Type u)
+
+/- The injections are unfolded only here, to check that composites agree
+nodewise. Traces are compared as lists, so `FreeMonoid` and `Idx` stay
+transparent to `rw` and `apply` at implicit transparency. -/
+attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
+
+attribute [local simp] TypeTree.Node.ContextHom.comp OpenNodeContext.close
+  OpenNodeContext.inlTensor OpenNodeContext.inrTensor OpenNodeContext.map
+  OpenNodeContext.wireLeft OpenNodeContext.wireRight OpenNodeProfile.mapBoundary
+  BoundaryAction.closed BoundaryAction.embedInlTensor BoundaryAction.embedInrTensor
+  BoundaryAction.mapBoundary BoundaryAction.wireLeft BoundaryAction.wireRight
+
+theorem close_comp_inlTensor (Δ₁ Δ₂ : PortBoundary) :
+    TypeTree.Node.ContextHom.comp (OpenNodeContext.close.{u, w} Party (PortBoundary.tensor Δ₁ Δ₂))
+        (OpenNodeContext.inlTensor Party Δ₁ Δ₂) =
+      OpenNodeContext.close Party Δ₁ := by
+  funext X ons
+  simp
+
+theorem close_comp_inrTensor (Δ₁ Δ₂ : PortBoundary) :
+    TypeTree.Node.ContextHom.comp (OpenNodeContext.close.{u, w} Party (PortBoundary.tensor Δ₁ Δ₂))
+        (OpenNodeContext.inrTensor Party Δ₁ Δ₂) =
+      OpenNodeContext.close Party Δ₂ := by
+  funext X ons
+  simp
+
+theorem close_comp_wireLeft (Δ₁ Γ Δ₂ : PortBoundary) :
+    TypeTree.Node.ContextHom.comp (OpenNodeContext.close.{u, w} Party (PortBoundary.tensor Δ₁ Δ₂))
+        (OpenNodeContext.wireLeft Party Δ₁ Γ Δ₂) =
+      OpenNodeContext.close Party (PortBoundary.tensor Δ₁ Γ) := by
+  funext X ons
+  simp
+
+theorem close_comp_wireRight (Δ₁ Γ Δ₂ : PortBoundary) :
+    TypeTree.Node.ContextHom.comp (OpenNodeContext.close.{u, w} Party (PortBoundary.tensor Δ₁ Δ₂))
+        (OpenNodeContext.wireRight Party Δ₁ Γ Δ₂) =
+      OpenNodeContext.close Party (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) := by
+  funext X ons
+  simp
+
+/-- The closing context after adapting a wired pair on the left is the
+closing context of the pair's left factor. -/
+theorem close_comp_map_comp_wireLeft {Δ₁ Γ Δ₂ Δ : PortBoundary}
+    (φ : PortBoundary.Hom (PortBoundary.tensor Δ₁ Δ₂) Δ) :
+    TypeTree.Node.ContextHom.comp (OpenNodeContext.close.{u, w} Party Δ)
+        (TypeTree.Node.ContextHom.comp (OpenNodeContext.map Party φ)
+          (OpenNodeContext.wireLeft Party Δ₁ Γ Δ₂)) =
+      OpenNodeContext.close Party (PortBoundary.tensor Δ₁ Γ) := by
+  funext X ons
+  simp
+
+/-- The closing context after adapting a wired pair on the right, and the
+right factor before wiring, is the closing context of that factor. -/
+theorem close_comp_map_comp_wireRight_comp_map {Δ₁ Γ Δ₂ Δ Δ' : PortBoundary}
+    (φ : PortBoundary.Hom (PortBoundary.tensor Δ₁ Δ₂) Δ)
+    (ψ : PortBoundary.Hom Δ' (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
+    TypeTree.Node.ContextHom.comp (OpenNodeContext.close.{u, w} Party Δ)
+        (TypeTree.Node.ContextHom.comp
+          (TypeTree.Node.ContextHom.comp (OpenNodeContext.map Party φ)
+            (OpenNodeContext.wireRight Party Δ₁ Γ Δ₂))
+          (OpenNodeContext.map Party ψ)) =
+      OpenNodeContext.close Party Δ' := by
+  funext X ons
+  simp
+
+/-- The closing context after adapting a wired pair on the left, and the
+left factor before wiring, is the closing context of that factor. -/
+theorem close_comp_map_comp_wireLeft_comp_map {Δ₁ Γ Δ₂ Δ Δ' : PortBoundary}
+    (φ : PortBoundary.Hom (PortBoundary.tensor Δ₁ Δ₂) Δ)
+    (ψ : PortBoundary.Hom Δ' (PortBoundary.tensor Δ₁ Γ)) :
+    TypeTree.Node.ContextHom.comp (OpenNodeContext.close.{u, w} Party Δ)
+        (TypeTree.Node.ContextHom.comp
+          (TypeTree.Node.ContextHom.comp (OpenNodeContext.map Party φ)
+            (OpenNodeContext.wireLeft Party Δ₁ Γ Δ₂))
+          (OpenNodeContext.map Party ψ)) =
+      OpenNodeContext.close Party Δ' := by
+  funext X ons
+  simp
+
+/-- The closing context after adapting a wired pair on the right is the
+closing context of the pair's right factor. -/
+theorem close_comp_map_comp_wireRight {Δ₁ Γ Δ₂ Δ : PortBoundary}
+    (φ : PortBoundary.Hom (PortBoundary.tensor Δ₁ Δ₂) Δ) :
+    TypeTree.Node.ContextHom.comp (OpenNodeContext.close.{u, w} Party Δ)
+        (TypeTree.Node.ContextHom.comp (OpenNodeContext.map Party φ)
+          (OpenNodeContext.wireRight Party Δ₁ Γ Δ₂)) =
+      OpenNodeContext.close Party (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂) := by
+  funext X ons
+  simp
+
+/-- The closing context after wiring and adapting the right factor is the
+closing context of that factor. -/
+theorem close_comp_wireRight_comp_map {Δ₁ Γ Δ₂ Δ' : PortBoundary}
+    (ψ : PortBoundary.Hom Δ' (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
+    TypeTree.Node.ContextHom.comp (OpenNodeContext.close.{u, w} Party (PortBoundary.tensor Δ₁ Δ₂))
+        (TypeTree.Node.ContextHom.comp (OpenNodeContext.wireRight Party Δ₁ Γ Δ₂)
+          (OpenNodeContext.map Party ψ)) =
+      OpenNodeContext.close Party Δ' := by
+  funext X ons
+  simp
+
+/-- The closing context after wiring and adapting the left factor is the
+closing context of that factor. -/
+theorem close_comp_wireLeft_comp_map {Δ₁ Γ Δ₂ Δ' : PortBoundary}
+    (ψ : PortBoundary.Hom Δ' (PortBoundary.tensor Δ₁ Γ)) :
+    TypeTree.Node.ContextHom.comp (OpenNodeContext.close.{u, w} Party (PortBoundary.tensor Δ₁ Δ₂))
+        (TypeTree.Node.ContextHom.comp (OpenNodeContext.wireLeft Party Δ₁ Γ Δ₂)
+          (OpenNodeContext.map Party ψ)) =
+      OpenNodeContext.close Party Δ' := by
+  funext X ons
+  simp
+
+/-! ### Tensor equivalences reindex the injections
+
+Pushing a boundary equivalence through an injection is another injection, or a
+composite of injections, because the equivalences only relabel positions. -/
+
+theorem map_tensorComm_comp_inlTensor (Δ₁ Δ₂ : PortBoundary) :
+    TypeTree.Node.ContextHom.comp
+        (OpenNodeContext.map.{u, w} Party (PortBoundary.Equiv.tensorComm Δ₁ Δ₂).toHom)
+        (OpenNodeContext.inlTensor Party Δ₁ Δ₂) =
+      OpenNodeContext.inrTensor Party Δ₂ Δ₁ := by
+  funext X ons
+  simp only [TypeTree.Node.ContextHom.comp, Function.comp_apply, OpenNodeContext.map,
+    OpenNodeProfile.mapBoundary, OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor,
+    BoundaryAction.mapBoundary, OpenNodeContext.inrTensor, BoundaryAction.embedInrTensor,
+    OpenNodeProfile.mk.injEq, BoundaryAction.mk.injEq, true_and]
+  rw [← PFunctor.Trace.mapChart_comp]
+  refine congrArg (PFunctor.Trace.mapChart · ons.boundary.emit) ?_
+  refine PFunctor.Chart.ext _ _ (fun a => ?_) (fun a => ?_)
+  · rfl
+  · funext b; rfl
+
+theorem map_tensorComm_comp_inrTensor (Δ₁ Δ₂ : PortBoundary) :
+    TypeTree.Node.ContextHom.comp
+        (OpenNodeContext.map.{u, w} Party (PortBoundary.Equiv.tensorComm Δ₁ Δ₂).toHom)
+        (OpenNodeContext.inrTensor Party Δ₁ Δ₂) =
+      OpenNodeContext.inlTensor Party Δ₂ Δ₁ := by
+  funext X ons
+  simp only [TypeTree.Node.ContextHom.comp, Function.comp_apply, OpenNodeContext.map,
+    OpenNodeProfile.mapBoundary, OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor,
+    BoundaryAction.mapBoundary, OpenNodeContext.inrTensor, BoundaryAction.embedInrTensor,
+    OpenNodeProfile.mk.injEq, BoundaryAction.mk.injEq, true_and]
+  rw [← PFunctor.Trace.mapChart_comp]
+  refine congrArg (PFunctor.Trace.mapChart · ons.boundary.emit) ?_
+  refine PFunctor.Chart.ext _ _ (fun a => ?_) (fun a => ?_)
+  · rfl
+  · funext b; rfl
+
+theorem map_tensorAssoc_comp_inlTensor_comp_inlTensor (Δ₁ Δ₂ Δ₃ : PortBoundary) :
+    TypeTree.Node.ContextHom.comp
+        (TypeTree.Node.ContextHom.comp
+          (OpenNodeContext.map.{u, w} Party (PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃).toHom)
+          (OpenNodeContext.inlTensor Party (PortBoundary.tensor Δ₁ Δ₂) Δ₃))
+        (OpenNodeContext.inlTensor Party Δ₁ Δ₂) =
+      OpenNodeContext.inlTensor Party Δ₁ (PortBoundary.tensor Δ₂ Δ₃) := by
+  funext X ons
+  simp only [TypeTree.Node.ContextHom.comp, Function.comp_apply, OpenNodeContext.map,
+    OpenNodeProfile.mapBoundary, OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor,
+    BoundaryAction.mapBoundary, OpenNodeProfile.mk.injEq, BoundaryAction.mk.injEq, true_and]
+  rw [← PFunctor.Trace.mapChart_comp, ← PFunctor.Trace.mapChart_comp]
+  refine congrArg (PFunctor.Trace.mapChart · ons.boundary.emit) ?_
+  refine PFunctor.Chart.ext _ _ (fun a => ?_) (fun a => ?_)
+  · rfl
+  · funext b; rfl
+
+theorem map_tensorAssoc_comp_inlTensor_comp_inrTensor (Δ₁ Δ₂ Δ₃ : PortBoundary) :
+    TypeTree.Node.ContextHom.comp
+        (TypeTree.Node.ContextHom.comp
+          (OpenNodeContext.map.{u, w} Party (PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃).toHom)
+          (OpenNodeContext.inlTensor Party (PortBoundary.tensor Δ₁ Δ₂) Δ₃))
+        (OpenNodeContext.inrTensor Party Δ₁ Δ₂) =
+      TypeTree.Node.ContextHom.comp
+        (OpenNodeContext.inrTensor Party Δ₁ (PortBoundary.tensor Δ₂ Δ₃))
+        (OpenNodeContext.inlTensor Party Δ₂ Δ₃) := by
+  funext X ons
+  simp only [TypeTree.Node.ContextHom.comp, Function.comp_apply, OpenNodeContext.map,
+    OpenNodeProfile.mapBoundary, OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor,
+    BoundaryAction.mapBoundary, OpenNodeContext.inrTensor, BoundaryAction.embedInrTensor,
+    OpenNodeProfile.mk.injEq, BoundaryAction.mk.injEq, true_and]
+  rw [← PFunctor.Trace.mapChart_comp, ← PFunctor.Trace.mapChart_comp,
+    ← PFunctor.Trace.mapChart_comp]
+  refine congrArg (PFunctor.Trace.mapChart · ons.boundary.emit) ?_
+  refine PFunctor.Chart.ext _ _ (fun a => ?_) (fun a => ?_)
+  · rfl
+  · funext b; rfl
+
+theorem map_tensorAssoc_comp_inrTensor (Δ₁ Δ₂ Δ₃ : PortBoundary) :
+    TypeTree.Node.ContextHom.comp
+        (OpenNodeContext.map.{u, w} Party (PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃).toHom)
+        (OpenNodeContext.inrTensor Party (PortBoundary.tensor Δ₁ Δ₂) Δ₃) =
+      TypeTree.Node.ContextHom.comp
+        (OpenNodeContext.inrTensor Party Δ₁ (PortBoundary.tensor Δ₂ Δ₃))
+        (OpenNodeContext.inrTensor Party Δ₂ Δ₃) := by
+  funext X ons
+  simp only [TypeTree.Node.ContextHom.comp, Function.comp_apply, OpenNodeContext.map,
+    OpenNodeProfile.mapBoundary, OpenNodeContext.inrTensor, BoundaryAction.embedInrTensor,
+    BoundaryAction.mapBoundary, OpenNodeProfile.mk.injEq, BoundaryAction.mk.injEq, true_and]
+  rw [← PFunctor.Trace.mapChart_comp, ← PFunctor.Trace.mapChart_comp]
+  refine congrArg (PFunctor.Trace.mapChart · ons.boundary.emit) ?_
+  refine PFunctor.Chart.ext _ _ (fun a => ?_) (fun a => ?_)
+  · rfl
+  · funext b; rfl
+
+/-- Commuting a wire's two factors turns the left wiring of the swapped right
+factor into the right wiring of the original. -/
+theorem map_tensorComm_comp_wireLeft_comp_map_tensorComm (Δ₁ Γ Δ₂ : PortBoundary) :
+    TypeTree.Node.ContextHom.comp
+        (TypeTree.Node.ContextHom.comp
+          (OpenNodeContext.map.{u, w} Party (PortBoundary.Equiv.tensorComm Δ₂ Δ₁).toHom)
+          (OpenNodeContext.wireLeft Party Δ₂ (PortBoundary.swap Γ) Δ₁))
+        (OpenNodeContext.map Party
+          (PortBoundary.Equiv.tensorComm (PortBoundary.swap Γ) Δ₂).toHom) =
+      OpenNodeContext.wireRight Party Δ₁ Γ Δ₂ := by
+  funext X ons
+  simp only [TypeTree.Node.ContextHom.comp, Function.comp_apply, OpenNodeContext.map,
+    OpenNodeProfile.mapBoundary, BoundaryAction.mapBoundary, OpenNodeContext.wireLeft,
+    BoundaryAction.wireLeft, OpenNodeContext.wireRight, BoundaryAction.wireRight,
+    OpenNodeProfile.mk.injEq, BoundaryAction.mk.injEq, true_and]
+  funext x
+  simp only [PFunctor.Trace.mapChart_apply, PFunctor.Trace.mapPartial_apply,
+    List.filterMap_filterMap]
+  apply List.filterMap_congr
+  rintro ⟨(_ | _), _⟩ _ <;> rfl
+
+/-- Commuting a wire's two factors turns the right wiring of the swapped left
+factor into the left wiring of the original. -/
+theorem map_tensorComm_comp_wireRight_comp_map_tensorComm (Δ₁ Γ Δ₂ : PortBoundary) :
+    TypeTree.Node.ContextHom.comp
+        (TypeTree.Node.ContextHom.comp
+          (OpenNodeContext.map.{u, w} Party (PortBoundary.Equiv.tensorComm Δ₂ Δ₁).toHom)
+          (OpenNodeContext.wireRight Party Δ₂ (PortBoundary.swap Γ) Δ₁))
+        (OpenNodeContext.map Party (PortBoundary.Equiv.tensorComm Δ₁ Γ).toHom) =
+      OpenNodeContext.wireLeft Party Δ₁ Γ Δ₂ := by
+  funext X ons
+  simp only [TypeTree.Node.ContextHom.comp, Function.comp_apply, OpenNodeContext.map,
+    OpenNodeProfile.mapBoundary, BoundaryAction.mapBoundary, OpenNodeContext.wireLeft,
+    BoundaryAction.wireLeft, OpenNodeContext.wireRight, BoundaryAction.wireRight,
+    OpenNodeProfile.mk.injEq, BoundaryAction.mk.injEq, true_and]
+  funext x
+  simp only [PFunctor.Trace.mapChart_apply, PFunctor.Trace.mapPartial_apply,
+    List.filterMap_filterMap]
+  apply List.filterMap_congr
+  rintro ⟨(_ | _), _⟩ _ <;> rfl
+
+end ClosedComposites
+
+/-- The scheduler node is internal. -/
+theorem isInternalNode_schedulerNode (Party : Type u) (Δ : PortBoundary) :
+    OpenNodeContext.IsInternalNode (schedulerNode.{u, w} Party Δ) :=
+  rfl
 
 variable (Party : Type u) (m : Type w → Type w')
   (schedulerSampler : m (ULift.{w, 0} Bool))
+
+open OpenProcessFactorization
 
 /-! ## Sampler-aware plug commutation -/
 
@@ -318,46 +445,12 @@ theorem openTheory_plug_comm_sampler_equiv [Monad m] [LawfulMonad m]
     OpenProcessSamplerEquiv R
       ((openTheory Party m schedulerSampler).plug W K)
       ((openTheory Party m schedulerSampler).plug K W) := by
-  refine ⟨fun (⟨s₁, s₂⟩ : W.Proc × K.Proc) (⟨s₂', s₁'⟩ : K.Proc × W.Proc) =>
-      s₁ = s₁' ∧ s₂ = s₂',
-    ⟨?_⟩,
-    fun ⟨s₁, s₂⟩ => ⟨⟨s₂, s₁⟩, rfl, rfl⟩,
-    fun ⟨s₂, s₁⟩ => ⟨⟨s₁, s₂⟩, rfl, rfl⟩⟩
-  rintro ⟨s₁, s₂⟩ ⟨s₂', s₁'⟩ ⟨h1, h2⟩
-  subst h1
-  subst h2
-  refine ⟨flipInterleavePathEquiv (W.step s₁).tree (K.step s₂).tree,
-    ?_, ?_, ?_, ?_⟩
-  · -- Silence is preserved: the scheduler node is never activated and the
-    -- branch decorations differ only by activation-preserving close maps.
-    rintro ⟨⟨b⟩, tr⟩
-    cases b <;>
-      exact and_congr Iff.rfl
-        (((isSilentDecoration_iff_map _ (fun X ons => by
-            simp [OpenNodeContext.close, BoundaryAction.closed]) _ _).trans
-          (isSilentDecoration_iff_map _ (fun X ons => by
-            simp [OpenNodeContext.close, BoundaryAction.closed]) _ _).symm))
-  · -- Both boundary traces live over the empty boundary.
-    intro tr
-    exact traceList_interface_empty_eq _ _
-  · -- Successors are componentwise equal after the swap.
-    rintro ⟨⟨b⟩, tr⟩
-    cases b <;> exact ⟨rfl, rfl⟩
-  · -- The sampled paths are related by scheduler fairness.
-    change R.rel
-      ((fun tr => flipInterleavePathEquiv (W.step s₁).tree (K.step s₂).tree tr)
-        <$> TypeTree.samplePath _
-          (TypeTree.Sampler.interleave schedulerSampler
-            (W.stepSampler s₁) (K.stepSampler s₂)))
-      (TypeTree.samplePath _
-        (TypeTree.Sampler.interleave schedulerSampler
-          (K.stepSampler s₂) (W.stepSampler s₁)))
-    rw [samplePath_interleave_flip]
-    exact samplePath_interleave_congr_scheduler R (R.symm hfair) _ _
+  simp only [openTheory]
+  exact interleave_comm_samplerEquiv R W K schedulerSampler schedulerSampler
+    (isInternalNode_schedulerNode Party _) (isInternalNode_schedulerNode Party _) (R.symm hfair)
 
-/-! ## Sampler-aware left par factorization -/
+/-! ## Sampler-aware left factorizations -/
 
-open OpenProcessFactorization in
 /-- Closing a parallel composition factors through its left component, up to
 sampler equivalence, conditionally on the scheduler-transport fact
 `R.rel (sourceDraw schedulerSampler) (leftDraw schedulerSampler)`: the source
@@ -387,204 +480,24 @@ theorem openTheory_plug_par_left_sampler_equiv [Monad m] [LawfulMonad m]
             K
             (OpenProcess.mapBoundary
               (PortBoundary.Equiv.tensorEmptyRight Δ₂).symm.toHom W₂)))) := by
-  refine ⟨fun (⟨⟨s₁, s₂⟩, k⟩ : (W₁.Proc × W₂.Proc) × K.Proc)
-      (⟨s₁', k', s₂'⟩ : W₁.Proc × K.Proc × W₂.Proc) =>
-      s₁ = s₁' ∧ s₂ = s₂' ∧ k = k',
-    ⟨?_⟩,
-    fun ⟨⟨s₁, s₂⟩, k⟩ => ⟨⟨s₁, k, s₂⟩, rfl, rfl, rfl⟩,
-    fun ⟨s₁, k, s₂⟩ => ⟨⟨⟨s₁, s₂⟩, k⟩, rfl, rfl, rfl⟩⟩
-  rintro ⟨⟨s₁, s₂⟩, k⟩ ⟨s₁', k', s₂'⟩ ⟨h1, h2, h3⟩
-  subst h1
-  subst h2
-  subst h3
-  refine ⟨parLeftPathEquiv (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree,
-    ?_, ?_, ?_, ?_⟩
-  · -- Silence is preserved through the regrouping.
-    rintro ⟨⟨b⟩, rest⟩
-    simp only [IsSilentStep, PFunctor.FreeM.Displayed.Decoration.map,
-      OpenProcess.mapBoundary, StepOver.mapContext]
-    cases b
-    · -- Context path: `⟨F, tr⟩ ↦ ⟨F, ⟨T, tr⟩⟩`.
-      constructor
-      · intro h
-        refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-          ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2)))⟩
-        all_goals intro X ons
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-            BoundaryAction.mapBoundary]
-        · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-      · intro h
-        refine ⟨rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-          ((isSilentDecoration_iff_map _ ?_ _ _).mp
-            ((isSilentDecoration_iff_map _ ?_ _ _).mp
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2)))⟩
-        all_goals intro X ons
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-        · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-            BoundaryAction.mapBoundary]
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-    · -- Composite paths: case on the inner coin.
-      obtain ⟨⟨b'⟩, rest'⟩ := rest
-      cases b'
-      · -- Second component: `⟨T, ⟨F, tr⟩⟩ ↦ ⟨F, ⟨F, tr⟩⟩`.
-        constructor
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-                ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-                  ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                    ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2)))))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.inrTensor, BoundaryAction.embedInrTensor]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                  ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                    ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2)))))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.inrTensor, BoundaryAction.embedInrTensor]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-      · -- First component: `⟨T, ⟨T, tr⟩⟩ ↦ ⟨T, tr⟩`.
-        constructor
-        · intro h
-          refine ⟨rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mp
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-  · -- Both boundary traces live over the empty boundary.
-    intro tr
-    exact traceList_interface_empty_eq _ _
-  · -- Successors are componentwise equal after the regrouping.
-    rintro ⟨⟨b⟩, rest⟩
-    cases b
-    · exact ⟨rfl, rfl, rfl⟩
-    · obtain ⟨⟨b'⟩, rest'⟩ := rest
-      cases b' <;> exact ⟨rfl, rfl, rfl⟩
-  · -- The sampled paths are related by the scheduler-transport fact.
-    change R.rel
-      ((fun tr => parLeftPathEquiv
-          (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree tr) <$>
-        TypeTree.samplePath
-          (TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-              | ⟨true⟩ => (W₁.step s₁).tree
-              | ⟨false⟩ => (W₂.step s₂).tree
-            | ⟨false⟩ => (K.step k).tree)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (TypeTree.Sampler.interleave schedulerSampler
-              (W₁.stepSampler s₁) (W₂.stepSampler s₂))
-            (K.stepSampler k)))
-      (TypeTree.samplePath
-        (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₁.step s₁).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₂.step s₂).tree)
-        (TypeTree.Sampler.interleave schedulerSampler
-          (W₁.stepSampler s₁)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (K.stepSampler k) (W₂.stepSampler s₂))))
-    set e := parLeftPathEquiv
-      (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree with he
-    let h : ULift.{w, 0} Leaf →
-        m (TypeTree.Path (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₁.step s₁).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₂.step s₂).tree)) := fun leaf =>
-      match leaf with
-      | ⟨.first⟩ => TypeTree.samplePath _ (W₁.stepSampler s₁) >>= fun tr =>
-          pure ⟨⟨true⟩, tr⟩
-      | ⟨.second⟩ => TypeTree.samplePath _ (W₂.stepSampler s₂) >>= fun tr =>
-          pure ⟨⟨false⟩, ⟨⟨false⟩, tr⟩⟩
-      | ⟨.context⟩ => TypeTree.samplePath _ (K.stepSampler k) >>= fun tr =>
-          pure ⟨⟨false⟩, ⟨⟨true⟩, tr⟩⟩
-    have hR : TypeTree.samplePath
-        (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₁.step s₁).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₂.step s₂).tree)
-        (TypeTree.Sampler.interleave schedulerSampler
-          (W₁.stepSampler s₁)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (K.stepSampler k) (W₂.stepSampler s₂))) =
-        leftDraw schedulerSampler >>= h := by
-      rw [leftDraw_bind]
-      simp only [TypeTree.Sampler.interleave, TypeTree.samplePath]
-      refine bind_congr fun b => ?_
-      obtain ⟨bb⟩ := b
-      cases bb
-      · simp only [TypeTree.samplePath, bind_assoc, pure_bind]
-        refine bind_congr fun b' => ?_
-        obtain ⟨bb'⟩ := b'
-        cases bb' <;> rfl
-      · rfl
-    have hL : (fun tr => e tr) <$>
-        TypeTree.samplePath
-          (TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-              | ⟨true⟩ => (W₁.step s₁).tree
-              | ⟨false⟩ => (W₂.step s₂).tree
-            | ⟨false⟩ => (K.step k).tree)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (TypeTree.Sampler.interleave schedulerSampler
-              (W₁.stepSampler s₁) (W₂.stepSampler s₂))
-            (K.stepSampler k)) =
-        sourceDraw schedulerSampler >>= h := by
-      rw [sourceDraw_bind]
-      simp only [TypeTree.Sampler.interleave, TypeTree.samplePath, map_bind]
-      refine bind_congr fun b => ?_
-      obtain ⟨bb⟩ := b
-      cases bb
-      · simp only [map_pure]
-        rfl
-      · simp only [TypeTree.samplePath, bind_assoc, map_pure, pure_bind]
-        refine bind_congr fun b' => ?_
-        obtain ⟨bb'⟩ := b'
-        cases bb' <;> rfl
-    rw [hL, hR]
-    exact R.bind_congr h hσ
+  simp only [openTheory]
+  rw [OpenProcess.mapBoundary_interleave, OpenProcess.mapBoundary_eq_mapHom,
+    OpenProcess.interleave_mapHom_right]
+  exact interleave_factorLeft_samplerEquiv R W₁ W₂ K schedulerSampler schedulerSampler
+    schedulerSampler schedulerSampler
+    (close_comp_inlTensor Party Δ₁ Δ₂)
+    ((close_comp_inrTensor Party Δ₁ Δ₂).trans
+      (close_comp_map_comp_wireRight_comp_map Party (Δ₁ := PortBoundary.swap Δ₁)
+        (Γ := PortBoundary.swap Δ₂) (Δ₂ := PortBoundary.empty) _ _).symm)
+    (close_comp_map_comp_wireLeft Party (Δ₁ := PortBoundary.swap Δ₁) (Γ := PortBoundary.swap Δ₂)
+      (Δ₂ := PortBoundary.empty) _).symm
+    (isInternalNode_schedulerNode Party _) (isInternalNode_schedulerNode Party _).close
+    (isInternalNode_schedulerNode Party _)
+    ((isInternalNode_schedulerNode Party _).map _).close hσ
 
-/-! ## Sampler-aware left wire factorization -/
-
-open OpenProcessFactorization in
-/-- Closing a wired composition factors through its left factor, up to sampler
-equivalence, conditionally on the source/left scheduler-transport fact.  The
-sampler-aware strengthening of
-`openTheory_plug_wire_left_activation_equiv`. -/
+/-- Closing a wired composition factors through its left factor, up to
+sampler equivalence, conditionally on the same scheduler-transport fact as the
+parallel case. -/
 theorem openTheory_plug_wire_left_sampler_equiv [Monad m] [LawfulMonad m]
     (R : MonadRelFamily m)
     (hσ : R.rel (sourceDraw schedulerSampler) (leftDraw schedulerSampler))
@@ -604,227 +517,26 @@ theorem openTheory_plug_wire_left_sampler_equiv [Monad m] [LawfulMonad m]
           (Δ₂ := PortBoundary.swap Γ)
           K
           (OpenProcess.mapBoundary
-            (PortBoundary.Equiv.tensorComm (PortBoundary.swap Γ) Δ₂).toHom
-            W₂))) := by
-  refine ⟨fun (⟨⟨s₁, s₂⟩, k⟩ : (W₁.Proc × W₂.Proc) × K.Proc)
-      (⟨s₁', k', s₂'⟩ : W₁.Proc × K.Proc × W₂.Proc) =>
-      s₁ = s₁' ∧ s₂ = s₂' ∧ k = k',
-    ⟨?_⟩,
-    fun ⟨⟨s₁, s₂⟩, k⟩ => ⟨⟨s₁, k, s₂⟩, rfl, rfl, rfl⟩,
-    fun ⟨s₁, k, s₂⟩ => ⟨⟨⟨s₁, s₂⟩, k⟩, rfl, rfl, rfl⟩⟩
-  rintro ⟨⟨s₁, s₂⟩, k⟩ ⟨s₁', k', s₂'⟩ ⟨h1, h2, h3⟩
-  subst h1
-  subst h2
-  subst h3
-  refine ⟨parLeftPathEquiv (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree,
-    ?_, ?_, ?_, ?_⟩
-  · rintro ⟨⟨b⟩, rest⟩
-    simp only [IsSilentStep, PFunctor.FreeM.Displayed.Decoration.map,
-      OpenProcess.mapBoundary, StepOver.mapContext]
-    cases b
-    · -- Context path: `⟨F, tr⟩ ↦ ⟨F, ⟨T, tr⟩⟩`.
-      constructor
-      · intro h
-        refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-          ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2))⟩
-        all_goals intro X ons
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-      · intro h
-        refine ⟨rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-          ((isSilentDecoration_iff_map _ ?_ _ _).mp
-            ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2))⟩
-        all_goals intro X ons
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-    · obtain ⟨⟨b'⟩, rest'⟩ := rest
-      cases b'
-      · -- Second factor: `⟨T, ⟨F, tr⟩⟩ ↦ ⟨F, ⟨F, tr⟩⟩`.
-        constructor
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-                ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                  ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2))))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                  ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2))))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-      · -- First factor: `⟨T, ⟨T, tr⟩⟩ ↦ ⟨T, tr⟩`.
-        constructor
-        · intro h
-          refine ⟨rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mp
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-  · intro tr
-    exact traceList_interface_empty_eq _ _
-  · rintro ⟨⟨b⟩, rest⟩
-    cases b
-    · exact ⟨rfl, rfl, rfl⟩
-    · obtain ⟨⟨b'⟩, rest'⟩ := rest
-      cases b' <;> exact ⟨rfl, rfl, rfl⟩
-  · change R.rel
-      ((fun tr => parLeftPathEquiv
-          (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree tr) <$>
-        TypeTree.samplePath
-          (TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-              | ⟨true⟩ => (W₁.step s₁).tree
-              | ⟨false⟩ => (W₂.step s₂).tree
-            | ⟨false⟩ => (K.step k).tree)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (TypeTree.Sampler.interleave schedulerSampler
-              (W₁.stepSampler s₁) (W₂.stepSampler s₂))
-            (K.stepSampler k)))
-      (TypeTree.samplePath
-        (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₁.step s₁).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₂.step s₂).tree)
-        (TypeTree.Sampler.interleave schedulerSampler
-          (W₁.stepSampler s₁)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (K.stepSampler k) (W₂.stepSampler s₂))))
-    set e := parLeftPathEquiv
-      (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree with he
-    let h : ULift.{w, 0} Leaf →
-        m (TypeTree.Path (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₁.step s₁).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₂.step s₂).tree)) := fun leaf =>
-      match leaf with
-      | ⟨.first⟩ => TypeTree.samplePath _ (W₁.stepSampler s₁) >>= fun tr =>
-          pure ⟨⟨true⟩, tr⟩
-      | ⟨.second⟩ => TypeTree.samplePath _ (W₂.stepSampler s₂) >>= fun tr =>
-          pure ⟨⟨false⟩, ⟨⟨false⟩, tr⟩⟩
-      | ⟨.context⟩ => TypeTree.samplePath _ (K.stepSampler k) >>= fun tr =>
-          pure ⟨⟨false⟩, ⟨⟨true⟩, tr⟩⟩
-    have hR : TypeTree.samplePath
-        (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₁.step s₁).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₂.step s₂).tree)
-        (TypeTree.Sampler.interleave schedulerSampler
-          (W₁.stepSampler s₁)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (K.stepSampler k) (W₂.stepSampler s₂))) =
-        leftDraw schedulerSampler >>= h := by
-      rw [leftDraw_bind]
-      simp only [TypeTree.Sampler.interleave, TypeTree.samplePath]
-      refine bind_congr fun b => ?_
-      obtain ⟨bb⟩ := b
-      cases bb
-      · simp only [TypeTree.samplePath, bind_assoc, pure_bind]
-        refine bind_congr fun b' => ?_
-        obtain ⟨bb'⟩ := b'
-        cases bb' <;> rfl
-      · rfl
-    have hL : (fun tr => e tr) <$>
-        TypeTree.samplePath
-          (TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-              | ⟨true⟩ => (W₁.step s₁).tree
-              | ⟨false⟩ => (W₂.step s₂).tree
-            | ⟨false⟩ => (K.step k).tree)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (TypeTree.Sampler.interleave schedulerSampler
-              (W₁.stepSampler s₁) (W₂.stepSampler s₂))
-            (K.stepSampler k)) =
-        sourceDraw schedulerSampler >>= h := by
-      rw [sourceDraw_bind]
-      simp only [TypeTree.Sampler.interleave, TypeTree.samplePath, map_bind]
-      refine bind_congr fun b => ?_
-      obtain ⟨bb⟩ := b
-      cases bb
-      · simp only [map_pure]
-        rfl
-      · simp only [TypeTree.samplePath, bind_assoc, map_pure, pure_bind]
-        refine bind_congr fun b' => ?_
-        obtain ⟨bb'⟩ := b'
-        cases bb' <;> rfl
-    rw [hL, hR]
-    exact R.bind_congr h hσ
+            (PortBoundary.Equiv.tensorComm (PortBoundary.swap Γ) Δ₂).toHom W₂))) := by
+  simp only [openTheory]
+  rw [OpenProcess.mapBoundary_eq_mapHom, OpenProcess.interleave_mapHom_right]
+  exact interleave_factorLeft_samplerEquiv R W₁ W₂ K schedulerSampler schedulerSampler
+    schedulerSampler schedulerSampler
+    (close_comp_wireLeft Party Δ₁ Γ Δ₂)
+    ((close_comp_wireRight Party Δ₁ Γ Δ₂).trans
+      (close_comp_wireRight_comp_map Party (Δ₁ := PortBoundary.swap Δ₁)
+        (Γ := PortBoundary.swap Δ₂) (Δ₂ := PortBoundary.swap Γ) _).symm)
+    (close_comp_wireLeft Party (PortBoundary.swap Δ₁) (PortBoundary.swap Δ₂)
+      (PortBoundary.swap Γ)).symm
+    (isInternalNode_schedulerNode Party _) (isInternalNode_schedulerNode Party _).close
+    (isInternalNode_schedulerNode Party _) (isInternalNode_schedulerNode Party _).close hσ
 
-/-! ## Path re-encoding for the right par/wire factorizations -/
+/-! ## Sampler-aware right factorizations -/
 
-/-- Regroup the nested scheduler coins of `plug (par/wire ⋯) K` onto the
-right-factored shape: the second component keeps a single `true` coin, the
-first component moves under two `false` coins, and the context moves under
-`false, true`. -/
-def parRightPathEquiv (t₁ t₂ tk : TypeTree.{w}) :
-    TypeTree.Path (TypeTree.node (ULift.{w, 0} Bool) fun
-      | ⟨true⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-        | ⟨true⟩ => t₁
-        | ⟨false⟩ => t₂
-      | ⟨false⟩ => tk) ≃
-    TypeTree.Path (TypeTree.node (ULift.{w, 0} Bool) fun
-      | ⟨true⟩ => t₂
-      | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-        | ⟨true⟩ => tk
-        | ⟨false⟩ => t₁) where
-  toFun := fun
-    | ⟨⟨true⟩, ⟨⟨true⟩, tr⟩⟩ => ⟨⟨false⟩, ⟨⟨false⟩, tr⟩⟩
-    | ⟨⟨true⟩, ⟨⟨false⟩, tr⟩⟩ => ⟨⟨true⟩, tr⟩
-    | ⟨⟨false⟩, tr⟩ => ⟨⟨false⟩, ⟨⟨true⟩, tr⟩⟩
-  invFun := fun
-    | ⟨⟨true⟩, tr⟩ => ⟨⟨true⟩, ⟨⟨false⟩, tr⟩⟩
-    | ⟨⟨false⟩, ⟨⟨true⟩, tr⟩⟩ => ⟨⟨false⟩, tr⟩
-    | ⟨⟨false⟩, ⟨⟨false⟩, tr⟩⟩ => ⟨⟨true⟩, ⟨⟨true⟩, tr⟩⟩
-  left_inv := by
-    rintro ⟨⟨b⟩, tr⟩
-    cases b
-    · rfl
-    · obtain ⟨⟨b'⟩, tr'⟩ := tr
-      cases b' <;> rfl
-  right_inv := by
-    rintro ⟨⟨b⟩, tr⟩
-    cases b
-    · obtain ⟨⟨b'⟩, tr'⟩ := tr
-      cases b' <;> rfl
-    · rfl
-
-/-! ## Sampler-aware right par factorization -/
-
-open OpenProcessFactorization in
 /-- Closing a parallel composition factors through its right component, up to
-sampler equivalence, conditionally on the source/right scheduler-transport
-fact.  The sampler-aware strengthening of
-`openTheory_plug_par_right_activation_equiv`. -/
+sampler equivalence, conditionally on the scheduler-transport fact
+`R.rel (sourceDraw schedulerSampler) (rightDraw schedulerSampler)`. The
+mirror of `openTheory_plug_par_left_sampler_equiv`. -/
 theorem openTheory_plug_par_right_sampler_equiv [Monad m] [LawfulMonad m]
     (R : MonadRelFamily m)
     (hσ : R.rel (sourceDraw schedulerSampler) (rightDraw schedulerSampler))
@@ -847,205 +559,26 @@ theorem openTheory_plug_par_right_sampler_equiv [Monad m] [LawfulMonad m]
                 (PortBoundary.swap Δ₁) (PortBoundary.swap Δ₂)).toHom K)
             (OpenProcess.mapBoundary
               (PortBoundary.Equiv.tensorEmptyRight Δ₁).symm.toHom W₁)))) := by
-  refine ⟨fun (⟨⟨s₁, s₂⟩, k⟩ : (W₁.Proc × W₂.Proc) × K.Proc)
-      (⟨s₂', k', s₁'⟩ : W₂.Proc × K.Proc × W₁.Proc) =>
-      s₁ = s₁' ∧ s₂ = s₂' ∧ k = k',
-    ⟨?_⟩,
-    fun ⟨⟨s₁, s₂⟩, k⟩ => ⟨⟨s₂, k, s₁⟩, rfl, rfl, rfl⟩,
-    fun ⟨s₂, k, s₁⟩ => ⟨⟨⟨s₁, s₂⟩, k⟩, rfl, rfl, rfl⟩⟩
-  rintro ⟨⟨s₁, s₂⟩, k⟩ ⟨s₂', k', s₁'⟩ ⟨h1, h2, h3⟩
-  subst h1
-  subst h2
-  subst h3
-  refine ⟨parRightPathEquiv (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree,
-    ?_, ?_, ?_, ?_⟩
-  · rintro ⟨⟨b⟩, rest⟩
-    simp only [IsSilentStep, PFunctor.FreeM.Displayed.Decoration.map,
-      OpenProcess.mapBoundary, StepOver.mapContext]
-    cases b
-    · -- Context path: `⟨F, tr⟩ ↦ ⟨F, ⟨T, tr⟩⟩`.
-      constructor
-      · intro h
-        refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-          ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-                ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2))))⟩
-        all_goals intro X ons
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-            BoundaryAction.mapBoundary]
-        · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-        · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-            BoundaryAction.mapBoundary]
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-      · intro h
-        refine ⟨rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-          ((isSilentDecoration_iff_map _ ?_ _ _).mp
-            ((isSilentDecoration_iff_map _ ?_ _ _).mp
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2))))⟩
-        all_goals intro X ons
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-            BoundaryAction.mapBoundary]
-        · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-        · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-            BoundaryAction.mapBoundary]
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-    · obtain ⟨⟨b'⟩, rest'⟩ := rest
-      cases b'
-      · -- Second component: `⟨T, ⟨F, tr⟩⟩ ↦ ⟨T, tr⟩`.
-        constructor
-        · intro h
-          refine ⟨rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mp
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.inrTensor, BoundaryAction.embedInrTensor]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.inrTensor, BoundaryAction.embedInrTensor]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-      · -- First component: `⟨T, ⟨T, tr⟩⟩ ↦ ⟨F, ⟨F, tr⟩⟩`.
-        constructor
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-                ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-                  ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                    ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2)))))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                  ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                    ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2)))))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.inlTensor, BoundaryAction.embedInlTensor]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-  · intro tr
-    exact traceList_interface_empty_eq _ _
-  · rintro ⟨⟨b⟩, rest⟩
-    cases b
-    · exact ⟨rfl, rfl, rfl⟩
-    · obtain ⟨⟨b'⟩, rest'⟩ := rest
-      cases b' <;> exact ⟨rfl, rfl, rfl⟩
-  · change R.rel
-      ((fun tr => parRightPathEquiv
-          (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree tr) <$>
-        TypeTree.samplePath
-          (TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-              | ⟨true⟩ => (W₁.step s₁).tree
-              | ⟨false⟩ => (W₂.step s₂).tree
-            | ⟨false⟩ => (K.step k).tree)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (TypeTree.Sampler.interleave schedulerSampler
-              (W₁.stepSampler s₁) (W₂.stepSampler s₂))
-            (K.stepSampler k)))
-      (TypeTree.samplePath
-        (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₂.step s₂).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₁.step s₁).tree)
-        (TypeTree.Sampler.interleave schedulerSampler
-          (W₂.stepSampler s₂)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (K.stepSampler k) (W₁.stepSampler s₁))))
-    set e := parRightPathEquiv
-      (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree with he
-    let h : ULift.{w, 0} Leaf →
-        m (TypeTree.Path (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₂.step s₂).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₁.step s₁).tree)) := fun leaf =>
-      match leaf with
-      | ⟨.first⟩ => TypeTree.samplePath _ (W₁.stepSampler s₁) >>= fun tr =>
-          pure ⟨⟨false⟩, ⟨⟨false⟩, tr⟩⟩
-      | ⟨.second⟩ => TypeTree.samplePath _ (W₂.stepSampler s₂) >>= fun tr =>
-          pure ⟨⟨true⟩, tr⟩
-      | ⟨.context⟩ => TypeTree.samplePath _ (K.stepSampler k) >>= fun tr =>
-          pure ⟨⟨false⟩, ⟨⟨true⟩, tr⟩⟩
-    have hR : TypeTree.samplePath
-        (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₂.step s₂).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₁.step s₁).tree)
-        (TypeTree.Sampler.interleave schedulerSampler
-          (W₂.stepSampler s₂)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (K.stepSampler k) (W₁.stepSampler s₁))) =
-        rightDraw schedulerSampler >>= h := by
-      rw [rightDraw_bind]
-      simp only [TypeTree.Sampler.interleave, TypeTree.samplePath]
-      refine bind_congr fun b => ?_
-      obtain ⟨bb⟩ := b
-      cases bb
-      · simp only [TypeTree.samplePath, bind_assoc, pure_bind]
-        refine bind_congr fun b' => ?_
-        obtain ⟨bb'⟩ := b'
-        cases bb' <;> rfl
-      · rfl
-    have hL : (fun tr => e tr) <$>
-        TypeTree.samplePath
-          (TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-              | ⟨true⟩ => (W₁.step s₁).tree
-              | ⟨false⟩ => (W₂.step s₂).tree
-            | ⟨false⟩ => (K.step k).tree)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (TypeTree.Sampler.interleave schedulerSampler
-              (W₁.stepSampler s₁) (W₂.stepSampler s₂))
-            (K.stepSampler k)) =
-        sourceDraw schedulerSampler >>= h := by
-      rw [sourceDraw_bind]
-      simp only [TypeTree.Sampler.interleave, TypeTree.samplePath, map_bind]
-      refine bind_congr fun b => ?_
-      obtain ⟨bb⟩ := b
-      cases bb
-      · simp only [map_pure]
-        rfl
-      · simp only [TypeTree.samplePath, bind_assoc, map_pure, pure_bind]
-        refine bind_congr fun b' => ?_
-        obtain ⟨bb'⟩ := b'
-        cases bb' <;> rfl
-    rw [hL, hR]
-    exact R.bind_congr h hσ
+  simp only [openTheory]
+  rw [OpenProcess.mapBoundary_interleave]
+  simp only [OpenProcess.mapBoundary_eq_mapHom]
+  rw [OpenProcess.interleave_mapHom_left, OpenProcess.interleave_mapHom_right]
+  exact interleave_factorRight_samplerEquiv R W₁ W₂ K schedulerSampler schedulerSampler
+    schedulerSampler schedulerSampler
+    ((close_comp_inlTensor Party Δ₁ Δ₂).trans
+      (close_comp_map_comp_wireRight_comp_map Party (Δ₁ := PortBoundary.swap Δ₂)
+        (Γ := PortBoundary.swap Δ₁) (Δ₂ := PortBoundary.empty) _ _).symm)
+    (close_comp_inrTensor Party Δ₁ Δ₂)
+    (close_comp_map_comp_wireLeft_comp_map Party (Δ₁ := PortBoundary.swap Δ₂)
+      (Γ := PortBoundary.swap Δ₁) (Δ₂ := PortBoundary.empty)
+      (Δ' := PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂)) _ _).symm
+    (isInternalNode_schedulerNode Party _) (isInternalNode_schedulerNode Party _).close
+    (isInternalNode_schedulerNode Party _)
+    ((isInternalNode_schedulerNode Party _).map _).close hσ
 
-/-! ## Sampler-aware right wire factorization -/
-
-open OpenProcessFactorization in
 /-- Closing a wired composition factors through its right factor, up to
-sampler equivalence, conditionally on the source/right scheduler-transport
-fact.  The sampler-aware strengthening of
-`openTheory_plug_wire_right_activation_equiv`. -/
+sampler equivalence, conditionally on the same scheduler-transport fact as the
+parallel case. The mirror of `openTheory_plug_wire_left_sampler_equiv`. -/
 theorem openTheory_plug_wire_right_sampler_equiv [Monad m] [LawfulMonad m]
     (R : MonadRelFamily m)
     (hσ : R.rel (sourceDraw schedulerSampler) (rightDraw schedulerSampler))
@@ -1069,191 +602,194 @@ theorem openTheory_plug_wire_right_sampler_equiv [Monad m] [LawfulMonad m]
               (PortBoundary.Equiv.tensorComm
                 (PortBoundary.swap Δ₁) (PortBoundary.swap Δ₂)).toHom K)
             W₁))) := by
-  refine ⟨fun (⟨⟨s₁, s₂⟩, k⟩ : (W₁.Proc × W₂.Proc) × K.Proc)
-      (⟨s₂', k', s₁'⟩ : W₂.Proc × K.Proc × W₁.Proc) =>
-      s₁ = s₁' ∧ s₂ = s₂' ∧ k = k',
-    ⟨?_⟩,
-    fun ⟨⟨s₁, s₂⟩, k⟩ => ⟨⟨s₂, k, s₁⟩, rfl, rfl, rfl⟩,
-    fun ⟨s₂, k, s₁⟩ => ⟨⟨⟨s₁, s₂⟩, k⟩, rfl, rfl, rfl⟩⟩
-  rintro ⟨⟨s₁, s₂⟩, k⟩ ⟨s₂', k', s₁'⟩ ⟨h1, h2, h3⟩
-  subst h1
-  subst h2
-  subst h3
-  refine ⟨parRightPathEquiv (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree,
-    ?_, ?_, ?_, ?_⟩
-  · rintro ⟨⟨b⟩, rest⟩
-    simp only [IsSilentStep, PFunctor.FreeM.Displayed.Decoration.map,
-      OpenProcess.mapBoundary, StepOver.mapContext]
-    cases b
-    · -- Context path: `⟨F, tr⟩ ↦ ⟨F, ⟨T, tr⟩⟩`.
-      constructor
-      · intro h
-        refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-          ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-                ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2))))⟩
-        all_goals intro X ons
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-            BoundaryAction.mapBoundary]
-        · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-        · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-            BoundaryAction.mapBoundary]
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-      · intro h
-        refine ⟨rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-          ((isSilentDecoration_iff_map _ ?_ _ _).mp
-            ((isSilentDecoration_iff_map _ ?_ _ _).mp
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2))))⟩
-        all_goals intro X ons
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-            BoundaryAction.mapBoundary]
-        · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-        · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-            BoundaryAction.mapBoundary]
-        · simp [OpenNodeContext.close, BoundaryAction.closed]
-    · obtain ⟨⟨b'⟩, rest'⟩ := rest
-      cases b'
-      · -- Second factor: `⟨T, ⟨F, tr⟩⟩ ↦ ⟨T, tr⟩`.
-        constructor
-        · intro h
-          refine ⟨rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mp
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-      · -- First factor: `⟨T, ⟨T, tr⟩⟩ ↦ ⟨F, ⟨F, tr⟩⟩`.
-        constructor
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-                ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                  ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2))))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-        · intro h
-          refine ⟨rfl, rfl, (isSilentDecoration_iff_map _ ?_ _ _).mpr
-            ((isSilentDecoration_iff_map _ ?_ _ _).mpr
-              ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                ((isSilentDecoration_iff_map _ ?_ _ _).mp
-                  ((isSilentDecoration_iff_map _ ?_ _ _).mp h.2.2))))⟩
-          all_goals intro X ons
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-          · simp [OpenNodeContext.wireLeft, BoundaryAction.wireLeft]
-          · simp [OpenNodeContext.wireRight, BoundaryAction.wireRight]
-          · simp [OpenNodeContext.map, OpenNodeProfile.mapBoundary,
-              BoundaryAction.mapBoundary]
-          · simp [OpenNodeContext.close, BoundaryAction.closed]
-  · intro tr
-    exact traceList_interface_empty_eq _ _
-  · rintro ⟨⟨b⟩, rest⟩
-    cases b
-    · exact ⟨rfl, rfl, rfl⟩
-    · obtain ⟨⟨b'⟩, rest'⟩ := rest
-      cases b' <;> exact ⟨rfl, rfl, rfl⟩
-  · change R.rel
-      ((fun tr => parRightPathEquiv
-          (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree tr) <$>
-        TypeTree.samplePath
-          (TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-              | ⟨true⟩ => (W₁.step s₁).tree
-              | ⟨false⟩ => (W₂.step s₂).tree
-            | ⟨false⟩ => (K.step k).tree)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (TypeTree.Sampler.interleave schedulerSampler
-              (W₁.stepSampler s₁) (W₂.stepSampler s₂))
-            (K.stepSampler k)))
-      (TypeTree.samplePath
-        (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₂.step s₂).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₁.step s₁).tree)
-        (TypeTree.Sampler.interleave schedulerSampler
-          (W₂.stepSampler s₂)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (K.stepSampler k) (W₁.stepSampler s₁))))
-    set e := parRightPathEquiv
-      (W₁.step s₁).tree (W₂.step s₂).tree (K.step k).tree with he
-    let h : ULift.{w, 0} Leaf →
-        m (TypeTree.Path (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₂.step s₂).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₁.step s₁).tree)) := fun leaf =>
-      match leaf with
-      | ⟨.first⟩ => TypeTree.samplePath _ (W₁.stepSampler s₁) >>= fun tr =>
-          pure ⟨⟨false⟩, ⟨⟨false⟩, tr⟩⟩
-      | ⟨.second⟩ => TypeTree.samplePath _ (W₂.stepSampler s₂) >>= fun tr =>
-          pure ⟨⟨true⟩, tr⟩
-      | ⟨.context⟩ => TypeTree.samplePath _ (K.stepSampler k) >>= fun tr =>
-          pure ⟨⟨false⟩, ⟨⟨true⟩, tr⟩⟩
-    have hR : TypeTree.samplePath
-        (TypeTree.node (ULift.{w, 0} Bool) fun
-          | ⟨true⟩ => (W₂.step s₂).tree
-          | ⟨false⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => (K.step k).tree
-            | ⟨false⟩ => (W₁.step s₁).tree)
-        (TypeTree.Sampler.interleave schedulerSampler
-          (W₂.stepSampler s₂)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (K.stepSampler k) (W₁.stepSampler s₁))) =
-        rightDraw schedulerSampler >>= h := by
-      rw [rightDraw_bind]
-      simp only [TypeTree.Sampler.interleave, TypeTree.samplePath]
-      refine bind_congr fun b => ?_
-      obtain ⟨bb⟩ := b
-      cases bb
-      · simp only [TypeTree.samplePath, bind_assoc, pure_bind]
-        refine bind_congr fun b' => ?_
-        obtain ⟨bb'⟩ := b'
-        cases bb' <;> rfl
-      · rfl
-    have hL : (fun tr => e tr) <$>
-        TypeTree.samplePath
-          (TypeTree.node (ULift.{w, 0} Bool) fun
-            | ⟨true⟩ => TypeTree.node (ULift.{w, 0} Bool) fun
-              | ⟨true⟩ => (W₁.step s₁).tree
-              | ⟨false⟩ => (W₂.step s₂).tree
-            | ⟨false⟩ => (K.step k).tree)
-          (TypeTree.Sampler.interleave schedulerSampler
-            (TypeTree.Sampler.interleave schedulerSampler
-              (W₁.stepSampler s₁) (W₂.stepSampler s₂))
-            (K.stepSampler k)) =
-        sourceDraw schedulerSampler >>= h := by
-      rw [sourceDraw_bind]
-      simp only [TypeTree.Sampler.interleave, TypeTree.samplePath, map_bind]
-      refine bind_congr fun b => ?_
-      obtain ⟨bb⟩ := b
-      cases bb
-      · simp only [map_pure]
-        rfl
-      · simp only [TypeTree.samplePath, bind_assoc, map_pure, pure_bind]
-        refine bind_congr fun b' => ?_
-        obtain ⟨bb'⟩ := b'
-        cases bb' <;> rfl
-    rw [hL, hR]
-    exact R.bind_congr h hσ
+  simp only [openTheory]
+  rw [OpenProcess.mapBoundary_interleave, OpenProcess.mapBoundary_eq_mapHom,
+    OpenProcess.interleave_mapHom_left]
+  exact interleave_factorRight_samplerEquiv R W₁ W₂ K schedulerSampler schedulerSampler
+    schedulerSampler schedulerSampler
+    ((close_comp_wireLeft Party Δ₁ Γ Δ₂).trans
+      (close_comp_map_comp_wireRight Party (Δ₁ := PortBoundary.swap Δ₂)
+        (Γ := PortBoundary.swap Δ₁) (Δ₂ := Γ) _).symm)
+    (close_comp_wireRight Party Δ₁ Γ Δ₂)
+    (close_comp_map_comp_wireLeft_comp_map Party (Δ₁ := PortBoundary.swap Δ₂)
+      (Γ := PortBoundary.swap Δ₁) (Δ₂ := Γ)
+      (Δ' := PortBoundary.swap (PortBoundary.tensor Δ₁ Δ₂)) _ _).symm
+    (isInternalNode_schedulerNode Party _) (isInternalNode_schedulerNode Party _).close
+    (isInternalNode_schedulerNode Party _)
+    ((isInternalNode_schedulerNode Party _).map _).close hσ
+
+/-! ## Sampler-aware monoidal laws
+
+The open laws move packets across the tensor equivalences, so their leaves are
+decorated by reindexed injections; the reindexing lemmas above make the two
+sides' composite injections equal. -/
+
+/-- Parallel composition is commutative up to sampler equivalence, provided
+the scheduler is `R`-fair. -/
+theorem openTheory_par_comm_sampler_equiv [Monad m] [LawfulMonad m]
+    (R : MonadRelFamily m)
+    (hfair : R.rel schedulerSampler (schedulerFlip <$> schedulerSampler))
+    {Δ₁ Δ₂ : PortBoundary}
+    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
+    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂) :
+    OpenProcessSamplerEquiv R
+      (OpenProcess.mapBoundary (PortBoundary.Equiv.tensorComm Δ₁ Δ₂).toHom
+        ((openTheory Party m schedulerSampler).par W₁ W₂))
+      ((openTheory Party m schedulerSampler).par W₂ W₁) := by
+  simp only [openTheory]
+  rw [OpenProcess.mapBoundary_interleave, map_tensorComm_comp_inlTensor,
+    map_tensorComm_comp_inrTensor]
+  exact interleave_comm_samplerEquiv R W₁ W₂ schedulerSampler schedulerSampler
+    ((isInternalNode_schedulerNode Party _).map _) (isInternalNode_schedulerNode Party _)
+    (R.symm hfair)
+
+/-- Parallel composition is associative up to sampler equivalence, provided
+the scheduler is `R`-fair, the left-factored transport fact holds, and `R` is
+bind-congruent: the left factorization followed by commutation of the inner
+pair. -/
+theorem openTheory_par_assoc_sampler_equiv [Monad m] [LawfulMonad m]
+    (R : MonadRelFamily m) [R.IsBindCongr]
+    (hfair : R.rel schedulerSampler (schedulerFlip <$> schedulerSampler))
+    (hσ : R.rel (sourceDraw schedulerSampler) (leftDraw schedulerSampler))
+    {Δ₁ Δ₂ Δ₃ : PortBoundary}
+    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁)
+    (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+    (W₃ : OpenProcess.{u, v, w, w'} m Party Δ₃) :
+    OpenProcessSamplerEquiv R
+      (OpenProcess.mapBoundary (PortBoundary.Equiv.tensorAssoc Δ₁ Δ₂ Δ₃).toHom
+        ((openTheory Party m schedulerSampler).par
+          ((openTheory Party m schedulerSampler).par W₁ W₂) W₃))
+      ((openTheory Party m schedulerSampler).par W₁
+        ((openTheory Party m schedulerSampler).par W₂ W₃)) := by
+  simp only [openTheory]
+  rw [OpenProcess.mapBoundary_interleave]
+  exact interleave_assoc_samplerEquiv R W₁ W₂ W₃ schedulerSampler schedulerSampler
+    schedulerSampler schedulerSampler schedulerSampler
+    (map_tensorAssoc_comp_inlTensor_comp_inlTensor Party Δ₁ Δ₂ Δ₃)
+    (map_tensorAssoc_comp_inlTensor_comp_inrTensor Party Δ₁ Δ₂ Δ₃)
+    (map_tensorAssoc_comp_inrTensor Party Δ₁ Δ₂ Δ₃)
+    ((isInternalNode_schedulerNode Party _).map _)
+    (((isInternalNode_schedulerNode Party _).inlTensor _).map _)
+    (isInternalNode_schedulerNode Party _) (isInternalNode_schedulerNode Party _)
+    ((isInternalNode_schedulerNode Party _).inrTensor _)
+    (OpenNodeContext.preservesActivation_inrTensor Δ₁ _)
+    (OpenNodeContext.emitsAlong_inrTensor Δ₁ _) hσ (R.symm hfair)
+
+/-- Wiring is commutative up to sampler equivalence and boundary reshaping,
+provided the scheduler is `R`-fair. -/
+theorem openTheory_wire_comm_sampler_equiv [Monad m] [LawfulMonad m]
+    (R : MonadRelFamily m)
+    (hfair : R.rel schedulerSampler (schedulerFlip <$> schedulerSampler))
+    {Δ₁ Γ Δ₂ : PortBoundary}
+    (W₁ : OpenProcess.{u, v, w, w'} m Party (PortBoundary.tensor Δ₁ Γ))
+    (W₂ : OpenProcess.{u, v, w, w'} m Party
+      (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
+    OpenProcessSamplerEquiv R
+      ((openTheory Party m schedulerSampler).wire W₁ W₂)
+      (OpenProcess.mapBoundary (PortBoundary.Equiv.tensorComm Δ₂ Δ₁).toHom
+        ((openTheory Party m schedulerSampler).wire
+          (OpenProcess.mapBoundary
+            (PortBoundary.Equiv.tensorComm (PortBoundary.swap Γ) Δ₂).toHom W₂)
+          (OpenProcess.mapBoundary (PortBoundary.Equiv.tensorComm Δ₁ Γ).toHom W₁))) := by
+  simp only [openTheory]
+  rw [OpenProcess.mapBoundary_interleave]
+  simp only [OpenProcess.mapBoundary_eq_mapHom]
+  rw [OpenProcess.interleave_mapHom_left, OpenProcess.interleave_mapHom_right,
+    map_tensorComm_comp_wireLeft_comp_map_tensorComm,
+    map_tensorComm_comp_wireRight_comp_map_tensorComm]
+  exact interleave_comm_samplerEquiv R W₁ W₂ schedulerSampler schedulerSampler
+    (isInternalNode_schedulerNode Party _) ((isInternalNode_schedulerNode Party _).map _)
+    (R.symm hfair)
+
+/-! ## Sampler equivalence is a congruence for the theory
+
+Given the relation family is a congruence for the continuation of `bind`
+(`MonadRelFamily.IsBindCongr`), each operation of `openTheory` preserves
+sampler equivalence in each argument: every injection preserves activation and
+relabels traces. -/
+
+section Congruence
+
+variable [Monad m] [LawfulMonad m] (R : MonadRelFamily m) [R.IsBindCongr]
+
+open OpenNodeContext
+
+omit [LawfulMonad m] [R.IsBindCongr] in
+theorem openTheory_map_congr_sampler_equiv {Δ₁ Δ₂ : PortBoundary}
+    (φ : PortBoundary.Hom Δ₁ Δ₂) {W W' : OpenProcess.{u, v, w, w'} m Party Δ₁}
+    (h : OpenProcessSamplerEquiv R W W') :
+    OpenProcessSamplerEquiv R
+      ((openTheory Party m schedulerSampler).map φ W)
+      ((openTheory Party m schedulerSampler).map φ W') := by
+  simp only [openTheory]
+  rw [OpenProcess.mapBoundary_eq_mapHom, OpenProcess.mapBoundary_eq_mapHom]
+  exact OpenProcess.mapHom_congr_samplerEquiv R (preservesActivation_map φ) (emitsAlong_map φ) h
+
+theorem openTheory_par_congr_left_sampler_equiv {Δ₁ Δ₂ : PortBoundary}
+    {W₁ W₁' : OpenProcess.{u, v, w, w'} m Party Δ₁} (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+    (h : OpenProcessSamplerEquiv R W₁ W₁') :
+    OpenProcessSamplerEquiv R
+      ((openTheory Party m schedulerSampler).par W₁ W₂)
+      ((openTheory Party m schedulerSampler).par W₁' W₂) := by
+  simp only [openTheory]
+  exact OpenProcess.interleave_congr_left_samplerEquiv R W₁ W₂
+    (preservesActivation_inlTensor Δ₁ Δ₂) (emitsAlong_inlTensor Δ₁ Δ₂) schedulerSampler h
+
+theorem openTheory_par_congr_right_sampler_equiv {Δ₁ Δ₂ : PortBoundary}
+    (W₁ : OpenProcess.{u, v, w, w'} m Party Δ₁) {W₂ W₂' : OpenProcess.{u, v, w, w'} m Party Δ₂}
+    (h : OpenProcessSamplerEquiv R W₂ W₂') :
+    OpenProcessSamplerEquiv R
+      ((openTheory Party m schedulerSampler).par W₁ W₂)
+      ((openTheory Party m schedulerSampler).par W₁ W₂') := by
+  simp only [openTheory]
+  exact OpenProcess.interleave_congr_right_samplerEquiv R W₁ W₂
+    (preservesActivation_inrTensor Δ₁ Δ₂) (emitsAlong_inrTensor Δ₁ Δ₂) schedulerSampler h
+
+theorem openTheory_wire_congr_left_sampler_equiv {Δ₁ Γ Δ₂ : PortBoundary}
+    {W₁ W₁' : OpenProcess.{u, v, w, w'} m Party (PortBoundary.tensor Δ₁ Γ)}
+    (W₂ : OpenProcess.{u, v, w, w'} m Party (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂))
+    (h : OpenProcessSamplerEquiv R W₁ W₁') :
+    OpenProcessSamplerEquiv R
+      ((openTheory Party m schedulerSampler).wire W₁ W₂)
+      ((openTheory Party m schedulerSampler).wire W₁' W₂) := by
+  simp only [openTheory]
+  exact OpenProcess.interleave_congr_left_samplerEquiv R W₁ W₂
+    (preservesActivation_wireLeft Δ₁ Γ Δ₂) (emitsAlong_wireLeft Δ₁ Γ Δ₂) schedulerSampler h
+
+theorem openTheory_wire_congr_right_sampler_equiv {Δ₁ Γ Δ₂ : PortBoundary}
+    (W₁ : OpenProcess.{u, v, w, w'} m Party (PortBoundary.tensor Δ₁ Γ))
+    {W₂ W₂' : OpenProcess.{u, v, w, w'} m Party (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)}
+    (h : OpenProcessSamplerEquiv R W₂ W₂') :
+    OpenProcessSamplerEquiv R
+      ((openTheory Party m schedulerSampler).wire W₁ W₂)
+      ((openTheory Party m schedulerSampler).wire W₁ W₂') := by
+  simp only [openTheory]
+  exact OpenProcess.interleave_congr_right_samplerEquiv R W₁ W₂
+    (preservesActivation_wireRight Δ₁ Γ Δ₂) (emitsAlong_wireRight Δ₁ Γ Δ₂) schedulerSampler h
+
+theorem openTheory_plug_congr_left_sampler_equiv {Δ : PortBoundary}
+    {W W' : OpenProcess.{u, v, w, w'} m Party Δ}
+    (K : OpenProcess.{u, v, w, w'} m Party (PortBoundary.swap Δ))
+    (h : OpenProcessSamplerEquiv R W W') :
+    OpenProcessSamplerEquiv R
+      ((openTheory Party m schedulerSampler).plug W K)
+      ((openTheory Party m schedulerSampler).plug W' K) := by
+  simp only [openTheory]
+  exact OpenProcess.interleave_congr_left_samplerEquiv R W K
+    (preservesActivation_close Δ) (emitsAlong_close Δ) schedulerSampler h
+
+theorem openTheory_plug_congr_right_sampler_equiv {Δ : PortBoundary}
+    (W : OpenProcess.{u, v, w, w'} m Party Δ)
+    {K K' : OpenProcess.{u, v, w, w'} m Party (PortBoundary.swap Δ)}
+    (h : OpenProcessSamplerEquiv R K K') :
+    OpenProcessSamplerEquiv R
+      ((openTheory Party m schedulerSampler).plug W K)
+      ((openTheory Party m schedulerSampler).plug W K') := by
+  simp only [openTheory]
+  exact OpenProcess.interleave_congr_right_samplerEquiv R W K
+    (preservesActivation_close _) (emitsAlong_close _) schedulerSampler h
+
+end Congruence
 
 end UC
 end Interaction

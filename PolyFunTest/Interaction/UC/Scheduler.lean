@@ -42,5 +42,16 @@ theorem largerSide_not_reassociation_stable :
   rw [sourceDraw_largerSide_unit, leftDraw_largerSide_unit]
   nofun
 
+/-- No deterministic identity-monad scheduler is exactly coherent: at equal
+masses, swap coherence would require its Boolean choice to equal its negation. -/
+theorem not_isCoherent_eq_id (scheduler : BinaryScheduler Id) :
+    ¬ scheduler.IsCoherent (MonadRelFamily.eq Id) := by
+  intro h
+  have hs := (MonadRelFamily.eq_rel _ _).mp (h.swap 1 1)
+  change scheduler 1 1 = BinaryScheduler.flip (scheduler 1 1) at hs
+  generalize scheduler 1 1 = x at hs
+  rcases x with ⟨x⟩
+  cases x <;> cases hs
+
 end UC
 end Interaction

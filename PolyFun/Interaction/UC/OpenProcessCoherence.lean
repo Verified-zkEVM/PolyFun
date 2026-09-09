@@ -43,6 +43,7 @@ namespace Interaction
 namespace UC
 
 open Concurrent
+open PFunctor.FreeM.Displayed (Decoration)
 
 variable {m : Type w → Type w'} {Party : Type u}
 
@@ -130,6 +131,107 @@ theorem isSilentStep_interleave_right_iff {Δ₁ Δ₂ Δ : PortBoundary}
       IsSilentStep p₂ s₂ tr :=
   isSilentStep_interleaveRouted_right_iff p₁ p₂ f₁ hf₂ hc σ (fun _ _ s => s) (fun _ _ s => s)
     s₁ s₂ tr
+
+end OpenProcess
+
+/-! ## Branches of a composite step -/
+
+namespace OpenProcess
+
+variable {Δ₁ Δ₂ Δ Δ' : PortBoundary}
+  (p₁ : OpenProcess.{u, v, w, w'} m Party Δ₁) (p₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)
+  (f₁ : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₁)
+    (OpenNodeContext.{u, w} Party Δ))
+  (f₂ : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ₂)
+    (OpenNodeContext.{u, w} Party Δ))
+  (c : OpenNodeContext.{u, w} Party Δ (ULift.{w, 0} Bool)) (σ : m (ULift.{w, 0} Bool))
+  (g : TypeTree.Node.ContextHom (OpenNodeContext.{u, w} Party Δ)
+    (OpenNodeContext.{u, w} Party Δ'))
+  (s₁ : p₁.Proc) (s₂ : p₂.Proc)
+
+/-- A left-scheduled composite step is silent when the scheduler node is and
+the re-decorated component step is. -/
+theorem isSilentStep_interleave_left_iff_decoration (tr : (p₁.step s₁).tree.Path) :
+    IsSilentStep (p₁.interleave p₂ f₁ f₂ c σ) (s₁, s₂) ⟨⟨true⟩, tr⟩ ↔
+      c.boundary.isActivated = false ∧
+        IsSilentDecoration (Decoration.map f₁ _ (p₁.step s₁).semantics) tr := by
+  simp only [IsSilentStep, OpenProcess.interleave, ProcessOver.interleave, ProcessOver.ofStep,
+    PFunctor.DynSystem.expose_mk', IsSilentDecoration]
+
+/-- A right-scheduled composite step is silent when the scheduler node is and
+the re-decorated component step is. -/
+theorem isSilentStep_interleave_right_iff_decoration (tr : (p₂.step s₂).tree.Path) :
+    IsSilentStep (p₁.interleave p₂ f₁ f₂ c σ) (s₁, s₂) ⟨⟨false⟩, tr⟩ ↔
+      c.boundary.isActivated = false ∧
+        IsSilentDecoration (Decoration.map f₂ _ (p₂.step s₂).semantics) tr := by
+  simp only [IsSilentStep, OpenProcess.interleave, ProcessOver.interleave, ProcessOver.ofStep,
+    PFunctor.DynSystem.expose_mk', IsSilentDecoration]
+
+/-- Silence of the left branch of a re-decorated composite step. -/
+theorem isSilentDecoration_map_interleave_left (tr : (p₁.step s₁).tree.Path) :
+    IsSilentDecoration
+        (Decoration.map g _ ((p₁.interleave p₂ f₁ f₂ c σ).step (s₁, s₂)).semantics)
+        ⟨⟨true⟩, tr⟩ ↔
+      (g _ c).boundary.isActivated = false ∧
+        IsSilentDecoration (Decoration.map g _ (Decoration.map f₁ _ (p₁.step s₁).semantics))
+          tr := by
+  simp only [OpenProcess.interleave, ProcessOver.interleave, ProcessOver.ofStep,
+    PFunctor.DynSystem.expose_mk', OpenNodeContext.decoration_map_node, IsSilentDecoration]
+
+/-- Silence of the right branch of a re-decorated composite step. -/
+theorem isSilentDecoration_map_interleave_right (tr : (p₂.step s₂).tree.Path) :
+    IsSilentDecoration
+        (Decoration.map g _ ((p₁.interleave p₂ f₁ f₂ c σ).step (s₁, s₂)).semantics)
+        ⟨⟨false⟩, tr⟩ ↔
+      (g _ c).boundary.isActivated = false ∧
+        IsSilentDecoration (Decoration.map g _ (Decoration.map f₂ _ (p₂.step s₂).semantics))
+          tr := by
+  simp only [OpenProcess.interleave, ProcessOver.interleave, ProcessOver.ofStep,
+    PFunctor.DynSystem.expose_mk', OpenNodeContext.decoration_map_node, IsSilentDecoration]
+
+/-- The boundary trace of a left-scheduled composite step. -/
+theorem boundaryTrace_interleave_left (tr : (p₁.step s₁).tree.Path) :
+    OpenNodeContext.boundaryTrace _ ((p₁.interleave p₂ f₁ f₂ c σ).step (s₁, s₂)).semantics
+        ⟨⟨true⟩, tr⟩ =
+      c.boundary.emit ⟨true⟩ *
+        OpenNodeContext.boundaryTrace _ (Decoration.map f₁ _ (p₁.step s₁).semantics) tr := by
+  simp only [OpenProcess.interleave, ProcessOver.interleave, ProcessOver.ofStep,
+    PFunctor.DynSystem.expose_mk']
+  exact OpenNodeContext.boundaryTrace_node _ _ _ _
+
+/-- The boundary trace of a right-scheduled composite step. -/
+theorem boundaryTrace_interleave_right (tr : (p₂.step s₂).tree.Path) :
+    OpenNodeContext.boundaryTrace _ ((p₁.interleave p₂ f₁ f₂ c σ).step (s₁, s₂)).semantics
+        ⟨⟨false⟩, tr⟩ =
+      c.boundary.emit ⟨false⟩ *
+        OpenNodeContext.boundaryTrace _ (Decoration.map f₂ _ (p₂.step s₂).semantics) tr := by
+  simp only [OpenProcess.interleave, ProcessOver.interleave, ProcessOver.ofStep,
+    PFunctor.DynSystem.expose_mk']
+  exact OpenNodeContext.boundaryTrace_node _ _ _ _
+
+/-- The boundary trace of the left branch of a re-decorated composite step. -/
+theorem boundaryTrace_map_interleave_left (tr : (p₁.step s₁).tree.Path) :
+    OpenNodeContext.boundaryTrace _
+        (Decoration.map g _ ((p₁.interleave p₂ f₁ f₂ c σ).step (s₁, s₂)).semantics)
+        ⟨⟨true⟩, tr⟩ =
+      (g _ c).boundary.emit ⟨true⟩ *
+        OpenNodeContext.boundaryTrace _
+          (Decoration.map g _ (Decoration.map f₁ _ (p₁.step s₁).semantics)) tr := by
+  simp only [OpenProcess.interleave, ProcessOver.interleave, ProcessOver.ofStep,
+    PFunctor.DynSystem.expose_mk', OpenNodeContext.decoration_map_node]
+  exact OpenNodeContext.boundaryTrace_node _ _ _ _
+
+/-- The boundary trace of the right branch of a re-decorated composite step. -/
+theorem boundaryTrace_map_interleave_right (tr : (p₂.step s₂).tree.Path) :
+    OpenNodeContext.boundaryTrace _
+        (Decoration.map g _ ((p₁.interleave p₂ f₁ f₂ c σ).step (s₁, s₂)).semantics)
+        ⟨⟨false⟩, tr⟩ =
+      (g _ c).boundary.emit ⟨false⟩ *
+        OpenNodeContext.boundaryTrace _
+          (Decoration.map g _ (Decoration.map f₂ _ (p₂.step s₂).semantics)) tr := by
+  simp only [OpenProcess.interleave, ProcessOver.interleave, ProcessOver.ofStep,
+    PFunctor.DynSystem.expose_mk', OpenNodeContext.decoration_map_node]
+  exact OpenNodeContext.boundaryTrace_node _ _ _ _
 
 end OpenProcess
 

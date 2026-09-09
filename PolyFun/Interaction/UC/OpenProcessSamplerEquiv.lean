@@ -22,7 +22,8 @@ per-type equivalence on `m`-computations respecting `map` and one-sided
 `bind`. `MonadRelFamily.eq` preserves exact computations and
 `MonadRelFamily.top` forgets sampler effects. A downstream relation may instead
 compare denotations (for example measure-valued semantics), provided it proves
-the same congruence laws.
+the same congruence laws. `MonadRelFamily.IsBindCongr` adds congruence in
+the continuation of `bind`, as needed when interleaving equivalent components.
 
 `IsSamplerBisimulation R p₁ p₂ rel` demands a *strong* step matching: related
 states carry a bijection of complete step paths preserving silence, boundary
@@ -108,6 +109,37 @@ theorem MonadRelFamily.top_rel {m : Type w → Type w'} [Monad m]
     {α : Type w} (x y : m α) : (MonadRelFamily.top m).rel x y :=
   trivial
 
+/-! ## Right-continuation congruence -/
+
+/-- A relation family is **bind-congruent on the right** when binding a common
+computation against pointwise related continuations gives related results.
+Together with `MonadRelFamily.bind_congr` this makes the family a congruence
+for `bind`. Equality and the everything-relation satisfy it. A relation comparing
+downstream denotations must prove this continuation law separately. -/
+class MonadRelFamily.IsBindCongr {m : Type w → Type w'} [Monad m]
+    (R : MonadRelFamily m) : Prop where
+  /-- Binding against pointwise related continuations preserves the relation. -/
+  bind_congr_right : ∀ {α β : Type w} (x : m α) {f g : α → m β},
+    (∀ a, R.rel (f a) (g a)) → R.rel (x >>= f) (x >>= g)
+
+theorem MonadRelFamily.bind_congr_right {m : Type w → Type w'} [Monad m]
+    (R : MonadRelFamily m) [R.IsBindCongr] {α β : Type w} (x : m α) {f g : α → m β}
+    (h : ∀ a, R.rel (f a) (g a)) : R.rel (x >>= f) (x >>= g) :=
+  IsBindCongr.bind_congr_right x h
+
+instance MonadRelFamily.eq_isBindCongr {m : Type w → Type w'} [Monad m] :
+    (MonadRelFamily.eq m).IsBindCongr where
+  bind_congr_right := by
+    intro α β x f g h
+    exact (MonadRelFamily.eq_rel _ _).mpr
+      (congrArg (x >>= ·) (funext fun a => (MonadRelFamily.eq_rel _ _).mp (h a)))
+
+instance MonadRelFamily.top_isBindCongr {m : Type w → Type w'} [Monad m] :
+    (MonadRelFamily.top m).IsBindCongr where
+  bind_congr_right := by
+    intro α β x f g _
+    exact MonadRelFamily.top_rel _ _
+
 /-! ## Sampler bisimulation -/
 
 /-- A strong sampler bisimulation between open processes on a common
@@ -120,7 +152,7 @@ structure IsSamplerBisimulation {m : Type w → Type w'} [Monad m]
     (p₂ : OpenProcess.{u, v₂, w, w'} m Party Δ)
     (rel : p₁.Proc → p₂.Proc → Prop) : Prop where
   /-- Each related pair of states admits a path bijection preserving the
-  security-visible step data. -/
+  observable step data. -/
   step_equiv : ∀ s₁ s₂, rel s₁ s₂ →
     ∃ e : TypeTree.Path (p₁.step s₁).tree ≃ TypeTree.Path (p₂.step s₂).tree,
       (∀ tr : TypeTree.Path (p₁.step s₁).tree,

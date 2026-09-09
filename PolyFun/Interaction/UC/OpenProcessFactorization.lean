@@ -41,8 +41,8 @@ with the context, and the inner pair is commuted under
 composite under `OpenProcess.interleave_congr_left`.
 
 `OpenProcessFactorization.sourceSchedule`, `leftSchedule`, and `rightSchedule`
-record the scheduler truth tables of the two sides; the sampler-aware laws
-consume them.
+record the scheduler truth tables of the two sides, indexed by the leaf type
+`OpenProcessFactorization.Leaf`; the sampler-aware laws consume them.
 -/
 
 public section
@@ -63,8 +63,8 @@ variable (schedulerSampler : m (ULift.{w, 0} Bool))
 
 namespace OpenProcessFactorization
 
-/-- The component selected after flattening either side of a plug
-factorization. -/
+/-- The leaf selected by a ternary regrouping of interleavings. `context` names
+the third leaf; in the plug factorizations it is the closing context. -/
 inductive Leaf where
   | first
   | second
