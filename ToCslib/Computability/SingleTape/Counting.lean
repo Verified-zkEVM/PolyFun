@@ -3,6 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Devon Tuma, Elias Judin
 -/
+
 module
 
 public import ToCslib.Computability.BitEncoding
@@ -12,10 +13,9 @@ public import Mathlib.Data.FinEnum
 /-!
 # Counting Polynomial-Size Turing Machines
 
-The combinatorial core of the non-triviality certificate for the machine-grounded
-polynomial-time model : only
-sub-doubly-exponentially many predicates `BitVec n → Bool` are realizable by
-`d`-state single-tape machines, while there are `2 ^ (2 ^ n)` such predicates.
+This module bounds the number of predicates `BitVec n → Bool` realizable by pairs
+of single-tape machines with at most `d` states each. It compares that bound with
+the `2 ^ (2 ^ n)` Boolean predicates to obtain a nonuniform separation theorem.
 
 The pieces, each isolated so the diagonalization argument reads as pure counting:
 
@@ -38,8 +38,11 @@ The pieces, each isolated so the diagonalization argument reads as pure counting
   (`ToCslib.Computability.eventually_poly_le`), while the machine count stays below the function
   count (`ToCslib.Computability.eventually_count_lt`).
 * **The function space** has cardinality `2 ^ (2 ^ n)` (`ToCslib.Computability.card_bitVec_fun`),
-  and a `Finset` family of subexponential cardinality misses a diagonal predicate
+  and a `Finset` family smaller than that predicate space misses a diagonal predicate
   eventually (`ToCslib.Computability.exists_diagonal`).
+* **Nonuniform separation** (`ToCslib.Computability.exists_not_realizableLE_poly`): some
+  Boolean predicate family admits no polynomial bound on the sizes of its realizing
+  machine pairs, even without a uniform running-time bound across input lengths.
 -/
 
 public section
@@ -509,7 +512,7 @@ theorem eventually_count_lt :
 
 /-! ## The diagonal predicate -/
 
-/-- A `Finset` family of subexponential cardinality misses a predicate eventually: if
+/-- A `Finset` family smaller than the predicate space eventually misses a predicate: if
 `(S n).card < 2 ^ (2 ^ n)` cofinitely, some family `f` has `f n ∉ S n` cofinitely. -/
 theorem exists_diagonal (S : (n : ℕ) → Finset (BitVec n → Bool))
     (hS : ∀ᶠ n in atTop, (S n).card < 2 ^ (2 ^ n)) :
@@ -525,5 +528,27 @@ theorem exists_diagonal (S : (n : ℕ) → Finset (BitVec n → Bool))
   refine hS.mono fun n hn => ?_
   simp only [dif_pos hn]
   exact (key n hn).choose_spec
+
+/-- Some Boolean predicate family cannot be realized by machine pairs of polynomially
+bounded description size. `RealizableLE` counts separately polynomial-time initialization
+and observation machines; no uniform time bound across input lengths is assumed here. -/
+theorem exists_not_realizableLE_poly :
+    ∃ f : (n : ℕ) → BitVec n → Bool,
+      ¬ ∃ q : Polynomial ℕ, ∀ n, f n ∈ RealizableLE n (q.eval n) := by
+  classical
+  let cover : (n : ℕ) → Finset (BitVec n → Bool) :=
+    fun n ↦ (exists_realizableLE_covering n (2 ^ (n / 4))).choose
+  have covered : ∀ n, RealizableLE n (2 ^ (n / 4)) ⊆ ↑(cover n) := fun n ↦
+    (exists_realizableLE_covering n (2 ^ (n / 4))).choose_spec.1
+  have cardBound : ∀ n, (cover n).card ≤ B (2 ^ (n / 4)) ^ 2 := fun n ↦
+    (exists_realizableLE_covering n (2 ^ (n / 4))).choose_spec.2
+  obtain ⟨f, misses⟩ := exists_diagonal cover
+    (eventually_count_lt.mono fun n bound ↦ lt_of_le_of_lt (cardBound n) bound)
+  refine ⟨f, fun ⟨q, realizable⟩ ↦ ?_⟩
+  have belongs : ∀ᶠ n in atTop, f n ∈ cover n :=
+    (eventually_poly_le q).mono fun n bound ↦
+      Finset.mem_coe.mp (covered n (realizableLE_mono bound (realizable n)))
+  obtain ⟨n, belongsAtN, missesAtN⟩ := (belongs.and misses).exists
+  exact missesAtN belongsAtN
 
 end ToCslib.Computability

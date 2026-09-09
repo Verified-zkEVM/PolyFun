@@ -38,6 +38,12 @@ example {n index : ℕ} (hindex : index < n) (bit : Bool) (value : BitVec n) :
 example : Fintype.card (BitVec 2 → Bool) = 16 := by
   simpa using card_bitVec_fun 2
 
+/-- The polynomial may depend on the predicate family; even this nonuniform claim fails. -/
+example : ¬ ∀ f : (n : ℕ) → BitVec n → Bool,
+    ∃ q : Polynomial ℕ, ∀ n, f n ∈ RealizableLE n (q.eval n) := by
+  obtain ⟨f, notRealizable⟩ := exists_not_realizableLE_poly
+  exact fun allFamilies ↦ notRealizable (allFamilies f)
+
 example (state : StrEncFam fun _ ↦ Bool) (parameter : ℕ) (value : Bool) :
     state.option.enc parameter none ≠ state.option.enc parameter (some value) := by
   simp

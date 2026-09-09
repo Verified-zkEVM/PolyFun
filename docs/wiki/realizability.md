@@ -447,17 +447,59 @@ scheme whose operations the word class admits, supplied as `WordPairing` and
 this writing complexitylib has the ingredients (`Complexity.pair`, `unpair?`,
 `delimit`) but has not exposed them as a class-level closure result, and cslib's
 `PolyTimeComputable` has `id` and `comp` but no pairing or projection machines at
-all. So a cslib instantiation is blocked upstream, not here.
+all. The local `ToCslib` extensions supply encoded machine families and finite-table
+constructors. `PolyFunCslib` uses those concrete certificates directly; it does not
+claim a complete `ofWordClass` structural instance.
 
 `StepClass.computable` — Mathlib's `Primcodable` representations and `Computable`
 functions — is the in-repo instance that works today and exercises every mixin.
 
+## Local cslib Complexity Theory And The Optional Adapter
+
+Concrete machine and complexity theory is maintained locally in `ToCslib` while
+upstream APIs stabilize. `ToCslib/Computability/PolyTime.lean` supplies encoded
+single-tape witnesses; `ToCslib/Computability/BitEncoding.lean` packages injective
+encoding families and uniform polynomial time and description bounds.
+`ToCslib/Computability/SingleTape/Counting.lean` proves
+`exists_not_realizableLE_poly`: some Boolean predicate family has no polynomial
+bound on its realizing machine-pair descriptions. This conclusion does not need
+a uniform running-time bound across input lengths. These modules import only
+cslib and Mathlib.
+
+The optional `PolyFunCslib/` library connects this theory to PolyFun:
+
+- `PolyFunCslib/Backend.lean` interprets `EncPolyTime` as quantitative executable
+  evidence. Its qualitative admissibility predicate is unconstrained; every
+  quantitative map still carries a concrete machine certificate.
+- `PolyFunCslib/PPoly.lean` pins the input, output, position, and dependent-answer
+  encodings. `IsPPolyBy` carries initialization, combined head observation, and
+  partial-update machine families, polynomial state-length and round bounds,
+  bounded semantic implementation, and progress at every reachable query.
+  `Witness.executionWork_le_totalTime` bounds every finite execution prefix by
+  `initTime + (rounds + 1) * headTime + rounds * updateTime`, using the generic
+  trace length and additive cost lemmas in `Quantitative.lean`.
+- `PolyFunCslib/Nontriviality.lean` extracts an initialization/observation pair
+  from a pure Boolean certificate and applies the local counting theorem.
+
+The work charge is each machine witness's certified time envelope. It excludes
+external answer computation and does not count the exact steps of a linked
+whole-program machine. No equivalence with the circuit characterization of
+P/poly is asserted. Encodings are fixed by the caller; arbitrary changes of
+encoding have no automatic complexity-preservation theorem. Precomposition and
+result mapping require supplied code families.
+
+The ordinary-import examples in `PolyFunTest/Realizability/CslibPPoly.lean`
+cover pure returns, real Boolean queries, distinct answers, mismatched update
+tags, nontrivial input/result maps, and rejection of an empty-answer query.
+`PolyFunTest/ToCslib/Basic.lean` consumes the machine separation independently
+of PolyFun. The generated `PolyFun` umbrella imports neither concrete library.
+
 ## Known Gaps
 
-- **No concrete machine-adequacy theorem.** `QuantitativeStepClass` retains
-  `Type`-valued executable witnesses, encoded sizes, and backend-relative costs,
-  but a concrete backend must still relate those costs to a standard operational
-  machine model before making a complexity-class claim.
+- **No whole-program machine-adequacy theorem.** `PolyFunCslib` certifies the
+  local step maps with cslib machines and bounds their additive time envelopes.
+  A compiler and linking theorem for the complete interactive machine, and a
+  circuit characterization, remain separate obligations.
 - **Open-process closure is a certificate obligation.**
   `OpenProcess.IsRealizabilityClosed` consists of four first-order lens
   admissibility certificates at the pinned boundary family

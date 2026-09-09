@@ -16,13 +16,13 @@ usage() {
 Usage: ./scripts/validate.sh [--lint] [--test] [--axioms]
 
 Default checks:
-  - lake build
+  - lake build PolyFun ToCslib PolyFunCslib --wfail
   - ./scripts/check-modules.sh
   - ./scripts/check-imports.sh
   - python3 ./scripts/check-docs-integrity.py
 
 Optional checks:
-  --lint    Run environment and text-style linters over PolyFun and ToCslib
+  --lint    Run environment and text-style linters over all production libraries
   --test    Run `lake test` (builds the PolyFunTest library)
   --axioms  Test axiomsweep, then enforce the zero axiom/sorry-debt gate
 EOF
@@ -52,7 +52,7 @@ for arg in "$@"; do
 done
 
 echo "# Building project"
-lake build PolyFun ToCslib --wfail
+lake build PolyFun ToCslib PolyFunCslib --wfail
 
 echo ""
 echo "# Checking module scopes"
@@ -71,7 +71,7 @@ if (( run_lint )); then
   echo ""
   echo "# Running environment linters (lake lint)"
   lake lint
-  lake exe lint-style PolyFun ToCslib
+  lake exe lint-style PolyFun ToCslib PolyFunCslib
 fi
 
 if (( run_test )); then
@@ -84,7 +84,7 @@ fi
 if (( run_axioms )); then
   echo ""
   echo "# Building axiom sweep roots"
-  lake build PolyFun ToCslib --wfail
+  lake build PolyFun ToCslib PolyFunCslib --wfail
 
   echo ""
   echo "# Testing the axiom sweep tool"
@@ -92,7 +92,7 @@ if (( run_axioms )); then
 
   echo ""
   echo "# Enforcing zero axiom/sorry debt"
-  lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --check
+  lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --root PolyFunCslib --check
 fi
 
 echo ""

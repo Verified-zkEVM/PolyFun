@@ -466,6 +466,22 @@ def length {start finish : R.machine.State} : ExecutionTrace R start finish → 
   | .nil _ => 0
   | .query _ _ tail => tail.length + 1
 
+/-- Every execution prefix fits within a branchwise resolution budget at its start. -/
+theorem length_le_of_resolvesIn {start finish : R.machine.State} {budget : ℕ}
+    (trace : ExecutionTrace R start finish) (resolves : R.machine.ResolvesIn budget start) :
+    trace.length ≤ budget := by
+  induction trace generalizing budget with
+  | nil => simp [length]
+  | @query state position next finish view_eq direction tail ih =>
+      cases budget with
+      | zero =>
+          exact False.elim
+            (R.machine.not_resolvesIn_query_zero state position next view_eq resolves)
+      | succ budget =>
+          exact Nat.succ_le_succ (ih
+            ((R.machine.resolvesIn_query_succ_iff budget state position next view_eq).mp
+              resolves direction))
+
 /-- Number of query-answer transitions carrying one selected interface label. -/
 def queryCount {label : Type*} [DecidableEq label] (labelOf : p.A → label)
     (interface : label) {start finish : R.machine.State} :
@@ -520,6 +536,25 @@ def cost {start finish : R.machine.State} : ExecutionTrace R start finish → Ex
           (Q.size bd.head (R.machine.head start)) +
         ExecutionCost.query (Q.size bd.pos position)
           (Q.size bd.idx ⟨position, direction⟩) + cost tail
+
+/-- Constant bounds on head and transition work give an additive bound for a trace and
+its final head observation: one head per visited state and one update per query. -/
+theorem work_cost_add_finalHead_le
+    (headBound updateBound : ℕ)
+    (head_le : ∀ state, Q.cost R.headCode state ≤ headBound)
+    (update_le : ∀ step, Q.cost R.updateCode step ≤ updateBound)
+    {start finish : R.machine.State} (trace : ExecutionTrace R start finish) :
+    trace.cost.work + Q.cost R.headCode finish ≤
+      (trace.length + 1) * headBound + trace.length * updateBound := by
+  induction trace with
+  | nil state => simpa [cost, length] using head_le state
+  | @query state position next finish view_eq direction tail ih =>
+      have headAtState := head_le state
+      have updateAtState := update_le (state, ⟨position, direction⟩)
+      simp only [cost, length, ExecutionCost.work_add, ExecutionCost.work_ofWork,
+        ExecutionCost.work_observe, ExecutionCost.work_query, Nat.add_zero]
+      simp only [Nat.add_mul, Nat.one_mul] at ih ⊢
+      omega
 
 /-- A trace starting at a returning state is empty: its final state is unchanged and it incurs no
 transition cost.

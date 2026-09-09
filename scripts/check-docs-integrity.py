@@ -37,7 +37,7 @@ TRACKED_PATHS = [
 MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 LEAN_PATH_RE = re.compile(
     r"(?<![A-Za-z0-9_./])"
-    r"((?:PolyFun|PolyFunTest)/(?:"
+    r"((?:PolyFun|ToCslib|PolyFunCslib|PolyFunTest)/(?:"
     r"[A-Za-z0-9_./-]+\.lean|"
     r"[A-Za-z0-9_./-]*\{[A-Za-z0-9_./, -]+\}(?:[A-Za-z0-9_./-]*\.lean)?"
     r"))"
@@ -167,8 +167,14 @@ def has_module_docstring(text: str) -> bool:
 
 def check_module_docstrings() -> list[str]:
     errors: list[str] = []
-    for source_root in (REPO_ROOT / "PolyFun", REPO_ROOT / "PolyFunTest"):
-        for lean_file in source_root.rglob("*.lean"):
+    for root_name in ("PolyFun", "ToCslib", "PolyFunCslib", "PolyFunTest"):
+        source_root = REPO_ROOT / root_name
+        lean_files = list(source_root.rglob("*.lean"))
+        umbrella = REPO_ROOT / f"{root_name}.lean"
+        # PolyFun.lean is a generated import index without a module docstring.
+        if root_name != "PolyFun" and umbrella.is_file():
+            lean_files.append(umbrella)
+        for lean_file in lean_files:
             if not has_module_docstring(lean_file.read_text()):
                 rel_path = lean_file.relative_to(REPO_ROOT)
                 errors.append(f"Missing module docstring: {rel_path}")

@@ -33,8 +33,10 @@ PolyFun/
                      quarantine root (Do/Basic)
   Logic/             small logic helpers (HEq)
 
-ToCslib/             separate low-level extensions to the pinned cslib machine
+ToCslib/             local machine and complexity theory over the pinned cslib
                      API; imports cslib and Mathlib, never PolyFun
+PolyFunCslib/         optional cslib-backed PolyFun realizability adapter;
+                     excluded from the PolyFun umbrella
 
 PolyFunTest/         tests and worked examples; imports PolyFun one-way,
                      built by lake test
@@ -58,10 +60,15 @@ recorded in [`AGENTS.md`](../../AGENTS.md):
 
 ```text
 Cslib + Mathlib -> ToCslib -> optional PolyFun backend adapters
+ToCslib/Computability/PolyTime -> ToCslib/Computability/BitEncoding
+  -> ToCslib/Computability/SingleTape/Counting (nonuniform separation)
 ```
 
-It contains concrete machine constructions and lemmas, but no realizability,
-oracle, probability, or cryptographic policy.
+It contains concrete machine constructions, encoded polynomial-time families,
+and counting/diagonalization results. Complexity theory stays here while upstream
+APIs stabilize. It does not depend on PolyFun realizability, oracle semantics,
+probability, or cryptographic policy. `PolyFunCslib` contains the PolyFun-specific
+certificate and its bridge to the machine-counting separation theorem.
 
 ```text
 PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
@@ -335,6 +342,12 @@ Realizability/Quantitative/Closure -> Realizability/Quantitative/BoundedClosure
  Realizability/Quantitative/Polynomial}
   -> Realizability/Quantitative/Resource
 Realizability/{Instances, Quantitative} -> Realizability/Quantitative/WordClass
+{Realizability/Quantitative, ToCslib/Computability/PolyTime}
+  -> PolyFunCslib/Backend
+{PolyFunCslib/Backend, ToCslib/Computability/BitEncoding}
+  -> PolyFunCslib/PPoly
+{PolyFunCslib/PPoly, ToCslib/Computability/SingleTape/Counting}
+  -> PolyFunCslib/Nontriviality
 Mathlib/Order/Monotone/Basic -> Complexity/SecondOrderPolynomial
   (Instances additionally draws on Mathlib's Computability and Fintype layers;
    Quantitative/Closure assembles executable structural code but asserts no
@@ -381,8 +394,10 @@ plain imports, and reducibility is exposed declaration-by-declaration.
   closure operations: start in `PolyFun/Realizability/Quantitative.lean` and
   `PolyFun/Realizability/Quantitative/Closure.lean`; for ranked termination,
   trace transport, and restricted pathwise closure, continue with
-  `PolyFun/Realizability/Quantitative/BoundedClosure.lean`. Concrete complexity
-  classes and adequacy theorems belong downstream.
+  `PolyFun/Realizability/Quantitative/BoundedClosure.lean`. Optional concrete
+  adapters live in separate library roots such as `PolyFunCslib/`;
+  cryptographic policy and protocol-specific adequacy theorems belong
+  downstream.
 - Updating notation: start in `PolyFun/Interaction/UC/Notation.lean`. See
   [`notation.md`](notation.md).
 

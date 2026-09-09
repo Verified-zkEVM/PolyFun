@@ -100,8 +100,11 @@ and depend on this library.
   from any class of word functions. `Representation.lean` supplies mutual
   admissible translation, boundary-level realizability invariance, and
   admissible word encode/decode retractions. Generic quantitative realizability
-  and backend-relative trace accounting also live here. *Generic only* —
-  concrete machine adequacy and complexity classes live downstream.
+  and backend-relative trace accounting also live here. Optional concrete
+  realizability adapters live in separate library roots; `PolyFunCslib/` exposes
+  a non-uniform, boundary-pinned P/poly certificate without
+  importing oracle, probability, or cryptographic policy. Named cryptographic
+  adversary classes and protocol-specific adequacy results remain downstream.
 - `PolyFun/Control/`: monad and comonad infrastructure transitively
   required by the above (coalgebra, comonad, free / freecont monad
   algebra, monad iter / hom), plus the program-logic
@@ -113,9 +116,13 @@ and depend on this library.
   silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
 - `ToCslib/`: a separate low-level Lake library of reusable extensions to the
-  pinned cslib machine API. It imports cslib and Mathlib but never PolyFun,
+  pinned cslib machine API, including local complexity theory while upstream
+  APIs stabilize: encoded polynomial-time families and machine-counting separation.
+  It imports cslib and Mathlib but never PolyFun,
   oracle semantics, probability, or cryptography. Concrete PolyFun backend
   adapters may import it explicitly; the generated `PolyFun` umbrella does not.
+- `PolyFunCslib/`: an optional adapter library combining generic PolyFun machines
+  with `ToCslib` certificates. It is excluded from the `PolyFun` umbrella.
 - `PolyFunTest/`: separate test / worked-example library (glob
   `PolyFunTest.+`), built by `lake test` and kept out of the `lake lint`
   scope. Holds the dynamical / interaction worked examples and the

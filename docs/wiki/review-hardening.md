@@ -43,8 +43,10 @@ If a reusable result is genuinely absent, keep the local result narrow and
 record the upstream search and the condition under which the local declaration
 can be deleted. PolyFun remains the correct home for polynomial, interaction,
 qualitative machine structure, and backend-relative quantitative accounting.
-Probability, concrete complexity-class and machine-adequacy claims, and
-cryptographic policy remain downstream.
+Concrete machine and complexity theory stays local in `ToCslib` while the upstream
+API stabilizes, using only cslib and Mathlib. `PolyFunCslib` supplies the optional
+bridge to PolyFun realizability. Probability, cryptographic policy, and
+protocol-specific adequacy claims remain downstream.
 
 ## Hardening Checklist
 

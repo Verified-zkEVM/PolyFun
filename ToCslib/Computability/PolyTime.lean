@@ -3,6 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Devon Tuma
 -/
+
 module
 
 public import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
@@ -17,7 +18,7 @@ of raw string functions `List Symbol → List Symbol`. This file adds the encodi
 arbitrary types is polynomial-time computable relative to `Bool`-string encodings
 `ea : α → List Bool` and `eb : β → List Bool`, by bundling a machine-computed total
 string function that intertwines the encodings. The encodings are supplied by call
-sites; the adversary model pins the injective fixed-width and length-bounded families
+sites, which can pin the injective fixed-width and length-bounded families
 of `ToCslib.Computability.BitEncoding` (`ToCslib.Computability.BitEncFam`,
 `ToCslib.Computability.StrEncFam`) at its boundaries.
 
@@ -28,13 +29,11 @@ which replaces a machine's time bound with its own polynomial.
 
 Besides the running time `EncPolyTime.time`, every witness has a **description size**
 `EncPolyTime.size`: the state count of its machine. Cslib's `PolyTimeComputable` bounds
-only the running time, which suffices for a *single* function but not for a *family* of
-witnesses indexed by a security parameter: a finite-table machine looks up any function
-in linear time using one state per valid input, so without a size bound a family of
-witnesses smuggles unbounded advice and the induced "polynomial-time" class contains
-every function on polynomially-encodable domains. Families must therefore bound
-`size` polynomially as well (see a uniform description bound), giving the standard
-non-uniform P/poly model.
+only the running time of a single function. A nonuniform family also needs a separate
+bound on machine descriptions: time bounds do not constrain the number of states
+in a machine. `EncPolyTimeFam` packages uniform polynomial bounds on both quantities.
+These are encoded machine certificates; equivalence to a circuit complexity class
+requires a separate characterization theorem.
 -/
 
 public section
@@ -71,8 +70,8 @@ number of states. Over the fixed `Bool` alphabet the transition table has exactl
 rows per state, and each target-state entry needs logarithmically many bits. Thus a
 polynomial state-count bound is polynomially equivalent to a conventional transition-
 table bit-size bound (rather than equal up to a constant factor). It is the advice
-measure counted by `B`. Time bounds alone do not control it: a table machine looks up
-any function on a finite domain in linear time using one state per valid input.
+measure counted by `B`. Time bounds alone do not control the number of states
+in a machine description.
 
 Deliberately restricted to `Symbol := Bool`: over a family of growing alphabets the
 transition table has `Fintype.card Symbol + 1` rows per state, so a bare state count
@@ -124,8 +123,8 @@ variable {ea : α → List Bool} {eb : β → List Bool} {ec : γ → List Bool}
 def time {f : α → β} (h : EncPolyTime ea eb f) : Polynomial ℕ := h.polyTime.poly
 
 /-- The description size (machine state count) of the underlying machine. Families of
-witnesses indexed by a security parameter must bound this polynomially — the advice
-bound of the non-uniform P/poly model; see the module docstring. -/
+witnesses indexed by a size parameter must bound this separately from running time;
+see `EncPolyTimeFam`. -/
 def size {f : α → β} (h : EncPolyTime ea eb f) : ℕ := h.polyTime.size
 
 /-- The time accessor returns the polynomial carried by the underlying cslib witness. -/

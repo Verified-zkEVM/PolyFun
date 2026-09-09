@@ -3,6 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Devon Tuma
 -/
+
 module
 
 public import ToCslib.Computability.SingleTape.BasicMachines
@@ -12,8 +13,8 @@ public import Mathlib.Data.Nat.Log
 /-!
 # Pinned Fixed-Width Bit Encodings and Uniform Machine Families
 
-The pinned boundary representation for the polynomial-time adversary model, and the
-reusable unit of machine-computability it consumes.
+Fixed representations and uniform polynomial certificates for nonuniform machine
+families over the cslib substrate.
 
 ## Why encodings must be pinned
 
@@ -24,12 +25,12 @@ relative to a *fixed, trusted* representation (syntactic frameworks fix one impl
 through the programming language's value representation; a machine-grounded framework
 must fix it explicitly). This file provides that representation:
 
-* `ToCslib.Computability.StrEncFam` — a security-parameter-indexed family of injective raw
+* `ToCslib.Computability.StrEncFam` — a size-parameter-indexed family of injective raw
   `List Bool` encodings with a polynomial length bound. This is the *variable-width*
   notion, the representation freedom left to a machine's internal state.
 * `ToCslib.Computability.BitEncFam` — the *fixed-width* refinement: at each parameter every
   value encodes to exactly `wid n` bits, with `wid` polynomially bounded. This is the
-  pinned *boundary* representation for inputs, outputs, and oracle interfaces. The
+  pinned *boundary* representation for inputs, outputs, and interaction interfaces. The
   structure does not itself certify that an encoding is canonical: call sites must pin
   a trusted constructor or an explicitly reviewed encoding. Its polynomial width bound
   ensures every boundary value has `poly(n)` length; machine-family bounds charge `n`
@@ -44,7 +45,7 @@ must fix it explicitly). This file provides that representation:
   polynomial time and description-size bounds: the reusable unit "this function family
   is computed by polynomial machines relative to these encodings". Base machines
   produce these; the closure combinators (`comp`, `id`, `const`, `ofFintype`) compose
-  them; a polynomial-time adversary carries four of them.
+  them; clients supply one certificate for each implemented function family.
 
 Everything here is raw `α → List Bool`: no intermediate alphabet types and no one-hot
 symbol relabeling — encodings are binary from the start, so encoded lengths are the
@@ -85,7 +86,7 @@ theorem natToBits_inj {w m₁ m₂ : ℕ} (h₁ : m₁ < 2 ^ w) (h₂ : m₂ < 2
 
 /-! ## Variable-width bounded string encodings -/
 
-/-- A security-parameter-indexed family of injective raw bit-string encodings with a
+/-- A size-parameter-indexed family of injective raw bit-string encodings with a
 polynomial length bound: the representation freedom left to a machine's internal
 state. Injectivity is the only semantic demand; the length bound is what keeps
 resource accounting polynomial. -/
@@ -101,7 +102,7 @@ structure StrEncFam (α : ℕ → Type u) : Type u where
 
 /-! ## Pinned fixed-width boundary encodings -/
 
-/-- A security-parameter-indexed family of **fixed-width** raw bit-string encodings.
+/-- A size-parameter-indexed family of **fixed-width** raw bit-string encodings.
 At parameter `n` every value encodes to exactly
 `wid n` bits, and `wid` is polynomially bounded — the formal content of the
 security-parameter size convention used by this family model. Fixed widths make pairing
@@ -356,12 +357,12 @@ end BitEncFam
 /-! ## Uniform polynomial-time machine families -/
 
 /-- A family of encoded polynomial-time machine witnesses with **uniform** polynomial
-bounds: one machine per security parameter computing `f n` relative to the given
+bounds: one machine per size parameter computing `f n` relative to the given
 string encodings, a single polynomial bounding all running times (in `n` plus the
 input length), and a single polynomial bounding all description sizes (the advice
 bound — without it, per-parameter table machines smuggle unbounded advice). This is
-the reusable unit of the polynomial-time adversary model: base machines produce these,
-combinators compose them, and an adversary's four step functions each carry one.
+a reusable unit of encoded machine computability: base machines produce certificates,
+and combinators compose them without fixing a particular client interface.
 
 Like `EncPolyTime`, the structure imposes nothing on the encodings themselves; its
 certifying power comes from the call site pinning the injective families

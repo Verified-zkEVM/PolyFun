@@ -21,7 +21,7 @@ lake exe cache get
 `./scripts/validate.sh` is the recommended convenience wrapper for routine
 local validation. By default it runs:
 
-1. `lake build PolyFun ToCslib --wfail` (warnings — including `mathlibStandardSet` style
+1. `lake build PolyFun ToCslib PolyFunCslib --wfail` (warnings — including `mathlibStandardSet` style
    warnings — are hard failures, matching CI)
 2. `./scripts/check-modules.sh` (all Lean sources use module mode and the
    Interaction public-scope policy is respected)
@@ -57,12 +57,12 @@ untracked `PolyFun/**/*.lean` files are present.
 ```
 
 `--lint` adds `lake lint` (Batteries' environment linters) and
-`lake exe lint-style PolyFun ToCslib` to the wrapper.
+`lake exe lint-style PolyFun ToCslib PolyFunCslib` to the wrapper.
 `checkUnivs` runs during elaboration, not in the environment runner.
 See [linting.md](linting.md) for coverage and exception maintenance.
 `--test` builds `PolyFunTest` with warnings fatal and runs `lake test`. `--axioms` adds
-the executable fixture matrix and `lake exe polyfun-axiomsweep --check`. The check scans
-every imported `PolyFun.*` declaration and fails on any `sorryAx` or non-standard
+the executable fixture matrix and `lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --root PolyFunCslib --check`. The check scans
+every declaration under the three production roots and fails on any `sorryAx` or non-standard
 axiom dependency. The committed `scripts/axiom_baseline.json` is a zero-debt
 policy, not an allowlist: both arrays must remain empty. Update mode refuses to
 record taint and is only useful for resetting a stale baseline after all debt is
@@ -112,7 +112,7 @@ deliberately outside the `lake lint` scope.
 - [`../../.github/workflows/ci.yml`](../../.github/workflows/ci.yml): runs
   three independent jobs on every push to `main` and on pull requests — a
   `build` job (`./scripts/validate.sh`, which includes
-  `lake build PolyFun ToCslib --wfail`), a `lint` job (`lake lint`, the environment linters),
+  `lake build PolyFun ToCslib PolyFunCslib --wfail`), a `lint` job (`lake lint`, the environment linters),
   and a `test` job (`lake test`, the
   `PolyFunTest` library). All builds pass `--wfail`, so any compiler or
   `mathlibStandardSet` warning fails CI rather than slipping through. The
@@ -130,7 +130,7 @@ deliberately outside the `lake lint` scope.
   a production/test module docstring from its prologue, will fail this job.
 - [`../../.github/workflows/linting.yml`](../../.github/workflows/linting.yml):
   runs the community `leanprover-community/lint-style-action` on `PolyFun`,
-  then explicitly runs Mathlib text linting on `ToCslib`.
+  then explicitly runs Mathlib text linting on `ToCslib` and `PolyFunCslib`.
 - [`../../.github/workflows/docs.yml`](../../.github/workflows/docs.yml):
   builds and publishes searchable API documentation from `main`.
 - [`../../.github/workflows/release-tag.yml`](../../.github/workflows/release-tag.yml)
