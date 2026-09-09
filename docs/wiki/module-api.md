@@ -85,3 +85,12 @@ A theorem belongs in PolyFun only when its statement can avoid `OracleSpec`,
 probability, and cryptographic policy; otherwise route it one dependency level
 at a time (VCVio candidates stay in VCVio), so "upstreamable" does not
 collapse everything to the lowest dependency.
+
+For a facade that reuses quotient structures, preserve instance coherence as
+well as declaration names. When `inferInstanceAs` shares a hierarchy containing
+data (such as `HasUnit` and `HasIdWire`), declare those instances before the
+stronger law classes. Otherwise separate generated data wrappers can prevent
+instance search from matching a predicate indexed by that data, even when
+ordinary `rfl` proves the values equal. Test a consumer that combines the full
+law instance with a data-indexed predicate; `SubTheory.IsStructural` under
+free-syntax interpretation exercises this boundary.

@@ -241,106 +241,110 @@ theorem interpret_unit {Atom : PortBoundary → Type u}
   simp only [Expr.unit]
   exact OpenTheory.unit_eq.symm
 
-/-! ## Lawful OpenTheory instance -/
+/-! ## The free lawful theory as a quotient -/
 
-/--
-The free lawful `OpenTheory` whose objects are quotiented expressions over
-`Atom`.
--/
-abbrev theory (Atom : PortBoundary → Type u) :
-    OpenTheory.{u + 1} where
+/-- The free lawful theory on `Atom`, with its carrier and basic operations
+presented through the `Expr` API. It is definitionally the quotient of
+`Raw.theory` by `Raw.congruence`; plugging agrees with the derived `Expr.plug`
+operation by `theory_plug`. -/
+abbrev theory (Atom : PortBoundary → Type u) : OpenTheory.{u + 1} where
   Obj := Expr Atom
   map := Expr.map
   par := Expr.par
   wire := Expr.wire
-  plug := Expr.plug
+  plug := ((Raw.theory Atom).quotient (Raw.congruence Atom)).plug
+
+/-- The expression theory is the generic quotient of the raw theory. -/
+theorem theory_eq_quotient (Atom : PortBoundary → Type u) :
+    theory Atom = (Raw.theory Atom).quotient (Raw.congruence Atom) :=
+  rfl
+
+/-! The law instances follow the class hierarchy from data to derived laws.
+`inferInstanceAs` then reuses the earlier unit and identity-wire instances in
+each stronger class, so consumers see the same data along every instance path. -/
 
 instance lawfulMap (Atom : PortBoundary → Type u) :
-    OpenTheory.IsLawfulMap (Expr.theory Atom) where
-  map_id := fun W =>
-    Quotient.inductionOn W fun _ => Quotient.sound Raw.Equiv.map_id
-  map_comp := fun _ _ W =>
-    Quotient.inductionOn W fun _ => Quotient.sound Raw.Equiv.map_comp
+    OpenTheory.IsLawfulMap (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsLawfulMap ((Raw.theory Atom).quotient (Raw.congruence Atom)))
 
 instance lawfulPar (Atom : PortBoundary → Type u) :
-    OpenTheory.IsLawfulPar (Expr.theory Atom) where
-  map_id := OpenTheory.IsLawfulMap.map_id (T := Expr.theory Atom)
-  map_comp := OpenTheory.IsLawfulMap.map_comp (T := Expr.theory Atom)
-  map_par := fun _ _ W₁ W₂ =>
-    Quotient.inductionOn₂ W₁ W₂ fun _ _ => Quotient.sound Raw.Equiv.map_par
+    OpenTheory.IsLawfulPar (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsLawfulPar ((Raw.theory Atom).quotient (Raw.congruence Atom)))
 
 instance lawfulWire (Atom : PortBoundary → Type u) :
-    OpenTheory.IsLawfulWire (Expr.theory Atom) where
-  map_id := OpenTheory.IsLawfulMap.map_id (T := Expr.theory Atom)
-  map_comp := OpenTheory.IsLawfulMap.map_comp (T := Expr.theory Atom)
-  map_wire := fun _ _ W₁ W₂ =>
-    Quotient.inductionOn₂ W₁ W₂ fun _ _ => Quotient.sound Raw.Equiv.map_wire
+    OpenTheory.IsLawfulWire (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsLawfulWire ((Raw.theory Atom).quotient (Raw.congruence Atom)))
 
 instance lawfulPlug (Atom : PortBoundary → Type u) :
-    OpenTheory.IsLawfulPlug (Expr.theory Atom) where
-  map_id := OpenTheory.IsLawfulMap.map_id (T := Expr.theory Atom)
-  map_comp := OpenTheory.IsLawfulMap.map_comp (T := Expr.theory Atom)
-  map_plug := fun _ W K =>
-    Quotient.inductionOn₂ W K fun _ _ => Quotient.sound Raw.Equiv.map_plug
+    OpenTheory.IsLawfulPlug (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsLawfulPlug ((Raw.theory Atom).quotient (Raw.congruence Atom)))
 
 instance lawful (Atom : PortBoundary → Type u) :
-    OpenTheory.IsLawful (Expr.theory Atom) where
+    OpenTheory.IsLawful (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsLawful ((Raw.theory Atom).quotient (Raw.congruence Atom)))
 
 instance hasUnit (Atom : PortBoundary → Type u) :
-    OpenTheory.HasUnit (Expr.theory Atom) where
-  unit := Expr.unit
+    OpenTheory.HasUnit (theory Atom) :=
+  inferInstanceAs (OpenTheory.HasUnit ((Raw.theory Atom).quotient (Raw.congruence Atom)))
 
 instance hasIdWire (Atom : PortBoundary → Type u) :
-    OpenTheory.HasIdWire (Expr.theory Atom) where
-  idWire := Expr.idWire
+    OpenTheory.HasIdWire (theory Atom) :=
+  inferInstanceAs (OpenTheory.HasIdWire ((Raw.theory Atom).quotient (Raw.congruence Atom)))
 
 instance isMonoidal (Atom : PortBoundary → Type u) :
-    OpenTheory.IsMonoidal (Expr.theory Atom) where
-  par_assoc := fun W₁ W₂ W₃ =>
-    Quotient.inductionOn₃ W₁ W₂ W₃ fun _ _ _ =>
-      Quotient.sound Raw.Equiv.par_assoc
-  par_comm := fun W₁ W₂ =>
-    Quotient.inductionOn₂ W₁ W₂ fun _ _ =>
-      Quotient.sound Raw.Equiv.par_comm
-  par_leftUnit := fun W =>
-    Quotient.inductionOn W fun _ =>
-      Quotient.sound Raw.Equiv.par_leftUnit
-  par_rightUnit := fun W =>
-    Quotient.inductionOn W fun _ =>
-      Quotient.sound Raw.Equiv.par_rightUnit
+    OpenTheory.IsMonoidal (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsMonoidal ((Raw.theory Atom).quotient (Raw.congruence Atom)))
 
 instance isTraced (Atom : PortBoundary → Type u) :
-    OpenTheory.IsTraced (Expr.theory Atom) where
-  wire_assoc := fun W₁ W₂ W₃ =>
-    Quotient.inductionOn₃ W₁ W₂ W₃ fun _ _ _ =>
-      Quotient.sound Raw.Equiv.wire_assoc
-  wire_par_superpose := fun W₁ W₂ W₃ =>
-    Quotient.inductionOn₃ W₁ W₂ W₃ fun _ _ _ =>
-      Quotient.sound Raw.Equiv.wire_par_superpose
-  wire_comm := fun W₁ W₂ =>
-    Quotient.inductionOn₂ W₁ W₂ fun _ _ =>
-      Quotient.sound Raw.Equiv.wire_comm
+    OpenTheory.IsTraced (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsTraced ((Raw.theory Atom).quotient (Raw.congruence Atom)))
 
 instance isCompactClosed (Atom : PortBoundary → Type u) :
-    OpenTheory.IsCompactClosed (Expr.theory Atom) where
-  wire_idWire := fun _ _ W₂ =>
-    Quotient.inductionOn W₂ fun _ =>
-      Quotient.sound Raw.Equiv.wire_idWire
-  wire_idWire_right := fun _ _ W₁ =>
-    Quotient.inductionOn W₁ fun _ =>
-      Quotient.sound Raw.Equiv.wire_idWire_right
-  unit_eq := rfl
+    OpenTheory.IsCompactClosed (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsCompactClosed ((Raw.theory Atom).quotient (Raw.congruence Atom)))
 
 instance hasPlugWireFactor (Atom : PortBoundary → Type u) :
-    OpenTheory.HasPlugWireFactor (Expr.theory Atom) where
-  plug_eq_wire := fun W K =>
-    Quotient.inductionOn₂ W K fun _ _ => rfl
-  plug_par_left := fun W₁ W₂ K =>
-    Quotient.inductionOn₃ W₁ W₂ K fun _ _ _ =>
-      Quotient.sound Raw.Equiv.plug_par_left
-  plug_wire_left := fun W₁ W₂ K =>
-    Quotient.inductionOn₃ W₁ W₂ K fun _ _ _ =>
-      Quotient.sound Raw.Equiv.plug_wire_left
+    OpenTheory.HasPlugWireFactor (theory Atom) :=
+  inferInstanceAs (OpenTheory.HasPlugWireFactor ((Raw.theory Atom).quotient (Raw.congruence Atom)))
+
+/-! The operations of the quotient theory are the lifted operations on classes.
+The statements quantify over the theory's own objects so that they rewrite
+goals phrased in terms of the theory, as the sub-theory fields are. -/
+
+@[simp]
+theorem theory_map {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
+    (f : PortBoundary.Hom Δ₁ Δ₂) (e : (theory Atom).Obj Δ₁) :
+    (theory Atom).map f e = Expr.map f e :=
+  rfl
+
+@[simp]
+theorem theory_par {Atom : PortBoundary → Type u} {Δ₁ Δ₂ : PortBoundary}
+    (e₁ : (theory Atom).Obj Δ₁) (e₂ : (theory Atom).Obj Δ₂) :
+    (theory Atom).par e₁ e₂ = Expr.par e₁ e₂ :=
+  rfl
+
+@[simp]
+theorem theory_wire {Atom : PortBoundary → Type u} {Δ₁ Γ Δ₂ : PortBoundary}
+    (e₁ : (theory Atom).Obj (PortBoundary.tensor Δ₁ Γ))
+    (e₂ : (theory Atom).Obj (PortBoundary.tensor (PortBoundary.swap Γ) Δ₂)) :
+    (theory Atom).wire e₁ e₂ = Expr.wire e₁ e₂ :=
+  rfl
+
+@[simp]
+theorem theory_plug {Atom : PortBoundary → Type u} {Δ : PortBoundary}
+    (e : (theory Atom).Obj Δ) (k : (theory Atom).Obj (PortBoundary.swap Δ)) :
+    (theory Atom).plug e k = Expr.plug e k :=
+  Quotient.inductionOn₂' e k fun _ _ => rfl
+
+@[simp]
+theorem theory_unit {Atom : PortBoundary → Type u} :
+    OpenTheory.HasUnit.unit (T := theory Atom) = Expr.unit :=
+  rfl
+
+@[simp]
+theorem theory_idWire {Atom : PortBoundary → Type u} (Γ : PortBoundary) :
+    OpenTheory.HasIdWire.idWire (T := theory Atom) Γ = Expr.idWire Γ :=
+  rfl
 
 /-! ## Bridge: Expr → Interp -/
 
