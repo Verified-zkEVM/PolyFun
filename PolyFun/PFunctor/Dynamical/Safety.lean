@@ -74,7 +74,6 @@ structure Ticketed (p : PFunctor.{uA, uB}) extends Machine.{u} p where
   /-- The assignment of a ticket to each transition. -/
   ticket : toMachine.toDynSystem.Tickets Ticket
 
-set_option linter.checkUnivs false in
 /-- A safety-verification problem: dynamics together with initial states,
 ambient assumptions, and the state predicate to be established.
 

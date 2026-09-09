@@ -104,7 +104,6 @@ instance : (unconstrained.{u, v}).IsDistributive where
   distrib_mem _ _ _ := True.intro
 
 -- Independent universes, as in `StepClass.HasULiftProd` itself.
-set_option linter.checkUnivs false in
 instance : (unconstrained.{max s t, v}).HasULiftProd.{s, t} where
   uliftProd _ _ := PUnit.unit
   up_mem _ _ := True.intro
@@ -145,7 +144,6 @@ instance : (finite.{u}).IsDistributive where
   distrib_mem _ _ _ := True.intro
 
 -- Independent universes, as in `StepClass.HasULiftProd` itself.
-set_option linter.checkUnivs false in
 instance : (finite.{max s t}).HasULiftProd.{s, t} where
   uliftProd {A B} a b := by
     let : Fintype (ULift.{t} A) := a
@@ -246,7 +244,6 @@ instance : (computable.{u}).HasOption where
     exact Computable.option_some
 
 -- Independent universes, as in `StepClass.HasULiftProd` itself.
-set_option linter.checkUnivs false in
 instance : (computable.{max s t}).HasULiftProd.{s, t} where
   uliftProd {A B} a b := by
     let : Primcodable (ULift.{t} A) := a

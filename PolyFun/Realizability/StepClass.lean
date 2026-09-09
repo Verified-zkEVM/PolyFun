@@ -366,7 +366,6 @@ attribute [instance] Distributive.toIsDistributive
 -- parameters of the regrouping, which is used precisely where a lifted
 -- composite state must live in a universe above both components, as in
 -- `DynSystem.ulift`.  The explicit binder list pins the order `s, t, v`.
-set_option linter.checkUnivs false in
 /-- The class represents the `ULift` regrouping of binary products: from
 representations of the lifted factors, a representation of the lifted product
 with both canonical regrouping maps admissible.
@@ -394,7 +393,6 @@ class HasULiftProd.{s, t, v'} (C : StepClass.{max s t, v'}) [P : C.HasProd] wher
 
 /-! ## Refinement between classes -/
 
-set_option linter.checkUnivs false in
 /-- A refinement of step classes: a translation of representations carrying
 `C`-admissibility to `D`-admissibility, compatibly with the product and sum
 representations. Realizability transports forward along a refinement, so a
@@ -434,7 +432,6 @@ def Refines.refl (C : StepClass.{u, v}) [C.HasProd] [C.HasSum] [C.HasOption] :
   str_sum _ _ := rfl
   str_option _ := rfl
 
-set_option linter.checkUnivs false in
 /-- Refinements compose. -/
 -- Three independent representation universes, for the same reason as `Refines`.
 def Refines.trans {C : StepClass.{u, v}} {D : StepClass.{u, v₂}}

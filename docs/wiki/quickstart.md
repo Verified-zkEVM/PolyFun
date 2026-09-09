@@ -74,6 +74,11 @@ checks enforce headers, line length, and module
 docstrings. The standalone text checks additionally enforce Unicode and other
 source-text rules; they are not interchangeable.
 
+Lean's `checkUnivs` examines each declaration's type. A bundled structure can
+have type `Type (max u v)` even though its fields require independent universes.
+Such declarations keep a documented, declaration-scoped exception. Do not
+identify the universes or add dummy arguments just to satisfy this heuristic.
+
 ## Optional Direct Commands
 
 You can still run the underlying pieces directly when debugging a specific

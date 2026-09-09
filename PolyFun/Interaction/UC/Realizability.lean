@@ -55,7 +55,9 @@ namespace OpenProcess
 
 set_option linter.checkUnivs false in
 /-- The universe-normalized polynomial interface exposed by open processes at
-boundary `Δ`. -/
+boundary `Δ`. The state universe `v` and move universe `w` are independent before
+the lift combines them; keeping both preserves the boundary's definitional
+agreement with `DynSystem.ulift`. -/
 abbrev StructuralPFunctor (Party : Type u) (Δ : PortBoundary) :=
   PFunctor.ulift.{max u (w + 1), w, max v w, max v (max u (w + 1))}
     (StepOver.toPFunctor (OpenNodeContext.{u, w} Party Δ))
@@ -120,7 +122,6 @@ theorem IsStructurallyRealizableBy.mapBoundary
 
 /-! ## Direct closure contract -/
 
-set_option linter.checkUnivs false in
 /-- The lifted regrouped polynomial lens implementing scheduler interleaving
 of open-process boundaries: the shared structural content of `openTheory.par`,
 `openTheory.wire`, and `openTheory.plug`, which differ only in the injection

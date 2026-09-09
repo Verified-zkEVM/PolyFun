@@ -824,7 +824,6 @@ abbrev currentController? {Party : Type u} {P : Type v}
 
 end StepOver
 
-set_option linter.checkUnivs false in
 /--
 The closed-world specialization of `ProcessOver`, with residual state space
 `P`.

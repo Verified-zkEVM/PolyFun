@@ -46,7 +46,6 @@ variable {SImpl : Type u₁} {SSpec : Type u₂}
 
 /-! ## Operational forward simulation -/
 
-set_option linter.checkUnivs false in
 /-- A trace-theoretic forward simulation between bare dynamical systems.
 
 Related implementation states can match every concrete implementation step by
@@ -91,7 +90,6 @@ def ReflectsStatePred (sim : ForwardSimulation impl spec matchStep)
 
 end ForwardSimulation
 
-set_option linter.checkUnivs false in
 /-- `SafetyRefinement impl spec matchStep` is a forward simulation from the
 implementation system `impl` to the specification system `spec`:
 
@@ -520,7 +518,6 @@ abbrev ReverseSafetyRefinement (impl : SafetySpec.{u₁} p) (spec : SafetySpec.{
     (matchStep : StepRel impl.toDynSystem spec.toDynSystem := StepRel.top) :=
   SafetyRefinement spec impl (StepRel.reverse matchStep)
 
-set_option linter.checkUnivs false in
 /-- `MutualSafetyRefinement left right matchForth matchBack` packages one forward
 simulation in each direction between `left` and `right`. By default, the
 backward step-matching relation is the reversal of the forward one.
