@@ -103,13 +103,19 @@ laws modulo `E` (`IsLawfulMod E`, …, `HasPlugWireFactorMod E`,
 the quotient; a strict theory satisfies every law modulo any congruence. The
 free syntax model is exactly this construction: `Expr.theory` is the quotient
 of `Raw.theory` by `Raw.congruence`, whose laws modulo the congruence are the
-constructors of `Raw.Equiv`.
+constructors of `Raw.Equiv`. Its `Expr` facade keeps the reducible carrier,
+map/par/wire operations, and named law instances. `Expr.theory_plug` identifies
+the lifted plug with the derived `Expr.plug` operation propositionally.
 
 Observations cross the quotient by `Observation.comap` and
 `Observation.descend`; equality of classes pulls back to the congruence at the
 empty boundary (`Observation.comap_eq_rel`), and `Emulates.quotient_iff`
-identifies emulation of classes with emulation of representatives. Because
-`RespectsFactorization` pulls back along `comap`, a theory whose laws hold
+identifies emulation of classes with emulation of representatives. This does
+not identify contextual emulation with equality of classes: closing contexts
+may forget distinctions. `Observation.descend` requires the congruence to
+imply the observation; equality of representatives generally cannot descend
+through a nontrivial congruence. Because `RespectsFactorization` pulls back
+along `comap`, a theory whose laws hold
 modulo `E` gets the whole `Emulates` composition suite at any observation that
 factors through its quotient, without carrying coherence hypotheses through
 every client. `OpenProcessQuotient` does this for the process models: the
@@ -117,9 +123,13 @@ activation quotient `openTheory ⧸ activationCongruence` is a strict
 `HasPlugWireFactor` theory, the sampler quotient satisfies
 `HasPlugFactorization` under the three scheduler-transport facts, and the
 mass-aware sampler quotient (whose congruence also fixes scheduler mass)
-satisfies it under `BinaryScheduler.IsCoherent` alone. `Observation.activation`
-and `Observation.sampler` are the pull-backs of equality on the respective
-quotients.
+satisfies it under `BinaryScheduler.IsCoherent`. Both sampler congruences
+require a lawful monad and a bind-congruent relation family (`R.IsBindCongr`).
+`Observation.activation` and `Observation.sampler` are the pull-backs of
+equality on the respective quotients. On the scheduled quotient, equality also retains mass; its pull-back
+is `Observation.ofCongruence`, while `Observation.scheduledSampler` forgets
+mass and can relate distinct classes. These quotients add no probabilistic
+or cryptographic adequacy claim.
 
 ## Long-Term Behavior Carrier
 

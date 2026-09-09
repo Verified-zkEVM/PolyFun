@@ -20,6 +20,8 @@ quotient `T.quotient E` by a congruence `E`.
 * `Emulates.quotient_iff`: emulation between classes in the quotient is
   emulation between representatives under the pulled-back observation, since
   every closing context of the quotient is the class of a context of `T`.
+  This compares contextual emulation on the two theories; it does not identify
+  contextual emulation with equality of classes.
 * An observation on the quotient that respects plug commutation or
   factorization pulls back to one that does. In particular, when the quotient
   satisfies `HasPlugFactorization` — for instance because the laws of `T` hold
@@ -28,7 +30,7 @@ quotient `T.quotient E` by a congruence `E`.
   to `T` at that observation.
 
 The congruence at the empty boundary is itself the pull-back of equality on
-the quotient (`Observation.comap_eq`): this is how a process model's structural
+the quotient (`Observation.comap_eq_rel`): this is how a process model's structural
 equivalence becomes the canonical observation of its quotient theory.
 -/
 

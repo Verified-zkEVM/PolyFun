@@ -14,6 +14,7 @@ import PolyFun.Interaction.UC.OpenProcessInterleave
 import PolyFun.Interaction.UC.OpenProcessCoherence
 import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
 import PolyFun.Interaction.UC.OpenTheory.Quotient
+import PolyFun.Interaction.UC.OpenSyntax.AtomSubTheory
 import PolyFun.Interaction.UC.EmulatesQuotient
 import PolyFun.Interaction.UC.OpenProcessQuotient
 import PolyFun.Interaction.UC.ScheduledOpenProcessModel
@@ -270,6 +271,35 @@ example {T : UC.OpenTheory} (E : UC.OpenTheory.Congruence T) {Δ : UC.PortBounda
     {real ideal : T.Obj Δ} {Obs : UC.Observation (T.quotient E)} :
     UC.Emulates (E.cls real) (E.cls ideal) Obs ↔ UC.Emulates real ideal (Obs.comap E) :=
   UC.Emulates.quotient_iff E
+
+/-! ## Free-syntax facade -/
+
+example {Atom : UC.PortBoundary → Type u} {Δ₁ Δ₂ : UC.PortBoundary}
+    (f : UC.PortBoundary.Hom Δ₁ Δ₂) (e : (UC.OpenSyntax.Expr.theory Atom).Obj Δ₁)
+    (T : UC.OpenTheory.{v}) [UC.OpenTheory.HasPlugWireFactor T]
+    (interp : ∀ {Δ}, Atom Δ → T.Obj Δ) :
+    ((UC.OpenSyntax.Expr.theory Atom).map f e).interpret T interp =
+      T.map f (e.interpret T interp) := by
+  rw [UC.OpenSyntax.Expr.interpret_map]
+
+example (Atom : UC.PortBoundary → Type u) :
+    UC.OpenTheory.HasUnit.unit (T := UC.OpenSyntax.Expr.theory Atom) =
+      UC.OpenSyntax.Expr.unit := rfl
+
+example (Atom : UC.PortBoundary → Type u) :
+    UC.OpenTheory.HasPlugWireFactor (UC.OpenSyntax.Expr.theory Atom) :=
+  UC.OpenSyntax.Expr.hasPlugWireFactor Atom
+
+/-- Structural allowedness uses the same unit and identity-wire data as the
+full law instance supplied to interpretation. -/
+example (Atom : UC.PortBoundary → Type u) (allowed : ∀ {Δ}, Atom Δ → Prop)
+    {Δ : UC.PortBoundary} {e : UC.OpenSyntax.Expr Atom Δ}
+    (he : (UC.OpenSyntax.atomSubTheory Atom allowed).mem e) :
+    (UC.OpenSyntax.atomSubTheory Atom allowed).mem
+      (e.interpret (UC.OpenSyntax.Expr.theory Atom) UC.OpenSyntax.Expr.atom) :=
+  UC.OpenSyntax.mem_interpret_of_atoms Atom allowed
+    (UC.OpenSyntax.atomSubTheory Atom allowed) UC.OpenSyntax.Expr.atom
+    (fun _ ha => UC.OpenSyntax.atomSubTheory.mem_atom Atom allowed ha) he
 
 /-! ## Quotients of the process model -/
 

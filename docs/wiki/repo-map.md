@@ -300,8 +300,8 @@ Interaction/UC/{ActivationObservation, EmulatesQuotient,
   (the activation and sampler congruences of the process models and their
    quotients: strictly compact closed with plug-wire factorization for
    activation, plug factorization for samplers under the transport facts or
-   scheduler coherence; the structural observations are pull-backs of
-   equality on the quotients)
+   scheduler coherence with bind congruence; equality pulls back to the
+   respective congruence observation, including mass for scheduled processes)
 
 Interaction/UC/OpenTheory -> Interaction/UC/SubTheory
 Interaction/UC/{OpenTheory, SubTheory}

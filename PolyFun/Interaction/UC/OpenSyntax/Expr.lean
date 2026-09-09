@@ -243,15 +243,69 @@ theorem interpret_unit {Atom : PortBoundary → Type u}
 
 /-! ## The free lawful theory as a quotient -/
 
-/--
-The free lawful `OpenTheory` whose objects are quotiented expressions over
-`Atom`: the raw theory quotiented by its congruence. Its objects are
-`Expr Atom Δ` and its operations are `Expr.map`, `Expr.par`, `Expr.wire`, and
-`Expr.plug`, all definitionally. Every class of the lawfulness ladder holds by
-the generic lifting of the laws modulo `Raw.Equiv`.
--/
-abbrev theory (Atom : PortBoundary → Type u) : OpenTheory.{u + 1} :=
-  (Raw.theory Atom).quotient (Raw.congruence Atom)
+/-- The free lawful theory on `Atom`, with its carrier and basic operations
+presented through the `Expr` API. It is definitionally the quotient of
+`Raw.theory` by `Raw.congruence`; plugging agrees with the derived `Expr.plug`
+operation by `theory_plug`. -/
+abbrev theory (Atom : PortBoundary → Type u) : OpenTheory.{u + 1} where
+  Obj := Expr Atom
+  map := Expr.map
+  par := Expr.par
+  wire := Expr.wire
+  plug := ((Raw.theory Atom).quotient (Raw.congruence Atom)).plug
+
+/-- The expression theory is the generic quotient of the raw theory. -/
+theorem theory_eq_quotient (Atom : PortBoundary → Type u) :
+    theory Atom = (Raw.theory Atom).quotient (Raw.congruence Atom) :=
+  rfl
+
+/-! The law instances follow the class hierarchy from data to derived laws.
+`inferInstanceAs` then reuses the earlier unit and identity-wire instances in
+each stronger class, so consumers see the same data along every instance path. -/
+
+instance lawfulMap (Atom : PortBoundary → Type u) :
+    OpenTheory.IsLawfulMap (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsLawfulMap ((Raw.theory Atom).quotient (Raw.congruence Atom)))
+
+instance lawfulPar (Atom : PortBoundary → Type u) :
+    OpenTheory.IsLawfulPar (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsLawfulPar ((Raw.theory Atom).quotient (Raw.congruence Atom)))
+
+instance lawfulWire (Atom : PortBoundary → Type u) :
+    OpenTheory.IsLawfulWire (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsLawfulWire ((Raw.theory Atom).quotient (Raw.congruence Atom)))
+
+instance lawfulPlug (Atom : PortBoundary → Type u) :
+    OpenTheory.IsLawfulPlug (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsLawfulPlug ((Raw.theory Atom).quotient (Raw.congruence Atom)))
+
+instance lawful (Atom : PortBoundary → Type u) :
+    OpenTheory.IsLawful (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsLawful ((Raw.theory Atom).quotient (Raw.congruence Atom)))
+
+instance hasUnit (Atom : PortBoundary → Type u) :
+    OpenTheory.HasUnit (theory Atom) :=
+  inferInstanceAs (OpenTheory.HasUnit ((Raw.theory Atom).quotient (Raw.congruence Atom)))
+
+instance hasIdWire (Atom : PortBoundary → Type u) :
+    OpenTheory.HasIdWire (theory Atom) :=
+  inferInstanceAs (OpenTheory.HasIdWire ((Raw.theory Atom).quotient (Raw.congruence Atom)))
+
+instance isMonoidal (Atom : PortBoundary → Type u) :
+    OpenTheory.IsMonoidal (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsMonoidal ((Raw.theory Atom).quotient (Raw.congruence Atom)))
+
+instance isTraced (Atom : PortBoundary → Type u) :
+    OpenTheory.IsTraced (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsTraced ((Raw.theory Atom).quotient (Raw.congruence Atom)))
+
+instance isCompactClosed (Atom : PortBoundary → Type u) :
+    OpenTheory.IsCompactClosed (theory Atom) :=
+  inferInstanceAs (OpenTheory.IsCompactClosed ((Raw.theory Atom).quotient (Raw.congruence Atom)))
+
+instance hasPlugWireFactor (Atom : PortBoundary → Type u) :
+    OpenTheory.HasPlugWireFactor (theory Atom) :=
+  inferInstanceAs (OpenTheory.HasPlugWireFactor ((Raw.theory Atom).quotient (Raw.congruence Atom)))
 
 /-! The operations of the quotient theory are the lifted operations on classes.
 The statements quantify over the theory's own objects so that they rewrite
@@ -291,9 +345,6 @@ theorem theory_unit {Atom : PortBoundary → Type u} :
 theorem theory_idWire {Atom : PortBoundary → Type u} (Γ : PortBoundary) :
     OpenTheory.HasIdWire.idWire (T := theory Atom) Γ = Expr.idWire Γ :=
   rfl
-
-example (Atom : PortBoundary → Type u) : OpenTheory.HasPlugWireFactor (theory Atom) :=
-  inferInstance
 
 /-! ## Bridge: Expr → Interp -/
 

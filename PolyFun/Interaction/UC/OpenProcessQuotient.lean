@@ -33,8 +33,10 @@ theories on which the laws are equalities.
   `Observation.sampler` is the pull-back of equality on this quotient.
 * `scheduledOpenTheory.samplerCongruence R`: on the mass-aware theory the
   congruence also fixes the scheduler mass, since composition draws with the
-  component masses. Scheduler coherence alone makes the quotient satisfy
-  `HasPlugFactorization`.
+  component masses. For a bind-congruent relation family, scheduler coherence
+  makes the quotient satisfy `HasPlugFactorization`. Equality on this quotient
+  pulls back to the mass-sensitive `Observation.ofCongruence`; the existing
+  `Observation.scheduledSampler` forgets mass and can relate distinct classes.
 
 In every case the composition suite of `Emulates` on the quotient, at plain
 equality, is the suite on the model at the corresponding observation
@@ -122,14 +124,6 @@ instance : HasPlugWireFactorMod (activationCongruence.{u, v, w, w'} Party m sche
     openTheory_plug_par_left_activation_equiv Party m schedulerSampler W₁ W₂ K
   plug_wire_left W₁ W₂ K :=
     openTheory_plug_wire_left_activation_equiv Party m schedulerSampler W₁ W₂ K
-
-/-- The quotient of the process model by activation equivalence is a strict
-compact-closed theory with plug-wire factorization. -/
-example :
-    HasPlugWireFactor
-      ((openTheory.{u, v, w, w'} Party m schedulerSampler).quotient
-        (activationCongruence Party m schedulerSampler)) :=
-  inferInstance
 
 end openTheory
 
@@ -226,8 +220,8 @@ theorem Observation.sampler_rel_iff_comap
   rw [Observation.sampler_rel, Observation.comap_eq_rel]
   exact (openTheory.samplerCongruence_rel Party m schedulerSampler R).symm
 
-/-- `Observation.respectsFactorization_sampler`, re-derived through the
-quotient: plug factorization on the quotient pulls back along `comap`. -/
+/-- Sampler observation respects plug factorization by pulling back equality
+on the sampler quotient along `Observation.comap`. -/
 theorem Observation.respectsFactorization_sampler_of_quotient
     (hfair : R.rel schedulerSampler (schedulerFlip <$> schedulerSampler))
     (hleft : R.rel (OpenProcessFactorization.sourceDraw schedulerSampler)
@@ -264,6 +258,8 @@ def samplerCongruence : (scheduledOpenTheory.{u, v, w, w'} Party m scheduler).Co
   map_congr := by
     rintro Δ₁ Δ₂ φ (W : ScheduledOpenProcess.{u, v, w, w'} m Party Δ₁)
       (W' : ScheduledOpenProcess.{u, v, w, w'} m Party Δ₁) ⟨hm, hp⟩
+    simp only [scheduledOpenTheory, ScheduledOpenProcess.mass_mapBoundary,
+      ScheduledOpenProcess.process_mapBoundary]
     exact ⟨hm, OpenProcess.mapHom_congr_samplerEquiv R (preservesActivation_map φ)
       (emitsAlong_map φ) hp⟩
   par_congr := by

@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Interaction.UC.OpenProcessQuotient
+public import PolyFunTest.Interaction.UC.SamplerCoherenceExamples
 
 /-!
 # Process-model quotient examples
@@ -15,8 +16,9 @@ Regression checks for the quotients of the process models. The activation
 quotient of `openTheory` is a strict compact-closed theory with plug-wire
 factorization, so the composition suite runs on it at plain equality and
 transfers back to activation equivalence on the model; the sampler quotients
-satisfy plug factorization under the transport facts, trivially at the
-forgetful relation family.
+satisfy plug factorization under the transport facts, both at the forgetful
+relation family and at exact equality for the Mathlib `SetM` scheduler.
+Mass-sensitive class equality is distinct from the mass-forgetting observation.
 -/
 
 @[expose] public section
@@ -105,5 +107,42 @@ example [Monad m] [LawfulMonad m] (scheduler : BinaryScheduler m) {Δ : PortBoun
     (scheduledOpenTheory.samplerCongruence Party m scheduler (MonadRelFamily.top m)).rel W W' ↔
       W.mass = W'.mass ∧ OpenProcessSamplerEquiv (MonadRelFamily.top m) W.process W'.process :=
   scheduledOpenTheory.samplerCongruence_rel Party m scheduler (MonadRelFamily.top m)
+
+/-! ## Exact nondeterministic scheduling and mass sensitivity -/
+
+open SamplerCoherenceExamples
+
+example :
+    HasPlugFactorization
+      ((scheduledOpenTheory.{u, v, w, w} Party SetM nondetScheduler).quotient
+        (scheduledOpenTheory.samplerCongruence Party SetM nondetScheduler
+          (MonadRelFamily.eq SetM))) :=
+  scheduledOpenTheory.hasPlugFactorization_quotient_samplerCongruence Party SetM nondetScheduler
+    (MonadRelFamily.eq SetM) nondetScheduler_isCoherent
+
+/-- The scheduled observation forgets mass. -/
+example (p : OpenProcess.{u, v, w, w} SetM Party PortBoundary.empty) :
+    (Observation.scheduledSampler Party SetM nondetScheduler (MonadRelFamily.eq SetM)).rel
+      (ScheduledOpenProcess.withMass 1 p) (ScheduledOpenProcess.withMass 2 p) := by
+  apply (Observation.scheduledSampler_rel Party SetM nondetScheduler
+    (MonadRelFamily.eq SetM)).mpr
+  simp only [ScheduledOpenProcess.process_withMass]
+  exact OpenProcessSamplerEquiv.refl p
+
+/-- The quotient retains mass even for the same underlying process. -/
+example (p : OpenProcess.{u, v, w, w} SetM Party PortBoundary.empty) :
+    (scheduledOpenTheory.samplerCongruence Party SetM nondetScheduler
+      (MonadRelFamily.eq SetM)).cls
+        (ScheduledOpenProcess.withMass 1 p) ≠
+      (scheduledOpenTheory.samplerCongruence Party SetM nondetScheduler
+      (MonadRelFamily.eq SetM)).cls
+        (ScheduledOpenProcess.withMass 2 p) := by
+  intro h
+  have hm := ((scheduledOpenTheory.samplerCongruence_rel Party SetM nondetScheduler
+    (MonadRelFamily.eq SetM)).mp
+      ((scheduledOpenTheory.samplerCongruence Party SetM nondetScheduler
+        (MonadRelFamily.eq SetM)).cls_eq_cls.mp h)).1
+  simp only [ScheduledOpenProcess.mass_withMass] at hm
+  exact (by decide : (1 : ℕ+) ≠ 2) hm
 
 end Interaction.UC.OpenProcessQuotientExamples
