@@ -18,7 +18,7 @@ public import PolyFun.Interaction.UC.OpenSyntax.Expr
 # Observation-level factorization examples
 
 Regression checks that the UC composition theorems still reach the free
-syntax models through `respectsFactorization_of_hasPlugWireFactor`, and that
+syntax models through `respectsFactorization_of_hasPlugFactorization`, and that
 the process-backed `openTheory` reaches the `plug` half of the suite from an
 exact `Observation.RespectsPlugComm` assumption.
 

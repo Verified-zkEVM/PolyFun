@@ -444,8 +444,9 @@ identifying `plug` as a derived operation: `plug` factors through `wire`
 via the unit (`plug_eq_wire`), and closure of a parallel or wired composite
 factors through closure of one component (`plug_par_left`/`plug_wire_left`).
 
-This is the "everything bundle" used by downstream UC composition theorems:
-`[HasPlugWireFactor T]` automatically supplies all of `IsCompactClosed T`,
+This bundle supplies the compact-closed laws together with plug compatibility.
+The composition API in `OpenTheory.PlugFactorization` isolates the resulting
+five plug-factorization equalities. `[HasPlugWireFactor T]` also supplies `IsCompactClosed T`,
 `IsTraced T`, `IsMonoidal T`, `IsLawful T`, `HasUnit T`, and `HasIdWire T`
 through the inheritance chain.
 -/
