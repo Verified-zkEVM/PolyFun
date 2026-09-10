@@ -66,8 +66,8 @@ theorem foldl_succ (position : P.A) (step : state → Nat → P.B position → s
   rw [foldl, Fin.foldlM_succ]
   simp only [Fin.val_zero]
   rw [FreeM.monad_bind_def, FreeM.map_bind]
-  simp only [FreeM.liftBind_bind, FreeM.pure_bind]
-  apply congrArg (fun next => (FreeM.lift position).bind next)
+  simp only [FreeM.lift_bind_eq_liftBind]
+  apply congrArg (FreeM.liftBind position)
   funext answer
   rw [foldl]
   congr 2
@@ -109,8 +109,8 @@ theorem foldr_succ (position : P.A) (step : state → Nat → P.B position → s
   rw [foldr, Fin.foldrM_succ_last]
   simp only [Fin.val_last]
   rw [FreeM.monad_bind_def, FreeM.map_bind]
-  simp only [FreeM.liftBind_bind, FreeM.pure_bind]
-  apply congrArg (fun next => (FreeM.lift position).bind next)
+  simp only [FreeM.lift_bind_eq_liftBind]
+  apply congrArg (FreeM.liftBind position)
   funext answer
   rw [foldr]
   congr 2
