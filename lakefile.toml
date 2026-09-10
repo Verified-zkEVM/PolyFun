@@ -28,7 +28,7 @@ rev = "v4.33.1"
 
 [[require]]
 name = "cslib"
-scope = "leanprover"
+git = "https://github.com/dtumad/cslib.git"
 rev = "268b2bb36c7ac161f3a95f97d5946097befcfdd1"
 
 [[lean_lib]]
