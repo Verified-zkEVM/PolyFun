@@ -277,7 +277,9 @@ public import PolyFun.Realizability.Quantitative
 public import PolyFun.Realizability.Quantitative.BoundedClosure
 public import PolyFun.Realizability.Quantitative.Closure
 public import PolyFun.Realizability.Quantitative.Polynomial
+public import PolyFun.Realizability.Quantitative.Prefix
 public import PolyFun.Realizability.Quantitative.Resource
+public import PolyFun.Realizability.Quantitative.TraceCost
 public import PolyFun.Realizability.Quantitative.WordClass
 public import PolyFun.Realizability.Representation
 public import PolyFun.Realizability.StepClass

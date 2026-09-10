@@ -38,6 +38,11 @@ PolyFun/Realizability/
                     admissible word encode/decode retractions
   Quantitative.lean Type-valued executable realizers, local cost, optional
                     categorical wiring, syntactic traces, and pathwise bounds
+  Quantitative/TraceCost.lean
+                    shared terminal and enabled-transition resource equations
+  Quantitative/Prefix.lean
+                    executed finite prefixes with exact trace costs, chunk
+                    composition, and erasure to ordinary bounded execution
   Quantitative/Closure.lean
                     executable product/sum/option/distributivity mixins;
                     ofFn, precomp, mapResult, unbounded seqComp, and lens transport
@@ -58,6 +63,12 @@ PolyFun/Realizability/
 `Machine.lean` and `StepClass.lean` are independent; `Basic.lean` joins them.
 `DynSystem.lean` is the non-returning substrate used by the UC bridge; it is
 also re-exported by `Basic.lean`.
+
+`QuantitativeRealization.runPrefix` returns the actual reached state and transition resource
+log. `runPrefix_trace` supplies its syntactic trace witness; `observedCost` adds initialization
+and the final observation exactly once. A prefix that has not returned consumes its full query
+budget (`runPrefix_queries`). Probability laws and expected-potential reasoning for these
+prefixes live downstream in VCVio, outside PolyFun's generic layer.
 
 ## `StepClass`: A Class Of Admissible Functions
 

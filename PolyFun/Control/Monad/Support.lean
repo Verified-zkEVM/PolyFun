@@ -414,6 +414,12 @@ theorem allOutputs_bind (p : β → Prop) (x : m α) (f : α → m β) :
     obtain ⟨a, ha, hb⟩ := mem_support_bind.mp hb
     exact h a ha b hb
 
+/-- Mapping the returned value pulls an output assertion back along that map. -/
+@[simp]
+theorem allOutputs_map (p : β → Prop) (f : α → β) (x : m α) :
+    AllOutputs p (f <$> x) ↔ AllOutputs (p ∘ f) x := by
+  simp only [AllOutputs, support_map, Set.forall_mem_image, Function.comp_apply]
+
 @[simp]
 theorem someOutput_pure (p : α → Prop) (a : α) :
     SomeOutput p (pure a : m α) ↔ p a := by
