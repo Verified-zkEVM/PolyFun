@@ -418,7 +418,8 @@ theorem allOutputs_bind (p : β → Prop) (x : m α) (f : α → m β) :
 @[simp]
 theorem allOutputs_map (p : β → Prop) (f : α → β) (x : m α) :
     AllOutputs p (f <$> x) ↔ AllOutputs (p ∘ f) x := by
-  simp only [AllOutputs, support_map, Set.forall_mem_image, Function.comp_apply]
+  change (∀ a ∈ support (f <$> x), p a) ↔ ∀ a ∈ support x, p (f a)
+  simp only [support_map, Set.forall_mem_image]
 
 @[simp]
 theorem someOutput_pure (p : α → Prop) (a : α) :
