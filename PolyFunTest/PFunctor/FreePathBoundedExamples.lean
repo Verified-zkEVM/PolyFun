@@ -57,26 +57,26 @@ example : withPathLength branchProgram =
       match first with
       | false => (FreeM.pure 1 : FreeM BranchP Nat)
       | true => FreeM.liftBind (P := BranchP) true fun _ => FreeM.pure 2 := by
-  rw [branchProgram, FreeM.liftBind_eq, withPathLength_liftBind]
+  rw [branchProgram, withPathLength_liftBind]
   apply congrArg (FreeM.liftBind (P := BranchP) false)
   funext first
   cases first with
   | false => rfl
   | true =>
       rw [show branchTail true =
-        (FreeM.lift (P := BranchP) true).bind fun _ : Bool => FreeM.pure 7 from rfl,
+        (FreeM.liftBind (P := BranchP) true fun _ : Bool => FreeM.pure 7) from rfl,
         withPathLength_liftBind]
       rfl
 
 theorem branchProgram_bound : branchProgram.IsTotalRollBound 2 := by
-  rw [branchProgram, FreeM.liftBind_eq, isTotalRollBound_lift_bind_iff]
+  rw [branchProgram, isTotalRollBound_lift_bind_iff]
   refine ⟨by omega, fun answer => ?_⟩
   cases answer with
   | false => simp [branchTail]
   | true =>
       rw [show branchTail true =
         (FreeM.liftBind true fun _ : Bool => FreeM.pure 7) from rfl,
-        FreeM.liftBind_eq, isTotalRollBound_lift_bind_iff]
+        isTotalRollBound_lift_bind_iff]
       exact ⟨by omega, fun _ => by simp⟩
 
 example : Path.length branchProgram longPath ≤ 2 :=

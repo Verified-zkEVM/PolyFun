@@ -81,6 +81,21 @@ in turn is reducibly `List (Idx P)`.  This is the universal carrier for
 
 namespace TraceList
 
+/-- The ordered input positions of a typed event trace, retaining repeated occurrences. -/
+def positions {P : PFunctor.{uA, uB}} (events : TraceList P) : List P.A :=
+  List.map (fun event : P.Idx => event.1) events
+
+@[simp]
+theorem positions_nil {P : PFunctor.{uA, uB}} : positions ([] : TraceList P) = [] := rfl
+
+@[simp]
+theorem positions_cons {P : PFunctor.{uA, uB}} (event : P.Idx) (events : TraceList P) :
+    positions (event :: events) = event.1 :: positions events := rfl
+
+@[simp]
+theorem length_positions {P : PFunctor.{uA, uB}} (events : TraceList P) :
+    (positions events).length = events.length := List.length_map ..
+
 /-- Every event in a trace carries a direction allowed at its position.
 
 The allowed directions remain fiber-indexed: checking an event `⟨a, b⟩`

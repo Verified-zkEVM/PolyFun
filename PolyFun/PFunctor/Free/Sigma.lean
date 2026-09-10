@@ -41,7 +41,7 @@ theorem sigmaInj_pure (i : I) (value : X i) :
 @[simp]
 theorem sigmaInj_liftBind (i : I) (position : (P i).A)
     (next : (P i).B position → FreeM (P i) (X i)) :
-    sigmaInj i ((FreeM.lift position).bind next) =
+    sigmaInj i (FreeM.liftBind position next) =
       FreeM.liftBind (P := PFunctor.sigma P) ⟨i, position⟩
         (fun direction => sigmaInj i (next direction)) :=
   rfl

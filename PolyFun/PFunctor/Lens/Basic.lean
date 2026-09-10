@@ -59,10 +59,10 @@ theorem ext_heq {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l�
       rfl
 
 /-- The identity lens -/
-@[implicit_reducible]
+@[reducible]
 protected def id (P : PFunctor.{uA, uB}) : Lens P P where
-  toFunA := id
-  toFunB := fun _ => id
+  toFunA := fun a => a
+  toFunB := fun _ b => b
 
 /-- Composition of lenses -/
 def comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
@@ -867,7 +867,7 @@ def toLensEquiv (e : P ≃ₚ Q) : P ≃ₗ Q where
     simp only [Lens.comp, Lens.id]
     ext a b
     · simp [PFunctor.Equiv.symm]
-    · simp only [Function.comp_apply, id_eq]
+    · simp only [Function.comp_apply]
       have hb :
           (e.equivB a).symm ((e.symm.equivB (e.equivA a)).symm b) =
             _root_.cast (congrArg P.B (e.equivA.symm_apply_apply a)) b := by
@@ -880,7 +880,7 @@ def toLensEquiv (e : P ≃ₚ Q) : P ≃ₗ Q where
     simp only [Lens.comp, Lens.id]
     ext a b
     · simp [PFunctor.Equiv.symm]
-    · simp only [Function.comp_apply, id_eq]
+    · simp only [Function.comp_apply]
       have hb :
           (e.symm.equivB a).symm ((e.equivB (e.symm.equivA a)).symm b) =
             _root_.cast (congrArg Q.B (e.equivA.apply_symm_apply a)) b := by

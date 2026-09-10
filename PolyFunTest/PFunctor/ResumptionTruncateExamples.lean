@@ -80,12 +80,12 @@ example : truncate 1 twoLevelTree =
 
 theorem twoLevelProgram_bound : twoLevelProgram.IsTotalRollBound 2 := by
   unfold twoLevelProgram
-  rw [FreeM.liftBind_eq, FreeM.isTotalRollBound_lift_bind_iff]
+  rw [FreeM.isTotalRollBound_lift_bind_iff]
   refine ⟨by omega, fun first => ?_⟩
   cases first
   · simp [secondProgram]
   · unfold secondProgram
-    rw [FreeM.liftBind_eq, FreeM.isTotalRollBound_lift_bind_iff]
+    rw [FreeM.isTotalRollBound_lift_bind_iff]
     refine ⟨by omega, fun second => ?_⟩
     simp
 
@@ -128,7 +128,7 @@ example : truncate 1 emptyDirectionTree = FreeM.map some emptyDirectionProgram :
   rw [htree]
   apply truncate_toResumption_eq_map_some
   unfold emptyDirectionProgram
-  rw [FreeM.liftBind_eq, FreeM.isTotalRollBound_lift_bind_iff]
+  rw [FreeM.isTotalRollBound_lift_bind_iff]
   exact ⟨by omega, fun direction => PEmpty.elim direction⟩
 
 /-- An infinite visible-query loop has a finite cutoff at every fuel. -/

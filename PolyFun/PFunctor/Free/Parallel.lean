@@ -364,7 +364,7 @@ theorem left_pure (value : E) :
 
 @[simp]
 theorem left_liftBind (a : P.A) (next : P.B a → FreeM P E) :
-    left (Q := Q) ((FreeM.lift a).bind next) =
+    left (Q := Q) (FreeM.liftBind a next) =
       @FreeM.liftBind (P ∥ Q) E (ParallelChoice.left a)
         (fun answer => left (Q := Q) (next answer)) :=
   rfl
@@ -376,7 +376,7 @@ theorem right_pure (value : E) :
 
 @[simp]
 theorem right_liftBind (b : Q.A) (next : Q.B b → FreeM Q E) :
-    right (P := P) ((FreeM.lift b).bind next) =
+    right (P := P) (FreeM.liftBind b next) =
       @FreeM.liftBind (P ∥ Q) E (ParallelChoice.right b)
         (fun answer => right (P := P) (next answer)) :=
   rfl
@@ -410,14 +410,14 @@ theorem parallel_pure_pure (x : E) (y : F) :
 @[simp]
 theorem parallel_liftBind_pure
     (a : P.A) (next : P.B a → FreeM P E) (y : F) :
-    parallel (Q := Q) ((FreeM.lift a).bind next) (pure y) =
+    parallel (Q := Q) (FreeM.liftBind a next) (pure y) =
       .liftBind (.left a) fun answer => parallel (Q := Q) (next answer) (.pure y) :=
   rfl
 
 @[simp]
 theorem parallel_pure_liftBind
     (x : E) (b : Q.A) (next : Q.B b → FreeM Q F) :
-    parallel (P := P) (pure x) ((FreeM.lift b).bind next) =
+    parallel (P := P) (pure x) (FreeM.liftBind b next) =
       .liftBind (.right b) fun answer => parallel (P := P) (.pure x) (next answer) :=
   rfl
 
@@ -425,7 +425,7 @@ theorem parallel_pure_liftBind
 theorem parallel_liftBind_liftBind
     (a : P.A) (nextP : P.B a → FreeM P E)
     (b : Q.A) (nextQ : Q.B b → FreeM Q F) :
-    parallel ((FreeM.lift a).bind nextP) ((FreeM.lift b).bind nextQ) =
+    parallel (FreeM.liftBind a nextP) (FreeM.liftBind b nextQ) =
       .liftBind (.both a b) fun answer =>
         parallel (nextP answer.1) (nextQ answer.2) :=
   rfl

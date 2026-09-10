@@ -43,7 +43,7 @@ theorem toITree_liftBind (position : E.A)
     toITree (FreeM.liftBind position next) =
       ITree.query position fun direction => toITree (next direction) := by
   unfold toITree
-  rw [FreeM.liftBind_eq, FreeM.toResumption_liftBind,
+  rw [FreeM.toResumption_liftBind,
     Resumption.toITree_query]
 
 @[simp] theorem toITree_bind (program : FreeM E α)

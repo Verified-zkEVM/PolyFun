@@ -506,16 +506,15 @@ private theorem noCutoff_truncate_toResumption_iff
       rw [FreeM.toResumption_pure, Resumption.truncate_pure, noCutoff_pure]
       simp
   | lift_bind position next ih =>
-      rw [← FreeM.liftBind_eq]
       cases k with
       | zero =>
           rw [Resumption.truncate_zero, FreeM.dest_toResumption_liftBind,
-            FreeM.liftBind_eq, FreeM.isTotalRollBound_lift_bind_iff]
+            FreeM.isTotalRollBound_lift_bind_iff]
           rw [noCutoff_pure]
           simp
       | succ k =>
           rw [Resumption.truncate_succ, FreeM.dest_toResumption_liftBind,
-            FreeM.liftBind_eq, FreeM.isTotalRollBound_lift_bind_iff]
+            FreeM.isTotalRollBound_lift_bind_iff]
           simp only [noCutoff_liftBind, Nat.zero_lt_succ,
             Nat.add_sub_cancel, true_and]
           exact forall_congr' fun direction => ih direction k

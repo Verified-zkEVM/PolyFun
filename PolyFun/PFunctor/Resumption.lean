@@ -441,7 +441,7 @@ def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β 
     · exact .pure value (by rw [dest_mapLens, h]) h
     · exact .query position
         (fun direction => mapLens (Lens.id p) (next direction)) next
-        (by rw [dest_mapLens, h]; rfl) h
+        (by rw [dest_mapLens, h]) h
         (fun direction => ⟨next direction, rfl, rfl⟩)
   · exact ⟨computation, rfl, rfl⟩
 

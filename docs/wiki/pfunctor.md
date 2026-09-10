@@ -208,6 +208,15 @@ interpreter with its `Interprets` universal property. PolyFun layers its own API
 displayed families, indexed-family packing, weakest preconditions, roll bounds)
 on top of the upstream type.
 
+Constructor simplification keeps `liftBind` as the normal form. `FreeM.lift_bind` folds a lifted
+operation followed by a bind into that constructor, `FreeM.lift_bind_eq_liftBind` handles named
+binds across universes, and `FreeM.liftBind_map` and `FreeM.liftM_liftBind` reduce maps and folds.
+Path, output, trace and length equations use the same constructor form, preserving dependent
+indices through ordinary simplification. `PolyFunTest/PFunctor/ConstructorNormalization.lean`
+checks these operations through an ordinary import.
+Use the named equality `FreeM.liftBind_eq` explicitly when a proof needs the bind presentation;
+expanding it during general simplification can disrupt dependent path indices.
+
 | File | Purpose |
 |------|---------|
 | [`PolyFun/PFunctor/Free/Basic.lean`](../../PolyFun/PFunctor/Free/Basic.lean) | Re-exports cslib's `FreeM P α` (`pure` / `liftBind`) and canonical `liftM` evaluator; exposes notation-facing and universe-polymorphic equations for `map`, constructor equations for `mapLens`, and adds `liftMHom` naturality, arbitrary-monad handler fusion, and `toW` / `ofW` / `equivWOfIsEmpty`. |
@@ -217,7 +226,7 @@ on top of the upstream type.
 | [`PolyFun/PFunctor/Free/WP.lean`](../../PolyFun/PFunctor/Free/WP.lean) | Syntactic and handler-relative weakest preconditions, canonical demonic/angelic operation specs, and the admitted-response `LeavesSatisfyUnder` contract. Its map and bind laws keep result universes independent; free-handler closure retains only upstream `FreeM.liftM`'s homogeneous source-result constraint. The leaf contract is partial correctness and supplies no progress claim. |
 | [`PolyFun/PFunctor/Free/Resumption.lean`](../../PolyFun/PFunctor/Free/Resumption.lean) | Injective monad-hom embedding `FreeM.toResumption`, with constructor, bind, map, and `mapLens` naturality laws. Kept separate to preserve the base `Resumption` import layer. |
 | [`PolyFun/PFunctor/Free/Path.lean`](../../PolyFun/PFunctor/Free/Path.lean) | `FreeM.Path s` (explicit polynomial direction at every node), `PathAlong`, `output`, `append`, the generic `StoppingTree` initial algebra, and its canonical-path `Telescope` specialization. |
-| [`PolyFun/PFunctor/Free/Path/Execution.lean`](../../PolyFun/PFunctor/Free/Path/Execution.lean) | Structural `withPath` execution, erased `Path.trace`, syntactic `Path.length` and `withPathLength`, and the exact recovery law `map_output_withPath`. |
+| [`PolyFun/PFunctor/Free/Path/Execution.lean`](../../PolyFun/PFunctor/Free/Path/Execution.lean) | Structural `withPath` execution, erased `Path.trace`, syntactic `Path.length` and `withPathLength`, the exact recovery law `map_output_withPath`, agreement on visited operations (`Path.ofHandler_eq_of_agree_trace`), and agreement of path output with the deterministic fold (`output_ofHandler`). |
 | [`PolyFun/PFunctor/Free/Path/Bounded.lean`](../../PolyFun/PFunctor/Free/Path/Bounded.lean) | Connects total roll-bound certificates to pointwise bounds on the syntactic length of every completed typed path. |
 | [`PolyFun/PFunctor/Free/Cursor.lean`](../../PolyFun/PFunctor/Free/Cursor.lean) | `FreeM.Cursor s`, a finite typed path prefix with an explicit residual subtree; composition, prefix traces, residual-path plugging, extension witnesses, and the equivalence between terminal cursors and complete `Path`s. |
 | [`PolyFun/PFunctor/Free/Cursor/Append.lean`](../../PolyFun/PFunctor/Free/Cursor/Append.lean) | Cast-free classification of cursors through dependent `FreeM.append`, with prefix/suffix split-join equivalences, terminal-path compatibility, and decoration restriction laws. |
@@ -315,3 +324,9 @@ If a concept appears redundant between layers, the substrate version
 (here, in `PFunctor/`) is almost always the load-bearing one. Downstream
 layers exist to give protocol-flavored names and ergonomics; the maths
 lives in `PFunctor/Free/`, `PFunctor/Cofree.lean`, and `PFunctor/Cofree/`.
+
+The execution API exposes `TraceList.positions` and `FreeM.Path.positions` for ordered input
+observations, including repeated inputs. Prefer these over mapping a bare `Sigma.fst` across
+the event carrier. The constructor equations for dependent path observations mark their path
+argument with `no_index`: the hidden sigma direction type changes when a polynomial is
+specialized, but the operation constructor remains available for simp indexing.

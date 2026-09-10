@@ -56,7 +56,7 @@ lemma isRollBound_pure (x : α) (b : B)
 @[simp, grind =]
 lemma isRollBound_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) (b : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
-    IsRollBound ((FreeM.lift a).bind r) b canRoll cost ↔
+    IsRollBound (FreeM.liftBind a r) b canRoll cost ↔
       canRoll a b ∧ ∀ y, IsRollBound (r y) (cost a b) canRoll cost :=
   Iff.rfl
 
@@ -64,7 +64,7 @@ lemma isRollBound_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) (b : B)
 lemma isRollBound_lift_iff (a : P.A) (b : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
     IsRollBound (FreeM.lift a : FreeM P (P.B a)) b canRoll cost ↔ canRoll a b := by
-  simp [IsRollBound, lift, - liftBind_eq, ← pure_eq_pure]
+  simp [IsRollBound, lift, ← pure_eq_pure]
 
 private lemma isRollBound_map_aux (oa : FreeM P α) (f : α → β)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
@@ -74,8 +74,7 @@ private lemma isRollBound_map_aux (oa : FreeM P α) (f : α → β)
   | pure x => intro b; exact ⟨fun _ => trivial, fun _ => trivial⟩
   | lift_bind a r ih =>
     intro b
-    rw [show (f <$> (lift a).bind r) = (lift a).bind (fun y => f <$> r y) from rfl,
-      isRollBound_lift_bind_iff, isRollBound_lift_bind_iff]
+    rw [liftBind_map, isRollBound_lift_bind_iff, isRollBound_lift_bind_iff]
     exact and_congr_right fun _ => forall_congr' fun y => ih y
 
 @[simp, grind =]
@@ -209,7 +208,7 @@ lemma isTotalRollBound_pure (x : α) (n : ℕ) :
 
 @[simp, grind =]
 lemma isTotalRollBound_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) :
-    IsTotalRollBound ((FreeM.lift a).bind r) n ↔
+    IsTotalRollBound (FreeM.liftBind a r) n ↔
       0 < n ∧ ∀ y, IsTotalRollBound (r y) (n - 1) :=
   Iff.rfl
 
@@ -250,8 +249,7 @@ lemma isTotalRollBound_mapLens {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
   | pure x => simp
   | lift_bind a cont ih =>
       rw [isTotalRollBound_lift_bind_iff] at h
-      rw [FreeM.mapLens_lift_bind, FreeM.liftBind_eq,
-        isTotalRollBound_lift_bind_iff]
+      rw [FreeM.mapLens_liftBind, isTotalRollBound_lift_bind_iff]
       exact ⟨h.1, fun d => ih _ (h.2 _)⟩
 
 end PFunctor.FreeM

@@ -142,7 +142,7 @@ theorem map_liftBind {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
     (f : ∀ a, Γ a → Δ a)
     (a : P.A) (rest : P.B a → FreeM P α)
     (d : Decoration Γ (FreeM.liftBind a rest)) :
-    map f ((FreeM.lift a).bind rest) d =
+    map f (FreeM.liftBind a rest) d =
       ⟨f a d.1, fun b => map f (rest b) (d.2 b)⟩ :=
   rfl
 
@@ -152,7 +152,7 @@ theorem map_id {Γ : P.A → Type w₂} :
     map (fun _ γ => γ) s d = d
   | .pure _, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩ => by
-      simp only [FreeM.liftBind_eq, map_liftBind]
+      simp only [map_liftBind]
       congr 1
       funext b
       exact map_id (rest b) (dRest b)
@@ -163,7 +163,7 @@ theorem map_comp {Γ : P.A → Type w₂} {Δ : P.A → Type w₃} {Λ : P.A →
     map g s (map f s d) = map (fun a => g a ∘ f a) s d
   | .pure _, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩ => by
-      simp only [FreeM.liftBind_eq, map_liftBind]
+      simp only [map_liftBind]
       congr 1
       funext b
       exact map_comp g f (rest b) (dRest b)
@@ -198,7 +198,7 @@ theorem map_id {Γ : P.A → Type w₂} {F : (a : P.A) → Γ a → Type w₃} :
     map (fun _ _ x => x) s d r = r
   | .pure _, ⟨⟩, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨fd, rRest⟩ => by
-      simp only [FreeM.liftBind_eq, map, fiberLocalMap,
+      simp only [map, fiberLocalMap,
         Displayed.Over.FiberLocalMap.toHom_liftBind]
       congr 1
       funext b
@@ -215,7 +215,7 @@ theorem map_comp {Γ : P.A → Type w₂}
       map (fun a γ => g a γ ∘ f a γ) s d r
   | .pure _, ⟨⟩, ⟨⟩ => rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨fd, rRest⟩ => by
-      simp only [FreeM.liftBind_eq, map, fiberLocalMap,
+      simp only [map, fiberLocalMap,
         Displayed.Over.FiberLocalMap.toHom_liftBind]
       congr 1
       funext b
@@ -257,7 +257,7 @@ theorem mapBase_id {Γ : P.A → Type w₂} {A : (a : P.A) → Γ a → Type w�
     HEq (mapBase (fun _ γ => γ) (fun _ _ x => x) s d r) r
   | .pure _, ⟨⟩, ⟨⟩ => HEq.rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨a, rRest⟩ => by
-      simp only [FreeM.liftBind_eq, mapBase, baseLocalMap,
+      simp only [mapBase, baseLocalMap,
         Displayed.Over.LocalMap.toHom_liftBind]
       refine Prod.mk_heq ?_
       refine Function.hfunext rfl ?_
@@ -282,7 +282,7 @@ theorem mapBase_comp {Γ : P.A → Type w₂} {Δ : P.A → Type w₃} {Λ : P.A
         (fun a γ => gOver a (f a γ) ∘ fOver a γ) s d r)
   | .pure _, ⟨⟩, ⟨⟩ => HEq.rfl
   | .liftBind _ rest, ⟨γ, dRest⟩, ⟨a, rRest⟩ => by
-      simp only [FreeM.liftBind_eq, mapBase, baseLocalMap,
+      simp only [mapBase, baseLocalMap,
         Displayed.Over.LocalMap.toHom_liftBind]
       refine Prod.mk_heq ?_
       refine Function.hfunext rfl ?_

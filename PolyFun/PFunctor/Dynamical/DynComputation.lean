@@ -53,6 +53,14 @@ visible query paired with its state-valued continuation. -/
 def view (M : DynComputation.{u} p α β) (state : M.State) : β ⊕ p.Obj M.State :=
   Resumption.unpack (M.toDynSystem.out state)
 
+/-- Two descriptions of the same exposed query have the same continuation. Keeping the
+polynomial carrier abstract avoids unfolding its dependent response type in consumers. -/
+theorem next_eq_of_view_query (M : DynComputation.{u} p α β) {state : M.State}
+    {position : p.A} {next next' : p.B position → M.State}
+    (h : M.view state = Sum.inr ⟨position, next⟩)
+    (h' : M.view state = Sum.inr ⟨position, next'⟩) : next = next' :=
+  eq_of_heq (Sigma.mk.inj_iff.mp (Sum.inr.inj (h.symm.trans h'))).2
+
 /-- The canonical state-free semantics of a dynamical computation. -/
 def denote (M : DynComputation.{u} p α β) (input : α) : Resumption p β :=
   M.toDynSystem.behavior (M.init input)
@@ -779,7 +787,7 @@ def ofFreeM (program : α → FreeM p β) : DynComputation p α β where
 
 @[simp] theorem view_ofFreeM_liftBind (program : α → FreeM p β)
     (position : p.A) (next : p.B position → FreeM p β) :
-    (ofFreeM program).view ((FreeM.lift position).bind next) =
+    (ofFreeM program).view (FreeM.liftBind position next) =
       Sum.inr ⟨position, next⟩ := rfl
 
 /-- `ofFreeM` has exactly the tau-free resumption semantics of its source

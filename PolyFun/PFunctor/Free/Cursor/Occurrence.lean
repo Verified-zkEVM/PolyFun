@@ -545,8 +545,6 @@ theorem splitAt_bind_complete [DecidableEq P.A] (target : P.A) : (program : Free
       rfl
   | lift_bind a next ih =>
       intro n
-      change FreeM.bind (splitAt target (FreeM.liftBind a next) n) Split.complete =
-        withPath (FreeM.liftBind a next)
       by_cases h : a = target
       · subst target
         cases n with
@@ -600,9 +598,6 @@ theorem map_val_splitAtValid [DecidableEq P.A] (target : P.A) : (program : FreeM
       rfl
   | lift_bind a next ih =>
       intro n
-      change FreeM.map Subtype.val
-          (splitAtValid target (FreeM.liftBind a next) n) =
-        splitAt target (FreeM.liftBind a next) n
       by_cases h : a = target
       · subst target
         cases n with

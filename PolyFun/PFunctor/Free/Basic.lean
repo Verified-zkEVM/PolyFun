@@ -143,7 +143,7 @@ theorem rootSatisfies_pure (positionPred : P.A → Prop) (leafPred : α → Prop
 theorem rootSatisfies_liftBind (positionPred : P.A → Prop) (leafPred : α → Prop)
     (position : P.A) (next : P.B position → FreeM P α) :
     RootSatisfies positionPred leafPred
-        ((FreeM.lift (P := P) position).bind next) =
+        (FreeM.liftBind (P := P) position next) =
       positionPred position :=
   rfl
 
@@ -219,7 +219,6 @@ theorem mapLens_liftBind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α) 
       FreeM.liftBind (l.toFunA a) (fun d ↦ (rest (l.toFunB a d)).mapLens l) :=
   rfl
 
-@[simp]
 theorem mapLens_lift_bind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α) :
     ((FreeM.lift a).bind rest).mapLens l =
       FreeM.liftBind (l.toFunA a) (fun d => (rest (l.toFunB a d)).mapLens l) := rfl

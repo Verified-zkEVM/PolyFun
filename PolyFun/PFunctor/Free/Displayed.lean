@@ -83,7 +83,7 @@ theorem pure_eq (D : Algebra P α) (x : α) :
 
 @[simp]
 theorem liftBind_eq (D : Algebra P α) (a : P.A) (rest : P.B a → FreeM P α) :
-    Displayed D ((FreeM.lift a).bind rest) =
+    Displayed D (FreeM.liftBind a rest) =
       D.node a (fun b => Displayed D (rest b)) :=
   rfl
 
@@ -136,7 +136,7 @@ theorem liftBind_eq
     (E : _root_.PFunctor.FreeM.Displayed.Over.Algebra D)
     (a : P.A) (rest : P.B a → FreeM P α)
     (d : D.node a (fun b => Displayed D (rest b))) :
-    _root_.PFunctor.FreeM.Displayed.Over E ((FreeM.lift a).bind rest) d =
+    _root_.PFunctor.FreeM.Displayed.Over E (FreeM.liftBind a rest) d =
       E.node a (fun b => Displayed D (rest b))
         (fun b d => _root_.PFunctor.FreeM.Displayed.Over E (rest b) d) d :=
   rfl
@@ -191,7 +191,7 @@ theorem ofConstructors_liftBind
       ((b : P.B a) → children b) →
       D.node a children)
     (a : P.A) (rest : P.B a → FreeM P α) :
-    ofConstructors onLeaf onNode ((FreeM.lift a).bind rest) =
+    ofConstructors onLeaf onNode (FreeM.liftBind a rest) =
       onNode a (fun b => Displayed D (rest b))
         (fun b => ofConstructors onLeaf onNode (rest b)) :=
   rfl
@@ -306,7 +306,7 @@ theorem toHom_pure (η : LocalMap D E) (x : α) (d : D.leaf x) :
 theorem toHom_liftBind (η : LocalMap D E)
     (a : P.A) (rest : P.B a → FreeM P α)
     (d : D.node a (fun b => Displayed D (rest b))) :
-    η.toHom ((FreeM.lift a).bind rest) d =
+    η.toHom (FreeM.liftBind a rest) d =
       η.mapNode a (fun b => Displayed D (rest b))
         (fun b => Displayed E (rest b))
         (fun b => η.toHom (rest b)) d :=
@@ -496,7 +496,7 @@ theorem toHom_liftBind (η : FiberLocalMap R' S')
     (d : D.node a (fun b => Displayed D (rest b)))
     (r : R'.node a (fun b => Displayed D (rest b))
       (fun b d => _root_.PFunctor.FreeM.Displayed.Over R' (rest b) d) d) :
-    η.toHom ((FreeM.lift a).bind rest) d r =
+    η.toHom (FreeM.liftBind a rest) d r =
       η.mapNode a (fun b => Displayed D (rest b))
         (fun b d => _root_.PFunctor.FreeM.Displayed.Over R' (rest b) d)
         (fun b d => _root_.PFunctor.FreeM.Displayed.Over S' (rest b) d)
@@ -579,7 +579,7 @@ theorem toHom_liftBind {η : Displayed.LocalMap D E} (φ : LocalMap η R S)
     (d : D.node a (fun b => Displayed D (rest b)))
     (r : R.node a (fun b => Displayed D (rest b))
       (fun b d => _root_.PFunctor.FreeM.Displayed.Over R (rest b) d) d) :
-    φ.toHom ((FreeM.lift a).bind rest) d r =
+    φ.toHom (FreeM.liftBind a rest) d r =
       φ.mapNode a (fun b => Displayed D (rest b))
         (fun b => Displayed E (rest b))
         (fun b => η.toHom (rest b))

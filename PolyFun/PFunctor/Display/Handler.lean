@@ -89,7 +89,7 @@ theorem liftM_liftBind
     (children : (b : P.B a) → S.direction a c b →
       FreeM.Displayed (S.toDisplayedAlgebra F) (rest b))
     (f : (a : P.A) → FreeM Q (P.B a)) (df : Handler S T f) :
-    S.liftM T (FreeM.lift a >>= rest) ⟨c, children⟩ f df =
+    S.liftM T (FreeM.liftBind a rest) ⟨c, children⟩ f df =
       T.bind (f a) (df a c) (fun b => (rest b).liftM f)
         (fun b e => S.liftM T (rest b) (children b e) f df) :=
   rfl
@@ -181,10 +181,9 @@ theorem liftM_id
       rfl
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
-      simp only [FreeM.pure_bind] at children
       rw [S.transport_proof_irrel F
-        (FreeM.liftM_lift_eq_self ((FreeM.lift a).bind rest))
-        (liftM_id_eq ((FreeM.lift a).bind rest))]
+        (FreeM.liftM_lift_eq_self (FreeM.liftBind a rest))
+        (liftM_id_eq (FreeM.liftBind a rest))]
       change S.transport F (liftM_id_eq (FreeM.liftBind a rest))
           ⟨c, fun b e =>
             S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
@@ -251,10 +250,9 @@ theorem liftM_bind
       rfl
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
-      simp only [FreeM.pure_bind] at children
       rw [T.transport_proof_irrel G
-        (FreeM.liftM_bind f ((FreeM.lift a).bind rest) g)
-        (liftM_bind_eq f g ((FreeM.lift a).bind rest))]
+        (FreeM.liftM_bind f (FreeM.liftBind a rest) g)
+        (liftM_bind_eq f g (FreeM.liftBind a rest))]
       let k : P.B a → FreeM Q E := fun b => (rest b).liftM f
       let h : E → FreeM Q E' := fun x => (g x).liftM f
       let childEq : (fun b => ((rest b).bind g).liftM f) =
@@ -352,10 +350,9 @@ theorem liftM_comp
       rfl
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
-      simp only [FreeM.pure_bind] at children
       rw [U.transport_proof_irrel F
-        (FreeM.liftM_comp ((FreeM.lift a).bind rest) first second)
-        (liftM_comp_eq first second ((FreeM.lift a).bind rest))]
+        (FreeM.liftM_comp (FreeM.liftBind a rest) first second)
+        (liftM_comp_eq first second (FreeM.liftBind a rest))]
       let k : P.B a → FreeM Q E := fun b => (rest b).liftM first
       let childEq : (fun b => (k b).liftM second) =
           (fun b => (rest b).liftM fun a => (first a).liftM second) :=

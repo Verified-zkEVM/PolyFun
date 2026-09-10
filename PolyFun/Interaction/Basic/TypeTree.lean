@@ -109,7 +109,7 @@ polynomial via `Decoration`, `NodeProfile`, and `StepOver`. -/
 @[expose, reducible]
 def basePFunctor : PFunctor.{u+1, u} where
   A := Type u
-  B := id
+  B := fun X => X
 
 end TypeTree
 

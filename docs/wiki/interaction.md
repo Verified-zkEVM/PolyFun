@@ -633,6 +633,13 @@ import PolyFun.Interaction.UC.OpenProcessModel
 | `Sampler.lean` | `TypeTree.Sampler m tree := Decoration (fun X => m X) tree`, `samplePath`, `Sampler.interleave`, and its public constructor equation `Sampler.interleave_eq` |
 | `TypeTreeFintype.lean` | Universe-polymorphic `TypeTree.Fintype` and `TypeTree.Nonempty` branching ornaments |
 
+Deterministic counterparts lift into a monadic run through the public
+`Counterpart.liftId_done`, `Counterpart.liftId_sender`, and `Counterpart.liftId_receiver`
+equations. Together with `TwoParty.run_sender`, `run_receiver`, and `run_done`, these simplify
+node observations under ordinary imports. `PolyFunTest/Interaction/TwoParty/NodeReduction.lean`
+checks both roles and a dependent terminal output. The identity lens and base direction family
+preserve the concrete move type during numeral instance search.
+
 ### `TwoParty/`
 
 | File | Purpose |

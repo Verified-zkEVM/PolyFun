@@ -61,7 +61,7 @@ open TwoParty
 the runner lemmas below rewrite through the strategy family and the generic
 runner there. `implicit_reducible` (unlike `reducible`) stays invisible to
 simp validation and instance search. -/
-attribute [local implicit_reducible] StrategyOver InteractionOver.runTypeTree
+attribute [local implicit_reducible] InteractionOver.runTypeTree
 
 /-- The ordinary paired two-party local syntax specialized to plain type trees,
 using the identity lens on `TypeTree.basePFunctor` and roles as node metadata. -/
@@ -473,6 +473,38 @@ def _root_.Interaction.StrategyOver.TwoParty.Counterpart.liftId {m : Type u → 
   | .node _ _, ⟨.receiver, _⟩, _, ⟨x, c⟩ =>
       pure ⟨x, liftId c⟩
 
+@[simp]
+theorem _root_.Interaction.StrategyOver.TwoParty.Counterpart.liftId_done
+    {m : Type u → Type u} [Monad m]
+    {Output : PFunctor.FreeM.Path TypeTree.done → Type u} (out : Output PUnit.unit) :
+    StrategyOver.TwoParty.Counterpart.liftId (m := m) (spec := TypeTree.done)
+      (roles := PUnit.unit) out = out := by
+  simp only [StrategyOver.TwoParty.Counterpart.liftId]
+
+@[simp]
+theorem _root_.Interaction.StrategyOver.TwoParty.Counterpart.liftId_sender
+    {m : Type u → Type u} [Monad m]
+    {X : Type u} {rest : X → TypeTree} {rRest : (x : X) → RoleDecoration (rest x)}
+    {Output : PFunctor.FreeM.Path (TypeTree.node X rest) → Type u}
+    (observe : (x : X) → StrategyOver (SyntaxOver.TwoParty.pairedTypeTree Id)
+      Participant.counterpart (rest x) (rRest x) (fun tr => Output ⟨x, tr⟩)) :
+    StrategyOver.TwoParty.Counterpart.liftId (m := m) (spec := TypeTree.node X rest)
+      (roles := ⟨.sender, rRest⟩) observe =
+        fun x => pure (StrategyOver.TwoParty.Counterpart.liftId (observe x)) := by
+  simp only [StrategyOver.TwoParty.Counterpart.liftId]
+
+@[simp]
+theorem _root_.Interaction.StrategyOver.TwoParty.Counterpart.liftId_receiver
+    {m : Type u → Type u} [Monad m]
+    {X : Type u} {rest : X → TypeTree} {rRest : (x : X) → RoleDecoration (rest x)}
+    {Output : PFunctor.FreeM.Path (TypeTree.node X rest) → Type u}
+    (choice : (x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree Id)
+      Participant.counterpart (rest x) (rRest x) (fun tr => Output ⟨x, tr⟩)) :
+    StrategyOver.TwoParty.Counterpart.liftId (m := m) (spec := TypeTree.node X rest)
+      (roles := ⟨.receiver, rRest⟩) choice =
+        pure ⟨choice.1, StrategyOver.TwoParty.Counterpart.liftId choice.2⟩ := by
+  simp only [StrategyOver.TwoParty.Counterpart.liftId]
+
 /-- The participant-indexed output family for a two-party run.
 
 The focal participant carries `OutputP`, while the counterpart carries
@@ -748,7 +780,7 @@ theorem run_sender {m : Type u → Type u} [Monad m]
     (dualFn : (x : X) → m (StrategyOver
       (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
         (rest x) (rRest x) (fun tr => OutputC ⟨x, tr⟩))) :
-    run (@PFunctor.FreeM.lift Interaction.TypeTree.basePFunctor X >>= rest) ⟨.sender, rRest⟩
+    run (TypeTree.node X rest) (⟨.sender, rRest⟩ : Role × ((x : X) → RoleDecoration (rest x)))
         send dualFn = (do
       let xc ← send
       let dualNext ← dualFn xc.1
@@ -765,7 +797,7 @@ theorem run_receiver {m : Type u → Type u} [Monad m]
     (dualSample :
       m ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
         (rest x) (rRest x) (fun tr => OutputC ⟨x, tr⟩))) :
-    run (@PFunctor.FreeM.lift Interaction.TypeTree.basePFunctor X >>= rest) ⟨.receiver, rRest⟩
+    run (TypeTree.node X rest) (⟨.receiver, rRest⟩ : Role × ((x : X) → RoleDecoration (rest x)))
         respond dualSample = (do
       let xc ← dualSample
       let next ← respond xc.1

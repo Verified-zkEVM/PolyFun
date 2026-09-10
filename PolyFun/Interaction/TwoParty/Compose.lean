@@ -44,7 +44,7 @@ open TwoParty
 the sequential-composition lemmas below rewrite through the runner and the
 strategy family there. `implicit_reducible` (unlike `reducible`) stays
 invisible to simp validation and instance search. -/
-attribute [local implicit_reducible] run InteractionOver.runTypeTree StrategyOver
+attribute [local implicit_reducible] run InteractionOver.runTypeTree
 
 /-- A lawful monad whose independent effects may be swapped.
 
@@ -536,7 +536,7 @@ theorem run_compFlat_appendFlat_pure
           PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
           run, InteractionOver.runTypeTree, InteractionOver.TwoParty.pairedTypeTree,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
-          participantOutputFamily, monad_norm, id_eq]
+          participantOutputFamily, monad_norm]
         let mapStrat :
             ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
               (rest x) (rRest x) (fun tr => MidP ⟨x, tr⟩)) →
@@ -588,7 +588,7 @@ theorem run_compFlat_appendFlat_pure
           PFunctor.FreeM.append, PFunctor.FreeM.Displayed.Decoration.append,
           run, InteractionOver.runTypeTree, InteractionOver.TwoParty.pairedTypeTree,
           InteractionOver.TwoParty.paired, participantProfile, collectParticipantOutputs,
-          participantOutputFamily, monad_norm, id_eq]
+          participantOutputFamily, monad_norm]
         let mapCpt :
             ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
               (rest x) (rRest x) (fun tr => MidC ⟨x, tr⟩)) →

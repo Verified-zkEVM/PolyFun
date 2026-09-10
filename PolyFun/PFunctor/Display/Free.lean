@@ -140,7 +140,7 @@ theorem bind_liftBind (S : Display.{uA, uB, uC, uD} P)
       FreeM.Displayed (S.toDisplayedAlgebra F) (rest b))
     (g : E → FreeM P E')
     (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedAlgebra G) (g x)) :
-    S.bind ((FreeM.lift a).bind rest) ⟨c, children⟩ g dg =
+    S.bind (FreeM.liftBind a rest) ⟨c, children⟩ g dg =
       ⟨c, fun b e => S.bind (rest b) (children b e) g dg⟩ :=
   rfl
 
@@ -242,8 +242,6 @@ theorem bind_leaf (S : Display.{uA, uB, uC, uD} P)
       rfl
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
-      simp only [FreeM.pure_bind] at children
-      simp only [bind_liftBind]
       change S.transport F (bind_pure_eq (FreeM.liftBind a rest))
           ⟨c, fun b e =>
             S.bind (rest b) (children b e) FreeM.pure fun x dx =>
@@ -290,11 +288,9 @@ theorem bind_assoc (S : Display.{uA, uB, uC, uD} P)
       rfl
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
-      simp only [FreeM.pure_bind] at children
-      simp only [bind_liftBind]
       rw [S.transport_proof_irrel H
-        (FreeM.bind_assoc ((FreeM.lift a).bind rest) g h)
-        (bind_assoc_eq g h ((FreeM.lift a).bind rest))]
+        (FreeM.bind_assoc (FreeM.liftBind a rest) g h)
+        (bind_assoc_eq g h (FreeM.liftBind a rest))]
       change S.transport H (bind_assoc_eq g h (FreeM.liftBind a rest))
           ⟨c, fun b e =>
             S.bind ((rest b).bind g) (S.bind (rest b) (children b e) g dg) h dh⟩ =
