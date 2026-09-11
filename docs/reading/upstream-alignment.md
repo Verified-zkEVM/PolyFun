@@ -31,18 +31,21 @@ Every claim below was checked against source on disk, not recalled.
 
 | Tree | Revision surveyed | Compared against |
 |---|---|---|
-| Lean core | **v4.33.1** | `master` and `v4.34.0-rc2`, via the GitHub API |
-| Mathlib | v4.33.1 (`0df444a360`) | `origin/master` |
-| cslib | v4.33.1 (`98e395a7`) | `origin/main` |
-| Batteries | `4488d40d0` | `origin/main` + live GitHub search |
+| Lean core | **v4.34.0-rc2** | `master`, via the GitHub API |
+| Mathlib | v4.34.0-rc2 (`85e3a25e00`) | `origin/master` |
+| cslib | v4.34.0-rc2 (`2255a5b5`) | `origin/main` |
+| Batteries | `d54dddc58` | `origin/main` + live GitHub search |
 
-Re-run at the v4.33.1 pin (2026-08). The previous baseline was v4.33.0, and the
-earlier hedge that a toolchain-only bump could not have invalidated anything is now
-**verified rather than assumed**: `diff -rq` over the two toolchains' `src/lean`
-trees exits clean across 2485 identical `.lean` files, `git diff --stat v4.33.0
-v4.33.1` in Mathlib touches only `lean-toolchain`, and in cslib only the manifest and
-toolchain files. So every stale row below is stale because the ledger was wrong when
-written, or because PolyFun moved — never because the pin moved.
+Re-run at the v4.34.0-rc2 pin (2026-09). The previous baseline was v4.33.1, and this
+time the pin move is *not* content-free: `diff -rq` over the v4.33.1 and v4.34.0-rc1
+toolchains' `src/lean` trees touches 201 files, and rc1→rc2 additionally changes
+`Init/Core`, `Init/Prelude`, `Init/Data/Bool`, `Init/Data/Int/Linear`, `Init/Grind/*`, and
+`Lean/Elab/Tactic/Do/Contract.lean`; cslib moves 63 files over 16 commits. The one change
+that reached PolyFun's build is the deprecation of `if_pos` / `if_neg` / `dif_pos` /
+`dif_neg` in favour of `ite_eq_left` / `ite_eq_right` / `dite_eq_left` / `dite_eq_right`
+(statement-identical aliases, `Init/Core.lean`), renamed at every call site. Rows below
+that changed verdict at this re-run say so explicitly; the rest were re-checked against the
+rc2 trees.
 
 Availability is always reported **at the survey baseline**. Where something exists
 only upstream, it is filed under *Track*, not *Adopt*.
@@ -284,10 +287,14 @@ exactly the drift that produced the `MonadSupport` situation.
 #### `mvcgen` is deprecated in favour of `vcgen`
 
 Upstream marks `mvcgen` deprecated via `deprecated_syntax`, directing users to `vcgen`
-(#14874, `since := "2026-08-21"`). That deprecation is on `master` only — not at the pin,
-not in `v4.34.0-rc2` — so it is a **v4.35** item. But **`vcgen` itself already exists at
-the pin** (`Std/Tactic/Do/Syntax.lean:465`), so retargeting PolyFun's six `mvcgen`
-references needs no toolchain bump and can be done whenever convenient.
+(#14874, `since := "2026-08-21"`). That deprecation is on `master` only — not at the
+`v4.34.0-rc2` pin — so it is a **v4.35** item. `vcgen` itself already exists at the pin
+(`Std/Tactic/Do/Syntax.lean:464`), **but it is not a drop-in replacement for PolyFun's
+`mvcgen` uses**: `vcgen` consumes `Std.Internal.Do.WPMonad` / `Std.Internal.Do.Triple`
+(`Lean/Elab/Tactic/Do/Internal/VCGen/Frontend.lean`), not the `Std.Do.WP` structures
+PolyFun's bridge provides. Retargeting therefore needs Internal-stack instances first, not a
+toolchain bump; the previous claim that it "needs no toolchain bump and can be done whenever
+convenient" was wrong on that point.
 
 Relatedly, `Batteries.Classes.SatisfiesM` has been deprecated in favour of
 `Std.Do.Triple`. The `SatisfiesM` / `MonadSatisfying` line — the other abstraction
@@ -331,20 +338,20 @@ decomposition — closed sets are safety, dense sets are liveness), and
 `Foundations/Data/OmegaSequence/Topology.lean`. Both overlap
 `Interaction/Concurrent/Liveness.lean`.
 
-**Three** breaking changes to plan for at the next cslib bump, not the one previously
-recorded:
+Of the **three** breaking changes previously recorded, two landed with the v4.34.0-rc2
+bump and one is still ahead of the pin:
 
-1. `LTS.Execution` becomes a `structure` (fields `length` / `start` / `last` / `trans`)
-   instead of a `Prop`, and its attribute changes from `@[scoped grind =]` to
-   `@[scoped grind]`. Destructuring proofs break.
-2. `LTS.Deterministic` is refactored: the single field becomes
-   `∀ s, lts.DeterministicState s`, layered over new `DeterministicStateLabel` /
-   `DeterministicState`. Four helper names change. A named
-   `DeterministicStateLabel.finite_image` theorem is added, while the existing
-   `Finite (lts.image s μ)` instance remains and delegates to it.
-3. `MapLabel.lean` is deleted in favour of a new `MapHom.lean`, so direct imports of
-   the old module break. The `mapLabel` definition and its main lemmas survive in the
-   new module, reimplemented through the more general `Hom.lift` API.
+1. *(landed at the pin, unused by PolyFun)* `LTS.Execution` is a `structure` (fields
+   `length` / `start` / `last` / `trans`) instead of a `Prop`, with attribute
+   `@[scoped grind]` instead of `@[scoped grind =]`. PolyFun does not destructure it.
+2. *(landed at the pin, unused by PolyFun)* `LTS.Deterministic` is refactored: the single
+   field is `∀ s, lts.DeterministicState s`, layered over `DeterministicStateLabel` /
+   `DeterministicState`, with `not_tr_of_ne`, `image_singleton_iff_tr`, `image_char`, and
+   `DeterministicStateLabel.finite_image`; the `Finite (lts.image s μ)` instance remains.
+3. *(still beyond the pin)* `MapLabel.lean` is deleted in favour of a new `MapHom.lean` on
+   `main`, so direct imports of the old module will break at the next bump. The `mapLabel`
+   definition and its main lemmas survive in the new module, reimplemented through the more
+   general `Hom.lift` API. `MapLabel.lean` still exists at `v4.34.0-rc2`.
 
 Still absent on `main`, so still genuine upstreaming targets: delay bisimulation, a
 well-placed `HasTau (Option α)`, and a cross-type `Bisimilarity.symm`.
@@ -386,7 +393,7 @@ Not in the previous survey at all. Ranked by leverage.
 
 | Upstream | PolyFun counterpart | Verdict |
 |---|---|---|
-| `Lean.Order.MonadTail` + `repeatM_eq_of_monadTail` + `Loop.forIn_eq_of_monadTail` + ~40 `monotone_*` lemmas + the `monotonicity` tactic (`Init/Internal/Order/`) | `Control/Monad/Iter.lean`, `ITree/Do.lean` | **Track and instantiate.** PolyFun has *zero* references to `MonadTail`. It is not the same thing as `MonadIter` — order-theoretic rather than Elgot/Conway — so it does not displace it, but it is the class to *also* instantiate if `partial_fixpoint` is ever wanted in these monads, and its lemma library is free. `Internal`, so no stability promise. |
+| `Lean.Order.MonadTail` + `repeatM.Internal.eq_of_monadTail` + `Loop.forIn_eq_of_monadTail` + ~40 `monotone_*` lemmas + the `monotonicity` tactic (`Init/Internal/Order/`) | `Control/Monad/Iter.lean`, `ITree/Do.lean` | **Track and instantiate.** PolyFun has *zero* references to `MonadTail`. It is not the same thing as `MonadIter` — order-theoretic rather than Elgot/Conway — so it does not displace it, but it is the class to *also* instantiate if `partial_fixpoint` is ever wanted in these monads, and its lemma library is free. `Internal`, so no stability promise. |
 | `Mathlib.Control.ULiftable` (`ULiftable`, `adaptUp`, `adaptDown`, instances for `Id`/`StateT`/`ReaderT`/`ContT`/`WriterT`/`Except`/`Option`) | the universe friction documented in `Control/Monad/Support.lean` and the `ExceptT` single-universe alias | **Investigate as a transport tool.** Zero PolyFun references today. It moves computations between universe instantiations, but it does not repair core's `MonadAttach (ExceptT ε m)` instance signature and ships no `ExceptT` lifting instance. The local single-universe alias therefore remains necessary unless a concrete bridge proves otherwise. |
 | `Mathlib.Control.Functor`'s `Liftp` / `Liftr` / `supp` | `MonadAttach.support` | **Cross-reference, do not adopt.** `Functor.supp` is the intersection of all predicates satisfying `Liftp`, not a `CanReturn` construction — a different definition of the same idea, which `Support.lean` should cite. |
 | `Mathlib.Control.Basic`'s `CommApplicative` | the interleaving / independence layer | **Cross-reference only.** It commutes applicative effects extensionally; it does not by itself prove independence, fairness, or scheduler invariance for interleaved processes. Reuse it only where the process semantics reduces to that exact applicative law. |

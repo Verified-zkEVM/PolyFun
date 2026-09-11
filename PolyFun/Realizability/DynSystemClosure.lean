@@ -112,7 +112,7 @@ theorem _root_.PFunctor.Lens.pullChoicePosIdx_enabled [DecidableEq r.A]
       some ((lens.toFunB a d).elim
         (fun d₁ => Sum.inl ⟨a.1, d₁⟩) (fun d₂ => Sum.inr ⟨a.2, d₂⟩)) := by
   unfold Lens.pullChoicePosIdx
-  rw [dif_pos rfl]
+  rw [dite_eq_left rfl]
 
 /-! ## The fused product-state combinator -/
 

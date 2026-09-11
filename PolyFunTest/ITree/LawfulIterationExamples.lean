@@ -131,11 +131,11 @@ example (loop : Lean.Loop) :
   intro b hb
   refine ITree.WeakBisimRel.pure ?_
   simp only [guardedStep, simplifiedStep]
-  rw [if_pos (by omega : b < 100)]
+  rw [ite_eq_left (by omega : b < 100)]
   by_cases h : b < 3
-  · rw [if_pos h]
+  · rw [ite_eq_left h]
     exact ⟨rfl, fun n hn => by have := ForInStep.yield.inj hn; omega⟩
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     exact ⟨rfl, fun n hn => by simp at hn⟩
 
 end ITree.LawfulIterationExamples

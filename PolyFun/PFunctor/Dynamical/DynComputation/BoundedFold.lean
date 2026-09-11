@@ -71,7 +71,7 @@ theorem view_boundedFold_zero (position : p.A)
     (isDone : (current.1 : ℕ) = 0) :
     (boundedFold position step readout rounds).view current =
       Sum.inl (readout current.2) := by
-  rw [view_ofStep, dif_pos isDone]
+  rw [view_ofStep, dite_eq_left isDone]
 
 theorem view_boundedFold_succ (position : p.A)
     (step : state → ℕ → p.B position → state) (readout : state → output)
@@ -82,7 +82,7 @@ theorem view_boundedFold_succ (position : p.A)
         (⟨(current.1 : ℕ) - 1,
           lt_of_le_of_lt (Nat.sub_le _ _) current.1.isLt⟩,
           step current.2 ((current.1 : ℕ) - 1) answer)⟩ := by
-  rw [view_ofStep, dif_neg notDone]
+  rw [view_ofStep, dite_eq_right notDone]
 
 /-- Unrolling from a state with `remaining` rounds gives the corresponding
 right fold followed by the final readout whenever the supplied fuel is

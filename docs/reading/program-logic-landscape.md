@@ -132,7 +132,7 @@ implemented).
   invariant inside the state relation, since `ITree` has no possible-output
   predicate for a postcondition to range over. wp-congruence under `WeakBisim`
   remains open.
-- The public angelic WP bridge is **blocked at the current Lean 4.33.1 pin**, not
+- The public angelic WP bridge is **blocked at the current Lean 4.34.0-rc2 pin**, not
   merely unwritten.
   `Std.Do.PredTrans` carries conjunctivity as a structure field, stated as a
   bi-entailment; `AllOutputs` distributes over `∧` both ways but `SomeOutput` only

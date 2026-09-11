@@ -47,7 +47,7 @@ theorem getLsbD_overwriteBit (i j : ℕ) (b : Bool) (m : BitVec n) :
     (overwriteBit i b m).getLsbD j = if j = i ∧ i < n then b else m.getLsbD j := by
   rcases eq_or_ne j i with rfl | h
   · rcases lt_or_ge j n with hj | hj
-    · rw [if_pos ⟨rfl, hj⟩]
+    · rw [ite_eq_left ⟨rfl, hj⟩]
       exact getLsbD_overwriteBit_self hj b m
     · cases b <;> simp [overwriteBit, getLsbD_of_ge _ _ hj, Nat.not_lt.mpr hj]
   · simp [h]

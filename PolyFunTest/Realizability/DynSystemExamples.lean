@@ -95,7 +95,7 @@ example (a : Bool × Bool) (index : (PFunctor.prod bitInterface bitInterface).Id
       (PFunctor.prod bitInterface bitInterface)).pullChoicePosIdx (a, index) =
       none := by
   unfold PFunctor.Lens.pullChoicePosIdx
-  rw [dif_neg]
+  rw [dite_eq_right]
   exact fun h => hne h
 
 end PFunctor.DynSystemRealizabilityExamples
