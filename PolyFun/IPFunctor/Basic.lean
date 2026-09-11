@@ -6,7 +6,6 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Basic
-import Batteries.Tactic.Lint
 
 /-!
 # Two-Index (Indexed) Polynomial Functors
@@ -55,10 +54,9 @@ implements the functor composition `Q ∘ P : (I → Type) → (K → Type)`. Se
   preservation law) live in [`PolyFun/IPFunctor/Lens/Basic.lean`](Lens/Basic.lean),
   [`PolyFun/IPFunctor/Chart/Basic.lean`](Chart/Basic.lean), and
   [`PolyFun/IPFunctor/Equiv/Basic.lean`](Equiv/Basic.lean).
-* When both `I` and `J` have at most one element, `IPFunctor I J` reduces to an ordinary
-  `PFunctor` via `IPFunctor.toPFunctor`. For the weaker `[Unique J]`-only case, the
-  selected-output-fiber view is `IPFunctor.fiberPFunctor` (an erasure, since the input
-  index `I` can still carry information that gets flattened). The unconditional
+* With `[Unique J]`, `IPFunctor.toPFunctor` and `IPFunctor.fiberPFunctor` select the
+  unique output fiber and erase its source-index map. With `[Unique I]` as well,
+  `IPFunctor.toPFunctor_injective` proves that no information is lost. The unconditional
   Σ-bundled erasure is `IPFunctor.sigmaPFunctor`.
 -/
 
@@ -153,9 +151,8 @@ different `I`-fibers and that distinction is lost on the target.
 The constraint is `[Unique J]` rather than `[Inhabited J]` because a richer `J` would have
 multiple fibers and silently picking the default one would discard observable information.
 For arbitrary `J`, use [`sigmaPFunctor`](#IPFunctor.sigmaPFunctor) instead, which Σ-bundles
-the index into positions and preserves every fiber. For the genuine `PFunctor`
-recovery — where nothing is lost — see [`toPFunctor`](#IPFunctor.toPFunctor), which
-strengthens to `[Unique I] [Unique J]`. -/
+the index into positions and preserves every fiber. With `[Unique I]` as well,
+`toPFunctor_injective` proves that the selected-output-fiber view loses no information. -/
 @[reducible, inline]
 def fiberPFunctor [Unique J] (P : IPFunctor I J) : PFunctor where
   A := P.A default
@@ -167,28 +164,42 @@ def fiberPFunctor [Unique J] (P : IPFunctor I J) : PFunctor where
 @[simp] lemma fiberPFunctor_one [Unique J] :
     (1 : IPFunctor.{uI, uJ, uA, uB} I J).fiberPFunctor = 1 := rfl
 
-/-- View an `IPFunctor I J` as a plain `PFunctor` when both input and output index types are
-unique. With `[Unique I] [Unique J]` there is exactly one fiber on each side and `P.src`'s
-single possible value carries no information, so this is a genuine no-information-lost
-recovery — not an erasure. For the fiber-only view that drops `P.src` even when `I` is
-non-trivial, see [`fiberPFunctor`](#IPFunctor.fiberPFunctor); for the unconditional
-Σ-bundled erasure, see [`sigmaPFunctor`](#IPFunctor.sigmaPFunctor). -/
--- `[Unique I]` is not needed to elaborate the body, but it is a deliberate part of the
--- interface: it witnesses that `P.src`'s single value carries no information, which is what
--- makes this a no-information-lost recovery rather than the fiber-only `fiberPFunctor`.
-@[reducible, inline, nolint unusedArguments]
-def toPFunctor [Unique I] [Unique J] (P : IPFunctor I J) : PFunctor where
-  A := P.A default
-  B := P.B default
+/-- The selected-output-fiber view of an indexed polynomial, with its source-index map
+forgotten. This is `fiberPFunctor`; when the input index is also unique,
+`toPFunctor_injective` gives its information-preservation guarantee. -/
+@[reducible, inline]
+def toPFunctor [Unique J] (P : IPFunctor I J) : PFunctor := P.fiberPFunctor
 
-@[simp] lemma toPFunctor_zero [Unique I] [Unique J] :
+/-- Selecting the unique output fiber loses no information when the input index is unique:
+the source-index map is then determined by its codomain. -/
+theorem toPFunctor_injective [Unique I] [Unique J] :
+    Function.Injective (fun P : IPFunctor.{uI, uJ, uA, uB} I J => P.toPFunctor) := by
+  intro P Q h
+  cases P with
+  | mk A B src =>
+    cases Q with
+    | mk A' B' src' =>
+      have hA : A = A' := funext fun j => by
+        simpa only [Subsingleton.elim j default] using congrArg PFunctor.A h
+      cases hA
+      have hB : B = B' := funext fun j => by
+        have hj : j = default := Subsingleton.elim _ _
+        subst j
+        exact eq_of_heq (PFunctor.mk.inj h).2
+      cases hB
+      have hs : src = src' := funext fun j => funext fun a => funext fun b =>
+        Subsingleton.elim _ _
+      cases hs
+      rfl
+
+@[simp] lemma toPFunctor_zero [Unique J] :
     (0 : IPFunctor.{uI, uJ, uA, uB} I J).toPFunctor = 0 := rfl
 
-@[simp] lemma toPFunctor_one [Unique I] [Unique J] :
+@[simp] lemma toPFunctor_one [Unique J] :
     (1 : IPFunctor.{uI, uJ, uA, uB} I J).toPFunctor = 1 := rfl
 
 /-- View an `IPFunctor` as a `PFunctor` by Σ-bundling the output index into each position.
-Unlike `toPFunctor`, no shape information is lost — but positions become `Σ j : J, P.A j` and
+All output fibers are retained: positions become `Σ j : J, P.A j`, and
 the source map `P.src` is still not represented on the target side. Works for any input
 and output index types (no `[Inhabited J]` required).
 

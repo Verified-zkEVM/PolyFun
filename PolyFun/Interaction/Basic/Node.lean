@@ -7,8 +7,6 @@ Authors: Quang Dao
 module
 
 public import PolyFun.PFunctor.Free.Basic
-public import Batteries.Tactic.Lint
-
 /-!
 # Node-local contexts and schemas
 
@@ -292,7 +290,6 @@ family it determines.
 -/
 -- The schema argument is ignored in the body (the context `Γ` is recovered from its
 -- type), but it is intentional: it lets callers write `S.toContext` in schema-level terms.
-@[nolint unusedArguments]
 abbrev Schema.toContext {Γ : Context} (_ : Schema Γ) : Context := Γ
 
 namespace Schema

@@ -53,6 +53,30 @@ W-type.
 
 namespace IPFunctor.Examples
 
+universe u v a b
+
+/-! ## Selected-fiber information preservation -/
+
+/-- An indexed polynomial whose only response selects the given Boolean source. -/
+def sourceChoice (source : Bool) : IPFunctor Bool Unit where
+  A _ := Unit
+  B _ _ := Unit
+  src _ _ _ := source
+
+example : (sourceChoice false).toPFunctor = (sourceChoice true).toPFunctor := rfl
+
+example : sourceChoice false ≠ sourceChoice true := by
+  intro h
+  have hs := (IPFunctor.mk.inj h).2.2
+  have : (fun (_ : Unit) (_ : Unit) (_ : Unit) => false) =
+      (fun (_ : Unit) (_ : Unit) (_ : Unit) => true) := eq_of_heq hs
+  have hf := congrFun (congrFun (congrFun this ()) ()) ()
+  cases hf
+
+example {I : Type u} {J : Type v} [Unique I] [Unique J]
+    (P Q : IPFunctor.{u, v, a, b} I J) (h : P.toPFunctor = Q.toPFunctor) : P = Q :=
+  toPFunctor_injective h
+
 /-! ## Two-phase protocol fixture -/
 
 /-- The two phases of the running protocol. Once we leave `opn`, we never

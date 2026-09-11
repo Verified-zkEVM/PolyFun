@@ -8,7 +8,6 @@ module
 public import PolyFun.Control.Comonad.Basic
 public import Mathlib.Data.Stream.Init
 public import Batteries.Data.List.Basic
-import Batteries.Tactic.Lint
 
 /-!
 # Instances of Comonads
@@ -137,11 +136,6 @@ structure NonEmptyList (α : Type u) where
   tail : List α
 
 deriving Repr, DecidableEq
-
--- The `prec` precedence argument is mandated by the `Repr.reprPrec` interface but is
--- unused for this structure (there is no infix form to disambiguate), so the derived
--- `repr` legitimately ignores it.
-attribute [nolint unusedArguments] instReprNonEmptyList.repr
 
 namespace NonEmptyList
 variable {α β : Type u} -- Declare universes here
@@ -411,11 +405,6 @@ structure List.Zipper (α : Type u) where
   right  : List α
 
 deriving Repr, DecidableEq
-
--- The `prec` precedence argument is mandated by the `Repr.reprPrec` interface but is
--- unused for this structure (there is no infix form to disambiguate), so the derived
--- `repr` legitimately ignores it.
-attribute [nolint unusedArguments] List.instReprZipper.repr
 
 -- Define instances for List.Zipper
 namespace List.Zipper
