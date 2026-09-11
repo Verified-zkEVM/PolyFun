@@ -29,7 +29,7 @@ The checks serve different purposes:
   including Unicode. Build-time checks do not cover every text-style rule.
 
 `PolyFunTest` is built with warnings fatal and excluded from production
-environment linting. Run a fresh build before environment linting: the
+environment linting. Its headers use the same standard checks as production. Run a fresh build before environment linting: the
 [Batteries runner](https://github.com/leanprover-community/batteries/blob/4488d40d070b9700d4d5a6aa342f0d40c31b2a2d/scripts/runLinter.lean)
 can reuse existing oleans. It imports each root independently at private
 visibility, including private bodies and documentation.
@@ -40,8 +40,18 @@ Keep the upstream runner and standard linter set. A definition or Lake option
 alone does not demonstrate that an environment linter is registered or runs.
 For example, the
 [cslib namespace linter at the recorded pin](https://github.com/leanprover/cslib/blob/98e395a701f2027a413ad24729e1a11a6c772eb4/Cslib/Foundations/Lint/Basic.lean)
-lacks `@[env_linter]`, so its JSON exceptions are inactive. Recheck registration
-when dependency pins change; the exact revisions are in `lake-manifest.json`.
+lacks `@[env_linter]` and is outside this project's lint policy. It checks private
+internal names instead of source names and can reject valid namespaces such as
+`Id` and `LawfulMonad` when no nested namespace is registered. Namespace placement
+remains part of API review; retiring the inactive exception list does not
+represent fixes to those APIs. Recheck registration when dependency pins change;
+the exact revisions are in `lake-manifest.json`.
+
+Mathlib's `pythonStyle`, `checkInitImports`, and `allScriptsDocumented` options
+are inactive by default in the pinned upstream configuration and absent from
+`mathlibStandardSet`. We use those defaults: the Python runner expects Mathlib's
+script layout, the import check inspects Mathlib's graph, and the script catalog
+check is optional. Removing redundant overrides does not enable these checks.
 
 Optional checks should be assessed against the library's intended API before
 enforcement. Use upstream commands or temporary probes for those reviews.
