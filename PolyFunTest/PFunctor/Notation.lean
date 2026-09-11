@@ -89,13 +89,14 @@ section DirectImportCompatibility
 /- These canaries intentionally use deprecated spellings. They import only
 `PFunctor.Basic`, proving the compatibility surface is not accidentally tied
 to the aggregate `PFunctor.Deprecated` or `PolyFun` umbrella imports. -/
-set_option linter.deprecated false in
+/--
+warning: `PFunctor.X` has been deprecated: Use `PFunctor.y` instead
+-/
+#guard_msgs in
 example : (X : PFunctor.{0, 0}) = y := rfl
 
-set_option linter.deprecated false in
 example : (Bool X^ Nat) = monomial Bool Nat := rfl
 
-set_option linter.deprecated false in
 example (p : PFunctor.{0, 0}) : p ^ 2 = p ◃ (p ◃ y) := rfl
 
 end DirectImportCompatibility
