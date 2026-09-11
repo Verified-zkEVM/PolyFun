@@ -78,8 +78,9 @@ mode, and review the combined result across roots.
 [Mathlib text exceptions](https://github.com/leanprover-community/mathlib4/blob/0df444a360eaa60ab8c11dca51a86af692955474/Mathlib/Tactic/Linter/TextBased.lean)
 match the file and error payload, ignoring line numbers. One Unicode
 file/character entry covers every occurrence in that file. Check for duplicate
-entries and deleted paths; preserve intentional notation such as `⨟` while
-removing obsolete exceptions.
+entries and deleted paths. The style-exception file is kept empty; polynomial
+composition uses the supported `∘ₗ` and `∘c` notation. See
+[notation.md](notation.md) for operand order and the relation to book notation.
 
 Follow the linter policy in [AGENTS.md](../../AGENTS.md#critical-gotchas).
 Existing suppressions do not authorize new ones. Preserve independent

@@ -52,7 +52,7 @@ lens `selfMonomial S ⟹ p`. Under the dynamical accessors this is
   the exposed position (the lens's direction map `toFunB`).
 
 The identification is definitional — "a dynamical system *is* a lens" — so lens
-combinators, lens equalities, and the diagrammatic composition `⨟` apply to
+combinators, lens equalities, and the lens composition `∘ₗ` apply to
 dynamical systems directly. -/
 abbrev DynSystem (S : Type u) (p : PFunctor.{uA, uB}) : Type _ :=
   Lens (selfMonomial S) p

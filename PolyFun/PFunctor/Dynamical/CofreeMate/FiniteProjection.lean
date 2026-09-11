@@ -29,18 +29,18 @@ run. This is the dynamical-system specialization of Spivak--Niu Proposition
 8.49. -/
 theorem cofreeMate_comp_projectionN {S : Type u} {P : PFunctor.{u, u}}
     (system : DynSystem S P) (n : ℕ) :
-    system.cofreeMate.toLens ⨟ CofreeP.projectionN P n =
+    CofreeP.projectionN P n ∘ₗ system.cofreeMate.toLens =
       system.nStep n := by
-  change (CofreeP.extend (stateComonoid S) system).toLens ⨟
-      CofreeP.projectionN P n = system.nStep n
+  change CofreeP.projectionN P n ∘ₗ
+      (CofreeP.extend (stateComonoid S) system).toLens = system.nStep n
   rw [CofreeP.extend_comp_projectionN, nStep_eq]
 
 /-- At depth two, finite projection recovers the established two-step system
 after removing the innermost right composition unit. -/
 theorem cofreeMate_comp_projectionN_two
     {S : Type u} {P : PFunctor.{u, u}} (system : DynSystem S P) :
-    (system.cofreeMate.toLens ⨟ CofreeP.projectionN P 2) ⨟
-        (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) =
+    (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ
+        (CofreeP.projectionN P 2 ∘ₗ system.cofreeMate.toLens) =
       system.twoStep := by
   exact (congrArg (fun lens => (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ lens)
     (cofreeMate_comp_projectionN system 2)).trans (nStep_two_eq_twoStep system)

@@ -279,7 +279,7 @@ theorem mappedMatterDirections :
     (CofreeP.hom_comp_projectionN F 2)
   dsimp only [mappedMatterVertex]
   change matterDirections
-      ((F.toLens ⨟ CofreeP.projectionN matterP 2).toFunB
+      ((CofreeP.projectionN matterP 2 ∘ₗ F.toLens).toFunB
         matter mappedMatterDirection) = [0, 1]
   have hdirections := congrArg matterDirections h
   have hrestrict :
@@ -417,12 +417,12 @@ theorem synchronizedBackwardDirections :
   dsimp only [synchronizedVertex]
   change
     matterDirections
-        ((F.toLens ⨟
-          CofreeP.projectionN (matterP ⊗ auxiliaryP) 2).toFunB
+        ((CofreeP.projectionN (matterP ⊗ auxiliaryP) 2 ∘ₗ
+          F.toLens).toFunB
           (matter, auxiliaryMatter) synchronizedDirection).1 = [2, 0] ∧
       auxiliaryDirections
-        ((F.toLens ⨟
-          CofreeP.projectionN (matterP ⊗ auxiliaryP) 2).toFunB
+        ((CofreeP.projectionN (matterP ⊗ auxiliaryP) 2 ∘ₗ
+          F.toLens).toFunB
           (matter, auxiliaryMatter) synchronizedDirection).2 = [true, false]
   have hmatter := congrArg (fun pair => matterDirections pair.1) h
   have hauxiliary := congrArg (fun pair => auxiliaryDirections pair.2) h

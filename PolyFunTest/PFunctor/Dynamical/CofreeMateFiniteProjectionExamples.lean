@@ -31,39 +31,38 @@ open ComonoidCategoryTest
 
 example (P : PFunctor.{u, u}) (S : Type u)
     (system : DynSystem S P) (n : ℕ) :
-    system.cofreeMate.toLens ⨟ CofreeP.projectionN P n =
+    CofreeP.projectionN P n ∘ₗ system.cofreeMate.toLens =
       system.nStep n :=
   DynSystem.cofreeMate_comp_projectionN system n
 
 example (P : PFunctor.{u, u}) (S : Type u)
     (system : DynSystem S P) :
-    (system.cofreeMate.toLens ⨟ CofreeP.projectionN P 2) ⨟
-        (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) =
+    (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ
+        (CofreeP.projectionN P 2 ∘ₗ system.cofreeMate.toLens) =
       system.twoStep :=
   DynSystem.cofreeMate_comp_projectionN_two system
 
 /-! ## Observable branching behavior -/
 
 /-- The depth-zero projection leaves the source state unchanged. -/
-example : (branchingSystem.cofreeMate.toLens ⨟
-      CofreeP.projectionN binaryP 0).toFunB .source PUnit.unit =
+example : (CofreeP.projectionN binaryP 0 ∘ₗ
+      branchingSystem.cofreeMate.toLens).toFunB .source PUnit.unit =
     ThreeState.source := by
   rw [DynSystem.cofreeMate_comp_projectionN]
   rfl
 
 /-- Projecting the mate through `false` then `true` reaches the final state,
 pinning both the dependent backward map and the order of the two edges. -/
-example : (branchingSystem.cofreeMate.toLens ⨟
-      CofreeP.projectionN binaryP 2).toFunB .source
+example : (CofreeP.projectionN binaryP 2 ∘ₗ
+      branchingSystem.cofreeMate.toLens).toFunB .source
         ⟨false, ⟨true, PUnit.unit⟩⟩ = ThreeState.final := by
   rw [DynSystem.cofreeMate_comp_projectionN]
   rfl
 
 /-- The same concrete depth-two run agrees with the established binary
 two-step system after applying the inner right unitor. -/
-example : ((branchingSystem.cofreeMate.toLens ⨟
-      CofreeP.projectionN binaryP 2) ⨟
-        (Lens.id binaryP ◃ₗ Lens.Equiv.compY.toLens)).toFunB
+example : ((Lens.id binaryP ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ
+      (CofreeP.projectionN binaryP 2 ∘ₗ branchingSystem.cofreeMate.toLens)).toFunB
       .source ⟨false, true⟩ = ThreeState.final := by
   rw [DynSystem.cofreeMate_comp_projectionN_two]
   rfl
