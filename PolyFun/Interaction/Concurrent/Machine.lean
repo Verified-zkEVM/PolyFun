@@ -46,7 +46,6 @@ universe u v
 namespace Interaction
 namespace Concurrent
 
-set_option linter.checkUnivs false in
 /--
 `Machine S` is the minimal state-indexed presentation of a concurrent system
 with residual states `S`: a dynamical system over the universe polynomial. At
