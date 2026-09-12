@@ -8,6 +8,7 @@ module
 
 public import PolyFun.Realizability.Quantitative.BoundedClosure
 public import PolyFun.Realizability.Quantitative.Polynomial
+public import PolyFun.Realizability.Quantitative.TraceCost
 
 /-!
 # Resource contracts for quantitative realizations
@@ -578,41 +579,6 @@ end PureResourceCertificate
 /-! ## Ranked resource potentials -/
 
 namespace RankedResource
-
-/-- Cost of observing a state as the final state of an execution prefix. -/
-@[expose]
-def terminalCost (R : QuantitativeRealization Q bd) (state : R.machine.State) :
-    ExecutionCost :=
-  ExecutionCost.ofWork (Q.cost R.headCode state) +
-    ExecutionCost.observe (Q.size R.state state) (Q.size bd.head (R.machine.head state))
-
-/-- Cost contributed by one enabled position-response transition. -/
-@[expose]
-def queryStepCost (R : QuantitativeRealization Q bd) (state : R.machine.State)
-    (position : p.A) (direction : p.B position) : ExecutionCost :=
-  ExecutionCost.ofWork (Q.cost R.headCode state) +
-    ExecutionCost.ofWork (Q.cost R.updateCode (state, ⟨position, direction⟩)) +
-    ExecutionCost.observe (Q.size R.state state) (Q.size bd.head (R.machine.head state)) +
-    ExecutionCost.query (Q.size bd.pos position) (Q.size bd.idx ⟨position, direction⟩)
-
-@[simp]
-theorem executionTrace_cost_query {R : QuantitativeRealization Q bd}
-    {state : R.machine.State} {position : p.A} {next : p.B position → R.machine.State}
-    {finish : R.machine.State}
-    (view_eq : R.machine.view state = Sum.inr ⟨position, next⟩)
-    (direction : p.B position) (tail : R.ExecutionTrace (next direction) finish) :
-    (QuantitativeRealization.ExecutionTrace.query (R := R) view_eq direction tail).cost =
-      queryStepCost R state position direction + tail.cost :=
-  by
-    simp [QuantitativeRealization.ExecutionTrace.cost, queryStepCost]
-
-/-- Split prefix cost into initialization, transition cost, and the final observation. -/
-theorem executionCost_eq_init_add_trace_add_terminal
-    (R : QuantitativeRealization Q bd) (value : input) {finish : R.machine.State}
-    (trace : R.ExecutionTrace (R.machine.init value) finish) :
-    R.executionCost value trace =
-      ExecutionCost.ofWork (Q.cost R.initCode value) + (trace.cost + terminalCost R finish) := by
-  simp [QuantitativeRealization.executionCost, terminalCost, add_assoc]
 
 /-- Local resource potentials combined with a decreasing, progress-bearing query rank. -/
 structure PotentialCertificate (R : QuantitativeRealization Q bd)

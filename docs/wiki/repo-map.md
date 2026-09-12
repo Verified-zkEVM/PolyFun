@@ -396,12 +396,15 @@ Realizability/{DynSystem, DynSystemClosure, StepClass, Machine}
   -> Realizability/Basic
 Realizability/Basic -> Realizability/{Closure, Instances, Representation}
 Realizability/Basic -> Realizability/Quantitative
+Realizability/Quantitative -> Realizability/Quantitative/TraceCost
+{Realizability/Quantitative/TraceCost, PFunctor/Free/Support}
+  -> Realizability/Quantitative/Prefix
 Realizability/Quantitative -> Realizability/Quantitative/Closure
 Realizability/Quantitative/Closure -> Realizability/Quantitative/BoundedClosure
 {Complexity/SecondOrderPolynomial, Realizability/Quantitative/Closure}
   -> Realizability/Quantitative/Polynomial
 {Realizability/Quantitative/BoundedClosure,
- Realizability/Quantitative/Polynomial}
+ Realizability/Quantitative/Polynomial, Realizability/Quantitative/TraceCost}
   -> Realizability/Quantitative/Resource
 Realizability/{Instances, Quantitative} -> Realizability/Quantitative/WordClass
 {Realizability/Quantitative, ToCslib/Computability/PolyTime}
