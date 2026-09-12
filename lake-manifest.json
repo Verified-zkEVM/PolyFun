@@ -1,7 +1,7 @@
 {"version": "1.2.0",
  "packagesDir": ".lake/packages",
  "packages":
- [{"url": "https://github.com/dtumad/cslib",
+ [{"url": "https://github.com/dtumad/cslib.git",
    "type": "git",
    "subDir": null,
    "scope": "leanprover",
