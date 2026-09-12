@@ -218,6 +218,7 @@ public import PolyFun.PFunctor.Free.Displayed.Decoration
 public import PolyFun.PFunctor.Free.Displayed.StateChain
 public import PolyFun.PFunctor.Free.Do
 public import PolyFun.PFunctor.Free.Fold
+public import PolyFun.PFunctor.Free.HandlerMachine
 public import PolyFun.PFunctor.Free.Parallel
 public import PolyFun.PFunctor.Free.Path
 public import PolyFun.PFunctor.Free.Path.Bounded
