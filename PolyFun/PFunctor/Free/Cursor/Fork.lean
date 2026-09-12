@@ -210,7 +210,6 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
                 (⟨target, answer⟩ :: Path.trace (next answer) suffix)
             rw [locateAt?_liftBind_same_zero]
             simp [occurrences]
-            rfl
         | succ n =>
             change (locateAt? target (FreeM.liftBind target next)
               (⟨answer, suffix⟩ : Path (FreeM.liftBind target next)) (n + 1)).isSome ↔
@@ -616,20 +615,14 @@ theorem forkAt_eq_locateAndForkAt [DecidableEq P.A] (target : P.A) :
       · subst a
         cases n with
         | zero =>
-            change forkAt target (FreeM.liftBind target next) 0 =
-              locateAndForkAt target (FreeM.liftBind target next) 0
             rw [forkAt_liftBind_same_zero, locateAndForkAt_liftBind_same_zero]
         | succ n =>
-            change forkAt target (FreeM.liftBind target next) (n + 1) =
-              locateAndForkAt target (FreeM.liftBind target next) (n + 1)
             rw [forkAt_liftBind_same_succ,
               locateAndForkAt_liftBind_same_succ]
             apply congrArg (FreeM.liftBind target)
             funext answer
             rw [ih answer n]
-      · change forkAt target (FreeM.liftBind a next) n =
-          locateAndForkAt target (FreeM.liftBind a next) n
-        rw [forkAt_liftBind_other h, locateAndForkAt_liftBind_other h]
+      · rw [forkAt_liftBind_other h, locateAndForkAt_liftBind_other h]
         apply congrArg (FreeM.liftBind a)
         funext answer
         rw [ih answer n]

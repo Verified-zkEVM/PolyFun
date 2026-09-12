@@ -40,7 +40,7 @@ At leaves it returns the output family. At a control node it presents the local
 node object supplied by `syn`, whose continuation family is recursively the
 strategy for the abstract branch selected by the lens.
 -/
-@[expose]
+@[expose, implicit_reducible]
 def StrategyOver {l : PFunctor.Lens P Q}
     (syn : SyntaxOver l Agent Γ) :
     (agent : Agent) →

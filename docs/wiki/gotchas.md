@@ -83,7 +83,9 @@ Symptoms and fixes (see the Transparency Attributes section of
 - A simp lemma silently never fires → its statement may freeze an
   unreduced projection into the discrimination-tree key (e.g. a
   `Sum.inl` binder ascribed through `(P + Q).A`); restate the binder
-  with the reduced component types.
+  with the reduced component types. The two-party runner rules ascribe the
+  role pair as `Role × ((x : X) → RoleDecoration (rest x))` so the index
+  contains `X`, rather than a stuck base-polynomial direction projection.
 - `calc` failing with a `Trans` instance error where a plain `.trans`
   works → typeclass resolution runs below implicit transparency; keep
   the term-level `.trans` form with a comment.

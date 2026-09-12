@@ -84,10 +84,6 @@ theorem collapseUnit_runPattern {E : Type uV}
       rw [DynSystem.runPattern_pure]
       rfl
   | lift_bind query next ih =>
-      change FreeM.collapseUnit
-          ((R.runPattern (.liftBind query next) state).mapLens
-            (FreeP.evaluation Q y.{uA', uB'})) =
-        R.runFree (.liftBind query next) state
       rw [DynSystem.runPattern_liftBind]
       change FreeM.collapseUnit
           (FreeM.liftBind PUnit.unit (fun _ =>

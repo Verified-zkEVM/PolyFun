@@ -123,7 +123,7 @@ theorem uncurry_curry {p q r : PFunctor.{uA, uB}} (l : Lens (p * q) r) :
       split <;> rename_i heq2
       · exact heq2.symm
       · rw [heq2] at heq; simp at heq
-    · simp only [Sum.elim_inr, Function.comp, id_eq]
+    · simp only [Sum.elim_inr, Function.comp]
       cases hs : l.toFunB (pa, qa) d with
       | inl pb => rw [hs] at heq; simp at heq
       | inr qb' => rw [hs] at heq; simp_all; rfl

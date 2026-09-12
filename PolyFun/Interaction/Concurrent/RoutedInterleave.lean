@@ -108,7 +108,6 @@ theorem mapContext_interleaveRouted
   refine ofStep_congr fun ⟨s₁, s₂⟩ => ?_
   dsimp only [ofStep, PFunctor.DynSystem.expose_mk', PFunctor.DynSystem.update_mk']
   congr 1
-  simp only [PFunctor.FreeM.liftBind_eq]
   rw [PFunctor.FreeM.Displayed.Decoration.map_liftBind]
   congr 1; funext ⟨b⟩
   cases b

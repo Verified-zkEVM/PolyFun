@@ -40,7 +40,7 @@ def withPath : (program : FreeM P α) → FreeM P (Path program)
     withPath (pure x : FreeM P α) = pure ⟨⟩ := rfl
 
 @[simp] theorem withPath_liftBind (a : P.A) (next : P.B a → FreeM P α) :
-    withPath ((FreeM.lift a).bind next) =
+    withPath (FreeM.liftBind a next) =
       FreeM.liftBind a fun answer =>
         FreeM.map (fun path : Path (next answer) =>
           (⟨answer, path⟩ : Path (FreeM.liftBind a next))) (withPath (next answer)) := rfl
@@ -87,10 +87,45 @@ def trace : (program : FreeM P α) → Path program → PFunctor.TraceList P
 @[simp] theorem trace_pure (x : α) (path : Path (pure x : FreeM P α)) :
     trace (pure x) path = [] := rfl
 
+/- The path constructor's hidden direction type specializes when the polynomial is concrete.
+Index the query constructor and leave dependent path matching to the unifier. -/
+
 @[simp] theorem trace_liftBind (a : P.A) (next : P.B a → FreeM P α)
     (answer : P.B a) (tail : Path (next answer)) :
-    trace ((FreeM.lift a).bind next) ⟨answer, tail⟩ =
+    trace (FreeM.liftBind a next) (no_index ⟨answer, tail⟩) =
       ⟨a, answer⟩ :: trace (next answer) tail := rfl
+
+/-- The visited input positions of a typed execution path, preserving their order and repeats. -/
+def positions (program : FreeM P α) (path : Path program) : List P.A :=
+  TraceList.positions (trace program path)
+
+@[simp]
+theorem positions_pure (x : α) (path : Path (pure x : FreeM P α)) :
+    positions (pure x) path = [] := rfl
+
+@[simp]
+theorem positions_liftBind (a : P.A) (next : P.B a → FreeM P α)
+    (answer : P.B a) (tail : Path (next answer)) :
+    positions (FreeM.liftBind a next) (no_index ⟨answer, tail⟩) =
+      a :: positions (next answer) tail := rfl
+
+/-- Agreement at the visited positions preserves deterministic execution, using the public
+position projection instead of exposing the event carrier's representation. -/
+theorem ofHandler_eq_of_agree_positions (choose choose' : (a : P.A) → P.B a)
+    (program : FreeM P α)
+    (h : ∀ a ∈ positions program (ofHandler choose program), choose' a = choose a) :
+    ofHandler choose' program = ofHandler choose program := by
+  induction program with
+  | pure _ => rfl
+  | lift_bind a next ih =>
+      change ∀ a' ∈ a :: positions (next (choose a)) (ofHandler choose (next (choose a))),
+        choose' a' = choose a' at h
+      have ha := h a (List.mem_cons_self ..)
+      change (⟨choose' a, ofHandler choose' (next (choose' a))⟩ : Path (FreeM.liftBind a next)) =
+        ⟨choose a, ofHandler choose (next (choose a))⟩
+      rw [ha]
+      exact congrArg (fun path => (⟨choose a, path⟩ : Path (FreeM.liftBind a next)))
+        (ih (choose a) fun a' ha' => h a' (List.mem_cons_of_mem a ha'))
 
 /-- Number of operation-answer steps in a completed typed path. -/
 def length : (program : FreeM P α) → Path program → Nat
@@ -102,7 +137,7 @@ def length : (program : FreeM P α) → Path program → Nat
 
 @[simp] theorem length_liftBind (a : P.A) (next : P.B a → FreeM P α)
     (answer : P.B a) (tail : Path (next answer)) :
-    length ((FreeM.lift a).bind next) ⟨answer, tail⟩ =
+    length (FreeM.liftBind a next) (no_index ⟨answer, tail⟩) =
       length (next answer) tail + 1 := rfl
 
 /-- Relabelling the leaves of a free program does not change the length of a
@@ -128,7 +163,27 @@ theorem length_eq_trace_length (program : FreeM P α) (path : Path program) :
         (trace (next answer) tail).length + 1
       exact congrArg (fun n => n + 1) (ih answer tail)
 
+/-- Agreement on the operations visited by one deterministic execution preserves its entire
+typed path. The alternative handler may differ arbitrarily on unvisited operations. -/
+theorem ofHandler_eq_of_agree_trace (choose choose' : (a : P.A) → P.B a)
+    (program : FreeM P α)
+    (h : ∀ a ∈ (trace program (ofHandler choose program)).map Sigma.fst,
+      choose' a = choose a) :
+    ofHandler choose' program = ofHandler choose program := by
+  apply ofHandler_eq_of_agree_positions
+  intro a ha
+  exact h a ha
+
 end Path
+
+/-- Reading the output of the path selected by a handler agrees with the ordinary monadic fold. -/
+theorem output_ofHandler {α : Type uB} (choose : (a : P.A) → P.B a) (program : FreeM P α) :
+    output program (Path.ofHandler choose program) =
+      FreeM.liftM (m := Id) choose program := by
+  induction program with
+  | pure _ => rfl
+  | lift_bind a next ih =>
+      exact ih (choose a)
 
 /-- Execute a free program while retaining only the number of steps in its
 completed typed path. This is the nondependent length projection of
@@ -141,7 +196,7 @@ def withPathLength (program : FreeM P α) : FreeM P Nat :=
 
 @[simp] theorem withPathLength_liftBind (a : P.A)
     (next : P.B a → FreeM P α) :
-    withPathLength ((FreeM.lift a).bind next) =
+    withPathLength (FreeM.liftBind a next) =
       FreeM.liftBind a fun answer =>
         FreeM.map (fun length => length + 1) (withPathLength (next answer)) := by
   unfold withPathLength

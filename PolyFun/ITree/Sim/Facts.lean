@@ -803,7 +803,6 @@ theorem mapSpec_id {E : PFunctor.{uEA, uEB}} {α : Type uα}
       refine ⟨.query a, c, c, ?_, rfl, fun _ => rfl⟩
       change mapSpecStep (PFunctor.Lens.id E) u = ⟨.query a, c⟩
       simp only [mapSpecStep, h]
-      rfl
 
 /-- Computing one `shape'` step of `mapSpec`, in terms of `mapSpecStep`. -/
 theorem dest_mapSpec {E : PFunctor.{uEA, uEB}}

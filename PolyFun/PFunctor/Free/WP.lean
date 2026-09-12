@@ -152,7 +152,7 @@ theorem leavesSatisfyUnder_pure (allows : (a : P.A) → P.B a → Prop)
 @[simp]
 theorem leavesSatisfyUnder_liftBind (allows : (a : P.A) → P.B a → Prop)
     (accept : α → Prop) (position : P.A) (next : P.B position → FreeM P α) :
-    ((FreeM.lift position).bind next).LeavesSatisfyUnder allows accept ↔
+    (FreeM.liftBind position next).LeavesSatisfyUnder allows accept ↔
       ∀ direction, allows position direction →
         (next direction).LeavesSatisfyUnder allows accept :=
   Iff.rfl
@@ -315,8 +315,7 @@ theorem wpFold_eq_wpVia {Φ : OpSpec P l} (s : Handler m P)
   induction x with
   | pure x => rw [wpFold_pure, wpVia_pure]
   | lift_bind a r ih =>
-      rw [show ((FreeM.lift a).bind r : FreeM P α) = FreeM.liftBind a r from rfl,
-        wpFold_liftBind, wpVia_liftBind, h a]
+      rw [wpFold_liftBind, wpVia_liftBind, h a]
       exact congrArg _ (funext fun b => ih b)
 
 end wpVia
@@ -337,8 +336,7 @@ theorem leavesSatisfyUnder_all_iff_allOutputs (x : FreeM P α) (post : α → Pr
   | pure x => simp
   | lift_bind a r ih =>
       rw [leavesSatisfyUnder_liftBind]
-      rw [show ((FreeM.lift a).bind r : FreeM P α) = FreeM.liftBind a r from rfl,
-        allOutputs_liftBind]
+      rw [allOutputs_liftBind]
       simp only [true_implies]
       exact forall_congr' fun b => ih b
 
@@ -348,8 +346,7 @@ theorem wpFold_demonic_iff_allOutputs (x : FreeM P α) (post : α → Prop) :
   induction x with
   | pure x => simp
   | lift_bind a r ih =>
-      rw [show ((FreeM.lift a).bind r : FreeM P α) = FreeM.liftBind a r from rfl,
-        wpFold_liftBind, allOutputs_liftBind]
+      rw [wpFold_liftBind, allOutputs_liftBind]
       exact forall_congr' fun b => ih b
 
 /-- The angelic fold is the "some output" judgment over the canonical support. -/
@@ -358,8 +355,7 @@ theorem wpFold_angelic_iff_someOutput (x : FreeM P α) (post : α → Prop) :
   induction x with
   | pure x => simp
   | lift_bind a r ih =>
-      rw [show ((FreeM.lift a).bind r : FreeM P α) = FreeM.liftBind a r from rfl,
-        wpFold_liftBind, someOutput_liftBind]
+      rw [wpFold_liftBind, someOutput_liftBind]
       exact exists_congr fun b => ih b
 
 /-- The demonic fold of a negated postcondition is the "never" judgment. -/

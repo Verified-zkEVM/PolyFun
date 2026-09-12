@@ -36,7 +36,7 @@ def toResumption : FreeM p α → Resumption p α
 
 @[simp] theorem toResumption_liftBind (position : p.A)
     (next : p.B position → FreeM p α) :
-    toResumption ((FreeM.lift position).bind next) =
+    toResumption (FreeM.liftBind position next) =
       Resumption.query position fun direction => toResumption (next direction) := rfl
 
 theorem dest_toResumption_pure (value : α) :
@@ -46,7 +46,7 @@ theorem dest_toResumption_liftBind (position : p.A)
     (next : p.B position → FreeM p α) :
     Resumption.dest (toResumption (FreeM.liftBind position next)) =
       Sum.inr ⟨position, fun direction => toResumption (next direction)⟩ := by
-  rw [FreeM.liftBind_eq, toResumption_liftBind, Resumption.dest_query]
+  rw [toResumption_liftBind, Resumption.dest_query]
 
 @[simp] theorem toResumption_bind (program : FreeM p α) (k : α → FreeM p β) :
     toResumption (FreeM.bind program k) =
@@ -62,7 +62,7 @@ theorem dest_toResumption_liftBind (position : p.A)
         Resumption.bind
           (Resumption.query position fun direction => toResumption (next direction))
           (fun value => toResumption (k value))
-      rw [FreeM.liftBind_eq, toResumption_liftBind, Resumption.bind_query]
+      rw [toResumption_liftBind, Resumption.bind_query]
       congr 1
       funext direction
       exact ih direction
@@ -78,7 +78,7 @@ theorem dest_toResumption_liftBind (position : p.A)
           (FreeM.liftBind position (fun direction => FreeM.map f (next direction))) =
         Resumption.map f
           (Resumption.query position fun direction => toResumption (next direction))
-      rw [FreeM.liftBind_eq, toResumption_liftBind, Resumption.map_query]
+      rw [toResumption_liftBind, Resumption.map_query]
       congr 1
       funext direction
       exact ih direction
@@ -90,7 +90,7 @@ theorem dest_toResumption_liftBind (position : p.A)
   induction program with
   | pure value => simp
   | lift_bind position next ih =>
-      rw [FreeM.mapLens_lift_bind, toResumption_liftBind]
+      rw [FreeM.mapLens_liftBind, toResumption_liftBind]
       change Resumption.query (lens.toFunA position)
           (fun direction => toResumption
             ((next (lens.toFunB position direction)).mapLens lens)) =

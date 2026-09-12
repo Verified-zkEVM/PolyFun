@@ -56,7 +56,7 @@ def leftMap {K : E → Type uH} (mapLeaf : (x : E) → I x → K x)
     (next : P.B a → FreeM P E) (c : S.position a)
     (children : (answer : P.B a) → S.direction a c answer →
       FreeM.Displayed (S.toDisplayedAlgebra I) (next answer)) :
-    leftMap (T := T) mapLeaf ((FreeM.lift a).bind next) ⟨c, children⟩ =
+    leftMap (T := T) mapLeaf (FreeM.liftBind a next) ⟨c, children⟩ =
       ⟨ULift.up c, fun answer evidence =>
         leftMap (T := T) mapLeaf (next answer)
           (children answer evidence.down)⟩ := rfl
@@ -91,7 +91,7 @@ def rightMap {K : E → Type uH} (mapLeaf : (x : E) → I x → K x)
     (next : Q.B b → FreeM Q E) (c : T.position b)
     (children : (answer : Q.B b) → T.direction b c answer →
       FreeM.Displayed (T.toDisplayedAlgebra I) (next answer)) :
-    rightMap (S := S) mapLeaf ((FreeM.lift b).bind next) ⟨c, children⟩ =
+    rightMap (S := S) mapLeaf (FreeM.liftBind b next) ⟨c, children⟩ =
       ⟨ULift.up c, fun answer evidence =>
         rightMap (S := S) mapLeaf (next answer)
           (children answer evidence.down)⟩ := rfl
@@ -136,7 +136,7 @@ def parallelAfterLeftReturn (x : E) (dx : I x)
     (children : (answer : Q.B b) → T.direction b c answer →
       FreeM.Displayed (T.toDisplayedAlgebra J) (next answer)) :
     parallelAfterLeftReturn (S := S) x dx
-        ((FreeM.lift b).bind next) ⟨c, children⟩ =
+        (FreeM.liftBind b next) ⟨c, children⟩ =
       ⟨ULift.up c, fun answer evidence =>
         parallelAfterLeftReturn (S := S) x dx (next answer)
           (children answer evidence.down)⟩ := rfl
@@ -176,7 +176,7 @@ def parallel (leftProgram : FreeM P E) (rightProgram : FreeM Q V)
     (children : (answer : P.B a) → S.direction a c answer →
       FreeM.Displayed (S.toDisplayedAlgebra I) (next answer))
     (y : V) (dy : J y) :
-    parallel (T := T) ((FreeM.lift a).bind next) (pure y) ⟨c, children⟩
+    parallel (T := T) (FreeM.liftBind a next) (pure y) ⟨c, children⟩
         (T.leaf J y dy) =
       ⟨ULift.up c, fun answer evidence =>
         parallel (T := T) (next answer) (.pure y)
@@ -187,7 +187,7 @@ def parallel (leftProgram : FreeM P E) (rightProgram : FreeM Q V)
     (c : T.position b)
     (children : (answer : Q.B b) → T.direction b c answer →
       FreeM.Displayed (T.toDisplayedAlgebra J) (next answer)) :
-    parallel (S := S) (pure x) ((FreeM.lift b).bind next) (S.leaf I x dx)
+    parallel (S := S) (pure x) (FreeM.liftBind b next) (S.leaf I x dx)
         ⟨c, children⟩ =
       ⟨ULift.up c, fun answer evidence =>
         parallel (S := S) (.pure x) (next answer) (S.leaf I x dx)
@@ -200,7 +200,7 @@ def parallel (leftProgram : FreeM P E) (rightProgram : FreeM Q V)
     (b : Q.A) (nextQ : Q.B b → FreeM Q V) (cQ : T.position b)
     (childrenQ : (answer : Q.B b) → T.direction b cQ answer →
       FreeM.Displayed (T.toDisplayedAlgebra J) (nextQ answer)) :
-    parallel ((FreeM.lift a).bind nextP) ((FreeM.lift b).bind nextQ)
+    parallel (FreeM.liftBind a nextP) (FreeM.liftBind b nextQ)
         ⟨cP, childrenP⟩ ⟨cQ, childrenQ⟩ =
       ⟨(cP, cQ), fun answer evidence =>
         parallel (nextP answer.1) (nextQ answer.2)

@@ -78,7 +78,7 @@ theorem isTotalRollBound_truncate (k : ℕ) (computation : Resumption p β) :
       · rw [truncate_succ, h]
         change (FreeM.liftBind position fun direction =>
           truncate k (next direction)).IsTotalRollBound (k + 1)
-        rw [FreeM.liftBind_eq, FreeM.isTotalRollBound_lift_bind_iff]
+        rw [FreeM.isTotalRollBound_lift_bind_iff]
         refine ⟨by omega, fun direction => ?_⟩
         simpa using ih (next direction)
 
@@ -114,7 +114,6 @@ theorem truncate_eq_map_some_iff (k : ℕ) (computation : Resumption p β) (prog
       · rintro ⟨rfl, _⟩
         exact truncate_pure k value
   | lift_bind position next ih =>
-      rw [← FreeM.liftBind_eq]
       constructor
       · intro h
         cases k with
@@ -154,13 +153,13 @@ theorem truncate_eq_map_some_iff (k : ℕ) (computation : Resumption p β) (prog
                 · apply heq_of_eq
                   funext direction
                   exact (hbranch direction).1
-              · rw [FreeM.liftBind_eq, FreeM.isTotalRollBound_lift_bind_iff]
+              · rw [FreeM.isTotalRollBound_lift_bind_iff]
                 refine ⟨by omega, fun direction => ?_⟩
                 simpa using (hbranch direction).2
       · rintro ⟨rfl, hbound⟩
         cases k with
         | zero =>
-            rw [FreeM.liftBind_eq, FreeM.isTotalRollBound_lift_bind_iff] at hbound
+            rw [FreeM.isTotalRollBound_lift_bind_iff] at hbound
             omega
         | succ k =>
             rw [truncate_succ, FreeM.dest_toResumption_liftBind]
@@ -172,7 +171,7 @@ theorem truncate_eq_map_some_iff (k : ℕ) (computation : Resumption p β) (prog
             funext direction
             apply (ih direction k (FreeM.toResumption (next direction))).mpr
             refine ⟨rfl, ?_⟩
-            rw [FreeM.liftBind_eq, FreeM.isTotalRollBound_lift_bind_iff] at hbound
+            rw [FreeM.isTotalRollBound_lift_bind_iff] at hbound
             simpa using hbound.2 direction
 
 /-- A well-founded program fitting within `k` is recovered exactly by truncating its
