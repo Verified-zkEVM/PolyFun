@@ -340,6 +340,22 @@ def mapSender {I : Interface.{uA, uB}} {M N : Type wA}
   sender := g rp.sender
   packet := rp.packet
 
+/-- Sender transport changes the observed sender by the supplied function. -/
+@[simp]
+theorem sender_mapSender {I : Interface.{uA, uB}} {M N : Type wA}
+    (g : M → N) (rp : RoutedPacket I M) : (mapSender g rp).sender = g rp.sender := by rfl
+
+/-- Sender transport leaves the dependent packet payload intact. -/
+@[simp]
+theorem packet_mapSender {I : Interface.{uA, uB}} {M N : Type wA}
+    (g : M → N) (rp : RoutedPacket I M) : (mapSender g rp).packet = rp.packet := by rfl
+
+/-- Sender transport on a constructed packet retains its port and dependent message. -/
+@[simp]
+theorem mapSender_mk {I : Interface.{uA, uB}} {M N : Type wA}
+    (g : M → N) (sender : M) (packet : Packet I) :
+    mapSender g ⟨sender, packet⟩ = ⟨g sender, packet⟩ := by rfl
+
 @[simp]
 theorem mapPacket_id {I : Interface.{uA, uB}} {M : Type wA} (rp : RoutedPacket I M) :
     mapPacket (Hom.id I) rp = rp := by

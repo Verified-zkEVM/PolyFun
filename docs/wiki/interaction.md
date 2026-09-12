@@ -67,6 +67,10 @@ Definitions are `@[expose]` only when downstream computation or definitional
 equality is an intentional part of the API. Proof modules use `import all`
 when they need opaque bodies without widening the exported reducer surface.
 
+Downstream packet runtimes can observe `Interface.RoutedPacket.mapSender` through
+`sender_mapSender`, `packet_mapSender`, and `mapSender_mk`. These public equations retain
+the dependent payload and expose the renamed sender without unfolding the implementation.
+
 ## Core concepts: TypeTree, Node, Party, Profile
 
 Before reading any one file, it helps to fix four words. They are the
