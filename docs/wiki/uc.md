@@ -131,23 +131,56 @@ is `Observation.ofCongruence`, while `Observation.scheduledSampler` forgets
 mass and can relate distinct classes. These quotients add no probabilistic
 or cryptographic adequacy claim.
 
-## Long-Term Behavior Carrier
+## Reactive Execution And Exact Behavior
 
-The family construction does not choose between process presentations and an
-extensional behavior carrier. VCVio's long-term design proposes mapping open
-processes into cofree behavior and defining a lawful `OpenTheory` there, so
-coherence is proved once by finality instead of carried as activation
-equivalences through every client. Until that carrier exists, the quotient of
-the process model by its structural equivalence is the interim carrier: it is
-strictly lawful where the process model is lawful only up to equivalence.
-`OpenTheory.pi`, `Observation`, and `EmulatesWithin` are intentionally
-parametric in that choice: the same asymptotic observation bridge should
-consume the behavior theory when it exists.
+[`ReactiveProcess`](../../PolyFun/Interaction/UC/ReactiveProcess.lean) expresses local effects,
+receiving, sending, local work, and yielding as one polynomial. Receiving has typed incoming
+packets as directions, so actual input selects the continuation. `Process` is a
+`DynComputation`; `Behavior` is a `Resumption`. `boundaryLens` reuses the established
+input/output variance, and `denote_mapBoundary` identifies its resumption semantics.
 
-This is not a license to identify activation equivalence with distributional
-equivalence. The behavior map needs a named adequacy theorem into VCVio's
-evaluation semantics, and sampling-order transformations that preserve
-distributions may still be coarser than equality of cofree behaviors.
+[`ReactiveNetwork`](../../PolyFun/Interaction/UC/ReactiveNetwork.lean) assigns stable identities
+separate effect and packet interfaces, routes sends into typed mailboxes or the external
+boundary, and threads one shared service state. Its token and FIFO runners retain residual
+machines, pending traffic, terminal abort/return outcomes, the control holder, and elapsed
+activations. Every tick, yield, delivery, or blocked activation consumes fuel. An atomic
+handler's internal cost remains a separate obligation. External input enters through an
+explicit ingress map; the security layer must constrain who may inject which input.
+
+[`Transport`](../../PolyFun/Interaction/UC/ReactiveNetwork/Transport.lean) proves that a
+bijection of identities transports actual execution under both policies. The dependent
+packets, initialization, schedules, token holder, and effects move together. This supplies
+renaming and regrouping of an existing flat diagram; it does not prove an arbitrary
+`OpenTheory.plug` factorization or scheduler-distribution invariance.
+
+[`Behavior`](../../PolyFun/Interaction/UC/ReactiveNetwork/Behavior.lean) proves exact adequacy:
+`runFIFO_behavior` and `runToken_behavior` commute execution with the map from private states
+to cofree behavior, in any lawful effect monad. Initialization and terminal observations
+also commute. This hides **state representation**, while retaining every effect operation,
+packet, delay, and fuel unit. It is not a theorem identifying arbitrary effectful handlers
+with pure cofree matter, and it does not make the behavior network into a lawful
+monoidal/traced `OpenTheory` automatically.
+
+[`Serial`](../../PolyFun/Interaction/UC/ReactiveNetwork/Serial.lean) gives a deliberately
+restricted policy comparison: from an empty pending queue, one FIFO component activation
+followed by a delivery activation agrees with one token activation, with exactly one extra
+fuel unit. Arbitrary FIFO schedules can behave differently. The
+[echo regressions](../../PolyFunTest/Interaction/UC/ReactiveNetwork.lean) exercise actual
+input-dependent output, missing delivery, short prefixes, and explicit abort.
+
+The legacy `OpenProcess` model has activation/output episodes but no intrinsic reaction to
+incoming packets. It cannot be adapted into a general reactive process without supplying
+that behavior. Its activation and sampler quotients retain their documented scope; neither
+is upgraded to this reactive semantics by a definitional alias.
+
+The probability-independent
+[`RequestNetwork`](../../PolyFun/Interaction/UC/RequestNetwork.lean) is a separate finite
+request/reply specialization: well-founded clients, one outstanding ticket per client, and
+an atomic shared handler. Its [serial theorem](../../PolyFun/Interaction/UC/RequestNetwork/Serial.lean)
+preserves result, service state, and transcript for every bounded adaptive client. Trace
+erasure is an application of the universal fold's naturality through `WriterT.eraseHom`.
+VCVio specializes this API to `OracleSpec`; this extraction alone is not a reactive-network
+embedding theorem.
 
 ## Equation Surfaces Across The VCVio Seam
 

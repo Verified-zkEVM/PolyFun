@@ -137,7 +137,15 @@ public import PolyFun.Interaction.UC.OpenTheory.Congruence
 public import PolyFun.Interaction.UC.OpenTheory.Family
 public import PolyFun.Interaction.UC.OpenTheory.PlugFactorization
 public import PolyFun.Interaction.UC.OpenTheory.Quotient
+public import PolyFun.Interaction.UC.ReactiveNetwork
+public import PolyFun.Interaction.UC.ReactiveNetwork.Behavior
+public import PolyFun.Interaction.UC.ReactiveNetwork.Serial
+public import PolyFun.Interaction.UC.ReactiveNetwork.Transport
+public import PolyFun.Interaction.UC.ReactiveProcess
 public import PolyFun.Interaction.UC.Realizability
+public import PolyFun.Interaction.UC.RequestNetwork
+public import PolyFun.Interaction.UC.RequestNetwork.Serial
+public import PolyFun.Interaction.UC.RequestNetwork.Transport
 public import PolyFun.Interaction.UC.SamplerObservation
 public import PolyFun.Interaction.UC.ScheduledOpenProcessModel
 public import PolyFun.Interaction.UC.ScheduledSamplerFactorization
@@ -233,6 +241,7 @@ public import PolyFun.PFunctor.Free.WP
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Free
 public import PolyFun.PFunctor.Handler.Instrumentation
+public import PolyFun.PFunctor.Handler.Instrumentation.Free
 public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr
 public import PolyFun.PFunctor.Handler.Stateful
