@@ -507,6 +507,13 @@ of PolyFun. The generated `PolyFun` umbrella imports neither concrete library.
 
 ## Known Gaps
 
+The operational dispatcher in `PFunctor/Free/HandlerMachine.lean` has executable phases,
+resumable finite prefixes and a completion bound derived from caller and handler query bounds.
+It counts administrative transitions explicitly. It is not a quantitative realizer: backend
+code for the host operations, bounded administrative normalization, encoded state sizes and
+actual work costs still require executable certificates. In particular, a syntactic query bound
+alone does not establish strict PPT.
+
 - **No whole-program machine-adequacy theorem.** `PolyFunCslib` certifies the
   local step maps with cslib machines and bounds their additive time envelopes.
   A compiler and linking theorem for the complete interactive machine, and a

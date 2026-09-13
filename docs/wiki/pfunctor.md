@@ -50,6 +50,7 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 | [`PolyFun/PFunctor/M.lean`](../../PolyFun/PFunctor/M.lean) | Extensions to Mathlib's `PFunctor.M` (M-type / final coalgebra) used downstream. |
 | [`PolyFun/PFunctor/M/Vertex.lean`](../../PolyFun/PFunctor/M/Vertex.lean) | Finite rooted vertices of an M-type tree: subtree selection, concatenation, canonical depth splitting, prefixes, dependent transport, and contravariant path mapping along lenses. This is the coinductive counterpart of `FreeM.Cursor`; the selected subtree is computed rather than stored as a second index so that vertices directly form the cofree polynomial's direction family. |
 | [`PolyFun/PFunctor/M/WellFounded.lean`](../../PolyFun/PFunctor/M/WellFounded.lean) | Immediate-child accessibility for M-types, lens transport of W-types, the canonical natural embedding `W.toM`, and the exact equivalence `W.equivWellFoundedM` with the accessible M-type fragment. |
+| [`PolyFun/PFunctor/Free/HandlerMachine.lean`](../../PolyFun/PFunctor/Free/HandlerMachine.lean) | Executable dependent handler phases with explicit entry/return transitions, resumable prefixes, separate dispatch/query counters, and a derived `calls * (inner + 2)` completion bound; erasure recovers full ordered handler substitution. |
 | [`PolyFun/PFunctor/Bound.lean`](../../PolyFun/PFunctor/Bound.lean) | Roll bounds for `FreeM` (budget-based termination predicate). |
 
 ### Lenses and charts
