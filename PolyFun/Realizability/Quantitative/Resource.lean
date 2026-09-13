@@ -508,6 +508,21 @@ def polynomial {resourceLabel : Type x}
     _root_.Complexity.FirstOrderPolynomial.comp certificate.head.outputSize
       certificate.result.outputSize
 
+/-- Evaluate the derived bound using only the public work and size certificates of its code.
+The resolved readout is charged at the result code's output-size bound. -/
+theorem eval_polynomial {resourceLabel : Type x}
+    (certificate : PureResourceCertificate Q bd function)
+    (length : resourceLabel → ℕ → ℕ) (inputSize : ℕ) :
+    certificate.polynomial.eval length inputSize =
+      { work := certificate.result.work.eval inputSize +
+          certificate.head.work.eval (certificate.result.outputSize.eval inputSize)
+        queries := 0
+        traffic := 0
+        peakStateSize := certificate.result.outputSize.eval inputSize
+        peakHeadSize := certificate.head.outputSize.eval
+          (certificate.result.outputSize.eval inputSize) } := by
+  ext <;> simp [polynomial, ExecutionCostPolynomial.eval]
+
 /-- The assembled realization implements the corresponding pure `FreeM` program. -/
 theorem implements (certificate : PureResourceCertificate Q bd function) :
     certificate.realization.machine.Implements fun input ↦ FreeM.pure (function input) := by

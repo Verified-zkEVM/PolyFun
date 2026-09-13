@@ -582,3 +582,7 @@ fixed technical term (Weihrauch 1985), where "admissible" qualifies the
 representation rather than the function class. This layer uses "admissible" in the
 sense of Petcher–Morrisett's FCF admissibility predicate — a property of a
 function, relative to chosen representations.
+
+`PureResourceCertificate.eval_polynomial` exposes the derived pure-program resource bound
+through the component code's public work and size polynomials. Consumers can inspect exact
+specializations without unfolding the resource implementation across package boundaries.
