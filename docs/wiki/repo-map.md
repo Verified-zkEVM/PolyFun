@@ -489,3 +489,23 @@ VCVio or a more specialized repo.
   The long-file linter cap is enforced via the lint workflow.
 - Before assuming a file is authoritative, check whether it is source or
   derived output. See [`generated-files.md`](generated-files.md).
+
+## Reactive execution modules
+
+The generic reactive path is `Interface` →
+[`ReactiveProcess`](../../PolyFun/Interaction/UC/ReactiveProcess.lean) →
+[`ReactiveNetwork`](../../PolyFun/Interaction/UC/ReactiveNetwork.lean) →
+[`Transport`](../../PolyFun/Interaction/UC/ReactiveNetwork/Transport.lean),
+[`Serial`](../../PolyFun/Interaction/UC/ReactiveNetwork/Serial.lean), and
+[`Behavior`](../../PolyFun/Interaction/UC/ReactiveNetwork/Behavior.lean).
+It imports the existing polynomial dynamical computation and resumption APIs, and no
+probability or cryptographic layer. The [UC ledger](uc.md#reactive-execution-and-exact-behavior)
+records the exact scope of the execution and behavior laws.
+
+[`RequestNetwork`](../../PolyFun/Interaction/UC/RequestNetwork.lean) and its
+[`Serial`](../../PolyFun/Interaction/UC/RequestNetwork/Serial.lean) and
+[`Transport`](../../PolyFun/Interaction/UC/RequestNetwork/Transport.lean) modules own finite
+polynomial request/reply execution. Serial trace erasure uses
+[`Handler/Instrumentation/Free`](../../PolyFun/PFunctor/Handler/Instrumentation/Free.lean),
+which combines handler instrumentation, the universal free fold, and
+[`WriterT.eraseHom`](../../PolyFun/Control/Monad/Hom/Writer.lean).
