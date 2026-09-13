@@ -586,3 +586,17 @@ function, relative to chosen representations.
 `PureResourceCertificate.eval_polynomial` exposes the derived pure-program resource bound
 through the component code's public work and size polynomials. Consumers can inspect exact
 specializations without unfolding the resource implementation across package boundaries.
+
+### Bounded iteration
+
+`PolyFun/Realizability/Quantitative/Iteration.lean` gives a uniform `IterationCode` taking an
+encoded count and state. Its backend comparison charges each actual step code at the reached
+state, plus explicit loop administration. `PolynomialBounds` separately bounds the iteration
+count and initial-state size in the encoded input, and supplies a uniform additive growth bound.
+These premises derive a polynomial state envelope and count-times-step-work bound for the same
+code. A polynomial one-step time bound alone does not control repeated state growth.
+
+This is a certificate constructor, not an instance asserting that every backend can implement
+loops. A concrete backend must supply the iterator code and prove its local cost decomposition.
+The arithmetic regression fixture checks changing per-step costs, zero-iteration setup, and the
+rejection of unbounded doubling or a count erased from the input representation.

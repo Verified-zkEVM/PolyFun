@@ -277,6 +277,7 @@ public import PolyFun.Realizability.Machine
 public import PolyFun.Realizability.Quantitative
 public import PolyFun.Realizability.Quantitative.BoundedClosure
 public import PolyFun.Realizability.Quantitative.Closure
+public import PolyFun.Realizability.Quantitative.Iteration
 public import PolyFun.Realizability.Quantitative.Polynomial
 public import PolyFun.Realizability.Quantitative.Prefix
 public import PolyFun.Realizability.Quantitative.Resource
