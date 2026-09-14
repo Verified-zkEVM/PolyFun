@@ -88,4 +88,97 @@ theorem activate_addElapsed
       | tick => simp [activate, h, State.addElapsed, Nat.add_right_comm]
       | yield => simp [activate, h, State.addElapsed, Nat.add_right_comm]
 
+/-- Execute a finite serial FIFO policy. Each round activates the current control holder
+and then delivers one packet. The policy reads only `focus`, never private component or
+service state, and charges a delivery even when the queue is empty. -/
+@[expose] def runSerial
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id)) :
+    ℕ → State network S → m (State network S)
+  | 0, state => pure state
+  | rounds + 1, state => serialRound impl state >>= runSerial impl rounds
+
+/-- Serial execution can be paused and resumed without resetting its queues or control. -/
+theorem runSerial_add
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id))
+    (first rest : ℕ) (state : State network S) :
+    runSerial impl (first + rest) state =
+      (runSerial impl first state >>= runSerial impl rest) := by
+  induction first generalizing state with
+  | zero => simp [runSerial]
+  | succ first ih =>
+      simp only [Nat.succ_add, runSerial, bind_assoc]
+      exact bind_congr ih
+
+/-- Prior administrative work does not affect a token-passing prefix. -/
+theorem runToken_addElapsed
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id))
+    (fuel extra : ℕ) (state : State network S) :
+    runToken impl fuel (state.addElapsed extra) =
+      State.addElapsed extra <$> runToken impl fuel state := by
+  induction fuel generalizing state with
+  | zero => simp [runToken]
+  | succ fuel ih =>
+      simp only [runToken]
+      rw [activate_addElapsed, bind_map_left, map_bind]
+      exact bind_congr ih
+
+/-- Continuations after a token activation need agree only on states with the unchanged
+pending FIFO queue. This law works for any lawful monad without a support operation. -/
+theorem activate_token_bind_congr {α : Type}
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id))
+    (id : Node) (state : State network S) (left right : State network S → m α)
+    (h : ∀ next, next.pending = state.pending → left next = right next) :
+    (activate impl .token id state >>= left) =
+      (activate impl .token id state >>= right) := by
+  cases hv : (network.component id).view (state.localState id) with
+  | inl value => simp only [activate, hv, pure_bind]; exact h _ rfl
+  | inr action =>
+      rcases action with ⟨action, next⟩
+      cases action with
+      | effect operation =>
+          simp only [activate, hv, bind_assoc, pure_bind]
+          exact bind_congr fun _ => h _ rfl
+      | receive =>
+          cases hin : state.inbox id <;>
+            simp only [activate, hv, hin, pure_bind] <;> exact h _ rfl
+      | send packet =>
+          cases hr : network.route id packet <;>
+            simp only [activate, hv, hr, dispatch, pure_bind] <;> exact h _ rfl
+      | tick => simp only [activate, hv, pure_bind]; exact h _ rfl
+      | yield => simp only [activate, hv, pure_bind]; exact h _ rfl
+
+/-- From an empty pending queue, any finite serial FIFO execution agrees with token
+passing on the complete residual state, with one extra charged delivery per round. -/
+theorem runSerial_eq_runToken
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id))
+    (rounds : ℕ) (state : State network S) (hqueue : state.pending = []) :
+    runSerial impl rounds state = State.addElapsed rounds <$> runToken impl rounds state := by
+  induction rounds generalizing state with
+  | zero => simp [runSerial, runToken, State.addElapsed]
+  | succ rounds ih =>
+      rw [runSerial, serialRound_eq_token impl state hqueue, bind_map_left, runToken, map_bind]
+      apply activate_token_bind_congr
+      intro next hpending
+      rw [ih (next.addElapsed 1) (hpending.trans hqueue), runToken_addElapsed]
+      rw [Functor.map_map]
+      congr 1
+      funext finalState
+      simp only [State.addElapsed]
+      congr 1
+      omega
+
+omit [DecidableEq Node] in
+/-- Terminal observations ignore the accumulated administrative counter. -/
+@[simp] theorem outcome_addElapsed (id : Node) (extra : ℕ) (state : State network S) :
+    outcome id (state.addElapsed extra) = outcome id state := rfl
+
+/-- The serial FIFO policy and token passing have equal terminal observations at
+corresponding horizons, including explicit abort and unfinished execution. -/
+theorem outcome_runSerial
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id))
+    (id : Node) (rounds : ℕ) (state : State network S) (hqueue : state.pending = []) :
+    outcome id <$> runSerial impl rounds state = outcome id <$> runToken impl rounds state := by
+  rw [runSerial_eq_runToken impl rounds state hqueue]
+  simp [Functor.map_map]
+
 end Interaction.UC.ReactiveNetwork

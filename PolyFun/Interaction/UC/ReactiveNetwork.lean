@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Interaction.UC.ReactiveProcess
+public import PolyFun.Interaction.UC.ReactiveNetwork.Diagram
 public import PolyFun.PFunctor.Handler
 
 /-!
@@ -34,21 +34,16 @@ namespace Interaction.UC.ReactiveNetwork
 
 open PFunctor ReactiveProcess
 
-/-- A static typed routing diagram of reactive machines. -/
-structure Network (Node : Type) (boundary : PortBoundary) (result : Type) where
-  /-- Each component exposes only its own effect signature. -/
-  effect : Node → PFunctor.{0, 0}
-  /-- Typed incoming and outgoing packet interfaces of each component. -/
-  ports : Node → PortBoundary
-  /-- Initialized machines, retaining separate private state carriers. -/
-  component : (id : Node) → Process (effect id) (ports id) Unit result
-  /-- An output goes to one internal mailbox or to the external output boundary. -/
-  route : (id : Node) → Interface.Packet (ports id).Out →
-    ((target : Node) × Interface.Packet (ports target).In) ⊕ Interface.Packet boundary.Out
-  /-- External input packets have typed internal recipients. -/
-  ingress : Interface.Packet boundary.In → (target : Node) × Interface.Packet (ports target).In
+/-- An open routing diagram with a designated global recipient of yielded control. -/
+structure Network (Node : Type) (boundary : PortBoundary) (result : Type)
+    extends Diagram Node boundary result where
   /-- Initial holder of control and recipient of control after yield or termination. -/
   environment : Node
+
+/-- Select the global environment only after assembling the open diagram. -/
+@[expose] def Diagram.withEnvironment {Node result : Type} {boundary : PortBoundary}
+    (diagram : Diagram Node boundary result) (environment : Node) : Network Node boundary result :=
+  ⟨diagram, environment⟩
 
 variable {Node result S : Type} {boundary : PortBoundary}
 

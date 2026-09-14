@@ -40,6 +40,10 @@ variable {Node Node' result S : Type} {boundary : PortBoundary}
   ingress packet := (Equiv.sigmaCongrLeft e).symm (network.ingress packet)
   environment := e.symm network.environment
 
+/-- The global environment follows the inverse bijection of component identities. -/
+@[simp] theorem Network.reindex_environment (network : Network Node boundary result)
+    (e : Node' ≃ Node) : (network.reindex e).environment = e.symm network.environment := rfl
+
 /-- Relabel a complete residual configuration, retaining traffic order and consumed fuel. -/
 @[expose] def State.reindex {network : Network Node boundary result} (e : Node' ≃ Node)
     (state : State network S) : State (network.reindex e) S where
@@ -51,12 +55,41 @@ variable {Node Node' result S : Type} {boundary : PortBoundary}
   focus := e.symm state.focus
   elapsed := state.elapsed
 
+/-- Equality of network data transports a residual configuration without executing a step. -/
+@[expose] def State.castNetwork {network network' : Network Node boundary result}
+    (h : network = network') (state : State network S) : State network' S := h ▸ state
+
+/-- Component handlers follow equality of the network's declared effect interfaces. -/
+@[expose] def castHandlers {m : Type → Type} {network network' : Network Node boundary result}
+    (h : network = network')
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id)) :
+    (id : Node) → Handler (StateT S m) (network'.effect id) := h ▸ impl
+
+/-- Transport along reflexive network equality leaves handlers unchanged. -/
+@[simp] theorem castHandlers_rfl {m : Type → Type} {network : Network Node boundary result}
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id)) :
+    castHandlers rfl impl = impl := rfl
+
 /-- FIFO schedules retain their order and delivery positions under relabeling. -/
 @[expose] def Activation.reindex (e : Node' ≃ Node) : Activation Node → Activation Node'
   | .node id => .node (e.symm id)
   | .deliver => .deliver
 
 attribute [local implicit_reducible] signature Response Network.reindex State.reindex
+
+/-- Reading a relabeled node recovers the same return, abort, or unfinished observation. -/
+@[simp] theorem outcome_reindex {network : Network Node boundary result} (e : Node' ≃ Node)
+    (id : Node') (state : State network S) :
+    outcome id (state.reindex e) = outcome (e id) state := by
+  simp only [outcome, State.reindex, Network.reindex]
+  cases (network.component (e id)).view (state.localState (e id)) <;> rfl
+
+/-- Changing an equal presentation preserves the node's actual observation. -/
+@[simp] theorem outcome_castNetwork {network network' : Network Node boundary result}
+    (h : network = network') (id : Node) (state : State network S) :
+    outcome id (state.castNetwork h) = outcome id state := by
+  cases h
+  rfl
 
 variable {network : Network Node boundary result} [DecidableEq Node] [DecidableEq Node']
 
@@ -93,6 +126,32 @@ theorem deliver_reindex (e : Node' ≃ Node) (state : State network S) :
       exact dispatch_reindex e packet _
 
 variable {m : Type → Type} [Monad m] [LawfulMonad m]
+
+omit [DecidableEq Node'] in
+/-- Token execution commutes with equality of network presentations. -/
+theorem runToken_castNetwork {network' : Network Node boundary result}
+    (h : network = network')
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id))
+    (fuel : ℕ) (state : State network S) :
+    runToken (castHandlers h impl) fuel (state.castNetwork h) =
+      State.castNetwork h <$> runToken impl fuel state := by
+  cases h
+  change _ = id <$> _
+  simp only [id_map]
+  rfl
+
+omit [DecidableEq Node'] in
+/-- FIFO execution commutes with equality of network presentations, keeping the schedule. -/
+theorem runFIFO_castNetwork {network' : Network Node boundary result}
+    (h : network = network')
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id))
+    (schedule : List (Activation Node)) (state : State network S) :
+    runFIFO (castHandlers h impl) schedule (state.castNetwork h) =
+      State.castNetwork h <$> runFIFO impl schedule state := by
+  cases h
+  change _ = id <$> _
+  simp only [id_map]
+  rfl
 
 /-- A local activation commutes with relabeling its component and effect handler. -/
 theorem activate_reindex
@@ -175,5 +234,26 @@ theorem runToken_reindex
       rw [activate_reindex]
       simp only [State.reindex, Equiv.apply_symm_apply, bind_map_left, map_bind]
       exact bind_congr fun next => ih next
+
+/-- A proved graph factorization transports complete token prefixes, including residual
+private states, shared service, queued traffic, control, and consumed fuel. -/
+theorem runToken_reindex_cast {network' : Network Node' boundary result}
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id))
+    (e : Node' ≃ Node) (h : network.reindex e = network')
+    (fuel : ℕ) (state : State network S) :
+    runToken (castHandlers h (fun id => impl (e id))) fuel ((state.reindex e).castNetwork h) =
+      (fun next => (next.reindex e).castNetwork h) <$> runToken impl fuel state := by
+  rw [runToken_castNetwork, runToken_reindex, Functor.map_map]
+
+/-- A proved graph factorization transports complete FIFO prefixes with exactly the same
+delivery positions and corresponding component activations. -/
+theorem runFIFO_reindex_cast {network' : Network Node' boundary result}
+    (impl : (id : Node) → Handler (StateT S m) (network.effect id))
+    (e : Node' ≃ Node) (h : network.reindex e = network')
+    (schedule : List (Activation Node)) (state : State network S) :
+    runFIFO (castHandlers h (fun id => impl (e id)))
+        (schedule.map (Activation.reindex e)) ((state.reindex e).castNetwork h) =
+      (fun next => (next.reindex e).castNetwork h) <$> runFIFO impl schedule state := by
+  rw [runFIFO_castNetwork, runFIFO_reindex, Functor.map_map]
 
 end Interaction.UC.ReactiveNetwork

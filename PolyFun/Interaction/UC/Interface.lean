@@ -648,11 +648,11 @@ theorem toHom_sumCongr {I₁ : Interface.{uA, uB}} {I₂ : Interface.{vA, uB}}
   ext a <;> cases a <;> rfl
 
 /-- The empty interface is a left unit for disjoint sum. -/
-def emptySum (I : Interface.{uA, uB}) : Equiv (Interface.sum Interface.empty I) I :=
+@[expose] def emptySum (I : Interface.{uA, uB}) : Equiv (Interface.sum Interface.empty I) I :=
   PFunctor.Equiv.zeroSum I
 
 /-- The empty interface is a right unit for disjoint sum. -/
-def sumEmpty (I : Interface.{uA, uB}) : Equiv (Interface.sum I Interface.empty) I :=
+@[expose] def sumEmpty (I : Interface.{uA, uB}) : Equiv (Interface.sum I Interface.empty) I :=
   PFunctor.Equiv.sumZero I
 
 /-- Disjoint sum of interfaces is commutative up to equivalence. -/
@@ -998,12 +998,14 @@ theorem toHom_swapCongr {Δ₁ Δ₂ : PortBoundary} (e : Equiv Δ₁ Δ₂) :
     (swapCongr e).toHom = PortBoundary.Hom.swap e.invHom := rfl
 
 /-- The empty boundary is a left tensor unit. -/
-def tensorEmptyLeft (Δ : PortBoundary) : Equiv (PortBoundary.tensor PortBoundary.empty Δ) Δ where
+@[expose] def tensorEmptyLeft (Δ : PortBoundary) :
+    Equiv (PortBoundary.tensor PortBoundary.empty Δ) Δ where
   onIn := (Interface.Equiv.emptySum Δ.In).symm
   onOut := Interface.Equiv.emptySum Δ.Out
 
 /-- The empty boundary is a right tensor unit. -/
-def tensorEmptyRight (Δ : PortBoundary) : Equiv (PortBoundary.tensor Δ PortBoundary.empty) Δ where
+@[expose] def tensorEmptyRight (Δ : PortBoundary) :
+    Equiv (PortBoundary.tensor Δ PortBoundary.empty) Δ where
   onIn := (Interface.Equiv.sumEmpty Δ.In).symm
   onOut := Interface.Equiv.sumEmpty Δ.Out
 
