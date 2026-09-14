@@ -234,6 +234,13 @@ theorem reachableUnder_map {X : Type uX} {Y : Type uY}
       simp only [Set.image_iUnion]
       exact iSup_congr fun direction => iSup_congr fun _ => ih direction
 
+@[simp]
+theorem reachableUnder_liftObj {X : Type uX}
+    (allows : (a : P.A) → P.B a → Prop) (object : P.Obj X) :
+    (FreeM.liftObj object).reachableUnder allows =
+      object.2 '' {direction | allows object.1 direction} := by
+  simp [FreeM.liftObj]
+
 /-- A path is admitted when every direction on it is admitted at its operation. -/
 def Path.AllowedUnder (allows : (a : P.A) → P.B a → Prop) :
     (x : FreeM P α) → Path x → Prop
