@@ -143,6 +143,8 @@ public import PolyFun.Interaction.UC.ReactiveNetwork.Behavior
 public import PolyFun.Interaction.UC.ReactiveNetwork.Diagram
 public import PolyFun.Interaction.UC.ReactiveNetwork.Factorization
 public import PolyFun.Interaction.UC.ReactiveNetwork.Factorization.Right
+public import PolyFun.Interaction.UC.ReactiveNetwork.HandledAssembly
+public import PolyFun.Interaction.UC.ReactiveNetwork.HandledDiagram
 public import PolyFun.Interaction.UC.ReactiveNetwork.Serial
 public import PolyFun.Interaction.UC.ReactiveNetwork.Transport
 public import PolyFun.Interaction.UC.ReactiveProcess
