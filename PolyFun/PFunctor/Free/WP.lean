@@ -448,6 +448,17 @@ theorem reachableUnder_liftM_subset
     hhandler program hprogram
   exact (leavesSatisfyUnder_iff_forall_reachable innerAllows _ _).mp hlift
 
+/-- Interpreting free operations by free programs cannot create new leaf values. -/
+theorem reachable_liftM_subset
+    (handler : (position : P.A) → FreeM Q (P.B position))
+    (program : FreeM P α) :
+    (program.liftM handler).reachable ⊆ program.reachable := by
+  exact reachableUnder_liftM_subset handler (fun _ _ => True) (fun _ _ => True)
+    (by
+      intro position
+      exact (leavesSatisfyUnder_iff_forall_reachable _ _ _).mpr
+        (fun _ _ => trivial)) program
+
 end FreeHandler
 
 /-! ## The induced ordered monad algebra -/
