@@ -207,6 +207,18 @@ incoming packets. It cannot be adapted into a general reactive process without s
 that behavior. Its activation and sampler quotients retain their documented scope; neither
 is upgraded to this reactive semantics by a definitional alias.
 
+[`Budget`](../../PolyFun/Interaction/UC/ReactiveNetwork/Budget.lean) proves exact elapsed counts
+for every successful token/FIFO prefix. Its `TokenBudgetCertificate` combines an invariant,
+a decreasing global rank while the environment is unfinished, and explicit nonempty progress.
+`runToken_terminal` proves that every successful result after sufficient fuel has a terminal
+environment; `runToken_nonempty` rules out obtaining that claim solely through an interpreter
+with no possible result. Progress does not assert that all effect branches return. Atomic
+interpreter work and runtime implementation costs still require their own witnesses.
+The [budget tests](../../PolyFunTest/Interaction/UC/ReactiveBudget.lean) admit a countdown,
+reject an everywhere-failing interpreter, and execute arbitrarily many productive ping-pong
+rounds between two actors with two-operation local reactions. That feedback network cannot
+have a global certificate, despite its bounded local reactions.
+
 The probability-independent
 [`RequestNetwork`](../../PolyFun/Interaction/UC/RequestNetwork.lean) is a separate finite
 request/reply specialization: well-founded clients, one outstanding ticket per client, and

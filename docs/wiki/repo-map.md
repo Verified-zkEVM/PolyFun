@@ -498,6 +498,9 @@ The generic reactive path is `Interface` →
 [`Transport`](../../PolyFun/Interaction/UC/ReactiveNetwork/Transport.lean),
 [`Serial`](../../PolyFun/Interaction/UC/ReactiveNetwork/Serial.lean), and
 [`Behavior`](../../PolyFun/Interaction/UC/ReactiveNetwork/Behavior.lean).
+[`Budget`](../../PolyFun/Interaction/UC/ReactiveNetwork/Budget.lean) additionally imports the
+existing exact monadic-support API to retain activation counts and prove progress-bearing
+global rank bounds for successful token results.
 It imports the existing polynomial dynamical computation and resumption APIs, and no
 probability or cryptographic layer. The [UC ledger](uc.md#reactive-execution-and-exact-behavior)
 records the exact scope of the execution and behavior laws.

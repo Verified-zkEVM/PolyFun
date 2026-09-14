@@ -140,6 +140,7 @@ public import PolyFun.Interaction.UC.OpenTheory.Quotient
 public import PolyFun.Interaction.UC.ReactiveNetwork
 public import PolyFun.Interaction.UC.ReactiveNetwork.Assembly
 public import PolyFun.Interaction.UC.ReactiveNetwork.Behavior
+public import PolyFun.Interaction.UC.ReactiveNetwork.Budget
 public import PolyFun.Interaction.UC.ReactiveNetwork.Diagram
 public import PolyFun.Interaction.UC.ReactiveNetwork.Factorization
 public import PolyFun.Interaction.UC.ReactiveNetwork.Factorization.Right
