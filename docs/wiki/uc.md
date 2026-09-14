@@ -173,6 +173,18 @@ is assumed. The [factorization consumer](../../PolyFunTest/Interaction/UC/Reacti
 transports every token prefix and arbitrary FIFO schedules for a context communicating with
 two separate machines. The echo tests refute retaining the old schedule after node relabeling.
 
+[`HandledDiagram`](../../PolyFun/Interaction/UC/ReactiveNetwork/HandledDiagram.lean) and
+[`HandledAssembly`](../../PolyFun/Interaction/UC/ReactiveNetwork/HandledAssembly.lean) carry
+each component's actual polynomial-operation interpreter as intrinsic data. Raw compilation,
+parallel composition, wiring, and all four closure factorizations preserve those interpreters.
+The public token and FIFO observation equations use the actual runners; FIFO schedules follow
+the component bijections. `atom_plug_atom` normalizes direct two-machine communication without
+adding relay nodes. The [handler tests](../../PolyFunTest/Interaction/UC/ReactiveHandlers.lean)
+show that identical unhandled diagrams can return different values and distinguish a failed
+interpreter from a successfully executed unfinished prefix. The explicit monad determines
+ambient capabilities: a stateless sampler grants no shared-state access, whereas choosing a
+shared-state monad grants that capability. Interpreter work still needs separate resource bounds.
+
 [`Behavior`](../../PolyFun/Interaction/UC/ReactiveNetwork/Behavior.lean) proves exact adequacy:
 `runFIFO_behavior` and `runToken_behavior` commute execution with the map from private states
 to cofree behavior, in any lawful effect monad. Initialization and terminal observations
