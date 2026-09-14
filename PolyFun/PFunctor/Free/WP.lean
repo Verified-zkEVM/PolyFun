@@ -428,6 +428,26 @@ theorem leavesSatisfyUnder_liftM
       exact (hhandler position).mono fun direction hdirection =>
         ih direction (hprogram direction hdirection)
 
+/-- A free handler whose admitted outputs respect the source response constraint
+cannot introduce new reachable results. This is the operational counterpart of
+`leavesSatisfyUnder_liftM`. -/
+theorem reachableUnder_liftM_subset
+    (handler : (position : P.A) → FreeM Q (P.B position))
+    (outerAllows : (position : P.A) → P.B position → Prop)
+    (innerAllows : (position : Q.A) → Q.B position → Prop)
+    (hhandler : ∀ position,
+      (handler position).LeavesSatisfyUnder innerAllows (outerAllows position))
+    (program : FreeM P α) :
+    (program.liftM handler).reachableUnder innerAllows ⊆
+      program.reachableUnder outerAllows := by
+  have hprogram : program.LeavesSatisfyUnder outerAllows
+      (fun result => result ∈ program.reachableUnder outerAllows) :=
+    (leavesSatisfyUnder_iff_forall_reachable outerAllows _ _).mpr
+      (fun _ hresult => hresult)
+  have hlift := leavesSatisfyUnder_liftM handler outerAllows innerAllows _
+    hhandler program hprogram
+  exact (leavesSatisfyUnder_iff_forall_reachable innerAllows _ _).mp hlift
+
 end FreeHandler
 
 /-! ## The induced ordered monad algebra -/
