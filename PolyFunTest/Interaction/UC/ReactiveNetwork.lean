@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Interaction.UC.ReactiveNetwork
+public import PolyFun.Interaction.UC.ReactiveNetwork.Transport
 
 /-!
 # Reactive delivery regressions
@@ -101,5 +101,17 @@ def abortNetwork : Network Unit PortBoundary.empty Bool where
 
 /-- An explicit abort is a terminal outcome, distinct from a residual process. -/
 example : outcome () (initial abortNetwork ()) = some .aborted := rfl
+
+@[expose] def flip : Bool ≃ Bool := ⟨Bool.not, Bool.not, Bool.not_not, Bool.not_not⟩
+
+/-- Relabeling the graph but retaining the old schedule prevents the initial message from
+being delivered in time. This separates graph isomorphism from untransported scheduling. -/
+theorem untransported_schedule_changes_observation :
+    outcome true (runFIFO (m := Id) (fun node => impl true (flip node))
+      fifoSchedule (initial ((echoNetwork true).reindex flip) ())) ≠
+    outcome false (runFIFO (m := Id) (impl true) fifoSchedule
+      (initial (echoNetwork true) ())) := by
+  intro h
+  cases h
 
 end Interaction.UC.ReactiveNetwork.Tests

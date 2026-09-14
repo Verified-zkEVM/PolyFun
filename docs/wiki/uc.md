@@ -150,8 +150,28 @@ explicit ingress map; the security layer must constrain who may inject which inp
 [`Transport`](../../PolyFun/Interaction/UC/ReactiveNetwork/Transport.lean) proves that a
 bijection of identities transports actual execution under both policies. The dependent
 packets, initialization, schedules, token holder, and effects move together. This supplies
-renaming and regrouping of an existing flat diagram; it does not prove an arbitrary
-`OpenTheory.plug` factorization or scheduler-distribution invariance.
+renaming and regrouping of an existing flat diagram. `runToken_reindex_cast` and
+`runFIFO_reindex_cast` consume a proved graph equality to transport complete residual
+configurations through factorization. These results do not resample a scheduler.
+
+[`Diagram`](../../PolyFun/Interaction/UC/ReactiveNetwork/Diagram.lean) separates typed
+components and routes from selection of the global environment. Its `map`, `par`, `wire`,
+and derived `plug` preserve component machines. The
+[factorization laws](../../PolyFun/Interaction/UC/ReactiveNetwork/Factorization.lean) and
+[right-component laws](../../PolyFun/Interaction/UC/ReactiveNetwork/Factorization/Right.lean)
+prove plug symmetry, boundary-map transport, and all four parallel/wired closure
+factorizations as graph equalities after explicit component bijections. The `Network`
+versions retain the environment selected in the closing context. These are direct routing
+theorems, independent of the legacy activation quotient and its scheduler hypotheses.
+
+[`Assembly`](../../PolyFun/Interaction/UC/ReactiveNetwork/Assembly.lean) bundles a finite
+diagram and compiles `OpenSyntax.Raw` using its existing universal interpretation.
+`idWire` is a persistent receive/send forwarding machine. The
+[assembly regressions](../../PolyFunTest/Interaction/UC/ReactiveAssembly.lean) distinguish
+its charged eight-step echo from a direct four-step exchange. No timed snake equation
+is assumed. The [factorization consumer](../../PolyFunTest/Interaction/UC/ReactiveFactorization.lean)
+transports every token prefix and arbitrary FIFO schedules for a context communicating with
+two separate machines. The echo tests refute retaining the old schedule after node relabeling.
 
 [`Behavior`](../../PolyFun/Interaction/UC/ReactiveNetwork/Behavior.lean) proves exact adequacy:
 `runFIFO_behavior` and `runToken_behavior` commute execution with the map from private states
@@ -162,9 +182,11 @@ with pure cofree matter, and it does not make the behavior network into a lawful
 monoidal/traced `OpenTheory` automatically.
 
 [`Serial`](../../PolyFun/Interaction/UC/ReactiveNetwork/Serial.lean) gives a deliberately
-restricted policy comparison: from an empty pending queue, one FIFO component activation
-followed by a delivery activation agrees with one token activation, with exactly one extra
-fuel unit. Arbitrary FIFO schedules can behave differently. The
+restricted policy comparison: from an empty pending queue, `runSerial_eq_runToken` identifies
+every finite serial FIFO prefix with the corresponding token prefix, retaining one extra
+delivery activation per round in the complete residual state. The proof works in any lawful
+monad, including failure, without assuming effect normalization. Arbitrary FIFO schedules can
+behave differently. The
 [echo regressions](../../PolyFunTest/Interaction/UC/ReactiveNetwork.lean) exercise actual
 input-dependent output, missing delivery, short prefixes, and explicit abort.
 
