@@ -28,7 +28,9 @@ rev = "e06eff5f95374108acfaf19f1ff7473aa7771df2"
 
 [[require]]
 name = "cslib"
-path = "/private/tmp/uc-cslib-rc2-candidate-20260914"
+scope = "leanprover"
+git = "https://github.com/dtumad/cslib.git"
+rev = "213cd0ce56c640f584edd059b14a3dd77f7a9b8c"
 
 [[lean_lib]]
 name = "PolyFun"

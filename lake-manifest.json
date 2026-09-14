@@ -3,12 +3,16 @@
   "packagesDir": ".lake/packages",
   "packages": [
     {
-      "type": "path",
+      "url": "https://github.com/dtumad/cslib.git",
+      "type": "git",
+      "subDir": null,
+      "scope": "leanprover",
+      "rev": "213cd0ce56c640f584edd059b14a3dd77f7a9b8c",
       "name": "cslib",
-      "dir": "/private/tmp/uc-cslib-rc2-candidate-20260914",
+      "manifestFile": "lake-manifest.json",
+      "inputRev": "213cd0ce56c640f584edd059b14a3dd77f7a9b8c",
       "inherited": false,
-      "configFile": "lakefile.toml",
-      "manifestFile": "lake-manifest.json"
+      "configFile": "lakefile.toml"
     },
     {
       "url": "https://github.com/leanprover-community/mathlib4",
