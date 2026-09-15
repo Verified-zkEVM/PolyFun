@@ -113,6 +113,7 @@ public import PolyFun.Interaction.Multiparty.ObservationProfile
 public import PolyFun.Interaction.Multiparty.Profile
 public import PolyFun.Interaction.TwoParty.Compose
 public import PolyFun.Interaction.TwoParty.Decoration
+public import PolyFun.Interaction.TwoParty.PublicCoin
 public import PolyFun.Interaction.TwoParty.Refine
 public import PolyFun.Interaction.TwoParty.Role
 public import PolyFun.Interaction.TwoParty.Strategy
@@ -237,6 +238,7 @@ public import PolyFun.PFunctor.Free.Cursor
 public import PolyFun.PFunctor.Free.Cursor.Append
 public import PolyFun.PFunctor.Free.Cursor.Fork
 public import PolyFun.PFunctor.Free.Cursor.Occurrence
+public import PolyFun.PFunctor.Free.Cursor.ReplayTree
 public import PolyFun.PFunctor.Free.Displayed
 public import PolyFun.PFunctor.Free.Displayed.Append
 public import PolyFun.PFunctor.Free.Displayed.Cursor
