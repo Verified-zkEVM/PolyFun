@@ -245,6 +245,12 @@ Label each node with `Role` (`.sender` or `.receiver`) via
 For public-coin protocols, `PublicCoinCounterpart` and `replay` support
 public-coin path replay (Fiat-Shamir-style).
 
+`TwoParty/PublicCoin.lean` provides ordinary-import constructor equations for
+both `replay` and `toCounterpart`. At receiver nodes replay follows a prescribed
+challenge, whereas the ordinary counterpart samples a challenge and follows its
+indexed continuation. These equations do not assert Fiat-Shamir security or
+that the prescribed path was produced by a particular prover.
+
 ### Composition
 
 `Strategy.compWithRoles` and `Counterpart.append` compose along
