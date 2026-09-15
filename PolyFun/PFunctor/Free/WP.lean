@@ -78,6 +78,11 @@ guarantees that *some* response satisfies the continuation. -/
 def angelic (P : PFunctor.{uA, uB}) : OpSpec P Prop :=
   fun _ k => ∃ b, k b
 
+/-- The angelic specification restricted to admitted responses: a call can continue
+along any response satisfying `allows`. -/
+def angelicUnder (allows : (a : P.A) → P.B a → Prop) : OpSpec P Prop :=
+  fun a k => ∃ b, allows a b ∧ k b
+
 theorem demonic_mono : (demonic P).Mono :=
   fun _ _ _ h hk b => h b (hk b)
 
@@ -87,6 +92,10 @@ theorem demonicUnder_mono (allows : (a : P.A) → P.B a → Prop) :
 
 theorem angelic_mono : (angelic P).Mono :=
   fun _ _ _ h => fun ⟨b, hb⟩ => ⟨b, h b hb⟩
+
+theorem angelicUnder_mono (allows : (a : P.A) → P.B a → Prop) :
+    (angelicUnder allows).Mono :=
+  fun _ _ _ h => fun ⟨b, hb, hk⟩ => ⟨b, hb, h b hk⟩
 
 end OpSpec
 
@@ -131,6 +140,171 @@ theorem wpFold_mono [Preorder l] {Φ : OpSpec P l} (hΦ : Φ.Mono) (x : FreeM P 
   induction x with
   | pure x => exact h x
   | lift_bind a r ih => exact hΦ a fun b => ih b
+
+/-! ## Reachable outputs under an operationalization -/
+
+/-- Outputs reachable when each operation may return exactly the responses admitted by
+`allows`. This is the set view of the angelic predicate transformer, not a generic
+interpretation of `MonadAttach.CanReturn`. -/
+def reachableUnder (allows : (a : P.A) → P.B a → Prop) (x : FreeM P α) : Set α :=
+  {result | x.wpFold (OpSpec.angelicUnder allows) (· = result)}
+
+/-- Structural reachability when every typed response is admitted. -/
+def reachable (x : FreeM P α) : Set α :=
+  x.reachableUnder (fun _ _ => True)
+
+@[simp]
+theorem reachableUnder_pure (allows : (a : P.A) → P.B a → Prop) (result : α) :
+    reachableUnder allows (pure result : FreeM P α) = {result} := by
+  ext a
+  simp [reachableUnder, eq_comm]
+
+@[simp]
+theorem reachableUnder_liftBind (allows : (a : P.A) → P.B a → Prop)
+    (position : P.A) (next : P.B position → FreeM P α) :
+    reachableUnder allows (FreeM.liftBind position next) =
+      ⋃ direction ∈ {direction | allows position direction},
+        reachableUnder allows (next direction) := by
+  ext result
+  simp only [reachableUnder, Set.mem_ofPred_eq, wpFold_liftBind,
+    OpSpec.angelicUnder, Set.mem_iUnion, exists_prop]
+
+@[simp]
+theorem reachableUnder_lift (allows : (a : P.A) → P.B a → Prop)
+    (position : P.A) :
+    (FreeM.lift position).reachableUnder allows =
+      {direction | allows position direction} := by
+  rw [FreeM.lift, reachableUnder_liftBind]
+  ext direction
+  simp
+
+/-- The angelic fold is existential quantification over reachable outputs. -/
+theorem wpFold_angelicUnder_iff_exists_reachable
+    (allows : (a : P.A) → P.B a → Prop) (x : FreeM P α) (post : α → Prop) :
+    x.wpFold (OpSpec.angelicUnder allows) post ↔
+      ∃ result ∈ x.reachableUnder allows, post result := by
+  induction x with
+  | pure result =>
+      simp [reachableUnder]
+  | lift_bind position next ih =>
+      rw [wpFold_liftBind, reachableUnder_liftBind]
+      simp only [OpSpec.angelicUnder, Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
+      constructor
+      · rintro ⟨direction, hallowed, hpost⟩
+        obtain ⟨result, hreach, hresult⟩ := (ih direction).mp hpost
+        exact ⟨result, ⟨direction, hallowed, hreach⟩, hresult⟩
+      · rintro ⟨result, ⟨direction, hallowed, hreach⟩, hresult⟩
+        exact ⟨direction, hallowed,
+          (ih direction).mpr ⟨result, hreach, hresult⟩⟩
+
+@[simp]
+theorem reachableUnder_bind (allows : (a : P.A) → P.B a → Prop)
+    (x : FreeM P α) (next : α → FreeM P β) :
+    (x >>= next).reachableUnder allows =
+      ⋃ result ∈ x.reachableUnder allows, (next result).reachableUnder allows := by
+  ext result
+  change wpFold (OpSpec.angelicUnder allows) (x >>= next) (· = result) ↔ _
+  rw [wpFold_bind, wpFold_angelicUnder_iff_exists_reachable]
+  simp only [Set.mem_iUnion, exists_prop]
+  exact exists_congr fun a => and_congr_right fun _ => Iff.rfl
+
+theorem reachableUnder_mono {allows₁ allows₂ : (a : P.A) → P.B a → Prop}
+    (h : ∀ position direction, allows₁ position direction → allows₂ position direction)
+    (x : FreeM P α) : x.reachableUnder allows₁ ⊆ x.reachableUnder allows₂ := by
+  intro result hresult
+  induction x with
+  | pure value => simpa using hresult
+  | lift_bind position next ih =>
+      rw [reachableUnder_liftBind] at hresult ⊢
+      simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop] at hresult ⊢
+      obtain ⟨direction, hallowed, hchild⟩ := hresult
+      exact ⟨direction, h position direction hallowed, ih direction hchild⟩
+
+/-- Mapping leaf values maps the set of outputs reachable under the same responses. -/
+@[simp]
+theorem reachableUnder_map {X : Type uX} {Y : Type uY}
+    (allows : (a : P.A) → P.B a → Prop) (function : X → Y)
+    (program : FreeM P X) :
+    (FreeM.map function program).reachableUnder allows =
+      function '' program.reachableUnder allows := by
+  induction program with
+  | pure result => simp
+  | lift_bind position next ih =>
+      rw [map_liftBind, reachableUnder_liftBind, reachableUnder_liftBind]
+      simp only [Set.image_iUnion]
+      exact iSup_congr fun direction => iSup_congr fun _ => ih direction
+
+theorem reachableUnder_liftObj {X : Type uX}
+    (allows : (a : P.A) → P.B a → Prop) (object : P.Obj X) :
+    (FreeM.liftObj object).reachableUnder allows =
+      object.2 '' {direction | allows object.1 direction} := by
+  simp [FreeM.liftObj]
+
+/-- A path is admitted when every direction on it is admitted at its operation. -/
+def Path.AllowedUnder (allows : (a : P.A) → P.B a → Prop) :
+    (x : FreeM P α) → Path x → Prop
+  | .pure _, _ => True
+  | .liftBind position next, ⟨direction, path⟩ =>
+      allows position direction ∧ AllowedUnder allows (next direction) path
+
+/-- Reachability is witnessed by an admitted root-to-leaf path. -/
+theorem mem_reachableUnder_iff_exists_path
+    (allows : (a : P.A) → P.B a → Prop) (x : FreeM P α) (result : α) :
+    result ∈ x.reachableUnder allows ↔
+      ∃ path : Path x, Path.AllowedUnder allows x path ∧ x.output path = result := by
+  induction x with
+  | pure value =>
+      change (value = result) ↔
+        ∃ path : Path (pure value : FreeM P α),
+          Path.AllowedUnder allows (pure value) path ∧ value = result
+      constructor
+      · intro h
+        exact ⟨⟨⟩, trivial, h⟩
+      · rintro ⟨_, _, h⟩
+        exact h
+  | lift_bind position next ih =>
+      rw [reachableUnder_liftBind]
+      simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
+      constructor
+      · rintro ⟨direction, hallowed, hchild⟩
+        obtain ⟨path, hpath, hresult⟩ := (ih direction).mp hchild
+        exact ⟨⟨direction, path⟩, ⟨hallowed, hpath⟩, hresult⟩
+      · rintro ⟨⟨direction, path⟩, ⟨hallowed, hpath⟩, hresult⟩
+        exact ⟨direction, hallowed,
+          (ih direction).mpr ⟨path, hpath, hresult⟩⟩
+
+/-- Running the powerset handler gives the same reachable outputs. -/
+theorem reachableUnder_eq_liftM
+    {γ : Type uB} (allows : (a : P.A) → P.B a → Prop) (x : FreeM P γ) :
+    x.reachableUnder allows =
+      SetM.run (x.liftM (fun position =>
+        ({direction | allows position direction} : SetM _))) := by
+  induction x with
+  | pure result =>
+      rw [reachableUnder_pure]
+      change {result} = SetM.run (pure result : SetM γ)
+      rfl
+  | lift_bind position next ih =>
+      rw [reachableUnder_liftBind]
+      change _ = ⋃ direction ∈ {direction | allows position direction},
+        SetM.run ((next direction).liftM (fun position =>
+          ({direction | allows position direction} : SetM _)))
+      exact iSup_congr fun direction => iSup_congr fun _ => ih direction
+
+/-- Full-response reachability agrees with the free tree's attachment predicate. -/
+theorem reachable_eq_support (x : FreeM P α) :
+    x.reachable = MonadAttach.support x := by
+  induction x with
+  | pure result => simp [reachable, reachableUnder_pure]
+  | lift_bind position next ih =>
+      rw [reachable, reachableUnder_liftBind, support_liftBind]
+      simp only [Set.ofPred_true, Set.biUnion_univ]
+      exact iSup_congr fun direction => ih direction
+
+theorem mem_reachable_iff_canReturn (x : FreeM P α) (result : α) :
+    result ∈ x.reachable ↔ MonadAttach.CanReturn x result := by
+  rw [reachable_eq_support]
+  rfl
 
 /-! ## Admitted-response leaf contracts -/
 
@@ -200,6 +374,25 @@ theorem leavesSatisfyUnder_bind_iff (allows : (a : P.A) → P.B a → Prop)
       exact forall_congr' fun direction =>
         imp_congr_right fun _ => ih direction
 
+/-- The relation-restricted demonic WP quantifies over the reachable outputs. -/
+theorem leavesSatisfyUnder_iff_forall_reachable
+    (allows : (a : P.A) → P.B a → Prop) (x : FreeM P α) (post : α → Prop) :
+    x.LeavesSatisfyUnder allows post ↔
+      ∀ result ∈ x.reachableUnder allows, post result := by
+  induction x with
+  | pure result =>
+      simp [LeavesSatisfyUnder, reachableUnder]
+  | lift_bind position next ih =>
+      rw [leavesSatisfyUnder_liftBind, reachableUnder_liftBind]
+      simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
+      constructor
+      · intro h result ⟨direction, hallowed, hchild⟩
+        exact (ih direction).mp (h direction hallowed) result hchild
+      · intro h direction hallowed
+        apply (ih direction).mpr
+        intro result hchild
+        exact h result ⟨direction, hallowed, hchild⟩
+
 section FreeHandler
 
 variable {Q : PFunctor.{uA₂, uB₂}} {α : Type uB}
@@ -234,6 +427,37 @@ theorem leavesSatisfyUnder_liftM
       rw [leavesSatisfyUnder_bind_iff]
       exact (hhandler position).mono fun direction hdirection =>
         ih direction (hprogram direction hdirection)
+
+/-- A free handler whose admitted outputs respect the source response constraint
+cannot introduce new reachable results. This is the operational counterpart of
+`leavesSatisfyUnder_liftM`. -/
+theorem reachableUnder_liftM_subset
+    (handler : (position : P.A) → FreeM Q (P.B position))
+    (outerAllows : (position : P.A) → P.B position → Prop)
+    (innerAllows : (position : Q.A) → Q.B position → Prop)
+    (hhandler : ∀ position,
+      (handler position).LeavesSatisfyUnder innerAllows (outerAllows position))
+    (program : FreeM P α) :
+    (program.liftM handler).reachableUnder innerAllows ⊆
+      program.reachableUnder outerAllows := by
+  have hprogram : program.LeavesSatisfyUnder outerAllows
+      (fun result => result ∈ program.reachableUnder outerAllows) :=
+    (leavesSatisfyUnder_iff_forall_reachable outerAllows _ _).mpr
+      (fun _ hresult => hresult)
+  have hlift := leavesSatisfyUnder_liftM handler outerAllows innerAllows _
+    hhandler program hprogram
+  exact (leavesSatisfyUnder_iff_forall_reachable innerAllows _ _).mp hlift
+
+/-- Interpreting free operations by free programs cannot create new leaf values. -/
+theorem reachable_liftM_subset
+    (handler : (position : P.A) → FreeM Q (P.B position))
+    (program : FreeM P α) :
+    (program.liftM handler).reachable ⊆ program.reachable := by
+  exact reachableUnder_liftM_subset handler (fun _ _ => True) (fun _ _ => True)
+    (by
+      intro position
+      exact (leavesSatisfyUnder_iff_forall_reachable _ _ _).mpr
+        (fun _ _ => trivial)) program
 
 end FreeHandler
 
