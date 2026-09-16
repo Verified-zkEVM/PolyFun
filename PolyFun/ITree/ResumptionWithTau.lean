@@ -26,8 +26,6 @@ namespace ITree
 
 variable {P : PFunctor.{uA, uB}} {α : Type uα}
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 /-- Reassociate the raw ITree polynomial `(P + C α) + y` as the raw
 resumption polynomial `(P + y) + C α`. -/
 def resumptionWithTauPolyEquiv :

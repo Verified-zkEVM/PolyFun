@@ -39,8 +39,9 @@ types are indexed through `M.Vertex.depth`, `compNth`, and the composition
 product, which must unfold there for the rewrites to type-check.
 `implicit_reducible` (unlike `reducible`) keeps them opaque to simp and
 typeclass resolution, and needs no `allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] M.Vertex.depth compNth PFunctor.comp
-  Lens.comp Lens.compMap cogenerator comult M.Vertex.subtree M.head M.children
+attribute [local implicit_reducible]
+  M.Vertex.depth compNth Lens.comp Lens.compMap cogenerator comult M.Vertex.subtree M.head
+  M.children
 
 /-! ## Structural finite projections -/
 

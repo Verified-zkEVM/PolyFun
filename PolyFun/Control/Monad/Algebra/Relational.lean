@@ -698,7 +698,8 @@ theorem strictBindStateTLeft [StrictBind m₁ m₂ l] (σ : Type u) :
   have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
     (x := x.run s) (y := y) (f := fun xs => (f xs.1).run xs.2) (g := g)
     (post := fun zs d => post zs.1 d zs.2)
-  convert h using 1 <;> rfl
+  convert h using 1
+  rfl
 
 /-- Strictness lifts through the named right `StateT` algebra. -/
 theorem strictBindStateTRight [StrictBind m₁ m₂ l] (σ : Type u) :
@@ -711,7 +712,8 @@ theorem strictBindStateTRight [StrictBind m₁ m₂ l] (σ : Type u) :
   have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
     (x := x) (y := y.run s) (f := f) (g := fun ys => (g ys.1).run ys.2)
     (post := fun c td => post c td.1 td.2)
-  convert h using 1 <;> rfl
+  convert h using 1
+  rfl
 
 /-- Strictness lifts through the named two-sided `StateT` algebra. -/
 theorem strictBindStateTBoth [StrictBind m₁ m₂ l] (σ₁ σ₂ : Type u) :
@@ -725,7 +727,8 @@ theorem strictBindStateTBoth [StrictBind m₁ m₂ l] (σ₁ σ₂ : Type u) :
     (x := x.run s₁) (y := y.run s₂)
     (f := fun p₁ => (f p₁.1).run p₁.2) (g := fun p₂ => (g p₂.1).run p₂.2)
     (post := fun p₁ p₂ => post p₁.1 p₂.1 p₁.2 p₂.2)
-  convert h using 1 <;> rfl
+  convert h using 1
+  rfl
 
 /-- Strictness lifts through the named left `ReaderT` algebra. -/
 theorem strictBindReaderTLeft [StrictBind m₁ m₂ l] (ρ : Type u) :
@@ -738,7 +741,8 @@ theorem strictBindReaderTLeft [StrictBind m₁ m₂ l] (ρ : Type u) :
   have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
     (x := x.run r) (y := y) (f := fun a => (f a).run r) (g := g)
     (post := fun c d => post c d r)
-  convert h using 1 <;> rfl
+  convert h using 1
+  rfl
 
 /-- Strictness lifts through the named right `ReaderT` algebra. -/
 theorem strictBindReaderTRight [StrictBind m₁ m₂ l] (ρ : Type u) :
@@ -751,7 +755,8 @@ theorem strictBindReaderTRight [StrictBind m₁ m₂ l] (ρ : Type u) :
   have h := StrictBind.rwp_bind (m₁ := m₁) (m₂ := m₂) (l := l)
     (x := x) (y := y.run r) (f := f) (g := fun b => (g b).run r)
     (post := fun c d => post c d r)
-  convert h using 1 <;> rfl
+  convert h using 1
+  rfl
 
 /-- Strictness lifts through the named two-sided `ReaderT` algebra. -/
 theorem strictBindReaderTBoth [StrictBind m₁ m₂ l] (ρ₁ ρ₂ : Type u) :
@@ -765,7 +770,8 @@ theorem strictBindReaderTBoth [StrictBind m₁ m₂ l] (ρ₁ ρ₂ : Type u) :
     (x := x.run r₁) (y := y.run r₂)
     (f := fun a => (f a).run r₁) (g := fun b => (g b).run r₂)
     (post := fun c d => post c d r₁ r₂)
-  convert h using 1 <;> rfl
+  convert h using 1
+  rfl
 
 end StrictBindInstances
 

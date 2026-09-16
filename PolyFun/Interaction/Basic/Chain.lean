@@ -59,8 +59,6 @@ at each step (`Fin 1`, `Fin 2`, …) without mentioning any state type.
 
 public section
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 universe u
 
 namespace Interaction

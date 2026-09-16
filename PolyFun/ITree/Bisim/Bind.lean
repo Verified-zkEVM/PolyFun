@@ -48,12 +48,6 @@ namespace ITree
 variable {F : PFunctor.{uFA, uFB}} {α : Type uα} {β : Type uβ}
   {γ : Type uγ} {δ : Type uδ}
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the `bindStep`-unfolding proofs below produce sigma goals whose types only
-match once `PFunctor.Obj` unfolds there. `implicit_reducible` restores that
-without touching simp or typeclass resolution. -/
-attribute [local implicit_reducible] PFunctor.Obj
-
 /-! ### Monad laws -/
 
 /-- Auxiliary: once `bind` has consumed the pure-leaf prefix and entered the

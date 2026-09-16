@@ -26,8 +26,6 @@ namespace PFunctor.Resumption
 variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
   {α : Type uα} {β : Type uβ} {γ : Type uγ}
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 /-! ## Embedding into interaction trees -/
 
 /-- One-step ITree coalgebra corresponding to a resumption return/query view. -/

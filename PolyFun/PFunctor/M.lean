@@ -94,6 +94,7 @@ theorem corec_dest (u : M P) : M.corec M.dest u = u := by
   refine ⟨(M.dest b).1, (fun i => M.corec M.dest ((M.dest b).2 i)),
     (M.dest b).2, ?_, ?_, ?_⟩
   · rw [dest_corec_apply]
+    rfl
   · rfl
   · intro i; rfl
 

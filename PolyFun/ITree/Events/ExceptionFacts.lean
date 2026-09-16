@@ -17,8 +17,6 @@ events and silent steps are preserved.
 
 @[expose] public section
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 universe uε uEA uB uα uβ
 
 namespace ITree

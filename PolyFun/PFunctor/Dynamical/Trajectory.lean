@@ -36,11 +36,6 @@ universe u u₁ u₂ u₃ uA uB w
 
 namespace PFunctor
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the trajectory unfolding equations below rewrite corecursive `constProd`
-objects there, so `P.Obj` must unfold to its sigma form in those checks. -/
-attribute [local implicit_reducible] PFunctor.Obj
-
 /-- The unique successor of a node in a unary (`y`-)cofree tree: read off the single
 child indexed by the lone direction `PUnit.unit`. -/
 def CofreeC.next {α : Type w} (t : CofreeC y.{uA, uB} α) : CofreeC y.{uA, uB} α :=

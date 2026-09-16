@@ -43,10 +43,9 @@ namespace PFunctor
 
 /- Lean compares the sigma presentations of polynomial objects and indices at
 implicit transparency in the flattened maps below. -/
-attribute [local implicit_reducible] PFunctor.Obj PFunctor.Idx PFunctor.prod
-  PFunctor.ulift PFunctor.Lens.comp PFunctor.Lens.uliftMap
-  DynSystem.wrap DynSystem.expose DynSystem.update
-  DynSystem.choiceProd DynSystem.ulift
+attribute [local implicit_reducible]
+  PFunctor.Idx PFunctor.prod PFunctor.ulift PFunctor.Lens.comp PFunctor.Lens.uliftMap
+  DynSystem.wrap DynSystem.expose DynSystem.update DynSystem.choiceProd DynSystem.ulift
 
 /-! ## The regrouping lens -/
 
@@ -112,7 +111,7 @@ theorem _root_.PFunctor.Lens.pullChoicePosIdx_enabled [DecidableEq r.A]
       some ((lens.toFunB a d).elim
         (fun d₁ => Sum.inl ⟨a.1, d₁⟩) (fun d₂ => Sum.inr ⟨a.2, d₂⟩)) := by
   unfold Lens.pullChoicePosIdx
-  rw [dif_pos rfl]
+  rw [dite_eq_left rfl]
 
 /-! ## The fused product-state combinator -/
 

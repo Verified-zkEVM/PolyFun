@@ -143,7 +143,7 @@ theorem dest_extend_eq {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β
     tail (extend t f) = F.map (fun x => extend x f) (tail t) := by
   unfold tail
   rw [dest_extend]
-  simp only [extendF, PFunctor.map_eq]
+  simp only [extendF]
   rfl
 
 instance : Comonad (CofreeC F) where

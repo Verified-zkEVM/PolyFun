@@ -23,7 +23,6 @@ universe uA uB
 
 namespace PFunctor
 
-attribute [local implicit_reducible] PFunctor.Obj
 namespace FreeP
 
 variable {P : PFunctor.{uA, uB}}

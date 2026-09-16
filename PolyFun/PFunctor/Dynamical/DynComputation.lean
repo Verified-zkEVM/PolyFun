@@ -28,8 +28,6 @@ and denotes exactly monadic bind on `Resumption`.
 
 @[expose] public section
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 universe u v w x uA uB uA₂ uB₂ uα uβ uγ uδ uε uζ
 
 namespace PFunctor
@@ -603,18 +601,18 @@ private theorem seqCompSem_coalg {γ : Type uγ}
           simp only [seqComp_State]
           rw [h₂]
           simp only [seqCompSem, Resumption.dest_bind, dest_behavior_view, h₁,
-            dest_denote, h₂, Sum.map_inl, Sum.map_inr, PFunctor.map_eq]
+            dest_denote, h₂, Sum.map_inl, Sum.map_inr]
           rfl
       · rw [seqComp_view_inl, h₁]
         simp only [seqCompSem, Resumption.dest_bind, dest_behavior_view, h₁,
-          Sum.map_inr, PFunctor.map_eq]
+          Sum.map_inr]
         rfl
   | inr state₂ =>
       rcases h₂ : M₂.view state₂ with result | ⟨position, next⟩
       · rw [seqComp_view_inr, h₂]
         simp only [seqCompSem, dest_behavior_view, h₂, Sum.map_inl]
       · rw [seqComp_view_inr, h₂]
-        simp only [seqCompSem, dest_behavior_view, h₂, Sum.map_inr, PFunctor.map_eq]
+        simp only [seqCompSem, dest_behavior_view, h₂, Sum.map_inr]
         rfl
 
 /-- State-level semantics of sequential composition. Phase-one states denote

@@ -57,7 +57,7 @@ def PolyTimeComputable.normalize {f : List Symbol → List Symbol}
     (h : PolyTimeComputable f) : PolyTimeComputable f where
   tm := h.tm
   timeBound n := h.poly.eval n
-  outputsFunInTime a := (h.outputsFunInTime a).of_le (h.bounds _)
+  outputsFunInTime a := Relation.RelatesWithinSteps.mono (h.bounds _) (h.outputsFunInTime a)
   poly := h.poly
   bounds _ := le_rfl
 

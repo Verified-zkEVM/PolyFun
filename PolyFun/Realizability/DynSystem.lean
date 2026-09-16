@@ -46,8 +46,7 @@ namespace PFunctor
 
 /- Lean compares the sigma presentations of polynomial objects and indices at
 implicit transparency in the flattened maps below. -/
-attribute [local implicit_reducible] PFunctor.Obj PFunctor.Idx
-  DynSystem.wrap DynSystem.expose DynSystem.update
+attribute [local implicit_reducible] PFunctor.Idx DynSystem.wrap DynSystem.expose DynSystem.update
 
 namespace DynSystem
 
@@ -114,13 +113,13 @@ theorem update?_of_eq [DecidableEq p.A] (system : DynSystem State p)
     system.update? (state, ⟨system.expose state, direction⟩) =
       some (system.update state direction) := by
   unfold update?
-  rw [dif_pos rfl]
+  rw [dite_eq_left rfl]
 
 theorem update?_of_ne [DecidableEq p.A] (system : DynSystem State p)
     (state : State) (index : p.Idx) (hne : index.1 ≠ system.expose state) :
     system.update? (state, index) = none := by
   unfold update?
-  rw [dif_neg hne]
+  rw [dite_eq_right hne]
 
 /-! ## Realizability boundaries and witnesses -/
 
