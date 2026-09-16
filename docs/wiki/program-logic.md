@@ -11,6 +11,7 @@ migration sketch live in
 | Module | Content |
 |---|---|
 | `PolyFun/Control/Monad/Algebra.lean` | `MAlgOrdered m l`: ordered monad algebras over a complete lattice, with `wp`, `Triple`, the structural rule set, `StateT`/`ReaderT`/`ExceptT`/`OptionT` lifts, and the honest two-postcondition `wpExc`/`wpOpt` |
+| `PolyFun/Control/Monad/Algebra/Restrict.lean` | `MAlgOrdered.restrictIic`: an algebra that respects a bound `c` restricted to the lower set `Set.Iic c` (Mathlib's complete lattice on it), with `wp_restrictIic_val` and `restrictIic_triple_iff` — the shape of a probabilistic carrier `[0, 1] ⊆ ℝ≥0∞` |
 | `PolyFun/Control/Monad/Algebra/Relational.lean` | `MAlgRelOrdered m₁ m₂ l`: relational `rwp`/`RelWP`/`Triple`, asynchronous one-sided bind rules, structural pure rules, explicit named `StateT`/`ReaderT` side lifts, and the `StrictBind` / `Anchored` subclasses (Maillard et al. POPL 2020 shapes) |
 | `PolyFun/Control/Monad/Algebra/Relational/Support.lean` | Named demonic and angelic exact-support relational algebras; support characterizations; matching `StrictBind` and `Anchored` witnesses |
 | `PolyFun/Control/Monad/Support.lean` | `ExactMonadAttach m`: additional pure/bind composition laws for `MonadAttach.CanReturn`; `MonadAttach.support`; the `AllOutputs`/`SomeOutput`/`NoOutput` judgments and scoped `⊨ₐ`/`⊨ₛ`/`⊭` notation with their `pure`/`bind` laws; the named demonic and angelic `MAlgOrdered m Prop` choices |
@@ -20,15 +21,15 @@ migration sketch live in
 | `PolyFun/Control/Monad/Support/Loops.lean` | Invariant rules for `forIn'`/`forIn`/`foldlM`/`forM` over lists and `PureForIn` containers, for `AllOutputs` (from core's `Spec.*` under the demonic instance) and `SomeOutput` (angelic) |
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); `OpSpec.toMAlgOrdered`; semantic `FreeM.wpVia` through a `Handler`; soundness `wpFold_le_wpVia`/`wpFold_eq_wpVia` |
-| `PolyFun/Control/Do/Spec.lean` | Tactic tier: `@[spec] Spec.forM_list` for `vcgen` |
 | `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`), `FreeM.wpMonadOfHandler` (transport along `liftMHom`), and `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad` |
 | `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
 | `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.bind`, `Spec.lift_angelic`, `Spec.lift_ofHandler` that let `vcgen` decompose free programs with uninterpreted operations |
 | `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as a core `Std.Internal.Do.WPMonad m l EPost.Nil` (through the `ToCslib.Order.LeanOrder` bridge), `wp` agreement by `rfl`, `toWP_triple_iff`, `wpConjunctiveOf`, and the transfer lemmas `top_eq_top` / `meet_eq_inf` / `join_eq_sup` between core's and Mathlib's lattice operations |
 | `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPMonadDemonic` / `toWPMonadAngelic`: the always/some judgments as `WPMonad m Prop EPost.Nil`; conjunctivity of the demonic reading; `MonadAttach.LawfulWPMonadAttach` (soundness with respect to lawful attachment, the class core ships as `Std.WP.LawfulWPMonadAttach` from v4.35) with its demonic instance; `support_subset_of_wp` / `allOutputs_of_wp` |
 | `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWPOf` / `transportWPMonadOf` (along cslib's `IsMonadHom`) and the bundled `transportWP` / `transportWPMonad`: pulling a core `WPMonad` back along a monad morphism |
+| `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.instWPMonad`: Mathlib's writer transformer on core's stack with the log-indexed carrier `ω → Pred` (the one global instance of the kernel, since `WriterT` has no other owner; low priority), `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, `wp_run_eq`, and the `tell` / `monadLift` entailments behind the `@[spec]` rules |
 | `PolyFun/Control/Monad/Hom/Loops.lean` | A monad morphism between lawful monads commutes with `forIn'`/`forIn`/`forM`/`foldlM`/`mapM` and with `forIn` over `PureForIn` containers (`@[simp, grind =]`), through `MonadHom.isMonadHom` and cslib's `IsMonadHom.map_list*` |
-| `PolyFun/Control/Do/Spec.lean` | `@[spec] Spec.forM_list`, the list loop core does not specify, and the `@[spec]` registration of core's `Spec.tryCatch_MonadExcept`, the `try … catch` rule core states but does not tag (tactic tier) |
+| `PolyFun/Control/Do/Spec.lean` | Tactic tier: `@[spec] Spec.forM_list`, the list loop core does not specify; the `@[spec]` registration of core's `Spec.tryCatch_MonadExcept`, the `try … catch` rule core states but does not tag; and the `WriterT` rules `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` |
 
 Worked examples: `PolyFunTest/Control/MonadAttach.lean` (judgments, notation,
 `Iff.rfl` transfer contract), `PolyFunTest/Control/{SupportStructural,SupportLoops,MonadHomLoops}.lean`
@@ -192,6 +193,7 @@ proof.
 | early `return`/`break`/`continue` | `Invariant.withEarlyReturnNewDo` (core) | via the instance | — | — | — |
 | `throw`/`tryCatch` on `ExceptT`/`OptionT` | core's lifted instances (`Spec.throw_MonadExcept`, `Spec.tryCatch_ExceptT`), plus `Spec.tryCatch_MonadExcept` registered in `Do/Spec.lean` for the `try … catch` elaboration | via the instance | — | `ExceptT.mapHom`/`OptionT.mapHom` | — |
 | `get`/`set`/`read` | core's lifted instances | `Support/Indexed.lean` (`supportFrom`, `supportAt`) | — | `StateT.mapHom`/`ReaderT.mapHom` | — |
+| `tell`/`WriterT.run` | `WriterT.instWPMonad` (`WriterT/WP.lean`) with `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` in `Do/Spec.lean` | — (`WriterT` support is inexact; `Support/Instances.lean`) | `MAlgOrdered.instWriterT` | `WriterT.mapHom` | — |
 | `while`/`repeat` | `ITree` only (`ITree/Do.lean`); no rule on finite `FreeM` | — | — | — | — |
 
 Open in this table: the relational (`MAlgRelOrdered`) loop rules and a `mapM` judgment rule
@@ -217,8 +219,12 @@ upstream API confined, and everything the fenced modules provide is a constructi
 `scoped` instance, not a global instance — global `WP` instances on `FreeM` would race
 downstream registrations on reducible unfoldings such as VCVio's `OracleComp`. The free-monad
 interpretations are `scoped` under `PFunctor.FreeM.DemonicWP` / `AngelicWP`; the bridges of
-`PolyFun/Control/Monad/{Algebra,Support,Hom}/WP.lean` and `FreeM.wpMonadOfHandler` are
-installed `local` or `scoped` at the carrier. `vcgen` itself is experimental at this pin (it warns on every call), so production
+`PolyFun/Control/Monad/{Algebra,Support,Hom}/WP.lean`, `MAlgOrdered.restrictIic`, and
+`FreeM.wpMonadOfHandler` are installed `local` or `scoped` at the carrier. The one global
+instance is the transformer lift `WriterT.instWPMonad`: it chooses no semantics (given the base
+interpretation there is one way to thread a monoid log) and `WriterT`, being Mathlib's, has no
+other owner — exactly the status of core's own `StateT.instWPMonad`. It is low priority so a
+bespoke interpretation of a concrete stack registered downstream wins. `vcgen` itself is experimental at this pin (it warns on every call), so production
 proofs do not call it; tactic calls live in `PolyFunTest/Do/`, where each asserts the warning
 with `#guard_msgs`.
 
@@ -246,6 +252,11 @@ distributes over `∧` in one direction only, which is exactly why it has no `St
 `ToCslib.Order.LeanOrder` bridge, and `MonadHom.transportWPMonad` pulls any of these back along
 a monad morphism. None of them is a global instance; install them `local` or `scoped` at the
 carrier (`PolyFunTest/Do/{Algebra,Support}.lean` show `vcgen` running through each).
+
+Argument order differs between the two triples: core's `Triple x pre post epost` is
+program-first, PolyFun's `MAlgOrdered.Triple pre x post` precondition-first; `toWP_triple_iff`
+(and `restrictIic_triple_iff` for a restricted carrier) bridge them, and no argument-order shim
+is provided.
 
 Four practical rules for writing against the canonical stack:
 

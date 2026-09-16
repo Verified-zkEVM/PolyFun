@@ -242,6 +242,16 @@ system to its observed distribution. The contract should survive changes in
 module exposure and instance elaboration without asking VCVio to unfold
 PolyFun internals.
 
+The program-logic seam follows the same rule. VCVio's quantitative carrier is an
+`MAlgOrdered (OracleComp spec) ℝ≥0∞`, and everything it needs on core's
+weakest-precondition stack is a named PolyFun export rather than an unfolding:
+`MAlgOrdered.toWPMonad` (with `wp` agreeing by `rfl`), the probabilistic carrier
+`Set.Iic 1` through `MAlgOrdered.restrictIic` (with `wp_restrictIic_val` and
+`restrictIic_triple_iff` as the contract), `WriterT.instWPMonad` for its
+logging stacks (`WriterT.wp_apply_eq`), and the transports of
+`PolyFun/Control/Monad/Hom/WP.lean` for handler-relative interpretations. See
+[`program-logic.md`](program-logic.md).
+
 ## Instantiation Gates
 
 The process model supports a computational UC claim only after all of the
