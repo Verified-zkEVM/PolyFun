@@ -77,7 +77,7 @@ extension. The position is sent forward and the payload is pulled back along
 the lens's direction map. -/
 def mapObj {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
     (l : Lens P Q) {α : Type v} (x : P.Obj α) : Q.Obj α :=
-  ⟨l.toFunA x.1, x.2 ∘ l.toFunB x.1⟩
+  Obj.mk (l.toFunA x.fst) (x.snd ∘ l.toFunB x.fst)
 
 @[simp]
 theorem mapObj_id {P : PFunctor.{uA, uB}} {α : Type v}
@@ -95,9 +95,9 @@ theorem mapObj_comp {P : PFunctor.{uA₁, uB₁}}
 equipped with its identity direction labelling. This packages the dependent
 position equality and direction-map transport needed by `Lens.ext`. -/
 theorem ext_mapObj {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l₁ l₂ : Lens P Q)
-    (h : ∀ a, mapObj l₁ (⟨a, id⟩ : P.Obj (P.B a)) = mapObj l₂ ⟨a, id⟩) : l₁ = l₂ := by
+    (h : ∀ a, mapObj l₁ (Obj.mk a id : P.Obj (P.B a)) = mapObj l₂ (Obj.mk a id)) : l₁ = l₂ := by
   let hA : ∀ a, l₁.toFunA a = l₂.toFunA a :=
-    fun a => congrArg Sigma.fst (h a)
+    fun a => congrArg Obj.fst (h a)
   refine Lens.ext _ _ hA ?_
   intro a
   apply eq_of_heq

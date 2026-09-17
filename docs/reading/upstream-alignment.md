@@ -50,10 +50,11 @@ cslib 57. The changes that reached PolyFun's build:
   `Obj.snd` (with `Obj.rec` as the `cases` eliminator) and marks `Obj` and `comp`
   `@[implicit_reducible]`. The M-type lemmas (`M.bisim`, `M.dest_mk`, …) now state their
   equations with `Obj.mk`, so PolyFun's anonymous-constructor spellings no longer match them
-  syntactically: `Resumption.pack_inl` / `pack_inr` produce `Obj.mk`, `PolyFun/PFunctor/Basic.lean`
-  adds the bridge equations `Obj.fst_sigma_mk` / `Obj.snd_sigma_mk` / `map_sigma_mk`, and the
-  local `implicit_reducible` attributes on `Obj` are gone (the attribute is now upstream's).
-  A systematic move of PolyFun's own `Obj` constructors to `Obj.mk` is a follow-up;
+  syntactically. PolyFun uses `Obj.mk` in the foundational object-producing APIs,
+  and `Obj.rec` when constructor simplification is needed. The temporary sigma
+  projection/map bridge lemmas and local reducibility overrides are removed.
+  Position and direction types that are themselves sigma types retain their
+  sigma constructors;
 - cslib #856 (`IsMonadHom`), which also gives `FreeM.liftM_map` an explicit interpreter
   argument and makes `Cslib.Foundations.Data.PFunctor.Free` import legacy `Std.Do.WP.Monad`
   transitively (the quarantine below fences *direct* imports and instances), the rename

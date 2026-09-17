@@ -88,7 +88,7 @@ arbitrary state labeling. Its shape records behavior and its label at a
 finite vertex records `label` applied to the state reached there. -/
 def mateObj (system : DynSystem S P) (state : S) (label : S → α) : (CofreeP P).Obj α :=
   Lens.mapObj (CofreeP.unfoldLens (stateComonoid S) system)
-    (⟨state, label⟩ : (selfMonomial S).Obj α)
+    (Obj.mk state label : (selfMonomial S).Obj α)
 
 -- `mateObj_child` rewrites through `mateObj` in the type of a bound direction.
 attribute [local implicit_reducible] mateObj

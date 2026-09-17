@@ -38,6 +38,14 @@ Altenkirch-Ghani-Hancock-McBride-Morris 2015 (*Indexed Containers*),
 Spivak-Niu 2024 (*Polynomial Functors: A Mathematical Theory of Interaction*),
 McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 
+## Polynomial objects
+
+Use Mathlib's `PFunctor.Obj.mk`, `.fst`, and `.snd` for values of `P.Obj α`.
+Their simplification rules (`Obj.fst_mk`, `Obj.snd_mk`, and `PFunctor.map_eq`)
+are the canonical constructor interface. Pattern matching and `cases` use
+`Obj.rec`. The position and direction types of composite polynomials may
+still be genuine sigma types; those use their own constructors and projections.
+
 ## File index
 
 ### Substrate (cycle root)

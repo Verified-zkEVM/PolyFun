@@ -76,7 +76,7 @@ def foldLens : Lens (FreeP P) M.carrier where
 
 /-- Interpret one generator operation in the extension monad of `M`. -/
 def extensionHandler (a : P.A) : M.carrier.Obj (P.B a) :=
-  ⟨l.toFunA a, l.toFunB a⟩
+  Obj.mk (l.toFunA a) (l.toFunB a)
 
 /-- Interpret a fixed free-tree shape whose leaves carry the supplied
 path-indexed labels. -/
@@ -95,7 +95,7 @@ used by `foldLens`. -/
 theorem foldObjAt_eq {α : Type uB}
     (s : FreeM P PUnit.{uB + 1}) (label : FreeM.Path s → α) :
     foldObjAt M l s label =
-      (⟨foldShape M l s, label ∘ foldPath M l s⟩ :
+      (Obj.mk (foldShape M l s) (label ∘ foldPath M l s) :
         M.carrier.Obj α) := by
   match s with
   | .pure u =>
@@ -110,9 +110,9 @@ theorem foldObjAt_eq {α : Type uB}
           (fun d => foldObjAt M l (rest d)
             (fun path => label (FreeM.Path.cons a rest d path))) =
           (fun d =>
-            (⟨foldShape M l (rest d),
-              (fun path => label (FreeM.Path.cons a rest d path)) ∘
-                foldPath M l (rest d)⟩ : M.carrier.Obj α)) := by
+            (Obj.mk (foldShape M l (rest d))
+              ((fun path => label (FreeM.Path.cons a rest d path)) ∘
+                foldPath M l (rest d)) : M.carrier.Obj α)) := by
         funext d
         exact foldObjAt_eq (rest d)
           (fun path => label (FreeM.Path.cons a rest d path))
@@ -123,7 +123,7 @@ theorem foldObjAt_eq {α : Type uB}
 used by `foldLens`. -/
 theorem foldObj_eq (s : FreeM P PUnit.{uB + 1}) :
     foldObj M l s =
-      (⟨foldShape M l s, foldPath M l s⟩ :
+      (Obj.mk (foldShape M l s) (foldPath M l s) :
         M.carrier.Obj (FreeM.Path s)) := by
   simpa [foldObj, Function.comp_def] using foldObjAt_eq M l s id
 
@@ -165,16 +165,16 @@ theorem foldLens_mult_obj
     (next : FreeM.Path s → FreeM P PUnit.{uB + 1}) :
     let x : (FreeP P ◃ FreeP P).A := ⟨s, next⟩
     Lens.mapObj (foldLens M l ∘ₗ mult (P := P))
-        (⟨x, id⟩ : (FreeP P ◃ FreeP P).Obj
+        (Obj.mk x id : (FreeP P ◃ FreeP P).Obj
           ((FreeP P ◃ FreeP P).B x)) =
       Lens.mapObj (M.mult ∘ₗ (foldLens M l ◃ₗ foldLens M l))
-        (⟨x, id⟩ : (FreeP P ◃ FreeP P).Obj
+        (Obj.mk x id : (FreeP P ◃ FreeP P).Obj
           ((FreeP P ◃ FreeP P).B x)) := by
   dsimp only
   have h := foldObjAt_append_split M l s next id
   rw [foldObjAt_eq M l (FreeM.append s next)] at h
   have houter : foldObjAt M l s id =
-      (⟨foldShape M l s, foldPath M l s⟩ :
+      (Obj.mk (foldShape M l s) (foldPath M l s) :
         M.carrier.Obj (FreeM.Path s)) := by
     simpa [Function.comp_def] using foldObjAt_eq M l s id
   have hinner :
@@ -183,11 +183,11 @@ theorem foldLens_mult_obj
           (⟨path, inner⟩ :
             (outer : FreeM.Path s) × FreeM.Path (next outer)))) =
       (fun path =>
-        (⟨foldShape M l (next path),
-          (fun inner =>
+        (Obj.mk (foldShape M l (next path))
+          ((fun inner =>
             (⟨path, inner⟩ :
               (outer : FreeM.Path s) × FreeM.Path (next outer))) ∘
-            foldPath M l (next path)⟩ :
+            foldPath M l (next path)) :
           M.carrier.Obj
             ((outer : FreeM.Path s) × FreeM.Path (next outer)))) := by
     funext path
@@ -221,8 +221,8 @@ def extend : SubstMonoid.Hom (substMonoid P) M where
 restricting to one-node generators recovers the original lens. -/
 theorem foldLens_comp_generator_obj (a : P.A) :
     Lens.mapObj (foldLens M l ∘ₗ generator P)
-        (⟨a, id⟩ : P.Obj (P.B a)) =
-      Lens.mapObj l (⟨a, id⟩ : P.Obj (P.B a)) := by
+        (Obj.mk a id : P.Obj (P.B a)) =
+      Lens.mapObj l (Obj.mk a id : P.Obj (P.B a)) := by
   have hinterp : foldObjAt M l
       (FreeM.liftBind a (fun _ => FreeM.pure PUnit.unit))
       (fun path => path.1) = extensionHandler M l a := by
@@ -246,7 +246,7 @@ identity on every path-labelled free-tree object. -/
 theorem foldObjAt_generator_eq {α : Type uB}
     (s : FreeM P PUnit.{uB + 1}) (label : FreeM.Path s → α) :
     foldObjAt (substMonoid P) (generator P) s label =
-      (⟨s, label⟩ : (FreeP P).Obj α) := by
+      (Obj.mk s label : (FreeP P).Obj α) := by
   match s with
   | .pure u =>
       cases u
@@ -259,8 +259,8 @@ theorem foldObjAt_generator_eq {α : Type uB}
           (fun d => foldObjAt (substMonoid P) (generator P) (rest d)
             (fun path => label (FreeM.Path.cons a rest d path))) =
           (fun d =>
-            (⟨rest d, fun path =>
-              label (FreeM.Path.cons a rest d path)⟩ :
+            (Obj.mk (rest d) (fun path =>
+              label (FreeM.Path.cons a rest d path)) :
               (FreeP P).Obj α)) := by
         funext d
         exact foldObjAt_generator_eq (rest d)
@@ -276,7 +276,7 @@ theorem foldObjAt_generator_comp_eq (lPQ : Lens P Q)
     {α : Type uB} (s : FreeM P PUnit.{uB + 1})
     (label : FreeM.Path s → α) :
     foldObjAt (substMonoid Q) (generator Q ∘ₗ lPQ) s label =
-      Lens.mapObj (map lPQ) (⟨s, label⟩ : (FreeP P).Obj α) := by
+      Lens.mapObj (map lPQ) (Obj.mk s label : (FreeP P).Obj α) := by
   match s with
   | .pure u =>
       cases u
@@ -291,8 +291,8 @@ theorem foldObjAt_generator_comp_eq (lPQ : Lens P Q)
             (rest d) (fun path =>
               label (FreeM.Path.cons a rest d path))) =
           (fun d => Lens.mapObj (map lPQ)
-            (⟨rest d, fun path =>
-              label (FreeM.Path.cons a rest d path)⟩ :
+            (Obj.mk (rest d) (fun path =>
+              label (FreeM.Path.cons a rest d path)) :
               (FreeP P).Obj α)) := by
         funext d
         exact foldObjAt_generator_comp_eq lPQ (rest d)
@@ -359,7 +359,7 @@ theorem foldShape_append (s : FreeM P PUnit.{uB + 1})
         ⟨foldShape M l s,
           fun direction =>
             foldShape M l (next (foldPath M l s direction))⟩ := by
-  have h := congrArg Sigma.fst (foldLens_mult_obj M l s next)
+  have h := congrArg Obj.fst (foldLens_mult_obj M l s next)
   simpa [Lens.mapObj, Lens.comp, Lens.compMap, foldLens, mult,
     Function.comp_def] using h
 
@@ -389,7 +389,7 @@ theorem hom_mapObj_eq_foldObjAt
     (f : SubstMonoid.Hom (substMonoid P) M)
     (s : FreeM P PUnit.{uB + 1}) {α : Type uB}
     (label : FreeM.Path s → α) :
-    Lens.mapObj f.toLens (⟨s, label⟩ : (FreeP P).Obj α) =
+    Lens.mapObj f.toLens (Obj.mk s label : (FreeP P).Obj α) =
       foldObjAt M (restrict M f) s label := by
   have h := FreeM.liftM_natural
     (extensionHandler (substMonoid P) (generator P))
