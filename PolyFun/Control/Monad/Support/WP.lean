@@ -10,21 +10,24 @@ public import PolyFun.Control.Monad.Algebra.WP
 public import Std.Internal.Do
 
 /-!
-# Exact support as core weakest preconditions
+# Monadic support as core weakest preconditions
 
-The always/some judgments of a monad with exact support are core `WPMonad` interpretations at
+The always/some judgments are core `WPMonad` interpretations at
 the `Prop` carrier with no exception layer: demonically, `wp x post` is `AllOutputs post x`;
 angelically, it is `SomeOutput post x`. Both satisfy core's inequational laws — the angelic
 reading has no counterpart on the older `Std.Do` stack, whose transformers carry conjunctivity
 as a field. The demonic reading is conjunctive (`toWPMonadDemonic_wpConjunctive`); the angelic
 one is not, and `PolyFunTest/Control/MonadAttach.lean` pins the counterexample. Neither is a
 global instance: install them scoped or local where the support semantics is intended, exactly
-as `mAlgOrderedPropDemonic` is.
+as `mAlgOrderedPropDemonic` is. The demonic construction needs only `LawfulMonadAttach`:
+core's return-value elimination rules prove its inequational pure and bind laws.
+The angelic construction needs the introduction rules of `ExactMonadAttach`.
 
 `MonadAttach.LawfulWPMonadAttach` is soundness of a `WPMonad` interpretation with respect to
-exact support: a `wp`-provable postcondition holds at every value the computation can return.
+lawful attachment: a `wp`-provable postcondition holds at every value the computation can return.
 `support_subset_of_wp` and `allOutputs_of_wp` turn any sound triple — including one discharged
-by `vcgen` — into a support fact.
+by `vcgen` — into a support fact. This additional soundness property is not automatic for
+angelic or quantitative interpretations.
 -/
 
 public section
@@ -36,7 +39,7 @@ open scoped Lean.Order
 
 namespace MonadAttach
 
--- upstream: `Std.WP.LawfulWPMonadAttach` (Lean v4.35), field for field; delete at that bump.
+-- upstream: leanprover/lean4#14801, `Std.WP.LawfulWPMonadAttach`; delete at the v4.35 bump.
 /-- Soundness of the weakest precondition interpretation of `m`: a postcondition that `wp` proves
 holds of every value the program returns. -/
 class LawfulWPMonadAttach (m : Type u → Type v) (Pred : outParam (Type w))
@@ -60,7 +63,7 @@ theorem support_subset_of_wp {α : Type u} {x : m α} {P : α → Prop}
   fun _ hcan => LawfulWPMonadAttach.of_canReturn_wp hcan h
 
 /-- The "always" phrasing of `support_subset_of_wp`: a sound weakest-precondition proof
-discharges the almost-sure judgment. Untagged: its antecedent has no first-order pattern for
+discharges the all-outputs judgment. Untagged: its antecedent has no first-order pattern for
 `grind` to index. -/
 theorem allOutputs_of_wp {α : Type u} {x : m α} {P : α → Prop}
     (h : Lean.Order.top ⊑ wp x (fun a => ⌜P a⌝) Lean.Order.top) : AllOutputs P x :=
@@ -70,7 +73,7 @@ end Eliminations
 
 section Demonic
 
-variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
+variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [LawfulMonadAttach m]
 
 -- upstream: `EPost.Nil` is spelled `EStack⟨⟩` from Lean v4.35.
 /-- The demonic (all-outputs) interpretation at the `Prop` carrier: `wp x post` holds when every
@@ -81,8 +84,14 @@ def toWPMonadDemonic : WPMonad m Prop EPost.Nil where
   toWP _ :=
     { wpTrans := fun x => ⟨fun post _ => AllOutputs post x⟩
       wp_trans_monotone := fun _ _ _ _ _ _ hpost => allOutputs_mono hpost }
-  pure_le_wp_pure a post _ := (allOutputs_pure post a).mpr
-  bind_le_wp_bind x f post _ := fun h => (allOutputs_bind post x f).mpr fun a ha => h a ha
+  pure_le_wp_pure _ _ _ := by
+    intro h b hb
+    cases LawfulMonadAttach.eq_of_canReturn_pure hb
+    exact h
+  bind_le_wp_bind _ _ _ _ := by
+    intro h b hb
+    obtain ⟨a, ha, hab⟩ := LawfulMonadAttach.canReturn_bind_imp' hb
+    exact h a ha b hab
 
 @[simp]
 theorem toWPMonadDemonic_wp {α : Type u} (x : m α) (post : α → Prop) (epost : EPost.Nil) :

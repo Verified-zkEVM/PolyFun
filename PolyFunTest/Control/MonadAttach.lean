@@ -264,14 +264,12 @@ example {m : Type → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMo
     ReaderT.supportAt r (pure a : ReaderT ρ m α) = {a} :=
   ReaderT.supportAt_pure r a
 
-/-! ### Why `ExactMonadAttach` has to exist
+/-! ### Exact composition is an additional monad property
 
-`LawfulMonadAttach` bounds the support from one side only: every core law is an implication
-*out of* `CanReturn`, so a uniformly-`False` predicate satisfies all of them vacuously. The
-model below is the one the `ExactMonadAttach` docstring appeals to. Its mirror image is
-`MonadAttach.trivial`, whose `CanReturn` is uniformly `True` and which core itself documents
-as having no `LawfulMonadAttach` instance — so the two classes exclude the two degenerate
-models from opposite sides. -/
+The constant monad below erases every value, so its canonical return predicate is empty.
+Its lawful attachment demonstrates that pure introduction is an additional requirement on
+the monad. It does not demonstrate any ambiguity between lawful attachment predicates on
+the same monad. -/
 
 /-- The constantly-`PUnit` monad, whose every law holds by `PUnit` eta. -/
 private def PUnitM (_ : Type) : Type := PUnit
@@ -288,15 +286,12 @@ private instance : MonadAttach PUnitM where
   CanReturn _ _ := False
   attach _ := PUnit.unit
 
-/-- And it is *lawful*: both fields are discharged without saying anything about outputs.
-This is why the introduction rules cannot be derived and must be assumed. -/
+/-- Empty support is lawful for a monad that retains no result data. -/
 private instance : LawfulMonadAttach PUnitM where
   map_attach := rfl
   canReturn_map_imp h := h.elim
 
-/-- The support of every computation in that model is empty, including `pure`. So
-`LawfulMonadAttach` alone does not pin the support: `ExactMonadAttach.canReturn_pure` is
-exactly what rules this out. -/
+/-- Even `pure` has empty support: lawfulness does not imply pure introduction. -/
 example (a : Nat) : support (pure a : PUnitM Nat) = ∅ := rfl
 
 example (a : Nat) : ¬ CanReturn (pure a : PUnitM Nat) a := id
