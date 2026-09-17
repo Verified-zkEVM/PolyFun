@@ -10,31 +10,31 @@ public import Mathlib.Data.Set.Functor
 public import Mathlib.Control.Monad.Writer
 
 /-!
-# Exact Monadic Support
+# Monadic Support and Exact Composition
 
 Lean core's `MonadAttach` already provides the notion this layer needs: a predicate
 `MonadAttach.CanReturn x a`, meaning `a` is a possible return value of `x`, together with
 `attach`, which decorates a computation's results with proofs of that predicate.
 `LawfulMonadAttach` further pins `CanReturn` down as *the* strongest postcondition. This
-file adds the missing half and the `Set`-valued view:
+file adds a `Set`-valued view and optional composition laws:
 
-* `ExactMonadAttach` — the *introduction* rules for `CanReturn`. Core proves only
-  elimination rules (`canReturn_bind_imp'`, `eq_of_canReturn_pure`, `canReturn_map_imp'`),
-  which bound the support from above. Those alone do not pin it down: the monad
-  `fun _ => PUnit` with `CanReturn := fun _ _ => False` satisfies `LawfulMonadAttach`
-  vacuously, since every core law is an implication *out of* `CanReturn`. Assuming the two
-  introduction rules turns each of core's implications into an equivalence, which is what
-  support reasoning actually rewrites with.
+* `ExactMonadAttach` — additional introduction rules for `CanReturn`. Together with
+  core's elimination rules they give exact support equations for `pure` and `bind`.
+  These are properties of the monad, not a choice of a more precise return predicate.
+  For example, the constant monad `fun _ => PUnit` forgets every result and has canonical
+  empty support, even for `pure`; it is lawful but does not satisfy these extra laws.
 * `MonadAttach.support x : Set α` — the `Set`-valued view of `CanReturn`, definitionally
   the predicate itself, so `a ∈ support x ↔ CanReturn x a` is `Iff.rfl`.
 * The qualitative judgments `AllOutputs` ("always"), `SomeOutput`, and `NoOutput`
   ("never"), with scoped notation `x ⊨ₐ p`, `x ⊨ₛ p`, and `x ⊭ p`.
 
-`ExactMonadAttach` extends `LawfulMonadAttach` rather than the weak class: that excludes
-`MonadAttach.trivial` (`CanReturn := fun _ _ => True`, i.e. `support = univ`), while the
-introduction rules exclude the empty model. Between them the support is exact.
+`ExactMonadAttach` is a proof-only extension of `LawfulMonadAttach` over the existing
+attachment data. Strong lawfulness already identifies the return predicate; weak lawfulness
+alone permits coarse predicates such as `MonadAttach.trivial`. Universal safety reasoning
+needs only the strong upstream laws. Exact composition is needed for the equations below
+and for introducing existential reachability through a bind.
 
-`AllOutputs` induces the demonic `Prop`-carrier ordered monad algebra `MAlgOrdered m Prop`,
+With exact composition, `AllOutputs` induces the demonic ordered monad algebra `MAlgOrdered m Prop`,
 identifying "always" with the trivial-precondition Hoare triple
 (`triple_top_iff_allOutputs`); `SomeOutput` gives the angelic companion. Both
 algebras are named definitions rather than global instances: transformer
@@ -43,12 +43,11 @@ so a generic global support instance would be incoherent with them.
 
 ## Scope
 
-Support is a *value*-level notion here. Core states the limitation directly: `CanReturn`
-"neither depends on the prior internal state of the monad, nor does it contain information
-about how the state of the monad changes". Concretely, `StateT σ m` and `ReaderT ρ m` do
+Support is a *value*-level notion here: `CanReturn` does not retain the initial state or
+state changes. Concretely, `StateT σ m` and `ReaderT ρ m` do
 have `MonadAttach` instances — quantifying existentially over the initial state — and those
-supports are canonical, so the elimination theory applies. But `ExactMonadAttach` is *false*
-for them: flattened premises may choose unrelated initial indices on the two sides of a
+supports are canonical, so the elimination theory applies. They do not admit a general
+`ExactMonadAttach` instance: flattened premises may choose unrelated indices on the sides of a
 `bind`. For `StateT` this can let the continuation observe a state the prefix did not
 produce; for `ReaderT` it can let the two premises use different environments. Reason about
 those per run instead, via
@@ -56,23 +55,21 @@ those per run instead, via
 counterexample. Oracle- and state-relative supports belong at the specification layer
 (`PolyFun.PFunctor.Free.WP`), which indexes the notion by a per-operation answer assignment.
 
-A second limitation is inherited from `MonadAttach`: obtaining an instance requires
-producing `attach`, which for continuation-passing monads is impossible to do
-non-trivially. CPS encodings such as `PolyFun.Control.Monad.FreeContT` therefore cannot be
-`ExactMonadAttach`, matching core's treatment of `StateCpsT` and `ExceptCpsT`.
+A second limitation is inherited from `MonadAttach`: an instance must supply `attach`.
+Informative computable attachment is not generally available for continuation-passing
+encodings. Core therefore uses trivial, weakly lawful attachment for `StateCpsT` and
+`ExceptCpsT`; those instances do not supply the strong laws required here.
 -/
 
 @[expose] public section
 
 universe u v w
 
-/-- A monad whose `MonadAttach.CanReturn` predicate is *exact*: besides being the strongest
-postcondition (`LawfulMonadAttach`), it is closed under the monad's introduction rules, so
-the possible outputs of `pure` and `bind` are exactly what one expects.
+/-- Exact pure and bind composition for the existing lawful attachment predicate.
 
-Core assumes only the elimination direction of each law, which leaves `CanReturn` free to be
-uniformly `False`. These two fields rule that out; together with the `LawfulMonadAttach`
-parent — which rules out the uniformly-`True` model — they determine the support exactly. -/
+The two introduction rules complement core's elimination rules to give support equations.
+This class carries proofs only: `LawfulMonadAttach` already fixes the return predicate,
+while these additional laws need not hold for every lawful monad. -/
 class ExactMonadAttach (m : Type u → Type v) [Monad m] [MonadAttach m]
     extends LawfulMonadAttach m where
   /-- A pure computation can return its own value. -/
@@ -817,6 +814,7 @@ two composable outputs compose with their accumulators multiplied. -/
 
 section WriterT
 
+variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m]
 variable {ω : Type u} [Monoid ω]
 
 instance instMonadAttachWriterT : MonadAttach (WriterT ω m) where
@@ -824,17 +822,17 @@ instance instMonadAttachWriterT : MonadAttach (WriterT ω m) where
   attach x := WriterT.mk <|
     (fun p => (⟨p.1.1, ⟨p.1.2, p.2⟩⟩, p.1.2)) <$> MonadAttach.attach x.run
 
-omit [LawfulMonad m] [ExactMonadAttach m] [Monoid ω] in
+omit [LawfulMonad m] [Monoid ω] in
 theorem mem_support_writerT_iff {x : WriterT ω m α} {a : α} :
     a ∈ support x ↔ ∃ w, (a, w) ∈ support x.run :=
   Iff.rfl
 
-omit [LawfulMonad m] [ExactMonadAttach m] [Monoid ω] in
+omit [LawfulMonad m] [Monoid ω] in
 theorem mem_support_of_run_writerT {x : WriterT ω m α} {a : α} {w : ω}
     (h : (a, w) ∈ support x.run) : a ∈ support x :=
   ⟨w, h⟩
 
-instance instWeaklyLawfulMonadAttachWriterT :
+instance instWeaklyLawfulMonadAttachWriterT [WeaklyLawfulMonadAttach m] :
     WeaklyLawfulMonadAttach (WriterT ω m) where
   map_attach {α x} := by
     refine WriterT.ext _ _ ?_
@@ -846,7 +844,8 @@ instance instWeaklyLawfulMonadAttachWriterT :
     rw [hrun, Functor.map_map]
     simpa [Function.comp_def] using WeaklyLawfulMonadAttach.map_attach (m := m) (x := x.run)
 
-instance instLawfulMonadAttachWriterT : LawfulMonadAttach (WriterT ω m) where
+instance instLawfulMonadAttachWriterT [LawfulMonadAttach m] :
+    LawfulMonadAttach (WriterT ω m) where
   canReturn_map_imp {α P x a} h := by
     obtain ⟨w, hw⟩ := h
     rw [WriterT.run_map] at hw
@@ -858,7 +857,7 @@ instance instLawfulMonadAttachWriterT : LawfulMonadAttach (WriterT ω m) where
 /-- Both introduction rules hold: `pure` writes the unit accumulator, and composable
 outputs compose with their accumulators multiplied. This is what `StateT` cannot have —
 there is no input index to quantify over, so nothing is flattened away. -/
-instance instExactMonadAttachWriterT : ExactMonadAttach (WriterT ω m) where
+instance instExactMonadAttachWriterT [ExactMonadAttach m] : ExactMonadAttach (WriterT ω m) where
   canReturn_pure {α} a := ⟨1, ExactMonadAttach.canReturn_pure _⟩
   canReturn_bind {α β x f a b} h h' := by
     obtain ⟨w₁, hw₁⟩ := h

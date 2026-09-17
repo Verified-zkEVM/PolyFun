@@ -54,9 +54,9 @@ two-tier quarantine of `scripts/check-modules.sh`.
   ship matching `StrictBind` and `Anchored` witnesses as opt-in definitions.
 - `Control/Monad/Support.lean` — the support layer, built on Lean core's
   `MonadAttach` (shipped since v4.28; `CanReturn` *is* the support predicate).
-  Core proves only the elimination half of the theory, and provably cannot prove
-  the rest — a monad with `CanReturn := False` satisfies `LawfulMonadAttach` —
-  so PolyFun contributes `ExactMonadAttach`, the two introduction rules, plus
+  Lawful attachment already determines the return predicate. PolyFun contributes
+  `ExactMonadAttach` for additional pure/bind introduction laws, which fail for
+  monads that erase result data or flatten incompatible state indices, plus
   `MonadAttach.support` (the `Set`-valued view), the
   `AllOutputs`/`SomeOutput`/`NoOutput` judgments with scoped `⊨ₐ`/`⊨ₛ`/`⊭`
   notation, and the named demonic `MAlgOrdered m Prop` choice. Core supplies the

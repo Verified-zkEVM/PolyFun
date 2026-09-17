@@ -22,8 +22,8 @@ and `attach` decorates each leaf with its reachability proof by structural recur
 are computable and axiom-free, so `MonadAttach.pbind` is available for well-founded
 recursion over free programs.
 
-The instance is `ExactMonadAttach`: `supp` really is the strongest postcondition, proved by
-induction rather than assumed. Consequently `MonadAttach.support` on `FreeM P` reduces
+The instance is lawful, and structural induction also proves the pure and bind introduction
+rules of `ExactMonadAttach`. `MonadAttach.support` on `FreeM P` reduces
 definitionally — `support (pure x) = {x}` and `support (liftBind a r) = ⋃ b, support (r b)`
 are both `rfl` — and the judgments `AllOutputs`/`SomeOutput`/`NoOutput` recurse structurally
 over trees.

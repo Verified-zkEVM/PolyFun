@@ -8,11 +8,13 @@ module
 
 public import PolyFun.Control.Monad.Support.WP
 public import Std.Tactic.Do
+import Std.Do.Internal.Ensures
+import Mathlib.Data.ENat.Lattice
 
 /-!
-# Exact support on core's `vcgen`
+# Lawful attachment on core's `vcgen`
 
-The demonic interpretation of a monad with exact support, installed locally, lets `vcgen`
+The demonic interpretation of a monad with lawful attachment, installed locally, lets `vcgen`
 decompose `do` blocks whose leaves are then discharged against the support: `wp` is the
 "always" judgment by `rfl`, core's triple is the guarded judgment, and a sound triple converts
 back into a support fact through `allOutputs_of_wp`. The angelic interpretation is checked to
@@ -23,6 +25,73 @@ with `#guard_msgs`, keeping `mvcgen.warning` enabled.
 public section
 
 open Std.Internal.Do MonadAttach
+
+/-! ## Upstream return predicates and weaker assumptions -/
+
+section Lawful
+
+universe u v
+
+variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m]
+  [LawfulMonadAttach m] {α : Type u}
+
+example (x : m α) (p : α → Prop) : AllOutputs p x ↔ Std.Do.Internal.Ensures p x := by
+  constructor
+  · intro h
+    exact Std.Do.Internal.Ensures.canReturn.weaken h
+  · intro h a ha
+    exact (Std.Do.Internal.MayReturn.of_canReturn ha).imp h
+
+example (x : m α) (a : α) :
+    a ∈ support x ↔ Std.Do.Internal.MayReturn x a :=
+  Std.Do.Internal.MayReturn.canReturn_iff x a
+
+example : WPMonad m Prop EPost.Nil := toWPMonadDemonic
+
+example : @LawfulWPMonadAttach m Prop EPost.Nil _ _ _ _ _ (toWPMonadDemonic (m := m)) :=
+  toWPMonadDemonic_lawfulWPMonadAttach
+
+example {ω : Type u} [Monoid ω] : LawfulMonadAttach (WriterT ω m) := inferInstance
+
+end Lawful
+
+-- A numeric interpretation and structural safety can describe the same computation.
+example {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m]
+    [LawfulMonadAttach m] [MAlgOrdered m ℕ∞] (x : m Nat) :
+    ((toWPMonadDemonic (m := m)).toWP Nat).wp x (fun a => a = 0) EPost.Nil.mk
+      = AllOutputs (fun a => a = 0) x ∧
+    ((MAlgOrdered.toWPMonad (m := m) (l := ℕ∞)).toWP Nat).wp x (fun a => (a : ℕ∞))
+      EPost.Nil.mk = MAlgOrdered.wp x (fun a => (a : ℕ∞)) := ⟨rfl, rfl⟩
+
+example {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m]
+    [WeaklyLawfulMonadAttach m] {ω : Type} [Monoid ω] :
+    WeaklyLawfulMonadAttach (WriterT ω m) := inferInstance
+
+-- Flattened StateT support has no exact bind law; demonic sequencing still applies.
+example : WPMonad (StateT Bool Id) Prop EPost.Nil := toWPMonadDemonic
+
+example : WPMonad (ReaderT Empty Id) Prop EPost.Nil := toWPMonadDemonic
+
+example {ω : Type} [Monoid ω] :
+    LawfulMonadAttach (WriterT ω (StateT Bool Id)) := inferInstance
+
+-- The standard state lift retains the initial and final states in its postconditions.
+example {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m]
+    [LawfulMonadAttach m] (x : StateT Bool m Nat) (p : Nat → Bool → Prop) (s : Bool) :
+    letI := toWPMonadDemonic (m := m)
+    wp x p EPost.Nil.mk s = AllOutputs (fun q => p q.1 q.2) (x.run s) := rfl
+
+-- Lawful instances agree even when their attachment implementations are different.
+example {m : Type → Type} [Monad m] (i j : MonadAttach m)
+    (hi : @LawfulMonadAttach m _ i) (hj : @LawfulMonadAttach m _ j)
+    {α : Type} (x : m α) (a : α) :
+    @CanReturn m i α x a ↔ @CanReturn m j α x a := by
+  have transfer (k l : MonadAttach m) (hk : @LawfulMonadAttach m _ k)
+      (hl : @LawfulMonadAttach m _ l) (h : @CanReturn m k α x a) :
+      @CanReturn m l α x a := by
+    rw [← hl.map_attach (x := x)] at h
+    exact hk.canReturn_map_imp h
+  exact ⟨transfer i j hi hj, transfer j i hj hi⟩
 
 /-- The demonic interpretation of `SetM`, installed locally. -/
 local instance instWPMonadSetMDemonic : WPMonad SetM Prop EPost.Nil :=
