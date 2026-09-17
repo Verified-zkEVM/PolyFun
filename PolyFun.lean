@@ -277,6 +277,7 @@ public import PolyFun.PFunctor.Lens.State
 public import PolyFun.PFunctor.M
 public import PolyFun.PFunctor.M.Vertex
 public import PolyFun.PFunctor.M.WellFounded
+public import PolyFun.PFunctor.Obj
 public import PolyFun.PFunctor.Parallel
 public import PolyFun.PFunctor.PatternRunsOnMatter.Applications
 public import PolyFun.PFunctor.PatternRunsOnMatter.Basic

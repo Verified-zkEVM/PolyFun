@@ -85,10 +85,10 @@ def mutualRecStep {D : PFunctor.{uDA, uB}} {E : PFunctor.{uEA, uB}} {α : Type u
     (u : ITree (D + E : PFunctor.{max uDA uEA, uB}) α) :
     (ViewPoly E α).Obj (ITree (D + E : PFunctor.{max uDA uEA, uB}) α) :=
   match ITree.shape' u with
-  | ⟨.pure r, _⟩ => ⟨.pure r, PEmpty.elim⟩
-  | ⟨.step, c⟩ => ⟨.step, fun _ => c PUnit.unit⟩
-  | ⟨.query (.inl d), c⟩ => ⟨.step, fun _ => bind (body d) c⟩
-  | ⟨.query (.inr e), c⟩ => ⟨.query e, c⟩
+  | .mk (.pure r) _ => .mk (.pure r) PEmpty.elim
+  | .mk .step c => .mk .step (fun _ => c PUnit.unit)
+  | .mk (.query (.inl d)) c => .mk .step (fun _ => bind (body d) c)
+  | .mk (.query (.inr e)) c => .mk (.query e) c
 
 /-- Interpret a tree over the combined spec `D + E` by splicing recursive
 `D`-calls into the body. -/

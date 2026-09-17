@@ -71,13 +71,13 @@ def toResumptionWithTau (tree : _root_.ITree P α) :
 theorem dest_toResumptionWithTau (tree : _root_.ITree P α) :
     PFunctor.Resumption.dest (toResumptionWithTau tree) =
       match ITree.shape' tree with
-      | ⟨.pure value, _⟩ => Sum.inl value
-      | ⟨.step, next⟩ => Sum.inr
-          ⟨Sum.inr PUnit.unit, fun direction =>
-            toResumptionWithTau (next direction)⟩
-      | ⟨.query position, next⟩ => Sum.inr
-          ⟨Sum.inl position, fun direction =>
-            toResumptionWithTau (next direction)⟩ := by
+      | .mk (.pure value) _ => Sum.inl value
+      | .mk .step next => Sum.inr
+          (.mk (Sum.inr PUnit.unit) fun direction =>
+            toResumptionWithTau (next direction))
+      | .mk (.query position) next => Sum.inr
+          (.mk (Sum.inl position) fun direction =>
+            toResumptionWithTau (next direction)) := by
   unfold toResumptionWithTau PFunctor.Resumption.dest
   unfold PFunctor.M.mapLens
   rw [PFunctor.M.dest_corec]

@@ -8,6 +8,7 @@ module
 
 import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 import PolyFun.PFunctor.Free.Basic
+import PolyFun.IPFunctor.Basic
 
 /-!
 # Ordinary-import canaries for the polynomial-functor API
@@ -84,5 +85,40 @@ example {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} (onValue : α �
     FreeM.foldFreeM onValue onEffect ((FreeM.lift a).bind cont) =
       onEffect a fun b => FreeM.foldFreeM onValue onEffect (cont b) := by
   rw [FreeM.foldFreeM_bind, FreeM.foldFreeM_lift]
+
+/-- Object equality works through the public projections at independent universes. -/
+example {P : PFunctor.{uA, uB}} {α : Type uα} {x y : P α}
+    (shapes : x.fst = y.fst) (children : HEq x.snd y.snd) : x = y := by
+  ext
+  · exact shapes
+  · exact children
+
+example {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
+    (f : α → β) (a : P.A) (children : P.B a → α) :
+    P.map f (.mk a children) = .mk a (f ∘ children) := by
+  rw [PFunctor.map_eq]
+
+/-- Indexed mapping retains each child's source fiber, even when the fibers differ. -/
+example {I : Type u} {J : Type v} {P : IPFunctor.{u, v, uA, uB} I J}
+    {X : I → Type uα} {Y : I → Type uβ}
+    (f : (i : I) → X i → Y i) {j : J} (a : P.A j)
+    (children : (b : P.B j a) → X (P.src j a b)) (b : P.B j a) :
+    (P.map f (.mk a children)).snd b = f (P.src j a b) (children b) := by
+  rw [IPFunctor.map_snd]
+  rfl
+
+example {I : Type u} {J : Type v} {P : IPFunctor.{u, v, uA, uB} I J}
+    {X : I → Type uα} {j : J} {x y : P.Obj X j}
+    (shapes : x.fst = y.fst) (children : HEq x.snd y.snd) : x = y := by
+  apply IPFunctor.Obj.ext
+  · exact shapes
+  · exact children
+
+/-- Consumers can eliminate objects without accessing their Sigma representation. -/
+example {I : Type u} {J : Type v} {P : IPFunctor.{u, v, uA, uB} I J}
+    {X : I → Type uα} {j : J} (x : P.Obj X j) :
+    ∃ a children, x = IPFunctor.Obj.mk a children := by
+  cases x using IPFunctor.Obj.rec with
+  | mk a children => exact ⟨a, children, rfl⟩
 
 end PolyFunTest.ModuleAPI.PFunctor

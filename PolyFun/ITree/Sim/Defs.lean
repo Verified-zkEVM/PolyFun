@@ -49,9 +49,9 @@ def simulate (h : Handler E F) (t : ITree E α) : ITree F α :=
   iter
     (fun (t : ITree E α) =>
       match shape' t with
-      | ⟨.pure r, _⟩ => pure (.inr r)
-      | ⟨.step, c⟩ => pure (.inl (c PUnit.unit))
-      | ⟨.query a, c⟩ => bind (h a) (fun b => pure (.inl (c b))))
+      | .mk (.pure r) _ => pure (.inr r)
+      | .mk .step c => pure (.inl (c PUnit.unit))
+      | .mk (.query a) c => bind (h a) (fun b => pure (.inl (c b))))
     t
 
 /-! ### Handler composition -/
@@ -89,20 +89,20 @@ end Handler
 target ITree by relabelling the head event. -/
 def mapSpecStep (φ : PFunctor.Lens E F) (t : ITree E α) : (ViewPoly F α).Obj (ITree E α) :=
   match shape' t with
-  | ⟨.pure r, _⟩ => ⟨.pure r, PEmpty.elim⟩
-  | ⟨.step, c⟩ => ⟨.step, fun _ => c PUnit.unit⟩
-  | ⟨.query a, c⟩ => ⟨.query (φ.toFunA a), fun b => c (φ.toFunB a b)⟩
+  | .mk (.pure r) _ => .mk (.pure r) PEmpty.elim
+  | .mk .step c => .mk .step (fun _ => c PUnit.unit)
+  | .mk (.query a) c => .mk (.query (φ.toFunA a)) (fun b => c (φ.toFunB a b))
 
 @[simp] theorem mapSpecStep_pure (φ : PFunctor.Lens E F) (r : α) :
-    mapSpecStep (α := α) φ (pure (F := E) r) = ⟨.pure r, PEmpty.elim⟩ := rfl
+    mapSpecStep (α := α) φ (pure (F := E) r) = .mk (.pure r) PEmpty.elim := rfl
 
 @[simp] theorem mapSpecStep_step (φ : PFunctor.Lens E F) (t : ITree E α) :
-    mapSpecStep φ (step t) = ⟨.step, fun _ => t⟩ := rfl
+    mapSpecStep φ (step t) = .mk .step (fun _ => t) := rfl
 
 @[simp] theorem mapSpecStep_query (φ : PFunctor.Lens E F) (a : E.A)
     (k : E.B a → ITree E α) :
     mapSpecStep (α := α) φ (query a k) =
-      ⟨.query (φ.toFunA a), fun b => k (φ.toFunB a b)⟩ := rfl
+      .mk (.query (φ.toFunA a)) (fun b => k (φ.toFunB a b)) := rfl
 
 /-- Apply a polynomial-functor lens `φ : PFunctor.Lens E F` to every event
 of an interaction tree, leaving the leaves and silent steps untouched.

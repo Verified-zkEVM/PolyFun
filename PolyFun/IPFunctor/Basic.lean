@@ -93,31 +93,83 @@ variable {I : Type uI} {J : Type uJ} {K : Type uK}
 
 /-- Applying `P : IPFunctor I J` to an indexed family `X : I → Type` at output index `j : J`.
 The child at position `⟨a, f⟩` and response `b` is the value `f b : X (P.src j a b)`. -/
-@[coe]
+@[coe, implicit_reducible]
 def Obj (P : IPFunctor I J) (X : I → Type*) (j : J) : Type _ :=
   Σ a : P.A j, (b : P.B j a) → X (P.src j a b)
 
 instance : CoeFun (IPFunctor I J) (fun _ => (I → Type*) → J → Type _) where
   coe := Obj
 
+/-! ## Polynomial objects -/
+
+namespace Obj
+
+variable {P : IPFunctor I J} {X : I → Type uX} {j : J}
+
+/-- An indexed polynomial object with a shape and a child in each prescribed fiber. -/
+@[implicit_reducible, match_pattern]
+def mk (a : P.A j) (f : (b : P.B j a) → X (P.src j a b)) : P.Obj X j := ⟨a, f⟩
+
+/-- Eliminate an indexed polynomial object through its shape and child family. -/
+@[implicit_reducible, elab_as_elim, induction_eliminator, cases_eliminator]
+def rec {motive : P.Obj X j → Sort*}
+    (mk : ∀ a f, motive (Obj.mk a f)) : ∀ x, motive x :=
+  fun x => mk x.1 x.2
+
+@[simp]
+theorem rec_mk {motive : P.Obj X j → Sort*}
+    {mk : ∀ a f, motive (Obj.mk a f)} (a : P.A j)
+    (f : (b : P.B j a) → X (P.src j a b)) :
+    Obj.rec mk (Obj.mk a f) = mk a f := rfl
+
+/-- The shape of an indexed polynomial object. -/
+@[implicit_reducible]
+def fst (x : P.Obj X j) : P.A j := x.1
+
+/-- The child family of an indexed polynomial object. -/
+@[implicit_reducible]
+def snd (x : P.Obj X j) : (b : P.B j x.fst) → X (P.src j x.fst b) := x.2
+
+@[simp]
+theorem fst_mk (a : P.A j) (f : (b : P.B j a) → X (P.src j a b)) :
+    (Obj.mk a f).fst = a := rfl
+
+@[simp]
+theorem snd_mk (a : P.A j) (f : (b : P.B j a) → X (P.src j a b)) :
+    (Obj.mk a f).snd = f := rfl
+
+@[simp]
+theorem eta (x : P.Obj X j) : Obj.mk x.fst x.snd = x := rfl
+
+/-- Indexed polynomial objects are equal when their shapes and child families agree. -/
+@[ext]
+theorem ext {x y : P.Obj X j} (h : x.fst = y.fst) (h' : HEq x.snd y.snd) : x = y := by
+  cases x using Obj.rec with | mk a f =>
+    cases y using Obj.rec with | mk b g =>
+      cases h
+      cases h'
+      rfl
+
+end Obj
+
 /-- Map a fiberwise function through the object action of an indexed
 polynomial functor.  The shape is unchanged and each child is mapped in the
 fiber selected by `P.src`. -/
 def map (P : IPFunctor I J) {X : I → Type uX} {Y : I → Type uY}
     (f : (i : I) → X i → Y i) {j : J} (x : P.Obj X j) : P.Obj Y j :=
-  ⟨x.1, fun direction => f _ (x.2 direction)⟩
+  .mk x.fst fun direction => f _ (x.snd direction)
 
 @[simp]
 theorem map_fst (P : IPFunctor I J) {X : I → Type uX} {Y : I → Type uY}
     (f : (i : I) → X i → Y i) {j : J} (x : P.Obj X j) :
-    (P.map f x).1 = x.1 :=
+    (P.map f x).fst = x.fst :=
   rfl
 
 @[simp]
 theorem map_snd (P : IPFunctor I J) {X : I → Type uX} {Y : I → Type uY}
     (f : (i : I) → X i → Y i) {j : J} (x : P.Obj X j)
-    (direction : P.B j x.1) :
-    (P.map f x).2 direction = f _ (x.2 direction) :=
+    (direction : P.B j x.fst) :
+    (P.map f x).snd direction = f _ (x.snd direction) :=
   rfl
 
 @[simp]

@@ -69,11 +69,11 @@ theorem bind_pure_left (r : α) (k : α → ITree F β) :
   apply eq_of_shape'_eq
   rw [bind, shape'_corec_apply, bindStep_inl]
   change (match ITree.shape' (k r) with
-      | ⟨s, c⟩ => Sigma.mk s
+      | ⟨s, c⟩ => PFunctor.Obj.mk s
           (fun b => ITree.corec (bindStep k) (Sum.inr (c b))) :
       (ViewPoly F β).Obj (ITree F β)) = ITree.shape' (k r)
   rcases hk : ITree.shape' (k r) with ⟨sk, ck⟩
-  change (Sigma.mk sk (fun b => ITree.corec (bindStep k) (Sum.inr (ck b))) :
+  change (PFunctor.Obj.mk sk (fun b => ITree.corec (bindStep k) (Sum.inr (ck b))) :
       (ViewPoly F β).Obj (ITree F β)) = ⟨sk, ck⟩
   congr 1
   funext b
@@ -94,11 +94,11 @@ theorem bind_pure_right (t : ITree F α) :
         unfold bindStep
         simp only [hdest]
         change (match shape' (pure r : ITree F α) with
-            | ⟨s, c⟩ => Sigma.mk s (fun b => Sum.inr (c b)) :
-            (ViewPoly F α).Obj _) = ⟨.pure r, PEmpty.elim⟩
+            | ⟨s, c⟩ => PFunctor.Obj.mk s (fun b => Sum.inr (c b)) :
+            (ViewPoly F α).Obj _) = .mk (.pure r) PEmpty.elim
         rw [shape'_pure]
-        change (Sigma.mk (.pure r) (fun b : PEmpty => Sum.inr (PEmpty.elim b)) :
-            (ViewPoly F α).Obj _) = ⟨.pure r, PEmpty.elim⟩
+        change (PFunctor.Obj.mk (.pure r) (fun b : PEmpty => Sum.inr (PEmpty.elim b)) :
+            (ViewPoly F α).Obj _) = .mk (.pure r) PEmpty.elim
         congr 1
         funext b
         exact b.elim
@@ -120,15 +120,15 @@ theorem bind_pure_right (t : ITree F α) :
 
 /-- Compute one `shape'` step of `bind` whose head is a step. -/
 theorem dest_bind_step (k : α → ITree F β) (t : ITree F α)
-    (c : PUnit → ITree F α) (h : ITree.shape' t = ⟨.step, c⟩) :
-    ITree.shape' (bind t k) = ⟨.step, fun _ => bind (c PUnit.unit) k⟩ := by
+    (c : PUnit → ITree F α) (h : ITree.shape' t = .mk .step c) :
+    ITree.shape' (bind t k) = .mk .step (fun _ => bind (c PUnit.unit) k) := by
   rw [bind, shape'_corec_apply, bindStep_inl, h]
   rfl
 
 /-- Compute one `shape'` step of `bind` whose head is a query. -/
 theorem dest_bind_query (k : α → ITree F β) (t : ITree F α) (a : F.A)
-    (c : F.B a → ITree F α) (h : ITree.shape' t = ⟨.query a, c⟩) :
-    ITree.shape' (bind t k) = ⟨.query a, fun b => bind (c b) k⟩ := by
+    (c : F.B a → ITree F α) (h : ITree.shape' t = .mk (.query a) c) :
+    ITree.shape' (bind t k) = .mk (.query a) (fun b => bind (c b) k) := by
   rw [bind, shape'_corec_apply, bindStep_inl, h]
   rfl
 
@@ -137,7 +137,7 @@ theorem bind_step (t : ITree F α) (k : α → ITree F β) :
     bind (step t) k = step (bind t k) := by
   apply eq_of_shape'_eq
   rw [dest_bind_step k (step t) (fun _ => t) (shape'_step t),
-      show ITree.shape' (step (bind t k)) = ⟨.step, fun _ => bind t k⟩
+      show ITree.shape' (step (bind t k)) = .mk .step (fun _ => bind t k)
         from shape'_step _]
 
 /-- `bind` distributes over a leading query node. -/
@@ -146,7 +146,7 @@ theorem bind_query (a : F.A) (k : F.B a → ITree F α) (f : α → ITree F β) 
   apply eq_of_shape'_eq
   rw [dest_bind_query f (query a k) a k (shape'_query a k),
       show ITree.shape' (query a (fun b => bind (k b) f)) =
-          ⟨.query a, fun b => bind (k b) f⟩ from shape'_query _ _]
+          .mk (.query a) (fun b => bind (k b) f) from shape'_query _ _]
 
 theorem bind_assoc (t : ITree F α) (k : α → ITree F β) (k' : β → ITree F γ) :
     bind (bind t k) k' = bind t (fun a => bind (k a) k') := by
@@ -194,7 +194,7 @@ theorem bind_assoc (t : ITree F α) (k : α → ITree F β) (k' : β → ITree F
         exact ⟨sh', c', c', rfl, rfl, fun _ => Or.inl rfl⟩
     | step =>
         have hbind : ITree.shape' (bind t k) =
-            ⟨.step, fun _ => bind (c PUnit.unit) k⟩ := dest_bind_step k t c h
+            .mk .step (fun _ => bind (c PUnit.unit) k) := dest_bind_step k t c h
         refine ⟨.step,
           fun _ => bind (bind (c PUnit.unit) k) k',
           fun _ => bind (c PUnit.unit) (fun a => bind (k a) k'),
@@ -203,7 +203,7 @@ theorem bind_assoc (t : ITree F α) (k : α → ITree F β) (k' : β → ITree F
         · exact dest_bind_step (fun a => bind (k a) k') t c h
     | query a =>
         have hbind : ITree.shape' (bind t k) =
-            ⟨.query a, fun b => bind (c b) k⟩ := dest_bind_query k t a c h
+            .mk (.query a) (fun b => bind (c b) k) := dest_bind_query k t a c h
         refine ⟨.query a,
           fun b => bind (bind (c b) k) k',
           fun b => bind (c b) (fun a => bind (k a) k'),
@@ -262,10 +262,10 @@ theorem iter_unfold (body : β → ITree F (β ⊕ α)) (init : β) :
             · -- The corecursor over `pure (.inl j)` exposes a step.
               rw [shape'_corec_apply, iterStep,
                   show ITree.shape' (pure (F := F) (.inl j : β ⊕ α)) =
-                    ⟨.pure (.inl j), PEmpty.elim⟩ from shape'_pure _]
+                    .mk (.pure (.inl j)) PEmpty.elim from shape'_pure _]
               rfl
             · rw [bind_pure_left]
-              change ITree.shape' (kk (.inl j)) = ⟨.step, fun _ => iter body j⟩
+              change ITree.shape' (kk (.inl j)) = .mk .step (fun _ => iter body j)
               rw [hkk]
               exact shape'_step _
         | inr r =>
@@ -275,7 +275,7 @@ theorem iter_unfold (body : β → ITree F (β ⊕ α)) (init : β) :
             refine ⟨.pure r, PEmpty.elim, PEmpty.elim, ?_, ?_, fun b => b.elim⟩
             · rw [shape'_corec_apply, iterStep,
                   show ITree.shape' (pure (F := F) (.inr r : β ⊕ α)) =
-                    ⟨.pure (.inr r), PEmpty.elim⟩ from shape'_pure _]
+                    .mk (.pure (.inr r)) PEmpty.elim from shape'_pure _]
               congr 1
               funext z
               exact z.elim
@@ -288,6 +288,7 @@ theorem iter_unfold (body : β → ITree F (β ⊕ α)) (init : β) :
           fun _ => bind (c PUnit.unit) kk,
           ?_, ?_, fun _ => Or.inr ⟨c PUnit.unit, rfl, rfl⟩⟩
         · rw [shape'_corec_apply, iterStep, h]
+          rfl
         · exact dest_bind_step kk t c h
     | query a =>
         refine ⟨.query a,
@@ -295,76 +296,77 @@ theorem iter_unfold (body : β → ITree F (β ⊕ α)) (init : β) :
           fun b => bind (c b) kk,
           ?_, ?_, fun b => Or.inr ⟨c b, rfl, rfl⟩⟩
         · rw [shape'_corec_apply, iterStep, h]
+          rfl
         · exact dest_bind_query kk t a c h
 
 /-- Helper: `shape' (bind u (fun c => pure (.inr c)))` when `u` has a pure head. -/
 private theorem dest_bind_pureInr_of_pure (u : ITree F γ) (r : γ)
     (c_in : (ViewPoly F γ).B (.pure r) → ITree F γ)
-    (h : ITree.shape' u = ⟨.pure r, c_in⟩) :
+    (h : ITree.shape' u = .mk (.pure r) c_in) :
     ITree.shape' (bind u (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))) =
-      ⟨.pure (.inr r), PEmpty.elim⟩ := by
+      .mk (.pure (.inr r)) PEmpty.elim := by
   rw [bind, shape'_corec_apply, bindStep_inl, h]
   change (match ITree.shape' (pure (F := F) (.inr r : β ⊕ γ)) with
-      | ⟨s, c'⟩ => Sigma.mk s
+      | ⟨s, c'⟩ => PFunctor.Obj.mk s
           (fun b => ITree.corec (bindStep (fun c : γ => pure (.inr c)))
             (.inr (c' b))) :
       (ViewPoly F (β ⊕ γ)).Obj _) = _
   rw [show ITree.shape' (pure (F := F) (.inr r : β ⊕ γ)) =
-    ⟨.pure (.inr r), PEmpty.elim⟩ from shape'_pure _]
-  change (Sigma.mk (.pure (.inr r) : Shape F (β ⊕ γ))
+    .mk (.pure (.inr r)) PEmpty.elim from shape'_pure _]
+  change (PFunctor.Obj.mk (.pure (.inr r) : Shape F (β ⊕ γ))
     (fun b : PEmpty => ITree.corec
       (bindStep (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ))))
-      (.inr (PEmpty.elim b))) : (ViewPoly F (β ⊕ γ)).Obj _) = ⟨.pure (.inr r), PEmpty.elim⟩
+      (.inr (PEmpty.elim b))) : (ViewPoly F (β ⊕ γ)).Obj _) = .mk (.pure (.inr r)) PEmpty.elim
   congr 1
   funext z
   exact z.elim
 
 /-- Helper: `shape' (bind u (fun c => pure (.inr c)))` when `u` has a step head. -/
 private theorem dest_bind_pureInr_of_step (u : ITree F γ)
-    (c : PUnit → ITree F γ) (h : ITree.shape' u = ⟨.step, c⟩) :
+    (c : PUnit → ITree F γ) (h : ITree.shape' u = .mk .step c) :
     ITree.shape' (bind u (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))) =
-      ⟨.step, fun _ =>
-        bind (c PUnit.unit) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))⟩ := by
+      .mk .step (fun _ =>
+        bind (c PUnit.unit) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))) := by
   rw [bind, shape'_corec_apply, bindStep_inl, h]
   rfl
 
 /-- Helper: `shape' (bind u (fun c => pure (.inr c)))` when `u` has a query head. -/
 private theorem dest_bind_pureInr_of_query (u : ITree F γ) (a : F.A)
-    (c : F.B a → ITree F γ) (h : ITree.shape' u = ⟨.query a, c⟩) :
+    (c : F.B a → ITree F γ) (h : ITree.shape' u = .mk (.query a) c) :
     ITree.shape' (bind u (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))) =
-      ⟨.query a, fun b =>
-        bind (c b) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))⟩ := by
+      .mk (.query a) (fun b =>
+        bind (c b) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))) := by
   rw [bind, shape'_corec_apply, bindStep_inl, h]
   rfl
 
 /-- Helper: `iterStep newBody (bind u (pure ∘ Sum.inr))` reduces to
-`⟨.pure r, PEmpty.elim⟩` when `u` has a pure head carrying `r`. -/
+`(.mk (.pure r) PEmpty.elim)` when `u` has a pure head carrying `r`. -/
 private theorem iterStep_bind_pureInr_of_pure
     (newBody : β → ITree F (β ⊕ γ)) (u : ITree F γ) (r : γ)
     (c_in : (ViewPoly F γ).B (.pure r) → ITree F γ)
-    (h : ITree.shape' u = ⟨.pure r, c_in⟩) :
+    (h : ITree.shape' u = .mk (.pure r) c_in) :
     iterStep newBody (bind u (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))) =
-      ⟨.pure r, PEmpty.elim⟩ := by
+      .mk (.pure r) PEmpty.elim := by
   rw [iterStep, dest_bind_pureInr_of_pure u r c_in h]
 
 /-- Helper: `iterStep newBody (bind u (pure ∘ Sum.inr))` reduces to
-`⟨.step, _⟩` when `u` has a step head. -/
+`(.mk .step _)` when `u` has a step head. -/
 private theorem iterStep_bind_pureInr_of_step
     (newBody : β → ITree F (β ⊕ γ)) (u : ITree F γ)
-    (c : PUnit → ITree F γ) (h : ITree.shape' u = ⟨.step, c⟩) :
+    (c : PUnit → ITree F γ) (h : ITree.shape' u = .mk .step c) :
     iterStep newBody (bind u (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))) =
-      ⟨.step, fun _ =>
-        bind (c PUnit.unit) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))⟩ := by
+      .mk .step (fun _ =>
+        bind (c PUnit.unit) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))) := by
   rw [iterStep, dest_bind_pureInr_of_step u c h]
 
 /-- Helper: `iterStep newBody (bind u (pure ∘ Sum.inr))` reduces to
-`⟨.query a, _⟩` when `u` has a query head. -/
+`(.mk (.query a) _)` when `u` has a query head. -/
 private theorem iterStep_bind_pureInr_of_query
     (newBody : β → ITree F (β ⊕ γ)) (u : ITree F γ) (a : F.A)
-    (c : F.B a → ITree F γ) (h : ITree.shape' u = ⟨.query a, c⟩) :
+    (c : F.B a → ITree F γ) (h : ITree.shape' u = .mk (.query a) c) :
     iterStep newBody (bind u (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))) =
-      ⟨.query a, fun b =>
-        bind (c b) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))⟩ := by
+      .mk (.query a) (fun b =>
+        bind (c b) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ)))) := by
   rw [iterStep, dest_bind_pureInr_of_query u a c h]
 
 /-- Helper: one `shape'` step of `ITree.corec (iterStep newBody) (bind u wrapper_inr)`
@@ -372,10 +374,10 @@ when `u` has a pure head. -/
 private theorem dest_corec_iter_bind_inr_of_pure
     (newBody : β → ITree F (β ⊕ γ)) (u : ITree F γ) (r : γ)
     (c_in : (ViewPoly F γ).B (.pure r) → ITree F γ)
-    (h : ITree.shape' u = ⟨.pure r, c_in⟩) :
+    (h : ITree.shape' u = .mk (.pure r) c_in) :
     ITree.shape' (ITree.corec (iterStep newBody)
         (bind u (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ))))) =
-      ⟨.pure r, PEmpty.elim⟩ := by
+      .mk (.pure r) PEmpty.elim := by
   rw [shape'_corec_apply, iterStep_bind_pureInr_of_pure newBody u r c_in h]
   congr 1
   funext z
@@ -385,23 +387,25 @@ private theorem dest_corec_iter_bind_inr_of_pure
 when `u` has a step head. -/
 private theorem dest_corec_iter_bind_inr_of_step
     (newBody : β → ITree F (β ⊕ γ)) (u : ITree F γ)
-    (c : PUnit → ITree F γ) (h : ITree.shape' u = ⟨.step, c⟩) :
+    (c : PUnit → ITree F γ) (h : ITree.shape' u = .mk .step c) :
     ITree.shape' (ITree.corec (iterStep newBody)
         (bind u (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ))))) =
-      ⟨.step, fun _ => ITree.corec (iterStep newBody)
-        (bind (c PUnit.unit) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ))))⟩ := by
+      .mk .step (fun _ => ITree.corec (iterStep newBody)
+        (bind (c PUnit.unit) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ))))) := by
   rw [shape'_corec_apply, iterStep_bind_pureInr_of_step newBody u c h]
+  rfl
 
 /-- Helper: one `shape'` step of `ITree.corec (iterStep newBody) (bind u wrapper_inr)`
 when `u` has a query head. -/
 private theorem dest_corec_iter_bind_inr_of_query
     (newBody : β → ITree F (β ⊕ γ)) (u : ITree F γ) (a : F.A)
-    (c : F.B a → ITree F γ) (h : ITree.shape' u = ⟨.query a, c⟩) :
+    (c : F.B a → ITree F γ) (h : ITree.shape' u = .mk (.query a) c) :
     ITree.shape' (ITree.corec (iterStep newBody)
         (bind u (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ))))) =
-      ⟨.query a, fun b => ITree.corec (iterStep newBody)
-        (bind (c b) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ))))⟩ := by
+      .mk (.query a) (fun b => ITree.corec (iterStep newBody)
+        (bind (c b) (fun c : γ => (pure (.inr c) : ITree F (β ⊕ γ))))) := by
   rw [shape'_corec_apply, iterStep_bind_pureInr_of_query newBody u a c h]
+  rfl
 
 theorem iter_bind (body : β → ITree F (β ⊕ α)) (k : α → ITree F γ) (init : β) :
     bind (iter body init) k =
@@ -443,10 +447,11 @@ theorem iter_bind (body : β → ITree F (β ⊕ α)) (k : α → ITree F γ) (i
             -- Compute destructors: both sides have a step head.
             have hL : ITree.shape'
                 (ITree.corec (iterStep body) (pure (.inl j) : ITree F (β ⊕ α))) =
-                ⟨.step, fun _ => ITree.corec (iterStep body) (body j)⟩ := by
+                .mk .step (fun _ => ITree.corec (iterStep body) (body j)) := by
               rw [shape'_corec_apply, iterStep,
                 show ITree.shape' (pure (F := F) (.inl j : β ⊕ α)) =
-                  ⟨.pure (.inl j), PEmpty.elim⟩ from shape'_pure _]
+                  .mk (.pure (.inl j)) PEmpty.elim from shape'_pure _]
+              rfl
             refine ⟨.step,
               fun _ => bind (ITree.corec (iterStep body) (body j)) k,
               fun _ => ITree.corec (iterStep newBody) (bind (body j) wrapper),
@@ -454,7 +459,8 @@ theorem iter_bind (body : β → ITree F (β ⊕ α)) (k : α → ITree F γ) (i
             · exact dest_bind_step k _ _ hL
             · rw [shape'_corec_apply, iterStep,
                   show ITree.shape' (pure (F := F) (.inl j : β ⊕ γ)) =
-                    ⟨.pure (.inl j), PEmpty.elim⟩ from shape'_pure _]
+                    .mk (.pure (.inl j)) PEmpty.elim from shape'_pure _]
+              rfl
         | inr r =>
             -- RHS: wrapper (.inr r) = bind (k r) (pure ∘ inr).
             have hw : wrapper (.inr r) =
@@ -467,12 +473,12 @@ theorem iter_bind (body : β → ITree F (β ⊕ α)) (k : α → ITree F γ) (i
               apply eq_of_shape'_eq
               rw [shape'_corec_apply, iterStep,
                 show ITree.shape' (pure (F := F) (.inr r : β ⊕ α)) =
-                  ⟨.pure (.inr r), PEmpty.elim⟩ from shape'_pure _,
+                  .mk (.pure (.inr r)) PEmpty.elim from shape'_pure _,
                 show ITree.shape' (pure (F := F) r) =
-                  ⟨.pure r, PEmpty.elim⟩ from shape'_pure _]
-              change (⟨.pure r, fun b : PEmpty =>
-                  ITree.corec (iterStep body) (PEmpty.elim b)⟩ :
-                (ViewPoly F α).Obj _) = ⟨.pure r, PEmpty.elim⟩
+                  .mk (.pure r) PEmpty.elim from shape'_pure _]
+              change ((.mk (.pure r) (fun b : PEmpty =>
+                  ITree.corec (iterStep body) (PEmpty.elim b))) :
+                (ViewPoly F α).Obj _) = .mk (.pure r) PEmpty.elim
               congr 1; funext z; exact z.elim
             rw [hcorec, bind_pure_left]
             -- Transition into Phase B with `u := k r`; case-split on `shape' (k r)`.
@@ -504,8 +510,9 @@ theorem iter_bind (body : β → ITree F (β ⊕ α)) (k : α → ITree F γ) (i
               shape'_corec_apply, iterStep, h]
           rfl
         · have hdest_bind : ITree.shape' (bind t wrapper) =
-              ⟨.step, fun _ => bind (c PUnit.unit) wrapper⟩ := dest_bind_step wrapper t c h
+              .mk .step (fun _ => bind (c PUnit.unit) wrapper) := dest_bind_step wrapper t c h
           rw [shape'_corec_apply, iterStep, hdest_bind]
+          rfl
     | query a =>
         refine ⟨.query a,
           fun b => bind (ITree.corec (iterStep body) (c b)) k,
@@ -515,8 +522,9 @@ theorem iter_bind (body : β → ITree F (β ⊕ α)) (k : α → ITree F γ) (i
               shape'_corec_apply, iterStep, h]
           rfl
         · have hdest_bind : ITree.shape' (bind t wrapper) =
-              ⟨.query a, fun b => bind (c b) wrapper⟩ := dest_bind_query wrapper t a c h
+              .mk (.query a) (fun b => bind (c b) wrapper) := dest_bind_query wrapper t a c h
           rw [shape'_corec_apply, iterStep, hdest_bind]
+          rfl
   · -- Phase B: `k r` has been spliced in; rhs is running `bind lhs (pure ∘ inr)`.
     -- `rintro`'s substitution eliminated `u` in favor of `lhs`.
     subst hlhs; subst hrhs

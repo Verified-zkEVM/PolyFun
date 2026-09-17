@@ -69,6 +69,7 @@ theorem mapSpec (φ : PFunctor.Lens E F) (t : ITree E α) :
       have ht' : t = ITree.step (c PUnit.unit) := by
         apply eq_of_shape'_eq
         rw [ht, shape'_step]
+        rfl
       subst t
       rw [ITree.mapSpec_step]
       exact ⟨_, _, .refl _, .refl _,
@@ -78,6 +79,7 @@ theorem mapSpec (φ : PFunctor.Lens E F) (t : ITree E α) :
       have ht' : t = ITree.query a c := by
         apply eq_of_shape'_eq
         rw [ht, shape'_query]
+        rfl
       subst t
       rw [ITree.mapSpec_query]
       refine ⟨_, _, .refl _, .refl _, ?_⟩

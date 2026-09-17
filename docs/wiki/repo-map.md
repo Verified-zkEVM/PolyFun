@@ -85,6 +85,7 @@ PolyFun-specific certificate and its bridge to the machine-counting separation
 theorem.
 
 ```text
+PFunctor/Obj -> PFunctor/{Basic, M}
 PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}
   -> PFunctor/{Cofree, Trace}
   -> PFunctor/Resumption

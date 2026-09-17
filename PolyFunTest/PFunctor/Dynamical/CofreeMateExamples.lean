@@ -72,15 +72,14 @@ example : CofreeC.head labeledBehavior = 0 := by
   simp [labeledBehavior, stateCode]
 
 /-- The false child is labelled by the reached middle state. -/
-example : CofreeC.head ((CofreeC.tail labeledBehavior).2 false) = 1 := by
-  simp [labeledBehavior, stateCode, branchingSystem, branchingLens,
-    DynSystem.update]
+example : CofreeC.head ((CofreeC.tail labeledBehavior).snd false) = 1 := by
+  rfl
 
 /-- Following false and then true reaches the final state, whose distinct label
 pins the same outer-then-inner order as the full retrofunctor test below. -/
-example : CofreeC.head ((CofreeC.tail ((CofreeC.tail labeledBehavior).2 false)).2 true) = 2 := by
-  simp [labeledBehavior, stateCode, branchingSystem, branchingLens,
-    DynSystem.update]
+example :
+    CofreeC.head ((CofreeC.tail ((CofreeC.tail labeledBehavior).snd false)).snd true) = 2 := by
+  rfl
 
 /-- The exposed-position labelling specializes directly to the established
 trajectory. -/

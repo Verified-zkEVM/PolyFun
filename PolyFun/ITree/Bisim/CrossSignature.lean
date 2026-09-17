@@ -104,23 +104,23 @@ inductive CrossSignatureWeakBisim.HeadMatch
     ITree E α → ITree F β → Prop where
   /-- Pure heads carry related return values. -/
   | pure {t : ITree E α} {s : ITree F β} (x : α) (y : β) (hxy : resultRel x y)
-      (ht : shape' t = ⟨.pure x, PEmpty.elim⟩)
-      (hs : shape' s = ⟨.pure y, PEmpty.elim⟩) :
+      (ht : shape' t = .mk (.pure x) PEmpty.elim)
+      (hs : shape' s = .mk (.pure y) PEmpty.elim) :
       CrossSignatureWeakBisim.HeadMatch eventRel resultRel treeRel t s
   /-- Query heads carry related events, and continuations are related for
   every pair of related replies. -/
   | query {t : ITree E α} {s : ITree F β}
       (a : E.A) (b : F.A) (hab : eventRel.event a b)
       (ct : E.B a → ITree E α) (cs : F.B b → ITree F β)
-      (ht : shape' t = ⟨.query a, ct⟩)
-      (hs : shape' s = ⟨.query b, cs⟩)
+      (ht : shape' t = .mk (.query a) (ct))
+      (hs : shape' s = .mk (.query b) (cs))
       (h : ∀ x y, eventRel.reply a b hab x y → treeRel (ct x) (cs y)) :
       CrossSignatureWeakBisim.HeadMatch eventRel resultRel treeRel t s
   /-- Silent heads continue through the relation. -/
   | tau {t : ITree E α} {s : ITree F β}
       (ct : PUnit.{uEB + 1} → ITree E α)
       (cs : PUnit.{uFB + 1} → ITree F β)
-      (ht : shape' t = ⟨.step, ct⟩) (hs : shape' s = ⟨.step, cs⟩)
+      (ht : shape' t = .mk .step (ct)) (hs : shape' s = .mk .step (cs))
       (h : treeRel (ct PUnit.unit) (cs PUnit.unit)) :
       CrossSignatureWeakBisim.HeadMatch eventRel resultRel treeRel t s
 
@@ -318,13 +318,13 @@ theorem step {eventRel : EventSignatureRel E F} {resultRel : α → β → Prop}
 theorem step_absorb_right {eventRel : EventSignatureRel E F} {resultRel : α → β → Prop}
     {t : ITree E α} {s : ITree F β}
     (c : PUnit.{uFB + 1} → ITree F β) (h : CrossSignatureWeakBisim eventRel resultRel t s)
-    (hstep : shape' s = ⟨.step, c⟩) :
+    (hstep : shape' s = .mk .step c) :
     CrossSignatureWeakBisim eventRel resultRel t (c PUnit.unit) := by
   refine coinduct eventRel resultRel
     (fun x z => CrossSignatureWeakBisim eventRel resultRel x z ∨
       ∃ (s' : ITree F β) (c' : PUnit.{uFB + 1} → ITree F β),
         CrossSignatureWeakBisim eventRel resultRel x s' ∧
-          shape' s' = ⟨.step, c'⟩ ∧ z = c' PUnit.unit)
+          shape' s' = .mk .step (c') ∧ z = c' PUnit.unit)
     ?_ (Or.inr ⟨s, c, h, hstep, rfl⟩)
   intro a b hab
   rcases hab with hab | ⟨s', c', hab, hstep', rfl⟩
@@ -344,7 +344,7 @@ theorem step_absorb_right {eventRel : EventSignatureRel E F} {resultRel : α →
           cases sh with
           | pure r =>
               have hsh' : shape' (cs PUnit.unit) =
-                  ⟨Shape.pure r, PEmpty.elim⟩ := by
+                  .mk (Shape.pure r) PEmpty.elim := by
                 rw [hsh]
                 congr 1
                 funext z
@@ -355,10 +355,10 @@ theorem step_absorb_right {eventRel : EventSignatureRel E F} {resultRel : α →
               subst hYeq
               cases MXY with
               | pure x y hxy hX' hY' =>
-                  have heq : (⟨Shape.pure y, PEmpty.elim⟩ :
+                  have heq : ((.mk (Shape.pure y) PEmpty.elim) :
                       (ViewPoly F β).Obj (ITree F β)) =
-                      ⟨Shape.pure r, PEmpty.elim⟩ := hY'.symm.trans hsh'
-                  have hyr : y = r := Shape.pure.inj (Sigma.mk.inj heq).1
+                      .mk (Shape.pure r) PEmpty.elim := hY'.symm.trans hsh'
+                  have hyr : y = r := Shape.pure.inj (PFunctor.Obj.mk.inj heq).1
                   subst y
                   refine ⟨X, cs PUnit.unit,
                     ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩
@@ -379,13 +379,13 @@ theorem step_absorb_right {eventRel : EventSignatureRel E F} {resultRel : α →
               cases MXY with
               | pure _ _ _ _ hY' => rw [hY'] at hsh; cases hsh
               | query eventE eventF' hevents cX cY hX' hY' hcont =>
-                  have heq : (⟨Shape.query eventF', cY⟩ :
+                  have heq : ((.mk (Shape.query eventF') (cY)) :
                       (ViewPoly F β).Obj (ITree F β)) =
-                      ⟨Shape.query eventF, cc⟩ := hY'.symm.trans hsh
+                      .mk (Shape.query eventF) (cc) := hY'.symm.trans hsh
                   have hevent : eventF' = eventF :=
-                    Shape.query.inj (Sigma.mk.inj heq).1
+                    Shape.query.inj (PFunctor.Obj.mk.inj heq).1
                   subst eventF'
-                  have hc : cY = cc := eq_of_heq (Sigma.mk.inj heq).2
+                  have hc : cY = cc := eq_of_heq (PFunctor.Obj.mk.inj heq).2
                   subst cY
                   refine ⟨X, cs PUnit.unit,
                     ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩

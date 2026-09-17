@@ -35,14 +35,14 @@ namespace IM
 
 /-- The root index stored in the sigma-erased representation. -/
 def rootIndex (tree : PFunctor.M P.sigmaPFunctor) : I :=
-  (PFunctor.M.dest tree).1.1
+  (PFunctor.M.dest tree).fst.1
 
 /-- The source-index law at the root of one sigma-erased tree. -/
 def EdgeCoherent (tree : PFunctor.M P.sigmaPFunctor) : Prop :=
   let node := PFunctor.M.dest tree
-  ∀ direction : P.B node.1.1 node.1.2,
-    rootIndex P (node.2 direction) =
-      P.src node.1.1 node.1.2 direction
+  ∀ direction : P.B node.fst.1 node.fst.2,
+    rootIndex P (node.snd direction) =
+      P.src node.fst.1 node.fst.2 direction
 
 /-- Every edge of a sigma-erased M-tree carries the source index prescribed
 by the indexed polynomial. -/
@@ -74,32 +74,31 @@ variable {P} {i : I}
 /-- The indexed shape exposed at the root. -/
 def head (tree : IM P i) : P.A i := by
   rw [← tree.root_eq]
-  exact (PFunctor.M.dest tree.toM).1.2
+  exact (PFunctor.M.dest tree.toM).fst.2
 
 /-- The indexed child selected by one root direction. -/
 def child (tree : IM P i) (direction : P.B i tree.head) :
     IM P (P.src i tree.head direction) := by
   rcases tree with ⟨tree, rootEq, wellIndexed⟩
   cases rootEq
-  change P.B (PFunctor.M.dest tree).1.1 (PFunctor.M.dest tree).1.2 at direction
+  change P.B (PFunctor.M.dest tree).fst.1 (PFunctor.M.dest tree).fst.2 at direction
   refine {
-    toM := (PFunctor.M.dest tree).2 direction
+    toM := (PFunctor.M.dest tree).snd direction
     root_eq := wellIndexed (.root tree) direction
     wellIndexed := fun vertex => ?_
   }
-  dsimp only [WellIndexed, PFunctor.M.Vertex.subtree]
   intro nextDirection
   exact wellIndexed (.child direction vertex) nextDirection
 
 /-- Destructor of the indexed final coalgebra. -/
 def dest (tree : IM P i) : P.Obj (IM P) i :=
-  ⟨tree.head, tree.child⟩
+  .mk tree.head tree.child
 
 /-- Erase one indexed node by bundling its output index into the ordinary
 sigma-polynomial shape and forgetting only the proof fields of its children. -/
 def eraseObj (node : P.Obj (IM P) i) :
     P.sigmaPFunctor.Obj (PFunctor.M P.sigmaPFunctor) :=
-  ⟨⟨i, node.1⟩, fun direction => (node.2 direction).toM⟩
+  .mk ⟨i, node.fst⟩ (fun direction => (node.snd direction).toM)
 
 /-- The sigma-erased destruction of an indexed tree is its indexed
 destruction with the root index bundled into the shape. -/
@@ -122,7 +121,7 @@ theorem ext (left right : IM P i) (h : left.toM = right.toM) : left = right := b
 def mk (node : P.Obj (IM P) i) : IM P i := by
   rcases node with ⟨shape, children⟩
   let underlying : P.sigmaPFunctor.Obj (PFunctor.M P.sigmaPFunctor) :=
-    ⟨⟨i, shape⟩, fun direction => (children direction).toM⟩
+    .mk ⟨i, shape⟩ (fun direction => (children direction).toM)
   let tree := PFunctor.M.mk underlying
   refine {
     toM := tree
@@ -141,7 +140,7 @@ def mk (node : P.Obj (IM P) i) : IM P i := by
         exact (children direction).wellIndexed next nextDirection
 
 @[simp]
-theorem head_mk (node : P.Obj (IM P) i) : (mk node).head = node.1 := by
+theorem head_mk (node : P.Obj (IM P) i) : (mk node).head = node.fst := by
   rcases node with ⟨shape, children⟩
   rfl
 
@@ -155,7 +154,7 @@ theorem mk_dest (tree : IM P i) : mk (dest tree) = tree := by
   apply ext
   rcases tree with ⟨tree, rootEq, wellIndexed⟩
   cases rootEq
-  simp only [mk, dest, head, child, rootIndex]
+  simp only [mk, dest, head, rootIndex]
   exact PFunctor.M.mk_dest tree
 
 /-- Constructor/destructor equivalence for the indexed final coalgebra. -/
@@ -186,8 +185,8 @@ def totalStep (step : (i : I) → X i → P.Obj X i) :
     (Σ i, X i) → P.sigmaPFunctor.Obj (Σ i, X i)
   | ⟨i, state⟩ =>
       let node := step i state
-      ⟨⟨i, node.1⟩, fun direction =>
-        ⟨P.src i node.1 direction, node.2 direction⟩⟩
+      (.mk ⟨i, node.fst⟩ (fun direction =>
+        ⟨P.src i node.fst direction, node.snd direction⟩))
 
 theorem corecTree_vertex
     (step : (i : I) → X i → P.Obj X i) (seed : Σ i, X i) :
@@ -204,7 +203,7 @@ theorem corecTree_vertex
         (PFunctor.M.corec (totalStep (P := P) step) ⟨index, state⟩)
       simp only [EdgeCoherent, rootIndex]
       rw [PFunctor.M.dest_corec_apply]
-      dsimp only [totalStep]
+      dsimp only [totalStep, PFunctor.Obj.fst_mk, PFunctor.Obj.snd_mk]
       intro direction
       rw [PFunctor.M.dest_corec_apply]
       rfl
@@ -214,16 +213,16 @@ theorem corecTree_vertex
       have hDest :
           PFunctor.M.dest
               (PFunctor.M.corec (totalStep (P := P) step) ⟨index, state⟩) =
-            ⟨⟨index, (step index state).1⟩, fun direction =>
+            .mk ⟨index, (step index state).fst⟩ (fun direction =>
               PFunctor.M.corec (totalStep (P := P) step)
-                ⟨P.src index (step index state).1 direction,
-                  (step index state).2 direction⟩⟩ := by
+                ⟨P.src index (step index state).fst direction,
+                  (step index state).snd direction⟩) := by
         rw [PFunctor.M.dest_corec_apply]
         rfl
       cases hDest
       exact ih
-        ⟨P.src index (step index state).1 direction,
-          (step index state).2 direction⟩ rfl
+        ⟨P.src index (step index state).fst direction,
+          (step index state).snd direction⟩ rfl
 
 theorem corecTree_wellIndexed
     (step : (i : I) → X i → P.Obj X i) (seed : Σ i, X i) :
@@ -258,30 +257,33 @@ theorem dest_corec (step : (i : I) → X i → P.Obj X i)
   rcases hStep : step i state with ⟨shape, children⟩
   have hUnderlying :
       PFunctor.M.dest tree.toM =
-        ⟨⟨i, shape⟩, fun direction =>
-          (corec (P := P) step _ (children direction)).toM⟩ := by
+        .mk ⟨i, shape⟩ (fun direction =>
+          (corec (P := P) step _ (children direction)).toM) := by
     simp only [tree, toM_corec, PFunctor.M.dest_corec_apply]
     change
-      (⟨⟨i, (step i state).1⟩, fun direction =>
+      ((.mk ⟨i, (step i state).fst⟩ (fun direction =>
           PFunctor.M.corec (totalStep (P := P) step)
-            ⟨P.src i (step i state).1 direction,
-              (step i state).2 direction⟩⟩ :
+            ⟨P.src i (step i state).fst direction,
+              (step i state).snd direction⟩)) :
         P.sigmaPFunctor.Obj (PFunctor.M P.sigmaPFunctor)) = _
     rw [hStep]
+    rfl
   have hDest := (toM_dest (P := P) tree).symm.trans hUnderlying
   have hRoot : (⟨i, tree.head⟩ : Σ j, P.A j) = ⟨i, shape⟩ :=
-    congrArg Sigma.fst hDest
+    congrArg PFunctor.Obj.fst hDest
   have hShape : tree.head = shape :=
     eq_of_heq (Sigma.mk.inj hRoot).2
-  change tree.dest = _
-  apply Sigma.ext hShape
+  change Obj.mk tree.head tree.child =
+    Obj.mk shape (fun direction => corec (P := P) step _ (children direction))
+  apply IPFunctor.Obj.ext
+  · exact hShape
   cases hShape
   apply heq_of_eq
   have hChildren :
       (fun direction => (tree.child direction).toM) =
         (fun direction =>
           (corec (P := P) step _ (children direction)).toM) :=
-    eq_of_heq (Sigma.mk.inj hDest).2
+    eq_of_heq (PFunctor.Obj.mk.inj hDest).2
   funext direction
   apply ext
   exact congrFun hChildren direction
@@ -303,12 +305,13 @@ theorem corec_unique (step : (i : I) → X i → P.Obj X i)
     rw [toM_dest, commute]
     rcases hStep : step i state with ⟨shape, children⟩
     change
-      (⟨⟨i, shape⟩, fun direction =>
-          (f _ (children direction)).toM⟩ :
+      ((.mk ⟨i, shape⟩ (fun direction =>
+          (f _ (children direction)).toM)) :
         P.sigmaPFunctor.Obj (PFunctor.M P.sigmaPFunctor)) =
-      ⟨⟨i, (step i state).1⟩, fun direction =>
-        (f _ ((step i state).2 direction)).toM⟩
+      .mk ⟨i, (step i state).fst⟩ (fun direction =>
+        (f _ ((step i state).snd direction)).toM)
     rw [hStep]
+    rfl
   funext i state
   apply ext
   exact congrFun hTotal ⟨i, state⟩
@@ -334,8 +337,8 @@ def IsBisimulation
     ∃ shape,
       ∃ leftChildren rightChildren :
         (direction : P.B i shape) → IM P (P.src i shape direction),
-      dest left = ⟨shape, leftChildren⟩ ∧
-      dest right = ⟨shape, rightChildren⟩ ∧
+      dest left = .mk shape leftChildren ∧
+      dest right = .mk shape rightChildren ∧
       ∀ direction, R (P.src i shape direction)
         (leftChildren direction) (rightChildren direction)
 

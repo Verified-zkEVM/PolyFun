@@ -36,7 +36,7 @@ attribute [local implicit_reducible] Sum.elim
       pure (s, r) := by
   have hstep : interpStateStep
       (s, pure (F := (StateE σ + E : PFunctor.{max uσ uEA, uσ})) r) =
-      ⟨.pure (s, r), PEmpty.elim⟩ := by
+      .mk (.pure (s, r)) PEmpty.elim := by
     simp [interpStateStep]
   apply eq_of_shape'_eq
   rw [interpState, shape'_corec_eq _ _ hstep]
@@ -50,7 +50,7 @@ attribute [local implicit_reducible] Sum.elim
     (t : ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :
     interpState (step t) s = step (interpState t s) := by
   have hstep : interpStateStep (s, step t) =
-      ⟨.step, fun _ => (s, t)⟩ := by
+      .mk .step (fun _ => (s, t)) := by
     simp [interpStateStep]
   apply eq_of_shape'_eq
   rw [interpState, shape'_corec_eq _ _ hstep]
@@ -66,7 +66,7 @@ attribute [local implicit_reducible] Sum.elim
   have hstep : interpStateStep (s, query
       (Sum.inl StateE.Shape.get :
         (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
-      ⟨.step, fun _ => (s, k s)⟩ := by
+      .mk .step (fun _ => (s, k s)) := by
     simp [interpStateStep]
   apply eq_of_shape'_eq
   rw [interpState, shape'_corec_eq _ _ hstep]
@@ -84,7 +84,7 @@ attribute [local implicit_reducible] Sum.elim
       (s, query
         (Sum.inl (StateE.Shape.put s') :
           (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
-      ⟨.step, fun _ => (s', k PUnit.unit)⟩ := by
+      .mk .step (fun _ => (s', k PUnit.unit)) := by
     simp [interpStateStep]
   apply eq_of_shape'_eq
   rw [interpState, shape'_corec_eq _ _ hstep]
@@ -100,7 +100,7 @@ attribute [local implicit_reducible] Sum.elim
       query e (fun b => interpState (k b) s) := by
   have hstep : interpStateStep (s, query
       (Sum.inr e : (StateE σ + E : PFunctor.{max uσ uEA, uσ}).A) k) =
-      ⟨.query e, fun b => (s, k b)⟩ := by
+      .mk (.query e) (fun b => (s, k b)) := by
     simp [interpStateStep]
   apply eq_of_shape'_eq
   rw [interpState, shape'_corec_eq _ _ hstep]
@@ -168,19 +168,19 @@ theorem interpState_bind {β : Type uβ}
                   Sum.inl StateE.Shape.get
                 have hLeft : ITree.shape'
                     (interpState (bind (query getEvent c) k) s) =
-                    ⟨.step, fun _ => interpState (bind (c s) k) s⟩ := by
+                    .mk .step (fun _ => interpState (bind (c s) k) s) := by
                   rw [interpState, shape'_corec_apply]
                   simp only [interpStateStep]
                   rfl
                 have hState : ITree.shape'
                     (interpState (query getEvent c) s) =
-                    ⟨.step, fun _ => interpState (c s) s⟩ := by
+                    .mk .step (fun _ => interpState (c s) s) := by
                   rw [interpState, shape'_corec_apply]
                   simp only [interpStateStep]
                   rfl
                 have hRight : ITree.shape'
                     (bind (interpState (query getEvent c) s) next) =
-                    ⟨.step, fun _ => bind (interpState (c s) s) next⟩ :=
+                    .mk .step (fun _ => bind (interpState (c s) s) next) :=
                   dest_bind_step next _ _ hState
                 exact ⟨.step,
                   fun _ => interpState (bind (c s) k) s,
@@ -203,21 +203,21 @@ theorem interpState_bind {β : Type uβ}
                   Sum.inl (StateE.Shape.put s')
                 have hLeft : ITree.shape'
                     (interpState (bind (query putEvent c) k) s) =
-                    ⟨.step, fun _ =>
-                      interpState (bind (c PUnit.unit) k) s'⟩ := by
+                    .mk .step (fun _ =>
+                      interpState (bind (c PUnit.unit) k) s') := by
                   rw [interpState, shape'_corec_apply]
                   simp only [interpStateStep]
                   rfl
                 have hState : ITree.shape'
                     (interpState (query putEvent c) s) =
-                    ⟨.step, fun _ => interpState (c PUnit.unit) s'⟩ := by
+                    .mk .step (fun _ => interpState (c PUnit.unit) s') := by
                   rw [interpState, shape'_corec_apply]
                   simp only [interpStateStep]
                   rfl
                 have hRight : ITree.shape'
                     (bind (interpState (query putEvent c) s) next) =
-                    ⟨.step, fun _ =>
-                      bind (interpState (c PUnit.unit) s') next⟩ :=
+                    .mk .step (fun _ =>
+                      bind (interpState (c PUnit.unit) s') next) :=
                   dest_bind_step next _ _ hState
                 exact ⟨.step,
                   fun _ => interpState (bind (c PUnit.unit) k) s',

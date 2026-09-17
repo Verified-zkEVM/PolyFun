@@ -47,17 +47,17 @@ variable {F : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type uγ}
 nodes. (Coq `spin`.) -/
 def diverge : ITree F α :=
   ITree.corec (F := F) (α := α)
-    (fun (_ : PUnit.{uB + 1}) => ⟨.step, fun _ => PUnit.unit⟩)
+    (fun (_ : PUnit.{uB + 1}) => .mk .step (fun _ => PUnit.unit))
     PUnit.unit
 
 @[simp] theorem shape'_diverge :
-    shape' (diverge (F := F) (α := α)) = ⟨.step, fun _ => diverge⟩ := by
+    shape' (diverge (F := F) (α := α)) = .mk .step (fun _ => diverge) := by
   unfold diverge
   rw [shape'_corec_eq _ _ rfl]
 
 @[simp] theorem shape_diverge :
     shape (diverge (F := F) (α := α)) = .step := by
-  unfold shape; rw [shape'_diverge]
+  rw [shape, shape'_diverge, PFunctor.Obj.fst_mk]
 
 /-! ### Functor map -/
 
@@ -95,9 +95,9 @@ def take : Nat → ITree F α → ITree F α
   | 0, t => t
   | n + 1, t =>
       match shape' t with
-      | ⟨.step, c⟩ => take n (c PUnit.unit)
-      | ⟨.pure _, _⟩ => t
-      | ⟨.query _, _⟩ => t
+      | .mk .step c => take n (c PUnit.unit)
+      | .mk (.pure _) _ => t
+      | .mk (.query _) _ => t
 
 @[simp] theorem take_zero (t : ITree F α) : take 0 t = t := rfl
 

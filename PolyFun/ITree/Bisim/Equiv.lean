@@ -67,7 +67,7 @@ namespace TauSteps
 
 /-- If `t` has a pure head, then `TauSteps t t'` forces `t' = t`. -/
 theorem rigid_of_pure {t t' : ITree F α} (r : α)
-    (ht : shape' t = ⟨.pure r, PEmpty.elim⟩)
+    (ht : shape' t = .mk (.pure r) PEmpty.elim)
     (h : TauSteps t t') : t' = t := by
   cases h with
   | refl _ => rfl
@@ -75,7 +75,7 @@ theorem rigid_of_pure {t t' : ITree F α} (r : α)
 
 /-- If `t` has a query head, then `TauSteps t t'` forces `t' = t`. -/
 theorem rigid_of_query {t t' : ITree F α} (a : F.A) (c : F.B a → ITree F α)
-    (ht : shape' t = ⟨.query a, c⟩)
+    (ht : shape' t = .mk (.query a) c)
     (h : TauSteps t t') : t' = t := by
   cases h with
   | refl _ => rfl
@@ -85,7 +85,7 @@ theorem rigid_of_query {t t' : ITree F α} (a : F.A) (c : F.B a → ITree F α)
 a step-headed tree either does nothing or proceeds through the unique
 step continuation. -/
 theorem step_cases {t t' : ITree F α} (c : PUnit.{uFB + 1} → ITree F α)
-    (ht : shape' t = ⟨.step, c⟩) (h : TauSteps t t') :
+    (ht : shape' t = .mk .step c) (h : TauSteps t t') :
     t' = t ∨ TauSteps (c PUnit.unit) t' := by
   cases h with
   | refl _ => exact Or.inl rfl
@@ -200,12 +200,12 @@ point constructors and is the key to relational composition. -/
 theorem step_absorb_right {RR : α → β → Prop}
     {t : ITree F α} {s : ITree F β}
     (c : PUnit.{uFB + 1} → ITree F β) (h : WeakBisimRel RR t s)
-    (hstep : shape' s = ⟨.step, c⟩) :
+    (hstep : shape' s = .mk .step c) :
     WeakBisimRel RR t (c PUnit.unit) := by
   refine coinduct RR
     (fun x z => WeakBisimRel RR x z ∨
       ∃ (s' : ITree F β) (c' : PUnit.{uFB + 1} → ITree F β),
-        WeakBisimRel RR x s' ∧ shape' s' = ⟨.step, c'⟩ ∧ z = c' PUnit.unit)
+        WeakBisimRel RR x s' ∧ shape' s' = .mk .step (c') ∧ z = c' PUnit.unit)
     ?_ (Or.inr ⟨s, c, h, hstep, rfl⟩)
   intro a b hab
   rcases hab with hab | ⟨s', c', hab, hstep', rfl⟩
@@ -224,7 +224,7 @@ theorem step_absorb_right {RR : α → β → Prop}
           cases sh with
           | pure r =>
               have hsh' : shape' (cs PUnit.unit) =
-                  ⟨Shape.pure r, PEmpty.elim⟩ := by
+                  .mk (Shape.pure r) PEmpty.elim := by
                 rw [hsh]
                 congr 1
                 funext z
@@ -235,10 +235,10 @@ theorem step_absorb_right {RR : α → β → Prop}
               subst hYeq
               cases MXY with
               | pure x y hxy hX' hY' =>
-                  have heq : (⟨Shape.pure y, PEmpty.elim⟩ :
+                  have heq : ((.mk (Shape.pure y) PEmpty.elim) :
                       (ViewPoly F β).Obj (ITree F β)) =
-                      ⟨Shape.pure r, PEmpty.elim⟩ := hY'.symm.trans hsh'
-                  have hyr : y = r := Shape.pure.inj (Sigma.mk.inj heq).1
+                      .mk (Shape.pure r) PEmpty.elim := hY'.symm.trans hsh'
+                  have hyr : y = r := Shape.pure.inj (PFunctor.Obj.mk.inj heq).1
                   subst y
                   refine ⟨X, cs PUnit.unit,
                     ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩
@@ -260,12 +260,12 @@ theorem step_absorb_right {RR : α → β → Prop}
               | pure _ _ _ _ hY' =>
                   rw [hY'] at hsh; cases hsh
               | query q' cX cY hX' hY' hcont =>
-                  have heq : (⟨Shape.query q', cY⟩ :
+                  have heq : ((.mk (Shape.query q') (cY)) :
                       (ViewPoly F β).Obj (ITree F β)) =
-                      ⟨Shape.query q, cc⟩ := hY'.symm.trans hsh
-                  have hqq : q' = q := Shape.query.inj (Sigma.mk.inj heq).1
+                      .mk (Shape.query q) (cc) := hY'.symm.trans hsh
+                  have hqq : q' = q := Shape.query.inj (PFunctor.Obj.mk.inj heq).1
                   subst hqq
-                  have hcc : cY = cc := eq_of_heq (Sigma.mk.inj heq).2
+                  have hcc : cY = cc := eq_of_heq (PFunctor.Obj.mk.inj heq).2
                   subst hcc
                   refine ⟨X, cs PUnit.unit,
                     ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩
@@ -358,10 +358,10 @@ theorem comp_aligned {γ : Type uγ} {RR : α → β → Prop} {SS : β → γ �
   | pure x y hxy hleft hmiddle =>
       cases second with
       | pure y' z hyz hmiddle' hright =>
-          have heq : (⟨Shape.pure y, PEmpty.elim⟩ :
+          have heq : ((.mk (Shape.pure y) PEmpty.elim) :
               (ViewPoly F β).Obj (ITree F β)) =
-              ⟨Shape.pure y', PEmpty.elim⟩ := hmiddle.symm.trans hmiddle'
-          have hyy : y = y' := Shape.pure.inj (Sigma.mk.inj heq).1
+              .mk (Shape.pure y') PEmpty.elim := hmiddle.symm.trans hmiddle'
+          have hyy : y = y' := Shape.pure.inj (PFunctor.Obj.mk.inj heq).1
           subst y'
           exact .pure x z ⟨y, hxy, hyz⟩ hleft hright
       | query _ _ _ hbad _ _ => rw [hmiddle] at hbad; cases hbad
@@ -370,12 +370,12 @@ theorem comp_aligned {γ : Type uγ} {RR : α → β → Prop} {SS : β → γ �
       cases second with
       | pure _ _ _ hbad _ => rw [hmiddle] at hbad; cases hbad
       | query event' cMiddle' cRight hmiddle' hright hcont' =>
-          have heq : (⟨Shape.query event, cMiddle⟩ :
+          have heq : ((.mk (Shape.query event) (cMiddle)) :
               (ViewPoly F β).Obj (ITree F β)) =
-              ⟨Shape.query event', cMiddle'⟩ := hmiddle.symm.trans hmiddle'
-          have hevent : event = event' := Shape.query.inj (Sigma.mk.inj heq).1
+              .mk (Shape.query event') (cMiddle') := hmiddle.symm.trans hmiddle'
+          have hevent : event = event' := Shape.query.inj (PFunctor.Obj.mk.inj heq).1
           subst event'
-          have hc : cMiddle = cMiddle' := eq_of_heq (Sigma.mk.inj heq).2
+          have hc : cMiddle = cMiddle' := eq_of_heq (PFunctor.Obj.mk.inj heq).2
           subst cMiddle'
           exact .query event cLeft cRight hleft hright
             (fun reply => ⟨cMiddle reply, hcont reply, hcont' reply⟩)
@@ -436,10 +436,10 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                 subst hYeq
                 cases MXY with
                 | pure x y' hxy HX HY =>
-                    have heq : (⟨Shape.pure y', PEmpty.elim⟩ :
+                    have heq : ((.mk (Shape.pure y') PEmpty.elim) :
                         (ViewPoly F β).Obj (ITree F β)) =
-                        ⟨Shape.pure y, PEmpty.elim⟩ := HY.symm.trans Hb''
-                    have hyy : y' = y := Shape.pure.inj (Sigma.mk.inj heq).1
+                        .mk (Shape.pure y) PEmpty.elim := HY.symm.trans Hb''
+                    have hyy : y' = y := Shape.pure.inj (PFunctor.Obj.mk.inj heq).1
                     subst y'
                     refine ⟨X, d'',
                       ha.trans (ha'.trans ((TauSteps.one ca Ha).trans hX)),
@@ -457,13 +457,13 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                 cases MXY with
                 | pure _ _ _ _ HY => rw [HY] at Hb''; cases Hb''
                 | query event' cLeft cMiddle' HX HY hAC' =>
-                    have heq : (⟨Shape.query event', cMiddle'⟩ :
+                    have heq : ((.mk (Shape.query event') (cMiddle')) :
                         (ViewPoly F β).Obj (ITree F β)) =
-                        ⟨Shape.query event, cMiddle⟩ := HY.symm.trans Hb''
+                        .mk (Shape.query event) (cMiddle) := HY.symm.trans Hb''
                     have hevent : event' = event :=
-                      Shape.query.inj (Sigma.mk.inj heq).1
+                      Shape.query.inj (PFunctor.Obj.mk.inj heq).1
                     subst event'
-                    have hc : cMiddle' = cMiddle := eq_of_heq (Sigma.mk.inj heq).2
+                    have hc : cMiddle' = cMiddle := eq_of_heq (PFunctor.Obj.mk.inj heq).2
                     subst cMiddle'
                     refine ⟨X, d'',
                       ha.trans (ha'.trans ((TauSteps.one ca Ha).trans hX)),
@@ -505,10 +505,10 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                 subst hXeq
                 cases MXY with
                 | pure y' z hyz HX HY =>
-                    have heq : (⟨Shape.pure y', PEmpty.elim⟩ :
+                    have heq : ((.mk (Shape.pure y') PEmpty.elim) :
                         (ViewPoly F β).Obj (ITree F β)) =
-                        ⟨Shape.pure y, PEmpty.elim⟩ := HX.symm.trans Hb''
-                    have hyy : y' = y := Shape.pure.inj (Sigma.mk.inj heq).1
+                        .mk (Shape.pure y) PEmpty.elim := HX.symm.trans Hb''
+                    have hyy : y' = y := Shape.pure.inj (PFunctor.Obj.mk.inj heq).1
                     subst y'
                     refine ⟨a'', Y, ha.trans ha',
                       hd.trans (hd'.trans ((TauSteps.one cd Hd).trans hY)), ?_⟩
@@ -525,13 +525,13 @@ protected theorem comp {γ : Type uγ} {RR : α → β → Prop}
                 cases MXY with
                 | pure _ _ _ HX _ => rw [HX] at Hb''; cases Hb''
                 | query event' cMiddle' cRight HX HY hBD' =>
-                    have heq : (⟨Shape.query event', cMiddle'⟩ :
+                    have heq : ((.mk (Shape.query event') (cMiddle')) :
                         (ViewPoly F β).Obj (ITree F β)) =
-                        ⟨Shape.query event, cMiddle⟩ := HX.symm.trans Hb''
+                        .mk (Shape.query event) (cMiddle) := HX.symm.trans Hb''
                     have hevent : event' = event :=
-                      Shape.query.inj (Sigma.mk.inj heq).1
+                      Shape.query.inj (PFunctor.Obj.mk.inj heq).1
                     subst event'
-                    have hc : cMiddle' = cMiddle := eq_of_heq (Sigma.mk.inj heq).2
+                    have hc : cMiddle' = cMiddle := eq_of_heq (PFunctor.Obj.mk.inj heq).2
                     subst cMiddle'
                     refine ⟨a'', Y, ha.trans ha',
                       hd.trans (hd'.trans ((TauSteps.one cd Hd).trans hY)), ?_⟩
@@ -614,12 +614,12 @@ given `t ≈ s` and `s` step-headed with continuation `c`, conclude
 the head of `(c .unit)`, in the worst case unfolding the inner
 `WeakBisim (ct .unit) (cs .unit)` one more level to reach a head match. -/
 theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α)
-    (h : t ≈ s) (hstep : shape' s = ⟨.step, c⟩) :
+    (h : t ≈ s) (hstep : shape' s = .mk .step c) :
     t ≈ (c PUnit.unit) := by
   refine coinduct
     (fun x z => x ≈ z ∨
       ∃ (s' : ITree F α) (c' : PUnit.{uFB + 1} → ITree F α),
-        x ≈ s' ∧ shape' s' = ⟨.step, c'⟩ ∧ z = (c' PUnit.unit))
+        x ≈ s' ∧ shape' s' = .mk .step (c') ∧ z = (c' PUnit.unit))
     ?_ (Or.inr ⟨s, c, h, hstep, rfl⟩)
   intro a b hab
   rcases hab with hab | ⟨s', c', hab, hstep', hz⟩
@@ -639,7 +639,7 @@ theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α
         cases sh_c with
         | pure r =>
             have hshc_rw : shape' (cs PUnit.unit) =
-                ⟨Shape.pure r, PEmpty.elim⟩ := by
+                .mk (Shape.pure r) PEmpty.elim := by
               rw [hshc]; congr 1; funext z; exact z.elim
             obtain ⟨X, Y, hX, hY, MxY⟩ := hr_weak.dest
             have hY_eq : Y = (cs PUnit.unit) :=
@@ -647,10 +647,10 @@ theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α
             subst hY_eq
             cases MxY with
             | pure r' ht_X hs_Y =>
-                have hEq1 : (⟨Shape.pure r', PEmpty.elim⟩ :
+                have hEq1 : ((.mk (Shape.pure r') PEmpty.elim) :
                     (ViewPoly F α).Obj (ITree F α)) =
-                  ⟨Shape.pure r, PEmpty.elim⟩ := hs_Y.symm.trans hshc_rw
-                have hrr : r' = r := Shape.pure.inj (Sigma.mk.inj hEq1).1
+                  .mk (Shape.pure r) PEmpty.elim := hs_Y.symm.trans hshc_rw
+                have hrr : r' = r := Shape.pure.inj (PFunctor.Obj.mk.inj hEq1).1
                 subst hrr
                 refine ⟨X, cs PUnit.unit,
                     ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩
@@ -660,13 +660,13 @@ theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α
             | tau _ _ _ hs_Y _ =>
                 rw [hs_Y] at hshc_rw; cases hshc_rw
         | step =>
-            have hshc_rw : shape' (cs PUnit.unit) = ⟨Shape.step, c_cc⟩ := hshc
+            have hshc_rw : shape' (cs PUnit.unit) = .mk Shape.step (c_cc) := hshc
             refine ⟨a', cs PUnit.unit, ha, .refl _, ?_⟩
             refine Match.tau ct c_cc ht_a hshc_rw ?_
             exact Or.inr ⟨cs PUnit.unit, c_cc, hr_weak, hshc_rw, rfl⟩
         | query qa =>
             have hshc_rw : shape' (cs PUnit.unit) =
-                ⟨Shape.query qa, c_cc⟩ := hshc
+                .mk (Shape.query qa) (c_cc) := hshc
             obtain ⟨X, Y, hX, hY, MxY⟩ := hr_weak.dest
             have hY_eq : Y = (cs PUnit.unit) :=
               TauSteps.rigid_of_query qa c_cc hshc_rw hY
@@ -675,12 +675,12 @@ theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α
             | pure _ _ hs_Y =>
                 rw [hs_Y] at hshc_rw; cases hshc_rw
             | query qa' c_X c_Y ht_X hs_Y hcc_XY =>
-                have hEq : (⟨Shape.query qa', c_Y⟩ :
+                have hEq : ((.mk (Shape.query qa') (c_Y)) :
                     (ViewPoly F α).Obj (ITree F α)) =
-                  ⟨Shape.query qa, c_cc⟩ := hs_Y.symm.trans hshc_rw
-                have hqq : qa' = qa := Shape.query.inj (Sigma.mk.inj hEq).1
+                  .mk (Shape.query qa) (c_cc) := hs_Y.symm.trans hshc_rw
+                have hqq : qa' = qa := Shape.query.inj (PFunctor.Obj.mk.inj hEq).1
                 subst hqq
-                have hcc : c_Y = c_cc := eq_of_heq (Sigma.mk.inj hEq).2
+                have hcc : c_Y = c_cc := eq_of_heq (PFunctor.Obj.mk.inj hEq).2
                 subst hcc
                 refine ⟨X, cs PUnit.unit,
                     ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩
@@ -788,9 +788,9 @@ theorem Match.trans_aligned {c a_1 b_1 : ITree F α}
   | pure r Ha Hc =>
       cases Mb with
       | pure r' Hc' Hb =>
-          have heq : (⟨.pure r, PEmpty.elim⟩ : (ViewPoly F α).Obj _) =
-              ⟨.pure r', PEmpty.elim⟩ := Hc.symm.trans Hc'
-          have hrr : r = r' := Shape.pure.inj (Sigma.mk.inj heq).1
+          have heq : ((.mk (.pure r) PEmpty.elim) : (ViewPoly F α).Obj _) =
+              .mk (.pure r') PEmpty.elim := Hc.symm.trans Hc'
+          have hrr : r = r' := Shape.pure.inj (PFunctor.Obj.mk.inj heq).1
           subst hrr
           exact .pure r Ha Hb
       | query _ _ _ Hc' _ _ => rw [Hc] at Hc'; cases Hc'
@@ -799,11 +799,11 @@ theorem Match.trans_aligned {c a_1 b_1 : ITree F α}
       cases Mb with
       | pure _ Hc' _ => rw [Hc] at Hc'; cases Hc'
       | query q' cc cb Hc' Hb h' =>
-          have heq : (⟨.query q, ca'⟩ : (ViewPoly F α).Obj _) =
-              ⟨.query q', cc⟩ := Hc.symm.trans Hc'
-          have hqq : q = q' := Shape.query.inj (Sigma.mk.inj heq).1
+          have heq : ((.mk (.query q) (ca')) : (ViewPoly F α).Obj _) =
+              .mk (.query q') (cc) := Hc.symm.trans Hc'
+          have hqq : q = q' := Shape.query.inj (PFunctor.Obj.mk.inj heq).1
           subst hqq
-          have hcc : ca' = cc := eq_of_heq (Sigma.mk.inj heq).2
+          have hcc : ca' = cc := eq_of_heq (PFunctor.Obj.mk.inj heq).2
           exact .query q ca cb Ha Hb (fun b => ⟨ca' b, h b, hcc.symm ▸ h' b⟩)
       | tau _ _ Hc' _ _ => rw [Hc] at Hc'; cases Hc'
   | tau ct cs Ha Hc h =>
@@ -881,10 +881,10 @@ Case analysis on the head of `c'` via `Ma'`:
                 subst hYc
                 cases MXY with
                 | pure r'' HX HY =>
-                    have heq : (⟨Shape.pure r'', PEmpty.elim⟩ :
+                    have heq : ((.mk (Shape.pure r'') PEmpty.elim) :
                         (ViewPoly F α).Obj (ITree F α)) =
-                        ⟨Shape.pure r', PEmpty.elim⟩ := HY.symm.trans Hc''
-                    have hrr : r' = r'' := (Shape.pure.inj (Sigma.mk.inj heq).1).symm
+                        .mk (Shape.pure r') PEmpty.elim := HY.symm.trans Hc''
+                    have hrr : r' = r'' := (Shape.pure.inj (PFunctor.Obj.mk.inj heq).1).symm
                     refine ⟨X, b'',
                       ha.trans (ha'.trans ((TauSteps.one ct Ha'').trans hX)),
                       hb.trans hb'', ?_⟩
@@ -900,13 +900,13 @@ Case analysis on the head of `c'` via `Ma'`:
                 cases MXY with
                 | pure _ _ HY => rw [HY] at Hc''; cases Hc''
                 | query q'' cq_a cq_b HX HY h_q =>
-                    have heq : (⟨Shape.query q'', cq_b⟩ :
+                    have heq : ((.mk (Shape.query q'') (cq_b)) :
                         (ViewPoly F α).Obj (ITree F α)) =
-                        ⟨Shape.query q_outer, cq_outer⟩ := HY.symm.trans Hc''
+                        .mk (Shape.query q_outer) (cq_outer) := HY.symm.trans Hc''
                     have hqq : q'' = q_outer :=
-                      Shape.query.inj (Sigma.mk.inj heq).1
+                      Shape.query.inj (PFunctor.Obj.mk.inj heq).1
                     subst hqq
-                    have hcc : cq_b = cq_outer := eq_of_heq (Sigma.mk.inj heq).2
+                    have hcc : cq_b = cq_outer := eq_of_heq (PFunctor.Obj.mk.inj heq).2
                     subst hcc
                     refine ⟨X, b'',
                       ha.trans (ha'.trans ((TauSteps.one ct Ha'').trans hX)),
@@ -950,10 +950,10 @@ Case analysis on the head of `c'` via `Ma'`:
                 subst hXc
                 cases MXY with
                 | pure r'' HX HY =>
-                    have heq : (⟨Shape.pure r'', PEmpty.elim⟩ :
+                    have heq : ((.mk (Shape.pure r'') PEmpty.elim) :
                         (ViewPoly F α).Obj (ITree F α)) =
-                        ⟨Shape.pure r', PEmpty.elim⟩ := HX.symm.trans Hc''
-                    have hrr : r' = r'' := (Shape.pure.inj (Sigma.mk.inj heq).1).symm
+                        .mk (Shape.pure r') PEmpty.elim := HX.symm.trans Hc''
+                    have hrr : r' = r'' := (Shape.pure.inj (PFunctor.Obj.mk.inj heq).1).symm
                     refine ⟨a'', Y, ha.trans ha'',
                       hb.trans (hb'.trans ((TauSteps.one cs Hb'').trans hY)),
                       ?_⟩
@@ -969,12 +969,12 @@ Case analysis on the head of `c'` via `Ma'`:
                 cases MXY with
                 | pure _ HX _ => rw [HX] at Hc''; cases Hc''
                 | query q'' cq_a cq_b HX HY h_q =>
-                    have heq : (⟨Shape.query q'', cq_a⟩ :
+                    have heq : ((.mk (Shape.query q'') (cq_a)) :
                         (ViewPoly F α).Obj (ITree F α)) =
-                        ⟨Shape.query q_a, cq'_outer⟩ := HX.symm.trans Hc''
-                    have hqq : q'' = q_a := Shape.query.inj (Sigma.mk.inj heq).1
+                        .mk (Shape.query q_a) (cq'_outer) := HX.symm.trans Hc''
+                    have hqq : q'' = q_a := Shape.query.inj (PFunctor.Obj.mk.inj heq).1
                     subst hqq
-                    have hcc : cq_a = cq'_outer := eq_of_heq (Sigma.mk.inj heq).2
+                    have hcc : cq_a = cq'_outer := eq_of_heq (PFunctor.Obj.mk.inj heq).2
                     subst hcc
                     refine ⟨a'', Y, ha.trans ha'',
                       hb.trans (hb'.trans ((TauSteps.one cs Hb'').trans hY)),

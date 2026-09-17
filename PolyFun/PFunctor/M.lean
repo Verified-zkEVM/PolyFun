@@ -6,6 +6,7 @@ Authors: Quang Dao
 module
 
 public import Mathlib.Data.PFunctor.Univariate.M
+public import PolyFun.PFunctor.Obj
 
 /-! # Auxiliary lemmas for `PFunctor.M`
 
@@ -19,10 +20,9 @@ defining and reasoning about ITrees:
 
 * `M.dest_inj` / `M.eq_of_dest_eq` — `M.dest` is injective on `M P` (since
   it has a left inverse `M.mk`).
-* `M.dest_corec_apply` — destructured form of `M.dest_corec` whose RHS unpacks
-  the `Sigma` so that nested pattern matches reduce by `rfl`.
+* `M.dest_corec_apply` — `M.dest_corec` through the polynomial-object constructor.
 * `M.dest_corec_eq` — reformulation of `M.dest_corec` that lets `simp` see the
-  result as an explicit `Sigma`.
+  result as an explicit polynomial object.
 * `M.corec_eq_corec` — bisimulation principle for two `corec`s, the workhorse
   for `bind`/`iter` rewriting.
 * `M.corec_dest` — `M.corec dest = id`. The corecursive identity.
@@ -50,21 +50,19 @@ theorem eq_of_dest_eq {u v : M P} (h : M.dest u = M.dest v) : u = v := by
 
 /-! ### Corec helpers -/
 
-/-- `M.dest_corec` with the result `Sigma` unpacked. The shape of `M.dest`'s
-output is `(g x).1`; the children component, after applying the `PFunctor.map`
-on the RHS of `M.dest_corec`, is `M.corec g ∘ (g x).2`. -/
+/-- The shape and children of a corecursive polynomial tree. -/
 theorem dest_corec_apply (g : α → P α) (x : α) :
-    M.dest (M.corec g x) = ⟨(g x).1, fun b => M.corec g ((g x).2 b)⟩ := by
+    M.dest (M.corec g x) = .mk ((g x).fst) (fun b => M.corec g ((g x).snd b)) := by
   rw [M.dest_corec]
-  rcases h : g x with ⟨a, f⟩
   rfl
 
-/-- Pointwise version of `dest_corec_apply` written in `Sigma`-eta form,
+/-- Pointwise version of `dest_corec_apply` with an explicit shape and child family,
 convenient when the right-hand side of a `corec` step is already known
 explicitly. -/
-theorem dest_corec_eq {a : P.A} {h : P.B a → α} (g : α → P α) (x : α) (heq : g x = ⟨a, h⟩) :
-    M.dest (M.corec g x) = ⟨a, fun b => M.corec g (h b)⟩ := by
+theorem dest_corec_eq {a : P.A} {h : P.B a → α} (g : α → P α) (x : α) (heq : g x = .mk a h) :
+    M.dest (M.corec g x) = .mk a (fun b => M.corec g (h b)) := by
   rw [dest_corec_apply, heq]
+  rfl
 
 /-- Bisimulation principle specialized to two `corec`s built from the same
 shape transformer. If at every reachable state the two seed transitions agree
@@ -73,7 +71,7 @@ theorem corec_eq_corec {α : Type v} {β : Type w} (g : α → P α) (h : β →
     (R : α → β → Prop) (x₀ : α) (y₀ : β)
     (hR : R x₀ y₀)
     (step : ∀ x y, R x y → ∃ a f f',
-      g x = ⟨a, f⟩ ∧ h y = ⟨a, f'⟩ ∧ ∀ i, R (f i) (f' i)) :
+      g x = .mk a f ∧ h y = .mk a (f') ∧ ∀ i, R (f i) (f' i)) :
     M.corec g x₀ = M.corec h y₀ := by
   let S : M P → M P → Prop :=
     fun u v => ∃ x y, R x y ∧ u = M.corec g x ∧ v = M.corec h y
@@ -91,10 +89,9 @@ theorem corec_eq_corec {α : Type v} {β : Type w} (g : α → P α) (h : β →
 theorem corec_dest (u : M P) : M.corec M.dest u = u := by
   refine M.bisim (fun a b => a = M.corec M.dest b) ?_ _ _ rfl
   rintro a b rfl
-  refine ⟨(M.dest b).1, (fun i => M.corec M.dest ((M.dest b).2 i)),
-    (M.dest b).2, ?_, ?_, ?_⟩
+  refine ⟨(M.dest b).fst, (fun i => M.corec M.dest ((M.dest b).snd i)),
+    (M.dest b).snd, ?_, ?_, ?_⟩
   · rw [dest_corec_apply]
-    rfl
   · rfl
   · intro i; rfl
 

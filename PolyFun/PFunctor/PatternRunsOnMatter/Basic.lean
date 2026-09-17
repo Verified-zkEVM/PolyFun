@@ -94,8 +94,8 @@ def runLabeled {α : Type v} (pattern : (FreeP P).A)
     (matter : (CofreeP Q).Obj α) :
     (FreeP (P ⊗ Q)).Obj (FreeM.Path pattern × α) :=
   FreeP.relabel
-    (fun pulled => ⟨pulled.1, matter.2 pulled.2⟩)
-    (runObj pattern matter.1)
+    (fun pulled => ⟨pulled.1, matter.snd pulled.2⟩)
+    (runObj pattern matter.fst)
 
 /-- A terminated pattern returns its leaf together with the label at the root
 of the matter object. -/
@@ -268,9 +268,9 @@ theorem runObj_natural {P' : PFunctor.{pA', pB'}} {Q' : PFunctor.{qA', qB'}}
         (CofreeP.mapChildObj g matter qDirection)
       have hMatterNormalized :
           runMatterObj
-              ⟨M.children (M.mapLens g matter) qDirection,
-                fun vertex => M.Vertex.pullMapLens g sourceChild
-                  (M.Vertex.castEquiv hchild vertex)⟩ =
+              (.mk (M.children (M.mapLens g matter) qDirection)
+                (fun vertex => M.Vertex.pullMapLens g sourceChild
+                  (M.Vertex.castEquiv hchild vertex))) =
             FreeP.relabel
               (fun pulled =>
                 (⟨(FreeP.map f).toFunB
@@ -282,7 +282,7 @@ theorem runObj_natural {P' : PFunctor.{pA', pB'}} {Q' : PFunctor.{qA', qB'}}
                 ((CofreeP.map g).toFunA sourceChild)) := by
         simpa only [runMatterObj, runLabeled, FreeP.relabel_relabel,
           Function.comp_def, CofreeP.map_toFunA,
-          CofreeP.map_toFunB] using hMatter
+          CofreeP.map_toFunB, Obj.fst_mk, Obj.snd_mk] using hMatter
       have hCore := hMatterNormalized.trans
         (ih (f.toFunB a pDirection) sourceChild)
       have h := congrArg
@@ -315,7 +315,7 @@ theorem runObj_natural {P' : PFunctor.{pA', pB'}} {Q' : PFunctor.{qA', qB'}}
         FreeM.mapLens_liftBind, FreeM.Path.pullMap_liftBind,
         FreeM.Path.pullMapLens_liftBind, sourceQ, sourceChild,
         mappedPattern, runMatterObj, runLabeled, rhsAt, hchild,
-        Lens.tensorMap, Prod.map] using hFinal
+        Lens.tensorMap, Prod.map, Obj.fst_mk, Obj.snd_mk] using hFinal
 
 /-- The Libkind--Spivak interaction is covariant in both the pattern and
 matter generators. All eight source and target universes remain independent. -/

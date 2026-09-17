@@ -44,12 +44,12 @@ records which destructor case supplies the move. -/
 inductive LTSMove (F : PFunctor.{uFA, uFB}) (α : Type uα) :
     Option (ITree F α) → Type (max uFA uFB uα) where
   | step (t : ITree F α) (c : PUnit.{uFB + 1} → ITree F α)
-      (head : shape' t = ⟨.step, c⟩) : LTSMove F α (some t)
+      (head : shape' t = .mk .step c) : LTSMove F α (some t)
   | event (t : ITree F α) (a : F.A) (c : F.B a → ITree F α)
-      (head : shape' t = ⟨.query a, c⟩) (reply : F.B a) :
+      (head : shape' t = .mk (.query a) c) (reply : F.B a) :
       LTSMove F α (some t)
   | ret (t : ITree F α) (result : α)
-      (head : shape' t = ⟨.pure result, PEmpty.elim⟩) :
+      (head : shape' t = .mk (.pure result) PEmpty.elim) :
       LTSMove F α (some t)
 
 namespace LTSMove
@@ -78,47 +78,47 @@ def toLTS (F : PFunctor.{uFA, uFB}) (α : Type uα) : Control.LTS (Observation F
   label := fun _ move => move.label
 
 @[simp] theorem LTSMove.next_step (t : ITree F α)
-    (c : PUnit.{uFB + 1} → ITree F α) (head : shape' t = ⟨.step, c⟩) :
+    (c : PUnit.{uFB + 1} → ITree F α) (head : shape' t = .mk .step c) :
     (@LTSMove.next F α _ (.step t c head)) = some (c PUnit.unit) := rfl
 
 @[simp] theorem LTSMove.next_event (t : ITree F α) (a : F.A)
-    (c : F.B a → ITree F α) (head : shape' t = ⟨.query a, c⟩)
+    (c : F.B a → ITree F α) (head : shape' t = .mk (.query a) c)
     (reply : F.B a) :
     (@LTSMove.next F α _ (.event t a c head reply)) = some (c reply) := rfl
 
 @[simp] theorem LTSMove.next_ret (t : ITree F α) (result : α)
-    (head : shape' t = ⟨.pure result, PEmpty.elim⟩) :
+    (head : shape' t = .mk (.pure result) PEmpty.elim) :
     (@LTSMove.next F α _ (.ret t result head)) = none := rfl
 
 @[simp] theorem LTSMove.label_step (t : ITree F α)
-    (c : PUnit.{uFB + 1} → ITree F α) (head : shape' t = ⟨.step, c⟩) :
+    (c : PUnit.{uFB + 1} → ITree F α) (head : shape' t = .mk .step c) :
     (@LTSMove.label F α _ (.step t c head)) = none := rfl
 
 @[simp] theorem LTSMove.label_event (t : ITree F α) (a : F.A)
-    (c : F.B a → ITree F α) (head : shape' t = ⟨.query a, c⟩)
+    (c : F.B a → ITree F α) (head : shape' t = .mk (.query a) c)
     (reply : F.B a) :
     (@LTSMove.label F α _ (.event t a c head reply)) =
       some (.event a reply) := rfl
 
 @[simp] theorem LTSMove.label_ret (t : ITree F α) (result : α)
-    (head : shape' t = ⟨.pure result, PEmpty.elim⟩) :
+    (head : shape' t = .mk (.pure result) PEmpty.elim) :
     (@LTSMove.label F α _ (.ret t result head)) = some (.ret result) := rfl
 
 /-! ## Primitive transitions -/
 
 theorem toLTS_silentStep_of_step {t : ITree F α}
-    (c : PUnit.{uFB + 1} → ITree F α) (head : shape' t = ⟨.step, c⟩) :
+    (c : PUnit.{uFB + 1} → ITree F α) (head : shape' t = .mk .step c) :
     (toLTS F α).SilentStep (some t) (some (c PUnit.unit)) :=
   ⟨.step t c head, rfl, rfl⟩
 
 theorem toLTS_visibleStep_of_query {t : ITree F α} (a : F.A)
-    (c : F.B a → ITree F α) (head : shape' t = ⟨.query a, c⟩)
+    (c : F.B a → ITree F α) (head : shape' t = .mk (.query a) c)
     (reply : F.B a) :
     (toLTS F α).VisibleStep (some t) (.event a reply) (some (c reply)) :=
   ⟨.event t a c head reply, rfl, rfl⟩
 
 theorem toLTS_visibleStep_of_pure {t : ITree F α} (result : α)
-    (head : shape' t = ⟨.pure result, PEmpty.elim⟩) :
+    (head : shape' t = .mk (.pure result) PEmpty.elim) :
     (toLTS F α).VisibleStep (some t) (.ret result) none :=
   ⟨.ret t result head, rfl, rfl⟩
 
@@ -201,12 +201,12 @@ theorem weakBisim_isWeakSimulation :
               cases matched with
               | pure observed htMatch hsMatch =>
                   have heq :
-                      (⟨Shape.pure observed, PEmpty.elim⟩ :
+                      ((.mk (Shape.pure observed) PEmpty.elim) :
                         (ViewPoly F α).Obj (ITree F α)) =
-                      ⟨Shape.pure result, PEmpty.elim⟩ :=
+                      .mk (Shape.pure result) PEmpty.elim :=
                     htMatch.symm.trans head
                   have hresult : observed = result :=
-                    Shape.pure.inj (Sigma.mk.inj heq).1
+                    Shape.pure.inj (PFunctor.Obj.mk.inj heq).1
                   subst observed
                   exact ⟨none,
                     ⟨some s', none, hs'.toLTSSilentSteps,
@@ -233,13 +233,13 @@ theorem weakBisim_isWeakSimulation :
                   cases htMatch
               | query observed ct cs htMatch hsMatch hcont =>
                   have heq :
-                      (⟨Shape.query observed, ct⟩ :
+                      ((.mk (Shape.query observed) (ct)) :
                         (ViewPoly F α).Obj (ITree F α)) =
-                      ⟨Shape.query a, c⟩ := htMatch.symm.trans head
+                      .mk (Shape.query a) c := htMatch.symm.trans head
                   have ha : observed = a :=
-                    Shape.query.inj (Sigma.mk.inj heq).1
+                    Shape.query.inj (PFunctor.Obj.mk.inj heq).1
                   subst observed
-                  have hc : ct = c := eq_of_heq (Sigma.mk.inj heq).2
+                  have hc : ct = c := eq_of_heq (PFunctor.Obj.mk.inj heq).2
                   subst ct
                   exact ⟨some (cs reply),
                     ⟨some s', some (cs reply), hs'.toLTSSilentSteps,

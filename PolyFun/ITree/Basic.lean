@@ -123,21 +123,21 @@ variable {F : PFunctor.{uA, uB}} {α : Type uα}
 
 /-- Repack an ergonomic `Shape`-based layer as a layer of `F + C α + y`. -/
 def pack {X : Type uS} : (ViewPoly F α).Obj X → (Poly F α).Obj X
-  | ⟨.pure value, _⟩ => ⟨.inl (.inr value), PEmpty.elim⟩
-  | ⟨.step, next⟩ => ⟨.inr PUnit.unit, next⟩
-  | ⟨.query position, next⟩ => ⟨.inl (.inl position), next⟩
+  | .mk (.pure value) _ => .mk (.inl (.inr value)) PEmpty.elim
+  | .mk .step next => .mk (.inr PUnit.unit) next
+  | .mk (.query position) next => .mk (.inl (.inl position)) next
 
 /-- Unpack a layer of `F + C α + y` into the ergonomic `Shape` view. -/
 def unpack {X : Type uS} : (Poly F α).Obj X → (ViewPoly F α).Obj X
-  | ⟨.inl (.inl position), next⟩ => ⟨.query position, next⟩
-  | ⟨.inl (.inr value), _⟩ => ⟨.pure value, PEmpty.elim⟩
-  | ⟨.inr _, next⟩ => ⟨.step, next⟩
+  | .mk (.inl (.inl position)) next => .mk (.query position) next
+  | .mk (.inl (.inr value)) _ => .mk (.pure value) PEmpty.elim
+  | .mk (.inr _) next => .mk .step next
 
 @[simp] theorem unpack_pack {X : Type uS} (layer : (ViewPoly F α).Obj X) :
     unpack (pack layer) = layer := by
   rcases layer with ⟨shape, next⟩
   cases shape with
-  | pure value => exact Sigma.ext rfl (heq_of_eq (funext fun direction => direction.elim))
+  | pure value => exact PFunctor.Obj.ext rfl (heq_of_eq (funext fun direction => direction.elim))
   | step => rfl
   | query position => rfl
 
@@ -146,7 +146,7 @@ def unpack {X : Type uS} : (Poly F α).Obj X → (ViewPoly F α).Obj X
   rcases layer with ⟨shape, next⟩
   rcases shape with ⟨position | value⟩ | step
   · rfl
-  · exact Sigma.ext rfl (heq_of_eq (funext fun direction => direction.elim))
+  · exact PFunctor.Obj.ext rfl (heq_of_eq (funext fun direction => direction.elim))
   · cases step
     rfl
 
@@ -163,7 +163,7 @@ def viewEquiv {X : Type uS} : (Poly F α).Obj X ≃ (ViewPoly F α).Obj X where
   rcases layer with ⟨shape, next⟩
   rcases shape with ⟨position | value⟩ | step
   · rfl
-  · exact Sigma.ext rfl (heq_of_eq (funext fun direction => direction.elim))
+  · exact PFunctor.Obj.ext rfl (heq_of_eq (funext fun direction => direction.elim))
   · cases step
     rfl
 
@@ -172,7 +172,7 @@ theorem pack_map {X : Type uS} {Y : Type uT} (f : X → Y)
     pack ((ViewPoly F α).map f layer) = (Poly F α).map f (pack layer) := by
   rcases layer with ⟨shape, next⟩
   cases shape with
-  | pure value => exact Sigma.ext rfl (heq_of_eq (funext fun direction => direction.elim))
+  | pure value => exact PFunctor.Obj.ext rfl (heq_of_eq (funext fun direction => direction.elim))
   | step => rfl
   | query position => rfl
 
@@ -237,20 +237,14 @@ def ofShape (layer : (ViewPoly F α).Obj (ITree F α)) : ITree F α :=
 
 private theorem viewMap_ofM_toM (layer : (ViewPoly F α).Obj (ITree F α)) :
     (ViewPoly F α).map ofM ((ViewPoly F α).map toM layer) = layer := by
-  rcases layer with ⟨shape, next⟩
-  cases shape with
-  | pure value => exact Sigma.ext rfl (heq_of_eq (funext fun direction => direction.elim))
-  | step => exact Sigma.ext rfl (heq_of_eq (funext fun _ => rfl))
-  | query position => exact Sigma.ext rfl (heq_of_eq (funext fun _ => rfl))
+  rw [PFunctor.map_map]
+  exact (ViewPoly F α).id_map layer
 
 private theorem viewMap_toM_ofM
     (layer : (ViewPoly F α).Obj (PFunctor.M (Poly F α))) :
     (ViewPoly F α).map toM ((ViewPoly F α).map ofM layer) = layer := by
-  rcases layer with ⟨shape, next⟩
-  cases shape with
-  | pure value => exact Sigma.ext rfl (heq_of_eq (funext fun direction => direction.elim))
-  | step => exact Sigma.ext rfl (heq_of_eq (funext fun _ => rfl))
-  | query position => exact Sigma.ext rfl (heq_of_eq (funext fun _ => rfl))
+  rw [PFunctor.map_map]
+  exact (ViewPoly F α).id_map layer
 
 @[simp] theorem shape'_ofShape (layer : (ViewPoly F α).Obj (ITree F α)) :
     shape' (ofShape layer) = layer := by
@@ -273,40 +267,40 @@ theorem shape'_mk (layer : (ViewPoly F α).Obj (ITree F α)) :
 
 /-- Build the `.pure` ITree node carrying a result `r : α`. (Coq `Ret`.) -/
 def pure (r : α) : ITree F α :=
-  ofShape ⟨.pure r, PEmpty.elim⟩
+  ofShape (.mk (.pure r) PEmpty.elim)
 
 /-- Build the `.step` ITree node — a silent step in front of `t`. (Coq `Tau`.) -/
 def step (t : ITree F α) : ITree F α :=
-  ofShape ⟨.step, fun _ => t⟩
+  ofShape (.mk .step (fun _ => t))
 
 /-- Build the `.query` ITree node — a visible event `a : F.A` together with a
 continuation `k : F.B a → ITree F α`. (Coq `Vis`.) -/
 def query (a : F.A) (k : F.B a → ITree F α) : ITree F α :=
-  ofShape ⟨.query a, k⟩
+  ofShape (.mk (.query a) k)
 
 /-- One-step shape view of an ITree, dropping the continuation. The full data
 remains accessible via `shape'`. -/
 def shape (t : ITree F α) : Shape F α :=
-  (shape' t).1
+  (shape' t).fst
 
-@[simp] theorem shape'_pure (r : α) : shape' (pure (F := F) r) = ⟨.pure r, PEmpty.elim⟩ := by
+@[simp] theorem shape'_pure (r : α) : shape' (pure (F := F) r) = .mk (.pure r) PEmpty.elim := by
   rw [pure, shape'_ofShape]
 
-@[simp] theorem shape'_step (t : ITree F α) : shape' (step t) = ⟨.step, fun _ => t⟩ := by
+@[simp] theorem shape'_step (t : ITree F α) : shape' (step t) = .mk .step (fun _ => t) := by
   rw [step, shape'_ofShape]
 
 @[simp] theorem shape'_query (a : F.A) (k : F.B a → ITree F α) :
-    shape' (query a k) = ⟨.query a, k⟩ :=
+    shape' (query a k) = .mk (.query a) k :=
   shape'_ofShape _
 
 @[simp] theorem shape_pure (r : α) : shape (pure (F := F) r) = .pure r := by
-  rw [shape, shape'_pure]
+  rw [shape, shape'_pure, PFunctor.Obj.fst_mk]
 
 @[simp] theorem shape_step (t : ITree F α) : shape (step t) = .step := by
-  rw [shape, shape'_step]
+  rw [shape, shape'_step, PFunctor.Obj.fst_mk]
 
 @[simp] theorem shape_query (a : F.A) (k : F.B a → ITree F α) : shape (query a k) = .query a := by
-  rw [shape, shape'_query]
+  rw [shape, shape'_query, PFunctor.Obj.fst_mk]
 
 /-! ### Corecursion and coinduction -/
 
@@ -319,21 +313,22 @@ def corec {S : Type uS} (next : S → (ViewPoly F α).Obj S) (seed : S) : ITree 
 
 theorem shape'_corec_apply {S : Type uS} (next : S → (ViewPoly F α).Obj S) (seed : S) :
     shape' (corec next seed) =
-      ⟨(next seed).1, fun direction => corec next ((next seed).2 direction)⟩ := by
+      .mk ((next seed).fst) (fun direction => corec next ((next seed).snd direction)) := by
   unfold shape' corec
   rw [PFunctor.M.dest_corec]
   rcases h : next seed with ⟨shape, children⟩
   cases shape with
-  | pure value => exact Sigma.ext rfl (heq_of_eq (funext fun direction => direction.elim))
+  | pure value => exact PFunctor.Obj.ext rfl (heq_of_eq (funext fun direction => direction.elim))
   | step => rfl
   | query position => rfl
 
 theorem shape'_corec_eq {S : Type uS} {shape : (ViewPoly F α).A}
     {children : (ViewPoly F α).B shape → S}
     (next : S → (ViewPoly F α).Obj S) (seed : S)
-    (h : next seed = ⟨shape, children⟩) :
-    shape' (corec next seed) = ⟨shape, fun direction => corec next (children direction)⟩ := by
+    (h : next seed = .mk shape children) :
+    shape' (corec next seed) = .mk shape (fun direction => corec next (children direction)) := by
   rw [shape'_corec_apply, h]
+  rfl
 
 /-- Recover the raw destructor by repacking `shape'` and unwrapping its children. -/
 theorem pack_shape' (tree : ITree F α) :
@@ -355,7 +350,7 @@ theorem eq_of_shape'_eq {left right : ITree F α} (h : shape' left = shape' righ
 /-- Coinduction stated entirely through the ergonomic ITree destructor. -/
 theorem bisim (R : ITree F α → ITree F α → Prop)
     (step : ∀ left right, R left right → ∃ shape leftNext rightNext,
-      shape' left = ⟨shape, leftNext⟩ ∧ shape' right = ⟨shape, rightNext⟩ ∧
+      shape' left = .mk shape leftNext ∧ shape' right = .mk shape rightNext ∧
         ∀ direction, R (leftNext direction) (rightNext direction)) :
     ∀ left right, R left right → left = right := by
   intro left right hrel
@@ -366,10 +361,10 @@ theorem bisim (R : ITree F α → ITree F α → Prop)
   obtain ⟨shape, leftNext, rightNext, hleft, hright, hnext⟩ :=
     step (ofM rawLeft) (ofM rawRight) hraw
   have hleftRaw : PFunctor.M.dest rawLeft =
-      pack ((ViewPoly F α).map toM ⟨shape, leftNext⟩) := by
+      pack ((ViewPoly F α).map toM (.mk shape leftNext)) := by
     rw [← pack_shape' (ofM rawLeft), hleft]
   have hrightRaw : PFunctor.M.dest rawRight =
-      pack ((ViewPoly F α).map toM ⟨shape, rightNext⟩) := by
+      pack ((ViewPoly F α).map toM (.mk shape rightNext)) := by
     rw [← pack_shape' (ofM rawRight), hright]
   cases shape with
   | pure value =>
@@ -412,7 +407,7 @@ theorem corec_eq_corec {S : Type uS} {T : Type uT}
     (R : S → T → Prop) (leftSeed : S) (rightSeed : T)
     (hseed : R leftSeed rightSeed)
     (hstep : ∀ left right, R left right → ∃ shape leftNext rightNext,
-      leftStep left = ⟨shape, leftNext⟩ ∧ rightStep right = ⟨shape, rightNext⟩ ∧
+      leftStep left = .mk shape leftNext ∧ rightStep right = .mk shape rightNext ∧
         ∀ direction, R (leftNext direction) (rightNext direction)) :
     corec leftStep leftSeed = corec rightStep rightSeed := by
   let Srel : ITree F α → ITree F α → Prop := fun left right =>
@@ -435,10 +430,10 @@ theorem corec_eq_corec {S : Type uS} {T : Type uT}
 direction continuation over the empty fiber is irrelevant. -/
 theorem eq_pure_of_dest {t : ITree F α} {r : α}
     {c : (ViewPoly F α).B (.pure r) → ITree F α}
-    (h : shape' t = ⟨.pure r, c⟩) : t = pure r := by
+    (h : shape' t = .mk (.pure r) c) : t = pure r := by
   apply eq_of_shape'_eq
   rw [h, shape'_pure]
-  change (⟨.pure r, c⟩ : (ViewPoly F α).Obj _) = ⟨.pure r, PEmpty.elim⟩
+  change ((.mk (.pure r) c) : (ViewPoly F α).Obj _) = .mk (.pure r) PEmpty.elim
   congr 1
   funext z
   exact z.elim
@@ -446,7 +441,7 @@ theorem eq_pure_of_dest {t : ITree F α} {r : α}
 /-- A tree whose `shape'` exposes a `.step` head is a silent step in
 front of its unique subtree. -/
 theorem eq_step_of_dest {t : ITree F α} {c : (ViewPoly F α).B .step → ITree F α}
-    (h : shape' t = ⟨.step, c⟩) : t = step (c PUnit.unit) := by
+    (h : shape' t = .mk .step c) : t = step (c PUnit.unit) := by
   apply eq_of_shape'_eq
   rw [h, shape'_step]
 
@@ -454,7 +449,7 @@ theorem eq_step_of_dest {t : ITree F α} {c : (ViewPoly F α).B .step → ITree 
 query with its continuation. -/
 theorem eq_query_of_dest {t : ITree F α} {a : F.A}
     {c : (ViewPoly F α).B (.query a) → ITree F α}
-    (h : shape' t = ⟨.query a, c⟩) : t = query a c := by
+    (h : shape' t = .mk (.query a) c) : t = query a c := by
   apply eq_of_shape'_eq
   rw [h, shape'_query]
 
@@ -471,26 +466,26 @@ def bindStep (k : α → ITree F β) :
     ITree F α ⊕ ITree F β → (ViewPoly F β).Obj (ITree F α ⊕ ITree F β)
   | .inl t =>
       match shape' t with
-      | ⟨.pure r, _⟩ =>
+      | .mk (.pure r) _ =>
           match shape' (k r) with
-          | ⟨s, c⟩ => ⟨s, fun b => .inr (c b)⟩
-      | ⟨.step, c⟩ => ⟨.step, fun _ => .inl (c PUnit.unit)⟩
-      | ⟨.query a, c⟩ => ⟨.query a, fun b => .inl (c b)⟩
+          | .mk s c => .mk s (fun b => .inr (c b))
+      | .mk .step c => .mk .step (fun _ => .inl (c PUnit.unit))
+      | .mk (.query a) c => .mk (.query a) (fun b => .inl (c b))
   | .inr u =>
       match shape' u with
-      | ⟨s, c⟩ => ⟨s, fun b => .inr (c b)⟩
+      | .mk s c => .mk s (fun b => .inr (c b))
 
 theorem bindStep_inl (k : α → ITree F β) (t : ITree F α) : bindStep k (.inl t) =
       (match shape' t with
-        | ⟨.pure r, _⟩ =>
+        | .mk (.pure r) _ =>
             match shape' (k r) with
-            | ⟨s, c⟩ => ⟨s, fun b => .inr (c b)⟩
-        | ⟨.step, c⟩ => ⟨.step, fun _ => .inl (c PUnit.unit)⟩
-        | ⟨.query a, c⟩ => ⟨.query a, fun b => .inl (c b)⟩) := rfl
+            | .mk s c => .mk s (fun b => .inr (c b))
+        | .mk .step c => .mk .step (fun _ => .inl (c PUnit.unit))
+        | .mk (.query a) c => .mk (.query a) (fun b => .inl (c b))) := rfl
 
 theorem bindStep_inr (k : α → ITree F β) (u : ITree F β) : bindStep k (.inr u) =
       (match shape' u with
-        | ⟨s, c⟩ => ⟨s, fun b => .inr (c b)⟩) := rfl
+        | .mk s c => .mk s (fun b => .inr (c b))) := rfl
 
 /-- Monadic bind on ITrees. `t.bind k` runs `t` until it reaches a `.pure r`
 leaf and then continues with `k r`. (Coq `ITree.bind`.) -/
@@ -519,10 +514,10 @@ def iterStep (body : β → ITree F (β ⊕ α)) :
     ITree F (β ⊕ α) → (ViewPoly F α).Obj (ITree F (β ⊕ α))
   | t =>
       match shape' t with
-      | ⟨.pure (.inl j), _⟩ => ⟨.step, fun _ => body j⟩
-      | ⟨.pure (.inr r), _⟩ => ⟨.pure r, PEmpty.elim⟩
-      | ⟨.step, c⟩ => ⟨.step, fun u => c u⟩
-      | ⟨.query a, c⟩ => ⟨.query a, fun b => c b⟩
+      | .mk (.pure (.inl j)) _ => .mk .step (fun _ => body j)
+      | .mk (.pure (.inr r)) _ => .mk (.pure r) PEmpty.elim
+      | .mk .step c => .mk .step (fun u => c u)
+      | .mk (.query a) c => .mk (.query a) (fun b => c b)
 
 /-- Iteration combinator. `iter body init` repeatedly invokes
 `body : β → ITree F (β ⊕ α)`; intermediate `Sum.inl j` results restart the

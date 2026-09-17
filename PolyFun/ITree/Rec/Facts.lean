@@ -45,7 +45,7 @@ attribute [local implicit_reducible] Sum.elim
   have hstep :
       mutualRecStep body
           (pure (F := (D + E : PFunctor.{max uDA uEA, uB})) r) =
-        ⟨.pure r, PEmpty.elim⟩ := by
+        .mk (.pure r) PEmpty.elim := by
     simp [mutualRecStep]
   apply eq_of_shape'_eq
   rw [interpMrec, shape'_corec_eq _ _ hstep]
@@ -59,7 +59,7 @@ attribute [local implicit_reducible] Sum.elim
     (t : ITree (D + E : PFunctor.{max uDA uEA, uB}) α) :
     interpMrec body (step t) = step (interpMrec body t) := by
   have hstep : mutualRecStep body (step t) =
-      ⟨.step, fun _ => t⟩ := by
+      .mk .step (fun _ => t) := by
     simp [mutualRecStep]
   apply eq_of_shape'_eq
   rw [interpMrec, shape'_corec_eq _ _ hstep]
@@ -72,7 +72,7 @@ attribute [local implicit_reducible] Sum.elim
     interpMrec body (query (.inl d) k) =
       step (interpMrec body (bind (body d) k)) := by
   have hstep : mutualRecStep body (query (.inl d) k) =
-      ⟨.step, fun _ => bind (body d) k⟩ := by
+      .mk .step (fun _ => bind (body d) k) := by
     simp [mutualRecStep]
   apply eq_of_shape'_eq
   rw [interpMrec, shape'_corec_eq _ _ hstep]
@@ -85,7 +85,7 @@ attribute [local implicit_reducible] Sum.elim
     interpMrec body (query (.inr e) k) =
       query e (fun b => interpMrec body (k b)) := by
   have hstep : mutualRecStep body (query (.inr e) k) =
-      ⟨.query e, k⟩ := by
+      .mk (.query e) k := by
     simp [mutualRecStep]
   apply eq_of_shape'_eq
   rw [interpMrec, shape'_corec_eq _ _ hstep]

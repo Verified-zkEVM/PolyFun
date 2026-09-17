@@ -38,7 +38,7 @@ attribute [local implicit_reducible] Sum.elim
   have hstep : interpExceptStep
       (pure (F := (ExceptE.{uε, uB} ε + E :
         PFunctor.{max uε uEA, uB})) r) =
-      ⟨.pure (.ok r), PEmpty.elim⟩ := by
+      .mk (.pure (.ok r)) PEmpty.elim := by
     simp [interpExceptStep]
   apply eq_of_shape'_eq
   rw [interpExcept, shape'_corec_eq _ _ hstep]
@@ -53,7 +53,7 @@ attribute [local implicit_reducible] Sum.elim
       PFunctor.{max uε uEA, uB}) α) :
     interpExcept (step t) = step (interpExcept t) := by
   have hstep : interpExceptStep (step t) =
-      ⟨.step, fun _ => t⟩ := by
+      .mk .step (fun _ => t) := by
     simp [interpExceptStep]
   apply eq_of_shape'_eq
   rw [interpExcept, shape'_corec_eq _ _ hstep]
@@ -66,7 +66,7 @@ attribute [local implicit_reducible] Sum.elim
       ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :
     interpExcept (query (Sum.inl (α := ε) (β := E.A) e) k) = pure (.error e) := by
   have hstep : interpExceptStep (query (.inl e) k) =
-      ⟨.pure (.error e), PEmpty.elim⟩ := by
+      .mk (.pure (.error e)) PEmpty.elim := by
     simp [interpExceptStep]
   apply eq_of_shape'_eq
   rw [interpExcept, shape'_corec_eq _ _ hstep]
@@ -82,7 +82,7 @@ attribute [local implicit_reducible] Sum.elim
     interpExcept (query (Sum.inr (α := ε) (β := E.A) e) k) =
       query e (fun b => interpExcept (k b)) := by
   have hstep : interpExceptStep (query (.inr e) k) =
-      ⟨.query e, k⟩ := by
+      .mk (.query e) k := by
     simp [interpExceptStep]
   apply eq_of_shape'_eq
   rw [interpExcept, shape'_corec_eq _ _ hstep]
