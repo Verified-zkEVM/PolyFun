@@ -152,47 +152,6 @@ checking the queue candidate against current `main` and earlier queued changes.
   release tagging and review helper workflows ported from
   [`Verified-zkEVM/ArkLib`](https://github.com/Verified-zkEVM/ArkLib).
 
-## Merge Queue Setup
-
-The workflow triggers support a merge queue; enabling it is a separate repository
-administration step. Merge the workflow changes into `main` before enabling the
-queue. In a branch ruleset targeting `refs/heads/main`, require pull requests,
-prevent branch deletion, and require these six GitHub Actions check names:
-
-- `build`
-- `Lint (environment linters)`
-- `Test`
-- `Lint Style`
-- `Check Library File Imports`
-- `Check Docs Integrity`
-
-These are also the review policy before repository settings enforce them. Keep
-check names stable, and update the ruleset alongside any workflow rename. Every
-required check must report on both `pull_request` and `merge_group` events;
-API-documentation publishing and release tagging are not queue checks.
-
-Use the same queue settings as VCVio: squash merges, build concurrency 4, only
-merge non-failing pull requests (`ALLGREEN`), a 60-minute check timeout, and
-merge groups of 1–4 entries with no minimum-group wait. Require status checks
-without requiring branches to be up to date: the queue validates the combined
-candidate. No approval-count requirement is needed to match VCVio's current
-policy. Keep the bypass list empty.
-
-After enabling the ruleset, verify a real queue entry runs all six checks and
-merges only when they pass. Workflow validation or passing PR checks alone does
-not verify queue operation. Stacked PRs targeting intermediate branches still
-receive PR validation; retarget each to `main` as its prerequisite lands before
-adding it to the queue.
-
-This follows [VCVio's CI](https://github.com/Verified-zkEVM/VCVio/blob/main/.github/workflows/build.yml),
-[Lean core's CI](https://github.com/leanprover/lean4/blob/master/.github/workflows/ci.yml),
-and [cslib's CI](https://github.com/leanprover/cslib/blob/main/.github/workflows/lean_action_ci.yml):
-ordinary PR validation plus a separate merge-group trigger. PolyFun keeps its
-independent build, environment-lint, and test jobs; VCVio's serialized lint and
-crypto-specific boundary checks address its larger build and downstream APIs.
-See GitHub's [merge-queue configuration guide](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue)
-for the administrator settings.
-
 ## Toolchain
 
 Lean, Mathlib, and cslib stay in sync. To upgrade them, update
