@@ -286,3 +286,10 @@ benefits from state-gated interaction (multi-phase oracle protocols, session
 types) should sit on top, not inline these constructors. Cryptographic
 content remains in [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio)
 per the project policy in [`CLAUDE.md`](../../CLAUDE.md).
+
+## Object action
+
+`IPFunctor.Obj` exposes `mk`, `fst`, `snd`, `rec`, `eta`, and `ext`, following
+Mathlib's polynomial-object interface. Its child projection has the dependent
+type `(b : P.B j x.fst) → X (P.src j x.fst b)`. Consumers should use these
+operations and `map_fst` / `map_snd` rather than unfolding the Sigma encoding.

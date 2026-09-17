@@ -45,14 +45,14 @@ theorem dest_toResumption_pure (value : α) :
 theorem dest_toResumption_lift_bind (position : p.A)
     (next : p.B position → FreeM p α) :
     Resumption.dest (toResumption ((FreeM.lift position).bind next)) =
-      Sum.inr ⟨position, fun direction => toResumption (next direction)⟩ := by
+      Sum.inr (.mk position (fun direction => toResumption (next direction))) := by
   change Resumption.dest (Resumption.query position (fun d => toResumption (next d))) = _
   rw [Resumption.dest_query]
 
 theorem dest_toResumption_liftBind (position : p.A)
     (next : p.B position → FreeM p α) :
     Resumption.dest (toResumption (FreeM.liftBind position next)) =
-      Sum.inr ⟨position, fun direction => toResumption (next direction)⟩ :=
+      Sum.inr (.mk position (fun direction => toResumption (next direction))) :=
   dest_toResumption_lift_bind position next
 
 @[simp] theorem toResumption_bind (program : FreeM p α) (k : α → FreeM p β) :
@@ -136,11 +136,11 @@ theorem toResumption_injective : Function.Injective (toResumption (p := p) (α :
           exact (Sum.inr_ne_inl hdest).elim
       | liftBind position' next' =>
           have hdest := Sum.inr.inj (congrArg Resumption.dest h)
-          have hposition : position = position' := (Sigma.mk.inj hdest).1
+          have hposition : position = position' := (PFunctor.Obj.mk.inj hdest).1
           cases hposition
           have hnext : (fun direction => toResumption (next direction)) =
               fun direction => toResumption (next' direction) :=
-            eq_of_heq (Sigma.mk.inj hdest).2
+            eq_of_heq (PFunctor.Obj.mk.inj hdest).2
           apply congrArg (FreeM.liftBind position)
           funext direction
           exact ih direction (congrFun hnext direction)

@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Data.PFunctor.Multivariate.Basic
 public import Mathlib.Util.Notation3
+public import PolyFun.PFunctor.Obj
 
 /-!
   # Polynomial Functors, Lens, and Charts

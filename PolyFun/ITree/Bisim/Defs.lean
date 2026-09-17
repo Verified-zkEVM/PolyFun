@@ -112,7 +112,7 @@ inductive TauSteps : ITree F α → ITree F α → Prop where
   | refl (t : ITree F α) : TauSteps t t
   /-- Strip one step from a step-headed tree and continue stripping. -/
   | step {t t' : ITree F α} (c : PUnit.{uFB + 1} → ITree F α)
-      (ht : shape' t = ⟨.step, c⟩) (hr : TauSteps (c PUnit.unit) t') :
+      (ht : shape' t = .mk .step c) (hr : TauSteps (c PUnit.unit) t') :
       TauSteps t t'
 
 namespace TauSteps
@@ -126,13 +126,13 @@ theorem trans {t s u : ITree F α} (h₁ : TauSteps t s) (h₂ : TauSteps s u) :
 
 /-- Stripping one step is available when the head is a step. -/
 theorem one {t : ITree F α} (c : PUnit.{uFB + 1} → ITree F α)
-    (ht : shape' t = ⟨.step, c⟩) : TauSteps t (c PUnit.unit) :=
+    (ht : shape' t = .mk .step c) : TauSteps t (c PUnit.unit) :=
   TauSteps.step (t' := c PUnit.unit) c ht (TauSteps.refl _)
 
 /-- The `.step` relation is deterministic on step-headed trees. -/
 theorem cont_eq {t : ITree F α} {c c' : PUnit.{uFB + 1} → ITree F α}
-    (h : shape' t = ⟨.step, c⟩) (h' : shape' t = ⟨.step, c'⟩) : c = c' :=
-  eq_of_heq (Sigma.mk.inj (h.symm.trans h')).2
+    (h : shape' t = .mk .step c) (h' : shape' t = .mk .step (c')) : c = c' :=
+  eq_of_heq (PFunctor.Obj.mk.inj (h.symm.trans h')).2
 
 /-- `TauSteps` is linear: any two strippings from the same tree are
 comparable. Uses determinism of `shape'`. -/
@@ -166,20 +166,20 @@ inductive MatchRel (RR : α → β → Prop)
     ITree F α → ITree F β → Prop where
   /-- Both heads are pure leaves carrying `RR`-related values. -/
   | pure {t : ITree F α} {s : ITree F β} (r : α) (r' : β) (hrr : RR r r')
-      (ht : shape' t = ⟨.pure r, PEmpty.elim⟩)
-      (hs : shape' s = ⟨.pure r', PEmpty.elim⟩) :
+      (ht : shape' t = .mk (.pure r) PEmpty.elim)
+      (hs : shape' s = .mk (.pure r') PEmpty.elim) :
       MatchRel RR R t s
   /-- Both heads are visible queries on the same event. -/
   | query {t : ITree F α} {s : ITree F β} (a : F.A)
       (c : F.B a → ITree F α) (c' : F.B a → ITree F β)
-      (ht : shape' t = ⟨.query a, c⟩) (hs : shape' s = ⟨.query a, c'⟩)
+      (ht : shape' t = .mk (.query a) c) (hs : shape' s = .mk (.query a) (c'))
       (h : ∀ b, R (c b) (c' b)) :
       MatchRel RR R t s
   /-- Both heads are silent steps, with continuations related by `R`. -/
   | tau {t : ITree F α} {s : ITree F β}
       (ct : PUnit.{uFB + 1} → ITree F α)
       (cs : PUnit.{uFB + 1} → ITree F β)
-      (ht : shape' t = ⟨.step, ct⟩) (hs : shape' s = ⟨.step, cs⟩)
+      (ht : shape' t = .mk .step (ct)) (hs : shape' s = .mk .step (cs))
       (h : R (ct PUnit.unit) (cs PUnit.unit)) :
       MatchRel RR R t s
 
@@ -230,17 +230,17 @@ inductive Match (R : ITree F α → ITree F α → Prop) :
     ITree F α → ITree F α → Prop where
   /-- Both heads are pure leaves with the same value. -/
   | pure {t s : ITree F α} (r : α)
-      (ht : shape' t = ⟨.pure r, PEmpty.elim⟩)
-      (hs : shape' s = ⟨.pure r, PEmpty.elim⟩) :
+      (ht : shape' t = .mk (.pure r) PEmpty.elim)
+      (hs : shape' s = .mk (.pure r) PEmpty.elim) :
       Match R t s
   /-- Both heads are visible queries on the same event. -/
   | query {t s : ITree F α} (a : F.A) (c c' : F.B a → ITree F α)
-      (ht : shape' t = ⟨.query a, c⟩) (hs : shape' s = ⟨.query a, c'⟩)
+      (ht : shape' t = .mk (.query a) c) (hs : shape' s = .mk (.query a) (c'))
       (h : ∀ b, R (c b) (c' b)) :
       Match R t s
   /-- Both heads are silent steps, with continuations related by `R`. -/
   | tau {t s : ITree F α} (ct cs : PUnit.{uFB + 1} → ITree F α)
-      (ht : shape' t = ⟨.step, ct⟩) (hs : shape' s = ⟨.step, cs⟩)
+      (ht : shape' t = .mk .step (ct)) (hs : shape' s = .mk .step (cs))
       (h : R (ct PUnit.unit) (cs PUnit.unit)) :
       Match R t s
 

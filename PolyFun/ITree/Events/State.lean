@@ -74,14 +74,14 @@ def interpStateStep {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
     (st : σ × ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :
     (ViewPoly E (σ × α)).Obj (σ × ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) :=
   match shape' st.2 with
-  | ⟨.pure r, _⟩ => ⟨.pure (st.1, r), PEmpty.elim⟩
-  | ⟨.step, c⟩ => ⟨.step, fun _ => (st.1, c PUnit.unit)⟩
-  | ⟨.query (.inl .get), c⟩ =>
-      ⟨.step, fun _ => (st.1, c st.1)⟩
-  | ⟨.query (.inl (.put s')), c⟩ =>
-      ⟨.step, fun _ => (s', c PUnit.unit)⟩
-  | ⟨.query (.inr e), c⟩ =>
-      ⟨.query e, fun b => (st.1, c b)⟩
+  | .mk (.pure r) _ => .mk (.pure (st.1, r)) PEmpty.elim
+  | .mk .step c => .mk .step (fun _ => (st.1, c PUnit.unit))
+  | .mk (.query (.inl .get)) c =>
+      .mk .step (fun _ => (st.1, c st.1))
+  | .mk (.query (.inl (.put s'))) c =>
+      .mk .step (fun _ => (s', c PUnit.unit))
+  | .mk (.query (.inr e)) c =>
+      .mk (.query e) (fun b => (st.1, c b))
 
 /-- Interpret state operations in `t`, starting from `s`, and return the final
 state together with the computation result. External events remain visible.

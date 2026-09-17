@@ -46,7 +46,7 @@ own position. The label carries no information beyond the tree itself; this is t
 comparison map between the plain terminal-coalgebra semantics `M p` and the cofree
 semantics `CofreeC p p.A` (see `DynSystem.trajectory_eq_selfLabel_behavior`). -/
 def M.selfLabel {p : PFunctor.{uA, uB}} : M p → CofreeC p p.A :=
-  M.corec fun t => ⟨((M.dest t).1, (M.dest t).1), (M.dest t).2⟩
+  M.corec fun t => .mk (((M.dest t).fst, (M.dest t).fst)) ((M.dest t).snd)
 
 namespace DynSystem
 
@@ -56,22 +56,22 @@ variable {S : Type u} {p : PFunctor.{uA, uB}}
 head label is the exposed position and whose `p.B`-indexed children are the
 trajectories from each successor state. -/
 def trajectory (s : DynSystem S p) (st : S) : CofreeC p p.A :=
-  M.corec (fun st => ⟨(s.expose st, s.expose st), fun d => s.update st d⟩) st
+  M.corec (fun st => .mk ((s.expose st, s.expose st)) (fun d => s.update st d)) st
 
 /-- One-step unfolding of a trajectory's `M.dest`: the stored label and position
 are the exposed position, and the children are the successor trajectories. -/
 theorem dest_trajectory (s : DynSystem S p) (st : S) :
     M.dest (trajectory s st)
-      = ⟨(s.expose st, s.expose st), fun d => trajectory s (s.update st d)⟩ := by
-  simp only [trajectory, M.dest_corec_apply]
+      = .mk ((s.expose st, s.expose st)) (fun d => trajectory s (s.update st d)) := by
+  simp only [trajectory, M.dest_corec_apply, Obj.fst_mk, Obj.snd_mk]
 
 @[simp] theorem head_trajectory (s : DynSystem S p) (st : S) :
     (trajectory s st).head = s.expose st := by
-  simp only [CofreeC.head, dest_trajectory]
+  simp only [CofreeC.head, dest_trajectory, Obj.fst_mk]
 
 @[simp] theorem tail_trajectory (s : DynSystem S p) (st : S) :
-    (trajectory s st).tail = ⟨s.expose st, fun d => trajectory s (s.update st d)⟩ := by
-  simp only [CofreeC.tail]; rw [dest_trajectory]
+    (trajectory s st).tail = .mk (s.expose st) (fun d => trajectory s (s.update st d)) := by
+  simp only [CofreeC.tail]; rw [dest_trajectory]; rfl
 
 /-! ## Terminal-coalgebra behavior
 
@@ -89,7 +89,7 @@ def behavior (s : DynSystem S p) : S → M p :=
 recovers the exposed position, with each subtree the behavior of the corresponding
 successor state. -/
 @[simp] theorem dest_behavior (s : DynSystem S p) (st : S) :
-    M.dest (s.behavior st) = ⟨s.expose st, fun d => s.behavior (s.update st d)⟩ := by
+    M.dest (s.behavior st) = .mk (s.expose st) (fun d => s.behavior (s.update st d)) := by
   simp only [behavior, M.dest_corec_apply]; rfl
 
 /-- **Bisimulation by uniqueness.** Any function into `M p` that commutes with the

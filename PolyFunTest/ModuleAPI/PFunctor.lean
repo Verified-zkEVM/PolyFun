@@ -8,6 +8,7 @@ module
 
 import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 import PolyFun.PFunctor.Free.Basic
+public import PolyFun.IPFunctor.Basic
 
 /-!
 # Ordinary-import canaries for the polynomial-functor API
@@ -84,5 +85,77 @@ example {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} (onValue : α �
     FreeM.foldFreeM onValue onEffect ((FreeM.lift a).bind cont) =
       onEffect a fun b => FreeM.foldFreeM onValue onEffect (cont b) := by
   rw [FreeM.foldFreeM_bind, FreeM.foldFreeM_lift]
+
+/-- Object equality works through the public projections at independent universes. -/
+example {P : PFunctor.{uA, uB}} {α : Type uα} {x y : P α}
+    (shapes : x.fst = y.fst) (children : HEq x.snd y.snd) : x = y := by
+  ext
+  · exact shapes
+  · exact children
+
+example {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
+    (f : α → β) (a : P.A) (children : P.B a → α) :
+    P.map f (.mk a children) = .mk a (f ∘ children) := by
+  rw [PFunctor.map_eq]
+
+/-- Indexed mapping retains each child's source fiber, even when the fibers differ. -/
+example {I : Type u} {J : Type v} {P : IPFunctor.{u, v, uA, uB} I J}
+    {X : I → Type uα} {Y : I → Type uβ}
+    (f : (i : I) → X i → Y i) {j : J} (a : P.A j)
+    (children : (b : P.B j a) → X (P.src j a b)) (b : P.B j a) :
+    (P.map f (.mk a children)).snd b = f (P.src j a b) (children b) := by
+  rw [IPFunctor.map_snd]
+  rfl
+
+example {I : Type u} {J : Type v} {P : IPFunctor.{u, v, uA, uB} I J}
+    {X : I → Type uα} {j : J} {x y : P.Obj X j}
+    (shapes : x.fst = y.fst) (children : HEq x.snd y.snd) : x = y := by
+  apply IPFunctor.Obj.ext
+  · exact shapes
+  · exact children
+
+/-- Consumers can eliminate objects without accessing their Sigma representation. -/
+example {I : Type u} {J : Type v} {P : IPFunctor.{u, v, uA, uB} I J}
+    {X : I → Type uα} {j : J} (x : P.Obj X j) :
+    ∃ a children, x = IPFunctor.Obj.mk a children := by
+  cases x using IPFunctor.Obj.rec with
+  | mk a children => exact ⟨a, children, rfl⟩
+
+/-- Native constructor injectivity exposes dependent children through an ordinary import. -/
+example {P : PFunctor.{uA, uB}} {α : Type uα}
+    {a b : P.A} {f : P.B a → α} {g : P.B b → α}
+    (h : PFunctor.Obj.mk a f = PFunctor.Obj.mk b g) : a = b ∧ HEq f g := by
+  simpa only [PFunctor.Obj.mk.inj_iff] using h
+
+/-- Eliminating a public object leaves the native map equation directly usable. -/
+example {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
+    (f : α → β) (x : P.Obj α) :
+    P.map f x = PFunctor.Obj.mk x.fst (f ∘ x.snd) := by
+  cases x using PFunctor.Obj.rec with
+  | mk a children =>
+      rw [PFunctor.map_eq]
+      rfl
+
+/-- Two directions select genuinely different result types. -/
+abbrev mixedFibers : IPFunctor Bool Unit where
+  A _ := Unit
+  B _ _ := Bool
+  src _ _ direction := direction
+
+abbrev mixedFamily : Bool → Type
+  | false => Nat
+  | true => Bool
+
+def mixedObject : mixedFibers.Obj mixedFamily () :=
+  .mk () (fun | false => 7 | true => false)
+
+def mixedMap : (i : Bool) → mixedFamily i → mixedFamily i
+  | false, n => n + 1
+  | true, b => !b
+
+/-- Mapping follows the source index instead of identifying the child fibers. -/
+example : (mixedFibers.map mixedMap mixedObject).snd false = 8 ∧
+    (mixedFibers.map mixedMap mixedObject).snd true = true := by
+  constructor <;> rfl
 
 end PolyFunTest.ModuleAPI.PFunctor

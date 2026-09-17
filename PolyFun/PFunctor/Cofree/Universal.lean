@@ -122,23 +122,23 @@ the chosen generator lens. -/
 def unfoldShape (lens : Lens C.carrier P) (object : C.carrier.A) : M P :=
   M.corec
     (fun current =>
-      ⟨lens.toFunA current, fun direction =>
-        Comonoid.target C current (lens.toFunB current direction)⟩)
+      .mk (lens.toFunA current) (fun direction =>
+        Comonoid.target C current (lens.toFunB current direction)))
     object
 
 /-- One-step unfolding of the coiterated shape. -/
 theorem dest_unfoldShape (lens : Lens C.carrier P)
     (object : C.carrier.A) :
     M.dest (unfoldShape C lens object) =
-      ⟨lens.toFunA object, fun direction =>
+      .mk (lens.toFunA object) (fun direction =>
         unfoldShape C lens
           (Comonoid.target C object
-            (lens.toFunB object direction))⟩ := by
-  simpa only [unfoldShape] using
+            (lens.toFunB object direction))) := by
+  simpa only [unfoldShape, Obj.fst_mk, Obj.snd_mk] using
     M.dest_corec_apply
       (fun current =>
-        ⟨lens.toFunA current, fun direction =>
-          Comonoid.target C current (lens.toFunB current direction)⟩)
+        .mk (lens.toFunA current) (fun direction =>
+          Comonoid.target C current (lens.toFunB current direction)))
       object
 
 /-- The root position of a coiterated tree is the position exposed by the

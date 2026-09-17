@@ -49,12 +49,12 @@ variable {F : PFunctor.{uA, uB}} {α : Type u}
 
 /-- Head (label) of a cofree tree. -/
 def head (t : CofreeC F α) : α :=
-  (M.dest t).1.1
+  (M.dest t).fst.1
 
 /-- Tail of a cofree tree (an `F`-structured family of sub-trees). -/
 def tail (t : CofreeC F α) : F (CofreeC F α) :=
   let d := M.dest t       --  d : constProd F α (CofreeC F α)
-  ⟨d.1.2, d.2⟩            -- drop the constant `α` stored in `d.1.1`
+  (.mk d.fst.2 d.snd)            -- drop the constant `α` stored in `d.fst.1`
 
 /-! ## Naturality in the generating polynomial -/
 
@@ -112,7 +112,7 @@ def extract (t : CofreeC F α) : α :=
 def extendF {β : Type u} (f : CofreeC F α → β) (t : CofreeC F α) :
     constProd F β (CofreeC F α) :=
   let d := M.dest t
-  ⟨(f t, d.1.2), d.2⟩
+  (.mk (f t, d.fst.2) d.snd)
 
 /-- Comonad coextension: relabel every node of `t` by applying `f` to the sub-tree
     rooted at that node. -/
@@ -130,14 +130,15 @@ def extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) : CofreeC 
   simp only [extend]; exact M.dest_corec (P := constProd F β) (g := extendF f) t
 
 theorem dest_extend_eq {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
-    M.dest (extend t f) = ⟨(f t, (M.dest t).1.2), (fun x => extend x f) ∘ (M.dest t).2⟩ := by
+    M.dest (extend t f) =
+      .mk (f t, (M.dest t).fst.2) ((fun x => extend x f) ∘ (M.dest t).snd) := by
   simp only [dest_extend, extendF]
   rfl
 
 @[simp] theorem head_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     head (extend t f) = f t := by
   unfold head
-  rw [dest_extend_eq]
+  rw [dest_extend_eq, Obj.fst_mk]
 
 @[simp] theorem tail_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     tail (extend t f) = F.map (fun x => extend x f) (tail t) := by
@@ -181,11 +182,11 @@ instance : Comonad (CofreeC F) where
       (constProd F γ).map l (extendF (fun y => g (extend y f)) x)
     rw [dest_extend_eq]
     have hdest : M.dest (extend x f) =
-        ⟨(f x, (M.dest x).1.2), (fun y => extend y f) ∘ (M.dest x).2⟩ := dest_extend_eq x f
+        .mk (f x, (M.dest x).fst.2) ((fun y => extend y f) ∘ (M.dest x).snd) := dest_extend_eq x f
     rw [hdest]
     have hfun :
-        (fun x => extend x g) ∘ (fun y => extend y f) ∘ (M.dest x).2 =
-          (fun x => extend (extend x f) g) ∘ (M.dest x).2 := by
+        (fun x => extend x g) ∘ (fun y => extend y f) ∘ (M.dest x).snd =
+          (fun x => extend (extend x f) g) ∘ (M.dest x).snd := by
       funext i
       rfl
     cases hfun

@@ -41,9 +41,9 @@ def program : FreeM Interface Nat :=
     | true => .liftBind (.select true) fun index => .pure (10 + index.val)
 
 example : Resumption.dest (toResumption program) =
-    Sum.inr ⟨Command.choose, fun answer => toResumption (match answer with
+    Sum.inr (.mk Command.choose fun answer => toResumption (match answer with
       | false => FreeM.pure 7
-      | true => FreeM.liftBind (.select true) fun index => .pure (10 + index.val))⟩ := by
+      | true => FreeM.liftBind (.select true) fun index => .pure (10 + index.val))) := by
   simpa only [program] using
     (dest_toResumption_liftBind (p := Interface) Command.choose (fun
       | false => FreeM.pure 7

@@ -366,3 +366,14 @@ The execution API exposes `TraceList.positions` and `FreeM.Path.positions` for o
 observations, including repeated inputs. Prefer these over mapping a bare `Sigma.fst` across
 the event carrier, and build or destructure paths through `Path.cons` / `Path.head` /
 `Path.tail` rather than the anonymous constructor and projections of the underlying sigma.
+
+## Object equality
+
+Use Mathlib's `PFunctor.Obj.mk`, `Obj.fst`, `Obj.snd`, and `Obj.rec` when
+constructing or eliminating the object action. `PFunctor/Obj.lean` supplies
+`Obj.ext`, its generated `Obj.ext_iff`, and `Obj.mk.inj` / `Obj.mk.inj_iff` for
+dependent equality. These use shape equality and heterogeneous equality of
+child functions, without normalizing public statements to `Sigma`.
+Positions and directions which are themselves Sigma types still use the
+ordinary Sigma API. The indexed counterpart in `IPFunctor/Basic.lean` preserves
+the source fiber of each child.

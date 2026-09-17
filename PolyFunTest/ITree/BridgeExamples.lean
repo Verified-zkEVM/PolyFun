@@ -28,13 +28,13 @@ depend on observable Boolean data. -/
 def infinite (seed : Bool) : Resumption Choice Nat :=
   Resumption.corec
     (fun current => Sum.inr
-      ⟨current, fun answer => xor current answer⟩) seed
+      (.mk current fun answer => xor current answer)) seed
 
 /-- A non-returning M-tree with the same position- and answer-sensitive
 branching used to pin the empty-resumption bridge. -/
 def behavior (seed : Bool) : M Choice :=
   M.corec (fun current =>
-    ⟨current, fun answer => xor current answer⟩) seed
+    (.mk current fun answer => xor current answer)) seed
 
 example : FreeM.toITree finite =
     ITree.query true fun answer => ITree.pure (if answer then 1 else 0) := by
@@ -107,6 +107,7 @@ example (seed : Bool) :
   rw [show M.dest (behavior seed) =
       ⟨seed, fun answer => behavior (xor seed answer)⟩ by
     unfold behavior
-    rw [M.dest_corec_apply]]
+    rw [M.dest_corec_apply]
+    rfl]
 
 end ITree.BridgeExamples

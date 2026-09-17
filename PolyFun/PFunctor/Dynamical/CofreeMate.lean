@@ -57,15 +57,15 @@ labeled by `label`. -/
 def labeledTrajectory (system : DynSystem S P) (label : S → α) (state : S) : CofreeC P α :=
   M.corec
     (fun current =>
-      ⟨(label current, system.expose current),
-        fun direction => system.update current direction⟩)
+      .mk (label current, system.expose current)
+        (fun direction => system.update current direction))
     state
 
 /-- One-step unfolding of a labeled trajectory. -/
 theorem dest_labeledTrajectory (system : DynSystem S P) (label : S → α) (state : S) :
     M.dest (labeledTrajectory system label state) =
-      ⟨(label state, system.expose state), fun direction =>
-        labeledTrajectory system label (system.update state direction)⟩ := by
+      .mk (label state, system.expose state) (fun direction =>
+        labeledTrajectory system label (system.update state direction)) := by
   unfold labeledTrajectory
   rw [M.dest_corec]
   rfl
@@ -73,15 +73,16 @@ theorem dest_labeledTrajectory (system : DynSystem S P) (label : S → α) (stat
 @[simp]
 theorem head_labeledTrajectory (system : DynSystem S P) (label : S → α) (state : S) :
     CofreeC.head (labeledTrajectory system label state) = label state := by
-  simp only [CofreeC.head, dest_labeledTrajectory]
+  simp only [CofreeC.head, dest_labeledTrajectory, Obj.fst_mk]
 
 @[simp]
 theorem tail_labeledTrajectory (system : DynSystem S P) (label : S → α) (state : S) :
     CofreeC.tail (labeledTrajectory system label state) =
-      ⟨system.expose state, fun direction =>
-        labeledTrajectory system label (system.update state direction)⟩ := by
+      .mk (system.expose state) (fun direction =>
+        labeledTrajectory system label (system.update state direction)) := by
   simp only [CofreeC.tail]
   rw [dest_labeledTrajectory]
+  rfl
 
 /-- Apply the generic coiterated mate lens to an initial state carrying an
 arbitrary state labeling. Its shape records behavior and its label at a

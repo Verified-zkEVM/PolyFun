@@ -31,8 +31,8 @@ variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
 /-- One-step ITree coalgebra corresponding to a resumption return/query view. -/
 def toITreeStep (computation : Resumption p β) : (ITree.ViewPoly p β).Obj (Resumption p β) :=
   match dest computation with
-  | Sum.inl value => ⟨.pure value, PEmpty.elim⟩
-  | Sum.inr ⟨position, next⟩ => ⟨.query position, next⟩
+  | Sum.inl value => .mk (.pure value) PEmpty.elim
+  | Sum.inr ⟨position, next⟩ => .mk (.query position) next
 
 /-- Embed a resumption as an interaction tree without inserting tau steps. -/
 def toITree (computation : Resumption p β) : ITree p β :=
@@ -41,16 +41,16 @@ def toITree (computation : Resumption p β) : ITree p β :=
 @[simp] theorem shape'_toITree (computation : Resumption p β) :
     ITree.shape' (toITree computation) =
       match dest computation with
-      | Sum.inl value => ⟨.pure value, PEmpty.elim⟩
+      | Sum.inl value => .mk (.pure value) PEmpty.elim
       | Sum.inr ⟨position, next⟩ =>
-          ⟨.query position, fun direction => toITree (next direction)⟩ := by
+          .mk (.query position) (fun direction => toITree (next direction)) := by
   unfold toITree
   rw [ITree.shape'_corec_apply]
   unfold toITreeStep
   rcases h : dest computation with value | ⟨position, next⟩
-  · change (⟨.pure value, fun direction =>
-        ITree.corec toITreeStep (PEmpty.elim direction)⟩ :
-      (ITree.ViewPoly p β).Obj (ITree p β)) = ⟨.pure value, PEmpty.elim⟩
+  · change ((.mk (.pure value) (fun direction =>
+        ITree.corec toITreeStep (PEmpty.elim direction))) :
+      (ITree.ViewPoly p β).Obj (ITree p β)) = .mk (.pure value) PEmpty.elim
     apply Sigma.ext
     · rfl
     · apply heq_of_eq
@@ -93,7 +93,8 @@ theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β
       exact ⟨shape, next, next, rfl, rfl, fun _ => Or.inl rfl⟩
     · have hsource : source = query position next := by
         apply eq_of_dest_eq
-        simpa using h
+        rw [dest_query]
+        exact h
       subst source
       simp only [bind_query, toITree_query, ITree.bind_query]
       refine ⟨.query position,
@@ -129,7 +130,8 @@ theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β
       ITree.shape'_pure _, ITree.shape'_pure _, fun direction => PEmpty.elim direction⟩
   · have hsource : source = query position next := by
       apply eq_of_dest_eq
-      simpa using h
+      rw [dest_query]
+      exact h
     subst source
     simp only [mapLens_query, toITree_query, ITree.mapSpec_query]
     refine ⟨.query (lens.toFunA position),
@@ -152,9 +154,9 @@ variable {p : PFunctor.{uA, uB}} {β : Type uβ}
 are rejected, and every continuation of a query must satisfy `R`. -/
 def TauFreeF (R : _root_.ITree p β → Prop) (tree : _root_.ITree p β) : Prop :=
   match shape' tree with
-  | ⟨.pure _, _⟩ => True
-  | ⟨.step, _⟩ => False
-  | ⟨.query _, next⟩ => ∀ direction, R (next direction)
+  | .mk (.pure _) _ => True
+  | .mk .step _ => False
+  | .mk (.query _) next => ∀ direction, R (next direction)
 
 theorem TauFreeF.mono {R S : _root_.ITree p β → Prop} (hRS : ∀ {tree}, R tree → S tree)
     {tree : _root_.ITree p β} (h : TauFreeF R tree) : TauFreeF S tree := by
@@ -216,13 +218,13 @@ theorem not_tauFree_step (tree : _root_.ITree p β) : ¬ TauFree (ITree.step tre
 
 /-- A tau-free tree observed as a query has tau-free children. -/
 theorem TauFree.of_shape'_query {tree : _root_.ITree p β} {position : p.A}
-    {next : p.B position → _root_.ITree p β} (hshape : shape' tree = ⟨.query position, next⟩)
+    {next : p.B position → _root_.ITree p β} (hshape : shape' tree = .mk (.query position) next)
     (h : TauFree tree) : ∀ direction, TauFree (next direction) := by
   simpa only [TauFreeF, hshape] using h.unfold
 
 /-- A tau-free tree cannot be observed as a silent step. -/
 theorem TauFree.not_of_shape'_step {tree : _root_.ITree p β} {next : PUnit → _root_.ITree p β}
-    (hshape : shape' tree = ⟨.step, next⟩) (h : TauFree tree) : False := by
+    (hshape : shape' tree = .mk .step next) (h : TauFree tree) : False := by
   simpa only [TauFreeF, hshape] using h.unfold
 
 end ITree
@@ -249,9 +251,9 @@ variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
 /-- The proof carried by one tau-free observation. -/
 def TauFreeLayer (observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β)) : Prop :=
   match observed with
-  | ⟨.pure _, _⟩ => True
-  | ⟨.step, _⟩ => False
-  | ⟨.query _, next⟩ => ∀ direction, ITree.TauFree (next direction)
+  | .mk (.pure _) _ => True
+  | .mk .step _ => False
+  | .mk (.query _) next => ∀ direction, ITree.TauFree (next direction)
 
 /-- Package a tau-free tree's observation with its one-layer invariant. -/
 def tauFreeHead (state : {tree : _root_.ITree p β // ITree.TauFree tree}) :
@@ -264,9 +266,9 @@ def ofTauFreeHead
     (head : Σ' observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β), TauFreeLayer observed) :
     β ⊕ p.Obj {tree : _root_.ITree p β // ITree.TauFree tree} :=
   match head with
-  | ⟨⟨.pure value, _⟩, _⟩ => Sum.inl value
-  | ⟨⟨.step, _⟩, impossible⟩ => False.elim impossible
-  | ⟨⟨.query position, next⟩, layer⟩ =>
+  | ⟨(.mk (.pure value) _), _⟩ => Sum.inl value
+  | ⟨(.mk .step _), impossible⟩ => False.elim impossible
+  | ⟨(.mk (.query position) next), layer⟩ =>
       Sum.inr ⟨position, fun direction => ⟨next direction, layer direction⟩⟩
 
 /-- Coalgebraic inverse for removing the impossible tau case from a tau-free
@@ -285,10 +287,10 @@ def ofTauFreeITree (state : {tree : _root_.ITree p β // ITree.TauFree tree}) : 
 theorem ofTauFreeStep_of_shape'_pure
     (state : {tree : _root_.ITree p β // ITree.TauFree tree}) (value : β)
     (next : PEmpty → _root_.ITree p β)
-    (hshape : ITree.shape' state.1 = ⟨.pure value, next⟩) :
+    (hshape : ITree.shape' state.1 = .mk (.pure value) next) :
     ofTauFreeStep state = Sum.inl value := by
   have hhead : tauFreeHead state =
-      (⟨⟨.pure value, next⟩, trivial⟩ :
+      (⟨(.mk (.pure value) next), trivial⟩ :
         Σ' observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β), TauFreeLayer observed) := by
     exact PSigma.mk.inj_iff.mpr ⟨hshape, proof_irrel_heq _ _⟩
   rw [ofTauFreeStep, hhead]
@@ -297,11 +299,11 @@ theorem ofTauFreeStep_of_shape'_pure
 theorem ofTauFreeStep_of_shape'_query
     (state : {tree : _root_.ITree p β // ITree.TauFree tree}) (position : p.A)
     (next : p.B position → _root_.ITree p β)
-    (hshape : ITree.shape' state.1 = ⟨.query position, next⟩) :
+    (hshape : ITree.shape' state.1 = .mk (.query position) next) :
     ofTauFreeStep state = Sum.inr ⟨position, fun direction =>
       ⟨next direction, state.2.of_shape'_query hshape direction⟩⟩ := by
   have hhead : tauFreeHead state =
-      (⟨⟨.query position, next⟩,
+      (⟨(.mk (.query position) next),
         fun direction => state.2.of_shape'_query hshape direction⟩ :
         Σ' observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β), TauFreeLayer observed) := by
     exact PSigma.mk.inj_iff.mpr ⟨hshape, proof_irrel_heq _ _⟩

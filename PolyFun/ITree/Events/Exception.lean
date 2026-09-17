@@ -58,10 +58,10 @@ def interpExceptStep {ε : Type uε} {E : PFunctor.{uEA, uB}} {α : Type uα}
     (ViewPoly E (Except ε α)).Obj
       (ITree (ExceptE.{uε, uB} ε + E : PFunctor.{max uε uEA, uB}) α) :=
   match shape' t with
-  | ⟨.pure r, _⟩ => ⟨.pure (.ok r), PEmpty.elim⟩
-  | ⟨.step, c⟩ => ⟨.step, fun _ => c PUnit.unit⟩
-  | ⟨.query (.inl e), _⟩ => ⟨.pure (.error e), PEmpty.elim⟩
-  | ⟨.query (.inr e), c⟩ => ⟨.query e, c⟩
+  | .mk (.pure r) _ => .mk (.pure (.ok r)) PEmpty.elim
+  | .mk .step c => .mk .step (fun _ => c PUnit.unit)
+  | .mk (.query (.inl e)) _ => .mk (.pure (.error e)) PEmpty.elim
+  | .mk (.query (.inr e)) c => .mk (.query e) c
 
 /-- Eliminate exception events from `t`, returning either the first thrown
 exception or the ordinary result. External events remain visible. -/

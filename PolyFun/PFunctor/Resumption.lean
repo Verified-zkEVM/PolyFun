@@ -44,21 +44,21 @@ variable {p : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type uγ}
 /-- Reassociate the extension of `p + C β` into the computational
 return-or-query view. -/
 def unpack {X : Type uX} : (p + C.{uβ, uB} β).Obj X → β ⊕ p.Obj X
-  | ⟨Sum.inl position, next⟩ => Sum.inr ⟨position, next⟩
-  | ⟨Sum.inr value, _⟩ => Sum.inl value
+  | .mk (Sum.inl position) next => Sum.inr (.mk position next)
+  | .mk (Sum.inr value) _ => Sum.inl value
 
 /-- Repack a computational return-or-query view as an extension of `p + C β`. -/
 def pack {X : Type uX} : β ⊕ p.Obj X → (p + C.{uβ, uB} β).Obj X
-  | Sum.inl value => ⟨Sum.inr value, PEmpty.elim⟩
-  | Sum.inr ⟨position, next⟩ => ⟨Sum.inl position, next⟩
+  | Sum.inl value => .mk (Sum.inr value) PEmpty.elim
+  | Sum.inr (.mk position next) => .mk (Sum.inl position) next
 
-/- The right-hand sides are spelled with `PFunctor.Obj.mk`, the constructor Mathlib's `M`-type
+/- The right-hand sides are spelled with `.mk`, the constructor Mathlib's `M`-type
 API (`M.bisim`, `M.dest_mk`, …) states its equations with. -/
 @[simp] theorem pack_inl {X : Type uX} (value : β) :
     pack (p := p) (X := X) (Sum.inl value) = .mk (Sum.inr value) PEmpty.elim := rfl
 
 @[simp] theorem pack_inr {X : Type uX} (position : p.A) (next : p.B position → X) :
-    pack (Sum.inr ⟨position, next⟩ : β ⊕ p.Obj X) = .mk (Sum.inl position) next := rfl
+    pack (Sum.inr (.mk position next) : β ⊕ p.Obj X) = .mk (Sum.inl position) next := rfl
 
 @[simp] theorem unpack_pack {X : Type uX} (step : β ⊕ p.Obj X) :
     unpack (pack step) = step := by
@@ -71,7 +71,7 @@ API (`M.bisim`, `M.dest_mk`, …) states its equations with. -/
   rcases step with ⟨shape, next⟩
   cases shape with
   | inl position => rfl
-  | inr value => exact Sigma.ext rfl (heq_of_eq (funext fun d => d.elim))
+  | inr value => exact PFunctor.Obj.ext rfl (heq_of_eq (funext fun d => d.elim))
 
 /-- The extension of `p + C β` is equivalent to the computational
 return-or-query view. -/
@@ -93,7 +93,7 @@ theorem pack_sum_map {X : Type uX} {Y : Type uY} (f : X → Y)
     pack (Sum.map (fun value : β => value) (p.map f) step) =
       (p + C.{uβ, uB} β).map f (pack step) := by
   rcases step with value | ⟨position, next⟩
-  · exact Sigma.ext rfl (heq_of_eq (funext fun d => d.elim))
+  · exact PFunctor.Obj.ext rfl (heq_of_eq (funext fun d => d.elim))
   · rfl
 
 /-! ## Constructors, destructor, and corecursor -/
@@ -105,7 +105,7 @@ def pure (value : β) : Resumption p β :=
 /-- A resumption that exposes `position` and continues according to the
 selected direction. -/
 def query (position : p.A) (next : p.B position → Resumption p β) : Resumption p β :=
-  M.mk (pack (Sum.inr ⟨position, next⟩))
+  M.mk (pack (Sum.inr (.mk position next)))
 
 /-- Observe whether a resumption returns or performs a visible query. -/
 def dest (computation : Resumption p β) : β ⊕ p.Obj (Resumption p β) :=
@@ -134,7 +134,7 @@ def corec {X : Type uX} (step : X → β ⊕ p.Obj X) (seed : X) : Resumption p 
   simp only [dest, pure, M.dest_mk, unpack_pack]
 
 @[simp] theorem dest_query (position : p.A) (next : p.B position → Resumption p β) :
-    dest (query position next) = Sum.inr ⟨position, next⟩ := by
+    dest (query position next) = Sum.inr (.mk position next) := by
   simp only [dest, query, M.dest_mk, unpack_pack]
 
 @[simp] theorem dest_corec {X : Type uX} (step : X → β ⊕ p.Obj X) (seed : X) :
@@ -166,8 +166,8 @@ inductive HeadMatch (R : Resumption p β → Resumption p β → Prop) :
       HeadMatch R left right
   | query {left right : Resumption p β} (position : p.A)
       (left_next right_next : p.B position → Resumption p β)
-      (left_dest : dest left = Sum.inr ⟨position, left_next⟩)
-      (right_dest : dest right = Sum.inr ⟨position, right_next⟩)
+      (left_dest : dest left = Sum.inr (.mk position left_next))
+      (right_dest : dest right = Sum.inr (.mk position right_next))
       (next_rel : ∀ direction, R (left_next direction) (right_next direction)) :
       HeadMatch R left right
 
@@ -221,7 +221,7 @@ def lift (position : p.A) : Resumption p (p.B position) :=
   query position pure
 
 @[simp] theorem dest_lift (position : p.A) :
-    dest (lift position) = Sum.inr ⟨position, pure⟩ := by
+    dest (lift position) = Sum.inr (.mk position pure) := by
   simp [lift]
 
 /-- Step coalgebra used by `bind`. The right summand records that execution has
@@ -234,15 +234,15 @@ def bindStep (k : α → Resumption p β) :
       | Sum.inl value =>
           match dest (k value) with
           | Sum.inl result => Sum.inl result
-          | Sum.inr ⟨position, next⟩ =>
-              Sum.inr ⟨position, fun direction => Sum.inr (next direction)⟩
-      | Sum.inr ⟨position, next⟩ =>
-          Sum.inr ⟨position, fun direction => Sum.inl (next direction)⟩
+          | Sum.inr (.mk position next) =>
+              Sum.inr (.mk position (fun direction => Sum.inr (next direction)))
+      | Sum.inr (.mk position next) =>
+          Sum.inr (.mk position (fun direction => Sum.inl (next direction)))
   | Sum.inr computation =>
       match dest computation with
       | Sum.inl result => Sum.inl result
-      | Sum.inr ⟨position, next⟩ =>
-          Sum.inr ⟨position, fun direction => Sum.inr (next direction)⟩
+      | Sum.inr (.mk position next) =>
+          Sum.inr (.mk position (fun direction => Sum.inr (next direction)))
 
 /-- Monadic bind on resumptions. Named bind permits source and target result
 types in different universes. -/
@@ -282,8 +282,8 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
     dest (bind computation k) =
       match dest computation with
       | Sum.inl value => dest (k value)
-      | Sum.inr ⟨position, next⟩ =>
-          Sum.inr ⟨position, fun direction => bind (next direction) k⟩ := by
+      | Sum.inr (.mk position next) =>
+          Sum.inr (.mk position (fun direction => bind (next direction) k)) := by
   unfold bind
   rw [dest_corec]
   rcases h : dest computation with value | ⟨position, next⟩
@@ -291,7 +291,7 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
     · simp [bindStep, h, hk]
     · simp only [bindStep, h, hk]
       apply congrArg Sum.inr
-      apply Sigma.ext
+      apply PFunctor.Obj.ext
       · rfl
       · apply heq_of_eq
         funext direction
@@ -397,9 +397,8 @@ def mapLensStep (lens : Lens p q) :
     Resumption p β → β ⊕ q.Obj (Resumption p β)
   | computation => match dest computation with
     | Sum.inl value => Sum.inl value
-    | Sum.inr ⟨position, next⟩ =>
-        Sum.inr ⟨lens.toFunA position,
-          fun direction => next (lens.toFunB position direction)⟩
+    | Sum.inr (.mk position next) =>
+        Sum.inr (.mk (lens.toFunA position) fun direction => next (lens.toFunB position direction))
 
 /-- Transport a resumption along a polynomial lens. -/
 def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β :=
@@ -408,9 +407,9 @@ def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β 
 @[simp] theorem dest_mapLens (lens : Lens p q) (computation : Resumption p β) :
     dest (mapLens lens computation) = match dest computation with
       | Sum.inl value => Sum.inl value
-      | Sum.inr ⟨position, next⟩ =>
-          Sum.inr ⟨lens.toFunA position,
-            fun direction => mapLens lens (next (lens.toFunB position direction))⟩ := by
+      | Sum.inr (.mk position next) =>
+          Sum.inr (.mk (lens.toFunA position) fun direction =>
+            mapLens lens (next (lens.toFunB position direction))) := by
   unfold mapLens
   rw [dest_corec]
   rcases h : dest computation with value | ⟨position, next⟩
