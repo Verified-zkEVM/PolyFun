@@ -96,7 +96,10 @@ end AngelicWP
 
 namespace Spec
 
-/-- Sequencing for the direct `FreeM.bind` spelling, for any core interpretation. -/
+/-- Sequencing for the direct `FreeM.bind` spelling, for any core interpretation.
+
+Core's generic bind specification is indexed under `Bind.bind`; `vcgen` also needs this
+registration for cslib's concrete `FreeM.bind` head. The proof is core's bind rule. -/
 @[spec]
 theorem bind {α β : Type uB} {Pred : Type v} {EPred : Type z}
     [Assertion Pred] [Assertion EPred] [WPMonad (FreeM P) Pred EPred]
@@ -121,7 +124,6 @@ theorem liftBind {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) (Q : α →
     (E : EPost.Nil) :
     Triple (FreeM.liftBind a r) (∀ b, wp (r b) Q E) Q E :=
   ⟨fun h => (allOutputs_liftBind Q a r).mpr h⟩
-
 
 end Demonic
 
