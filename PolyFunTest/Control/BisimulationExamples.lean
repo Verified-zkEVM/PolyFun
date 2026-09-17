@@ -240,4 +240,30 @@ example : [some true] ∈ plainLTS.toLts.saturate.traces () := by
   exact .cons ((show plainLTS.Step () (some true) () from ⟨(), rfl, rfl⟩).delay).weak
     (LTS.WeakTrace.nil (L := plainLTS) ())
 
+/-- Silent prefixes and suffixes are both admitted when there is a visible event. -/
+example : preSilentLTS.WeakTrace .start [true] .done :=
+  .cons (LTS.DelayStep.weak preSilentLTS
+    ⟨.middle, .single ⟨(), rfl, rfl⟩, ⟨(), rfl, rfl⟩⟩) (.nil _)
+
+example : postSilentLTS.WeakTrace .start [true] .done :=
+  .cons ⟨.start, .middle, .refl, ⟨(), rfl, rfl⟩, .single ⟨(), rfl, rfl⟩⟩ (.nil _)
+
+/-- Concatenation keeps both visible events. -/
+example : plainLTS.WeakTrace () [true, true] () := by
+  have tick : plainLTS.WeakTrace () [true] () :=
+    .cons ((show plainLTS.Step () (some true) () from ⟨(), rfl, rfl⟩).delay).weak (.nil _)
+  exact LTS.WeakTrace.append plainLTS tick tick
+
+/-- Composed trace transport preserves the endpoint relation across independent universes. -/
+example {Obs : Type uObs}
+    {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs}
+    {L₃ : LTS.{uObs, uState₃, uMove₃} Obs}
+    {r₁₂ : L₁.State → L₂.State → Prop} {r₂₃ : L₂.State → L₃.State → Prop}
+    (h₁₂ : IsWeakSimulation L₁ L₂ r₁₂) (h₂₃ : IsWeakSimulation L₂ L₃ r₂₃)
+    {s₁ t₁ : L₁.State} {s₂ : L₂.State} {s₃ : L₃.State} {observations : List Obs}
+    (hr₁₂ : r₁₂ s₁ s₂) (hr₂₃ : r₂₃ s₂ s₃) (htrace : L₁.WeakTrace s₁ observations t₁) :
+    ∃ t₃, L₃.WeakTrace s₃ observations t₃ ∧ ∃ t₂, r₁₂ t₁ t₂ ∧ r₂₃ t₂ t₃ :=
+  IsWeakSimulation.weakTrace (h₁₂.comp h₂₃) ⟨s₂, hr₁₂, hr₂₃⟩ htrace
+
 end Control.BisimulationExamples

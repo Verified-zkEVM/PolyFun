@@ -11,7 +11,9 @@ public import PolyFun.Control.Bisimulation
 
 `Control.LTS.WeakTrace L s observations t` records a finite sequence of
 visible observations from `s` to `t`. Each visible transition is a weak
-transition, so arbitrary finite silent prefixes and suffixes are ignored.
+transition, so finite silent prefixes and suffixes can surround each visible
+step. An empty visible trace has equal endpoints; it does not record a
+nontrivial silent-only path.
 
 This is the trace semantics naturally preserved by `IsWeakSimulation` and
 `IsWeakBisimulation`. It deliberately lives over the existing `Control.LTS`
