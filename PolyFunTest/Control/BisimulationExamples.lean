@@ -70,6 +70,14 @@ def postSilentLTS : LTS Bool where
     | .middle, _ => none
     | .done, move => move.elim
 
+/-- Silent reachability alone does not supply an empty visible trace. -/
+example : preSilentLTS.SilentSteps .start .middle := .single ⟨(), rfl, rfl⟩
+
+example : ¬ preSilentLTS.WeakTrace .start [] .middle := by
+  intro trace
+  have h : Phase.start = .middle := (LTS.WeakTrace.nil_iff preSilentLTS).mp trace
+  cases h
+
 /-- Delay closure can absorb a silent prefix that strong matching cannot. -/
 example : preSilentLTS.DelayStep .start (some true) .done :=
   ⟨.middle, .single ⟨(), rfl, rfl⟩, ⟨(), rfl, rfl⟩⟩
