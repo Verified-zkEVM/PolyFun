@@ -21,6 +21,25 @@ public section
 
 open MonadAttach
 
+/-! Universal loop safety needs no exact support equations on the base monad. -/
+
+example {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m]
+    [LawfulMonadAttach m] (xs : List Nat) (f : Nat → m PUnit) :
+    AllOutputs (fun _ => True) (xs.forM f) :=
+  allOutputs_forM_list_of_inv (fun _ _ => True)
+    (fun _ _ _ _ _ => allOutputs_true _) trivial
+
+example (xs : List Nat) (f : Nat → StateT Bool Id PUnit) :
+    AllOutputs (fun _ => True) (xs.forM f) :=
+  allOutputs_forM_list_of_inv (fun _ _ => True)
+    (fun _ _ _ _ _ => allOutputs_true _) trivial
+
+example {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m]
+    [LawfulMonadAttach m] (xs : List Nat) (f : Nat → Nat → m (ForInStep Nat)) :
+    AllOutputs (fun _ => True) (forIn xs 0 f) :=
+  allOutputs_forIn_list_of_const_inv (fun _ => True)
+    (fun _ _ _ _ r _ => by cases r <;> trivial) trivial
+
 /-- A nondeterministic choice between an element and its successor. -/
 def choose (x : Nat) : SetM Nat := ({x, x + 1} : Set Nat)
 

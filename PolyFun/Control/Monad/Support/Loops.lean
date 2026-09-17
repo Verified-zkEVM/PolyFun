@@ -95,12 +95,10 @@ theorem allOutputs_forM_list_of_inv {xs : List ι} {f : ι → m PUnit}
   intro pref suff
   induction suff generalizing pref with
   | nil =>
-    intro hxs hinv
-    intro _ _
+    intro hxs hinv _ _
     simpa [hxs] using hinv
   | cons x suff ih =>
-    intro hxs hinv
-    intro u hu
+    intro hxs hinv u hu
     rw [List.forM_eq_forM, List.forM_cons] at hu
     obtain ⟨v, hv, hu⟩ := LawfulMonadAttach.canReturn_bind_imp' hu
     exact ih (pref ++ [x]) (by simp [hxs]) (step pref x suff hxs hinv v hv) u hu
