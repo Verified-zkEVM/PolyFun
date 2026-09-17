@@ -147,6 +147,20 @@ theorem not_mem_support_iff [MonadAttach m] {x : m α} {a : α} :
     a ∉ support x ↔ ¬ CanReturn x a :=
   Iff.rfl
 
+/-- Continuations agreeing on possible returns produce the same computation. -/
+theorem bind_congr_of_canReturn [Monad m] [LawfulMonad m] [MonadAttach m]
+    [WeaklyLawfulMonadAttach m] (x : m α) {f g : α → m β}
+    (h : ∀ a, CanReturn x a → f a = g a) : x >>= f = x >>= g := by
+  rw [← WeaklyLawfulMonadAttach.attach_bind_val (x := x) (f := f),
+    ← WeaklyLawfulMonadAttach.attach_bind_val (x := x) (f := g)]
+  exact bind_congr fun a ↦ h a.1 a.2
+
+/-- Continuations agreeing on the support produce the same computation. -/
+theorem bind_congr_of_forall_mem_support [Monad m] [LawfulMonad m] [MonadAttach m]
+    [WeaklyLawfulMonadAttach m] (x : m α) {f g : α → m β}
+    (h : ∀ a ∈ support x, f a = g a) : x >>= f = x >>= g :=
+  bind_congr_of_canReturn x h
+
 @[simp]
 theorem support_ite [MonadAttach m] (c : Prop) [Decidable c] (x y : m α) :
     support (if c then x else y) = if c then support x else support y := by

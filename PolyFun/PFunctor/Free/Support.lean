@@ -7,6 +7,7 @@ module
 
 public import PolyFun.Control.Monad.Support.Instances
 public import PolyFun.PFunctor.Free.Path
+public import Mathlib.Data.Set.Finite.Lattice
 
 /-!
 # Exact Support of the Free Monad
@@ -36,7 +37,7 @@ canonical `FreeM.Path` type, and `support_eq_liftM_univ` identifies it with the 
 
 @[expose] public section
 
-universe uA uB v
+universe uA uB v w
 
 namespace PFunctor.FreeM
 
@@ -126,6 +127,48 @@ theorem support_lift (a : P.A) :
 theorem mem_support_liftBind {a : P.A} {r : P.B a → FreeM P α} {c : α} :
     c ∈ support (FreeM.liftBind a r) ↔ ∃ b, c ∈ support (r b) :=
   Set.mem_iUnion
+
+/-- A primitive operation followed by a continuation can return any child output. -/
+@[simp, freeM_unfold]
+theorem support_lift_bind (a : P.A) (r : P.B a → FreeM P α) :
+    support ((FreeM.lift a).bind r) = ⋃ b, support (r b) := rfl
+
+/-- Mapping a free tree maps its reachable leaves, independently of result universes. -/
+@[simp]
+theorem support_map {γ : Type v} {δ : Type w} (f : γ → δ) (program : FreeM P γ) :
+    support (FreeM.map f program) = f '' support program := by
+  induction program with
+  | pure value => simp
+  | lift_bind position next ih =>
+    simp only [map_bind, support_lift_bind, ih, Set.image_iUnion]
+
+/-- An operation object can return exactly the outputs of its continuation. -/
+-- Prefer the public projection over unfolding `liftObj` through the generic map equation.
+@[simp 1100]
+theorem support_liftObj (object : P.Obj α) :
+    support (FreeM.liftObj object) = Set.range (PFunctor.Obj.snd object) := by
+  cases object using PFunctor.Obj.rec
+  simp [FreeM.liftObj, support_map, PFunctor.Obj.snd]
+
+/-- A free program has a possible return when every operation has an answer. -/
+theorem support_nonempty [∀ a, Nonempty (P.B a)] (program : FreeM P α) :
+    (support program).Nonempty := by
+  classical
+  induction program with
+  | pure value => exact ⟨value, by simp⟩
+  | lift_bind position next ih =>
+    obtain ⟨value, hvalue⟩ := ih (Classical.ofNonempty : P.B position)
+    exact ⟨value, mem_support_liftBind.mpr ⟨Classical.ofNonempty, hvalue⟩⟩
+
+/-- A free program has finitely many possible returns when every answer type is finite. -/
+@[simp]
+theorem support_finite [∀ a, Finite (P.B a)] (program : FreeM P α) :
+    (support program).Finite := by
+  induction program with
+  | pure value => simp
+  | lift_bind position next ih =>
+    rw [support_lift_bind]
+    exact Set.finite_iUnion ih
 
 /-! ## Structural recursion for the satisfaction judgments -/
 

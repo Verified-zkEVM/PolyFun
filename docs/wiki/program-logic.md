@@ -42,6 +42,16 @@ locally installed algebra, the demonic reading of `SetM` with `for` and `forM` l
 
 ## Relation to core `MonadAttach`
 
+Continuation congruence needs only `WeaklyLawfulMonadAttach`: use
+`MonadAttach.bind_congr_of_canReturn` or
+`MonadAttach.bind_congr_of_forall_mem_support` to compare continuations on possible
+returns. Both follow from core's `attach_bind_val`, without exact composition.
+
+For polynomial free programs, `FreeM.support_map` permits independent result
+universes and `support_liftObj` uses the public object projection. Nonempty answer
+types give `support_nonempty`; finite answer types give `support_finite`, even when
+some answer types are empty. Neither theorem requires an enumeration.
+
 The support layer is a three-way split:
 
 - **Core owns the data and canonicity.** `MonadAttach.CanReturn x a` is "`a` is a
