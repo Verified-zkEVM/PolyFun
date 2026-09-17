@@ -118,3 +118,8 @@ example : (ask.liftM chooseTrue).reachableUnder (fun _ _ => True) ⊆
   simp [chooseTrue]
 
 end PolyFunTest.ModuleAPI.Reachability
+
+/- Operation specifications also simplify at concrete dependent answer types. -/
+example (n : Nat) (spec : PFunctor.OpSpec ⟨Nat, Fin⟩ Nat) (post : Fin n → Nat) :
+    PFunctor.FreeM.wpFold spec (PFunctor.FreeM.lift (P := ⟨Nat, Fin⟩) n) post = spec n post := by
+  simp

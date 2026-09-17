@@ -147,7 +147,7 @@ theorem foldFreeM_liftBind (onValue : α → β) (onEffect : (a : P.A) → (P.B 
 @[simp]
 theorem foldFreeM_lift (a : P.A) (onValue : P.B a → β)
     (onEffect : (a : P.A) → (P.B a → β) → β) :
-    foldFreeM onValue onEffect (FreeM.lift a) = onEffect a onValue :=
+    foldFreeM (α := no_index (P.B a)) onValue onEffect (FreeM.lift a) = onEffect a onValue :=
   rfl
 
 /-- **Universal property of the fold**: a function agreeing with the algebra on leaves and on

@@ -144,7 +144,7 @@ theorem wpFold_liftBind (Φ : OpSpec P l) (a : P.A) (r : P.B a → FreeM P α)
 
 @[simp]
 theorem wpFold_lift (Φ : OpSpec P l) (a : P.A) (post : P.B a → l) :
-    wpFold Φ (FreeM.lift (P := P) a) post = Φ a post :=
+    wpFold (α := no_index (P.B a)) Φ (FreeM.lift (P := P) a) post = Φ a post :=
   rfl
 
 theorem wpFold_bind (Φ : OpSpec P l) (x : FreeM P α) (f : α → FreeM P β)

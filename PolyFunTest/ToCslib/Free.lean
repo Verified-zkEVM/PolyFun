@@ -102,3 +102,10 @@ example (x : FreeM coinP Nat) (first : (a : coinP.A) → FreeM coinP (coinP.B a)
     (second : (a : coinP.A) → Option (coinP.B a)) :
     (x.liftM first).liftM second = x.liftM fun a => (first a).liftM second :=
   FreeM.liftM_comp x first second
+
+/- Dependent response types must not prevent simp from finding the lift equation. -/
+example (n : Nat) (onValue : Fin n → Nat)
+    (onEffect : (n : Nat) → (Fin n → Nat) → Nat) :
+    PFunctor.FreeM.foldFreeM onValue onEffect
+      (PFunctor.FreeM.lift (P := ⟨Nat, Fin⟩) n) = onEffect n onValue := by
+  simp
