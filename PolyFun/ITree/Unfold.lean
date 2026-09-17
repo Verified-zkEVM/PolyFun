@@ -34,7 +34,7 @@ every node becomes a visible `query` at its position, with the same children.
 The result never returns (`PEmpty` leaves) and takes no silent steps. The empty
 return type may live in a universe independent of both universes of `p`. -/
 def M.toITree {p : PFunctor.{uA, uB}} : M p → ITree p PEmpty.{uR + 1} :=
-  ITree.corec fun t => .mk (.query (M.dest t).1) ((M.dest t).2)
+  ITree.corec fun t => .mk (.query (M.dest t).fst) (M.dest t).snd
 
 /-- The direct all-query ITree embedding of an M-tree agrees with first
 viewing the tree as an empty-valued resumption and then using the canonical
