@@ -199,6 +199,7 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
   | pure value => simp [occurrences]
   | liftBind a next ih =>
       rcases path with ⟨answer, suffix⟩
+      rw [Path.trace_liftBind]
       by_cases h : a = target
       · subst a
         cases n with

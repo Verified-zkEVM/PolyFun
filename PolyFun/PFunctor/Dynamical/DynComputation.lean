@@ -783,12 +783,6 @@ def ofFreeM (program : α → FreeM p β) : DynComputation p α β where
 @[simp] theorem view_ofFreeM_pure (program : α → FreeM p β) (value : β) :
     (ofFreeM program).view (pure value) = Sum.inl value := rfl
 
-@[simp] theorem view_ofFreeM_lift_bind (program : α → FreeM p β)
-    (position : p.A) (next : p.B position → FreeM p β) :
-    (ofFreeM program).view (lift_bind% position next) =
-      Sum.inr ⟨position, next⟩ := rfl
-
-/-- Constructor spelling of `view_ofFreeM_lift_bind`. -/
 theorem view_ofFreeM_liftBind (program : α → FreeM p β)
     (position : p.A) (next : p.B position → FreeM p β) :
     (ofFreeM program).view (FreeM.liftBind position next) =

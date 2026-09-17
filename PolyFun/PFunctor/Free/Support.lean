@@ -114,17 +114,6 @@ theorem support_eq_supp (x : FreeM P α) : support x = supp x := rfl
 @[simp]
 theorem support_pure' (a : α) : support (pure a : FreeM P α) = {a} := rfl
 
-/-- The support of an operation node, on the simp normal form `(FreeM.lift a).bind r`. -/
-@[simp]
-theorem support_lift_bind (a : P.A) (r : P.B a → FreeM P α) :
-    support (lift_bind% a r) = ⋃ b, support (r b) := rfl
-
-/-- `support_lift_bind` when results and directions share a universe. -/
-@[simp]
-theorem support_lift_bind' {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) :
-    support (lift_bind'% a r) = ⋃ b, support (r b) := rfl
-
-/-- Constructor spelling of `support_lift_bind`, in the `freeM_unfold` set. -/
 @[freeM_unfold]
 theorem support_liftBind (a : P.A) (r : P.B a → FreeM P α) :
     support (FreeM.liftBind a r) = ⋃ b, support (r b) := rfl
@@ -164,30 +153,6 @@ theorem someOutput_liftBind (p : α → Prop) (a : P.A) (r : P.B a → FreeM P �
 theorem noOutput_liftBind (p : α → Prop) (a : P.A) (r : P.B a → FreeM P α) :
     NoOutput p (FreeM.liftBind a r) ↔ ∀ b, NoOutput p (r b) :=
   allOutputs_liftBind (fun a => ¬ p a) a r
-
-/-! ## Judgments through operation nodes in simp normal form
-
-The constructor equations above are one-way unfolding lemmas on `FreeM.liftBind`. Upstream
-simplification presents a node as `(FreeM.lift a).bind r`, so the same equations are restated
-on that spelling as `simp` lemmas. When results and directions share a universe the node
-normalises further to `FreeM.lift a >>= r`, which the generic `allOutputs_bind` /
-`someOutput_bind` / `noOutput_bind` rules already handle through `support_lift`. -/
-
-@[simp]
-theorem allOutputs_lift_bind (p : α → Prop) (a : P.A) (r : P.B a → FreeM P α) :
-    AllOutputs p (lift_bind% a r) ↔ ∀ b, AllOutputs p (r b) :=
-  allOutputs_liftBind p a r
-
-@[simp]
-theorem someOutput_lift_bind (p : α → Prop) (a : P.A) (r : P.B a → FreeM P α) :
-    SomeOutput p (lift_bind% a r) ↔ ∃ b, SomeOutput p (r b) :=
-  someOutput_liftBind p a r
-
-@[simp]
-theorem noOutput_lift_bind (p : α → Prop) (a : P.A) (r : P.B a → FreeM P α) :
-    NoOutput p (lift_bind% a r) ↔ ∀ b, NoOutput p (r b) :=
-  noOutput_liftBind p a r
-
 
 /-! ## Coherence with paths and with the powerset fold -/
 

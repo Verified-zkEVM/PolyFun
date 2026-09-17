@@ -137,16 +137,6 @@ theorem map_pure {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
     map f (pure x) d = ⟨⟩ :=
   rfl
 
-@[simp]
-theorem map_lift_bind {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
-    (f : ∀ a, Γ a → Δ a)
-    (a : P.A) (rest : P.B a → FreeM P α)
-    (d : Decoration Γ ((FreeM.lift a).bind rest)) :
-    map f (lift_bind% a rest) d =
-      ⟨f a d.1, fun b => map f (rest b) (d.2 b)⟩ :=
-  rfl
-
-/-- Constructor spelling of `Decoration.map_lift_bind`. -/
 theorem map_liftBind {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
     (f : ∀ a, Γ a → Δ a)
     (a : P.A) (rest : P.B a → FreeM P α)

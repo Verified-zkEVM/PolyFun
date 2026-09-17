@@ -65,7 +65,7 @@ theorem foldl_succ (position : P.A) (step : state → Nat → P.B position → s
           readout rounds (step accumulator 0 answer) := by
   rw [foldl, Fin.foldlM_succ]
   simp only [Fin.val_zero]
-  rw [FreeM.bind_eq, FreeM.map_bind]
+  rw [← FreeM.bind_eq_bind, FreeM.map_bind]
   simp only [FreeM.liftBind_bind, FreeM.pure_bind]
   apply congrArg (fun next => (FreeM.lift position).bind next)
   funext answer
@@ -108,7 +108,7 @@ theorem foldr_succ (position : P.A) (step : state → Nat → P.B position → s
         foldr position step readout rounds (step accumulator rounds answer) := by
   rw [foldr, Fin.foldrM_succ_last]
   simp only [Fin.val_last]
-  rw [FreeM.bind_eq, FreeM.map_bind]
+  rw [← FreeM.bind_eq_bind, FreeM.map_bind]
   simp only [FreeM.liftBind_bind, FreeM.pure_bind]
   apply congrArg (fun next => (FreeM.lift position).bind next)
   funext answer
@@ -126,7 +126,7 @@ theorem map_foldl (f : output → output₂) (position : P.A)
   induction rounds generalizing accumulator step with
   | zero => simp only [foldl_zero, FreeM.map_pure, Function.comp_apply]
   | succ rounds induction =>
-      rw [foldl_succ, foldl_succ, FreeM.map_lift_bind]
+      rw [foldl_succ, foldl_succ, FreeM.map_bind]
       exact congrArg (fun next => (FreeM.lift position).bind next)
         (funext fun answer => induction _ _)
 
@@ -141,7 +141,7 @@ theorem map_foldr (f : output → output₂) (position : P.A)
   induction rounds generalizing accumulator with
   | zero => simp only [foldr_zero, FreeM.map_pure, Function.comp_apply]
   | succ rounds induction =>
-      rw [foldr_succ, foldr_succ, FreeM.map_lift_bind]
+      rw [foldr_succ, foldr_succ, FreeM.map_bind]
       exact congrArg (fun next => (FreeM.lift position).bind next)
         (funext fun answer => induction _)
 

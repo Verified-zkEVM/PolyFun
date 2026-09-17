@@ -117,9 +117,9 @@ and depend on this library.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
 - `ToCslib/`: a separate Lake library that is the lowest production layer
   under PolyFun and stages what PolyFun will upstream: additions to cslib's
-  free monad `PFunctor.FreeM` (`Data/PFunctor/Free/`: the `lift_bind%`
-  normal-form elaborators, a normal-form case principle, `map_pure` /
-  `map_bind`, the catamorphism `foldFreeM`, handler fusion, and commutation
+  free monad `PFunctor.FreeM` (`Data/PFunctor/Free/`: universe-polymorphic
+  map laws, the catamorphism `foldFreeM` with its substitution and uniqueness
+  laws, handler fusion, and commutation
   of `liftM` with loops), transport of `forIn` loops along cslib's
   `IsMonadHom` plus effect-free loop instances for `Option` and `Vector`
   (`Control/`), the bridge from Mathlib's `CompleteLattice` to core's

@@ -68,7 +68,6 @@ lemma isRollBound_lift_bind_iff' {α : Type uB} (a : P.A) (r : P.B a → FreeM P
       canRoll a b ∧ ∀ y, IsRollBound (r y) (cost a b) canRoll cost :=
   Iff.rfl
 
-/-- Constructor spelling of `isRollBound_lift_bind_iff`, for `rw` on `match`-shaped goals. -/
 lemma isRollBound_liftBind_iff (a : P.A) (r : P.B a → FreeM P α) (b : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
     IsRollBound (FreeM.liftBind a r) b canRoll cost ↔
@@ -89,7 +88,8 @@ private lemma isRollBound_map_aux (oa : FreeM P α) (f : α → β)
   | pure x => intro b; exact ⟨fun _ => trivial, fun _ => trivial⟩
   | lift_bind a r ih =>
     intro b
-    rw [functorMap_lift_bind, isRollBound_lift_bind_iff, isRollBound_lift_bind_iff]
+    change (canRoll a b ∧ ∀ y, IsRollBound (f <$> r y) (cost a b) canRoll cost) ↔
+      (canRoll a b ∧ ∀ y, IsRollBound (r y) (cost a b) canRoll cost)
     exact and_congr_right fun _ => forall_congr' fun y => ih y
 
 @[simp, grind =]
@@ -234,7 +234,6 @@ lemma isTotalRollBound_lift_bind_iff' {α : Type uB} (a : P.A) (r : P.B a → Fr
       0 < n ∧ ∀ y, IsTotalRollBound (r y) (n - 1) :=
   Iff.rfl
 
-/-- Constructor spelling of `isTotalRollBound_lift_bind_iff`, for `rw` on `match`-shaped goals. -/
 lemma isTotalRollBound_liftBind_iff (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) :
     IsTotalRollBound (FreeM.liftBind a r) n ↔
       0 < n ∧ ∀ y, IsTotalRollBound (r y) (n - 1) :=
@@ -277,7 +276,9 @@ lemma isTotalRollBound_mapLens {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
   | pure x => simp
   | lift_bind a cont ih =>
       rw [isTotalRollBound_lift_bind_iff] at h
-      rw [FreeM.mapLens_lift_bind, isTotalRollBound_lift_bind_iff]
+      change IsTotalRollBound (FreeM.liftBind (l.toFunA a)
+        (fun d => (cont (l.toFunB a d)).mapLens l)) n
+      rw [FreeM.liftBind_eq, isTotalRollBound_lift_bind_iff]
       exact ⟨h.1, fun d => ih _ (h.2 _)⟩
 
 end PFunctor.FreeM

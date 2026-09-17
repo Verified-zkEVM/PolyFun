@@ -128,19 +128,6 @@ theorem bind_pure (S : Display.{uA, uB, uC, uD} P)
     S.bind (pure x) d g dg = dg x d.down :=
   rfl
 
-@[simp]
-theorem bind_lift_bind (S : Display.{uA, uB, uC, uD} P)
-    {E : Type uE} {F : E → Type uF}
-    {E' : Type uE'} {G : E' → Type uG}
-    (a : P.A) (rest : P.B a → FreeM P E)
-    (d : FreeM.Displayed (S.toDisplayedAlgebra F) ((FreeM.lift a).bind rest))
-    (g : E → FreeM P E')
-    (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedAlgebra G) (g x)) :
-    S.bind (lift_bind% a rest) d g dg =
-      ⟨d.1, fun b e => S.bind (rest b) (d.2 b e) g dg⟩ :=
-  rfl
-
-/-- Constructor spelling of `bind_lift_bind`. -/
 theorem bind_liftBind (S : Display.{uA, uB, uC, uD} P)
     {E : Type uE} {F : E → Type uF}
     {E' : Type uE'} {G : E' → Type uG}

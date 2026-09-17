@@ -217,10 +217,8 @@ as its lowest layer:
 
 | `ToCslib` module | Contents | Upstream target |
 |---|---|---|
-| `Data/PFunctor/Free/Basic.lean` | `lift_bind%` / `lift_bind'%` (normal form with the direction type unindexed) | new cslib PR (see the node normal form below) |
 | `Data/PFunctor/Free/Basic.lean` | `map_pure`, `map_bind`, `liftM_lift_eq_self` | upstream candidate (proposed in cslib#716, closed unmerged) |
-| `Data/PFunctor/Free/Basic.lean` | normal-form case principle `FreeM.cases` | cslib#731 (open) supplies a `cases_eliminator` |
-| `Data/PFunctor/Free/Basic.lean` | `bind_eq`, `map_lift_bind` / `functorMap_lift_bind` / `map_liftBind`, `foldFreeM` + `foldFreeM_unique`, `liftM_comp` | new cslib PR |
+| `Data/PFunctor/Free/Basic.lean` | `foldFreeM` with substitution and uniqueness laws, `liftM_comp` | new cslib PR |
 | `Data/PFunctor/Free/Loops.lean` | `liftM_forIn'`, `liftM_forIn`, `liftM_forIn_of_pureForIn` (and `liftM_forM` / `liftM_foldlM` / `liftM_mapM` as restatements of cslib#856's `IsMonadHom.map_list*`) | new cslib PR |
 | `Control/Monad/HomTransport.lean` | `IsMonadHom.map_listForIn'`, `map_listForIn`, `map_forIn_of_pureForIn`, `map_forIn'_of_pureForIn'` | new cslib PR, next to `IsMonadHom/List.lean` |
 | `Control/ForIn.lean` | `PureForIn` / `PureForIn'` / `LawfulMemForInId` for `Option`, `Vector` | Lean core (`Std.Internal.ForIn`) |
@@ -400,32 +398,21 @@ well-placed `HasTau (Option α)`, and a cross-type `Bisimilarity.symm`.
 
 #### The `FreeM` node normal form
 
-PolyFun follows upstream's simp normal form for an operation node, `(FreeM.lift a).bind k`
-(`FreeM.liftBind_eq`), and no longer pins a cslib fork that kept the constructor `liftBind`
-as the normal form; the conventions are recorded in `docs/wiki/pfunctor.md`. Four upstream
-changes would remove the remaining friction, in decreasing order of importance:
+PolyFun consumes the pinned cslib normalization convention unchanged. Use
+upstream monadic interpretation, `IsMonadHom` transport, and general bind laws;
+use named structural equations when reasoning about dependent paths.
 
-1. `@[implicit_reducible]` on `FreeM.bind`, `FreeM.lift` and `FreeM.map`. The node normal
-   form appears inside type parameters (families indexed by a tree), and metavariable
-   assignments compare types at implicit transparency, so these definitions must unfold there
-   (`Init.MetaTypes`: "operations used in type parameters … should, as a basic rule, be
-   implicit-reducible"; a `rfl` lemma's sides should agree at implicit transparency, which
-   `liftBind_eq` currently does not). Prepared on `dtumad/cslib`, branch
-   `polyfun/freem-implicit-reducible`, together with the `>>=` spellings of
-   `bind_eq_pure_iff` / `pure_eq_bind_iff`. Until it lands, PolyFun files that unify node
-   indices declare the attribute locally.
-2. cslib#893 (drop `@[simp]` from `pure_eq_pure` / `bind_eq_bind`), which would collapse the
-   two normal forms — `(lift a).bind k` across universes, `lift a >>= k` within one — into
-   one and retire PolyFun's `_lift_bind'` twins.
-3. Purity disequalities for the `>>=` spelling (`monadBind_eq_pure_iff` and
-   `pure_eq_monadBind_iff` on the branch above), which `simp` needs to discharge matcher side
-   conditions on a node in normal form.
-4. `no_index` on the direction type in cslib's own normal-form `simp` lemmas
-   (`liftM_lift_bind`, `liftM_lift`, `liftBind_bind`, `bind_eq_pure_iff`, …). The direction
-   type `P.B a` is an implicit type argument of the bind that the simplifier indexes, and on a
-   concrete polynomial it reduces (to `Bool` on `⟨PUnit, fun _ => Bool⟩`), so none of these
-   lemmas fire there — `PolyFunTest/ToCslib/Free.lean` pins the failure for `liftM_lift_bind`.
-   The staged `lift_bind%` / `lift_bind'%` elaborators are the proposed spelling.
+Two narrow upstream concerns remain: dependent indices sometimes require
+`FreeM.bind` and `FreeM.lift` to be implicit-reducible, and simp's indexing of
+dependent result types can miss equations on concrete signatures. These need
+isolated reproductions and targeted fixes, not a local normalization API.
+For example, on the signature `⟨Nat, Fin⟩`, interpreting `lift n >>= k` works
+with `rw [FreeM.liftM_bind, FreeM.liftM_lift]` even when bare `simp` leaves the
+single-operation interpretation unreduced.
+
+cslib#893 discusses the tradeoff between universe-polymorphic `.bind` and the
+standard `>>=` laws used by `LawfulMonad` and WP automation. PolyFun does not
+assume that proposal will land or change those attributes locally.
 
 ## Unused surface
 

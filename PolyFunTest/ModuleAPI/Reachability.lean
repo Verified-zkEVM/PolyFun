@@ -64,15 +64,17 @@ example (path : Path ((FreeM.lift (P := coinP) ()).bind fun answer => pure answe
     Path.AllowedUnder (P := coinP) (fun _ answer => answer = true)
       ((FreeM.lift (P := coinP) ()).bind fun answer => pure answer) path ↔
         Path.head (P := coinP) () (fun answer => pure answer) path = true := by
-  simp
+  rcases path with ⟨answer, tail⟩
+  change (answer = true ∧ Path.AllowedUnder _ (pure answer) tail) ↔ answer = true
+  exact and_iff_left (Path.allowedUnder_pure _ answer tail)
 
 example {P : PFunctor.{uA, uB}} {X : Type uX} (allows : (a : P.A) → P.B a → Prop)
     (position : P.A) (next : P.B position → FreeM P X)
     (direction : P.B position) (path : Path (next direction)) :
     Path.AllowedUnder allows ((FreeM.lift position).bind next)
       (Path.cons position next direction path) ↔
-        allows position direction ∧ Path.AllowedUnder allows (next direction) path := by
-  simp
+        allows position direction ∧ Path.AllowedUnder allows (next direction) path :=
+  Path.allowedUnder_liftBind allows position next direction path
 
 abbrev dependentP : PFunctor := ⟨Nat, Fin⟩
 

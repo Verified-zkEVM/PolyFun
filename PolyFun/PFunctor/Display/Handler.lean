@@ -79,23 +79,6 @@ theorem liftM_pure
     S.liftM T (pure x) d f df = T.leaf F x d.down :=
   rfl
 
-/-- Displayed handler extension through an operation node. Results and directions share
-a universe here, so the node's simp normal form is `FreeM.lift a >>= rest`. -/
-@[simp]
-theorem liftM_lift_bind
-    {Q : PFunctor.{uA', uB'}}
-    (S : Display.{uA, uB, uC, uD} P)
-    (T : Display.{uA', uB', uC', uD'} Q)
-    {E : Type uB} {F : E → Type uF}
-    (a : P.A) (rest : P.B a → FreeM P E)
-    (d : FreeM.Displayed (S.toDisplayedAlgebra F) (FreeM.lift a >>= rest))
-    (f : (a : P.A) → FreeM Q (P.B a)) (df : Handler S T f) :
-    S.liftM T (lift_bind'% a rest) d f df =
-      T.bind (f a) (df a d.1) (fun b => (rest b).liftM f)
-        (fun b e => S.liftM T (rest b) (d.2 b e) f df) :=
-  rfl
-
-/-- Constructor spelling of `liftM_lift_bind`. -/
 theorem liftM_liftBind
     {Q : PFunctor.{uA', uB'}}
     (S : Display.{uA, uB, uC, uD} P)

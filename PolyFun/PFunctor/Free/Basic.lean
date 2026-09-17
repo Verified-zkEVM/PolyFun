@@ -15,9 +15,9 @@ public import ToCslib.Data.PFunctor.Free.Basic
 
 PolyFun's layer over cslib's free monad `PFunctor.FreeM`: the W-type presentations, root
 predicates, transport along lenses, and the bundled monad-homomorphism form of `FreeM.liftM`
-with its universal property and naturality. The purely free-monadic lemmas that used to live
-here (`map_pure`, `map_bind`, `foldFreeM`, `liftM_comp`, `liftM_lift_eq_self`, …) are staged for
-cslib in `ToCslib.Data.PFunctor.Free.Basic`, which this module re-exports.
+with its universal property and naturality. The algebraic laws (`map_pure`, `map_bind`, `foldFreeM`,
+`foldFreeM_bind`, `liftM_comp`, `liftM_lift_eq_self`) are staged for cslib in
+`ToCslib.Data.PFunctor.Free.Basic`, which this module re-exports.
 -/
 
 @[expose] public section
@@ -117,14 +117,6 @@ theorem rootSatisfies_pure (positionPred : P.A → Prop) (leafPred : α → Prop
       leafPred result :=
   rfl
 
-@[simp]
-theorem rootSatisfies_lift_bind (positionPred : P.A → Prop) (leafPred : α → Prop)
-    (position : P.A) (next : P.B position → FreeM P α) :
-    RootSatisfies positionPred leafPred (lift_bind% position next) =
-      positionPred position :=
-  rfl
-
-/-- Constructor spelling of `rootSatisfies_lift_bind`. -/
 theorem rootSatisfies_liftBind (positionPred : P.A → Prop) (leafPred : α → Prop)
     (position : P.A) (next : P.B position → FreeM P α) :
     RootSatisfies positionPred leafPred
@@ -178,14 +170,6 @@ theorem mapLens_pure (l : Lens P Q) (x : α) :
     (pure x : FreeM P α).mapLens l = FreeM.pure x :=
   rfl
 
-/-- Interface transport through an operation node, on the simp normal form. -/
-@[simp]
-theorem mapLens_lift_bind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α) :
-    (lift_bind% a rest).mapLens l =
-      (FreeM.lift (l.toFunA a)).bind (fun d ↦ (rest (l.toFunB a d)).mapLens l) :=
-  rfl
-
-/-- Constructor spelling of `mapLens_lift_bind`. -/
 theorem mapLens_liftBind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α) :
     (FreeM.liftBind a rest).mapLens l =
       FreeM.liftBind (l.toFunA a) (fun d ↦ (rest (l.toFunB a d)).mapLens l) :=

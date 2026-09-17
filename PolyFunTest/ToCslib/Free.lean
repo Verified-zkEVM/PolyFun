@@ -11,11 +11,9 @@ public import ToCslib.Data.PFunctor.Free.Loops
 /-!
 # Canaries for the staged free-monad API
 
-These examples pin the behaviour of `ToCslib.Data.PFunctor.Free`: the opt-in case principle
-presents nodes in simp normal form, the functor and fold equations fire on constructor-spelled
-goals without disabling `liftBind_eq` and on a reducible concrete interface, the catamorphism is
-characterised by its universal property (interpretation *is* the fold), interpretation is a
-monad morphism in cslib's sense, and it commutes with list loops.
+These examples exercise compositional mapping and folding, the fold's universal property,
+handler fusion, and transport of loops through monadic interpretation. Concrete signatures
+include dependent finite response types.
 -/
 
 public section
@@ -25,53 +23,43 @@ open PFunctor
 /-- A single-position interface with boolean responses. -/
 abbrev coinP : PFunctor.{0, 0} := ⟨PUnit, fun _ => Bool⟩
 
-/-- `FreeM.cases` produces the `(lift a).bind cont` normal form, on which `simp` continues. -/
-example (x : FreeM coinP Nat) : FreeM.map id x = x := by
-  cases x using FreeM.cases with
-  | pure a => rfl
-  | lift_bind a cont => simp
-
 /-- The functor equation fires on a constructor-spelled goal. -/
 example (f : Nat → Nat) (cont : Bool → FreeM coinP Nat) :
     FreeM.map f (FreeM.liftBind PUnit.unit cont) =
       FreeM.liftBind PUnit.unit fun b => FreeM.map f (cont b) := by
-  simp
+  rw [FreeM.map_liftBind]
 
-/-- The fold equations fire under `simp`, in both the `.bind` and the `>>=` spelling, and
-on a constructor-spelled node (which `simp` first normalises). They are stated through
-`lift_bind%` / `lift_bind'%`, so they also fire on the reducible interface `coinP`, where the
-node's response type `coinP.B a` reduces to `Bool` in `simp`'s index (`docs/wiki/gotchas.md`,
-6b); a lemma indexed on the projection `P.B a`, such as cslib's `liftM_lift_bind`, does not. -/
+/-- Folding a node composes the sequencing law with the single-operation law. -/
 example (onValue : Nat → Nat) (onEffect : (a : coinP.A) → (coinP.B a → Nat) → Nat)
     (a : coinP.A) (cont : coinP.B a → FreeM coinP Nat) :
     FreeM.foldFreeM onValue onEffect ((FreeM.lift a).bind cont) =
       onEffect a fun b => FreeM.foldFreeM onValue onEffect (cont b) := by
-  simp
+  rw [FreeM.foldFreeM_bind, FreeM.foldFreeM_lift]
 
 example (onValue : Nat → Nat) (onEffect : (a : coinP.A) → (coinP.B a → Nat) → Nat)
     (a : coinP.A) (cont : Bool → FreeM coinP Nat) :
     FreeM.foldFreeM onValue onEffect (FreeM.lift a >>= cont) =
       onEffect a fun b => FreeM.foldFreeM onValue onEffect (cont b) := by
-  simp
+  rw [← FreeM.bind_eq_bind, FreeM.foldFreeM_bind, FreeM.foldFreeM_lift]
 
 example (onValue : Nat → Nat) (onEffect : (a : coinP.A) → (coinP.B a → Nat) → Nat)
     (a : coinP.A) (cont : Bool → FreeM coinP Nat) :
     FreeM.foldFreeM onValue onEffect (FreeM.liftBind a cont) =
       onEffect a fun b => FreeM.foldFreeM onValue onEffect (cont b) := by
-  simp
+  rw [FreeM.foldFreeM_liftBind]
 
 /-- The same equations on a generic interface, where the response type stays a projection. -/
 example {P : PFunctor.{0, 0}} (onValue : Nat → Nat) (onEffect : (a : P.A) → (P.B a → Nat) → Nat)
     (a : P.A) (cont : P.B a → FreeM P Nat) :
     FreeM.foldFreeM onValue onEffect ((FreeM.lift a).bind cont) =
       onEffect a fun b => FreeM.foldFreeM onValue onEffect (cont b) := by
-  simp
+  rw [FreeM.foldFreeM_bind, FreeM.foldFreeM_lift]
 
 example {P : PFunctor.{0, 0}} (onValue : Nat → Nat) (onEffect : (a : P.A) → (P.B a → Nat) → Nat)
     (a : P.A) (cont : P.B a → FreeM P Nat) :
     FreeM.foldFreeM onValue onEffect (FreeM.lift a >>= cont) =
       onEffect a fun b => FreeM.foldFreeM onValue onEffect (cont b) := by
-  simp
+  rw [← FreeM.bind_eq_bind, FreeM.foldFreeM_bind, FreeM.foldFreeM_lift]
 
 /-- Interpretation through a handler is the fold into the target monad's algebra. -/
 example (s : (a : coinP.A) → Option (coinP.B a)) :
@@ -109,3 +97,11 @@ example (n : Nat) (onValue : Fin n → Nat)
     PFunctor.FreeM.foldFreeM onValue onEffect
       (PFunctor.FreeM.lift (P := ⟨Nat, Fin⟩) n) = onEffect n onValue := by
   simp
+
+/-- Sequencing may raise the result universe without changing the algebra's carrier. -/
+example (n : Nat) (onEffect : (n : Nat) → (Fin n → Nat) → Nat) :
+    FreeM.foldFreeM ULift.down onEffect
+      ((FreeM.lift (P := ⟨Nat, Fin⟩) n).bind
+        (fun b => pure (ULift.up b.val : ULift.{1} Nat))) = onEffect n Fin.val := by
+  rw [FreeM.foldFreeM_bind, FreeM.foldFreeM_lift]
+  rfl

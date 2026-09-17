@@ -34,12 +34,6 @@ def toResumption : FreeM p α → Resumption p α
 @[simp] theorem toResumption_pure (value : α) :
     toResumption (pure value : FreeM p α) = Resumption.pure value := rfl
 
-@[simp] theorem toResumption_lift_bind (position : p.A)
-    (next : p.B position → FreeM p α) :
-    toResumption (lift_bind% position next) =
-      Resumption.query position fun direction => toResumption (next direction) := rfl
-
-/-- Constructor spelling of `toResumption_lift_bind`. -/
 theorem toResumption_liftBind (position : p.A)
     (next : p.B position → FreeM p α) :
     toResumption (FreeM.liftBind position next) =
@@ -52,9 +46,9 @@ theorem dest_toResumption_lift_bind (position : p.A)
     (next : p.B position → FreeM p α) :
     Resumption.dest (toResumption ((FreeM.lift position).bind next)) =
       Sum.inr ⟨position, fun direction => toResumption (next direction)⟩ := by
-  rw [toResumption_lift_bind, Resumption.dest_query]
+  change Resumption.dest (Resumption.query position (fun d => toResumption (next d))) = _
+  rw [Resumption.dest_query]
 
-/-- Constructor spelling of `dest_toResumption_lift_bind`. -/
 theorem dest_toResumption_liftBind (position : p.A)
     (next : p.B position → FreeM p α) :
     Resumption.dest (toResumption (FreeM.liftBind position next)) =
@@ -103,8 +97,10 @@ theorem dest_toResumption_liftBind (position : p.A)
   induction program with
   | pure value => simp
   | lift_bind position next ih =>
-      rw [FreeM.mapLens_lift_bind, toResumption_lift_bind, toResumption_lift_bind,
-        Resumption.mapLens_query]
+      change Resumption.query (lens.toFunA position)
+        (fun d => toResumption ((next (lens.toFunB position d)).mapLens lens)) =
+        Resumption.mapLens lens (Resumption.query position (fun d => toResumption (next d)))
+      rw [Resumption.mapLens_query]
       congr 1
       funext direction
       exact ih (lens.toFunB position direction)

@@ -180,7 +180,7 @@ theorem runWithHandler_append [LawfulMonad m]
               (FreeM.Path.append pattern next pulled.1 inner.1,
                 M.Vertex.append pulled.2 inner.2) := by
   unfold runWithHandler
-  rw [runTree_append, ← FreeM.bind_eq, FreeM.liftM_bind]
+  rw [runTree_append, FreeM.bind_eq_bind, FreeM.liftM_bind]
   apply bind_congr
   intro pulled
   change FreeM.liftM handler
