@@ -133,6 +133,14 @@ implemented).
 
 ## Open follow-ups
 
+- Relational loop rules: `MAlgRelOrdered` lockstep `forIn` / `forM` / `foldlM` rules under
+  `StrictBind`, mirroring core's `Spec.forIn'_list` induction; not yet written.
+- A `mapM` rule for the judgments (`Hom/Loops.lean` has the morphism form only).
+- Upstream ask, closed locally: `try … catch` elaborates to `MonadExcept.tryCatch`, not
+  `MonadExceptOf.tryCatch`, so core's `Spec.tryCatch_ExceptT` never applies to it; the
+  lifting rule `Spec.tryCatch_MonadExcept` exists at the pin but lacks `@[spec]` (its twin
+  `Spec.throw_MonadExcept` has it). `Control/Do/Spec.lean` registers the attribute and
+  `PolyFunTest/Do/Except.lean` is the canary.
 - Relational free-monad layer: a two-tree `rwpFold` giving
   `MAlgRelOrdered (FreeM P) (FreeM Q) l` from a relational op-spec.
 - `Display`/wp adequacy: `Display.ofPredicates` sections versus `wpFold` of

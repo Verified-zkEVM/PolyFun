@@ -138,6 +138,20 @@ type are equal. -/
 @[simp] lemma mmap_seqRight [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n) (x : m α) (y : m β) :
     F (x *> y) = F x *> F y := by simp [seqRight_eq]
 
+@[simp] lemma mmap_ite (F : m →ᵐ n) (c : Prop) [Decidable c] (x y : m α) :
+    F (if c then x else y) = if c then F x else F y := by split <;> rfl
+
+@[simp] lemma mmap_dite (F : m →ᵐ n) (c : Prop) [Decidable c] (x : c → m α)
+    (y : ¬ c → m α) : F (if h : c then x h else y h) = if h : c then F (x h) else F (y h) := by
+  split <;> rfl
+
+@[simp] lemma mmap_option_elim {γ : Type x} (F : m →ᵐ n) (o : Option γ) (x : m α)
+    (f : γ → m α) : F (o.elim x f) = o.elim (F x) fun c => F (f c) := by cases o <;> rfl
+
+@[simp] lemma mmap_sum_elim {γ : Type x} {δ : Type y} (F : m →ᵐ n) (s : γ ⊕ δ) (f : γ → m α)
+    (g : δ → m α) : F (s.elim f g) = s.elim (fun c => F (f c)) fun d => F (g d) := by
+  cases s <;> rfl
+
 /-- Construct a `MonadHom` from a lawful monad lift. -/
 def ofLift (m : Type u → Type v) (n : Type u → Type w) [Monad m] [Monad n]
     [MonadLiftT m n] [LawfulMonadLiftT m n] : m →ᵐ n where

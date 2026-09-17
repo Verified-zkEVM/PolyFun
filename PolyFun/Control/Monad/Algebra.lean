@@ -29,7 +29,7 @@ Loom's `MonadAlgebras` development.
 
 @[expose] public section
 
-universe u v
+universe u v w w'
 
 /-- An algebra for a monad `m`: a structure map collapsing a monadic value `m α` into a plain
 value of `α`. -/
@@ -142,6 +142,44 @@ theorem wp_seq [LawfulMonad m] (f : m (α → β)) (x : m α) (post : β → l) 
   congr
   funext g
   simp [wp_map]
+
+/-! ### The rest of the `do` fragment
+
+`<*`, `*>`, `if`, `if h :`, and `match` on `Option` / `Sum` (through `Option.elim` /
+`Sum.elim`) push `wp` inwards like the four rules above; each is an equation on proper
+subprograms and joins the same `@[simp]` set. -/
+
+@[simp]
+theorem wp_seqLeft [LawfulMonad m] (x : m α) (y : m β) (post : α → l) :
+    wp (x <* y) post = wp x (fun a => wp y fun _ => post a) := by
+  rw [seqLeft_eq_bind, wp_bind]
+  simp only [wp_bind, wp_pure]
+
+@[simp]
+theorem wp_seqRight [LawfulMonad m] (x : m α) (y : m β) (post : β → l) :
+    wp (x *> y) post = wp x (fun _ => wp y post) := by
+  rw [seqRight_eq_bind, wp_bind]
+
+@[simp]
+theorem wp_ite (c : Prop) [Decidable c] (x y : m α) (post : α → l) :
+    wp (if c then x else y) post = if c then wp x post else wp y post := by
+  split <;> rfl
+
+@[simp]
+theorem wp_dite (c : Prop) [Decidable c] (x : c → m α) (y : ¬ c → m α) (post : α → l) :
+    wp (if h : c then x h else y h) post = if h : c then wp (x h) post else wp (y h) post := by
+  split <;> rfl
+
+@[simp]
+theorem wp_option_elim {γ : Type w} (o : Option γ) (x : m α) (f : γ → m α) (post : α → l) :
+    wp (o.elim x f) post = o.elim (wp x post) fun c => wp (f c) post := by
+  cases o <;> rfl
+
+@[simp]
+theorem wp_sum_elim {γ : Type w} {δ : Type w'} (s : γ ⊕ δ) (f : γ → m α) (g : δ → m α)
+    (post : α → l) :
+    wp (s.elim f g) post = s.elim (fun c => wp (f c) post) fun d => wp (g d) post := by
+  cases s <;> rfl
 
 theorem triple_conseq {pre pre' : l} {x : m α} {post post' : α → l}
     (hpre : pre' ≤ pre) (hpost : ∀ a, post a ≤ post' a) :

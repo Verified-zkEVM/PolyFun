@@ -5,7 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.Control.Monad.Support
+public import PolyFun.Control.Monad.Support.Instances
 public import PolyFun.PFunctor.Free.Path
 
 /-!

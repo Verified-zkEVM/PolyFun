@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Free.Support
+public import PolyFun.Control.Monad.Support.Indexed
 
 /-!
 # Examples for exact monadic support and the always/never judgments

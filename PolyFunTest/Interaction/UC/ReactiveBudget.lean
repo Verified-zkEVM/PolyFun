@@ -6,6 +6,7 @@ Authors: Devon Tuma
 
 module
 
+public import PolyFun.Control.Monad.Support.Instances
 public import PolyFun.Interaction.UC.ReactiveNetwork.Budget
 
 /-!

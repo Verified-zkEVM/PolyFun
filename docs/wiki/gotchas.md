@@ -372,3 +372,34 @@ value whose interpretation is a *non-instance* construction (`MAlgOrdered.toWP �
 `MonadAttach.toWPMonadDemonic`) makes Lean synthesize the instance afresh and fail. Bind the
 construction first — `let inst := MAlgOrdered.toWP α` — so it is found as a local instance;
 `let`, not `have`, so it stays definitionally the term in the statement.
+
+### 12c. `grind =` cannot index `ite`, `dite`, or thunked applicative operands
+
+`@[grind =]` rejects a lemma whose left-hand side is `f (if c then x else y)` ("invalid
+pattern"): `grind` reserves `ite` / `dite` for its own case splitting and will not use them as
+pattern heads. Likewise `x <* y` and `x *> y` store `y` under the thunk `fun _ => y`, which a
+pattern cannot bind. Such lemmas stay `@[simp]`; `grind` splits the `if` itself and reaches the
+applicative forms through `simp`'s normalization to `>>=`.
+
+### 12d. A `@[spec]` loop rule needs an `Invariant`-typed invariant
+
+`vcgen` recognises the invariant argument of a loop specification by its type: only an argument
+of type `Std.Internal.Do.Invariant α β Pred` (tagged `@[spec_invariant_type]`) is filled from
+the `invariants` clause. A rule whose invariant is a bare `List α → List α → Pred` leaves an
+unassigned metavariable behind and fails with "Failed to strip the `⊤ ⊑` wrapper". State the
+invariant as `Invariant α PUnit Pred` when the loop carries no accumulator, and pin `PUnit`'s
+universe to the monad's (`PUnit.{u + 1}` for `m : Type u → Type v`), or the theorem elaborates
+with a universe metavariable. `Spec.forM_list` in `PolyFun/Control/Do/Spec.lean` is the
+template. Specifications match the program syntactically, so state them on the class method
+(`forM`, `forIn`) and reach the function spelling (`List.forM`) through its defining equation
+in the unfolding list: `vcgen [prog, List.forM_eq_forM]`.
+
+### 12e. A `Set` literal ascribed as `SetM` is still a `Set`
+
+`SetM α := Set α` is a `def`, so `(({1, 2} : Set Nat) : SetM Nat)` elaborates to a term of type
+`Set Nat` — the ascription is a definitional check, not a cast. `rw` and `simp` match lemma
+statements at reducible or instance transparency and will not unfold `SetM`, so
+`allOutputs_bind`, `SetM.canReturn_iff`, and every other `SetM`-stated lemma reports "did not
+find an occurrence" on such a term even though `exact` / `refine` (default transparency) accept
+it. Give the literal a `SetM`-typed name (`def choose (x : Nat) : SetM Nat := {x, x + 1}`), or
+apply the lemma by term (`refine (allOutputs_bind _ _ _).mpr ?_`).

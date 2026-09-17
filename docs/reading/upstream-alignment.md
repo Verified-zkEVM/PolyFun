@@ -339,6 +339,13 @@ bridges above provide, so it runs through PolyFun's semantics
 assert the warning with `#guard_msgs` under `--wfail`. The `mvcgen` smoke tests on the
 `Std.Do` bridge keep running until that bridge is retired.
 
+Two gaps in the `@[spec]` database at the pin, both still present on `master`, are closed in
+`PolyFun/Control/Do/Spec.lean` and are upstream asks for `SpecLemmas.lean`: `try … catch`
+elaborates to `MonadExcept.tryCatch`, whose lifting rule `Spec.tryCatch_MonadExcept` core states
+but does not tag (its twin `Spec.throw_MonadExcept` is tagged), so every `try … catch` on a
+transformer stack stopped with "no spec found"; and `forM` over a list has no rule at all
+(`Spec.forM_list`, an `Invariant α PUnit Pred` rule in the shape of `Spec.forIn_list`).
+
 Relatedly, `Batteries.Classes.SatisfiesM` has been deprecated in favour of
 `Std.Do.Triple`. The `SatisfiesM` / `MonadSatisfying` line — the other abstraction
 PolyFun's support layer resembled — is superseded by core's `MonadAttach` plus
