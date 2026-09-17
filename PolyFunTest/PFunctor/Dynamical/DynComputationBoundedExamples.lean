@@ -59,7 +59,7 @@ theorem branchProgram_bound : (branchProgram ()).IsTotalRollBound 1 := by
   unfold branchP
   rw [show branchProgram () = FreeM.liftBind false (fun answer : Bool =>
     pure (if answer = true then 11 else 10)) from rfl,
-    FreeM.isTotalRollBound_lift_bind_iff]
+    FreeM.isTotalRollBound_liftBind_iff]
   exact ⟨by omega, fun _ => by simp⟩
 
 example : branchMachine.run 0 () = FreeM.pure none := rfl
@@ -224,7 +224,7 @@ theorem constantBranchProgram_bound : (constantBranchProgram ()).IsTotalRollBoun
   unfold branchP
   rw [show constantBranchProgram () =
       FreeM.liftBind false (fun _ : Bool => pure 10) from rfl,
-    FreeM.isTotalRollBound_lift_bind_iff]
+    FreeM.isTotalRollBound_liftBind_iff]
   exact ⟨by omega, fun _ => by simp⟩
 
 inductive BoolResidual : Bool → FreeM branchP Nat → Prop
@@ -270,7 +270,7 @@ theorem firstProgram_bound : (firstProgram ()).IsTotalRollBound 1 := by
   unfold branchP
   rw [show firstProgram () =
       FreeM.liftBind false (fun answer : Bool => pure answer) from rfl,
-    FreeM.isTotalRollBound_lift_bind_iff]
+    FreeM.isTotalRollBound_liftBind_iff]
   exact ⟨by omega, fun _ => by simp⟩
 
 theorem secondProgram_bound (first : Bool) : (secondProgram first).IsTotalRollBound 1 := by
@@ -278,7 +278,7 @@ theorem secondProgram_bound (first : Bool) : (secondProgram first).IsTotalRollBo
   rw [show secondProgram first = FreeM.liftBind first (fun answer : Bool =>
       pure (if first = true then if answer = true then 11 else 12
         else if answer = true then 20 else 21)) from rfl,
-    FreeM.isTotalRollBound_lift_bind_iff]
+    FreeM.isTotalRollBound_liftBind_iff]
   exact ⟨by omega, fun _ => by simp⟩
 
 theorem firstWithin : firstMachine.ImplementsWithin firstProgram 1 := by
@@ -307,13 +307,13 @@ example : ¬(firstMachine.seqComp secondMachine).ResolvesIn 1
   · unfold branchP
     rw [show FreeM.bind (firstProgram ()) secondProgram =
         FreeM.liftBind false (fun first : Bool => secondProgram first) from rfl,
-        FreeM.isTotalRollBound_lift_bind_iff]
+        FreeM.isTotalRollBound_liftBind_iff]
     intro h
     have hfalse := h.2 false
     rw [show secondProgram false = FreeM.liftBind false (fun answer : Bool =>
         pure (if false = true then if answer = true then 11 else 12
           else if answer = true then 20 else 21)) from rfl,
-      FreeM.isTotalRollBound_lift_bind_iff] at hfalse
+      FreeM.isTotalRollBound_liftBind_iff] at hfalse
     simp at hfalse
   · change (firstMachine.seqComp secondMachine).denote () =
       FreeM.toResumption (FreeM.bind (firstProgram ()) secondProgram)

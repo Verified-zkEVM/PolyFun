@@ -90,6 +90,33 @@ Symptoms and fixes (see the Transparency Attributes section of
   works → typeclass resolution runs below implicit transparency; keep
   the term-level `.trans` form with a comment.
 
+### 6b. `FreeM` nodes in simp normal form
+
+Upstream's `FreeM.liftBind_eq` is a `rfl` simp lemma: `simp` rewrites the constructor
+`liftBind a k` to `(FreeM.lift a).bind k` everywhere, including inside the type indices of
+`Path` / `Displayed` and inside implicit arguments, and to `FreeM.lift a >>= k` when the
+result and direction universes coincide. Consequences and the conventions that answer them
+(see the normal-form section of `docs/wiki/pfunctor.md`):
+
+- A `simp` lemma stated on `liftBind a k` never fires and fails the `simpNF` linter → state
+  it on the normal form (`_lift_bind`, `_lift_bind'`) and keep the constructor spelling as a
+  non-`simp` `_liftBind` twin for `rw` inside `match` arms; `induction … using FreeM.rec`
+  presents constructors when a proof needs them.
+- A normal-form lemma fires on a generic polynomial but not on `⟨I, D⟩` or
+  `TypeTree.basePFunctor` → the direction type `P.B a` is an indexed implicit argument of the
+  bind and reduced on the concrete polynomial; state the lemma through `lift_bind%` /
+  `lift_bind'%`, which mark it `no_index`.
+- `match … with | .ready (.liftBind a k) => …` no longer reduces by `simp` on a normalised
+  discriminant → give the definition explicit equation lemmas on the normal form and use them
+  (`emit_ready_lift_bind` in `Interaction/UC/RequestNetwork.lean`); `pure v = lift a >>= k`
+  is decided by `bind_eq_pure_iff` only in the `.bind` spelling at cslib v4.34.0.
+- A path lemma "does not apply" or a displayed node `⟨c, children⟩` carries the residue type
+  `(pure b).bind rest` after `rcases` → `Path ((lift a).bind k)` only unfolds to its sigma
+  once `FreeM.bind` and `FreeM.lift` unfold at implicit transparency; declare
+  `attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift` in that file
+  (the bridge to the cslib change on `dtumad/cslib`, branch `polyfun/freem-implicit-reducible`),
+  and `simp only [FreeM.pure_bind] at children` for the residue.
+
 ### 7. Universe polymorphism
 
 `PFunctor` carries two universe parameters `(uA, uB)`; `FreeM`,

@@ -180,7 +180,7 @@ theorem runPrefix_complete_of_budget (impl : (a : P.A) → FreeM Q (P.B a))
           cases program with
           | pure value => simp [runPrefix, allOutputs_pure]
           | liftBind a next =>
-              rw [isTotalRollBound_lift_bind_iff] at hprogram
+              rw [isTotalRollBound_liftBind_iff] at hprogram
               obtain ⟨hpos, hnext⟩ := hprogram
               cases n with
               | zero => omega
@@ -198,7 +198,7 @@ theorem runPrefix_complete_of_budget (impl : (a : P.A) → FreeM Q (P.B a))
               rw [runPrefix, allOutputs_map]
               exact ih (.caller (next answer)) ⟨n, hnext answer, by omega⟩
           | liftBind b rest =>
-              rw [isTotalRollBound_lift_bind_iff] at hprogram
+              rw [isTotalRollBound_liftBind_iff] at hprogram
               obtain ⟨hpos, hrest⟩ := hprogram
               cases k with
               | zero => omega

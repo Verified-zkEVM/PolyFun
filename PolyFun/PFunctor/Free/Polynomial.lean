@@ -252,7 +252,7 @@ theorem decode_relabel {β : Type w} (f : α → β)
       cases value
       rfl
   | liftBind a rest ih =>
-      simp only [decode, decodeAt, relabel, Function.comp_apply, FreeM.map]
+      simp only [decode, decodeAt, relabel, FreeM.map]
       apply congrArg (FreeM.liftBind a)
       funext direction
       exact ih direction
@@ -346,8 +346,7 @@ theorem decode_map (l : Lens P Q) (x : (FreeP P).Obj α) :
       cases u
       rfl
   | liftBind a rest ih =>
-      simp only [Lens.mapObj, map, mapShape, decode, decodeAt, FreeM.mapLens,
-        FreeM.map, Function.comp_apply]
+      simp only [Lens.mapObj, map, mapShape, decode, decodeAt, FreeM.mapLens, FreeM.map]
       apply congrArg (FreeM.liftBind (l.toFunA a))
       funext d
       exact ih (l.toFunB a d) (fun path ↦ label ⟨l.toFunB a d, path⟩)

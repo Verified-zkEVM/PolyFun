@@ -780,8 +780,9 @@ theorem run_sender {m : Type u → Type u} [Monad m]
     (dualFn : (x : X) → m (StrategyOver
       (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
         (rest x) (rRest x) (fun tr => OutputC ⟨x, tr⟩))) :
-    run (TypeTree.node X rest) (⟨.sender, rRest⟩ : Role × ((x : X) → RoleDecoration (rest x)))
-        send dualFn = (do
+    run (@Bind.bind (PFunctor.FreeM TypeTree.basePFunctor) _ (no_index _) _
+        (@PFunctor.FreeM.lift TypeTree.basePFunctor X) rest)
+        (⟨.sender, rRest⟩ : Role × ((x : X) → RoleDecoration (rest x))) send dualFn = (do
       let xc ← send
       let dualNext ← dualFn xc.1
       let tailOut ← run (rest xc.1) (rRest xc.1) xc.2 dualNext
@@ -797,8 +798,9 @@ theorem run_receiver {m : Type u → Type u} [Monad m]
     (dualSample :
       m ((x : X) × StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart
         (rest x) (rRest x) (fun tr => OutputC ⟨x, tr⟩))) :
-    run (TypeTree.node X rest) (⟨.receiver, rRest⟩ : Role × ((x : X) → RoleDecoration (rest x)))
-        respond dualSample = (do
+    run (@Bind.bind (PFunctor.FreeM TypeTree.basePFunctor) _ (no_index _) _
+        (@PFunctor.FreeM.lift TypeTree.basePFunctor X) rest)
+        (⟨.receiver, rRest⟩ : Role × ((x : X) → RoleDecoration (rest x))) respond dualSample = (do
       let xc ← dualSample
       let next ← respond xc.1
       let tailOut ← run (rest xc.1) (rRest xc.1) next xc.2

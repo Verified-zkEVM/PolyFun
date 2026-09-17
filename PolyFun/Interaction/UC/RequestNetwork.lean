@@ -72,6 +72,28 @@ variable [DecidableEq Client] [DecidableEq p.A]
         nextTicket := state.nextTicket + 1 }
   | _ => state
 
+omit [DecidableEq p.A] in
+/-- A returned client emits nothing. -/
+theorem emit_ready_pure {id : Client} {state : State Client p α S} {value : α}
+    (h : state.clients id = .ready (pure value)) : emit id state = state := by
+  unfold emit
+  rw [h]
+  rfl
+
+omit [DecidableEq p.A] in
+/-- A ready client at an operation node emits that request. Stated on the simp normal form
+`FreeM.lift a >>= next` of the node, as it appears after constructor normalisation. -/
+theorem emit_ready_lift_bind {id : Client} {state : State Client p α S} {a : p.A}
+    {next : p.B a → FreeM p α} (h : state.clients id = .ready (FreeM.lift a >>= next)) :
+    emit id state =
+      { state with
+        clients := Function.update state.clients id (.waiting state.nextTicket a next)
+        queue := state.queue ++ [.request id state.nextTicket a]
+        nextTicket := state.nextTicket + 1 } := by
+  unfold emit
+  rw [h]
+  rfl
+
 /-- Resume a waiting client only when both ticket and dependent query tag match. -/
 @[expose] def accept (ticket : ℕ) (reply : Interface.RoutedPacket p Client)
     (state : State Client p α S) : State Client p α S :=
@@ -148,7 +170,7 @@ theorem accept_wrong_ticket (ticket expected : ℕ)
 actual service answer, and the final transcript records that answer with its stable client id. -/
 theorem run_roundtrip (impl : Handler (StateT S m) p) (id : Client)
     (state : State Client p α S) (a : p.A) (next : p.B a → FreeM p α)
-    (hclient : state.clients id = .ready (.liftBind a next)) (hqueue : state.queue = []) :
+    (hclient : state.clients id = .ready (FreeM.lift a >>= next)) (hqueue : state.queue = []) :
     run impl [.client id, .deliver, .deliver] state = (do
       let (answer, service) ← (impl a).run state.service
       pure { state with
@@ -157,6 +179,6 @@ theorem run_roundtrip (impl : Handler (StateT S m) p) (id : Client)
         queue := []
         nextTicket := state.nextTicket + 1
         transcript := state.transcript ++ [⟨id, ⟨a, answer⟩⟩] }) := by
-  simp [run, step, emit, hclient, deliver, hqueue, accept]
+  simp [run, step, emit_ready_lift_bind hclient, deliver, hqueue, accept]
 
 end Interaction.UC.RequestNetwork

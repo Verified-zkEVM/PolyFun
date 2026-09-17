@@ -84,7 +84,7 @@ theorem collapseUnit_runPattern {E : Type uV}
       rw [DynSystem.runPattern_pure]
       rfl
   | lift_bind query next ih =>
-      rw [DynSystem.runPattern_liftBind]
+      rw [DynSystem.runPattern_lift_bind]
       change FreeM.collapseUnit
           (FreeM.liftBind PUnit.unit (fun _ =>
             (R.runPattern (next (R.answer state query))

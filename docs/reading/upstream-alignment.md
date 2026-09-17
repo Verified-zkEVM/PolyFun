@@ -349,6 +349,29 @@ recorded:
 Still absent on `main`, so still genuine upstreaming targets: delay bisimulation, a
 well-placed `HasTau (Option α)`, and a cross-type `Bisimilarity.symm`.
 
+#### The `FreeM` node normal form
+
+PolyFun follows upstream's simp normal form for an operation node, `(FreeM.lift a).bind k`
+(`FreeM.liftBind_eq`), and no longer pins a cslib fork that kept the constructor `liftBind`
+as the normal form; the conventions are recorded in `docs/wiki/pfunctor.md`. Three upstream
+changes would remove the remaining friction, in decreasing order of importance:
+
+1. `@[implicit_reducible]` on `FreeM.bind`, `FreeM.lift` and `FreeM.map`. The node normal
+   form appears inside type parameters (families indexed by a tree), and metavariable
+   assignments compare types at implicit transparency, so these definitions must unfold there
+   (`Init.MetaTypes`: "operations used in type parameters … should, as a basic rule, be
+   implicit-reducible"; a `rfl` lemma's sides should agree at implicit transparency, which
+   `liftBind_eq` currently does not). Prepared on `dtumad/cslib`, branch
+   `polyfun/freem-implicit-reducible`, together with the `>>=` spellings of
+   `bind_eq_pure_iff` / `pure_eq_bind_iff`. Until it lands, PolyFun files that unify node
+   indices declare the attribute locally.
+2. cslib#893 (drop `@[simp]` from `pure_eq_pure` / `bind_eq_bind`), which would collapse the
+   two normal forms — `(lift a).bind k` across universes, `lift a >>= k` within one — into
+   one and retire PolyFun's `_lift_bind'` twins.
+3. Purity disequalities for the `>>=` spelling (`monadBind_eq_pure_iff` and
+   `pure_eq_monadBind_iff` on the branch above), which `simp` needs to discharge matcher side
+   conditions on a node in normal form.
+
 ## Unused surface
 
 Not upstream duplicates, so secondary to this survey — but each deserves an explicit

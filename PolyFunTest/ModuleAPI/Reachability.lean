@@ -60,6 +60,20 @@ example : false ∈ ask.reachable := by
 example : false ∉ ask.reachableUnder (fun _ answer => answer = true) := by
   simp [ask]
 
+example (path : Path ((FreeM.lift (P := coinP) ()).bind fun answer => pure answer)) :
+    Path.AllowedUnder (P := coinP) (fun _ answer => answer = true)
+      ((FreeM.lift (P := coinP) ()).bind fun answer => pure answer) path ↔
+        Path.head (P := coinP) () (fun answer => pure answer) path = true := by
+  simp
+
+example {P : PFunctor.{uA, uB}} {X : Type uX} (allows : (a : P.A) → P.B a → Prop)
+    (position : P.A) (next : P.B position → FreeM P X)
+    (direction : P.B position) (path : Path (next direction)) :
+    Path.AllowedUnder allows ((FreeM.lift position).bind next)
+      (Path.cons position next direction path) ↔
+        allows position direction ∧ Path.AllowedUnder allows (next direction) path := by
+  simp
+
 abbrev dependentP : PFunctor := ⟨Nat, Fin⟩
 
 def allowsZero : (a : dependentP.A) → dependentP.B a → Prop := fun _ answer => answer.val = 0
