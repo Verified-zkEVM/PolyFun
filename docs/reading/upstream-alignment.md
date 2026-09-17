@@ -2,19 +2,18 @@
 
 A ledger of PolyFun's general-purpose machinery against what Lean core, Batteries,
 Mathlib, and cslib already provide, with a verdict for each entry: **adopt** what
-upstream owns, **keep** what is genuinely PolyFun's, **upstream** what belongs
-elsewhere, and **track** what is on its way to core.
+upstream owns, **redesign** an unsuitable abstraction, **keep** a justified local
+interface, **upstream** what belongs elsewhere, and **track** forthcoming APIs.
 
 Companion files: `program-logic-landscape.md` (the verification-tooling landscape),
 `coalgebra-related-work.md` (coalgebras in other provers), `roadmap.md`.
 
 ## Why this file exists
 
-PolyFun hand-rolled a `MonadSupport` class before discovering that Lean core had
-shipped `MonadAttach` — the same abstraction, with a lawfulness hierarchy and a
-`Std.Do` soundness bridge — five releases earlier. The cost was not the deleted code;
-it was the design time spent rediscovering an interface, and the near-miss of
-publishing a competing one.
+PolyFun's former `MonadSupport` overlapped Lean core's `MonadAttach` return-reachability
+interface. Core's lawful predicates need not be exact, so adoption retains optional
+exactness laws while using core's carrier and transformer infrastructure. Searching
+only for a class with the same name would have missed that design relationship.
 
 That was drift, not bad luck. PolyFun's generic layers were written against an
 ecosystem that has since moved: cslib grew a full labelled-transition-system library,
@@ -86,13 +85,125 @@ Two traps worth recording for whoever repeats this:
   `exact?` against full Mathlib on the exact statement — a lemma that "looks like it
   must exist" repeatedly turned out not to.
 
+## Whole-library design review, 2026-09-17
+
+The baseline is PolyFun `efe111a4208adb853b7ce342f5ada634df817dbe` on Lean
+v4.34.0. The census covers all **329 production modules**, excluding generated
+root umbrellas. It records imports, public declaration shapes, class/instance
+surfaces, transparency attributes, and automation hooks. The object API supplement
+adds one production module. Tests and CI configuration were reviewed separately.
+The implementation also incorporates main's subsequent support extension at
+`91e9c02ed23af2259868805f80e6947d5cf38b8e`: continuation congruence uses core's
+weak attachment law, and free support uses public object projections and permits
+independent result universes.
+
+The census is not a line-by-line proof audit. The deeper pass follows foundational
+definitions through representative consumers and checks those choices against
+upstream source. Remaining questions are explicit below; a passing build alone
+does not settle the design of an interface.
+
+| Area | Baseline modules | Deep-review anchors and representative consumers |
+|---|---:|---|
+| Polynomial substrate | 126 | `PFunctor/Basic`, free monads and displayed paths, M/cofree, resumption, lenses/charts, polynomial traces; ordinary-import object consumers |
+| Indexed polynomials | 12 | `IPFunctor/Basic`, both free monads, indexed laws and `do` elaboration, indexed M observations |
+| Control | 28 | Comonad hierarchy and transformers, coalgebras, monad hom/iteration, algebra/support/WP, LTS and traces |
+| Interaction trees | 24 | One-step objects, strong/weak/cross-signature relations, handlers and their simp set, finite observations and `do` bridge |
+| Interaction framework | 106 | `TypeTree`, decoration, strategy/composition; concurrent fairness/liveness; UC interfaces, wiring laws, sub-theories and activation observations |
+| Realizability | 17 | `StepClass`, representation transport, machine closure, quantitative witnesses and trace accounting |
+| Logic and complexity | 2 | HEq helpers and second-order polynomial syntax/substitution |
+| Upstream staging | 11 | `ToCslib` free-monad/loop transport, order bridge, encoded polynomial time and machine-counting assumptions |
+| Optional backend adapters | 3 | `PolyFunCslib` representation/certificate boundary and dependency direction |
+
+### Design evidence and resulting changes
+
+The reference standard is upstream's intended interface, including what its
+assumptions and normal forms mean. Relevant primary sources are Mathlib's
+[review guide](https://leanprover-community.github.io/contribute/pr-review.html),
+[hierarchy design notes](https://github.com/leanprover-community/mathlib4/blob/v4.34.0/Mathlib/Algebra/HierarchyDesign.lean),
+and [polynomial-object API](https://github.com/leanprover-community/mathlib4/blob/v4.34.0/Mathlib/Data/PFunctor/Univariate/Basic.lean),
+plus cslib's [contribution guide](https://github.com/leanprover/cslib/blob/v4.34.0/CONTRIBUTING.md).
+These support reviewing abstraction fit, instance coherence, and theorem reuse in
+addition to syntax and naming.
+
+| Finding | Verdict and implemented boundary | Evidence / regression |
+|---|---|---|
+| Object consumers destructured the Sigma implementation despite the native `Obj` interface | **Adopt.** Public `Obj.mk/fst/snd/rec`, with extensionality and constructor injectivity; analogous source-dependent indexed API. M/cofree/resumption and ITree observations use that interface. | Ordinary imports, independent universes, dependent child equality, and VCVio resumption-measure consumer. Actual Sigma-valued positions/directions keep their own constructors. |
+| `Comonad` required optional pairing unrelated to the comonad laws | **Redesign.** Separate `Coapplicative`; keep minimal functor/extract/extend data and lawful-functor/comonad laws. Transformers require only operations they use. | Mathlib's categorical comonad definition; a generic comonad must not synthesize pairing; stream/Cofree functor-path coherence and transformer tests. |
+| Generic transition proofs were duplicated after introducing the cslib bridge | **Adopt.** Transport composition, following and visible-trace operations through cslib simulation/saturation/MTr. | Empty visible trace versus nontrivial silent closure regression; existing strong, weak, delay and ITree examples. |
+| Transparency guidance treated an elaboration failure as a reason to expose bodies | **Redesign policy.** Inspect the intended eliminator/equations first; justify reduction by type computation or instance coherence and test the actual consumer. | Native object migration above; retain documented `TypeTree.done/node` computation and deliberate hierarchy builders. |
+| Realizability documentation claimed a wide subcategory of all types and full distributivity | **Narrow the claim.** Objects include chosen representations; current closure assumptions provide binary products/sums/distributivity, not nullary structure. | `StepClass.finite.Str Nat` is uninhabited. No vacuous categorical adapter or stronger assumption is introduced. |
+| Coalgebra and UC prose identified local interfaces with stronger categorical structures | **Narrow the claim.** `Coalg` is an F-coalgebra interface; UC classes state boundary-indexed wiring equations. A categorical comparison requires a separate construction and full axioms. | Source fields in `Control/Coalgebra.lean` and `Interaction/UC/OpenTheory.lean`; no claim that wire symmetry proves JSV yanking. |
+
+### Intentional differences retained
+
+- **Qualitative support.** `ExactMonadAttach` extends `LawfulMonadAttach` with
+  proof-only introduction rules; the support predicate is core's `CanReturn`.
+  Core's general, potentially inexact instances remain usable without exactness.
+  `StateT` reachability includes the final state and is evaluated at a chosen
+  initial state. This is structural reachability, independent of a downstream
+  probability interpretation. The demonic and angelic WP constructions stay
+  explicit/scoped so either can coexist with VCVio's quantitative interpretation.
+- **Iteration and program logic.** `MonadIter` chooses an iteration semantics and
+  separate laws; `repeatM` is not a replacement for that contract. Mathlib ordered
+  algebras bridge to core's lattice-generic WP without installing a competing
+  global WP interpretation. The `Std.Internal.Do` dependency remains fenced.
+- **Indexed `do` and normalization.** Indexed free monads use upstream
+  `doElem_elab` extension points with expected-type dispatch and fallthrough to
+  ordinary monads. Existing mixed-monad tests exercise both paths. `FreeM` follows
+  cslib's `liftBind` to `lift >>= continuation` simp direction; dependent-path
+  equations and the scoped handler simp set do not reverse that global direction.
+- **Bundled data and universes.** `BundledMonad` packages type-level syntax data;
+  `Coalg` allows different source/target universes. Neither is automatically the
+  same interface as a lawful categorical endofunctor on one category. Add a
+  categorical adapter when a consumer needs one, with its hypotheses explicit.
+- **Optional comonad instances.** `Day` retains its raw existential carrier and
+  has no `LawfulComonad` instance. Identifying it with categorical Day convolution
+  would require the coend quotient. Instance-providing public modules are not
+  deleted on the basis of missing textual references.
+- **Interaction semantics.** Move-indexed transitions, delay bisimulation,
+  coinductive ITree relations, and boundary-indexed UC composition retain their
+  semantic distinctions. In particular, activation equivalence does not establish
+  sampler realizability or cryptographic security.
+- **Representations and costs.** Quantitative step witnesses depend on chosen
+  encodings and backend costs. Second-order polynomial syntax allows nested
+  oracle-length applications; `MvPolynomial` does not directly express that syntax.
+  Its first-order specialization participates in substitution. The cslib staging
+  certificate already uses `Polynomial ℕ` where that is the intended object.
+- **Small wrappers and module boundaries.** `Control.Trace.mapHom` delegates to
+  `MonoidHom.compLeft`; `TraceList` uses upstream `FreeMonoid`. These are useful
+  interfaces over upstream theory. `ToCslib` remains below PolyFun, with concrete
+  backend adapters in `PolyFunCslib` and probability/security downstream.
+- **CI.** The comparison with cslib, Batteries and VCVio supports the existing
+  Lake lint/test drivers, lean-action builds, separate checks and `merge_group`
+  triggers. VCVio's additional domain/FFI checks serve a different library surface.
+  This review needs no new CI workflow or one-time audit script in the repository.
+
+### Bounded follow-up work
+
+| Question | Next concrete check | Acceptance / removal condition |
+|---|---|---|
+| Residual raw polynomial-object carriers in `PFunctor/Free/Polynomial.lean`, displayed paths and M vertices | Trace `FreeP.encode/decode` and public dependent indices before changing their Sigma presentation. Distinguish intentional position/direction Sigma from object implementation. | A focused migration with ordinary-import and mixed-universe consumers; no local override restoring old object normalization. The foundational migration does not claim every carrier has been converted. |
+| Small object and LTS gaps upstream | Propose native `Obj.ext`/injectivity to Mathlib; relocate cslib's `HasTau (Option _)` next to the LTS API; minimize the delay/cross-type symmetry use cases. | Delete local supplements when the supported pin exposes equivalent interfaces without unrelated imports. |
+| Remaining dependent `FreeM` elaboration friction | Minimize indexed `bind/lift` reduction and dependent-result simp matching failures against cslib. | Fix the owning API or use a supported eliminator; preserve upstream simp direction and remove each override once its reproducer works. |
+| WP and coinductive API changes after v4.34 | At the coordinated toolchain bump, exercise support, StateT, both WP readings, quantitative VCVio consumers and weak-bisimulation examples against `Std.WP`, attachment soundness, `monotonicity_by` and strong coinduction. | Replace superseded local bridges/instances only when the new pin and tests support the same contract; no speculative compatibility hierarchy now. |
+| Categorical adapters for represented types and UC wiring | Start from an actual consumer needing category-theory operations; construct objects/morphisms and prove all required laws. | State only the equivalence actually proved. Binary closure and boundary wiring equations alone do not certify the stronger structures. |
+
+The [Lean roadmap for September 2026–February 2027](https://lean-lang.org/fro/roadmap/y4-1/)
+prioritizes new `do` notation, verification-condition generation and `SymM`. It is
+directional evidence for keeping adapters small, not a release contract. For the
+next pin, use actual source changes such as
+[`LawfulWPMonadAttach`](https://github.com/leanprover/lean4/pull/14801),
+[`monotonicity_by`](https://github.com/leanprover/lean4/pull/14861) and
+[strong (co)induction](https://github.com/leanprover/lean4/pull/14855), and test their
+semantics rather than assuming a namespace rename completes the migration.
+
 ## Ledger
 
 ### Adopt — upstream owns it, PolyFun duplicates it
 
 | PolyFun | Upstream | At the pin? | Status |
 |---|---|---|---|
-| `Control/Bisimulation.lean`, `Control/LTS/Trace.lean` | `Cslib.LTS` and its `Simulation` / `Bisimulation` / `HasTau` / `TraceEq` theory | yes | **partial** — the cslib bridge is in (`toLts`, `instHasTauOption`, the `↔`-correspondences), but the strong/weak spectrum is still redeveloped locally and `LTS/Trace.lean` still defines its own `WeakTrace` |
+| `Control/Bisimulation.lean`, `Control/LTS/Trace.lean` | `Cslib.LTS` simulation, saturation, and multi-step theory | yes | **adopted through bridges** — strong/weak composition, silent/weak following, trace concatenation, and trace simulation use cslib. The move-indexed presentation, delay relations, and visible-only induction API remain local. |
 | `Interaction/Concurrent/Fairness.lean`, `Liveness.lean` — the `Always` / `Eventually` / `EventuallyAlways` / `InfinitelyOften` block | `Filter.atTop` | yes | **done** |
 | `Control/Trace.lean` `mapHom` | `MonoidHom.compLeft`, `Mathlib/Algebra/Group/Pi/Lemmas.lean` | yes | **done** — `mapHom` is literally `φ.compLeft X` |
 | `PFunctor/Supply.lean` `List.take_set_self` / `drop_set_self` | `List.take_set_of_le` (`Init/Data/List/Nat/TakeDrop.lean:119`), `List.drop_set_of_lt` (`:375`) | yes | **done** — previously mis-filed under *Upstream*; both were already in core |
@@ -135,8 +246,12 @@ instance : Cslib.HasTau (Option Obs) := ⟨none⟩
 def Control.LTS.toLts (L : LTS Obs) : Cslib.LTS L.State (Option Obs) := ⟨L.Step⟩
 ```
 
-with `SilentSteps` ⇝ `τSTr`, `WeakStep` ⇝ `STr`, and `WeakTrace` / `traces` ⇝ `SMTr` /
-`traces`.
+with `SilentSteps` ⇝ `τSTr` and `WeakStep` ⇝ `STr`. `WeakTrace L s xs t`
+corresponds to `L.toLts.saturate.MTr s (xs.map some) t`, as proved by
+`weakTrace_iff_mTr`. This detail matters: an empty visible trace has equal
+endpoints, whereas silent reachability can change state. The local inductive
+trace remains useful to ITree consumers; concatenation and simulation transport
+now go through the upstream multi-step theory.
 
 **The one genuine gap is delay bisimulation.** cslib has strong and weak/saturated
 only. PolyFun's delay flavour is load-bearing — `Interaction/UC/OpenProcess.lean` uses
@@ -202,7 +317,7 @@ should cite it alongside `LawfulMonadLift(T)` and Batteries' `LawfulAlternativeL
 
 | PolyFun | Why |
 |---|---|
-| `Control/Comonad/Basic.lean` | There is no `Type`-level `Comonad` class in core, Batteries, Mathlib, or cslib. Mathlib has only the categorical `CategoryTheory.Comonad`. PolyFun's is the only one in the ecosystem. |
+| `Control/Comonad/Basic.lean` | No `Type`-level class in the surveyed upstream trees; Mathlib has `CategoryTheory.Comonad`. **Redesigned** to require only functor, extraction, and extension, with lawful-functor and comonad laws separately. Optional `Coapplicative` pairing is independent. |
 | `Control/Monad/Iter.lean` | Nothing upstream axiomatises Elgot/Conway iteration. The nearest concrete instance is `PFun.fix : (α →. β ⊕ α) → (α →. β)` — the same `β ⊕ α` shape — and core's `Lean.Order.MonadTail` unrolling lemmas, which are `Init/Internal/` with no stability promise. |
 | `Control/Monad/Algebra.lean` `MonadAlgebra` | No non-categorical Eilenberg–Moore class upstream. |
 | `Control/Coalgebra.lean` `Coalg` | Mathlib's `CategoryTheory.Endofunctor.Coalgebra` is bundled in an arbitrary category; the `Type`-level unbundled form is not upstream. Worth borrowing upstream *names* (`isoMk`, `forget`, `functorOfNatTrans`, and `Terminal.strInv` for Lambek's lemma). |
@@ -259,7 +374,7 @@ PFunctor.FreeM.lift`.
   `v4.34.0`, so shipping in **v4.35**). PolyFun's local instance is marked for
   deletion at that bump; the `ExactMonadAttach (Except ε)` half stays, since core does
   not ship the introduction rules.
-- **Mathlib**: the small helpers below. Each was checked with `exact?` against full
+- **Mathlib**: the HEq helpers below. Each was checked with `exact?` against full
   Mathlib and **none** is subsumed, so they are contributions rather than reuse — the
   opposite of the first guess, which is why the check matters:
   - `Logic/HEq.lean`'s `dependent_apply_heq` and `Prod.mk_heq`. Neighbours exist
@@ -268,6 +383,10 @@ PFunctor.FreeM.lift`.
     in Mathlib".
   - `heq_forall_iff` and `instIsEmptySigma`, currently parked in `section find_home`
     blocks in `PFunctor/Lens/Basic.lean` and `PFunctor/Equiv/Basic.lean`.
+- **Mathlib's native object API**: `PFunctor.Obj.ext` and constructor injectivity
+  in `PolyFun/PFunctor/Obj.lean`. The pinned object module does not provide them.
+  These use `Obj.rec`; upstreaming them would let PolyFun delete the local
+  supplement without exposing the Sigma carrier.
 
 ### Track — heading into core
 
@@ -453,7 +572,7 @@ module is orphaned or safe to remove.
 
 | Surface | Lines | Verdict |
 |---|---:|---|
-| `Control/Comonad/Instances.lean` — `NonEmptyList`, `List.Zipper`, `EnvT`, `StoreT`, `Day` | 898 | **No named in-repo consumer, but not proved orphaned.** It is publicly imported by `PolyFun.lean` and contributes 65 typeclass instances, so downstream and in-repo typeclass use is invisible to the textual scan. The `Comonad` *class* is independently live via `PFunctor/Cofree.lean`. `Day` has `Comonad` but no `LawfulComonad`; Mathlib also has a distinct categorical Day convolution (`CategoryTheory/Monoidal/DayConvolution.lean`). Before deletion, audit instance synthesis and public API compatibility. Otherwise document it explicitly as a standalone instance library. |
+| `Control/Comonad/Instances.lean` — `NonEmptyList`, `List.Zipper`, `EnvT`, `StoreT`, `Day` | 892 | **Retain the standalone instance library.** It is publicly imported by `PolyFun.lean`; instance synthesis is invisible to a textual reference scan. The hierarchy tests exercise minimal transformer assumptions and stream pairing. The `Comonad` class is independently live via `PFunctor/Cofree.lean`. `Day` has `Comonad` but no `LawfulComonad`; its raw existential carrier is not Mathlib's categorical Day convolution (`CategoryTheory/Monoidal/DayConvolution.lean`). |
 | `Control/Monad/FreeCont.lean` | 229 | Test-only consumer. The previous note was wrong twice: the file has **no `inductive`** at all (it is a `structure FreeContT`, a Church/CPS encoding of the freer transformer over an arbitrary signature), and cslib's `FreeCont r := FreeM (ContF r)` is a free monad over a *continuation signature* — a different object, not the same construction. |
 | `Control/Monad/Iter.lean` — `MonadIter` | 152 | Class justified against upstream (core's `repeatM` is a function, not a class, is partial-recursive, and needs `[Nonempty β]`), but it has **no instances in its own file**; the only one in the repo is `ITree F`. Keep. Add another instance only with a chosen iteration semantics and proofs of the separate `LawfulMonadIter` laws; a generic monad need not support iteration. |
 | ~~`Control/Monad/Equiv.lean`~~ | — | **File deleted** (#143). No `MonadEquiv`, no `≃ᵐ`. |

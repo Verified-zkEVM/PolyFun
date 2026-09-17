@@ -86,10 +86,9 @@ and depend on this library.
     bounds, sampler realizability, or a connection to `CorruptionModel`; those
     require explicit downstream instances. *Generic only* — security-flavored UC layers
     (computational equivalence, asymptotic security) live in VCVio.
-- `PolyFun/Realizability/`: step classes (`StepClass` — a wide subcategory of
-  `Type u` presented by a representation structure on types and an
-  admissibility predicate on functions; with products, sums and distributivity
-  it is exactly a distributive category), realizability of arbitrary
+- `PolyFun/Realizability/`: step classes (`StepClass` — represented types and
+  admissible functions, with optional binary products, sums, and distributivity;
+  representations need not exist for every type), realizability of arbitrary
   `DynSystem`s through an enabled-correct partial update extension, and
   realizability of `FreeM` program families by `DynComputation` machines whose
   first-order step maps are admissible. Closed under `ofFn`, input precomposition, result

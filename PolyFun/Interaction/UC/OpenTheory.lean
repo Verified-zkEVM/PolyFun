@@ -13,9 +13,10 @@ public import PolyFun.Interaction.UC.Interface
 
 This module defines `OpenTheory`, a boundary-indexed algebra of open systems,
 together with a granular hierarchy of lawfulness classes capturing
-increasingly strong equational properties. The split mirrors the categorical
-distinction between symmetric monoidal, traced symmetric monoidal
-(Joyal-Street-Verity), and compact closed categories.
+increasingly strong equational properties inspired by symmetric monoidal,
+traced, and compact closed categories. These are concrete boundary-indexed
+laws; this module does not construct a Mathlib category or assert an
+equivalence with its categorical structures.
 
 ## Operations
 
@@ -44,7 +45,7 @@ Symmetric monoidal coherence:
 * `IsMonoidal` (extends `IsLawful`, `HasUnit`): associativity, commutativity
   (braiding), and left/right unit laws for `par`.
 
-Trace algebra (JSV traced symmetric monoidal):
+Binary wiring algebra:
 
 * `IsTraced` (extends `IsMonoidal`): wire associativity, par-superposition,
   and wire commutativity.
@@ -80,7 +81,7 @@ namespace UC
 `OpenTheory` is a boundary-indexed algebra of open systems.
 
 For each directed boundary `Δ`, `Obj Δ` is the type of systems that still
-expose `Δ` to an external context. The structure then specifies three
+expose `Δ` to an external context. The structure then specifies four
 primitive composition operations:
 
 * `map` changes how an exposed boundary is presented, without changing the
@@ -323,9 +324,8 @@ class IsLawful (T : UC.OpenTheory.{u}) : Prop extends IsLawfulPar T, IsLawfulWir
 monoidal coherence laws for `par`: associativity, commutativity (braiding),
 and left/right unit laws up to boundary equivalence.
 
-Pentagon and hexagon coherence conditions are deferred: they are derivable
-in the free models and hold trivially for the concrete model up to process
-isomorphism.
+The equations explicitly transport along boundary equivalences. They are
+not themselves a construction of a `CategoryTheory.MonoidalCategory`.
 -/
 class IsMonoidal (T : UC.OpenTheory.{u})
     extends IsLawful T, HasUnit T where
@@ -349,19 +349,15 @@ class IsMonoidal (T : UC.OpenTheory.{u})
       T.map (PortBoundary.Equiv.tensorEmptyRight Δ).toHom
         (T.par W (HasUnit.unit (T := T))) = W
 
-/-! ### Trace algebra (Joyal-Street-Verity traced symmetric monoidal) -/
+/-! ### Binary wiring algebra -/
 
 /--
-`IsTraced T` extends `IsMonoidal T` with the three trace axioms of a
-Joyal-Street-Verity traced symmetric monoidal category, formulated for the
-binary `wire` operator: wire associativity (vanishing II), wire-par
-superposition, and wire commutativity (yanking via the symmetry).
+`IsTraced T` extends `IsMonoidal T` with associativity, parallel superposition,
+and symmetry for the binary `wire` operator.
 
-These axioms make sense without `HasIdWire` or any snake equation: they are
-purely about the algebra of `wire` itself and how it interacts with `par`.
-A model satisfies `IsTraced` exactly when its `wire` operation behaves like
-a JSV trace; the existence of duals (i.e., compact closure) is a separate
-class layered on top.
+These laws require neither `HasIdWire` nor snake equations. A comparison with
+Joyal-Street-Verity trace requires a category of morphisms and a trace operation,
+with their full axioms; wire symmetry alone is not the categorical yanking law.
 -/
 class IsTraced (T : UC.OpenTheory.{u})
     extends IsMonoidal T where
@@ -411,12 +407,10 @@ class IsTraced (T : UC.OpenTheory.{u})
 (zig-zag) identities relating the coevaluation `idWire` to `wire`, plus the
 identification `unit_eq` of the monoidal unit with the trivial coevaluation.
 
-These laws say that `swap Γ` is a categorical dual of `Γ`, witnessed by
-`idWire Γ` as the coevaluation. In our setting the trace algebra and the
-duality structure are independent (since `wire` is a primitive, not derived
-from η/ε), so `IsCompactClosed` extends `IsTraced` rather than living
-side-by-side with it: a model that satisfies `IsCompactClosed` also has a
-JSV trace.
+The equations express the two identity-wire cancellations in the boundary
+algebra. `wire` remains a primitive operation, so the class also requests
+`IsTraced`'s binary wiring laws explicitly. Categorical duality requires a
+separate construction of objects, morphisms, and composition.
 -/
 class IsCompactClosed (T : UC.OpenTheory.{u})
     extends IsTraced T, HasIdWire T where

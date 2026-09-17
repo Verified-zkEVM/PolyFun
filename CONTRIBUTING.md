@@ -157,44 +157,46 @@ validation wrapper runs this check automatically.
 
 ### Transparency Attributes
 
-Lean orders unfolding by transparency level (`reducible < instances <
-implicit < default < all`) and, since Lean 4.33, respects those levels
-strictly: assigned metavariable types are compared at *implicit*
-transparency, and typeclass resolution unfolds only up to *instances*
-transparency. A plain `def` no longer unfolds during unification in those
-positions. Choose the weakest attribute that fixes the failure:
+Start from the representation's intended API. A failed `rw`, `subst`, or
+instance search does not by itself justify making a definition more transparent.
+Check upstream constructors, projections, eliminators, and equation lemmas first;
+reduce the failure to an ordinary-import consumer before changing the interface.
+For example, polynomial objects use `PFunctor.Obj.mk` / `fst` / `snd` / `rec`,
+while genuinely Sigma-valued positions and directions use Sigma operations.
 
-- **No attribute** is the normal state. Prefer an equation or simp lemma
-  over a transparency change when a proof merely rewrites through a
-  definition.
-- **`@[implicit_reducible]`** is the standard fix for Lean 4.33
-  unification failures (`rw` not finding a visible pattern, `subst`
-  motive errors, goals "not type-correct under the implicit transparency
-  level"). It unfolds during implicit-transparency checks only; simp
-  validation, simp and typeclass indexing are unaffected, so `rfl` simp
-  lemmas keyed on the definition stay valid. Per the core documentation
-  (`Init.MetaTypes`), operations occurring in type parameters should be
-  implicit-reducible as a basic rule.
-- **`@[instance_reducible]`** when *instance synthesis* must see through
-  the definition. This changes typeclass discrimination-tree indexing;
-  use it only for genuine instance-resolution failures.
-- **`@[reducible]`** only for thin type wrappers all automation should
-  index through (the `TypeTree.done` / `TypeTree.node` pattern). It
-  invalidates `rfl` simp lemmas whose head is the wrapper, and is never
-  appropriate on recursive functions.
-- **`attribute [local implicit_reducible] Foo.bar`** is the sanctioned,
-  option-free way to grant one file implicit-transparency access to an
-  imported declaration (including Mathlib/cslib ones). Add a short
-  comment naming the proofs that need it. `attribute [local reducible]`
-  on imported declarations requires `allowUnsafeReducibility` and is not
-  permitted.
-- **`set_option allowUnsafeReducibility true`** is reserved for a
-  *global* attribute on an imported declaration, always with a comment
-  justifying why a local attribute does not suffice and pointing at the
-  upstream fix. The option is currently unused: every override of an
-  imported declaration is a per-file `attribute [local implicit_reducible]`.
-- **`with_unfolding_all`** should not appear in new proofs; prefer
-  equation lemmas for well-founded or structural recursion.
+Definitional equality is also a useful API commitment. Preserve it where it
+supports dependent indices, constructor wrappers, or coherent instance paths:
+
+- **No attribute** is the normal state. Use public equations for ordinary
+  rewriting and recursive computation.
+- **`@[implicit_reducible]`** is appropriate when a definition is intended to
+  compute in types. Core's `Init.MetaTypes` recommends this for operations in
+  type parameters. Explain the dependent consumer; an elaboration diagnostic
+  alone is insufficient evidence.
+- **`@[instance_reducible]`** exposes a definition to instance synthesis.
+  Justify the instance path and test it together with competing inherited paths.
+- **`@[reducible]`** is appropriate for intentional transparent wrappers and
+  instance-building definitions whose projections must agree during synthesis.
+  Mathlib's hierarchy note explicitly relies on reducible non-instances for
+  this purpose. It changes indexing and can invalidate head-keyed `rfl` simp
+  lemmas. Do not apply it to recursive functions.
+- The `TypeTree.done` / `TypeTree.node` constructor wrappers intentionally
+  support pattern matching and reduction to upstream `FreeM` constructors.
+  Preserve those contracts; do not hide all reducers as a blanket policy.
+- An imported declaration may need a per-file
+  `attribute [local implicit_reducible] Foo.bar` for genuine dependent typing.
+  First check its public API, then document the missing reduction, affected
+  consumer, and upstream resolution. Do not use overrides to restore an old
+  simplifier normal form or to bypass a new upstream abstraction boundary.
+- `allowUnsafeReducibility` requires a specific upstream correction and a
+  justification for a global override. A local override is not automatically
+  preferable to fixing the consumer. The option is currently unused.
+- Use equation lemmas for structural or well-founded recursion instead of new
+  `with_unfolding_all` proofs.
+
+See [public module APIs](docs/wiki/module-api.md) for exposure versus
+transparency and [review hardening](docs/wiki/review-hardening.md) for the
+source-backed design review.
 
 ### Section Headers Within A File
 

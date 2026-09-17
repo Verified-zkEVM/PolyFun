@@ -80,7 +80,12 @@ structure PFunctor.StepClass where
   comp_mem : Hom a b f → Hom b d g → Hom a d (g ∘ f)
 ```
 
-A wide subcategory of `Type u`, presented pointwise. Two deliberate choices:
+A category of represented types and admissible functions. Its objects carry
+both an underlying type and a selected `Str` value. It is a wide subcategory
+of the category of these represented types with arbitrary functions, with a
+faithful forgetful functor to `Type u`; it is not in general a wide subcategory
+of `Type u` itself. For example, the finite-state class has no representation
+of `Nat`. Two deliberate choices:
 
 - **`Str` is data, not a proposition.** A resource bound only makes sense
   relative to a chosen representation: "`f` runs in polynomial time" is a
@@ -120,31 +125,26 @@ representation-level mixin: `Str (ULift A × ULift B)` and
 convert representation data between types, so the regrouping used by
 universe-normalized composite states is its own obligation.
 
-### It really is a distributive category
+### Binary distributivity on represented types
 
-A class with `HasProd`, `HasSum`, and `IsDistributive` is exactly a **distributive
-category** in the sense of Cockett (MSCS 1993) and Carboni–Lack–Walters (JPAA
-1993), presented concretely — i.e. with a faithful functor to `Type` preserving
-finite products and coproducts. Two points worth knowing:
+`HasProd` and `HasSum` select binary products and coproducts of represented
+types. `IsDistributive` makes the canonical binary distributivity map an
+isomorphism: its field supplies one direction, and `codistrib_mem` derives
+the other from products and sums. Mathlib's
+`CategoryTheory.IsCartesianDistributive` uses the cogap orientation; the local
+`distrib_mem` field states admissibility of its inverse.
 
-* **This is not a one-sided weakening.** The *other* direction of the canonical
-  map, the cogap `(A × I) ⊕ (B × I) → (A ⊕ B) × I`, is derivable from `HasProd`
-  and `HasSum` alone and ships as `StepClass.codistrib_mem`. Both directions
-  being admissible is literally "the canonical map is an isomorphism in the
-  subcategory", which is Cockett's axiom verbatim.
-* **Mathlib's canonical orientation is the opposite one.** Mathlib does have this
-  concept — `CategoryTheory.IsCartesianDistributive`, citing the same two papers —
-  and states the axiom in the cogap direction. Our `distrib_mem` field is the
-  *inverse*. Do not read the arrow as a mistake.
+Only binary structure is required. No terminal or initial representation is
+assumed, so this is not a claim of all finite products/coproducts or an instance
+of Mathlib's categorical class. `StepClass.Distributive` additionally bundles
+optional values for the closure theory. The definitions keep chosen encodings
+explicit because quantitative costs depend on them.
 
-We deliberately do **not** import Mathlib's version. `MorphismProperty (Type u)`
-cannot type our `Hom`, which is indexed by *representations* and not just by
-types; the `BundledHom` framework that matched this pattern exactly was
-deprecated to nothing in February 2026; and `IsCartesianDistributive` has zero
-consumers in Mathlib, so adopting it would cost a full monoidal/limit-cone layer
-for no new theorem. Only the binary case is axiomatized here — no terminal or
-initial representation is required, and none is needed — so
-`StepClass.Distributive` is deliberately weaker than `IsCartesianDistributive`.
+A categorical adapter should use represented types as objects, not a
+`MorphismProperty (Type u)` that forgets the representation arguments. Add such
+an adapter when a consumer needs categorical theorems, supplying the missing
+nullary structure where required; the current machine closure proofs use the
+smaller concrete interface.
 
 Distributivity is a real axiom, not a theorem: every bicartesian *closed* category
 is automatically distributive because `X × (−)` is a left adjoint, but the

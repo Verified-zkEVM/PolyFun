@@ -48,6 +48,39 @@ API stabilizes, using only cslib and Mathlib. `PolyFunCslib` supplies the option
 bridge to PolyFun realizability. Probability, cryptographic policy, and
 protocol-specific adequacy claims remain downstream.
 
+Review the intended upstream abstraction, not just whether a similarly named
+declaration exists. Follow a foundational definition through a real consumer and
+compare the public constructor, projections, eliminator, equations and normal forms.
+For a broad review, census every production module, then identify which interfaces
+and consumers received deeper inspection; do not present a census as a proof audit.
+Record evidence and a verdict in the existing
+[upstream alignment ledger](../reading/upstream-alignment.md): adopt, redesign,
+retain with a reason, propose upstream, or track until a supported pin provides it.
+
+In particular:
+
+- **Representation and reduction:** prefer the owning API before exposing or
+  unfolding a carrier. Preserve definitional computation when the interface
+  promises it or instance coherence needs it. Each imported reducibility override
+  needs a concrete dependent consumer and a condition for its removal.
+- **Class design:** distinguish data from laws, required operations from optional
+  structure, and canonical instances from chosen interpretations. Test generic
+  assumptions and competing instance paths; a rich concrete example can hide an
+  unnecessarily strong superclass.
+- **Theory reuse:** transport proofs through a faithful bridge instead of
+  rebuilding the upstream theory. Check semantic boundaries such as silent closure
+  versus an empty visible trace before identifying two presentations.
+- **Automation:** follow upstream simp direction and elaborator extension points.
+  A local reverse-normalization rule or a tactic-specific workaround needs scrutiny
+  even when the resulting proof is short.
+- **Mathematical scope:** check that a categorical name, paper claim or complexity
+  label matches the actual objects, operations and laws. Add a boundary example
+  when it refutes an overclaim; strengthen the interface only for a real consumer.
+- **Compatibility:** exercise ordinary imports, independent universes and relevant
+  downstream semantics. Qualitative reachability must not choose VCVio's probability
+  or WP interpretation implicitly. Check the pinned API separately from roadmap
+  proposals and newer upstream source.
+
 ## Hardening Checklist
 
 A merge-ready change must have:
