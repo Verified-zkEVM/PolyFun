@@ -350,7 +350,9 @@ becomes a public `Std.WP` in v4.35), so the dependency stays confined to those
 files, and everything they export is a construction (`def`) or a `scoped`
 instance, never a global instance: a global `WP` instance on `FreeM P` would race
 downstream registrations on reducible unfoldings such as oracle-computation
-types. Register the provided structures `scoped` or `local` downstream.
+types. Register the provided structures `scoped` or `local` downstream. The one
+exception is a transformer lift for a type with no other owner
+(`WriterT.instWPMonad`, low priority), which chooses no semantics.
 `scripts/check-modules.sh` enforces both tiers. See
 [`program-logic.md`](program-logic.md).
 

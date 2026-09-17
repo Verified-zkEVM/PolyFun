@@ -112,11 +112,12 @@ and depend on this library.
   exact monadic support over core's `MonadAttach` with the
   always/some/never judgments (`Monad/Support`, with instances, indexed
   support, the structural `do`-fragment laws, and loop rules under
-  `Monad/Support/`), their bridges to core's
-  lattice-generic `Std.Internal.Do` weakest-precondition stack
-  (`Monad/{Algebra,Support,Hom}/WP`: `toWPMonad`, demonic and angelic
-  interpretations, `vcgen`-ready), and the tactic-tier `vcgen` specifications
-  (`Do/Spec`).
+  `Monad/Support/`), restriction of an algebra to a lower set
+  (`Monad/Algebra/Restrict`), their bridges to core's lattice-generic
+  `Std.Internal.Do` weakest-precondition stack (`Monad/{Algebra,Support,Hom}/WP`:
+  `toWPMonad`, demonic and angelic interpretations, `vcgen`-ready; `WriterT/WP`
+  for Mathlib's writer transformer), and the tactic-tier `vcgen`
+  specifications (`Do/Spec`).
 - `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
   silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).

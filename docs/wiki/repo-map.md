@@ -29,9 +29,10 @@ PolyFun/
   Control/           monad/comonad and LTS infrastructure (Coalgebra,
                      Comonad, Free, Iter, Bisimulation, LTS/Trace),
                      including the program-logic kernel
-                     (Monad/{Algebra, Support}, Support/{Instances, Indexed,
-                     Structural, Loops}, Hom/Loops), its bridges to core's
-                     lattice-generic WP stack (Monad/{Algebra, Support, Hom}/WP),
+                     (Monad/{Algebra, Support}, Algebra/Restrict,
+                     Support/{Instances, Indexed, Structural, Loops},
+                     Hom/Loops), its bridges to core's lattice-generic WP
+                     stack (Monad/{Algebra, Support, Hom}/WP, WriterT/WP),
                      and the vcgen spec tier (Do/Spec)
   Logic/             small logic helpers (HEq)
 
@@ -141,6 +142,9 @@ Logic/HEq, Control/{Coalgebra, Comonad, Lawful, Monad, Bisimulation, LTS/Trace}
   is cslib's, reached through `Control.LTS.toLts`.
 
 Control/Monad/Algebra -> Control/Monad/Algebra/Relational
+Control/Monad/Algebra + Mathlib.Order.CompleteLatticeIntervals -> Control/Monad/Algebra/Restrict
+Mathlib.Control.Monad.Writer + Std.Internal.Do -> Control/Monad/WriterT/WP
+  (definition tier; the kernel's one global WPMonad instance)
 Control/Monad/{Algebra/Relational, Support}
   -> Control/Monad/Algebra/Relational/Support
 Control/Monad/Hom + Mathlib.Control.Monad.Writer -> Control/Monad/Hom/Writer
@@ -152,7 +156,7 @@ Control/Monad/{Algebra, Support, Hom/IsMonadHom} + Std.Internal.Do
   -> Control/Monad/{Algebra/WP, Support/WP, Hom/WP}  (definition tier of the
   quarantine rule in program-logic.md)
 Control/Monad/Support/WP -> Control/Monad/Support/Loops
-Std.Internal.Do + Std.Tactic.Do -> Control/Do/Spec  (tactic tier)
+Control/Monad/WriterT/WP + Std.Tactic.Do -> Control/Do/Spec  (tactic tier)
 
 PFunctor/Lens/{Basic, Cartesian, State}
   -> PFunctor/Lens/{Composite, Distributivity, Factorization, Duoidal}

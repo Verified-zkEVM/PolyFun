@@ -10,6 +10,7 @@ public import PolyFun.Control.LTS.Trace
 public import PolyFun.Control.Monad.Algebra
 public import PolyFun.Control.Monad.Algebra.Relational
 public import PolyFun.Control.Monad.Algebra.Relational.Support
+public import PolyFun.Control.Monad.Algebra.Restrict
 public import PolyFun.Control.Monad.Algebra.WP
 public import PolyFun.Control.Monad.Free
 public import PolyFun.Control.Monad.FreeCont
@@ -26,6 +27,7 @@ public import PolyFun.Control.Monad.Support.Instances
 public import PolyFun.Control.Monad.Support.Loops
 public import PolyFun.Control.Monad.Support.Structural
 public import PolyFun.Control.Monad.Support.WP
+public import PolyFun.Control.Monad.WriterT.WP
 public import PolyFun.Control.Trace
 public import PolyFun.IPFunctor.Basic
 public import PolyFun.IPFunctor.Chart.Basic
