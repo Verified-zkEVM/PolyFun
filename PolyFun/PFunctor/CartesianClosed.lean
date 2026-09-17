@@ -64,7 +64,7 @@ product and exponential constructions there. `implicit_reducible` (unlike
 `reducible`) keeps them opaque to simp and typeclass resolution, and needs
 no `allowUnsafeReducibility`. -/
 attribute [local implicit_reducible] PFunctor.monomial PFunctor.y PFunctor.prod
-  PFunctor.instHMulPFunctor PFunctor.instMulPFunctor PFunctor.pi PFunctor.exp PFunctor.comp
+  PFunctor.instHMulPFunctor PFunctor.instMulPFunctor PFunctor.pi PFunctor.exp
 
 /-- The evaluation lens `exp r q * q ⇆ r`, the counit of the cartesian
 exponential adjunction (Spivak–Niu Example 5.32).

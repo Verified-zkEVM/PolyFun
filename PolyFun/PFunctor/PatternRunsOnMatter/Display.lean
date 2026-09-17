@@ -43,8 +43,8 @@ the responder equations below rewrite through the internal-hom display and
 the terminal dynamical system there. `implicit_reducible` (unlike
 `reducible`) keeps these constants opaque to simp and typeclass resolution,
 and needs no `allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] PFunctor.Obj PFunctor.y PFunctor.monomial
-  PFunctor.ihom PFunctor.DynSystem.out PFunctor.DynSystem.expose
+attribute [local implicit_reducible]
+  PFunctor.y PFunctor.monomial PFunctor.ihom PFunctor.DynSystem.out PFunctor.DynSystem.expose
   PFunctor.DynSystem.update PFunctor.M.terminalSystem Responder.terminal
 
 variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}

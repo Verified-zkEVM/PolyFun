@@ -38,7 +38,7 @@ variable {Node result S : Type} {boundary : PortBoundary}
     localState := fun id => (network.component id).toDynSystem.behavior (state.localState id) }
 
 attribute [local implicit_reducible] signature Response Network.behavior State.behavior
-  DynComputation.ofResumption PFunctor.Obj
+  DynComputation.ofResumption
 
 variable {network : Network Node boundary result} [DecidableEq Node]
 

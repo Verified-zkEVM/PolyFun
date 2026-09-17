@@ -27,7 +27,7 @@ namespace PFunctor
 /- Lean 4.33 compares dependent W/M indices at implicit transparency in the
 proofs below. These local attributes expose only the thin type aliases and
 recursive bridge applications needed by those checks. -/
-attribute [local implicit_reducible] PFunctor.Obj PFunctor.W
+attribute [local implicit_reducible] PFunctor.W
 
 namespace M
 

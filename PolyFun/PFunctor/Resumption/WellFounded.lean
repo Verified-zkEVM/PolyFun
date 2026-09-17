@@ -24,8 +24,7 @@ universe uA uB uα
 
 namespace PFunctor
 
-attribute [local implicit_reducible] PFunctor.Obj PFunctor.W
-  PFunctor.W.head PFunctor.W.children
+attribute [local implicit_reducible] PFunctor.W PFunctor.W.head PFunctor.W.children
 
 namespace Resumption
 
@@ -43,6 +42,7 @@ theorem wellFounded_pure (value : α) :
   have hdest : M.dest (pure (p := P) value) =
       ⟨Sum.inr value, PEmpty.elim⟩ := by
     rw [← pack_dest, dest_pure, pack_inl]
+    rfl
   exact (M.wellFounded_iff_of_dest
     (pure (p := P) value) (Sum.inr value) PEmpty.elim hdest).2
       fun direction => direction.elim
@@ -56,6 +56,7 @@ theorem wellFounded_query_iff (position : P.A)
   apply M.wellFounded_iff_of_dest
     (query position next) (Sum.inl position) next
   rw [← pack_dest, dest_query, pack_inr]
+  rfl
 
 end Resumption
 

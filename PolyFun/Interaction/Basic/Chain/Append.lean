@@ -44,8 +44,8 @@ namespace Chain
 the concatenation lemmas below equate flattened chains with `FreeM.append`
 through the substitution monoid there. `implicit_reducible` (unlike
 `reducible`) stays invisible to simp validation and instance search. -/
-attribute [local implicit_reducible] PFunctor.Obj PFunctor.FreeP.substMonoid
-  PFunctor.FreeP.mult TypeTree.Chain toTypeTree
+attribute [local implicit_reducible]
+  PFunctor.FreeP.substMonoid PFunctor.FreeP.mult TypeTree.Chain toTypeTree
 
 /-- Transport a chain across an equality of its round count. -/
 @[expose]

@@ -710,6 +710,7 @@ theorem reindexDisplayedBehavior_id
       funext direction
       unfold leftChildren
       rw [hDirection_rfl]
+      rfl
     · rw [IPFunctor.IM.toM_dest]
       rfl
     · intro direction
@@ -935,6 +936,7 @@ theorem reindexDisplayedBehavior_comp
       funext direction
       unfold leftChildren
       rw [hDirection_rfl]
+      rfl
     · rw [IPFunctor.IM.toM_dest]
       rfl
     · intro direction

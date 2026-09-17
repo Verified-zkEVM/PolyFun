@@ -37,7 +37,7 @@ cofree comparison retrofunctors there. `implicit_reducible` (unlike
 and needs no `allowUnsafeReducibility`. Constants already
 `implicit_reducible` at their definition sites (the `unfold*` family,
 `relabel`, `Comonoid.tensor`) are omitted. -/
-attribute [local implicit_reducible] PFunctor.Obj PFunctor.y PFunctor.monomial
+attribute [local implicit_reducible] PFunctor.y PFunctor.monomial
 
 /- Path indices are compared at implicit transparency; the node normal form
 `(FreeM.lift a).bind rest` and the constructor `FreeM.liftBind a rest` must agree there. -/

@@ -20,8 +20,6 @@ monads on types.
 
 @[expose] public section
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 universe uA uB
 
 namespace PFunctor

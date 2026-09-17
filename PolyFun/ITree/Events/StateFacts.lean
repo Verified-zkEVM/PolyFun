@@ -17,8 +17,6 @@ and external events remain visible.
 
 @[expose] public section
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 universe uσ uEA uα uβ
 
 namespace ITree

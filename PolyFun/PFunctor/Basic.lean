@@ -23,6 +23,25 @@ universe u v uA uB uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uA₄ uB₄ uA₅ uB₅ u
 
 namespace PFunctor
 
+/-! ## Objects formed with the anonymous constructor
+
+Mathlib states the `PFunctor.Obj` API through `Obj.mk`, `Obj.fst` and `Obj.snd`. PolyFun still
+forms many objects with the anonymous constructor of the underlying sigma type; these equations
+let Mathlib's projections and `map` reduce on such terms. -/
+
+section ObjBridge
+
+variable {P : PFunctor.{uA, uB}} {α : Type v} {β : Type vB}
+
+@[simp] theorem Obj.fst_sigma_mk (a : P.A) (f : P.B a → α) : Obj.fst (⟨a, f⟩ : P α) = a := rfl
+
+@[simp] theorem Obj.snd_sigma_mk (a : P.A) (f : P.B a → α) : Obj.snd (⟨a, f⟩ : P α) = f := rfl
+
+@[simp] theorem map_sigma_mk (f : α → β) (a : P.A) (g : P.B a → α) :
+    P.map f (⟨a, g⟩ : P α) = ⟨a, f ∘ g⟩ := rfl
+
+end ObjBridge
+
 section Basic
 
 /-- The zero polynomial functor, defined as `A = PEmpty` and `B _ = PEmpty`, is the identity with

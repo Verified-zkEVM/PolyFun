@@ -16,8 +16,6 @@ dependent data rather than propositions.
 
 @[expose] public section
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 namespace PFunctor.Display.ResponderExample
 
 inductive Query where

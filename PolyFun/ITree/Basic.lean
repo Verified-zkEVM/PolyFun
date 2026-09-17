@@ -197,8 +197,6 @@ namespace ITree
 
 variable {F : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 /-! ### Raw M-type equivalence -/
 
 @[simp] theorem ofM_toM (tree : ITree F α) : ofM tree.toM = tree := rfl

@@ -23,8 +23,6 @@ universe uA uB v
 
 namespace PFunctor.FreeM.Cursor
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 open PFunctor.TraceList
 
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;

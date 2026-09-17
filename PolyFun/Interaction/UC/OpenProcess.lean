@@ -67,7 +67,7 @@ the wiring lemmas below rewrite `List.filterMap` chains over `TraceList`
 carriers (reducibly `FreeMonoid (Idx _)`) there. `implicit_reducible` (unlike
 `reducible`) stays invisible to simp and instance search, and needs no
 `allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] PFunctor.Obj PFunctor.Idx FreeMonoid
+attribute [local implicit_reducible] PFunctor.Idx FreeMonoid
 
 universe u v v₁ v₂ v₃ w w'
 

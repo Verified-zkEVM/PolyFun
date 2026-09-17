@@ -125,8 +125,7 @@ theorem snocComputer_outputsWithinTime (c : Bool) (input : List Bool) :
         (input.length + (1 + (input.reverse.length + 1))) := by
     rw [mk₁_eq input, mk₁_eq (input ++ [c])]
     exact forward.trans ((RelatesInSteps.single (by rfl)).trans backward)
-  refine RelatesWithinSteps.of_le
-    (RelatesWithinSteps.of_relatesInSteps chain) ?_
+  refine RelatesWithinSteps.mono ?_ (RelatesWithinSteps.of_relatesInSteps chain)
   simp only [List.length_reverse]
   omega
 

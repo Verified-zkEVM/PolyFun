@@ -26,8 +26,6 @@ the common-maximum universe boundary currently required by `Comonoid.Hom`.
 
 @[expose] public section
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 universe uA uB uA₂ uB₂ uCA uCB
 
 namespace PFunctor

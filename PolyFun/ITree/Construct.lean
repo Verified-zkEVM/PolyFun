@@ -41,13 +41,6 @@ namespace ITree
 
 variable {F : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type uγ}
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the `unfold`-style corecursor proof below exposes an `ITree.corec` step whose
-sigma-typed body only typechecks once `PFunctor.Obj` unfolds there.
-`implicit_reducible` restores that without touching simp or typeclass
-resolution. -/
-attribute [local implicit_reducible] PFunctor.Obj
-
 /-! ### Diverging tree -/
 
 /-- The diverging interaction tree, an infinite sequence of silent (`step`)

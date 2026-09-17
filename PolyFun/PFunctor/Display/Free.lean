@@ -41,8 +41,6 @@ a duplicate spelling of the existing displayed-family definitions.
 
 @[expose] public section
 
-attribute [local implicit_reducible] PFunctor.Obj
-
 universe uA uB uC uD uE uE' uE'' uF uG uH
 
 namespace PFunctor

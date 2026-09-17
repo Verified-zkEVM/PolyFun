@@ -52,11 +52,13 @@ def pack {X : Type uX} : β ⊕ p.Obj X → (p + C.{uβ, uB} β).Obj X
   | Sum.inl value => ⟨Sum.inr value, PEmpty.elim⟩
   | Sum.inr ⟨position, next⟩ => ⟨Sum.inl position, next⟩
 
+/- The right-hand sides are spelled with `PFunctor.Obj.mk`, the constructor Mathlib's `M`-type
+API (`M.bisim`, `M.dest_mk`, …) states its equations with. -/
 @[simp] theorem pack_inl {X : Type uX} (value : β) :
-    pack (p := p) (X := X) (Sum.inl value) = ⟨Sum.inr value, PEmpty.elim⟩ := rfl
+    pack (p := p) (X := X) (Sum.inl value) = .mk (Sum.inr value) PEmpty.elim := rfl
 
 @[simp] theorem pack_inr {X : Type uX} (position : p.A) (next : p.B position → X) :
-    pack (Sum.inr ⟨position, next⟩ : β ⊕ p.Obj X) = ⟨Sum.inl position, next⟩ := rfl
+    pack (Sum.inr ⟨position, next⟩ : β ⊕ p.Obj X) = .mk (Sum.inl position) next := rfl
 
 @[simp] theorem unpack_pack {X : Type uX} (step : β ⊕ p.Obj X) :
     unpack (pack step) = step := by

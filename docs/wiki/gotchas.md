@@ -89,6 +89,14 @@ Symptoms and fixes (see the Transparency Attributes section of
 - `calc` failing with a `Trans` instance error where a plain `.trans`
   works → typeclass resolution runs below implicit transparency; keep
   the term-level `.trans` form with a comment.
+- A Mathlib `PFunctor.Obj` / `M`-type lemma "does not apply", or a `rw` leaves
+  `Obj.mk a f = ⟨a, f⟩` → since Mathlib #43056 (v4.34.0) that API is stated through
+  `Obj.mk` / `Obj.fst` / `Obj.snd`, which are `@[implicit_reducible]` and therefore not
+  unfolded when simp matches or `rw` closes goals. Prefer `Obj.mk` where a term meets that
+  API (as `Resumption.pack_inl` / `pack_inr` do); `PolyFun/PFunctor/Basic.lean` bridges the
+  anonymous constructor with `Obj.fst_sigma_mk`, `Obj.snd_sigma_mk` and `map_sigma_mk`, and
+  a leftover `Obj.mk … = ⟨…⟩` closes by `rfl`. `Obj` and `comp` are already
+  implicit-reducible upstream, so they must not appear in local attribute lists.
 
 ### 6b. `FreeM` nodes in simp normal form
 
@@ -336,11 +344,13 @@ path. Foundational citations live in
 those keys (`Hancock-Setzer`, `Spivak-Niu`, etc.) rather than copying
 prose.
 
-### 12. `Std.Tactic.Do` imports are quarantined
+### 12. `Std.Do` imports are quarantined
 
 Only `PolyFun/Control/Do/Basic.lean`, `PolyFun/PFunctor/Free/Do.lean`, and
-`PolyFunTest/Do/` may import `Std.Tactic.Do` (core `Std.Do` / `mvcgen`). The
-upstream API is evolving quickly (an `mvcgen'` rewrite is in progress), so the
+`PolyFunTest/Do/` may import `Std.Do`, `Std.Internal.Do`, or `Std.Tactic.Do`
+(core's two weakest-precondition stacks and the `mvcgen` / `vcgen` tactics). The
+upstream API is evolving quickly (`vcgen` on the `Std.Internal.Do` stack is
+replacing `mvcgen`, and that stack becomes a public `Std.WP` in v4.35), so the
 dependency stays confined to those files, and everything they export is a
 construction (`def`), never a global instance: a global `Std.Do.WP` instance on
 `FreeM P` would race downstream registrations on reducible unfoldings such as

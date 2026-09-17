@@ -44,7 +44,7 @@ so rewriting through `Extension (FreeP.substMonoid R)` needs `substMonoid`
 (not `reducible`) keeps the `substMonoid`-headed goals opaque to typeclass
 resolution, which must recover `Monad (Extension ?M)` without unfolding
 `?M`. -/
-attribute [local implicit_reducible] PFunctor.Obj FreeP.substMonoid
+attribute [local implicit_reducible] FreeP.substMonoid
 
 /-- Package a free handler as the corresponding lens into the free
 polynomial.  The forward map is the erased program shape and the backward map

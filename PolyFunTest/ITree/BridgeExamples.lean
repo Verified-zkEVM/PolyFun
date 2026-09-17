@@ -6,7 +6,6 @@ Authors: Devon Tuma
 
 module
 
-
 public import PolyFun.ITree.PatternRunsOnMatter
 public import PolyFun.ITree.Unfold
 public import PolyFun.PFunctor.Resumption.Empty
@@ -18,8 +17,6 @@ public import PolyFun.PFunctor.Resumption.Empty
 namespace ITree.BridgeExamples
 
 open PFunctor
-
-attribute [local implicit_reducible] PFunctor.Obj
 
 @[reducible] def Choice : PFunctor := ⟨Bool, fun _ => Bool⟩
 

@@ -35,8 +35,7 @@ namespace DynSystem
 the mate equations below rewrite through these constants there.
 `implicit_reducible` (unlike `reducible`) leaves simp validation and instance
 resolution untouched, and needs no `allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] PFunctor.Obj Comonoid.identity Comonoid.target
-  Comonoid.compose Lens.mapObj
+attribute [local implicit_reducible] Comonoid.identity Comonoid.target Comonoid.compose Lens.mapObj
 
 variable {S : Type uS} {P : PFunctor.{uA, uB}} {α : Type uα}
 
