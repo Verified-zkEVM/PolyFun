@@ -10,11 +10,11 @@ public import Mathlib.Data.FunLike.Basic
 /-!
 # F-coalgebras
 
-An `F`-coalgebra for an endofunctor `F` on `Type` is a type `S` together with a
+An `F`-coalgebra is a type `S` together with a
 structure map `out : S → F S`.
 
-This is the categorical dual of `MonadAlgebra`: where an algebra collapses a
-functor layer, a coalgebra *observes* one layer of structure from a state.
+It has the arrow shape dual to an `F`-algebra `F S → S`: a coalgebra
+observes one layer of structure from a state. No monad or comonad laws are imposed.
 
 ## Main definitions
 
@@ -39,8 +39,9 @@ universe u v
 /-- An `F`-coalgebra on `S` is a structure map `out : S → F S`.
 
 Named `Coalg` to avoid collision with `Mathlib.RingTheory.Coalgebra`.
-This is the dual of `MonadAlgebra`. No `[Functor F]` constraint is imposed on the
-class itself so that the definition applies to arbitrary type-level maps. -/
+No `[Functor F]` constraint is imposed on the class itself, and the source and
+target universes may differ. Categorical endofunctor coalgebras specialize to
+the same-universe case with a lawful functor. -/
 class Coalg (F : Type u → Type v) (S : Type u) where
   /-- The structure map of the coalgebra, unfolding a state `S` into one layer of `F`. -/
   out : S → F S

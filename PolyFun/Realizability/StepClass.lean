@@ -11,14 +11,16 @@ public import PolyFun.PFunctor.Basic
 # Classes of admissible functions
 
 A `PFunctor.StepClass` is a class of allowed data representations and functions
-between them — a wide subcategory of `Type u`, presented pointwise by
+between them, presented pointwise by
 
 * `Str A`, the structure a type must carry to be representable (a bit encoding,
   a finiteness witness, a `Primcodable` instance, …), and
 * `Hom a b f`, the proposition that `f : A → B` is admissible between chosen
   representations,
 
-closed under identities and composition.
+closed under identities and composition. Objects are pairs of a type and a
+chosen representation. The forgetful map to `Type u` is faithful, but it need
+not cover every type, and one type may have several representations.
 
 `Str` is *data* rather than a proposition because a resource bound only makes
 sense relative to a chosen representation: "`f` runs in polynomial time" is a
@@ -54,9 +56,8 @@ universe u v v₂ v₃
 namespace PFunctor
 
 set_option linter.checkUnivs false in
-/-- A class of admissible data representations and functions between them: a wide
-subcategory of `Type u` presented by a structure on objects and a predicate on
-morphisms.
+/-- A category of represented types and admissible functions, presented by
+representation data and a predicate on underlying functions.
 
 `Str A` is the representation structure carried by an admissible type, and
 `Hom a b f` says that `f` is admissible from representation `a` to
@@ -235,11 +236,12 @@ flattened transition is *partial*, and `none` records that an answer is not one
 the machine is waiting for. Partiality is what makes the flattening
 compositional — see `PolyFun.Realizability.Machine`.
 
-Up to the equivalence `Option A ≃ A ⊕ PUnit` this is `HasSum` together with a
-terminal representation, but it is taken as primitive: factoring it would force
-a terminal representation on every instance, and nothing else needs one. For the
-same reason `omap_mem` and `obindCtx_mem` are both primitive — each is derivable
-from the other only through a unit representation. -/
+The type equivalence `Option A ≃ A ⊕ PUnit` suggests an implementation using
+sums and a terminal representation, provided the representation transports and
+case analysis are admissible. This interface instead selects optional values
+directly, without requiring a terminal representation. `omap_mem` and
+`obindCtx_mem` are separate obligations for ordinary mapping and sequencing
+with a retained context. -/
 class HasOption (C : StepClass.{u, v}) [P : C.HasProd] where
   /-- The representation of an optional value. -/
   option : {A : Type u} → C.Str A → C.Str (Option A)
@@ -297,8 +299,7 @@ Equivalently — and this is the form the closure theory actually uses, availabl
 The field is the **inverse** of the map a category theorist calls canonical: the
 canonical (cogap) direction is `codistrib_mem` below, which needs no axiom at all.
 Both directions being admissible is exactly "the canonical map is an isomorphism
-in the subcategory", so this is Cockett's distributivity verbatim rather than a
-one-sided weakening. Only the binary case is required; no terminal or initial
+between represented types". Only the binary case is required; no terminal or initial
 representation is assumed, so this is weaker than
 `CategoryTheory.IsCartesianDistributive`.
 
@@ -340,8 +341,8 @@ theorem IsDistributive.elimCtx_mem [P : C.HasProd] [S : C.HasSum]
   cases x with
   | mk s v => cases s <;> rfl
 
-/-- A distributive step class: a distributive category (Cockett 1993) presented
-concretely over `Type u`, together with admissible optional values.
+/-- A step class with admissible binary products, sums, their distributivity
+isomorphism, and optional values. Terminal and initial representations are not required.
 
 This bundles the structure the closure theory consumes. It is a convenience only;
 each individual theorem asks for exactly the mixins it uses. -/
