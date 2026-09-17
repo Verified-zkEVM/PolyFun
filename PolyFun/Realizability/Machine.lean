@@ -65,12 +65,10 @@ universe u v w uA uB uA₂ uB₂ uα uβ uγ
 
 namespace PFunctor
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency; the
-step maps below move between `Obj` and its `Sigma` normal form (to reach the
-exposed position and its continuation) and between `Idx` and its `Sigma` normal
-form (to pair a position with a direction) there. Both are plain semireducible
-definitions in Mathlib; `implicit_reducible` (unlike `reducible`) keeps them
-opaque to simp and typeclass resolution, and needs no `allowUnsafeReducibility`. -/
+/- The step maps pair positions and directions through Mathlib's `Idx` definition.
+Unifying those dependent pairs needs `Idx` to unfold at implicit transparency.
+`implicit_reducible` keeps it opaque to simp and typeclass resolution. Mathlib
+already gives `Obj` the corresponding transparency for positions and continuations. -/
 attribute [local implicit_reducible] PFunctor.Idx
 
 namespace DynSystem.DynComputation
