@@ -204,18 +204,6 @@ instance : LawfulComonad (CofreeC F) where
     change extend t ((g ∘ f) ∘ extract) = extend (extend t (f ∘ extract)) (g ∘ extract)
     rw [extend_assoc]
     congr 1
-  coseqLeft_eq := by
-    intro α β wa wb
-    rfl
-  coseqRight_eq := by
-    intro α β wa wb
-    rfl
-  coseq_assoc := by
-    intro α β γ wa wb wc
-    simp [coseq, Functor.map, Function.comp, extend_assoc]
-  map_coseq := by
-    intro α β α' β' f g wa wb
-    simp [coseq, Functor.map, Function.comp, extend_assoc]
   map_eq_extend_extract := by
     intro α β f t
     rfl
@@ -228,6 +216,24 @@ instance : LawfulComonad (CofreeC F) where
   extend_assoc := by
     intro α β γ t f g
     exact CofreeC.extend_assoc t f g
+
+/-- Pair cofree values by retaining the left tree and the right root value. -/
+instance : Coapplicative (CofreeC F) where
+  coseq wa wb := extend wa (fun wa' => (extract wa', extract wb))
+
+instance : LawfulCoapplicative (CofreeC F) where
+  coseqLeft_eq := by
+    intro α β wa wb
+    rfl
+  coseqRight_eq := by
+    intro α β wa wb
+    rfl
+  coseq_assoc := by
+    intro α β γ wa wb wc
+    simp [coseq, Functor.map, Function.comp, extend_assoc]
+  map_coseq := by
+    intro α β α' β' f g wa wb
+    simp [coseq, Functor.map, Function.comp, extend_assoc]
 
 end CofreeC
 
