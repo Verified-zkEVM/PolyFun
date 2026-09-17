@@ -8,6 +8,7 @@ module
 
 public import PolyFunTest.Do.Algebra
 public import PolyFun.Control.Monad.Algebra.Restrict
+public import PolyFun.Control.Monad.Support.Instances
 
 /-!
 # A restricted carrier on core's `vcgen`
@@ -49,3 +50,14 @@ example (c : Set.Iic (1 : ℕ∞)) :
     ⦃ c ⦄ (do let x ← pure 1; pure (x + 1) : Det Nat) ⦃ fun _ => ⟨1, Set.self_mem_Iic⟩ ⦄ := by
   vcgen
   exact le_top
+
+/- A bound is not automatic: demonic correctness of an empty choice is vacuous. -/
+example :
+    (letI := MonadAttach.mAlgOrderedPropDemonic (m := SetM)
+     ¬ ∀ x : SetM Unit, MAlgOrdered.wp x (fun _ => False) ≤ False) := by
+  intro h
+  have hempty := h (∅ : Set Unit)
+  apply hempty
+  apply (MonadAttach.wp_iff_allOutputs _ _).mpr
+  intro a ha
+  exact MonadAttach.SetM.canReturn_iff.mp ha
