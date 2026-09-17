@@ -12,13 +12,18 @@ public import Mathlib.Logic.Equiv.Prod
 A `Comonad` provides `Functor`, `Extract`, and `Extend`; `LawfulComonad`
 states the counit, coassociativity, and map-compatibility laws. This is the
 functional presentation of a comonad. Nesting via `duplicate` requires an
-endofunctor, while `extend` itself can change universes.
+endofunctor; the extraction/extension interface permits a context functor
+between different universes.
 
-`Coapplicative` is a separate interface for an associative, natural pairing of
-contexts. It is not the categorical dual of `Applicative`, and a comonad does
+`Coapplicative` chooses a pairing of contexts; `LawfulCoapplicative` requires
+associativity and naturality. It is not the categorical dual of `Applicative`, and a comonad does
 not choose such a pairing. For example, streams can pair pointwise or preserve
 the left context while extracting a single value from the right. The pairing
 classes carry no law relating `extract` to `coseq`.
+
+A consumer combining extension and pairing can request `[Comonad w] [Coseq w]`.
+Two independent assumptions `[Comonad w] [Coapplicative w]` may select different
+functor and extraction data; they do not assert that the shared operations agree.
 
 -/
 

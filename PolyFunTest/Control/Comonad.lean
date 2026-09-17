@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-import PolyFun.Control.Comonad.Instances
+public import PolyFun.Control.Comonad.Instances
 import PolyFun.PFunctor.Cofree
 
 /-! # Comonads and independent choices of context pairing
@@ -32,6 +32,10 @@ example (w : Type u → Type v) [Comonad w] [LawfulComonad w] (σ : Type u) :
 example (w : Type u → Type v) [Coapplicative w] [LawfulCoapplicative w] (σ : Type u) :
     LawfulCoapplicative (StoreT σ w) := inferInstance
 
+/-- A consumer can request pairing without choosing a second functor or extraction. -/
+example (w : Type u → Type v) [Comonad w] [Coseq w] (σ : Type u) :
+    Coseq (StoreT σ w) := inferInstance
+
 example (w : Type u → Type u) [Comonad w] [LawfulComonad w]
     {α : Type u} (x : w α) :
     extract (duplicate x) = x ∧
@@ -52,3 +56,57 @@ example {α β : Type u} (f : α → β) (xs : Stream' α) :
 example {P : PFunctor.{u, u}} {α β : Type u} (f : α → β) (x : PFunctor.CofreeC P α) :
     @Functor.map (PFunctor.CofreeC P) (Comonad.toFunctor) α β f x =
       @Functor.map (PFunctor.CofreeC P) (Coapplicative.toFunctor) α β f x := rfl
+
+namespace ComonadExamples
+
+/-- Retaining the right root is a lawful alternative to pointwise stream pairing. -/
+@[instance_reducible]
+def rootPairing : Coapplicative Stream' where
+  toFunctor := inferInstance
+  toExtract := inferInstance
+  coseq xs ys := fun n => (xs n, ys 0)
+  coseqLeft xs _ := xs
+  coseqRight _ ys := fun _ => ys 0
+
+section RootPairing
+
+local instance : Coapplicative Stream' := rootPairing
+
+example : LawfulCoapplicative Stream' where
+  coseqLeft_eq := by intros; rfl
+  coseqRight_eq := by intros; rfl
+  coseq_assoc := by intros; rfl
+  map_coseq := by intros; rfl
+
+end RootPairing
+
+/-- The two lawful policies disagree away from the root. -/
+example : Stream'.get ((fun n => n) <@> (fun n => n)) 1 ≠
+    Stream'.get (rootPairing.coseq (fun n => n) (fun n => n)) 1 := by
+  decide
+
+/-- Cofree pairing keeps the left shape and pairs its labels with the right root. -/
+example {P : PFunctor.{u, u}} {α β : Type u}
+    (xs : PFunctor.CofreeC P α) (ys : PFunctor.CofreeC P β) :
+    PFunctor.CofreeC.head (xs <@> ys) =
+      (PFunctor.CofreeC.head xs, PFunctor.CofreeC.head ys) := by
+  change PFunctor.CofreeC.head (PFunctor.CofreeC.extend xs _) = _
+  rw [PFunctor.CofreeC.head_extend]
+  rfl
+
+example {P : PFunctor.{u, u}} {α β : Type u}
+    (xs : PFunctor.CofreeC P α) (ys : PFunctor.CofreeC P β) :
+    PFunctor.CofreeC.tail (xs <@> ys) =
+      P.map (fun child => child <@> ys) (PFunctor.CofreeC.tail xs) := by
+  exact PFunctor.CofreeC.tail_extend xs _
+
+/-- Both transformer hierarchy paths preserve the base mapping and extraction. -/
+example (ε : Type u) :
+    (Comonad.toFunctor (w := EnvT ε Stream')) = Coapplicative.toFunctor ∧
+      (Comonad.toExtract (w := EnvT ε Stream')) = Coapplicative.toExtract := ⟨rfl, rfl⟩
+
+example (σ : Type u) :
+    (Comonad.toFunctor (w := StoreT σ Stream')) = Coapplicative.toFunctor ∧
+      (Comonad.toExtract (w := StoreT σ Stream')) = Coapplicative.toExtract := ⟨rfl, rfl⟩
+
+end ComonadExamples

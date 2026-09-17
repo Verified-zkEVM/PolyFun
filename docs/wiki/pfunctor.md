@@ -386,5 +386,9 @@ independent choice of context pairing, with its own law class; generic comonad
 consumers do not obtain a pairing instance automatically. `EnvT` and `StoreT`
 lift these interfaces separately. Concrete pairings retain their meaning:
 streams zip pointwise, while `CofreeC` retains the left tree and the right root
-value. A consumer using `coseq` should ask for `Coapplicative` (or the smaller
-operation class it needs) explicitly.
+value. A consumer using only pairing can ask for `Coapplicative` or the smaller
+operation class it needs. A consumer already requiring `Comonad` should add
+`Coseq` for pairing, rather than another independent `Coapplicative` assumption:
+the latter also chooses `Functor` and `Extract` data and can create conflicting
+instances. Concrete instances share those operations, but two arbitrary class
+parameters do not assert that they agree.

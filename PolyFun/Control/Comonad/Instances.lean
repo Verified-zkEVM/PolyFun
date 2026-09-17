@@ -13,14 +13,14 @@ public import Batteries.Data.List.Basic
 # Instances of Comonads
 
 Comonad, `Coapplicative`, and lawfulness instances for a range of concrete functors,
-together with two comonad transformers and Day convolution.
+together with two comonad transformers and an unquotiented Day carrier.
 
 ## Main definitions
 
 * `NonEmptyList`: a list with a distinguished head, carrying the non-empty-tails comonad.
 * `List.Zipper`: a list with a distinguished focus, carrying the zipper comonad.
 * `EnvT`, `StoreT`: the environment and store comonad transformers over a base comonad.
-* `Day`: the Day convolution of two endofunctors.
+* `Day`: raw Day-convolution data, without the coend quotient or a lawfulness instance.
 
 The identity functor `Id`, products `Prod ε`, and streams `Stream'` also receive their
 comonad instances here.
