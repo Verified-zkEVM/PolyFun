@@ -11,7 +11,9 @@ public import PolyFun.Control.Bisimulation
 
 `Control.LTS.WeakTrace L s observations t` records a finite sequence of
 visible observations from `s` to `t`. Each visible transition is a weak
-transition, so arbitrary finite silent prefixes and suffixes are ignored.
+transition, so finite silent prefixes and suffixes can surround each visible
+step. An empty visible trace has equal endpoints; it does not record a
+nontrivial silent-only path.
 
 This is the trace semantics naturally preserved by `IsWeakSimulation` and
 `IsWeakBisimulation`. It deliberately lives over the existing `Control.LTS`
@@ -36,18 +38,6 @@ inductive WeakTrace : L.State → List Obs → L.State → Prop where
       (tail : WeakTrace middle observations t) :
       WeakTrace s (obs :: observations) t
 
-namespace WeakTrace
-
-/-- Concatenate two finite weak traces. -/
-theorem append {s middle t : L.State} {xs ys : List Obs}
-    (first : L.WeakTrace s xs middle) (second : L.WeakTrace middle ys t) :
-    L.WeakTrace s (xs ++ ys) t := by
-  induction first with
-  | nil _ => exact second
-  | cons head _ ih => exact .cons head (ih second)
-
-end WeakTrace
-
 /-- The set of finite visible traces beginning at `s`. -/
 def traces (s : L.State) : Set (List Obs) :=
   { observations | ∃ t, L.WeakTrace s observations t }
@@ -61,7 +51,10 @@ def traces (s : L.State) : Set (List Obs) :=
 whereas a cslib multi-step transition is labelled by a `List Label` that may
 still mention the silent label.  Tagging every observation recovers the cslib
 trace of the saturated system: a visible trace `[o₁, …, oₙ]` here is the
-multi-step trace `[some o₁, …, some oₙ]` there.
+multi-step trace `[some o₁, …, some oₙ]` there. In particular, an empty
+visible trace has equal endpoints; it is not an arbitrary silent path.
+The inductive presentation supplies visible-label induction to ITree consumers,
+while concatenation and simulation transport use cslib's multi-step theory.
 -/
 
 /-- A finite visible trace is a multi-step transition of the saturated
@@ -80,6 +73,23 @@ theorem weakTrace_iff_mTr {s t : L.State} {observations : List Obs} :
     | cons obs rest ih =>
         rcases h with _ | ⟨hhead, htail⟩
         exact .cons (L.sTr_toLts_iff.mp hhead) (ih htail)
+
+namespace WeakTrace
+
+/-- A trace with no visible observations has equal endpoints. -/
+@[simp] theorem nil_iff {s t : L.State} : L.WeakTrace s [] t ↔ s = t :=
+  ⟨fun h => (L.weakTrace_iff_mTr.mp h).nil_eq, by rintro rfl; exact .nil _⟩
+
+/-- Concatenate two finite weak traces. -/
+theorem append {s middle t : L.State} {xs ys : List Obs}
+    (first : L.WeakTrace s xs middle) (second : L.WeakTrace middle ys t) :
+    L.WeakTrace s (xs ++ ys) t := by
+  apply L.weakTrace_iff_mTr.mpr
+  rw [List.map_append]
+  exact Cslib.LTS.MTr.comp L.toLts.saturate
+    (L.weakTrace_iff_mTr.mp first) (L.weakTrace_iff_mTr.mp second)
+
+end WeakTrace
 
 /-- Membership in the visible trace set, transported to cslib's trace set. -/
 theorem mem_traces_iff_mem_toLts {s : L.State} {observations : List Obs} :
@@ -105,13 +115,10 @@ theorem weakTrace
     {s₁ t₁ : L₁.State} {s₂ : L₂.State} {observations : List Obs}
     (hrel : rel s₁ s₂) (trace : L₁.WeakTrace s₁ observations t₁) :
     ∃ t₂, L₂.WeakTrace s₂ observations t₂ ∧ rel t₁ t₂ := by
-  induction trace generalizing s₂ with
-  | nil s => exact ⟨s₂, .nil s₂, hrel⟩
-  | cons head _ ih =>
-      obtain ⟨middle₂, head₂, hmiddle⟩ :=
-        simulation.weakStep hrel head
-      obtain ⟨t₂, tail₂, ht⟩ := ih hmiddle
-      exact ⟨t₂, .cons head₂ tail₂, ht⟩
+  obtain ⟨t₂, htrace, htarget⟩ :=
+    (isWeakSimulation_iff.mp simulation).isSimulation_saturate_left.sim_trace
+      hrel (observations.map some) t₁ (L₁.weakTrace_iff_mTr.mp trace)
+  exact ⟨t₂, L₂.weakTrace_iff_mTr.mpr htrace, htarget⟩
 
 /-- Weak simulation implies inclusion of finite visible trace sets. -/
 theorem traces_subset

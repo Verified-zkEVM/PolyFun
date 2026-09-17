@@ -51,10 +51,10 @@ silent label through `Cslib.HasTau`, after which cslib's development applies
 verbatim: `SilentSteps` is its `τSTr`, `WeakStep` is its saturated transition
 `STr`, and the strong and weak simulation and bisimulation notions here agree
 with `Cslib.LTS.IsSimulation`, `IsBisimulation`, `IsSWBisimulation`, and
-`WeakBisimilarity` on the projection.  The `Relation to cslib` section at the
-end of this file records those correspondences and derives the consequences
-that cslib proves and this file does not, in particular that bisimilarity is
-itself the largest bisimulation.
+`WeakBisimilarity` on the projection. The projection and simulation correspondences
+precede the generic
+closure and composition lemmas so these reuse cslib's proofs. The final
+section records the bisimulation correspondences and largest-bisimulation laws.
 
 The *delay* spectrum has no cslib counterpart and is developed here.
 -/
@@ -180,6 +180,85 @@ def IsWeakSimulation (L₁ : LTS.{uObs, uState₁, uMove₁} Obs)
   ∀ {s₁ s₂}, rel s₁ s₂ → ∀ {label t₁}, L₁.Step s₁ label t₁ →
     ∃ t₂, L₂.WeakStep s₂ label t₂ ∧ rel t₁ t₂
 
+/-! ## Relational projection and simulation transport -/
+
+section Projection
+
+/-- `none` is the silent label, so an optionally-observed transition system is a
+cslib transition system with a distinguished `τ`.
+
+cslib declares this same instance, but inside
+`Cslib/Computability/Automata/EpsilonNA/Basic.lean`, where it is reachable only
+by importing the ε-NFA development. Repeating it here is cheaper than taking
+that dependency, and the two agree definitionally, so having both in scope is
+harmless. It belongs next to `HasTau` itself upstream. -/
+instance instHasTauOption : Cslib.HasTau (Option Obs) := ⟨none⟩
+
+@[simp] theorem hasTau_option_τ : (Cslib.HasTau.τ : Option Obs) = none := rfl
+
+/-- The relation-indexed transition system underlying a move-indexed one:
+forget which move justified a transition and keep only that one exists. -/
+def LTS.toLts (L : LTS.{uObs, uState, uMove} Obs) : Cslib.LTS L.State (Option Obs) :=
+  ⟨L.Step⟩
+
+variable (L : LTS.{uObs, uState, uMove} Obs)
+
+@[simp] theorem LTS.toLts_tr {s t : L.State} {label : Option Obs} :
+    L.toLts.Tr s label t ↔ L.Step s label t := Iff.rfl
+
+/-- The silent closure is cslib's `τ`-closure. -/
+@[simp] theorem LTS.τSTr_toLts {s t : L.State} :
+    L.toLts.τSTr s t ↔ L.SilentSteps s t := Iff.rfl
+
+/-- A weak transition is cslib's saturated transition.  The two definitions
+differ in shape — one is a match on the label, the other an inductive — but
+describe the same relation. -/
+theorem LTS.sTr_toLts_iff {s t : L.State} {label : Option Obs} :
+    L.toLts.STr s label t ↔ L.WeakStep s label t := by
+  constructor
+  · rintro (_ | ⟨hpre, hstep, hpost⟩)
+    · exact Relation.ReflTransGen.refl
+    · cases label with
+      | none => exact (hpre.trans (Relation.ReflTransGen.single hstep)).trans hpost
+      | some obs => exact ⟨_, _, hpre, hstep, hpost⟩
+  · intro h
+    cases label with
+    | none =>
+        induction h with
+        | refl => exact .refl
+        | tail _ hlast ih =>
+            cases ih with
+            | refl => exact .tr Relation.ReflTransGen.refl hlast Relation.ReflTransGen.refl
+            | tr hpre hstep hpost =>
+                exact .tr hpre hstep (hpost.trans (Relation.ReflTransGen.single hlast))
+    | some obs =>
+        obtain ⟨before, after, hpre, hvis, hpost⟩ := h
+        exact .tr hpre hvis hpost
+
+/-- Saturating the projection exposes exactly the weak transitions. -/
+theorem LTS.saturate_toLts_tr_iff {s t : L.State} {label : Option Obs} :
+    L.toLts.saturate.Tr s label t ↔ L.WeakStep s label t := L.sTr_toLts_iff
+
+end Projection
+
+theorem isStrongSimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
+    IsStrongSimulation L₁ L₂ rel ↔ Cslib.LTS.IsSimulation L₁.toLts L₂.toLts rel :=
+  ⟨fun h _ _ hrel _ _ hstep => h hrel hstep,
+    fun h _ _ hrel _ _ hstep => h hrel _ _ hstep⟩
+
+theorem isWeakSimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
+    IsWeakSimulation L₁ L₂ rel ↔
+      Cslib.LTS.IsSimulation L₁.toLts L₂.toLts.saturate rel := by
+  constructor
+  · exact fun h _ _ hrel _ _ hstep =>
+      let ⟨t₂, hw, hr⟩ := h hrel hstep
+      ⟨t₂, L₂.sTr_toLts_iff.mpr hw, hr⟩
+  · exact fun h _ _ hrel _ _ hstep =>
+      let ⟨t₂, hs, hr⟩ := h hrel _ _ hstep
+      ⟨t₂, L₂.sTr_toLts_iff.mp hs, hr⟩
+
 namespace IsStrongSimulation
 
 /-- Equality strongly simulates a system by itself. -/
@@ -195,10 +274,9 @@ protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     (h₁₂ : IsStrongSimulation L₁ L₂ r₁₂)
     (h₂₃ : IsStrongSimulation L₂ L₃ r₂₃) :
     IsStrongSimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) := by
-  rintro s₁ s₃ ⟨s₂, hrel₁₂, hrel₂₃⟩ label t₁ hstep
-  obtain ⟨t₂, hstep₂, hrelt₂⟩ := h₁₂ hrel₁₂ hstep
-  obtain ⟨t₃, hstep₃, hrelt₃⟩ := h₂₃ hrel₂₃ hstep₂
-  exact ⟨t₃, hstep₃, t₂, hrelt₂, hrelt₃⟩
+  exact isStrongSimulation_iff.mpr
+    (Cslib.LTS.IsSimulation.comp _ _
+      (isStrongSimulation_iff.mp h₁₂) (isStrongSimulation_iff.mp h₂₃))
 
 /-- Strong simulation is, in particular, delay simulation. -/
 protected theorem toDelay {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -273,12 +351,7 @@ theorem silentSteps {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     (h : IsWeakSimulation L₁ L₂ rel) {s₁ t₁ : L₁.State} {s₂ : L₂.State}
     (hrel : rel s₁ s₂) (hsteps : L₁.SilentSteps s₁ t₁) :
     ∃ t₂, L₂.SilentSteps s₂ t₂ ∧ rel t₁ t₂ := by
-  induction hsteps with
-  | refl => exact ⟨s₂, .refl, hrel⟩
-  | tail hprefix hlast ih =>
-      obtain ⟨middle₂, hprefix₂, hrelMiddle⟩ := ih
-      obtain ⟨t₂, hlast₂, hrelTarget⟩ := h hrelMiddle hlast
-      exact ⟨t₂, LTS.SilentSteps.trans L₂ hprefix₂ hlast₂, hrelTarget⟩
+  exact (isWeakSimulation_iff.mp h).follow_internal hrel hsteps
 
 /-- A weak simulation lifts a weak transition to a weak transition. -/
 theorem weakStep {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -286,17 +359,10 @@ theorem weakStep {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     (h : IsWeakSimulation L₁ L₂ rel) {s₁ t₁ : L₁.State} {s₂ : L₂.State}
     {label : Option Obs} (hrel : rel s₁ s₂) (hstep : L₁.WeakStep s₁ label t₁) :
     ∃ t₂, L₂.WeakStep s₂ label t₂ ∧ rel t₁ t₂ := by
-  cases label with
-  | none => exact h.silentSteps hrel hstep
-  | some obs =>
-      obtain ⟨before₁, after₁, hpre₁, hvis₁, hpost₁⟩ := hstep
-      obtain ⟨before₂, hpre₂, hrelBefore⟩ := h.silentSteps hrel hpre₁
-      obtain ⟨afterMatch₂, hvisMatch₂, hrelAfter⟩ := h hrelBefore hvis₁
-      obtain ⟨visibleAt₂, after₂, hpreMore₂, hvis₂, hpost₂⟩ := hvisMatch₂
-      obtain ⟨t₂, hpostMore₂, hrelTarget⟩ := h.silentSteps hrelAfter hpost₁
-      exact ⟨t₂, ⟨visibleAt₂, after₂,
-        LTS.SilentSteps.trans L₂ hpre₂ hpreMore₂, hvis₂,
-        LTS.SilentSteps.trans L₂ hpost₂ hpostMore₂⟩, hrelTarget⟩
+  obtain ⟨t₂, hmatch, htarget⟩ :=
+    (isWeakSimulation_iff.mp h).isSimulation_saturate_left.follow hrel
+      (L₁.sTr_toLts_iff.mpr hstep)
+  exact ⟨t₂, L₂.sTr_toLts_iff.mp hmatch, htarget⟩
 
 /-- Weak simulations compose through their relational composite. -/
 protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -306,10 +372,9 @@ protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     (h₁₂ : IsWeakSimulation L₁ L₂ r₁₂)
     (h₂₃ : IsWeakSimulation L₂ L₃ r₂₃) :
     IsWeakSimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) := by
-  rintro s₁ s₃ ⟨s₂, hrel₁₂, hrel₂₃⟩ label t₁ hstep
-  obtain ⟨t₂, hstep₂, hrelt₂⟩ := h₁₂ hrel₁₂ hstep
-  obtain ⟨t₃, hstep₃, hrelt₃⟩ := h₂₃.weakStep hrel₂₃ hstep₂
-  exact ⟨t₃, hstep₃, t₂, hrelt₂, hrelt₃⟩
+  exact isWeakSimulation_iff.mpr
+    (Cslib.LTS.IsSimulation.comp _ _ (isWeakSimulation_iff.mp h₁₂)
+      (isWeakSimulation_iff.mp h₂₃).isSimulation_saturate_left)
 
 end IsWeakSimulation
 
@@ -704,70 +769,7 @@ relation-level ones transport cslib's theory onto the notions defined above.
 
 section Cslib
 
-/-- `none` is the silent label, so an optionally-observed transition system is a
-cslib transition system with a distinguished `τ`.
-
-cslib declares this same instance, but inside
-`Cslib/Computability/Automata/EpsilonNA/Basic.lean`, where it is reachable only
-by importing the ε-NFA development. Repeating it here is cheaper than taking
-that dependency, and the two agree definitionally, so having both in scope is
-harmless. It belongs next to `HasTau` itself upstream. -/
-instance instHasTauOption : Cslib.HasTau (Option Obs) := ⟨none⟩
-
-@[simp] theorem hasTau_option_τ : (Cslib.HasTau.τ : Option Obs) = none := rfl
-
-/-- The relation-indexed transition system underlying a move-indexed one:
-forget which move justified a transition and keep only that one exists. -/
-def LTS.toLts (L : LTS.{uObs, uState, uMove} Obs) : Cslib.LTS L.State (Option Obs) :=
-  ⟨L.Step⟩
-
-variable (L : LTS.{uObs, uState, uMove} Obs)
-
-@[simp] theorem LTS.toLts_tr {s t : L.State} {label : Option Obs} :
-    L.toLts.Tr s label t ↔ L.Step s label t := Iff.rfl
-
-/-- The silent closure is cslib's `τ`-closure. -/
-@[simp] theorem LTS.τSTr_toLts {s t : L.State} :
-    L.toLts.τSTr s t ↔ L.SilentSteps s t := Iff.rfl
-
-/-- A weak transition is cslib's saturated transition.  The two definitions
-differ in shape — one is a match on the label, the other an inductive — but
-describe the same relation. -/
-theorem LTS.sTr_toLts_iff {s t : L.State} {label : Option Obs} :
-    L.toLts.STr s label t ↔ L.WeakStep s label t := by
-  constructor
-  · rintro (_ | ⟨hpre, hstep, hpost⟩)
-    · exact Relation.ReflTransGen.refl
-    · cases label with
-      | none => exact (hpre.trans (Relation.ReflTransGen.single hstep)).trans hpost
-      | some obs => exact ⟨_, _, hpre, hstep, hpost⟩
-  · intro h
-    cases label with
-    | none =>
-        induction h with
-        | refl => exact .refl
-        | tail _ hlast ih =>
-            cases ih with
-            | refl => exact .tr Relation.ReflTransGen.refl hlast Relation.ReflTransGen.refl
-            | tr hpre hstep hpost =>
-                exact .tr hpre hstep (hpost.trans (Relation.ReflTransGen.single hlast))
-    | some obs =>
-        obtain ⟨before, after, hpre, hvis, hpost⟩ := h
-        exact .tr hpre hvis hpost
-
-/-- Saturating the projection exposes exactly the weak transitions. -/
-theorem LTS.saturate_toLts_tr_iff {s t : L.State} {label : Option Obs} :
-    L.toLts.saturate.Tr s label t ↔ L.WeakStep s label t := L.sTr_toLts_iff
-
-variable {L}
-
 /-! ### Correspondence of the strong spectrum -/
-
-theorem isStrongSimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
-    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
-    IsStrongSimulation L₁ L₂ rel ↔ Cslib.LTS.IsSimulation L₁.toLts L₂.toLts rel :=
-  ⟨fun h _ _ hrel _ _ hstep => h hrel hstep,
-    fun h _ _ hrel _ _ hstep => h hrel _ _ hstep⟩
 
 theorem isStrongBisimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
@@ -789,18 +791,6 @@ theorem strongBisimilar_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     fun ⟨rel, hrel, hb⟩ => ⟨rel, isStrongBisimulation_iff.mpr hb, hrel⟩⟩
 
 /-! ### Correspondence of the weak spectrum -/
-
-theorem isWeakSimulation_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
-    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop} :
-    IsWeakSimulation L₁ L₂ rel ↔
-      Cslib.LTS.IsSimulation L₁.toLts L₂.toLts.saturate rel := by
-  constructor
-  · exact fun h _ _ hrel _ _ hstep =>
-      let ⟨t₂, hw, hr⟩ := h hrel hstep
-      ⟨t₂, L₂.sTr_toLts_iff.mpr hw, hr⟩
-  · exact fun h _ _ hrel _ _ hstep =>
-      let ⟨t₂, hs, hr⟩ := h hrel _ _ hstep
-      ⟨t₂, L₂.sTr_toLts_iff.mp hs, hr⟩
 
 /-- The weak bisimulations of this file are cslib's *sw*-bisimulations: the
 challenge is a single transition and the answer a weak one. -/

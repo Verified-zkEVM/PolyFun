@@ -146,3 +146,17 @@ repository (`Core/ITreeDefinition.v`, `Core/Subevent.v`,
 as the canonical algebraic reference; the bibliography entry is
 `Xia-Zakowski-He-Hur-Malecha-Pierce-Zdancewic 2020` in
 [`REFERENCES.md`](../../REFERENCES.md).
+
+## Relational transition-system theory
+
+`Control.LTS.toLts` forgets the witness move and connects the polynomial
+transition system to cslib. Strong and weak simulation composition, silent and
+saturated transition transport, and finite-trace transport use cslib's generic
+theorems through the public correspondences. Delay simulation retains its
+separate silent-prefix-only semantics.
+
+`Control.LTS.WeakTrace` keeps a visible-label induction API for ITree proofs.
+Its cslib interpretation is `MTr` of the saturated system with `List.map some`
+on labels. In particular, `WeakTrace.nil_iff` requires equal endpoints; it does
+not quotient the empty trace by silent reachability. Trace concatenation and
+simulation transport use that interpretation.
