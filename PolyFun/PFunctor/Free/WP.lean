@@ -119,23 +119,6 @@ theorem wpFold_pure (Φ : OpSpec P l) (x : α) (post : α → l) :
     wpFold Φ (pure x : FreeM P α) post = post x :=
   rfl
 
-/-- The fold through an operation node, on the simp normal form `(FreeM.lift a).bind r`
-of the node. -/
-@[simp]
-theorem wpFold_lift_bind (Φ : OpSpec P l) (a : P.A) (r : P.B a → FreeM P α)
-    (post : α → l) :
-    wpFold Φ (lift_bind% a r) post = Φ a fun b => wpFold Φ (r b) post :=
-  rfl
-
-/-- `wpFold_lift_bind` when results and directions share a universe, where the node
-normalises to `FreeM.lift a >>= r`. -/
-@[simp]
-theorem wpFold_lift_bind' {α : Type uB} (Φ : OpSpec P l) (a : P.A) (r : P.B a → FreeM P α)
-    (post : α → l) :
-    wpFold Φ (lift_bind'% a r) post = Φ a fun b => wpFold Φ (r b) post :=
-  rfl
-
-/-- Constructor spelling of `wpFold_lift_bind`, in the `freeM_unfold` set. -/
 @[freeM_unfold]
 theorem wpFold_liftBind (Φ : OpSpec P l) (a : P.A) (r : P.B a → FreeM P α)
     (post : α → l) :
@@ -144,15 +127,21 @@ theorem wpFold_liftBind (Φ : OpSpec P l) (a : P.A) (r : P.B a → FreeM P α)
 
 @[simp]
 theorem wpFold_lift (Φ : OpSpec P l) (a : P.A) (post : P.B a → l) :
-    wpFold Φ (FreeM.lift (P := P) a) post = Φ a post :=
+    wpFold (α := no_index (P.B a)) Φ (FreeM.lift (P := P) a) post = Φ a post :=
   rfl
 
-theorem wpFold_bind (Φ : OpSpec P l) (x : FreeM P α) (f : α → FreeM P β)
-    (post : β → l) :
-    wpFold Φ (x >>= f) post = wpFold Φ x fun a => wpFold Φ (f a) post := by
+/-- Weakest preconditions compose through sequencing across result universes. -/
+theorem wpFold_bind' {X : Type uX} {Y : Type uY} (Φ : OpSpec P l)
+    (x : FreeM P X) (f : X → FreeM P Y) (post : Y → l) :
+    wpFold Φ (x.bind f) post = wpFold Φ x fun a => wpFold Φ (f a) post := by
   induction x with
   | pure x => rfl
   | lift_bind a r ih => exact congrArg (Φ a) (funext fun b => ih b)
+
+theorem wpFold_bind (Φ : OpSpec P l) (x : FreeM P α) (f : α → FreeM P β)
+    (post : β → l) :
+    wpFold Φ (x >>= f) post = wpFold Φ x fun a => wpFold Φ (f a) post :=
+  wpFold_bind' Φ x f post
 
 theorem wpFold_mono [Preorder l] {Φ : OpSpec P l} (hΦ : Φ.Mono) (x : FreeM P α)
     {post post' : α → l} (h : ∀ a, post a ≤ post' a) :
@@ -188,22 +177,6 @@ theorem reachableUnder_liftBind (allows : (a : P.A) → P.B a → Prop)
   simp only [reachableUnder, Set.mem_ofPred_eq, wpFold_liftBind,
     OpSpec.angelicUnder, Set.mem_iUnion, exists_prop]
 
-/-- Reachability through an operation node in the upstream simp normal form. -/
-theorem reachableUnder_lift_bind (allows : (a : P.A) → P.B a → Prop)
-    (position : P.A) (next : P.B position → FreeM P α) :
-    reachableUnder allows (lift_bind% position next) =
-      ⋃ direction ∈ {direction | allows position direction},
-        reachableUnder allows (next direction) :=
-  reachableUnder_liftBind allows position next
-
-/-- The operation-node law when results and directions share a universe. -/
-theorem reachableUnder_lift_bind' {α : Type uB} (allows : (a : P.A) → P.B a → Prop)
-    (position : P.A) (next : P.B position → FreeM P α) :
-    reachableUnder allows (lift_bind'% position next) =
-      ⋃ direction ∈ {direction | allows position direction},
-        reachableUnder allows (next direction) :=
-  reachableUnder_liftBind allows position next
-
 @[simp]
 theorem reachableUnder_lift (allows : (a : P.A) → P.B a → Prop)
     (position : P.A) :
@@ -222,7 +195,7 @@ theorem wpFold_angelicUnder_iff_exists_reachable
   | pure result =>
       simp [reachableUnder]
   | lift_bind position next ih =>
-      rw [wpFold_lift_bind, reachableUnder_lift_bind]
+      rw [wpFold_bind', wpFold_lift, ← FreeM.liftBind_eq, reachableUnder_liftBind]
       simp only [OpSpec.angelicUnder, Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
       constructor
       · rintro ⟨direction, hallowed, hpost⟩
@@ -250,18 +223,11 @@ theorem reachableUnder_bind' {X : Type uX} {Y : Type uY}
     (next : X → FreeM P Y) :
     (FreeM.bind program next).reachableUnder allows =
       ⋃ result ∈ program.reachableUnder allows, (next result).reachableUnder allows := by
-  induction program with
-  | pure value => simp
-  | lift_bind position cont ih =>
-      rw [FreeM.bind_assoc, reachableUnder_lift_bind, reachableUnder_lift_bind]
-      simp_rw [ih]
-      ext result
-      simp only [Set.mem_iUnion]
-      constructor
-      · rintro ⟨direction, hallowed, value, hvalue, hresult⟩
-        exact ⟨value, ⟨direction, hallowed, hvalue⟩, hresult⟩
-      · rintro ⟨value, ⟨direction, hallowed, hvalue⟩, hresult⟩
-        exact ⟨direction, hallowed, value, hvalue, hresult⟩
+  ext result
+  change wpFold (OpSpec.angelicUnder allows) (program.bind next) (· = result) ↔ _
+  rw [wpFold_bind', wpFold_angelicUnder_iff_exists_reachable]
+  simp only [Set.mem_iUnion, exists_prop]
+  exact exists_congr fun a => and_congr_right fun _ => Iff.rfl
 
 theorem reachableUnder_mono {allows₁ allows₂ : (a : P.A) → P.B a → Prop}
     (h : ∀ position direction, allows₁ position direction → allows₂ position direction)
@@ -270,7 +236,7 @@ theorem reachableUnder_mono {allows₁ allows₂ : (a : P.A) → P.B a → Prop}
   induction x with
   | pure value => simpa using hresult
   | lift_bind position next ih =>
-      rw [reachableUnder_lift_bind] at hresult ⊢
+      rw [← FreeM.liftBind_eq, reachableUnder_liftBind] at hresult ⊢
       simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop] at hresult ⊢
       obtain ⟨direction, hallowed, hchild⟩ := hresult
       exact ⟨direction, h position direction hallowed, ih direction hchild⟩
@@ -282,12 +248,9 @@ theorem reachableUnder_map {X : Type uX} {Y : Type uY}
     (program : FreeM P X) :
     (FreeM.map function program).reachableUnder allows =
       function '' program.reachableUnder allows := by
-  induction program with
-  | pure result => simp
-  | lift_bind position next ih =>
-      rw [map_lift_bind, reachableUnder_lift_bind, reachableUnder_lift_bind]
-      simp only [Set.image_iUnion]
-      exact iSup_congr fun direction => iSup_congr fun _ => ih direction
+  rw [← FreeM.bind_pure_comp, reachableUnder_bind']
+  ext result
+  simp [Set.mem_image, eq_comm]
 
 theorem reachableUnder_liftObj {X : Type uX}
     (allows : (a : P.A) → P.B a → Prop) (object : P.Obj X) :
@@ -322,27 +285,6 @@ theorem Path.allowedUnder_liftBind (allows : (a : P.A) → P.B a → Prop)
     Path.AllowedUnder allows (FreeM.liftBind position next) ⟨direction, path⟩ ↔
       allows position direction ∧ Path.AllowedUnder allows (next direction) path := Iff.rfl
 
-/-- An admitted node path has an admitted head response and an admitted tail. -/
-@[simp]
-theorem Path.allowedUnder_lift_bind (allows : (a : P.A) → P.B a → Prop)
-    (position : P.A) (next : P.B position → FreeM P α)
-    (path : Path ((FreeM.lift position).bind next)) :
-    Path.AllowedUnder allows (lift_bind% position next) path ↔
-      allows position (Path.head position next path) ∧
-        Path.AllowedUnder allows (next (Path.head position next path))
-          (Path.tail position next path) := Iff.rfl
-
-/-- The admitted-path node law when results and directions share a universe. -/
-@[simp]
-theorem Path.allowedUnder_lift_bind' {α : Type uB}
-    (allows : (a : P.A) → P.B a → Prop)
-    (position : P.A) (next : P.B position → FreeM P α)
-    (path : Path ((FreeM.lift position).bind next)) :
-    Path.AllowedUnder allows (lift_bind'% position next) path ↔
-      allows position (Path.head position next path) ∧
-        Path.AllowedUnder allows (next (Path.head position next path))
-          (Path.tail position next path) := Iff.rfl
-
 /-- Reachability is witnessed by an admitted root-to-leaf path. -/
 theorem mem_reachableUnder_iff_exists_path
     (allows : (a : P.A) → P.B a → Prop) (x : FreeM P α) (result : α) :
@@ -359,7 +301,7 @@ theorem mem_reachableUnder_iff_exists_path
       · rintro ⟨_, _, h⟩
         exact h
   | lift_bind position next ih =>
-      rw [reachableUnder_lift_bind]
+      rw [← FreeM.liftBind_eq, reachableUnder_liftBind]
       simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
       constructor
       · rintro ⟨direction, hallowed, hchild⟩
@@ -381,7 +323,7 @@ theorem reachableUnder_eq_liftM
       change {result} = SetM.run (pure result : SetM γ)
       rfl
   | lift_bind position next ih =>
-      rw [reachableUnder_lift_bind]
+      rw [← FreeM.liftBind_eq, reachableUnder_liftBind]
       change _ = ⋃ direction ∈ {direction | allows position direction},
         SetM.run ((next direction).liftM (fun position =>
           ({direction | allows position direction} : SetM _)))
@@ -393,7 +335,7 @@ theorem reachable_eq_support (x : FreeM P α) :
   induction x with
   | pure result => simp [reachable, reachableUnder_pure]
   | lift_bind position next ih =>
-      rw [reachable, reachableUnder_lift_bind, support_lift_bind]
+      rw [reachable, ← FreeM.liftBind_eq, reachableUnder_liftBind, support_liftBind]
       simp only [Set.ofPred_true, Set.biUnion_univ]
       exact iSup_congr fun direction => ih direction
 
@@ -419,24 +361,6 @@ theorem leavesSatisfyUnder_pure (allows : (a : P.A) → P.B a → Prop)
     (pure result : FreeM P α).LeavesSatisfyUnder allows accept ↔ accept result :=
   Iff.rfl
 
-@[simp]
-theorem leavesSatisfyUnder_lift_bind (allows : (a : P.A) → P.B a → Prop)
-    (accept : α → Prop) (position : P.A) (next : P.B position → FreeM P α) :
-    (lift_bind% position next).LeavesSatisfyUnder allows accept ↔
-      ∀ direction, allows position direction →
-        (next direction).LeavesSatisfyUnder allows accept :=
-  Iff.rfl
-
-/-- `leavesSatisfyUnder_lift_bind` when results and directions share a universe. -/
-@[simp]
-theorem leavesSatisfyUnder_lift_bind' {α : Type uB} (allows : (a : P.A) → P.B a → Prop)
-    (accept : α → Prop) (position : P.A) (next : P.B position → FreeM P α) :
-    (lift_bind'% position next).LeavesSatisfyUnder allows accept ↔
-      ∀ direction, allows position direction →
-        (next direction).LeavesSatisfyUnder allows accept :=
-  Iff.rfl
-
-/-- Constructor spelling of `leavesSatisfyUnder_lift_bind`. -/
 theorem leavesSatisfyUnder_liftBind (allows : (a : P.A) → P.B a → Prop)
     (accept : α → Prop) (position : P.A) (next : P.B position → FreeM P α) :
     (FreeM.liftBind position next).LeavesSatisfyUnder allows accept ↔
@@ -496,7 +420,7 @@ theorem leavesSatisfyUnder_iff_forall_reachable
   | pure result =>
       simp [LeavesSatisfyUnder, reachableUnder]
   | lift_bind position next ih =>
-      rw [leavesSatisfyUnder_lift_bind, reachableUnder_lift_bind]
+      rw [← FreeM.liftBind_eq, leavesSatisfyUnder_liftBind, reachableUnder_liftBind]
       simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
       constructor
       · intro h result ⟨direction, hallowed, hchild⟩
@@ -620,29 +544,10 @@ theorem wpVia_bind (s : Handler m P) (x : FreeM P α) (f : α → FreeM P β)
   rw [wpVia, FreeM.liftM_bind, MAlgOrdered.wp_bind]
   rfl
 
-/-- The handler-relative wp through an operation node. `wpVia` lives at a single
-universe, so the node's simp normal form is `FreeM.lift a >>= r`. -/
-@[simp]
-theorem wpVia_lift_bind' (s : Handler m P) (a : P.A) (r : P.B a → FreeM P α)
-    (post : α → l) :
-    wpVia s (lift_bind'% a r) post =
-      MAlgOrdered.wp (s a) fun b => wpVia s (r b) post := by
-  rw [wpVia, FreeM.liftM_bind, FreeM.liftM_lift, MAlgOrdered.wp_bind]
-  rfl
-
-/-- `wpVia_lift_bind'` in the spelling produced by the induction principle. -/
-theorem wpVia_lift_bind (s : Handler m P) (a : P.A) (r : P.B a → FreeM P α)
-    (post : α → l) :
-    wpVia s ((FreeM.lift a).bind r) post =
-      MAlgOrdered.wp (s a) fun b => wpVia s (r b) post :=
-  wpVia_lift_bind' s a r post
-
-/-- Constructor spelling of `wpVia_lift_bind'`. -/
-theorem wpVia_liftBind (s : Handler m P) (a : P.A) (r : P.B a → FreeM P α)
-    (post : α → l) :
-    wpVia s (FreeM.liftBind a r) post =
-      MAlgOrdered.wp (s a) fun b => wpVia s (r b) post :=
-  wpVia_lift_bind' s a r post
+/-- The semantic precondition of a single operation is the handler's precondition. -/
+theorem wpVia_lift (s : Handler m P) (a : P.A) (post : P.B a → l) :
+    wpVia s (FreeM.lift a) post = MAlgOrdered.wp (s a) post := by
+  rw [wpVia, FreeM.liftM_lift]
 
 /-- **Soundness of per-operation specs against a handler**: specs that lower-bound
 the handler's wp at every operation give a syntactic wp lower-bounding the
@@ -658,7 +563,8 @@ theorem wpFold_le_wpVia {Φ : OpSpec P l} (s : Handler m P)
           ≤ MAlgOrdered.wp (s a) fun b => wpFold Φ (r b) post := h a _
         _ ≤ MAlgOrdered.wp (s a) fun b => wpVia s (r b) post :=
             MAlgOrdered.wp_mono _ fun b => ih b
-        _ = wpVia s ((FreeM.lift a).bind r) post := (wpVia_lift_bind s a r post).symm
+        _ = wpVia s ((FreeM.lift a).bind r) post := by
+          rw [FreeM.bind_eq_bind, wpVia_bind, wpVia_lift]
 
 /-- Exact per-operation specs give the semantic wp exactly. -/
 theorem wpFold_eq_wpVia {Φ : OpSpec P l} (s : Handler m P)
@@ -668,7 +574,7 @@ theorem wpFold_eq_wpVia {Φ : OpSpec P l} (s : Handler m P)
   induction x with
   | pure x => rw [wpFold_pure, wpVia_pure]
   | lift_bind a r ih =>
-      rw [wpFold_lift_bind, wpVia_lift_bind, h a]
+      rw [wpFold_bind', wpFold_lift, FreeM.bind_eq_bind, wpVia_bind, wpVia_lift, h a]
       exact congrArg _ (funext fun b => ih b)
 
 end wpVia
@@ -688,7 +594,7 @@ theorem leavesSatisfyUnder_all_iff_allOutputs (x : FreeM P α) (post : α → Pr
   induction x with
   | pure x => simp
   | lift_bind a r ih =>
-      rw [leavesSatisfyUnder_lift_bind, allOutputs_lift_bind]
+      rw [← FreeM.liftBind_eq, leavesSatisfyUnder_liftBind, allOutputs_liftBind]
       simp only [true_implies]
       exact forall_congr' fun b => ih b
 
@@ -698,7 +604,7 @@ theorem wpFold_demonic_iff_allOutputs (x : FreeM P α) (post : α → Prop) :
   induction x with
   | pure x => simp
   | lift_bind a r ih =>
-      rw [wpFold_lift_bind, allOutputs_lift_bind]
+      rw [wpFold_bind', wpFold_lift, ← FreeM.liftBind_eq, allOutputs_liftBind]
       exact forall_congr' fun b => ih b
 
 /-- The angelic fold is the "some output" judgment over the canonical support. -/
@@ -707,7 +613,7 @@ theorem wpFold_angelic_iff_someOutput (x : FreeM P α) (post : α → Prop) :
   induction x with
   | pure x => simp
   | lift_bind a r ih =>
-      rw [wpFold_lift_bind, someOutput_lift_bind]
+      rw [wpFold_bind', wpFold_lift, ← FreeM.liftBind_eq, someOutput_liftBind]
       exact exists_congr fun b => ih b
 
 /-- The demonic fold of a negated postcondition is the "never" judgment. -/

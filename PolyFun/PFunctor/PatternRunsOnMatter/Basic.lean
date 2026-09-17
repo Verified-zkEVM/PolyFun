@@ -312,8 +312,8 @@ theorem runObj_natural {P' : PFunctor.{pA', pB'}} {Q' : PFunctor.{qA', qB'}}
         Function.comp_def, FreeP.map_toFunB_cons,
         CofreeP.map_toFunB, M.Vertex.pullMapLens_child,
         FreeP.map_toFunA, FreeP.mapShape, CofreeP.map_toFunA,
-        FreeM.mapLens_lift_bind, FreeM.Path.pullMap_lift_bind,
-        FreeM.Path.pullMapLens_lift_bind, sourceQ, sourceChild,
+        FreeM.mapLens_liftBind, FreeM.Path.pullMap_liftBind,
+        FreeM.Path.pullMapLens_liftBind, sourceQ, sourceChild,
         mappedPattern, runMatterObj, runLabeled, rhsAt, hchild,
         Lens.tensorMap, Prod.map] using hFinal
 

@@ -56,9 +56,9 @@ using `allows : (a : P.A) → P.B a → Prop`. It is the angelic `wpFold`, and
 `mem_reachableUnder_iff_exists_path` characterizes its outputs by a root-to-leaf
 path satisfying `Path.AllowedUnder`. The pure and node equations for that path
 predicate are public, so consumers do not need `import all` to reason about it.
-Operation-node simp equations use `lift_bind%` and `lift_bind'%`, matching
-upstream FreeM normalization. Admitted-path equations use `Path.head` and
-`Path.tail`, including for concrete dependent response types.
+Use the compositional bind and lift equations for ordinary programs and the
+explicit constructor equation `Path.allowedUnder_liftBind` for node paths.
+`wpFold_bind'` supports sequencing across independent result universes.
 The bind and map laws support independent result universes; use
 `reachableUnder_bind'` for the universe-polymorphic `FreeM.bind`.
 

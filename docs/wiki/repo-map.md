@@ -33,9 +33,14 @@ PolyFun/
                      quarantine root (Do/Basic)
   Logic/             small logic helpers (HEq)
 
-ToCslib/             local machine and complexity theory over the pinned cslib
-                     API; imports cslib and Mathlib, never PolyFun
-PolyFunCslib/         optional cslib-backed PolyFun realizability adapter;
+ToCslib/             lowest production layer, staging what PolyFun upstreams:
+                     free-monad additions (Data/PFunctor/Free/), loop transport
+                     along cslib's IsMonadHom and effect-free loop instances
+                     (Control/), the Mathlib -> core order bridge (Order/), and
+                     local machine and complexity theory over the pinned cslib
+                     API (Computability/); imports core, cslib and Mathlib,
+                     never PolyFun or (directly) Std.Do
+PolyFunCslib/        optional cslib-backed PolyFun realizability adapter;
                      excluded from the PolyFun umbrella
 
 PolyFunTest/         tests and worked examples; imports PolyFun one-way,
@@ -56,19 +61,25 @@ is built by `lake test` and adds no production import edge.
 Imports flow strictly downward, cycles are a build error. The DAG is also
 recorded in [`AGENTS.md`](../../AGENTS.md):
 
-`ToCslib` is a separate lower library rather than part of this DAG:
+`ToCslib` is the lowest layer of this DAG:
 
 ```text
-Cslib + Mathlib -> ToCslib -> optional PolyFun backend adapters
+Cslib + Mathlib + core Std.Internal -> ToCslib -> PolyFun
+                                               -> optional PolyFun backend adapters
 ToCslib/Computability/PolyTime -> ToCslib/Computability/BitEncoding
   -> ToCslib/Computability/SingleTape/Counting (nonuniform separation)
 ```
 
-It contains concrete machine constructions, encoded polynomial-time families,
-and counting/diagonalization results. Complexity theory stays here while upstream
-APIs stabilize. It does not depend on PolyFun realizability, oracle semantics,
-probability, or cryptographic policy. `PolyFunCslib` contains the PolyFun-specific
-certificate and its bridge to the machine-counting separation theorem.
+`PolyFun/PFunctor/Free/Basic.lean` imports `ToCslib.Data.PFunctor.Free.Basic`,
+and `ToCslib.Order.LeanOrder` is where the program-logic kernel picks up core's
+order hierarchy. The machine modules contain concrete machine constructions,
+encoded polynomial-time families, and counting/diagonalization results;
+complexity theory stays there while upstream APIs stabilize, and only backend
+adapters import them. `ToCslib` contains staged upstream material only: no
+realizability, oracle, probability, or cryptographic policy, and no direct
+`Std.Do` / `Std.Internal.Do` imports. `PolyFunCslib` contains the
+PolyFun-specific certificate and its bridge to the machine-counting separation
+theorem.
 
 ```text
 PFunctor/{Basic, Bound, M, Equiv, Chart, Lens}

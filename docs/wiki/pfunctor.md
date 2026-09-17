@@ -204,43 +204,46 @@ supplies the inductive type (constructors `pure` / `liftBind`), the `bind` / `ma
 / `Monad` / `LawfulMonad` / `MonadLift` instances, the `@[induction_eliminator]
 induction` principle (non-pure case `lift_bind`), the shape lift `lift : P.A →
 FreeM (P.B a)` and object lift `liftObj : P.Obj α → FreeM α`, and the `liftM`
-interpreter with its `Interprets` universal property. PolyFun layers its own API
-(`mapLens`, `liftM` monad-hom and naturality lemmas, `toW` / `equivWOfIsEmpty`, paths,
-displayed families, indexed-family packing, weakest preconditions, roll bounds)
-on top of the upstream type.
+interpreter with its `Interprets` universal property, the monad-morphism predicate
+`IsMonadHom` with `isMonadHom_liftM` and naturality `IsMonadHom.map_pfunctorFreeMLiftM`.
+Between cslib and PolyFun sits `ToCslib/Data/PFunctor/Free/`, the staging area for
+cslib-bound additions: universe-polymorphic `map_pure` / `map_bind`, the
+catamorphism `foldFreeM` with substitution (`foldFreeM_bind`) and uniqueness
+(`foldFreeM_unique`), handler fusion `liftM_comp`, the identity fold
+`liftM_lift_eq_self`, and commutation of `liftM` with loops (`liftM_forIn'`,
+`liftM_forIn`, `liftM_forIn_of_pureForIn`, and the `liftM_forM` / `liftM_foldlM` /
+`liftM_mapM` specializations of cslib's `IsMonadHom.map_list*`).
+`PolyFun.PFunctor.Free.Basic` re-exports it and layers PolyFun's own API
+(`mapLens`, the bundled `liftMHom` monad-hom with its universal property and
+`liftM_natural`, `toW` / `equivWOfIsEmpty`, paths, displayed families, indexed-family
+packing, weakest preconditions, roll bounds) on top; `PolyFun.Control.Monad.Hom.IsMonadHom`
+turns a bundled `m →ᵐ n` into cslib's predicate so its transport lemmas apply.
 
-### The simp normal form of an operation node
+### Reasoning about free programs
 
-Upstream's `FreeM.liftBind_eq` is a `simp` lemma, so simplification presents an operation node
-`FreeM.liftBind a k` as `(FreeM.lift a).bind k`, and — when the result and direction universes
-coincide, where `FreeM.bind_eq_bind` also applies — as `FreeM.lift a >>= k`. The constructor
-survives only inside `match` arms and `cases` on a tree, exactly as `Nat.succ` does next to
-`n + 1`. PolyFun follows that convention:
+Use upstream `FreeM.induction`, `>>=`, `<$>`, and the general monad laws for
+program composition. `FreeM.bind` and `FreeM.map` support independent result
+universes where the typeclass operations cannot. The upstream simp attributes
+remain active: `liftBind a k` normalizes to `(FreeM.lift a).bind k`, then to
+`FreeM.lift a >>= k` when the universes agree.
 
-- Every `simp` equation about a node is stated on the normal form, with suffix `_lift_bind`
-  for `(FreeM.lift a).bind k` and `_lift_bind'` for `FreeM.lift a >>= k` (the second exists
-  only where a single-universe instantiation is expected). The constructor spelling keeps the
-  suffix `_liftBind` without the `simp` attribute, for `rw` on `match`-shaped goals; the
-  `freeM_unfold` set collects those one-way constructor equations.
-- Both normal forms carry the direction type `P.B a` as an implicit type argument of the bind,
-  which the simplifier indexes and which reduces on concrete polynomials (`⟨I, D⟩`,
-  `TypeTree.basePFunctor`). Normal-form `simp` lemmas are therefore written through the
-  `lift_bind% a k` / `lift_bind'% a k` elaborators of `PolyFun/PFunctor/Free/Basic.lean`, which
-  mark that argument `no_index`.
-- Families indexed by a tree (`Path`, `PathAlong`, `Displayed`) expose the node structure
-  through an interface — `Path.cons` / `Path.head` / `Path.tail` and their `PathAlong`
-  counterparts — and the observation equations (`output`, `trace`, `positions`, `length`,
-  `withPath`, `ofHandler`, …) are stated through it rather than through anonymous constructors
-  and projections of the underlying sigma type. `head_mk` / `tail_mk` bridge to paths obtained
-  by pattern matching.
-- Comparing a node index with the constructor it reduces to needs `FreeM.bind` and `FreeM.lift`
-  to unfold at implicit transparency (metavariable types are compared there). Until cslib marks
-  them `@[implicit_reducible]` — the change carried by the `dtumad/cslib` branch
-  `polyfun/freem-implicit-reducible` — files that unify such indices declare
-  `attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift`.
+For folds and interpretations, compose the pure, bind, and lift equations.
+For example, `rw [FreeM.foldFreeM_bind, FreeM.foldFreeM_lift]` evaluates a
+single operation followed by its continuation. A concrete dependent response
+type can affect simp's theorem lookup; an explicit `rw` still selects the law.
+There is no requirement that every structural equation close with bare `simp`.
 
-`PolyFunTest/PFunctor/ConstructorNormalization.lean` checks the normal forms, maps, folds and
-path observations through an ordinary import.
+Constructor equations remain useful for structural recursion over paths and
+displayed families. Use them explicitly with `rw`, or expose the particular
+constructor goal with `change`. `Path.cons`, `Path.head`, and `Path.tail` are
+the public interface to node paths. Files that unify constructor-shaped and
+bind-shaped dependent indices narrowly mark `FreeM.bind` and `FreeM.lift`
+`local implicit_reducible`; this is an elaboration requirement, not a change
+to the simp normal form.
+
+`PolyFunTest/PFunctor/ConstructorNormalization.lean` checks composition and
+structural observations through an ordinary import, including independent
+universes and concrete response families.
 
 | File | Purpose |
 |------|---------|

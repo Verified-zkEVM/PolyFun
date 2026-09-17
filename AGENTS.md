@@ -115,12 +115,22 @@ and depend on this library.
 - `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
   silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
-- `ToCslib/`: a separate low-level Lake library of reusable extensions to the
-  pinned cslib machine API, including local complexity theory while upstream
-  APIs stabilize: encoded polynomial-time families and machine-counting separation.
-  It imports cslib and Mathlib but never PolyFun,
-  oracle semantics, probability, or cryptography. Concrete PolyFun backend
-  adapters may import it explicitly; the generated `PolyFun` umbrella does not.
+- `ToCslib/`: a separate Lake library that is the lowest production layer
+  under PolyFun and stages what PolyFun will upstream: additions to cslib's
+  free monad `PFunctor.FreeM` (`Data/PFunctor/Free/`: universe-polymorphic
+  map laws, the catamorphism `foldFreeM` with its substitution and uniqueness
+  laws, handler fusion, and commutation
+  of `liftM` with loops), transport of `forIn` loops along cslib's
+  `IsMonadHom` plus effect-free loop instances for `Option` and `Vector`
+  (`Control/`), the bridge from Mathlib's `CompleteLattice` to core's
+  `Lean.Order.CompleteLattice` (`Order/`), and local complexity theory over
+  the pinned cslib machine API while upstream APIs stabilize
+  (`Computability/`: encoded polynomial-time families and machine-counting
+  separation). It imports core, cslib, and Mathlib but never PolyFun,
+  `Std.Do` (directly), oracle semantics, probability, or cryptography.
+  PolyFun imports the free-monad slice directly; concrete backend adapters
+  import the machine modules explicitly. Its umbrella `ToCslib.lean` is
+  generated like `PolyFun.lean` (`./scripts/update-lib.sh ToCslib`).
 - `PolyFunCslib/`: an optional adapter library combining generic PolyFun machines
   with `ToCslib` certificates. It is excluded from the `PolyFun` umbrella.
 - `PolyFunTest/`: separate test / worked-example library (glob
@@ -136,7 +146,7 @@ dependency map lives in [`docs/wiki/repo-map.md`](docs/wiki/repo-map.md#conceptu
 Update that map when a change adds a module or changes an import boundary.
 
 New files must respect the documented DAG. Re-exports through
-`PolyFun.lean` are auto-generated; do not hand-edit.
+`PolyFun.lean` and `ToCslib.lean` are auto-generated; do not hand-edit.
 
 All Lean sources use module mode. In production files, make the intended API
 explicit with `public section` and expose individual reducer bodies only when
@@ -213,17 +223,20 @@ Structures use UpperCamelCase: `PFunctor`, `TypeTree`, `Decoration`,
    parameters are mathematically and compositionally intentional; explain
    that reason in an adjacent comment. This matches the treatment of
    universe-separated polynomial position/direction data upstream.
-6. **`PolyFun.lean` is generated.** Do not hand-edit it. After adding,
-   renaming, or deleting `.lean` files under `PolyFun/`, run
-   `./scripts/update-lib.sh`.
+6. **`PolyFun.lean` and `ToCslib.lean` are generated.** Do not hand-edit
+   them. After adding, renaming, or deleting `.lean` files under `PolyFun/`
+   run `./scripts/update-lib.sh`; under `ToCslib/`, run
+   `./scripts/update-lib.sh ToCslib`.
 7. **Do not introduce `sorry` or `admit` in finished work.** Use `stop`
    only when explicitly preserving partial proof work during a refactor.
 8. **`Std.Do` imports are quarantined.** Only
    `PolyFun/Control/Do/Basic.lean`, `PolyFun/PFunctor/Free/Do.lean`, and
    `PolyFunTest/Do/` may import core `Std.Do`, `Std.Internal.Do`, or
    `Std.Tactic.Do` (`mvcgen` / `vcgen`), and they export constructions
-   (`def`s and `scoped` instances), never global `WP` instances. See
-   `docs/wiki/program-logic.md`.
+   (`def`s and `scoped` instances), never global `WP` instances. `ToCslib/`
+   never imports them directly (cslib's `IsMonadHom` brings the legacy
+   `Std.Do.WP` classes in transitively; the fence is about direct imports
+   and instances). See `docs/wiki/program-logic.md`.
 
 ## Building
 
@@ -231,7 +244,8 @@ Structures use UpperCamelCase: `PFunctor`, `TypeTree`, `Decoration`,
 lake exe cache get && lake build
 ```
 
-After adding new `.lean` files: `./scripts/update-lib.sh`.
+After adding new `.lean` files: `./scripts/update-lib.sh` (and
+`./scripts/update-lib.sh ToCslib` for the staging library).
 For routine local validation: `./scripts/validate.sh`.
 For anything that must stay axiom-clean, run `./scripts/validate.sh --axioms`.
 PolyFun has a zero-debt baseline: do not add `sorry` or non-standard axioms to it.

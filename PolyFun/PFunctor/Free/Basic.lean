@@ -8,13 +8,16 @@ module
 public import PolyFun.Control.Monad.Hom
 public import PolyFun.PFunctor.Basic
 public import PolyFun.PFunctor.Lens.Basic
-public import Cslib.Foundations.Data.PFunctor.Free
+public import ToCslib.Data.PFunctor.Free.Basic
 
 /-!
 # Free Monad of a Polynomial Functor
 
-We define the free monad on a **polynomial functor** (`PFunctor`), and prove some basic properties.
-
+PolyFun's layer over cslib's free monad `PFunctor.FreeM`: the W-type presentations, root
+predicates, transport along lenses, and the bundled monad-homomorphism form of `FreeM.liftM`
+with its universal property and naturality. The algebraic laws (`map_pure`, `map_bind`, `foldFreeM`,
+`foldFreeM_bind`, `liftM_comp`, `liftM_lift_eq_self`) are staged for cslib in
+`ToCslib.Data.PFunctor.Free.Basic`, which this module re-exports.
 -/
 
 @[expose] public section
@@ -29,32 +32,6 @@ attribute.
 -/
 register_simp_attr freeM_unfold
 
-/-!
-## The simp normal form of an operation node
-
-Upstream's `FreeM.liftBind_eq` is a `simp` lemma, so simplification presents an operation
-node `FreeM.liftBind a k` as `(FreeM.lift a).bind k` — and, when results and directions
-share a universe, `FreeM.bind_eq_bind` takes it on to `FreeM.lift a >>= k`. PolyFun states its
-`simp` equations on those two spellings (suffixes `_lift_bind` and `_lift_bind'`) and keeps the
-constructor spelling (suffix `_liftBind`) for `rw` on `match`-shaped goals.
-
-Both normal forms carry the direction type `P.B a` as an implicit type argument of the bind,
-and the simplifier indexes implicit type arguments. On a concrete polynomial that type reduces
-(to `D a` for `⟨I, D⟩`, or to `X` for `TypeTree.basePFunctor`), so a lemma indexed on `P.B a`
-would never match there. The two elaborators below produce the normal forms with that
-argument marked `no_index`; every normal-form `simp` lemma is stated through them.
--/
-
-/-- The simp normal form `(FreeM.lift a).bind k` of an operation node, with the direction type
-left unindexed so lemmas stated with it also match nodes over concrete polynomials. -/
-macro "lift_bind% " a:term:max k:term:max : term =>
-  `(@PFunctor.FreeM.bind _ (no_index _) _ (PFunctor.FreeM.lift $a) $k)
-
-/-- The simp normal form `FreeM.lift a >>= k` of an operation node whose results and directions
-share a universe, with the direction type left unindexed. -/
-macro "lift_bind'% " a:term:max k:term:max : term =>
-  `(@Bind.bind _ _ (no_index _) _ (PFunctor.FreeM.lift $a) $k)
-
 universe u v uA uB uA₂ uB₂ uA₃ uB₃ uδ uβ uγ
 
 namespace PFunctor
@@ -62,42 +39,6 @@ namespace PFunctor
 namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {α β γ : Type v}
-
-/-! ## Public constructor equations -/
-
-/-- Mapping a value through a leaf is visible through an ordinary module import,
-with the leaf written using the public `Pure` operation. -/
-@[simp]
-theorem map_pure {X : Type uβ} {Y : Type uγ} (f : X → Y) (x : X) :
-    FreeM.map (P := P) f (pure x : FreeM P X) = (pure (f x) : FreeM P Y) :=
-  rfl
-
-/-- Mapping through an operation node maps every continuation. Stated on the simp
-normal form of a node, `(FreeM.lift a).bind rest`, so it fires after `FreeM.liftBind_eq`
-has normalised the constructor. -/
-@[simp]
-theorem map_lift_bind {X : Type uβ} {Y : Type uγ} (f : X → Y)
-    (a : P.A) (rest : P.B a → FreeM P X) :
-    FreeM.map f (lift_bind% a rest) =
-      (FreeM.lift a).bind (fun direction ↦ FreeM.map f (rest direction)) :=
-  rfl
-
-/-- Constructor spelling of `map_lift_bind`, for `rw` on `match`-shaped goals. -/
-theorem map_liftBind {X : Type uβ} {Y : Type uγ} (f : X → Y)
-    (a : P.A) (rest : P.B a → FreeM P X) :
-    FreeM.map f (FreeM.liftBind a rest) =
-      FreeM.liftBind a (fun direction ↦ FreeM.map f (rest direction)) :=
-  rfl
-
-/-- `Functor.map` through an operation node whose result type lives in a universe
-other than the direction universe. When the universes agree the node normalises to
-`FreeM.lift a >>= rest` instead and the generic `map_bind` applies. -/
-@[simp]
-theorem functorMap_lift_bind {X Y : Type v} (f : X → Y)
-    (a : P.A) (rest : P.B a → FreeM P X) :
-    f <$> lift_bind% a rest =
-      (FreeM.lift a).bind (fun direction ↦ f <$> rest direction) :=
-  rfl
 
 /-! ## Fixed-point presentation -/
 
@@ -176,14 +117,6 @@ theorem rootSatisfies_pure (positionPred : P.A → Prop) (leafPred : α → Prop
       leafPred result :=
   rfl
 
-@[simp]
-theorem rootSatisfies_lift_bind (positionPred : P.A → Prop) (leafPred : α → Prop)
-    (position : P.A) (next : P.B position → FreeM P α) :
-    RootSatisfies positionPred leafPred (lift_bind% position next) =
-      positionPred position :=
-  rfl
-
-/-- Constructor spelling of `rootSatisfies_lift_bind`. -/
 theorem rootSatisfies_liftBind (positionPred : P.A → Prop) (leafPred : α → Prop)
     (position : P.A) (next : P.B position → FreeM P α) :
     RootSatisfies positionPred leafPred
@@ -215,24 +148,6 @@ def equivWOfIsEmpty [IsEmpty α] : FreeM P α ≃ P.W where
     induction w with
     | mk a f ih => exact congrArg (WType.mk a) (funext ih)
 
-lemma monad_bind_def (x : FreeM P α) (g : α → FreeM P β) :
-    x >>= g = FreeM.bind x g := rfl
-
-/-- Mapping after a free-monad bind can be moved into each continuation. -/
-theorem bind_map_right {δ : Type uδ} {β : Type uβ} {γ : Type uγ}
-    (mx : FreeM P δ) (g : δ → FreeM P β) (f : β → γ) :
-    FreeM.bind mx (fun x => FreeM.map f (g x)) =
-      FreeM.map f (FreeM.bind mx g) := by
-  simpa only [FreeM.bind_pure_comp] using
-    (FreeM.bind_assoc mx g (pure ∘ f)).symm
-
-/-- Mapping after a free-monad bind distributes through its continuation. -/
-theorem map_bind {δ : Type uδ} {β : Type uβ} {γ : Type uγ}
-    (f : β → γ) (mx : FreeM P δ) (g : δ → FreeM P β) :
-    FreeM.map f (FreeM.bind mx g) =
-      FreeM.bind mx (fun x ↦ FreeM.map f (g x)) :=
-  (bind_map_right mx g f).symm
-
 section mapLens
 
 variable {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
@@ -255,14 +170,6 @@ theorem mapLens_pure (l : Lens P Q) (x : α) :
     (pure x : FreeM P α).mapLens l = FreeM.pure x :=
   rfl
 
-/-- Interface transport through an operation node, on the simp normal form. -/
-@[simp]
-theorem mapLens_lift_bind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α) :
-    (lift_bind% a rest).mapLens l =
-      (FreeM.lift (l.toFunA a)).bind (fun d ↦ (rest (l.toFunB a d)).mapLens l) :=
-  rfl
-
-/-- Constructor spelling of `mapLens_lift_bind`. -/
 theorem mapLens_liftBind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α) :
     (FreeM.liftBind a rest).mapLens l =
       FreeM.liftBind (l.toFunA a) (fun d ↦ (rest (l.toFunB a d)).mapLens l) :=
@@ -386,38 +293,9 @@ section idFold
 
 variable {α : Type uB}
 
-/-- The fold with the canonical re-lifting handler `FreeM.lift` is the identity: interpreting each
-position back into the free monad recovers the tree (equivalently `FreeM.liftMHom FreeM.lift` is
-the identity homomorphism, `liftMHom_lift_eq_id`). The upstream form of `simulateQ` of the
-identity handler being the identity — a corollary of the universal property. -/
-@[simp] theorem liftM_lift_eq_self (x : FreeM P α) : FreeM.liftM FreeM.lift x = x := by
-  induction x with
-  | pure y => rfl
-  | lift_bind a r ih => simp [ih]
-
 theorem liftMHom_lift_eq_id :
     FreeM.liftMHom (P := P) (m := FreeM P) FreeM.lift = MonadHom.id (FreeM P) :=
   MonadHom.ext' fun _ x => by simp
-
-/-- Interpreting a free tree by a free handler and then interpreting the
-resulting free tree by an arbitrary monadic handler is the same as interpreting
-once by their pointwise Kleisli composite. -/
-theorem liftM_comp {Q : PFunctor.{uA₂, uB}} {m : Type uB → Type v}
-    [Monad m] [LawfulMonad m]
-    (x : FreeM P α)
-    (first : (a : P.A) → FreeM Q (P.B a))
-    (second : (a : Q.A) → m (Q.B a)) :
-    (x.liftM first).liftM second =
-      x.liftM (fun a => (first a).liftM second) := by
-  induction x with
-  | pure _ => rfl
-  | lift_bind a rest ih =>
-      change
-        ((first a >>= fun b => (rest b).liftM first).liftM second) =
-          (first a).liftM second >>= fun b =>
-            (rest b).liftM (fun a => (first a).liftM second)
-      rw [FreeM.liftM_bind]
-      exact congrArg (fun k => (first a).liftM second >>= k) (funext ih)
 
 end idFold
 

@@ -41,7 +41,7 @@ example {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
     FreeM.map f ((FreeM.lift position).bind next) =
       (FreeM.lift position).bind
         (fun direction ↦ FreeM.map f (next direction)) := by
-  rw [FreeM.map_lift_bind]
+  rw [FreeM.map_bind]
 
 example {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
     {γ : Type w} (f : β → γ) (program : FreeM P α)
@@ -72,5 +72,17 @@ example {P : PFunctor.{uA, uB}} {m : Type uB → Type v}
     hom (program.liftM handler) =
       program.liftM (fun position => hom (handler position)) :=
   FreeM.liftM_natural handler hom program
+
+/-- Lemmas staged in `ToCslib` reach PolyFun consumers through the ordinary re-export. -/
+example {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type w}
+    (f : β → γ) (x : FreeM P α) (cont : α → FreeM P β) :
+    FreeM.map f (x.bind cont) = x.bind fun a => (cont a).map f :=
+  FreeM.map_bind f x cont
+
+example {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} (onValue : α → β)
+    (onEffect : (a : P.A) → (P.B a → β) → β) (a : P.A) (cont : P.B a → FreeM P α) :
+    FreeM.foldFreeM onValue onEffect ((FreeM.lift a).bind cont) =
+      onEffect a fun b => FreeM.foldFreeM onValue onEffect (cont b) := by
+  rw [FreeM.foldFreeM_bind, FreeM.foldFreeM_lift]
 
 end PolyFunTest.ModuleAPI.PFunctor

@@ -6,18 +6,25 @@ Edit the source of truth, not the output.
 | --- | --- | --- | --- |
 | `CLAUDE.md` | compatibility symlink | No | Edit `AGENTS.md` |
 | `PolyFun.lean` | generated module with umbrella public imports | No | `./scripts/update-lib.sh` or `./scripts/check-imports.sh` |
+| `ToCslib.lean` | generated umbrella for the staging library | No | `./scripts/update-lib.sh ToCslib` or `./scripts/check-imports.sh` |
 | `.lake/` | build artifacts and cache | No | `lake build`, `lake exe cache get` |
 | `lake-manifest.json` | resolved dependency lockfile | Manual edits unsafe | Update `lean-toolchain` and both dependency pins in `lakefile.toml`, then run `lake update` |
 
 ## Important Notes
 
-- `./scripts/update-lib.sh` only uses tracked `PolyFun/**/*.lean` files and
+- `./scripts/update-lib.sh [ToCslib]` only uses tracked `PolyFun/**/*.lean` (or
+  `ToCslib/**/*.lean`) files and
   fails fast if untracked Lean files would be skipped. Stage new files
   first, then rerun. It emits a `module` command followed by sorted
   `public import` commands so importing `PolyFun` re-exports the library API.
+  `ToCslib.lean` is a Lake library root in its own right, so the generator
+  wraps its import list in the standard file header and the library's module
+  docstring (both fixed text inside the script; edit them there, not in the
+  output), which `check-docs-integrity.py` requires of every umbrella except
+  `PolyFun.lean`.
 - `./scripts/check-imports.sh` is the lightweight read-only check used in
-  CI: it regenerates `PolyFun.lean` to a temp file and diffs against the
-  committed copy.
+  CI: it regenerates `PolyFun.lean` and `ToCslib.lean` to temp files and diffs
+  them against the committed copies.
 - `./scripts/check-docs-integrity.py` validates the CLAUDE.md symlink,
   resolves internal markdown links and repository-rooted Lean paths in tracked
   top-level docs and `docs/`, and checks that production/test Lean files keep a

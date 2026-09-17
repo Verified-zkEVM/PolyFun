@@ -9,13 +9,19 @@ cd "$REPO_ROOT"
 
 status=0
 
+# Every Lean source of the four Lake libraries: the generated umbrellas and the module trees of
+# `PolyFun`, `ToCslib`, `PolyFunCslib`, and `PolyFunTest`.
+lean_sources() {
+  git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
+    'PolyFunCslib.lean' 'PolyFunCslib/*.lean' 'PolyFunTest/*.lean'
+}
+
 while IFS= read -r file; do
   if ! grep -qx 'module' "$file"; then
     echo "ERROR: $file does not enable module mode with a 'module' command." >&2
     status=1
   fi
-done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
-  'PolyFunCslib.lean' 'PolyFunCslib/*.lean' 'PolyFunTest/*.lean')
+done < <(lean_sources)
 
 while IFS= read -r file; do
   if ! grep -qx 'public section' "$file"; then
@@ -66,8 +72,7 @@ while IFS= read -r file; do
       status=1
     fi
   fi
-done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
-  'PolyFunCslib.lean' 'PolyFunCslib/*.lean' 'PolyFunTest/*.lean')
+done < <(lean_sources)
 
 if grep -rEn --include='*.lean' '@\[expose\][[:space:]]+public section' PolyFun/Interaction; then
   echo "ERROR: Broad exposed public sections are forbidden in PolyFun/Interaction." >&2
