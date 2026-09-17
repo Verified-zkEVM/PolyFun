@@ -49,6 +49,32 @@ single-universe alias for core's `ExceptT` instance (which is declared at
 `max`-joined universes and cannot otherwise be synthesized polymorphically), and
 the `FreeM P` instance.
 
+## Operation-indexed reachability
+
+`FreeM.reachableUnder allows program` restricts each operation's typed responses
+using `allows : (a : P.A) → P.B a → Prop`. It is the angelic `wpFold`, and
+`mem_reachableUnder_iff_exists_path` characterizes its outputs by a root-to-leaf
+path satisfying `Path.AllowedUnder`. The pure and node equations for that path
+predicate are public, so consumers do not need `import all` to reason about it.
+The bind and map laws support independent result universes; use
+`reachableUnder_bind'` for the universe-polymorphic `FreeM.bind`.
+
+`FreeM.reachable` admits every typed response and equals `MonadAttach.support`.
+A response policy can exclude structurally possible leaves. An operation with
+no admitted answers has no reachable output: its demonic `LeavesSatisfyUnder`
+judgment is vacuous, while the angelic judgment is false. These are partial
+correctness statements, with no termination or progress guarantee.
+
+A free handler satisfying the source response policy cannot add reachable leaf
+results (`reachableUnder_liftM_subset`). It can discard source responses, so the
+law is an inclusion, not equality. `reachable_liftM_subset` specializes to the
+all-response policy. This generic semantics assumes neither probabilities nor
+`ExactMonadAttach`.
+
+`PolyFunTest/ModuleAPI/Reachability.lean` checks this API through ordinary imports,
+including dependent responses, empty response sets, independent result universes,
+and a handler that strictly reduces the reachable results.
+
 ## Always / never judgments
 
 For `[MonadAttach m]` and `x : m α` (`open scoped MonadAttach`):
