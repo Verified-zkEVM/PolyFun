@@ -140,6 +140,12 @@ of Mathlib's categorical class. `StepClass.Distributive` additionally bundles
 optional values for the closure theory. The definitions keep chosen encodings
 explicit because quantitative costs depend on them.
 
+The ordinary-import countermodel in
+`PolyFunTest/Realizability/RepresentationBoundary.lean` represents types with
+two distinct points. It has all the `Distributive` mixins and represents `Bool`,
+but represents neither `Unit` nor `Empty`. Thus the missing nullary structure
+cannot be inferred from the bundled assumptions.
+
 A categorical adapter should use represented types as objects, not a
 `MorphismProperty (Type u)` that forgets the representation arguments. Add such
 an adapter when a consumer needs categorical theorems, supplying the missing
@@ -532,9 +538,9 @@ alone does not establish strict PPT.
    (`generatedRealizableSubTheory_eq_realizableSubTheory`).
 - **`ImplementsWithin` is pinned to a uniform `ℕ` budget.** `FreeM.IsRollBound`
   is already generic in the budget type; `ImplementsWithin` is not.
-- **No terminal or initial representation**, hence only binary distributivity and
-  no unparameterized equality test. Nothing needs them; adding them would tax
-  every instance.
+- **Terminal and initial representations are not required.** The closure API
+  uses binary distributivity. Admissibility of equality tests is a separate
+  obligation, not a consequence of the presence or absence of nullary structure.
 - **Constant maps are not assumed admissible**, with one exception: `HasOption`
   asserts `none_mem`, because a machine that has returned takes no step and so has
   a constantly-`none` transition. (`some_mem` is not a constant: it wraps its

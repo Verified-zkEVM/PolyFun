@@ -236,11 +236,12 @@ flattened transition is *partial*, and `none` records that an answer is not one
 the machine is waiting for. Partiality is what makes the flattening
 compositional — see `PolyFun.Realizability.Machine`.
 
-Up to the equivalence `Option A ≃ A ⊕ PUnit` this is `HasSum` together with a
-terminal representation, but it is taken as primitive: factoring it would force
-a terminal representation on every instance, and nothing else needs one. For the
-same reason `omap_mem` and `obindCtx_mem` are both primitive — each is derivable
-from the other only through a unit representation. -/
+The type equivalence `Option A ≃ A ⊕ PUnit` suggests an implementation using
+sums and a terminal representation, provided the representation transports and
+case analysis are admissible. This interface instead selects optional values
+directly, without requiring a terminal representation. `omap_mem` and
+`obindCtx_mem` are separate obligations for ordinary mapping and sequencing
+with a retained context. -/
 class HasOption (C : StepClass.{u, v}) [P : C.HasProd] where
   /-- The representation of an optional value. -/
   option : {A : Type u} → C.Str A → C.Str (Option A)

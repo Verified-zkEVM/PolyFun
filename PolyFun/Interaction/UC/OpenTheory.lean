@@ -312,8 +312,8 @@ At this stage it only records:
 * naturality of `wire`, and
 * naturality of `plug`.
 
-Unit, associativity, and symmetry laws for open composition should be added
-later, once the library settles on the right notion of boundary equivalence.
+Unit, associativity, and symmetry laws are supplied separately by `IsMonoidal`
+and the stronger wiring classes below.
 -/
 class IsLawful (T : UC.OpenTheory.{u}) : Prop extends IsLawfulPar T, IsLawfulWire T, IsLawfulPlug T
 
