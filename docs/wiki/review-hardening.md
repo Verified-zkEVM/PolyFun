@@ -31,6 +31,17 @@ dependency boundary as likely drift points. `scripts/check-docs-integrity.py`
 checks both markdown links and repository-rooted Lean paths, but semantic
 accuracy still requires review.
 
+## Native GitHub Stacks
+
+Merge native stacks from the bottom using GitHub's supported stack merge API.
+GitHub rebases and retargets the remaining pull requests automatically; manual
+base changes are rejected while a pull request belongs to a native stack. See
+[GitHub's stack merge documentation](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/merging-stacked-pull-requests).
+Keep the reviewed revisions locally, compare the resulting trees and incremental
+diffs after each rebase, and check validation and CI for the new candidate head.
+A successful check on an earlier revision is not evidence that a changed tree
+was validated.
+
 ## Upstream-First Mathematics
 
 Before adding a generic definition or lemma, search the pinned Lean core,
