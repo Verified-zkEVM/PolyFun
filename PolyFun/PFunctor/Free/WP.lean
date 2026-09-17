@@ -172,7 +172,7 @@ theorem reachableUnder_liftBind (allows : (a : P.A) → P.B a → Prop)
 @[simp]
 theorem reachableUnder_lift (allows : (a : P.A) → P.B a → Prop)
     (position : P.A) :
-    (FreeM.lift position).reachableUnder allows =
+    reachableUnder (α := no_index (P.B position)) allows (FreeM.lift position) =
       {direction | allows position direction} := by
   rw [FreeM.lift, reachableUnder_liftBind]
   ext direction
@@ -208,6 +208,26 @@ theorem reachableUnder_bind (allows : (a : P.A) → P.B a → Prop)
   simp only [Set.mem_iUnion, exists_prop]
   exact exists_congr fun a => and_congr_right fun _ => Iff.rfl
 
+/-- Reachability through sequencing with independent result universes. -/
+@[simp]
+theorem reachableUnder_bind' {X : Type uX} {Y : Type uY}
+    (allows : (a : P.A) → P.B a → Prop) (program : FreeM P X)
+    (next : X → FreeM P Y) :
+    (FreeM.bind program next).reachableUnder allows =
+      ⋃ result ∈ program.reachableUnder allows, (next result).reachableUnder allows := by
+  induction program with
+  | pure value => simp
+  | lift_bind position cont ih =>
+      rw [liftBind_bind, reachableUnder_liftBind, reachableUnder_liftBind]
+      simp_rw [ih]
+      ext result
+      simp only [Set.mem_iUnion]
+      constructor
+      · rintro ⟨direction, hallowed, value, hvalue, hresult⟩
+        exact ⟨value, ⟨direction, hallowed, hvalue⟩, hresult⟩
+      · rintro ⟨value, ⟨direction, hallowed, hvalue⟩, hresult⟩
+        exact ⟨direction, hallowed, value, hvalue, hresult⟩
+
 theorem reachableUnder_mono {allows₁ allows₂ : (a : P.A) → P.B a → Prop}
     (h : ∀ position direction, allows₁ position direction → allows₂ position direction)
     (x : FreeM P α) : x.reachableUnder allows₁ ⊆ x.reachableUnder allows₂ := by
@@ -240,12 +260,33 @@ theorem reachableUnder_liftObj {X : Type uX}
       object.2 '' {direction | allows object.1 direction} := by
   simp [FreeM.liftObj]
 
+/-- Functor mapping preserves the admitted response policy and maps reachable results. -/
+@[simp]
+theorem reachableUnder_functorMap (allows : (a : P.A) → P.B a → Prop)
+    (function : α → β) (program : FreeM P α) :
+    (function <$> program).reachableUnder allows = function '' program.reachableUnder allows :=
+  reachableUnder_map allows function program
+
 /-- A path is admitted when every direction on it is admitted at its operation. -/
 def Path.AllowedUnder (allows : (a : P.A) → P.B a → Prop) :
     (x : FreeM P α) → Path x → Prop
   | .pure _, _ => True
   | .liftBind position next, ⟨direction, path⟩ =>
       allows position direction ∧ AllowedUnder allows (next direction) path
+
+/-- The terminal path has no response constraints. -/
+@[simp]
+theorem Path.allowedUnder_pure (allows : (a : P.A) → P.B a → Prop)
+    (value : α) (path : Path (pure value : FreeM P α)) :
+    Path.AllowedUnder allows (pure value) path := trivial
+
+/-- An admitted node path takes an admitted response and an admitted continuation path. -/
+@[simp]
+theorem Path.allowedUnder_liftBind (allows : (a : P.A) → P.B a → Prop)
+    (position : P.A) (next : P.B position → FreeM P α)
+    (direction : P.B position) (path : Path (next direction)) :
+    Path.AllowedUnder allows (FreeM.liftBind position next) ⟨direction, path⟩ ↔
+      allows position direction ∧ Path.AllowedUnder allows (next direction) path := Iff.rfl
 
 /-- Reachability is witnessed by an admitted root-to-leaf path. -/
 theorem mem_reachableUnder_iff_exists_path
