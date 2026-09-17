@@ -9,22 +9,21 @@ public import Mathlib.Logic.Equiv.Prod
 
 /-! # Comonads
 
-This file defines the `Comonad` typeclass hierarchy, dual to `Monad`.
+A `Comonad` provides `Functor`, `Extract`, and `Extend`; `LawfulComonad`
+states the counit, coassociativity, and map-compatibility laws. This is the
+functional presentation of a comonad. Nesting via `duplicate` requires an
+endofunctor; the extraction/extension interface permits a context functor
+between different universes.
 
-It follows the structure of the `Monad` hierarchy:
-`Extract` (`pure`), `Extend` (`bind`), `Coseq` (`seq`),
-`Coapplicative` (`Applicative`), `Comonad` (`Monad`).
+`Coapplicative` chooses a pairing of contexts; `LawfulCoapplicative` requires
+associativity and naturality. It is not the categorical dual of `Applicative`, and a comonad does
+not choose such a pairing. For example, streams can pair pointwise or preserve
+the left context while extracting a single value from the right. The pairing
+classes carry no law relating `extract` to `coseq`.
 
-## Hierarchy
-
-* `Extract (w)`: Provides `extract : w α → α`.
-* `Extend (w)`: Provides `extend : w α → (w α → β) → w β`.
-* `Coseq (w)`: Provides `coseq : w α → w β → w (α × β)` (operator `<@>`).
-* `CoseqLeft (w)`: Provides `coseqLeft : w α → w β → w α` (operator `<@`).
-* `CoseqRight (w)`: Provides `coseqRight : w α → w β → w β` (operator `@>`).
-* `Coapplicative (w)`: Extends `Functor`, `Extract`, `Coseq`, `CoseqLeft`, `CoseqRight`.
-* `Comonad (w)`: Extends `Coapplicative`, `Extend`. Provides default `map`.
-* `Lawful` variants mirroring `LawfulFunctor`, `LawfulApplicative`, `LawfulMonad`.
+A consumer combining extension and pairing can request `[Comonad w] [Coseq w]`.
+Two independent assumptions `[Comonad w] [Coapplicative w]` may select different
+functor and extraction data; they do not assert that the shared operations agree.
 
 -/
 
@@ -42,20 +41,17 @@ class Extend (w : Type u → Type v) where
   /-- Extend a function across the comonadic context. -/
   extend {α β : Type u} : w α → (w α → β) → w β
 
-/-- The `Coseq` typeclass provides the `coseq` operation (`<@>`), dual to `Seq.seq` (`<*>`).
-    It combines two comonadic contexts, pairing their results. -/
+/-- Pair values in two contexts using a chosen combination of their structure. -/
 class Coseq (w : Type u → Type v) where
   /-- Combine two comonadic contexts. -/
   coseq : {α β : Type u} → w α → w β → w (α × β)
 
-/-- The `CoseqLeft` typeclass provides the `coseqLeft` operation (`<@`), dual to `SeqLeft.seqLeft`
-  (`<*`). Evaluates two contexts but returns the result of the first. -/
+/-- Combine two contexts and retain the first result. -/
 class CoseqLeft (w : Type u → Type v) where
   /-- Evaluate two contexts, returning the first result. -/
   coseqLeft : {α β : Type u} → w α → w β → w α
 
-/-- The `CoseqRight` typeclass provides the `coseqRight` operation (`@>`), dual to
-  `SeqRight.seqRight` (`*>`). Evaluates two contexts but returns the result of the second. -/
+/-- Combine two contexts and retain the second result. -/
 class CoseqRight (w : Type u → Type v) where
   /-- Evaluate two contexts, returning the second result. -/
   coseqRight : {α β : Type u} → w α → w β → w β
@@ -73,8 +69,7 @@ infixl:60 " <@ "  => CoseqLeft.coseqLeft
 /-- Right cosequencing `CoseqRight.coseqRight`, keeping the right context's result. -/
 infixl:60 " @> "  => CoseqRight.coseqRight
 
-/-- `Coapplicative` functor. Dual to `Applicative`.
-    Combines `Functor`, `Extract`, and `Coseq` operations. -/
+/-- A functor with extraction and a chosen pairing of contexts. -/
 class Coapplicative (w : Type u → Type v) extends
     Functor w, Extract w, Coseq w, CoseqLeft w, CoseqRight w where
   /-- Default implementation for `coseqLeft` using `coseq` and `map`. -/
@@ -82,25 +77,14 @@ class Coapplicative (w : Type u → Type v) extends
   /-- Default implementation for `coseqRight` using `coseq` and `map`. -/
   coseqRight wa wb := Functor.map Prod.snd (coseq wa wb)
 
-/-- `Comonad`. Dual to `Monad`.
-    Combines `Coapplicative` structure with `Extend`. -/
-class Comonad (w : Type u → Type v) extends Coapplicative w, Extend w where
-  /-- Default implementation for `map` using `extend` and `extract`.
-      Note: This requires that the `Functor` instance provided to `Coapplicative`
-      is compatible with this definition. `LawfulComonad` ensures this. -/
+/-- A comonad in terms of extraction and extension of context-dependent functions. -/
+class Comonad (w : Type u → Type v) extends Functor w, Extract w, Extend w where
+  /-- Mapping obtained by extending a function of the extracted value. -/
   map f wa := extend wa (f ∘ extract)
-  /-- Default `coseq` built only from `extend` and `extract`.
-
-      For two contexts `wa : w α`, `wb : w β` we:
-      1. `extend` over the first context, so we may look inside it,
-      2. pair its extracted value with the *already* extracted value of `wb`.
-
-      This yields `w (α × β)` as required. -/
-  coseq wa wb := extend wa (fun wa' => (extract wa', extract wb))
 
 /-! ## Lawful hierarchy -/
 
-/-- Lawful `Coapplicative` functor. Dual to `LawfulApplicative`. -/
+/-- Functor laws and associativity/naturality of the chosen context pairing. -/
 class LawfulCoapplicative (w : Type u → Type v) [Coapplicative w] extends LawfulFunctor w where
   /-- Ensure default `coseqLeft` law holds even if overridden. -/
   coseqLeft_eq : ∀ {α β : Type u} (wa : w α) (wb : w β),
@@ -116,16 +100,14 @@ class LawfulCoapplicative (w : Type u → Type v) [Coapplicative w] extends Lawf
     (wa : w α) (wb : w β),
     Functor.map (fun p : α × β => (f p.1, g p.2)) (coseq wa wb) =
       coseq (Functor.map f wa) (Functor.map g wb)
-  -- Other potential laws like extract_coseq : extract (wa <@> wb) = (extract wa, extract wb)
-  -- are often added but require `w (α × β)` structure, so omitted here for generality.
 
 export LawfulCoapplicative (coseqLeft_eq coseqRight_eq coseq_assoc map_coseq)
 
 /-- Lawful `Comonad`. Dual to `LawfulMonad`. -/
-class LawfulComonad (w : Type u → Type v) [Comonad w] extends LawfulCoapplicative w where
+class LawfulComonad (w : Type u → Type v) [Comonad w] extends LawfulFunctor w where
   /-- Compatibility between `map` and `extend`/`extract`.
       Since `Comonad.map` defines map this way, this law ensures the `Functor` instance
-      used by `LawfulCoapplicative` (and `LawfulFunctor`) is consistent. -/
+      used by `LawfulFunctor` is consistent. -/
   map_eq_extend_extract : ∀ {α β : Type u} (f : α → β) (wa : w α),
     Functor.map f wa = extend wa (f ∘ extract)
   /-- Extending with `extract` is the identity (Left identity dual). -/

@@ -377,3 +377,18 @@ child functions, without normalizing public statements to `Sigma`.
 Positions and directions which are themselves Sigma types still use the
 ordinary Sigma API. The indexed counterpart in `IPFunctor/Basic.lean` preserves
 the source fiber of each child.
+
+## Comonadic structure and pairing
+
+`Comonad` supplies `Functor`, `Extract`, and `Extend`. `LawfulComonad` adds the
+usual counit, associativity, and map-compatibility laws. `Coapplicative` is an
+independent choice of context pairing, with its own law class; generic comonad
+consumers do not obtain a pairing instance automatically. `EnvT` and `StoreT`
+lift these interfaces separately. Concrete pairings retain their meaning:
+streams zip pointwise, while `CofreeC` retains the left tree and the right root
+value. A consumer using only pairing can ask for `Coapplicative` or the smaller
+operation class it needs. A consumer already requiring `Comonad` should add
+`Coseq` for pairing, rather than another independent `Coapplicative` assumption:
+the latter also chooses `Functor` and `Extract` data and can create conflicting
+instances. Concrete instances share those operations, but two arbitrary class
+parameters do not assert that they agree.

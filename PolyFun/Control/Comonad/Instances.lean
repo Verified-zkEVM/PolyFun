@@ -13,14 +13,14 @@ public import Batteries.Data.List.Basic
 # Instances of Comonads
 
 Comonad, `Coapplicative`, and lawfulness instances for a range of concrete functors,
-together with two comonad transformers and Day convolution.
+together with two comonad transformers and an unquotiented Day carrier.
 
 ## Main definitions
 
 * `NonEmptyList`: a list with a distinguished head, carrying the non-empty-tails comonad.
 * `List.Zipper`: a list with a distinguished focus, carrying the zipper comonad.
 * `EnvT`, `StoreT`: the environment and store comonad transformers over a base comonad.
-* `Day`: the Day convolution of two endofunctors.
+* `Day`: raw Day-convolution data, without the coend quotient or a lawfulness instance.
 
 The identity functor `Id`, products `Prod ε`, and streams `Stream'` also receive their
 comonad instances here.
@@ -80,7 +80,7 @@ instance instFunctorProd : Functor (Prod ε) where -- Need Functor explicitly fo
   map f wx := (wx.1, f wx.2)
 
 instance : Coseq (Prod ε) where
-  coseq wx wy := (wx.1, (wx.2, wy.2)) -- Environment must match, assume wx.1 = wy.1 implicitly
+  coseq wx wy := (wx.1, (wx.2, wy.2)) -- Retain the left environment.
   -- Note: A stricter version might require `wx.1 = wy.1` as a hypothesis.
 
 -- Let Lean synthesize from base instances and defaults
@@ -90,7 +90,7 @@ instance : Coapplicative (Prod ε) where
 
 -- Let Lean synthesize from base instances
 instance : Comonad (Prod ε) where
-  -- Coapplicative and Extend instances are defined above.
+  -- Functor, Extract, and Extend instances are defined above.
   -- map will use the default from Comonad class definition.
 
 -- Lawfulness Proofs for Prod ε
@@ -118,7 +118,7 @@ instance : LawfulCoapplicative (Prod ε) where
     rfl
 
 instance : LawfulComonad (Prod ε) where
-  -- Inherits LawfulCoapplicative proofs
+  -- Inherits LawfulFunctor proofs
   map_eq_extend_extract := by simp [Functor.map, extend, extract]
   extend_extract := by simp [extend, extract]
   extract_extend := by simp [extract, extend]
@@ -281,7 +281,7 @@ instance : Coapplicative NonEmptyList where
   -- Uses Functor, Extract, Coseq defined above
 
 instance : Comonad NonEmptyList where
-  -- Uses Coapplicative and Extend defined above
+  -- Uses Functor, Extract, and Extend defined above
 
 -- Lawfulness proofs for NonEmptyList
 
@@ -541,7 +541,7 @@ instance : Coapplicative Zipper where
   coseq := coseq
 
 instance : Comonad Zipper where
-  -- Uses Coapplicative and Extend defined above
+  -- Uses Functor, Extract, and Extend defined above
 
 -- Lawfulness proofs for List.Zipper
 
@@ -657,8 +657,7 @@ instance instExtend [Extend w] : Extend (EnvT e w) where
 --   extend envt id
 
 -- Coseq instance (Requires Coseq w)
--- Note: This assumes the environments are the same, which is typical usage.
--- A stricter version might require envt_a.env = envt_b.env.
+-- The chosen pairing retains the left environment.
 instance instCoseq [Coseq w] : Coseq (EnvT e w) where
   coseq envt_a envt_b := { runEnvT := Coseq.coseq envt_a.runEnvT envt_b.runEnvT, env := envt_a.env }
 
@@ -669,17 +668,17 @@ instance instCoapplicative [Coapplicative w] : Coapplicative (EnvT e w) where
 
 -- Comonad instance
 instance instComonad [Comonad w] : Comonad (EnvT e w) where
-  -- Uses instCoapplicative and instExtend defined above
+  -- Uses the functor, extraction, and extension instances above.
   -- map uses default implementation: extend envt (fun wa => f (extract wa))
 
 -- Lawfulness proofs, derived from the base comonad `w`
 
-instance instLawfulFunctor [Comonad w] [LawfulFunctor w] : LawfulFunctor (EnvT e w) where
+instance instLawfulFunctor [Functor w] [LawfulFunctor w] : LawfulFunctor (EnvT e w) where
   id_map := by intros α wa; cases wa; simp [Functor.map, id_map]
   comp_map := by intros α β γ g h wa; cases wa; simp [Functor.map, comp_map]
   map_const := by intros; rfl
 
-instance instLawfulCoapplicative [Comonad w] [LawfulCoapplicative w] :
+instance instLawfulCoapplicative [Coapplicative w] [LawfulCoapplicative w] :
     LawfulCoapplicative (EnvT e w) where
   -- Requires LawfulFunctor w
   coseqLeft_eq := by intros α β wa wb; cases wa; cases wb; simp [coseqLeft, Functor.map,
@@ -729,11 +728,11 @@ instance instFunctor [Functor w] : Functor (StoreT s w) where
   map f storet := { runStoreT := Functor.map (fun g => f ∘ g) storet.runStoreT, pos := storet.pos }
 
 -- Extract instance
-instance instExtract [Comonad w] : Extract (StoreT s w) where
+instance instExtract [Extract w] : Extract (StoreT s w) where
   extract storet := Extract.extract storet.runStoreT storet.pos
 
 -- Extend instance
-instance instExtend [Comonad w] : Extend (StoreT s w) where
+instance instExtend [Extend w] : Extend (StoreT s w) where
   extend storet k := {
     runStoreT := Extend.extend storet.runStoreT (fun w'sa s' => k { runStoreT := w'sa, pos := s' })
     pos := storet.pos
@@ -743,30 +742,30 @@ instance instExtend [Comonad w] : Extend (StoreT s w) where
 -- def duplicate [Comonad w] {a : Type u₂} (storet : StoreT s w a) : StoreT s w (StoreT s w a) :=
 --   extend storet id
 
--- Coseq instance (Requires Comonad w for map/coseq)
-instance instCoseq [Comonad w] : Coseq (StoreT s w) where
+-- Pairing requires only mapping and a chosen pairing of the base functor.
+instance instCoseq [Functor w] [Coseq w] : Coseq (StoreT s w) where
   coseq storet_a storet_b :=
     let run_ab := Coseq.coseq storet_a.runStoreT storet_b.runStoreT -- w ((s → a) × (s → b))
     let run_prod_s := Functor.map (fun (f, g) s' => (f s', g s')) run_ab -- w (s → a × b)
     { runStoreT := run_prod_s, pos := storet_a.pos }
-    -- Keep first position? Or combine? Let's keep first.
+    -- The chosen pairing retains the left position.
 
 -- Coapplicative instance
-instance instCoapplicative [Comonad w] : Coapplicative (StoreT s w) where
+instance instCoapplicative [Coapplicative w] : Coapplicative (StoreT s w) where
   -- Uses instFunctor, instExtract, instCoseq defined above
 
 -- Comonad instance
 instance instComonad [Comonad w] : Comonad (StoreT s w) where
-  -- Uses instCoapplicative and instExtend defined above
+  -- Uses the functor, extraction, and extension instances above.
 
 -- Lawfulness proofs, derived from the base comonad `w`
 
-instance instLawfulFunctor [Comonad w] [LawfulFunctor w] : LawfulFunctor (StoreT s w) where
+instance instLawfulFunctor [Functor w] [LawfulFunctor w] : LawfulFunctor (StoreT s w) where
   id_map := by intros α wa; cases wa; simp [Functor.map]
   comp_map := by intros α β γ g h wa; cases wa; simp [Functor.map, Function.comp_assoc]
   map_const := by intros; rfl
 
-instance instLawfulCoapplicative [Comonad w] [LawfulCoapplicative w] :
+instance instLawfulCoapplicative [Coapplicative w] [LawfulCoapplicative w] :
     LawfulCoapplicative (StoreT s w) where
   coseqLeft_eq := by intros; rfl
   coseqRight_eq := by intros; rfl
@@ -824,7 +823,11 @@ end StoreT
 universe u₃
 
 /--
-The Day convolution of two endofunctors.
+Raw Day-convolution data for two endofunctors.
+
+This carrier retains the existential witness types and does not quotient by the
+coend relation. It is not Mathlib's categorical Day convolution; no
+`LawfulComonad` instance is supplied for this representation.
 
 The endofunctor restriction is intentional: the comonadic `extend` for Day
 uses `extend` on the component functors, producing values in `f (f α)` and
@@ -879,9 +882,11 @@ def coseq [Coseq f] [Coseq g] {a b : Type u₃} (day_a : Day f g a)
 instance instCoseq [Coseq f] [Coseq g] : Coseq (Day f g) where
   coseq := coseq
 
+instance [Coapplicative f] [Coapplicative g] : Coapplicative (Day f g) where
+  extract := extract
+
 instance [Comonad f] [Comonad g] : Comonad (Day f g) where
   extract := extract
   extend := extend
-  coseq := coseq
 
 end Day
