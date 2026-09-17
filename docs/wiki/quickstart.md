@@ -118,6 +118,10 @@ deliberately outside the `lake lint` scope.
 
 ## CI Mapping
 
+Pull-request validation runs against every base branch, including intermediate
+branches in a stack. Retargeting or restacking a PR requires fresh checks on the
+resulting revision; a style-only result is not the full validation suite.
+
 - [`../../.github/workflows/ci.yml`](../../.github/workflows/ci.yml): runs
   three independent jobs on every push to `main` and on pull requests — a
   `build` job (`./scripts/validate.sh`, which includes
