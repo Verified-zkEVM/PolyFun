@@ -207,7 +207,7 @@ should cite it alongside `LawfulMonadLift(T)` and Batteries' `LawfulAlternativeL
 | `Control/Coalgebra.lean` `Coalg` | Mathlib's `CategoryTheory.Endofunctor.Coalgebra` is bundled in an arbitrary category; the `Type`-level unbundled form is not upstream. Worth borrowing upstream *names* (`isoMk`, `forget`, `functorOfNatTrans`, and `Terminal.strInv` for Lambek's lemma). |
 | The `Poly` categorical layer — lenses, charts, comonoids, `SubstMonoid`, `Display`, `Cofree`, `InternalHom`, wiring | Mathlib's `PFunctor` is a bare `⟨A, B⟩` used only as scaffolding for W-types, M-types, and QPF. It has no lenses, charts, category instance, or monoidal structure. This is PolyFun's actual contribution. |
 | Delay bisimulation | See above. |
-| `Control/Monad/WriterT/WP.lean` `WriterT.instWPMonad` | Core's `Std.Internal.Do` lifts its own transformers only; `WriterT` is Mathlib's, and Mathlib does not depend on core's WP stack. The lift can live nowhere upstream, so PolyFun owns it (its one global `WPMonad` instance). |
+| `Control/Monad/WriterT/WP.lean` `WriterT.wpMonadOf` | The pinned core and Mathlib provide no writer lift for the lattice-generic WP stack. PolyFun supplies an explicit construction compatible with Mathlib's `WriterT.monad empty append`, with a scoped monoid specialization. A future upstream lift with the same operations and instance coherence would supersede it. |
 | `Control/Monad/Algebra/Restrict.lean` `MAlgOrdered.restrictIic` | A construction on PolyFun's own `MAlgOrdered`; the lattice on `Set.Iic c` it uses is Mathlib's. |
 
 ### Upstream — belongs elsewhere, PolyFun is the wrong home

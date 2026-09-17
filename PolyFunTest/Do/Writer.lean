@@ -14,8 +14,9 @@ public import Mathlib.Algebra.FreeMonoid.Basic
 /-!
 # `WriterT` on core's `vcgen`
 
-`WriterT.instWPMonad` lifts any core interpretation through Mathlib's writer transformer with a
-log-indexed carrier, and the `@[spec]` rules of `PolyFun.Control.Do.Spec` let `vcgen` step
+`WriterT.MonoidWP.instWPMonad` lifts a core interpretation through Mathlib's writer
+transformer with a log-indexed carrier. The `@[spec]` rules of `PolyFun.Control.Do.Spec`
+let `vcgen` step
 through `tell`, lifted base computations, and `run`. The log is a free monoid so that what was
 written is visible as a list. Each `vcgen` call asserts the experimental-tactic diagnostic with
 `#guard_msgs`, keeping `mvcgen.warning` enabled.
@@ -24,6 +25,15 @@ written is visible as a list. Each `vcgen` call asserts the experimental-tactic 
 public section
 
 open Std.Internal.Do MonadAttach
+
+/- Importing the bridge leaves the writer interpretation unselected. -/
+example : True := by
+  fail_if_success
+    have := inferInstanceAs
+      (WPMonad (WriterT (FreeMonoid Nat) Id) (FreeMonoid Nat → Prop) EPost.Nil)
+  trivial
+
+open scoped WriterT.MonoidWP
 
 /-- Log two numbers around a lifted computation. -/
 def logTwo (a b : Nat) : WriterT (FreeMonoid Nat) Id Nat := do
@@ -52,7 +62,7 @@ example (a b : Nat) :
   vcgen [logTwo]
   simp_all
 
-/-- The demonic interpretation of `SetM`, installed locally; `WriterT.instWPMonad` lifts it. -/
+/-- The demonic interpretation of `SetM`, lifted by the scoped writer interpretation. -/
 local instance instWPMonadSetMDemonic : WPMonad SetM Prop EPost.Nil :=
   toWPMonadDemonic
 

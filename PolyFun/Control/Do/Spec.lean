@@ -80,6 +80,8 @@ theorem Spec.forM_list {xs : List α} {f : α → m PUnit} (inv : Invariant α P
 
 section WriterTSpec
 
+open scoped WriterT.MonoidWP
+
 variable {ω : Type u} [Monoid ω] {Pred : Type z} {EPred : Type z}
   [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred]
 

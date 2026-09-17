@@ -27,7 +27,7 @@ migration sketch live in
 | `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as a core `Std.Internal.Do.WPMonad m l EPost.Nil` (through the `ToCslib.Order.LeanOrder` bridge), `wp` agreement by `rfl`, `toWP_triple_iff`, `wpConjunctiveOf`, and the transfer lemmas `top_eq_top` / `meet_eq_inf` / `join_eq_sup` between core's and Mathlib's lattice operations |
 | `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPMonadDemonic` / `toWPMonadAngelic`: the always/some judgments as `WPMonad m Prop EPost.Nil`; conjunctivity of the demonic reading; `MonadAttach.LawfulWPMonadAttach` (soundness with respect to lawful attachment, the class core ships as `Std.WP.LawfulWPMonadAttach` from v4.35) with its demonic instance; `support_subset_of_wp` / `allOutputs_of_wp` |
 | `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWPOf` / `transportWPMonadOf` (along cslib's `IsMonadHom`) and the bundled `transportWP` / `transportWPMonad`: pulling a core `WPMonad` back along a monad morphism |
-| `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.instWPMonad`: Mathlib's writer transformer on core's stack with the log-indexed carrier `ω → Pred` (the one global instance of the kernel, since `WriterT` has no other owner; low priority), `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, `wp_run_eq`, and the `tell` / `monadLift` entailments behind the `@[spec]` rules |
+| `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.wpMonadOf`: explicit empty/append operations on the log-indexed carrier `ω → Pred`; the multiplicative specialization is scoped under `WriterT.MonoidWP`, `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, `wp_run_eq`, and the `tell` / `monadLift` entailments behind the `@[spec]` rules |
 | `PolyFun/Control/Monad/Hom/Loops.lean` | A monad morphism between lawful monads commutes with `forIn'`/`forIn`/`forM`/`foldlM`/`mapM` and with `forIn` over `PureForIn` containers (`@[simp, grind =]`), through `MonadHom.isMonadHom` and cslib's `IsMonadHom.map_list*` |
 | `PolyFun/Control/Do/Spec.lean` | Tactic tier: `@[spec] Spec.forM_list`, the list loop core does not specify; the `@[spec]` registration of core's `Spec.tryCatch_MonadExcept`, the `try … catch` rule core states but does not tag; and the `WriterT` rules `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` |
 
@@ -193,7 +193,7 @@ proof.
 | early `return`/`break`/`continue` | `Invariant.withEarlyReturnNewDo` (core) | via the instance | — | — | — |
 | `throw`/`tryCatch` on `ExceptT`/`OptionT` | core's lifted instances (`Spec.throw_MonadExcept`, `Spec.tryCatch_ExceptT`), plus `Spec.tryCatch_MonadExcept` registered in `Do/Spec.lean` for the `try … catch` elaboration | via the instance | — | `ExceptT.mapHom`/`OptionT.mapHom` | — |
 | `get`/`set`/`read` | core's lifted instances | `Support/Indexed.lean` (`supportFrom`, `supportAt`) | — | `StateT.mapHom`/`ReaderT.mapHom` | — |
-| `tell`/`WriterT.run` | `WriterT.instWPMonad` (`WriterT/WP.lean`) with `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` in `Do/Spec.lean` | — (`WriterT` support is inexact; `Support/Instances.lean`) | `MAlgOrdered.instWriterT` | `WriterT.mapHom` | — |
+| `tell`/`WriterT.run` | `WriterT.MonoidWP.instWPMonad` (`WriterT/WP.lean`) with `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` in `Do/Spec.lean` | — (`WriterT` support is inexact; `Support/Instances.lean`) | `MAlgOrdered.instWriterT` | `WriterT.mapHom` | — |
 | `while`/`repeat` | `ITree` only (`ITree/Do.lean`); no rule on finite `FreeM` | — | — | — | — |
 
 Open in this table: the relational (`MAlgRelOrdered`) loop rules and a `mapM` judgment rule
@@ -220,11 +220,13 @@ upstream API confined, and everything the fenced modules provide is a constructi
 downstream registrations on reducible unfoldings such as VCVio's `OracleComp`. The free-monad
 interpretations are `scoped` under `PFunctor.FreeM.DemonicWP` / `AngelicWP`; the bridges of
 `PolyFun/Control/Monad/{Algebra,Support,Hom}/WP.lean`, `MAlgOrdered.restrictIic`, and
-`FreeM.wpMonadOfHandler` are installed `local` or `scoped` at the carrier. The one global
-instance is the transformer lift `WriterT.instWPMonad`: it chooses no semantics (given the base
-interpretation there is one way to thread a monoid log) and `WriterT`, being Mathlib's, has no
-other owner — exactly the status of core's own `StateT.instWPMonad`. It is low priority so a
-bespoke interpretation of a concrete stack registered downstream wins. `vcgen` itself is experimental at this pin (it warns on every call), so production
+`FreeM.wpMonadOfHandler` are installed `local` or `scoped` at the carrier. The writer lift
+also requires an explicit choice: `open scoped WriterT.MonoidWP` for multiplicative logs,
+or install `WriterT.wpMonadOf` locally with the empty/append operations and the lawfulness
+witness for that same `WriterT.monad`. This supports append-based logs without adding a
+`Monoid` instance or creating a competing writer monad. `PolyFunTest/Do/WriterAppend.lean`
+checks ordered accumulation from a nonempty incoming log. `vcgen` itself is experimental at
+this pin (it warns on every call), so production
 proofs do not call it; tactic calls live in `PolyFunTest/Do/`, where each asserts the warning
 with `#guard_msgs`.
 
