@@ -149,6 +149,17 @@ theorem someOutput_liftBind (p : α → Prop) (a : P.A) (r : P.B a → FreeM P �
   · rintro ⟨b, c, hc, hpc⟩
     exact ⟨c, mem_support_liftBind.mpr ⟨b, hc⟩, hpc⟩
 
+@[simp]
+theorem allOutputs_lift (a : P.A) (p : P.B a → Prop) :
+    AllOutputs p (FreeM.lift (P := P) a) ↔ ∀ b, p b :=
+  ⟨fun h b => h b (by rw [← mem_support, support_lift]; exact Set.mem_univ b), fun h c _ => h c⟩
+
+@[simp]
+theorem someOutput_lift (a : P.A) (p : P.B a → Prop) :
+    SomeOutput p (FreeM.lift (P := P) a) ↔ ∃ b, p b :=
+  ⟨fun ⟨c, _, hc⟩ => ⟨c, hc⟩,
+    fun ⟨b, hb⟩ => ⟨b, by rw [← mem_support, support_lift]; exact Set.mem_univ b, hb⟩⟩
+
 @[freeM_unfold]
 theorem noOutput_liftBind (p : α → Prop) (a : P.A) (r : P.B a → FreeM P α) :
     NoOutput p (FreeM.liftBind a r) ↔ ∀ b, NoOutput p (r b) :=

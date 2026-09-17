@@ -32,8 +32,7 @@ PolyFun/
                      (Monad/{Algebra, Support}, Support/{Instances, Indexed,
                      Structural, Loops}, Hom/Loops), its bridges to core's
                      lattice-generic WP stack (Monad/{Algebra, Support, Hom}/WP),
-                     the vcgen spec tier (Do/Spec) and the core-Std.Do
-                     quarantine root (Do/Basic)
+                     and the vcgen spec tier (Do/Spec)
   Logic/             small logic helpers (HEq)
 
 ToCslib/             lowest production layer, staging what PolyFun upstreams:
@@ -145,8 +144,15 @@ Control/Monad/Algebra -> Control/Monad/Algebra/Relational
 Control/Monad/{Algebra/Relational, Support}
   -> Control/Monad/Algebra/Relational/Support
 Control/Monad/Hom + Mathlib.Control.Monad.Writer -> Control/Monad/Hom/Writer
-Control/Monad/Support -> Control/Do/Basic  (also imports Std.Tactic.Do; see
-  the quarantine rule in program-logic.md)
+Control/Monad/Hom + Cslib IsMonadHom -> Control/Monad/Hom/IsMonadHom
+Control/Monad/Hom/IsMonadHom + ToCslib/Control/Monad/HomTransport -> Control/Monad/Hom/Loops
+Control/Monad/Support -> Control/Monad/Support/{Instances, Structural}
+Control/Monad/Support/Instances -> Control/Monad/Support/Indexed
+Control/Monad/{Algebra, Support, Hom/IsMonadHom} + Std.Internal.Do
+  -> Control/Monad/{Algebra/WP, Support/WP, Hom/WP}  (definition tier of the
+  quarantine rule in program-logic.md)
+Control/Monad/Support/WP -> Control/Monad/Support/Loops
+Std.Internal.Do + Std.Tactic.Do -> Control/Do/Spec  (tactic tier)
 
 PFunctor/Lens/{Basic, Cartesian, State}
   -> PFunctor/Lens/{Composite, Distributivity, Factorization, Duoidal}
@@ -157,7 +163,9 @@ PFunctor/{Free/Path, SubstMonoid} -> PFunctor/Free/Polynomial
 PFunctor/Free/Path + Control/Monad/Support -> PFunctor/Free/Support
 PFunctor/{Free/Support, Handler} -> PFunctor/Free/WP
   (demonic/angelic and admitted-response leaf contracts, including free-handler closure)
-Control/Do/Basic + PFunctor/Free/WP -> PFunctor/Free/Do
+PFunctor/Free/{WP, Support} + Control/Monad/{Algebra/WP, Support/WP, Hom/WP}
+  -> PFunctor/Free/WP/Upstream
+PFunctor/Free/WP/Upstream + Std.Tactic.Do -> PFunctor/Free/Do  (tactic tier)
 PFunctor/Comonoid -> PFunctor/Comonoid/Category
 PFunctor/{Comonoid, Lens/Duoidal} -> PFunctor/Comonoid/Tensor
 PFunctor/{SubstMonoid, Comonoid, InternalHom, Lens/Duoidal}
