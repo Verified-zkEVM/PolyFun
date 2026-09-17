@@ -186,7 +186,7 @@ theorem xi_unit (P : PFunctor.{u, u}) :
     (matterQ : (CofreeP Q).A) (matterR : (CofreeP R).A) :
     (CofreeP Q ⊗ CofreeP R).Obj
       (M.Vertex matterQ × M.Vertex matterR) :=
-  ⟨(matterQ, matterR), id⟩
+  Obj.mk (matterQ, matterR) id
 
 @[implicit_reducible] private def laxTensorVertexObj {Q R : PFunctor.{u, u}}
     (matterQ : (CofreeP Q).A) (matterR : (CofreeP R).A) :
@@ -201,15 +201,15 @@ private theorem laxTensorVertexObj_child (Q R : PFunctor.{u, u})
           (.child direction next)⟩ :
       (CofreeP (Q ⊗ R)).Obj (M.Vertex matterQ × M.Vertex matterR)) =
     let mappedChild := Lens.mapObj (CofreeP.laxTensor Q R)
-      (⟨(M.children matterQ direction.1,
-          M.children matterR direction.2), id⟩ :
+      (Obj.mk (M.children matterQ direction.1,
+          M.children matterR direction.2) id :
         (CofreeP Q ⊗ CofreeP R).Obj
           (M.Vertex (M.children matterQ direction.1) ×
             M.Vertex (M.children matterR direction.2)))
     ⟨mappedChild.1, fun next =>
       let pulled := mappedChild.2 next
       (.child direction.1 pulled.1, .child direction.2 pulled.2)⟩ := by
-  simpa only [laxTensorVertexObj, vertexPairObj, Lens.mapObj,
+  simpa only [laxTensorVertexObj, vertexPairObj, Lens.mapObj, Obj.fst, Obj.snd, Obj.mk,
     Function.comp_apply, id_eq] using
     CofreeP.laxTensor_childObj Q R matterQ matterR direction
 
@@ -318,7 +318,7 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
       simpa only [runLabeled, FreeP.relabel_relabel,
         FreeP.mapObj_relabel, FreeP.relabel,
         Function.comp_def, laxTensorVertexObj, vertexPairObj,
-        rightChildren, Lens.mapObj, Function.comp_apply, id_eq,
+        rightChildren, Lens.mapObj, Obj.fst, Obj.snd, Obj.mk, Function.comp_apply, id_eq,
         Lens.Equiv.tensorAssoc_toFunA, Lens.Equiv.tensorAssoc_toFunB,
         Equiv.prodAssoc_apply, Equiv.prodAssoc_symm_apply,
         FreeP.node, FreeM.Path.cons, FreeM.Path.head,

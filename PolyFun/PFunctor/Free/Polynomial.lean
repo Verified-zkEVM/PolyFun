@@ -346,7 +346,7 @@ theorem decode_map (l : Lens P Q) (x : (FreeP P).Obj α) :
       cases u
       rfl
   | liftBind a rest ih =>
-      simp only [Lens.mapObj, map, mapShape, decode, decodeAt, FreeM.mapLens, FreeM.map]
+      simp only [Lens.mapObj, map, mapShape, decode, decodeAt, FreeM.mapLens]
       apply congrArg (FreeM.liftBind (l.toFunA a))
       funext d
       exact ih (l.toFunB a d) (fun path ↦ label ⟨l.toFunB a d, path⟩)
@@ -492,8 +492,7 @@ theorem decode_mult (x : (FreeP P ◃ FreeP P).Obj α) :
       cases u
       rfl
   | liftBind a rest ih =>
-      simp only [Lens.mapObj, mult, nest, decode, decodeAt, FreeM.append,
-        FreeM.bind]
+      simp only [Lens.mapObj, mult, nest, decode, decodeAt, FreeM.bind]
       apply congrArg (FreeM.liftBind a)
       funext b
       exact ih b (fun path ↦ middle ⟨b, path⟩)

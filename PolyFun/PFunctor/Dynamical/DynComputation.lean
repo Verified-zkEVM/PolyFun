@@ -256,17 +256,19 @@ theorem behavior_mapResult {γ : Type uγ} (f : β → γ)
   · rintro left right ⟨current, hleft, hright⟩
     subst left
     subst right
-    rcases h : M.view current with value | ⟨position, next⟩
+    rcases h : M.view current with value | query
     · exact .pure (f value)
         (by rw [dest_behavior_view, mapResult_view, h]; rfl)
         (by simp [Resumption.map, dest_behavior_view, h])
-    · exact .query position
-        (fun direction => (M.mapResult f).toDynSystem.behavior (next direction))
-        (fun direction => Resumption.map f
-          (M.toDynSystem.behavior (next direction)))
-        (by rw [dest_behavior_view, mapResult_view, h]; rfl)
-        (by simp [Resumption.map, dest_behavior_view, h])
-        (fun direction => ⟨next direction, rfl, rfl⟩)
+    · cases query with
+      | mk position next =>
+        exact .query position
+          (fun direction => (M.mapResult f).toDynSystem.behavior (next direction))
+          (fun direction => Resumption.map f
+            (M.toDynSystem.behavior (next direction)))
+          (by rw [dest_behavior_view, mapResult_view, h]; rfl)
+          (by simp [Resumption.map, dest_behavior_view, h])
+          (fun direction => ⟨next direction, rfl, rfl⟩)
   · exact ⟨state, rfl, rfl⟩
 
 @[simp] theorem mapResult_denote {γ : Type uγ} (f : β → γ)
@@ -322,18 +324,20 @@ theorem behavior_wrap {q : PFunctor.{uA₂, uB₂}} (lens : Lens p q)
   · rintro left right ⟨current, hleft, hright⟩
     subst left
     subst right
-    rcases h : M.view current with value | ⟨position, next⟩
+    rcases h : M.view current with value | query
     · exact .pure value
         (by rw [dest_behavior_view, wrap_view, h]; rfl)
         (by simp [dest_behavior_view, h])
-    · exact .query (lens.toFunA position)
-        (fun direction => (M.wrap lens).toDynSystem.behavior
-          (next (lens.toFunB position direction)))
-        (fun direction => Resumption.mapLens lens
-          (M.toDynSystem.behavior (next (lens.toFunB position direction))))
-        (by rw [dest_behavior_view, wrap_view, h]; rfl)
-        (by simp [dest_behavior_view, h])
-        (fun direction => ⟨next (lens.toFunB position direction), rfl, rfl⟩)
+    · cases query with
+      | mk position next =>
+        exact .query (lens.toFunA position)
+          (fun direction => (M.wrap lens).toDynSystem.behavior
+            (next (lens.toFunB position direction)))
+          (fun direction => Resumption.mapLens lens
+            (M.toDynSystem.behavior (next (lens.toFunB position direction))))
+          (by rw [dest_behavior_view, wrap_view, h]; rfl)
+          (by simp [dest_behavior_view, h])
+          (fun direction => ⟨next (lens.toFunB position direction), rfl, rfl⟩)
   · exact ⟨state, rfl, rfl⟩
 
 @[simp] theorem wrap_denote {q : PFunctor.{uA₂, uB₂}} (lens : Lens p q)

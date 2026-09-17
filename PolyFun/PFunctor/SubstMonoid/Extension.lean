@@ -40,13 +40,13 @@ variable (M : SubstMonoid.{uA, uB})
 /-- The extension-level unit induced by the polynomial unit lens. -/
 def pure {α : Type uB} (x : α) : Extension M α :=
   Lens.mapObj M.unit
-    (⟨PUnit.unit, fun _ => x⟩ : y.{max uA uB, uB}.Obj α)
+    (Obj.mk PUnit.unit (fun _ => x) : y.{max uA uB, uB}.Obj α)
 
 /-- The extension-level bind induced by polynomial substitution. -/
 def bind {α β : Type uB} (x : Extension M α) (f : α → Extension M β) : Extension M β :=
   Lens.mapObj M.mult
-    (⟨⟨x.1, fun d => (f (x.2 d)).1⟩,
-      fun direction => (f (x.2 direction.1)).2 direction.2⟩ :
+    (Obj.mk ⟨x.fst, fun d => (f (x.snd d)).fst⟩
+      (fun direction => (f (x.snd direction.1)).snd direction.2) :
       (M.carrier ◃ M.carrier).Obj β)
 
 instance instMonad : Monad (Extension M) where
@@ -73,17 +73,17 @@ theorem bind_pure {α : Type uB} (x : Extension M α) :
 theorem bind_assoc {α β γ : Type uB} (x : Extension M α) (f : α → Extension M β)
     (g : β → Extension M γ) : (x >>= f) >>= g = x >>= fun y => f y >>= g :=
   let source : ((M.carrier ◃ M.carrier) ◃ M.carrier).Obj γ :=
-    ⟨⟨⟨x.1, fun d => (f (x.2 d)).1⟩,
-        fun direction => (g ((f (x.2 direction.1)).2 direction.2)).1⟩,
-      fun direction =>
-        (g ((f (x.2 direction.1.1)).2 direction.1.2)).2 direction.2⟩
+    Obj.mk ⟨⟨x.fst, fun d => (f (x.snd d)).fst⟩,
+        fun direction => (g ((f (x.snd direction.1)).snd direction.2)).fst⟩
+      (fun direction =>
+        (g ((f (x.snd direction.1.1)).snd direction.1.2)).snd direction.2)
   congrArg (fun lens => Lens.mapObj lens source) M.assoc
 
 instance instLawfulMonad : LawfulMonad (Extension M) := LawfulMonad.mk'
   (bind_pure_comp := by
     intro α β f x
     exact congrArg
-      (fun lens => Lens.mapObj lens (⟨x.1, f ∘ x.2⟩ : M.carrier.Obj β)) M.unit_right)
+      (fun lens => Lens.mapObj lens (Obj.mk x.fst (f ∘ x.snd) : M.carrier.Obj β)) M.unit_right)
   (id_map := fun _ => rfl)
   (pure_bind := pure_bind M)
   (bind_assoc := bind_assoc M)
@@ -100,11 +100,11 @@ def toMonadHom (f : SubstMonoid.Hom M N) : (Extension M) →ᵐ (Extension N) wh
   toFun _ := Lens.mapObj f.toLens
   toFun_pure' x :=
     congrArg (fun lens => Lens.mapObj lens
-      (⟨PUnit.unit, fun _ => x⟩ : y.{max uA uB, uB}.Obj _)) f.map_unit
+      (Obj.mk PUnit.unit (fun _ => x) : y.{max uA uB, uB}.Obj _)) f.map_unit
   toFun_bind' x k :=
     let source : (M.carrier ◃ M.carrier).Obj _ :=
-      ⟨⟨x.1, fun d => (k (x.2 d)).1⟩,
-        fun direction => (k (x.2 direction.1)).2 direction.2⟩
+      Obj.mk ⟨x.fst, fun d => (k (x.snd d)).fst⟩
+        (fun direction => (k (x.snd direction.1)).snd direction.2)
     congrArg (fun lens => Lens.mapObj lens source) f.map_mult
 
 @[simp]

@@ -196,8 +196,8 @@ theorem laxTensor_childObj (P : PFunctor.{uA₁, uB₁})
     (direction : P.B (M.head left) × Q.B (M.head right)) :
     let combined := (laxTensor P Q).toFunA (left, right)
     let mappedChild := Lens.mapObj (laxTensor P Q)
-      (⟨(M.children left direction.1,
-          M.children right direction.2), id⟩ :
+      (Obj.mk (M.children left direction.1,
+          M.children right direction.2) id :
         (CofreeP P ⊗ CofreeP Q).Obj
           (M.Vertex (M.children left direction.1) ×
             M.Vertex (M.children right direction.2)))
