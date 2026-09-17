@@ -118,22 +118,27 @@ deliberately outside the `lake lint` scope.
 
 ## CI Mapping
 
+Pull-request validation runs against every base branch, including intermediate
+branches in a stack. Retargeting or restacking a PR requires fresh checks on the
+resulting revision; a style-only result is not the full validation suite.
+The same validation workflows also run on `merge_group: checks_requested`,
+checking the queue candidate against current `main` and earlier queued changes.
+
 - [`../../.github/workflows/ci.yml`](../../.github/workflows/ci.yml): runs
-  three independent jobs on every push to `main` and on pull requests — a
-  `build` job (`./scripts/validate.sh`, which includes
+  three independent jobs on every push to `main`, on pull requests, and on
+  merge-queue candidates — a
+  `build` job (`./scripts/validate.sh --axioms`, which includes
   `lake build PolyFun ToCslib PolyFunCslib --wfail`), a `lint` job (`lake lint`, the environment linters),
   and a `test` job (`lake test`, the
   `PolyFunTest` library). All builds pass `--wfail`, so any compiler or
   `mathlibStandardSet` warning fails CI rather than slipping through. The
-  `build` job is a required status check on `main`.
+  `build` job includes the zero-debt axiom sweep.
 - [`../../.github/workflows/check-imports.yml`](../../.github/workflows/check-imports.yml):
-  checks that `PolyFun.lean` matches the tracked source tree. `Check
-  Library File Imports` is a required status check on `main`.
+  checks that `PolyFun.lean` matches the tracked source tree.
 - [`../../.github/workflows/docs-integrity.yml`](../../.github/workflows/docs-integrity.yml):
   runs the checker's regression fixtures and `./scripts/check-docs-integrity.py`
   (CLAUDE.md symlink, tracked markdown links, repository-rooted Lean paths,
-  and module docstrings). `Check Docs Integrity` is a required status check
-  on `main`. This is the agent-documentation liveness check: any PR that
+  and module docstrings). This is the agent-documentation liveness check: any PR that
   breaks an internal link or documented Lean path in `AGENTS.md`, `README.md`,
   `CONTRIBUTING.md`, `REFERENCES.md`, or a tracked page under `docs/`, or drops
   a production/test module docstring from its prologue, will fail this job.
