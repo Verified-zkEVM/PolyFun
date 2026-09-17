@@ -14,6 +14,8 @@ public import PolyFun.PFunctor.Free.Cursor.Occurrence
 A replay tree retains a typed occurrence at every branch. Each selected leaf
 therefore reconstructs a path of the original program. The structural interface
 is independent of sampling, acceptance predicates, and the number of siblings.
+Branches may have arity zero, and different leaf addresses may reconstruct the
+same source path when their prescribed answers coincide.
 -/
 
 public section
@@ -78,10 +80,6 @@ theorem branch_trace {program : FreeM P α} {target : P.A} {ordinal : Nat}
         (⟨target, answers i⟩ :: Path.trace _ tail.path) :=
   occurrence.trace_plug (answers i) tail.path
 
-/-- Source-path invariants apply to every reconstructed replay leaf. -/
-theorem leaf_property {program : FreeM P α} (tree : ReplayTree program)
-    (property : Path program → Prop) (valid : ∀ path, property path) (leaf : Leaf tree) :
-    property leaf.path := valid leaf.path
 
 end ReplayTree
 end PFunctor.FreeM.Cursor

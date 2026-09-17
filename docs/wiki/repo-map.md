@@ -122,6 +122,7 @@ PFunctor/Free/Basic
   -> PFunctor/Free/Cursor/Append
   -> PFunctor/Free/Cursor/Occurrence
   -> PFunctor/Free/Cursor/Fork
+PFunctor/Free/Cursor/Occurrence -> PFunctor/Free/Cursor/ReplayTree
 PFunctor/{Bound, Free/Path/Execution} -> PFunctor/Free/Path/Bounded
 PFunctor/{Free/Basic, Lens/Cartesian} -> PFunctor/Free/Sigma
 PFunctor/{Resumption, Free/Basic} -> PFunctor/Free/Resumption
@@ -449,6 +450,8 @@ Mathlib/Order/Monotone/Basic -> Complexity/SecondOrderPolynomial
    only the explicit Interaction/UC/Realizability bridge crosses from the
    interaction layer into Realizability/; nothing under PFunctor/ or ITree/
    depends on Realizability/)
+Interaction/TwoParty/{Syntax, Strategy} + Interaction/Basic/StrategyOver
+  -> Interaction/TwoParty/PublicCoin
 ```
 
 `PolyFun.lean` is a generated umbrella import file, not a hand-maintained

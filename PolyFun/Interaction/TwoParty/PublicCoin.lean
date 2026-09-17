@@ -71,6 +71,7 @@ theorem toCounterpart_sender {X : Type u} {rest : X → TypeTree}
       (fun x => toCounterpart <$> observe x) := by
   simp [toCounterpart, StrategyOver.map, toCounterpartHom,
     StrategyOver.TwoParty.PublicCoinCounterpart.toCounterpartHom]
+  rfl
 
 /-- Ordinary execution samples a challenge and follows its indexed continuation. -/
 theorem toCounterpart_receiver {X : Type u} {rest : X → TypeTree}
@@ -83,5 +84,6 @@ theorem toCounterpart_receiver {X : Type u} {rest : X → TypeTree}
       (sample, next) = (do let x ← sample; pure ⟨x, toCounterpart (next x)⟩) := by
   simp [toCounterpart, StrategyOver.map, toCounterpartHom,
     StrategyOver.TwoParty.PublicCoinCounterpart.toCounterpartHom]
+  rfl
 
 end Interaction.TwoParty.PublicCoinCounterpart
