@@ -417,7 +417,7 @@ listed and rejected ("No spec applicable"). Registering the unfolding
 then meets the same mismatch on the continuation. Use `vcgen -errorOnMissingSpec` and finish
 the residual `wp` goal by rewriting with `DemonicWP.wp_apply_eq` and
 `FreeM.allOutputs_lift (P := …)`, naming the interface explicitly because its direction type
-has been reduced on the concrete polynomial (the same mechanism as 6b's `lift_bind%` bullet;
-`PolyFunTest/Do/Loops.lean`), or state the program over a generic interface so the value type
+has been reduced on the concrete polynomial (see the dependent-type lookup discussion in 6b
+and `PolyFunTest/Do/Loops.lean`), or state the program over a generic interface so the value type
 stays `P.B a`. Downstream interfaces whose `P.B a` reduces to their own type (an oracle spec's
 range, say) need their own `Spec.query`-style rule at that type for the same reason.
