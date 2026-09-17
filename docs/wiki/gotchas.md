@@ -336,15 +336,39 @@ path. Foundational citations live in
 those keys (`Hancock-Setzer`, `Spivak-Niu`, etc.) rather than copying
 prose.
 
-### 12. `Std.Do` imports are quarantined
+### 12. `Std.Do` imports are quarantined, in two tiers
 
-Only `PolyFun/Control/Do/Basic.lean`, `PolyFun/PFunctor/Free/Do.lean`, and
-`PolyFunTest/Do/` may import `Std.Do`, `Std.Internal.Do`, or `Std.Tactic.Do`
-(core's two weakest-precondition stacks and the `mvcgen` / `vcgen` tactics). The
-upstream API is evolving quickly (`vcgen` on the `Std.Internal.Do` stack is
-replacing `mvcgen`, and that stack becomes a public `Std.WP` in v4.35), so the
-dependency stays confined to those files, and everything they export is a
-construction (`def`), never a global instance: a global `Std.Do.WP` instance on
-`FreeM P` would race downstream registrations on reducible unfoldings such as
-oracle-computation types. Register the provided structures `scoped` or `local`
-downstream. See [`program-logic.md`](program-logic.md).
+The definitions (`Std.Do` and `Std.Internal.Do`: `WP`, `WPMonad`, `Triple`, the
+`@[spec]` lemmas) may be imported only by the program-logic kernel —
+`PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
+`PolyFun/ITree/Do.lean` — and by `PolyFunTest/Do/`. The tactics (`Std.Tactic.Do`:
+`mvcgen`, `vcgen`, and the `@[spec]` attribute syntax) stay in
+`PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`.
+`ToCslib/` imports neither directly. The upstream API is evolving quickly
+(`vcgen` on the `Std.Internal.Do` stack is replacing `mvcgen`, and that stack
+becomes a public `Std.WP` in v4.35), so the dependency stays confined to those
+files, and everything they export is a construction (`def`) or a `scoped`
+instance, never a global instance: a global `WP` instance on `FreeM P` would race
+downstream registrations on reducible unfoldings such as oracle-computation
+types. Register the provided structures `scoped` or `local` downstream.
+`scripts/check-modules.sh` enforces both tiers. See
+[`program-logic.md`](program-logic.md).
+
+### 12a. `vcgen` finds no spec unless the `Std.Internal.Do` root is imported
+
+`vcgen` consults the `@[spec]` database, and `Spec.bind` / `Spec.pure` live in
+`Std.Internal.Do.Triple.SpecLemmas`. A file that imports only `Std.Internal.Do.WP.Basic`
+(or reaches the stack through such a module) gets `No spec found for program …` on every
+`do` block, with an empty candidate list. Import the root `Std.Internal.Do`; the bridge
+modules under `PolyFun/Control/Monad/*/WP.lean` do so for this reason. A leaf with no
+registered specification is left as a verification condition with
+`vcgen -errorOnMissingSpec`.
+
+### 12b. Projections re-synthesize instance-implicit structure arguments
+
+`Triple`, `WPConjunctive`, and `LawfulWPMonadAttach` take their `WP` / `WPMonad` as
+instance-implicit parameters. Projecting (`h.le_wp`) or constructing (`⟨h⟩`, `refine ⟨…⟩`) a
+value whose interpretation is a *non-instance* construction (`MAlgOrdered.toWP α`,
+`MonadAttach.toWPMonadDemonic`) makes Lean synthesize the instance afresh and fail. Bind the
+construction first — `let inst := MAlgOrdered.toWP α` — so it is found as a local instance;
+`let`, not `have`, so it stays definitionally the term in the statement.

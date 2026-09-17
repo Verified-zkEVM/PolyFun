@@ -85,7 +85,7 @@ warning: The `mvcgen` tactic is experimental and still under development. Avoid 
 -/
 #guard_msgs in
 example : MonadAttach.AllOutputs (fun b => b = true ∨ b = false) flipTwo := by
-  refine MonadAttach.allOutputs_of_wp ?_
+  refine MonadAttach.allOutputs_of_wpSPred ?_
   mvcgen [flipTwo]
   intro x y
   cases x && y <;> simp

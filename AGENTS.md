@@ -110,8 +110,11 @@ and depend on this library.
   algebra, monad iter / hom), plus the program-logic
   kernel: ordered monad algebras (`Monad/Algebra`, unary and relational),
   exact monadic support over core's `MonadAttach` with the
-  always/some/never judgments (`Monad/Support`), and the core-`Std.Do`
-  quarantine root (`Do/Basic`).
+  always/some/never judgments (`Monad/Support`), their bridges to core's
+  lattice-generic `Std.Internal.Do` weakest-precondition stack
+  (`Monad/{Algebra,Support,Hom}/WP`: `toWPMonad`, demonic and angelic
+  interpretations, `vcgen`-ready), and the core-`Std.Do` quarantine root
+  (`Do/Basic`).
 - `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
   silent/visible `Control.LTS` layer and preservation by weak simulation.
 - `PolyFun/Logic/`: small logic helpers (`HEq`).
@@ -229,14 +232,17 @@ Structures use UpperCamelCase: `PFunctor`, `TypeTree`, `Decoration`,
    `./scripts/update-lib.sh ToCslib`.
 7. **Do not introduce `sorry` or `admit` in finished work.** Use `stop`
    only when explicitly preserving partial proof work during a refactor.
-8. **`Std.Do` imports are quarantined.** Only
-   `PolyFun/Control/Do/Basic.lean`, `PolyFun/PFunctor/Free/Do.lean`, and
-   `PolyFunTest/Do/` may import core `Std.Do`, `Std.Internal.Do`, or
-   `Std.Tactic.Do` (`mvcgen` / `vcgen`), and they export constructions
-   (`def`s and `scoped` instances), never global `WP` instances. `ToCslib/`
-   never imports them directly (cslib's `IsMonadHom` brings the legacy
-   `Std.Do.WP` classes in transitively; the fence is about direct imports
-   and instances). See `docs/wiki/program-logic.md`.
+8. **`Std.Do` imports are quarantined, in two tiers.** The definitions
+   (`Std.Do`, `Std.Internal.Do`: `WP`, `WPMonad`, `Triple`, spec lemmas) may
+   be imported only by the program-logic kernel — `PolyFun/Control/Monad/`,
+   `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`, `PolyFun/ITree/Do.lean` —
+   and by `PolyFunTest/Do/`. The tactics (`Std.Tactic.Do`: `mvcgen`,
+   `vcgen`, the `@[spec]` attribute syntax) stay in `PolyFun/Control/Do/`,
+   `PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`. `ToCslib/` imports
+   neither directly (cslib's `IsMonadHom` brings the legacy `Std.Do.WP`
+   classes in transitively; the fence is about direct imports and
+   instances). Fenced modules export constructions (`def`s and `scoped`
+   instances), never global `WP` instances. See `docs/wiki/program-logic.md`.
 
 ## Building
 

@@ -266,21 +266,24 @@ PFunctor.FreeM.lift`.
   - `heq_forall_iff` and `instIsEmptySigma`, currently parked in `section find_home`
     blocks in `PFunctor/Lens/Basic.lean` and `PFunctor/Equiv/Basic.lean`.
 
-### Track — heading into core, not ready to adopt
+### Track — heading into core
 
-#### Core is absorbing Loom's weakest-precondition design
+#### Core is absorbing Loom's weakest-precondition design — adopted, behind the quarantine
 
-**There are two complete WP stacks at the pin, and PolyFun bridges the other one.** The
-tree described here is `Std/Internal/Do/`; the one `Control/Do/Basic.lean` and
-`PFunctor/Free/Do.lean` target is the public `Std/Do/`, which is `SPred`/`PostShape`-indexed
-and older. Confusing them is easy and consequential — they differ on conjunctivity, which
-decides what PolyFun can express. The comparison table and that consequence are in
+**There are two complete WP stacks at the pin, and PolyFun now bridges both.** The tree
+described here is `Std/Internal/Do/`, the lattice-generic stack that `vcgen` drives and that
+PolyFun's program-logic kernel targets through `Control/Monad/{Algebra,Support,Hom}/WP.lean`;
+the older public `Std/Do/` is `SPred`/`PostShape`-indexed and is what `Control/Do/Basic.lean`
+and `PFunctor/Free/Do.lean` still target for the `mvcgen` smoke tests. Confusing them is easy
+and consequential — they differ on conjunctivity, which decides what PolyFun can express. The
+comparison table and that consequence are in
 [`docs/wiki/program-logic.md`](../wiki/program-logic.md#the-two-upstream-wp-stacks); the
 short version is that `Std.Do.PredTrans` makes conjunctivity a *structure field* stated as a
-bi-entailment, which is why the demonic support reading has a `WP` instance and the angelic
-one provably cannot.
+bi-entailment, which is why the demonic support reading has a `Std.Do.WP` instance and the
+angelic one provably cannot, while the inequational `Std.Internal.Do.WPMonad` admits both
+readings (`MonadAttach.toWPMonadDemonic` / `toWPMonadAngelic`).
 
-At the pin, `Std/Internal/Do/` contains a lattice-generic weakest-precondition stack:
+At the pin, `Std/Internal/Do/` contains:
 
 ```lean
 -- Std/Internal/Do/Assertion.lean
@@ -294,12 +297,9 @@ class WP (Prog : Type u) (Value : outParam (Type v))
 ```
 
 together with `WP/Frame.lean`, `WP/Conjunctive.lean`, `Triple/`, and an `Order/`
-subtree. Upstream of the pin this whole tree was renamed out of `Internal` into a
-public `Std.WP` namespace (#14783) and gained `Std.WP.LawfulWPMonadAttach` (#14801),
-whose single field concludes from a `MonadAttach.CanReturn` witness directly and which
-**drops the `Std.Do.Internal.Ensures` formulation** that `MonadAttach.toWPSound` is built
-on. Timing matters here: `src/Std/` at `v4.34.0` still has no `WP` directory, so all
-of this lands in **v4.35**, and a v4.34 bump buys none of it.
+subtree. Upstream of the pin this whole tree is renamed out of `Internal` into a public
+`Std.WP` namespace (#14783) and gains `Std.WP.LawfulWPMonadAttach` (#14801), whose single
+field concludes from a `MonadAttach.CanReturn` witness directly. Both land in **v4.35**.
 
 This is structurally PolyFun's `MAlgOrdered` — a monotone predicate transformer into a
 complete lattice — and core's frame and conjunctivity layers sit where a relational
@@ -308,34 +308,36 @@ extension of it would sit. Its author is the first author of the Loom paper that
 PolyFun adapted from Loom, and that VCVio depends on a pinned Loom fork for, is being
 upstreamed into Lean core.
 
-**Verdict: track, do not adopt yet.** Three reasons:
+**Verdict: adopted at v4.34.0, with the three original reservations answered in place:**
 
-1. It is `Std.Internal` at the pin and public only from v4.35.
-2. It is churning: several breaking refactors landed in the week this survey was
-   written, and more since.
-3. It is built on `Lean.Order.CompleteLattice`, while `MAlgOrdered` uses Mathlib's.
-   Reconciling those is real work, not a rename — and the gap is total: `Lean.Order`
-   has **zero** occurrences anywhere in the pinned Mathlib. No instance, no coercion,
-   no bridge lemma. Adopting core's stack means porting `MAlgOrdered` off Mathlib's
-   order hierarchy. (`Lean.Order.PartialOrder` is on `Sort u` with `⊑` and no `LE`
-   superclass; its `CompleteLattice.sup` takes a *predicate* where Mathlib's `sSup`
-   takes a `Set`. Same data, no connective tissue. The `Std.Internal.Do` extension's
-   `scoped notation` for `⊓`/`⊔`/`⊤`/`⨅` also collides with Mathlib's.)
-
-Revisit after a toolchain bump. Recording the trajectory now is the point — this is
-exactly the drift that produced the `MonadSupport` situation.
+1. It is `Std.Internal` at the pin and public only from v4.35 → the kernel's bridges are
+   behind the two-tier `Std.Do` quarantine (`scripts/check-modules.sh`), every construction
+   is `local`/`scoped` rather than a global instance, and each declaration that the v4.35
+   rename touches carries an `-- upstream:` comment (`Std.Internal.Do` → `Std.WP`,
+   `EPost.Nil` → `EStack⟨⟩`, `MonadAttach.LawfulWPMonadAttach` → `Std.WP.LawfulWPMonadAttach`).
+2. It is churning → the churn is confined to those comments and to
+   `PolyFunTest/Do/`, whose `#guard_msgs` texts pin the experimental-tactic diagnostic.
+3. It is built on `Lean.Order.CompleteLattice`, while `MAlgOrdered` uses Mathlib's, and the
+   pinned Mathlib has no bridge → `ToCslib/Order/LeanOrder.lean` supplies it (Mathlib's
+   `CompleteLattice` as core's, low priority, definitionally Mathlib's `≤`), so `MAlgOrdered`
+   is **not** ported off Mathlib's hierarchy; `MAlgOrdered.toWPMonad` is a bridge whose `wp`
+   is `MAlgOrdered.wp` by `rfl`, and `MAlgOrdered.top_eq_top` / `meet_eq_inf` / `join_eq_sup`
+   move between the two spellings of the lattice operations (core's `scoped notation` for
+   `⊓`/`⊔`/`⊤` collides with Mathlib's, so transfer lemmas stay out of the `Lean.Order`
+   namespace).
 
 #### `mvcgen` is deprecated in favour of `vcgen`
 
 Upstream marks `mvcgen` deprecated via `deprecated_syntax`, directing users to `vcgen`
 (#14874, `since := "2026-08-21"`). That deprecation is on `master` only — not at the
 `v4.34.0` pin — so it is a **v4.35** item. `vcgen` itself already exists at the pin
-(`Std/Tactic/Do/Syntax.lean:464`), **but it is not a drop-in replacement for PolyFun's
-`mvcgen` uses**: `vcgen` consumes `Std.Internal.Do.WPMonad` / `Std.Internal.Do.Triple`
-(`Lean/Elab/Tactic/Do/Internal/VCGen/Frontend.lean`), not the `Std.Do.WP` structures
-PolyFun's bridge provides. Retargeting therefore needs Internal-stack instances first, not a
-toolchain bump; the previous claim that it "needs no toolchain bump and can be done whenever
-convenient" was wrong on that point.
+(`Std/Tactic/Do/Syntax.lean:464`) and consumes `Std.Internal.Do.WPMonad` /
+`Std.Internal.Do.Triple` (`Lean/Elab/Tactic/Do/Internal/VCGen/Frontend.lean`), which the
+bridges above provide, so it runs through PolyFun's semantics
+(`PolyFunTest/Do/{Algebra,Support}.lean`). It warns on every call (`mvcgen.warning`; behind
+`experimental.vcgen` from v4.35), so production proofs do not call it and the test canaries
+assert the warning with `#guard_msgs` under `--wfail`. The `mvcgen` smoke tests on the
+`Std.Do` bridge keep running until that bridge is retired.
 
 Relatedly, `Batteries.Classes.SatisfiesM` has been deprecated in favour of
 `Std.Do.Triple`. The `SatisfiesM` / `MonadSatisfying` line — the other abstraction

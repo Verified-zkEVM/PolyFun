@@ -17,7 +17,7 @@ semantics in two ways:
 
 * **Through a handler**: `FreeM.wpMonadOfHandler s` interprets programs by
   `FreeM.liftM s` into any monad already carrying a `WPMonad` structure, via
-  `MonadHom.transportWPMonad`. Registration is left to the caller.
+  `MonadHom.transportSPredWPMonad`. Registration is left to the caller.
 * **Demonically, with operations uninterpreted**: the *scoped* instances
   `instWPAll` / `instWPMonadAll` interpret `wp⟦x⟧ Q` as "every possible output of
   `x` satisfies `Q`" (the `MonadAttach.toWP` structure at the `.pure` post
@@ -46,7 +46,7 @@ structure. Not an instance — register it scoped or local downstream. -/
 @[instance_reducible]
 def wpMonadOfHandler {n : Type uB → Type w} {ps : PostShape.{uB}} [Monad n]
     [WPMonad n ps] (s : Handler n P) : WPMonad (FreeM P) ps :=
-  (FreeM.liftMHom s).transportWPMonad
+  (FreeM.liftMHom s).transportSPredWPMonad
 
 namespace DemonicWP
 
