@@ -29,6 +29,32 @@ attribute.
 -/
 register_simp_attr freeM_unfold
 
+/-!
+## The simp normal form of an operation node
+
+Upstream's `FreeM.liftBind_eq` is a `simp` lemma, so simplification presents an operation
+node `FreeM.liftBind a k` as `(FreeM.lift a).bind k` — and, when results and directions
+share a universe, `FreeM.bind_eq_bind` takes it on to `FreeM.lift a >>= k`. PolyFun states its
+`simp` equations on those two spellings (suffixes `_lift_bind` and `_lift_bind'`) and keeps the
+constructor spelling (suffix `_liftBind`) for `rw` on `match`-shaped goals.
+
+Both normal forms carry the direction type `P.B a` as an implicit type argument of the bind,
+and the simplifier indexes implicit type arguments. On a concrete polynomial that type reduces
+(to `D a` for `⟨I, D⟩`, or to `X` for `TypeTree.basePFunctor`), so a lemma indexed on `P.B a`
+would never match there. The two elaborators below produce the normal forms with that
+argument marked `no_index`; every normal-form `simp` lemma is stated through them.
+-/
+
+/-- The simp normal form `(FreeM.lift a).bind k` of an operation node, with the direction type
+left unindexed so lemmas stated with it also match nodes over concrete polynomials. -/
+macro "lift_bind% " a:term:max k:term:max : term =>
+  `(@PFunctor.FreeM.bind _ (no_index _) _ (PFunctor.FreeM.lift $a) $k)
+
+/-- The simp normal form `FreeM.lift a >>= k` of an operation node whose results and directions
+share a universe, with the direction type left unindexed. -/
+macro "lift_bind'% " a:term:max k:term:max : term =>
+  `(@Bind.bind _ _ (no_index _) _ (PFunctor.FreeM.lift $a) $k)
+
 universe u v uA uB uA₂ uB₂ uA₃ uB₃ uδ uβ uγ
 
 namespace PFunctor
@@ -46,20 +72,31 @@ theorem map_pure {X : Type uβ} {Y : Type uγ} (f : X → Y) (x : X) :
     FreeM.map (P := P) f (pure x : FreeM P X) = (pure (f x) : FreeM P Y) :=
   rfl
 
-/-- Mapping a value through a query preserves its position and maps every
-continuation. -/
+/-- Mapping through an operation node maps every continuation. Stated on the simp
+normal form of a node, `(FreeM.lift a).bind rest`, so it fires after `FreeM.liftBind_eq`
+has normalised the constructor. -/
+@[simp]
+theorem map_lift_bind {X : Type uβ} {Y : Type uγ} (f : X → Y)
+    (a : P.A) (rest : P.B a → FreeM P X) :
+    FreeM.map f (lift_bind% a rest) =
+      (FreeM.lift a).bind (fun direction ↦ FreeM.map f (rest direction)) :=
+  rfl
+
+/-- Constructor spelling of `map_lift_bind`, for `rw` on `match`-shaped goals. -/
 theorem map_liftBind {X : Type uβ} {Y : Type uγ} (f : X → Y)
     (a : P.A) (rest : P.B a → FreeM P X) :
     FreeM.map f (FreeM.liftBind a rest) =
       FreeM.liftBind a (fun direction ↦ FreeM.map f (rest direction)) :=
   rfl
 
-/-- Mapping through a query written as `lift` followed by `bind` maps every
-continuation without requiring clients to expose `liftBind`. -/
-theorem map_lift_bind {X : Type uβ} {Y : Type uγ} (f : X → Y)
+/-- `Functor.map` through an operation node whose result type lives in a universe
+other than the direction universe. When the universes agree the node normalises to
+`FreeM.lift a >>= rest` instead and the generic `map_bind` applies. -/
+@[simp]
+theorem functorMap_lift_bind {X Y : Type v} (f : X → Y)
     (a : P.A) (rest : P.B a → FreeM P X) :
-    FreeM.map f ((FreeM.lift a).bind rest) =
-      (FreeM.lift a).bind (fun direction ↦ FreeM.map f (rest direction)) :=
+    f <$> lift_bind% a rest =
+      (FreeM.lift a).bind (fun direction ↦ f <$> rest direction) :=
   rfl
 
 /-! ## Fixed-point presentation -/
@@ -140,6 +177,13 @@ theorem rootSatisfies_pure (positionPred : P.A → Prop) (leafPred : α → Prop
   rfl
 
 @[simp]
+theorem rootSatisfies_lift_bind (positionPred : P.A → Prop) (leafPred : α → Prop)
+    (position : P.A) (next : P.B position → FreeM P α) :
+    RootSatisfies positionPred leafPred (lift_bind% position next) =
+      positionPred position :=
+  rfl
+
+/-- Constructor spelling of `rootSatisfies_lift_bind`. -/
 theorem rootSatisfies_liftBind (positionPred : P.A → Prop) (leafPred : α → Prop)
     (position : P.A) (next : P.B position → FreeM P α) :
     RootSatisfies positionPred leafPred
@@ -211,17 +255,18 @@ theorem mapLens_pure (l : Lens P Q) (x : α) :
     (pure x : FreeM P α).mapLens l = FreeM.pure x :=
   rfl
 
-/-- Interface transport exposes the `liftBind` constructor without requiring
-clients to unfold its compatibility presentation as `lift` followed by `bind`. -/
+/-- Interface transport through an operation node, on the simp normal form. -/
 @[simp]
+theorem mapLens_lift_bind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α) :
+    (lift_bind% a rest).mapLens l =
+      (FreeM.lift (l.toFunA a)).bind (fun d ↦ (rest (l.toFunB a d)).mapLens l) :=
+  rfl
+
+/-- Constructor spelling of `mapLens_lift_bind`. -/
 theorem mapLens_liftBind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α) :
     (FreeM.liftBind a rest).mapLens l =
       FreeM.liftBind (l.toFunA a) (fun d ↦ (rest (l.toFunB a d)).mapLens l) :=
   rfl
-
-theorem mapLens_lift_bind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α) :
-    ((FreeM.lift a).bind rest).mapLens l =
-      FreeM.liftBind (l.toFunA a) (fun d => (rest (l.toFunB a d)).mapLens l) := rfl
 
 @[simp]
 theorem mapLens_id (x : FreeM P α) :

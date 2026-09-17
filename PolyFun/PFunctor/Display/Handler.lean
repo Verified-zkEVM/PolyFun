@@ -79,7 +79,23 @@ theorem liftM_pure
     S.liftM T (pure x) d f df = T.leaf F x d.down :=
   rfl
 
+/-- Displayed handler extension through an operation node. Results and directions share
+a universe here, so the node's simp normal form is `FreeM.lift a >>= rest`. -/
 @[simp]
+theorem liftM_lift_bind
+    {Q : PFunctor.{uA', uB'}}
+    (S : Display.{uA, uB, uC, uD} P)
+    (T : Display.{uA', uB', uC', uD'} Q)
+    {E : Type uB} {F : E → Type uF}
+    (a : P.A) (rest : P.B a → FreeM P E)
+    (d : FreeM.Displayed (S.toDisplayedAlgebra F) (FreeM.lift a >>= rest))
+    (f : (a : P.A) → FreeM Q (P.B a)) (df : Handler S T f) :
+    S.liftM T (lift_bind'% a rest) d f df =
+      T.bind (f a) (df a d.1) (fun b => (rest b).liftM f)
+        (fun b e => S.liftM T (rest b) (d.2 b e) f df) :=
+  rfl
+
+/-- Constructor spelling of `liftM_lift_bind`. -/
 theorem liftM_liftBind
     {Q : PFunctor.{uA', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
@@ -181,9 +197,10 @@ theorem liftM_id
       rfl
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
+      simp only [FreeM.pure_bind] at children
       rw [S.transport_proof_irrel F
-        (FreeM.liftM_lift_eq_self (FreeM.liftBind a rest))
-        (liftM_id_eq (FreeM.liftBind a rest))]
+        (FreeM.liftM_lift_eq_self ((FreeM.lift a).bind rest))
+        (liftM_id_eq ((FreeM.lift a).bind rest))]
       change S.transport F (liftM_id_eq (FreeM.liftBind a rest))
           ⟨c, fun b e =>
             S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
@@ -250,9 +267,10 @@ theorem liftM_bind
       rfl
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
+      simp only [FreeM.pure_bind] at children
       rw [T.transport_proof_irrel G
-        (FreeM.liftM_bind f (FreeM.liftBind a rest) g)
-        (liftM_bind_eq f g (FreeM.liftBind a rest))]
+        (FreeM.liftM_bind f ((FreeM.lift a).bind rest) g)
+        (liftM_bind_eq f g ((FreeM.lift a).bind rest))]
       let k : P.B a → FreeM Q E := fun b => (rest b).liftM f
       let h : E → FreeM Q E' := fun x => (g x).liftM f
       let childEq : (fun b => ((rest b).bind g).liftM f) =
@@ -350,9 +368,10 @@ theorem liftM_comp
       rfl
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
+      simp only [FreeM.pure_bind] at children
       rw [U.transport_proof_irrel F
-        (FreeM.liftM_comp (FreeM.liftBind a rest) first second)
-        (liftM_comp_eq first second (FreeM.liftBind a rest))]
+        (FreeM.liftM_comp ((FreeM.lift a).bind rest) first second)
+        (liftM_comp_eq first second ((FreeM.lift a).bind rest))]
       let k : P.B a → FreeM Q E := fun b => (rest b).liftM first
       let childEq : (fun b => (k b).liftM second) =
           (fun b => (rest b).liftM fun a => (first a).liftM second) :=

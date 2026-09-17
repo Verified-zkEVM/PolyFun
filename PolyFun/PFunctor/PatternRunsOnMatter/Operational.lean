@@ -31,6 +31,10 @@ opaque to simp and typeclass resolution, and needs no
 `allowUnsafeReducibility`. -/
 attribute [local implicit_reducible] PFunctor.tensor
 
+/- Path indices are compared at implicit transparency; the node normal form
+`(FreeM.lift a).bind rest` and the constructor `FreeM.liftBind a rest` must agree there. -/
+attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift
+
 variable {P : PFunctor.{pA, pB}} {Q : PFunctor.{qA, qB}}
 
 /-- Decode the synchronized object produced by `runObj` into an ordinary

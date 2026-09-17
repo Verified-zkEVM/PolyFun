@@ -52,7 +52,16 @@ def leftMap {K : E → Type uH} (mapLeaf : (x : E) → I x → K x)
     leftMap (S := S) (T := T) mapLeaf (pure x) (S.leaf I x dx) =
       (Display.parallelSum S T).leaf K x (mapLeaf x dx) := rfl
 
-@[simp] theorem leftMap_liftBind {K : E → Type uH} (mapLeaf : (x : E) → I x → K x) (a : P.A)
+@[simp] theorem leftMap_lift_bind {K : E → Type uH} (mapLeaf : (x : E) → I x → K x) (a : P.A)
+    (next : P.B a → FreeM P E)
+    (d : FreeM.Displayed (S.toDisplayedAlgebra I) ((FreeM.lift a).bind next)) :
+    leftMap (T := T) mapLeaf (lift_bind% a next) d =
+      ⟨ULift.up d.1, fun answer evidence =>
+        leftMap (T := T) mapLeaf (next answer)
+          (d.2 answer evidence.down)⟩ := rfl
+
+/-- Constructor spelling of `leftMap_lift_bind`. -/
+theorem leftMap_liftBind {K : E → Type uH} (mapLeaf : (x : E) → I x → K x) (a : P.A)
     (next : P.B a → FreeM P E) (c : S.position a)
     (children : (answer : P.B a) → S.direction a c answer →
       FreeM.Displayed (S.toDisplayedAlgebra I) (next answer)) :
@@ -87,7 +96,16 @@ def rightMap {K : E → Type uH} (mapLeaf : (x : E) → I x → K x)
     rightMap (S := S) (T := T) mapLeaf (pure x) (T.leaf I x dx) =
       (Display.parallelSum S T).leaf K x (mapLeaf x dx) := rfl
 
-@[simp] theorem rightMap_liftBind {K : E → Type uH} (mapLeaf : (x : E) → I x → K x) (b : Q.A)
+@[simp] theorem rightMap_lift_bind {K : E → Type uH} (mapLeaf : (x : E) → I x → K x) (b : Q.A)
+    (next : Q.B b → FreeM Q E)
+    (d : FreeM.Displayed (T.toDisplayedAlgebra I) ((FreeM.lift b).bind next)) :
+    rightMap (S := S) mapLeaf (lift_bind% b next) d =
+      ⟨ULift.up d.1, fun answer evidence =>
+        rightMap (S := S) mapLeaf (next answer)
+          (d.2 answer evidence.down)⟩ := rfl
+
+/-- Constructor spelling of `rightMap_lift_bind`. -/
+theorem rightMap_liftBind {K : E → Type uH} (mapLeaf : (x : E) → I x → K x) (b : Q.A)
     (next : Q.B b → FreeM Q E) (c : T.position b)
     (children : (answer : Q.B b) → T.direction b c answer →
       FreeM.Displayed (T.toDisplayedAlgebra I) (next answer)) :
@@ -130,7 +148,17 @@ def parallelAfterLeftReturn (x : E) (dx : I x)
         (fun result : E × V => I result.1 × J result.2)
         (x, y) (dx, dy) := rfl
 
-@[simp] theorem parallelAfterLeftReturn_liftBind
+@[simp] theorem parallelAfterLeftReturn_lift_bind
+    (x : E) (dx : I x) (b : Q.A) (next : Q.B b → FreeM Q V)
+    (d : FreeM.Displayed (T.toDisplayedAlgebra J) ((FreeM.lift b).bind next)) :
+    parallelAfterLeftReturn (S := S) x dx
+        (lift_bind% b next) d =
+      ⟨ULift.up d.1, fun answer evidence =>
+        parallelAfterLeftReturn (S := S) x dx (next answer)
+          (d.2 answer evidence.down)⟩ := rfl
+
+/-- Constructor spelling of `parallelAfterLeftReturn_lift_bind`. -/
+theorem parallelAfterLeftReturn_liftBind
     (x : E) (dx : I x) (b : Q.A) (next : Q.B b → FreeM Q V)
     (c : T.position b)
     (children : (answer : Q.B b) → T.direction b c answer →
@@ -171,7 +199,37 @@ def parallel (leftProgram : FreeM P E) (rightProgram : FreeM Q V)
         (fun result : E × V => I result.1 × J result.2)
         (x, y) (dx, dy) := rfl
 
-@[simp] theorem parallel_liftBind_pure
+@[simp] theorem parallel_lift_bind_pure
+    (a : P.A) (next : P.B a → FreeM P E)
+    (d : FreeM.Displayed (S.toDisplayedAlgebra I) ((FreeM.lift a).bind next))
+    (y : V) (dy : J y) :
+    parallel (T := T) (lift_bind% a next) (pure y) d
+        (T.leaf J y dy) =
+      ⟨ULift.up d.1, fun answer evidence =>
+        parallel (T := T) (next answer) (pure y)
+          (d.2 answer evidence.down) (T.leaf J y dy)⟩ := rfl
+
+@[simp] theorem parallel_pure_lift_bind
+    (x : E) (dx : I x) (b : Q.A) (next : Q.B b → FreeM Q V)
+    (d : FreeM.Displayed (T.toDisplayedAlgebra J) ((FreeM.lift b).bind next)) :
+    parallel (S := S) (pure x) (lift_bind% b next) (S.leaf I x dx) d =
+      ⟨ULift.up d.1, fun answer evidence =>
+        parallel (S := S) (pure x) (next answer) (S.leaf I x dx)
+          (d.2 answer evidence.down)⟩ := rfl
+
+@[simp] theorem parallel_lift_bind_lift_bind
+    (a : P.A) (nextP : P.B a → FreeM P E)
+    (dP : FreeM.Displayed (S.toDisplayedAlgebra I) ((FreeM.lift a).bind nextP))
+    (b : Q.A) (nextQ : Q.B b → FreeM Q V)
+    (dQ : FreeM.Displayed (T.toDisplayedAlgebra J) ((FreeM.lift b).bind nextQ)) :
+    parallel (lift_bind% a nextP) (lift_bind% b nextQ) dP dQ =
+      ⟨(dP.1, dQ.1), fun answer evidence =>
+        parallel (nextP answer.1) (nextQ answer.2)
+          (dP.2 answer.1 evidence.1)
+          (dQ.2 answer.2 evidence.2)⟩ := rfl
+
+/-- Constructor spelling of `parallel_lift_bind_pure`. -/
+theorem parallel_liftBind_pure
     (a : P.A) (next : P.B a → FreeM P E) (c : S.position a)
     (children : (answer : P.B a) → S.direction a c answer →
       FreeM.Displayed (S.toDisplayedAlgebra I) (next answer))
@@ -182,7 +240,8 @@ def parallel (leftProgram : FreeM P E) (rightProgram : FreeM Q V)
         parallel (T := T) (next answer) (.pure y)
           (children answer evidence.down) (T.leaf J y dy)⟩ := rfl
 
-@[simp] theorem parallel_pure_liftBind
+/-- Constructor spelling of `parallel_pure_lift_bind`. -/
+theorem parallel_pure_liftBind
     (x : E) (dx : I x) (b : Q.A) (next : Q.B b → FreeM Q V)
     (c : T.position b)
     (children : (answer : Q.B b) → T.direction b c answer →
@@ -193,7 +252,8 @@ def parallel (leftProgram : FreeM P E) (rightProgram : FreeM Q V)
         parallel (S := S) (.pure x) (next answer) (S.leaf I x dx)
           (children answer evidence.down)⟩ := rfl
 
-@[simp] theorem parallel_liftBind_liftBind
+/-- Constructor spelling of `parallel_lift_bind_lift_bind`. -/
+theorem parallel_liftBind_liftBind
     (a : P.A) (nextP : P.B a → FreeM P E) (cP : S.position a)
     (childrenP : (answer : P.B a) → S.direction a cP answer →
       FreeM.Displayed (S.toDisplayedAlgebra I) (nextP answer))

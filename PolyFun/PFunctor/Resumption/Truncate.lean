@@ -78,7 +78,7 @@ theorem isTotalRollBound_truncate (k : ℕ) (computation : Resumption p β) :
       · rw [truncate_succ, h]
         change (FreeM.liftBind position fun direction =>
           truncate k (next direction)).IsTotalRollBound (k + 1)
-        rw [FreeM.isTotalRollBound_lift_bind_iff]
+        rw [FreeM.isTotalRollBound_liftBind_iff]
         refine ⟨by omega, fun direction => ?_⟩
         simpa using ih (next direction)
 
@@ -146,7 +146,7 @@ theorem truncate_eq_map_some_iff (k : ℕ) (computation : Resumption p β) (prog
                 (ih direction k (next' direction)).mp (congrFun hnext' direction)
               constructor
               · apply Resumption.eq_of_dest_eq
-                rw [hdest, FreeM.dest_toResumption_liftBind]
+                rw [hdest, FreeM.dest_toResumption_lift_bind]
                 apply congrArg Sum.inr
                 apply Sigma.ext
                 · rfl
@@ -162,7 +162,7 @@ theorem truncate_eq_map_some_iff (k : ℕ) (computation : Resumption p β) (prog
             rw [FreeM.isTotalRollBound_lift_bind_iff] at hbound
             omega
         | succ k =>
-            rw [truncate_succ, FreeM.dest_toResumption_liftBind]
+            rw [truncate_succ, FreeM.dest_toResumption_lift_bind]
             change FreeM.liftBind position
                 (fun direction => truncate k (FreeM.toResumption (next direction))) =
               FreeM.liftBind position

@@ -75,7 +75,7 @@ theorem run_serialSchedule_return (impl : Handler (StateT S m) p) (id : Client)
     run impl (serialSchedule id n) state = pure state := by
   induction n with
   | zero => rfl
-  | succ n ih => simp [serialSchedule, run, step, emit, hclient, deliver, hqueue, ih]
+  | succ n ih => simp [serialSchedule, run, step, emit_ready_pure hclient, deliver, hqueue, ih]
 
 /-- A bounded adaptive client completes within its allocated FIFO schedule. The full returned
 state agrees with the traced oracle game, including the number of fresh tickets actually used. -/

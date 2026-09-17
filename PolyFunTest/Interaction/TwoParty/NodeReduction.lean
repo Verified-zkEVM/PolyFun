@@ -11,13 +11,18 @@ public import PolyFun.Interaction.TwoParty.Strategy
 /-!
 # Ordinary-import reduction of two-party nodes
 
-Deterministic counterpart lifting and path observations simplify using the public node API.
-The tests keep dependent path indices intact through an ordinary `simp` call.
+Deterministic counterpart lifting and path observations simplify using the public node API
+under an ordinary `simp` call. Simplification presents a node as `PFunctor.FreeM.lift X >>= rest`
+while hypotheses keep the `TypeTree.node X rest` spelling they were declared with; the two agree
+once `FreeM.bind` and `FreeM.lift` unfold at implicit transparency. The attribute below is the
+local form of that upstream change (`dtumad/cslib`, branch `polyfun/freem-implicit-reducible`).
 -/
 
 public section
 
 open Interaction Interaction.TwoParty
+
+attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift
 
 variable {m : Type → Type} [Monad m] [LawfulMonad m] {X : Type}
 
@@ -37,7 +42,8 @@ example (sample : m X) :
       ((fun x => ⟨x, PUnit.unit⟩) <$> sample)
       (StrategyOver.TwoParty.Counterpart.liftId (m := m) (fun _ => PUnit.unit)) =
         (fun x => ⟨x, PUnit.unit⟩) <$> sample := by
-  simp only [StrategyOver.TwoParty.Counterpart.liftId_sender,
+  simp only [PFunctor.FreeM.liftBind_eq, PFunctor.FreeM.bind_eq_bind,
+    StrategyOver.TwoParty.Counterpart.liftId_sender,
     StrategyOver.TwoParty.Counterpart.liftId_done, run_sender, run_done,
     map_eq_pure_bind, bind_assoc, pure_bind]
 

@@ -24,8 +24,10 @@ namespace PFunctor.FreeM
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
-/- Lean compares path indices over `liftBind` at implicit transparency. -/
-attribute [local implicit_reducible] FreeM.bind FreeMonoid
+/- Path indices are compared at implicit transparency; `FreeM.bind` and `FreeM.lift` must unfold
+there so the normal form `(FreeM.lift a).bind next` of a node agrees with the constructor
+`FreeM.liftBind a next` presented by pattern matching. -/
+attribute [local implicit_reducible] FreeM.bind FreeM.lift FreeMonoid
 
 /-- Execute a free program while returning the typed path selected by the
 answers received during that execution. -/
@@ -39,7 +41,20 @@ def withPath : (program : FreeM P α) → FreeM P (Path program)
 @[simp] theorem withPath_pure (x : α) :
     withPath (pure x : FreeM P α) = pure ⟨⟩ := rfl
 
-@[simp] theorem withPath_liftBind (a : P.A) (next : P.B a → FreeM P α) :
+/-- Path execution through an operation node, on the simp normal form of the node. -/
+@[simp] theorem withPath_lift_bind (a : P.A) (next : P.B a → FreeM P α) :
+    withPath (lift_bind% a next) =
+      (FreeM.lift a).bind fun answer =>
+        FreeM.map (Path.cons a next answer) (withPath (next answer)) := rfl
+
+/-- `withPath_lift_bind` when results and directions share a universe. -/
+@[simp] theorem withPath_lift_bind' {α : Type uB} (a : P.A) (next : P.B a → FreeM P α) :
+    withPath (lift_bind'% a next) =
+      (FreeM.lift a).bind fun answer =>
+        FreeM.map (Path.cons a next answer) (withPath (next answer)) := rfl
+
+/-- Constructor spelling of `withPath_lift_bind`. -/
+theorem withPath_liftBind (a : P.A) (next : P.B a → FreeM P α) :
     withPath (FreeM.liftBind a next) =
       FreeM.liftBind a fun answer =>
         FreeM.map (fun path : Path (next answer) =>
@@ -87,12 +102,25 @@ def trace : (program : FreeM P α) → Path program → PFunctor.TraceList P
 @[simp] theorem trace_pure (x : α) (path : Path (pure x : FreeM P α)) :
     trace (pure x) path = [] := rfl
 
-/- The path constructor's hidden direction type specializes when the polynomial is concrete.
-Index the query constructor and leave dependent path matching to the unifier. -/
+/-- The trace through an operation node, on the simp normal form of the node. The path is
+left as a variable and projected on the right, so the equation fires on any path term. -/
+@[simp] theorem trace_lift_bind (a : P.A) (next : P.B a → FreeM P α)
+    (path : Path ((FreeM.lift a).bind next)) :
+    trace (lift_bind% a next) path =
+      ⟨a, Path.head a next path⟩ :: trace (next (Path.head a next path)) (Path.tail a next path) :=
+  rfl
 
-@[simp] theorem trace_liftBind (a : P.A) (next : P.B a → FreeM P α)
+/-- `trace_lift_bind` when results and directions share a universe. -/
+@[simp] theorem trace_lift_bind' {α : Type uB} (a : P.A) (next : P.B a → FreeM P α)
+    (path : Path (FreeM.lift a >>= next)) :
+    trace (lift_bind'% a next) path =
+      ⟨a, Path.head a next path⟩ :: trace (next (Path.head a next path)) (Path.tail a next path) :=
+  rfl
+
+/-- Constructor spelling of `trace_lift_bind`. -/
+theorem trace_liftBind (a : P.A) (next : P.B a → FreeM P α)
     (answer : P.B a) (tail : Path (next answer)) :
-    trace (FreeM.liftBind a next) (no_index ⟨answer, tail⟩) =
+    trace (FreeM.liftBind a next) ⟨answer, tail⟩ =
       ⟨a, answer⟩ :: trace (next answer) tail := rfl
 
 /-- The visited input positions of a typed execution path, preserving their order and repeats. -/
@@ -104,9 +132,22 @@ theorem positions_pure (x : α) (path : Path (pure x : FreeM P α)) :
     positions (pure x) path = [] := rfl
 
 @[simp]
+theorem positions_lift_bind (a : P.A) (next : P.B a → FreeM P α)
+    (path : Path ((FreeM.lift a).bind next)) :
+    positions (lift_bind% a next) path =
+      a :: positions (next (Path.head a next path)) (Path.tail a next path) := rfl
+
+/-- `positions_lift_bind` when results and directions share a universe. -/
+@[simp]
+theorem positions_lift_bind' {α : Type uB} (a : P.A) (next : P.B a → FreeM P α)
+    (path : Path (FreeM.lift a >>= next)) :
+    positions (lift_bind'% a next) path =
+      a :: positions (next (Path.head a next path)) (Path.tail a next path) := rfl
+
+/-- Constructor spelling of `positions_lift_bind`. -/
 theorem positions_liftBind (a : P.A) (next : P.B a → FreeM P α)
     (answer : P.B a) (tail : Path (next answer)) :
-    positions (FreeM.liftBind a next) (no_index ⟨answer, tail⟩) =
+    positions (FreeM.liftBind a next) ⟨answer, tail⟩ =
       a :: positions (next answer) tail := rfl
 
 /-- Agreement at the visited positions preserves deterministic execution, using the public
@@ -135,9 +176,21 @@ def length : (program : FreeM P α) → Path program → Nat
 @[simp] theorem length_pure (x : α) (path : Path (pure x : FreeM P α)) :
     length (pure x) path = 0 := rfl
 
-@[simp] theorem length_liftBind (a : P.A) (next : P.B a → FreeM P α)
+@[simp] theorem length_lift_bind (a : P.A) (next : P.B a → FreeM P α)
+    (path : Path ((FreeM.lift a).bind next)) :
+    length (lift_bind% a next) path =
+      length (next (Path.head a next path)) (Path.tail a next path) + 1 := rfl
+
+/-- `length_lift_bind` when results and directions share a universe. -/
+@[simp] theorem length_lift_bind' {α : Type uB} (a : P.A) (next : P.B a → FreeM P α)
+    (path : Path (FreeM.lift a >>= next)) :
+    length (lift_bind'% a next) path =
+      length (next (Path.head a next path)) (Path.tail a next path) + 1 := rfl
+
+/-- Constructor spelling of `length_lift_bind`. -/
+theorem length_liftBind (a : P.A) (next : P.B a → FreeM P α)
     (answer : P.B a) (tail : Path (next answer)) :
-    length (FreeM.liftBind a next) (no_index ⟨answer, tail⟩) =
+    length (FreeM.liftBind a next) ⟨answer, tail⟩ =
       length (next answer) tail + 1 := rfl
 
 /-- Relabelling the leaves of a free program does not change the length of a
@@ -194,10 +247,10 @@ def withPathLength (program : FreeM P α) : FreeM P Nat :=
 @[simp] theorem withPathLength_pure (x : α) :
     withPathLength (pure x : FreeM P α) = pure 0 := rfl
 
-@[simp] theorem withPathLength_liftBind (a : P.A)
+@[simp] theorem withPathLength_lift_bind (a : P.A)
     (next : P.B a → FreeM P α) :
-    withPathLength (FreeM.liftBind a next) =
-      FreeM.liftBind a fun answer =>
+    withPathLength (lift_bind% a next) =
+      (FreeM.lift a).bind fun answer =>
         FreeM.map (fun length => length + 1) (withPathLength (next answer)) := by
   unfold withPathLength
   change FreeM.liftBind a (fun answer =>
@@ -214,5 +267,21 @@ def withPathLength (program : FreeM P α) : FreeM P Nat :=
   apply congrArg (fun f => FreeM.map f (withPath (next answer)))
   funext tail
   rfl
+
+/-- `withPathLength_lift_bind` when results and directions share a universe. -/
+@[simp] theorem withPathLength_lift_bind' {α : Type uB} (a : P.A)
+    (next : P.B a → FreeM P α) :
+    withPathLength (lift_bind'% a next) =
+      (FreeM.lift a).bind fun answer =>
+        FreeM.map (fun length => length + 1) (withPathLength (next answer)) :=
+  withPathLength_lift_bind a next
+
+/-- Constructor spelling of `withPathLength_lift_bind`. -/
+theorem withPathLength_liftBind (a : P.A)
+    (next : P.B a → FreeM P α) :
+    withPathLength (FreeM.liftBind a next) =
+      FreeM.liftBind a fun answer =>
+        FreeM.map (fun length => length + 1) (withPathLength (next answer)) :=
+  withPathLength_lift_bind a next
 
 end PFunctor.FreeM

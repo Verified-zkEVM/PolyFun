@@ -209,14 +209,38 @@ interpreter with its `Interprets` universal property. PolyFun layers its own API
 displayed families, indexed-family packing, weakest preconditions, roll bounds)
 on top of the upstream type.
 
-Constructor simplification keeps `liftBind` as the normal form. `FreeM.lift_bind` folds a lifted
-operation followed by a bind into that constructor, `FreeM.lift_bind_eq_liftBind` handles named
-binds across universes, and `FreeM.liftBind_map` and `FreeM.liftM_liftBind` reduce maps and folds.
-Path, output, trace and length equations use the same constructor form, preserving dependent
-indices through ordinary simplification. `PolyFunTest/PFunctor/ConstructorNormalization.lean`
-checks these operations through an ordinary import.
-Use the named equality `FreeM.liftBind_eq` explicitly when a proof needs the bind presentation;
-expanding it during general simplification can disrupt dependent path indices.
+### The simp normal form of an operation node
+
+Upstream's `FreeM.liftBind_eq` is a `simp` lemma, so simplification presents an operation node
+`FreeM.liftBind a k` as `(FreeM.lift a).bind k`, and — when the result and direction universes
+coincide, where `FreeM.bind_eq_bind` also applies — as `FreeM.lift a >>= k`. The constructor
+survives only inside `match` arms and `cases` on a tree, exactly as `Nat.succ` does next to
+`n + 1`. PolyFun follows that convention:
+
+- Every `simp` equation about a node is stated on the normal form, with suffix `_lift_bind`
+  for `(FreeM.lift a).bind k` and `_lift_bind'` for `FreeM.lift a >>= k` (the second exists
+  only where a single-universe instantiation is expected). The constructor spelling keeps the
+  suffix `_liftBind` without the `simp` attribute, for `rw` on `match`-shaped goals; the
+  `freeM_unfold` set collects those one-way constructor equations.
+- Both normal forms carry the direction type `P.B a` as an implicit type argument of the bind,
+  which the simplifier indexes and which reduces on concrete polynomials (`⟨I, D⟩`,
+  `TypeTree.basePFunctor`). Normal-form `simp` lemmas are therefore written through the
+  `lift_bind% a k` / `lift_bind'% a k` elaborators of `PolyFun/PFunctor/Free/Basic.lean`, which
+  mark that argument `no_index`.
+- Families indexed by a tree (`Path`, `PathAlong`, `Displayed`) expose the node structure
+  through an interface — `Path.cons` / `Path.head` / `Path.tail` and their `PathAlong`
+  counterparts — and the observation equations (`output`, `trace`, `positions`, `length`,
+  `withPath`, `ofHandler`, …) are stated through it rather than through anonymous constructors
+  and projections of the underlying sigma type. `head_mk` / `tail_mk` bridge to paths obtained
+  by pattern matching.
+- Comparing a node index with the constructor it reduces to needs `FreeM.bind` and `FreeM.lift`
+  to unfold at implicit transparency (metavariable types are compared there). Until cslib marks
+  them `@[implicit_reducible]` — the change carried by the `dtumad/cslib` branch
+  `polyfun/freem-implicit-reducible` — files that unify such indices declare
+  `attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift`.
+
+`PolyFunTest/PFunctor/ConstructorNormalization.lean` checks the normal forms, maps, folds and
+path observations through an ordinary import.
 
 | File | Purpose |
 |------|---------|
@@ -328,6 +352,5 @@ lives in `PFunctor/Free/`, `PFunctor/Cofree.lean`, and `PFunctor/Cofree/`.
 
 The execution API exposes `TraceList.positions` and `FreeM.Path.positions` for ordered input
 observations, including repeated inputs. Prefer these over mapping a bare `Sigma.fst` across
-the event carrier. The constructor equations for dependent path observations mark their path
-argument with `no_index`: the hidden sigma direction type changes when a polynomial is
-specialized, but the operation constructor remains available for simp indexing.
+the event carrier, and build or destructure paths through `Path.cons` / `Path.head` /
+`Path.tail` rather than the anonymous constructor and projections of the underlying sigma.

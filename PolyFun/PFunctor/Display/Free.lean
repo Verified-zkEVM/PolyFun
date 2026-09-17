@@ -51,7 +51,7 @@ namespace Display
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
 transporting displayed trees along `FreeM.bind_pure` / `FreeM.bind_assoc`
 needs `FreeM.bind` and `FreeM.map` to unfold there. -/
-attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.map
+attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift PFunctor.FreeM.map
 
 variable {P : PFunctor.{uA, uB}}
 
@@ -131,6 +131,18 @@ theorem bind_pure (S : Display.{uA, uB, uC, uD} P)
   rfl
 
 @[simp]
+theorem bind_lift_bind (S : Display.{uA, uB, uC, uD} P)
+    {E : Type uE} {F : E → Type uF}
+    {E' : Type uE'} {G : E' → Type uG}
+    (a : P.A) (rest : P.B a → FreeM P E)
+    (d : FreeM.Displayed (S.toDisplayedAlgebra F) ((FreeM.lift a).bind rest))
+    (g : E → FreeM P E')
+    (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedAlgebra G) (g x)) :
+    S.bind (lift_bind% a rest) d g dg =
+      ⟨d.1, fun b e => S.bind (rest b) (d.2 b e) g dg⟩ :=
+  rfl
+
+/-- Constructor spelling of `bind_lift_bind`. -/
 theorem bind_liftBind (S : Display.{uA, uB, uC, uD} P)
     {E : Type uE} {F : E → Type uF}
     {E' : Type uE'} {G : E' → Type uG}
@@ -288,9 +300,10 @@ theorem bind_assoc (S : Display.{uA, uB, uC, uD} P)
       rfl
   | lift_bind a rest ih =>
       rcases d with ⟨c, children⟩
+      simp only [FreeM.pure_bind] at children
       rw [S.transport_proof_irrel H
-        (FreeM.bind_assoc (FreeM.liftBind a rest) g h)
-        (bind_assoc_eq g h (FreeM.liftBind a rest))]
+        (FreeM.bind_assoc ((FreeM.lift a).bind rest) g h)
+        (bind_assoc_eq g h ((FreeM.lift a).bind rest))]
       change S.transport H (bind_assoc_eq g h (FreeM.liftBind a rest))
           ⟨c, fun b e =>
             S.bind ((rest b).bind g) (S.bind (rest b) (children b e) g dg) h dh⟩ =

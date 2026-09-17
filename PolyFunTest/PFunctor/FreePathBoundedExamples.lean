@@ -69,14 +69,14 @@ example : withPathLength branchProgram =
       rfl
 
 theorem branchProgram_bound : branchProgram.IsTotalRollBound 2 := by
-  rw [branchProgram, isTotalRollBound_lift_bind_iff]
+  rw [branchProgram, isTotalRollBound_liftBind_iff]
   refine ⟨by omega, fun answer => ?_⟩
   cases answer with
   | false => simp [branchTail]
   | true =>
       rw [show branchTail true =
         (FreeM.liftBind true fun _ : Bool => FreeM.pure 7) from rfl,
-        isTotalRollBound_lift_bind_iff]
+        isTotalRollBound_liftBind_iff]
       exact ⟨by omega, fun _ => by simp⟩
 
 example : Path.length branchProgram longPath ≤ 2 :=

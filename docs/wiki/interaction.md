@@ -640,9 +640,13 @@ import PolyFun.Interaction.UC.OpenProcessModel
 Deterministic counterparts lift into a monadic run through the public
 `Counterpart.liftId_done`, `Counterpart.liftId_sender`, and `Counterpart.liftId_receiver`
 equations. Together with `TwoParty.run_sender`, `run_receiver`, and `run_done`, these simplify
-node observations under ordinary imports. `PolyFunTest/Interaction/TwoParty/NodeReduction.lean`
-checks both roles and a dependent terminal output. The identity lens and base direction family
-preserve the concrete move type during numeral instance search.
+node observations under ordinary imports. `run_sender` and `run_receiver` are stated on the
+simp normal form `PFunctor.FreeM.lift X >>= rest` of a node (see the normal-form section of
+`pfunctor.md`); `TypeTree.node X rest` reduces to it under `simp`, and indices declared through
+`node` unify with it once `FreeM.bind` / `FreeM.lift` unfold at implicit transparency.
+`PolyFunTest/Interaction/TwoParty/NodeReduction.lean` checks both roles and a dependent terminal
+output. The identity lens and base direction family preserve the concrete move type during
+numeral instance search.
 
 ### `TwoParty/`
 

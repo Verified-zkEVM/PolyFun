@@ -66,13 +66,20 @@ omit [DecidableEq p.A] in
 /-- Emission commutes with relabeling, including the client's waiting continuation. -/
 theorem emit_rename (e : Client ≃ Client') (id : Client) (state : State Client p α S) :
     emit (e id) (state.rename e) = (emit id state).rename e := by
+  have hrename : (state.rename e).clients (e id) = state.clients id := by
+    simp [State.rename]
   cases h : state.clients id with
-  | waiting ticket a next => simp [emit, State.rename, h]
+  | waiting ticket a next =>
+      rw [emit_waiting (e id) (state.rename e) ticket a next (hrename.trans h),
+        emit_waiting id state ticket a next h]
   | ready program =>
       cases program with
-      | pure value => simp [emit, State.rename, h]
+      | pure value =>
+          rw [emit_ready_pure (hrename.trans h), emit_ready_pure h]
       | liftBind a next =>
-          simp [emit, State.rename, h, Envelope.rename, update_rename]
+          rw [emit_ready_lift_bind (a := a) (next := next) (hrename.trans h),
+            emit_ready_lift_bind (a := a) (next := next) h]
+          simp [State.rename, Envelope.rename, update_rename]
 
 /-- Accepting a typed response commutes with relabeling its destination client. -/
 theorem accept_rename (e : Client ≃ Client') (ticket : ℕ)

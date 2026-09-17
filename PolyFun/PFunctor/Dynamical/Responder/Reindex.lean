@@ -68,7 +68,15 @@ theorem runFree_lift (R : Responder State Q) (query : Q.A) (state : State) :
       (R.answer state query, R.next state query) :=
   rfl
 
+/-- Running through an operation node, on the simp normal form `(FreeM.lift query).bind next`. -/
 @[simp]
+theorem runFree_lift_bind (R : Responder State Q) {E : Type uV}
+    (query : Q.A) (next : Q.B query → FreeM Q E) (state : State) :
+    R.runFree (lift_bind% query next) state =
+      R.runFree (E := E) (next (R.answer state query)) (R.next state query) :=
+  rfl
+
+/-- Constructor spelling of `runFree_lift_bind`. -/
 theorem runFree_liftBind (R : Responder State Q) {E : Type uV}
     (query : Q.A) (next : Q.B query → FreeM Q E) (state : State) :
     R.runFree (FreeM.liftBind query next) state =
@@ -326,6 +334,7 @@ theorem runFreeDisplayed_bind
       rfl
   | lift_bind query rest ih =>
       rcases displayedProgram with ⟨contract, displayedChildren⟩
+      simp only [FreeM.pure_bind] at displayedChildren
       let stepEvidence :=
         (Display.responderCoalgebraEquiv T R I) displayedR
           state witness query contract
@@ -429,6 +438,7 @@ theorem runFreeDisplayed_reindex
       rfl
   | lift_bind query next ih =>
       rcases displayedProgram with ⟨contract, displayedNext⟩
+      simp only [FreeM.pure_bind] at displayedNext
       let result := R.runFree (f query) state
       let stepEvidence :=
         runFreeDisplayed T R displayedR (df query contract) state witness

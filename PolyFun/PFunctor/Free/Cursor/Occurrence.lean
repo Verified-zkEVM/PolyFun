@@ -539,11 +539,13 @@ path-producing execution exactly. -/
 theorem splitAt_bind_complete [DecidableEq P.A] (target : P.A) : (program : FreeM P α) → (n : Nat) →
     FreeM.bind (splitAt target program n) Split.complete = withPath program := by
   intro program
-  induction program with
+  -- The structural recursor presents the constructor `liftBind`, which is what `splitAt`
+  -- and `withPath` unfold on.
+  induction program using FreeM.rec with
   | pure value =>
       intro n
       rfl
-  | lift_bind a next ih =>
+  | liftBind a next ih =>
       intro n
       by_cases h : a = target
       · subst target
@@ -592,11 +594,11 @@ theorem splitAt_bind_complete [DecidableEq P.A] (target : P.A) : (program : Free
 theorem map_val_splitAtValid [DecidableEq P.A] (target : P.A) : (program : FreeM P α) → (n : Nat) →
     FreeM.map Subtype.val (splitAtValid target program n) = splitAt target program n := by
   intro program
-  induction program with
+  induction program using FreeM.rec with
   | pure value =>
       intro n
       rfl
-  | lift_bind a next ih =>
+  | liftBind a next ih =>
       intro n
       by_cases h : a = target
       · subst target

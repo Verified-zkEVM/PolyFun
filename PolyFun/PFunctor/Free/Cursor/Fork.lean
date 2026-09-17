@@ -32,7 +32,7 @@ rewriting `locateAt?` goals whose `Path` indices sit over `FreeM.liftBind`
 trees needs `FreeM.bind` and `FreeM.map` to unfold there, and the
 occurrence-counting goals rewrite `List.countP` over `Idx`-typed events
 inside the `TraceList` carrier (reducibly `FreeMonoid (Idx _)`). -/
-attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.map
+attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift PFunctor.FreeM.map
   FreeMonoid PFunctor.Idx
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
@@ -195,32 +195,22 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
     (program : FreeM P α) (path : Path program) (n : Nat) :
     (locateAt? target program path n).isSome ↔
       n < occurrences target (Path.trace program path) := by
-  induction program generalizing n with
+  -- The structural recursor presents the constructor `liftBind`, matching the
+  -- constructor equations of `locateAt?` and `Path.trace`.
+  induction program using FreeM.rec generalizing n with
   | pure value => simp [occurrences]
-  | lift_bind a next ih =>
+  | liftBind a next ih =>
       rcases path with ⟨answer, suffix⟩
-      change Path (next answer) at suffix
       by_cases h : a = target
       · subst a
         cases n with
         | zero =>
-            change (locateAt? target (FreeM.liftBind target next)
-              (⟨answer, suffix⟩ : Path (FreeM.liftBind target next)) 0).isSome ↔
-              0 < occurrences target
-                (⟨target, answer⟩ :: Path.trace (next answer) suffix)
             rw [locateAt?_liftBind_same_zero]
             simp [occurrences]
         | succ n =>
-            change (locateAt? target (FreeM.liftBind target next)
-              (⟨answer, suffix⟩ : Path (FreeM.liftBind target next)) (n + 1)).isSome ↔
-              n + 1 < occurrences target
-                (⟨target, answer⟩ :: Path.trace (next answer) suffix)
             rw [locateAt?_liftBind_same_succ, Option.isSome_map]
             simpa [occurrences] using ih answer suffix n
-      · change (locateAt? target (FreeM.liftBind a next)
-            (⟨answer, suffix⟩ : Path (FreeM.liftBind a next)) n).isSome ↔
-          n < occurrences target (⟨a, answer⟩ :: Path.trace (next answer) suffix)
-        rw [locateAt?_liftBind_other h, Option.isSome_map]
+      · rw [locateAt?_liftBind_other h, Option.isSome_map]
         simpa [occurrences, h] using ih answer suffix n
 
 namespace Located
@@ -605,11 +595,11 @@ theorem forkAt_eq_locateAndForkAt [DecidableEq P.A] (target : P.A) :
     (program : FreeM P α) → (n : Nat) →
       forkAt target program n = locateAndForkAt target program n := by
   intro program
-  induction program with
+  induction program using FreeM.rec with
   | pure value =>
       intro n
-      rw [forkAt_pure, locateAndForkAt_pure]
-  | lift_bind a next ih =>
+      rw [FreeM.pure_eq_pure, forkAt_pure, locateAndForkAt_pure]
+  | liftBind a next ih =>
       intro n
       by_cases h : a = target
       · subst a
