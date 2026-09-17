@@ -65,8 +65,8 @@ example : ⦃ True ⦄ flipCtor ⦃ fun r => r = true ∨ r = false ⦄ := by
   vcgen [flipCtor]
   exact Bool.eq_false_or_eq_true _
 
-/-- A node in the simp normal form `(FreeM.lift a).bind r`, decomposed by `Spec.lift_bind`
-(`Spec.bind` does not see `FreeM.bind`). -/
+/-- A node in the simp normal form `(FreeM.lift a).bind r`, decomposed by the general
+`PFunctor.FreeM.Spec.bind` rule. -/
 def flipNF : FreeM coinP Bool := (FreeM.lift (P := coinP) PUnit.unit).bind fun b => pure (!b)
 
 /--

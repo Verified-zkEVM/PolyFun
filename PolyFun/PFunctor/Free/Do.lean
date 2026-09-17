@@ -96,6 +96,14 @@ end AngelicWP
 
 namespace Spec
 
+/-- Sequencing for the direct `FreeM.bind` spelling, for any core interpretation. -/
+@[spec]
+theorem bind {α β : Type uB} {Pred : Type v} {EPred : Type z}
+    [Assertion Pred] [Assertion EPred] [WPMonad (FreeM P) Pred EPred]
+    (x : FreeM P α) (f : α → FreeM P β) (Q : β → Pred) (E : EPred) :
+    Triple (x.bind f) (wp x (fun a => wp (f a) Q E) E) Q E :=
+  Std.Internal.Do.Spec.bind x f
+
 section Demonic
 
 open DemonicWP
@@ -114,13 +122,6 @@ theorem liftBind {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) (Q : α →
     Triple (FreeM.liftBind a r) (∀ b, wp (r b) Q E) Q E :=
   ⟨fun h => (allOutputs_liftBind Q a r).mpr h⟩
 
-/-- A node in the simp normal form `(FreeM.lift a).bind r`, which `Spec.bind` does not reach
-because `FreeM.bind` is not the monad's `>>=` syntactically. -/
-@[spec]
-theorem lift_bind {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) (Q : α → Prop)
-    (E : EPost.Nil) :
-    Triple ((FreeM.lift a).bind r) (∀ b, wp (r b) Q E) Q E :=
-  ⟨fun h => (allOutputs_liftBind Q a r).mpr h⟩
 
 end Demonic
 
