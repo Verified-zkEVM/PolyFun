@@ -383,6 +383,7 @@ def toCounterpart {m : Type u → Type u} [Monad m] :
 /-- Replay a prescribed path through a public-coin counterpart. Sender
 messages are read from the path; receiver samplers are ignored and the
 stored continuation family is followed at the recorded challenge. -/
+@[expose]
 def replay {m : Type u → Type u} [Monad m] :
     {spec : TypeTree.{u}} → {roles : RoleDecoration spec} →
     {Output : PFunctor.FreeM.Path spec → Type u} →
