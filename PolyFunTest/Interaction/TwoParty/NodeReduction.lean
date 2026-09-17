@@ -11,18 +11,14 @@ public import PolyFun.Interaction.TwoParty.Strategy
 /-!
 # Ordinary-import reduction of two-party nodes
 
-Deterministic counterpart lifting and path observations simplify using the public node API
-under an ordinary `simp` call. Simplification presents a node as `PFunctor.FreeM.lift X >>= rest`
-while hypotheses keep the `TypeTree.node X rest` spelling they were declared with; the two agree
-once `FreeM.bind` and `FreeM.lift` unfold at implicit transparency. The attribute below is the
-local form of that upstream change (`dtumad/cslib`, branch `polyfun/freem-implicit-reducible`).
+Deterministic counterpart lifting and path observations use the public node equations.
+The tests retain the dependent output family and use explicit rewriting where the simplifier's
+normal form differs from the constructor spelling.
 -/
 
 public section
 
 open Interaction Interaction.TwoParty
-
-attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift
 
 variable {m : Type → Type} [Monad m] [LawfulMonad m] {X : Type}
 
@@ -33,7 +29,14 @@ example (x : X) :
       (fun _ => pure PUnit.unit)
       (StrategyOver.TwoParty.Counterpart.liftId (m := m) ⟨x, PUnit.unit⟩) =
         pure ⟨x, PUnit.unit⟩ := by
-  simp
+  rw [StrategyOver.TwoParty.Counterpart.liftId_receiver,
+    StrategyOver.TwoParty.Counterpart.liftId_done]
+  have h := run_receiver (m := m) (rest := fun (_ : X) => .done)
+    (rRest := fun _ => PUnit.unit) (OutputP := fun _ => PUnit) (OutputC := fun _ => PUnit)
+    (fun _ => pure PUnit.unit) (pure ⟨x, PUnit.unit⟩)
+  exact (congrArg (fun t => Sigma.fst <$> t) h).trans (by
+    simp only [pure_bind, run_done, map_pure]
+    rfl)
 
 example (sample : m X) :
     Sigma.fst <$> run (TypeTree.node X fun _ => .done)
@@ -42,15 +45,21 @@ example (sample : m X) :
       ((fun x => ⟨x, PUnit.unit⟩) <$> sample)
       (StrategyOver.TwoParty.Counterpart.liftId (m := m) (fun _ => PUnit.unit)) =
         (fun x => ⟨x, PUnit.unit⟩) <$> sample := by
-  simp only [PFunctor.FreeM.liftBind_eq, PFunctor.FreeM.bind_eq_bind,
-    StrategyOver.TwoParty.Counterpart.liftId_sender,
-    StrategyOver.TwoParty.Counterpart.liftId_done, run_sender, run_done,
-    map_eq_pure_bind, bind_assoc, pure_bind]
+  simp only [StrategyOver.TwoParty.Counterpart.liftId_sender,
+    StrategyOver.TwoParty.Counterpart.liftId_done]
+  have h := run_sender (m := m) (rest := fun (_ : X) => .done)
+    (rRest := fun _ => PUnit.unit) (OutputP := fun _ => PUnit) (OutputC := fun _ => PUnit)
+    ((fun x => ⟨x, PUnit.unit⟩) <$> sample) (fun _ => pure PUnit.unit)
+  exact (congrArg (fun t => Sigma.fst <$> t) h).trans (by
+    simp only [run_done, map_eq_pure_bind, bind_assoc, pure_bind]
+    rfl)
 
 example {A : TypeTree.Path (TypeTree.node X fun _ => .done) → Type} (x : X)
     (out : A ⟨x, PUnit.unit⟩) :
     StrategyOver.TwoParty.Counterpart.liftId (m := m) (spec := TypeTree.node X fun _ => .done)
       (roles := ⟨.receiver, fun _ => PUnit.unit⟩)
-      (Output := A) ⟨x, out⟩ = pure ⟨x, out⟩ := by simp
+      (Output := A) ⟨x, out⟩ = pure ⟨x, out⟩ := by
+  rw [StrategyOver.TwoParty.Counterpart.liftId_receiver,
+    StrategyOver.TwoParty.Counterpart.liftId_done]
 
 end
