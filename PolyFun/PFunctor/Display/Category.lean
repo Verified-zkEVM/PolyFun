@@ -51,14 +51,14 @@ polynomial.  The forward map is the erased program shape and the backward map
 reads the label at the selected complete path. -/
 def toFreeLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     (f : Handler (FreeM Q) P) : Lens P (FreeP Q) where
-  toFunA operation := (FreeP.encode (f operation)).1
-  toFunB operation := (FreeP.encode (f operation)).2
+  toFunA operation := (FreeP.encode (f operation)).fst
+  toFunB operation := (FreeP.encode (f operation)).snd
 
 /-- Decode a lens into a free polynomial as a free handler. -/
 def ofFreeLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     (lens : Lens P (FreeP Q)) : Handler (FreeM Q) P :=
   fun operation =>
-    FreeP.decode ⟨lens.toFunA operation, lens.toFunB operation⟩
+    FreeP.decode (.mk (lens.toFunA operation) (lens.toFunB operation))
 
 /-- Free handlers are structurally equivalent to lenses into the free
 polynomial, with independent position and direction universes for the source
@@ -74,7 +74,7 @@ def freeLensEquiv {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}} :
     apply Lens.ext_mapObj
     intro operation
     exact FreeP.encode_decode
-      (⟨lens.toFunA operation, lens.toFunB operation⟩ :
+      (.mk (lens.toFunA operation) (lens.toFunB operation) :
         (FreeP Q).Obj (P.B operation))
 
 @[simp]
@@ -98,8 +98,8 @@ private theorem decode_extension_bind {R : PFunctor.{u, u}} {E F : Type u}
         (SubstMonoid.Extension.bind (FreeP.substMonoid R) x f) =
       FreeM.bind (FreeP.decode x) (fun value => FreeP.decode (f value)) := by
   let source : (FreeP R ◃ FreeP R).Obj F :=
-    ⟨⟨x.1, fun path => (f (x.2 path)).1⟩,
-      fun direction => (f (x.2 direction.1)).2 direction.2⟩
+    .mk ⟨x.fst, fun path => (f (x.snd path)).fst⟩
+      (fun direction => (f (x.snd direction.1)).snd direction.2)
   change FreeP.decode (Lens.mapObj (FreeP.mult (P := R)) source) = _
   rw [FreeP.decode_mult]
   have hnest : FreeP.nest source =
@@ -140,7 +140,8 @@ private theorem liftM_encode {Q R : PFunctor.{u, u}} (second : Handler (FreeM R)
       have hright : FreeM.liftM second ((FreeM.lift query).bind next) =
           FreeM.bind (second query)
             (fun direction => FreeM.liftM second (next direction)) := rfl
-      change FreeP.decode (FreeM.liftM extHandler
+      change FreeP.decode (FreeM.liftM
+          (m := SubstMonoid.Extension (FreeP.substMonoid R)) extHandler
           ((FreeM.lift query).bind next)) =
         FreeP.decode (FreeP.encode
           (FreeM.liftM second ((FreeM.lift query).bind next)))
@@ -154,11 +155,11 @@ private theorem liftM_encode {Q R : PFunctor.{u, u}} (second : Handler (FreeM R)
 private theorem foldObjAt_encode {Q R : PFunctor.{u, u}} (second : Handler (FreeM R) Q) {E : Type u}
     (program : FreeM Q E) :
     FreeP.foldObjAt (FreeP.substMonoid R) (toFreeLens second)
-        (FreeP.encode program).1 (FreeP.encode program).2 =
+        (FreeP.encode program).fst (FreeP.encode program).snd =
       FreeP.encode (program.liftM second) := by
   unfold FreeP.foldObjAt
-  rw [show FreeP.decodeAt (FreeP.encode program).1
-      (FreeP.encode program).2 = program from FreeP.decode_encode _]
+  rw [show FreeP.decodeAt (FreeP.encode program).fst
+      (FreeP.encode program).snd = program from FreeP.decode_encode _]
   exact liftM_encode second program
 
 /-- Under `freeLensEquiv`, categorical free-handler composition is the
@@ -179,8 +180,8 @@ theorem toFreeLens_comp {P Q R : PFunctor.{u, u}}
       (FreeP.encode (first operation))
   calc
     _ = FreeP.foldObjAt (FreeP.substMonoid R) (toFreeLens second)
-        (FreeP.encode (first operation)).1
-        (FreeP.encode (first operation)).2 :=
+        (FreeP.encode (first operation)).fst
+        (FreeP.encode (first operation)).snd :=
       (foldObjAt_encode second (first operation)).symm
     _ = _ := FreeP.foldObjAt_eq _ _ _ _
 

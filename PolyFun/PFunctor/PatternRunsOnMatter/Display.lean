@@ -57,8 +57,8 @@ def runAgainstProgramObj {E : Type uV}
     (R : Responder State Q) (program : FreeM Q E) (state : State) :
     (FreeP y.{uA', uB'}).Obj (E × State) :=
   Lens.mapObj (FreeP.runAgainstSystem Q y.{uA', uB'} R)
-    ⟨((FreeP.encode program).1, state), fun direction =>
-      ((FreeP.encode program).2 direction.1, direction.2)⟩
+    (.mk ((FreeP.encode program).fst, state) (fun direction =>
+      ((FreeP.encode program).snd direction.1, direction.2)))
 
 /-- Decoding `runAgainstProgramObj` is exactly `DynSystem.runPattern`
 followed by internal-hom evaluation. -/
@@ -101,7 +101,7 @@ def runAgainstResult {E : Type uV}
     (R : Responder State Q) (program : FreeM Q E) (state : State) :
     E × State :=
   (Lens.mapObj FreeP.collapseUnit
-    (runAgainstProgramObj R program state)).2 PUnit.unit
+    (runAgainstProgramObj R program state)).snd PUnit.unit
 
 /-- The evaluated Pattern-Runs-on-Matter result is exactly `runFree`,
 including both the returned value and the reached responder state. -/

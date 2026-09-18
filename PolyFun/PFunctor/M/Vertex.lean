@@ -53,16 +53,16 @@ def mapLens (l : Lens P Q) (tree : M P) : M Q :=
 /-- One-step unfolding of `mapLens`. -/
 theorem dest_mapLens (l : Lens P Q) (tree : M P) :
     M.dest (mapLens l tree) =
-      ⟨l.toFunA (M.head tree), fun direction =>
+      .mk (l.toFunA (M.head tree)) (fun direction =>
         mapLens l (M.children tree
-          (l.toFunB (M.head tree) direction))⟩ := by
+          (l.toFunB (M.head tree) direction))) := by
   rw [mapLens, M.dest_corec_apply]
   rfl
 
 /-- The root position of a mapped M-type tree. -/
 theorem head_mapLens (l : Lens P Q) (tree : M P) :
     M.head (mapLens l tree) = l.toFunA (M.head tree) :=
-  congrArg Sigma.fst (dest_mapLens l tree)
+  congrArg PFunctor.Obj.fst (dest_mapLens l tree)
 
 /-- Pull a root direction of a mapped tree back to the source root. -/
 def pullDirection (l : Lens P Q) (tree : M P)
@@ -77,8 +77,8 @@ theorem children_mapLens (l : Lens P Q) (tree : M P)
     M.children (mapLens l tree) direction =
       mapLens l (M.children tree (pullDirection l tree direction)) := by
   have h := dest_mapLens l tree
-  cases congrArg Sigma.fst h
-  exact congrFun (eq_of_heq (Sigma.ext_iff.mp h).2) direction
+  cases congrArg PFunctor.Obj.fst h
+  exact congrFun (eq_of_heq (PFunctor.Obj.ext_iff.mp h).2) direction
 
 @[simp]
 theorem mapLens_id (tree : M P) : mapLens (Lens.id P) tree = tree := by
@@ -94,7 +94,7 @@ theorem mapLens_comp {R : PFunctor.{uA₃, uB₃}} (g : Lens Q R)
     (fun source mapped => mapped = mapLens f source)
     tree (mapLens f tree) rfl ?_
   rintro source _ rfl
-  rcases hsource : M.dest source with ⟨shape, children⟩
+  cases hsource : M.dest source using PFunctor.Obj.rec with | mk shape children =>
   refine ⟨g.toFunA (f.toFunA shape),
     fun direction => children ((g ∘ₗ f).toFunB shape direction),
     fun direction => mapLens f
@@ -118,7 +118,7 @@ theorem mapLens_corec {α : Type v} (l : Lens P Q) (step : α → P α)
     (fun tree state => tree = M.corec step state)
     (M.corec step seed) seed rfl ?_
   rintro tree state rfl
-  rcases hstep : step state with ⟨shape, children⟩
+  cases hstep : step state using PFunctor.Obj.rec with | mk shape children =>
   refine ⟨l.toFunA shape,
     fun direction => M.corec step (children (l.toFunB shape direction)),
     fun direction => children (l.toFunB shape direction), ?_, ?_, fun _ => rfl⟩

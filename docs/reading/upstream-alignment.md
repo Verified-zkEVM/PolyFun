@@ -197,6 +197,52 @@ next pin, use actual source changes such as
 [strong (co)induction](https://github.com/leanprover/lean4/pull/14855), and test their
 semantics rather than assuming a namespace rename completes the migration.
 
+## Definitional-equality follow-up
+
+The baseline is `88f0fa6fc23a8982b154b8a2ea65e9e982e393da`, with the same
+Lean/Mathlib/cslib v4.34.0 pins as the design review. A fresh source census
+covers **330 production modules** (316 PolyFun, 11 ToCslib, 3 PolyFunCslib),
+excluding generated umbrellas. Tests and downstream examples are separate
+consumer evidence, not part of that count.
+
+| Source signal | PolyFun occurrences / files | ToCslib | PolyFunCslib |
+|---|---:|---:|---:|
+| Broad exposed public sections | 193 / 193 | 0 | 0 |
+| Local implicit-reducibility attribute commands | 71 / 58 | 0 | 0 |
+| Implementation imports (`import all`) | 60 / 38 | 0 | 0 |
+| `with_unfolding_all` | 0 | 0 | 0 |
+
+These are textual signals, including comments if a spelling occurs there,
+not counts of defects. An attribute command can mention multiple definitions.
+The census also locates `rfl`, `change`, `unfold`, and `dsimp`; their use inside
+an implementation or to prove its public equations is not itself an API problem.
+Reproduce the counts with `rg` over the three production roots and inspect the
+matched files; temporary inventories stay outside the repository.
+
+### Polynomial-object carriers
+
+**Adopt the owning object API.** `FreeP.node`, `encode`, and `decode` now use
+`(FreeP P).Obj` in their signatures, with `Obj.mk/fst/snd/rec/ext` in their
+construction and equality proofs. Public node projections, encoding equations,
+and `decode_mk` let consumers reason without expanding the carrier. `relabel`
+delegates to `PFunctor.map`, with an explicit bridge to the ordinary map law.
+The free-handler equivalence uses these projections; its interpretation proof
+names `SubstMonoid.Extension` explicitly, since the object carrier alone does
+not choose a monad instance. `M.Vertex` lens observations likewise use native
+object equality rather than Sigma equality.
+
+Positions of composite polynomials, dependent path decompositions, and display
+fibers that are defined as Sigma types retain those types. `FreeP` itself stays
+reducible: its positions and directions intentionally compute to free trees
+and their paths. This is not a change to the polynomial's mathematical carrier.
+
+The ordinary-import regressions in
+`PolyFunTest/ModuleAPI/FreePolynomial.lean` cover independent universes, labelled
+node observations, both encode/decode round trips, free-handler conversion,
+M-type child transport, different response fibers, and an operation without
+responses. A response-free node is tested extensionally: functions out of
+`Empty` need not be definitionally equal merely because they have no arguments.
+
 ## Ledger
 
 ### Adopt — upstream owns it, PolyFun duplicates it
