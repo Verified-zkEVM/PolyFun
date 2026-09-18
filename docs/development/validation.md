@@ -15,13 +15,13 @@ proofs, examples, import boundaries, or validation infrastructure.
 
 | Check | Scope |
 |---|---|
-| Default build | `PolyFun`, `ToCslib`, `PolyFunCslib`, `PolyFunExamples`, with `--wfail` |
-| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests, `Std.Do` quarantine |
+| Default build | `PolyFun`, `ToCslib`, `PolyFunCslib`, `PolyFunExamples`, and `+PolyFunParliamentMain`, with `--wfail` |
+| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.Do` quarantine |
 | Generated imports | Generated umbrellas match the tracked source tree |
 | Documentation | Checker regressions, agent symlink, local paths and heading anchors, module docstrings, README excerpt synchronization |
-| `--lint` | Batteries environment linters and Mathlib text-style checks over production and tutorial libraries |
-| `--test` | `PolyFunTest` with warnings fatal, `lake test`, and the separate documentation consumer |
-| `--axioms` | Axiom-sweep fixture matrix and zero-debt check over production and tutorial module roots |
+| `--lint` | Batteries environment linters and Mathlib text-style checks over production and example libraries plus the executable entry point |
+| `--test` | `PolyFunTest` with warnings fatal, `lake test`, native CLI/filesystem tests, and both separate consumers |
+| `--axioms` | Axiom-sweep fixture matrix and zero-debt check over production, tutorial, case-study, and executable module roots |
 
 The committed axiom baseline is a zero-debt policy, not an allowlist. Both
 arrays stay empty. `--update-baseline` refuses to record taint and is only
@@ -41,7 +41,8 @@ git add PolyFun ToCslib
 
 The generator reads tracked paths and rejects untracked source files. Never
 edit generated umbrellas by hand. Tutorial and test libraries use glob targets;
-they have no generated umbrella. Add new tutorial modules to the explicit
+they have no generated umbrella. The Parliament case study uses
+`./scripts/update-lib.sh Examples.Parliament`. Add new tutorial modules to the explicit
 environment-lint, text-lint, and axiom-sweep module lists in `lakefile.toml`,
 `scripts/validate.sh`, and the text-lint workflow. See [generated files](generated-files.md).
 
@@ -52,9 +53,13 @@ lake build PolyFunExamples --wfail
 lake build PolyFunTest --wfail
 lake test
 lake -d test/DocumentationConsumer build --wfail
+lake build polyfun-parliament --wfail
+python3 scripts/test-parliament-cli.py
+lake -d test/ParliamentConsumer build --wfail
 lake lint
 lake exe lint-style PolyFun ToCslib PolyFunCslib \
-  Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms
+  Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
+  Examples.Parliament PolyFunParliamentMain
 python3 scripts/test-docs-integrity.py
 python3 scripts/check-docs-integrity.py
 ```
@@ -64,9 +69,9 @@ Build the relevant libraries before running environment linters. Use
 during elaboration; text-style linting is a separate check. The test library
 is outside `lake lint` scope. See [lint policy](linting.md).
 
-The [consumer fixture](../../test/DocumentationConsumer/README.md) depends on
-PolyFun as a separate package and uses ordinary imports. It shares the root's
-dependency cache and pins. This catches missing public equations that an
+The [documentation consumer](../../test/DocumentationConsumer/README.md) and
+`test/ParliamentConsumer` depend on PolyFun as separate packages and use ordinary
+imports. They share the root's dependency cache and pins. This catches missing public equations that an
 internal `import all` test could conceal.
 
 When changing the README example, update both its fenced block and the named
@@ -91,9 +96,9 @@ style-only result does not cover compilation or proof validation.
 
 ## Toolchain updates
 
-Lean, Mathlib and CSLib stay in sync. Update `lean-toolchain`, the consumer's
+Lean, Mathlib and CSLib stay in sync. Update `lean-toolchain`, both consumers'
 matching `lean-toolchain`, and both dependency pins in `lakefile.toml`, then
 run `lake update` and the full suite. Keep the root manifest committed and
-review the resolved versions. The consumer manifest is regenerated locally.
+review the resolved versions. Consumer manifests are regenerated locally.
 Compatibility tests for existing deprecated APIs should assert their expected
 diagnostics with strict `#guard_msgs` rather than suppressing warnings.

@@ -1,0 +1,2 @@
+# Preserve the byte-exact golden rendering, including its empty final section.
+Examples/Parliament/Fixtures/draft/minutes.md whitespace=-blank-at-eof

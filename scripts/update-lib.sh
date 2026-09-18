@@ -15,14 +15,16 @@ cd "$REPO_ROOT"
 
 lib="${1:-PolyFun}"
 case "$lib" in
-  PolyFun|ToCslib) ;;
+  PolyFun|ToCslib|Examples.Parliament) ;;
   *)
-    echo "ERROR: unknown library '$lib' (expected PolyFun or ToCslib)." >&2
+    echo "ERROR: unknown library '$lib' (expected PolyFun, ToCslib, or Examples.Parliament)." >&2
     exit 1
     ;;
 esac
 
-if [[ ! -d "$lib" || ! -f "$lib.lean" ]]; then
+source_root="${lib//.//}"
+
+if [[ ! -d "$source_root" || ! -f "$source_root.lean" ]]; then
   echo "ERROR: Run this script from inside the PolyFun repository." >&2
   exit 1
 fi
@@ -32,7 +34,7 @@ while IFS= read -r file; do
   if [[ -n "$file" ]]; then
     untracked_lean_files+=("$file")
   fi
-done < <(git ls-files --others --exclude-standard -- "$lib/*.lean")
+done < <(git ls-files --others --exclude-standard -- "$source_root/*.lean")
 
 if (( ${#untracked_lean_files[@]} > 0 )); then
   echo "ERROR: Untracked Lean files under $lib/ are not included in $lib.lean generation." >&2
@@ -53,6 +55,16 @@ trap cleanup EXIT
 # right, so it keeps the standard file header and a module docstring around its generated imports.
 umbrella_header() {
   case "$1" in
+    Examples.Parliament)
+      cat <<'EOF_HEADER'
+/-
+Copyright (c) 2026 PolyFun Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Devon Tuma
+-/
+
+EOF_HEADER
+      ;;
     ToCslib)
       cat <<'EOF_HEADER'
 /-
@@ -68,6 +80,18 @@ EOF_HEADER
 
 umbrella_docstring() {
   case "$1" in
+    Examples.Parliament)
+      cat <<'EOF_DOCSTRING'
+
+/-!
+# Executable parliamentary procedure and certified draft minutes
+
+A bounded RONR case study of indexed interaction, legal histories, dynamical execution,
+and interchangeable IO handlers. See `Examples/Parliament/README.md` for the runnable
+walkthrough and the explicit specification and physical-IO proof boundary.
+-/
+EOF_DOCSTRING
+      ;;
     ToCslib)
       cat <<'EOF_DOCSTRING'
 
@@ -92,14 +116,14 @@ EOF_DOCSTRING
   umbrella_header "$lib"
   echo "module"
   echo ""
-  git ls-files -- "$lib/*.lean" \
+  git ls-files -- "$source_root/*.lean" \
     | LC_ALL=C sort \
     | sed 's/\.lean//;s,/,.,g;s/^/public import /'
   umbrella_docstring "$lib"
 } > "$tmp_file"
 
-mv "$tmp_file" "$lib.lean"
+mv "$tmp_file" "$source_root.lean"
 trap - EXIT
 
-import_count="$(grep -c '^public import ' "$lib.lean")"
+import_count="$(grep -c '^public import ' "$source_root.lean")"
 echo "✓ $lib.lean updated with $import_count public imports"

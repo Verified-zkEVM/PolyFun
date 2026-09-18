@@ -131,9 +131,8 @@ out library. Follow the links for current status.
 
 | PR | Proposed contribution | Documentation integration when it lands |
 |---|---|---|
-| [#236](https://github.com/Verified-zkEVM/PolyFun/pull/236) | Parliament application | Add an application route from `Examples/README.md`, with its own assumptions and commands. |
 | [#237](https://github.com/Verified-zkEVM/PolyFun/pull/237) | Walkthroughs for the driver/application stack | Rebase links and imports onto the tutorial/guide layout; keep narrative walkthroughs separate from regression tests. |
 
-The Parliament and walkthrough PRs build on the resumable driver. Their
-examples should be tested together before being promoted to the main newcomer route. The source-backed tutorials in this checkout use
+The proposed walkthroughs build on the maintained Parliament example and the
+resumable driver. Their public bridges are checked before joining the reader guides. The source-backed tutorials in this checkout use
 only available APIs.

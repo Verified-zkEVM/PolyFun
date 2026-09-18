@@ -281,3 +281,15 @@ module. Change that source and the excerpt together. The integrity checker
 validates excerpt equality, local paths, Markdown heading anchors, and module
 docstrings. Historical progress notes belong in Git/PR history; preserve useful
 rationale in the owning guide before removing a stale document.
+
+## Case-study validation
+
+Maintained applications live under `Examples/` in the optional `PolyFunExamples`
+library. Parliament's recurring `scripts/test-parliament-cli.py` checks process
+exit codes, terminal input, writer locks, publication, and recovery using temporary
+directories. The validation wrapper and CI run it after building `polyfun-parliament`.
+Every spawned process needs a bounded wait and cleanup on failure.
+
+Generate its public import index with `./scripts/update-lib.sh Examples.Parliament`.
+This optional library root is distinct from tutorial modules, which need no umbrella.
+Use the separate `test/ParliamentConsumer` package to check its public interfaces.

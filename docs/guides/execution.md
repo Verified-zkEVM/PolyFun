@@ -90,5 +90,7 @@ own contract. Reactive assembly depends on `Interaction.Open.OpenSyntax`;
 the elementary process and routing interfaces do not depend on that syntax.
 
 The [open-systems guide](open-systems.md) explains composition and observation.
-[Current development](../development/upstream.md#open-development) links
-the proposed executable case study and its proved walkthroughs.
+The [Parliament application](../../Examples/Parliament/README.md) uses the
+resumable driver with both a memory backend and terminal/filesystem IO. Its
+[runtime contract](../../Examples/Parliament/Docs/runtime.md) separates certified
+history extension from the backend's physical behavior.

@@ -82,7 +82,7 @@ Open the folder in VS Code with the Lean 4 extension. The pinned compiler is
 recorded in [`lean-toolchain`](lean-toolchain); Mathlib and CSLib revisions are
 recorded in [`lakefile.toml`](lakefile.toml). The cache command downloads
 precompiled dependencies. `lake build` builds the generic library, while
-`PolyFunExamples` builds the optional tutorials.
+`PolyFunExamples` builds the optional tutorials and Parliament library.
 
 To use the development version from another Lake project, match its toolchain
 and add:
@@ -130,6 +130,14 @@ Save this as `Main.lean` in the repository and run `lake env lean Main.lean`.
 The example is checked in [Requests.lean](Examples/Tutorials/Requests.lean).
 The [walkthrough](docs/tutorials/first-program.md) changes the handler to obtain
 `(6, 12)` from the same program, then explains stateful and effectful handlers.
+
+## Executable case study
+
+[Parliament](Examples/Parliament/README.md) uses indexed interfaces, certified
+histories, dynamical machines, and interchangeable handlers to run a bounded
+meeting model and request draft minutes. Its guide gives the modeled assumptions
+and proof boundaries. Build it with `lake build PolyFunExamples polyfun-parliament`,
+then run `lake exe polyfun-parliament --help`.
 
 ## Reading routes
 

@@ -49,11 +49,15 @@ public section
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
             for root_name in ("ToCslib", "PolyFunCslib", "Examples/Tutorials",
-                              "test/DocumentationConsumer"):
+                              "test/DocumentationConsumer", "test/ParliamentConsumer"):
                 source = repo_root / root_name / "MissingDoc.lean"
                 source.parent.mkdir(parents=True)
                 source.write_text("module\n\npublic section\n")
             (repo_root / "PolyFunCslib.lean").write_text("module\n")
+            (repo_root / "PolyFunParliamentMain.lean").write_text("module\n")
+            cached = repo_root / "test/ParliamentConsumer/.lake/build/Cached.lean"
+            cached.parent.mkdir(parents=True)
+            cached.write_text("module\n")
             with patch.object(CHECKER, "REPO_ROOT", repo_root):
                 self.assertCountEqual(
                     CHECKER.check_module_docstrings(),
@@ -63,6 +67,8 @@ public section
                         "Missing module docstring: PolyFunCslib.lean",
                         "Missing module docstring: Examples/Tutorials/MissingDoc.lean",
                         "Missing module docstring: test/DocumentationConsumer/MissingDoc.lean",
+                        "Missing module docstring: test/ParliamentConsumer/MissingDoc.lean",
+                        "Missing module docstring: PolyFunParliamentMain.lean",
                     ],
                 )
 

@@ -36,6 +36,7 @@ TRACKED_PATHS = [
     "docs",
     "Examples",
     "test/DocumentationConsumer",
+    "test/ParliamentConsumer",
 ]
 
 MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
@@ -258,7 +259,7 @@ def has_module_docstring(text: str) -> bool:
 def check_module_docstrings() -> list[str]:
     errors: list[str] = []
     for root_name in ("PolyFun", "ToCslib", "PolyFunCslib", "PolyFunTest", "Examples",
-                      "test/DocumentationConsumer"):
+                      "test/DocumentationConsumer", "test/ParliamentConsumer"):
         source_root = REPO_ROOT / root_name
         lean_files = [p for p in source_root.rglob("*.lean") if ".lake" not in p.parts]
         umbrella = REPO_ROOT / f"{root_name}.lean"
@@ -269,6 +270,9 @@ def check_module_docstrings() -> list[str]:
             if not has_module_docstring(lean_file.read_text()):
                 rel_path = lean_file.relative_to(REPO_ROOT)
                 errors.append(f"Missing module docstring: {rel_path}")
+    entry = REPO_ROOT / "PolyFunParliamentMain.lean"
+    if entry.exists() and not has_module_docstring(entry.read_text()):
+        errors.append("Missing module docstring: PolyFunParliamentMain.lean")
     return errors
 
 
