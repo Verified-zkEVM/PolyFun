@@ -25,13 +25,8 @@ namespace PFunctor.FreeM.Cursor
 
 open PFunctor.TraceList
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-rewriting `locateAt?` goals whose `Path` indices sit over `FreeM.liftBind`
-trees needs `FreeM.bind` and `FreeM.map` to unfold there, and the
-occurrence-counting goals rewrite `List.countP` over `Idx`-typed events
-inside the `TraceList` carrier (reducibly `FreeMonoid (Idx _)`). -/
-attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift PFunctor.FreeM.map
-  FreeMonoid PFunctor.Idx
+/- The trace equations use the List view of FreeMonoid. -/
+attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
@@ -205,6 +200,7 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
         cases n with
         | zero =>
             rw [locateAt?_liftBind_same_zero]
+            change (true = true) ↔ _
             simp [occurrences]
         | succ n =>
             rw [locateAt?_liftBind_same_succ, Option.isSome_map]

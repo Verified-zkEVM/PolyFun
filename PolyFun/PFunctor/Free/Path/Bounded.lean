@@ -17,16 +17,13 @@ structural: a certificate that every branch performs at most `bound` rolls
 also bounds the length of every path through that program.
 -/
 
-@[expose] public section
+public section
 
 universe uA uB v
 
 namespace PFunctor.FreeM.Path
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
-
-/- Lean compares path indices over `liftBind` at implicit transparency. -/
-attribute [local implicit_reducible] FreeM.bind
 
 /-- Every completed path through a totally roll-bounded program has length at
 most the certified bound. -/

@@ -74,6 +74,31 @@ Interaction policy and may hide legitimate definitional dependencies.
 
 ## Ongoing audit rule
 
+### Dependent indices and node spellings
+
+`FreeM.liftBind a next` and `(FreeM.lift a).bind next` denote the same
+tree, but a dependent application mixing these index spellings can be accepted
+by ordinary elaboration and rejected by rewriting's implicit-transparency
+check. Use the public equation directly, or align the hypothesis with the
+equation's index before rewriting:
+
+```lean
+-- path : FreeM.Path (FreeM.liftBind a next)
+change FreeM.Path ((FreeM.lift a).bind next) at path
+rw [FreeM.Path.cons_head_tail]
+```
+
+Direct application `FreeM.Path.cons_head_tail a next path` also works. This
+does not require exposing the path representation or changing imported
+`FreeM.bind` / `lift` attributes. The same distinction applies to dependent
+transport: use an existing transport theorem directly when its conclusion
+already matches, instead of asking `convert` to compare its types again.
+The ordinary-import examples in `PolyFunTest/ModuleAPI/DependentPaths.lean`
+exercise both forms, general dependent families, path composition, and the
+structural replay consumers used downstream.
+
+### Cross-package consumers
+
 Treat each cross-package `import all PolyFun...` in a downstream repository as
 a bug report with four possible resolutions: expose a genuinely computational
 definition, add public equations, add a constructor/eliminator or

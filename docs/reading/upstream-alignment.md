@@ -243,6 +243,46 @@ M-type child transport, different response fibers, and an operation without
 responses. A response-free node is tested extensionally: functions out of
 `Empty` need not be definitionally equal merely because they have no arguments.
 
+### Dependent free-monad indices
+
+**Fix consumers; remove redundant overrides.** Removing the imported
+`FreeM.bind/lift/map` overrides in isolation left six modules compiling
+unchanged: `Free/Path`, `Free/Path/Execution`, `Free/Path/Bounded`, `Free/WP`,
+`Free/Displayed/Append`, and `Free/Displayed/Decoration`. Two more required
+small proof changes: `Display/Free` applies `transport_liftBind` directly
+instead of `convert`, and `Free/Cursor/Fork` computes the Boolean observation
+of `some` before simplifying the occurrence count. All eight now use the
+pinned upstream attributes. The theorem-only bounded-path module has a plain
+public section. This does not change the public tree or path representation.
+
+The ordinary-import regression starts with `path : Path (liftBind a next)`.
+`rw [Path.cons_head_tail]` fails its implicit-transparency check, while direct
+theorem application succeeds. Changing the hypothesis to
+`Path ((lift a).bind next)` makes the same rewrite succeed. The issue can be
+reproduced without PolyFun, using only
+`Cslib.Foundations.Data.PFunctor.Free`:
+
+```lean
+example {P : PFunctor} {α : Type}
+    (F : PFunctor.FreeM P α → Type) (a : P.A)
+    (next : P.B a → PFunctor.FreeM P α)
+    (observe : F ((PFunctor.FreeM.lift a).bind next) → Nat)
+    (value : F (PFunctor.FreeM.liftBind a next))
+    (h : ∀ x, observe x = 0) : observe value = 0 := by
+  -- `rw [h]` fails at v4.34.0 because value's index has the constructor spelling.
+  change F ((PFunctor.FreeM.lift a).bind next) at value
+  rw [h]
+```
+
+This is evidence for an upstream dependent-elaboration discussion, not evidence
+that every user of paths requires more transparency. No upstream attribute or
+simp direction is changed locally. The regression also covers generic and
+independent-universe append/split, displayed right unitality, operation WP,
+TypeTree constructor patterns, and the path-erasure and typed dynamic-fork
+interfaces used by VCVio's replay proof. The latter are extracted structural
+consumers compiled at PolyFun's pins; they do not claim a full build of VCVio
+at its older pins or validate its probability arguments.
+
 ## Ledger
 
 ### Adopt — upstream owns it, PolyFun duplicates it

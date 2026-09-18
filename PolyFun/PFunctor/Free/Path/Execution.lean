@@ -24,10 +24,8 @@ namespace PFunctor.FreeM
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
-/- Path indices are compared at implicit transparency; `FreeM.bind` and `FreeM.lift` must unfold
-there so the normal form `(FreeM.lift a).bind next` of a node agrees with the constructor
-`FreeM.liftBind a next` presented by pattern matching. -/
-attribute [local implicit_reducible] FreeM.bind FreeM.lift FreeMonoid
+/- The trace equations use the List view of FreeMonoid. -/
+attribute [local implicit_reducible] FreeMonoid
 
 /-- Execute a free program while returning the typed path selected by the
 answers received during that execution. -/
