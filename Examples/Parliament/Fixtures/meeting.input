@@ -1,0 +1,21 @@
+{"attendance": {"actor": 0, "member": 0, "present": true}}
+{"attendance": {"actor": 0, "member": 1, "present": true}}
+{"attendance": {"actor": 0, "member": 2, "present": true}}
+{"attendance": {"actor": 0, "member": 3, "present": true}}
+{"openMeeting": {"actor": 0}}
+{"advanceBusiness": {"actor": 0}}
+{"advanceBusiness": {"actor": 0}}
+{"requestFloor": {"actor": 1}}
+{"recognize": {"actor": 0, "member": 1}}
+{"propose": {"actor": 1, "motion": {"main": {"text": ["fund", "the", "library"]}}}}
+{"second": {"actor": 2}}
+judge
+allow
+Within the assembly purpose.
+{"continueAfterRuling": {"actor": 0}}
+{"stateQuestion": {"actor": 0}}
+{"openVote": {"actor": 0}}
+{"vote": {"actor": 1, "choice": "yes"}}
+{"vote": {"actor": 2, "choice": "yes"}}
+{"announce": {"actor": 0}}
+quit

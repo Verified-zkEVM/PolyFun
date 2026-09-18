@@ -13,7 +13,8 @@ status=0
 lean_sources() {
   git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
     'PolyFunCslib.lean' 'PolyFunCslib/*.lean' 'PolyFunTest/*.lean' \
-    'Examples/*.lean' 'test/DocumentationConsumer/*.lean'
+    'Examples/*.lean' 'PolyFunParliamentMain.lean' \
+    'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean'
 }
 
 while IFS= read -r file; do
@@ -126,10 +127,10 @@ if grep -rEn --include='*.lean' '@\[expose\][[:space:]]+public section' PolyFun/
   status=1
 fi
 
-# Production and upstream staging must stay usable without the teaching/test libraries.
+# Production and upstream staging must stay usable without teaching/test libraries or executables.
 while IFS= read -r file; do
-  if grep -qE "${import_prefix}(Examples|PolyFunTest)([[:space:]]*$|\.)" "$file"; then
-    echo "ERROR: $file imports a tutorial or test from a production library." >&2
+  if grep -qE "${import_prefix}(Examples|PolyFunTest|PolyFunParliamentMain)([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file imports an example, test, or executable from a production library." >&2
     status=1
   fi
 done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \

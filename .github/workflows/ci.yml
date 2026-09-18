@@ -89,8 +89,8 @@ jobs:
       - name: Fetch dependency cache
         run: lake exe cache get
 
-      - name: Build production and tutorial libraries
-        run: lake build PolyFun ToCslib PolyFunCslib PolyFunExamples --wfail
+      - name: Build production and example libraries
+        run: lake build PolyFun ToCslib PolyFunCslib PolyFunExamples +PolyFunParliamentMain --wfail
 
       - name: Run environment linters
         run: lake lint
@@ -130,3 +130,6 @@ jobs:
           lake build PolyFunTest --wfail
           lake test
           lake -d test/DocumentationConsumer build --wfail
+          lake build polyfun-parliament --wfail
+          python3 scripts/test-parliament-cli.py
+          lake -d test/ParliamentConsumer build --wfail

@@ -7,6 +7,7 @@ Edit the source of truth, not the output.
 | `CLAUDE.md` | compatibility symlink | No | Edit `AGENTS.md` |
 | `PolyFun.lean` | generated module with umbrella public imports | No | `./scripts/update-lib.sh` or `./scripts/check-imports.sh` |
 | `ToCslib.lean` | generated umbrella for the staging library | No | `./scripts/update-lib.sh ToCslib` or `./scripts/check-imports.sh` |
+| `Examples/Parliament.lean` | generated case-study umbrella | No | `./scripts/update-lib.sh Examples.Parliament` |
 | `.lake/` | build artifacts and cache | No | `lake build`, `lake exe cache get` |
 | `lake-manifest.json` | resolved dependency lockfile | Manual edits unsafe | Update `lean-toolchain` and both dependency pins in `lakefile.toml`, then run `lake update` |
 
@@ -37,3 +38,9 @@ Edit the source of truth, not the output.
 - If a path looks derived, confirm its source of truth before editing it.
 - The documentation itself is *not* generated. Keep it maintained with source changes;
   see [`README.md`](../README.md) for the maintenance contract.
+
+The `Examples.Parliament` generator argument maps to the nested
+`Examples/Parliament` source directory. Its public import index receives the same
+tracked-source coverage check as the production roots. Tutorials remain glob-based
+and do not need an umbrella. Documentation checks include both consumer packages
+and the executable entry point, while excluding their `.lake` build artifacts.

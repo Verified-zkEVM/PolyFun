@@ -11,12 +11,17 @@ it provides, rather than importing the whole project while developing a module.
 | `PolyFun` | Generic polynomial, interaction, logic, and realizability library | Default `lake build`; `import PolyFun` or a specific module |
 | `ToCslib` | Upstream staging: free-monad and loop laws, order bridge, machine/complexity theory | `lake build ToCslib`; specific `ToCslib.*` imports |
 | `PolyFunCslib` | Optional concrete realizability adapters | `lake build PolyFunCslib`; `import PolyFunCslib` |
-| `PolyFunExamples` | Human-facing checked tutorials under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
+| `PolyFunExamples` | Checked tutorials and the Parliament application under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
 | `PolyFunTest` | Regression tests, adversarial cases, and ordinary-import consumers | `lake test` |
 
 `PolyFun.lean` and `ToCslib.lean` are generated import indexes. The optional
 adapter and examples are outside the `PolyFun` umbrella. `PolyFunTest` can
 consume examples, but production never depends on examples or tests.
+
+`PolyFunExamples` combines tutorial globs with the generated `Examples.Parliament`
+root; there is no generic `Examples` umbrella to collide with a downstream target.
+`polyfun-parliament` uses the separate `PolyFunParliamentMain` executable entry point.
+Example and test imports never flow back into production.
 
 ## Find the right module
 
@@ -70,6 +75,10 @@ flowchart TD
   OP --> OR
   R --> AD[PolyFunCslib]
   T --> AD
+  I --> EX[Optional examples]
+  IO --> EX
+  EX --> CLI[Parliament executable]
+  EX --> TEST[Regression and consumer tests]
 ```
 
 The free-monad slice of `ToCslib` is used by PolyFun. Its machine modules are
@@ -93,6 +102,7 @@ for imports, transparency, and exposed reducer bodies.
 - `scripts/`: recurring validation and generation workflows.
 - `.github/workflows/`: build, test, lint, axiom, documentation, and release checks.
 - `test/DocumentationConsumer/`: a separate Lake consumer of the public tutorial and interaction APIs.
+- `test/ParliamentConsumer/`: a separate Lake consumer of the Parliament public API.
 
 See [generated files](../development/generated-files.md) before changing an
 umbrella, and [PolyFun and VCVio](../guides/polyfun-and-vcvio.md) before adding

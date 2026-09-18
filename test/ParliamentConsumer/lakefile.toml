@@ -1,0 +1,10 @@
+name = "PolyFunParliamentConsumer"
+defaultTargets = ["PolyFunParliamentConsumer"]
+packagesDir = "../../.lake/packages"
+
+[[require]]
+name = "PolyFun"
+path = "../.."
+
+[[lean_lib]]
+name = "PolyFunParliamentConsumer"

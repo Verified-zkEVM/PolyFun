@@ -16,14 +16,14 @@ usage() {
 Usage: ./scripts/validate.sh [--lint] [--test] [--axioms]
 
 Default checks:
-  - lake build PolyFun ToCslib PolyFunCslib PolyFunExamples --wfail
+  - lake build PolyFun ToCslib PolyFunCslib PolyFunExamples +PolyFunParliamentMain --wfail
   - ./scripts/check-modules.sh
   - ./scripts/check-imports.sh
   - python3 ./scripts/check-docs-integrity.py
 
 Optional checks:
-  --lint    Run environment and text-style linters over production and tutorial libraries
-  --test    Build regression tests and the separate documentation consumer
+  --lint    Run environment and text-style linters over production, tutorials, and case studies
+  --test    Build regressions, run CLI/filesystem tests, and build both separate consumers
   --axioms  Test axiomsweep, then enforce the zero axiom/sorry-debt gate
 EOF
 }
@@ -52,7 +52,7 @@ for arg in "$@"; do
 done
 
 echo "# Building project"
-lake build PolyFun ToCslib PolyFunCslib PolyFunExamples --wfail
+lake build PolyFun ToCslib PolyFunCslib PolyFunExamples +PolyFunParliamentMain --wfail
 
 echo ""
 echo "# Checking module scopes"
@@ -72,7 +72,8 @@ if (( run_lint )); then
   echo "# Running environment linters (lake lint)"
   lake lint
   lake exe lint-style PolyFun ToCslib PolyFunCslib \
-    Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms
+    Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
+    Examples.Parliament PolyFunParliamentMain
 fi
 
 if (( run_test )); then
@@ -81,12 +82,15 @@ if (( run_test )); then
   lake build PolyFunTest --wfail
   lake test
   lake -d test/DocumentationConsumer build --wfail
+  lake build polyfun-parliament --wfail
+  python3 scripts/test-parliament-cli.py
+  lake -d test/ParliamentConsumer build --wfail
 fi
 
 if (( run_axioms )); then
   echo ""
   echo "# Building axiom sweep roots"
-  lake build PolyFun ToCslib PolyFunCslib PolyFunExamples --wfail
+  lake build PolyFun ToCslib PolyFunCslib PolyFunExamples +PolyFunParliamentMain --wfail
 
   echo ""
   echo "# Testing the axiom sweep tool"
@@ -96,7 +100,8 @@ if (( run_axioms )); then
   echo "# Enforcing zero axiom/sorry debt"
   lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --root PolyFunCslib \
     --root Examples.Tutorials.Requests --root Examples.Tutorials.Machines \
-    --root Examples.Tutorials.IndexedPrograms --check
+    --root Examples.Tutorials.IndexedPrograms --root Examples.Parliament \
+    --root PolyFunParliamentMain --check
 fi
 
 echo ""

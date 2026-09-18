@@ -19,6 +19,7 @@ The Lean source is authoritative for definitions and theorem assumptions.
 - [First program](tutorials/first-program.md): two requests, two interpretations, checked results.
 - [Indexed programs](tutorials/indexed-programs.md): a protocol whose type records its phases.
 - [Runnable Lean examples](../Examples/README.md): program, machine, and indexed-program source.
+- [Parliament](../Examples/Parliament/README.md): an executable application with certified history, interchangeable handlers, and explicit IO boundaries.
 
 ## Guides
 

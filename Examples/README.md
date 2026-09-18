@@ -1,6 +1,6 @@
 # PolyFun examples
 
-These small programs are intended to be read and edited. From the repository root:
+The tutorials and executable case study are intended to be read and edited. From the repository root:
 
 ```sh
 lake build PolyFunExamples
@@ -21,5 +21,19 @@ Repository validation builds, lints, tests, and audits these examples explicitly
 
 Start with the [first-program walkthrough](../docs/tutorials/first-program.md)
 or the [indexed-program walkthrough](../docs/tutorials/indexed-programs.md).
-[Development notes](../docs/development/upstream.md#open-development) link
-proposed larger applications while they are under review.
+
+## Parliament application
+
+[Parliament](Parliament/README.md) combines indexed meeting inputs, certified
+histories, a returning machine, and interchangeable memory/IO handlers. It exports
+replayable journals and unapproved draft minutes for an explicitly bounded rule set.
+Use `import Examples.Parliament` for the case-study API.
+
+```sh
+lake build polyfun-parliament
+lake exe polyfun-parliament --help
+```
+
+Read the [runtime contract](Parliament/Docs/runtime.md) alongside the source.
+The [execution guide](../docs/guides/execution.md#resumable-execution) explains
+the generic driver reused by this application.

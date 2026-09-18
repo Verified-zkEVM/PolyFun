@@ -19,10 +19,10 @@ lake build
 ./scripts/validate.sh --lint --test --axioms
 ```
 
-The wrapper builds production and tutorial libraries, checks module/import/docs
-integrity, and optionally runs linters, regressions, the separate consumer, and
+The wrapper builds production and example libraries plus the executable entry point, checks module/import/docs
+integrity, and optionally runs linters, regressions, both separate consumers, CLI/filesystem tests, and
 the zero-debt axiom gate. See [validation](docs/development/validation.md).
-`lake test` builds `PolyFunTest`; `lake lint` covers production and tutorial
+`lake test` builds `PolyFunTest`; `lake lint` covers production and example
 libraries, with tests excluded. Use `lake lint -- --trace` after a fresh build
 to inspect the environment checks.
 
@@ -47,7 +47,7 @@ boundary. Imports flow downward and must remain acyclic.
 | `PolyFun/Complexity/`, `PolyFun/Logic/` | Generic resource-bound syntax and small logic helpers |
 | `ToCslib/` | Lowest production layer: upstream staging for free-monad, loop, order and machine/complexity laws |
 | `PolyFunCslib/` | Optional concrete realizability adapters, outside the generic umbrella |
-| `Examples/` | Checked teaching programs, target `PolyFunExamples` |
+| `Examples/` | Tutorials and the Parliament case study, target `PolyFunExamples` |
 | `PolyFunTest/` | Regression tests; may import tutorials, with no reverse production dependency |
 
 Start with `PFunctor/Basic.lean`, `PFunctor/Free/Basic.lean`, `ITree/Basic.lean`,
@@ -134,7 +134,10 @@ and [review guide](docs/development/review-hardening.md) apply to every change.
 `PolyFun.lean` and `ToCslib.lean` are generated; never hand-edit them. Stage
 new/deleted/renamed source files before running `./scripts/update-lib.sh` or
 `./scripts/update-lib.sh ToCslib`. See [generated files](docs/development/generated-files.md).
-Teaching modules use a glob target and need no generated umbrella.
+Tutorial modules use a glob target and need no generated umbrella. The optional
+case-study root `Examples/Parliament.lean` is generated with
+`./scripts/update-lib.sh Examples.Parliament`; stage new case-study modules first.
+Core libraries may not import examples, tests, or `PolyFunParliamentMain`.
 
 Add repository scripts only for concrete recurring workflows under
 [the scripts policy](CONTRIBUTING.md#repository-scripts). Reuse existing drivers

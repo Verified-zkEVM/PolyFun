@@ -1,7 +1,7 @@
 name = "PolyFun"
 defaultTargets = ["PolyFun"]
 
-# `lake lint` runs Batteries' environment linters over production and tutorial modules.
+# `lake lint` runs Batteries' environment linters over production, tutorial, and case-study modules.
 # `lake test` builds the `PolyFunTest` library; any failing `example` /
 # `#guard` / `#eval` fails elaboration. This mirrors Mathlib and cslib, which
 # reuse `batteries/runLinter` rather than shipping a local runner.
@@ -9,7 +9,7 @@ lintDriver = "batteries/runLinter"
 lintDriverArgs = [
   "PolyFun", "ToCslib", "PolyFunCslib",
   "Examples.Tutorials.Requests", "Examples.Tutorials.Machines",
-  "Examples.Tutorials.IndexedPrograms"
+  "Examples.Tutorials.IndexedPrograms", "Examples.Parliament", "PolyFunParliamentMain"
 ]
 testDriver = "PolyFunTest"
 
@@ -49,11 +49,12 @@ name = "ToCslib"
 [[lean_lib]]
 name = "PolyFunCslib"
 
-# Optional human-facing tutorials. This target name can coexist with VCVio's
+# Optional human-facing tutorials and executable case studies. This target name can coexist with VCVio's
 # `Examples` target. No generic `Examples` umbrella or core import is introduced.
 [[lean_lib]]
 name = "PolyFunExamples"
-globs = ["Examples.Tutorials.+"]
+roots = ["Examples.Parliament"]
+globs = ["Examples.Parliament", "Examples.Parliament.+", "Examples.Tutorials.+"]
 
 # Test / worked-example library. Built by `lake test`, kept out of the
 # `lake lint` scope. Glob-based, so no umbrella
@@ -83,3 +84,7 @@ supportInterpreter = true
 name = "PolyFunAxiomSweepTestFixtures"
 srcDir = "scripts"
 globs = ["PolyFunAxiomSweepTestFixtures.+"]
+
+[[lean_exe]]
+name = "polyfun-parliament"
+root = "PolyFunParliamentMain"
