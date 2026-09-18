@@ -142,7 +142,3 @@ theorem different_branch_counts :
   decide
 
 end PFunctor.FreeM.Cursor.HeterogeneousReplay
-
-#print axioms PFunctor.FreeM.Cursor.HeterogeneousReplay.example_output
-#print axioms PFunctor.FreeM.Cursor.HeterogeneousReplay.example_trace
-#print axioms PFunctor.FreeM.Cursor.HeterogeneousReplay.different_branch_counts
