@@ -131,3 +131,10 @@ Its cslib interpretation is `MTr` of the saturated system with `List.map some`
 on labels. In particular, `WeakTrace.nil_iff` requires equal endpoints; it does
 not quotient the empty trace by silent reachability. Trace concatenation and
 simulation transport use that interpretation.
+
+## Executable case study
+
+The [Parliament behavior walkthrough](../../Examples/Parliament/Docs/walkthrough.md)
+uses `DynComputation` behavior and `Resumption.toITree` to present the live application
+as a tau-free interaction tree. It proves query/return observations and relates finite
+chunks to resumption truncation; this does not require the meeting to terminate.

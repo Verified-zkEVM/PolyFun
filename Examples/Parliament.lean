@@ -28,6 +28,9 @@ public import Examples.Parliament.Procedure.Disposition
 public import Examples.Parliament.Procedure.Helpers
 public import Examples.Parliament.Replay
 public import Examples.Parliament.Rulebook
+public import Examples.Parliament.Walkthrough.Behavior
+public import Examples.Parliament.Walkthrough.Execution
+public import Examples.Parliament.Walkthrough.Handlers
 
 /-!
 # Executable parliamentary procedure and certified draft minutes

@@ -49,3 +49,23 @@ example (rules : Rules) (first second : Journal wordDomain rules)
     (commands : first.history.commands = second.history.commands) (meeting : Nat) :
     (draftMinutes first meeting).entries = (draftMinutes second meeting).entries :=
   draftMinutes_reconstruction first second initial commands meeting
+
+example {rules : Rules} {s last : AssemblyState wordDomain}
+    {commands : List (Command wordDomain)} {events : List Event}
+    (path : MeetingPath rules s commands last events) :
+    (Walkthrough.toPrefix path).last = last ∧
+      (Walkthrough.toPrefix path).events Walkthrough.commandLabel = commands :=
+  ⟨Walkthrough.toPrefix_last path, Walkthrough.toPrefix_commands path⟩
+
+example (config : App.Configuration) (state : App.State config) :
+    ITree.TauFree (Walkthrough.behaviorTree config state) :=
+  Walkthrough.behaviorTree_tauFree config state
+
+example (config : App.Configuration) (fuel : Nat) (state : App.State config) :
+    Walkthrough.forgetLog ((App.application config).runChunk
+      (Walkthrough.loggedHandler config) fuel state) =
+      (App.application config).runChunk (App.memoryHandler config) fuel state :=
+  Walkthrough.forget_logged_run config fuel state
+
+example (rules : Rules) (initial : AssemblyState wordDomain) (valid : initial.WellFormed) :
+    (Walkthrough.meetingSafety rules initial).init initial := ⟨rfl, valid⟩
