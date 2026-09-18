@@ -103,7 +103,6 @@ namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {l : Type w} {α β : Type v}
 
--- Path indices must identify the node normal form with its constructor spelling.
 /-! ## Syntactic weakest precondition -/
 
 /-- Fold a per-operation spec over a free tree: the syntactic weakest
