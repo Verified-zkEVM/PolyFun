@@ -240,9 +240,7 @@ theorem emitsAlong_wireRight (Δ₁ Γ Δ₂ : PortBoundary) :
 theorem emitsAlong_close (Δ : PortBoundary) :
     EmitsAlong (OpenNodeContext.close.{u, w} Party Δ) (fun _ => none) := by
   intro X ons
-  funext x
-  simp only [OpenNodeContext.close, BoundaryAction.closed, PFunctor.Trace.mapPartial_apply]
-  exact (List.filterMap_eq_nil_iff.mpr fun _ _ => rfl).symm
+  simp only [OpenNodeContext.close, BoundaryAction.closed, PFunctor.Trace.mapPartial_none]
 
 /-- Re-decorating a node applies the hom at the node and recursively below. -/
 theorem decoration_map_node {Δ₁ Δ₂ : PortBoundary}

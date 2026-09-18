@@ -31,11 +31,6 @@ namespace Decoration
 
 variable {P : PFunctor.{u, v}} {α : Type w} {β : Type w₄}
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-rewriting appended decorations over `FreeM.liftBind` trees needs `FreeM.bind`
-to unfold there so that `(lift a).bind rest` and `liftBind a rest` agree. -/
-attribute [local implicit_reducible] PFunctor.FreeM.bind
-
 /-- Concatenate per-node metadata along `FreeM.append`. -/
 @[implicit_reducible]
 def append {Γ : P.A → Type w₂}

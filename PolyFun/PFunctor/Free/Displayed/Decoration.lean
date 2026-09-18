@@ -51,12 +51,6 @@ namespace Displayed
 
 variable {P : PFunctor.{u, v}} {α : Type w}
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-rewriting nested `map` applications over `FreeM.liftBind` trees needs
-`FreeM.bind` to unfold there so that `(lift a).bind rest` and
-`liftBind a rest` agree. -/
-attribute [local implicit_reducible] PFunctor.FreeM.bind
-
 /-- Displayed algebra for node-local metadata over a polynomial tree. -/
 @[implicit_reducible]
 def Decoration.algebra (Γ : P.A → Type w₂) :

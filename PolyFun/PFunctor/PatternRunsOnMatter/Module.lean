@@ -53,7 +53,7 @@ private theorem runObj_unit (P : PFunctor.{u, u})
           (runObj pattern
             ((CofreeP.laxUnit.{u, u}).toFunA
               (PUnit.unit : y.{u, u}.A)))) =
-      (⟨pattern, fun path => (path, PUnit.unit)⟩ :
+      (.mk pattern (fun path => (path, PUnit.unit)) :
         (FreeP P).Obj (FreeM.Path pattern × PUnit.{u + 1})) := by
   induction pattern with
   | pure value =>
@@ -97,7 +97,7 @@ private theorem runObj_unit (P : PFunctor.{u, u})
                 (runObj (rest direction)
                   ((CofreeP.laxUnit.{u, u}).toFunA
                     (PUnit.unit : y.{u, u}.A)))) =
-            (⟨rest direction, fun path => (path, PUnit.unit)⟩ :
+            (.mk (rest direction) (fun path => (path, PUnit.unit)) :
               (FreeP P).Obj
                 (FreeM.Path (rest direction) × PUnit.{u + 1})) := by
         rw [← FreeP.mapObj_relabel]
@@ -108,7 +108,7 @@ private theorem runObj_unit (P : PFunctor.{u, u})
             (FreeM.Path.cons a rest direction pulled.1, pulled.2)))
         ih'
       simpa only [FreeP.relabel_relabel, FreeP.mapObj_relabel,
-        FreeP.relabel, Function.comp_def] using hi
+        FreeP.relabel, PFunctor.map, Obj.fst_mk, Obj.snd_mk, Function.comp_def] using hi
 
 private def unitLhs (P : PFunctor.{u, u}) :
     Lens (FreeP P ⊗ y.{u, u}) (FreeP P) :=
@@ -136,7 +136,7 @@ private theorem unitObj (P : PFunctor.{u, u})
         (runObj pattern
           ((CofreeP.laxUnit.{u, u}).toFunA
             (PUnit.unit : y.{u, u}.A)))) =
-    (⟨pattern, fun path => (path, PUnit.unit)⟩ :
+    (.mk pattern (fun path => (path, PUnit.unit)) :
       (FreeP P).Obj (FreeM.Path pattern × PUnit.{u + 1}))
   have hlabel :
       (fun pulled : FreeM.Path pattern ×
@@ -316,7 +316,7 @@ private theorem runObj_assoc (P Q R : PFunctor.{u, u})
               M.Vertex.child matterRDirection pulled.2)))
         ihChild
       simpa only [runLabeled, FreeP.relabel_relabel,
-        FreeP.mapObj_relabel, FreeP.relabel,
+        FreeP.mapObj_relabel, FreeP.relabel, PFunctor.map,
         Function.comp_def, laxTensorVertexObj, vertexPairObj,
         rightChildren, Lens.mapObj, Obj.fst, Obj.snd, Obj.mk, Function.comp_apply, id_eq,
         Lens.Equiv.tensorAssoc_toFunA, Lens.Equiv.tensorAssoc_toFunB,

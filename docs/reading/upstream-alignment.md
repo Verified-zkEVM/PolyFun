@@ -182,7 +182,7 @@ addition to syntax and naming.
 
 | Question | Next concrete check | Acceptance / removal condition |
 |---|---|---|
-| Residual raw polynomial-object carriers in `PFunctor/Free/Polynomial.lean`, displayed paths and M vertices | Trace `FreeP.encode/decode` and public dependent indices before changing their Sigma presentation. Distinguish intentional position/direction Sigma from object implementation. | A focused migration with ordinary-import and mixed-universe consumers; no local override restoring old object normalization. The foundational migration does not claim every carrier has been converted. |
+| Residual raw polynomial-object carriers | **FreeP and M vertices addressed below.** Continue through cofree and displayed constructions, distinguishing intentional position/direction Sigma from object implementation. | Each further migration needs ordinary-import and mixed-universe consumers; no local override restoring old object normalization. Neither migration claims every carrier has been converted. |
 | Small object and LTS gaps upstream | Propose native `Obj.ext`/injectivity to Mathlib; relocate cslib's `HasTau (Option _)` next to the LTS API; minimize the delay/cross-type symmetry use cases. | Delete local supplements when the supported pin exposes equivalent interfaces without unrelated imports. |
 | Remaining dependent `FreeM` elaboration friction | Minimize indexed `bind/lift` reduction and dependent-result simp matching failures against cslib. | Fix the owning API or use a supported eliminator; preserve upstream simp direction and remove each override once its reproducer works. |
 | WP and coinductive API changes after v4.34 | At the coordinated toolchain bump, exercise support, StateT, both WP readings, quantitative VCVio consumers and weak-bisimulation examples against `Std.WP`, attachment soundness, `monotonicity_by` and strong coinduction. | Replace superseded local bridges/instances only when the new pin and tests support the same contract; no speculative compatibility hierarchy now. |
@@ -196,6 +196,179 @@ next pin, use actual source changes such as
 [`monotonicity_by`](https://github.com/leanprover/lean4/pull/14861) and
 [strong (co)induction](https://github.com/leanprover/lean4/pull/14855), and test their
 semantics rather than assuming a namespace rename completes the migration.
+
+## Definitional-equality follow-up
+
+The baseline is `88f0fa6fc23a8982b154b8a2ea65e9e982e393da`, with the same
+Lean/Mathlib/cslib v4.34.0 pins as the design review. A fresh source census
+covers **330 production modules** (316 PolyFun, 11 ToCslib, 3 PolyFunCslib),
+excluding generated umbrellas. Tests and downstream examples are separate
+consumer evidence, not part of that count.
+
+| Source signal | PolyFun occurrences / files | ToCslib | PolyFunCslib |
+|---|---:|---:|---:|
+| Broad exposed public sections | 193 / 193 | 0 | 0 |
+| Local implicit-reducibility attribute commands | 71 / 58 | 0 | 0 |
+| Implementation imports (`import all`) | 60 / 38 | 0 | 0 |
+| `with_unfolding_all` | 0 | 0 | 0 |
+
+These are textual signals, including comments if a spelling occurs there,
+not counts of defects. An attribute command can mention multiple definitions.
+The census also locates `rfl`, `change`, `unfold`, and `dsimp`; their use inside
+an implementation or to prove its public equations is not itself an API problem.
+Reproduce the counts with `rg` over the three production roots and inspect the
+matched files; temporary inventories stay outside the repository.
+
+### Polynomial-object carriers
+
+**Adopt the owning object API.** `FreeP.node`, `encode`, and `decode` now use
+`(FreeP P).Obj` in their signatures, with `Obj.mk/fst/snd/rec/ext` in their
+construction and equality proofs. Public node projections, encoding equations,
+and `decode_mk` let consumers reason without expanding the carrier. `relabel`
+delegates to `PFunctor.map`, with an explicit bridge to the ordinary map law.
+The free-handler equivalence uses these projections; its interpretation proof
+names `SubstMonoid.Extension` explicitly, since the object carrier alone does
+not choose a monad instance. `M.Vertex` lens observations likewise use native
+object equality rather than Sigma equality.
+
+Positions of composite polynomials, dependent path decompositions, and display
+fibers that are defined as Sigma types retain those types. `FreeP` itself stays
+reducible: its positions and directions intentionally compute to free trees
+and their paths. This is not a change to the polynomial's mathematical carrier.
+
+The ordinary-import regressions in
+`PolyFunTest/ModuleAPI/FreePolynomial.lean` cover independent universes, labelled
+node observations, both encode/decode round trips, free-handler conversion,
+M-type child transport, different response fibers, and an operation without
+responses. A response-free node is tested extensionally: functions out of
+`Empty` need not be definitionally equal merely because they have no arguments.
+
+### Dependent free-monad indices
+
+**Fix consumers; remove redundant overrides.** Removing the imported
+`FreeM.bind/lift/map` overrides in isolation left six modules compiling
+unchanged: `Free/Path`, `Free/Path/Execution`, `Free/Path/Bounded`, `Free/WP`,
+`Free/Displayed/Append`, and `Free/Displayed/Decoration`. Two more required
+small proof changes: `Display/Free` applies `transport_liftBind` directly
+instead of `convert`, and `Free/Cursor/Fork` computes the Boolean observation
+of `some` before simplifying the occurrence count. All eight now use the
+pinned upstream attributes. The theorem-only bounded-path module has a plain
+public section. This does not change the public tree or path representation.
+
+The ordinary-import regression starts with `path : Path (liftBind a next)`.
+`rw [Path.cons_head_tail]` fails its implicit-transparency check, while direct
+theorem application succeeds. Changing the hypothesis to
+`Path ((lift a).bind next)` makes the same rewrite succeed. The issue can be
+reproduced without PolyFun, using only
+`Cslib.Foundations.Data.PFunctor.Free`:
+
+```lean
+example {P : PFunctor} {α : Type}
+    (F : PFunctor.FreeM P α → Type) (a : P.A)
+    (next : P.B a → PFunctor.FreeM P α)
+    (observe : F ((PFunctor.FreeM.lift a).bind next) → Nat)
+    (value : F (PFunctor.FreeM.liftBind a next))
+    (h : ∀ x, observe x = 0) : observe value = 0 := by
+  -- `rw [h]` fails at v4.34.0 because value's index has the constructor spelling.
+  change F ((PFunctor.FreeM.lift a).bind next) at value
+  rw [h]
+```
+
+This is evidence for an upstream dependent-elaboration discussion, not evidence
+that every user of paths requires more transparency. No upstream attribute or
+simp direction is changed locally. The regression also covers generic and
+independent-universe append/split, displayed right unitality, operation WP,
+TypeTree constructor patterns, and the path-erasure and typed dynamic-fork
+interfaces used by VCVio's replay proof. The latter are extracted structural
+consumers compiled at PolyFun's pins; they do not claim a full build of VCVio
+at its older pins or validate its probability arguments.
+
+### Ordered traces and dependent events
+
+**Adopt the free-monoid API; publish observation laws.** The pinned Mathlib
+`Algebra/FreeMonoid/Basic.lean` already supplies `toList/ofList`, their equations,
+and `recOn` with `one` and `of_mul` cases. The induction proofs for dependent
+lookup now use that recursor. `positions`, `occurrences`, and `mapPartial`
+explicitly cross the list boundary through `toList/ofList`; polynomial-specific
+counting and lookup equations stay in PolyFun. Searching the pinned FreeMonoid
+and PFunctor sources found no corresponding dependent occurrence API to reuse.
+
+The public additions cover concatenated position lists and occurrence counts,
+generator lookup, lookup at a prefix's occurrence count, and partial-map
+composition and erasure. `Path.trace_liftBind_eq_mul` exposes a node trace
+through monoid operations. Existing list-form equations remain available.
+`Trace.mapPartial` delegates to `TraceList.mapPartial`, so its composition and
+erasure proofs share the same implementation and laws.
+
+Supply consumption uses these equations instead of three private duplicates.
+Occurrence and fork proofs use the public counting laws. Open-process wiring,
+sampler factorization, and closing an interleaved context use partial-map laws
+instead of exposing `List.filterMap` in their proofs. `FreeMonoid` overrides
+are removed from all seven selected modules: trace, path execution, supply
+trace, occurrence, fork, open process, and sampler factorization. The latter
+four also lose their `Idx` overrides.
+
+**Retain the two demonstrated dependent-event overrides.** Removing `Idx`
+from the final trace module still prevents simplification of the two cons-count
+equations and the base case of `getAt?_mul_self_occurrences`. Removing it from
+supply trace prevents the generator rewrites in `apply_eq_drop_occurrences`
+and `getAt?_trace_runPath`: a constructed Sigma pair is not accepted as `P.Idx`
+at implicit transparency. This is separate from list/monoid representation.
+The comments beside both retained attributes name those consumers and the
+removal condition: a supported `Idx` constructor API, or consumer terms that
+consistently retain the named event type. No upstream attributes are changed
+globally.
+
+A smaller reproducer needs only Mathlib's `Algebra.FreeMonoid.Basic` and
+`Data.PFunctor.Univariate.Basic`, with no PolyFun import:
+
+```lean
+example {P : PFunctor} (a : P.A) (answer : P.B a)
+    (observe : FreeMonoid P.Idx → Nat)
+    (h : ∀ event : P.Idx, observe (FreeMonoid.of event) = 0) :
+    observe (FreeMonoid.of (α := P.Idx) ⟨a, answer⟩) = 0 := by
+  -- `rw [h]` rejects the Sigma/Idx application at implicit transparency.
+  exact h ⟨a, answer⟩
+```
+
+`PolyFunTest/ModuleAPI/Traces.lean` checks ordinary-import rewriting across
+independent universes, a generic supply consumer, and concrete ordered traces
+interleaving Nat and Bool response fibers. Repeated positions carry different
+answers; lookup checks both answers, missing occurrences, and the empty trace.
+Filtering checks retained order, payloads, removed positions, composition,
+and total erasure. Existing supply examples also check that changing an answer
+can shorten the execution and leave the remaining supply untouched.
+
+### Review outcome and next cases
+
+The same textual census after these changes has **192 broad exposed sections**,
+**60 local implicit-reducibility commands in 49 files**, and the unchanged
+**60 implementation imports in 38 files**. These figures describe scope, not a
+quality score: the eight FreeM consumers and seven trace consumers were tested
+in isolation, while the rest of the library received a source census.
+
+The implementation is split into object, dependent-path, and trace changes.
+Each runs `./scripts/validate.sh --lint --test --axioms`, including production
+and optional adapters, ordinary-import and behavioral tests, module/layer and
+documentation checks, environment lint, and the zero-taint axiom sweep. API
+review preserves independent universes, upstream simp direction, existing
+constructor computation, and the instance choices of the free-handler bridge.
+Boundary tests cover empty response fibers, dependent indices, repeated events,
+and absence of observations. No instances, dependency pins, or cryptographic
+semantics are added.
+
+Remaining work is ranked by an actual consumer and a falsifiable removal test:
+
+| Priority | Case | Next experiment and acceptance condition |
+|---|---|---|
+| 1 | `Idx` in trace/supply and `Interaction/UC/RequestNetwork/Transport.lean` | Use the minimal generator reproducer to evaluate an owning constructor/eliminator API; then remove each override in isolation and rebuild dependent lookup, transport, and supply consumers. Avoid duplicating the event type locally. |
+| 2 | `PFunctor/Cofree/{Polynomial,Universal,LaxMonoidal,FiniteProjection}.lean` and `PFunctor/PatternRunsOnMatter/` | Trace one object equality and one dependent action/continuation through the existing object and lens APIs. Test the remaining FreeM overrides separately; distinguish them from type-level tensor/unit contracts before narrowing exposure. |
+| 3 | `Interaction/UC/ReactiveNetwork/` and `Realizability/{DynSystem,DynSystemClosure,Machine}.lean` | Minimize a transport or closure proof using public update/exposure equations. Keep representation and chosen admissible-step data coherent; require a dependent consumer under ordinary imports before dropping an override. |
+| 4 | Other broad sections in Control, IPFunctor, and ITree; core/cslib dependent-result automation | Select one real consumer per interface, including data-indexed instance search. Keep the FreeM/Idx reproducers separate from simp-result indexing and `vcgen` matching. Re-run at the coordinated pin upgrade; do not infer an upstream fix from attribute counts. |
+
+Full VCVio validation remains a separate pin-coordination task. The structural
+replay consumers here exercise the PolyFun boundary without changing the older
+downstream checkout or asserting that its probability and WP proofs compile.
 
 ## Ledger
 

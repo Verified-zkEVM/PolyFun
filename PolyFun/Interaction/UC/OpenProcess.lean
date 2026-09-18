@@ -62,13 +62,6 @@ probabilistic execution belong to downstream runtime interpreters.
 
 public section
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the wiring lemmas below rewrite `List.filterMap` chains over `TraceList`
-carriers (reducibly `FreeMonoid (Idx _)`) there. `implicit_reducible` (unlike
-`reducible`) stays invisible to simp and instance search, and needs no
-`allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] PFunctor.Idx FreeMonoid
-
 universe u v v₁ v₂ v₃ w w'
 
 namespace Interaction
@@ -270,14 +263,11 @@ theorem mapBoundary_wireLeft {Δ₁ Δ₁' Γ : PortBoundary} {Δ₂ Δ₂' : Po
         (PortBoundary.Hom.tensor f₁ (PortBoundary.Hom.id Γ))).wireLeft Δ₂' := by
   simp only [wireLeft, mapBoundary, PortBoundary.Hom.tensor, PortBoundary.Hom.id]
   congr 1
-  funext x
-  apply FreeMonoid.toList.injective
-  dsimp only [FreeMonoid.toList]
-  simp only [PFunctor.Trace.mapChart_apply, PFunctor.Trace.mapPartial_apply]
-  rw [List.filterMap_filterMap, List.filterMap_filterMap]
-  apply List.filterMap_congr
-  intro ⟨pkt_port, pkt_msg⟩ _
-  cases pkt_port <;> rfl
+  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_comp]
+  congr 1
+  funext packet
+  rcases packet with ⟨port, message⟩
+  cases port <;> rfl
 
 @[simp]
 theorem mapBoundary_wireRight {Δ₁ Δ₁' : PortBoundary} {Γ Δ₂ Δ₂' : PortBoundary} {X : Type w}
@@ -289,14 +279,11 @@ theorem mapBoundary_wireRight {Δ₁ Δ₁' : PortBoundary} {Γ Δ₂ Δ₂' : P
           (PortBoundary.Hom.id (PortBoundary.swap Γ)) f₂)).wireRight Δ₁' := by
   simp only [wireRight, mapBoundary, PortBoundary.Hom.tensor, PortBoundary.Hom.id]
   congr 1
-  funext x
-  apply FreeMonoid.toList.injective
-  dsimp only [FreeMonoid.toList]
-  simp only [PFunctor.Trace.mapChart_apply, PFunctor.Trace.mapPartial_apply]
-  rw [List.filterMap_filterMap, List.filterMap_filterMap]
-  apply List.filterMap_congr
-  intro ⟨pkt_port, pkt_msg⟩ _
-  cases pkt_port <;> rfl
+  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_comp]
+  congr 1
+  funext packet
+  rcases packet with ⟨port, message⟩
+  cases port <;> rfl
 
 end BoundaryAction
 

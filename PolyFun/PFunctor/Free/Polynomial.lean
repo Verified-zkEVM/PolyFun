@@ -44,20 +44,41 @@ variable {P : PFunctor.{uA, uB}} {α : Type v}
 
 /-- Construct one `FreeP` operation node from its path-labelled children. -/
 def node (a : P.A)
-    (children : P.B a →
-      (Σ s : FreeM P PUnit.{uB + 1}, FreeM.Path s → α)) :
-    Σ s : FreeM P PUnit.{uB + 1}, FreeM.Path s → α :=
-  let rest := fun b => (children b).1
-  ⟨.liftBind a rest, fun path =>
+    (children : P.B a → (FreeP P).Obj α) : (FreeP P).Obj α :=
+  let rest := fun b => (children b).fst
+  .mk (.liftBind a rest) fun path =>
     let b := FreeM.Path.head a rest path
-    (children b).2 (FreeM.Path.tail a rest path)⟩
+    (children b).snd (FreeM.Path.tail a rest path)
+
+/-- The shape of a labelled operation node. -/
+@[simp]
+theorem node_fst (a : P.A) (children : P.B a → (FreeP P).Obj α) :
+    (node a children).fst = FreeM.liftBind a (fun b => (children b).fst) :=
+  rfl
+
+/-- A node's label at a path is the corresponding child label. -/
+@[simp]
+theorem node_snd_cons (a : P.A) (children : P.B a → (FreeP P).Obj α)
+    (b : P.B a) (path : FreeM.Path (children b).fst) :
+    (node a children).snd (FreeM.Path.cons a (fun b => (children b).fst) b path) =
+      (children b).snd path :=
+  rfl
 
 /-- Erase the leaf labels of a free tree while recording each label at its
 complete path. -/
-def encode : FreeM P α →
-    (Σ s : FreeM P PUnit.{uB + 1}, FreeM.Path s → α)
-  | .pure x => ⟨.pure PUnit.unit, fun _ => x⟩
+def encode : FreeM P α → (FreeP P).Obj α
+  | .pure x => .mk (.pure PUnit.unit) (fun _ => x)
   | .liftBind a rest => node a fun b => encode (rest b)
+
+@[simp]
+theorem encode_pure (x : α) : encode (pure x : FreeM P α) =
+    .mk (.pure PUnit.unit) (fun _ => x) :=
+  rfl
+
+/-- Encoding an operation node encodes its children separately. -/
+theorem encode_liftBind (a : P.A) (rest : P.B a → FreeM P α) :
+    encode (FreeM.liftBind a rest) = node a (fun b => encode (rest b)) :=
+  rfl
 
 /-- Label the leaves of a fixed unlabelled tree using its path-indexed
 payload. -/
@@ -70,9 +91,13 @@ def decodeAt : (s : FreeM P PUnit.{uB + 1}) →
 
 /-- Label the leaves of an unlabelled free tree using its path-indexed
 payload. -/
-def decode (x : Σ s : FreeM P PUnit.{uB + 1}, FreeM.Path s → α) :
-    FreeM P α :=
-  decodeAt x.1 x.2
+def decode (x : (FreeP P).Obj α) : FreeM P α :=
+  decodeAt x.fst x.snd
+
+@[simp]
+theorem decode_mk (s : (FreeP P).A) (label : FreeM.Path s → α) :
+    decode (PFunctor.Obj.mk s label) = decodeAt s label :=
+  rfl
 
 /-- Decoding a labelled polynomial node is `FreeM.liftBind` of the decoded
 children. -/
@@ -103,9 +128,9 @@ def collapseUnit : Lens (FreeP y.{uA, uB}) y.{uA, uB} where
 `FreeM.collapseUnit` after decoding. -/
 theorem collapseUnit_mapObj {E : Type v}
     (x : (FreeP y.{uA, uB}).Obj E) :
-    (Lens.mapObj collapseUnit x).2 PUnit.unit =
+    (Lens.mapObj collapseUnit x).snd PUnit.unit =
       FreeM.collapseUnit (FreeP.decode x) := by
-  rcases x with ⟨tree, label⟩
+  cases x using PFunctor.Obj.rec with | mk tree label =>
   induction tree with
   | pure value =>
       cases value
@@ -126,10 +151,9 @@ theorem node_paths (a : P.A)
     (rest : P.B a → FreeM P PUnit.{uB + 1})
     (label : FreeM.Path (FreeM.liftBind a rest) → α) :
     node a (fun b =>
-      (⟨rest b, fun path => label (FreeM.Path.cons a rest b path)⟩ :
-        Σ s : FreeM P PUnit.{uB + 1}, FreeM.Path s → α)) =
-      ⟨.liftBind a rest, label⟩ := by
-  refine Sigma.ext (by rfl) ?_
+      (PFunctor.Obj.mk (rest b) (fun path => label (FreeM.Path.cons a rest b path)))) =
+      .mk (.liftBind a rest) label := by
+  refine PFunctor.Obj.ext (by rfl) ?_
   apply heq_of_eq
   funext path
   rcases path with ⟨b, path⟩
@@ -137,11 +161,11 @@ theorem node_paths (a : P.A)
 
 theorem encode_decodeAt (s : FreeM P PUnit.{uB + 1})
     (label : FreeM.Path s → α) :
-    encode (decodeAt s label) = ⟨s, label⟩ := by
+    encode (decodeAt s label) = .mk s label := by
   match s with
   | .pure u =>
       cases u
-      refine Sigma.ext (by rfl) ?_
+      refine PFunctor.Obj.ext (by rfl) ?_
       apply heq_of_eq
       funext path
       cases path
@@ -150,13 +174,12 @@ theorem encode_decodeAt (s : FreeM P PUnit.{uB + 1})
       change
         node a (fun b => encode (decodeAt (rest b)
           (fun path => label (FreeM.Path.cons a rest b path)))) =
-        ⟨.liftBind a rest, label⟩
+        .mk (.liftBind a rest) label
       have hchildren :
           (fun b => encode (decodeAt (rest b)
             (fun path => label (FreeM.Path.cons a rest b path)))) =
-          (fun b => (⟨rest b,
-            fun path => label (FreeM.Path.cons a rest b path)⟩ :
-            Σ s : FreeM P PUnit.{uB + 1}, FreeM.Path s → α)) := by
+          (fun b => (PFunctor.Obj.mk (rest b)
+            (fun path => label (FreeM.Path.cons a rest b path)))) := by
         funext b
         exact encode_decodeAt (rest b)
           (fun path => label (FreeM.Path.cons a rest b path))
@@ -165,7 +188,7 @@ theorem encode_decodeAt (s : FreeM P PUnit.{uB + 1})
 
 @[simp]
 theorem encode_decode (x : (FreeP P).Obj α) : encode (decode x) = x := by
-  rcases x with ⟨s, label⟩
+  cases x using PFunctor.Obj.rec with | mk s label =>
   exact encode_decodeAt s label
 
 /-- Binding a decoded tree depends on a leaf label only through the
@@ -239,20 +262,26 @@ changing its tree shape. -/
 @[implicit_reducible]
 def relabel {β : Type w} (f : α → β) (x : (FreeP P).Obj α) :
     (FreeP P).Obj β :=
-  ⟨x.1, f ∘ x.2⟩
+  (FreeP P).map f x
+
+/-- Relabelling is the ordinary action of the free polynomial on a function. -/
+theorem relabel_eq_map {β : Type w} (f : α → β) (x : (FreeP P).Obj α) :
+    relabel f x = (FreeP P).map f x :=
+  rfl
 
 /-- Decoding after relabelling is ordinary free-monad mapping. -/
 @[simp]
 theorem decode_relabel {β : Type w} (f : α → β)
     (x : (FreeP P).Obj α) :
     decode (relabel f x) = FreeM.map f (decode x) := by
-  rcases x with ⟨shape, labels⟩
+  cases x using PFunctor.Obj.rec with | mk shape labels =>
   induction shape with
   | pure value =>
       cases value
       rfl
   | liftBind a rest ih =>
-      simp only [decode, decodeAt, relabel, FreeM.map]
+      simp only [decode, decodeAt, relabel, PFunctor.map_eq, PFunctor.Obj.fst_mk,
+        PFunctor.Obj.snd_mk, FreeM.map]
       apply congrArg (FreeM.liftBind a)
       funext direction
       exact ih direction
@@ -340,13 +369,14 @@ theorem mapObj_relabel {β : Type w} (l : Lens P Q)
 @[simp]
 theorem decode_map (l : Lens P Q) (x : (FreeP P).Obj α) :
     decode (Lens.mapObj (map l) x) = (decode x).mapLens l := by
-  rcases x with ⟨s, label⟩
+  cases x using PFunctor.Obj.rec with | mk s label =>
   induction s with
   | pure u =>
       cases u
       rfl
   | liftBind a rest ih =>
-      simp only [Lens.mapObj, map, mapShape, decode, decodeAt, FreeM.mapLens]
+      simp only [Lens.mapObj, map, mapShape, decode, PFunctor.Obj.fst_mk,
+        PFunctor.Obj.snd_mk, decodeAt, FreeM.mapLens]
       apply congrArg (FreeM.liftBind (l.toFunA a))
       funext d
       exact ih (l.toFunB a d) (fun path ↦ label ⟨l.toFunB a d, path⟩)
@@ -355,13 +385,13 @@ theorem decode_map (l : Lens P Q) (x : (FreeP P).Obj α) :
 the mapped shape together with its pulled-back path avoids exposing a cast in
 the public functor law. -/
 theorem map_obj_id (s : (FreeP P).A) :
-    (⟨mapShape (Lens.id P) s, (map (Lens.id P)).toFunB s⟩ :
+    (.mk (mapShape (Lens.id P) s) ((map (Lens.id P)).toFunB s) :
       (FreeP P).Obj (FreeM.Path s)) =
-    ⟨s, id⟩ := by
+    .mk s id := by
   match s with
   | .pure u =>
       cases u
-      refine Sigma.ext (by rfl) ?_
+      refine PFunctor.Obj.ext (by rfl) ?_
       apply heq_of_eq
       funext path
       cases path
@@ -369,16 +399,16 @@ theorem map_obj_id (s : (FreeP P).A) :
   | .liftBind a rest =>
       change
         node a (fun b => relabel (FreeM.Path.cons a rest b)
-          (⟨mapShape (Lens.id P) (rest b),
-            (map (Lens.id P)).toFunB (rest b)⟩ :
+          (.mk (mapShape (Lens.id P) (rest b))
+            ((map (Lens.id P)).toFunB (rest b)) :
               (FreeP P).Obj (FreeM.Path (rest b)))) =
-        ⟨.liftBind a rest, id⟩
+        .mk (.liftBind a rest) id
       have hchildren :
           (fun b => relabel (FreeM.Path.cons a rest b)
-            (⟨mapShape (Lens.id P) (rest b),
-              (map (Lens.id P)).toFunB (rest b)⟩ :
+            (.mk (mapShape (Lens.id P) (rest b))
+              ((map (Lens.id P)).toFunB (rest b)) :
                 (FreeP P).Obj (FreeM.Path (rest b)))) =
-          (fun b => (⟨rest b, FreeM.Path.cons a rest b⟩ :
+          (fun b => (.mk (rest b) (FreeM.Path.cons a rest b) :
             (FreeP P).Obj (FreeM.Path (FreeM.liftBind a rest)))) := by
         funext b
         exact congrArg (relabel (FreeM.Path.cons a rest b))
@@ -393,15 +423,15 @@ theorem map_id : map (Lens.id P) = Lens.id (FreeP P) :=
 /-- Pointwise container form of composition preservation for `FreeP.map`. -/
 theorem map_obj_comp (l₂ : Lens Q R) (l₁ : Lens P Q)
     (s : (FreeP P).A) :
-    (⟨(map l₂ ∘ₗ map l₁).toFunA s,
-        (map l₂ ∘ₗ map l₁).toFunB s⟩ :
+    (.mk ((map l₂ ∘ₗ map l₁).toFunA s)
+        ((map l₂ ∘ₗ map l₁).toFunB s) :
       (FreeP R).Obj (FreeM.Path s)) =
-    ⟨(map (l₂ ∘ₗ l₁)).toFunA s,
-      (map (l₂ ∘ₗ l₁)).toFunB s⟩ := by
+    .mk ((map (l₂ ∘ₗ l₁)).toFunA s)
+      ((map (l₂ ∘ₗ l₁)).toFunB s) := by
   match s with
   | .pure u =>
       cases u
-      refine Sigma.ext (by rfl) ?_
+      refine PFunctor.Obj.ext (by rfl) ?_
       apply heq_of_eq
       funext path
       cases path
@@ -412,10 +442,10 @@ theorem map_obj_comp (l₂ : Lens Q R) (l₁ : Lens P Q)
           relabel
             (FreeM.Path.cons a rest
               (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d)))
-            (⟨(map l₂ ∘ₗ map l₁).toFunA
-                (rest (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d))),
-              (map l₂ ∘ₗ map l₁).toFunB
-                (rest (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d)))⟩ :
+            (.mk ((map l₂ ∘ₗ map l₁).toFunA
+                (rest (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d))))
+              ((map l₂ ∘ₗ map l₁).toFunB
+                (rest (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d)))) :
               (FreeP R).Obj
                 (FreeM.Path
                   (rest (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d)))))) =
@@ -423,10 +453,10 @@ theorem map_obj_comp (l₂ : Lens Q R) (l₁ : Lens P Q)
           relabel
             (FreeM.Path.cons a rest
               (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d)))
-            (⟨(map (l₂ ∘ₗ l₁)).toFunA
-                (rest (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d))),
-              (map (l₂ ∘ₗ l₁)).toFunB
-                (rest (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d)))⟩ :
+            (.mk ((map (l₂ ∘ₗ l₁)).toFunA
+                (rest (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d))))
+              ((map (l₂ ∘ₗ l₁)).toFunB
+                (rest (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d)))) :
               (FreeP R).Obj
                 (FreeM.Path
                   (rest (l₁.toFunB a (l₂.toFunB (l₁.toFunA a) d))))))
@@ -478,21 +508,23 @@ theorem mult_toFunB (x : (FreeP P ◃ FreeP P).A)
 /-- Decode each inner tree of a two-layer `FreeP` object, leaving the outer
 tree labelled by free-monad computations. -/
 def nest (x : (FreeP P ◃ FreeP P).Obj α) : (FreeP P).Obj (FreeM P α) :=
-  ⟨x.1.1, fun path₁ ↦
-    decodeAt (x.1.2 path₁) (fun path₂ ↦ x.2 ⟨path₁, path₂⟩)⟩
+  .mk x.fst.1 fun path₁ ↦
+    decodeAt (x.fst.2 path₁) (fun path₂ ↦ x.snd ⟨path₁, path₂⟩)
 
 /-- Multiplication of labelled free polynomials corresponds under `objEquiv`
 to joining the nested decoded free-monad computation. -/
 theorem decode_mult (x : (FreeP P ◃ FreeP P).Obj α) :
     decode (Lens.mapObj (mult (P := P)) x) =
       FreeM.bind (decode (nest x)) id := by
-  rcases x with ⟨⟨s, middle⟩, label⟩
+  cases x using PFunctor.Obj.rec with | mk position label =>
+  rcases position with ⟨s, middle⟩
   induction s with
   | pure u =>
       cases u
       rfl
   | liftBind a rest ih =>
-      simp only [Lens.mapObj, mult, nest, decode, decodeAt, FreeM.bind]
+      simp only [Lens.mapObj, mult, nest, decode, PFunctor.Obj.fst_mk,
+        PFunctor.Obj.snd_mk, decodeAt, FreeM.bind]
       apply congrArg (FreeM.liftBind a)
       funext b
       exact ih b (fun path ↦ middle ⟨b, path⟩)
@@ -512,13 +544,13 @@ theorem mult_unit_right_obj (s : (FreeP P).A) :
         (Lens.comp (mult (P := P))
           (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
         Lens.Equiv.compY.invLens
-    (⟨composite.toFunA s, composite.toFunB s⟩ :
-      (FreeP P).Obj (FreeM.Path s)) = ⟨s, id⟩ := by
+    (.mk (composite.toFunA s) (composite.toFunB s) :
+      (FreeP P).Obj (FreeM.Path s)) = .mk s id := by
   dsimp only
   match s with
   | .pure u =>
       cases u
-      refine Sigma.ext (by rfl) ?_
+      refine PFunctor.Obj.ext (by rfl) ?_
       apply heq_of_eq
       funext path
       cases path
@@ -531,9 +563,9 @@ theorem mult_unit_right_obj (s : (FreeP P).A) :
               (Lens.comp (mult (P := P))
                 (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
               Lens.Equiv.compY.invLens
-           (⟨composite.toFunA (rest b), composite.toFunB (rest b)⟩ :
+           (.mk (composite.toFunA (rest b)) (composite.toFunB (rest b)) :
              (FreeP P).Obj (FreeM.Path (rest b))))) =
-        ⟨.liftBind a rest, id⟩
+        .mk (.liftBind a rest) id
       have hchildren :
           (fun b => relabel (FreeM.Path.cons a rest b)
             (let composite :=
@@ -541,9 +573,9 @@ theorem mult_unit_right_obj (s : (FreeP P).A) :
                 (Lens.comp (mult (P := P))
                   (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
                 Lens.Equiv.compY.invLens
-             (⟨composite.toFunA (rest b), composite.toFunB (rest b)⟩ :
+             (.mk (composite.toFunA (rest b)) (composite.toFunB (rest b)) :
                (FreeP P).Obj (FreeM.Path (rest b))))) =
-          (fun b => (⟨rest b, FreeM.Path.cons a rest b⟩ :
+          (fun b => (.mk (rest b) (FreeM.Path.cons a rest b) :
             (FreeP P).Obj (FreeM.Path (FreeM.liftBind a rest)))) := by
         funext b
         exact congrArg (relabel (FreeM.Path.cons a rest b))
@@ -579,11 +611,11 @@ theorem mult_assoc_obj
       (FreeP P).A) :
     let x : ((FreeP P ◃ FreeP P) ◃ FreeP P).A :=
       ⟨⟨s, middle⟩, inner⟩
-    (⟨(multAssocLeft (P := P)).toFunA x,
-        (multAssocLeft (P := P)).toFunB x⟩ :
+    (.mk ((multAssocLeft (P := P)).toFunA x)
+        ((multAssocLeft (P := P)).toFunB x) :
       (FreeP P).Obj (((FreeP P ◃ FreeP P) ◃ FreeP P).B x)) =
-    ⟨(multAssocRight (P := P)).toFunA x,
-      (multAssocRight (P := P)).toFunB x⟩ := by
+    .mk ((multAssocRight (P := P)).toFunA x)
+      ((multAssocRight (P := P)).toFunB x) := by
   dsimp only
   match s with
   | .pure u =>
@@ -603,13 +635,13 @@ theorem mult_assoc_obj
             direction.1.2⟩, direction.2⟩
       change
         node a (fun b => relabel (embed b)
-          (⟨(multAssocLeft (P := P)).toFunA (child b),
-            (multAssocLeft (P := P)).toFunB (child b)⟩ :
+          (.mk ((multAssocLeft (P := P)).toFunA (child b))
+            ((multAssocLeft (P := P)).toFunB (child b)) :
             (FreeP P).Obj
               (((FreeP P ◃ FreeP P) ◃ FreeP P).B (child b)))) =
         node a (fun b => relabel (embed b)
-          (⟨(multAssocRight (P := P)).toFunA (child b),
-            (multAssocRight (P := P)).toFunB (child b)⟩ :
+          (.mk ((multAssocRight (P := P)).toFunA (child b))
+            ((multAssocRight (P := P)).toFunB (child b)) :
             (FreeP P).Obj
               (((FreeP P ◃ FreeP P) ◃ FreeP P).B (child b))))
       congr 1

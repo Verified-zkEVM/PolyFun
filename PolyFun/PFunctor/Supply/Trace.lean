@@ -38,36 +38,16 @@ namespace PFunctor
 
 namespace Supply
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency; the rewrites below move
-between `TraceList` — reducibly `FreeMonoid (Idx _)` — and its `List` normal form.
-`implicit_reducible` (unlike `reducible`) stays invisible to simp and instance search, and needs no
-`allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
+/- The generator equations in `apply_eq_drop_occurrences` and `getAt?_trace_runPath`
+reconstruct dependent position/answer pairs. Keep `Idx` visible for those fibers
+until an upstream constructor API avoids mixing its name with the Sigma carrier. -/
+attribute [local implicit_reducible] PFunctor.Idx
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
-
-/-- `FreeM.Path.trace_liftBind` in the `liftBind` spelling the definitions below produce. -/
-private theorem trace_liftBind' {a : P.A} (next : P.B a → FreeM P α) (answer : P.B a)
-    (tail : FreeM.Path (next answer)) :
-    FreeM.Path.trace (FreeM.liftBind a next) ⟨answer, tail⟩
-      = (⟨a, answer⟩ : P.Idx) :: FreeM.Path.trace (next answer) tail := rfl
 
 /-! ### Running for a path -/
 
 variable [DecidableEq P.A]
-
-/-- One event at the counted position. -/
-private theorem occurrences_cons_self (a : P.A) (answer : P.B a) (tail : TraceList P) :
-    TraceList.occurrences a ((⟨a, answer⟩ : P.Idx) :: tail)
-      = TraceList.occurrences a tail + 1 := by
-  simp [TraceList.occurrences]
-
-/-- An event elsewhere is not counted. -/
-private theorem occurrences_cons_of_ne {a b : P.A} (hb : b ≠ a) (answer : P.B a)
-    (tail : TraceList P) :
-    TraceList.occurrences b ((⟨a, answer⟩ : P.Idx) :: tail)
-      = TraceList.occurrences b tail := by
-  simp [TraceList.occurrences, Ne.symm hb]
 
 /-- Run a program against a supply, retaining the typed path the answers selected. -/
 def runPath : (program : FreeM P α) → Supply P → Option (FreeM.Path program × Supply P)
@@ -133,9 +113,12 @@ theorem apply_eq_drop_occurrences : ∀ (program : FreeM P α) {s s' : Supply P}
           have hih := apply_eq_drop_occurrences (next u) hrec b
           by_cases hb : b = a
           · subst hb
-            rw [hih, update_apply_self, trace_liftBind', occurrences_cons_self, hs,
-              List.drop_succ_cons]
-          · rw [hih, update_apply_of_ne _ _ _ hb, trace_liftBind', occurrences_cons_of_ne hb]
+            rw [hih, update_apply_self, FreeM.Path.trace_liftBind_eq_mul,
+              TraceList.occurrences_of_mul]
+            simp [hs]
+          · rw [hih, update_apply_of_ne _ _ _ hb, FreeM.Path.trace_liftBind_eq_mul,
+              TraceList.occurrences_of_mul]
+            simp [Ne.symm hb]
 
 /-- **The bridge to the trace.** The answer a run took at the `n`-th occurrence of a position is
 the supply's `n`-th answer there. A supply therefore *positionally* determines the trace, which is
@@ -150,7 +133,7 @@ theorem getAt?_trace_runPath (program : FreeM P α) : ∀ (b : P.A) (n : Nat) (s
       intro b n s s' path h hn
       rw [runPath_pure, Option.some.injEq, Prod.mk.injEq] at h
       obtain ⟨rfl, rfl⟩ := h
-      simp [TraceList.occurrences] at hn
+      simp at hn
   | lift_bind a next ih =>
       intro b n s s' path h hn
       -- The recursor presents the node as `(FreeM.lift a).bind next`; name it by its constructor.
@@ -167,20 +150,18 @@ theorem getAt?_trace_runPath (program : FreeM P α) : ∀ (b : P.A) (n : Nat) (s
           obtain ⟨tail, s''⟩ := r
           simp only at heq
           obtain ⟨rfl, rfl⟩ := heq
-          rw [trace_liftBind'] at hn ⊢
+          rw [FreeM.Path.trace_liftBind_eq_mul] at hn ⊢
           by_cases hb : b = a
           · subst hb
             cases n with
-            | zero => rw [TraceList.getAt?_cons_self_zero, hs]; rfl
+            | zero => simp [TraceList.getAt?_of_mul, hs]
             | succ n =>
-                rw [occurrences_cons_self] at hn
+                simp only [TraceList.occurrences_of_mul, ↓reduceIte] at hn
                 have hih := ih u b n (s.update b us) s' tail hrec (by omega)
-                rw [TraceList.getAt?_cons_self_succ, hih, update_apply_self, hs]
-                rfl
-          · rw [occurrences_cons_of_ne hb] at hn
+                simp [TraceList.getAt?_of_mul, hih, hs]
+          · simp only [TraceList.occurrences_of_mul, Ne.symm hb, ↓reduceIte, Nat.add_zero] at hn
             have hih := ih u b n (s.update a us) s' tail hrec hn
-            rw [TraceList.getAt?_cons_of_ne (fun h : a = b => hb h.symm), hih,
-              update_apply_of_ne _ _ _ hb]
+            simp [TraceList.getAt?_of_mul, Ne.symm hb, hih, update_apply_of_ne _ _ _ hb]
 
 /-- A run never reads more answers at a position than the supply offers there. -/
 theorem occurrences_le_length {program : FreeM P α} {s s' : Supply P} {path : FreeM.Path program}

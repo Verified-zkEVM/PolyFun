@@ -25,14 +25,6 @@ namespace PFunctor.FreeM.Cursor
 
 open PFunctor.TraceList
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-rewriting `locateAt?` goals whose `Path` indices sit over `FreeM.liftBind`
-trees needs `FreeM.bind` and `FreeM.map` to unfold there, and the
-occurrence-counting goals rewrite `List.countP` over `Idx`-typed events
-inside the `TraceList` carrier (reducibly `FreeMonoid (Idx _)`). -/
-attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift PFunctor.FreeM.map
-  FreeMonoid PFunctor.Idx
-
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
 /-! ## Locating an occurrence on an existing path -/
@@ -196,7 +188,7 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
   -- The structural recursor presents the constructor `liftBind`, matching the
   -- constructor equations of `locateAt?` and `Path.trace`.
   induction program using FreeM.rec generalizing n with
-  | pure value => simp [occurrences]
+  | pure value => simp
   | liftBind a next ih =>
       rcases path with ⟨answer, suffix⟩
       rw [Path.trace_liftBind]
@@ -205,12 +197,13 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
         cases n with
         | zero =>
             rw [locateAt?_liftBind_same_zero]
-            simp [occurrences]
+            change (true = true) ↔ _
+            simp
         | succ n =>
             rw [locateAt?_liftBind_same_succ, Option.isSome_map]
-            simpa [occurrences] using ih answer suffix n
+            simpa using ih answer suffix n
       · rw [locateAt?_liftBind_other h, Option.isSome_map]
-        simpa [occurrences, h] using ih answer suffix n
+        simpa [h] using ih answer suffix n
 
 namespace Located
 

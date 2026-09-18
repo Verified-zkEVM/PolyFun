@@ -27,13 +27,6 @@ namespace PFunctor.FreeM.Cursor
 
 open PFunctor.TraceList
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the occurrence-counting proofs below rewrite `List.countP` over `Idx`-typed
-events inside the `TraceList` carrier (reducibly `FreeMonoid (Idx _)`) there.
-`implicit_reducible` (unlike `reducible`) stays invisible to simp and
-instance search, and needs no `allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
-
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
 /-! ## Occurrence contexts and completions -/
@@ -110,13 +103,11 @@ def plug (occ : Occurrence target program n) (answer : P.B target)
   | stepSame answer tail ih =>
       change occurrences target
         ((⟨target, answer⟩ : P.Idx) :: tail.before) = _
-      rw [occurrences, List.countP_cons_of_pos (by simp)]
-      change occurrences target tail.before + 1 = _
-      rw [ih]
+      rw [occurrences_cons_self, ih]
   | stepOther hne answer tail ih =>
       change occurrences target
         ((⟨_, answer⟩ : P.Idx) :: tail.before) = _
-      simpa [occurrences, hne] using ih
+      simpa [hne] using ih
 
 @[simp] theorem trace_plug (occ : Occurrence target program n)
     (answer : P.B target) (suffix : Path (occ.resume answer)) :
@@ -350,7 +341,7 @@ theorem valid_prependSame {next : P.B target → FreeM P α}
   | missing path =>
       change occurrences target
         (⟨target, answer⟩ :: Path.trace (next answer) path) ≤ n + 1
-      simpa [occurrences] using Nat.succ_le_succ hresult
+      simpa using Nat.succ_le_succ hresult
   | found occurrence => trivial
 
 theorem valid_prependOther {a : P.A} {next : P.B a → FreeM P α}
@@ -361,7 +352,7 @@ theorem valid_prependOther {a : P.A} {next : P.B a → FreeM P α}
   | missing path =>
       change occurrences target (Path.trace (next answer) path) ≤ n at hresult
       change occurrences target (⟨a, answer⟩ :: Path.trace (next answer) path) ≤ n
-      simpa [occurrences, hne] using hresult
+      simpa [hne] using hresult
   | found occurrence => trivial
 
 omit [DecidableEq P.A] in

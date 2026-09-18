@@ -61,14 +61,6 @@ namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
-/- Path indices are compared at implicit transparency. The simp normal form of an
-operation node is `(FreeM.lift a).bind rest` (upstream's `FreeM.liftBind_eq`), while
-pattern matching presents the constructor `FreeM.liftBind a rest`; `FreeM.bind` and
-`FreeM.lift` must unfold at that transparency so the two spellings of one index agree.
-Structural equations below are named rewrite rules; path observations use the
-public head and tail projections. -/
-attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift
-
 /-! ## Canonical paths -/
 
 variable {Q : PFunctor.{uA₂, uB₂}}

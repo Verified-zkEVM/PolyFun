@@ -46,11 +46,6 @@ universe uA uB uC uD uE uE' uE'' uF uG uH
 namespace PFunctor
 namespace Display
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-transporting displayed trees along `FreeM.bind_pure` / `FreeM.bind_assoc`
-needs `FreeM.bind` and `FreeM.map` to unfold there. -/
-attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift PFunctor.FreeM.map
-
 variable {P : PFunctor.{uA, uB}}
 
 /-- Embed a one-step polynomial display into the generic displayed algebra over
@@ -252,11 +247,11 @@ theorem bind_leaf (S : Display.{uA, uB, uC, uD} P)
               S.transport F (bind_pure_eq (rest b))
                 (S.bind (rest b) (children b e) FreeM.pure fun x dx =>
                   S.leaf F x dx)⟩ := by
-        convert S.transport_liftBind F a
+        exact S.transport_liftBind F a
           (funext fun b => bind_pure_eq (rest b)) c
           (fun b e =>
             S.bind (rest b) (children b e) FreeM.pure fun x dx =>
-              S.leaf F x dx) using 1
+              S.leaf F x dx)
       rw [htransport]
       congr
       funext b e
@@ -304,11 +299,11 @@ theorem bind_assoc (S : Display.{uA, uB, uC, uD} P)
               S.transport H (bind_assoc_eq g h (rest b))
                 (S.bind ((rest b).bind g)
                   (S.bind (rest b) (children b e) g dg) h dh)⟩ := by
-        convert S.transport_liftBind H a
+        exact S.transport_liftBind H a
           (funext fun b => bind_assoc_eq g h (rest b)) c
           (fun b e =>
             S.bind ((rest b).bind g)
-              (S.bind (rest b) (children b e) g dg) h dh) using 1
+              (S.bind (rest b) (children b e) g dg) h dh)
       rw [htransport]
       congr
       funext b e
