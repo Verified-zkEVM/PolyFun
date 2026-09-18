@@ -97,6 +97,27 @@ The ordinary-import examples in `PolyFunTest/ModuleAPI/DependentPaths.lean`
 exercise both forms, general dependent families, path composition, and the
 structural replay consumers used downstream.
 
+### Monoid traces and dependent events
+
+Use `TraceList.positions_mul`, `occurrences_mul`, and the generator lookup
+equations to observe traces. Use `TraceList.mapPartial_comp` and
+`Trace.mapPartial_comp` to reason about filtering and wiring. A consumer that
+needs list operations should cross the boundary explicitly with
+`FreeMonoid.toList`; `TraceList.toList_mapPartial` exposes the filtered list.
+Induct on a generic trace with `FreeMonoid.recOn`, whose cases are `one` and
+`of_mul`, to keep the induction hypothesis on the monoid carrier.
+
+When constructing a generator from a dependent position/answer pair, specify
+the event type: `FreeMonoid.of (α := P.Idx) ⟨a, answer⟩`. Otherwise inference
+can select the raw Sigma carrier before it sees the surrounding monoid
+operation. Even with the explicit type, a rewrite that reconstructs the pair
+can fail at implicit transparency. Direct theorem application or retaining a
+named `event : P.Idx` can avoid that extra comparison. The remaining local
+`Idx` overrides in trace and supply name the concrete failures and their
+removal conditions; they do not justify a `FreeMonoid` override in consumers.
+`PolyFunTest/ModuleAPI/Traces.lean` exercises the public laws and concrete
+dependent payloads without either override.
+
 ### Cross-package consumers
 
 Treat each cross-package `import all PolyFun...` in a downstream repository as

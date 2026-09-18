@@ -170,11 +170,6 @@ section ClosedComposites
 
 variable (Party : Type u)
 
-/- The injections are unfolded only here, to check that composites agree
-nodewise. Traces are compared as lists, so `FreeMonoid` and `Idx` stay
-transparent to `rw` and `apply` at implicit transparency. -/
-attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
-
 attribute [local simp] TypeTree.Node.ContextHom.comp OpenNodeContext.close
   OpenNodeContext.inlTensor OpenNodeContext.inrTensor OpenNodeContext.map
   OpenNodeContext.wireLeft OpenNodeContext.wireRight OpenNodeProfile.mapBoundary
@@ -388,11 +383,10 @@ theorem map_tensorComm_comp_wireLeft_comp_map_tensorComm (Δ₁ Γ Δ₂ : PortB
     OpenNodeProfile.mapBoundary, BoundaryAction.mapBoundary, OpenNodeContext.wireLeft,
     BoundaryAction.wireLeft, OpenNodeContext.wireRight, BoundaryAction.wireRight,
     OpenNodeProfile.mk.injEq, BoundaryAction.mk.injEq, true_and]
-  funext x
-  simp only [PFunctor.Trace.mapChart_apply, PFunctor.Trace.mapPartial_apply,
-    List.filterMap_filterMap]
-  apply List.filterMap_congr
-  rintro ⟨(_ | _), _⟩ _ <;> rfl
+  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_comp]
+  congr 1
+  funext packet
+  rcases packet with ⟨(_ | _), _⟩ <;> rfl
 
 /-- Commuting a wire's two factors turns the right wiring of the swapped left
 factor into the left wiring of the original. -/
@@ -408,11 +402,10 @@ theorem map_tensorComm_comp_wireRight_comp_map_tensorComm (Δ₁ Γ Δ₂ : Port
     OpenNodeProfile.mapBoundary, BoundaryAction.mapBoundary, OpenNodeContext.wireLeft,
     BoundaryAction.wireLeft, OpenNodeContext.wireRight, BoundaryAction.wireRight,
     OpenNodeProfile.mk.injEq, BoundaryAction.mk.injEq, true_and]
-  funext x
-  simp only [PFunctor.Trace.mapChart_apply, PFunctor.Trace.mapPartial_apply,
-    List.filterMap_filterMap]
-  apply List.filterMap_congr
-  rintro ⟨(_ | _), _⟩ _ <;> rfl
+  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_comp]
+  congr 1
+  funext packet
+  rcases packet with ⟨(_ | _), _⟩ <;> rfl
 
 end ClosedComposites
 

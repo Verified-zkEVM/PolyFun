@@ -25,9 +25,6 @@ namespace PFunctor.FreeM.Cursor
 
 open PFunctor.TraceList
 
-/- The trace equations use the List view of FreeMonoid. -/
-attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
-
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
 /-! ## Locating an occurrence on an existing path -/
@@ -191,7 +188,7 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
   -- The structural recursor presents the constructor `liftBind`, matching the
   -- constructor equations of `locateAt?` and `Path.trace`.
   induction program using FreeM.rec generalizing n with
-  | pure value => simp [occurrences]
+  | pure value => simp
   | liftBind a next ih =>
       rcases path with ⟨answer, suffix⟩
       rw [Path.trace_liftBind]
@@ -201,12 +198,12 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
         | zero =>
             rw [locateAt?_liftBind_same_zero]
             change (true = true) ↔ _
-            simp [occurrences]
+            simp
         | succ n =>
             rw [locateAt?_liftBind_same_succ, Option.isSome_map]
-            simpa [occurrences] using ih answer suffix n
+            simpa using ih answer suffix n
       · rw [locateAt?_liftBind_other h, Option.isSome_map]
-        simpa [occurrences, h] using ih answer suffix n
+        simpa [h] using ih answer suffix n
 
 namespace Located
 

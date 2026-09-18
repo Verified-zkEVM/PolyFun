@@ -24,9 +24,6 @@ namespace PFunctor.FreeM
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
 
-/- The trace equations use the List view of FreeMonoid. -/
-attribute [local implicit_reducible] FreeMonoid
-
 /-- Execute a free program while returning the typed path selected by the
 answers received during that execution. -/
 def withPath : (program : FreeM P α) → FreeM P (Path program)
@@ -91,6 +88,12 @@ theorem trace_liftBind (a : P.A) (next : P.B a → FreeM P α)
     (answer : P.B a) (tail : Path (next answer)) :
     trace (FreeM.liftBind a next) ⟨answer, tail⟩ =
       ⟨a, answer⟩ :: trace (next answer) tail := rfl
+
+/-- A node prepends one generator to the monoid-valued execution trace. -/
+theorem trace_liftBind_eq_mul (a : P.A) (next : P.B a → FreeM P α)
+    (answer : P.B a) (tail : Path (next answer)) :
+    trace (FreeM.liftBind a next) ⟨answer, tail⟩ =
+      FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * trace (next answer) tail := rfl
 
 /-- The visited input positions of a typed execution path, preserving their order and repeats. -/
 def positions (program : FreeM P α) (path : Path program) : List P.A :=
