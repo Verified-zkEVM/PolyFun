@@ -3,6 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Devon Tuma
 -/
+
 module
 
 public import PolyFun.Realizability.DynSystem
@@ -15,8 +16,8 @@ public import PolyFun.Realizability.StepClass
 
 A well-founded program family `program : α → FreeM p β` says *what* interaction
 to perform. A `DynComputation p α β` says *how* a machine performs it, and
-`DynComputation.Implements` says the two agree. This module adds the missing
-third ingredient: a constraint on the machine's transition functions.
+`DynComputation.Implements` says the two agree. This module constrains the machine's
+transition functions.
 
 `IsRealizableBy C bd program` holds when some `C`-admissible machine implements
 `program`, where `C` is a `StepClass` and admissibility is asserted of the three
@@ -27,18 +28,18 @@ demands that every branch resolve within `k` visible queries.
 Instantiating `C` recovers a spectrum of concrete notions from one definition:
 the trivial class gives back plain implementability, a finiteness class gives
 finite-state realizability, a computability class gives machines with computable
-transitions, and a resource-bounded class gives the polynomial-time
-adversary model used in cryptography.
+transitions, and resource-constrained classes restrict the local transition maps.
+A polynomial-time adversary model additionally needs quantitative run bounds,
+fixed encodings, and backend adequacy supplied by a concrete interpretation.
 
 ## The boundary is a parameter, never an existential
 
 `Boundary` collects the representations of the input type, the result type, and
 the interface. It is always a *parameter* of a realizability statement. A
-statement of the form `∃ bd, IsRealizableBy C bd program` is vacuous, because a
-representation is only required to be admissible, not canonical: an adversarially
-chosen encoding can precompute across the boundary. Only the machine's own state
-representation is chosen by the realization, and that choice is harmless — it is
-exactly the freedom to pick a state layout.
+statement that existentially chooses `bd` can hide computation in its boundary
+encoding, weakening the intended admissibility claim. Fixing the boundary keeps
+that representation visible. The realization chooses its own internal state
+representation, subject to the admissibility requirements on its step maps.
 
 ## Universe discipline
 

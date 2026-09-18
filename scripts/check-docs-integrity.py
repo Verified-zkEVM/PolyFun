@@ -3,10 +3,11 @@
 
 Checks:
 1. `CLAUDE.md` exists and is a symlink to `AGENTS.md`.
-2. Local markdown links in tracked top-level docs and `docs/` resolve.
+2. Local markdown links and heading anchors in tracked docs resolve.
 3. Repository-rooted Lean paths in those documents resolve even when they
    are written as code rather than markdown links.
-4. Every production and test Lean module has a module documentation comment.
+4. Lean excerpts match marked regions of checked tutorial modules.
+5. Every library, example and consumer Lean module has a module docstring.
 
 Exit code 0 if all checks pass, 1 otherwise.
 """
@@ -18,6 +19,7 @@ import subprocess
 import sys
 from collections.abc import Iterator
 from pathlib import Path
+from urllib.parse import unquote
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CLAUDE_PATH = REPO_ROOT / "CLAUDE.md"
@@ -25,19 +27,21 @@ AGENTS_PATH = REPO_ROOT / "AGENTS.md"
 
 # The set of tracked markdown files we walk for link checking. Top-level
 # repo docs plus everything under `docs/`. Keep this list in sync with the
-# wiki maintenance contract in `docs/wiki/README.md`.
+# maintenance contract in `docs/README.md`.
 TRACKED_PATHS = [
     "AGENTS.md",
     "CONTRIBUTING.md",
     "README.md",
     "REFERENCES.md",
     "docs",
+    "Examples",
+    "test/DocumentationConsumer",
 ]
 
 MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 LEAN_PATH_RE = re.compile(
     r"(?<![A-Za-z0-9_./])"
-    r"((?:PolyFun|ToCslib|PolyFunCslib|PolyFunTest)/(?:"
+    r"((?:PolyFun|ToCslib|PolyFunCslib|PolyFunTest|Examples)/(?:"
     r"[A-Za-z0-9_./-]+\.lean|"
     r"[A-Za-z0-9_./-]*\{[A-Za-z0-9_./, -]+\}(?:[A-Za-z0-9_./-]*\.lean)?"
     r"))"
@@ -85,31 +89,117 @@ def check_claude_symlink() -> list[str]:
 
 
 def resolve_link(source_file: Path, raw_target: str) -> Path | None:
-    target = raw_target.strip().strip("`")
+    target = raw_target.strip().strip("`").strip("<>")
     if not target or "://" in target or target.startswith("mailto:"):
         return None
 
-    path_part = target.split("#", 1)[0].strip()
+    path_part = unquote(target.split("#", 1)[0].strip())
     if not path_part:
-        return None
+        return source_file
 
     if path_part.startswith("/"):
         return (REPO_ROOT / path_part.lstrip("/")).resolve()
     return (source_file.parent / path_part).resolve()
 
 
-def check_markdown_links() -> list[str]:
+def outside_fences(text: str) -> str:
+    """Remove fenced code so examples do not create headings or links."""
+    lines: list[str] = []
+    fence = ""
+    for line in text.splitlines():
+        marker = re.match(r"^\s{0,3}(`{3,}|~{3,})", line)
+        if fence:
+            if re.match(r"^\s{0,3}" + re.escape(fence[0]) +
+                        "{" + str(len(fence)) + r",}\s*$", line):
+                fence = ""
+        elif marker:
+            fence = marker.group(1)
+        else:
+            lines.append(line)
+    return "\n".join(lines)
+
+
+def markdown_anchors(text: str) -> set[str]:
+    """GitHub-style heading slugs (including duplicates) and explicit anchors."""
+    text = outside_fences(text)
+    anchors = set(re.findall(r'<[^>]+\b(?:id|name)=[\'"]([^\'"]+)[\'"]', text))
+    used: set[str] = set()
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        heading = re.match(r"^ {0,3}#{1,6}\s+(.+?)(?:\s+#+)?\s*$", line)
+        if heading:
+            title = heading.group(1)
+        elif index + 1 < len(lines) and line.strip() and re.fullmatch(
+                r" {0,3}(?:=+|-+)\s*", lines[index + 1]):
+            title = line.strip()
+        else:
+            continue
+        title = re.sub(r"!?\[([^\]]*)\]\([^)]*\)", r"\1", title)
+        title = re.sub(r"<[^>]+>", "", title).lower()
+        slug = "".join(c for c in title if c.isalnum() or c in " _-").replace(" ", "-")
+        candidate = slug
+        suffix = 0
+        while candidate in used:
+            suffix += 1
+            candidate = f"{slug}-{suffix}"
+        used.add(candidate)
+        anchors.add(candidate)
+    return anchors
+
+
+def markdown_link_errors(doc_file: Path) -> list[str]:
+    """Check local paths and Markdown fragments, including same-page links."""
     errors: list[str] = []
-    for doc_file in tracked_markdown_files():
-        text = doc_file.read_text()
-        for raw_target in MARKDOWN_LINK_RE.findall(text):
-            resolved = resolve_link(doc_file, raw_target)
-            if resolved is None:
-                continue
-            if not resolved.exists():
-                rel_doc = doc_file.relative_to(REPO_ROOT)
-                errors.append(f"Broken link in {rel_doc}: {raw_target}")
+    text = outside_fences(doc_file.read_text())
+    targets = MARKDOWN_LINK_RE.findall(text)
+    targets += re.findall(r"^\s{0,3}\[[^\]]+\]:\s*(\S+)", text, re.MULTILINE)
+    for raw_target in targets:
+        resolved = resolve_link(doc_file, raw_target)
+        if resolved is None:
+            continue
+        if not resolved.exists():
+            errors.append(f"Broken link: {raw_target}")
+        elif "#" in raw_target and resolved.suffix.lower() == ".md":
+            fragment = unquote(raw_target.split("#", 1)[1].rstrip(">"))
+            if fragment and fragment not in markdown_anchors(resolved.read_text()):
+                errors.append(f"Broken heading anchor: {raw_target}")
     return errors
+
+
+def check_markdown_links() -> list[str]:
+    return [f"{doc.relative_to(REPO_ROOT)}: {error}"
+            for doc in tracked_markdown_files()
+            for error in markdown_link_errors(doc)]
+
+
+def example_errors(text: str, repo_root: Path = REPO_ROOT) -> list[str]:
+    """Compare marked excerpts with imports plus a named region of Lean source."""
+    errors: list[str] = []
+    for marker in re.finditer(r"<!--\s*lean-example:\s*(.*?)\s*-->", text):
+        target = marker.group(1)
+        source_path, separator, region = target.partition("#")
+        source = (repo_root / source_path).resolve()
+        if not separator or not region or not source.is_relative_to(repo_root.resolve()) or not source.is_file():
+            errors.append(f"Invalid Lean example source: {target}")
+            continue
+        code = source.read_text()
+        begin, end = f"-- BEGIN {region}", f"-- END {region}"
+        if code.count(begin) != 1 or code.count(end) != 1 or code.index(begin) > code.index(end):
+            errors.append(f"Missing or ambiguous Lean example region: {target}")
+            continue
+        imports = re.findall(r"^public (import [^\n]+)$", code, re.MULTILINE)
+        body = code.split(begin, 1)[1].split(end, 1)[0].strip()
+        expected = "\n".join(imports) + "\n\n" + body
+        excerpt = re.match(r"\s*```lean\n(.*?)\n```", text[marker.end():], re.DOTALL)
+        if excerpt is None or excerpt.group(1).strip() != expected.strip():
+            errors.append(f"Lean excerpt differs from checked source: {target}")
+    return errors
+
+
+def check_examples() -> list[str]:
+    return [f"{doc.relative_to(REPO_ROOT)}: {error}"
+            for doc in tracked_markdown_files()
+            for error in example_errors(doc.read_text(), REPO_ROOT)]
 
 
 def expand_lean_path(expression: str) -> list[str]:
@@ -167,9 +257,10 @@ def has_module_docstring(text: str) -> bool:
 
 def check_module_docstrings() -> list[str]:
     errors: list[str] = []
-    for root_name in ("PolyFun", "ToCslib", "PolyFunCslib", "PolyFunTest"):
+    for root_name in ("PolyFun", "ToCslib", "PolyFunCslib", "PolyFunTest", "Examples",
+                      "test/DocumentationConsumer"):
         source_root = REPO_ROOT / root_name
-        lean_files = list(source_root.rglob("*.lean"))
+        lean_files = [p for p in source_root.rglob("*.lean") if ".lake" not in p.parts]
         umbrella = REPO_ROOT / f"{root_name}.lean"
         # PolyFun.lean is a generated import index without a module docstring.
         if root_name != "PolyFun" and umbrella.is_file():
@@ -195,6 +286,9 @@ def main() -> int:
 
     print("Checking Lean module docstrings...")
     all_errors.extend(check_module_docstrings())
+
+    print("Checking Lean documentation excerpts...")
+    all_errors.extend(check_examples())
 
     if all_errors:
         print(f"\n{len(all_errors)} issue(s) found:\n")

@@ -5,13 +5,17 @@ Thanks for contributing.
 Start with:
 
 - [`README.md`](README.md) for the project overview and scope
-- [`AGENTS.md`](AGENTS.md) for repo workflow, module layering, and proof guidance
+- [Documentation hub](docs/README.md) for concepts and reading routes
+- [Repository map](docs/reference/repo-map.md) and [validation](docs/development/validation.md) for contributor workflows
+- [`AGENTS.md`](AGENTS.md) for the concise agent policy
 - [`REFERENCES.md`](REFERENCES.md) for the citations used by module docstrings
 
 Before sending work for review:
 
-- Run `lake exe cache get && lake build`.
-- After adding new `.lean` files, run `./scripts/update-lib.sh`.
+- Fetch dependencies with `lake exe cache get`, then run
+  `./scripts/validate.sh --lint --test --axioms`.
+- Stage new/deleted/renamed source files before regenerating the matching
+  umbrella with `./scripts/update-lib.sh` or `./scripts/update-lib.sh ToCslib`.
 - Finished work should not contain `sorry` or `admit`. Use `stop` only when
   explicitly preserving partial proof work during a refactor.
 - Keep repo-wide Lean options in `lakefile.toml`. Do not restate
@@ -23,17 +27,17 @@ Before sending work for review:
 ## Scope
 
 PolyFun hosts generic, domain-agnostic infrastructure: polynomial functors,
-free / displayed-free / cofree structures, interaction trees, and the
-generic interaction framework over a polynomial substrate. PRs that
+free / displayed-free / cofree structures, interaction trees, state machines,
+generic interaction, program logic, and realizability. PRs that
 introduce *cryptographic* content (probabilistic semantics, evaluation
 distributions, oracle-simulation security definitions, scheme-specific
 algebra) belong in [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio)
 or downstream consumers, not here.
 
 If a PolyFun definition has a load-bearing dependency on a probability
-monad, oracle simulator, or security predicate, that's a smell — please
-parameterize over an arbitrary monad and let downstream consumers
-instantiate.
+monad, oracle simulator, or security predicate, parameterize the generic
+construction over an arbitrary monad or observation
+and let downstream consumers instantiate it.
 
 ## Repository Scripts
 
@@ -44,7 +48,8 @@ reasonably provide it, and justify maintaining the additional code.
 
 Keep temporary review probes, migration experiments, and one-time audits
 outside the tracked repository. Record their findings and validation evidence
-in the PR, and put lasting guidance in the wiki. Tests for maintained
+in the PR, and put lasting guidance in the owning documentation page. Tests for
+maintained
 repository behavior belong on the narrowest existing test surface; a useful
 review experiment alone does not justify a new script or CI job.
 
@@ -194,8 +199,8 @@ supports dependent indices, constructor wrappers, or coherent instance paths:
 - Use equation lemmas for structural or well-founded recursion instead of new
   `with_unfolding_all` proofs.
 
-See [public module APIs](docs/wiki/module-api.md) for exposure versus
-transparency and [review hardening](docs/wiki/review-hardening.md) for the
+See [public module APIs](docs/development/module-api.md) for exposure versus
+transparency and [review hardening](docs/development/review-hardening.md) for the
 source-backed design review.
 
 ### Section Headers Within A File
@@ -256,3 +261,23 @@ warrant its own `namespace` or its own file.
 
 This project is licensed under Apache 2.0. By contributing, you agree
 that your contributions are licensed under the same terms.
+
+## Documentation and examples
+
+Use the [documentation hub](docs/README.md) to find each topic's owning page.
+Update it in the same PR as a public API, command, import boundary, or layout
+change. Keep the README focused on purpose, a checked example, installation,
+and reading routes. Explain assumptions and theorem scope in the guides and
+source docstrings; use the bibliography for public literature references.
+
+Teaching programs belong under `Examples/Tutorials/` in the optional
+`PolyFunExamples` target. Regressions and adversarial cases belong in
+`PolyFunTest/`. Production libraries import neither. Add public-consumer checks
+in [the separate fixture](test/DocumentationConsumer/README.md) when examples
+rely on equations across a package boundary.
+
+The README's `lean-example` marker selects a named region from a compiled Lean
+module. Change that source and the excerpt together. The integrity checker
+validates excerpt equality, local paths, Markdown heading anchors, and module
+docstrings. Historical progress notes belong in Git/PR history; preserve useful
+rationale in the owning guide before removing a stale document.

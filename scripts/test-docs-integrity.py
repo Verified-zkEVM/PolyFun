@@ -48,9 +48,10 @@ public section
     def test_auxiliary_modules_and_umbrellas_are_checked(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            for root_name in ("ToCslib", "PolyFunCslib"):
+            for root_name in ("ToCslib", "PolyFunCslib", "Examples/Tutorials",
+                              "test/DocumentationConsumer"):
                 source = repo_root / root_name / "MissingDoc.lean"
-                source.parent.mkdir()
+                source.parent.mkdir(parents=True)
                 source.write_text("module\n\npublic section\n")
             (repo_root / "PolyFunCslib.lean").write_text("module\n")
             with patch.object(CHECKER, "REPO_ROOT", repo_root):
@@ -60,6 +61,8 @@ public section
                         "Missing module docstring: ToCslib/MissingDoc.lean",
                         "Missing module docstring: PolyFunCslib/MissingDoc.lean",
                         "Missing module docstring: PolyFunCslib.lean",
+                        "Missing module docstring: Examples/Tutorials/MissingDoc.lean",
+                        "Missing module docstring: test/DocumentationConsumer/MissingDoc.lean",
                     ],
                 )
 
@@ -72,6 +75,7 @@ class LeanPathTests(unittest.TestCase):
 `PolyFun/ITree/{Basic.lean,Bisim/Defs.lean}`
 `ToCslib/Computability/PolyTime.lean`
 `PolyFunCslib/{Backend, PPoly}.lean`
+`Examples/Tutorials/Requests.lean`
 """
         self.assertEqual(
             set(CHECKER.lean_paths(text)),
@@ -84,6 +88,7 @@ class LeanPathTests(unittest.TestCase):
                 "ToCslib/Computability/PolyTime.lean",
                 "PolyFunCslib/Backend.lean",
                 "PolyFunCslib/PPoly.lean",
+                "Examples/Tutorials/Requests.lean",
             },
         )
 
@@ -98,6 +103,68 @@ class LeanPathTests(unittest.TestCase):
                 CHECKER.missing_lean_paths(text, repo_root),
                 ["PolyFun/PFunctor/DefinitelyMissing.lean"],
             )
+
+
+class MarkdownTests(unittest.TestCase):
+    def test_headings_duplicates_and_fences(self) -> None:
+        text = '''# A `Lean` heading
+## A `Lean` heading
+```lean
+# Not a heading
+```
+~~~text
+# Not a heading either
+~~~
+<a id="explicit"></a>
+'''
+        self.assertEqual(CHECKER.markdown_anchors(text),
+                         {"a-lean-heading", "a-lean-heading-1", "explicit"})
+
+    def test_local_and_cross_page_fragments(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "Other Page.md").write_text("# Destination\n")
+            doc = root / "README.md"
+            doc.write_text('''# Start
+[same](#start)
+[cross](Other%20Page.md#destination)
+[missing](#missing)
+[bad cross](Other%20Page.md#wrong)
+[missing file](absent.md)
+```
+[example](also-absent.md)
+```
+''')
+            self.assertEqual(CHECKER.markdown_link_errors(doc), [
+                "Broken heading anchor: #missing",
+                "Broken heading anchor: Other%20Page.md#wrong",
+                "Broken link: absent.md",
+            ])
+
+
+class ExampleTests(unittest.TestCase):
+    def test_excerpt_source_and_region_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "Example.lean"
+            source.write_text('''module
+public import PolyFun.PFunctor.Basic
+-- BEGIN README
+example : True := True.intro
+-- END README
+''')
+            doc = '''<!-- lean-example: Example.lean#README -->
+```lean
+import PolyFun.PFunctor.Basic
+
+example : True := True.intro
+```
+'''
+            self.assertEqual(CHECKER.example_errors(doc, root), [])
+            self.assertIn("differs", CHECKER.example_errors(doc.replace("True.intro", "by trivial"), root)[0])
+            self.assertIn("region", CHECKER.example_errors(doc.replace("#README", "#MISSING"), root)[0])
+            self.assertIn("source", CHECKER.example_errors(doc.replace("Example.lean", "Missing.lean"), root)[0])
+            self.assertIn("differs", CHECKER.example_errors(doc.replace("```lean", "```text"), root)[0])
 
 
 if __name__ == "__main__":

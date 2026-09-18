@@ -1,0 +1,46 @@
+/-
+Copyright (c) 2026 PolyFun Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Devon Tuma
+-/
+
+module
+
+public import PolyFun.Interaction.Open.SecureEmulation
+public import PolyFun.Interaction.Open.ActivationObservation
+
+/-!
+# Secure-emulation examples
+
+Regression checks for the existential-simulator judgment: reconciliation with
+`Emulates` and `UCSecure`, the preorder packaging, the relativized variant,
+and availability over the concrete process model at the activation
+observation.
+-/
+
+@[expose] public section
+
+universe u v w w'
+
+namespace Interaction.Open.SecureEmulationExamples
+
+variable {T : OpenTheory.{u}} {Δ : PortBoundary} {Obs : Observation T}
+
+/-- The preorder's order is secure emulation, and transitivity flows through
+it. -/
+example (Obs : Observation T) {W₁ W₂ W₃ : T.Obj Δ}
+    (h₁₂ : SecurelyEmulates W₁ W₂ Obs) (h₂₃ : SecurelyEmulates W₂ W₃ Obs) :
+    (securelyEmulatesPreorder Δ Obs).le W₁ W₃ :=
+  securelyEmulatesPreorder_le_iff.mpr (SecurelyEmulates.trans h₁₂ h₂₃)
+
+/-- The judgment applies over the concrete process model at the activation
+observation. -/
+example {Party : Type u} {m : Type w → Type w'}
+    {schedulerSampler : m (ULift.{w, 0} Bool)} {Δ : PortBoundary}
+    {real ideal : (openTheory.{u, v, w, w'} Party m schedulerSampler).Obj Δ}
+    (h : Emulates real ideal (Observation.activation Party m schedulerSampler)) :
+    SecurelyEmulates real ideal
+      (Observation.activation Party m schedulerSampler) :=
+  h.toSecurelyEmulates
+
+end Interaction.Open.SecureEmulationExamples

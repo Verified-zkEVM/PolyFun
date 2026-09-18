@@ -16,14 +16,14 @@ usage() {
 Usage: ./scripts/validate.sh [--lint] [--test] [--axioms]
 
 Default checks:
-  - lake build PolyFun ToCslib PolyFunCslib --wfail
+  - lake build PolyFun ToCslib PolyFunCslib PolyFunExamples --wfail
   - ./scripts/check-modules.sh
   - ./scripts/check-imports.sh
   - python3 ./scripts/check-docs-integrity.py
 
 Optional checks:
-  --lint    Run environment and text-style linters over all production libraries
-  --test    Run `lake test` (builds the PolyFunTest library)
+  --lint    Run environment and text-style linters over production and tutorial libraries
+  --test    Build regression tests and the separate documentation consumer
   --axioms  Test axiomsweep, then enforce the zero axiom/sorry-debt gate
 EOF
 }
@@ -52,7 +52,7 @@ for arg in "$@"; do
 done
 
 echo "# Building project"
-lake build PolyFun ToCslib PolyFunCslib --wfail
+lake build PolyFun ToCslib PolyFunCslib PolyFunExamples --wfail
 
 echo ""
 echo "# Checking module scopes"
@@ -71,7 +71,8 @@ if (( run_lint )); then
   echo ""
   echo "# Running environment linters (lake lint)"
   lake lint
-  lake exe lint-style PolyFun ToCslib PolyFunCslib
+  lake exe lint-style PolyFun ToCslib PolyFunCslib \
+    Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms
 fi
 
 if (( run_test )); then
@@ -79,12 +80,13 @@ if (( run_test )); then
   echo "# Running test library (lake test)"
   lake build PolyFunTest --wfail
   lake test
+  lake -d test/DocumentationConsumer build --wfail
 fi
 
 if (( run_axioms )); then
   echo ""
   echo "# Building axiom sweep roots"
-  lake build PolyFun ToCslib PolyFunCslib --wfail
+  lake build PolyFun ToCslib PolyFunCslib PolyFunExamples --wfail
 
   echo ""
   echo "# Testing the axiom sweep tool"
@@ -92,7 +94,9 @@ if (( run_axioms )); then
 
   echo ""
   echo "# Enforcing zero axiom/sorry debt"
-  lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --root PolyFunCslib --check
+  lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --root PolyFunCslib \
+    --root Examples.Tutorials.Requests --root Examples.Tutorials.Machines \
+    --root Examples.Tutorials.IndexedPrograms --check
 fi
 
 echo ""

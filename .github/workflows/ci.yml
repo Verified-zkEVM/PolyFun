@@ -89,8 +89,8 @@ jobs:
       - name: Fetch dependency cache
         run: lake exe cache get
 
-      - name: Build production libraries
-        run: lake build PolyFun ToCslib PolyFunCslib --wfail
+      - name: Build production and tutorial libraries
+        run: lake build PolyFun ToCslib PolyFunCslib PolyFunExamples --wfail
 
       - name: Run environment linters
         run: lake lint
@@ -129,3 +129,4 @@ jobs:
         run: |
           lake build PolyFunTest --wfail
           lake test
+          lake -d test/DocumentationConsumer build --wfail

@@ -5,6 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
+public import Examples.Tutorials.Machines
 public import PolyFun.ITree.Unfold
 public import PolyFun.PFunctor.Dynamical.Behavior
 public import PolyFun.PFunctor.Dynamical.Combinators
@@ -26,10 +27,7 @@ namespace PFunctor
 
 namespace DynSystem.Examples
 
-/-- A running-sum counter: state is the accumulated total, the output is the total
-itself, and each input is added to the state. -/
-def counter : MooreMachine ℕ ℕ ℕ :=
-  id ⇆ fun (n : ℕ) (i : ℕ) => n + i
+open PolyFunExamples.Machines (counter)
 
 example : counter.run (0 : ℕ) [1, 2, 3] = (6 : ℕ) := rfl
 

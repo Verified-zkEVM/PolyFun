@@ -12,8 +12,7 @@ public import PolyFun.Interaction.Concurrent.Trace
 /-!
 # Interleaving equivalence of concurrent traces
 
-This file adds the first quotient-style refinement on top of finite concurrent
-traces.
+Finite concurrent traces are compared by exchanging adjacent independent events.
 
 `Concurrent.Trace` records one concrete scheduler linearization of frontier
 events. `Concurrent.Independent` then identifies pairs of frontier events that
@@ -29,9 +28,8 @@ on traces:
   * congruence under a common leading step;
   * one local `swap` rule for adjacent independent frontier events.
 
-This is still intentionally minimal. It does not yet construct quotient types,
-normal forms, or more elaborate partial-order objects; it only records the
-standard commuting conversion at the trace level.
+The API supplies an equivalence relation on traces and its commuting conversion.
+It does not package a quotient carrier or a normal-form algorithm.
 -/
 
 public section

@@ -9,11 +9,11 @@ cd "$REPO_ROOT"
 
 status=0
 
-# Every Lean source of the four Lake libraries: the generated umbrellas and the module trees of
-# `PolyFun`, `ToCslib`, `PolyFunCslib`, and `PolyFunTest`.
+# Lean sources in the production, tutorial and test libraries, plus the external consumer.
 lean_sources() {
   git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
-    'PolyFunCslib.lean' 'PolyFunCslib/*.lean' 'PolyFunTest/*.lean'
+    'PolyFunCslib.lean' 'PolyFunCslib/*.lean' 'PolyFunTest/*.lean' \
+    'Examples/*.lean' 'test/DocumentationConsumer/*.lean'
 }
 
 while IFS= read -r file; do
@@ -30,7 +30,7 @@ while IFS= read -r file; do
   fi
 done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 
-# The `Std.Do` quarantine (AGENTS.md gotcha 8, docs/wiki/program-logic.md): core's
+# The `Std.Do` quarantine (AGENTS.md Std.Do quarantine, docs/guides/program-logic.md): core's
 # weakest-precondition API moves fast, so it is fenced in two tiers.
 #
 # * Definitions (`Std.Do` and `Std.Internal.Do`: `WP`, `WPMonad`, `Triple`, spec lemmas) may be
@@ -109,13 +109,13 @@ while IFS= read -r file; do
     echo "ERROR: $file imports core Std.Do / Std.Internal.Do outside the quarantine." >&2
     echo "Only the program-logic kernel (PolyFun/Control/Monad/, PolyFun/Control/Do/," >&2
     echo "PolyFun/PFunctor/Free/, PolyFun/ITree/Do.lean) and PolyFunTest/Do/ may depend on" >&2
-    echo "it. See AGENTS.md gotcha 8." >&2
+    echo "it. See AGENTS.md Std.Do quarantine." >&2
     status=1
   fi
   if grep -qE "$std_do_tactic_pattern" "$file" && ! std_do_tactic_allowed "$file"; then
     echo "ERROR: $file imports core Std.Tactic.Do outside the quarantine." >&2
     echo "Only PolyFun/Control/Do/, PolyFun/PFunctor/Free/Do.lean, and PolyFunTest/Do/ may" >&2
-    echo "depend on it. See AGENTS.md gotcha 8." >&2
+    echo "depend on it. See AGENTS.md Std.Do quarantine." >&2
     status=1
   fi
 done < <(lean_sources)
@@ -125,6 +125,15 @@ if grep -rEn --include='*.lean' '@\[expose\][[:space:]]+public section' PolyFun/
   echo "Expose individual definitions, or use 'import all' in proof modules." >&2
   status=1
 fi
+
+# Production and upstream staging must stay usable without the teaching/test libraries.
+while IFS= read -r file; do
+  if grep -qE "${import_prefix}(Examples|PolyFunTest)([[:space:]]*$|\.)" "$file"; then
+    echo "ERROR: $file imports a tutorial or test from a production library." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
+  'PolyFunCslib.lean' 'PolyFunCslib/*.lean')
 
 if (( status != 0 )); then
   exit "$status"

@@ -1,0 +1,14 @@
+name = "PolyFunDocumentationConsumer"
+defaultTargets = ["PolyFunDocumentationConsumer"]
+# Reuse the dependency cache, while elaborating as a distinct Lake package.
+packagesDir = "../../.lake/packages"
+
+[leanOptions]
+autoImplicit = false
+
+[[require]]
+name = "PolyFun"
+path = "../.."
+
+[[lean_lib]]
+name = "PolyFunDocumentationConsumer"

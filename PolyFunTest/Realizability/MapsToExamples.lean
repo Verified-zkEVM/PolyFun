@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Interaction.UC.Realizability
+public import PolyFun.Interaction.Open.Realizability
 public import PolyFun.Realizability.Instances
 public import Mathlib.Data.Set.Function
 
