@@ -148,3 +148,8 @@ operation class it needs. A consumer already requiring `Comonad` should add
 the latter also chooses `Functor` and `Extract` data and can create conflicting
 instances. Concrete instances share those operations, but two arbitrary class
 parameters do not assert that they agree.
+
+The [Parliament walkthrough](../../Examples/Parliament/Docs/walkthrough.md) applies these
+APIs to legal meeting inputs, finite prefixes with event labels, safety specifications,
+and the application's resumption semantics. Its writer-handler erasure proof instantiates
+`runChunk_natural` without changing the underlying application machine.

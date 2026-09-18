@@ -94,3 +94,9 @@ The [Parliament application](../../Examples/Parliament/README.md) uses the
 resumable driver with both a memory backend and terminal/filesystem IO. Its
 [runtime contract](../../Examples/Parliament/Docs/runtime.md) separates certified
 history extension from the backend's physical behavior.
+
+The [proved walkthrough](../../Examples/Parliament/Docs/walkthrough.md) connects
+certified meeting paths to generic prefixes, proves safety for arbitrary legal
+inputs, and relates finite execution to resumption and interaction-tree semantics.
+It also uses `Handler.withTraceAppend` and `WriterT.eraseHom` to instrument the
+same application and prove that erasing its log preserves the result and memory.

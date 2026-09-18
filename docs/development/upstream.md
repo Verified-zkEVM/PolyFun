@@ -122,17 +122,3 @@ removal conditions. They do not require exposing the free-monoid carrier.
 | Cofree polynomials, displayed constructions, and pattern-runs-on-matter | Follow an object equality and dependent continuation through public object/lens equations; preserve type-level tensor and unit computation. |
 | Reactive networks and realizability closure | Minimize actual transport/update consumers, retaining coherent representation and admissible-step data. |
 | Core/CSLib dependent automation | Recheck the independent free-tree and event reproducers at a coordinated pin upgrade; treat WP/`vcgen` result-index matching as a separate question. |
-
-## Open development
-
-The following PRs were open when this guide was reviewed on 2026-09-17.
-These are proposed additions, not prerequisites or promises about the checked
-out library. Follow the links for current status.
-
-| PR | Proposed contribution | Documentation integration when it lands |
-|---|---|---|
-| [#237](https://github.com/Verified-zkEVM/PolyFun/pull/237) | Walkthroughs for the driver/application stack | Rebase links and imports onto the tutorial/guide layout; keep narrative walkthroughs separate from regression tests. |
-
-The proposed walkthroughs build on the maintained Parliament example and the
-resumable driver. Their public bridges are checked before joining the reader guides. The source-backed tutorials in this checkout use
-only available APIs.

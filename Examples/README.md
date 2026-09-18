@@ -37,3 +37,7 @@ lake exe polyfun-parliament --help
 Read the [runtime contract](Parliament/Docs/runtime.md) alongside the source.
 The [execution guide](../docs/guides/execution.md#resumable-execution) explains
 the generic driver reused by this application.
+
+The [Parliament walkthrough](Parliament/Docs/walkthrough.md) follows the same
+application through certified prefixes, safety, resumptions, interaction trees,
+and a writer handler whose erasure preserves execution.

@@ -59,6 +59,13 @@ returns either a value or the exact residual state, and `runIO` resumes chunks o
 128 queries. Machine state describes control flow and committed history; handler
 state describes external interaction or a test backend. These are distinct layers.
 
+## Proved walkthroughs
+
+Follow [From legal inputs to executable effects](Docs/walkthrough.md) for four focused
+bridges: execution prefixes and labels, safety specifications, resumptions and tau-free
+interaction trees, and instrumentation through a writer handler. Each section names the
+actual definitions, gives its proof boundary, and is exercised by regression tests.
+
 ## Guarantees and boundaries
 
 Read the [coverage ledger](Docs/coverage.md), [research sources](Docs/research.md),
