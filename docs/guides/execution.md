@@ -19,6 +19,8 @@ proves that a second input list can be run from the first list's final state.
 | Describe arbitrary prefixes and continuing runs | `DynSystem.Prefix`, `Run` | `PolyFun.PFunctor.Dynamical.Run` |
 | Initialize a return-capable machine | `DynSystem.DynComputation` | `PolyFun.PFunctor.Dynamical.DynComputation` |
 | Interpret a finite query budget | `DynComputation.runWith`, `ImplementsWithin` | `PolyFun.PFunctor.Dynamical.DynComputation.Bounded` |
+| Pause and resume a finite query budget | `Chunk`, `unrollChunk`, `runChunk` | `PolyFun.PFunctor.Dynamical.DynComputation.Resumable` |
+| Run successive chunks through Lean IO | `DynComputation.runIO` | `PolyFun.PFunctor.Dynamical.DynComputation.IO` |
 | Prove safety or simulation | `SafetySpec`, `IsSimulation` | `PolyFun.PFunctor.Dynamical.Safety`, `PolyFun.PFunctor.Dynamical.Simulation` |
 
 ## Two kinds of state
@@ -41,6 +43,34 @@ Fuel in this API bounds visible machine queries. It is not a general CPU-time
 or allocation bound. Costs of answering a request, evaluating local functions,
 and transporting data need their own accounting. See [realizability](realizability.md).
 
+## Resumable execution
+
+`unrollChunk` keeps the exact residual machine state when the query budget
+runs out. `Chunk.done` carries the returned value; `Chunk.paused` carries
+that state. A terminal observation consumes no fuel, including at budget zero.
+`resumeChunk` continues a paused chunk and leaves a completed value alone.
+`runChunk` interprets the finite program through `Handler m p`.
+
+The public laws connect this interface to bounded execution:
+
+- `unrollChunk_result` and `runChunk_result` recover the bounded observation
+  after forgetting residual state.
+- `unrollChunk_add` and `runChunk_add` identify successive budgets with their sum.
+- `runChunk_natural` transports interpretation along a monad homomorphism,
+  preserving the handler's chosen value and effects.
+
+The syntax keeps state, input, result, position, and direction universes
+independent. Its observation law uses the universe-polymorphic `FreeM.map`.
+Monadic interpretation aligns the state, result, and response universes;
+positions and initialization inputs remain independent.
+
+`runIO` executes successive chunks of 128 queries. It retains machine state
+across boundaries and propagates IO failures. It makes no termination or
+physical-effect correctness claim. The
+[driver regressions](../../PolyFunTest/PFunctor/Dynamical/Resumable.lean)
+check dependent responses, zero fuel, exact residuals, 257 IO interactions,
+and a handler failure immediately after a chunk boundary.
+
 ## Typed execution networks
 
 General network runtimes live in `Interaction.Execution`, above the shared
@@ -61,4 +91,4 @@ the elementary process and routing interfaces do not depend on that syntax.
 
 The [open-systems guide](open-systems.md) explains composition and observation.
 [Current development](../development/upstream.md#open-development) links
-proposed resumable execution and a larger executable case study.
+the proposed executable case study and its proved walkthroughs.

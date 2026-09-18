@@ -27,6 +27,12 @@ Their pins are recorded in the manifest; their README files live under
   module. `ToCslib/Data/PFunctor/Free/` adds laws and folds without redefining
   the carrier. PolyFun-specific decorations, paths, machines, and handlers
   remain in `PolyFun/PFunctor/`.
+- **Resumable execution:** `DynComputation.Resumable` retains machine state
+  and derives budget composition and handler transport from the existing
+  `FreeM.liftM` laws. The pinned CSLib, Mathlib, and Batteries APIs supply no
+  residual-state driver for PolyFun's `DynComputation`. Keep this extension
+  beside bounded execution; revisit ownership if the returning-machine
+  abstraction moves upstream. The IO adapter adds no domain policy.
 - **Transition systems:** `Control.LTS.toLts` forgets the polynomial witness
   move. Generic relational simulation and finite-trace results use CSLib;
   dependent response witnesses and delay semantics remain explicit in PolyFun.
@@ -125,11 +131,9 @@ out library. Follow the links for current status.
 
 | PR | Proposed contribution | Documentation integration when it lands |
 |---|---|---|
-| [#235](https://github.com/Verified-zkEVM/PolyFun/pull/235) | Resumable driver API | Extend the execution guide with bounded runs, residual state, and the relevant correctness laws. |
 | [#236](https://github.com/Verified-zkEVM/PolyFun/pull/236) | Parliament application | Add an application route from `Examples/README.md`, with its own assumptions and commands. |
 | [#237](https://github.com/Verified-zkEVM/PolyFun/pull/237) | Walkthroughs for the driver/application stack | Rebase links and imports onto the tutorial/guide layout; keep narrative walkthroughs separate from regression tests. |
 
-The driver, Parliament, and walkthrough PRs form a related stack. Their
-examples should be tested against the final driver API before being promoted
-to the main newcomer route. The source-backed tutorials in this checkout use
+The Parliament and walkthrough PRs build on the resumable driver. Their
+examples should be tested together before being promoted to the main newcomer route. The source-backed tutorials in this checkout use
 only available APIs.
