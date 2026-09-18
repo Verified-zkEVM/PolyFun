@@ -29,7 +29,10 @@ jobs:
       - name: Build project
         uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0
         with:
-          build-args: --log-level=warning
+          # The action also runs lake lint; build every configured lint root first.
+          build-args: >-
+            PolyFun ToCslib PolyFunCslib PolyFunExamples +PolyFunParliamentMain
+            --log-level=warning
 
       - name: Build and publish documentation
         id: docs

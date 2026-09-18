@@ -88,7 +88,11 @@ the source and its result proofs.
   links, anchors, excerpts and module docs.
 - [Text lint](../../.github/workflows/linting.yml): source style for production
   and tutorial libraries.
-- [API docs](../../.github/workflows/docs.yml): generated source documentation.
+- [API docs](../../.github/workflows/docs.yml): generated source documentation
+  published on pushes to `main`. The Lean action also runs tests and environment
+  lint, so its explicit build targets must cover every root in `lintDriverArgs`,
+  including the executable entry point. Keep those targets in sync when adding
+  lint roots; the default `lake build` target alone does not cover them.
 
 All required jobs must pass on the revision under review. Retargeted or
 restacked PRs need fresh checks, including intermediate base branches. A
