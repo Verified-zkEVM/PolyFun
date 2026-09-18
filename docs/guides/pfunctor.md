@@ -52,7 +52,7 @@ still be genuine sigma types; those use their own constructors and projections.
 | Describe an interface and translate requests/replies | [Basic](../../PolyFun/PFunctor/Basic.lean), [lenses](../../PolyFun/PFunctor/Lens/Basic.lean), [charts](../../PolyFun/PFunctor/Chart/Basic.lean) |
 | Write and interpret a well-founded program | [FreeM](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean), [first tutorial](../tutorials/first-program.md) |
 | Inspect or decorate a program | [Paths](../../PolyFun/PFunctor/Free/Path.lean), [cursors](../../PolyFun/PFunctor/Free/Cursor.lean), [displayed programs](../../PolyFun/PFunctor/Free/Displayed.lean) |
-| Model stateful behavior | [Dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean), [computation model guide](computation-models.md) |
+| Model stateful behavior | [Dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean), [resumable execution](execution.md#resumable-execution), [computation model guide](computation-models.md) |
 | Compare possibly infinite trees | [M-types](../../PolyFun/PFunctor/M.lean), [resumptions](../../PolyFun/PFunctor/Resumption.lean) |
 | Study the categorical structure | [Tensor internal hom](../../PolyFun/PFunctor/InternalHom.lean), [cartesian exponential](../../PolyFun/PFunctor/CartesianClosed.lean), [mathematical background](../reference/mathematical-background.md) |
 | Relate free and cofree constructions | [Pattern runs on matter](../reference/pattern-runs-on-matter.md) |

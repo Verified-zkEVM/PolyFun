@@ -50,6 +50,9 @@ flowchart TD
   T --> P
   P --> F[Free programs / handlers / displays]
   P --> D[Dynamical systems / resumptions]
+  D --> BD[Bounded machine execution]
+  BD --> RC[Resumable chunks]
+  RC --> IO[Lean IO driver]
   P --> I[ITrees and indexed polynomials]
   F --> S[Interaction shapes and strategies]
   S --> C[Concurrent processes]
