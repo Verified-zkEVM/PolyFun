@@ -10,12 +10,12 @@ public import Mathlib.Util.Notation3
 public import PolyFun.PFunctor.Obj
 
 /-!
-  # Polynomial Functors, Lens, and Charts
+# Polynomial operations, lenses, and charts
 
-  This file defines polynomial functors, lenses, and charts. The goal is to provide basic
-  definitions, with their properties and categories defined in later files.
-
-dt: this file is getting long and should maybe be split up more.
+This module extends Mathlib's `PFunctor` with polynomial constants, sums, products,
+tensor and substitution, together with lenses and charts. A lens maps positions forward
+and directions backward; a chart maps both forward. The `Lens`, `Chart`, and `Equiv`
+subtrees supply their laws, and `Category` packages the corresponding categories.
 -/
 
 @[expose] public section

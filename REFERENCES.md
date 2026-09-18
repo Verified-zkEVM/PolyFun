@@ -54,8 +54,8 @@ Used in: `PolyFun/PFunctor/Trace.lean`, `PolyFun/PFunctor/Lens/State.lean`,
 `PolyFun/PFunctor/Free/Path.lean`, the dynamical-systems layer in
 `PolyFun/PFunctor/Dynamical/` (Ch. 4), `PolyFun/Interaction/Basic/TypeTree.lean`,
 `PolyFun/Interaction/Basic/Telescope.lean`,
-`PolyFun/Interaction/UC/Interface.lean`, and
-companion files in `PolyFun/Interaction/UC/`.
+`PolyFun/Interaction/Interface.lean`, and
+companion files in `PolyFun/Interaction/Open/`.
 
 ### LS25 — Libkind and Spivak, *Pattern runs on matter*
 
@@ -161,11 +161,11 @@ Cryptology ePrint Archive, [Report 2026/1605](https://eprint.iacr.org/2026/1605)
 A categorical account of static/simple universal composability in which
 computational indistinguishability is an equivalence on resources closed
 under sequential and parallel composition. It supplies the external
-instantiation contract tracked in `docs/wiki/uc.md`; probability and
+instantiation contract tracked in `docs/guides/open-systems.md`; probability and
 efficiency remain downstream obligations.
 
-Used in: `docs/wiki/uc.md`, `PolyFun/Interaction/UC/GlobalSubroutine.lean`,
-`PolyFun/Interaction/UC/SecureEmulation.lean`.
+Used in: `docs/guides/open-systems.md`, `PolyFun/Interaction/Open/GlobalSubroutine.lean`,
+`PolyFun/Interaction/Open/SecureEmulation.lean`.
 
 ### CJSV22 — Canetti, Jain, Swanberg, Varia, *End-to-End Secure Messaging*
 
@@ -180,8 +180,8 @@ and recovery through protocol-specific key evolution. It motivates the
 compromise/refresh vocabulary and snapshot projections; PolyFun's bookkeeping
 and projection interfaces alone establish no cryptographic guarantees.
 
-Used in: `PolyFun/Interaction/UC/MomentaryCorruption.lean`,
-`PolyFun/Interaction/UC/Leakage.lean`.
+Used in: `PolyFun/Interaction/Open/MomentaryCorruption.lean`,
+`PolyFun/Interaction/Open/Leakage.lean`.
 
 ### CSV19 — Canetti, Stoughton, Varia, *EasyUC*
 
@@ -196,7 +196,7 @@ messaging case study. Its experience with routing boilerplate and the mismatch
 between procedure calls and coroutine communication informs the typed-boundary
 and control-transfer requirements in the UC audit.
 
-Used in: `docs/wiki/uc.md`.
+Used in: `docs/guides/open-systems.md`.
 
 ### KTR20 — Küsters, Tuengerthal, Rausch, *The IITM Model*
 
@@ -210,7 +210,7 @@ forwarding, and theorems relating networks of IITMs to single machines. It is
 the main comparison point for the efficiency and addressing obligations that
 PolyFun deliberately leaves to an instantiation.
 
-Used in: `docs/wiki/uc.md`.
+Used in: `docs/guides/open-systems.md`.
 
 ### HARM+23 — Haselwarter et al., *SSProve*
 
@@ -225,7 +225,7 @@ Free-monad cryptographic packages, sequential and parallel composition, and
 machine-checked algebraic package laws connected to a probabilistic relational
 program logic.
 
-Used in: `docs/wiki/uc.md`.
+Used in: `docs/guides/open-systems.md`.
 
 ### LS25-N — Larsen and Schürmann, *Nominal State-Separating Proofs*
 
@@ -237,7 +237,7 @@ A nominal extension of SSProve in which packages receive local state-name
 spaces and composition automatically avoids capture. It makes explicit the
 modularity cost of globally named mutable state.
 
-Used in: `docs/wiki/uc.md`.
+Used in: `docs/guides/open-systems.md`.
 
 ### PKWC24 — Patrignani, Künnemann, Wahby, Cecchetti, *Universal Composability Is Robust Compilation*
 
@@ -250,7 +250,7 @@ arXiv:1910.08634.
 An axiomatic comparison between UC and robust compilation, including explicit
 interface and composition requirements and mechanized symbolic case studies.
 
-Used in: `docs/wiki/uc.md`.
+Used in: `docs/guides/open-systems.md`.
 
 ### FGMPS07 — Foster, Greenwald, Moore, Pierce, Schmitt, *Combinators for bidirectional tree transformations*
 
@@ -465,7 +465,7 @@ categories, with PTIME and LOGSPACE as worked examples. The closest existing
 statement that a complexity class *is* a distributive category, and hence the
 nearest prior art for treating a resource-bounded function class as one.
 
-Used in: `docs/wiki/realizability.md`.
+Used in: `docs/guides/realizability.md`.
 
 ### CH08 — Cockett and Hofstra, *Introduction to Turing categories*
 
@@ -485,7 +485,7 @@ hand-rolled stand-in for `1 ⊕ 1`.
 Companion: Cockett, Hofstra, and Hrubeš, *Total maps of Turing categories*,
 ENTCS 308:129–146, 2014.
 
-Used in: `docs/wiki/realizability.md`.
+Used in: `docs/guides/realizability.md`.
 
 ### Clo99 — Clote, *Computation models and function algebras*
 
@@ -507,4 +507,4 @@ Function algebras are single-sorted, so branching enters as a *base function*
 tradition. Making the axiom visible is a consequence of this layer being
 multi-sorted and representation-indexed.
 
-Used in: `docs/wiki/realizability.md`.
+Used in: `docs/guides/realizability.md`.

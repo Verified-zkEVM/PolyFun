@@ -1,361 +1,141 @@
 # PolyFun — AI Agent Guide
 
-Lean 4 library for polynomial functors, interaction trees, and a generic
-interaction framework over a polynomial substrate. Built on Mathlib.
+PolyFun is a Lean 4 library for polynomial interfaces, programs, machines,
+interaction trees, generic open-system composition, program logic, and
+realizability. It extends Mathlib and CSLib. Cryptographic interpretations,
+probability semantics, distinguishing advantage, and scheme-specific proofs
+belong in [VCVio](https://github.com/Verified-zkEVM/VCVio).
 
-## Fast Start
+`AGENTS.md` is the canonical agent guide; `CLAUDE.md` is its symlink.
+Human readers should start with [README.md](README.md) and the
+[documentation hub](docs/README.md). [CONTRIBUTING.md](CONTRIBUTING.md)
+is the attribution and contribution policy.
 
-1. Run `lake exe cache get && lake build`.
-2. To gauge the Polynomial-functor / FreeM substrate, start with
-   [`PolyFun/PFunctor/Basic.lean`](PolyFun/PFunctor/Basic.lean) and
-   [`PolyFun/PFunctor/Free/Basic.lean`](PolyFun/PFunctor/Free/Basic.lean).
-3. To gauge interaction trees, start with
-   [`PolyFun/ITree/Basic.lean`](PolyFun/ITree/Basic.lean).
-4. To gauge the protocol-flavored interaction framework, start with
-   [`PolyFun/Interaction/Basic/TypeTree.lean`](PolyFun/Interaction/Basic/TypeTree.lean)
-   and [`PolyFun/Interaction/Basic/Decoration.lean`](PolyFun/Interaction/Basic/Decoration.lean).
-
-`AGENTS.md` is the canonical guide. `CLAUDE.md` is a symlink to this file.
-
-## What This Project Is
-
-PolyFun packages three layers of generic, domain-agnostic infrastructure
-that emerged from the cryptographic-protocols formalization in
-[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio):
-
-1. **Polynomial functors and lenses.** `PFunctor` cores (positions /
-   directions), polynomial charts, lenses (Cartesian, state),
-   equivalences, free monad `FreeM`, displayed `FreeM`, and the
-   `Cofree` / M-type companion. The Spivak-Niu *Poly* category and its
-   internal-language fragments live here. The free monads are re-exported
-   from upstream [`leanprover/cslib`](https://github.com/leanprover/cslib)
-   (a pinned lake dependency): `PFunctor.FreeM` from
-   `Cslib.Foundations.Data.PFunctor.Free` and the functor-generic
-   `Cslib.FreeM` from `Cslib.Foundations.Control.Monad.Free`; PolyFun adds
-   its own API on top.
-2. **Interaction trees** in the style of Xia-Zakowski-He-Hur-Malecha-
-   Pierce-Zdancewic (POPL 2020), modeled as the M-type of a one-step
-   polynomial functor, with strong / weak bisimulation, simulation,
-   handlers, and event signatures.
-3. **Generic interaction framework** for sequential, two-party,
-   multi-party, and concurrent interaction over a `TypeTree` polynomial
-   substrate (`TypeTree := PFunctor.FreeM TypeTree.basePFunctor PUnit`), with
-   structural decoration, syntax / strategy / execution lenses, and an
-   open-process layer for compositional reasoning. Hancock-Setzer
-   recursion over interaction interfaces.
-
-PolyFun is intentionally *not* the place for cryptographic content.
-Probabilistic semantics, evaluation distributions, oracle-simulation
-security definitions, scheme-specific algebra, and concrete-protocol
-runtime layers all live in
-[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio)
-and depend on this library.
-
-## Repo Map
-
-- `PolyFun/PFunctor/`: polynomial functors, charts, lenses, equivalences,
-  M-type / cofree, free monad and displayed-free machinery.
-- `PolyFun/IPFunctor/`: state-indexed polynomial functors (`IPFunctor I`)
-  and their indexed free monads. `Free/Basic.lean` holds the single-index
-  `FreeM` (state-polymorphic continuations); `Free/Indexed.lean` holds the
-  two-index `FreeM₂` carrying a `LawfulIndexedMonad` instance.
-- `PolyFun/ITree/`: coinductive interaction trees, same-signature weak
-  bisimulation, cross-signature relational trees (`Bisim/CrossSignature.lean`),
-  simulation, handlers, event signatures, and finite observation traces.
-- `PolyFun/Interaction/`: protocol-flavored generic interaction framework.
-  - `Basic/`: `TypeTree`, node contexts, decorations, syntax / shape /
-    interaction, strategies, append / replicate / state-chain
-    composition.
-  - `TwoParty/`: sender / receiver roles, paired strategies, refinement,
-    swap, composition.
-  - `Multiparty/`: native multiparty local views and per-party profiles.
-  - `Concurrent/`: structural concurrent specs, frontiers, processes,
-    machines, traces, fairness, liveness, refinement, bisimulation,
-    interleaving, observation.
-  - `UC/`: open-process / open-theory layer, structural composition
-    (interfaces, par, wire, plug), corruption models, environment
-    actions, leakage, and composition-closed sub-theories (`SubTheory`, a
-    boundary-indexed membership predicate, with contextual emulation
-    relativized to its allowed closing contexts), a structural activation
-    observation carrying the composition suite over the process model,
-    global-subroutine emulation (with secure UCGS composition still gated on
-    structural simulators), plus a
-    structural bridge from
-    open-process realizability to direct or generated sub-theories. This bridge
-    does not assert real/ideal protocol membership, quantitative resource
-    bounds, sampler realizability, or a connection to `CorruptionModel`; those
-    require explicit downstream instances. *Generic only* — security-flavored UC layers
-    (computational equivalence, asymptotic security) live in VCVio.
-- `PolyFun/Realizability/`: step classes (`StepClass` — represented types and
-  admissible functions, with optional binary products, sums, and distributivity;
-  representations need not exist for every type), realizability of arbitrary
-  `DynSystem`s through an enabled-correct partial update extension, and
-  realizability of `FreeM` program families by `DynComputation` machines whose
-  first-order step maps are admissible. Closed under `ofFn`, input precomposition, result
-  postcomposition, `bind`, interface transport, wrapped asynchronous choice
-  (the product-state combinator behind UC composite closure), and class
-  refinement.
-  Instances: unconstrained, finite-state, Mathlib-`Computable`, and a bridge
-  from any class of word functions. `Representation.lean` supplies mutual
-  admissible translation, boundary-level realizability invariance, and
-  admissible word encode/decode retractions. Generic quantitative realizability
-  and backend-relative trace accounting also live here. Optional concrete
-  realizability adapters live in separate library roots; `PolyFunCslib/` exposes
-  a non-uniform, boundary-pinned P/poly certificate without
-  importing oracle, probability, or cryptographic policy. Named cryptographic
-  adversary classes and protocol-specific adequacy results remain downstream.
-- `PolyFun/Control/`: monad and comonad infrastructure transitively
-  required by the above (coalgebra, comonad, free / freecont monad
-  algebra, monad iter / hom), plus the program-logic
-  kernel: ordered monad algebras (`Monad/Algebra`, unary and relational),
-  exact monadic support over core's `MonadAttach` with the
-  always/some/never judgments (`Monad/Support`, with instances, indexed
-  support, the structural `do`-fragment laws, and loop rules under
-  `Monad/Support/`), restriction of an algebra to a lower set
-  (`Monad/Algebra/Restrict`), their bridges to core's lattice-generic
-  `Std.Internal.Do` weakest-precondition stack (`Monad/{Algebra,Support,Hom}/WP`:
-  `toWPMonad`, demonic and angelic interpretations, `vcgen`-ready; `WriterT/WP`
-  for Mathlib's writer transformer), and the tactic-tier `vcgen`
-  specifications (`Do/Spec`).
-- `PolyFun/Control/LTS/Trace.lean`: generic finite visible traces over the
-  silent/visible `Control.LTS` layer and preservation by weak simulation.
-- `PolyFun/Logic/`: small logic helpers (`HEq`).
-- `ToCslib/`: a separate Lake library that is the lowest production layer
-  under PolyFun and stages what PolyFun will upstream: additions to cslib's
-  free monad `PFunctor.FreeM` (`Data/PFunctor/Free/`: universe-polymorphic
-  map laws, the catamorphism `foldFreeM` with its substitution and uniqueness
-  laws, handler fusion, and commutation
-  of `liftM` with loops), transport of `forIn` loops along cslib's
-  `IsMonadHom` plus effect-free loop instances for `Option` and `Vector`
-  (`Control/`), the bridge from Mathlib's `CompleteLattice` to core's
-  `Lean.Order.CompleteLattice` (`Order/`), and local complexity theory over
-  the pinned cslib machine API while upstream APIs stabilize
-  (`Computability/`: encoded polynomial-time families and machine-counting
-  separation). It imports core, cslib, and Mathlib but never PolyFun,
-  `Std.Do` (directly), oracle semantics, probability, or cryptography.
-  PolyFun imports the free-monad slice directly; concrete backend adapters
-  import the machine modules explicitly. Its umbrella `ToCslib.lean` is
-  generated like `PolyFun.lean` (`./scripts/update-lib.sh ToCslib`).
-- `PolyFunCslib/`: an optional adapter library combining generic PolyFun machines
-  with `ToCslib` certificates. It is excluded from the `PolyFun` umbrella.
-- `PolyFunTest/`: separate test / worked-example library (glob
-  `PolyFunTest.+`), built by `lake test` and kept out of the `lake lint`
-  scope. Holds the dynamical / interaction worked examples and the
-  `IPFunctor` `do`-notation smoke tests. Imports `PolyFun` one-way; nothing
-  in `PolyFun` depends on it.
-
-## Module Layering
-
-Imports flow strictly downward; cycles are a build error. The canonical
-dependency map lives in [`docs/wiki/repo-map.md`](docs/wiki/repo-map.md#conceptual-layering).
-Update that map when a change adds a module or changes an import boundary.
-
-New files must respect the documented DAG. Re-exports through
-`PolyFun.lean` and `ToCslib.lean` are auto-generated; do not hand-edit.
-
-All Lean sources use module mode. In production files, make the intended API
-explicit with `public section` and expose individual reducer bodies only when
-downstream definitional equality needs them. Use `public import` for public
-signature dependencies, plain `import` for implementation details, and
-`import all` for proof modules that need opaque bodies. Broad
-`@[expose] public section` scopes are forbidden in `PolyFun/Interaction/`.
-
-## Attribution, Headers, And Docstrings
-
-Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) for the repo's explicit
-attribution policy.
-
-- The copyright line on every Lean file is `Copyright (c) <YEAR>
-  PolyFun Contributors. All rights reserved.` — *always* "PolyFun
-  Contributors", never an individual. This matches the
-  [`Verified-zkEVM/ArkLib`](https://github.com/Verified-zkEVM/ArkLib)
-  convention and keeps copyright ownership with the project.
-- The `Authors:` line names individual humans (comma-separated for
-  multiple authors). This is the human-attribution channel and is
-  preserved on routine edits.
-- New Lean files should use the standard copyright / license /
-  authors header and a module docstring.
-- For ordinary Lean source files, use the standard prologue layout:
-  header, blank line, `module`, blank line, imports, blank line, module
-  docstring.
-- Docstrings must be intrinsic and descriptive. Cross-reference live
-  sibling definitions when helpful, but do not mention removed or
-  renamed declarations, change history, or reactive wording such as
-  "replaces" or "renamed from".
-- Preserve the `Authors:` line on routine edits. The copyright line
-  stays "PolyFun Contributors" regardless of who edits.
-- Only rewrite the `Authors:` line when a file is genuinely new or
-  materially replaced.
-- Do not add a separate AI-attribution line.
-- For inline section breaks within a Lean file, use Mathlib-style
-  doc-comment headers `/-! ## Title -/` (or the multi-line
-  `/-! ## Title \n\n explanation -/` form). **Do not use ASCII banners**
-  such as `-- ====...===` flanking a `-- § Title` line. The `/-!` form
-  is rendered by `doc-gen4`; ASCII banners are not, and they make the
-  file feel artificially partitioned. If a section is large enough to
-  want a loud header, it is usually large enough to want its own
-  `namespace` or its own file. See *Section Headers Within A File* in
-  [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
-## Naming Conventions
-
-Follow Mathlib convention: `{head_symbol}_{operation}_{rhs_form}`.
-Examples: `FreeM.bind_pure`, `Decoration.map_comp`, `ITree.bisim_bind`.
-Structures use UpperCamelCase: `PFunctor`, `TypeTree`, `Decoration`,
-`SyntaxOver`, `InteractionOver`, `ITree.Shape`.
-
-## Critical Gotchas
-
-1. **`autoImplicit = false` is set globally in `lakefile.toml`.** Do not
-   add `set_option autoImplicit false` in individual files. Every
-   variable must be explicitly declared.
-2. **No cryptographic content.** Do not introduce dependencies on
-   probability monads, evaluation distributions, security predicates,
-   or concrete-scheme algebra. Parameterize over an abstract monad
-   instead. Cryptographic content belongs in
-   [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio).
-3. **`TypeTree.done` and `TypeTree.node` are `@[match_pattern, reducible]`**
-   wrappers over `PFunctor.FreeM.{pure, liftBind}`. Pattern matching on
-   them works transparently; `rfl` against the polynomial substrate
-   also works. Do not break either invariant when refactoring.
-4. **Files should stay under 1500 lines** unless explicitly opted out
-   per file. The long-file linter cap is enforced repo-wide.
-5. **Do not disable linters to silence errors.** Do not use
-   `set_option linter.* false`, `set_option weak.linter.* false`, or
-   add repo-level `leanOptions` that turn lints off. Fix the root
-   cause instead. The one narrow exception is a declaration-scoped
-   `set_option linter.checkUnivs false in` when independent universe
-   parameters are mathematically and compositionally intentional; explain
-   that reason in an adjacent comment. This matches the treatment of
-   universe-separated polynomial position/direction data upstream.
-6. **`PolyFun.lean` and `ToCslib.lean` are generated.** Do not hand-edit
-   them. After adding, renaming, or deleting `.lean` files under `PolyFun/`
-   run `./scripts/update-lib.sh`; under `ToCslib/`, run
-   `./scripts/update-lib.sh ToCslib`.
-7. **Do not introduce `sorry` or `admit` in finished work.** Use `stop`
-   only when explicitly preserving partial proof work during a refactor.
-8. **`Std.Do` imports are quarantined, in two tiers.** The definitions
-   (`Std.Do`, `Std.Internal.Do`: `WP`, `WPMonad`, `Triple`, spec lemmas) may
-   be imported only by the program-logic kernel — `PolyFun/Control/Monad/`,
-   `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`, `PolyFun/ITree/Do.lean` —
-   and by `PolyFunTest/Do/`. The tactics (`Std.Tactic.Do`: `mvcgen`,
-   `vcgen`, the `@[spec]` attribute syntax) stay in `PolyFun/Control/Do/`,
-   `PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`. `ToCslib/` imports
-   neither directly (cslib's `IsMonadHom` brings the legacy `Std.Do.WP`
-   classes in transitively; the fence is about direct imports and
-   instances). Fenced modules export constructions (`def`s and `scoped`
-   instances), never global `WP` instances. See `docs/wiki/program-logic.md`.
-
-## Building
+## Start and validate
 
 ```bash
-lake exe cache get && lake build
+lake exe cache get
+lake build
+./scripts/validate.sh --lint --test --axioms
 ```
 
-After adding new `.lean` files: `./scripts/update-lib.sh` (and
-`./scripts/update-lib.sh ToCslib` for the staging library).
-For routine local validation: `./scripts/validate.sh`.
-For anything that must stay axiom-clean, run `./scripts/validate.sh --axioms`.
-PolyFun has a zero-debt baseline: do not add `sorry` or non-standard axioms to it.
-`lake exe polyfun-axiomsweep --update-baseline` only rewrites the empty baseline after all
-taint has been removed; it refuses to record tainted declarations.
+The wrapper builds production and tutorial libraries, checks module/import/docs
+integrity, and optionally runs linters, regressions, the separate consumer, and
+the zero-debt axiom gate. See [validation](docs/development/validation.md).
+`lake test` builds `PolyFunTest`; `lake lint` covers production and tutorial
+libraries, with tests excluded. Use `lake lint -- --trace` after a fresh build
+to inspect the environment checks.
 
-Environment linters and the test library have Lake drivers:
+## Source map and dependency direction
 
-```bash
-lake lint   # Batteries runLinter over all production libraries
-lake test   # builds the PolyFunTest library
-```
+The canonical [repository map](docs/reference/repo-map.md#conceptual-layering)
+records module layering. Update it when adding a module or changing an import
+boundary. Imports flow downward and must remain acyclic.
 
-`./scripts/validate.sh --lint --test` folds both into the convenience wrapper.
-Both run as independent CI jobs (`lint`, `test`) alongside `build`. Adding a
-per-declaration `@[nolint <linter>]` exception requires
-`import Batteries.Tactic.Lint` in that file.
+| Root | Responsibility |
+|---|---|
+| `PolyFun/PFunctor/` | Polynomial operations, lenses/charts, free/cofree structures, handlers, resumptions and dynamical systems |
+| `PolyFun/IPFunctor/` | Indexed containers, family/single-index/two-index free programs, indexed coinduction and notation |
+| `PolyFun/ITree/` | Coinductive programs with silent steps, bisimulation, handlers and traces |
+| `PolyFun/Interaction/Basic/` | `TypeTree`, decorations, syntax, strategies and sequential composition |
+| `PolyFun/Interaction/{TwoParty,Multiparty,Concurrent}/` | Roles, local views, concurrency, fairness and refinement |
+| `PolyFun/Interaction/Interface.lean` | Shared typed interfaces and directed boundaries |
+| `PolyFun/Interaction/Execution/` | Reactive/request networks, routing, budgets and assemblies |
+| `PolyFun/Interaction/Open/` | Open theory/syntax/processes, observations, contextual emulation and structural realizability bridge |
+| `PolyFun/Control/` | Monad/comonad/coalgebra infrastructure, LTS and program-logic kernel |
+| `PolyFun/Realizability/` | Represented types, admissible state machines, representation invariance and quantitative resource certificates |
+| `PolyFun/Complexity/`, `PolyFun/Logic/` | Generic resource-bound syntax and small logic helpers |
+| `ToCslib/` | Lowest production layer: upstream staging for free-monad, loop, order and machine/complexity laws |
+| `PolyFunCslib/` | Optional concrete realizability adapters, outside the generic umbrella |
+| `Examples/` | Checked teaching programs, target `PolyFunExamples` |
+| `PolyFunTest/` | Regression tests; may import tutorials, with no reverse production dependency |
 
-Lint policy follows Lean's built-in linters, Mathlib's `mathlibStandardSet` and
-text style checks, and Batteries' environment linters. Use `lake lint -- --trace`
-after a fresh production build to inspect the checks that actually run. The
-pinned cslib `topNamespace` checker is unregistered and outside this policy;
-namespace organization remains part of API review. Do not add a local replacement
-or namespace exceptions for its module-system limitations. See
-[`docs/wiki/linting.md`](docs/wiki/linting.md) for coverage and exception maintenance.
+Start with `PFunctor/Basic.lean`, `PFunctor/Free/Basic.lean`, `ITree/Basic.lean`,
+and `Interaction/Basic/{TypeTree,Decoration}.lean` under `PolyFun/`.
+CSLib owns `PFunctor.FreeM` and the functor-generic `Cslib.FreeM`; extend them.
+`ToCslib` imports core, CSLib and Mathlib, never PolyFun, probability or
+cryptography. Concrete machine adapters import its machine modules explicitly.
 
-Add repository scripts only for concrete, recurring library workflows, as
-specified in [Repository Scripts](CONTRIBUTING.md#repository-scripts).
-Keep temporary review probes and one-time audits outside the tracked tree.
+## Semantic boundaries
 
-Lean, Mathlib, and cslib stay in sync. The current versions are recorded in
-`lean-toolchain` and `lakefile.toml`. Files should stay under 1500 lines.
+- Parameterize generic effects by an abstract monad. Keep oracle/probability
+  interpretations, security policy and concrete protocol runtime semantics downstream.
+- `TypeTree := PFunctor.FreeM TypeTree.basePFunctor PUnit`. Its `done` and
+  `node` are `@[match_pattern, reducible]` wrappers; preserve pattern matching
+  and definitional equality with the substrate.
+- A coarse activation observation is not a packet-aware or probabilistic
+  security observation. The structural open-process bridge does not assert
+  real/ideal membership, quantitative bounds, sampler realizability, or a link
+  to `CorruptionModel`; those need explicit instances. Follow the
+  [open-system contract](docs/guides/open-systems.md).
+- `StepClass` representations need not exist for every type. Fix boundary
+  encodings; distinguish admissible local steps from whole-program resource
+  bounds. Named cryptographic adversary classes remain downstream. See
+  [realizability](docs/guides/realizability.md).
 
-## Further Reading
+## Lean and API policy
 
-Deeper agent-facing notes live in [`docs/wiki/`](docs/wiki/). Use this
-`AGENTS.md` for the one-screen overview and the wiki for details that are
-too specific or too changeable to keep at the repo root.
+All sources use module mode: header, blank line, `module`, blank line, imports,
+blank line, module docstring. Use `public section` for the intended API,
+`public import` for signature dependencies, plain `import` for implementation
+dependencies, and `import all` for proof access to opaque bodies. Expose reducer
+bodies individually when definitional equality is part of the public contract.
+Broad `@[expose] public section` is forbidden under `PolyFun/Interaction/`.
+Use ordinary-import canaries and the separate documentation consumer to check
+public equations; see [module APIs](docs/development/module-api.md).
 
-- [`docs/wiki/README.md`](docs/wiki/README.md): hub and maintenance contract.
-- [`docs/wiki/quickstart.md`](docs/wiki/quickstart.md): commands and
-  validation playbook.
-- [`docs/wiki/repo-map.md`](docs/wiki/repo-map.md): subtree map and where to
-  start by task.
-- [`docs/wiki/generated-files.md`](docs/wiki/generated-files.md): derived
-  outputs and source-of-truth rules.
-- [`docs/wiki/pfunctor.md`](docs/wiki/pfunctor.md): the polynomial-functor
-  substrate.
-- [`docs/wiki/ipfunctor.md`](docs/wiki/ipfunctor.md): state-indexed
-  polynomial functors and their indexed free monads.
-- [`docs/wiki/itree.md`](docs/wiki/itree.md): interaction trees layer.
-- [`docs/wiki/interaction.md`](docs/wiki/interaction.md): generic interaction
-  framework (`TypeTree`, two-party, multiparty, concurrent, UC).
-- [`docs/wiki/program-logic.md`](docs/wiki/program-logic.md): the
-  program-logic kernel (ordered monad algebras, exact monadic support, free-monad
-  wp, `Std.Do` quarantine).
-- [`docs/wiki/realizability.md`](docs/wiki/realizability.md): step classes and
-  realizability of free programs by admissible state machines.
-- [`docs/wiki/uc.md`](docs/wiki/uc.md): UC semantic contract, paper-to-code
-  ledger, observation boundaries, and the PolyFun/VCVio split.
-- [`docs/wiki/notation.md`](docs/wiki/notation.md): notation reference (UC
-  composition operators).
-- [`docs/wiki/gotchas.md`](docs/wiki/gotchas.md): recurring traps and
-  troubleshooting.
-- [`docs/wiki/review-hardening.md`](docs/wiki/review-hardening.md): required
-  API, mathematical, adversarial, lint, and content-control review passes.
-- [`docs/wiki/module-api.md`](docs/wiki/module-api.md): public-API policy
-  under Lean's module system (import choices, reducer surfaces,
-  ordinary-import canaries, cross-package `import all` audit rule).
+Follow Mathlib naming (`{head_symbol}_{operation}_{rhs_form}`); structures use
+UpperCamelCase. Keep files below 1500 lines unless explicitly opted out.
+`autoImplicit = false` is global in `lakefile.toml`; declare variables and do
+not repeat that option per file. Lean, Mathlib and CSLib versions stay in sync.
 
-### Wiki Maintenance Contract
+Do not add `sorry`, `admit`, or non-standard axioms to finished work. Use `stop`
+only when explicitly preserving partial proof work during a refactor. The axiom
+baseline must stay empty; update mode refuses to record taint.
 
-The wiki is maintained alongside the Lean source. Treat it as the canonical
-long-form companion to this guide, while remembering that source files are the
-final authority for names, imports, and theorem statements:
+Do not disable linters to suppress errors, locally or globally. The narrow
+exception is declaration-scoped `set_option linter.checkUnivs false in` for
+mathematically intentional independent universes, with an adjacent explanation.
+Per-declaration `@[nolint ...]` needs `Batteries.Tactic.Lint` imported. The pinned
+CSLib `topNamespace` checker is unregistered; do not add a local replacement or
+namespace exceptions for its module-system limitations. See
+[lint policy](docs/development/linting.md).
 
-- If a page contradicts the source, the source wins. Fix the page in the
-  same PR.
-- If a PR changes commands, repo structure, generated-file behavior, file
-  naming, namespaces, or load-bearing public APIs, update the matching wiki
-  page in the same PR. Add a new page when that is the cleaner split.
-- Promote recurring agent learnings into [`docs/wiki/`](docs/wiki/); do not
-  let stable guidance live only in ephemeral notes (`*-NEVER-COMMIT.md`,
-  scratch chats, scratch worktrees).
-- Prefer linking to canonical docs (Lean source, Mathlib, papers in
-  [`REFERENCES.md`](REFERENCES.md)) over copying their contents.
+## Std.Do quarantine
 
-## References
+Definitions from `Std.Do` and `Std.Internal.Do` may be directly imported only
+by `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
+`PolyFun/ITree/Do.lean`, and `PolyFunTest/Do/`. Tactics from `Std.Tactic.Do`
+stay in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and
+`PolyFunTest/Do/`. Export constructions or scoped instances, never global WP
+instances. `ToCslib` directly imports neither tier; transitive legacy `Std.Do.WP`
+through CSLib's `IsMonadHom` is permitted. See [program logic](docs/guides/program-logic.md).
 
-Module docstrings cite a small set of foundational papers. The
-canonical bibliography is [`REFERENCES.md`](REFERENCES.md).
+## Attribution and documentation
 
-Highlights:
+Copyright headers always name **PolyFun Contributors**. Preserve the human
+`Authors:` line on ordinary edits; change it only for new or materially replaced
+files. Do not add separate AI attribution. Follow the exact policy and header
+in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-- Hancock-Setzer 2000 — recursion over interaction interfaces; the
-  free interaction structure on a polynomial container.
-- Altenkirch-Ghani-Hancock-McBride-Morris 2015 — *Indexed Containers*
-  (JFP 25, e5).
-- Spivak-Niu 2025 — *Polynomial Functors: A Mathematical Theory of
-  Interaction* (Cambridge University Press); the pattern-runs-on-matter
-  module structure of `FreeM` over `Cofree`.
-- Xia-Zakowski-He-Hur-Malecha-Pierce-Zdancewic 2020 —
-  *Interaction Trees* (POPL).
-- Escardó-Oliva 2023 — games as type trees (TCS 974).
-- McBride 2010; Dagand-McBride 2014 — displayed algebras / ornaments.
+Docstrings describe current definitions, assumptions and live sibling APIs;
+avoid removed names, change history and reactive wording. Use Mathlib-style
+`/-! ## Title -/` section comments, never ASCII banners. Cite public papers
+through [REFERENCES.md](REFERENCES.md).
+
+Update the owning tutorial/guide/reference/development page with API and
+workflow changes. Source is authoritative when prose disagrees. Promote durable
+learnings into the existing docs, and keep one-time reviews and migration maps
+outside the tracked tree. The [maintenance contract](docs/README.md#maintenance-contract)
+and [review guide](docs/development/review-hardening.md) apply to every change.
+
+## Generated files and scripts
+
+`PolyFun.lean` and `ToCslib.lean` are generated; never hand-edit them. Stage
+new/deleted/renamed source files before running `./scripts/update-lib.sh` or
+`./scripts/update-lib.sh ToCslib`. See [generated files](docs/development/generated-files.md).
+Teaching modules use a glob target and need no generated umbrella.
+
+Add repository scripts only for concrete recurring workflows under
+[the scripts policy](CONTRIBUTING.md#repository-scripts). Reuse existing drivers
+for validation. Keep temporary probes outside the tracked repository.

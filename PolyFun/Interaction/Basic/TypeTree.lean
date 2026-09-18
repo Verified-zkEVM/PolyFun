@@ -56,25 +56,17 @@ representation.
 
 ## Module map
 
-- `Basic/` — type trees, node contexts, decoration, generic shapes, strategy,
-  composition (this layer)
-- `Concurrent/` — structural concurrent source syntax, frontiers and residuals,
-  typed interfaces and directed open boundaries,
-  operations-first open-composition theory and its first final-tagless free
-  lawful model,
-  structural frontier traces and true-concurrency refinements, dynamic
-  `Process` / `Machine` / `Tree` frontends, generic process executions and
-  policies, finite prefixes and infinite runs, observation extraction,
-  refinement, bisimulation, packaged equivalence notions, fairness, liveness,
-  per-party observation profiles,
-  scheduler/control ownership, and current local frontier views
+- `Basic/` — type trees, node contexts, decorations, syntax, strategies, and composition
 - `TwoParty/` — sender/receiver roles and paired focal/counterpart strategies
-- `Reduction.lean` — prover, verifier, reduction
-- `Oracle/` — oracle decoration, path-dependent oracle access
-- `Security.lean` / `OracleSecurity.lean` — security definitions
-- `Boundary/` — same-path interface adaptation
-- `Multiparty/` — native multiparty local views and per-party profiles,
-  including broadcast and directed communication models
+- `Multiparty/` — local views, observation kernels, broadcast and directed communication
+- `Concurrent/` — structural concurrency, frontiers, processes, runs, fairness and refinement
+- `Interface.lean` — typed request/reply interfaces and directed boundaries
+- `Execution/` — reactive processes, request networks, routing and execution assemblies
+- `Open/` — open composition, contexts, observations and generic emulation judgments
+
+Probability semantics, oracle interpretations, and cryptographic security definitions are
+provided by downstream VCVio. `TypeTree` describes well-founded protocol shapes; the
+potentially infinite computation datatype `ITree` lives in its own subtree.
 
 ## References
 

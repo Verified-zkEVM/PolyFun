@@ -5,7 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.Interaction.UC.Realizability
+public import PolyFun.Interaction.Open.Realizability
 public import PolyFun.Realizability.Instances
 public import PolyFun.Realizability.Representation
 public import Mathlib.Data.Fintype.Sigma
@@ -100,7 +100,7 @@ example (a : Bool × Bool) (index : (PFunctor.prod bitInterface bitInterface).Id
 
 end PFunctor.DynSystemRealizabilityExamples
 
-namespace Interaction.UC.OpenProcessRealizabilityExamples
+namespace Interaction.Open.OpenProcessRealizabilityExamples
 
 open PFunctor
 
@@ -159,4 +159,4 @@ example {Δ : PortBoundary} (process : OpenProcess M Party Δ) :
       boundary schedulerSampler).mem process :=
   DynSystem.isRealizableBy_unconstrained _
 
-end Interaction.UC.OpenProcessRealizabilityExamples
+end Interaction.Open.OpenProcessRealizabilityExamples

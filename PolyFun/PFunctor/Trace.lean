@@ -39,7 +39,7 @@ category.  Stateful executors (e.g. running over an `OracleComp`) are handled
 separately in `VCVio/OracleComp/QueryTracking/`.
 
 The canonical user inside this repository is `BoundaryAction.emit` in
-`PolyFun/Interaction/UC/OpenProcess.lean`, where `Trace Δ.Out X` records the
+`PolyFun/Interaction/Open/OpenProcess.lean`, where `Trace Δ.Out X` records the
 list of output-port packets a node emits when the local state transitions
 to `x : X`. Operations such as `mapBoundary`, `wireLeft`, `wireRight`, and
 the tensor embeddings of open processes are implemented directly by

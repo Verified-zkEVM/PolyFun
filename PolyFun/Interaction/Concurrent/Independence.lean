@@ -11,16 +11,14 @@ public import PolyFun.Interaction.Concurrent.Frontier
 /-!
 # Independence and commuting concurrent events
 
-This file adds the first true-concurrency refinement to the structural
-concurrent syntax.
+Independent frontier events commute in the structural concurrent syntax.
 
 The source syntax `Concurrent.Spec` and its frontier semantics still admit an
 interleaving reading: when several frontier events are enabled, a scheduler may
 pick one and continue with the residual spec.
 
-To recover a more genuinely concurrent perspective, we also want to identify
-frontier events that come from independent concurrent components and therefore
-commute. This file does that in the most structural way possible.
+The independence relation identifies events from distinct live components,
+and the residual law expresses that either scheduling order has the same result.
 
 Main definitions:
 
@@ -31,9 +29,8 @@ Main definitions:
 * `diamond h` is the commuting residual law: independent events yield the same
   residual spec regardless of which one is scheduled first.
 
-This is intentionally the minimal true-concurrency layer.
-It does not yet quotient traces by independence, attach fairness assumptions,
-or introduce richer partial-order objects such as pomsets or event structures.
+`Concurrent.Interleaving` uses this independence relation to define equivalence
+of finite traces. Fairness of process runs is treated in `Concurrent.Fairness`.
 -/
 
 public section
