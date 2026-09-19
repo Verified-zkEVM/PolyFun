@@ -6,7 +6,6 @@ Authors: Devon Tuma
 
 module
 
-import all PolyFun.Interaction.Open.Emulates
 public import PolyFun.Interaction.Open.Emulates
 public import PolyFun.Interaction.Open.OpenProcessSamplerFactorization
 

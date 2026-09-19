@@ -6,6 +6,7 @@ Authors: Quang Dao
 
 module
 
+-- import all: unfolds `Admissible`, `Safe`, `Satisfies`
 import all PolyFun.Interaction.Concurrent.Liveness
 public import PolyFun.Interaction.Concurrent.Liveness
 public import PolyFun.Interaction.Concurrent.Observation

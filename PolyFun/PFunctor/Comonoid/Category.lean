@@ -5,7 +5,6 @@ Authors: Quang Dao
 -/
 module
 
-import all PolyFun.PFunctor.Comonoid
 public import PolyFun.PFunctor.Comonoid
 
 /-!

@@ -6,10 +6,15 @@ Authors: Quang Dao
 
 module
 
+-- import all: unfolds `InteractionOver.run`
 import all PolyFun.Interaction.Basic.Interaction
+-- import all: unfolds `monadic`, `syntaxOver`
 import all PolyFun.Interaction.Basic.Ownership
+-- import all: unfolds `StrategyOver`, `mapOutput`, `map`, `mapContext`
 import all PolyFun.Interaction.Basic.StrategyOver
+-- import all: unfolds `withMonads`
 import all PolyFun.Interaction.TwoParty.Decoration
+-- import all: unfolds `counterpart`, `paired`, `pairedMonadic`, `toCounterpartHom`
 import all PolyFun.Interaction.TwoParty.Syntax
 public import PolyFun.Interaction.Basic.Decoration
 public import PolyFun.Interaction.Basic.Interaction

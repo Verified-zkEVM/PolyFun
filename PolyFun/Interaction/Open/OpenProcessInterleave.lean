@@ -6,6 +6,8 @@ Authors: Devon Tuma
 
 module
 
+-- import all: unfolds `wireLeft`, `wireRight`, `mapBoundary`, `inlTensor`, `inrTensor`, `close`,
+--   `IsInternalNode`, `IsSilentStep`
 import all PolyFun.Interaction.Open.OpenProcess
 public import PolyFun.Interaction.Open.OpenProcess
 public import PolyFun.Interaction.Concurrent.RoutedInterleave

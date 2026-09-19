@@ -6,6 +6,7 @@ Authors: Quang Dao, Devon Tuma
 
 module
 
+-- import all: unfolds `PortBoundary.tensor`, `PortBoundary.swap`, `tensorComm`
 import all PolyFun.Interaction.Interface
 public import PolyFun.Interaction.Open.OpenTheory
 

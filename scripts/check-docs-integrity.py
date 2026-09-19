@@ -250,6 +250,11 @@ def has_module_docstring(text: str) -> bool:
         offset += whitespace.end()
         if text.startswith("/-!", offset):
             return True
+        # Line comments may annotate imports (an `import all` names the bodies it unfolds).
+        if text.startswith("--", offset):
+            newline = text.find("\n", offset)
+            offset = len(text) if newline == -1 else newline
+            continue
         import_match = IMPORT_COMMAND_RE.match(text, offset)
         if import_match is None:
             return False

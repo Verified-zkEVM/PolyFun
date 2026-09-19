@@ -6,8 +6,11 @@ Authors: Devon Tuma
 
 module
 
+-- import all: unfolds `Sampler.interleave`, `samplePath`
 import all PolyFun.Interaction.Basic.Sampler
+-- import all: unfolds `IsSilentStep`
 import all PolyFun.Interaction.Open.OpenProcess
+-- import all: unfolds `OpenProcessSamplerEquiv`
 import all PolyFun.Interaction.Open.OpenProcessSamplerEquiv
 public import PolyFun.Interaction.Basic.Sampler
 public import PolyFun.Interaction.Open.OpenProcessCoherence

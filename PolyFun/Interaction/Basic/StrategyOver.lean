@@ -6,7 +6,6 @@ Authors: Quang Dao
 
 module
 
-import all PolyFun.Interaction.Basic.Shape
 public import PolyFun.Interaction.Basic.Decoration
 public import PolyFun.Interaction.Basic.Shape
 

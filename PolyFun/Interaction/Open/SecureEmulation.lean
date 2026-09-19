@@ -6,7 +6,9 @@ Authors: Devon Tuma
 
 module
 
+-- import all: unfolds `UCSecure`
 import all PolyFun.Interaction.Open.Emulates
+-- import all: unfolds `UCSecureWithin`
 import all PolyFun.Interaction.Open.EmulatesWithin
 public import PolyFun.Interaction.Open.EmulatesWithin
 
