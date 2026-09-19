@@ -6,6 +6,7 @@ Authors: Devon Tuma
 
 module
 
+-- import all: unfolds `UCSecure`
 import all PolyFun.Interaction.Open.Emulates
 public import PolyFun.Interaction.Open.Emulates
 public import PolyFun.Interaction.Open.SubTheory

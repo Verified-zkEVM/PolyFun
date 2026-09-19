@@ -6,7 +6,6 @@ Authors: Quang Dao
 
 module
 
-import all PolyFun.Interaction.Basic.Syntax
 public import PolyFun.Interaction.Basic.Node
 public import PolyFun.Interaction.Basic.Syntax
 

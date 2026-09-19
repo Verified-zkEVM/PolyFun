@@ -6,6 +6,7 @@ Authors: Devon Tuma
 
 module
 
+-- import all: unfolds `IsSilentStep`, `OpenProcessActivationEquiv`, `boundaryTrace`
 import all PolyFun.Interaction.Open.OpenProcess
 public import PolyFun.Interaction.Open.OpenProcess
 

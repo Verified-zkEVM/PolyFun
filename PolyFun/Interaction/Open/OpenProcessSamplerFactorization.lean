@@ -6,6 +6,7 @@ Authors: Devon Tuma
 
 module
 
+-- import all: unfolds `close`, `mapBoundary`, `inlTensor`, `inrTensor`, `wireLeft`, `wireRight`
 import all PolyFun.Interaction.Open.OpenProcess
 public import PolyFun.Interaction.Open.OpenProcessFactorization
 public import PolyFun.Interaction.Open.OpenProcessModel

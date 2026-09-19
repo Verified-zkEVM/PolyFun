@@ -6,6 +6,7 @@ Authors: Quang Dao
 
 module
 
+-- import all: unfolds `PortBoundary.tensor`, `PortBoundary.swap`, `PortBoundary.sum`
 import all PolyFun.Interaction.Interface
 public import PolyFun.PFunctor.Trace
 public import PolyFun.Control.Bisimulation

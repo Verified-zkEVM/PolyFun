@@ -6,6 +6,8 @@ Authors: Devon Tuma
 
 module
 
+-- import all: unfolds `PortBoundary.swap`, `PortBoundary.tensor`, `sumCongr`, `sumAssoc`,
+--   `tensorComm`
 import all PolyFun.Interaction.Interface
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Transport
 

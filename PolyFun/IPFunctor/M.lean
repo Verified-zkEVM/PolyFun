@@ -6,7 +6,6 @@ Authors: Quang Dao
 
 module
 
-import all PolyFun.IPFunctor.Basic
 public import PolyFun.IPFunctor.Basic
 public import PolyFun.PFunctor.M.Vertex
 

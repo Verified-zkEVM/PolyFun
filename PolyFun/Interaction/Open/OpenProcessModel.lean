@@ -6,6 +6,7 @@ Authors: Quang Dao
 
 module
 
+-- import all: unfolds `OpenProcess`, `mapBoundary`, `toProcess`, `close`
 import all PolyFun.Interaction.Open.OpenProcess
 public import PolyFun.Interaction.Open.OpenProcess
 public import PolyFun.Interaction.Open.OpenProcessCoherence
