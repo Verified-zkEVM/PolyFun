@@ -114,7 +114,8 @@ EOF_DOCSTRING
 This library stages reusable extensions of the pinned cslib, Mathlib, and core APIs: free-monad
 lemmas in cslib's simp normal form, transport of loop combinators along monad morphisms,
 `PureForIn` instances, the bridge from Mathlib's complete lattices to core's `Lean.Order`,
-single-bit overwrites on bitvectors, and monotonicity of natural-number polynomial evaluation.
+single-bit overwrites on bitvectors, monotonicity of natural-number polynomial evaluation, and
+polynomial growth against `2 ^ n`.
 It imports core, cslib, and Mathlib only — never `PolyFun`, a concrete complexity backend, or any
 downstream oracle or cryptographic semantics. `PolyFun` imports the modules it needs explicitly;
 `ComplexityBackends` may do the same.
