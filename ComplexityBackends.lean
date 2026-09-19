@@ -10,6 +10,7 @@ public import ComplexityBackends.CslibSingleTape.Backend
 public import ComplexityBackends.CslibSingleTape.BasicMachines
 public import ComplexityBackends.CslibSingleTape.BitEncoding
 public import ComplexityBackends.CslibSingleTape.Counting
+public import ComplexityBackends.CslibSingleTape.Description
 public import ComplexityBackends.CslibSingleTape.Nontriviality
 public import ComplexityBackends.CslibSingleTape.PPoly
 public import ComplexityBackends.CslibSingleTape.PolyTime

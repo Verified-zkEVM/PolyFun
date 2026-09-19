@@ -359,6 +359,34 @@ sound composition bound or the optional exact equation. As with the qualitative
 adapter, clients must pin decodable representations rather than existentially
 select arbitrary injections.
 
+### Description measures and the counting separation
+
+`Quantitative/Description.lean` adds the third measure a complexity backend
+needs. A `DescriptionMeasure` gives every realizer a description size and, at
+each size bound and each pair of representations, a finite type of canonical
+descriptions, with the law that two realizers with the same description compute
+the same function whenever the codomain representation is *faithful*.
+Faithfulness is a parameter of the measure (injectivity, for raw string
+encodings), never a field of the representation. `RealizableLE a b d` is the set
+of functions with a realizer of description size at most `d`; against a faithful
+codomain it is covered by a finite set no larger than the number of canonical
+descriptions.
+
+`Quantitative/Counting.lean` turns the cover into the nonuniform separation: if
+every polynomial is eventually below a threshold and the description count at
+that threshold is eventually below `2 ^ |D n|`, some Boolean predicate family has
+no polynomially description-bounded realizer family
+(`exists_not_realizableLE_poly`; `exists_not_realizableLE_poly_of_card_lt` fixes
+the standard threshold `2 ^ (n / 4)`). Nothing about cost, time, or categorical
+structure enters; the growth lemmas live in
+`ToCslib/Algebra/PolynomialGrowth.lean`. The regression tests in
+`PolyFunTest/Realizability/QuantitativeDescription.lean` record the two vacuity
+canaries: the cost-free backend admits no measure against a trivial faithfulness
+predicate, and admits a trivial one, under which everything is realizable at
+size zero, against an unsatisfiable predicate. The theorem's content is therefore
+entirely the backend's description count and the faithfulness of the pinned
+boundary.
+
 ## Representation Invariance And Codability
 
 `StepClass.PolyTranslatable a b` contains admissibility proofs for the identity
@@ -457,12 +485,20 @@ single-tape Turing machines. Its machine half imports only cslib, Mathlib, and
   `ComplexityBackends/CslibSingleTape/Snoc.lean` build the constant, finite-table,
   and append-bit machines behind `EncPolyTime.const`, `EncPolyTime.ofFintype`,
   and `EncPolyTime.appendBit`.
-- `ComplexityBackends/CslibSingleTape/Counting.lean` proves
-  `exists_not_realizableLE_poly`: some Boolean predicate family has no polynomial
-  bound on its realizing machine-pair descriptions. This conclusion does not need
-  a uniform running-time bound across input lengths.
+- `ComplexityBackends/CslibSingleTape/Counting.lean` supplies the
+  machine-theoretic half of the counting separation: canonical `d`-state tables,
+  state relabeling (`exists_tmTable_of_card_le`), determinism of runs
+  (`Outputs_unique`), and the table count at the threshold size
+  (`eventually_count_lt`).
 
 Its adapter half connects this theory to PolyFun:
+
+- `ComplexityBackends/CslibSingleTape/Description.lean` instantiates
+  `DescriptionMeasure` with the state count as description size and the tables
+  as canonical descriptions, faithfulness being injectivity of the codomain
+  encoding, and states the counting separation at the canonical bitvector and
+  optional-Boolean encodings (`Backend.exists_not_realizableLE_poly`). No uniform
+  running-time bound across input lengths is involved.
 
 - `ComplexityBackends/CslibSingleTape/Backend.lean` interprets `EncPolyTime` as
   quantitative executable evidence. Its qualitative admissibility predicate is
@@ -475,9 +511,10 @@ Its adapter half connects this theory to PolyFun:
   `Witness.executionWork_le_totalTime` bounds every finite execution prefix by
   `initTime + (rounds + 1) * headTime + rounds * updateTime`, using the generic
   trace length and additive cost lemmas in `Quantitative.lean`.
-- `ComplexityBackends/CslibSingleTape/Nontriviality.lean` extracts an
-  initialization/observation pair from a pure Boolean certificate and applies the
-  backend's counting theorem.
+- `ComplexityBackends/CslibSingleTape/Nontriviality.lean` extracts, from a pure
+  Boolean certificate, one composed machine per parameter (initialization
+  followed by decoded observation) whose state count is polynomially bounded, and
+  applies the counting separation.
 
 The work charge is each machine witness's certified time envelope. It excludes
 external answer computation and does not count the exact steps of a linked
@@ -491,8 +528,49 @@ The ordinary-import examples in
 real Boolean queries, distinct answers, mismatched update tags, nontrivial
 input/result maps, and rejection of an empty-answer query.
 `PolyFunTest/ComplexityBackends/CslibSingleTape/Basic.lean` consumes the machine
-separation independently of PolyFun. The generated `PolyFun` umbrella imports no
-backend, and `scripts/check-modules.sh` rejects any such import.
+substrate independently of PolyFun, and
+`PolyFunTest/ComplexityBackends/CslibSingleTape/Description.lean` holds the
+adversarial canaries described below. `PolyFunTest/ModuleAPI/Realizability.lean`
+and `PolyFunTest/ModuleAPI/ComplexityBackends.lean` reach both layers through
+ordinary imports. The generated `PolyFun` umbrella imports no backend, and
+`scripts/check-modules.sh` rejects any such import.
+
+## What A Certificate Cannot Fake
+
+The quantitative layer is only as honest as the facts that pin it. What a
+dishonest prover cannot do, and where the definitions leave the burden with the
+caller:
+
+- **Understate cost.** `Backend.quantitative.cost` is the certified polynomial at
+  the encoded input length, and the underlying cslib witness carries an actual
+  halting run within that bound; a prover can only overstate.
+- **Certify a hard family.** `exists_not_isPPolyBy_pure` exhibits a family with
+  no witness at the pinned coin boundary, and the counting separation behind it
+  is generic in the description measure.
+- **Smuggle advice.** Description sizes are polynomially bounded by
+  `EncPolyTimeFam.size_le`, finite tables cost one state per encoded input bit,
+  and the description size is a projection of the witness, never chosen.
+- **Terminate vacuously.** `RunsWithinUnder` carries a progress conjunct, and
+  `rounds` is enforced through `ImplementsWithin`.
+- **Move a certificate.** `recode` and `copy` preserve size and time.
+- **Install a bogus measure.** A description measure with size zero exists only
+  under an unsatisfiable faithfulness predicate, and the separation demands
+  faithfulness at every boundary it separates.
+
+Left to the pinned boundary, and exercised by the canaries in
+`PolyFunTest/ComplexityBackends/CslibSingleTape/Description.lean`:
+
+- `EncPolyTime` is trivially inhabited against a non-injective codomain encoding
+  (the erasing machine), so faithfulness is always a hypothesis.
+- An injective, polynomially wide `BitEncFam` may still cache the function in its
+  encoding; only the canonical constructors are trustworthy, and a boundary is a
+  parameter assembled from them, never an existential.
+- The qualitative class `Hom := True` admits every function; the quantitative
+  layer is load-bearing.
+
+Still open: a whole-program linking theorem (below), completeness relative to a
+standard model (reductions may be uncertifiable, never unsound), and the
+`Type 0` pin of the single-tape description measure.
 
 ## Known Gaps
 
@@ -555,7 +633,7 @@ alone does not establish strict PPT.
 ## References
 
 See [`REFERENCES.md`](../../REFERENCES.md) — `AM74`, `AMMS13`, `PR89`, `Uus15`,
-`PM15`, `Blum67`, `GHP09` for the realizability notion, and `Coc93`, `CLW93`,
+`PM15`, `Blum67`, `FKL22`, `GHP09` for the realizability notion, and `Coc93`, `CLW93`,
 `Wal91`, `CF92`, `CDGH12`, `CH08`, `Clo99` for the distributive-category and
 function-algebra vocabulary; plus `SN24`, `LS25`, and `Abe26`.
 
