@@ -154,7 +154,11 @@ normalize local fixtures, while remaining outside the production library.
   this module's public signatures or are intentionally re-exported.
 - Use plain `import` for implementation-only dependencies.
 - Use `import all` before the corresponding regular or public import when
-  proofs need opaque declaration bodies from another module.
+  proofs need opaque declaration bodies from another module, and comment which
+  definition they unfold. Library boundaries for `import all` (tests may open
+  `ComplexityBackends`, backends never open `PolyFun`, module canaries open
+  nothing) are listed in `docs/development/module-api.md` and enforced by
+  `scripts/check-modules.sh`.
 - Prefer `@[expose]` on individual definitions whose reduction is part of the
   public API. Do not use `@[expose] public section` in `PolyFun/Interaction/`.
 
