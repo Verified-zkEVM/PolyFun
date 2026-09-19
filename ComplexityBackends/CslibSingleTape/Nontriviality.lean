@@ -7,15 +7,17 @@ Authors: Quang Dao
 module
 
 public import ComplexityBackends.CslibSingleTape.PPoly
-public import ComplexityBackends.CslibSingleTape.Counting
+public import ComplexityBackends.CslibSingleTape.Description
 
 /-!
 # Non-triviality of the cslib-backed P/poly model
 
-This module connects the semantic `IsPPolyBy` certificate to this backend's
-machine-counting theorem at one pinned Boolean boundary. The resulting theorem
-says that polynomially bounded non-uniform machine families cannot contain all
-families of Boolean predicates on `BitVec n`.
+This module connects the semantic `IsPPolyBy` certificate to the counting
+separation for this backend's description measure at one pinned Boolean
+boundary. A pure certificate yields, at every parameter, a single composed
+witness (initialization followed by decoded observation) whose state count is
+polynomially bounded; the separation says no such family exists for some
+Boolean predicate family on `BitVec n`.
 -/
 
 public section
@@ -68,30 +70,22 @@ noncomputable def decodeCoinHeadCode :
       (BitEncFam.bool.option.len_eq n (decodeCoinHead value)).le.trans
         (BitEncFam.bool.option.wid_le n))
 
-/-- A pure Boolean P/poly certificate yields the two cslib machines counted by
-`RealizableLE`: initialization, followed by decoded initial-state observation. -/
-theorem realizableLE_of_isPPolyBy_pure
-    {function : (n : ℕ) → BitVec n → Bool}
-    (certificate : IsPPolyBy coinBoundary
-      (fun n value ↦ FreeM.pure (function n value))) :
-    ∃ q : Polynomial ℕ, ∀ n, function n ∈ RealizableLE n (q.eval n) := by
-  obtain ⟨witness⟩ := certificate.toNonempty
+/-- A pure Boolean P/poly certificate yields, at every parameter, one cslib machine computing
+`some ∘ function n` at the canonical encodings: initialization composed with decoded observation.
+Its state count is bounded by the sum of the two code families' description bounds. -/
+theorem realizableLE_of_witness {function : (n : ℕ) → BitVec n → Bool}
+    (witness : Witness coinBoundary (fun n value ↦ FreeM.pure (function n value))) (n : ℕ) :
+    (some ∘ function n) ∈ Backend.description.RealizableLE (coinBoundary.input.enc n)
+      (BitEncFam.bool.option.enc n)
+      ((witness.realization.initCode.size +
+        (witness.realization.headCode.comp decodeCoinHeadCode).size).eval n) := by
   let outputCode := witness.realization.headCode.comp decodeCoinHeadCode
-  refine ⟨witness.realization.initCode.size + outputCode.size, fun n ↦ ?_⟩
-  apply mem_realizableLE.mpr
-  refine ⟨(witness.realization.machine n).State, witness.realization.state.enc n,
-    (witness.realization.machine n).init,
-    decodeCoinHead ∘ (witness.realization.machine n).head,
-    witness.realization.initCode.wit n, outputCode.wit n, ?_, ?_, ?_⟩
-  · have initBound := witness.realization.initCode.size_le n
-    simp only [Polynomial.eval_add]
-    exact initBound.trans (Nat.le_add_right _ _)
-  · have outputBound := outputCode.size_le n
-    simp only [Polynomial.eval_add]
-    exact outputBound.trans (Nat.le_add_left _ _)
+  let code := (witness.realization.initCode.wit n).comp (outputCode.wit n)
+  refine Backend.description.mem_realizableLE.mpr ⟨code.copy _ ?_, ?_⟩
   · intro value
-    rw [Function.comp_apply, witness.head_init_eq_of_pure]
-    rfl
+    simp only [Function.comp_apply, witness.head_init_eq_of_pure, decodeCoinHead]
+  · rw [Backend.descSize_eq, EncPolyTime.size_copy, EncPolyTime.size_comp, Polynomial.eval_add]
+    exact Nat.add_le_add (witness.realization.initCode.size_le n) (outputCode.size_le n)
 
 /-- There is a Boolean predicate family whose pure programs have no
 cslib-backed non-uniform P/poly certificate at the pinned coin boundary. -/
@@ -99,8 +93,9 @@ theorem exists_not_isPPolyBy_pure :
     ∃ function : (n : ℕ) → BitVec n → Bool,
       ¬ IsPPolyBy coinBoundary
         (fun n value ↦ FreeM.pure (function n value)) := by
-  obtain ⟨function, notRealizable⟩ := exists_not_realizableLE_poly
-  exact ⟨function, fun certificate ↦
-    notRealizable (realizableLE_of_isPPolyBy_pure certificate)⟩
+  obtain ⟨function, notRealizable⟩ := Backend.exists_not_realizableLE_poly
+  refine ⟨function, fun certificate ↦ notRealizable ?_⟩
+  obtain ⟨witness⟩ := certificate.toNonempty
+  exact ⟨_, fun n ↦ realizableLE_of_witness witness n⟩
 
 end ComplexityBackends.CslibSingleTape.PPoly
