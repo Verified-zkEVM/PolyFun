@@ -7,7 +7,7 @@ defaultTargets = ["PolyFun"]
 # reuse `batteries/runLinter` rather than shipping a local runner.
 lintDriver = "batteries/runLinter"
 lintDriverArgs = [
-  "PolyFun", "ToCslib", "PolyFunCslib",
+  "PolyFun", "ToCslib", "ComplexityBackends",
   "Examples.Tutorials.Requests", "Examples.Tutorials.Machines",
   "Examples.Tutorials.IndexedPrograms", "Examples.Parliament", "PolyFunParliamentMain"
 ]
@@ -38,16 +38,17 @@ rev = "v4.34.0"
 [[lean_lib]]
 name = "PolyFun"
 
-# Local machine and complexity theory over the pinned cslib API. This target does not
-# import PolyFun and is intentionally separate from the generated `PolyFun`
-# umbrella; PolyFun backend adapters may import it explicitly.
+# Upstream staging over the pinned core, cslib, and Mathlib APIs. This target never
+# imports PolyFun or a complexity backend and is intentionally separate from the
+# generated `PolyFun` umbrella; PolyFun imports the modules it needs explicitly.
 [[lean_lib]]
 name = "ToCslib"
 
-# Optional adapter from the cslib machine substrate to PolyFun realizability.
-# Kept outside the `PolyFun/` root so `import PolyFun` remains backend-neutral.
+# Optional concrete complexity backends, one subdirectory per machine model, that
+# instantiate PolyFun's quantitative realizability layer. Kept outside the `PolyFun/`
+# root so `import PolyFun` remains backend-neutral.
 [[lean_lib]]
-name = "PolyFunCslib"
+name = "ComplexityBackends"
 
 # Optional human-facing tutorials and executable case studies. This target name can coexist with VCVio's
 # `Examples` target. No generic `Examples` umbrella or core import is introduced.

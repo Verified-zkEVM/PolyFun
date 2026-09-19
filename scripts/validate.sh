@@ -16,7 +16,7 @@ usage() {
 Usage: ./scripts/validate.sh [--lint] [--test] [--axioms]
 
 Default checks:
-  - lake build PolyFun ToCslib PolyFunCslib PolyFunExamples +PolyFunParliamentMain --wfail
+  - lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
   - ./scripts/check-modules.sh
   - ./scripts/check-imports.sh
   - python3 ./scripts/check-docs-integrity.py
@@ -52,7 +52,7 @@ for arg in "$@"; do
 done
 
 echo "# Building project"
-lake build PolyFun ToCslib PolyFunCslib PolyFunExamples +PolyFunParliamentMain --wfail
+lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
 
 echo ""
 echo "# Checking module scopes"
@@ -71,7 +71,7 @@ if (( run_lint )); then
   echo ""
   echo "# Running environment linters (lake lint)"
   lake lint
-  lake exe lint-style PolyFun ToCslib PolyFunCslib \
+  lake exe lint-style PolyFun ToCslib ComplexityBackends \
     Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
     Examples.Parliament PolyFunParliamentMain
 fi
@@ -90,7 +90,7 @@ fi
 if (( run_axioms )); then
   echo ""
   echo "# Building axiom sweep roots"
-  lake build PolyFun ToCslib PolyFunCslib PolyFunExamples +PolyFunParliamentMain --wfail
+  lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
 
   echo ""
   echo "# Testing the axiom sweep tool"
@@ -98,7 +98,7 @@ if (( run_axioms )); then
 
   echo ""
   echo "# Enforcing zero axiom/sorry debt"
-  lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --root PolyFunCslib \
+  lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --root ComplexityBackends \
     --root Examples.Tutorials.Requests --root Examples.Tutorials.Machines \
     --root Examples.Tutorials.IndexedPrograms --root Examples.Parliament \
     --root PolyFunParliamentMain --check

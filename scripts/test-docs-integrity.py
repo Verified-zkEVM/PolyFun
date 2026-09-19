@@ -48,12 +48,12 @@ public section
     def test_auxiliary_modules_and_umbrellas_are_checked(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            for root_name in ("ToCslib", "PolyFunCslib", "Examples/Tutorials",
+            for root_name in ("ToCslib", "ComplexityBackends", "Examples/Tutorials",
                               "test/DocumentationConsumer", "test/ParliamentConsumer"):
                 source = repo_root / root_name / "MissingDoc.lean"
                 source.parent.mkdir(parents=True)
                 source.write_text("module\n\npublic section\n")
-            (repo_root / "PolyFunCslib.lean").write_text("module\n")
+            (repo_root / "ComplexityBackends.lean").write_text("module\n")
             (repo_root / "PolyFunParliamentMain.lean").write_text("module\n")
             cached = repo_root / "test/ParliamentConsumer/.lake/build/Cached.lean"
             cached.parent.mkdir(parents=True)
@@ -63,8 +63,8 @@ public section
                     CHECKER.check_module_docstrings(),
                     [
                         "Missing module docstring: ToCslib/MissingDoc.lean",
-                        "Missing module docstring: PolyFunCslib/MissingDoc.lean",
-                        "Missing module docstring: PolyFunCslib.lean",
+                        "Missing module docstring: ComplexityBackends/MissingDoc.lean",
+                        "Missing module docstring: ComplexityBackends.lean",
                         "Missing module docstring: Examples/Tutorials/MissingDoc.lean",
                         "Missing module docstring: test/DocumentationConsumer/MissingDoc.lean",
                         "Missing module docstring: test/ParliamentConsumer/MissingDoc.lean",
@@ -79,8 +79,8 @@ class LeanPathTests(unittest.TestCase):
 `PolyFun/PFunctor/Basic.lean`
 `PolyFun/PFunctor/Dynamical/{Responder, Game}.lean`
 `PolyFun/ITree/{Basic.lean,Bisim/Defs.lean}`
-`ToCslib/Computability/PolyTime.lean`
-`PolyFunCslib/{Backend, PPoly}.lean`
+`ComplexityBackends/CslibSingleTape/PolyTime.lean`
+`ComplexityBackends/CslibSingleTape/{Backend, PPoly}.lean`
 `Examples/Tutorials/Requests.lean`
 """
         self.assertEqual(
@@ -91,9 +91,9 @@ class LeanPathTests(unittest.TestCase):
                 "PolyFun/PFunctor/Dynamical/Game.lean",
                 "PolyFun/ITree/Basic.lean",
                 "PolyFun/ITree/Bisim/Defs.lean",
-                "ToCslib/Computability/PolyTime.lean",
-                "PolyFunCslib/Backend.lean",
-                "PolyFunCslib/PPoly.lean",
+                "ComplexityBackends/CslibSingleTape/PolyTime.lean",
+                "ComplexityBackends/CslibSingleTape/Backend.lean",
+                "ComplexityBackends/CslibSingleTape/PPoly.lean",
                 "Examples/Tutorials/Requests.lean",
             },
         )

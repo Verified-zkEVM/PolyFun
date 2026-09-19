@@ -5,7 +5,7 @@ Authors: Devon Tuma, Elias Judin
 -/
 module
 
-public import ToCslib.Computability.PolyTime
+public import ComplexityBackends.CslibSingleTape.PolyTime
 
 /-!
 # Appending a fixed bit with a single-tape machine
@@ -151,7 +151,7 @@ theorem size_snocPolyTimeComputable (c : Bool) :
 
 end Cslib.Turing.SingleTapeTM
 
-namespace ToCslib.Computability.EncPolyTime
+namespace ComplexityBackends.CslibSingleTape.EncPolyTime
 
 open Cslib.Turing.SingleTapeTM
 
@@ -200,4 +200,4 @@ theorem exists_iterate {σ : Type} (encoding : σ → List Bool) {step : σ → 
         ring
       omega
 
-end ToCslib.Computability.EncPolyTime
+end ComplexityBackends.CslibSingleTape.EncPolyTime

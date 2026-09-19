@@ -2,8 +2,10 @@
 
 # Update a library's umbrella module with all public imports.
 #
-#   ./scripts/update-lib.sh            # regenerates PolyFun.lean
-#   ./scripts/update-lib.sh ToCslib    # regenerates ToCslib.lean
+#   ./scripts/update-lib.sh                       # regenerates PolyFun.lean
+#   ./scripts/update-lib.sh ToCslib               # regenerates ToCslib.lean
+#   ./scripts/update-lib.sh ComplexityBackends    # regenerates ComplexityBackends.lean
+#   ./scripts/update-lib.sh Examples.Parliament   # regenerates Examples/Parliament.lean
 #
 # This script only considers tracked files. New <Lib>/**/*.lean files
 # must be staged first.
@@ -15,9 +17,9 @@ cd "$REPO_ROOT"
 
 lib="${1:-PolyFun}"
 case "$lib" in
-  PolyFun|ToCslib|Examples.Parliament) ;;
+  PolyFun|ToCslib|ComplexityBackends|Examples.Parliament) ;;
   *)
-    echo "ERROR: unknown library '$lib' (expected PolyFun, ToCslib, or Examples.Parliament)." >&2
+    echo "ERROR: unknown library '$lib' (expected PolyFun, ToCslib, ComplexityBackends, or Examples.Parliament)." >&2
     exit 1
     ;;
 esac
@@ -51,8 +53,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# `PolyFun.lean` is a bare import index. The `ToCslib` umbrella is a Lake library root in its own
-# right, so it keeps the standard file header and a module docstring around its generated imports.
+# `PolyFun.lean` is a bare import index. The `ToCslib` and `ComplexityBackends` umbrellas are Lake
+# library roots in their own right, so they keep the standard file header and a module docstring
+# around their generated imports.
 umbrella_header() {
   case "$1" in
     Examples.Parliament)
@@ -70,7 +73,17 @@ EOF_HEADER
 /-
 Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Devon Tuma, Elias Judin
+Authors: Devon Tuma, Quang Dao
+-/
+
+EOF_HEADER
+      ;;
+    ComplexityBackends)
+      cat <<'EOF_HEADER'
+/-
+Copyright (c) 2026 PolyFun Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Devon Tuma, Elias Judin, Quang Dao
 -/
 
 EOF_HEADER
@@ -98,14 +111,29 @@ EOF_DOCSTRING
 /-!
 # Extensions of the pinned cslib library
 
-This library stages reusable extensions of the pinned cslib API: free-monad lemmas in cslib's
-simp normal form, transport of loop combinators along monad morphisms, `PureForIn` instances,
-the bridge from Mathlib's complete lattices to core's `Lean.Order`, and local machine and
-complexity theory (encoded polynomial-time families, machine constructions, and counting
-separation). It imports cslib and Mathlib only — never PolyFun's realizability theory or any
-downstream oracle or cryptographic semantics. `PolyFun` imports the free-monad slice
-explicitly; optional backend libraries import the machine modules without adding concrete
-machine extensions to the generic `PolyFun` umbrella.
+This library stages reusable extensions of the pinned cslib, Mathlib, and core APIs: free-monad
+lemmas in cslib's simp normal form, transport of loop combinators along monad morphisms,
+`PureForIn` instances, the bridge from Mathlib's complete lattices to core's `Lean.Order`,
+single-bit overwrites on bitvectors, and monotonicity of natural-number polynomial evaluation.
+It imports core, cslib, and Mathlib only — never `PolyFun`, a concrete complexity backend, or any
+downstream oracle or cryptographic semantics. `PolyFun` imports the modules it needs explicitly;
+`ComplexityBackends` may do the same.
+-/
+EOF_DOCSTRING
+      ;;
+    ComplexityBackends)
+      cat <<'EOF_DOCSTRING'
+
+/-!
+# Concrete complexity backends for PolyFun realizability
+
+This library hosts optional concrete backends that instantiate PolyFun's abstract quantitative
+realizability layer (`PolyFun.Realizability.Quantitative`) with a specific machine model. Each
+backend lives in its own subdirectory and is self-contained: `CslibSingleTape` grounds encoded
+polynomial-time families, finite-table machine constructions, and a counting separation in cslib's
+single-tape Turing machines, then certifies PolyFun step maps with them. The library imports
+`PolyFun`, `ToCslib`, cslib, and Mathlib; it is a separate Lake library and is intentionally absent
+from the backend-neutral `PolyFun` umbrella.
 -/
 EOF_DOCSTRING
       ;;

@@ -6,7 +6,7 @@ Authors: Quang Dao
 
 module
 
-public import PolyFunCslib.Nontriviality
+public import ComplexityBackends.CslibSingleTape.Nontriviality
 
 /-!
 # Direct canaries for the cslib-backed P/poly adapter
@@ -16,13 +16,11 @@ returning Boolean program. The remaining examples exercise the derived resource
 bounds and compositional API through the public surface.
 -/
 
-open ToCslib.Computability
+open PFunctor ComplexityBackends.CslibSingleTape ComplexityBackends.CslibSingleTape.PPoly
 
 @[expose] public section
 
-namespace PFunctor.CslibPPolyTest
-
-open CslibPPoly
+namespace PolyFunTest.ComplexityBackends.CslibSingleTape.PPoly
 
 abbrev ConstBool : ℕ → PFunctor := fun _ ↦ PFunctor.C Bool
 abbrev BoolFam : ℕ → Type := fun _ ↦ Bool
@@ -48,7 +46,7 @@ noncomputable def boolMachine (_n : ℕ) :
     DynSystem.DynComputation (PFunctor.C Bool) Bool Bool :=
   .ofFn id
 
-noncomputable def boolRealization : CslibPPoly.Realization boolBoundary where
+noncomputable def boolRealization : PPoly.Realization boolBoundary where
   machine := boolMachine
   rounds := 0
   state := BitEncFam.bool.toStrEncFam
@@ -73,7 +71,7 @@ noncomputable def boolWitness : Witness boolBoundary (fun _ value ↦ FreeM.pure
   realization := boolRealization
   implements := Realization.Implements.intro fun _ value ↦ by
     simp [boolRealization, boolMachine]
-  progress _ value := programProgress_pure value
+  progress _ value := FreeM.programProgress_pure value
 
 example : IsPPolyBy boolBoundary (fun _ value ↦ FreeM.pure value) :=
   IsPPolyBy.intro boolWitness
@@ -153,7 +151,7 @@ noncomputable def boolStepStateEncoding : StrEncFam fun _ ↦ BoolStepState :=
       | (_, some answer) => Sum.inl answer)
     (fun position ↦ (position, none))
 
-noncomputable def boolStepRealization : CslibPPoly.Realization boolStepBoundary where
+noncomputable def boolStepRealization : PPoly.Realization boolStepBoundary where
   machine := boolStepMachine
   rounds := .C 1
   state := boolStepStateEncoding
@@ -186,8 +184,8 @@ noncomputable def boolStepWitness : Witness boolStepBoundary boolQueryProgram wh
     simp only [boolStepRealization, Polynomial.eval_C]
     cases position <;> rfl
   progress _ _ := by
-    rw [boolQueryProgram, programProgress_liftBind]
-    exact ⟨⟨false⟩, fun answer ↦ programProgress_pure answer⟩
+    rw [boolQueryProgram, FreeM.programProgress_liftBind_iff]
+    exact ⟨⟨false⟩, fun answer ↦ FreeM.programProgress_pure answer⟩
 
 example : IsPPolyBy boolStepBoundary boolQueryProgram := IsPPolyBy.intro boolStepWitness
 
@@ -288,7 +286,7 @@ example (boundary : Boundary EmptyInteractionFam (fun _ ↦ PUnit) BoolFam) :
   intro certificate
   obtain ⟨witness⟩ := certificate.toNonempty
   have progress := witness.progress 0 PUnit.unit
-  rw [emptyQueryProgram, programProgress_liftBind] at progress
+  rw [emptyQueryProgram, FreeM.programProgress_liftBind_iff] at progress
   exact nomatch progress.1
 
 /-- Nontriviality is available to ordinary consumers of the optional adapter. -/
@@ -296,4 +294,4 @@ example : ∃ f : (n : ℕ) → BitVec n → Bool,
     ¬ IsPPolyBy coinBoundary (fun n value ↦ FreeM.pure (f n value)) :=
   exists_not_isPPolyBy_pure
 
-end PFunctor.CslibPPolyTest
+end PolyFunTest.ComplexityBackends.CslibSingleTape.PPoly

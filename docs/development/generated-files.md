@@ -7,22 +7,22 @@ Edit the source of truth, not the output.
 | `CLAUDE.md` | compatibility symlink | No | Edit `AGENTS.md` |
 | `PolyFun.lean` | generated module with umbrella public imports | No | `./scripts/update-lib.sh` or `./scripts/check-imports.sh` |
 | `ToCslib.lean` | generated umbrella for the staging library | No | `./scripts/update-lib.sh ToCslib` or `./scripts/check-imports.sh` |
+| `ComplexityBackends.lean` | generated umbrella for the optional backend library | No | `./scripts/update-lib.sh ComplexityBackends` or `./scripts/check-imports.sh` |
 | `Examples/Parliament.lean` | generated case-study umbrella | No | `./scripts/update-lib.sh Examples.Parliament` |
 | `.lake/` | build artifacts and cache | No | `lake build`, `lake exe cache get` |
 | `lake-manifest.json` | resolved dependency lockfile | Manual edits unsafe | Update `lean-toolchain` and both dependency pins in `lakefile.toml`, then run `lake update` |
 
 ## Important Notes
 
-- `./scripts/update-lib.sh [ToCslib]` only uses tracked `PolyFun/**/*.lean` (or
-  `ToCslib/**/*.lean`) files and
-  fails fast if untracked Lean files would be skipped. Stage new files
-  first, then rerun. It emits a `module` command followed by sorted
-  `public import` commands so importing `PolyFun` re-exports the library API.
-  `ToCslib.lean` is a Lake library root in its own right, so the generator
-  wraps its import list in the standard file header and the library's module
-  docstring (both fixed text inside the script; edit them there, not in the
-  output), which `check-docs-integrity.py` requires of every umbrella except
-  `PolyFun.lean`.
+- `./scripts/update-lib.sh [ToCslib|ComplexityBackends]` only uses tracked
+  `<Lib>/**/*.lean` files and fails fast if untracked Lean files would be
+  skipped. Stage new files first, then rerun. It emits a `module` command
+  followed by sorted `public import` commands so importing `PolyFun` re-exports
+  the library API. `ToCslib.lean` and `ComplexityBackends.lean` are Lake library
+  roots in their own right, so the generator wraps their import lists in the
+  standard file header and the library's module docstring (both fixed text
+  inside the script; edit them there, not in the output), which
+  `check-docs-integrity.py` requires of every umbrella except `PolyFun.lean`.
 - `./scripts/check-imports.sh` regenerates each umbrella, compares it with a
   temporary backup, and restores the original. It reports any difference
   without retaining the regenerated output.

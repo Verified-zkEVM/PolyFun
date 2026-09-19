@@ -42,7 +42,7 @@ TRACKED_PATHS = [
 MARKDOWN_LINK_RE = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 LEAN_PATH_RE = re.compile(
     r"(?<![A-Za-z0-9_./])"
-    r"((?:PolyFun|ToCslib|PolyFunCslib|PolyFunTest|Examples)/(?:"
+    r"((?:PolyFun|ToCslib|ComplexityBackends|PolyFunTest|Examples)/(?:"
     r"[A-Za-z0-9_./-]+\.lean|"
     r"[A-Za-z0-9_./-]*\{[A-Za-z0-9_./, -]+\}(?:[A-Za-z0-9_./-]*\.lean)?"
     r"))"
@@ -258,7 +258,7 @@ def has_module_docstring(text: str) -> bool:
 
 def check_module_docstrings() -> list[str]:
     errors: list[str] = []
-    for root_name in ("PolyFun", "ToCslib", "PolyFunCslib", "PolyFunTest", "Examples",
+    for root_name in ("PolyFun", "ToCslib", "ComplexityBackends", "PolyFunTest", "Examples",
                       "test/DocumentationConsumer", "test/ParliamentConsumer"):
         source_root = REPO_ROOT / root_name
         lean_files = [p for p in source_root.rglob("*.lean") if ".lake" not in p.parts]

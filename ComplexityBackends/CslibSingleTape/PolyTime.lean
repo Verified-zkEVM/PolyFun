@@ -8,19 +8,20 @@ module
 
 public import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
 public import Mathlib.Algebra.Polynomial.Eval.Degree
+public import ToCslib.Algebra.Polynomial
 
 /-!
 # Encoded Polynomial-Time Computability
 
 Cslib's `Cslib.Turing.SingleTapeTM.PolyTimeComputable` certifies polynomial-time computability
 of raw string functions `List Symbol → List Symbol`. This file adds the encoding layer:
-`ToCslib.Computability.EncPolyTime ea eb f` witnesses that a function `f : α → β` between
+`EncPolyTime ea eb f` witnesses that a function `f : α → β` between
 arbitrary types is polynomial-time computable relative to `Bool`-string encodings
 `ea : α → List Bool` and `eb : β → List Bool`, by bundling a machine-computed total
 string function that intertwines the encodings. The encodings are supplied by call
 sites, which can pin the injective fixed-width and length-bounded families
-of `ToCslib.Computability.BitEncoding` (`ToCslib.Computability.BitEncFam`,
-`ToCslib.Computability.StrEncFam`) at its boundaries.
+`BitEncFam` and `StrEncFam` of `ComplexityBackends.CslibSingleTape.BitEncoding` at its
+boundaries.
 
 Identity and composition (`EncPolyTime.id`, `EncPolyTime.comp`) lift directly from
 Cslib's proven `PolyTimeComputable.id` and `PolyTimeComputable.comp`; the monotone
@@ -39,12 +40,6 @@ requires a separate characterization theorem.
 public section
 
 universe u v w u' v'
-
-/-- Evaluation of a natural-number polynomial is monotone in the argument. -/
-theorem Polynomial.eval_le_eval {p : Polynomial ℕ} {m n : ℕ} (h : m ≤ n) :
-    p.eval m ≤ p.eval n := by
-  rw [p.eval_eq_sum_range, p.eval_eq_sum_range]
-  exact Finset.sum_le_sum fun i _ => Nat.mul_le_mul_left _ (Nat.pow_le_pow_left h i)
 
 namespace Cslib.Turing.SingleTapeTM
 
@@ -92,7 +87,7 @@ theorem PolyTimeComputable.size_eq_card {f : List Bool → List Bool}
 
 end Cslib.Turing.SingleTapeTM
 
-namespace ToCslib.Computability
+namespace ComplexityBackends.CslibSingleTape
 
 open Cslib.Turing.SingleTapeTM
 
@@ -106,7 +101,7 @@ The string function is total: its behavior on strings outside the range of `ea` 
 unconstrained. The structure imposes nothing on `ea` and `eb` themselves — with a
 non-injective codomain encoding it is trivially inhabited — so its certifying power
 comes from the call site pinning injective encoding families
-(`ToCslib.Computability.BitEncFam`, `ToCslib.Computability.StrEncFam`). -/
+(`BitEncFam`, `StrEncFam`). -/
 structure EncPolyTime (ea : α → List Bool) (eb : β → List Bool) (f : α → β) where
   /-- The total string function the machine computes. -/
   toFun : List Bool → List Bool
@@ -245,4 +240,4 @@ theorem length_le {f : α → β} (h : EncPolyTime ea eb f) (a : α) :
 
 end EncPolyTime
 
-end ToCslib.Computability
+end ComplexityBackends.CslibSingleTape

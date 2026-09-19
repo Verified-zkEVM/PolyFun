@@ -15,7 +15,8 @@ Before sending work for review:
 - Fetch dependencies with `lake exe cache get`, then run
   `./scripts/validate.sh --lint --test --axioms`.
 - Stage new/deleted/renamed source files before regenerating the matching
-  umbrella with `./scripts/update-lib.sh` or `./scripts/update-lib.sh ToCslib`.
+  umbrella with `./scripts/update-lib.sh`, `./scripts/update-lib.sh ToCslib` or
+  `./scripts/update-lib.sh ComplexityBackends`.
 - Finished work should not contain `sorry` or `admit`. Use `stop` only when
   explicitly preserving partial proof work during a refactor.
 - Keep repo-wide Lean options in `lakefile.toml`. Do not restate

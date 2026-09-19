@@ -5,7 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
-public import ToCslib.Computability.PolyTime
+public import ComplexityBackends.CslibSingleTape.PolyTime
 
 /-!
 # Base Polynomial-Time Machines
@@ -15,11 +15,11 @@ functions, in Cslib's `Cslib.Turing.SingleTapeTM` model:
 
 - `Cslib.Turing.SingleTapeTM.clearComputer` / `Cslib.Turing.SingleTapeTM.constComputer`: erase the
   input and produce a fixed output string, giving `constPolyTimeComputable` and the
-  encoding-level witness `ToCslib.Computability.EncPolyTime.const` for constant functions.
+  encoding-level witness `EncPolyTime.const` for constant functions.
 - `Cslib.Turing.SingleTapeTM.tableComputer`: read the input into machine state through the
   prefix tree of a finite set of valid inputs, then write the corresponding table
   output, giving `tablePolyTimeComputable` and the encoding-level witness
-  `ToCslib.Computability.EncPolyTime.ofFintype`: **any function with a finite domain is
+  `EncPolyTime.ofFintype`: **any function with a finite domain is
   polynomial-time computable** relative to an injective encoding — but with a
   description size (`EncPolyTime.size_ofFintype_le`) that grows with the domain's
   total encoded length, so a *family* of tables stays within a polynomial advice
@@ -38,7 +38,7 @@ Base machines for *unbounded* domains (symbol relabeling, projections with respe
 paired encodings of infinite types) would follow the same skeleton and remain future
 work; together with `EncPolyTime.comp` (from Cslib's proven machine composition) they
 would extend the generic witnesses beyond finite domains, stated in the raw-encoding
-family form (`ToCslib.Computability.EncPolyTimeFam`) used by backend adapters.
+family form (`EncPolyTimeFam`) used by backend adapters.
 -/
 
 public section
@@ -399,7 +399,7 @@ The table machine's *time* is linear, but its *state count* — the reading pref
 plus the writing states — grows with the total length of the valid inputs and their
 table outputs. This is the advice a table smuggles: a family of tables over
 exponentially large domains has exponential description size, which is why witness
-families must carry an explicit size bound (`ToCslib.Computability.EncPolyTime.size`). -/
+families must carry an explicit size bound (`EncPolyTime.size`). -/
 
 omit [Inhabited Symbol] [Fintype Symbol] in
 /-- The prefix tree of a finite set of strings has at most `∑ (length + 1)` nodes. -/
@@ -420,7 +420,7 @@ end Table
 
 end Cslib.Turing.SingleTapeTM
 
-namespace ToCslib.Computability.EncPolyTime
+namespace ComplexityBackends.CslibSingleTape.EncPolyTime
 
 /-- Constant functions are polynomial-time computable relative to any encodings. -/
 noncomputable def const {α : Type u} {β : Type v} (ea : α → List Bool)
@@ -435,8 +435,8 @@ tree of the finitely many valid encodings, then writes the encoded output. The t
 time for description: the machine has one reading state per prefix of a valid input
 (`size_ofFintype_le`), so families of these witnesses respect a polynomial advice bound
 only on domains of polynomially bounded cardinality. Instantiated at the injective
-encodings of `ToCslib.Computability.BitEncFam` /
-`ToCslib.Computability.StrEncFam`, this discharges the per-step machine witnesses. -/
+encodings of `BitEncFam` /
+`StrEncFam`, this discharges the per-step machine witnesses. -/
 noncomputable def ofFintype {α : Type u} {β : Type v} [Fintype α]
     (ea : α → List Bool) (hea : Function.Injective ea) (eb : β → List Bool)
     (f : α → β) : EncPolyTime ea eb f where
@@ -542,4 +542,4 @@ theorem size_ofFintype_le_of_bounds {α : Type u} {β : Type v} [Fintype α]
       ≤ A * (La + 1) + 1 + A * B := by omega
     _ = A * (La + 1 + B) + 1 := by ring
 
-end ToCslib.Computability.EncPolyTime
+end ComplexityBackends.CslibSingleTape.EncPolyTime

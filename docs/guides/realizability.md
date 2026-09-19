@@ -434,39 +434,50 @@ scheme whose operations the word class admits, supplied as `WordPairing` and
 this writing complexitylib has the ingredients (`Complexity.pair`, `unpair?`,
 `delimit`) but has not exposed them as a class-level closure result, and cslib's
 `PolyTimeComputable` has `id` and `comp` but no pairing or projection machines at
-all. The local `ToCslib` extensions supply encoded machine families and finite-table
-constructors. `PolyFunCslib` uses those concrete certificates directly; it does not
-claim a complete `ofWordClass` structural instance.
+all. The `CslibSingleTape` backend supplies encoded machine families and finite-table
+constructors and uses those concrete certificates directly; it does not claim a
+complete `ofWordClass` structural instance.
 
 `StepClass.computable` — Mathlib's `Primcodable` representations and `Computable`
 functions — is the in-repo instance that works today and exercises every mixin.
 
-## Local cslib Complexity Theory And The Optional Adapter
+## The Optional `ComplexityBackends` Library
 
-Concrete machine and complexity theory is maintained locally in `ToCslib` while
-upstream APIs stabilize. `ToCslib/Computability/PolyTime.lean` supplies encoded
-single-tape witnesses; `ToCslib/Computability/BitEncoding.lean` packages injective
-encoding families and uniform polynomial time and description bounds.
-`ToCslib/Computability/SingleTape/Counting.lean` proves
-`exists_not_realizableLE_poly`: some Boolean predicate family has no polynomial
-bound on its realizing machine-pair descriptions. This conclusion does not need
-a uniform running-time bound across input lengths. These modules import only
-cslib and Mathlib.
+Concrete machine models live in the optional `ComplexityBackends` library, one
+self-contained subdirectory per backend, outside the generic `PolyFun` umbrella.
+The `CslibSingleTape` backend grounds the quantitative layer in cslib's
+single-tape Turing machines. Its machine half imports only cslib, Mathlib, and
+`ToCslib`:
 
-The optional `PolyFunCslib/` library connects this theory to PolyFun:
+- `ComplexityBackends/CslibSingleTape/PolyTime.lean` supplies encoded single-tape
+  witnesses `EncPolyTime` with a running-time polynomial and a description size.
+- `ComplexityBackends/CslibSingleTape/BitEncoding.lean` packages injective encoding
+  families and uniform polynomial time and description bounds.
+- `ComplexityBackends/CslibSingleTape/BasicMachines.lean` and
+  `ComplexityBackends/CslibSingleTape/Snoc.lean` build the constant, finite-table,
+  and append-bit machines behind `EncPolyTime.const`, `EncPolyTime.ofFintype`,
+  and `EncPolyTime.appendBit`.
+- `ComplexityBackends/CslibSingleTape/Counting.lean` proves
+  `exists_not_realizableLE_poly`: some Boolean predicate family has no polynomial
+  bound on its realizing machine-pair descriptions. This conclusion does not need
+  a uniform running-time bound across input lengths.
 
-- `PolyFunCslib/Backend.lean` interprets `EncPolyTime` as quantitative executable
-  evidence. Its qualitative admissibility predicate is unconstrained; every
-  quantitative map still carries a concrete machine certificate.
-- `PolyFunCslib/PPoly.lean` pins the input, output, position, and dependent-answer
-  encodings. `IsPPolyBy` carries initialization, combined head observation, and
-  partial-update machine families, polynomial state-length and round bounds,
-  bounded semantic implementation, and progress at every reachable query.
+Its adapter half connects this theory to PolyFun:
+
+- `ComplexityBackends/CslibSingleTape/Backend.lean` interprets `EncPolyTime` as
+  quantitative executable evidence. Its qualitative admissibility predicate is
+  unconstrained; every quantitative map still carries a concrete machine certificate.
+- `ComplexityBackends/CslibSingleTape/PPoly.lean` pins the input, output, position,
+  and dependent-answer encodings. `IsPPolyBy` carries initialization, combined head
+  observation, and partial-update machine families, polynomial state-length and
+  round bounds, bounded semantic implementation, and `FreeM.ProgramProgress` at
+  every reachable query (the liveness predicate in `PolyFun/PFunctor/Bound.lean`).
   `Witness.executionWork_le_totalTime` bounds every finite execution prefix by
   `initTime + (rounds + 1) * headTime + rounds * updateTime`, using the generic
   trace length and additive cost lemmas in `Quantitative.lean`.
-- `PolyFunCslib/Nontriviality.lean` extracts an initialization/observation pair
-  from a pure Boolean certificate and applies the local counting theorem.
+- `ComplexityBackends/CslibSingleTape/Nontriviality.lean` extracts an
+  initialization/observation pair from a pure Boolean certificate and applies the
+  backend's counting theorem.
 
 The work charge is each machine witness's certified time envelope. It excludes
 external answer computation and does not count the exact steps of a linked
@@ -475,11 +486,13 @@ P/poly is asserted. Encodings are fixed by the caller; arbitrary changes of
 encoding have no automatic complexity-preservation theorem. Precomposition and
 result mapping require supplied code families.
 
-The ordinary-import examples in `PolyFunTest/Realizability/CslibPPoly.lean`
-cover pure returns, real Boolean queries, distinct answers, mismatched update
-tags, nontrivial input/result maps, and rejection of an empty-answer query.
-`PolyFunTest/ToCslib/Basic.lean` consumes the machine separation independently
-of PolyFun. The generated `PolyFun` umbrella imports neither concrete library.
+The ordinary-import examples in
+`PolyFunTest/ComplexityBackends/CslibSingleTape/PPoly.lean` cover pure returns,
+real Boolean queries, distinct answers, mismatched update tags, nontrivial
+input/result maps, and rejection of an empty-answer query.
+`PolyFunTest/ComplexityBackends/CslibSingleTape/Basic.lean` consumes the machine
+separation independently of PolyFun. The generated `PolyFun` umbrella imports no
+backend, and `scripts/check-modules.sh` rejects any such import.
 
 ## Known Gaps
 
@@ -490,8 +503,9 @@ code for the host operations, bounded administrative normalization, encoded stat
 actual work costs still require executable certificates. In particular, a syntactic query bound
 alone does not establish strict PPT.
 
-- **No whole-program machine-adequacy theorem.** `PolyFunCslib` certifies the
-  local step maps with cslib machines and bounds their additive time envelopes.
+- **No whole-program machine-adequacy theorem.** The `CslibSingleTape` backend
+  certifies the local step maps with cslib machines and bounds their additive
+  time envelopes.
   A compiler and linking theorem for the complete interactive machine, and a
   circuit characterization, remain separate obligations.
 - **Open-process closure is a certificate obligation.**

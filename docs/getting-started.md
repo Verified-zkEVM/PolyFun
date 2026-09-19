@@ -87,10 +87,10 @@ import PolyFun.PFunctor.Handler
 ```
 
 `import PolyFun` makes the entire generic library available. The optional
-`import PolyFunCslib` exposes concrete complexity adapters. Tutorials use
-`import Examples.Tutorials.Requests`; their Lake target is `PolyFunExamples`.
+`import ComplexityBackends` exposes the concrete complexity backends. Tutorials
+use `import Examples.Tutorials.Requests`; their Lake target is `PolyFunExamples`.
 These are distinct targets in one package, so depending on PolyFun does not
-require building the optional examples or adapters.
+require building the optional examples or backends.
 
 ## Choose your next step
 
