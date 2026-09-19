@@ -394,6 +394,34 @@ on the codomain representation.
 
 Used in: `PolyFun/Realizability/Quantitative/Description.lean`.
 
+### DH11 — Dal Lago and Hofmann, *Realizability models and implicit complexity*
+
+Ugo Dal Lago and Martin Hofmann.
+*Realizability Models and Implicit Complexity*.
+*Theoretical Computer Science* 412(20):2029–2047, 2011.
+DOI: <https://doi.org/10.1016/j.tcs.2010.12.025>
+
+Realizers carry resource majorants from a resource monoid, and a polynomial-time
+class arises from the choice of monoid; length spaces make the size of data part
+of the realizability relation. `PolynomialBackend` is the same shape with a
+canonical polynomial per realizer and explicit envelope and overhead laws.
+
+Used in: `PolyFun/Realizability/Quantitative/Family.lean`.
+
+### Cob65 — Cobham, *The intrinsic computational difficulty of functions*
+
+Alan Cobham.
+*The Intrinsic Computational Difficulty of Functions*.
+In *Logic, Methodology and Philosophy of Science: Proceedings of the 1964
+International Congress*, North-Holland, pp. 24–30, 1965.
+
+The machine-independent characterization of polynomial time as the closure of
+initial functions under composition and limited recursion on notation.
+`FiniteTables`, `FamRealizer.id` and `FamRealizer.comp` are the initial-function
+and composition clauses; limited recursion has no generic counterpart yet.
+
+Used in: `PolyFun/Realizability/Quantitative/Family.lean`.
+
 ### GHP09 — Ghani, Hancock, Pattinson, *Representations of stream processors*
 
 Neil Ghani, Peter Hancock, and Dirk Pattinson.

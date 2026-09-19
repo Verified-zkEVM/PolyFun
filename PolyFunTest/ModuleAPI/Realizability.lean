@@ -7,13 +7,15 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Realizability.Quantitative.Counting
+public import PolyFun.Realizability.Quantitative.Family
 
 /-!
 # Description measures through ordinary imports
 
 `RealizableLE` is opaque; `mem_realizableLE` is the membership API, and the counting separation is
-applied by naming its threshold hypotheses. These spellings are what a backend in another package
-uses.
+applied by naming its threshold hypotheses. Families expose their components through projection
+laws, and finite tables through `FiniteTables.table`. These spellings are what a backend in another
+package uses.
 -/
 
 @[expose] public section
@@ -22,7 +24,8 @@ universe u v w x
 
 namespace PolyFunTest.ModuleAPI.Realizability
 
-open PFunctor PFunctor.QuantitativeStepClass Filter
+open PFunctor PFunctor.QuantitativeStepClass PFunctor.QuantitativeStepClass.DescriptionMeasure
+open Filter
 
 variable {C : StepClass.{u, v}} {Q : QuantitativeStepClass.{u, v, w} C}
   {Faithful : ∀ {B : Type u}, C.Str B → Prop} (M : Q.DescriptionMeasure Faithful)
@@ -42,5 +45,17 @@ example {D E : ℕ → Type u} [∀ n, Fintype (D n)] (a : ∀ n, C.Str (D n)) (
     ∃ f : (n : ℕ) → D n → Bool, ¬ ∃ q : Polynomial ℕ,
       ∀ᶠ n in atTop, (ι n ∘ f n) ∈ M.RealizableLE (a n) (b n) (q.eval n) :=
   M.exists_not_realizableLE_poly_of_card_lt a b ι hι hb ht_count
+
+example [Q.HasCategory] {PB : M.PolynomialBackend} {D E F : ℕ → Type u}
+    {a : ∀ n, C.Str (D n)} {b : ∀ n, C.Str (E n)} {c : ∀ n, C.Str (F n)}
+    {f : ∀ n, D n → E n} {g : ∀ n, E n → F n}
+    (X : M.FamRealizer PB a b f) (Y : M.FamRealizer PB b c g) (n : ℕ) :
+    (X.comp Y).wit n = Q.compose (X.wit n) (Y.wit n) :=
+  FamRealizer.wit_comp X Y n
+
+example [Q.HasCategory] {PB : M.PolynomialBackend} {FaithfulIn : ∀ {A : Type u}, C.Str A → Prop}
+    (T : M.FiniteTables PB FaithfulIn) {A B : Type u} [Fintype A] (a : C.Str A)
+    (ha : FaithfulIn a) (b : C.Str B) (f : A → B) : Q.Realizer a b f :=
+  T.table a ha b f
 
 end PolyFunTest.ModuleAPI.Realizability

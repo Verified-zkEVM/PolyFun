@@ -387,6 +387,31 @@ size zero, against an unsatisfiable predicate. The theorem's content is therefor
 entirely the backend's description count and the faithfulness of the pinned
 boundary.
 
+### Polynomial backends and families
+
+`Quantitative/Family.lean` is where a description measure meets running time. A
+`PolynomialBackend` asks the backend for a canonical polynomial certificate
+`timeOf` on every realizer, an output-size envelope and a composition overhead
+expressed through those certificates, and subadditive description size, with
+every law in the shifted form `p.eval k ≤ P.eval (n + k)`. Canonical certificates
+are necessary, not a convenience: the single-tape backend's composition overhead
+is the second machine's polynomial evaluated at the first machine's output
+envelope, a hypothetical length that a per-use certificate such as `PolyRealizer`
+(bounds at actual inputs only) does not control, so families of `PolyRealizer`s
+cannot compose there.
+
+A `FamRealizer` is one realizer per security parameter `n` with a uniform time
+bound in `n + k` (`k` the encoded input size) and a uniform description bound in
+`n` (the advice bound). The `n + k` form is the formal content of the `1^n`
+convention at this layer. Families have an identity, compose (the parameter is
+folded into the envelope's argument, so the composite is one substitution looser
+than the backend's own), and arise from `FiniteTables`, the advice primitive:
+every function out of a polynomially small finite domain with a faithful input
+representation has a realizer whose description is the size of its table. The
+single-tape backend's `EncPolyTimeFam` is this structure field for field
+(`EncPolyTimeFam.toFam`, `ofFam`), with `Backend.polynomialBackend` supplying
+the certificates and `Backend.finiteTables` the finite-table machine.
+
 ## Representation Invariance And Codability
 
 `StepClass.PolyTranslatable a b` contains admissibility proofs for the identity
@@ -480,7 +505,8 @@ single-tape Turing machines. Its machine half imports only cslib, Mathlib, and
 - `ComplexityBackends/CslibSingleTape/PolyTime.lean` supplies encoded single-tape
   witnesses `EncPolyTime` with a running-time polynomial and a description size.
 - `ComplexityBackends/CslibSingleTape/BitEncoding.lean` packages injective encoding
-  families and uniform polynomial time and description bounds.
+  families and uniform polynomial time and description bounds; its `EncPolyTimeFam`
+  is the generic `FamRealizer` over this backend.
 - `ComplexityBackends/CslibSingleTape/BasicMachines.lean` and
   `ComplexityBackends/CslibSingleTape/Snoc.lean` build the constant, finite-table,
   and append-bit machines behind `EncPolyTime.const`, `EncPolyTime.ofFintype`,
@@ -499,6 +525,10 @@ Its adapter half connects this theory to PolyFun:
   encoding, and states the counting separation at the canonical bitvector and
   optional-Boolean encodings (`Backend.exists_not_realizableLE_poly`). No uniform
   running-time bound across input lengths is involved.
+- `ComplexityBackends/CslibSingleTape/Family.lean` supplies the canonical polynomial
+  certificates (`Backend.polynomialBackend`: certified time, envelope `1 + X + p`,
+  overhead `q.comp (1 + X + p)`), the finite-table primitive (`Backend.finiteTables`),
+  and the round trip between `EncPolyTimeFam` and the generic families.
 
 - `ComplexityBackends/CslibSingleTape/Backend.lean` interprets `EncPolyTime` as
   quantitative executable evidence. Its qualitative admissibility predicate is
@@ -633,9 +663,10 @@ alone does not establish strict PPT.
 ## References
 
 See [`REFERENCES.md`](../../REFERENCES.md) — `AM74`, `AMMS13`, `PR89`, `Uus15`,
-`PM15`, `Blum67`, `FKL22`, `GHP09` for the realizability notion, and `Coc93`, `CLW93`,
-`Wal91`, `CF92`, `CDGH12`, `CH08`, `Clo99` for the distributive-category and
-function-algebra vocabulary; plus `SN24`, `LS25`, and `Abe26`.
+`PM15`, `Blum67`, `FKL22`, `DH11`, `Cob65`, `GHP09` for the realizability notion, and
+`Coc93`, `CLW93`, `Wal91`, `CF92`, `CDGH12`, `CH08`, `Clo99` for the
+distributive-category and function-algebra vocabulary; plus `SN24`, `LS25`, and
+`Abe26`.
 
 Terminology follows classical (co)algebraic *realization* theory rather than the
 word "implementation", which Aberlé (2026) uses for the free-monad Kleisli
