@@ -15,8 +15,8 @@ proofs, examples, import boundaries, or validation infrastructure.
 
 | Check | Scope |
 |---|---|
-| Default build | `PolyFun`, `ToCslib`, `PolyFunCslib`, `PolyFunExamples`, and `+PolyFunParliamentMain`, with `--wfail` |
-| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.Do` quarantine |
+| Default build | `PolyFun`, `ToCslib`, `ComplexityBackends`, `PolyFunExamples`, and `+PolyFunParliamentMain`, with `--wfail` |
+| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.Do` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend; `PolyFun` imports no backend) |
 | Generated imports | Generated umbrellas match the tracked source tree |
 | Documentation | Checker regressions, agent symlink, local paths and heading anchors, module docstrings, README excerpt synchronization |
 | `--lint` | Batteries environment linters and Mathlib text-style checks over production and example libraries plus the executable entry point |
@@ -33,9 +33,10 @@ non-standard axioms to finished work.
 Stage additions, deletions, and renames before generating the relevant umbrella:
 
 ```bash
-git add PolyFun ToCslib
+git add PolyFun ToCslib ComplexityBackends
 ./scripts/update-lib.sh
 ./scripts/update-lib.sh ToCslib
+./scripts/update-lib.sh ComplexityBackends
 ./scripts/validate.sh --lint --test --axioms
 ```
 
@@ -57,7 +58,7 @@ lake build polyfun-parliament --wfail
 python3 scripts/test-parliament-cli.py
 lake -d test/ParliamentConsumer build --wfail
 lake lint
-lake exe lint-style PolyFun ToCslib PolyFunCslib \
+lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
   Examples.Parliament PolyFunParliamentMain
 python3 scripts/test-docs-integrity.py

@@ -6,16 +6,17 @@ Authors: Devon Tuma, Elias Judin, Quang Dao
 
 module
 
-public import ToCslib
+public import ComplexityBackends.CslibSingleTape.Counting
+public import ComplexityBackends.CslibSingleTape.Snoc
 
 /-!
-# Direct canaries for the ToCslib substrate
+# Direct canaries for the cslib single-tape machine substrate
 
-These examples pin bit order, finite-table semantic orientation, overwrite
-selection, and the cardinality used by the machine-counting argument.
+These examples pin bit order, finite-table semantic orientation, and the
+cardinality used by the machine-counting argument, independently of PolyFun.
 -/
 
-open ToCslib.Computability
+open ComplexityBackends.CslibSingleTape
 
 example : natToBits 3 5 = [true, false, true] := by
   rw [natToBits_eq_map_range]
@@ -30,10 +31,6 @@ example (bit : Bool) :
     witness.toFun (encoding bit) = encoding (!bit) := by
   dsimp only
   exact EncPolyTime.map_encode _ bit
-
-example {n index : ℕ} (hindex : index < n) (bit : Bool) (value : BitVec n) :
-    (value.overwriteBit index bit).getLsbD index = bit := by
-  exact BitVec.getLsbD_overwriteBit_self hindex bit value
 
 example : Fintype.card (BitVec 2 → Bool) = 16 := by
   simpa using card_bitVec_fun 2

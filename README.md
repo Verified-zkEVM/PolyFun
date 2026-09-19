@@ -42,8 +42,8 @@ below and learn the categorical vocabulary as needed.
 | [Mathlib](https://github.com/leanprover-community/mathlib4) | Polynomial functors, W-types and M-types, mathematical structures, and supporting theory |
 | [CSLib](https://github.com/leanprover/cslib) | The upstream free monads and shared computer-science infrastructure |
 | **PolyFun** | Handlers, lenses, paths, computation-model connections, interaction frameworks, generic program logic, and realizability |
-| `ToCslib` | Local additions staged for upstream, including free-monad laws and machine/complexity theory |
-| `PolyFunCslib` | Optional concrete adapters between PolyFun realizability and the staged complexity theory |
+| `ToCslib` | Local additions staged for upstream: free-monad and loop laws, an order bridge, bitvector and polynomial lemmas |
+| `ComplexityBackends` | Optional concrete complexity backends, one subdirectory per machine model, instantiating PolyFun's quantitative realizability |
 | [VCVio](https://github.com/Verified-zkEVM/VCVio) | Probability semantics, cryptographic experiments, security definitions, reductions, and cryptographic applications |
 
 ```mermaid
@@ -53,8 +53,8 @@ flowchart LR
   M --> T[ToCslib]
   C --> T
   T --> P
-  P --> A[Optional PolyFunCslib]
-  T --> A
+  P --> A[Optional ComplexityBackends]
+  T -.-> A
   P --> V[VCVio]
 ```
 
@@ -159,8 +159,8 @@ then run `lake exe polyfun-parliament --help`.
 
 The [documentation hub](docs/README.md) also indexes notation, bisimulation,
 realizability, and program logic. Prefer specific module imports while
-working; `import PolyFun` exposes the full generic library. Optional adapters
-use `import PolyFunCslib`. The [repository map](docs/reference/repo-map.md)
+working; `import PolyFun` exposes the full generic library. Optional concrete
+backends use `import ComplexityBackends`. The [repository map](docs/reference/repo-map.md)
 explains the separate library targets.
 
 ## Status and contributions

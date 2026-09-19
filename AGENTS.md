@@ -45,16 +45,17 @@ boundary. Imports flow downward and must remain acyclic.
 | `PolyFun/Control/` | Monad/comonad/coalgebra infrastructure, LTS and program-logic kernel |
 | `PolyFun/Realizability/` | Represented types, admissible state machines, representation invariance and quantitative resource certificates |
 | `PolyFun/Complexity/`, `PolyFun/Logic/` | Generic resource-bound syntax and small logic helpers |
-| `ToCslib/` | Lowest production layer: upstream staging for free-monad, loop, order and machine/complexity laws |
-| `PolyFunCslib/` | Optional concrete realizability adapters, outside the generic umbrella |
+| `ToCslib/` | Lowest production layer: upstream staging for free-monad, loop, order, bitvector and polynomial lemmas |
+| `ComplexityBackends/` | Optional concrete complexity backends, one subdirectory per machine model (`CslibSingleTape/`), outside the generic umbrella |
 | `Examples/` | Tutorials and the Parliament case study, target `PolyFunExamples` |
 | `PolyFunTest/` | Regression tests; may import tutorials, with no reverse production dependency |
 
 Start with `PFunctor/Basic.lean`, `PFunctor/Free/Basic.lean`, `ITree/Basic.lean`,
 and `Interaction/Basic/{TypeTree,Decoration}.lean` under `PolyFun/`.
 CSLib owns `PFunctor.FreeM` and the functor-generic `Cslib.FreeM`; extend them.
-`ToCslib` imports core, CSLib and Mathlib, never PolyFun, probability or
-cryptography. Concrete machine adapters import its machine modules explicitly.
+`ToCslib` imports core, CSLib and Mathlib, never PolyFun, a backend, probability
+or cryptography. `ComplexityBackends` imports PolyFun and `ToCslib`; PolyFun never
+imports a backend. `scripts/check-modules.sh` enforces both directions.
 
 ## Semantic boundaries
 
@@ -131,9 +132,11 @@ and [review guide](docs/development/review-hardening.md) apply to every change.
 
 ## Generated files and scripts
 
-`PolyFun.lean` and `ToCslib.lean` are generated; never hand-edit them. Stage
-new/deleted/renamed source files before running `./scripts/update-lib.sh` or
-`./scripts/update-lib.sh ToCslib`. See [generated files](docs/development/generated-files.md).
+`PolyFun.lean`, `ToCslib.lean` and `ComplexityBackends.lean` are generated; never
+hand-edit them. Stage new/deleted/renamed source files before running
+`./scripts/update-lib.sh`, `./scripts/update-lib.sh ToCslib` or
+`./scripts/update-lib.sh ComplexityBackends`. See
+[generated files](docs/development/generated-files.md).
 Tutorial modules use a glob target and need no generated umbrella. The optional
 case-study root `Examples/Parliament.lean` is generated with
 `./scripts/update-lib.sh Examples.Parliament`; stage new case-study modules first.

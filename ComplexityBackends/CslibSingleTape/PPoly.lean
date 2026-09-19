@@ -6,14 +6,14 @@ Authors: Devon Tuma, Quang Dao
 
 module
 
-public import PolyFunCslib.Backend
-public import ToCslib.Computability.BitEncoding
+public import ComplexityBackends.CslibSingleTape.Backend
+public import ComplexityBackends.CslibSingleTape.BitEncoding
 
 /-!
 # Non-uniform P/poly realizations backed by cslib machines
 
-This module connects the parameter-indexed single-tape certificates in
-`ToCslib` to PolyFun returning dynamical computations. It deliberately uses
+This module connects this backend's parameter-indexed single-tape certificates
+to PolyFun returning dynamical computations. It deliberately uses
 PolyFun's compositional first-order boundary: initialization, the combined
 return-or-query `head`, and the enabled partial transition `update?`.
 
@@ -29,11 +29,9 @@ public section
 
 universe u
 
-namespace PFunctor
-namespace CslibPPoly
+namespace ComplexityBackends.CslibSingleTape.PPoly
 
-open ToCslib.Computability
-open DynSystem.DynComputation
+open PFunctor PFunctor.DynSystem.DynComputation
 
 variable {p : ℕ → PFunctor.{u, u}} {input output : ℕ → Type u}
 
@@ -63,7 +61,7 @@ noncomputable def head (bd : Boundary p input output) :
 /-- Specialize a parameterized pinned boundary to the generic PolyFun
 quantitative boundary at one size parameter. -/
 noncomputable def toGeneric (bd : Boundary p input output) (n : ℕ) :
-    DynSystem.DynComputation.Boundary CslibBackend.encodingStepClass
+    DynSystem.DynComputation.Boundary Backend.encodingStepClass
       (p n) (input n) (output n) where
   input := bd.input.enc n
   out := bd.output.enc n
@@ -148,7 +146,7 @@ def withOutput (bd : Boundary p input output) (encoding : BitEncFam nextOutput) 
     (bd.toGeneric n).head value = bd.head.enc n value := by
   cases value <;>
     simp [toGeneric, DynSystem.DynComputation.Boundary.head,
-      CslibBackend.encodingStepClass, head]
+      Backend.encodingStepClass, head]
 
 /-- The generic boundary's transition-domain representation agrees with
 `StrEncFam.pairVar`. -/
@@ -157,40 +155,9 @@ def withOutput (bd : Boundary p input output) (encoding : BitEncFam nextOutput) 
     (bd.toGeneric n).stateIdx (encoding.enc n) step =
       (encoding.pairVar bd.index).enc n step := by
   simp [toGeneric, DynSystem.DynComputation.Boundary.stateIdx,
-    CslibBackend.encodingStepClass]
+    Backend.encodingStepClass]
 
 end Boundary
-
-/-! ## Program progress -/
-
-/-- Every query in a finite free program has at least one typed answer, and the
-same holds recursively on every answer branch. This is separate from a
-branchwise query bound: universal branch obligations are vacuous at a query
-whose answer type is empty. -/
-def ProgramProgress {p : PFunctor.{u, u}} {result : Type u} : FreeM p result → Prop
-  | .pure _ => True
-  | .liftBind position next =>
-      Nonempty (p.B position) ∧ ∀ direction, ProgramProgress (next direction)
-
-theorem programProgress_pure {p : PFunctor.{u, u}} {result : Type u}
-    (value : result) : ProgramProgress (FreeM.pure (P := p) value) :=
-  trivial
-
-theorem programProgress_liftBind {p : PFunctor.{u, u}} {result : Type u}
-    (position : p.A) (next : p.B position → FreeM p result) :
-    ProgramProgress (FreeM.liftBind position next) ↔
-      Nonempty (p.B position) ∧ ∀ direction, ProgramProgress (next direction) :=
-  Iff.rfl
-
-/-- Mapping returned values preserves the reachable query tree and hence
-program progress. -/
-theorem ProgramProgress.map {p : PFunctor.{u, u}} {source target : Type u}
-    {program : FreeM p source} (progress : ProgramProgress program)
-    (function : source → target) : ProgramProgress (FreeM.map function program) := by
-  induction program with
-  | pure value => trivial
-  | lift_bind position next induction =>
-      exact ⟨progress.1, fun direction ↦ induction direction (progress.2 direction)⟩
 
 /-! ## Machine families -/
 
@@ -227,7 +194,7 @@ the realization's machine-state type: the bridge promises that projection is
 definitionally the original family member. Named projection and cost laws
 below provide the ordinary proof API. -/
 @[expose] noncomputable def toQuantitative (realization : Realization bd) (n : ℕ) :
-    DynSystem.DynComputation.QuantitativeRealization CslibBackend.quantitative
+    DynSystem.DynComputation.QuantitativeRealization Backend.quantitative
       (bd.toGeneric n) where
   machine := realization.machine n
   state := realization.state.enc n
@@ -239,7 +206,7 @@ below provide the ordinary proof API. -/
     (realization.machine n).update? (fun step ↦ by simp) (fun step ↦ by
       change _ = realization.state.option.enc n ((realization.machine n).update? step)
       cases value : (realization.machine n).update? step <;>
-        simp [CslibBackend.encodingStepClass])
+        simp [Backend.encodingStepClass])
 
 @[simp] theorem toQuantitative_machine (realization : Realization bd) (n : ℕ) :
     (realization.toQuantitative n).machine = realization.machine n := rfl
@@ -250,14 +217,14 @@ below provide the ordinary proof API. -/
 /-- The generic bridge charges the original initialization code's time envelope. -/
 theorem toQuantitative_initCost (realization : Realization bd) (n : ℕ)
     (value : input n) :
-    CslibBackend.quantitative.cost (realization.toQuantitative n).initCode value =
+    Backend.quantitative.cost (realization.toQuantitative n).initCode value =
       ((realization.initCode.wit n).time).eval (bd.input.enc n value).length := by
   simp [toQuantitative]
 
 /-- The generic bridge charges the original observation code's time envelope. -/
 theorem toQuantitative_headCost (realization : Realization bd) (n : ℕ)
     (state : (realization.machine n).State) :
-    CslibBackend.quantitative.cost (realization.toQuantitative n).headCode state =
+    Backend.quantitative.cost (realization.toQuantitative n).headCode state =
       ((realization.headCode.wit n).time).eval
         (realization.state.enc n state).length := by
   simp [toQuantitative]
@@ -265,7 +232,7 @@ theorem toQuantitative_headCost (realization : Realization bd) (n : ℕ)
 /-- The generic bridge charges the original transition code's time envelope. -/
 theorem toQuantitative_updateCost (realization : Realization bd) (n : ℕ)
     (step : (realization.machine n).State × (p n).Idx) :
-    CslibBackend.quantitative.cost (realization.toQuantitative n).updateCode step =
+    Backend.quantitative.cost (realization.toQuantitative n).updateCode step =
       ((realization.updateCode.wit n).time).eval
         ((realization.state.pairVar bd.index).enc n step).length := by
   simp [toQuantitative]
@@ -375,7 +342,7 @@ theorem certifiedTimeCharge_le (realization : Realization bd)
     (trace : DynSystem.DynComputation.QuantitativeRealization.ExecutionTrace
       (realization.toQuantitative n) start finish) :
     trace.cost.work +
-        CslibBackend.quantitative.cost
+        Backend.quantitative.cost
           (realization.toQuantitative n).headCode finish ≤
       (trace.length + 1) * realization.headTime.eval n +
       trace.length * realization.updateTime.eval n := by
@@ -493,7 +460,7 @@ structure Witness (bd : Boundary p input output)
   /-- The machines implement the programs within the polynomial round bound. -/
   implements : realization.Implements program
   /-- Every syntactically reachable query has a possible typed response. -/
-  progress : ∀ n value, ProgramProgress (program n value)
+  progress : ∀ n value, (program n value).ProgramProgress
 
 /-- Backend-relative non-uniform P/poly realizability at a pinned boundary. -/
 def IsPPolyBy (bd : Boundary p input output)
@@ -568,11 +535,11 @@ variable {bd : Boundary p input output}
 
 /-- Construct a P/poly certificate from its explicit witness. -/
 theorem intro (witness : Witness bd program) : IsPPolyBy bd program := by
-  simpa [CslibPPoly.IsPPolyBy] using (show Nonempty (Witness bd program) from ⟨witness⟩)
+  simpa [PPoly.IsPPolyBy] using (show Nonempty (Witness bd program) from ⟨witness⟩)
 
 /-- Recover the nonempty witness package carried by a P/poly certificate. -/
 theorem toNonempty (certificate : IsPPolyBy bd program) : Nonempty (Witness bd program) := by
-  simpa [CslibPPoly.IsPPolyBy] using certificate
+  simpa [PPoly.IsPPolyBy] using certificate
 
 /-- Transport a P/poly certificate along pointwise program equality. -/
 theorem congr (equality : ∀ n value, program n value = program' n value)
@@ -632,5 +599,4 @@ theorem mapResult {nextOutput : ℕ → Type u} (certificate : IsPPolyBy bd prog
 
 end IsPPolyBy
 
-end CslibPPoly
-end PFunctor
+end ComplexityBackends.CslibSingleTape.PPoly

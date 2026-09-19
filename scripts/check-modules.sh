@@ -12,7 +12,7 @@ status=0
 # Lean sources in the production, tutorial and test libraries, plus the external consumer.
 lean_sources() {
   git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
-    'PolyFunCslib.lean' 'PolyFunCslib/*.lean' 'PolyFunTest/*.lean' \
+    'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunTest/*.lean' \
     'Examples/*.lean' 'PolyFunParliamentMain.lean' \
     'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean'
 }
@@ -42,7 +42,8 @@ done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 #
 # `ToCslib/` stages material for cslib, which uses neither stack, so it may import none of it
 # directly (cslib's `IsMonadHom` module brings the legacy `Std.Do.WP` classes in transitively;
-# the fence is about direct imports and instances). Everything the fenced modules export is a
+# the fence is about direct imports and instances). `ComplexityBackends/` sits above PolyFun and
+# is likewise outside both tiers. Everything the fenced modules export is a
 # construction or a scoped instance, never a global `WP` instance.
 std_do_def_allowed() {
   case "$1" in
@@ -134,7 +135,23 @@ while IFS= read -r file; do
     status=1
   fi
 done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
-  'PolyFunCslib.lean' 'PolyFunCslib/*.lean')
+  'ComplexityBackends.lean' 'ComplexityBackends/*.lean')
+
+# Layering (docs/reference/repo-map.md): `ToCslib` is upstream staging and never imports PolyFun or
+# a complexity backend; the generic `PolyFun` library never imports a concrete complexity backend.
+while IFS= read -r file; do
+  if grep -qE "${import_prefix}(PolyFun|ComplexityBackends)([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file imports PolyFun or ComplexityBackends from the ToCslib staging library." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'ToCslib.lean' 'ToCslib/*.lean')
+
+while IFS= read -r file; do
+  if grep -qE "${import_prefix}ComplexityBackends([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file imports a concrete complexity backend from the generic PolyFun library." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean')
 
 if (( status != 0 )); then
   exit "$status"

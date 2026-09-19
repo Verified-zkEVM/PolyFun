@@ -12,13 +12,13 @@ used independently in semantics, effect handling, and concurrent systems.
 | Mathlib | `PFunctor`, W-types and M-types, algebra and order theory, and supporting mathematics |
 | CSLib | `PFunctor.FreeM`, the functor-generic `Cslib.FreeM`, and reusable computer-science infrastructure |
 | PolyFun | Polynomial morphisms and handlers; paths and replay structure; programs, behaviors, machines, and their laws; protocol shapes; open composition; generic support/WP and realizability |
-| `ToCslib` | Staged extensions of upstream interfaces, including concrete machine and complexity results |
-| `PolyFunCslib` | Optional backend-specific certificates connecting those complexity results to PolyFun |
+| `ToCslib` | Staged extensions of upstream interfaces: free-monad and loop laws, an order bridge, bitvector and polynomial lemmas |
+| `ComplexityBackends` | Optional concrete machine models and the backend-specific certificates connecting them to PolyFun realizability |
 | VCVio | Probability and distributions, cryptographic experiments and adversary restrictions, security definitions, reductions, and concrete cryptographic applications |
 
 Generic resource accounting is already part of PolyFun. Concrete complexity
-theory can live in `ToCslib`, and the optional adapter includes a non-uniform,
-boundary-pinned P/poly certificate. These facts do not identify a generic
+theory lives in `ComplexityBackends`, whose cslib single-tape backend includes a
+non-uniform, boundary-pinned P/poly certificate. These facts do not identify a generic
 realization with a cryptographic PPT adversary. Such an interpretation needs
 its own encoding, probability, resource, and adequacy obligations.
 
@@ -58,7 +58,8 @@ observation and allowed contexts satisfy the required laws.
 
 Put reusable polynomial, monadic, machine, and structural interaction laws in
 PolyFun. Put reusable upstream extensions in `ToCslib` while they are staged.
-Put an optional concrete adapter in its own library root. Put definitions whose
+Put a concrete machine model in its own subdirectory of `ComplexityBackends`.
+Put definitions whose
 meaning depends on probability or cryptographic security in VCVio or a more
 specialized downstream library.
 

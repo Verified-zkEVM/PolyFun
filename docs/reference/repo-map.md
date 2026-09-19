@@ -9,14 +9,14 @@ it provides, rather than importing the whole project while developing a module.
 | Target | Purpose | Build or import |
 |---|---|---|
 | `PolyFun` | Generic polynomial, interaction, logic, and realizability library | Default `lake build`; `import PolyFun` or a specific module |
-| `ToCslib` | Upstream staging: free-monad and loop laws, order bridge, machine/complexity theory | `lake build ToCslib`; specific `ToCslib.*` imports |
-| `PolyFunCslib` | Optional concrete realizability adapters | `lake build PolyFunCslib`; `import PolyFunCslib` |
+| `ToCslib` | Upstream staging: free-monad and loop laws, order bridge, bitvector and polynomial lemmas | `lake build ToCslib`; specific `ToCslib.*` imports |
+| `ComplexityBackends` | Optional concrete complexity backends, one subdirectory per machine model | `lake build ComplexityBackends`; `import ComplexityBackends` or a specific `ComplexityBackends.CslibSingleTape.*` module |
 | `PolyFunExamples` | Checked tutorials and the Parliament application under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
 | `PolyFunTest` | Regression tests, adversarial cases, and ordinary-import consumers | `lake test` |
 
-`PolyFun.lean` and `ToCslib.lean` are generated import indexes. The optional
-adapter and examples are outside the `PolyFun` umbrella. `PolyFunTest` can
-consume examples, but production never depends on examples or tests.
+`PolyFun.lean`, `ToCslib.lean`, and `ComplexityBackends.lean` are generated import
+indexes. The optional backends and examples are outside the `PolyFun` umbrella.
+`PolyFunTest` can consume examples, but production never depends on examples or tests.
 
 `PolyFunExamples` combines tutorial globs with the generated `Examples.Parliament`
 root; there is no generic `Examples` umbrella to collide with a downstream target.
@@ -42,7 +42,7 @@ Example and test imports never flow back into production.
 
 `Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure.
 `Logic/` holds small logic helpers. `Complexity/` supplies resource-bound syntax;
-concrete machine complexity is staged separately under `ToCslib/Computability`.
+concrete machine complexity lives in the optional `ComplexityBackends` library.
 
 ## Conceptual layering
 
@@ -73,17 +73,21 @@ flowchart TD
   D --> R[Realizability]
   R --> OR[Open.Realizability]
   OP --> OR
-  R --> AD[PolyFunCslib]
-  T --> AD
+  R --> AD[ComplexityBackends]
+  T -.-> AD
   I --> EX[Optional examples]
   IO --> EX
   EX --> CLI[Parliament executable]
   EX --> TEST[Regression and consumer tests]
 ```
 
-The free-monad slice of `ToCslib` is used by PolyFun. Its machine modules are
-imported explicitly by optional adapters, rather than introducing a concrete
-backend into the generic umbrella. `ToCslib` never imports PolyFun.
+PolyFun imports the `ToCslib` modules it needs explicitly. `ComplexityBackends`
+hosts one self-contained subdirectory per backend (`CslibSingleTape/` grounds
+encoded polynomial-time families, machine constructions, and a counting
+separation in cslib's single-tape machines, then certifies PolyFun step maps);
+a new backend is a sibling subdirectory, never a module inside `PolyFun/`.
+`ToCslib` never imports PolyFun or a backend, and PolyFun never imports a
+backend; `scripts/check-modules.sh` enforces both.
 
 `Interaction.Interface` exposes `Interaction.Interface` and
 `Interaction.PortBoundary`. Runtime declarations use `Interaction.Execution`;

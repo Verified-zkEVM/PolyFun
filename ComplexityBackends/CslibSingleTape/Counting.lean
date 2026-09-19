@@ -6,7 +6,7 @@ Authors: Devon Tuma, Elias Judin
 
 module
 
-public import ToCslib.Computability.BitEncoding
+public import ComplexityBackends.CslibSingleTape.BitEncoding
 public import Mathlib.Analysis.SpecificLimits.Normed
 public import Mathlib.Data.FinEnum
 
@@ -28,19 +28,19 @@ The pieces, each isolated so the diagonalization argument reads as pure counting
 * **State normalization** (`exists_tmTable_of_card_le`): any
   `SingleTapeTM Bool` with at most `d` states computes the same string function as
   `reify` of some `TMTable d`.
-* **Realizable predicates** (`ToCslib.Computability.RealizableLE`): the predicates realizable by
+* **Realizable predicates** (`RealizableLE`): the predicates realizable by
   an input/output `EncPolyTime` pair of description size at most `d`. This set is covered
   by a `Finset` of cardinality at most `B d ^ 2` (`exists_realizableLE_covering`, the
   counting core: the cover of `RealizableLE n d` by the image of
   `TMTable d × TMTable d` under `tablePairPred`, built from state normalization), and it is
   monotone in `d` (`realizableLE_mono`).
 * **Growth bounds**: every polynomial is eventually dominated by `2 ^ (n / 4)`
-  (`ToCslib.Computability.eventually_poly_le`), while the machine count stays below the function
-  count (`ToCslib.Computability.eventually_count_lt`).
-* **The function space** has cardinality `2 ^ (2 ^ n)` (`ToCslib.Computability.card_bitVec_fun`),
+  (`eventually_poly_le`), while the machine count stays below the function
+  count (`eventually_count_lt`).
+* **The function space** has cardinality `2 ^ (2 ^ n)` (`card_bitVec_fun`),
   and a `Finset` family smaller than that predicate space misses a diagonal predicate
-  eventually (`ToCslib.Computability.exists_diagonal`).
-* **Nonuniform separation** (`ToCslib.Computability.exists_not_realizableLE_poly`): some
+  eventually (`exists_diagonal`).
+* **Nonuniform separation** (`exists_not_realizableLE_poly`): some
   Boolean predicate family admits no polynomial bound on the sizes of its realizing
   machine pairs, even without a uniform running-time bound across input lengths.
 -/
@@ -222,7 +222,7 @@ end Normalize
 
 /-! ## Determinism of machine runs
 
-Supporting facts for `ToCslib.Computability.exists_realizableLE_covering`: a single-tape machine
+Supporting facts for `exists_realizableLE_covering`: a single-tape machine
 is deterministic (its `step` is a function), so the output list of a halting run is
 unique. This lets the covering predicate attached to a table pair be read off by an
 unbounded-search-free choice construction and still agree with any witness predicate. -/
@@ -334,7 +334,7 @@ theorem exists_tmTable_of_card_le (tm : SingleTapeTM Bool)
 
 end Cslib.Turing.SingleTapeTM
 
-namespace ToCslib.Computability
+namespace ComplexityBackends.CslibSingleTape
 
 open Cslib.Turing.SingleTapeTM
 
@@ -551,4 +551,4 @@ theorem exists_not_realizableLE_poly :
   obtain ⟨n, belongsAtN, missesAtN⟩ := (belongs.and misses).exists
   exact missesAtN belongsAtN
 
-end ToCslib.Computability
+end ComplexityBackends.CslibSingleTape

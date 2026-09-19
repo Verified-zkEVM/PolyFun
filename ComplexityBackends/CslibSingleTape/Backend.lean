@@ -7,7 +7,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.Realizability.Quantitative
-public import ToCslib.Computability.PolyTime
+public import ComplexityBackends.CslibSingleTape.PolyTime
 
 /-!
 # Cslib's single-tape backend for quantitative PolyFun realizability
@@ -26,9 +26,9 @@ public section
 
 universe u
 
-namespace PFunctor.CslibBackend
+namespace ComplexityBackends.CslibSingleTape.Backend
 
-open ToCslib.Computability
+open PFunctor
 
 /-- Raw Boolean-string representations with unconstrained qualitative
 admissibility. Concrete quantitative morphisms still require cslib code.
@@ -123,4 +123,4 @@ noncomputable instance : quantitative.HasCategory where
     quantitative.cost code input = code.time.eval (sourceEncoding input).length :=
   rfl
 
-end PFunctor.CslibBackend
+end ComplexityBackends.CslibSingleTape.Backend

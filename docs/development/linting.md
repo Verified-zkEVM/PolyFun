@@ -4,9 +4,9 @@
 
 ```bash
 lake exe cache get
-lake build PolyFun ToCslib PolyFunCslib PolyFunExamples PolyFunTest --wfail
+lake build PolyFun ToCslib ComplexityBackends PolyFunExamples PolyFunTest --wfail
 lake lint -- --trace
-lake exe lint-style PolyFun ToCslib PolyFunCslib \
+lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms
 ```
 
@@ -14,7 +14,7 @@ The convenience command `./scripts/validate.sh --lint --test --axioms` runs
 production and tutorial builds with warnings fatal, environment and text-style
 linting, the test library, and the integrity/axiom checks.
 
-`PolyFun`, `ToCslib`, and `PolyFunCslib` are separate production roots. All must be named in
+`PolyFun`, `ToCslib`, and `ComplexityBackends` are separate production roots. All must be named in
 environment linting and standalone text linting. `PolyFunExamples` is the
 additional tutorial library; its individual modules appear in `lintDriverArgs`
 because it has no umbrella. The default target is only
@@ -28,7 +28,7 @@ The checks serve different purposes:
   `--wfail` makes their warnings fail the build.
 - `lake lint` uses Batteries' environment runner, with all production roots and tutorial modules
   supplied by `lintDriverArgs`. `--trace` shows which checks actually run.
-- `lake exe lint-style PolyFun ToCslib PolyFunCslib Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms` uses Mathlib's source-text checks,
+- `lake exe lint-style PolyFun ToCslib ComplexityBackends Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms` uses Mathlib's source-text checks,
   including Unicode. Build-time checks do not cover every text-style rule.
 
 `PolyFunTest` is built with warnings fatal and excluded from production

@@ -42,9 +42,10 @@ Their pins are recorded in the manifest; their README files live under
 - **Program logic:** ordered algebras and exact support connect to core's
   lattice-generic WP stack. `Std.Do` and `Std.Internal.Do` denote distinct
   interfaces in this pin; see [program logic](../guides/program-logic.md).
-- **Complexity:** `ToCslib/Computability/` contains machine-relative theory;
-  `PolyFunCslib` supplies optional adapters. Generic PolyFun does not acquire
-  a concrete complexity backend transitively through its umbrella.
+- **Complexity:** `ComplexityBackends/` holds machine-relative theory and the
+  adapters that certify PolyFun step maps with it, one subdirectory per
+  backend. Generic PolyFun does not acquire a concrete complexity backend
+  transitively through its umbrella.
 - **Module APIs:** ordinary-import consumers should use named equations.
   Downstream `import all` is not a substitute for a missing public API.
 

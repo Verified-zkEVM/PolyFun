@@ -155,13 +155,17 @@ so that the upstream pull request is a move rather than a rewrite:
   transport lemmas it superseded are gone and the remaining `forIn` transport is stated on
   `Cslib.IsMonadHom`);
 - a lemma with no upstream twin yet is marked `-- upstream candidate`;
-- `ToCslib` imports core, cslib, and Mathlib only — never PolyFun, and never `Std.Do`,
-  `Std.Internal.Do`, or `Std.Tactic.Do` directly (`scripts/check-modules.sh` enforces this;
-  cslib's `IsMonadHom` module brings the legacy `Std.Do.WP` classes in transitively, which the
-  fence does not police);
+- `ToCslib` imports core, cslib, and Mathlib only — never PolyFun or `ComplexityBackends`, and
+  never `Std.Do`, `Std.Internal.Do`, or `Std.Tactic.Do` directly (`scripts/check-modules.sh`
+  enforces both; cslib's `IsMonadHom` module brings the legacy `Std.Do.WP` classes in
+  transitively, which the fence does not police);
 - PolyFun modules import `ToCslib` modules directly (`public import`) and keep no local copy of
   a lemma that lives there; ordinary-import canaries for the moved lemmas stay in
   `PolyFunTest/ModuleAPI/`, and behavioural canaries in `PolyFunTest/ToCslib/`;
 - headers say `PolyFun Contributors` here and are rewritten to the individual authors at
   upstream pull-request time, when the file also gains `import Cslib.Init` and a
   `CslibTests/` entry.
+
+Concrete machine models are not staging material: they live in the optional
+`ComplexityBackends` library above PolyFun, and PolyFun never imports them
+(`scripts/check-modules.sh` enforces this too).
