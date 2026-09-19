@@ -7,7 +7,7 @@ Authors: Quang Dao
 module
 
 public import Mathlib.Data.PNat.Basic
-import all PolyFun.Interaction.Open.OpenProcessFactorization
+-- import all: unfolds `OpenProcessSamplerEquiv`
 import all PolyFun.Interaction.Open.OpenProcessSamplerEquiv
 public import PolyFun.Interaction.Open.OpenProcessFactorization
 public import PolyFun.Interaction.Open.OpenProcessSamplerEquiv

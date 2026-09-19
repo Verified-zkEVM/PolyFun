@@ -5,9 +5,6 @@ Authors: Quang Dao
 -/
 module
 
-import all PolyFun.PFunctor.Cofree
-import all PolyFun.PFunctor.Comonoid
-import all PolyFun.PFunctor.M.Vertex
 public import PolyFun.PFunctor.Cofree
 public import PolyFun.PFunctor.Comonoid
 public import PolyFun.PFunctor.M.Vertex

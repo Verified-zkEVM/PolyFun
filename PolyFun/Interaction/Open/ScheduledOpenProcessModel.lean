@@ -6,7 +6,6 @@ Authors: Quang Dao
 
 module
 
-import all PolyFun.Interaction.Open.OpenProcessModel
 public import PolyFun.Interaction.Open.OpenProcessModel
 public import PolyFun.Interaction.Open.Scheduler
 

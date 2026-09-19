@@ -6,8 +6,11 @@ Authors: Devon Tuma
 
 module
 
+-- import all: unfolds `StrategyOver`, `map`
 import all PolyFun.Interaction.Basic.StrategyOver
+-- import all: unfolds `toCounterpartHom`
 import all PolyFun.Interaction.TwoParty.Syntax
+-- import all: unfolds `toCounterpart`
 import all PolyFun.Interaction.TwoParty.Strategy
 public import PolyFun.Interaction.TwoParty.Strategy
 

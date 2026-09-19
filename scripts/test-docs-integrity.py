@@ -32,6 +32,19 @@ public section
 """
         self.assertTrue(CHECKER.has_module_docstring(text))
 
+    def test_import_all_annotation_is_allowed_in_prologue(self) -> None:
+        text = """/- header -/
+
+module
+
+-- import all: unfolds `Foo.bar`
+import all PolyFun.PFunctor.Free.Basic
+public import PolyFun.PFunctor.Free.Basic
+
+/-! # Module documentation -/
+"""
+        self.assertTrue(CHECKER.has_module_docstring(text))
+
     def test_later_section_comment_is_not_module_docstring(self) -> None:
         text = """/- header -/
 

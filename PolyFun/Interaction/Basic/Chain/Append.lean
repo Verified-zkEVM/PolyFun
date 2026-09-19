@@ -6,6 +6,7 @@ Authors: Quang Dao
 
 module
 
+-- import all: unfolds `appendPath`
 import all PolyFun.Interaction.Basic.Chain
 public import PolyFun.Interaction.Basic.Chain
 

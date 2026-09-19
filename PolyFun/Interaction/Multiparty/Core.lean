@@ -6,6 +6,7 @@ Authors: Quang Dao
 
 module
 
+-- import all: unfolds `Action`, `bot`, `basePFunctor`
 import all PolyFun.Interaction.Multiparty.Observation
 public import PolyFun.Interaction.Basic.Decoration
 public import PolyFun.Interaction.Basic.StrategyOver

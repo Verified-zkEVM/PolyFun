@@ -6,6 +6,7 @@ Authors: Quang Dao
 
 module
 
+-- import all: unfolds `RoleDecoration.swap`
 import all PolyFun.Interaction.TwoParty.Decoration
 public import Mathlib.Control.Monad.Basic
 public import Mathlib.Data.Sigma.Basic
