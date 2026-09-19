@@ -411,6 +411,34 @@ representation has a realizer whose description is the size of its table. The
 single-tape backend's `EncPolyTimeFam` is this structure field for field
 (`EncPolyTimeFam.toFam`, `ofFam`), with `Backend.polynomialBackend` supplying
 the certificates and `Backend.finiteTables` the finite-table machine.
+### Three notions of polynomial time
+
+Three certificates in and around the library all deserve the name "polynomial
+time". They differ in what is uniform and in what the polynomial is a function
+of.
+
+| | Certificate | Uniform in | Polynomial in | Advice |
+|---|---|---|---|---|
+| (A) | `PPoly.IsPPolyBy` in `ComplexityBackends/CslibSingleTape/PPoly.lean` | nothing: one machine per parameter `n` | the parameter `n` | polynomially bounded description sizes |
+| (B) | `PolynomialProgramWitness` in `Quantitative/Resource.lean` | the input | the encoded input size and the response moduli, as a second-order polynomial | none |
+| (C) | a uniform packed certificate, VCVio's `SecurityFamily.IsOraclePPTBy` | the input and the parameter, packed with the parameter in unary | the packed input size | none |
+
+(A) is nonuniform: the certificate is a family of machines indexed by `n` with
+polynomially bounded descriptions, and its bound is a polynomial in `n` alone.
+(B) is uniform in the input: one realization, one contract on the response
+environment, and one second-order polynomial that may consult the response
+moduli. (C) is the cryptographic notion; it is in flight downstream, and
+PolyFun does not define it.
+
+`ComplexityBackends/CslibSingleTape/ProgramWitness.lean` is the bridge
+(A) ⇒ (B) at each `n`. `Witness.toPolynomialProgramWitness` turns a P/poly
+certificate into a program witness at parameter `n` whose second-order
+polynomial is the constant `runBoundCost`, under the total-answer contract
+`totalContract` and with tag-bit output recovery. The only extra hypothesis is
+that every position admits an answer, which the progress conjunct of
+`RunsWithinUnder` needs. Neither reverse direction is in the library: a witness
+at every `n` carries no description bound, and (C) needs the unary parameter
+inside the packed encoding.
 
 ## Representation Invariance And Codability
 
@@ -530,6 +558,19 @@ Its adapter half connects this theory to PolyFun:
   overhead `q.comp (1 + X + p)`), the finite-table primitive (`Backend.finiteTables`),
   and the round trip between `EncPolyTimeFam` and the generic families.
 
+- `ComplexityBackends/CslibSingleTape/ProgramWitness.lean` bridges the
+  nonuniform certificate to the generic program witness: at each parameter
+  `n`, `Witness.toPolynomialProgramWitness` produces a
+  `PolynomialProgramWitness` whose second-order polynomial is the constant
+  `runBoundCost`, under the total-answer contract `totalContract`. See
+  [three notions of polynomial time](#three-notions-of-polynomial-time).
+
+- `ComplexityBackends/CslibSingleTape/Adequacy.lean` proves per-step adequacy.
+  `Backend.cost_adequate` exhibits a halting run of the certified machine
+  within `Backend.quantitative.cost`; `Backend.run_length_unique` and
+  `Backend.run_length_le_cost` show that every halting run has that one
+  length, so the envelope can only be overstated.
+
 - `ComplexityBackends/CslibSingleTape/Backend.lean` interprets `EncPolyTime` as
   quantitative executable evidence. Its qualitative admissibility predicate is
   unconstrained; every quantitative map still carries a concrete machine certificate.
@@ -572,8 +613,9 @@ dishonest prover cannot do, and where the definitions leave the burden with the
 caller:
 
 - **Understate cost.** `Backend.quantitative.cost` is the certified polynomial at
-  the encoded input length, and the underlying cslib witness carries an actual
-  halting run within that bound; a prover can only overstate.
+  the encoded input length. `Backend.cost_adequate` exhibits a halting run of
+  the underlying machine within that bound, and `Backend.run_length_le_cost`
+  shows that every halting run stays within it; a prover can only overstate.
 - **Certify a hard family.** `exists_not_isPPolyBy_pure` exhibits a family with
   no witness at the pinned coin boundary, and the counting separation behind it
   is generic in the description measure.
@@ -613,9 +655,11 @@ alone does not establish strict PPT.
 
 - **No whole-program machine-adequacy theorem.** The `CslibSingleTape` backend
   certifies the local step maps with cslib machines and bounds their additive
-  time envelopes.
-  A compiler and linking theorem for the complete interactive machine, and a
-  circuit characterization, remain separate obligations.
+  time envelopes. `Backend.cost_adequate` is the per-step half: each certified
+  step map has an actual halting run within its envelope, and by determinism
+  every halting run has that length. A compiler and linking theorem for the
+  complete interactive machine, in the sense of the reactive polynomial runtime
+  of `HUM13`, and a circuit characterization remain separate obligations.
 - **Open-process closure is a certificate obligation.**
   `OpenProcess.IsRealizabilityClosed` consists of four first-order lens
   admissibility certificates at the pinned boundary family
@@ -663,7 +707,7 @@ alone does not establish strict PPT.
 ## References
 
 See [`REFERENCES.md`](../../REFERENCES.md) — `AM74`, `AMMS13`, `PR89`, `Uus15`,
-`PM15`, `Blum67`, `FKL22`, `DH11`, `Cob65`, `GHP09` for the realizability notion, and
+`PM15`, `Blum67`, `FKL22`, `DH11`, `Cob65`, `HUM13`, `GHP09` for the realizability notion, and
 `Coc93`, `CLW93`, `Wal91`, `CF92`, `CDGH12`, `CH08`, `Clo99` for the
 distributive-category and function-algebra vocabulary; plus `SN24`, `LS25`, and
 `Abe26`.

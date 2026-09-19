@@ -84,8 +84,10 @@ flowchart TD
 PolyFun imports the `ToCslib` modules it needs explicitly. `ComplexityBackends`
 hosts one self-contained subdirectory per backend (`CslibSingleTape/` grounds
 encoded polynomial-time families, machine constructions, and a counting
-separation in cslib's single-tape machines, then certifies PolyFun step maps);
-a new backend is a sibling subdirectory, never a module inside `PolyFun/`.
+separation in cslib's single-tape machines, then certifies PolyFun step maps,
+bridges its P/poly certificates to per-parameter program witnesses, and proves
+per-step cost adequacy); a new backend is a sibling subdirectory, never a
+module inside `PolyFun/`.
 `ToCslib` never imports PolyFun or a backend, and PolyFun never imports a
 backend; `scripts/check-modules.sh` enforces both.
 
