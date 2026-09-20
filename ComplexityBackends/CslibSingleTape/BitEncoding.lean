@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import ToCslib.Computability.SingleTape.BasicMachines
+public import ComplexityBackends.CslibSingleTape.BasicMachines
 public import Mathlib.Data.Nat.Bitwise
 public import Mathlib.Data.Nat.Log
 
@@ -25,10 +25,10 @@ relative to a *fixed, trusted* representation (syntactic frameworks fix one impl
 through the programming language's value representation; a machine-grounded framework
 must fix it explicitly). This file provides that representation:
 
-* `ToCslib.Computability.StrEncFam` — a size-parameter-indexed family of injective raw
+* `StrEncFam` — a size-parameter-indexed family of injective raw
   `List Bool` encodings with a polynomial length bound. This is the *variable-width*
   notion, the representation freedom left to a machine's internal state.
-* `ToCslib.Computability.BitEncFam` — the *fixed-width* refinement: at each parameter every
+* `BitEncFam` — the *fixed-width* refinement: at each parameter every
   value encodes to exactly `wid n` bits, with `wid` polynomially bounded. This is the
   pinned *boundary* representation for inputs, outputs, and interaction interfaces. The
   structure does not itself certify that an encoding is canonical: call sites must pin
@@ -41,7 +41,7 @@ must fix it explicitly). This file provides that representation:
   and `StrEncFam.pairVar` (variable-width left ++ fixed-width right, injective because
   the split point is determined from the right — the shape of a machine's
   state/answer update input).
-* `ToCslib.Computability.EncPolyTimeFam` — a family of `EncPolyTime` witnesses with uniform
+* `EncPolyTimeFam` — a family of `EncPolyTime` witnesses with uniform
   polynomial time and description-size bounds: the reusable unit "this function family
   is computed by polynomial machines relative to these encodings". Base machines
   produce these; the closure combinators (`comp`, `id`, `const`, `ofFintype`) compose
@@ -58,7 +58,7 @@ universe u v w u' v'
 
 open Cslib.Turing.SingleTapeTM
 
-namespace ToCslib.Computability
+namespace ComplexityBackends.CslibSingleTape
 
 /-! ## Fixed-width binary strings for natural numbers -/
 
@@ -366,7 +366,7 @@ and combinators compose them without fixing a particular client interface.
 
 Like `EncPolyTime`, the structure imposes nothing on the encodings themselves; its
 certifying power comes from the call site pinning the injective families
-(`ToCslib.Computability.BitEncFam`, `ToCslib.Computability.StrEncFam`). -/
+(`BitEncFam`, `StrEncFam`). -/
 structure EncPolyTimeFam {α : ℕ → Type u} {β : ℕ → Type v}
     (ea : (n : ℕ) → α n → List Bool) (eb : (n : ℕ) → β n → List Bool)
     (f : (n : ℕ) → α n → β n) : Type (max (u + 1) (v + 1)) where
@@ -499,4 +499,4 @@ noncomputable def ofFintype [∀ n, Fintype (α n)] {ea : (n : ℕ) → α n →
 
 end EncPolyTimeFam
 
-end ToCslib.Computability
+end ComplexityBackends.CslibSingleTape

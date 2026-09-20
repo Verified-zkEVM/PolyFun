@@ -27,6 +27,10 @@ continuation `r y` satisfies the bound at `cost a b`.
 is the specialization of this predicate to `FreeM (spec.toPFunctor)` and is
 equal to `IsRollBound` definitionally; the bridge lemma in `QueryBound.lean`
 witnesses the equivalence by `Iff.rfl`.
+
+`ProgramProgress` is the complementary liveness predicate: every reachable query
+has at least one typed answer, so a roll bound stated by universal quantification
+over answers is never satisfied vacuously.
 -/
 
 @[expose] public section
@@ -280,5 +284,37 @@ lemma isTotalRollBound_mapLens {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
         (fun d => (cont (l.toFunB a d)).mapLens l)) n
       rw [FreeM.liftBind_eq, isTotalRollBound_lift_bind_iff]
       exact ⟨h.1, fun d => ih _ (h.2 _)⟩
+
+
+/-! ### Program progress -/
+
+/-- Every query in a finite free program has at least one typed answer, and the
+same holds recursively on every answer branch. This is separate from a
+branchwise roll bound: universal branch obligations such as `IsTotalRollBound`
+are vacuous at a query whose answer type is empty. -/
+def ProgramProgress : FreeM P α → Prop
+  | .pure _ => True
+  | .liftBind a r => Nonempty (P.B a) ∧ ∀ y, ProgramProgress (r y)
+
+@[simp, grind .]
+lemma programProgress_pure (x : α) : ProgramProgress (pure x : FreeM P α) :=
+  trivial
+
+@[simp, grind =]
+lemma programProgress_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) :
+    ProgramProgress ((FreeM.lift a).bind r) ↔ Nonempty (P.B a) ∧ ∀ y, ProgramProgress (r y) :=
+  Iff.rfl
+
+lemma programProgress_liftBind_iff (a : P.A) (r : P.B a → FreeM P α) :
+    ProgramProgress (FreeM.liftBind a r) ↔ Nonempty (P.B a) ∧ ∀ y, ProgramProgress (r y) :=
+  Iff.rfl
+
+/-- Mapping returned values preserves the reachable query tree and hence
+program progress. -/
+lemma ProgramProgress.map {oa : FreeM P α} (h : oa.ProgramProgress) (f : α → β) :
+    (FreeM.map f oa).ProgramProgress := by
+  induction oa with
+  | pure x => trivial
+  | lift_bind a r ih => exact ⟨h.1, fun y ↦ ih y (h.2 y)⟩
 
 end PFunctor.FreeM

@@ -6,13 +6,13 @@ Authors: Quang Dao
 
 module
 
-public import PolyFunCslib.PPoly
-public import ToCslib.Computability.SingleTape.Counting
+public import ComplexityBackends.CslibSingleTape.PPoly
+public import ComplexityBackends.CslibSingleTape.Counting
 
 /-!
 # Non-triviality of the cslib-backed P/poly model
 
-This module connects the semantic `IsPPolyBy` certificate to `ToCslib`'s
+This module connects the semantic `IsPPolyBy` certificate to this backend's
 machine-counting theorem at one pinned Boolean boundary. The resulting theorem
 says that polynomially bounded non-uniform machine families cannot contain all
 families of Boolean predicates on `BitVec n`.
@@ -20,9 +20,9 @@ families of Boolean predicates on `BitVec n`.
 
 public section
 
-open ToCslib.Computability
+open PFunctor
 
-namespace PFunctor.CslibPPoly
+namespace ComplexityBackends.CslibSingleTape.PPoly
 
 /-! ## The pinned pure-Boolean boundary -/
 
@@ -103,4 +103,4 @@ theorem exists_not_isPPolyBy_pure :
   exact ⟨function, fun certificate ↦
     notRealizable (realizableLE_of_isPPolyBy_pure certificate)⟩
 
-end PFunctor.CslibPPoly
+end ComplexityBackends.CslibSingleTape.PPoly

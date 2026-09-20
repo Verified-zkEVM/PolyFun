@@ -60,7 +60,7 @@ still be genuine sigma types; those use their own constructors and projections.
 Mathlib owns `PFunctor`, its object action, and W/M-type foundations. CSLib
 owns `PFunctor.FreeM`. PolyFun extends those definitions instead of introducing
 parallel foundational types. The [repository map](../reference/repo-map.md)
-explains the staging library `ToCslib` and optional adapters.
+explains the staging library `ToCslib` and the optional `ComplexityBackends`.
 
 ## Mental model
 
