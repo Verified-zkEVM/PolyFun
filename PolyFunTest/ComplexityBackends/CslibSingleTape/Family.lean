@@ -38,11 +38,12 @@ example (h : EncPolyTimeFam ea eb f) (h' : EncPolyTimeFam eb ec g) (n : ℕ) :
     (h.toFam.comp h'.toFam).wit n = (h.wit n).comp (h'.wit n) :=
   FamRealizer.wit_comp h.toFam h'.toFam n
 
-/-- The generic composite's uniform time bound, with the backend's envelope and overhead. -/
+/-- The generic composite's uniform time bound is the first machine's plus the second's at the
+output envelope: this backend contributes no composition overhead, so the second machine's
+polynomial appears once. -/
 example (h : EncPolyTimeFam ea eb f) (h' : EncPolyTimeFam eb ec g) :
     (h.toFam.comp h'.toFam).time =
-      h.time + h'.time.comp (Polynomial.X + (1 + Polynomial.X + h.time)) +
-        h'.time.comp (1 + Polynomial.X + h.time) :=
+      h.time + h'.time.comp (Polynomial.X + (1 + Polynomial.X + h.time)) + 0 :=
   FamRealizer.time_comp h.toFam h'.toFam
 
 /-- The generic composite's advice bound adds. -/

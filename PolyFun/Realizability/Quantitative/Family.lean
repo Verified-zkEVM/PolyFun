@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Realizability.Quantitative.Description
+public import PolyFun.Realizability.Quantitative.Counting
 public import ToCslib.Algebra.Polynomial
 
 /-!
@@ -29,11 +29,18 @@ uniform form that family composition consumes.
 `FiniteTables` is the advice primitive: every function out of a finite domain with a faithful
 input representation has a realizer with linear canonical time and a description of the size of
 its table, so families over polynomially small domains stay within a polynomial advice bound.
+
+`FamRealizer.mem_realizableLE` is the bridge to the counting layer: a family's advice bound is
+exactly a polynomial description bound at every parameter, so `exists_not_famRealizer` reads the
+counting separation back as the non-existence of a uniform realizer family. Without that bridge
+the separation and the composition layer would be about unrelated objects.
 -/
 
 public section
 
 universe u v w x
+
+open Filter
 
 namespace PFunctor.QuantitativeStepClass.DescriptionMeasure
 
@@ -110,6 +117,12 @@ variable {M} [Q.HasCategory] {PB : M.PolynomialBackend} {D E F : ℕ → Type u}
 theorem cost_le (X : M.FamRealizer PB a b f) (n : ℕ) (x : D n) :
     Q.cost (X.wit n) x ≤ X.time.eval (n + Q.size (a n) x) :=
   (PB.cost_le _ x).trans (X.time_le n _)
+
+/-- A family's advice bound is a description bound at every parameter: this is what makes the
+uniform-family layer and the `RealizableLE` counting layer talk about the same functions. -/
+theorem mem_realizableLE (X : M.FamRealizer PB a b f) (n : ℕ) :
+    f n ∈ M.RealizableLE (a n) (b n) (X.desc.eval n) :=
+  M.mem_realizableLE.mpr ⟨X.wit n, X.desc_le n⟩
 
 /-- The identity family. Exposed so that its projection laws hold by reflexivity downstream. -/
 @[expose] noncomputable def id (PB : M.PolynomialBackend) (a : ∀ n, C.Str (D n)) :
@@ -230,5 +243,20 @@ Exposed so that its projection law holds by reflexivity downstream. -/
   rfl
 
 end FamRealizer
+
+/-- **No uniform realizer family for the diagonal predicate family.** The counting separation
+says some Boolean predicate family has no eventual polynomial description bound; a `FamRealizer`
+supplies such a bound at *every* parameter through `FamRealizer.mem_realizableLE`, so none can
+exist. This is the form the separation takes for a consumer that works with families rather than
+with `RealizableLE` directly. -/
+theorem exists_not_famRealizer [Q.HasCategory] (PB : M.PolynomialBackend) {D E : ℕ → Type u}
+    [∀ n, Fintype (D n)] (a : ∀ n, C.Str (D n)) (b : ∀ n, C.Str (E n))
+    (ι : ∀ n, Bool → E n) (hι : ∀ n, Function.Injective (ι n)) (hb : ∀ n, Faithful (b n))
+    (ht_count : ∀ᶠ n in atTop,
+      Fintype.card (M.Desc (a n) (b n) (2 ^ (n / 4))) < 2 ^ Fintype.card (D n)) :
+    ∃ f : (n : ℕ) → D n → Bool,
+      IsEmpty (M.FamRealizer PB a b (fun n ↦ ι n ∘ f n)) := by
+  obtain ⟨f, hf⟩ := M.exists_not_realizableLE_poly_of_card_lt a b ι hι hb ht_count
+  exact ⟨f, ⟨fun X ↦ hf ⟨X.desc, .of_forall fun n ↦ X.mem_realizableLE n⟩⟩⟩
 
 end PFunctor.QuantitativeStepClass.DescriptionMeasure

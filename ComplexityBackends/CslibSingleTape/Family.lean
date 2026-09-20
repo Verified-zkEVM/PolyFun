@@ -13,10 +13,11 @@ public import PolyFun.Realizability.Quantitative.Family
 /-!
 # The single-tape backend as a polynomial backend
 
-A witness's canonical time polynomial is its certified `time`; the output-size envelope is
-`1 + X + p` (`EncPolyTime.length_le`), and the composition overhead is `q.comp (1 + X + p)`
-(`EncPolyTime.comp_time_eval`), the second machine's polynomial evaluated at the first's output
-envelope. Description size is the state count and adds under composition.
+A witness's canonical time polynomial is its certified `time` and the output-size envelope is
+`1 + X + p` (`EncPolyTime.length_le`). `EncPolyTime.comp_time_eval` says a composite's time is
+exactly the first machine's plus the second's evaluated at that envelope, so this backend has no
+composition overhead beyond what `timeOf_compose_le` already accounts for and `overhead` is `0`.
+Description size is the state count and adds under composition.
 
 With these certificates the backend's `EncPolyTimeFam` is the generic `FamRealizer` field for
 field: `EncPolyTimeFam.toFam` and `EncPolyTimeFam.ofFam` are mutually inverse by reflexivity.
@@ -46,16 +47,12 @@ to `EncPolyTime.time` and the envelope and overhead reduce to their polynomial s
     have := hp k
     simp only [Polynomial.eval_add, Polynomial.eval_one, Polynomial.eval_X]
     omega
-  overhead p q := q.comp (1 + Polynomial.X + p)
-  overhead_le n hp hq k := by
-    simp only [Polynomial.eval_comp, Polynomial.eval_add, Polynomial.eval_one, Polynomial.eval_X]
-    refine (hq _).trans (Polynomial.eval_le_eval ?_)
-    have := hp k
-    omega
+  overhead _ _ := 0
+  overhead_le _ _ _ _ := by simp
   timeOf_compose_le r s k := by
     change (r.comp s).time.eval k ≤ _
     rw [EncPolyTime.comp_time_eval]
-    simp only [Polynomial.eval_comp, Polynomial.eval_add, Polynomial.eval_one, Polynomial.eval_X]
+    simp only [Polynomial.eval_add, Polynomial.eval_one, Polynomial.eval_X, Polynomial.eval_zero]
     omega
   idTime := .C 1
   timeOf_identity_le a k := by
