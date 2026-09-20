@@ -84,9 +84,10 @@ bodies individually when definitional equality is part of the public contract.
 Broad `@[expose] public section` is forbidden under `PolyFun/Interaction/`.
 `import all` opens bodies only inside the library that owns them: tests may
 open `ComplexityBackends`, nothing opens a backend from `PolyFun/`, a backend
-never opens `PolyFun` or `ToCslib`, and `PolyFunTest/ModuleAPI/` canaries open
-nothing (`scripts/check-modules.sh`). Use ordinary-import canaries and the
-separate documentation consumer to check public equations; see
+never opens `PolyFun` or `ToCslib`, and `ToCslib/`, `Examples/`,
+`PolyFunParliamentMain.lean`, the consumer packages and `PolyFunTest/ModuleAPI/`
+canaries open nothing (`scripts/check-modules.sh`). Use ordinary-import
+canaries and the separate documentation consumer to check public equations; see
 [module APIs](docs/development/module-api.md).
 
 Follow Mathlib naming (`{head_symbol}_{operation}_{rhs_form}`); structures use
