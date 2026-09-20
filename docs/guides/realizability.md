@@ -411,6 +411,7 @@ representation has a realizer whose description is the size of its table. The
 single-tape backend's `EncPolyTimeFam` is this structure field for field
 (`EncPolyTimeFam.toFam`, `ofFam`), with `Backend.polynomialBackend` supplying
 the certificates and `Backend.finiteTables` the finite-table machine.
+
 ### Three notions of polynomial time
 
 Three certificates in and around the library all deserve the name "polynomial
@@ -568,8 +569,9 @@ Its adapter half connects this theory to PolyFun:
 - `ComplexityBackends/CslibSingleTape/Adequacy.lean` proves per-step adequacy.
   `Backend.cost_adequate` exhibits a halting run of the certified machine
   within `Backend.quantitative.cost`; `Backend.run_length_unique` and
-  `Backend.run_length_le_cost` show that every halting run has that one
-  length, so the envelope can only be overstated.
+  `Backend.run_length_le_cost` show that every run from the encoded input to
+  the encoded output has that one length, so the envelope can only be
+  overstated.
 
 - `ComplexityBackends/CslibSingleTape/Backend.lean` interprets `EncPolyTime` as
   quantitative executable evidence. Its qualitative admissibility predicate is
@@ -615,7 +617,8 @@ caller:
 - **Understate cost.** `Backend.quantitative.cost` is the certified polynomial at
   the encoded input length. `Backend.cost_adequate` exhibits a halting run of
   the underlying machine within that bound, and `Backend.run_length_le_cost`
-  shows that every halting run stays within it; a prover can only overstate.
+  shows that every run reaching the encoded output stays within it; a prover
+  can only overstate.
 - **Certify a hard family.** `exists_not_isPPolyBy_pure` exhibits a family with
   no witness at the pinned coin boundary, and the counting separation behind it
   is generic in the description measure.
@@ -657,7 +660,7 @@ alone does not establish strict PPT.
   certifies the local step maps with cslib machines and bounds their additive
   time envelopes. `Backend.cost_adequate` is the per-step half: each certified
   step map has an actual halting run within its envelope, and by determinism
-  every halting run has that length. A compiler and linking theorem for the
+  every run reaching the encoded output has that length. A compiler and linking theorem for the
   complete interactive machine, in the sense of the reactive polynomial runtime
   of `HUM13`, and a circuit characterization remain separate obligations.
 - **Open-process closure is a certificate obligation.**

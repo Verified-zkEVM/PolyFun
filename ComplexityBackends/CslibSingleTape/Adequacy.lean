@@ -16,8 +16,9 @@ public import ComplexityBackends.CslibSingleTape.Counting
 length. It is an upper envelope on a real machine run: some halting run of the underlying
 single-tape machine from the encoded input to the encoded output takes at most `cost` steps
 (`cost_adequate`), and because the machine is deterministic and the halting configuration is
-irreducible, every halting run takes the same number of steps (`run_length_unique`). A prover can
-therefore only overstate cost, never understate it (`run_length_le_cost`).
+irreducible, any two runs from that encoded input to that encoded output have the same length
+(`run_length_unique`). A prover can therefore only overstate cost, never understate it
+(`run_length_le_cost`).
 
 This is the per-step half of machine adequacy. Linking the three step maps of a realization into
 one whole-program machine whose run length meets the additive envelope remains open.
@@ -83,7 +84,8 @@ theorem cost_adequate (code : EncPolyTime a b f) (x : A) :
     exact code.polyTime.bounds _
   · rwa [code.map_encode x] at hrun
 
-/-- Every halting run of a realizer's machine on an encoded input has the same length. -/
+/-- Any two runs of a realizer's machine from an encoded input to the encoded output have the
+same length. Both endpoints are pinned: this does not speak about a run halting elsewhere. -/
 theorem run_length_unique (code : EncPolyTime a b f) (x : A) {t t' : ℕ}
     (h : Relation.RelatesInSteps code.polyTime.tm.TransitionRelation
       (code.polyTime.tm.initCfg (a x)) (code.polyTime.tm.haltCfg (b (f x))) t)
@@ -93,8 +95,8 @@ theorem run_length_unique (code : EncPolyTime a b f) (x : A) {t t' : ℕ}
     (transitionRelation_deterministic code.polyTime.tm)
     (not_transitionRelation_haltCfg code.polyTime.tm (b (f x))) h h'
 
-/-- **A prover can only overstate cost.** Every halting run of a realizer's machine on an encoded
-input takes at most `cost` steps. -/
+/-- **A prover can only overstate cost.** Every run of a realizer's machine from an encoded input
+to the encoded output takes at most `cost` steps. -/
 theorem run_length_le_cost (code : EncPolyTime a b f) (x : A) {t : ℕ}
     (h : Relation.RelatesInSteps code.polyTime.tm.TransitionRelation
       (code.polyTime.tm.initCfg (a x)) (code.polyTime.tm.haltCfg (b (f x))) t) :
