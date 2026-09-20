@@ -6,8 +6,6 @@ Authors: Quang Dao
 
 module
 
-import all PolyFun.PFunctor.Display.Basic
-import all PolyFun.PFunctor.Free.Displayed
 public import PolyFun.PFunctor.Display.Basic
 public import PolyFun.PFunctor.Free.Displayed
 

@@ -6,9 +6,10 @@ Authors: Quang Dao
 
 module
 
-import all PolyFun.Interaction.Basic.Decoration
+import PolyFun.Interaction.Basic.Decoration
+-- import all: unfolds `mapOutput`, `StrategyOver`
 import all PolyFun.Interaction.Basic.StrategyOver
-import all PolyFun.PFunctor.Free.Displayed.Decoration
+import PolyFun.PFunctor.Free.Displayed.Decoration
 public import PolyFun.Interaction.Basic.Interaction
 
 /-!

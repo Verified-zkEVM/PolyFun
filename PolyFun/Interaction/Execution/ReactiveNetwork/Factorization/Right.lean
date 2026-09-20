@@ -6,7 +6,10 @@ Authors: Devon Tuma
 
 module
 
+-- import all: unfolds `PortBoundary.swap`, `PortBoundary.tensor`, `tensorComm`, `sumCongr`
 import all PolyFun.Interaction.Interface
+-- import all: opens the private theorems `par_route_left`, `par_route_right`,
+--   `par_ingress_left`, `par_ingress_right`, `routed_packet_heq`
 import all PolyFun.Interaction.Execution.ReactiveNetwork.Factorization
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Factorization
 

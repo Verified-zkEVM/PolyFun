@@ -6,6 +6,7 @@ Authors: Quang Dao
 
 module
 
+-- import all: unfolds `byController`, `byPath`, `byEvent`, `observations`
 import all PolyFun.Interaction.Concurrent.Observation
 public import PolyFun.Interaction.Concurrent.MutualSafetyRefinement
 

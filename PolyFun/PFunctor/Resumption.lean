@@ -5,8 +5,6 @@ Authors: Devon Tuma
 -/
 module
 
-import all PolyFun.PFunctor.Lens.Basic
-import all PolyFun.PFunctor.M
 public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.M
 

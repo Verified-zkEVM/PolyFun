@@ -6,7 +6,9 @@ Authors: Quang Dao
 
 module
 
+-- import all: unfolds `RoleDecoration.swap`
 import all PolyFun.Interaction.TwoParty.Decoration
+-- import all: unfolds `Role.swap`
 import all PolyFun.Interaction.TwoParty.Role
 public import PolyFun.Interaction.Basic.Append
 public import PolyFun.Interaction.Basic.Decoration

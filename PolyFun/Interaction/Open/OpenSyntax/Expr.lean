@@ -6,8 +6,6 @@ Authors: Quang Dao
 
 module
 
-import all PolyFun.Interaction.Open.OpenSyntax.Interp
-import all PolyFun.Interaction.Open.OpenSyntax.Raw
 public import PolyFun.Interaction.Open.OpenSyntax.Interp
 public import PolyFun.Interaction.Open.OpenSyntax.Raw
 
