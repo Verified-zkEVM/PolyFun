@@ -90,15 +90,14 @@ injective codomain encoding. Exposed so that `descSize` reduces to `EncPolyTime.
 theorem eventually_card_tmTable_lt :
     ∀ᶠ n in atTop, Fintype.card (TMTable (2 ^ (n / 4))) < 2 ^ Fintype.card (BitVec n) := by
   refine eventually_count_lt.mono fun n h ↦ ?_
-  rw [card_tmTable, ← FinEnum.card_eq_fintypeCard, FinEnum.card_bitVec]
-  exact lt_of_le_of_lt (Nat.le_self_pow (by norm_num) _) h
+  rwa [card_tmTable, ← FinEnum.card_eq_fintypeCard, FinEnum.card_bitVec]
 
 /-- **Counting separation for the single-tape backend**, at the canonical bitvector input and
-optional-Boolean output encodings: some Boolean predicate family has no realizer family of
-polynomially bounded state count. -/
+optional-Boolean output encodings: some Boolean predicate family has no realizer family whose
+state count is polynomially bounded on any cofinite set of parameters. -/
 theorem exists_not_realizableLE_poly :
-    ∃ f : (n : ℕ) → BitVec n → Bool,
-      ¬ ∃ q : Polynomial ℕ, ∀ n, (some ∘ f n) ∈
+    ∃ f : (n : ℕ) → BitVec n → Bool, ¬ ∃ q : Polynomial ℕ,
+      ∀ᶠ n in atTop, (some ∘ f n) ∈
         description.RealizableLE (BitEncFam.bitVecX.enc n) (BitEncFam.bool.option.enc n)
           (q.eval n) :=
   description.exists_not_realizableLE_poly_of_card_lt (D := fun n ↦ BitVec n)

@@ -39,8 +39,8 @@ example {D E : ℕ → Type u} [∀ n, Fintype (D n)] (a : ∀ n, C.Str (D n)) (
     (ι : ∀ n, Bool → E n) (hι : ∀ n, Function.Injective (ι n)) (hb : ∀ n, Faithful (b n))
     (ht_count : ∀ᶠ n in atTop,
       Fintype.card (M.Desc (a n) (b n) (2 ^ (n / 4))) < 2 ^ Fintype.card (D n)) :
-    ∃ f : (n : ℕ) → D n → Bool,
-      ¬ ∃ q : Polynomial ℕ, ∀ n, (ι n ∘ f n) ∈ M.RealizableLE (a n) (b n) (q.eval n) :=
+    ∃ f : (n : ℕ) → D n → Bool, ¬ ∃ q : Polynomial ℕ,
+      ∀ᶠ n in atTop, (ι n ∘ f n) ∈ M.RealizableLE (a n) (b n) (q.eval n) :=
   M.exists_not_realizableLE_poly_of_card_lt a b ι hι hb ht_count
 
 end PolyFunTest.ModuleAPI.Realizability

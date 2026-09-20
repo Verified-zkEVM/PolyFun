@@ -22,8 +22,10 @@ Only a `DescriptionMeasure` enters; cost, time, and categorical structure play n
 faithfulness of every codomain representation is a hypothesis, so a measure that is only
 inhabited under an unsatisfiable predicate cannot feed the separation.
 `exists_not_realizableLE_poly` takes an arbitrary threshold; the corollary fixes `2 ^ (n / 4)`, at
-which every natural-number
-polynomial is eventually bounded, leaving the backend only its description count to prove.
+which every natural-number polynomial is eventually bounded, leaving the backend only its
+description count to prove. The conclusion rules out a realizer family that is polynomially
+description-bounded only *eventually*, not merely one bounded at every `n`: a bound that holds
+cofinitely is the honest reading, since any finite prefix can be absorbed into the measure.
 -/
 
 public section
@@ -60,7 +62,8 @@ theorem exists_diagonal {D : ℕ → Type u} [∀ n, Fintype (D n)]
 /-- **Counting separation.** Against faithful codomain representations, if every polynomial is
 eventually below the threshold `t n` and the canonical-description count at `t n` is eventually
 below the predicate count `2 ^ |D n|`, some Boolean predicate family (tagged into the codomain by
-the injections `ι n`) has no polynomially description-bounded realizer family. -/
+the injections `ι n`) is not description-bounded by any polynomial on any cofinite set of
+parameters. -/
 theorem exists_not_realizableLE_poly {D E : ℕ → Type u} [∀ n, Fintype (D n)]
     (a : ∀ n, C.Str (D n)) (b : ∀ n, C.Str (E n))
     (ι : ∀ n, Bool → E n) (hι : ∀ n, Function.Injective (ι n))
@@ -68,8 +71,8 @@ theorem exists_not_realizableLE_poly {D E : ℕ → Type u} [∀ n, Fintype (D n
     (ht_poly : ∀ q : Polynomial ℕ, ∀ᶠ n in atTop, q.eval n ≤ t n)
     (ht_count : ∀ᶠ n in atTop,
       Fintype.card (M.Desc (a n) (b n) (t n)) < 2 ^ Fintype.card (D n)) :
-    ∃ f : (n : ℕ) → D n → Bool,
-      ¬ ∃ q : Polynomial ℕ, ∀ n, (ι n ∘ f n) ∈ M.RealizableLE (a n) (b n) (q.eval n) := by
+    ∃ f : (n : ℕ) → D n → Bool, ¬ ∃ q : Polynomial ℕ,
+      ∀ᶠ n in atTop, (ι n ∘ f n) ∈ M.RealizableLE (a n) (b n) (q.eval n) := by
   classical
   let cover : (n : ℕ) → Finset (D n → E n) :=
     fun n ↦ (M.exists_realizableLE_covering (a n) (hb n) (t n)).choose
@@ -84,9 +87,9 @@ theorem exists_not_realizableLE_poly {D E : ℕ → Type u} [∀ n, Fintype (D n
   obtain ⟨f, misses⟩ := exists_diagonal S hS
   refine ⟨f, fun ⟨q, realizable⟩ ↦ ?_⟩
   have belongs : ∀ᶠ n in atTop, f n ∈ S n :=
-    (ht_poly q).mono fun n bound ↦ by
+    ((ht_poly q).and realizable).mono fun n ⟨bound, hrealizable⟩ ↦ by
       have hmem : (ι n ∘ f n) ∈ cover n :=
-        Finset.mem_coe.mp (covered n (M.realizableLE_mono bound (realizable n)))
+        Finset.mem_coe.mp (covered n (M.realizableLE_mono bound hrealizable))
       refine Finset.mem_image.mpr ⟨_, hmem, ?_⟩
       funext x
       simp [decodeBool, (hι n).eq_iff]
@@ -101,8 +104,8 @@ theorem exists_not_realizableLE_poly_of_card_lt {D E : ℕ → Type u} [∀ n, F
     (hb : ∀ n, Faithful (b n))
     (ht_count : ∀ᶠ n in atTop,
       Fintype.card (M.Desc (a n) (b n) (2 ^ (n / 4))) < 2 ^ Fintype.card (D n)) :
-    ∃ f : (n : ℕ) → D n → Bool,
-      ¬ ∃ q : Polynomial ℕ, ∀ n, (ι n ∘ f n) ∈ M.RealizableLE (a n) (b n) (q.eval n) :=
+    ∃ f : (n : ℕ) → D n → Bool, ¬ ∃ q : Polynomial ℕ,
+      ∀ᶠ n in atTop, (ι n ∘ f n) ∈ M.RealizableLE (a n) (b n) (q.eval n) :=
   M.exists_not_realizableLE_poly a b ι hι hb (fun n ↦ 2 ^ (n / 4))
     Polynomial.eventually_eval_le_two_pow_div_four ht_count
 

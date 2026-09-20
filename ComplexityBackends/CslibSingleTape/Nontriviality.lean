@@ -96,6 +96,6 @@ theorem exists_not_isPPolyBy_pure :
   obtain ⟨function, notRealizable⟩ := Backend.exists_not_realizableLE_poly
   refine ⟨function, fun certificate ↦ notRealizable ?_⟩
   obtain ⟨witness⟩ := certificate.toNonempty
-  exact ⟨_, fun n ↦ realizableLE_of_witness witness n⟩
+  exact ⟨_, .of_forall fun n ↦ realizableLE_of_witness witness n⟩
 
 end ComplexityBackends.CslibSingleTape.PPoly

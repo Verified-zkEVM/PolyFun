@@ -32,7 +32,7 @@ instantiates it for this backend.
   `reify` of some `TMTable d`.
 * **Determinism** (`Outputs_unique`, `PolyTimeComputable.outputs`): a halting run's output is
   unique, and a polynomial-time witness outputs its function on every input.
-* **Counting** (`card_bitVec_fun`, `B_sq_le`, `eventually_count_lt`): there are `2 ^ (2 ^ n)`
+* **Counting** (`card_bitVec_fun`, `B_le`, `eventually_count_lt`): there are `2 ^ (2 ^ n)`
   predicates on `BitVec n`, and the squared machine count at the threshold size `2 ^ (n / 4)`
   stays below it eventually. Polynomial growth against that threshold is
   `Polynomial.eventually_eval_le_two_pow_div_four` in `ToCslib.Algebra.PolynomialGrowth`.
@@ -80,8 +80,8 @@ noncomputable instance (d : ℕ) : Fintype (TMTable d) := inferInstance
 
 instance (d : ℕ) : DecidableEq (TMTable d) := inferInstance
 
-/-- A crude closed-form upper bound on the number of `d`-state machines: the exact
-cardinality `card_tmTable`. -/
+/-- The number of canonical `d`-state machines, in closed form. `card_tmTable` proves this
+is the exact cardinality, not an over-count. -/
 def B (d : ℕ) : ℕ := (9 * (d + 1)) ^ (3 * d) * d
 
 /-- The exact number of canonical `d`-state machines: each of the `d` states maps each of
@@ -337,27 +337,24 @@ open Cslib.Turing.SingleTapeTM
 theorem card_bitVec_fun (n : ℕ) : Fintype.card (BitVec n → Bool) = 2 ^ (2 ^ n) := by
   rw [Fintype.card_fun, Fintype.card_bool, ← FinEnum.card_eq_fintypeCard, FinEnum.card_bitVec]
 
-/-- A crude closed-form bound on the squared machine count: for `9 * (d + 1) ≤ 2 ^ d` and
-`d ≥ 1`, `B d ^ 2 ≤ 2 ^ (8 * d ^ 2)`. Uses `9 * (d + 1) ≤ 2 ^ d` on the statement/next-state
-base and `d ^ 2 ≤ 2 ^ (2 * d)` on the initial-state factor. -/
-theorem B_sq_le (d : ℕ) (hd : 9 * (d + 1) ≤ 2 ^ d) (hd1 : 1 ≤ d) :
-    B d ^ 2 ≤ 2 ^ (8 * d ^ 2) := by
-  have hd2 : d ^ 2 ≤ 2 ^ (2 * d) := by
-    calc d ^ 2 ≤ (2 ^ d) ^ 2 := Nat.pow_le_pow_left (Nat.le_of_lt d.lt_two_pow_self) 2
-      _ = 2 ^ (2 * d) := by rw [← pow_mul, Nat.mul_comm]
-  calc B d ^ 2 = ((9 * (d + 1)) ^ (3 * d)) ^ 2 * d ^ 2 := by rw [B, mul_pow]
-    _ = (9 * (d + 1)) ^ (6 * d) * d ^ 2 := by rw [← pow_mul]; ring_nf
-    _ ≤ (2 ^ d) ^ (6 * d) * 2 ^ (2 * d) := Nat.mul_le_mul (Nat.pow_le_pow_left hd _) hd2
-    _ = 2 ^ (6 * d ^ 2) * 2 ^ (2 * d) := by rw [← pow_mul]; ring_nf
-    _ = 2 ^ (6 * d ^ 2 + 2 * d) := by rw [← pow_add]
-    _ ≤ 2 ^ (8 * d ^ 2) := Nat.pow_le_pow_right (by norm_num) (by nlinarith [hd1])
+/-- A crude closed-form bound on the machine count: for `9 * (d + 1) ≤ 2 ^ d` and `d ≥ 1`,
+`B d ≤ 2 ^ (4 * d ^ 2)`. Uses `9 * (d + 1) ≤ 2 ^ d` on the statement/next-state base and
+`d ≤ 2 ^ d` on the initial-state factor. -/
+theorem B_le (d : ℕ) (hd : 9 * (d + 1) ≤ 2 ^ d) (hd1 : 1 ≤ d) :
+    B d ≤ 2 ^ (4 * d ^ 2) := by
+  calc B d = (9 * (d + 1)) ^ (3 * d) * d := by rw [B]
+    _ ≤ (2 ^ d) ^ (3 * d) * 2 ^ d :=
+        Nat.mul_le_mul (Nat.pow_le_pow_left hd _) (Nat.le_of_lt d.lt_two_pow_self)
+    _ = 2 ^ (3 * d ^ 2) * 2 ^ d := by rw [← pow_mul]; ring_nf
+    _ = 2 ^ (3 * d ^ 2 + d) := by rw [← pow_add]
+    _ ≤ 2 ^ (4 * d ^ 2) := Nat.pow_le_pow_right (by norm_num) (by nlinarith [hd1])
 
-/-- **The squared machine count at the threshold size `2 ^ (n / 4)` stays below the
-predicate count `2 ^ (2 ^ n)` eventually.** The count at size `d = 2 ^ (n / 4)` is at most
-`2 ^ (8 * d ^ 2)` (`B_sq_le`, whose hypothesis `9 * (d + 1) ≤ 2 ^ d` holds cofinitely as
-`d → ∞`), and its exponent `8 * d ^ 2 = 2 ^ (3 + n / 4 * 2)` is eventually below `2 ^ n`. -/
+/-- **The machine count at the threshold size `2 ^ (n / 4)` stays below the predicate count
+`2 ^ (2 ^ n)` eventually.** The count at size `d = 2 ^ (n / 4)` is at most `2 ^ (4 * d ^ 2)`
+(`B_le`, whose hypothesis `9 * (d + 1) ≤ 2 ^ d` holds cofinitely as `d → ∞`), and its
+exponent `4 * d ^ 2 = 2 ^ (2 + n / 4 * 2)` is eventually below `2 ^ n`. -/
 theorem eventually_count_lt :
-    ∀ᶠ n in atTop, B (2 ^ (n / 4)) ^ 2 < 2 ^ (2 ^ n) := by
+    ∀ᶠ n in atTop, B (2 ^ (n / 4)) < 2 ^ (2 ^ n) := by
   have htwo : Tendsto (fun m : ℕ => 2 ^ m) atTop atTop :=
     tendsto_atTop_mono (fun m => (Nat.lt_two_pow_self).le) tendsto_id
   have htend : Tendsto (fun n : ℕ => 2 ^ (n / 4)) atTop atTop :=
@@ -365,10 +362,10 @@ theorem eventually_count_lt :
   filter_upwards [htend.eventually (Nat.eventually_const_mul_pow_le_two_pow 9 1),
     eventually_ge_atTop 8] with n ha hn
   rw [pow_one] at ha
-  refine lt_of_le_of_lt (B_sq_le _ ha Nat.one_le_two_pow) ?_
+  refine lt_of_le_of_lt (B_le _ ha Nat.one_le_two_pow) ?_
   apply Nat.pow_lt_pow_right (by norm_num)
-  calc 8 * (2 ^ (n / 4)) ^ 2
-      = 2 ^ (3 + n / 4 * 2) := by rw [show (8 : ℕ) = 2 ^ 3 from rfl, ← pow_mul, ← pow_add]
+  calc 4 * (2 ^ (n / 4)) ^ 2
+      = 2 ^ (2 + n / 4 * 2) := by rw [show (4 : ℕ) = 2 ^ 2 from rfl, ← pow_mul, ← pow_add]
     _ < 2 ^ n := Nat.pow_lt_pow_right (by norm_num) (by omega)
 
 end ComplexityBackends.CslibSingleTape

@@ -70,10 +70,12 @@ theorem exists_isEmpty_witness :
   obtain ⟨f, h⟩ := exists_not_isPPolyBy_pure
   exact ⟨f, ⟨fun witness ↦ h (IsPPolyBy.intro witness)⟩⟩
 
-/-- The polynomial may depend on the predicate family; even this nonuniform claim fails. -/
-example : ¬ ∀ f : (n : ℕ) → BitVec n → Bool, ∃ q : Polynomial ℕ, ∀ n,
-    (some ∘ f n) ∈ Backend.description.RealizableLE (BitEncFam.bitVecX.enc n)
-      (BitEncFam.bool.option.enc n) (q.eval n) := by
+/-- The polynomial may depend on the predicate family, and it only has to bound the description
+size cofinitely; even this nonuniform, eventual claim fails. -/
+example : ¬ ∀ f : (n : ℕ) → BitVec n → Bool, ∃ q : Polynomial ℕ,
+    ∀ᶠ n in Filter.atTop, (some ∘ f n) ∈
+      Backend.description.RealizableLE (BitEncFam.bitVecX.enc n)
+        (BitEncFam.bool.option.enc n) (q.eval n) := by
   obtain ⟨f, notRealizable⟩ := Backend.exists_not_realizableLE_poly
   exact fun allFamilies ↦ notRealizable (allFamilies f)
 

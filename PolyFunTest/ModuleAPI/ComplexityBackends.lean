@@ -47,9 +47,10 @@ example {A B : Type} {a : A → List Bool} {b : B → List Bool} {f : A → B}
     (r : EncPolyTime a b f) : Backend.description.descSize r = r.size :=
   Backend.descSize_eq r
 
-example : ∃ f : (n : ℕ) → BitVec n → Bool, ¬ ∃ q : Polynomial ℕ, ∀ n,
-    (some ∘ f n) ∈ Backend.description.RealizableLE (BitEncFam.bitVecX.enc n)
-      (BitEncFam.bool.option.enc n) (q.eval n) :=
+example : ∃ f : (n : ℕ) → BitVec n → Bool, ¬ ∃ q : Polynomial ℕ,
+    ∀ᶠ n in Filter.atTop, (some ∘ f n) ∈
+      Backend.description.RealizableLE (BitEncFam.bitVecX.enc n)
+        (BitEncFam.bool.option.enc n) (q.eval n) :=
   Backend.exists_not_realizableLE_poly
 
 end PolyFunTest.ModuleAPI.ComplexityBackends
