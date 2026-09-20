@@ -9,10 +9,15 @@ ordinary imports useful without making every implementation reducer public.
 - `public import A` means declarations from `A` occur in this module's public
   signatures or are intentionally re-exported.
 - `import A` is for implementation-only dependencies.
-- `import all A` makes opaque bodies from `A` available to the importing
-  module's proofs. Write it immediately before the corresponding `import A` or
-  `public import A`, and name in a one-line comment the definition whose body
-  the proofs unfold; an `import all` that unfolds nothing is dead and is removed.
+- `import all A` makes `A`'s opaque bodies and its private declarations
+  available to the importing module's proofs. Write it immediately before the
+  corresponding `import A` or `public import A`, and name in a one-line comment
+  what the proofs need from it — the definitions whose bodies they unfold, or
+  the private declarations they reference. Say which: a private theorem is
+  referenced, not unfolded, and reading the annotation is how the next author
+  learns whether narrowing that import means publishing an equation or
+  publishing a lemma. An `import all` that supplies neither is dead and is
+  removed.
   Outside proof modules it is a code smell: a downstream `import all PolyFun...`
   is an API audit signal, never the normal integration surface.
 
