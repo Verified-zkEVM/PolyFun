@@ -10,12 +10,48 @@ ordinary imports useful without making every implementation reducer public.
   signatures or are intentionally re-exported.
 - `import A` is for implementation-only dependencies.
 - `import all A` makes opaque bodies from `A` available to the importing
-  module's proofs. It is acceptable inside PolyFun proof modules when the body
-  dependence is deliberate. A downstream `import all PolyFun...` is an API
-  audit signal and should not be the normal integration surface.
+  module's proofs. Write it immediately before the corresponding `import A` or
+  `public import A`, and name in a one-line comment the definition whose body
+  the proofs unfold; an `import all` that unfolds nothing is dead and is removed.
+  Outside proof modules it is a code smell: a downstream `import all PolyFun...`
+  is an API audit signal, never the normal integration surface.
 
 Changing `import` to `public import` does not expose declaration bodies. It
 changes the signature/re-export boundary only.
+
+### Who may open whose bodies
+
+`scripts/check-modules.sh` enforces these boundaries:
+
+| Opener | May `import all` | May not `import all` |
+|---|---|---|
+| `PolyFun/` proof modules | sibling `PolyFun` modules, for a named definition | any `ComplexityBackends` module |
+| `ToCslib/` | nothing (upstream staging stays ordinary-import clean) | `PolyFun`, `ComplexityBackends` |
+| `ComplexityBackends/` | its own modules | `PolyFun`, `ToCslib` |
+| `Examples/`, `PolyFunParliamentMain.lean`, consumer packages | nothing | everything |
+| `PolyFunTest/` worked examples | `ComplexityBackends` modules; `PolyFun` modules only in the grandfathered `PolyFunTest/Interaction/` examples listed in the script | `PolyFun` elsewhere |
+| `PolyFunTest/ModuleAPI/` canaries | nothing | everything |
+
+Staging opens nothing because its modules are meant to be lifted into cslib
+unchanged, and cslib has no access to this repository's bodies. Tutorials, the
+case-study executable and the consumer packages open nothing because they are
+the evidence that the ordinary-import surface is usable.
+
+Tests may open a backend because backend regressions legitimately inspect
+machine constructions. They reach the generic library through its public API so
+that the ordinary-import surface is what gets exercised; the grandfathered list
+shrinks as those examples migrate to public laws and never grows.
+
+### Two module-system facts
+
+- A `@[simp]`- or `dsimp`-registered `rfl` theorem about a definition that is
+  not exposed is rejected in the *defining* module, because the theorem is
+  exported. Prove it by `simp [def]`, or expose the definition.
+- `import all` rescues proofs, never definitions or exported statements. A
+  `def` whose body or type needs the definitional unfolding of an imported
+  non-exposed definition fails even under `import all`, and so does an exported
+  theorem statement. Such dependencies force `@[expose]` upstream or a public
+  equation.
 
 ## Choosing the public reducer surface
 
@@ -68,9 +104,14 @@ When a consumer needs `import all`:
 
 When hardening an older broadly exposed module, apply the same process in
 reverse: inventory real consumers, publish laws for load-bearing reductions,
-add canaries, and only then narrow exposure. Do not make PFunctor, IPFunctor,
-ITree, or Control opaque wholesale; their broad sections predate the selective
-Interaction policy and may hide legitimate definitional dependencies.
+add canaries, and only then narrow exposure. The whole-file `@[expose] public
+section`s in `PFunctor/`, `IPFunctor/`, `ITree/`, `Control/` and most of
+`Realizability/` are a standing decision, not a target: every `import all`
+inside `PFunctor/` and `IPFunctor/` opens a module that is already fully
+exposed, so nothing there depends on hidden bodies today. Narrow a module only
+after recording in its docstring whether definitional computation is part of
+its contract; the per-directory status and the migration of `Realizability/`
+are tracked in issue #244.
 
 ## Ongoing audit rule
 
