@@ -376,7 +376,23 @@ Complexity measures axiomatized rather than fixed, with a complexity class as
 the same existential shape as `IsRealizableBy`, but quantifying over a Gödel
 numbering of programs rather than over machines with constrained structure maps.
 
-Used in: `PolyFun/Realizability/Basic.lean`.
+Used in: `PolyFun/Realizability/Basic.lean`, `PolyFun/Realizability/Quantitative/Description.lean`.
+
+### FKL22 — Forster, Kunze, Lauermann, *Synthetic Kolmogorov complexity in Coq*
+
+Yannick Forster, Fabian Kunze, and Nils Lauermann.
+*Synthetic Kolmogorov Complexity in Coq*.
+*13th International Conference on Interactive Theorem Proving (ITP 2022)*,
+LIPIcs 237, 12:1–12:19, 2022.
+DOI: <https://doi.org/10.4230/LIPIcs.ITP.2022.12>
+
+Description size without a fixed machine: a description is any datum that
+determines a function, with the finiteness needed for counting arguments.
+`DescriptionMeasure` specialises the same idea to a finite type of canonical
+descriptions at each size bound and boundary, against a faithfulness predicate
+on the codomain representation.
+
+Used in: `PolyFun/Realizability/Quantitative/Description.lean`.
 
 ### GHP09 — Ghani, Hancock, Pattinson, *Representations of stream processors*
 

@@ -7,17 +7,19 @@ Authors: Devon Tuma, Elias Judin
 module
 
 public import ComplexityBackends.CslibSingleTape.BitEncoding
+public import ToCslib.Algebra.PolynomialGrowth
 public import Mathlib.Analysis.SpecificLimits.Normed
 public import Mathlib.Data.FinEnum
 
 /-!
 # Counting Polynomial-Size Turing Machines
 
-This module bounds the number of predicates `BitVec n → Bool` realizable by pairs
-of single-tape machines with at most `d` states each. It compares that bound with
-the `2 ^ (2 ^ n)` Boolean predicates to obtain a nonuniform separation theorem.
-
-The pieces, each isolated so the diagonalization argument reads as pure counting:
+This module supplies the machine-theoretic half of the counting separation for the single-tape
+backend: canonical `d`-state machines, state relabeling, determinism of runs, and the bound on how
+many canonical machines exist at a threshold size. The generic half, description measures with a
+finite cover, the diagonal argument, and the separation itself, lives in
+`PolyFun.Realizability.Quantitative.Counting`; `ComplexityBackends.CslibSingleTape.Description`
+instantiates it for this backend.
 
 * **Canonical `d`-state machines** (`Cslib.Turing.SingleTapeTM.TMTable`): a transition table
   `Fin d → Option Bool → Stmt Bool × Option (Fin d)` together with an initial state.
@@ -28,21 +30,12 @@ The pieces, each isolated so the diagonalization argument reads as pure counting
 * **State normalization** (`exists_tmTable_of_card_le`): any
   `SingleTapeTM Bool` with at most `d` states computes the same string function as
   `reify` of some `TMTable d`.
-* **Realizable predicates** (`RealizableLE`): the predicates realizable by
-  an input/output `EncPolyTime` pair of description size at most `d`. This set is covered
-  by a `Finset` of cardinality at most `B d ^ 2` (`exists_realizableLE_covering`, the
-  counting core: the cover of `RealizableLE n d` by the image of
-  `TMTable d × TMTable d` under `tablePairPred`, built from state normalization), and it is
-  monotone in `d` (`realizableLE_mono`).
-* **Growth bounds**: every polynomial is eventually dominated by `2 ^ (n / 4)`
-  (`eventually_poly_le`), while the machine count stays below the function
-  count (`eventually_count_lt`).
-* **The function space** has cardinality `2 ^ (2 ^ n)` (`card_bitVec_fun`),
-  and a `Finset` family smaller than that predicate space misses a diagonal predicate
-  eventually (`exists_diagonal`).
-* **Nonuniform separation** (`exists_not_realizableLE_poly`): some
-  Boolean predicate family admits no polynomial bound on the sizes of its realizing
-  machine pairs, even without a uniform running-time bound across input lengths.
+* **Determinism** (`Outputs_unique`, `PolyTimeComputable.outputs`): a halting run's output is
+  unique, and a polynomial-time witness outputs its function on every input.
+* **Counting** (`card_bitVec_fun`, `B_le`, `eventually_count_lt`): there are `2 ^ (2 ^ n)`
+  predicates on `BitVec n`, and the squared machine count at the threshold size `2 ^ (n / 4)`
+  stays below it eventually. Polynomial growth against that threshold is
+  `Polynomial.eventually_eval_le_two_pow_div_four` in `ToCslib.Algebra.PolynomialGrowth`.
 -/
 
 public section
@@ -87,8 +80,8 @@ noncomputable instance (d : ℕ) : Fintype (TMTable d) := inferInstance
 
 instance (d : ℕ) : DecidableEq (TMTable d) := inferInstance
 
-/-- A crude closed-form upper bound on the number of `d`-state machines: the exact
-cardinality `card_tmTable`. -/
+/-- The number of canonical `d`-state machines, in closed form. `card_tmTable` proves this
+is the exact cardinality, not an over-count. -/
 def B (d : ℕ) : ℕ := (9 * (d + 1)) ^ (3 * d) * d
 
 /-- The exact number of canonical `d`-state machines: each of the `d` states maps each of
@@ -338,217 +331,41 @@ namespace ComplexityBackends.CslibSingleTape
 
 open Cslib.Turing.SingleTapeTM
 
-/-! ## Realizable predicates -/
-
-/-- The predicates `BitVec n → Bool` realizable at description size at most `d`: those
-computed by an initialization witness into some state encoding followed by an output
-witness, both `EncPolyTime` machines of description size at most `d`, against the canonical
-`BitVec`/`Option Bool` boundary encodings. An implementing machine adversary at these
-boundaries lands its computed predicate here (its `initF`/`outputF` witnesses), and the
-count of such predicates is controlled by counting the underlying machines
-(`exists_realizableLE_covering`). -/
-def RealizableLE (n d : ℕ) : Set (BitVec n → Bool) :=
-  {g | ∃ (σ : Type) (es : σ → List Bool) (init : BitVec n → σ) (output : σ → Option Bool)
-        (_i : EncPolyTime (BitEncFam.bitVecX.enc n) es init)
-        (_o : EncPolyTime es (BitEncFam.bool.option.enc n) output),
-      _i.size ≤ d ∧ _o.size ≤ d ∧ ∀ x, output (init x) = some (g x)}
-
-/-- Full witness characterization of membership in `RealizableLE`. -/
-theorem mem_realizableLE {n d : ℕ} {g : BitVec n → Bool} :
-    g ∈ RealizableLE n d ↔
-      ∃ (σ : Type) (es : σ → List Bool) (init : BitVec n → σ)
-          (output : σ → Option Bool)
-          (_i : EncPolyTime (BitEncFam.bitVecX.enc n) es init)
-          (_o : EncPolyTime es (BitEncFam.bool.option.enc n) output),
-        _i.size ≤ d ∧ _o.size ≤ d ∧ ∀ x, output (init x) = some (g x) := by
-  simp [RealizableLE]
-
-/-- Realizability at a larger description size is a weaker requirement. -/
-theorem realizableLE_mono {n : ℕ} {d d' : ℕ} (h : d ≤ d') :
-    RealizableLE n d ⊆ RealizableLE n d' := by
-  rintro g ⟨σ, es, init, output, i, o, hi, ho, hg⟩
-  exact ⟨σ, es, init, output, i, o, hi.trans h, ho.trans h, hg⟩
-
-open Classical in
-/-- The total predicate `BitVec n → Bool` attached to a pair of canonical `d`-state tables:
-run `reify p.1` on the canonical input encoding of `x`, feed its (deterministic) output to
-`reify p.2`, and decode the resulting canonical `Option Bool` encoding. Totality is ensured
-by a deterministic choice over the (at most one, by `Outputs_unique`) successful run, with
-an arbitrary `false` fallback where no such run exists — no claim that either raw table
-pair halts or is polynomial-time. -/
-noncomputable def tablePairPred (n d : ℕ) (p : TMTable d × TMTable d) : BitVec n → Bool :=
-  fun x =>
-    if h : ∃ b : Bool, ∃ l₁ : List Bool,
-        (reify p.1).Outputs (BitEncFam.bitVecX.enc n x) l₁ ∧
-        (reify p.2).Outputs l₁ (BitEncFam.bool.option.enc n (some b))
-    then h.choose else false
-
-/-- The realizable predicates at description size at most `d` are covered by a `Finset` of
-cardinality at most `B d ^ 2`. State normalization (`exists_tmTable_of_card_le`) reduces each
-realizing pair of witness machines to a pair `TMTable d × TMTable d` of canonical `d`-state
-tables; the realized predicate is recovered from the two tables by `tablePairPred` (running
-both reified machines and decoding the canonical output encoding, using determinism of the
-runs via `Outputs_unique`). Thus `RealizableLE n d` lands in the image of
-`TMTable d × TMTable d` under `tablePairPred`, whence
-`card ≤ Fintype.card (TMTable d × TMTable d) = B d ^ 2` (`card_tmTable`). The map need not be
-injective — it only needs to cover the realizable set. -/
-theorem exists_realizableLE_covering (n d : ℕ) :
-    ∃ s : Finset (BitVec n → Bool), RealizableLE n d ⊆ ↑s ∧ s.card ≤ B d ^ 2 := by
-  classical
-  refine ⟨Finset.image (tablePairPred n d)
-    (Finset.univ : Finset (TMTable d × TMTable d)), ?_, ?_⟩
-  · rintro g ⟨σ, es, init, output, i, o, hi, ho, hg⟩
-    rw [EncPolyTime.size_eq_card] at hi ho
-    obtain ⟨t₁, ht₁⟩ := exists_tmTable_of_card_le i.polyTime.tm (d := d) hi
-    obtain ⟨t₂, ht₂⟩ := exists_tmTable_of_card_le o.polyTime.tm (d := d) ho
-    refine Finset.mem_coe.mpr (Finset.mem_image.mpr ⟨(t₁, t₂), Finset.mem_univ _, ?_⟩)
-    funext x
-    have hrun1 : (reify t₁).Outputs (BitEncFam.bitVecX.enc n x) (es (init x)) := by
-      rw [ht₁]
-      have h := i.polyTime.outputs (BitEncFam.bitVecX.enc n x)
-      rwa [i.map_encode x] at h
-    have hrun2 : (reify t₂).Outputs (es (init x))
-        (BitEncFam.bool.option.enc n (some (g x))) := by
-      rw [ht₂]
-      have h := o.polyTime.outputs (es (init x))
-      rwa [o.map_encode (init x), hg x] at h
-    have hex : ∃ b : Bool, ∃ l₁ : List Bool,
-        (reify t₁).Outputs (BitEncFam.bitVecX.enc n x) l₁ ∧
-        (reify t₂).Outputs l₁ (BitEncFam.bool.option.enc n (some b)) :=
-      ⟨g x, es (init x), hrun1, hrun2⟩
-    have hpick : tablePairPred n d (t₁, t₂) x = hex.choose := dite_eq_left hex
-    rw [hpick]
-    obtain ⟨l₁', hl1', hl2'⟩ := hex.choose_spec
-    have hl1eq : l₁' = es (init x) := Outputs_unique _ hl1' hrun1
-    rw [hl1eq] at hl2'
-    have henc := Outputs_unique _ hl2' hrun2
-    exact Option.some.inj ((BitEncFam.bool.option).enc_injective n henc)
-  · refine Finset.card_image_le.trans ?_
-    rw [Finset.card_univ, Fintype.card_prod, card_tmTable, sq]
-
 /-! ## Cardinality of the predicate space -/
 
 /-- There are exactly `2 ^ (2 ^ n)` predicates `BitVec n → Bool`. -/
 theorem card_bitVec_fun (n : ℕ) : Fintype.card (BitVec n → Bool) = 2 ^ (2 ^ n) := by
   rw [Fintype.card_fun, Fintype.card_bool, ← FinEnum.card_eq_fintypeCard, FinEnum.card_bitVec]
 
-/-! ## Polynomial versus exponential growth -/
+/-- A crude closed-form bound on the machine count: for `9 * (d + 1) ≤ 2 ^ d` and `d ≥ 1`,
+`B d ≤ 2 ^ (4 * d ^ 2)`. Uses `9 * (d + 1) ≤ 2 ^ d` on the statement/next-state base and
+`d ≤ 2 ^ d` on the initial-state factor. -/
+theorem B_le (d : ℕ) (hd : 9 * (d + 1) ≤ 2 ^ d) (hd1 : 1 ≤ d) :
+    B d ≤ 2 ^ (4 * d ^ 2) := by
+  calc B d = (9 * (d + 1)) ^ (3 * d) * d := by rw [B]
+    _ ≤ (2 ^ d) ^ (3 * d) * 2 ^ d :=
+        Nat.mul_le_mul (Nat.pow_le_pow_left hd _) (Nat.le_of_lt d.lt_two_pow_self)
+    _ = 2 ^ (3 * d ^ 2) * 2 ^ d := by rw [← pow_mul]; ring_nf
+    _ = 2 ^ (3 * d ^ 2 + d) := by rw [← pow_add]
+    _ ≤ 2 ^ (4 * d ^ 2) := Nat.pow_le_pow_right (by norm_num) (by nlinarith [hd1])
 
-/-- Any fixed power is eventually dominated by `2 ^ n`. -/
-theorem nat_pow_le_two_pow (k : ℕ) : ∀ᶠ n in atTop, n ^ k ≤ 2 ^ n := by
-  have h : (fun n : ℕ => (n : ℝ) ^ k) =o[atTop] fun n : ℕ => (2 : ℝ) ^ n :=
-    isLittleO_pow_const_const_pow_of_one_lt k (by norm_num)
-  refine h.eventuallyLE.mono fun n hn => ?_
-  simp only [Real.norm_eq_abs] at hn
-  rw [abs_of_nonneg (by positivity), abs_of_nonneg (by positivity)] at hn
-  exact_mod_cast (by push_cast; exact hn : ((n ^ k : ℕ) : ℝ) ≤ ((2 ^ n : ℕ) : ℝ))
-
-/-- A constant multiple of any fixed power of `n + 1` is eventually dominated by `2 ^ n`. -/
-theorem const_mul_pow_le_two_pow (C k : ℕ) : ∀ᶠ m in atTop, C * (m + 1) ^ k ≤ 2 ^ m := by
-  filter_upwards [eventually_ge_atTop (C * 2 ^ k), eventually_ge_atTop 1,
-    nat_pow_le_two_pow (k + 1)] with m hm hm1 hm3
-  calc C * (m + 1) ^ k ≤ C * (2 * m) ^ k :=
-        Nat.mul_le_mul_left _ (Nat.pow_le_pow_left (by omega) k)
-    _ = C * 2 ^ k * m ^ k := by rw [mul_pow]; ring
-    _ ≤ m * m ^ k := Nat.mul_le_mul_right _ hm
-    _ = m ^ (k + 1) := by rw [pow_succ]; ring
-    _ ≤ 2 ^ m := hm3
-
-/-- **Polynomials are eventually dominated by `2 ^ (n / 4)`.** The exponent `n / 4` is the
-threshold fed to the machine count: fast enough to eventually exceed every polynomial
-description bound (this lemma), yet slow enough that the resulting machine count stays below
-`2 ^ (2 ^ n)` (`eventually_count_lt`). -/
-theorem eventually_poly_le (p : Polynomial ℕ) :
-    ∀ᶠ n in atTop, p.eval n ≤ 2 ^ (n / 4) := by
-  obtain ⟨C, k, hCk⟩ : ∃ C k : ℕ, ∀ n : ℕ, p.eval n ≤ C * (n + 1) ^ k := by
-    refine ⟨∑ i ∈ Finset.range (p.natDegree + 1), p.coeff i, p.natDegree, fun n => ?_⟩
-    rw [Polynomial.eval_eq_sum_range, Finset.sum_mul]
-    refine Finset.sum_le_sum fun i hi => ?_
-    rw [Finset.mem_range] at hi
-    exact Nat.mul_le_mul_left _ ((Nat.pow_le_pow_left (by omega) i).trans
-      (Nat.pow_le_pow_right (by omega) (by omega)))
-  have htend : Tendsto (fun n : ℕ => n / 4) atTop atTop :=
-    Nat.tendsto_div_const_atTop (by norm_num)
-  filter_upwards [htend.eventually (const_mul_pow_le_two_pow (C * 4 ^ k) k)] with n hn
-  calc p.eval n ≤ C * (n + 1) ^ k := hCk n
-    _ ≤ C * 4 ^ k * (n / 4 + 1) ^ k := by
-        rw [mul_assoc, ← mul_pow]
-        exact Nat.mul_le_mul_left _ (Nat.pow_le_pow_left (by omega) k)
-    _ ≤ 2 ^ (n / 4) := hn
-
-/-- A crude closed-form bound on the squared machine count: for `9 * (d + 1) ≤ 2 ^ d` and
-`d ≥ 1`, `B d ^ 2 ≤ 2 ^ (8 * d ^ 2)`. Uses `9 * (d + 1) ≤ 2 ^ d` on the statement/next-state
-base and `d ^ 2 ≤ 2 ^ (2 * d)` on the initial-state factor. -/
-theorem B_sq_le (d : ℕ) (hd : 9 * (d + 1) ≤ 2 ^ d) (hd1 : 1 ≤ d) :
-    B d ^ 2 ≤ 2 ^ (8 * d ^ 2) := by
-  have hd2 : d ^ 2 ≤ 2 ^ (2 * d) := by
-    calc d ^ 2 ≤ (2 ^ d) ^ 2 := Nat.pow_le_pow_left (Nat.le_of_lt d.lt_two_pow_self) 2
-      _ = 2 ^ (2 * d) := by rw [← pow_mul, Nat.mul_comm]
-  calc B d ^ 2 = ((9 * (d + 1)) ^ (3 * d)) ^ 2 * d ^ 2 := by rw [B, mul_pow]
-    _ = (9 * (d + 1)) ^ (6 * d) * d ^ 2 := by rw [← pow_mul]; ring_nf
-    _ ≤ (2 ^ d) ^ (6 * d) * 2 ^ (2 * d) := Nat.mul_le_mul (Nat.pow_le_pow_left hd _) hd2
-    _ = 2 ^ (6 * d ^ 2) * 2 ^ (2 * d) := by rw [← pow_mul]; ring_nf
-    _ = 2 ^ (6 * d ^ 2 + 2 * d) := by rw [← pow_add]
-    _ ≤ 2 ^ (8 * d ^ 2) := Nat.pow_le_pow_right (by norm_num) (by nlinarith [hd1])
-
-/-- **The squared machine count at the threshold size `2 ^ (n / 4)` stays below the
-predicate count `2 ^ (2 ^ n)` eventually.** The count at size `d = 2 ^ (n / 4)` is at most
-`2 ^ (8 * d ^ 2)` (`B_sq_le`, whose hypothesis `9 * (d + 1) ≤ 2 ^ d` holds cofinitely as
-`d → ∞`), and its exponent `8 * d ^ 2 = 2 ^ (3 + n / 4 * 2)` is eventually below `2 ^ n`. -/
+/-- **The machine count at the threshold size `2 ^ (n / 4)` stays below the predicate count
+`2 ^ (2 ^ n)` eventually.** The count at size `d = 2 ^ (n / 4)` is at most `2 ^ (4 * d ^ 2)`
+(`B_le`, whose hypothesis `9 * (d + 1) ≤ 2 ^ d` holds cofinitely as `d → ∞`), and its
+exponent `4 * d ^ 2 = 2 ^ (2 + n / 4 * 2)` is eventually below `2 ^ n`. -/
 theorem eventually_count_lt :
-    ∀ᶠ n in atTop, B (2 ^ (n / 4)) ^ 2 < 2 ^ (2 ^ n) := by
+    ∀ᶠ n in atTop, B (2 ^ (n / 4)) < 2 ^ (2 ^ n) := by
   have htwo : Tendsto (fun m : ℕ => 2 ^ m) atTop atTop :=
     tendsto_atTop_mono (fun m => (Nat.lt_two_pow_self).le) tendsto_id
   have htend : Tendsto (fun n : ℕ => 2 ^ (n / 4)) atTop atTop :=
     htwo.comp (Nat.tendsto_div_const_atTop (by norm_num))
-  filter_upwards [htend.eventually (const_mul_pow_le_two_pow 9 1),
+  filter_upwards [htend.eventually (Nat.eventually_const_mul_pow_le_two_pow 9 1),
     eventually_ge_atTop 8] with n ha hn
   rw [pow_one] at ha
-  refine lt_of_le_of_lt (B_sq_le _ ha Nat.one_le_two_pow) ?_
+  refine lt_of_le_of_lt (B_le _ ha Nat.one_le_two_pow) ?_
   apply Nat.pow_lt_pow_right (by norm_num)
-  calc 8 * (2 ^ (n / 4)) ^ 2
-      = 2 ^ (3 + n / 4 * 2) := by rw [show (8 : ℕ) = 2 ^ 3 from rfl, ← pow_mul, ← pow_add]
+  calc 4 * (2 ^ (n / 4)) ^ 2
+      = 2 ^ (2 + n / 4 * 2) := by rw [show (4 : ℕ) = 2 ^ 2 from rfl, ← pow_mul, ← pow_add]
     _ < 2 ^ n := Nat.pow_lt_pow_right (by norm_num) (by omega)
-
-/-! ## The diagonal predicate -/
-
-/-- A `Finset` family smaller than the predicate space eventually misses a predicate: if
-`(S n).card < 2 ^ (2 ^ n)` cofinitely, some family `f` has `f n ∉ S n` cofinitely. -/
-theorem exists_diagonal (S : (n : ℕ) → Finset (BitVec n → Bool))
-    (hS : ∀ᶠ n in atTop, (S n).card < 2 ^ (2 ^ n)) :
-    ∃ f : (n : ℕ) → BitVec n → Bool, ∀ᶠ n in atTop, f n ∉ S n := by
-  classical
-  have key : ∀ n, (S n).card < 2 ^ (2 ^ n) → ∃ g : BitVec n → Bool, g ∉ S n := by
-    intro n hn
-    have hlt : (S n).card < (Finset.univ : Finset (BitVec n → Bool)).card := by
-      rw [Finset.card_univ, card_bitVec_fun]; exact hn
-    obtain ⟨e, -, he⟩ := Finset.exists_mem_notMem_of_card_lt_card hlt
-    exact ⟨e, he⟩
-  refine ⟨fun n => if h : (S n).card < 2 ^ (2 ^ n) then (key n h).choose else default, ?_⟩
-  refine hS.mono fun n hn => ?_
-  simp only [dite_eq_left hn]
-  exact (key n hn).choose_spec
-
-/-- Some Boolean predicate family cannot be realized by machine pairs of polynomially
-bounded description size. `RealizableLE` counts separately polynomial-time initialization
-and observation machines; no uniform time bound across input lengths is assumed here. -/
-theorem exists_not_realizableLE_poly :
-    ∃ f : (n : ℕ) → BitVec n → Bool,
-      ¬ ∃ q : Polynomial ℕ, ∀ n, f n ∈ RealizableLE n (q.eval n) := by
-  classical
-  let cover : (n : ℕ) → Finset (BitVec n → Bool) :=
-    fun n ↦ (exists_realizableLE_covering n (2 ^ (n / 4))).choose
-  have covered : ∀ n, RealizableLE n (2 ^ (n / 4)) ⊆ ↑(cover n) := fun n ↦
-    (exists_realizableLE_covering n (2 ^ (n / 4))).choose_spec.1
-  have cardBound : ∀ n, (cover n).card ≤ B (2 ^ (n / 4)) ^ 2 := fun n ↦
-    (exists_realizableLE_covering n (2 ^ (n / 4))).choose_spec.2
-  obtain ⟨f, misses⟩ := exists_diagonal cover
-    (eventually_count_lt.mono fun n bound ↦ lt_of_le_of_lt (cardBound n) bound)
-  refine ⟨f, fun ⟨q, realizable⟩ ↦ ?_⟩
-  have belongs : ∀ᶠ n in atTop, f n ∈ cover n :=
-    (eventually_poly_le q).mono fun n bound ↦
-      Finset.mem_coe.mp (covered n (realizableLE_mono bound (realizable n)))
-  obtain ⟨n, belongsAtN, missesAtN⟩ := (belongs.and misses).exists
-  exact missesAtN belongsAtN
 
 end ComplexityBackends.CslibSingleTape
