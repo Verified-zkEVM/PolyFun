@@ -59,8 +59,9 @@ theorem isEmpty_descriptionMeasure_true :
     exact (Set.countable_iUnion fun d ↦ Finset.countable_toSet _).mono hsub
   exact not_countable_nat_bool (Set.countable_univ_iff.mp hcount)
 
-/-- Against an unsatisfiable faithfulness predicate the axioms are trivially satisfiable. -/
-def trivialMeasure :
+/-- Against an unsatisfiable faithfulness predicate the axioms are trivially satisfiable. Exposed so
+that sibling tests can compute with its zero description size. -/
+@[expose] def trivialMeasure :
     QuantitativeTest.zeroBackend.{0, 0, 0}.DescriptionMeasure (fun {_} _ ↦ False) where
   descSize _ := 0
   Desc _ _ _ := PUnit
