@@ -394,11 +394,13 @@ boundary.
 `timeOf` on every realizer, an output-size envelope and a composition overhead
 expressed through those certificates, and subadditive description size, with
 every law in the shifted form `p.eval k ≤ P.eval (n + k)`. Canonical certificates
-are necessary, not a convenience: the single-tape backend's composition overhead
-is the second machine's polynomial evaluated at the first machine's output
-envelope, a hypothetical length that a per-use certificate such as `PolyRealizer`
-(bounds at actual inputs only) does not control, so families of `PolyRealizer`s
-cannot compose there.
+are necessary, not a convenience: `timeOf_compose_le` charges the second
+machine's polynomial at the first machine's output envelope, a hypothetical
+length that a per-use certificate such as `PolyRealizer` (bounds at actual
+inputs only) does not control, so families of `PolyRealizer`s cannot compose
+there. The separate `overhead` slot covers cost beyond that; on the single-tape
+backend it is `0`, since `EncPolyTime.comp_time_eval` makes the two-term bound
+an equality.
 
 A `FamRealizer` is one realizer per security parameter `n` with a uniform time
 bound in `n + k` (`k` the encoded input size) and a uniform description bound in
