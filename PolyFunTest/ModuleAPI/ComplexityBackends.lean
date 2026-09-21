@@ -6,21 +6,24 @@ Authors: Devon Tuma
 
 module
 
+public import ComplexityBackends.CslibSingleTape.Adequacy
 public import ComplexityBackends.CslibSingleTape.Nontriviality
+public import ComplexityBackends.CslibSingleTape.ProgramWitness
 
 /-!
 # The single-tape backend through ordinary imports
 
-Consumers reach the backend's separation, its execution-work envelope and its description measure
-through public statements only; `Boundary.toGeneric` and `EncPolyTime.size` are opaque, so the
-named cost and size laws are the API.
+Consumers reach the backend's separation, its execution-work envelope, its description measure,
+its per-parameter program witnesses and its per-step adequacy through public statements only;
+`Boundary.toGeneric` and `EncPolyTime.size` are opaque, so the named cost and size laws are the
+API.
 -/
 
 @[expose] public section
 
 namespace PolyFunTest.ModuleAPI.ComplexityBackends
 
-open PFunctor
+open PFunctor PFunctor.DynSystem.DynComputation
 open _root_.ComplexityBackends.CslibSingleTape _root_.ComplexityBackends.CslibSingleTape.PPoly
 
 /-- The constant-`true` family at the coin boundary, immediately returning. -/
@@ -52,5 +55,19 @@ example : ∃ f : (n : ℕ) → BitVec n → Bool, ¬ ∃ q : Polynomial ℕ,
       Backend.description.RealizableLE (BitEncFam.bitVecX.enc n)
         (BitEncFam.bool.option.enc n) (q.eval n) :=
   Backend.exists_not_realizableLE_poly
+
+/-- A P/poly certificate is a generic program witness at every parameter. -/
+noncomputable example (witness : Witness coinBoundary constProgram) (n : ℕ) :
+    PolynomialProgramWitness Backend.quantitative (coinBoundary.toGeneric n) (totalContract n)
+      (constProgram n) :=
+  witness.toPolynomialProgramWitness n
+
+/-- Per-step adequacy: some halting run of a certified machine stays within its cost. -/
+example {A B : Type} {a : A → List Bool} {b : B → List Bool} {f : A → B}
+    (code : EncPolyTime a b f) (x : A) :
+    ∃ t ≤ Backend.quantitative.cost code x,
+      Relation.RelatesInSteps code.polyTime.tm.TransitionRelation
+        (code.polyTime.tm.initCfg (a x)) (code.polyTime.tm.haltCfg (b (f x))) t :=
+  Backend.cost_adequate code x
 
 end PolyFunTest.ModuleAPI.ComplexityBackends

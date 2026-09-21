@@ -18,7 +18,9 @@ used independently in semantics, effect handling, and concurrent systems.
 
 Generic resource accounting is already part of PolyFun. Concrete complexity
 theory lives in `ComplexityBackends`, whose cslib single-tape backend includes a
-non-uniform, boundary-pinned P/poly certificate. These facts do not identify a generic
+non-uniform, boundary-pinned P/poly certificate. Such a certificate yields a generic
+`PolynomialProgramWitness` at each parameter, with a constant second-order bound
+(`Witness.toPolynomialProgramWitness`). These facts do not identify a generic
 realization with a cryptographic PPT adversary. Such an interpretation needs
 its own encoding, probability, resource, and adequacy obligations.
 

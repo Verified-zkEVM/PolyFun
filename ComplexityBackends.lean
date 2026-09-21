@@ -6,6 +6,7 @@ Authors: Devon Tuma, Elias Judin, Quang Dao
 
 module
 
+public import ComplexityBackends.CslibSingleTape.Adequacy
 public import ComplexityBackends.CslibSingleTape.Backend
 public import ComplexityBackends.CslibSingleTape.BasicMachines
 public import ComplexityBackends.CslibSingleTape.BitEncoding
@@ -15,6 +16,7 @@ public import ComplexityBackends.CslibSingleTape.Family
 public import ComplexityBackends.CslibSingleTape.Nontriviality
 public import ComplexityBackends.CslibSingleTape.PPoly
 public import ComplexityBackends.CslibSingleTape.PolyTime
+public import ComplexityBackends.CslibSingleTape.ProgramWitness
 public import ComplexityBackends.CslibSingleTape.Snoc
 
 /-!

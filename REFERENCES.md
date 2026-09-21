@@ -421,6 +421,19 @@ initial functions under composition and limited recursion on notation.
 and composition clauses; limited recursion has no generic counterpart yet.
 
 Used in: `PolyFun/Realizability/Quantitative/Family.lean`.
+### HUM13 — Hofheinz, Unruh, Müller-Quade, *Polynomial Runtime and Composability*
+
+Dennis Hofheinz, Dominique Unruh, and Jörn Müller-Quade.
+*Polynomial Runtime and Composability*.
+*Journal of Cryptology* 26(3):375–441, 2013.
+DOI: <https://doi.org/10.1007/s00145-012-9127-4>
+
+Polynomial runtime for reactive, interactive machines, where the bound must
+survive composition with the environment and other machines. The whole-program
+linking theorem that PolyFun's backend still lacks is a statement of this kind;
+`Backend.cost_adequate` covers only the per-step half.
+
+Used in: `docs/guides/realizability.md`.
 
 ### GHP09 — Ghani, Hancock, Pattinson, *Representations of stream processors*
 

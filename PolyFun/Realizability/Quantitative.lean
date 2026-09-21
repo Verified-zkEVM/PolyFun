@@ -556,6 +556,48 @@ theorem work_cost_add_finalHead_le
       simp only [Nat.add_mul, Nat.one_mul] at ih ⊢
       omega
 
+/-- Pointwise bounds on encoded positions and indices bound a trace's traffic by its length
+times the per-step traffic. -/
+theorem traffic_cost_le (positionBound indexBound : ℕ)
+    (position_le : ∀ position, Q.size bd.pos position ≤ positionBound)
+    (index_le : ∀ index : p.Idx, Q.size bd.idx index ≤ indexBound)
+    {start finish : R.machine.State} (trace : ExecutionTrace R start finish) :
+    trace.cost.traffic ≤ trace.length * (positionBound + indexBound) := by
+  induction trace with
+  | nil => simp [cost, length]
+  | @query state position next finish view_eq direction tail ih =>
+      have hposition := position_le position
+      have hindex := index_le ⟨position, direction⟩
+      simp only [cost, length, ExecutionCost.traffic_add, ExecutionCost.traffic_ofWork,
+        ExecutionCost.traffic_observe, ExecutionCost.traffic_query, Nat.add_mul, Nat.one_mul]
+      omega
+
+/-- A pointwise bound on encoded hidden states bounds a trace's peak state size. -/
+theorem peakStateSize_cost_le (stateBound : ℕ)
+    (state_le : ∀ state, Q.size R.state state ≤ stateBound)
+    {start finish : R.machine.State} (trace : ExecutionTrace R start finish) :
+    trace.cost.peakStateSize ≤ stateBound := by
+  induction trace with
+  | nil => simp [cost]
+  | @query state position next finish view_eq direction tail ih =>
+      have := state_le state
+      simp only [cost, ExecutionCost.peakStateSize_add, ExecutionCost.peakStateSize_observe,
+        ExecutionCost.ofWork, ExecutionCost.query]
+      omega
+
+/-- A pointwise bound on encoded readouts bounds a trace's peak readout size. -/
+theorem peakHeadSize_cost_le (headBound : ℕ)
+    (head_le : ∀ state, Q.size bd.head (R.machine.head state) ≤ headBound)
+    {start finish : R.machine.State} (trace : ExecutionTrace R start finish) :
+    trace.cost.peakHeadSize ≤ headBound := by
+  induction trace with
+  | nil => simp [cost]
+  | @query state position next finish view_eq direction tail ih =>
+      have := head_le state
+      simp only [cost, ExecutionCost.peakHeadSize_add, ExecutionCost.peakHeadSize_observe,
+        ExecutionCost.ofWork, ExecutionCost.query]
+      omega
+
 /-- A trace starting at a returning state is empty: its final state is unchanged and it incurs no
 transition cost.
 
@@ -827,6 +869,32 @@ theorem resolvesInUnder_all_iff (M : DynComputation.{u} p α β)
           rcases query with ⟨position, next⟩
           simp only [ResolvesInUnder, ResolvesIn, hview, true_implies]
           exact forall_congr' fun direction ↦ ih (next direction)
+
+omit [DecidableEq p.A] in
+/-- Ordinary branchwise resolution implies resolution under any answer relation: restricting the
+allowed answers only weakens the universal quantification. -/
+theorem resolvesInUnder_of_resolvesIn (M : DynComputation.{u} p α β)
+    (allows : ∀ position, p.B position → Prop) :
+    ∀ (k : ℕ) (state : M.State), M.ResolvesIn k state → M.ResolvesInUnder allows k state := by
+  intro k
+  induction k with
+  | zero =>
+      intro state h
+      rw [resolvesInUnder_zero]
+      cases hview : M.view state with
+      | inl value => exact ⟨value, rfl⟩
+      | inr query => simp [ResolvesIn, hview] at h
+  | succ k ih =>
+      intro state h
+      cases hview : M.view state with
+      | inl value => simp [ResolvesInUnder, hview]
+      | inr query =>
+          rcases query with ⟨position, next⟩
+          simp only [ResolvesInUnder, hview]
+          intro direction _
+          have h' := h
+          simp only [ResolvesIn, hview] at h'
+          exact ih _ (h' direction)
 
 namespace QuantitativeRealization
 
