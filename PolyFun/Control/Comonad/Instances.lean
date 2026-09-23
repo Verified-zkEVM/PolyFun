@@ -260,7 +260,7 @@ end Stream'
 namespace NonEmptyList
 variable {α β γ : Type u}
 
--- Helper theorem for LawfulFunctor
+/-- Mapping twice over a nonempty list composes the payload maps. -/
 theorem map_map (g : α → β) (h : β → γ) (nel : NonEmptyList α) :
     map h (map g nel) = map (h ∘ g) nel := by
   cases nel; simp [map, List.map_map]
@@ -320,16 +320,8 @@ instance : LawfulCoapplicative NonEmptyList where
           exact congrArg _ (ih t2 t3)
   map_coseq := by
     intro _ _ _ _ f g ⟨ha, la⟩ ⟨hb, lb⟩
-    simp only [Functor.map, coseq, zip, NonEmptyList.map]
-    congr 1
-    induction la generalizing lb with
-    | nil => simp [List.zip]
-    | cons h t ih =>
-      cases lb with
-      | nil => simp [List.zip]
-      | cons h2 t2 =>
-        simp only [List.zip, List.zipWith, List.map]
-        exact congrArg _ (ih t2)
+    simp only [Functor.map, coseq, zip, NonEmptyList.map, List.zip_map]
+    rfl
 
 theorem filterMap_fromList?_tails_map (f : α → β) (l : List α) :
     List.map (fun nel : NonEmptyList α => f nel.head)
@@ -454,12 +446,14 @@ theorem map_comp (f : α → β) (g : β → γ) (z : Zipper α) :
     map g (map f z) = map (g ∘ f) z := by
   cases z; simp [map, List.map_map]
 
+/-- Reading the focus of each leftward context recovers the stored left list. -/
 theorem iterateLeft_map_extract (ls : List α) (f : α) (rs : List α) :
     List.map Zipper.extract (iterateLeft ⟨ls, f, rs⟩) = ls := by
   induction ls generalizing f rs with
   | nil => simp [iterateLeft]
   | cons l ls' ih => simp [iterateLeft, extract, ih]
 
+/-- Reading the focus of each rightward context recovers the stored right list. -/
 theorem iterateRight_map_extract (ls : List α) (f : α) (rs : List α) :
     List.map Zipper.extract (iterateRight ⟨ls, f, rs⟩) = rs := by
   induction rs generalizing ls f with
@@ -514,10 +508,12 @@ theorem duplicate_duplicate (l : List α) (c : α) (r : List α) :
   · exact iterateLeft_duplicate l c r
   · exact iterateRight_duplicate l c r
 
+/-- Mapping a zipper maps every context in its duplication. -/
 theorem duplicate_map' (f : α → β) (z : Zipper α) :
     duplicate (map f z) = map (map f) (duplicate z) := by
   cases z; exact duplicate_map _ _ _ _
 
+/-- Duplicating contexts twice agrees with duplicating each individual context. -/
 theorem duplicate_duplicate' (z : Zipper α) :
     duplicate (duplicate z) = map duplicate (duplicate z) := by
   cases z; exact duplicate_duplicate _ _ _
@@ -577,20 +573,8 @@ instance : LawfulCoapplicative Zipper where
           | cons h3 t3 => simp only [List.zip, List.zipWith]; exact congrArg _ (ih t2 t3)
   map_coseq := by
     intro _ _ _ _ f g ⟨la, fa, ra⟩ ⟨lb, fb, rb⟩
-    simp only [Functor.map, Coseq.coseq, coseq, map]
-    congr 1
-    · induction la generalizing lb with
-      | nil => simp [List.zip]
-      | cons h t ih =>
-        cases lb with
-        | nil => simp [List.zip]
-        | cons h2 t2 => simp only [List.zip, List.zipWith, List.map]; exact congrArg _ (ih t2)
-    · induction ra generalizing rb with
-      | nil => simp [List.zip]
-      | cons h t ih =>
-        cases rb with
-        | nil => simp [List.zip]
-        | cons h2 t2 => simp only [List.zip, List.zipWith, List.map]; exact congrArg _ (ih t2)
+    simp only [Functor.map, Coseq.coseq, coseq, map, List.zip_map]
+    rfl
 
 instance : LawfulComonad Zipper where
   map_eq_extend_extract := by

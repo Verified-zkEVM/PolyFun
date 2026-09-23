@@ -246,6 +246,20 @@ warrant its own `namespace` or its own file.
 
 ## Style Notes
 
+- For proof-only cleanup, preserve declaration names, signatures, binder and
+  universe parameters, attributes, imports, and intended definitional equations.
+  Prefer a direct theorem application or constructor over a one-step tactic
+  wrapper; reuse existing map, preservation, and extensionality laws before
+  introducing induction or unfolding representations.
+- Use `rfl` for definitional equations and proof-irrelevance equalities when the
+  module's public reduction contract permits it; do not expose an opaque body
+  just to shorten a proof. Combine identical induction branches only when the
+  common proof remains readable. Retain explicit dependent transports and case splits when
+  they explain the types; fewer lines alone do not justify heavier automation.
+- Keep theorem docstrings concise and state the useful relation or assumptions.
+  Check claims about equivalence, bounds, and codomains against the declaration,
+  including empty cases. Record reusable guidance in the owning documentation;
+  keep per-file cleanup inventories outside the tracked tree.
 - Keep imports at the top of the file.
 - Follow Mathlib naming conventions where possible. See the
   [Mathlib naming guide](https://leanprover-community.github.io/contribute/naming.html)

@@ -365,8 +365,8 @@ theorem zero_le (cost : ExecutionCost) : 0 ≤ cost :=
     Nat.zero_le cost.peakStateSize, Nat.zero_le cost.peakHeadSize⟩
 
 /-- Adding nonnegative resources on the right can only enlarge a resource record. -/
-theorem le_add_right (left right : ExecutionCost) : left ≤ left + right := by
-  exact ⟨Nat.le_add_right .., Nat.le_add_right .., Nat.le_add_right ..,
+theorem le_add_right (left right : ExecutionCost) : left ≤ left + right :=
+  ⟨Nat.le_add_right .., Nat.le_add_right .., Nat.le_add_right ..,
     Nat.le_max_left .., Nat.le_max_left ..⟩
 
 end ExecutionCost

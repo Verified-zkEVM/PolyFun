@@ -133,9 +133,7 @@ theorem transportRunEvidence_proof_irrel {E : Type uV}
     {x y : E × State} (h h' : x = y)
     (evidence : F x.1 × I x.2) :
     transportRunEvidence F I h evidence =
-      transportRunEvidence F I h' evidence := by
-  cases h
-  rfl
+      transportRunEvidence F I h' evidence := rfl
 
 /-- Successive transports of run evidence compose. -/
 theorem transportRunEvidence_trans {E : Type uV}

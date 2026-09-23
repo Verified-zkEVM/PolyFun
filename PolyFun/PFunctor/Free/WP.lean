@@ -541,8 +541,8 @@ theorem reachableUnder_liftM_subset
 theorem reachable_liftM_subset
     (handler : (position : P.A) → FreeM Q (P.B position))
     (program : FreeM P α) :
-    (program.liftM handler).reachable ⊆ program.reachable := by
-  exact reachableUnder_liftM_subset handler (fun _ _ => True) (fun _ _ => True)
+    (program.liftM handler).reachable ⊆ program.reachable :=
+  reachableUnder_liftM_subset handler (fun _ _ => True) (fun _ _ => True)
     (by
       intro position
       exact (leavesSatisfyUnder_iff_forall_reachable _ _ _).mpr

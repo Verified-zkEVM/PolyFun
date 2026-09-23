@@ -10,7 +10,11 @@ public import PolyFun.PFunctor.Equiv.Basic
 import Batteries.Tactic.Lint
 
 /-!
-# More properties about lenses between polynomial functors
+# Lenses between polynomial functors
+
+Lenses map positions forward and directions backward. This module provides extensionality,
+identity and composition, the action on polynomial objects, and canonical lenses for sums,
+products, tensor, and substitution. Position and direction universes remain independent.
 -/
 
 @[expose] public section
@@ -33,6 +37,8 @@ namespace PFunctor
 
 namespace Lens
 
+/-- Lenses agree when their position maps agree pointwise and their direction maps agree after
+transport along those position equalities. -/
 @[ext (iff := false)]
 theorem ext {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l₁ l₂ : Lens P Q)
     (h₁ : ∀ a, l₁.toFunA a = l₂.toFunA a) (h₂ : ∀ a, l₁.toFunB a = (h₁ a) ▸ l₂.toFunB a) :

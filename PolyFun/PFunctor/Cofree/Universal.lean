@@ -811,8 +811,8 @@ theorem hom_ext_cogenerator
     {C : Comonoid.{max uA uB, max uA uB}}
     {f g : Comonoid.Hom C (comonoid P)}
     (h : cogenerator P ∘ₗ f.toLens = cogenerator P ∘ₗ g.toLens) :
-    f = g := by
-  exact (homEquiv (P := P) C).injective h
+    f = g :=
+  (homEquiv (P := P) C).injective h
 
 /-- The cofree hom-set equivalence is natural in its source comonoid. -/
 theorem homEquiv_naturality_left
