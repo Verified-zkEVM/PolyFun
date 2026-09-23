@@ -493,9 +493,7 @@ theorem transport_proof_irrel
     {T : Display.{uA', uB', uC', uD'} Q}
     {f g : PFunctor.Handler (FreeM Q) P} (h h' : f = g)
     (df : Display.Handler S T f) :
-    transport h df = transport h' df := by
-  cases h
-  rfl
+    transport h df = transport h' df := rfl
 
 theorem transport_trans
     {Q : PFunctor.{uA', uB'}}

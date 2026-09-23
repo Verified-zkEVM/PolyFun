@@ -143,8 +143,8 @@ private theorem displayedBehavior_parallel_comm_presented
               (Display.Coalgebra.terminal (Display.responder T))
               (Display.Coalgebra.terminal (Display.responder S))))
           (right, left) (displayedRight, displayedLeft)) =
-      parallelDisplayedBehavior S T left displayedLeft right displayedRight := by
-  exact (parallelCommPresentationHom S T).toDisplayedBehavior_naturality
+      parallelDisplayedBehavior S T left displayedLeft right displayedRight :=
+  (parallelCommPresentationHom S T).toDisplayedBehavior_naturality
     (left, right) (displayedLeft, displayedRight)
 
 /-- The unique proof-relevant coalgebra over the empty responder. -/
@@ -319,8 +319,8 @@ private theorem displayedBehavior_parallel_zero_right_presented
           (Display.M (Display.responder S)) (fun _ => PUnit)
           (Display.Coalgebra.terminal (Display.responder S))
           zeroDisplayedCoalgebra)
-        (left, PUnit.unit) (displayedLeft, PUnit.unit) := by
-  exact (parallelZeroRightUnitorPresentationHom S).toDisplayedBehavior_naturality
+        (left, PUnit.unit) (displayedLeft, PUnit.unit) :=
+  (parallelZeroRightUnitorPresentationHom S).toDisplayedBehavior_naturality
     (left, PUnit.unit) (displayedLeft, PUnit.unit)
 
 /-- Replacing the operational presentation of the empty responder by its
@@ -459,8 +459,8 @@ private theorem displayedBehavior_parallel_zero_right_presentation
           (Display.M (Display.responder S)) (fun _ => PUnit)
           (Display.Coalgebra.terminal (Display.responder S))
           zeroDisplayedCoalgebra)
-        (left, PUnit.unit) (displayedLeft, PUnit.unit) := by
-  exact (parallelZeroRightTerminalPresentationHom S).toDisplayedBehavior_naturality
+        (left, PUnit.unit) (displayedLeft, PUnit.unit) :=
+  (parallelZeroRightTerminalPresentationHom S).toDisplayedBehavior_naturality
     (left, PUnit.unit) (displayedLeft, PUnit.unit)
 
 /-- The displayed left unitor as a displayed map between raw responder
@@ -612,8 +612,8 @@ private theorem displayedBehavior_parallel_zero_left_presented
           (fun _ => PUnit) (Display.M (Display.responder S))
           zeroDisplayedCoalgebra
           (Display.Coalgebra.terminal (Display.responder S)))
-        (PUnit.unit, right) (PUnit.unit, displayedRight) := by
-  exact (parallelZeroLeftUnitorPresentationHom S).toDisplayedBehavior_naturality
+        (PUnit.unit, right) (PUnit.unit, displayedRight) :=
+  (parallelZeroLeftUnitorPresentationHom S).toDisplayedBehavior_naturality
     (PUnit.unit, right) (PUnit.unit, displayedRight)
 
 /-- Presentation change from the raw empty responder on the left to the
@@ -755,8 +755,8 @@ private theorem displayedBehavior_parallel_zero_left_presentation
           (fun _ => PUnit) (Display.M (Display.responder S))
           zeroDisplayedCoalgebra
           (Display.Coalgebra.terminal (Display.responder S)))
-        (PUnit.unit, right) (PUnit.unit, displayedRight) := by
-  exact (parallelZeroLeftTerminalPresentationHom S).toDisplayedBehavior_naturality
+        (PUnit.unit, right) (PUnit.unit, displayedRight) :=
+  (parallelZeroLeftTerminalPresentationHom S).toDisplayedBehavior_naturality
       (PUnit.unit, right) (PUnit.unit, displayedRight)
 
 

@@ -120,8 +120,8 @@ def toDecodeDirection (x : (CofreeP P).Obj α)
 theorem children_decode (x : (CofreeP P).Obj α)
     (direction : P.B (M.head x.fst)) :
     M.children (decode x) (toDecodeDirection x direction) =
-      decode (childObj x direction) := by
-  exact congr_heq (Obj.ext_iff.mp (dest_decode x)).2 (cast_heq _ direction)
+      decode (childObj x direction) :=
+  congr_heq (Obj.ext_iff.mp (dest_decode x)).2 (cast_heq _ direction)
 
 @[simp]
 theorem forgetLabels_toFunB (shape : (constProd P α).A)
