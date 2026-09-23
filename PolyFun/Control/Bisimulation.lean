@@ -273,8 +273,8 @@ protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {r₁₂ : L₁.State → L₂.State → Prop} {r₂₃ : L₂.State → L₃.State → Prop}
     (h₁₂ : IsStrongSimulation L₁ L₂ r₁₂)
     (h₂₃ : IsStrongSimulation L₂ L₃ r₂₃) :
-    IsStrongSimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) := by
-  exact isStrongSimulation_iff.mpr
+    IsStrongSimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) :=
+  isStrongSimulation_iff.mpr
     (Cslib.LTS.IsSimulation.comp _ _
       (isStrongSimulation_iff.mp h₁₂) (isStrongSimulation_iff.mp h₂₃))
 
@@ -350,8 +350,8 @@ theorem silentSteps {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop}
     (h : IsWeakSimulation L₁ L₂ rel) {s₁ t₁ : L₁.State} {s₂ : L₂.State}
     (hrel : rel s₁ s₂) (hsteps : L₁.SilentSteps s₁ t₁) :
-    ∃ t₂, L₂.SilentSteps s₂ t₂ ∧ rel t₁ t₂ := by
-  exact (isWeakSimulation_iff.mp h).follow_internal hrel hsteps
+    ∃ t₂, L₂.SilentSteps s₂ t₂ ∧ rel t₁ t₂ :=
+  (isWeakSimulation_iff.mp h).follow_internal hrel hsteps
 
 /-- A weak simulation lifts a weak transition to a weak transition. -/
 theorem weakStep {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -371,8 +371,8 @@ protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {r₁₂ : L₁.State → L₂.State → Prop} {r₂₃ : L₂.State → L₃.State → Prop}
     (h₁₂ : IsWeakSimulation L₁ L₂ r₁₂)
     (h₂₃ : IsWeakSimulation L₂ L₃ r₂₃) :
-    IsWeakSimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) := by
-  exact isWeakSimulation_iff.mpr
+    IsWeakSimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) :=
+  isWeakSimulation_iff.mpr
     (Cslib.LTS.IsSimulation.comp _ _ (isWeakSimulation_iff.mp h₁₂)
       (isWeakSimulation_iff.mp h₂₃).isSimulation_saturate_left)
 

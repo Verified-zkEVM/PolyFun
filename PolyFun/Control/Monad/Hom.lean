@@ -121,10 +121,12 @@ type are equal. -/
     (h : ∀ α (x : m α), F x = G x) : F = G :=
   MonadHom.ext (funext fun α => funext fun x => h α x)
 
-@[grind =] lemma mmap_pure (F : m →ᵐ n) (x : α) : F (pure x) = pure x := by grind
+@[grind =] lemma mmap_pure (F : m →ᵐ n) (x : α) : F (pure x) = pure x :=
+  F.toFun_pure' x
 
 @[grind =] lemma mmap_bind (F : m →ᵐ n) (mx : m α) (my : α → m β) :
-    F (mx >>= my) = F mx >>= fun x => F (my x) := by grind
+    F (mx >>= my) = F mx >>= fun x => F (my x) :=
+  F.toFun_bind' mx my
 
 @[simp, grind =] lemma mmap_map [LawfulMonad m] [LawfulMonad n] (F : m →ᵐ n) (x : m α) (g : α → β) :
     F (g <$> x) = g <$> F x := by simp [monad_norm]
