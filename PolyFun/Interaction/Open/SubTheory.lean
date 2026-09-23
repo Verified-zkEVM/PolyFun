@@ -15,7 +15,7 @@ An `OpenTheory` says how open systems may be combined. It does not say which
 open systems belong to a chosen class. `SubTheory T` supplies that second,
 purely structural notion.
 
-`SubTheory T` is that notion. It is a boundary-indexed membership predicate
+It is a boundary-indexed membership predicate
 on `T.Obj` together with proofs that membership survives the theory's
 operations. Nothing here defines corruption, protocol membership, probability,
 cost, or realizability. A later bridge may instantiate `mem` with one of those

@@ -18,9 +18,9 @@ This file defines `Multiparty.Observation X`, the **maximally general
 single-projection form** of a local view at a node whose move space is `X`,
 together with its information-lattice algebra.
 
-`Observation X = Σ Obs : Type u, X → Obs` is one quotient morphism `X → Obs`
-packaged with its codomain. Three independent literature traditions converge
-on this exact object:
+`Observation X = Σ Obs : Type u, X → Obs` packages an observation function
+`X → Obs` with its codomain; surjectivity is not required. Related uses of
+observation functions include:
 
 * Halpern-Vardi epistemic logic ("Reasoning About Knowledge"): an agent's
   observation is a projection from global state to local indistinguishability
@@ -47,10 +47,7 @@ where `Observation.basePFunctor X : PFunctor.{u+1, u}` has positions
 observation of `X` is precisely an *element* (in `PFunctor.Idx` terms) of
 this polynomial: a chosen codomain `Obs` together with a projection
 `X → Obs`. The `Σ`-form `Σ Obs : Type u, X → Obs` is recovered
-definitionally because `PFunctor.Idx P` unfolds to `Σ a, P.B a`. The
-polynomial substrate is the truth; the `Observation` name is an
-ergonomic re-skin in the spirit of `OracleSpec` / `OracleComp` and
-`TypeTree.done` / `TypeTree.node`.
+definitionally because `PFunctor.Idx P` unfolds to `Σ a, P.B a`.
 
 ## Information lattice
 
@@ -130,8 +127,8 @@ end Observation
 
 /--
 `Observation X` is the polynomial-element form of a local view at a node
-whose move space is `X`: a single quotient morphism `toObs : X → Obs`
-packaged with its codomain `Obs`.
+whose move space is `X`: an observation function `toObs : X → Obs`
+packaged with its codomain `Obs`, with no surjectivity requirement.
 
 It is **definitionally** the index type of `Observation.basePFunctor X`:
 `Observation X = PFunctor.Idx (basePFunctor X) = Σ Obs : Type u, X → Obs`,
@@ -180,9 +177,9 @@ protected def bot (X : Type u) : Observation X := ⟨PUnit, fun _ => PUnit.unit�
 more revealing than `k₂`: the projection of `k₁` factors through that of
 `k₂`.
 
-Equivalently, every `k₂`-indistinguishability class is a union of
-`k₁`-indistinguishability classes, so observers using `k₁` learn at most what
-observers using `k₂` learn. This is the natural ordering in which
+Consequently, moves indistinguishable under `k₂` are also indistinguishable
+under `k₁`. The factor must be defined on the entire codomain of `k₂`,
+including observations outside its image. In this ordering,
 `Observation.bot` is least and `Observation.top` is greatest.
 -/
 @[expose]

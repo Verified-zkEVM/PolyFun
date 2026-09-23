@@ -16,10 +16,9 @@ public import Batteries.Tactic.Lint
 
 This module supplies the interface vocabulary shared by execution networks and open systems.
 
-The current concurrent semantic center, `ProcessOver`, describes closed
-residual processes whose step protocols already live inside the system. For
-UC-style openness, contextual plugging, and general interaction with an
-environment, we also need a typed notion of:
+`ProcessOver` describes closed residual processes whose step protocols live
+inside the system. Interaction with an environment uses typed boundaries to
+describe:
 
 * what traffic may enter a component,
 * what traffic may leave it, and
@@ -56,7 +55,7 @@ pulls the eventual response back.
 The composition product is only functorial for `QueryHom` (lenses), not for
 `Hom` (charts), because the fibre-level map must be contravariant.
 
-This file also introduces the first equivalence layer:
+Interface and boundary isomorphisms are bundled as:
 
 * `Interface.Equiv` for interface isomorphisms, and
 * `PortBoundary.Equiv` for the corresponding variance-aware isomorphisms of
@@ -66,9 +65,8 @@ These structures are the starting point for expressing tensor unit,
 associativity, and symmetry at the boundary level without hard-coding more
 primitive operations into `OpenTheory`.
 
-This file does **not** yet define open worlds, plugging, or runtime semantics.
-Those later layers should build on these typed boundary primitives rather than
-re-introducing their own packet/interface vocabulary.
+The `Interaction.Open` layer uses these boundaries for open composition and
+plugging; `Interaction.Execution` uses them for packet routing and execution.
 
 ## References
 
@@ -92,9 +90,8 @@ An interface packages:
 * a type of ports, written `I.port`, and
 * for each port `a : I.port`, a type of messages `I.message a`.
 
-This is the same dependent-container structure already used throughout the
-existing `PFunctor` world. The point of the new name is only to reflect the
-intended reading: these are typed communication interfaces.
+The underlying dependent-container structure is `PFunctor`; the accessors
+give its positions and directions their communication interpretation.
 -/
 -- `Interface`'s two universes are the independent port (position) and message (direction)
 -- universes of the underlying `PFunctor`; kept separate for generality.
