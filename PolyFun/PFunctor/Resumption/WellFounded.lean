@@ -104,8 +104,8 @@ def equivWellFoundedResumption :
   equivWWithReturn.trans W.equivWellFoundedM
 
 @[simp] theorem equivWellFoundedResumption_coe (program : FreeM P α) :
-    (equivWellFoundedResumption program).1 = toResumption program := by
-  exact (toResumption_eq_toM_toWWithReturn program).symm
+    (equivWellFoundedResumption program).1 = toResumption program :=
+  (toResumption_eq_toM_toWWithReturn program).symm
 
 @[simp] theorem equivWellFoundedResumption_symm_apply
     (computation : Resumption P α)

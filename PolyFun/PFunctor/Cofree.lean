@@ -11,11 +11,9 @@ public import PolyFun.PFunctor.M.Vertex
 
 /-! # Cofree Comonads
 
-This file defines the `Cofree` comonad, which is a comonad that is constructed from a functor and a
-coalgebra.
-
-Since this is a coinductive type, the only way to define it right now is to use the `M` type
-construction from `PFunctor`.
+For a polynomial `F`, `CofreeC F α` is the M-type of `X ↦ α × F X`: a potentially infinite
+`F`-branching tree with an `α` label at every node. The counit reads the root label, and
+coextension relabels each node using the subtree rooted there.
 
 ## Main definitions
 
@@ -126,8 +124,8 @@ def extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) : CofreeC 
       rfl
 
 @[simp] theorem dest_extend {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
-    M.dest (extend t f) = (constProd F β).map (fun x => extend x f) (extendF f t) := by
-  simp only [extend]; exact M.dest_corec (P := constProd F β) (g := extendF f) t
+    M.dest (extend t f) = (constProd F β).map (fun x => extend x f) (extendF f t) :=
+  M.dest_corec (P := constProd F β) (g := extendF f) t
 
 theorem dest_extend_eq {β : Type u} (t : CofreeC F α) (f : CofreeC F α → β) :
     M.dest (extend t f) =
