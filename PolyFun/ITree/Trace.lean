@@ -315,8 +315,8 @@ private theorem weakTrace_from_none_aux
     {target : Option (ITree F α)}
     (hsource : source = none)
     (trace : (toLTS F α).WeakTrace source observations target) :
-    observations = [] ∧ target = none := by
-  exact Control.LTS.WeakTrace.rec
+    observations = [] ∧ target = none :=
+  Control.LTS.WeakTrace.rec
     (motive := fun initial obs final _ =>
       initial = none → obs = [] ∧ final = none)
     (fun s hs => ⟨rfl, hs⟩)
@@ -344,8 +344,8 @@ private theorem weakTrace_from_pure_aux (result : α)
     {target : Option (ITree F α)}
     (hsource : source = some (pure result))
     (trace : (toLTS F α).WeakTrace source observations target) :
-    observations = [] ∨ observations = [.ret result] := by
-  exact Control.LTS.WeakTrace.rec
+    observations = [] ∨ observations = [.ret result] :=
+  Control.LTS.WeakTrace.rec
     (motive := fun initial obs _ _ =>
       initial = some (pure result) →
         obs = [] ∨ obs = [.ret result])
