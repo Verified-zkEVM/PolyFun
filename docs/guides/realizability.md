@@ -558,7 +558,7 @@ Its adapter half connects this theory to PolyFun:
   running-time bound across input lengths is involved.
 - `ComplexityBackends/CslibSingleTape/Family.lean` supplies the canonical polynomial
   certificates (`Backend.polynomialBackend`: certified time, envelope `1 + X + p`,
-  overhead `q.comp (1 + X + p)`), the finite-table primitive (`Backend.finiteTables`),
+  additional composition overhead `0`), the finite-table primitive (`Backend.finiteTables`),
   and the round trip between `EncPolyTimeFam` and the generic families.
 
 - `ComplexityBackends/CslibSingleTape/ProgramWitness.lean` bridges the
