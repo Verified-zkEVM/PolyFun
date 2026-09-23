@@ -3,6 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Devon Tuma, Elias Judin
 -/
+
 module
 
 public import ComplexityBackends.CslibSingleTape.PolyTime
@@ -10,9 +11,8 @@ public import ComplexityBackends.CslibSingleTape.PolyTime
 /-!
 # Appending a fixed bit with a single-tape machine
 
-This supplies the missing low-level string primitive needed to feed a fixed
-encoded answer into a machine state. It is independent of PolyFun and oracle
-semantics. The encoding-level API also records the additive description-size
+`snocComputer` appends a fixed bit to its input and restores the head position.
+The encoding-level API records the additive description-size
 bound for finite iteration; it makes no polynomial-time claim about an
 iteration count that grows with the security parameter.
 -/
@@ -171,10 +171,8 @@ noncomputable def appendBit {σ : Type} (encoding : σ → List Bool) (c : Bool)
 /-- The append witness uses at most two states. -/
 theorem size_appendBit {σ : Type} (encoding : σ → List Bool) (c : Bool) :
     (appendBit encoding c).size ≤ 2 := by
-  rw [EncPolyTime.size_eq_card]
-  change Fintype.card (snocPolyTimeComputable c).tm.State ≤ 2
-  rw [← PolyTimeComputable.size_eq_card]
-  exact size_snocPolyTimeComputable c
+  simpa only [EncPolyTime.size_eq_card, PolyTimeComputable.size_eq_card, appendBit] using
+    size_snocPolyTimeComputable c
 
 /-- A fixed finite iterate has description size at most one plus the sum of
 the step-machine sizes. This is description accounting only: composing a
