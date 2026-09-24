@@ -97,7 +97,7 @@ noncomputable abbrev quantitative : QuantitativeStepClass encodingStepClass wher
     code.time.eval (source input).length
   admissible _ := trivial
 
-noncomputable instance : quantitative.HasCategory where
+noncomputable instance : quantitative.HasComposition where
   identity representation := EncPolyTime.id representation
   compose first second := first.comp second
   composeOverhead := @fun _ _ _ source _ _ _ _ first second input ↦

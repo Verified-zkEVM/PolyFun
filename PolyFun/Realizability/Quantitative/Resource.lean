@@ -708,7 +708,7 @@ end RankedResourceCertificate
 
 section SeqComp
 
-variable [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive]
+variable [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive]
   {final : Type u} {middleOut : C.Str final}
   {R₁ : QuantitativeRealization Q bd}
   {R₂ : QuantitativeRealization Q (bd.mid middleOut)}
