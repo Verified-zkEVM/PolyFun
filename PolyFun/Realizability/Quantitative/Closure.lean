@@ -80,7 +80,7 @@ class HasProd [P : C.HasProd] where
 
 namespace HasProd
 
-variable [Q.HasCategory] [P : C.HasProd] (QP : Q.HasProd)
+variable [Q.HasComposition] [P : C.HasProd] (QP : Q.HasProd)
 
 /-- Execute two functions independently on the components of a product. -/
 def map {A B A' B' : Type u} {a : C.Str A} {b : C.Str B} {a' : C.Str A'}
@@ -150,7 +150,7 @@ class HasSum [S : C.HasSum] where
 
 namespace HasSum
 
-variable [Q.HasCategory] [S : C.HasSum] (QS : Q.HasSum)
+variable [Q.HasComposition] [S : C.HasSum] (QS : Q.HasSum)
 
 /-- Execute functions independently on the two summands. -/
 def map {A B A' B' : Type u} {a : C.Str A} {b : C.Str B} {a' : C.Str A'}
@@ -200,7 +200,7 @@ def strength {A E : Type u} (a : C.Str A) (e : C.Str E) :
 
 /-- Execute a function on the present branch of an optional value while retaining a context: the
 executable counterpart of `StepClass.HasOption.omapCtx_mem`. -/
-def mapContext [Q.HasCategory] {A B E : Type u} {a : C.Str A} {b : C.Str B} {e : C.Str E}
+def mapContext [Q.HasComposition] {A B E : Type u} {a : C.Str A} {b : C.Str B} {e : C.Str E}
     {f : A × E → B} (code : Q.Realizer (P.prod a e) b f) :
     Q.Realizer (P.prod (O.option a) e) (O.option b)
       fun input ↦ input.1.map fun value ↦ f (value, input.2) :=
@@ -225,7 +225,7 @@ class IsDistributive [P : C.HasProd] [S : C.HasSum] where
 
 namespace IsDistributive
 
-variable [Q.HasCategory] [P : C.HasProd] [S : C.HasSum] [QS : Q.HasSum]
+variable [Q.HasComposition] [P : C.HasProd] [S : C.HasSum] [QS : Q.HasSum]
   (QD : Q.IsDistributive)
 
 /-- Execute case analysis while retaining a common context. -/
@@ -307,7 +307,7 @@ end OfFn
 The new initialization code is genuine sequential composition. Its exact cost therefore follows
 from `QuantitativeStepClass.cost_comp`; the head and update code are shared unchanged. -/
 @[implicit_reducible]
-def precomp [Q.HasCategory] {D : Type u} {inputRep : C.Str D} {f : D → A}
+def precomp [Q.HasComposition] {D : Type u} {inputRep : C.Str D} {f : D → A}
     (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f) :
     QuantitativeRealization Q (bd.withInput inputRep) where
   machine := R.machine.setInit (R.machine.init ∘ f)
@@ -320,7 +320,7 @@ def precomp [Q.HasCategory] {D : Type u} {inputRep : C.Str D} {f : D → A}
 
 /-- Initialization cost of quantitative input precomposition is bounded by its components and
 the backend's explicit connection overhead. -/
-theorem cost_initCode_precomp_le [Q.HasCategory]
+theorem cost_initCode_precomp_le [Q.HasComposition]
     {D : Type u} {inputRep : C.Str D} {f : D → A}
     (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
     (input : D) :
@@ -332,7 +332,7 @@ theorem cost_initCode_precomp_le [Q.HasCategory]
     exact Q.cost_comp_le code R.initCode input
 
 /-- Exact initialization cost when the backend carries an exact-category refinement. -/
-theorem cost_initCode_precomp [Q.HasCategory] [Q.HasExactCategory]
+theorem cost_initCode_precomp [Q.HasComposition] [Q.HasExactComposition]
     {D : Type u} {inputRep : C.Str D} {f : D → A}
     (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
     (input : D) :
@@ -343,7 +343,7 @@ theorem cost_initCode_precomp [Q.HasCategory] [Q.HasExactCategory]
   exact Q.cost_comp code R.initCode input
 
 /-- Input precomposition leaves one-step readout work unchanged. -/
-@[simp] theorem cost_headCode_precomp [Q.HasCategory]
+@[simp] theorem cost_headCode_precomp [Q.HasComposition]
     {D : Type u} {inputRep : C.Str D} {f : D → A}
     (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
     (state : R.machine.State) :
@@ -351,7 +351,7 @@ theorem cost_initCode_precomp [Q.HasCategory] [Q.HasExactCategory]
   rfl
 
 /-- Input precomposition leaves enabled-transition work unchanged. -/
-@[simp] theorem cost_updateCode_precomp [Q.HasCategory]
+@[simp] theorem cost_updateCode_precomp [Q.HasComposition]
     {D : Type u} {inputRep : C.Str D} {f : D → A}
     (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
     (step : R.machine.State × p.Idx) :
@@ -359,7 +359,7 @@ theorem cost_initCode_precomp [Q.HasCategory] [Q.HasExactCategory]
   rfl
 
 /-- Input precomposition leaves hidden-state encodings unchanged. -/
-@[simp] theorem size_state_precomp [Q.HasCategory]
+@[simp] theorem size_state_precomp [Q.HasComposition]
     {D : Type u} {inputRep : C.Str D} {f : D → A}
     (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
     (state : R.machine.State) :
@@ -367,7 +367,7 @@ theorem cost_initCode_precomp [Q.HasCategory] [Q.HasExactCategory]
   rfl
 
 /-- Input precomposition leaves encoded one-step readout sizes unchanged. -/
-@[simp] theorem size_head_precomp [Q.HasCategory]
+@[simp] theorem size_head_precomp [Q.HasComposition]
     {D : Type u} {inputRep : C.Str D} {f : D → A}
     (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
     (state : R.machine.State) :
@@ -379,7 +379,7 @@ theorem cost_initCode_precomp [Q.HasCategory] [Q.HasExactCategory]
 
 section MapResult
 
-variable [Q.HasCategory] [QS : Q.HasSum]
+variable [Q.HasComposition] [QS : Q.HasSum]
 
 /-- Postcompose returned values of a quantitative realization with explicit backend code. -/
 @[implicit_reducible]
@@ -404,7 +404,7 @@ end MapResult
 
 section SeqComp
 
-variable [Q.HasCategory] [QS : Q.HasSum] [QO : Q.HasOption] [QP : Q.HasProd]
+variable [Q.HasComposition] [QS : Q.HasSum] [QO : Q.HasOption] [QP : Q.HasProd]
   [QD : Q.IsDistributive] {D : Type u} {outRep : C.Str D}
 
 /-- Sequentially compose two quantitative realizations.
@@ -473,7 +473,7 @@ end SeqComp
 
 section Wrap
 
-variable [Q.HasCategory] [QS : Q.HasSum] [QO : Q.HasOption] [QP : Q.HasProd]
+variable [Q.HasComposition] [QS : Q.HasSum] [QO : Q.HasOption] [QP : Q.HasProd]
   {q : PFunctor.{u, u}} [DecidableEq q.A]
 
 /-- Transport a quantitative realization along a lens carrying executable position and answer
@@ -537,7 +537,7 @@ namespace IsQuantitativelyRealizableBy
 variable {program : A → FreeM p B}
 
 /-- Quantitative realizability is closed under executable input precomposition. -/
-theorem precomp [Q.HasCategory] {D : Type u} {inputRep : C.Str D} {f : D → A}
+theorem precomp [Q.HasComposition] {D : Type u} {inputRep : C.Str D} {f : D → A}
     (h : IsQuantitativelyRealizableBy Q bd program)
     (code : Q.Realizer inputRep bd.input f) :
     IsQuantitativelyRealizableBy Q (bd.withInput inputRep) (program ∘ f) := by
@@ -549,7 +549,7 @@ theorem precomp [Q.HasCategory] {D : Type u} {inputRep : C.Str D} {f : D → A}
 
 /-- Quantitative realizability is closed under executable result postcomposition. -/
 theorem mapResult {D : Type u} {outRep : C.Str D} {f : B → D}
-    [Q.HasCategory] [Q.HasSum]
+    [Q.HasComposition] [Q.HasSum]
     (h : IsQuantitativelyRealizableBy Q bd program)
     (code : Q.Realizer bd.out outRep f) :
     IsQuantitativelyRealizableBy Q (bd.withOut outRep)
@@ -561,7 +561,7 @@ theorem mapResult {D : Type u} {outRep : C.Str D} {f : B → D}
 
 section SeqComp
 
-variable [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive]
+variable [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive]
   {D : Type u} {outRep : C.Str D}
   {next : B → FreeM p D}
 
@@ -583,7 +583,7 @@ end SeqComp
 
 section Wrap
 
-variable [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.HasOption]
+variable [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption]
   {q : PFunctor.{u, u}} [DecidableEq q.A]
 
 /-- Quantitative realizability is closed under executable interface transport. -/

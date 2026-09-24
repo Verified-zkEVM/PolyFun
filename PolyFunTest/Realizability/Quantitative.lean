@@ -31,15 +31,15 @@ def zeroBackend : QuantitativeStepClass StepClass.unconstrained where
   admissible _ := True.intro
 
 /-- Exact categorical wiring data for the cost-free backend. -/
-def zeroExactCategory : zeroBackend.ExactCategory where
+def zeroExactComposition : zeroBackend.ExactComposition where
   identity _ := PUnit.unit
   compose _ _ := PUnit.unit
   composeOverhead _ _ _ := 0
   cost_compose_eq _ _ _ := rfl
 
-instance : zeroBackend.HasCategory := zeroExactCategory.toHasCategory
+instance : zeroBackend.HasComposition := zeroExactComposition.toHasComposition
 
-instance : zeroBackend.HasExactCategory := zeroExactCategory.toHasExactCategory
+instance : zeroBackend.HasExactComposition := zeroExactComposition.toHasExactComposition
 
 /-- An interface exposing one query with no possible typed response. -/
 abbrev emptyResponse : PFunctor := PFunctor.mk PUnit fun _ ↦ PEmpty

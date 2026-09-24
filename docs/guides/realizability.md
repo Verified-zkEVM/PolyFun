@@ -271,22 +271,22 @@ structure QuantitativeStepClass (C : StepClass) where
   cost : Realizer a b f → A → ℕ
   admissible : Realizer a b f → C.Hom a b f
 
-class QuantitativeStepClass.HasCategory (Q) where
+class QuantitativeStepClass.HasComposition (Q) where
   identity : Realizer a a id
   compose : Realizer a b f → Realizer b d g → Realizer a d (g ∘ f)
   composeOverhead : … → A → ℕ
   cost_compose_le : cost (compose rf rg) x ≤
     cost rf x + cost rg (f x) + composeOverhead rf rg x
 
-class QuantitativeStepClass.HasExactCategory (Q) : Prop where
+class QuantitativeStepClass.HasExactComposition (Q) : Prop where
   cost_compose_eq : cost (compose rf rg) x =
     cost rf x + cost rg (f x) + composeOverhead rf rg x
 ```
 
-The semantic function indexes its code, so correctness is intrinsic. Categorical
-wiring is optional: the generic closure API needs only a sound upper bound, while
-operational backends can retain their exact equation through `HasExactCategory`
-or the `ExactCategory` adapter. The cost remains relative to the chosen backend;
+The semantic function indexes its code, so correctness is intrinsic. Executable
+composition is optional: the generic closure API needs only a sound upper bound, while
+operational backends can retain their exact equation through `HasExactComposition`
+or the `ExactComposition` adapter. The cost remains relative to the chosen backend;
 an adequacy theorem must still connect that backend to a conventional Turing/RAM
 model before a downstream library calls the resulting bound polynomial time.
 
@@ -339,9 +339,9 @@ encodings.
 
 `Quantitative/Polynomial.lean` supplies `FirstOrderPolynomial` and
 `PolyRealizer`, which retains one executable realizer plus work and encoded
-output-size polynomials. `PolynomialCategory` proves identity and composition,
+output-size polynomials. `PolynomialComposition` proves identity and composition,
 including an explicit polynomial for `composeOverhead`. `PolynomialModel` is an
-ordinary value collecting that category with a `StructuralKernel` and
+ordinary value collecting those composition bounds with a `StructuralKernel` and
 `PolynomialStructuralClosure`; it is deliberately not a global instance.
 Structural product, sum, and option encodings carry construction and payload
 recovery bounds in both directions.
@@ -358,7 +358,7 @@ composition have constructors that discharge the shared run-bound interface.
 These are backend-relative contracts, not a declaration of any complexity class.
 
 `QuantitativeWordClass` lifts code, size, and cost from a word-function backend
-through `WordClass` representations. Separate category adapters lift either a
+through `WordClass` representations. Separate composition adapters lift either a
 sound composition bound or the optional exact equation. As with the qualitative
 adapter, clients must pin decodable representations rather than existentially
 select arbitrary injections.
@@ -393,18 +393,26 @@ boundary.
 
 ### Polynomial backends and families
 
-`Quantitative/Family.lean` is where a description measure meets running time. A
-`PolynomialBackend` asks the backend for a canonical polynomial certificate
-`timeOf` on every realizer, an output-size envelope and a composition overhead
-expressed through those certificates, and subadditive description size, with
-every law in the shifted form `p.eval k ≤ P.eval (n + k)`. Canonical certificates
-are necessary, not a convenience: `timeOf_compose_le` charges the second
-machine's polynomial at the first machine's output envelope, a hypothetical
-length that a per-use certificate such as `PolyRealizer` (bounds at actual
-inputs only) does not control, so families of `PolyRealizer`s cannot compose
-there. The separate `overhead` slot covers cost beyond that; on the single-tape
-backend it is `0`, since `EncPolyTime.comp_time_eval` makes the two-term bound
-an equality.
+`Quantitative/Family.lean` separates two contracts. `PolynomialTimeBackend` supplies a
+canonical polynomial `timeOf` on every realizer, an output-size envelope, and composition
+overhead, with shifted domination laws `p.eval k ≤ P.eval (n + k)`.
+`DescriptionComposition` supplies identity and subadditive composition bounds for a selected
+description measure. `PolynomialBackend` combines them for families; a time-only consumer
+needs no description measure.
+
+The canonical time law controls the second machine at hypothetical lengths produced by the
+first machine's output envelope. A per-use `PolyRealizer` alone need not bound the backend's
+chosen polynomial at those lengths. The family theorem consequently asks for uniform control
+of that polynomial and its composition overhead. This is a requirement of this certificate
+interface, not an impossibility of composing polynomially bounded functions.
+On the single-tape backend `PolynomialBackend.overhead` is zero because the two-term canonical
+time equation already includes the envelope. Its separate `HasComposition.composeOverhead`
+is a conservative allowance relative to charges at the actual intermediate value.
+
+`HasComposition` has no unit or associativity law on code. `HasExactComposition` adds the exact
+cost equation, not those laws. Likewise two associations of `FamRealizer.comp` realize the same
+function family but may choose different code and polynomial certificates. `FamRealizer.weaken`
+enlarges bounds while retaining every member; certificate equality is not a semantic law.
 
 A `FamRealizer` is one realizer per security parameter `n` with a uniform time
 bound in `n + k` (`k` the encoded input size) and a uniform description bound in
@@ -615,6 +623,27 @@ ordinary imports. The generated `PolyFun` umbrella imports no backend, and
 `scripts/check-modules.sh` rejects any such import.
 
 ## What A Certificate Cannot Fake
+
+### Interpretation obligations
+
+The generic certificate validates its selected mathematical contract. Its complexity
+interpretation additionally depends on the concrete backend and encoding: a `Realizer`
+indexed by a semantic function supplies executable computation only when the backend proves
+that connection. Likewise a backend charge may be an upper envelope rather than an actual
+step count. The single-tape adequacy theorem establishes that distinction explicitly.
+
+Representation faithfulness prevents identifying distinct outputs, but does not certify
+efficient encoding or exclude cached answers. Canonical constructors or executable
+translation certificates are required when interpreting a boundary in a conventional model.
+The raw backend product encoding is concatenation; variable-width operands need a justified
+split point or a self-delimiting codec before operational product closure can be asserted.
+
+Uniform time and description bounds on a family do not select one machine for all parameters.
+A packed witness instead has one realization on a parameter-containing input. A bridge must
+state which encoding it retains, whether it bounds reachable or all states, and whether its
+conclusion is a function family, a program witness, or a concrete machine execution.
+
+### Adversarial boundaries
 
 The quantitative layer is only as honest as the facts that pin it. What a
 dishonest prover cannot do, and where the definitions leave the burden with the

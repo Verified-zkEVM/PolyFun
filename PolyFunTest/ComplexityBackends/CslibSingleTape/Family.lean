@@ -62,4 +62,27 @@ example {A B : Type} {a : A → List Bool} {b : B → List Bool} {f : A → B}
     (r : EncPolyTime a b f) : Backend.polynomialBackend.timeOf r = r.time :=
   Backend.timeOf_eq r
 
+/-! ## Composition certificates depend on association -/
+
+/-- One fixed identity machine at every parameter. -/
+@[expose] noncomputable def identityFamily :
+    Backend.description.FamRealizer Backend.polynomialBackend
+      (fun _ (_ : Unit) ↦ []) (fun _ (_ : Unit) ↦ []) (fun _ ↦ id) :=
+  FamRealizer.id Backend.polynomialBackend _
+
+/-- The same machines with a deliberately looser linear time certificate. -/
+@[expose] noncomputable def linearIdentityFamily :
+    Backend.description.FamRealizer Backend.polynomialBackend
+      (fun _ (_ : Unit) ↦ []) (fun _ (_ : Unit) ↦ []) (fun _ ↦ id) :=
+  identityFamily.weaken (1 + Polynomial.X) 1
+    (fun _ ↦ by simp [identityFamily, Backend.polynomialBackend])
+    (fun _ ↦ by simp [identityFamily, Backend.polynomialBackend])
+
+/-- Both associations are valid realizers of identity, but their time certificates differ. -/
+example :
+    ((identityFamily.comp identityFamily).comp linearIdentityFamily).time.eval 0 = 6 ∧
+      (identityFamily.comp (identityFamily.comp linearIdentityFamily)).time.eval 0 = 9 := by
+  norm_num [identityFamily, linearIdentityFamily, FamRealizer.comp, FamRealizer.weaken,
+    FamRealizer.id, Backend.polynomialBackend]
+
 end PolyFunTest.ComplexityBackends.CslibSingleTape.Family

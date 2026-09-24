@@ -31,13 +31,13 @@ def zeroBackend : QuantitativeStepClass StepClass.unconstrained where
   cost _ _ := 0
   admissible _ := True.intro
 
-instance : zeroBackend.HasCategory where
+instance : zeroBackend.HasComposition where
   identity _ := PUnit.unit
   compose _ _ := PUnit.unit
   composeOverhead _ _ _ := 0
   cost_compose_le _ _ _ := le_rfl
 
-instance : zeroBackend.HasExactCategory where
+instance : zeroBackend.HasExactComposition where
   cost_compose_eq _ _ _ := rfl
 
 instance : zeroBackend.HasProd where
@@ -145,7 +145,7 @@ example {C : StepClass.{0, 0}} (Q : QuantitativeStepClass.{0, 0, 0} C) [P : C.Ha
       fun input ↦ input.1.map fun value ↦ (value, input.2) :=
   QuantitativeStepClass.HasOption.strength Q QO a e
 
-example {C : StepClass.{0, 0}} (Q : QuantitativeStepClass.{0, 0, 0} C) [Q.HasCategory]
+example {C : StepClass.{0, 0}} (Q : QuantitativeStepClass.{0, 0, 0} C) [Q.HasComposition]
     [P : C.HasProd] [O : C.HasOption] (QO : Q.HasOption) {A B E : Type} {a : C.Str A}
     {b : C.Str B} {e : C.Str E} {f : A × E → B} (code : Q.Realizer (P.prod a e) b f) :
     Q.Realizer (P.prod (O.option a) e) (O.option b)
