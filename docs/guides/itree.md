@@ -107,6 +107,20 @@ follow the polynomial event interface described below.
   external replies share a universe because the current `PFunctor.sum`
   representation requires it. No other ITree API inherits that constraint.
 
+## Iterative monads
+
+`ITree.iter` is an instance of the `MonadIter` interface in
+[`Control/Monad/Iter.lean`](../../PolyFun/Control/Monad/Iter.lean): a monad
+with a uniform loop combinator `iterM : (β → m (β ⊕ α)) → β → m α`. Its lawful
+version, `LawfulMonadIter`, states the Elgot laws (the four Conway laws and
+uniformity) over a monad-specific equivalence; for interaction trees that
+equivalence is weak bisimulation, because every loop step inserts a silent
+guard. [`Control/Monad/Iter/Instances.lean`](../../PolyFun/Control/Monad/Iter/Instances.lean)
+makes `StateT`, `ReaderT`, `ExceptT`, and `OptionT` over an iterative monad
+iterative, with `run_iterM` equations by definition, and proves the state and
+reader transformers lawful over a lawful base, so `StateT σ (ITree F)` and
+`ReaderT ρ (ITree F)` carry the same loop laws as `ITree F`.
+
 ## Recovering Coq references
 
 Coq file references in module docstrings and Lean comments use the file
