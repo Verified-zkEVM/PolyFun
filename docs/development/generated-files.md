@@ -22,7 +22,10 @@ Edit the source of truth, not the output.
   roots in their own right, so the generator wraps their import lists in the
   standard file header and the library's module docstring (both fixed text
   inside the script; edit them there, not in the output), which
-  `check-docs-integrity.py` requires of every umbrella except `PolyFun.lean`.
+  `check-docs-integrity.py` requires of every umbrella except `PolyFun.lean`. An import of a
+  module that declares `deprecated_module` receives the suffix `-- deprecated_module: ignore`,
+  so the umbrella builds without deprecation warnings while ordinary consumers still see them;
+  see [compatibility](compatibility.md).
 - `./scripts/check-imports.sh` regenerates each umbrella, compares it with a
   temporary backup, and restores the original. It reports any difference
   without retaining the regenerated output.

@@ -141,13 +141,28 @@ EOF_DOCSTRING
   esac
 }
 
+# A module that declares itself `deprecated_module` (docs/development/compatibility.md) warns at
+# every import site. The umbrella must still import it, so the generated line carries Lean's
+# per-import `-- deprecated_module: ignore` suffix; the `module` line itself stays bare because
+# `scripts/check-modules.sh` matches it exactly.
+umbrella_import_line() {
+  local file="$1"
+  local module_name="${file%.lean}"
+  module_name="${module_name//\//.}"
+  if grep -qE '^deprecated_module([[:space:]]|$)' "$file"; then
+    echo "public import $module_name -- deprecated_module: ignore"
+  else
+    echo "public import $module_name"
+  fi
+}
+
 {
   umbrella_header "$lib"
   echo "module"
   echo ""
-  git ls-files -- "$source_root/*.lean" \
-    | LC_ALL=C sort \
-    | sed 's/\.lean//;s,/,.,g;s/^/public import /'
+  while IFS= read -r file; do
+    umbrella_import_line "$file"
+  done < <(git ls-files -- "$source_root/*.lean" | LC_ALL=C sort)
   umbrella_docstring "$lib"
 } > "$tmp_file"
 

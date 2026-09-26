@@ -41,7 +41,10 @@ git add PolyFun ToCslib ComplexityBackends
 ```
 
 The generator reads tracked paths and rejects untracked source files. Never
-edit generated umbrellas by hand. Tutorial and test libraries use glob targets;
+edit generated umbrellas by hand. When a production module moves, leave a
+`deprecated_module` shim at the old path and record it in
+[compatibility](compatibility.md); the generator marks the umbrella's import
+of a shim so warning-fatal builds stay green. Tutorial and test libraries use glob targets;
 they have no generated umbrella. The Parliament case study uses
 `./scripts/update-lib.sh Examples.Parliament`. Add new tutorial modules to the explicit
 environment-lint, text-lint, and axiom-sweep module lists in `lakefile.toml`,

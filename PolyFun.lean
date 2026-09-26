@@ -171,6 +171,58 @@ public import PolyFun.Interaction.TwoParty.Role
 public import PolyFun.Interaction.TwoParty.Strategy
 public import PolyFun.Interaction.TwoParty.Swap
 public import PolyFun.Interaction.TwoParty.Syntax
+public import PolyFun.Interaction.UC.ActivationObservation -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.CorruptionModel -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.Emulates -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.EmulatesQuotient -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.EmulatesWithin -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.EnvAction -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.EnvOpenProcess -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.GlobalSubroutine -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.Interface -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.Leakage -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.MomentaryCorruption -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.Notation -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenProcess -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenProcessCoherence -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenProcessFactorization -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenProcessInterleave -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenProcessModel -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenProcessQuotient -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenProcessSamplerCoherence -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenProcessSamplerEquiv -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenProcessSamplerFactorization -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenSyntax.AtomSubTheory -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenSyntax.Expr -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenSyntax.Interp -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenSyntax.Raw -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenTheory -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenTheory.Congruence -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenTheory.Family -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenTheory.PlugFactorization -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.OpenTheory.Quotient -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveNetwork -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveNetwork.Assembly -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveNetwork.Behavior -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveNetwork.Budget -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveNetwork.Diagram -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveNetwork.Factorization -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveNetwork.Factorization.Right -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveNetwork.HandledAssembly -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveNetwork.HandledDiagram -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveNetwork.Serial -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveNetwork.Transport -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ReactiveProcess -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.Realizability -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.RequestNetwork -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.RequestNetwork.Serial -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.RequestNetwork.Transport -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.SamplerObservation -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ScheduledOpenProcessModel -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.ScheduledSamplerFactorization -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.Scheduler -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.SecureEmulation -- deprecated_module: ignore
+public import PolyFun.Interaction.UC.SubTheory -- deprecated_module: ignore
 public import PolyFun.Logic.HEq
 public import PolyFun.PFunctor.Adjunctions
 public import PolyFun.PFunctor.Basic
