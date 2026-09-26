@@ -72,7 +72,7 @@ the constant trace and `*` the pointwise product.
 See the module docstring for motivation and the catalogue of instances
 (`QueryLog`, `QueryCount`, ...) it is intended to subsume.
 -/
-@[reducible] def Trace (ω : Type u) (X : Type v) : Type max u v := X → ω
+abbrev Trace (ω : Type u) (X : Type v) : Type max u v := X → ω
 
 namespace Trace
 

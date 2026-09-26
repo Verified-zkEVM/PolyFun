@@ -43,8 +43,9 @@ def checkBridges : IO Unit := do
   unless exit.code == 1 && exit.journal.state.revision == 0 && failed.persistCount == 1 &&
       failedLog == [.read, .persist, .tell] do
     throw (IO.userError "instrumentation changed failure behavior")
-  IO.println "Walkthrough: nonempty prefixes and successful/failed instrumented execution passed"
-
+  IO.println "checkBridges: ok"
+/-- info: checkBridges: ok -/
+#guard_msgs in
 #eval checkBridges
 
 end ParliamentTest.Walkthrough

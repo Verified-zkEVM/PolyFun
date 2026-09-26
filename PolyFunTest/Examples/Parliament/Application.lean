@@ -58,8 +58,6 @@ def scenario (name : String) (program : Scenario Unit) : IO Unit := do
   let [output] := final.exports | throw (IO.userError s!"{name}: wrong publication count")
   unless output.markdown == expected.markdown && output.json == expected.json do
     throw (IO.userError s!"{name}: wrong publication payload")
-  IO.println s!"Application/{name}: persisted, replayed, rendered, and verified"
-
 /-- All existing accepted meeting journals are exercised through the real application protocol. -/
 def allScenarios : IO Unit := do
   for (name, program) in [
@@ -75,6 +73,7 @@ def allScenarios : IO Unit := do
     ("appeal continuation", Edges.appealContinuation), ("unfinished", Edges.unfinishedBusiness),
     ("due precedence", Edges.duePrecedence), ("midnight recess", Edges.recessAcrossMidnight)] do
     scenario name program
+  IO.println "allScenarios: ok"
 
 /-- Failed writes never acknowledge the candidate, even when a backend may have stored it. -/
 def failures : IO Unit := do
@@ -102,8 +101,7 @@ def failures : IO Unit := do
     | throw (IO.userError "rejection run did not stop")
   unless result.journal.state.revision == 0 && memory.persistCount == 0 do
     throw (IO.userError "rejected input persisted")
-  IO.println "Application/failures: rejection, ambiguous writes, publication and readback failures"
-
+  IO.println "failures: ok"
 /-- Chunk boundaries preserve every residual phase and do not repeat completed writes. -/
 def chunks : IO Unit := do
   let .ok journal := config.start | throw (IO.userError "invalid config")
@@ -117,8 +115,7 @@ def chunks : IO Unit := do
   let .done result := second | throw (IO.userError "second chunk did not finish")
   unless result.code == 0 && final.persistCount == 1 && final.publishCount == 1 do
     throw (IO.userError "resumption repeated an effect")
-  IO.println "Application/chunks: retained residual state without repeating writes"
-
+  IO.println "chunks: ok"
 /-- Contextual recordability distinguishes a missing second, consent, and amended wording. -/
 def minuteBoundaries : IO Unit := do
   let .ok (_, run) := missingSecond.run {} | throw (IO.userError "setup failed")
@@ -141,11 +138,18 @@ def minuteBoundaries : IO Unit := do
   | .ok _ => throw (IO.userError "tampered artifact accepted")
   unless escapeMarkdown "a\n# *b* & <c>" == "a\\n\\# \\*b\\* \\& \\<c\\>" do
     throw (IO.userError "Markdown escaping mismatch")
-  IO.println "Application/minutes: typed outcomes, final wording, escaping, and tamper rejection"
-
+  IO.println "minuteBoundaries: ok"
+/-- info: allScenarios: ok -/
+#guard_msgs in
 #eval allScenarios
+/-- info: failures: ok -/
+#guard_msgs in
 #eval failures
+/-- info: chunks: ok -/
+#guard_msgs in
 #eval chunks
+/-- info: minuteBoundaries: ok -/
+#guard_msgs in
 #eval minuteBoundaries
 
 end ParliamentTest.Application

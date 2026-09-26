@@ -172,8 +172,7 @@ def rejectedPrefix : IO Unit := do
       unless state == error.state && events == error.events do
         throw (IO.userError "rejected suffix altered the accepted prefix")
     | .error _ => throw (IO.userError "accepted prefix was not replayable")
-  IO.println "Replay rejection preserves its accepted prefix and stops before the suffix"
-
+  IO.println "rejectedPrefix: ok"
 def configuration : IO Unit := do
   match initializeAssembly wordDomain rules roster 0 calendar [7] with
   | .ok state => unless state == initial do throw (IO.userError "wrong initial state")
@@ -185,8 +184,7 @@ def configuration : IO Unit := do
     match invalid with
     | .error .invalidConfiguration => pure ()
     | _ => throw (IO.userError "invalid configuration accepted")
-  IO.println "Initialization rejects duplicate identities, invalid dates, and zero quorum"
-
+  IO.println "configuration: ok"
 -- This interpreter consumes raw commands through PolyFun's actual IFreeM monadic fold.
 def scriptedInput (s : AssemblyState wordDomain) :
     StateT (List (Command wordDomain)) (Except String) (EnabledInput rules s) := do
@@ -205,8 +203,7 @@ def polyfunReplay : IO Unit := do
   | .ok (result, remaining) =>
     unless result.1 == run.state && remaining.isEmpty do
       throw (IO.userError "PolyFun script diverged from replay")
-  IO.println "PolyFun IFreeM interpreter agrees with amendment journal"
-
+  IO.println "polyfunReplay: ok"
 def openHandler : IO Unit := do
   let setup : Scenario Unit := do
     start
@@ -223,20 +220,45 @@ def openHandler : IO Unit := do
         no.next.ruling.any (fun r => !r.answer.allowed) do
       throw (IO.userError "handler responses were not recorded independently")
   | _, _ => throw (IO.userError "valid external reply rejected")
-  IO.println "Open judgment handlers accept both external answers without semantic axioms"
-
+  IO.println "openHandler: ok"
+/-- info: empty poll: ok -/
+#guard_msgs in
 #eval runScenario "empty poll" emptyPoll
+/-- info: speech clock and interruption: ok -/
+#guard_msgs in
 #eval runScenario "speech clock and interruption" speechClock
+/-- info: quorum at decision: ok -/
+#guard_msgs in
 #eval runScenario "quorum at decision" quorumAtDecision
+/-- info: scoped closure: ok -/
+#guard_msgs in
 #eval runScenario "scoped closure" scopedClosure
+/-- info: failed closure: ok -/
+#guard_msgs in
 #eval runScenario "failed closure" failedClosure
+/-- info: appeal continuation: ok -/
+#guard_msgs in
 #eval runScenario "appeal continuation" appealContinuation
+/-- info: unfinished business: ok -/
+#guard_msgs in
 #eval runScenario "unfinished business" unfinishedBusiness
+/-- info: due business precedence: ok -/
+#guard_msgs in
 #eval runScenario "due business precedence" duePrecedence
+/-- info: recess across midnight: ok -/
+#guard_msgs in
 #eval runScenario "recess across midnight" recessAcrossMidnight
+/-- info: polyfunReplay: ok -/
+#guard_msgs in
 #eval polyfunReplay
+/-- info: openHandler: ok -/
+#guard_msgs in
 #eval openHandler
+/-- info: rejectedPrefix: ok -/
+#guard_msgs in
 #eval rejectedPrefix
+/-- info: configuration: ok -/
+#guard_msgs in
 #eval configuration
 
 end ParliamentTest.Edges

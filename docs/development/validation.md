@@ -20,7 +20,7 @@ proofs, examples, import boundaries, or validation infrastructure.
 | Generated imports | Generated umbrellas match the tracked source tree |
 | Documentation | Checker regressions, agent symlink, local paths and heading anchors, module docstrings, README excerpt synchronization |
 | `--lint` | Batteries environment linters and Mathlib text-style checks over production and example libraries plus the executable entry point |
-| `--test` | `PolyFunTest` with warnings fatal, `lake test`, native CLI/filesystem tests, and both separate consumers |
+| `--test` | `PolyFunTest` with warnings and printed output fatal (`--wfail --iofail`), `lake test`, native CLI/filesystem tests, and both separate consumers |
 | `--axioms` | Axiom-sweep fixture matrix and zero-debt check over production, tutorial, case-study, and executable module roots |
 
 The committed axiom baseline is a zero-debt policy, not an allowlist. Both

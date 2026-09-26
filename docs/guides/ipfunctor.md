@@ -248,7 +248,7 @@ read the state back.
   The monoidal-product, distributive, and Σ / Π combinators present in
   `PFunctor.Lens` are not yet mirrored; add on demand.
 - Several `PFunctor`-layer files have no indexed analogue yet —
-  `PFunctor/{Bound, Category, Cofree, M, Trace}.lean`,
+  `PFunctor/{Bound, Category, Cofree, Trace}.lean`,
   `PFunctor/Lens/{Cartesian, State}.lean`, and the displayed-free family
   `PFunctor/Free/{Displayed, Displayed/*, Path, Replicate}.lean`. The
   indexed side currently exposes only `Free/{Family, Basic, Indexed}.lean`

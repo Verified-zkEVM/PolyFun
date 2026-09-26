@@ -201,8 +201,8 @@ proof.
 | `tell`/`WriterT.run` | `WriterT.MonoidWP.instWPMonad` (`WriterT/WP.lean`) with `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` in `Do/Spec.lean` | — (`WriterT` support is inexact; `Support/Instances.lean`) | `MAlgOrdered.instWriterT` | `WriterT.mapHom` | — |
 | `while`/`repeat` | `ITree` only (`ITree/Do.lean`); no rule on finite `FreeM` | — | — | — | — |
 
-Open in this table: the relational (`MAlgRelOrdered`) loop rules and a `mapM` judgment rule
-(see the landscape memo's follow-ups). `try … catch` elaborates to `MonadExcept.tryCatch`, whose
+Open in this table: the relational (`MAlgRelOrdered`) loop rules and a `mapM` judgment rule;
+both need a relational invariant shape that the unary `Spec.forIn_list` rule does not supply. `try … catch` elaborates to `MonadExcept.tryCatch`, whose
 lifting rule core states as `Spec.tryCatch_MonadExcept` but — unlike its twin
 `Spec.throw_MonadExcept` — does not tag; `Do/Spec.lean` registers it, and
 `PolyFunTest/Do/Except.lean` runs `vcgen` through a `try … catch` on `ExceptT String SetM`.

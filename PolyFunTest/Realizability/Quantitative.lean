@@ -87,11 +87,12 @@ theorem stuckRealization_not_runsWithinUnder_none :
   obtain ⟨_, hfalse⟩ := hresponse
   exact hfalse
 
-#check QuantitativeRealization.ExecutionTrace.Conforms
-#check QuantitativeRealization.ExecutionTrace.finish_eq_and_cost_eq_zero_of_view_return
-#check ResolvesInUnder
-#check QuantitativeRealization.TraceProgressUnder
-#check QuantitativeRealization.RunsWithinUnder
-#check IsQuantitativelyRealizableWithinUnder
+noncomputable example := @QuantitativeRealization.ExecutionTrace.Conforms
+noncomputable example :=
+  @QuantitativeRealization.ExecutionTrace.finish_eq_and_cost_eq_zero_of_view_return
+noncomputable example := @ResolvesInUnder
+noncomputable example := @QuantitativeRealization.TraceProgressUnder
+noncomputable example := @QuantitativeRealization.RunsWithinUnder
+noncomputable example := @IsQuantitativelyRealizableWithinUnder
 
 end PFunctor.QuantitativeTest

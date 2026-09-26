@@ -182,7 +182,7 @@ def contramapInput {γ : Type uγ} (M : DynComputation.{u} p α β) (f : γ → 
 input type, while keeping its dynamics untouched. Reducible so that the state
 type, one-step views, and behaviors of `M.setInit g` reduce to those of `M`:
 computations sharing `toMachine` share every derived step map definitionally. -/
-@[reducible] def setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
+abbrev setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
     (g : γ → M.State) : DynComputation.{u} p γ β :=
   ⟨M.toMachine, g⟩
 
@@ -716,7 +716,7 @@ This is the primary constructor for a hand-built machine: the supplied step
 function is exactly what `view` reads back, so no repackaging is visible to the
 caller. Reducible, so the state type and one-step views of a computation built
 this way are transparently those of the supplied data. -/
-@[reducible] def ofStep {S : Type u} (stepFn : S → β ⊕ p.Obj S) (init : α → S) :
+abbrev ofStep {S : Type u} (stepFn : S → β ⊕ p.Obj S) (init : α → S) :
     DynComputation.{u} p α β where
   State := S
   toDynSystem :=

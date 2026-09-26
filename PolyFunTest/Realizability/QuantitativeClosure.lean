@@ -133,18 +133,18 @@ example : zeroBackend.cost wrappedReturn.initCode PUnit.unit = 0 := rfl
 
 example : zeroBackend.cost wrappedReturn.headCode PUnit.unit = 0 := rfl
 
-#check QuantitativeStepClass.HasProd.pairRight
-#check QuantitativeStepClass.HasSum.map
-#check QuantitativeStepClass.IsDistributive.elimContext
-#check Lens.QuantitativelyAdmissible
-#check Lens.QuantitativelyAdmissible.toIsAdmissible
-#check QuantitativeRealization.seqComp
-#check QuantitativeRealization.wrap
-#check QuantitativeRealization.ExecutionTrace.queryCount_le_length
-#check QuantitativeRealization.ExecutionTrace.interfaceTraffic_le_traffic_cost
-#check QuantitativeRealization.RunsWithin.queryCount_le
-#check QuantitativeRealization.RunsWithin.interfaceTraffic_le
-#check QuantitativeRealization.RunsWithin.traceProgress
-#check QuantitativeRealization.RunsWithin.response_nonempty
+noncomputable example := @QuantitativeStepClass.HasProd.pairRight
+noncomputable example := @QuantitativeStepClass.HasSum.map
+noncomputable example := @QuantitativeStepClass.IsDistributive.elimContext
+noncomputable example := @Lens.QuantitativelyAdmissible
+noncomputable example := @Lens.QuantitativelyAdmissible.toIsAdmissible
+noncomputable example := @QuantitativeRealization.seqComp
+noncomputable example := @QuantitativeRealization.wrap
+noncomputable example := @QuantitativeRealization.ExecutionTrace.queryCount_le_length
+noncomputable example := @QuantitativeRealization.ExecutionTrace.interfaceTraffic_le_traffic_cost
+noncomputable example := @QuantitativeRealization.RunsWithin.queryCount_le
+noncomputable example := @QuantitativeRealization.RunsWithin.interfaceTraffic_le
+noncomputable example := @QuantitativeRealization.RunsWithin.traceProgress
+noncomputable example := @QuantitativeRealization.RunsWithin.response_nonempty
 
 end PFunctor.QuantitativeClosureTest
