@@ -19,6 +19,8 @@ independent of the free-monad layer.
 
 @[expose] public section
 
+open scoped MonadHom
+
 universe uA uB uA₂ uB₂ uα uβ
 
 namespace PFunctor.FreeM

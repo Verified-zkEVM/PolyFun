@@ -19,6 +19,8 @@ transports the per-effect agreement to every finite application execution.
 
 public section
 
+open scoped MonadHom
+
 namespace Parliament.Walkthrough
 
 open PFunctor PFunctor.DynSystem Parliament.App

@@ -37,6 +37,8 @@ readings are recorded as derived `@[simp]` equations.
 
 @[expose] public section
 
+open scoped PFunctor.Lens
+
 universe u v uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uO uI
 
 namespace PFunctor

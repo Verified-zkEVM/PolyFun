@@ -41,6 +41,8 @@ state-heavy distributed and cryptographic protocol semantics.
 
 public section
 
+open scoped PFunctor
+
 universe u v
 
 namespace Interaction

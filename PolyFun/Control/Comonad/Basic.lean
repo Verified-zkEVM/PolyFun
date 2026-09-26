@@ -62,12 +62,21 @@ export Coseq (coseq)
 export CoseqLeft (coseqLeft)
 export CoseqRight (coseqRight)
 
-/-- Cosequencing `Coseq.coseq`, pairing two comonadic contexts. -/
-infixl:60 " <@> " => Coseq.coseq
-/-- Left cosequencing `CoseqLeft.coseqLeft`, keeping the left context's result. -/
-infixl:60 " <@ "  => CoseqLeft.coseqLeft
-/-- Right cosequencing `CoseqRight.coseqRight`, keeping the right context's result. -/
-infixl:60 " @> "  => CoseqRight.coseqRight
+namespace Comonad
+
+/-- Cosequencing `Coseq.coseq`, pairing two comonadic contexts; activate it with
+`open scoped Comonad`. -/
+scoped infixl:60 " <@> " => Coseq.coseq
+/-- Left cosequencing `CoseqLeft.coseqLeft`, keeping the left context's result; activate it with
+`open scoped Comonad`. -/
+scoped infixl:60 " <@ "  => CoseqLeft.coseqLeft
+/-- Right cosequencing `CoseqRight.coseqRight`, keeping the right context's result; activate it
+with `open scoped Comonad`. -/
+scoped infixl:60 " @> "  => CoseqRight.coseqRight
+
+end Comonad
+
+open scoped Comonad
 
 /-- A functor with extraction and a chosen pairing of contexts. -/
 class Coapplicative (w : Type u → Type v) extends
