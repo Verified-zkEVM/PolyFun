@@ -20,7 +20,7 @@ public section
 
 namespace PolyFunTest.Do.WriterAppend
 
-open Std.Internal.Do
+open Std.WP
 
 local instance : LawfulMonad (WriterT (List Nat) Id) := LawfulMonad.mk'
   (bind_pure_comp := fun _ _ => by
@@ -30,7 +30,7 @@ local instance : LawfulMonad (WriterT (List Nat) Id) := LawfulMonad.mk'
   (pure_bind := fun _ _ => by apply WriterT.ext; simp [WriterT.run_bind, WriterT.run_pure])
   (bind_assoc := fun _ _ _ => by apply WriterT.ext; simp [WriterT.run_bind, List.append_assoc])
 
-local instance : WPMonad (WriterT (List Nat) Id) (List Nat → Prop) EPost.Nil :=
+local instance : WPMonad (WriterT (List Nat) Id) (List Nat → Prop) EStack⟨⟩ :=
   WriterT.wpMonadOf [] (· ++ ·) List.append_nil List.append_assoc
 
 /-- Record two values around a lifted computation. -/
@@ -51,7 +51,7 @@ example (a b : Nat) :
 example (a b : Nat) :
     (logPair a b).run = (a + b, [a, b]) := rfl
 
-example (out : List Nat) (post : PUnit.{1} → List Nat → Prop) (epost : EPost.Nil) :
+example (out : List Nat) (post : PUnit.{1} → List Nat → Prop) (epost : EStack⟨⟩) :
     Triple (tell out : WriterT (List Nat) Id PUnit)
       (fun log => post ⟨⟩ (log ++ out)) post epost :=
   Triple.intro (WriterT.le_wp_tell_of (· ++ ·) out post epost)

@@ -19,7 +19,7 @@ all-responses reading cannot.
 
 namespace PolyFunTest.DoTransport
 
-open Std.Internal.Do PFunctor
+open Std.WP PFunctor
 
 abbrev coinP : PFunctor.{0, 0} := ⟨PUnit, fun _ => Bool⟩
 
@@ -32,7 +32,7 @@ def flipTwo : FreeM coinP Bool := do
 def chooseTrue : Handler Id coinP :=
   fun _ => true
 
-local instance instHandlerWP : WPMonad (FreeM coinP) Prop EPost.Nil :=
+local instance instHandlerWP : WPMonad (FreeM coinP) Prop EStack⟨⟩ :=
   FreeM.wpMonadOfHandler chooseTrue
 
 /-- The transported `wp` is the handler's, definitionally. -/

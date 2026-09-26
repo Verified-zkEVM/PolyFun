@@ -32,7 +32,7 @@ core `WPMonad`, the generic form of `wpFold_le_wpVia`; it needs only the inequat
 
 universe uA uB v w z
 
-open Std.Internal.Do
+open Std.WP
 
 namespace PFunctor
 
@@ -44,13 +44,13 @@ variable {l : Type v} [CompleteLattice l]
 
 /-- The core interpretation of free programs induced by a monotone per-operation spec. -/
 @[instance_reducible]
-def toWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) : WPMonad (FreeM P) l EPost.Nil :=
+def toWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) : WPMonad (FreeM P) l EStack⟨⟩ :=
   letI := Φ.toMAlgOrdered hΦ
   MAlgOrdered.toWPMonad
 
 /-- Its `wp` is the syntactic fold. -/
 theorem toWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Mono) {α : Type v} (x : FreeM P α) (post : α → l)
-    (epost : EPost.Nil) :
+    (epost : EStack⟨⟩) :
     ((Φ.toWPMonad hΦ).toWP α).wp x post epost = FreeM.wpFold Φ x post := by
   change (letI := Φ.toMAlgOrdered hΦ; MAlgOrdered.wp x post) = _
   exact FreeM.wp_toMAlgOrdered Φ hΦ x post
@@ -80,7 +80,7 @@ end Handler
 section Soundness
 
 variable {n : Type uB → Type w} [Monad n] {l : Type uB} [CompleteLattice l]
-  [WPMonad n l EPost.Nil] {α : Type uB}
+  [WPMonad n l EStack⟨⟩] {α : Type uB}
 
 /-- **Soundness of per-operation specs against a handler**, over any core `WPMonad`: specs that
 lower-bound the handler's `wp` at every operation give a syntactic `wp` lower-bounding the

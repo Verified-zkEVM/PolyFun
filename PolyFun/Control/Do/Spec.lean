@@ -6,13 +6,13 @@ Authors: Devon Tuma
 module
 
 public import Std.Tactic.Do
-public import Std.Internal.Do
+public import Std.WP
 public import PolyFun.Control.Monad.WriterT.WP
 
 /-!
 # Additional Specifications and Normal Forms for `vcgen`
 
-Core's `Std.Internal.Do.Triple.SpecLemmas` covers `forIn'` / `forIn` / `foldlM` over lists,
+Core's `Std.WP.Triple.SpecLemmas` covers `forIn'` / `forIn` / `foldlM` over lists,
 ranges, arrays, and iterators, and the operations of core's own transformers; this file adds:
 
 * the `@[spec]` rule for `List.forM`, the one list loop that core does not specify;
@@ -29,26 +29,25 @@ here: they are `abbrev`s, and both `simp` and `grind` reduce them on a construct
 unaided.
 
 The core-shaped specifications live in the namespace they would have upstream, next to core's
-`Spec.forIn_list` in `SpecLemmas.lean`; the v4.35 rename of `Std.Internal.Do` to `Std.WP` moves
-them in lockstep. This module imports `Std.Tactic.Do` for the `@[spec]` attribute syntax and is
-therefore part of the tactic tier of the `Std.Do` quarantine.
+`Spec.forIn_list` in `Std.WP.Triple.SpecLemmas`. This module imports `Std.Tactic.Do` for the
+`@[spec]` attribute syntax and is therefore part of the tactic tier of the `Std.WP` quarantine.
 -/
 
 @[expose] public section
 
 universe u v w z
 
-open Std.Internal.Do
+open Std.WP
 
 -- upstream: lean4 `SpecLemmas.lean` tags `Spec.throw_MonadExcept` but not this twin.
-attribute [spec] Std.Internal.Do.Spec.tryCatch_MonadExcept
+attribute [spec] Std.WP.Spec.tryCatch_MonadExcept
 
-namespace Std.Internal.Do
+namespace Std.WP
 
 variable {α : Type w} {m : Type u → Type v} {Pred : Type z} {EPred : Type z}
   [Monad m] [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred]
 
--- upstream candidate: `Std.Internal.Do.Triple.SpecLemmas` (`Std.WP` from Lean v4.35).
+-- upstream candidate: `Std.WP.Triple.SpecLemmas`.
 /-- Invariant rule for `forM` over a list: the invariant relates the elements consumed so far to
 those remaining (its accumulator is `PUnit`, so `vcgen`'s `invariants` clause applies to it), and
 each body step advances it by one element. Stated on the class method `forM`, the simp normal
@@ -110,4 +109,4 @@ theorem Spec.run_WriterT {α : Type u} (x : WriterT ω m α) (post : α × ω �
 
 end WriterTSpec
 
-end Std.Internal.Do
+end Std.WP

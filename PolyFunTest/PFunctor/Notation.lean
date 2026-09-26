@@ -91,6 +91,9 @@ section DirectImportCompatibility
 to the aggregate `PFunctor.Deprecated` or `PolyFun` umbrella imports. -/
 /--
 warning: `PFunctor.X` has been deprecated: Use `PFunctor.y` instead
+
+Hint: Replace the deprecated name:
+  X̵y̲
 -/
 #guard_msgs in
 example : (X : PFunctor.{0, 0}) = y := rfl

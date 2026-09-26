@@ -7,28 +7,26 @@ module
 
 public import PolyFun.Control.Monad.Algebra
 public import ToCslib.Order.LeanOrder
-public import Std.Internal.Do
+public import Std.WP
 
 /-!
 # Ordered monad algebras as core weakest-precondition monads
 
-Core's lattice-generic program logic (`Std.Internal.Do`, public as `Std.WP` from Lean v4.35)
-interprets a monad through `WPMonad m Pred EPred`: a monotone predicate transformer per program,
-sound for `pure` and `bind` up to `⊑`. An ordered monad algebra `MAlgOrdered m l` carries exactly
-that data, with equations in place of the inequalities and no exception layer, so it yields a
-`WPMonad m l EPost.Nil` once `ToCslib.Order.LeanOrder` makes Mathlib's `CompleteLattice l` an
-`Assertion`. The construction is deliberately not an instance: install it at the base monad
-(`letI` / `local instance`) and let core's `StateT`, `ReaderT`, `ExceptT`, and `OptionT`
-instances lift it, which supplies honest exception postconditions where PolyFun's own
-transformer lifts collapse failures to `⊥`.
+Core's lattice-generic program logic (`Std.WP`) interprets a monad through `WPMonad m Pred EPred`: a
+monotone predicate transformer per program, sound for `pure` and `bind` up to `⊑`. An ordered monad
+algebra `MAlgOrdered m l` carries exactly that data, with equations in place of the inequalities and
+no exception layer, so it yields a `WPMonad m l EStack⟨⟩` once `ToCslib.Order.LeanOrder` makes
+Mathlib's `CompleteLattice l` an `Assertion`. The construction is deliberately not an instance:
+install it at the base monad (`letI` / `local instance`) and let core's `StateT`, `ReaderT`,
+`ExceptT`, and `OptionT` instances lift it, which supplies honest exception postconditions where
+PolyFun's own transformer lifts collapse failures to `⊥`.
 
-Agreement is definitional: `wp` computed through the derived interpretation *is*
-`MAlgOrdered.wp`, and core's `Triple` unfolds to `MAlgOrdered.Triple`. The module imports the
-`Std.Internal.Do` root rather than its `WP` submodules so that the `@[spec]` database `vcgen`
-consults — `Spec.bind` in particular, which lives in `Std.Internal.Do.Triple.SpecLemmas` — is
-loaded wherever an instance built here is installed. The lattice operations
-core's lemmas are stated with (`⊤`, `⊥`, `⊓`, `⊔` of `Lean.Order`) are Mathlib's on a bridged
-carrier; the transfer lemmas below let `simp` move between the two spellings.
+Agreement is definitional: `wp` computed through the derived interpretation *is* `MAlgOrdered.wp`,
+and core's `Triple` unfolds to `MAlgOrdered.Triple`. The module imports the `Std.WP` root rather
+than its submodules so that the `@[spec]` database `vcgen` consults — `Spec.bind` in particular,
+which lives in `Std.WP.Triple.SpecLemmas` — is loaded wherever an instance built here is installed.
+The lattice operations core's lemmas are stated with (`⊤`, `⊥`, `⊓`, `⊔` of `Lean.Order`) are
+Mathlib's on a bridged carrier; the transfer lemmas below let `simp` move between the two spellings.
 -/
 
 public section
@@ -37,7 +35,7 @@ universe u v w
 
 /-! ## Lattice operations across the bridge
 
-`Std.Internal.Do.Order.Basic` defines `Lean.Order.top`, `meet`, and `join` from predicate-indexed
+`Std.Internal.Order.Basic` defines `Lean.Order.top`, `meet`, and `join` from predicate-indexed
 suprema; on a carrier whose `Lean.Order.CompleteLattice` comes from Mathlib they are Mathlib's
 `⊤`, `⊓`, and `⊔`. -/
 
@@ -65,28 +63,27 @@ end LatticeTransfer
 
 end MAlgOrdered
 
-open Std.Internal.Do
+open Std.WP
 
 namespace MAlgOrdered
 
 variable {m : Type u → Type v} {l : Type u} [Monad m] [_root_.CompleteLattice l] [MAlgOrdered m l]
 
--- upstream: `Std.Internal.Do` becomes `Std.WP` and `EPost.Nil` becomes `EStack⟨⟩` at Lean v4.35.
 /-- The predicate-transformer interpretation of `m α` induced by an ordered monad algebra:
 `MAlgOrdered.wp x post`, ignoring the empty exception postcondition. -/
 @[expose, instance_reducible]
-def toWP (α : Type u) : WP (m α) α l EPost.Nil where
+def toWP (α : Type u) : WP (m α) α l EStack⟨⟩ where
   wpTrans x := ⟨fun post _ => MAlgOrdered.wp x post⟩
   wp_trans_monotone x _ _ _ _ _ hpost := wp_mono x hpost
 
 @[simp]
-theorem toWP_wp {α : Type u} (x : m α) (post : α → l) (epost : EPost.Nil) :
+theorem toWP_wp {α : Type u} (x : m α) (post : α → l) (epost : EStack⟨⟩) :
     (toWP (m := m) (l := l) α).wp x post epost = MAlgOrdered.wp x post :=
   rfl
 
 /-- Core's triple through the derived interpretation is PolyFun's triple. -/
-theorem toWP_triple_iff {α : Type u} (x : m α) (pre : l) (post : α → l) (epost : EPost.Nil) :
-    @Std.Internal.Do.Triple l EPost.Nil (m α) α _ _ x (toWP α) pre post epost ↔
+theorem toWP_triple_iff {α : Type u} (x : m α) (pre : l) (post : α → l) (epost : EStack⟨⟩) :
+    @Std.WP.Triple l EStack⟨⟩ (m α) α _ _ x (toWP α) pre post epost ↔
       MAlgOrdered.Triple pre x post := by
   let inst := toWP (m := m) (l := l) α
   exact ⟨fun h => h.le_wp, fun h => ⟨h⟩⟩
@@ -94,15 +91,15 @@ theorem toWP_triple_iff {α : Type u} (x : m α) (pre : l) (post : α → l) (ep
 /-- An ordered monad algebra is a core weakest-precondition monad: its laws are the equations
 `wp_pure` and `wp_bind` read as inequalities. Not an instance. -/
 @[expose, instance_reducible]
-def toWPMonad [LawfulMonad m] : WPMonad m l EPost.Nil where
+def toWPMonad [LawfulMonad m] : WPMonad m l EStack⟨⟩ where
   toLawfulMonad := inferInstance
   toWP := toWP
   pure_le_wp_pure x post _ := Lean.Order.PartialOrder.rel_of_eq (wp_pure x post).symm
   bind_le_wp_bind x f post _ := Lean.Order.PartialOrder.rel_of_eq (wp_bind x f post).symm
 
 @[simp]
-theorem toWPMonad_wp [LawfulMonad m] {α : Type u} (x : m α) (post : α → l) (epost : EPost.Nil) :
-    (letI := toWPMonad (m := m) (l := l); Std.Internal.Do.wp x post epost) =
+theorem toWPMonad_wp [LawfulMonad m] {α : Type u} (x : m α) (post : α → l) (epost : EStack⟨⟩) :
+    (letI := toWPMonad (m := m) (l := l); Std.WP.wp x post epost) =
       MAlgOrdered.wp x post :=
   rfl
 
@@ -111,7 +108,7 @@ binary meets of postconditions. -/
 theorem wpConjunctiveOf {α : Type u} (x : m α)
     (h : ∀ Q₁ Q₂ : α → l,
       MAlgOrdered.wp x Q₁ ⊓ MAlgOrdered.wp x Q₂ ≤ MAlgOrdered.wp x fun a => Q₁ a ⊓ Q₂ a) :
-    @WPConjunctive (m α) α l EPost.Nil _ _ (toWP α) x := by
+    @WPConjunctive (m α) α l EStack⟨⟩ _ _ (toWP α) x := by
   let inst := toWP (m := m) (l := l) α
   refine ⟨fun Q₁ Q₂ _ _ => ?_⟩
   change Lean.Order.meet (MAlgOrdered.wp x Q₁) (MAlgOrdered.wp x Q₂) ≤

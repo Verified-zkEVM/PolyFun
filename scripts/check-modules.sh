@@ -31,14 +31,16 @@ while IFS= read -r file; do
   fi
 done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 
-# The `Std.Do` quarantine (AGENTS.md Std.Do quarantine, docs/guides/program-logic.md): core's
-# weakest-precondition API moves fast, so it is fenced in two tiers.
+# The `Std.WP` quarantine (AGENTS.md, docs/guides/program-logic.md): core's weakest-precondition
+# API moves fast, so it is fenced in two tiers.
 #
-# * Definitions (`Std.Do` and `Std.Internal.Do`: `WP`, `WPMonad`, `Triple`, spec lemmas) may be
-#   imported by the program-logic kernel — `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`,
-#   `PolyFun/PFunctor/Free/`, `PolyFun/ITree/Do.lean` — and by the `PolyFunTest/Do/` tests.
-# * Tactics (`Std.Tactic.Do`: `mvcgen`, `vcgen`, and the `@[spec]` attribute syntax) stay in
-#   `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`.
+# * Definitions (`Std.WP`, the legacy `Std.Do`, and the pre-4.35 `Std.Internal.Do`: `WP`,
+#   `WPMonad`, `Triple`, spec lemmas) may be imported by the program-logic kernel —
+#   `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
+#   `PolyFun/ITree/Do.lean` — and by the `PolyFunTest/Do/` tests.
+# * Tactics (`Std.Tactic.Do` and, from Lean 4.36, `Std.WP.Tactic`: `vcgen` and the `@[spec]`
+#   attribute syntax) stay in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and
+#   `PolyFunTest/Do/`.
 #
 # `ToCslib/` stages material for cslib, which uses neither stack, so it may import none of it
 # directly (cslib's `IsMonadHom` module brings the legacy `Std.Do.WP` classes in transitively;
@@ -61,14 +63,17 @@ std_do_tactic_allowed() {
 }
 
 import_prefix='^[[:space:]]*(public[[:space:]]+)?(meta[[:space:]]+)?import([[:space:]]+all)?[[:space:]]+'
-std_do_def_pattern="${import_prefix}Std\.(Internal\.)?Do([[:space:]]*$|\.)"
-std_do_tactic_pattern="${import_prefix}Std\.Tactic\.Do([[:space:]]*$|\.)"
+std_do_def_pattern="${import_prefix}Std\.((Internal\.)?Do([[:space:]]*$|\.)|WP([[:space:]]*$|\.(Basic|Conjunctive|EStack|Frame|Monad|Triple|Assertion|Gadget)))"
+std_do_tactic_pattern="${import_prefix}Std\.(Tactic\.Do|WP\.Tactic)([[:space:]]*$|\.)"
 
 # Keep every supported import modifier covered: otherwise a valid Lean import form can bypass
 # the quarantine while the repository's existing files still leave this check green.
 for std_do_import in \
     'import Std.Do' \
     'import Std.Internal.Do' \
+    'import Std.WP' \
+    'public import Std.WP.Monad.Basic' \
+    'import all Std.WP.Triple' \
     'public import Std.Internal.Do.WP.Basic' \
     'import all Std.Do.Triple' \
     'public import all Std.Do' \
@@ -85,6 +90,8 @@ done
 for std_do_import in \
     'public import Std.Tactic.Do' \
     'import Std.Tactic.Do.Syntax' \
+    'meta import Std.WP.Tactic' \
+    'import Std.WP.Tactic.Basic' \
     'import all Std.Tactic.Do' \
     'public import all Std.Tactic.Do' \
     'meta import Std.Tactic.Do' \
@@ -101,6 +108,10 @@ if grep -qE "$std_do_def_pattern" <<< 'import Std.Tactic.Do'; then
   echo "ERROR: Std.Do definition matcher must not classify tactic imports." >&2
   status=1
 fi
+if grep -qE "$std_do_def_pattern" <<< 'import Std.WP.Tactic'; then
+  echo "ERROR: Std.WP definition matcher must not classify tactic imports." >&2
+  status=1
+fi
 if grep -qE "$std_do_tactic_pattern" <<< 'import Std.Internal.Do'; then
   echo "ERROR: Std.Tactic.Do matcher must not classify definition imports." >&2
   status=1
@@ -108,14 +119,14 @@ fi
 
 while IFS= read -r file; do
   if grep -qE "$std_do_def_pattern" "$file" && ! std_do_def_allowed "$file"; then
-    echo "ERROR: $file imports core Std.Do / Std.Internal.Do outside the quarantine." >&2
+    echo "ERROR: $file imports core Std.WP / Std.Do outside the quarantine." >&2
     echo "Only the program-logic kernel (PolyFun/Control/Monad/, PolyFun/Control/Do/," >&2
     echo "PolyFun/PFunctor/Free/, PolyFun/ITree/Do.lean) and PolyFunTest/Do/ may depend on" >&2
     echo "it. See AGENTS.md Std.Do quarantine." >&2
     status=1
   fi
   if grep -qE "$std_do_tactic_pattern" "$file" && ! std_do_tactic_allowed "$file"; then
-    echo "ERROR: $file imports core Std.Tactic.Do outside the quarantine." >&2
+    echo "ERROR: $file imports core Std.Tactic.Do / Std.WP.Tactic outside the quarantine." >&2
     echo "Only PolyFun/Control/Do/, PolyFun/PFunctor/Free/Do.lean, and PolyFunTest/Do/ may" >&2
     echo "depend on it. See AGENTS.md Std.Do quarantine." >&2
     status=1

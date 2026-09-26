@@ -6,7 +6,7 @@ Authors: Devon Tuma
 module
 
 public import Mathlib.Control.Monad.Writer
-public import Std.Internal.Do
+public import Std.WP
 
 /-!
 # `WriterT` on core's weakest-precondition stack
@@ -23,7 +23,7 @@ interprets append-based logs without a `Monoid` instance. The monoid specializat
 under `WriterT.MonoidWP`; clients opt in with `open scoped WriterT.MonoidWP` or install an
 explicit interpretation locally. Importing the module does not choose a writer interpretation.
 The `@[spec]` rules for `tell`, `monadLift`, `mk`, and `run`
-live in `PolyFun.Control.Do.Spec`, the tactic tier of the `Std.Do` quarantine; the entailments
+live in `PolyFun.Control.Do.Spec`, the tactic tier of the `Std.WP` quarantine; the entailments
 they wrap are stated here.
 -/
 
@@ -31,8 +31,19 @@ public section
 
 universe u v w z
 
-open Std.Internal.Do
+open Std.WP
 open scoped Lean.Order
+
+/-- `WPMonad.map_le_wp_map` with the mapped postcondition given as an equation, the form the
+`WriterT` proofs below instantiate; Lean 4.34's `map_le_wp_map'` stated it this way. -/
+private theorem WPMonad.map_le_wp_map' {m : Type u → Type v} {Pred : Type w} {EPred : Type z}
+    [Monad m] [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred] {α β : Type u}
+    (f : α → β) (x : m α) :
+    ∀ post post' epost, post = (fun a => post' (f a)) →
+      wp x post epost ⊑ wp (f <$> x) post' epost := by
+  intro post post' epost h
+  subst h
+  exact WPMonad.map_le_wp_map f x post' epost
 
 namespace WriterT
 
