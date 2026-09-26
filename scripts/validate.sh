@@ -73,6 +73,7 @@ if (( run_lint )); then
   lake lint
   lake exe lint-style PolyFun ToCslib ComplexityBackends \
     Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
+    Examples.Tutorials.InteractionTrees \
     Examples.Parliament PolyFunParliamentMain
 fi
 
@@ -100,7 +101,8 @@ if (( run_axioms )); then
   echo "# Enforcing zero axiom/sorry debt"
   lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --root ComplexityBackends \
     --root Examples.Tutorials.Requests --root Examples.Tutorials.Machines \
-    --root Examples.Tutorials.IndexedPrograms --root Examples.Parliament \
+    --root Examples.Tutorials.IndexedPrograms --root Examples.Tutorials.InteractionTrees \
+    --root Examples.Parliament \
     --root PolyFunParliamentMain --check
 fi
 
