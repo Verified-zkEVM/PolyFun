@@ -9,6 +9,7 @@ Edit the source of truth, not the output.
 | `ToCslib.lean` | generated umbrella for the staging library | No | `./scripts/update-lib.sh ToCslib` or `./scripts/check-imports.sh` |
 | `ComplexityBackends.lean` | generated umbrella for the optional backend library | No | `./scripts/update-lib.sh ComplexityBackends` or `./scripts/check-imports.sh` |
 | `Examples/Parliament.lean` | generated case-study umbrella | No | `./scripts/update-lib.sh Examples.Parliament` |
+| `PolyFunTest/Downstream/Surface.lean` | generated downstream-surface canary | No | edit `scripts/downstream-surface.json`, then `python3 scripts/downstream-surface.py check --fix`; rescan consumers with `python3 scripts/downstream-surface.py refresh --vcvio ../VCVio --arklib ../ArkLib` |
 | `.lake/` | build artifacts and cache | No | `lake build`, `lake exe cache get` |
 | `lake-manifest.json` | resolved dependency lockfile | Manual edits unsafe | Update `lean-toolchain` and both dependency pins in `lakefile.toml`, then run `lake update` |
 

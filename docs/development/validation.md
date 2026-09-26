@@ -18,6 +18,7 @@ proofs, examples, import boundaries, or validation infrastructure.
 | Default build | `PolyFun`, `ToCslib`, `ComplexityBackends`, `PolyFunExamples`, and `+PolyFunParliamentMain`, with `--wfail` |
 | Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.Do` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend; `PolyFun` imports no backend), `import all` boundaries (tests may open backends, backends never open `PolyFun` or `ToCslib`, module canaries open nothing) |
 | Generated imports | Generated umbrellas match the tracked source tree |
+| Downstream surface | `PolyFunTest/Downstream/Surface.lean` matches `scripts/downstream-surface.json`, the modules and declarations VCVio and ArkLib consume; the test build then checks they still exist |
 | Documentation | Checker regressions, agent symlink, local paths and heading anchors, module docstrings, README excerpt synchronization |
 | `--lint` | Batteries environment linters and Mathlib text-style checks over production and example libraries plus the executable entry point |
 | `--test` | `PolyFunTest` with warnings fatal, `lake test`, native CLI/filesystem tests, and both separate consumers |

@@ -192,7 +192,8 @@ done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean')
 # opened only inside the library that owns them. Tests may open a complexity backend; nothing opens a
 # backend from the generic library, staging, examples, or consumers; a backend never opens `PolyFun`
 # or `ToCslib`; tests reach `PolyFun` through its public API except the grandfathered worked
-# examples listed below; ordinary-import canaries open nothing.
+# examples listed below; ordinary-import canaries (`PolyFunTest/ModuleAPI/`, the generated
+# downstream surface under `PolyFunTest/Downstream/`) open nothing.
 import_all_prefix='^[[:space:]]*(public[[:space:]]+)?(meta[[:space:]]+)?import[[:space:]]+all[[:space:]]+'
 
 for import_all_form in \
@@ -238,7 +239,7 @@ done
 
 backend_import_all_allowed() {
   case "$1" in
-    PolyFunTest/ModuleAPI/*) return 1 ;;
+    PolyFunTest/ModuleAPI/*|PolyFunTest/Downstream/*) return 1 ;;
     ComplexityBackends/*|PolyFunTest/*) return 0 ;;
     *) return 1 ;;
   esac
@@ -314,7 +315,7 @@ while IFS= read -r file; do
     echo "ERROR: $file is an ordinary-import canary and may not use 'import all'." >&2
     status=1
   fi
-done < <(git ls-files -- 'PolyFunTest/ModuleAPI/*.lean')
+done < <(git ls-files -- 'PolyFunTest/ModuleAPI/*.lean' 'PolyFunTest/Downstream/*.lean')
 
 if (( status != 0 )); then
   exit "$status"

@@ -1,0 +1,68 @@
+name: Downstream build
+
+# Advisory: builds VCVio's production libraries against PolyFun `main` so that a change which
+# survives the recorded downstream surface (PolyFunTest/Downstream/Surface.lean) but breaks the
+# consumer's proofs is noticed within a week. VCVio pins a PolyFun commit, so a failure here does
+# not break VCVio; it tells the next pin bump what to expect.
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      vcvio_ref:
+        description: VCVio ref to build
+        default: main
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  vcvio:
+    name: Build VCVio against PolyFun ${{ github.sha }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    permissions:
+      contents: read
+    steps:
+      - name: Check out VCVio
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: Verified-zkEVM/VCVio
+          ref: ${{ github.event.inputs.vcvio_ref || 'main' }}
+
+      - name: Point VCVio's PolyFun requirement at this commit
+        env:
+          POLYFUN_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, re
+          path = pathlib.Path("lakefile.lean")
+          text = path.read_text()
+          pattern = re.compile(r'("https://github\.com/Verified-zkEVM/PolyFun"\s*@\s*")[0-9a-f]{40}(")')
+          new, count = pattern.subn(rf'\g<1>{os.environ["POLYFUN_SHA"]}\g<2>', text)
+          if count != 1:
+              raise SystemExit(f"expected one PolyFun requirement, found {count}")
+          path.write_text(new)
+          PY
+          git diff --stat
+
+      - name: Set up Lean environment
+        uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-github-cache: false
+          use-mathlib-cache: false
+
+      - name: Resolve dependencies and fetch the Mathlib cache
+        run: |
+          lake update PolyFun
+          lake exe cache get
+
+      - name: Build the production libraries
+        run: lake build VCVio VCVioCslib
