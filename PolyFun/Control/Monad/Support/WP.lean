@@ -7,7 +7,7 @@ module
 
 public import PolyFun.Control.Monad.Support
 public import PolyFun.Control.Monad.Algebra.WP
-public import Std.Internal.Do
+public import Std.WP
 
 /-!
 # Monadic support as core weakest preconditions
@@ -23,7 +23,7 @@ as `mAlgOrderedPropDemonic` is. The demonic construction needs only `LawfulMonad
 core's return-value elimination rules prove its inequational pure and bind laws.
 The angelic construction needs the introduction rules of `ExactMonadAttach`.
 
-`MonadAttach.LawfulWPMonadAttach` is soundness of a `WPMonad` interpretation with respect to
+`Std.WP.LawfulWPMonadAttach` is soundness of a `WPMonad` interpretation with respect to
 lawful attachment: a `wp`-provable postcondition holds at every value the computation can return.
 `support_subset_of_wp` and `allOutputs_of_wp` turn any sound triple — including one discharged
 by `vcgen` — into a support fact. This additional soundness property is not automatic for
@@ -34,22 +34,10 @@ public section
 
 universe u v w z
 
-open Std.Internal.Do
+open Std.WP
 open scoped Lean.Order
 
 namespace MonadAttach
-
--- upstream: leanprover/lean4#14801, `Std.WP.LawfulWPMonadAttach`; delete at the v4.35 bump.
-/-- Soundness of the weakest precondition interpretation of `m`: a postcondition that `wp` proves
-holds of every value the program returns. -/
-class LawfulWPMonadAttach (m : Type u → Type v) (Pred : outParam (Type w))
-    (EPred : outParam (Type z)) [Monad m] [MonadAttach m] [LawfulMonadAttach m]
-    [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred] where
-  /-- From a `wp`-provable postcondition and a `MonadAttach.CanReturn` witness, conclude `P` at
-  that value. -/
-  of_canReturn_wp {α : Type u} {x : m α} {P : α → Prop} {a : α} :
-    MonadAttach.CanReturn x a →
-      (Lean.Order.top ⊑ wp x (fun a => ⌜P a⌝) Lean.Order.top) → P a
 
 section Eliminations
 
@@ -75,11 +63,10 @@ section Demonic
 
 variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [LawfulMonadAttach m]
 
--- upstream: `EPost.Nil` is spelled `EStack⟨⟩` from Lean v4.35.
 /-- The demonic (all-outputs) interpretation at the `Prop` carrier: `wp x post` holds when every
 possible output of `x` satisfies `post`. Not an instance. -/
 @[expose, instance_reducible]
-def toWPMonadDemonic : WPMonad m Prop EPost.Nil where
+def toWPMonadDemonic : WPMonad m Prop EStack⟨⟩ where
   toLawfulMonad := inferInstance
   toWP _ :=
     { wpTrans := fun x => ⟨fun post _ => AllOutputs post x⟩
@@ -94,14 +81,14 @@ def toWPMonadDemonic : WPMonad m Prop EPost.Nil where
     exact h a ha b hab
 
 @[simp]
-theorem toWPMonadDemonic_wp {α : Type u} (x : m α) (post : α → Prop) (epost : EPost.Nil) :
+theorem toWPMonadDemonic_wp {α : Type u} (x : m α) (post : α → Prop) (epost : EStack⟨⟩) :
     ((toWPMonadDemonic (m := m)).toWP α).wp x post epost = AllOutputs post x :=
   rfl
 
 /-- Core's triple under the demonic interpretation is the guarded "always" judgment. -/
 theorem toWPMonadDemonic_triple_iff {α : Type u} (x : m α) (pre : Prop) (post : α → Prop)
-    (epost : EPost.Nil) :
-    @Std.Internal.Do.Triple Prop EPost.Nil (m α) α _ _ x ((toWPMonadDemonic (m := m)).toWP α)
+    (epost : EStack⟨⟩) :
+    @Std.WP.Triple Prop EStack⟨⟩ (m α) α _ _ x ((toWPMonadDemonic (m := m)).toWP α)
         pre post epost ↔
       (pre → AllOutputs post x) := by
   let inst := (toWPMonadDemonic (m := m)).toWP α
@@ -109,7 +96,7 @@ theorem toWPMonadDemonic_triple_iff {α : Type u} (x : m α) (pre : Prop) (post 
 
 /-- The demonic interpretation is conjunctive: "always" distributes over `∧`. -/
 theorem toWPMonadDemonic_wpConjunctive {α : Type u} (x : m α) :
-    @WPConjunctive (m α) α Prop EPost.Nil _ _ ((toWPMonadDemonic (m := m)).toWP α) x := by
+    @WPConjunctive (m α) α Prop EStack⟨⟩ _ _ ((toWPMonadDemonic (m := m)).toWP α) x := by
   let inst := (toWPMonadDemonic (m := m)).toWP α
   refine ⟨fun Q₁ Q₂ _ _ => ?_⟩
   change Lean.Order.meet (AllOutputs Q₁ x) (AllOutputs Q₂ x) →
@@ -121,7 +108,7 @@ theorem toWPMonadDemonic_wpConjunctive {α : Type u} (x : m α) :
 
 /-- The demonic interpretation is sound in core's sense: `CanReturn` is exactly the support. -/
 theorem toWPMonadDemonic_lawfulWPMonadAttach :
-    @LawfulWPMonadAttach m Prop EPost.Nil _ _ _ _ _ (toWPMonadDemonic (m := m)) := by
+    @LawfulWPMonadAttach m Prop EStack⟨⟩ _ _ _ _ _ (toWPMonadDemonic (m := m)) := by
   let inst := toWPMonadDemonic (m := m)
   refine ⟨fun {α x P a} hcan hwp => ?_⟩
   have h : AllOutputs (fun a => ⌜P a⌝) x := Lean.Order.of_top_le_prop hwp
@@ -137,7 +124,7 @@ variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [Exac
 possible output of `x` satisfies `post`. Expressible only on the inequational stack; not an
 instance. -/
 @[expose, instance_reducible]
-def toWPMonadAngelic : WPMonad m Prop EPost.Nil where
+def toWPMonadAngelic : WPMonad m Prop EStack⟨⟩ where
   toLawfulMonad := inferInstance
   toWP _ :=
     { wpTrans := fun x => ⟨fun post _ => SomeOutput post x⟩
@@ -146,14 +133,14 @@ def toWPMonadAngelic : WPMonad m Prop EPost.Nil where
   bind_le_wp_bind x f post _ := fun h => (someOutput_bind post x f).mpr h
 
 @[simp]
-theorem toWPMonadAngelic_wp {α : Type u} (x : m α) (post : α → Prop) (epost : EPost.Nil) :
+theorem toWPMonadAngelic_wp {α : Type u} (x : m α) (post : α → Prop) (epost : EStack⟨⟩) :
     ((toWPMonadAngelic (m := m)).toWP α).wp x post epost = SomeOutput post x :=
   rfl
 
 /-- Core's triple under the angelic interpretation is the guarded "sometimes" judgment. -/
 theorem toWPMonadAngelic_triple_iff {α : Type u} (x : m α) (pre : Prop) (post : α → Prop)
-    (epost : EPost.Nil) :
-    @Std.Internal.Do.Triple Prop EPost.Nil (m α) α _ _ x ((toWPMonadAngelic (m := m)).toWP α)
+    (epost : EStack⟨⟩) :
+    @Std.WP.Triple Prop EStack⟨⟩ (m α) α _ _ x ((toWPMonadAngelic (m := m)).toWP α)
         pre post epost ↔
       (pre → SomeOutput post x) := by
   let inst := (toWPMonadAngelic (m := m)).toWP α

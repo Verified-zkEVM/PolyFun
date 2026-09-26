@@ -10,16 +10,19 @@ public import PolyFun.PFunctor.Free.Do
 /-!
 # Loops, branching, and state over free programs, through `vcgen`
 
-The acceptance test for "broad monadic code": `let mut` accumulators over `for` loops, `if`,
-`if let`, and `StateT` over the free monad, each verified by `vcgen` with an invariant through
-core's `Spec.forIn_list` and PolyFun's scoped demonic interpretation. Each `vcgen` call asserts
-the experimental-tactic diagnostic with `#guard_msgs`, keeping `mvcgen.warning` enabled.
+The acceptance test for "broad monadic code": `let mut` accumulators over `for` loops, `if`, `if
+let`, and `StateT` over the free monad, each verified by `vcgen` with an invariant through core's
+`Spec.forIn_list` and PolyFun's scoped demonic interpretation. The module acknowledges the tactic's
+experimental status with `set_option experimental.vcgen true`; `PolyFunTest.Do.Algebra` pins the
+diagnostic itself.
 -/
 
 @[expose] public section
 
-open Std.Internal.Do PFunctor
+open Std.WP PFunctor
 open scoped PFunctor.FreeM.DemonicWP
+
+set_option experimental.vcgen true
 
 /-- A single-position query interface with boolean responses. -/
 abbrev coinP : PFunctor.{0, 0} := ⟨PUnit, fun _ => Bool⟩
@@ -33,10 +36,6 @@ def countTrue (n : Nat) : FreeM coinP Nat := do
   pure k
 
 /- Whatever the responses, the count is bounded by the number of queries. -/
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 theorem countTrue_le (n : Nat) : ⦃ True ⦄ countTrue n ⦃ fun r => r ≤ n ⦄ := by
   vcgen [countTrue] invariants
     · fun pref _ k => k ≤ pref.length
@@ -54,10 +53,6 @@ def firstOrDefault (o : Option Bool) : FreeM coinP Bool := do
 normalized to `Bool`, where `vcgen`'s structural matcher cannot apply `Spec.lift` (stated at
 `P.B a`); the residual `wp` goal is finished by the judgment equations, naming the interface
 explicitly because its value type no longer reads `coinP.B _`. -/
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 example (o : Option Bool) : ⦃ True ⦄ firstOrDefault o ⦃ fun r => r = true ∨ r = false ⦄ := by
   vcgen -errorOnMissingSpec [firstOrDefault]
   · exact Bool.eq_false_or_eq_true _
@@ -66,10 +61,6 @@ example (o : Option Bool) : ⦃ True ⦄ firstOrDefault o ⦃ fun r => r = true 
 
 /- With the value type syntactically `P.B a`, a tail-position operation is decomposed by
 `Spec.lift` directly. -/
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 example {P : PFunctor.{0, 0}} (a : P.A) (q : P.B a → Prop) (h : ∀ b, q b) :
     ⦃ True ⦄ FreeM.lift (P := P) a ⦃ q ⦄ := by
   vcgen
@@ -81,10 +72,6 @@ def tick (n : Nat) : StateT Nat (FreeM coinP) Unit := do
     let _ ← FreeM.lift (P := coinP) PUnit.unit
     modify (· + 1)
 
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 theorem tick_spec (n : Nat) : ⦃ fun s => s = 0 ⦄ tick n ⦃ fun _ s => s = n ⦄ := by
   vcgen [tick] invariants
     · fun pref _ _ s => s = pref.length

@@ -11,7 +11,7 @@ public import Std.Tactic.Do
 /-!
 # Core Program Logic for the Free Monad
 
-The tactic-tier module of the `Std.Do` quarantine for free programs. It registers *scoped*
+The tactic-tier module of the `Std.WP` quarantine for free programs. It registers *scoped*
 core `WPMonad` interpretations of `FreeM P` and the `@[spec]` lemmas that let `vcgen` decompose
 `do` programs over `FreeM P` with uninterpreted operations:
 
@@ -40,7 +40,7 @@ syntax.
 
 universe uA uB v w z
 
-open Std.Internal.Do MonadAttach
+open Std.WP MonadAttach
 open scoped Lean.Order
 
 namespace PFunctor.FreeM
@@ -51,12 +51,12 @@ namespace DemonicWP
 
 /-- Demonic (all-outputs) core interpretation of free programs with uninterpreted
 operations. -/
-scoped instance instWPMonadAll : WPMonad (FreeM P) Prop EPost.Nil :=
+scoped instance instWPMonadAll : WPMonad (FreeM P) Prop EStack⟨⟩ :=
   toWPMonadDemonic
 
 /-- The demonic interpretation is sound: a `wp`-provable postcondition holds at every possible
 output. -/
-scoped instance instLawfulWPMonadAttachAll : LawfulWPMonadAttach (FreeM P) Prop EPost.Nil :=
+scoped instance instLawfulWPMonadAttachAll : LawfulWPMonadAttach (FreeM P) Prop EStack⟨⟩ :=
   toWPMonadDemonic_lawfulWPMonadAttach
 
 /-- The demonic interpretation is conjunctive at every program. -/
@@ -66,13 +66,13 @@ scoped instance instWPConjunctiveAll {α : Type uB} (x : FreeM P α) : WPConjunc
 variable {α : Type uB}
 
 /-- The demonic `wp` is the "always" judgment. -/
-theorem wp_apply_eq (x : FreeM P α) (post : α → Prop) (epost : EPost.Nil) :
+theorem wp_apply_eq (x : FreeM P α) (post : α → Prop) (epost : EStack⟨⟩) :
     wp x post epost = AllOutputs post x :=
   rfl
 
 /-- The demonic triple is the guarded "always" judgment. -/
 theorem triple_iff_allOutputs (x : FreeM P α) (pre : Prop) (post : α → Prop)
-    (epost : EPost.Nil) :
+    (epost : EStack⟨⟩) :
     Triple x pre post epost ↔ (pre → AllOutputs post x) :=
   ⟨fun h => h.le_wp, fun h => ⟨h⟩⟩
 
@@ -82,13 +82,13 @@ namespace AngelicWP
 
 /-- Angelic (some-output) core interpretation of free programs with uninterpreted
 operations. -/
-scoped instance instWPMonadSome : WPMonad (FreeM P) Prop EPost.Nil :=
+scoped instance instWPMonadSome : WPMonad (FreeM P) Prop EStack⟨⟩ :=
   toWPMonadAngelic
 
 variable {α : Type uB}
 
 /-- The angelic `wp` is the "sometimes" judgment. -/
-theorem wp_apply_eq (x : FreeM P α) (post : α → Prop) (epost : EPost.Nil) :
+theorem wp_apply_eq (x : FreeM P α) (post : α → Prop) (epost : EStack⟨⟩) :
     wp x post epost = SomeOutput post x :=
   rfl
 
@@ -105,7 +105,7 @@ theorem bind {α β : Type uB} {Pred : Type v} {EPred : Type z}
     [Assertion Pred] [Assertion EPred] [WPMonad (FreeM P) Pred EPred]
     (x : FreeM P α) (f : α → FreeM P β) (Q : β → Pred) (E : EPred) :
     Triple (x.bind f) (wp x (fun a => wp (f a) Q E) E) Q E :=
-  Std.Internal.Do.Spec.bind x f
+  Std.WP.Spec.bind x f
 
 section Demonic
 
@@ -114,14 +114,14 @@ open DemonicWP
 /-- An uninterpreted operation, demonically: the weakest precondition of `FreeM.lift a` demands
 the postcondition of every response. -/
 @[spec]
-theorem lift (a : P.A) (Q : P.B a → Prop) (E : EPost.Nil) :
+theorem lift (a : P.A) (Q : P.B a → Prop) (E : EStack⟨⟩) :
     Triple (FreeM.lift (P := P) a) (∀ b, Q b) Q E :=
   ⟨fun h b _ => h b⟩
 
 /-- A node written with the constructor: every continuation must meet the postcondition. -/
 @[spec]
 theorem liftBind {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) (Q : α → Prop)
-    (E : EPost.Nil) :
+    (E : EStack⟨⟩) :
     Triple (FreeM.liftBind a r) (∀ b, wp (r b) Q E) Q E :=
   ⟨fun h => (allOutputs_liftBind Q a r).mpr h⟩
 
@@ -133,7 +133,7 @@ open AngelicWP
 
 /-- An uninterpreted operation, angelically: some response meets the postcondition. -/
 @[spec]
-theorem lift_angelic (a : P.A) (Q : P.B a → Prop) (E : EPost.Nil) :
+theorem lift_angelic (a : P.A) (Q : P.B a → Prop) (E : EStack⟨⟩) :
     Triple (FreeM.lift (P := P) a) (∃ b, Q b) Q E :=
   ⟨fun ⟨b, hb⟩ => ⟨b, by rw [← mem_support, support_lift]; exact Set.mem_univ b, hb⟩⟩
 

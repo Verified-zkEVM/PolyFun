@@ -6,7 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Monad.Hom.IsMonadHom
-public import Std.Internal.Do
+public import Std.WP
 
 /-!
 # Transport of weakest preconditions along monad morphisms
@@ -27,7 +27,7 @@ public section
 
 universe u v w w' z
 
-open Std.Internal.Do Lean.Order
+open Std.WP Lean.Order
 
 namespace MonadHom
 
