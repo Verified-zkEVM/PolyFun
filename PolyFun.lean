@@ -320,6 +320,7 @@ public import PolyFun.PFunctor.Handler.Instrumentation.Free
 public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr
 public import PolyFun.PFunctor.Handler.Stateful
+public import PolyFun.PFunctor.Handler.Stateful.Combinators
 public import PolyFun.PFunctor.Handler.Sum
 public import PolyFun.PFunctor.InternalHom
 public import PolyFun.PFunctor.Lens.Basic

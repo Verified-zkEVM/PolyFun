@@ -32,6 +32,7 @@ its own encoding, probability, resource, and adequacy obligations.
 | `OracleComp spec α` | `PFunctor.FreeM spec.toPFunctor α` |
 | `QueryImpl spec m` | Definitionally `PFunctor.Handler m spec.toPFunctor` |
 | `QueryImpl.add` and the `simulateQ_add_*` routing lemmas | `PFunctor.Handler.sum` with `liftM_sum_lift_inl`, `liftM_sum_mapLens_inl`, and their right-hand and `sumLift` variants |
+| `mapStateTBase`, `parallelStateT`, `piStateT`, `flattenStateT`, `extendState`, `fixSndStateT` and their `simulateQ … .run` laws | `PFunctor.Handler.Stateful.mapBase`, `parallel`, `pi`, `flatten`, `extend`, `fixSnd` with `run_mapBase`, `run_flatten`, `run_extend_map_fst`, and `run_map_eq_of_apply_map_eq` |
 | ArkLib's `Statement.Lens`, `Witness.Lens`, and context lenses | `PFunctor.Lens.ofMonomial`, `monomialMapFst`, `monomialMapSnd` between monomials |
 | Positions of an indexed oracle sum `Σₚ i, spec i` | `PFunctor.sigma.mk`, `sigma.fst`, `sigma.snd`, `sigma.rec`, `sigma.B_mk` |
 | `simulateQ` | Interpretation through the free-monad handler extension |
