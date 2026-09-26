@@ -17,6 +17,8 @@ pairing instances retain their chosen behavior and share the functor operations.
 
 @[expose] public section
 
+open scoped Comonad
+
 universe u v
 
 example (w : Type u → Type v) [Comonad w] : True := by

@@ -27,7 +27,7 @@ so nothing of that shape should be re-derived here.
 
 When the morphism is *data* — chosen at the call site, passed around, composed,
 or mapped over — instance search is the wrong mechanism and a first-class arrow
-is needed.  Core has no bundled form, so `MonadHom` (notation `m →ᵐ n`) is that
+is needed.  Core has no bundled form, so `MonadHom` (scoped notation `m →ᵐ n`) is that
 arrow, with `MonadHom.comp` (`∘ₘ`), `MonadHom.id`, and `StateT.mapHom` for
 transporting one along a transformer.  `NatHom` is the underlying natural
 transformation without the laws; `PFunctor.FreeM.liftMHom'` consumes it
@@ -98,7 +98,15 @@ it respects the `bind` and `pure` operations in the underlying monad. -/
   toFun_bind' {α β} (x : m α) (y : α → m β) :
     toFun β (x >>= y) = toFun α x >>= fun x => toFun β (y x)
 
-@[inherit_doc] infixr:25 " →ᵐ " => MonadHom
+namespace MonadHom
+
+/-- Notation for the type `MonadHom m n` of bundled monad morphisms; activate it with
+`open scoped MonadHom`. -/
+scoped infixr:25 " →ᵐ " => MonadHom
+
+end MonadHom
+
+open scoped MonadHom
 
 attribute [simp, grind =] MonadHom.toFun_pure' MonadHom.toFun_bind'
 
@@ -176,8 +184,9 @@ protected def comp (G : n →ᵐ n') (F : m →ᵐ n) : m →ᵐ n' where
   toFun_pure' := by simp
   toFun_bind' := by simp
 
-/-- Infix notation for composition of monad homomorphisms, `G ∘ₘ F`. -/
-infixr:90 " ∘ₘ "  => MonadHom.comp
+/-- Infix notation for composition of monad homomorphisms, `G ∘ₘ F`; activate it with
+`open scoped MonadHom`. The same glyph is Mathlib's scoped `Measure.bind` notation. -/
+scoped infixr:90 " ∘ₘ " => MonadHom.comp
 
 @[simp, grind =] lemma comp_apply (G : n →ᵐ n') (F : m →ᵐ n) (x : m α) :
     (G ∘ₘ F) x = G (F x) := rfl

@@ -18,6 +18,8 @@ do not acquire Mathlib's Writer dependency unless they use it.
 
 @[expose] public section
 
+open scoped MonadHom
+
 universe u v w x
 
 namespace WriterT

@@ -19,6 +19,8 @@ fold-naturality bridges that VCVio's `simulateQ` / `evalDist` layer instantiates
 
 @[expose] public section
 
+open scoped MonadHom
+
 open PFunctor
 
 namespace PolyFunTest.FreeMapM

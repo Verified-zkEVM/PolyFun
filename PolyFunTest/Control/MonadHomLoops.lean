@@ -18,6 +18,8 @@ and `grind` closes goals that need the list forms as rewrite rules.
 
 public section
 
+open scoped MonadHom
+
 universe v w
 
 variable {m : Type → Type v} {n : Type → Type w} [Monad m] [Monad n] [LawfulMonad m]

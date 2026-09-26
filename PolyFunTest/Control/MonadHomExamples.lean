@@ -23,6 +23,8 @@ supplies the *unbundled*, instance-found morphisms, `MonadHom` supplies the
 
 @[expose] public section
 
+open scoped MonadHom
+
 universe u v w
 
 namespace Control.MonadHomExamples

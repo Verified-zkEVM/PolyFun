@@ -22,6 +22,8 @@ with its universal property and naturality. The algebraic laws (`map_pure`, `map
 
 @[expose] public section
 
+open scoped MonadHom
+
 /--
 Simp set for structurally unfolding `FreeM` and displayed-family operations.
 

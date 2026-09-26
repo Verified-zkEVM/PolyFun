@@ -36,6 +36,7 @@ first and migrate names afterwards, one warning at a time.
 |---|---|---|
 | v4.34 (2026-09-17, #241) | `PolyFun/Interaction/UC/**` split into `Interaction/Execution/**`, `Interaction/Open/**` and `Interaction/Interface.lean`; namespace `Interaction.UC` became `Interaction.Open` and `Interaction.Execution.*` | module shims below; no namespace aliases |
 | v4.34 (2026-09-19, #243) | library `PolyFunCslib` became `ComplexityBackends`; `ToCslib/Computability/**` moved to `ComplexityBackends/CslibSingleTape/**`; namespaces `ToCslib.Computability.*` and `PFunctor.CslibPPoly` became `ComplexityBackends.CslibSingleTape.*` | none (a shim would make `ToCslib` import a backend, which the layering forbids); migrate imports directly |
+| v4.34 (2026-09-26) | the notations `→ᵐ`, `∘ₘ` (`MonadHom`), `⇆`, `⇉` (`PFunctor`), `⟨,⟩ₗ`, `[,]ₗ` (`PFunctor.Lens`), `⟨,⟩c`, `[,]c` (`PFunctor.Chart`) and `<@>`, `<@`, `@>` (`Comonad`) became `scoped` | none; add `open scoped <namespace>` where a file uses them (see [notation](../reference/notation.md)) |
 | v4.33 (2026-08-17) | polynomial algebra respelled from `X` to `y` (`PFunctor.X`, `X^`, `p ^ n`) | `@[deprecated]` aliases in `PolyFun/PFunctor/Deprecated.lean`, removable at v4.35 unless a tracked consumer still needs them |
 
 ## Module shims
