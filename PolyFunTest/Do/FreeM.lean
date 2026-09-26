@@ -84,16 +84,3 @@ example (a : Bool) (h : MonadAttach.CanReturn maskFalse a) : a = false :=
 example : MonadAttach.AllOutputs (fun b => b = false) maskFalse := by
   refine MonadAttach.allOutputs_of_wp fun _ => ?_
   simpa only [Lean.Order.ofProp_prop_eq] using maskFalse_spec.le_wp trivial
-
-/-! ## The angelic reading -/
-
-/-- Under the angelic interpretation the same program can return `true`: one response suffices. -/
-example : (letI := PFunctor.FreeM.AngelicWP.instWPMonadSome (P := coinP);
-    Triple flipNot True (fun r => r = true) Lean.Order.bot) := by
-  let inst := PFunctor.FreeM.AngelicWP.instWPMonadSome (P := coinP)
-  refine ⟨fun _ => ?_⟩
-  change MonadAttach.SomeOutput _ _
-  refine ⟨true, MonadAttach.canReturn_bind_iff.mpr
-    ⟨false, ?_, ExactMonadAttach.canReturn_pure true⟩, rfl⟩
-  rw [← MonadAttach.mem_support, FreeM.support_lift]
-  exact Set.mem_univ _

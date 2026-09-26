@@ -27,7 +27,7 @@ probabilistic interpretations; its quantitative carrier is not part of PolyFun.
 | `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.bind`, `Spec.lift_angelic`, `Spec.lift_ofHandler` that let `vcgen` decompose free programs with uninterpreted operations |
 | `PolyFun/Control/Monad/ExactWP.lean` | `ExactWPMonad m Pred EPred`: the `Prop` mixin making core's `pure`/`bind` soundness laws equations (equivalently `ExactWPMonad.isMonadHom`, a monad morphism into `PredTrans`); the equational `simp` set on core's `wp` (`wp_pure`, `wp_bind`, `wp_map`, `wp_seq`, `wp_seqLeft`, `wp_seqRight`, `wp_ite`, `wp_dite`, `wp_option_elim`, `wp_sum_elim`); exactness of core's `Id`/`Option`/`Except`/`EStateM` interpretations and of its `StateT`/`ReaderT`/`ExceptT`/`OptionT` lifts |
 | `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as the core `Std.WP.WPMonad m l EStack⟨⟩` with `wp x post = μ (x >>= fun a => pure (post a))` (through the `ToCslib.Order.LeanOrder` bridge), exact (`instExactWPMonadToWPMonad`), its value by `rfl` (`toWPMonad_wp`, not `@[simp]`), `toWP_triple_iff`, `wpConjunctiveOf`, and the transfer lemmas `top_eq_top` / `meet_eq_inf` / `join_eq_sup` between core's and Mathlib's lattice operations |
-| `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPMonadDemonic` / `toWPMonadAngelic`: the always/some judgments as `WPMonad m Prop EStack⟨⟩`; conjunctivity of the demonic reading; exactness of both readings over an `ExactMonadAttach`; the demonic instance of core's `Std.WP.LawfulWPMonadAttach` (soundness with respect to lawful attachment); `support_subset_of_wp` / `allOutputs_of_wp` |
+| `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPDemonic` / `toWPAngelic`: the always/some judgments as core `WP` transformers from attachment alone; `toWPMonadDemonic` / `toWPMonadAngelic`: the `WPMonad m Prop EStack⟨⟩` interpretations built on them; conjunctivity of the demonic reading; exactness of both readings over an `ExactMonadAttach`; the demonic instance of core's `Std.WP.LawfulWPMonadAttach` (soundness with respect to lawful attachment); `support_subset_of_wp` / `allOutputs_of_wp` |
 | `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWPOf` / `transportWPMonadOf` (along cslib's `IsMonadHom`) and the bundled `transportWP` / `transportWPMonad`: pulling a core `WPMonad` back along a monad morphism, preserving exactness |
 | `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.wpMonadOf`: explicit empty/append operations on the log-indexed carrier `ω → Pred`; the multiplicative specialization is scoped under `WriterT.MonoidWP`, `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, `wp_run_eq`, and the `tell` / `monadLift` entailments behind the `@[spec]` rules, and exactness over an exact base (`exactWPMonad_wpMonadOf`, scoped `WriterT.MonoidWP.instExactWPMonad`) |
 | `PolyFun/Control/Monad/Hom/Loops.lean` | A monad morphism between lawful monads commutes with `forIn'`/`forIn`/`forM`/`foldlM`/`mapM` and with `forIn` over `PureForIn` containers (`@[simp, grind =]`), through `MonadHom.isMonadHom` and cslib's `IsMonadHom.map_list*` |
@@ -263,7 +263,25 @@ distributes over `∧` in one direction only, which is exactly why it has no `St
 `MAlgOrdered.toWPMonad` gives every Mathlib-lattice carrier the same treatment through the
 `ToCslib.Order.LeanOrder` bridge, and `MonadHom.transportWPMonad` pulls any of these back along
 a monad morphism. None of them is a global instance; install them `local` or `scoped` at the
-carrier (`PolyFunTest/Do/{Algebra,Support}.lean` show `vcgen` running through each).
+carrier (`PolyFunTest/Do/{Algebra,Support,Angelic}.lean` show `vcgen` running through each).
+
+### What the angelic reading does and does not say
+
+`wp x post` under `toWPAngelic` is may/existential reachability: some output of `x` satisfies
+`post`. It is the right reading for reachability, search, synthesis, and witness-producing
+nondeterminism, and `PolyFunTest/Do/Angelic.lean` runs `vcgen` through it on a free program. Its
+limits are deliberate, not gaps:
+
+- No `WPConjunctive` instance, so core's `Triple.and`, `Triple.mp`, and `Triple.observe` do not
+  apply: on the support `{0, 1}`, `wp x (· = 0)` and `wp x (· = 1)` both hold while
+  `wp x (fun a => a = 0 ∧ a = 1)` fails.
+- No `LawfulWPMonadAttach` instance: `wp x (· = 0)` holds on the same support although `1` is
+  reachable, so an angelic `wp` proof never bounds every output; `support_subset_of_wp` needs the
+  demonic reading.
+- Empty support makes the angelic `wp` false where the demonic one is vacuously true.
+- Existential reachability is not a probability bound and is never a security claim. Under
+  scheduler nondeterminism it says that some favourable schedule exists, nothing about a fixed,
+  fair, random, or adversarial scheduler, which needs its own bridge downstream.
 
 ## Exact interpretations
 
