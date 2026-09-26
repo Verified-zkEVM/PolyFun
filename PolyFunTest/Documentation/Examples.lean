@@ -9,6 +9,7 @@ module
 import Examples.Tutorials.Requests
 import Examples.Tutorials.Machines
 import Examples.Tutorials.IndexedPrograms
+import Examples.Tutorials.InteractionTrees
 
 /-!
 # Ordinary-import consumers of the documentation examples

@@ -60,6 +60,7 @@ lake -d test/ParliamentConsumer build --wfail
 lake lint
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
+  Examples.Tutorials.InteractionTrees \
   Examples.Parliament PolyFunParliamentMain
 python3 scripts/test-docs-integrity.py
 python3 scripts/check-docs-integrity.py

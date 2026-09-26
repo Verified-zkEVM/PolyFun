@@ -9,6 +9,7 @@ module
 import Examples.Tutorials.Requests
 import Examples.Tutorials.Machines
 import Examples.Tutorials.IndexedPrograms
+import Examples.Tutorials.InteractionTrees
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess
 import PolyFun.Interaction.Execution.RequestNetwork
