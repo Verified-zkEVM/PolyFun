@@ -390,20 +390,19 @@ end AlgebraSelection
 
 section AngelicNotConjunctive
 
-/-! ### Why there is no angelic `Std.Do.WP`
+/-! ### Why the angelic reading is not conjunctive
 
-`Std.Do.PredTrans` carries conjunctivity as a *structure field*, and as a bi-entailment:
-`t (Q₁ ∧ₚ Q₂) ⊣⊢ₛ t Q₁ ∧ t Q₂`. The demonic reading satisfies it in both directions, which
-is what lets `MonadAttach.toWP` build a `PredTrans` at all. The angelic reading satisfies
-only `→`: two *different* outputs may witness the two conjuncts separately, so nothing
-forces a single output to satisfy both.
+The legacy `Std.Do.PredTrans` carries conjunctivity as a *structure field*, and as a
+bi-entailment: `t (Q₁ ∧ₚ Q₂) ⊣⊢ₛ t Q₁ ∧ t Q₂`. The demonic reading satisfies it in both
+directions. The angelic reading satisfies only `→`: two *different* outputs may witness the
+two conjuncts separately, so nothing forces a single output to satisfy both.
 
-The consequence is structural rather than a gap in this development. The angelic
-interpretation cannot be a `Std.Do.WP`, so it stays at the `MAlgOrdered` level, whose
-`μ_bind_mono` asks only for monotonicity. Core's newer weakest-precondition stack drops
-conjunctivity from `PredTrans` and reintroduces it as an opt-in `WPConjunctive`.
-That optional class asks for exactly the direction refuted below; the angelic reading
-is expressible against the newer base `WP` only without such an instance. -/
+The consequence is structural rather than a gap in this development. Core's `Std.WP` stack
+asks a `WP` for monotonicity only and reintroduces conjunctivity as the opt-in
+`WPConjunctive`, so the angelic reading is a `WPMonad` there (`MonadAttach.toWPMonadAngelic`)
+without that instance, exactly as it is an `MAlgOrdered` whose `μ_bind_mono` asks only for
+monotonicity. `PolyFunTest/Do/Angelic.lean` pins the same counterexample against core's
+classes; this section states it on the judgments. -/
 
 /-- The direction that does hold: an angelic conjunction splits. -/
 example {α : Type} (x : SetM α) (p q : α → Prop) (h : x ⊨ₛ fun a => p a ∧ q a) :
@@ -422,8 +421,8 @@ example : ¬ (∀ {α : Type} (x : SetM α) (p q : α → Prop),
       ⟨0, Or.inl rfl, rfl⟩ ⟨1, Or.inr rfl, rfl⟩
   omega
 
-/-- The demonic reading, by contrast, distributes in both directions — this is the
-`conjunctiveRaw` field that `MonadAttach.toWP` discharges. -/
+/-- The demonic reading, by contrast, distributes in both directions — this is what
+`MonadAttach.toWPMonadDemonic_wpConjunctive` proves against core's class. -/
 example {α : Type} (x : SetM α) (p q : α → Prop) :
     (x ⊨ₐ fun a => p a ∧ q a) ↔ (x ⊨ₐ p) ∧ (x ⊨ₐ q) :=
   allOutputs_and p q x

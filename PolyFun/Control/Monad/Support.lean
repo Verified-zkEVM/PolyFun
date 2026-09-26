@@ -306,7 +306,8 @@ The two presentations of the layer meet here. `support` is the `Set`-valued carr
 says nothing is lost by reading the carrier off the modality instead. The modality is the
 more flexible presentation: its shape can be indexed when a flattened set of values is
 too coarse, as in the `StateT` section below. It is also what the weakest-precondition
-bridge consumes: `MonadAttach.toWP` is built from `AllOutputs`, not from `support`. -/
+bridges consume: `MonadAttach.toWPDemonic` and `toWPAngelic` are built from `AllOutputs` and
+`SomeOutput`, not from `support`. -/
 theorem support_eq_setOf_someOutput (x : m α) :
     support x = {a | SomeOutput (· = a) x} :=
   Set.ext fun a => ⟨fun ha => ⟨a, ha, rfl⟩, fun ⟨_, hb, hba⟩ => hba ▸ hb⟩
