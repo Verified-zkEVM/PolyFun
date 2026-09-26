@@ -160,4 +160,42 @@ example : (mixedFibers.map mixedMap mixedObject).snd false = 8 ∧
     (mixedFibers.map mixedMap mixedObject).snd true = true := by
   constructor <;> rfl
 
+/-! ### Indexed-sum positions
+
+Positions of `PFunctor.sigma F` are built with `sigma.mk` and taken apart with `sigma.fst`,
+`sigma.snd`, and `sigma.rec`. The constructor has type `(sigma F).A` at every transparency,
+so a statement about such a position typechecks under the instance checker without a local
+reducibility override on `sigma` (the wiring consumers previously needed one). -/
+
+set_option linter.tacticCheckInstances true in
+example (P : PFunctor.{0, 0}) (f : (PFunctor.sigma fun _ : Unit => P).A → Nat) (a : P.A) :
+    f (PFunctor.sigma.mk () a) = f (PFunctor.sigma.mk () a) := by
+  rfl
+
+example {I : Type u} {F : I → PFunctor.{uA, uB}} (i : I) (a : (F i).A) :
+    PFunctor.sigma.fst (PFunctor.sigma.mk (F := F) i a) = i ∧
+      PFunctor.sigma.snd (PFunctor.sigma.mk (F := F) i a) = a := by
+  simp
+
+example {I : Type u} {F : I → PFunctor.{uA, uB}} (i : I) (a : (F i).A) :
+    (PFunctor.sigma F).B (PFunctor.sigma.mk i a) = (F i).B a :=
+  PFunctor.sigma.B_mk i a
+
+/-- Eliminating a position by its index and member position. -/
+example {I : Type u} {F : I → PFunctor.{uA, uB}} (x : (PFunctor.sigma F).A) :
+    PFunctor.sigma.mk (PFunctor.sigma.fst x) (PFunctor.sigma.snd x) = x := by
+  induction x using PFunctor.sigma.rec with
+  | mk i a => rfl
+
+/-- Two positions agree when their indices and member positions do. -/
+example {I : Type u} {F : I → PFunctor.{uA, uB}} (i : I) (a b : (F i).A) (h : a = b) :
+    PFunctor.sigma.mk (F := F) i a = PFunctor.sigma.mk i b :=
+  PFunctor.sigma.ext rfl (heq_of_eq h)
+
+/-- A sigma-indexed handler answers each member's request with that member's handler. -/
+example {I : Type u} {F : I → PFunctor.{uA, u}} {m : Type u → Type v}
+    (h : (i : I) → Handler m (F i)) (i : I) (a : (F i).A) :
+    Handler.sigma h (PFunctor.sigma.mk i a) = h i a := by
+  simp
+
 end PolyFunTest.ModuleAPI.PFunctor

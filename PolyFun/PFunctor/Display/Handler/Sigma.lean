@@ -36,7 +36,7 @@ def sigma {I : Type uI} {P : I → PFunctor.{uA, uB}}
     {f : (i : I) → (a : (P i).A) → FreeM Q ((P i).B a)}
     (df : (i : I) → Display.Handler (S i) T (f i)) :
     Display.Handler (Display.sigma S) T (PFunctor.Handler.sigma f) :=
-  fun a c => df a.1 a.2 c
+  fun a c => df (PFunctor.sigma.fst a) (PFunctor.sigma.snd a) c
 
 @[simp]
 theorem sigma_apply {I : Type uI} {P : I → PFunctor.{uA, uB}}
@@ -46,15 +46,15 @@ theorem sigma_apply {I : Type uI} {P : I → PFunctor.{uA, uB}}
     {f : (i : I) → (a : (P i).A) → FreeM Q ((P i).B a)}
     (df : (i : I) → Display.Handler (S i) T (f i))
     (i : I) (a : (P i).A) (c : (S i).position a) :
-    sigma S T df ⟨i, a⟩ c = df i a c :=
+    sigma S T df (PFunctor.sigma.mk i a) c = df i a c :=
   rfl
 
 /-- The displayed handler for one coproduct injection. -/
 def sigmaInj {I : Type uI} {P : I → PFunctor.{uA, uB}}
     (S : (i : I) → Display.{uA, uB, uC, uD} (P i)) (i : I) :
     Display.Handler (S i) (Display.sigma S)
-      (fun a => FreeM.lift (P := PFunctor.sigma P) ⟨i, a⟩) :=
-  fun a c => Display.Handler.id (Display.sigma S) ⟨i, a⟩ c
+      (fun a => FreeM.lift (P := PFunctor.sigma P) (PFunctor.sigma.mk i a)) :=
+  fun a c => Display.Handler.id (Display.sigma S) (PFunctor.sigma.mk i a) c
 
 @[simp]
 theorem sigmaInj_apply {I : Type uI} {P : I → PFunctor.{uA, uB}}

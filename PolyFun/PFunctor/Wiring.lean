@@ -70,7 +70,7 @@ def eval
       Wiring Boxes Arity Dom Cod Inputs inputInterface output →
       (a : output.A) → FreeM (PFunctor.sigma inputInterface) (output.B a)
   | _, .input i => fun a =>
-      FreeM.lift (P := PFunctor.sigma inputInterface) ⟨i, a⟩
+      FreeM.lift (P := PFunctor.sigma inputInterface) (PFunctor.sigma.mk i a)
   | _, .box b children => fun a =>
       (implementation b a).liftM
         (PFunctor.Handler.sigma fun port => eval implementation (children port))
@@ -81,7 +81,7 @@ theorem eval_input
       (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
     (i : Inputs) (a : (inputInterface i).A) :
     eval implementation (.input i) a =
-      FreeM.lift (P := PFunctor.sigma inputInterface) ⟨i, a⟩ :=
+      FreeM.lift (P := PFunctor.sigma inputInterface) (PFunctor.sigma.mk i a) :=
   rfl
 
 @[simp]
