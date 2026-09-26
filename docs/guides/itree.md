@@ -48,7 +48,8 @@ step are lifted to `uB`; a visible query retains its original direction type.
 
 | Task | Entry point |
 |---|---|
-| Construct and observe a tree | [Basic](../../PolyFun/ITree/Basic.lean) |
+| Construct and observe a tree | [Basic](../../PolyFun/ITree/Basic.lean), [tutorial](../tutorials/interaction-trees.md) |
+| Run a tree in another monad | [Interpretation](../../PolyFun/ITree/Interp/Defs.lean), [state handler](../../PolyFun/ITree/Interp/State.lean) |
 | Reason modulo finite silent steps | [Bisimulation definitions](../../PolyFun/ITree/Bisim/Defs.lean), [bisimulation guide](bisimulation.md) |
 | Compare different event signatures | [Cross-signature relations](../../PolyFun/ITree/Bisim/CrossSignature.lean) |
 | Run guarded loops in `do` notation | [Do](../../PolyFun/ITree/Do.lean) |

@@ -544,6 +544,11 @@ instance instMonad : Monad (ITree F) where
 instance instMonadIter : MonadIter (ITree F) where
   iterM := iter
 
+/-- The monadic bind of an interaction tree is `ITree.bind`; use this to move from `do`-notation
+to the equational theory stated on `bind`. -/
+theorem bind_eq_bind {β : Type uα} (t : ITree F α) (k : α → ITree F β) : t >>= k = bind t k :=
+  rfl
+
 /-! ### Definitional unfoldings
 
 These match Coq's `Core/ITreeDefinition.v:208-217` (`unfold_bind`,

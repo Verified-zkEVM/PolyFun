@@ -24,7 +24,7 @@ You can use PolyFun without probabilistic or cryptographic semantics.
 |---|---|---|
 | Describe typed requests and translate interfaces | `PFunctor`, lenses, charts; indexed `IPFunctor` | [Polynomial functors](docs/guides/pfunctor.md), [indexed interfaces](docs/guides/ipfunctor.md) |
 | Write programs independently of their implementations | `FreeM`, `Handler`, paths, cursors, structural replay | [First program](docs/tutorials/first-program.md), [free programs](PolyFun/PFunctor/Free/Basic.lean) |
-| Model continuing interaction or explicit machine state | `Resumption`, `ITree`, `DynSystem`, `DynComputation` | [Choosing a model](docs/guides/computation-models.md), [execution](docs/guides/execution.md) |
+| Model continuing interaction or explicit machine state | `Resumption`, `ITree`, `DynSystem`, `DynComputation` | [Choosing a model](docs/guides/computation-models.md), [interaction trees](docs/tutorials/interaction-trees.md), [execution](docs/guides/execution.md) |
 | Describe protocols and compose open systems | `TypeTree`, decorations, strategies, concurrent processes, `OpenTheory` | [Interaction](docs/guides/interaction.md), [open systems](docs/guides/open-systems.md) |
 | Prove properties through support or weakest preconditions | Exact monadic support, ordered monad algebras, `vcgen` bridges | [Program logic](docs/guides/program-logic.md) |
 | Constrain implementations and account for their resources | `StepClass`, realizations, bounded execution, quantitative certificates | [Realizability](docs/guides/realizability.md) |
