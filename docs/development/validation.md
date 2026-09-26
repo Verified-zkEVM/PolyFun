@@ -82,8 +82,11 @@ the source and its result proofs.
 
 ## CI mapping
 
-- [CI](../../.github/workflows/ci.yml): independent build/axiom, environment
-  lint, and test/consumer jobs, including merge-queue candidates.
+- [CI](../../.github/workflows/ci.yml): one job running the full wrapper
+  (`--lint --test --axioms`), including merge-queue candidates. It restores the
+  newest `.lake` build cache for the pinned toolchain and manifest (exact
+  commit first, then the latest `main` build) and saves a per-commit cache
+  only on `main`, so every branch starts from the most recent complete build.
 - [Import check](../../.github/workflows/check-imports.yml): generated imports.
 - [Docs integrity](../../.github/workflows/docs-integrity.yml): checker tests,
   links, anchors, excerpts and module docs.
