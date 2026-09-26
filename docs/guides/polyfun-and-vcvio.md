@@ -31,6 +31,9 @@ its own encoding, probability, resource, and adequacy obligations.
 | `OracleSpec I` | A response family indexed by requests; `toPFunctor` bundles it as a polynomial interface |
 | `OracleComp spec α` | `PFunctor.FreeM spec.toPFunctor α` |
 | `QueryImpl spec m` | Definitionally `PFunctor.Handler m spec.toPFunctor` |
+| `QueryImpl.add` and the `simulateQ_add_*` routing lemmas | `PFunctor.Handler.sum` with `liftM_sum_lift_inl`, `liftM_sum_mapLens_inl`, and their right-hand and `sumLift` variants |
+| ArkLib's `Statement.Lens`, `Witness.Lens`, and context lenses | `PFunctor.Lens.ofMonomial`, `monomialMapFst`, `monomialMapSnd` between monomials |
+| Positions of an indexed oracle sum `Σₚ i, spec i` | `PFunctor.sigma.mk`, `sigma.fst`, `sigma.snd`, `sigma.rec`, `sigma.B_mk` |
 | `simulateQ` | Interpretation through the free-monad handler extension |
 | Oracle strategies and returning implementations | Specializations of polynomial dynamical systems and returning computations |
 | Probability of an output or event | A downstream interpretation, not a field of the generic request tree |

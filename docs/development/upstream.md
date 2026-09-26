@@ -59,7 +59,11 @@ behavior match the consumer.
 
 `FreeP.node`, `FreeP.encode`, and `FreeP.decode` use the owning polynomial
 object API: `Obj.mk`, `fst`, `snd`, `rec`, and `ext`. Node projections and
-encoding/decoding equations support ordinary imports. `FreeP.relabel` delegates
+encoding/decoding equations support ordinary imports. Positions of an indexed
+sum have the parallel interface `sigma.mk`, `sigma.fst`, `sigma.snd`,
+`sigma.rec`, `sigma.ext`, and `sigma.B_mk`; `Handler.sigma`, the sigma lenses,
+wiring evaluation, and the displayed sigma handlers are stated through it, so
+consumers need no reducibility override on `sigma` to work with those positions. `FreeP.relabel` delegates
 to `PFunctor.map`. Positions of composite polynomials and dependent path
 decompositions that are defined as Sigma types retain those types; they are
 distinct from the object carrier. The free-handler bridge explicitly selects

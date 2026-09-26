@@ -130,7 +130,7 @@ is the identity on directions. This is the `Lens` whose corresponding
 /-- Lens injection `Lens (F j) (sigma F)` for a fixed index `j : I`. -/
 def sigmaInj {I : Type v} {F : I → PFunctor.{uA, uB}} (j : I) :
     Lens (F j) (sigma F) :=
-  (fun fa => ⟨j, fa⟩) ⇆ fun _ => id
+  (fun fa => sigma.mk j fa) ⇆ fun _ => id
 
 namespace IsCartesian
 
