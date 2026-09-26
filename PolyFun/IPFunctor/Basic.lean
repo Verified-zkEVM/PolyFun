@@ -285,7 +285,7 @@ def comp (Q : IPFunctor.{uJ, uK, uA₁, uB₁} J K) (P : IPFunctor.{uI, uJ, uA�
 `(I → Type)`: a unique position at each index, a single response landing at the same index.
 This is the categorical identity for [`comp`](#IPFunctor.comp); see `compX` / `XComp` /
 `compAssoc` in [`PolyFun/IPFunctor/Equiv/Basic.lean`](Equiv/Basic.lean) for the laws. -/
-@[reducible] def X : IPFunctor.Endo.{uI, uA, uB} I where
+abbrev X : IPFunctor.Endo.{uI, uA, uB} I where
   A _ := PUnit
   B _ _ := PUnit
   src i _ _ := i

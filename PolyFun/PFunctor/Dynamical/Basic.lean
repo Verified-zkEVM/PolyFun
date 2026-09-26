@@ -103,7 +103,7 @@ def out (s : DynSystem S p) (st : S) : p.Obj S := ⟨s.expose st, s.update st⟩
 /-- Every dynamical system is an F-coalgebra of its interface's extension functor.
 Not an instance: with the state a parameter, the system no longer appears in the
 class's return type, so synthesis could not select one. -/
-@[reducible] def coalg (s : DynSystem S p) : Coalg p.Obj S := ⟨s.out⟩
+abbrev coalg (s : DynSystem S p) : Coalg p.Obj S := ⟨s.out⟩
 
 /-! ## Concrete steps and step relations -/
 

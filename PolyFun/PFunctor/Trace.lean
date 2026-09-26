@@ -75,7 +75,7 @@ The free monoid on `P`-events.  Definitionally `FreeMonoid (Idx P)`, which
 in turn is reducibly `List (Idx P)`.  This is the universal carrier for
 "finite ordered logs of `P`-events".
 -/
-@[reducible] def TraceList (P : PFunctor.{uA, uB}) : Type max uA uB :=
+abbrev TraceList (P : PFunctor.{uA, uB}) : Type max uA uB :=
   FreeMonoid (Idx P)
 
 namespace TraceList
@@ -308,7 +308,7 @@ An `X`-indexed trace of `P`-events: for each input `x : X`, a finite ordered
 list of `P`-events.  Specialisation of `Control.Trace` at
 `ω = TraceList P`, inheriting a pointwise monoid structure.
 -/
-@[reducible] def Trace (P : PFunctor.{uA, uB}) (X : Type v) : Type max uA uB v :=
+abbrev Trace (P : PFunctor.{uA, uB}) (X : Type v) : Type max uA uB v :=
   Control.Trace (TraceList P) X
 
 namespace Trace

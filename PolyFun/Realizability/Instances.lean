@@ -393,12 +393,12 @@ structure WordClass (W : Type u) where
   distributor : WordDistrib Mem pairing tagging
 
 /-- The step class presented by a bundle of word-level data. -/
-@[reducible] def WordClass.toStepClass {W : Type u} (V : WordClass W) :
+abbrev WordClass.toStepClass {W : Type u} (V : WordClass W) :
     StepClass.{u, u} :=
   ofWordClass W V.Mem V.id_mem V.comp_mem
 
 /-- Products for a word class, from a pairing codec. -/
-@[reducible] def ofWordClass.hasProd {W : Type u} {Q : (W → W) → Prop} {hid : Q id}
+abbrev ofWordClass.hasProd {W : Type u} {Q : (W → W) → Prop} {hid : Q id}
     {hcomp : ∀ {f g : W → W}, Q f → Q g → Q (g ∘ f)}
     (P : WordPairing Q) : (ofWordClass W Q hid hcomp).HasProd where
   prod a b :=
@@ -415,7 +415,7 @@ structure WordClass (W : Type u) where
     rw [hfEq, hgEq]
 
 /-- Sums for a word class, from a tagging scheme. -/
-@[reducible] def ofWordClass.hasSum {W : Type u} {Q : (W → W) → Prop} {hid : Q id}
+abbrev ofWordClass.hasSum {W : Type u} {Q : (W → W) → Prop} {hid : Q id}
     {hcomp : ∀ {f g : W → W}, Q f → Q g → Q (g ∘ f)}
     (T : WordTagging Q) : (ofWordClass W Q hid hcomp).HasSum where
   sum a b :=

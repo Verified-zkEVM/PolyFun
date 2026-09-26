@@ -51,7 +51,7 @@ namespace DynSystem.DynComputation
 
 /-- A hidden-state machine for a fixed-query `FreeM.foldr`. Its state is the
 remaining round counter paired with the accumulator. -/
-@[reducible] def boundedFold (position : p.A)
+abbrev boundedFold (position : p.A)
     (step : state → ℕ → p.B position → state) (readout : state → output)
     (rounds : ℕ) : DynComputation p state output :=
   ofStep (S := Fin (rounds + 1) × state)

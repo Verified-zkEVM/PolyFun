@@ -32,8 +32,8 @@ local instance instDemonicRel : MAlgRelOrdered SetM SetM Prop :=
 local instance instDemonicStrict : StrictBind SetM SetM Prop := strictBindPropDemonic
 local instance instDemonicAnchored : Anchored SetM SetM Prop := anchoredPropDemonic
 
-#synth StrictBind SetM SetM Prop
-#synth Anchored SetM SetM Prop
+example : StrictBind SetM SetM Prop := inferInstance
+example : Anchored SetM SetM Prop := inferInstance
 
 /-- Equality does not hold demoniacally: every cross-product pair would have to agree. -/
 example : ¬ RelWP leftChoices rightChoices (· = ·) := by
@@ -66,8 +66,8 @@ local instance instAngelicRel : MAlgRelOrdered SetM SetM Prop :=
 local instance instAngelicStrict : StrictBind SetM SetM Prop := strictBindPropAngelic
 local instance instAngelicAnchored : Anchored SetM SetM Prop := anchoredPropAngelic
 
-#synth StrictBind SetM SetM Prop
-#synth Anchored SetM SetM Prop
+example : StrictBind SetM SetM Prop := inferInstance
+example : Anchored SetM SetM Prop := inferInstance
 
 /-- Equality does hold angelically: the shared output `1` witnesses it. -/
 example : RelWP leftChoices rightChoices (· = ·) := by

@@ -37,15 +37,15 @@ example : WordEdit.apply ["a", "b"] ⟨2, 0, ["c"]⟩ = some ["a", "b", "c"] := 
 example : WordEdit.apply ["a", "b"] ⟨1, 2, []⟩ = none := by decide
 example : applyWordSecondary ["a", "b"] ⟨0, 2, []⟩ (.narrow 1 1) = some ⟨1, 1, []⟩ := by decide
 
-#check MeetingP
-#check JudgmentSig
-#check Script
-#check boundedScript
-#check meetingSystem
-#check step_iff
-#check replay_iff
-#check LegalStep.substantiveDecision_quorum
-#check MeetingPath.replays
+noncomputable example := @MeetingP
+noncomputable example := @JudgmentSig
+noncomputable example := @Script
+noncomputable example := @boundedScript
+noncomputable example := @meetingSystem
+noncomputable example := @step_iff
+noncomputable example := @replay_iff
+noncomputable example := @LegalStep.substantiveDecision_quorum
+noncomputable example := @MeetingPath.replays
 
 example (rules : Rules) (s : AssemblyState wordDomain) (input : EnabledInput rules s) :
     (meetingSystem wordDomain rules).update s input = input.next := rfl

@@ -334,23 +334,54 @@ def runScenario (name : String) (scenario : Scenario Unit) : IO Unit := do
       unless state == run.state && events == run.events do
         throw (IO.userError s!"{name}: replay diverged")
       unless decide state.WellFormed do throw (IO.userError s!"{name}: invalid final state")
-      IO.println s!"{name}: {run.commands.length} accepted commands; replay agrees"
-
+      IO.println s!"{name}: ok"
+/-- info: basic: ok -/
+#guard_msgs in
 #eval runScenario "basic" basic
+/-- info: amendment: ok -/
+#guard_msgs in
 #eval runScenario "amendment" amendment
+/-- info: missing second: ok -/
+#guard_msgs in
 #eval runScenario "missing second" missingSecond
+/-- info: debate closure: ok -/
+#guard_msgs in
 #eval runScenario "debate closure" debateClosure
+/-- info: consent objection: ok -/
+#guard_msgs in
 #eval runScenario "consent objection" consentObjection
+/-- info: appeal: ok -/
+#guard_msgs in
 #eval runScenario "appeal" appeal
+/-- info: appeal tie: ok -/
+#guard_msgs in
 #eval runScenario "appeal tie" appealTie
+/-- info: interruption: ok -/
+#guard_msgs in
 #eval runScenario "interruption" interruption
+/-- info: stale judgment: ok -/
+#guard_msgs in
 #eval runScenario "stale judgment" staleJudgment
+/-- info: quorum loss: ok -/
+#guard_msgs in
 #eval runScenario "quorum loss" quorumLoss
+/-- info: table and restore: ok -/
+#guard_msgs in
 #eval runScenario "table and restore" tableRestore
+/-- info: committee report: ok -/
+#guard_msgs in
 #eval runScenario "committee report" committeeReport
+/-- info: postponement: ok -/
+#guard_msgs in
 #eval runScenario "postponement" postponement
+/-- info: withdrawal: ok -/
+#guard_msgs in
 #eval runScenario "withdrawal" withdrawal
+/-- info: chair vote: ok -/
+#guard_msgs in
 #eval runScenario "chair vote" chairVote
+/-- info: session expiration: ok -/
+#guard_msgs in
 #eval runScenario "session expiration" sessionExpiration
 
 end ParliamentTest
