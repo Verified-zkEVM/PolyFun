@@ -252,15 +252,15 @@ def sumMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}} {R : PFun
 def sigmaExists {I : Type v} {F : I → PFunctor.{uA₁, uB₁}} {R : PFunctor.{uA₂, uB₂}}
     (l : ∀ i, Lens (F i) R) :
     Lens (sigma F) R :=
-  (fun ⟨i, fa⟩ => (l i).toFunA fa) ⇆
-    (fun ⟨i, fa⟩ => (l i).toFunB fa)
+  (fun x => (l (sigma.fst x)).toFunA (sigma.snd x)) ⇆
+    (fun x => (l (sigma.fst x)).toFunB (sigma.snd x))
 
 /-- Pointwise mapping of lenses over `sigma`. -/
 def sigmaMap {I : Type v} {F : I → PFunctor.{uA₁, uB₁}} {G : I → PFunctor.{uA₂, uB₂}}
     (l : ∀ i, Lens (F i) (G i)) :
     Lens (sigma F) (sigma G) :=
-  (fun ⟨i, fa⟩ => ⟨i, (l i).toFunA fa⟩) ⇆
-    (fun ⟨i, fa⟩ => (l i).toFunB fa)
+  (fun x => sigma.mk (sigma.fst x) ((l (sigma.fst x)).toFunA (sigma.snd x))) ⇆
+    (fun x => (l (sigma.fst x)).toFunB (sigma.snd x))
 
 /-- Projection lens `fst : P * Q → P` -/
 def fst {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} :
