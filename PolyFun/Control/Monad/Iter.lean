@@ -18,14 +18,14 @@ The notion is due to Adámek, Milius, and Velebil (and used pervasively in
 the Coq `InteractionTrees` library, `Basics/Basics.v`, where it is called
 `MonadIter`). It generalises uniform definition of recursive functions
 across monadic effects and is the data underlying `ITree.iter`,
-`OracleComp`'s simulators, the `MonadIter` instances on `OptionT` /
-`StateT`, and so on.
+`OracleComp`'s simulators, and the transformer instances in
+`PolyFun.Control.Monad.Iter.Instances`.
 
 ## Main definitions
 
 * `MonadIter m` — typeclass packaging a single iteration combinator.
-* `LawfulMonadIter m` — the standard Conway/Elgot iteration laws, stated
-  over a monad-specific semantic equivalence.
+* `LawfulMonadIter m` — the Elgot iteration laws (the four Conway laws and
+  uniformity), stated over a monad-specific semantic equivalence.
 
 ## Conventions
 
@@ -79,12 +79,17 @@ export MonadIter (iterM)
 a chosen semantic equivalence.
 
 The selected relation must be an equivalence and a congruence for `bind` and
-`iterM`. The four characteristic laws are:
+`iterM`. The characteristic laws are:
 
 * `iter_unfold`: the fixed-point equation;
 * `iter_natural`: postprocessing / parameter naturality;
 * `iter_dinatural`: the composition identity for changing loop state;
-* `iter_codiagonal`: flattening two nested loops (double dagger).
+* `iter_codiagonal`: flattening two nested loops (double dagger);
+* `iter_uniform`: uniformity, the Elgot law that lets the loop state be changed
+  along an arbitrary map `φ`, provided the two bodies agree up to `φ`. The four
+  Conway laws relate loops whose states are related by *injections* only;
+  uniformity is what interpreting a loop into another monad needs, since
+  interpretation changes the loop-state type along a non-injective map.
 
 Using an explicit semantic equivalence is essential for productive
 coinductive monads: their iteration operator may add guards that are
@@ -137,6 +142,13 @@ class LawfulMonadIter (m : Type u → Type v) [Monad m] [LawfulMonad m]
         | .inl next => pure (.inl next)
         | .inr (.inl next) => pure (.inl next)
         | .inr (.inr result) => pure (.inr result)) init)
+  /-- Uniformity: a loop whose body, after relabelling its continuing state along
+  `φ`, agrees with the body of a second loop iterates like that loop from the
+  relabelled initial state. The hypothesis is stated up to `Eqv`, so the second
+  body may itself be a semantic rearrangement of the first. -/
+  iter_uniform {α β γ : Type u} (φ : β → γ) (f : β → m (β ⊕ α)) (g : γ → m (γ ⊕ α))
+    (h : ∀ b, Eqv (g (φ b)) (Sum.map φ id <$> f b)) (init : β) :
+    Eqv (iterM f init) (iterM g (φ init))
 
 namespace LawfulMonadIter
 
@@ -148,7 +160,18 @@ equivalence relation at every result type. -/
 theorem eqv_equivalence (α : Type u) : Equivalence (@Eqv m _ _ _ _ α) :=
   ⟨eqv_refl, fun {_ _} => eqv_symm, fun {_ _ _} => eqv_trans⟩
 
+/-- Equal computations are semantically equivalent. -/
+theorem eqv_of_eq {α : Type u} {x y : m α} (h : x = y) : Eqv x y :=
+  h ▸ eqv_refl x
+
+/-- Semantic equivalence is a congruence for `Functor.map`. -/
+theorem map_eqv {α β : Type u} (f : α → β) {x y : m α} (hxy : Eqv x y) :
+    Eqv (f <$> x) (f <$> y) := by
+  rw [map_eq_pure_bind, map_eq_pure_bind]
+  exact bind_eqv hxy fun _ => eqv_refl _
+
 end LawfulMonadIter
 
 export LawfulMonadIter
-  (Eqv bind_eqv iter_eqv iter_unfold iter_natural iter_dinatural iter_codiagonal)
+  (Eqv bind_eqv iter_eqv iter_unfold iter_natural iter_dinatural iter_codiagonal
+    iter_uniform)
