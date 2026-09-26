@@ -49,7 +49,8 @@ The Lean source is authoritative for definitions and theorem assumptions.
 [Validation](development/validation.md), [module APIs](development/module-api.md),
 [linting](development/linting.md), [generated files](development/generated-files.md),
 [review practices](development/review-hardening.md),
-[troubleshooting](development/troubleshooting.md), and
+[troubleshooting](development/troubleshooting.md),
+[compatibility and deprecation](development/compatibility.md), and
 [upstream obligations](development/upstream.md) document contributor workflows.
 [AGENTS.md](../AGENTS.md) is the canonical agent guide;
 [CONTRIBUTING.md](../CONTRIBUTING.md) is the human contribution guide.

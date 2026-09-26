@@ -146,6 +146,9 @@ Tutorial modules use a glob target and need no generated umbrella. The optional
 case-study root `Examples/Parliament.lean` is generated with
 `./scripts/update-lib.sh Examples.Parliament`; stage new case-study modules first.
 Core libraries may not import examples, tests, or `PolyFunParliamentMain`.
+A moved module keeps a `deprecated_module` shim at its old path and a renamed declaration
+keeps a `@[deprecated]` alias for two Lean minor releases; record every rename in
+[compatibility](docs/development/compatibility.md). `PolyFun/Interaction/UC/` holds only such shims.
 
 Add repository scripts only for concrete recurring workflows under
 [the scripts policy](CONTRIBUTING.md#repository-scripts). Reuse existing drivers

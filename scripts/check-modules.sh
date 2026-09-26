@@ -122,6 +122,41 @@ while IFS= read -r file; do
   fi
 done < <(lean_sources)
 
+# `PolyFun/Interaction/UC/` holds only compatibility shims for the modules that moved to
+# `Interaction/Execution/` and `Interaction/Open/` (docs/development/compatibility.md): each file is
+# a `deprecated_module` with exactly one `public import` of its replacement and no declarations. The
+# rule keeps the retired tree from regrowing and keeps the umbrella's per-import ignore suffix honest.
+while IFS= read -r file; do
+  if ! grep -qE '^deprecated_module([[:space:]]|$)' "$file"; then
+    echo "ERROR: $file lives in the retired PolyFun/Interaction/UC/ tree but is not a" >&2
+    echo "'deprecated_module' shim; add new modules under Interaction/Execution/ or Interaction/Open/." >&2
+    status=1
+  fi
+  import_lines="$(grep -cE "${import_prefix}" "$file" || true)"
+  if [[ "$import_lines" != "1" ]] || ! grep -qE '^public import PolyFun\.Interaction\.' "$file"; then
+    echo "ERROR: $file must contain exactly one 'public import' of its Interaction replacement." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFun/Interaction/UC/*.lean')
+
+# Every umbrella import of a deprecated module carries Lean's per-import ignore suffix, and no
+# other import line does; otherwise `--wfail` builds fail or the suffix silently hides a real import.
+while IFS= read -r file; do
+  module_name="${file%.lean}"
+  module_name="${module_name//\//.}"
+  if grep -qE '^deprecated_module([[:space:]]|$)' "$file"; then
+    if ! grep -qxF "public import $module_name -- deprecated_module: ignore" PolyFun.lean; then
+      echo "ERROR: PolyFun.lean must import deprecated module $module_name with" >&2
+      echo "'-- deprecated_module: ignore'; rerun ./scripts/update-lib.sh." >&2
+      status=1
+    fi
+  elif grep -qxF "public import $module_name -- deprecated_module: ignore" PolyFun.lean; then
+    echo "ERROR: PolyFun.lean marks $module_name as deprecated but the module is not; rerun" >&2
+    echo "./scripts/update-lib.sh." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFun/*.lean')
+
 if grep -rEn --include='*.lean' '@\[expose\][[:space:]]+public section' PolyFun/Interaction; then
   echo "ERROR: Broad exposed public sections are forbidden in PolyFun/Interaction." >&2
   echo "Expose individual definitions, or use 'import all' in proof modules." >&2

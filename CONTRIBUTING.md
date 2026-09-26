@@ -128,7 +128,9 @@ When in doubt, prefer:
 - Docstrings must be intrinsic and descriptive. Cross-reference live
   definitions when helpful, but do not mention removed or renamed
   declarations, change history, or reactive phrases such as "replaces"
-  or "renamed from".
+  or "renamed from". The one exception is a compatibility shim or alias,
+  whose docstring names the replacement; see
+  [`docs/development/compatibility.md`](docs/development/compatibility.md).
 - If a file cites papers, include a references section in the module
   docstring or cite the source via [`REFERENCES.md`](REFERENCES.md).
 - For ordinary Lean source files, use this prologue layout:
