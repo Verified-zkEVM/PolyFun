@@ -30,6 +30,19 @@ first and migrate names afterwards, one warning at a time.
 - Consumers should pin a PolyFun release tag (`v4.N.0`, cut by `.github/workflows/release-tag.yml`
   whenever `lean-toolchain` changes on `main`) or a commit, not `main`.
 
+## Downstream surface
+
+`scripts/downstream-surface.json` records, per tracked consumer, the PolyFun-owned modules it
+imports and the PolyFun-owned declarations it names. `python3 scripts/downstream-surface.py check`
+regenerates `PolyFunTest/Downstream/Surface.lean` from it (one ordinary import per module, one
+`noncomputable example := @name` per declaration) and fails when the tracked file differs; the
+test build then fails on any module or declaration that no longer exists. A rename PR therefore
+sees the downstream breakage in its own CI and adds the shim or alias before merging. Refresh the
+record from the consumer checkouts with `refresh --vcvio ../VCVio --arklib ../ArkLib` after a
+consumer bumps its pin; the scan is heuristic, so prune a recorded name when the build reports it
+unknown and the consumer never used it. `.github/workflows/downstream.yml` builds VCVio against
+PolyFun `main` weekly as an advisory check of the whole consumer, not only its recorded surface.
+
 ## Breaking changes by release
 
 | Introduced at | Change | Compatibility surface |

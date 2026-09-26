@@ -19,6 +19,7 @@ Default checks:
   - lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
   - ./scripts/check-modules.sh
   - ./scripts/check-imports.sh
+  - python3 ./scripts/downstream-surface.py check
   - python3 ./scripts/check-docs-integrity.py
 
 Optional checks:
@@ -61,6 +62,10 @@ echo "# Checking module scopes"
 echo ""
 echo "# Checking umbrella imports"
 ./scripts/check-imports.sh
+
+echo ""
+echo "# Checking the recorded downstream surface"
+python3 ./scripts/downstream-surface.py check
 
 echo ""
 echo "# Checking docs integrity"
