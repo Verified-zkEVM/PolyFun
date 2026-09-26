@@ -30,7 +30,7 @@ add exact pure/bind composition.
 
 universe u v w w'
 
-open Std.Internal.Do
+open Std.WP
 
 namespace MonadAttach
 

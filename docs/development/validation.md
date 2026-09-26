@@ -107,3 +107,10 @@ run `lake update` and the full suite. Keep the root manifest committed and
 review the resolved versions. Consumer manifests are regenerated locally.
 Compatibility tests for existing deprecated APIs should assert their expected
 diagnostics with strict `#guard_msgs` rather than suppressing warnings.
+
+A release candidate is staged on a branch with the `-rcN` tags pinned wherever
+the stable tag will go. The branch merges only once Lean, Mathlib and CSLib all
+carry the stable tag, after flipping the pins and rerunning the suite, because
+merging cuts the matching PolyFun release tag. Acknowledging an experimental
+feature (`set_option experimental.vcgen true`) is not a linter suppression; one
+pinned diagnostic in `PolyFunTest/Do/Algebra.lean` tracks its warning text.

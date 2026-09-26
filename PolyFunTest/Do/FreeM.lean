@@ -11,17 +11,19 @@ public import PolyFun.PFunctor.Free.Do
 # `vcgen` smoke tests over the free monad
 
 Core's `vcgen` decomposes `do`-programs over `FreeM P` with uninterpreted operations under the
-scoped demonic interpretation of `PolyFun.PFunctor.Free.Do`. Each query is discharged through
-the registered `Spec.lift` specification — an operation guarantees its postcondition for every
-possible response — and a discharged triple converts back into a fact about the program's
-possible outputs. Each `vcgen` call asserts the experimental-tactic diagnostic with
-`#guard_msgs`, keeping `mvcgen.warning` enabled.
+scoped demonic interpretation of `PolyFun.PFunctor.Free.Do`. Each query is discharged through the
+registered `Spec.lift` specification — an operation guarantees its postcondition for every possible
+response — and a discharged triple converts back into a fact about the program's possible outputs.
+The module acknowledges the tactic's experimental status with `set_option experimental.vcgen true`;
+`PolyFunTest.Do.Algebra` pins the diagnostic itself.
 -/
 
 @[expose] public section
 
-open Std.Internal.Do PFunctor
+open Std.WP PFunctor
 open scoped PFunctor.FreeM.DemonicWP
+
+set_option experimental.vcgen true
 
 /-- A single-position query interface with boolean responses. -/
 abbrev coinP : PFunctor.{0, 0} := ⟨PUnit, fun _ => Bool⟩
@@ -33,10 +35,6 @@ def flipTwo : FreeM coinP Bool := do
   pure (a && b)
 
 /- `vcgen` decomposes a two-query bind chain; the leaf VCs quantify over each response. -/
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 example : ⦃ True ⦄ flipTwo ⦃ fun r => r = true ∨ r = false ⦄ := by
   vcgen [flipTwo]
   exact Bool.eq_false_or_eq_true _
@@ -46,10 +44,6 @@ def flipNot : FreeM coinP Bool := do
   let a ← FreeM.lift (P := coinP) PUnit.unit
   pure (!a)
 
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 example : ⦃ True ⦄ flipNot ⦃ fun r => r = true ∨ r = false ⦄ := by
   vcgen [flipNot]
   exact Bool.eq_false_or_eq_true _
@@ -57,10 +51,6 @@ example : ⦃ True ⦄ flipNot ⦃ fun r => r = true ∨ r = false ⦄ := by
 /-- A node in constructor spelling, decomposed by `Spec.liftBind`. -/
 def flipCtor : FreeM coinP Bool := FreeM.liftBind PUnit.unit fun b => pure (!b)
 
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 example : ⦃ True ⦄ flipCtor ⦃ fun r => r = true ∨ r = false ⦄ := by
   vcgen [flipCtor]
   exact Bool.eq_false_or_eq_true _
@@ -69,10 +59,6 @@ example : ⦃ True ⦄ flipCtor ⦃ fun r => r = true ∨ r = false ⦄ := by
 `PFunctor.FreeM.Spec.bind` rule. -/
 def flipNF : FreeM coinP Bool := (FreeM.lift (P := coinP) PUnit.unit).bind fun b => pure (!b)
 
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 example : ⦃ True ⦄ flipNF ⦃ fun r => r = true ∨ r = false ⦄ := by
   vcgen [flipNF]
   exact Bool.eq_false_or_eq_true _
@@ -84,17 +70,13 @@ def maskFalse : FreeM coinP Bool := do
   let a ← FreeM.lift (P := coinP) PUnit.unit
   pure (a && false)
 
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 theorem maskFalse_spec : ⦃ True ⦄ maskFalse ⦃ fun r => r = false ⦄ := by
   vcgen [maskFalse]
   simp
 
 /-- Soundness transports the verification condition to every reachable result. -/
 example (a : Bool) (h : MonadAttach.CanReturn maskFalse a) : a = false :=
-  MonadAttach.LawfulWPMonadAttach.of_canReturn_wp (P := fun r => r = false) h <| by
+  Std.WP.LawfulWPMonadAttach.of_canReturn_wp (P := fun r => r = false) h <| by
     intro _
     simpa only [Lean.Order.ofProp_prop_eq] using maskFalse_spec.le_wp trivial
 

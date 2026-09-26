@@ -16,16 +16,18 @@ import Mathlib.Data.ENat.Lattice
 # Lawful attachment on core's `vcgen`
 
 The demonic interpretation of a monad with lawful attachment, installed locally, lets `vcgen`
-decompose `do` blocks whose leaves are then discharged against the support: `wp` is the
-"always" judgment by `rfl`, core's triple is the guarded judgment, and a sound triple converts
-back into a support fact through `allOutputs_of_wp`. The angelic interpretation is checked to
-compute the "sometimes" judgment. Each `vcgen` call asserts the experimental-tactic diagnostic
-with `#guard_msgs`, keeping `mvcgen.warning` enabled.
+decompose `do` blocks whose leaves are then discharged against the support: `wp` is the "always"
+judgment by `rfl`, core's triple is the guarded judgment, and a sound triple converts back into a
+support fact through `allOutputs_of_wp`. The angelic interpretation is checked to compute the
+"sometimes" judgment. The module acknowledges the tactic's experimental status with `set_option
+experimental.vcgen true`; `PolyFunTest.Do.Algebra` pins the diagnostic itself.
 -/
 
 public section
 
-open Std.Internal.Do MonadAttach
+open Std.WP MonadAttach
+
+set_option experimental.vcgen true
 
 /-! ## Upstream return predicates and weaker assumptions -/
 
@@ -47,9 +49,9 @@ example (x : m α) (a : α) :
     a ∈ support x ↔ Std.Do.Internal.MayReturn x a :=
   Std.Do.Internal.MayReturn.canReturn_iff x a
 
-example : WPMonad m Prop EPost.Nil := toWPMonadDemonic
+example : WPMonad m Prop EStack⟨⟩ := toWPMonadDemonic
 
-example : @LawfulWPMonadAttach m Prop EPost.Nil _ _ _ _ _ (toWPMonadDemonic (m := m)) :=
+example : @LawfulWPMonadAttach m Prop EStack⟨⟩ _ _ _ _ _ (toWPMonadDemonic (m := m)) :=
   toWPMonadDemonic_lawfulWPMonadAttach
 
 example {ω : Type u} [Monoid ω] : LawfulMonadAttach (WriterT ω m) := inferInstance
@@ -59,19 +61,19 @@ end Lawful
 -- A numeric interpretation and structural safety can describe the same computation.
 example {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m]
     [LawfulMonadAttach m] [MAlgOrdered m ℕ∞] (x : m Nat) :
-    ((toWPMonadDemonic (m := m)).toWP Nat).wp x (fun a => a = 0) EPost.Nil.mk
+    ((toWPMonadDemonic (m := m)).toWP Nat).wp x (fun a => a = 0) estack⟨⟩
       = AllOutputs (fun a => a = 0) x ∧
     ((MAlgOrdered.toWPMonad (m := m) (l := ℕ∞)).toWP Nat).wp x (fun a => (a : ℕ∞))
-      EPost.Nil.mk = MAlgOrdered.wp x (fun a => (a : ℕ∞)) := ⟨rfl, rfl⟩
+      estack⟨⟩ = MAlgOrdered.wp x (fun a => (a : ℕ∞)) := ⟨rfl, rfl⟩
 
 example {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m]
     [WeaklyLawfulMonadAttach m] {ω : Type} [Monoid ω] :
     WeaklyLawfulMonadAttach (WriterT ω m) := inferInstance
 
 -- Flattened StateT support has no exact bind law; demonic sequencing still applies.
-example : WPMonad (StateT Bool Id) Prop EPost.Nil := toWPMonadDemonic
+example : WPMonad (StateT Bool Id) Prop EStack⟨⟩ := toWPMonadDemonic
 
-example : WPMonad (ReaderT Empty Id) Prop EPost.Nil := toWPMonadDemonic
+example : WPMonad (ReaderT Empty Id) Prop EStack⟨⟩ := toWPMonadDemonic
 
 example {ω : Type} [Monoid ω] :
     LawfulMonadAttach (WriterT ω (StateT Bool Id)) := inferInstance
@@ -80,7 +82,7 @@ example {ω : Type} [Monoid ω] :
 example {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m]
     [LawfulMonadAttach m] (x : StateT Bool m Nat) (p : Nat → Bool → Prop) (s : Bool) :
     letI := toWPMonadDemonic (m := m)
-    wp x p EPost.Nil.mk s = AllOutputs (fun q => p q.1 q.2) (x.run s) := rfl
+    wp x p estack⟨⟩ s = AllOutputs (fun q => p q.1 q.2) (x.run s) := rfl
 
 -- Lawful instances agree even when their attachment implementations are different.
 example {m : Type → Type} [Monad m] (i j : MonadAttach m)
@@ -95,7 +97,7 @@ example {m : Type → Type} [Monad m] (i j : MonadAttach m)
   exact ⟨transfer i j hi hj, transfer j i hj hi⟩
 
 /-- The demonic interpretation of `SetM`, installed locally. -/
-local instance instWPMonadSetMDemonic : WPMonad SetM Prop EPost.Nil :=
+local instance instWPMonadSetMDemonic : WPMonad SetM Prop EStack⟨⟩ :=
   toWPMonadDemonic
 
 /-- A nondeterministic choice followed by a deterministic step. -/
@@ -104,16 +106,12 @@ def choose12 : SetM Nat := do
   pure (x + 1)
 
 /-- `wp` is the "always" judgment. -/
-example (x : SetM Nat) (post : Nat → Prop) (epost : EPost.Nil) :
+example (x : SetM Nat) (post : Nat → Prop) (epost : EStack⟨⟩) :
     wp x post epost = AllOutputs post x :=
   rfl
 
 /- `vcgen` decomposes the bind chain; the nondeterministic leaf has no registered
 specification, so its verification condition is left as a support fact. -/
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 theorem choose12_spec : ⦃ True ⦄ choose12 ⦃ fun r => r = 2 ∨ r = 3 ⦄ := by
   vcgen -errorOnMissingSpec [choose12]
   intro a ha
@@ -139,10 +137,6 @@ def sumList (xs : List Nat) : SetM Nat := do
 
 /- `vcgen` reaches the loop through core's `Spec.forIn_list`; the invariant relates the
 accumulator to the elements consumed so far. -/
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 theorem sumList_spec (xs : List Nat) : ⦃ True ⦄ sumList xs ⦃ fun r => r = xs.sum ⦄ := by
   vcgen [sumList] invariants
     · fun pref _ s => s = pref.sum
@@ -162,10 +156,6 @@ def checkAll (xs : List Nat) : SetM PUnit :=
 /- `forM` over a list has no specification in core; `PolyFun.Control.Do.Spec` supplies
 `Spec.forM_list`, whose `PUnit`-accumulator invariant `vcgen`'s `invariants` clause fills. The
 nondeterministic body has no registered specification and is left as a support fact. -/
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 theorem checkAll_spec (xs : List Nat) : ⦃ True ⦄ checkAll xs ⦃ fun _ => True ⦄ := by
   vcgen -errorOnMissingSpec [checkAll] invariants
     · fun _ _ _ => True
@@ -177,10 +167,6 @@ def checkAll' (xs : List Nat) : SetM PUnit :=
 
 /- `Spec.forM_list` is stated on the class method `forM`, the simp normal form; the function
 spelling reaches it through `List.forM_eq_forM` in the unfolding list. -/
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 theorem checkAll'_spec (xs : List Nat) : ⦃ True ⦄ checkAll' xs ⦃ fun _ => True ⦄ := by
   vcgen -errorOnMissingSpec [checkAll', List.forM_eq_forM] invariants
     · fun _ _ _ => True
@@ -188,10 +174,10 @@ theorem checkAll'_spec (xs : List Nat) : ⦃ True ⦄ checkAll' xs ⦃ fun _ => 
 
 /-- The demonic interpretation is conjunctive. -/
 example (x : SetM Nat) :
-    @WPConjunctive (SetM Nat) Nat Prop EPost.Nil _ _ (instWPMonadSetMDemonic.toWP Nat) x :=
+    @WPConjunctive (SetM Nat) Nat Prop EStack⟨⟩ _ _ (instWPMonadSetMDemonic.toWP Nat) x :=
   toWPMonadDemonic_wpConjunctive x
 
 /-- The angelic interpretation computes the "sometimes" judgment. -/
-example (x : SetM Nat) (post : Nat → Prop) (epost : EPost.Nil) :
+example (x : SetM Nat) (post : Nat → Prop) (epost : EStack⟨⟩) :
     ((toWPMonadAngelic (m := SetM)).toWP Nat).wp x post epost = SomeOutput post x :=
   rfl

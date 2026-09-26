@@ -337,18 +337,18 @@ path. Foundational citations live in
 those keys (`Hancock-Setzer`, `Spivak-Niu`, etc.) rather than copying
 prose.
 
-### `Std.Do` imports are quarantined, in two tiers
+### `Std.WP` imports are quarantined, in two tiers
 
-The definitions (`Std.Do` and `Std.Internal.Do`: `WP`, `WPMonad`, `Triple`, the
+The definitions (`Std.WP`, and the legacy `Std.Do` stack: `WP`, `WPMonad`, `Triple`, the
 `@[spec]` lemmas) may be imported only by the program-logic kernel —
 `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
-`PolyFun/ITree/Do.lean` — and by `PolyFunTest/Do/`. The tactics (`Std.Tactic.Do`:
-`mvcgen`, `vcgen`, and the `@[spec]` attribute syntax) stay in
-`PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`.
-`ToCslib/` and `ComplexityBackends/` import neither directly. The upstream API is evolving quickly
-(`vcgen` on the `Std.Internal.Do` stack is replacing `mvcgen`, and that stack
-becomes a public `Std.WP` in v4.35), so the dependency stays confined to those
-files, and everything they export is a construction (`def`) or a `scoped`
+`PolyFun/ITree/Do.lean` — and by `PolyFunTest/Do/`. The tactics (`Std.Tactic.Do`, or
+`Std.WP.Tactic` once the syntax moves there: `vcgen`, the deprecated `mvcgen`, and the
+`@[spec]` attribute syntax) stay in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`,
+and `PolyFunTest/Do/`. `ToCslib/` and `ComplexityBackends/` import neither directly. The
+upstream API is still evolving (`vcgen` is experimental and warns on every call unless
+`set_option experimental.vcgen true` acknowledges it; `mvcgen` is deprecated), so the
+dependency stays confined to those files, and everything they export is a construction (`def`) or a `scoped`
 instance, never a global instance: a global `WP` instance on `FreeM P` would race
 downstream registrations on reducible unfoldings such as oracle-computation
 types. Register the provided structures `scoped` or `local` downstream. The one
@@ -357,12 +357,12 @@ exception is a transformer lift for a type with no other owner
 `scripts/check-modules.sh` enforces both tiers. See
 [`program-logic.md`](../guides/program-logic.md).
 
-### `vcgen` finds no spec unless the `Std.Internal.Do` root is imported
+### `vcgen` finds no spec unless the `Std.WP` root is imported
 
 `vcgen` consults the `@[spec]` database, and `Spec.bind` / `Spec.pure` live in
-`Std.Internal.Do.Triple.SpecLemmas`. A file that imports only `Std.Internal.Do.WP.Basic`
+`Std.WP.Triple.SpecLemmas`. A file that imports only `Std.WP.Basic`
 (or reaches the stack through such a module) gets `No spec found for program …` on every
-`do` block, with an empty candidate list. Import the root `Std.Internal.Do`; the bridge
+`do` block, with an empty candidate list. Import the root `Std.WP`; the bridge
 modules under `PolyFun/Control/Monad/*/WP.lean` do so for this reason. A leaf with no
 registered specification is left as a verification condition with
 `vcgen -errorOnMissingSpec`.
@@ -387,7 +387,7 @@ applicative forms through `simp`'s normalization to `>>=`.
 ### A `@[spec]` loop rule needs an `Invariant`-typed invariant
 
 `vcgen` recognises the invariant argument of a loop specification by its type: only an argument
-of type `Std.Internal.Do.Invariant α β Pred` (tagged `@[spec_invariant_type]`) is filled from
+of type `Std.WP.Invariant α β Pred` (tagged `@[spec_invariant_type]`) is filled from
 the `invariants` clause. A rule whose invariant is a bare `List α → List α → Pred` leaves an
 unassigned metavariable behind and fails with "Failed to strip the `⊤ ⊑` wrapper". State the
 invariant as `Invariant α PUnit Pred` when the loop carries no accumulator, and pin `PUnit`'s

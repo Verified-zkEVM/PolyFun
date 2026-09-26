@@ -23,16 +23,28 @@ namespace PFunctor.Lens
 
 /--
 warning: `PFunctor.X` has been deprecated: Use `PFunctor.y` instead
+
+Hint: Replace the deprecated name:
+  X̵y̲
 ---
 warning: `PFunctor.Lens.fromX` has been deprecated: Use `PFunctor.Lens.fromY` instead
+
+Hint: Replace the deprecated name:
+  fromX̵Y̲
 -/
 #guard_msgs in
 example {P : PFunctor.{0, 0}} (a : P.A) : Lens X P := fromX a
 
 /--
 warning: `PFunctor.X` has been deprecated: Use `PFunctor.y` instead
+
+Hint: Replace the deprecated name:
+  X̵y̲
 ---
 warning: `PFunctor.Lens.Equiv.compX` has been deprecated: Use `PFunctor.Lens.Equiv.compY` instead
+
+Hint: Replace the deprecated name:
+  L̵e̵n̵s̵.̵E̵q̵u̵i̵v̵.̵c̵o̵m̵p̵X̵E̲q̲u̲i̲v̲.̲c̲o̲m̲p̲Y̲
 -/
 #guard_msgs in
 example {P : PFunctor.{0, 0}} : Lens.Equiv (P ◃ X) P := Lens.Equiv.compX
