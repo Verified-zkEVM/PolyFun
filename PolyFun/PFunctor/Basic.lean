@@ -179,6 +179,61 @@ alias coprod := sum
 def sigma {I : Type v} (F : I → PFunctor.{uA, uB}) : PFunctor.{max uA v, uB} :=
   ⟨Σ i, (F i).A, fun ⟨i, a⟩ => (F i).B a⟩
 
+namespace sigma
+
+variable {I : Type v} {F : I → PFunctor.{uA, uB}}
+
+/-- A position of `sigma F`: a family index together with a position of that member.
+
+Use this constructor rather than the anonymous constructor `⟨i, a⟩`, whose type is the
+underlying sigma type only after `sigma` unfolds; `sigma.mk i a` has type `(sigma F).A` at
+every transparency, so statements about indexed-sum positions elaborate in ordinary-import
+consumers and under `linter.tacticCheckInstances`. Apply the projections as `sigma.fst x`
+and `sigma.snd x`: generalized field notation on a position resolves to `Sigma.fst` and
+`Sigma.snd`, because the position type unfolds to a sigma type. -/
+@[implicit_reducible, match_pattern]
+def mk (i : I) (a : (F i).A) : (sigma F).A := ⟨i, a⟩
+
+/-- The family index of a position of `sigma F`. -/
+@[implicit_reducible] def fst (x : (sigma F).A) : I := x.1
+
+/-- The member position of a position of `sigma F`. -/
+@[implicit_reducible] def snd (x : (sigma F).A) : (F (fst x)).A := x.2
+
+/-- To prove a statement about every position of `sigma F`, prove it for `sigma.mk i a`. -/
+@[implicit_reducible, elab_as_elim]
+def rec {motive : (sigma F).A → Sort*} (mk : ∀ i a, motive (.mk i a)) : ∀ x, motive x :=
+  fun x => mk x.1 x.2
+
+@[simp] theorem rec_mk {motive : (sigma F).A → Sort*} {mk : ∀ i a, motive (.mk i a)}
+    (i : I) (a : (F i).A) : sigma.rec mk (.mk i a) = mk i a := rfl
+
+@[simp] theorem fst_mk (i : I) (a : (F i).A) : fst (mk (F := F) i a) = i := rfl
+
+@[simp] theorem snd_mk (i : I) (a : (F i).A) : snd (mk (F := F) i a) = a := rfl
+
+@[simp] theorem eta (x : (sigma F).A) : mk (fst x) (snd x) = x := rfl
+
+/-- The directions at `sigma.mk i a` are the directions of the member `F i` at `a`. -/
+@[simp] theorem B_mk (i : I) (a : (F i).A) : (sigma F).B (mk i a) = (F i).B a := rfl
+
+/-- The directions at a position are the member's directions at its component. -/
+theorem B_eq (x : (sigma F).A) : (sigma F).B x = (F (fst x)).B (snd x) := rfl
+
+@[ext] theorem ext {x y : (sigma F).A} (h₁ : fst x = fst y) (h₂ : HEq (snd x) (snd y)) :
+    x = y :=
+  Sigma.ext h₁ h₂
+
+theorem mk.inj_iff {i j : I} {a : (F i).A} {b : (F j).A} :
+    mk (F := F) i a = mk j b ↔ i = j ∧ HEq a b :=
+  Sigma.mk.inj_iff
+
+theorem mk.inj {i j : I} {a : (F i).A} {b : (F j).A} (h : mk (F := F) i a = mk j b) :
+    i = j ∧ HEq a b :=
+  mk.inj_iff.mp h
+
+end sigma
+
 /-- `Σₚ i, F i` is the indexed sum `PFunctor.sigma F` of a family of polynomial functors. -/
 scoped notation3 "Σₚ "(...)", "F:60:(scoped f => PFunctor.sigma f) => F
 
