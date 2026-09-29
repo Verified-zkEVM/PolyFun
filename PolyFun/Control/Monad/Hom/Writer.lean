@@ -18,8 +18,6 @@ do not acquire Mathlib's Writer dependency unless they use it.
 
 @[expose] public section
 
-open scoped MonadHom
-
 universe u v w x
 
 namespace WriterT
@@ -69,8 +67,8 @@ def mapHom (φ : m →ᵐ n) : WriterT ω m →ᵐ WriterT ω n where
 variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
 
 @[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
-    WriterT.mapHom (ω := ω) (G ∘ₘ F) =
-      WriterT.mapHom (ω := ω) G ∘ₘ WriterT.mapHom (ω := ω) F := by
+    WriterT.mapHom (ω := ω) (G ∘ᵐ F) =
+      WriterT.mapHom (ω := ω) G ∘ᵐ WriterT.mapHom (ω := ω) F := by
   apply MonadHom.ext'
   intro α x
   rfl

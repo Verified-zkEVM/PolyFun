@@ -23,8 +23,6 @@ by `ITree.simulate`.
 
 @[expose] public section
 
-open scoped MonadHom
-
 universe uEA uEB uFA uFB uα uβ
 
 namespace PFunctor.FreeM

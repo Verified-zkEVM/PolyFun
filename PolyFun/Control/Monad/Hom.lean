@@ -27,8 +27,8 @@ so nothing of that shape should be re-derived here.
 
 When the morphism is *data* — chosen at the call site, passed around, composed,
 or mapped over — instance search is the wrong mechanism and a first-class arrow
-is needed.  Core has no bundled form, so `MonadHom` (scoped notation `m →ᵐ n`) is that
-arrow, with `MonadHom.comp` (`∘ₘ`), `MonadHom.id`, and `StateT.mapHom` for
+is needed.  Core has no bundled form, so `MonadHom` (notation `m →ᵐ n`) is that
+arrow, with `MonadHom.comp` (`∘ᵐ`), `MonadHom.id`, and `StateT.mapHom` for
 transporting one along a transformer.  `NatHom` is the underlying natural
 transformation without the laws; `PFunctor.FreeM.liftMHom'` consumes it
 directly.
@@ -98,15 +98,7 @@ it respects the `bind` and `pure` operations in the underlying monad. -/
   toFun_bind' {α β} (x : m α) (y : α → m β) :
     toFun β (x >>= y) = toFun α x >>= fun x => toFun β (y x)
 
-namespace MonadHom
-
-/-- Notation for the type `MonadHom m n` of bundled monad morphisms; activate it with
-`open scoped MonadHom`. -/
-scoped infixr:25 " →ᵐ " => MonadHom
-
-end MonadHom
-
-open scoped MonadHom
+@[inherit_doc] infixr:25 " →ᵐ " => MonadHom
 
 attribute [simp, grind =] MonadHom.toFun_pure' MonadHom.toFun_bind'
 
@@ -184,19 +176,19 @@ protected def comp (G : n →ᵐ n') (F : m →ᵐ n) : m →ᵐ n' where
   toFun_pure' := by simp
   toFun_bind' := by simp
 
-/-- Infix notation for composition of monad homomorphisms, `G ∘ₘ F`; activate it with
-`open scoped MonadHom`. The same glyph is Mathlib's scoped `Measure.bind` notation. -/
-scoped infixr:90 " ∘ₘ " => MonadHom.comp
+/-- Infix notation for composition of monad homomorphisms, `G ∘ᵐ F`. The superscript
+matches the arrow `→ᵐ` and keeps the glyph distinct from Mathlib's `κ ∘ₘ μ`. -/
+infixr:90 " ∘ᵐ " => MonadHom.comp
 
 @[simp, grind =] lemma comp_apply (G : n →ᵐ n') (F : m →ᵐ n) (x : m α) :
-    (G ∘ₘ F) x = G (F x) := rfl
+    (G ∘ᵐ F) x = G (F x) := rfl
 
 @[simp, grind =] lemma comp_id (F : m →ᵐ n) : F.comp (MonadHom.id m) = F := rfl
 
 @[simp, grind =] lemma id_comp (F : m →ᵐ n) : (MonadHom.id n).comp F = F := rfl
 
 @[grind =] lemma comp_assoc (H : n' →ᵐ n'') (G : n →ᵐ n') (F : m →ᵐ n) :
-    (H ∘ₘ G) ∘ₘ F = H ∘ₘ (G ∘ₘ F) := rfl
+    (H ∘ᵐ G) ∘ᵐ F = H ∘ᵐ (G ∘ᵐ F) := rfl
 
 /-- `pure`/`return` lawfully embed the `Id` monad into any lawful monad. -/
 protected def pure (m) [Monad m] [LawfulMonad m] : Id →ᵐ m where
@@ -240,8 +232,8 @@ variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
 
 omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
 @[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
-    StateT.mapHom (σ := σ) (G ∘ₘ F) =
-      StateT.mapHom (σ := σ) G ∘ₘ StateT.mapHom (σ := σ) F := by
+    StateT.mapHom (σ := σ) (G ∘ᵐ F) =
+      StateT.mapHom (σ := σ) G ∘ᵐ StateT.mapHom (σ := σ) F := by
   apply MonadHom.ext'
   intro α x
   rfl
@@ -274,8 +266,8 @@ variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
 
 omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
 @[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
-    ReaderT.mapHom (ρ := ρ) (G ∘ₘ F) =
-      ReaderT.mapHom (ρ := ρ) G ∘ₘ ReaderT.mapHom (ρ := ρ) F := by
+    ReaderT.mapHom (ρ := ρ) (G ∘ᵐ F) =
+      ReaderT.mapHom (ρ := ρ) G ∘ᵐ ReaderT.mapHom (ρ := ρ) F := by
   apply MonadHom.ext'
   intro α x
   rfl
@@ -317,7 +309,7 @@ variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
 
 omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
 @[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
-    OptionT.mapHom (G ∘ₘ F) = OptionT.mapHom G ∘ₘ OptionT.mapHom F := by
+    OptionT.mapHom (G ∘ᵐ F) = OptionT.mapHom G ∘ᵐ OptionT.mapHom F := by
   apply MonadHom.ext'
   intro α x
   rfl
@@ -358,8 +350,8 @@ variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
 
 omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
 @[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
-    ExceptT.mapHom (ε := ε) (G ∘ₘ F) =
-      ExceptT.mapHom (ε := ε) G ∘ₘ ExceptT.mapHom (ε := ε) F := by
+    ExceptT.mapHom (ε := ε) (G ∘ᵐ F) =
+      ExceptT.mapHom (ε := ε) G ∘ᵐ ExceptT.mapHom (ε := ε) F := by
   apply MonadHom.ext'
   intro α x
   rfl

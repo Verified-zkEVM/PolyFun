@@ -22,8 +22,6 @@ with its universal property and naturality. The algebraic laws (`map_pure`, `map
 
 @[expose] public section
 
-open scoped MonadHom
-
 /--
 Simp set for structurally unfolding `FreeM` and displayed-family operations.
 
@@ -268,7 +266,7 @@ naturality square of the universal fold. -/
 /-- Bundled form of `liftM_natural`: composing the fold monad-homomorphism `FreeM.liftMHom s` with
 a monad morphism `φ` is the fold of the post-composed handler. -/
 theorem liftMHom_comp (φ : m →ᵐ n) :
-    φ ∘ₘ FreeM.liftMHom s = FreeM.liftMHom (fun a => φ (s a)) :=
+    φ ∘ᵐ FreeM.liftMHom s = FreeM.liftMHom (fun a => φ (s a)) :=
   MonadHom.ext' fun β x => by simp
 
 end liftM

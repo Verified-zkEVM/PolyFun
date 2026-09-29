@@ -19,8 +19,6 @@ fold-naturality bridges that VCVio's `simulateQ` / `evalDist` layer instantiates
 
 @[expose] public section
 
-open scoped MonadHom
-
 open PFunctor
 
 namespace PolyFunTest.FreeMapM
@@ -35,9 +33,9 @@ example (s : (a : P.A) → m (P.B a)) (φ : m →ᵐ n) {α : Type} (x : FreeM P
     φ (FreeM.liftM s x) = FreeM.liftM (fun a => φ (s a)) x :=
   FreeM.liftM_natural s φ x
 
-/-- **Bundled naturality**: `φ ∘ₘ liftMHom s = liftMHom (φ ∘ s)`. -/
+/-- **Bundled naturality**: `φ ∘ᵐ liftMHom s = liftMHom (φ ∘ s)`. -/
 example (s : (a : P.A) → m (P.B a)) (φ : m →ᵐ n) :
-    φ ∘ₘ FreeM.liftMHom s = FreeM.liftMHom (fun a => φ (s a)) :=
+    φ ∘ᵐ FreeM.liftMHom s = FreeM.liftMHom (fun a => φ (s a)) :=
   FreeM.liftMHom_comp s φ
 
 /-- **Universal property**: a monad hom out of `FreeM P` agreeing with `s` on generators is

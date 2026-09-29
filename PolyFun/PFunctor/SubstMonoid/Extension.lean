@@ -20,8 +20,6 @@ monads on types.
 
 @[expose] public section
 
-open scoped MonadHom
-
 universe uA uB
 
 namespace PFunctor

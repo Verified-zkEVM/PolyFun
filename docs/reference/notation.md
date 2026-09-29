@@ -112,9 +112,9 @@ Conventions and glyph rationale:
   `open scoped PFunctor.DynComputation`; the symbol deliberately says nothing
   about resource bounds.
 - Bundled monad morphisms (`PolyFun/Control/Monad/Hom.lean`) write their type as
-  `m →ᵐ n` (`MonadHom m n`) and their composition as `G ∘ₘ F` (`MonadHom.comp`), both
-  opt-in via `open scoped MonadHom`. The composition glyph is also Mathlib's scoped
-  `κ ∘ₘ μ` for `Measure.bind`, so a file that opens both scopes must qualify one side.
+  `m →ᵐ n` (`MonadHom m n`) and their composition as `G ∘ᵐ F` (`MonadHom.comp`). Both
+  are global, like the lens and chart operators. The superscript `ᵐ` keeps the composition
+  glyph distinct from Mathlib's `scoped[ProbabilityTheory]` `κ ∘ₘ μ` (`Measure.bind`).
 - Comonadic cosequencing `xs <@> ys`, `xs <@ ys`, `xs @> ys` (`Coseq.coseq`,
   `CoseqLeft.coseqLeft`, `CoseqRight.coseqRight` in `PolyFun/Control/Comonad/Basic.lean`)
   is opt-in via `open scoped Comonad`.

@@ -20,8 +20,6 @@ bodies.
 
 @[expose] public section
 
-open scoped MonadHom
-
 universe u v w uA uB uA₂ uB₂ uα uβ
 
 namespace PolyFunTest.ModuleAPI.PFunctor

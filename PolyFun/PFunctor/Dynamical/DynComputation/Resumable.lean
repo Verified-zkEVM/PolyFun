@@ -19,8 +19,6 @@ universes because the handler's monad must carry the residual state as well as r
 
 public section
 
-open scoped MonadHom
-
 namespace PFunctor.DynSystem.DynComputation
 
 universe u v w uState uA uB uα uβ
