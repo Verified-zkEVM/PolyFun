@@ -6,31 +6,71 @@ on:
   pull_request:
   merge_group:
     types: [checks_requested]
+  # Nightly clean build of `main`: a check that nothing passes only because of the build cache.
+  schedule:
+    - cron: "40 5 * * *"
   workflow_dispatch:
+    inputs:
+      clean_build:
+        description: "Ignore the build cache and build from scratch"
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Runs on `main` save the build cache that later runs start from, so a newer push waits for the
+  # running one instead of cancelling it.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# The three jobs run in parallel and share two caches with different lifetimes. Dependencies
+# (`.lake/packages`, including Mathlib's oleans and the cslib build) change only with the toolchain
+# and manifest. PolyFun's own build (`.lake/build`) changes with every commit, so it is keyed per
+# commit and restored from the newest `main` build. Lake decides what to rebuild from content
+# hashes, so a restored build is only a starting point: whatever the checkout changed, and
+# everything importing it, is rebuilt. Only the `build` job on `main` saves either cache. Lake
+# regenerates `*.setup.json` files per build and never reads old ones, so they are not cached.
+#
+# The job names `build`, `Lint (environment linters)` and `Test` are required status checks on
+# `main`; keep them stable.
 
 jobs:
   build:
+    name: build
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      CLEAN_BUILD: ${{ github.event_name == 'schedule' || inputs.clean_build == true }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
-      - name: Restore Lean cache
+      - name: Restore dependency cache
+        id: deps-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        id: lake-cache
         with:
-          path: ./.lake
-          key: ${{ runner.os }}-lean-ci-${{ hashFiles('lake-manifest.json') }}
+          path: |
+            .lake/packages
+            !.lake/packages/**/*.setup.json
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          # On a dependency bump, start from the previous packages; Lake checks out the new
+          # revisions and rebuilds only the packages that changed.
           restore-keys: |
-            ${{ runner.os }}-lean-ci-
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Restore build cache
+        if: env.CLEAN_BUILD != 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            .lake/build
+            !.lake/build/**/*.setup.json
+          key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
@@ -52,29 +92,61 @@ jobs:
       - name: Run validation wrapper
         run: ./scripts/validate.sh --axioms
 
-      - name: Save Lean cache
-        if: success() && steps.lake-cache.outputs.cache-hit != 'true'
+      - name: Save dependency cache
+        if: success() && github.ref == 'refs/heads/main' && steps.deps-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
-          path: ./.lake
-          key: ${{ runner.os }}-lean-ci-${{ hashFiles('lake-manifest.json') }}
+          path: |
+            .lake/packages
+            !.lake/packages/**/*.setup.json
+          key: ${{ steps.deps-cache.outputs.cache-primary-key }}
+
+      # Keyed by run as well as commit, so a rerun on `main` still saves; restores take the newest
+      # match for the same pins.
+      - name: Save build cache
+        if: success() && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            .lake/build
+            !.lake/build/**/*.setup.json
+          key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}
 
   lint:
     name: Lint (environment linters)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CLEAN_BUILD: ${{ github.event_name == 'schedule' || inputs.clean_build == true }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
-      - name: Restore Lean cache
+      # Paths and keys must match the saves in `build` exactly, or the restore misses.
+      - name: Restore dependency cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
-          path: ./.lake
-          key: ${{ runner.os }}-lean-ci-${{ hashFiles('lake-manifest.json') }}
+          path: |
+            .lake/packages
+            !.lake/packages/**/*.setup.json
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
           restore-keys: |
-            ${{ runner.os }}-lean-ci-
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Restore build cache
+        if: env.CLEAN_BUILD != 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            .lake/build
+            !.lake/build/**/*.setup.json
+          key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set up Lean environment
         uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0
@@ -98,19 +170,38 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CLEAN_BUILD: ${{ github.event_name == 'schedule' || inputs.clean_build == true }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
-      - name: Restore Lean cache
+      # Paths and keys must match the saves in `build` exactly, or the restore misses.
+      - name: Restore dependency cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
-          path: ./.lake
-          key: ${{ runner.os }}-lean-ci-${{ hashFiles('lake-manifest.json') }}
+          path: |
+            .lake/packages
+            !.lake/packages/**/*.setup.json
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
           restore-keys: |
-            ${{ runner.os }}-lean-ci-
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Restore build cache
+        if: env.CLEAN_BUILD != 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            .lake/build
+            !.lake/build/**/*.setup.json
+          key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set up Lean environment
         uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0

@@ -82,8 +82,20 @@ the source and its result proofs.
 
 ## CI mapping
 
-- [CI](../../.github/workflows/ci.yml): independent build/axiom, environment
-  lint, and test/consumer jobs, including merge-queue candidates.
+- [CI](../../.github/workflows/ci.yml): three parallel jobs, including
+  merge-queue candidates:
+  - `build` runs the wrapper with `--axioms`;
+  - `Lint (environment linters)` builds the production and example libraries
+    with `--wfail` and runs `lake lint`;
+  - `Test` builds `PolyFunTest` with `--wfail --iofail` and runs `lake test`,
+    the CLI tests and both consumers.
+
+  Every job restores two caches: dependencies keyed on the toolchain and
+  manifest, and PolyFun's own `.lake/build` keyed per commit and restored from
+  the newest `main` build. Each job therefore rebuilds only what the checkout
+  changed. Only `build` on `main` saves the caches, and a newer push to `main`
+  waits for the running job rather than cancelling its save. A nightly clean
+  build of `main` skips the build cache, so nothing passes only because of it.
 - [Import check](../../.github/workflows/check-imports.yml): generated imports.
 - [Docs integrity](../../.github/workflows/docs-integrity.yml): checker tests,
   links, anchors, excerpts and module docs.
