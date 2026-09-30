@@ -39,9 +39,9 @@ universe u v w
 
 /-! ## Lattice operations across the bridge
 
-`Std.Internal.Order.Basic` defines `Lean.Order.top`, `meet`, and `join` from predicate-indexed
-suprema; on a carrier whose `Lean.Order.CompleteLattice` comes from Mathlib they are Mathlib's
-`⊤`, `⊓`, and `⊔`. -/
+`Std.Internal.Order.Basic` defines `Lean.Order.top`, `meet`, `join`, `iInf`, and `iSup` from
+predicate-indexed suprema; on a carrier whose `Lean.Order.CompleteLattice` comes from Mathlib they
+are Mathlib's `⊤`, `⊓`, `⊔`, `⨅`, and `⨆`. -/
 
 namespace MAlgOrdered
 
@@ -62,6 +62,16 @@ theorem meet_eq_inf (x y : α) : Lean.Order.meet x y = x ⊓ y :=
 theorem join_eq_sup (x y : α) : Lean.Order.join x y = x ⊔ y :=
   le_antisymm (Lean.Order.join_le x y _ le_sup_left le_sup_right)
     (sup_le (Lean.Order.left_le_join x y) (Lean.Order.right_le_join x y))
+
+@[simp]
+theorem iInf_eq_iInf {ι : Type v} (f : ι → α) : Lean.Order.iInf f = ⨅ i, f i :=
+  le_antisymm (le_iInf fun i => Lean.Order.iInf_le f i)
+    (Lean.Order.le_iInf f _ fun i => iInf_le f i)
+
+@[simp]
+theorem iSup_eq_iSup {ι : Type v} (f : ι → α) : Lean.Order.iSup f = ⨆ i, f i :=
+  le_antisymm (Lean.Order.iSup_le f _ fun i => le_iSup f i)
+    (iSup_le fun i => Lean.Order.le_iSup f i)
 
 end LatticeTransfer
 

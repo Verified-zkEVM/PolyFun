@@ -21,7 +21,10 @@ ranges, arrays, and iterators, and the operations of core's own transformers; th
   does not tag, so that a `try … catch` block on a transformer stack no longer stops `vcgen`
   with "no spec found";
 * the rules for `WriterT` (Mathlib's transformer, interpreted by
-  `PolyFun.Control.Monad.WriterT.WP`): `tell`, `monadLift`, `mk`, and `run`.
+  `PolyFun.Control.Monad.WriterT.WP`): `tell`, `monadLift`, `mk`, and `run`;
+* the `OptionT` rules core does not state: `failure` and `OptionT.lift` for every assertion
+  carrier, and `guard` for `Prop`-valued readings, stated with lattice connectives so that
+  `vcgen` splits it into its two outcomes.
 
 The wrappers the `do` elaborator uses to tunnel `return`, `break`, and `continue` through
 non-algebraic combinators (`EarlyReturn.runK`, `Break.runK`, `Continue.runK`) need no rules
@@ -108,5 +111,49 @@ theorem Spec.run_WriterT {α : Type u} (x : WriterT ω m α) (post : α × ω �
   Triple.intro (by rw [WriterT.wp_run_eq])
 
 end WriterTSpec
+
+end Std.WP
+
+namespace Std.WP
+
+section OptionTSpec
+
+variable {m : Type u → Type v} {Pred EPred : Type u} [Monad m] [Assertion Pred]
+  [Assertion EPred] [WPMonad m Pred EPred] {α : Type u}
+
+/-- `failure` in `OptionT` establishes the failure postcondition. -/
+@[spec]
+theorem Spec.failure_OptionT (post : α → Pred) (epost : (Unit → Pred) × EPred) :
+    Triple (failure : OptionT m α) (epost.fst ()) post epost :=
+  ⟨by
+    rw [OptionT.wp_apply_eq]
+    exact WPMonad.pure_le_wp_pure (m := m) none (Lean.Order.pushOption post epost.fst)
+      epost.snd⟩
+
+/-- `OptionT.lift` runs the base computation and succeeds. -/
+@[spec]
+theorem Spec.lift_OptionT (x : m α) (post : α → Pred) (epost : (Unit → Pred) × EPred) :
+    Triple (OptionT.lift x) (wp x post epost.snd) post epost :=
+  Spec.monadLift_OptionT x post epost
+
+/-- `guard p` in `OptionT` over a `Prop`-valued reading: the success postcondition when `p`
+holds and the failure postcondition when it does not, as a meet of two implications. -/
+@[spec]
+theorem Spec.guard_OptionT {m : Type → Type} {EPred : Type} [Monad m] [Assertion EPred]
+    [WPMonad m Prop EPred] (p : Prop) [Decidable p] (post : Unit → Prop)
+    (epost : (Unit → Prop) × EPred) :
+    Triple (guard p : OptionT m Unit)
+      (Lean.Order.meet (Lean.Order.himp (Lean.Order.CompleteLattice.ofProp p) (post ()))
+        (Lean.Order.himp (Lean.Order.CompleteLattice.ofProp (¬ p)) (epost.fst ())))
+      post epost := by
+  refine ⟨fun h => ?_⟩
+  simp only [Lean.Order.meet_prop_eq_and, Lean.Order.himp_prop_eq_imp,
+    Lean.Order.CompleteLattice.ofProp, Lean.Order.top_prop_eq, Lean.Order.bot_prop_eq] at h
+  unfold _root_.guard
+  split
+  · exact (Spec.pure (post := post) ()).le_wp (h.1 (by simp [*]))
+  · exact (Spec.failure_OptionT post epost).le_wp (h.2 (by simp [*]))
+
+end OptionTSpec
 
 end Std.WP
