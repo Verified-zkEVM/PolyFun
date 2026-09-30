@@ -9,6 +9,7 @@ module
 import Examples.Tutorials.Requests
 import Examples.Tutorials.Machines
 import Examples.Tutorials.IndexedPrograms
+import Examples.Tutorials.InteractionTrees
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess
 import PolyFun.Interaction.Execution.RequestNetwork
@@ -38,6 +39,11 @@ example (initial : Nat) (xs ys : List Nat) :
 example : IPFunctor.FreeM₂ IPFunctor.Examples.proto
     IPFunctor.Examples.Phase.opn IPFunctor.Examples.Phase.counting Nat :=
   IPFunctor.Examples.TwoIndex.run
+
+example :
+    (ITree.interp InteractionTrees.refuse InteractionTrees.bump).run =
+      ITree.query (F := ITree.StateE Nat) .get fun _ => ITree.step (ITree.pure none) :=
+  InteractionTrees.run_interp_refuse_bump
 
 example (I : Interface) : Type := Interface.Packet I
 
