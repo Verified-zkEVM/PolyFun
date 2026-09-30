@@ -103,7 +103,7 @@ and the order of the returned pair. -/
 theorem interpState_weakBisimRel_interp (t : ITree (StateE σ + E : PFunctor.{u, u}) α) (s : σ) :
     WeakBisimRel (fun (p : σ × α) (q : α × σ) => p.1 = q.2 ∧ p.2 = q.1) (interpState t s)
       ((interp (StateE.stateHandler (σ := σ) (E := E)) t).run s) := by
-  rw [interp, StateT.run_iterM_eq_stateBody]
+  rw [interp, StateT.run_iterM]
   change WeakBisimRel _ (interpState t s) (iter stateLoop (t, s))
   refine WeakBisimRel.coinduct _ (fun x y =>
       (∃ t s, x = interpState t s ∧ y = iter stateLoop (t, s)) ∨

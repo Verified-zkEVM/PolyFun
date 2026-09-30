@@ -14,7 +14,7 @@ public import PolyFun.Control.Monad.Iter
 # Interpreting interaction trees into iterative monads
 
 `ITree.interp h t` runs the tree `t` in a monad `m`, answering each event through the handler
-`h : PFunctor.Handler m E`. The definition is Coq's `interp` (`Interp/Interp.v`): iterate one node
+`h : PFunctor.Handler m E`. The definition is Rocq's `interp` (`Interp/Interp.v`): iterate one node
 at a time with `MonadIter.iterM`, returning at a leaf, continuing past a silent step, and asking
 the handler at a query. Interpreting into another interaction tree is `ITree.simulate`, by
 definition (`interp_eq_simulate`); the point of the general form is that `StateT σ (ITree F)`,

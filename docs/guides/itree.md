@@ -111,7 +111,7 @@ follow the polynomial event interface described below.
 
 `ITree.interp h t` ([`ITree/Interp/Defs.lean`](../../PolyFun/ITree/Interp/Defs.lean))
 runs a tree over `E` in any iterative monad `m`, answering each event through a
-handler `h : PFunctor.Handler m E`. It is Coq's `interp`: one `iterM` loop that
+handler `h : PFunctor.Handler m E`. It is Rocq's `interp`: one `iterM` loop that
 returns at a leaf, continues past a silent step, and asks the handler at a
 query. Interpreting into another interaction tree is `simulate` by definition
 (`interp_eq_simulate`), so the strong computation equations and the weak
