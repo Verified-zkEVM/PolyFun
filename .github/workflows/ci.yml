@@ -12,9 +12,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# The three jobs run in parallel and share two caches with different lifetimes. Dependencies
+# (`.lake/packages`, including Mathlib's oleans and the cslib build) change only with the toolchain
+# and manifest. PolyFun's own build (`.lake/build`) changes with every commit, so it is keyed per
+# commit and restored from the newest `main` build. Lake decides what to rebuild from content
+# hashes, so a restored build is only a starting point: whatever the checkout changed, and
+# everything importing it, is rebuilt. Only the `build` job on `main` saves either cache. Lake
+# regenerates `*.setup.json` files per build and never reads old ones, so they are not cached.
+#
+# The job names `build`, `Lint (environment linters)` and `Test` are required status checks on
+# `main`; keep them stable.
+
 jobs:
-  # The check name `build` is a required status check on `main`; keep it stable.
-  validate:
+  build:
     name: build
     runs-on: ubuntu-latest
     permissions:
@@ -25,17 +35,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      # One build cache for the whole run: an exact hit on this commit, otherwise the newest
-      # cache for the same toolchain and dependency pins (normally the latest `main` build).
-      - name: Restore Lean build cache
+      - name: Restore dependency cache
+        id: deps-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        id: lake-cache
         with:
-          path: ./.lake
-          key: ${{ runner.os }}-lean-ci-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          path: |
+            .lake/packages
+            !.lake/packages/**/*.setup.json
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          # On a dependency bump, start from the previous packages; Lake checks out the new
+          # revisions and rebuilds only the packages that changed.
           restore-keys: |
-            ${{ runner.os }}-lean-ci-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
-            ${{ runner.os }}-lean-ci-
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Restore build cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            .lake/build
+            !.lake/build/**/*.setup.json
+          key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
@@ -55,13 +77,131 @@ jobs:
         run: lake exe cache get
 
       - name: Run validation wrapper
-        run: ./scripts/validate.sh --lint --test --axioms
+        run: ./scripts/validate.sh --axioms
 
-      # Only `main` publishes caches: a cache saved there is visible to every branch, and the
-      # per-commit key keeps the restore prefix pointing at the newest complete build.
-      - name: Save Lean build cache
-        if: success() && github.ref == 'refs/heads/main' && steps.lake-cache.outputs.cache-hit != 'true'
+      - name: Save dependency cache
+        if: success() && github.ref == 'refs/heads/main' && steps.deps-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
-          path: ./.lake
-          key: ${{ runner.os }}-lean-ci-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          path: |
+            .lake/packages
+            !.lake/packages/**/*.setup.json
+          key: ${{ steps.deps-cache.outputs.cache-primary-key }}
+
+      # Keyed by run as well as commit, so a rerun on `main` still saves; restores take the newest
+      # match for the same pins.
+      - name: Save build cache
+        if: success() && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            .lake/build
+            !.lake/build/**/*.setup.json
+          key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}
+
+  lint:
+    name: Lint (environment linters)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      # Paths and keys must match the saves in `build` exactly, or the restore misses.
+      - name: Restore dependency cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            .lake/packages
+            !.lake/packages/**/*.setup.json
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          restore-keys: |
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Restore build cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            .lake/build
+            !.lake/build/**/*.setup.json
+          key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Set up Lean environment
+        uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-github-cache: false
+          use-mathlib-cache: false
+
+      - name: Fetch dependency cache
+        run: lake exe cache get
+
+      - name: Build production and example libraries
+        run: lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
+
+      - name: Run environment linters
+        run: lake lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      # Paths and keys must match the saves in `build` exactly, or the restore misses.
+      - name: Restore dependency cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            .lake/packages
+            !.lake/packages/**/*.setup.json
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          restore-keys: |
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Restore build cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            .lake/build
+            !.lake/build/**/*.setup.json
+          key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+            polyfun-build-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Set up Lean environment
+        uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0
+        with:
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-github-cache: false
+          use-mathlib-cache: false
+
+      - name: Fetch dependency cache
+        run: lake exe cache get
+
+      - name: Run test library
+        run: |
+          lake build PolyFunTest --wfail --iofail
+          lake test
+          lake -d test/DocumentationConsumer build --wfail
+          lake build polyfun-parliament --wfail
+          python3 scripts/test-parliament-cli.py
+          lake -d test/ParliamentConsumer build --wfail
