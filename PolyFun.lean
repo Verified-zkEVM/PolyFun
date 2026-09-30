@@ -21,6 +21,7 @@ public import PolyFun.Control.Monad.Hom.WP
 public import PolyFun.Control.Monad.Hom.Writer
 public import PolyFun.Control.Monad.Indexed
 public import PolyFun.Control.Monad.Iter
+public import PolyFun.Control.Monad.Iter.Instances
 public import PolyFun.Control.Monad.Support
 public import PolyFun.Control.Monad.Support.Indexed
 public import PolyFun.Control.Monad.Support.Instances
