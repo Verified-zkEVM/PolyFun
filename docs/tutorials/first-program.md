@@ -61,3 +61,5 @@ probability semantics downstream; the request tree itself has no probabilities.
   outputs, and a compositional execution law.
 - [Indexed programs](indexed-programs.md) restrict which requests are available
   at each phase of a protocol.
+- [Interaction trees](interaction-trees.md) run a program with state and ticks
+  through the state corecursor and through handlers into other monads.

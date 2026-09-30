@@ -20,7 +20,7 @@ proofs, examples, import boundaries, or validation infrastructure.
 | Generated imports | Generated umbrellas match the tracked source tree |
 | Documentation | Checker regressions, agent symlink, local paths and heading anchors, module docstrings, README excerpt synchronization |
 | `--lint` | Batteries environment linters and Mathlib text-style checks over production and example libraries plus the executable entry point |
-| `--test` | `PolyFunTest` with warnings fatal, `lake test`, native CLI/filesystem tests, and both separate consumers |
+| `--test` | `PolyFunTest` with warnings and printed output fatal (`--wfail --iofail`), `lake test`, native CLI/filesystem tests, and both separate consumers |
 | `--axioms` | Axiom-sweep fixture matrix and zero-debt check over production, tutorial, case-study, and executable module roots |
 
 The committed axiom baseline is a zero-debt policy, not an allowlist. Both
@@ -54,7 +54,7 @@ environment-lint, text-lint, and axiom-sweep module lists in `lakefile.toml`,
 
 ```bash
 lake build PolyFunExamples --wfail
-lake build PolyFunTest --wfail
+lake build PolyFunTest --wfail --iofail
 lake test
 lake -d test/DocumentationConsumer build --wfail
 lake build polyfun-parliament --wfail
@@ -63,6 +63,7 @@ lake -d test/ParliamentConsumer build --wfail
 lake lint
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
+  Examples.Tutorials.InteractionTrees \
   Examples.Parliament PolyFunParliamentMain
 python3 scripts/test-docs-integrity.py
 python3 scripts/check-docs-integrity.py
@@ -85,8 +86,20 @@ the source and its result proofs.
 
 ## CI mapping
 
-- [CI](../../.github/workflows/ci.yml): independent build/axiom, environment
-  lint, and test/consumer jobs, including merge-queue candidates.
+- [CI](../../.github/workflows/ci.yml): three parallel jobs, including
+  merge-queue candidates:
+  - `build` runs the wrapper with `--axioms`;
+  - `Lint (environment linters)` builds the production and example libraries
+    with `--wfail` and runs `lake lint`;
+  - `Test` builds `PolyFunTest` with `--wfail --iofail` and runs `lake test`,
+    the CLI tests and both consumers.
+
+  Every job restores two caches: dependencies keyed on the toolchain and
+  manifest, and PolyFun's own `.lake/build` keyed per commit and restored from
+  the newest `main` build. Each job therefore rebuilds only what the checkout
+  changed. Only `build` on `main` saves the caches, and a newer push to `main`
+  waits for the running job rather than cancelling its save. A nightly clean
+  build of `main` skips the build cache, so nothing passes only because of it.
 - [Import check](../../.github/workflows/check-imports.yml): generated imports.
 - [Docs integrity](../../.github/workflows/docs-integrity.yml): checker tests,
   links, anchors, excerpts and module docs.

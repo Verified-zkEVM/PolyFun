@@ -9,7 +9,8 @@ lintDriver = "batteries/runLinter"
 lintDriverArgs = [
   "PolyFun", "ToCslib", "ComplexityBackends",
   "Examples.Tutorials.Requests", "Examples.Tutorials.Machines",
-  "Examples.Tutorials.IndexedPrograms", "Examples.Parliament", "PolyFunParliamentMain"
+  "Examples.Tutorials.IndexedPrograms", "Examples.Tutorials.InteractionTrees",
+  "Examples.Parliament", "PolyFunParliamentMain"
 ]
 testDriver = "PolyFunTest"
 

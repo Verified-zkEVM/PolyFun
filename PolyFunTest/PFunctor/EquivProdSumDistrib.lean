@@ -36,7 +36,7 @@ def wrapped :
     ((P * Q) + (P * R) : PFunctor.{2, 1}) :=
   PFunctor.Equiv.prodSumDistrib P Q R
 
-#check wrapped_equivB
+noncomputable example := @wrapped_equivB
 
 /-! The wrapper canary rejects losing the producer's generated response projection metadata. -/
 

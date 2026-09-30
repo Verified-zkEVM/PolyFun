@@ -21,6 +21,7 @@ public import PolyFun.Control.Monad.Hom.WP
 public import PolyFun.Control.Monad.Hom.Writer
 public import PolyFun.Control.Monad.Indexed
 public import PolyFun.Control.Monad.Iter
+public import PolyFun.Control.Monad.Iter.Instances
 public import PolyFun.Control.Monad.Support
 public import PolyFun.Control.Monad.Support.Indexed
 public import PolyFun.Control.Monad.Support.Instances
@@ -55,6 +56,10 @@ public import PolyFun.ITree.Events.State
 public import PolyFun.ITree.Events.StateFacts
 public import PolyFun.ITree.Free
 public import PolyFun.ITree.Handler
+public import PolyFun.ITree.Interp.Defs
+public import PolyFun.ITree.Interp.Laws
+public import PolyFun.ITree.Interp.Sim
+public import PolyFun.ITree.Interp.State
 public import PolyFun.ITree.PatternRunsOnMatter
 public import PolyFun.ITree.Rec
 public import PolyFun.ITree.Rec.Facts

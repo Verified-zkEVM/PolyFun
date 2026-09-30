@@ -596,18 +596,18 @@ example :
   rw [← hbound]
   exact querySeqCompRunsWithin
 
-#check RankedRunCertificate.resolvesInUnder
-#check RankedRunCertificate.runsWithinUnder
-#check QuantitativeRealization.ExecutionTrace.toPrecomp
-#check QuantitativeRealization.ExecutionTrace.ofPrecomp
-#check QuantitativeRealization.ExecutionTrace.toMapResult
-#check QuantitativeRealization.ExecutionTrace.ofMapResult
-#check QuantitativeRealization.ExecutionTrace.seqCompAnyDecomposition
-#check QuantitativeRealization.ExecutionTrace.conforms_seqCompSource
-#check QuantitativeRealization.ExecutionTrace.length_seqCompSource
-#check QuantitativeRealization.RunsWithinUnder.precomp
-#check QuantitativeRealization.RunsWithinUnder.mapResult
-#check QuantitativeRealization.resolvesInUnder_seqComp
-#check QuantitativeRealization.RunsWithinUnder.seqComp
+noncomputable example := @RankedRunCertificate.resolvesInUnder
+noncomputable example := @RankedRunCertificate.runsWithinUnder
+noncomputable example := @QuantitativeRealization.ExecutionTrace.toPrecomp
+noncomputable example := @QuantitativeRealization.ExecutionTrace.ofPrecomp
+noncomputable example := @QuantitativeRealization.ExecutionTrace.toMapResult
+noncomputable example := @QuantitativeRealization.ExecutionTrace.ofMapResult
+noncomputable example := @QuantitativeRealization.ExecutionTrace.seqCompAnyDecomposition
+noncomputable example := @QuantitativeRealization.ExecutionTrace.conforms_seqCompSource
+noncomputable example := @QuantitativeRealization.ExecutionTrace.length_seqCompSource
+noncomputable example := @QuantitativeRealization.RunsWithinUnder.precomp
+noncomputable example := @QuantitativeRealization.RunsWithinUnder.mapResult
+noncomputable example := @QuantitativeRealization.resolvesInUnder_seqComp
+noncomputable example := @QuantitativeRealization.RunsWithinUnder.seqComp
 
 end PFunctor.QuantitativeBoundedClosureTest

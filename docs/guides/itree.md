@@ -48,7 +48,8 @@ step are lifted to `uB`; a visible query retains its original direction type.
 
 | Task | Entry point |
 |---|---|
-| Construct and observe a tree | [Basic](../../PolyFun/ITree/Basic.lean) |
+| Construct and observe a tree | [Basic](../../PolyFun/ITree/Basic.lean), [tutorial](../tutorials/interaction-trees.md) |
+| Run a tree in another monad | [Interpretation](../../PolyFun/ITree/Interp/Defs.lean), [state handler](../../PolyFun/ITree/Interp/State.lean) |
 | Reason modulo finite silent steps | [Bisimulation definitions](../../PolyFun/ITree/Bisim/Defs.lean), [bisimulation guide](bisimulation.md) |
 | Compare different event signatures | [Cross-signature relations](../../PolyFun/ITree/Bisim/CrossSignature.lean) |
 | Run guarded loops in `do` notation | [Do](../../PolyFun/ITree/Do.lean) |
@@ -106,6 +107,59 @@ follow the polynomial event interface described below.
   universes. `mutualRec` and `fixRec` retain one local equality: recursive and
   external replies share a universe because the current `PFunctor.sum`
   representation requires it. No other ITree API inherits that constraint.
+
+## Interpreting into a monad
+
+`ITree.interp h t` ([`ITree/Interp/Defs.lean`](../../PolyFun/ITree/Interp/Defs.lean))
+runs a tree over `E` in any iterative monad `m`, answering each event through a
+handler `h : PFunctor.Handler m E`. It is Rocq's `interp`: one `iterM` loop that
+returns at a leaf, continues past a silent step, and asks the handler at a
+query. Interpreting into another interaction tree is `simulate` by definition
+(`interp_eq_simulate`), so the strong computation equations and the weak
+bisimulation laws of simulation transfer to it
+([`Interp/Sim.lean`](../../PolyFun/ITree/Interp/Sim.lean)); the general form
+adds `StateT σ (ITree F)`, `ReaderT ρ (ITree F)`, `OptionT (ITree F)`, and any
+other iterative monad as targets. The loop state forces one universe: `E : PFunctor.{u, u}`,
+`α : Type u`, `m : Type u → Type v`; `simulate` keeps its independent universes.
+
+The laws hold for lawful iterative targets, such as `ITree F`,
+`StateT σ (ITree F)`, and `ReaderT ρ (ITree F)`, up to the target's iteration
+equivalence ([`Interp/Laws.lean`](../../PolyFun/ITree/Interp/Laws.lean)): `interp_pure`,
+`interp_step`, `interp_query`, `interp_lift`, and `interp_bind`. The last is
+the one that needs uniformity: the interpreted loop of `t >>= k` is run as a
+two-phase loop whose state is a residual of `t` or of some `k a`; uniformity
+identifies it with the loop of the sequenced tree, the codiagonal law splits it
+into an outer loop over an inner one, and naturality and uniformity identify the
+inner loops with `interp h t` and `interp h (k a)`. `liftHandler` leaves events in place up
+to a monad lift, so a handler for a sum `E + F` that interprets `E` and lifts
+`F` keeps the `F` events visible in the target tree.
+[`Interp/State.lean`](../../PolyFun/ITree/Interp/State.lean) does this for
+state: `StateE.stateHandler` answers `get` and `put` in `StateT σ (ITree E)`
+and lifts the remaining events, and `interpState_weakBisimRel_interp` shows it
+agrees with the direct corecursor `interpState` up to weak bisimulation and the
+order of the returned pair. The corecursor keeps its exact computation rules;
+the handler form is the one that composes with other iterative targets.
+
+## Iterative monads
+
+`ITree.iter` is an instance of the `MonadIter` interface in
+[`Control/Monad/Iter.lean`](../../PolyFun/Control/Monad/Iter.lean): a monad
+with a uniform loop combinator `iterM : (β → m (β ⊕ α)) → β → m α`. Its lawful
+version, `LawfulMonadIter`, states the Elgot laws (the four Conway laws and
+uniformity) over a monad-specific equivalence; for interaction trees that
+equivalence is weak bisimulation, because every loop step inserts a silent
+guard. [`Control/Monad/Iter/Instances.lean`](../../PolyFun/Control/Monad/Iter/Instances.lean)
+makes `StateT`, `ReaderT`, `ExceptT`, and `OptionT` over an iterative monad
+iterative, with `run_iterM` equations by definition, and proves the state and
+reader transformers lawful over a lawful base, so `StateT σ (ITree F)` and
+`ReaderT ρ (ITree F)` carry the same loop laws as `ITree F`.
+
+`ITree.bind_eq_bind`, `ITree.pure_eq_pure`, and `ITree.iterM_eq_iter` identify
+the monadic `>>=`, `pure`, and `iterM` with `ITree.bind`, `ITree.pure`, and
+`ITree.iter`, whose exact equations (`bind_query`, `bind_pure_left`,
+`iter_unfold`) compute concrete runs. The
+[tutorial](../tutorials/interaction-trees.md) uses them to compute
+interpretations into `OptionT (ITree E)`, a target without a lawful instance.
 
 ## Recovering Coq references
 

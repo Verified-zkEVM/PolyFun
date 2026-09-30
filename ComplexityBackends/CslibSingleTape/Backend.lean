@@ -35,7 +35,7 @@ admissibility. Concrete quantitative morphisms still require cslib code.
 
 This definition is reducibly exposed so that `encodingStepClass.Str type`
 elaborates as the function type `type → List Bool` across module boundaries. -/
-@[expose, reducible] def encodingStepClass : StepClass.{u, u} where
+abbrev encodingStepClass : StepClass.{u, u} where
   Str type := type → List Bool
   Hom _ _ _ := True
   id_mem _ := trivial
@@ -90,7 +90,7 @@ is a certified operational upper envelope, not an exact step counter.
 This definition is reducibly exposed so that its generic `Realizer` family
 elaborates as `EncPolyTime`; the named size and cost laws below remain the proof
 API. -/
-@[expose, reducible] noncomputable def quantitative : QuantitativeStepClass encodingStepClass where
+noncomputable abbrev quantitative : QuantitativeStepClass encodingStepClass where
   Realizer source target function := EncPolyTime source target function
   size representation value := (representation value).length
   cost := @fun _ _ source _ _ code input ↦

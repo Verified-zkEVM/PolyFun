@@ -41,13 +41,13 @@ def mapTarget {m : Type u → Type v} {n : Type u → Type w}
     (handler : PFunctor.Handler m q) : PFunctor.Handler n q :=
   fun position => transform (handler position)
 
-@[simp] theorem mapTarget_apply {m : Type u → Type v} {n : Type u → Type w}
+@[simp, grind =] theorem mapTarget_apply {m : Type u → Type v} {n : Type u → Type w}
     {q : PFunctor.{uA, u}} (transform : ∀ {α : Type u}, m α → n α)
     (handler : PFunctor.Handler m q) (position : q.A) :
     mapTarget transform handler position = transform (handler position) :=
   rfl
 
-@[simp] theorem mapTarget_id {m : Type u → Type v}
+@[simp, grind =] theorem mapTarget_id {m : Type u → Type v}
     {q : PFunctor.{uA, u}} (handler : PFunctor.Handler m q) :
     mapTarget (fun computation => computation) handler = handler :=
   rfl
