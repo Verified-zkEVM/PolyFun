@@ -13,8 +13,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The check name `build` is a required status check on `main`; keep it stable.
   validate:
-    name: Build, lint, test, axioms
+    name: build
     runs-on: ubuntu-latest
     permissions:
       contents: read
