@@ -257,7 +257,7 @@ omit [LawfulMonad m] [LawfulMonad n] in
 /-- **Naturality of the fold along a monad morphism**: pushing a monad morphism `φ : m →ᵐ n` through
 `FreeM.liftM s` is the fold of the post-composed handler `fun a => φ (s a)` — the value-level
 naturality square of the universal fold. -/
-@[simp] theorem liftM_natural (φ : m →ᵐ n) (x : FreeM P α) :
+@[simp, grind =] theorem liftM_natural (φ : m →ᵐ n) (x : FreeM P α) :
     φ (FreeM.liftM s x) = FreeM.liftM (fun a => φ (s a)) x := by
   induction x with
   | pure x => exact φ.mmap_pure x
