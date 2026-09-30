@@ -15,7 +15,7 @@ sending each input to either a fresh input (`Sum.inl`) or a final result
 (`Sum.inr`) into a transformer producing the result.
 
 The notion is due to Adámek, Milius, and Velebil (and used pervasively in
-the Coq `InteractionTrees` library, `Basics/Basics.v`, where it is called
+the Rocq `InteractionTrees` library, `Basics/Basics.v`, where it is called
 `MonadIter`). It generalises uniform definition of recursive functions
 across monadic effects and is the data underlying `ITree.iter`,
 `OracleComp`'s simulators, and the transformer instances in
@@ -30,7 +30,7 @@ across monadic effects and is the data underlying `ITree.iter`,
 ## Conventions
 
 We use `Sum.inl` for "loop continues with new input" and `Sum.inr` for
-"loop terminates with this final result", matching the Coq library and
+"loop terminates with this final result", matching the Rocq library and
 the standard Bekic / iterative-monads literature. (Some Haskell libraries
 flip the convention; we stick with `inl = continue`, `inr = stop`.)
 

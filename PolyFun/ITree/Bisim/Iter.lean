@@ -412,8 +412,8 @@ theorem iter_codiagonal_weak {F : PFunctor.{uFA, uFB}}
           | inr result => exact Or.inr ⟨result, rfl, rfl⟩) u
 
 /-- Uniformity: relabelling the loop state along `φ` is invisible up to weak
-bisimulation, provided the second body agrees with the relabelled first body on
-every reachable state. -/
+bisimulation, provided the second body agrees, up to weak bisimulation, with the
+relabelled first body at every state. -/
 theorem iter_uniform_weak {F : PFunctor.{uFA, uFB}} {α : Type uα} {β : Type uβ}
     {γ : Type uγ} (φ : β → γ) (f : β → ITree F (β ⊕ α)) (g : γ → ITree F (γ ⊕ α))
     (h : ∀ b, WeakBisim (g (φ b)) (ITree.map (Sum.map φ id) (f b))) (init : β) :
@@ -422,15 +422,10 @@ theorem iter_uniform_weak {F : PFunctor.{uFA, uFB}} {α : Type uα} {β : Type u
   subst hbc
   have hmap : WeakBisimRel (Sum.LiftRel (fun b c => c = φ b) Eq) (f b)
       (ITree.map (Sum.map φ id) (f b)) := by
-    have := bind_weakBisimRel (RR := Eq) (SS := Sum.LiftRel (fun b c => c = φ b) Eq)
-      (u := f b) (v := f b) (f := pure) (g := fun x => pure (Sum.map φ id x))
-      (WeakBisimRel.refl (fun _ => rfl) (f b))
-      (fun a a' haa' => by
-        subst haa'
-        cases a with
-        | inl b' => exact WeakBisimRel.pure (Sum.LiftRel.inl rfl)
-        | inr r => exact WeakBisimRel.pure (Sum.LiftRel.inr rfl))
-    rwa [bind_pure_right] at this
+    have := map_weakBisimRel (SS := Sum.LiftRel (fun b c => c = φ b) Eq) id (Sum.map φ id)
+      (WeakBisimRel.refl (fun _ => rfl) (f b)) fun a a' haa' => by
+        subst haa'; cases a <;> constructor <;> rfl
+    simpa [ITree.map, bind_pure_right] using this
   exact (hmap.comp (h b).symm).mono_result fun _ _ ⟨_, hxy, hyz⟩ => hyz ▸ hxy
 
 /-! ## Lawful iteration instance -/

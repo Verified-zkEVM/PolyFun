@@ -14,8 +14,8 @@ public import PolyFun.ITree.Bisim.Iter
 
 Canaries for the transformer `MonadIter` instances: a state loop over an interaction tree
 unfolds to the paired base loop, the lawful instances are found by instance search over an
-iterative base, the option and exception loops turn early exits into loop results, and the
-constructions live at independent universes.
+iterative base, a failing option body and a throwing exception body end their loops at the first
+step, and the constructions live at independent universes.
 -/
 
 @[expose] public section
@@ -69,6 +69,26 @@ whose right-hand sides are base loops that the base iteration laws apply to. -/
 example (f : Unit → OptionT (ITree Tick) (Unit ⊕ Nat)) := OptionT.run_iterM f ()
 
 example (f : Unit → ExceptT String (ITree Tick) (Unit ⊕ Nat)) := ExceptT.run_iterM f ()
+
+/-- A failing body ends the option loop with `none` at the first step. -/
+example :
+    LawfulMonadIter.Eqv
+      ((iterM (fun _ : Unit => (failure : OptionT (ITree Tick) (Unit ⊕ Nat))) ()).run)
+      (Pure.pure none) := by
+  rw [OptionT.run_iterM]
+  refine LawfulMonadIter.eqv_trans (LawfulMonadIter.iter_unfold _ _)
+    (LawfulMonadIter.eqv_of_eq ?_)
+  simp only [OptionT.optionBody, OptionT.run_failure, map_pure, LawfulMonad.pure_bind]
+
+/-- A throwing body ends the exception loop with that exception at the first step. -/
+example (e : String) :
+    LawfulMonadIter.Eqv
+      ((iterM (fun _ : Unit => (throw e : ExceptT String (ITree Tick) (Unit ⊕ Nat))) ()).run)
+      (Pure.pure (.error e)) := by
+  rw [ExceptT.run_iterM]
+  refine LawfulMonadIter.eqv_trans (LawfulMonadIter.iter_unfold _ _)
+    (LawfulMonadIter.eqv_of_eq ?_)
+  simp only [ExceptT.exceptBody, ExceptT.run_throw, map_pure, LawfulMonad.pure_bind]
 
 /-- The constructions elaborate at a higher universe. -/
 example {σ : Type 1} {F : PFunctor.{1, 1}} : MonadIter (StateT σ (ITree F)) := inferInstance
