@@ -152,7 +152,6 @@ def fromList? : List α → Option (NonEmptyList α)
 def map (f : α → β) : NonEmptyList α → NonEmptyList β
   | ⟨h, t⟩ => ⟨f h, List.map f t⟩
 
-
 /-- Get the head of the `NonEmptyList` (extract). -/
 @[simp] def headNel (nel : NonEmptyList α) : α := nel.head
 
