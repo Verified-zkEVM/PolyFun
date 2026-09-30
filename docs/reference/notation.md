@@ -92,7 +92,7 @@ Conventions and glyph rationale:
 - `Responder S q` and the game formers in
   `PolyFun/PFunctor/Dynamical/{Responder, Game}.lean` are dynamical
   systems over `q ⊸ y` and `q ⊸ r`; the positions of `q ⊸ r` are the
-  lenses `q ⇆ r` (Spivak–Niu Ex 4.78).
+  lenses `Lens q r` (Spivak–Niu Ex 4.78).
 - Lens and chart constructors have the scoped arrows `toFunA ⇆ toFunB` (`Lens.mk`) and
   `toFunA ⇉ toFunB` (`Chart.mk`), active under `open scoped PFunctor` like the rest of the
   polynomial algebra. The pairing brackets `⟨l₁, l₂⟩ₗ` / `[l₁, l₂]ₗ` (`Lens.prodPair` /
@@ -117,7 +117,7 @@ Conventions and glyph rationale:
   glyph distinct from Mathlib's `scoped[ProbabilityTheory]` `κ ∘ₘ μ` (`Measure.bind`).
 - Comonadic cosequencing `xs <@> ys`, `xs <@ ys`, `xs @> ys` (`Coseq.coseq`,
   `CoseqLeft.coseqLeft`, `CoseqRight.coseqRight` in `PolyFun/Control/Comonad/Basic.lean`)
-  is opt-in via `open scoped Comonad`.
+  is opt-in via `open scoped Coapplicative`.
 - Support satisfaction judgments, opt-in via `open scoped MonadAttach` for any
   monad with a core `MonadAttach` instance: `x ⊨ₐ p` (`AllOutputs p x`, every
   possible output satisfies `p`), `x ⊨ₛ p` (`SomeOutput p x`, some possible
@@ -131,4 +131,5 @@ New notation should follow the same pattern: scoped to the owning
 namespace, declared next to the definition it abbreviates, with the
 named form remaining the canonical API. Custom operator clusters are
 reserved for the polynomial algebra above, the open-system composition algebra,
-and composition of lenses, charts, and lens-defined systems.
+composition of lenses, charts, and lens-defined systems, and the monad-morphism
+arrow `→ᵐ` with its composition `∘ᵐ`.

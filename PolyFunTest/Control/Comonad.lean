@@ -17,7 +17,7 @@ pairing instances retain their chosen behavior and share the functor operations.
 
 @[expose] public section
 
-open scoped Comonad
+open scoped Coapplicative
 
 universe u v
 
