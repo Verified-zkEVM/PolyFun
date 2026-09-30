@@ -334,53 +334,54 @@ def runScenario (name : String) (scenario : Scenario Unit) : IO Unit := do
       unless state == run.state && events == run.events do
         throw (IO.userError s!"{name}: replay diverged")
       unless decide state.WellFormed do throw (IO.userError s!"{name}: invalid final state")
-      IO.println s!"{name}: ok"
-/-- info: basic: ok -/
+      IO.println s!"{name}: {run.commands.length} accepted commands; replay agrees"
+
+/-- info: basic: 26 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "basic" basic
-/-- info: amendment: ok -/
+/-- info: amendment: 47 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "amendment" amendment
-/-- info: missing second: ok -/
+/-- info: missing second: 14 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "missing second" missingSecond
-/-- info: debate closure: ok -/
+/-- info: debate closure: 36 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "debate closure" debateClosure
-/-- info: consent objection: ok -/
+/-- info: consent objection: 22 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "consent objection" consentObjection
-/-- info: appeal: ok -/
+/-- info: appeal: 39 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "appeal" appeal
-/-- info: appeal tie: ok -/
+/-- info: appeal tie: 26 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "appeal tie" appealTie
-/-- info: interruption: ok -/
+/-- info: interruption: 27 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "interruption" interruption
-/-- info: stale judgment: ok -/
+/-- info: stale judgment: 12 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "stale judgment" staleJudgment
-/-- info: quorum loss: ok -/
+/-- info: quorum loss: 32 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "quorum loss" quorumLoss
-/-- info: table and restore: ok -/
+/-- info: table and restore: 54 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "table and restore" tableRestore
-/-- info: committee report: ok -/
+/-- info: committee report: 45 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "committee report" committeeReport
-/-- info: postponement: ok -/
+/-- info: postponement: 32 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "postponement" postponement
-/-- info: withdrawal: ok -/
+/-- info: withdrawal: 19 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "withdrawal" withdrawal
-/-- info: chair vote: ok -/
+/-- info: chair vote: 33 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "chair vote" chairVote
-/-- info: session expiration: ok -/
+/-- info: session expiration: 57 accepted commands; replay agrees -/
 #guard_msgs in
 #eval runScenario "session expiration" sessionExpiration
 

@@ -51,7 +51,7 @@ environment-lint, text-lint, and axiom-sweep module lists in `lakefile.toml`,
 
 ```bash
 lake build PolyFunExamples --wfail
-lake build PolyFunTest --wfail
+lake build PolyFunTest --wfail --iofail
 lake test
 lake -d test/DocumentationConsumer build --wfail
 lake build polyfun-parliament --wfail

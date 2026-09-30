@@ -102,6 +102,7 @@ def failures : IO Unit := do
   unless result.journal.state.revision == 0 && memory.persistCount == 0 do
     throw (IO.userError "rejected input persisted")
   IO.println "failures: ok"
+
 /-- Chunk boundaries preserve every residual phase and do not repeat completed writes. -/
 def chunks : IO Unit := do
   let .ok journal := config.start | throw (IO.userError "invalid config")
@@ -116,6 +117,7 @@ def chunks : IO Unit := do
   unless result.code == 0 && final.persistCount == 1 && final.publishCount == 1 do
     throw (IO.userError "resumption repeated an effect")
   IO.println "chunks: ok"
+
 /-- Contextual recordability distinguishes a missing second, consent, and amended wording. -/
 def minuteBoundaries : IO Unit := do
   let .ok (_, run) := missingSecond.run {} | throw (IO.userError "setup failed")
@@ -139,6 +141,7 @@ def minuteBoundaries : IO Unit := do
   unless escapeMarkdown "a\n# *b* & <c>" == "a\\n\\# \\*b\\* \\& \\<c\\>" do
     throw (IO.userError "Markdown escaping mismatch")
   IO.println "minuteBoundaries: ok"
+
 /-- info: allScenarios: ok -/
 #guard_msgs in
 #eval allScenarios

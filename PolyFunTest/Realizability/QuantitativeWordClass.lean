@@ -33,11 +33,14 @@ section Category
 
 variable [Q.HasCategory] [Q.HasExactCategory]
 
-noncomputable example := @Q.identity
-noncomputable example := @Q.compose
-noncomputable example := @Q.composeOverhead
-noncomputable example := @Q.toHasCategory
-noncomputable example := @Q.toHasExactCategory
+noncomputable example : Q.Code id := Q.identity
+noncomputable example {f g : W → W} (first : Q.Code f) (second : Q.Code g) : Q.Code (g ∘ f) :=
+  Q.compose first second
+noncomputable example {f g : W → W} (first : Q.Code f) (second : Q.Code g) (word : W) : ℕ :=
+  Q.composeOverhead first second word
+noncomputable example : Q.toQuantitativeStepClass.HasCategory := Q.toHasCategory
+example : letI := Q.toHasCategory; Q.toQuantitativeStepClass.HasExactCategory :=
+  Q.toHasExactCategory
 
 end Category
 

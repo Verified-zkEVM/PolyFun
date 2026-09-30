@@ -57,6 +57,7 @@ def checkChunks : IO Unit := do
   | .error "unavailable" => pure ()
   | _ => throw (IO.userError "handler failure was hidden")
   IO.println "checkChunks: ok"
+
 /-- Exercise the actual IO loop across two chunk boundaries. -/
 def checkIO : IO Unit := do
   let calls ← IO.mkRef 0
@@ -80,6 +81,7 @@ def checkIO : IO Unit := do
   unless failed && (← failedCalls.get) == 129 do
     throw (IO.userError "IO resumption hid failure or repeated effects")
   IO.println "checkIO: ok"
+
 /-- info: checkChunks: ok -/
 #guard_msgs in
 #eval checkChunks

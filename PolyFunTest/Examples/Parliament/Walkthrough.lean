@@ -44,6 +44,7 @@ def checkBridges : IO Unit := do
       failedLog == [.read, .persist, .tell] do
     throw (IO.userError "instrumentation changed failure behavior")
   IO.println "checkBridges: ok"
+
 /-- info: checkBridges: ok -/
 #guard_msgs in
 #eval checkBridges
