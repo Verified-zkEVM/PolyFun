@@ -33,7 +33,7 @@ namespace TwoParty
 open TwoParty
 
 /-- Role-aware displayed data: `S X` at sender nodes; `∀` recursion at receiver nodes. -/
-@[expose, reducible] def Role.Refine (S : Type u → Type v) :
+abbrev Role.Refine (S : Type u → Type v) :
     (spec : TypeTree.{u}) → RoleDecoration spec → Type (max u v)
   | .done, _ => PUnit
   | .node X rest, ⟨.sender, rRest⟩ =>

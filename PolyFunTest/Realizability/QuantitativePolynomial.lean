@@ -335,16 +335,16 @@ example (polynomial : Polynomial ℕ) (inputSize : ℕ) :
       polynomial.eval inputSize :=
   FirstOrderPolynomial.eval_ofNatPolynomial polynomial inputSize
 
-#check QuantitativeStepClass.PolyRealizer
-#check QuantitativeStepClass.PolynomialCategory
-#check QuantitativeStepClass.StructuralKernel
-#check QuantitativeStepClass.PolynomialStructuralClosure
-#check QuantitativeStepClass.PolyOutputSizeRecovery
-#check QuantitativeStepClass.PolyOutputSizeRecovery.toOutputSizeRecovery
-#check QuantitativeStepClass.PolynomialStructuralClosure.polyOutputSizeRecovery
-#check QuantitativeStepClass.PolynomialModel
-#check FirstOrderPolynomial.pow
-#check FirstOrderPolynomial.ofNatPolynomial
-#check FirstOrderPolynomial.eval_ofNatPolynomial
+noncomputable example := @QuantitativeStepClass.PolyRealizer
+noncomputable example := @QuantitativeStepClass.PolynomialCategory
+noncomputable example := @QuantitativeStepClass.StructuralKernel
+noncomputable example := @QuantitativeStepClass.PolynomialStructuralClosure
+noncomputable example := @QuantitativeStepClass.PolyOutputSizeRecovery
+noncomputable example := @QuantitativeStepClass.PolyOutputSizeRecovery.toOutputSizeRecovery
+noncomputable example := @QuantitativeStepClass.PolynomialStructuralClosure.polyOutputSizeRecovery
+noncomputable example := @QuantitativeStepClass.PolynomialModel
+noncomputable example := @FirstOrderPolynomial.pow
+noncomputable example := @FirstOrderPolynomial.ofNatPolynomial
+noncomputable example := @FirstOrderPolynomial.eval_ofNatPolynomial
 
 end PFunctor.QuantitativePolynomialTest
