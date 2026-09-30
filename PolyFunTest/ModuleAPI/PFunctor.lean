@@ -163,7 +163,7 @@ example : (mixedFibers.map mixedMap mixedObject).snd false = 8 ∧
 Positions of `PFunctor.sigma F` are built with `sigma.mk` and taken apart with `sigma.fst`,
 `sigma.snd`, and `sigma.rec`. The constructor has type `(sigma F).A` at every transparency,
 so a statement about such a position typechecks under the instance checker without a local
-reducibility override on `sigma` (the wiring consumers previously needed one). -/
+reducibility override on `sigma`. -/
 
 set_option linter.tacticCheckInstances true in
 example (P : PFunctor.{0, 0}) (f : (PFunctor.sigma fun _ : Unit => P).A → Nat) (a : P.A) :

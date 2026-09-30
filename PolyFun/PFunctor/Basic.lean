@@ -202,11 +202,11 @@ def mk (i : I) (a : (F i).A) : (sigma F).A := ⟨i, a⟩
 
 /-- To prove a statement about every position of `sigma F`, prove it for `sigma.mk i a`. -/
 @[implicit_reducible, elab_as_elim]
-def rec {motive : (sigma F).A → Sort*} (mk : ∀ i a, motive (.mk i a)) : ∀ x, motive x :=
+def rec {motive : (sigma F).A → Sort*} (mk : ∀ i a, motive (sigma.mk i a)) : ∀ x, motive x :=
   fun x => mk x.1 x.2
 
-@[simp] theorem rec_mk {motive : (sigma F).A → Sort*} {mk : ∀ i a, motive (.mk i a)}
-    (i : I) (a : (F i).A) : sigma.rec mk (.mk i a) = mk i a := rfl
+@[simp] theorem rec_mk {motive : (sigma F).A → Sort*} {mk : ∀ i a, motive (sigma.mk i a)}
+    (i : I) (a : (F i).A) : sigma.rec mk (sigma.mk i a) = mk i a := rfl
 
 @[simp] theorem fst_mk (i : I) (a : (F i).A) : fst (mk (F := F) i a) = i := rfl
 

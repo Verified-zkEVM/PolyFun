@@ -32,25 +32,6 @@ universe u v w uA uA₁ uA₂
 
 namespace PFunctor
 
-namespace FreeM
-
-variable {P : PFunctor.{uA₁, u}} {Q : PFunctor.{uA₂, u}} {m : Type u → Type v} {α : Type u}
-
-/-- Interpreting a relabelled program pulls the handler back along the lens: the handler
-answers at the relabelled position and the lens's backward map translates the direction. -/
-theorem liftM_mapLens [Monad m] [LawfulMonad m] (l : Lens P Q) (h : Handler m Q) :
-    ∀ x : FreeM P α, (x.mapLens l).liftM h = x.liftM fun a => l.toFunB a <$> h (l.toFunA a)
-  | .pure _ => rfl
-  | .liftBind a rest => by
-    rw [FreeM.mapLens_liftBind]
-    change (h (l.toFunA a) >>= fun d => ((rest (l.toFunB a d)).mapLens l).liftM h) =
-      (l.toFunB a <$> h (l.toFunA a)) >>= fun d =>
-        (rest d).liftM fun a => l.toFunB a <$> h (l.toFunA a)
-    rw [bind_map_left]
-    exact bind_congr fun d => liftM_mapLens l h (rest (l.toFunB a d))
-
-end FreeM
-
 namespace Handler
 
 variable {P : PFunctor.{uA₁, u}} {Q : PFunctor.{uA₂, u}} {m : Type u → Type v}
