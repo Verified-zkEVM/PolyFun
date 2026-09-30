@@ -14,14 +14,14 @@ public import PolyFun.ITree.Bisim.Equiv
 /-!
 # State events through `interp`
 
-`StateE.handler` answers `get` and `put` in any state monad, and `StateE.stateHandler` answers
-state events that way while lifting the remaining events of `StateE σ + E` into
-`StateT σ (ITree E)`. Interpreting through it agrees with the direct corecursor
-`interpState` up to weak bisimulation and the order of the returned pair
-(`interpState_weakBisimRel_interp`): `interpState` returns `σ × α` and takes one silent step
-per state operation, while `interp` into `StateT` returns `α × σ` and takes one silent step per
-node of the source. The exact computation rules of `interpState` are therefore kept, and this
-module supplies the bridge.
+`StateE.handler` answers `get` and `put` in the state transformer `StateT σ m`, and
+`StateE.stateHandler` answers state events that way while lifting the remaining events of
+`StateE σ + E` into `StateT σ (ITree E)` through `liftHandler`. Interpreting through it agrees
+with the direct corecursor `interpState` up to weak bisimulation and the order of the returned
+pair (`interpState_weakBisimRel_interp`): `interpState` returns `σ × α` and takes one silent
+step per state operation besides keeping each silent step of the source, while `interp` into
+`StateT` returns `α × σ` and takes one silent step per node of the source. The exact
+computation rules of `interpState` are therefore kept, and this module supplies the bridge.
 -/
 
 @[expose] public section
@@ -34,7 +34,7 @@ namespace StateE
 
 variable {σ : Type u} {m : Type u → Type v} [Monad m]
 
-/-- Answer state events in a state monad. -/
+/-- Answer state events in the state transformer. -/
 def handler : PFunctor.Handler (StateT σ m) (StateE σ)
   | .get => MonadState.get
   | .put s => set s
@@ -47,7 +47,7 @@ def handler : PFunctor.Handler (StateT σ m) (StateE σ)
 def stateHandler {E : PFunctor.{u, u}} :
     PFunctor.Handler (StateT σ (ITree E)) (StateE σ + E : PFunctor.{u, u})
   | .inl e => handler e
-  | .inr e => StateT.lift (lift e)
+  | .inr e => liftHandler e
 
 @[simp] theorem stateHandler_inl {E : PFunctor.{u, u}} (e : (StateE σ).A) :
     stateHandler (E := E) (.inl e) = handler e := rfl

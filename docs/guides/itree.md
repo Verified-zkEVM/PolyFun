@@ -117,18 +117,19 @@ query. Interpreting into another interaction tree is `simulate` by definition
 (`interp_eq_simulate`), so the strong computation equations and the weak
 bisimulation laws of simulation transfer to it
 ([`Interp/Sim.lean`](../../PolyFun/ITree/Interp/Sim.lean)); the general form
-adds `StateT σ (ITree F)`, `OptionT (ITree F)`, and any other lawful iterative
-monad as targets. The loop state forces one universe: `E : PFunctor.{u, u}`,
+adds `StateT σ (ITree F)`, `ReaderT ρ (ITree F)`, `OptionT (ITree F)`, and any
+other iterative monad as targets. The loop state forces one universe: `E : PFunctor.{u, u}`,
 `α : Type u`, `m : Type u → Type v`; `simulate` keeps its independent universes.
 
-The laws hold up to the target's iteration equivalence
-([`Interp/Laws.lean`](../../PolyFun/ITree/Interp/Laws.lean)): `interp_pure`,
+The laws hold for lawful iterative targets, such as `ITree F`,
+`StateT σ (ITree F)`, and `ReaderT ρ (ITree F)`, up to the target's iteration
+equivalence ([`Interp/Laws.lean`](../../PolyFun/ITree/Interp/Laws.lean)): `interp_pure`,
 `interp_step`, `interp_query`, `interp_lift`, and `interp_bind`. The last is
 the one that needs uniformity: the interpreted loop of `t >>= k` is run as a
 two-phase loop whose state is a residual of `t` or of some `k a`; uniformity
 identifies it with the loop of the sequenced tree, the codiagonal law splits it
-into an outer loop over an inner one, and naturality identifies the inner loops
-with `interp h t` and `interp h (k a)`. `liftHandler` leaves events in place up
+into an outer loop over an inner one, and naturality and uniformity identify the
+inner loops with `interp h t` and `interp h (k a)`. `liftHandler` leaves events in place up
 to a monad lift, so a handler for a sum `E + F` that interprets `E` and lifts
 `F` keeps the `F` events visible in the target tree.
 [`Interp/State.lean`](../../PolyFun/ITree/Interp/State.lean) does this for

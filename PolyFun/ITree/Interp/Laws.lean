@@ -90,10 +90,6 @@ private def firstBody (s : ITree E α) : m (ITree E α ⊕ ((ITree E α ⊕ ITre
   | .mk .step c => Pure.pure (.inl (c PUnit.unit))
   | .mk (.query e) c => (fun b => .inl (c b)) <$> h e
 
-private theorem map_elim_inr (y : ITree E β ⊕ β) :
-    Sum.map (Sum.elim (fun s : ITree E α => bind s k) id) id (Sum.map Sum.inr id y) = y := by
-  cases y <;> rfl
-
 /-- The two-phase loop from the first phase is the interpretation of the sequenced tree. -/
 private theorem iterM_phaseBody_inl (t : ITree E α) :
     Eqv (iterM (phaseBody h k) (.inl t)) (interp h (bind t k)) := by

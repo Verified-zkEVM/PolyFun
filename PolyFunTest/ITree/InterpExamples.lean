@@ -16,8 +16,8 @@ public import PolyFun.Control.Monad.Iter.Instances
 
 Canaries for `ITree.interp`: interpreting into a tree is simulation by definition, the generic
 laws instantiate at a state transformer over a tree, the state handler agrees with the direct
-state corecursor up to weak bisimulation and pair order, and a handler into an option
-transformer turns an event into a failure.
+state corecursor up to weak bisimulation and pair order, and a failing handler into an option
+transformer ends the run with `none`.
 -/
 
 @[expose] public section
@@ -74,6 +74,19 @@ example : OptionT (ITree Tick) Unit := interp failingTick (lift ())
 
 example : interpStep failingTick (lift ()) = (fun b => .inl (ITree.pure b)) <$> failingTick () :=
   interpStep_query failingTick () ITree.pure
+
+/-- The failing handler ends the run with `none`: the option loop's first step asks the handler,
+which fails, and the loop exits. -/
+example :
+    LawfulMonadIter.Eqv ((interp failingTick (lift (F := Tick) ())).run)
+      (Pure.pure none : ITree Tick (Option Unit)) := by
+  rw [interp, OptionT.run_iterM]
+  refine LawfulMonadIter.eqv_trans (LawfulMonadIter.iter_unfold _ _)
+    (LawfulMonadIter.eqv_of_eq ?_)
+  simp only [ITree.lift, OptionT.optionBody]
+  rw [interpStep_query]
+  simp only [failingTick, OptionT.run_map, OptionT.run_failure, map_pure, Option.map_none,
+    LawfulMonad.pure_bind]
 
 /-- The construction elaborates at a higher universe. -/
 example {E : PFunctor.{1, 1}} {σ : Type 1} (h : PFunctor.Handler (StateT σ (ITree E)) E)
