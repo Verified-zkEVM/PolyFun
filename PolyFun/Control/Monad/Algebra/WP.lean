@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Monad.Algebra
+public import PolyFun.Control.Monad.ExactWP
 public import ToCslib.Order.LeanOrder
 public import Std.WP
 
@@ -21,12 +22,17 @@ install it at the base monad (`letI` / `local instance`) and let core's `StateT`
 `ExceptT`, and `OptionT` instances lift it, which supplies honest exception postconditions where
 PolyFun's own transformer lifts collapse failures to `⊥`.
 
-Agreement is definitional: `wp` computed through the derived interpretation *is* `MAlgOrdered.wp`,
-and core's `Triple` unfolds to `MAlgOrdered.Triple`. The module imports the `Std.WP` root rather
-than its submodules so that the `@[spec]` database `vcgen` consults — `Spec.bind` in particular,
-which lives in `Std.WP.Triple.SpecLemmas` — is loaded wherever an instance built here is installed.
+The derived interpretation is exact (`ExactWPMonad`), so core's `wp` under it carries the
+equational `simp` set of `PolyFun.Control.Monad.ExactWP`; that set, not `MAlgOrdered.wp`'s, is
+the automation for goals stated against core's `wp`. Agreement is definitional: `wp` computed
+through the derived interpretation *is* `MAlgOrdered.wp` (`toWPMonad_wp`, deliberately not
+`@[simp]`, so `simp` keeps core's head), and core's `Triple` unfolds to `MAlgOrdered.Triple`.
+The module imports the `Std.WP` root rather than its `WP` submodules so that the
+`@[spec]` database `vcgen` consults — `Spec.bind` in particular, which lives in
+`Std.WP.Triple.SpecLemmas` — is loaded wherever an instance built here is installed.
 The lattice operations core's lemmas are stated with (`⊤`, `⊥`, `⊓`, `⊔` of `Lean.Order`) are
-Mathlib's on a bridged carrier; the transfer lemmas below let `simp` move between the two spellings.
+Mathlib's on a bridged carrier; the transfer lemmas below let `simp` move between the two
+spellings.
 -/
 
 public section
@@ -76,7 +82,6 @@ def toWP (α : Type u) : WP (m α) α l EStack⟨⟩ where
   wpTrans x := ⟨fun post _ => MAlgOrdered.wp x post⟩
   wp_trans_monotone x _ _ _ _ _ hpost := wp_mono x hpost
 
-@[simp]
 theorem toWP_wp {α : Type u} (x : m α) (post : α → l) (epost : EStack⟨⟩) :
     (toWP (m := m) (l := l) α).wp x post epost = MAlgOrdered.wp x post :=
   rfl
@@ -89,7 +94,8 @@ theorem toWP_triple_iff {α : Type u} (x : m α) (pre : l) (post : α → l) (ep
   exact ⟨fun h => h.le_wp, fun h => ⟨h⟩⟩
 
 /-- An ordered monad algebra is a core weakest-precondition monad: its laws are the equations
-`wp_pure` and `wp_bind` read as inequalities. Not an instance. -/
+`wp_pure` and `wp_bind` read as inequalities, and the result is exact
+(`instExactWPMonadToWPMonad`). Not an instance. -/
 @[expose, instance_reducible]
 def toWPMonad [LawfulMonad m] : WPMonad m l EStack⟨⟩ where
   toLawfulMonad := inferInstance
@@ -97,11 +103,20 @@ def toWPMonad [LawfulMonad m] : WPMonad m l EStack⟨⟩ where
   pure_le_wp_pure x post _ := Lean.Order.PartialOrder.rel_of_eq (wp_pure x post).symm
   bind_le_wp_bind x f post _ := Lean.Order.PartialOrder.rel_of_eq (wp_bind x f post).symm
 
-@[simp]
+/-- Core's `wp` through the derived interpretation is `MAlgOrdered.wp`. Not `@[simp]`: core's
+`wp` is the normal form, driven by the exact equations of `ExactWPMonad`. -/
 theorem toWPMonad_wp [LawfulMonad m] {α : Type u} (x : m α) (post : α → l) (epost : EStack⟨⟩) :
     (letI := toWPMonad (m := m) (l := l); Std.WP.wp x post epost) =
       MAlgOrdered.wp x post :=
   rfl
+
+/-- The interpretation derived from an ordered monad algebra is exact: `wp_pure` and `wp_bind`
+hold with equality. -/
+instance instExactWPMonadToWPMonad [LawfulMonad m] :
+    @ExactWPMonad m l EStack⟨⟩ _ _ _ (toWPMonad (m := m) (l := l)) :=
+  let _ := toWPMonad (m := m) (l := l)
+  { wp_pure := fun a post _ => wp_pure a post
+    wp_bind := fun x f post _ => wp_bind x f post }
 
 /-- The derived interpretation is conjunctive at `x` whenever the algebra's `wp x` preserves
 binary meets of postconditions. -/

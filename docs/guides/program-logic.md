@@ -20,13 +20,14 @@ probabilistic interpretations; its quantitative carrier is not part of PolyFun.
 | `PolyFun/Control/Monad/Support/Loops.lean` | Invariant rules for `forIn'`/`forIn`/`foldlM`/`forM` over lists and `PureForIn` containers, for `AllOutputs` (from core's `Spec.*` under the demonic instance) and `SomeOutput` (angelic) |
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); `OpSpec.toMAlgOrdered`; semantic `FreeM.wpVia` through a `Handler`; soundness `wpFold_le_wpVia`/`wpFold_eq_wpVia` |
-| `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`), `FreeM.wpMonadOfHandler` (transport along `liftMHom`), and `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad` |
+| `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`), `FreeM.wpMonadOfHandler` (transport along `liftMHom`), both exact when their source is, and `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad` |
 | `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
 | `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.bind`, `Spec.lift_angelic`, `Spec.lift_ofHandler` that let `vcgen` decompose free programs with uninterpreted operations |
-| `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as a core `Std.WP.WPMonad m l EStack⟨⟩` (through the `ToCslib.Order.LeanOrder` bridge), `wp` agreement by `rfl`, `toWP_triple_iff`, `wpConjunctiveOf`, and the transfer lemmas `top_eq_top` / `meet_eq_inf` / `join_eq_sup` between core's and Mathlib's lattice operations |
-| `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPMonadDemonic` / `toWPMonadAngelic`: the always/some judgments as `WPMonad m Prop EStack⟨⟩`; conjunctivity of the demonic reading; the demonic instance of core's `Std.WP.LawfulWPMonadAttach` (soundness with respect to lawful attachment); `support_subset_of_wp` / `allOutputs_of_wp` |
-| `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWPOf` / `transportWPMonadOf` (along cslib's `IsMonadHom`) and the bundled `transportWP` / `transportWPMonad`: pulling a core `WPMonad` back along a monad morphism |
-| `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.wpMonadOf`: explicit empty/append operations on the log-indexed carrier `ω → Pred`; the multiplicative specialization is scoped under `WriterT.MonoidWP`, `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, `wp_run_eq`, and the `tell` / `monadLift` entailments behind the `@[spec]` rules |
+| `PolyFun/Control/Monad/ExactWP.lean` | `ExactWPMonad m Pred EPred`: the `Prop` mixin making core's `pure`/`bind` soundness laws equations (equivalently `ExactWPMonad.isMonadHom`, a monad morphism into `PredTrans`); the equational `simp` set on core's `wp` (`wp_pure`, `wp_bind`, `wp_map`, `wp_seq`, `wp_seqLeft`, `wp_seqRight`, `wp_ite`, `wp_dite`, `wp_option_elim`, `wp_sum_elim`); exactness of core's `Id`/`Option`/`Except`/`EStateM` interpretations and of its `StateT`/`ReaderT`/`ExceptT`/`OptionT` lifts |
+| `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as a core `Std.WP.WPMonad m l EStack⟨⟩` (through the `ToCslib.Order.LeanOrder` bridge), exact (`instExactWPMonadToWPMonad`), `wp` agreement by `rfl` (`toWPMonad_wp`, not `@[simp]`), `toWP_triple_iff`, `wpConjunctiveOf`, and the transfer lemmas `top_eq_top` / `meet_eq_inf` / `join_eq_sup` between core's and Mathlib's lattice operations |
+| `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPMonadDemonic` / `toWPMonadAngelic`: the always/some judgments as `WPMonad m Prop EStack⟨⟩`; conjunctivity of the demonic reading; exactness of both readings over an `ExactMonadAttach`; the demonic instance of core's `Std.WP.LawfulWPMonadAttach` (soundness with respect to lawful attachment); `support_subset_of_wp` / `allOutputs_of_wp` |
+| `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWPOf` / `transportWPMonadOf` (along cslib's `IsMonadHom`) and the bundled `transportWP` / `transportWPMonad`: pulling a core `WPMonad` back along a monad morphism, preserving exactness |
+| `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.wpMonadOf`: explicit empty/append operations on the log-indexed carrier `ω → Pred`; the multiplicative specialization is scoped under `WriterT.MonoidWP`, `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, `wp_run_eq`, and the `tell` / `monadLift` entailments behind the `@[spec]` rules, and exactness over an exact base (`exactWPMonad_wpMonadOf`, scoped `WriterT.MonoidWP.instExactWPMonad`) |
 | `PolyFun/Control/Monad/Hom/Loops.lean` | A monad morphism between lawful monads commutes with `forIn'`/`forIn`/`forM`/`foldlM`/`mapM` and with `forIn` over `PureForIn` containers (`@[simp, grind =]`), through `MonadHom.isMonadHom` and cslib's `IsMonadHom.map_list*` |
 | `PolyFun/Control/Do/Spec.lean` | Tactic tier: `@[spec] Spec.forM_list`, the list loop core does not specify; the `@[spec]` registration of core's `Spec.tryCatch_MonadExcept`, the `try … catch` rule core states but does not tag; and the `WriterT` rules `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` |
 
@@ -248,7 +249,7 @@ SPred one.
 | | `Std/WP/` (canonical here) | `Std/Do/` (not used) |
 |---|---|---|
 | Assertions | any `Lean.Order.CompleteLattice` (`Assertion`) | `SPred` / `PostShape` |
-| `WPMonad` bind law | inequational (`bind_le_wp_bind`) | equational (`wp_bind : … = …`) |
+| `WPMonad` bind law | inequational (`bind_le_wp_bind`); equational under PolyFun's `ExactWPMonad` | equational (`wp_bind : … = …`) |
 | Conjunctivity | opt-in, per program (`WPConjunctive x`) | a **field of `PredTrans`**, bi-entailment |
 | Exceptions | `EPred` postconditions (`EStack⟨⟩`, `EStack⟨ε → Pred, …⟩`) | `ExceptConds` inside `PostCond` |
 | Tactic | `vcgen` (experimental) | `mvcgen` (deprecated) |
@@ -263,6 +264,29 @@ distributes over `∧` in one direction only, which is exactly why it has no `St
 `ToCslib.Order.LeanOrder` bridge, and `MonadHom.transportWPMonad` pulls any of these back along
 a monad morphism. None of them is a global instance; install them `local` or `scoped` at the
 carrier (`PolyFunTest/Do/{Algebra,Support}.lean` show `vcgen` running through each).
+
+## Exact interpretations
+
+Soundness, the inequational `pure` and `bind` laws, is what `vcgen` needs: it decomposes a lower
+bound `pre ⊑ wp prog post epost` into lower bounds on the pieces. Three other uses need the
+reverse inequalities: an upper bound `wp prog post epost ⊑ c` through a `bind`, an exact value,
+and a rewriting normal form for `simp`. `ExactWPMonad m Pred EPred` is the `Prop` mixin on a
+`WPMonad` that supplies them: `wp_pure` and `wp_bind` hold with equality, equivalently the
+interpretation is a monad morphism into core's `PredTrans` (`ExactWPMonad.isMonadHom`,
+`ExactWPMonad.ofIsMonadHom`). Every construction in this guide that can be exact is:
+`MAlgOrdered.toWPMonad`, both support readings over an `ExactMonadAttach`, transport along a
+monad morphism, `OpSpec.toWPMonad`, `FreeM.wpMonadOfHandler` into an exact target, core's
+`Id`/`Option`/`Except`/`EStateM` interpretations, and core's transformer lifts and the
+`WriterT` interpretation over an exact base. Exactness is a mixin rather than a stronger class
+so that each of these stays a plain core `WPMonad`, installed as before, and so that a
+separation-logic or inexact-support interpretation keeps the same interface.
+
+Under `ExactWPMonad`, core's `wp` is the normal form: its `@[simp]` set drives `wp` inward
+through `pure`, `>>=`, `<$>`, `<*>`, `<*`, `*>`, `if`, `if h :`, `Option.elim`, and `Sum.elim`,
+with each rewrite shrinking the program argument, the same contract `MAlgOrdered.wp`'s set has.
+The algebra bridge `toWPMonad_wp` (and `toWP_wp`) is therefore not `@[simp]`: `simp` keeps a goal
+stated against core's `wp` on core's head rather than moving it to `MAlgOrdered.wp`.
+`PolyFunTest/Do/Exact.lean` checks the instances and that normalization stays on core's head.
 
 Argument order differs between the two triples: core's `Triple x pre post epost` is
 program-first, PolyFun's `MAlgOrdered.Triple pre x post` precondition-first; `toWP_triple_iff`
@@ -289,9 +313,9 @@ Four practical rules for writing against the canonical stack:
 Names in this guide follow the pinned compiler. Recheck the core WP interfaces
 when updating Lean; proposed upstream renames do not change the current API.
 
-`MAlgOrdered` stays: it is the Mathlib-lattice kernel VCVio's quantitative carrier bridges to
-by `rfl`, and its `WriterT` lift has no core counterpart. The bridge, not a port, is what
-connects it to core's order hierarchy.
+`MAlgOrdered` stays: it constructs exact interpretations over Mathlib lattices, the kernel
+VCVio's quantitative carrier is built from, and its `WriterT` lift has no core counterpart. The
+bridge, not a port, is what connects it to core's order hierarchy.
 
 ## Qualitative and quantitative interpretations
 

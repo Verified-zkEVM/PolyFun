@@ -21,7 +21,10 @@ one is not, and `PolyFunTest/Control/MonadAttach.lean` pins the counterexample. 
 global instance: install them scoped or local where the support semantics is intended, exactly
 as `mAlgOrderedPropDemonic` is. The demonic construction needs only `LawfulMonadAttach`:
 core's return-value elimination rules prove its inequational pure and bind laws.
-The angelic construction needs the introduction rules of `ExactMonadAttach`.
+The angelic construction needs the introduction rules of `ExactMonadAttach`. Over an
+`ExactMonadAttach` both readings are exact (`ExactWPMonad`): "always" and "sometimes" distribute
+over `pure` and `bind` with equality, so core's `wp` under either carries the equational `simp`
+set of `PolyFun.Control.Monad.ExactWP`.
 
 `Std.WP.LawfulWPMonadAttach` is soundness of a `WPMonad` interpretation with respect to
 lawful attachment: a `wp`-provable postcondition holds at every value the computation can return.
@@ -147,5 +150,27 @@ theorem toWPMonadAngelic_triple_iff {α : Type u} (x : m α) (pre : Prop) (post 
   exact ⟨fun h => h.le_wp, fun h => ⟨h⟩⟩
 
 end Angelic
+
+section Exact
+
+variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
+
+/-- Over an exact attachment the demonic interpretation is exact: "always" distributes over
+`pure` and `bind` with equality. -/
+instance instExactWPMonadToWPMonadDemonic :
+    @ExactWPMonad m Prop EStack⟨⟩ _ _ _ (toWPMonadDemonic (m := m)) :=
+  let _ := toWPMonadDemonic (m := m)
+  { wp_pure := fun a post _ => propext (allOutputs_pure post a)
+    wp_bind := fun x f post _ => propext (allOutputs_bind post x f) }
+
+/-- Over an exact attachment the angelic interpretation is exact: "sometimes" distributes over
+`pure` and `bind` with equality. -/
+instance instExactWPMonadToWPMonadAngelic :
+    @ExactWPMonad m Prop EStack⟨⟩ _ _ _ (toWPMonadAngelic (m := m)) :=
+  let _ := toWPMonadAngelic (m := m)
+  { wp_pure := fun a post _ => propext (someOutput_pure post a)
+    wp_bind := fun x f post _ => propext (someOutput_bind post x f) }
+
+end Exact
 
 end MonadAttach

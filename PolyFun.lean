@@ -12,6 +12,7 @@ public import PolyFun.Control.Monad.Algebra.Relational
 public import PolyFun.Control.Monad.Algebra.Relational.Support
 public import PolyFun.Control.Monad.Algebra.Restrict
 public import PolyFun.Control.Monad.Algebra.WP
+public import PolyFun.Control.Monad.ExactWP
 public import PolyFun.Control.Monad.Free
 public import PolyFun.Control.Monad.FreeCont
 public import PolyFun.Control.Monad.Hom

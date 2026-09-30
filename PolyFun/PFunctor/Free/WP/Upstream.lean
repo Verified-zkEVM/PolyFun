@@ -24,6 +24,9 @@ instances (`PolyFun.PFunctor.Free.Do` registers the scoped ones):
   `FreeM.wpMonadOfHandler s` is the interpretation transported along `FreeM.liftMHom s`, and its
   `wp` is the target's `wp` of the interpreted program.
 
+Both are exact (`ExactWPMonad`) whenever their source is: the syntactic one always, the handler
+one when the target's interpretation is exact.
+
 `wpFold_le_wp_liftM` is the soundness of per-operation specs against a handler stated over any
 core `WPMonad`, the generic form of `wpFold_le_wpVia`; it needs only the inequational `bind` law.
 -/
@@ -55,6 +58,12 @@ theorem toWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Mono) {α : Type v} (x : FreeM 
   change (letI := Φ.toMAlgOrdered hΦ; MAlgOrdered.wp x post) = _
   exact FreeM.wp_toMAlgOrdered Φ hΦ x post
 
+/-- The syntactic interpretation is exact. -/
+instance instExactWPMonadToWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) :
+    @ExactWPMonad (FreeM P) l EStack⟨⟩ _ _ _ (Φ.toWPMonad hΦ) :=
+  letI := Φ.toMAlgOrdered hΦ
+  MAlgOrdered.instExactWPMonadToWPMonad
+
 end OpSpec
 
 namespace FreeM
@@ -74,6 +83,11 @@ theorem wpMonadOfHandler_wp [WPMonad n Pred EPred] (s : Handler n P) {α : Type 
     (x : FreeM P α) (post : α → Pred) (epost : EPred) :
     ((wpMonadOfHandler s).toWP α).wp x post epost = wp (x.liftM s) post epost :=
   rfl
+
+/-- Interpretation through a handler into an exact interpretation is exact. -/
+instance instExactWPMonadWpMonadOfHandler [WPMonad n Pred EPred] [ExactWPMonad n Pred EPred]
+    (s : Handler n P) : @ExactWPMonad (FreeM P) Pred EPred _ _ _ (wpMonadOfHandler s) :=
+  MonadHom.instExactWPMonadTransportWPMonad _
 
 end Handler
 

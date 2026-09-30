@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import Mathlib.Control.Monad.Writer
+public import PolyFun.Control.Monad.ExactWP
 public import Std.WP
 
 /-!
@@ -92,6 +93,29 @@ def wpMonadOf (empty : ω) (append : ω → ω → ω)
         (WPMonad.bind_le_wp_bind x.run _ _ epost)
       exact WPMonad.map_le_wp_map' _ (f p.1).run _ _ epost (funext fun q => by rw [assoc]) }
 
+/-- Over an exact base interpretation, the explicit writer interpretation is exact. -/
+theorem exactWPMonad_wpMonadOf [ExactWPMonad m Pred EPred] (empty : ω) (append : ω → ω → ω)
+    (right_id : ∀ w, append w empty = w)
+    (assoc : ∀ a b c, append (append a b) c = append a (append b c))
+    [@LawfulMonad (WriterT ω m) (WriterT.monad empty append)] :
+    letI := WriterT.monad (M := m) empty append
+    @ExactWPMonad (WriterT ω m) (ω → Pred) EPred _ _ _
+      (wpMonadOf empty append right_id assoc) := by
+  let := WriterT.monad (M := m) empty append
+  let := wpMonadOf (m := m) (Pred := Pred) (EPred := EPred) empty append right_id assoc
+  exact {
+    wp_pure := fun {α} x post epost => by
+      funext w
+      change wp (pure (x, empty) : m (α × ω)) (fun p => post p.1 (append w p.2)) epost = post x w
+      rw [ExactWPMonad.wp_pure, right_id]
+    wp_bind := fun {α β} x f post epost => by
+      funext w
+      change wp (x.run >>= fun p => (fun q : β × ω => (q.1, append p.2 q.2)) <$> (f p.1).run)
+          (fun q => post q.1 (append w q.2)) epost =
+        wp x.run (fun p => wp (f p.1).run
+          (fun q => post q.1 (append (append w p.2) q.2)) epost) epost
+      simp only [ExactWPMonad.wp_bind, ExactWPMonad.wp_map, assoc] }
+
 /-- The explicit writer interpretation exposes its accumulated-log equation. -/
 @[simp]
 theorem wpInstOf_apply_eq (append : ω → ω → ω) (x : WriterT ω m α)
@@ -135,6 +159,11 @@ namespace MonoidWP
 /-- Opt-in writer interpretation for multiplicative monoid logs. -/
 scoped instance instWPMonad : WPMonad (WriterT ω m) (ω → Pred) EPred :=
   wpMonadOf 1 (· * ·) mul_one mul_assoc
+
+/-- The multiplicative writer interpretation is exact over an exact base. -/
+scoped instance instExactWPMonad [ExactWPMonad m Pred EPred] :
+    ExactWPMonad (WriterT ω m) (ω → Pred) EPred :=
+  exactWPMonad_wpMonadOf 1 (· * ·) mul_one mul_assoc
 
 end MonoidWP
 

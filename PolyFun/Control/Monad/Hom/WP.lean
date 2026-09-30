@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Monad.Hom.IsMonadHom
+public import PolyFun.Control.Monad.ExactWP
 public import Std.WP
 
 /-!
@@ -17,7 +18,8 @@ the soundness inequalities transfer verbatim. This is how a free program acquire
 of a handler (`FreeM.liftM` is a monad morphism), and how any monad interpreting into a
 `vcgen`-ready stack inherits that stack's specifications. The unbundled form takes cslib's
 `IsMonadHom` predicate; the bundled form takes PolyFun's `m →ᵐ n` and goes through
-`MonadHom.isMonadHom`.
+`MonadHom.isMonadHom`. Transport preserves exactness (`ExactWPMonad`): the pulled-back
+interpretation is the composite of two monad morphisms.
 
 Nothing here is an instance: register the transported structure scoped or local at the
 carrier where it is intended.
@@ -86,5 +88,24 @@ def transportWPMonadOf {F : ∀ {α : Type u}, m α → n α} (hf : Cslib.IsMona
 def transportWPMonad (F : m →ᵐ n) [LawfulMonad m] [WPMonad n Pred EPred] :
     WPMonad m Pred EPred :=
   transportWPMonadOf F.isMonadHom
+
+/-- An exact interpretation pulled back along a monad morphism is exact. -/
+instance instExactWPMonadTransportWPMonadOf {F : ∀ {α : Type u}, m α → n α}
+    {hf : Cslib.IsMonadHom m n F} [LawfulMonad m] [WPMonad n Pred EPred]
+    [ExactWPMonad n Pred EPred] :
+    @ExactWPMonad m Pred EPred _ _ _ (transportWPMonadOf (Pred := Pred) (EPred := EPred) hf) :=
+  let _ := transportWPMonadOf (Pred := Pred) (EPred := EPred) hf
+  { wp_pure := fun a post epost => by
+      change wp (F (pure a)) post epost = post a
+      rw [hf.map_pure, ExactWPMonad.wp_pure]
+    wp_bind := fun x f post epost => by
+      change wp (F (x >>= f)) post epost = wp (F x) (fun a => wp (F (f a)) post epost) epost
+      rw [hf.map_bind, ExactWPMonad.wp_bind] }
+
+/-- An exact interpretation pulled back along a bundled monad morphism is exact. -/
+instance instExactWPMonadTransportWPMonad (F : m →ᵐ n) [LawfulMonad m] [WPMonad n Pred EPred]
+    [ExactWPMonad n Pred EPred] :
+    @ExactWPMonad m Pred EPred _ _ _ (F.transportWPMonad (Pred := Pred) (EPred := EPred)) :=
+  instExactWPMonadTransportWPMonadOf
 
 end MonadHom
