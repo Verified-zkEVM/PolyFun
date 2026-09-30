@@ -61,11 +61,6 @@ section Bridge
 
 variable {σ : Type u} {E : PFunctor.{u, u}} {α : Type u}
 
-/-- `bind_pure_left` keyed on the monadic `pure`, for rewriting after `StateT` computations. -/
-private theorem bind_pure_left' {β : Type u} (r : β) (k : β → ITree E α) :
-    bind (Pure.pure r : ITree E β) k = k r :=
-  bind_pure_left r k
-
 /-- The paired loop body of `interp StateE.stateHandler` run at a state. -/
 private abbrev stateLoop :
     ITree (StateE σ + E : PFunctor.{u, u}) α × σ →
@@ -74,23 +69,23 @@ private abbrev stateLoop :
 
 private theorem stateLoop_pure (r : α) (s : σ) :
     stateLoop (E := E) (pure r, s) = pure (.inr (r, s)) := by
-  simp [stateLoop, StateT.stateBody, ITree.map, bind_pure_left']
+  simp [stateLoop, StateT.stateBody, ITree.map, pure_eq_pure, bind_pure_left]
 
 private theorem stateLoop_step (t : ITree (StateE σ + E : PFunctor.{u, u}) α) (s : σ) :
     stateLoop (E := E) (step t, s) = pure (.inl (t, s)) := by
-  simp [stateLoop, StateT.stateBody, ITree.map, bind_pure_left']
+  simp [stateLoop, StateT.stateBody, ITree.map, pure_eq_pure, bind_pure_left]
 
 private theorem stateLoop_get (k : σ → ITree (StateE σ + E : PFunctor.{u, u}) α) (s : σ) :
     stateLoop (E := E) (query (.inl .get) k, s) = pure (.inl (k s, s)) := by
   simp [stateLoop, StateT.stateBody, ITree.map, StateE.stateHandler, StateE.handler,
-    bind_pure_left, bind_pure_left']
+    bind_pure_left, pure_eq_pure]
 
 private theorem stateLoop_put (k : PUnit → ITree (StateE σ + E : PFunctor.{u, u}) α)
     (s s' : σ) :
     stateLoop (E := E) (query (.inl (.put s')) k, s) = pure (.inl (k PUnit.unit, s')) := by
   have hset : (set s' : StateT σ (ITree E) PUnit).run s = Pure.pure (PUnit.unit, s') := rfl
   simp [stateLoop, StateT.stateBody, ITree.map, StateE.stateHandler, StateE.handler, hset,
-    bind_pure_left, bind_pure_left']
+    bind_pure_left, pure_eq_pure]
 
 private theorem stateLoop_external (e : E.A) (k : E.B e → ITree (StateE σ + E : PFunctor.{u, u}) α)
     (s : σ) :

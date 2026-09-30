@@ -30,3 +30,8 @@ example (xs ys : List Nat) : Machines.counter.run 0 (xs ++ ys) =
 example : IPFunctor.FreeM₂ IPFunctor.Examples.proto
     IPFunctor.Examples.Phase.opn IPFunctor.Examples.Phase.counting Nat :=
   IPFunctor.Examples.TwoIndex.run
+
+example :
+    (ITree.interp InteractionTrees.refuse InteractionTrees.bump).run =
+      ITree.query (F := ITree.StateE Nat) .get fun _ => ITree.step (ITree.pure none) :=
+  InteractionTrees.run_interp_refuse_bump

@@ -40,6 +40,11 @@ example : IPFunctor.FreeM₂ IPFunctor.Examples.proto
     IPFunctor.Examples.Phase.opn IPFunctor.Examples.Phase.counting Nat :=
   IPFunctor.Examples.TwoIndex.run
 
+example :
+    (ITree.interp InteractionTrees.refuse InteractionTrees.bump).run =
+      ITree.query (F := ITree.StateE Nat) .get fun _ => ITree.step (ITree.pure none) :=
+  InteractionTrees.run_interp_refuse_bump
+
 example (I : Interface) : Type := Interface.Packet I
 
 example (effect : PFunctor.{0, 0}) (boundary : PortBoundary) :

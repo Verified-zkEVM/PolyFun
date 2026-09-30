@@ -14,7 +14,8 @@ a sum: state events on a natural number (`StateE Nat`, with `get` and
 <!-- lean-example: Examples/Tutorials/InteractionTrees.lean#PROGRAM -->
 ```lean
 import PolyFun.ITree.Interp.State
-import PolyFun.ITree.Interp.Laws
+
+open ITree
 
 /-- One external event, a tick, acknowledged with no payload. -/
 abbrev Tick : PFunctor.{0, 0} := ⟨Unit, fun _ => Unit⟩
@@ -24,16 +25,18 @@ abbrev Sig : PFunctor.{0, 0} := StateE Nat + Tick
 
 /-- Read the counter, tick once, store the incremented value, and return the value read. -/
 def bump : ITree Sig Nat := do
-  let n ← (query (F := Sig) (.inl .get) ITree.pure : ITree Sig Nat)
-  let _ ← query (F := Sig) (.inr ()) ITree.pure
-  let _ ← query (F := Sig) (.inl (.put (n + 1))) ITree.pure
+  let n : Nat ← lift (F := Sig) (.inl .get)
+  let _ ← lift (F := Sig) (.inr ())
+  let _ ← lift (F := Sig) (.inl (.put (n + 1)))
   ITree.pure n
 ```
 
-`query a k` issues the event `a` and continues with `k` on the answer;
-`ITree.pure` returns. The `do` block sequences three events. The type ascription on
-the first line names the answer type of `get`, which the signature stores as a
-dependent fiber.
+`lift a` issues the event `a` and returns its answer; `ITree.pure` returns a
+value. The type annotation on the first line names the answer type of `get`,
+which the signature stores as a dependent fiber. As a tree, the `do` block is
+three `query` nodes in sequence, where `query a k` issues `a` and continues
+with `k` on the answer. `bump_eq` states this form, and the proofs below start
+from it.
 
 ## Run with the state corecursor
 
@@ -41,7 +44,7 @@ dependent fiber.
 `s` through the tree. Each state operation becomes one silent `step`, the tick
 stays visible as a `query`, and the final state is returned first:
 `runState_bump` proves the result is `step (query () fun _ => step (pure (s + 1, s)))`,
-by rewriting with the exact computation rules of `interpState`.
+by rewriting `bump_eq` and the exact computation rules of `interpState`.
 
 ## Run through a handler
 
@@ -56,12 +59,16 @@ proves the two agree up to weak bisimulation and pair order
 ## Change the handler
 
 The same program interprets into `OptionT (ITree (StateE Nat))` through two
-handlers that agree on state events and differ on the tick: `acknowledge`
-answers it, `refuse` fails. The last example shows the loop step of `interp`
-at a single tick asking the handler, so the refusing interpretation fails at
-its first tick. Weak bisimulation is the right notion of equality for these
-trees: the [bisimulation guide](../guides/bisimulation.md) explains why silent
-steps must be hidden and how `WeakBisim` does it.
+handlers. Both pass state events on unchanged with `liftHandler`; on the tick,
+`acknowledge` answers and `refuse` fails. The file computes both runs exactly.
+`run_interp_acknowledge_bump` reads the counter, writes the incremented value,
+and returns `some` of the value read. `run_interp_refuse_bump` reads the
+counter and ends with `none` at the tick, so the write never happens. The
+proofs unfold the loop of `interp` once per node with `iter_unfold`, and the
+loop takes one silent `step` each time it moves on to the next node. Such
+steps are why runs are compared up to weak bisimulation: the
+[bisimulation guide](../guides/bisimulation.md) explains why silent steps must
+be hidden and how `WeakBisim` does it.
 
 ## Keep exploring
 
