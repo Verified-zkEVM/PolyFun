@@ -62,7 +62,7 @@ example : wpFold chooseTrueSpec flipTwo (fun out => out = true) := by
 /-- The induced core interpretation computes the same nontrivial fold. -/
 example :
     ((chooseTrueSpec.toWPMonad chooseTrueSpec_mono).toWP Bool).wp flipTwo
-      (fun out => out = true) Std.WP.EStackEnd.mk := by
+      (fun out => out = true) estack⟨⟩ := by
   rw [OpSpec.toWPMonad_wp]
   change true && true = true
   rfl
@@ -76,14 +76,14 @@ def chooseTrueHandler : Handler Id coinP :=
 /-- The semantic WP, core's `wp` of the interpreted program, observes the handler rather than
 quantifying over every syntactic response. -/
 example : Std.WP.wp (flipTwo.liftM chooseTrueHandler) (fun out => out = true)
-    Std.WP.EStackEnd.mk := by
+    estack⟨⟩ := by
   change true && true = true
   rfl
 
 /-- The deterministic operation spec agrees exactly with the handler WP. -/
 example : wpFold chooseTrueSpec flipTwo (fun out => out = true) =
     Std.WP.wp (flipTwo.liftM chooseTrueHandler) (fun out => out = true)
-      Std.WP.EStackEnd.mk := by
+      estack⟨⟩ := by
   apply wpFold_eq_wp_liftM
   intro _ continuation
   rfl
@@ -92,7 +92,7 @@ example : wpFold chooseTrueSpec flipTwo (fun out => out = true) =
 when the postcondition is not tautological. -/
 example : wpFold (OpSpec.demonic coinP) flipTwo (fun out => out = true) ≤
     Std.WP.wp (flipTwo.liftM chooseTrueHandler) (fun out => out = true)
-      Std.WP.EStackEnd.mk := by
+      estack⟨⟩ := by
   apply wpFold_le_wp_liftM
   intro _ continuation hall
   exact hall true

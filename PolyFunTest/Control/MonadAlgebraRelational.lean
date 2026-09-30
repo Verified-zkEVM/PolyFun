@@ -58,7 +58,7 @@ example (x y : Nat) (f g : Nat → Nat) (post : Nat → Nat → Prop) :
 /-- Anchoring recovers core's unary WP of `Id` when the left computation is pure. -/
 example (a : Nat) (y : Id Nat) (post : Nat → Nat → Prop) :
     RelWP (m₁ := Id) (m₂ := Id) (pure a) y post =
-      Std.WP.wp y (post a) Std.WP.EStackEnd.mk :=
+      Std.WP.wp y (post a) estack⟨⟩ :=
   Anchored.relWP_pure_left a y post
 
 /-- The one-sided bind rules have the advertised orientation on concrete,
@@ -329,7 +329,7 @@ example (e : Unit) : rwpExc (m₁ := Id) (m₂ := Id) (ε₂ := Unit)
 the right side's run, whose `Except` result keeps both branches. -/
 example (y : ExceptT Unit Id Nat) (post : Except Unit Nat → Except Unit Nat → Prop) :
     rwpExc (m₁ := Id) (m₂ := Id) (pure 2 : ExceptT Unit Id Nat) y post =
-      Std.WP.wp y.run (post (Except.ok 2)) Std.WP.EStackEnd.mk :=
+      Std.WP.wp y.run (post (Except.ok 2)) estack⟨⟩ :=
   rwpExc_pure_left 2 y post
 
 /-- The relational bind rule preserves an existing error instead of running that

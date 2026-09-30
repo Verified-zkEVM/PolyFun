@@ -111,7 +111,7 @@ theorem toWP_triple_iff {α : Type u} (x : m α) (pre : l) (post : α → l) (ep
     @Std.WP.Triple l EStack⟨⟩ (m α) α _ _ x (toWP α) pre post epost ↔
       pre ≤ MAlgOrdered.μ (x >>= fun a => pure (post a)) := by
   let inst := toWP (m := m) (l := l) α
-  exact ⟨fun h => h.le_wp, fun h => ⟨h⟩⟩
+  exact Std.WP.Triple.iff
 
 /-- An ordered monad algebra is a core weakest-precondition monad, with its soundness laws
 holding as equations (`instExactWPMonadToWPMonad`). Not an instance. -/
@@ -126,7 +126,7 @@ def toWPMonad [LawfulMonad m] : WPMonad m l EStack⟨⟩ where
 /-- Core's `wp` through the derived interpretation is the algebra of the mapped program. Not
 `@[simp]`: core's `wp` is the normal form, driven by the exact equations of `ExactWPMonad`. -/
 theorem toWPMonad_wp [LawfulMonad m] {α : Type u} (x : m α) (post : α → l) (epost : EStack⟨⟩) :
-    (letI := toWPMonad (m := m) (l := l); Std.WP.wp x post epost) =
+    ((toWPMonad (m := m) (l := l)).toWP α).wp x post epost =
       MAlgOrdered.μ (x >>= fun a => pure (post a)) :=
   rfl
 

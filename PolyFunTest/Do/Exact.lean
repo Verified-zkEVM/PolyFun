@@ -55,8 +55,8 @@ noncomputable local instance instWPMonadDetENat : WPMonad Det ℕ∞ EStack⟨�
 example : ExactWPMonad Det ℕ∞ EStack⟨⟩ := inferInstance
 example {σ : Type} : ExactWPMonad (StateT σ Det) (σ → ℕ∞) EStack⟨⟩ := inferInstance
 example {ρ : Type} : ExactWPMonad (ReaderT ρ Det) (ρ → ℕ∞) EStack⟨⟩ := inferInstance
-example : ExactWPMonad (OptionT Det) ℕ∞ ((Unit → ℕ∞) × EStack⟨⟩) := inferInstance
-example {ε : Type} : ExactWPMonad (ExceptT ε Det) ℕ∞ ((ε → ℕ∞) × EStack⟨⟩) :=
+example : ExactWPMonad (OptionT Det) ℕ∞ EStack⟨Unit → ℕ∞⟩ := inferInstance
+example {ε : Type} : ExactWPMonad (ExceptT ε Det) ℕ∞ EStack⟨ε → ℕ∞⟩ :=
   inferInstance
 
 example : @ExactWPMonad SetM Prop EStack⟨⟩ _ _ _ (MonadAttach.toWPMonadDemonic (m := SetM)) :=
@@ -65,10 +65,10 @@ example : @ExactWPMonad SetM Prop EStack⟨⟩ _ _ _ (MonadAttach.toWPMonadAngel
   inferInstance
 
 /-! Core's lifts stack, and exactness stacks with them. -/
-example {σ : Type} : ExactWPMonad (StateT σ (OptionT Det)) (σ → ℕ∞) ((Unit → ℕ∞) × EStack⟨⟩) :=
+example {σ : Type} : ExactWPMonad (StateT σ (OptionT Det)) (σ → ℕ∞) EStack⟨Unit → ℕ∞⟩ :=
   inferInstance
 example {ρ ε : Type} :
-    ExactWPMonad (ReaderT ρ (ExceptT ε Det)) (ρ → ℕ∞) ((ε → ℕ∞) × EStack⟨⟩) :=
+    ExactWPMonad (ReaderT ρ (ExceptT ε Det)) (ρ → ℕ∞) EStack⟨ε → ℕ∞⟩ :=
   inferInstance
 
 section Writer
@@ -126,7 +126,7 @@ example (a : Det Nat) (post : Nat → Nat → ℕ∞) (s : Nat) :
   simp [StateT.run_lift, StateT.run_modify]
 
 /-- The failure branch of `OptionT` reaches the exception postcondition exactly. -/
-example (a : Det Nat) (post : Nat → ℕ∞) (epost : (Unit → ℕ∞) × EStack⟨⟩) :
+example (a : Det Nat) (post : Nat → ℕ∞) (epost : EStack⟨Unit → ℕ∞⟩) :
     wp (do let x ← OptionT.lift a; if x = 0 then failure else pure x : OptionT Det Nat) post
         epost =
       wp a (fun x => if x = 0 then epost.fst () else post x) estack⟨⟩ := by

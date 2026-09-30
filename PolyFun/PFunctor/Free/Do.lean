@@ -74,7 +74,7 @@ theorem wp_apply_eq (x : FreeM P α) (post : α → Prop) (epost : EStack⟨⟩)
 theorem triple_iff_allOutputs (x : FreeM P α) (pre : Prop) (post : α → Prop)
     (epost : EStack⟨⟩) :
     Triple x pre post epost ↔ (pre → AllOutputs post x) :=
-  ⟨fun h => h.le_wp, fun h => ⟨h⟩⟩
+  Triple.iff
 
 end DemonicWP
 

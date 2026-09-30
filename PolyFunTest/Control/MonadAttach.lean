@@ -349,8 +349,8 @@ variable {α : Type}
 
 /-- The "always" judgment is core's trivial-precondition triple under the demonic reading. -/
 example (x : m α) (p : α → Prop) :
-    @Std.WP.Triple Prop Std.WP.EStackEnd (m α) α _ _ x
-        ((toWPMonadDemonic (m := m)).toWP α) True p Std.WP.EStackEnd.mk ↔
+    @Std.WP.Triple Prop EStack⟨⟩ (m α) α _ _ x
+        ((toWPMonadDemonic (m := m)).toWP α) True p estack⟨⟩ ↔
       (x ⊨ₐ p) := by
   rw [toWPMonadDemonic_triple_iff, true_implies]
 
@@ -365,7 +365,7 @@ def noResult : OptionT Id Nat := none
 /-- Core's `OptionT` lift over `Id` sends `none` to the failure postcondition: with failure
 postcondition `False`, even the trivial success postcondition is not established. -/
 example : ¬ Std.WP.wp noResult (fun _ => True)
-    ((fun _ => False), Std.WP.EStackEnd.mk) :=
+    estack⟨fun _ => False⟩ :=
   id
 
 /-- The support interpretation of the transformer itself makes its empty support satisfy every
@@ -373,7 +373,7 @@ postcondition vacuously. Core's `OptionT` instance is found before a local `WPMo
 interpretation is passed explicitly. -/
 example :
     ((toWPMonadDemonic (m := OptionT Id)).toWP Nat).wp noResult (fun _ => True)
-      Std.WP.EStackEnd.mk :=
+      estack⟨⟩ :=
   fun _ _ => trivial
 
 end AlgebraSelection

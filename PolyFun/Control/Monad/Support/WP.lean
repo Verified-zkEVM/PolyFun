@@ -95,7 +95,7 @@ theorem toWPMonadDemonic_triple_iff {α : Type u} (x : m α) (pre : Prop) (post 
         pre post epost ↔
       (pre → AllOutputs post x) := by
   let inst := (toWPMonadDemonic (m := m)).toWP α
-  exact ⟨fun h => h.le_wp, fun h => ⟨h⟩⟩
+  exact Std.WP.Triple.iff
 
 /-- The demonic interpretation is conjunctive: "always" distributes over `∧`. -/
 theorem toWPMonadDemonic_wpConjunctive {α : Type u} (x : m α) :
@@ -147,7 +147,7 @@ theorem toWPMonadAngelic_triple_iff {α : Type u} (x : m α) (pre : Prop) (post 
         pre post epost ↔
       (pre → SomeOutput post x) := by
   let inst := (toWPMonadAngelic (m := m)).toWP α
-  exact ⟨fun h => h.le_wp, fun h => ⟨h⟩⟩
+  exact Std.WP.Triple.iff
 
 end Angelic
 

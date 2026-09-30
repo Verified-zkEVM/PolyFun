@@ -65,9 +65,8 @@ underlying values. -/
 theorem wp_restrictIic_val (c : l)
     (hc : ∀ {α : Type u} (x : m α), MAlgOrdered.μ (x >>= fun _ => pure c) ≤ c)
     {α : Type u} (x : m α) (post : α → Set.Iic c) (epost : EStack⟨⟩) :
-    (letI := restrictIic c hc; letI := toWPMonad (m := m) (l := Set.Iic c);
-      (wp x post epost).val) =
-      (letI := toWPMonad (m := m) (l := l); wp x (fun a => (post a).val) epost) := by
+    (letI := restrictIic c hc; ((toWPMonad (m := m) (l := Set.Iic c)).toWP α).wp x post epost).val =
+      ((toWPMonad (m := m) (l := l)).toWP α).wp x (fun a => (post a).val) epost := by
   change MAlgOrdered.μ (Subtype.val <$> (x >>= fun a => pure (post a))) =
     MAlgOrdered.μ (x >>= fun a => pure (post a).val)
   simp only [map_bind, map_pure]

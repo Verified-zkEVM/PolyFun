@@ -34,8 +34,8 @@ universe u v w z
 open Std.WP
 open scoped Lean.Order
 
-/-- `WPMonad.map_le_wp_map` with the mapped postcondition given as an equation, the form the
-`WriterT` proofs below instantiate; Lean 4.34's `map_le_wp_map'` stated it this way. -/
+/-- `WPMonad.map_le_wp_map` with the unmapped program's postcondition given up to an equation, the
+form the `WriterT` proofs below instantiate. -/
 private theorem WPMonad.map_le_wp_map' {m : Type u → Type v} {Pred : Type w} {EPred : Type z}
     [Monad m] [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred] {α β : Type u}
     (f : α → β) (x : m α) :
