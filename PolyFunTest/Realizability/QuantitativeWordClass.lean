@@ -23,21 +23,24 @@ namespace PFunctor.StepClass.QuantitativeWordClassTest
 
 variable {W : Type u} {V : WordClass W} (Q : QuantitativeWordClass.{u, v} V)
 
-#check Q.toQuantitativeStepClass
-#check QuantitativeWordClass.HasCategory
-#check QuantitativeWordClass.HasExactCategory
-#check QuantitativeWordClass.toHasCategory
-#check QuantitativeWordClass.toHasExactCategory
+noncomputable example := @Q.toQuantitativeStepClass
+noncomputable example := @QuantitativeWordClass.HasCategory
+noncomputable example := @QuantitativeWordClass.HasExactCategory
+noncomputable example := @QuantitativeWordClass.toHasCategory
+noncomputable example := @QuantitativeWordClass.toHasExactCategory
 
 section Category
 
 variable [Q.HasCategory] [Q.HasExactCategory]
 
-#check Q.identity
-#check Q.compose
-#check Q.composeOverhead
-#check Q.toHasCategory
-#check Q.toHasExactCategory
+noncomputable example : Q.Code id := Q.identity
+noncomputable example {f g : W → W} (first : Q.Code f) (second : Q.Code g) : Q.Code (g ∘ f) :=
+  Q.compose first second
+noncomputable example {f g : W → W} (first : Q.Code f) (second : Q.Code g) (word : W) : ℕ :=
+  Q.composeOverhead first second word
+noncomputable example : Q.toQuantitativeStepClass.HasCategory := Q.toHasCategory
+example : letI := Q.toHasCategory; Q.toQuantitativeStepClass.HasExactCategory :=
+  Q.toHasExactCategory
 
 end Category
 

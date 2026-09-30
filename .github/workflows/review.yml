@@ -55,7 +55,7 @@ jobs:
           # into external/spec/repo context automatically.
           additional_comments: "${{ steps.get_args.outputs.instructions }}"
           # Ground the review in this repo's curated knowledge base (spec/KB docs).
-          spec_refs: 'docs/wiki,REFERENCES.md'
+          spec_refs: 'docs/guides,docs/reference,docs/development,REFERENCES.md'
           # Everything else uses the action defaults (deep agents on z-ai/glm-5.2,
           # verification on deepseek/deepseek-v4-pro, lean_tools + verify_findings
           # on). See the review action README to override models or tune

@@ -17,9 +17,10 @@ a lens from a comonoid carrier to `P` extends uniquely to a retrofunctor into
 the cofree comonoid.
 
 This file packages the adjunction at the hom-set level.  It does not install a
-bundled `CategoryTheory.Adjunction`: `PFunctor` currently has overlapping lens
-and chart category instances, whereas the concrete hom-set equivalence is
-unambiguous and is the API needed by downstream dynamical systems. Generic
+bundled `CategoryTheory.Adjunction` between the category of polynomial comonoids
+and `LensCat` (`PFunctor/Category.lean`): nothing consumes the bundled functors,
+whereas the concrete hom-set equivalence is the API needed by downstream
+dynamical systems. Generic
 coiteration remains universe-polymorphic; only the retrofunctor packaging uses
 the common-maximum universe boundary currently required by `Comonoid.Hom`.
 -/

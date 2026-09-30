@@ -97,8 +97,8 @@ noncomputable local instance instStrictLeftState :
     StrictBind (StateT Nat Id) Id (Nat → Prop) :=
   strictBindStateTLeft Nat
 
-#synth MAlgRelOrdered (StateT Nat Id) Id (Nat → Prop)
-#synth StrictBind (StateT Nat Id) Id (Nat → Prop)
+noncomputable example : MAlgRelOrdered (StateT Nat Id) Id (Nat → Prop) := inferInstance
+noncomputable example : StrictBind (StateT Nat Id) Id (Nat → Prop) := inferInstance
 
 /-- A left-state lift threads the final state into the postcondition. -/
 def bump : StateT Nat Id Nat :=
@@ -121,8 +121,8 @@ noncomputable local instance instStrictRightState :
     StrictBind Id (StateT Bool Id) (Bool → Prop) :=
   strictBindStateTRight Bool
 
-#synth MAlgRelOrdered Id (StateT Bool Id) (Bool → Prop)
-#synth StrictBind Id (StateT Bool Id) (Bool → Prop)
+noncomputable example : MAlgRelOrdered Id (StateT Bool Id) (Bool → Prop) := inferInstance
+noncomputable example : StrictBind Id (StateT Bool Id) (Bool → Prop) := inferInstance
 
 example : (RelWP (m₁ := Id) (m₂ := StateT Bool Id) (l := Bool → Prop)
     (7 : Nat) (fun state => (if state then 8 else 6, !state))
@@ -142,8 +142,12 @@ noncomputable local instance instStrictBothStates :
     StrictBind (StateT Bool Id) (StateT Nat Id) (Bool → Nat → Prop) :=
   strictBindStateTBoth Bool Nat
 
-#synth MAlgRelOrdered (StateT Bool Id) (StateT Nat Id) (Bool → Nat → Prop)
-#synth StrictBind (StateT Bool Id) (StateT Nat Id) (Bool → Nat → Prop)
+noncomputable example :
+    MAlgRelOrdered (StateT Bool Id) (StateT Nat Id) (Bool → Nat → Prop) :=
+  inferInstance
+noncomputable example :
+    StrictBind (StateT Bool Id) (StateT Nat Id) (Bool → Nat → Prop) :=
+  inferInstance
 
 /-- The two-sided lift keeps left output, right output, left final state, and
 right final state in that order. Distinct types and values make every swap
@@ -170,7 +174,7 @@ noncomputable local instance instStrictLeftReader :
     StrictBind (ReaderT Bool Id) Id (Bool → Prop) :=
   strictBindReaderTLeft Bool
 
-#synth StrictBind (ReaderT Bool Id) Id (Bool → Prop)
+noncomputable example : StrictBind (ReaderT Bool Id) Id (Bool → Prop) := inferInstance
 
 /-- A left reader exposes the environment used to select its result. -/
 example : (RelWP (m₁ := ReaderT Bool Id) (m₂ := Id) (l := Bool → Prop)
@@ -191,7 +195,7 @@ noncomputable local instance instStrictRightReader :
     StrictBind Id (ReaderT Nat Id) (Nat → Prop) :=
   strictBindReaderTRight Nat
 
-#synth StrictBind Id (ReaderT Nat Id) (Nat → Prop)
+noncomputable example : StrictBind Id (ReaderT Nat Id) (Nat → Prop) := inferInstance
 
 end RightReader
 
@@ -205,7 +209,9 @@ noncomputable local instance instStrictBothReaders :
     StrictBind (ReaderT Bool Id) (ReaderT Nat Id) (Bool → Nat → Prop) :=
   strictBindReaderTBoth Bool Nat
 
-#synth StrictBind (ReaderT Bool Id) (ReaderT Nat Id) (Bool → Nat → Prop)
+noncomputable example :
+    StrictBind (ReaderT Bool Id) (ReaderT Nat Id) (Bool → Nat → Prop) :=
+  inferInstance
 
 /-- The two-sided lift exposes distinct left and right environments in that order. -/
 example : (RelWP (m₁ := ReaderT Bool Id) (m₂ := ReaderT Nat Id)
@@ -225,7 +231,7 @@ noncomputable local instance instRightOption :
     MAlgRelOrdered Id (OptionT Id) Prop :=
   optionTRight
 
-#synth MAlgRelOrdered Id (OptionT Id) Prop
+noncomputable example : MAlgRelOrdered Id (OptionT Id) Prop := inferInstance
 
 /-- The lossy `OptionT` side lift interprets `none` as `⊥`. -/
 def noRightResult : OptionT Id Nat := none
@@ -248,7 +254,7 @@ noncomputable local instance instLeftOption :
     MAlgRelOrdered (OptionT Id) Id Prop :=
   optionTLeft
 
-#synth MAlgRelOrdered (OptionT Id) Id Prop
+noncomputable example : MAlgRelOrdered (OptionT Id) Id Prop := inferInstance
 
 example : ¬ RelWP (m₁ := OptionT Id) (m₂ := Id) (none : OptionT Id Nat) (1 : Nat)
     (fun _ _ => True) := by
@@ -268,7 +274,7 @@ noncomputable local instance instLeftExcept :
     MAlgRelOrdered (ExceptT Unit Id) Id Prop :=
   exceptTLeft Unit
 
-#synth MAlgRelOrdered (ExceptT Unit Id) Id Prop
+noncomputable example : MAlgRelOrdered (ExceptT Unit Id) Id Prop := inferInstance
 
 /-- The lossy `ExceptT` side lift likewise interprets an error as `⊥`. -/
 def leftError : ExceptT Unit Id Nat := .error ()
@@ -291,7 +297,7 @@ noncomputable local instance instRightExcept :
     MAlgRelOrdered Id (ExceptT Unit Id) Prop :=
   exceptTRight Unit
 
-#synth MAlgRelOrdered Id (ExceptT Unit Id) Prop
+noncomputable example : MAlgRelOrdered Id (ExceptT Unit Id) Prop := inferInstance
 
 example : ¬ RelWP (m₁ := Id) (m₂ := ExceptT Unit Id) (1 : Nat)
     (.error () : ExceptT Unit Id Nat) (fun _ _ => True) := by
