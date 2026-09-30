@@ -384,6 +384,22 @@ pattern heads. Likewise `x <* y` and `x *> y` store `y` under the thunk `fun _ =
 pattern cannot bind. Such lemmas stay `@[simp]`; `grind` splits the `if` itself and reaches the
 applicative forms through `simp`'s normalization to `>>=`.
 
+### `grind =` matches implicit arguments syntactically, so `WType.mk` over `P + C α` misfires
+
+The W-type equations of free programs look like good `grind =` rules. `ofWWithReturn_return` and
+`ofWWithReturn_query` have `WType.mk` on the left-hand side, and `toWWithReturn_pure` has it on
+the right. The implicit polynomial argument of `WType.mk` elaborates in two forms: the unreduced
+sum `P + C α` inside the lemma statement, and its reduced `Sum` / `Sum.rec` fields in a goal
+written with the same text. `grind` indexes and merges terms syntactically, up to its own
+congruence closure, so each equation is instantiated without ever being merged with the goal's
+term. `grind` then fails even on the equation's own statement, whichever side holds `WType.mk`,
+and `toWWithReturn_pure` fails whether it is written with `pure` or with `FreeM.pure`.
+
+Keep such equations `@[simp]`, where matching is up to reducible definitional equality, and
+reserve `grind =` for equations in which every implicit argument has one spelling.
+`PolyFunTest/PFunctor/GrindSmoke.lean` checks the fold, handler-retargeting and lens-constructor
+equations that do work.
+
 ### A `@[spec]` loop rule needs an `Invariant`-typed invariant
 
 `vcgen` recognises the invariant argument of a loop specification by its type: only an argument

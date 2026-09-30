@@ -186,10 +186,10 @@ backward map is uniquely determined by the unit direction of `y`. -/
 def fromY {P : PFunctor.{uA, uB}} (a : P.A) : Lens y.{uA₁, uB₁} P :=
   (fun _ => a) ⇆ fun _ _ => PUnit.unit
 
-@[simp] theorem fromY_toFunA {P : PFunctor.{uA, uB}} (a : P.A) (u : PUnit) :
+@[simp, grind =] theorem fromY_toFunA {P : PFunctor.{uA, uB}} (a : P.A) (u : PUnit) :
     (fromY a : Lens y.{uA₁, uB₁} P).toFunA u = a := rfl
 
-@[simp] theorem fromY_toFunB {P : PFunctor.{uA, uB}} (a : P.A) (u : PUnit)
+@[simp, grind =] theorem fromY_toFunB {P : PFunctor.{uA, uB}} (a : P.A) (u : PUnit)
     (d : P.B a) :
     (fromY a : Lens y.{uA₁, uB₁} P).toFunB u d = PUnit.unit := rfl
 
@@ -203,7 +203,7 @@ def toConst {P : PFunctor.{uA, uB}} {A : Type uA₂} (f : P.A → A) :
     Lens P (C A : PFunctor.{uA₂, uB₁}) :=
   f ⇆ fun _ => PEmpty.elim
 
-@[simp] theorem toConst_toFunA {P : PFunctor.{uA, uB}} {A : Type uA₂}
+@[simp, grind =] theorem toConst_toFunA {P : PFunctor.{uA, uB}} {A : Type uA₂}
     (f : P.A → A) (a : P.A) :
     (toConst f : Lens P (C A : PFunctor.{uA₂, uB₁})).toFunA a = f a := rfl
 
@@ -214,11 +214,11 @@ def toLinear {P : PFunctor.{uA, uB}} {A : Type uA₂}
     Lens P (linear A : PFunctor.{uA₂, uB₁}) :=
   f ⇆ fun a _ => choose a
 
-@[simp] theorem toLinear_toFunA {P : PFunctor.{uA, uB}} {A : Type uA₂}
+@[simp, grind =] theorem toLinear_toFunA {P : PFunctor.{uA, uB}} {A : Type uA₂}
     (f : P.A → A) (choose : (a : P.A) → P.B a) (a : P.A) :
     (toLinear f choose : Lens P (linear A : PFunctor.{uA₂, uB₁})).toFunA a = f a := rfl
 
-@[simp] theorem toLinear_toFunB {P : PFunctor.{uA, uB}} {A : Type uA₂}
+@[simp, grind =] theorem toLinear_toFunB {P : PFunctor.{uA, uB}} {A : Type uA₂}
     (f : P.A → A) (choose : (a : P.A) → P.B a) (a : P.A) (u : PUnit) :
     (toLinear f choose : Lens P (linear A : PFunctor.{uA₂, uB₁})).toFunB a u = choose a := rfl
 
@@ -731,13 +731,13 @@ def tensorAssoc : (P ⊗ Q) ⊗ R ≃ₗ P ⊗ (Q ⊗ R) where
   left_inv := rfl
   right_inv := rfl
 
-@[simp]
+@[simp, grind =]
 theorem tensorAssoc_toFunA (position : ((P ⊗ Q) ⊗ R).A) :
     (tensorAssoc (P := P) (Q := Q) (R := R)).toLens.toFunA position =
       (position.1.1, (position.1.2, position.2)) :=
   rfl
 
-@[simp]
+@[simp, grind =]
 theorem tensorAssoc_toFunB (position : ((P ⊗ Q) ⊗ R).A)
     (direction : (P ⊗ (Q ⊗ R)).B
       ((tensorAssoc (P := P) (Q := Q) (R := R)).toLens.toFunA position)) :
