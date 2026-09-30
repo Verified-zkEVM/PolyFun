@@ -93,7 +93,9 @@ the source and its result proofs.
   Every job restores two caches: dependencies keyed on the toolchain and
   manifest, and PolyFun's own `.lake/build` keyed per commit and restored from
   the newest `main` build. Each job therefore rebuilds only what the checkout
-  changed. Only `build` on `main` saves the caches.
+  changed. Only `build` on `main` saves the caches, and a newer push to `main`
+  waits for the running job rather than cancelling its save. A nightly clean
+  build of `main` skips the build cache, so nothing passes only because of it.
 - [Import check](../../.github/workflows/check-imports.yml): generated imports.
 - [Docs integrity](../../.github/workflows/docs-integrity.yml): checker tests,
   links, anchors, excerpts and module docs.

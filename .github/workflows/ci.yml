@@ -6,11 +6,21 @@ on:
   pull_request:
   merge_group:
     types: [checks_requested]
+  # Nightly clean build of `main`: a check that nothing passes only because of the build cache.
+  schedule:
+    - cron: "40 5 * * *"
   workflow_dispatch:
+    inputs:
+      clean_build:
+        description: "Ignore the build cache and build from scratch"
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Runs on `main` save the build cache that later runs start from, so a newer push waits for the
+  # running one instead of cancelling it.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # The three jobs run in parallel and share two caches with different lifetimes. Dependencies
 # (`.lake/packages`, including Mathlib's oleans and the cslib build) change only with the toolchain
@@ -29,6 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      CLEAN_BUILD: ${{ github.event_name == 'schedule' || inputs.clean_build == true }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -49,6 +61,7 @@ jobs:
             lake-deps-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore build cache
+        if: env.CLEAN_BUILD != 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
@@ -104,6 +117,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      CLEAN_BUILD: ${{ github.event_name == 'schedule' || inputs.clean_build == true }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -122,6 +137,7 @@ jobs:
             lake-deps-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore build cache
+        if: env.CLEAN_BUILD != 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
@@ -156,6 +172,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      CLEAN_BUILD: ${{ github.event_name == 'schedule' || inputs.clean_build == true }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -174,6 +192,7 @@ jobs:
             lake-deps-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore build cache
+        if: env.CLEAN_BUILD != 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
