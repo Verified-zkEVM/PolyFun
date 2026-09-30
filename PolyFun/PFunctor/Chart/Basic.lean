@@ -254,15 +254,15 @@ chart direction, which has no canonical choice in `Set^→`. -/
 def sigmaExists {I : Type v} {F : I → PFunctor.{uA₁, uB₁}} {R : PFunctor.{uA₂, uB₂}}
     (c : ∀ i, Chart (F i) R) :
     Chart (sigma F) R :=
-  (fun ⟨i, fa⟩ => (c i).toFunA fa) ⇉
-    (fun ⟨i, fa⟩ => (c i).toFunB fa)
+  (fun x => (c (sigma.fst x)).toFunA (sigma.snd x)) ⇉
+    (fun x => (c (sigma.fst x)).toFunB (sigma.snd x))
 
 /-- Pointwise mapping of charts over `sigma`. -/
 def sigmaMap {I : Type v} {F : I → PFunctor.{uA₁, uB₁}} {G : I → PFunctor.{uA₂, uB₂}}
     (c : ∀ i, Chart (F i) (G i)) :
     Chart (sigma F) (sigma G) :=
-  (fun ⟨i, fa⟩ => ⟨i, (c i).toFunA fa⟩) ⇉
-    (fun ⟨i, fa⟩ => (c i).toFunB fa)
+  (fun x => sigma.mk (sigma.fst x) ((c (sigma.fst x)).toFunA (sigma.snd x))) ⇉
+    (fun x => (c (sigma.fst x)).toFunB (sigma.snd x))
 
 /-- Pointwise mapping of charts over `pi`. -/
 def piMap {I : Type v} {F : I → PFunctor.{uA₁, uB₁}} {G : I → PFunctor.{uA₂, uB₂}}
