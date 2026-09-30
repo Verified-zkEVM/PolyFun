@@ -254,7 +254,8 @@ PolyFun internals.
 The program-logic seam follows the same rule. VCVio's quantitative carrier is an
 `MAlgOrdered (OracleComp spec) ℝ≥0∞`, and everything it needs on core's
 weakest-precondition stack is a named PolyFun export rather than an unfolding:
-`MAlgOrdered.toWPMonad` (with `wp` agreeing by `rfl`), the probabilistic carrier
+`MAlgOrdered.toWPMonad` (with its value `toWPMonad_wp` by `rfl` and its exactness
+instance), the probabilistic carrier
 `Set.Iic 1` through `MAlgOrdered.restrictIic` (with `wp_restrictIic_val` and
 `restrictIic_triple_iff` as the contract), `WriterT.instWPMonad` for its
 logging stacks (`WriterT.wp_apply_eq`), and the transports of

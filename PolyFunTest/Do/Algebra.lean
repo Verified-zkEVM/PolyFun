@@ -14,13 +14,13 @@ public import Mathlib.Data.ENat.Lattice
 # Ordered monad algebras on core's `vcgen`
 
 An ordered monad algebra installed locally as a `WPMonad` drives core's `vcgen`: the generic
-`Spec.pure` / `Spec.bind` rules apply, the derived `wp` is `MAlgOrdered.wp` by `rfl`, and
-core's triple is PolyFun's. The base algebra below is the identity algebra on a deterministic
-monad at the carrier `ℕ∞`, the shape a quantitative carrier takes; the `Prop` carrier is
-exercised through the support layer instead. The monad is a fresh copy of `Id` so that no
-global core instance competes with the locally installed one. The single `vcgen` call pins the
-experimental-tactic diagnostic with `#guard_msgs`; the other `PolyFunTest/Do/` modules
-acknowledge it with `set_option experimental.vcgen true` instead.
+`Spec.pure` / `Spec.bind` rules apply, the derived `wp` is the algebra of the mapped program by
+`rfl`, and core's triple unfolds to Mathlib's order on the carrier. The base algebra below is
+the identity algebra on a deterministic monad at the carrier `ℕ∞`, the shape a quantitative
+carrier takes; the `Prop` carrier is exercised through the support layer instead. The monad is
+a fresh copy of `Id` so that no global core instance competes with the locally installed one.
+The single `vcgen` call pins the experimental-tactic diagnostic with `#guard_msgs`; the other
+`PolyFunTest/Do/` modules acknowledge it with `set_option experimental.vcgen true` instead.
 -/
 
 public section
@@ -48,9 +48,9 @@ noncomputable local instance instMAlgOrderedDetENat : MAlgOrdered Det ℕ∞ whe
 noncomputable local instance instWPMonadDetENat : WPMonad Det ℕ∞ EStack⟨⟩ :=
   MAlgOrdered.toWPMonad
 
-/-- Agreement with PolyFun's `wp` is definitional. -/
+/-- The derived `wp` is the algebra of the mapped program, definitionally. -/
 example (x : Det Nat) (post : Nat → ℕ∞) (epost : EStack⟨⟩) :
-    wp x post epost = MAlgOrdered.wp x post :=
+    wp x post epost = MAlgOrdered.μ (x >>= fun a => pure (post a)) :=
   rfl
 
 /- `vcgen` decomposes a `do` block through the locally installed algebra. -/
@@ -64,7 +64,7 @@ example (c : ℕ∞) :
   change c ≤ _
   simp
 
-/-- Core's triple through the derived interpretation is PolyFun's triple. -/
+/-- Core's triple through the derived interpretation is Mathlib's order on the carrier. -/
 example (x : Det Nat) (pre : ℕ∞) (post : Nat → ℕ∞) :
-    Triple x pre post Lean.Order.bot ↔ MAlgOrdered.Triple pre x post :=
+    Triple x pre post Lean.Order.bot ↔ pre ≤ MAlgOrdered.μ (x >>= fun a => pure (post a)) :=
   MAlgOrdered.toWP_triple_iff x pre post Lean.Order.bot

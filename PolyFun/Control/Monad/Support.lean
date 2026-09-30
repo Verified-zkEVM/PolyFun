@@ -5,7 +5,6 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.Control.Monad.Algebra
 public import Mathlib.Data.Set.Functor
 public import Mathlib.Control.Monad.Writer
 
@@ -34,12 +33,11 @@ alone permits coarse predicates such as `MonadAttach.trivial`. Universal safety 
 needs only the strong upstream laws. Exact composition is needed for the equations below
 and for introducing existential reachability through a bind.
 
-With exact composition, `AllOutputs` induces the demonic ordered monad algebra `MAlgOrdered m Prop`,
-identifying "always" with the trivial-precondition Hoare triple
-(`triple_top_iff_allOutputs`); `SomeOutput` gives the angelic companion. Both
-algebras are named definitions rather than global instances: transformer
-algebras such as `MAlgOrdered.instOptionT` give failures a different meaning,
-so a generic global support instance would be incoherent with them.
+The judgments are also core weakest-precondition interpretations at the `Prop` carrier
+(`MonadAttach.toWPMonadDemonic`, `MonadAttach.toWPMonadAngelic` in
+`PolyFun.Control.Monad.Support.WP`), exact over an `ExactMonadAttach`. Both are named
+constructions rather than global instances: a support reading is one interpretation among
+several on the same monad.
 
 ## Scope
 
@@ -467,106 +465,5 @@ theorem noOutput_bind (p : β → Prop) (x : m α) (f : α → m β) :
   simp [NoOutput]
 
 end JudgmentLaws
-
-/-! ## Induced ordered monad algebras on `Prop`
-
-`AllOutputs` is the demonic `Prop`-carrier ordered monad algebra: its induced
-`MAlgOrdered.wp` is the support-based weakest precondition, and the trivial-precondition
-triple is exactly the "always" judgment. The angelic companion built from `SomeOutput` is
-provided as a plain definition rather than an instance, since the two share an instance
-head. -/
-
-section PropAlgebra
-
-variable {m : Type → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
-variable {α : Type}
-
-/-- The demonic `Prop`-carrier ordered monad algebra of a monad with exact support:
-`μ` asserts that every possible output is a true proposition. This is deliberately
-not a global instance: for example, the existing `OptionT` algebra interprets
-`none` as `⊥`, whereas exact-support partial correctness interprets its empty
-support vacuously. Install this definition locally when support semantics is
-intended. -/
-@[instance_reducible]
-def mAlgOrderedPropDemonic : MAlgOrdered m Prop where
-  μ x := AllOutputs id x
-  μ_pure x := propext (allOutputs_pure id x)
-  μ_bind_mono f g hfg x := by
-    simp only [allOutputs_bind]
-    exact fun h a ha => hfg a (h a ha)
-
-attribute [local instance] mAlgOrderedPropDemonic
-
-/-- Support-based characterization of the demonic `Prop`-valued weakest precondition. -/
-theorem wp_iff_forall_support (x : m α) (post : α → Prop) :
-    MAlgOrdered.wp (l := Prop) x post ↔ ∀ a ∈ support x, post a := by
-  change AllOutputs id (x >>= fun a => pure (post a)) ↔ _
-  rw [allOutputs_bind]
-  exact ⟨fun h a ha => (allOutputs_pure id (post a)).mp (h a ha),
-    fun h a ha => (allOutputs_pure id (post a)).mpr (h a ha)⟩
-
-/-- The demonic `Prop`-valued weakest precondition is the "always" judgment. -/
-theorem wp_iff_allOutputs (x : m α) (post : α → Prop) :
-    MAlgOrdered.wp (l := Prop) x post ↔ AllOutputs post x :=
-  wp_iff_forall_support x post
-
-/-- The trivial-precondition `Prop`-valued triple is exactly the "always" judgment:
-`⊤`-precondition triples assert that every possible output satisfies `post`. -/
-theorem triple_top_iff_allOutputs (x : m α) (post : α → Prop) :
-    MAlgOrdered.Triple (l := Prop) ⊤ x post ↔ AllOutputs post x := by
-  rw [MAlgOrdered.Triple, top_le_iff, ← wp_iff_allOutputs x post]
-  exact ⟨fun h => h ▸ trivial, fun h => eq_true h⟩
-
-/-- The trivial-precondition `Prop`-valued triple against a negated postcondition is
-exactly the "never" judgment. -/
-theorem triple_top_not_iff_noOutput (x : m α) (post : α → Prop) :
-    MAlgOrdered.Triple (l := Prop) ⊤ x (fun a => ¬ post a) ↔ NoOutput post x :=
-  triple_top_iff_allOutputs x fun a => ¬ post a
-
-/-- The angelic `Prop`-carrier ordered monad algebra: `μ` asserts that some possible output
-is a true proposition. Not an instance — it shares an instance head with the demonic
-`mAlgOrderedPropDemonic`. -/
-@[instance_reducible]
-def mAlgOrderedPropAngelic : MAlgOrdered m Prop where
-  μ x := SomeOutput id x
-  μ_pure x := propext (someOutput_pure id x)
-  μ_bind_mono f g hfg x := by
-    simp only [someOutput_bind]
-    exact fun ⟨a, ha, h⟩ => ⟨a, ha, hfg a h⟩
-
-section Angelic
-
-attribute [local instance] mAlgOrderedPropAngelic
-
-/-- Support-based characterization of the angelic `Prop`-valued weakest precondition —
-the mirror of `wp_iff_forall_support`. -/
-theorem wp_angelic_iff_exists_support (x : m α) (post : α → Prop) :
-    MAlgOrdered.wp (l := Prop) x post ↔ ∃ a ∈ support x, post a := by
-  change SomeOutput id (x >>= fun a => pure (post a)) ↔ _
-  rw [someOutput_bind]
-  exact ⟨fun ⟨a, ha, h⟩ => ⟨a, ha, (someOutput_pure id (post a)).mp h⟩,
-    fun ⟨a, ha, h⟩ => ⟨a, ha, (someOutput_pure id (post a)).mpr h⟩⟩
-
-/-- The angelic `Prop`-valued weakest precondition is the "sometimes" judgment. -/
-theorem wp_angelic_iff_someOutput (x : m α) (post : α → Prop) :
-    MAlgOrdered.wp (l := Prop) x post ↔ SomeOutput post x :=
-  wp_angelic_iff_exists_support x post
-
-/-- The trivial-precondition angelic triple is exactly the "sometimes" judgment — the
-mirror of `triple_top_iff_allOutputs`. -/
-theorem triple_top_iff_someOutput (x : m α) (post : α → Prop) :
-    MAlgOrdered.Triple (l := Prop) ⊤ x post ↔ SomeOutput post x := by
-  rw [MAlgOrdered.Triple, top_le_iff, ← wp_angelic_iff_someOutput x post]
-  exact ⟨fun h => h ▸ trivial, fun h => eq_true h⟩
-
-/-- Against a negated postcondition the angelic triple says that the demonic guarantee
-does not hold. -/
-theorem triple_top_not_iff_not_allOutputs (x : m α) (post : α → Prop) :
-    MAlgOrdered.Triple (l := Prop) ⊤ x (fun a => ¬ post a) ↔ ¬ AllOutputs post x := by
-  rw [triple_top_iff_someOutput, ← not_allOutputs_iff]
-
-end Angelic
-
-end PropAlgebra
 
 end MonadAttach

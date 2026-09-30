@@ -16,7 +16,7 @@ An ordinary consumer of the program-logic kernel sees the bridges into core's `S
 these shapes: the ordered-algebra interpretation `MAlgOrdered.toWPMonad` and the demonic support
 interpretation `MonadAttach.toWPMonadDemonic` are `WPMonad`s at the empty exception stack
 `EStack⟨⟩`, their `wp` agreement equations apply without unfolding either construction, and
-core's triple through the algebra bridge is PolyFun's triple.
+core's triple through the algebra bridge unfolds to Mathlib's order on the algebra's value.
 -/
 
 public section
@@ -36,12 +36,12 @@ example : WPMonad m l EStack⟨⟩ := MAlgOrdered.toWPMonad
 
 example {α : Type u} (x : m α) (post : α → l) (epost : EStack⟨⟩) :
     (letI := MAlgOrdered.toWPMonad (m := m) (l := l); Std.WP.wp x post epost) =
-      MAlgOrdered.wp x post :=
+      MAlgOrdered.μ (x >>= fun a => pure (post a)) :=
   MAlgOrdered.toWPMonad_wp x post epost
 
 example {α : Type u} (x : m α) (pre : l) (post : α → l) (epost : EStack⟨⟩) :
     @Std.WP.Triple l EStack⟨⟩ (m α) α _ _ x (MAlgOrdered.toWP α) pre post epost ↔
-      MAlgOrdered.Triple pre x post :=
+      pre ≤ MAlgOrdered.μ (x >>= fun a => pure (post a)) :=
   MAlgOrdered.toWP_triple_iff x pre post epost
 
 end Algebra

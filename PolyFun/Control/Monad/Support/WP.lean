@@ -18,8 +18,8 @@ angelically, it is `SomeOutput post x`. Both satisfy core's inequational laws â€
 reading has no counterpart on the older `Std.Do` stack, whose transformers carry conjunctivity
 as a field. The demonic reading is conjunctive (`toWPMonadDemonic_wpConjunctive`); the angelic
 one is not, and `PolyFunTest/Control/MonadAttach.lean` pins the counterexample. Neither is a
-global instance: install them scoped or local where the support semantics is intended, exactly
-as `mAlgOrderedPropDemonic` is. The demonic construction needs only `LawfulMonadAttach`:
+global instance: install them scoped or local where the support semantics is intended. The
+demonic construction needs only `LawfulMonadAttach`:
 core's return-value elimination rules prove its inequational pure and bind laws.
 The angelic construction needs the introduction rules of `ExactMonadAttach`. Over an
 `ExactMonadAttach` both readings are exact (`ExactWPMonad`): "always" and "sometimes" distribute

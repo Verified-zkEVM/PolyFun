@@ -24,8 +24,8 @@ upper bound `wp prog post epost ⊑ c`, an exact value, and a rewriting normal f
 
 ## Automation contract
 
-The `@[simp]` set drives `wp` inwards through program structure until it meets a leaf, as
-`MAlgOrdered.wp`'s set does: `wp_pure` and `wp_bind` (the fields), `wp_map`, `wp_seq`,
+The `@[simp]` set drives `wp` inwards through program structure until it meets a leaf:
+`wp_pure` and `wp_bind` (the fields), `wp_map`, `wp_seq`,
 `wp_seqLeft`, `wp_seqRight`, and the control-flow equations `wp_ite`, `wp_dite`,
 `wp_option_elim`, `wp_sum_elim`. The control-flow equations hold for every `WP` interpretation
 and need no exactness. Each rewrite strictly decreases the program argument. No `grind`

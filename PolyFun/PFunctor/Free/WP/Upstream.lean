@@ -28,7 +28,9 @@ Both are exact (`ExactWPMonad`) whenever their source is: the syntactic one alwa
 one when the target's interpretation is exact.
 
 `wpFold_le_wp_liftM` is the soundness of per-operation specs against a handler stated over any
-core `WPMonad`, the generic form of `wpFold_le_wpVia`; it needs only the inequational `bind` law.
+core `WPMonad`; it needs only the inequational `bind` law. `wpFold_eq_wp_liftM` is its exact
+counterpart over an exact target. Over the demonic reading of the target's support they say
+which outputs the interpreted program can return (`allOutputs_liftM_of_wpFold`).
 -/
 
 @[expose] public section
@@ -55,8 +57,8 @@ def toWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) : WPMonad (FreeM P) l EStack⟨�
 theorem toWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Mono) {α : Type v} (x : FreeM P α) (post : α → l)
     (epost : EStack⟨⟩) :
     ((Φ.toWPMonad hΦ).toWP α).wp x post epost = FreeM.wpFold Φ x post := by
-  change (letI := Φ.toMAlgOrdered hΦ; MAlgOrdered.wp x post) = _
-  exact FreeM.wp_toMAlgOrdered Φ hΦ x post
+  change (letI := Φ.toMAlgOrdered hΦ; MAlgOrdered.μ (x >>= fun a => pure (post a))) = _
+  exact FreeM.toMAlgOrdered_μ_bind_pure Φ hΦ x post
 
 /-- The syntactic interpretation is exact. -/
 instance instExactWPMonadToWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) :
@@ -118,7 +120,56 @@ theorem wpFold_le_wp_liftM {Φ : OpSpec P l} (s : Handler n P)
       _ ≤ wp (s a >>= fun b => (r b).liftM s) post Lean.Order.bot :=
           WPMonad.bind_le_wp_bind (s a) _ post Lean.Order.bot
 
+/-- **Exact per-operation specs give the semantic wp exactly**, over an exact core
+interpretation of the target. -/
+theorem wpFold_eq_wp_liftM [ExactWPMonad n l EStack⟨⟩] {Φ : OpSpec P l} (s : Handler n P)
+    (h : ∀ (a : P.A) (k : P.B a → l), Φ a k = wp (s a) k Lean.Order.bot)
+    (x : FreeM P α) (post : α → l) :
+    wpFold Φ x post = wp (x.liftM s) post Lean.Order.bot := by
+  induction x with
+  | pure x => rw [wpFold_pure, FreeM.liftM_pure, ExactWPMonad.wp_pure]
+  | lift_bind a r ih =>
+    change Φ a (fun b => wpFold Φ (r b) post) =
+      wp (((FreeM.lift a).bind r).liftM s) post Lean.Order.bot
+    rw [bind_eq_bind, FreeM.liftM_lift_bind, ExactWPMonad.wp_bind, h a]
+    exact congrArg (fun k => wp (s a) k Lean.Order.bot) (funext fun b => ih b)
+
 end Soundness
+
+/-! ## Support of the interpreted program
+
+Over the demonic reading of the target's support (`MonadAttach.toWPMonadDemonic`), the
+soundness theorem turns a syntactic fold into a guarantee about every output the interpreted
+program can return. The carrier is `Prop`, so these live at the ground direction universe. -/
+
+section SemanticSupport
+
+open MonadAttach
+
+variable {Q : PFunctor.{uA, 0}} {n : Type → Type w}
+  [Monad n] [LawfulMonad n] [MonadAttach n] [ExactMonadAttach n] {α : Type}
+
+/-- **Specs discharge support facts about the interpreted program.** A per-operation spec
+that each handled operation validates for all its outputs turns a syntactic fold into a
+guarantee about every output the interpreted program can return. -/
+theorem allOutputs_liftM_of_wpFold {Φ : OpSpec Q Prop} (s : Handler n Q)
+    (h : ∀ (a : Q.A) (k : Q.B a → Prop), Φ a k → AllOutputs k (s a))
+    (x : FreeM Q α) (post : α → Prop) (hx : wpFold Φ x post) :
+    AllOutputs post (x.liftM s) := by
+  let := toWPMonadDemonic (m := n)
+  exact wpFold_le_wp_liftM (n := n) s (fun a k => h a k) x post hx
+
+/-- The demonic fold at the *canonical* spec already implies the interpreted guarantee,
+whenever the handler validates that spec: the handler must establish every postcondition
+that holds for all typed responses. This constrains its outputs to the operation's response
+type; it does not claim that the handler can produce every response. -/
+theorem allOutputs_liftM_of_allOutputs (s : Handler n Q)
+    (h : ∀ (a : Q.A) (k : Q.B a → Prop), (∀ b, k b) → AllOutputs k (s a))
+    (x : FreeM Q α) (post : α → Prop) (hx : AllOutputs post x) :
+    AllOutputs post (x.liftM s) :=
+  allOutputs_liftM_of_wpFold s h x post ((wpFold_demonic_iff_allOutputs x post).mpr hx)
+
+end SemanticSupport
 
 end FreeM
 

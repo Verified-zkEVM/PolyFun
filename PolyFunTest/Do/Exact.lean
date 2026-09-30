@@ -10,6 +10,7 @@ public import PolyFun.Control.Monad.Algebra.WP
 public import PolyFun.Control.Monad.Support.WP
 public import PolyFun.Control.Monad.Support.Instances
 public import PolyFun.PFunctor.Free.Do
+public import PolyFun.Control.Monad.WriterT.WP
 public import Mathlib.Data.ENat.Lattice
 
 /-!
@@ -18,7 +19,7 @@ public import Mathlib.Data.ENat.Lattice
 `ExactWPMonad` is found for every exact construction — an ordered algebra installed locally,
 core's transformer lifts over it, the demonic and angelic support readings, and the scoped
 free-program readings — and its equational set normalizes core's `wp` itself: after `simp`, goals
-keep core's head, with no `MAlgOrdered.wp` or support judgment in the result. The base monad is
+keep core's head, with no algebra value or support judgment in the result. The base monad is
 a fresh copy of `Id` so that no global core instance competes with the local one.
 -/
 
@@ -63,6 +64,28 @@ example : @ExactWPMonad SetM Prop EStack⟨⟩ _ _ _ (MonadAttach.toWPMonadDemon
 example : @ExactWPMonad SetM Prop EStack⟨⟩ _ _ _ (MonadAttach.toWPMonadAngelic (m := SetM)) :=
   inferInstance
 
+/-! Core's lifts stack, and exactness stacks with them. -/
+example {σ : Type} : ExactWPMonad (StateT σ (OptionT Det)) (σ → ℕ∞) ((Unit → ℕ∞) × EStack⟨⟩) :=
+  inferInstance
+example {ρ ε : Type} :
+    ExactWPMonad (ReaderT ρ (ExceptT ε Det)) (ρ → ℕ∞) ((ε → ℕ∞) × EStack⟨⟩) :=
+  inferInstance
+
+section Writer
+open scoped WriterT.MonoidWP
+variable {ω : Type} [Monoid ω]
+
+example : ExactWPMonad (WriterT ω Det) (ω → ℕ∞) EStack⟨⟩ := inferInstance
+example {σ : Type} : ExactWPMonad (StateT σ (WriterT ω Det)) (σ → ω → ℕ∞) EStack⟨⟩ :=
+  inferInstance
+
+/-- `tell` shifts the log the postcondition is shown: the content of indexing the carrier by
+`ω`, and the analogue of `StateT`'s postcondition seeing the final state. -/
+example (w₀ : ω) (post : PUnit → ω → ℕ∞) :
+    wp (MonadWriter.tell w₀ : WriterT ω Det PUnit) post estack⟨⟩ = fun w => post ⟨⟩ (w * w₀) :=
+  rfl
+end Writer
+
 section FreeDemonic
 open scoped PFunctor.FreeM.DemonicWP
 example (P : PFunctor.{0, 0}) : ExactWPMonad (PFunctor.FreeM P) Prop EStack⟨⟩ := inferInstance
@@ -88,8 +111,8 @@ example (c : Bool) (a b : Det Nat) (f : Nat → Nat) (post : Nat → ℕ∞) :
       else wp b (fun x => post (f x)) estack⟨⟩ := by
   simp only [ExactWPMonad.wp_map, ExactWPMonad.wp_ite]
 
-/-- `simp` does not unfold core's `wp` into `MAlgOrdered.wp`: the bridge is a lemma, not a
-normalization. -/
+/-- `simp` keeps core's `wp` rather than unfolding it to the algebra's value: `toWPMonad_wp` is a
+lemma, not a normalization. -/
 example (a : Det Nat) (post : Nat → ℕ∞) :
     wp (a >>= fun x => pure (x + 1)) post estack⟨⟩ =
       wp a (fun x => post (x + 1)) estack⟨⟩ := by
@@ -110,6 +133,16 @@ example (a : Det Nat) (post : Nat → ℕ∞) (epost : (Unit → ℕ∞) × ESta
   simp only [ExactWPMonad.wp_bind, ExactWPMonad.wp_ite, ExactWPMonad.wp_pure,
     OptionT.wp_apply_eq, OptionT.run_lift, OptionT.run_failure, Lean.Order.pushOption_some,
     Lean.Order.pushOption_none]
+
+/-- On an abstract exact monad, one `simp` call uses `wp_map`, `wp_bind`, and `wp_seq` to
+reach the three opaque computation leaves: the canary behind the automation contract of
+`PolyFun/Control/Monad/ExactWP.lean`. -/
+example {m : Type → Type} [Monad m] [WPMonad m ℕ∞ EStack⟨⟩] [ExactWPMonad m ℕ∞ EStack⟨⟩]
+    {α β γ δ : Type} (mf : m (α → β)) (x : m α) (k : β → m γ) (h : γ → δ)
+    (post : δ → ℕ∞) (e : EStack⟨⟩) :
+    wp (h <$> ((mf <*> x) >>= k)) post e =
+      wp mf (fun f => wp x (fun a => wp (k (f a)) (fun c => post (h c)) e) e) e := by
+  simp
 
 /-- An upper bound through a bind, which the inequational laws alone do not give. -/
 example (a : Det Nat) (b : Nat → Det Nat) (post : Nat → ℕ∞) (c : ℕ∞)

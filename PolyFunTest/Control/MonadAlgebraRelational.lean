@@ -27,11 +27,6 @@ noncomputable local instance instIdRel : MAlgRelOrdered Id Id Prop where
   rwp_mono hpost := hpost _ _
   rwp_bind_le _ _ _ _ _ := le_rfl
 
-noncomputable local instance instIdOrdered : MAlgOrdered Id Prop where
-  μ x := x
-  μ_pure _ := rfl
-  μ_bind_mono _ _ h x := h x
-
 local instance instStrictId : StrictBind Id Id Prop where
   rwp_bind _ _ _ _ _ := rfl
 
@@ -60,9 +55,10 @@ example (x y : Nat) (f g : Nat → Nat) (post : Nat → Nat → Prop) :
       RelWP (m₁ := Id) (m₂ := Id) (x >>= f) (y >>= g) post :=
   StrictBind.relWP_bind (m₁ := Id) (m₂ := Id) (l := Prop) x y f g post
 
-/-- Anchoring recovers the unary WP when the left computation is pure. -/
+/-- Anchoring recovers core's unary WP of `Id` when the left computation is pure. -/
 example (a : Nat) (y : Id Nat) (post : Nat → Nat → Prop) :
-    RelWP (m₁ := Id) (m₂ := Id) (pure a) y post = MAlgOrdered.wp y (post a) :=
+    RelWP (m₁ := Id) (m₂ := Id) (pure a) y post =
+      Std.WP.wp y (post a) Std.WP.EStackEnd.mk :=
   Anchored.relWP_pure_left a y post
 
 /-- The one-sided bind rules have the advertised orientation on concrete,
@@ -329,12 +325,11 @@ example (e : Unit) : rwpExc (m₁ := Id) (m₂ := Id) (ε₂ := Unit)
     (fun ea eb => ea = Except.error e ∧ eb = Except.ok 3) :=
   by simp
 
-/-- Anchoring: with a pure left side, the relational statement becomes the unary `wpExc`
-of the right side. -/
+/-- Anchoring: with a pure left side, the relational statement becomes core's unary `wp` of
+the right side's run, whose `Except` result keeps both branches. -/
 example (y : ExceptT Unit Id Nat) (post : Except Unit Nat → Except Unit Nat → Prop) :
     rwpExc (m₁ := Id) (m₂ := Id) (pure 2 : ExceptT Unit Id Nat) y post =
-      MAlgOrdered.wpExc y (fun b => post (Except.ok 2) (Except.ok b))
-        (fun e => post (Except.ok 2) (Except.error e)) :=
+      Std.WP.wp y.run (post (Except.ok 2)) Std.WP.EStackEnd.mk :=
   rwpExc_pure_left 2 y post
 
 /-- The relational bind rule preserves an existing error instead of running that

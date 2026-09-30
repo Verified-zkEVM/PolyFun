@@ -7,6 +7,7 @@ module
 
 public import PolyFun.PFunctor.Free.Support
 public import PolyFun.Control.Monad.Support.Indexed
+public import PolyFun.Control.Monad.Support.WP
 
 /-!
 # Examples for exact monadic support and the always/never judgments
@@ -346,11 +347,12 @@ section TrivialTriple
 variable {m : Type → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
 variable {α : Type}
 
-/-- The "always" judgment is the trivial-precondition `Prop`-valued triple. -/
+/-- The "always" judgment is core's trivial-precondition triple under the demonic reading. -/
 example (x : m α) (p : α → Prop) :
-    letI := mAlgOrderedPropDemonic (m := m)
-    MAlgOrdered.Triple (l := Prop) ⊤ x p ↔ (x ⊨ₐ p) :=
-  triple_top_iff_allOutputs x p
+    @Std.WP.Triple Prop Std.WP.EStackEnd (m α) α _ _ x
+        ((toWPMonadDemonic (m := m)).toWP α) True p Std.WP.EStackEnd.mk ↔
+      (x ⊨ₐ p) := by
+  rw [toWPMonadDemonic_triple_iff, true_implies]
 
 end TrivialTriple
 
@@ -360,31 +362,19 @@ section AlgebraSelection
 support-based partial-correctness semantics. -/
 def noResult : OptionT Id Nat := none
 
-section TransformerDefault
+/-- Core's `OptionT` lift over `Id` sends `none` to the failure postcondition: with failure
+postcondition `False`, even the trivial success postcondition is not established. -/
+example : ¬ Std.WP.wp noResult (fun _ => True)
+    ((fun _ => False), Std.WP.EStackEnd.mk) :=
+  id
 
-local instance : MAlgOrdered Id Prop := mAlgOrderedPropDemonic
-
-/-- Installing the support algebra only on the base monad leaves PolyFun's
-existing `OptionT` algebra in charge, so `none` is failure (`⊥`). -/
-example : ¬ MAlgOrdered.wp noResult (fun _ => True) := by
-  change ¬ MAlgOrdered.wpOpt noResult (fun _ => True) False
-  intro hw
-  have hEq :=
-    MAlgOrdered.wpOpt_fail (m := Id) (l := Prop) (α := Nat) (fun _ => True) False
-  have hw' : MAlgOrdered.wpOpt (OptionT.mk (pure none) : OptionT Id Nat)
-      (fun _ => True) False := by
-    exact hw
-  exact hEq.mp hw'
-
-end TransformerDefault
-
-/-- Installing support semantics explicitly on the transformer instead makes
-its empty support satisfy every postcondition vacuously. -/
+/-- The support interpretation of the transformer itself makes its empty support satisfy every
+postcondition vacuously. Core's `OptionT` instance is found before a local `WPMonad`, so the
+interpretation is passed explicitly. -/
 example :
-    letI := mAlgOrderedPropDemonic (m := OptionT Id)
-    MAlgOrdered.wp noResult (fun _ => True) := by
-  rw [wp_iff_allOutputs]
-  exact fun _ _ => trivial
+    ((toWPMonadDemonic (m := OptionT Id)).toWP Nat).wp noResult (fun _ => True)
+      Std.WP.EStackEnd.mk :=
+  fun _ _ => trivial
 
 end AlgebraSelection
 
@@ -399,11 +389,10 @@ only `→`: two *different* outputs may witness the two conjuncts separately, so
 forces a single output to satisfy both.
 
 The consequence is structural rather than a gap in this development. The angelic
-interpretation cannot be a `Std.Do.WP`, so it stays at the `MAlgOrdered` level, whose
-`μ_bind_mono` asks only for monotonicity. Core's newer weakest-precondition stack drops
-conjunctivity from `PredTrans` and reintroduces it as an opt-in `WPConjunctive`.
-That optional class asks for exactly the direction refuted below; the angelic reading
-is expressible against the newer base `WP` only without such an instance. -/
+interpretation cannot be a `Std.Do.WP`. Core's newer weakest-precondition stack drops
+conjunctivity from `PredTrans` and reintroduces it as an opt-in `WPConjunctive`, so the
+angelic reading lives there as `MonadAttach.toWPMonadAngelic`. That optional class asks for
+exactly the direction refuted below; the angelic reading has no such instance. -/
 
 /-- The direction that does hold: an angelic conjunction splits. -/
 example {α : Type} (x : SetM α) (p q : α → Prop) (h : x ⊨ₛ fun a => p a ∧ q a) :

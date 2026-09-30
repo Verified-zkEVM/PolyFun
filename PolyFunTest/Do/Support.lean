@@ -64,7 +64,7 @@ example {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m]
     ((toWPMonadDemonic (m := m)).toWP Nat).wp x (fun a => a = 0) estack⟨⟩
       = AllOutputs (fun a => a = 0) x ∧
     ((MAlgOrdered.toWPMonad (m := m) (l := ℕ∞)).toWP Nat).wp x (fun a => (a : ℕ∞))
-      estack⟨⟩ = MAlgOrdered.wp x (fun a => (a : ℕ∞)) := ⟨rfl, rfl⟩
+      estack⟨⟩ = MAlgOrdered.μ (x >>= fun a => pure (a : ℕ∞)) := ⟨rfl, rfl⟩
 
 example {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m]
     [WeaklyLawfulMonadAttach m] {ω : Type} [Monoid ω] :

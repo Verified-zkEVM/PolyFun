@@ -14,10 +14,9 @@ public import Std.WP
 
 Core lifts a `WPMonad` interpretation through its own transformers (`StateT`, `ReaderT`,
 `ExceptT`, `OptionT`); `WriterT` is Mathlib's, so its lift lives here. The carrier is `ω → Pred`,
-indexed by the log written so far, exactly as `MAlgOrdered.instWriterT` indexes its lattice:
-`bind` multiplies the prefix's log into the continuation's, so a postcondition that mentions the
-log has to be told what has already been written, and reading the interpretation at the unit
-recovers the log-oblivious one.
+indexed by the log written so far: `bind` multiplies the prefix's log into the continuation's,
+so a postcondition that mentions the log has to be told what has already been written, and
+reading the interpretation at the unit recovers the log-oblivious one.
 
 `WriterT.wpMonadOf` takes explicit empty/append operations and their laws, so it also
 interprets append-based logs without a `Monoid` instance. The monoid specialization is scoped
