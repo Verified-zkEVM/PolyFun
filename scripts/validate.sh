@@ -79,7 +79,7 @@ fi
 if (( run_test )); then
   echo ""
   echo "# Running test library (lake test)"
-  lake build PolyFunTest --wfail
+  lake build PolyFunTest --wfail --iofail
   lake test
   lake -d test/DocumentationConsumer build --wfail
   lake build polyfun-parliament --wfail
