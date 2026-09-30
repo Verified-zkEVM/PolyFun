@@ -74,6 +74,7 @@ machine's transition function. -/
 abbrev step {S : Type v} (machine : Machine.{u, v} S) (σ : S) (e : machine.Enabled σ) : S :=
   machine.update σ e
 
+open scoped PFunctor in
 /-- Build a machine from its state set, enabled-event family, and successor
 function, using the classical field names. -/
 @[expose]

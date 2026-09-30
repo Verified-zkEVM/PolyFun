@@ -307,10 +307,12 @@ def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
 @[inherit_doc] infixl:75 " ⊎c " => sumMap
 @[inherit_doc] infixl:75 " ⊗c " => tensorMap
 @[inherit_doc] infixl:75 " ×c " => prodMap
-/-- Notation for the copairing `sumPair c₁ c₂` of two charts out of a sum. -/
-notation "[" c₁ "," c₂ "]c" => sumPair c₁ c₂
-/-- Notation for the pairing `tensorPair c₁ c₂` of two charts into a tensor. -/
-notation "⟨" c₁ "," c₂ "⟩c" => tensorPair c₁ c₂
+/-- Notation for the copairing `sumPair c₁ c₂` of two charts out of a sum; activate it with
+`open scoped PFunctor.Chart`. -/
+scoped notation "[" c₁ "," c₂ "]c" => sumPair c₁ c₂
+/-- Notation for the pairing `tensorPair c₁ c₂` of two charts into a tensor; activate it with
+`open scoped PFunctor.Chart`. -/
+scoped notation "⟨" c₁ "," c₂ "⟩c" => tensorPair c₁ c₂
 
 /-! ### Coproduct coherence -/
 

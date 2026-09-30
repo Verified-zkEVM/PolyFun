@@ -90,7 +90,7 @@ explains the staging library `ToCslib` and the optional `ComplexityBackends`.
   instance. PolyFun separately formalizes
   `LawfulMonad (FreeM P)` and `LawfulComonad (CofreeC F)`; those type-level
   structures are not the paper's polynomial module action. The latter is
-  `FreeP.runOn : FreeP p ⊗ CofreeP q ⇆ FreeP (p ⊗ q)`: it executes a
+  `FreeP.runOn p q : Lens (FreeP p ⊗ CofreeP q) (FreeP (p ⊗ q))`: it executes a
   finite pattern against potentially infinite matter, is natural in both
   inputs, agrees with the paper's convolution/free-universal construction
   `FreeP.xi`, and satisfies the concrete unit and associativity equations.

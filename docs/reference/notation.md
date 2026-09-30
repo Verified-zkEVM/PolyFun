@@ -92,7 +92,13 @@ Conventions and glyph rationale:
 - `Responder S q` and the game formers in
   `PolyFun/PFunctor/Dynamical/{Responder, Game}.lean` are dynamical
   systems over `q ⊸ y` and `q ⊸ r`; the positions of `q ⊸ r` are the
-  lenses `q ⇆ r` (Spivak–Niu Ex 4.78).
+  lenses `Lens q r` (Spivak–Niu Ex 4.78).
+- Lens and chart constructors have the scoped arrows `toFunA ⇆ toFunB` (`Lens.mk`) and
+  `toFunA ⇉ toFunB` (`Chart.mk`), active under `open scoped PFunctor` like the rest of the
+  polynomial algebra. The pairing brackets `⟨l₁, l₂⟩ₗ` / `[l₁, l₂]ₗ` (`Lens.prodPair` /
+  `Lens.sumPair`) need `open scoped PFunctor.Lens`, and `⟨c₁, c₂⟩c` / `[c₁, c₂]c`
+  (`Chart.tensorPair` / `Chart.sumPair`) need `open scoped PFunctor.Chart`; these brackets
+  are scoped because they extend the anonymous-constructor and list-literal syntax.
 - Lens composition `g ∘ₗ f` applies `f` first and then `g`. Chart composition
   uses `g ∘c f`. The same lens notation applies to lens-defined dynamical
   systems. In the book and reading notes, diagrammatic `f ⨟ g` denotes this
@@ -105,6 +111,13 @@ Conventions and glyph rationale:
   abbreviates `DynComputation.Implements M program`. It is opt-in via
   `open scoped PFunctor.DynComputation`; the symbol deliberately says nothing
   about resource bounds.
+- Bundled monad morphisms (`PolyFun/Control/Monad/Hom.lean`) write their type as
+  `m →ᵐ n` (`MonadHom m n`) and their composition as `G ∘ᵐ F` (`MonadHom.comp`). Both
+  are global, like the lens and chart operators. The superscript `ᵐ` keeps the composition
+  glyph distinct from Mathlib's `scoped[ProbabilityTheory]` `κ ∘ₘ μ` (`Measure.bind`).
+- Comonadic cosequencing `xs <@> ys`, `xs <@ ys`, `xs @> ys` (`Coseq.coseq`,
+  `CoseqLeft.coseqLeft`, `CoseqRight.coseqRight` in `PolyFun/Control/Comonad/Basic.lean`)
+  is opt-in via `open scoped Coapplicative`.
 - Support satisfaction judgments, opt-in via `open scoped MonadAttach` for any
   monad with a core `MonadAttach` instance: `x ⊨ₐ p` (`AllOutputs p x`, every
   possible output satisfies `p`), `x ⊨ₛ p` (`SomeOutput p x`, some possible
@@ -118,4 +131,5 @@ New notation should follow the same pattern: scoped to the owning
 namespace, declared next to the definition it abbreviates, with the
 named form remaining the canonical API. Custom operator clusters are
 reserved for the polynomial algebra above, the open-system composition algebra,
-and composition of lenses, charts, and lens-defined systems.
+composition of lenses, charts, and lens-defined systems, and the monad-morphism
+arrow `→ᵐ` with its composition `∘ᵐ`.

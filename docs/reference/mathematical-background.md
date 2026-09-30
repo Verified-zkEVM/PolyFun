@@ -25,7 +25,7 @@ index to each direction, following the indexed-container viewpoint.
 | `p * q` | Categorical product for polynomial lenses | [Basic](../../PolyFun/PFunctor/Basic.lean) |
 | `p ⊗ q` | Tensor product of polynomials | [Basic](../../PolyFun/PFunctor/Basic.lean) |
 | `p ◃ q` | Substitution/composition product | [Basic](../../PolyFun/PFunctor/Basic.lean) |
-| `ihom q r` | Tensor internal hom; positions are lenses `q ⇆ r` | [InternalHom](../../PolyFun/PFunctor/InternalHom.lean) |
+| `ihom q r` | Tensor internal hom; positions are lenses `Lens q r` | [InternalHom](../../PolyFun/PFunctor/InternalHom.lean) |
 | `exp q r` | Cartesian exponential for `*` | [CartesianClosed](../../PolyFun/PFunctor/CartesianClosed.lean) |
 
 The two curry/uncurry constructions serve different products. A proof about

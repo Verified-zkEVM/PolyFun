@@ -490,8 +490,9 @@ structure Lens (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) where
   direction of `P` at `a`. -/
   toFunB : ∀ a, Q.B (toFunA a) → P.B a
 
-/-- Infix notation for constructing a lens `toFunA ⇆ toFunB` -/
-infixr:25 " ⇆ " => Lens.mk
+/-- Infix notation for constructing a lens `toFunA ⇆ toFunB`; activate it with
+`open scoped PFunctor`. -/
+scoped infixr:25 " ⇆ " => Lens.mk
 
 /-- A chart between two polynomial functors `P` and `Q` is a pair of a function:
 - `toFunA : P.A → Q.A`
@@ -503,8 +504,9 @@ structure Chart (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) wher
   at `toFunA a`. -/
   toFunB : ∀ a, P.B a → Q.B (toFunA a)
 
-/-- Infix notation for constructing a chart `toFunA ⇉ toFunB` -/
-infixr:25 " ⇉ " => Chart.mk
+/-- Infix notation for constructing a chart `toFunA ⇉ toFunB`; activate it with
+`open scoped PFunctor`. -/
+scoped infixr:25 " ⇉ " => Chart.mk
 
 section Lemmas
 

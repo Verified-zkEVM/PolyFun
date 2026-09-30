@@ -26,7 +26,7 @@ readings are recorded as derived `@[simp]` equations.
 * `DynSystem.tensor` — the *parallel product* (§4.3.2): juxtapose two systems;
   literally `s ⊗ₗ t` (the states multiply and the interfaces tensor).
 * `DynSystem.pairing` — the *categorical product* (§4.3.1): two interfaces driven
-  by a shared state; literally the lens pairing `⟨l₁, l₂⟩ₗ`.
+  by a shared state; literally the lens pairing `Lens.prodPair l₁ l₂`.
 * `DynSystem.choiceProd` — asynchronous choice: juxtapose two systems on the
   product state, but expose the product interface `prod p q`, so each step
   advances exactly one side.
@@ -108,9 +108,9 @@ theorem tensor_eq_tensorMap (s : DynSystem S p) (t : DynSystem T q) :
 /-- The **categorical product** of two interfaces on a shared state (Niu–Spivak
 §4.3.1): given two interface lenses out of the same state polynomial, expose both
 interfaces at once, valued in the product `prod p q` — literally the lens pairing
-`⟨l₁, l₂⟩ₗ`. -/
+`Lens.prodPair l₁ l₂`. -/
 def pairing (l₁ : DynSystem S p) (l₂ : DynSystem S q) : DynSystem S (prod p q) :=
-  ⟨l₁, l₂⟩ₗ
+  Lens.prodPair l₁ l₂
 
 @[simp] theorem pairing_expose (l₁ : DynSystem S p) (l₂ : DynSystem S q) (st : S) :
     (pairing l₁ l₂).expose st = (l₁.expose st, l₂.expose st) := rfl

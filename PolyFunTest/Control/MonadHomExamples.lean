@@ -60,10 +60,10 @@ variable {m : Type u → Type v} [Monad m] [LawfulMonad m]
 /-- Bundled morphisms compose and have identities, which is what makes them
 usable as data rather than as instances. -/
 example (σ : Type u) : Id →ᵐ StateT σ m :=
-  MonadHom.ofLift m (StateT σ m) ∘ₘ MonadHom.pure m
+  MonadHom.ofLift m (StateT σ m) ∘ᵐ MonadHom.pure m
 
 example {α : Type u} (σ : Type u) (x : Id α) :
-    (MonadHom.ofLift m (StateT σ m) ∘ₘ MonadHom.pure m) x = liftM (pure x.run : m α) := rfl
+    (MonadHom.ofLift m (StateT σ m) ∘ᵐ MonadHom.pure m) x = liftM (pure x.run : m α) := rfl
 
 /-- `StateT σ` transports a morphism, acting on the state-run. -/
 example {n : Type u → Type w} [Monad n] [LawfulMonad n] (σ : Type u) (φ : m →ᵐ n) :

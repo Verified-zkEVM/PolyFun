@@ -338,10 +338,12 @@ def invTildeL {P : PFunctor.{uA, uB}} : Lens (y ◃ P) P :=
 @[inherit_doc] infixl:75 " ×ₗ " => prodMap
 @[inherit_doc] infixl:75 " ⊎ₗ " => sumMap
 @[inherit_doc] infixl:75 " ⊗ₗ " => tensorMap
-/-- Notation for the copairing `sumPair l₁ l₂` of two lenses out of a sum. -/
-notation "[" l₁ "," l₂ "]ₗ" => sumPair l₁ l₂
-/-- Notation for the pairing `prodPair l₁ l₂` of two lenses into a product. -/
-notation "⟨" l₁ "," l₂ "⟩ₗ" => prodPair l₁ l₂
+/-- Notation for the copairing `sumPair l₁ l₂` of two lenses out of a sum; activate it with
+`open scoped PFunctor.Lens`. -/
+scoped notation "[" l₁ "," l₂ "]ₗ" => sumPair l₁ l₂
+/-- Notation for the pairing `prodPair l₁ l₂` of two lenses into a product; activate it with
+`open scoped PFunctor.Lens`. -/
+scoped notation "⟨" l₁ "," l₂ "⟩ₗ" => prodPair l₁ l₂
 
 set_option linter.checkUnivs false in
 /-- The type of lenses from a polynomial functor `P` to `y` -/
