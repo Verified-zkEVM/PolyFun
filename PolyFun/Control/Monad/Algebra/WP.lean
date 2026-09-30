@@ -145,8 +145,8 @@ hold with equality. -/
 instance instExactWPMonadToWPMonad [LawfulMonad m] :
     @ExactWPMonad m l EStack⟨⟩ _ _ _ (toWPMonad (m := m) (l := l)) :=
   let _ := toWPMonad (m := m) (l := l)
-  { wp_pure := fun a post _ => μ_pure_bind_pure a post
-    wp_bind := fun x f post _ => μ_bind_bind_pure x f post }
+  ExactWPMonad.of_eq (fun a post _ => μ_pure_bind_pure a post)
+    (fun x f post _ => μ_bind_bind_pure x f post)
 
 /-- The derived interpretation is conjunctive at `x` whenever the algebra of the mapped program
 preserves binary meets of postconditions. -/

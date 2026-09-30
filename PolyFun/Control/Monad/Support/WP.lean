@@ -198,16 +198,16 @@ variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [Exac
 instance instExactWPMonadToWPMonadDemonic :
     @ExactWPMonad m Prop EStack⟨⟩ _ _ _ (toWPMonadDemonic (m := m)) :=
   let _ := toWPMonadDemonic (m := m)
-  { wp_pure := fun a post _ => propext (allOutputs_pure post a)
-    wp_bind := fun x f post _ => propext (allOutputs_bind post x f) }
+  ExactWPMonad.of_eq (fun a post _ => propext (allOutputs_pure post a))
+    (fun x f post _ => propext (allOutputs_bind post x f))
 
 /-- Over an exact attachment the angelic interpretation is exact: "sometimes" distributes over
 `pure` and `bind` with equality. -/
 instance instExactWPMonadToWPMonadAngelic :
     @ExactWPMonad m Prop EStack⟨⟩ _ _ _ (toWPMonadAngelic (m := m)) :=
   let _ := toWPMonadAngelic (m := m)
-  { wp_pure := fun a post _ => propext (someOutput_pure post a)
-    wp_bind := fun x f post _ => propext (someOutput_bind post x f) }
+  ExactWPMonad.of_eq (fun a post _ => propext (someOutput_pure post a))
+    (fun x f post _ => propext (someOutput_bind post x f))
 
 end Exact
 

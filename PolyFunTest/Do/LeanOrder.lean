@@ -49,3 +49,14 @@ example (f g : Nat → Prop) : (f ⊑ g) = ∀ n, f n → g n := rfl
 /-- The bridged Mathlib instance on functions is the pointwise order too. -/
 example (f g : Nat → Prop) :
     (@PartialOrder.rel (Nat → Prop) instPartialOrderOfMathlib f g) = ∀ n, f n → g n := rfl
+
+/-- Core's order reversed on the order dual is the bridge of Mathlib's dual order, at instance
+transparency. -/
+example : (instPartialOrderOrderDual : Lean.Order.PartialOrder (Nat → Prop)ᵒᵈ) =
+    (instPartialOrderOfMathlib : Lean.Order.PartialOrder (Nat → Prop)ᵒᵈ) := by
+  with_reducible_and_instances rfl
+
+/-- The two complete lattices on the order dual agree at instance transparency. -/
+example : (instCompleteLatticeOrderDual : Lean.Order.CompleteLattice (Nat → Prop)ᵒᵈ) =
+    (instCompleteLatticeOfMathlib : Lean.Order.CompleteLattice (Nat → Prop)ᵒᵈ) := by
+  with_reducible_and_instances rfl

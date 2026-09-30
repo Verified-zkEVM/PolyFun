@@ -95,12 +95,13 @@ instance instExactWPMonadTransportWPMonadOf {F : ∀ {α : Type u}, m α → n �
     [ExactWPMonad n Pred EPred] :
     @ExactWPMonad m Pred EPred _ _ _ (transportWPMonadOf (Pred := Pred) (EPred := EPred) hf) :=
   let _ := transportWPMonadOf (Pred := Pred) (EPred := EPred) hf
-  { wp_pure := fun a post epost => by
+  ExactWPMonad.of_eq
+    (fun a post epost => by
       change wp (F (pure a)) post epost = post a
-      rw [hf.map_pure, ExactWPMonad.wp_pure]
-    wp_bind := fun x f post epost => by
+      rw [hf.map_pure, ExactWPMonad.wp_pure])
+    (fun x f post epost => by
       change wp (F (x >>= f)) post epost = wp (F x) (fun a => wp (F (f a)) post epost) epost
-      rw [hf.map_bind, ExactWPMonad.wp_bind] }
+      rw [hf.map_bind, ExactWPMonad.wp_bind])
 
 /-- An exact interpretation pulled back along a bundled monad morphism is exact. -/
 instance instExactWPMonadTransportWPMonad (F : m →ᵐ n) [LawfulMonad m] [WPMonad n Pred EPred]

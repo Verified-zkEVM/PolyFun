@@ -102,18 +102,18 @@ theorem exactWPMonad_wpMonadOf [ExactWPMonad m Pred EPred] (empty : ω) (append 
       (wpMonadOf empty append right_id assoc) := by
   let := WriterT.monad (M := m) empty append
   let := wpMonadOf (m := m) (Pred := Pred) (EPred := EPred) empty append right_id assoc
-  exact {
-    wp_pure := fun {α} x post epost => by
+  exact ExactWPMonad.of_eq
+    (fun {α} x post epost => by
       funext w
       change wp (pure (x, empty) : m (α × ω)) (fun p => post p.1 (append w p.2)) epost = post x w
-      rw [ExactWPMonad.wp_pure, right_id]
-    wp_bind := fun {α β} x f post epost => by
+      rw [ExactWPMonad.wp_pure, right_id])
+    (fun {α β} x f post epost => by
       funext w
       change wp (x.run >>= fun p => (fun q : β × ω => (q.1, append p.2 q.2)) <$> (f p.1).run)
           (fun q => post q.1 (append w q.2)) epost =
         wp x.run (fun p => wp (f p.1).run
           (fun q => post q.1 (append (append w p.2) q.2)) epost) epost
-      simp only [ExactWPMonad.wp_bind, ExactWPMonad.wp_map, assoc] }
+      simp only [ExactWPMonad.wp_bind, ExactWPMonad.wp_map, assoc])
 
 /-- The explicit writer interpretation exposes its accumulated-log equation. -/
 @[simp]
