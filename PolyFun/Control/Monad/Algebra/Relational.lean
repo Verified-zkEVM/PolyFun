@@ -440,9 +440,7 @@ noncomputable def optionTRight :
     MAlgRelOrdered m₁ (OptionT m₂) l where
   rwp x y post :=
     MAlgRelOrdered.rwp x y.run (fun a ob =>
-      match ob with
-      | none => ⊥
-      | some b => post a b)
+      Lean.Order.pushOption (post a) (fun _ => ⊥) ob)
   rwp_pure a b post := by
     simp
   rwp_mono hpost :=
@@ -452,17 +450,15 @@ noncomputable def optionTRight :
       | some b => simpa using hpost a b)
   rwp_bind_le {α β γ δ} x y f g post := by
     let collapse : γ → Option δ → l := fun c od =>
-      match od with
-      | none => ⊥
-      | some d => post c d
+      Lean.Order.pushOption (post c) (fun _ => ⊥) od
     let gRun : Option β → m₂ (Option δ) := fun ob =>
       Option.elim ob (pure none) (fun b => (g b).run)
     have hmono :
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x y.run
           (fun a ob =>
-            match ob with
-            | none => ⊥
-            | some b => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (g b).run collapse)
+            Lean.Order.pushOption
+              (fun b => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (g b).run collapse)
+              (fun _ => ⊥) ob)
         ≤
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x y.run (fun a ob =>
           MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (gRun ob) collapse) := by
@@ -486,9 +482,7 @@ noncomputable def optionTLeft :
     MAlgRelOrdered (OptionT m₁) m₂ l where
   rwp x y post :=
     MAlgRelOrdered.rwp x.run y (fun oa b =>
-      match oa with
-      | none => ⊥
-      | some a => post a b)
+      Lean.Order.pushOption (fun a => post a b) (fun _ => ⊥) oa)
   rwp_pure a b post := by
     simp
   rwp_mono hpost :=
@@ -498,17 +492,15 @@ noncomputable def optionTLeft :
       | some a => simpa using hpost a b)
   rwp_bind_le {α β γ δ} x y f g post := by
     let collapse : Option γ → δ → l := fun oa b =>
-      match oa with
-      | none => ⊥
-      | some a => post a b
+      Lean.Order.pushOption (fun a => post a b) (fun _ => ⊥) oa
     let fRun : Option α → m₁ (Option γ) := fun oa =>
       Option.elim oa (pure none) (fun a => (f a).run)
     have hmono :
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y
           (fun oa b =>
-            match oa with
-            | none => ⊥
-            | some a => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+            Lean.Order.pushOption
+              (fun a => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+              (fun _ => ⊥) oa)
         ≤
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y (fun oa b =>
           MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (fRun oa) (g b) collapse) := by
@@ -522,9 +514,9 @@ noncomputable def optionTLeft :
     have hmono' :
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y
           (fun oa b =>
-            match oa with
-            | none => ⊥
-            | some a => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+            Lean.Order.pushOption
+              (fun a => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+              (fun _ => ⊥) oa)
         ≤
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y (fun oa b =>
           MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (fRun oa) (g b) collapse) := by
@@ -542,9 +534,7 @@ noncomputable def exceptTRight (ε : Type u) :
     MAlgRelOrdered m₁ (ExceptT ε m₂) l where
   rwp x y post :=
     MAlgRelOrdered.rwp x y.run (fun a eb =>
-      match eb with
-      | Except.error _ => ⊥
-      | Except.ok b => post a b)
+      Lean.Order.pushExcept (post a) (fun _ => ⊥) eb)
   rwp_pure a b post := by
     simp
   rwp_mono hpost :=
@@ -554,9 +544,7 @@ noncomputable def exceptTRight (ε : Type u) :
       | ok b => simpa using hpost a b)
   rwp_bind_le {α β γ δ} x y f g post := by
     let collapse : γ → Except ε δ → l := fun c ed =>
-      match ed with
-      | Except.error _ => ⊥
-      | Except.ok d => post c d
+      Lean.Order.pushExcept (post c) (fun _ => ⊥) ed
     let gRun : Except ε β → m₂ (Except ε δ) := fun eb =>
       match eb with
       | Except.ok b => (g b).run
@@ -564,10 +552,9 @@ noncomputable def exceptTRight (ε : Type u) :
     have hmono :
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x y.run
           (fun a eb =>
-            match eb with
-            | Except.error _ => ⊥
-            | Except.ok b =>
-                MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (g b).run collapse)
+            Lean.Order.pushExcept
+              (fun b => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (g b).run collapse)
+              (fun _ => ⊥) eb)
         ≤
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x y.run (fun a eb =>
           MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (gRun eb) collapse) := by
@@ -591,9 +578,7 @@ noncomputable def exceptTLeft (ε : Type u) :
     MAlgRelOrdered (ExceptT ε m₁) m₂ l where
   rwp x y post :=
     MAlgRelOrdered.rwp x.run y (fun ea b =>
-      match ea with
-      | Except.error _ => ⊥
-      | Except.ok a => post a b)
+      Lean.Order.pushExcept (fun a => post a b) (fun _ => ⊥) ea)
   rwp_pure a b post := by
     simp
   rwp_mono hpost :=
@@ -603,9 +588,7 @@ noncomputable def exceptTLeft (ε : Type u) :
       | ok a => simpa using hpost a b)
   rwp_bind_le {α β γ δ} x y f g post := by
     let collapse : Except ε γ → δ → l := fun ec d =>
-      match ec with
-      | Except.error _ => ⊥
-      | Except.ok c => post c d
+      Lean.Order.pushExcept (fun c => post c d) (fun _ => ⊥) ec
     let fRun : Except ε α → m₁ (Except ε γ) := fun ea =>
       match ea with
       | Except.ok a => (f a).run
@@ -613,10 +596,9 @@ noncomputable def exceptTLeft (ε : Type u) :
     have hmono :
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y
           (fun ea b =>
-            match ea with
-            | Except.error _ => ⊥
-            | Except.ok a =>
-                MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+            Lean.Order.pushExcept
+              (fun a => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+              (fun _ => ⊥) ea)
         ≤
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y (fun ea b =>
           MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (fRun ea) (g b) collapse) := by
