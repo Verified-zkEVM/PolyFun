@@ -322,10 +322,13 @@ public import PolyFun.Realizability.Quantitative.Closure
 public import PolyFun.Realizability.Quantitative.Counting
 public import PolyFun.Realizability.Quantitative.Description
 public import PolyFun.Realizability.Quantitative.Family
+public import PolyFun.Realizability.Quantitative.FamilySimulation
 public import PolyFun.Realizability.Quantitative.Iteration
 public import PolyFun.Realizability.Quantitative.Polynomial
 public import PolyFun.Realizability.Quantitative.Prefix
+public import PolyFun.Realizability.Quantitative.Reference
 public import PolyFun.Realizability.Quantitative.Resource
+public import PolyFun.Realizability.Quantitative.Simulation
 public import PolyFun.Realizability.Quantitative.TraceCost
 public import PolyFun.Realizability.Quantitative.WordClass
 public import PolyFun.Realizability.Representation
