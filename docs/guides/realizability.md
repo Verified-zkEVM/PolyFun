@@ -514,11 +514,12 @@ admissible decoder.
 
 Products and sums are *not* automatic. They need a pairing codec and a tagging
 scheme whose operations the word class admits, supplied as `WordPairing` and
-`WordTagging` and consumed by `ofWordClass.hasProd` / `ofWordClass.hasSum`. As of
-this writing complexitylib has the ingredients (`Complexity.pair`, `unpair?`,
-`delimit`) but has not exposed them as a class-level closure result, and cslib's
-`PolyTimeComputable` has `id` and `comp` but no pairing or projection machines at
-all. The `CslibSingleTape` backend supplies encoded machine families and finite-table
+`WordTagging` and consumed by `ofWordClass.hasProd` / `ofWordClass.hasSum`.
+complexitylib exposes the class-level product closure that `WordPairing` needs
+(`pairFst_mem_FP`, `pairSnd_mem_FP` and `mem_FP_pair` in
+`Complexitylib/Classes/P/Pairing.lean`); PolyFun does not depend on complexitylib,
+so no such instance is built here. cslib's `PolyTimeComputable` has `id` and
+`comp` but no pairing or projection machines at all. The `CslibSingleTape` backend supplies encoded machine families and finite-table
 constructors and uses those concrete certificates directly; it does not claim a
 complete `ofWordClass` structural instance.
 
@@ -558,7 +559,9 @@ Its adapter half connects this theory to PolyFun:
   running-time bound across input lengths is involved.
 - `ComplexityBackends/CslibSingleTape/Family.lean` supplies the canonical polynomial
   certificates (`Backend.polynomialBackend`: certified time, envelope `1 + X + p`,
-  overhead `q.comp (1 + X + p)`), the finite-table primitive (`Backend.finiteTables`),
+  overhead `0`, since `timeOf_compose_le` already charges the second machine's
+  polynomial at the first machine's envelope), the finite-table primitive
+  (`Backend.finiteTables`),
   and the round trip between `EncPolyTimeFam` and the generic families.
 
 - `ComplexityBackends/CslibSingleTape/ProgramWitness.lean` bridges the
