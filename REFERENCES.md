@@ -167,6 +167,21 @@ efficiency remain downstream obligations.
 Used in: `docs/guides/open-systems.md`, `PolyFun/Interaction/Open/GlobalSubroutine.lean`,
 `PolyFun/Interaction/Open/SecureEmulation.lean`.
 
+### Can20 — Canetti, *Universally Composable Security*
+
+Ran Canetti.
+*Universally Composable Security*.
+*Journal of the ACM* 67(5), article 28, 2020;
+[full version, ePrint 2000/067](https://eprint.iacr.org/2000/067).
+
+The reference treatment of universal composability. Its runtime notion bounds a
+machine's steps by a function of its net import: the credit carried by the
+messages it receives, minus the credit it passes on. `ImportBounded` is that
+ledger on reactive networks; for linear bounds it is a conservation certificate.
+
+Used in: `PolyFun/Interaction/Execution/ReactiveNetwork/Import.lean`,
+`docs/guides/open-systems.md`.
+
 ### CJSV22 — Canetti, Jain, Swanberg, Varia, *End-to-End Secure Messaging*
 
 Ran Canetti, Palak Jain, Marika Swanberg, and Mayank Varia.
@@ -431,9 +446,11 @@ DOI: <https://doi.org/10.1007/s00145-012-9127-4>
 Polynomial runtime for reactive, interactive machines, where the bound must
 survive composition with the environment and other machines. The whole-program
 linking theorem that PolyFun's backend still lacks is a statement of this kind;
-`Backend.cost_adequate` covers only the per-step half.
+`Backend.cost_adequate` covers only the per-step half. Input-relative certificates
+in `ReactiveNetwork/InputRelative.lean` express its amortization.
 
-Used in: `docs/guides/realizability.md`.
+Used in: `docs/guides/realizability.md`, `docs/guides/open-systems.md`,
+`PolyFun/Interaction/Execution/ReactiveNetwork/InputRelative.lean`.
 
 ### GHP09 — Ghani, Hancock, Pattinson, *Representations of stream processors*
 
