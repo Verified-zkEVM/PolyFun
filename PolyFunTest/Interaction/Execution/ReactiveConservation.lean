@@ -7,7 +7,9 @@ Authors: Devon Tuma
 module
 
 public import PolyFunTest.Interaction.Execution.ReactiveBudget
-public import PolyFun.Interaction.Execution.ReactiveNetwork.Conserving
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Import
+public import PolyFun.Interaction.Execution.ReactiveNetwork.InputRelative
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Local
 
 /-!
 # Conservation certificates on reactive networks
@@ -25,6 +27,12 @@ public import PolyFun.Interaction.Execution.ReactiveNetwork.Conserving
 * **Unit charges.** They recover the activation count retained by `elapsed`. Because conservation
   forces administrative activations to be free, they are not certifiable once a finished node
   can be activated.
+* **Component certificates.** Certificates about the countdown's and the echo loop's processes
+  alone, placed at their nodes, give the same network potentials.
+* **Import ledgers.** The countdown is an import ledger with endowment `n`. Its work is bounded by
+  the endowment, and as a linear ledger it is a conserving certificate.
+* **Input-relative certificates.** Both ping-pong nodes are input-relatively certified, yet their
+  joint productive work is unbounded, and no exchange rates satisfy the gain law.
 -/
 
 public section
@@ -426,5 +434,300 @@ example (charge : Charge feedback Unit) (credit : CreditModel feedback)
 example (fuel : ℕ) :
     (runTokenCharged (m := Id) feedbackImpl Charge.one fuel (initial feedback ())).run.2 = fuel :=
   (runTokenCharged_one feedbackImpl fuel _ _ _ (Id.canReturn_iff.mpr rfl)).1
+
+/-! ## Component certificates -/
+
+/-- The countdown's component certificate: the counter is the potential and each tick costs one. -/
+def countdownProcess (n : ℕ) :
+    ProcessConserving ((countdown n).component ()) (countdownImpl n ()) (fun _ => 1)
+      ((countdownCredit n).inbound ()) ((countdownCredit n).outbound ()) where
+  pot s := (s : ℕ)
+  onEffect _ operation := operation.elim
+  onReceive s _ _ hv := by
+    simp only [countdown, DynComputation.view_ofStep] at hv
+    cases s <;> simp only [countdownStep] at hv <;> cases hv
+  onSend s _ _ hv := by
+    simp only [countdown, DynComputation.view_ofStep] at hv
+    cases s <;> simp only [countdownStep] at hv <;> cases hv
+  onTick s cont hv := by
+    simp only [countdown, DynComputation.view_ofStep] at hv
+    cases s with
+    | zero => simp only [countdownStep] at hv; cases hv
+    | succ k =>
+      simp only [countdownStep] at hv
+      cases hv
+      exact le_refl _
+  onYield s _ hv := by
+    simp only [countdown, DynComputation.view_ofStep] at hv
+    cases s <;> simp only [countdownStep] at hv <;> cases hv
+
+/-- Placed at the countdown's only node, the component certificate has the counter as network
+potential, and its unit component charge is the productive charge. -/
+example (n : ℕ) :
+    (ProcessConserving.toConserving (fun _ => countdownProcess n) .token (fun _ => True)).total
+      (initial (countdown n) ()) = n ∧
+    Charge.ofLocal (network := countdown n) (S := Unit) (fun _ _ => 1) = Charge.productive := by
+  refine ⟨?_, Charge.ofLocal_one⟩
+  rw [Conserving.total_initial]
+  simp [ProcessConserving.toConserving, countdownProcess, countdown]
+
+/-- The counter's component certificate: potential `4 k` while holding `k`. -/
+def counterProcess (N : ℕ) :
+    ProcessConserving ((echo N).component false) (echoImpl N false) (fun _ => 1)
+      ((echoCredit N).inbound false) ((echoCredit N).outbound false) where
+  pot
+    | .wait => 0
+    | .hold k => 4 * k
+  onEffect _ operation := operation.elim
+  onReceive s cont packet hv := by
+    simp only [echo, DynComputation.view_ofStep, phaseStep] at hv
+    rcases s with _ | _ | k <;> simp only [counterStep] at hv <;> cases hv
+    simp [echoCredit, payload]
+  onSend s packet cont hv := by
+    simp only [echo, DynComputation.view_ofStep, phaseStep] at hv
+    rcases s with _ | _ | k <;> simp only [counterStep] at hv <;> cases hv
+    simp [echoCredit, payload]
+    omega
+  onTick s cont hv := by
+    simp only [echo, DynComputation.view_ofStep, phaseStep] at hv
+    rcases s with _ | _ | k <;> simp only [counterStep] at hv <;> cases hv
+  onYield s cont hv := by
+    simp only [echo, DynComputation.view_ofStep, phaseStep] at hv
+    rcases s with _ | _ | k <;> simp only [counterStep] at hv <;> cases hv
+
+/-- The echo's component certificate: potential `4 k + 2` while holding `k`. -/
+def echoProcess (N : ℕ) :
+    ProcessConserving ((echo N).component true) (echoImpl N true) (fun _ => 1)
+      ((echoCredit N).inbound true) ((echoCredit N).outbound true) where
+  pot
+    | .wait => 0
+    | .hold k => 4 * k + 2
+  onEffect _ operation := operation.elim
+  onReceive s cont packet hv := by
+    simp only [echo, DynComputation.view_ofStep, phaseStep] at hv
+    rcases s with _ | k <;> simp only [echoStep] at hv <;> cases hv
+    simp [echoCredit, payload]
+  onSend s packet cont hv := by
+    simp only [echo, DynComputation.view_ofStep, phaseStep] at hv
+    rcases s with _ | k <;> simp only [echoStep] at hv <;> cases hv
+    simp [echoCredit, payload]
+    omega
+  onTick s cont hv := by
+    simp only [echo, DynComputation.view_ofStep, phaseStep] at hv
+    rcases s with _ | k <;> simp only [echoStep] at hv <;> cases hv
+  onYield s cont hv := by
+    simp only [echo, DynComputation.view_ofStep, phaseStep] at hv
+    rcases s with _ | k <;> simp only [echoStep] at hv <;> cases hv
+
+/-- The echo loop's network certificate from its two component certificates. -/
+def echoConservingOfProcesses (N : ℕ) :
+    Conserving (echoImpl N) .token (Charge.ofLocal fun _ _ => 1) (echoCredit N) (fun _ => True) :=
+  ProcessConserving.toConserving
+    (fun id => match id with
+      | false => counterProcess N
+      | true => echoProcess N) .token _
+
+/-- The component certificates give the same initial network potential, `4 N`. -/
+example (N : ℕ) : (echoConservingOfProcesses N).total (initial (echo N) ()) = 4 * N := by
+  rw [Conserving.total_initial]
+  simp [echoConservingOfProcesses, ProcessConserving.toConserving, counterProcess, echoProcess,
+    echo, phaseInit]
+
+/-! ## Import ledgers -/
+
+/-- The counter value of a countdown state. -/
+@[expose] def counter {n : ℕ} (s : ((countdown n).component ()).State) : ℕ := s
+
+/-- The countdown as an import ledger: an endowment of `n`, and `n - s` steps taken at counter
+`s`. -/
+def countdownLedger (n : ℕ) :
+    ImportBounded (countdownImpl n) .token Charge.productive (countdownCredit n)
+      (fun state => counter (state.localState ()) ≤ n) id where
+  net _ _ := n
+  steps _ s := n - counter s
+  bounded _ _ := Nat.sub_le _ _
+  ledger id state next hinv _ h := by
+    have heq := Id.canReturn_iff.mp h
+    subst heq
+    cases id
+    cases hs : (state.localState () : ℕ) with
+    | zero =>
+      simp [activate, countdown, DynComputation.view_ofStep, hs, countdownStep,
+        Charge.productive, isProductive, CreditModel.emitted, CreditModel.consumed]
+    | succ k =>
+      simp only [counter, hs] at hinv
+      simp [activate, countdown, DynComputation.view_ofStep, hs, countdownStep, counter,
+        Charge.productive, isProductive, CreditModel.emitted, CreditModel.consumed]
+      omega
+
+/-- The countdown never raises its counter. -/
+theorem countdown_preserves (n : ℕ) :
+    TokenInvariant (countdownImpl n) (fun state => counter (state.localState ()) ≤ n) := by
+  intro state next hinv h
+  have heq := Id.canReturn_iff.mp h
+  subst heq
+  cases hfocus : state.focus
+  cases hs : (state.localState () : ℕ) with
+  | zero =>
+    simp [activate, countdown, DynComputation.view_ofStep, hs, countdownStep, counter]
+  | succ k =>
+    simp only [counter, hs] at hinv
+    simp [activate, countdown, DynComputation.view_ofStep, hs, countdownStep, hfocus, counter]
+    omega
+
+/-- The ledger bounds the countdown's work by its endowment, for every fuel. -/
+example (n fuel : ℕ) :
+    (runTokenOpen (m := Id) (countdownImpl n) Charge.productive (List.replicate fuel .step)
+      (initial (countdown n) ())).run.2 ≤ n := by
+  obtain ⟨⟨next, work⟩, h⟩ : ∃ r, CanReturn (runTokenOpen (m := Id) (countdownImpl n)
+      Charge.productive (List.replicate fuel .step) (initial (countdown n) ())) r :=
+    ⟨_, Id.canReturn_iff.mpr rfl⟩
+  rw [Id.canReturn_iff.mp h]
+  have := (countdownLedger n).work_runTokenOpen_le (fun _ _ => le_rfl) monotone_id
+    (countdown_preserves n) (fun packet _ _ => packet.1.elim) (by exact le_rfl) h
+  simp [ImportBounded.imported, ImportBounded.stepsTotal, countdownLedger, countdown_held,
+    CreditModel.funded] at this
+  omega
+
+/-- A linear ledger is a conserving certificate. -/
+example (n : ℕ) :
+    Conserving (countdownImpl n) .token Charge.productive (countdownCredit n)
+      (fun state => counter (state.localState ()) ≤ n) :=
+  (countdownLedger n).toConserving
+
+/-! ## Input-relative certificates across feedback -/
+
+/-- Two units of credit per packet: one per activation of the receive and send it causes. -/
+def credit2 : CreditModel feedback where
+  inbound _ _ := 2
+  outbound _ _ := 2
+  exported _ := 0
+  route_le _ _ := le_refl _
+
+/-- A node's potential: one unit while it still has to send. -/
+@[expose] def loopPot (s : Bool) : ℕ := if s then 1 else 0
+
+/-- Both ping-pong nodes are input-relatively certified, under any invariant. -/
+def feedbackInputRelative (invariant : State feedback Unit → Prop) :
+    InputRelative feedbackImpl .token Charge.productive credit2 invariant where
+  pot _ s := loopPot s
+  step id state next _ _ h := by
+    have heq := Id.canReturn_iff.mp h
+    subst heq
+    cases hs : (state.localState id : Bool) with
+    | true =>
+      simp [activate, feedback, DynComputation.view_ofStep, hs, loopStep, dispatch,
+        Charge.productive, isProductive, CreditModel.consumed, loopPot]
+    | false =>
+      cases hq : state.inbox id with
+      | nil =>
+        simp [activate, feedback, DynComputation.view_ofStep, hs, hq, loopStep,
+          Charge.productive, isProductive, CreditModel.consumed, loopPot]
+      | cons packet rest =>
+        simp [activate, feedback, DynComputation.view_ofStep, hs, hq, loopStep,
+          Charge.productive, isProductive, CreditModel.consumed, loopPot, credit2]
+
+/-- The token holder can always act: it is about to send, or it has mail. -/
+@[expose] def feedbackReady (state : State feedback Unit) : Prop :=
+  (state.localState state.focus : Bool) = true ∨ state.inbox state.focus ≠ []
+
+theorem feedbackReady_initial : feedbackReady (initial feedback ()) := by
+  left
+  rfl
+
+/-- A node about to send hands its packet and the token to the other node. -/
+theorem feedback_activate_send (id : Bool) (state : State feedback Unit)
+    (hs : (state.localState id : Bool) = true) :
+    (activate feedbackImpl .token id state).run =
+      { state with
+        elapsed := state.elapsed + 1
+        localState := Function.update state.localState id (false : Bool)
+        inbox := Function.update state.inbox (!id) (state.inbox (!id) ++ [⟨(), ()⟩])
+        focus := !id } := by
+  simp [activate, feedback, DynComputation.view_ofStep, hs, loopStep, dispatch]
+
+/-- A node with mail consumes it and becomes ready to send. -/
+theorem feedback_activate_receive (id : Bool) (state : State feedback Unit)
+    (hs : (state.localState id : Bool) = false) (packet : Interface.Packet unitPort)
+    (rest : List (Interface.Packet unitPort)) (hq : state.inbox id = packet :: rest) :
+    (activate feedbackImpl .token id state).run =
+      { state with
+        elapsed := state.elapsed + 1
+        localState := Function.update state.localState id (true : Bool)
+        inbox := Function.update state.inbox id rest } := by
+  simp [activate, feedback, DynComputation.view_ofStep, hs, hq, loopStep]
+
+theorem feedbackReady_preserves : TokenInvariant feedbackImpl feedbackReady := by
+  intro state next hready h
+  have heq := Id.canReturn_iff.mp h
+  subst heq
+  cases hs : (state.localState state.focus : Bool) with
+  | true =>
+    rw [feedback_activate_send _ _ hs]
+    right
+    simp
+  | false =>
+    have hq : state.inbox state.focus ≠ [] := by
+      rcases hready with h' | h'
+      · rw [hs] at h'
+        cases h'
+      · exact h'
+    obtain ⟨packet, rest, hpr⟩ := List.exists_cons_of_ne_nil hq
+    rw [feedback_activate_receive _ _ hs packet rest hpr]
+    left
+    simp
+
+theorem productive_of_ready (state : State feedback Unit) (hready : feedbackReady state) :
+    Charge.productive (.node state.focus) state = 1 := by
+  rcases hready with hs | hq
+  · simp [Charge.productive, isProductive, feedback, DynComputation.view_ofStep, hs, loopStep]
+  · cases hs : (state.localState state.focus : Bool) with
+    | true =>
+      simp [Charge.productive, isProductive, feedback, DynComputation.view_ofStep, hs, loopStep]
+    | false =>
+      simp [Charge.productive, isProductive, feedback, DynComputation.view_ofStep, hs, loopStep,
+        hq]
+
+theorem productive_le_one (activation : Activation Bool) (state : State feedback Unit) :
+    Charge.productive activation state ≤ 1 := by
+  cases activation with
+  | node id => simp only [Charge.productive]; split_ifs <;> omega
+  | deliver => simp [Charge.productive]
+
+/-- The productive work of `fuel` token activations from the initial state is exactly `fuel`. -/
+theorem feedback_productive_work (fuel : ℕ) :
+    (runTokenCharged (m := Id) feedbackImpl Charge.productive fuel
+      (initial feedback ())).run.2 = fuel := by
+  obtain ⟨⟨next, work⟩, h⟩ : ∃ r, CanReturn (runTokenCharged (m := Id) feedbackImpl
+      Charge.productive fuel (initial feedback ())) r := ⟨_, Id.canReturn_iff.mpr rfl⟩
+  rw [Id.canReturn_iff.mp h]
+  have hlow := le_chargedRun (step := tokenStep feedbackImpl) feedbackReady (fun _ => 1)
+    (fun _ s s' hs hstep => ⟨feedbackReady_preserves s s' hs hstep,
+      (productive_of_ready s hs).ge⟩) _ _ _ _ feedbackReady_initial h
+  have hup := (chargedRun_le (step := tokenStep feedbackImpl) (fun _ => True) (fun _ => 0)
+    (fun _ => 1) (fun _ s _ _ _ => ⟨trivial, by simpa using productive_le_one _ s⟩) _ _ _ _
+    trivial h).2
+  simp at hlow hup
+  omega
+
+/-- **Input-relative certificates do not compose across feedback.** Both nodes are certified
+(`feedbackInputRelative`), yet their joint work is unbounded. -/
+theorem feedback_work_unbounded :
+    ¬ ∃ bound, ∀ fuel, (runTokenCharged (m := Id) feedbackImpl Charge.productive fuel
+      (initial feedback ())).run.2 ≤ bound := by
+  rintro ⟨bound, hbound⟩
+  have := hbound (bound + 1)
+  rw [feedback_productive_work] at this
+  omega
+
+/-- **No exchange rates make the certified ping-pong nodes satisfy the gain law**; otherwise the
+re-denominated certificate would be conserving. -/
+theorem feedback_no_smallGain (w : Bool → ℕ) :
+    ¬ SmallGain .token Charge.productive credit2 feedbackReady w := by
+  intro hgain
+  exact feedback_not_conserving Charge.productive (credit2.reweight w) feedbackReady
+    feedbackReady_initial feedbackReady_preserves
+    (fun state hready _ => (productive_of_ready state hready).ge)
+    ⟨(feedbackInputRelative feedbackReady).toConserving w hgain⟩
 
 end Interaction.Execution.ReactiveNetwork.ConservationTests
