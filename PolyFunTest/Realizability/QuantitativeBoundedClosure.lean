@@ -9,6 +9,8 @@ module
 public import PolyFun.Realizability.Instances
 public import PolyFun.Realizability.Quantitative.BoundedClosure
 
+public import PolyFun.Realizability.Quantitative.Reference
+
 /-!
 # Bounded quantitative-closure checks
 
@@ -27,38 +29,8 @@ namespace PFunctor.QuantitativeBoundedClosureTest
 
 open DynSystem.DynComputation
 
-/-- Synthetic structural-smoke backend, explicitly excluded from complexity evidence. -/
-@[expose]
-def zeroBackend : QuantitativeStepClass.{0, 0, 0} StepClass.unconstrained.{0, 0} where
-  Realizer _ _ _ := PUnit
-  size _ _ := 0
-  cost _ _ := 0
-  admissible _ := True.intro
-
-instance : zeroBackend.HasComposition where
-  identity _ := PUnit.unit
-  compose _ _ := PUnit.unit
-  composeOverhead _ _ _ := 0
-  cost_compose_le _ _ _ := le_rfl
-
-instance : zeroBackend.HasProd where
-  fst _ _ := PUnit.unit
-  snd _ _ := PUnit.unit
-  pair _ _ := PUnit.unit
-
-instance : zeroBackend.HasSum where
-  inl _ _ := PUnit.unit
-  inr _ _ := PUnit.unit
-  elim _ _ := PUnit.unit
-
-instance : zeroBackend.HasOption where
-  map _ := PUnit.unit
-  none _ _ := PUnit.unit
-  bindContext _ := PUnit.unit
-  some _ := PUnit.unit
-
-instance : zeroBackend.IsDistributive where
-  distribute _ _ _ := PUnit.unit
+/-- Shared zero-cost reference model for structural resource checks. -/
+abbrev zeroBackend := QuantitativeStepClass.Reference.zero.{0, 0, 0}
 
 /-- Interface with one position and no possible answer. -/
 abbrev emptyResponse : PFunctor.{0, 0} :=
