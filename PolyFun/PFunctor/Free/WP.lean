@@ -28,6 +28,10 @@ in two coupled layers:
   soundness of per-operation specs against it (`wpFold_le_wp_liftM`, `wpFold_eq_wp_liftM`) and
   its support consequences for the interpreted program.
 
+* **Substitution.** A handler implementing each operation of `P` by a free `Q`-program pulls a
+  `Q`-spec back to a `P`-spec (`OpSpec.pullback`), and folding over the substituted program is
+  folding the pullback over the original (`wpFold_liftM`).
+
 The canonical `Prop`-carrier specs `OpSpec.demonic` ("every response") and
 `OpSpec.angelic` ("some response") recover the support-based judgments of
 `PolyFun.PFunctor.Free.Support`: `wpFold_demonic_iff_allOutputs` and
@@ -547,7 +551,38 @@ theorem reachable_liftM_subset
       exact (leavesSatisfyUnder_iff_forall_reachable _ _ _).mpr
         (fun _ _ => trivial)) program
 
+/-! ### Folding after substitution -/
+
+/-- Pull a specification of `Q` back along a handler that implements each operation of `P` by a
+`Q`-program: a call at `position` is specified by the fold of `Φ` over its implementation. -/
+def _root_.PFunctor.OpSpec.pullback (handler : (position : P.A) → FreeM Q (P.B position))
+    (Φ : OpSpec Q l) : OpSpec P l :=
+  fun position post => wpFold Φ (handler position) post
+
+/-- Folding a specification over a substituted program is folding its pullback over the original
+program. -/
+theorem wpFold_liftM (handler : (position : P.A) → FreeM Q (P.B position)) (Φ : OpSpec Q l)
+    (program : FreeM P α) (post : α → l) :
+    wpFold Φ (program.liftM handler) post = wpFold (Φ.pullback handler) program post := by
+  induction program with
+  | pure result => rfl
+  | lift_bind position next ih =>
+      change wpFold Φ (handler position >>= fun direction => (next direction).liftM handler)
+        post = _
+      rw [wpFold_bind]
+      exact congrArg (wpFold Φ (handler position)) (funext ih)
+
 end FreeHandler
+
+/-- Pullback is functorial: pulling back along two handlers in turn is pulling back along the
+handler that interprets the first one's programs through the second. -/
+theorem _root_.PFunctor.OpSpec.pullback_pullback {Q : PFunctor.{uA₂, uB}}
+    {R : PFunctor.{uX, uY}} (first : (position : P.A) → FreeM Q (P.B position))
+    (second : (position : Q.A) → FreeM R (Q.B position)) (Φ : OpSpec R l) :
+    (Φ.pullback second).pullback first =
+      Φ.pullback fun position => (first position).liftM second := by
+  funext position post
+  exact (wpFold_liftM second Φ (first position) post).symm
 
 /-! ## The induced ordered monad algebra -/
 
