@@ -46,6 +46,11 @@ Example and test imports never flow back into production.
 `Logic/` holds small logic helpers. `Complexity/` supplies resource-bound syntax;
 concrete machine complexity lives in the optional `ComplexityBackends` library.
 
+The quantitative realizability layer separates code-local certificates from run bounds.
+`Quantitative/Simulation.lean` and `FamilySimulation.lean` handle backend changes with
+explicit size, time and description comparisons. `Reference.lean` contains unrestricted
+arithmetic models.
+
 ## Conceptual layering
 
 Arrows mean “is used by”; they do not assert equivalence of the objects.

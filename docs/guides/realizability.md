@@ -682,6 +682,21 @@ Still open: a whole-program linking theorem (below), completeness relative to a
 standard model (reductions may be uncertifiable, never unsound), and the
 `Type 0` pin of the single-tape description measure.
 
+## Transporting resource certificates
+
+[`Simulation.lean`](../../PolyFun/Realizability/Quantitative/Simulation.lean) translates codes
+without changing their semantic function. Size comparisons in both directions allow each
+`PolyRealizer` to be bounded in its target input size. The cost polynomial may depend on the
+source code, including its tape count. This does not by itself transport a uniform family.
+[`FamilySimulation.lean`](../../PolyFun/Realizability/Quantitative/FamilySimulation.lean)
+requires additional uniform description and canonical-time comparisons. Its time comparison
+permits polynomial dependence on source description size and controls the selected target
+envelope at every length, beyond just the lengths of actual inputs.
+
+[`Reference.lean`](../../PolyFun/Realizability/Quantitative/Reference.lean) supplies the shared
+`metered` and `zero` arithmetic models. `toMetered` preserves any backend's charges and sizes.
+These models impose no computability restriction and serve to test accounting laws.
+
 ## Known Gaps
 
 The operational dispatcher in `PFunctor/Free/HandlerMachine.lean` has executable phases,
