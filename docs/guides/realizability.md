@@ -337,6 +337,53 @@ overhead. Together they yield the generic bounded sequential-composition
 theorem without pretending that arbitrary unreachable values have small
 encodings.
 
+### Strength and the strong bind
+
+A `seqComp` continuation sees only the first phase's result. Reductions usually
+need more: a later step reads a value the program had before an earlier call.
+`Quantitative/Strength.lean` supplies that strength at machine level.
+
+- **`QuantitativeRealization.withInput R`** realizes
+  `fun a ↦ (·, a) <$> program a`. Its machine `DynComputation.withInput` carries
+  the input in a second state component. Like `HasProd.withInput`, it pairs a
+  result with the retained input; `Boundary.withInput`, which replaces an input
+  representation, is unrelated.
+- **`seqCompWithInput R₁ R₂`** realizes the strong bind
+  `fun a ↦ program a >>= fun b ↦ next (b, a)`. Its second phase runs on
+  `Boundary.strongMid`, which reads the pair of the result and the original input.
+
+The input-retaining code is assembled from the carry combinators of
+`Quantitative/Closure.lean`: `carryReadout` for the readout, and `carryUpdate`
+(exchange, `pairRight`, then `HasOption.strength`) for the transition. The
+transition never consults the readout, so no component code runs twice.
+
+Bounds come in two layers.
+
+- **Certificates.** `WithInputCostCertificate` states per-step carry
+  allowances, required only at states reachable along conforming traces.
+  `RunsWithinUnder.withInput` charges them:
+  `ExecutionCost.withCarry` (`Quantitative/Carry.lean`) adds one initialization
+  carry, `q + 1` readout carries and `q` transition carries for `q` queries, and
+  shifts the peak sizes. Queries and traffic are unchanged, and resolution and
+  progress transfer exactly.
+- **Cost laws.** `Quantitative/CostLaws.lean` states per-primitive laws
+  (`HasCompositionCost`, `HasProdCost`, `HasSumCost`, `HasOptionCost`,
+  `IsDistributiveCost`), each bounding a structural primitive's own work by a
+  monotone envelope of the encoded sizes it touches. Under them,
+  `RunsWithinUnder.withInput_of_laws` discharges the certificate with
+  `lawCarry`: at most two structural primitives at initialization, eleven per
+  readout and seventeen per transition, each charged the combined envelope
+  `structOverhead` at a size bounded by the source's peak sizes, its traffic and
+  the input.
+
+`RunsWithinUnder.seqCompWithInput` combines the strength carry with
+`seqComp`'s handoff envelope and structural certificate, and
+`queries_seqCompWithInput_bound` records that neither adds queries. The laws
+are additive, so they hold for backends whose combinators cost a size-dependent
+amount on top of their parts. They fail for the single-tape backend, whose
+composition overhead re-evaluates the second machine's polynomial at an
+inflated size; such a backend discharges the certificates directly.
+
 `Quantitative/Polynomial.lean` supplies `FirstOrderPolynomial` and
 `PolyRealizer`, which retains one executable realizer plus work and encoded
 output-size polynomials. `PolynomialCategory` proves identity and composition,

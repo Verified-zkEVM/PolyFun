@@ -162,6 +162,12 @@ def withOut {γ : Type u} (bd : Boundary C p α β) (outRep : C.Str γ) :
 @[simp] theorem withOut_input {γ : Type u} (bd : Boundary C p α β)
     (outRep : C.Str γ) : (bd.withOut outRep).input = bd.input := rfl
 
+@[simp] theorem withOut_pos {γ : Type u} (bd : Boundary C p α β)
+    (outRep : C.Str γ) : (bd.withOut outRep).pos = bd.pos := rfl
+
+@[simp] theorem withOut_idx {γ : Type u} (bd : Boundary C p α β)
+    (outRep : C.Str γ) : (bd.withOut outRep).idx = bd.idx := rfl
+
 /-- The middle boundary of a sequential composition: the second phase reads the
 first's results and shares its interface.
 
@@ -186,6 +192,19 @@ def mid {γ : Type u} (bd : Boundary C p α β) (outRep : C.Str γ) :
 
 @[simp] theorem mid_idx {γ : Type u} (bd : Boundary C p α β)
     (outRep : C.Str γ) : (bd.mid outRep).idx = bd.idx := rfl
+
+/-- The middle boundary of a strong sequential composition: the second phase reads the first's
+result paired with the original input, and shares the interface. -/
+@[implicit_reducible]
+def strongMid [P : C.HasProd] {γ : Type u} (bd : Boundary C p α β) (outRep : C.Str γ) :
+    Boundary C p (β × α) γ :=
+  (bd.withOut outRep).withInput (P.prod bd.out bd.input)
+
+@[simp] theorem strongMid_input [P : C.HasProd] {γ : Type u} (bd : Boundary C p α β)
+    (outRep : C.Str γ) : (bd.strongMid outRep).input = P.prod bd.out bd.input := rfl
+
+@[simp] theorem strongMid_out [C.HasProd] {γ : Type u} (bd : Boundary C p α β)
+    (outRep : C.Str γ) : (bd.strongMid outRep).out = outRep := rfl
 
 /-- Two boundaries compose when the second reads the first's results and both
 describe the same interface. A convenience wrapper over `mid`, for use sites that

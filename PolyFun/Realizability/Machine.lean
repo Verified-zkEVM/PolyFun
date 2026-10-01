@@ -494,6 +494,35 @@ theorem updateFlat_seqComp_inl_of_query [DecidableEq p.A]
 
 end SeqComp
 
+/-! ## The step maps of retaining the input -/
+
+/-- The input-retaining readout attaches the carried input to a returned value. -/
+@[simp] theorem head_withInput (M : DynComputation.{u} p α β) (state : M.State × α) :
+    M.withInput.head state = Sum.map (fun value ↦ (value, state.2)) id (M.head state.1) := by
+  rw [head_eq_sumMap_view, head_eq_sumMap_view, view_withInput]
+  rcases M.view state.1 with value | ⟨position, next⟩ <;> rfl
+
+/-- The input-retaining partial transition steps the first component and keeps the carried
+input. -/
+@[simp] theorem update?_withInput [DecidableEq p.A] (M : DynComputation.{u} p α β)
+    (state : M.State × α) (index : p.Idx) :
+    M.withInput.update? (state, index) =
+      Option.map (fun next ↦ (next, state.2)) (M.update? (state.1, index)) := by
+  obtain ⟨position, direction⟩ := index
+  rcases hview : M.view state.1 with value | ⟨position', next⟩
+  · rw [update?_of_view_return M.withInput (view_withInput_of_return M hview),
+      update?_of_view_return M hview]
+    rfl
+  · have hcomp := view_withInput_of_query M hview
+    by_cases h : position = position'
+    · subst h
+      rw [update?_of_view_query M.withInput hcomp direction,
+        update?_of_view_query M hview direction]
+      rfl
+    · rw [update?_of_view_query_of_ne M.withInput hcomp h,
+        update?_of_view_query_of_ne M hview h]
+      rfl
+
 /-! ## Faithfulness of the flat presentation
 
 The flat step maps lose nothing: a step function is determined by the readout and
