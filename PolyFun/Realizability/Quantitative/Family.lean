@@ -18,13 +18,12 @@ A `FamRealizer` is a parameter-indexed family of realizers: one realizer per sec
 (the advice bound). The `n + k` form is the formal content of the `1^n` convention at this layer:
 a resource bound polynomial in the parameter plus the input length, and nothing else.
 
-Families compose only when the backend's composition overhead is a function of the components'
-*canonical* time polynomials, evaluated at hypothetical input lengths, rather than of their costs
-at actual inputs. A per-use certificate such as `PolyRealizer` does not control what a composed
-realizer costs on the larger inputs produced by its first stage, so a `PolynomialBackend` asks the
-backend for a canonical certificate `timeOf` on every realizer, with an output-size envelope and a
-composition overhead expressed through those certificates. Its laws are stated in the shifted
-uniform form that family composition consumes.
+The composition theorem controls the backend's *canonical* time polynomials at every input
+length, including hypothetical lengths used by an output envelope. A per-use `PolyRealizer`
+bounds costs on actual inputs but need not dominate the backend's selected polynomial at every
+length. Uniform families therefore need uniform control of composition overhead as well as
+local cost bounds. `PolynomialTimeBackend` supplies this through canonical certificates and
+shifted envelope laws; `DescriptionComposition` supplies the separate advice bounds.
 
 `FiniteTables` is the advice primitive: every function out of a finite domain with a faithful
 input representation has a realizer with linear canonical time and a description of the size of
@@ -42,15 +41,14 @@ universe u v w x
 
 open Filter
 
-namespace PFunctor.QuantitativeStepClass.DescriptionMeasure
+namespace PFunctor.QuantitativeStepClass
 
 variable {C : StepClass.{u, v}} {Q : QuantitativeStepClass.{u, v, w} C}
-  {Faithful : ∀ {B : Type u}, C.Str B → Prop} (M : Q.DescriptionMeasure Faithful)
 
-/-- A backend whose realizers carry canonical polynomial time certificates, whose output-size
-envelope and composition overhead are polynomial in those certificates, and whose description
-size is subadditive. Every law is stated in the shifted uniform form used by families. -/
-structure PolynomialBackend [Q.HasCategory] where
+/-- Canonical polynomial time certificates, output-size envelopes and executable composition
+bounds. This contract does not require a description measure or an advice bound. -/
+structure PolynomialTimeBackend (Q : QuantitativeStepClass.{u, v, w} C)
+    [Q.HasComposition] where
   /-- Canonical time polynomial of a realizer. -/
   timeOf : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B},
     Q.Realizer a b f → Polynomial ℕ
@@ -83,6 +81,13 @@ structure PolynomialBackend [Q.HasCategory] where
   /-- Identities respect the uniform identity polynomial. -/
   timeOf_identity_le : ∀ {A : Type u} (a : C.Str A) (k : ℕ),
     (timeOf (Q.identity a)).eval k ≤ idTime.eval k
+namespace DescriptionMeasure
+
+variable {Faithful : ∀ {B : Type u}, C.Str B → Prop} (M : Q.DescriptionMeasure Faithful)
+
+/-- Uniform identity-description and subadditive composition-description bounds for a selected
+measure. These laws are independent of running-time certificates. -/
+structure DescriptionComposition [Q.HasComposition] where
   /-- Uniform description size of identities. -/
   idDesc : ℕ
   /-- Identities respect the uniform description bound. -/
@@ -92,9 +97,14 @@ structure PolynomialBackend [Q.HasCategory] where
     {f : A → B} {g : B → D} (r : Q.Realizer a b f) (s : Q.Realizer b d g),
     M.descSize (Q.compose r s) ≤ M.descSize r + M.descSize s
 
+/-- A canonical polynomial time backend together with description bounds for identity and
+composition. Families use both contracts; time-only consumers use `PolynomialTimeBackend`. -/
+structure PolynomialBackend [Q.HasComposition]
+    extends Q.PolynomialTimeBackend, M.DescriptionComposition
+
 /-- A parameter-indexed family of realizers with a uniform polynomial time bound in `n + k` and
 a uniform polynomial description bound in `n`. -/
-structure FamRealizer [Q.HasCategory] (PB : M.PolynomialBackend) {D E : ℕ → Type u}
+structure FamRealizer [Q.HasComposition] (PB : M.PolynomialBackend) {D E : ℕ → Type u}
     (a : ∀ n, C.Str (D n)) (b : ∀ n, C.Str (E n)) (f : ∀ n, D n → E n) where
   /-- The realizer at each parameter. -/
   wit : ∀ n, Q.Realizer (a n) (b n) (f n)
@@ -109,7 +119,7 @@ structure FamRealizer [Q.HasCategory] (PB : M.PolynomialBackend) {D E : ℕ → 
 
 namespace FamRealizer
 
-variable {M} [Q.HasCategory] {PB : M.PolynomialBackend} {D E F : ℕ → Type u}
+variable {M} [Q.HasComposition] {PB : M.PolynomialBackend} {D E F : ℕ → Type u}
   {a : ∀ n, C.Str (D n)} {b : ∀ n, C.Str (E n)} {c : ∀ n, C.Str (F n)}
   {f : ∀ n, D n → E n} {g : ∀ n, E n → F n}
 
@@ -123,6 +133,21 @@ uniform-family layer and the `RealizableLE` counting layer talk about the same f
 theorem mem_realizableLE (X : M.FamRealizer PB a b f) (n : ℕ) :
     f n ∈ M.RealizableLE (a n) (b n) (X.desc.eval n) :=
   M.mem_realizableLE.mpr ⟨X.wit n, X.desc_le n⟩
+
+/-- Enlarge the time and description certificates without changing any family member. -/
+@[expose] def weaken (X : M.FamRealizer PB a b f) (time desc : Polynomial ℕ)
+    (htime : ∀ k, X.time.eval k ≤ time.eval k)
+    (hdesc : ∀ n, X.desc.eval n ≤ desc.eval n) : M.FamRealizer PB a b f where
+  wit := X.wit
+  time := time
+  time_le n k := (X.time_le n k).trans (htime (n + k))
+  desc := desc
+  desc_le n := (X.desc_le n).trans (hdesc n)
+
+@[simp] theorem wit_weaken (X : M.FamRealizer PB a b f) (time desc : Polynomial ℕ)
+    (htime : ∀ k, X.time.eval k ≤ time.eval k)
+    (hdesc : ∀ n, X.desc.eval n ≤ desc.eval n) (n : ℕ) :
+    (X.weaken time desc htime hdesc).wit n = X.wit n := rfl
 
 /-- The identity family. Exposed so that its projection laws hold by reflexivity downstream. -/
 @[expose] noncomputable def id (PB : M.PolynomialBackend) (a : ∀ n, C.Str (D n)) :
@@ -188,7 +213,7 @@ end FamRealizer
 
 /-- The finite-table (advice) primitive: any function out of a finite domain with a faithful
 input representation has a realizer with linear canonical time and a table-sized description. -/
-structure FiniteTables [Q.HasCategory] (PB : M.PolynomialBackend)
+structure FiniteTables [Q.HasComposition] (PB : M.PolynomialBackend)
     (FaithfulIn : ∀ {A : Type u}, C.Str A → Prop) where
   /-- The table realizer. -/
   table : ∀ {A B : Type u} [Fintype A] (a : C.Str A), FaithfulIn a →
@@ -204,7 +229,7 @@ structure FiniteTables [Q.HasCategory] (PB : M.PolynomialBackend)
 
 namespace FamRealizer
 
-variable {M} [Q.HasCategory] {PB : M.PolynomialBackend}
+variable {M} [Q.HasComposition] {PB : M.PolynomialBackend}
   {FaithfulIn : ∀ {A : Type u}, C.Str A → Prop}
 
 /-- The finite-table family, for input families of polynomially bounded cardinality and size.
@@ -249,7 +274,7 @@ says some Boolean predicate family has no eventual polynomial description bound;
 supplies such a bound at *every* parameter through `FamRealizer.mem_realizableLE`, so none can
 exist. This is the form the separation takes for a consumer that works with families rather than
 with `RealizableLE` directly. -/
-theorem exists_not_famRealizer [Q.HasCategory] (PB : M.PolynomialBackend) {D E : ℕ → Type u}
+theorem exists_not_famRealizer [Q.HasComposition] (PB : M.PolynomialBackend) {D E : ℕ → Type u}
     [∀ n, Fintype (D n)] (a : ∀ n, C.Str (D n)) (b : ∀ n, C.Str (E n))
     (ι : ∀ n, Bool → E n) (hι : ∀ n, Function.Injective (ι n)) (hb : ∀ n, Faithful (b n))
     (ht_count : ∀ᶠ n in atTop,
@@ -259,4 +284,6 @@ theorem exists_not_famRealizer [Q.HasCategory] (PB : M.PolynomialBackend) {D E :
   obtain ⟨f, hf⟩ := M.exists_not_realizableLE_poly_of_card_lt a b ι hι hb ht_count
   exact ⟨f, ⟨fun X ↦ hf ⟨X.desc, .of_forall fun n ↦ X.mem_realizableLE n⟩⟩⟩
 
-end PFunctor.QuantitativeStepClass.DescriptionMeasure
+end DescriptionMeasure
+
+end PFunctor.QuantitativeStepClass

@@ -15,8 +15,8 @@ This file refines the qualitative `StepClass` boundary with Type-valued executab
 evidence and a backend-relative work measure. A `QuantitativeStepClass C` packages
 one concrete notion of code for `C`-admissible functions together with its operational
 cost semantics. Identity and composition are deliberately separate, optional structure:
-`QuantitativeStepClass.HasCategory` supplies executable categorical wiring and a sound
-upper bound for its cost, while `QuantitativeStepClass.HasExactCategory` records the
+`QuantitativeStepClass.HasComposition` supplies executable identity and composition and a sound
+upper bound for its cost, while `QuantitativeStepClass.HasExactComposition` records the
 stronger exact-cost equation when a backend supports one. A later adequacy theorem must
 connect a chosen backend to a conventional machine model before the costs support a claim
 such as polynomial time.
@@ -53,8 +53,8 @@ namespace PFunctor
 
 `Realizer a b f` is the backend's executable evidence for the represented
 function `f`. Its type index supplies semantic correctness; `admissible` erases
-the evidence to the qualitative class. `cost` is exact only relative to the
-chosen backend. Establishing that it counts steps of a standard machine model is
+the evidence to the qualitative class. `cost` is the chosen backend charge; it may be an operational
+upper envelope. Establishing that it counts steps of a standard machine model is
 a separate adequacy obligation for each backend.
 
 Identity and composition are not core fields: some quantitative backends are useful
@@ -64,7 +64,7 @@ structure QuantitativeStepClass (C : StepClass.{u, v}) where
   Realizer : {A B : Type u} → C.Str A → C.Str B → (A → B) → Type w
   /-- Encoded size of a value relative to its pinned representation. -/
   size : {A : Type u} → C.Str A → A → ℕ
-  /-- Exact work used by a realizer on an input, relative to this backend. -/
+  /-- Work charged to a realizer on an input, relative to this backend. -/
   cost : {A B : Type u} → {a : C.Str A} → {b : C.Str B} → {f : A → B} →
     Realizer a b f → A → ℕ
   /-- Every quantitative realizer is qualitatively admissible. -/
@@ -77,10 +77,12 @@ variable {C : StepClass.{u, v}} (Q : QuantitativeStepClass.{u, v, w} C)
 
 /-- Executable identity and sequential composition for a quantitative backend.
 
-Composition exposes its connection overhead and only requires a certified upper bound.
+No associativity or unit equation on code is required. The semantic function index records
+which function each construction realizes; different code and bounds may realize that same
+function. Composition exposes its connection overhead and only requires a certified upper bound.
 Backends whose operational semantics gives an exact equation can additionally implement
-`HasExactCategory`. -/
-class HasCategory where
+`HasExactComposition`. -/
+class HasComposition where
   /-- Executable evidence for identity functions. -/
   identity : ∀ {A : Type u} (a : C.Str A), Q.Realizer a a id
   /-- Sequentially compose two pieces of executable evidence. -/
@@ -98,24 +100,24 @@ class HasCategory where
     Q.cost (compose rf rg) input ≤
       Q.cost rf input + Q.cost rg (f input) + composeOverhead rf rg input
 
-/-- The identity code selected by a quantitative category instance. -/
-def identity [Q.HasCategory] {A : Type u} (a : C.Str A) : Q.Realizer a a id :=
-  HasCategory.identity a
+/-- The identity code selected by a quantitative composition instance. -/
+def identity [Q.HasComposition] {A : Type u} (a : C.Str A) : Q.Realizer a a id :=
+  HasComposition.identity a
 
-/-- Sequential composition selected by a quantitative category instance. -/
-def compose [Q.HasCategory] {A B D : Type u} {a : C.Str A} {b : C.Str B}
+/-- Sequential composition selected by a quantitative composition instance. -/
+def compose [Q.HasComposition] {A B D : Type u} {a : C.Str A} {b : C.Str B}
     {d : C.Str D} {f : A → B} {g : B → D}
     (rf : Q.Realizer a b f) (rg : Q.Realizer b d g) : Q.Realizer a d (g ∘ f) :=
-  HasCategory.compose rf rg
+  HasComposition.compose rf rg
 
-/-- Connection overhead selected by a quantitative category instance. -/
-def composeOverhead [Q.HasCategory] {A B D : Type u} {a : C.Str A} {b : C.Str B}
+/-- Connection overhead selected by a quantitative composition instance. -/
+def composeOverhead [Q.HasComposition] {A B D : Type u} {a : C.Str A} {b : C.Str B}
     {d : C.Str D} {f : A → B} {g : B → D}
     (rf : Q.Realizer a b f) (rg : Q.Realizer b d g) (input : A) : ℕ :=
-  HasCategory.composeOverhead rf rg input
+  HasComposition.composeOverhead rf rg input
 
-/-- Optional exact-cost refinement of `QuantitativeStepClass.HasCategory`. -/
-class HasExactCategory [Q.HasCategory] : Prop where
+/-- Optional exact-cost refinement of `QuantitativeStepClass.HasComposition`. -/
+class HasExactComposition [Q.HasComposition] : Prop where
   /-- Exact cost equation for sequentially composed evidence. -/
   cost_compose_eq : ∀ {A B D : Type u} {a : C.Str A} {b : C.Str B}
     {d : C.Str D} {f : A → B} {g : B → D}
@@ -123,11 +125,11 @@ class HasExactCategory [Q.HasCategory] : Prop where
     Q.cost (Q.compose rf rg) input =
       Q.cost rf input + Q.cost rg (f input) + Q.composeOverhead rf rg input
 
-/-- Exact categorical data in one bundle, convenient for operational backends whose composition
-cost has an exact equation. `ExactCategory.toHasCategory` forgets equality to the sound upper
-bound required by generic closure, and `ExactCategory.toHasExactCategory` restores the
+/-- Exact composition-cost data in one bundle, convenient for operational backends whose composition
+cost has an exact equation. `ExactComposition.toHasComposition` forgets equality to the sound upper
+bound required by generic closure, and `ExactComposition.toHasExactComposition` restores the
 refinement. -/
-structure ExactCategory where
+structure ExactComposition where
   /-- Executable evidence for identity functions. -/
   identity : ∀ {A : Type u} (a : C.Str A), Q.Realizer a a id
   /-- Sequentially compose two pieces of executable evidence. -/
@@ -145,24 +147,73 @@ structure ExactCategory where
     Q.cost (compose rf rg) input =
       Q.cost rf input + Q.cost rg (f input) + composeOverhead rf rg input
 
-namespace ExactCategory
+namespace ExactComposition
 
 variable {Q}
 
-/-- Forget an exact composition equation to its sound upper-bound category. -/
+/-- Forget an exact composition equation to its sound upper-bound composition structure. -/
 @[instance_reducible]
-def toHasCategory (category : Q.ExactCategory) : Q.HasCategory where
+def toHasComposition (category : Q.ExactComposition) : Q.HasComposition where
   identity := category.identity
   compose := category.compose
   composeOverhead := category.composeOverhead
   cost_compose_le first second input := Nat.le_of_eq (category.cost_compose_eq first second input)
 
-/-- Recover the optional exact refinement for the category obtained from exact data. -/
-theorem toHasExactCategory (category : Q.ExactCategory) :
-    letI := category.toHasCategory
-    Q.HasExactCategory := by
-  let _ := category.toHasCategory
+/-- Recover the optional exact refinement for the composition structure obtained from exact data. -/
+theorem toHasExactComposition (category : Q.ExactComposition) :
+    letI := category.toHasComposition
+    Q.HasExactComposition := by
+  let _ := category.toHasComposition
   exact ⟨category.cost_compose_eq⟩
+
+end ExactComposition
+
+/-- Deprecated name of `HasComposition`, which assumes no category laws on code. -/
+@[deprecated HasComposition (since := "2026-10-01")]
+abbrev HasCategory := HasComposition Q
+
+/-- Deprecated name of `HasExactComposition`. -/
+@[deprecated HasExactComposition (since := "2026-10-01")]
+abbrev HasExactCategory [Q.HasComposition] := HasExactComposition Q
+
+/-- Deprecated name of `ExactComposition`. -/
+@[deprecated ExactComposition (since := "2026-10-01")]
+abbrev ExactCategory := ExactComposition Q
+
+namespace HasCategory
+
+@[inherit_doc HasComposition.identity,
+  deprecated HasComposition.identity (since := "2026-10-01")]
+abbrev identity := @HasComposition.identity
+@[inherit_doc HasComposition.compose,
+  deprecated HasComposition.compose (since := "2026-10-01")]
+abbrev compose := @HasComposition.compose
+@[inherit_doc HasComposition.composeOverhead,
+  deprecated HasComposition.composeOverhead (since := "2026-10-01")]
+abbrev composeOverhead := @HasComposition.composeOverhead
+@[deprecated HasComposition.cost_compose_le (since := "2026-10-01")]
+alias cost_compose_le := HasComposition.cost_compose_le
+
+end HasCategory
+
+namespace HasExactCategory
+
+@[deprecated HasExactComposition.cost_compose_eq (since := "2026-10-01")]
+alias cost_compose_eq := HasExactComposition.cost_compose_eq
+
+end HasExactCategory
+
+namespace ExactCategory
+
+variable {Q}
+
+@[inherit_doc ExactComposition.toHasComposition,
+  deprecated ExactComposition.toHasComposition (since := "2026-10-01")]
+abbrev toHasCategory (data : Q.ExactComposition) : Q.HasComposition :=
+  data.toHasComposition
+
+@[deprecated ExactComposition.toHasExactComposition (since := "2026-10-01")]
+alias toHasExactCategory := ExactComposition.toHasExactComposition
 
 end ExactCategory
 
@@ -173,21 +224,21 @@ theorem Realizer.toHom {A B : Type u} {a : C.Str A} {b : C.Str B}
 
 /-- The cost of composed code is at most the two component costs plus the backend's
 explicit connection overhead. -/
-theorem cost_comp_le [Q.HasCategory] {A B D : Type u} {a : C.Str A} {b : C.Str B}
+theorem cost_comp_le [Q.HasComposition] {A B D : Type u} {a : C.Str A} {b : C.Str B}
     {d : C.Str D} {f : A → B} {g : B → D}
     (rf : Q.Realizer a b f) (rg : Q.Realizer b d g) (input : A) :
     Q.cost (Q.compose rf rg) input ≤
       Q.cost rf input + Q.cost rg (f input) + Q.composeOverhead rf rg input :=
-  HasCategory.cost_compose_le rf rg input
+  HasComposition.cost_compose_le rf rg input
 
 /-- Exact cost of composition for a backend carrying the optional exact refinement. -/
-theorem cost_comp [Q.HasCategory] [Q.HasExactCategory]
+theorem cost_comp [Q.HasComposition] [Q.HasExactComposition]
     {A B D : Type u} {a : C.Str A} {b : C.Str B}
     {d : C.Str D} {f : A → B} {g : B → D}
     (rf : Q.Realizer a b f) (rg : Q.Realizer b d g) (input : A) :
     Q.cost (Q.compose rf rg) input =
       Q.cost rf input + Q.cost rg (f input) + Q.composeOverhead rf rg input :=
-  HasExactCategory.cost_compose_eq rf rg input
+  HasExactComposition.cost_compose_eq rf rg input
 
 end QuantitativeStepClass
 
