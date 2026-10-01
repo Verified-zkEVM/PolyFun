@@ -329,7 +329,9 @@ public import PolyFun.Realizability.Instances
 public import PolyFun.Realizability.Machine
 public import PolyFun.Realizability.Quantitative
 public import PolyFun.Realizability.Quantitative.BoundedClosure
+public import PolyFun.Realizability.Quantitative.Carry
 public import PolyFun.Realizability.Quantitative.Closure
+public import PolyFun.Realizability.Quantitative.CostLaws
 public import PolyFun.Realizability.Quantitative.Counting
 public import PolyFun.Realizability.Quantitative.Description
 public import PolyFun.Realizability.Quantitative.Family
@@ -342,6 +344,7 @@ public import PolyFun.Realizability.Quantitative.Recost
 public import PolyFun.Realizability.Quantitative.Reference
 public import PolyFun.Realizability.Quantitative.Resource
 public import PolyFun.Realizability.Quantitative.Simulation
+public import PolyFun.Realizability.Quantitative.Strength
 public import PolyFun.Realizability.Quantitative.TraceCost
 public import PolyFun.Realizability.Quantitative.WordClass
 public import PolyFun.Realizability.Representation

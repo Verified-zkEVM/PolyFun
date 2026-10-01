@@ -16,7 +16,10 @@ This file refines the structural closure operations of `StepClass` with executab
 `QuantitativeStepClass.Realizer` data. The four mixins mirror the qualitative product, sum,
 optional-value, and distributivity interfaces without attaching an asymptotic interpretation to
 them. In particular, a structural realizer has the exact backend cost supplied by `Q.cost`, but no
-theorem here calls that cost polynomial or bounds it by the costs of its inputs.
+theorem here calls that cost polynomial or bounds it by the costs of its inputs. The carry
+combinators (`exchange`, `rotate`, `carryReadout`, `carryReadoutWith`, `carryUpdate`) are the
+structural code that a product-state machine uses to carry a passive value through a step; their
+cost bounds live in `PolyFun.Realizability.Quantitative.CostLaws`.
 
 The resulting realization constructors cover the operations whose qualitative counterparts live
 in `PolyFun.Realizability.Closure`:
@@ -242,6 +245,74 @@ def elimContext {A B E D : Type u} {a : C.Str A} {b : C.Str B} {e : C.Str E}
       cases side <;> rfl)
 
 end IsDistributive
+
+/-! ## Carry combinators
+
+Structural code for carrying a passive value through one step of a machine whose state is paired
+with it: rearrange nested pairs, attach the carried value to a returned readout, or step a partial
+transition while keeping the carried value. -/
+
+section Carry
+
+variable [Q.HasCategory] [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
+  [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption] [QD : Q.IsDistributive]
+
+/-- Exchange a carried component past an index: `((x, y), j) ↦ ((x, j), y)`. -/
+def exchange {A E I : Type u} (a : C.Str A) (e : C.Str E) (i : C.Str I) :
+    Q.Realizer (P.prod (P.prod a e) i) (P.prod (P.prod a i) e) fun z ↦ ((z.1.1, z.2), z.1.2) :=
+  QP.pair (QP.pair (Q.compose (QP.fst (P.prod a e) i) (QP.fst a e)) (QP.snd (P.prod a e) i))
+    (Q.compose (QP.fst (P.prod a e) i) (QP.snd a e))
+
+/-- Rotate a nested pair: `((x, y), z) ↦ ((z, y), x)`. -/
+def rotate {A E I : Type u} (a : C.Str A) (e : C.Str E) (i : C.Str I) :
+    Q.Realizer (P.prod (P.prod a e) i) (P.prod (P.prod i e) a) fun w ↦ ((w.2, w.1.2), w.1.1) :=
+  QP.pair (QP.pair (QP.snd (P.prod a e) i) (Q.compose (QP.fst (P.prod a e) i) (QP.snd a e)))
+    (Q.compose (QP.fst (P.prod a e) i) (QP.fst a e))
+
+/-- Attach a carried value to the returned summand of a readout:
+`(x, y) ↦ Sum.map (·, y) id (f x)`. -/
+def carryReadout {A B D E : Type u} {a : C.Str A} {b : C.Str B} {d : C.Str D} (e : C.Str E)
+    {f : A → B ⊕ D} (code : Q.Realizer a (S.sum b d) f) :
+    Q.Realizer (P.prod a e) (S.sum (P.prod b e) d)
+      fun x ↦ Sum.map (fun value ↦ (value, x.2)) id (f x.1) :=
+  (Q.compose (HasProd.pairRight Q QP (d := e) code)
+    (IsDistributive.elimContext Q QD (QS.inl (P.prod b e) d)
+      (Q.compose (QP.fst d e) (QS.inr (P.prod b e) d)))).castFunction (by
+    funext x
+    obtain ⟨x, y⟩ := x
+    change Sum.elim (fun value ↦ Sum.inl (value, y)) (fun position ↦ Sum.inr position) (f x) =
+      Sum.map (fun value ↦ (value, y)) id (f x)
+    rcases f x with value | position <;> rfl)
+
+/-- Attach a carried value to the returned summand of a readout and post-process the other summand
+in context: `(x, y) ↦ Sum.elim (fun v ↦ inl (v, y)) (fun q ↦ inr (g (q, y))) (f x)`.
+`carryReadout` is the case `g = Prod.fst`. -/
+def carryReadoutWith {A B D D' E : Type u} {a : C.Str A} {b : C.Str B} {d : C.Str D}
+    {d' : C.Str D'} {e : C.Str E} {f : A → B ⊕ D} {g : D × E → D'}
+    (code : Q.Realizer a (S.sum b d) f) (right : Q.Realizer (P.prod d e) d' g) :
+    Q.Realizer (P.prod a e) (S.sum (P.prod b e) d')
+      fun x ↦ Sum.elim (fun value ↦ Sum.inl (value, x.2)) (fun q ↦ Sum.inr (g (q, x.2))) (f x.1) :=
+  (Q.compose (HasProd.pairRight Q QP (d := e) code)
+    (IsDistributive.elimContext Q QD (QS.inl (P.prod b e) d')
+      (Q.compose right (QS.inr (P.prod b e) d')))).castFunction (by
+    funext x
+    obtain ⟨x, y⟩ := x
+    change Sum.elim (fun value ↦ Sum.inl (value, y)) (fun q ↦ Sum.inr (g (q, y))) (f x) = _
+    rfl)
+
+/-- Step a partial transition while carrying a value: `((x, y), j) ↦ (g (x, j)).map (·, y)`. -/
+def carryUpdate {A I E : Type u} {a : C.Str A} {i : C.Str I} (e : C.Str E)
+    {g : A × I → Option A} (code : Q.Realizer (P.prod a i) (O.option a) g) :
+    Q.Realizer (P.prod (P.prod a e) i) (O.option (P.prod a e))
+      fun x ↦ Option.map (fun next ↦ (next, x.1.2)) (g (x.1.1, x.2)) :=
+  (Q.compose (exchange Q a e i)
+    (Q.compose (HasProd.pairRight Q QP (d := e) code) (HasOption.strength Q QO a e))).castFunction
+    (by
+      funext x
+      obtain ⟨⟨x, y⟩, j⟩ := x
+      rfl)
+
+end Carry
 
 end QuantitativeStepClass
 
