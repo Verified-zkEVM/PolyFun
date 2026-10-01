@@ -55,6 +55,7 @@ instance : zeroBackend.HasOption where
   map _ := PUnit.unit
   none _ _ := PUnit.unit
   bindContext _ := PUnit.unit
+  some _ := PUnit.unit
 
 instance : zeroBackend.IsDistributive where
   distribute _ _ _ := PUnit.unit
@@ -97,6 +98,7 @@ def zeroStructural : zeroBackend.PolynomialStructuralClosure zeroKernel where
   optionMap _ := zeroPolyRealizer _ _ _
   optionNone _ _ := zeroPolyRealizer _ _ fun _ ↦ none
   optionBindContext _ := zeroPolyRealizer _ _ _
+  optionSome _ := zeroPolyRealizer _ _ Option.some
   distribute _ _ _ := zeroPolyRealizer _ _ _
   prodSize _ _ := FirstOrderPolynomial.const 0
   size_prod_le _ _ _ := le_rfl
@@ -165,6 +167,7 @@ instance : oneSizeBackend.HasOption where
   map _ := PUnit.unit
   none _ _ := PUnit.unit
   bindContext _ := PUnit.unit
+  some _ := PUnit.unit
 
 instance : oneSizeBackend.IsDistributive where
   distribute _ _ _ := PUnit.unit
@@ -207,6 +210,7 @@ def oneStructural : oneSizeBackend.PolynomialStructuralClosure oneKernel where
   optionMap _ := onePolyRealizer _ _ _
   optionNone _ _ := onePolyRealizer _ _ fun _ ↦ none
   optionBindContext _ := onePolyRealizer _ _ _
+  optionSome _ := onePolyRealizer _ _ Option.some
   distribute _ _ _ := onePolyRealizer _ _ _
   prodSize _ _ := FirstOrderPolynomial.const 1
   size_prod_le _ _ _ := le_rfl
