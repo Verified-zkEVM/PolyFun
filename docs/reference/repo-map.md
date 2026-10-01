@@ -47,9 +47,11 @@ Example and test imports never flow back into production.
 concrete machine complexity lives in the optional `ComplexityBackends` library.
 
 The quantitative realizability layer separates code-local certificates from run bounds.
-`Quantitative/Simulation.lean` and `FamilySimulation.lean` handle backend changes with
-explicit size, time and description comparisons. `Reference.lean` contains unrestricted
-arithmetic models.
+`Quantitative/QueryPolynomial.lean` uses `Complexity/SecondOrderPolynomial/NatPolynomial.lean`
+to specialize response-relative bounds. `Simulation.lean` and `FamilySimulation.lean` handle
+backend changes with explicit size, time and description comparisons. `Reference.lean`
+contains unrestricted arithmetic models. The concrete unary pure-family bridge lives in
+`ComplexityBackends/CslibSingleTape/Uniform.lean`, outside the generic umbrella.
 
 ## Conceptual layering
 

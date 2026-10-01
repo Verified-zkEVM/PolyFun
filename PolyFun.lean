@@ -1,6 +1,7 @@
 module
 
 public import PolyFun.Complexity.SecondOrderPolynomial
+public import PolyFun.Complexity.SecondOrderPolynomial.NatPolynomial
 public import PolyFun.Control.Bisimulation
 public import PolyFun.Control.Coalgebra
 public import PolyFun.Control.Comonad.Basic
@@ -326,6 +327,7 @@ public import PolyFun.Realizability.Quantitative.FamilySimulation
 public import PolyFun.Realizability.Quantitative.Iteration
 public import PolyFun.Realizability.Quantitative.Polynomial
 public import PolyFun.Realizability.Quantitative.Prefix
+public import PolyFun.Realizability.Quantitative.QueryPolynomial
 public import PolyFun.Realizability.Quantitative.Reference
 public import PolyFun.Realizability.Quantitative.Resource
 public import PolyFun.Realizability.Quantitative.Simulation
