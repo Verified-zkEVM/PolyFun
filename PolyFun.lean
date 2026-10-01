@@ -322,6 +322,7 @@ public import PolyFun.Realizability.Quantitative.BoundedClosure
 public import PolyFun.Realizability.Quantitative.Closure
 public import PolyFun.Realizability.Quantitative.Counting
 public import PolyFun.Realizability.Quantitative.Description
+public import PolyFun.Realizability.Quantitative.Erasure
 public import PolyFun.Realizability.Quantitative.Family
 public import PolyFun.Realizability.Quantitative.FamilySimulation
 public import PolyFun.Realizability.Quantitative.Iteration

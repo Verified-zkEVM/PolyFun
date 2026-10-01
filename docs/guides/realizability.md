@@ -691,6 +691,12 @@ counts and local work. `exists_natPolynomial_traceLength` and
 applications become polynomial composition through `SecondOrderPolynomial.toNatPolynomial`;
 the actual response modulus need not itself be monotone for this conversion.
 
+[`Erasure.lean`](../../PolyFun/Realizability/Quantitative/Erasure.lean) changes local work
+charges while retaining the computation, codes and representations. Trace transport preserves
+allowed responses, visible queries, traffic and peak sizes. `runsWithinUnder_recost` requires
+a pointwise decrease of local charges. With arbitrary new charges, even an immediate return
+can lose its old work bound: initialization and terminal readout are both charged.
+
 [`Simulation.lean`](../../PolyFun/Realizability/Quantitative/Simulation.lean) translates codes
 without changing their semantic function. Size comparisons in both directions allow each
 `PolyRealizer` to be bounded in its target input size. The cost polynomial may depend on the
