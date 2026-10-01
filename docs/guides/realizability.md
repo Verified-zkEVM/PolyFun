@@ -384,6 +384,35 @@ amount on top of their parts. They fail for the single-tape backend, whose
 composition overhead re-evaluates the second machine's polynomial at an
 inflated size; such a backend discharges the certificates directly.
 
+### Stateful handler substitution
+
+A reduction often runs its adversary against a stateful handler that forwards
+each call, logging or counting along the way. `StateLens p r σ`
+(`PFunctor/Handler/StateLens.lean`) is such a handler when it answers every outer
+query with exactly one inner query; substitution along it is
+`Handler.Stateful.run` of its handler (`mapFreeM_eq_run`).
+`DynComputation.wrapState` runs a machine against it as one product machine, and
+`QuantitativeRealization.wrapState` (`Quantitative/Handler.lean`) assembles that
+machine's code from the adversary's code and the lens code
+`StateLens.QuantitativelyAdmissible`.
+
+`RunsWithinUnder.wrapState` transfers a bound through the substitution. It needs
+two hypotheses beyond the per-step `WrapStateCostCertificate`:
+
+- a **contract**: allowed inner answers pull back to allowed outer answers;
+- **progress**: every query the adversary can still answer has an allowed inner
+  answer. Without it an empty inner contract would make the conclusion false,
+  as `PolyFunTest/Realizability/QuantitativeHandler.lean` checks.
+
+The bound `ExecutionCost.handled` keeps the adversary's query count, charges `q`
+times the per-step inner traffic, and doubles the adversary's work, because the
+product transition recomputes the adversary's readout to know which query is
+pending. `RunsWithinUnder.wrapState_of_laws` discharges the certificate from the
+cost laws and from handler invariants along conforming product runs: a
+handler-state size bound, per-call work bounds for the lens code, and a per-step
+inner-traffic bound. A handler that may answer without an inner query, such as a
+cache hit, needs silent steps and is not covered.
+
 `Quantitative/Polynomial.lean` supplies `FirstOrderPolynomial` and
 `PolyRealizer`, which retains one executable realizer plus work and encoded
 output-size polynomials. `PolynomialCategory` proves identity and composition,
