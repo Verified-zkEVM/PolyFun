@@ -503,28 +503,11 @@ theorem head_init_eq_of_pure {function : (n : ℕ) → input n → output n}
     (witness : Witness bd (fun n value ↦ FreeM.pure (function n value)))
     (n : ℕ) (value : input n) :
     (witness.realization.machine n).head
-        ((witness.realization.machine n).init value) = Sum.inl (function n value) := by
-  have implementation :=
+        ((witness.realization.machine n).init value) = Sum.inl (function n value) :=
+  DynSystem.DynComputation.head_init_eq_of_implements_pure (witness.realization.machine n)
     ((implementsWithin_iff_implements_and_bound
       (witness.realization.machine n) (fun value ↦ FreeM.pure (function n value))
         (witness.realization.rounds.eval n)).mp (witness.implements.apply n)).1 value
-  have firstStep := congrArg Resumption.dest implementation
-  rw [DynSystem.DynComputation.dest_denote] at firstStep
-  change Sum.map (fun result ↦ result)
-      ((p n).map (witness.realization.machine n).toDynSystem.behavior)
-        ((witness.realization.machine n).view
-          ((witness.realization.machine n).init value)) =
-      Sum.inl (function n value) at firstStep
-  cases viewEquation : (witness.realization.machine n).view
-      ((witness.realization.machine n).init value) with
-  | inl result =>
-      rw [viewEquation] at firstStep
-      simp only [Sum.map_inl, Sum.inl.injEq] at firstStep
-      simpa [firstStep] using
-        (witness.realization.machine n).head_eq_inl_of_view viewEquation
-  | inr query =>
-      rw [viewEquation] at firstStep
-      simp at firstStep
 
 end Witness
 
