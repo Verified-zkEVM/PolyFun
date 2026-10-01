@@ -7,14 +7,15 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Realizability.Quantitative.QueryPolynomial
+public import PolyFun.Realizability.Quantitative.Erasure
 public import PolyFun.Realizability.Quantitative.FamilySimulation
 public import PolyFun.Realizability.Quantitative.Reference
 
 /-!
 # Resource transport through ordinary imports
 
-Nested response lengths and independent universes exercise the public equations. Size collapse
-is rejected by the lower comparison required for simulation.
+Nested response lengths, independent universes, and restoration of recosted traces exercise the
+public equations. Size collapse is rejected by the lower comparison required for simulation.
 -/
 
 public section
@@ -42,6 +43,17 @@ example (q : SecondOrderPolynomial Unit) (k : ℕ) :
 variable {C : StepClass.{u, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{u, v, w} C} {p : PFunctor.{u, u}} [DecidableEq p.A]
   {α β : Type u} {bd : Boundary C p α β} (R : QuantitativeRealization Q bd)
+  (cost' : ∀ (A B : Type u) (a : C.Str A) (b : C.Str B) (f : A → B),
+    Q.Realizer a b f → A → ℕ)
+
+example {start finish : R.machine.State} (t : (R.recost cost').ExecutionTrace start finish) :
+    (t.restore (R := R)).recost (cost' := cost') = t :=
+  QuantitativeRealization.ExecutionTrace.recost_restore t
+
+example {allows : ∀ a, p.B a → Prop} {bound : α → ExecutionCost}
+    (h : R.RunsWithinUnder allows bound) :
+    (R.recost (fun _ _ _ _ _ _ _ ↦ 0)).RunsWithinUnder allows bound :=
+  R.runsWithinUnder_recost h (fun _ _ _ _ _ _ _ ↦ Nat.zero_le _)
 
 example {label : Type x} {contract : ResponseResourceContract Q bd.interface label}
     (h : PolynomialRunBound R contract) (model : contract.Model)
