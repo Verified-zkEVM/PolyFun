@@ -22,7 +22,10 @@ The support lemmas bound the charge of every possible result:
   decrease plus a per-event grant, then the charge of every possible result plus its final
   potential is at most the initial potential plus the grants of the events;
 * `le_chargedRun` is the matching lower bound from a per-event lower bound on the charge;
-* `chargedRun_const` counts the events under a constant charge.
+* `chargedRun_const` counts the events under a constant charge;
+* `chargedRun_ledger` bounds the charge by the growth of a ledger that records at least each
+  event's charge, and `chargedRun_bounded` bounds the growth of a quantity that rises by at most a
+  grant per event.
 -/
 
 @[expose] public section
@@ -126,6 +129,61 @@ theorem chargedRun_const {step : E → σ → m σ} (c : ℕ) :
     simp only [Prod.mk.injEq] at heq
     obtain ⟨rfl, rfl⟩ := heq
     rw [ih mid fin w' hrun, List.length_cons, Nat.mul_succ]
+    omega
+
+/-- **Ledger bound.** If every possible step from an invariant state keeps the invariant and a
+ledger grows by at least the step's charge, every possible result's charge is at most the ledger's
+growth. -/
+theorem chargedRun_ledger {step : E → σ → m σ} {charge : E → σ → ℕ}
+    (inv : σ → Prop) (Ψ : σ → ℕ)
+    (hstep : ∀ e s s', inv s → CanReturn (step e s) s' → inv s' ∧ Ψ s + charge e s ≤ Ψ s') :
+    ∀ (es : List E) (s s' : σ) (w : ℕ), inv s →
+      CanReturn (chargedRun step charge es s) (s', w) → inv s' ∧ w + Ψ s ≤ Ψ s' := by
+  intro es
+  induction es with
+  | nil =>
+    intro s s' w hs h
+    have heq := LawfulMonadAttach.eq_of_canReturn_pure h
+    simp only [Prod.mk.injEq] at heq
+    obtain ⟨rfl, rfl⟩ := heq
+    simpa using hs
+  | cons e es ih =>
+    intro s s' w hs h
+    obtain ⟨mid, hmid, hrest⟩ := LawfulMonadAttach.canReturn_bind_imp' h
+    obtain ⟨⟨fin, w'⟩, hrun, heq⟩ := LawfulMonadAttach.canReturn_map_imp' hrest
+    simp only [Prod.mk.injEq] at heq
+    obtain ⟨rfl, rfl⟩ := heq
+    obtain ⟨hinv, hpay⟩ := hstep e s mid hs hmid
+    obtain ⟨hfin, hrec⟩ := ih mid fin w' hinv hrun
+    exact ⟨hfin, by omega⟩
+
+/-- **Growth bound.** If every possible step from an invariant state keeps the invariant and a
+quantity rises by at most a grant, every possible result's final quantity is at most the initial
+one plus the grants of the events. -/
+theorem chargedRun_bounded {step : E → σ → m σ} {charge : E → σ → ℕ}
+    (inv : σ → Prop) (Φ : σ → ℕ) (grant : E → ℕ)
+    (hstep : ∀ e s s', inv s → CanReturn (step e s) s' → inv s' ∧ Φ s' ≤ Φ s + grant e) :
+    ∀ (es : List E) (s s' : σ) (w : ℕ), inv s →
+      CanReturn (chargedRun step charge es s) (s', w) →
+        inv s' ∧ Φ s' ≤ Φ s + (es.map grant).sum := by
+  intro es
+  induction es with
+  | nil =>
+    intro s s' w hs h
+    have heq := LawfulMonadAttach.eq_of_canReturn_pure h
+    simp only [Prod.mk.injEq] at heq
+    obtain ⟨rfl, rfl⟩ := heq
+    simpa using hs
+  | cons e es ih =>
+    intro s s' w hs h
+    obtain ⟨mid, hmid, hrest⟩ := LawfulMonadAttach.canReturn_bind_imp' h
+    obtain ⟨⟨fin, w'⟩, hrun, heq⟩ := LawfulMonadAttach.canReturn_map_imp' hrest
+    simp only [Prod.mk.injEq] at heq
+    obtain ⟨rfl, rfl⟩ := heq
+    obtain ⟨hinv, hpay⟩ := hstep e s mid hs hmid
+    obtain ⟨hfin, hrec⟩ := ih mid fin w' hinv hrun
+    refine ⟨hfin, ?_⟩
+    simp only [List.map_cons, List.sum_cons]
     omega
 
 end Lawful

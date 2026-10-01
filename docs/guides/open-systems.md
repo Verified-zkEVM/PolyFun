@@ -255,6 +255,28 @@ recover the countdown's budget. They also bound a terminating counter/echo feedb
 initial credit, and prove that ping-pong admits no conserving certificate for any positive
 charge, credit model, or invariant.
 
+Three constructions relate conservation to other certificates.
+
+- **Process certificates.** A
+  [`ProcessConserving`](../../PolyFun/Interaction/Execution/ReactiveProcess/Conserving.lean)
+  certificate mentions one process, its handler, a charge on its states, and credits on its own
+  ports, with no network in sight. Placed at the nodes of a network whose credit model agrees,
+  process certificates form a conserving certificate for both disciplines under the charge
+  `Charge.ofLocal` ([`Local`](../../PolyFun/Interaction/Execution/ReactiveNetwork/Local.lean)).
+  Diagram operations preserve components, so the certificates are reused unchanged. Wiring only
+  has to respect `route_le`.
+- **Import ledgers.**
+  [`ImportBounded T`](../../PolyFun/Interaction/Execution/ReactiveNetwork/Import.lean) is the
+  ledger form of the import-bounded runtime of universal composability (`Can20`). It composes for
+  monotone superadditive `T`, and for `T = id` it is a conserving certificate.
+- **Input-relative certificates.** An
+  [`InputRelative`](../../PolyFun/Interaction/Execution/ReactiveNetwork/InputRelative.lean)
+  certificate pays a node's charge from its potential and consumed credit, without constraining
+  what it emits (`HUM13`). Such certificates compose only through exchange rates: under the gain
+  law `SmallGain` they are conserving in re-denominated credit. Uniform rate 2 and acyclic
+  networks (`Acyclic.smallGain`) are instances. The ping-pong nodes are input-relatively
+  certified, yet no rates satisfy the law.
+
 The probability-independent
 [`RequestNetwork`](../../PolyFun/Interaction/Execution/RequestNetwork.lean) is a separate finite
 request/reply specialization: well-founded clients, one outstanding ticket per client, and

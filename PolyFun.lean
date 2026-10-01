@@ -124,9 +124,13 @@ public import PolyFun.Interaction.Execution.ReactiveNetwork.Factorization
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Factorization.Right
 public import PolyFun.Interaction.Execution.ReactiveNetwork.HandledAssembly
 public import PolyFun.Interaction.Execution.ReactiveNetwork.HandledDiagram
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Import
+public import PolyFun.Interaction.Execution.ReactiveNetwork.InputRelative
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Local
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Serial
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Transport
 public import PolyFun.Interaction.Execution.ReactiveProcess
+public import PolyFun.Interaction.Execution.ReactiveProcess.Conserving
 public import PolyFun.Interaction.Execution.RequestNetwork
 public import PolyFun.Interaction.Execution.RequestNetwork.Serial
 public import PolyFun.Interaction.Execution.RequestNetwork.Transport
