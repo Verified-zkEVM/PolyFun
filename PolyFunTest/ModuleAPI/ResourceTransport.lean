@@ -6,23 +6,51 @@ Authors: Devon Tuma
 
 module
 
+public import PolyFun.Realizability.Quantitative.QueryPolynomial
 public import PolyFun.Realizability.Quantitative.FamilySimulation
 public import PolyFun.Realizability.Quantitative.Reference
 
 /-!
 # Resource transport through ordinary imports
 
-Independent universes exercise the public simulation equations. Size collapse is rejected by the
-lower comparison required for simulation.
+Nested response lengths and independent universes exercise the public equations. Size collapse
+is rejected by the lower comparison required for simulation.
 -/
 
 public section
 
-open PFunctor
+open PFunctor PFunctor.DynSystem.DynComputation Complexity
 
-universe u v w
+universe u v w x
 
 namespace PolyFunTest.ModuleAPI.ResourceTransport
+
+/-- An adaptive second query uses the length of the first response. -/
+example (k : ℕ) :
+    ((SecondOrderPolynomial.oracle () (.oracle () .input)).toNatPolynomial
+      (fun _ ↦ Polynomial.X + 1)).eval k = k + 2 := by
+  simp
+
+/-- The source modulus can be nonmonotone; only its polynomial upper bound is used. -/
+example (q : SecondOrderPolynomial Unit) (k : ℕ) :
+    q.eval (fun _ n ↦ if n = 0 then 2 else 0) k ≤
+      (q.toNatPolynomial (fun _ ↦ Polynomial.C 2)).eval k := by
+  apply SecondOrderPolynomial.eval_le_toNatPolynomial
+  intro i n
+  split <;> simp
+
+variable {C : StepClass.{u, v}} [C.HasProd] [C.HasSum] [C.HasOption]
+  {Q : QuantitativeStepClass.{u, v, w} C} {p : PFunctor.{u, u}} [DecidableEq p.A]
+  {α β : Type u} {bd : Boundary C p α β} (R : QuantitativeRealization Q bd)
+
+example {label : Type x} {contract : ResponseResourceContract Q bd.interface label}
+    (h : PolynomialRunBound R contract) (model : contract.Model)
+    (bounds : ResponseModulus label → Polynomial ℕ)
+    (hb : ∀ i n, model.modulus i n ≤ (bounds i).eval n) :
+    ∃ q : Polynomial ℕ, ∀ value {finish : R.machine.State}
+      (t : R.ExecutionTrace (R.machine.init value) finish),
+      t.Conforms model.resourceModel.allows → t.length ≤ q.eval (Q.size bd.input value) :=
+  h.exists_natPolynomial_traceLength model bounds hb
 
 /-- Erasing arbitrary input sizes cannot satisfy the simulation's lower size comparison. -/
 example (q : Polynomial ℕ) : ¬∀ n : ℕ, n ≤ q.eval 0 := by

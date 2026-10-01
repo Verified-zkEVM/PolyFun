@@ -684,6 +684,13 @@ standard model (reductions may be uncertifiable, never unsound), and the
 
 ## Transporting resource certificates
 
+[`QueryPolynomial.lean`](../../PolyFun/Realizability/Quantitative/QueryPolynomial.lean)
+turns polynomial upper bounds on every response modulus into ordinary polynomials for query
+counts and local work. `exists_natPolynomial_traceLength` and
+`exists_natPolynomial_executionWork` apply to every conforming finite prefix. Nested oracle
+applications become polynomial composition through `SecondOrderPolynomial.toNatPolynomial`;
+the actual response modulus need not itself be monotone for this conversion.
+
 [`Simulation.lean`](../../PolyFun/Realizability/Quantitative/Simulation.lean) translates codes
 without changing their semantic function. Size comparisons in both directions allow each
 `PolyRealizer` to be bounded in its target input size. The cost polynomial may depend on the
@@ -696,6 +703,20 @@ envelope at every length, beyond just the lengths of actual inputs.
 [`Reference.lean`](../../PolyFun/Realizability/Quantitative/Reference.lean) supplies the shared
 `metered` and `zero` arithmetic models. `toMetered` preserves any backend's charges and sizes.
 These models impose no computability restriction and serve to test accounting laws.
+
+## Uniform pure families
+
+[`CslibSingleTape/Uniform.lean`](../../ComplexityBackends/CslibSingleTape/Uniform.lean)
+fixes packed bitvector inputs with a unary parameter and separator, and similarly tagged Boolean
+outputs. `UniformPureWitness` contains one machine and fixed initialization/readout codes for
+all parameters. `ofProgramWitness` extracts those codes from a packed pure program certificate
+at that boundary. `toFam` gives a family with one time polynomial and constant description size.
+At an injective position encoding, finite-description counting proves that some Boolean family
+has no such uniform witness.
+
+This bridge is for immediate returns. It does not convert arbitrary interactive witnesses into
+P/poly. Unary framing is substantive: an output containing `n` unary bits has no polynomial
+length bound in the binary parameter length `Nat.size n` (`binary_no_envelope`).
 
 ## Known Gaps
 
