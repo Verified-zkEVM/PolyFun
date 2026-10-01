@@ -291,11 +291,16 @@ actually uses.
 `PolyFun/Interaction/Basic/` folder). Even if a module "feels cohesive",
 callers must import the specific submodule they use.
 
-### Full cutover, no backward-compatibility shims
+### Full cutover, with deprecated aliases for renames
 
 When refactoring APIs, notations, or proof infrastructure, update all
-call sites in one pass. Do not add deprecated aliases, migration
-wrappers, or compatibility layers.
+call sites in one pass. Module moves and notation changes break cleanly:
+add no module shims, migration wrappers, or compatibility layers. A
+renamed declaration keeps a `@[deprecated]` alias under its old name,
+pointing at the new one, and a declaration whose meaning changes keeps a
+deprecated old form where feasible; a little-used lemma may be dropped
+without one. PR descriptions and the owning docs record each change;
+there is no separate compatibility log.
 
 ### Agent guidance files must be committed
 
