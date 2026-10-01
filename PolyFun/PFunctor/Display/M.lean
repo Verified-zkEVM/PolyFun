@@ -98,9 +98,7 @@ theorem transport_rfl (displayedTree : Display.M S tree) :
 
 theorem transport_proof_irrel {left right : PFunctor.M P}
     (h h' : left = right) (displayedTree : Display.M S left) :
-    transport (S := S) h displayedTree = transport h' displayedTree := by
-  cases h
-  rfl
+    transport (S := S) h displayedTree = transport h' displayedTree := rfl
 
 theorem transport_trans {first second third : PFunctor.M P}
     (h : first = second) (h' : second = third)

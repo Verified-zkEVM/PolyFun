@@ -159,16 +159,13 @@ theorem toFreeMFrom_query (M : DynComputation.{u} p α β)
 /-- Extracted programs do not depend on the particular accessibility proof. -/
 theorem toFreeMFrom_proof_irrel (M : DynComputation.{u} p α β)
     (state : M.State) (h₁ h₂ : M.TerminatesFrom state) :
-    M.toFreeMFrom state h₁ = M.toFreeMFrom state h₂ := by
-  congr
+    M.toFreeMFrom state h₁ = M.toFreeMFrom state h₂ := rfl
 
 /-- Extracted program families do not depend on the pointwise accessibility
 proof. -/
 theorem toFreeM_proof_irrel (M : DynComputation.{u} p α β)
     (h₁ h₂ : ∀ input, M.TerminatesFrom (M.init input)) :
-    M.toFreeM h₁ = M.toFreeM h₂ := by
-  funext input
-  exact M.toFreeMFrom_proof_irrel (M.init input) (h₁ input) (h₂ input)
+    M.toFreeM h₁ = M.toFreeM h₂ := rfl
 
 /-! ## Exact well-founded semantics -/
 

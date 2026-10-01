@@ -15,9 +15,8 @@ Concatenation of node-local metadata along the dependent sequential composition
 `FreeM.append`. The decoration of an appended tree is the `Decoration` of the
 prefix paired (per canonical prefix path) with the `Decoration` of the suffix.
 
-This file lives below the protocol layer: nothing here mentions `TypeTree`,
-`Path`, or any interaction-specific notion. Protocol-flavored append
-combinators are thin specializations of these definitions.
+The construction uses generic `FreeM.Path` indices and lives below the protocol layer.
+The append combinators for `TypeTree` decorations specialize these definitions.
 -/
 
 @[expose] public section

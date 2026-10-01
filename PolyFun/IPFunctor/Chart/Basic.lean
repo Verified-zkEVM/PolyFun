@@ -15,13 +15,12 @@ morphism: forward maps on both positions and responses, together with the source
 preservation law `src_eq` in the chart direction (the pushed-forward response and the
 original response have the same source in `I`).
 
-Charts and lenses are dual: lenses pull responses *back* (contravariantly), charts push them
+Lenses pull responses *back* (contravariantly), while charts push them
 *forward*. See [`Lens`](../Lens/Basic.lean) for the contravariant analogue.
 
-This file provides the basic structure plus identity, composition, and the structural
-equivalence companion. The richer monoidal infrastructure of
-[`PFunctor.Chart`](../../PFunctor/Chart/Basic.lean) is intentionally not mirrored here yet —
-extend on demand as downstream consumers need it.
+This file provides identity, composition, extensionality, and the structural-equivalence
+companion `Chart.Equiv`. See [`PFunctor.Chart`](../../PFunctor/Chart/Basic.lean) for charts
+between unindexed polynomial functors.
 -/
 
 @[expose] public section
@@ -57,9 +56,7 @@ theorem ext {P : IPFunctor.{uI, uJ, uA₁, uB₁} I J}
   rcases c₂ with ⟨toFunA₂, toFunB₂, src_eq₂⟩
   have h : toFunA₁ = toFunA₂ := funext fun j => funext (hA j)
   subst h
-  have h' : toFunB₁ = toFunB₂ := by
-    funext j a
-    simpa using hB j a
+  have h' : toFunB₁ = toFunB₂ := funext₂ hB
   subst h'
   rfl
 

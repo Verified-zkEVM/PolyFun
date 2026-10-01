@@ -10,7 +10,11 @@ public import PolyFun.PFunctor.Equiv.Basic
 import Batteries.Tactic.Lint
 
 /-!
-# More properties about lenses between polynomial functors
+# Lenses between polynomial functors
+
+Lenses map positions forward and directions backward. This module provides extensionality,
+identity and composition, the action on polynomial objects, and canonical lenses for sums,
+products, tensor, and substitution. Position and direction universes remain independent.
 -/
 
 @[expose] public section
@@ -33,6 +37,8 @@ namespace PFunctor
 
 namespace Lens
 
+/-- Lenses agree when their position maps agree pointwise and their direction maps agree after
+transport along those position equalities. -/
 @[ext (iff := false)]
 theorem ext {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l₁ l₂ : Lens P Q)
     (h₁ : ∀ a, l₁.toFunA a = l₂.toFunA a) (h₂ : ∀ a, l₁.toFunB a = (h₁ a) ▸ l₂.toFunB a) :
@@ -252,15 +258,15 @@ def sumMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}} {R : PFun
 def sigmaExists {I : Type v} {F : I → PFunctor.{uA₁, uB₁}} {R : PFunctor.{uA₂, uB₂}}
     (l : ∀ i, Lens (F i) R) :
     Lens (sigma F) R :=
-  (fun ⟨i, fa⟩ => (l i).toFunA fa) ⇆
-    (fun ⟨i, fa⟩ => (l i).toFunB fa)
+  (fun x => (l (sigma.fst x)).toFunA (sigma.snd x)) ⇆
+    (fun x => (l (sigma.fst x)).toFunB (sigma.snd x))
 
 /-- Pointwise mapping of lenses over `sigma`. -/
 def sigmaMap {I : Type v} {F : I → PFunctor.{uA₁, uB₁}} {G : I → PFunctor.{uA₂, uB₂}}
     (l : ∀ i, Lens (F i) (G i)) :
     Lens (sigma F) (sigma G) :=
-  (fun ⟨i, fa⟩ => ⟨i, (l i).toFunA fa⟩) ⇆
-    (fun ⟨i, fa⟩ => (l i).toFunB fa)
+  (fun x => sigma.mk (sigma.fst x) ((l (sigma.fst x)).toFunA (sigma.snd x))) ⇆
+    (fun x => (l (sigma.fst x)).toFunB (sigma.snd x))
 
 /-- Projection lens `fst : P * Q → P` -/
 def fst {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} :

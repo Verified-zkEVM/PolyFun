@@ -182,8 +182,7 @@ theorem toW_eq (tree : M P) (accessibility : WellFounded tree) :
 
 /-- Extraction is independent of the accessibility witness. -/
 theorem toW_proof_irrel (tree : M P) (first second : WellFounded tree) :
-    toW tree first = toW tree second := by
-  congr
+    toW tree first = toW tree second := rfl
 
 @[simp] theorem toW_toM (tree : P.W) :
     toW (W.toM tree) (W.wellFounded_toM tree) = tree := by

@@ -202,7 +202,7 @@ so that the upstream pull request is a move rather than a rewrite:
   `Cslib.IsMonadHom`);
 - a lemma with no upstream twin yet is marked `-- upstream candidate`;
 - `ToCslib` imports core, cslib, and Mathlib only — never PolyFun or `ComplexityBackends`, and
-  never `Std.Do`, `Std.Internal.Do`, or `Std.Tactic.Do` directly (`scripts/check-modules.sh`
+  never `Std.WP`, `Std.Do`, or `Std.Tactic.Do` directly (`scripts/check-modules.sh`
   enforces both; cslib's `IsMonadHom` module brings the legacy `Std.Do.WP` classes in
   transitively, which the fence does not police);
 - PolyFun modules import `ToCslib` modules directly (`public import`) and keep no local copy of

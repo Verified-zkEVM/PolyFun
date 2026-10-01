@@ -6,13 +6,13 @@ Authors: Devon Tuma
 module
 
 public import Std.Tactic.Do
-public import Std.Internal.Do
+public import Std.WP
 public import PolyFun.Control.Monad.WriterT.WP
 
 /-!
 # Additional Specifications and Normal Forms for `vcgen`
 
-Core's `Std.Internal.Do.Triple.SpecLemmas` covers `forIn'` / `forIn` / `foldlM` over lists,
+Core's `Std.WP.Triple.SpecLemmas` covers `forIn'` / `forIn` / `foldlM` over lists,
 ranges, arrays, and iterators, and the operations of core's own transformers; this file adds:
 
 * the `@[spec]` rule for `List.forM`, the one list loop that core does not specify;
@@ -21,7 +21,10 @@ ranges, arrays, and iterators, and the operations of core's own transformers; th
   does not tag, so that a `try … catch` block on a transformer stack no longer stops `vcgen`
   with "no spec found";
 * the rules for `WriterT` (Mathlib's transformer, interpreted by
-  `PolyFun.Control.Monad.WriterT.WP`): `tell`, `monadLift`, `mk`, and `run`.
+  `PolyFun.Control.Monad.WriterT.WP`): `tell`, `monadLift`, `mk`, and `run`;
+* the `OptionT` rules core does not state: `failure` and `OptionT.lift` for every assertion
+  carrier, and `guard` for `Prop`-valued readings, stated with lattice connectives so that
+  `vcgen` splits it into its two outcomes.
 
 The wrappers the `do` elaborator uses to tunnel `return`, `break`, and `continue` through
 non-algebraic combinators (`EarlyReturn.runK`, `Break.runK`, `Continue.runK`) need no rules
@@ -29,26 +32,25 @@ here: they are `abbrev`s, and both `simp` and `grind` reduce them on a construct
 unaided.
 
 The core-shaped specifications live in the namespace they would have upstream, next to core's
-`Spec.forIn_list` in `SpecLemmas.lean`; the v4.35 rename of `Std.Internal.Do` to `Std.WP` moves
-them in lockstep. This module imports `Std.Tactic.Do` for the `@[spec]` attribute syntax and is
-therefore part of the tactic tier of the `Std.Do` quarantine.
+`Spec.forIn_list` in `Std.WP.Triple.SpecLemmas`. This module imports `Std.Tactic.Do` for the
+`@[spec]` attribute syntax and is therefore part of the tactic tier of the `Std.WP` quarantine.
 -/
 
 @[expose] public section
 
 universe u v w z
 
-open Std.Internal.Do
+open Std.WP
 
 -- upstream: lean4 `SpecLemmas.lean` tags `Spec.throw_MonadExcept` but not this twin.
-attribute [spec] Std.Internal.Do.Spec.tryCatch_MonadExcept
+attribute [spec] Std.WP.Spec.tryCatch_MonadExcept
 
-namespace Std.Internal.Do
+namespace Std.WP
 
 variable {α : Type w} {m : Type u → Type v} {Pred : Type z} {EPred : Type z}
   [Monad m] [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred]
 
--- upstream candidate: `Std.Internal.Do.Triple.SpecLemmas` (`Std.WP` from Lean v4.35).
+-- upstream candidate: `Std.WP.Triple.SpecLemmas`.
 /-- Invariant rule for `forM` over a list: the invariant relates the elements consumed so far to
 those remaining (its accumulator is `PUnit`, so `vcgen`'s `invariants` clause applies to it), and
 each body step advances it by one element. Stated on the class method `forM`, the simp normal
@@ -110,4 +112,48 @@ theorem Spec.run_WriterT {α : Type u} (x : WriterT ω m α) (post : α × ω �
 
 end WriterTSpec
 
-end Std.Internal.Do
+end Std.WP
+
+namespace Std.WP
+
+section OptionTSpec
+
+variable {m : Type u → Type v} {Pred EPred : Type u} [Monad m] [Assertion Pred]
+  [Assertion EPred] [WPMonad m Pred EPred] {α : Type u}
+
+/-- `failure` in `OptionT` establishes the failure postcondition. -/
+@[spec]
+theorem Spec.failure_OptionT (post : α → Pred) (epost : (Unit → Pred) × EPred) :
+    Triple (failure : OptionT m α) (epost.fst ()) post epost :=
+  ⟨by
+    rw [OptionT.wp_apply_eq]
+    exact WPMonad.pure_le_wp_pure (m := m) none (Lean.Order.pushOption post epost.fst)
+      epost.snd⟩
+
+/-- `OptionT.lift` runs the base computation and succeeds. -/
+@[spec]
+theorem Spec.lift_OptionT (x : m α) (post : α → Pred) (epost : (Unit → Pred) × EPred) :
+    Triple (OptionT.lift x) (wp x post epost.snd) post epost :=
+  Spec.monadLift_OptionT x post epost
+
+/-- `guard p` in `OptionT` over a `Prop`-valued reading: the success postcondition when `p`
+holds and the failure postcondition when it does not, as a meet of two implications. -/
+@[spec]
+theorem Spec.guard_OptionT {m : Type → Type} {EPred : Type} [Monad m] [Assertion EPred]
+    [WPMonad m Prop EPred] (p : Prop) [Decidable p] (post : Unit → Prop)
+    (epost : (Unit → Prop) × EPred) :
+    Triple (guard p : OptionT m Unit)
+      (Lean.Order.meet (Lean.Order.himp (Lean.Order.CompleteLattice.ofProp p) (post ()))
+        (Lean.Order.himp (Lean.Order.CompleteLattice.ofProp (¬ p)) (epost.fst ())))
+      post epost := by
+  refine ⟨fun h => ?_⟩
+  simp only [Lean.Order.meet_prop_eq_and, Lean.Order.himp_prop_eq_imp,
+    Lean.Order.CompleteLattice.ofProp, Lean.Order.top_prop_eq, Lean.Order.bot_prop_eq] at h
+  unfold _root_.guard
+  split
+  · exact (Spec.pure (post := post) ()).le_wp (h.1 (by simp [*]))
+  · exact (Spec.failure_OptionT post epost).le_wp (h.2 (by simp [*]))
+
+end OptionTSpec
+
+end Std.WP

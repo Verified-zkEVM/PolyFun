@@ -301,7 +301,8 @@ Three packaged resolver patterns:
   `Multiparty.Observation X`, defined as
   `PFunctor.Idx (Observation.basePFunctor X)` where
   `Observation.basePFunctor X := ⟨Type, (X → ·)⟩`. Concretely it
-  unfolds to `Σ Obs : Type, X → Obs`. Every `ViewMode X` collapses to
+  unfolds to `Σ Obs : Type, X → Obs`; the observation function need not be
+  surjective. Every `ViewMode X` collapses to
   an `Observation X` via `ViewMode.toObservation`.
 - **Operational**: what continuation-passing shape does the participant
   use for `Action`? `.pick` (effectful Σ-of-X), `.observe`
@@ -326,7 +327,10 @@ typeclasses, so `⊤`, `⊥`, `≤`, `⊔` work directly:
 - `⊥ : Observation X` is `Observation.bot X = ⟨PUnit, fun _ => .unit⟩`.
   No information. This is exactly the kernel of `ViewMode.hidden`.
 - `k₁ ≤ k₂` denotes `Observation.Refines k₁ k₂`. `k₁` is no more
-  revealing than `k₂`.
+  revealing than `k₂`: its observation function factors through that of `k₂`.
+  Thus moves indistinguishable under `k₂` are indistinguishable under `k₁`.
+  The factor is a function on the entire codomain of `k₂`, including unused
+  observations, so the definition carries more than this implication alone.
 - `k₁ ⊔ k₂` denotes `Observation.combine k₁ k₂`. The join (Σ-product) of
   two observations.
 
