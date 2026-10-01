@@ -581,6 +581,11 @@ Its adapter half connects this theory to PolyFun:
 - `ComplexityBackends/CslibSingleTape/Backend.lean` interprets `EncPolyTime` as
   quantitative executable evidence. Its qualitative admissibility predicate is
   unconstrained; every quantitative map still carries a concrete machine certificate.
+  Its quantitative `HasCategory` is the backend's only executable structural instance.
+  Composition is the cslib machine composite, whose `composeOverhead` evaluates the
+  second machine's polynomial at `1 + |x| + T₁(|x|)`, so composed cost is not additive
+  in the costs of the parts. Without executable product, sum, and option code, the
+  realizations `ofFn`, `seqComp`, and `wrap` do not yet apply to this backend.
 - `ComplexityBackends/CslibSingleTape/PPoly.lean` pins the input, output, position,
   and dependent-answer encodings. `IsPPolyBy` carries initialization, combined head
   observation, and partial-update machine families, polynomial state-length and
@@ -661,6 +666,20 @@ code for the host operations, bounded administrative normalization, encoded stat
 actual work costs still require executable certificates. In particular, a syntactic query bound
 alone does not establish strict PPT.
 
+- **Query bounds do not charge pure computation.** `FreeM.IsRollBound` holds of every `pure`
+  leaf, so `pure (f x)` meets every budget whatever Lean function `f` is. A program with no
+  queries can therefore solve any search problem posed in its input, by brute force when the
+  answers are finitely enumerable and checkable. A class bounded only by queries carries
+  information-theoretic hardness of an instance behind the interface, not computational hardness
+  of a problem posed in the input.
+- **No machine-level strength.** The continuation of `QuantitativeRealization.seqComp` runs over
+  `Boundary.mid`, whose input is the first phase's result alone. A continuation that also reads
+  the original input therefore has no sequential realization; only the realizer-level
+  `HasProd.withInput` retains context.
+- **`queries ≤ work` needs positive costs.** Each visible query adds one query and the costs of
+  that step's head and update codes to an execution's `ExecutionCost`. The inequality therefore
+  holds only for a backend whose codes cost at least one; the cost-free test fixtures run any
+  number of queries in zero work.
 - **No whole-program machine-adequacy theorem.** The `CslibSingleTape` backend
   certifies the local step maps with cslib machines and bounds their additive
   time envelopes. `Backend.cost_adequate` is the per-step half: each certified
