@@ -23,7 +23,9 @@ states. In particular, `DynComputation.ofFn` and the `Pure` instance are
 available for every interface and do not require a chosen `Point p`.
 
 State-sum sequential composition performs return handoff in one observation
-and denotes exactly monadic bind on `Resumption`.
+and denotes exactly monadic bind on `Resumption`. `DynComputation.withInput`
+carries the input in a second state component and pairs it with the result;
+it denotes `fun a ↦ (·, a) <$> M.denote a`.
 -/
 
 @[expose] public section
@@ -909,6 +911,102 @@ theorem implements_of_isSimulation (M : DynComputation p α β)
   intro input
   rw [← denote_ofFreeM program input]
   exact behavior_eq_of_isSimulation simulation (init_rel input)
+
+/-! ## Retaining the input -/
+
+/-- Run `M` while carrying its input in a second state component, and return the input alongside
+the result: the machine counterpart of pairing a result with the retained input. Semantically it
+is `fun a ↦ (·, a) <$> M.denote a` (`denote_withInput`). -/
+abbrev withInput (M : DynComputation.{u} p α β) : DynComputation.{max u uα} p α (β × α) :=
+  ofStep (S := M.State × α)
+    (fun state ↦ Sum.map (fun value ↦ (value, state.2)) (p.map fun next ↦ (next, state.2))
+      (M.view state.1))
+    (fun input ↦ (M.init input, input))
+
+@[simp] theorem withInput_init (M : DynComputation.{u} p α β) (input : α) :
+    M.withInput.init input = (M.init input, input) := rfl
+
+theorem view_withInput (M : DynComputation.{u} p α β) (state : M.State × α) :
+    M.withInput.view state = Sum.map (fun value ↦ (value, state.2))
+      (p.map fun next ↦ (next, state.2)) (M.view state.1) :=
+  view_ofStep _ _ state
+
+theorem view_withInput_of_return (M : DynComputation.{u} p α β) {state : M.State × α}
+    {value : β} (h : M.view state.1 = Sum.inl value) :
+    M.withInput.view state = Sum.inl (value, state.2) := by
+  rw [view_withInput, h]; rfl
+
+theorem view_withInput_of_query (M : DynComputation.{u} p α β) {state : M.State × α}
+    {position : p.A} {next : p.B position → M.State}
+    (h : M.view state.1 = Sum.inr ⟨position, next⟩) :
+    M.withInput.view state = Sum.inr ⟨position, fun direction ↦ (next direction, state.2)⟩ := by
+  rw [view_withInput, h]; rfl
+
+/-- A query exposed by the input-retaining machine is a query of the underlying machine, and every
+continuation keeps the carried input. -/
+theorem view_eq_query_of_withInput_view_eq_query (M : DynComputation.{u} p α β)
+    {state : M.State × α} {position : p.A} {next : p.B position → M.State × α}
+    (h : M.withInput.view state = Sum.inr ⟨position, next⟩) :
+    M.view state.1 = Sum.inr ⟨position, fun direction ↦ (next direction).1⟩ ∧
+      ∀ direction, (next direction).2 = state.2 := by
+  rw [view_withInput] at h
+  rcases hview : M.view state.1 with value | ⟨position', next'⟩
+  · rw [hview] at h
+    exact nomatch h
+  · rw [hview] at h
+    have h' := Sum.inr.inj h
+    cases h'
+    exact ⟨rfl, fun _ ↦ rfl⟩
+
+/-- A returning state of the input-retaining machine returns the underlying value with the
+carried input. -/
+theorem view_eq_return_of_withInput_view_eq_return (M : DynComputation.{u} p α β)
+    {state : M.State × α} {result : β × α} (h : M.withInput.view state = Sum.inl result) :
+    M.view state.1 = Sum.inl result.1 ∧ result.2 = state.2 := by
+  rw [view_withInput] at h
+  rcases hview : M.view state.1 with value | ⟨position', next'⟩
+  · rw [hview] at h
+    cases Sum.inl.inj h
+    exact ⟨rfl, rfl⟩
+  · rw [hview] at h
+    exact nomatch h
+
+/-- State-level semantics: retaining the input attaches it to every returned value. -/
+theorem behavior_withInput (M : DynComputation.{u} p α β) (state : M.State) (input : α) :
+    M.withInput.toDynSystem.behavior (state, input) =
+      Resumption.map (fun value ↦ (value, input)) (M.toDynSystem.behavior state) := by
+  apply Resumption.bisim
+    (fun left right ↦ ∃ current : M.State,
+      left = M.withInput.toDynSystem.behavior (current, input) ∧
+      right = Resumption.map (fun value ↦ (value, input)) (M.toDynSystem.behavior current))
+  · rintro left right ⟨current, rfl, rfl⟩
+    rcases h : M.view current with value | ⟨position, next⟩
+    · exact .pure (value, input)
+        (by rw [dest_behavior_view, view_withInput_of_return M (state := (current, input)) h]; rfl)
+        (by simp [Resumption.map, dest_behavior_view, h])
+    · exact .query position
+        (fun direction ↦ M.withInput.toDynSystem.behavior (next direction, input))
+        (fun direction ↦ Resumption.map (fun value ↦ (value, input))
+          (M.toDynSystem.behavior (next direction)))
+        (by rw [dest_behavior_view, view_withInput_of_query M (state := (current, input)) h]; rfl)
+        (by simp [Resumption.map, dest_behavior_view, h]; rfl)
+        (fun direction ↦ ⟨next direction, rfl, rfl⟩)
+  · exact ⟨state, rfl, rfl⟩
+
+/-- Retaining the input denotes the original denotation with each result paired with the
+input. -/
+@[simp] theorem denote_withInput (M : DynComputation.{u} p α β) (input : α) :
+    M.withInput.denote input =
+      Resumption.map (fun value ↦ (value, input)) (M.denote input) :=
+  behavior_withInput M (M.init input) input
+
+/-- Retaining the input transports qualitative implementation to the program that pairs each
+result with the input. -/
+theorem Implements.withInput {M : DynComputation.{u} p α β} {program : α → FreeM p β}
+    (h : M.Implements program) :
+    M.withInput.Implements fun input ↦ FreeM.map (fun value ↦ (value, input)) (program input) := by
+  intro input
+  rw [denote_withInput, h input, FreeM.toResumption_map]
 
 end DynComputation
 
