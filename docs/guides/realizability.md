@@ -701,6 +701,12 @@ the actual response modulus need not itself be monotone for this conversion. On 
 syntax the substitution inverts `FirstOrderPolynomial.ofNatPolynomial`
 (`FirstOrderPolynomial.toNatPolynomial_ofNatPolynomial`).
 
+[`Erasure.lean`](../../PolyFun/Realizability/Quantitative/Erasure.lean) changes local work
+charges while retaining the computation, codes and representations. Trace transport preserves
+allowed responses, visible queries, traffic and peak sizes. `runsWithinUnder_recost` requires
+a pointwise decrease of local charges. With arbitrary new charges, even an immediate return
+can lose its old work bound: initialization and terminal readout are both charged.
+
 [`Simulation.lean`](../../PolyFun/Realizability/Quantitative/Simulation.lean) defines
 `Q₁.SimulatedBy Q₂ str`: every `Q₁` code translates to `Q₂` code with the same semantic
 function, so `Q₂` simulates `Q₁`. Simulations have an identity and compose
