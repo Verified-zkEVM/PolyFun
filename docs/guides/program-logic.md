@@ -31,7 +31,7 @@ probabilistic interpretations; its quantitative carrier is not part of PolyFun.
 | `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWPOf` / `transportWPMonadOf` (along cslib's `IsMonadHom`) and the bundled `transportWP` / `transportWPMonad`: pulling a core `WPMonad` back along a monad morphism, preserving exactness |
 | `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.wpMonadOf`: explicit empty/append operations on the log-indexed carrier `ω → Pred`; the multiplicative specialization is scoped under `WriterT.MonoidWP`, `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, `wp_run_eq`, and the `tell` / `monadLift` entailments behind the `@[spec]` rules, and exactness over an exact base (`exactWPMonad_wpMonadOf`, scoped `WriterT.MonoidWP.instExactWPMonad`) |
 | `PolyFun/Control/Monad/Hom/Loops.lean` | A monad morphism between lawful monads commutes with `forIn'`/`forIn`/`forM`/`foldlM`/`mapM` and with `forIn` over `PureForIn` containers (`@[simp, grind =]`), through `MonadHom.isMonadHom` and cslib's `IsMonadHom.map_list*` |
-| `PolyFun/Control/Do/Spec.lean` | Tactic tier: `@[spec] Spec.forM_list`, the list loop core does not specify; the `@[spec]` registration of core's `Spec.tryCatch_MonadExcept`, the `try … catch` rule core states but does not tag; and the `WriterT` rules `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` |
+| `PolyFun/Control/Do/Spec.lean` | Tactic tier: `@[spec] Spec.forM_list`, the list loop core does not specify; the `@[spec]` registration of core's `Spec.tryCatch_MonadExcept`, the `try … catch` rule core states but does not tag; and the `WriterT` rules `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT`; the transformers' constructors, lifts and runners that programs write (`StateT.mk`, `StateT.lift`, `StateT.run'`, `OptionT.mk`, `ExceptT.mk`, `ExceptT.lift`, `Spec.run_OptionT'`, `Spec.run_ExceptT'`), `Spec.guard_OptionT_iInf` for every assertion carrier, `Spec.mapM_list` with a loop invariant, and `Spec.seqLeft`/`Spec.seqRight` |
 
 Worked examples: `PolyFunTest/Control/MonadAttach.lean` (judgments, notation,
 `Iff.rfl` transfer contract), `PolyFunTest/Control/{SupportStructural,SupportLoops,MonadHomLoops}.lean`
@@ -191,12 +191,12 @@ proof.
 |---|---|---|---|---|---|
 | `pure`, `>>=`, `<$>`, `<*>` | free | `Support.lean`, `Support/Structural.lean` | `ExactWP.lean` | `Hom.lean` | `Free/WP.lean` |
 | `FreeM.lift a`, `FreeM.liftBind a r`, `(FreeM.lift a).bind r` | `Spec.lift`/`Spec.liftBind`/`Spec.bind` (`Free/Do.lean`; tail position via `wp_apply_eq`, gotcha 12f) | `Free/Support.lean` (`allOutputs_lift`, `allOutputs_bind`, `allOutputs_liftBind`) | via `OpSpec.toWPMonad` | — | `wpFold_lift` / `wpFold_bind` / `wpFold_liftBind` |
-| `<*`, `*>` | free | `Support/Structural.lean` | `ExactWP.lean` (`wp_seqLeft`/`wp_seqRight`) | `Hom.lean` | `Free/WP.lean` |
+| `<*`, `*>` | `Spec.seqLeft`/`Spec.seqRight` in `Do/Spec.lean` | `Support/Structural.lean` | `ExactWP.lean` (`wp_seqLeft`/`wp_seqRight`) | `Hom.lean` | `Free/WP.lean` |
 | `if`, `if h :` | `vcgen` splits | `Support/Structural.lean` | `wp_ite`/`wp_dite` | `mmap_ite`/`mmap_dite` | `wpFold_ite`/`wpFold_dite` |
 | `match` on `Option`/`Sum` | `vcgen` splits | `*_option_elim`/`*_sum_elim` | `wp_option_elim`/`wp_sum_elim` | `mmap_option_elim`/`mmap_sum_elim` | `wpFold_option_elim`/`wpFold_sum_elim` |
 | `for` over `List`/`Array`/ranges/`Option`/`Vector` | free (`Spec.forIn'_list`, `forIn_pure` + `PureForIn`) | `Support/Loops.lean` | via the instance | `Hom/Loops.lean` | via `OpSpec.toWPMonad` (`Free/WP/Upstream.lean`) |
 | `forM`, `foldlM` | `Spec.foldlM_list` free, `Spec.forM_list` in `Do/Spec.lean` | `Support/Loops.lean` | via the instance | `Hom/Loops.lean` | — |
-| `mapM` | — | — | — | `Hom/Loops.lean` | — |
+| `mapM` | `Spec.mapM_list` in `Do/Spec.lean`, with an invariant over the elements consumed, the elements remaining and the outputs so far | — | — | `Hom/Loops.lean` | — |
 | early `return`/`break`/`continue` | `Invariant.withEarlyReturnNewDo` (core) | via the instance | — | — | — |
 | `throw`/`tryCatch` on `ExceptT`/`OptionT` | core's lifted instances (`Spec.throw_MonadExcept`, `Spec.tryCatch_ExceptT`), plus `Spec.tryCatch_MonadExcept` registered in `Do/Spec.lean` for the `try … catch` elaboration | via the instance | core's lifts, exact over an exact base | `ExceptT.mapHom`/`OptionT.mapHom` | — |
 | `get`/`set`/`read` | core's lifted instances | `Support/Indexed.lean` (`supportFrom`, `supportAt`) | core's lifts, exact over an exact base | `StateT.mapHom`/`ReaderT.mapHom` | — |
