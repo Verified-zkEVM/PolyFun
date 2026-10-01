@@ -514,11 +514,12 @@ admissible decoder.
 
 Products and sums are *not* automatic. They need a pairing codec and a tagging
 scheme whose operations the word class admits, supplied as `WordPairing` and
-`WordTagging` and consumed by `ofWordClass.hasProd` / `ofWordClass.hasSum`. As of
-this writing complexitylib has the ingredients (`Complexity.pair`, `unpair?`,
-`delimit`) but has not exposed them as a class-level closure result, and cslib's
-`PolyTimeComputable` has `id` and `comp` but no pairing or projection machines at
-all. The `CslibSingleTape` backend supplies encoded machine families and finite-table
+`WordTagging` and consumed by `ofWordClass.hasProd` / `ofWordClass.hasSum`.
+complexitylib exposes the class-level product closure that `WordPairing` needs
+(`pairFst_mem_FP`, `pairSnd_mem_FP` and `mem_FP_pair` in
+`Complexitylib/Classes/P/Pairing.lean`); PolyFun does not depend on complexitylib,
+so no such instance is built here. cslib's `PolyTimeComputable` has `id` and
+`comp` but no pairing or projection machines at all. The `CslibSingleTape` backend supplies encoded machine families and finite-table
 constructors and uses those concrete certificates directly; it does not claim a
 complete `ofWordClass` structural instance.
 
@@ -558,7 +559,9 @@ Its adapter half connects this theory to PolyFun:
   running-time bound across input lengths is involved.
 - `ComplexityBackends/CslibSingleTape/Family.lean` supplies the canonical polynomial
   certificates (`Backend.polynomialBackend`: certified time, envelope `1 + X + p`,
-  overhead `q.comp (1 + X + p)`), the finite-table primitive (`Backend.finiteTables`),
+  overhead `0`, since `timeOf_compose_le` already charges the second machine's
+  polynomial at the first machine's envelope), the finite-table primitive
+  (`Backend.finiteTables`),
   and the round trip between `EncPolyTimeFam` and the generic families.
 
 - `ComplexityBackends/CslibSingleTape/ProgramWitness.lean` bridges the
@@ -578,6 +581,11 @@ Its adapter half connects this theory to PolyFun:
 - `ComplexityBackends/CslibSingleTape/Backend.lean` interprets `EncPolyTime` as
   quantitative executable evidence. Its qualitative admissibility predicate is
   unconstrained; every quantitative map still carries a concrete machine certificate.
+  Its quantitative `HasCategory` is the backend's only executable structural instance.
+  Composition is the cslib machine composite, whose `composeOverhead` evaluates the
+  second machine's polynomial at `1 + |x| + T₁(|x|)`, so composed cost is not additive
+  in the costs of the parts. Without executable product, sum, and option code, the
+  realizations `ofFn`, `seqComp`, and `wrap` do not yet apply to this backend.
 - `ComplexityBackends/CslibSingleTape/PPoly.lean` pins the input, output, position,
   and dependent-answer encodings. `IsPPolyBy` carries initialization, combined head
   observation, and partial-update machine families, polynomial state-length and
@@ -658,6 +666,20 @@ code for the host operations, bounded administrative normalization, encoded stat
 actual work costs still require executable certificates. In particular, a syntactic query bound
 alone does not establish strict PPT.
 
+- **Query bounds do not charge pure computation.** `FreeM.IsRollBound` holds of every `pure`
+  leaf, so `pure (f x)` meets every budget whatever Lean function `f` is. A program with no
+  queries can therefore solve any search problem posed in its input, by brute force when the
+  answers are finitely enumerable and checkable. A class bounded only by queries carries
+  information-theoretic hardness of an instance behind the interface, not computational hardness
+  of a problem posed in the input.
+- **No machine-level strength.** The continuation of `QuantitativeRealization.seqComp` runs over
+  `Boundary.mid`, whose input is the first phase's result alone. A continuation that also reads
+  the original input therefore has no sequential realization; only the realizer-level
+  `HasProd.withInput` retains context.
+- **`queries ≤ work` needs positive costs.** Each visible query adds one query and the costs of
+  that step's head and update codes to an execution's `ExecutionCost`. The inequality therefore
+  holds only for a backend whose codes cost at least one; the cost-free test fixtures run any
+  number of queries in zero work.
 - **No whole-program machine-adequacy theorem.** The `CslibSingleTape` backend
   certifies the local step maps with cslib machines and bounds their additive
   time envelopes. `Backend.cost_adequate` is the per-step half: each certified
