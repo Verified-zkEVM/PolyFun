@@ -359,7 +359,7 @@ automatically.
 
 ## What stays downstream
 
-Probability carriers (`evalDist`, SPMF, ℝ≥0∞/`Prob`), couplings and
+Probability carriers (`evalDist`, output measures, ℝ≥0∞/`Prob`), couplings and
 pRHL/eRHL, concrete handler specifications, verification tactics
 specific to those interpretations, and any Loom2 or Iris/Bluebell dependency.
 PolyFun supplies generic definitions, rule lemmas, and the quarantined `vcgen`
