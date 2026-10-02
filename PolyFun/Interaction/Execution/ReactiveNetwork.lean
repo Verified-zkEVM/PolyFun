@@ -69,6 +69,23 @@ structure State (network : Network Node boundary result) (S : Type) where
   /-- Number of consumed local or delivery activations, including no-ops. -/
   elapsed : ℕ
 
+/-- Equality of residual configurations preserves private states, traffic, and accounting. -/
+@[ext] theorem State.ext {network : Network Node boundary result} {left right : State network S}
+    (hlocal : left.localState = right.localState) (hinbox : left.inbox = right.inbox)
+    (hservice : left.service = right.service) (hpending : left.pending = right.pending)
+    (houtput : left.output = right.output) (hfocus : left.focus = right.focus)
+    (helapsed : left.elapsed = right.elapsed) : left = right := by
+  cases left
+  cases right
+  cases hlocal
+  cases hinbox
+  cases hservice
+  cases hpending
+  cases houtput
+  cases hfocus
+  cases helapsed
+  rfl
+
 /-- Initial state with no traffic and the environment holding control. -/
 @[expose] def initial (network : Network Node boundary result) (service : S) : State network S :=
   ⟨fun id => (network.component id).init (), fun _ => [], service, [], [], network.environment, 0⟩

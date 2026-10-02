@@ -1,0 +1,34 @@
+name = "PolyFunPipeline"
+defaultTargets = ["Pipeline", "polyfun-pipeline"]
+packagesDir = "../../.lake/packages"
+testDriver = "PipelineTest"
+lintDriver = "batteries/runLinter"
+lintDriverArgs = ["Pipeline", "PipelineMain"]
+
+[leanOptions]
+autoImplicit = false
+relaxedAutoImplicit = false
+pp.unicode.fun = true
+weak.linter.mathlibStandardSet = true
+weak.linter.style.longFile = 1500
+
+[[require]]
+name = "PolyFun"
+path = "../.."
+
+[[require]]
+name = "Cli"
+scope = "leanprover"
+rev = "v4.34.0"
+
+[[lean_lib]]
+name = "Pipeline"
+globs = ["Pipeline", "Pipeline.+"]
+
+[[lean_lib]]
+name = "PipelineTest"
+globs = ["PipelineTest.+"]
+
+[[lean_exe]]
+name = "polyfun-pipeline"
+root = "PipelineMain"

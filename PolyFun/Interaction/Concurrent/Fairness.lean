@@ -142,6 +142,47 @@ def StrongFair {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} (ticketed : Pr
     (run : ProcessOver.Run ticketed.toProcess) : Prop :=
   ∀ ticket, StrongFairOn ticketed run ticket
 
+/-- Enabledness has a concrete complete-path witness at the selected time. -/
+theorem enabledAt_iff {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    (ticketed : ProcessOver.Ticketed Γ) (run : ProcessOver.Run ticketed.toProcess)
+    (ticket : ticketed.Ticket) (n : Nat) :
+    enabledAt ticketed run ticket n ↔
+      ∃ path : (ticketed.toProcess.step (run.state n)).tree.Path,
+        ticketed.ticket (run.state n) path = ticket := Iff.rfl
+
+/-- Firing identifies the ticket on the path actually taken by the run. -/
+theorem firedAt_iff {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    (ticketed : ProcessOver.Ticketed Γ) (run : ProcessOver.Run ticketed.toProcess)
+    (ticket : ticketed.Ticket) (n : Nat) :
+    firedAt ticketed run ticket n ↔
+      ticketed.ticket (run.state n) (run.path n) = ticket := Iff.rfl
+
+/-- The persistence hypothesis and recurring-service conclusion of weak fairness. -/
+theorem weakFairOn_iff {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    (ticketed : ProcessOver.Ticketed Γ) (run : ProcessOver.Run ticketed.toProcess)
+    (ticket : ticketed.Ticket) :
+    WeakFairOn ticketed run ticket ↔
+      (Run.EventuallyAlways (enabledAt ticketed run ticket) →
+        Run.InfinitelyOften (firedAt ticketed run ticket)) := Iff.rfl
+
+/-- The recurring-enablement hypothesis and recurring-service conclusion of strong fairness. -/
+theorem strongFairOn_iff {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    (ticketed : ProcessOver.Ticketed Γ) (run : ProcessOver.Run ticketed.toProcess)
+    (ticket : ticketed.Ticket) :
+    StrongFairOn ticketed run ticket ↔
+      (Run.InfinitelyOften (enabledAt ticketed run ticket) →
+        Run.InfinitelyOften (firedAt ticketed run ticket)) := Iff.rfl
+
+/-- Weak fairness requires the contract for every stable ticket. -/
+theorem weakFair_iff {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    (ticketed : ProcessOver.Ticketed Γ) (run : ProcessOver.Run ticketed.toProcess) :
+    WeakFair ticketed run ↔ ∀ ticket, WeakFairOn ticketed run ticket := Iff.rfl
+
+/-- Strong fairness requires the contract for every stable ticket. -/
+theorem strongFair_iff {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+    (ticketed : ProcessOver.Ticketed Γ) (run : ProcessOver.Run ticketed.toProcess) :
+    StrongFair ticketed run ↔ ∀ ticket, StrongFairOn ticketed run ticket := Iff.rfl
+
 /--
 The actually fired ticket at time `n` is always enabled at time `n`.
 -/

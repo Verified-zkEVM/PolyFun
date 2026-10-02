@@ -20,6 +20,12 @@ explicit certificates and downstream interpretation obligations.
 
 ## Where to start
 
+The [bounded-controller tutorial](../../Examples/Tutorials/BoundedController.lean) starts with
+two worker slots and proves a finite-state `DynSystem` realization. It also transports that
+witness between a function-shaped occupancy vector and an equivalent Boolean pair boundary.
+Its four-state carrier supports finite admission; it does not claim an IO, word-machine or
+asymptotic resource bound.
+
 | Task | Entry point |
 |---|---|
 | Define represented types and allowed functions | [StepClass](../../PolyFun/Realizability/StepClass.lean) |

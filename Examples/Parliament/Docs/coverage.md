@@ -22,35 +22,31 @@ through explicit configuration or a future extension, not through an invisible o
 | Referral/report | Registered committee; whole pending series retained; report restores attachments | Chair records delivery; no internal committee protocol, new report text, or committee instructions; §13 |
 | Postpone definitely | Future valid civil date within the modeled next-session/quarter limits; due-item restoration | Date granularity only; no same-day timed postponement, special orders, or parameter amendment; §14 |
 | Lay on table | Urgency ruling, ranked adoption, whole-series suspension, expiry | No use as an unchecked debate-closing shortcut; §17 |
-| Take from table | Majority vote, idle business, available bundle, restoration of adhering motions | No nested suspension of an active appeal; §34 |
+| Take from table | Majority vote, idle business, available bundle, eligibility ruling, restoration of adhering motions | Handler establishes intervening business or completion of urgent interruption; §34 |
 | Business order | Reports, unfinished business, new business; due general orders block fresh main motions | Opening formalities, officer reports, special orders, and customized agendas deferred; §41 |
 | Sessions | Recess and resumption; adjournment; meeting/session identifiers; unfinished and suspended carryover | Explicit regular-session calendar and continuing-membership flag; §§8–9, 20–21 |
-| Records | Certified command history, contextual draft entries, exact wording versions, canonical JSON/Markdown, replay verification | Unapproved drafts for the bounded policy; approval/correction and full editorial RONR compliance remain outside the model; §48 |
+| Records | Immutable action register; attributed prior-meeting drafts, correction opportunity, approval, append-only postapproval corrections | Exact-text prior-meeting notice only; no delegated approval, executive sessions, meeting-call notice, or expunging; §§35, 41, 48 |
 
 Unsupported interactions return a specific rejection or `RuleError.unsupported`.
 `Command.unsupported name` lets a host represent an unimplemented operation without
 silently accepting it. Reconsideration, rescission, postpone indefinitely, suspension
 of rules, elections, disciplinary proceedings, and committee/small-board procedure
-are outside this release.
+are outside the model.
 
 Interpretive replies may be wrong, biased, or inconsistent. The safety theorems
 still concern procedural handling of those replies; no semantic-correctness theorem
 is asserted. The host also supplies fair recognition, genuine response windows,
 authentication, clock accuracy, and the validity of organizational rule overrides.
 
-## Regression map
+## Contextual judgments
 
-`ParliamentTest.Boundaries` checks threshold edges, zero-vote outcomes, quarter/month
-boundaries, leap years, valid edits, and the exposed public API. `Scenarios` covers
-16 complete meeting journals. `Edges` adds nine meeting journals plus PolyFun-fold,
-external-handler, replay-error, and invalid-configuration checks. Every successful
-scenario replays its accepted command journal and compares the entire final state
-and ordered event log.
-
-The separate `test/ParliamentConsumer` Lake package imports the public
-`Examples.Parliament` umbrella from this PolyFun checkout. Sharing downloaded
-dependencies is a test optimization; the package still checks ordinary imports
-across a Lake package boundary.
+Renewal review is conservative: a rejected motion of the same family in the session triggers a ruling
+about identity and sufficient progress. Intrinsic obligations such as germaneness or
+urgency remain in the request too. Commands elapsed are not evidence of progress.
+Appeals are scoped to the particular ruling instead; reversing one does not block later
+appeals. Recognition requests remain pending across minutes corrections.
+Idle recess is a debatable incidental main motion; procedural-parameter amendments
+remain excluded. The semantic truth of all contextual rulings remains external.
 
 ## Executable IO and draft minutes
 
@@ -70,9 +66,32 @@ is not a new proof that every exception in RONR §48 has been implemented. The
 bare-event `minutes` filter serves a separate event-summary API; certified drafts
 use the contextual policy.
 
-`ParliamentTest.Application` runs all 25 meeting scenarios through the actual
-persistence/publication machine and compares complete states, events, reconstructed
-entries, and output payloads. It also tests rejected inputs, ambiguous write failures,
-publication/readback failures, chunk resumption, exact amended wording, and tampering.
-`scripts/test-parliament-cli.py` exercises the compiled executable against real temporary files,
-including guided commands, live judgments, EOF, recovery, immutable exports, and locks.
+Validation surfaces and commands are documented in the
+[development validation guide](../../../docs/development/validation.md#examples-as-usability-checks).
+
+## Sources
+
+Specification baseline: **RONR, 12th edition**, ordinary formal assembly.
+The [official edition page](https://robertsrules.com/books/newly-revised-12th-edition/)
+identifies this edition. This implementation is independent and is not an official
+Robert's Rules publication or a substitute for the complete manual.
+
+Sources consulted:
+
+- [Official frequently asked questions](https://robertsrules.com/frequently-asked-questions/):
+  voting thresholds, abstentions, chair participation, quorum, and minutes.
+- [Official interpretations](https://robertsrules.com/official-interpretations/):
+  interpretive context; older-edition interpretations require edition-specific care.
+- [RONR 12th-edition text, hosted PDF](https://static1.squarespace.com/static/632a33aaad395c03987c7993/t/64a249bcd345564990cbbcf2/1688357315799/Roberts%2BRules%2B12th%2BEdition.pdf):
+  primary rule text used to check the section references in the coverage ledger.
+  No book text is bundled in this repository.
+
+Key research distinctions retained in the design:
+
+- Interpretive applicability requires recorded external judgments.
+- Parliamentary sessions and meetings are distinct; calendar-quarter calculations
+  cannot be replaced by a fixed number of days.
+- Suspended business carries its adhering questions and relevant debate context.
+- A vote on an appeal asks whether to sustain the ruling.
+- Debate, consent, and counted voting require distinct control phases.
+- The action register and speech transcript serve different purposes.

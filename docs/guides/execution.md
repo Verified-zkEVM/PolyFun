@@ -51,6 +51,16 @@ that state. A terminal observation consumes no fuel, including at budget zero.
 `resumeChunk` continues a paused chunk and leaves a completed value alone.
 `runChunk` interprets the finite program through `Handler m p`.
 
+Use `startChunk handler fuel input` when you have an initialization input, and
+`continueChunk handler fuel chunk` for either a paused or completed result. Neither requires
+reconstructing the machine's hidden state. `startChunk_continueChunk` equates consecutive
+budgets with their sum, including the exact residual. Zero fuel still observes a terminal state.
+
+For interaction trees, import `PolyFun.ITree.Execution`: `ITree.machine` uses the exact
+resumption-with-tau representation and `ITree.withSilentSteps` lifts a visible-event handler.
+Both visible events and tau consume this machine's budget; tau never invokes the visible
+handler. These pure adapters belong to core, not the optional physical IO library.
+
 The public laws connect this interface to bounded execution:
 
 - `unrollChunk_result` and `runChunk_result` recover the bounded observation
@@ -84,10 +94,44 @@ General network runtimes live in `Interaction.Execution`, above the shared
 | Open assembly | Compile open composition syntax into finite executable components | [Assembly](../../PolyFun/Interaction/Execution/ReactiveNetwork/Assembly.lean) |
 
 Finite execution does not assume fairness or guarantee eventual delivery.
+`RequestNetwork.State.initial` creates ready clients and empty traffic with a fresh ticket
+counter. `ClientState.result` observes only a returned client without discarding its network's
+queue or transcript. The [versioned-cell example](../../Examples/Tutorials/VersionedRequests.lean)
+demonstrates two read-then-update clients under an explicit schedule.
 Requests and physical effects must also be distinguished: a handler's law is
 about its mathematical interpretation, while external IO behavior needs its
 own contract. Reactive assembly depends on `Interaction.Open.OpenSyntax`;
 the elementary process and routing interfaces do not depend on that syntax.
+
+`HandledDiagram.initial`, `runToken` and `runFIFO` execute diagrams with their intrinsic
+handlers and return complete residual states. Their `runToken_add` and `runFIFO_append`
+laws preserve local state, inboxes, pending traffic, outputs and elapsed activations across
+a split, for every lawful ambient monad. They delegate to the existing runtime rather than
+introducing a second interpreter. `State.ext` compares all retained fields.
+
+The independent [Pipeline application](../../Examples/Pipeline/README.md) composes a loader
+and analyser in parallel, then plugs in a finite collector. It reports file read errors as
+typed results and demonstrates pausing immediately after a read without repeating that read.
+Its fuel counts network activations, not bytes processed, IO latency or thread scheduling.
+
+## Composing effects and inspecting alternatives
+
+`Handler.sum` interprets dependent responses from either side of a coproduct. Existing
+`Lens.inl` and `Lens.inr` embed a component program; `FreeM.liftM_mapLens_inl` and its right-side
+counterpart show that interpreting the embedding uses only the corresponding handler.
+`Handler.mapTarget_sum` preserves this separation when changing target monads.
+
+For one-or-both interfaces, `Handler.parallelSeq` executes a joint request left-first. This is
+an explicit policy, not OS parallelism or a commutativity guarantee. Compare the request traces
+in [parallel reports](../../Examples/Tutorials/ParallelReports.lean); arbitrary free-handler
+composition can change which requests synchronize, so unrestricted interchange is not promised.
+
+`Occurrence.completeWith answer` supplies the selected query's answer and executes its suffix.
+`Cursor.forkAtWith` executes a shared prefix once, then supplies two answers and retains typed
+completion paths. It does not ask the handler for either selected answer. **Both suffixes still
+execute their effects independently**: this is not rollback or automatic state isolation.
+Notes' preview uses a console-only signature, and Parliament's comparison uses a judgment-only
+signature with pure suffixes. Only the selected, revalidated command can enter a storage handler.
 
 The [open-systems guide](open-systems.md) explains composition and observation.
 The [Parliament application](../../Examples/Parliament/README.md) uses the

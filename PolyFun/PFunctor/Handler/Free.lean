@@ -99,4 +99,40 @@ theorem comp_assoc
   exact (FreeM.liftM_comp (first a) second third).symm
 
 end Handler
+
+namespace FreeM
+
+/-- Injecting a left-side program and interpreting a coproduct handler uses only that handler. -/
+theorem liftM_mapLens_inl {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {m : Type u → Type u'} [Monad m] {α : Type u}
+    (program : FreeM P α) (left : Handler m P) (right : Handler m Q) :
+    (program.mapLens (Lens.inl (Q := Q))).liftM (Handler.sum left right) =
+      program.liftM left := by
+  induction program with
+  | pure value => rfl
+  | lift_bind operation next ih =>
+    change (left operation >>= fun answer =>
+      ((next answer).mapLens Lens.inl).liftM (Handler.sum left right)) =
+      (left operation >>= fun answer => (next answer).liftM left)
+    congr 1
+    funext answer
+    exact ih answer
+
+/-- Injecting a right-side program uses only the right component implementation. -/
+theorem liftM_mapLens_inr {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {m : Type u → Type u'} [Monad m] {α : Type u}
+    (program : FreeM Q α) (left : Handler m P) (right : Handler m Q) :
+    (program.mapLens (Lens.inr (P := P))).liftM (Handler.sum left right) =
+      program.liftM right := by
+  induction program with
+  | pure value => rfl
+  | lift_bind operation next ih =>
+    change (right operation >>= fun answer =>
+      ((next answer).mapLens Lens.inr).liftM (Handler.sum left right)) =
+      (right operation >>= fun answer => (next answer).liftM right)
+    congr 1
+    funext answer
+    exact ih answer
+
+end FreeM
 end PFunctor

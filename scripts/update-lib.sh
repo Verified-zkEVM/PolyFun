@@ -5,7 +5,10 @@
 #   ./scripts/update-lib.sh                       # regenerates PolyFun.lean
 #   ./scripts/update-lib.sh ToCslib               # regenerates ToCslib.lean
 #   ./scripts/update-lib.sh ComplexityBackends    # regenerates ComplexityBackends.lean
-#   ./scripts/update-lib.sh Examples.Parliament   # regenerates Examples/Parliament.lean
+#   ./scripts/update-lib.sh PolyFunIO             # optional IO library
+#   ./scripts/update-lib.sh Parliament            # standalone example library
+#   ./scripts/update-lib.sh Notes                 # standalone example library
+#   ./scripts/update-lib.sh Pipeline              # standalone example library
 #
 # This script only considers tracked files. New <Lib>/**/*.lean files
 # must be staged first.
@@ -17,16 +20,20 @@ cd "$REPO_ROOT"
 
 lib="${1:-PolyFun}"
 case "$lib" in
-  PolyFun|ToCslib|ComplexityBackends|Examples.Parliament) ;;
+  PolyFun|ToCslib|ComplexityBackends|PolyFunIO|Parliament|Notes|Pipeline) ;;
   *)
-    echo "ERROR: unknown library '$lib' (expected PolyFun, ToCslib, ComplexityBackends, or Examples.Parliament)." >&2
+    echo "ERROR: unknown library '$lib'." >&2
     exit 1
     ;;
 esac
 
 source_root="${lib//.//}"
+package_root=""
+case "$lib" in
+  Parliament|Notes|Pipeline) package_root="Examples/$lib/"; source_root="$package_root$lib" ;;
+esac
 
-if [[ ! -d "$source_root" || ! -f "$source_root.lean" ]]; then
+if [[ ! -d "$source_root" ]]; then
   echo "ERROR: Run this script from inside the PolyFun repository." >&2
   exit 1
 fi
@@ -58,7 +65,7 @@ trap cleanup EXIT
 # around their generated imports.
 umbrella_header() {
   case "$1" in
-    Examples.Parliament)
+    Parliament|Notes|Pipeline|PolyFunIO)
       cat <<'EOF_HEADER'
 /-
 Copyright (c) 2026 PolyFun Contributors. All rights reserved.
@@ -93,7 +100,7 @@ EOF_HEADER
 
 umbrella_docstring() {
   case "$1" in
-    Examples.Parliament)
+    Parliament)
       cat <<'EOF_DOCSTRING'
 
 /-!
@@ -102,6 +109,27 @@ umbrella_docstring() {
 A bounded RONR case study of indexed interaction, legal histories, dynamical execution,
 and interchangeable IO handlers. See `Examples/Parliament/README.md` for the runnable
 walkthrough and the explicit specification and physical-IO proof boundary.
+-/
+EOF_DOCSTRING
+      ;;
+    Notes)
+      cat <<'EOF_DOCSTRING'
+
+/-! # Local note-taking with typed effects and a replayable command journal -/
+EOF_DOCSTRING
+      ;;
+    Pipeline)
+      cat <<'EOF_DOCSTRING'
+
+/-! # Read-only file reporting through a typed, resumable component assembly -/
+EOF_DOCSTRING
+      ;;
+    PolyFunIO)
+      cat <<'EOF_DOCSTRING'
+
+/-! # Optional typed console forms and checked filesystem operations
+
+This library is deliberately outside the backend-neutral `PolyFun` umbrella.
 -/
 EOF_DOCSTRING
       ;;
@@ -147,7 +175,7 @@ EOF_DOCSTRING
   echo ""
   git ls-files -- "$source_root/*.lean" \
     | LC_ALL=C sort \
-    | sed 's/\.lean//;s,/,.,g;s/^/public import /'
+    | sed "s|^$package_root||;s/\.lean//;s,/,.,g;s/^/public import /"
   umbrella_docstring "$lib"
 } > "$tmp_file"
 

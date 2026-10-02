@@ -5,6 +5,12 @@ and bridges to core's lattice-generic `Std.Internal.Do` / `vcgen` stack.
 It is parameterized by effects and an ordered result algebra. VCVio supplies
 probabilistic interpretations; its quantitative carrier is not part of PolyFun.
 
+For a small application-facing entry point, read
+[UpdatePolicies](../../Examples/Tutorials/UpdatePolicies.lean). A finite proposed update shows
+all-response validation, an explicit permitted-answer policy, exact reachability, and one
+noncompliant handler. An empty policy illustrates why partial correctness alone is not progress.
+The tutorial consumes public `OpSpec` and `FreeM.wpFold` APIs without importing the tactic tier.
+
 ## Layers
 
 | Module | Content |

@@ -155,10 +155,25 @@ the answer stored by that completion. -/
       occ.before (Path.trace (occ.resume completion.answer) completion.suffix)
         target completion.answer)
 
+/-- Supply an explicit answer without issuing the focused query, then execute its residual.
+Only the suffix performs effects; supplying an answer does not roll any effects back. -/
+def completeWith (occ : Occurrence target program n) (answer : P.B target) :
+    FreeM P (Completion occ) :=
+  FreeM.map (fun suffix => Completion.mk answer suffix) (withPath (occ.resume answer))
+
+/-- At the head occurrence, supplying an answer executes exactly the chosen suffix. -/
+theorem completeWith_here (next : P.B target → FreeM P α) (answer : P.B target) :
+    (Occurrence.here next).completeWith answer =
+      FreeM.map (fun suffix => Completion.mk answer suffix) (withPath (next answer)) := rfl
+
 /-- Execute the focused query and its residual, retaining the typed completion. -/
 def complete (occ : Occurrence target program n) : FreeM P (Completion occ) :=
   FreeM.liftBind target fun answer =>
     FreeM.map (fun suffix => Completion.mk answer suffix) (withPath (occ.resume answer))
+
+/-- Ordinary completion requests its answer before completing the selected suffix. -/
+theorem complete_eq_liftBind (occ : Occurrence target program n) :
+    occ.complete = FreeM.liftBind target occ.completeWith := rfl
 
 /-- Execute an occurrence completion and plug it back into the original program. -/
 def completePath (occ : Occurrence target program n) : FreeM P (Path program) :=
@@ -634,6 +649,32 @@ complete the occurrence twice. -/
 def forkAt [DecidableEq P.A] (target : P.A) (program : FreeM P α) (n : Nat) :
     FreeM P (Option (ForkView target program n)) :=
   FreeM.bind (splitAt target program n) Split.completeFork
+
+/-- Execute the prefix once, supply two explicit answers, and execute each suffix independently.
+The selected query is not sent to the handler. Missing occurrences yield `none`; suffix effects
+are neither isolated nor rolled back, so speculative callers should use a read-only interface. -/
+def forkAtWith [DecidableEq P.A] (target : P.A) (program : FreeM P α) (n : Nat)
+    (firstAnswer secondAnswer : P.B target) : FreeM P (Option (ForkView target program n)) :=
+  FreeM.bind (splitAt target program n) fun result => match result with
+  | .missing _ => pure none
+  | .found occurrence =>
+    FreeM.bind (occurrence.completeWith firstAnswer) fun first =>
+      FreeM.map (fun second => some ⟨occurrence, first, second⟩)
+        (occurrence.completeWith secondAnswer)
+
+@[simp] theorem forkAtWith_pure [DecidableEq P.A] (target : P.A) (value : α) (n : Nat)
+    (first second : P.B target) :
+    forkAtWith target (pure value : FreeM P α) n first second = pure none := rfl
+
+/-- At the first matching query, explicit forking performs only the two selected suffixes. -/
+theorem forkAtWith_liftBind_same_zero [DecidableEq P.A] (target : P.A)
+    (next : P.B target → FreeM P α) (first second : P.B target) :
+    forkAtWith target (FreeM.liftBind target next) 0 first second =
+      FreeM.bind ((Occurrence.here next).completeWith first) (fun firstCompletion =>
+        FreeM.map (fun secondCompletion => some
+          (ForkView.mk (.here next) firstCompletion secondCompletion))
+          ((Occurrence.here next).completeWith second)) := by
+  simp [forkAtWith, splitAt]
 
 /-- Certified splitting followed by two focused completions is exactly the
 ordinary `forkAt` computation after forgetting the validity certificate. -/

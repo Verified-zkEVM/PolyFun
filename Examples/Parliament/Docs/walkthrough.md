@@ -4,6 +4,13 @@ Start with the [runnable meeting](../README.md#run-the-example), then read these
 in order. The full application remains the common example throughout: these semantic
 views and instrumented handlers reuse its existing definitions.
 
+For the smaller entry point, begin with [Notes](../../Notes/README.md), then
+[typed attendance](../Parliament/Walkthrough/Attendance.lean). Its `FreeM` form reads
+two IDs and a yes/no field through the shared console handler. `checkedAttendance`
+keeps input errors separate from domain rejections: successfully parsing a chair ID
+does not confer authority. Invalid fields, unauthorized actors, and incomplete input
+remain distinct outcomes under either a real or an in-memory console handler.
+
 ## 1. Requests whose responses carry the next state
 
 `JudgmentSig` is a `PFunctor`: a position is a request, and its direction type is a
@@ -18,7 +25,7 @@ The ordinary `meetingSystem` uses the same source map as its update operation.
 
 ## 2. One execution, two descriptions
 
-[Execution](../Walkthrough/Execution.lean) defines `toPrefix`, translating a
+[Execution](../Parliament/Walkthrough/Execution.lean) defines `toPrefix`, translating a
 `MeetingPath` into PolyFun's generic `DynSystem.Prefix`. It retains every direction
 and has exactly as many steps as the command journal. The proved equations are:
 
@@ -44,7 +51,7 @@ meeting model. Its `DynComputation.ofStep` representation can either expose one 
 those effects or return an exit value. The committed journal stays unchanged while
 a candidate is awaiting persistence; successful acknowledgment installs the successor.
 
-[Behavior](../Walkthrough/Behavior.lean) uses the existing machine behavior as a
+[Behavior](../Parliament/Walkthrough/Behavior.lean) uses the existing machine behavior as a
 `Resumption`, then embeds it with `Resumption.toITree`. `behavior_view` identifies the
 resumption's destructor with `machineStep`. `behavior_done` observes a returned exit;
 `behaviorTree_query` preserves an exposed effect and its dependent response type.
@@ -58,7 +65,7 @@ The production runtime continues from the retained state through `runIO`.
 
 ## 4. Change the handler, keep the machine
 
-[Handlers](../Walkthrough/Handlers.lean) interprets the same application through
+[Handlers](../Parliament/Walkthrough/Handlers.lean) interprets the same application through
 `WriterT (List EffectTag) (StateM Memory)`. `loggedHandler` uses `Handler.withTraceAppend` to delegate every answer to
 the existing memory backend and record only the kind of requested effect.
 
@@ -78,8 +85,7 @@ read → persist → tell → read → publish → tell
 For a failed persistence attempt it is `read → persist → tell`, followed by a failure
 exit with unchanged acknowledged history. Persistence errors are response values
 inside `StateM`, so the trace added after the response also records a failed
-persistence attempt. Both cases run in the regression suite.
-The log records requested effects; it does not certify external physical operations.
+persistence attempt. The log records requested effects; it does not certify external physical operations.
 The real IO handler separately performs terminal interactions, checked writes, and
 publication, as described in the [runtime contract](runtime.md).
 
@@ -88,7 +94,7 @@ publication, as described in the [runtime contract](runtime.md).
 This snippet uses only an ordinary import:
 
 ```lean
-import Examples.Parliament
+import Parliament
 
 #check Parliament.Walkthrough.toPrefix_events
 #check Parliament.Walkthrough.meetingSafety_safe
@@ -98,6 +104,6 @@ import Examples.Parliament
 #check PFunctor.DynSystem.DynComputation.runChunk_natural
 ```
 
-The separate consumer fixture checks these interfaces across a Lake package boundary.
-Run `./scripts/validate.sh --lint --test --axioms` to check core laws, the complete
-case study, its walkthroughs, and the actual executable together.
+Parliament consumes PolyFun across the standalone Lake package boundary. For checks of these
+interfaces and the executable, use the [validation guide](../../../docs/development/validation.md).
+The [execution guide](../../../docs/guides/execution.md) explains the generic driver APIs.
