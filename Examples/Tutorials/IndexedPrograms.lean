@@ -22,9 +22,9 @@ See the [indexed-program tutorial](../../docs/tutorials/indexed-programs.md).
 
 @[expose] public section
 
-namespace IPFunctor.Examples
+namespace PolyFunExamples.IndexedPrograms
 
-/-! ## Two-phase protocol fixture -/
+/-! ## Two-phase protocol -/
 
 /-- The two phases of the running protocol. Once we leave `opn`, we never
 return: every transition from either state goes to `counting`. The
@@ -62,7 +62,7 @@ instance : IPFunctor.DeterministicTransitions proto where
     | .counting, _ => .counting
   spec s _ _ := by cases s <;> rfl
 
-/-! ## Flavor 1: `IPFunctor.FreeM₂` with statically-tracked post-states
+/-! ## Explicit start and end indices
 
 The two-index variant tracks pre- and post-state in the type, so chains
 compose without restriction and the `IndexedMonad` instance from
@@ -89,8 +89,7 @@ def run : IPFunctor.FreeM₂ proto .opn .counting Nat := do
   let b ← tick
   pure (a + b)
 
-/-- The run unfolds to a transparent nested `liftBind` tree, exercising the
-`FreeM₂.bind` simp lemmas. -/
+/-- Sequencing preserves the initial request and the two dependent counting steps. -/
 example :
     run = IPFunctor.FreeM₂.liftBind () (fun _ =>
       IPFunctor.FreeM₂.liftBind () (fun a : Nat =>
@@ -99,24 +98,15 @@ example :
 
 end TwoIndex
 
-/-! ## Flavor 2: single-index `IPFunctor.FreeM` under `DeterministicTransitions`
+/-! ## Response-independent transitions
 
-When transitions are deterministic, a single-index `IPFunctor.FreeM` chain
-can still compose arbitrarily because each `IPFunctor.FreeM.lift s a`
-lands at the unique post-state `det.next s a`. The
-[`Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) elaborator
-detects the `IPFunctor.FreeM.lift`-shape and uses the specialized
-`IPFunctor.FreeM.bindLiftA` to thread that concrete post-state, lifting the
-universal-quantification restriction that bites generic single-index
-`do`-blocks. -/
+When the next phase does not depend on the response, single-index `IPFunctor.FreeM`
+can also sequence these operations. The deterministic notation threads the known post-state
+through each `lift` step; this assumption does not hold for every indexed protocol. -/
 
 namespace Deterministic
 
-/-- `init` as a `FreeM` `lift`-style step. Marked `@[reducible]` so the
-deterministic elaborator can see through it to the underlying `lift`.
-`lift`'s state argument is explicit, so we use the fully-qualified
-`Phase.opn` rather than the dotted form, which has no type to infer
-from at that position. -/
+/-- The initial step exposes its underlying `lift` to the deterministic notation. -/
 @[reducible] def init : IPFunctor.FreeM proto Phase.opn Unit :=
   IPFunctor.FreeM.lift Phase.opn ()
 
@@ -134,11 +124,7 @@ def run : IPFunctor.FreeM proto .opn Nat := do
   let b ← tick
   pure (a + b)
 
-/-- The deterministic elaborator emits a nested `liftBind` chain whose post-states
-are pinned by the `DeterministicTransitions` instance; the `(det.spec _).symm ▸`
-transports inside `bindLiftA` collapse by `rfl` because `proto`'s `spec` proof
-is itself `rfl` after `cases s`. Mirrors the parallel `TwoIndex.run` check
-above. -/
+/-- The single-index program has the same three requests as the two-index program. -/
 example :
     run = IPFunctor.FreeM.liftBind Phase.opn () (fun _ : Unit =>
       IPFunctor.FreeM.liftBind Phase.counting () (fun a : Nat =>
@@ -147,16 +133,11 @@ example :
 
 end Deterministic
 
-/-! ## Flavor 3: erasing into a plain `PFunctor.FreeM` via `IPFunctor.FreeM.toSigmaFreeM`
+/-! ## Forgetting indices while retaining request tags
 
-`IPFunctor.FreeM.erase` requires `[Unique I]`, which `Phase` is not. The
-Σ-bundled forgetful map `IPFunctor.FreeM.toSigmaFreeM` (in
-[`Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean)) works for any index type by recording
-the originating state inside each position; the result sits over
-`proto.sigmaPFunctor` rather than `proto.toPFunctor`. We test the
-collapsing simp lemmas (`toSigmaFreeM_pure`, `toSigmaFreeM_liftBind`) by
-checking that the `TwoIndex.run` tree, viewed as an `IPFunctor.FreeM`,
-agrees definitionally with the expected nested `PFunctor.FreeM.liftBind`. -/
+`IPFunctor.FreeM.toSigmaFreeM` produces an ordinary polynomial free program by recording
+the originating phase in each request. The result uses `proto.sigmaPFunctor`: forgetting
+the index does not discard the phase tags needed to interpret the requests. -/
 
 example :
     IPFunctor.FreeM.toSigmaFreeM proto TwoIndex.run.toFreeM
@@ -166,4 +147,4 @@ example :
         PFunctor.FreeM.liftBind ⟨.counting, ()⟩ (fun b : Nat =>
           PFunctor.FreeM.pure (a + b)))) := rfl
 
-end IPFunctor.Examples
+end PolyFunExamples.IndexedPrograms

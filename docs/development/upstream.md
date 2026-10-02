@@ -39,6 +39,16 @@ Their pins are recorded in the manifest; their README files live under
   See [bisimulation](../guides/bisimulation.md).
 - **Temporal reasoning:** reuse the pinned temporal operators and prove
   application-specific fairness statements over the chosen event/ticket model.
+- **Handled execution:** `HandledDiagram.initial`, `runToken`, and `runFIFO` wrap
+  PolyFun's existing routed runtime and retain residuals. Their composition laws delegate
+  to that runtime; CSLib's free-monad interpreters do not own PolyFun's packet topology.
+  The generic stateful ordinary-import consumer and Pipeline exercise the same methods.
+- **Fairness observations:** the ticket predicate characterization lemmas belong beside
+  PolyFun's `ProcessOver.Ticketed`, not in a tutorial or in a duplicate scheduler model.
+  FairWorkQueues uses existing runs, temporal predicates and Moore-machine streams.
+- **Metadata and finite control:** ReviewableWorkflows uses existing `Decoration.map`,
+  `toOver` and cursor restriction; BoundedController uses the existing finite step class
+  and boundary translation. These consumers need no new display or realizability wrapper.
 - **Program logic:** ordered algebras and exact support connect to core's
   lattice-generic WP stack. `Std.Do` and `Std.Internal.Do` denote distinct
   interfaces in this pin; see [program logic](../guides/program-logic.md).

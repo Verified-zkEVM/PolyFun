@@ -33,6 +33,25 @@ abbrev Handler (m : Type u → Type v) (q : PFunctor.{uA, u}) :=
 
 namespace Handler
 
+/-- Handle a coproduct by independent implementations of its two interfaces. The response
+type still depends on the selected operation; no dynamic response conversion is needed. -/
+def sum {m : Type u → Type v} {P : PFunctor.{uA, u}} {Q : PFunctor.{uI, u}}
+    (left : PFunctor.Handler.{u, v, uA} m P)
+    (right : PFunctor.Handler.{u, v, uI} m Q) :
+    PFunctor.Handler.{u, v, max uA uI} m (P + Q)
+  | .inl operation => left operation
+  | .inr operation => right operation
+
+@[simp] theorem sum_inl {m : Type u → Type v}
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uI, u}}
+    (left : Handler m P) (right : Handler m Q) (operation : P.A) :
+    sum left right (.inl operation) = left operation := rfl
+
+@[simp] theorem sum_inr {m : Type u → Type v}
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uI, u}}
+    (left : Handler m P) (right : Handler m Q) (operation : Q.A) :
+    sum left right (.inr operation) = right operation := rfl
+
 /-- Postcompose every answer computation of a handler by a polymorphic map
 between target type constructors. No monad laws are needed for this basic
 change-of-target operation. -/
@@ -60,6 +79,15 @@ theorem mapTarget_comp {m : Type u → Type v} {n : Type u → Type w}
     mapTarget second (mapTarget first handler) =
       mapTarget (fun computation => second (first computation)) handler :=
   rfl
+
+/-- Changing the target acts independently on both component handlers. -/
+theorem mapTarget_sum {m : Type u → Type v} {n : Type u → Type w}
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uI, u}}
+    (transform : ∀ {α : Type u}, m α → n α) (left : Handler m P) (right : Handler m Q) :
+    mapTarget transform (sum left right) =
+      sum (mapTarget transform left) (mapTarget transform right) := by
+  funext operation
+  cases operation <;> rfl
 
 /-- An effectful stateful handler for `q`: on each position it reads a state,
 performs effects in `m`, and returns a direction together with the next state.

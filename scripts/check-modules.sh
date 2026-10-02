@@ -13,8 +13,8 @@ status=0
 lean_sources() {
   git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
     'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunTest/*.lean' \
-    'Examples/*.lean' 'PolyFunParliamentMain.lean' \
-    'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean'
+    'Examples/*.lean' 'PolyFunIO.lean' 'PolyFunIO/*.lean' \
+    'test/DocumentationConsumer/*.lean'
 }
 
 while IFS= read -r file; do
@@ -130,24 +130,45 @@ fi
 
 # Production and upstream staging must stay usable without teaching/test libraries or executables.
 while IFS= read -r file; do
-  if grep -qE "${import_prefix}(Examples|PolyFunTest|PolyFunParliamentMain)([[:space:]]|\.|$)" "$file"; then
+  if grep -qE "${import_prefix}(Examples|PolyFunTest|Parliament|ParliamentTest|ParliamentMain|Notes|NotesTest|NotesMain|Pipeline|PipelineTest|PipelineMain)([[:space:]]|\.|$)" "$file"; then
     echo "ERROR: $file imports an example, test, or executable from a production library." >&2
     status=1
   fi
 done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
-  'ComplexityBackends.lean' 'ComplexityBackends/*.lean')
+  'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunIO.lean' 'PolyFunIO/*.lean')
+
+# Root regressions and tutorials must not silently pull in a standalone application.
+while IFS= read -r file; do
+  if grep -qE "${import_prefix}(Parliament|ParliamentTest|ParliamentMain|Notes|NotesTest|NotesMain|Pipeline|PipelineTest|PipelineMain)([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file imports a standalone application into a root test/tutorial target." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFunTest/*.lean' 'Examples/Tutorials/*.lean')
+
+# Computational example modules and their memory tests do not import real-IO entry points.
+# The package umbrellas intentionally export the runtimes, so they are not pure-layer imports.
+while IFS= read -r file; do
+  case "$file" in
+    Examples/Notes/Notes/Runtime.lean|Examples/Pipeline/Pipeline/App.lean) continue ;;
+  esac
+  if grep -qE "${import_prefix}(Notes|NotesMain|Pipeline|PipelineMain)([[:space:]]|$)|${import_prefix}(Notes\.Runtime|Pipeline\.App)([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file imports an executable runtime into an example computational layer." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'Examples/Notes/Notes/*.lean' 'Examples/Notes/NotesTest/*.lean' \
+  'Examples/Pipeline/Pipeline/*.lean' 'Examples/Pipeline/PipelineTest/*.lean')
 
 # Layering (docs/reference/repo-map.md): `ToCslib` is upstream staging and never imports PolyFun or
 # a complexity backend; the generic `PolyFun` library never imports a concrete complexity backend.
 while IFS= read -r file; do
-  if grep -qE "${import_prefix}(PolyFun|ComplexityBackends)([[:space:]]|\.|$)" "$file"; then
+  if grep -qE "${import_prefix}(PolyFun|PolyFunIO|ComplexityBackends)([[:space:]]|\.|$)" "$file"; then
     echo "ERROR: $file imports PolyFun or ComplexityBackends from the ToCslib staging library." >&2
     status=1
   fi
 done < <(git ls-files -- 'ToCslib.lean' 'ToCslib/*.lean')
 
 while IFS= read -r file; do
-  if grep -qE "${import_prefix}ComplexityBackends([[:space:]]|\.|$)" "$file"; then
+  if grep -qE "${import_prefix}(ComplexityBackends|PolyFunIO)([[:space:]]|\.|$)" "$file"; then
     echo "ERROR: $file imports a concrete complexity backend from the generic PolyFun library." >&2
     status=1
   fi
@@ -244,8 +265,8 @@ while IFS= read -r file; do
     echo "packages must reach every library through its public API." >&2
     status=1
   fi
-done < <(git ls-files -- 'Examples/*.lean' 'PolyFunParliamentMain.lean' \
-  'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean')
+done < <(git ls-files -- 'Examples/*.lean' 'PolyFunIO.lean' 'PolyFunIO/*.lean' \
+  'test/DocumentationConsumer/*.lean')
 
 # Grandfathered worked examples that still open `PolyFun` bodies. Remove entries as they migrate to
 # public laws; do not add entries.

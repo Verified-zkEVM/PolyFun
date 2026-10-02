@@ -12,9 +12,9 @@ public import PolyFun.PFunctor.Handler
 /-!
 # Requests, programs, and handlers
 
-A program asks two dependent questions. Changing its handler changes the answers without
-changing the program. The README excerpt is checked against this module by the documentation
-integrity checker. Import this module to explore the definitions in `PolyFunExamples.Requests`.
+A program asks two questions, with the first answer determining the second request.
+Changing its handler changes the answers without changing the program. These handlers are
+deterministic interpretations; the program itself specifies requests, not their answers.
 -/
 
 @[expose] public section

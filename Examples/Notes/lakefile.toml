@@ -1,0 +1,33 @@
+name = "PolyFunNotes"
+defaultTargets = ["Notes", "polyfun-notes"]
+packagesDir = "../../.lake/packages"
+testDriver = "NotesTest"
+lintDriver = "batteries/runLinter"
+lintDriverArgs = ["Notes", "NotesMain"]
+
+[leanOptions]
+autoImplicit = false
+relaxedAutoImplicit = false
+pp.unicode.fun = true
+weak.linter.mathlibStandardSet = true
+weak.linter.style.longFile = 1500
+
+[[require]]
+name = "PolyFun"
+path = "../.."
+
+[[require]]
+name = "Cli"
+scope = "leanprover"
+rev = "v4.34.0"
+
+[[lean_lib]]
+name = "Notes"
+
+[[lean_lib]]
+name = "NotesTest"
+globs = ["NotesTest.+"]
+
+[[lean_exe]]
+name = "polyfun-notes"
+root = "NotesMain"

@@ -1,8 +1,24 @@
-# Architecture and implementation plan
+# Architecture
 
 The implementation follows five layers: executable content operations, parliamentary
 state, procedural premises, certified transaction boundaries, and PolyFun interaction.
-The first release is implemented; the coverage ledger identifies deliberate limits.
+The [coverage ledger](coverage.md) identifies deliberate limits and source references.
+
+The example is an independent Lake package. `PolyFunIO` supplies shared typed forms,
+streams, and checked storage; core never imports this optional library or an application.
+Internal certified meeting state is separate from ephemeral application-session history state.
+No local interpreter replaces a library computation representation.
+
+Application effects form the coproduct of interaction and storage. `Handler.sum` composes
+the real or memory implementations. Read-only history restrictions live in `handleSession`;
+a backend cannot bypass them by submitting a command while a historical cursor is selected.
+`Dialogue.judgmentForm` is the same typed dialogue for real and memory consoles;
+the memory backend does not depend on terminal execution.
+
+`App.Preview` compares explicit answers using typed cursor completions. Each hypothetical branch
+checks `answerJudgment` and `continueAfterRuling` through `checkInput`, explicitly assuming no
+appeal. Its polynomial interface cannot persist or publish. Neither branch certifies that its
+interpretive judgment is substantively correct, and neither answers the live request.
 
 ## Data and identity
 
@@ -53,7 +69,7 @@ substantive adopted decisions, and exact agreement of a counted decision with it
 source poll and prescribed outcome.
 
 The preservation theorems establish that *accepted* transitions preserve these
-contracts. The checker explicitly validates the postcondition; this release does not
+contracts. The checker explicitly validates the postcondition; the model does not
 prove that every raw procedural candidate automatically satisfies it. A procedure
 bug may consequently reject a command with `invalidState` without compromising the
 accepted-transition theorem. Scenario coverage exercises intended successful cases.
@@ -109,12 +125,9 @@ It also proves agreement of the index with the accepted prefix length.
 
 ## Validation and extension
 
-The test suite combines kernel-checked concrete arithmetic/calendar/edit facts,
-replay-checked meeting scenarios, error-boundary tests, external judgment handlers,
-an actual PolyFun interpreter, and a separate consumer package using ordinary public
-imports. `scripts/check.sh` also runs the dependency's kernel-level axiom sweep over
-all `Parliament` modules; the umbrella coverage check prevents unaudited production
-files from being omitted. CI invokes that same wrapper.
+The [validation guide](../../../docs/development/validation.md#examples-as-usability-checks)
+owns test coverage and commands. Parliament consumes PolyFun through ordinary imports
+across its standalone package boundary.
 
 To extend the model:
 
@@ -129,11 +142,11 @@ orders, nested and undebatable appeal refinements, richer recognition preference
 special orders, and reconsideration. They require new specification work and should
 not be treated as aliases for existing commands.
 
-## Implemented IO application layer
+## IO application layer
 
-The [runtime and minutes specification](runtime.md) describes the new execution layer.
-It adds a certified `History`/`Journal`, contextual `MinuteEntry` values, ordered
-`Records`/`RecordsHistory` judgments, typed draft and payload certificates, a resumable
+The [runtime and minutes specification](runtime.md) describes the application protocol and storage limits.
+The layer contains a certified `History`/`Journal`, contextual `MinuteEntry` values, ordered
+`Records`/`RecordsHistory` judgments, typed draft and payload certificates, the generic resumable
 PolyFun driver, explicit application phases, and real/in-memory effect handlers.
 
 This layer preserves the underlying parliamentary rules. It reconstructs all derived

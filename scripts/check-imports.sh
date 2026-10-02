@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Check whether each generated umbrella module (PolyFun.lean, ToCslib.lean,
-# ComplexityBackends.lean, Examples/Parliament.lean) matches the tracked
+# ComplexityBackends.lean and the optional IO/example roots) matches the tracked
 # <Lib>/**/*.lean file set.
 
 set -euo pipefail
@@ -11,8 +11,11 @@ cd "$REPO_ROOT"
 
 status=0
 
-for lib in PolyFun ToCslib ComplexityBackends Examples.Parliament; do
+for lib in PolyFun ToCslib ComplexityBackends PolyFunIO Parliament Notes Pipeline; do
   source_root="${lib//.//}"
+  case "$lib" in
+    Parliament|Notes|Pipeline) source_root="Examples/$lib/$lib" ;;
+  esac
   echo "Checking if all $lib imports are up to date..."
 
   backup_file="$(mktemp "${TMPDIR:-/tmp}/$lib.lean.backup.XXXXXX")"

@@ -33,7 +33,7 @@ changes the signature/re-export boundary only.
 | `PolyFun/` proof modules | sibling `PolyFun` modules, for a named definition | any `ComplexityBackends` module |
 | `ToCslib/` | nothing (upstream staging stays ordinary-import clean) | `PolyFun`, `ComplexityBackends` |
 | `ComplexityBackends/` | its own modules | `PolyFun`, `ToCslib` |
-| `Examples/`, `PolyFunParliamentMain.lean`, consumer packages | nothing | everything |
+| `Examples/`, `Examples/Parliament/ParliamentMain.lean`, consumer packages | nothing | everything |
 | `PolyFunTest/` worked examples | `ComplexityBackends` modules; `PolyFun` modules only in the grandfathered `PolyFunTest/Interaction/` examples listed in the script | `PolyFun` elsewhere |
 | `PolyFunTest/ModuleAPI/` canaries | nothing | everything |
 

@@ -1,0 +1,33 @@
+name = "PolyFunParliament"
+defaultTargets = ["Parliament", "polyfun-parliament"]
+packagesDir = "../../.lake/packages"
+testDriver = "ParliamentTest"
+lintDriver = "batteries/runLinter"
+lintDriverArgs = ["Parliament", "ParliamentMain"]
+
+[leanOptions]
+autoImplicit = false
+relaxedAutoImplicit = false
+pp.unicode.fun = true
+weak.linter.mathlibStandardSet = true
+weak.linter.style.longFile = 1500
+
+[[require]]
+name = "PolyFun"
+path = "../.."
+
+[[require]]
+name = "Cli"
+scope = "leanprover"
+rev = "v4.34.0"
+
+[[lean_lib]]
+name = "Parliament"
+
+[[lean_lib]]
+name = "ParliamentTest"
+globs = ["ParliamentTest.+"]
+
+[[lean_exe]]
+name = "polyfun-parliament"
+root = "ParliamentMain"

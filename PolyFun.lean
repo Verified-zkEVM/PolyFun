@@ -54,6 +54,7 @@ public import PolyFun.ITree.Events.Exception
 public import PolyFun.ITree.Events.ExceptionFacts
 public import PolyFun.ITree.Events.State
 public import PolyFun.ITree.Events.StateFacts
+public import PolyFun.ITree.Execution
 public import PolyFun.ITree.Free
 public import PolyFun.ITree.Handler
 public import PolyFun.ITree.Interp.Defs

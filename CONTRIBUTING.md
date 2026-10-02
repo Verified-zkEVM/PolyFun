@@ -289,12 +289,18 @@ rationale in the owning guide before removing a stale document.
 
 ## Case-study validation
 
-Maintained applications live under `Examples/` in the optional `PolyFunExamples`
-library. Parliament's recurring `scripts/test-parliament-cli.py` checks process
+Maintained applications live in independent Lake packages under `Examples/Parliament`,
+`Examples/Notes` and `Examples/Pipeline`; `PolyFunExamples` contains small tutorials only.
+The optional `PolyFunIO` library contains reusable console and storage primitives.
+Parliament's recurring `scripts/test-parliament-cli.py` checks process
 exit codes, terminal input, writer locks, publication, and recovery using temporary
-directories. The validation wrapper and CI run it after building `polyfun-parliament`.
+directories. Notes has `scripts/test-notes-cli.py`; Pipeline has `scripts/test-pipeline-cli.py`
+for read-only reports and resumed execution. The validation wrapper's `--examples`
+flag and CI run them after building the standalone executables.
 Every spawned process needs a bounded wait and cleanup on failure.
 
-Generate its public import index with `./scripts/update-lib.sh Examples.Parliament`.
+Generate its public import index with `./scripts/update-lib.sh Parliament`.
 This optional library root is distinct from tutorial modules, which need no umbrella.
-Use the separate `test/ParliamentConsumer` package to check its public interfaces.
+The standalone packages check public APIs across their dependency on PolyFun; Parliament's
+ordinary-import canaries live in `ParliamentTest/PublicAPI.lean`. Notes, Pipeline and `PolyFunIO`
+have matching generator arguments. No example is pulled into root production or regression targets.
