@@ -24,6 +24,7 @@ public import PolyFun.Control.Monad.Indexed
 public import PolyFun.Control.Monad.Iter
 public import PolyFun.Control.Monad.Iter.Instances
 public import PolyFun.Control.Monad.Support
+public import PolyFun.Control.Monad.Support.Charged
 public import PolyFun.Control.Monad.Support.Indexed
 public import PolyFun.Control.Monad.Support.Instances
 public import PolyFun.Control.Monad.Support.Loops
@@ -115,6 +116,9 @@ public import PolyFun.Interaction.Execution.ReactiveNetwork
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Assembly
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Behavior
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Budget
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Charge
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Conserving
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Credit
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Diagram
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Factorization
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Factorization.Right

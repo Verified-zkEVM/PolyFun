@@ -16,7 +16,10 @@ Each successful finite prefix retains its exact activation count, including bloc
 administrative steps. A global rank on invariant network states bounds the fuel after which
 every successful token result has a terminal environment. Progress supplies at least one
 successful result; it does not assert that all branches of an effect interpreter return.
-Local reaction bounds alone do not provide such a rank in the presence of feedback.
+Local reaction bounds alone do not provide such a rank in the presence of feedback. Local
+conservation certificates do: `Conserving.toTokenBudget`
+(`PolyFun.Interaction.Execution.ReactiveNetwork.Conserving`) derives one from per-node potentials
+and credit carried by packets.
 
 These are activation bounds. Atomic handlers and the runtime's routing, queue, scheduling,
 initialization, and output operations still require quantitative implementation witnesses.
