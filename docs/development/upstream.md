@@ -9,7 +9,7 @@ upstream README can describe APIs that the pinned revision does not yet supply.
 
 | Project | Existing role | Guidance for PolyFun contributors |
 |---|---|---|
-| [Lean](https://github.com/leanprover/lean4) | Language, module system, basic effects, weakest-precondition infrastructure | Use core monad laws and the pinned `Std.Internal.Do` interfaces through the documented quarantine. |
+| [Lean](https://github.com/leanprover/lean4) | Language, module system, basic effects, weakest-precondition infrastructure | Use core monad laws and the pinned `Std.WP` interfaces through the documented quarantine. |
 | [Mathlib](https://github.com/leanprover-community/mathlib4) | `PFunctor`, W/M-types, algebra, order and category theory | Extend existing structures, notation, and typeclasses; use its naming and documentation conventions. |
 | [CSLib](https://github.com/leanprover/cslib) | Polynomial and generic free monads, transition systems, temporal and machine foundations | Reuse `PFunctor.FreeM`, `Cslib.FreeM`, relational LTS laws and machine APIs; stage reusable additions in `ToCslib`. |
 | [Batteries](https://github.com/leanprover-community/batteries) | Lean utilities and environment linter driver | Use the existing linter integration rather than a second policy implementation. |
@@ -40,8 +40,8 @@ Their pins are recorded in the manifest; their README files live under
 - **Temporal reasoning:** reuse the pinned temporal operators and prove
   application-specific fairness statements over the chosen event/ticket model.
 - **Program logic:** ordered algebras and exact support connect to core's
-  lattice-generic WP stack. `Std.Do` and `Std.Internal.Do` denote distinct
-  interfaces in this pin; see [program logic](../guides/program-logic.md).
+  lattice-generic WP stack `Std.WP`. The legacy `Std.Do` stack is a distinct
+  interface that PolyFun does not instantiate; see [program logic](../guides/program-logic.md).
 - **Complexity:** `ComplexityBackends/` holds machine-relative theory and the
   adapters that certify PolyFun step maps with it, one subdirectory per
   backend. Generic PolyFun does not acquire a concrete complexity backend
@@ -59,7 +59,12 @@ behavior match the consumer.
 
 `FreeP.node`, `FreeP.encode`, and `FreeP.decode` use the owning polynomial
 object API: `Obj.mk`, `fst`, `snd`, `rec`, and `ext`. Node projections and
-encoding/decoding equations support ordinary imports. `FreeP.relabel` delegates
+encoding/decoding equations support ordinary imports. Positions of an indexed
+sum have the parallel interface `sigma.mk`, `sigma.fst`, `sigma.snd`,
+`sigma.rec`, `sigma.ext`, and `sigma.B_mk`; `Handler.sigma`, the sigma lenses
+and charts, wiring evaluation, and the sigma displays and displayed handlers
+are stated through it, so
+consumers need no reducibility override on `sigma` to work with those positions. `FreeP.relabel` delegates
 to `PFunctor.map`. Positions of composite polynomials and dependent path
 decompositions that are defined as Sigma types retain those types; they are
 distinct from the object carrier. The free-handler bridge explicitly selects

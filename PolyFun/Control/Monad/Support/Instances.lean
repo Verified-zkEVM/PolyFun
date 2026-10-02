@@ -111,27 +111,11 @@ end Transport
 
 /-! ## Base instances
 
-Core supplies `MonadAttach` and `LawfulMonadAttach` for `Id`, `Option`, `OptionT`,
-`ExceptT`, `StateT`, and `ReaderT`; only the exactness fields are needed here. `Except` and
-`SetM` have no core instance and are supplied below. -/
+Core supplies `MonadAttach` and `LawfulMonadAttach` for `Id`, `Option`, `Except`, `OptionT`,
+`ExceptT`, `StateT`, and `ReaderT`; only the exactness fields are needed here. `SetM` has no core
+instance and is supplied below. -/
 
 section Instances
-
-/-- Core provides no `MonadAttach (Except ε)` at this pin, only the transformer version; this
-mirrors core's `Option` instance. An identical declaration has landed upstream and ships in
-Lean v4.35, so delete this instance and the one below it at that toolchain bump. -/
-instance instMonadAttachExcept {ε : Type u} : MonadAttach (Except ε) where
-  CanReturn x a := x = Except.ok a
-  attach
-    | .ok a => .ok ⟨a, rfl⟩
-    | .error e => .error e
-
-instance instLawfulMonadAttachExcept {ε : Type u} : LawfulMonadAttach (Except ε) where
-  map_attach {_ x} := by cases x <;> rfl
-  canReturn_map_imp {_ _ x _} h := by
-    cases x with
-    | error e => cases h
-    | ok z => cases h; exact z.2
 
 /-- Core's `MonadAttach (ExceptT ε m)` is stated at `max`-joined universes, which blocks
 synthesis in a universe-polymorphic context; this alias instantiates it at a single

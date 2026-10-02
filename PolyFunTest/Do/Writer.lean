@@ -14,23 +14,24 @@ public import Mathlib.Algebra.FreeMonoid.Basic
 /-!
 # `WriterT` on core's `vcgen`
 
-`WriterT.MonoidWP.instWPMonad` lifts a core interpretation through Mathlib's writer
-transformer with a log-indexed carrier. The `@[spec]` rules of `PolyFun.Control.Do.Spec`
-let `vcgen` step
-through `tell`, lifted base computations, and `run`. The log is a free monoid so that what was
-written is visible as a list. Each `vcgen` call asserts the experimental-tactic diagnostic with
-`#guard_msgs`, keeping `mvcgen.warning` enabled.
+`WriterT.MonoidWP.instWPMonad` lifts a core interpretation through Mathlib's writer transformer with
+a log-indexed carrier. The `@[spec]` rules of `PolyFun.Control.Do.Spec` let `vcgen` step through
+`tell`, lifted base computations, and `run`. The log is a free monoid so that what was written is
+visible as a list. The module acknowledges the tactic's experimental status with `set_option
+experimental.vcgen true`; `PolyFunTest.Do.Algebra` pins the diagnostic itself.
 -/
 
 public section
 
-open Std.Internal.Do MonadAttach
+open Std.WP MonadAttach
+
+set_option experimental.vcgen true
 
 /- Importing the bridge leaves the writer interpretation unselected. -/
 example : True := by
   fail_if_success
     have := inferInstanceAs
-      (WPMonad (WriterT (FreeMonoid Nat) Id) (FreeMonoid Nat → Prop) EPost.Nil)
+      (WPMonad (WriterT (FreeMonoid Nat) Id) (FreeMonoid Nat → Prop) EStack⟨⟩)
   trivial
 
 open scoped WriterT.MonoidWP
@@ -43,27 +44,19 @@ def logTwo (a b : Nat) : WriterT (FreeMonoid Nat) Id Nat := do
   pure s
 
 /- The postcondition sees the log accumulated so far; `tell` extends it on the right. -/
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 example (a b : Nat) :
     ⦃ fun w => w = 1 ⦄ logTwo a b ⦃ fun r w => r = a + b ∧ w.toList = [a, b] ⦄ := by
   vcgen [logTwo]
   simp_all
 
 /- `run` starts from the empty log. -/
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 example (a b : Nat) :
     ⦃ True ⦄ (logTwo a b).run ⦃ fun p => p.1 = a + b ∧ p.2.toList = [a, b] ⦄ := by
   vcgen [logTwo]
   simp_all
 
 /-- The demonic interpretation of `SetM`, lifted by the scoped writer interpretation. -/
-local instance instWPMonadSetMDemonic : WPMonad SetM Prop EPost.Nil :=
+local instance instWPMonadSetMDemonic : WPMonad SetM Prop EStack⟨⟩ :=
   toWPMonadDemonic
 
 /-- A nondeterministic choice between an element and its successor. -/
@@ -78,10 +71,6 @@ def logChoice (x : Nat) : WriterT (FreeMonoid Nat) SetM Nat := do
 
 /- Over a nondeterministic base the log records the choice made; the nondeterministic leaf has no
 registered specification and is discharged against the support. -/
-/--
-warning: The `vcgen` tactic is an experimental drop-in replacement for `mvcgen` that will eventually replace it. Avoid using it in production projects.
--/
-#guard_msgs in
 example (x : Nat) :
     ⦃ fun w => w = 1 ⦄ logChoice x
       ⦃ fun r w => (r = x ∨ r = x + 1) ∧ w.toList = [x, r] ⦄ := by

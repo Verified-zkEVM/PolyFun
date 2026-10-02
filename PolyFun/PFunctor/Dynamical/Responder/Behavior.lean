@@ -13,8 +13,8 @@ public import PolyFun.PFunctor.Dynamical.Simulation
 /-!
 # State-free responder behavior
 
-An ordinary state-free responder behavior for `P` is already the terminal
-coalgebra `M (P ⊸ y)`; no paper-specific `Mealy` alias is introduced.  Given a
+An ordinary state-free responder behavior for `P` is the terminal
+coalgebra `M (P ⊸ y)`. Given a
 proof-relevant responder coalgebra, `Display.Coalgebra.toM` maps a state and
 its current witness into the greatest displayed fixed point over that ordinary
 behavior:
@@ -638,8 +638,8 @@ theorem respondDisplayed_reindexDisplayedBehavior_next
         (respondDisplayed S
           (reindexDisplayedBehavior S T f displayedF behavior displayedBehavior)
           query precondition).2 =
-      reindexDisplayedBehavior S T f displayedF result.2 displayedResult.2 := by
-  exact respondDisplayed_toDisplayedBehavior_next S
+      reindexDisplayedBehavior S T f displayedF result.2 displayedResult.2 :=
+  respondDisplayed_toDisplayedBehavior_next S
     (Responder.reindex f (Responder.terminal (P := Q)))
     (Display.M (Display.responder T))
     (Responder.reindexCoalgebra S T f displayedF

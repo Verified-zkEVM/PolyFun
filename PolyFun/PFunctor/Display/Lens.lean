@@ -177,9 +177,7 @@ def transport {f g : PFunctor.Lens P Q} (h : f = g)
 
 theorem transport_proof_irrel {g : PFunctor.Lens P Q} (h h' : f = g)
     (displayed : Display.Lens S T f) :
-    transport h displayed = transport h' displayed := by
-  cases h
-  rfl
+    transport h displayed = transport h' displayed := rfl
 
 @[simp] theorem transport_toPosition {g : PFunctor.Lens P Q} (h : f = g)
     (displayed : Display.Lens S T f) (a : P.A) (c : S.position a) :

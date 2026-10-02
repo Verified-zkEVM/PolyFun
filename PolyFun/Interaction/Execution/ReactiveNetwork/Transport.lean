@@ -97,8 +97,8 @@ omit [DecidableEq Node] [DecidableEq Node'] in
 private theorem packet_reindex (e : Node' ≃ Node) (id : Node')
     (packet : Interface.Packet (network.ports (e id)).In) :
     (Equiv.sigmaCongrLeft (β := fun id => Interface.Packet (network.ports id).In) e).symm
-      ⟨e id, packet⟩ = ⟨id, packet⟩ := by
-  exact Equiv.symm_apply_apply
+      ⟨e id, packet⟩ = ⟨id, packet⟩ :=
+  Equiv.symm_apply_apply
     (Equiv.sigmaCongrLeft (β := fun id => Interface.Packet (network.ports id).In) e) ⟨id, packet⟩
 
 /-- Delivery respects dependent recipient types after relabeling. -/

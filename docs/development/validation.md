@@ -120,3 +120,9 @@ run `lake update` and the full suite. Keep the root manifest committed and
 review the resolved versions. Consumer manifests are regenerated locally.
 Compatibility tests for existing deprecated APIs should assert their expected
 diagnostics with strict `#guard_msgs` rather than suppressing warnings.
+
+A release candidate is pinned like a stable version, with the `-rcN` tags in
+every place the version goes; merging a toolchain change to `main` cuts the
+matching PolyFun release tag. Acknowledging an experimental
+feature (`set_option experimental.vcgen true`) is not a linter suppression; one
+pinned diagnostic in `PolyFunTest/Do/Algebra.lean` tracks its warning text.

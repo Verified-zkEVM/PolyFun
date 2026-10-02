@@ -1,7 +1,9 @@
 # Program-Logic Core
 
-PolyFun's program-logic layer supplies ordered monad algebras, exact support,
-and bridges to core's lattice-generic `Std.Internal.Do` / `vcgen` stack.
+PolyFun's program-logic layer extends core's lattice-generic `Std.WP` / `vcgen` stack:
+exactness of interpretations (`ExactWPMonad`) and the equational `simp` set it licenses on core's
+`wp`, ordered monad algebras as a presentation of exact interpretations, exact support, and the
+relational layer core does not have.
 It is parameterized by effects and an ordered result algebra. VCVio supplies
 probabilistic interpretations; its quantitative carrier is not part of PolyFun.
 
@@ -9,26 +11,27 @@ probabilistic interpretations; its quantitative carrier is not part of PolyFun.
 
 | Module | Content |
 |---|---|
-| `PolyFun/Control/Monad/Algebra.lean` | `MAlgOrdered m l`: ordered monad algebras over a complete lattice, with `wp`, `Triple`, the structural rule set, `StateT`/`ReaderT`/`ExceptT`/`OptionT` lifts, and the honest two-postcondition `wpExc`/`wpOpt` |
-| `PolyFun/Control/Monad/Algebra/Restrict.lean` | `MAlgOrdered.restrictIic`: an algebra that respects a bound `c` restricted to the lower set `Set.Iic c` (Mathlib's complete lattice on it), with `wp_restrictIic_val` and `restrictIic_triple_iff` — the shape of a probabilistic carrier `[0, 1] ⊆ ℝ≥0∞` |
-| `PolyFun/Control/Monad/Algebra/Relational.lean` | `MAlgRelOrdered m₁ m₂ l`: relational `rwp`/`RelWP`/`Triple`, asynchronous one-sided bind rules, structural pure rules, explicit named `StateT`/`ReaderT` side lifts, and the `StrictBind` / `Anchored` subclasses (Maillard et al. POPL 2020 shapes) |
-| `PolyFun/Control/Monad/Algebra/Relational/Support.lean` | Named demonic and angelic exact-support relational algebras; support characterizations; matching `StrictBind` and `Anchored` witnesses |
-| `PolyFun/Control/Monad/Support.lean` | `ExactMonadAttach m`: additional pure/bind composition laws for `MonadAttach.CanReturn`; `MonadAttach.support`; the `AllOutputs`/`SomeOutput`/`NoOutput` judgments and scoped `⊨ₐ`/`⊨ₛ`/`⊭` notation with their `pure`/`bind` laws; the named demonic and angelic `MAlgOrdered m Prop` choices |
+| `PolyFun/Control/Monad/Algebra.lean` | `MonadAlgebra`/`LawfulMonadAlgebra` (Eilenberg–Moore structure maps); `MAlgOrdered m l`: ordered monad algebras over a complete lattice, a structure map `μ` fixing `pure` and monotone under `bind` — the presentation of an exact interpretation that `MAlgOrdered.toWPMonad` installs |
+| `PolyFun/Control/Monad/Algebra/Restrict.lean` | `MAlgOrdered.restrictIic`: an algebra that respects a bound `c` restricted to the lower set `Set.Iic c` (Mathlib's complete lattice on it), with `wp_restrictIic_val` and `restrictIic_triple_iff` on core's `wp`/`Triple` — the shape of a probabilistic carrier `[0, 1] ⊆ ℝ≥0∞` |
+| `PolyFun/Control/Monad/Algebra/Relational.lean` | `MAlgRelOrdered m₁ m₂ l`: relational `rwp`/`RelWP`/`Triple`, asynchronous one-sided bind rules, structural pure rules, explicit named `StateT`/`ReaderT` side lifts, the honest `rwpExc`, and the `StrictBind` / `Anchored` subclasses (Maillard et al. POPL 2020 shapes; `Anchored` ties `rwp` to core's `wp` of each side at `pure`) |
+| `PolyFun/Control/Monad/Algebra/Relational/Support.lean` | Named demonic and angelic exact-support relational algebras; support characterizations; matching `StrictBind` witnesses and `Anchored` witnesses over `toWPMonadDemonic`/`toWPMonadAngelic` |
+| `PolyFun/Control/Monad/Support.lean` | `ExactMonadAttach m`: additional pure/bind composition laws for `MonadAttach.CanReturn`; `MonadAttach.support`; the `AllOutputs`/`SomeOutput`/`NoOutput` judgments and scoped `⊨ₐ`/`⊨ₛ`/`⊭` notation with their `pure`/`bind` laws |
 | `PolyFun/Control/Monad/Support/Instances.lean` | The `MonadLiftT m SetM` shim, transport along lawful lifts, the `MonadAttach` instances for `Except`, `SetM`, and Mathlib’s `WriterT`, exactness instances for `Id`/`Option`/`OptionT`/`ExceptT`, per-monad `CanReturn` unfoldings |
 | `PolyFun/Control/Monad/Support/Indexed.lean` | Per-run support of `StateT`/`ReaderT` (`supportFrom`, `supportAt`) with exact laws and the indexed judgments `⊨ₐ[s]`/`⊨ₛ[s]`/`⊭[s]` |
 | `PolyFun/Control/Monad/Support/Structural.lean` | The rest of the `do` fragment for `CanReturn` and the judgments: `<*`, `*>`, `if`, `if h :`, `Option.elim`, `Sum.elim`, `<$>`, `<*>` |
 | `PolyFun/Control/Monad/Support/Loops.lean` | Invariant rules for `forIn'`/`forIn`/`foldlM`/`forM` over lists and `PureForIn` containers, for `AllOutputs` (from core's `Spec.*` under the demonic instance) and `SomeOutput` (angelic) |
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
-| `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); `OpSpec.toMAlgOrdered`; semantic `FreeM.wpVia` through a `Handler`; soundness `wpFold_le_wpVia`/`wpFold_eq_wpVia` |
-| `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`), `FreeM.wpMonadOfHandler` (transport along `liftMHom`), and `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad` |
+| `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); `OpSpec.toMAlgOrdered` (`toMAlgOrdered_μ_bind_pure`); coherence of the demonic/angelic folds with the support judgments |
+| `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`), `FreeM.wpMonadOfHandler` (transport along `liftMHom`), both exact when their source is; `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad`, and `wpFold_eq_wp_liftM` over an exact one; `allOutputs_liftM_of_wpFold` / `allOutputs_liftM_of_allOutputs` for the support of the interpreted program |
 | `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
 | `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.bind`, `Spec.lift_angelic`, `Spec.lift_ofHandler` that let `vcgen` decompose free programs with uninterpreted operations |
-| `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as a core `Std.Internal.Do.WPMonad m l EPost.Nil` (through the `ToCslib.Order.LeanOrder` bridge), `wp` agreement by `rfl`, `toWP_triple_iff`, `wpConjunctiveOf`, and the transfer lemmas `top_eq_top` / `meet_eq_inf` / `join_eq_sup` between core's and Mathlib's lattice operations |
-| `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPMonadDemonic` / `toWPMonadAngelic`: the always/some judgments as `WPMonad m Prop EPost.Nil`; conjunctivity of the demonic reading; `MonadAttach.LawfulWPMonadAttach` (soundness with respect to lawful attachment, the class core ships as `Std.WP.LawfulWPMonadAttach` from v4.35) with its demonic instance; `support_subset_of_wp` / `allOutputs_of_wp` |
-| `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWPOf` / `transportWPMonadOf` (along cslib's `IsMonadHom`) and the bundled `transportWP` / `transportWPMonad`: pulling a core `WPMonad` back along a monad morphism |
-| `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.wpMonadOf`: explicit empty/append operations on the log-indexed carrier `ω → Pred`; the multiplicative specialization is scoped under `WriterT.MonoidWP`, `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, `wp_run_eq`, and the `tell` / `monadLift` entailments behind the `@[spec]` rules |
+| `PolyFun/Control/Monad/ExactWP.lean` | `ExactWPMonad m Pred EPred`: the `Prop` mixin of the oplax laws, core's `pure`/`bind` soundness laws read in the order dual, which together with soundness make the laws equations (equivalently `ExactWPMonad.isMonadHom`, a monad morphism into `PredTrans`); `ExactWPMonad.dual`, the same interpretation over `Predᵒᵈ`, whose triples are upper bounds, with `of_dual` and `exactWPMonad_iff_dual`; the equational `simp` set on core's `wp` (`wp_pure`, `wp_bind`, `wp_map`, `wp_seq`, `wp_seqLeft`, `wp_seqRight`, `wp_ite`, `wp_dite`, `wp_option_elim`, `wp_sum_elim`); exactness of core's `Id`/`Option`/`Except`/`EStateM` interpretations and of its `StateT`/`ReaderT`/`ExceptT`/`OptionT` lifts |
+| `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as the core `Std.WP.WPMonad m l EStack⟨⟩` with `wp x post = μ (x >>= fun a => pure (post a))` (through the `ToCslib.Order.LeanOrder` bridge), exact (`instExactWPMonadToWPMonad`), its value by `rfl` (`toWPMonad_wp`, not `@[simp]`), `toWP_triple_iff`, `wpConjunctiveOf`, and the transfer lemmas `top_eq_top` / `meet_eq_inf` / `join_eq_sup` between core's and Mathlib's lattice operations |
+| `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPDemonic` / `toWPAngelic`: the always/some judgments as core `WP` transformers from attachment alone; `toWPMonadDemonic` / `toWPMonadAngelic`: the `WPMonad m Prop EStack⟨⟩` interpretations built on them; conjunctivity of the demonic reading; exactness of both readings over an `ExactMonadAttach`; the demonic instance of core's `Std.WP.LawfulWPMonadAttach` (soundness with respect to lawful attachment); `support_subset_of_wp` / `allOutputs_of_wp` |
+| `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWPOf` / `transportWPMonadOf` (along cslib's `IsMonadHom`) and the bundled `transportWP` / `transportWPMonad`: pulling a core `WPMonad` back along a monad morphism, preserving exactness |
+| `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.wpMonadOf`: explicit empty/append operations on the log-indexed carrier `ω → Pred`; the multiplicative specialization is scoped under `WriterT.MonoidWP`, `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, `wp_run_eq`, and the `tell` / `monadLift` entailments behind the `@[spec]` rules, and exactness over an exact base (`exactWPMonad_wpMonadOf`, scoped `WriterT.MonoidWP.instExactWPMonad`) |
 | `PolyFun/Control/Monad/Hom/Loops.lean` | A monad morphism between lawful monads commutes with `forIn'`/`forIn`/`forM`/`foldlM`/`mapM` and with `forIn` over `PureForIn` containers (`@[simp, grind =]`), through `MonadHom.isMonadHom` and cslib's `IsMonadHom.map_list*` |
-| `PolyFun/Control/Do/Spec.lean` | Tactic tier: `@[spec] Spec.forM_list`, the list loop core does not specify; the `@[spec]` registration of core's `Spec.tryCatch_MonadExcept`, the `try … catch` rule core states but does not tag; and the `WriterT` rules `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` |
+| `PolyFun/Control/Do/Spec.lean` | Tactic tier: `@[spec] Spec.forM_list`, the list loop core does not specify; the `@[spec]` registration of core's `Spec.tryCatch_MonadExcept`, the `try … catch` rule core states but does not tag; and the `WriterT` rules `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT`; the transformers' constructors, lifts and runners that programs write (`StateT.mk`, `StateT.lift`, `StateT.run'`, `OptionT.mk`, `ExceptT.mk`, `ExceptT.lift`, `Spec.run_OptionT'`, `Spec.run_ExceptT'`), `Spec.guard_OptionT_iInf` for every assertion carrier, `Spec.mapM_list` with a loop invariant, and `Spec.seqLeft`/`Spec.seqRight` |
 
 Worked examples: `PolyFunTest/Control/MonadAttach.lean` (judgments, notation,
 `Iff.rfl` transfer contract), `PolyFunTest/Control/{SupportStructural,SupportLoops,MonadHomLoops}.lean`
@@ -70,15 +73,15 @@ The support layer is a three-way split:
 The demonic core `WPMonad` needs only `LawfulMonadAttach`, including when the
 monad is a state or reader transformer. Its pure/bind laws are inequalities,
 proved directly from core's return-value elimination lemmas. The angelic
-interpretation and the equality-based `MAlgOrdered` constructions require exact
-composition. Writer attachment's weak and strong law instances require the
+interpretation, and exactness of either reading, require exact composition. Writer attachment's weak and strong law instances require the
 corresponding upstream law on the base, independently of exactness.
 
 `PolyFunTest/Do/Support.lean` checks that lawful `CanReturn` agrees with upstream
 `Std.Do.Internal.MayReturn`, that `AllOutputs` agrees with `Ensures`, and that
-two lawful attachment instances have equivalent return predicates. These older
-internal predicates stay out of the public API: the v4.35 public soundness class
-uses `CanReturn` directly ([Lean #14801](https://github.com/leanprover/lean4/pull/14801)).
+two lawful attachment instances have equivalent return predicates. These
+internal predicates stay out of the public API: core's public soundness class
+`Std.WP.LawfulWPMonadAttach` uses `CanReturn` directly
+([Lean #14801](https://github.com/leanprover/lean4/pull/14801)).
 
 Core supplies the instances for `Id`, `Option`, `OptionT`, `ExceptT`, `StateT`,
 and `ReaderT`; PolyFun adds `Except` and `SetM` (which core lacks), a
@@ -128,8 +131,8 @@ For `[MonadAttach m]` and `x : m α` (`open scoped MonadAttach`):
 
 These stay `Iff.rfl`-convertible both to their bounded-quantifier spellings and
 to `CanReturn` — a contract pinned by tests — so downstream support-based
-statements transfer without rewriting. `triple_top_iff_allOutputs` identifies
-`x ⊨ₐ p` with the trivial-precondition `Prop`-carrier triple, and on `FreeM` the
+statements transfer without rewriting. `toWPMonadDemonic_triple_iff` identifies
+`x ⊨ₐ p` with core's triple under the demonic reading, and on `FreeM` the
 judgments recurse structurally (`allOutputs_liftBind` and friends) and agree with
 the demonic/angelic `wpFold` (`wpFold_demonic_iff_allOutputs`).
 
@@ -143,18 +146,17 @@ different environments. The test suite pins both failures. Reason per run instea
 specification layer (`PFunctor/Free/WP.lean`), which indexes the notion by a
 per-operation answer assignment.
 
-The support-based unary and relational `Prop` algebras and the relational transformer lifts are
-explicit named definitions, not unrestricted global instances. This keeps
-support partial correctness distinct from the existing failure-as-`⊥`
-`OptionT`/`ExceptT` algebras and prevents inequivalent left/right transformer
-instance paths. The demonic relational algebra quantifies over every pair in the
-two supports; the angelic algebra asks for one witnessing pair. Both satisfy
-`StrictBind` and are `Anchored` to the corresponding unary support algebra.
+The unary support readings, the relational `Prop` algebras, and the relational transformer
+lifts are explicit named definitions, not unrestricted global instances. This keeps
+support partial correctness distinct from other interpretations of the same monad and prevents
+inequivalent left/right transformer instance paths. The demonic relational algebra quantifies
+over every pair in the two supports; the angelic algebra asks for one witnessing pair. Both
+satisfy `StrictBind` and are `Anchored` to the corresponding unary support reading.
 Install the intended definitions and witnesses locally at each verification boundary.
 
 ```lean
-local instance : MAlgOrdered m₁ Prop := MonadAttach.mAlgOrderedPropDemonic
-local instance : MAlgOrdered m₂ Prop := MonadAttach.mAlgOrderedPropDemonic
+local instance : WPMonad m₁ Prop EStack⟨⟩ := MonadAttach.toWPMonadDemonic
+local instance : WPMonad m₂ Prop EStack⟨⟩ := MonadAttach.toWPMonadDemonic
 local instance : MAlgRelOrdered m₁ m₂ Prop :=
   MonadAttach.mAlgRelOrderedPropDemonic
 local instance : StrictBind m₁ m₂ Prop := MonadAttach.strictBindPropDemonic
@@ -185,20 +187,20 @@ What `do`-notation elaborates to, and where each construct has a rule. "free" me
 core's `Spec.*` lemma applied through the `WPMonad` instances of the bridges, with no PolyFun
 proof.
 
-| Construct | core `wp` / `Triple` (`vcgen`) | `AllOutputs` / `SomeOutput` / `support` | `MAlgOrdered.wp` | `MonadHom` | `wpFold` |
+| Construct | core `wp` / `Triple` (`vcgen`) | `AllOutputs` / `SomeOutput` / `support` | exact core `wp` (`simp`) | `MonadHom` | `wpFold` |
 |---|---|---|---|---|---|
-| `pure`, `>>=`, `<$>`, `<*>` | free | `Support.lean`, `Support/Structural.lean` | `Algebra.lean` | `Hom.lean` | `Free/WP.lean` |
-| `FreeM.lift a`, `FreeM.liftBind a r`, `(FreeM.lift a).bind r` | `Spec.lift`/`Spec.liftBind`/`Spec.bind` (`Free/Do.lean`; tail position via `wp_apply_eq`, gotcha 12f) | `Free/Support.lean` (`allOutputs_lift`, `allOutputs_bind`, `allOutputs_liftBind`) | via `OpSpec.toMAlgOrdered` | — | `wpFold_lift` / `wpFold_bind` / `wpFold_liftBind` |
-| `<*`, `*>` | free | `Support/Structural.lean` | `Algebra.lean` (`wp_seqLeft`/`wp_seqRight`) | `Hom.lean` | `Free/WP.lean` |
+| `pure`, `>>=`, `<$>`, `<*>` | free | `Support.lean`, `Support/Structural.lean` | `ExactWP.lean` | `Hom.lean` | `Free/WP.lean` |
+| `FreeM.lift a`, `FreeM.liftBind a r`, `(FreeM.lift a).bind r` | `Spec.lift`/`Spec.liftBind`/`Spec.bind` (`Free/Do.lean`; tail position via `wp_apply_eq`, gotcha 12f) | `Free/Support.lean` (`allOutputs_lift`, `allOutputs_bind`, `allOutputs_liftBind`) | via `OpSpec.toWPMonad` | — | `wpFold_lift` / `wpFold_bind` / `wpFold_liftBind` |
+| `<*`, `*>` | `Spec.seqLeft`/`Spec.seqRight` in `Do/Spec.lean` | `Support/Structural.lean` | `ExactWP.lean` (`wp_seqLeft`/`wp_seqRight`) | `Hom.lean` | `Free/WP.lean` |
 | `if`, `if h :` | `vcgen` splits | `Support/Structural.lean` | `wp_ite`/`wp_dite` | `mmap_ite`/`mmap_dite` | `wpFold_ite`/`wpFold_dite` |
 | `match` on `Option`/`Sum` | `vcgen` splits | `*_option_elim`/`*_sum_elim` | `wp_option_elim`/`wp_sum_elim` | `mmap_option_elim`/`mmap_sum_elim` | `wpFold_option_elim`/`wpFold_sum_elim` |
 | `for` over `List`/`Array`/ranges/`Option`/`Vector` | free (`Spec.forIn'_list`, `forIn_pure` + `PureForIn`) | `Support/Loops.lean` | via the instance | `Hom/Loops.lean` | via `OpSpec.toWPMonad` (`Free/WP/Upstream.lean`) |
 | `forM`, `foldlM` | `Spec.foldlM_list` free, `Spec.forM_list` in `Do/Spec.lean` | `Support/Loops.lean` | via the instance | `Hom/Loops.lean` | — |
-| `mapM` | — | — | — | `Hom/Loops.lean` | — |
+| `mapM` | `Spec.mapM_list` in `Do/Spec.lean`, with an invariant over the elements consumed, the elements remaining and the outputs so far | — | — | `Hom/Loops.lean` | — |
 | early `return`/`break`/`continue` | `Invariant.withEarlyReturnNewDo` (core) | via the instance | — | — | — |
-| `throw`/`tryCatch` on `ExceptT`/`OptionT` | core's lifted instances (`Spec.throw_MonadExcept`, `Spec.tryCatch_ExceptT`), plus `Spec.tryCatch_MonadExcept` registered in `Do/Spec.lean` for the `try … catch` elaboration | via the instance | — | `ExceptT.mapHom`/`OptionT.mapHom` | — |
-| `get`/`set`/`read` | core's lifted instances | `Support/Indexed.lean` (`supportFrom`, `supportAt`) | — | `StateT.mapHom`/`ReaderT.mapHom` | — |
-| `tell`/`WriterT.run` | `WriterT.MonoidWP.instWPMonad` (`WriterT/WP.lean`) with `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` in `Do/Spec.lean` | — (`WriterT` support is inexact; `Support/Instances.lean`) | `MAlgOrdered.instWriterT` | `WriterT.mapHom` | — |
+| `throw`/`tryCatch` on `ExceptT`/`OptionT` | core's lifted instances (`Spec.throw_MonadExcept`, `Spec.tryCatch_ExceptT`), plus `Spec.tryCatch_MonadExcept` registered in `Do/Spec.lean` for the `try … catch` elaboration | via the instance | core's lifts, exact over an exact base | `ExceptT.mapHom`/`OptionT.mapHom` | — |
+| `get`/`set`/`read` | core's lifted instances | `Support/Indexed.lean` (`supportFrom`, `supportAt`) | core's lifts, exact over an exact base | `StateT.mapHom`/`ReaderT.mapHom` | — |
+| `tell`/`WriterT.run` | `WriterT.MonoidWP.instWPMonad` (`WriterT/WP.lean`) with `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` in `Do/Spec.lean` | — (`WriterT` support is inexact; `Support/Instances.lean`) | `WriterT.MonoidWP.instExactWPMonad` | `WriterT.mapHom` | — |
 | `while`/`repeat` | `ITree` only (`ITree/Do.lean`); no rule on finite `FreeM` | — | — | — | — |
 
 Open in this table: the relational (`MAlgRelOrdered`) loop rules, which need an invariant
@@ -209,16 +211,17 @@ lifting rule core states as `Spec.tryCatch_MonadExcept` but — unlike its twin
 `Spec.throw_MonadExcept` — does not tag; `Do/Spec.lean` registers it, and
 `PolyFunTest/Do/Except.lean` runs `vcgen` through a `try … catch` on `ExceptT String SetM`.
 
-## The `Std.Do` quarantine
+## The `Std.WP` quarantine
 
 Core's weakest-precondition API is fenced in two tiers (`scripts/check-modules.sh` enforces
 both, for every import modifier):
 
-- **Definitions** — `Std.Do` and `Std.Internal.Do` (`WP`, `WPMonad`, `Triple`, the `@[spec]`
-  lemmas) — may be imported by the program-logic kernel, `PolyFun/Control/Monad/`,
+- **Definitions** — `Std.WP` (`WP`, `WPMonad`, `Triple`, the `@[spec]` lemmas) and the legacy
+  `Std.Do` stack — may be imported by the program-logic kernel, `PolyFun/Control/Monad/`,
   `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`, `PolyFun/ITree/Do.lean`, and by
   `PolyFunTest/Do/`.
-- **Tactics** — `Std.Tactic.Do` (`mvcgen`, `vcgen`, the `@[spec]` attribute syntax) — stay in
+- **Tactics** — `Std.Tactic.Do` (`vcgen`, the deprecated `mvcgen`, the `@[spec]` attribute
+  syntax; `Std.WP.Tactic` once the syntax moves there) — stay in
   `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`.
 
 `ToCslib/` imports neither directly. The quarantine keeps the dependency on the fast-moving
@@ -233,24 +236,24 @@ or install `WriterT.wpMonadOf` locally with the empty/append operations and the 
 witness for that same `WriterT.monad`. This supports append-based logs without adding a
 `Monoid` instance or creating a competing writer monad. `PolyFunTest/Do/WriterAppend.lean`
 checks ordered accumulation from a nonempty incoming log. `vcgen` itself is experimental at
-this pin (it warns on every call), so production
-proofs do not call it; tactic calls live in `PolyFunTest/Do/`, where each asserts the warning
-with `#guard_msgs`.
+this pin: it warns on every call unless `set_option experimental.vcgen true` acknowledges that
+status. Production proofs do not call it; tactic calls live in `PolyFunTest/Do/`, whose modules
+set the option, and `PolyFunTest/Do/Algebra.lean` pins the diagnostic itself with `#guard_msgs`.
 
 ## The two upstream WP stacks
 
-Core ships **two** complete weakest-precondition stacks at the v4.34.0 pin. PolyFun's
+Core ships **two** complete weakest-precondition stacks at the pinned toolchain. PolyFun's
 canonical interface is the lattice-generic one; nothing in PolyFun instantiates the older
 SPred one.
 
-| | `Std/Internal/Do/` (canonical here) | `Std/Do/` (not used) |
+| | `Std/WP/` (canonical here) | `Std/Do/` (not used) |
 |---|---|---|
 | Assertions | any `Lean.Order.CompleteLattice` (`Assertion`) | `SPred` / `PostShape` |
-| `WPMonad` bind law | inequational (`bind_le_wp_bind`) | equational (`wp_bind : … = …`) |
+| `WPMonad` bind law | inequational (`bind_le_wp_bind`); equational under PolyFun's `ExactWPMonad` | equational (`wp_bind : … = …`) |
 | Conjunctivity | opt-in, per program (`WPConjunctive x`) | a **field of `PredTrans`**, bi-entailment |
-| Exceptions | `EPred` postconditions (`EPost.Nil`, `EPost.Cons`) | `ExceptConds` inside `PostCond` |
-| Tactic | `vcgen` | `mvcgen` (deprecated on master) |
-| Upstream direction | public `Std.WP` in v4.35 | `mvcgen` deprecated in favor of `vcgen` |
+| Exceptions | `EPred` postconditions (`EStack⟨⟩`, `EStack⟨ε → Pred, …⟩`) | `ExceptConds` inside `PostCond` |
+| Tactic | `vcgen` (experimental) | `mvcgen` (deprecated) |
+| Status | public API since Lean v4.35 | superseded; kept for `mvcgen` users |
 
 The inequational law is what lets *both* support readings instantiate the canonical stack:
 `MonadAttach.toWPMonadDemonic` (`wp x post = AllOutputs post x`) and `toWPMonadAngelic`
@@ -260,18 +263,65 @@ distributes over `∧` in one direction only, which is exactly why it has no `St
 `MAlgOrdered.toWPMonad` gives every Mathlib-lattice carrier the same treatment through the
 `ToCslib.Order.LeanOrder` bridge, and `MonadHom.transportWPMonad` pulls any of these back along
 a monad morphism. None of them is a global instance; install them `local` or `scoped` at the
-carrier (`PolyFunTest/Do/{Algebra,Support}.lean` show `vcgen` running through each).
+carrier (`PolyFunTest/Do/{Algebra,Support,Angelic}.lean` show `vcgen` running through each).
 
-Argument order differs between the two triples: core's `Triple x pre post epost` is
-program-first, PolyFun's `MAlgOrdered.Triple pre x post` precondition-first; `toWP_triple_iff`
-(and `restrictIic_triple_iff` for a restricted carrier) bridge them, and no argument-order shim
-is provided.
+### What the angelic reading does and does not say
+
+`wp x post` under `toWPAngelic` is may/existential reachability: some output of `x` satisfies
+`post`. It is the right reading for reachability, search, synthesis, and witness-producing
+nondeterminism, and `PolyFunTest/Do/Angelic.lean` runs `vcgen` through it on a free program. Its
+limits are deliberate, not gaps:
+
+- No `WPConjunctive` instance, so core's `Triple.and`, `Triple.mp`, and `Triple.observe` do not
+  apply: on the support `{0, 1}`, `wp x (· = 0)` and `wp x (· = 1)` both hold while
+  `wp x (fun a => a = 0 ∧ a = 1)` fails.
+- No `LawfulWPMonadAttach` instance: `wp x (· = 0)` holds on the same support although `1` is
+  reachable, so an angelic `wp` proof never bounds every output; `support_subset_of_wp` needs the
+  demonic reading.
+- Empty support makes the angelic `wp` false where the demonic one is vacuously true.
+- Existential reachability is not a probability bound and is never a security claim. Under
+  scheduler nondeterminism it says that some favourable schedule exists, nothing about a fixed,
+  fair, random, or adversarial scheduler, which needs its own bridge downstream.
+
+## Exact interpretations
+
+Soundness, the inequational `pure` and `bind` laws, is what `vcgen` needs: it decomposes a lower
+bound `pre ⊑ wp prog post epost` into lower bounds on the pieces. These are the laws of a lax
+monad morphism into core's `PredTrans`. Three other uses need the reverse, oplax, inequalities: an
+upper bound `wp prog post epost ⊑ c` through a `bind`, an exact value, and a rewriting normal form
+for `simp`. `ExactWPMonad m Pred EPred` is the `Prop` mixin on a `WPMonad` that supplies them. The
+oplax laws are the soundness laws read in the order dual, so an exact interpretation is one that
+is sound on both `Pred` and `Predᵒᵈ`: `ExactWPMonad.dual` is the same interpretation as a core
+`WPMonad m Predᵒᵈ EPredᵒᵈ`, whose triples state upper bounds and which `vcgen` decomposes like any
+other (`PolyFunTest/Do/Dual.lean`), and `ExactWPMonad.of_dual` recovers exactness from a sound dual
+that agrees with the original (`exactWPMonad_iff_dual`). Lax and oplax together make `wp_pure` and
+`wp_bind` equations, equivalently the interpretation is a monad morphism into `PredTrans`
+(`ExactWPMonad.isMonadHom`, `ExactWPMonad.ofIsMonadHom`); `ExactWPMonad.of_eq` builds an instance
+from the equations. `ToCslib.Order.LeanOrder` supplies core's order on `αᵒᵈ`, which agrees with
+the bridge of Mathlib's dual order at instance transparency. Every construction in this guide that can be exact is:
+`MAlgOrdered.toWPMonad`, both support readings over an `ExactMonadAttach`, transport along a
+monad morphism, `OpSpec.toWPMonad`, `FreeM.wpMonadOfHandler` into an exact target, core's
+`Id`/`Option`/`Except`/`EStateM` interpretations, and core's transformer lifts and the
+`WriterT` interpretation over an exact base. Exactness is a mixin rather than a stronger class
+so that each of these stays a plain core `WPMonad`, installed as before, and so that a
+separation-logic or inexact-support interpretation keeps the same interface.
+
+Under `ExactWPMonad`, core's `wp` is the normal form: its `@[simp]` set drives `wp` inward
+through `pure`, `>>=`, `<$>`, `<*>`, `<*`, `*>`, `if`, `if h :`, `Option.elim`, and `Sum.elim`,
+with each rewrite shrinking the program argument. The value of an algebra-built interpretation,
+`toWPMonad_wp` (and `toWP_wp`), is therefore not `@[simp]`: `simp` keeps a goal stated against
+core's `wp` on core's head rather than unfolding it to the algebra.
+`PolyFunTest/Do/Exact.lean` checks the instances and that normalization stays on core's head.
+
+Core's `Triple x pre post epost` is program-first; under an algebra-built interpretation
+`toWP_triple_iff` unfolds it to Mathlib's order on the algebra (and `restrictIic_triple_iff`
+relates a restricted carrier to its base).
 
 Four practical rules for writing against the canonical stack:
 
-- Import the `Std.Internal.Do` **root** wherever a `vcgen` proof is expected: the `@[spec]`
-  database (`Spec.bind`, `Spec.pure`, …) lives in `Std.Internal.Do.Triple.SpecLemmas`, and
-  importing only `WP.Basic` yields `No spec found for program …` on every `do` block. The bridge
+- Import the `Std.WP` **root** wherever a `vcgen` proof is expected: the `@[spec]`
+  database (`Spec.bind`, `Spec.pure`, …) lives in `Std.WP.Triple.SpecLemmas`, and
+  importing only `Std.WP.Basic` yields `No spec found for program …` on every `do` block. The bridge
   modules import the root for this reason.
 - A structure with an instance-implicit parameter re-synthesizes that instance on projection
   and construction (`h.le_wp`, `⟨h⟩`, `refine ⟨…⟩` for `WPConjunctive`), so a proof about a
@@ -287,9 +337,9 @@ Four practical rules for writing against the canonical stack:
 Names in this guide follow the pinned compiler. Recheck the core WP interfaces
 when updating Lean; proposed upstream renames do not change the current API.
 
-`MAlgOrdered` stays: it is the Mathlib-lattice kernel VCVio's quantitative carrier bridges to
-by `rfl`, and its `WriterT` lift has no core counterpart. The bridge, not a port, is what
-connects it to core's order hierarchy.
+`MAlgOrdered` is a presentation, not a second program logic: it is how an exact interpretation
+over a Mathlib lattice is written down (VCVio's quantitative carrier is one), and everything
+proved about the interpretation is stated on core's `wp`.
 
 ## Qualitative and quantitative interpretations
 
@@ -309,7 +359,7 @@ automatically.
 
 ## What stays downstream
 
-Probability carriers (`evalDist`, SPMF, ℝ≥0∞/`Prob`), couplings and
+Probability carriers (`evalDist`, output measures, ℝ≥0∞/`Prob`), couplings and
 pRHL/eRHL, concrete handler specifications, verification tactics
 specific to those interpretations, and any Loom2 or Iris/Bluebell dependency.
 PolyFun supplies generic definitions, rule lemmas, and the quarantined `vcgen`
