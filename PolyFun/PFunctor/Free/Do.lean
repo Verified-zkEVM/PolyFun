@@ -22,7 +22,11 @@ core `WPMonad` interpretations of `FreeM P` and the `@[spec]` lemmas that let `v
   satisfies `Q`" (`MonadAttach.toWPMonadAngelic`), and `Spec.lift_angelic` asks for *some*
   response;
 * through a handler, `FreeM.wpMonadOfHandler s` installed locally lets `Spec.lift_ofHandler`
-  reduce an operation to the handler's `wp`.
+  reduce an operation to the handler's `wp`;
+* under the upper-bound reading of a spec, `OpSpec.toUpperWPMonad Φ hΦ` installed locally lets
+  `Spec.lift_upper` read an operation as `Φ` in the dual order. For a charge
+  (`PolyFun.PFunctor.Free.WP.Charge`) the precondition is the call's charge plus the supremum of
+  the continuation, so `vcgen` decomposes the call and leaves the continuation under the supremum.
 
 `vcgen` matches `@[spec]` lemmas structurally, so `Spec.lift`, whose value type is the dependent
 `P.B a`, applies wherever the goal's value type is syntactically `P.B a`: under `bind`, where the
@@ -156,6 +160,27 @@ theorem lift_ofHandler (s : Handler n P) (a : P.A) (Q : P.B a → Pred) (E : EPr
   rw [FreeM.liftM_lift]
 
 end Handler
+
+section Upper
+
+variable {l : Type uB} [CompleteLattice l]
+
+/-- Under the upper-bound reading of a spec, an operation's weakest precondition is the spec's
+transformer read in the dual order. Stated against the explicit interpretation; it applies once
+`OpSpec.toUpperWPMonad Φ hΦ` is installed. -/
+@[spec]
+theorem lift_upper (Φ : OpSpec P l) (hΦ : Φ.Mono) (a : P.A) (Q : P.B a → lᵒᵈ)
+    (E : EStack⟨⟩ᵒᵈ) :
+    @Triple lᵒᵈ EStack⟨⟩ᵒᵈ (FreeM P (P.B a)) (P.B a) _ _ (FreeM.lift (P := P) a)
+      ((Φ.toUpperWPMonad hΦ).toWP _)
+      (OrderDual.toDual (Φ a fun b => OrderDual.ofDual (Q b))) Q E := by
+  let inst := Φ.toUpperWPMonad hΦ
+  refine ⟨?_⟩
+  change OrderDual.toDual (Φ a fun b => OrderDual.ofDual (Q b)) ⊑
+    ((Φ.toUpperWPMonad hΦ).toWP _).wp (FreeM.lift (P := P) a) Q E
+  rw [OpSpec.toUpperWPMonad_wp, FreeM.wpFold_lift]
+
+end Upper
 
 end Spec
 

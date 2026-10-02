@@ -25,7 +25,9 @@ instances (`PolyFun.PFunctor.Free.Do` registers the scoped ones):
   `wp` is the target's `wp` of the interpreted program.
 
 Both are exact (`ExactWPMonad`) whenever their source is: the syntactic one always, the handler
-one when the target's interpretation is exact.
+one when the target's interpretation is exact. Exactness makes the syntactic interpretation sound
+on the order duals as well: `OpSpec.toUpperWPMonad` is the same interpretation over `lᵒᵈ`, whose
+triples state upper bounds on the fold.
 
 `wpFold_le_wp_liftM` is the soundness of per-operation specs against a handler stated over any
 core `WPMonad`; it needs only the inequational `bind` law. `wpFold_eq_wp_liftM` is its exact
@@ -65,6 +67,29 @@ instance instExactWPMonadToWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) :
     @ExactWPMonad (FreeM P) l EStack⟨⟩ _ _ _ (Φ.toWPMonad hΦ) :=
   letI := Φ.toMAlgOrdered hΦ
   MAlgOrdered.instExactWPMonadToWPMonad
+
+/-- The upper-bound reading of a monotone per-operation spec: the syntactic interpretation over
+the order duals (`ExactWPMonad.dual`). Its triple `⦃ toDual t ⦄ x ⦃ post ⦄` states that the fold
+of `Φ` over `x`, with leaf values `ofDual ∘ post`, is at most `t`. -/
+@[instance_reducible]
+def toUpperWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) : WPMonad (FreeM P) lᵒᵈ EStack⟨⟩ᵒᵈ :=
+  letI := Φ.toWPMonad hΦ
+  ExactWPMonad.dual
+
+/-- The upper-bound reading's `wp` is the fold, read in the dual order. -/
+theorem toUpperWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Mono) {α : Type v} (x : FreeM P α)
+    (post : α → lᵒᵈ) (epost : EStack⟨⟩ᵒᵈ) :
+    ((Φ.toUpperWPMonad hΦ).toWP α).wp x post epost =
+      OrderDual.toDual (FreeM.wpFold Φ x fun a => OrderDual.ofDual (post a)) := by
+  change OrderDual.toDual (((Φ.toWPMonad hΦ).toWP α).wp x (fun a => OrderDual.ofDual (post a))
+    (OrderDual.ofDual epost)) = _
+  rw [toWPMonad_wp]
+
+/-- The upper-bound reading is exact. -/
+instance instExactWPMonadToUpperWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) :
+    @ExactWPMonad (FreeM P) lᵒᵈ EStack⟨⟩ᵒᵈ _ _ _ (Φ.toUpperWPMonad hΦ) :=
+  letI := Φ.toWPMonad hΦ
+  ExactWPMonad.instExactWPMonadDual
 
 end OpSpec
 

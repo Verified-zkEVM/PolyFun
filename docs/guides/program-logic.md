@@ -21,10 +21,11 @@ probabilistic interpretations; its quantitative carrier is not part of PolyFun.
 | `PolyFun/Control/Monad/Support/Structural.lean` | The rest of the `do` fragment for `CanReturn` and the judgments: `<*`, `*>`, `if`, `if h :`, `Option.elim`, `Sum.elim`, `<$>`, `<*>` |
 | `PolyFun/Control/Monad/Support/Loops.lean` | Invariant rules for `forIn'`/`forIn`/`foldlM`/`forM` over lists and `PureForIn` containers, for `AllOutputs` (from core's `Spec.*` under the demonic instance) and `SomeOutput` (angelic) |
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
-| `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); `OpSpec.toMAlgOrdered` (`toMAlgOrdered_μ_bind_pure`); coherence of the demonic/angelic folds with the support judgments |
-| `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`), `FreeM.wpMonadOfHandler` (transport along `liftMHom`), both exact when their source is; `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad`, and `wpFold_eq_wp_liftM` over an exact one; `allOutputs_liftM_of_wpFold` / `allOutputs_liftM_of_allOutputs` for the support of the interpreted program |
+| `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); folding after substitution (`OpSpec.pullback`, `wpFold_liftM`, `OpSpec.pullback_pullback`); `OpSpec.toMAlgOrdered` (`toMAlgOrdered_μ_bind_pure`); coherence of the demonic/angelic folds with the support judgments |
+| `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`) and its upper-bound reading `OpSpec.toUpperWPMonad` over the order duals, `FreeM.wpMonadOfHandler` (transport along `liftMHom`), all exact when their source is; `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad`, and `wpFold_eq_wp_liftM` over an exact one; `allOutputs_liftM_of_wpFold` / `allOutputs_liftM_of_allOutputs` for the support of the interpreted program |
+| `PolyFun/PFunctor/Free/WP/Charge.lean` | The worst-case charge reading `OpSpec.charge`; budgets as charge bounds (`isRollBound_iff_wpFold_charge`); simulation overhead (`wpFold_charge_liftM_le`, `handlerCost`); ranked simulation triples (`triple_liftM_ranked`) |
 | `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
-| `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.bind`, `Spec.lift_angelic`, `Spec.lift_ofHandler` that let `vcgen` decompose free programs with uninterpreted operations |
+| `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.bind`, `Spec.lift_angelic`, `Spec.lift_ofHandler`, `Spec.lift_upper` that let `vcgen` decompose free programs with uninterpreted operations |
 | `PolyFun/Control/Monad/ExactWP.lean` | `ExactWPMonad m Pred EPred`: the `Prop` mixin of the oplax laws, core's `pure`/`bind` soundness laws read in the order dual, which together with soundness make the laws equations (equivalently `ExactWPMonad.isMonadHom`, a monad morphism into `PredTrans`); `ExactWPMonad.dual`, the same interpretation over `Predᵒᵈ`, whose triples are upper bounds, with `of_dual` and `exactWPMonad_iff_dual`; the equational `simp` set on core's `wp` (`wp_pure`, `wp_bind`, `wp_map`, `wp_seq`, `wp_seqLeft`, `wp_seqRight`, `wp_ite`, `wp_dite`, `wp_option_elim`, `wp_sum_elim`); exactness of core's `Id`/`Option`/`Except`/`EStateM` interpretations and of its `StateT`/`ReaderT`/`ExceptT`/`OptionT` lifts |
 | `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as the core `Std.WP.WPMonad m l EStack⟨⟩` with `wp x post = μ (x >>= fun a => pure (post a))` (through the `ToCslib.Order.LeanOrder` bridge), exact (`instExactWPMonadToWPMonad`), its value by `rfl` (`toWPMonad_wp`, not `@[simp]`), `toWP_triple_iff`, `wpConjunctiveOf`, and the transfer lemmas `top_eq_top` / `meet_eq_inf` / `join_eq_sup` between core's and Mathlib's lattice operations |
 | `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPDemonic` / `toWPAngelic`: the always/some judgments as core `WP` transformers from attachment alone; `toWPMonadDemonic` / `toWPMonadAngelic`: the `WPMonad m Prop EStack⟨⟩` interpretations built on them; conjunctivity of the demonic reading; exactness of both readings over an `ExactMonadAttach`; the demonic instance of core's `Std.WP.LawfulWPMonadAttach` (soundness with respect to lawful attachment); `support_subset_of_wp` / `allOutputs_of_wp` |
@@ -300,7 +301,7 @@ that agrees with the original (`exactWPMonad_iff_dual`). Lax and oplax together 
 from the equations. `ToCslib.Order.LeanOrder` supplies core's order on `αᵒᵈ`, which agrees with
 the bridge of Mathlib's dual order at instance transparency. Every construction in this guide that can be exact is:
 `MAlgOrdered.toWPMonad`, both support readings over an `ExactMonadAttach`, transport along a
-monad morphism, `OpSpec.toWPMonad`, `FreeM.wpMonadOfHandler` into an exact target, core's
+monad morphism, `OpSpec.toWPMonad` and `OpSpec.toUpperWPMonad`, `FreeM.wpMonadOfHandler` into an exact target, core's
 `Id`/`Option`/`Except`/`EStateM` interpretations, and core's transformer lifts and the
 `WriterT` interpretation over an exact base. Exactness is a mixin rather than a stronger class
 so that each of these stays a plain core `WPMonad`, installed as before, and so that a
@@ -340,6 +341,35 @@ when updating Lean; proposed upstream renames do not change the current API.
 `MAlgOrdered` is a presentation, not a second program logic: it is how an exact interpretation
 over a Mathlib lattice is written down (VCVio's quantitative carrier is one), and everything
 proved about the interpretation is stated on core's `wp`.
+
+## Charges and budgets
+
+`OpSpec.charge c` (`PolyFun/PFunctor/Free/WP/Charge.lean`) reads a call at `a` as costing `c a`,
+followed by its worst continuation: `c a + ⨆ b, k b`. Its fold is the worst-case charge-to-go of
+a program. Subtractive per-position budgets are exactly upper bounds on that fold in `ℕ∞`
+(`isRollBound_iff_wpFold_charge`, with `isTotalRollBound_iff_wpFold_charge` for unit charges),
+and no progress condition is needed.
+
+Handlers transport specifications. `OpSpec.pullback handler Φ` specifies a call by the fold of
+`Φ` over its implementation, and folding over a substituted program is folding the pullback over
+the original (`wpFold_liftM`, functorial by `OpSpec.pullback_pullback`). For charges this bounds
+simulation overhead: a simulated program costs at most the original with each call charged its
+handler's worst case (`wpFold_charge_liftM_le`, `handlerCost`).
+
+There are two ways to state such a bound as a core triple.
+
+- **The upper-bound reading.** `OpSpec.toUpperWPMonad` reads any monotone spec in the order dual,
+  by `ExactWPMonad.dual`. Under the charge's reading, `⦃ toDual t ⦄ x ⦃ post ⦄` states that the
+  charge-to-go is at most `t`. `Spec.lift_upper` decomposes one call, but the continuation stays
+  under the supremum, so `vcgen` stops after the first call. The rest closes by rewriting with
+  `OpSpec.toUpperWPMonad_wp` and `simp` on the fold.
+- **Ranked simulation triples.** `triple_liftM_ranked` carries the budget in the precondition
+  instead: every call at `a` moves a rank family from `k + c a` to `k`. This is the shape that
+  decomposes call by call. With ranks that hold a bad-event indicator plus the remaining budget,
+  it is the union bound over the calls.
+
+`PolyFunTest/Do/Charge.lean` checks both forms on a coin interface. The ranked triple is
+instantiated in the upper-bound reading, where it bounds a simulated program's charge.
 
 ## Qualitative and quantitative interpretations
 

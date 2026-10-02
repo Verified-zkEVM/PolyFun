@@ -40,6 +40,7 @@ Example and test imports never flow back into production.
 | Executable reactive/request networks | `Interaction/Execution` | [Execution](../guides/execution.md) |
 | Open composition, contextual emulation, and observations | [OpenTheory](../../PolyFun/Interaction/Open/OpenTheory.lean), [OpenProcess](../../PolyFun/Interaction/Open/OpenProcess.lean) | [Open systems](../guides/open-systems.md) |
 | Support and weakest preconditions | [Ordered algebras](../../PolyFun/Control/Monad/Algebra.lean), [support](../../PolyFun/Control/Monad/Support.lean), [exact interpretations](../../PolyFun/Control/Monad/ExactWP.lean) | [Program logic](../guides/program-logic.md#exact-interpretations) |
+| Worst-case cost and query budgets | [Charges](../../PolyFun/PFunctor/Free/WP/Charge.lean) | [Program logic](../guides/program-logic.md#charges-and-budgets) |
 | Admissible implementations and resources | [Realizability](../../PolyFun/Realizability/Basic.lean), [quantitative certificates](../../PolyFun/Realizability/Quantitative.lean), [description measures](../../PolyFun/Realizability/Quantitative/Description.lean) | [Realizability](../guides/realizability.md) |
 
 `Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure.
