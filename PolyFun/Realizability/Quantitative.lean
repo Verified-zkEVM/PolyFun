@@ -218,7 +218,8 @@ namespace ExecutionCost
 /-- No work and no visible queries. -/
 instance : Zero ExecutionCost := ⟨⟨0, 0, 0, 0, 0⟩⟩
 
-/-- Sequential resource use adds componentwise. -/
+/-- Sequential resource use adds work, queries, and traffic, and keeps the larger of each peak
+size. -/
 instance : Add ExecutionCost := ⟨fun left right =>
   ⟨left.work + right.work, left.queries + right.queries,
     left.traffic + right.traffic, max left.peakStateSize right.peakStateSize,
