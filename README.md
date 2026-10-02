@@ -82,7 +82,8 @@ Open the folder in VS Code with the Lean 4 extension. The pinned compiler is
 recorded in [`lean-toolchain`](lean-toolchain); Mathlib and CSLib revisions are
 recorded in [`lakefile.toml`](lakefile.toml). The cache command downloads
 precompiled dependencies. `lake build` builds the generic library, while
-`PolyFunExamples` builds the optional tutorials and Parliament library.
+`PolyFunExamples` builds only the optional small tutorials. The Notes, Parliament and Pipeline
+applications are independent, opt-in packages.
 
 To use the development version from another Lake project, match its toolchain
 and add:
@@ -131,13 +132,15 @@ The example is checked in [Requests.lean](Examples/Tutorials/Requests.lean).
 The [walkthrough](docs/tutorials/first-program.md) changes the handler to obtain
 `(6, 12)` from the same program, then explains stateful and effectful handlers.
 
-## Executable case study
+## Nonprobabilistic applications
 
-[Parliament](Examples/Parliament/README.md) uses indexed interfaces, certified
-histories, dynamical machines, and interchangeable handlers to run a bounded
-meeting model and request draft minutes. Its guide gives the modeled assumptions
-and proof boundaries. Build it with `lake build PolyFunExamples polyfun-parliament`,
-then run `lake exe polyfun-parliament --help`.
+The [examples collection](Examples/README.md) contains independent, runnable projects and
+small checked tutorials. Start with **Notes**, a local versioned notebook; choose **Pipeline**
+for communicating components or **Parliament** for a larger meeting model.
+
+Each project has a manual quick start and a source-reading guide. The applications are opt-in:
+root builds and `import PolyFun` do not include them. Shared console and storage helpers
+live in optional `PolyFunIO`.
 
 ## Reading routes
 

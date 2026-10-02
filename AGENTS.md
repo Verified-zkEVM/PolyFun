@@ -16,12 +16,12 @@ is the attribution and contribution policy.
 ```bash
 lake exe cache get
 lake build
-./scripts/validate.sh --lint --test --axioms
+./scripts/validate.sh --examples --lint --test --axioms
 ```
 
-The wrapper builds production and example libraries plus the executable entry point, checks module/import/docs
-integrity, and optionally runs linters, regressions, both separate consumers, CLI/filesystem tests, and
-the zero-debt axiom gate. See [validation](docs/development/validation.md).
+The wrapper builds production and tutorial libraries and checks module/import/docs integrity.
+`--examples` adds the independent Notes, Parliament and Pipeline packages, with their own executables,
+tests, and lint/axiom gates. See [validation](docs/development/validation.md).
 `lake test` builds `PolyFunTest`; `lake lint` covers production and example
 libraries, with tests excluded. Use `lake lint -- --trace` after a fresh build
 to inspect the environment checks.
@@ -47,7 +47,9 @@ boundary. Imports flow downward and must remain acyclic.
 | `PolyFun/Complexity/`, `PolyFun/Logic/` | Generic resource-bound syntax and small logic helpers |
 | `ToCslib/` | Lowest production layer: upstream staging for free-monad, loop, order, bitvector and polynomial lemmas |
 | `ComplexityBackends/` | Optional concrete complexity backends, one subdirectory per machine model (`CslibSingleTape/`), outside the generic umbrella |
-| `Examples/` | Tutorials and the Parliament case study, target `PolyFunExamples` |
+| `PolyFunIO/` | Optional reusable typed console and checked storage; outside `PolyFun` |
+| `Examples/Tutorials/` | Small checked tutorials, target `PolyFunExamples` |
+| `Examples/{Parliament,Notes,Pipeline}/` | Independent opt-in Lake packages with their own libraries, executables, and tests |
 | `PolyFunTest/` | Regression tests; may import tutorials, with no reverse production dependency |
 
 Start with `PFunctor/Basic.lean`, `PFunctor/Free/Basic.lean`, `ITree/Basic.lean`,
@@ -85,7 +87,7 @@ Broad `@[expose] public section` is forbidden under `PolyFun/Interaction/`.
 `import all` opens bodies only inside the library that owns them: tests may
 open `ComplexityBackends`, nothing opens a backend from `PolyFun/`, a backend
 never opens `PolyFun` or `ToCslib`, and `ToCslib/`, `Examples/`,
-`PolyFunParliamentMain.lean`, the consumer packages and `PolyFunTest/ModuleAPI/`
+`Examples/Parliament/ParliamentMain.lean`, the consumer packages and `PolyFunTest/ModuleAPI/`
 canaries open nothing (`scripts/check-modules.sh`). Use ordinary-import
 canaries and the separate documentation consumer to check public equations; see
 [module APIs](docs/development/module-api.md).
@@ -143,9 +145,11 @@ hand-edit them. Stage new/deleted/renamed source files before running
 `./scripts/update-lib.sh ComplexityBackends`. See
 [generated files](docs/development/generated-files.md).
 Tutorial modules use a glob target and need no generated umbrella. The optional
-case-study root `Examples/Parliament.lean` is generated with
-`./scripts/update-lib.sh Examples.Parliament`; stage new case-study modules first.
-Core libraries may not import examples, tests, or `PolyFunParliamentMain`.
+case-study root `Examples/Parliament/Parliament.lean` is generated with
+`./scripts/update-lib.sh Parliament`; Notes, Pipeline and PolyFunIO use the corresponding generator names.
+Stage new case-study modules first. `--examples` opts the validation wrapper into all three packages;
+root builds/tests must not import either application. Core never imports PolyFunIO.
+Core libraries may not import examples, tests, PolyFunIO, or application entry points.
 
 Add repository scripts only for concrete recurring workflows under
 [the scripts policy](CONTRIBUTING.md#repository-scripts). Reuse existing drivers

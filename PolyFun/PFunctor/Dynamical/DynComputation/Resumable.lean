@@ -124,6 +124,43 @@ def runChunk {m : Type u → Type v} [Monad m] (machine : DynComputation.{u} p �
     (handler : Handler m p) (fuel : Nat) (state : machine.State) :
     m (Chunk machine.State β) := (unrollChunk machine fuel state).liftM handler
 
+/-- Initialize a machine from its public input and interpret one bounded chunk. -/
+def startChunk {m : Type u → Type v} [Monad m] (machine : DynComputation.{u} p α β)
+    (handler : Handler m p) (fuel : Nat) (input : α) : m (Chunk machine.State β) :=
+  machine.runChunk handler fuel (machine.init input)
+
+/-- Interpret a residual chunk without reinitializing the machine or repeating its prefix. -/
+def continueChunk {m : Type u → Type v} [Monad m] (machine : DynComputation.{u} p α β)
+    (handler : Handler m p) (fuel : Nat) (chunk : Chunk machine.State β) :
+    m (Chunk machine.State β) := (machine.resumeChunk fuel chunk).liftM handler
+
+@[simp] theorem startChunk_eq_runChunk {m : Type u → Type v} [Monad m]
+    (machine : DynComputation.{u} p α β) (handler : Handler m p) (fuel : Nat) (input : α) :
+    machine.startChunk handler fuel input =
+      machine.runChunk handler fuel (machine.init input) := by unfold startChunk; rfl
+
+@[simp] theorem continueChunk_done {m : Type u → Type v} [Monad m]
+    (machine : DynComputation.{u} p α β) (handler : Handler m p) (fuel : Nat) (value : β) :
+    machine.continueChunk handler fuel (.done value) = pure (.done value) := by
+  unfold continueChunk
+  rfl
+
+@[simp] theorem continueChunk_paused {m : Type u → Type v} [Monad m]
+    (machine : DynComputation.{u} p α β) (handler : Handler m p) (fuel : Nat)
+    (state : machine.State) :
+    machine.continueChunk handler fuel (.paused state) = machine.runChunk handler fuel state := by
+  unfold continueChunk runChunk
+  rfl
+
+/-- Starting with no fuel observes a return or preserves the exact initialized state. -/
+theorem startChunk_zero {m : Type u → Type v} [Monad m]
+    (machine : DynComputation.{u} p α β) (handler : Handler m p) (input : α) :
+    machine.startChunk handler 0 input = pure (match machine.view (machine.init input) with
+      | .inl value => .done value
+      | .inr _ => .paused (machine.init input)) := by
+  cases h : machine.view (machine.init input) <;>
+    simp [startChunk, runChunk, unrollChunk, h]
+
 theorem runChunk_result {m : Type u → Type v} [Monad m] [LawfulMonad m]
     (machine : DynComputation.{u} p α β) (handler : Handler m p)
     (fuel : Nat) (state : machine.State) :
@@ -139,6 +176,14 @@ theorem runChunk_add {m : Type u → Type v} [Monad m] [LawfulMonad m]
         runChunk machine handler (first + second) state := by
   rw [runChunk, ← FreeM.liftM_bind, unrollChunk_add]
   rfl
+
+/-- Starting and continuing conserves the exact residual state, not just the final result. -/
+theorem startChunk_continueChunk {m : Type u → Type v} [Monad m] [LawfulMonad m]
+    (machine : DynComputation.{u} p α β) (handler : Handler m p)
+    (first second : Nat) (input : α) :
+    (machine.startChunk handler first input >>= machine.continueChunk handler second) =
+      machine.startChunk handler (first + second) input :=
+  machine.runChunk_add handler first second (machine.init input)
 
 /-- Transporting the target monad commutes with interpretation of a chunk. -/
 theorem runChunk_natural {m : Type u → Type v} {n : Type u → Type w}
