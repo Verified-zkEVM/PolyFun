@@ -23,8 +23,14 @@ namespace PFunctor.Equiv
 
 /--
 warning: `PFunctor.Equiv.tensorX` has been deprecated: Use `PFunctor.Equiv.tensorY` instead
+
+Hint: Replace the deprecated name:
+  tensorX̵Y̲
 ---
 warning: `PFunctor.Equiv.tensorX_equivA` has been deprecated: Use `PFunctor.Equiv.tensorY_equivA` instead
+
+Hint: Replace the deprecated name:
+  tensorX̵Y̲_equivA
 -/
 #guard_msgs in
 example (P : PFunctor.{0, 0}) :
@@ -33,10 +39,19 @@ example (P : PFunctor.{0, 0}) :
 
 /--
 warning: `PFunctor.X` has been deprecated: Use `PFunctor.y` instead
+
+Hint: Replace the deprecated name:
+  X̵y̲
 ---
 warning: `PFunctor.Equiv.tensorX` has been deprecated: Use `PFunctor.Equiv.tensorY` instead
+
+Hint: Replace the deprecated name:
+  tensorX̵Y̲
 ---
 warning: `PFunctor.Equiv.tensorX_equivB` has been deprecated: Use `PFunctor.Equiv.tensorY_equivB` instead
+
+Hint: Replace the deprecated name:
+  tensorX̵Y̲_equivB
 -/
 #guard_msgs in
 example (P : PFunctor.{0, 0}) (a : (P ⊗ X).A) :
@@ -45,8 +60,14 @@ example (P : PFunctor.{0, 0}) (a : (P ⊗ X).A) :
 
 /--
 warning: `PFunctor.Equiv.xTensor` has been deprecated: Use `PFunctor.Equiv.yTensor` instead
+
+Hint: Replace the deprecated name:
+  x̵y̲Tensor
 ---
 warning: `PFunctor.Equiv.xTensor_equivA` has been deprecated: Use `PFunctor.Equiv.yTensor_equivA` instead
+
+Hint: Replace the deprecated name:
+  x̵y̲Tensor_equivA
 -/
 #guard_msgs in
 example (P : PFunctor.{0, 0}) :
@@ -55,10 +76,19 @@ example (P : PFunctor.{0, 0}) :
 
 /--
 warning: `PFunctor.X` has been deprecated: Use `PFunctor.y` instead
+
+Hint: Replace the deprecated name:
+  X̵y̲
 ---
 warning: `PFunctor.Equiv.xTensor` has been deprecated: Use `PFunctor.Equiv.yTensor` instead
+
+Hint: Replace the deprecated name:
+  x̵y̲Tensor
 ---
 warning: `PFunctor.Equiv.xTensor_equivB` has been deprecated: Use `PFunctor.Equiv.yTensor_equivB` instead
+
+Hint: Replace the deprecated name:
+  x̵y̲Tensor_equivB
 -/
 #guard_msgs in
 example (P : PFunctor.{0, 0}) (a : (X ⊗ P).A) :

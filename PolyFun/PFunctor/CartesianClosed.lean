@@ -179,10 +179,10 @@ uncurried lens recovers the original lens. -/
 @[simp, grind =]
 theorem curry_uncurry {p q r : PFunctor.{uA, uB}} (g : Lens p (exp r q)) :
     curry (uncurry g) = g := by
-  -- Lean 4.33: the original transport through `transported_dependent_apply`
-  -- leaves a final goal that is no longer type-correct at implicit
-  -- transparency, defeating `grind`; the round-trip is instead established
-  -- componentwise through heterogeneous extensionality.
+  -- Transport through `transported_dependent_apply` leaves a final goal that is
+  -- not type-correct at implicit transparency, which defeats `grind`, so the
+  -- round trip is established componentwise through heterogeneous
+  -- extensionality.
   apply Lens.ext_heq
   · exact curry_uncurry_toFunA g
   · apply Function.hfunext rfl

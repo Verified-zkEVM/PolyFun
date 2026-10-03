@@ -15,9 +15,8 @@ Concatenation of node-local metadata along the dependent sequential composition
 `FreeM.append`. The decoration of an appended tree is the `Decoration` of the
 prefix paired (per canonical prefix path) with the `Decoration` of the suffix.
 
-This file lives below the protocol layer: nothing here mentions `TypeTree`,
-`Path`, or any interaction-specific notion. Protocol-flavored append
-combinators are thin specializations of these definitions.
+The construction uses generic `FreeM.Path` indices and lives below the protocol layer.
+The append combinators for `TypeTree` decorations specialize these definitions.
 -/
 
 @[expose] public section
@@ -119,9 +118,9 @@ theorem map_append {Γ : P.A → Type w₂}
         (fun path₁ => Decoration.Over.map η (s₂ path₁) (d₂ path₁) (r₂ path₁))
   | .pure _, _, _, _, _, _ => rfl
   | .liftBind a rest, s₂, ⟨γ, dRest⟩, d₂, ⟨fd, rRest⟩, r₂ => by
-      -- Lean 4.33: the `toHom_liftBind` rewrite no longer applies here (its
-      -- metavariable assignments fail the implicit-transparency type check),
-      -- so the node layer is exposed by `change` instead.
+      -- The `toHom_liftBind` rewrite does not apply here (its metavariable
+      -- assignments fail the implicit-transparency type check), so the node
+      -- layer is exposed by `change` instead.
       change
         (η a γ fd, fun b => Decoration.Over.map η
           (FreeM.append (rest b) (fun path => s₂ ⟨b, path⟩))
@@ -149,9 +148,9 @@ theorem map_append {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
         (fun path₁ => Decoration.map f (s₂ path₁) (d₂ path₁))
   | .pure _, _, _, _ => rfl
   | .liftBind a rest, s₂, ⟨γ, dRest⟩, d₂ => by
-      -- Lean 4.33: the `toHom_liftBind` rewrite no longer applies here (its
-      -- metavariable assignments fail the implicit-transparency type check),
-      -- so the node layer is exposed by `change` instead.
+      -- The `toHom_liftBind` rewrite does not apply here (its metavariable
+      -- assignments fail the implicit-transparency type check), so the node
+      -- layer is exposed by `change` instead.
       change
         (f a γ, fun b => Decoration.map f
           (FreeM.append (rest b) (fun path => s₂ ⟨b, path⟩))

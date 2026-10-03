@@ -155,9 +155,9 @@ theorem process_interleave {m : Type w → Type w'} {Party : Type u}
 
 end ScheduledOpenProcess
 
-/-- The mass-aware open-composition theory. This is additive alongside the
-legacy `openTheory`: callers can migrate atoms with `ScheduledOpenProcess.atom`
-without changing `OpenProcess` itself. -/
+/-- The mass-aware open-composition theory, beside `openTheory`.
+`ScheduledOpenProcess.atom` equips an atomic `OpenProcess` with one scheduler slot,
+so the atoms of `openTheory` serve here without any change to `OpenProcess`. -/
 @[expose]
 def scheduledOpenTheory (Party : Type u) (m : Type w → Type w')
     (scheduler : BinaryScheduler m) : OpenTheory where

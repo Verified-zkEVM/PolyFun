@@ -19,6 +19,10 @@ supplies it. The instances are low priority so that core's own instances on `Pro
 function types win where both apply; they agree with these definitionally on the order relation,
 and `Lean.Order.CompleteLattice` carries no further data, so the two routes to a lattice
 structure on the same type are propositionally interchangeable.
+
+The file also reverses core's order on Mathlib's `OrderDual`: `⊑` on `αᵒᵈ` is `⊑` on `α` read
+backwards, and the supremum of a predicate is its infimum in `α`. On a Mathlib lattice this agrees,
+at instance transparency, with the bridge of Mathlib's own dual order.
 -/
 
 public section
@@ -58,5 +62,22 @@ theorem sup_eq_sSup [_root_.CompleteLattice α] (c : α → Prop) :
   is_sup_unique (CompleteLattice.sup_spec c) fun _ =>
     ⟨fun h y hy => le_trans (le_sSup (show y ∈ {x | c x} from hy)) h,
       fun h => sSup_le fun y hy => h y hy⟩
+
+/-- Core's order read backwards on the order dual. -/
+instance instPartialOrderOrderDual [PartialOrder α] : PartialOrder αᵒᵈ where
+  rel x y := PartialOrder.rel (α := α) y x
+  rel_refl := PartialOrder.rel_refl (α := α)
+  rel_trans h₁ h₂ := PartialOrder.rel_trans (α := α) h₂ h₁
+  rel_antisymm h₁ h₂ := PartialOrder.rel_antisymm (α := α) h₂ h₁
+
+/-- The order dual of a complete lattice: the supremum of a predicate is its infimum below. -/
+instance instCompleteLatticeOrderDual [CompleteLattice α] : CompleteLattice αᵒᵈ :=
+  { instPartialOrderOrderDual (α := α) with
+    has_sup := fun c => ⟨inf (α := α) c, fun _ => inf_spec (α := α)⟩ }
+
+/-- The dual order is the original order with its arguments swapped. -/
+theorem rel_orderDual [PartialOrder α] (x y : αᵒᵈ) :
+    PartialOrder.rel x y = PartialOrder.rel (α := α) (OrderDual.ofDual y) (OrderDual.ofDual x) :=
+  rfl
 
 end Lean.Order

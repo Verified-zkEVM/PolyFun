@@ -28,7 +28,7 @@ Example and test imports never flow back into production.
 | Subject | Entry point | Guide |
 |---|---|---|
 | Polynomial interfaces and morphisms | [PFunctor basics](../../PolyFun/PFunctor/Basic.lean), [lens laws](../../PolyFun/PFunctor/Lens/Basic.lean) | [Polynomial functors](../guides/pfunctor.md) |
-| Free programs and handlers | [Free basics](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean) | [First program](../tutorials/first-program.md) |
+| Free programs and handlers | [Free basics](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean), [handler sums](../../PolyFun/PFunctor/Handler/Sum.lean), [stateful combinators](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean) | [First program](../tutorials/first-program.md) |
 | State-dependent interfaces | [Indexed basics](../../PolyFun/IPFunctor/Basic.lean) | [Indexed polynomials](../guides/ipfunctor.md) |
 | Behaviors and explicit-state machines | [Resumptions](../../PolyFun/PFunctor/Resumption.lean), [dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean) | [Computation models](../guides/computation-models.md) |
 | Interaction trees and recursion | [ITree basics](../../PolyFun/ITree/Basic.lean) | [Interaction trees](../guides/itree.md) |
@@ -39,7 +39,7 @@ Example and test imports never flow back into production.
 | General interfaces and directed boundaries | [Interface](../../PolyFun/Interaction/Interface.lean) | [Execution](../guides/execution.md) |
 | Executable reactive/request networks | `Interaction/Execution` | [Execution](../guides/execution.md) |
 | Open composition, contextual emulation, and observations | [OpenTheory](../../PolyFun/Interaction/Open/OpenTheory.lean), [OpenProcess](../../PolyFun/Interaction/Open/OpenProcess.lean) | [Open systems](../guides/open-systems.md) |
-| Support and weakest preconditions | [Ordered algebras](../../PolyFun/Control/Monad/Algebra.lean), [support](../../PolyFun/Control/Monad/Support.lean) | [Program logic](../guides/program-logic.md) |
+| Support and weakest preconditions | [Ordered algebras](../../PolyFun/Control/Monad/Algebra.lean), [support](../../PolyFun/Control/Monad/Support.lean), [exact interpretations](../../PolyFun/Control/Monad/ExactWP.lean) | [Program logic](../guides/program-logic.md#exact-interpretations) |
 | Admissible implementations and resources | [Realizability](../../PolyFun/Realizability/Basic.lean), [quantitative certificates](../../PolyFun/Realizability/Quantitative.lean), [description measures](../../PolyFun/Realizability/Quantitative/Description.lean) | [Realizability](../guides/realizability.md) |
 
 `Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure.
@@ -99,8 +99,8 @@ composition, open-process, and observation declarations use `Interaction.Open`.
 The explicit `Open.Realizability` bridge connects open processes to realizability.
 Nothing under `PFunctor/` or `ITree/` depends on `Realizability/`.
 
-The `Std.Do` and tactic import boundaries remain restricted to the
-[program-logic kernel](../guides/program-logic.md#the-stddo-quarantine).
+The `Std.WP` and tactic import boundaries are restricted to the
+[program-logic kernel](../guides/program-logic.md#the-stdwp-quarantine).
 Every Lean source uses module mode; see [public APIs](../development/module-api.md)
 for imports, transparency, and exposed reducer bodies.
 

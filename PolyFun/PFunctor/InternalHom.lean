@@ -26,8 +26,8 @@ is witnessed by the `curry` / `uncurry` bijection
 
 `Lens (p ⊗ q) r ≃ Lens p (ihom q r)`  (`curryEquiv`).
 
-This is the object VCVio's `WireK`/`ProbResponder` wiring hand-rolls: wiring a
-challenger against a responder is exactly closing over `eval`. Two special cases
+Wiring a challenger against an adversary is exactly closing over `eval`
+(`DynSystem.game`, and `DynSystem.closedGame` for a responder). Two special cases
 tie the hom back to existing structure: `[y, r] ≅ r` (`ihomY`, the tensor-unit
 law) and `(ihom q y).A = Lens q y = enclose q` — the positions of `[q, y]` are
 the handlers (sections) of `q`.

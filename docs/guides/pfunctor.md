@@ -42,8 +42,28 @@ McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 Use Mathlib's `PFunctor.Obj.mk`, `.fst`, and `.snd` for values of `P.Obj α`.
 Their simplification rules (`Obj.fst_mk`, `Obj.snd_mk`, and `PFunctor.map_eq`)
 are the canonical constructor interface. Pattern matching and `cases` use
-`Obj.rec`. The position and direction types of composite polynomials may
-still be genuine sigma types; those use their own constructors and projections.
+`Obj.rec`. Positions of an indexed sum `PFunctor.sigma F` have the same shape
+of interface: build them with `sigma.mk i a`, project with `sigma.fst` and
+`sigma.snd`, eliminate with `sigma.rec`, and rewrite their direction type with
+`sigma.B_mk`. `sigma.mk i a` has type `(sigma F).A` at every transparency, so
+statements about indexed-sum positions elaborate in ordinary-import consumers
+and under `linter.tacticCheckInstances` without a local reducibility override
+on `sigma`; prefer it to the anonymous constructor. Apply the projections as
+`sigma.fst x` and `sigma.snd x`: field notation on a position resolves to
+`Sigma.fst` and `Sigma.snd`, because the position type unfolds to a sigma type.
+Other composite positions and directions that are genuine sigma types use the
+ordinary sigma API.
+
+Handlers combine along the same constructions: `Handler.sigma` answers an
+indexed sum member by member, and `Handler.sum` (in
+[`Handler/Sum.lean`](../../PolyFun/PFunctor/Handler/Sum.lean)) routes a binary
+sum `P + Q` to one of two handlers. Interpreting a program relabelled into the
+sum along `Lens.inl` uses only the left handler (`liftM_sum_mapLens_inl`), a
+consequence of `FreeM.liftM_mapLens`: interpreting a relabelled program pulls
+the handler back along the lens. Lenses between monomials, the shape of
+input/output transformers and of proof-system context lenses, are built with
+`Lens.ofMonomial`, `monomialMapFst`, and `monomialMapSnd` in
+[`Lens/Monomial.lean`](../../PolyFun/PFunctor/Lens/Monomial.lean).
 
 ## Where to start
 

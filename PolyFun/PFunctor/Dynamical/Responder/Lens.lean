@@ -186,8 +186,8 @@ theorem respondDisplayed_mapDisplayedBehavior_post
         ((Responder.terminal (P := Q)).answer behavior
           (f.toFunA operation))
         (respondDisplayed T displayedBehavior (f.toFunA operation)
-          (df.toPosition operation contract)).1 := by
-  exact (respondDisplayed_reindexDisplayedBehavior_post S T
+          (df.toPosition operation contract)).1 :=
+  (respondDisplayed_reindexDisplayedBehavior_post S T
     (PFunctor.Handler.ofLens f) (df.toHandler)
     behavior displayedBehavior operation contract).trans
       (congrArg Prod.fst

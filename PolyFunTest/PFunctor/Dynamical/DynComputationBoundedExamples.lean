@@ -173,8 +173,8 @@ example : collatzMachine.closedStutterStep (collatzMachine.init 1) =
 
 example : collatzMachine.closedStutterIterate (collatzMachine.init 6) 8 =
     collatzMachine.init 1 := by
-  -- Lean 4.33: `Function.iterate_succ_apply` no longer fires from `norm_num`'s
-  -- default simp set here, and the final step needs `rfl`.
+  -- `norm_num`'s default simp set does not apply `Function.iterate_succ_apply`
+  -- here, so the lemma is passed explicitly, and the final step needs `rfl`.
   norm_num [closedStutterIterate, Function.iterate_succ_apply, collatzNext]
   rfl
 

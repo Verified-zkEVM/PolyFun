@@ -12,9 +12,9 @@ public import PolyFun.PFunctor.PatternRunsOnMatter.Display
 /-!
 # Parallel Pattern-Runs-on-Matter reconstruction
 
-G5 identifies categorical Pattern-Runs-on-Matter reconstruction with ordinary
-responder reindexing.  Since G6 parallel reindexing is componentwise, the same
-is true directly for `reindexViaRunAgainst`.
+`reindexViaRunAgainst_eq_reindex` identifies categorical Pattern-Runs-on-Matter
+reconstruction with ordinary responder reindexing. The componentwise law
+`reindex_parallel` therefore also holds for `reindexViaRunAgainst`.
 -/
 
 @[expose] public section

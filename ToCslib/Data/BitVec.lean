@@ -13,9 +13,9 @@ public import Mathlib.Data.BitVec
 This file defines `BitVec.overwriteBit i b m`, the bitvector `m` with its `i`-th least
 significant bit replaced by `b`, together with its `getLsbD` description and the involution
 `(m, b) ↦ (m with bit i overwritten by b, original bit i of m)` on `BitVec n × Bool`.
-The involution is the change of variables underlying uniform-distribution splitting
-arguments: sampling a uniform bitvector and reading its `i`-th bit is equivalent to
-sampling a uniform bit and a uniform bitvector and overwriting the `i`-th bit.
+For an in-range position, the involution exchanges a separately supplied bit with the
+selected bit of the vector. It provides a bijection for downstream change-of-variables
+arguments; this module itself contains only deterministic bitvector operations and laws.
 -/
 
 public section
@@ -43,6 +43,7 @@ theorem getLsbD_overwriteBit_self {i : ℕ} (hi : i < n) (b : Bool) (m : BitVec 
   · cases b <;> simp [overwriteBit, h, hj]
   · cases b <;> simp [overwriteBit, getLsbD_of_ge _ _ hj]
 
+/-- Reading an overwritten vector returns the new bit exactly at the selected in-range index. -/
 theorem getLsbD_overwriteBit (i j : ℕ) (b : Bool) (m : BitVec n) :
     (overwriteBit i b m).getLsbD j = if j = i ∧ i < n then b else m.getLsbD j := by
   rcases eq_or_ne j i with rfl | h

@@ -171,7 +171,8 @@ and derived `plug` preserve component machines. The
 prove plug symmetry, boundary-map transport, and all four parallel/wired closure
 factorizations as graph equalities after explicit component bijections. The `Network`
 versions retain the environment selected in the closing context. These are direct routing
-theorems, independent of the legacy activation quotient and its scheduler hypotheses.
+theorems, independent of the activation quotient of `OpenProcess` and its scheduler
+hypotheses.
 
 [`Assembly`](../../PolyFun/Interaction/Execution/ReactiveNetwork/Assembly.lean) bundles a finite
 diagram and compiles `OpenSyntax.Raw` using its existing universal interpretation.
@@ -211,7 +212,7 @@ behave differently. The
 [echo regressions](../../PolyFunTest/Interaction/Execution/ReactiveNetwork.lean) exercise actual
 input-dependent output, missing delivery, short prefixes, and explicit abort.
 
-The legacy `OpenProcess` model has activation/output episodes but no intrinsic reaction to
+The `OpenProcess` model has activation/output episodes but no intrinsic reaction to
 incoming packets. It cannot be adapted into a general reactive process without supplying
 that behavior. Its activation and sampler quotients retain their documented scope; neither
 is upgraded to this reactive semantics by a definitional alias.
@@ -251,21 +252,21 @@ system to its observed distribution. The contract should survive changes in
 module exposure and instance elaboration without asking VCVio to unfold
 PolyFun internals.
 
-The program-logic seam follows the same rule. VCVio's quantitative carrier is an
-`MAlgOrdered (OracleComp spec) ℝ≥0∞`, and everything it needs on core's
-weakest-precondition stack is a named PolyFun export rather than an unfolding:
-`MAlgOrdered.toWPMonad` (with `wp` agreeing by `rfl`), the probabilistic carrier
-`Set.Iic 1` through `MAlgOrdered.restrictIic` (with `wp_restrictIic_val` and
-`restrictIic_triple_iff` as the contract), `WriterT.instWPMonad` for its
-logging stacks (`WriterT.wp_apply_eq`), and the transports of
-`PolyFun/Control/Monad/Hom/WP.lean` for handler-relative interpretations. See
-[`program-logic.md`](program-logic.md).
+The program-logic seam follows the same rule. VCVio presents its expectation reading as an
+`MAlgOrdered (OracleComp spec) ℝ≥0∞`, and everything it needs from core's
+weakest-precondition framework is a named PolyFun export rather than an unfolding:
+`MAlgOrdered.toWPMonad` (with its value `toWPMonad_wp` by `rfl` and its exactness
+instance), `ExactWPMonad.dual` for upper bounds, the probabilistic carrier `Set.Iic 1`
+through `MAlgOrdered.restrictIic` (with `wp_restrictIic_val` and `restrictIic_triple_iff` as
+the contract), `WriterT.MonoidWP.instWPMonad` for its logging layers (`WriterT.wp_apply_eq`),
+and the transports of `PolyFun/Control/Monad/Hom/WP.lean` for handler-relative
+interpretations. See [`program-logic.md`](program-logic.md).
 
 ## Instantiation Gates
 
 The process model supports a computational UC claim only after all of the
 following have named proofs. The scheduler obstruction and the conditional
-structural implications are now named PolyFun lemmas over the abstract
+structural implications are named PolyFun lemmas over the abstract
 relation family `MonadRelFamily`
 (`OpenProcessSamplerEquiv`, `OpenProcessSamplerFactorization`,
 `SamplerObservation`); what remains downstream per gate is stated explicitly:
