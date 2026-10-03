@@ -86,9 +86,9 @@ Conventions and glyph rationale:
 ## FreeM and Dynamical Notation
 
 - `FreeM` uses standard monadic `do`-notation. There is no separate
-  surface syntax for `liftBind` / `pure`; reach for `PFunctor.FreeM.lift`
-  and `PFunctor.FreeM.liftPos` when you need to embed a single
-  polynomial step.
+  surface syntax for `liftBind` / `pure`. To embed a single polynomial step,
+  use `PFunctor.FreeM.lift` for an operation at a position and
+  `PFunctor.FreeM.liftObj` for a polynomial object, whose responses it relabels.
 - `Responder S q` and the game formers in
   `PolyFun/PFunctor/Dynamical/{Responder, Game}.lean` are dynamical
   systems over `q ⊸ y` and `q ⊸ r`; the positions of `q ⊸ r` are the

@@ -202,8 +202,8 @@ theorem liftM_id
           (fun b e =>
             S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
               (Handler.id S)) using 1
-        -- Lean 4.33: the transported node goal now simplifies to a
-        -- reflexive `Iff`, which `congr` no longer closes.
+        -- The transported node goal simplifies to a reflexive `Iff`, which
+        -- `congr` does not close.
         all_goals simp only [FreeM.liftBind_eq, FreeM.bind_eq_bind, FreeM.pure_bind]
         all_goals exact Iff.rfl
       rw [htransport]

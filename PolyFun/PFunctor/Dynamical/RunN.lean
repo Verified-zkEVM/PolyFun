@@ -25,8 +25,8 @@ and `φ^{◁n}` is the composition power of the interface lens (`Lens.compNthMap
 `DynSystem.nStep` is that construction on bundled systems: one composite
 `p^{◃n}`-step exposes `n` successive `p`-positions and threads the answers through
 `n` updates. `nStep_two_eq_twoStep` records that the `n = 2` case collapses to
-`twoStep`. This is the generic core of the finite-run truncation ladder that a
-probabilistic run semantics (VCVio's `RunLimit`) instantiates.
+`twoStep`. This is the generic core of a finite-run truncation ladder, which a
+probabilistic run semantics can instantiate.
 -/
 
 @[expose] public section

@@ -28,10 +28,11 @@ ordinary `do { let x ← e; … }` blocks elaborate to the right
 
 ## Elaborator selection
 
-The pinned Lean toolchain ships both legacy and extensible `do` elaborators.
-The extensible elaborator is the default (`backward.do.legacy` is `false`), so
-no option is needed to use this module. Setting `backward.do.legacy true`
-selects the legacy elaborator, where these overrides are unavailable.
+The pinned Lean toolchain ships two `do` elaborators, an extensible one and a
+non-extensible one. The extensible elaborator is the default
+(`backward.do.legacy` is `false`), so no option is needed to use this module.
+Setting `backward.do.legacy true` selects the non-extensible elaborator, where
+these overrides are unavailable.
 
 Other monads in the same file continue to work — our elaborators check
 the expected type and `throwUnsupportedSyntax` for non-`IPFunctor.FreeM`

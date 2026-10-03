@@ -33,18 +33,23 @@ on directions, where `lift` may consult the source position. -/
 def ofMonomial (proj : A → C) (lift : A → D → B) : Lens (A y^ B) (C y^ D) :=
   proj ⇆ lift
 
+/-- The forward map of `ofMonomial proj lift` is `proj`. -/
 @[simp] theorem ofMonomial_toFunA (proj : A → C) (lift : A → D → B) (a : A) :
     (ofMonomial proj lift).toFunA a = proj a := rfl
 
+/-- The backward map of `ofMonomial proj lift` is `lift`. -/
 @[simp] theorem ofMonomial_toFunB (proj : A → C) (lift : A → D → B) (a : A) (d : D) :
     (ofMonomial proj lift).toFunB a d = lift a d := rfl
 
 /-- Every lens between monomials is `ofMonomial` of its two components. -/
 theorem ofMonomial_eta (l : Lens (A y^ B) (C y^ D)) : ofMonomial l.toFunA l.toFunB = l := rfl
 
+/-- The monomial lens of the identity maps is the identity lens. -/
 @[simp] theorem ofMonomial_id :
     ofMonomial (fun a : A => a) (fun _ (b : B) => b) = Lens.id (A y^ B) := rfl
 
+/-- The composite of two monomial lenses is the monomial lens whose forward map composes the
+forward maps and whose backward map applies `lift₂` before `lift₁`. -/
 @[simp] theorem ofMonomial_comp (proj₂ : C → E) (lift₂ : C → F → D) (proj₁ : A → C)
     (lift₁ : A → D → B) :
     ofMonomial proj₂ lift₂ ∘ₗ ofMonomial proj₁ lift₁ =
@@ -60,15 +65,19 @@ the position. -/
 def monomialMapSnd (lift : A → D → B) : Lens (A y^ B) (A y^ D) :=
   ofMonomial (fun a => a) lift
 
+/-- The forward map of `monomialMapFst proj` is `proj`. -/
 @[simp] theorem monomialMapFst_toFunA (proj : A → C) (a : A) :
     (monomialMapFst (B := B) proj).toFunA a = proj a := rfl
 
+/-- The backward map of `monomialMapFst proj` returns each direction unchanged. -/
 @[simp] theorem monomialMapFst_toFunB (proj : A → C) (a : A) (b : B) :
     (monomialMapFst proj).toFunB a b = b := rfl
 
+/-- The forward map of `monomialMapSnd lift` returns each position unchanged. -/
 @[simp] theorem monomialMapSnd_toFunA (lift : A → D → B) (a : A) :
     (monomialMapSnd lift).toFunA a = a := rfl
 
+/-- The backward map of `monomialMapSnd lift` is `lift`. -/
 @[simp] theorem monomialMapSnd_toFunB (lift : A → D → B) (a : A) (d : D) :
     (monomialMapSnd lift).toFunB a d = lift a d := rfl
 

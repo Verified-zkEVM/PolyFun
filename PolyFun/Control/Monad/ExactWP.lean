@@ -30,19 +30,19 @@ laws read in the order dual, so an exact interpretation is one that is sound on 
 * `ExactWPMonad.of_dual` recovers exactness from a sound interpretation over the duals that agrees
   with the original, and `exactWPMonad_iff_dual` states both directions.
 
-Lax and oplax together make the laws equations (`wp_pure`, `wp_bind`): the interpretation
+The lax and oplax laws together make `wp_pure` and `wp_bind` equations, so the interpretation
 `fun x => WP.wpTrans x` is a monad morphism into `PredTrans Pred EPred` (`isMonadHom`,
-`ofIsMonadHom`). Exactness is what an upper bound, an exact value, and a rewriting normal form
-need.
+`ofIsMonadHom`). Three uses need exactness: upper bounds through a `bind`, exact values, and a
+rewriting normal form for `simp`.
 
 ## Automation contract
 
-The `@[simp]` set drives `wp` inwards through program structure until it meets a leaf:
-`wp_pure` and `wp_bind`, `wp_map`, `wp_seq`,
-`wp_seqLeft`, `wp_seqRight`, and the control-flow equations `wp_ite`, `wp_dite`,
-`wp_option_elim`, `wp_sum_elim`. The control-flow equations hold for every `WP` interpretation
-and need no exactness. Each rewrite strictly decreases the program argument. No `grind`
-annotations: `wp_bind` introduces a fresh higher-order argument on its right-hand side.
+The `@[simp]` set drives `wp` inwards through program structure until it meets a leaf. It
+consists of `wp_pure`, `wp_bind`, `wp_map`, `wp_seq`, `wp_seqLeft`, and `wp_seqRight`, together
+with the control-flow equations `wp_ite`, `wp_dite`, `wp_option_elim`, and `wp_sum_elim`, which
+hold for every `WP` interpretation and need no exactness. Each rewrite strictly shrinks the
+program argument. The equations carry no `grind` annotations, because `wp_bind` introduces a
+fresh higher-order argument on its right-hand side.
 
 ## Instances
 
@@ -75,7 +75,7 @@ class ExactWPMonad (m : Type u → Type v) (Pred : Type w) (EPred : Type w') [Mo
 
 namespace ExactWPMonad
 
-/-- Exactness from the two equations. -/
+/-- An interpretation for which `wp_pure` and `wp_bind` hold as equations is exact. -/
 theorem of_eq {m : Type u → Type v} {Pred : Type w} {EPred : Type w'} [Monad m]
     [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred]
     (wp_pure : ∀ {α : Type u} (a : α) (post : α → Pred) (epost : EPred),
@@ -104,24 +104,32 @@ theorem wp_bind (x : m α) (f : α → m β) (post : β → Pred) (epost : EPred
     wp (x >>= f) post epost = wp x (fun a => wp (f a) post epost) epost :=
   PartialOrder.rel_antisymm (wp_bind_le x f post epost) (WPMonad.bind_le_wp_bind x f post epost)
 
+/-- The interpretation of `f <$> x` is the interpretation of `x` against the postcondition
+composed with `f`. -/
 @[simp]
 theorem wp_map (f : α → β) (x : m α) (post : β → Pred) (epost : EPred) :
     wp (f <$> x) post epost = wp x (fun a => post (f a)) epost := by
   rw [← bind_pure_comp, wp_bind]
   simp only [wp_pure]
 
+/-- The interpretation of `f <*> x` is the interpretation of `f` against, for each function `g`
+that `f` returns, the interpretation of `x` against the postcondition composed with `g`. -/
 @[simp]
 theorem wp_seq (f : m (α → β)) (x : m α) (post : β → Pred) (epost : EPred) :
     wp (f <*> x) post epost = wp f (fun g => wp x (fun a => post (g a)) epost) epost := by
   rw [← bind_map, wp_bind]
   simp only [wp_map]
 
+/-- The interpretation of `x <* y` is the interpretation of `x` against, for each value `a` that
+`x` returns, the interpretation of `y` against the postcondition at `a`. -/
 @[simp]
 theorem wp_seqLeft (x : m α) (y : m β) (post : α → Pred) (epost : EPred) :
     wp (x <* y) post epost = wp x (fun a => wp y (fun _ => post a) epost) epost := by
   rw [seqLeft_eq, wp_seq, wp_map]
   rfl
 
+/-- The interpretation of `x *> y` is the interpretation of `x` against the interpretation of
+`y`, whatever value `x` returns. -/
 @[simp]
 theorem wp_seqRight (x : m α) (y : m β) (post : β → Pred) (epost : EPred) :
     wp (x *> y) post epost = wp x (fun _ => wp y post epost) epost := by
@@ -161,9 +169,11 @@ def dualWP (α : Type u) : WP (m α) α Predᵒᵈ EPredᵒᵈ where
   wpTrans x := ⟨fun post epost => toDual (wp x (fun a => ofDual (post a)) (ofDual epost))⟩
   wp_trans_monotone x _ _ _ _ hepost hpost := WP.wp_trans_monotone x _ _ _ _ hepost hpost
 
-/-- The upper-bound reading of an exact interpretation: the same interpretation as a core
-`WPMonad` over the order duals, sound because the original satisfies the oplax laws. Its triples
-`⦃ pre ⦄ x ⦃ post ⦄` state `wp x post epost ⊑ pre` in the original order. Not an instance. -/
+/-- The dual reading of an exact interpretation: the same interpretation as a core `WPMonad` over
+the order duals, which is sound because the original satisfies the oplax laws. Its triples
+`⦃ pre ⦄ x ⦃ post ⦄` state the upper bound `wp x post epost ⊑ pre` in the original order. It is
+not an instance: core's assertion types are output parameters, so a global dual would compete
+with the original interpretation of `m`. -/
 @[instance_reducible]
 def dual [ExactWPMonad m Pred EPred] : WPMonad m Predᵒᵈ EPredᵒᵈ where
   toLawfulMonad := inferInstance
@@ -233,12 +243,16 @@ section ControlFlow
 variable {Prog : Type u} {Value : Type v} {Pred : Type w} {EPred : Type w'} [Assertion Pred]
   [Assertion EPred] [WP Prog Value Pred EPred]
 
+/-- The interpretation of a conditional program is the conditional of the interpretations of its
+branches. -/
 @[simp]
 theorem ExactWPMonad.wp_ite (c : Prop) [Decidable c] (x y : Prog) (post : Value → Pred)
     (epost : EPred) :
     wp (if c then x else y) post epost = if c then wp x post epost else wp y post epost := by
   split <;> rfl
 
+/-- The interpretation of a dependent conditional program is the dependent conditional of the
+interpretations of its branches. -/
 @[simp]
 theorem ExactWPMonad.wp_dite (c : Prop) [Decidable c] (x : c → Prog) (y : ¬c → Prog)
     (post : Value → Pred) (epost : EPred) :
@@ -246,12 +260,16 @@ theorem ExactWPMonad.wp_dite (c : Prop) [Decidable c] (x : c → Prog) (y : ¬c 
       if h : c then wp (x h) post epost else wp (y h) post epost := by
   split <;> rfl
 
+/-- The interpretation of `o.elim x f` eliminates `o` into the interpretation of `x` and the
+interpretations of the programs `f c`. -/
 @[simp]
 theorem ExactWPMonad.wp_option_elim {γ : Type z} (o : Option γ) (x : Prog) (f : γ → Prog)
     (post : Value → Pred) (epost : EPred) :
     wp (o.elim x f) post epost = o.elim (wp x post epost) (fun c => wp (f c) post epost) := by
   cases o <;> rfl
 
+/-- The interpretation of `s.elim f g` eliminates `s` into the interpretations of the programs
+`f c` and `g d`. -/
 @[simp]
 theorem ExactWPMonad.wp_sum_elim {γ : Type z} {δ : Type z} (s : γ ⊕ δ) (f : γ → Prog)
     (g : δ → Prog) (post : Value → Pred) (epost : EPred) :

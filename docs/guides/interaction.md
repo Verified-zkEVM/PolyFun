@@ -237,15 +237,16 @@ of the API contract.
 ## Two-party protocols (`TwoParty/`)
 
 Label each node with `Role` (`.sender` or `.receiver`) via
-`RoleDecoration`. Then:
+`RoleDecoration`. Both parties' strategies are fibers of one syntax over the
+role-decorated tree, `SyntaxOver.TwoParty.pairedTypeTree m`:
 
-- **`Strategy.withRoles m spec roles Output`**: the focal party's strategy,
-  seeing sender nodes as "produce a move" and receiver nodes as "observe a
-  move".
-- **`Counterpart m spec roles Output`**: the environment (verifier if
-  focal is prover).
-- **`Strategy.runWithRoles`**: executes focal + counterpart to get a
-  path.
+- **The focal party's strategy** is its `Participant.focal` fiber,
+  `StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal spec roles Output`.
+  It produces a move at a sender node and observes the move at a receiver node.
+- **The counterpart's strategy** is its `Participant.counterpart` fiber: the
+  environment, which is the verifier when the focal party is the prover.
+- **`TwoParty.run`** executes a focal strategy against a counterpart and returns
+  the path together with both outputs.
 
 For public-coin protocols, `PublicCoinCounterpart` and `replay` support
 public-coin path replay (Fiat-Shamir-style).
@@ -265,13 +266,13 @@ replay guarantees; probability and security bounds require downstream semantics.
 
 ### Composition
 
-`Strategy.compWithRoles` and `Counterpart.append` compose along
-`TypeTree.append`. The flat variants (`compWithRolesFlat`,
-`Counterpart.appendFlat`) take a single output family on the combined
-path. Factorization theorems (e.g.
-`runWithRoles_compWithRoles_append`) show that executing a composed
-protocol equals sequential execution of its parts. These require
-`LawfulCommMonad` (independent effects may be swapped).
+`StrategyOver.TwoParty.Focal.comp` and `StrategyOver.TwoParty.Counterpart.append`
+compose along `PFunctor.FreeM.append`. The flat variants (`Focal.compFlat`,
+`Counterpart.appendFlat`) take a single output family on the combined path. The
+factorization theorems `TwoParty.run_comp_append` and
+`TwoParty.run_compFlat_appendFlat` show that executing a composed protocol
+equals executing its parts in sequence. They require `LawfulCommMonad`
+(independent effects may be swapped).
 
 ## Multiparty local views (`Multiparty/`)
 
@@ -531,8 +532,8 @@ This guide explains the concepts; the source is the declaration index.
 ## Worked regressions
 
 - [`PolyFunTest/Interaction/TwoParty/Examples.lean`](../../PolyFunTest/Interaction/TwoParty/Examples.lean):
-  `rfl` checks that `withRoles` / `Counterpart` types unfold correctly on
-  a two-step type tree.
+  `rfl` checks that the focal and counterpart strategy types unfold as
+  expected on a two-step type tree.
 - [`PolyFunTest/Interaction/Multiparty/Examples.lean`](../../PolyFunTest/Interaction/Multiparty/Examples.lean):
   pattern-matching resolvers for broadcast, directed, and profile-based
   models; adversarial leakage and adaptive corruption.

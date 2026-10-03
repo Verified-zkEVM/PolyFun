@@ -99,7 +99,7 @@ composition, open-process, and observation declarations use `Interaction.Open`.
 The explicit `Open.Realizability` bridge connects open processes to realizability.
 Nothing under `PFunctor/` or `ITree/` depends on `Realizability/`.
 
-The `Std.Do` and tactic import boundaries remain restricted to the
+The `Std.WP` and tactic import boundaries are restricted to the
 [program-logic kernel](../guides/program-logic.md#the-stdwp-quarantine).
 Every Lean source uses module mode; see [public APIs](../development/module-api.md)
 for imports, transparency, and exposed reducer bodies.

@@ -118,9 +118,9 @@ theorem map_append {Γ : P.A → Type w₂}
         (fun path₁ => Decoration.Over.map η (s₂ path₁) (d₂ path₁) (r₂ path₁))
   | .pure _, _, _, _, _, _ => rfl
   | .liftBind a rest, s₂, ⟨γ, dRest⟩, d₂, ⟨fd, rRest⟩, r₂ => by
-      -- Lean 4.33: the `toHom_liftBind` rewrite no longer applies here (its
-      -- metavariable assignments fail the implicit-transparency type check),
-      -- so the node layer is exposed by `change` instead.
+      -- The `toHom_liftBind` rewrite does not apply here (its metavariable
+      -- assignments fail the implicit-transparency type check), so the node
+      -- layer is exposed by `change` instead.
       change
         (η a γ fd, fun b => Decoration.Over.map η
           (FreeM.append (rest b) (fun path => s₂ ⟨b, path⟩))
@@ -148,9 +148,9 @@ theorem map_append {Γ : P.A → Type w₂} {Δ : P.A → Type w₃}
         (fun path₁ => Decoration.map f (s₂ path₁) (d₂ path₁))
   | .pure _, _, _, _ => rfl
   | .liftBind a rest, s₂, ⟨γ, dRest⟩, d₂ => by
-      -- Lean 4.33: the `toHom_liftBind` rewrite no longer applies here (its
-      -- metavariable assignments fail the implicit-transparency type check),
-      -- so the node layer is exposed by `change` instead.
+      -- The `toHom_liftBind` rewrite does not apply here (its metavariable
+      -- assignments fail the implicit-transparency type check), so the node
+      -- layer is exposed by `change` instead.
       change
         (f a γ, fun b => Decoration.map f
           (FreeM.append (rest b) (fun path => s₂ ⟨b, path⟩))

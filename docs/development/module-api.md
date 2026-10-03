@@ -197,13 +197,13 @@ so that the upstream pull request is a move rather than a rewrite:
   downstream call sites do not change when it lands;
 - a lemma that duplicates an open upstream pull request carries an `-- upstream:` comment
   naming it and copies that request's statement shape; it is deleted when the request lands
-  and the pin moves (cslib#856's `IsMonadHom` landed in cslib `v4.34.0`, so the hypothesis-form
-  transport lemmas it superseded are gone and the remaining `forIn` transport is stated on
+  and the pin moves (cslib#856's `IsMonadHom` is part of cslib `v4.34.0`, so PolyFun keeps no
+  hypothesis-form transport lemmas, and its `forIn` transport is stated on
   `Cslib.IsMonadHom`);
 - a lemma with no upstream twin yet is marked `-- upstream candidate`;
 - `ToCslib` imports core, cslib, and Mathlib only — never PolyFun or `ComplexityBackends`, and
   never `Std.WP`, `Std.Do`, or `Std.Tactic.Do` directly (`scripts/check-modules.sh`
-  enforces both; cslib's `IsMonadHom` module brings the legacy `Std.Do.WP` classes in
+  enforces both; cslib's `IsMonadHom` module brings core's `Std.Do.WP` classes in
   transitively, which the fence does not police);
 - PolyFun modules import `ToCslib` modules directly (`public import`) and keep no local copy of
   a lemma that lives there; ordinary-import canaries for the moved lemmas stay in

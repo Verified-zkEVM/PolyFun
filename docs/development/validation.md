@@ -16,7 +16,7 @@ proofs, examples, import boundaries, or validation infrastructure.
 | Check | Scope |
 |---|---|
 | Default build | `PolyFun`, `ToCslib`, `ComplexityBackends`, `PolyFunExamples`, and `+PolyFunParliamentMain`, with `--wfail` |
-| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.Do` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend; `PolyFun` imports no backend), `import all` boundaries (tests may open backends, backends never open `PolyFun` or `ToCslib`, module canaries open nothing) |
+| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.WP` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend; `PolyFun` imports no backend), `import all` boundaries (tests may open backends, backends never open `PolyFun` or `ToCslib`, module canaries open nothing) |
 | Generated imports | Generated umbrellas match the tracked source tree |
 | Documentation | Checker regressions, agent symlink, local paths and heading anchors, module docstrings, README excerpt synchronization |
 | `--lint` | Batteries environment linters and Mathlib text-style checks over production and example libraries plus the executable entry point |
@@ -121,8 +121,11 @@ review the resolved versions. Consumer manifests are regenerated locally.
 Compatibility tests for existing deprecated APIs should assert their expected
 diagnostics with strict `#guard_msgs` rather than suppressing warnings.
 
-A release candidate is pinned like a stable version, with the `-rcN` tags in
-every place the version goes; merging a toolchain change to `main` cuts the
-matching PolyFun release tag. Acknowledging an experimental
-feature (`set_option experimental.vcgen true`) is not a linter suppression; one
-pinned diagnostic in `PolyFunTest/Do/Algebra.lean` tracks its warning text.
+A release candidate is pinned like a stable version, with its `-rcN` tag
+wherever the version appears. When a change to `lean-toolchain` reaches `main`,
+the [release-tag workflow](../../.github/workflows/release-tag.yml) creates the
+matching PolyFun release tag.
+
+Acknowledging an experimental feature with `set_option experimental.vcgen true`
+is not a linter suppression. `PolyFunTest/Do/Algebra.lean` pins the warning that
+`vcgen` prints without that option, so a change to its text fails the test.

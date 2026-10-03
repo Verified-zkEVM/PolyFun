@@ -209,7 +209,7 @@ interpretation of `MonadAttach.CanReturn`. -/
 def reachableUnder (allows : (a : P.A) → P.B a → Prop) (x : FreeM P α) : Set α :=
   {result | x.wpFold (OpSpec.angelicUnder allows) (· = result)}
 
-/-- Structural reachability when every typed response is admitted. -/
+/-- Outputs reachable when every operation may return every typed response. -/
 def reachable (x : FreeM P α) : Set α :=
   x.reachableUnder (fun _ _ => True)
 

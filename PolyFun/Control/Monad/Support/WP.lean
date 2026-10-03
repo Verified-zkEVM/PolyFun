@@ -12,25 +12,28 @@ public import Std.WP
 /-!
 # Monadic support as core weakest preconditions
 
-The always/some judgments are core predicate transformers at the `Prop` carrier with no
-exception layer, built from `MonadAttach` alone: demonically (`toWPDemonic`), `wp x post` is
-`AllOutputs post x`; angelically (`toWPAngelic`), it is `SomeOutput post x`. Both extend to
-`WPMonad` interpretations satisfying core's inequational laws — the angelic reading has no
-counterpart on the older `Std.Do` stack, whose transformers carry conjunctivity as a field. The
-demonic reading is conjunctive (`toWPMonadDemonic_wpConjunctive`); the angelic one is not, and
-`PolyFunTest/Do/Angelic.lean` pins the counterexample against core's classes. Neither is a global
-instance: install them scoped or local where the support semantics is intended. The demonic monad
-laws need only `LawfulMonadAttach`: core's return-value elimination rules prove them. The angelic
-laws need the introduction rules of `ExactMonadAttach`. Over an `ExactMonadAttach` both readings
-are exact (`ExactWPMonad`): "always" and "sometimes" distribute over `pure` and `bind` with
-equality, so core's `wp` under either carries the equational `simp` set of
-`PolyFun.Control.Monad.ExactWP`.
+The always and sometimes judgments are core predicate transformers at the `Prop` carrier with no
+exception layer, built from `MonadAttach` alone. Under the demonic transformer (`toWPDemonic`),
+`wp x post` is `AllOutputs post x`, and under the angelic one (`toWPAngelic`) it is
+`SomeOutput post x`. Both extend to `WPMonad` interpretations, the demonic and angelic readings
+(`toWPMonadDemonic`, `toWPMonadAngelic`), which satisfy core's inequational laws. The angelic
+reading has no counterpart in core's `Std.Do` framework, whose predicate transformers carry
+conjunctivity as a field.
+
+The demonic reading is conjunctive (`toWPMonadDemonic_wpConjunctive`). The angelic reading is
+not, and `PolyFunTest/Do/Angelic.lean` pins the counterexample against core's classes. Neither
+reading is a global instance: install each scoped or local where the support semantics is
+intended. The demonic monad laws need only `LawfulMonadAttach`, because core's elimination rules
+for return values prove them. The angelic laws need the introduction rules of
+`ExactMonadAttach`. Over an `ExactMonadAttach` both readings are exact (`ExactWPMonad`):
+"always" and "sometimes" distribute over `pure` and `bind` with equality, so core's `wp` under
+either reading carries the equational `simp` set of `PolyFun.Control.Monad.ExactWP`.
 
 `Std.WP.LawfulWPMonadAttach` is soundness of a `WPMonad` interpretation with respect to
 lawful attachment: a `wp`-provable postcondition holds at every value the computation can return.
-`support_subset_of_wp` and `allOutputs_of_wp` turn any sound triple — including one discharged
-by `vcgen` — into a support fact. This additional soundness property is not automatic for
-angelic or quantitative interpretations.
+`support_subset_of_wp` and `allOutputs_of_wp` turn any sound triple, including one discharged
+by `vcgen`, into a support fact. This soundness property does not hold automatically for the
+angelic reading or for an expectation reading.
 
 The angelic interpretation is a may/existential reading and nothing more: a proof of `wp x post`
 exhibits one favourable output, so it has no `LawfulWPMonadAttach` instance (the other outputs

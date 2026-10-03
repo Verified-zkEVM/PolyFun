@@ -16,15 +16,16 @@ Core's `Std.WP.Triple.SpecLemmas` covers `forIn'` / `forIn` / `foldlM` over list
 ranges, arrays, and iterators, and the operations of core's own transformers; this file adds:
 
 * the `@[spec]` rule for `List.forM`, the one list loop that core does not specify;
-* the registration of core's own `Spec.tryCatch_MonadExcept` — the lifting rule `try … catch`
-  elaborates to (`MonadExcept.tryCatch`, not `MonadExceptOf.tryCatch`) — which core states but
-  does not tag, so that a `try … catch` block on a transformer stack no longer stops `vcgen`
-  with "no spec found";
+* the registration of core's `Spec.tryCatch_MonadExcept`, which core states but does not tag.
+  It is the lifting rule for `MonadExcept.tryCatch` (not `MonadExceptOf.tryCatch`), which
+  `try … catch` elaborates to, so with it `vcgen` decomposes a `try … catch` block on a
+  transformer stack instead of stopping with "no spec found";
 * the rules for `WriterT` (Mathlib's transformer, interpreted by
   `PolyFun.Control.Monad.WriterT.WP`): `tell`, `monadLift`, `mk`, and `run`;
-* the `OptionT` rules core does not state: `failure` and `OptionT.lift` for every assertion
-  carrier, and `guard` for `Prop`-valued readings, stated with lattice connectives so that
-  `vcgen` splits it into its two outcomes, with `guard` for every assertion carrier below it;
+* the `OptionT` rules that core does not state: `failure` and `OptionT.lift` for every
+  assertion carrier, and `guard`, stated with lattice connectives so that `vcgen` splits it into
+  its two outcomes. `Spec.guard_OptionT` covers `Prop`-valued readings, and
+  `Spec.guard_OptionT_iInf`, at a lower priority, covers every assertion carrier;
 * the transformers' constructors, lifts and runners that programs also write: `StateT.mk`,
   `StateT.lift`, running a `StateT` at a state with the state discarded, `OptionT.mk`,
   `ExceptT.mk`, `ExceptT.lift`, and running an `OptionT` or `ExceptT` into a postcondition of the

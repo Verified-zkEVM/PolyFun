@@ -52,7 +52,7 @@ def firstOrDefault (o : Option Bool) : FreeM coinP Bool := do
 /- The `else` branch puts an operation in tail position with the value type already
 normalized to `Bool`, where `vcgen`'s structural matcher cannot apply `Spec.lift` (stated at
 `P.B a`); the residual `wp` goal is finished by the judgment equations, naming the interface
-explicitly because its value type no longer reads `coinP.B _`. -/
+explicitly because its value type reads `Bool` rather than `coinP.B _`. -/
 example (o : Option Bool) : ⦃ True ⦄ firstOrDefault o ⦃ fun r => r = true ∨ r = false ⦄ := by
   vcgen -errorOnMissingSpec [firstOrDefault]
   · exact Bool.eq_false_or_eq_true _

@@ -34,7 +34,7 @@ done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 # The `Std.WP` quarantine (AGENTS.md, docs/guides/program-logic.md): core's weakest-precondition
 # API moves fast, so it is fenced in two tiers.
 #
-# * Definitions (`Std.WP`, the legacy `Std.Do`, and the pre-4.35 `Std.Internal.Do`: `WP`,
+# * Definitions (`Std.WP`, core's `Std.Do`, and the pre-4.35 `Std.Internal.Do`: `WP`,
 #   `WPMonad`, `Triple`, spec lemmas) may be imported by the program-logic kernel —
 #   `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
 #   `PolyFun/ITree/Do.lean` — and by the `PolyFunTest/Do/` tests.
@@ -43,7 +43,7 @@ done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 #   `PolyFunTest/Do/`.
 #
 # `ToCslib/` stages material for cslib, which uses neither stack, so it may import none of it
-# directly (cslib's `IsMonadHom` module brings the legacy `Std.Do.WP` classes in transitively;
+# directly (cslib's `IsMonadHom` module brings core's `Std.Do.WP` classes in transitively;
 # the fence is about direct imports and instances). `ComplexityBackends/` sits above PolyFun and
 # is likewise outside both tiers. Everything the fenced modules export is a
 # construction or a scoped instance, never a global `WP` instance.
@@ -122,13 +122,13 @@ while IFS= read -r file; do
     echo "ERROR: $file imports core Std.WP / Std.Do outside the quarantine." >&2
     echo "Only the program-logic kernel (PolyFun/Control/Monad/, PolyFun/Control/Do/," >&2
     echo "PolyFun/PFunctor/Free/, PolyFun/ITree/Do.lean) and PolyFunTest/Do/ may depend on" >&2
-    echo "it. See AGENTS.md Std.Do quarantine." >&2
+    echo "it. See AGENTS.md Std.WP quarantine." >&2
     status=1
   fi
   if grep -qE "$std_do_tactic_pattern" "$file" && ! std_do_tactic_allowed "$file"; then
     echo "ERROR: $file imports core Std.Tactic.Do / Std.WP.Tactic outside the quarantine." >&2
     echo "Only PolyFun/Control/Do/, PolyFun/PFunctor/Free/Do.lean, and PolyFunTest/Do/ may" >&2
-    echo "depend on it. See AGENTS.md Std.Do quarantine." >&2
+    echo "depend on it. See AGENTS.md Std.WP quarantine." >&2
     status=1
   fi
 done < <(lean_sources)
