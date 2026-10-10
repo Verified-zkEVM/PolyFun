@@ -14,7 +14,7 @@ it provides, rather than importing the whole project while developing a module.
 | `PolyFunExamples` | Checked tutorials and the Parliament application under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
 | `PolyFunTest` | Regression tests, adversarial cases, and ordinary-import consumers | `lake test` |
 
-`PolyFun.lean`, `ToCslib.lean`, and `ComplexityBackends.lean` are generated import
+`PolyFun.lean`, `ToCslib.lean`, `ComplexityBackends.lean` are generated import
 indexes. The optional backends and examples are outside the `PolyFun` umbrella.
 `PolyFunTest` can consume examples, but production never depends on examples or tests.
 
@@ -29,9 +29,11 @@ Example and test imports never flow back into production.
 |---|---|---|
 | Polynomial interfaces and morphisms | [PFunctor basics](../../PolyFun/PFunctor/Basic.lean), [lens laws](../../PolyFun/PFunctor/Lens/Basic.lean) | [Polynomial functors](../guides/pfunctor.md) |
 | Free programs and handlers | [Free basics](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean), [handler sums](../../PolyFun/PFunctor/Handler/Sum.lean), [stateful combinators](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean) | [First program](../tutorials/first-program.md) |
+| Binding syntax and type-changing IR translations | [Scoped signatures](../../PolyFun/IPFunctor/Scoped/Basic.lean), [interpretations](../../PolyFun/IPFunctor/Scoped/Interpretation.lean), [reindexing](../../PolyFun/IPFunctor/Scoped/Reindex.lean) | [Scoped programs](../guides/ipfunctor.md#binding-signatures-and-native-ir) |
 | State-dependent interfaces | [Indexed basics](../../PolyFun/IPFunctor/Basic.lean) | [Indexed polynomials](../guides/ipfunctor.md) |
 | Behaviors and explicit-state machines | [Resumptions](../../PolyFun/PFunctor/Resumption.lean), [dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean) | [Computation models](../guides/computation-models.md) |
 | Interaction trees and recursion | [ITree basics](../../PolyFun/ITree/Basic.lean) | [Interaction trees](../guides/itree.md) |
+| Continuous partial semantics | [Lifted results](../../PolyFun/Control/Domain/Result.lean), [prefix recurrences](../../PolyFun/Control/Domain/PrefixRecursion.lean), [resumption domains](../../PolyFun/PFunctor/Resumption/Domain.lean), [ITree domains](../../PolyFun/ITree/Domain.lean) | [Continuous interpretations](../guides/itree.md#continuous-domain-interpretations) |
 | Interpreting trees into monads | [Interpretation](../../PolyFun/ITree/Interp/Defs.lean), [laws](../../PolyFun/ITree/Interp/Laws.lean) | [Interaction trees](../guides/itree.md#interpreting-into-a-monad) |
 | Iterative monads and transformer loops | [Iteration](../../PolyFun/Control/Monad/Iter.lean), [transformer instances](../../PolyFun/Control/Monad/Iter/Instances.lean) | [Interaction trees](../guides/itree.md#iterative-monads) |
 | Protocol shapes and strategies | [TypeTree](../../PolyFun/Interaction/Basic/TypeTree.lean) | [Interaction](../guides/interaction.md) |
@@ -77,7 +79,9 @@ flowchart TD
   OP --> OR
   R --> AD[ComplexityBackends]
   T -.-> AD
-  I --> EX[Optional examples]
+  I --> SF[Algebraic folds and scoped syntax]
+  SF --> EX[Optional examples]
+  I --> EX
   IO --> EX
   EX --> CLI[Parliament executable]
   EX --> TEST[Regression and consumer tests]

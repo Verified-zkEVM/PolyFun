@@ -56,6 +56,37 @@ remove superseded local helpers, check ordinary imports, and run the full
 is useful only if its universe parameters, hypotheses, and computational
 behavior match the consumer.
 
+## Finite case compilation
+
+`ToCslib/Data/Fin/Cases.lean` proves compiler simplifications for core's
+`Fin.cases` and Mathlib's `Fin.cons`/`Matrix.vecCons` wrappers. At the pinned
+v4.35 release candidate, strict evaluation of the induction-based definition
+computes discarded recursive results; nested vector lookup compounds that
+work. The replacement selects the underlying natural-number case directly,
+with a kernel-checked equality and unchanged logical computation rules.
+The wrapper equations matter because imported wrappers can be inlined after
+the compiler simplification pass. Remove these staging lemmas when the owning
+core and Mathlib definitions acquire equivalent compiled implementations.
+
+## Continuous domain foundations
+
+`ToCslib/Order/` extends Mathlib’s omega-CPO API with continuous currying,
+least fixed points, admissibility, discrete and lifted orders, and finite
+prefix recursion. Order-only results are candidates for Mathlib or CSLib;
+remove superseded local instances before upgrading their owning dependency.
+
+`PolyFun.Control.Domain` supplies partial results and constructor-producing
+recursive arrays. Continuous interpretations live beside the existing
+resumption and ITree APIs. They use the existing carriers; coordinate any
+carrier migration with [CSLib PR 1088](https://github.com/leanprover/cslib/pull/1088).
+`ITree.Execution` overlaps the adapter in
+[PolyFun PR 289](https://github.com/Verified-zkEVM/PolyFun/pull/289).
+
+The downstream CryptolModel package uses these public APIs without making
+PolyFun responsible for a language frontend, concrete primitives, or
+cryptographic interpretations. Its own dependency ledger records the pinned
+Cryptol, Foundation, and CSLib campaign audit.
+
 ## Object, path, and trace interfaces
 
 `FreeP.node`, `FreeP.encode`, and `FreeP.decode` use the owning polynomial

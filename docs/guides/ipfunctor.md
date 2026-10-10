@@ -294,3 +294,37 @@ per the project policy in [`CLAUDE.md`](../../AGENTS.md).
 Mathlib's polynomial-object interface. Its child projection has the dependent
 type `(b : P.B j x.fst) → X (P.src j x.fst b)`. Consumers should use these
 operations and `map_fst` / `map_snd` rather than unfolding the Sigma encoding.
+
+## Binding signatures and native IR
+
+`IPFunctor.ScopedSignature` describes operations by their result sort, argument
+positions, and the sorts bound in each argument. Its `Term` is an `IFreeM`:
+variables are typed leaves, and constructor nodes contain their children.
+This makes the polynomial structure the syntax representation itself.
+
+`Term.rename` and `Term.subst` lift their maps through each argument's binder
+list. The identity, composition, and single-variable substitution laws live in
+`Scoped.Renaming` and `Scoped.Substitution`. `Scoped.Interpretation` folds into
+functions of environments and proves `denote_rename`, `denote_subst`, and
+`denote_substOne` once for every constructor algebra. Algebras receive argument
+meanings as functions of new bound values, so entering a binder does not
+execute its body.
+
+For a different semantic carrier, `IPFunctor.Algebra` and `IFreeM.fold` provide
+an indexed constructor fold. `fold_rel`, `fold_fusion`, and `fold_unique` separate
+constructor reasoning from whole-tree induction. In particular, a lazy language
+can fold into **continuous** environment functions; it need not erase continuity
+to use the simpler native interpretation API.
+
+`ScopedSignature.Hom` changes sorts, operations, and argument positions together.
+Its equations require translated child sorts and binder lists to agree.
+`Term.map` uses `IFreeM.reindex`; `fold_reindex` relates interpretation before and
+after this change. Sort maps may identify different sorts: variable positions
+remain distinct. This supports type instantiation of a suitable signature, but
+does not itself supply a language's type-quantifier syntax or constraints.
+
+The [scoped-program tutorial](../../Examples/Tutorials/ScopedPrograms.lean)
+contains arithmetic, functions, lexical lets, and a bounded loop whose body is
+stored once. Its let-elimination proof uses generic fold fusion and substitution
+correctness. [Ordinary-import checks](../../PolyFunTest/ModuleAPI/Scoped.lean)
+exercise capture avoidance and noninjective sort translation.

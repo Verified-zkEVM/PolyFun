@@ -10,6 +10,7 @@ import Examples.Tutorials.Requests
 import Examples.Tutorials.Machines
 import Examples.Tutorials.IndexedPrograms
 import Examples.Tutorials.InteractionTrees
+import Examples.Tutorials.ScopedPrograms
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess
 import PolyFun.Interaction.Execution.RequestNetwork
@@ -55,3 +56,6 @@ example : Execution.RequestNetwork.Activation Unit := .deliver
 example (T : Open.OpenTheory) (Δ : PortBoundary) (system : T.Obj Δ) :
     Open.Emulates system system (Open.Observation.eq T) :=
   Open.Emulates.refl _ _
+
+example : Examples.ScopedPrograms.captureExample.denote Examples.ScopedPrograms.algebra
+    IPFunctor.ScopedSignature.Env.empty 3 = 10 := rfl

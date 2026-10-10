@@ -11,9 +11,16 @@ public import ToCslib.Algebra.PolynomialGrowth
 public import ToCslib.Control.ForIn
 public import ToCslib.Control.Monad.HomTransport
 public import ToCslib.Data.BitVec
+public import ToCslib.Data.Fin.Cases
 public import ToCslib.Data.PFunctor.Free.Basic
 public import ToCslib.Data.PFunctor.Free.Loops
+public import ToCslib.Order.Admissible
+public import ToCslib.Order.DiscreteOmegaCompletePartialOrder
 public import ToCslib.Order.LeanOrder
+public import ToCslib.Order.OmegaCompletePartialOrder
+public import ToCslib.Order.PrefixRecursion
+public import ToCslib.Order.SumOmegaCompletePartialOrder
+public import ToCslib.Order.WithBotOmegaCompletePartialOrder
 
 /-!
 # Extensions of the pinned cslib library

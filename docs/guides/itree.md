@@ -140,6 +140,41 @@ agrees with the direct corecursor `interpState` up to weak bisimulation and the
 order of the returned pair. The corecursor keeps its exact computation rules;
 the handler form is the one that composes with other iterative targets.
 
+## Continuous domain interpretations
+
+[`ITree.Domain`](../../PolyFun/ITree/Domain.lean) interprets trees into any
+pointed omega-CPO with a continuous algebra for each visible query. Silent
+steps use identity. `ITree.denote` is the least solution of these equations;
+`WeakBisim.denote_eq` proves it invariant under weak bisimulation.
+`denote_corec` relates a corecursive tree to the least solution of its state
+equations. This is a domain interpretation, separate from a chosen monadic
+handler or a termination argument.
+
+[`Resumption.Domain`](../../PolyFun/PFunctor/Resumption/Domain.lean) supplies
+the same construction for resumptions, proves agreement with well-founded
+free folds, and transports algebras along lenses. `denote_toResumptionWithTau`
+connects the ITree and resumption presentations exactly.
+[`DomainTruncate`](../../PolyFun/PFunctor/Resumption/DomainTruncate.lean)
+interprets finite cutoff leaves as bottom and proves that the increasing
+truncation folds have the full denotation as their supremum. These theorems
+do not require finite branching or a uniform finite depth for a well-founded tree.
+
+[`ITree.Execution`](../../PolyFun/ITree/Execution.lean) supplies the
+`ITree.machine` resumable adapter and `withSilentSteps` handler. Silent steps
+consume budget without invoking a visible-event handler, and a paused run
+retains the exact tree residual. The downstream [Cryptol model](cryptol-model.md)
+uses both this execution boundary and continuous denotation.
+
+[`DomainResult.generateStep_fix_eq`](../../PolyFun/Control/Domain/PrefixRecursion.lean)
+solves a finite recursive array by its strict-prefix equations. The generator
+must expose its outer constructor; entries may still be bottom or errors.
+`Function.UsesPrefix` expresses that coordinate `i` observes only coordinates
+strictly before `i`, and yields uniqueness without requiring total entries.
+`generateStep_fix_eq_prefixRecursion` connects the least fixed point to the
+well-founded `Function.prefixRecursion` in `ToCslib/Order/PrefixRecursion.lean`.
+Self-dependent equations and generators that demand the whole array before
+returning its constructor do not satisfy this contract.
+
 ## Iterative monads
 
 `ITree.iter` is an instance of the `MonadIter` interface in
