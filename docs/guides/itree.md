@@ -142,6 +142,14 @@ the handler form is the one that composes with other iterative targets.
 
 ## Continuous domain interpretations
 
+[`PointedDomain`](../../PolyFun/Control/Domain/Pointed.lean) bundles the carrier,
+omega-CPO structure, and bottom when a semantic domain depends on syntax.
+Dependent products preserve each coordinate's partial information; `result`
+adds a new outer suspension and an explicit error alternative. The strict
+`DomainResult.elim` map can target any pointed omega-CPO, including a dependent
+family without an additional suspension. For continuous local environments and
+simultaneous recursive groups, see [binding families](ipfunctor.md#binders-that-change-parameter-contexts).
+
 [`ITree.Domain`](../../PolyFun/ITree/Domain.lean) interprets trees into any
 pointed omega-CPO with a continuous algebra for each visible query. Silent
 steps use identity. `ITree.denote` is the least solution of these equations;

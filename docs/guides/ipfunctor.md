@@ -328,3 +328,52 @@ contains arithmetic, functions, lexical lets, and a bounded loop whose body is
 stored once. Its let-elimination proof uses generic fold fusion and substitution
 correctness. [Ordinary-import checks](../../PolyFunTest/ModuleAPI/Scoped.lean)
 exercise capture avoidance and noninjective sort translation.
+
+## Binders that change parameter contexts
+
+[`ScopedFamily W S`](../../PolyFun/IPFunctor/Scoped/Family.lean) lets each child
+enter its own parameter context `w : W`, reindex old value sorts `S w`, and
+bind new values. A judgment contains the parameter context, the local value
+context, and the result sort. Terms remain `IFreeM` trees. This supports type
+or numeric quantifiers without representing syntax as a callback that builds a
+different term for each instantiation.
+
+[`ScopedFamily.Hom`](../../PolyFun/IPFunctor/Scoped/FamilyMap.lean) describes a
+parameter transformation by constructor-local equations. It checks how the
+parameter map lifts at every child, including compatibility with old variable
+sorts, new binder lists, and result sorts. `Term.map` assembles these equations
+into an [`IPFunctor.Traversal`](../../PolyFun/IPFunctor/Free/Traversal.lean).
+`IFreeM.traverse_comp` fuses traversals; `fold_traverse_rel` lifts local semantic
+compatibility to all trees. A language must still prove that compatibility for
+its own constructor algebra.
+
+[`Scoped.Transport`](../../PolyFun/IPFunctor/Scoped/Transport.lean) reindexes
+variables by their original positions. No injectivity assumption is required:
+two parameters can instantiate to the same type without merging their bindings.
+Value renaming has identity and composition laws. The
+[`family substitution API`](../../PolyFun/IPFunctor/Scoped/FamilySubstitution.lean)
+requires a language action for reindexing substitution images when entering a
+new parameter context. It proves identity under variable preservation and
+substitution after renaming. General substitution composition and semantic
+substitution require further laws for that action; they are not consequences
+of arbitrary `ReindexAction` data alone.
+
+The [constant-family adapter](../../PolyFun/IPFunctor/Scoped/ConstantFamily.lean)
+provides both proved round trips to the existing `ScopedSignature` API.
+[`FamilySize`](../../PolyFun/IPFunctor/Scoped/FamilySize.lean) counts nodes when
+every constructor has finitely many children. The count excludes head payloads
+and measures neither execution cost nor the size of a semantic value.
+
+[`ScopedDomain.Env`](../../PolyFun/IPFunctor/Scoped/Domain.lean) interprets local
+contexts in bundled [`PointedDomain`](../../PolyFun/Control/Domain/Pointed.lean)
+carriers. Extension, append, and sort reindexing are continuous maps.
+`Env.fixGroup` ties a finite heterogeneous group with one least fixed point;
+its unfolding and leastness laws apply to the whole environment. Language
+specific errors and quantifier stages remain outside this generic layer.
+
+The [polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean) constructs
+a finite identity under a type binder and proves erasure preservation for every
+parameter renaming using `fold_traverse_rel`. It has no Cryptol or cryptography
+dependency. [Public API checks](../../PolyFunTest/ModuleAPI/ScopedFamily.lean)
+and the separate documentation consumer exercise the same theorems through
+ordinary imports.

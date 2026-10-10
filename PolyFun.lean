@@ -6,6 +6,7 @@ public import PolyFun.Control.Coalgebra
 public import PolyFun.Control.Comonad.Basic
 public import PolyFun.Control.Comonad.Instances
 public import PolyFun.Control.Do.Spec
+public import PolyFun.Control.Domain.Pointed
 public import PolyFun.Control.Domain.PrefixRecursion
 public import PolyFun.Control.Domain.Result
 public import PolyFun.Control.LTS.Trace
@@ -41,6 +42,7 @@ public import PolyFun.IPFunctor.Free.Family
 public import PolyFun.IPFunctor.Free.Fold
 public import PolyFun.IPFunctor.Free.Indexed
 public import PolyFun.IPFunctor.Free.Reindex
+public import PolyFun.IPFunctor.Free.Traversal
 public import PolyFun.IPFunctor.Lens.Basic
 public import PolyFun.IPFunctor.M
 public import PolyFun.IPFunctor.Notation
@@ -48,11 +50,18 @@ public import PolyFun.IPFunctor.Notation.Common
 public import PolyFun.IPFunctor.Notation.Deterministic
 public import PolyFun.IPFunctor.Notation.Indexed
 public import PolyFun.IPFunctor.Scoped.Basic
+public import PolyFun.IPFunctor.Scoped.ConstantFamily
+public import PolyFun.IPFunctor.Scoped.Domain
+public import PolyFun.IPFunctor.Scoped.Family
+public import PolyFun.IPFunctor.Scoped.FamilyMap
+public import PolyFun.IPFunctor.Scoped.FamilySize
+public import PolyFun.IPFunctor.Scoped.FamilySubstitution
 public import PolyFun.IPFunctor.Scoped.Interpretation
 public import PolyFun.IPFunctor.Scoped.Reindex
 public import PolyFun.IPFunctor.Scoped.Renaming
 public import PolyFun.IPFunctor.Scoped.Size
 public import PolyFun.IPFunctor.Scoped.Substitution
+public import PolyFun.IPFunctor.Scoped.Transport
 public import PolyFun.ITree.Basic
 public import PolyFun.ITree.Bisim.Bind
 public import PolyFun.ITree.Bisim.CrossSignature

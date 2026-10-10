@@ -13,4 +13,8 @@ interpretations, and finite prefix recursion. See the
 The downstream project owns Cryptol syntax choices and semantics, extraction,
 export, language compatibility tests, Foundation correspondences, and VCVio
 probability statements. Both the resolved source and native finite IR consume
-PolyFun's scoped syntax directly.
+PolyFun's scoped syntax directly. Ordered polymorphic syntax uses the
+[context-changing binding families](ipfunctor.md#binders-that-change-parameter-contexts),
+generic parameter traversals, and continuous heterogeneous environments.
+The [independent polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean)
+exercises these APIs without a language or cryptographic dependency.

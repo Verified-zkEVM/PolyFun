@@ -69,6 +69,36 @@ variable [OmegaCompletePartialOrder α] [OmegaCompletePartialOrder β]
 @[expose] noncomputable def valueContinuous : α →𝒄 DomainResult ε α :=
   .ofFun value (WithBot.ωScottContinuous_coe.comp Sum.ωScottContinuous_inr)
 
+/-- Eliminate an outer suspension into any pointed domain. The error handler
+may itself return a function, without introducing another suspension. -/
+@[expose] noncomputable def elim [OrderBot β] (fail : ε → β) (f : α →𝒄 β) :
+    DomainResult ε α →𝒄 β :=
+  WithBot.extend (Sum.elimContinuous (DiscreteOrder.continuousMap fail) f)
+
+@[simp] theorem elim_bot [OrderBot β] (fail : ε → β) (f : α →𝒄 β) :
+    elim fail f ⊥ = ⊥ := rfl
+
+@[simp] theorem elim_error [OrderBot β] (fail : ε → β) (f : α →𝒄 β) (e : ε) :
+    elim fail f (error e) = fail e := rfl
+
+@[simp] theorem elim_value [OrderBot β] (fail : ε → β) (f : α →𝒄 β) (a : α) :
+    elim fail f (value a) = f a := rfl
+
+/-- Eliminating a suspension is continuous in its value continuation. -/
+@[fun_prop] theorem ωScottContinuous_elim [OrderBot β] (fail : ε → β) :
+    ωScottContinuous (elim (α := α) fail) := by
+  apply ContinuousHom.ωScottContinuous_of_apply
+  intro x
+  induction x using inductionOn with
+  | bot => exact ωScottContinuous.const
+  | error e => exact ωScottContinuous.const
+  | value a =>
+      exact ContinuousHom.ωScottContinuous_apply ωScottContinuous.id ωScottContinuous.const
+
+/-- The continuous eliminator, including its continuation argument. -/
+@[expose] noncomputable def elimContinuous [OrderBot β] (fail : ε → β) :
+    (α →𝒄 β) →𝒄 (DomainResult ε α →𝒄 β) := .ofFun (elim fail) (ωScottContinuous_elim fail)
+
 /-- Binding propagates divergence and errors and passes a value, including
 its partial components, to the continuation. -/
 @[expose] noncomputable def bind (f : α →𝒄 DomainResult ε β) :

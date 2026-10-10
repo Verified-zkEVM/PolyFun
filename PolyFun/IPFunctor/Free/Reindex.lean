@@ -18,7 +18,7 @@ this can instantiate types as well as change the variable context.
 
 public section
 
-universe uI uJ uA uB uC uD uX uY uV
+universe uI uJ uK uA uB uC uD uE uF uX uY uZ uV
 
 namespace IPFunctor
 
@@ -39,6 +39,14 @@ structure Reindexing (P : Endo.{uI, uA, uB} I) (Q : Endo.{uJ, uC, uD} J)
   op _ a := a
   arg _ _ b := b
   source _ _ _ := rfl
+
+/-- Compose index and constructor translations, retaining the child equations. -/
+@[expose] def Reindexing.comp {K : Type uK} {P : Endo.{uI, uA, uB} I}
+    {Q : Endo.{uJ, uC, uD} J} {R : Endo.{uK, uE, uF} K} {f : I → J} {g : J → K}
+    (h : Reindexing P Q f) (k : Reindexing Q R g) : Reindexing P R (g ∘ f) where
+  op i a := k.op (f i) (h.op i a)
+  arg i a b := h.arg i a (k.arg (f i) (h.op i a) b)
+  source i a b := (congrArg g (h.source i a _)).trans (k.source (f i) (h.op i a) b)
 
 namespace IFreeM
 
@@ -68,6 +76,34 @@ variable {P : Endo.{uI, uA, uB} I} {Q : Endo.{uJ, uC, uD} J} {f : I → J}
     simp only [reindex_liftBind, Reindexing.id]
     congr 1
     exact funext ih
+
+/-- Index transport commutes with reindexing. -/
+theorem reindex_cast (h : Reindexing P Q f) (leaf : ∀ s, X s → Y (f s))
+    {i j : I} (e : i = j) (t : IFreeM P X i) :
+    (e ▸ t).reindex h leaf = congrArg f e ▸ t.reindex h leaf := by
+  cases e
+  rfl
+
+/-- Successive changes of indices equal their composite translation. -/
+theorem reindex_comp {K : Type uK} {R : Endo.{uK, uE, uF} K}
+    {Z : K → Type uZ} {g : J → K} (h : Reindexing P Q f) (k : Reindexing Q R g)
+    (leafH : ∀ i, X i → Y (f i)) (leafK : ∀ j, Y j → Z (g j))
+    {i : I} (t : IFreeM P X i) :
+    (t.reindex h leafH).reindex k leafK =
+      t.reindex (h.comp k) (fun i x => leafK (f i) (leafH i x)) := by
+  induction t with
+  | pure x => rfl
+  | liftBind a next ih =>
+      simp only [reindex_liftBind, reindex_cast, ih, Reindexing.comp]
+      congr 1
+      funext b
+      exact transport_trans _ _ _
+where
+  transport_trans {j k l : K} (e : j = k) (d : k = l) (t : IFreeM R Z j) :
+      d ▸ (e ▸ t) = (e.trans d) ▸ t := by
+    cases e
+    cases d
+    rfl
 
 /-- Interpreting a transported tree transports its meaning at the same index. -/
 theorem fold_cast {V : J → Type uV} (leaf : ∀ s, Y s → V s) (alg : Algebra Q V)

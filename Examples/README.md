@@ -13,6 +13,7 @@ lake env lean Examples/Tutorials/Requests.lean
 | [Machines](Tutorials/Machines.lean) | A counter's state, outputs, trace, and composition of finite runs |
 | [Indexed programs](Tutorials/IndexedPrograms.lean) | Two protocol phases, indexed sequencing, and forgetting indices |
 | [Scoped programs](Tutorials/ScopedPrograms.lean) | Native polynomial syntax, capture-avoiding substitution, bounded loops, and proved let elimination |
+| [Polymorphic scoped families](Tutorials/ScopedFamily.lean) | Finite syntax with changing type-parameter scopes, parameter renaming, and erasure preservation by generic traversal |
 | [Interaction trees](Tutorials/InteractionTrees.lean) | A counter over state events and ticks, run by the state corecursor and through handlers |
 
 Use ordinary imports such as `import Examples.Tutorials.Requests`.

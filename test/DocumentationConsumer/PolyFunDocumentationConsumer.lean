@@ -11,6 +11,7 @@ import Examples.Tutorials.Machines
 import Examples.Tutorials.IndexedPrograms
 import Examples.Tutorials.InteractionTrees
 import Examples.Tutorials.ScopedPrograms
+import Examples.Tutorials.ScopedFamily
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess
 import PolyFun.Interaction.Execution.RequestNetwork
@@ -59,3 +60,9 @@ example (T : Open.OpenTheory) (Δ : PortBoundary) (system : T.Obj Δ) :
 
 example : Examples.ScopedPrograms.captureExample.denote Examples.ScopedPrograms.algebra
     IPFunctor.ScopedSignature.Env.empty 3 = 10 := rfl
+
+example {n m : Nat} (ρ : Fin n → Fin m)
+    {Γ : List (Examples.ScopedFamily.ValueSort n)} {s : Examples.ScopedFamily.ValueSort n}
+    (t : Examples.ScopedFamily.Term n Γ s) :
+    Examples.ScopedFamily.erase (t.map Examples.ScopedFamily.parameterHom ρ) =
+      Examples.ScopedFamily.erase t := Examples.ScopedFamily.erase_parameters ρ t
