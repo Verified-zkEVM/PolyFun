@@ -102,9 +102,11 @@ theorem traverse_comp (f : Traversal P Q S) (g : Traversal Q R T)
       funext b
       exact ih _ _ _
 
-/-- Traversing with identity states and variable leaves leaves the tree unchanged. -/
-@[simp] theorem traverse_identity {i} (t : IFreeM P X i) :
-    t.traverse (Traversal.identity P) (fun s x => .pure (s.down ▸ x)) ⟨rfl⟩ = t := by
+/-- An identity traversal only transports the tree to the equal target judgment. -/
+@[simp] theorem traverse_identity {i j} (t : IFreeM P X i) (s : PLift (i = j)) :
+    t.traverse (Traversal.identity P) (fun s x => .pure (s.down ▸ x)) s = s.down ▸ t := by
+  rcases s with ⟨e⟩
+  cases e
   induction t with
   | pure x => rfl
   | liftBind a next ih =>

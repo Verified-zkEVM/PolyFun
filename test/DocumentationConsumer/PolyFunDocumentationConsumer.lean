@@ -66,3 +66,11 @@ example {n m : Nat} (ρ : Fin n → Fin m)
     (t : Examples.ScopedFamily.Term n Γ s) :
     Examples.ScopedFamily.erase (t.map Examples.ScopedFamily.parameterHom ρ) =
       Examples.ScopedFamily.erase t := Examples.ScopedFamily.erase_parameters ρ t
+
+example {n m : Nat} (μ : Fin n → Fin m)
+    {Γ Δ : List (Examples.ScopedFamily.ValueSort n)} {s : Examples.ScopedFamily.ValueSort n}
+    (ρ : IPFunctor.ScopedSignature.Renaming Γ Δ) (t : Examples.ScopedFamily.Term n Γ s) :
+    (t.rename ρ).map Examples.ScopedFamily.parameterHom μ =
+      (t.map Examples.ScopedFamily.parameterHom μ).rename
+        (IPFunctor.ScopedSignature.Renaming.map (Examples.ScopedFamily.ValueSort.rename μ) ρ) :=
+  Examples.ScopedFamily.parameters_rename μ ρ t

@@ -54,7 +54,10 @@ namespace PointedDomain
   cases h
   exact OmegaCompletePartialOrder.ContinuousHom.id
 
-@[simp] theorem cast_rfl {D : PointedDomain.{u}} (x : D) : cast rfl x = x := rfl
+/-- Transport by any equality proof from a domain to itself is identity. -/
+@[simp] theorem cast_self {D : PointedDomain.{u}} (h : D = D) (x : D) : cast h x = x := rfl
+
+theorem cast_rfl {D : PointedDomain.{u}} (x : D) : cast rfl x = x := rfl
 
 @[simp] theorem cast_bot {D E : PointedDomain.{u}} (h : D = E) : cast h ⊥ = ⊥ := by
   cases h

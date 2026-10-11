@@ -44,6 +44,17 @@ theorem map_id {Γ : List S} {a : S} (x : ScopedVar Γ a) :
       change succ (x.map id) = (congrArg (b :: ·) (List.map_id Γ).symm ▸ succ x)
       rw [cast_succ, ih]
 
+/-- Composing sort maps retains the original binding position. -/
+theorem map_map {U : Type w} (f : S → T) (g : T → U)
+    {Γ : List S} {a : S} (x : ScopedVar Γ a) :
+    (List.map_map ▸ (x.map f).map g) = x.map (g ∘ f) := by
+  induction x with
+  | @zero Γ a => exact cast_zero List.map_map _
+  | @succ Γ a b x ih =>
+      change (congrArg (g (f b) :: ·) (List.map_map (l := Γ)) ▸
+        succ ((x.map f).map g)) = succ (x.map (g ∘ f))
+      rw [cast_succ (List.map_map (l := Γ)), ih]
+
 /-- Read a mapped context using an assignment to its original variable positions. -/
 @[expose] def mapLookup (f : S → T) {V : T → Type w} :
     {Γ : List S} → (∀ {a}, ScopedVar Γ a → V (f a)) →
@@ -78,6 +89,37 @@ namespace IPFunctor.ScopedSignature.Renaming
 
 variable {S : Type u} {T : Type v} {Γ Δ Θ : List S}
 
+/-- Normalize the two contexts of a renaming. -/
+@[expose] def cast {Γ' Δ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
+    (ρ : Renaming Γ Δ) : Renaming Γ' Δ' := hΔ ▸ hΓ ▸ ρ
+
+@[simp] theorem cast_self (hΓ : Γ = Γ) (hΔ : Δ = Δ) (ρ : Renaming Γ Δ) :
+    (cast hΓ hΔ ρ : Renaming Γ Δ) = @ρ := rfl
+
+theorem cast_apply {Γ' Δ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
+    (ρ : Renaming Γ Δ) {a : S} (x : ScopedVar Γ a) :
+    cast hΓ hΔ ρ (hΓ ▸ x) = hΔ ▸ ρ x := by
+  cases hΓ
+  cases hΔ
+  rfl
+
+/-- Context normalization only changes the type of a renaming. -/
+@[simp] theorem cast_heq {Γ' Δ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
+    (ρ : Renaming Γ Δ) : HEq (cast hΓ hΔ ρ : Renaming Γ' Δ') (@ρ) := by
+  cases hΓ
+  cases hΔ
+  rfl
+
+/-- Context normalization commutes with protecting a fresh binder. -/
+theorem cast_lift {Γ' Δ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
+    (ρ : Renaming Γ Δ) (a : S) :
+    (cast (congrArg (a :: ·) hΓ) (congrArg (a :: ·) hΔ) (lift ρ a) :
+      Renaming (a :: Γ') (a :: Δ')) =
+      (fun {_} x => lift (cast hΓ hΔ ρ) a x) := by
+  cases hΓ
+  cases hΔ
+  rfl
+
 /-- Reindex both contexts of a renaming, retaining their variable positions. -/
 @[expose] def map (f : S → T) (ρ : Renaming Γ Δ) : Renaming (Γ.map f) (Δ.map f) :=
   ScopedVar.mapLookup f (fun x => (ρ x).map f)
@@ -85,6 +127,54 @@ variable {S : Type u} {T : Type v} {Γ Δ Θ : List S}
 @[simp] theorem map_apply (f : S → T) (ρ : Renaming Γ Δ) {a : S}
     (x : ScopedVar Γ a) : map f ρ (x.map f) = (ρ x).map f :=
   ScopedVar.mapLookup_map f _ x
+
+/-- Equal sort functions induce the same positional renaming. -/
+theorem map_heq {f g : S → T} (h : f = g) (ρ : Renaming Γ Δ) :
+    HEq (map f ρ : Renaming _ _) (map g ρ : Renaming _ _) := by
+  cases h
+  rfl
+
+theorem map_lift (f : S → T) (ρ : Renaming Γ Δ) (a : S) :
+    (map f (lift ρ a) : Renaming _ _) = (fun {_} x => lift (map f ρ) (f a) x) := by
+  funext b x
+  induction x using ScopedVar.map_inductionOn f with
+  | h b x =>
+      rw [map_apply]
+      cases x <;> simp only [lift, ScopedVar.map, map_apply]
+
+/-- Mapping sorts commutes with lifting under a block of value binders. -/
+theorem map_liftMany (f : S → T) (ρ : Renaming Γ Δ) (Ξ : List S) :
+    (cast List.map_append List.map_append (map f (liftMany ρ Ξ)) : Renaming _ _) =
+      (fun {_} x => liftMany (map f ρ) (Ξ.map f) x) := by
+  induction Ξ with
+  | nil => rfl
+  | cons a Ξ ih =>
+      change (cast (congrArg (f a :: ·) List.map_append)
+        (congrArg (f a :: ·) List.map_append) (map f (lift (liftMany ρ Ξ) a)) : Renaming _ _) = _
+      rw [map_lift, cast_lift
+        (show (Ξ ++ Γ).map f = Ξ.map f ++ Γ.map f from List.map_append)
+        (show (Ξ ++ Δ).map f = Ξ.map f ++ Δ.map f from List.map_append), ih]
+      rfl
+
+/-- Mapping a renaming twice agrees with composing the sort maps. -/
+theorem map_map {U : Type w} (f : S → T) (g : T → U) (ρ : Renaming Γ Δ) :
+    (cast List.map_map List.map_map (map g (map f ρ)) : Renaming _ _) =
+      (fun {_} x => map (g ∘ f) ρ x) := by
+  funext b x
+  induction x using ScopedVar.map_inductionOn (g ∘ f) with
+  | h a x =>
+      rw [← ScopedVar.map_map f g x, cast_apply, map_apply, map_apply,
+        ScopedVar.map_map f g (ρ x), ScopedVar.map_map f g x, map_apply]
+
+/-- Lifting respects equality of the two contexts and the fresh binding block. -/
+theorem liftMany_heq {Γ' Δ' Ξ Ξ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
+    {ρ : Renaming Γ Δ} {τ : Renaming Γ' Δ'} (hρ : HEq (@ρ) (@τ)) (hΞ : Ξ = Ξ') :
+    HEq (liftMany ρ Ξ : Renaming _ _) (liftMany τ Ξ' : Renaming _ _) := by
+  cases hΓ
+  cases hΔ
+  cases hΞ
+  cases eq_of_heq hρ
+  rfl
 
 @[simp] theorem map_id (f : S → T) :
     (map f (fun {a} (x : ScopedVar Γ a) => x) : Renaming (Γ.map f) (Γ.map f)) =

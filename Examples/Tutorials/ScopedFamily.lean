@@ -195,12 +195,11 @@ theorem erase_parameters {n m : Nat} (ρ : Fin n → Fin m)
     {Γ : List (ValueSort n)} {s : ValueSort n} (t : Term n Γ s) :
     erase (t.map parameterHom ρ) = erase t := by
   symm
-  apply IFreeM.fold_traverse_rel parameterHom.toTraversal IPFunctor.ScopedFamily.Hom.leaf
+  apply IPFunctor.ScopedFamily.Term.fold_map_rel parameterHom
     (fun _ x => Runtime.var x.index) (fun _ o next => eraseOp o next)
     (fun _ x => Runtime.var x.index) (fun _ o next => eraseOp o next)
-    (fun _ x y => x = y) ?_ ?_ (.mk ρ Γ s) t
-  · intro i j state x
-    cases state
+    (fun _ x y => x = y) ?_ ?_ ρ t
+  · intro n m μ Γ a x
     change Runtime.var x.index = Runtime.var (x.map _).index
     rw [ScopedVar.index_map]
   · intro i j state o ds vs hs
@@ -225,5 +224,28 @@ theorem map_variable {n m : Nat} (ρ : Fin n → Fin m) {Γ : List (ValueSort n)
     erase ((IPFunctor.ScopedFamily.Term.var x).map parameterHom ρ) = .var x.index := by
   change Runtime.var (x.map (ValueSort.rename ρ)).index = _
   rw [ScopedVar.index_map]
+
+/-- Parameter maps and local-variable maps can be applied in either order. -/
+theorem parameters_rename {n m : Nat} (μ : Fin n → Fin m)
+    {Γ Δ : List (ValueSort n)} {s : ValueSort n}
+    (ρ : ScopedSignature.Renaming Γ Δ) (t : Term n Γ s) :
+    (t.rename ρ).map parameterHom μ =
+      (t.map parameterHom μ).rename (ScopedSignature.Renaming.map (ValueSort.rename μ) ρ) :=
+  IPFunctor.ScopedFamily.Term.map_rename parameterHom μ ρ t
+
+/-- A type binder and a value binder both preserve access to an ambient value.
+The lambda's parameter is nearest; the free value remains one position farther away. -/
+@[expose] def ambientValue : Term 1 [.mono (.param 0)]
+    (.poly (.arrow (.param 0) (.param 1))) :=
+  .liftBind (.typeAbs (.arrow (.param 0) (.param 1))) (fun _ =>
+    .liftBind (.lam (.param 0) (.param 1)) (fun _ => .pure (.succ .zero)))
+
+/-- Adding another ambient binding does not capture the free variable beneath the lambda. -/
+theorem erase_rename_ambientValue :
+    erase (ambientValue.rename (ScopedVar.succ (b := ValueSort.mono (n := 1) .bit))) =
+      .lam (.var 2) := by
+  simp only [erase, ambientValue, IPFunctor.ScopedFamily.Term.rename, IFreeM.fold_liftBind,
+    IFreeM.fold_pure, eraseOp]
+  rfl
 
 end Examples.ScopedFamily

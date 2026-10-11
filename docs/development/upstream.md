@@ -82,10 +82,26 @@ carrier migration with [CSLib PR 1088](https://github.com/leanprover/cslib/pull/
 `ITree.Execution` overlaps the adapter in
 [PolyFun PR 289](https://github.com/Verified-zkEVM/PolyFun/pull/289).
 
-The downstream CryptolModel package uses these public APIs without making
+The downstream [Cryptol development](../guides/cryptol-model.md) uses these public APIs without making
 PolyFun responsible for a language frontend, concrete primitives, or
 cryptographic interpretations. Its own dependency ledger records the pinned
 Cryptol, Foundation, and CSLib campaign audit.
+
+## Binding families and parameter transport
+
+`ScopedFamily` describes changing parameter contexts, typed binding positions,
+and constructor-local maps over the existing `IPFunctor.IFreeM` carrier.
+Identity, composition, renaming, and relational-fold laws belong beside this
+representation. Substitution laws state the compatibility required of the
+language's parameter action explicitly.
+
+The pinned CSLib `Foundations.Syntax.HasSubstitution` provides notation for a
+replacement operation, and its locally nameless lambda calculi provide
+language-specific substitution and binding theories. Neither supplies this
+indexed polynomial family interface. Retain the binding-family layer in
+PolyFun; revisit it when an upstream indexed binding abstraction supplies
+equivalent mixed-binder and noninjective sort-map laws. Language semantics and
+the proof that a concrete parameter action satisfies these laws remain downstream.
 
 ## Object, path, and trace interfaces
 
