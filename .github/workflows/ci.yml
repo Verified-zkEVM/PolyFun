@@ -165,7 +165,21 @@ jobs:
         run: lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
 
       - name: Run environment linters
-        run: lake lint
+        # The upstream runner retains imported environments across roots. Use a fresh
+        # process per configured root to bound memory on hosted runners.
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          import subprocess
+          import tomllib
+
+          config = tomllib.loads(pathlib.Path("lakefile.toml").read_text())
+          for module in config["lintDriverArgs"]:
+              subprocess.run(
+                  ["lake", "exe", config["lintDriver"], "--no-build", "--trace", module],
+                  check=True,
+              )
+          PY
 
   test:
     name: Test
