@@ -17,7 +17,7 @@ binding position, so variables remain distinct when their instantiated types agr
 
 public section
 
-universe u v w
+universe u v w x
 
 namespace IPFunctor.ScopedVar
 
@@ -82,6 +82,41 @@ theorem map_map {U : Type w} (f : S → T) (g : T → U)
       | zero => exact h a .zero
       | succ x =>
           exact ih (motive := fun b x => motive b (.succ x)) (fun a x => h a (.succ x)) x
+
+/-- Applying a sort-indexed function commutes with positional lookup. -/
+theorem mapLookup_postcomp (f : S → T) {V : T → Type w} {U : T → Type x}
+    {Γ : List S} (η : ∀ {a}, ScopedVar Γ a → V (f a))
+    (k : ∀ b, V b → U b) {b : T} (x : ScopedVar (Γ.map f) b) :
+    k b (mapLookup f η x) = mapLookup f (fun x => k _ (η x)) x := by
+  induction x using map_inductionOn f with
+  | h a x => simp only [mapLookup_map]
+
+/-- Lookup through two sort maps is lookup through their composite. -/
+theorem mapLookup_comp {U : Type w} (f : S → T) (g : T → U) {V : U → Type x}
+    {Γ : List S} (η : ∀ {a}, ScopedVar Γ a → V (g (f a)))
+    {b : U} (x : ScopedVar ((Γ.map f).map g) b) :
+    mapLookup g (fun x => mapLookup f (V := fun b => V (g b)) η x) x =
+      mapLookup (g ∘ f) η (List.map_map ▸ x) := by
+  induction x using map_inductionOn g with
+  | h a x =>
+      induction x using map_inductionOn f with
+      | h a x => simp only [mapLookup_map, map_map]
+
+/-- Equal sort maps and pointwise assignments give the same positional lookup. -/
+theorem mapLookup_heq {f g : S → T} {V U : T → Type w} {Γ : List S}
+    (hf : f = g) (hV : V = U)
+    {η : ∀ {a}, ScopedVar Γ a → V (f a)}
+    {θ : ∀ {a}, ScopedVar Γ a → U (g a)}
+    (h : ∀ {a} (x : ScopedVar Γ a), HEq (η x) (θ x)) :
+    HEq (mapLookup f η : ∀ {b}, ScopedVar (Γ.map f) b → V b)
+      (mapLookup g θ : ∀ {b}, ScopedVar (Γ.map g) b → U b) := by
+  cases hf
+  cases hV
+  have he : @η = @θ := by
+    funext a x
+    exact eq_of_heq (h x)
+  cases he
+  rfl
 
 end IPFunctor.ScopedVar
 

@@ -373,6 +373,15 @@ support beta reduction and closing a term below a fresh binder. A language must
 establish these action laws; they do not follow from arbitrary `ReindexAction`
 data. Semantic substitution additionally requires interpretation preservation.
 
+[`FamilyMapSubstitution`](../../PolyFun/IPFunctor/Scoped/FamilyMapSubstitution.lean)
+relates these operations. `Hom.PreservesReindex` asks for a commuting square
+between a translation and the source/target parameter actions at each child.
+Its `preservesSubstitution` theorem handles positional lookup and binder lifting;
+`Term.map_subst` then commutes the translation with simultaneous substitution.
+This does not assume injectivity of sort maps or preservation of an interpretation.
+`Substitution.cast` accepts arbitrary context equalities, and its `cast_heq`
+simplifier also covers contexts that are only propositionally equal.
+
 The [constant-family adapter](../../PolyFun/IPFunctor/Scoped/ConstantFamily.lean)
 provides both proved round trips to the existing `ScopedSignature` API.
 [`FamilySize`](../../PolyFun/IPFunctor/Scoped/FamilySize.lean) counts nodes when

@@ -7,7 +7,7 @@ Authors: Devon Tuma
 module
 
 import Examples.Tutorials.ScopedFamily
-import PolyFun.IPFunctor.Scoped.FamilySubstitution
+import PolyFun.IPFunctor.Scoped.FamilyMapSubstitution
 import PolyFun.IPFunctor.Scoped.Domain
 
 /-! # Ordinary-import checks for context-changing binding families -/
@@ -81,6 +81,28 @@ example {W : Type} {S : W → Type} {σ : ScopedFamily W S} (A : σ.ReindexActio
 example {W : Type} {S : W → Type} {σ : ScopedFamily W S} {w : W}
     {Γ Δ : List (S w)} {a b : S w} (hΓ : Γ = Δ) (ha : a = b) (t : σ.Term w Γ a) :
     HEq (t.cast hΓ ha) t := by simp
+
+example {W : Type} {S : W → Type} {σ : ScopedFamily W S} {w : W}
+    {Γ Δ Γ' Δ' : List (S w)} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
+    (θ : σ.Substitution Γ Δ) :
+    HEq (θ.cast hΓ hΔ : σ.Substitution Γ' Δ') (@θ) := by simp
+
+example {W : Type} {S : W → Type} {σ τ : ScopedFamily W S}
+    {M : W → W → Type} {f : ∀ {w z}, M w z → S w → S z}
+    (h : ScopedFamily.Hom σ τ M f) (A : σ.ReindexAction) (B : τ.ReindexAction)
+    (compatible : h.PreservesReindex A B) {w z : W} (μ : M w z)
+    {Γ Δ : List (S w)} {a : S w} (θ : σ.Substitution Γ Δ) (t : σ.Term w Γ a) :
+    (t.subst A θ).map h μ = (t.map h μ).subst B (θ.map h μ) :=
+  ScopedFamily.Term.map_subst h A B (compatible.preservesSubstitution h A B) μ θ t
+
+/-- A noninjective type map retains both positional assignments. -/
+example :
+    let f : Bool → Unit := fun _ => ()
+    let θ : ∀ {a}, ScopedVar [true, false] a → Nat := fun {_} x => x.index + 7
+    (ScopedVar.mapLookup f (Γ := [true, false]) (V := fun _ => Nat) θ
+        (ScopedVar.zero : ScopedVar [(), ()] ()),
+      ScopedVar.mapLookup f (Γ := [true, false]) (V := fun _ => Nat) θ
+        (ScopedVar.succ .zero : ScopedVar [(), ()] ())) = (7, 8) := rfl
 
 /-- Identifying two free type parameters does not identify their value bindings. -/
 example :
