@@ -147,7 +147,7 @@ section SemanticSupport
 open MonadAttach
 
 variable {Q : PFunctor.{uA, 0}} {n : Type → Type w}
-  [Monad n] [LawfulMonad n] [MonadAttach n] [ExactMonadAttach n] {α : Type}
+  [Monad n] [LawfulMonad n] [MonadAttach n] [LawfulMonadAttach n] {α : Type}
 
 /-- **Specs discharge support facts about the interpreted program.** A per-operation spec
 that each handled operation validates for all its outputs turns a syntactic fold into a
