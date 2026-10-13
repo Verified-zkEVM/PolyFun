@@ -55,6 +55,7 @@ instance : zeroBackend.HasOption where
   map _ := PUnit.unit
   none _ _ := PUnit.unit
   bindContext _ := PUnit.unit
+  some _ := PUnit.unit
 
 instance : zeroBackend.IsDistributive where
   distribute _ _ _ := PUnit.unit
@@ -240,6 +241,7 @@ instance : unitCostBackend.HasOption where
   map _ := PUnit.unit
   none _ _ := PUnit.unit
   bindContext _ := PUnit.unit
+  some _ := PUnit.unit
 
 instance : unitCostBackend.IsDistributive where
   distribute _ _ _ := PUnit.unit
