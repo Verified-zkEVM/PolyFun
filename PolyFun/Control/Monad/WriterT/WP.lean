@@ -6,24 +6,24 @@ Authors: Devon Tuma
 module
 
 public import Mathlib.Control.Monad.Writer
-public import Std.Internal.Do
+public import PolyFun.Control.Monad.ExactWP
+public import Std.WP
 
 /-!
 # `WriterT` on core's weakest-precondition stack
 
 Core lifts a `WPMonad` interpretation through its own transformers (`StateT`, `ReaderT`,
 `ExceptT`, `OptionT`); `WriterT` is Mathlib's, so its lift lives here. The carrier is `ω → Pred`,
-indexed by the log written so far, exactly as `MAlgOrdered.instWriterT` indexes its lattice:
-`bind` multiplies the prefix's log into the continuation's, so a postcondition that mentions the
-log has to be told what has already been written, and reading the interpretation at the unit
-recovers the log-oblivious one.
+indexed by the log written so far: `bind` multiplies the prefix's log into the continuation's,
+so a postcondition that mentions the log has to be told what has already been written, and
+reading the interpretation at the unit recovers the log-oblivious one.
 
 `WriterT.wpMonadOf` takes explicit empty/append operations and their laws, so it also
 interprets append-based logs without a `Monoid` instance. The monoid specialization is scoped
 under `WriterT.MonoidWP`; clients opt in with `open scoped WriterT.MonoidWP` or install an
 explicit interpretation locally. Importing the module does not choose a writer interpretation.
 The `@[spec]` rules for `tell`, `monadLift`, `mk`, and `run`
-live in `PolyFun.Control.Do.Spec`, the tactic tier of the `Std.Do` quarantine; the entailments
+live in `PolyFun.Control.Do.Spec`, the tactic tier of the `Std.WP` quarantine; the entailments
 they wrap are stated here.
 -/
 
@@ -31,8 +31,19 @@ public section
 
 universe u v w z
 
-open Std.Internal.Do
+open Std.WP
 open scoped Lean.Order
+
+/-- `WPMonad.map_le_wp_map` with the unmapped program's postcondition given up to an equation, the
+form the `WriterT` proofs below instantiate. -/
+private theorem WPMonad.map_le_wp_map' {m : Type u → Type v} {Pred : Type w} {EPred : Type z}
+    [Monad m] [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred] {α β : Type u}
+    (f : α → β) (x : m α) :
+    ∀ post post' epost, post = (fun a => post' (f a)) →
+      wp x post epost ⊑ wp (f <$> x) post' epost := by
+  intro post post' epost h
+  subst h
+  exact WPMonad.map_le_wp_map f x post' epost
 
 namespace WriterT
 
@@ -81,6 +92,29 @@ def wpMonadOf (empty : ω) (append : ω → ω → ω)
         (WPMonad.bind_le_wp_bind x.run _ _ epost)
       exact WPMonad.map_le_wp_map' _ (f p.1).run _ _ epost (funext fun q => by rw [assoc]) }
 
+/-- Over an exact base interpretation, the explicit writer interpretation is exact. -/
+theorem exactWPMonad_wpMonadOf [ExactWPMonad m Pred EPred] (empty : ω) (append : ω → ω → ω)
+    (right_id : ∀ w, append w empty = w)
+    (assoc : ∀ a b c, append (append a b) c = append a (append b c))
+    [@LawfulMonad (WriterT ω m) (WriterT.monad empty append)] :
+    letI := WriterT.monad (M := m) empty append
+    @ExactWPMonad (WriterT ω m) (ω → Pred) EPred _ _ _
+      (wpMonadOf empty append right_id assoc) := by
+  let := WriterT.monad (M := m) empty append
+  let := wpMonadOf (m := m) (Pred := Pred) (EPred := EPred) empty append right_id assoc
+  exact ExactWPMonad.of_eq
+    (fun {α} x post epost => by
+      funext w
+      change wp (pure (x, empty) : m (α × ω)) (fun p => post p.1 (append w p.2)) epost = post x w
+      rw [ExactWPMonad.wp_pure, right_id])
+    (fun {α β} x f post epost => by
+      funext w
+      change wp (x.run >>= fun p => (fun q : β × ω => (q.1, append p.2 q.2)) <$> (f p.1).run)
+          (fun q => post q.1 (append w q.2)) epost =
+        wp x.run (fun p => wp (f p.1).run
+          (fun q => post q.1 (append (append w p.2) q.2)) epost) epost
+      simp only [ExactWPMonad.wp_bind, ExactWPMonad.wp_map, assoc])
+
 /-- The explicit writer interpretation exposes its accumulated-log equation. -/
 @[simp]
 theorem wpInstOf_apply_eq (append : ω → ω → ω) (x : WriterT ω m α)
@@ -124,6 +158,11 @@ namespace MonoidWP
 /-- Opt-in writer interpretation for multiplicative monoid logs. -/
 scoped instance instWPMonad : WPMonad (WriterT ω m) (ω → Pred) EPred :=
   wpMonadOf 1 (· * ·) mul_one mul_assoc
+
+/-- The multiplicative writer interpretation is exact over an exact base. -/
+scoped instance instExactWPMonad [ExactWPMonad m Pred EPred] :
+    ExactWPMonad (WriterT ω m) (ω → Pred) EPred :=
+  exactWPMonad_wpMonadOf 1 (· * ·) mul_one mul_assoc
 
 end MonoidWP
 

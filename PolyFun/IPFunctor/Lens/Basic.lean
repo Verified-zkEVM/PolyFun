@@ -10,7 +10,7 @@ public import PolyFun.IPFunctor.Basic
 /-!
 # Lenses Between Indexed Polynomial Functors
 
-A `Lens P Q` between two indexed polynomial functors `P Q : IPFunctor I J` is a Cartesian
+A `Lens P Q` between two indexed polynomial functors `P Q : IPFunctor I J` is a
 morphism over the same input/output indices: a forward map on positions and a *backward* map
 on responses, together with the *source-index preservation law* `src_eq` that says the two
 child sources (computed via `P.src` after pulling back, or via `Q.src` directly) agree in `I`.
@@ -19,10 +19,9 @@ The `src_eq` law is equality of index *values* in `I`, not of types, so most con
 discharge it by `rfl`. In general it induces transports in object maps because children live
 in fibers over `src ...`.
 
-This file provides the basic structure plus identity, composition, and a structural-equivalence
-companion (`Lens.Equiv`). The richer monoidal / distributive infrastructure of
-[`PFunctor.Lens`](../../PFunctor/Lens/Basic.lean) is intentionally not mirrored here yet —
-add operations on demand as downstream consumers need them.
+This file provides identity, composition, extensionality, and the structural-equivalence
+companion `Lens.Equiv`. See [`PFunctor.Lens`](../../PFunctor/Lens/Basic.lean) for lenses
+between unindexed polynomial functors.
 -/
 
 @[expose] public section
@@ -57,9 +56,7 @@ theorem ext {P : IPFunctor.{uI, uJ, uA₁, uB₁} I J}
   rcases l₂ with ⟨toFunA₂, toFunB₂, src_eq₂⟩
   have h : toFunA₁ = toFunA₂ := funext fun j => funext (hA j)
   subst h
-  have h' : toFunB₁ = toFunB₂ := by
-    funext j a
-    simpa using hB j a
+  have h' : toFunB₁ = toFunB₂ := funext₂ hB
   subst h'
   rfl
 

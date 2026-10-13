@@ -12,6 +12,7 @@ public import PolyFun.Control.Monad.Algebra.Relational
 public import PolyFun.Control.Monad.Algebra.Relational.Support
 public import PolyFun.Control.Monad.Algebra.Restrict
 public import PolyFun.Control.Monad.Algebra.WP
+public import PolyFun.Control.Monad.ExactWP
 public import PolyFun.Control.Monad.Free
 public import PolyFun.Control.Monad.FreeCont
 public import PolyFun.Control.Monad.Hom
@@ -273,6 +274,8 @@ public import PolyFun.PFunctor.Handler.Instrumentation.Free
 public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr
 public import PolyFun.PFunctor.Handler.Stateful
+public import PolyFun.PFunctor.Handler.Stateful.Combinators
+public import PolyFun.PFunctor.Handler.Sum
 public import PolyFun.PFunctor.InternalHom
 public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Cartesian
@@ -280,6 +283,7 @@ public import PolyFun.PFunctor.Lens.Composite
 public import PolyFun.PFunctor.Lens.Distributivity
 public import PolyFun.PFunctor.Lens.Duoidal
 public import PolyFun.PFunctor.Lens.Factorization
+public import PolyFun.PFunctor.Lens.Monomial
 public import PolyFun.PFunctor.Lens.State
 public import PolyFun.PFunctor.M
 public import PolyFun.PFunctor.M.Vertex

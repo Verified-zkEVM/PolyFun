@@ -27,6 +27,25 @@ prefix may stop before handoff, while a returned first phase exposes the second 
 view immediately and its first query transitions directly into the right state. The decomposition
 combines a uniform second-phase bound with explicit assembled-code overhead without choosing a
 pointwise second-phase witness.
+
+## Main definitions
+
+* `RankedRunCertificate`: a rank-and-progress certificate for query termination.
+* `MapResultCostCertificate`: the pathwise backend overhead charged by result postcomposition.
+* `SeqCompTraceSource`, `SeqCompRightTraceSource`, `SeqCompAnyTraceSource`: phase-local source
+  traces underlying a prefix of a sequentially composed machine.
+* `SeqCompHandoffBound`, `SeqCompCostCertificate`: the reachable second-phase envelope and the
+  structural overhead allowance used by bounded sequential composition.
+
+## Main results
+
+* `resolvesInUnder_of_traceLength_le`: a uniform prefix-length bound plus syntactic progress
+  gives branchwise resolution.
+* `QuantitativeRealization.RunsWithinUnder.precomp`: input precomposition preserves restricted
+  pathwise bounds.
+* `QuantitativeRealization.RunsWithinUnder.mapResult`: result postcomposition preserves them
+  under an explicit cost certificate.
+* `QuantitativeRealization.RunsWithinUnder.seqComp`: bounded sequential composition.
 -/
 
 @[expose] public section
@@ -49,21 +68,21 @@ variable {p : PFunctor.{u, u}} {C : StepClass.{u, v}} [C.HasProd]
 The rank is attached to machine states, not semantic oracle executions. Every allowed response
 strictly decreases it. `returns_of_rank_zero` prevents a zero-ranked query, while `progress`
 prevents a pending query from satisfying the universal decrease condition vacuously because no
-answer is allowed. -/
+answer is allowed.
+
+`resolvesInUnder` discharges relation-restricted resolution from a certificate, and
+`runsWithinUnder` combines it with a separate pathwise cost proof. -/
 structure RankedRunCertificate (R : QuantitativeRealization Q bd)
     (allows : ∀ position, p.B position → Prop) where
   /-- Natural-valued potential remaining at a hidden machine state. -/
   rank : R.machine.State → ℕ
   /-- A zero-ranked state has already returned. -/
-  returns_of_rank_zero : ∀ state, rank state = 0 →
-    ∃ value, R.machine.view state = Sum.inl value
+  returns_of_rank_zero : ∀ state, rank state = 0 → ∃ value, R.machine.view state = Sum.inl value
   /-- Every admitted response strictly decreases the potential. -/
-  decreases : ∀ {state position next},
-    R.machine.view state = Sum.inr ⟨position, next⟩ →
+  decreases : ∀ {state position next}, R.machine.view state = Sum.inr ⟨position, next⟩ →
       ∀ direction, allows position direction → rank (next direction) < rank state
   /-- Every pending query admits at least one response under the contract. -/
-  progress : ∀ {state position next},
-    R.machine.view state = Sum.inr ⟨position, next⟩ →
+  progress : ∀ {state position next}, R.machine.view state = Sum.inr ⟨position, next⟩ →
       ∃ direction, allows position direction
 
 namespace RankedRunCertificate
@@ -72,50 +91,41 @@ variable {R : QuantitativeRealization Q bd}
   {allows : ∀ position, p.B position → Prop}
 
 /-- A rank certificate proves relation-restricted resolution with the state's rank as fuel. -/
-theorem resolvesInUnder (certificate : RankedRunCertificate R allows)
-    (state : R.machine.State) :
+theorem resolvesInUnder (certificate : RankedRunCertificate R allows) (state : R.machine.State) :
     R.machine.ResolvesInUnder allows (certificate.rank state) state := by
   generalize hrank : certificate.rank state = rank
   induction rank using Nat.strong_induction_on generalizing state with
   | h rank ih =>
-      cases rank with
-      | zero =>
-          obtain ⟨value, hview⟩ := certificate.returns_of_rank_zero state hrank
-          exact R.machine.resolvesInUnder_return allows 0 state value hview
-      | succ rank =>
-          cases hview : R.machine.view state with
-          | inl value =>
-              exact R.machine.resolvesInUnder_return allows (rank + 1) state value hview
-          | inr query =>
-              rcases query with ⟨position, next⟩
-              rw [R.machine.resolvesInUnder_query_succ_iff allows rank state position next hview]
-              intro direction hAllows
-              apply (ih (certificate.rank (next direction)) ?_ (next direction) rfl).mono
-              · have hdecrease := certificate.decreases hview direction hAllows
-                omega
-              · have := certificate.decreases hview direction hAllows
-                omega
+    cases rank with
+    | zero =>
+      obtain ⟨value, hview⟩ := certificate.returns_of_rank_zero state hrank
+      exact R.machine.resolvesInUnder_return allows 0 state value hview
+    | succ rank =>
+      cases hview : R.machine.view state with
+      | inl value => exact R.machine.resolvesInUnder_return allows (rank + 1) state value hview
+      | inr query =>
+        obtain ⟨position, next⟩ := query
+        rw [R.machine.resolvesInUnder_query_succ_iff allows rank state position next hview]
+        intro direction hAllows
+        -- An allowed answer strictly drops the rank, so the successor's own rank is enough fuel.
+        have := certificate.decreases hview direction hAllows
+        exact (ih _ (by lia) (next direction) rfl).mono (by lia)
 
 /-- A global rank certificate supplies syntactic progress from every input. -/
 theorem traceProgressUnder (certificate : RankedRunCertificate R allows) (input : A) :
-    R.TraceProgressUnder allows input := by
-  intro state trace htrace position next hview
-  exact certificate.progress hview
+    R.TraceProgressUnder allows input := fun _ _ ↦ certificate.progress
 
 /-- Combine a rank certificate with an honest pathwise cost proof.
 
 The rank bound and cost bound are separate on purpose: a decreasing query potential does not say
 anything about backend work, traffic, or representation sizes. -/
-theorem runsWithinUnder (certificate : RankedRunCertificate R allows)
-    (bound : A → ExecutionCost)
+theorem runsWithinUnder (certificate : RankedRunCertificate R allows) (bound : A → ExecutionCost)
     (cost_le : ∀ input {finish : R.machine.State}
       (trace : R.ExecutionTrace (R.machine.init input) finish),
       trace.Conforms allows → R.executionCost input trace ≤ bound input)
-    (rank_init_le : ∀ input, certificate.rank (R.machine.init input) ≤
-      (bound input).queries) :
+    (rank_init_le : ∀ input, certificate.rank (R.machine.init input) ≤ (bound input).queries) :
     R.RunsWithinUnder allows bound :=
-  ⟨cost_le,
-    fun input ↦ (certificate.resolvesInUnder (R.machine.init input)).mono (rank_init_le input),
+  ⟨cost_le, fun input ↦ (certificate.resolvesInUnder _).mono (rank_init_le input),
     certificate.traceProgressUnder⟩
 
 end RankedRunCertificate
@@ -128,41 +138,29 @@ branchwise resolution.
 This lemma closes a useful proof gap between the pathwise and inductive parts of
 `RunsWithinUnder`. Progress is essential at budget zero: without it a pending query with no
 allowed answers would make `ResolvesInUnder` hold vacuously. -/
-theorem resolvesInUnder_of_traceLength_le
-    (R : QuantitativeRealization Q bd) (allows : ∀ position, p.B position → Prop)
-    (start : R.machine.State) (queries : ℕ)
+theorem resolvesInUnder_of_traceLength_le (R : QuantitativeRealization Q bd)
+    (allows : ∀ position, p.B position → Prop) (start : R.machine.State) (queries : ℕ)
     (length_le : ∀ {finish : R.machine.State} (trace : R.ExecutionTrace start finish),
       trace.Conforms allows → trace.length ≤ queries)
     (progress : ∀ {state : R.machine.State} (trace : R.ExecutionTrace start state),
       trace.Conforms allows → ∀ {position : p.A} {next : p.B position → R.machine.State},
-        R.machine.view state = Sum.inr ⟨position, next⟩ →
-          ∃ direction, allows position direction) :
+        R.machine.view state = Sum.inr ⟨position, next⟩ → ∃ direction, allows position direction) :
     R.machine.ResolvesInUnder allows queries start := by
   induction queries generalizing start with
   | zero =>
-      cases hview : R.machine.view start with
-      | inl value => exact R.machine.resolvesInUnder_return allows 0 start value hview
-      | inr query =>
-          rcases query with ⟨position, next⟩
-          obtain ⟨direction, hAllows⟩ := progress (.nil start) trivial hview
-          have hlength := length_le (.query hview direction (.nil (next direction)))
-            ⟨hAllows, trivial⟩
-          simp [QuantitativeRealization.ExecutionTrace.length] at hlength
+      rcases hview : R.machine.view start with value | ⟨position, next⟩
+      · exact R.machine.resolvesInUnder_return allows 0 start value hview
+      · obtain ⟨direction, hAllows⟩ := progress (.nil start) trivial hview
+        simpa [QuantitativeRealization.ExecutionTrace.length] using
+          length_le (.query hview direction (.nil (next direction))) ⟨hAllows, trivial⟩
   | succ queries ih =>
-      cases hview : R.machine.view start with
-      | inl value =>
-          exact R.machine.resolvesInUnder_return allows (queries + 1) start value hview
-      | inr query =>
-          rcases query with ⟨position, next⟩
-          rw [R.machine.resolvesInUnder_query_succ_iff allows queries start position next hview]
-          intro direction hAllows
-          apply ih (next direction)
-          · intro finish trace htrace
-            have hlength := length_le (.query hview direction trace) ⟨hAllows, htrace⟩
-            simp only [QuantitativeRealization.ExecutionTrace.length] at hlength
-            omega
-          · intro state trace htrace queryPosition queryNext queryView
-            exact progress (.query hview direction trace) ⟨hAllows, htrace⟩ queryView
+      rcases hview : R.machine.view start with value | ⟨position, next⟩
+      · exact R.machine.resolvesInUnder_return allows (queries + 1) start value hview
+      · rw [R.machine.resolvesInUnder_query_succ_iff allows queries start position next hview]
+        refine fun direction hAllows ↦ ih (next direction) (fun trace htrace ↦ ?_)
+          fun trace htrace ↦ progress (.query hview direction trace) ⟨hAllows, htrace⟩
+        simpa [QuantitativeRealization.ExecutionTrace.length] using
+          length_le (.query hview direction trace) ⟨hAllows, htrace⟩
 
 /-! ## Initialization replacement -/
 
@@ -170,23 +168,14 @@ omit [DecidableEq p.A] in
 /-- Replacing only a computation's initialization leaves relation-restricted resolution from an
 already selected state unchanged. -/
 theorem resolvesInUnder_setInit_iff (M : DynComputation.{u} p A B)
-    (allows : ∀ position, p.B position → Prop) {D : Type u}
-    (init : D → M.State) (k : ℕ) (state : M.State) :
-    (M.setInit init).ResolvesInUnder allows k state ↔
-      M.ResolvesInUnder allows k state := by
+    (allows : ∀ position, p.B position → Prop) {D : Type u} (init : D → M.State) (k : ℕ)
+    (state : M.State) :
+    (M.setInit init).ResolvesInUnder allows k state ↔ M.ResolvesInUnder allows k state := by
   induction k generalizing state with
-  | zero =>
-      cases hview : M.view state <;>
-        simp [ResolvesInUnder, DynComputation.setInit_view, hview]
+  | zero => simp [resolvesInUnder_zero]
   | succ k ih =>
-      cases hview : M.view state with
-      | inl value =>
-          simp [ResolvesInUnder, DynComputation.setInit_view, hview]
-      | inr query =>
-          rcases query with ⟨position, next⟩
-          simp only [ResolvesInUnder, DynComputation.setInit_view, hview]
-          exact forall_congr' fun direction ↦
-            imp_congr_right fun _ ↦ ih (next direction)
+    rcases hview : M.view state with value | ⟨position, next⟩ <;>
+      simp [ResolvesInUnder, hview, ih]
 
 /-! ## Input precomposition -/
 
@@ -199,170 +188,146 @@ namespace QuantitativeRealization.ExecutionTrace
 /-- Regard a source trace as a trace of an input-precomposed realization.
 
 Precomposition changes only initialization, so hidden states, views, and transitions are shared
-definitionally. -/
-def toPrecomp (R : QuantitativeRealization Q bd)
-    (code : Q.Realizer inputRep bd.input f) {start finish : R.machine.State}
-    (trace : R.ExecutionTrace start finish) :
+definitionally. `ofPrecomp` transports back, and the two are mutually inverse. -/
+def toPrecomp (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
+    {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
     (R.precomp code).ExecutionTrace start finish :=
   match trace with
   | .nil state => .nil (R := R.precomp code) state
   | .query view_eq direction tail =>
       .query (R := R.precomp code) view_eq direction (toPrecomp R code tail)
 
-/-- Forget the changed initialization of an input-precomposed trace. -/
-def ofPrecomp (R : QuantitativeRealization Q bd)
-    (code : Q.Realizer inputRep bd.input f) {start finish : R.machine.State}
-    (trace : (R.precomp code).ExecutionTrace start finish) :
+/-- Forget the changed initialization of an input-precomposed trace.
+
+This is the two-sided inverse of `toPrecomp` (`ofPrecomp_toPrecomp`, `toPrecomp_ofPrecomp`). It
+preserves conformance and cost (`conforms_ofPrecomp`, `cost_ofPrecomp`), so a pathwise bound
+established for `R` applies verbatim to traces of `R.precomp code`. -/
+def ofPrecomp (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
+    {start finish : R.machine.State} (trace : (R.precomp code).ExecutionTrace start finish) :
     R.ExecutionTrace start finish :=
   match trace with
   | .nil state => .nil (R := R) state
   | .query view_eq direction tail =>
       .query (R := R) view_eq direction (ofPrecomp R code tail)
 
+/-- Transporting a source trace into an input-precomposed realization and forgetting the changed
+initialization recovers it, so `ofPrecomp` is a left inverse of `toPrecomp`; `toPrecomp_ofPrecomp`
+is the converse round trip. -/
 @[simp] theorem ofPrecomp_toPrecomp (R : QuantitativeRealization Q bd)
     (code : Q.Realizer inputRep bd.input f) {start finish : R.machine.State}
     (trace : R.ExecutionTrace start finish) :
     (trace.toPrecomp R code).ofPrecomp R code = trace := by
-  induction trace with
-  | nil => rfl
-  | query view_eq direction tail ih => simp [toPrecomp, ofPrecomp, ih]
+  induction trace <;> simp [toPrecomp, ofPrecomp, *]
 
+/-- Forgetting an input-precomposed trace's initialization and transporting it back recovers it, so
+`toPrecomp` is a left inverse of `ofPrecomp`; `ofPrecomp_toPrecomp` is the converse round trip. -/
 @[simp] theorem toPrecomp_ofPrecomp (R : QuantitativeRealization Q bd)
     (code : Q.Realizer inputRep bd.input f) {start finish : R.machine.State}
     (trace : (R.precomp code).ExecutionTrace start finish) :
     (trace.ofPrecomp R code).toPrecomp R code = trace :=
   match trace with
   | .nil _ => rfl
-  | .query _ _ tail => by
-      simp only [ofPrecomp, toPrecomp]
-      rw [toPrecomp_ofPrecomp R code tail]
+  | .query _ _ tail => congrArg _ (toPrecomp_ofPrecomp R code tail)
 
+/-- Transporting a source trace into an input-precomposed realization preserves conformance, so a
+query contract verified for `R` transfers verbatim to the transported trace; the companion
+`conforms_ofPrecomp` states the same for the backward transport. -/
 @[simp] theorem conforms_toPrecomp (R : QuantitativeRealization Q bd)
-    (code : Q.Realizer inputRep bd.input f)
-    (allows : ∀ position, p.B position → Prop)
+    (code : Q.Realizer inputRep bd.input f) (allows : ∀ position, p.B position → Prop)
     {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
     (trace.toPrecomp R code).Conforms allows ↔ trace.Conforms allows := by
-  induction trace with
-  | nil => rfl
-  | query view_eq direction tail ih => simp [toPrecomp, Conforms, ih]
+  induction trace <;> simp [toPrecomp, Conforms, *]
 
+/-- Forgetting the changed initialization of an input-precomposed trace preserves conformance, so a
+query contract verified for `R` transfers verbatim to traces of `R.precomp code`; the companion
+`conforms_toPrecomp` states the same for the forward transport. -/
 @[simp] theorem conforms_ofPrecomp (R : QuantitativeRealization Q bd)
-    (code : Q.Realizer inputRep bd.input f)
-    (allows : ∀ position, p.B position → Prop)
-    {start finish : R.machine.State}
-    (trace : (R.precomp code).ExecutionTrace start finish) :
+    (code : Q.Realizer inputRep bd.input f) (allows : ∀ position, p.B position → Prop)
+    {start finish : R.machine.State} (trace : (R.precomp code).ExecutionTrace start finish) :
     (trace.ofPrecomp R code).Conforms allows ↔ trace.Conforms allows := by
-  rw [← conforms_toPrecomp R code allows (trace.ofPrecomp R code),
-    toPrecomp_ofPrecomp]
+  rw [← conforms_toPrecomp R code allows (trace.ofPrecomp R code), toPrecomp_ofPrecomp]
 
+/-- Input precomposition leaves a transported trace's cost unchanged, because it rewires only
+initialization while sharing the head, transition, state and interface encodings; the extra
+initialization work is charged separately by `executionCost_toPrecomp_le`. -/
 @[simp] theorem cost_toPrecomp (R : QuantitativeRealization Q bd)
     (code : Q.Realizer inputRep bd.input f) {start finish : R.machine.State}
-    (trace : R.ExecutionTrace start finish) :
-    (trace.toPrecomp R code).cost = trace.cost := by
+    (trace : R.ExecutionTrace start finish) : (trace.toPrecomp R code).cost = trace.cost := by
   induction trace with
   | nil => rfl
-  | query view_eq direction tail ih =>
-      rename_i current position next finish
-      simp only [toPrecomp, cost]
-      rw [R.cost_headCode_precomp code current,
-        R.cost_updateCode_precomp code (current, ⟨position, direction⟩),
-        R.size_state_precomp code current]
-      simp only [Boundary.withInput_head]
-      rw [R.size_head_precomp code current, ih]
-      rfl
+  | query _ _ _ ih => exact congrArg _ ih
 
+/-- Forgetting an input-precomposed trace's changed initialization leaves its cost unchanged, so a
+pathwise cost bound proved for `R` applies verbatim to traces of `R.precomp code`.
+
+This is `cost_toPrecomp` read through the round trip `toPrecomp_ofPrecomp`; use it with
+`conforms_ofPrecomp` to pull a conforming precomposed trace back to the source realization. -/
 @[simp] theorem cost_ofPrecomp (R : QuantitativeRealization Q bd)
     (code : Q.Realizer inputRep bd.input f) {start finish : R.machine.State}
     (trace : (R.precomp code).ExecutionTrace start finish) :
     (trace.ofPrecomp R code).cost = trace.cost := by
   rw [← cost_toPrecomp R code (trace.ofPrecomp R code), toPrecomp_ofPrecomp]
 
+/-- Input precomposition leaves trace length unchanged, because `toPrecomp` rewrites only the
+initialization and keeps the visible query-answer steps in bijection. -/
 @[simp] theorem length_toPrecomp (R : QuantitativeRealization Q bd)
     (code : Q.Realizer inputRep bd.input f) {start finish : R.machine.State}
-    (trace : R.ExecutionTrace start finish) :
-    (trace.toPrecomp R code).length = trace.length := by
-  induction trace with
-  | nil => rfl
-  | query view_eq direction tail ih => simp [toPrecomp, length, ih]
+    (trace : R.ExecutionTrace start finish) : (trace.toPrecomp R code).length = trace.length := by
+  induction trace <;> simp [toPrecomp, length, *]
 
 end QuantitativeRealization.ExecutionTrace
 
 /-- The only additional resource charged by input precomposition is the executable input map and
-the backend's certified composition overhead. -/
-theorem QuantitativeRealization.executionCost_toPrecomp_le
-    (R : QuantitativeRealization Q bd)
-    (code : Q.Realizer inputRep bd.input f) (input : D)
-    {finish : R.machine.State}
+the backend's certified composition overhead.
+
+Only `work` receives an additional allowance, supplied by `cost_initCode_precomp_le`;
+`queries`, `traffic` and the two peak sizes are transported unchanged. Compare
+`ExecutionTrace.cost_toPrecomp`, which relates the two trace costs alone and therefore charges
+neither initialization nor the final readout. -/
+theorem QuantitativeRealization.executionCost_toPrecomp_le (R : QuantitativeRealization Q bd)
+    (code : Q.Realizer inputRep bd.input f) (input : D) {finish : R.machine.State}
     (trace : R.ExecutionTrace (R.machine.init (f input)) finish) :
     (R.precomp code).executionCost input (trace.toPrecomp R code) ≤
-      ExecutionCost.ofWork
-          (Q.cost code input + Q.composeOverhead code R.initCode input) +
+      ExecutionCost.ofWork (Q.cost code input + Q.composeOverhead code R.initCode input) +
         R.executionCost (f input) trace := by
+  -- `omega` compares the five components against these facts, so each shared encoding is read at
+  -- the precomposed boundary `bd.withInput inputRep`: rewriting it away would desynchronise the
+  -- implicit representation arguments and hide the equations from `omega`.
   have hinit := R.cost_initCode_precomp_le code input
   have hcost := QuantitativeRealization.ExecutionTrace.cost_toPrecomp R code trace
   have hhead := R.cost_headCode_precomp code finish
   have hstate := R.size_state_precomp code finish
-  have hheadSize := R.size_head_precomp code finish
+  have hheadSize : Q.size (bd.withInput inputRep).head ((R.precomp code).machine.head finish) =
+      Q.size bd.head (R.machine.head finish) := R.size_head_precomp code finish
   unfold QuantitativeRealization.executionCost
-  constructor
-  · simp only [ExecutionCost.work_add, ExecutionCost.work_ofWork,
-      ExecutionCost.work_observe]
-    have hcostWork := congrArg ExecutionCost.work hcost
-    omega
-  · constructor
-    · simp only [ExecutionCost.queries_add, ExecutionCost.queries_ofWork,
-        ExecutionCost.queries_observe, Nat.zero_add]
-      exact Nat.le_of_eq (congrArg ExecutionCost.queries hcost)
-    · constructor
-      · simp only [ExecutionCost.traffic_add, ExecutionCost.traffic_ofWork,
-          ExecutionCost.traffic_observe, Nat.zero_add]
-        exact Nat.le_of_eq (congrArg ExecutionCost.traffic hcost)
-      · constructor
-        · simp only [ExecutionCost.peakStateSize_add,
-            ExecutionCost.peakStateSize_observe]
-          rw [congrArg ExecutionCost.peakStateSize hcost, hstate]
-          simp [ExecutionCost.ofWork]
-        · simp only [ExecutionCost.peakHeadSize_add,
-            ExecutionCost.peakHeadSize_observe]
-          rw [congrArg ExecutionCost.peakHeadSize hcost]
-          simp only [ExecutionCost.ofWork]
-          simp only [Boundary.withInput_head]
-          rw [hheadSize]
-          omega
+  refine ⟨?_, ?_, ?_, ?_, ?_⟩ <;>
+    simp only [ExecutionCost.work_add, ExecutionCost.work_observe, ExecutionCost.queries_add,
+      ExecutionCost.queries_observe, ExecutionCost.traffic_add, ExecutionCost.traffic_observe,
+      ExecutionCost.peakStateSize_add, ExecutionCost.peakStateSize_observe,
+      ExecutionCost.peakHeadSize_add, ExecutionCost.peakHeadSize_observe, ExecutionCost.ofWork,
+      hcost] <;> omega
 
 /-- Input precomposition preserves restricted pathwise bounds, using the backend's certified
 upper bound for initialization overhead on top of the source bound. -/
-theorem QuantitativeRealization.RunsWithinUnder.precomp
-    {R : QuantitativeRealization Q bd}
+theorem QuantitativeRealization.RunsWithinUnder.precomp {R : QuantitativeRealization Q bd}
     {allows : ∀ position, p.B position → Prop} {bound : A → ExecutionCost}
-    (h : R.RunsWithinUnder allows bound)
-    (code : Q.Realizer inputRep bd.input f) :
-    (R.precomp code).RunsWithinUnder allows fun input ↦
-      ExecutionCost.ofWork
-          (Q.cost code input + Q.composeOverhead code R.initCode input) +
-        bound (f input) := by
+    (h : R.RunsWithinUnder allows bound) (code : Q.Realizer inputRep bd.input f) :
+    (R.precomp code).RunsWithinUnder allows fun input ↦ ExecutionCost.ofWork
+      (Q.cost code input + Q.composeOverhead code R.initCode input) + bound (f input) := by
   refine ⟨?_, ?_, ?_⟩
   · intro input finish trace htrace
-    let sourceTrace := trace.ofPrecomp R code
-    have hsource : R.executionCost (f input) sourceTrace ≤ bound (f input) :=
-      h.cost_le (f input) sourceTrace (by
-        exact (QuantitativeRealization.ExecutionTrace.conforms_ofPrecomp
-          R code allows trace).mpr htrace)
     rw [← QuantitativeRealization.ExecutionTrace.toPrecomp_ofPrecomp R code trace]
-    exact (R.executionCost_toPrecomp_le code input sourceTrace).trans
-      (ExecutionCost.add_le_add le_rfl hsource)
-  · intro input
-    simp only [ExecutionCost.queries_add, ExecutionCost.queries_ofWork, Nat.zero_add]
-    simpa only [QuantitativeRealization.precomp, Function.comp_apply] using
+    exact (R.executionCost_toPrecomp_le code input _).trans <| ExecutionCost.add_le_add le_rfl <|
+      h.cost_le (f input) _ ((trace.conforms_ofPrecomp R code allows).mpr htrace)
+  · -- Only `work` grows, so the query budget is the source one at the rewired initial state.
+    intro input
+    simpa [QuantitativeRealization.precomp] using
       (resolvesInUnder_setInit_iff R.machine allows (R.machine.init ∘ f)
-        (bound (f input)).queries (R.machine.init (f input))).mpr
-          (h.resolvesIn (f input))
+        (bound (f input)).queries (R.machine.init (f input))).mpr (h.resolvesIn (f input))
   · intro input state trace htrace position next hview
-    apply h.traceProgress (f input) (trace.ofPrecomp R code)
-    · exact (QuantitativeRealization.ExecutionTrace.conforms_ofPrecomp
-        R code allows trace).mpr htrace
-    · simpa only [QuantitativeRealization.precomp,
-        DynComputation.setInit_view] using hview
+    exact h.traceProgress (f input) (trace.ofPrecomp R code)
+      ((trace.conforms_ofPrecomp R code allows).mpr htrace)
+      (by simpa [QuantitativeRealization.precomp] using hview)
 
 end Precomp
 
@@ -373,27 +338,20 @@ section MapResult
 variable [Q.HasCategory] [Q.HasSum] {D : Type u} {outRep : C.Str D} {f : B → D}
 
 omit [DecidableEq p.A] in
-/-- A query exposed after mapping return values was already the same source query. -/
-theorem view_eq_query_of_mapResult_view_eq_query (M : DynComputation.{u} p A B)
-    {state : M.State} {position : p.A} {next : p.B position → M.State}
+/-- A query exposed after mapping return values was already the same source query.
+`DynComputation.mapResult_view` is the underlying view equation and gives the converse. -/
+theorem view_eq_query_of_mapResult_view_eq_query (M : DynComputation.{u} p A B) {state : M.State}
+    {position : p.A} {next : p.B position → M.State}
     (view_eq : (M.mapResult f).view state = Sum.inr ⟨position, next⟩) :
     M.view state = Sum.inr ⟨position, next⟩ := by
-  cases hsource : M.view state with
-  | inl value =>
-      rw [DynComputation.mapResult_view, hsource] at view_eq
-      exact nomatch view_eq
-  | inr query =>
-      rw [DynComputation.mapResult_view, hsource] at view_eq
-      cases view_eq
-      rfl
+  aesop
 
 namespace QuantitativeRealization.ExecutionTrace
 
 /-- Transport a trace through result postcomposition. Visible queries, typed answers, and hidden
-states are preserved. -/
-def toMapResult (R : QuantitativeRealization Q bd)
-    (code : Q.Realizer bd.out outRep f) {start finish : R.machine.State}
-    (trace : R.ExecutionTrace start finish) :
+states are preserved; `ofMapResult` transports back. -/
+def toMapResult (R : QuantitativeRealization Q bd) (code : Q.Realizer bd.out outRep f)
+    {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
     (R.mapResult code).ExecutionTrace start finish :=
   match trace with
   | .nil state => .nil (R := R.mapResult code) state
@@ -404,120 +362,104 @@ def toMapResult (R : QuantitativeRealization Q bd)
           rw [DynComputation.mapResult_view, view_eq]) direction
         (toMapResult R code tail)
 
-/-- Recover the source trace underlying result postcomposition. -/
-def ofMapResult (R : QuantitativeRealization Q bd)
-    (code : Q.Realizer bd.out outRep f) {start finish : R.machine.State}
-    (trace : (R.mapResult code).ExecutionTrace start finish) :
+/-- Recover the source trace underlying result postcomposition. This is a left inverse of
+`toMapResult` (`ofMapResult_toMapResult`), and the recovered trace conforms to a query contract
+exactly when the given one does (`conforms_ofMapResult`). -/
+def ofMapResult (R : QuantitativeRealization Q bd) (code : Q.Realizer bd.out outRep f)
+    {start finish : R.machine.State} (trace : (R.mapResult code).ExecutionTrace start finish) :
     R.ExecutionTrace start finish :=
   match trace with
   | .nil state => .nil (R := R) state
-  | .query view_eq direction tail => by
-      change (R.machine.mapResult f).view _ = _ at view_eq
-      exact .query (R := R)
-        (view_eq_query_of_mapResult_view_eq_query R.machine view_eq)
-        direction (ofMapResult R code tail)
+  | .query view_eq direction tail =>
+      .query (R := R) (view_eq_query_of_mapResult_view_eq_query R.machine view_eq) direction
+        (ofMapResult R code tail)
 
+/-- Transporting a source trace through result postcomposition and recovering it returns the
+original trace, so `ofMapResult` is a left inverse of `toMapResult` and the transport is injective.
+The companions `conforms_toMapResult` and `length_toMapResult` carry the query contract and the
+step count across the same transport. -/
 @[simp] theorem ofMapResult_toMapResult (R : QuantitativeRealization Q bd)
     (code : Q.Realizer bd.out outRep f) {start finish : R.machine.State}
     (trace : R.ExecutionTrace start finish) :
     (trace.toMapResult R code).ofMapResult R code = trace := by
-  induction trace with
-  | nil => rfl
-  | query view_eq direction tail ih => simp [toMapResult, ofMapResult, ih]
+  induction trace <;> simp [toMapResult, ofMapResult, *]
 
+/-- Transporting a source trace through result postcomposition preserves conformance, so a query
+contract verified for `R` transfers verbatim to the transported trace; the companion
+`conforms_ofMapResult` states the same for the backward transport. -/
 @[simp] theorem conforms_toMapResult (R : QuantitativeRealization Q bd)
-    (code : Q.Realizer bd.out outRep f)
-    (allows : ∀ position, p.B position → Prop)
+    (code : Q.Realizer bd.out outRep f) (allows : ∀ position, p.B position → Prop)
     {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
     (trace.toMapResult R code).Conforms allows ↔ trace.Conforms allows := by
-  induction trace with
-  | nil => rfl
-  | query view_eq direction tail ih => simp [toMapResult, Conforms, ih]
+  induction trace <;> simp [toMapResult, Conforms, *]
 
+/-- Recovering the source trace underlying result postcomposition preserves conformance, so a
+query contract verified for `R.mapResult code` transfers verbatim to the recovered trace; the
+companion `conforms_toMapResult` states the same for the forward transport. -/
 @[simp] theorem conforms_ofMapResult (R : QuantitativeRealization Q bd)
-    (code : Q.Realizer bd.out outRep f)
-    (allows : ∀ position, p.B position → Prop)
-    {start finish : R.machine.State}
-    (trace : (R.mapResult code).ExecutionTrace start finish) :
-    (trace.ofMapResult R code).Conforms allows ↔ trace.Conforms allows :=
-  match trace with
-  | .nil _ => Iff.rfl
-  | .query _ _ tail => and_congr Iff.rfl (conforms_ofMapResult R code allows tail)
+    (code : Q.Realizer bd.out outRep f) (allows : ∀ position, p.B position → Prop)
+    {start finish : R.machine.State} (trace : (R.mapResult code).ExecutionTrace start finish) :
+    (trace.ofMapResult R code).Conforms allows ↔ trace.Conforms allows := by
+  fun_induction ofMapResult R code trace <;> simp [Conforms, *]
 
+/-- Result postcomposition leaves trace length unchanged, because `toMapResult` rewrites only the
+returned value and keeps the visible query-answer steps in bijection. -/
 @[simp] theorem length_toMapResult (R : QuantitativeRealization Q bd)
     (code : Q.Realizer bd.out outRep f) {start finish : R.machine.State}
-    (trace : R.ExecutionTrace start finish) :
-    (trace.toMapResult R code).length = trace.length := by
-  induction trace with
-  | nil => rfl
-  | query view_eq direction tail ih => simp [toMapResult, length, ih]
+    (trace : R.ExecutionTrace start finish) : (trace.toMapResult R code).length = trace.length := by
+  induction trace <;> simp [toMapResult, length, *]
 
 end QuantitativeRealization.ExecutionTrace
 
 omit [DecidableEq p.A] in
-/-- Mapping returned values preserves relation-restricted resolution exactly. -/
+/-- Mapping returned values preserves relation-restricted resolution exactly.
+
+The equivalence holds at each budget `k` separately, so it rewrites in either direction without a
+monotonicity step; `resolvesInUnder_setInit_iff` is the analogue for initialization replacement. -/
 theorem resolvesInUnder_mapResult_iff (M : DynComputation.{u} p A B)
     (allows : ∀ position, p.B position → Prop) (k : ℕ) (state : M.State) :
-    (M.mapResult f).ResolvesInUnder allows k state ↔
-      M.ResolvesInUnder allows k state := by
-  induction k generalizing state with
-  | zero =>
-      cases hview : M.view state <;>
-        simp [ResolvesInUnder, DynComputation.mapResult_view, hview]
-  | succ k ih =>
-      cases hview : M.view state with
-      | inl value =>
-          simp [ResolvesInUnder, DynComputation.mapResult_view, hview]
-      | inr query =>
-          rcases query with ⟨position, next⟩
-          simp only [ResolvesInUnder, DynComputation.mapResult_view, hview]
-          exact forall_congr' fun direction ↦
-            imp_congr_right fun _ ↦ ih (next direction)
+    (M.mapResult f).ResolvesInUnder allows k state ↔ M.ResolvesInUnder allows k state := by
+  induction k generalizing state <;>
+    rcases hview : M.view state with value | ⟨position, next⟩ <;> simp [ResolvesInUnder, *]
 
 /-- An explicit pathwise account of the backend overhead introduced by result postcomposition.
 
 This certificate deliberately compares exact target cost with exact source cost. It does not infer
-that sum elimination, composition, or result encoding is free. -/
+that sum elimination, composition, or result encoding is free.
+
+`QuantitativeRealization.RunsWithinUnder.mapResult` consumes it, charging `overhead` on top of the
+source bound. `SeqCompCostCertificate` is the sequential-composition analogue, whose source cost
+comes from an exact phase decomposition rather than from a single reindexed trace. -/
 structure MapResultCostCertificate (R : QuantitativeRealization Q bd)
-    (code : Q.Realizer bd.out outRep f)
-    (allows : ∀ position, p.B position → Prop) where
+    (code : Q.Realizer bd.out outRep f) (allows : ∀ position, p.B position → Prop) where
   /-- Input-indexed resource allowance for the assembled result readout. -/
   overhead : A → ExecutionCost
   /-- Every conforming target prefix costs at most its source prefix plus the allowance. -/
   cost_le : ∀ input {finish : R.machine.State}
-    (trace : (R.mapResult code).ExecutionTrace
-      ((R.mapResult code).machine.init input) finish),
-    trace.Conforms allows →
-      (R.mapResult code).executionCost input trace ≤
+      (trace : (R.mapResult code).ExecutionTrace ((R.mapResult code).machine.init input) finish),
+      trace.Conforms allows → (R.mapResult code).executionCost input trace ≤
         R.executionCost input (trace.ofMapResult R code) + overhead input
 
 /-- Result postcomposition preserves restricted bounds under an explicit pathwise backend-cost
-certificate. Control-flow termination and progress are transported generically. -/
-theorem QuantitativeRealization.RunsWithinUnder.mapResult
-    {R : QuantitativeRealization Q bd}
+certificate. Control-flow termination and progress are transported generically, so `certificate`
+carries the whole cost gap. `QuantitativeRealization.RunsWithinUnder.precomp` is the input-side
+analogue, where the overhead comes from a backend law instead of a supplied certificate. -/
+theorem QuantitativeRealization.RunsWithinUnder.mapResult {R : QuantitativeRealization Q bd}
     {allows : ∀ position, p.B position → Prop} {bound : A → ExecutionCost}
-    (h : R.RunsWithinUnder allows bound)
-    (code : Q.Realizer bd.out outRep f)
+    (h : R.RunsWithinUnder allows bound) (code : Q.Realizer bd.out outRep f)
     (certificate : MapResultCostCertificate R code allows) :
     (R.mapResult code).RunsWithinUnder allows fun input ↦
       bound input + certificate.overhead input := by
   refine ⟨?_, ?_, ?_⟩
   · intro input finish trace htrace
-    have hsource : R.executionCost input (trace.ofMapResult R code) ≤ bound input :=
-      h.cost_le input (trace.ofMapResult R code)
-        ((QuantitativeRealization.ExecutionTrace.conforms_ofMapResult
-          R code allows trace).mpr htrace)
-    exact (certificate.cost_le input trace htrace).trans
-      (ExecutionCost.add_le_add hsource le_rfl)
-  · intro input
-    apply (resolvesInUnder_mapResult_iff R.machine allows _ _).mpr
-    apply (h.resolvesIn input).mono
-    simp
+    exact (certificate.cost_le input trace htrace).trans <| ExecutionCost.add_le_add
+      (h.cost_le input _ ((trace.conforms_ofMapResult R code allows).mpr htrace)) le_rfl
+  · exact fun input ↦ (resolvesInUnder_mapResult_iff R.machine allows _ _).mpr <|
+      (h.resolvesIn input).mono (by simp)
   · intro input state trace htrace position next hview
-    apply h.traceProgress input (trace.ofMapResult R code)
-    · exact (QuantitativeRealization.ExecutionTrace.conforms_ofMapResult
-        R code allows trace).mpr htrace
-    · exact view_eq_query_of_mapResult_view_eq_query R.machine hview
+    exact h.traceProgress input (trace.ofMapResult R code)
+      ((trace.conforms_ofMapResult R code allows).mpr htrace)
+      (view_eq_query_of_mapResult_view_eq_query R.machine hview)
 
 end MapResult
 
@@ -530,52 +472,55 @@ variable [Q.HasCategory] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive]
 
 namespace QuantitativeRealization.ExecutionTrace
 
-/-- Embed a first-phase trace in the left summand of a sequentially composed realization. -/
+/-- Embed a first-phase trace in the left summand of a sequentially composed realization.
+
+`toSeqCompRight` is the second-phase counterpart on `Sum.inr`, and `conforms_toSeqCompLeft`
+carries a query contract across this embedding. -/
 def toSeqCompLeft (R₁ : QuantitativeRealization Q bd)
-    (R₂ : QuantitativeRealization Q (bd.mid outRep))
-    {start finish : R₁.machine.State} (trace : R₁.ExecutionTrace start finish) :
+    (R₂ : QuantitativeRealization Q (bd.mid outRep)) {start finish : R₁.machine.State}
+    (trace : R₁.ExecutionTrace start finish) :
     (R₁.seqComp R₂).ExecutionTrace (Sum.inl start) (Sum.inl finish) :=
   match trace with
   | .nil state => .nil (R := R₁.seqComp R₂) (Sum.inl state)
-  | .query (position := position) (next := next) view_eq direction tail =>
-      .query (R := R₁.seqComp R₂) (position := position)
-        (next := fun answer ↦ Sum.inl (next answer))
-        (R₁.machine.seqComp_view_inl_of_query R₂.machine view_eq) direction
+  | .query view_eq direction tail =>
+      .query (R₁.machine.seqComp_view_inl_of_query R₂.machine view_eq) direction
         (toSeqCompLeft R₁ R₂ tail)
 
-/-- Embed a second-phase trace in the right summand of a sequentially composed realization. -/
+/-- Embed a second-phase trace in the right summand of a sequentially composed realization.
+
+`toSeqCompLeft` is the first-phase counterpart on `Sum.inl`, and `conforms_toSeqCompRight`
+carries a query contract across this embedding. -/
 def toSeqCompRight (R₁ : QuantitativeRealization Q bd)
-    (R₂ : QuantitativeRealization Q (bd.mid outRep))
-    {start finish : R₂.machine.State} (trace : R₂.ExecutionTrace start finish) :
+    (R₂ : QuantitativeRealization Q (bd.mid outRep)) {start finish : R₂.machine.State}
+    (trace : R₂.ExecutionTrace start finish) :
     (R₁.seqComp R₂).ExecutionTrace (Sum.inr start) (Sum.inr finish) :=
   match trace with
   | .nil state => .nil (R := R₁.seqComp R₂) (Sum.inr state)
-  | .query (position := position) (next := next) view_eq direction tail =>
-      .query (R := R₁.seqComp R₂) (position := position)
-        (next := fun answer ↦ Sum.inr (next answer))
+  | .query (next := next) view_eq direction tail =>
+      .query (next := fun answer ↦ Sum.inr (next answer))
         (by
           change (R₁.machine.seqComp R₂.machine).view (Sum.inr start) = _
           rw [R₁.machine.seqComp_view_inr, view_eq]
           rfl) direction
         (toSeqCompRight R₁ R₂ tail)
 
+/-- Embedding a first-phase trace in the left summand preserves conformance, so a query contract
+verified for `R₁` transfers verbatim to the embedded trace; the companion `conforms_toSeqCompRight`
+states the same for the second-phase embedding. -/
 @[simp] theorem conforms_toSeqCompLeft (R₁ : QuantitativeRealization Q bd)
-    (R₂ : QuantitativeRealization Q (bd.mid outRep))
-    (allows : ∀ position, p.B position → Prop)
+    (R₂ : QuantitativeRealization Q (bd.mid outRep)) (allows : ∀ position, p.B position → Prop)
     {start finish : R₁.machine.State} (trace : R₁.ExecutionTrace start finish) :
     (trace.toSeqCompLeft R₁ R₂).Conforms allows ↔ trace.Conforms allows := by
-  induction trace with
-  | nil => rfl
-  | query view_eq direction tail ih => simp [toSeqCompLeft, Conforms, ih]
+  induction trace <;> simp [toSeqCompLeft, Conforms, *]
 
+/-- Embedding a second-phase trace on the `Sum.inr` side of a sequential composition leaves its
+query contract unchanged: the composite issues exactly the queries of `trace`, so `allows` neither
+gains nor discharges an obligation. `conforms_toSeqCompLeft` is the first-phase analogue. -/
 @[simp] theorem conforms_toSeqCompRight (R₁ : QuantitativeRealization Q bd)
-    (R₂ : QuantitativeRealization Q (bd.mid outRep))
-    (allows : ∀ position, p.B position → Prop)
+    (R₂ : QuantitativeRealization Q (bd.mid outRep)) (allows : ∀ position, p.B position → Prop)
     {start finish : R₂.machine.State} (trace : R₂.ExecutionTrace start finish) :
     (trace.toSeqCompRight R₁ R₂).Conforms allows ↔ trace.Conforms allows := by
-  induction trace with
-  | nil => rfl
-  | query view_eq direction tail ih => simp [toSeqCompRight, Conforms, ih]
+  induction trace <;> simp [toSeqCompRight, Conforms, *]
 
 end QuantitativeRealization.ExecutionTrace
 
@@ -585,24 +530,29 @@ The three constructors distinguish a prefix still exposing a first-phase query, 
 first phase before the second phase has made a query, and a prefix that has crossed into the
 right state summand. The handoff constructor includes the zero-length second-phase prefix; this
 accounts for the second initialization and its first readout even when no second-phase query has
-yet occurred. -/
+yet occurred.
+
+Build a value with `QuantitativeRealization.ExecutionTrace.seqCompSource`, which decomposes a
+composite prefix that starts in the left summand, or with `prependLeft`, which extends a
+decomposition by one first-phase query. `length`, `Conforms` and `cost` read a decomposition
+back, and `length_le`, `cost_le` and `response_exists` turn phase-local bounds into bounds on the
+composite. `SeqCompAnyTraceSource.fromLeft` embeds this family when the starting summand is not
+fixed; `SeqCompRightTraceSource` is the separate family for prefixes that already start on the
+right. -/
 inductive SeqCompTraceSource (R₁ : QuantitativeRealization Q bd)
     (R₂ : QuantitativeRealization Q (bd.mid outRep)) (start : R₁.machine.State) :
     (R₁.machine.State ⊕ R₂.machine.State) → Type u where
   /-- The prefix remains in phase one at a state that exposes another phase-one query. -/
-  | left {finish : R₁.machine.State}
-      (trace : R₁.ExecutionTrace start finish)
-      {position : p.A} {next : p.B position → R₁.machine.State}
+  | left {finish : R₁.machine.State} (trace : R₁.ExecutionTrace start finish) {position : p.A}
+      {next : p.B position → R₁.machine.State}
       (view_eq : R₁.machine.view finish = Sum.inr ⟨position, next⟩) :
       SeqCompTraceSource R₁ R₂ start (Sum.inl finish)
   /-- Phase one has returned, but the prefix contains no second-phase query yet. -/
-  | handoff {finish : R₁.machine.State} {value : B}
-      (trace : R₁.ExecutionTrace start finish)
+  | handoff {finish : R₁.machine.State} {value : B} (trace : R₁.ExecutionTrace start finish)
       (view_eq : R₁.machine.view finish = Sum.inl value) :
       SeqCompTraceSource R₁ R₂ start (Sum.inl finish)
-  /-- The prefix contains a handoff and at least one second-phase query. -/
-  | right {leftFinish : R₁.machine.State} {value : B}
-      {rightFinish : R₂.machine.State}
+  /-- A completed first-phase trace followed by a second-phase trace. -/
+  | right {leftFinish : R₁.machine.State} {value : B} {rightFinish : R₂.machine.State}
       (left : R₁.ExecutionTrace start leftFinish)
       (view_eq : R₁.machine.view leftFinish = Sum.inl value)
       (right : R₂.ExecutionTrace (R₂.machine.init value) rightFinish) :
@@ -613,18 +563,24 @@ namespace SeqCompTraceSource
 variable {R₁ : QuantitativeRealization Q bd}
   {R₂ : QuantitativeRealization Q (bd.mid outRep)} {start : R₁.machine.State}
 
-/-- Number of visible query-answer transitions represented by the phase-local traces. -/
+/-- Number of visible query-answer transitions represented by the phase-local traces.
+
+The `left` and `handoff` prefixes count only the first-phase trace, while `right` adds both
+phase counts. `SeqCompRightTraceSource.length` is the counterpart for a prefix confined to the
+second phase, and `SeqCompAnyTraceSource.length` dispatches on the starting summand. -/
 def length : {finish : R₁.machine.State ⊕ R₂.machine.State} →
     SeqCompTraceSource R₁ R₂ start finish → ℕ
   | _, .left trace _ => trace.length
   | _, .handoff trace _ => trace.length
   | _, .right leftTrace _ rightTrace => leftTrace.length + rightTrace.length
 
-/-- Prepend one first-phase query to a decomposition starting at its selected child. -/
-def prependLeft {state : R₁.machine.State} {position : p.A}
-    {next : p.B position → R₁.machine.State}
-    (view_eq : R₁.machine.view state = Sum.inr ⟨position, next⟩)
-    (direction : p.B position)
+/-- Prepend one first-phase query to a decomposition starting at its selected child.
+
+The constructor shape is preserved: the query is pushed onto the first-phase trace, while a
+handoff readout and any second-phase trace are carried through unchanged. `length_prependLeft`
+and `conforms_prependLeft` read the resulting length and answer contract off the new query. -/
+def prependLeft {state : R₁.machine.State} {position : p.A} {next : p.B position → R₁.machine.State}
+    (view_eq : R₁.machine.view state = Sum.inr ⟨position, next⟩) (direction : p.B position)
     {finish : R₁.machine.State ⊕ R₂.machine.State}
     (source : SeqCompTraceSource R₁ R₂ (next direction) finish) :
     SeqCompTraceSource R₁ R₂ state finish :=
@@ -635,64 +591,86 @@ def prependLeft {state : R₁.machine.State} {position : p.A}
       .right (.query view_eq direction leftTrace) returned rightTrace
 
 omit [Q.HasCategory] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
+/-- Prepending a first-phase query lengthens a phase decomposition by exactly one step.
+
+The extra query is absorbed by the first-phase trace in every constructor, so a `right`
+decomposition keeps its second-phase count unchanged; `conforms_prependLeft` is the
+answer-contract counterpart. -/
 @[simp] theorem length_prependLeft {state : R₁.machine.State} {position : p.A}
     {next : p.B position → R₁.machine.State}
-    (view_eq : R₁.machine.view state = Sum.inr ⟨position, next⟩)
-    (direction : p.B position)
+    (view_eq : R₁.machine.view state = Sum.inr ⟨position, next⟩) (direction : p.B position)
     {finish : R₁.machine.State ⊕ R₂.machine.State}
     (source : SeqCompTraceSource R₁ R₂ (next direction) finish) :
     (source.prependLeft view_eq direction).length = source.length + 1 := by
-  cases source with
-  | left => rfl
-  | handoff => rfl
-  | right =>
-      simp [prependLeft, length, QuantitativeRealization.ExecutionTrace.length]
-      omega
+  cases source <;> simp [prependLeft, length,
+    QuantitativeRealization.ExecutionTrace.length, Nat.add_right_comm]
 
-/-- Whether every answer appearing in the projected source traces obeys an answer contract. -/
+/-- Whether every answer appearing in the projected source traces obeys an answer contract.
+
+A `left` or `handoff` prefix constrains only the first-phase trace, while `right` constrains
+both phase traces. `SeqCompRightTraceSource.Conforms` is the counterpart for a prefix confined
+to the second phase, and `SeqCompAnyTraceSource.Conforms` dispatches on the starting summand. -/
 def Conforms (allows : ∀ position, p.B position → Prop) :
-    {finish : R₁.machine.State ⊕ R₂.machine.State} →
-      SeqCompTraceSource R₁ R₂ start finish → Prop
+    {finish : R₁.machine.State ⊕ R₂.machine.State} → SeqCompTraceSource R₁ R₂ start finish → Prop
   | _, .left trace _ => trace.Conforms allows
   | _, .handoff trace _ => trace.Conforms allows
-  | _, .right leftTrace _ rightTrace =>
-      leftTrace.Conforms allows ∧ rightTrace.Conforms allows
+  | _, .right leftTrace _ rightTrace => leftTrace.Conforms allows ∧ rightTrace.Conforms allows
 
 omit [Q.HasCategory] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
+/-- A prepended first-phase query conforms to an answer contract exactly when the new answer is
+allowed and the shorter decomposition already conforms.
+
+The conjunction is right-nested, matching `QuantitativeRealization.ExecutionTrace.Conforms` on
+`.query`, so repeated rewriting peels one query at a time instead of accumulating bracketing in
+the `right` case. `length_prependLeft` is the length counterpart on the same construction. -/
 @[simp] theorem conforms_prependLeft (allows : ∀ position, p.B position → Prop)
-    {state : R₁.machine.State} {position : p.A}
-    {next : p.B position → R₁.machine.State}
-    (view_eq : R₁.machine.view state = Sum.inr ⟨position, next⟩)
-    (direction : p.B position)
+    {state : R₁.machine.State} {position : p.A} {next : p.B position → R₁.machine.State}
+    (view_eq : R₁.machine.view state = Sum.inr ⟨position, next⟩) (direction : p.B position)
     {finish : R₁.machine.State ⊕ R₂.machine.State}
     (source : SeqCompTraceSource R₁ R₂ (next direction) finish) :
     (source.prependLeft view_eq direction).Conforms allows ↔
       allows position direction ∧ source.Conforms allows := by
-  cases source <;> simp [prependLeft, Conforms,
-    QuantitativeRealization.ExecutionTrace.Conforms, and_assoc]
+  cases source <;>
+    simp [prependLeft, Conforms, QuantitativeRealization.ExecutionTrace.Conforms, and_assoc]
 
-/-- Exact source-machine cost represented by a phase decomposition. -/
-def cost (input : A) :
-    {finish : R₁.machine.State ⊕ R₂.machine.State} →
-      SeqCompTraceSource R₁ R₂ (R₁.machine.init input) finish → ExecutionCost
+/-- Exact source-machine cost represented by a phase decomposition.
+
+This is the realized cost of the phase-local traces, not a bound: the handoff case charges the
+second machine's initialization and first readout through its empty second-phase prefix.
+`queries_cost` reads the `queries` component back as `length`, and `cost_le` bounds the whole
+cost by a first-phase bound plus the reachable second-phase envelope. -/
+def cost (input : A) : {finish : R₁.machine.State ⊕ R₂.machine.State} →
+    SeqCompTraceSource R₁ R₂ (R₁.machine.init input) finish → ExecutionCost
   | _, .left trace _ => R₁.executionCost input trace
   | _, .handoff (value := value) trace _ =>
-      R₁.executionCost input trace +
-        R₂.executionCost value (.nil (R₂.machine.init value))
+      R₁.executionCost input trace + R₂.executionCost value (.nil (R₂.machine.init value))
   | _, .right (value := value) leftTrace _ rightTrace =>
       R₁.executionCost input leftTrace + R₂.executionCost value rightTrace
 
 omit [Q.HasCategory] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
-/-- The query component of a phase source's cost is its exact syntactic length. -/
-@[simp] theorem queries_cost (input : A)
-    {finish : R₁.machine.State ⊕ R₂.machine.State}
+/-- The query component of a phase source's cost is its exact syntactic length.
+
+Backend work, encoded sizes and handoff overhead are invisible to `queries`, so the identity
+needs no cost certificate; `SeqCompTraceSource.length_le` rewrites backwards along it to turn a
+pathwise cost bound into a prefix-length bound. The single-phase counterpart is
+`QuantitativeRealization.ExecutionTrace.queries_cost`. -/
+@[simp] theorem queries_cost (input : A) {finish : R₁.machine.State ⊕ R₂.machine.State}
     (source : SeqCompTraceSource R₁ R₂ (R₁.machine.init input) finish) :
     (source.cost input).queries = source.length := by
   cases source <;> simp [cost, length, QuantitativeRealization.ExecutionTrace.length]
 
 end SeqCompTraceSource
 
-/-- A second-phase trace projected from a composite prefix already in the right summand. -/
+/-- A second-phase trace projected from a composite prefix already in the right summand.
+
+`R₁` only fixes the left summand of the state index; the projected trace itself lives entirely
+in `R₂`. The single constructor pins the `finish` index to `Sum.inr`, so matching on a value
+also refines that index.
+
+Values arrive wrapped in `SeqCompAnyTraceSource.fromRight`, which
+`QuantitativeRealization.ExecutionTrace.seqCompAnySource` returns for a composite prefix that
+already starts in the second phase. `length` and `Conforms` read the projection back.
+`SeqCompTraceSource` is the counterpart family for prefixes that start in the left summand. -/
 inductive SeqCompRightTraceSource (R₁ : QuantitativeRealization Q bd)
     (R₂ : QuantitativeRealization Q (bd.mid outRep)) (start : R₂.machine.State) :
     (R₁.machine.State ⊕ R₂.machine.State) → Type u where

@@ -92,17 +92,13 @@ def comp (outer inner : SecondOrderPolynomial ι) : SecondOrderPolynomial ι :=
   | .mul left right => .mul (left.comp inner) (right.comp inner)
   | .oracle interface argument => .oracle interface (argument.comp inner)
 
+/-- Evaluating input substitution feeds the inner value to the outer polynomial. -/
 @[simp]
 theorem eval_comp (outer inner : SecondOrderPolynomial ι) (length : ι → Nat → Nat)
     (inputSize : Nat) :
     (outer.comp inner).eval length inputSize =
       outer.eval length (inner.eval length inputSize) := by
-  induction outer with
-  | const value => rfl
-  | input => rfl
-  | add left right left_ih right_ih => simp only [comp, eval_add, left_ih, right_ih]
-  | mul left right left_ih right_ih => simp only [comp, eval_mul, left_ih, right_ih]
-  | oracle interface argument ih => simp only [comp, eval_oracle, ih]
+  induction outer <;> simp_all only [comp, eval]
 
 /-- Relabel the interface symbols of a second-order polynomial. -/
 def reindex (map : ι → κ) : SecondOrderPolynomial ι → SecondOrderPolynomial κ
@@ -112,17 +108,13 @@ def reindex (map : ι → κ) : SecondOrderPolynomial ι → SecondOrderPolynomi
   | .mul left right => .mul (left.reindex map) (right.reindex map)
   | .oracle interface argument => .oracle (map interface) (argument.reindex map)
 
+/-- Relabeling oracle symbols precomposes the length environment with the label map. -/
 @[simp]
 theorem eval_reindex (polynomial : SecondOrderPolynomial ι) (map : ι → κ)
     (length : κ → Nat → Nat) (inputSize : Nat) :
     (polynomial.reindex map).eval length inputSize =
       polynomial.eval (fun interface ↦ length (map interface)) inputSize := by
-  induction polynomial with
-  | const value => rfl
-  | input => rfl
-  | add left right left_ih right_ih => simp only [reindex, eval_add, left_ih, right_ih]
-  | mul left right left_ih right_ih => simp only [reindex, eval_mul, left_ih, right_ih]
-  | oracle interface argument ih => simp only [reindex, eval_oracle, ih]
+  induction polynomial <;> simp_all only [reindex, eval]
 
 /-- Substitute a resource transformer for every source-interface length symbol. -/
 def subst (replacement : ι → SecondOrderPolynomial κ) :
@@ -134,6 +126,7 @@ def subst (replacement : ι → SecondOrderPolynomial κ) :
   | .oracle interface argument =>
       (replacement interface).comp (argument.subst replacement)
 
+/-- Symbol substitution evaluates each replacement in the target length environment. -/
 @[simp]
 theorem eval_subst (polynomial : SecondOrderPolynomial ι)
     (replacement : ι → SecondOrderPolynomial κ) (length : κ → Nat → Nat)
@@ -141,12 +134,7 @@ theorem eval_subst (polynomial : SecondOrderPolynomial ι)
     (polynomial.subst replacement).eval length inputSize =
       polynomial.eval (fun interface size ↦ (replacement interface).eval length size)
         inputSize := by
-  induction polynomial with
-  | const value => rfl
-  | input => rfl
-  | add left right left_ih right_ih => simp only [subst, eval_add, left_ih, right_ih]
-  | mul left right left_ih right_ih => simp only [subst, eval_mul, left_ih, right_ih]
-  | oracle interface argument ih => simp only [subst, eval_comp, eval_oracle, ih]
+  induction polynomial <;> simp_all only [subst, eval, eval_comp]
 
 /-- Every length function supplied to an open-resource bound is monotone in message size. -/
 def MonotoneLengths (length : ι → Nat → Nat) : Prop :=

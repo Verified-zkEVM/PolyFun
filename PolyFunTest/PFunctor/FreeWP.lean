@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Free.WP
+public import PolyFun.PFunctor.Free.WP.Upstream
 
 /-!
 # Free-monad weakest-precondition canaries
@@ -58,11 +59,11 @@ example : wpFold chooseTrueSpec flipTwo (fun out => out = true) := by
   change true && true = true
   rfl
 
-/-- The induced ordered algebra computes the same nontrivial fold. -/
+/-- The induced core interpretation computes the same nontrivial fold. -/
 example :
-    letI := chooseTrueSpec.toMAlgOrdered chooseTrueSpec_mono
-    MAlgOrdered.wp flipTwo (fun out => out = true) := by
-  rw [wp_toMAlgOrdered]
+    ((chooseTrueSpec.toWPMonad chooseTrueSpec_mono).toWP Bool).wp flipTwo
+      (fun out => out = true) estack⟨⟩ := by
+  rw [OpSpec.toWPMonad_wp]
   change true && true = true
   rfl
 
@@ -72,29 +73,27 @@ example :
 def chooseTrueHandler : Handler Id coinP :=
   fun _ => true
 
-noncomputable local instance instIdOrdered : MAlgOrdered Id Prop where
-  μ x := x
-  μ_pure _ := rfl
-  μ_bind_mono _ _ h x := h x
-
-/-- The semantic WP observes the handler rather than quantifying over every
-syntactic response. -/
-example : wpVia chooseTrueHandler flipTwo (fun out => out = true) := by
+/-- The semantic WP, core's `wp` of the interpreted program, observes the handler rather than
+quantifying over every syntactic response. -/
+example : Std.WP.wp (flipTwo.liftM chooseTrueHandler) (fun out => out = true)
+    estack⟨⟩ := by
   change true && true = true
   rfl
 
 /-- The deterministic operation spec agrees exactly with the handler WP. -/
 example : wpFold chooseTrueSpec flipTwo (fun out => out = true) =
-    wpVia chooseTrueHandler flipTwo (fun out => out = true) := by
-  apply wpFold_eq_wpVia
+    Std.WP.wp (flipTwo.liftM chooseTrueHandler) (fun out => out = true)
+      estack⟨⟩ := by
+  apply wpFold_eq_wp_liftM
   intro _ continuation
   rfl
 
 /-- Demonic syntax safely under-approximates the deterministic handler even
 when the postcondition is not tautological. -/
 example : wpFold (OpSpec.demonic coinP) flipTwo (fun out => out = true) ≤
-    wpVia chooseTrueHandler flipTwo (fun out => out = true) := by
-  apply wpFold_le_wpVia
+    Std.WP.wp (flipTwo.liftM chooseTrueHandler) (fun out => out = true)
+      estack⟨⟩ := by
+  apply wpFold_le_wp_liftM
   intro _ continuation hall
   exact hall true
 

@@ -6,7 +6,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.Control.Monad.Algebra.Relational
-public import PolyFun.Control.Monad.Support
+public import PolyFun.Control.Monad.Support.WP
 
 /-!
 # Relational weakest preconditions from exact support
@@ -17,10 +17,11 @@ exact support:
 * the **demonic** algebra requires the postcondition for every pair of possible outputs;
 * the **angelic** algebra requires it for some pair of possible outputs.
 
-Both observations satisfy strict bind and are anchored to their matching unary support
-algebras. The definitions are deliberately named rather than global instances because
-the demonic and angelic interpretations have the same instance head, and because other
-relational semantics (for example couplings) may be appropriate for the same monads.
+Both observations satisfy strict bind and are anchored to the matching unary support readings
+(`toWPMonadDemonic`, `toWPMonadAngelic`). The definitions are deliberately named rather than
+global instances because the demonic and angelic interpretations have the same instance head,
+and because other relational semantics (for example couplings) may be appropriate for the same
+monads.
 -/
 
 @[expose] public section
@@ -66,7 +67,7 @@ def mAlgRelOrderedPropAngelic : MAlgRelOrdered m₁ m₂ Prop where
 
 section Demonic
 
-attribute [local instance] mAlgRelOrderedPropDemonic mAlgOrderedPropDemonic
+attribute [local instance] mAlgRelOrderedPropDemonic toWPMonadDemonic
 
 /-- Support characterization of the demonic relational weakest precondition. -/
 theorem relWP_demonic_iff_forall_support {α β : Type} (x : m₁ α) (y : m₂ β)
@@ -89,19 +90,17 @@ theorem strictBindPropDemonic : StrictBind m₁ m₂ Prop := by
       d (mem_support_bind.mpr ⟨b, hb, hd⟩)
 
 /-- The demonic relational support algebra is anchored to the demonic unary support
-algebra on both sides. -/
+reading on both sides. -/
 theorem anchoredPropDemonic : Anchored m₁ m₂ Prop := by
   refine { rwp_pure_left := ?_, rwp_pure_right := ?_ }
   · intro α β a y post
     apply propext
-    change AllOutputs (fun a' => AllOutputs (post a') y) (pure a : m₁ α) ↔
-      MAlgOrdered.wp y (post a)
-    rw [allOutputs_pure, wp_iff_allOutputs]
+    change AllOutputs (fun a' => AllOutputs (post a') y) (pure a : m₁ α) ↔ AllOutputs (post a) y
+    rw [allOutputs_pure]
   · intro α β x b post
     apply propext
     change AllOutputs (fun a => AllOutputs (post a) (pure b : m₂ β)) x ↔
-      MAlgOrdered.wp x (fun a => post a b)
-    rw [wp_iff_allOutputs]
+      AllOutputs (fun a => post a b) x
     apply allOutputs_congr
     intro a
     exact allOutputs_pure (post a) b
@@ -110,7 +109,7 @@ end Demonic
 
 section Angelic
 
-attribute [local instance] mAlgRelOrderedPropAngelic mAlgOrderedPropAngelic
+attribute [local instance] mAlgRelOrderedPropAngelic toWPMonadAngelic
 
 /-- Support characterization of the angelic relational weakest precondition. -/
 theorem relWP_angelic_iff_exists_support {α β : Type} (x : m₁ α) (y : m₂ β)
@@ -133,19 +132,17 @@ theorem strictBindPropAngelic : StrictBind m₁ m₂ Prop := by
     exact ⟨a, ha, b, hb, c, hc, d, hd, hcd⟩
 
 /-- The angelic relational support algebra is anchored to the angelic unary support
-algebra on both sides. -/
+reading on both sides. -/
 theorem anchoredPropAngelic : Anchored m₁ m₂ Prop := by
   refine { rwp_pure_left := ?_, rwp_pure_right := ?_ }
   · intro α β a y post
     apply propext
-    change SomeOutput (fun a' => SomeOutput (post a') y) (pure a : m₁ α) ↔
-      MAlgOrdered.wp y (post a)
-    rw [someOutput_pure, wp_angelic_iff_someOutput]
+    change SomeOutput (fun a' => SomeOutput (post a') y) (pure a : m₁ α) ↔ SomeOutput (post a) y
+    rw [someOutput_pure]
   · intro α β x b post
     apply propext
     change SomeOutput (fun a => SomeOutput (post a) (pure b : m₂ β)) x ↔
-      MAlgOrdered.wp x (fun a => post a b)
-    rw [wp_angelic_iff_someOutput]
+      SomeOutput (fun a => post a b) x
     apply someOutput_congr
     intro a
     exact someOutput_pure (post a) b

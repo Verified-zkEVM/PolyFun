@@ -26,7 +26,8 @@ def rightChoices : SetM Nat := ({1, 2} : Set Nat)
 
 section Demonic
 
-local instance instDemonicLeft : MAlgOrdered SetM Prop := mAlgOrderedPropDemonic
+local instance instDemonicLeft : Std.WP.WPMonad SetM Prop EStack⟨⟩ :=
+  toWPMonadDemonic
 local instance instDemonicRel : MAlgRelOrdered SetM SetM Prop :=
   mAlgRelOrderedPropDemonic
 local instance instDemonicStrict : StrictBind SetM SetM Prop := strictBindPropDemonic
@@ -60,7 +61,8 @@ end Demonic
 
 section Angelic
 
-local instance instAngelicLeft : MAlgOrdered SetM Prop := mAlgOrderedPropAngelic
+local instance instAngelicLeft : Std.WP.WPMonad SetM Prop EStack⟨⟩ :=
+  toWPMonadAngelic
 local instance instAngelicRel : MAlgRelOrdered SetM SetM Prop :=
   mAlgRelOrderedPropAngelic
 local instance instAngelicStrict : StrictBind SetM SetM Prop := strictBindPropAngelic

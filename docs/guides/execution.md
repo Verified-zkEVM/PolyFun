@@ -31,6 +31,17 @@ requests. For example, a machine may track its current phase while a handler
 maintains an external store or a log. A correctness theorem must say whether it
 preserves just the returned value or also that retained handler state.
 
+Stateful handlers compose the way effect stacks do
+([`Handler/Stateful/Combinators.lean`](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean)):
+`parallel` and `pi` run handlers for the summands of `P + Q` or of an indexed
+sum on a product state, `flatten` reassociates a handler over a stateful base
+into one product state, `mapBase` interprets a handler's base free monad through
+an outer handler, and `extend` / `extendLeft` add a passive auxiliary component
+that `fixSnd` projects away. Each has a run law relating `Stateful.run` through
+the combinator to the runs of its parts; their common core,
+`run_map_eq_of_apply_map_eq`, says that a state projection which commutes with
+every single request commutes with every run.
+
 ## Bounds and continuing behavior
 
 A `DynComputation` may run indefinitely. Its `denote` gives a `Resumption`;

@@ -169,7 +169,7 @@ instance (s t : I) : LawfulFunctor (FreeM₂ P s t) where
     | liftBind _ a r ih =>
       change FreeM₂.map (g ∘ f) (FreeM₂.liftBind a r) =
         FreeM₂.map g (FreeM₂.map f (FreeM₂.liftBind a r))
-      exact congrArg _ (funext (fun b => ih b))
+      exact congrArg _ (funext ih)
 
 /-! ## `Pure` instance and `IndexedMonad` / `LawfulIndexedMonad` instances -/
 

@@ -110,8 +110,8 @@ theorem run_reindex [LawfulMonad m]
     (implementation : Handler (FreeM Q) P) (h : Stateful m S Q)
     {α : Type u} (program : FreeM P α) (state : S) :
     (h.reindex implementation).run program state =
-      h.run (program.liftM implementation) state := by
-  exact congrArg (fun computation => computation.run state)
+      h.run (program.liftM implementation) state :=
+  congrArg (fun computation => computation.run state)
     (FreeM.liftM_comp program implementation h).symm
 
 @[simp]

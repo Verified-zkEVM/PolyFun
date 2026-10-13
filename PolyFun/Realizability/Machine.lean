@@ -42,7 +42,7 @@ the flattening carries no coherence side conditions — the only cost is
 `updateFlat`, `output`, `expose`, and `stepD` are derived compatibility accessors:
 a total state-to-state transition, an optional readout, a total query selector,
 and the deterministic one-step transition against a fixed pure handler. They are
-useful for execution and legacy clients, but they are not the compositional
+useful for execution and for clients of a total transition, but they are not the compositional
 resource boundary. A quantitative realization should cost `head` and the partial
 `update?` directly, so junk inputs and already-returned states cannot acquire a
 conventional total-step cost.

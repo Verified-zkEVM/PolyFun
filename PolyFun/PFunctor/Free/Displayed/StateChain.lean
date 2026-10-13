@@ -13,8 +13,8 @@ public import PolyFun.PFunctor.Free.Replicate
 
 `FreeM.stateChain` is the `n`-stage dependent composition where stage `i`
 runs the tree `s i state` (with `state : Stage i`) and advances the state
-via `advance i state path`. It is the FreeM-substrate analogue of
-`Spec.stateChain`, and the displayed-layer `Decoration.stateChain` /
+via `advance i state path`. It is the substrate of
+`Interaction.TypeTree.stateChain`, and the displayed-layer `Decoration.stateChain` /
 `Decoration.Over.stateChain` lift this iteration to per-node decorations.
 
 Like `replicate`, `stateChain` is purely structural (iterated
