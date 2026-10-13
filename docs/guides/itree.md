@@ -161,6 +161,21 @@ the monadic `>>=`, `pure`, and `iterM` with `ITree.bind`, `ITree.pure`, and
 [tutorial](../tutorials/interaction-trees.md) uses them to compute
 interpretations into `OptionT (ITree E)`, a target without a lawful instance.
 
+## Running a tree as a machine
+
+[`ITree/Machine.lean`](../../PolyFun/ITree/Machine.lean) reads an interaction tree
+as a machine, so the dynamical-system and computation APIs apply to it.
+
+- `ITree.toDynSystem` is a dynamical system over the raw polynomial
+  `ITree.Poly F α`: the state is the tree, the exposed position its head node,
+  and an answer the selected child. Its behavior is the raw M-type tree
+  (`behavior_toDynSystem`).
+- `ITree.toDynComputation` is a returning computation over `F + y`, through the
+  resumption-with-tau encoding. Silent steps become visible unit queries, so the
+  bounded, chunked, and `IO` runners of `DynComputation` run interaction trees,
+  and a silent step can be counted like any other query. Its denotation is
+  `toResumptionWithTau` (`denote_toDynComputation`).
+
 ## Recovering Coq references
 
 Coq file references in module docstrings and Lean comments use the file
