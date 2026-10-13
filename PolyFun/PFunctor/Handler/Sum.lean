@@ -41,9 +41,11 @@ def sum (f : Handler m P) (g : Handler m Q) : Handler m (P + Q : PFunctor.{max u
   | .inl a => f a
   | .inr b => g b
 
+/-- The sum handler answers a left position with the left handler. -/
 @[simp] theorem sum_inl (f : Handler m P) (g : Handler m Q) (a : P.A) :
     sum f g (.inl a) = f a := rfl
 
+/-- The sum handler answers a right position with the right handler. -/
 @[simp] theorem sum_inr (f : Handler m P) (g : Handler m Q) (b : Q.A) :
     sum f g (.inr b) = g b := rfl
 
@@ -56,15 +58,21 @@ def sumLift (f : Handler m P) (g : Handler n Q) : Handler r (P + Q : PFunctor.{m
   sum (mapTarget (fun {α} (x : m α) => (monadLift x : r α)) f)
     (mapTarget (fun {α} (x : n α) => (monadLift x : r α)) g)
 
+/-- The lifted sum handler is the sum of the two handlers, each mapped into the shared target
+monad by `monadLift`. -/
 theorem sumLift_def (f : Handler m P) (g : Handler n Q) :
     sumLift (r := r) f g =
       sum (mapTarget (fun {α} (x : m α) => (monadLift x : r α)) f)
         (mapTarget (fun {α} (x : n α) => (monadLift x : r α)) g) :=
   rfl
 
+/-- The lifted sum handler answers a left position with the left handler's answer, lifted into
+the shared target monad. -/
 @[simp] theorem sumLift_inl (f : Handler m P) (g : Handler n Q) (a : P.A) :
     sumLift (r := r) f g (.inl a) = (monadLift (f a) : r _) := rfl
 
+/-- The lifted sum handler answers a right position with the right handler's answer, lifted into
+the shared target monad. -/
 @[simp] theorem sumLift_inr (f : Handler m P) (g : Handler n Q) (b : Q.A) :
     sumLift (r := r) f g (.inr b) = (monadLift (g b) : r _) := rfl
 
@@ -80,6 +88,8 @@ section Monad
 
 variable [Monad m] {α : Type u}
 
+/-- Interpreting a node at a left position through a sum handler runs the left handler and then
+interprets the continuation at its answer. -/
 theorem liftM_sum_liftBind_inl (f : Handler m P) (g : Handler m Q) (a : P.A)
     (k : (P + Q : PFunctor.{max uA₁ uA₂, u}).B (.inl a) →
       FreeM (P + Q : PFunctor.{max uA₁ uA₂, u}) α) :
@@ -88,6 +98,8 @@ theorem liftM_sum_liftBind_inl (f : Handler m P) (g : Handler m Q) (a : P.A)
       f a >>= fun d => (k d).liftM (sum f g) :=
   rfl
 
+/-- Interpreting a node at a right position through a sum handler runs the right handler and
+then interprets the continuation at its answer. -/
 theorem liftM_sum_liftBind_inr (f : Handler m P) (g : Handler m Q) (b : Q.A)
     (k : (P + Q : PFunctor.{max uA₁ uA₂, u}).B (.inr b) →
       FreeM (P + Q : PFunctor.{max uA₁ uA₂, u}) α) :
@@ -102,10 +114,14 @@ section LawfulMonad
 
 variable [Monad m] [LawfulMonad m] {α : Type u}
 
+/-- Interpreting a single request at a left position through a sum handler gives the left
+handler's answer to it. -/
 theorem liftM_sum_lift_inl (f : Handler m P) (g : Handler m Q) (a : P.A) :
     (FreeM.lift (P := (P + Q : PFunctor.{max uA₁ uA₂, u})) (.inl a)).liftM (sum f g) = f a := by
   simp
 
+/-- Interpreting a single request at a right position through a sum handler gives the right
+handler's answer to it. -/
 theorem liftM_sum_lift_inr (f : Handler m P) (g : Handler m Q) (b : Q.A) :
     (FreeM.lift (P := (P + Q : PFunctor.{max uA₁ uA₂, u})) (.inr b)).liftM (sum f g) = g b := by
   simp
@@ -116,6 +132,8 @@ A program over one summand, relabelled into the sum along `Lens.inl` or `Lens.in
 interpreted by the handler of that summand. The `_eq_of_apply` forms need only the handler's
 values on the relevant injection, not its shape as a `sum`. -/
 
+/-- Interpreting a program relabelled along `Lens.inl` through a handler that agrees with `f` on
+left positions is interpreting the original program through `f`. -/
 theorem liftM_mapLens_inl_eq_of_apply (h : Handler m (P + Q : PFunctor.{max uA₁ uA₂, u}))
     (f : Handler m P) (hf : ∀ a, h (.inl a) = f a) (x : FreeM P α) :
     (x.mapLens Lens.inl).liftM h = x.liftM f := by
@@ -124,6 +142,8 @@ theorem liftM_mapLens_inl_eq_of_apply (h : Handler m (P + Q : PFunctor.{max uA�
   funext a
   simp [Lens.inl, hf]
 
+/-- Interpreting a program relabelled along `Lens.inr` through a handler that agrees with `g` on
+right positions is interpreting the original program through `g`. -/
 theorem liftM_mapLens_inr_eq_of_apply (h : Handler m (P + Q : PFunctor.{max uA₁ uA₂, u}))
     (g : Handler m Q) (hg : ∀ b, h (.inr b) = g b) (x : FreeM Q α) :
     (x.mapLens Lens.inr).liftM h = x.liftM g := by
@@ -132,10 +152,14 @@ theorem liftM_mapLens_inr_eq_of_apply (h : Handler m (P + Q : PFunctor.{max uA�
   funext b
   simp [Lens.inr, hg]
 
+/-- Interpreting a program relabelled along `Lens.inl` through `sum f g` is interpreting the
+original program through `f`. -/
 theorem liftM_sum_mapLens_inl (f : Handler m P) (g : Handler m Q) (x : FreeM P α) :
     (x.mapLens Lens.inl).liftM (sum f g) = x.liftM f :=
   liftM_mapLens_inl_eq_of_apply _ _ (fun _ => rfl) x
 
+/-- Interpreting a program relabelled along `Lens.inr` through `sum f g` is interpreting the
+original program through `g`. -/
 theorem liftM_sum_mapLens_inr (f : Handler m P) (g : Handler m Q) (x : FreeM Q α) :
     (x.mapLens Lens.inr).liftM (sum f g) = x.liftM g :=
   liftM_mapLens_inr_eq_of_apply _ _ (fun _ => rfl) x
@@ -147,11 +171,15 @@ section SumLiftLaws
 variable {n : Type u → Type w} {r : Type u → Type uA} [Monad r] [LawfulMonad r] [MonadLiftT m r]
   [MonadLiftT n r] {α : Type u}
 
+/-- Interpreting a program relabelled along `Lens.inl` through `sumLift f g` is interpreting the
+original program through `f`, with its answers lifted into the shared target monad. -/
 theorem liftM_sumLift_mapLens_inl (f : Handler m P) (g : Handler n Q) (x : FreeM P α) :
     (x.mapLens Lens.inl).liftM (sumLift (r := r) f g) =
       x.liftM (mapTarget (fun {α} (y : m α) => (monadLift y : r α)) f) :=
   liftM_mapLens_inl_eq_of_apply _ _ (fun _ => rfl) x
 
+/-- Interpreting a program relabelled along `Lens.inr` through `sumLift f g` is interpreting the
+original program through `g`, with its answers lifted into the shared target monad. -/
 theorem liftM_sumLift_mapLens_inr (f : Handler m P) (g : Handler n Q) (x : FreeM Q α) :
     (x.mapLens Lens.inr).liftM (sumLift (r := r) f g) =
       x.liftM (mapTarget (fun {α} (y : n α) => (monadLift y : r α)) g) :=

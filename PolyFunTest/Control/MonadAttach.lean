@@ -326,7 +326,7 @@ example (g : Nat → Bool) (x : m Nat) : support (g <$> x) = g '' support x := b
 example {σ : Type} (s : σ) (a : Nat) :
     StateT.supportFrom s (pure a : StateT σ m Nat) = {(a, s)} := by simp
 
--- The writer layer, which had no support at all before.
+-- The writer layer: a value returned with some accumulated output is a possible output.
 example {ω : Type} [Monoid ω] (a : Nat) (w : ω) (x : WriterT ω m Nat)
     (h : (a, w) ∈ support x.run) : a ∈ support x := by grind [mem_support_writerT_iff]
 
@@ -382,13 +382,14 @@ section AngelicNotConjunctive
 
 /-! ### Why the angelic reading is not conjunctive
 
-The legacy `Std.Do.PredTrans` carries conjunctivity as a *structure field*, and as a
-bi-entailment: `t (Q₁ ∧ₚ Q₂) ⊣⊢ₛ t Q₁ ∧ t Q₂`. The demonic reading satisfies it in both
-directions. The angelic reading satisfies only `→`: two *different* outputs may witness the
-two conjuncts separately, so nothing forces a single output to satisfy both.
+Core's `Std.Do.PredTrans`, the predicate transformer of the `Std.Do` framework that `mvcgen`
+uses, carries conjunctivity as a *structure field*, and as a bi-entailment:
+`t (Q₁ ∧ₚ Q₂) ⊣⊢ₛ t Q₁ ∧ t Q₂`. The demonic reading satisfies it in both directions. The angelic
+reading satisfies only `→`: two *different* outputs may witness the two conjuncts separately,
+so nothing forces a single output to satisfy both.
 
-The consequence is structural rather than a gap in this development. Core's `Std.WP` stack
-asks a `WP` for monotonicity only and reintroduces conjunctivity as the opt-in
+The consequence is structural rather than a gap in this development. Core's `Std.WP` framework
+asks a `WP` for monotonicity only and makes conjunctivity the opt-in class
 `WPConjunctive`, so the angelic reading is a `WPMonad` there (`MonadAttach.toWPMonadAngelic`)
 without that instance, exactly as it is an `MAlgOrdered` whose `μ_bind_mono` asks only for
 monotonicity. `PolyFunTest/Do/Angelic.lean` pins the same counterexample against core's

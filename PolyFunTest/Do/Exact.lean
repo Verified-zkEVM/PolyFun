@@ -161,4 +161,12 @@ example (x : SetM Nat) (f : Nat → SetM Nat) (p : Nat → Prop) :
   let := MonadAttach.toWPMonadDemonic (m := SetM.{0})
   exact ExactWPMonad.wp_bind x f p estack⟨⟩
 
+/-- The sum-elimination rule lets the two arms live in different universes. -/
+example {Prog : Type} {Value : Type} {Pred : Type} {EPred : Type} [Assertion Pred]
+    [Assertion EPred] [WP Prog Value Pred EPred] {γ : Type 1} {δ : Type 2} (s : γ ⊕ δ)
+    (f : γ → Prog) (g : δ → Prog) (post : Value → Pred) (epost : EPred) :
+    wp (s.elim f g) post epost =
+      s.elim (fun c => wp (f c) post epost) (fun d => wp (g d) post epost) := by
+  simp only [ExactWPMonad.wp_sum_elim]
+
 end PolyFunTest.Exact

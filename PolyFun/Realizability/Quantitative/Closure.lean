@@ -376,8 +376,12 @@ variable [Q.HasCategory] [QS : Q.HasSum] [QO : Q.HasOption] [QP : Q.HasProd]
 /-- Sequentially compose two quantitative realizations.
 
 All three maps of the sum-state machine carry executable evidence. No resource bound is inferred:
-the exact cost of each assembled map remains available through `Q.cost` and `Q.cost_compose`, while
-bounding the primitive structural codes is an explicit backend obligation. -/
+each assembled map costs `Q.cost` of its code, bounded through `cost_comp_le` and exact through
+`cost_comp` under `HasExactCategory`, while bounding the primitive structural codes is an explicit
+backend obligation. A first-phase transition re-runs `R₁.headCode` to learn whether the first phase
+has returned, and the handoff re-runs `R₂.initCode`, so an execution of the composite pays those
+readouts once in `headCode` and again in `updateCode`. The bounded theorem charges them through
+`SeqCompCostCertificate`. -/
 @[implicit_reducible]
 def seqComp (R₁ : QuantitativeRealization Q bd)
     (R₂ : QuantitativeRealization Q (bd.mid outRep)) :
@@ -446,7 +450,9 @@ variable [Q.HasCategory] [QS : Q.HasSum] [QO : Q.HasOption] [QP : Q.HasProd]
 pullback code.
 
 The construction relabels the readout, partially pulls each tagged answer back to the source
-interface, and only then executes the source transition. No resource bound is inferred. -/
+interface, and only then executes the source transition. The pullback re-runs `R.headCode` to
+compare the answer's tag with the exposed position, so an execution of the transported machine pays
+the source readout once in `headCode` and again in `updateCode`. No resource bound is inferred. -/
 @[implicit_reducible]
 def wrap (R : QuantitativeRealization Q bd) (posRep : C.Str q.A) (idxRep : C.Str q.Idx)
     {lens : Lens p q} (hlens : lens.QuantitativelyAdmissible Q bd posRep idxRep) :
