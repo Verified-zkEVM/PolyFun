@@ -177,6 +177,40 @@ class HasOption [P : C.HasProd] [O : C.HasOption] where
     {k : A × E → Option B}, Q.Realizer (P.prod a e) (O.option b) k →
       Q.Realizer (P.prod (O.option a) e) (O.option b) fun input ↦
         input.1.bind fun value ↦ k (value, input.2)
+  /-- Executable wrapping of a present value, the counterpart of `StepClass.HasOption.some_mem`.
+  As there, it is a primitive: no other operation produces a present value from an input that is
+  not already optional. -/
+  some : ∀ {A : Type u} (a : C.Str A), Q.Realizer a (O.option a) Option.some
+
+namespace HasOption
+
+variable [P : C.HasProd] [O : C.HasOption] (QO : Q.HasOption)
+
+/-- The strength of `Option` relative to the backend: pair a present value with a retained
+context. A product-state machine uses it to step one component of its state while keeping the
+other. -/
+def strength {A E : Type u} (a : C.Str A) (e : C.Str E) :
+    Q.Realizer (P.prod (O.option a) e) (O.option (P.prod a e))
+      fun input ↦ input.1.map fun value ↦ (value, input.2) :=
+  (QO.bindContext (QO.some (P.prod a e))).castFunction
+    (by
+      funext input
+      obtain ⟨value, context⟩ := input
+      cases value <;> rfl)
+
+/-- Execute a function on the present branch of an optional value while retaining a context: the
+executable counterpart of `StepClass.HasOption.omapCtx_mem`. -/
+def mapContext [Q.HasCategory] {A B E : Type u} {a : C.Str A} {b : C.Str B} {e : C.Str E}
+    {f : A × E → B} (code : Q.Realizer (P.prod a e) b f) :
+    Q.Realizer (P.prod (O.option a) e) (O.option b)
+      fun input ↦ input.1.map fun value ↦ f (value, input.2) :=
+  (QO.bindContext (Q.compose code (QO.some b))).castFunction
+    (by
+      funext input
+      obtain ⟨value, context⟩ := input
+      cases value <;> rfl)
+
+end HasOption
 
 /-- Executable distributivity of product over sum.
 

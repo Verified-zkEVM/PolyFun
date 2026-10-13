@@ -304,7 +304,11 @@ answer. `RunsWithin` is the all-answers specialization. Filtered `queryCount` an
 per-interface accounting cannot exceed the globally charged run.
 
 `Quantitative/Closure.lean` mirrors the four qualitative structural mixins with
-executable product, sum, option, and distributivity code. It constructs
+executable product, sum, option, and distributivity code. As in the qualitative
+layer, executable `some` is a primitive of the option mixin. With `bindContext`
+it gives `HasOption.strength` and `HasOption.mapContext`, the executable
+strength of `Option`, which a product-state machine needs to step one component
+while keeping the other. It constructs
 immediate-return, precomposed, result-mapped, and sequentially composed
 realizations, plus interface transport from executable lens maps. Its `seqComp`
 result is intentionally only

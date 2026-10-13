@@ -311,6 +311,9 @@ structure PolynomialStructuralClosure [Q.HasCategory] (kernel : Q.StructuralKern
     Q.PolyRealizer (kernel.cProd.prod a e) (kernel.cOption.option b) k →
       Q.PolyRealizer (kernel.cProd.prod (kernel.cOption.option a) e)
         (kernel.cOption.option b) fun input ↦ input.1.bind fun value ↦ k (value, input.2)
+  /-- Polynomially bounded wrapping of a present value. -/
+  optionSome : ∀ {A : Type u} (a : C.Str A),
+    Q.PolyRealizer a (kernel.cOption.option a) Option.some
   /-- Polynomially bounded inverse distributivity used by contextual case analysis. -/
   distribute : ∀ {A B E : Type u} (a : C.Str A) (b : C.Str B) (e : C.Str E),
     Q.PolyRealizer (kernel.cProd.prod (kernel.cSum.sum a b) e)
