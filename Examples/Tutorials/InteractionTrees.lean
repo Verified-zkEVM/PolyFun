@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.ITree.Interp.State
+import Batteries.Control.OptionT
 
 /-!
 # Interaction trees: a counter with state and ticks
