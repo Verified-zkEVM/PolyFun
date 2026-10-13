@@ -367,10 +367,9 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
         cast (congrArg (C.carrier ◃ C.carrier).B
           (congrFun childrenEq d)) innerLeft = innerRight := by
       rw [hAtDirection]
-      -- Lean 4.33: the original `calc` through `cast_comp_direction` no longer
-      -- elaborates (its intermediate type needs unfolding beyond implicit
-      -- transparency to pick the `Trans` instance), so the cast is discharged
-      -- by rewriting instead.
+      -- A `calc` through `cast_comp_direction` does not elaborate: its
+      -- intermediate type needs unfolding beyond implicit transparency to pick
+      -- the `Trans` instance. The cast is discharged by rewriting instead.
       rw [cast_comp_direction]
       · dsimp only [innerRight]
         congr 1

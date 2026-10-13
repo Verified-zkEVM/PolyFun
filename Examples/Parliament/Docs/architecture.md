@@ -112,9 +112,9 @@ It also proves agreement of the index with the accepted prefix length.
 The test suite combines kernel-checked concrete arithmetic/calendar/edit facts,
 replay-checked meeting scenarios, error-boundary tests, external judgment handlers,
 an actual PolyFun interpreter, and a separate consumer package using ordinary public
-imports. `scripts/check.sh` also runs the dependency's kernel-level axiom sweep over
-all `Parliament` modules; the umbrella coverage check prevents unaudited production
-files from being omitted. CI invokes that same wrapper.
+imports. `./scripts/validate.sh --axioms` also runs PolyFun's kernel-level axiom sweep
+over all `Parliament` modules, and the umbrella coverage check prevents unaudited
+production files from being omitted. CI invokes the same wrapper.
 
 To extend the model:
 

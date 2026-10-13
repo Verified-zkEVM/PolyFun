@@ -258,14 +258,14 @@ read the state back.
 ## `do`-notation flavors
 
 Three parallel `do`-notation files plug into Lean's extensible
-do-elaborator. See
-[`ipfunctor-do-notation.md`](../tutorials/indexed-programs.md) for a worked
+do-elaborator. See the
+[indexed-programs tutorial](../tutorials/indexed-programs.md) for a worked
 walkthrough with a small two-phase-protocol example.
 
 The extensible elaborator is the pinned toolchain's default, so no option is
 required. All three check the expected monad type before activating, leaving
 other monads in the same file unaffected. Setting `backward.do.legacy true`
-selects Lean's legacy elaborator and disables these extensions.
+selects core's non-extensible `do` elaborator, which disables these extensions.
 
 The elaborator detectors use `Meta.withTransparency .reducible <| whnf m`
 so the `IPFunctor.FreeM` / `IPFunctor.FreeM₂` head — defined as a plain

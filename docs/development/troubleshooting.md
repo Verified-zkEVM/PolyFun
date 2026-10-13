@@ -61,9 +61,9 @@ aggressively. Use the canonical eliminators
 
 ### Transparency after Lean 4.33
 
-Lean 4.33 split the transparency ladder (`reducible < instances <
-implicit < default < all`) and compares assigned metavariable types at
-implicit transparency. Semireducible definitions no longer unfold during
+Lean's transparency ladder has five levels (`reducible < instances <
+implicit < default < all`), and Lean compares assigned metavariable types at
+implicit transparency. Semireducible definitions do not unfold during
 unification in `rw` / `simp` / `subst` / instance-argument positions.
 Symptoms and fixes (see the Transparency Attributes section of
 `CONTRIBUTING.md` for the policy):
@@ -90,13 +90,13 @@ Symptoms and fixes (see the Transparency Attributes section of
   works → typeclass resolution runs below implicit transparency; keep
   the term-level `.trans` form with a comment.
 - A Mathlib `PFunctor.Obj` / `M`-type lemma "does not apply", or a `rw` leaves
-  `Obj.mk a f = ⟨a, f⟩` → since Mathlib #43056 (v4.34.0) that API is stated through
-  `Obj.mk` / `Obj.fst` / `Obj.snd`, which are `@[implicit_reducible]` and therefore not
-  unfolded when simp matches or `rw` closes goals. Prefer `Obj.mk` where a term meets that
-  API (as `Resumption.pack_inl` / `pack_inr` do); `PolyFun/PFunctor/Basic.lean` bridges the
-  anonymous constructor with `Obj.fst_sigma_mk`, `Obj.snd_sigma_mk` and `map_sigma_mk`, and
-  a leftover `Obj.mk … = ⟨…⟩` closes by `rfl`. `Obj` and `comp` are already
-  implicit-reducible upstream, so they must not appear in local attribute lists.
+  `Obj.mk a f = ⟨a, f⟩` → Mathlib states that API through `Obj.mk` / `Obj.fst` /
+  `Obj.snd` (Mathlib #43056), which are `@[implicit_reducible]` and therefore not
+  unfolded when simp matches or `rw` closes goals. Build objects with `Obj.mk` where a term
+  meets that API, as `Resumption.pack_inl` / `pack_inr` do. Rewrite with Mathlib's
+  `Obj.fst_mk`, `Obj.snd_mk`, and `PFunctor.map_eq`, and eliminate with `Obj.rec`. A
+  leftover `Obj.mk … = ⟨…⟩` closes by `rfl`. `Obj` and `comp` are implicit-reducible
+  upstream, so they must not appear in local attribute lists.
 
 ### `FreeM` nodes in simp normal form
 
@@ -339,22 +339,22 @@ prose.
 
 ### `Std.WP` imports are quarantined, in two tiers
 
-The definitions (`Std.WP`, and the legacy `Std.Do` stack: `WP`, `WPMonad`, `Triple`, the
-`@[spec]` lemmas) may be imported only by the program-logic kernel —
-`PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
-`PolyFun/ITree/Do.lean` — and by `PolyFunTest/Do/`. The tactics (`Std.Tactic.Do`, or
-`Std.WP.Tactic` once the syntax moves there: `vcgen`, the deprecated `mvcgen`, and the
-`@[spec]` attribute syntax) stay in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`,
-and `PolyFunTest/Do/`. `ToCslib/` and `ComplexityBackends/` import neither directly. The
-upstream API is still evolving (`vcgen` is experimental and warns on every call unless
-`set_option experimental.vcgen true` acknowledges it; `mvcgen` is deprecated), so the
-dependency stays confined to those files, and everything they export is a construction (`def`) or a `scoped`
-instance, never a global instance: a global `WP` instance on `FreeM P` would race
-downstream registrations on reducible unfoldings such as oracle-computation
-types. Register the provided structures `scoped` or `local` downstream. The one
-exception is a transformer lift for a type with no other owner
-(`WriterT.instWPMonad`, low priority), which chooses no semantics.
-`scripts/check-modules.sh` enforces both tiers. See
+The definition tier, `Std.WP` (`WP`, `WPMonad`, `Triple`, and the `@[spec]` lemmas) together
+with core's `Std.Do` framework, which `mvcgen` uses, may be imported only by the program-logic
+kernel — `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
+`PolyFun/ITree/Do.lean` — and by `PolyFunTest/Do/`. The tactic tier, `Std.Tactic.Do` (`vcgen`,
+the deprecated `mvcgen`, and the `@[spec]` attribute syntax), stays in `PolyFun/Control/Do/`,
+`PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`. `ToCslib/` and `ComplexityBackends/`
+import neither tier directly.
+
+Core's API here is evolving: `vcgen` is experimental and warns on every call unless
+`set_option experimental.vcgen true` acknowledges it, and `mvcgen` is deprecated. The
+dependency therefore stays confined to those files. Every interpretation they export is a
+construction (`def`) or a `scoped` instance, never a global instance, because a global `WP`
+instance on `FreeM P` would compete with downstream instances on its reducible unfoldings, such
+as oracle-computation types. Register the provided interpretations `scoped` or `local`
+downstream. The writer interpretation follows the same rule: `WriterT.MonoidWP.instWPMonad` is
+scoped under `WriterT.MonoidWP`. `scripts/check-modules.sh` enforces both tiers. See
 [`program-logic.md`](../guides/program-logic.md).
 
 ### `vcgen` finds no spec unless the `Std.WP` root is imported
@@ -436,7 +436,8 @@ listed and rejected ("No spec applicable"). Registering the unfolding
 then meets the same mismatch on the continuation. Use `vcgen -errorOnMissingSpec` and finish
 the residual `wp` goal by rewriting with `DemonicWP.wp_apply_eq` and
 `FreeM.allOutputs_lift (P := …)`, naming the interface explicitly because its direction type
-has been reduced on the concrete polynomial (see the dependent-type lookup discussion in 6b
-and `PolyFunTest/Do/Loops.lean`), or state the program over a generic interface so the value type
+has been reduced on the concrete polynomial (see
+[`FreeM` nodes in simp normal form](#freem-nodes-in-simp-normal-form) and
+`PolyFunTest/Do/Loops.lean`), or state the program over a generic interface so the value type
 stays `P.B a`. Downstream interfaces whose `P.B a` reduces to their own type (an oracle spec's
 range, say) need their own `Spec.query`-style rule at that type for the same reason.

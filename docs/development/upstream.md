@@ -40,8 +40,9 @@ Their pins are recorded in the manifest; their README files live under
 - **Temporal reasoning:** reuse the pinned temporal operators and prove
   application-specific fairness statements over the chosen event/ticket model.
 - **Program logic:** ordered algebras and exact support connect to core's
-  lattice-generic WP stack `Std.WP`. The legacy `Std.Do` stack is a distinct
-  interface that PolyFun does not instantiate; see [program logic](../guides/program-logic.md).
+  lattice-generic weakest-precondition framework `Std.WP`, which `vcgen` uses.
+  Core's `Std.Do` framework, which `mvcgen` uses, is a distinct interface that
+  PolyFun does not instantiate. See [program logic](../guides/program-logic.md).
 - **Complexity:** `ComplexityBackends/` holds machine-relative theory and the
   adapters that certify PolyFun step maps with it, one subdirectory per
   backend. Generic PolyFun does not acquire a concrete complexity backend
@@ -61,10 +62,10 @@ behavior match the consumer.
 object API: `Obj.mk`, `fst`, `snd`, `rec`, and `ext`. Node projections and
 encoding/decoding equations support ordinary imports. Positions of an indexed
 sum have the parallel interface `sigma.mk`, `sigma.fst`, `sigma.snd`,
-`sigma.rec`, `sigma.ext`, and `sigma.B_mk`; `Handler.sigma`, the sigma lenses
+`sigma.rec`, `sigma.ext`, and `sigma.B_mk`. `Handler.sigma`, the sigma lenses
 and charts, wiring evaluation, and the sigma displays and displayed handlers
-are stated through it, so
-consumers need no reducibility override on `sigma` to work with those positions. `FreeP.relabel` delegates
+are stated through it, so consumers need no reducibility override on `sigma`
+to work with those positions. `FreeP.relabel` delegates
 to `PFunctor.map`. Positions of composite polynomials and dependent path
 decompositions that are defined as Sigma types retain those types; they are
 distinct from the object carrier. The free-handler bridge explicitly selects

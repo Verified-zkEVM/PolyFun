@@ -8,7 +8,7 @@ module
 
 public import PolyFun.Interaction.Open.EmulatesQuotient
 public import PolyFun.Interaction.Open.OpenSyntax.Expr
-public import Mathlib.Data.Setoid.Basic
+public import Mathlib.Order.Setoid.Basic
 
 /-!
 # Quotient-theory examples

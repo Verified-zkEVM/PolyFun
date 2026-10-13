@@ -104,7 +104,11 @@ A merge-ready change must have:
   public API, focused proof regressions beside the owning subsystem, and
   teaching examples in `Examples/` and regressions in `PolyFunTest/`;
 - minimized regressions for every discovered failure or counterexample;
-- satisfiable assumptions and statements that cover their documented scope;
+- satisfiable assumptions and statements that cover their documented scope. A
+  resource class or hardness hypothesis needs three witnesses: a small honest
+  member (inhabitation), something provably outside it, such as the counting
+  separation (discrimination), and a model in which the assumption is provable
+  (hypothesis consistency);
 - Mathlib-style names, intrinsic docstrings, and lint-clean simp declarations;
 - any new scripts justified by a recurring library workflow under the
   [repository script policy](../../CONTRIBUTING.md#repository-scripts);

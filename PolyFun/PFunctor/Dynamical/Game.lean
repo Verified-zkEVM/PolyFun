@@ -20,18 +20,17 @@ system over the outer interface `r`; equivalently — definitionally — it is t
 uncurried challenger applied to the adversary (`game_eq_uncurry`), the
 tensor–hom adjunction in dynamical clothing. When the challenger is a
 `Responder` (`r = y`) the game is closed and runs autonomously
-(`DynSystem.closedGame`), the deterministic shadow of VCVio's `wireKStep`
-wiring. There is no separate scored-game structure: a win readout is a state (or
-Moore) readout on the closed run, and the win-bit form is the
+(`DynSystem.closedGame`): the adversary queries and the responder answers,
+deterministically. There is no separate scored-game structure: a win readout is
+a state (or Moore) readout on the closed run, and the win-bit form is the
 `r := Bool y^ PUnit` instance of `game`.
 
-Monadic runs against handlers are provided in two strengths: `kleisliStep` /
-`kleisliIterate` drive a system with a stateless handler in a monad `m` (VCVio's
-`wireKStep` / `wireKIterate` are the `m := SPMF` instances), and `stepWith` /
-`iterWith` drive it with a *stateful* handler in `StateT σ m`, the handler state
-first in the pair. The two agree along `StateT.lift` (`stepWith_lift`), and at
-`m := Id` a responder's handler recovers the closed game
-(`stepWith_toStateHandler`). The load-bearing export is
+Monadic runs against handlers come in two strengths. `kleisliStep` and
+`kleisliIterate` drive a system with a stateless handler in any monad `m`, and
+`stepWith` and `iterWith` drive it with a *stateful* handler in `StateT σ m`,
+with the handler state first in the pair. The two agree along `StateT.lift`
+(`stepWith_lift`), and at `m := Id` a responder's handler recovers the closed
+game (`stepWith_toStateHandler`). The load-bearing export is
 `DynComputation.runWith_query_succ_stateT`: under an explicit visible-query
 view, it unrolls one unit of fuel through the stateful handler and threads the
 answer and handler state into the residual computation. The query hypothesis
@@ -65,8 +64,8 @@ variable {S : Type u} {T : Type v} {q r : PFunctor.{uA, uB}}
 `q`, along the evaluation lens (Spivak–Niu Ex 4.78): at each step the challenger
 commits to a lens `q ⟹ r`, the adversary picks a `q`-position, and the composite
 exposes the resulting `r`-position; the incoming `r`-direction is answered back
-through the committed lens. VCVio's `Challenger`-vs-adversary wiring is the
-Kleisli consumer of this former. -/
+through the committed lens. The Kleisli runs below drive a system against a
+monadic handler instead of a second system. -/
 def game (chal : DynSystem S (q ⊸ r)) (adv : DynSystem T q) : DynSystem (S × T) r :=
   wire₂ (Lens.eval q r) chal adv
 
@@ -101,10 +100,10 @@ section Game
 variable {S : Type u} {T : Type v} {q : PFunctor.{uA, uB}}
 
 /-- Close a responder against an adversary: the `r = y` instance of `game` runs
-autonomously, so the pair steps by "adversary queries, responder answers". This
-is the deterministic shadow of VCVio's `wireKStep`; a win condition is a state
-readout on the closed run (for a Moore win bit, instantiate `game` at
-`r := Bool y^ PUnit` instead). -/
+autonomously, so the pair steps by "adversary queries, responder answers". Its step
+is `stepWith` at `m := Id` against the responder's stateful handler
+(`stepWith_toStateHandler`). A win condition is a state readout on the closed
+run; for a Moore win bit, instantiate `game` at `r := Bool y^ PUnit` instead. -/
 def closedGame (R : Responder S q) (adv : DynSystem T q) : Closed (S × T) :=
   game R adv
 
@@ -120,14 +119,13 @@ section Kleisli
 
 variable {q : PFunctor.{uA, u}} {S σ : Type u} {m : Type u → Type v} [Monad m]
 
-/-- One step of a system driven by a stateless monadic handler: resolve the
-exposed position in `m` and update. VCVio's `wireKStep` is the `m := SPMF`
-instance. -/
+/-- One step of a system driven by a stateless monadic handler: the handler answers
+the exposed position in `m`, and the system updates with the answer. -/
 def kleisliStep (h : Handler m q) (A : DynSystem S q) (s : S) : m S :=
   (fun d => A.update s d) <$> h (A.expose s)
 
-/-- `n` monadic steps of a system against a stateless handler. VCVio's
-`wireKIterate` is the `m := SPMF` instance. -/
+/-- `n` monadic steps of a system against a stateless handler, each one a
+`kleisliStep`. -/
 def kleisliIterate (h : Handler m q) (A : DynSystem S q) : ℕ → S → m S
   | 0, s => pure s
   | n + 1, s => kleisliStep h A s >>= kleisliIterate h A n
@@ -251,8 +249,7 @@ variable {S : Type u} {T : Type v} {q₁ r₁ q₂ r₂ : PFunctor.{uA, uB}}
 `Lens.eval₂`: commit phase, then guess phase, exposed on the outer interface
 `r₁ ◃ r₂`. The challenger's interface has the direct composite-lens accessors
 `compOuter`, `compInner`, and `compPullback` (Spivak–Niu Ex 6.40) as its
-elimination rules; VCVio's
-`Challenger₂` is the Kleisli consumer of this former. -/
+elimination rules. -/
 def game₂ (chal : DynSystem S ((q₁ ⊸ r₁) ◃ (q₂ ⊸ r₂))) (adv : DynSystem T (q₁ ◃ q₂)) :
     DynSystem (S × T) (r₁ ◃ r₂) :=
   wire₂ (Lens.eval₂ q₁ r₁ q₂ r₂) chal adv

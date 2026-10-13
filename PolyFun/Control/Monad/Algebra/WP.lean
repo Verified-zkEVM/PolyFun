@@ -16,21 +16,23 @@ public import Std.WP
 Core's lattice-generic program logic (`Std.WP`) interprets a monad through
 `WPMonad m Pred EPred`: a monotone predicate transformer per program, sound for `pure` and `bind`
 up to `⊑`. An ordered monad algebra `MAlgOrdered m l` presents such an interpretation with no
-exception layer, `wp x post := μ (x >>= fun a => pure (post a))`, once
-`ToCslib.Order.LeanOrder` makes Mathlib's `CompleteLattice l` an `Assertion`, and its laws make
-that interpretation exact (`instExactWPMonadToWPMonad`). The construction is deliberately not an
-instance: install `MAlgOrdered.toWPMonad` at the base monad (`letI` / `local instance`) and let
-core's `StateT`, `ReaderT`, `ExceptT`, and `OptionT` instances lift it, with honest exception
-postconditions; their exactness instances lift with them.
+exception layer, `wp x post := μ (x >>= fun a => pure (post a))`. `ToCslib.Order.LeanOrder` makes
+Mathlib's `CompleteLattice l` an `Assertion`, and the algebra's laws make the interpretation
+exact (`instExactWPMonadToWPMonad`).
+
+The construction is deliberately not an instance. Install `MAlgOrdered.toWPMonad` at the base
+monad (`letI` or `local instance`), and core's `StateT`, `ReaderT`, `ExceptT`, and `OptionT`
+instances lift it with honest exception postconditions. Exactness lifts through the same
+transformers (`PolyFun.Control.Monad.ExactWP`).
 
 Reasoning happens on core's `wp`, under the equational `simp` set of
 `PolyFun.Control.Monad.ExactWP`. The value of the interpretation is definitional
-(`toWPMonad_wp`, deliberately not `@[simp]`, so `simp` keeps core's head). The module imports the
-`Std.WP` root rather than its `WP` submodules so that the `@[spec]` database `vcgen`
-consults — `Spec.bind` in particular, which lives in `Std.WP.Triple.SpecLemmas` — is
-loaded wherever an instance built here is installed. The lattice operations core's lemmas are
-stated with (`⊤`, `⊥`, `⊓`, `⊔` of `Lean.Order`) are Mathlib's on a bridged carrier; the transfer
-lemmas below let `simp` move between the two spellings.
+(`toWPMonad_wp`), and it is deliberately not `@[simp]`, so that `simp` keeps core's head. The
+module imports the `Std.WP` root rather than its `WP` submodules, so that the `@[spec]` database
+`vcgen` consults is loaded wherever an instance built here is installed. That database includes
+`Spec.bind`, which lives in `Std.WP.Triple.SpecLemmas`. On a bridged carrier, the lattice
+operations that core's lemmas are stated with are Mathlib's, and the transfer lemmas below let
+`simp` move between the two spellings.
 -/
 
 public section
@@ -49,25 +51,30 @@ section LatticeTransfer
 
 variable {α : Type u} [CompleteLattice α]
 
+/-- On a Mathlib complete lattice, core's top element is Mathlib's `⊤`. -/
 @[simp]
 theorem top_eq_top : (Lean.Order.top : α) = ⊤ :=
   le_antisymm le_top (Lean.Order.le_top (⊤ : α))
 
+/-- On a Mathlib complete lattice, core's binary meet is Mathlib's `⊓`. -/
 @[simp]
 theorem meet_eq_inf (x y : α) : Lean.Order.meet x y = x ⊓ y :=
   le_antisymm (le_inf (Lean.Order.meet_le_left x y) (Lean.Order.meet_le_right x y))
     (Lean.Order.le_meet _ x y inf_le_left inf_le_right)
 
+/-- On a Mathlib complete lattice, core's binary join is Mathlib's `⊔`. -/
 @[simp]
 theorem join_eq_sup (x y : α) : Lean.Order.join x y = x ⊔ y :=
   le_antisymm (Lean.Order.join_le x y _ le_sup_left le_sup_right)
     (sup_le (Lean.Order.left_le_join x y) (Lean.Order.right_le_join x y))
 
+/-- On a Mathlib complete lattice, core's infimum of an indexed family is Mathlib's `⨅`. -/
 @[simp]
 theorem iInf_eq_iInf {ι : Type v} (f : ι → α) : Lean.Order.iInf f = ⨅ i, f i :=
   le_antisymm (le_iInf fun i => Lean.Order.iInf_le f i)
     (Lean.Order.le_iInf f _ fun i => iInf_le f i)
 
+/-- On a Mathlib complete lattice, core's supremum of an indexed family is Mathlib's `⨆`. -/
 @[simp]
 theorem iSup_eq_iSup {ι : Type v} (f : ι → α) : Lean.Order.iSup f = ⨆ i, f i :=
   le_antisymm (Lean.Order.iSup_le f _ fun i => le_iSup f i)

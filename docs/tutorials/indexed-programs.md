@@ -14,10 +14,10 @@ which serves as the live-Lean companion to this prose.
 
 ## Activation
 
-The extensible `do` elaborator is already the pinned Lean toolchain's default,
-so all three flavors work without an option. Setting
-`backward.do.legacy true` explicitly selects the legacy elaborator, where the
-custom overrides are unavailable.
+The extensible `do` elaborator is the pinned Lean toolchain's default, so all
+three flavors work without an option. Setting `backward.do.legacy true`
+selects core's non-extensible `do` elaborator, where the custom overrides are
+unavailable.
 
 ## The three flavors at a glance
 

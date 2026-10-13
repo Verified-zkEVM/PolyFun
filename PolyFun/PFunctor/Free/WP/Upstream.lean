@@ -147,7 +147,7 @@ section SemanticSupport
 open MonadAttach
 
 variable {Q : PFunctor.{uA, 0}} {n : Type → Type w}
-  [Monad n] [LawfulMonad n] [MonadAttach n] [ExactMonadAttach n] {α : Type}
+  [Monad n] [LawfulMonad n] [MonadAttach n] [LawfulMonadAttach n] {α : Type}
 
 /-- **Specs discharge support facts about the interpreted program.** A per-operation spec
 that each handled operation validates for all its outputs turns a syntactic fold into a
@@ -159,15 +159,15 @@ theorem allOutputs_liftM_of_wpFold {Φ : OpSpec Q Prop} (s : Handler n Q)
   let := toWPMonadDemonic (m := n)
   exact wpFold_le_wp_liftM (n := n) s (fun a k => h a k) x post hx
 
-/-- The demonic fold at the *canonical* spec already implies the interpreted guarantee,
-whenever the handler validates that spec: the handler must establish every postcondition
-that holds for all typed responses. This constrains its outputs to the operation's response
-type; it does not claim that the handler can produce every response. -/
+/-- The demonic fold at the *canonical* spec already implies the interpreted guarantee, for
+every handler: a postcondition that holds at every typed response holds at every output of the
+handled operation, so the canonical spec is validated by the handler's type alone. The theorem
+says nothing about which responses the handler can produce. -/
 theorem allOutputs_liftM_of_allOutputs (s : Handler n Q)
-    (h : ∀ (a : Q.A) (k : Q.B a → Prop), (∀ b, k b) → AllOutputs k (s a))
     (x : FreeM Q α) (post : α → Prop) (hx : AllOutputs post x) :
     AllOutputs post (x.liftM s) :=
-  allOutputs_liftM_of_wpFold s h x post ((wpFold_demonic_iff_allOutputs x post).mpr hx)
+  allOutputs_liftM_of_wpFold s (fun _ _ hk b _ => hk b) x post
+    ((wpFold_demonic_iff_allOutputs x post).mpr hx)
 
 end SemanticSupport
 
