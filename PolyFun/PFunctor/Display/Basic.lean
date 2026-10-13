@@ -150,21 +150,21 @@ summand. -/
 def sigma {I : Type uI} {Ps : I → PFunctor.{uA, uB}}
     (S : (i : I) → Display.{uA, uB, uC, uD} (Ps i)) :
     Display.{max uA uI, uB, uC, uD} (PFunctor.sigma Ps) where
-  position ia := S ia.1 |>.position ia.2
-  direction ia c b := S ia.1 |>.direction ia.2 c b
+  position ia := (S (PFunctor.sigma.fst ia)).position (PFunctor.sigma.snd ia)
+  direction ia c b := (S (PFunctor.sigma.fst ia)).direction (PFunctor.sigma.snd ia) c b
 
 @[simp]
 theorem sigma_position {I : Type uI} {Ps : I → PFunctor.{uA, uB}}
     (S : (i : I) → Display.{uA, uB, uC, uD} (Ps i))
     (i : I) (a : (Ps i).A) :
-    (sigma S).position ⟨i, a⟩ = (S i).position a :=
+    (sigma S).position (PFunctor.sigma.mk i a) = (S i).position a :=
   rfl
 
 @[simp]
 theorem sigma_direction {I : Type uI} {Ps : I → PFunctor.{uA, uB}}
     (S : (i : I) → Display.{uA, uB, uC, uD} (Ps i))
     (i : I) (a : (Ps i).A) (c : (S i).position a) (b : (Ps i).B a) :
-    (sigma S).direction ⟨i, a⟩ c b = (S i).direction a c b :=
+    (sigma S).direction (PFunctor.sigma.mk i a) c b = (S i).direction a c b :=
   rfl
 
 /-- Binary coproduct of polynomial displays. -/

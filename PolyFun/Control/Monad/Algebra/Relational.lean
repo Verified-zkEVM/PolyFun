@@ -6,12 +6,13 @@ Authors: Quang Dao
 module
 
 public import Mathlib.Order.CompleteLattice.Basic
-public import PolyFun.Control.Monad.Algebra
+public import PolyFun.Control.Monad.Algebra.WP
+public import Std.WP
 
 /-!
 # Relational monad algebras
 
-This file introduces a two-monad relational analogue of `MAlgOrdered`:
+This file introduces a two-monad relational analogue of ordered monad algebras (`MAlgOrdered`):
 
 * `MAlgRelOrdered m₁ m₂ l` with a relational weakest-precondition operator `rwp`.
 * Generic relational triple rules (`pure`, `consequence`, `bind`, `map`).
@@ -22,6 +23,8 @@ This file introduces a two-monad relational analogue of `MAlgOrdered`:
 * `StrictBind` subclass capturing strict relational effect observations
   (in the sense of Maillard et al.) together with `StateT` and `ReaderT` lifts that
   preserve it.
+* `Anchored` subclass tying the relational `rwp` to core weakest-precondition interpretations
+  of the two sides at `pure`.
 
 The framework is the predicate-transformer specialization of Maillard et al.'s
 *simple framework* (POPL 2020, §2): the relational specification monad is fixed
@@ -47,8 +50,8 @@ universe u v₁ v₂
 
 /-! ### Automation contract
 
-The `@[simp]` set here is deliberately much thinner than the unary one in
-`PolyFun/Control/Monad/Algebra.lean`, and the reason is structural rather than an
+The `@[simp]` set here is deliberately much thinner than the unary one on core's `wp` in
+`PolyFun/Control/Monad/ExactWP.lean`, and the reason is structural rather than an
 oversight: **the relational layer is inequational by design.** `MAlgRelOrdered`'s
 composition axiom is `rwp_bind_le`, an inequality, so the derived structural rules
 (`relWP_map_left`, `relWP_map_right`, `relWP_bind_left_le`, `relWP_bind_right_le`) are
@@ -437,9 +440,7 @@ noncomputable def optionTRight :
     MAlgRelOrdered m₁ (OptionT m₂) l where
   rwp x y post :=
     MAlgRelOrdered.rwp x y.run (fun a ob =>
-      match ob with
-      | none => ⊥
-      | some b => post a b)
+      Lean.Order.pushOption (post a) (fun _ => ⊥) ob)
   rwp_pure a b post := by
     simp
   rwp_mono hpost :=
@@ -449,17 +450,15 @@ noncomputable def optionTRight :
       | some b => simpa using hpost a b)
   rwp_bind_le {α β γ δ} x y f g post := by
     let collapse : γ → Option δ → l := fun c od =>
-      match od with
-      | none => ⊥
-      | some d => post c d
+      Lean.Order.pushOption (post c) (fun _ => ⊥) od
     let gRun : Option β → m₂ (Option δ) := fun ob =>
       Option.elim ob (pure none) (fun b => (g b).run)
     have hmono :
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x y.run
           (fun a ob =>
-            match ob with
-            | none => ⊥
-            | some b => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (g b).run collapse)
+            Lean.Order.pushOption
+              (fun b => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (g b).run collapse)
+              (fun _ => ⊥) ob)
         ≤
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x y.run (fun a ob =>
           MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (gRun ob) collapse) := by
@@ -483,9 +482,7 @@ noncomputable def optionTLeft :
     MAlgRelOrdered (OptionT m₁) m₂ l where
   rwp x y post :=
     MAlgRelOrdered.rwp x.run y (fun oa b =>
-      match oa with
-      | none => ⊥
-      | some a => post a b)
+      Lean.Order.pushOption (fun a => post a b) (fun _ => ⊥) oa)
   rwp_pure a b post := by
     simp
   rwp_mono hpost :=
@@ -495,17 +492,15 @@ noncomputable def optionTLeft :
       | some a => simpa using hpost a b)
   rwp_bind_le {α β γ δ} x y f g post := by
     let collapse : Option γ → δ → l := fun oa b =>
-      match oa with
-      | none => ⊥
-      | some a => post a b
+      Lean.Order.pushOption (fun a => post a b) (fun _ => ⊥) oa
     let fRun : Option α → m₁ (Option γ) := fun oa =>
       Option.elim oa (pure none) (fun a => (f a).run)
     have hmono :
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y
           (fun oa b =>
-            match oa with
-            | none => ⊥
-            | some a => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+            Lean.Order.pushOption
+              (fun a => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+              (fun _ => ⊥) oa)
         ≤
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y (fun oa b =>
           MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (fRun oa) (g b) collapse) := by
@@ -519,9 +514,9 @@ noncomputable def optionTLeft :
     have hmono' :
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y
           (fun oa b =>
-            match oa with
-            | none => ⊥
-            | some a => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+            Lean.Order.pushOption
+              (fun a => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+              (fun _ => ⊥) oa)
         ≤
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y (fun oa b =>
           MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (fRun oa) (g b) collapse) := by
@@ -539,9 +534,7 @@ noncomputable def exceptTRight (ε : Type u) :
     MAlgRelOrdered m₁ (ExceptT ε m₂) l where
   rwp x y post :=
     MAlgRelOrdered.rwp x y.run (fun a eb =>
-      match eb with
-      | Except.error _ => ⊥
-      | Except.ok b => post a b)
+      Lean.Order.pushExcept (post a) (fun _ => ⊥) eb)
   rwp_pure a b post := by
     simp
   rwp_mono hpost :=
@@ -551,9 +544,7 @@ noncomputable def exceptTRight (ε : Type u) :
       | ok b => simpa using hpost a b)
   rwp_bind_le {α β γ δ} x y f g post := by
     let collapse : γ → Except ε δ → l := fun c ed =>
-      match ed with
-      | Except.error _ => ⊥
-      | Except.ok d => post c d
+      Lean.Order.pushExcept (post c) (fun _ => ⊥) ed
     let gRun : Except ε β → m₂ (Except ε δ) := fun eb =>
       match eb with
       | Except.ok b => (g b).run
@@ -561,10 +552,9 @@ noncomputable def exceptTRight (ε : Type u) :
     have hmono :
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x y.run
           (fun a eb =>
-            match eb with
-            | Except.error _ => ⊥
-            | Except.ok b =>
-                MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (g b).run collapse)
+            Lean.Order.pushExcept
+              (fun b => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (g b).run collapse)
+              (fun _ => ⊥) eb)
         ≤
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x y.run (fun a eb =>
           MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a) (gRun eb) collapse) := by
@@ -588,9 +578,7 @@ noncomputable def exceptTLeft (ε : Type u) :
     MAlgRelOrdered (ExceptT ε m₁) m₂ l where
   rwp x y post :=
     MAlgRelOrdered.rwp x.run y (fun ea b =>
-      match ea with
-      | Except.error _ => ⊥
-      | Except.ok a => post a b)
+      Lean.Order.pushExcept (fun a => post a b) (fun _ => ⊥) ea)
   rwp_pure a b post := by
     simp
   rwp_mono hpost :=
@@ -600,9 +588,7 @@ noncomputable def exceptTLeft (ε : Type u) :
       | ok a => simpa using hpost a b)
   rwp_bind_le {α β γ δ} x y f g post := by
     let collapse : Except ε γ → δ → l := fun ec d =>
-      match ec with
-      | Except.error _ => ⊥
-      | Except.ok c => post c d
+      Lean.Order.pushExcept (fun c => post c d) (fun _ => ⊥) ec
     let fRun : Except ε α → m₁ (Except ε γ) := fun ea =>
       match ea with
       | Except.ok a => (f a).run
@@ -610,10 +596,9 @@ noncomputable def exceptTLeft (ε : Type u) :
     have hmono :
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y
           (fun ea b =>
-            match ea with
-            | Except.error _ => ⊥
-            | Except.ok a =>
-                MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+            Lean.Order.pushExcept
+              (fun a => MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (f a).run (g b) collapse)
+              (fun _ => ⊥) ea)
         ≤
         MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) x.run y (fun ea b =>
           MAlgRelOrdered.rwp (m₁ := m₁) (m₂ := m₂) (l := l) (fRun ea) (g b) collapse) := by
@@ -777,78 +762,79 @@ end StrictBindInstances
 
 /-! ## Anchored subclass
 
-A relational logic is *anchored* (with respect to a unary algebra on each side) when
-relational reasoning collapses to unary reasoning whenever one of the two computations
-is a `pure` value. The two coherence axioms
+A relational logic is *anchored* to core weakest-precondition interpretations of its two sides
+when relational reasoning collapses to unary reasoning whenever one of the two computations is a
+`pure` value. The two coherence axioms
 
-* `rwp_pure_left a y post = wp y (post a)`
-* `rwp_pure_right x b post = wp x (fun a => post a b)`
+* `rwp_pure_left a y post = wp y (post a) ⊥`
+* `rwp_pure_right x b post = wp x (fun a => post a b) ⊥`
 
 freeze the relational `rwp` to the underlying unary `wp` at one of the two corners,
 recovering Maillard et al.'s "two unary triples + a relational triple" pattern from
 [*The Next 700 Relational Program Logics*, POPL 2020] without committing to the full
 relative-monad machinery. They are precisely the ingredient missing from the lossy
 exception lifts (see `exceptTLeft` / `exceptTRight` above), which collapse failure to
-`⊥`. The honest combinators that track success and failure separately are
-`MAlgOrdered.wpExc` (unary) and `rwpExc` (relational) below; anchoring is what lets
-the `rwpExc_pure_*` and `rwpExc_throw_*` rules collapse the relational statement to the
-unary one once either underlying result is known purely.
+`⊥`. The honest relational combinator that tracks success and failure separately is
+`rwpExc` below; anchoring collapses its `rwpExc_pure_*` and `rwpExc_throw_*` corners to the
+unary `wp` of the other side's underlying run, whose `Except` result keeps both branches.
 
 Anchoring is independent of `StrictBind`. A coupling-based probabilistic carrier is
 anchored (Dirac couplings are unique) but is not strict, while a deterministic
 specification monad is strict and anchored.
 -/
 
-/-- A `MAlgRelOrdered` instance that *anchors* the relational WP to the unary WPs of
-the two sides at `pure`. The two axioms are the relational analogues of the coupling
-identities `IsCoupling c (pure a) q ↔ c = (a, ·) <$> q` (and symmetrically on the
-right): once one side is a Dirac, the relational WP collapses to the unary WP of the
-other side, specialized at the Dirac point. -/
+open Std.WP
+
+/-- A `MAlgRelOrdered` instance that *anchors* the relational WP to core weakest-precondition
+interpretations of the two sides at `pure`. The two axioms are the relational analogues of the
+coupling identities `IsCoupling c (pure a) q ↔ c = (a, ·) <$> q` (and symmetrically on the
+right): once one side is a Dirac, the relational WP collapses to the unary WP of the other
+side, specialized at the Dirac point. -/
 class Anchored (m₁ : Type u → Type v₁) (m₂ : Type u → Type v₂) (l : Type u)
     [Monad m₁] [Monad m₂] [CompleteLattice l]
-    [MAlgOrdered m₁ l] [MAlgOrdered m₂ l] [MAlgRelOrdered m₁ m₂ l] : Prop where
+    [WPMonad m₁ l EStack⟨⟩] [WPMonad m₂ l EStack⟨⟩] [MAlgRelOrdered m₁ m₂ l] : Prop where
   /-- Left anchoring: when the left computation is `pure a`, the relational WP equals
   the unary WP of the right computation evaluated at the postcondition specialized at
   `a`. -/
   rwp_pure_left {α β : Type u} (a : α) (y : m₂ β) (post : α → β → l) :
-    MAlgRelOrdered.rwp (pure a : m₁ α) y post = MAlgOrdered.wp y (post a)
+    MAlgRelOrdered.rwp (pure a : m₁ α) y post = wp y (post a) Lean.Order.bot
   /-- Right anchoring: when the right computation is `pure b`, the relational WP equals
   the unary WP of the left computation evaluated at the postcondition specialized at
   `b`. -/
   rwp_pure_right {α β : Type u} (x : m₁ α) (b : β) (post : α → β → l) :
-    MAlgRelOrdered.rwp x (pure b : m₂ β) post = MAlgOrdered.wp x (fun a => post a b)
+    MAlgRelOrdered.rwp x (pure b : m₂ β) post = wp x (fun a => post a b) Lean.Order.bot
 
 namespace Anchored
 
 variable {m₁ : Type u → Type v₁} {m₂ : Type u → Type v₂} {l : Type u}
 variable [Monad m₁] [Monad m₂] [CompleteLattice l]
-variable [MAlgOrdered m₁ l] [MAlgOrdered m₂ l] [MAlgRelOrdered m₁ m₂ l]
+variable [WPMonad m₁ l EStack⟨⟩] [WPMonad m₂ l EStack⟨⟩] [MAlgRelOrdered m₁ m₂ l]
 variable {α β : Type u}
 
 /-- `RelWP`-flavoured restatement of the left anchoring axiom. -/
 theorem relWP_pure_left [Anchored m₁ m₂ l] (a : α) (y : m₂ β) (post : α → β → l) :
-    RelWP (pure a : m₁ α) y post = MAlgOrdered.wp y (post a) :=
+    RelWP (pure a : m₁ α) y post = wp y (post a) Lean.Order.bot :=
   Anchored.rwp_pure_left a y post
 
 /-- `RelWP`-flavoured restatement of the right anchoring axiom. -/
 theorem relWP_pure_right [Anchored m₁ m₂ l] (x : m₁ α) (b : β) (post : α → β → l) :
-    RelWP x (pure b : m₂ β) post = MAlgOrdered.wp x (fun a => post a b) :=
+    RelWP x (pure b : m₂ β) post = wp x (fun a => post a b) Lean.Order.bot :=
   Anchored.rwp_pure_right x b post
 
 end Anchored
 
 /-! ## Honest relational exception WP
 
-`rwpExc` is the relational sibling of `MAlgOrdered.wpExc`. It evaluates two `ExceptT`
-computations against a postcondition indexed by *both* result branches, so all four
-success/failure combinations are tracked separately, rather than collapsing failure to
-`⊥` the way the `exceptTLeft` / `exceptTRight` lifts above do.
+`rwpExc` is the relational weakest precondition of two `ExceptT` programs. It evaluates them
+against a postcondition indexed by *both* result branches, so all four success/failure
+combinations are tracked separately, rather than collapsing failure to `⊥` the way the
+`exceptTLeft` / `exceptTRight` lifts above do.
 
-Like `wpExc` it is derived: it uses only the *base* relational algebra
+It is derived: it uses only the *base* relational algebra
 `MAlgRelOrdered m₁ m₂ l` on the underlying monads, never a lifted one. Under `Anchored`
-it collapses to the unary `wpExc` whenever one side has a pure underlying result—either
-a success or an immediate failure—which is the payoff the anchoring axioms were
-introduced for.
+it collapses to the unary `wp` of the other side's underlying run whenever one side has a pure
+underlying result—either a success or an immediate failure—which is the payoff the anchoring
+axioms were introduced for.
 -/
 
 section Exc
@@ -924,56 +910,40 @@ section AnchoredExc
 
 variable {m₁ : Type u → Type v₁} {m₂ : Type u → Type v₂} {l : Type u}
 variable [Monad m₁] [Monad m₂] [CompleteLattice l] [MAlgRelOrdered m₁ m₂ l]
-variable [MAlgOrdered m₁ l] [MAlgOrdered m₂ l] [Anchored m₁ m₂ l]
+variable [WPMonad m₁ l EStack⟨⟩] [WPMonad m₂ l EStack⟨⟩] [Anchored m₁ m₂ l]
 variable {α β ε₁ ε₂ : Type u}
 
-/-- Anchoring collapses `rwpExc` to the unary `wpExc` when the left side succeeds
-purely. This is the "two unary triples plus a relational triple" pattern: once one side
+/-- Anchoring collapses `rwpExc` to the unary `wp` of the right side's run when the left side
+succeeds purely. This is the "two unary triples plus a relational triple" pattern: once one side
 is a Dirac, relational reasoning about exceptions becomes unary reasoning about them. -/
-theorem rwpExc_pure_left (a : α) (y : ExceptT ε₂ m₂ β)
+@[simp] theorem rwpExc_pure_left (a : α) (y : ExceptT ε₂ m₂ β)
     (post : Except ε₁ α → Except ε₂ β → l) :
     rwpExc (pure a : ExceptT ε₁ m₁ α) y post =
-      MAlgOrdered.wpExc y (fun b => post (Except.ok a) (Except.ok b))
-        (fun e => post (Except.ok a) (Except.error e)) := by
+      wp y.run (post (Except.ok a)) Lean.Order.bot := by
   rw [rwpExc_def, ExceptT.run_pure, Anchored.rwp_pure_left]
-  congr 1
-  funext eb
-  cases eb <;> rfl
 
 /-- Anchoring on the right, symmetrically. -/
-theorem rwpExc_pure_right (x : ExceptT ε₁ m₁ α) (b : β)
+@[simp] theorem rwpExc_pure_right (x : ExceptT ε₁ m₁ α) (b : β)
     (post : Except ε₁ α → Except ε₂ β → l) :
     rwpExc x (pure b : ExceptT ε₂ m₂ β) post =
-      MAlgOrdered.wpExc x (fun a => post (Except.ok a) (Except.ok b))
-        (fun e => post (Except.error e) (Except.ok b)) := by
+      wp x.run (fun ea => post ea (Except.ok b)) Lean.Order.bot := by
   rw [rwpExc_def, ExceptT.run_pure, Anchored.rwp_pure_right]
-  congr 1
-  funext ea
-  cases ea <;> rfl
 
 /-- Anchoring also collapses `rwpExc` when the left side throws immediately. -/
-theorem rwpExc_throw_left (e : ε₁) (y : ExceptT ε₂ m₂ β)
+@[simp] theorem rwpExc_throw_left (e : ε₁) (y : ExceptT ε₂ m₂ β)
     (post : Except ε₁ α → Except ε₂ β → l) :
     rwpExc (ExceptT.mk (pure (Except.error e)) : ExceptT ε₁ m₁ α) y post =
-      MAlgOrdered.wpExc y (fun b => post (Except.error e) (Except.ok b))
-        (fun e' => post (Except.error e) (Except.error e')) := by
+      wp y.run (post (Except.error e)) Lean.Order.bot := by
   change MAlgRelOrdered.rwp (pure (Except.error e) : m₁ (Except ε₁ α)) y.run post = _
   rw [Anchored.rwp_pure_left]
-  congr 1
-  funext eb
-  cases eb <;> rfl
 
 /-- Anchoring also collapses `rwpExc` when the right side throws immediately. -/
-theorem rwpExc_throw_right (x : ExceptT ε₁ m₁ α) (e : ε₂)
+@[simp] theorem rwpExc_throw_right (x : ExceptT ε₁ m₁ α) (e : ε₂)
     (post : Except ε₁ α → Except ε₂ β → l) :
     rwpExc x (ExceptT.mk (pure (Except.error e)) : ExceptT ε₂ m₂ β) post =
-      MAlgOrdered.wpExc x (fun a => post (Except.ok a) (Except.error e))
-        (fun e' => post (Except.error e') (Except.error e)) := by
+      wp x.run (fun ea => post ea (Except.error e)) Lean.Order.bot := by
   change MAlgRelOrdered.rwp x.run (pure (Except.error e) : m₂ (Except ε₂ β)) post = _
   rw [Anchored.rwp_pure_right]
-  congr 1
-  funext ea
-  cases ea <;> rfl
 
 end AnchoredExc
 

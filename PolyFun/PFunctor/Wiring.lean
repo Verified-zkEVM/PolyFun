@@ -70,7 +70,7 @@ def eval
       Wiring Boxes Arity Dom Cod Inputs inputInterface output →
       (a : output.A) → FreeM (PFunctor.sigma inputInterface) (output.B a)
   | _, .input i => fun a =>
-      FreeM.lift (P := PFunctor.sigma inputInterface) ⟨i, a⟩
+      FreeM.lift (P := PFunctor.sigma inputInterface) (PFunctor.sigma.mk i a)
   | _, .box b children => fun a =>
       (implementation b a).liftM
         (PFunctor.Handler.sigma fun port => eval implementation (children port))
@@ -81,7 +81,7 @@ theorem eval_input
       (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
     (i : Inputs) (a : (inputInterface i).A) :
     eval implementation (.input i) a =
-      FreeM.lift (P := PFunctor.sigma inputInterface) ⟨i, a⟩ :=
+      FreeM.lift (P := PFunctor.sigma inputInterface) (PFunctor.sigma.mk i a) :=
   rfl
 
 @[simp]
@@ -354,7 +354,7 @@ theorem eval_substitute
   | input i =>
       exact (FreeM.liftM_lift
         (PFunctor.Handler.sigma fun i => eval implementation (replacement i))
-        ⟨i, a⟩)
+        (PFunctor.sigma.mk i a))
   | box b children ih =>
       simp only [substitute, eval]
       rw [FreeM.liftM_comp]
@@ -408,7 +408,7 @@ theorem evalDisplayed_substitute
         (Display.Handler.sigma inputDisplay (Display.sigma inputDisplay')
           (fun i => evalDisplayed domDisplay codDisplay inputDisplay'
             implementation displayedImplementation (displayedReplacement i)))
-        ⟨i, a⟩ c
+        (PFunctor.sigma.mk i a) c
   | box b children displayedChildren ih =>
       let first := PFunctor.Handler.sigma fun port =>
         eval implementation (children port)

@@ -69,13 +69,13 @@ example (answer : Bool) :
 
 /-- A resolved state takes no step, and neither does a mismatched answer — with a
 one-position interface only the former can occur. -/
-example (answer : Bool) : ∀ given : Bool,
-    machine.update? (some answer, ⟨(), given⟩) = none :=
+example (answer : Bool) : ∀ supplied : Bool,
+    machine.update? (some answer, ⟨(), supplied⟩) = none :=
   fun _ => machine.update?_of_view_return rfl _
 
 /-- The total variant collapses `none` to the unchanged state. -/
-example (answer : Bool) : ∀ given : Bool,
-    machine.updateFlat (some answer, ⟨(), given⟩) = some answer :=
+example (answer : Bool) : ∀ supplied : Bool,
+    machine.updateFlat (some answer, ⟨(), supplied⟩) = some answer :=
   fun _ => machine.updateFlat_of_view_return rfl _
 
 example : machine.output none = none := rfl
@@ -162,10 +162,10 @@ example (answer : Bool) :
 
 /-- And the composite transition is unconditional in the answer index — the
 equation that partiality buys. -/
-example (answer given : Bool) :
-    (machine.seqComp machine₂).update? (Sum.inl (some answer), ⟨(), given⟩) =
-      Option.map Sum.inr (machine₂.update? (machine₂.init answer, ⟨(), given⟩)) :=
-  machine.update?_seqComp_inl machine₂ (some answer) ⟨(), given⟩
+example (answer supplied : Bool) :
+    (machine.seqComp machine₂).update? (Sum.inl (some answer), ⟨(), supplied⟩) =
+      Option.map Sum.inr (machine₂.update? (machine₂.init answer, ⟨(), supplied⟩)) :=
+  machine.update?_seqComp_inl machine₂ (some answer) ⟨(), supplied⟩
 
 /-! ## Non-vacuity of the unconstrained class -/
 

@@ -286,8 +286,8 @@ def sumDisplayedBehavior
     (a : P.A) (contract : S.position a) :
     (sumDisplayedBehavior S T left displayedLeft right displayedRight).head
         (.inl a) (ULift.up contract) =
-      ULift.up (displayedLeft.head a contract) := by
-  exact (respondDisplayed_toDisplayedBehavior_post (Display.sum S T)
+      ULift.up (displayedLeft.head a contract) :=
+  (respondDisplayed_toDisplayedBehavior_post (Display.sum S T)
     (Responder.sum (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
@@ -306,8 +306,8 @@ def sumDisplayedBehavior
     (b : Q.A) (contract : T.position b) :
     (sumDisplayedBehavior S T left displayedLeft right displayedRight).head
         (.inr b) (ULift.up contract) =
-      ULift.up (displayedRight.head b contract) := by
-  exact (respondDisplayed_toDisplayedBehavior_post (Display.sum S T)
+      ULift.up (displayedRight.head b contract) :=
+  (respondDisplayed_toDisplayedBehavior_post (Display.sum S T)
     (Responder.sum (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
@@ -349,8 +349,8 @@ theorem respondDisplayed_sumDisplayedBehavior_next
           (fun state => Display.M (Display.responder S) state.1 ×
             Display.M (Display.responder T) state.2))
           (terminalSumCoalgebra S T)
-          (left, right) (displayedLeft, displayedRight) query contract).2) := by
-  exact respondDisplayed_toDisplayedBehavior_next (Display.sum S T)
+          (left, right) (displayedLeft, displayedRight) query contract).2) :=
+  respondDisplayed_toDisplayedBehavior_next (Display.sum S T)
     (Responder.sum (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
@@ -386,8 +386,8 @@ def parallelDisplayedBehavior
     (a : P.A) (contract : S.position a) :
     (parallelDisplayedBehavior S T left displayedLeft right displayedRight).head
         (.left a) (ULift.up contract) =
-      ULift.up (displayedLeft.head a contract) := by
-  exact (respondDisplayed_toDisplayedBehavior_post (Display.parallelSum S T)
+      ULift.up (displayedLeft.head a contract) :=
+  (respondDisplayed_toDisplayedBehavior_post (Display.parallelSum S T)
     (Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
@@ -406,8 +406,8 @@ def parallelDisplayedBehavior
     (b : Q.A) (contract : T.position b) :
     (parallelDisplayedBehavior S T left displayedLeft right displayedRight).head
         (.right b) (ULift.up contract) =
-      ULift.up (displayedRight.head b contract) := by
-  exact (respondDisplayed_toDisplayedBehavior_post (Display.parallelSum S T)
+      ULift.up (displayedRight.head b contract) :=
+  (respondDisplayed_toDisplayedBehavior_post (Display.parallelSum S T)
     (Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
@@ -428,8 +428,8 @@ def parallelDisplayedBehavior
     (parallelDisplayedBehavior S T left displayedLeft right displayedRight).head
         (.both a b) (leftContract, rightContract) =
       (displayedLeft.head a leftContract,
-        displayedRight.head b rightContract) := by
-  exact (respondDisplayed_toDisplayedBehavior_post (Display.parallelSum S T)
+        displayedRight.head b rightContract) :=
+  (respondDisplayed_toDisplayedBehavior_post (Display.parallelSum S T)
     (Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
@@ -470,8 +470,8 @@ theorem respondDisplayed_parallelDisplayedBehavior_next_left
             Display.M (Display.responder T) state.2))
           (terminalParallelCoalgebra S T)
           (left, right) (displayedLeft, displayedRight)
-          (ParallelChoice.left a : (P ∥ Q).A) (ULift.up contract)).2) := by
-  exact respondDisplayed_toDisplayedBehavior_next (Display.parallelSum S T)
+          (ParallelChoice.left a : (P ∥ Q).A) (ULift.up contract)).2) :=
+  respondDisplayed_toDisplayedBehavior_next (Display.parallelSum S T)
     (Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×
@@ -514,8 +514,8 @@ theorem respondDisplayed_parallelDisplayedBehavior_next
             Display.M (Display.responder T) state.2))
           (terminalParallelCoalgebra S T)
           (left, right) (displayedLeft, displayedRight)
-          query contract).2) := by
-  exact respondDisplayed_toDisplayedBehavior_next (Display.parallelSum S T)
+          query contract).2) :=
+  respondDisplayed_toDisplayedBehavior_next (Display.parallelSum S T)
     (Responder.parallel (Responder.terminal (P := P))
       (Responder.terminal (P := Q)))
     (fun state => Display.M (Display.responder S) state.1 ×

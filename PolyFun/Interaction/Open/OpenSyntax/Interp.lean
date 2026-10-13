@@ -77,10 +77,7 @@ theorem ext {Atom : PortBoundary → Type u} {Δ : PortBoundary} {W₁ W₂ : In
         W₁.run T hT interp = W₂.run T hT interp) : W₁ = W₂ := by
   cases W₁
   cases W₂
-  simp only at h
-  congr
-  funext T hT interp
-  exact h T hT interp
+  exact congrArg Interp.mk (funext fun T => funext fun hT => funext (h T hT))
 
 /--
 Inject a primitive open component into the tagless-final syntax.

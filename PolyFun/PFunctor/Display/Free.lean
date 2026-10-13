@@ -12,8 +12,8 @@ public import PolyFun.PFunctor.Free.Displayed
 /-!
 # Polynomial displays over free trees
 
-This file is the precise bridge between `PFunctor.Display` and the older
-`FreeM.Displayed` API. A display determines a particular displayed
+This file connects `PFunctor.Display` to the generic `FreeM.Displayed` API.
+A display determines a particular displayed
 algebra at every node:
 
 ```text
@@ -22,19 +22,18 @@ X ↦ Σ c : S.position a, ∀ b, S.direction a c b → X b.
 
 Thus the relationship is generation, not identification:
 
-* `PFunctor.Display S` is one-step polynomial data over the operations of `P`;
+* `S : PFunctor.Display P` is one-step polynomial data over the operations of `P`;
 * `S.toDisplayedAlgebra F` embeds that data into the generic higher-order
   `FreeM.Displayed.Algebra`, with `F` specifying the leaf fibers;
 * `FreeM.Displayed (S.toDisplayedAlgebra F) t` is the recursively evaluated
   fiber over a particular free tree `t`;
-* `FreeM.Displayed.Over` remains a separate, second displayed layer over an
-  inhabitant of any evaluated displayed algebra. It is not replaced by `Display`.
+* `FreeM.Displayed.Over` is a second displayed layer over an inhabitant of any
+  evaluated displayed algebra.
 
 Every display-generated algebra is polynomial and consequently admits the
 dependent substitution operation below. Generic `FreeM.Displayed.Algebra`s do
 not: their `node` field can inspect child sorts negatively or otherwise
-non-functorially. This is the extra theory supplied by `Display`, rather than
-a duplicate spelling of the existing displayed-family definitions.
+non-functorially. The polynomial structure of `Display` supplies the substitution laws.
 -/
 
 @[expose] public section
@@ -154,9 +153,7 @@ equality.  This is the normalization lemma for replacing an opaque library
 proof by a structurally recursive proof of the same equality. -/
 theorem transport_proof_irrel (S : Display.{uA, uB, uC, uD} P) {E : Type uE} (F : E → Type uF)
     {t t' : FreeM P E} (h h' : t = t') (d : FreeM.Displayed (S.toDisplayedAlgebra F) t) :
-    S.transport F h d = S.transport F h' d := by
-  cases h
-  rfl
+    S.transport F h d = S.transport F h' d := rfl
 
 /-- Successive transports compose.  This is the public normalization lemma
 for proofs whose base-tree indices are changed by more than one free-monad

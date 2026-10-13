@@ -93,8 +93,8 @@ theorem isSimulation_graph {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p} (
 
 /-- A coalgebra morphism between the state coalgebras of two `p`-systems is a
 functional simulation: its graph is a simulation. The coalgebra structures are
-the systems' own (`DynSystem.coalg`), supplied locally: with the state set a
-parameter, the system no longer determines them by instance synthesis. -/
+the systems' own (`DynSystem.coalg`), supplied locally, because instance
+synthesis cannot recover a system from its state set. -/
 theorem isSimulation_graph_coalgHom {S₂' : Type u₁}
     {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂' p} :
     letI := D₁.coalg

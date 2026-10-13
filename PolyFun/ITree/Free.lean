@@ -76,6 +76,7 @@ theorem toResumptionWithTau_toITree (program : FreeM E α) :
         (toResumption program) :=
   ITree.toResumptionWithTau_toITree (toResumption program)
 
+/-- The embedding preserves enough structure to recover the original finite program. -/
 theorem toITree_injective :
     Function.Injective (toITree (E := E) (α := α)) :=
   Resumption.toITree_injective.comp toResumption_injective
@@ -156,8 +157,8 @@ theorem toITree_liftM_weakBisim
               (fun direction => toITree ((next direction).liftM handler)))
             (ITree.bind (ITree.Handler.ofFree handler position)
               (fun direction => ITree.simulate (ITree.Handler.ofFree handler)
-                (toITree (next direction)))) := by
-        exact ITree.bind_weakBisim_cont ih
+                (toITree (next direction)))) :=
+        ITree.bind_weakBisim_cont ih
       exact hcontinuations.trans
         (ITree.simulate_query (ITree.Handler.ofFree handler) position
           (fun direction => toITree (next direction))).symm

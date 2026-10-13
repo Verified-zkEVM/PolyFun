@@ -24,9 +24,9 @@ sites, which can pin the injective fixed-width and length-bounded families
 boundaries.
 
 Identity and composition (`EncPolyTime.id`, `EncPolyTime.comp`) lift directly from
-Cslib's proven `PolyTimeComputable.id` and `PolyTimeComputable.comp`; the monotone
-time-bound side condition of the latter is discharged by `PolyTimeComputable.normalize`,
-which replaces a machine's time bound with its own polynomial.
+Cslib's proven `PolyTimeComputable.id` and `PolyTimeComputable.comp`; composition
+uses Cslib's `PolyTimeComputable.withMonotoneBound` internally to obtain a monotone
+time bound for the second machine.
 
 Besides the running time `EncPolyTime.time`, every witness has a **description size**
 `EncPolyTime.size`: the state count of its machine. Cslib's `PolyTimeComputable` bounds
@@ -46,8 +46,7 @@ namespace Cslib.Turing.SingleTapeTM
 variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
 
 /-- Replace the time bound of a polynomial-time machine by the evaluation of its own
-polynomial. The resulting bound is monotone, as required by `PolyTimeComputable.comp`
-for the second machine. -/
+polynomial. The resulting bound is monotone. -/
 def PolyTimeComputable.normalize {f : List Symbol → List Symbol}
     (h : PolyTimeComputable f) : PolyTimeComputable f where
   tm := h.tm
@@ -204,7 +203,7 @@ noncomputable def comp {f : α → β} {f' : β → γ}
     (h : EncPolyTime ea eb f) (h' : EncPolyTime eb ec f') :
     EncPolyTime ea ec (f' ∘ f) where
   toFun := h'.toFun ∘ h.toFun
-  polyTime := h.polyTime.comp h'.polyTime.normalize h'.polyTime.monotone_normalize_timeBound
+  polyTime := h.polyTime.comp h'.polyTime
   map_encode a := by
     simp only [Function.comp_apply, h.map_encode, h'.map_encode]
 
@@ -213,7 +212,6 @@ the second's evaluated at the first's output-length envelope `1 + X + h.time`. -
 theorem comp_time {f : α → β} {f' : β → γ}
     (h : EncPolyTime ea eb f) (h' : EncPolyTime eb ec f') :
     (h.comp h').time = h.time + h'.time.comp (1 + Polynomial.X + h.time) := by
-  simp [EncPolyTime.comp, EncPolyTime.time, PolyTimeComputable.normalize]
   rfl
 
 /-- Evaluation of the composed time bound: `h`'s cost at input length `k`, plus `h'`'s cost at the

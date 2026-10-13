@@ -12,8 +12,8 @@ public import Cslib.Foundations.Data.PFunctor.Free
 
 The catamorphism `foldFreeM` evaluates a tree in an arbitrary algebra of its signature.
 Its substitution law describes sequencing by substitution in the leaf handler.
-The remaining additions supply universe-polymorphic functor laws and handler fusion.
-Monadic interpretation and its naturality use cslib's `FreeM.liftM` and `IsMonadHom` API.
+The node mapping equation supplements cslib's universe-polymorphic functor laws.
+Monadic interpretation and handler fusion use cslib's `FreeM.liftM` and `IsMonadHom` API.
 -/
 
 public section
@@ -25,16 +25,6 @@ namespace PFunctor.FreeM
 variable {P : PFunctor.{uA, uB}} {α β γ : Type*}
 
 /-! ## Bind and functor equations -/
-
--- upstream candidate (cslib#716 proposed it and was closed without merging)
-@[simp]
-theorem map_pure (f : α → β) (x : α) : map f (pure x : P.FreeM α) = pure (f x) := rfl
-
--- upstream candidate (cslib#716)
-@[simp]
-theorem map_bind (f : β → γ) (x : P.FreeM α) (cont : α → P.FreeM β) :
-    map f (x.bind cont) = x.bind fun a => (cont a).map f := by
-  simp_rw [← bind_pure_comp, FreeM.bind_assoc]
 
 /-- Mapping through a node maps every continuation, in constructor spelling. -/
 theorem map_liftBind (f : α → β) (a : P.A) (cont : P.B a → P.FreeM α) :
@@ -91,34 +81,5 @@ theorem foldFreeM_unique (onValue : α → β) (onEffect : (a : P.A) → (P.B a 
   | pure a => rw [foldFreeM_pure, h_pure]
   | lift_bind a cont ih =>
       exact (h_lift_bind a cont).trans (congrArg (onEffect a) (funext ih))
-
-/-! ## Interpretation -/
-
-section liftM
-
-variable {m : Type uB → Type v} [Monad m]
-
--- upstream candidate (cslib#716)
-/-- Folding a free polynomial tree by lifting each operation back into `FreeM` is the identity. -/
-@[simp]
-theorem liftM_lift_eq_self {α : Type uB} (x : P.FreeM α) : FreeM.liftM FreeM.lift x = x := by
-  induction x with
-  | pure _ => simp
-  | lift_bind _ _ ih => simp [ih]
-
-/-- **Handler fusion**: interpreting into a free monad and then into `m` is interpreting once
-through the pointwise Kleisli composite of the two handlers. -/
-theorem liftM_comp [LawfulMonad m] {Q : PFunctor.{u, uB}} {α : Type uB} (x : P.FreeM α)
-    (first : (a : P.A) → Q.FreeM (P.B a)) (second : (a : Q.A) → m (Q.B a)) :
-    (x.liftM first).liftM second = x.liftM fun a => (first a).liftM second := by
-  induction x with
-  | pure _ => rfl
-  | lift_bind a cont ih =>
-    change ((first a >>= fun b => (cont b).liftM first).liftM second) =
-      (first a).liftM second >>= fun b => (cont b).liftM fun a => (first a).liftM second
-    rw [FreeM.liftM_bind]
-    exact congrArg (fun k => (first a).liftM second >>= k) (funext ih)
-
-end liftM
 
 end PFunctor.FreeM

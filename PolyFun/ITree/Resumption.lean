@@ -291,8 +291,8 @@ theorem ofTauFreeStep_of_shape'_pure
     ofTauFreeStep state = Sum.inl value := by
   have hhead : tauFreeHead state =
       (⟨(.mk (.pure value) next), trivial⟩ :
-        Σ' observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β), TauFreeLayer observed) := by
-    exact PSigma.mk.inj_iff.mpr ⟨hshape, proof_irrel_heq _ _⟩
+        Σ' observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β), TauFreeLayer observed) :=
+    PSigma.mk.inj_iff.mpr ⟨hshape, proof_irrel_heq _ _⟩
   rw [ofTauFreeStep, hhead]
   rfl
 
@@ -305,8 +305,8 @@ theorem ofTauFreeStep_of_shape'_query
   have hhead : tauFreeHead state =
       (⟨(.mk (.query position) next),
         fun direction => state.2.of_shape'_query hshape direction⟩ :
-        Σ' observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β), TauFreeLayer observed) := by
-    exact PSigma.mk.inj_iff.mpr ⟨hshape, proof_irrel_heq _ _⟩
+        Σ' observed : (ITree.ViewPoly p β).Obj (_root_.ITree p β), TauFreeLayer observed) :=
+    PSigma.mk.inj_iff.mpr ⟨hshape, proof_irrel_heq _ _⟩
   rw [ofTauFreeStep, hhead]
   rfl
 
@@ -316,6 +316,7 @@ theorem ofTauFreeStep_of_shape'_query
       Sum.map (fun value : β => value) (p.map ofTauFreeITree) (ofTauFreeStep state) :=
   dest_corec ofTauFreeStep state
 
+/-- Converting a tau-free tree to a resumption and back recovers the original tree. -/
 theorem toITree_ofTauFreeITree
     (state : {tree : _root_.ITree p β // ITree.TauFree tree}) :
     toITree (ofTauFreeITree state) = state.1 := by
@@ -350,6 +351,7 @@ theorem toITree_ofTauFreeITree
       · exact fun direction =>
           ⟨⟨next direction, hchildren direction⟩, rfl, rfl⟩
 
+/-- Removing tau from an embedded resumption recovers that resumption. -/
 theorem ofTauFreeITree_toITree (computation : Resumption p β) :
     ofTauFreeITree ⟨toITree computation, toITree_tauFree computation⟩ = computation := by
   apply bisim

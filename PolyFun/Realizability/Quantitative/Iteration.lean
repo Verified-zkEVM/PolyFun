@@ -117,8 +117,8 @@ variable {loop : IterationCode input step}
 /-- The size envelope covers every finite prefix, including the final state. -/
 theorem size_le (bounds : PolynomialBounds loop) (count : ℕ) (initial : S)
     (i : ℕ) (hi : i ≤ count) :
-    Q.size state (next^[i] initial) ≤ bounds.stateSize.eval (Q.size input (count, initial)) := by
-  exact (size_iterate_le bounds.growth bounds.growth_le i initial).trans <|
+    Q.size state (next^[i] initial) ≤ bounds.stateSize.eval (Q.size input (count, initial)) :=
+  (size_iterate_le bounds.growth bounds.growth_le i initial).trans <|
     Nat.add_le_add (bounds.initialSize_le count initial)
       (Nat.mul_le_mul_right bounds.growth (hi.trans (bounds.count_le count initial)))
 

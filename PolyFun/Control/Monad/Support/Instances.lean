@@ -11,11 +11,12 @@ public import PolyFun.Control.Monad.Support
 # Exact Support: Instances and Lift Transport
 
 The instance side of the exact-support layer: the `MonadLiftT m SetM` compatibility shim,
-transport of the judgments along a lawful monad lift, the `MonadAttach` / `ExactMonadAttach`
-instances for `Except`, `SetM`, and Mathlib's `WriterT`, the exactness instances
-for `Id`, `Option`, `OptionT`, and `ExceptT`, and the per-monad `CanReturn` unfoldings. The
-judgments and their structural laws live in `PolyFun.Control.Monad.Support`; the per-run
-support of `StateT` and `ReaderT` lives in `PolyFun.Control.Monad.Support.Indexed`.
+transport of the judgments along a lawful monad lift, `MonadAttach` and its lawfulness instances
+for `SetM` and Mathlib's `WriterT`, a single-universe alias of core's `MonadAttach (ExceptT ε m)`,
+the exactness instances for `Id`, `Option`, `Except`, `SetM`, `OptionT`, `ExceptT`, and
+`WriterT`, and the per-monad `CanReturn` unfoldings. The judgments and their structural laws live
+in `PolyFun.Control.Monad.Support`, and the per-run support of `StateT` and `ReaderT` lives in
+`PolyFun.Control.Monad.Support.Indexed`.
 -/
 
 @[expose] public section
@@ -30,22 +31,19 @@ variable {m : Type u → Type v} {α β : Type u}
 
 `MonadAttach` is the canonical interface for reachability here: it is core's, it carries
 a lawfulness hierarchy, and core supplies instances for the transformers this library
-cares about. The `MonadLiftT m SetM` spelling below is a **compatibility shim for a
-downstream still phrased that way**, not the recommended API — register it locally when
-migrating, rather than building against it.
+uses. The `MonadLiftT m SetM` spelling below is a **compatibility shim for downstream code
+phrased as a lift into `SetM`**, not the recommended API. Register it locally where such
+code needs it, rather than building against it.
 
-Two things this does *not* say. `SetM` remains perfectly good as a **carrier**:
-`support : Set α` is unchanged, and `PFunctor.FreeM.support_eq_liftM_univ` — which
-genuinely folds into `SetM` as a monad — stays. What is being demoted is the lift as an
-*interface*. And unlike the probability layer's `PMF` retirement, there is no upstream
-force here: `SetM` is not being deprecated by Mathlib. This is a project standardizing
-on core's vocabulary, nothing more.
+`SetM` is a good **carrier**: `support` takes values in `Set α`, and
+`PFunctor.FreeM.support_eq_liftM_univ` genuinely folds into `SetM` as a monad. Only the lift
+as an *interface* is discouraged. Mathlib does not deprecate `SetM`, so preferring core's
+vocabulary is a convention of this project.
 
-One concrete argument for the direction, which is otherwise recorded nowhere:
+The attach-based presentation is also more universe-polymorphic than the fold.
 `support_eq_liftM_univ` is restricted to `{γ : Type uB}`, because `FreeM.liftM` pins the
-payload universe to the *direction* universe. `MonadAttach.support` on `FreeM P` carries
-no such restriction. The attach-based presentation is strictly more universe-polymorphic
-than the fold.
+payload universe to the *direction* universe, whereas `MonadAttach.support` on `FreeM P`
+carries no such restriction.
 
 The two declarations are deliberately not instances, so that support reasoning does not
 perturb monad-lift instance search. -/
@@ -111,27 +109,11 @@ end Transport
 
 /-! ## Base instances
 
-Core supplies `MonadAttach` and `LawfulMonadAttach` for `Id`, `Option`, `OptionT`,
-`ExceptT`, `StateT`, and `ReaderT`; only the exactness fields are needed here. `Except` and
-`SetM` have no core instance and are supplied below. -/
+Core supplies `MonadAttach` and `LawfulMonadAttach` for `Id`, `Option`, `Except`, `OptionT`,
+`ExceptT`, `StateT`, and `ReaderT`; only the exactness fields are needed here. `SetM` has no core
+instance and is supplied below. -/
 
 section Instances
-
-/-- Core provides no `MonadAttach (Except ε)` at this pin, only the transformer version; this
-mirrors core's `Option` instance. An identical declaration has landed upstream and ships in
-Lean v4.35, so delete this instance and the one below it at that toolchain bump. -/
-instance instMonadAttachExcept {ε : Type u} : MonadAttach (Except ε) where
-  CanReturn x a := x = Except.ok a
-  attach
-    | .ok a => .ok ⟨a, rfl⟩
-    | .error e => .error e
-
-instance instLawfulMonadAttachExcept {ε : Type u} : LawfulMonadAttach (Except ε) where
-  map_attach {_ x} := by cases x <;> rfl
-  canReturn_map_imp {_ _ x _} h := by
-    cases x with
-    | error e => cases h
-    | ok z => cases h; exact z.2
 
 /-- Core's `MonadAttach (ExceptT ε m)` is stated at `max`-joined universes, which blocks
 synthesis in a universe-polymorphic context; this alias instantiates it at a single

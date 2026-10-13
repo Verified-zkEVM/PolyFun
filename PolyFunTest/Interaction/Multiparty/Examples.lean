@@ -43,6 +43,21 @@ universe u
 namespace Interaction
 namespace Multiparty
 
+/-! ## Observation refinement boundaries -/
+
+/-- Refinement carries indistinguishability from the more revealing observation
+to the less revealing one. -/
+example {X : Type u} {k₁ k₂ : Observation X} (h : k₁.Refines k₂)
+    {x y : X} (hxy : k₂.2 x = k₂.2 y) : k₁.2 x = k₁.2 y := by
+  obtain ⟨f, hf⟩ := h
+  exact (hf x).trans ((congrArg f hxy).trans (hf y).symm)
+
+/-- On an empty move space, indistinguishability is vacuous, but a refinement
+factor still needs a value at every point of its source codomain. -/
+example : ¬ Observation.Refines (X := Empty) ⟨Empty, id⟩ ⟨Unit, Empty.elim⟩ := by
+  rintro ⟨f, _⟩
+  exact (f ()).elim
+
 section BroadcastExamples
 
 inductive ThreeParty : Type u where
