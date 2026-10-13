@@ -60,8 +60,10 @@ def answer (b : Bool) : PFunctor.Handler Id (Coin + PFunctor.y) := fun
   | .inl _ => b
   | .inr _ => PUnit.unit
 
-#guard Id.run ((ITree.toDynComputation.run 1 coinTree).liftM (answer true)) == none
-#guard Id.run ((ITree.toDynComputation.run 2 coinTree).liftM (answer true)) == some 7
-#guard Id.run ((ITree.toDynComputation.run 2 coinTree).liftM (answer false)) == some 11
+/-- info: [none, some 7, some 11] -/
+#guard_msgs in
+#eval [Id.run ((ITree.toDynComputation.run 1 coinTree).liftM (answer true)),
+  Id.run ((ITree.toDynComputation.run 2 coinTree).liftM (answer true)),
+  Id.run ((ITree.toDynComputation.run 2 coinTree).liftM (answer false))]
 
 end ITree.MachineExamples
