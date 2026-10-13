@@ -50,7 +50,7 @@ theorem behavior_toDynSystem :
 
 /-- An interaction tree as a returning computation over `F + y`: silent steps become visible unit
 queries. -/
-noncomputable def toDynComputation :
+def toDynComputation :
     DynSystem.DynComputation (F + PFunctor.y.{uA, uB}) (ITree F α) α :=
   DynSystem.DynComputation.ofResumption toResumptionWithTau
 

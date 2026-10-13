@@ -6,6 +6,9 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.ITree.Machine
+public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
+meta import PolyFun.ITree.Machine
+meta import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 
 /-!
 # Interaction trees as machines: examples
@@ -41,5 +44,24 @@ example (position : F.A) (next : F.B position → ITree F α) :
 /-- The dynamical-system reading unfolds to the raw M-type tree. -/
 example (t : ITree F α) : (ITree.toDynSystem (F := F) (α := α)).behavior t = t.toM := by
   rw [ITree.behavior_toDynSystem]
+
+/-! The adapter is executable: a bounded run of a tree with one silent step and one visible
+query needs two units of fuel, one for each. -/
+
+/-- A single Boolean query. -/
+abbrev Coin : PFunctor := ⟨Unit, fun _ => Bool⟩
+
+/-- One silent step, then a query whose answer selects the returned value. -/
+def coinTree : ITree Coin ℕ :=
+  ITree.step (ITree.query () fun b => ITree.pure (if b then 7 else 11))
+
+/-- Answer every query with `b`. -/
+def answer (b : Bool) : PFunctor.Handler Id (Coin + PFunctor.y) := fun
+  | .inl _ => b
+  | .inr _ => PUnit.unit
+
+#guard Id.run ((ITree.toDynComputation.run 1 coinTree).liftM (answer true)) == none
+#guard Id.run ((ITree.toDynComputation.run 2 coinTree).liftM (answer true)) == some 7
+#guard Id.run ((ITree.toDynComputation.run 2 coinTree).liftM (answer false)) == some 11
 
 end ITree.MachineExamples
