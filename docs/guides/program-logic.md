@@ -28,6 +28,7 @@ supplies the expectation reading of its oracle computations.
 | `PolyFun/Control/Monad/Support/Indexed.lean` | Per-run support of `StateT`/`ReaderT` (`supportFrom`, `supportAt`) with exact laws and the indexed judgments `⊨ₐ[s]`/`⊨ₛ[s]`/`⊭[s]` |
 | `PolyFun/Control/Monad/Support/Structural.lean` | The rest of the `do` fragment for `CanReturn` and the judgments: `<*`, `*>`, `if`, `if h :`, `Option.elim`, `Sum.elim`, `<$>`, `<*>` |
 | `PolyFun/Control/Monad/Support/Loops.lean` | Invariant rules for `forIn'`/`forIn`/`foldlM`/`forM` over lists and `PureForIn` containers, for `AllOutputs` (from core's `Spec.*` under the demonic reading) and `SomeOutput` (angelic) |
+| `PolyFun/Control/Monad/Support/Charged.lean` | `MonadAttach.chargedFoldlM`: a `List.foldlM` that also accumulates a state-dependent charge per event; induction over its possible results (`chargedFoldlM_induction`) and the potential method (`chargedFoldlM_le`), with a matching lower bound and constant-charge count |
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); folding after substitution (`OpSpec.pullback`, `wpFold_liftM`, `OpSpec.pullback_pullback`); `OpSpec.toMAlgOrdered` (`toMAlgOrdered_μ_bind_pure`); coherence of the demonic/angelic folds with the support judgments |
 | `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`) and its upper-bound reading `OpSpec.toUpperWPMonad` over the order duals, `FreeM.wpMonadOfHandler` (transport along `liftMHom`), all exact when their source is; `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad`, and `wpFold_eq_wp_liftM` over an exact one; `allOutputs_liftM_of_wpFold` / `allOutputs_liftM_of_allOutputs` for the support of the interpreted program |
@@ -417,6 +418,15 @@ There are two ways to state such a bound as a core triple.
 
 `PolyFunTest/Do/Charge.lean` checks both forms on a coin interface. The ranked triple is
 instantiated in the upper-bound reading, where it bounds a simulated program's charge.
+
+`OpSpec.charge` reads cost off the syntax of a free program: its fold is the worst case over
+every branch, whether or not an interpretation reaches it. `MonadAttach.chargedFoldlM`
+(`PolyFun/Control/Monad/Support/Charged.lean`) instead instruments an interpreted
+`List.foldlM` with a per-event, state-dependent charge, and `chargedFoldlM_le` bounds the work
+of every possible result by a potential: the support-level counterpart of
+`triple_liftM_ranked`. Reactive networks instantiate it with `ReactiveNetwork.Charge`, a weight
+per activation, and obtain potentials from `Conserving` certificates
+([open systems](open-systems.md)).
 
 ## Support readings and expectation readings
 
