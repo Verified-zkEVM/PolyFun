@@ -9,15 +9,14 @@ module
 public import ComplexityBackends.CslibSingleTape.Family
 public import PolyFun.Realizability.Quantitative.Resource
 public import PolyFun.PFunctor.Free.Sigma
-public import Mathlib.Data.Nat.Size
 
 /-!
 # Uniform pure families at a unary parameter boundary
 
 One fixed initialization and readout machine for a packed pure Boolean family induces a
 nonuniform family with constant description size. Injective pinned encodings then transfer the
-finite-description counting separation to the uniform notion. The theorem concerns immediately
-returning programs; interactive implementation requires a separate operational linker.
+finite-description counting separation to the uniform notion, so it is not universal. Only
+immediately returning programs are covered.
 -/
 
 public section
@@ -108,7 +107,8 @@ structure UniformPureWitness (p : ℕ → PFunctor.{0, 0}) (posEnc : (PFunctor.s
   headCode : EncPolyTime state (headEnc posEnc) machine.head
 
 /-- A packed polynomial program witness at this fixed unary boundary supplies the two
-codes needed by the pure-family bridge. The run certificate retains its separate meaning. -/
+codes needed by the pure-family bridge. Only the realization's machine, state encoding and
+`init`/`head` codes are kept; the witness's run bound and output recovery are discarded. -/
 noncomputable def UniformPureWitness.ofProgramWitness
     {p : ℕ → PFunctor.{0, 0}} [DecidableEq (PFunctor.sigma p).A]
     (posEnc : (PFunctor.sigma p).A → List Bool)
@@ -171,8 +171,10 @@ noncomputable def UniformPureWitness.toFam (w : UniformPureWitness p posEnc f) :
     rw [w.size_toRealizer]
     simp
 
-/-- **The uniform notion is not vacuous**: at any pinned position encoding, some Boolean family
-has no uniform certificate. Obtained from the generic separation through bridge 2. -/
+/-- **The uniform notion is not universal**: at any injective pinned position encoding, some
+Boolean family has no uniform certificate. This is the description-counting separation of
+`Backend.description`, applied to the members `toRealizer` extracts; uniformity enters only
+through their shared description size `initCode.size + headCode.size`. -/
 theorem exists_isEmpty_uniformPureWitness (hpos : Function.Injective posEnc) :
     ∃ f : (n : ℕ) → BitVec n → Bool, IsEmpty (UniformPureWitness p posEnc f) := by
   obtain ⟨f, hf⟩ := Backend.description.exists_not_realizableLE_poly
@@ -186,20 +188,5 @@ theorem exists_isEmpty_uniformPureWitness (hpos : Function.Injective posEnc) :
   refine Backend.description.mem_realizableLE.mpr ⟨w.toRealizer n, ?_⟩
   rw [Backend.descSize_eq, w.size_toRealizer]
   simp
-
-/-! ## The `1^n` canary, machine-free -/
-
-/-- Under the unary parameter, an output of size `n` has a linear envelope in the input size. -/
-theorem unary_envelope (n k : ℕ) : n ≤ (Polynomial.X : Polynomial ℕ).eval (n + k) := by
-  simp
-
-/-- Under a binary parameter, no polynomial in the input size bounds an output of size `n`:
-`1^n` is not polynomially bounded in `Nat.size n`. -/
-theorem binary_no_envelope (q : Polynomial ℕ) : ∃ n, q.eval (Nat.size n) < n := by
-  obtain ⟨M, hM⟩ := Filter.eventually_atTop.mp (Polynomial.eventually_eval_le_two_pow_div_four q)
-  refine ⟨2 ^ (M + 3), ?_⟩
-  rw [Nat.size_pow]
-  calc q.eval (M + 3 + 1) ≤ 2 ^ ((M + 3 + 1) / 4) := hM _ (by omega)
-    _ < 2 ^ (M + 3) := Nat.pow_lt_pow_right (by norm_num) (by omega)
 
 end ComplexityBackends.CslibSingleTape.Uniform

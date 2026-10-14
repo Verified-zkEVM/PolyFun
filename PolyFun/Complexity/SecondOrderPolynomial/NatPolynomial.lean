@@ -84,4 +84,3 @@ theorem eval_le_toNatPolynomial (bounds : ι → Polynomial ℕ) (length : ι �
       exact (hlength interface _).trans (Polynomial.eval_le_eval ih)
 
 end Complexity.SecondOrderPolynomial
-

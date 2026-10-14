@@ -697,7 +697,9 @@ turns polynomial upper bounds on every response modulus into ordinary polynomial
 counts and local work. `exists_natPolynomial_traceLength` and
 `exists_natPolynomial_executionWork` apply to every conforming finite prefix. Nested oracle
 applications become polynomial composition through `SecondOrderPolynomial.toNatPolynomial`;
-the actual response modulus need not itself be monotone for this conversion.
+the actual response modulus need not itself be monotone for this conversion. On first-order
+syntax the substitution inverts `FirstOrderPolynomial.ofNatPolynomial`
+(`FirstOrderPolynomial.toNatPolynomial_ofNatPolynomial`).
 
 [`Simulation.lean`](../../PolyFun/Realizability/Quantitative/Simulation.lean) defines
 `Q₁.SimulatedBy Q₂ str`: every `Q₁` code translates to `Q₂` code with the same semantic
@@ -730,7 +732,12 @@ has no such uniform witness.
 
 This bridge is for immediate returns. It does not convert arbitrary interactive witnesses into
 P/poly. Unary framing is substantive: an output containing `n` unary bits has no polynomial
-length bound in the binary parameter length `Nat.size n` (`binary_no_envelope`).
+length bound in the binary parameter length `Nat.size n`, an arithmetic fact recorded as
+`binary_no_envelope` in `PolyFunTest/ComplexityBackends/CslibSingleTape/Uniform.lean`.
+
+No `UniformPureWitness` is constructed in the library. The single-tape machines it provides
+(identity, constants, finite tables and bit appending) cannot move the unary prefix behind the
+output tag, so the uniform notion is shown non-universal but not yet inhabited.
 
 ## Known Gaps
 

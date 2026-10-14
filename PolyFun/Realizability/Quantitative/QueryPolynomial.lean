@@ -8,17 +8,39 @@ module
 
 public import PolyFun.Realizability.Quantitative.Resource
 public import PolyFun.Complexity.SecondOrderPolynomial.NatPolynomial
+import Mathlib.Algebra.Polynomial.Roots
 
 /-!
 # Ordinary polynomial bounds on conforming executions
 
 Polynomial response moduli turn second-order run certificates into ordinary bounds on visible
 queries and backend work. The resulting bounds apply to every conforming finite prefix.
+`FirstOrderPolynomial.toNatPolynomial_ofNatPolynomial` shows that the substitution inverts the
+translation of a Mathlib polynomial into first-order syntax.
 -/
 
 public section
 
 universe u v w x
+
+namespace Complexity.FirstOrderPolynomial
+
+/-- Translating a Mathlib polynomial into first-order syntax and substituting back recovers it. -/
+theorem toNatPolynomial_ofNatPolynomial (bounds : PEmpty.{1} → Polynomial ℕ)
+    (polynomial : Polynomial ℕ) :
+    (ofNatPolynomial polynomial).toNatPolynomial bounds = polynomial := by
+  apply Polynomial.map_injective (Nat.castRingHom ℤ) Nat.cast_injective
+  apply Polynomial.eq_of_infinite_eval_eq
+  refine Set.infinite_of_injective_forall_mem (f := fun n : ℕ ↦ (n : ℤ)) Nat.cast_injective
+    fun n ↦ ?_
+  simp only [Set.mem_ofPred_eq, Polynomial.eval_natCast_map, eq_natCast, Nat.cast_inj,
+    Nat.cast_id, SecondOrderPolynomial.eval_toNatPolynomial]
+  have hfun : (fun i ↦ (bounds i).eval) = (PEmpty.elim : PEmpty.{1} → ℕ → ℕ) :=
+    funext fun i ↦ i.elim
+  rw [hfun]
+  exact eval_ofNatPolynomial polynomial n
+
+end Complexity.FirstOrderPolynomial
 
 namespace PFunctor.DynSystem.DynComputation.PolynomialRunBound
 
