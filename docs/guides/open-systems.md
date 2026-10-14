@@ -268,9 +268,12 @@ Three constructions relate conservation to other certificates.
   Diagram operations preserve components, so the certificates are reused unchanged. Wiring only
   has to respect `route_le`.
 - **Import ledgers.**
-  [`ImportBounded T`](../../PolyFun/Interaction/Execution/ReactiveNetwork/Import.lean) is the
-  ledger form of the import-bounded runtime of universal composability (`Can20`). It composes for
-  monotone superadditive `T`, and for `T = id` it is a conserving certificate.
+  [`ImportBounded T`](../../PolyFun/Interaction/Execution/ReactiveNetwork/Import.lean) is a
+  ledger shape of the import-bounded runtime of universal composability (`Can20`), with packet
+  credit standing in for import and no security parameter. It composes for monotone
+  superadditive `T`, which forces `T 0 = 0`. For any monotone `T`, `work_runTokenOpen_le_card`
+  bounds the work by the number of nodes times `T` of the import. For `T = id` it is a
+  conserving certificate.
 - **Input-relative certificates.** An
   [`InputRelative`](../../PolyFun/Interaction/Execution/ReactiveNetwork/InputRelative.lean)
   certificate pays a node's charge from its potential and consumed credit, without constraining

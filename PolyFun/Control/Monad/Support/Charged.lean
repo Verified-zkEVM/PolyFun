@@ -26,8 +26,7 @@ events. The support lemmas below are its instances:
 * `le_chargedFoldlM` is the matching lower bound from a per-event lower bound on the charge;
 * `chargedFoldlM_const` counts the events under a constant charge;
 * `chargedFoldlM_ledger` bounds the charge by the growth of a ledger that records at least each
-  event's charge, and `chargedFoldlM_bounded` bounds the growth of a quantity that rises by at most
-  a grant per event.
+  event's charge.
 
 This is the support-level reading of a charge: it bounds what an interpretation can actually
 return. `OpSpec.charge` in `PolyFun/PFunctor/Free/WP/Charge.lean` instead reads a charge off the
@@ -142,52 +141,12 @@ theorem chargedFoldlM_ledger {step : E → σ → m σ} {charge : E → σ → �
     (hstep : ∀ e s s', inv s → CanReturn (step e s) s' → inv s' ∧ Ψ s + charge e s ≤ Ψ s') :
     ∀ (es : List E) (s s' : σ) (w : ℕ), inv s →
       CanReturn (chargedFoldlM step charge es s) (s', w) → inv s' ∧ w + Ψ s ≤ Ψ s' := by
-  intro es
-  induction es with
-  | nil =>
-    intro s s' w hs h
-    have heq := LawfulMonadAttach.eq_of_canReturn_pure h
-    simp only [Prod.mk.injEq] at heq
-    obtain ⟨rfl, rfl⟩ := heq
-    simpa using hs
-  | cons e es ih =>
-    intro s s' w hs h
-    obtain ⟨mid, hmid, hrest⟩ := LawfulMonadAttach.canReturn_bind_imp' h
-    obtain ⟨⟨fin, w'⟩, hrun, heq⟩ := LawfulMonadAttach.canReturn_map_imp' hrest
-    simp only [Prod.mk.injEq] at heq
-    obtain ⟨rfl, rfl⟩ := heq
-    obtain ⟨hinv, hpay⟩ := hstep e s mid hs hmid
-    obtain ⟨hfin, hrec⟩ := ih mid fin w' hinv hrun
-    exact ⟨hfin, by omega⟩
-
-/-- **Growth bound.** If every possible step from an invariant state keeps the invariant and a
-quantity rises by at most a grant, every possible result's final quantity is at most the initial
-one plus the grants of the events. -/
-theorem chargedFoldlM_bounded {step : E → σ → m σ} {charge : E → σ → ℕ}
-    (inv : σ → Prop) (Φ : σ → ℕ) (grant : E → ℕ)
-    (hstep : ∀ e s s', inv s → CanReturn (step e s) s' → inv s' ∧ Φ s' ≤ Φ s + grant e) :
-    ∀ (es : List E) (s s' : σ) (w : ℕ), inv s →
-      CanReturn (chargedFoldlM step charge es s) (s', w) →
-        inv s' ∧ Φ s' ≤ Φ s + (es.map grant).sum := by
-  intro es
-  induction es with
-  | nil =>
-    intro s s' w hs h
-    have heq := LawfulMonadAttach.eq_of_canReturn_pure h
-    simp only [Prod.mk.injEq] at heq
-    obtain ⟨rfl, rfl⟩ := heq
-    simpa using hs
-  | cons e es ih =>
-    intro s s' w hs h
-    obtain ⟨mid, hmid, hrest⟩ := LawfulMonadAttach.canReturn_bind_imp' h
-    obtain ⟨⟨fin, w'⟩, hrun, heq⟩ := LawfulMonadAttach.canReturn_map_imp' hrest
-    simp only [Prod.mk.injEq] at heq
-    obtain ⟨rfl, rfl⟩ := heq
-    obtain ⟨hinv, hpay⟩ := hstep e s mid hs hmid
-    obtain ⟨hfin, hrec⟩ := ih mid fin w' hinv hrun
-    refine ⟨hfin, ?_⟩
-    simp only [List.map_cons, List.sum_cons]
-    omega
+  intro es s s' w hs h
+  refine chargedFoldlM_induction (motive := fun _ s s' w => inv s → inv s' ∧ w + Ψ s ≤ Ψ s')
+    (fun _ hs => by simpa using hs) (fun e es s mid fin w hmid ih hs => ?_) es s s' w h hs
+  obtain ⟨hinv, hpay⟩ := hstep e s mid hs hmid
+  obtain ⟨hfin, hrec⟩ := ih hinv
+  exact ⟨hfin, by omega⟩
 
 end Lawful
 

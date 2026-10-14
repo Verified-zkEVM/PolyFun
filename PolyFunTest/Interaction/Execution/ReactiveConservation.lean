@@ -609,6 +609,38 @@ example (n : ℕ) :
       (fun state => counter (state.localState ()) ≤ n) :=
   (countdownLedger n).toConserving
 
+/-! ## The gain law on a network without sends
+
+The countdown sends nothing, so the send clause of the gain law is vacuous. These checks exercise
+the path from an input-relative certificate through the gain law to a work bound, not the gain
+arithmetic itself. -/
+
+/-- Uniform rate `2` satisfies the gain law for the countdown. -/
+theorem countdown_smallGain_two (n : ℕ) :
+    SmallGain .token Charge.productive (countdownCredit n)
+      (fun _ : State (countdown n) Unit => True) (fun _ => 2) :=
+  smallGain_two fun _ _ packet _ _ _ _ => packet.1.elim
+
+/-- The countdown is acyclic at any levels, so `Acyclic.smallGain` supplies its rates. -/
+example (n g : ℕ) (level : Unit → ℕ) :
+    SmallGain .token Charge.productive (countdownCredit n)
+      (fun _ : State (countdown n) Unit => True) (fun id => (g + 1) ^ level id) :=
+  Acyclic.smallGain fun _ _ packet _ _ _ _ => packet.1.elim
+
+/-- Small-gain soundness at rate `2` bounds the countdown's open token work by `2 n`. -/
+example (n fuel : ℕ) :
+    (runTokenOpen (m := Id) (countdownImpl n) Charge.productive (List.replicate fuel .step)
+      (initial (countdown n) ())).run.2 ≤ 2 * n := by
+  obtain ⟨⟨next, work⟩, h⟩ : ∃ r, CanReturn (runTokenOpen (m := Id) (countdownImpl n)
+      Charge.productive (List.replicate fuel .step) (initial (countdown n) ())) r :=
+    ⟨_, Id.canReturn_iff.mpr rfl⟩
+  rw [Id.canReturn_iff.mp h]
+  have := (countdownConserving n .token).toInputRelative.work_le_initial_of_smallGain
+    (fun _ => 2) (countdown_smallGain_two n) (fun _ _ _ _ => trivial)
+    (fun packet _ _ => packet.1.elim) trivial h
+  simpa [Conserving.toInputRelative, countdownConserving, countdown, CreditModel.funded]
+    using this
+
 /-! ## Input-relative certificates across feedback -/
 
 /-- Two units of credit per packet: one per activation of the receive and send it causes. -/
@@ -724,11 +756,13 @@ theorem feedback_productive_work (fuel : ℕ) :
   simp at hlow hup
   omega
 
-/-- **Input-relative certificates do not compose across feedback.** Both nodes are certified
-(`feedbackInputRelative`), yet their joint work is unbounded. -/
+/-- **Input-relative certificates do not compose across feedback.** Both nodes are certified,
+yet their joint work is unbounded. -/
 theorem feedback_work_unbounded :
-    ¬ ∃ bound, ∀ fuel, (runTokenCharged (m := Id) feedbackImpl Charge.productive fuel
-      (initial feedback ())).run.2 ≤ bound := by
+    Nonempty (InputRelative feedbackImpl .token Charge.productive credit2 fun _ => True) ∧
+      ¬ ∃ bound, ∀ fuel, (runTokenCharged (m := Id) feedbackImpl Charge.productive fuel
+        (initial feedback ())).run.2 ≤ bound := by
+  refine ⟨⟨feedbackInputRelative _⟩, ?_⟩
   rintro ⟨bound, hbound⟩
   have := hbound (bound + 1)
   rw [feedback_productive_work] at this

@@ -7,14 +7,17 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Conserving
-public import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Algebra.Order.Monoid.OrderDual
 
 /-!
 # Import-bounded ledgers
 
-An `ImportBounded T` certificate is the ledger form of the runtime notion of universal
-composability (`Can20`), where a machine's steps are bounded by a function of its net import. Each
-node keeps, as functions of its own local state:
+An `ImportBounded T` certificate is a ledger shape of the import-bounded runtime of universal
+composability (`Can20`), where a machine's steps are bounded by a function of its net import.
+Packet credit stands in for import; there is no security parameter, polynomial-time class, or
+distinction between a caller and its subroutines. Each node keeps, as functions of its own local
+state:
 
 * its net import `net`: credit consumed, minus credit attached to sent packets, plus any initial
   endowment;
@@ -27,7 +30,10 @@ receiver's balance, so this is not a fixed-rate potential.
 * `ImportBounded.work_runTokenOpen_le`: if `T` is monotone and superadditive
   (`T a + T b ≤ T (a + b)`), then along any open token execution, work plus the ledgers' initial
   steps is at most `T` of the initial import and the funded ingress credit. The local bounds compose
-  by superadditivity, not by telescoping.
+  by superadditivity, not by telescoping. Superadditivity forces `T 0 = 0`, so it excludes bounds
+  with a positive constant term such as `n ^ 2 + 1`.
+* `ImportBounded.work_runTokenOpen_le_card`: for a monotone `T` alone, the same work is at most
+  `Fintype.card Node` times `T` of that import.
 * `ImportBounded.toConserving`: for `T = id`, the ledger is a conserving certificate with
   potential `net - steps`.
 -/
@@ -42,15 +48,12 @@ variable {Node result S : Type} {boundary : PortBoundary}
   {network : Network Node boundary result} [DecidableEq Node]
   {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
 
-/-- A superadditive function of a sum dominates the sum of its values. -/
+/-- A superadditive function of a sum dominates the sum of its values: Mathlib's
+`Finset.le_sum_of_subadditive` read in the order dual. -/
 theorem sum_le_of_superadditive {ι : Type} (s : Finset ι) (f : ι → ℕ) (T : ℕ → ℕ)
-    (hsuper : ∀ a b, T a + T b ≤ T (a + b)) : ∑ i ∈ s, T (f i) ≤ T (∑ i ∈ s, f i) := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simp
-  | insert a s ha ih =>
-    rw [Finset.sum_insert ha, Finset.sum_insert ha]
-    exact le_trans (Nat.add_le_add_left ih _) (hsuper _ _)
+    (hsuper : ∀ a b, T a + T b ≤ T (a + b)) : ∑ i ∈ s, T (f i) ≤ T (∑ i ∈ s, f i) :=
+  Finset.le_sum_of_subadditive (N := ℕᵒᵈ) (fun n ↦ OrderDual.toDual (T n)) (Nat.zero_le _)
+    hsuper s f
 
 /-- **An import ledger.** Each node's net import and step count, as functions of its own local
 state: activations move import with packets and record their charge, and steps never exceed `T`
@@ -134,17 +137,16 @@ theorem stepsTotal_le (c : ImportBounded impl discipline charge credit invariant
         sum_le_of_superadditive _ _ T hsuper
     _ ≤ T (c.imported state) := hmono (Nat.le_add_right _ _)
 
-/-- **Composition of import-bounded nodes.** With a monotone superadditive `T`, the work of any
-open token execution plus the ledgers' initial steps is at most `T` of the initial import plus
-the funded ingress credit. -/
-theorem work_runTokenOpen_le (c : ImportBounded impl .token charge credit invariant T)
-    (hsuper : ∀ a b, T a + T b ≤ T (a + b)) (hmono : Monotone T)
+/-- **The ledgers along an open execution.** The work of an open token execution plus the initial
+steps is at most the final steps, and the import grows by at most the funded ingress credit. -/
+theorem runTokenOpen_ledger (c : ImportBounded impl .token charge credit invariant T)
     (preserves : TokenInvariant impl invariant)
     (preserves_input : ∀ packet state, invariant state → invariant (input packet state))
     {events : List (TokenEvent boundary)} {state next : State network S} {work : ℕ}
     (hinv : invariant state)
     (h : CanReturn (runTokenOpen impl charge events state) (next, work)) :
-    work + c.stepsTotal state ≤ T (c.imported state + (events.map credit.funded).sum) := by
+    work + c.stepsTotal state ≤ c.stepsTotal next ∧
+      c.imported next ≤ c.imported state + (events.map credit.funded).sum := by
   have hwork := (chargedFoldlM_ledger invariant c.stepsTotal
     (fun event s s' hs hstep => by
       cases event with
@@ -158,20 +160,75 @@ theorem work_runTokenOpen_le (c : ImportBounded impl .token charge credit invari
       | step =>
         exact ⟨preserves s s' hs hstep, c.stepsTotal_activate hs rfl hstep⟩)
     _ state next work hinv h).2
-  have himport := (chargedFoldlM_bounded invariant c.imported credit.funded
-    (fun event s s' hs hstep => by
-      cases event with
-      | input packet =>
-        have heq : s' = input packet s := canReturn_pure_iff.mp hstep
-        subst heq
-        exact ⟨preserves_input packet s hs, by simp [CreditModel.funded, c.imported_input]⟩
-      | step =>
-        exact ⟨preserves s s' hs hstep, by
-          simpa [CreditModel.funded] using c.imported_activate hs rfl hstep⟩)
-    _ state next work hinv h).2
+  have hgrowth : ∀ event s s', invariant s → CanReturn (tokenEventStep impl event s) s' →
+      invariant s' ∧ c.imported s' ≤ c.imported s + credit.funded event := by
+    intro event s s' hs hstep
+    cases event with
+    | input packet =>
+      have heq : s' = input packet s := canReturn_pure_iff.mp hstep
+      subst heq
+      exact ⟨preserves_input packet s hs, by simp [CreditModel.funded, c.imported_input]⟩
+    | step =>
+      exact ⟨preserves s s' hs hstep, by
+        simpa [CreditModel.funded] using c.imported_activate hs rfl hstep⟩
+  have himport := (chargedFoldlM_induction
+    (motive := fun events s s' _ => invariant s →
+      invariant s' ∧ c.imported s' ≤ c.imported s + (events.map credit.funded).sum)
+    (fun _ hs => by simpa using hs)
+    (fun event _ s mid _ _ hstep ih hs => by
+      obtain ⟨hmid, hgrow⟩ := hgrowth event s mid hs hstep
+      obtain ⟨hfin, hrec⟩ := ih hmid
+      refine ⟨hfin, ?_⟩
+      simp only [List.map_cons, List.sum_cons]
+      omega)
+    _ state next work h hinv).2
+  exact ⟨hwork, himport⟩
+
+/-- **Composition of import-bounded nodes.** With a monotone superadditive `T`, the work of any
+open token execution plus the ledgers' initial steps is at most `T` of the initial import plus
+the funded ingress credit. -/
+theorem work_runTokenOpen_le (c : ImportBounded impl .token charge credit invariant T)
+    (hsuper : ∀ a b, T a + T b ≤ T (a + b)) (hmono : Monotone T)
+    (preserves : TokenInvariant impl invariant)
+    (preserves_input : ∀ packet state, invariant state → invariant (input packet state))
+    {events : List (TokenEvent boundary)} {state next : State network S} {work : ℕ}
+    (hinv : invariant state)
+    (h : CanReturn (runTokenOpen impl charge events state) (next, work)) :
+    work + c.stepsTotal state ≤ T (c.imported state + (events.map credit.funded).sum) := by
+  obtain ⟨hwork, himport⟩ := c.runTokenOpen_ledger preserves preserves_input hinv h
   calc work + c.stepsTotal state ≤ c.stepsTotal next := hwork
     _ ≤ T (c.imported next) := c.stepsTotal_le hsuper hmono next
     _ ≤ T (c.imported state + (events.map credit.funded).sum) := hmono himport
+
+omit [LawfulMonad m] [ExactMonadAttach m] in
+/-- Without superadditivity, every node's steps are still at most `T` of the whole import. -/
+theorem stepsTotal_le_card (c : ImportBounded impl discipline charge credit invariant T)
+    (hmono : Monotone T) (state : State network S) :
+    c.stepsTotal state ≤ Fintype.card Node * T (c.imported state) := by
+  calc c.stepsTotal state ≤ ∑ id, T (c.net id (state.localState id)) :=
+        Finset.sum_le_sum fun id _ => c.bounded id _
+    _ ≤ ∑ _id : Node, T (c.imported state) :=
+        Finset.sum_le_sum fun id _ => hmono <|
+          (Finset.single_le_sum (fun i _ => Nat.zero_le (c.net i (state.localState i)))
+            (Finset.mem_univ id)).trans (Nat.le_add_right _ _)
+    _ = Fintype.card Node * T (c.imported state) := by simp
+
+/-- **Monotone budgets.** With a monotone `T` that need not be superadditive, the work of any open
+token execution plus the ledgers' initial steps is at most `Fintype.card Node` times `T` of the
+initial import plus the funded ingress credit. This covers bounds with a positive constant term. -/
+theorem work_runTokenOpen_le_card (c : ImportBounded impl .token charge credit invariant T)
+    (hmono : Monotone T)
+    (preserves : TokenInvariant impl invariant)
+    (preserves_input : ∀ packet state, invariant state → invariant (input packet state))
+    {events : List (TokenEvent boundary)} {state next : State network S} {work : ℕ}
+    (hinv : invariant state)
+    (h : CanReturn (runTokenOpen impl charge events state) (next, work)) :
+    work + c.stepsTotal state ≤
+      Fintype.card Node * T (c.imported state + (events.map credit.funded).sum) := by
+  obtain ⟨hwork, himport⟩ := c.runTokenOpen_ledger preserves preserves_input hinv h
+  calc work + c.stepsTotal state ≤ c.stepsTotal next := hwork
+    _ ≤ Fintype.card Node * T (c.imported next) := c.stepsTotal_le_card hmono next
+    _ ≤ _ := Nat.mul_le_mul_left _ (hmono himport)
 
 omit [Fintype Node] in
 /-- **Linear budgets are conservation.** For `T = id`, the ledger is a conserving certificate

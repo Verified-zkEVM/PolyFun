@@ -7,7 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Conserving
-public import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Ring
 
 /-!
 # Input-relative certificates compose only through an exchange rate
