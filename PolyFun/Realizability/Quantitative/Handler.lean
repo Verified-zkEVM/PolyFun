@@ -180,7 +180,7 @@ namespace QuantitativeRealization
 
 section WrapState
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive]
 
 /-- The pullback half of the product transition:
@@ -255,7 +255,7 @@ structure WrapStateCostCertificate (R : QuantitativeRealization Q bd)
     (hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep)
     (allowsR : ∀ position, r.B position → Prop) where
   /-- Input-indexed carry allowances. -/
-  carry : A × σ → Carry
+  carry : A × σ → ExecutionCost.Carry
   /-- Input-indexed per-step inner traffic allowance. -/
   traffic : A × σ → ℕ
   init_le : ∀ input,
@@ -632,7 +632,7 @@ variable [CC : Q.HasCompositionCost] [PC : Q.HasProdCost] [SC : Q.HasSumCost]
 bound, the input size, a handler-state size bound, per-call handler work for `onPos` and
 `onPull`, and a per-step inner-traffic bound. -/
 def handlerLawCarry (bound : ExecutionCost)
-    (inputSize stateSize posWork pullWork innerTraffic : ℕ) : Carry where
+    (inputSize stateSize posWork pullWork innerTraffic : ℕ) : ExecutionCost.Carry where
   init := 4 * QuantitativeStepClass.structOverhead Q (inputSize + stateSize + PC.sizeOverhead)
   head := posWork + 10 * QuantitativeStepClass.structOverhead Q (bound.peakStateSize +
     2 * bound.peakHeadSize + 2 * stateSize + innerTraffic + 2 * PC.sizeOverhead +

@@ -41,7 +41,7 @@ example {M : DynComputation.{u} p α β} {program : α → FreeM p β} (h : M.Im
 
 variable {C : StepClass.{u, v}} [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
   [DecidableEq p.A] [DecidableEq r.A] {Q : QuantitativeStepClass.{u, v, w} C}
-  {bd : Boundary C p α β} [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.HasOption]
+  {bd : Boundary C p α β} [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption]
   [Q.IsDistributive]
 
 example {R : QuantitativeRealization Q bd} {stateRep : C.Str σ} {posRep : C.Str r.A}

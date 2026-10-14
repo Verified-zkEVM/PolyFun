@@ -70,7 +70,7 @@ abbrev countingRealization :
 
 /-- The law-derived handler carry for the one-query bound, with unit handler-state size, unit
 per-call handler work and inner traffic `2` per step. -/
-abbrev countingCarry (input : PUnit.{1} × ℕ) : Carry :=
+abbrev countingCarry (input : PUnit.{1} × ℕ) : ExecutionCost.Carry :=
   QuantitativeRealization.handlerLawCarry (Q := unitCostBackend) oneQueryBound
     (unitCostBackend.size firstQueryBoundary.input input.1) 1 1 1 2
 
