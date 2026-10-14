@@ -11,8 +11,9 @@ public import PolyFun.Realizability.Quantitative.Handler
 /-!
 # Stateful lenses through ordinary imports
 
-Substitution along a stateful lens is `Handler.Stateful.run` of its handler, the product machine
-denotes stateful substitution by `simp`, and the bounded transfer applies to any bounded
+Substitution along a stateful lens is `Handler.Stateful.run` of its handler, a stateful lens is a
+lens `p ⊗ σy^σ → r`, substitution does not raise the worst-case charge of a program, the product
+machine denotes stateful substitution by `simp`, and the bounded transfer applies to any bounded
 realization with executable lens code. These are the spellings a consumer in another package uses.
 -/
 
@@ -29,6 +30,14 @@ variable {p r : PFunctor.{u, u}} {σ α β : Type u}
 example (L : StateLens p r σ) (program : FreeM p β) (state : σ) :
     L.mapFreeM program state = L.toStateful.run program state :=
   L.mapFreeM_eq_run program state
+
+example (L : StateLens p r σ) : StateLens.equivLens.symm (StateLens.equivLens L) = L :=
+  StateLens.equivLens.symm_apply_apply L
+
+example (L : StateLens p r σ) (c : r.A → ℕ∞) (program : FreeM p β) (state : σ) :
+    FreeM.wpFold (OpSpec.charge c) (L.mapFreeM program state) (fun _ => 0) ≤
+      FreeM.wpFold (OpSpec.charge fun a => ⨆ st, c (L.pos (a, st))) program (fun _ => 0) :=
+  L.wpFold_charge_mapFreeM_le c program state
 
 example (M : DynComputation.{u} p α β) (L : StateLens p r σ) (input : α × σ) :
     (M.wrapState L).denote input = L.mapResumption (M.denote input.1) input.2 := by

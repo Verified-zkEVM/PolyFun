@@ -8,6 +8,7 @@ module
 
 public import PolyFun.Realizability.Quantitative.Strength
 public import PolyFun.PFunctor.Dynamical.DynComputation.WrapState
+public import PolyFun.PFunctor.Free.WP.Charge
 
 /-!
 # Quantitative substitution of one-query stateful handlers
@@ -21,12 +22,12 @@ stateful lens `L : StateLens p r σ` that carries executable code
 
 The product machine is `DynComputation.wrapState`, with state `R.State × σ`.
 
-Every product step is one adversary step, so the trace correspondence is one-to-one
-(`exists_source_trace`). Queries are preserved exactly, answer contracts transfer along the lens,
-and the work of a product step is bounded by the adversary step plus the handler's per-call work
-and structural carry. The flattened `update?` must recompute the adversary's readout to know which
-query is pending, so the adversary's readout work is charged twice and the bound doubles the
-adversary's work (`ExecutionCost.handled`).
+Every product step is one adversary step: each conforming product trace has a source trace of
+the adversary of the same length (`exists_source_trace`). Queries are preserved exactly, answer
+contracts transfer along the lens, and the work of a product step is bounded by the adversary
+step plus the handler's per-call work and structural carry. The flattened `update?` must
+recompute the adversary's readout to know which query is pending, so the adversary's readout work
+is charged twice and the bound doubles the adversary's work (`ExecutionCost.handled`).
 
 ## Main results
 
@@ -41,7 +42,11 @@ adversary's work (`ExecutionCost.handled`).
 * `WrapStateCostCertificate.ofLaws` and `RunsWithinUnder.wrapState_of_laws`: under the cost laws,
   the certificate holds from handler invariants along conforming product runs, namely a
   handler-state size bound, per-call work bounds for the lens code and a per-step inner-traffic
-  bound.
+  bound. The structural primitives charged are the named counts `wrapStatePullCount`,
+  `wrapStateStepCount` and `wrapStateUpdateCount`.
+* `StateLens.wpFold_charge_mapFreeM_le`: the program-side counterpart. Under any per-position
+  charge on `r`, the substituted program costs at most the source program with each call charged
+  the worst case of its forwarded query.
 -/
 
 @[expose] public section
@@ -258,15 +263,21 @@ structure WrapStateCostCertificate (R : QuantitativeRealization Q bd)
   carry : A × σ → ExecutionCost.Carry
   /-- Input-indexed per-step inner traffic allowance. -/
   traffic : A × σ → ℕ
+  /-- Product initialization costs the adversary's plus the initialization carry. -/
   init_le : ∀ input,
     Q.cost (R.wrapState stateRep posRep idxRep hL).initCode input ≤
       Q.cost R.initCode input.1 + (carry input).init
+  /-- At a conformingly reachable product state, the product readout costs the adversary's
+  readout plus the readout carry. -/
   head_le : ∀ input {state : R.machine.State × σ}
     (pre : (R.wrapState stateRep posRep idxRep hL).ExecutionTrace
       ((R.wrapState stateRep posRep idxRep hL).machine.init input) state),
     pre.Conforms allowsR →
       Q.cost (R.wrapState stateRep posRep idxRep hL).headCode state ≤
         Q.cost R.headCode state.1 + (carry input).head
+  /-- At a conformingly reachable product state with a pending query, the product transition on an
+  allowed inner answer costs the adversary's transition, its recomputed readout, and the transition
+  carry. -/
   update_le : ∀ input {state : R.machine.State × σ}
     (pre : (R.wrapState stateRep posRep idxRep hL).ExecutionTrace
       ((R.wrapState stateRep posRep idxRep hL).machine.init input) state),
@@ -278,6 +289,7 @@ structure WrapStateCostCertificate (R : QuantitativeRealization Q bd)
                 (state, ⟨L.pos (position, state.2), answer⟩) ≤
               Q.cost R.updateCode (state.1, ⟨position, L.answer (position, state.2) answer⟩) +
                 Q.cost R.headCode state.1 + (carry input).update
+  /-- The forwarded query and the tagged inner answer fit the per-step traffic allowance. -/
   traffic_le : ∀ input {state : R.machine.State × σ}
     (pre : (R.wrapState stateRep posRep idxRep hL).ExecutionTrace
       ((R.wrapState stateRep posRep idxRep hL).machine.init input) state),
@@ -287,12 +299,14 @@ structure WrapStateCostCertificate (R : QuantitativeRealization Q bd)
           ∀ answer, allowsR (L.pos (position, state.2)) answer →
             Q.size posRep (L.pos (position, state.2)) +
               Q.size idxRep ⟨L.pos (position, state.2), answer⟩ ≤ traffic input
+  /-- The encoded product state is the adversary's plus the state-size carry. -/
   state_le : ∀ input {state : R.machine.State × σ}
     (pre : (R.wrapState stateRep posRep idxRep hL).ExecutionTrace
       ((R.wrapState stateRep posRep idxRep hL).machine.init input) state),
     pre.Conforms allowsR →
       Q.size (R.wrapState stateRep posRep idxRep hL).state state ≤
         Q.size R.state state.1 + (carry input).state
+  /-- The encoded product readout is the adversary's plus the readout-size carry. -/
   headSize_le : ∀ input {state : R.machine.State × σ}
     (pre : (R.wrapState stateRep posRep idxRep hL).ExecutionTrace
       ((R.wrapState stateRep posRep idxRep hL).machine.init input) state),
@@ -423,6 +437,31 @@ theorem RunsWithinUnder.wrapState {R : QuantitativeRealization Q bd}
     cases hsig
     exact progress _ _ (h.traceProgress input.1 source hconf hR)
 
+/-! ### Conformance transport without a cost certificate -/
+
+/-- Every conforming product trace has a conforming source trace of `R` of the same length. -/
+theorem exists_source_conforms {R : QuantitativeRealization Q bd}
+    {stateRep : C.Str σ} {posRep : C.Str r.A} {idxRep : C.Str r.Idx} {L : StateLens p r σ}
+    {hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep}
+    {allowsP : ∀ position, p.B position → Prop} {allowsR : ∀ position, r.B position → Prop}
+    (contract : ∀ position state answer, allowsR (L.pos (position, state)) answer →
+      allowsP position (L.answer (position, state) answer))
+    {start finish : (R.wrapState stateRep posRep idxRep hL).machine.State}
+    (trace : (R.wrapState stateRep posRep idxRep hL).ExecutionTrace start finish)
+    (htrace : trace.Conforms allowsR) :
+    ∃ source : R.ExecutionTrace start.1 finish.1, source.Conforms allowsP ∧
+      source.length = trace.length := by
+  induction trace with
+  | nil state => exact ⟨.nil state.1, trivial, rfl⟩
+  | @query state position next finish view_eq direction tail ih =>
+      obtain ⟨source, sourceNext, hR, hsig⟩ :=
+        R.machine.exists_view_eq_query_of_wrapState L view_eq
+      cases hsig
+      obtain ⟨tailSource, hconf, hlength⟩ := ih htrace.2
+      exact ⟨.query hR (L.answer (source, state.2) direction) tailSource,
+        ⟨contract _ _ _ htrace.1, hconf⟩, by
+          simp only [QuantitativeRealization.ExecutionTrace.length, hlength]⟩
+
 /-! ### Per-step costs under cost laws
 
 The product step is `R`'s step, plus a recomputed `R` readout in the transition, plus the
@@ -435,8 +474,28 @@ section Laws
 variable [CC : Q.HasCompositionCost] [PC : Q.HasProdCost] [SC : Q.HasSumCost]
   [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost]
 
+/-- Structural primitives charged by `wrapStatePull` beyond the adversary's readout and `onPull`:
+two `pairRight`s, the glue into `onPull`, the outer pairing, and two projections with their
+glue. -/
+def wrapStatePullCount : ℕ := 2 * QuantitativeStepClass.pairRightCount + 5
+
+/-- Structural primitives charged by `wrapStateStep` beyond the adversary's transition: `rotate`,
+one glue, and `carryUpdate`. -/
+def wrapStateStepCount : ℕ :=
+  QuantitativeStepClass.exchangeCount + 1 + QuantitativeStepClass.carryUpdateCount
+
+/-- Structural primitives charged by a product transition beyond the adversary's transition and
+readout and `onPull`: the pullback half, one glue, the contextual bind, and the stepping half. -/
+def wrapStateUpdateCount : ℕ := wrapStatePullCount + 2 + wrapStateStepCount
+
+theorem wrapStatePullCount_eq : wrapStatePullCount = 13 := rfl
+
+theorem wrapStateStepCount_eq : wrapStateStepCount = 27 := rfl
+
+theorem wrapStateUpdateCount_eq : wrapStateUpdateCount = 42 := rfl
+
 omit [SC : Q.HasSumCost] [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost] in
-/-- Product initialization costs `R`'s plus four structural primitives. -/
+/-- Product initialization costs `R`'s plus `pairRightCount` structural primitives. -/
 theorem cost_initCode_wrapState_le (R : QuantitativeRealization Q bd)
     (hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep) (input : A) (state : σ) :
     Q.cost (R.wrapState stateRep posRep idxRep hL).initCode (input, state) ≤
@@ -445,14 +504,15 @@ theorem cost_initCode_wrapState_le (R : QuantitativeRealization Q bd)
         CC.overhead (Q.size bd.input input) :=
   QuantitativeStepClass.cost_pairRight_le Q R.initCode input state
 
-/-- A product readout costs `R`'s readout, `onPos` when `R` exposes a query, and at most ten
-structural primitives. -/
+/-- A product readout costs `R`'s readout, `onPos` when `R` exposes a query, and at most
+`carryReadoutWithCount` structural primitives. -/
 theorem cost_headCode_wrapState_le (R : QuantitativeRealization Q bd)
     (hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep) (s : R.machine.State)
     (st : σ) :
     Q.cost (R.wrapState stateRep posRep idxRep hL).headCode (s, st) ≤ Q.cost R.headCode s +
       (R.machine.head s).elim (fun _ ↦ 0) (fun position ↦ Q.cost hL.onPos (position, st)) +
-      10 * QuantitativeStepClass.structOverhead Q (Q.size R.state s +
+      QuantitativeStepClass.carryReadoutWithCount * QuantitativeStepClass.structOverhead Q
+        (Q.size R.state s +
         Q.size bd.head (R.machine.head s) + Q.size stateRep st +
         Q.size (bd.withHandler stateRep posRep idxRep).head
           ((R.wrapState stateRep posRep idxRep hL).machine.head (s, st)) +
@@ -460,19 +520,23 @@ theorem cost_headCode_wrapState_le (R : QuantitativeRealization Q bd)
   change Q.cost ((QuantitativeStepClass.carryReadoutWith Q R.headCode hL.onPos).castFunction _)
     (s, st) ≤ _
   rw [QuantitativeStepClass.Realizer.cost_castFunction]
-  change _ ≤ _ + _ + 10 * QuantitativeStepClass.structOverhead Q (_ + _ + _ +
+  change _ ≤ _ + _ + QuantitativeStepClass.carryReadoutWithCount *
+    QuantitativeStepClass.structOverhead Q (_ + _ + _ +
     Q.size (S.sum (P.prod bd.out stateRep) posRep) ((R.machine.wrapState L).head (s, st)) + _ + _)
   rw [head_wrapState]
   exact QuantitativeStepClass.cost_carryReadoutWith_le Q R.headCode hL.onPos s st
 
-/-- The pullback half costs `R`'s readout, `onPull`, and thirteen structural primitives. -/
+/-- The pullback half costs `R`'s readout, `onPull`, and `wrapStatePullCount` structural
+primitives. -/
 theorem cost_wrapStatePull_le (R : QuantitativeRealization Q bd)
     (hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep) (s : R.machine.State)
     (st : σ) (j : r.Idx) :
     Q.cost (R.wrapStatePull hL) ((s, st), j) ≤
       Q.cost R.headCode s + Q.cost hL.onPull ((R.machine.head s, st), j) +
-        13 * QuantitativeStepClass.structOverhead Q (Q.size R.state s + Q.size stateRep st +
-          Q.size bd.head (R.machine.head s) + Q.size idxRep j + 2 * PC.sizeOverhead) := by
+        wrapStatePullCount * QuantitativeStepClass.structOverhead Q (Q.size R.state s +
+          Q.size stateRep st + Q.size bd.head (R.machine.head s) + Q.size idxRep j +
+            2 * PC.sizeOverhead) := by
+  rw [wrapStatePullCount_eq]
   set N := Q.size R.state s + Q.size stateRep st + Q.size bd.head (R.machine.head s) +
     Q.size idxRep j + 2 * PC.sizeOverhead with hN
   unfold wrapStatePull
@@ -514,13 +578,15 @@ theorem cost_wrapStatePull_le (R : QuantitativeRealization Q bd)
       omega)
   omega
 
-/-- The stepping half costs `R`'s transition and twenty-seven structural primitives. -/
+/-- The stepping half costs `R`'s transition and `wrapStateStepCount` structural primitives. -/
 theorem cost_wrapStateStep_le (R : QuantitativeRealization Q bd) (stateRep : C.Str σ)
     (i : p.Idx) (st' : σ) (s : R.machine.State) {s' : R.machine.State}
     (h : R.machine.update? (s, i) = some s') :
     Q.cost (R.wrapStateStep stateRep) ((i, st'), s) ≤ Q.cost R.updateCode (s, i) +
-      27 * QuantitativeStepClass.structOverhead Q (Q.size R.state s + Q.size R.state s' +
-        Q.size stateRep st' + Q.size bd.idx i + 2 * PC.sizeOverhead + OC.sizeOverhead) := by
+      wrapStateStepCount * QuantitativeStepClass.structOverhead Q (Q.size R.state s +
+        Q.size R.state s' + Q.size stateRep st' + Q.size bd.idx i + 2 * PC.sizeOverhead +
+          OC.sizeOverhead) := by
+  rw [wrapStateStepCount_eq]
   set N := Q.size R.state s + Q.size R.state s' + Q.size stateRep st' + Q.size bd.idx i +
     2 * PC.sizeOverhead + OC.sizeOverhead with hN
   unfold wrapStateStep
@@ -549,7 +615,7 @@ theorem cost_wrapStateStep_le (R : QuantitativeRealization Q bd) (stateRep : C.S
   omega
 
 /-- A product transition costs `R`'s transition, a recomputed `R` readout, `onPull`, and at most
-forty-two structural primitives. -/
+`wrapStateUpdateCount` structural primitives. -/
 theorem cost_updateCode_wrapState_le (R : QuantitativeRealization Q bd)
     (hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep) (s : R.machine.State)
     (st : σ) (j : r.Idx) {i : p.Idx} {st' : σ} {s' : R.machine.State}
@@ -558,9 +624,11 @@ theorem cost_updateCode_wrapState_le (R : QuantitativeRealization Q bd)
     Q.cost (R.wrapState stateRep posRep idxRep hL).updateCode ((s, st), j) ≤
       Q.cost R.updateCode (s, i) + Q.cost R.headCode s +
         Q.cost hL.onPull ((R.machine.head s, st), j) +
-        42 * QuantitativeStepClass.structOverhead Q (Q.size R.state s + Q.size R.state s' +
-          Q.size stateRep st + Q.size stateRep st' + Q.size bd.head (R.machine.head s) +
-          Q.size bd.idx i + Q.size idxRep j + 2 * PC.sizeOverhead + OC.sizeOverhead) := by
+        wrapStateUpdateCount * QuantitativeStepClass.structOverhead Q (Q.size R.state s +
+          Q.size R.state s' + Q.size stateRep st + Q.size stateRep st' +
+          Q.size bd.head (R.machine.head s) + Q.size bd.idx i + Q.size idxRep j +
+          2 * PC.sizeOverhead + OC.sizeOverhead) := by
+  rw [wrapStateUpdateCount_eq]
   set N := Q.size R.state s + Q.size R.state s' + Q.size stateRep st + Q.size stateRep st' +
     Q.size bd.head (R.machine.head s) + Q.size bd.idx i + Q.size idxRep j +
     2 * PC.sizeOverhead + OC.sizeOverhead with hN
@@ -574,9 +642,11 @@ theorem cost_updateCode_wrapState_le (R : QuantitativeRealization Q bd)
   dsimp only at hcomp hglue
   rw [hpull] at hcomp hglue
   have hpullCost := cost_wrapStatePull_le R hL s st j
+  rw [wrapStatePullCount_eq] at hpullCost
   have hbind := OC.cost_bindContext_le (R.wrapStateStep stateRep) (some (i, st'), s)
   simp only [Option.elim_some] at hbind
   have hstep := cost_wrapStateStep_le R stateRep i st' s hupdate
+  rw [wrapStateStepCount_eq] at hstep
   have hm1 := QuantitativeStepClass.monotone_structOverhead Q
     (show Q.size R.state s + Q.size stateRep st + Q.size bd.head (R.machine.head s) +
       Q.size idxRep j + 2 * PC.sizeOverhead ≤ N by omega)
@@ -594,52 +664,21 @@ theorem cost_updateCode_wrapState_le (R : QuantitativeRealization Q bd)
       omega)
   omega
 
-end Laws
-
-/-! ### Conformance transport without a cost certificate -/
-
-/-- Every conforming product trace has a conforming source trace of `R` of the same length. -/
-theorem exists_source_conforms {R : QuantitativeRealization Q bd}
-    {stateRep : C.Str σ} {posRep : C.Str r.A} {idxRep : C.Str r.Idx} {L : StateLens p r σ}
-    {hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep}
-    {allowsP : ∀ position, p.B position → Prop} {allowsR : ∀ position, r.B position → Prop}
-    (contract : ∀ position state answer, allowsR (L.pos (position, state)) answer →
-      allowsP position (L.answer (position, state) answer))
-    {start finish : (R.wrapState stateRep posRep idxRep hL).machine.State}
-    (trace : (R.wrapState stateRep posRep idxRep hL).ExecutionTrace start finish)
-    (htrace : trace.Conforms allowsR) :
-    ∃ source : R.ExecutionTrace start.1 finish.1, source.Conforms allowsP ∧
-      source.length = trace.length := by
-  induction trace with
-  | nil state => exact ⟨.nil state.1, trivial, rfl⟩
-  | @query state position next finish view_eq direction tail ih =>
-      obtain ⟨source, sourceNext, hR, hsig⟩ :=
-        R.machine.exists_view_eq_query_of_wrapState L view_eq
-      cases hsig
-      obtain ⟨tailSource, hconf, hlength⟩ := ih htrace.2
-      exact ⟨.query hR (L.answer (source, state.2) direction) tailSource,
-        ⟨contract _ _ _ htrace.1, hconf⟩, by
-          simp only [QuantitativeRealization.ExecutionTrace.length, hlength]⟩
-
 /-! ### Discharging the certificate from cost laws and handler invariants -/
-
-section Laws
-
-variable [CC : Q.HasCompositionCost] [PC : Q.HasProdCost] [SC : Q.HasSumCost]
-  [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost]
 
 /-- The carry charged by the cost laws for a one-query stateful handler, from the adversary's
 bound, the input size, a handler-state size bound, per-call handler work for `onPos` and
 `onPull`, and a per-step inner-traffic bound. -/
 def handlerLawCarry (bound : ExecutionCost)
     (inputSize stateSize posWork pullWork innerTraffic : ℕ) : ExecutionCost.Carry where
-  init := 4 * QuantitativeStepClass.structOverhead Q (inputSize + stateSize + PC.sizeOverhead)
-  head := posWork + 10 * QuantitativeStepClass.structOverhead Q (bound.peakStateSize +
-    2 * bound.peakHeadSize + 2 * stateSize + innerTraffic + 2 * PC.sizeOverhead +
-      2 * SC.sizeOverhead)
-  update := pullWork + 42 * QuantitativeStepClass.structOverhead Q (2 * bound.peakStateSize +
-    2 * stateSize + bound.peakHeadSize + bound.traffic + innerTraffic + 2 * PC.sizeOverhead +
-      OC.sizeOverhead)
+  init := QuantitativeStepClass.pairRightCount * QuantitativeStepClass.structOverhead Q
+    (inputSize + stateSize + PC.sizeOverhead)
+  head := posWork + QuantitativeStepClass.carryReadoutWithCount *
+    QuantitativeStepClass.structOverhead Q (bound.peakStateSize + 2 * bound.peakHeadSize +
+      2 * stateSize + innerTraffic + 2 * PC.sizeOverhead + 2 * SC.sizeOverhead)
+  update := pullWork + wrapStateUpdateCount * QuantitativeStepClass.structOverhead Q
+    (2 * bound.peakStateSize + 2 * stateSize + bound.peakHeadSize + bound.traffic + innerTraffic +
+      2 * PC.sizeOverhead + OC.sizeOverhead)
   state := stateSize + PC.sizeOverhead
   headSize := stateSize + innerTraffic + PC.sizeOverhead + SC.sizeOverhead
 
@@ -697,7 +736,8 @@ def WrapStateCostCertificate.ofLaws {R : QuantitativeRealization Q bd}
         Q.size bd.input a + stateSize (a, st) + PC.sizeOverhead by omega)
     have o2 := QuantitativeStepClass.composition_overhead_le Q
       (show Q.size bd.input a ≤ Q.size bd.input a + stateSize (a, st) + PC.sizeOverhead by omega)
-    simp only [handlerLawCarry]
+    simp only [handlerLawCarry, QuantitativeStepClass.pairRightCount_eq,
+      QuantitativeStepClass.carryReadoutWithCount_eq, wrapStateUpdateCount_eq]
     omega
   head_le := by
     intro input state pre hpre
@@ -707,6 +747,7 @@ def WrapStateCostCertificate.ofLaws {R : QuantitativeRealization Q bd}
     have hh := h.size_head_le input.1 source hsource
     have hst := state_le input pre hpre
     have hcost := cost_headCode_wrapState_le R hL s st
+    rw [QuantitativeStepClass.carryReadoutWithCount_eq] at hcost
     have hsize := size_head_wrapState_le (Q := Q) (bd := bd) (stateRep := stateRep)
       (posRep := posRep) (L := L) R.machine s st
     dsimp only at hs hh hst
@@ -736,7 +777,8 @@ def WrapStateCostCertificate.ofLaws {R : QuantitativeRealization Q bd}
         (bound input.1).peakStateSize + 2 * (bound input.1).peakHeadSize +
           2 * stateSize input + innerTraffic input + 2 * PC.sizeOverhead +
             2 * SC.sizeOverhead by omega)
-    simp only [handlerLawCarry]
+    simp only [handlerLawCarry, QuantitativeStepClass.pairRightCount_eq,
+      QuantitativeStepClass.carryReadoutWithCount_eq, wrapStateUpdateCount_eq]
     omega
   update_le := by
     intro input state pre hpre position next hview answer hanswer
@@ -762,6 +804,7 @@ def WrapStateCostCertificate.ofLaws {R : QuantitativeRealization Q bd}
       rw [dite_eq_left rfl]
     have hcost := cost_updateCode_wrapState_le R hL s st ⟨L.pos (position, st), answer⟩ hpull
       (R.machine.update?_of_view_query hview _)
+    rw [wrapStateUpdateCount_eq] at hcost
     have hpullWork := pull_le input pre hpre hview answer hanswer
     have htraffic := traffic_le input pre hpre hview answer hanswer
     dsimp only at hs hh hst hpullWork htraffic
@@ -775,7 +818,8 @@ def WrapStateCostCertificate.ofLaws {R : QuantitativeRealization Q bd}
         2 * (bound input.1).peakStateSize + 2 * stateSize input + (bound input.1).peakHeadSize +
           (bound input.1).traffic + innerTraffic input + 2 * PC.sizeOverhead +
             OC.sizeOverhead by omega)
-    simp only [handlerLawCarry]
+    simp only [handlerLawCarry, QuantitativeStepClass.pairRightCount_eq,
+      QuantitativeStepClass.carryReadoutWithCount_eq, wrapStateUpdateCount_eq]
     omega
   traffic_le := by
     intro input state pre hpre position next hview answer hanswer
@@ -786,7 +830,8 @@ def WrapStateCostCertificate.ofLaws {R : QuantitativeRealization Q bd}
     obtain ⟨s, st⟩ := state
     have hsize := PC.size_prod_le R.state stateRep s st
     dsimp only at hst
-    simp only [handlerLawCarry]
+    simp only [handlerLawCarry, QuantitativeStepClass.pairRightCount_eq,
+      QuantitativeStepClass.carryReadoutWithCount_eq, wrapStateUpdateCount_eq]
     change Q.size (P.prod R.state stateRep) (s, st) ≤ _
     omega
   headSize_le := by
@@ -809,7 +854,8 @@ def WrapStateCostCertificate.ofLaws {R : QuantitativeRealization Q bd}
         dsimp only at this
         simp only [Sum.elim_inr]
         omega
-    simp only [handlerLawCarry]
+    simp only [handlerLawCarry, QuantitativeStepClass.pairRightCount_eq,
+      QuantitativeStepClass.carryReadoutWithCount_eq, wrapStateUpdateCount_eq]
     change Q.size (S.sum (P.prod bd.out stateRep) posRep)
       ((R.machine.wrapState L).head (s, st)) ≤ _
     omega
@@ -870,5 +916,36 @@ end WrapState
 end QuantitativeRealization
 
 end DynSystem.DynComputation
+
+/-! ## The program-side counterpart -/
+
+namespace StateLens
+
+variable {p r : PFunctor.{u, u}} {σ : Type u}
+
+/-- **Program-side substitution cost.** Under any per-position charge `c` on the inner interface,
+substituting a program along a stateful lens costs at most the source program with each call at
+`a` charged the worst forwarded query over handler states. With unit charges, the substituted
+program makes at most as many queries as the source on every branch. -/
+theorem wpFold_charge_mapFreeM_le (L : StateLens p r σ) (c : r.A → ℕ∞) {β : Type u}
+    (x : FreeM p β) (state : σ) :
+    FreeM.wpFold (OpSpec.charge c) (L.mapFreeM x state) (fun _ => 0) ≤
+      FreeM.wpFold (OpSpec.charge fun a => ⨆ st, c (L.pos (a, st))) x (fun _ => 0) := by
+  induction x generalizing state with
+  | pure value => exact le_rfl
+  | lift_bind position next ih =>
+    change c (L.pos (position, state)) +
+        (⨆ answer, FreeM.wpFold (OpSpec.charge c)
+          (L.mapFreeM (next (L.answer (position, state) answer))
+            (L.update (position, state) answer)) fun _ => 0) ≤
+      (⨆ st, c (L.pos (position, st))) +
+        ⨆ b, FreeM.wpFold (OpSpec.charge fun a => ⨆ st, c (L.pos (a, st))) (next b) fun _ => 0
+    gcongr
+    · exact le_iSup (fun st => c (L.pos (position, st))) state
+    · exact iSup_le fun answer => (ih _ _).trans
+        (le_iSup (fun b => FreeM.wpFold (OpSpec.charge fun a => ⨆ st, c (L.pos (a, st)))
+          (next b) fun _ => 0) _)
+
+end StateLens
 
 end PFunctor

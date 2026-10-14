@@ -16,13 +16,14 @@ A `StateLens p r σ` is a stateful handler that answers every outer `p`-query wi
 `r`-query. At handler state `s`, the outer query `x` is forwarded as `pos (x, s)`, and the inner
 answer `e` determines the outer answer `answer (x, s) e` and the next handler state
 `update (x, s) e`. Its data is exactly that of a lens from the tensor of `p` with the state monomial
-`σy^σ` to `r`. (`Lens.State`, a get/put lens on states, is unrelated.)
+`σy^σ` to `r` (`StateLens.equivLens`). (`Lens.State`, a get/put lens on states, is unrelated.)
 
 Forwarding, logging, counting and relabelling handlers have this shape. A handler that may answer
 without an inner query, such as a cache hit, or with several does not.
 
 ## Main definitions and results
 
+* `StateLens.equivLens`: stateful lenses are lenses `p ⊗ σy^σ → r`.
 * `StateLens.mapFreeM` and `StateLens.mapResumption`: stateful substitution on programs and
   resumptions, related by `toResumption_mapFreeM`.
 * `StateLens.toStateful` and `mapFreeM_eq_run`: substitution along a stateful lens is
@@ -50,6 +51,16 @@ structure StateLens (p r : PFunctor.{u, u}) (σ : Type u) where
 namespace StateLens
 
 variable {p r : PFunctor.{u, u}} {σ : Type u}
+
+/-- A stateful lens is a lens from the tensor of `p` with the state monomial `σy^σ` to `r`: the
+forward map issues the inner query, and the backward map returns the outer answer together with the
+next handler state. -/
+def equivLens : StateLens p r σ ≃ Lens (tensor p (selfMonomial σ)) r where
+  toFun L := ⟨L.pos, fun query answer ↦ (L.answer query answer, L.update query answer)⟩
+  invFun l := ⟨l.toFunA, fun query answer ↦ (l.toFunB query answer).1,
+    fun query answer ↦ (l.toFunB query answer).2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
 
 /-- Stateful substitution of a free program along a stateful lens. -/
 def mapFreeM (L : StateLens p r σ) {β : Type u} : FreeM p β → σ → FreeM r (β × σ)

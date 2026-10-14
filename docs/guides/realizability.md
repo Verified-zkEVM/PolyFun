@@ -399,8 +399,13 @@ a backend that copies both results into one pair encoding cannot meet.
 A reduction often runs its adversary against a stateful handler that forwards
 each call, logging or counting along the way. `StateLens p r σ`
 (`PFunctor/Handler/StateLens.lean`) is such a handler when it answers every outer
-query with exactly one inner query; substitution along it is
-`Handler.Stateful.run` of its handler (`mapFreeM_eq_run`).
+query with exactly one inner query. Its data is that of a lens
+`p ⊗ σy^σ → r` (`StateLens.equivLens`), and substitution along it is
+`Handler.Stateful.run` of its handler (`mapFreeM_eq_run`). On the program side,
+`StateLens.wpFold_charge_mapFreeM_le` bounds the worst-case charge of a
+substituted program by the source program's, with each call charged its
+forwarded query's worst case, the stateful counterpart of
+`wpFold_charge_liftM_le`.
 `DynComputation.wrapState` runs a machine against it as one product machine, and
 `QuantitativeRealization.wrapState` (`Quantitative/Handler.lean`) assembles that
 machine's code from the adversary's code and the lens code
@@ -420,8 +425,11 @@ product transition recomputes the adversary's readout to know which query is
 pending. `RunsWithinUnder.wrapState_of_laws` discharges the certificate from the
 cost laws and from handler invariants along conforming product runs: a
 handler-state size bound, per-call work bounds for the lens code, and a per-step
-inner-traffic bound. A handler that may answer without an inner query, such as a
-cache hit, needs silent steps and is not covered.
+inner-traffic bound. Its carry `handlerLawCarry` charges the named counts
+`wrapStatePullCount`, `wrapStateStepCount` and `wrapStateUpdateCount`, which are
+built from the counts of the combinators the product code is assembled from. A
+handler that may answer without an inner query, such as a cache hit, needs
+silent steps and is not covered.
 
 `Quantitative/Polynomial.lean` supplies `FirstOrderPolynomial` and
 `PolyRealizer`, which retains one executable realizer plus work and encoded
@@ -845,6 +853,11 @@ code for the host operations, bounded administrative normalization, encoded stat
 actual work costs still require executable certificates. In particular, a syntactic query bound
 alone does not establish strict PPT.
 
+- **Handler substitution charges the adversary's readout twice.** The product transition of
+  `QuantitativeRealization.wrapState` recomputes the adversary's readout to learn which query is
+  pending, so `ExecutionCost.handled` doubles the adversary's work. Removing the factor needs
+  either a decoder recovering the outer query from the forwarded one or a cached readout in the
+  product state; neither is part of the current lens code.
 - **Query bounds do not charge pure computation.** `FreeM.IsRollBound` holds of every `pure`
   leaf, so `pure (f x)` meets every budget whatever Lean function `f` is. A program with no
   queries can therefore solve any search problem posed in its input, by brute force when the

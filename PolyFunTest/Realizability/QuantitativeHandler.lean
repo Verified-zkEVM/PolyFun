@@ -16,8 +16,8 @@ A counting lens forwards each Boolean query unchanged and increments a natural-n
 
 On the constant-cost fixture:
 - substitution along the lens is `Handler.Stateful.run` of its handler, and computes the counter;
-- the product machine exposes the forwarded query, accepts the matching answer with the counter
-  incremented, and rejects a mismatched tag;
+- the product machine exposes the forwarded query and accepts the matching answer with the counter
+  incremented;
 - the one-query realization's exact bound transfers to the product machine under the cost laws,
   with the adversary's query count and concrete work;
 - when the inner contract allows no answer, the product machine runs within no bound at all, so
@@ -43,8 +43,8 @@ example (program : FreeM boolResponse Bool) (state : ℕ) :
     countingLens.mapFreeM program state = countingLens.toStateful.run program state :=
   countingLens.mapFreeM_eq_run program state
 
-/- The product machine exposes the forwarded query, takes the matching answer to the next state
-with the counter incremented, and rejects nothing it can answer. -/
+/- The product machine exposes the forwarded query and takes the matching answer to the next
+state with the counter incremented. -/
 example : (firstQueryMachine.wrapState countingLens).head (none, 3) = Sum.inr PUnit.unit := by
   rw [head_wrapState]
   rfl
