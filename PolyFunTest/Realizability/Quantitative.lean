@@ -8,7 +8,6 @@ module
 
 public import PolyFun.Realizability.Instances
 public import PolyFun.Realizability.Quantitative
-
 public import PolyFun.Realizability.Quantitative.Reference
 
 /-!
@@ -26,6 +25,21 @@ open DynSystem.DynComputation
 
 /-- Shared zero-cost reference model for structural resource checks. -/
 abbrev zeroBackend := QuantitativeStepClass.Reference.zero
+
+/-- Bundled exact composition data for the zero model. -/
+def zeroExactComposition : zeroBackend.ExactComposition where
+  identity _ := PUnit.unit
+  compose _ _ := PUnit.unit
+  composeOverhead _ _ _ := 0
+  cost_compose_eq _ _ _ := rfl
+
+/-- The bundle forgets to a sound composition structure. -/
+example : zeroBackend.HasComposition := zeroExactComposition.toHasComposition
+
+/-- The bundle restores the exact refinement for that structure. -/
+example : letI := zeroExactComposition.toHasComposition
+    zeroBackend.HasExactComposition :=
+  zeroExactComposition.toHasExactComposition
 
 /-- An interface exposing one query with no possible typed response. -/
 abbrev emptyResponse : PFunctor := PFunctor.mk PUnit fun _ ↦ PEmpty

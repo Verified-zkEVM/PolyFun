@@ -75,7 +75,7 @@ instance : zero.IsDistributive where
 
 /-- Every backend maps to the arithmetic model while preserving its sizes and local charges. -/
 noncomputable def toMetered {C : StepClass.{u, v}} (Q : QuantitativeStepClass.{u, v, w} C) :
-    Q.Simulates metered (fun a ↦ Q.size a) where
+    Q.SimulatedBy metered (fun a ↦ Q.size a) where
   code r := Q.cost r
   sizeBound := Polynomial.X
   size_le _ _ := by simp [metered]

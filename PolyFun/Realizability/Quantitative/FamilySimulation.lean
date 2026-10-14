@@ -22,7 +22,7 @@ public section
 
 universe u v w v' w' x x'
 
-namespace PFunctor.QuantitativeStepClass.Simulates
+namespace PFunctor.QuantitativeStepClass.SimulatedBy
 
 variable {C₁ : StepClass.{u, v}} {C₂ : StepClass.{u, v'}}
   {Q₁ : QuantitativeStepClass.{u, v, w} C₁} {Q₂ : QuantitativeStepClass.{u, v', w'} C₂}
@@ -31,7 +31,7 @@ variable {C₁ : StepClass.{u, v}} {C₂ : StepClass.{u, v'}}
   {faithful₂ : ∀ {A : Type u}, C₂.Str A → Prop}
 
 /-- Uniform control of translated code size, separate from operational cost. -/
-structure DescriptionBound (S : Q₁.Simulates Q₂ str)
+structure DescriptionBound (S : Q₁.SimulatedBy Q₂ str)
     (M₁ : Q₁.DescriptionMeasure.{u, v, w, x} faithful₁)
     (M₂ : Q₂.DescriptionMeasure.{u, v', w', x'} faithful₂) where
   /-- A polynomial in source description size. -/
@@ -46,7 +46,7 @@ variable [Q₁.HasComposition] [Q₂.HasComposition]
 
 /-- Uniform canonical-time and advice control for a simulation. Operational cost control alone
 cannot constrain an arbitrarily widened target canonical envelope. -/
-structure FamilyBound (S : Q₁.Simulates Q₂ str)
+structure FamilyBound (S : Q₁.SimulatedBy Q₂ str)
     (PB₁ : M₁.PolynomialBackend) (PB₂ : M₂.PolynomialBackend)
     extends DescriptionBound S M₁ M₂ where
   /-- A polynomial in input length, source canonical time and source code size. -/
@@ -57,8 +57,12 @@ structure FamilyBound (S : Q₁.Simulates Q₂ str)
     (PB₂.timeOf (S.code r)).eval k ≤
       time.eval (k + (PB₁.timeOf r).eval (S.sizeLower.eval k) + M₁.descSize r)
 
-/-- Translate a whole family using uniform canonical-time and description comparisons. -/
-noncomputable def FamilyBound.famRealizer {S : Q₁.Simulates Q₂ str}
+/-- Translate a whole family using uniform canonical-time and description comparisons.
+
+The construction uses only the simulation's code translation and its lower size polynomial:
+`FamilyBound.time_le` and `DescriptionBound.desc_le` carry the substantive bounds, and the per-code
+laws `size_le`, `size_ge` and `cost_le` are not consulted. -/
+noncomputable def FamilyBound.famRealizer {S : Q₁.SimulatedBy Q₂ str}
     {PB₁ : M₁.PolynomialBackend} {PB₂ : M₂.PolynomialBackend}
     (h : FamilyBound S PB₁ PB₂)
     {A B : ℕ → Type u} {a : ∀ n, C₁.Str (A n)} {b : ∀ n, C₁.Str (B n)}
@@ -81,4 +85,4 @@ noncomputable def FamilyBound.famRealizer {S : Q₁.Simulates Q₂ str}
     rw [Polynomial.eval_comp]
     exact (h.desc_le (F.wit n)).trans (Polynomial.eval_le_eval (F.desc_le n))
 
-end PFunctor.QuantitativeStepClass.Simulates
+end PFunctor.QuantitativeStepClass.SimulatedBy

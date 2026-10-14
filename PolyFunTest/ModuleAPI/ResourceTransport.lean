@@ -24,10 +24,14 @@ universe u v w
 
 namespace PolyFunTest.ModuleAPI.ResourceTransport
 
-/-- Erasing arbitrary input sizes cannot satisfy the simulation's lower size comparison. -/
-example (q : Polynomial ℕ) : ¬∀ n : ℕ, n ≤ q.eval 0 := by
-  intro h
-  have := h (q.eval 0 + 1)
+open QuantitativeStepClass in
+/-- The size-free reference model cannot simulate the metered model: the lower size comparison
+would bound every metered size by one constant, `sizeLower.eval 0`. -/
+theorem not_simulatedBy_zero {str} :
+    IsEmpty (Reference.metered.{u}.SimulatedBy Reference.zero.{u, v, w} str) := by
+  refine ⟨fun S ↦ ?_⟩
+  have h := S.size_ge (A := ULift.{u} ℕ) (fun x ↦ x.down) ⟨S.sizeLower.eval 0 + 1⟩
+  change S.sizeLower.eval 0 + 1 ≤ S.sizeLower.eval 0 at h
   omega
 
 /-- The arithmetic reference model preserves a polynomial certificate across universes. -/
@@ -35,5 +39,10 @@ noncomputable example {C : StepClass.{u, v}} (Q : QuantitativeStepClass.{u, v, w
     {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B} (r : Q.PolyRealizer a b f) :
     QuantitativeStepClass.Reference.metered.PolyRealizer (Q.size a) (Q.size b) f :=
   (QuantitativeStepClass.Reference.toMetered Q).polyRealizer r
+
+/-- Simulations compose through ordinary imports, including with the identity simulation. -/
+noncomputable example {C : StepClass.{u, v}} (Q : QuantitativeStepClass.{u, v, w} C) :
+    Q.SimulatedBy QuantitativeStepClass.Reference.metered (fun a ↦ Q.size a) :=
+  (QuantitativeStepClass.SimulatedBy.id Q).comp (QuantitativeStepClass.Reference.toMetered Q)
 
 end PolyFunTest.ModuleAPI.ResourceTransport

@@ -692,14 +692,20 @@ standard model (reductions may be uncertifiable, never unsound), and the
 
 ## Transporting resource certificates
 
-[`Simulation.lean`](../../PolyFun/Realizability/Quantitative/Simulation.lean) translates codes
-without changing their semantic function. Size comparisons in both directions allow each
-`PolyRealizer` to be bounded in its target input size. The cost polynomial may depend on the
-source code, including its tape count. This does not by itself transport a uniform family.
+[`Simulation.lean`](../../PolyFun/Realizability/Quantitative/Simulation.lean) defines
+`Q₁.SimulatedBy Q₂ str`: every `Q₁` code translates to `Q₂` code with the same semantic
+function, so `Q₂` simulates `Q₁`. Simulations have an identity and compose
+(`SimulatedBy.id`, `SimulatedBy.comp`). Size comparisons in both directions allow each
+`PolyRealizer` to be bounded in its target input size; the lower comparison is what forbids a
+target that erases sizes (`PolyFunTest/ModuleAPI/ResourceTransport.lean` checks that the size-free
+`zero` model cannot simulate `metered`). The cost polynomial may depend on the source code,
+including its tape count. This does not by itself transport a uniform family.
 [`FamilySimulation.lean`](../../PolyFun/Realizability/Quantitative/FamilySimulation.lean)
 requires additional uniform description and canonical-time comparisons. Its time comparison
 permits polynomial dependence on source description size and controls the selected target
-envelope at every length, beyond just the lengths of actual inputs.
+envelope at every length, beyond just the lengths of actual inputs. `FamilyBound.famRealizer`
+uses only the code translation and the lower size polynomial: these two comparisons, not the
+per-code laws, carry the family bound.
 
 [`Reference.lean`](../../PolyFun/Realizability/Quantitative/Reference.lean) supplies the shared
 `metered` and `zero` arithmetic models. `toMetered` preserves any backend's charges and sizes.
