@@ -330,6 +330,7 @@ public import PolyFun.Realizability.Quantitative.Iteration
 public import PolyFun.Realizability.Quantitative.Polynomial
 public import PolyFun.Realizability.Quantitative.Prefix
 public import PolyFun.Realizability.Quantitative.QueryPolynomial
+public import PolyFun.Realizability.Quantitative.Recost
 public import PolyFun.Realizability.Quantitative.Reference
 public import PolyFun.Realizability.Quantitative.Resource
 public import PolyFun.Realizability.Quantitative.Simulation
