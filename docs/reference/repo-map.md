@@ -42,14 +42,23 @@ Example and test imports never flow back into production.
 | Two-party, multiparty, concurrent interaction | `Interaction/TwoParty`, `Multiparty`, `Concurrent` | [Interaction](../guides/interaction.md) |
 | General interfaces and directed boundaries | [Interface](../../PolyFun/Interaction/Interface.lean) | [Execution](../guides/execution.md) |
 | Executable reactive/request networks | `Interaction/Execution` | [Execution](../guides/execution.md) |
+| Activation budgets and work conservation | [Budget](../../PolyFun/Interaction/Execution/ReactiveNetwork/Budget.lean), [conservation](../../PolyFun/Interaction/Execution/ReactiveNetwork/Conserving.lean), [charged folds](../../PolyFun/Control/Monad/Support/Charged.lean), [process certificates](../../PolyFun/Interaction/Execution/ReactiveProcess/Conserving.lean), [import ledgers](../../PolyFun/Interaction/Execution/ReactiveNetwork/Import.lean), [input-relative bounds](../../PolyFun/Interaction/Execution/ReactiveNetwork/InputRelative.lean) | [Open systems](../guides/open-systems.md#reactive-execution-and-exact-behavior), [program logic](../guides/program-logic.md#charges-and-budgets) |
 | Open composition, contextual emulation, and observations | [OpenTheory](../../PolyFun/Interaction/Open/OpenTheory.lean), [OpenProcess](../../PolyFun/Interaction/Open/OpenProcess.lean) | [Open systems](../guides/open-systems.md) |
 | Support and weakest preconditions | [Ordered algebras](../../PolyFun/Control/Monad/Algebra.lean), [support](../../PolyFun/Control/Monad/Support.lean), [exact interpretations](../../PolyFun/Control/Monad/ExactWP.lean) | [Program logic](../guides/program-logic.md#exact-interpretations) |
-| Worst-case cost and query budgets | [Charges](../../PolyFun/PFunctor/Free/WP/Charge.lean) | [Program logic](../guides/program-logic.md#charges-and-budgets) |
+| Worst-case cost and query budgets | [Charges](../../PolyFun/PFunctor/Free/WP/Charge.lean); support-level [charged folds](../../PolyFun/Control/Monad/Support/Charged.lean) | [Program logic](../guides/program-logic.md#charges-and-budgets) |
 | Admissible implementations and resources | [Realizability](../../PolyFun/Realizability/Basic.lean), [quantitative certificates](../../PolyFun/Realizability/Quantitative.lean), [description measures](../../PolyFun/Realizability/Quantitative/Description.lean) | [Realizability](../guides/realizability.md) |
 
 `Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure.
 `Logic/` holds small logic helpers. `Complexity/` supplies resource-bound syntax;
 concrete machine complexity lives in the optional `ComplexityBackends` library.
+
+The quantitative realizability layer separates code-local certificates from run bounds.
+`Quantitative/QueryPolynomial.lean` uses `Complexity/SecondOrderPolynomial/NatPolynomial.lean`
+to specialize response-relative bounds. `Quantitative/Recost.lean` transports traces when
+charges change; `Simulation.lean` and `FamilySimulation.lean` handle backend changes with
+explicit size, time and description comparisons. `Reference.lean` contains unrestricted
+arithmetic models. The concrete unary pure-family bridge lives in
+`ComplexityBackends/CslibSingleTape/Uniform.lean`, outside the generic umbrella.
 
 ## Conceptual layering
 

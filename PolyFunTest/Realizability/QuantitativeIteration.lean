@@ -8,6 +8,8 @@ module
 
 public import PolyFun.Realizability.Quantitative.Iteration
 
+public import PolyFun.Realizability.Quantitative.Reference
+
 /-!
 # Bounded-iteration arithmetic regressions
 
@@ -23,19 +25,11 @@ namespace PFunctor.IterationTest
 
 open QuantitativeStepClass _root_.Complexity
 
-/-- Test representations explicitly select their natural-number size function. -/
-@[expose] def sizes : StepClass where
-  Str A := A → ℕ
-  Hom _ _ _ := True
-  id_mem _ := trivial
-  comp_mem _ _ := trivial
+/-- Shared size representations for arithmetic resource checks. -/
+abbrev sizes := Reference.sizes.{0}
 
-/-- Arithmetic-only fixture whose code records a cost on each input. -/
-@[expose] def metered : QuantitativeStepClass sizes where
-  Realizer {A} {_B} _ _ _ := A → ℕ
-  size rep value := rep value
-  cost code value := code value
-  admissible _ := trivial
+/-- Shared arithmetic reference model. -/
+abbrev metered := Reference.metered.{0}
 
 /-- Increment one state, paying its successor size. -/
 @[expose] def increment : metered.PolyRealizer id id Nat.succ where
@@ -79,7 +73,7 @@ example : metered.PolyRealizer inputSize id (fun value => Nat.succ^[value.1] val
 example (count initial i : ℕ) (hi : i ≤ count) :
     Nat.succ^[i] initial ≤ 2 * (count + initial + 1) := by
   have h := bounds.size_le count initial i hi
-  simpa [IterationCode.PolynomialBounds.stateSize, bounds, metered, inputSize,
+  simpa [IterationCode.PolynomialBounds.stateSize, bounds, metered, Reference.metered, inputSize,
     two_mul] using h
 
 /-- Size doubling cannot satisfy any fixed additive one-step growth allowance. -/

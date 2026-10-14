@@ -1,6 +1,7 @@
 module
 
 public import PolyFun.Complexity.SecondOrderPolynomial
+public import PolyFun.Complexity.SecondOrderPolynomial.NatPolynomial
 public import PolyFun.Control.Bisimulation
 public import PolyFun.Control.Coalgebra
 public import PolyFun.Control.Comonad.Basic
@@ -27,6 +28,7 @@ public import PolyFun.Control.Monad.Indexed
 public import PolyFun.Control.Monad.Iter
 public import PolyFun.Control.Monad.Iter.Instances
 public import PolyFun.Control.Monad.Support
+public import PolyFun.Control.Monad.Support.Charged
 public import PolyFun.Control.Monad.Support.Indexed
 public import PolyFun.Control.Monad.Support.Instances
 public import PolyFun.Control.Monad.Support.Loops
@@ -140,14 +142,21 @@ public import PolyFun.Interaction.Execution.ReactiveNetwork
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Assembly
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Behavior
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Budget
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Charge
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Conserving
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Credit
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Diagram
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Factorization
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Factorization.Right
 public import PolyFun.Interaction.Execution.ReactiveNetwork.HandledAssembly
 public import PolyFun.Interaction.Execution.ReactiveNetwork.HandledDiagram
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Import
+public import PolyFun.Interaction.Execution.ReactiveNetwork.InputRelative
+public import PolyFun.Interaction.Execution.ReactiveNetwork.Local
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Serial
 public import PolyFun.Interaction.Execution.ReactiveNetwork.Transport
 public import PolyFun.Interaction.Execution.ReactiveProcess
+public import PolyFun.Interaction.Execution.ReactiveProcess.Conserving
 public import PolyFun.Interaction.Execution.RequestNetwork
 public import PolyFun.Interaction.Execution.RequestNetwork.Serial
 public import PolyFun.Interaction.Execution.RequestNetwork.Transport
@@ -350,10 +359,15 @@ public import PolyFun.Realizability.Quantitative.Closure
 public import PolyFun.Realizability.Quantitative.Counting
 public import PolyFun.Realizability.Quantitative.Description
 public import PolyFun.Realizability.Quantitative.Family
+public import PolyFun.Realizability.Quantitative.FamilySimulation
 public import PolyFun.Realizability.Quantitative.Iteration
 public import PolyFun.Realizability.Quantitative.Polynomial
 public import PolyFun.Realizability.Quantitative.Prefix
+public import PolyFun.Realizability.Quantitative.QueryPolynomial
+public import PolyFun.Realizability.Quantitative.Recost
+public import PolyFun.Realizability.Quantitative.Reference
 public import PolyFun.Realizability.Quantitative.Resource
+public import PolyFun.Realizability.Quantitative.Simulation
 public import PolyFun.Realizability.Quantitative.TraceCost
 public import PolyFun.Realizability.Quantitative.WordClass
 public import PolyFun.Realizability.Representation

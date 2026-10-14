@@ -229,6 +229,59 @@ reject an everywhere-failing interpreter, and execute arbitrarily many productiv
 rounds between two actors with two-operation local reactions. That feedback network cannot
 have a global certificate, despite its bounded local reactions.
 
+[`Conserving`](../../PolyFun/Interaction/Execution/ReactiveNetwork/Conserving.lean) bounds weighted
+work, and through it termination, from per-node certificates.
+
+- **Charges.** A [`Charge`](../../PolyFun/Interaction/Execution/ReactiveNetwork/Charge.lean) weighs
+  each activation at the state where it fires. `runTokenCharged` and `runFIFOCharged` execute
+  exactly the activations of the unweighted runners and return the work. `runTokenOpen`
+  interleaves external inputs with token activations.
+- **Credit.** A [`CreditModel`](../../PolyFun/Interaction/Execution/ReactiveNetwork/Credit.lean)
+  attaches credit to packets. Senders pay `outbound`, receivers release `inbound`, routing never
+  creates credit (`route_le`), and the caller funds each external input.
+- **Certificates.** A `Conserving` certificate gives each node a potential on its own local states,
+  with the local obligation `pot' + charge + emitted ≤ pot + consumed`.
+- **Bounds.** `work_le_initial` bounds the work of every open token execution from the initial
+  state by the initial potentials plus the funded ingress credit, at every fuel.
+  `work_runFIFO_le` adds an exogenous allowance per delivery.
+- **The unit charge.** Conservation makes administrative activations free (finished no-ops and
+  blocked receives). The activation count of `elapsed` is therefore not certifiable, and
+  `Charge.productive` is the unit charge that is.
+- **Termination.** Given charges positive at unfinished focus activations and progress,
+  `Conserving.toTokenBudget` returns a `TokenBudgetCertificate` whose rank is twice the network
+  total, plus one while a finished non-environment node holds the focus.
+
+The [conservation tests](../../PolyFunTest/Interaction/Execution/ReactiveConservation.lean)
+recover the countdown's budget. They also bound a terminating counter/echo feedback loop by its
+initial credit, and prove that ping-pong admits no conserving certificate for any positive
+charge, credit model, or token invariant (an invariant preserved by token activation) that
+contains the initial state.
+
+Three constructions relate conservation to other certificates.
+
+- **Process certificates.** A
+  [`ProcessConserving`](../../PolyFun/Interaction/Execution/ReactiveProcess/Conserving.lean)
+  certificate mentions one process, its handler, a charge on its states, and credits on its own
+  ports, with no network in sight. Placed at the nodes of a network whose credit model agrees,
+  process certificates form a conserving certificate for both disciplines under the charge
+  `Charge.ofLocal` ([`Local`](../../PolyFun/Interaction/Execution/ReactiveNetwork/Local.lean)).
+  Diagram operations preserve components, so the certificates are reused unchanged. Wiring only
+  has to respect `route_le`.
+- **Import ledgers.**
+  [`ImportBounded T`](../../PolyFun/Interaction/Execution/ReactiveNetwork/Import.lean) is a
+  ledger shape of the import-bounded runtime of universal composability (`Can20`), with packet
+  credit standing in for import and no security parameter. It composes for monotone
+  superadditive `T`, which forces `T 0 = 0`. For any monotone `T`, `work_runTokenOpen_le_card`
+  bounds the work by the number of nodes times `T` of the import. For `T = id` it is a
+  conserving certificate.
+- **Input-relative certificates.** An
+  [`InputRelative`](../../PolyFun/Interaction/Execution/ReactiveNetwork/InputRelative.lean)
+  certificate pays a node's charge from its potential and consumed credit, without constraining
+  what it emits (`HUM13`). Such certificates compose only through exchange rates: under the gain
+  law `SmallGain` they are conserving in re-denominated credit. Uniform rate 2 and acyclic
+  networks (`Acyclic.smallGain`) are instances. The ping-pong nodes are input-relatively
+  certified, yet no rates satisfy the law.
+
 The probability-independent
 [`RequestNetwork`](../../PolyFun/Interaction/Execution/RequestNetwork.lean) is a separate finite
 request/reply specialization: well-founded clients, one outstanding ticket per client, and

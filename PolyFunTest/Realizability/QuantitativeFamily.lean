@@ -44,6 +44,11 @@ noncomputable def trivialBackend : trivialMeasure.PolynomialBackend where
   descSize_identity_le _ := le_rfl
   descSize_compose_le _ _ := le_rfl
 
+/-- Time certificates exist even when faithful finite descriptions cannot exist. -/
+example : Nonempty QuantitativeTest.zeroBackend.{0, 0, 0}.PolynomialTimeBackend ∧
+    IsEmpty (QuantitativeTest.zeroBackend.{0, 0, 0}.DescriptionMeasure (fun {_} _ ↦ True)) :=
+  ⟨⟨trivialBackend.{0}.toPolynomialTimeBackend⟩, isEmpty_descriptionMeasure_true⟩
+
 /-- Every function is a finite table at zero size in the cost-free backend. -/
 noncomputable def trivialTables :
     trivialMeasure.FiniteTables trivialBackend (fun {_} _ ↦ True) where

@@ -98,8 +98,9 @@ example : loopStep false = .inr ⟨.receive, fun _ => true⟩ ∧
     loopStep true = .inr ⟨.send ⟨(), ()⟩, fun _ => false⟩ := ⟨rfl, rfl⟩
 
 /-- Every local control state in the feedback network is unfinished. -/
-theorem feedback_unfinished (state : State feedback Unit) : outcome false state = none := by
-  cases hs : state.localState false <;>
+theorem feedback_unfinished (id : Bool) (state : State feedback Unit) :
+    outcome id state = none := by
+  cases hs : (state.localState id : Bool) <;>
     simp [outcome, feedback, DynComputation.view_ofStep, hs, loopStep]
 
 /-- Four productive token activations exchange two packets and restore the private control state. -/
@@ -125,12 +126,14 @@ theorem feedback_rounds (rounds : ℕ) :
     simp only [pure_bind]
     exact feedback_round _
 
-/-- Constant-size local reactions do not supply any global termination budget. -/
-theorem feedback_has_no_budget :
-    ¬ Nonempty (TokenBudgetCertificate feedbackImpl (fun _ => True)) := by
+/-- Constant-size local reactions do not supply any global termination budget, under any
+invariant that holds initially. -/
+theorem feedback_has_no_budget (invariant : State feedback Unit → Prop)
+    (hinit : invariant (initial feedback ())) :
+    ¬ Nonempty (TokenBudgetCertificate feedbackImpl invariant) := by
   rintro ⟨certificate⟩
   obtain ⟨value, hvalue⟩ := certificate.runToken_terminal
-    (certificate.rank (initial feedback ())) (initial feedback ()) _ trivial
+    (certificate.rank (initial feedback ())) (initial feedback ()) _ hinit
     (Nat.le_refl _) (Id.canReturn_iff.mpr rfl)
   change outcome false _ = some value at hvalue
   rw [feedback_unfinished] at hvalue

@@ -1,0 +1,100 @@
+/-
+Copyright (c) 2026 PolyFun Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Devon Tuma
+-/
+
+module
+
+public import PolyFun.Realizability.Quantitative.QueryPolynomial
+public import PolyFun.Realizability.Quantitative.Recost
+public import PolyFun.Realizability.Quantitative.FamilySimulation
+public import PolyFun.Realizability.Quantitative.Reference
+
+/-!
+# Resource transport through ordinary imports
+
+Nested response lengths, independent universes, and restoration of recosted traces exercise the
+public equations. Size collapse is rejected by the lower comparison required for simulation.
+-/
+
+public section
+
+open PFunctor PFunctor.DynSystem.DynComputation Complexity
+
+universe u v w x
+
+namespace PolyFunTest.ModuleAPI.ResourceTransport
+
+/-- An adaptive second query uses the length of the first response. -/
+example (k : ℕ) :
+    ((SecondOrderPolynomial.oracle () (.oracle () .input)).toNatPolynomial
+      (fun _ ↦ Polynomial.X + 1)).eval k = k + 2 := by
+  simp
+
+/-- The source modulus can be nonmonotone; only its polynomial upper bound is used. -/
+example (q : SecondOrderPolynomial Unit) (k : ℕ) :
+    q.eval (fun _ n ↦ if n = 0 then 2 else 0) k ≤
+      (q.toNatPolynomial (fun _ ↦ Polynomial.C 2)).eval k := by
+  apply SecondOrderPolynomial.eval_le_toNatPolynomial
+  intro i n
+  split <;> simp
+
+variable {C : StepClass.{u, v}} [C.HasProd] [C.HasSum] [C.HasOption]
+  {Q : QuantitativeStepClass.{u, v, w} C} {p : PFunctor.{u, u}} [DecidableEq p.A]
+  {α β : Type u} {bd : Boundary C p α β} (R : QuantitativeRealization Q bd)
+  (cost' : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B},
+    Q.Realizer a b f → A → ℕ)
+
+example {start finish : R.machine.State} (t : (R.recost cost').ExecutionTrace start finish) :
+    (t.restore (R := R)).recost (cost' := cost') = t :=
+  QuantitativeRealization.ExecutionTrace.recost_restore t
+
+example {allows : ∀ a, p.B a → Prop} {bound : α → ExecutionCost}
+    (h : R.RunsWithinUnder allows bound) :
+    (R.recost (fun _ _ ↦ 0)).RunsWithinUnder allows bound :=
+  R.runsWithinUnder_recost h (fun _ _ ↦ Nat.zero_le _)
+
+/-- A pointwise decrease of charges is a simulation, through ordinary imports. -/
+noncomputable example (hle : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}
+      (r : Q.Realizer a b f) (x : A), cost' r x ≤ Q.cost r x) :
+    Q.SimulatedBy (Q.recost cost') (fun a ↦ a) :=
+  QuantitativeStepClass.SimulatedBy.ofRecostLE hle
+
+/-- Recosting commutes with sequential composition, through ordinary imports. -/
+example [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive]
+    {D : Type u} {outRep : C.Str D} (R₂ : QuantitativeRealization Q (bd.mid outRep)) :
+    (R.seqComp R₂).recost cost' = (R.recost cost').seqComp (R₂.recost cost') :=
+  QuantitativeRealization.seqComp_recost R R₂
+
+example {label : Type x} {contract : ResponseResourceContract Q bd.interface label}
+    (h : PolynomialRunBound R contract) (model : contract.Model)
+    (bounds : ResponseModulus label → Polynomial ℕ)
+    (hb : ∀ i n, model.modulus i n ≤ (bounds i).eval n) :
+    ∃ q : Polynomial ℕ, ∀ value {finish : R.machine.State}
+      (t : R.ExecutionTrace (R.machine.init value) finish),
+      t.Conforms model.resourceModel.allows → t.length ≤ q.eval (Q.size bd.input value) :=
+  h.exists_natPolynomial_traceLength model bounds hb
+
+open QuantitativeStepClass in
+/-- The size-free reference model cannot simulate the metered model: the lower size comparison
+would bound every metered size by one constant, `sizeLower.eval 0`. -/
+theorem not_simulatedBy_zero {str} :
+    IsEmpty (Reference.metered.{u}.SimulatedBy Reference.zero.{u, v, w} str) := by
+  refine ⟨fun S ↦ ?_⟩
+  have h := S.size_ge (A := ULift.{u} ℕ) (fun x ↦ x.down) ⟨S.sizeLower.eval 0 + 1⟩
+  change S.sizeLower.eval 0 + 1 ≤ S.sizeLower.eval 0 at h
+  omega
+
+/-- The arithmetic reference model preserves a polynomial certificate across universes. -/
+noncomputable example {C : StepClass.{u, v}} (Q : QuantitativeStepClass.{u, v, w} C)
+    {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B} (r : Q.PolyRealizer a b f) :
+    QuantitativeStepClass.Reference.metered.PolyRealizer (Q.size a) (Q.size b) f :=
+  (QuantitativeStepClass.Reference.toMetered Q).polyRealizer r
+
+/-- Simulations compose through ordinary imports, including with the identity simulation. -/
+noncomputable example {C : StepClass.{u, v}} (Q : QuantitativeStepClass.{u, v, w} C) :
+    Q.SimulatedBy QuantitativeStepClass.Reference.metered (fun a ↦ Q.size a) :=
+  (QuantitativeStepClass.SimulatedBy.id Q).comp (QuantitativeStepClass.Reference.toMetered Q)
+
+end PolyFunTest.ModuleAPI.ResourceTransport

@@ -469,7 +469,7 @@ def ofPolyRealizer (model : Q.PolynomialModel)
     letI := model.kernel.cSum
     letI := model.kernel.cOption
     PureResourceCertificate Q bd function := by
-  letI := model.category
+  letI := model.composition
   letI := model.kernel.cProd
   letI := model.kernel.cSum
   letI := model.kernel.cOption
@@ -708,7 +708,7 @@ end RankedResourceCertificate
 
 section SeqComp
 
-variable [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive]
+variable [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive]
   {final : Type u} {middleOut : C.Str final}
   {R₁ : QuantitativeRealization Q bd}
   {R₂ : QuantitativeRealization Q (bd.mid middleOut)}

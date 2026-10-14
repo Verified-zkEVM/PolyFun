@@ -181,7 +181,7 @@ theorem resolvesInUnder_setInit_iff (M : DynComputation.{u} p A B)
 
 section Precomp
 
-variable [Q.HasCategory] {D : Type u} {inputRep : C.Str D} {f : D → A}
+variable [Q.HasComposition] {D : Type u} {inputRep : C.Str D} {f : D → A}
 
 namespace QuantitativeRealization.ExecutionTrace
 
@@ -335,7 +335,7 @@ end Precomp
 
 section MapResult
 
-variable [Q.HasCategory] [Q.HasSum] {D : Type u} {outRep : C.Str D} {f : B → D}
+variable [Q.HasComposition] [Q.HasSum] {D : Type u} {outRep : C.Str D} {f : B → D}
 
 omit [DecidableEq p.A] in
 /-- A query exposed after mapping return values was already the same source query.
@@ -467,7 +467,7 @@ end MapResult
 
 section SeqComp
 
-variable [Q.HasCategory] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive]
+variable [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive]
   {D : Type u} {outRep : C.Str D}
 
 namespace QuantitativeRealization.ExecutionTrace
@@ -590,7 +590,7 @@ def prependLeft {state : R₁.machine.State} {position : p.A} {next : p.B positi
   | .right leftTrace returned rightTrace =>
       .right (.query view_eq direction leftTrace) returned rightTrace
 
-omit [Q.HasCategory] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
+omit [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
 /-- Prepending a first-phase query lengthens a phase decomposition by exactly one step.
 
 The extra query is absorbed by the first-phase trace in every constructor, so a `right`
@@ -616,7 +616,7 @@ def Conforms (allows : ∀ position, p.B position → Prop) :
   | _, .handoff trace _ => trace.Conforms allows
   | _, .right leftTrace _ rightTrace => leftTrace.Conforms allows ∧ rightTrace.Conforms allows
 
-omit [Q.HasCategory] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
+omit [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
 /-- A prepended first-phase query conforms to an answer contract exactly when the new answer is
 allowed and the shorter decomposition already conforms.
 
@@ -647,7 +647,7 @@ def cost (input : A) : {finish : R₁.machine.State ⊕ R₂.machine.State} →
   | _, .right (value := value) leftTrace _ rightTrace =>
       R₁.executionCost input leftTrace + R₂.executionCost value rightTrace
 
-omit [Q.HasCategory] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
+omit [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
 /-- The query component of a phase source's cost is its exact syntactic length.
 
 Backend work, encoded sizes and handoff overhead are invisible to `queries`, so the identity
@@ -1075,7 +1075,7 @@ theorem QuantitativeRealization.traceProgressUnder_seqComp
   exact (trace.seqCompSource R₁ R₂).response_exists first second input
     (trace.conforms_seqCompSource R₁ R₂ allows htrace) view_eq
 
-omit [Q.HasCategory] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
+omit [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
 /-- The exact phase-local cost of a composite prefix is bounded by the first-phase bound plus
 the reachable second-phase envelope. -/
 theorem SeqCompTraceSource.cost_le
@@ -1108,7 +1108,7 @@ theorem SeqCompTraceSource.cost_le
       exact (second.cost_le value rightTrace hsource.2).trans
         (handoff.returned_le input leftTrace hsource.1 returned)
 
-omit [Q.HasCategory] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
+omit [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
 /-- Exact phase-local query accounting is independent of structural backend overhead. -/
 theorem SeqCompTraceSource.length_le
     {R₁ : QuantitativeRealization Q bd}
