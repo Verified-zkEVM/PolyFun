@@ -49,6 +49,13 @@ def sum (f : Handler m P) (g : Handler m Q) : Handler m (P + Q : PFunctor.{max u
 @[simp] theorem sum_inr (f : Handler m P) (g : Handler m Q) (b : Q.A) :
     sum f g (.inr b) = g b := rfl
 
+/-- Changing the target acts independently on both component handlers. -/
+theorem mapTarget_sum {n : Type u → Type w} (transform : ∀ {α : Type u}, m α → n α)
+    (f : Handler m P) (g : Handler m Q) :
+    mapTarget transform (sum f g) = sum (mapTarget transform f) (mapTarget transform g) := by
+  funext operation
+  cases operation <;> rfl
+
 section SumLift
 
 variable {n : Type u → Type w} {r : Type u → Type uA} [MonadLiftT m r] [MonadLiftT n r]
@@ -188,5 +195,43 @@ theorem liftM_sumLift_mapLens_inr (f : Handler m P) (g : Handler n Q) (x : FreeM
 end SumLiftLaws
 
 end Handler
+
+namespace FreeM
+
+/-- Injecting a left-side program and interpreting a coproduct handler uses only that handler.
+Unlike `Handler.liftM_sum_mapLens_inl`, this needs only `Monad m`. -/
+theorem liftM_mapLens_inl {P : PFunctor.{uA₁, u}} {Q : PFunctor.{uA₂, u}}
+    {m : Type u → Type v} [Monad m] {α : Type u}
+    (program : FreeM P α) (left : Handler m P) (right : Handler m Q) :
+    (program.mapLens (Lens.inl (Q := Q))).liftM (Handler.sum left right) =
+      program.liftM left := by
+  induction program with
+  | pure value => rfl
+  | lift_bind operation next ih =>
+    change (left operation >>= fun answer =>
+      ((next answer).mapLens Lens.inl).liftM (Handler.sum left right)) =
+      (left operation >>= fun answer => (next answer).liftM left)
+    congr 1
+    funext answer
+    exact ih answer
+
+/-- Injecting a right-side program uses only the right component implementation. Unlike
+`Handler.liftM_sum_mapLens_inr`, this needs only `Monad m`. -/
+theorem liftM_mapLens_inr {P : PFunctor.{uA₁, u}} {Q : PFunctor.{uA₂, u}}
+    {m : Type u → Type v} [Monad m] {α : Type u}
+    (program : FreeM Q α) (left : Handler m P) (right : Handler m Q) :
+    (program.mapLens (Lens.inr (P := P))).liftM (Handler.sum left right) =
+      program.liftM right := by
+  induction program with
+  | pure value => rfl
+  | lift_bind operation next ih =>
+    change (right operation >>= fun answer =>
+      ((next answer).mapLens Lens.inr).liftM (Handler.sum left right)) =
+      (right operation >>= fun answer => (next answer).liftM right)
+    congr 1
+    funext answer
+    exact ih answer
+
+end FreeM
 
 end PFunctor

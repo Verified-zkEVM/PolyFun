@@ -9,6 +9,7 @@ module
 public import Parliament.App.Terminal
 public import PolyFun.PFunctor.Dynamical.DynComputation.IO
 public import PolyFunIO.Storage
+public import PolyFun.PFunctor.Handler.Sum
 
 /-! # IO interpretation, verified readback, and single-writer storage -/
 

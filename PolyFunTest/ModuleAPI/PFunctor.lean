@@ -9,6 +9,7 @@ module
 import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 import PolyFun.PFunctor.Free.Basic
 import PolyFun.PFunctor.Handler.Free
+import PolyFun.PFunctor.Handler.Sum
 public import PolyFun.IPFunctor.Basic
 
 /-!

@@ -8,6 +8,7 @@ module
 public import PolyFun.ITree.ResumptionWithTau
 public import PolyFun.PFunctor.Dynamical.DynComputation
 public import PolyFun.PFunctor.Dynamical.Trajectory
+public import PolyFun.PFunctor.Handler.Sum
 
 /-!
 # Interaction trees as machines
@@ -22,11 +23,15 @@ An interaction tree is itself a machine, in two ways.
   visible unit queries, so the bounded, chunked and `IO` runners of `DynComputation` apply to
   interaction trees, and a silent step can be counted like any other query. Its denotation is
   `ITree.toResumptionWithTau` (`ITree.denote_toDynComputation`).
+
+`ITree.withSilentSteps` lifts a handler of visible events to `F + y`, acknowledging each silent
+step without invoking the visible handler, so the runners of `toDynComputation` consume chunk
+budget on silent steps too. A finite budget makes no claim of termination or productivity.
 -/
 
 @[expose] public section
 
-universe uA uB uα
+universe uA uB uα uM
 
 namespace ITree
 
@@ -58,5 +63,18 @@ def toDynComputation :
 @[simp] theorem denote_toDynComputation (t : ITree F α) :
     (toDynComputation (F := F)).denote t = toResumptionWithTau t :=
   DynSystem.DynComputation.denote_ofResumption _ _
+
+/-- Interpret visible operations by `handler` and acknowledge silent steps internally. -/
+def withSilentSteps {m : Type uB → Type uM} [Monad m] (handler : PFunctor.Handler m F) :
+    PFunctor.Handler m (F + PFunctor.y.{uA, uB}) :=
+  PFunctor.Handler.sum handler fun _ => Pure.pure PUnit.unit
+
+@[simp] theorem withSilentSteps_visible {m : Type uB → Type uM} [Monad m]
+    (handler : PFunctor.Handler m F) (operation : F.A) :
+    withSilentSteps handler (.inl operation) = handler operation := rfl
+
+@[simp] theorem withSilentSteps_silent {m : Type uB → Type uM} [Monad m]
+    (handler : PFunctor.Handler m F) :
+    withSilentSteps handler (.inr PUnit.unit) = Pure.pure PUnit.unit := rfl
 
 end ITree

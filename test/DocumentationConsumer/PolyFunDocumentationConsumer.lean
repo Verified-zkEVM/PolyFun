@@ -13,7 +13,9 @@ import Examples.Tutorials.InteractionTrees
 import Examples.Tutorials.ParallelReports
 import Examples.Tutorials.VersionedRequests
 import Examples.Tutorials.UpdatePolicies
-import PolyFun.ITree.Execution
+import PolyFun.ITree.Machine
+import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
+import PolyFun.PFunctor.Handler.Sum
 import PolyFun.PFunctor.Free.Cursor.Occurrence
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess

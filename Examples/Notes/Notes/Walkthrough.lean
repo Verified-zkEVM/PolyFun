@@ -8,7 +8,8 @@ module
 
 public import PolyFunIO.Console
 public import Notes.Preview
-public import PolyFun.ITree.Execution
+public import PolyFun.ITree.Machine
+public import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
 public import PolyFun.IPFunctor.Free.Basic
 public import PolyFun.PFunctor.Dynamical.Game
 public import PolyFun.PFunctor.Free.Cursor.Occurrence
@@ -105,7 +106,7 @@ def run {m : Type → Type} [Monad m] (model : Model) (handler : Handler m Conso
     | .done result => return .ok result
     | .paused _ => return .error "Unexpected pause in the one-request resumption."
   | .tree =>
-    match ← ITree.machine.startChunk (ITree.withSilentSteps handler) 2 tree with
+    match ← ITree.toDynComputation.startChunk (ITree.withSilentSteps handler) 2 tree with
     | .done result => return .ok result
     | .paused _ => return .error "Unexpected pause after tau and one request."
 
@@ -205,7 +206,8 @@ def runEdit {m : Type → Type} [Monad m] (model : Model) (handler : Handler m C
     | .paused _ => return .error "Edit resumption paused."
   | .tree =>
     let tree := ITree.step program.toResumption.toITree
-    match ← ITree.machine.startChunk (ITree.withSilentSteps handler) (editQueryBudget + 1) tree with
+    match ← ITree.toDynComputation.startChunk (ITree.withSilentSteps handler)
+        (editQueryBudget + 1) tree with
     | .done result => return .ok result
     | .paused _ => return .error "Edit tree paused."
 

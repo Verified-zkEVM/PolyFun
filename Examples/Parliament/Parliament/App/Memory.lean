@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import Parliament.App.Dialogue
+public import PolyFun.PFunctor.Handler.Sum
 
 /-! # In-memory effect backend with explicit failure injection -/
 

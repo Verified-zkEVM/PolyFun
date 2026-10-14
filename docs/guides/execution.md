@@ -67,7 +67,7 @@ Use `startChunk handler fuel input` when you have an initialization input, and
 reconstructing the machine's hidden state. `startChunk_continueChunk` equates consecutive
 budgets with their sum, including the exact residual. Zero fuel still observes a terminal state.
 
-For interaction trees, import `PolyFun.ITree.Execution`: `ITree.machine` uses the exact
+For interaction trees, import `PolyFun.ITree.Machine`: `ITree.toDynComputation` uses the exact
 resumption-with-tau representation and `ITree.withSilentSteps` lifts a visible-event handler.
 Both visible events and tau consume this machine's budget; tau never invokes the visible
 handler. These pure adapters belong to core, not the optional physical IO library.

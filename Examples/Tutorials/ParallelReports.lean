@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Free.Parallel
+public import PolyFun.PFunctor.Handler.Sum
 
 /-! # Composed read-only reports
 

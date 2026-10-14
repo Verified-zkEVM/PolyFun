@@ -36,17 +36,19 @@ def representationTests : IO Unit := do
       let (_, reference) := (runEdit .free consoleMemoryHandler).run { input }
       unless answer == .ok expected && memory.output == reference.output && memory.input.isEmpty do
         throw (IO.userError s!"{model.name}: edit workflow changed answers or visible effects")
-  let (first, memory) := (ITree.machine.runChunk (ITree.withSilentSteps consoleMemoryHandler)
-    1 tree.toResumptionWithTau).run { input := ["later"] }
+  let (first, memory) := (ITree.toDynComputation.runChunk
+    (ITree.withSilentSteps consoleMemoryHandler) 1 tree.toResumptionWithTau).run
+      { input := ["later"] }
   let .paused residual := first | throw (IO.userError "tau budget falsely reported completion")
   unless memory.output.isEmpty && memory.input == ["later"] do
     throw (IO.userError "tau called the console handler")
   let (second, memory) :=
-    (ITree.machine.runChunk (ITree.withSilentSteps consoleMemoryHandler) 1 residual).run memory
+    (ITree.toDynComputation.runChunk (ITree.withSilentSteps consoleMemoryHandler) 1
+      residual).run memory
   let .done (some "later") := second | throw (IO.userError "tau residual lost its continuation")
   unless memory.output == #["Note: "] do throw (IO.userError "resume duplicated the prompt")
   let silent : ITree Console Unit := ITree.diverge
-  let (silentResult, silentMemory) := (ITree.machine.runChunk
+  let (silentResult, silentMemory) := (ITree.toDynComputation.runChunk
     (ITree.withSilentSteps consoleMemoryHandler) 8 silent.toResumptionWithTau).run {}
   match silentResult with
   | .done _ => throw (IO.userError "infinite silence was mistaken for completion")
