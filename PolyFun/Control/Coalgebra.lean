@@ -5,7 +5,7 @@ Authors: Quang Dao
 -/
 module
 
-public import Mathlib.Data.FunLike.Basic
+public import Mathlib.Basic.FunLike.Basic
 
 /-!
 # F-coalgebras

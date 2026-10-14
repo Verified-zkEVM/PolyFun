@@ -83,6 +83,7 @@ public import PolyFun.ITree.Interp.Defs
 public import PolyFun.ITree.Interp.Laws
 public import PolyFun.ITree.Interp.Sim
 public import PolyFun.ITree.Interp.State
+public import PolyFun.ITree.Machine
 public import PolyFun.ITree.PatternRunsOnMatter
 public import PolyFun.ITree.Rec
 public import PolyFun.ITree.Rec.Facts
@@ -288,6 +289,7 @@ public import PolyFun.PFunctor.Free.Sigma
 public import PolyFun.PFunctor.Free.Support
 public import PolyFun.PFunctor.Free.Universal
 public import PolyFun.PFunctor.Free.WP
+public import PolyFun.PFunctor.Free.WP.Charge
 public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Free

@@ -54,6 +54,7 @@ instance : zeroBackend.HasOption where
   map _ := PUnit.unit
   none _ _ := PUnit.unit
   bindContext _ := PUnit.unit
+  some _ := PUnit.unit
 
 instance : zeroBackend.IsDistributive where
   distribute _ _ _ := PUnit.unit
@@ -132,6 +133,27 @@ def wrappedReturn : QuantitativeRealization zeroBackend
 example : zeroBackend.cost wrappedReturn.initCode PUnit.unit = 0 := rfl
 
 example : zeroBackend.cost wrappedReturn.headCode PUnit.unit = 0 := rfl
+
+/-! The strength of `Option` is assembled from `bindContext` and `some`. Over an abstract backend
+the realizer type cannot unfold, so these statements pin each derived realizer's semantic index: a
+present value is paired with, or combined with, the retained context, and an absent one stays
+absent. (At `zeroBackend` every realizer type unfolds to `PUnit`, which would accept any index.) -/
+
+example {C : StepClass.{0, 0}} (Q : QuantitativeStepClass.{0, 0, 0} C) [P : C.HasProd]
+    [O : C.HasOption] (QO : Q.HasOption) {A E : Type} (a : C.Str A) (e : C.Str E) :
+    Q.Realizer (P.prod (O.option a) e) (O.option (P.prod a e))
+      fun input ↦ input.1.map fun value ↦ (value, input.2) :=
+  QuantitativeStepClass.HasOption.strength Q QO a e
+
+example {C : StepClass.{0, 0}} (Q : QuantitativeStepClass.{0, 0, 0} C) [Q.HasCategory]
+    [P : C.HasProd] [O : C.HasOption] (QO : Q.HasOption) {A B E : Type} {a : C.Str A}
+    {b : C.Str B} {e : C.Str E} {f : A × E → B} (code : Q.Realizer (P.prod a e) b f) :
+    Q.Realizer (P.prod (O.option a) e) (O.option b)
+      fun input ↦ input.1.map fun value ↦ f (value, input.2) :=
+  QuantitativeStepClass.HasOption.mapContext Q QO code
+
+example (a e : StepClass.unconstrained.Str Bool) :=
+  QuantitativeStepClass.HasOption.strength zeroBackend inferInstance a e
 
 noncomputable example := @QuantitativeStepClass.HasProd.pairRight
 noncomputable example := @QuantitativeStepClass.HasSum.map

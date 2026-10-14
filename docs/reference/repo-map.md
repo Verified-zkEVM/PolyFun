@@ -36,6 +36,7 @@ Example and test imports never flow back into production.
 | Interaction trees and recursion | [ITree basics](../../PolyFun/ITree/Basic.lean) | [Interaction trees](../guides/itree.md) |
 | Continuous partial semantics | [Pointed domains](../../PolyFun/Control/Domain/Pointed.lean), [lifted results](../../PolyFun/Control/Domain/Result.lean), [prefix recurrences](../../PolyFun/Control/Domain/PrefixRecursion.lean), [resumption domains](../../PolyFun/PFunctor/Resumption/Domain.lean), [ITree domains](../../PolyFun/ITree/Domain.lean) | [Continuous interpretations](../guides/itree.md#continuous-domain-interpretations) |
 | Interpreting trees into monads | [Interpretation](../../PolyFun/ITree/Interp/Defs.lean), [laws](../../PolyFun/ITree/Interp/Laws.lean) | [Interaction trees](../guides/itree.md#interpreting-into-a-monad) |
+| Running trees as machines | [Machine](../../PolyFun/ITree/Machine.lean) | [Interaction trees](../guides/itree.md#running-a-tree-as-a-machine) |
 | Iterative monads and transformer loops | [Iteration](../../PolyFun/Control/Monad/Iter.lean), [transformer instances](../../PolyFun/Control/Monad/Iter/Instances.lean) | [Interaction trees](../guides/itree.md#iterative-monads) |
 | Protocol shapes and strategies | [TypeTree](../../PolyFun/Interaction/Basic/TypeTree.lean) | [Interaction](../guides/interaction.md) |
 | Two-party, multiparty, concurrent interaction | `Interaction/TwoParty`, `Multiparty`, `Concurrent` | [Interaction](../guides/interaction.md) |
@@ -43,6 +44,7 @@ Example and test imports never flow back into production.
 | Executable reactive/request networks | `Interaction/Execution` | [Execution](../guides/execution.md) |
 | Open composition, contextual emulation, and observations | [OpenTheory](../../PolyFun/Interaction/Open/OpenTheory.lean), [OpenProcess](../../PolyFun/Interaction/Open/OpenProcess.lean) | [Open systems](../guides/open-systems.md) |
 | Support and weakest preconditions | [Ordered algebras](../../PolyFun/Control/Monad/Algebra.lean), [support](../../PolyFun/Control/Monad/Support.lean), [exact interpretations](../../PolyFun/Control/Monad/ExactWP.lean) | [Program logic](../guides/program-logic.md#exact-interpretations) |
+| Worst-case cost and query budgets | [Charges](../../PolyFun/PFunctor/Free/WP/Charge.lean) | [Program logic](../guides/program-logic.md#charges-and-budgets) |
 | Admissible implementations and resources | [Realizability](../../PolyFun/Realizability/Basic.lean), [quantitative certificates](../../PolyFun/Realizability/Quantitative.lean), [description measures](../../PolyFun/Realizability/Quantitative/Description.lean) | [Realizability](../guides/realizability.md) |
 
 `Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure.

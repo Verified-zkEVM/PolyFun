@@ -25,7 +25,9 @@ instances (`PolyFun.PFunctor.Free.Do` registers the scoped ones):
   `wp` is the target's `wp` of the interpreted program.
 
 Both are exact (`ExactWPMonad`) whenever their source is: the syntactic one always, the handler
-one when the target's interpretation is exact.
+one when the target's interpretation is exact. Exactness makes the syntactic interpretation sound
+on the order duals as well: `OpSpec.toUpperWPMonad` is the same interpretation over `lᵒᵈ`, whose
+triples state upper bounds on the fold.
 
 `wpFold_le_wp_liftM` is the soundness of per-operation specs against a handler stated over any
 core `WPMonad`; it needs only the inequational `bind` law. `wpFold_eq_wp_liftM` is its exact
@@ -65,6 +67,29 @@ instance instExactWPMonadToWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) :
     @ExactWPMonad (FreeM P) l EStack⟨⟩ _ _ _ (Φ.toWPMonad hΦ) :=
   letI := Φ.toMAlgOrdered hΦ
   MAlgOrdered.instExactWPMonadToWPMonad
+
+/-- The upper-bound reading of a monotone per-operation spec: the syntactic interpretation over
+the order duals (`ExactWPMonad.dual`). Its triple `⦃ toDual t ⦄ x ⦃ post ⦄` states that the fold
+of `Φ` over `x`, with leaf values `ofDual ∘ post`, is at most `t`. -/
+@[instance_reducible]
+def toUpperWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) : WPMonad (FreeM P) lᵒᵈ EStack⟨⟩ᵒᵈ :=
+  letI := Φ.toWPMonad hΦ
+  ExactWPMonad.dual
+
+/-- The upper-bound reading's `wp` is the fold, read in the dual order. -/
+theorem toUpperWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Mono) {α : Type v} (x : FreeM P α)
+    (post : α → lᵒᵈ) (epost : EStack⟨⟩ᵒᵈ) :
+    ((Φ.toUpperWPMonad hΦ).toWP α).wp x post epost =
+      OrderDual.toDual (FreeM.wpFold Φ x fun a => OrderDual.ofDual (post a)) := by
+  change OrderDual.toDual (((Φ.toWPMonad hΦ).toWP α).wp x (fun a => OrderDual.ofDual (post a))
+    (OrderDual.ofDual epost)) = _
+  rw [toWPMonad_wp]
+
+/-- The upper-bound reading is exact. -/
+instance instExactWPMonadToUpperWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) :
+    @ExactWPMonad (FreeM P) lᵒᵈ EStack⟨⟩ᵒᵈ _ _ _ (Φ.toUpperWPMonad hΦ) :=
+  letI := Φ.toWPMonad hΦ
+  ExactWPMonad.instExactWPMonadDual
 
 end OpSpec
 
@@ -147,7 +172,7 @@ section SemanticSupport
 open MonadAttach
 
 variable {Q : PFunctor.{uA, 0}} {n : Type → Type w}
-  [Monad n] [LawfulMonad n] [MonadAttach n] [ExactMonadAttach n] {α : Type}
+  [Monad n] [LawfulMonad n] [MonadAttach n] [LawfulMonadAttach n] {α : Type}
 
 /-- **Specs discharge support facts about the interpreted program.** A per-operation spec
 that each handled operation validates for all its outputs turns a syntactic fold into a
@@ -159,15 +184,15 @@ theorem allOutputs_liftM_of_wpFold {Φ : OpSpec Q Prop} (s : Handler n Q)
   let := toWPMonadDemonic (m := n)
   exact wpFold_le_wp_liftM (n := n) s (fun a k => h a k) x post hx
 
-/-- The demonic fold at the *canonical* spec already implies the interpreted guarantee,
-whenever the handler validates that spec: the handler must establish every postcondition
-that holds for all typed responses. This constrains its outputs to the operation's response
-type; it does not claim that the handler can produce every response. -/
+/-- The demonic fold at the *canonical* spec already implies the interpreted guarantee, for
+every handler: a postcondition that holds at every typed response holds at every output of the
+handled operation, so the canonical spec is validated by the handler's type alone. The theorem
+says nothing about which responses the handler can produce. -/
 theorem allOutputs_liftM_of_allOutputs (s : Handler n Q)
-    (h : ∀ (a : Q.A) (k : Q.B a → Prop), (∀ b, k b) → AllOutputs k (s a))
     (x : FreeM Q α) (post : α → Prop) (hx : AllOutputs post x) :
     AllOutputs post (x.liftM s) :=
-  allOutputs_liftM_of_wpFold s h x post ((wpFold_demonic_iff_allOutputs x post).mpr hx)
+  allOutputs_liftM_of_wpFold s (fun _ _ hk b _ => hk b) x post
+    ((wpFold_demonic_iff_allOutputs x post).mpr hx)
 
 end SemanticSupport
 

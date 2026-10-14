@@ -55,7 +55,7 @@ readings over an `ExactMonadAttach`, and by transport along a monad morphism
 
 @[expose] public section
 
-universe u v w w' z
+universe u v w w' z z'
 
 open Std.WP Lean.Order
 
@@ -271,7 +271,7 @@ theorem ExactWPMonad.wp_option_elim {γ : Type z} (o : Option γ) (x : Prog) (f 
 /-- The interpretation of `s.elim f g` eliminates `s` into the interpretations of the programs
 `f c` and `g d`. -/
 @[simp]
-theorem ExactWPMonad.wp_sum_elim {γ : Type z} {δ : Type z} (s : γ ⊕ δ) (f : γ → Prog)
+theorem ExactWPMonad.wp_sum_elim {γ : Type z} {δ : Type z'} (s : γ ⊕ δ) (f : γ → Prog)
     (g : δ → Prog) (post : Value → Pred) (epost : EPred) :
     wp (s.elim f g) post epost =
       s.elim (fun c => wp (f c) post epost) (fun d => wp (g d) post epost) := by
