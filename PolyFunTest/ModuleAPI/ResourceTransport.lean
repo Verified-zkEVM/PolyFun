@@ -7,7 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Realizability.Quantitative.QueryPolynomial
-public import PolyFun.Realizability.Quantitative.Erasure
+public import PolyFun.Realizability.Quantitative.Recost
 public import PolyFun.Realizability.Quantitative.FamilySimulation
 public import PolyFun.Realizability.Quantitative.Reference
 
@@ -43,7 +43,7 @@ example (q : SecondOrderPolynomial Unit) (k : ℕ) :
 variable {C : StepClass.{u, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{u, v, w} C} {p : PFunctor.{u, u}} [DecidableEq p.A]
   {α β : Type u} {bd : Boundary C p α β} (R : QuantitativeRealization Q bd)
-  (cost' : ∀ (A B : Type u) (a : C.Str A) (b : C.Str B) (f : A → B),
+  (cost' : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B},
     Q.Realizer a b f → A → ℕ)
 
 example {start finish : R.machine.State} (t : (R.recost cost').ExecutionTrace start finish) :
@@ -52,8 +52,20 @@ example {start finish : R.machine.State} (t : (R.recost cost').ExecutionTrace st
 
 example {allows : ∀ a, p.B a → Prop} {bound : α → ExecutionCost}
     (h : R.RunsWithinUnder allows bound) :
-    (R.recost (fun _ _ _ _ _ _ _ ↦ 0)).RunsWithinUnder allows bound :=
-  R.runsWithinUnder_recost h (fun _ _ _ _ _ _ _ ↦ Nat.zero_le _)
+    (R.recost (fun _ _ ↦ 0)).RunsWithinUnder allows bound :=
+  R.runsWithinUnder_recost h (fun _ _ ↦ Nat.zero_le _)
+
+/-- A pointwise decrease of charges is a simulation, through ordinary imports. -/
+noncomputable example (hle : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}
+      (r : Q.Realizer a b f) (x : A), cost' r x ≤ Q.cost r x) :
+    Q.SimulatedBy (Q.recost cost') (fun a ↦ a) :=
+  QuantitativeStepClass.SimulatedBy.ofRecostLE hle
+
+/-- Recosting commutes with sequential composition, through ordinary imports. -/
+example [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive]
+    {D : Type u} {outRep : C.Str D} (R₂ : QuantitativeRealization Q (bd.mid outRep)) :
+    (R.seqComp R₂).recost cost' = (R.recost cost').seqComp (R₂.recost cost') :=
+  QuantitativeRealization.seqComp_recost R R₂
 
 example {label : Type x} {contract : ResponseResourceContract Q bd.interface label}
     (h : PolynomialRunBound R contract) (model : contract.Model)

@@ -6,7 +6,8 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Realizability.Quantitative
+public import PolyFun.Realizability.Quantitative.Closure
+public import PolyFun.Realizability.Quantitative.Simulation
 
 /-!
 # Changing local work charges
@@ -15,6 +16,11 @@ public import PolyFun.Realizability.Quantitative
 charge. The same machine implements the same programs and has the same traces, query counts,
 traffic and peak sizes. Only work changes. Transporting work bounds requires a comparison of
 the old and new charges; arbitrary recosting does not preserve a run bound.
+
+The recosted backend carries the original structural code (`HasComposition`, `HasProd`,
+`HasSum`, `HasOption`, `IsDistributive`), so composite realizations recost part by part
+(`QuantitativeRealization.seqComp_recost`). A pointwise decrease of charges is also a
+simulation (`SimulatedBy.ofRecostLE`).
 -/
 
 public section
@@ -29,18 +35,15 @@ variable {C : StepClass.{u, v}} (Q : QuantitativeStepClass.{u, v, w} C)
 
 /-- Replace the cost function of a backend. Realizers, sizes and admissibility are untouched. -/
 @[expose] def recost
-    (cost' : ∀ (A B : Type u) (a : C.Str A) (b : C.Str B) (f : A → B), Q.Realizer a b f → A → ℕ) :
+    (cost' : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}, Q.Realizer a b f → A → ℕ) :
     QuantitativeStepClass.{u, v, w} C where
   Realizer := Q.Realizer
   size := Q.size
-  cost := @fun A B a b f r x ↦ cost' A B a b f r x
+  cost := cost'
   admissible := Q.admissible
 
-/-- Cost erasure: every realizer costs zero. -/
-@[expose] def erase : QuantitativeStepClass.{u, v, w} C := Q.recost fun _ _ _ _ _ _ _ ↦ 0
-
 variable {Q}
-  {cost' : ∀ (A B : Type u) (a : C.Str A) (b : C.Str B) (f : A → B), Q.Realizer a b f → A → ℕ}
+  {cost' : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}, Q.Realizer a b f → A → ℕ}
 
 @[simp] theorem recost_Realizer {A B : Type u} (a : C.Str A) (b : C.Str B) (f : A → B) :
     (Q.recost cost').Realizer a b f = Q.Realizer a b f := rfl
@@ -49,7 +52,59 @@ variable {Q}
     (Q.recost cost').size a x = Q.size a x := rfl
 
 @[simp] theorem recost_cost {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}
-    (r : Q.Realizer a b f) (x : A) : (Q.recost cost').cost r x = cost' A B a b f r x := rfl
+    (r : Q.Realizer a b f) (x : A) : (Q.recost cost').cost r x = cost' r x := rfl
+
+/-! ## Structure carried by a recosted backend -/
+
+/-- The original identity and composition code, under the new charges. The new charges are
+arbitrary, so the only generic connection overhead is the composite's own new charge. -/
+instance [Q.HasComposition] : (Q.recost cost').HasComposition where
+  identity a := Q.identity a
+  compose r s := Q.compose r s
+  composeOverhead r s x := cost' (Q.compose r s) x
+  cost_compose_le _ _ _ := Nat.le_add_left _ _
+
+/-- The original product code. -/
+instance [C.HasProd] [QP : Q.HasProd] : (Q.recost cost').HasProd where
+  fst := QP.fst
+  snd := QP.snd
+  pair := QP.pair
+
+/-- The original sum code. -/
+instance [C.HasSum] [QS : Q.HasSum] : (Q.recost cost').HasSum where
+  inl := QS.inl
+  inr := QS.inr
+  elim := QS.elim
+
+/-- The original optional-value code. -/
+instance [C.HasProd] [C.HasOption] [QO : Q.HasOption] : (Q.recost cost').HasOption where
+  map := QO.map
+  none := QO.none
+  bindContext := QO.bindContext
+  some := QO.some
+
+/-- The original distributivity code. -/
+instance [C.HasProd] [C.HasSum] [QD : Q.IsDistributive] : (Q.recost cost').IsDistributive where
+  distribute := QD.distribute
+
+/-! ## Recosting as a simulation -/
+
+/-- A pointwise decrease of local charges is a simulation of the original backend by the
+recosted one, along the identity on representations. It transports `PolyRealizer`s but no run
+bounds; `QuantitativeRealization.runsWithinUnder_recost` transports those. -/
+noncomputable def SimulatedBy.ofRecostLE
+    (hle : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}
+      (r : Q.Realizer a b f) (x : A), cost' r x ≤ Q.cost r x) :
+    Q.SimulatedBy (Q.recost cost') (fun a ↦ a) where
+  code r := r
+  sizeBound := Polynomial.X
+  size_le _ _ := by simp
+  sizeLower := Polynomial.X
+  size_ge _ _ := by simp
+  costBound _ := Polynomial.X
+  cost_le r x := by
+    simp only [Polynomial.eval_X, recost_cost]
+    exact (hle r x).trans (Nat.le_add_left _ _)
 
 end PFunctor.QuantitativeStepClass
 
@@ -60,7 +115,7 @@ open PFunctor.DynSystem.DynComputation
 variable {C : StepClass.{u, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{u, v, w} C} {p : PFunctor.{u, u}} [DecidableEq p.A]
   {α β : Type u} {bd : Boundary C p α β}
-  (cost' : ∀ (A B : Type u) (a : C.Str A) (b : C.Str B) (f : A → B), Q.Realizer a b f → A → ℕ)
+  (cost' : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}, Q.Realizer a b f → A → ℕ)
 
 /-- The same realization over the recosted backend: same machine, state, and codes. -/
 @[expose] def recost (R : QuantitativeRealization Q bd) :
@@ -92,6 +147,14 @@ variable {cost'}
 theorem recost_implements (R : QuantitativeRealization Q bd) (program : α → FreeM p β) :
     (R.recost cost').machine.Implements program ↔ R.machine.Implements program :=
   Iff.rfl
+
+/-- Recosting commutes with sequential composition: neither the machine nor any code changes,
+and the recosted backend carries the original structural code. -/
+theorem seqComp_recost [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption]
+    [Q.IsDistributive] {D : Type u} {outRep : C.Str D} (R₁ : QuantitativeRealization Q bd)
+    (R₂ : QuantitativeRealization Q (bd.mid outRep)) :
+    (R₁.seqComp R₂).recost cost' = (R₁.recost cost').seqComp (R₂.recost cost') :=
+  rfl
 
 /-- Transport a trace to the recosted realization; the constructors are definitionally the same
 because the machine is. -/
@@ -203,10 +266,10 @@ theorem executionCost_recost_peakHeadSize :
     ExecutionCost.ofWork, h]
   all_goals rfl
 
-/-- Only work moves: under erasure every prefix charges zero work. -/
-theorem ExecutionTrace.cost_erase_work {R : QuantitativeRealization Q bd}
+/-- Only work moves: under the zero charge every prefix charges zero work. -/
+theorem ExecutionTrace.cost_recost_zero_work {R : QuantitativeRealization Q bd}
     {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
-    (trace.recost (cost' := fun _ _ _ _ _ _ _ ↦ 0)).cost.work = 0 := by
+    (trace.recost (cost' := fun _ _ ↦ 0)).cost.work = 0 := by
   induction trace with
   | nil => rfl
   | query _ _ tail ih =>
@@ -215,11 +278,11 @@ theorem ExecutionTrace.cost_erase_work {R : QuantitativeRealization Q bd}
         recost_headCode, recost_updateCode, ih]
       all_goals rfl
 
-theorem executionCost_erase_work :
-    ((R.recost fun _ _ _ _ _ _ _ ↦ 0).executionCost input
-      (recostTrace (cost' := fun _ _ _ _ _ _ _ ↦ 0) R input trace)).work = 0 := by
-  have h : (recostTrace (cost' := fun _ _ _ _ _ _ _ ↦ 0) R input trace).cost.work = 0 :=
-    ExecutionTrace.cost_erase_work trace
+theorem executionCost_recost_zero_work :
+    ((R.recost fun _ _ ↦ 0).executionCost input
+      (recostTrace (cost' := fun _ _ ↦ 0) R input trace)).work = 0 := by
+  have h : (recostTrace (cost' := fun _ _ ↦ 0) R input trace).cost.work = 0 :=
+    ExecutionTrace.cost_recost_zero_work trace
   simp only [executionCost, ExecutionCost.work_add, ExecutionCost.work_ofWork,
     ExecutionCost.work_observe, recost_initCode,
     recost_headCode, h]
@@ -262,8 +325,8 @@ theorem executionCost_erase_work :
 
 /-- Pointwise smaller local charges give smaller prefix work. -/
 theorem ExecutionTrace.work_recost_le {R : QuantitativeRealization Q bd}
-    (hle : ∀ (A B : Type u) (a : C.Str A) (b : C.Str B) (f : A → B)
-      (r : Q.Realizer a b f) (x : A), cost' A B a b f r x ≤ Q.cost r x)
+    (hle : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}
+      (r : Q.Realizer a b f) (x : A), cost' r x ≤ Q.cost r x)
     {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
     (trace.recost (cost' := cost')).cost.work ≤ trace.cost.work := by
   induction trace with
@@ -271,17 +334,17 @@ theorem ExecutionTrace.work_recost_le {R : QuantitativeRealization Q bd}
   | @query state position next finish view_eq direction tail ih =>
       simp only [ExecutionTrace.recost, ExecutionTrace.cost, ExecutionCost.work_add,
         ExecutionCost.work_ofWork, ExecutionCost.work_observe, ExecutionCost.work_query]
-      have hh := hle _ _ _ _ _ R.headCode state
-      have hu := hle _ _ _ _ _ R.updateCode (state, ⟨position, direction⟩)
-      change cost' _ _ _ _ _ R.headCode state +
-        cost' _ _ _ _ _ R.updateCode (state, ⟨position, direction⟩) + 0 + 0 +
+      have hh := hle R.headCode state
+      have hu := hle R.updateCode (state, ⟨position, direction⟩)
+      change cost' R.headCode state +
+        cost' R.updateCode (state, ⟨position, direction⟩) + 0 + 0 +
         (tail.recost (cost' := cost')).cost.work ≤ _
       omega
 
 /-- Pointwise smaller local charges preserve the whole resource inequality. -/
 theorem executionCost_recost_le
-    (hle : ∀ (A B : Type u) (a : C.Str A) (b : C.Str B) (f : A → B)
-      (r : Q.Realizer a b f) (x : A), cost' A B a b f r x ≤ Q.cost r x) :
+    (hle : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}
+      (r : Q.Realizer a b f) (x : A), cost' r x ≤ Q.cost r x) :
     (R.recost cost').executionCost input (recostTrace R input trace) ≤
       R.executionCost input trace := by
   refine ⟨?_, (executionCost_recost_queries R input trace).le,
@@ -289,19 +352,19 @@ theorem executionCost_recost_le
     (executionCost_recost_peakStateSize R input trace).le,
     (executionCost_recost_peakHeadSize R input trace).le⟩
   have ht := trace.work_recost_le hle
-  have hi := hle _ _ _ _ _ R.initCode input
-  have hh := hle _ _ _ _ _ R.headCode finish
+  have hi := hle R.initCode input
+  have hh := hle R.headCode finish
   simp only [executionCost, ExecutionCost.work_add, ExecutionCost.work_ofWork,
     ExecutionCost.work_observe]
-  change cost' _ _ _ _ _ R.initCode input + 0 +
-    (trace.recost (cost' := cost')).cost.work + cost' _ _ _ _ _ R.headCode finish ≤ _
+  change cost' R.initCode input + 0 +
+    (trace.recost (cost' := cost')).cost.work + cost' R.headCode finish ≤ _
   omega
 
-/-- A run bound survives a decrease of local work charges, including cost erasure. -/
+/-- A run bound survives a decrease of local work charges, including the zero charge. -/
 theorem runsWithinUnder_recost {allows : ∀ position, p.B position → Prop}
     {bound : α → ExecutionCost} (h : R.RunsWithinUnder allows bound)
-    (hle : ∀ (A B : Type u) (a : C.Str A) (b : C.Str B) (f : A → B)
-      (r : Q.Realizer a b f) (x : A), cost' A B a b f r x ≤ Q.cost r x) :
+    (hle : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}
+      (r : Q.Realizer a b f) (x : A), cost' r x ≤ Q.cost r x) :
     (R.recost cost').RunsWithinUnder allows bound := by
   refine ⟨?_, h.2.1, ?_⟩
   · intro value last t ht

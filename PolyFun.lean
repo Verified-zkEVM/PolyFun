@@ -324,13 +324,13 @@ public import PolyFun.Realizability.Quantitative.BoundedClosure
 public import PolyFun.Realizability.Quantitative.Closure
 public import PolyFun.Realizability.Quantitative.Counting
 public import PolyFun.Realizability.Quantitative.Description
-public import PolyFun.Realizability.Quantitative.Erasure
 public import PolyFun.Realizability.Quantitative.Family
 public import PolyFun.Realizability.Quantitative.FamilySimulation
 public import PolyFun.Realizability.Quantitative.Iteration
 public import PolyFun.Realizability.Quantitative.Polynomial
 public import PolyFun.Realizability.Quantitative.Prefix
 public import PolyFun.Realizability.Quantitative.QueryPolynomial
+public import PolyFun.Realizability.Quantitative.Recost
 public import PolyFun.Realizability.Quantitative.Reference
 public import PolyFun.Realizability.Quantitative.Resource
 public import PolyFun.Realizability.Quantitative.Simulation

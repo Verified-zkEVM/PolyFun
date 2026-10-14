@@ -50,7 +50,7 @@ concrete machine complexity lives in the optional `ComplexityBackends` library.
 
 The quantitative realizability layer separates code-local certificates from run bounds.
 `Quantitative/QueryPolynomial.lean` uses `Complexity/SecondOrderPolynomial/NatPolynomial.lean`
-to specialize response-relative bounds. `Quantitative/Erasure.lean` transports traces when
+to specialize response-relative bounds. `Quantitative/Recost.lean` transports traces when
 charges change; `Simulation.lean` and `FamilySimulation.lean` handle backend changes with
 explicit size, time and description comparisons. `Reference.lean` contains unrestricted
 arithmetic models. The concrete unary pure-family bridge lives in

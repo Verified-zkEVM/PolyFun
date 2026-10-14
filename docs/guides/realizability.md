@@ -701,11 +701,16 @@ the actual response modulus need not itself be monotone for this conversion. On 
 syntax the substitution inverts `FirstOrderPolynomial.ofNatPolynomial`
 (`FirstOrderPolynomial.toNatPolynomial_ofNatPolynomial`).
 
-[`Erasure.lean`](../../PolyFun/Realizability/Quantitative/Erasure.lean) changes local work
+[`Recost.lean`](../../PolyFun/Realizability/Quantitative/Recost.lean) changes local work
 charges while retaining the computation, codes and representations. Trace transport preserves
 allowed responses, visible queries, traffic and peak sizes. `runsWithinUnder_recost` requires
 a pointwise decrease of local charges. With arbitrary new charges, even an immediate return
-can lose its old work bound: initialization and terminal readout are both charged.
+can lose its old work bound: initialization and terminal readout are both charged. The
+recosted backend keeps the original structural code, so `seqComp_recost` recosts a composite
+part by part. Its composition instance can only charge a composite's own new cost as overhead,
+since nothing relates arbitrary new charges to each other. A pointwise decrease of charges is a
+simulation (`SimulatedBy.ofRecostLE`), which transports `PolyRealizer`s; run bounds transport
+through `runsWithinUnder_recost`.
 
 [`Simulation.lean`](../../PolyFun/Realizability/Quantitative/Simulation.lean) defines
 `Q₁.SimulatedBy Q₂ str`: every `Q₁` code translates to `Q₂` code with the same semantic

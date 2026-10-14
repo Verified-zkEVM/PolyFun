@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Realizability.Quantitative.Erasure
+public import PolyFun.Realizability.Quantitative.Recost
 public import PolyFunTest.Realizability.QuantitativeBoundedClosure
 
 /-!
@@ -21,7 +21,7 @@ public section
 open PFunctor PFunctor.DynSystem.DynComputation
 open PFunctor.QuantitativeBoundedClosureTest
 
-example : ¬(returnRealization.recost (fun _ _ _ _ _ _ _ ↦ 1)).RunsWithin
+example : ¬(returnRealization.recost (fun _ _ ↦ 1)).RunsWithin
     (fun _ ↦ (0 : ExecutionCost)) := by
   intro h
   have hc := (h.cost_le PUnit.unit (.nil _)).1
@@ -29,5 +29,5 @@ example : ¬(returnRealization.recost (fun _ _ _ _ _ _ _ ↦ 1)).RunsWithin
   omega
 
 example (input : PUnit) :
-    (returnRealization.recost (fun _ _ _ _ _ _ _ ↦ 1)).machine.denote input =
+    (returnRealization.recost (fun _ _ ↦ 1)).machine.denote input =
       returnRealization.machine.denote input := rfl
