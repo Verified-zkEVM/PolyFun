@@ -25,8 +25,8 @@ unit only for activations that advance a local machine: an unfinished node that 
 an empty mailbox.
 
 `runTokenOpen` interleaves external inputs with token activations. Inputs are uncharged; their
-admissibility belongs to the caller. All three runners are `MonadAttach.chargedRun` folds, so
-the potential method `MonadAttach.chargedRun_le` bounds their work.
+admissibility belongs to the caller. All three runners are `MonadAttach.chargedFoldlM` folds, so
+the potential method `MonadAttach.chargedFoldlM_le` bounds their work.
 -/
 
 public section
@@ -77,14 +77,14 @@ end Productive
 @[expose] def runTokenCharged (impl : (id : Node) → Handler (StateT S m) (network.effect id))
     (charge : Charge network S) (fuel : ℕ) (state : State network S) :
     m (State network S × ℕ) :=
-  chargedRun (tokenStep impl) (fun _ state => charge (.node state.focus) state)
+  chargedFoldlM (tokenStep impl) (fun _ state => charge (.node state.focus) state)
     (List.replicate fuel ()) state
 
 /-- A FIFO schedule that also returns its weighted work. -/
 @[expose] def runFIFOCharged (impl : (id : Node) → Handler (StateT S m) (network.effect id))
     (charge : Charge network S) (schedule : List (Activation Node)) (state : State network S) :
     m (State network S × ℕ) :=
-  chargedRun (fifoStep impl) charge schedule state
+  chargedFoldlM (fifoStep impl) charge schedule state
 
 /-- An event of an open token execution: a funded external input or one token activation. -/
 inductive TokenEvent (boundary : PortBoundary) where
@@ -110,7 +110,7 @@ work. -/
 @[expose] def runTokenOpen (impl : (id : Node) → Handler (StateT S m) (network.effect id))
     (charge : Charge network S) (events : List (TokenEvent boundary))
     (state : State network S) : m (State network S × ℕ) :=
-  chargedRun (tokenEventStep impl) (tokenEventCharge charge) events state
+  chargedFoldlM (tokenEventStep impl) (tokenEventCharge charge) events state
 
 /-- An open execution without inputs is the charged token run. -/
 theorem runTokenOpen_replicate_step
@@ -121,7 +121,7 @@ theorem runTokenOpen_replicate_step
   induction fuel generalizing state with
   | zero => rfl
   | succ fuel ih =>
-    simp only [runTokenOpen, runTokenCharged, List.replicate_succ, chargedRun] at ih ⊢
+    simp only [runTokenOpen, runTokenCharged, List.replicate_succ, chargedFoldlM] at ih ⊢
     exact bind_congr fun s => by rw [ih]; rfl
 
 /-- The token runner is the fold of `tokenStep` over its fuel. -/
@@ -152,14 +152,14 @@ theorem map_fst_runTokenCharged
     (impl : (id : Node) → Handler (StateT S m) (network.effect id))
     (charge : Charge network S) (fuel : ℕ) (state : State network S) :
     Prod.fst <$> runTokenCharged impl charge fuel state = runToken impl fuel state := by
-  rw [runTokenCharged, map_fst_chargedRun, runToken_eq_foldlM]
+  rw [runTokenCharged, map_fst_chargedFoldlM, runToken_eq_foldlM]
 
 /-- The charged FIFO run executes exactly the activations of `runFIFO`. -/
 theorem map_fst_runFIFOCharged
     (impl : (id : Node) → Handler (StateT S m) (network.effect id))
     (charge : Charge network S) (schedule : List (Activation Node)) (state : State network S) :
     Prod.fst <$> runFIFOCharged impl charge schedule state = runFIFO impl schedule state := by
-  rw [runFIFOCharged, map_fst_chargedRun, runFIFO_eq_foldlM]
+  rw [runFIFOCharged, map_fst_chargedFoldlM, runFIFO_eq_foldlM]
 
 section Exact
 
@@ -172,7 +172,7 @@ theorem canReturn_runToken_iff_runTokenCharged
     CanReturn (runToken impl fuel state) next ↔
       ∃ work, CanReturn (runTokenCharged impl charge fuel state) (next, work) := by
   rw [runToken_eq_foldlM]
-  exact canReturn_foldlM_iff_chargedRun _ _ _ _ _
+  exact canReturn_foldlM_iff_chargedFoldlM _ _ _ _ _
 
 /-- Every FIFO result carries a weighted work, for any charge. -/
 theorem canReturn_runFIFO_iff_runFIFOCharged
@@ -181,7 +181,7 @@ theorem canReturn_runFIFO_iff_runFIFOCharged
     CanReturn (runFIFO impl schedule state) next ↔
       ∃ work, CanReturn (runFIFOCharged impl charge schedule state) (next, work) := by
   rw [runFIFO_eq_foldlM]
-  exact canReturn_foldlM_iff_chargedRun _ _ _ _ _
+  exact canReturn_foldlM_iff_chargedFoldlM _ _ _ _ _
 
 /-- Under the unit charge, the work of a token result is its fuel, which is also its `elapsed`
 increment. -/
@@ -190,7 +190,7 @@ theorem runTokenCharged_one (impl : (id : Node) → Handler (StateT S m) (networ
     (h : CanReturn (runTokenCharged impl Charge.one fuel state) (next, work)) :
     work = fuel ∧ next.elapsed = state.elapsed + work := by
   have hw : work = fuel := by
-    simpa using chargedRun_const (step := tokenStep impl) 1 _ state next work h
+    simpa using chargedFoldlM_const (step := tokenStep impl) 1 _ state next work h
   refine ⟨hw, ?_⟩
   have hrun : CanReturn (runToken impl fuel state) next :=
     (canReturn_runToken_iff_runTokenCharged impl Charge.one fuel state next).2 ⟨work, h⟩
@@ -203,7 +203,7 @@ theorem runFIFOCharged_one (impl : (id : Node) → Handler (StateT S m) (network
     (h : CanReturn (runFIFOCharged impl Charge.one schedule state) (next, work)) :
     work = schedule.length ∧ next.elapsed = state.elapsed + work := by
   have hw : work = schedule.length := by
-    simpa using chargedRun_const (step := fifoStep impl) 1 _ state next work h
+    simpa using chargedFoldlM_const (step := fifoStep impl) 1 _ state next work h
   refine ⟨hw, ?_⟩
   have hrun : CanReturn (runFIFO impl schedule state) next :=
     (canReturn_runFIFO_iff_runFIFOCharged impl Charge.one schedule state next).2 ⟨work, h⟩

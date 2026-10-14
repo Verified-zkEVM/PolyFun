@@ -19,9 +19,9 @@ public import PolyFun.Interaction.Execution.ReactiveNetwork.Conserving
   around the cycle, so the productive work of every token prefix is at most `4 N`, and the counter
   finishes within `4 N` activations.
 * **Ping-pong.** The network admits no conserving certificate, for any charge positive at the
-  focus, any credit model, and any invariant containing the initial state. This follows directly
-  from the soundness bound against the lower bound on work, and again through the derived token
-  budget.
+  focus, any credit model, and any token invariant (an invariant preserved by token activation)
+  containing the initial state. This follows directly from the soundness bound against the lower
+  bound on work, and again through the derived token budget.
 * **Unit charges.** They recover the activation count retained by `elapsed`. Because conservation
   forces administrative activations to be free, they are not certifiable once a finished node
   can be activated.
@@ -112,6 +112,18 @@ example (n : ℕ) :
       (initial (countdown n) ())).run = some value :=
   (countdownConservingBudget n).runToken_terminal n _ _ trivial
     (by rw [countdownConservingBudget_rank]; exact le_refl _) (Id.canReturn_iff.mpr rfl)
+
+/-- The general corollary `Conserving.runToken_terminal`, which does not need the focus-ready
+hypothesis, finishes the countdown within `2 n + 1` activations. -/
+example (n : ℕ) :
+    ∃ value, outcome () (runToken (m := Id) (countdownImpl n) (2 * n + 1)
+      (initial (countdown n) ())).run = some value := by
+  have htotal : (countdownConserving n .token).total (initial (countdown n) ()) = n :=
+    countdownConservingBudget_rank n _
+  exact (countdownConserving n .token).runToken_terminal (fun _ _ _ _ => trivial)
+    (fun state _ hout => countdown_positive n state hout)
+    (fun _ _ => ⟨_, Id.canReturn_iff.mpr rfl⟩) trivial (by rw [htotal])
+    (Id.canReturn_iff.mpr rfl)
 
 /-- FIFO execution of the countdown does at most `n` units of productive work, whatever the
 schedule. -/
@@ -392,8 +404,10 @@ theorem echo_terminal (N : ℕ) :
 /-! ## Ping-pong -/
 
 /-- **Ping-pong is not conservation-certifiable.** No charge positive at the focus, credit model,
-and invariant containing the initial state admit a conserving certificate: conservation caps the
-work of every run by the initial total, while each activation costs at least one. -/
+and token invariant containing the initial state admit a conserving certificate: conservation caps
+the work of every run by the initial total, while each activation costs at least one. The
+invariant must be preserved by token activation (`preserves`), because both bounds are applied
+along every run from the initial state. -/
 theorem feedback_not_conserving (charge : Charge feedback Unit) (credit : CreditModel feedback)
     (invariant : State feedback Unit → Prop) (hinit : invariant (initial feedback ()))
     (preserves : TokenInvariant feedbackImpl invariant)
@@ -405,7 +419,7 @@ theorem feedback_not_conserving (charge : Charge feedback Unit) (credit : Credit
       (c.total (initial feedback ()) + 1) (initial feedback ())) r :=
     ⟨_, Id.canReturn_iff.mpr rfl⟩
   have hup := c.work_runToken_le preserves hinit h
-  have hlow := le_chargedRun (step := tokenStep feedbackImpl) invariant (fun _ => 1)
+  have hlow := le_chargedFoldlM (step := tokenStep feedbackImpl) invariant (fun _ => 1)
     (fun _ s s' hs hstep => ⟨preserves s s' hs hstep, positive s hs (feedback_unfinished _ _)⟩)
     _ _ _ _ hinit h
   simp at hlow

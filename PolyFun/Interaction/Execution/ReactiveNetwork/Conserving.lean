@@ -21,7 +21,7 @@ of the packet it consumes (`consumed`):
 Credit moves with packets and routing never creates it, so the network total
 `Conserving.total`, node potentials plus credit held by packets, pays for every charge
 (`total_activate`). Deliveries and inputs only move or add credit (`total_deliver`,
-`total_input`). Soundness follows by the potential method `MonadAttach.chargedRun_le`:
+`total_input`). Soundness follows by the potential method `MonadAttach.chargedFoldlM_le`:
 
 * `work_runToken_le`: token work plus the final total is at most the initial total, for every
   fuel;
@@ -33,8 +33,8 @@ Credit moves with packets and routing never creates it, so the network total
 
 Conservation forces administrative activations, finished no-ops and blocked receives, to be free
 (`charge_eq_zero_of_finished`, `charge_eq_zero_of_blocked`). The unit count of `State.elapsed` is
-therefore not certifiable (`isEmpty_one_of_finished`); `Charge.productive` is the unit charge that
-is.
+therefore not certifiable (`isEmpty_conserving_one_of_finished`); `Charge.productive` is the unit
+charge that is.
 
 The global `TokenBudgetCertificate` is a corollary (`Conserving.toTokenBudget`). Given positive
 charges at unfinished focus activations and progress, its rank is twice the total, plus one while
@@ -227,7 +227,7 @@ theorem work_runToken_le (c : Conserving impl .token charge credit invariant)
     {work : ℕ} (hinv : invariant state)
     (h : CanReturn (runTokenCharged impl charge fuel state) (next, work)) :
     work + c.total next ≤ c.total state := by
-  have := chargedRun_le invariant c.total (fun _ => 0)
+  have := chargedFoldlM_le invariant c.total (fun _ => 0)
     (fun _ s s' hs hstep => ⟨preserves s s' hs hstep, by
       simpa using c.total_activate hs rfl hstep⟩) _ state next work hinv h
   simpa using this.2
@@ -241,7 +241,7 @@ theorem work_runFIFO_le (c : Conserving impl .fifo charge credit invariant)
     (hinv : invariant state)
     (h : CanReturn (runFIFOCharged impl charge schedule state) (next, work)) :
     work + c.total next ≤ c.total state + δ * schedule.count .deliver := by
-  have := chargedRun_le invariant c.total (deliveryAllowance δ)
+  have := chargedFoldlM_le invariant c.total (deliveryAllowance δ)
     (fun activation s s' hs hstep => ⟨preserves activation s s' hs hstep, by
       cases activation with
       | node id => simpa [deliveryAllowance] using c.total_activate hs trivial hstep
@@ -262,7 +262,7 @@ theorem work_runTokenOpen_le (c : Conserving impl .token charge credit invariant
     (hinv : invariant state)
     (h : CanReturn (runTokenOpen impl charge events state) (next, work)) :
     work + c.total next ≤ c.total state + (events.map credit.funded).sum := by
-  refine (chargedRun_le invariant c.total credit.funded
+  refine (chargedFoldlM_le invariant c.total credit.funded
     (fun event s s' hs hstep => ?_) _ state next work hinv h).2
   cases event with
   | input packet =>

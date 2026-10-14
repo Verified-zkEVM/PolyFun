@@ -254,7 +254,8 @@ work, and through it termination, from per-node certificates.
 The [conservation tests](../../PolyFunTest/Interaction/Execution/ReactiveConservation.lean)
 recover the countdown's budget. They also bound a terminating counter/echo feedback loop by its
 initial credit, and prove that ping-pong admits no conserving certificate for any positive
-charge, credit model, or invariant.
+charge, credit model, or token invariant (an invariant preserved by token activation) that
+contains the initial state.
 
 The probability-independent
 [`RequestNetwork`](../../PolyFun/Interaction/Execution/RequestNetwork.lean) is a separate finite
