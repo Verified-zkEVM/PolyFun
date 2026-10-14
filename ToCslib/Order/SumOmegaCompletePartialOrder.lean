@@ -7,7 +7,7 @@ Authors: Devon Tuma
 module
 
 public import Mathlib.Order.OmegaCompletePartialOrder
-public import Mathlib.Data.Sum.Order
+public import Mathlib.Order.Sum.Order
 
 /-!
 # Disjoint sums of omega-CPOs

@@ -12,6 +12,7 @@ import Examples.Tutorials.IndexedPrograms
 import Examples.Tutorials.InteractionTrees
 import Examples.Tutorials.ScopedPrograms
 import Examples.Tutorials.ScopedFamily
+import PolyFun.IPFunctor.Scoped.DomainRelation
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess
 import PolyFun.Interaction.Execution.RequestNetwork
@@ -74,3 +75,11 @@ example {n m : Nat} (μ : Fin n → Fin m)
       (t.map Examples.ScopedFamily.parameterHom μ).rename
         (IPFunctor.ScopedSignature.Renaming.map (Examples.ScopedFamily.ValueSort.rename μ) ρ) :=
   Examples.ScopedFamily.parameters_rename μ ρ t
+
+/-- A separate package can recover transported environments from positional correspondence. -/
+example {S T : Type*} {D : S → PointedDomain} {E : T → PointedDomain}
+    {Γ : List S} (f : S → T) (hf : ∀ a, E (f a) = D a)
+    (η : IPFunctor.ScopedDomain.Env D Γ) (ζ : IPFunctor.ScopedDomain.Env E (Γ.map f))
+    (h : IPFunctor.ScopedDomain.Env.Pointwise η ζ) :
+    IPFunctor.ScopedDomain.Env.reindex D E f hf η = ζ :=
+  IPFunctor.ScopedDomain.Env.pointwise_reindex_eq hf h

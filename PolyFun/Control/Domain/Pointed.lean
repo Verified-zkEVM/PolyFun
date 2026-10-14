@@ -63,11 +63,60 @@ theorem cast_rfl {D : PointedDomain.{u}} (x : D) : cast rfl x = x := rfl
   cases h
   rfl
 
+/-- Transport preserves the underlying value across equal semantic domains. -/
+@[simp] theorem cast_heq {D E : PointedDomain.{u}} (h : D = E) (x : D) :
+    HEq (cast h x) x := by
+  cases h
+  rfl
+
+/-- Equality after semantic transport is heterogeneous equality before transport. -/
+theorem cast_eq_iff {D E : PointedDomain.{u}} (h : D = E) (x : D) (y : E) :
+    cast h x = y ↔ HEq x y := by
+  cases h
+  exact ⟨heq_of_eq, eq_of_heq⟩
+
 /-- Successive semantic transports compose without changing a computation. -/
 theorem cast_cast {D E F : PointedDomain.{u}} (h : D = E) (k : E = F) (x : D) :
     cast k (cast h x) = cast (h.trans k) x := by
   cases h
   cases k
+  rfl
+
+/-- Pointwise correspondence identifies continuous functions across equal domains. -/
+theorem hom_heq {D E : PointedDomain.{u}} {F G : PointedDomain.{v}}
+    (hD : D = E) (hF : F = G)
+    (f : OmegaCompletePartialOrder.ContinuousHom D F)
+    (g : OmegaCompletePartialOrder.ContinuousHom E G)
+    (h : ∀ x y, HEq x y → HEq (f x) (g y)) : HEq f g := by
+  cases hD
+  cases hF
+  apply heq_of_eq
+  apply OmegaCompletePartialOrder.ContinuousHom.ext
+  intro x
+  exact eq_of_heq (h x x HEq.rfl)
+
+/-- Equal continuous unfolding maps have equal least fixed points across domain transport. -/
+theorem fix_heq {D E : PointedDomain.{u}} (hD : D = E)
+    (f : OmegaCompletePartialOrder.ContinuousHom D D)
+    (g : OmegaCompletePartialOrder.ContinuousHom E E)
+    (h : ∀ x y, HEq x y → HEq (f x) (g y)) :
+    HEq f.fix g.fix := by
+  cases hD
+  exact congr_arg_heq (fun k : OmegaCompletePartialOrder.ContinuousHom D D => k.fix)
+    (eq_of_heq (hom_heq rfl rfl f g h))
+
+/-- Corresponding components form corresponding dependent semantic families. -/
+theorem pi_heq {I : Type v} {D E : I → PointedDomain.{u}} (hD : ∀ i, D i = E i)
+    {f : (i : I) → D i} {g : (i : I) → E i} (h : ∀ i, HEq (f i) (g i)) : HEq f g := by
+  cases funext hD
+  exact heq_of_eq (funext (fun i => eq_of_heq (h i)))
+
+/-- Suspending corresponding values retains their correspondence. -/
+theorem result_value_heq {D E : PointedDomain.{u}} {ε : Type v} (hD : D = E)
+    {x : D} {y : E} (h : HEq x y) :
+    HEq (DomainResult.value x : DomainResult ε D) (DomainResult.value y : DomainResult ε E) := by
+  cases hD
+  cases eq_of_heq h
   rfl
 
 end PointedDomain

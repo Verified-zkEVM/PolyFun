@@ -152,7 +152,7 @@ abbrev Term := signature.Term
       (ValueSort.rename_rename a ρ Fin.succ).symm
   sort := by
     intro n m ρ s o p
-    cases o <;> first | rfl | exact Fin.elim0 p | skip
+    cases o <;> try first | rfl | exact Fin.elim0 p
     cases p using Fin.cases <;> rfl
 
 /-- Untyped runtime descriptions, with type abstractions erased. -/

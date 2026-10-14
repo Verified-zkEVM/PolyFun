@@ -18,3 +18,33 @@ PolyFun's scoped syntax directly. Ordered polymorphic syntax uses the
 generic parameter traversals, and continuous heterogeneous environments.
 The [independent polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean)
 exercises these APIs without a language or cryptographic dependency.
+
+## Substitution and semantic transport
+
+`ScopedFamily.Term.map_congr` compares parameter traversals with related states,
+including different target scopes and arbitrary context/sort equality witnesses.
+It complements traversal composition: a consumer proves constructor and child
+coherence, then obtains whole-term identity/composition without implementing
+another recursive traversal.
+
+`ScopedDomain.Env.Pointwise` compares values at equal binding positions across
+independent sort types. It is stable under context casts, domain reindexing,
+fresh bindings and blocks. `fixGroup_pointwise` transports one simultaneous
+least fixed point using a strict continuous map; it does not move quantifiers
+through recursion or assume that a language's value substitution is strict.
+These APIs use the existing Mathlib omega-CPO and PolyFun scoped carriers.
+
+The companion VCVio development discharges the concrete Cryptol binder squares
+and proves whole-term parameter identity/composition, parameter/value fusion,
+value-substitution composition, and denotation preservation for every current
+ordered constructor. Its tests include noninjective type maps, arbitrary
+annotations, mixed binders, partial environments and recursive groups.
+Language-specific constructor proofs remain downstream.
+
+The next downstream work is checked typed-AST import and a pinned official
+reference-core correspondence, wider language semantics and polymorphic
+operational adequacy, syntax-producing specialization/native compilation,
+then polymorphic export and semantic round trips. PolyFun should gain only
+reusable transport, binding or domain lemmas needed by those slices. A frontend,
+Cryptol primitives, reference version policy and cryptographic conformance
+certificates belong to VCVio's optional development.

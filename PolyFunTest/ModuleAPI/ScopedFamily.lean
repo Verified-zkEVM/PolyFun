@@ -8,6 +8,7 @@ module
 
 import Examples.Tutorials.ScopedFamily
 import PolyFun.IPFunctor.Scoped.FamilyMapSubstitution
+import PolyFun.IPFunctor.Scoped.FamilyMapCongr
 import PolyFun.IPFunctor.Scoped.Domain
 
 /-! # Ordinary-import checks for context-changing binding families -/
@@ -119,3 +120,31 @@ example : Examples.ScopedFamily.erase
     (Examples.ScopedFamily.ambientValue.rename (ScopedVar.succ
       (b := Examples.ScopedFamily.ValueSort.mono .bit))) = .lam (.var 2) :=
   Examples.ScopedFamily.erase_rename_ambientValue
+
+universe uScope uSort uOp uArg
+
+/-- Related traversals retain arbitrary endpoint equality witnesses at independent universes. -/
+example {W : Type uScope} {S : W → Type uSort}
+    {σ : ScopedFamily.{uScope, uSort, uOp, uArg} W S}
+    {a b c : W} (μ : PLift (a = b)) (ν : PLift (a = c))
+    {Γ : List (S a)} {s : S a} (t : σ.Term a Γ s) :
+    HEq (t.map (ScopedFamily.Hom.identity σ) μ)
+      (t.map (ScopedFamily.Hom.identity σ) ν) := by
+  apply ScopedFamily.Term.map_congr (ScopedFamily.Hom.identity σ)
+    (ScopedFamily.Hom.identity σ) (fun _ _ => True) ?_ ?_ ?_ ?_ ?_ trivial t
+  · intro a b c μ ν _
+    exact μ.down.symm.trans ν.down
+  · intro a b c μ ν _
+    cases μ.down
+    cases ν.down
+    rfl
+  · intro a b c μ ν _ s op
+    cases μ.down
+    cases ν.down
+    rfl
+  · intro a b c μ ν _ s op p q he
+    cases μ.down
+    cases ν.down
+    exact eq_of_heq he
+  · intros
+    trivial

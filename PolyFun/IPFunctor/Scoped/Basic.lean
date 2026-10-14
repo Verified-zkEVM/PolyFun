@@ -45,6 +45,23 @@ inductive ScopedVar {S : Type u} : List S → S → Type u where
   | zero => rfl
   | succ x ih => exact congrArg (· + 1) ih
 
+/-- A variable's numerical position determines its sort and typed occurrence. -/
+theorem ScopedVar.sigma_eq_of_index_eq {S : Type u} {Γ : List S} {a b : S}
+    (x : ScopedVar Γ a) (y : ScopedVar Γ b) (h : x.index = y.index) :
+    (⟨a, x⟩ : (s : S) × ScopedVar Γ s) = ⟨b, y⟩ := by
+  induction x generalizing b with
+  | zero =>
+    cases y with
+    | zero => rfl
+    | succ y => simp only [index] at h; omega
+  | succ x ih =>
+    cases y with
+    | zero => simp only [index] at h; omega
+    | succ y =>
+      have he := ih y (Nat.add_right_cancel h)
+      cases he
+      rfl
+
 /-- Constructor shapes with explicit binding information for every argument. -/
 structure ScopedSignature (S : Type u) where
   /-- Constructors producing the given sort. -/

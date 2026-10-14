@@ -9,6 +9,7 @@ module
 import PolyFun.ITree.Domain
 import PolyFun.PFunctor.Resumption.DomainTruncate
 import PolyFun.Control.Domain.Result
+import PolyFun.IPFunctor.Scoped.DomainRelation
 
 /-!
 # Public continuous-domain API canaries
@@ -46,3 +47,23 @@ example {P : PFunctor} {α : Type} (ret : α → DomainResult Unit (DiscreteOrde
 
 example {D : Type uD} [OmegaCompletePartialOrder D] [OrderBot D]
     (f : D →𝒄 D) : f f.fix = f.fix := f.map_fix
+
+/-- Sort collapse preserves a failure at one position and bottom at another. -/
+example :
+    let D := fun _ : Bool => PointedDomain.ofType (DomainResult Unit (DiscreteOrder Nat))
+    let E := fun _ : Unit => PointedDomain.ofType (DomainResult Unit (DiscreteOrder Nat))
+    let η : IPFunctor.ScopedDomain.Env D [true, false] :=
+      IPFunctor.ScopedDomain.Env.cons D (DomainResult.error ())
+        (IPFunctor.ScopedDomain.Env.cons D ⊥ (IPFunctor.ScopedDomain.Env.empty D))
+    let ζ := IPFunctor.ScopedDomain.Env.reindex D E (fun _ => ()) (fun _ => rfl) η
+    ζ () .zero = DomainResult.error () ∧ ζ () (.succ .zero) = ⊥ := by
+  constructor <;> rfl
+
+/-- Positional comparison is usable across independent sort universes and arbitrary casts. -/
+example {S : Type uA} {T : Type uB} {D : S → PointedDomain} {E : T → PointedDomain}
+    {Γ Γ' : List S} {Δ Δ' : List T} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
+    (η : IPFunctor.ScopedDomain.Env D Γ) (ζ : IPFunctor.ScopedDomain.Env E Δ)
+    (h : IPFunctor.ScopedDomain.Env.Pointwise η ζ) :
+    IPFunctor.ScopedDomain.Env.Pointwise (hΓ ▸ η) (hΔ ▸ ζ) := by
+  apply IPFunctor.ScopedDomain.Env.Pointwise.cast_left
+  exact fun {_ _} x y he => IPFunctor.ScopedDomain.Env.Pointwise.cast_right hΔ h x y he
