@@ -69,7 +69,7 @@ def zeroPolyRealizer {A B : Type} (a : StepClass.unconstrained.Str A)
   work_le _ := le_rfl
   outputSize_le _ := le_rfl
 
-/-- Polynomial category certificate for the cost-free fixture. -/
+/-- Polynomial composition certificate for the cost-free fixture. -/
 def zeroPolynomialComposition : zeroBackend.PolynomialComposition where
   identityWork _ := FirstOrderPolynomial.const 0
   cost_identity_le _ _ := le_rfl
@@ -181,7 +181,7 @@ def onePolyRealizer {A B : Type} (a : StepClass.unconstrained.Str A)
   work_le _ := le_rfl
   outputSize_le _ := le_rfl
 
-/-- Polynomial category certificate for the nonzero fixture. -/
+/-- Polynomial composition certificate for the nonzero fixture. -/
 def onePolynomialComposition : oneSizeBackend.PolynomialComposition where
   identityWork _ := FirstOrderPolynomial.const 0
   cost_identity_le _ _ := le_rfl
@@ -308,9 +308,9 @@ theorem no_zero_output_recovery :
 
 /-- Complete explicit polynomial model for the cost-free fixture. -/
 def zeroModel : zeroBackend.PolynomialModel where
-  category := inferInstance
+  composition := inferInstance
   kernel := zeroKernel
-  polynomialCategory := zeroPolynomialComposition
+  polynomialComposition := zeroPolynomialComposition
   structural := zeroStructural
 
 /-- The pinned unit representation used by the identity/composition checks. -/
@@ -320,7 +320,7 @@ def unitRep : StepClass.unconstrained.Str PUnit := PUnit.unit
 def identityCode : zeroBackend.PolyRealizer unitRep unitRep id :=
   zeroModel.identity unitRep
 
-/-- Composition charges the explicit category model and retains both certificates. -/
+/-- Composition charges the explicit composition model and retains both certificates. -/
 def composedIdentity : zeroBackend.PolyRealizer unitRep unitRep (id ∘ id) :=
   zeroModel.comp identityCode identityCode
 

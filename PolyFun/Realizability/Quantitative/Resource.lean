@@ -469,7 +469,7 @@ def ofPolyRealizer (model : Q.PolynomialModel)
     letI := model.kernel.cSum
     letI := model.kernel.cOption
     PureResourceCertificate Q bd function := by
-  letI := model.category
+  letI := model.composition
   letI := model.kernel.cProd
   letI := model.kernel.cSum
   letI := model.kernel.cOption

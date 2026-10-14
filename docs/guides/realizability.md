@@ -11,7 +11,7 @@ implementation:
 | *How* does a machine perform it? | `PFunctor.DynSystem.DynComputation p α β` |
 | Do the two agree (and within what budget)? | `Implements` / `ImplementsWithin` |
 | Is the machine's *machinery* allowed? | **this subtree** |
-| What exact backend work does its interaction prefix use? | `QuantitativeRealization` |
+| What backend work is charged to its interaction prefix? | `QuantitativeRealization` |
 
 Instances include finite-state realizability and machines with computable
 transitions. Cryptographic polynomial-time adversaries additionally require
@@ -593,7 +593,7 @@ Its adapter half connects this theory to PolyFun:
 - `ComplexityBackends/CslibSingleTape/Backend.lean` interprets `EncPolyTime` as
   quantitative executable evidence. Its qualitative admissibility predicate is
   unconstrained; every quantitative map still carries a concrete machine certificate.
-  Its quantitative `HasCategory` is the backend's only executable structural instance.
+  Its quantitative `HasComposition` is the backend's only executable structural instance.
   Composition is the cslib machine composite, whose `composeOverhead` evaluates the
   second machine's polynomial at `1 + |x| + T₁(|x|)`, so composed cost is not additive
   in the costs of the parts. Without executable product, sum, and option code, the

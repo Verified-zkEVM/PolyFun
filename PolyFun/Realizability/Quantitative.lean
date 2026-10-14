@@ -136,7 +136,7 @@ structure ExactComposition where
   compose : ∀ {A B D : Type u} {a : C.Str A} {b : C.Str B} {d : C.Str D}
     {f : A → B} {g : B → D}, Q.Realizer a b f → Q.Realizer b d g →
       Q.Realizer a d (g ∘ f)
-  /-- Exact work spent connecting two pieces of code. -/
+  /-- Work charged for connecting two pieces of code, as it appears in the exact cost equation. -/
   composeOverhead : ∀ {A B D : Type u} {a : C.Str A} {b : C.Str B}
     {d : C.Str D} {f : A → B} {g : B → D},
     Q.Realizer a b f → Q.Realizer b d g → A → ℕ
@@ -153,69 +153,21 @@ variable {Q}
 
 /-- Forget an exact composition equation to its sound upper-bound composition structure. -/
 @[instance_reducible]
-def toHasComposition (category : Q.ExactComposition) : Q.HasComposition where
-  identity := category.identity
-  compose := category.compose
-  composeOverhead := category.composeOverhead
-  cost_compose_le first second input := Nat.le_of_eq (category.cost_compose_eq first second input)
+def toHasComposition (composition : Q.ExactComposition) : Q.HasComposition where
+  identity := composition.identity
+  compose := composition.compose
+  composeOverhead := composition.composeOverhead
+  cost_compose_le first second input :=
+    Nat.le_of_eq (composition.cost_compose_eq first second input)
 
 /-- Recover the optional exact refinement for the composition structure obtained from exact data. -/
-theorem toHasExactComposition (category : Q.ExactComposition) :
-    letI := category.toHasComposition
+theorem toHasExactComposition (composition : Q.ExactComposition) :
+    letI := composition.toHasComposition
     Q.HasExactComposition := by
-  let _ := category.toHasComposition
-  exact ⟨category.cost_compose_eq⟩
+  let _ := composition.toHasComposition
+  exact ⟨composition.cost_compose_eq⟩
 
 end ExactComposition
-
-/-- Deprecated name of `HasComposition`, which assumes no category laws on code. -/
-@[deprecated HasComposition (since := "2026-10-01")]
-abbrev HasCategory := HasComposition Q
-
-/-- Deprecated name of `HasExactComposition`. -/
-@[deprecated HasExactComposition (since := "2026-10-01")]
-abbrev HasExactCategory [Q.HasComposition] := HasExactComposition Q
-
-/-- Deprecated name of `ExactComposition`. -/
-@[deprecated ExactComposition (since := "2026-10-01")]
-abbrev ExactCategory := ExactComposition Q
-
-namespace HasCategory
-
-@[inherit_doc HasComposition.identity,
-  deprecated HasComposition.identity (since := "2026-10-01")]
-abbrev identity := @HasComposition.identity
-@[inherit_doc HasComposition.compose,
-  deprecated HasComposition.compose (since := "2026-10-01")]
-abbrev compose := @HasComposition.compose
-@[inherit_doc HasComposition.composeOverhead,
-  deprecated HasComposition.composeOverhead (since := "2026-10-01")]
-abbrev composeOverhead := @HasComposition.composeOverhead
-@[deprecated HasComposition.cost_compose_le (since := "2026-10-01")]
-alias cost_compose_le := HasComposition.cost_compose_le
-
-end HasCategory
-
-namespace HasExactCategory
-
-@[deprecated HasExactComposition.cost_compose_eq (since := "2026-10-01")]
-alias cost_compose_eq := HasExactComposition.cost_compose_eq
-
-end HasExactCategory
-
-namespace ExactCategory
-
-variable {Q}
-
-@[inherit_doc ExactComposition.toHasComposition,
-  deprecated ExactComposition.toHasComposition (since := "2026-10-01")]
-abbrev toHasCategory (data : Q.ExactComposition) : Q.HasComposition :=
-  data.toHasComposition
-
-@[deprecated ExactComposition.toHasExactComposition (since := "2026-10-01")]
-alias toHasExactCategory := ExactComposition.toHasExactComposition
-
-end ExactCategory
 
 /-- The qualitative admissibility proof carried by executable evidence. -/
 theorem Realizer.toHom {A B : Type u} {a : C.Str A} {b : C.Str B}
@@ -753,7 +705,8 @@ end ExecutionTrace
 
 /-! ## Exact pathwise bounds -/
 
-/-- Exact resource use of an execution prefix from a concrete input.
+/-- Resource use charged to an execution prefix from a concrete input, exact relative to the
+backend's `cost` and `size`.
 
 Initialization is charged once, transition costs are folded from the trace, and
 `head` is charged once at the final observed state. Thus a prefix of `k` queries

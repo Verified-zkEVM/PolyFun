@@ -331,7 +331,7 @@ theorem cost_initCode_precomp_le [Q.HasComposition]
     change Q.cost (Q.compose code R.initCode) input ≤ _
     exact Q.cost_comp_le code R.initCode input
 
-/-- Exact initialization cost when the backend carries an exact-category refinement. -/
+/-- Exact initialization cost when the backend carries an exact-composition refinement. -/
 theorem cost_initCode_precomp [Q.HasComposition] [Q.HasExactComposition]
     {D : Type u} {inputRep : C.Str D} {f : D → A}
     (R : QuantitativeRealization Q bd) (code : Q.Realizer inputRep bd.input f)
@@ -411,11 +411,11 @@ variable [Q.HasComposition] [QS : Q.HasSum] [QO : Q.HasOption] [QP : Q.HasProd]
 
 All three maps of the sum-state machine carry executable evidence. No resource bound is inferred:
 each assembled map costs `Q.cost` of its code, bounded through `cost_comp_le` and exact through
-`cost_comp` under `HasExactCategory`, while bounding the primitive structural codes is an explicit
-backend obligation. A first-phase transition re-runs `R₁.headCode` to learn whether the first phase
-has returned, and the handoff re-runs `R₂.initCode`, so an execution of the composite pays those
-readouts once in `headCode` and again in `updateCode`. The bounded theorem charges them through
-`SeqCompCostCertificate`. -/
+`cost_comp` under `HasExactComposition`, while bounding the primitive structural codes is an
+explicit backend obligation. A first-phase transition re-runs `R₁.headCode` to learn whether the
+first phase has returned, and the handoff re-runs `R₂.initCode`, so an execution of the composite
+pays those readouts once in `headCode` and again in `updateCode`. The bounded theorem charges them
+through `SeqCompCostCertificate`. -/
 @[implicit_reducible]
 def seqComp (R₁ : QuantitativeRealization Q bd)
     (R₂ : QuantitativeRealization Q (bd.mid outRep)) :

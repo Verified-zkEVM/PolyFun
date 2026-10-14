@@ -15,9 +15,9 @@ public import PolyFun.Realizability.Quantitative
 `StepClass.WordClass` is the qualitative adapter from a conventional class of word functions to
 PolyFun realizability. This file supplies its quantitative counterpart. A backend provides
 Type-valued code for its admitted word functions, a word-size measure, and code cost. Optional
-category mixins add identity and composition with a sound cost bound or an exact equation.
+composition mixins add identity and composition with a sound cost bound or an exact equation.
 `QuantitativeWordClass.toQuantitativeStepClass` lifts the core data through every injective
-representation used by `WordClass.toStepClass`; separate adapters lift the category mixins.
+representation used by `WordClass.toStepClass`; separate adapters lift the composition mixins.
 
 Keeping the executable witness in `Type` is essential. A proof-irrelevant assertion that some
 word function is polynomial-time does not retain a program whose run can be charged. Conversely,
@@ -80,7 +80,8 @@ structure ExactComposition where
   identity : Q.Code id
   /-- Sequential composition of word-function code. -/
   compose : ∀ {f g : W → W}, Q.Code f → Q.Code g → Q.Code (g ∘ f)
-  /-- Exact work used to connect two sequential pieces of code. -/
+  /-- Work charged for connecting two sequential pieces of code, as it appears in the exact
+  cost equation. -/
   composeOverhead : ∀ {f g : W → W}, Q.Code f → Q.Code g → W → ℕ
   /-- Exact cost equation for sequentially composed word-function code. -/
   cost_compose_eq : ∀ {f g : W → W} (first : Q.Code f) (second : Q.Code g) (word : W),
@@ -93,69 +94,21 @@ variable {Q}
 
 /-- Forget exact word-composition data to a sound upper-bound composition structure. -/
 @[instance_reducible]
-def toHasComposition (category : Q.ExactComposition) : Q.HasComposition where
-  identity := category.identity
-  compose := category.compose
-  composeOverhead := category.composeOverhead
-  cost_compose_le first second word := Nat.le_of_eq (category.cost_compose_eq first second word)
+def toHasComposition (composition : Q.ExactComposition) : Q.HasComposition where
+  identity := composition.identity
+  compose := composition.compose
+  composeOverhead := composition.composeOverhead
+  cost_compose_le first second word :=
+    Nat.le_of_eq (composition.cost_compose_eq first second word)
 
 /-- Recover the optional exact refinement for the composition structure obtained from exact data. -/
-theorem toHasExactComposition (category : Q.ExactComposition) :
-    letI := category.toHasComposition
+theorem toHasExactComposition (composition : Q.ExactComposition) :
+    letI := composition.toHasComposition
     Q.HasExactComposition := by
-  let _ := category.toHasComposition
-  exact ⟨category.cost_compose_eq⟩
+  let _ := composition.toHasComposition
+  exact ⟨composition.cost_compose_eq⟩
 
 end ExactComposition
-
-/-- Deprecated name of `HasComposition`, which assumes no category laws on code. -/
-@[deprecated HasComposition (since := "2026-10-01")]
-abbrev HasCategory := HasComposition Q
-
-/-- Deprecated name of `HasExactComposition`. -/
-@[deprecated HasExactComposition (since := "2026-10-01")]
-abbrev HasExactCategory [Q.HasComposition] := HasExactComposition Q
-
-/-- Deprecated name of `ExactComposition`. -/
-@[deprecated ExactComposition (since := "2026-10-01")]
-abbrev ExactCategory := ExactComposition Q
-
-namespace HasCategory
-
-@[inherit_doc HasComposition.identity,
-  deprecated HasComposition.identity (since := "2026-10-01")]
-abbrev identity := @HasComposition.identity
-@[inherit_doc HasComposition.compose,
-  deprecated HasComposition.compose (since := "2026-10-01")]
-abbrev compose := @HasComposition.compose
-@[inherit_doc HasComposition.composeOverhead,
-  deprecated HasComposition.composeOverhead (since := "2026-10-01")]
-abbrev composeOverhead := @HasComposition.composeOverhead
-@[deprecated HasComposition.cost_compose_le (since := "2026-10-01")]
-alias cost_compose_le := HasComposition.cost_compose_le
-
-end HasCategory
-
-namespace HasExactCategory
-
-@[deprecated HasExactComposition.cost_compose_eq (since := "2026-10-01")]
-alias cost_compose_eq := HasExactComposition.cost_compose_eq
-
-end HasExactCategory
-
-namespace ExactCategory
-
-variable {Q}
-
-@[inherit_doc ExactComposition.toHasComposition,
-  deprecated ExactComposition.toHasComposition (since := "2026-10-01")]
-abbrev toHasCategory (data : Q.ExactComposition) : Q.HasComposition :=
-  data.toHasComposition
-
-@[deprecated ExactComposition.toHasExactComposition (since := "2026-10-01")]
-alias toHasExactCategory := ExactComposition.toHasExactComposition
-
-end ExactCategory
 
 /-- Identity word code selected by a composition instance. -/
 def identity [Q.HasComposition] : Q.Code id := HasComposition.identity
@@ -229,12 +182,6 @@ theorem toHasExactComposition [Q.HasComposition] [Q.HasExactComposition] :
   have h := HasExactComposition.cost_compose_eq first.code second.code (a.1 input)
   rw [first.realizes input] at h
   exact h
-
-@[inherit_doc toHasComposition, deprecated toHasComposition (since := "2026-10-01")]
-abbrev toHasCategory := @toHasComposition
-
-@[deprecated toHasExactComposition (since := "2026-10-01")]
-alias toHasExactCategory := toHasExactComposition
 
 @[simp]
 theorem toQuantitativeStepClass_size {A : Type u} (rep : V.toStepClass.Str A) (value : A) :

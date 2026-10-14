@@ -81,6 +81,7 @@ structure PolynomialTimeBackend (Q : QuantitativeStepClass.{u, v, w} C)
   /-- Identities respect the uniform identity polynomial. -/
   timeOf_identity_le : ∀ {A : Type u} (a : C.Str A) (k : ℕ),
     (timeOf (Q.identity a)).eval k ≤ idTime.eval k
+
 namespace DescriptionMeasure
 
 variable {Faithful : ∀ {B : Type u}, C.Str B → Prop} (M : Q.DescriptionMeasure Faithful)

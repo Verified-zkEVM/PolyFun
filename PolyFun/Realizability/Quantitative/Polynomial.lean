@@ -177,27 +177,25 @@ structure PolynomialComposition [Q.HasComposition] where
     Q.composeOverhead first second input ≤
       (composeOverhead first second).eval (Q.size a input)
 
-@[inherit_doc PolynomialComposition, deprecated PolynomialComposition (since := "2026-10-01")]
-abbrev PolynomialCategory := @PolynomialComposition
 
 namespace PolyRealizer
 
 variable {Q}
 
 /-- Polynomially bounded identity code. -/
-def identity [Q.HasComposition] (category : Q.PolynomialComposition)
+def identity [Q.HasComposition] (bounds : Q.PolynomialComposition)
     {A : Type u} (a : C.Str A) : Q.PolyRealizer a a id where
   code := Q.identity a
-  work := category.identityWork a
+  work := bounds.identityWork a
   outputSize := FirstOrderPolynomial.input
-  work_le := category.cost_identity_le a
+  work_le := bounds.cost_identity_le a
   outputSize_le := fun _ ↦ le_rfl
 
 /-- Sequential composition of polynomially bounded code.
 
 The work polynomial charges the first code, the second code at the first output-size bound, and
 the backend's explicit connection overhead. -/
-def comp [Q.HasComposition] (category : Q.PolynomialComposition)
+def comp [Q.HasComposition] (bounds : Q.PolynomialComposition)
     {A B D : Type u} {a : C.Str A} {b : C.Str B} {d : C.Str D}
     {f : A → B} {g : B → D}
     (first : Q.PolyRealizer a b f) (second : Q.PolyRealizer b d g) :
@@ -206,7 +204,7 @@ def comp [Q.HasComposition] (category : Q.PolynomialComposition)
   work := FirstOrderPolynomial.add
     (FirstOrderPolynomial.add first.work
       (FirstOrderPolynomial.comp second.work first.outputSize))
-    (category.composeOverhead first.code second.code)
+    (bounds.composeOverhead first.code second.code)
   outputSize := FirstOrderPolynomial.comp second.outputSize first.outputSize
   work_le := fun input ↦ by
     have hsecond : Q.cost second.code (f input) ≤
@@ -216,7 +214,7 @@ def comp [Q.HasComposition] (category : Q.PolynomialComposition)
     exact (Q.cost_comp_le first.code second.code input).trans (by
       simpa using Nat.add_le_add
         (Nat.add_le_add (first.work_le input) hsecond)
-        (category.composeOverhead_le first.code second.code input))
+        (bounds.composeOverhead_le first.code second.code input))
   outputSize_le := fun input ↦ by
     simpa using (second.outputSize_le (f input)).trans
       (second.outputSize.eval_monotone (first.outputSize_le input))
@@ -399,13 +397,13 @@ The class-valued fields are data. This structure is not itself a typeclass, so t
 same backend can coexist without creating global instance ambiguity. -/
 structure PolynomialModel where
   /-- Executable identity and composition used by this model. -/
-  category : Q.HasComposition
+  composition : Q.HasComposition
   /-- Pinned structural representation and executable choices. -/
   kernel : Q.StructuralKernel
   /-- Polynomial bounds for identity and composition. -/
-  polynomialCategory : @PolynomialComposition C Q category
+  polynomialComposition : @PolynomialComposition C Q composition
   /-- Polynomially bounded structural operations and size laws. -/
-  structural : @PolynomialStructuralClosure C Q category kernel
+  structural : @PolynomialStructuralClosure C Q composition kernel
 
 namespace PolynomialModel
 
@@ -414,8 +412,8 @@ variable {Q}
 /-- Use the explicit model's polynomially bounded identity. -/
 def identity (model : Q.PolynomialModel) {A : Type u} (a : C.Str A) :
     Q.PolyRealizer a a id := by
-  letI := model.category
-  exact PolyRealizer.identity model.polynomialCategory a
+  letI := model.composition
+  exact PolyRealizer.identity model.polynomialComposition a
 
 /-- Use the explicit model's polynomially bounded sequential composition. -/
 def comp (model : Q.PolynomialModel)
@@ -423,8 +421,8 @@ def comp (model : Q.PolynomialModel)
     {f : A → B} {g : B → D}
     (first : Q.PolyRealizer a b f) (second : Q.PolyRealizer b d g) :
     Q.PolyRealizer a d (g ∘ f) := by
-  letI := model.category
-  exact first.comp model.polynomialCategory second
+  letI := model.composition
+  exact first.comp model.polynomialComposition second
 
 end PolynomialModel
 

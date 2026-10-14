@@ -29,7 +29,7 @@ noncomputable example := @QuantitativeWordClass.HasExactComposition
 noncomputable example := @QuantitativeWordClass.toHasComposition
 noncomputable example := @QuantitativeWordClass.toHasExactComposition
 
-section Category
+section Composition
 
 variable [Q.HasComposition] [Q.HasExactComposition]
 
@@ -42,7 +42,7 @@ noncomputable example : Q.toQuantitativeStepClass.HasComposition := Q.toHasCompo
 example : letI := Q.toHasComposition; Q.toQuantitativeStepClass.HasExactComposition :=
   Q.toHasExactComposition
 
-end Category
+end Composition
 
 example {A B : Type u} {a : V.toStepClass.Str A} {b : V.toStepClass.Str B}
     {f : A → B} (code : QuantitativeWordClass.Realizer Q a b f) :
@@ -140,14 +140,14 @@ def testQuantitativeWordClass : QuantitativeWordClass testWordClass where
   cost code := code.runCost
 
 @[instance_reducible]
-def testCategory : testQuantitativeWordClass.HasComposition where
+def testComposition : testQuantitativeWordClass.HasComposition where
   identity := TestCode.mk fun _ ↦ 0
   compose := fun {f} {_} first second =>
     TestCode.mk fun word ↦ first.runCost word + second.runCost (f word) + 1
   composeOverhead _ _ _ := 1
   cost_compose_le _ _ _ := le_rfl
 
-local instance : testQuantitativeWordClass.HasComposition := testCategory
+local instance : testQuantitativeWordClass.HasComposition := testComposition
 
 theorem testExactComposition : testQuantitativeWordClass.HasExactComposition :=
   ⟨fun _ _ _ ↦ rfl⟩
