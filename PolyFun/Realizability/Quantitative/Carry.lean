@@ -16,8 +16,8 @@ a per-step overhead on top of the component:
 - extra work at initialization, at every readout and at every enabled transition;
 - larger encoded states and readouts.
 
-`Carry` records these allowances, and `ExecutionCost.withCarry` charges them along a run with a
-given number of visible queries. Queries and traffic are unchanged.
+`ExecutionCost.Carry` records these allowances, and `ExecutionCost.withCarry` charges them along
+a run with a given number of visible queries. Queries and traffic are unchanged.
 
 The allowances of an honest backend grow with the sizes of the states and readouts involved, so
 discharging them needs those sizes bounded along conforming runs. `RunsWithinUnder.size_state_le`,
@@ -31,6 +31,8 @@ universe u v w
 
 namespace PFunctor
 
+namespace ExecutionCost
+
 /-- Per-step backend overhead of carrying a retained value through a run. -/
 structure Carry where
   /-- Extra initialization work. -/
@@ -43,8 +45,6 @@ structure Carry where
   state : ℕ
   /-- Extra encoded readout size. -/
   headSize : ℕ
-
-namespace ExecutionCost
 
 /-- Charge a carry along the transitions of a trace with `steps` queries: `steps` readouts and
 `steps` updates, and shifted peak sizes. Initialization and the final readout are not included;

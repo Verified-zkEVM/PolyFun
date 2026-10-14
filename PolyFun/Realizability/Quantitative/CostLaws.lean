@@ -24,13 +24,17 @@ public import PolyFun.Realizability.Quantitative.Closure
   state carry costs compactly;
 * derived cost bounds for `HasProd.withInput`, `HasProd.pairRight`, `HasProd.pairLeft`,
   `IsDistributive.elimContext`, the option strength `HasOption.strength`, and the carry
-  combinators `exchange`, `rotate`, `carryReadout`, `carryReadoutWith` and `carryUpdate`.
+  combinators `exchange`, `rotate`, `carryReadout`, `carryReadoutWith` and `carryUpdate`, which
+  charge the named primitive counts `carryReadoutCount`, `carryReadoutWithCount` and
+  `carryUpdateCount`.
 
-The laws are *additive*: wrapped black-box code is charged exactly its own cost. This holds for
-backends whose combinators cost a size-dependent amount on top of their parts, such as RAM-style
-models or first-order cost semantics. It fails for the single-tape backend of
-`ComplexityBackends`, whose `composeOverhead` evaluates the second machine's time polynomial at an
-inflated input size, so structural code composed before black-box code is not additive there.
+The laws are *additive*: wrapped black-box code is charged exactly its own cost, and each
+primitive adds an envelope of the sizes it touches. Only test fixtures instantiate them. The
+single-tape backend of `ComplexityBackends` has no executable structural code, and its
+`composeOverhead` evaluates the second machine's time polynomial at an inflated input size, so it
+is not additive. `cost_pair_le` charges pairing at the shared input's size only; a backend that
+copies both results into one pair encoding also pays for the results' sizes, which this law does
+not admit.
 -/
 
 @[expose] public section
@@ -130,6 +134,14 @@ class HasOptionCost [P : C.HasProd] [O : C.HasOption] [QO : Q.HasOption] where
   /-- Wrapping a present value costs at most the envelope at its payload's size. -/
   cost_some_le : ∀ {A : Type u} (a : C.Str A) (x : A),
     Q.cost (QO.some a) x ≤ overhead (Q.size a x)
+  /-- The constantly absent value costs at most the envelope at its input's size. -/
+  cost_none_le : ∀ {A B : Type u} (a : C.Str A) (b : C.Str B) (x : A),
+    Q.cost (QO.none a b) x ≤ overhead (Q.size a x)
+  /-- Mapping over an optional value costs the mapped code on a present value plus the envelope
+  at the input's size. -/
+  cost_map_le : ∀ {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}
+    (code : Q.Realizer a b f) (z : Option A),
+    Q.cost (QO.map code) z ≤ z.elim 0 (Q.cost code) + overhead (Q.size (O.option a) z)
   /-- A contextual bind costs its continuation on a present value plus the envelope at the
   input's size. -/
   cost_bindContext_le : ∀ {A B E : Type u} {a : C.Str A} {b : C.Str B} {e : C.Str E}
@@ -318,6 +330,46 @@ theorem cost_strength_some_le {A E : Type u} (a : C.Str A) (e : C.Str E) (x : A)
 
 end Strength
 
+/-! ## Primitive counts
+
+The carry bounds charge a fixed number of structural primitives, each at the combined envelope
+`structOverhead`. Naming the counts lets statements, derived carries and documentation share one
+definition. -/
+
+/-- Structural primitives charged by `HasProd.pairRight` or `HasProd.pairLeft`: two projections,
+one pairing and one composition glue. -/
+def pairRightCount : ℕ := 4
+
+/-- Structural primitives charged by `IsDistributive.elimContext`: distribution, case analysis and
+one glue. -/
+def elimContextCount : ℕ := 3
+
+/-- Structural primitives charged by `HasOption.strength` on a present value: `some` and the
+contextual bind. -/
+def strengthCount : ℕ := 2
+
+/-- Structural primitives charged by `exchange` or `rotate`: seven pairings and projections and two
+glues. -/
+def exchangeCount : ℕ := 9
+
+/-- Structural primitives charged by `carryReadoutWith` beyond its two wrapped codes: `pairRight`,
+the glue into case analysis, `elimContext`, and an injection with its glue. -/
+def carryReadoutWithCount : ℕ := pairRightCount + 1 + elimContextCount + 2
+
+/-- Structural primitives charged by `carryReadout` beyond its wrapped code: those of
+`carryReadoutWith`, plus the projection that drops the carried value on the query branch. -/
+def carryReadoutCount : ℕ := carryReadoutWithCount + 1
+
+/-- Structural primitives charged by `carryUpdate` beyond its wrapped code: `exchange`, two glues,
+`pairRight` and the option strength. -/
+def carryUpdateCount : ℕ := exchangeCount + 2 + pairRightCount + strengthCount
+
+theorem carryReadoutWithCount_eq : carryReadoutWithCount = 10 := rfl
+
+theorem carryReadoutCount_eq : carryReadoutCount = 11 := rfl
+
+theorem carryUpdateCount_eq : carryUpdateCount = 17 := rfl
+
 /-! ## Cost bounds for the carry combinators -/
 
 section Carry
@@ -380,14 +432,15 @@ theorem cost_exchange_le {A E I : Type u} (a : C.Str A) (e : C.Str E) (i : C.Str
   dsimp only at hc1 hc2 hg1 hg2
   omega
 
-/-- Attaching a carried value to a readout costs the wrapped code plus at most eleven structural
-primitives, each charged the combined envelope at the input, readout and carried sizes. -/
+/-- Attaching a carried value to a readout costs the wrapped code plus at most
+`carryReadoutCount` structural primitives, each charged the combined envelope at the input,
+readout and carried sizes. -/
 theorem cost_carryReadout_le {A B D E : Type u} {a : C.Str A} {b : C.Str B} {d : C.Str D}
     (e : C.Str E) {f : A → B ⊕ D} (code : Q.Realizer a (S.sum b d) f) (x : A) (y : E) :
     Q.cost (carryReadout Q e code) (x, y) ≤ Q.cost code x +
-      11 * structOverhead Q (Q.size a x + Q.size (S.sum b d) (f x) + Q.size e y +
+      carryReadoutCount * structOverhead Q (Q.size a x + Q.size (S.sum b d) (f x) + Q.size e y +
         PC.sizeOverhead + SC.sizeOverhead) := by
-  rw [carryReadout, Realizer.cost_castFunction]
+  rw [carryReadoutCount_eq, carryReadout, Realizer.cost_castFunction]
   set N := Q.size a x + Q.size (S.sum b d) (f x) + Q.size e y + PC.sizeOverhead +
     SC.sizeOverhead with hN
   have hcomp := Q.cost_comp_le (HasProd.pairRight Q QP (d := e) code)
@@ -444,15 +497,15 @@ theorem cost_carryReadout_le {A B D E : Type u} {a : C.Str A} {b : C.Str B} {d :
     omega
 
 /-- Stepping a partial transition while carrying a value costs the wrapped code plus at most
-seventeen structural primitives, each charged the combined envelope at a size bounded by the
-source and target states, the carried value and the index. -/
+`carryUpdateCount` structural primitives, each charged the combined envelope at a size bounded by
+the source and target states, the carried value and the index. -/
 theorem cost_carryUpdate_le {A I E : Type u} {a : C.Str A} {i : C.Str I} (e : C.Str E)
     {g : A × I → Option A} (code : Q.Realizer (P.prod a i) (O.option a) g)
     (x : A) (y : E) (j : I) {x' : A} (hg : g (x, j) = some x') :
     Q.cost (carryUpdate Q e code) ((x, y), j) ≤ Q.cost code (x, j) +
-      17 * structOverhead Q (Q.size a x + Q.size a x' + Q.size e y + Q.size i j +
+      carryUpdateCount * structOverhead Q (Q.size a x + Q.size a x' + Q.size e y + Q.size i j +
         2 * PC.sizeOverhead + OC.sizeOverhead) := by
-  rw [carryUpdate, Realizer.cost_castFunction]
+  rw [carryUpdateCount_eq, carryUpdate, Realizer.cost_castFunction]
   set N := Q.size a x + Q.size a x' + Q.size e y + Q.size i j + 2 * PC.sizeOverhead +
     OC.sizeOverhead with hN
   have hcomp := Q.cost_comp_le (exchange Q a e i)
@@ -490,18 +543,18 @@ theorem cost_carryUpdate_le {A I E : Type u} {a : C.Str A} {i : C.Str I} (e : C.
   omega
 
 /-- Attaching a carried value and post-processing the other summand costs the readout code, the
-post-processing code on the branch taken, and at most ten structural primitives, each charged the
-combined envelope at the input, readout, carried and output sizes. -/
+post-processing code on the branch taken, and at most `carryReadoutWithCount` structural
+primitives, each charged the combined envelope at the input, readout, carried and output sizes. -/
 theorem cost_carryReadoutWith_le {A B D D' E : Type u} {a : C.Str A} {b : C.Str B}
     {d : C.Str D} {d' : C.Str D'} {e : C.Str E} {f : A → B ⊕ D} {g : D × E → D'}
     (code : Q.Realizer a (S.sum b d) f) (right : Q.Realizer (P.prod d e) d' g) (x : A) (y : E) :
     Q.cost (carryReadoutWith Q code right) (x, y) ≤ Q.cost code x +
       (f x).elim (fun _ ↦ 0) (fun q ↦ Q.cost right (q, y)) +
-      10 * structOverhead Q (Q.size a x + Q.size (S.sum b d) (f x) + Q.size e y +
-        Q.size (S.sum (P.prod b e) d')
+      carryReadoutWithCount * structOverhead Q (Q.size a x + Q.size (S.sum b d) (f x) +
+        Q.size e y + Q.size (S.sum (P.prod b e) d')
           (Sum.elim (fun value ↦ Sum.inl (value, y)) (fun q ↦ Sum.inr (g (q, y))) (f x)) +
         PC.sizeOverhead + SC.sizeOverhead) := by
-  rw [carryReadoutWith, Realizer.cost_castFunction]
+  rw [carryReadoutWithCount_eq, carryReadoutWith, Realizer.cost_castFunction]
   set N := Q.size a x + Q.size (S.sum b d) (f x) + Q.size e y +
     Q.size (S.sum (P.prod b e) d')
       (Sum.elim (fun value ↦ Sum.inl (value, y)) (fun q ↦ Sum.inr (g (q, y))) (f x)) +

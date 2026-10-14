@@ -71,6 +71,8 @@ instance : unitCostBackend.HasOptionCost where
   overhead _ := 1
   monotone_overhead := monotone_const
   cost_some_le _ _ := le_rfl
+  cost_none_le _ _ _ := le_rfl
+  cost_map_le _ _ := Nat.le_add_left _ _
   cost_bindContext_le _ _ := Nat.le_add_left _ _
 
 instance : unitCostBackend.IsDistributiveCost where
@@ -79,7 +81,7 @@ instance : unitCostBackend.IsDistributiveCost where
   cost_distribute_le _ _ _ _ := le_rfl
 
 /-- The law-derived carry of the one-query bound on the constant-cost fixture. -/
-abbrev firstQueryCarry (input : PUnit.{1}) : Carry :=
+abbrev firstQueryCarry (input : PUnit.{1}) : ExecutionCost.Carry :=
   QuantitativeRealization.lawCarry (Q := unitCostBackend) oneQueryBound
     (unitCostBackend.size firstQueryBoundary.input input)
 
@@ -89,8 +91,14 @@ theorem firstQueryWithInputRunsWithin :
       oneQueryBound.withCarry oneQueryBound.queries (firstQueryCarry input) :=
   firstQueryRunsWithin.withInput_of_laws
 
+/-- The named primitive counts behind `lawCarry`. -/
+example : QuantitativeStepClass.carryReadoutCount = 11 ∧
+    QuantitativeStepClass.carryUpdateCount = 17 :=
+  ⟨rfl, rfl⟩
+
 /- Retaining the input adds no query, and the law-derived work is concrete: the source's four
-units, two for initialization, two readouts of `11 · 5` and one transition of `17 · 5`. -/
+units, two for initialization, two readouts of `carryReadoutCount · 5` and one transition of
+`carryUpdateCount · 5`. -/
 example : (oneQueryBound.withCarry oneQueryBound.queries (firstQueryCarry PUnit.unit)).queries =
     1 := rfl
 

@@ -45,11 +45,12 @@ alone gives its second phase only `b`.
   traffic are unchanged and the peak sizes shift by the size carries.
 * `WithInputCostCertificate.ofLaws` and `RunsWithinUnder.withInput_of_laws`: under the cost laws
   of `PolyFun.Realizability.Quantitative.CostLaws` the certificate holds with `lawCarry`. That is
-  at most `2` structural primitives at initialization, `11` per readout and `17` per transition,
-  each charged the combined envelope at a size bounded by `R`'s peak sizes, traffic and the input.
-* `RunsWithinUnder.seqCompWithInput` and its `_of_laws` form: the bounded strong bind, from the
-  strength carry, the second-phase bound, a handoff envelope and `seqComp`'s structural-overhead
-  certificate.
+  identity and pairing at initialization, `carryReadoutCount` structural primitives per readout and
+  `carryUpdateCount` per transition, each charged the combined envelope at a size bounded by `R`'s
+  peak sizes, traffic and the input.
+* `RunsWithinUnder.seqCompWithInput` and `seqCompWithInput_of_strengthLaws`: the bounded strong
+  bind, from the strength carry, the second-phase bound, a handoff envelope and `seqComp`'s
+  structural-overhead certificate; the latter discharges only the strength carry from the laws.
 -/
 
 @[expose] public section
@@ -171,7 +172,7 @@ discharge them from `R`'s own peak-size and traffic bounds (`ofLaws`). -/
 structure WithInputCostCertificate (R : QuantitativeRealization Q bd)
     (allows : ∀ position, p.B position → Prop) where
   /-- Input-indexed carry allowances. -/
-  carry : A → Carry
+  carry : A → ExecutionCost.Carry
   /-- Initialization costs `R`'s plus the initialization carry. -/
   init_le : ∀ input,
     Q.cost R.withInput.initCode input ≤ Q.cost R.initCode input + (carry input).init
@@ -322,11 +323,13 @@ theorem cost_initCode_withInput_le (R : QuantitativeRealization Q bd) (input : A
         PC.overhead (Q.size bd.input input) :=
   QuantitativeStepClass.cost_withInput_le Q R.initCode input
 
-/-- An input-retaining readout costs `R`'s plus at most eleven structural primitives. -/
+/-- An input-retaining readout costs `R`'s plus at most `carryReadoutCount` structural
+primitives. -/
 theorem cost_headCode_withInput_le (R : QuantitativeRealization Q bd)
     (state : R.machine.State) (input : A) :
     Q.cost R.withInput.headCode (state, input) ≤ Q.cost R.headCode state +
-      11 * QuantitativeStepClass.structOverhead Q (Q.size R.state state +
+      QuantitativeStepClass.carryReadoutCount * QuantitativeStepClass.structOverhead Q
+        (Q.size R.state state +
         Q.size bd.head (R.machine.head state) + Q.size bd.input input + PC.sizeOverhead +
           SC.sizeOverhead) := by
   change Q.cost ((QuantitativeStepClass.carryReadout Q bd.input R.headCode).castFunction _)
@@ -334,14 +337,15 @@ theorem cost_headCode_withInput_le (R : QuantitativeRealization Q bd)
   rw [QuantitativeStepClass.Realizer.cost_castFunction]
   exact QuantitativeStepClass.cost_carryReadout_le Q bd.input R.headCode state input
 
-/-- An input-retaining enabled transition costs `R`'s plus at most seventeen structural
+/-- An input-retaining enabled transition costs `R`'s plus at most `carryUpdateCount` structural
 primitives. -/
 theorem cost_updateCode_withInput_le (R : QuantitativeRealization Q bd)
     (state : R.machine.State) (input : A) (index : p.Idx) {next : R.machine.State}
     (h : R.machine.update? (state, index) = some next) :
     Q.cost R.withInput.updateCode ((state, input), index) ≤ Q.cost R.updateCode (state, index) +
-      17 * QuantitativeStepClass.structOverhead Q (Q.size R.state state + Q.size R.state next +
-        Q.size bd.input input + Q.size bd.idx index + 2 * PC.sizeOverhead + OC.sizeOverhead) := by
+      QuantitativeStepClass.carryUpdateCount * QuantitativeStepClass.structOverhead Q
+        (Q.size R.state state + Q.size R.state next + Q.size bd.input input + Q.size bd.idx index +
+          2 * PC.sizeOverhead + OC.sizeOverhead) := by
   change Q.cost ((QuantitativeStepClass.carryUpdate Q bd.input R.updateCode).castFunction _)
     ((state, input), index) ≤ _
   rw [QuantitativeStepClass.Realizer.cost_castFunction]
@@ -379,15 +383,16 @@ theorem size_head_withInput_le (R : QuantitativeRealization Q bd) (state : R.mac
     simp only [Sum.map_inr, id]
     omega
 
-/-- The carry charged by the cost laws, as a function of a source bound and the input size: `2`
-primitives at initialization, `11` per readout and `17` per transition, each charged the combined
-envelope at a size bounded by the source's peak sizes and traffic and the input. -/
-def lawCarry (bound : ExecutionCost) (inputSize : ℕ) : Carry where
+/-- The carry charged by the cost laws, as a function of a source bound and the input size:
+identity and pairing at initialization, `carryReadoutCount` primitives per readout and
+`carryUpdateCount` per transition, each charged the combined envelope at a size bounded by the
+source's peak sizes and traffic and the input. -/
+def lawCarry (bound : ExecutionCost) (inputSize : ℕ) : ExecutionCost.Carry where
   init := CC.overhead inputSize + PC.overhead inputSize
-  head := 11 * QuantitativeStepClass.structOverhead Q (bound.peakStateSize +
-    bound.peakHeadSize + inputSize + PC.sizeOverhead + SC.sizeOverhead)
-  update := 17 * QuantitativeStepClass.structOverhead Q (2 * bound.peakStateSize + inputSize +
-    bound.traffic + 2 * PC.sizeOverhead + OC.sizeOverhead)
+  head := QuantitativeStepClass.carryReadoutCount * QuantitativeStepClass.structOverhead Q
+    (bound.peakStateSize + bound.peakHeadSize + inputSize + PC.sizeOverhead + SC.sizeOverhead)
+  update := QuantitativeStepClass.carryUpdateCount * QuantitativeStepClass.structOverhead Q
+    (2 * bound.peakStateSize + inputSize + bound.traffic + 2 * PC.sizeOverhead + OC.sizeOverhead)
   state := inputSize + PC.sizeOverhead
   headSize := inputSize + PC.sizeOverhead + SC.sizeOverhead
 
@@ -405,11 +410,12 @@ def WithInputCostCertificate.ofLaws {R : QuantitativeRealization Q bd}
     refine (cost_headCode_withInput_le R state input).trans ?_
     have hs := h.size_state_le input pre hpre
     have hh := h.size_head_le input pre hpre
-    have hm := QuantitativeStepClass.monotone_structOverhead Q
-      (show Q.size R.state state + Q.size bd.head (R.machine.head state) + Q.size bd.input input +
-          PC.sizeOverhead + SC.sizeOverhead ≤ (bound input).peakStateSize +
-            (bound input).peakHeadSize + Q.size bd.input input + PC.sizeOverhead +
-              SC.sizeOverhead by omega)
+    have hm := Nat.mul_le_mul_left QuantitativeStepClass.carryReadoutCount
+      (QuantitativeStepClass.monotone_structOverhead Q
+        (show Q.size R.state state + Q.size bd.head (R.machine.head state) +
+            Q.size bd.input input + PC.sizeOverhead + SC.sizeOverhead ≤
+              (bound input).peakStateSize + (bound input).peakHeadSize + Q.size bd.input input +
+                PC.sizeOverhead + SC.sizeOverhead by omega))
     simp only [lawCarry]
     omega
   update_le input state pre hpre position next hview direction hallowed := by
@@ -417,11 +423,12 @@ def WithInputCostCertificate.ofLaws {R : QuantitativeRealization Q bd}
       (R.machine.update?_of_view_query hview direction)).trans ?_
     have hs := h.size_state_le input pre hpre
     obtain ⟨hs', hi⟩ := h.size_step_le input pre hpre hview direction hallowed
-    have hm := QuantitativeStepClass.monotone_structOverhead Q
-      (show Q.size R.state state + Q.size R.state (next direction) + Q.size bd.input input +
-          Q.size bd.idx ⟨position, direction⟩ + 2 * PC.sizeOverhead + OC.sizeOverhead ≤
-            2 * (bound input).peakStateSize + Q.size bd.input input + (bound input).traffic +
-              2 * PC.sizeOverhead + OC.sizeOverhead by omega)
+    have hm := Nat.mul_le_mul_left QuantitativeStepClass.carryUpdateCount
+      (QuantitativeStepClass.monotone_structOverhead Q
+        (show Q.size R.state state + Q.size R.state (next direction) + Q.size bd.input input +
+            Q.size bd.idx ⟨position, direction⟩ + 2 * PC.sizeOverhead + OC.sizeOverhead ≤
+              2 * (bound input).peakStateSize + Q.size bd.input input + (bound input).traffic +
+                2 * PC.sizeOverhead + OC.sizeOverhead by omega))
     simp only [lawCarry]
     omega
   state_le input state _ _ := by
@@ -533,9 +540,12 @@ theorem RunsWithinUnder.seqCompWithInput {R₁ : QuantitativeRealization Q bd}
   (first.withInput carry).seqComp second handoff certificate
 
 omit [DecidableEq p.A] in
-/-- The query budget of the bounded strong bind is exactly the sum of the first phase's budget and
-the handoff envelope's: neither the strength carry nor the structural wiring adds queries. -/
-theorem queries_seqCompWithInput_bound (first second overhead : ExecutionCost) (c : Carry) :
+/-- The query budget of the bounded strong bind is the first phase's budget plus the handoff
+envelope's plus the structural certificate's overhead: the strength carry adds no queries. Whether
+the wiring adds queries depends on `SeqCompCostCertificate.overhead`, which does not constrain its
+`queries` field. -/
+theorem queries_seqCompWithInput_bound (first second overhead : ExecutionCost)
+    (c : ExecutionCost.Carry) :
     (first.withCarry first.queries c + second + overhead).queries =
       first.queries + second.queries + overhead.queries := rfl
 
@@ -544,8 +554,9 @@ section Laws
 variable [CC : Q.HasCompositionCost] [PC : Q.HasProdCost] [SC : Q.HasSumCost]
   [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost]
 
-/-- The bounded strong bind with the strength carry discharged from cost laws. -/
-theorem RunsWithinUnder.seqCompWithInput_of_laws {R₁ : QuantitativeRealization Q bd}
+/-- The bounded strong bind with the strength carry discharged from cost laws. The handoff bound
+and the structural `SeqCompCostCertificate` for the assembled machine remain hypotheses. -/
+theorem RunsWithinUnder.seqCompWithInput_of_strengthLaws {R₁ : QuantitativeRealization Q bd}
     {R₂ : QuantitativeRealization Q (bd.strongMid outRep)}
     {allows : ∀ position, p.B position → Prop}
     {firstBound : A → ExecutionCost} {secondBound : B × A → ExecutionCost}

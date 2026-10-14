@@ -41,7 +41,7 @@ example [DecidableEq p.A] (M : DynComputation.{u} p α β) (state : M.State × �
       Option.map (fun next ↦ (next, state.2)) (M.update? (state.1, index)) := by
   rw [update?_withInput]
 
-example (cost : ExecutionCost) (steps : ℕ) (c : Carry) :
+example (cost : ExecutionCost) (steps : ℕ) (c : ExecutionCost.Carry) :
     (cost.withCarry steps c).queries = cost.queries ∧
       (cost.withCarry steps c).traffic = cost.traffic := by
   simp

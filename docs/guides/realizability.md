@@ -371,18 +371,28 @@ Bounds come in two layers.
   `IsDistributiveCost`), each bounding a structural primitive's own work by a
   monotone envelope of the encoded sizes it touches. Under them,
   `RunsWithinUnder.withInput_of_laws` discharges the certificate with
-  `lawCarry`: at most two structural primitives at initialization, eleven per
-  readout and seventeen per transition, each charged the combined envelope
-  `structOverhead` at a size bounded by the source's peak sizes, its traffic and
-  the input.
+  `lawCarry`: identity and pairing at initialization, `carryReadoutCount`
+  structural primitives per readout and `carryUpdateCount` per transition, each
+  charged the combined envelope `structOverhead` at a size bounded by the
+  source's peak sizes, its traffic and the input. The counts are named
+  definitions in `CostLaws.lean`, built from the counts of the combinators the
+  carry code is assembled from.
 
 `RunsWithinUnder.seqCompWithInput` combines the strength carry with
-`seqComp`'s handoff envelope and structural certificate, and
-`queries_seqCompWithInput_bound` records that neither adds queries. The laws
-are additive, so they hold for backends whose combinators cost a size-dependent
-amount on top of their parts. They fail for the single-tape backend, whose
-composition overhead re-evaluates the second machine's polynomial at an
-inflated size; such a backend discharges the certificates directly.
+`seqComp`'s handoff envelope and structural certificate. By
+`queries_seqCompWithInput_bound`, the strength carry adds no queries; the
+structural certificate's overhead may, since `SeqCompCostCertificate` does not
+constrain its `queries` field. `seqCompWithInput_of_strengthLaws` discharges
+only the strength carry from the laws; the handoff bound and the structural
+certificate remain hypotheses.
+
+The laws are additive: wrapped code is charged its own cost, and each primitive
+an envelope of the sizes it touches. Only test fixtures instantiate them. The
+single-tape backend has no executable structural code, so `withInput` and the
+strong bind cannot yet be assembled over it, and its composition overhead
+re-evaluates the second machine's polynomial at an inflated size, which is not
+additive. `cost_pair_le` charges pairing at the shared input's size only, which
+a backend that copies both results into one pair encoding cannot meet.
 
 `Quantitative/Polynomial.lean` supplies `FirstOrderPolynomial` and
 `PolyRealizer`, which retains one executable realizer plus work and encoded
