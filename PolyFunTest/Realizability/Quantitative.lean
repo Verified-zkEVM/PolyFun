@@ -8,6 +8,7 @@ module
 
 public import PolyFun.Realizability.Instances
 public import PolyFun.Realizability.Quantitative
+public import PolyFun.Realizability.Quantitative.Reference
 
 /-!
 # Quantitative-realizability regression checks
@@ -22,24 +23,23 @@ namespace PFunctor.QuantitativeTest
 
 open DynSystem.DynComputation
 
-/-- A deliberately cost-free backend used only to isolate structural query accounting. -/
-@[expose]
-def zeroBackend : QuantitativeStepClass StepClass.unconstrained where
-  Realizer _ _ _ := PUnit
-  size _ _ := 0
-  cost _ _ := 0
-  admissible _ := True.intro
+/-- Shared zero-cost reference model for structural resource checks. -/
+abbrev zeroBackend := QuantitativeStepClass.Reference.zero
 
-/-- Exact categorical wiring data for the cost-free backend. -/
+/-- Bundled exact composition data for the zero model. -/
 def zeroExactComposition : zeroBackend.ExactComposition where
   identity _ := PUnit.unit
   compose _ _ := PUnit.unit
   composeOverhead _ _ _ := 0
   cost_compose_eq _ _ _ := rfl
 
-instance : zeroBackend.HasComposition := zeroExactComposition.toHasComposition
+/-- The bundle forgets to a sound composition structure. -/
+example : zeroBackend.HasComposition := zeroExactComposition.toHasComposition
 
-instance : zeroBackend.HasExactComposition := zeroExactComposition.toHasExactComposition
+/-- The bundle restores the exact refinement for that structure. -/
+example : letI := zeroExactComposition.toHasComposition
+    zeroBackend.HasExactComposition :=
+  zeroExactComposition.toHasExactComposition
 
 /-- An interface exposing one query with no possible typed response. -/
 abbrev emptyResponse : PFunctor := PFunctor.mk PUnit fun _ ↦ PEmpty
