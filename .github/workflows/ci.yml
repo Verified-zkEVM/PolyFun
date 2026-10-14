@@ -171,7 +171,7 @@ jobs:
         run: lake exe cache get
 
       - name: Build production and example libraries
-        run: ./scripts/validate.sh --examples --lint
+        run: lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunExamples --wfail
 
       # One process per lint root. `lake lint` loads every root's environment into a single
       # process (about 7 GB in total); on Lean v4.35.0 the runner was shut down during that step.
@@ -181,6 +181,20 @@ jobs:
             while read -r root; do
               lake exe runLinter "$root"
             done
+
+      # The example packages are linted the same way, one root per process, inside each package.
+      - name: Run example-package environment linters
+        run: |
+          for example in Parliament Notes Pipeline; do
+            (
+              cd "Examples/$example"
+              lake build --wfail
+              python3 -c "import tomllib; print('\\n'.join(tomllib.load(open('lakefile.toml', 'rb'))['lintDriverArgs']))" |
+                while read -r root; do
+                  lake exe runLinter "$root"
+                done
+            )
+          done
 
   test:
     name: Test
