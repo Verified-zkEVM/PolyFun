@@ -116,6 +116,23 @@ theorem head_eq_inr_of_view (M : DynComputation.{u} p α β)
     M.head state = Sum.inr query.1 := by
   rw [head_eq_sumMap_view, hview]; rfl
 
+/-- An implementation of an immediate return exposes that return at its initial state. -/
+theorem head_init_eq_of_implements_pure (M : DynComputation.{u} p α β) {g : α → β}
+    (h : M.Implements fun v ↦ FreeM.pure (g v)) (v : α) :
+    M.head (M.init v) = Sum.inl (g v) := by
+  have firstStep := congrArg Resumption.dest (h v)
+  rw [dest_denote] at firstStep
+  change Sum.map (fun result ↦ result) (p.map M.toDynSystem.behavior) (M.view (M.init v)) =
+    Sum.inl (g v) at firstStep
+  cases viewEquation : M.view (M.init v) with
+  | inl result =>
+      rw [viewEquation] at firstStep
+      simp only [Sum.map_inl, Sum.inl.injEq] at firstStep
+      simpa [firstStep] using M.head_eq_inl_of_view viewEquation
+  | inr query =>
+      rw [viewEquation] at firstStep
+      simp at firstStep
+
 /-! ## The flattened transition -/
 
 /-- The continuation of a returning computation, flattened onto the whole index

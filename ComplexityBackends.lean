@@ -18,6 +18,7 @@ public import ComplexityBackends.CslibSingleTape.PPoly
 public import ComplexityBackends.CslibSingleTape.PolyTime
 public import ComplexityBackends.CslibSingleTape.ProgramWitness
 public import ComplexityBackends.CslibSingleTape.Snoc
+public import ComplexityBackends.CslibSingleTape.Uniform
 
 /-!
 # Concrete complexity backends for PolyFun realizability
