@@ -24,25 +24,25 @@ namespace PFunctor.StepClass.QuantitativeWordClassTest
 variable {W : Type u} {V : WordClass W} (Q : QuantitativeWordClass.{u, v} V)
 
 noncomputable example := @Q.toQuantitativeStepClass
-noncomputable example := @QuantitativeWordClass.HasCategory
-noncomputable example := @QuantitativeWordClass.HasExactCategory
-noncomputable example := @QuantitativeWordClass.toHasCategory
-noncomputable example := @QuantitativeWordClass.toHasExactCategory
+noncomputable example := @QuantitativeWordClass.HasComposition
+noncomputable example := @QuantitativeWordClass.HasExactComposition
+noncomputable example := @QuantitativeWordClass.toHasComposition
+noncomputable example := @QuantitativeWordClass.toHasExactComposition
 
-section Category
+section Composition
 
-variable [Q.HasCategory] [Q.HasExactCategory]
+variable [Q.HasComposition] [Q.HasExactComposition]
 
 noncomputable example : Q.Code id := Q.identity
 noncomputable example {f g : W → W} (first : Q.Code f) (second : Q.Code g) : Q.Code (g ∘ f) :=
   Q.compose first second
 noncomputable example {f g : W → W} (first : Q.Code f) (second : Q.Code g) (word : W) : ℕ :=
   Q.composeOverhead first second word
-noncomputable example : Q.toQuantitativeStepClass.HasCategory := Q.toHasCategory
-example : letI := Q.toHasCategory; Q.toQuantitativeStepClass.HasExactCategory :=
-  Q.toHasExactCategory
+noncomputable example : Q.toQuantitativeStepClass.HasComposition := Q.toHasComposition
+example : letI := Q.toHasComposition; Q.toQuantitativeStepClass.HasExactComposition :=
+  Q.toHasExactComposition
 
-end Category
+end Composition
 
 example {A B : Type u} {a : V.toStepClass.Str A} {b : V.toStepClass.Str B}
     {f : A → B} (code : QuantitativeWordClass.Realizer Q a b f) :
@@ -140,19 +140,19 @@ def testQuantitativeWordClass : QuantitativeWordClass testWordClass where
   cost code := code.runCost
 
 @[instance_reducible]
-def testCategory : testQuantitativeWordClass.HasCategory where
+def testComposition : testQuantitativeWordClass.HasComposition where
   identity := TestCode.mk fun _ ↦ 0
   compose := fun {f} {_} first second =>
     TestCode.mk fun word ↦ first.runCost word + second.runCost (f word) + 1
   composeOverhead _ _ _ := 1
   cost_compose_le _ _ _ := le_rfl
 
-local instance : testQuantitativeWordClass.HasCategory := testCategory
+local instance : testQuantitativeWordClass.HasComposition := testComposition
 
-theorem testExactCategory : testQuantitativeWordClass.HasExactCategory :=
+theorem testExactComposition : testQuantitativeWordClass.HasExactComposition :=
   ⟨fun _ _ _ ↦ rfl⟩
 
-local instance : testQuantitativeWordClass.HasExactCategory := testExactCategory
+local instance : testQuantitativeWordClass.HasExactComposition := testExactComposition
 
 /-- Natural numbers represented by atom words. -/
 @[expose]
@@ -191,7 +191,7 @@ def doubleRealizer : QuantitativeWordClass.Realizer testQuantitativeWordClass
 @[expose]
 def composedRealizer : QuantitativeWordClass.Realizer testQuantitativeWordClass
     natRep natRep ((fun value ↦ 2 * value) ∘ Nat.succ) := by
-  letI := testQuantitativeWordClass.toHasCategory
+  letI := testQuantitativeWordClass.toHasComposition
   exact testQuantitativeWordClass.toQuantitativeStepClass.compose succRealizer doubleRealizer
 
 example : testQuantitativeWordClass.toQuantitativeStepClass.size natRep 4 = 5 := rfl

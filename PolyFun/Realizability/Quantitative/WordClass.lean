@@ -15,9 +15,9 @@ public import PolyFun.Realizability.Quantitative
 `StepClass.WordClass` is the qualitative adapter from a conventional class of word functions to
 PolyFun realizability. This file supplies its quantitative counterpart. A backend provides
 Type-valued code for its admitted word functions, a word-size measure, and code cost. Optional
-category mixins add identity and composition with a sound cost bound or an exact equation.
+composition mixins add identity and composition with a sound cost bound or an exact equation.
 `QuantitativeWordClass.toQuantitativeStepClass` lifts the core data through every injective
-representation used by `WordClass.toStepClass`; separate adapters lift the category mixins.
+representation used by `WordClass.toStepClass`; separate adapters lift the composition mixins.
 
 Keeping the executable witness in `Type` is essential. A proof-irrelevant assertion that some
 word function is polynomial-time does not retain a program whose run can be charged. Conversely,
@@ -37,7 +37,7 @@ variable {W : Type u}
 /-- Executable and costed evidence refining a qualitative word-function class.
 
 The semantic function remains an index of `Code`, so every code is correct by construction. The
-`code_mem` field forgets executable evidence to the qualitative class. Category structure is kept
+`code_mem` field forgets executable evidence to the qualitative class. Composition structure is kept
 separate so a backend can expose costed code before certifying closure under wiring. -/
 structure QuantitativeWordClass (V : WordClass W) where
   /-- Type-valued code for an admitted word function. -/
@@ -46,7 +46,7 @@ structure QuantitativeWordClass (V : WordClass W) where
   code_mem : ∀ {f : W → W}, Code f → V.Mem f
   /-- Encoded size of a word. -/
   size : W → ℕ
-  /-- Exact backend-relative cost of running code on one word. -/
+  /-- Backend-relative work charged to code on one word. -/
   cost : ∀ {f : W → W}, Code f → W → ℕ
 
 namespace QuantitativeWordClass
@@ -54,7 +54,7 @@ namespace QuantitativeWordClass
 variable {V : WordClass W} (Q : QuantitativeWordClass.{u, v} V)
 
 /-- Executable identity and composition for quantitative word code. -/
-class HasCategory where
+class HasComposition where
   /-- Code for the identity word function. -/
   identity : Q.Code id
   /-- Sequential composition of word-function code. -/
@@ -66,60 +66,62 @@ class HasCategory where
     Q.cost (compose first second) word ≤
       Q.cost first word + Q.cost second (f word) + composeOverhead first second word
 
-/-- Optional exact-cost refinement of a quantitative word category. -/
-class HasExactCategory [Q.HasCategory] : Prop where
+/-- Optional exact-cost refinement of a quantitative word composition. -/
+class HasExactComposition [Q.HasComposition] : Prop where
   /-- Exact cost equation for sequentially composed word-function code. -/
   cost_compose_eq : ∀ {f g : W → W} (first : Q.Code f) (second : Q.Code g) (word : W),
-    Q.cost (HasCategory.compose first second) word =
+    Q.cost (HasComposition.compose first second) word =
       Q.cost first word + Q.cost second (f word) +
-        HasCategory.composeOverhead first second word
+        HasComposition.composeOverhead first second word
 
-/-- Exact word-category data in one migration-friendly bundle. -/
-structure ExactCategory where
+/-- Exact word-composition data in one bundle. -/
+structure ExactComposition where
   /-- Code for the identity word function. -/
   identity : Q.Code id
   /-- Sequential composition of word-function code. -/
   compose : ∀ {f g : W → W}, Q.Code f → Q.Code g → Q.Code (g ∘ f)
-  /-- Exact work used to connect two sequential pieces of code. -/
+  /-- Work charged for connecting two sequential pieces of code, as it appears in the exact
+  cost equation. -/
   composeOverhead : ∀ {f g : W → W}, Q.Code f → Q.Code g → W → ℕ
   /-- Exact cost equation for sequentially composed word-function code. -/
   cost_compose_eq : ∀ {f g : W → W} (first : Q.Code f) (second : Q.Code g) (word : W),
     Q.cost (compose first second) word =
       Q.cost first word + Q.cost second (f word) + composeOverhead first second word
 
-namespace ExactCategory
+namespace ExactComposition
 
 variable {Q}
 
-/-- Forget exact word-category data to a sound upper-bound category. -/
+/-- Forget exact word-composition data to a sound upper-bound composition structure. -/
 @[instance_reducible]
-def toHasCategory (category : Q.ExactCategory) : Q.HasCategory where
-  identity := category.identity
-  compose := category.compose
-  composeOverhead := category.composeOverhead
-  cost_compose_le first second word := Nat.le_of_eq (category.cost_compose_eq first second word)
+def toHasComposition (composition : Q.ExactComposition) : Q.HasComposition where
+  identity := composition.identity
+  compose := composition.compose
+  composeOverhead := composition.composeOverhead
+  cost_compose_le first second word :=
+    Nat.le_of_eq (composition.cost_compose_eq first second word)
 
-/-- Recover the optional exact refinement for the category obtained from exact data. -/
-theorem toHasExactCategory (category : Q.ExactCategory) :
-    letI := category.toHasCategory
-    Q.HasExactCategory := by
-  let _ := category.toHasCategory
-  exact ⟨category.cost_compose_eq⟩
+/-- Recover the optional exact refinement for the composition structure obtained from exact data. -/
+theorem toHasExactComposition (composition : Q.ExactComposition) :
+    letI := composition.toHasComposition
+    Q.HasExactComposition := by
+  let _ := composition.toHasComposition
+  exact ⟨composition.cost_compose_eq⟩
 
-end ExactCategory
+end ExactComposition
 
-/-- Identity word code selected by a category instance. -/
-def identity [Q.HasCategory] : Q.Code id := HasCategory.identity
+/-- Identity word code selected by a composition instance. -/
+def identity [Q.HasComposition] : Q.Code id := HasComposition.identity
 
-/-- Sequential composition selected by a word-category instance. -/
-def compose [Q.HasCategory] {f g : W → W}
+/-- Sequential composition selected by a word-composition instance. -/
+def compose [Q.HasComposition] {f g : W → W}
     (first : Q.Code f) (second : Q.Code g) : Q.Code (g ∘ f) :=
-  HasCategory.compose first second
+  HasComposition.compose first second
 
-/-- Connection overhead selected by a word-category instance. -/
-def composeOverhead [Q.HasCategory] {f g : W → W}
+/-- Connection overhead selected by a word-composition instance. -/
+def composeOverhead [Q.HasComposition] {f g : W → W}
     (first : Q.Code f) (second : Q.Code g) (word : W) : ℕ :=
-  HasCategory.composeOverhead first second word
+  HasComposition.composeOverhead first second word
 
 /-- Word-level code realizing a function between two pinned injective representations. -/
 structure Realizer {A B : Type u} (a : V.toStepClass.Str A)
@@ -149,9 +151,9 @@ def toQuantitativeStepClass : QuantitativeStepClass.{u, u, max u v} V.toStepClas
   cost := @fun _ _ a _ _ code input ↦ Q.cost code.code (a.1 input)
   admissible := fun code ↦ Realizer.toHom code
 
-/-- Lift executable word-category wiring through injective representations. -/
+/-- Lift executable word-composition wiring through injective representations. -/
 @[instance_reducible]
-def toHasCategory [Q.HasCategory] : Q.toQuantitativeStepClass.HasCategory where
+def toHasComposition [Q.HasComposition] : Q.toQuantitativeStepClass.HasComposition where
   identity := fun _ ↦ ⟨id, Q.identity, fun _ ↦ rfl⟩
   compose := fun first second ↦
     ⟨second.function ∘ first.function, Q.compose first.code second.code, fun input ↦ by
@@ -161,23 +163,23 @@ def toHasCategory [Q.HasCategory] : Q.toQuantitativeStepClass.HasCategory where
   cost_compose_le := @fun _ _ _ a _ _ _ _ first second input ↦ by
     change Q.cost (Q.compose first.code second.code) _ ≤
       Q.cost first.code _ + Q.cost second.code _ + Q.composeOverhead first.code second.code _
-    have h := HasCategory.cost_compose_le first.code second.code (a.1 input)
+    have h := HasComposition.cost_compose_le first.code second.code (a.1 input)
     rw [first.realizes input] at h
     exact h
 
-/-- Lift an exact word-category equation through injective representations.
+/-- Lift an exact word-composition equation through injective representations.
 
-The target category instance is explicit so the proof cannot accidentally refine unrelated
+The target composition instance is explicit so the proof cannot accidentally refine unrelated
 composition code installed for the lifted quantitative step class. -/
-theorem toHasExactCategory [Q.HasCategory] [Q.HasExactCategory] :
-    letI := Q.toHasCategory
-    Q.toQuantitativeStepClass.HasExactCategory := by
-  let _ := Q.toHasCategory
+theorem toHasExactComposition [Q.HasComposition] [Q.HasExactComposition] :
+    letI := Q.toHasComposition
+    Q.toQuantitativeStepClass.HasExactComposition := by
+  let _ := Q.toHasComposition
   refine { cost_compose_eq := ?_ }
   intro A B D a b d f g first second input
   change Q.cost (Q.compose first.code second.code) _ =
     Q.cost first.code _ + Q.cost second.code _ + Q.composeOverhead first.code second.code _
-  have h := HasExactCategory.cost_compose_eq first.code second.code (a.1 input)
+  have h := HasExactComposition.cost_compose_eq first.code second.code (a.1 input)
   rw [first.realizes input] at h
   exact h
 

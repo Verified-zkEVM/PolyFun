@@ -35,7 +35,7 @@ def zeroBackend : QuantitativeStepClass.{0, 0, 0} StepClass.unconstrained.{0, 0}
   cost _ _ := 0
   admissible _ := True.intro
 
-instance : zeroBackend.HasCategory where
+instance : zeroBackend.HasComposition where
   identity _ := PUnit.unit
   compose _ _ := PUnit.unit
   composeOverhead _ _ _ := 0
@@ -219,7 +219,7 @@ def unitCostBackend : QuantitativeStepClass.{0, 0, 0} StepClass.unconstrained.{0
   cost _ _ := 1
   admissible _ := True.intro
 
-instance : unitCostBackend.HasCategory where
+instance : unitCostBackend.HasComposition where
   identity _ := PUnit.unit
   compose _ _ := PUnit.unit
   composeOverhead _ _ _ := 0

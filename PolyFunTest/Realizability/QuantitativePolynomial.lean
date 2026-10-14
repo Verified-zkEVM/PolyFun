@@ -32,13 +32,13 @@ def zeroBackend : QuantitativeStepClass StepClass.unconstrained where
   cost _ _ := 0
   admissible _ := True.intro
 
-instance : zeroBackend.HasCategory where
+instance : zeroBackend.HasComposition where
   identity _ := PUnit.unit
   compose _ _ := PUnit.unit
   composeOverhead _ _ _ := 0
   cost_compose_le _ _ _ := le_rfl
 
-instance : zeroBackend.HasExactCategory where
+instance : zeroBackend.HasExactComposition where
   cost_compose_eq _ _ _ := rfl
 
 instance : zeroBackend.HasProd where
@@ -69,8 +69,8 @@ def zeroPolyRealizer {A B : Type} (a : StepClass.unconstrained.Str A)
   work_le _ := le_rfl
   outputSize_le _ := le_rfl
 
-/-- Polynomial category certificate for the cost-free fixture. -/
-def zeroPolynomialCategory : zeroBackend.PolynomialCategory where
+/-- Polynomial composition certificate for the cost-free fixture. -/
+def zeroPolynomialComposition : zeroBackend.PolynomialComposition where
   identityWork _ := FirstOrderPolynomial.const 0
   cost_identity_le _ _ := le_rfl
   composeOverhead _ _ := FirstOrderPolynomial.const 0
@@ -144,13 +144,13 @@ def oneSizeBackend : QuantitativeStepClass StepClass.unconstrained where
   cost _ _ := 0
   admissible _ := True.intro
 
-instance : oneSizeBackend.HasCategory where
+instance : oneSizeBackend.HasComposition where
   identity _ := PUnit.unit
   compose _ _ := PUnit.unit
   composeOverhead _ _ _ := 0
   cost_compose_le _ _ _ := le_rfl
 
-instance : oneSizeBackend.HasExactCategory where
+instance : oneSizeBackend.HasExactComposition where
   cost_compose_eq _ _ _ := rfl
 
 instance : oneSizeBackend.HasProd where
@@ -181,8 +181,8 @@ def onePolyRealizer {A B : Type} (a : StepClass.unconstrained.Str A)
   work_le _ := le_rfl
   outputSize_le _ := le_rfl
 
-/-- Polynomial category certificate for the nonzero fixture. -/
-def onePolynomialCategory : oneSizeBackend.PolynomialCategory where
+/-- Polynomial composition certificate for the nonzero fixture. -/
+def onePolynomialComposition : oneSizeBackend.PolynomialComposition where
   identityWork _ := FirstOrderPolynomial.const 0
   cost_identity_le _ _ := le_rfl
   composeOverhead _ _ := FirstOrderPolynomial.const 0
@@ -308,9 +308,9 @@ theorem no_zero_output_recovery :
 
 /-- Complete explicit polynomial model for the cost-free fixture. -/
 def zeroModel : zeroBackend.PolynomialModel where
-  category := inferInstance
+  composition := inferInstance
   kernel := zeroKernel
-  polynomialCategory := zeroPolynomialCategory
+  polynomialComposition := zeroPolynomialComposition
   structural := zeroStructural
 
 /-- The pinned unit representation used by the identity/composition checks. -/
@@ -320,7 +320,7 @@ def unitRep : StepClass.unconstrained.Str PUnit := PUnit.unit
 def identityCode : zeroBackend.PolyRealizer unitRep unitRep id :=
   zeroModel.identity unitRep
 
-/-- Composition charges the explicit category model and retains both certificates. -/
+/-- Composition charges the explicit composition model and retains both certificates. -/
 def composedIdentity : zeroBackend.PolyRealizer unitRep unitRep (id ∘ id) :=
   zeroModel.comp identityCode identityCode
 
@@ -340,7 +340,7 @@ example (polynomial : Polynomial ℕ) (inputSize : ℕ) :
   FirstOrderPolynomial.eval_ofNatPolynomial polynomial inputSize
 
 noncomputable example := @QuantitativeStepClass.PolyRealizer
-noncomputable example := @QuantitativeStepClass.PolynomialCategory
+noncomputable example := @QuantitativeStepClass.PolynomialComposition
 noncomputable example := @QuantitativeStepClass.StructuralKernel
 noncomputable example := @QuantitativeStepClass.PolynomialStructuralClosure
 noncomputable example := @QuantitativeStepClass.PolyOutputSizeRecovery

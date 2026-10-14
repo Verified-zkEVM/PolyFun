@@ -18,8 +18,9 @@ This module packages first-order polynomial work and output-size certificates ar
 executable evidence of `QuantitativeStepClass`. The bounds remain relative to a pinned backend
 and pinned representations; no unqualified complexity class is defined here.
 
-`PolynomialCategory` records polynomial bounds for identity wiring and composition overhead.
-It turns `PolyRealizer`s into a category without assuming that code composition is free.
+`PolynomialComposition` records polynomial bounds for identity wiring and composition overhead.
+It composes `PolyRealizer`s with explicit overhead. It asserts no associativity or unit
+equations on code or on the selected polynomial certificates.
 `StructuralKernel` and `PolynomialStructuralClosure` are explicit values rather than global
 instances. They pin the qualitative and executable structural choices and package polynomially
 bounded product, sum, optional-value, and distributivity operations together with bidirectional
@@ -156,10 +157,10 @@ theorem toHom (realizer : Q.PolyRealizer a b f) : C.Hom a b f :=
 
 end PolyRealizer
 
-/-! ## Polynomial category structure -/
+/-! ## Polynomial composition bounds -/
 
-/-- Polynomial bounds for the executable categorical wiring of a quantitative backend. -/
-structure PolynomialCategory [Q.HasCategory] where
+/-- Polynomial bounds for the executable identity and composition of a quantitative backend. -/
+structure PolynomialComposition [Q.HasComposition] where
   /-- Work bound for identity code at each pinned representation. -/
   identityWork : ∀ {A : Type u}, C.Str A → FirstOrderPolynomial
   /-- Identity code obeys its selected work polynomial. -/
@@ -176,24 +177,25 @@ structure PolynomialCategory [Q.HasCategory] where
     Q.composeOverhead first second input ≤
       (composeOverhead first second).eval (Q.size a input)
 
+
 namespace PolyRealizer
 
 variable {Q}
 
 /-- Polynomially bounded identity code. -/
-def identity [Q.HasCategory] (category : Q.PolynomialCategory)
+def identity [Q.HasComposition] (bounds : Q.PolynomialComposition)
     {A : Type u} (a : C.Str A) : Q.PolyRealizer a a id where
   code := Q.identity a
-  work := category.identityWork a
+  work := bounds.identityWork a
   outputSize := FirstOrderPolynomial.input
-  work_le := category.cost_identity_le a
+  work_le := bounds.cost_identity_le a
   outputSize_le := fun _ ↦ le_rfl
 
 /-- Sequential composition of polynomially bounded code.
 
 The work polynomial charges the first code, the second code at the first output-size bound, and
 the backend's explicit connection overhead. -/
-def comp [Q.HasCategory] (category : Q.PolynomialCategory)
+def comp [Q.HasComposition] (bounds : Q.PolynomialComposition)
     {A B D : Type u} {a : C.Str A} {b : C.Str B} {d : C.Str D}
     {f : A → B} {g : B → D}
     (first : Q.PolyRealizer a b f) (second : Q.PolyRealizer b d g) :
@@ -202,7 +204,7 @@ def comp [Q.HasCategory] (category : Q.PolynomialCategory)
   work := FirstOrderPolynomial.add
     (FirstOrderPolynomial.add first.work
       (FirstOrderPolynomial.comp second.work first.outputSize))
-    (category.composeOverhead first.code second.code)
+    (bounds.composeOverhead first.code second.code)
   outputSize := FirstOrderPolynomial.comp second.outputSize first.outputSize
   work_le := fun input ↦ by
     have hsecond : Q.cost second.code (f input) ≤
@@ -212,7 +214,7 @@ def comp [Q.HasCategory] (category : Q.PolynomialCategory)
     exact (Q.cost_comp_le first.code second.code input).trans (by
       simpa using Nat.add_le_add
         (Nat.add_le_add (first.work_le input) hsecond)
-        (category.composeOverhead_le first.code second.code input))
+        (bounds.composeOverhead_le first.code second.code input))
   outputSize_le := fun input ↦ by
     simpa using (second.outputSize_le (f input)).trans
       (second.outputSize.eval_monotone (first.outputSize_le input))
@@ -277,7 +279,7 @@ structure StructuralKernel where
 The operation fields may select any correct backend realizers, but their semantic functions and
 representations are fixed by `kernel`. The recovery size bounds prevent products, sums, or options
 from hiding an exponentially larger payload behind a short outer encoding. -/
-structure PolynomialStructuralClosure [Q.HasCategory] (kernel : Q.StructuralKernel) where
+structure PolynomialStructuralClosure [Q.HasComposition] (kernel : Q.StructuralKernel) where
   /-- Polynomially bounded first projection. -/
   fst : ∀ {A B : Type u} (a : C.Str A) (b : C.Str B),
     Q.PolyRealizer (kernel.cProd.prod a b) a Prod.fst
@@ -373,7 +375,7 @@ structure PolynomialStructuralClosure [Q.HasCategory] (kernel : Q.StructuralKern
 
 namespace PolynomialStructuralClosure
 
-variable {Q} [Q.HasCategory] {kernel : Q.StructuralKernel}
+variable {Q} [Q.HasComposition] {kernel : Q.StructuralKernel}
 
 /-- Recover returned-value size from the tagged readout using the structural sum-payload
 polynomial. -/
@@ -389,19 +391,19 @@ def polyOutputSizeRecovery (structural : Q.PolynomialStructuralClosure kernel)
 
 end PolynomialStructuralClosure
 
-/-- One explicit value collecting the categorical and structural polynomial interface.
+/-- One explicit value collecting the composition and structural polynomial interfaces.
 
 The class-valued fields are data. This structure is not itself a typeclass, so two models for the
 same backend can coexist without creating global instance ambiguity. -/
 structure PolynomialModel where
-  /-- Executable categorical wiring used by this model. -/
-  category : Q.HasCategory
+  /-- Executable identity and composition used by this model. -/
+  composition : Q.HasComposition
   /-- Pinned structural representation and executable choices. -/
   kernel : Q.StructuralKernel
-  /-- Polynomial bounds for categorical wiring. -/
-  polynomialCategory : @PolynomialCategory C Q category
+  /-- Polynomial bounds for identity and composition. -/
+  polynomialComposition : @PolynomialComposition C Q composition
   /-- Polynomially bounded structural operations and size laws. -/
-  structural : @PolynomialStructuralClosure C Q category kernel
+  structural : @PolynomialStructuralClosure C Q composition kernel
 
 namespace PolynomialModel
 
@@ -410,8 +412,8 @@ variable {Q}
 /-- Use the explicit model's polynomially bounded identity. -/
 def identity (model : Q.PolynomialModel) {A : Type u} (a : C.Str A) :
     Q.PolyRealizer a a id := by
-  letI := model.category
-  exact PolyRealizer.identity model.polynomialCategory a
+  letI := model.composition
+  exact PolyRealizer.identity model.polynomialComposition a
 
 /-- Use the explicit model's polynomially bounded sequential composition. -/
 def comp (model : Q.PolynomialModel)
@@ -419,8 +421,8 @@ def comp (model : Q.PolynomialModel)
     {f : A → B} {g : B → D}
     (first : Q.PolyRealizer a b f) (second : Q.PolyRealizer b d g) :
     Q.PolyRealizer a d (g ∘ f) := by
-  letI := model.category
-  exact first.comp model.polynomialCategory second
+  letI := model.composition
+  exact first.comp model.polynomialComposition second
 
 end PolynomialModel
 
