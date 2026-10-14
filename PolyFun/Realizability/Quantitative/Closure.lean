@@ -254,7 +254,7 @@ transition while keeping the carried value. -/
 
 section Carry
 
-variable [Q.HasCategory] [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
+variable [Q.HasComposition] [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
   [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption] [QD : Q.IsDistributive]
 
 /-- Exchange a carried component past an index: `((x, y), j) ↦ ((x, j), y)`. -/

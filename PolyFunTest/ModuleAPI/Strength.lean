@@ -48,7 +48,7 @@ example (cost : ExecutionCost) (steps : ℕ) (c : Carry) :
 
 variable {C : StepClass.{u, v}} [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
   [DecidableEq p.A] {Q : QuantitativeStepClass.{u, v, w} C} {bd : Boundary C p α β}
-  [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive]
+  [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive]
   [Q.HasCompositionCost] [Q.HasProdCost] [Q.HasSumCost] [Q.HasOptionCost] [Q.IsDistributiveCost]
 
 example {R : QuantitativeRealization Q bd} {allows : ∀ position, p.B position → Prop}

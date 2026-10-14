@@ -89,7 +89,7 @@ namespace QuantitativeRealization
 
 section WithInput
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive]
 
 /-- Machine-level strength: a quantitative realization of `fun a ↦ (·, a) <$> program a` whose
@@ -347,7 +347,7 @@ theorem cost_updateCode_withInput_le (R : QuantitativeRealization Q bd)
   rw [QuantitativeStepClass.Realizer.cost_castFunction]
   exact QuantitativeStepClass.cost_carryUpdate_le Q bd.input R.updateCode state input index h
 
-omit [Q.HasCategory] [QS : Q.HasSum] [QO : Q.HasOption] [QD : Q.IsDistributive]
+omit [Q.HasComposition] [QS : Q.HasSum] [QO : Q.HasOption] [QD : Q.IsDistributive]
   [CC : Q.HasCompositionCost] [SC : Q.HasSumCost] [OC : Q.HasOptionCost]
   [DC : Q.IsDistributiveCost] in
 /-- The input-retaining state is encoded within `R`'s state, the input and the pair overhead. -/
@@ -357,7 +357,7 @@ theorem size_state_withInput_le (R : QuantitativeRealization Q bd) (state : R.ma
       Q.size R.state state + Q.size bd.input input + PC.sizeOverhead :=
   PC.size_prod_le R.state bd.input state input
 
-omit [Q.HasCategory] [QO : Q.HasOption] [QD : Q.IsDistributive]
+omit [Q.HasComposition] [QO : Q.HasOption] [QD : Q.IsDistributive]
   [CC : Q.HasCompositionCost] [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost] in
 /-- The input-retaining readout is encoded within `R`'s readout, the input and the pair and tag
 overheads. -/
@@ -455,7 +455,7 @@ end WithInput
 
 section SeqCompWithInput
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive] {D : Type u} {outRep : C.Str D}
 
 /-- Strong sequential composition: the second phase reads the first phase's result together with
@@ -569,7 +569,7 @@ end QuantitativeRealization
 
 section Program
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive]
 
 /-- Bounded quantitative realizability is closed under strength

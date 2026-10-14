@@ -47,7 +47,7 @@ variable {C : StepClass.{u, v}} (Q : QuantitativeStepClass.{u, v, w} C)
 
 `composeOverhead_le` charges the connection by the size of the intermediate value, so composed
 code costs its parts plus a function of what is passed between them. -/
-class HasCompositionCost [Q.HasCategory] where
+class HasCompositionCost [Q.HasComposition] where
   /-- Envelope for identity work and composition glue, as a function of an encoded size. -/
   overhead : ℕ → ℕ
   /-- The envelope is monotone. -/
@@ -153,7 +153,7 @@ class IsDistributiveCost [P : C.HasProd] [S : C.HasSum] [QD : Q.IsDistributive] 
 
 section Envelope
 
-variable [Q.HasCategory] [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
+variable [Q.HasComposition] [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
   [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption] [QD : Q.IsDistributive]
   [CC : Q.HasCompositionCost] [PC : Q.HasProdCost] [SC : Q.HasSumCost] [OC : Q.HasOptionCost]
   [DC : Q.IsDistributiveCost]
@@ -200,7 +200,7 @@ end Envelope
 
 section Derived
 
-variable [Q.HasCategory] [CC : Q.HasCompositionCost] [P : C.HasProd] [QP : Q.HasProd]
+variable [Q.HasComposition] [CC : Q.HasCompositionCost] [P : C.HasProd] [QP : Q.HasProd]
   [PC : Q.HasProdCost]
 
 /-- Retaining an input costs the wrapped code plus identity and pairing at the input's size. -/
@@ -322,7 +322,7 @@ end Strength
 
 section Carry
 
-variable [Q.HasCategory] [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
+variable [Q.HasComposition] [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
   [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption] [QD : Q.IsDistributive]
   [CC : Q.HasCompositionCost] [PC : Q.HasProdCost] [SC : Q.HasSumCost] [OC : Q.HasOptionCost]
   [DC : Q.IsDistributiveCost]
