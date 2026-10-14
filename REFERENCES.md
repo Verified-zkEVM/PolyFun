@@ -167,6 +167,23 @@ efficiency remain downstream obligations.
 Used in: `docs/guides/open-systems.md`, `PolyFun/Interaction/Open/GlobalSubroutine.lean`,
 `PolyFun/Interaction/Open/SecureEmulation.lean`.
 
+### Can20 — Canetti, *Universally Composable Security*
+
+Ran Canetti.
+*Universally Composable Security*.
+*Journal of the ACM* 67(5), article 28, 2020;
+[full version, ePrint 2000/067](https://eprint.iacr.org/2000/067).
+
+The reference treatment of universal composability. Its runtime notion bounds a
+machine's steps by a function of its net import: the credit carried by the
+messages it receives, minus the credit it passes on. `ImportBounded` is a ledger
+shape of that notion on reactive networks: packet credit stands in for import, and
+there is no security parameter, polynomial-time class, or caller/subroutine
+distinction. For linear bounds it is a conservation certificate.
+
+Used in: `PolyFun/Interaction/Execution/ReactiveNetwork/Import.lean`,
+`docs/guides/open-systems.md`.
+
 ### CJSV22 — Canetti, Jain, Swanberg, Varia, *End-to-End Secure Messaging*
 
 Ran Canetti, Palak Jain, Marika Swanberg, and Mayank Varia.
@@ -431,9 +448,14 @@ DOI: <https://doi.org/10.1007/s00145-012-9127-4>
 Polynomial runtime for reactive, interactive machines, where the bound must
 survive composition with the environment and other machines. The whole-program
 linking theorem that PolyFun's backend still lacks is a statement of this kind;
-`Backend.cost_adequate` covers only the per-step half.
+`Backend.cost_adequate` covers only the per-step half. Input-relative certificates
+in `ReactiveNetwork/InputRelative.lean` bound a node's work by the input it
+consumes. PolyFun composes them only under a gain law (`SmallGain`), and the
+ping-pong network (`feedback_work_unbounded`) shows that without one they do not
+compose across feedback.
 
-Used in: `docs/guides/realizability.md`.
+Used in: `docs/guides/realizability.md`, `docs/guides/open-systems.md`,
+`PolyFun/Interaction/Execution/ReactiveNetwork/InputRelative.lean`.
 
 ### GHP09 — Ghani, Hancock, Pattinson, *Representations of stream processors*
 

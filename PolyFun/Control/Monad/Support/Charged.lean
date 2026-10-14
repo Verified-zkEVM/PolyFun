@@ -24,7 +24,9 @@ events. The support lemmas below are its instances:
   decrease plus a per-event grant, then the charge of every possible result plus its final
   potential is at most the initial potential plus the grants of the events;
 * `le_chargedFoldlM` is the matching lower bound from a per-event lower bound on the charge;
-* `chargedFoldlM_const` counts the events under a constant charge.
+* `chargedFoldlM_const` counts the events under a constant charge;
+* `chargedFoldlM_ledger` bounds the charge by the growth of a ledger that records at least each
+  event's charge.
 
 This is the support-level reading of a charge: it bounds what an interpretation can actually
 return. `OpSpec.charge` in `PolyFun/PFunctor/Free/WP/Charge.lean` instead reads a charge off the
@@ -130,6 +132,21 @@ theorem chargedFoldlM_const {step : E → σ → m σ} (c : ℕ) :
     fun _ _ _ _ _ _ _ ih => by
       rw [ih, List.length_cons, Nat.mul_succ]
       omega
+
+/-- **Ledger bound.** If every possible step from an invariant state keeps the invariant and a
+ledger grows by at least the step's charge, every possible result's charge is at most the ledger's
+growth. -/
+theorem chargedFoldlM_ledger {step : E → σ → m σ} {charge : E → σ → ℕ}
+    (inv : σ → Prop) (Ψ : σ → ℕ)
+    (hstep : ∀ e s s', inv s → CanReturn (step e s) s' → inv s' ∧ Ψ s + charge e s ≤ Ψ s') :
+    ∀ (es : List E) (s s' : σ) (w : ℕ), inv s →
+      CanReturn (chargedFoldlM step charge es s) (s', w) → inv s' ∧ w + Ψ s ≤ Ψ s' := by
+  intro es s s' w hs h
+  refine chargedFoldlM_induction (motive := fun _ s s' w => inv s → inv s' ∧ w + Ψ s ≤ Ψ s')
+    (fun _ hs => by simpa using hs) (fun e es s mid fin w hmid ih hs => ?_) es s s' w h hs
+  obtain ⟨hinv, hpay⟩ := hstep e s mid hs hmid
+  obtain ⟨hfin, hrec⟩ := ih hinv
+  exact ⟨hfin, by omega⟩
 
 end Lawful
 
