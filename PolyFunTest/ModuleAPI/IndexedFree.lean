@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.IPFunctor.Free.Bound
+public import PolyFun.IPFunctor.Free.Lens
 
 /-!
 # Indexed free trees through ordinary imports
@@ -17,6 +17,9 @@ constant-family bind still unfolds to it.
 
 Roll bounds unfold to their constructor form, compose across leaf universes, and are reached by
 dot notation on `IFreeM`, `FreeM` and `FreeM₂`.
+
+Coproducts reduce on their injections, copairing restricts along them, and trees transported
+along an injection keep their constructors and their roll bounds.
 -/
 
 @[expose] public section
@@ -82,6 +85,39 @@ example {α β : Type v} {s t u : I} {x : FreeM₂ P s t α} {g : α → FreeM�
     (h₁ : x.IsTotalRollBound 1) (h₂ : ∀ y, (g y).IsTotalRollBound 2) :
     (x.bind g).IsTotalRollBound 3 :=
   FreeM₂.isTotalRollBound_bind h₁ h₂
+
+/-! ## Coproducts and lens transport -/
+
+example {P Q : IPFunctor.Endo.{uI, uA, uB} I} {s : I} (a : P.A s) (b : P.B s a) :
+    (P.sum Q).src s (.inl a) b = P.src s a b := by
+  simp
+
+example {P : IPFunctor.Endo.{uI, uA, uB} I} {Q : IPFunctor.Endo.{uI, uA, w} I} {s : I}
+    (a : Q.A s) : (P.sumULift Q).B s (.inr a) = ULift.{uB} (Q.B s a) := by
+  simp
+
+example {P Q R : IPFunctor.Endo.{uI, uA, uB} I} (l₁ : Lens P R) (l₂ : Lens Q R) :
+    Lens.comp (Lens.sumPair l₁ l₂) Lens.inl = l₁ := by
+  simp
+
+example {P Q : IPFunctor.Endo.{uI, uA, uB} I} {s : I} (a : P.A s)
+    (r : (b : P.B s a) → IFreeM P X (P.src s a b)) :
+    (IFreeM.liftBind a r).mapLens (Lens.inl (Q := Q)) =
+      IFreeM.liftBind (P := P.sum Q) (.inl a) fun b => (r b).mapLens Lens.inl := by
+  rw [IFreeM.mapLens_inl_liftBind]
+
+example {P Q : IPFunctor.Endo.{uI, uA, uB} I} {s : I} {x y : IFreeM P X s}
+    (h : x.mapLens (Lens.inl (Q := Q)) = y.mapLens Lens.inl) : x = y :=
+  IFreeM.mapLens_inl_injective h
+
+example {P Q : IPFunctor.Endo.{uI, uA, uB} I} {s : I} (x : IFreeM P X s) (n : ℕ) :
+    (x.mapLens (Lens.inl (Q := Q))).IsTotalRollBound n ↔ x.IsTotalRollBound n :=
+  IFreeM.isRollBound_mapLens_inl_iff x n
+
+example {P : IPFunctor.Endo.{uI, uA, uB} I} {Q : IPFunctor.Endo.{uI, uA, w} I} {s : I}
+    {x : IFreeM P X s} {n : ℕ} (h : x.IsTotalRollBound n) :
+    (x.mapLens (Lens.inlULift (Q := Q))).IsTotalRollBound n :=
+  h.mapLens _
 
 end generic
 
