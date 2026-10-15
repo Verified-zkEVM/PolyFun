@@ -57,6 +57,7 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 | [`PolyFun/IPFunctor/Free/Family.lean`](../../PolyFun/IPFunctor/Free/Family.lean) | **Primitive `IPFunctor.IFreeM P X : I → Type`** for `P : Endo I` and `X : I → Type` (state-indexed return family). Family-polymorphic `bind` whose continuation may change the leaf universe, `imap`, the bind and map laws, `inductionOn`, `construct`, `mapM`, `toSigmaFreeM`, injectivity / equation lemmas. |
 | [`PolyFun/IPFunctor/Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean) | `IPFunctor.FreeM P s α := IFreeM P (fun _ => α) s` — the constant-family specialization. Constructors `pure` / `liftBind` (as `@[match_pattern]` aliases over `IFreeM`), `lift` (shape) / `liftObj` (object), `bind` (state-polymorphic), `Functor` / `LawfulFunctor`, `inductionOn`, `construct`, `mapM`, `erase` (forgetful to `PFunctor.FreeM` under `[Unique I]`), `toSigmaFreeM`. |
 | [`PolyFun/IPFunctor/Free/Indexed.lean`](../../PolyFun/IPFunctor/Free/Indexed.lean) | `IPFunctor.FreeM₂ P s t α := IFreeM P (fun u => PSigma (fun _ : u = t => α)) s` — the terminal-state-marker specialization. `bind` chains indices positionally; carries `IndexedMonad` / `LawfulIndexedMonad` instances. Forgetful coercion `toFreeM`. |
+| [`PolyFun/IPFunctor/Free/Bound.lean`](../../PolyFun/IPFunctor/Free/Bound.lean) | Roll bounds on `IFreeM` whose check and cost read the state (`IsRollBound`), the subtractive charge bound `IsChargeBound` and the total bound `IsTotalRollBound`; budgets add under `bind` across leaf universes; transfer to `PFunctor.FreeM.IsRollBound` through `toSigmaFreeM`; `FreeM` / `FreeM₂` abbreviations for dot notation. |
 | [`PolyFun/IPFunctor/Lens/Basic.lean`](../../PolyFun/IPFunctor/Lens/Basic.lean) | `IPFunctor.Lens P Q` — Cartesian lens between indexed polynomials with the source-index preservation law `src_eq`. Identity, composition, `Lens.Equiv`. |
 | [`PolyFun/IPFunctor/Chart/Basic.lean`](../../PolyFun/IPFunctor/Chart/Basic.lean) | `IPFunctor.Chart P Q` — covariant chart (dual to lens) with `src_eq` in the chart direction. Identity, composition, `Chart.Equiv`. |
 | [`PolyFun/IPFunctor/Equiv/Basic.lean`](../../PolyFun/IPFunctor/Equiv/Basic.lean) | `IPFunctor.Equiv P Q` (`≃ₚ`) — structural equivalence with fiberwise `A` / `B` equivalences plus `src_eq`. |
@@ -166,6 +167,37 @@ computation (session-typed protocols are the canonical example).
 | Suitable for `do`-notation | no | via custom elaborator | via `ipure` / `ibind` | yes |
 | `bind` continuation shape | `∀ s', X s' → IFreeM P Y s'` | `(s' : I) → α → FreeM P s' β` | `α → FreeM₂ P t u β` | `α → PFunctor.FreeM Q β` |
 
+### Roll bounds
+
+`IPFunctor.IFreeM.IsRollBound x budget canRoll cost` is the indexed analogue of
+[`PFunctor.FreeM.IsRollBound`](../../PolyFun/PFunctor/Bound.lean): along every
+branch, a `liftBind` at shape `a : P.A s` must pass `canRoll s a b` and moves the
+budget to `cost s a b`. The check and the cost see the state, so a budget can
+charge a request differently in different protocol phases. The bound is the
+plain bound of the Σ-bundled erasure, whose positions carry the state
+(`isRollBound_toSigmaFreeM_iff`).
+
+- `IsChargeBound x c n` — the charges `c s a` along every branch add up to at
+  most `n`. This is the subtractive budget that
+  `PFunctor.FreeM.isRollBound_iff_wpFold_charge` reads as a worst-case charge.
+- `IsTotalRollBound x n` — at most `n` rolls along every branch; the unit
+  charge bound by `Iff.rfl`.
+
+Both budgets add under `IFreeM.bind` (`isChargeBound_bind`,
+`isTotalRollBound_bind`), also when the continuation changes the universe of the
+leaf family. A per-port query budget is a charge that is one at calls of that
+port and zero elsewhere. `FreeM.IsRollBound` and `FreeM₂.IsRollBound`, with
+their charge and total specializations, are abbreviations that give dot notation
+on those types.
+
+The bounds unfold one constructor at a time by `Iff.rfl`, so the constructor
+form `⟨hcan, fun y => …⟩` proves them directly. Over a concrete polynomial
+declared by a plain `def`, a `liftBind` tree is well typed only after the
+polynomial unfolds, so `rw` and `simp` with the `liftBind` lemmas fail at their
+implicit transparency. Declare such a polynomial with `abbrev`, or use the
+constructor form; [`BoundTests.lean`](../../PolyFunTest/IPFunctor/BoundTests.lean)
+does the latter for a register-machine signature with oracle ports.
+
 ### Forgetful maps
 
 - `IPFunctor.FreeM₂.toFreeM : FreeM₂ P s t α → FreeM P s α` — always available;
@@ -254,12 +286,15 @@ read the state back.
   The monoidal-product, distributive, and Σ / Π combinators present in
   `PFunctor.Lens` are not yet mirrored; add on demand.
 - Several `PFunctor`-layer files have no indexed analogue yet —
-  `PFunctor/{Bound, Category, Cofree, Trace}.lean`,
+  `PFunctor/{Category, Cofree, Trace}.lean`,
   `PFunctor/Lens/{Cartesian, State}.lean`, and the displayed-free family
   `PFunctor/Free/{Displayed, Displayed/*, Path, Replicate}.lean`. The
   indexed side currently has `Basic.lean`, `M.lean`,
-  `Free/{Family, Basic, Indexed}.lean`, and the core `Lens`, `Chart`, and `Equiv`
-  modules. Mirror on demand as downstream consumers require.
+  `Free/{Family, Basic, Indexed, Bound}.lean`, and the core `Lens`, `Chart`, and
+  `Equiv` modules. Mirror on demand as downstream consumers require.
+- The indexed roll bounds have no counterpart of `PFunctor.FreeM.ProgramProgress`
+  or of the charge fold in `PFunctor/Free/WP/Charge.lean`. Reach the latter
+  through `isRollBound_toSigmaFreeM_iff`.
 
 ## `do`-notation flavors
 

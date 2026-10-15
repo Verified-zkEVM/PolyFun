@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.IPFunctor.Free.Indexed
+public import PolyFun.IPFunctor.Free.Bound
 
 /-!
 # Indexed free trees through ordinary imports
@@ -14,6 +14,9 @@ public import PolyFun.IPFunctor.Free.Indexed
 `IFreeM.bind` may move the leaf payloads to another universe. Its equations and laws are used at
 independent leaf universes, including a continuation whose leaves are types, and the
 constant-family bind still unfolds to it.
+
+Roll bounds unfold to their constructor form, compose across leaf universes, and are reached by
+dot notation on `IFreeM`, `FreeM` and `FreeM₂`.
 -/
 
 @[expose] public section
@@ -53,12 +56,40 @@ example {s : I} (f : ∀ s, X s → X s) (x : IFreeM P X s) :
 example {α β : Type v} {s : I} (x : FreeM P s α) (g : (s' : I) → α → FreeM P s' β) :
     x.bind g = IFreeM.bind x g := rfl
 
+/-! ## Roll bounds -/
+
+/-- A charge bound on a `liftBind` is built from its constructor form. -/
+example {s : I} (a : P.A s) (r : (b : P.B s a) → IFreeM P X (P.src s a b))
+    {c : (s : I) → P.A s → ℕ} {n : ℕ} (ha : c s a ≤ n)
+    (hr : ∀ b, (r b).IsChargeBound c (n - c s a)) :
+    (IFreeM.liftBind a r).IsChargeBound c n :=
+  ⟨ha, hr⟩
+
+example {s : I} {x : IFreeM P X s} {g : ∀ s', X s' → IFreeM P Y s'} {c : (s : I) → P.A s → ℕ}
+    {n₁ n₂ : ℕ} (h₁ : x.IsChargeBound c n₁) (h₂ : ∀ s' y, (g s' y).IsChargeBound c n₂) :
+    (x.bind g).IsChargeBound c (n₁ + n₂) :=
+  IFreeM.isChargeBound_bind h₁ h₂
+
+example {s : I} (x : IFreeM P X s) (n : ℕ) :
+    (IFreeM.toSigmaFreeM P x).IsTotalRollBound n ↔ x.IsTotalRollBound n :=
+  IFreeM.isTotalRollBound_toSigmaFreeM_iff x n
+
+example {α : Type v} {s : I} (x : FreeM P s α) (n : ℕ) :
+    (FreeM.toSigmaFreeM P x).IsTotalRollBound n ↔ x.IsTotalRollBound n :=
+  FreeM.isTotalRollBound_toSigmaFreeM_iff x n
+
+example {α β : Type v} {s t u : I} {x : FreeM₂ P s t α} {g : α → FreeM₂ P t u β}
+    (h₁ : x.IsTotalRollBound 1) (h₂ : ∀ y, (g y).IsTotalRollBound 2) :
+    (x.bind g).IsTotalRollBound 3 :=
+  FreeM₂.isTotalRollBound_bind h₁ h₂
+
 end generic
 
 /-! ## A continuation whose leaves are types -/
 
-/-- One request at each Boolean state, whose Boolean answer becomes the next state. -/
-def toggle : IPFunctor.Endo Bool where
+/-- One request at each Boolean state, whose Boolean answer becomes the next state. It is
+reducible, so that `liftBind` trees over it are well typed at the transparency of `simp`. -/
+abbrev toggle : IPFunctor.Endo Bool where
   A _ := Unit
   B _ _ := Bool
   src _ _ b := b
@@ -73,5 +104,13 @@ def askType (s : Bool) : IFreeM toggle (fun _ => Type) s :=
 
 example (s : Bool) :
     askType s = .liftBind () fun (b : Bool) => .pure (if b then Unit else Empty) := rfl
+
+example (s : Bool) : (ask s).IsTotalRollBound 1 := by
+  simp [ask]
+
+/-- The type-valued continuation makes no request. -/
+example (s : Bool) : (askType s).IsTotalRollBound 1 :=
+  IFreeM.isTotalRollBound_bind (n₁ := 1) (n₂ := 0) ⟨Nat.one_pos, fun _ => trivial⟩
+    fun _ _ => trivial
 
 end PolyFunTest.ModuleAPI.IndexedFree
