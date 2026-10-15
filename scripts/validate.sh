@@ -74,7 +74,7 @@ if (( run_lint )); then
   lake exe lint-style PolyFun ToCslib ComplexityBackends \
     Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
     Examples.Tutorials.InteractionTrees Examples.Tutorials.ScopedPrograms \
-    Examples.Tutorials.ScopedFamily \
+    Examples.Tutorials.ScopedFamily Examples.Tutorials.ScopedExecution \
     Examples.Parliament PolyFunParliamentMain
 fi
 
@@ -104,6 +104,7 @@ if (( run_axioms )); then
     --root Examples.Tutorials.Requests --root Examples.Tutorials.Machines \
     --root Examples.Tutorials.IndexedPrograms --root Examples.Tutorials.InteractionTrees \
     --root Examples.Tutorials.ScopedPrograms --root Examples.Tutorials.ScopedFamily \
+    --root Examples.Tutorials.ScopedExecution \
     --root Examples.Parliament \
     --root PolyFunParliamentMain --check
 fi

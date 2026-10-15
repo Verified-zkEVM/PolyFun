@@ -11,6 +11,7 @@ lintDriverArgs = [
   "Examples.Tutorials.Requests", "Examples.Tutorials.Machines",
   "Examples.Tutorials.IndexedPrograms", "Examples.Tutorials.InteractionTrees",
   "Examples.Tutorials.ScopedPrograms", "Examples.Tutorials.ScopedFamily",
+  "Examples.Tutorials.ScopedExecution",
   "Examples.Parliament", "PolyFunParliamentMain"
 ]
 testDriver = "PolyFunTest"

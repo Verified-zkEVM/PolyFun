@@ -82,6 +82,23 @@ physical-effect correctness claim. The
 check dependent responses, zero fuel, exact residuals, 257 IO interactions,
 and a handler failure immediately after a chunk boundary.
 
+## Deterministic language transitions
+
+`Control.Transition S R` describes a next-state function returning either a result
+or a residual state. `run_add` preserves exact residuals across chunks; `Executes`
+is equivalent to successful finite fuel and has a unique result. Here each call
+to the transition function consumes one tick, including a terminal transition.
+
+`PolyFun.ITree.Transition` supplies a pure ITree and a `DynComputation` over the
+unit interface. The machine stores `R ⊕ S`, so it performs a tick to discover a
+terminal result and then observes that result without further fuel.
+`runChunk_toMachine` proves agreement at every budget, including zero. This
+explicit convention reconciles transition fuel with the existing machine API.
+Frontend error results stay results; a paused state is not a proof of divergence.
+
+The [interop guide](interop.md) gives the strict scoped-language example and the
+relationship to frontend adequacy and resource certificates.
+
 ## Typed execution networks
 
 General network runtimes live in `Interaction.Execution`, above the shared

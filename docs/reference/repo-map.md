@@ -49,6 +49,9 @@ Example and test imports never flow back into production.
 | Admissible implementations and resources | [Realizability](../../PolyFun/Realizability/Basic.lean), [quantitative certificates](../../PolyFun/Realizability/Quantitative.lean), [description measures](../../PolyFun/Realizability/Quantitative/Description.lean) | [Realizability](../guides/realizability.md) |
 
 `Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure.
+`Control/Semantics/Correspondence` owns represented-data contract transfer;
+`Control/Transition` and `ITree/Transition` connect deterministic execution to
+resumable machines. Their frontend obligations are in the [interop guide](../guides/interop.md).
 `Logic/` holds small logic helpers. `Complexity/` supplies resource-bound syntax;
 concrete machine complexity lives in the optional `ComplexityBackends` library.
 

@@ -35,7 +35,9 @@ public import PolyFun.Control.Monad.Support.Loops
 public import PolyFun.Control.Monad.Support.Structural
 public import PolyFun.Control.Monad.Support.WP
 public import PolyFun.Control.Monad.WriterT.WP
+public import PolyFun.Control.Semantics.Correspondence
 public import PolyFun.Control.Trace
+public import PolyFun.Control.Transition
 public import PolyFun.IPFunctor.Basic
 public import PolyFun.IPFunctor.Chart.Basic
 public import PolyFun.IPFunctor.Equiv.Basic
@@ -97,6 +99,7 @@ public import PolyFun.ITree.Sim.CrossSignature
 public import PolyFun.ITree.Sim.Defs
 public import PolyFun.ITree.Sim.Facts
 public import PolyFun.ITree.Trace
+public import PolyFun.ITree.Transition
 public import PolyFun.ITree.Unfold
 public import PolyFun.Interaction.Basic.Append
 public import PolyFun.Interaction.Basic.BundledMonad

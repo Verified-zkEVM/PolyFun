@@ -7,7 +7,9 @@ and validation do not build it.
 
 PolyFun owns the reusable scoped polynomial syntax, indexed algebra folds,
 renaming, substitution, sort reindexing, continuous partial results, tree
-interpretations, and finite prefix recursion. See the
+interpretations, finite prefix recursion, represented-data correspondence and
+deterministic transition adapters. The [interop guide](interop.md) explains the
+shared pipeline and its independent strict arithmetic/let/loop consumer. See the
 [indexed-polynomial guide](ipfunctor.md#binding-signatures-and-native-ir),
 [interaction-tree guide](itree.md), and [upstream ownership](../development/upstream.md).
 The downstream project owns Cryptol syntax choices and semantics, extraction,

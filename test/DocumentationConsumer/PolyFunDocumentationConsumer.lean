@@ -12,6 +12,7 @@ import Examples.Tutorials.IndexedPrograms
 import Examples.Tutorials.InteractionTrees
 import Examples.Tutorials.ScopedPrograms
 import Examples.Tutorials.ScopedFamily
+import Examples.Tutorials.ScopedExecution
 import PolyFun.IPFunctor.Scoped.DomainRelation
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess
@@ -83,3 +84,13 @@ example {S T : Type*} {D : S → PointedDomain} {E : T → PointedDomain}
     (h : IPFunctor.ScopedDomain.Env.Pointwise η ζ) :
     IPFunctor.ScopedDomain.Env.reindex D E f hf η = ζ :=
   IPFunctor.ScopedDomain.Env.pointwise_reindex_eq hf h
+
+example (n : Nat) : Examples.ScopedPrograms.FirstOrder.sumCertificate.meaning n =
+    (Examples.ScopedPrograms.sumTo n).denote Examples.ScopedPrograms.algebra
+      IPFunctor.ScopedSignature.Env.empty :=
+  Examples.ScopedPrograms.FirstOrder.sumCertificate.correct n
+
+example {S R : Type} (step : Control.Transition S R) (fuel : Nat) (state : S) :
+    (Control.Transition.toMachine step).runChunk Control.Transition.tickHandler fuel
+      (.inr state) = Control.Transition.toChunk (Control.Transition.run step fuel state) :=
+  Control.Transition.runChunk_toMachine step fuel state
