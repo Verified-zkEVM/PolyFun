@@ -30,6 +30,7 @@ Example and test imports never flow back into production.
 | Polynomial interfaces and morphisms | [PFunctor basics](../../PolyFun/PFunctor/Basic.lean), [lens laws](../../PolyFun/PFunctor/Lens/Basic.lean) | [Polynomial functors](../guides/pfunctor.md) |
 | Free programs and handlers | [Free basics](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean), [handler sums](../../PolyFun/PFunctor/Handler/Sum.lean), [stateful combinators](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean) | [First program](../tutorials/first-program.md) |
 | State-dependent interfaces | [Indexed basics](../../PolyFun/IPFunctor/Basic.lean) | [Indexed polynomials](../guides/ipfunctor.md) |
+| Indexed folds, reindexing, and traversals | [Folds](../../PolyFun/IPFunctor/Free/Fold.lean), [reindexing](../../PolyFun/IPFunctor/Free/Reindex.lean), [traversals](../../PolyFun/IPFunctor/Free/Traversal.lean) | [Indexed polynomials](../guides/ipfunctor.md#folds-reindexing-and-traversals) |
 | Behaviors and explicit-state machines | [Resumptions](../../PolyFun/PFunctor/Resumption.lean), [dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean) | [Computation models](../guides/computation-models.md) |
 | Interaction trees and recursion | [ITree basics](../../PolyFun/ITree/Basic.lean) | [Interaction trees](../guides/itree.md) |
 | Interpreting trees into monads | [Interpretation](../../PolyFun/ITree/Interp/Defs.lean), [laws](../../PolyFun/ITree/Interp/Laws.lean) | [Interaction trees](../guides/itree.md#interpreting-into-a-monad) |
