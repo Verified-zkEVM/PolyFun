@@ -43,9 +43,9 @@ namespace PFunctor
 
 /- Lean compares the sigma presentations of polynomial objects and indices at
 implicit transparency in the flattened maps below. -/
-attribute [local implicit_reducible]
-  PFunctor.Idx PFunctor.prod PFunctor.ulift PFunctor.Lens.comp PFunctor.Lens.uliftMap
-  DynSystem.wrap DynSystem.expose DynSystem.update DynSystem.choiceProd DynSystem.ulift
+attribute [local implicit_reducible] PFunctor.Idx PFunctor.ulift PFunctor.Lens.comp
+  PFunctor.Lens.uliftMap DynSystem.wrap DynSystem.expose DynSystem.update DynSystem.choiceProd
+  DynSystem.ulift
 
 /-! ## The regrouping lens -/
 
