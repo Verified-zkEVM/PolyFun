@@ -15,10 +15,6 @@ open PFunctor
 
 namespace PFunctor.Resumption
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the truncation examples below unfold these signatures there. -/
-attribute [local implicit_reducible] PFunctor.y PFunctor.monomial
-
 universe uA uB uβ
 
 def truncateUniverseCanary {p : PFunctor.{uA, uB}} {β : Type uβ}

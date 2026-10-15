@@ -6,19 +6,22 @@ Authors: Devon Tuma
 
 module
 
+import Cslib.Foundations.Data.PFunctor.Basic
 import Cslib.Foundations.Data.PFunctor.Free.Fold
 import Cslib.Foundations.Data.PFunctor.Free.W
+import PolyFun.PFunctor.Basic
 import PolyFun.PFunctor.Free.Basic
 import ToCslib.Data.PFunctor.Free.Basic
 
 /-!
-# Co-import canaries for cslib's polynomial free-monad modules
+# Co-import canaries for cslib's polynomial modules
 
-cslib's `Free.Fold` and `Free.W` own the fold `PFunctor.FreeM.foldFreeM` and the W-type
-equivalence `PFunctor.FreeM.equivWOfIsEmpty`. `ToCslib.Data.PFunctor.Free.Basic` and
-`PolyFun.PFunctor.Free.Basic` build on them without redeclaring either, so all four modules import
-together. Each example combines a lemma from cslib with one from PolyFun or `ToCslib` through
-ordinary imports.
+cslib's `PFunctor.Basic` owns the monomial abbreviations, `0`, `1`, `P + Q` and `P * Q`; its
+`Free.Fold` and `Free.W` own the fold `PFunctor.FreeM.foldFreeM` and the W-type equivalence
+`PFunctor.FreeM.equivWOfIsEmpty`. `PolyFun.PFunctor.Basic`, `PolyFun.PFunctor.Free.Basic` and
+`ToCslib.Data.PFunctor.Free.Basic` build on them without redeclaring any of these, so all six
+modules import together. Each example combines a lemma from cslib with one from PolyFun or
+`ToCslib` through ordinary imports.
 -/
 
 @[expose] public section
@@ -28,6 +31,29 @@ universe uA uB uA₂ uB₂ uα uβ uγ
 namespace PolyFunTest.ModuleAPI.CslibCoImport
 
 open _root_.PFunctor
+
+/-! ## Polynomial constructions -/
+
+/-- cslib's `P + Q` and PolyFun's named sum `PFunctor.sum` are the same polynomial. -/
+example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}} : P + Q = PFunctor.sum P Q := rfl
+
+/-- cslib's direction equation for `P + Q` and PolyFun's for `PFunctor.sum` agree on a left
+position. -/
+example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}} (a : P.A) :
+    (P + Q).B (.inl a) = (PFunctor.sum P Q).B (.inl a) := by
+  rw [hAdd_B, sum_B_inl]
+
+/-- cslib's `C_pempty` turns `0` into a constant polynomial, whose positions PolyFun's `C_A`
+computes. -/
+example : (0 : PFunctor.{uA, uB}).A = PEmpty := by
+  rw [← C_pempty, C_A]
+
+/-- Instance search unfolds cslib's reducible abbreviations to `PUnit` and `PEmpty`. -/
+example (a : y.{uA, uB}.A) : Unique (y.{uA, uB}.B a) := inferInstance
+
+example (α : Type uA) (a : (C.{uA, uB} α).A) : IsEmpty ((C.{uA, uB} α).B a) := inferInstance
+
+/-! ## Free programs -/
 
 /-- cslib's map-fusion law for the fold composes with `ToCslib`'s constructor-spelled node
 equation. -/

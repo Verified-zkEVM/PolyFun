@@ -97,6 +97,17 @@ Symptoms and fixes (see the Transparency Attributes section of
   `Obj.fst_mk`, `Obj.snd_mk`, and `PFunctor.map_eq`, and eliminate with `Obj.rec`. A
   leftover `Obj.mk … = ⟨…⟩` closes by `rfl`. `Obj` and `comp` are implicit-reducible
   upstream, so they must not appear in local attribute lists.
+- "failed to set `[local implicit_reducible]`, `monomial` is currently
+  `[reducible]`" → the name is already at least implicit-reducible upstream.
+  CSLib's `monomial`, `y`, `C`, `linear`, `selfMonomial` and `purePower` are
+  reducible abbreviations and its `add` and `prod` are implicit-reducible, so
+  they never belong in local attribute lists. A goal over these polynomials
+  that fails needs a different fix: an instance declared on `y.A` or
+  `(linear α).B a` becomes a catch-all `PUnit`/`PEmpty` instance and should be
+  deleted; a simp lemma that misses a concrete polynomial needs reduced
+  implicit type arguments or `no_index`; and `OfNat.ofNat`, `One.one` or
+  `Zero.zero` in a simp set loops, so use `inferInstanceAs`. See
+  [CSLib's polynomial constructions](../guides/pfunctor.md#cslibs-polynomial-constructions).
 
 ### `FreeM` nodes in simp normal form
 
