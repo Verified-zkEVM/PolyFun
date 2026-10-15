@@ -28,6 +28,10 @@ is the specialization of this predicate to `FreeM (spec.toPFunctor)` and is
 equal to `IsRollBound` definitionally; the bridge lemma in `QueryBound.lean`
 witnesses the equivalence by `Iff.rfl`.
 
+Bounds compose under `FreeM.bind` (`isRollBound_bind`, `isTotalRollBound_bind`) and under the
+binds of the error-handling transformers `ExceptT ε (FreeM P)` and `OptionT (FreeM P)`, whose
+early exits perform no roll (`isTotalRollBound_exceptT_bind`, `isTotalRollBound_optionT_bind`).
+
 `ProgramProgress` is the complementary liveness predicate: every reachable query
 has at least one typed answer, so a roll bound stated by universal quantification
 over answers is never satisfied vacuously.
@@ -285,6 +289,99 @@ lemma isTotalRollBound_mapLens {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
       rw [FreeM.liftBind_eq, isTotalRollBound_lift_bind_iff]
       exact ⟨h.1, fun d => ih _ (h.2 _)⟩
 
+/-! ### Error-handling transformers
+
+A computation in `ExceptT ε (FreeM P)` or `OptionT (FreeM P)` is the free program `x.run` with
+an early exit. The exit is a `pure` leaf and performs no roll, so roll bounds compose under the
+transformer's bind exactly as under `FreeM.bind`: a bound for the first computation, combined
+with a uniform bound for every continuation. -/
+
+section Transformers
+
+variable {ε : Type v}
+
+/-- Roll bounds compose through an `ExceptT` bind, under the side conditions of
+`isRollBound_bind`. An error exits with no further rolls. -/
+lemma isRollBound_exceptT_bind {x : ExceptT ε (FreeM P) α} {f : α → ExceptT ε (FreeM P) β}
+    {canRoll : P.A → B → Prop} {cost : P.A → B → B}
+    (combine : B → B → B) {b₁ b₂ : B}
+    (h_can : ∀ a b₁' b₂' b, canRoll a b → canRoll a (combine b₁' b) ∧
+      canRoll a (combine b b₂'))
+    (h_cost : ∀ a b₁' b₂' b, canRoll a b →
+      combine b₁' (cost a b) = cost a (combine b₁' b) ∧
+      cost a (combine b b₂') = combine (cost a b) b₂')
+    (hx : x.run.IsRollBound b₁ canRoll cost)
+    (hf : ∀ value, (f value).run.IsRollBound b₂ canRoll cost) :
+    (x >>= f).run.IsRollBound (combine b₁ b₂) canRoll cost := by
+  rw [ExceptT.run_bind]
+  refine isRollBound_bind combine h_can h_cost hx fun result => ?_
+  cases result with
+  | error _ => exact isRollBound_pure _ _ _ _
+  | ok value => exact hf value
+
+/-- Roll bounds compose through an `OptionT` bind, under the side conditions of
+`isRollBound_bind`. A failure exits with no further rolls. -/
+lemma isRollBound_optionT_bind {x : OptionT (FreeM P) α} {f : α → OptionT (FreeM P) β}
+    {canRoll : P.A → B → Prop} {cost : P.A → B → B}
+    (combine : B → B → B) {b₁ b₂ : B}
+    (h_can : ∀ a b₁' b₂' b, canRoll a b → canRoll a (combine b₁' b) ∧
+      canRoll a (combine b b₂'))
+    (h_cost : ∀ a b₁' b₂' b, canRoll a b →
+      combine b₁' (cost a b) = cost a (combine b₁' b) ∧
+      cost a (combine b b₂') = combine (cost a b) b₂')
+    (hx : x.run.IsRollBound b₁ canRoll cost)
+    (hf : ∀ value, (f value).run.IsRollBound b₂ canRoll cost) :
+    (x >>= f).run.IsRollBound (combine b₁ b₂) canRoll cost := by
+  change IsRollBound (FreeM.bind x.run fun result => match result with
+    | some value => (f value).run
+    | none => pure none) (combine b₁ b₂) canRoll cost
+  refine isRollBound_bind combine h_can h_cost hx fun result => ?_
+  cases result with
+  | none => exact isRollBound_pure _ _ _ _
+  | some value => exact hf value
+
+/-- Total roll bounds add under an `ExceptT` bind: an error exits with no further rolls. -/
+lemma isTotalRollBound_exceptT_bind {x : ExceptT ε (FreeM P) α}
+    {f : α → ExceptT ε (FreeM P) β} {n₁ n₂ : ℕ} (hx : x.run.IsTotalRollBound n₁)
+    (hf : ∀ value, (f value).run.IsTotalRollBound n₂) :
+    (x >>= f).run.IsTotalRollBound (n₁ + n₂) := by
+  refine isRollBound_exceptT_bind (fun a b => a + b) ?_ ?_ hx hf <;> grind
+
+/-- Total roll bounds add under an `OptionT` bind: a failure exits with no further rolls. -/
+lemma isTotalRollBound_optionT_bind {x : OptionT (FreeM P) α}
+    {f : α → OptionT (FreeM P) β} {n₁ n₂ : ℕ} (hx : x.run.IsTotalRollBound n₁)
+    (hf : ∀ value, (f value).run.IsTotalRollBound n₂) :
+    (x >>= f).run.IsTotalRollBound (n₁ + n₂) := by
+  refine isRollBound_optionT_bind (fun a b => a + b) ?_ ?_ hx hf <;> grind
+
+/-- Returning a value in `ExceptT` performs no roll. -/
+lemma isTotalRollBound_exceptT_pure (value : α) (n : ℕ) :
+    (pure value : ExceptT ε (FreeM P) α).run.IsTotalRollBound n := trivial
+
+/-- Throwing an error in `ExceptT` performs no roll. -/
+lemma isTotalRollBound_exceptT_throw (error : ε) (n : ℕ) :
+    (throw error : ExceptT ε (FreeM P) α).run.IsTotalRollBound n := trivial
+
+/-- Lifting a free program into `ExceptT` keeps exactly its rolls. -/
+lemma isTotalRollBound_exceptT_lift_iff (x : FreeM P α) (n : ℕ) :
+    (ExceptT.lift x : ExceptT ε (FreeM P) α).run.IsTotalRollBound n ↔ x.IsTotalRollBound n :=
+  isRollBound_map_iff x Except.ok n _ _
+
+/-- Returning a value in `OptionT` performs no roll. -/
+lemma isTotalRollBound_optionT_pure (value : α) (n : ℕ) :
+    (pure value : OptionT (FreeM P) α).run.IsTotalRollBound n := trivial
+
+/-- Failing in `OptionT` performs no roll. -/
+lemma isTotalRollBound_optionT_failure (n : ℕ) :
+    (failure : OptionT (FreeM P) α).run.IsTotalRollBound n := trivial
+
+/-- Lifting a free program into `OptionT` keeps exactly its rolls. -/
+lemma isTotalRollBound_optionT_lift_iff (x : FreeM P α) (n : ℕ) :
+    (OptionT.lift x : OptionT (FreeM P) α).run.IsTotalRollBound n ↔ x.IsTotalRollBound n := by
+  rw [OptionT.run_lift, LawfulMonad.bind_pure_comp]
+  exact isRollBound_map_iff x some n _ _
+
+end Transformers
 
 /-! ### Program progress -/
 
