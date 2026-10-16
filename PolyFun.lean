@@ -229,6 +229,7 @@ public import PolyFun.PFunctor.Dynamical.DynComputation.BoundedFold
 public import PolyFun.PFunctor.Dynamical.DynComputation.IO
 public import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
 public import PolyFun.PFunctor.Dynamical.DynComputation.Termination
+public import PolyFun.PFunctor.Dynamical.DynComputation.WrapState
 public import PolyFun.PFunctor.Dynamical.Game
 public import PolyFun.PFunctor.Dynamical.Refinement
 public import PolyFun.PFunctor.Dynamical.Responder
@@ -284,6 +285,7 @@ public import PolyFun.PFunctor.Handler.Instrumentation
 public import PolyFun.PFunctor.Handler.Instrumentation.Free
 public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr
+public import PolyFun.PFunctor.Handler.StateLens
 public import PolyFun.PFunctor.Handler.Stateful
 public import PolyFun.PFunctor.Handler.Stateful.Combinators
 public import PolyFun.PFunctor.Handler.Sum
@@ -336,6 +338,7 @@ public import PolyFun.Realizability.Quantitative.Counting
 public import PolyFun.Realizability.Quantitative.Description
 public import PolyFun.Realizability.Quantitative.Family
 public import PolyFun.Realizability.Quantitative.FamilySimulation
+public import PolyFun.Realizability.Quantitative.Handler
 public import PolyFun.Realizability.Quantitative.Iteration
 public import PolyFun.Realizability.Quantitative.Polynomial
 public import PolyFun.Realizability.Quantitative.Prefix

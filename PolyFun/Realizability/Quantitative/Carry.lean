@@ -76,6 +76,29 @@ theorem withCarry_mono {cost bound : ExecutionCost} {steps steps' : ℕ} (c : Ca
   have h2 : steps * c.update ≤ steps' * c.update := Nat.mul_le_mul_right _ hsteps
   refine ⟨?_, hq, ht, ?_, ?_⟩ <;> simp only [withCarry] <;> omega
 
+/-- The bound of a run against a one-query stateful handler with `steps` queries:
+- twice the source work, because the product transition recomputes the source's readout;
+- the per-step carry;
+- the source's query count;
+- `steps` times the per-step inner traffic;
+- peak sizes shifted by the size carries. -/
+def handled (cost : ExecutionCost) (steps : ℕ) (c : Carry) (traffic : ℕ) : ExecutionCost :=
+  ⟨2 * cost.work + c.init + (steps + 1) * c.head + steps * c.update, cost.queries,
+    steps * traffic, cost.peakStateSize + c.state, cost.peakHeadSize + c.headSize⟩
+
+@[simp] theorem queries_handled (cost : ExecutionCost) (steps : ℕ) (c : Carry) (traffic : ℕ) :
+    (cost.handled steps c traffic).queries = cost.queries := rfl
+
+/-- Handled bounds are monotone in the source resources and in the number of steps. -/
+theorem handled_mono {cost bound : ExecutionCost} {steps steps' : ℕ} (c : Carry) (traffic : ℕ)
+    (h : cost ≤ bound) (hsteps : steps ≤ steps') :
+    cost.handled steps c traffic ≤ bound.handled steps' c traffic := by
+  obtain ⟨hw, hq, ht, hs, hh⟩ := h
+  have h1 : (steps + 1) * c.head ≤ (steps' + 1) * c.head := Nat.mul_le_mul_right _ (by omega)
+  have h2 : steps * c.update ≤ steps' * c.update := Nat.mul_le_mul_right _ hsteps
+  have h3 : steps * traffic ≤ steps' * traffic := Nat.mul_le_mul_right _ hsteps
+  refine ⟨?_, hq, ?_, ?_, ?_⟩ <;> simp only [handled] <;> omega
+
 end ExecutionCost
 
 namespace DynSystem.DynComputation.QuantitativeRealization

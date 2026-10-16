@@ -370,6 +370,8 @@ theorem carryReadoutCount_eq : carryReadoutCount = 11 := rfl
 
 theorem carryUpdateCount_eq : carryUpdateCount = 17 := rfl
 
+theorem pairRightCount_eq : pairRightCount = 4 := rfl
+
 /-! ## Cost bounds for the carry combinators -/
 
 section Carry
