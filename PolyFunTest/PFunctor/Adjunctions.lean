@@ -97,10 +97,7 @@ projections to `simp` without unfolding the constructors. -/
 example {p : PFunctor.{pA, pB}} (a : p.A) (d : p.B a) :
     (Lens.positionCounit p).toFunA a = a ∧
       (Lens.positionCounit p).toFunB a d = PUnit.unit := by
-  -- Lean 4.33: simp stops at a universe-polymorphic `PUnit.unit = PUnit.unit`;
-  -- close it with `rfl`.
   simp
-  rfl
 
 example {p : PFunctor.{pA, pB}} {q : PFunctor.{qA, qB}}
     {r : PFunctor.{rA, rB}} (l : Lens (p ⊗ q) r) (pq : p.A × q.A)
