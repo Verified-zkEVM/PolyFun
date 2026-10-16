@@ -5,6 +5,7 @@ Authors: Quang Dao, Devon Tuma
 -/
 module
 
+public import Cslib.Foundations.Data.PFunctor.Free.W
 public import PolyFun.Control.Monad.Hom
 public import PolyFun.PFunctor.Basic
 public import PolyFun.PFunctor.Lens.Basic
@@ -13,11 +14,12 @@ public import ToCslib.Data.PFunctor.Free.Basic
 /-!
 # Free Monad of a Polynomial Functor
 
-PolyFun's layer over cslib's free monad `PFunctor.FreeM`: the W-type presentations, root
-predicates, transport along lenses, and the bundled monad-homomorphism form of `FreeM.liftM`
-with its universal property and naturality. The algebraic laws (`map_pure`, `map_bind`, `foldFreeM`,
-`foldFreeM_bind`, `liftM_comp`, `liftM_lift_eq_self`) are staged for cslib in
-`ToCslib.Data.PFunctor.Free.Basic`, which this module re-exports.
+PolyFun's layer over cslib's free monad `PFunctor.FreeM`: the W-type presentation of programs
+with return values, root predicates, transport along lenses, and the bundled monad-homomorphism
+form of `FreeM.liftM` with its universal property and naturality. This module re-exports cslib's
+fold `FreeM.foldFreeM` and its laws, cslib's W-type equivalence `FreeM.equivWOfIsEmpty` for an
+empty leaf type, and the constructor-spelled node equations staged in
+`ToCslib.Data.PFunctor.Free.Basic`.
 -/
 
 @[expose] public section
@@ -123,30 +125,6 @@ theorem rootSatisfies_liftBind (positionPred : P.A → Prop) (leafPred : α → 
         (FreeM.liftBind (P := P) position next) =
       positionPred position :=
   rfl
-
-/-- Forward direction of the equivalence with `P.W` when the leaf type is empty: every `pure`
-case is unreachable, and every `liftBind` is reinterpreted as a W-node. -/
-def toW [IsEmpty α] : FreeM P α → P.W
-  | .pure y   => (IsEmpty.false y).elim
-  | .liftBind a r => ⟨a, fun b => toW (r b)⟩
-
-/-- Inverse direction of the equivalence with `P.W` when the leaf type is empty: every W-node
-becomes a `liftBind`. -/
-def ofW [IsEmpty α] : P.W → FreeM P α
-  | ⟨a, f⟩ => FreeM.liftBind a (fun b => ofW (f b))
-
-/-- When the value type is empty, every `pure` is unreachable and `FreeM P α` is structurally
-identical to `P.W`. -/
-def equivWOfIsEmpty [IsEmpty α] : FreeM P α ≃ P.W where
-  toFun := toW
-  invFun := ofW
-  left_inv x := by
-    induction x with
-    | pure y => exact (IsEmpty.false y).elim
-    | lift_bind a r ih => exact congrArg (FreeM.liftBind a) (funext ih)
-  right_inv w := by
-    induction w with
-    | mk a f ih => exact congrArg (WType.mk a) (funext ih)
 
 section mapLens
 

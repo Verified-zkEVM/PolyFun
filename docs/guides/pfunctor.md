@@ -78,8 +78,10 @@ input/output transformers and of proof-system context lenses, are built with
 | Relate free and cofree constructions | [Pattern runs on matter](../reference/pattern-runs-on-matter.md) |
 
 Mathlib owns `PFunctor`, its object action, and W/M-type foundations. CSLib
-owns `PFunctor.FreeM`. PolyFun extends those definitions instead of introducing
-parallel foundational types. The [repository map](../reference/repo-map.md)
+owns `PFunctor.FreeM`, its fold `FreeM.foldFreeM`, and the equivalence
+`FreeM.equivWOfIsEmpty` between a free monad with an empty leaf type and the
+W-type. PolyFun extends those definitions instead of introducing parallel
+foundational types. The [repository map](../reference/repo-map.md)
 explains the staging library `ToCslib` and the optional `ComplexityBackends`.
 
 ## Mental model
