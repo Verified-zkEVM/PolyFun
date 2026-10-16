@@ -44,6 +44,7 @@ Example and test imports never flow back into production.
 | Support and weakest preconditions | [Ordered algebras](../../PolyFun/Control/Monad/Algebra.lean), [support](../../PolyFun/Control/Monad/Support.lean), [exact interpretations](../../PolyFun/Control/Monad/ExactWP.lean) | [Program logic](../guides/program-logic.md#exact-interpretations) |
 | Worst-case cost and query budgets | [Charges](../../PolyFun/PFunctor/Free/WP/Charge.lean); support-level [charged folds](../../PolyFun/Control/Monad/Support/Charged.lean) | [Program logic](../guides/program-logic.md#charges-and-budgets) |
 | Admissible implementations and resources | [Realizability](../../PolyFun/Realizability/Basic.lean), [quantitative certificates](../../PolyFun/Realizability/Quantitative.lean), [description measures](../../PolyFun/Realizability/Quantitative/Description.lean) | [Realizability](../guides/realizability.md) |
+| Strength, the strong bind, and structural cost laws | [Strength](../../PolyFun/Realizability/Quantitative/Strength.lean), [cost laws](../../PolyFun/Realizability/Quantitative/CostLaws.lean), [carries](../../PolyFun/Realizability/Quantitative/Carry.lean) | [Realizability](../guides/realizability.md#strength-and-the-strong-bind) |
 
 `Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure.
 `Logic/` holds small logic helpers. `Complexity/` supplies resource-bound syntax;
