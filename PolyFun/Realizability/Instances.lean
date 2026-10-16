@@ -54,14 +54,14 @@ cannot see the surrounding context and a tag cannot be moved past a pairing usin
 
 What this costs a real client: `Complexity.FP` (complexitylib) and
 `Cslib.Turing.PolyTimeComputable` (cslib) both supply the identity and composition
-closure. complexitylib also exposes the class-level product closure a
-`WordPairing` needs (`pairFst_mem_FP`, `pairSnd_mem_FP`, `mem_FP_pair`), but
-PolyFun does not depend on complexitylib; cslib has no pairing or projection
-machines at all. cslib's
-`PolyTimeComputable` is additionally `Type`-valued with a `Monotone` side condition
-on `comp` whose removal is still a `TODO` upstream, so `Mem f :=
-Nonempty (PolyTimeComputable f)` needs a monotonisation lemma that does not exist
-yet.
+closure. complexitylib's development branch also exposes the class-level product
+closure a `WordPairing` needs (`pairFst_mem_FP`, `pairSnd_mem_FP`, `mem_FP_pair` in
+`Complexitylib/Classes/P/Pairing.lean`), but PolyFun does not depend on complexitylib;
+cslib has no pairing or projection machines at all. cslib's `PolyTimeComputable` is
+`Type`-valued, and its `comp` replaces the second machine's time bound by a monotone one
+itself (`PolyTimeComputable.withMonotoneBound`), so `Mem f := Nonempty (PolyTimeComputable f)`
+is closed under `PolyTimeComputable.id` and `PolyTimeComputable.comp` with no further
+hypothesis.
 -/
 
 @[expose] public section
