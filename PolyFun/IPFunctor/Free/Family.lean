@@ -146,8 +146,8 @@ end construct
 /-! ## Bind and map laws
 
 The continuation of `bind` may change the universe of the leaf family, so `bind_assoc`,
-`bind_imap` and `imap_bind` take their families in independent universes. `imap` keeps the
-universe and is the bind whose continuation returns a leaf (`imap_eq_bind`). -/
+`bind_imap` and `imap_bind` take their families in independent universes. `imap` is the bind
+whose continuation returns a leaf (`imap_eq_bind`), also across universes. -/
 
 /-- Binding with `IFreeM.pure` returns the tree unchanged. -/
 @[simp]
@@ -165,7 +165,7 @@ lemma bind_assoc {Y : I → Type w} {Z : I → Type w'} {s : I} (x : IFreeM P X 
   | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
 
 /-- Mapping the leaves is binding with a continuation that returns a leaf. -/
-lemma imap_eq_bind (f : ∀ s, X s → Y s) {s : I} (x : IFreeM P X s) :
+lemma imap_eq_bind {Y : I → Type w} (f : ∀ s, X s → Y s) {s : I} (x : IFreeM P X s) :
     x.imap f = x.bind (fun s' y => IFreeM.pure (f s' y)) := by
   induction x using IFreeM.inductionOn with
   | pure _ _ => rfl
@@ -178,14 +178,16 @@ lemma imap_id {s : I} (x : IFreeM P X s) : x.imap (fun _ => id) = x := by
   | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
 
 @[simp]
-lemma imap_imap (f : ∀ s, X s → Y s) (g : ∀ s, Y s → Z s) {s : I} (x : IFreeM P X s) :
+lemma imap_imap {Y : I → Type w} {Z : I → Type w'} (f : ∀ s, X s → Y s)
+    (g : ∀ s, Y s → Z s) {s : I} (x : IFreeM P X s) :
     (x.imap f).imap g = x.imap (fun s' => g s' ∘ f s') := by
   induction x using IFreeM.inductionOn with
   | pure _ _ => rfl
   | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
 
 /-- Binding after mapping the leaves feeds the mapped payloads to the continuation. -/
-lemma bind_imap {Z : I → Type w} (f : ∀ s, X s → Y s) (g : ∀ s', Y s' → IFreeM P Z s')
+lemma bind_imap {Y : I → Type w} {Z : I → Type w'} (f : ∀ s, X s → Y s)
+    (g : ∀ s', Y s' → IFreeM P Z s')
     {s : I} (x : IFreeM P X s) :
     (x.imap f).bind g = x.bind (fun s' y => g s' (f s' y)) := by
   induction x using IFreeM.inductionOn with
@@ -193,7 +195,8 @@ lemma bind_imap {Z : I → Type w} (f : ∀ s, X s → Y s) (g : ∀ s', Y s' �
   | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
 
 /-- Mapping the leaves of a bind maps the leaves of each continuation. -/
-lemma imap_bind {Y Z : I → Type w} (g : ∀ s', X s' → IFreeM P Y s') (f : ∀ s, Y s → Z s)
+lemma imap_bind {Y : I → Type w} {Z : I → Type w'} (g : ∀ s', X s' → IFreeM P Y s')
+    (f : ∀ s, Y s → Z s)
     {s : I} (x : IFreeM P X s) :
     (x.bind g).imap f = x.bind (fun s' y => (g s' y).imap f) := by
   induction x using IFreeM.inductionOn with
