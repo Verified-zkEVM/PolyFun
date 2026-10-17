@@ -24,7 +24,7 @@ example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
 
 example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
     (h : MachineHandler P Q S) (caller : DynComputation.{1} P A B)
-    (phase : MachineHandler.Phase h caller.State) :
+    (phase : MachineHandler.Phase h caller) :
     (h.dispatch caller).view phase = h.dispatchStep caller phase :=
   h.view_dispatch caller phase
 

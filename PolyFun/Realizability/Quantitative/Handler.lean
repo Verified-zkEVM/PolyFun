@@ -355,14 +355,16 @@ theorem exists_source_trace {R : QuantitativeRealization Q bd}
         ih pre' hpre' htrace.2
       refine ⟨.query hR (L.answer (source, state.2) direction) tailSource,
         ⟨contract _ _ _ hallowed, htailConforms⟩, ?_, ?_⟩
-      · simp only [QuantitativeRealization.ExecutionTrace.length, htailLength]
+      · simp only [QuantitativeRealization.ExecutionTrace.length] at htailLength ⊢
+        simp only [DynComputation.ExecutionTrace.length, htailLength]
       have hhead := cert.head_le input pre hpre
       have hupdate := cert.update_le input pre hpre hR direction hallowed
       have htraffic := cert.traffic_le input pre hpre hR direction hallowed
       have hstate := cert.state_le input pre hpre
       have hheadSize := cert.headSize_le input pre hpre
       simp only [QuantitativeRealization.ExecutionTrace.cost,
-        QuantitativeRealization.ExecutionTrace.length, ExecutionCost.work_add,
+        QuantitativeRealization.ExecutionTrace.length, DynComputation.ExecutionTrace.length,
+        ExecutionCost.work_add,
         ExecutionCost.work_observe, ExecutionCost.queries_add, ExecutionCost.queries_observe,
         ExecutionCost.traffic_add, ExecutionCost.traffic_observe,
         ExecutionCost.peakStateSize_add, ExecutionCost.peakStateSize_observe,
@@ -460,7 +462,8 @@ theorem exists_source_conforms {R : QuantitativeRealization Q bd}
       obtain ⟨tailSource, hconf, hlength⟩ := ih htrace.2
       exact ⟨.query hR (L.answer (source, state.2) direction) tailSource,
         ⟨contract _ _ _ htrace.1, hconf⟩, by
-          simp only [QuantitativeRealization.ExecutionTrace.length, hlength]⟩
+          simp only [QuantitativeRealization.ExecutionTrace.length] at hlength ⊢
+          simp only [DynComputation.ExecutionTrace.length, hlength]⟩
 
 /-! ### Per-step costs under cost laws
 

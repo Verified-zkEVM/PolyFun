@@ -148,7 +148,10 @@ theorem snd_finish_eq (R : QuantitativeRealization Q bd)
   induction trace with
   | nil => rfl
   | query view_eq direction tail ih =>
-      simp only [ofWithInput, QuantitativeRealization.ExecutionTrace.length, ih]
+      simp only [QuantitativeRealization.ExecutionTrace.length] at ih ⊢
+      simp only [ofWithInput, QuantitativeRealization.ExecutionTrace.query,
+        DynComputation.ExecutionTrace.length]
+      rw [ih]
 
 @[simp] theorem conforms_ofWithInput (R : QuantitativeRealization Q bd)
     (allows : ∀ position, p.B position → Prop)
@@ -157,7 +160,10 @@ theorem snd_finish_eq (R : QuantitativeRealization Q bd)
   induction trace with
   | nil => exact Iff.rfl
   | query view_eq direction tail ih =>
-      simp only [ofWithInput, QuantitativeRealization.ExecutionTrace.Conforms, ih]
+      simp only [QuantitativeRealization.ExecutionTrace.Conforms] at ih ⊢
+      simp only [ofWithInput, QuantitativeRealization.ExecutionTrace.query,
+        DynComputation.ExecutionTrace.Conforms]
+      rw [ih]
 
 end ExecutionTrace
 
@@ -236,7 +242,8 @@ theorem cost_le_traceCarry {R : QuantitativeRealization Q bd}
       simp only [ExecutionCost.traceCarry] at hw hq ht hs hh
       refine ⟨?_, ?_, ?_, ?_, ?_⟩ <;>
         simp only [ofWithInput, QuantitativeRealization.ExecutionTrace.cost,
-          QuantitativeRealization.ExecutionTrace.length, ExecutionCost.traceCarry,
+          QuantitativeRealization.ExecutionTrace.length, DynComputation.ExecutionTrace.length,
+          ExecutionCost.traceCarry,
           ExecutionCost.work_add, ExecutionCost.work_observe, ExecutionCost.queries_add,
           ExecutionCost.queries_observe, ExecutionCost.traffic_add,
           ExecutionCost.traffic_observe, ExecutionCost.peakStateSize_add,

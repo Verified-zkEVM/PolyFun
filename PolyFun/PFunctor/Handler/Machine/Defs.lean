@@ -8,6 +8,7 @@ module
 
 public import PolyFun.PFunctor.Handler.Stateful.Combinators
 public import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
+public import PolyFun.PFunctor.Dynamical.DynComputation.Pending
 
 /-!
 # Stateful services implemented by machines
@@ -64,21 +65,52 @@ theorem execute_bind (h : MachineHandler P Q S) (client : FreeM P A)
   Handler.Stateful.run_bind h.toHandler client next s
 
 /-- Either a caller ready to run or a service call with its suspended continuation. -/
-inductive Phase (h : MachineHandler P Q S) (callerState : Type u) where
-  | caller (state : callerState) (service : S)
+inductive Phase (h : MachineHandler P Q S) (caller : DynComputation.{u} P A B) where
+  | caller (state : caller.State) (service : S)
   | handler (operation : P.A) (state : (h operation).State)
-      (next : P.B operation → callerState)
+      (pending : caller.Pending operation)
 
 /-- One dispatcher transition. Administrative events are the right unary summand. -/
 @[expose] def dispatchStep (h : MachineHandler P Q S) (caller : DynComputation.{u} P A B) :
-    Phase h caller.State → (B × S) ⊕ (Q + y.{u, u}).Obj (Phase h caller.State)
-  | .caller state service => match caller.view state with
+    Phase h caller → (B × S) ⊕ (Q + y.{u, u}).Obj (Phase h caller)
+  | .caller state service => match hv : caller.view state with
     | .inl value => .inl (value, service)
-    | .inr ⟨a, next⟩ => .inr ⟨.inr PUnit.unit,
-        fun _ => .handler a ((h a).init service) next⟩
-  | .handler a state next => match (h a).view state with
-    | .inl result => .inr ⟨.inr PUnit.unit, fun _ => .caller (next result.1) result.2⟩
-    | .inr ⟨q, rest⟩ => .inr ⟨.inl q, fun answer => .handler a (rest answer) next⟩
+    | .inr ⟨a, _next⟩ => .inr ⟨.inr PUnit.unit,
+        fun _ => .handler a ((h a).init service) (.ofView hv)⟩
+  | .handler a state pending => match (h a).view state with
+    | .inl result => .inr ⟨.inr PUnit.unit, fun _ => .caller (pending.resume result.1) result.2⟩
+    | .inr ⟨q, rest⟩ => .inr ⟨.inl q, fun answer => .handler a (rest answer) pending⟩
+
+/-- A returned caller needs no transition. -/
+@[simp] theorem dispatchStep_caller_pure (h : MachineHandler P Q S)
+    (caller : DynComputation.{u} P A B) {state : caller.State} {b : B}
+    (hb : caller.view state = .inl b) (s : S) :
+    h.dispatchStep caller (.caller state s) = .inl (b, s) := by
+  simp only [dispatchStep]
+  split
+  · rename_i value hv
+    have heq := Sum.inl.inj (hv.symm.trans hb)
+    subst value
+    rfl
+  · rename_i operation next hv
+    have heq := hv.symm.trans hb
+    cases heq
+
+/-- Entering a call retains the caller state and pending-operation evidence. -/
+theorem dispatchStep_caller_query (h : MachineHandler P Q S)
+    (caller : DynComputation.{u} P A B) {state : caller.State} {a : P.A}
+    {next : P.B a → caller.State} (ha : caller.view state = .inr ⟨a, next⟩) (s : S) :
+    h.dispatchStep caller (.caller state s) =
+      .inr ⟨.inr PUnit.unit, fun _ => .handler a ((h a).init s) (.ofView ha)⟩ := by
+  simp only [dispatchStep]
+  split
+  · rename_i value hv
+    have heq := hv.symm.trans ha
+    cases heq
+  · rename_i operation rest hv
+    have heq := Sum.inr.inj (hv.symm.trans ha)
+    cases heq
+    rfl
 
 /-- Compose a caller and service into one machine, with explicit dispatch steps.
 The state projection reduces to `Phase`, so consumers can inspect retained phases. -/
@@ -88,7 +120,7 @@ The state projection reduces to `Phase`, so consumers can inspect retained phase
   .ofStep (h.dispatchStep caller) fun input => .caller (caller.init input.1) input.2
 
 @[simp] theorem view_dispatch (h : MachineHandler P Q S) (caller : DynComputation.{u} P A B)
-    (phase : Phase h caller.State) :
+    (phase : Phase h caller) :
     (h.dispatch caller).view phase = h.dispatchStep caller phase :=
   DynComputation.view_ofStep _ _ _
 

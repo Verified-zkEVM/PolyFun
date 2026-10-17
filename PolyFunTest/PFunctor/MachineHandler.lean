@@ -8,9 +8,13 @@ module
 
 public import PolyFun.PFunctor.Handler.Machine.Behavior
 public import PolyFun.ITree.Machine
+public import PolyFun.PFunctor.Dynamical.DynComputation.Observe
+public import Mathlib.Algebra.FreeMonoid.Basic
 meta import PolyFun.PFunctor.Handler.Machine.Defs
 meta import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
 meta import PolyFun.ITree.Machine
+meta import PolyFun.PFunctor.Dynamical.DynComputation.Observe
+meta import Mathlib.Algebra.FreeMonoid.Basic
 
 /-!
 # Shared state and retained execution in compiled services
@@ -64,5 +68,30 @@ run_cmd do
     throwError "zero fuel performed an effect"
   unless run 8 100 == (some ((0, 1), 2), 4) do
     throwError "continuing a returned client performed an effect"
+
+/-- Log entry separately from work inside a handler, including its return transition. -/
+def observation : machine.toDynSystem.EventMap (FreeMonoid Nat) := fun phase _ =>
+  FreeMonoid.of (match phase with
+    | .caller _ _ => 0
+    | .handler _ _ _ => 1)
+
+/-- Read logs from completed and paused computations through the same residual state. -/
+def runLogged (first second : Nat) : Option ((Nat × Nat) × Nat) × List Nat × Nat :=
+  let observed := machine.withAccumulator observation
+  let action := do
+    let chunk ← observed.startChunk (ITree.withSilentSteps draw) first (((), 0), 1)
+    observed.continueChunk (ITree.withSilentSteps draw) second chunk
+  let (chunk, draws) := action.run 0
+  match chunk with
+  | .done (value, log) => (some value, log.toList, draws)
+  | .paused (_, log) => (none, log.toList, draws)
+
+run_cmd do
+  unless runLogged 2 6 == (some ((0, 1), 2), [0, 1, 1, 1, 0, 1, 1, 1], 4) do
+    throwError "resumed observation lost order or replayed a transition"
+  unless runLogged 3 0 == (none, [0, 1, 1], 2) do
+    throwError "unfinished handler work was discarded"
+  unless runLogged 0 0 == (none, [], 0) do
+    throwError "zero fuel added an observation"
 
 end MachineHandlerTest

@@ -176,3 +176,26 @@ not promised.
 typed completions. It does not ask the handler for either selected answer. **Both suffixes
 still execute their effects independently**: this is not rollback or automatic state
 isolation, so speculative callers should fork over a read-only interface.
+
+## Observations and resource-independent prefixes
+
+[`DynComputation.Trace`](../../PolyFun/PFunctor/Dynamical/DynComputation/Trace.lean)
+records actual query/answer steps with both endpoint states. Its `ExecutionTrace`
+carrier, append, length, answer conformance and query counts require no resource
+backend. `toPrefix` connects it to the general length-indexed `DynSystem.Prefix`.
+Quantitative realizations use this same carrier; recosting leaves a trace unchanged.
+
+[`DynComputation.Observe`](../../PolyFun/PFunctor/Dynamical/DynComputation/Observe.lean)
+uses `DynSystem.EventMap` for observations depending on the current state and
+the typed answer. `withAccumulator` carries a monoid value in the machine state
+and returns it with the result. `ExecutionTrace.withAccumulator` lifts a source
+trace with exactly its accumulated observation, while `accumulate_append` splits
+it at any retained intermediate state. `map_unrollChunk_withAccumulator` erases
+observations from every bounded execution, including a pause inside a call.
+Noncommutative monoids retain observation order.
+
+A [`Pending`](../../PolyFun/PFunctor/Dynamical/DynComputation/Pending.lean) query
+stores the caller state and evidence for the operation it exposes. `resume`
+recovers the continuation from that state. Machine-handler phases use this
+representation, so a suspended caller's representation certificate need not
+encode a function. Entry and return remain explicit administrative transitions.

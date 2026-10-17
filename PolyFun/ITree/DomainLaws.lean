@@ -41,6 +41,7 @@ theorem denote_toITree (ret : α → D) (alg : ContinuousAlgebra P D)
     simp only [pre, ContinuousHom.ofFun_apply, domainStep,
       PFunctor.Resumption.domainStep, PFunctor.Resumption.shape'_toITree]
     cases PFunctor.Resumption.dest t <;> rfl
+  rw [denote_eq_fix]
   exact congrFun ((domainStep ret alg).fix_fusion
     (PFunctor.Resumption.domainStep ret alg) pre rfl comm) tree
 
@@ -59,8 +60,9 @@ theorem denote_fusion (ret : α → D) (alg : ContinuousAlgebra P D)
 /-- Leastness of continuous interpretation against a prefixed interpretation. -/
 theorem denote_le (ret : α → D) (alg : ContinuousAlgebra P D)
     (meaning : ITree P α → D) (h : domainStep ret alg meaning ≤ meaning) :
-    denote ret alg ≤ meaning :=
-  (domainStep ret alg).fix_le h
+    denote ret alg ≤ meaning := by
+  rw [denote_eq_fix]
+  exact (domainStep ret alg).fix_le h
 
 /-- Substitution changes only the interpretation of return leaves. -/
 theorem denote_bind (ret : β → D) (alg : ContinuousAlgebra P D)
@@ -95,7 +97,7 @@ theorem denote_bind (ret : β → D) (alg : ContinuousAlgebra P D)
         have he := eq_pure_of_dest ht
         rw [he, bind_pure_left]
         change _ ≤ denote (fun a => denote ret alg (next a)) alg (pure a)
-        rw [denote_pure]
+        rw [denote_pure, denote_eq_fix]
         exact (domainStep ret alg).approximants_le_fix (n + 1) (next a)
       | step =>
         have he := eq_step_of_dest ht
@@ -110,14 +112,13 @@ theorem denote_bind (ret : β → D) (alg : ContinuousAlgebra P D)
         rw [denote_query]
         exact (alg a).monotone fun b => ih (children b)
   apply le_antisymm _ (lower tree)
-  change (ωSup (domainStep ret alg).approximants) (bind tree next) ≤ rhs tree
-  exact ωSup_le _ _ (fun n => upper n tree)
+  exact denote_le_of_approximants_le ret alg _ _ (fun n => upper n tree)
 
 /-- Silent divergence has the least denotation, independently of the visible algebra. -/
 @[simp] theorem denote_diverge (ret : α → D) (alg : ContinuousAlgebra P D) :
     denote ret alg (diverge : ITree P α) = ⊥ := by
   apply le_antisymm _ bot_le
-  apply ωSup_le
+  apply denote_le_of_approximants_le
   intro n
   have h : (domainStep ret alg).approximants n (diverge : ITree P α) = ⊥ := by
     induction n with

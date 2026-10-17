@@ -83,7 +83,6 @@ public import PolyFun.ITree.Events.Exception
 public import PolyFun.ITree.Events.ExceptionFacts
 public import PolyFun.ITree.Events.State
 public import PolyFun.ITree.Events.StateFacts
-public import PolyFun.ITree.Execution
 public import PolyFun.ITree.Free
 public import PolyFun.ITree.Handler
 public import PolyFun.ITree.Interp.Defs
@@ -255,8 +254,11 @@ public import PolyFun.PFunctor.Dynamical.DynComputation
 public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 public import PolyFun.PFunctor.Dynamical.DynComputation.BoundedFold
 public import PolyFun.PFunctor.Dynamical.DynComputation.IO
+public import PolyFun.PFunctor.Dynamical.DynComputation.Observe
+public import PolyFun.PFunctor.Dynamical.DynComputation.Pending
 public import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
 public import PolyFun.PFunctor.Dynamical.DynComputation.Termination
+public import PolyFun.PFunctor.Dynamical.DynComputation.Trace
 public import PolyFun.PFunctor.Dynamical.DynComputation.WrapState
 public import PolyFun.PFunctor.Dynamical.Game
 public import PolyFun.PFunctor.Dynamical.Refinement

@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
+public import Mathlib.Basic.Countable.Basic
 
 /-!
 # Resumable bounded execution
@@ -30,6 +31,37 @@ universe u v w uState uA uB uα uβ
 inductive Chunk (S : Type uState) (β : Type uβ) where
   | done (value : β)
   | paused (state : S)
+
+/-- A residual chunk is the disjoint sum of returned values and suspended states. -/
+@[expose] def Chunk.sumEquiv {S : Type uState} {β : Type uβ} : Chunk S β ≃ β ⊕ S where
+  toFun
+    | .done value => .inl value
+    | .paused state => .inr state
+  invFun
+    | .inl value => .done value
+    | .inr state => .paused state
+  left_inv chunk := by cases chunk <;> rfl
+  right_inv value := by cases value <;> rfl
+
+instance {S : Type uState} {β : Type uβ} [Countable S] [Countable β] :
+    Countable (Chunk S β) := Chunk.sumEquiv.injective.countable
+
+/-- Translate residual states and returned values independently. -/
+@[expose] def Chunk.map {S : Type uState} {T : Type w} {β : Type uβ} {γ : Type v}
+    (state : S → T) (result : β → γ) : Chunk S β → Chunk T γ
+  | .done value => .done (result value)
+  | .paused value => .paused (state value)
+
+@[simp] theorem Chunk.map_done {S : Type uState} {T : Type w} {β : Type uβ} {γ : Type v}
+    (state : S → T) (result : β → γ) (value : β) :
+    (Chunk.done value : Chunk S β).map state result = .done (result value) := rfl
+
+@[simp] theorem Chunk.map_paused {S : Type uState} {T : Type w} {β : Type uβ} {γ : Type v}
+    (state : S → T) (result : β → γ) (value : S) :
+    (Chunk.paused value : Chunk S β).map state result = .paused (state value) := rfl
+
+@[simp] theorem Chunk.map_id {S : Type uState} {β : Type uβ} (chunk : Chunk S β) :
+    chunk.map id id = chunk := by cases chunk <;> rfl
 
 /-- Forget the residual state, recovering PolyFun's bounded-run observation. -/
 @[expose] def Chunk.result {S : Type uState} {β : Type uβ} : Chunk S β → Option β

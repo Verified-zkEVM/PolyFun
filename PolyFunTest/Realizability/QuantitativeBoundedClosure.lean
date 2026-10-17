@@ -331,9 +331,12 @@ theorem traceWork_unitCost {p : PFunctor.{0, 0}} [DecidableEq p.A]
   induction trace with
   | nil => rfl
   | query view_eq direction tail ih =>
-      change 2 + tail.cost.work = 2 * (tail.length + 1)
+      change 2 + (QuantitativeRealization.ExecutionTrace.cost (R := R) tail).work =
+        2 * (tail.length + 1)
       calc
-        2 + tail.cost.work = 2 + 2 * tail.length := congrArg (fun work ↦ 2 + work) ih
+        2 + (QuantitativeRealization.ExecutionTrace.cost (R := R) tail).work =
+            2 + 2 * tail.length :=
+          congrArg (fun work ↦ 2 + work) ih
         _ = 2 * (tail.length + 1) := by omega
 
 /-- Encoded boundary traffic is exactly two units per typed query in `unitCostBackend`. -/
@@ -344,9 +347,11 @@ theorem traceTraffic_unitCost {p : PFunctor.{0, 0}} [DecidableEq p.A]
   induction trace with
   | nil => rfl
   | query view_eq direction tail ih =>
-      change 2 + tail.cost.traffic = 2 * (tail.length + 1)
+      change 2 + (QuantitativeRealization.ExecutionTrace.cost (R := R) tail).traffic =
+        2 * (tail.length + 1)
       calc
-        2 + tail.cost.traffic = 2 + 2 * tail.length :=
+        2 + (QuantitativeRealization.ExecutionTrace.cost (R := R) tail).traffic =
+            2 + 2 * tail.length :=
           congrArg (fun traffic ↦ 2 + traffic) ih
         _ = 2 * (tail.length + 1) := by omega
 
@@ -358,7 +363,7 @@ theorem tracePeakState_unitCost {p : PFunctor.{0, 0}} [DecidableEq p.A]
   induction trace with
   | nil => exact Nat.zero_le 1
   | query view_eq direction tail ih =>
-      change max 1 tail.cost.peakStateSize ≤ 1
+      change max 1 (QuantitativeRealization.ExecutionTrace.cost (R := R) tail).peakStateSize ≤ 1
       exact Nat.max_le.mpr ⟨le_rfl, ih⟩
 
 /-- Every transition readout has the backend's selected unit size envelope. -/
@@ -369,7 +374,7 @@ theorem tracePeakHead_unitCost {p : PFunctor.{0, 0}} [DecidableEq p.A]
   induction trace with
   | nil => exact Nat.zero_le 1
   | query view_eq direction tail ih =>
-      change max 1 tail.cost.peakHeadSize ≤ 1
+      change max 1 (QuantitativeRealization.ExecutionTrace.cost (R := R) tail).peakHeadSize ≤ 1
       exact Nat.max_le.mpr ⟨le_rfl, ih⟩
 
 /-- Exact resource envelope determined by a syntactic query count in `unitCostBackend`. -/
@@ -442,10 +447,12 @@ theorem firstQueryRunsWithin :
         cases view_eq
         have hreturn : firstQueryRealization.machine.view (some direction) =
             Sum.inl direction := rfl
-        obtain ⟨rfl, hcost⟩ := tail.finish_eq_and_cost_eq_zero_of_view_return hreturn
+        obtain ⟨rfl, hcost⟩ :=
+          QuantitativeRealization.ExecutionTrace.finish_eq_and_cost_eq_zero_of_view_return
+            tail hreturn
         have hlength : tail.length = 0 := by
-          rw [← tail.queries_cost, hcost]
-          rfl
+          exact (QuantitativeRealization.ExecutionTrace.queries_cost tail).symm.trans
+            (congrArg ExecutionCost.queries hcost)
         apply executionCost_le_unitCost PUnit.unit _ 1
         change tail.length + 1 ≤ 1
         omega
@@ -472,10 +479,12 @@ theorem secondQueryRunsWithin :
         change Bool at direction
         have hreturn : secondQueryRealization.machine.view (input, some direction) =
             Sum.inl (if input = direction then 9 else 4) := rfl
-        obtain ⟨rfl, hcost⟩ := tail.finish_eq_and_cost_eq_zero_of_view_return hreturn
+        obtain ⟨rfl, hcost⟩ :=
+          QuantitativeRealization.ExecutionTrace.finish_eq_and_cost_eq_zero_of_view_return
+            tail hreturn
         have hlength : tail.length = 0 := by
-          rw [← tail.queries_cost, hcost]
-          rfl
+          exact (QuantitativeRealization.ExecutionTrace.queries_cost tail).symm.trans
+            (congrArg ExecutionCost.queries hcost)
         apply executionCost_le_unitCost input _ 1
         change tail.length + 1 ≤ 1
         omega
