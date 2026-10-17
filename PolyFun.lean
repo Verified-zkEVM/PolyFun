@@ -256,6 +256,7 @@ public import PolyFun.PFunctor.Dynamical.Combinators
 public import PolyFun.PFunctor.Dynamical.DynComputation
 public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 public import PolyFun.PFunctor.Dynamical.DynComputation.BoundedFold
+public import PolyFun.PFunctor.Dynamical.DynComputation.History
 public import PolyFun.PFunctor.Dynamical.DynComputation.IO
 public import PolyFun.PFunctor.Dynamical.DynComputation.Observe
 public import PolyFun.PFunctor.Dynamical.DynComputation.Pending

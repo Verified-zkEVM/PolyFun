@@ -17,8 +17,9 @@ positions to `g`; `Handler.sumLift` first lifts each handler into a shared targe
 Interpreting a free program through a sum handler routes each request by its summand: a
 program over `P`, relabelled into `P + Q` along `Lens.inl`, is interpreted by the left handler
 alone (`liftM_sum_mapLens_inl`), and symmetrically on the right. The general fact behind these
-laws is `FreeM.liftM_mapLens`: interpreting a relabelled program pulls the handler back along
-the lens. Changing the target monad acts on each component handler (`mapTarget_sum`).
+laws is `FreeM.liftM_mapLens` for lawful monads. Coproduct injections retain the response
+unchanged, so their specialized laws need only `Monad`. Changing the target monad acts on
+each component handler (`mapTarget_sum`).
 
 No `HAdd` instance is registered here. `Handler` is a reducible function type, so an instance
 keyed on it would compete with the pointwise addition of function types whenever the answer
@@ -133,6 +134,12 @@ theorem liftM_sum_lift_inr (f : Handler m P) (g : Handler m Q) (b : Q.A) :
     (FreeM.lift (P := (P + Q : PFunctor.{max uA₁ uA₂, u})) (.inr b)).liftM (sum f g) = g b := by
   simp
 
+end LawfulMonad
+
+section Monad
+
+variable [Monad m] {α : Type u}
+
 /-! ### Relabelled programs
 
 A program over one summand, relabelled into the sum along `Lens.inl` or `Lens.inr`, is
@@ -144,20 +151,26 @@ left positions is interpreting the original program through `f`. -/
 theorem liftM_mapLens_inl_eq_of_apply (h : Handler m (P + Q : PFunctor.{max uA₁ uA₂, u}))
     (f : Handler m P) (hf : ∀ a, h (.inl a) = f a) (x : FreeM P α) :
     (x.mapLens Lens.inl).liftM h = x.liftM f := by
-  rw [FreeM.liftM_mapLens]
-  congr 1
-  funext a
-  simp [Lens.inl, hf]
+  induction x with
+  | pure _ => rfl
+  | lift_bind a next ih =>
+      change (h (.inl a) >>= fun answer => ((next answer).mapLens Lens.inl).liftM h) =
+        (f a >>= fun answer => (next answer).liftM f)
+      rw [hf a]
+      exact congrArg (fun k => f a >>= k) (funext ih)
 
 /-- Interpreting a program relabelled along `Lens.inr` through a handler that agrees with `g` on
 right positions is interpreting the original program through `g`. -/
 theorem liftM_mapLens_inr_eq_of_apply (h : Handler m (P + Q : PFunctor.{max uA₁ uA₂, u}))
     (g : Handler m Q) (hg : ∀ b, h (.inr b) = g b) (x : FreeM Q α) :
     (x.mapLens Lens.inr).liftM h = x.liftM g := by
-  rw [FreeM.liftM_mapLens]
-  congr 1
-  funext b
-  simp [Lens.inr, hg]
+  induction x with
+  | pure _ => rfl
+  | lift_bind a next ih =>
+      change (h (.inr a) >>= fun answer => ((next answer).mapLens Lens.inr).liftM h) =
+        (g a >>= fun answer => (next answer).liftM g)
+      rw [hg a]
+      exact congrArg (fun k => g a >>= k) (funext ih)
 
 /-- Interpreting a program relabelled along `Lens.inl` through `sum f g` is interpreting the
 original program through `f`. -/
@@ -171,11 +184,11 @@ theorem liftM_sum_mapLens_inr (f : Handler m P) (g : Handler m Q) (x : FreeM Q �
     (x.mapLens Lens.inr).liftM (sum f g) = x.liftM g :=
   liftM_mapLens_inr_eq_of_apply _ _ (fun _ => rfl) x
 
-end LawfulMonad
+end Monad
 
 section SumLiftLaws
 
-variable {n : Type u → Type w} {r : Type u → Type uA} [Monad r] [LawfulMonad r] [MonadLiftT m r]
+variable {n : Type u → Type w} {r : Type u → Type uA} [Monad r] [MonadLiftT m r]
   [MonadLiftT n r] {α : Type u}
 
 /-- Interpreting a program relabelled along `Lens.inl` through `sumLift f g` is interpreting the

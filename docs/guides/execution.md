@@ -88,6 +88,15 @@ completed result. Neither requires reconstructing the machine's hidden state.
 `startChunk_continueChunk` equates consecutive budgets with their sum, including the exact
 residual, and `startChunk_zero` shows that zero fuel still observes a terminal state.
 
+For joint observations across time, import
+`PolyFun.PFunctor.Dynamical.DynComputation.History`. `unrollHistory fuel state`
+returns a `Fin (fuel + 1)` tuple of chunks, beginning with the zero-fuel observation.
+Each extension resumes only the last saved chunk for one query. Completed results
+remain constant through the remaining coordinates. `map_unrollHistory_last`
+recovers exactly `unrollChunk fuel state`, including its effects. Earlier-coordinate
+projections still execute the whole budget: removing those effects requires a law
+of the chosen interpretation and is not a general syntactic equality.
+
 The syntax keeps state, input, result, position, and direction universes
 independent. Its observation law uses the universe-polymorphic `FreeM.map`.
 Monadic interpretation aligns the state, result, and response universes;

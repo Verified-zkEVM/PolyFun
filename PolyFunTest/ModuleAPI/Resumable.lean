@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
+import PolyFun.PFunctor.Dynamical.DynComputation.History
 
 /-! # Ordinary-import canaries for resumable execution across independent universes -/
 
@@ -43,6 +43,18 @@ example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uB} {m : Type uB �
     (machine.startChunk handler first input >>= machine.continueChunk handler second) =
       machine.startChunk handler (first + second) input :=
   machine.startChunk_continueChunk handler first second input
+
+/-- Histories retain the runner's actual last chunk at independent syntax universes. -/
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uResult}
+    (machine : DynComputation.{uState} p α β) (fuel : Nat) (state : machine.State) :
+    FreeM.map (fun history => history (Fin.last fuel)) (machine.unrollHistory fuel state) =
+      machine.unrollChunk fuel state := machine.map_unrollHistory_last fuel state
+
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uResult}
+    (machine : DynComputation.{uState} p α β) {state : machine.State} {value : β}
+    (h : machine.view state = .inl value) (fuel : Nat) :
+    machine.unrollHistory fuel state = .pure (fun _ => .done value) :=
+  machine.unrollHistory_of_view_return h fuel
 
 example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uResult}
     (machine : DynComputation.{uState} p α β) (fuel : Nat) (state : machine.State) :

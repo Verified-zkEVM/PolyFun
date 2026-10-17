@@ -171,7 +171,7 @@ do not require finite branching or a uniform finite depth for a well-founded tre
 [`ITree.Machine`](../../PolyFun/ITree/Machine.lean) supplies the canonical
 `ITree.toDynComputation` adapter. Use it with `DynComputation.startChunk` and
 `continueChunk` from [`Resumable`](../../PolyFun/PFunctor/Dynamical/DynComputation/Resumable.lean),
-and the `withSilentSteps` handler from `PFunctor.Handler.Sum`. Silent steps
+and the `ITree.withSilentSteps` handler. Silent steps
 consume budget without invoking a visible-event handler, and a paused run
 retains the exact tree residual. The downstream [Cryptol model](cryptol-model.md)
 uses both this execution boundary and continuous denotation.

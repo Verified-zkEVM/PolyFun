@@ -68,51 +68,7 @@ theorem denote_le (ret : α → D) (alg : ContinuousAlgebra P D)
 theorem denote_bind (ret : β → D) (alg : ContinuousAlgebra P D)
     (tree : ITree P α) (next : α → ITree P β) :
     denote ret alg (bind tree next) = denote (fun a => denote ret alg (next a)) alg tree := by
-  let rhs := denote (fun a => denote ret alg (next a)) alg
-  have lower : rhs ≤ fun t => denote ret alg (bind t next) := by
-    apply denote_le
-    intro t
-    rcases ht : shape' t with ⟨head, children⟩
-    cases head with
-    | pure a =>
-      have he := eq_pure_of_dest ht
-      subst t
-      simp [domainStep, bind_pure_left]
-    | step =>
-      have he := eq_step_of_dest ht
-      subst t
-      simp [domainStep, bind_step]
-    | query a =>
-      have he := eq_query_of_dest ht
-      subst t
-      simp [domainStep, bind_query]
-  have upper (n : ℕ) (t : ITree P α) :
-      (domainStep ret alg).approximants n (bind t next) ≤ rhs t := by
-    induction n generalizing t with
-    | zero => exact bot_le
-    | succ n ih =>
-      rcases ht : shape' t with ⟨head, children⟩
-      cases head with
-      | pure a =>
-        have he := eq_pure_of_dest ht
-        rw [he, bind_pure_left]
-        change _ ≤ denote (fun a => denote ret alg (next a)) alg (pure a)
-        rw [denote_pure, denote_eq_fix]
-        exact (domainStep ret alg).approximants_le_fix (n + 1) (next a)
-      | step =>
-        have he := eq_step_of_dest ht
-        rw [he, bind_step, ContinuousHom.approximants_succ]
-        change (domainStep ret alg).approximants n (bind (children PUnit.unit) next) ≤ _
-        simpa only [rhs, denote_step] using ih (children PUnit.unit)
-      | query a =>
-        have he := eq_query_of_dest ht
-        rw [he, bind_query, ContinuousHom.approximants_succ]
-        change alg a (fun b => (domainStep ret alg).approximants n (bind (children b) next)) ≤ _
-        change _ ≤ denote (fun a => denote ret alg (next a)) alg (query a children)
-        rw [denote_query]
-        exact (alg a).monotone fun b => ih (children b)
-  apply le_antisymm _ (lower tree)
-  exact denote_le_of_approximants_le ret alg _ _ (fun n => upper n tree)
+  simp only [denote, toResumptionWithTau_bind, PFunctor.Resumption.denote_bind]
 
 /-- Silent divergence has the least denotation, independently of the visible algebra. -/
 @[simp] theorem denote_diverge (ret : α → D) (alg : ContinuousAlgebra P D) :

@@ -20,7 +20,7 @@ of those implementation polynomials as an exact equivalence.
 
 @[expose] public section
 
-universe uA uB uα
+universe uA uB uα uβ
 
 namespace ITree
 
@@ -113,6 +113,47 @@ theorem dest_toResumptionWithTau (tree : _root_.ITree P α) :
   apply PFunctor.Resumption.eq_of_dest_eq
   rw [dest_toResumptionWithTau, ITree.shape'_query,
     PFunctor.Resumption.dest_query]
+
+/-- The exact encoding preserves substitution, including silent steps. -/
+@[simp] theorem toResumptionWithTau_bind {β : Type uβ} (tree : _root_.ITree P α)
+    (next : α → _root_.ITree P β) :
+    toResumptionWithTau (bind tree next) =
+      PFunctor.Resumption.bind (toResumptionWithTau tree)
+        (fun value => toResumptionWithTau (next value)) := by
+  apply PFunctor.Resumption.bisim
+    (fun left right => left = right ∨ ∃ source : _root_.ITree P α,
+      left = toResumptionWithTau (bind source next) ∧
+      right = PFunctor.Resumption.bind (toResumptionWithTau source)
+        (fun value => toResumptionWithTau (next value)))
+  · rintro left right (heq | ⟨source, rfl, rfl⟩)
+    · subst left
+      rcases h : PFunctor.Resumption.dest right with value | ⟨a, rest⟩
+      · exact .pure value h h
+      · exact .query a rest rest h h (fun _ => Or.inl rfl)
+    · rcases h : shape' source with ⟨head, rest⟩
+      cases head with
+      | pure value =>
+          have heq := eq_pure_of_dest h
+          subst source
+          simp only [bind_pure_left, toResumptionWithTau_pure,
+            PFunctor.Resumption.bind_pure_left]
+          rcases hn : PFunctor.Resumption.dest (toResumptionWithTau (next value)) with
+            result | ⟨a, children⟩
+          · exact .pure result hn hn
+          · exact .query a children children hn hn (fun _ => Or.inl rfl)
+      | step =>
+          have heq := eq_step_of_dest h
+          subst source
+          simp only [bind_step, toResumptionWithTau_step, PFunctor.Resumption.bind_query]
+          exact .query (.inr PUnit.unit) _ _ (PFunctor.Resumption.dest_query _ _)
+            (PFunctor.Resumption.dest_query _ _) (fun _ => Or.inr ⟨_, rfl, rfl⟩)
+      | query a =>
+          have heq := eq_query_of_dest h
+          subst source
+          simp only [bind_query, toResumptionWithTau_query, PFunctor.Resumption.bind_query]
+          exact .query (.inl a) _ _ (PFunctor.Resumption.dest_query _ _)
+            (PFunctor.Resumption.dest_query _ _) (fun answer => Or.inr ⟨rest answer, rfl, rfl⟩)
+  · exact Or.inr ⟨tree, rfl, rfl⟩
 
 /-- Encoding the tau-free ITree associated to a resumption agrees with
 injecting its visible interface into the resumption-with-tau signature. This is
