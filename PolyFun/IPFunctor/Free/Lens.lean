@@ -3,10 +3,10 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Devon Tuma
 -/
+
 module
 
-public import PolyFun.IPFunctor.Free.Bound
-public import PolyFun.IPFunctor.Lens.Basic
+public import PolyFun.IPFunctor.Free.Bound.Reindex
 
 /-!
 # Transporting State-Indexed Free Trees Along Lenses
@@ -23,7 +23,7 @@ their roll bounds unchanged (`isRollBound_mapLens_inl_iff`). Along an arbitrary 
 whose check and cost are read through `l.toFunA` transports forward (`IsRollBound.mapLens`).
 -/
 
-@[expose] public section
+public section
 
 universe uI uA₁ uA₂ uB uB₁ uB₂ v
 
@@ -33,11 +33,9 @@ variable {I : Type uI} {X : I → Type v}
 
 /-- Transport a tree along a lens: relabel each shape forward and read each response back,
 transporting each continuation along the source-index law. -/
-def mapLens {P : Endo.{uI, uA₁, uB₁} I} {Q : Endo.{uI, uA₂, uB₂} I} (l : Lens P Q) :
-    {s : I} → IFreeM P X s → IFreeM Q X s
-  | _, .pure x => .pure x
-  | _, .liftBind (s := s) a r =>
-      .liftBind (l.toFunA s a) fun d => l.src_eq s a d ▸ (r (l.toFunB s a d)).mapLens l
+@[expose] def mapLens {P : Endo.{uI, uA₁, uB₁} I} {Q : Endo.{uI, uA₂, uB₂} I}
+    (l : Lens P Q) {s : I} (x : IFreeM P X s) : IFreeM Q X s :=
+  x.reindex l.toReindexing (fun _ value => value)
 
 section mapLens
 
@@ -57,10 +55,8 @@ theorem IsRollBound.mapLens {B : Type*} {canRoll : (s : I) → Q.A s → B → P
     {cost : (s : I) → Q.A s → B → B} {x : IFreeM P X s} {b : B}
     (h : x.IsRollBound b (fun s a => canRoll s (l.toFunA s a))
       (fun s a => cost s (l.toFunA s a))) :
-    (x.mapLens l).IsRollBound b canRoll cost := by
-  induction x using IFreeM.inductionOn generalizing b with
-  | pure _ _ => trivial
-  | liftBind _ _ _ ih => exact ⟨h.1, fun _ => (isRollBound_cast _ _ _).2 (ih _ (h.2 _))⟩
+    (x.mapLens l).IsRollBound b canRoll cost :=
+  h.reindex l.toReindexing (fun _ value => value)
 
 /-- A lens carries a charge bound whose charge is read through `l.toFunA` to the transported
 tree. -/
@@ -69,7 +65,7 @@ theorem IsChargeBound.mapLens {c : (s : I) → Q.A s → ℕ} {x : IFreeM P X s}
     (x.mapLens l).IsChargeBound c n :=
   IsRollBound.mapLens l h
 
-/-- A lens preserves total roll bounds: it relabels shapes and leaves the branching unchanged. -/
+/-- A lens preserves total roll bounds: it relabels shapes and selects source branches. -/
 theorem IsTotalRollBound.mapLens {x : IFreeM P X s} {n : ℕ} (h : x.IsTotalRollBound n) :
     (x.mapLens l).IsTotalRollBound n :=
   IsRollBound.mapLens l h
@@ -140,10 +136,9 @@ theorem isRollBound_mapLens_inl_iff {B : Type*}
     {canRoll : (s : I) → (P.sum Q).A s → B → Prop} {cost : (s : I) → (P.sum Q).A s → B → B}
     (x : IFreeM P X s) (b : B) :
     (x.mapLens Lens.inl).IsRollBound b canRoll cost ↔
-      x.IsRollBound b (fun s a => canRoll s (.inl a)) (fun s a => cost s (.inl a)) := by
-  induction x using IFreeM.inductionOn generalizing b with
-  | pure _ _ => exact iff_of_true trivial trivial
-  | liftBind _ _ _ ih => exact and_congr_right fun _ => forall_congr' fun y => ih y _
+      x.IsRollBound b (fun s a => canRoll s (.inl a)) (fun s a => cost s (.inl a)) :=
+  isRollBound_reindex_iff Lens.inl.toReindexing (fun _ value => value)
+    (fun _ _ answer => ⟨answer, rfl⟩) x b
 
 /-- A roll bound on a program embedded by the right injection is a roll bound on the program,
 with the checks and costs of the right summand. -/
@@ -151,10 +146,9 @@ theorem isRollBound_mapLens_inr_iff {B : Type*}
     {canRoll : (s : I) → (P.sum Q).A s → B → Prop} {cost : (s : I) → (P.sum Q).A s → B → B}
     (x : IFreeM Q X s) (b : B) :
     (x.mapLens Lens.inr).IsRollBound b canRoll cost ↔
-      x.IsRollBound b (fun s a => canRoll s (.inr a)) (fun s a => cost s (.inr a)) := by
-  induction x using IFreeM.inductionOn generalizing b with
-  | pure _ _ => exact iff_of_true trivial trivial
-  | liftBind _ _ _ ih => exact and_congr_right fun _ => forall_congr' fun y => ih y _
+      x.IsRollBound b (fun s a => canRoll s (.inr a)) (fun s a => cost s (.inr a)) :=
+  isRollBound_reindex_iff Lens.inr.toReindexing (fun _ value => value)
+    (fun _ _ answer => ⟨answer, rfl⟩) x b
 
 end sum
 

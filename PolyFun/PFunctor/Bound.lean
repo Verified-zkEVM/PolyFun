@@ -60,7 +60,7 @@ lemma isRollBound_pure (x : α) (b : B)
 @[simp, grind =]
 lemma isRollBound_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) (b : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
-    IsRollBound ((FreeM.lift a).bind r) b canRoll cost ↔
+    IsRollBound ((FreeM.lift a).bind (α := no_index (P.B a)) r) b canRoll cost ↔
       canRoll a b ∧ ∀ y, IsRollBound (r y) (cost a b) canRoll cost :=
   Iff.rfl
 
@@ -68,7 +68,7 @@ lemma isRollBound_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) (b : B)
 @[simp, grind =]
 lemma isRollBound_lift_bind_iff' {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) (b : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
-    IsRollBound (FreeM.lift a >>= r) b canRoll cost ↔
+    IsRollBound (Bind.bind (α := no_index (P.B a)) (FreeM.lift a) r) b canRoll cost ↔
       canRoll a b ∧ ∀ y, IsRollBound (r y) (cost a b) canRoll cost :=
   Iff.rfl
 
@@ -84,22 +84,22 @@ lemma isRollBound_lift_iff (a : P.A) (b : B)
     IsRollBound (FreeM.lift a : FreeM P (P.B a)) b canRoll cost ↔ canRoll a b :=
   ⟨fun h => h.1, fun h => ⟨h, fun _ => trivial⟩⟩
 
-private lemma isRollBound_map_aux (oa : FreeM P α) (f : α → β)
+private lemma isRollBound_map_aux (oa : FreeM P α) {γ : Type w} (f : α → γ)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
-    ∀ {b : B}, (f <$> oa).IsRollBound b canRoll cost ↔
+    ∀ {b : B}, (FreeM.map f oa).IsRollBound b canRoll cost ↔
       oa.IsRollBound b canRoll cost := by
   induction oa with
   | pure x => intro b; exact ⟨fun _ => trivial, fun _ => trivial⟩
   | lift_bind a r ih =>
     intro b
-    change (canRoll a b ∧ ∀ y, IsRollBound (f <$> r y) (cost a b) canRoll cost) ↔
+    change (canRoll a b ∧ ∀ y, IsRollBound (FreeM.map f (r y)) (cost a b) canRoll cost) ↔
       (canRoll a b ∧ ∀ y, IsRollBound (r y) (cost a b) canRoll cost)
     exact and_congr_right fun _ => forall_congr' fun y => ih y
 
 @[simp, grind =]
-lemma isRollBound_map_iff (oa : FreeM P α) (f : α → β) (b : B)
+lemma isRollBound_map_iff (oa : FreeM P α) {γ : Type w} (f : α → γ) (b : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
-    IsRollBound (f <$> oa) b canRoll cost ↔ IsRollBound oa b canRoll cost :=
+    IsRollBound (FreeM.map f oa) b canRoll cost ↔ IsRollBound oa b canRoll cost :=
   isRollBound_map_aux oa f canRoll cost
 
 /-- If `f <$> oa = ob` for any `f`, the roll-bound predicate transfers between
@@ -153,6 +153,18 @@ lemma IsRollBound.proj
       have hy : IsRollBound (r y) (proj (cost a b)) canRoll' cost' :=
         ih y (h.2 y)
       rwa [h_cost a b h.1] at hy
+
+/-- Enlarge a budget along any relation respected by validity and cost updates. -/
+lemma IsRollBound.mono_of_rel (R : B → B → Prop) {oa : FreeM P α} {b b' : B}
+    {canRoll : P.A → B → Prop} {cost : P.A → B → B}
+    (h_can : ∀ a b b', R b b' → canRoll a b → canRoll a b')
+    (h_cost : ∀ a b b', R b b' → canRoll a b → R (cost a b) (cost a b'))
+    (h : IsRollBound oa b canRoll cost) (hb : R b b') :
+    IsRollBound oa b' canRoll cost := by
+  induction oa using FreeM.induction generalizing b b' with
+  | pure _ => trivial
+  | lift_bind a r ih =>
+      exact ⟨h_can a b b' hb h.1, fun y => ih y (h.2 y) (h_cost a b b' hb h.1)⟩
 
 /-- Generic bind composition for `IsRollBound` parameterised by an arbitrary
 budget type `B` and a binary `combine` operation on it.
@@ -227,14 +239,14 @@ lemma isTotalRollBound_pure (x : α) (n : ℕ) :
 
 @[simp, grind =]
 lemma isTotalRollBound_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) :
-    IsTotalRollBound ((FreeM.lift a).bind r) n ↔
+    IsTotalRollBound ((FreeM.lift a).bind (α := no_index (P.B a)) r) n ↔
       0 < n ∧ ∀ y, IsTotalRollBound (r y) (n - 1) :=
   Iff.rfl
 
 /-- `isTotalRollBound_lift_bind_iff` when results and directions share a universe. -/
 @[simp, grind =]
 lemma isTotalRollBound_lift_bind_iff' {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) :
-    IsTotalRollBound (FreeM.lift a >>= r) n ↔
+    IsTotalRollBound (Bind.bind (α := no_index (P.B a)) (FreeM.lift a) r) n ↔
       0 < n ∧ ∀ y, IsTotalRollBound (r y) (n - 1) :=
   Iff.rfl
 
@@ -302,7 +314,8 @@ lemma programProgress_pure (x : α) : ProgramProgress (pure x : FreeM P α) :=
 
 @[simp, grind =]
 lemma programProgress_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) :
-    ProgramProgress ((FreeM.lift a).bind r) ↔ Nonempty (P.B a) ∧ ∀ y, ProgramProgress (r y) :=
+    ProgramProgress ((FreeM.lift a).bind (α := no_index (P.B a)) r) ↔
+      Nonempty (P.B a) ∧ ∀ y, ProgramProgress (r y) :=
   Iff.rfl
 
 lemma programProgress_liftBind_iff (a : P.A) (r : P.B a → FreeM P α) :

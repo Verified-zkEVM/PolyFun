@@ -29,7 +29,7 @@ variable {P : PFunctor.{uA, uB}}
 def emptyResumptionPolyEquiv :
     Lens.Equiv.{max uA uR, uB, uA, uB}
       (P + C.{uR, uB} PEmpty.{uR + 1}) P := by
-  simpa only [C_empty] using
+  simpa only [C_pempty] using
     (Lens.Equiv.sumZero (P := P) : Lens.Equiv.{max uA uR, uB, uA, uB}
       (P + (0 : PFunctor.{uR, uB})) P)
 

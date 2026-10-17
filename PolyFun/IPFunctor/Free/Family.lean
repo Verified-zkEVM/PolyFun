@@ -77,16 +77,16 @@ lemma bind_liftBind {Y : I → Type w} {s : I} (a : P.A s)
 /-! ## Family map -/
 
 /-- Family functor map: apply a state-indexed function `f : ∀ s, X s → Y s` at every leaf. -/
-protected def imap (f : ∀ s, X s → Y s) : {s : I} → IFreeM P X s → IFreeM P Y s
+protected def imap {Y : I → Type w} (f : ∀ s, X s → Y s) : {s : I} → IFreeM P X s → IFreeM P Y s
   | _, .pure x   => .pure (f _ x)
   | _, .liftBind a r => .liftBind a (fun b => (r b).imap f)
 
 @[simp]
-lemma imap_pure (f : ∀ s, X s → Y s) {s : I} (x : X s) :
+lemma imap_pure {Y : I → Type w} (f : ∀ s, X s → Y s) {s : I} (x : X s) :
     (IFreeM.pure (P := P) x).imap f = IFreeM.pure (f s x) := rfl
 
 @[simp]
-lemma imap_liftBind (f : ∀ s, X s → Y s) {s : I} (a : P.A s)
+lemma imap_liftBind {Y : I → Type w} (f : ∀ s, X s → Y s) {s : I} (a : P.A s)
     (r : (b : P.B s a) → IFreeM P X (P.src s a b)) :
     (IFreeM.liftBind a r).imap f = IFreeM.liftBind a (fun b => (r b).imap f) := rfl
 
@@ -146,8 +146,8 @@ end construct
 /-! ## Bind and map laws
 
 The continuation of `bind` may change the universe of the leaf family, so `bind_assoc`,
-`bind_imap` and `imap_bind` take their families in independent universes. `imap` keeps the
-universe and is the bind whose continuation returns a leaf (`imap_eq_bind`). -/
+`bind_imap` and `imap_bind` take their families in independent universes. `imap` is the bind
+whose continuation returns a leaf (`imap_eq_bind`), also across universes. -/
 
 /-- Binding with `IFreeM.pure` returns the tree unchanged. -/
 @[simp]
@@ -165,7 +165,7 @@ lemma bind_assoc {Y : I → Type w} {Z : I → Type w'} {s : I} (x : IFreeM P X 
   | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
 
 /-- Mapping the leaves is binding with a continuation that returns a leaf. -/
-lemma imap_eq_bind (f : ∀ s, X s → Y s) {s : I} (x : IFreeM P X s) :
+lemma imap_eq_bind {Y : I → Type w} (f : ∀ s, X s → Y s) {s : I} (x : IFreeM P X s) :
     x.imap f = x.bind (fun s' y => IFreeM.pure (f s' y)) := by
   induction x using IFreeM.inductionOn with
   | pure _ _ => rfl
@@ -178,14 +178,16 @@ lemma imap_id {s : I} (x : IFreeM P X s) : x.imap (fun _ => id) = x := by
   | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
 
 @[simp]
-lemma imap_imap (f : ∀ s, X s → Y s) (g : ∀ s, Y s → Z s) {s : I} (x : IFreeM P X s) :
+lemma imap_imap {Y : I → Type w} {Z : I → Type w'} (f : ∀ s, X s → Y s)
+    (g : ∀ s, Y s → Z s) {s : I} (x : IFreeM P X s) :
     (x.imap f).imap g = x.imap (fun s' => g s' ∘ f s') := by
   induction x using IFreeM.inductionOn with
   | pure _ _ => rfl
   | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
 
 /-- Binding after mapping the leaves feeds the mapped payloads to the continuation. -/
-lemma bind_imap {Z : I → Type w} (f : ∀ s, X s → Y s) (g : ∀ s', Y s' → IFreeM P Z s')
+lemma bind_imap {Y : I → Type w} {Z : I → Type w'} (f : ∀ s, X s → Y s)
+    (g : ∀ s', Y s' → IFreeM P Z s')
     {s : I} (x : IFreeM P X s) :
     (x.imap f).bind g = x.bind (fun s' y => g s' (f s' y)) := by
   induction x using IFreeM.inductionOn with
@@ -193,7 +195,8 @@ lemma bind_imap {Z : I → Type w} (f : ∀ s, X s → Y s) (g : ∀ s', Y s' �
   | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
 
 /-- Mapping the leaves of a bind maps the leaves of each continuation. -/
-lemma imap_bind {Y Z : I → Type w} (g : ∀ s', X s' → IFreeM P Y s') (f : ∀ s, Y s → Z s)
+lemma imap_bind {Y : I → Type w} {Z : I → Type w'} (g : ∀ s', X s' → IFreeM P Y s')
+    (f : ∀ s, Y s → Z s)
     {s : I} (x : IFreeM P X s) :
     (x.bind g).imap f = x.bind (fun s' y => (g s' y).imap f) := by
   induction x using IFreeM.inductionOn with
@@ -259,6 +262,35 @@ lemma toSigmaFreeM_liftBind (P : Endo I) {s : I} (a : P.A s)
     toSigmaFreeM P (IFreeM.liftBind a r) =
       PFunctor.FreeM.liftBind (⟨s, a⟩ : P.sigmaPFunctor.A)
         (fun b => toSigmaFreeM P (r b)) := rfl
+
+/-- Erasure preserves sequencing, including a change of leaf universe. -/
+@[simp]
+lemma toSigmaFreeM_bind {Y : I → Type w} {s : I} (x : IFreeM P X s)
+    (g : ∀ s', X s' → IFreeM P Y s') :
+    toSigmaFreeM P (x.bind g) =
+      PFunctor.FreeM.bind (toSigmaFreeM P x) (fun value => toSigmaFreeM P (g value.1 value.2)) := by
+  induction x using IFreeM.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ _ _ ih =>
+      simp only [bind_liftBind, toSigmaFreeM_liftBind]
+      congr 1
+      funext answer
+      exact ih answer
+
+/-- Erasure maps the payload while retaining its terminal state. -/
+@[simp]
+lemma toSigmaFreeM_imap {Y : I → Type w} {s : I} (f : ∀ s, X s → Y s)
+    (x : IFreeM P X s) :
+    toSigmaFreeM P (x.imap f) =
+      PFunctor.FreeM.map (fun value => (⟨value.1, f value.1 value.2⟩ : Σ s, Y s))
+        (toSigmaFreeM P x) := by
+  induction x using IFreeM.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ _ _ ih =>
+      simp only [imap_liftBind, toSigmaFreeM_liftBind, PFunctor.FreeM.map_liftBind]
+      congr 1
+      funext answer
+      exact ih answer
 
 end toSigmaFreeM
 

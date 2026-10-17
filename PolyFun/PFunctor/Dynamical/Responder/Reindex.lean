@@ -64,7 +64,7 @@ theorem runFree_pure (R : Responder State Q) {E : Type uV}
 
 @[simp]
 theorem runFree_lift (R : Responder State Q) (query : Q.A) (state : State) :
-    R.runFree (FreeM.lift query) state =
+    R.runFree (E := no_index (Q.B query)) (FreeM.lift query) state =
       (R.answer state query, R.next state query) :=
   rfl
 

@@ -32,9 +32,8 @@ namespace CofreeLaxMonoidalTest
 the lax-monoidal examples below unfold these constants there.  The `unfold*`
 family, `Lens.tensorMap`, and the comonoid tensor and unit carry the attribute
 at their definition sites. -/
-attribute [local implicit_reducible] PFunctor.y PFunctor.monomial PFunctor.tensor
-  Comonoid.Hom.ofCategoryLaws CofreeP.comonoid CofreeP.cogenerator
-  CofreeP.extend CofreeP.laxUnitHom CofreeP.laxUnit CofreeP.laxTensorHom
+attribute [local implicit_reducible] PFunctor.tensor Comonoid.Hom.ofCategoryLaws CofreeP.comonoid
+  CofreeP.cogenerator CofreeP.extend CofreeP.laxUnitHom CofreeP.laxUnit CofreeP.laxTensorHom
   CofreeP.laxTensor
 
 /-! ## Universe and theorem-surface canaries -/

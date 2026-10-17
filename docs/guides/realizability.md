@@ -337,6 +337,100 @@ overhead. Together they yield the generic bounded sequential-composition
 theorem without pretending that arbitrary unreachable values have small
 encodings.
 
+### Strength and the strong bind
+
+A `seqComp` continuation sees only the first phase's result. Reductions usually
+need more: a later step reads a value the program had before an earlier call.
+`Quantitative/Strength.lean` supplies that strength at machine level.
+
+- **`QuantitativeRealization.withInput R`** realizes
+  `fun a ↦ (·, a) <$> program a`. Its machine `DynComputation.withInput` carries
+  the input in a second state component. Like `HasProd.withInput`, it pairs a
+  result with the retained input; `Boundary.withInput`, which replaces an input
+  representation, is unrelated.
+- **`seqCompWithInput R₁ R₂`** realizes the strong bind
+  `fun a ↦ program a >>= fun b ↦ next (b, a)`. Its second phase runs on
+  `Boundary.strongMid`, which reads the pair of the result and the original input.
+
+The input-retaining code is assembled from the carry combinators of
+`Quantitative/Closure.lean`: `carryReadout` for the readout, and `carryUpdate`
+(exchange, `pairRight`, then `HasOption.strength`) for the transition. The
+transition never consults the readout, so no component code runs twice.
+
+Bounds come in two layers.
+
+- **Certificates.** `WithInputCostCertificate` states per-step carry
+  allowances, required only at states reachable along conforming traces.
+  `RunsWithinUnder.withInput` charges them:
+  `ExecutionCost.withCarry` (`Quantitative/Carry.lean`) adds one initialization
+  carry, `q + 1` readout carries and `q` transition carries for `q` queries, and
+  shifts the peak sizes. Queries and traffic are unchanged, and resolution and
+  progress transfer exactly.
+- **Cost laws.** `Quantitative/CostLaws.lean` states per-primitive laws
+  (`HasCompositionCost`, `HasProdCost`, `HasSumCost`, `HasOptionCost`,
+  `IsDistributiveCost`), each bounding a structural primitive's own work by a
+  monotone envelope of the encoded sizes it touches. Under them,
+  `RunsWithinUnder.withInput_of_laws` discharges the certificate with
+  `lawCarry`: identity and pairing at initialization, `carryReadoutCount`
+  structural primitives per readout and `carryUpdateCount` per transition, each
+  charged the combined envelope `structOverhead` at a size bounded by the
+  source's peak sizes, its traffic and the input. The counts are named
+  definitions in `CostLaws.lean`, built from the counts of the combinators the
+  carry code is assembled from.
+
+`RunsWithinUnder.seqCompWithInput` combines the strength carry with
+`seqComp`'s handoff envelope and structural certificate. By
+`queries_seqCompWithInput_bound`, the strength carry adds no queries; the
+structural certificate's overhead may, since `SeqCompCostCertificate` does not
+constrain its `queries` field. `seqCompWithInput_of_strengthLaws` discharges
+only the strength carry from the laws; the handoff bound and the structural
+certificate remain hypotheses.
+
+The laws are additive: wrapped code is charged its own cost, and each primitive
+an envelope of the sizes it touches. Only test fixtures instantiate them. The
+single-tape backend has no executable structural code, so `withInput` and the
+strong bind cannot yet be assembled over it, and its composition overhead
+re-evaluates the second machine's polynomial at an inflated size, which is not
+additive. `cost_pair_le` charges pairing at the shared input's size only, which
+a backend that copies both results into one pair encoding cannot meet.
+
+### Stateful handler substitution
+
+A reduction often runs its adversary against a stateful handler that forwards
+each call, logging or counting along the way. `StateLens p r σ`
+(`PFunctor/Handler/StateLens.lean`) is such a handler when it answers every outer
+query with exactly one inner query. Its data is that of a lens
+`p ⊗ σy^σ → r` (`StateLens.equivLens`), and substitution along it is
+`Handler.Stateful.run` of its handler (`mapFreeM_eq_run`). On the program side,
+`StateLens.wpFold_charge_mapFreeM_le` bounds the worst-case charge of a
+substituted program by the source program's, with each call charged its
+forwarded query's worst case, the stateful counterpart of
+`wpFold_charge_liftM_le`.
+`DynComputation.wrapState` runs a machine against it as one product machine, and
+`QuantitativeRealization.wrapState` (`Quantitative/Handler.lean`) assembles that
+machine's code from the adversary's code and the lens code
+`StateLens.QuantitativelyAdmissible`.
+
+`RunsWithinUnder.wrapState` transfers a bound through the substitution. It needs
+two hypotheses beyond the per-step `WrapStateCostCertificate`:
+
+- a **contract**: allowed inner answers pull back to allowed outer answers;
+- **progress**: every query the adversary can still answer has an allowed inner
+  answer. Without it an empty inner contract would make the conclusion false,
+  as `PolyFunTest/Realizability/QuantitativeHandler.lean` checks.
+
+The bound `ExecutionCost.handled` keeps the adversary's query count, charges `q`
+times the per-step inner traffic, and doubles the adversary's work, because the
+product transition recomputes the adversary's readout to know which query is
+pending. `RunsWithinUnder.wrapState_of_laws` discharges the certificate from the
+cost laws and from handler invariants along conforming product runs: a
+handler-state size bound, per-call work bounds for the lens code, and a per-step
+inner-traffic bound. Its carry `handlerLawCarry` charges the named counts
+`wrapStatePullCount`, `wrapStateStepCount` and `wrapStateUpdateCount`, which are
+built from the counts of the combinators the product code is assembled from. A
+handler that may answer without an inner query, such as a cache hit, needs
+silent steps and is not covered.
+
 `Quantitative/Polynomial.lean` supplies `FirstOrderPolynomial` and
 `PolyRealizer`, which retains one executable realizer plus work and encoded
 output-size polynomials. `PolynomialComposition` proves identity and composition,
@@ -527,8 +621,8 @@ admissible decoder.
 Products and sums are *not* automatic. They need a pairing codec and a tagging
 scheme whose operations the word class admits, supplied as `WordPairing` and
 `WordTagging` and consumed by `ofWordClass.hasProd` / `ofWordClass.hasSum`.
-complexitylib exposes the class-level product closure that `WordPairing` needs
-(`pairFst_mem_FP`, `pairSnd_mem_FP` and `mem_FP_pair` in
+complexitylib's development branch exposes the class-level product closure that
+`WordPairing` needs (`pairFst_mem_FP`, `pairSnd_mem_FP` and `mem_FP_pair` in
 `Complexitylib/Classes/P/Pairing.lean`); PolyFun does not depend on complexitylib,
 so no such instance is built here. cslib's `PolyTimeComputable` has `id` and
 `comp` but no pairing or projection machines at all. The `CslibSingleTape` backend supplies encoded machine families and finite-table
@@ -759,6 +853,11 @@ code for the host operations, bounded administrative normalization, encoded stat
 actual work costs still require executable certificates. In particular, a syntactic query bound
 alone does not establish strict PPT.
 
+- **Handler substitution charges the adversary's readout twice.** The product transition of
+  `QuantitativeRealization.wrapState` recomputes the adversary's readout to learn which query is
+  pending, so `ExecutionCost.handled` doubles the adversary's work. Removing the factor needs
+  either a decoder recovering the outer query from the forwarded one or a cached readout in the
+  product state; neither is part of the current lens code.
 - **Query bounds do not charge pure computation.** `FreeM.IsRollBound` holds of every `pure`
   leaf, so `pure (f x)` meets every budget whatever Lean function `f` is. A program with no
   queries can therefore solve any search problem posed in its input, by brute force when the

@@ -37,10 +37,12 @@ The polynomial algebra uses the Spivak–Niu book surface, scoped to the
 `PFunctor` namespace (activated by `open scoped PFunctor`). The named
 definitions (`PFunctor.monomial`, `purePower`, `comp`, `compNth`,
 `sigma`, `pi`, …) remain the canonical API; every glyph below is sugar
-that elaborates to (and pretty-prints from) the named form. Everything
-is defined next to its definition in
-[`PolyFun/PFunctor/Basic.lean`](../../PolyFun/PFunctor/Basic.lean)
-unless noted.
+that elaborates to (and pretty-prints from) the named form. CSLib's
+`Cslib/Foundations/Data/PFunctor/Basic.lean` defines `y`, `A y^ B`, `y^ B`,
+`C A`, `0`, `1`, `P + Q` and `P * Q`, and
+[`PolyFun/PFunctor/Basic.lean`](../../PolyFun/PFunctor/Basic.lean) re-exports
+it; every other glyph is defined next to its definition in that PolyFun
+module unless noted.
 
 | Notation | Meaning | Prec | Input method |
 |----------|---------|------|--------------|
@@ -48,7 +50,7 @@ unless noted.
 | `A y^ B` | `monomial A B` | 82r | ASCII |
 | `y^ B` | `purePower B` (representable) | 100 | ASCII |
 | `C A` | constant polynomial | — | plain `C` |
-| `P + Q`, `P * Q` | `sum` / `prod` (ring-style instances, with `0` / `1` units) | std | ASCII |
+| `P + Q`, `P * Q` | `add` / `prod` (ring-style instances, with `0` / `1` units); PolyFun's `sum` has the body of `add` | std | ASCII |
 | `Σₚ i, F i` | `sigma F` (indexed sum) | body 60 | `\Sigma\_p` |
 | `Πₚ i, F i` | `pi F` (indexed product) | body 60 | `\Pi\_p` |
 | `P ⊗ Q` | `tensor` (Dirichlet/parallel product) | 70l | `\otimes` |
