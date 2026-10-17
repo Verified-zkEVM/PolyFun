@@ -219,7 +219,7 @@ def lift (position : p.A) : Resumption p (p.B position) :=
   query position pure
 
 @[simp] theorem dest_lift (position : p.A) :
-    dest (lift position) = Sum.inr (.mk position pure) := by
+    dest (β := no_index (p.B position)) (lift position) = Sum.inr (.mk position pure) := by
   simp [lift]
 
 /-- Step coalgebra used by `bind`. The right summand records that execution has

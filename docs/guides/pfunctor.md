@@ -126,13 +126,21 @@ Three rules follow from this transparency:
   the `PUnit` and `PEmpty` instances by unfolding.
 - Write implicit type arguments on simp left-hand sides in their reduced form,
   for example `(Sum.inl op : F.A ⊕ PUnit)` rather than an ascription through
-  `(F + y).A`. Simp's index reduces `P.B a` to the concrete direction type
-  when `P` is one of these abbreviations, so a lemma about a generic `P` whose
-  left side carries `P.B a` in an implicit argument, as `FreeM.lift a` does,
-  needs `no_index` on that argument, as in `Handler.Stateful.run_lift` and
-  CSLib's `FreeM.foldFreeM_lift`; the
+  `(F + y).A`. Simp reduces `P.B a` to the concrete direction type before it
+  consults its index when `P` is one of these abbreviations, so a lemma about
+  a generic `P` whose left side carries `P.B a` in an implicit argument, as
+  `FreeM.lift a` does, needs `no_index` on that argument, as in
+  `Handler.Stateful.run_lift`, `FreeM.support_lift` and CSLib's
+  `FreeM.foldFreeM_lift`. A `>>=` on such a left side is written
+  `Bind.bind (α := no_index (P.B a))`, as in
+  `FreeM.isRollBound_lift_bind_iff'`, and
+  [`ConcreteSimp.lean`](../../PolyFunTest/PFunctor/ConcreteSimp.lean) tests
+  each lift equation on a concrete interface. `no_index` does not help when an
+  explicit argument whose type mentions `P.B a` precedes the lift, as the
+  predicate of `FreeM.allOutputs_lift` does, because simp unifies that argument
+  before `P` is known; the
   [upstream page](../development/upstream.md#remaining-abstraction-boundaries)
-  lists the lemmas that still lack it.
+  lists the lemmas that still miss.
 - Do not put `OfNat.ofNat`, `One.one` or `Zero.zero` in a simp set. `1` is
   literally `PUnit y^ PEmpty`, which `C_punit` folds back to `1`, so simp
   loops; use `inferInstanceAs` for the instance or a projection lemma such as

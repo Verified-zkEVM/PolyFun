@@ -64,7 +64,7 @@ lemma isRollBound_pure (x : α) (b : B)
 @[simp, grind =]
 lemma isRollBound_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) (b : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
-    IsRollBound ((FreeM.lift a).bind r) b canRoll cost ↔
+    IsRollBound ((FreeM.lift a).bind (α := no_index (P.B a)) r) b canRoll cost ↔
       canRoll a b ∧ ∀ y, IsRollBound (r y) (cost a b) canRoll cost :=
   Iff.rfl
 
@@ -72,7 +72,7 @@ lemma isRollBound_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) (b : B)
 @[simp, grind =]
 lemma isRollBound_lift_bind_iff' {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) (b : B)
     (canRoll : P.A → B → Prop) (cost : P.A → B → B) :
-    IsRollBound (FreeM.lift a >>= r) b canRoll cost ↔
+    IsRollBound (Bind.bind (α := no_index (P.B a)) (FreeM.lift a) r) b canRoll cost ↔
       canRoll a b ∧ ∀ y, IsRollBound (r y) (cost a b) canRoll cost :=
   Iff.rfl
 
@@ -231,14 +231,14 @@ lemma isTotalRollBound_pure (x : α) (n : ℕ) :
 
 @[simp, grind =]
 lemma isTotalRollBound_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) :
-    IsTotalRollBound ((FreeM.lift a).bind r) n ↔
+    IsTotalRollBound ((FreeM.lift a).bind (α := no_index (P.B a)) r) n ↔
       0 < n ∧ ∀ y, IsTotalRollBound (r y) (n - 1) :=
   Iff.rfl
 
 /-- `isTotalRollBound_lift_bind_iff` when results and directions share a universe. -/
 @[simp, grind =]
 lemma isTotalRollBound_lift_bind_iff' {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) :
-    IsTotalRollBound (FreeM.lift a >>= r) n ↔
+    IsTotalRollBound (Bind.bind (α := no_index (P.B a)) (FreeM.lift a) r) n ↔
       0 < n ∧ ∀ y, IsTotalRollBound (r y) (n - 1) :=
   Iff.rfl
 
@@ -399,7 +399,8 @@ lemma programProgress_pure (x : α) : ProgramProgress (pure x : FreeM P α) :=
 
 @[simp, grind =]
 lemma programProgress_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) :
-    ProgramProgress ((FreeM.lift a).bind r) ↔ Nonempty (P.B a) ∧ ∀ y, ProgramProgress (r y) :=
+    ProgramProgress ((FreeM.lift a).bind (α := no_index (P.B a)) r) ↔
+      Nonempty (P.B a) ∧ ∀ y, ProgramProgress (r y) :=
   Iff.rfl
 
 lemma programProgress_liftBind_iff (a : P.A) (r : P.B a → FreeM P α) :
