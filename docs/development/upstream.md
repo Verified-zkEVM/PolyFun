@@ -23,16 +23,42 @@ Their pins are recorded in the manifest; their README files live under
 
 ## Integration contracts
 
+- **Polynomial constructions:** CSLib's
+  `Cslib.Foundations.Data.PFunctor.Basic` owns the monomial `A y^ B` and its
+  special cases `C`, `linear`, `selfMonomial`, `purePower` (`y^ B`) and `y`,
+  the constants `0` and `1`, `P + Q` (through `PFunctor.add`), `P * Q`
+  (through `PFunctor.prod`) and `PFunctor.ext`, together with their simp
+  lemmas. `PolyFun/PFunctor/Basic.lean` re-exports that module and adds the
+  universe polynomial, the named sum `PFunctor.sum`, indexed sums and
+  products, tensor, lifts, exponentials, lenses and charts. The reducibility of
+  the shared constructions is CSLib's; the
+  [polynomial guide](../guides/pfunctor.md#cslibs-polynomial-constructions)
+  describes what it implies for instance search and simp.
 - **Free monads:** import the CSLib definitions through the appropriate public
-  module. `ToCslib/Data/PFunctor/Free/` adds laws and folds without redefining
-  the carrier. PolyFun-specific decorations, paths, machines, and handlers
-  remain in `PolyFun/PFunctor/`.
+  module. CSLib owns the carrier `PFunctor.FreeM`, its fold `FreeM.foldFreeM`
+  with the fold laws (`Free.Fold`), and the W-type equivalence
+  `FreeM.equivWOfIsEmpty` with its directions `FreeM.toWOfIsEmpty` and
+  `W.toFreeM` (`Free.W`). `ToCslib/Data/PFunctor/Free/` adds
+  constructor-spelled equations and loop transport without redeclaring any of
+  them, and PolyFun-specific decorations, paths, machines, and handlers remain
+  in `PolyFun/PFunctor/`.
+- **Co-import:** neither PolyFun nor `ToCslib` redeclares a CSLib name, so
+  `import Cslib` elaborates together with `import PolyFun`, `import ToCslib`
+  and `import ComplexityBackends`. The ordinary-import canary
+  [`CslibCoImport.lean`](../../PolyFunTest/ModuleAPI/CslibCoImport.lean)
+  imports each owning CSLib module together with the PolyFun and `ToCslib`
+  modules that build on it, so a redeclared name fails the test build without
+  building the whole CSLib root.
 - **Resumable execution:** `DynComputation.Resumable` retains machine state
   and derives budget composition and handler transport from the existing
   `FreeM.liftM` laws. The pinned CSLib, Mathlib, and Batteries APIs supply no
   residual-state driver for PolyFun's `DynComputation`. Keep this extension
   beside bounded execution; revisit ownership if the returning-machine
   abstraction moves upstream. The IO adapter adds no domain policy.
+- **Handled execution:** `HandledDiagram.initial`, `runToken` and `runFIFO`
+  wrap PolyFun's routed runtime and retain residuals. Their composition laws
+  delegate to that runtime; CSLib's free-monad interpreters do not own
+  PolyFun's packet topology.
 - **Transition systems:** `Control.LTS.toLts` forgets the polynomial witness
   move. Generic relational simulation and finite-trace results use CSLib;
   dependent response witnesses and delay semantics remain explicit in PolyFun.
@@ -65,6 +91,46 @@ remove superseded local helpers, check ordinary imports, and run the full
 [validation workflow](validation.md). An upstream theorem with the same name
 is useful only if its universe parameters, hypotheses, and computational
 behavior match the consumer.
+
+## Finite case compilation
+
+`ToCslib/Data/Fin/Cases.lean` proves compiler simplifications for core's
+`Fin.cases` and Mathlib's `Fin.cons`/`Matrix.vecCons` wrappers. At the pinned
+v4.35 release candidate, strict evaluation of the induction-based definition
+computes discarded recursive results; nested vector lookup compounds that
+work. The replacement selects the underlying natural-number case directly,
+with a kernel-checked equality and unchanged logical computation rules.
+The wrapper equations matter because imported wrappers can be inlined after
+the compiler simplification pass. Remove these staging lemmas when the owning
+core and Mathlib definitions acquire equivalent compiled implementations.
+
+## Omega-CPO fixed points
+
+`ToCslib/Order/` extends Mathlib’s omega-CPO API with continuous currying,
+least fixed points, admissibility, discrete, lifted, and disjoint-sum orders,
+and finite prefix recursion. Order-only results are candidates for Mathlib or
+CSLib; remove superseded local instances before upgrading their owning
+dependency. The pinned Mathlib has no omega-CPO instance for `WithBot` or for
+disjoint sums, and no equality-ordered wrapper; `DiscreteOrder` leaves the
+ordinary order on numbers and Booleans intact.
+
+Mathlib already supplies the Kleene chain
+`OmegaCompletePartialOrder.fixedPoints.iterateChain`, its facts
+`ωSup_iterate_mem_fixedPoint` and `ωSup_iterate_le_prefixedPoint`, and Kleene's
+theorem `fixedPoints.lfp_eq_sSup_iterate` for complete lattices. It has no
+least-fixed-point operator on a pointed omega-CPO that is not a lattice; `LawfulFix`
+asks only for the unfolding equation, and Mathlib instantiates it for `Part`-valued
+carriers. `ContinuousHom.approximants` is that chain started at bottom, so
+`ContinuousHom.fix` is its supremum (`fix_eq_ωSup_iterateChain`, by `rfl`), and
+`map_fix` and `fix_le` specialize the two Mathlib facts. `isLeast_fix`
+characterizes `fix` as the least prefixed point. On the omega-CPO structure of a
+complete lattice, `fix_eq_lfp` identifies it with `OrderHom.lfp`; carriers with a
+separate pointwise instance, such as function types, combine `isLeast_fix` with
+`OrderHom.isLeast_lfp_le`. The local additions are fixed-point induction, fusion
+through strict maps, and continuity in the recursive body. `fix_induction` takes
+the chain-closure hypothesis in unfolded form, so an `Admissible` proof can be
+passed directly; `Admissible.fix_induction` states the same principle with the
+named predicate. An upstream version belongs beside `fixedPoints.iterateChain`.
 
 ## Object, path, and trace interfaces
 
@@ -139,3 +205,5 @@ removal conditions. They do not require exposing the free-monoid carrier.
 | Cofree polynomials, displayed constructions, and pattern-runs-on-matter | Follow an object equality and dependent continuation through public object/lens equations; preserve type-level tensor and unit computation. |
 | Reactive networks and realizability closure | Minimize actual transport/update consumers, retaining coherent representation and admissible-step data. |
 | Core/CSLib dependent automation | Recheck the independent free-tree and event reproducers at a coordinated pin upgrade; treat WP/`vcgen` result-index matching as a separate question. |
+| Simp lemmas over concrete polynomial abbreviations | A simp lemma whose left side carries `P.B a` in an implicit argument, as `FreeM.lift a` does, misses a goal in which `P` is a concrete `A y^ B`, `y`, `C`, `linear` or `purePower`, because simp reduces that argument to `B` before it consults its index. PolyFun's generic lift equations mark the argument `no_index`, as CSLib's `foldFreeM_lift` does, and [`ConcreteSimp.lean`](../../PolyFunTest/PFunctor/ConcreteSimp.lean) tests them against `Bool y^ Nat`. CSLib's `FreeM.liftM_lift` and `liftM_lift_bind` still miss; once a CSLib pin marks them `no_index`, add their `Bool y^ Nat` cases to that file. `FreeM.allOutputs_lift` and `FreeM.someOutput_lift` also miss, and `no_index` alone does not repair them: simp unifies their predicate `p : P.B a → Prop` before `FreeM.lift a` determines `P`, so the predicate's type is stuck. Rewrite with them on a concrete interface until a restatement fires under plain `simp` there. |
+| CSLib polynomial W/M-types and resumptions | cslib#1088 adds `FreeM.toW` and `FreeM.ofW` to `Free.W`, which PolyFun does not declare, together with `M.dest_inj`, `M.corec_dest`, `W.toM`, `M.toW_toM`, and a `PFunctor.Resumption` API whose sum lists the summands in the opposite order. PolyFun declares the last five in [`M.lean`](../../PolyFun/PFunctor/M.lean), [`M/WellFounded.lean`](../../PolyFun/PFunctor/M/WellFounded.lean), and [`Resumption.lean`](../../PolyFun/PFunctor/Resumption.lean). At the pin that contains the request, adopt or rename each one so the co-import canary still elaborates. |

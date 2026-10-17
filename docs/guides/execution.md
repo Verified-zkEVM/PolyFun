@@ -19,7 +19,7 @@ proves that a second input list can be run from the first list's final state.
 | Describe arbitrary prefixes and continuing runs | `DynSystem.Prefix`, `Run` | `PolyFun.PFunctor.Dynamical.Run` |
 | Initialize a return-capable machine | `DynSystem.DynComputation` | `PolyFun.PFunctor.Dynamical.DynComputation` |
 | Interpret a finite query budget | `DynComputation.runWith`, `ImplementsWithin` | `PolyFun.PFunctor.Dynamical.DynComputation.Bounded` |
-| Pause and resume a finite query budget | `Chunk`, `unrollChunk`, `runChunk` | `PolyFun.PFunctor.Dynamical.DynComputation.Resumable` |
+| Pause and resume a finite query budget | `Chunk`, `unrollChunk`, `runChunk`, `startChunk`, `continueChunk` | `PolyFun.PFunctor.Dynamical.DynComputation.Resumable` |
 | Run successive chunks through Lean IO | `DynComputation.runIO` | `PolyFun.PFunctor.Dynamical.DynComputation.IO` |
 | Prove safety or simulation | `SafetySpec`, `IsSimulation` | `PolyFun.PFunctor.Dynamical.Safety`, `PolyFun.PFunctor.Dynamical.Simulation` |
 
@@ -41,6 +41,13 @@ that `fixSnd` projects away. Each has a run law relating `Stateful.run` through
 the combinator to the runs of its parts; their common core,
 `run_map_eq_of_apply_map_eq`, says that a state projection which commutes with
 every single request commutes with every run.
+
+A `StateLens` ([`Handler/StateLens.lean`](../../PolyFun/PFunctor/Handler/StateLens.lean))
+is the stateful handler that answers every request with exactly one inner
+request; its substitution is `Stateful.run` of its handler (`mapFreeM_eq_run`).
+`DynComputation.wrapState` runs a machine against it as one product machine, and
+the [realizability guide](realizability.md#stateful-handler-substitution) bounds
+the cost of that substitution.
 
 ## Bounds and continuing behavior
 
@@ -79,6 +86,12 @@ The public laws connect this interface to bounded execution:
 - `unrollChunk_add` and `runChunk_add` identify successive budgets with their sum.
 - `runChunk_natural` transports interpretation along a monad homomorphism,
   preserving the handler's chosen value and effects.
+
+Use `startChunk handler fuel input` to initialize a machine from its input and interpret the
+first chunk, and `continueChunk handler fuel chunk` for the next chunk of either a paused or a
+completed result. Neither requires reconstructing the machine's hidden state.
+`startChunk_continueChunk` equates consecutive budgets with their sum, including the exact
+residual, and `startChunk_zero` shows that zero fuel still observes a terminal state.
 
 The syntax keeps state, input, result, position, and direction universes
 independent. Its observation law uses the universe-polymorphic `FreeM.map`.
@@ -128,7 +141,7 @@ Its fuel counts network activations, not bytes processed, IO latency or thread s
 ## Composing effects and inspecting alternatives
 
 `Handler.sum` interprets dependent responses from either side of a coproduct. Existing
-`Lens.inl` and `Lens.inr` embed a component program; `FreeM.liftM_mapLens_inl` and its right-side
+`Lens.inl` and `Lens.inr` embed a component program; `Handler.liftM_sum_mapLens_inl` and its right-side
 counterpart show that interpreting the embedding uses only the corresponding handler.
 `Handler.mapTarget_sum` preserves this separation when changing target monads.
 
@@ -155,3 +168,21 @@ certified meeting paths to generic prefixes, proves safety for arbitrary legal
 inputs, and relates finite execution to resumption and interaction-tree semantics.
 It also uses `Handler.withTraceAppend` and `WriterT.eraseHom` to instrument the
 same application and prove that erasing its log preserves the result and memory.
+
+## Composing effects and inspecting alternatives
+
+`Handler.sum` interprets dependent responses from either side of a coproduct. `Lens.inl` and
+`Lens.inr` embed a component program; `Handler.liftM_sum_mapLens_inl` and its right-side
+counterpart show that interpreting the embedding uses only the corresponding handler.
+`Handler.mapTarget_sum` preserves this separation when changing target monads.
+
+For one-or-both interfaces, `Handler.parallelSeq` executes a joint request left first. This is
+an explicit interpretation order, not OS parallelism or a commutativity guarantee. Arbitrary
+free-handler composition can change which requests synchronize, so unrestricted interchange is
+not promised.
+
+`Occurrence.completeWith answer` supplies the selected query's answer and executes its suffix.
+`Cursor.forkAtWith` executes a shared prefix once, then supplies two answers and retains both
+typed completions. It does not ask the handler for either selected answer. **Both suffixes
+still execute their effects independently**: this is not rollback or automatic state
+isolation, so speculative callers should fork over a read-only interface.

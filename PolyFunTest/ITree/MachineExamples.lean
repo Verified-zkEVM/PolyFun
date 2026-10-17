@@ -66,4 +66,20 @@ def answer (b : Bool) : PFunctor.Handler Id (Coin + PFunctor.y) := fun
   Id.run ((ITree.toDynComputation.run 2 coinTree).liftM (answer true)),
   Id.run ((ITree.toDynComputation.run 2 coinTree).liftM (answer false))]
 
+/-! `ITree.withSilentSteps` builds the same handler from a handler of visible events alone; the
+silent step still consumes a unit of fuel. -/
+
+/-- Answer every coin query with `b`, with no case for silent steps. -/
+def flip (b : Bool) : PFunctor.Handler Id Coin := fun _ => b
+
+/-- info: [none, some 7, some 11] -/
+#guard_msgs in
+#eval [Id.run ((ITree.toDynComputation.run 1 coinTree).liftM (ITree.withSilentSteps (flip true))),
+  Id.run ((ITree.toDynComputation.run 2 coinTree).liftM (ITree.withSilentSteps (flip true))),
+  Id.run ((ITree.toDynComputation.run 2 coinTree).liftM (ITree.withSilentSteps (flip false)))]
+
+example (b : Bool) : ITree.withSilentSteps (flip b) = answer b := by
+  funext operation
+  cases operation <;> rfl
+
 end ITree.MachineExamples

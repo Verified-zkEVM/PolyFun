@@ -5,6 +5,7 @@ Authors: Quang Dao
 -/
 module
 
+public import Cslib.Foundations.Data.PFunctor.Basic
 public import Mathlib.Data.PFunctor.Multivariate.Basic
 public import Mathlib.Util.Notation3
 public import PolyFun.PFunctor.Obj
@@ -12,10 +13,18 @@ public import PolyFun.PFunctor.Obj
 /-!
 # Polynomial operations, lenses, and charts
 
-This module extends Mathlib's `PFunctor` with polynomial constants, sums, products,
-tensor and substitution, together with lenses and charts. A lens maps positions forward
-and directions backward; a chart maps both forward. The `Lens`, `Chart`, and `Equiv`
-subtrees supply their laws, and `Category` packages the corresponding categories.
+This module extends Mathlib's `PFunctor` and cslib's polynomial constructions with the universe
+polynomial, the named sum `sum`, indexed sums and products, tensor, composition powers, lifts and
+exponentials, together with lenses and charts. A lens maps positions forward and directions
+backward; a chart maps both forward. The `Lens`, `Chart`, and `Equiv` subtrees supply their laws,
+and `Category` packages the corresponding categories.
+
+cslib's `Cslib.Foundations.Data.PFunctor.Basic` supplies the monomial `A y^ B` and its special
+cases `C`, `linear`, `selfMonomial`, `purePower` (`y^ B`) and `y` as reducible abbreviations, the
+constants `0` and `1`, the sum `P + Q` through `PFunctor.add`, the product `P * Q` through
+`PFunctor.prod`, and the extensionality lemma `PFunctor.ext`. This module adds the head and child
+equations of the abbreviations and the position instances `IsEmpty (A 0)` and `Unique (A 1)` at
+every child universe.
 -/
 
 @[expose] public section
@@ -26,35 +35,11 @@ namespace PFunctor
 
 section Basic
 
-/-- The zero polynomial functor, defined as `A = PEmpty` and `B _ = PEmpty`, is the identity with
-  respect to sum (up to equivalence) -/
-instance instZeroPFunctor : Zero PFunctor.{uA, uB} where
-  zero := ⟨PEmpty, fun _ => PEmpty⟩
-
-/-- The unit polynomial functor, defined as `A = PUnit` and `B _ = PEmpty`, is the identity with
-  respect to product (up to equivalence) -/
-instance instOnePFunctor : One PFunctor.{uA, uB} where
-  one := ⟨PUnit, fun _ => PEmpty⟩
-
-/-- The variable (or identity) polynomial functor `y`, with a single position and a single
-direction. Under the Yoneda reading `y = y^ PUnit` is the representable on a point; it is the
-unit for both composition `◃` and the tensor product `⊗` (up to equivalence). -/
-def y : PFunctor.{uA, uB} :=
-  ⟨PUnit, fun _ => PUnit⟩
-
 /-- Deprecated compatibility name for the variable polynomial. -/
 @[deprecated (since := "2026-08-17")] alias X := y
 
 instance : IsEmpty (A 0) := inferInstanceAs (IsEmpty PEmpty)
 instance instUniqueAOfNatOne : Unique (A 1) := inferInstanceAs (Unique PUnit)
-instance : Unique y.A := inferInstanceAs (Unique PUnit)
-
-/-- The monomial functor `A y^ B` has `A` as its head type and the constant
-  family `B_a = B` as the child type for each each shape `a : A` . -/
-def monomial (A : Type uA) (B : Type uB) : PFunctor.{uA, uB} :=
-  ⟨A, fun _ => B⟩
-
-@[inherit_doc] scoped[PFunctor] infixr:82 " y^ " => monomial
 
 /-- Parse-only compatibility spelling of the monomial `A y^ B`.
 
@@ -65,33 +50,8 @@ scoped syntax:82 term:83 " X^ " term:82 : term
 scoped macro_rules
   | `($A X^ $B) => `(PFunctor.monomial $A $B)
 
-/-- The constant polynomial functor `A y^ PEmpty` -/
-@[reducible]
-def C (A : Type uA) : PFunctor.{uA, uB} :=
-  A y^ PEmpty
-
-/-- The linear polynomial functor `A y^ PUnit` -/
-def linear (A : Type uA) : PFunctor.{uA, uB} :=
-  A y^ PUnit
-
-/-- The self monomial polynomial functor `S y^ S`.
-
-The body spells out the monomial rather than using `S y^ S` so that the
-head and child types are projections of an explicit structure literal at
-every transparency level; the mate-object equations in the dynamical
-layers rewrite through this carrier during implicit-transparency checks. -/
-@[reducible]
-def selfMonomial (S : Type uA) : PFunctor.{uA, uA} :=
-  { A := S, B := fun _ => S }
-
-/-- The pure power polynomial functor `y^ B`, the representable on the type `B`. -/
-def purePower (B : Type uB) : PFunctor.{uA, uB} :=
-  PUnit y^ B
-
 /-- A polynomial functor is representable if it is equivalent to `y^ A` for some type `A`. -/
 alias representable := purePower
-
-@[inherit_doc purePower] scoped[PFunctor] notation:100 "y^" B:100 => purePower B
 
 /-- The **universe polynomial functor** `Σ (T : Type u), y^ T`: positions are types,
 and the directions at a position `T` are its elements. Its extension `univ.Obj S` is
@@ -105,45 +65,40 @@ def univ : PFunctor.{u + 1, u} :=
   ⟨Type u, fun T => T⟩
 
 section Coprod
-instance {a} : IsEmpty (B 1 a) := inferInstanceAs (IsEmpty PEmpty)
-instance {α} (a : α) : IsEmpty (B (C α) a) := inferInstanceAs (IsEmpty PEmpty)
-instance {a} : Unique (B y a) := inferInstanceAs (Unique PUnit)
-instance {α} (a : α) : Unique (B (linear α) a) := inferInstanceAs (Unique PUnit)
-instance {β} : Unique (A (purePower β)) := inferInstanceAs (Unique PUnit)
 
-@[simp] lemma C_empty : C PEmpty = 0 := rfl
-@[simp] lemma C_unit : C PUnit = 1 := rfl
+/- The head and child equations of cslib's abbreviations are not simp lemmas: simp's projection
+step already reduces these projections of a structure literal. They remain available to `rw` and
+`simp only`. -/
 
-@[simp] lemma C_A (A : Type u) : (C A).A = A := rfl
-@[simp] lemma C_B (A : Type u) (a : (C A).A) : (C A).B a = PEmpty := rfl
+lemma C_A (A : Type u) : (C A).A = A := rfl
+lemma C_B (A : Type u) (a : (C A).A) : (C A).B a = PEmpty := rfl
 
-@[simp] lemma y_A : y.A = PUnit := rfl
-@[simp] lemma y_B (a : y.A) : y.B a = PUnit := rfl
+lemma y_A : y.A = PUnit := rfl
+lemma y_B (a : y.A) : y.B a = PUnit := rfl
 
 @[deprecated (since := "2026-08-17")] alias X_A := y_A
 @[deprecated (since := "2026-08-17")] alias X_B := y_B
 
-@[simp] lemma linear_A (A : Type u) : (linear A).A = A := rfl
-@[simp] lemma linear_B (A : Type u) (a : (linear A).A) : (linear A).B a = PUnit := rfl
+lemma linear_A (A : Type u) : (linear A).A = A := rfl
+lemma linear_B (A : Type u) (a : (linear A).A) : (linear A).B a = PUnit := rfl
 
-@[simp] lemma selfMonomial_A (S : Type u) : (selfMonomial S).A = S := rfl
-@[simp] lemma selfMonomial_B (S : Type u) (a : (selfMonomial S).A) : (selfMonomial S).B a = S := rfl
-@[simp] lemma selfMonomial_unit : selfMonomial PUnit = y := rfl
+lemma selfMonomial_A (S : Type u) : (selfMonomial S).A = S := rfl
+lemma selfMonomial_B (S : Type u) (a : (selfMonomial S).A) : (selfMonomial S).B a = S := rfl
 
-@[simp] lemma purePower_A (B : Type u) : (purePower B).A = PUnit := rfl
-@[simp] lemma purePower_B (B : Type u) (a : (purePower B).A) : (purePower B).B a = B := rfl
-@[simp] lemma purePower_unit : purePower PUnit = y := rfl
+lemma purePower_A (B : Type u) : (purePower B).A = PUnit := rfl
+lemma purePower_B (B : Type u) (a : (purePower B).A) : (purePower B).B a = B := rfl
 
 @[simp] lemma univ_A : univ.{u}.A = Type u := rfl
 lemma univ_B (T : Type u) : univ.{u}.B T = T := rfl
 
 section Sum
 
-/-- The sum (coproduct) of two polynomial functors `P` and `Q`, written as `P + Q`.
+/-- The sum (coproduct) of two polynomial functors `P` and `Q`.
 
 Defined as the sum of the head types and the dependent sum recursor for the child types. The
 recursor is written directly so that nested coproduct directions normalize at implicit
-transparency.
+transparency. cslib's `P + Q` (`PFunctor.add`) has the same body, so `P + Q = sum P Q` holds by
+`rfl`, and the homogeneous instance `instAddPFunctor` is defined by `sum`.
 
 Note: requires the `B` universe levels to be the same. -/
 abbrev sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max uA₁ uA₂, uB} :=
@@ -160,11 +115,6 @@ lemma sum_B_inl (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : P.A) 
 @[simp]
 lemma sum_B_inr (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : Q.A) :
     (sum P Q).B (.inr a) = Q.B a := rfl
-
-/-- Addition of polynomial functors, defined as the sum construction. -/
-@[reducible] instance instHAddPFunctor :
-    HAdd PFunctor.{uA₁, uB} PFunctor.{uA₂, uB} PFunctor.{max uA₁ uA₂, uB} where
-  hAdd := sum
 
 @[reducible] instance instAddPFunctor : Add PFunctor.{uA, uB} where
   add := sum
@@ -240,18 +190,6 @@ scoped notation3 "Σₚ "(...)", "F:60:(scoped f => PFunctor.sigma f) => F
 end Sum
 
 section Prod
-
-/-- The product of two polynomial functors `P` and `Q`, written as `P * Q`.
-
-Defined as the product of the head types and the sum of the child types. -/
-def prod (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) :
-    PFunctor.{max uA₁ uA₂, max uB₁ uB₂} :=
-  ⟨P.A × Q.A, fun ab => P.B ab.1 ⊕ Q.B ab.2⟩
-
-/-- Multiplication of polynomial functors, defined as the product construction. -/
-instance instHMulPFunctor :
-    HMul PFunctor.{uA₁, uB₁} PFunctor.{uA₂, uB₂} PFunctor.{max uA₁ uA₂, max uB₁ uB₂} where
-  hMul := prod
 
 instance instMulPFunctor : Mul PFunctor.{uA, uB} where
   mul := prod
@@ -564,11 +502,6 @@ structure Chart (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) wher
 scoped infixr:25 " ⇉ " => Chart.mk
 
 section Lemmas
-
-@[ext (iff := false)]
-theorem ext {P Q : PFunctor.{uA, uB}} (h : P.A = Q.A) (h' : ∀ a, P.B a = Q.B (h ▸ a)) : P = Q := by
-  cases P; cases Q; simp only [mk.injEq] at h h' ⊢; subst h;
-  simp_all only [heq_eq_eq, true_and]; funext; exact h' _
 
 lemma y_eq_linear_pUnit : y = linear PUnit := rfl
 lemma y_eq_purePower_pUnit : y = purePower PUnit := rfl

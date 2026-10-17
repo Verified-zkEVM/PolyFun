@@ -24,9 +24,10 @@ An interaction tree is itself a machine, in two ways.
   interaction trees, and a silent step can be counted like any other query. Its denotation is
   `ITree.toResumptionWithTau` (`ITree.denote_toDynComputation`).
 
-`ITree.withSilentSteps` lifts a handler of visible events to `F + y`, acknowledging each silent
-step without invoking the visible handler, so the runners of `toDynComputation` consume chunk
-budget on silent steps too. A finite budget makes no claim of termination or productivity.
+`ITree.withSilentSteps` lifts a handler of visible events to `F + y`: it acknowledges each silent
+step with `pure ()` and never invokes the visible handler on one. Silent steps still consume the
+budget of the `toDynComputation` runners, and a finite budget makes no claim of termination or
+productivity.
 -/
 
 @[expose] public section
@@ -64,17 +65,23 @@ def toDynComputation :
     (toDynComputation (F := F)).denote t = toResumptionWithTau t :=
   DynSystem.DynComputation.denote_ofResumption _ _
 
-/-- Interpret visible operations by `handler` and acknowledge silent steps internally. -/
+/-- Interpret visible operations by `handler` and acknowledge silent steps internally, so a
+handler for `F` runs `toDynComputation`. -/
 def withSilentSteps {m : Type uB → Type uM} [Monad m] (handler : PFunctor.Handler m F) :
     PFunctor.Handler m (F + PFunctor.y.{uA, uB}) :=
   PFunctor.Handler.sum handler fun _ => Pure.pure PUnit.unit
 
+/-- Visible operations go to `handler`. The position is stated at the reduced type
+`F.A ⊕ PUnit`, the form `simp` leaves the implicit arguments of `Sum.inl` in, so the lemma fires
+under `simp`, `simp only` and `rw` alike. -/
 @[simp] theorem withSilentSteps_visible {m : Type uB → Type uM} [Monad m]
     (handler : PFunctor.Handler m F) (operation : F.A) :
-    withSilentSteps handler (.inl operation) = handler operation := rfl
+    withSilentSteps handler (Sum.inl operation : F.A ⊕ PUnit) = handler operation := rfl
 
+/-- Silent steps are acknowledged without consulting `handler`; stated at `F.A ⊕ PUnit` for the
+same reason as `withSilentSteps_visible`. -/
 @[simp] theorem withSilentSteps_silent {m : Type uB → Type uM} [Monad m]
     (handler : PFunctor.Handler m F) :
-    withSilentSteps handler (.inr PUnit.unit) = Pure.pure PUnit.unit := rfl
+    withSilentSteps handler (Sum.inr PUnit.unit : F.A ⊕ PUnit) = Pure.pure PUnit.unit := rfl
 
 end ITree

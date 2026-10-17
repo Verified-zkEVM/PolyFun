@@ -22,7 +22,9 @@ scheduling obligation across time and across different presentations of the
 same protocol.
 
 The closed-world `Process` API is recovered as a specialization of these
-generic definitions.
+generic definitions. The `_iff` characterizations of `enabledAt`, `firedAt`,
+and the weak and strong fairness contracts state these definitions for
+ordinary-import consumers.
 -/
 
 public section

@@ -13,12 +13,12 @@ public import PolyFun.Interaction.Concurrent.Fairness
 
 The stateful consumer distinguishes dependent answers, threads state through effects, and
 continues a residual without interpreting an operation twice. Generic laws retain arbitrary
-diagrams and lawful monads rather than specializing to a file-reporting application.
+diagrams and lawful monads, and the terminal observations unfold to the residual runners.
 -/
 
 @[expose] public section
 
-namespace PolyFunTest.HandledExecution
+namespace PolyFunTest.ModuleAPI.HandledExecution
 
 open PFunctor DynSystem Interaction Interaction.Execution ReactiveProcess ReactiveNetwork
 
@@ -54,6 +54,36 @@ example : ((do
     let last ← d.runToken () 1 first
     return outcome () last).run.run 7) = (Except.error "read failed", 8) := rfl
 
+/-- Two token activations from the initial configuration are the observation at fuel two. -/
+example : (diagram.tokenObservation () 2).run 7 = some (some (.returned 8), 8) := rfl
+
+example {m : Type → Type} [Monad m] {N R : Type} [DecidableEq N] {boundary : PortBoundary}
+    (d : HandledDiagram m N boundary R) (environment : N) (fuel : Nat) :
+    d.tokenObservation environment fuel =
+      outcome environment <$> d.runToken environment fuel (d.initial environment) :=
+  d.tokenObservation_eq environment fuel
+
+example {m : Type → Type} [Monad m] {N R : Type} [DecidableEq N] {boundary : PortBoundary}
+    (d : HandledDiagram m N boundary R) (environment : N) (schedule : List (Activation N)) :
+    d.fifoObservation environment schedule =
+      outcome environment <$> d.runFIFO environment schedule (d.initial environment) :=
+  d.fifoObservation_eq environment schedule
+
+example {m : Type → Type} [Monad m] {N R : Type} [DecidableEq N] {boundary : PortBoundary}
+    (d : HandledDiagram m N boundary R) (environment : N)
+    (state : State (d.network environment) Unit) :
+    d.runToken environment 0 state = pure state ∧ d.runFIFO environment [] state = pure state := by
+  simp
+
+/-- Residual configurations are equal when every retained field agrees. -/
+example {N R S : Type} {boundary : PortBoundary} {network : Network N boundary R}
+    (left right : State network S)
+    (hlocal : left.localState = right.localState) (hinbox : left.inbox = right.inbox)
+    (hservice : left.service = right.service) (hpending : left.pending = right.pending)
+    (houtput : left.output = right.output) (hfocus : left.focus = right.focus)
+    (helapsed : left.elapsed = right.elapsed) : left = right := by
+  ext : 1 <;> assumption
+
 example {m : Type → Type} [Monad m] [LawfulMonad m] {N R : Type} [DecidableEq N]
     {boundary : PortBoundary} (d : HandledDiagram m N boundary R) (environment : N)
     (state : State (d.network environment) Unit) (first rest : List (Activation N)) :
@@ -78,4 +108,4 @@ example {Γ : TypeTree.Node.Context} (t : Concurrent.ProcessOver.Ticketed Γ)
   (Concurrent.ProcessOver.Ticketed.weakFairOn_iff t r ticket).mp
     ((Concurrent.ProcessOver.Ticketed.weakFair_iff t r).mp h ticket)
 
-end PolyFunTest.HandledExecution
+end PolyFunTest.ModuleAPI.HandledExecution

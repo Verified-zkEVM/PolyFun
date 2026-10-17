@@ -30,15 +30,6 @@ universe u
 namespace PFunctor
 namespace FreeP
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the module-law equations below rewrite through the tensor substrate and the
-cofree comparison retrofunctors there. `implicit_reducible` (unlike
-`reducible`) keeps these constants opaque to simp and typeclass resolution,
-and needs no `allowUnsafeReducibility`. Constants already
-`implicit_reducible` at their definition sites (the `unfold*` family,
-`relabel`, `Comonoid.tensor`) are omitted. -/
-attribute [local implicit_reducible] PFunctor.y PFunctor.monomial
-
 /- Path indices are compared at implicit transparency; the node normal form
 `(FreeM.lift a).bind rest` and the constructor `FreeM.liftBind a rest` must agree there. -/
 attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.lift

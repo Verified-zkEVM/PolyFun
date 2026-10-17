@@ -64,7 +64,7 @@ example {P Q : PFunctor.{0, 0}} {m : Type → Type} [Monad m]
     (left : PFunctor.Handler m P) (right : PFunctor.Handler m Q)
     (program : PFunctor.FreeM P Nat) :
     (program.mapLens PFunctor.Lens.inl).liftM (PFunctor.Handler.sum left right) =
-      program.liftM left := PFunctor.FreeM.liftM_mapLens_inl program left right
+      program.liftM left := PFunctor.Handler.liftM_sum_mapLens_inl left right program
 
 example {P : PFunctor.{0, 0}} (machine : PFunctor.DynSystem.DynComputation P Unit Nat)
     (handler : PFunctor.Handler Id P) (first second : Nat) :

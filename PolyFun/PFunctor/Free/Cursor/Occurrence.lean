@@ -15,6 +15,12 @@ An `Occurrence` stops immediately before a selected polynomial position and
 retains the typed prefix needed to complete that position along any answer.
 The executable `splitAt` operation exposes this context without interpreting
 the polynomial.
+
+`Occurrence.complete` issues the focused query and executes the residual;
+`Occurrence.completeWith` executes the residual at a supplied answer without
+issuing the query (`complete_eq_liftBind`). `forkAtWith` executes the prefix
+once and completes the occurrence at two supplied answers. The two suffixes
+still perform their own effects; neither is rolled back or isolated.
 -/
 
 @[expose] public section

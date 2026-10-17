@@ -15,6 +15,9 @@ A chunk either returns a value or retains the exact residual machine state. Term
 observation costs no fuel. The syntactic API keeps the state, input, result, position,
 and direction universes independent. Interpretation aligns state, result, and direction
 universes because the handler's monad must carry the residual state as well as responses.
+`startChunk` initializes a machine from its input and interprets the first chunk;
+`continueChunk` interprets the next chunk of a residual, so a caller never reconstructs the
+hidden state (`startChunk_continueChunk`).
 -/
 
 public section

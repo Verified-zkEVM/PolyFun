@@ -38,7 +38,10 @@ public import PolyFun.IPFunctor.Chart.Basic
 public import PolyFun.IPFunctor.Equiv.Basic
 public import PolyFun.IPFunctor.Free.Basic
 public import PolyFun.IPFunctor.Free.Family
+public import PolyFun.IPFunctor.Free.Fold
 public import PolyFun.IPFunctor.Free.Indexed
+public import PolyFun.IPFunctor.Free.Reindex
+public import PolyFun.IPFunctor.Free.Traversal
 public import PolyFun.IPFunctor.Lens.Basic
 public import PolyFun.IPFunctor.M
 public import PolyFun.IPFunctor.Notation
@@ -229,6 +232,7 @@ public import PolyFun.PFunctor.Dynamical.DynComputation.BoundedFold
 public import PolyFun.PFunctor.Dynamical.DynComputation.IO
 public import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
 public import PolyFun.PFunctor.Dynamical.DynComputation.Termination
+public import PolyFun.PFunctor.Dynamical.DynComputation.WrapState
 public import PolyFun.PFunctor.Dynamical.Game
 public import PolyFun.PFunctor.Dynamical.Refinement
 public import PolyFun.PFunctor.Dynamical.Responder
@@ -284,6 +288,7 @@ public import PolyFun.PFunctor.Handler.Instrumentation
 public import PolyFun.PFunctor.Handler.Instrumentation.Free
 public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr
+public import PolyFun.PFunctor.Handler.StateLens
 public import PolyFun.PFunctor.Handler.Stateful
 public import PolyFun.PFunctor.Handler.Stateful.Combinators
 public import PolyFun.PFunctor.Handler.Sum
@@ -329,11 +334,14 @@ public import PolyFun.Realizability.Instances
 public import PolyFun.Realizability.Machine
 public import PolyFun.Realizability.Quantitative
 public import PolyFun.Realizability.Quantitative.BoundedClosure
+public import PolyFun.Realizability.Quantitative.Carry
 public import PolyFun.Realizability.Quantitative.Closure
+public import PolyFun.Realizability.Quantitative.CostLaws
 public import PolyFun.Realizability.Quantitative.Counting
 public import PolyFun.Realizability.Quantitative.Description
 public import PolyFun.Realizability.Quantitative.Family
 public import PolyFun.Realizability.Quantitative.FamilySimulation
+public import PolyFun.Realizability.Quantitative.Handler
 public import PolyFun.Realizability.Quantitative.Iteration
 public import PolyFun.Realizability.Quantitative.Polynomial
 public import PolyFun.Realizability.Quantitative.Prefix
@@ -342,6 +350,7 @@ public import PolyFun.Realizability.Quantitative.Recost
 public import PolyFun.Realizability.Quantitative.Reference
 public import PolyFun.Realizability.Quantitative.Resource
 public import PolyFun.Realizability.Quantitative.Simulation
+public import PolyFun.Realizability.Quantitative.Strength
 public import PolyFun.Realizability.Quantitative.TraceCost
 public import PolyFun.Realizability.Quantitative.WordClass
 public import PolyFun.Realizability.Representation

@@ -18,7 +18,7 @@ namespace PFunctor.DynSystem.DynComputation
 
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
 the boundary examples below unfold these constants there. -/
-attribute [local implicit_reducible] PFunctor.y PFunctor.monomial FreeM.IsTotalRollBound
+attribute [local implicit_reducible] FreeM.IsTotalRollBound
 
 /-! ## Boundary behavior and universes -/
 

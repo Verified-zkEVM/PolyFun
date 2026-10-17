@@ -21,6 +21,9 @@ requires three activations, even when the service computation itself is pure.
 The service's monadic effect is atomic at this runtime boundary. Its internal cost is separate
 from packet-delivery fuel. No fairness or completion assumption is built into finite execution.
 Typed response traffic uses PolyFun's `Interface.RoutedPacket` vocabulary.
+
+`State.initial` starts every client ready, with no traffic and a fresh ticket counter.
+`ClientState.result` observes a returned client without discarding the network state.
 -/
 
 public section

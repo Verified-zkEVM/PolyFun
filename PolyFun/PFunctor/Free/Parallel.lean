@@ -29,6 +29,10 @@ not state an unrestricted interchange theorem between `Handler.parallel` and
 `Handler.comp`; `PolyFunTest.PFunctor.ParallelFree` records a concrete
 counterexample. Such an interchange law needs an additional scheduling or
 commutativity discipline.
+
+`Handler.parallelSeq` interprets `P ∥ Q` in a monad by running a joint request's left
+component before its right component. This fixes an interpretation order; it does not assert
+that the component effects commute.
 -/
 
 @[expose] public section

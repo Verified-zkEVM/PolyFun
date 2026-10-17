@@ -21,7 +21,8 @@ Both runners use the same component machines and routing data. Token passing del
 immediately and transfers control to its recipient. FIFO execution enqueues sends and delivers
 the oldest pending packet on a delivery activation. Waiting with an empty mailbox consumes an
 activation without advancing the component. A non-environment return or yield gives the token
-back to the environment. Finite execution retains residual machines and pending packets.
+back to the environment. Finite execution retains residual machines and pending packets;
+`State.ext` compares residual configurations field by field.
 
 The external output trace is execution data, not a security observation by itself. In
 particular, callers must justify their initialization, permitted input, scheduler access,
