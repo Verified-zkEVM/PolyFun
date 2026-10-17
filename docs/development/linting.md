@@ -9,6 +9,7 @@ lake lint -- --trace
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
   Examples.Tutorials.InteractionTrees \
+  Examples.Tutorials.ScopedPrograms Examples.Tutorials.ScopedFamily \
   Examples.Parliament PolyFunParliamentMain
 ```
 
@@ -38,6 +39,13 @@ environment linting. Its headers use the same standard checks as production. Run
 [Batteries runner](https://github.com/leanprover-community/batteries/blob/4488d40d070b9700d4d5a6aa342f0d40c31b2a2d/scripts/runLinter.lean)
 can reuse existing oleans. It imports each root independently at private
 visibility, including private bodies and documentation.
+
+CI invokes that same runner in a fresh process for each entry in `lintDriverArgs`,
+using `--no-build --trace` after the library build. The root list is read directly
+from `lakefile.toml`. Separating processes bounds memory retained by repeated
+environment imports; it preserves the complete root inventory and linter set.
+For a single-root local check, use
+`lake exe batteries/runLinter --no-build --trace PolyFun`.
 
 ## Registration and upstream tools
 
