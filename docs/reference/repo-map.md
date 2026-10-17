@@ -28,13 +28,13 @@ Example and test imports never flow back into production.
 | Subject | Entry point | Guide |
 |---|---|---|
 | Polynomial interfaces and morphisms | [PFunctor basics](../../PolyFun/PFunctor/Basic.lean), [lens laws](../../PolyFun/PFunctor/Lens/Basic.lean) | [Polynomial functors](../guides/pfunctor.md) |
-| Free programs and handlers | [Free basics](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean), [handler sums](../../PolyFun/PFunctor/Handler/Sum.lean), [stateful combinators](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean) | [First program](../tutorials/first-program.md) |
+| Free programs and handlers | [Free basics](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean), [handler sums](../../PolyFun/PFunctor/Handler/Sum.lean), [stateful combinators](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean), [stateful lenses](../../PolyFun/PFunctor/Handler/StateLens.lean) | [First program](../tutorials/first-program.md) |
 | State-dependent interfaces | [Indexed basics](../../PolyFun/IPFunctor/Basic.lean) | [Indexed polynomials](../guides/ipfunctor.md) |
 | Behaviors and explicit-state machines | [Resumptions](../../PolyFun/PFunctor/Resumption.lean), [dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean) | [Computation models](../guides/computation-models.md) |
 | Interaction trees and recursion | [ITree basics](../../PolyFun/ITree/Basic.lean) | [Interaction trees](../guides/itree.md) |
 | Least fixed points and admissible predicates | [Omega-CPO fixed points](../../ToCslib/Order/OmegaCompletePartialOrder.lean), [admissibility](../../ToCslib/Order/Admissible.lean), [prefix recursion](../../ToCslib/Order/PrefixRecursion.lean) | [Upstream ownership](../development/upstream.md#omega-cpo-fixed-points) |
 | Interpreting trees into monads | [Interpretation](../../PolyFun/ITree/Interp/Defs.lean), [laws](../../PolyFun/ITree/Interp/Laws.lean) | [Interaction trees](../guides/itree.md#interpreting-into-a-monad) |
-| Running trees as machines | [Machine](../../PolyFun/ITree/Machine.lean) | [Interaction trees](../guides/itree.md#running-a-tree-as-a-machine) |
+| Running trees as machines, with silent-step handlers | [Machine](../../PolyFun/ITree/Machine.lean) | [Interaction trees](../guides/itree.md#running-a-tree-as-a-machine) |
 | Iterative monads and transformer loops | [Iteration](../../PolyFun/Control/Monad/Iter.lean), [transformer instances](../../PolyFun/Control/Monad/Iter/Instances.lean) | [Interaction trees](../guides/itree.md#iterative-monads) |
 | Protocol shapes and strategies | [TypeTree](../../PolyFun/Interaction/Basic/TypeTree.lean) | [Interaction](../guides/interaction.md) |
 | Two-party, multiparty, concurrent interaction | `Interaction/TwoParty`, `Multiparty`, `Concurrent` | [Interaction](../guides/interaction.md) |
@@ -45,6 +45,8 @@ Example and test imports never flow back into production.
 | Support and weakest preconditions | [Ordered algebras](../../PolyFun/Control/Monad/Algebra.lean), [support](../../PolyFun/Control/Monad/Support.lean), [exact interpretations](../../PolyFun/Control/Monad/ExactWP.lean) | [Program logic](../guides/program-logic.md#exact-interpretations) |
 | Worst-case cost and query budgets | [Charges](../../PolyFun/PFunctor/Free/WP/Charge.lean); support-level [charged folds](../../PolyFun/Control/Monad/Support/Charged.lean) | [Program logic](../guides/program-logic.md#charges-and-budgets) |
 | Admissible implementations and resources | [Realizability](../../PolyFun/Realizability/Basic.lean), [quantitative certificates](../../PolyFun/Realizability/Quantitative.lean), [description measures](../../PolyFun/Realizability/Quantitative/Description.lean) | [Realizability](../guides/realizability.md) |
+| Strength, the strong bind, and structural cost laws | [Strength](../../PolyFun/Realizability/Quantitative/Strength.lean), [cost laws](../../PolyFun/Realizability/Quantitative/CostLaws.lean), [carries](../../PolyFun/Realizability/Quantitative/Carry.lean) | [Realizability](../guides/realizability.md#strength-and-the-strong-bind) |
+| Stateful handler substitution | [Handler costs](../../PolyFun/Realizability/Quantitative/Handler.lean), [product machine](../../PolyFun/PFunctor/Dynamical/DynComputation/WrapState.lean) | [Realizability](../guides/realizability.md#stateful-handler-substitution) |
 
 `Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure.
 `Logic/` holds small logic helpers. `Complexity/` supplies resource-bound syntax;
@@ -104,6 +106,17 @@ per-step cost adequacy); a new backend is a sibling subdirectory, never a
 module inside `PolyFun/`.
 `ToCslib` never imports PolyFun or a backend, and PolyFun never imports a
 backend; `scripts/check-modules.sh` enforces both.
+
+PolyFun and `ToCslib` import the CSLib module that owns each reused
+declaration instead of declaring a local copy: `PolyFun.PFunctor.Basic`
+re-exports `Cslib.Foundations.Data.PFunctor.Basic`,
+`ToCslib.Data.PFunctor.Free.Basic` re-exports
+`Cslib.Foundations.Data.PFunctor.Free.Fold`, and `PolyFun.PFunctor.Free.Basic`
+re-exports `Cslib.Foundations.Data.PFunctor.Free.W`. `import Cslib` therefore
+elaborates together with `import PolyFun`, `import ToCslib` and
+`import ComplexityBackends`;
+[`CslibCoImport.lean`](../../PolyFunTest/ModuleAPI/CslibCoImport.lean) imports
+each owning module together with the modules that build on it.
 
 `Interaction.Interface` exposes `Interaction.Interface` and
 `Interaction.PortBoundary`. Runtime declarations use `Interaction.Execution`;

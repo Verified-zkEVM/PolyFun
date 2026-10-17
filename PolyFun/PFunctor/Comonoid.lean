@@ -264,7 +264,8 @@ variable {S T : Type u}
 
 /-- A very-well-behaved state lens is exactly a retrofunctor between state
 comonoids. Preservation of the counit is `GetPut`; preservation of
-comultiplication splits into `PutGet` on positions and `PutPut` on directions. -/
+comultiplication splits into `PutGet` on positions and `PutPut` on directions.
+The argument is a get/put `Lens.State`, not a one-query stateful handler `StateLens`. -/
 def ofStateLens (L : Lens.State S T) [L.IsVeryWellBehaved] :
     Comonoid.Hom (stateComonoid S) (stateComonoid T) where
   toLens := L

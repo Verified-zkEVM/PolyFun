@@ -21,10 +21,6 @@ changes the observed result.
 
 namespace PFunctor.Handler.Normalization.Examples
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the handler examples below unfold `monomial` there. -/
-attribute [local implicit_reducible] PFunctor.monomial
-
 abbrev Query : PFunctor.{0, 0} := Bool y^ Nat
 
 def answerAndAdvance : Handler.Stateful Option Nat Query :=
@@ -42,6 +38,13 @@ effect while preserving branch selection and state handoff. -/
 example : answerAndAdvance.run twoQueries 3 = some ((13, 24), 6) := by
   simp only [handler_nf, twoQueries]
   rfl
+
+/-- The single-query equation fires on the concrete monomial interface, whose direction type
+`Query.B query` reduces to `Nat` at reducible transparency. -/
+example {m : Type → Type} [Monad m] [LawfulMonad m]
+    (h : Handler.Stateful m Nat Query) (query : Query.A) (state : Nat) :
+    h.run (FreeM.lift query) state = (h query).run state := by
+  simp only [handler_nf]
 
 /-- The direct `liftBind` and derived `bind` normalization paths agree. -/
 example {m : Type → Type} [Monad m] [LawfulMonad m] {S α : Type}
