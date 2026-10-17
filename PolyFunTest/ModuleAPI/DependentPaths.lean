@@ -29,6 +29,33 @@ namespace PolyFunTest.ModuleAPI.DependentPaths
 
 open PFunctor
 
+example {P : PFunctor.{uA, uB}} [DecidableEq P.A] {α : Type v} (target : P.A)
+    (next : P.B target → FreeM P α) (first second : P.B target) :
+    FreeM.Cursor.forkAtWith target (FreeM.liftBind target next) 0 first second =
+      FreeM.bind ((FreeM.Cursor.Occurrence.here next).completeWith first)
+        (fun firstCompletion => FreeM.map (fun secondCompletion => some
+          (FreeM.Cursor.ForkView.mk (.here next) firstCompletion secondCompletion))
+          ((FreeM.Cursor.Occurrence.here next).completeWith second)) :=
+  FreeM.Cursor.forkAtWith_liftBind_same_zero target next first second
+
+example {P : PFunctor.{uA, uB}} [DecidableEq P.A] {α : Type v} (target : P.A) (value : α)
+    (n : Nat) (first second : P.B target) :
+    FreeM.Cursor.forkAtWith target (pure value : FreeM P α) n first second = pure none := by
+  simp
+
+/-- Ordinary completion is an explicit completion at the answer of the issued query. -/
+example {P : PFunctor.{uA, uB}} {α : Type v} {target : P.A} {program : FreeM P α} {n : Nat}
+    (occurrence : FreeM.Cursor.Occurrence target program n) :
+    occurrence.complete = FreeM.liftBind target occurrence.completeWith :=
+  occurrence.complete_eq_liftBind
+
+example {P : PFunctor.{uA, uB}} {α : Type v} (target : P.A) (next : P.B target → FreeM P α)
+    (answer : P.B target) :
+    (FreeM.Cursor.Occurrence.here next).completeWith answer =
+      FreeM.map (fun suffix => FreeM.Cursor.Occurrence.Completion.mk answer suffix)
+        (FreeM.withPath (next answer)) :=
+  FreeM.Cursor.Occurrence.completeWith_here next answer
+
 example {P : PFunctor.{uA, uB}} {α : Type v} (a : P.A)
     (next : P.B a → FreeM P α) (path : FreeM.Path (FreeM.liftBind a next)) :
     FreeM.Path.cons a next (FreeM.Path.head a next path)
