@@ -55,12 +55,17 @@ Their pins are recorded in the manifest; their README files live under
   residual-state driver for PolyFun's `DynComputation`. Keep this extension
   beside bounded execution; revisit ownership if the returning-machine
   abstraction moves upstream. The IO adapter adds no domain policy.
+- **Handled execution:** `HandledDiagram.initial`, `runToken` and `runFIFO`
+  wrap PolyFun's routed runtime and retain residuals. Their composition laws
+  delegate to that runtime; CSLib's free-monad interpreters do not own
+  PolyFun's packet topology.
 - **Transition systems:** `Control.LTS.toLts` forgets the polynomial witness
   move. Generic relational simulation and finite-trace results use CSLib;
   dependent response witnesses and delay semantics remain explicit in PolyFun.
   See [bisimulation](../guides/bisimulation.md).
 - **Temporal reasoning:** reuse the pinned temporal operators and prove
   application-specific fairness statements over the chosen event/ticket model.
+  The ticket-predicate characterizations stay beside `ProcessOver.Ticketed`.
 - **Program logic:** ordered algebras and exact support connect to core's
   lattice-generic weakest-precondition framework `Std.WP`, which `vcgen` uses.
   Core's `Std.Do` framework, which `mvcgen` uses, is a distinct interface that

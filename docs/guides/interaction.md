@@ -459,7 +459,9 @@ systems, including the generic implication from strong to weak fairness and
 the temporal fact that eventual persistence implies infinite recurrence.
 `Liveness.lean` provides temporal predicates (`AlwaysState`,
 `EventuallyState`, `InfinitelyOftenState`) and safety / admissibility
-under fairness.
+under fairness. The `enabledAt_iff`, `firedAt_iff`, `weakFairOn_iff`,
+`strongFairOn_iff`, `weakFair_iff` and `strongFair_iff` equations state these
+predicates for ordinary-import consumers without opening their bodies.
 
 ### Safety refinement and mutual refinement
 

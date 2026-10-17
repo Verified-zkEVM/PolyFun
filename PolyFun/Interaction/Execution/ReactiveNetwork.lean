@@ -21,7 +21,8 @@ Both runners use the same component machines and routing data. Token passing del
 immediately and transfers control to its recipient. FIFO execution enqueues sends and delivers
 the oldest pending packet on a delivery activation. Waiting with an empty mailbox consumes an
 activation without advancing the component. A non-environment return or yield gives the token
-back to the environment. Finite execution retains residual machines and pending packets.
+back to the environment. Finite execution retains residual machines and pending packets;
+`State.ext` compares residual configurations field by field.
 
 The external output trace is execution data, not a security observation by itself. In
 particular, callers must justify their initialization, permitted input, scheduler access,
@@ -68,6 +69,23 @@ structure State (network : Network Node boundary result) (S : Type) where
   focus : Node
   /-- Number of consumed local or delivery activations, including no-ops. -/
   elapsed : ℕ
+
+/-- Equality of residual configurations preserves private states, traffic, and accounting. -/
+@[ext] theorem State.ext {network : Network Node boundary result} {left right : State network S}
+    (hlocal : left.localState = right.localState) (hinbox : left.inbox = right.inbox)
+    (hservice : left.service = right.service) (hpending : left.pending = right.pending)
+    (houtput : left.output = right.output) (hfocus : left.focus = right.focus)
+    (helapsed : left.elapsed = right.elapsed) : left = right := by
+  cases left
+  cases right
+  cases hlocal
+  cases hinbox
+  cases hservice
+  cases hpending
+  cases houtput
+  cases hfocus
+  cases helapsed
+  rfl
 
 /-- Initial state with no traffic and the environment holding control. -/
 @[expose] def initial (network : Network Node boundary result) (service : S) : State network S :=
