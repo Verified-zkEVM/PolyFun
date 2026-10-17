@@ -90,24 +90,33 @@ The wrapper equations matter because imported wrappers can be inlined after
 the compiler simplification pass. Remove these staging lemmas when the owning
 core and Mathlib definitions acquire equivalent compiled implementations.
 
-## Continuous domain foundations
+## Omega-CPO fixed points
 
 `ToCslib/Order/` extends Mathlib’s omega-CPO API with continuous currying,
-least fixed points, admissibility, discrete and lifted orders, and finite
-prefix recursion. Order-only results are candidates for Mathlib or CSLib;
-remove superseded local instances before upgrading their owning dependency.
+least fixed points, admissibility, discrete, lifted, and disjoint-sum orders,
+and finite prefix recursion. Order-only results are candidates for Mathlib or
+CSLib; remove superseded local instances before upgrading their owning
+dependency. The pinned Mathlib has no omega-CPO instance for `WithBot` or for
+disjoint sums, and no equality-ordered wrapper; `DiscreteOrder` leaves the
+ordinary order on numbers and Booleans intact.
 
-`PolyFun.Control.Domain` supplies partial results and constructor-producing
-recursive arrays. Continuous interpretations live beside the existing
-resumption and ITree APIs. They use the existing carriers; coordinate any
-carrier migration with [CSLib PR 1088](https://github.com/leanprover/cslib/pull/1088).
-`ITree.Execution` overlaps the adapter in
-[PolyFun PR 289](https://github.com/Verified-zkEVM/PolyFun/pull/289).
-
-The downstream [Cryptol development](../guides/cryptol-model.md) uses these public APIs without making
-PolyFun responsible for a language frontend, concrete primitives, or
-cryptographic interpretations. Its own dependency ledger records the pinned
-Cryptol, Foundation, and CSLib campaign audit.
+Mathlib already supplies the Kleene chain
+`OmegaCompletePartialOrder.fixedPoints.iterateChain`, its facts
+`ωSup_iterate_mem_fixedPoint` and `ωSup_iterate_le_prefixedPoint`, and Kleene's
+theorem `fixedPoints.lfp_eq_sSup_iterate` for complete lattices. It has no
+least-fixed-point operator on a pointed omega-CPO that is not a lattice; `LawfulFix`
+asks only for the unfolding equation, and Mathlib instantiates it for `Part`-valued
+carriers. `ContinuousHom.approximants` is that chain started at bottom, so
+`ContinuousHom.fix` is its supremum (`fix_eq_ωSup_iterateChain`, by `rfl`), and
+`map_fix` and `fix_le` specialize the two Mathlib facts. `isLeast_fix`
+characterizes `fix` as the least prefixed point. On the omega-CPO structure of a
+complete lattice, `fix_eq_lfp` identifies it with `OrderHom.lfp`; carriers with a
+separate pointwise instance, such as function types, combine `isLeast_fix` with
+`OrderHom.isLeast_lfp_le`. The local additions are fixed-point induction, fusion
+through strict maps, and continuity in the recursive body. `fix_induction` takes
+the chain-closure hypothesis in unfolded form, so an `Admissible` proof can be
+passed directly; `Admissible.fix_induction` states the same principle with the
+named predicate. An upstream version belongs beside `fixedPoints.iterateChain`.
 
 ## Binding families and parameter transport
 

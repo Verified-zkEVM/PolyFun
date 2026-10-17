@@ -15,7 +15,8 @@ public import ToCslib.Order.WithBotOmegaCompletePartialOrder
 
 Admissible predicates support fixed-point induction and logical relations for
 lazy values. Closure is preserved by continuous inverse images, universal
-quantification, disjoint sums, and adjoining bottom.
+quantification, disjoint sums, and adjoining bottom. `Admissible.fix_induction`
+states fixed-point induction with this hypothesis.
 -/
 
 public section
@@ -29,6 +30,12 @@ variable {α β : Type*} [OmegaCompletePartialOrder α] [OmegaCompletePartialOrd
 /-- A predicate closed under suprema of increasing sequences. -/
 @[expose] def Admissible (p : α → Prop) : Prop :=
   ∀ c : Chain α, (∀ n, p (c n)) → p (ωSup c)
+
+/-- Fixed-point induction for an admissible predicate: it holds at the least
+fixed point when it holds at bottom and is preserved by the recursive body. -/
+theorem Admissible.fix_induction [OrderBot α] {p : α → Prop} (hp : Admissible p)
+    (f : α →𝒄 α) (hbot : p ⊥) (hstep : ∀ x, p x → p (f x)) : p f.fix :=
+  ContinuousHom.fix_induction f p hbot hstep hp
 
 /-- Continuous inverse images of admissible predicates are admissible. -/
 theorem Admissible.comp {p : β → Prop} (hp : Admissible p) (f : α →𝒄 β) :
