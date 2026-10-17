@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.IPFunctor.Free.Bound
+public import PolyFun.IPFunctor.Free.Lens
 
 /-!
 # Charge bounds on a register-machine command signature
@@ -20,6 +20,10 @@ A per-port query bound and a cost bound on local operations are `IFreeM.IsCharge
 command-level characterizations follow from the generic unfolding, the per-port bound agrees
 with its direct recursive definition, and both budgets add under sequencing across leaf
 universes.
+
+The command signature is also the lifted coproduct of its local operations and its oracle calls,
+at the same universes, and a program of local operations keeps its cost bound when it is
+embedded into the coproduct.
 -/
 
 @[expose] public section
@@ -209,5 +213,35 @@ theorem isCostBound_queryBind_iff (j : S.Port) (E : Reg) (ℓ : A ≃ S.In j × 
 theorem IsCostBound.bind (hx : IsCostBound c x n) (hk : ∀ B y, IsCostBound c (k B y) m) :
     IsCostBound c (x.bind k) (n + m) :=
   IFreeM.isChargeBound_bind hx hk
+
+/-! ## The command signature as a lifted coproduct -/
+
+variable (L) in
+/-- The local operations as an indexed polynomial. -/
+def primIPF : IPFunctor.Endo.{1, u, v} Reg where
+  A := L.Op
+  B _ o := L.Outcome o
+  src _ o b := L.next o b
+
+variable (S) in
+/-- The oracle calls as an indexed polynomial: a port and an exposed factor of the register. -/
+def queryIPF : IPFunctor.Endo.{1, max 1 u₁, v₁} Reg where
+  A A := Σ i : S.Port, Σ E : Reg, A ≃ S.In i × E
+  B _ q := S.Result q.1
+  src _ q _ := Reg.of (S.Out q.1 × q.2.1)
+
+variable (L S) in
+/-- The commands as a lifted coproduct, at the universes of `cmdIPF`. -/
+abbrev cmdSum : IPFunctor.Endo.{1, max 1 u u₁, max v v₁} Reg :=
+  (primIPF L).sumULift (queryIPF S)
+
+/-- The cost charge on the coproduct, by cases on the summand. -/
+def sumCharge (c : ∀ ⦃A : Reg⦄, L.Op A → ℕ) : (A : Reg) → (cmdSum L S).A A → ℕ :=
+  fun _ => Sum.elim (fun o => c o) fun _ => 0
+
+/-- A program of local operations alone keeps its cost bound in the coproduct. -/
+example {x : IFreeM (primIPF L) X A} (h : IFreeM.IsChargeBound x (fun _ o => c o) n) :
+    IFreeM.IsChargeBound (x.mapLens (Lens.inlULift (Q := queryIPF S))) (sumCharge c) n :=
+  h.mapLens _
 
 end IPFunctorBoundTests
