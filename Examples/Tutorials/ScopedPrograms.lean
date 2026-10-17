@@ -113,7 +113,7 @@ end Expr
   .letE (.literal 7) (.lam (.add (.var (.succ .zero)) (.var .zero)))
 
 /-- One constructor-level transformation used as an indexed fold algebra. -/
-@[expose] def eliminateLetNode : Algebra signature.polynomial
+@[expose] def eliminateLetNode : FoldAlgebra signature.polynomial
     (fun j => Expr j.1 j.2) := fun _ op =>
   match op with
   | .letE _ _ => fun args => (args 1).substOne (args 0)

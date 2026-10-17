@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
+public import Mathlib.Basic.Countable.Basic
 
 /-!
 # Resumable bounded execution
@@ -15,6 +16,9 @@ A chunk either returns a value or retains the exact residual machine state. Term
 observation costs no fuel. The syntactic API keeps the state, input, result, position,
 and direction universes independent. Interpretation aligns state, result, and direction
 universes because the handler's monad must carry the residual state as well as responses.
+`startChunk` initializes a machine from its input and interprets the first chunk;
+`continueChunk` interprets the next chunk of a residual, so a caller never reconstructs the
+hidden state (`startChunk_continueChunk`).
 -/
 
 public section
@@ -27,6 +31,37 @@ universe u v w uState uA uB uα uβ
 inductive Chunk (S : Type uState) (β : Type uβ) where
   | done (value : β)
   | paused (state : S)
+
+/-- A residual chunk is the disjoint sum of returned values and suspended states. -/
+@[expose] def Chunk.sumEquiv {S : Type uState} {β : Type uβ} : Chunk S β ≃ β ⊕ S where
+  toFun
+    | .done value => .inl value
+    | .paused state => .inr state
+  invFun
+    | .inl value => .done value
+    | .inr state => .paused state
+  left_inv chunk := by cases chunk <;> rfl
+  right_inv value := by cases value <;> rfl
+
+instance {S : Type uState} {β : Type uβ} [Countable S] [Countable β] :
+    Countable (Chunk S β) := Chunk.sumEquiv.injective.countable
+
+/-- Translate residual states and returned values independently. -/
+@[expose] def Chunk.map {S : Type uState} {T : Type w} {β : Type uβ} {γ : Type v}
+    (state : S → T) (result : β → γ) : Chunk S β → Chunk T γ
+  | .done value => .done (result value)
+  | .paused value => .paused (state value)
+
+@[simp] theorem Chunk.map_done {S : Type uState} {T : Type w} {β : Type uβ} {γ : Type v}
+    (state : S → T) (result : β → γ) (value : β) :
+    (Chunk.done value : Chunk S β).map state result = .done (result value) := rfl
+
+@[simp] theorem Chunk.map_paused {S : Type uState} {T : Type w} {β : Type uβ} {γ : Type v}
+    (state : S → T) (result : β → γ) (value : S) :
+    (Chunk.paused value : Chunk S β).map state result = .paused (state value) := rfl
+
+@[simp] theorem Chunk.map_id {S : Type uState} {β : Type uβ} (chunk : Chunk S β) :
+    chunk.map id id = chunk := by cases chunk <;> rfl
 
 /-- Forget the residual state, recovering PolyFun's bounded-run observation. -/
 @[expose] def Chunk.result {S : Type uState} {β : Type uβ} : Chunk S β → Option β
@@ -124,6 +159,43 @@ def runChunk {m : Type u → Type v} [Monad m] (machine : DynComputation.{u} p �
     (handler : Handler m p) (fuel : Nat) (state : machine.State) :
     m (Chunk machine.State β) := (unrollChunk machine fuel state).liftM handler
 
+/-- Initialize a machine from its public input and interpret one bounded chunk. -/
+def startChunk {m : Type u → Type v} [Monad m] (machine : DynComputation.{u} p α β)
+    (handler : Handler m p) (fuel : Nat) (input : α) : m (Chunk machine.State β) :=
+  machine.runChunk handler fuel (machine.init input)
+
+/-- Interpret a residual chunk without reinitializing the machine or repeating its prefix. -/
+def continueChunk {m : Type u → Type v} [Monad m] (machine : DynComputation.{u} p α β)
+    (handler : Handler m p) (fuel : Nat) (chunk : Chunk machine.State β) :
+    m (Chunk machine.State β) := (machine.resumeChunk fuel chunk).liftM handler
+
+@[simp] theorem startChunk_eq_runChunk {m : Type u → Type v} [Monad m]
+    (machine : DynComputation.{u} p α β) (handler : Handler m p) (fuel : Nat) (input : α) :
+    machine.startChunk handler fuel input =
+      machine.runChunk handler fuel (machine.init input) := by unfold startChunk; rfl
+
+@[simp] theorem continueChunk_done {m : Type u → Type v} [Monad m]
+    (machine : DynComputation.{u} p α β) (handler : Handler m p) (fuel : Nat) (value : β) :
+    machine.continueChunk handler fuel (.done value) = pure (.done value) := by
+  unfold continueChunk
+  rfl
+
+@[simp] theorem continueChunk_paused {m : Type u → Type v} [Monad m]
+    (machine : DynComputation.{u} p α β) (handler : Handler m p) (fuel : Nat)
+    (state : machine.State) :
+    machine.continueChunk handler fuel (.paused state) = machine.runChunk handler fuel state := by
+  unfold continueChunk runChunk
+  rfl
+
+/-- Starting with no fuel observes a return or preserves the exact initialized state. -/
+theorem startChunk_zero {m : Type u → Type v} [Monad m]
+    (machine : DynComputation.{u} p α β) (handler : Handler m p) (input : α) :
+    machine.startChunk handler 0 input = pure (match machine.view (machine.init input) with
+      | .inl value => .done value
+      | .inr _ => .paused (machine.init input)) := by
+  cases h : machine.view (machine.init input) <;>
+    simp [startChunk, runChunk, unrollChunk, h]
+
 theorem runChunk_result {m : Type u → Type v} [Monad m] [LawfulMonad m]
     (machine : DynComputation.{u} p α β) (handler : Handler m p)
     (fuel : Nat) (state : machine.State) :
@@ -139,6 +211,14 @@ theorem runChunk_add {m : Type u → Type v} [Monad m] [LawfulMonad m]
         runChunk machine handler (first + second) state := by
   rw [runChunk, ← FreeM.liftM_bind, unrollChunk_add]
   rfl
+
+/-- Starting and continuing conserves the exact residual state, not just the final result. -/
+theorem startChunk_continueChunk {m : Type u → Type v} [Monad m] [LawfulMonad m]
+    (machine : DynComputation.{u} p α β) (handler : Handler m p)
+    (first second : Nat) (input : α) :
+    (machine.startChunk handler first input >>= machine.continueChunk handler second) =
+      machine.startChunk handler (first + second) input :=
+  machine.runChunk_add handler first second (machine.init input)
 
 /-- Transporting the target monad commutes with interpretation of a chunk. -/
 theorem runChunk_natural {m : Type u → Type v} {n : Type u → Type w}

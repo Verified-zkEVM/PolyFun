@@ -633,7 +633,6 @@ theorem map_counit {Q : PFunctor.{uA, uB}} (lens : Lens P Q) :
     (comonoid Q).counit ∘ₗ map lens = (comonoid P).counit := by
   ext tree
   · rfl
-  · exact M.Vertex.pullMapLens_root lens tree
 
 private theorem map_comult_obj {Q : PFunctor.{uA, uB}}
     (lens : Lens P Q) (tree : M P) :

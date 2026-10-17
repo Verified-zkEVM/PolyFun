@@ -158,19 +158,13 @@ theorem seqComp_recost [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption]
 
 /-- Transport a trace to the recosted realization; the constructors are definitionally the same
 because the machine is. -/
-@[expose] def ExecutionTrace.recost {R : QuantitativeRealization Q bd} :
-    ∀ {start finish : R.machine.State},
-      R.ExecutionTrace start finish → (R.recost cost').ExecutionTrace start finish
-  | _, _, .nil state => ExecutionTrace.nil (R := R.recost cost') state
-  | _, _, .query view_eq direction tail =>
-      ExecutionTrace.query (R := R.recost cost') view_eq direction (ExecutionTrace.recost tail)
+@[expose] def ExecutionTrace.recost {R : QuantitativeRealization Q bd}
+    {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
+    (R.recost cost').ExecutionTrace start finish := trace
 
 @[simp] theorem ExecutionTrace.length_recost {R : QuantitativeRealization Q bd}
     {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
-    (trace.recost (cost' := cost')).length = trace.length := by
-  induction trace with
-  | nil => simp [ExecutionTrace.recost, ExecutionTrace.length]
-  | query _ _ tail ih => simp [ExecutionTrace.recost, ExecutionTrace.length, ih]
+    (trace.recost (cost' := cost')).length = trace.length := rfl
 
 theorem ExecutionTrace.cost_recost_queries {R : QuantitativeRealization Q bd}
     {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
@@ -178,6 +172,7 @@ theorem ExecutionTrace.cost_recost_queries {R : QuantitativeRealization Q bd}
   induction trace with
   | nil => rfl
   | query _ _ tail ih =>
+      simp only [ExecutionTrace.recost] at ih
       simp only [ExecutionTrace.recost, ExecutionTrace.cost, ExecutionCost.queries_add,
         ExecutionCost.queries_ofWork, ExecutionCost.queries_observe, ExecutionCost.queries_query,
         ih]
@@ -188,6 +183,7 @@ theorem ExecutionTrace.cost_recost_traffic {R : QuantitativeRealization Q bd}
   induction trace with
   | nil => rfl
   | query _ _ tail ih =>
+      simp only [ExecutionTrace.recost] at ih
       simp only [ExecutionTrace.recost, ExecutionTrace.cost, ExecutionCost.traffic_add,
         ExecutionCost.traffic_ofWork, ExecutionCost.traffic_observe, ExecutionCost.traffic_query,
         QuantitativeStepClass.recost_size,
@@ -200,6 +196,7 @@ theorem ExecutionTrace.cost_recost_peakStateSize {R : QuantitativeRealization Q 
   induction trace with
   | nil => rfl
   | query _ _ tail ih =>
+      simp only [ExecutionTrace.recost] at ih
       simp only [ExecutionTrace.recost, ExecutionTrace.cost, ExecutionCost.peakStateSize_add,
         ExecutionCost.peakStateSize_observe, ExecutionCost.ofWork, ExecutionCost.query,
         QuantitativeStepClass.recost_size,
@@ -212,6 +209,7 @@ theorem ExecutionTrace.cost_recost_peakHeadSize {R : QuantitativeRealization Q b
   induction trace with
   | nil => rfl
   | query _ _ tail ih =>
+      simp only [ExecutionTrace.recost] at ih
       simp only [ExecutionTrace.recost, ExecutionTrace.cost, ExecutionCost.peakHeadSize_add,
         ExecutionCost.peakHeadSize_observe, ExecutionCost.ofWork, ExecutionCost.query,
         QuantitativeStepClass.recost_size,
@@ -273,6 +271,7 @@ theorem ExecutionTrace.cost_recost_zero_work {R : QuantitativeRealization Q bd}
   induction trace with
   | nil => rfl
   | query _ _ tail ih =>
+      simp only [ExecutionTrace.recost] at ih
       simp only [ExecutionTrace.recost, ExecutionTrace.cost, ExecutionCost.work_add,
         ExecutionCost.work_ofWork, ExecutionCost.work_observe, ExecutionCost.work_query,
         recost_headCode, recost_updateCode, ih]
@@ -289,39 +288,27 @@ theorem executionCost_recost_zero_work :
   all_goals rfl
 
 /-- Restore the original charge annotations on a trace. -/
-@[expose] def ExecutionTrace.restore {R : QuantitativeRealization Q bd} :
-    ∀ {start finish : R.machine.State},
-      (R.recost cost').ExecutionTrace start finish → R.ExecutionTrace start finish
-  | _, _, .nil state => ExecutionTrace.nil (R := R) state
-  | _, _, .query view_eq direction tail =>
-      ExecutionTrace.query (R := R) view_eq direction (ExecutionTrace.restore (R := R) tail)
+@[expose] def ExecutionTrace.restore {R : QuantitativeRealization Q bd}
+    {start finish : R.machine.State} (trace : (R.recost cost').ExecutionTrace start finish) :
+    R.ExecutionTrace start finish := trace
 
 @[simp] theorem ExecutionTrace.recost_restore {R : QuantitativeRealization Q bd}
     {start finish : R.machine.State}
     (trace : (R.recost cost').ExecutionTrace start finish) :
-    (trace.restore (R := R)).recost (cost' := cost') = trace := by
-  induction trace using ExecutionTrace.rec (R := R.recost cost') with
-  | nil => rfl
-  | query _ _ tail ih => simp only [restore, recost, ih]
+    (trace.restore (R := R)).recost (cost' := cost') = trace := rfl
 
 /-- Recosting preserves the set of allowed response prefixes. -/
 @[simp] theorem ExecutionTrace.conforms_recost {R : QuantitativeRealization Q bd}
     {start finish : R.machine.State} (trace : R.ExecutionTrace start finish)
     (allows : ∀ position, p.B position → Prop) :
-    (trace.recost (cost' := cost')).Conforms allows ↔ trace.Conforms allows := by
-  induction trace with
-  | nil => rfl
-  | query _ _ tail ih => simp only [recost, Conforms, ih]
+    (trace.recost (cost' := cost')).Conforms allows ↔ trace.Conforms allows := Iff.rfl
 
 /-- Restoring charge annotations preserves allowed response prefixes. -/
 @[simp] theorem ExecutionTrace.conforms_restore {R : QuantitativeRealization Q bd}
     {start finish : R.machine.State}
     (trace : (R.recost cost').ExecutionTrace start finish)
     (allows : ∀ position, p.B position → Prop) :
-    (trace.restore (R := R)).Conforms allows ↔ trace.Conforms allows := by
-  induction trace using ExecutionTrace.rec (R := R.recost cost') with
-  | nil => rfl
-  | query _ _ tail ih => simp only [restore, Conforms, ih]
+    (trace.restore (R := R)).Conforms allows ↔ trace.Conforms allows := Iff.rfl
 
 /-- Pointwise smaller local charges give smaller prefix work. -/
 theorem ExecutionTrace.work_recost_le {R : QuantitativeRealization Q bd}
@@ -338,7 +325,7 @@ theorem ExecutionTrace.work_recost_le {R : QuantitativeRealization Q bd}
       have hu := hle R.updateCode (state, ⟨position, direction⟩)
       change cost' R.headCode state +
         cost' R.updateCode (state, ⟨position, direction⟩) + 0 + 0 +
-        (tail.recost (cost' := cost')).cost.work ≤ _
+        (ExecutionTrace.recost (R := R) (cost' := cost') tail).cost.work ≤ _
       omega
 
 /-- Pointwise smaller local charges preserve the whole resource inequality. -/

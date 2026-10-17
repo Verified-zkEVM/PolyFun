@@ -219,7 +219,7 @@ def lift (position : p.A) : Resumption p (p.B position) :=
   query position pure
 
 @[simp] theorem dest_lift (position : p.A) :
-    dest (lift position) = Sum.inr (.mk position pure) := by
+    dest (β := no_index (p.B position)) (lift position) = Sum.inr (.mk position pure) := by
   simp [lift]
 
 /-- Step coalgebra used by `bind`. The right summand records that execution has
@@ -519,6 +519,13 @@ variable {p : PFunctor.{uA, uB}} {α β γ : Type u}
 instance instMonad : Monad (Resumption p) where
   pure := pure
   bind := bind
+
+/-- The monadic return is the resumption leaf constructor. -/
+theorem pure_eq_pure (value : α) : (Pure.pure value : Resumption p α) = pure value := rfl
+
+/-- The monadic sequencing operation is resumption substitution. -/
+theorem bind_eq_bind (tree : Resumption p α) (next : α → Resumption p β) :
+    tree >>= next = bind tree next := rfl
 
 @[simp] theorem map_eq_functor_map (f : α → β) (computation : Resumption p α) :
     f <$> computation = map f computation := rfl

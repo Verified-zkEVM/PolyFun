@@ -105,7 +105,7 @@ lemma bind_liftObj (s : I) (x : P.Obj (fun _ => α) s) (g : (s' : I) → α → 
 @[simp]
 lemma bind_lift {β : Type uB} (s : I) (a : P.A s)
     (g : (s' : I) → P.B s a → FreeM P s' β) :
-    FreeM.bind (FreeM.lift s a) g =
+    FreeM.bind (α := no_index (P.B s a)) (FreeM.lift s a) g =
       FreeM.liftBind s a (fun b => g (P.src s a b) b) := rfl
 
 /-! ## Specialized bind under deterministic transitions
