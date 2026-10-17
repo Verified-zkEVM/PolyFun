@@ -20,7 +20,7 @@ of those implementation polynomials as an exact equivalence.
 
 @[expose] public section
 
-universe uA uB uα
+universe uA uB uα uβ
 
 namespace ITree
 
@@ -114,6 +114,47 @@ theorem dest_toResumptionWithTau (tree : _root_.ITree P α) :
   rw [dest_toResumptionWithTau, ITree.shape'_query,
     PFunctor.Resumption.dest_query]
 
+/-- The exact encoding preserves substitution, including silent steps. -/
+@[simp] theorem toResumptionWithTau_bind {β : Type uβ} (tree : _root_.ITree P α)
+    (next : α → _root_.ITree P β) :
+    toResumptionWithTau (bind tree next) =
+      PFunctor.Resumption.bind (toResumptionWithTau tree)
+        (fun value => toResumptionWithTau (next value)) := by
+  apply PFunctor.Resumption.bisim
+    (fun left right => left = right ∨ ∃ source : _root_.ITree P α,
+      left = toResumptionWithTau (bind source next) ∧
+      right = PFunctor.Resumption.bind (toResumptionWithTau source)
+        (fun value => toResumptionWithTau (next value)))
+  · rintro left right (heq | ⟨source, rfl, rfl⟩)
+    · subst left
+      rcases h : PFunctor.Resumption.dest right with value | ⟨a, rest⟩
+      · exact .pure value h h
+      · exact .query a rest rest h h (fun _ => Or.inl rfl)
+    · rcases h : shape' source with ⟨head, rest⟩
+      cases head with
+      | pure value =>
+          have heq := eq_pure_of_dest h
+          subst source
+          simp only [bind_pure_left, toResumptionWithTau_pure,
+            PFunctor.Resumption.bind_pure_left]
+          rcases hn : PFunctor.Resumption.dest (toResumptionWithTau (next value)) with
+            result | ⟨a, children⟩
+          · exact .pure result hn hn
+          · exact .query a children children hn hn (fun _ => Or.inl rfl)
+      | step =>
+          have heq := eq_step_of_dest h
+          subst source
+          simp only [bind_step, toResumptionWithTau_step, PFunctor.Resumption.bind_query]
+          exact .query (.inr PUnit.unit) _ _ (PFunctor.Resumption.dest_query _ _)
+            (PFunctor.Resumption.dest_query _ _) (fun _ => Or.inr ⟨_, rfl, rfl⟩)
+      | query a =>
+          have heq := eq_query_of_dest h
+          subst source
+          simp only [bind_query, toResumptionWithTau_query, PFunctor.Resumption.bind_query]
+          exact .query (.inl a) _ _ (PFunctor.Resumption.dest_query _ _)
+            (PFunctor.Resumption.dest_query _ _) (fun answer => Or.inr ⟨rest answer, rfl, rfl⟩)
+  · exact Or.inr ⟨tree, rfl, rfl⟩
+
 /-- Encoding the tau-free ITree associated to a resumption agrees with
 injecting its visible interface into the resumption-with-tau signature. This is
 the commuting square between the tau-free and unrestricted resumption views of
@@ -190,5 +231,48 @@ def equivResumptionWithTau :
   invFun := ofResumptionWithTau
   left_inv := ofResumptionWithTau_toResumptionWithTau
   right_inv := toResumptionWithTau_ofResumptionWithTau
+
+open PFunctor
+
+/-- Encoding silent steps explicitly preserves distinct trees. -/
+theorem toResumptionWithTau_injective :
+    Function.Injective (toResumptionWithTau (P := P) (α := α)) :=
+  Function.LeftInverse.injective ofResumptionWithTau_toResumptionWithTau
+
+@[simp] theorem ofResumptionWithTau_pure (a : α) :
+    ofResumptionWithTau (Resumption.pure a : Resumption (P + y.{uA, uB}) α) = pure a := by
+  apply toResumptionWithTau_injective
+  simp
+
+/-- Decoding a visible query preserves its dependent continuation. -/
+theorem ofResumptionWithTau_query (p : P.A) (k : P.B p → Resumption (P + y.{uA, uB}) α) :
+    ofResumptionWithTau (Resumption.query (p := P + y.{uA, uB}) (.inl p) k) =
+      query p (fun b => ofResumptionWithTau (k b)) := by
+  apply toResumptionWithTau_injective
+  simp
+
+/-- Decoding a unary administrative event produces one silent step. -/
+theorem ofResumptionWithTau_step (k : PUnit.{uB + 1} → Resumption (P + y.{uA, uB}) α) :
+    ofResumptionWithTau (Resumption.query (p := P + y.{uA, uB}) (.inr PUnit.unit) k) =
+      step (ofResumptionWithTau (k PUnit.unit)) := by
+  apply toResumptionWithTau_injective
+  simp
+
+/-- The computational view of an explicitly encoded silent-step resumption. -/
+theorem shape'_ofResumptionWithTau (t : Resumption (P + y.{uA, uB}) α) :
+    shape' (ofResumptionWithTau t) = match Resumption.dest t with
+    | .inl a => .mk (.pure a) PEmpty.elim
+    | .inr ⟨.inl p, k⟩ => .mk (.query p) (fun b => ofResumptionWithTau (k b))
+    | .inr ⟨.inr _, k⟩ => .mk .step (fun b => ofResumptionWithTau (k b)) := by
+  rcases ht : Resumption.dest t with a | ⟨p, k⟩
+  · have he : t = Resumption.pure a :=
+      Resumption.eq_of_dest_eq (ht.trans (Resumption.dest_pure a).symm)
+    simp [he, ofResumptionWithTau_pure]
+  · have he : t = Resumption.query p k :=
+      Resumption.eq_of_dest_eq (ht.trans (Resumption.dest_query p k).symm)
+    rcases p with p | tick
+    · rw [he, ofResumptionWithTau_query, shape'_query]
+    · cases tick
+      rw [he, ofResumptionWithTau_step, shape'_step]
 
 end ITree

@@ -212,3 +212,35 @@ The [Parliament behavior walkthrough](../../Examples/Parliament/Docs/walkthrough
 uses `DynComputation` behavior and `Resumption.toITree` to present the live application
 as a tau-free interaction tree. It proves query/return observations and relates finite
 chunks to resumption truncation; this does not require the meeting to terminate.
+
+## Continuous domain interpretations
+
+[`ITree.Domain`](../../PolyFun/ITree/Domain.lean) interprets trees into any
+pointed omega-CPO with a continuous algebra for each visible query. Silent
+steps use identity. `ITree.denote` interprets the exact resumption-with-tau
+representation; `denote_eq_fix` identifies it with the least solution of the tree equations;
+`WeakBisim.denote_eq` proves it invariant under weak bisimulation.
+`denote_corec` relates a corecursive tree to the least solution of its state
+equations. This is a domain interpretation, separate from a chosen monadic
+handler or a termination argument.
+
+[`Resumption.Domain`](../../PolyFun/PFunctor/Resumption/Domain.lean) supplies
+the same construction for resumptions, proves agreement with well-founded
+free folds, and transports algebras along lenses. `denote_toResumptionWithTau`
+connects the ITree and resumption presentations exactly.
+[`DomainTruncate`](../../PolyFun/PFunctor/Resumption/DomainTruncate.lean)
+interprets finite cutoff leaves as bottom and proves that the increasing
+truncation folds have the full denotation as their supremum. These theorems
+do not require finite branching or a uniform finite depth for a well-founded tree.
+
+### Sequencing continuous interpretations
+
+[`Resumption/DomainLaws`](../../PolyFun/PFunctor/Resumption/DomainLaws.lean)
+and [`ITree/DomainLaws`](../../PolyFun/ITree/DomainLaws.lean) provide algebra
+fusion and substitution laws. A strict continuous map that commutes with query
+algebras commutes with `denote`. Interpreting `bind tree next` changes the return
+interpretation to `fun a => denote ret alg (next a)` and retains the query algebra.
+The proof uses leastness and increasing approximants, so it covers unbounded
+branching and divergence. `ITree.denote_toITree` connects these laws across the
+canonical tau-free resumption embedding. Measure and kernel algebras belong in
+VCVio; these laws themselves impose no probability interpretation.
