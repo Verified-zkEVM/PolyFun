@@ -255,3 +255,15 @@ The [Parliament behavior walkthrough](../../Examples/Parliament/Docs/walkthrough
 uses `DynComputation` behavior and `Resumption.toITree` to present the live application
 as a tau-free interaction tree. It proves query/return observations and relates finite
 chunks to resumption truncation; this does not require the meeting to terminate.
+
+### Sequencing continuous interpretations
+
+[`Resumption/DomainLaws`](../../PolyFun/PFunctor/Resumption/DomainLaws.lean)
+and [`ITree/DomainLaws`](../../PolyFun/ITree/DomainLaws.lean) provide algebra
+fusion and substitution laws. A strict continuous map that commutes with query
+algebras commutes with `denote`. Interpreting `bind tree next` changes the return
+interpretation to `fun a => denote ret alg (next a)` and retains the query algebra.
+The proof uses leastness and increasing approximants, so it covers unbounded
+branching and divergence. `ITree.denote_toITree` connects these laws across the
+canonical tau-free resumption embedding. Measure and kernel algebras belong in
+VCVio; these laws themselves impose no probability interpretation.

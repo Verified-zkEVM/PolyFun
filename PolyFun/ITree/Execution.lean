@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.ITree.ResumptionWithTau
+public import PolyFun.ITree.Machine
 public import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
 public import PolyFun.PFunctor.Handler.Sum
 
@@ -23,22 +23,9 @@ namespace ITree
 
 universe uA u uM
 
-/-- Interpret visible operations normally and acknowledge silent steps internally. -/
-@[expose] def withSilentSteps {P : PFunctor.{uA, u}} {m : Type u → Type uM} [Monad m]
-    (handler : PFunctor.Handler m P) : PFunctor.Handler m (P + PFunctor.y.{uA, u}) :=
-  PFunctor.Handler.sum handler (fun _ => Pure.pure PUnit.unit)
-
 /-- The exact tree/resumption representation, with visible and silent events both budgeted. -/
 @[expose] def machine {P : PFunctor.{uA, u}} {α : Type u} :
     PFunctor.DynSystem.DynComputation (P + PFunctor.y.{uA, u}) (ITree P α) α :=
-  .ofResumption toResumptionWithTau
-
-@[simp] theorem withSilentSteps_visible {P : PFunctor.{uA, u}}
-    {m : Type u → Type uM} [Monad m] (handler : PFunctor.Handler m P) (operation : P.A) :
-    withSilentSteps handler (.inl operation) = handler operation := rfl
-
-@[simp] theorem withSilentSteps_silent {P : PFunctor.{uA, u}}
-    {m : Type u → Type uM} [Monad m] (handler : PFunctor.Handler m P) :
-    withSilentSteps handler (.inr PUnit.unit) = Pure.pure PUnit.unit := rfl
+  toDynComputation
 
 end ITree

@@ -191,4 +191,47 @@ def equivResumptionWithTau :
   left_inv := ofResumptionWithTau_toResumptionWithTau
   right_inv := toResumptionWithTau_ofResumptionWithTau
 
+open PFunctor
+
+/-- Encoding silent steps explicitly preserves distinct trees. -/
+theorem toResumptionWithTau_injective :
+    Function.Injective (toResumptionWithTau (P := P) (α := α)) :=
+  Function.LeftInverse.injective ofResumptionWithTau_toResumptionWithTau
+
+@[simp] theorem ofResumptionWithTau_pure (a : α) :
+    ofResumptionWithTau (Resumption.pure a : Resumption (P + y.{uA, uB}) α) = pure a := by
+  apply toResumptionWithTau_injective
+  simp
+
+/-- Decoding a visible query preserves its dependent continuation. -/
+theorem ofResumptionWithTau_query (p : P.A) (k : P.B p → Resumption (P + y.{uA, uB}) α) :
+    ofResumptionWithTau (Resumption.query (p := P + y.{uA, uB}) (.inl p) k) =
+      query p (fun b => ofResumptionWithTau (k b)) := by
+  apply toResumptionWithTau_injective
+  simp
+
+/-- Decoding a unary administrative event produces one silent step. -/
+theorem ofResumptionWithTau_step (k : PUnit.{uB + 1} → Resumption (P + y.{uA, uB}) α) :
+    ofResumptionWithTau (Resumption.query (p := P + y.{uA, uB}) (.inr PUnit.unit) k) =
+      step (ofResumptionWithTau (k PUnit.unit)) := by
+  apply toResumptionWithTau_injective
+  simp
+
+/-- The computational view of an explicitly encoded silent-step resumption. -/
+theorem shape'_ofResumptionWithTau (t : Resumption (P + y.{uA, uB}) α) :
+    shape' (ofResumptionWithTau t) = match Resumption.dest t with
+    | .inl a => .mk (.pure a) PEmpty.elim
+    | .inr ⟨.inl p, k⟩ => .mk (.query p) (fun b => ofResumptionWithTau (k b))
+    | .inr ⟨.inr _, k⟩ => .mk .step (fun b => ofResumptionWithTau (k b)) := by
+  rcases ht : Resumption.dest t with a | ⟨p, k⟩
+  · have he : t = Resumption.pure a :=
+      Resumption.eq_of_dest_eq (ht.trans (Resumption.dest_pure a).symm)
+    simp [he, ofResumptionWithTau_pure]
+  · have he : t = Resumption.query p k :=
+      Resumption.eq_of_dest_eq (ht.trans (Resumption.dest_query p k).symm)
+    rcases p with p | tick
+    · rw [he, ofResumptionWithTau_query, shape'_query]
+    · cases tick
+      rw [he, ofResumptionWithTau_step, shape'_step]
+
 end ITree

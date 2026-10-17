@@ -329,8 +329,8 @@ theorem map_map {υ : ScopedFamily.{u, v, w, z} W S} {N : W → W → Type n}
 The relation may compare different domains at different parameter assignments. -/
 theorem fold_map_rel (h : Hom σ τ M f)
     {D : Judgment S → Type d} {E : Judgment S → Type e}
-    (sourceVars : ∀ j, ScopedVar j.2.1 j.2.2 → D j) (sourceAlg : Algebra σ.polynomial D)
-    (targetVars : ∀ j, ScopedVar j.2.1 j.2.2 → E j) (targetAlg : Algebra τ.polynomial E)
+    (sourceVars : ∀ j, ScopedVar j.2.1 j.2.2 → D j) (sourceAlg : FoldAlgebra σ.polynomial D)
+    (targetVars : ∀ j, ScopedVar j.2.1 j.2.2 → E j) (targetAlg : FoldAlgebra τ.polynomial E)
     (Rel : ∀ {i j}, MapState M f i j → D i → E j → Prop)
     (hvar : ∀ {w z} (μ : M w z) (Γ : List (S w)) (a : S w) (x : ScopedVar Γ a),
       Rel (.mk μ Γ a) (sourceVars _ x) (targetVars _ (x.map (f μ))))

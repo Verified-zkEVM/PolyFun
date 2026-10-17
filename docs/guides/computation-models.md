@@ -62,3 +62,46 @@ Use the [bisimulation guide](bisimulation.md) to select the actual relation befo
 stating an equivalence theorem. The [execution guide](execution.md) explains
 handler state and fuel, and [realizability](realizability.md) adds admissibility
 and resource obligations to a machine implementation.
+
+## Composed stateful services
+
+[`MachineHandler`](../../PolyFun/PFunctor/Handler/Machine/Defs.lean) is a family
+`(a : P.A) → DynComputation Q S (P.B a × S)`. It adds no computation syntax:
+`toHandler` forgets private machine state and produces the existing
+`Handler.Stateful (Resumption Q) S P`, and `execute` uses that handler's free fold.
+
+`dispatch` composes an arbitrary caller machine with the service. Its retained
+`Phase` contains either the caller state and shared service state, or an active
+operation's private machine state and the caller's suspended dependent
+continuation. Entry and return are unary administrative events; primitive
+queries keep their original answer types. `compile` specializes this same
+construction to `DynComputation.ofFreeM`. The existing `startChunk` and
+`continueChunk` runners preserve these phases across pauses.
+
+[`dispatch_weakBisim_interp`](../../PolyFun/PFunctor/Handler/Machine/Behavior.lean)
+identifies dispatch with ITree interpretation in `StateT`. Its finite-client
+specialization, `compile_weakBisim_execute`, identifies the composed machine
+with the resumption handler fold. Neither requires a uniform client-depth
+bound or handler termination. Weak bisimulation hides administrative steps;
+it does not preserve fuel counts or timing observations. Service calls,
+primitive queries, and administrative transitions are distinct costs.
+
+`capped` instead returns an `OptionT (FreeM Q)` implementation of each operation.
+A timeout permanently aborts the client. It neither restarts nor renormalizes
+that call. This is useful when a consumer requires finite syntax with an
+explicit failure outcome; chunking remains the API for retaining unfinished work.
+
+| Consumer requirement | Model and existing bridge |
+|---|---|
+| Well-founded adaptive client | `FreeM`, `Handler.Stateful.run`, `MachineHandler.compile` |
+| Possibly infinite visible behavior | `Resumption`, `toITree`, continuous `denote` |
+| Recursion and silent divergence | `ITree`, stateful `interp`, weak bisimulation |
+| Executable retained state | `DynComputation`, `dispatch`, resumable runners |
+| Continuing interaction and paths | `DynSystem.behavior`, `trajectory`, M/cofree bridges |
+| State-indexed legal operations | Indexed free models and their existing sigma erasure |
+
+Indexed models already retain terminal-state information through
+`IFreeM.toSigmaFreeM`; a state-indexed protocol consumer can use that bridge
+before adding another interpreter. The service construction here is for an
+ordinary dependent answer interface. Protocol legality, measurable stochastic
+transitions, and cost certificates remain separate obligations.
