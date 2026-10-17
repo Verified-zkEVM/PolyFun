@@ -396,7 +396,10 @@ on core's `wp`. VCVio presents its expectation reading this way, as an
 followed by its worst continuation: `c a + ⨆ b, k b`. Its fold is the worst-case charge-to-go of
 a program. Subtractive per-position budgets are exactly upper bounds on that fold in `ℕ∞`
 (`isRollBound_iff_wpFold_charge`, with `isTotalRollBound_iff_wpFold_charge` for unit charges),
-and no progress condition is needed.
+and no progress condition is needed. State-indexed programs carry the same budgets with charges
+that read the state: `IPFunctor.IFreeM.IsChargeBound` (`PolyFun/IPFunctor/Free/Bound.lean`) is
+the subtractive budget of the Σ-bundled erasure (`isRollBound_toSigmaFreeM_iff`), and it adds
+under binds that change the universe of the leaf family.
 
 Roll bounds (`PolyFun/PFunctor/Bound.lean`) add under `FreeM.bind` and under the binds of
 `ExceptT ε (FreeM P)` and `OptionT (FreeM P)`. If `x.run` makes at most `a` calls and every

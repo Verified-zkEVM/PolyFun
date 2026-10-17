@@ -17,9 +17,6 @@ all its branches. A request interface can have infinitely many possible
 responses. A handler can also introduce its own effects or nontermination;
 well-founded syntax alone does not certify arbitrary external execution.
 
-For language frontends, [reusable interoperability](interop.md) connects scoped
-syntax, represented meanings and deterministic transitions to these models.
-
 ## Interfaces, programs, and protocol shapes
 
 A polynomial interface `P` specifies requests `P.A` and responses `P.B a`.
@@ -72,8 +69,8 @@ and resource obligations to a machine implementation.
 
 `dispatch` composes an arbitrary caller machine with the service. Its retained
 `Phase` contains either the caller state and shared service state, or an active
-operation's private machine state and the caller's suspended dependent
-continuation. Entry and return are unary administrative events; primitive
+operation's private machine state and a `Pending` caller state with evidence
+for its operation. Resuming recovers the dependent continuation from that state. Entry and return are unary administrative events; primitive
 queries keep their original answer types. `compile` specializes this same
 construction to `DynComputation.ofFreeM`. The existing `startChunk` and
 `continueChunk` runners preserve these phases across pauses.

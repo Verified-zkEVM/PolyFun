@@ -167,21 +167,11 @@ jobs:
       # One process per lint root. `lake lint` loads every root's environment into a single
       # process (about 7 GB in total); on Lean v4.35.0 the runner was shut down during that step.
       - name: Run environment linters
-        # The upstream runner retains imported environments across roots. Use a fresh
-        # process per configured root to bound memory on hosted runners.
         run: |
-          python3 - <<'PY'
-          import pathlib
-          import subprocess
-          import tomllib
-
-          config = tomllib.loads(pathlib.Path("lakefile.toml").read_text())
-          for module in config["lintDriverArgs"]:
-              subprocess.run(
-                  ["lake", "exe", config["lintDriver"], "--no-build", "--trace", module],
-                  check=True,
-              )
-          PY
+          python3 -c "import tomllib; print('\\n'.join(tomllib.load(open('lakefile.toml', 'rb'))['lintDriverArgs']))" |
+            while read -r root; do
+              lake exe runLinter "$root"
+            done
 
   test:
     name: Test
