@@ -3,6 +3,7 @@ Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Devon Tuma
 -/
+
 module
 
 public import PolyFun.IPFunctor.Free.Indexed
@@ -37,7 +38,7 @@ abbreviations `FreeM.IsRollBound`, `FreeM₂.IsRollBound` and their specializati
 notation on those types.
 -/
 
-@[expose] public section
+public section
 
 universe uI uA uB v w
 
@@ -49,12 +50,9 @@ variable {I : Type uI} {P : Endo.{uI, uA, uB} I} {X : I → Type v} {B : Type*} 
 `canRoll`, and a cost function `cost`, both of which see the state of the rolled shape. `pure`
 satisfies any bound; `liftBind a r` at state `s` satisfies the bound when `canRoll s a b` holds
 and every continuation satisfies the bound at `cost s a b`. -/
-def IsRollBound (x : IFreeM P X s) (budget : B)
+@[expose] def IsRollBound (x : IFreeM P X s) (budget : B)
     (canRoll : (s : I) → P.A s → B → Prop) (cost : (s : I) → P.A s → B → B) : Prop :=
-  IFreeM.construct (C := fun _ _ => B → Prop)
-    (fun _ _ _ => True)
-    (fun t a _ ih b => canRoll t a b ∧ ∀ y, ih y (cost t a b))
-    x budget
+  (toSigmaFreeM P x).IsRollBound budget (fun a => canRoll a.1 a.2) (fun a => cost a.1 a.2)
 
 variable {canRoll : (s : I) → P.A s → B → Prop} {cost : (s : I) → P.A s → B → B}
 
@@ -70,11 +68,10 @@ lemma isRollBound_liftBind_iff (a : P.A s) (r : (y : P.B s a) → IFreeM P X (P.
   Iff.rfl
 
 @[simp, grind =]
-lemma isRollBound_imap_iff {Y : I → Type v} (f : ∀ s, X s → Y s) (x : IFreeM P X s) (b : B) :
+lemma isRollBound_imap_iff {Y : I → Type w} (f : ∀ s, X s → Y s) (x : IFreeM P X s) (b : B) :
     IsRollBound (x.imap f) b canRoll cost ↔ IsRollBound x b canRoll cost := by
-  induction x using IFreeM.inductionOn generalizing b with
-  | pure _ _ => exact iff_of_true trivial trivial
-  | liftBind _ _ _ ih => exact and_congr_right fun _ => forall_congr' fun y => ih y _
+  unfold IsRollBound
+  rw [toSigmaFreeM_imap, PFunctor.FreeM.isRollBound_map_iff]
 
 /-- Transport along an equality of states, such as the source-index law of a lens, does not
 change the bound. -/
@@ -88,12 +85,8 @@ lemma isRollBound_congr {x : IFreeM P X s} {b : B}
     {canRoll₁ canRoll₂ : (s : I) → P.A s → B → Prop} {cost₁ cost₂ : (s : I) → P.A s → B → B}
     (hcan : ∀ s a b, canRoll₁ s a b ↔ canRoll₂ s a b)
     (hcost : ∀ s a b, cost₁ s a b = cost₂ s a b) :
-    IsRollBound x b canRoll₁ cost₁ ↔ IsRollBound x b canRoll₂ cost₂ := by
-  induction x using IFreeM.inductionOn generalizing b with
-  | pure _ _ => exact iff_of_true trivial trivial
-  | liftBind t a _ ih =>
-      rw [isRollBound_liftBind_iff, isRollBound_liftBind_iff, hcan, hcost]
-      exact and_congr_right fun _ => forall_congr' fun y => ih y
+    IsRollBound x b canRoll₁ cost₁ ↔ IsRollBound x b canRoll₂ cost₂ :=
+  PFunctor.FreeM.isRollBound_congr (fun a => hcan a.1 a.2) (fun a => hcost a.1 a.2)
 
 /-- Project an `IsRollBound` along a budget projection `proj : B → B'`, as
 `PFunctor.FreeM.IsRollBound.proj`:
@@ -104,13 +97,9 @@ lemma IsRollBound.proj {B' : Type*} (proj : B → B') {x : IFreeM P X s} {b : B}
     (h_can : ∀ s a b', canRoll s a b' → canRoll' s a (proj b'))
     (h_cost : ∀ s a b', canRoll s a b' → proj (cost s a b') = cost' s a (proj b'))
     (h : IsRollBound x b canRoll cost) :
-    IsRollBound x (proj b) canRoll' cost' := by
-  induction x using IFreeM.inductionOn generalizing b with
-  | pure _ _ => trivial
-  | liftBind t a _ ih =>
-      refine ⟨h_can t a b h.1, fun y => ?_⟩
-      rw [← h_cost t a b h.1]
-      exact ih y (h.2 y)
+    IsRollBound x (proj b) canRoll' cost' :=
+  PFunctor.FreeM.IsRollBound.proj proj (fun a => h_can a.1 a.2)
+    (fun a => h_cost a.1 a.2) h
 
 /-- A roll bound is monotone in the budget for any relation `R` that is preserved by the
 validity check and by the cost step. With `R := (· ≤ ·)` this is budget enlargement. -/
@@ -118,11 +107,9 @@ lemma IsRollBound.mono_of_rel (R : B → B → Prop) {x : IFreeM P X s} {b b' : 
     (h_can : ∀ s a b b', R b b' → canRoll s a b → canRoll s a b')
     (h_cost : ∀ s a b b', R b b' → canRoll s a b → R (cost s a b) (cost s a b'))
     (h : IsRollBound x b canRoll cost) (hb : R b b') :
-    IsRollBound x b' canRoll cost := by
-  induction x using IFreeM.inductionOn generalizing b b' with
-  | pure _ _ => trivial
-  | liftBind t a _ ih =>
-      exact ⟨h_can t a b b' hb h.1, fun y => ih y (h.2 y) (h_cost t a b b' hb h.1)⟩
+    IsRollBound x b' canRoll cost :=
+  PFunctor.FreeM.IsRollBound.mono_of_rel R (fun a => h_can a.1 a.2)
+    (fun a => h_cost a.1 a.2) h hb
 
 /-- Weakening the validity check, at a fixed cost function. -/
 lemma IsRollBound.mono_canRoll {canRoll' : (s : I) → P.A s → B → Prop}
@@ -145,14 +132,10 @@ lemma isRollBound_bind {Y : I → Type w} {x : IFreeM P X s} {g : ∀ s', X s' �
     (h₁ : IsRollBound x b₁ canRoll cost)
     (h₂ : ∀ s' y, IsRollBound (g s' y) b₂ canRoll cost) :
     IsRollBound (x.bind g) (combine b₁ b₂) canRoll cost := by
-  induction x using IFreeM.inductionOn generalizing b₁ with
-  | pure t y =>
-      exact (h₂ t y).proj (combine b₁) (fun s a b hb => (h_can s a b₁ b₂ b hb).1)
-        (fun s a b hb => (h_cost s a b₁ b₂ b hb).1)
-  | liftBind t a _ ih =>
-      refine ⟨(h_can t a b₁ b₂ b₁ h₁.1).2, fun y => ?_⟩
-      rw [(h_cost t a b₁ b₂ b₁ h₁.1).2]
-      exact ih y (h₁.2 y)
+  unfold IsRollBound
+  rw [toSigmaFreeM_bind]
+  exact PFunctor.FreeM.isRollBound_bind combine (fun a => h_can a.1 a.2)
+    (fun a => h_cost a.1 a.2) h₁ (fun value => h₂ value.1 value.2)
 
 /-! ## Σ-bundled erasure -/
 
@@ -160,17 +143,15 @@ lemma isRollBound_bind {Y : I → Type w} {x : IFreeM P X s} {g : ∀ s', X s' �
 `Σ s, P.A s` carry the state of each rolled shape. -/
 theorem isRollBound_toSigmaFreeM_iff (x : IFreeM P X s) (b : B) :
     (toSigmaFreeM P x).IsRollBound b (fun a => canRoll a.1 a.2) (fun a => cost a.1 a.2) ↔
-      IsRollBound x b canRoll cost := by
-  induction x using IFreeM.inductionOn generalizing b with
-  | pure _ _ => exact iff_of_true trivial trivial
-  | liftBind _ _ _ ih => exact and_congr_right fun _ => forall_congr' fun y => ih y _
+      IsRollBound x b canRoll cost :=
+  Iff.rfl
 
 /-! ## Charge bounds -/
 
 /-- A charge bound: along every branch of `x`, the charges `c s a` of the rolled shapes add up
 to at most `n`. A roll at `a : P.A s` is allowed when `c s a` fits in the remaining budget, which
 then decreases by `c s a`. -/
-def IsChargeBound (x : IFreeM P X s) (c : (s : I) → P.A s → ℕ) (n : ℕ) : Prop :=
+@[expose] def IsChargeBound (x : IFreeM P X s) (c : (s : I) → P.A s → ℕ) (n : ℕ) : Prop :=
   IsRollBound x n (fun s a b => c s a ≤ b) (fun s a b => b - c s a)
 
 variable {c : (s : I) → P.A s → ℕ}
@@ -208,7 +189,7 @@ lemma isChargeBound_bind {Y : I → Type w} {x : IFreeM P X s} {g : ∀ s', X s'
 /-- A total roll bound: `x` encounters at most `n` `IFreeM.liftBind` constructors along every
 branch. Each roll consumes one unit of a natural-number budget, independently of its state and
 shape. -/
-def IsTotalRollBound (x : IFreeM P X s) (n : ℕ) : Prop :=
+@[expose] def IsTotalRollBound (x : IFreeM P X s) (n : ℕ) : Prop :=
   IsRollBound x n (fun _ _ b => 0 < b) (fun _ _ b => b - 1)
 
 theorem isTotalRollBound_iff_isRollBound (x : IFreeM P X s) (n : ℕ) :

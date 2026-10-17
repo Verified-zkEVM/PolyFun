@@ -113,4 +113,12 @@ example (s : Bool) : (askType s).IsTotalRollBound 1 :=
   IFreeM.isTotalRollBound_bind (n₁ := 1) (n₂ := 0) ⟨Nat.one_pos, fun _ => trivial⟩
     fun _ _ => trivial
 
+/-- Erasure commutes with a universe-changing map of a genuinely indexed family. -/
+example {I : Type uI} {P : Endo.{uI, uA, uB} I} {X : I → Type v}
+    {Y : I → Type w} {s : I} (f : ∀ s, X s → Y s) (x : IFreeM P X s) :
+    IFreeM.toSigmaFreeM P (x.imap f) =
+      PFunctor.FreeM.map (fun value => (⟨value.1, f value.1 value.2⟩ : Σ s, Y s))
+        (IFreeM.toSigmaFreeM P x) :=
+  IFreeM.toSigmaFreeM_imap f x
+
 end PolyFunTest.ModuleAPI.IndexedFree

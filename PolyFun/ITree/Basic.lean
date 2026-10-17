@@ -573,7 +573,8 @@ bisimulation reasoning and lives in `PolyFun.ITree.Bisim.*`. -/
 @[simp] theorem shape'_iter (body : β → ITree F (β ⊕ α)) (init : β) : shape' (iter body init) =
       shape' (corec (iterStep body) (body init)) := rfl
 
-@[simp] theorem shape_lift (a : F.A) : shape (lift (F := F) a) = .query a := by
+@[simp] theorem shape_lift (a : F.A) :
+    shape (α := no_index (F.B a)) (lift (F := F) a) = .query a := by
   rw [lift, shape_query]
 
 end ITree
