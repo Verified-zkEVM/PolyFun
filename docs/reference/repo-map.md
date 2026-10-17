@@ -9,7 +9,7 @@ it provides, rather than importing the whole project while developing a module.
 | Target | Purpose | Build or import |
 |---|---|---|
 | `PolyFun` | Generic polynomial, interaction, logic, and realizability library | Default `lake build`; `import PolyFun` or a specific module |
-| `ToCslib` | Upstream staging: free-monad and loop laws, order bridge, bitvector and polynomial lemmas | `lake build ToCslib`; specific `ToCslib.*` imports |
+| `ToCslib` | Upstream staging: free-monad and loop laws, order bridge, omega-CPO fixed points, finite case compilation, bitvector and polynomial lemmas | `lake build ToCslib`; specific `ToCslib.*` imports |
 | `ComplexityBackends` | Optional concrete complexity backends, one subdirectory per machine model | `lake build ComplexityBackends`; `import ComplexityBackends` or a specific `ComplexityBackends.CslibSingleTape.*` module |
 | `PolyFunExamples` | Checked tutorials and the Parliament application under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
 | `PolyFunTest` | Regression tests, adversarial cases, and ordinary-import consumers | `lake test` |
@@ -32,6 +32,7 @@ Example and test imports never flow back into production.
 | State-dependent interfaces | [Indexed basics](../../PolyFun/IPFunctor/Basic.lean) | [Indexed polynomials](../guides/ipfunctor.md) |
 | Behaviors and explicit-state machines | [Resumptions](../../PolyFun/PFunctor/Resumption.lean), [dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean) | [Computation models](../guides/computation-models.md) |
 | Interaction trees and recursion | [ITree basics](../../PolyFun/ITree/Basic.lean) | [Interaction trees](../guides/itree.md) |
+| Least fixed points and admissible predicates | [Omega-CPO fixed points](../../ToCslib/Order/OmegaCompletePartialOrder.lean), [admissibility](../../ToCslib/Order/Admissible.lean), [prefix recursion](../../ToCslib/Order/PrefixRecursion.lean) | [Upstream ownership](../development/upstream.md#omega-cpo-fixed-points) |
 | Interpreting trees into monads | [Interpretation](../../PolyFun/ITree/Interp/Defs.lean), [laws](../../PolyFun/ITree/Interp/Laws.lean) | [Interaction trees](../guides/itree.md#interpreting-into-a-monad) |
 | Running trees as machines, with silent-step handlers | [Machine](../../PolyFun/ITree/Machine.lean) | [Interaction trees](../guides/itree.md#running-a-tree-as-a-machine) |
 | Iterative monads and transformer loops | [Iteration](../../PolyFun/Control/Monad/Iter.lean), [transformer instances](../../PolyFun/Control/Monad/Iter/Instances.lean) | [Interaction trees](../guides/itree.md#iterative-monads) |
