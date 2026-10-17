@@ -398,6 +398,15 @@ a program. Subtractive per-position budgets are exactly upper bounds on that fol
 (`isRollBound_iff_wpFold_charge`, with `isTotalRollBound_iff_wpFold_charge` for unit charges),
 and no progress condition is needed.
 
+Roll bounds (`PolyFun/PFunctor/Bound.lean`) add under `FreeM.bind` and under the binds of
+`ExceptT ε (FreeM P)` and `OptionT (FreeM P)`. If `x.run` makes at most `a` calls and every
+`(f v).run` at most `b`, then `(x >>= f).run` makes at most `a + b`
+(`isTotalRollBound_exceptT_bind`, `isTotalRollBound_optionT_bind`; the `isRollBound_` forms
+take a general budget). An error or failure is a leaf and makes no call, and lifting a free
+program keeps its bound (`isTotalRollBound_exceptT_throw`, `isTotalRollBound_optionT_failure`,
+`isTotalRollBound_exceptT_lift_iff`). `PolyFunTest/PFunctor/BoundTransformer.lean` bounds a
+console form that may reject its input.
+
 Handlers transport specifications. `OpSpec.pullback handler Φ` specifies a call by the fold of
 `Φ` over its implementation, and folding over a substituted program is folding the pullback over
 the original (`wpFold_liftM`, functorial by `OpSpec.pullback_pullback`). For charges this bounds
