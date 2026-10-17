@@ -42,6 +42,13 @@ the combinator to the runs of its parts; their common core,
 `run_map_eq_of_apply_map_eq`, says that a state projection which commutes with
 every single request commutes with every run.
 
+A `StateLens` ([`Handler/StateLens.lean`](../../PolyFun/PFunctor/Handler/StateLens.lean))
+is the stateful handler that answers every request with exactly one inner
+request; its substitution is `Stateful.run` of its handler (`mapFreeM_eq_run`).
+`DynComputation.wrapState` runs a machine against it as one product machine, and
+the [realizability guide](realizability.md#stateful-handler-substitution) bounds
+the cost of that substitution.
+
 ## Bounds and continuing behavior
 
 A `DynComputation` may run indefinitely. Its `denote` gives a `Resumption`;
@@ -61,6 +68,11 @@ runs out. `Chunk.done` carries the returned value; `Chunk.paused` carries
 that state. A terminal observation consumes no fuel, including at budget zero.
 `resumeChunk` continues a paused chunk and leaves a completed value alone.
 `runChunk` interprets the finite program through `Handler m p`.
+
+For interaction trees, import `PolyFun.ITree.Machine`: `ITree.toDynComputation` uses the
+resumption-with-tau representation, and `ITree.withSilentSteps` lifts a visible-event handler
+to it. Visible events and silent steps both consume the budget; a silent step never invokes
+the visible handler.
 
 The public laws connect this interface to bounded execution:
 

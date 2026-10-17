@@ -78,9 +78,73 @@ input/output transformers and of proof-system context lenses, are built with
 | Relate free and cofree constructions | [Pattern runs on matter](../reference/pattern-runs-on-matter.md) |
 
 Mathlib owns `PFunctor`, its object action, and W/M-type foundations. CSLib
-owns `PFunctor.FreeM`. PolyFun extends those definitions instead of introducing
-parallel foundational types. The [repository map](../reference/repo-map.md)
+owns the basic polynomial constructions (`A y^ B`, `C`, `linear`,
+`selfMonomial`, `y^ B`, `y`, `0`, `1`, `P + Q` and `P * Q`), `PFunctor.FreeM`,
+its fold `FreeM.foldFreeM`, and the equivalence `FreeM.equivWOfIsEmpty`
+between a free monad with an empty leaf type and the W-type. PolyFun extends
+those definitions instead of introducing parallel foundational types. The [repository map](../reference/repo-map.md)
 explains the staging library `ToCslib` and the optional `ComplexityBackends`.
+
+## CSLib's polynomial constructions
+
+`PolyFun.PFunctor.Basic` re-exports `Cslib.Foundations.Data.PFunctor.Basic`,
+and the constructions it supplies keep CSLib's transparency:
+
+- `monomial`, `C`, `linear`, `selfMonomial`, `purePower` and `y` are reducible
+  abbreviations of one structure literal, so `(A y^ B).B a` is `B` during
+  elaboration, unification and instance search. `Unique y.A`,
+  `Unique (y.B a)`, `Unique ((linear α).B a)`, `Unique (y^ β).A` and
+  `IsEmpty ((C α).B a)` are found by unfolding, without dedicated instances.
+  Simp's projection step computes `(C A).A`, `(y^ B).B a` and the other heads
+  and children, so PolyFun's equations `C_A`, `C_B`, `y_A`, `y_B`,
+  `linear_A`, `linear_B`, `selfMonomial_A`, `selfMonomial_B`, `purePower_A`
+  and `purePower_B` are plain lemmas for `rw` and `simp only`.
+- `P + Q` elaborates through CSLib's `instHAddPFunctor` to `PFunctor.add`, and
+  `P * Q` through `instHMulPFunctor` to `PFunctor.prod`; both definitions are
+  `implicit_reducible`. Instance search therefore does not see through `P + Q`:
+  a `Unique ((P + Q).B (.inl a))` goal needs an explicit instance or a rewrite.
+  PolyFun's named sum `PFunctor.sum` is a separate reducible structure literal
+  with the same body, so `P + Q = PFunctor.sum P Q` holds by `rfl` but not at
+  reducible and instance transparency. The homogeneous instance
+  `instAddPFunctor` is defined by `sum`.
+- CSLib's global simp lemmas include `hAdd_A` and `hAdd_B` (which rewrites
+  `(P + Q).B t` to `Sum.rec P.B Q.B t` for every `t`, not only constructors),
+  `hMul_A`, `hMul_B`, `zero_A`, `zero_B`, `one_A`, `one_B`, `C_pempty`,
+  `C_punit`, `linear_punit`, `selfMonomial_punit`, `purePower_punit`,
+  `add_eq_add` and `prod_eq_mul`.
+- The universe parameters of `purePower` (and its alias `representable`) are
+  `.{uB, uA}`, child universe first; those of `prod` and `instHMulPFunctor`
+  are `.{uA₁, uA₂, uB₁, uB₂}`; `instZeroPFunctor` and `instOnePFunctor` take
+  the child universe first.
+
+Three rules follow from this transparency:
+
+- Do not declare instances on the positions or directions of an abbreviated
+  polynomial, such as `y.A` or `(linear α).B a`. Their keys reduce to `PUnit`
+  or `PEmpty`, so they apply to every `Unique PUnit` or `IsEmpty PEmpty` goal
+  and can leave universe metavariables behind; instance search already finds
+  the `PUnit` and `PEmpty` instances by unfolding.
+- Write implicit type arguments on simp left-hand sides in their reduced form,
+  for example `(Sum.inl op : F.A ⊕ PUnit)` rather than an ascription through
+  `(F + y).A`. Simp reduces `P.B a` to the concrete direction type before it
+  consults its index when `P` is one of these abbreviations, so a lemma about
+  a generic `P` whose left side carries `P.B a` in an implicit argument, as
+  `FreeM.lift a` does, needs `no_index` on that argument, as in
+  `Handler.Stateful.run_lift`, `FreeM.support_lift` and CSLib's
+  `FreeM.foldFreeM_lift`. A `>>=` on such a left side is written
+  `Bind.bind (α := no_index (P.B a))`, as in
+  `FreeM.isRollBound_lift_bind_iff'`, and
+  [`ConcreteSimp.lean`](../../PolyFunTest/PFunctor/ConcreteSimp.lean) tests
+  each lift equation on a concrete interface. `no_index` does not help when an
+  explicit argument whose type mentions `P.B a` precedes the lift, as the
+  predicate of `FreeM.allOutputs_lift` does, because simp unifies that argument
+  before `P` is known; the
+  [upstream page](../development/upstream.md#remaining-abstraction-boundaries)
+  lists the lemmas that still miss.
+- Do not put `OfNat.ofNat`, `One.one` or `Zero.zero` in a simp set. `1` is
+  literally `PUnit y^ PEmpty`, which `C_punit` folds back to `1`, so simp
+  loops; use `inferInstanceAs` for the instance or a projection lemma such as
+  `one_B` for the equation.
 
 ## Mental model
 

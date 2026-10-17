@@ -193,8 +193,8 @@ free-syntax interpretation exercises this boundary.
 so that the upstream pull request is a move rather than a rewrite:
 
 - every declaration lives in the namespace it will have upstream (`PFunctor.FreeM`, `Cslib`,
-  `Cslib.IsMonadHom`, `Lean.Order`, `Std.Internal`), so cslib's `topNamespace` linter and
-  downstream call sites do not change when it lands;
+  `Cslib.IsMonadHom`, `Lean.Order`, `Std.Internal`, `OmegaCompletePartialOrder`, `Fin`), so
+  cslib's `topNamespace` linter and downstream call sites do not change when it lands;
 - a lemma that duplicates an open upstream pull request carries an `-- upstream:` comment
   naming it and copies that request's statement shape; it is deleted when the request lands
   and the pin moves (cslib#856's `IsMonadHom` is part of cslib `v4.34.0`, so PolyFun keeps no
