@@ -69,6 +69,11 @@ that state. A terminal observation consumes no fuel, including at budget zero.
 `resumeChunk` continues a paused chunk and leaves a completed value alone.
 `runChunk` interprets the finite program through `Handler m p`.
 
+For interaction trees, import `PolyFun.ITree.Machine`: `ITree.toDynComputation` uses the
+resumption-with-tau representation, and `ITree.withSilentSteps` lifts a visible-event handler
+to it. Visible events and silent steps both consume the budget; a silent step never invokes
+the visible handler.
+
 The public laws connect this interface to bounded execution:
 
 - `unrollChunk_result` and `runChunk_result` recover the bounded observation

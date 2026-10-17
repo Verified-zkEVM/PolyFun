@@ -36,7 +36,7 @@ Example and test imports never flow back into production.
 | Interaction trees and recursion | [ITree basics](../../PolyFun/ITree/Basic.lean) | [Interaction trees](../guides/itree.md) |
 | Continuous partial semantics | [Pointed domains](../../PolyFun/Control/Domain/Pointed.lean), [lifted results](../../PolyFun/Control/Domain/Result.lean), [prefix recurrences](../../PolyFun/Control/Domain/PrefixRecursion.lean), [resumption domains](../../PolyFun/PFunctor/Resumption/Domain.lean), [ITree domains](../../PolyFun/ITree/Domain.lean) | [Continuous interpretations](../guides/itree.md#continuous-domain-interpretations) |
 | Interpreting trees into monads | [Interpretation](../../PolyFun/ITree/Interp/Defs.lean), [laws](../../PolyFun/ITree/Interp/Laws.lean) | [Interaction trees](../guides/itree.md#interpreting-into-a-monad) |
-| Running trees as machines | [Machine](../../PolyFun/ITree/Machine.lean) | [Interaction trees](../guides/itree.md#running-a-tree-as-a-machine) |
+| Running trees as machines, with silent-step handlers | [Machine](../../PolyFun/ITree/Machine.lean) | [Interaction trees](../guides/itree.md#running-a-tree-as-a-machine) |
 | Iterative monads and transformer loops | [Iteration](../../PolyFun/Control/Monad/Iter.lean), [transformer instances](../../PolyFun/Control/Monad/Iter/Instances.lean) | [Interaction trees](../guides/itree.md#iterative-monads) |
 | Protocol shapes and strategies | [TypeTree](../../PolyFun/Interaction/Basic/TypeTree.lean) | [Interaction](../guides/interaction.md) |
 | Two-party, multiparty, concurrent interaction | `Interaction/TwoParty`, `Multiparty`, `Concurrent` | [Interaction](../guides/interaction.md) |
