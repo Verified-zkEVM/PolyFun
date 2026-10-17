@@ -54,7 +54,7 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 |------|---------|
 | [`PolyFun/IPFunctor/Basic.lean`](../../PolyFun/IPFunctor/Basic.lean) | `IPFunctor I J` structure (fields `A`, `B`, `src`), `Endo I := IPFunctor I I` abbrev, `Obj`, fiberwise `map` and functor laws, `CoeFun`, `Zero`, `One`, `toPFunctor`, `sigmaPFunctor`, composition `Q ◃ P`, `DeterministicTransitions`. |
 | [`PolyFun/IPFunctor/M.lean`](../../PolyFun/IPFunctor/M.lean) | `IPFunctor.IM P i`, the indexed final coalgebra for `P : Endo I`: audit-visible sigma-erased representation with root/all-edge coherence, constructor/destructor equivalence, corecursor equations, uniqueness, and a cast-free indexed bisimulation principle. |
-| [`PolyFun/IPFunctor/Free/Family.lean`](../../PolyFun/IPFunctor/Free/Family.lean) | **Primitive `IPFunctor.IFreeM P X : I → Type`** for `P : Endo I` and `X : I → Type` (state-indexed return family). Family-polymorphic `bind`, `imap`, `inductionOn`, `construct`, `mapM`, `toSigmaFreeM`, injectivity / equation lemmas. |
+| [`PolyFun/IPFunctor/Free/Family.lean`](../../PolyFun/IPFunctor/Free/Family.lean) | **Primitive `IPFunctor.IFreeM P X : I → Type`** for `P : Endo I` and `X : I → Type` (state-indexed return family). Family-polymorphic `bind` whose continuation may change the leaf universe, `imap`, the bind and map laws, `inductionOn`, `construct`, `mapM`, `toSigmaFreeM`, injectivity / equation lemmas. |
 | [`PolyFun/IPFunctor/Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean) | `IPFunctor.FreeM P s α := IFreeM P (fun _ => α) s` — the constant-family specialization. Constructors `pure` / `liftBind` (as `@[match_pattern]` aliases over `IFreeM`), `lift` (shape) / `liftObj` (object), `bind` (state-polymorphic), `Functor` / `LawfulFunctor`, `inductionOn`, `construct`, `mapM`, `erase` (forgetful to `PFunctor.FreeM` under `[Unique I]`), `toSigmaFreeM`. |
 | [`PolyFun/IPFunctor/Free/Indexed.lean`](../../PolyFun/IPFunctor/Free/Indexed.lean) | `IPFunctor.FreeM₂ P s t α := IFreeM P (fun u => PSigma (fun _ : u = t => α)) s` — the terminal-state-marker specialization. `bind` chains indices positionally; carries `IndexedMonad` / `LawfulIndexedMonad` instances. Forgetful coercion `toFreeM`. |
 | [`PolyFun/IPFunctor/Free/Fold.lean`](../../PolyFun/IPFunctor/Free/Fold.lean) | `IPFunctor.FoldAlgebra P D` and the whole-tree fold `IFreeM.fold`, with `fold_rel`, `fold_fusion`, and `fold_unique`. |
@@ -109,12 +109,18 @@ sits in.
 This is the **primitive** indexed free construction. The bind shape
 
 ```lean
-protected def bind :
+protected def bind {Y : I → Type w} :
     {s : I} → IFreeM P X s → (∀ s', X s' → IFreeM P Y s') → IFreeM P Y s
 ```
 
 takes a family-polymorphic continuation: a function from each leaf state `s'`
 and the leaf payload `X s'` to a continuation tree returning `Y`-leaves.
+The leaf family `X : I → Type v` and the continuation's family `Y` live in
+independent universes, so a bind can, for example, turn Boolean leaves into
+type-valued leaves. `bind_pure_right` and `bind_assoc` hold across independent
+leaf universes, and `imap` is the bind whose continuation returns a leaf
+(`imap_eq_bind`). `FreeM.bind` and `FreeM₂.bind` keep one value universe:
+their `do`-notation elaborators build terms at fixed universe levels.
 
 Specializing the return family `X` recovers the two distinguished cases:
 
