@@ -29,6 +29,10 @@ not state an unrestricted interchange theorem between `Handler.parallel` and
 `Handler.comp`; `PolyFunTest.PFunctor.ParallelFree` records a concrete
 counterexample. Such an interchange law needs an additional scheduling or
 commutativity discipline.
+
+`Handler.parallelSeq` interprets `P ∥ Q` in a monad by running a joint request's left
+component before its right component. This fixes an interpretation order; it does not assert
+that the component effects commute.
 -/
 
 @[expose] public section
@@ -550,6 +554,35 @@ theorem parallel_assoc
 end FreeM
 
 namespace Handler
+
+/-- Interpret a one-or-both interface in a monad. A joint query sequences the left action
+before the right action; this is an explicit interpretation order, not parallel IO or an
+assertion that the component effects commute. -/
+def parallelSeq {m : Type uB → Type uE} [Monad m]
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Handler m P) (right : Handler m Q) : Handler m (P ∥ Q)
+  | .left operation => left operation
+  | .right operation => right operation
+  | .both first second => do
+    let a ← left first
+    let b ← right second
+    pure (a, b)
+
+@[simp] theorem parallelSeq_left {m : Type uB → Type uE} [Monad m]
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Handler m P) (right : Handler m Q) (operation : P.A) :
+    parallelSeq left right (.left operation) = left operation := rfl
+
+@[simp] theorem parallelSeq_right {m : Type uB → Type uE} [Monad m]
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Handler m P) (right : Handler m Q) (operation : Q.A) :
+    parallelSeq left right (.right operation) = right operation := rfl
+
+theorem parallelSeq_both {m : Type uB → Type uE} [Monad m]
+    {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    (left : Handler m P) (right : Handler m Q) (first : P.A) (second : Q.A) :
+    parallelSeq left right (.both first second) =
+      (do let a ← left first; let b ← right second; pure (a, b)) := rfl
 
 /-- Combine two free handlers pointwise over one-or-both interfaces. -/
 def parallel

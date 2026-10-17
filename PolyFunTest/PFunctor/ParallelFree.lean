@@ -286,4 +286,11 @@ theorem handler_parallel_comp_fails :
   intro equality
   cases congrArg rootOperation (congrFun equality (ParallelChoice.both false false))
 
+/-- `Handler.parallelSeq` sequences a joint request left first, and its log records that order. -/
+example :
+    (Handler.parallelSeq (m := StateM (List String)) (P := P) (Q := Q)
+      (fun b => do modify (· ++ ["left"]); pure (!b))
+      (fun _ => do modify (· ++ ["right"]); pure 7) (.both true PUnit.unit)).run [] =
+      ((false, 7), ["left", "right"]) := rfl
+
 end PFunctor.ParallelFreeCanary
