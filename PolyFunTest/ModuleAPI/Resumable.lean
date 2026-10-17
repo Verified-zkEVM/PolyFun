@@ -14,6 +14,36 @@ open PFunctor PFunctor.DynSystem PFunctor.DynSystem.DynComputation
 
 universe uA uB uState uInput uResult
 
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uB}
+    (machine : DynComputation.{uB} p α β) (handler : Handler Id p) (input : α) :
+    machine.startChunk handler 0 input = pure (match machine.view (machine.init input) with
+      | .inl value => .done value
+      | .inr _ => .paused (machine.init input)) := machine.startChunk_zero handler input
+
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uB}
+    (machine : DynComputation.{uB} p α β) (handler : Handler Id p) (fuel : Nat) (value : β) :
+    machine.continueChunk handler fuel (.done value) = pure (.done value) := by simp
+
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uB} {m : Type uB → Type uResult}
+    [Monad m] (machine : DynComputation.{uB} p α β) (handler : Handler m p) (fuel : Nat)
+    (state : machine.State) :
+    machine.continueChunk handler fuel (.paused state) = machine.runChunk handler fuel state := by
+  simp
+
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uB} {m : Type uB → Type uResult}
+    [Monad m] (machine : DynComputation.{uB} p α β) (handler : Handler m p) (fuel : Nat)
+    (input : α) :
+    machine.startChunk handler fuel input = machine.runChunk handler fuel (machine.init input) := by
+  simp
+
+/-- Starting and continuing never reinitializes the machine or repeats an interpreted prefix. -/
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uB} {m : Type uB → Type uResult}
+    [Monad m] [LawfulMonad m] (machine : DynComputation.{uB} p α β) (handler : Handler m p)
+    (first second : Nat) (input : α) :
+    (machine.startChunk handler first input >>= machine.continueChunk handler second) =
+      machine.startChunk handler (first + second) input :=
+  machine.startChunk_continueChunk handler first second input
+
 example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uResult}
     (machine : DynComputation.{uState} p α β) (fuel : Nat) (state : machine.State) :
     FreeM.map Chunk.result (machine.unrollChunk fuel state) = machine.unroll fuel state :=

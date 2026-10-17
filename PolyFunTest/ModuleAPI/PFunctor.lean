@@ -8,6 +8,9 @@ module
 
 import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 import PolyFun.PFunctor.Free.Basic
+import PolyFun.PFunctor.Free.Parallel
+import PolyFun.PFunctor.Handler.Free
+import PolyFun.PFunctor.Handler.Sum
 public import PolyFun.IPFunctor.Basic
 
 /-!
@@ -25,6 +28,32 @@ universe u v w uA uB uA₂ uB₂ uα uβ
 namespace PolyFunTest.ModuleAPI.PFunctor
 
 open _root_.PFunctor
+
+-- Component positions may inhabit different universes; replies remain genuinely dependent.
+example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}} {m : Type uB → Type v}
+    (left : Handler m P) (right : Handler m Q) (operation : Q.A) :
+    Handler.sum left right (.inr operation) = right operation := Handler.sum_inr _ _ _
+
+example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}}
+    {m : Type uB → Type v} {n : Type uB → Type w}
+    (transform : ∀ {α : Type uB}, m α → n α)
+    (left : Handler m P) (right : Handler m Q) :
+    Handler.mapTarget transform (Handler.sum left right) =
+      Handler.sum (Handler.mapTarget transform left) (Handler.mapTarget transform right) :=
+  Handler.mapTarget_sum transform left right
+
+-- A joint request sequences the left handler before the right one.
+example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}} {m : Type uB → Type v} [Monad m]
+    (left : Handler m P) (right : Handler m Q) (first : P.A) (second : Q.A) :
+    Handler.parallelSeq left right (.both first second) =
+      (do let a ← left first; let b ← right second; pure (a, b)) :=
+  Handler.parallelSeq_both left right first second
+
+example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}} {m : Type uB → Type v} [Monad m]
+    (left : Handler m P) (right : Handler m Q) (first : P.A) (second : Q.A) :
+    Handler.parallelSeq left right (.left first) = left first ∧
+      Handler.parallelSeq left right (.right second) = right second := by
+  simp
 
 example {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
     (f : α → β) (x : α) :
