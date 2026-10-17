@@ -50,6 +50,8 @@ implements the functor composition `Q ∘ P : (I → Type) → (K → Type)`. Se
   and equality-tagged specializations `FreeM` / `FreeM₂` live in
   [`PolyFun/IPFunctor/Free/Basic.lean`](Free/Basic.lean) and
   [`PolyFun/IPFunctor/Free/Indexed.lean`](Free/Indexed.lean).
+* `IPFunctor.sum` and `IPFunctor.sumULift` are coproducts over shared indices; their lens
+  injections and copairing live in [`PolyFun/IPFunctor/Lens/Basic.lean`](Lens/Basic.lean).
 * Indexed lenses, charts, and structural equivalences (each carrying a source-index
   preservation law) live in [`PolyFun/IPFunctor/Lens/Basic.lean`](Lens/Basic.lean),
   [`PolyFun/IPFunctor/Chart/Basic.lean`](Chart/Basic.lean), and
@@ -260,6 +262,76 @@ Used by the Σ-bundled forgetful map from indexed free trees into plain `PFuncto
 def sigmaPFunctor (P : IPFunctor I J) : PFunctor where
   A := Σ j : J, P.A j
   B := fun x => P.B x.1 x.2
+
+/-! ## Coproducts
+
+`sum P Q` offers, at each output index `j`, the shapes of both summands, and a shape keeps the
+responses and source indices of its summand. As with `PFunctor.sum`, the response and source maps
+are `Sum` recursors written directly, so on `Sum.inl a` and `Sum.inr a` they reduce to those of
+`a` at implicit transparency; the summands then share one response universe. `sumULift P Q`
+allows independent response universes by lifting each summand's responses to their maximum. -/
+
+/-- The coproduct of two indexed polynomial functors over the same indices, with a shared
+response universe: the shapes at `j` are `P.A j ⊕ Q.A j`, and each shape keeps the responses and
+source indices of its summand. -/
+abbrev sum (P : IPFunctor.{uI, uJ, uA₁, uB} I J) (Q : IPFunctor.{uI, uJ, uA₂, uB} I J) :
+    IPFunctor.{uI, uJ, max uA₁ uA₂, uB} I J where
+  A j := P.A j ⊕ Q.A j
+  B j := @Sum.rec (P.A j) (Q.A j) (fun _ => Type uB) (P.B j) (Q.B j)
+  src j := @Sum.rec (P.A j) (Q.A j)
+    (fun a => @Sum.rec (P.A j) (Q.A j) (fun _ => Type uB) (P.B j) (Q.B j) a → I)
+    (P.src j) (Q.src j)
+
+section sum
+
+variable {P : IPFunctor.{uI, uJ, uA₁, uB} I J} {Q : IPFunctor.{uI, uJ, uA₂, uB} I J}
+
+@[simp] lemma sum_A (j : J) : (sum P Q).A j = (P.A j ⊕ Q.A j) := rfl
+
+@[simp] lemma sum_B_inl (j : J) (a : P.A j) : (sum P Q).B j (.inl a) = P.B j a := rfl
+
+@[simp] lemma sum_B_inr (j : J) (a : Q.A j) : (sum P Q).B j (.inr a) = Q.B j a := rfl
+
+@[simp] lemma sum_src_inl (j : J) (a : P.A j) (b : P.B j a) :
+    (sum P Q).src j (.inl a) b = P.src j a b := rfl
+
+@[simp] lemma sum_src_inr (j : J) (a : Q.A j) (b : Q.B j a) :
+    (sum P Q).src j (.inr a) b = Q.src j a b := rfl
+
+end sum
+
+/-- The coproduct of two indexed polynomial functors whose responses lie in independent
+universes. Each summand's responses are lifted to `Type (max uB₁ uB₂)`, and its source map
+reads the lifted response through `ULift.down`. -/
+abbrev sumULift (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J) (Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J) :
+    IPFunctor.{uI, uJ, max uA₁ uA₂, max uB₁ uB₂} I J where
+  A j := P.A j ⊕ Q.A j
+  B j := @Sum.rec (P.A j) (Q.A j) (fun _ => Type (max uB₁ uB₂))
+    (fun a => ULift.{uB₂} (P.B j a)) (fun a => ULift.{uB₁} (Q.B j a))
+  src j := @Sum.rec (P.A j) (Q.A j)
+    (fun a => @Sum.rec (P.A j) (Q.A j) (fun _ => Type (max uB₁ uB₂))
+      (fun a => ULift.{uB₂} (P.B j a)) (fun a => ULift.{uB₁} (Q.B j a)) a → I)
+    (fun a b => P.src j a b.down) (fun a b => Q.src j a b.down)
+
+section sumULift
+
+variable {P : IPFunctor.{uI, uJ, uA₁, uB₁} I J} {Q : IPFunctor.{uI, uJ, uA₂, uB₂} I J}
+
+@[simp] lemma sumULift_A (j : J) : (sumULift P Q).A j = (P.A j ⊕ Q.A j) := rfl
+
+@[simp] lemma sumULift_B_inl (j : J) (a : P.A j) :
+    (sumULift P Q).B j (.inl a) = ULift.{uB₂} (P.B j a) := rfl
+
+@[simp] lemma sumULift_B_inr (j : J) (a : Q.A j) :
+    (sumULift P Q).B j (.inr a) = ULift.{uB₁} (Q.B j a) := rfl
+
+@[simp] lemma sumULift_src_inl (j : J) (a : P.A j) (b : ULift.{uB₂} (P.B j a)) :
+    (sumULift P Q).src j (.inl a) b = P.src j a b.down := rfl
+
+@[simp] lemma sumULift_src_inr (j : J) (a : Q.A j) (b : ULift.{uB₁} (Q.B j a)) :
+    (sumULift P Q).src j (.inr a) b = Q.src j a b.down := rfl
+
+end sumULift
 
 /-! ## Composition
 

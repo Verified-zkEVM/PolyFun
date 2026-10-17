@@ -19,9 +19,11 @@ The `src_eq` law is equality of index *values* in `I`, not of types, so most con
 discharge it by `rfl`. In general it induces transports in object maps because children live
 in fibers over `src ...`.
 
-This file provides identity, composition, extensionality, and the structural-equivalence
-companion `Lens.Equiv`. See [`PFunctor.Lens`](../../PFunctor/Lens/Basic.lean) for lenses
-between unindexed polynomial functors.
+This file provides identity, composition, extensionality, the coproduct injections
+`Lens.inl` / `Lens.inr` (with their lifted forms `Lens.inlULift` / `Lens.inrULift`) and the
+copairing `Lens.sumPair`, and the structural-equivalence companion `Lens.Equiv`. See
+[`PFunctor.Lens`](../../PFunctor/Lens/Basic.lean) for lenses between unindexed polynomial
+functors.
 -/
 
 @[expose] public section
@@ -90,6 +92,58 @@ theorem comp_id (f : Lens P Q) : f ∘ₗ (Lens.id P) = f := rfl
 
 theorem comp_assoc (l : Lens R S) (l' : Lens Q R) (l'' : Lens P Q) :
     (l ∘ₗ l') ∘ₗ l'' = l ∘ₗ (l' ∘ₗ l'') := rfl
+
+/-! ## Coproduct injections and copairing
+
+The injections into `IPFunctor.sum` keep each response, and those into `IPFunctor.sumULift`
+read it through `ULift.down`; all of them satisfy the source-index law by `rfl`. -/
+
+/-- Left injection lens `P → P.sum Q`. -/
+def inl {P : IPFunctor.{uI, uJ, uA₁, uB} I J} {Q : IPFunctor.{uI, uJ, uA₂, uB} I J} :
+    Lens P (P.sum Q) where
+  toFunA _ := Sum.inl
+  toFunB _ _ := id
+  src_eq _ _ _ := rfl
+
+/-- Right injection lens `Q → P.sum Q`. -/
+def inr {P : IPFunctor.{uI, uJ, uA₁, uB} I J} {Q : IPFunctor.{uI, uJ, uA₂, uB} I J} :
+    Lens Q (P.sum Q) where
+  toFunA _ := Sum.inr
+  toFunB _ _ := id
+  src_eq _ _ _ := rfl
+
+/-- Copairing `P.sum Q → R` of two lenses into the same target. -/
+def sumPair {P : IPFunctor.{uI, uJ, uA₁, uB} I J} {Q : IPFunctor.{uI, uJ, uA₂, uB} I J}
+    (l₁ : Lens P R) (l₂ : Lens Q R) : Lens (P.sum Q) R where
+  toFunA j := Sum.elim (l₁.toFunA j) (l₂.toFunA j)
+  toFunB j
+    | .inl a => l₁.toFunB j a
+    | .inr a => l₂.toFunB j a
+  src_eq j
+    | .inl a => l₁.src_eq j a
+    | .inr a => l₂.src_eq j a
+
+@[simp]
+theorem sumPair_comp_inl {P : IPFunctor.{uI, uJ, uA₁, uB} I J}
+    {Q : IPFunctor.{uI, uJ, uA₂, uB} I J} (l₁ : Lens P R) (l₂ : Lens Q R) :
+    sumPair l₁ l₂ ∘ₗ inl = l₁ := rfl
+
+@[simp]
+theorem sumPair_comp_inr {P : IPFunctor.{uI, uJ, uA₁, uB} I J}
+    {Q : IPFunctor.{uI, uJ, uA₂, uB} I J} (l₁ : Lens P R) (l₂ : Lens Q R) :
+    sumPair l₁ l₂ ∘ₗ inr = l₂ := rfl
+
+/-- Left injection lens `P → P.sumULift Q`, lowering the lifted response. -/
+def inlULift : Lens P (P.sumULift Q) where
+  toFunA _ := Sum.inl
+  toFunB _ _ := ULift.down
+  src_eq _ _ _ := rfl
+
+/-- Right injection lens `Q → P.sumULift Q`, lowering the lifted response. -/
+def inrULift : Lens Q (P.sumULift Q) where
+  toFunA _ := Sum.inr
+  toFunB _ _ := ULift.down
+  src_eq _ _ _ := rfl
 
 /-! ## Equivalence (isomorphism in the lens category) -/
 
