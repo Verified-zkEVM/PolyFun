@@ -40,8 +40,8 @@ the lax-monoidal structure equations below rewrite through the tensor
 substrate and the cofree unfolding pipeline there. `implicit_reducible`
 (unlike `reducible`) leaves the `rfl` simp lemmas on these constants valid,
 and needs no `allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] PFunctor.y PFunctor.monomial PFunctor.tensor
-  Comonoid.Hom.ofCategoryLaws comonoid cogenerator extend
+attribute [local implicit_reducible] PFunctor.tensor Comonoid.Hom.ofCategoryLaws comonoid
+  cogenerator extend
 
 /-! ## Structure maps and generator equations -/
 
@@ -120,7 +120,6 @@ theorem laxUnit_children :
       (laxUnit.{uA, uB}).toFunA PUnit.unit := by
   change M.children (unfoldShape _ _ _) _ = unfoldShape _ _ _
   rw [children_unfoldShape]
-  rfl
 
 @[simp]
 theorem laxUnit_toFunB

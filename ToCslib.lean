@@ -11,9 +11,16 @@ public import ToCslib.Algebra.PolynomialGrowth
 public import ToCslib.Control.ForIn
 public import ToCslib.Control.Monad.HomTransport
 public import ToCslib.Data.BitVec
+public import ToCslib.Data.Fin.Cases
 public import ToCslib.Data.PFunctor.Free.Basic
 public import ToCslib.Data.PFunctor.Free.Loops
+public import ToCslib.Order.Admissible
+public import ToCslib.Order.DiscreteOmegaCompletePartialOrder
 public import ToCslib.Order.LeanOrder
+public import ToCslib.Order.OmegaCompletePartialOrder
+public import ToCslib.Order.PrefixRecursion
+public import ToCslib.Order.SumOmegaCompletePartialOrder
+public import ToCslib.Order.WithBotOmegaCompletePartialOrder
 
 /-!
 # Extensions of the pinned cslib library
@@ -21,8 +28,10 @@ public import ToCslib.Order.LeanOrder
 This library stages reusable extensions of the pinned cslib, Mathlib, and core APIs: free-monad
 lemmas in cslib's simp normal form, transport of loop combinators along monad morphisms,
 `PureForIn` instances, the bridge from Mathlib's complete lattices to core's `Lean.Order`,
-single-bit overwrites on bitvectors, monotonicity of natural-number polynomial evaluation, and
-polynomial growth against `2 ^ n`.
+least fixed points, admissible predicates, and discrete, lifted, and disjoint-sum carriers over
+Mathlib's omega-complete partial orders, finite prefix recursion, direct compilation of
+`Fin.cases`, single-bit overwrites on bitvectors, monotonicity of natural-number polynomial
+evaluation, and polynomial growth against `2 ^ n`.
 It imports core, cslib, and Mathlib only — never `PolyFun`, a concrete complexity backend, or any
 downstream oracle or cryptographic semantics. `PolyFun` imports the modules it needs explicitly;
 `ComplexityBackends` may do the same.

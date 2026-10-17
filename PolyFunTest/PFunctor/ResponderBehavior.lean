@@ -20,9 +20,8 @@ namespace PFunctor.ResponderBehaviorExample
 
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
 the behavior examples below unfold these constants there. -/
-attribute [local implicit_reducible] PFunctor.y PFunctor.monomial PFunctor.ihom
-  PFunctor.DynSystem.out PFunctor.DynSystem.expose PFunctor.DynSystem.update
-  PFunctor.M.terminalSystem PFunctor.Responder.terminal
+attribute [local implicit_reducible] PFunctor.ihom PFunctor.DynSystem.out PFunctor.DynSystem.expose
+  PFunctor.DynSystem.update PFunctor.M.terminalSystem PFunctor.Responder.terminal
 
 -- Lean 4.33: the examples below unfold `Interface` at implicit transparency.
 @[implicit_reducible]
