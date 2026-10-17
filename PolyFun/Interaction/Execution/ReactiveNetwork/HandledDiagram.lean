@@ -19,6 +19,9 @@ choosing a shared-state monad grants the capabilities expressed by that monad in
 
 The interpreter's internal work is not counted by a single network activation. Computational
 admission must bound that work separately, along with routing and machine updates.
+
+`HandledDiagram.runToken` and `runFIFO` continue execution from any residual configuration,
+and the terminal observations run them from `HandledDiagram.initial`.
 -/
 
 public section
@@ -368,6 +371,83 @@ theorem fifoObservation_close_wire_right
       ((left.wire right).plug context).fifoObservation (.inr environment) schedule := by
   rw [← close_wire_right]
   exact fifoObservation_reindex _ (Diagram.parContextRightEquiv N₁ N₂ K) (.inr environment) schedule
+
+end HandledDiagram
+
+/-! ## Resumable handled execution
+
+`HandledDiagram.initial`, `runToken` and `runFIFO` run a diagram with its intrinsic interpreters
+and return the complete residual configuration, so a caller can pause and continue without
+repeating an interpreted effect. They delegate to the network runners. The terminal observations
+read the selected environment's outcome after running from `initial`
+(`tokenObservation_eq`, `fifoObservation_eq`). -/
+
+namespace HandledDiagram
+
+variable {m : Type → Type} {N result : Type} {Δ : PortBoundary}
+
+/-- Initial residual configuration, with the selected environment holding control. -/
+@[expose] def initial (diagram : HandledDiagram m N Δ result) (environment : N) :
+    State (diagram.network environment) Unit :=
+  ReactiveNetwork.initial (diagram.network environment) ()
+
+variable [Monad m]
+
+/-- Continue token execution without discarding private states, mailboxes, or control. -/
+@[expose] def runToken [DecidableEq N] (diagram : HandledDiagram m N Δ result)
+    (environment : N) (fuel : ℕ) (state : State (diagram.network environment) Unit) :
+    m (State (diagram.network environment) Unit) :=
+  ReactiveNetwork.runToken (diagram.handlers environment) fuel state
+
+/-- Continue FIFO execution from its full residual configuration. -/
+@[expose] def runFIFO [DecidableEq N] (diagram : HandledDiagram m N Δ result)
+    (environment : N) (schedule : List (Activation N))
+    (state : State (diagram.network environment) Unit) :
+    m (State (diagram.network environment) Unit) :=
+  ReactiveNetwork.runFIFO (diagram.handlers environment) schedule state
+
+/-- A zero token budget performs no effects and retains the exact residual. -/
+@[simp] theorem runToken_zero [DecidableEq N] (diagram : HandledDiagram m N Δ result)
+    (environment : N) (state : State (diagram.network environment) Unit) :
+    diagram.runToken environment 0 state = pure state := rfl
+
+/-- An empty schedule performs no effects and retains the exact residual. -/
+@[simp] theorem runFIFO_nil [DecidableEq N] (diagram : HandledDiagram m N Δ result)
+    (environment : N) (state : State (diagram.network environment) Unit) :
+    diagram.runFIFO environment [] state = pure state := rfl
+
+/-- The token observation reads the environment's outcome after token execution from the
+initial configuration. -/
+theorem tokenObservation_eq [DecidableEq N] (diagram : HandledDiagram m N Δ result)
+    (environment : N) (fuel : ℕ) :
+    diagram.tokenObservation environment fuel =
+      outcome environment <$> diagram.runToken environment fuel (diagram.initial environment) :=
+  rfl
+
+/-- The FIFO observation reads the environment's outcome after FIFO execution from the initial
+configuration. -/
+theorem fifoObservation_eq [DecidableEq N] (diagram : HandledDiagram m N Δ result)
+    (environment : N) (schedule : List (Activation N)) :
+    diagram.fifoObservation environment schedule =
+      outcome environment <$> diagram.runFIFO environment schedule (diagram.initial environment) :=
+  rfl
+
+variable [LawfulMonad m]
+
+/-- Splitting a token budget preserves the entire effectful execution, not only its result. -/
+theorem runToken_add [DecidableEq N] (diagram : HandledDiagram m N Δ result)
+    (environment : N) (first rest : ℕ) (state : State (diagram.network environment) Unit) :
+    diagram.runToken environment (first + rest) state =
+      (diagram.runToken environment first state >>= diagram.runToken environment rest) :=
+  ReactiveNetwork.runToken_add _ _ _ _
+
+/-- Splitting a FIFO schedule retains pending deliveries and already interpreted effects. -/
+theorem runFIFO_append [DecidableEq N] (diagram : HandledDiagram m N Δ result)
+    (environment : N) (first rest : List (Activation N))
+    (state : State (diagram.network environment) Unit) :
+    diagram.runFIFO environment (first ++ rest) state =
+      (diagram.runFIFO environment first state >>= diagram.runFIFO environment rest) :=
+  ReactiveNetwork.runFIFO_append _ _ _ _
 
 end HandledDiagram
 
