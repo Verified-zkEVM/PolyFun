@@ -18,7 +18,7 @@ Interpreting a free program through a sum handler routes each request by its sum
 program over `P`, relabelled into `P + Q` along `Lens.inl`, is interpreted by the left handler
 alone (`liftM_sum_mapLens_inl`), and symmetrically on the right. The general fact behind these
 laws is `FreeM.liftM_mapLens`: interpreting a relabelled program pulls the handler back along
-the lens.
+the lens. Changing the target monad acts on each component handler (`mapTarget_sum`).
 
 No `HAdd` instance is registered here. `Handler` is a reducible function type, so an instance
 keyed on it would compete with the pointwise addition of function types whenever the answer
@@ -48,6 +48,13 @@ def sum (f : Handler m P) (g : Handler m Q) : Handler m (P + Q : PFunctor.{max u
 /-- The sum handler answers a right position with the right handler. -/
 @[simp] theorem sum_inr (f : Handler m P) (g : Handler m Q) (b : Q.A) :
     sum f g (.inr b) = g b := rfl
+
+/-- Changing the target monad acts independently on both component handlers. -/
+theorem mapTarget_sum {n : Type u → Type w} (transform : ∀ {α : Type u}, m α → n α)
+    (f : Handler m P) (g : Handler m Q) :
+    mapTarget transform (sum f g) = sum (mapTarget transform f) (mapTarget transform g) := by
+  funext operation
+  cases operation <;> rfl
 
 section SumLift
 

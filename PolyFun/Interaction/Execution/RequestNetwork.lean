@@ -21,6 +21,9 @@ requires three activations, even when the service computation itself is pure.
 The service's monadic effect is atomic at this runtime boundary. Its internal cost is separate
 from packet-delivery fuel. No fairness or completion assumption is built into finite execution.
 Typed response traffic uses PolyFun's `Interface.RoutedPacket` vocabulary.
+
+`State.initial` starts every client ready, with no traffic and a fresh ticket counter.
+`ClientState.result` observes a returned client without discarding the network state.
 -/
 
 public section
@@ -53,6 +56,22 @@ structure State (Client : Type) (p : PFunctor.{0, 0}) (α S : Type) where
   nextTicket : ℕ
   /-- Responses actually delivered to matching clients, in delivery order. -/
   transcript : List (Interface.RoutedPacket p Client)
+
+/-- Initialize ready clients and a service with no outstanding or delivered traffic. -/
+@[expose] def State.initial (programs : Client → FreeM p α) (service : S) :
+    State Client p α S := ⟨fun id => .ready (programs id), service, [], 0, []⟩
+
+/-- Observe a completed client without discarding any pending network state. -/
+@[expose] def ClientState.result : ClientState p α → Option α
+  | .ready (.pure value) => some value
+  | _ => none
+
+@[simp] theorem ClientState.result_ready_pure (value : α) :
+    ClientState.result (.ready (pure value : FreeM p α)) = some value := rfl
+
+@[simp] theorem ClientState.result_waiting (ticket : Nat) (query : p.A)
+    (next : p.B query → FreeM p α) :
+    ClientState.result (.waiting ticket query next) = none := rfl
 
 /-- A schedule either activates a client or delivers the oldest queued packet. -/
 inductive Activation (Client : Type) where
