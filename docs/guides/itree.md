@@ -152,7 +152,8 @@ simultaneous recursive groups, see [binding families](ipfunctor.md#binders-that-
 
 [`ITree.Domain`](../../PolyFun/ITree/Domain.lean) interprets trees into any
 pointed omega-CPO with a continuous algebra for each visible query. Silent
-steps use identity. `ITree.denote` is the least solution of these equations;
+steps use identity. `ITree.denote` interprets the exact resumption-with-tau
+representation; `denote_eq_fix` identifies it with the least solution of the tree equations;
 `WeakBisim.denote_eq` proves it invariant under weak bisimulation.
 `denote_corec` relates a corecursive tree to the least solution of its state
 equations. This is a domain interpretation, separate from a chosen monadic
@@ -167,8 +168,10 @@ interprets finite cutoff leaves as bottom and proves that the increasing
 truncation folds have the full denotation as their supremum. These theorems
 do not require finite branching or a uniform finite depth for a well-founded tree.
 
-[`ITree.Execution`](../../PolyFun/ITree/Execution.lean) supplies the
-`ITree.machine` resumable adapter and `withSilentSteps` handler. Silent steps
+[`ITree.Machine`](../../PolyFun/ITree/Machine.lean) supplies the canonical
+`ITree.toDynComputation` adapter. Use it with `DynComputation.startChunk` and
+`continueChunk` from [`Resumable`](../../PolyFun/PFunctor/Dynamical/DynComputation/Resumable.lean),
+and the `ITree.withSilentSteps` handler. Silent steps
 consume budget without invoking a visible-event handler, and a paused run
 retains the exact tree residual. The downstream [Cryptol model](cryptol-model.md)
 uses both this execution boundary and continuous denotation.
@@ -182,6 +185,18 @@ strictly before `i`, and yields uniqueness without requiring total entries.
 well-founded `Function.prefixRecursion` in `ToCslib/Order/PrefixRecursion.lean`.
 Self-dependent equations and generators that demand the whole array before
 returning its constructor do not satisfy this contract.
+
+### Sequencing continuous interpretations
+
+[`Resumption/DomainLaws`](../../PolyFun/PFunctor/Resumption/DomainLaws.lean)
+and [`ITree/DomainLaws`](../../PolyFun/ITree/DomainLaws.lean) provide algebra
+fusion and substitution laws. A strict continuous map that commutes with query
+algebras commutes with `denote`. Interpreting `bind tree next` changes the return
+interpretation to `fun a => denote ret alg (next a)` and retains the query algebra.
+The proof uses leastness and increasing approximants, so it covers unbounded
+branching and divergence. `ITree.denote_toITree` connects these laws across the
+canonical tau-free resumption embedding. Measure and kernel algebras belong in
+VCVio; these laws themselves impose no probability interpretation.
 
 ## Iterative monads
 

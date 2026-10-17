@@ -55,15 +55,46 @@ variable {P : PFunctor.{uA, uB}} {α : Type uα} {D : Type uD}
 
 /-- The least solution of the ITree interpretation equations. -/
 @[expose] def denote (ret : α → D) (alg : ContinuousAlgebra P D) : ITree P α → D :=
-  (domainStep ret alg).fix
+  fun tree => PFunctor.Resumption.denote ret (ContinuousAlgebra.withTau alg)
+    (toResumptionWithTau tree)
+
+/-- The canonical resumption interpretation is the least solution of the ITree equations. -/
+theorem denote_eq_fix (ret : α → D) (alg : ContinuousAlgebra P D) :
+    denote ret alg = (domainStep ret alg).fix := by
+  let pre : (PFunctor.Resumption (P + PFunctor.y) α → D) →𝒄 (ITree P α → D) :=
+    .ofFun (fun f t => f (toResumptionWithTau t))
+  have comm (f : PFunctor.Resumption (P + PFunctor.y) α → D) :
+      pre (PFunctor.Resumption.domainStep ret (ContinuousAlgebra.withTau alg) f) =
+        domainStep ret alg (pre f) := by
+    funext t
+    simp only [pre, ContinuousHom.ofFun_apply, PFunctor.Resumption.domainStep,
+      dest_toResumptionWithTau, domainStep]
+    rcases shape' t with ⟨head, next⟩
+    cases head <;> rfl
+  funext tree
+  exact congrFun ((PFunctor.Resumption.domainStep ret (ContinuousAlgebra.withTau alg)).fix_fusion
+    (domainStep ret alg) pre rfl comm) tree
+
+
+/-- Bound denotation by bounding every finite semantic approximation. -/
+theorem denote_le_of_approximants_le (ret : α → D) (alg : ContinuousAlgebra P D)
+    (tree : ITree P α) (bound : D)
+    (h : ∀ n, (domainStep ret alg).approximants n tree ≤ bound) :
+    denote ret alg tree ≤ bound := by
+  rw [denote_eq_fix]
+  apply ωSup_le
+  intro n
+  simpa only [Chain.coe_map, Function.comp_apply, Pi.evalOrderHom, OrderHom.coe_mk,
+    Function.eval] using h n
 
 /-- The denotation satisfies the one-step interpretation equations. -/
 theorem denote_eq (ret : α → D) (alg : ContinuousAlgebra P D) (tree : ITree P α) :
     denote ret alg tree = match shape' tree with
       | .mk (.pure value) _ => ret value
       | .mk .step next => denote ret alg (next PUnit.unit)
-      | .mk (.query operation) next => alg operation (fun b => denote ret alg (next b)) :=
-  (congrFun (domainStep ret alg).map_fix tree).symm
+      | .mk (.query operation) next => alg operation (fun b => denote ret alg (next b)) := by
+  simp only [denote_eq_fix]
+  exact (congrFun (domainStep ret alg).map_fix tree).symm
 
 @[simp] theorem denote_pure (ret : α → D) (alg : ContinuousAlgebra P D) (value : α) :
     denote ret alg (pure value) = ret value := by rw [denote_eq, shape'_pure]
@@ -76,22 +107,10 @@ theorem denote_eq (ret : α → D) (alg : ContinuousAlgebra P D) (tree : ITree P
       alg a (fun b => denote ret alg (next b)) := by rw [denote_eq, shape'_query]
 
 /-- The exact resumption representation commutes with interpretation. -/
-theorem denote_toResumptionWithTau (ret : α → D) (alg : ContinuousAlgebra P D)
+@[simp] theorem denote_toResumptionWithTau (ret : α → D) (alg : ContinuousAlgebra P D)
     (tree : ITree P α) :
     PFunctor.Resumption.denote ret (ContinuousAlgebra.withTau alg) (toResumptionWithTau tree) =
-      denote ret alg tree := by
-  let pre : (PFunctor.Resumption (P + PFunctor.y) α → D) →𝒄 (ITree P α → D) :=
-    .ofFun (fun f t => f (toResumptionWithTau t))
-  have comm (f : PFunctor.Resumption (P + PFunctor.y) α → D) :
-      pre (PFunctor.Resumption.domainStep ret (ContinuousAlgebra.withTau alg) f) =
-        domainStep ret alg (pre f) := by
-    funext t
-    simp only [pre, ContinuousHom.ofFun_apply, PFunctor.Resumption.domainStep,
-      dest_toResumptionWithTau, domainStep]
-    rcases shape' t with ⟨head, next⟩
-    cases head <;> rfl
-  exact congrFun ((PFunctor.Resumption.domainStep ret (ContinuousAlgebra.withTau alg)).fix_fusion
-    (domainStep ret alg) pre rfl comm) tree
+      denote ret alg tree := rfl
 
 /-- Unfold a coalgebra using the meanings of its successor states. -/
 @[expose] def corecDomainStep {S : Type uS} (next : S → (ViewPoly P α).Obj S)
@@ -121,6 +140,7 @@ theorem denote_corec {S : Type uS} (next : S → (ViewPoly P α).Obj S)
     simp only [pre, domainStep, ContinuousHom.ofFun_apply, shape'_corec_apply, corecDomainStep]
     rcases next s with ⟨head, children⟩
     cases head <;> rfl
+  rw [denote_eq_fix]
   exact congrFun ((domainStep ret alg).fix_fusion
     (corecDomainStep next ret alg) pre rfl comm) state
 
@@ -183,8 +203,8 @@ theorem WeakBisim.approximants_le_denote (ret : α → D) (alg : ContinuousAlgeb
 /-- Weak bisimulation preserves every continuous-algebra denotation. -/
 theorem WeakBisim.denote_eq (ret : α → D) (alg : ContinuousAlgebra P D)
     {t s : ITree P α} (h : WeakBisim t s) : denote ret alg t = denote ret alg s := by
-  apply le_antisymm
-  · exact ωSup_le _ _ (fun n => h.approximants_le_denote ret alg n)
-  · exact ωSup_le _ _ (fun n => h.symm.approximants_le_denote ret alg n)
+  exact le_antisymm
+    (denote_le_of_approximants_le ret alg t _ (h.approximants_le_denote ret alg))
+    (denote_le_of_approximants_le ret alg s _ (h.symm.approximants_le_denote ret alg))
 
 end ITree

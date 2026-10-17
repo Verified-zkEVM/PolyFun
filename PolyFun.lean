@@ -78,11 +78,11 @@ public import PolyFun.ITree.Bisim.Iter
 public import PolyFun.ITree.Construct
 public import PolyFun.ITree.Do
 public import PolyFun.ITree.Domain
+public import PolyFun.ITree.DomainLaws
 public import PolyFun.ITree.Events.Exception
 public import PolyFun.ITree.Events.ExceptionFacts
 public import PolyFun.ITree.Events.State
 public import PolyFun.ITree.Events.StateFacts
-public import PolyFun.ITree.Execution
 public import PolyFun.ITree.Free
 public import PolyFun.ITree.Handler
 public import PolyFun.ITree.Interp.Defs
@@ -340,6 +340,7 @@ public import PolyFun.PFunctor.PatternRunsOnMatter.Parallel
 public import PolyFun.PFunctor.PatternRunsOnMatter.Universal
 public import PolyFun.PFunctor.Resumption
 public import PolyFun.PFunctor.Resumption.Domain
+public import PolyFun.PFunctor.Resumption.DomainLaws
 public import PolyFun.PFunctor.Resumption.DomainTruncate
 public import PolyFun.PFunctor.Resumption.Empty
 public import PolyFun.PFunctor.Resumption.Truncate
