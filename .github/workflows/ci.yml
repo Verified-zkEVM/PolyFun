@@ -66,7 +66,10 @@ jobs:
         with:
           path: |
             .lake/build
-            !.lake/build/**/*.setup.json
+            Examples/Parliament/.lake/build
+            Examples/Notes/.lake/build
+            Examples/Pipeline/.lake/build
+            !**/.lake/build/**/*.setup.json
           key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
             polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
@@ -90,7 +93,7 @@ jobs:
         run: lake exe cache get
 
       - name: Run validation wrapper
-        run: ./scripts/validate.sh --axioms
+        run: ./scripts/validate.sh --examples --axioms
 
       - name: Save dependency cache
         if: success() && github.ref == 'refs/heads/main' && steps.deps-cache.outputs.cache-hit != 'true'
@@ -109,7 +112,10 @@ jobs:
         with:
           path: |
             .lake/build
-            !.lake/build/**/*.setup.json
+            Examples/Parliament/.lake/build
+            Examples/Notes/.lake/build
+            Examples/Pipeline/.lake/build
+            !**/.lake/build/**/*.setup.json
           key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}
 
   lint:
@@ -142,7 +148,10 @@ jobs:
         with:
           path: |
             .lake/build
-            !.lake/build/**/*.setup.json
+            Examples/Parliament/.lake/build
+            Examples/Notes/.lake/build
+            Examples/Pipeline/.lake/build
+            !**/.lake/build/**/*.setup.json
           key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
             polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
@@ -162,7 +171,7 @@ jobs:
         run: lake exe cache get
 
       - name: Build production and example libraries
-        run: lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
+        run: lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunExamples --wfail
 
       # One process per lint root. `lake lint` loads every root's environment into a single
       # process (about 7 GB in total); on Lean v4.35.0 the runner was shut down during that step.
@@ -172,6 +181,20 @@ jobs:
             while read -r root; do
               lake exe runLinter "$root"
             done
+
+      # The example packages are linted the same way, one root per process, inside each package.
+      - name: Run example-package environment linters
+        run: |
+          for example in Parliament Notes Pipeline; do
+            (
+              cd "Examples/$example"
+              lake build --wfail
+              python3 -c "import tomllib; print('\\n'.join(tomllib.load(open('lakefile.toml', 'rb'))['lintDriverArgs']))" |
+                while read -r root; do
+                  lake exe runLinter "$root"
+                done
+            )
+          done
 
   test:
     name: Test
@@ -203,7 +226,10 @@ jobs:
         with:
           path: |
             .lake/build
-            !.lake/build/**/*.setup.json
+            Examples/Parliament/.lake/build
+            Examples/Notes/.lake/build
+            Examples/Pipeline/.lake/build
+            !**/.lake/build/**/*.setup.json
           key: polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
             polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
@@ -227,6 +253,12 @@ jobs:
           lake build PolyFunTest --wfail --iofail
           lake test
           lake -d test/DocumentationConsumer build --wfail
-          lake build polyfun-parliament --wfail
+          lake -d Examples/Parliament build ParliamentTest polyfun-parliament --wfail --iofail
+          lake -d Examples/Notes build NotesTest polyfun-notes --wfail --iofail
+          lake -d Examples/Parliament test
+          lake -d Examples/Notes test
+          lake -d Examples/Pipeline build PipelineTest polyfun-pipeline --wfail --iofail
+          lake -d Examples/Pipeline test
           python3 scripts/test-parliament-cli.py
-          lake -d test/ParliamentConsumer build --wfail
+          python3 scripts/test-notes-cli.py
+          python3 scripts/test-pipeline-cli.py

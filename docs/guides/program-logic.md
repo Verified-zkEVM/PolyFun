@@ -15,6 +15,12 @@ postconditions valued in `ℝ≥0∞` and gives their expected values. VCVio, wh
 supplies the expectation reading of its oracle computations.
 [Names in VCVio](#names-in-vcvio) lists VCVio's names for these readings.
 
+For a small application-facing entry point, read
+[UpdatePolicies](../../Examples/Tutorials/UpdatePolicies.lean). A finite proposed update shows
+all-response validation, an explicit permitted-answer policy, exact reachability, and one
+noncompliant handler. An empty policy illustrates why partial correctness alone is not progress.
+The tutorial consumes public `OpSpec` and `FreeM.wpFold` APIs without importing the tactic tier.
+
 ## Layers
 
 | Module | Content |

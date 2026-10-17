@@ -1,7 +1,7 @@
 name = "PolyFun"
 defaultTargets = ["PolyFun"]
 
-# `lake lint` runs Batteries' environment linters over production, tutorial, and case-study modules.
+# `lake lint` runs Batteries' environment linters over production, IO, and small tutorial modules.
 # `lake test` builds the `PolyFunTest` library; any failing `example` /
 # `#guard` / `#eval` fails elaboration. This mirrors Mathlib and cslib, which
 # reuse `batteries/runLinter` rather than shipping a local runner.
@@ -10,7 +10,9 @@ lintDriverArgs = [
   "PolyFun", "ToCslib", "ComplexityBackends",
   "Examples.Tutorials.Requests", "Examples.Tutorials.Machines",
   "Examples.Tutorials.IndexedPrograms", "Examples.Tutorials.InteractionTrees",
-  "Examples.Parliament", "PolyFunParliamentMain"
+  "Examples.Tutorials.ParallelReports", "Examples.Tutorials.VersionedRequests",
+  "Examples.Tutorials.UpdatePolicies", "Examples.Tutorials.ReviewableWorkflows",
+  "Examples.Tutorials.FairWorkQueues", "Examples.Tutorials.BoundedController", "PolyFunIO"
 ]
 testDriver = "PolyFunTest"
 
@@ -51,12 +53,15 @@ name = "ToCslib"
 [[lean_lib]]
 name = "ComplexityBackends"
 
-# Optional human-facing tutorials and executable case studies. This target name can coexist with VCVio's
+# Optional executable IO adapters; the mathematical PolyFun umbrella does not import these.
+[[lean_lib]]
+name = "PolyFunIO"
+
+# Optional small tutorials only. The applications have independent Lake packages. This target coexists with VCVio's
 # `Examples` target. No generic `Examples` umbrella or core import is introduced.
 [[lean_lib]]
 name = "PolyFunExamples"
-roots = ["Examples.Parliament"]
-globs = ["Examples.Parliament", "Examples.Parliament.+", "Examples.Tutorials.+"]
+globs = ["Examples.Tutorials.+"]
 
 # Test / worked-example library. Built by `lake test`, kept out of the
 # `lake lint` scope. Glob-based, so no umbrella
@@ -86,7 +91,3 @@ supportInterpreter = true
 name = "PolyFunAxiomSweepTestFixtures"
 srcDir = "scripts"
 globs = ["PolyFunAxiomSweepTestFixtures.+"]
-
-[[lean_exe]]
-name = "polyfun-parliament"
-root = "PolyFunParliamentMain"

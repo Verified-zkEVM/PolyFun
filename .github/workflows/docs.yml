@@ -31,7 +31,7 @@ jobs:
         with:
           # The action also runs lake lint; build every configured lint root first.
           build-args: >-
-            PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain
+            PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunExamples
             --log-level=warning
 
       - name: Build and publish documentation

@@ -10,6 +10,7 @@ The Lean source is authoritative for definitions and theorem assumptions.
 |---|---|
 | New to Lean | [Install and build](getting-started.md), then [write a first program](tutorials/first-program.md) |
 | Familiar with Lean libraries | [Repository map](reference/repo-map.md), then [choose a computation model](guides/computation-models.md) |
+| Building a nonprobabilistic app | [Choose a runnable example](../Examples/README.md); start with Notes |
 | Modeling interaction | [Interfaces and protocol shapes](guides/interaction.md), [execution](guides/execution.md), [open composition](guides/open-systems.md) |
 | Coming from VCVio | [Ownership and API correspondence](guides/polyfun-and-vcvio.md) |
 | Contributing | [Contribution guide](../CONTRIBUTING.md), [validation](development/validation.md), [module APIs](development/module-api.md) |
@@ -19,8 +20,8 @@ The Lean source is authoritative for definitions and theorem assumptions.
 - [First program](tutorials/first-program.md): two requests, two interpretations, checked results.
 - [Indexed programs](tutorials/indexed-programs.md): a protocol whose type records its phases.
 - [Interaction trees](tutorials/interaction-trees.md): a program with state and ticks, run three ways.
-- [Runnable Lean examples](../Examples/README.md): program, machine, and indexed-program source.
-- [Parliament](../Examples/Parliament/README.md): an executable application with certified history, interchangeable handlers, and explicit IO boundaries.
+- [Examples collection](../Examples/README.md): runnable applications, grouped Lean tutorials,
+  and source-reading paths. Start with Notes, then choose composition or a deeper case study.
 
 ## Guides
 
@@ -60,7 +61,8 @@ The Lean source is authoritative for definitions and theorem assumptions.
 Each topic has one owning guide. Change that guide in the same PR as a public
 API, command, import boundary, or source-layout change. Source wins when prose
 and declarations disagree. Keep executable teaching material in `Examples/`
-and regressions in `PolyFunTest/`; keep links and README excerpts checked by
+and core regressions in `PolyFunTest/`; application tests live inside their independent
+Notes, Parliament, and Pipeline packages. Keep links and README excerpts checked by
 `scripts/check-docs-integrity.py`.
 
 Document present behavior and explicit assumptions. Preserve useful design
