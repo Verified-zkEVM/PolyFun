@@ -11,9 +11,10 @@ public import PolyFun.IPFunctor.Free.Family
 /-!
 # Algebras and relational folds for indexed free trees
 
-An algebra consumes every child meaning at its own index. Unlike an effect
+A fold algebra consumes every child meaning at its own index. Unlike an effect
 handler, it need not choose a single response. Function-valued carriers can
 delay evaluation of children, including children under language binders.
+The name `FoldAlgebra` leaves Mathlib's `Algebra` unshadowed under `open IPFunctor`.
 -/
 
 public section
@@ -25,7 +26,7 @@ namespace IPFunctor
 variable {I : Type uI} (P : Endo.{uI, uA, uB} I)
 
 /-- An indexed algebra interpreting one constructor and its child meanings. -/
-abbrev Algebra (D : I → Type uD) :=
+abbrev FoldAlgebra (D : I → Type uD) :=
   ∀ s (a : P.A s), ((b : P.B s a) → D (P.src s a b)) → D s
 
 namespace IFreeM
@@ -33,15 +34,15 @@ namespace IFreeM
 variable {P} {X : I → Type uX} {D : I → Type uD} {E : I → Type uE}
 
 /-- Interpret all nodes of a finite indexed tree in an algebra. -/
-@[expose] protected def fold (leaf : ∀ s, X s → D s) (alg : Algebra P D) :
+@[expose] protected def fold (leaf : ∀ s, X s → D s) (alg : FoldAlgebra P D) :
     {s : I} → IFreeM P X s → D s
   | _, .pure x => leaf _ x
   | _, .liftBind a next => alg _ a (fun b => (next b).fold leaf alg)
 
-@[simp] theorem fold_pure (leaf : ∀ s, X s → D s) (alg : Algebra P D)
+@[simp] theorem fold_pure (leaf : ∀ s, X s → D s) (alg : FoldAlgebra P D)
     {s : I} (x : X s) : (IFreeM.pure (P := P) x).fold leaf alg = leaf s x := rfl
 
-@[simp] theorem fold_liftBind (leaf : ∀ s, X s → D s) (alg : Algebra P D)
+@[simp] theorem fold_liftBind (leaf : ∀ s, X s → D s) (alg : FoldAlgebra P D)
     {s : I} (a : P.A s) (next : (b : P.B s a) → IFreeM P X (P.src s a b)) :
     (IFreeM.liftBind a next).fold leaf alg =
       alg s a (fun b => (next b).fold leaf alg) := rfl
@@ -49,7 +50,7 @@ variable {P} {X : I → Type uX} {D : I → Type uD} {E : I → Type uE}
 /-- Related leaves and constructors give related whole-tree interpretations. -/
 theorem fold_rel (R : ∀ s, D s → E s → Prop)
     (leafD : ∀ s, X s → D s) (leafE : ∀ s, X s → E s)
-    (algD : Algebra P D) (algE : Algebra P E)
+    (algD : FoldAlgebra P D) (algE : FoldAlgebra P E)
     (hleaf : ∀ s x, R s (leafD s x) (leafE s x))
     (halg : ∀ s a ds es, (∀ b, R (P.src s a b) (ds b) (es b)) →
       R s (algD s a ds) (algE s a es)) {s : I} (t : IFreeM P X s) :
@@ -61,7 +62,7 @@ theorem fold_rel (R : ∀ s, D s → E s → Prop)
 /-- A homomorphism of algebras commutes with their whole-tree folds. -/
 theorem fold_fusion (f : ∀ s, D s → E s)
     (leafD : ∀ s, X s → D s) (leafE : ∀ s, X s → E s)
-    (algD : Algebra P D) (algE : Algebra P E)
+    (algD : FoldAlgebra P D) (algE : FoldAlgebra P E)
     (hleaf : ∀ s x, f s (leafD s x) = leafE s x)
     (halg : ∀ s a ds, f s (algD s a ds) =
       algE s a (fun b => f (P.src s a b) (ds b)))
@@ -73,7 +74,7 @@ theorem fold_fusion (f : ∀ s, D s → E s)
   exact funext h
 
 /-- The algebra fold is determined by its equations on leaves and constructors. -/
-theorem fold_unique (leaf : ∀ s, X s → D s) (alg : Algebra P D)
+theorem fold_unique (leaf : ∀ s, X s → D s) (alg : FoldAlgebra P D)
     (f : ∀ s, IFreeM P X s → D s)
     (hpure : ∀ s x, f s (.pure x) = leaf s x)
     (hnode : ∀ s a next, f s (.liftBind a next) =

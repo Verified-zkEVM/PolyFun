@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.IPFunctor.Free.Fold
+public import PolyFun.IPFunctor.Lens.Basic
 
 /-!
 # Changing the indices of polynomial syntax
@@ -14,6 +15,10 @@ public import PolyFun.IPFunctor.Free.Fold
 A reindexing changes both the judgment and the available constructors. The
 source equation records how argument judgments change. In a typed language,
 this can instantiate types as well as change the variable context.
+
+An indexed lens between endomorphic polynomials is a reindexing along the identity
+(`Lens.toReindexing`); reindexing along successive lenses is reindexing along
+their composite.
 -/
 
 public section
@@ -47,6 +52,32 @@ structure Reindexing (P : Endo.{uI, uA, uB} I) (Q : Endo.{uJ, uC, uD} J)
   op i a := k.op (f i) (h.op i a)
   arg i a b := h.arg i a (k.arg (f i) (h.op i a) b)
   source i a b := (congrArg g (h.source i a _)).trans (k.source (f i) (h.op i a) b)
+
+namespace Lens
+
+variable {P : Endo.{uI, uA, uB} I} {Q : Endo.{uI, uC, uD} I}
+
+/-- A lens between endomorphic polynomials reindexes along the identity: positions
+move forward, responses pull back, and `src_eq` is the child-index equation. -/
+@[expose] def toReindexing (l : Lens P Q) : Reindexing P Q id where
+  op := l.toFunA
+  arg := l.toFunB
+  source := l.src_eq
+
+@[simp] theorem toReindexing_op (l : Lens P Q) (s : I) (a : P.A s) :
+    l.toReindexing.op s a = l.toFunA s a := rfl
+
+@[simp] theorem toReindexing_arg (l : Lens P Q) (s : I) (a : P.A s)
+    (b : Q.B s (l.toFunA s a)) : l.toReindexing.arg s a b = l.toFunB s a b := rfl
+
+/-- The identity lens reindexes by the identity reindexing. -/
+@[simp] theorem toReindexing_id : (Lens.id P).toReindexing = Reindexing.id P := rfl
+
+/-- Lens composition is reindexing composition in diagrammatic order. -/
+theorem toReindexing_comp {R : Endo.{uI, uE, uF} I} (l : Lens Q R) (l' : Lens P Q) :
+    (l ∘ₗ l').toReindexing = l'.toReindexing.comp l.toReindexing := rfl
+
+end Lens
 
 namespace IFreeM
 
@@ -106,7 +137,7 @@ where
     rfl
 
 /-- Interpreting a transported tree transports its meaning at the same index. -/
-theorem fold_cast {V : J → Type uV} (leaf : ∀ s, Y s → V s) (alg : Algebra Q V)
+theorem fold_cast {V : J → Type uV} (leaf : ∀ s, Y s → V s) (alg : FoldAlgebra Q V)
     {j k : J} (h : j = k) (t : IFreeM Q Y j) :
     (h ▸ t).fold leaf alg = h ▸ t.fold leaf alg := by
   cases h
@@ -114,7 +145,7 @@ theorem fold_cast {V : J → Type uV} (leaf : ∀ s, Y s → V s) (alg : Algebra
 
 /-- Reindexing commutes with interpretation through the translated constructor algebra. -/
 theorem fold_reindex {V : J → Type uV} (h : Reindexing P Q f)
-    (vars : ∀ s, X s → Y (f s)) (leaf : ∀ s, Y s → V s) (alg : Algebra Q V)
+    (vars : ∀ s, X s → Y (f s)) (leaf : ∀ s, Y s → V s) (alg : FoldAlgebra Q V)
     {s : I} (t : IFreeM P X s) :
     (t.reindex h vars).fold leaf alg =
       t.fold (fun s x => leaf (f s) (vars s x))
@@ -124,6 +155,28 @@ theorem fold_reindex {V : J → Type uV} (h : Reindexing P Q f)
   | pure x => rfl
   | liftBind a next ih =>
     simp only [reindex_liftBind, fold_liftBind, fold_cast, ih]
+
+end IFreeM
+
+/-! ## Reindexing along lenses -/
+
+namespace IFreeM
+
+variable {P : Endo.{uI, uA, uB} I} {Q : Endo.{uI, uC, uD} I} {R : Endo.{uI, uE, uF} I}
+  {X : I → Type uX} {Y : I → Type uY} {Z : I → Type uZ}
+
+/-- One constructor reindexed along a lens, stated with the lens fields. -/
+theorem reindex_toReindexing_liftBind (l : Lens P Q) (leaf : ∀ s, X s → Y s) {s : I}
+    (a : P.A s) (next : (b : P.B s a) → IFreeM P X (P.src s a b)) :
+    (IFreeM.liftBind a next).reindex l.toReindexing leaf = .liftBind (l.toFunA s a)
+      (fun b => l.src_eq s a b ▸ (next (l.toFunB s a b)).reindex l.toReindexing leaf) := rfl
+
+/-- Reindexing along successive lenses is reindexing along their composite. -/
+@[simp] theorem reindex_toReindexing_comp (l' : Lens P Q) (l : Lens Q R)
+    (leaf' : ∀ s, X s → Y s) (leaf : ∀ s, Y s → Z s) {s : I} (t : IFreeM P X s) :
+    (t.reindex l'.toReindexing leaf').reindex l.toReindexing leaf =
+      t.reindex (l.comp l').toReindexing (fun s x => leaf s (leaf' s x)) :=
+  reindex_comp l'.toReindexing l.toReindexing leaf' leaf t
 
 end IFreeM
 end IPFunctor

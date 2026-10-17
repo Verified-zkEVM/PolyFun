@@ -62,8 +62,8 @@ the exponential-adjunction equations below rewrite through the cartesian
 product and exponential constructions there. `implicit_reducible` (unlike
 `reducible`) keeps them opaque to simp and typeclass resolution, and needs
 no `allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] PFunctor.monomial PFunctor.y PFunctor.prod
-  PFunctor.instHMulPFunctor PFunctor.instMulPFunctor PFunctor.pi PFunctor.exp
+attribute [local implicit_reducible] PFunctor.instHMulPFunctor PFunctor.instMulPFunctor PFunctor.pi
+  PFunctor.exp
 
 /-- The evaluation lens `exp r q * q ⇆ r`, the counit of the cartesian
 exponential adjunction (Spivak–Niu Example 5.32).
@@ -125,7 +125,7 @@ theorem uncurry_curry {p q r : PFunctor.{uA, uB}} (l : Lens (p * q) r) :
     · simp only [Sum.elim_inr, Function.comp]
       cases hs : l.toFunB (pa, qa) d with
       | inl pb => rw [hs] at heq; simp at heq
-      | inr qb' => rw [hs] at heq; simp_all; rfl
+      | inr qb' => rw [hs] at heq; simp_all
 
 /-- Position-level reverse round-trip: `curry (uncurry g)` and `g` agree on
 positions. This is the position component of the adjunction unit-counit identity

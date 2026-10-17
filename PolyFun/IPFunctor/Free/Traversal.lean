@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.IPFunctor.Free.Fold
+public import PolyFun.IPFunctor.Free.Reindex
 
 /-!
 # Indexed traversals with a state at every child
@@ -15,6 +15,9 @@ A traversal changes constructors and carries an indexed state into each child.
 The state can describe a renaming, a type instantiation, or a substitution;
 entering a binder changes that state. Leaves may be replaced by whole trees.
 Composition and interpretation laws apply independently of the binding language.
+
+A reindexing is the traversal whose state records the translated judgment
+(`Reindexing.toTraversal`); with pure leaves, traversing along it is reindexing.
 -/
 
 public section
@@ -60,6 +63,18 @@ abbrev Composite (S : I → J → Type uR) (T : J → K → Type uS) (i : I) (k 
   next s a b := by cases s.down; exact ⟨rfl⟩
 
 end Traversal
+
+/-- A reindexing as a traversal whose state records that the target judgment is the
+translated source judgment. -/
+@[expose] def Reindexing.toTraversal {P : Endo.{uI, uA, uB} I} {Q : Endo.{uJ, uC, uD} J}
+    {f : I → J} (h : Reindexing P Q f) : Traversal P Q (fun i j => PLift (f i = j)) where
+  op s a := s.down ▸ h.op _ a
+  arg s a b := by cases s.down; exact h.arg _ a b
+  next s a b := by cases s.down; exact ⟨h.source _ a b⟩
+
+/-- The identity reindexing gives the identity traversal. -/
+theorem Reindexing.toTraversal_id (P : Endo.{uI, uA, uB} I) :
+    (Reindexing.id P).toTraversal = Traversal.identity P := rfl
 
 namespace IFreeM
 
@@ -117,7 +132,7 @@ theorem traverse_comp (f : Traversal P Q S) (g : Traversal Q R T)
 /-- An interpretation after traversal is a fold carrying the traversal state. -/
 theorem fold_traverse {V : J → Type uV} (f : Traversal P Q S)
     (leaf : ∀ {i j}, S i j → X i → IFreeM Q Y j)
-    (vars : ∀ j, Y j → V j) (alg : Algebra Q V)
+    (vars : ∀ j, Y j → V j) (alg : FoldAlgebra Q V)
     {i j} (s : S i j) (t : IFreeM P X i) :
     (t.traverse f leaf s).fold vars alg =
       t.fold (D := fun i => ∀ j, S i j → V j)
@@ -132,8 +147,8 @@ theorem fold_traverse {V : J → Type uV} (f : Traversal P Q S)
 /-- Constructor-local semantic compatibility suffices for every term and lifted state. -/
 theorem fold_traverse_rel {D : I → Type uZ} {V : J → Type uV} (f : Traversal P Q S)
     (leaf : ∀ {i j}, S i j → X i → IFreeM Q Y j)
-    (sourceVars : ∀ i, X i → D i) (sourceAlg : Algebra P D)
-    (targetVars : ∀ j, Y j → V j) (targetAlg : Algebra Q V)
+    (sourceVars : ∀ i, X i → D i) (sourceAlg : FoldAlgebra P D)
+    (targetVars : ∀ j, Y j → V j) (targetAlg : FoldAlgebra Q V)
     (Rel : ∀ {i j}, S i j → D i → V j → Prop)
     (hvar : ∀ {i j} (s : S i j) x,
       Rel s (sourceVars i x) ((leaf s x).fold targetVars targetAlg))
@@ -148,6 +163,31 @@ theorem fold_traverse_rel {D : I → Type uZ} {V : J → Type uV} (f : Traversal
   | liftBind a next ih =>
       simp only [traverse_liftBind, fold_liftBind]
       exact hnode s a _ _ (fun b => ih _ _)
+
+/-- Traversing along a reindexing with pure leaves reindexes the tree and transports it
+to the recorded target judgment. -/
+@[simp] theorem traverse_toTraversal {f : I → J} (h : Reindexing P Q f) (leaf : ∀ i, X i → Y (f i))
+    {i j} (s : PLift (f i = j)) (t : IFreeM P X i) :
+    t.traverse h.toTraversal (fun s x => .pure (s.down ▸ leaf _ x)) s =
+      s.down ▸ t.reindex h leaf := by
+  induction t generalizing j with
+  | pure x =>
+      rcases s with ⟨rfl⟩
+      rfl
+  | liftBind a next ih =>
+      rcases s with ⟨rfl⟩
+      change IFreeM.liftBind (h.op _ a)
+          (fun b => (next (h.arg _ a b)).traverse h.toTraversal _ ⟨h.source _ a b⟩) =
+        IFreeM.liftBind (h.op _ a) (fun b => h.source _ a b ▸ (next (h.arg _ a b)).reindex h leaf)
+      congr 1
+      funext b
+      exact ih _ _
+
+/-- At the translated judgment itself, traversal along a reindexing is reindexing. -/
+theorem traverse_toTraversal_rfl {f : I → J} (h : Reindexing P Q f)
+    (leaf : ∀ i, X i → Y (f i)) {i} (t : IFreeM P X i) :
+    t.traverse h.toTraversal (fun s x => .pure (s.down ▸ leaf _ x)) ⟨rfl⟩ = t.reindex h leaf :=
+  traverse_toTraversal h leaf ⟨rfl⟩ t
 
 end IFreeM
 end IPFunctor

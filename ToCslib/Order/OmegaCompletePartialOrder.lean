@@ -6,6 +6,7 @@ Authors: Devon Tuma
 
 module
 
+public import Mathlib.Order.FixedPoints
 public import Mathlib.Order.OmegaCompletePartialOrder
 
 /-!
@@ -14,6 +15,14 @@ public import Mathlib.Order.OmegaCompletePartialOrder
 Kleene iteration in a pointed omega-complete partial order. The carrier need
 not be a complete lattice. In particular, distinct errors and returned values
 need not have a common upper bound.
+
+The approximants are Mathlib's `fixedPoints.iterateChain` started at bottom, so
+`ContinuousHom.fix` is the supremum of that Kleene chain, and its unfolding and
+leastness are Mathlib's `fixedPoints.ωSup_iterate_mem_fixedPoint` and
+`fixedPoints.ωSup_iterate_le_prefixedPoint`. This file adds the pointed packaging,
+fixed-point induction, fusion, and continuity in the recursive body. As the least
+prefixed point (`ContinuousHom.isLeast_fix`), the result agrees with `OrderHom.lfp`
+on a complete lattice (`ContinuousHom.fix_eq_lfp`).
 -/
 
 public section
@@ -102,6 +111,23 @@ theorem approximants_le_fix (f : α →𝒄 α) (n : ℕ) : f.approximants n ≤
 /-- The least fixed point is below every prefixed point. -/
 theorem fix_le (f : α →𝒄 α) {x : α} (h : f x ≤ x) : f.fix ≤ x :=
   fixedPoints.ωSup_iterate_le_prefixedPoint f ⊥ bot_le h bot_le
+
+/-- The least fixed point is the supremum of Mathlib's Kleene chain from bottom. -/
+theorem fix_eq_ωSup_iterateChain (f : α →𝒄 α) :
+    f.fix = ωSup (fixedPoints.iterateChain f ⊥ bot_le) := rfl
+
+/-- The least fixed point is the least prefixed point. Together with
+`OrderHom.isLeast_lfp_le`, this identifies it with `OrderHom.lfp` whenever the
+carrier is also a complete lattice with the same order. -/
+theorem isLeast_fix (f : α →𝒄 α) : IsLeast {x | f x ≤ x} f.fix :=
+  ⟨(map_fix f).le, fun _ h => fix_le f h⟩
+
+/-- For the omega-CPO structure of a complete lattice, the least fixed point of a
+continuous map is its order-theoretic least fixed point. Carriers with a separate
+omega-CPO instance, such as function types, use `isLeast_fix` instead. -/
+theorem fix_eq_lfp {L : Type*} [CompleteLattice L] (f : L →𝒄 L) :
+    f.fix = OrderHom.lfp f.toOrderHom :=
+  (isLeast_fix f).unique (OrderHom.isLeast_lfp_le _)
 
 /-- Induction over finite approximations followed by an admissibility step. -/
 theorem fix_induction (f : α →𝒄 α) (p : α → Prop)

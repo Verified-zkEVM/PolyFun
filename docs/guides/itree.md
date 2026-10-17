@@ -218,6 +218,11 @@ as a machine, so the dynamical-system and computation APIs apply to it.
   bounded, chunked, and `IO` runners of `DynComputation` run interaction trees,
   and a silent step can be counted like any other query. Its denotation is
   `toResumptionWithTau` (`denote_toDynComputation`).
+- `ITree.withSilentSteps handler` extends a handler for `F` to `F + y`. It
+  answers each silent step with `pure ()` without invoking `handler`
+  (`withSilentSteps_visible`, `withSilentSteps_silent`), so a visible-event
+  handler runs `toDynComputation`. Silent steps still consume fuel, and a
+  finite budget makes no claim of termination or productivity.
 
 ## Recovering Coq references
 

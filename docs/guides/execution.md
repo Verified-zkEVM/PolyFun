@@ -19,7 +19,7 @@ proves that a second input list can be run from the first list's final state.
 | Describe arbitrary prefixes and continuing runs | `DynSystem.Prefix`, `Run` | `PolyFun.PFunctor.Dynamical.Run` |
 | Initialize a return-capable machine | `DynSystem.DynComputation` | `PolyFun.PFunctor.Dynamical.DynComputation` |
 | Interpret a finite query budget | `DynComputation.runWith`, `ImplementsWithin` | `PolyFun.PFunctor.Dynamical.DynComputation.Bounded` |
-| Pause and resume a finite query budget | `Chunk`, `unrollChunk`, `runChunk` | `PolyFun.PFunctor.Dynamical.DynComputation.Resumable` |
+| Pause and resume a finite query budget | `Chunk`, `unrollChunk`, `runChunk`, `startChunk`, `continueChunk` | `PolyFun.PFunctor.Dynamical.DynComputation.Resumable` |
 | Run successive chunks through Lean IO | `DynComputation.runIO` | `PolyFun.PFunctor.Dynamical.DynComputation.IO` |
 | Prove safety or simulation | `SafetySpec`, `IsSimulation` | `PolyFun.PFunctor.Dynamical.Safety`, `PolyFun.PFunctor.Dynamical.Simulation` |
 
@@ -42,6 +42,13 @@ the combinator to the runs of its parts; their common core,
 `run_map_eq_of_apply_map_eq`, says that a state projection which commutes with
 every single request commutes with every run.
 
+A `StateLens` ([`Handler/StateLens.lean`](../../PolyFun/PFunctor/Handler/StateLens.lean))
+is the stateful handler that answers every request with exactly one inner
+request; its substitution is `Stateful.run` of its handler (`mapFreeM_eq_run`).
+`DynComputation.wrapState` runs a machine against it as one product machine, and
+the [realizability guide](realizability.md#stateful-handler-substitution) bounds
+the cost of that substitution.
+
 ## Bounds and continuing behavior
 
 A `DynComputation` may run indefinitely. Its `denote` gives a `Resumption`;
@@ -62,6 +69,11 @@ that state. A terminal observation consumes no fuel, including at budget zero.
 `resumeChunk` continues a paused chunk and leaves a completed value alone.
 `runChunk` interprets the finite program through `Handler m p`.
 
+For interaction trees, import `PolyFun.ITree.Machine`: `ITree.toDynComputation` uses the
+resumption-with-tau representation, and `ITree.withSilentSteps` lifts a visible-event handler
+to it. Visible events and silent steps both consume the budget; a silent step never invokes
+the visible handler.
+
 The public laws connect this interface to bounded execution:
 
 - `unrollChunk_result` and `runChunk_result` recover the bounded observation
@@ -69,6 +81,12 @@ The public laws connect this interface to bounded execution:
 - `unrollChunk_add` and `runChunk_add` identify successive budgets with their sum.
 - `runChunk_natural` transports interpretation along a monad homomorphism,
   preserving the handler's chosen value and effects.
+
+Use `startChunk handler fuel input` to initialize a machine from its input and interpret the
+first chunk, and `continueChunk handler fuel chunk` for the next chunk of either a paused or a
+completed result. Neither requires reconstructing the machine's hidden state.
+`startChunk_continueChunk` equates consecutive budgets with their sum, including the exact
+residual, and `startChunk_zero` shows that zero fuel still observes a terminal state.
 
 The syntax keeps state, input, result, position, and direction universes
 independent. Its observation law uses the universe-polymorphic `FreeM.map`.
@@ -117,6 +135,18 @@ about its mathematical interpretation, while external IO behavior needs its
 own contract. Reactive assembly depends on `Interaction.Open.OpenSyntax`;
 the elementary process and routing interfaces do not depend on that syntax.
 
+`RequestNetwork.State.initial` starts every client ready, with no traffic and a fresh ticket
+counter. `ClientState.result` observes only a returned client and leaves the network's queue
+and transcript in place.
+
+`HandledDiagram.initial`, `runToken` and `runFIFO` execute a diagram with its intrinsic
+handlers and return complete residual states. Their `runToken_add` and `runFIFO_append` laws
+preserve local state, inboxes, pending traffic, outputs and elapsed activations across a split,
+for every lawful ambient monad, so a caller can pause after an effect without repeating it.
+They delegate to the network runners rather than introducing a second interpreter;
+`tokenObservation_eq` and `fifoObservation_eq` identify the terminal observations with these
+runners from `initial`. `ReactiveNetwork.State.ext` compares all retained fields.
+
 The [open-systems guide](open-systems.md) explains composition and observation.
 The [Parliament application](../../Examples/Parliament/README.md) uses the
 resumable driver with both a memory backend and terminal/filesystem IO. Its
@@ -128,3 +158,21 @@ certified meeting paths to generic prefixes, proves safety for arbitrary legal
 inputs, and relates finite execution to resumption and interaction-tree semantics.
 It also uses `Handler.withTraceAppend` and `WriterT.eraseHom` to instrument the
 same application and prove that erasing its log preserves the result and memory.
+
+## Composing effects and inspecting alternatives
+
+`Handler.sum` interprets dependent responses from either side of a coproduct. `Lens.inl` and
+`Lens.inr` embed a component program; `Handler.liftM_sum_mapLens_inl` and its right-side
+counterpart show that interpreting the embedding uses only the corresponding handler.
+`Handler.mapTarget_sum` preserves this separation when changing target monads.
+
+For one-or-both interfaces, `Handler.parallelSeq` executes a joint request left first. This is
+an explicit interpretation order, not OS parallelism or a commutativity guarantee. Arbitrary
+free-handler composition can change which requests synchronize, so unrestricted interchange is
+not promised.
+
+`Occurrence.completeWith answer` supplies the selected query's answer and executes its suffix.
+`Cursor.forkAtWith` executes a shared prefix once, then supplies two answers and retains both
+typed completions. It does not ask the handler for either selected answer. **Both suffixes
+still execute their effects independently**: this is not rollback or automatic state
+isolation, so speculative callers should fork over a read-only interface.

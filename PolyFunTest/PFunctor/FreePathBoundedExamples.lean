@@ -17,7 +17,7 @@ namespace PFunctor.FreeM.PathBoundedExamples
 
 /- Lean compares the concrete polynomial and path indices below at implicit
 transparency. -/
-attribute [local implicit_reducible] PFunctor.monomial FreeM.bind
+attribute [local implicit_reducible] FreeM.bind
 
 /-- A small interface whose first Boolean answer selects a one- or two-step
 branch. -/
