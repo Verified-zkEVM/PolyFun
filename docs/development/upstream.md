@@ -23,10 +23,32 @@ Their pins are recorded in the manifest; their README files live under
 
 ## Integration contracts
 
+- **Polynomial constructions:** CSLib's
+  `Cslib.Foundations.Data.PFunctor.Basic` owns the monomial `A y^ B` and its
+  special cases `C`, `linear`, `selfMonomial`, `purePower` (`y^ B`) and `y`,
+  the constants `0` and `1`, `P + Q` (through `PFunctor.add`), `P * Q`
+  (through `PFunctor.prod`) and `PFunctor.ext`, together with their simp
+  lemmas. `PolyFun/PFunctor/Basic.lean` re-exports that module and adds the
+  universe polynomial, the named sum `PFunctor.sum`, indexed sums and
+  products, tensor, lifts, exponentials, lenses and charts. The reducibility of
+  the shared constructions is CSLib's; the
+  [polynomial guide](../guides/pfunctor.md#cslibs-polynomial-constructions)
+  describes what it implies for instance search and simp.
 - **Free monads:** import the CSLib definitions through the appropriate public
-  module. `ToCslib/Data/PFunctor/Free/` adds laws and folds without redefining
-  the carrier. PolyFun-specific decorations, paths, machines, and handlers
-  remain in `PolyFun/PFunctor/`.
+  module. CSLib owns the carrier `PFunctor.FreeM`, its fold `FreeM.foldFreeM`
+  with the fold laws (`Free.Fold`), and the W-type equivalence
+  `FreeM.equivWOfIsEmpty` with its directions `FreeM.toWOfIsEmpty` and
+  `W.toFreeM` (`Free.W`). `ToCslib/Data/PFunctor/Free/` adds
+  constructor-spelled equations and loop transport without redeclaring any of
+  them, and PolyFun-specific decorations, paths, machines, and handlers remain
+  in `PolyFun/PFunctor/`.
+- **Co-import:** neither PolyFun nor `ToCslib` redeclares a CSLib name, so
+  `import Cslib` elaborates together with `import PolyFun`, `import ToCslib`
+  and `import ComplexityBackends`. The ordinary-import canary
+  [`CslibCoImport.lean`](../../PolyFunTest/ModuleAPI/CslibCoImport.lean)
+  imports each owning CSLib module together with the PolyFun and `ToCslib`
+  modules that build on it, so a redeclared name fails the test build without
+  building the whole CSLib root.
 - **Resumable execution:** `DynComputation.Resumable` retains machine state
   and derives budget composition and handler transport from the existing
   `FreeM.liftM` laws. The pinned CSLib, Mathlib, and Batteries APIs supply no
@@ -176,3 +198,5 @@ removal conditions. They do not require exposing the free-monoid carrier.
 | Cofree polynomials, displayed constructions, and pattern-runs-on-matter | Follow an object equality and dependent continuation through public object/lens equations; preserve type-level tensor and unit computation. |
 | Reactive networks and realizability closure | Minimize actual transport/update consumers, retaining coherent representation and admissible-step data. |
 | Core/CSLib dependent automation | Recheck the independent free-tree and event reproducers at a coordinated pin upgrade; treat WP/`vcgen` result-index matching as a separate question. |
+| Simp lemmas over concrete polynomial abbreviations | A simp lemma whose left side carries `P.B a` in an implicit argument, as `FreeM.lift a` does, misses a goal in which `P` is a concrete `A y^ B`, `y`, `C`, `linear` or `purePower`, because the discrimination tree reduces that argument to `B`. `Handler.Stateful.run_lift` marks it `no_index`, as CSLib's `foldFreeM_lift` does; `FreeM.support_lift`, `FreeM.support_lift_bind`, the `isRollBound`, `isTotalRollBound` and `programProgress` `lift_bind` lemmas, `Responder.runFree_lift`, `Resumption.dest_lift`, and CSLib's `FreeM.liftM_lift` and `liftM_lift_bind` do not. Settle the reducibility of the CSLib abbreviations, then index the remaining lemmas accordingly and test each against `Bool y^ Nat`. |
+| CSLib polynomial W/M-types and resumptions | cslib#1088 adds `FreeM.toW` and `FreeM.ofW` to `Free.W`, which PolyFun does not declare, together with `M.dest_inj`, `M.corec_dest`, `W.toM`, `M.toW_toM`, and a `PFunctor.Resumption` API whose sum lists the summands in the opposite order. PolyFun declares the last five in [`M.lean`](../../PolyFun/PFunctor/M.lean), [`M/WellFounded.lean`](../../PolyFun/PFunctor/M/WellFounded.lean), and [`Resumption.lean`](../../PolyFun/PFunctor/Resumption.lean). At the pin that contains the request, adopt or rename each one so the co-import canary still elaborates. |

@@ -289,8 +289,8 @@ def branchMachine : DynComputation branchSource Unit Nat where
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
 the branch-machine examples below unfold these constants there (`wrap`
 carries the attribute at its definition site). -/
-attribute [local implicit_reducible] PFunctor.monomial branchSource branchTarget
-  branchFinal branchLens branchLens₂ branchMachine seqComp
+attribute [local implicit_reducible] branchSource branchTarget branchFinal branchLens branchLens₂
+  branchMachine seqComp
 
 def handoffResult (answer : Bool) : Nat := if answer = true then 11 else 7
 
@@ -435,8 +435,7 @@ def sourceMachine (trueResult : Nat) : DynComputation lossySource Unit Nat :=
 
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
 the observation examples below unfold these constants there. -/
-attribute [local implicit_reducible] PFunctor.y lossySource lossyLens sourceTree
-  sourceMachine
+attribute [local implicit_reducible] lossySource lossyLens sourceTree sourceMachine
 
 def observeTrueResult (tree : Resumption lossySource Nat) : Option Nat :=
   match Resumption.dest tree with

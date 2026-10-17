@@ -114,6 +114,17 @@ module inside `PolyFun/`.
 `ToCslib` never imports PolyFun or a backend, and PolyFun never imports a
 backend; `scripts/check-modules.sh` enforces both.
 
+PolyFun and `ToCslib` import the CSLib module that owns each reused
+declaration instead of declaring a local copy: `PolyFun.PFunctor.Basic`
+re-exports `Cslib.Foundations.Data.PFunctor.Basic`,
+`ToCslib.Data.PFunctor.Free.Basic` re-exports
+`Cslib.Foundations.Data.PFunctor.Free.Fold`, and `PolyFun.PFunctor.Free.Basic`
+re-exports `Cslib.Foundations.Data.PFunctor.Free.W`. `import Cslib` therefore
+elaborates together with `import PolyFun`, `import ToCslib` and
+`import ComplexityBackends`;
+[`CslibCoImport.lean`](../../PolyFunTest/ModuleAPI/CslibCoImport.lean) imports
+each owning module together with the modules that build on it.
+
 `Interaction.Interface` exposes `Interaction.Interface` and
 `Interaction.PortBoundary`. Runtime declarations use `Interaction.Execution`;
 composition, open-process, and observation declarations use `Interaction.Open`.

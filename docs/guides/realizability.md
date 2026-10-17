@@ -621,8 +621,8 @@ admissible decoder.
 Products and sums are *not* automatic. They need a pairing codec and a tagging
 scheme whose operations the word class admits, supplied as `WordPairing` and
 `WordTagging` and consumed by `ofWordClass.hasProd` / `ofWordClass.hasSum`.
-complexitylib exposes the class-level product closure that `WordPairing` needs
-(`pairFst_mem_FP`, `pairSnd_mem_FP` and `mem_FP_pair` in
+complexitylib's development branch exposes the class-level product closure that
+`WordPairing` needs (`pairFst_mem_FP`, `pairSnd_mem_FP` and `mem_FP_pair` in
 `Complexitylib/Classes/P/Pairing.lean`); PolyFun does not depend on complexitylib,
 so no such instance is built here. cslib's `PolyTimeComputable` has `id` and
 `comp` but no pairing or projection machines at all. The `CslibSingleTape` backend supplies encoded machine families and finite-table
