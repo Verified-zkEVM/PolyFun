@@ -9,7 +9,8 @@ module
 public import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
 public import Mathlib.Data.Fin.Tuple.Basic
 
-/-!+# Finite histories of residual execution
+/-!
+# Finite histories of residual execution
 
 `unrollHistory` records the initialized zero-fuel observation and every subsequent
 chunk. It extends a history by resuming its last chunk for one query, so previous

@@ -190,7 +190,10 @@ and returns it with the result. `ExecutionTrace.withAccumulator` lifts a source
 trace with exactly its accumulated observation, while `accumulate_append` splits
 it at any retained intermediate state. `map_unrollChunk_withAccumulator` erases
 observations from every bounded execution, including a pause inside a call.
-Noncommutative monoids retain observation order.
+Noncommutative monoids retain observation order. `unrollChunk_withAccumulator_mul`
+factors a fixed left multiplier through the entire residual computation. This lets
+semantic consumers vary the initial accumulator using one pushforward of the
+execution started at the monoid identity.
 
 A [`Pending`](../../PolyFun/PFunctor/Dynamical/DynComputation/Pending.lean) query
 stores the caller state and evidence for the operation it exposes. `resume`

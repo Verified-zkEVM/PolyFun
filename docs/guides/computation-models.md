@@ -88,6 +88,14 @@ A timeout permanently aborts the client. It neither restarts nor renormalizes
 that call. This is useful when a consumer requires finite syntax with an
 explicit failure outcome; chunking remains the API for retaining unfinished work.
 
+`admitted` uses core `ExceptT` over `StateT` to retain service and admission state
+on permanent abort. The [exception-answer adapter](../../PolyFun/PFunctor/Free/Except.lean)
+exposes `Except ε (P.B a)` as an ordinary dependent answer type. `FreeM.withExcept`
+stops at the first error, and `liftM_withExcept` identifies its fold with the
+core transformer interpretation. Consumers can reuse laws for ordinary finite
+clients while keeping error tags and final state. The syntax permits independent
+answer, error and result universes.
+
 | Consumer requirement | Model and existing bridge |
 |---|---|
 | Well-founded adaptive client | `FreeM`, `Handler.Stateful.run`, `MachineHandler.compile` |

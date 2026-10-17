@@ -36,7 +36,7 @@ variable {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {W : Type uW} [
         (next answer, accumulated * observe.atOut (ExecutionTrace.out_eq_of_view_query h) answer)⟩
 
 /-- A machine with a persistent accumulator, initialized by the caller. -/
-@[expose, implicit_reducible] def withAccumulator (machine : DynComputation.{u} P α β)
+@[expose, reducible] def withAccumulator (machine : DynComputation.{u} P α β)
     (observe : machine.toDynSystem.EventMap W) :
     DynComputation.{max u uW} P (α × W) (β × W) :=
   .ofStep (machine.observeStep observe) (fun input => (machine.init input.1, input.2))
@@ -48,7 +48,7 @@ theorem view_withAccumulator (machine : DynComputation.{u} P α β)
   view_ofStep _ _ _
 
 /-- Returning a value preserves the accumulated observations. -/
-@[simp] theorem view_withAccumulator_pure (machine : DynComputation.{u} P α β)
+theorem view_withAccumulator_pure (machine : DynComputation.{u} P α β)
     (observe : machine.toDynSystem.EventMap W) {state : machine.State} {value : β}
     (h : machine.view state = .inl value) (accumulated : W) :
     (machine.withAccumulator observe).view (state, accumulated) = .inl (value, accumulated) := by
@@ -109,6 +109,40 @@ theorem map_unrollChunk_withAccumulator (machine : DynComputation.{u} P α β)
               (next answer, accumulated * observe.atOut
                 (ExecutionTrace.out_eq_of_view_query h) answer))) = _
         exact congrArg (FreeM.liftBind a) (funext fun answer => ih (next answer) _)
+
+/-- A fixed left factor in the accumulator is carried through every query and pause. -/
+theorem unrollChunk_withAccumulator_mul (machine : DynComputation.{u} P α β)
+    (observe : machine.toDynSystem.EventMap W) (fuel : Nat) (state : machine.State)
+    (left right : W) :
+    (machine.withAccumulator observe).unrollChunk fuel (state, left * right) =
+      FreeM.map (Chunk.map (fun out => (out.1, left * out.2))
+        (fun out => (out.1, left * out.2)))
+        ((machine.withAccumulator observe).unrollChunk fuel (state, right)) := by
+  induction fuel generalizing state right with
+  | zero =>
+      rcases h : machine.view state with value | ⟨a, next⟩
+      · rw [unrollChunk_zero, unrollChunk_zero,
+          machine.view_withAccumulator_pure observe h,
+          machine.view_withAccumulator_pure observe h]
+        rfl
+      · rw [unrollChunk_zero, unrollChunk_zero,
+          machine.view_withAccumulator_query observe h,
+          machine.view_withAccumulator_query observe h]
+        rfl
+  | succ fuel ih =>
+      rcases h : machine.view state with value | ⟨a, next⟩
+      · rw [unrollChunk_succ, unrollChunk_succ,
+          machine.view_withAccumulator_pure observe h,
+          machine.view_withAccumulator_pure observe h]
+        rfl
+      · rw [unrollChunk_succ, unrollChunk_succ,
+          machine.view_withAccumulator_query observe h,
+          machine.view_withAccumulator_query observe h]
+        change FreeM.liftBind a _ = FreeM.liftBind a _
+        apply congrArg (FreeM.liftBind a)
+        funext answer
+        simpa only [mul_assoc] using ih (next answer)
+          (right * observe.atOut (ExecutionTrace.out_eq_of_view_query h) answer)
 
 namespace ExecutionTrace
 

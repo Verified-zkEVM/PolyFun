@@ -64,3 +64,13 @@ example (machine : DynComputation.{u} P α β) {W : Type*} [Monoid W]
     (machine.withAccumulator observe).ExecutionTrace (start, accumulated)
       (finish, accumulated * trace.accumulate observe) :=
   trace.withAccumulator observe accumulated
+
+/-- The accumulator law does not require a commutative monoid or shared universes. -/
+example (machine : DynComputation.{u} P α β) {W : Type*} [Monoid W]
+    (observe : machine.toDynSystem.EventMap W) (fuel : Nat) (state : machine.State)
+    (left right : W) :
+    (machine.withAccumulator observe).unrollChunk fuel (state, left * right) =
+      FreeM.map (DynComputation.Chunk.map (fun out => (out.1, left * out.2))
+        (fun out => (out.1, left * out.2)))
+        ((machine.withAccumulator observe).unrollChunk fuel (state, right)) :=
+  machine.unrollChunk_withAccumulator_mul observe fuel state left right
