@@ -9,7 +9,8 @@ module
 import PolyFun.PFunctor.Dynamical.DynComputation.History
 meta import PolyFun.PFunctor.Dynamical.DynComputation.History
 
-/-!+# Histories retain execution without replay
+/-!
+# Histories retain execution without replay
 
 A two-query machine is observed for longer than its execution. Its stateful
 interpreter records exactly two calls, while every later coordinate retains the

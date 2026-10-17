@@ -159,6 +159,14 @@ def runChunk {m : Type u → Type v} [Monad m] (machine : DynComputation.{u} p �
     (handler : Handler m p) (fuel : Nat) (state : machine.State) :
     m (Chunk machine.State β) := (unrollChunk machine fuel state).liftM handler
 
+/-- Bounded interpretation is the free fold of the saved-chunk program. -/
+theorem runChunk_eq_liftM {m : Type u → Type v} [Monad m]
+    (machine : DynComputation.{u} p α β) (handler : Handler m p)
+    (fuel : Nat) (state : machine.State) :
+    machine.runChunk handler fuel state = (machine.unrollChunk fuel state).liftM handler := by
+  unfold runChunk
+  rfl
+
 /-- Initialize a machine from its public input and interpret one bounded chunk. -/
 def startChunk {m : Type u → Type v} [Monad m] (machine : DynComputation.{u} p α β)
     (handler : Handler m p) (fuel : Nat) (input : α) : m (Chunk machine.State β) :=

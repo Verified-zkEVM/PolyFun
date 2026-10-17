@@ -239,6 +239,7 @@ public import PolyFun.PFunctor.Dynamical.DynComputation.IO
 public import PolyFun.PFunctor.Dynamical.DynComputation.Observe
 public import PolyFun.PFunctor.Dynamical.DynComputation.Pending
 public import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
+public import PolyFun.PFunctor.Dynamical.DynComputation.ResumableMap
 public import PolyFun.PFunctor.Dynamical.DynComputation.Termination
 public import PolyFun.PFunctor.Dynamical.DynComputation.Trace
 public import PolyFun.PFunctor.Dynamical.DynComputation.WrapState
@@ -295,6 +296,7 @@ public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Free
 public import PolyFun.PFunctor.Handler.Instrumentation
 public import PolyFun.PFunctor.Handler.Instrumentation.Free
+public import PolyFun.PFunctor.Handler.Machine.Admission
 public import PolyFun.PFunctor.Handler.Machine.Behavior
 public import PolyFun.PFunctor.Handler.Machine.Defs
 public import PolyFun.PFunctor.Handler.Normalization

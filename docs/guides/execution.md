@@ -97,6 +97,12 @@ recovers exactly `unrollChunk fuel state`, including its effects. Earlier-coordi
 projections still execute the whole budget: removing those effects requires a law
 of the chosen interpretation and is not a general syntactic equality.
 
+`DynComputation.ResumableMap` transports these observations through existing
+input and result adapters. `unrollChunk_mapResult` and `unrollHistory_mapResult`
+map only returned values and retain the exact residual state at every coordinate.
+`unrollHistory_contramapInput` changes only initialization. The maps may change
+their input or output universes; the proofs use heterogeneous free-monad laws.
+
 The syntax keeps state, input, result, position, and direction universes
 independent. Its observation law uses the universe-polymorphic `FreeM.map`.
 Monadic interpretation aligns the state, result, and response universes;
@@ -191,3 +197,20 @@ stores the caller state and evidence for the operation it exposes. `resume`
 recovers the continuation from that state. Machine-handler phases use this
 representation, so a suspended caller's representation certificate need not
 encode a function. Entry and return remain explicit administrative transitions.
+
+The finite [`FreeM.HandlerMachine`](../../PolyFun/PFunctor/Free/HandlerMachine.lean)
+API observes this same dispatcher through `encodePhase` and `decodePrefix`.
+`runPrefix_eq_runChunk` identifies its runner with a shared machine chunk interpreted
+through `Handler.withTraceBefore`. Administrative transitions and primitive queries
+have separate counters, including an unfinished call. The public `runPrefix_*`
+constructor equations support proofs without unfolding the writer implementation.
+`runPrefix_complete` includes both entry and return in its `calls * (inner + 2)`
+budget; `map_result_runPrefix` preserves the ordered inner interaction after completion.
+
+[`Machine.Admission`](../../PolyFun/PFunctor/Handler/Machine/Admission.lean) adds an
+executable admission policy around any service. The policy can refuse a call or
+supply its cap and update separate admission data before execution. `admitted`
+uses core `ExceptT` over `StateT`, so an error retains state and stops a free client's
+continuation. The timeout callback observes the saved private state; auxiliary
+admission data survives success and timeout unchanged by the service. This supports
+prepaid budgets without embedding their bookkeeping in every service machine.
