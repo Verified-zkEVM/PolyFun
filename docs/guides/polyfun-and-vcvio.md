@@ -12,7 +12,7 @@ used independently in semantics, effect handling, and concurrent systems.
 | Mathlib | `PFunctor`, W-types and M-types, algebra and order theory, and supporting mathematics |
 | CSLib | `PFunctor.FreeM`, the functor-generic `Cslib.FreeM`, and reusable computer-science infrastructure |
 | PolyFun | Polynomial morphisms and handlers; paths and replay structure; programs, behaviors, machines, and their laws; protocol shapes; open composition; generic support/WP and realizability |
-| `ToCslib` | Staged extensions of upstream interfaces: free-monad and loop laws, an order bridge, bitvector and polynomial lemmas |
+| `ToCslib` | Staged extensions of upstream interfaces: free-monad and loop laws, an order bridge, omega-CPO fixed points, bitvector and polynomial lemmas |
 | `ComplexityBackends` | Optional concrete machine models and the backend-specific certificates connecting them to PolyFun realizability |
 | VCVio | Probability and distributions, cryptographic experiments and adversary restrictions, security definitions, reductions, and concrete cryptographic applications |
 

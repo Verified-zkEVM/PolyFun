@@ -46,14 +46,17 @@ example {I : Type u} {J : Type v} [Unique I] [Unique J]
 /-! ## `PFunctor.FreeM.equivWOfIsEmpty` round-trip
 
 When the value type `α` is empty, every `pure` leaf is unreachable and
-`PFunctor.FreeM P α` collapses structurally to `P.W`. The forward direction
-`toW` reinterprets each `liftBind` as a W-node; the inverse `ofW` rebuilds
-the tree. Both directions are mutual inverses by induction; this example
+`PFunctor.FreeM P α` collapses structurally to `P.W`. cslib's forward direction
+`FreeM.toWOfIsEmpty` reinterprets each `liftBind` as a W-node; the inverse
+`W.toFreeM` rebuilds the tree. Both directions are mutual inverses by induction; this example
 just confirms the equivalence resolves and either round-trip is
 `rfl` after unfolding. -/
 
 example (P : PFunctor) (w : P.W) :
     (PFunctor.FreeM.equivWOfIsEmpty (P := P) (α := PEmpty)).invFun w =
-      PFunctor.FreeM.ofW w := rfl
+      PFunctor.W.toFreeM w := rfl
+
+example (P : PFunctor) (x : PFunctor.FreeM P PEmpty) :
+    PFunctor.FreeM.equivWOfIsEmpty x = PFunctor.FreeM.toWOfIsEmpty x := rfl
 
 end IPFunctor.Examples

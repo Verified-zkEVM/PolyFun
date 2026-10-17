@@ -67,7 +67,7 @@ theorem run_pure (h : Stateful m S P) {α : Type u}
 @[simp]
 theorem run_lift [LawfulMonad m] (h : Stateful m S P)
     (query : P.A) (state : S) :
-    h.run (FreeM.lift query) state = (h query).run state := by
+    h.run (α := no_index (P.B query)) (FreeM.lift query) state = (h query).run state := by
   change (FreeM.liftM h (FreeM.lift query)).run state = _
   rw [FreeM.liftM_lift]
 

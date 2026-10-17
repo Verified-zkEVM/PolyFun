@@ -26,12 +26,14 @@ specializations:
   *terminal-state-marker* family.
 
 `IFreeM` itself is not a `Monad` — its bind is family-polymorphic in the leaf state,
-since different branches of an `IFreeM` tree end at different leaf states.
+since different branches of an `IFreeM` tree end at different leaf states. The continuation's
+leaf family may live in a different universe from the tree's; `bind_assoc` relates leaf
+families in three independent universes.
 -/
 
 @[expose] public section
 
-universe uI uA uB v w
+universe uI uA uB v w w'
 
 namespace IPFunctor
 
@@ -54,20 +56,22 @@ variable {P : Endo.{uI, uA, uB} I} {X Y Z : I → Type v}
 /-! ## Bind: family-polymorphic continuation -/
 
 /-- Family-polymorphic bind on `IFreeM`. The continuation `g` accepts the leaf state
-explicitly because different leaves of `x` may land at different states. Specializes to both
-`FreeM.bind` (constant family) and `FreeM₂.bind` (terminal-state-marker family). -/
+explicitly because different leaves of `x` may land at different states, and its leaf family
+`Y` may live in a different universe from `X`. Specializes to both `FreeM.bind` (constant
+family) and `FreeM₂.bind` (terminal-state-marker family). -/
 @[always_inline, inline]
-protected def bind : {s : I} → IFreeM P X s → (∀ s', X s' → IFreeM P Y s') → IFreeM P Y s
+protected def bind {Y : I → Type w} :
+    {s : I} → IFreeM P X s → (∀ s', X s' → IFreeM P Y s') → IFreeM P Y s
   | _, .pure x,   g => g _ x
   | _, .liftBind a r, g => .liftBind a (fun b => (r b).bind g)
 
 @[simp]
-lemma bind_pure {s : I} (x : X s) (g : ∀ s', X s' → IFreeM P Y s') :
+lemma bind_pure {Y : I → Type w} {s : I} (x : X s) (g : ∀ s', X s' → IFreeM P Y s') :
     (IFreeM.pure (P := P) x).bind g = g s x := rfl
 
 @[simp]
-lemma bind_liftBind {s : I} (a : P.A s) (r : (b : P.B s a) → IFreeM P X (P.src s a b))
-    (g : ∀ s', X s' → IFreeM P Y s') :
+lemma bind_liftBind {Y : I → Type w} {s : I} (a : P.A s)
+    (r : (b : P.B s a) → IFreeM P X (P.src s a b)) (g : ∀ s', X s' → IFreeM P Y s') :
     (IFreeM.liftBind a r).bind g = IFreeM.liftBind a (fun b => (r b).bind g) := rfl
 
 /-! ## Family map -/
@@ -138,6 +142,63 @@ lemma construct_liftBind {s : I} (a : P.A s) (r : (b : P.B s a) → IFreeM P X (
       h_liftBind s a r (fun b => IFreeM.construct h_pure h_liftBind (r b)) := rfl
 
 end construct
+
+/-! ## Bind and map laws
+
+The continuation of `bind` may change the universe of the leaf family, so `bind_assoc`,
+`bind_imap` and `imap_bind` take their families in independent universes. `imap` keeps the
+universe and is the bind whose continuation returns a leaf (`imap_eq_bind`). -/
+
+/-- Binding with `IFreeM.pure` returns the tree unchanged. -/
+@[simp]
+lemma bind_pure_right {s : I} (x : IFreeM P X s) : x.bind (fun _ y => IFreeM.pure y) = x := by
+  induction x using IFreeM.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
+
+/-- Bind is associative, with the three leaf families in independent universes. -/
+lemma bind_assoc {Y : I → Type w} {Z : I → Type w'} {s : I} (x : IFreeM P X s)
+    (f : ∀ s', X s' → IFreeM P Y s') (g : ∀ s', Y s' → IFreeM P Z s') :
+    (x.bind f).bind g = x.bind (fun s' y => (f s' y).bind g) := by
+  induction x using IFreeM.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
+
+/-- Mapping the leaves is binding with a continuation that returns a leaf. -/
+lemma imap_eq_bind (f : ∀ s, X s → Y s) {s : I} (x : IFreeM P X s) :
+    x.imap f = x.bind (fun s' y => IFreeM.pure (f s' y)) := by
+  induction x using IFreeM.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
+
+@[simp]
+lemma imap_id {s : I} (x : IFreeM P X s) : x.imap (fun _ => id) = x := by
+  induction x using IFreeM.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
+
+@[simp]
+lemma imap_imap (f : ∀ s, X s → Y s) (g : ∀ s, Y s → Z s) {s : I} (x : IFreeM P X s) :
+    (x.imap f).imap g = x.imap (fun s' => g s' ∘ f s') := by
+  induction x using IFreeM.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
+
+/-- Binding after mapping the leaves feeds the mapped payloads to the continuation. -/
+lemma bind_imap {Z : I → Type w} (f : ∀ s, X s → Y s) (g : ∀ s', Y s' → IFreeM P Z s')
+    {s : I} (x : IFreeM P X s) :
+    (x.imap f).bind g = x.bind (fun s' y => g s' (f s' y)) := by
+  induction x using IFreeM.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
+
+/-- Mapping the leaves of a bind maps the leaves of each continuation. -/
+lemma imap_bind {Y Z : I → Type w} (g : ∀ s', X s' → IFreeM P Y s') (f : ∀ s, Y s → Z s)
+    {s : I} (x : IFreeM P X s) :
+    (x.bind g).imap f = x.bind (fun s' y => (g s' y).imap f) := by
+  induction x using IFreeM.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ a _ ih => exact congrArg (IFreeM.liftBind a) (funext ih)
 
 /-! ## `mapM`: interpreting `IFreeM` into a monad
 

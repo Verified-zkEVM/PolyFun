@@ -121,7 +121,7 @@ theorem support_liftBind (a : P.A) (r : P.B a → FreeM P α) :
 
 @[simp]
 theorem support_lift (a : P.A) :
-    support (FreeM.lift (P := P) a) = Set.univ :=
+    support (α := no_index (P.B a)) (FreeM.lift (P := P) a) = Set.univ :=
   Set.eq_univ_of_forall fun c => Set.mem_iUnion.mpr ⟨c, rfl⟩
 
 theorem mem_support_liftBind {a : P.A} {r : P.B a → FreeM P α} {c : α} :
@@ -131,7 +131,7 @@ theorem mem_support_liftBind {a : P.A} {r : P.B a → FreeM P α} {c : α} :
 /-- A primitive operation followed by a continuation can return any child output. -/
 @[simp, freeM_unfold]
 theorem support_lift_bind (a : P.A) (r : P.B a → FreeM P α) :
-    support ((FreeM.lift a).bind r) = ⋃ b, support (r b) := rfl
+    support ((FreeM.lift a).bind (α := no_index (P.B a)) r) = ⋃ b, support (r b) := rfl
 
 /-- Mapping a free tree maps its reachable leaves, independently of result universes. -/
 @[simp]
