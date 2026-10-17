@@ -121,7 +121,8 @@ A dependent type such as `P.B a` can reduce on a concrete signature and prevent
 simp from finding an otherwise applicable lemma. Try `rw [the_named_equation]`;
 a lookup miss alone does not justify new syntax or another equation variant.
 Standard `no_index` annotations on individual dependent type arguments are
-appropriate for genuine public simp laws, with a concrete regression test.
+appropriate for genuine public simp laws, with a concrete regression test such
+as those in [`ConcreteSimp.lean`](../../PolyFunTest/PFunctor/ConcreteSimp.lean).
 
 When matching path or displayed-family indices needs bind and lift to unfold at
 implicit transparency, use a local `implicit_reducible` attribute on those
