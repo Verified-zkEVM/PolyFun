@@ -57,6 +57,9 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 | [`PolyFun/IPFunctor/Free/Family.lean`](../../PolyFun/IPFunctor/Free/Family.lean) | **Primitive `IPFunctor.IFreeM P X : I → Type`** for `P : Endo I` and `X : I → Type` (state-indexed return family). Family-polymorphic `bind` whose continuation may change the leaf universe, `imap`, the bind and map laws, `inductionOn`, `construct`, `mapM`, `toSigmaFreeM`, injectivity / equation lemmas. |
 | [`PolyFun/IPFunctor/Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean) | `IPFunctor.FreeM P s α := IFreeM P (fun _ => α) s` — the constant-family specialization. Constructors `pure` / `liftBind` (as `@[match_pattern]` aliases over `IFreeM`), `lift` (shape) / `liftObj` (object), `bind` (state-polymorphic), `Functor` / `LawfulFunctor`, `inductionOn`, `construct`, `mapM`, `erase` (forgetful to `PFunctor.FreeM` under `[Unique I]`), `toSigmaFreeM`. |
 | [`PolyFun/IPFunctor/Free/Indexed.lean`](../../PolyFun/IPFunctor/Free/Indexed.lean) | `IPFunctor.FreeM₂ P s t α := IFreeM P (fun u => PSigma (fun _ : u = t => α)) s` — the terminal-state-marker specialization. `bind` chains indices positionally; carries `IndexedMonad` / `LawfulIndexedMonad` instances. Forgetful coercion `toFreeM`. |
+| [`PolyFun/IPFunctor/Free/Fold.lean`](../../PolyFun/IPFunctor/Free/Fold.lean) | `IPFunctor.FoldAlgebra P D` and the whole-tree fold `IFreeM.fold`, with `fold_rel`, `fold_fusion`, and `fold_unique`. |
+| [`PolyFun/IPFunctor/Free/Reindex.lean`](../../PolyFun/IPFunctor/Free/Reindex.lean) | `IPFunctor.Reindexing P Q f` across index types and `IFreeM.reindex`, with identity, composition, transport, and interpretation laws. `Lens.toReindexing` views an indexed lens as a reindexing along `id`. |
+| [`PolyFun/IPFunctor/Free/Traversal.lean`](../../PolyFun/IPFunctor/Free/Traversal.lean) | `IPFunctor.Traversal P Q State` and `IFreeM.traverse`, carrying a state into each child and replacing leaves by trees; composition, identity, and interpretation laws. `Reindexing.toTraversal` relates traversals to reindexing. |
 | [`PolyFun/IPFunctor/Lens/Basic.lean`](../../PolyFun/IPFunctor/Lens/Basic.lean) | `IPFunctor.Lens P Q` — Cartesian lens between indexed polynomials with the source-index preservation law `src_eq`. Identity, composition, `Lens.Equiv`. |
 | [`PolyFun/IPFunctor/Chart/Basic.lean`](../../PolyFun/IPFunctor/Chart/Basic.lean) | `IPFunctor.Chart P Q` — covariant chart (dual to lens) with `src_eq` in the chart direction. Identity, composition, `Chart.Equiv`. |
 | [`PolyFun/IPFunctor/Equiv/Basic.lean`](../../PolyFun/IPFunctor/Equiv/Basic.lean) | `IPFunctor.Equiv P Q` (`≃ₚ`) — structural equivalence with fiberwise `A` / `B` equivalences plus `src_eq`. |
@@ -217,6 +220,43 @@ chase through the inner `P.src`. See `IPFunctor.comp` in
 Composition is *not* defined on the endomorphic `Endo I` alone — it crucially
 needs distinct input and output indices to type-check in general.
 
+## Folds, reindexing, and traversals
+
+`IPFunctor.FoldAlgebra P D` interprets one constructor from the meanings of its
+children, each at the child's own index; `IFreeM.fold` interprets a whole finite
+tree with a leaf map and such an algebra. Unlike an effect handler, an algebra
+need not choose a single response, and function-valued carriers can delay the
+evaluation of children, including children under a language's binders.
+`fold_rel`, `fold_fusion`, and `fold_unique` separate constructor reasoning from
+whole-tree induction. The algebra is named `FoldAlgebra` so that `open IPFunctor`
+leaves Mathlib's `Algebra` unshadowed.
+
+`IPFunctor.Reindexing P Q f` translates the constructors of `P : Endo I` into
+those of `Q : Endo J` along a change of index `f : I → J`, together with argument
+positions; its `source` equation says that translated children sit at translated
+indices. `IFreeM.reindex` applies it with an explicit leaf map. `reindex_id`,
+`reindex_comp`, and `reindex_cast` give its identity, composition, and transport
+laws, and `fold_reindex` relates interpretation before and after a reindexing.
+An indexed [lens](#morphisms-lenses-charts-structural-equivalences) between
+endomorphic polynomials is a reindexing along `id` (`Lens.toReindexing`, with
+`src_eq` as its source equation); `reindex_toReindexing_comp` fuses reindexing
+along successive lenses into reindexing along their composite.
+
+`IPFunctor.Traversal P Q State` carries a state `State i j` into each child and
+may change it under each constructor, as a renaming, type instantiation, or
+substitution does when it enters a binder. `IFreeM.traverse` replaces leaves by
+whole trees. `traverse_comp` fuses traversals through `Traversal.comp`;
+`traverse_identity` accepts any equality witness between its source and target
+judgments and returns the transported tree. `fold_traverse` and
+`fold_traverse_rel` reduce interpretation after a traversal to a fold carrying the
+state, and constructor-local compatibility to all trees. `Reindexing.toTraversal`
+is the traversal whose state `PLift (f i = j)` records the translated judgment;
+with pure leaves, `traverse_toTraversal` identifies traversal along it with
+`reindex` followed by transport to the recorded target, and the identity
+reindexing gives `Traversal.identity` (`Reindexing.toTraversal_id`).
+[Ordinary-import checks](../../PolyFunTest/ModuleAPI/IndexedFold.lean) exercise
+these operations on a two-sorted expression signature.
+
 ## `mapM` and the universe constraint
 
 For both `IPFunctor.FreeM` and `IPFunctor.FreeM₂`, `mapM` interprets into an
@@ -258,8 +298,9 @@ read the state back.
   `PFunctor/Lens/{Cartesian, State}.lean`, and the displayed-free family
   `PFunctor/Free/{Displayed, Displayed/*, Path, Replicate}.lean`. The
   indexed side currently has `Basic.lean`, `M.lean`,
-  `Free/{Family, Basic, Indexed}.lean`, and the core `Lens`, `Chart`, and `Equiv`
-  modules. Mirror on demand as downstream consumers require.
+  `Free/{Family, Basic, Indexed, Fold, Reindex, Traversal}.lean`, and the core
+  `Lens`, `Chart`, and `Equiv` modules. Mirror on demand as downstream consumers
+  require.
 
 ## `do`-notation flavors
 
