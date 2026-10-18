@@ -180,6 +180,23 @@ theorem queryCount_le_length {label : Type*} [DecidableEq label]
   | .nil _ => right
   | .query view_eq direction tail => .query view_eq direction (tail.append right)
 
+/-- Appending an empty trace preserves the original prefix. -/
+@[simp] theorem append_nil {start finish : machine.State}
+    (trace : machine.ExecutionTrace start finish) : trace.append (.nil finish) = trace := by
+  induction trace with
+  | nil => rfl
+  | query hv answer tail ih => simp only [append, ih]
+
+/-- Concatenating adjacent traces is associative. -/
+theorem append_assoc {start first second finish : machine.State}
+    (left : machine.ExecutionTrace start first) (middle : machine.ExecutionTrace first second)
+    (right : machine.ExecutionTrace second finish) :
+    (left.append middle).append right = left.append (middle.append right) := by
+  induction left with
+  | nil => rfl
+  | query hv answer tail ih => simp only [append, ih]
+
+
 /-- Adjacent execution prefixes have additive lengths. -/
 @[simp] theorem length_append {start middle finish : machine.State}
     (left : ExecutionTrace machine start middle) (right : ExecutionTrace machine middle finish) :

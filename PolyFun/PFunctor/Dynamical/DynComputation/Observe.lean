@@ -24,7 +24,35 @@ namespace PFunctor.DynSystem.DynComputation
 
 universe u uA uB uα uβ uW
 
-variable {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {W : Type uW} [Monoid W]
+variable {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {W : Type uW}
+
+/-- Build a state-aware event map from observations of typed queries. Terminal states
+have no answers, so they need no observation value. -/
+def queryEventMap (machine : DynComputation.{u} P α β)
+    (observe : machine.State → (a : P.A) → P.B a → W) : machine.toDynSystem.EventMap W :=
+  fun state => match machine.toDynSystem.expose state with
+    | .inl a => observe state a
+    | .inr _ => PEmpty.elim
+
+/-- On an enabled query, the generic event map returns the supplied observation. -/
+theorem queryEventMap_atOut (machine : DynComputation.{u} P α β)
+    (observe : machine.State → (a : P.A) → P.B a → W)
+    {state : machine.State} {a : P.A} {next : P.B a → machine.State}
+    (h : machine.toDynSystem.out state = ⟨.inl a, next⟩) (answer : P.B a) :
+    (machine.queryEventMap observe).atOut h answer =
+      observe state a answer := by
+  unfold EventMap.atOut queryEventMap
+  have aux (position : P.A ⊕ β) (hp : position = .inl a) :
+      (match (motive := (pos : P.A ⊕ β) → (P + C β).B pos → W) position with
+        | .inl b => observe state b
+        | .inr _ => PEmpty.elim)
+        (cast (congrArg (P + C β).B hp.symm) answer) = observe state a answer := by
+    cases hp
+    rfl
+  exact aux _ (congrArg PFunctor.Obj.fst h)
+
+
+variable [Monoid W]
 
 /-- Record each actual transition without changing its operation or answer. -/
 @[expose] def observeStep (machine : DynComputation.{u} P α β)

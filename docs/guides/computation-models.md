@@ -83,6 +83,23 @@ bound or handler termination. Weak bisimulation hides administrative steps;
 it does not preserve fuel counts or timing observations. Service calls,
 primitive queries, and administrative transitions are distinct costs.
 
+[Dispatcher prefix decomposition](../../PolyFun/PFunctor/Handler/Machine/Trace.lean)
+retains every completed call's exact service trace and any unfinished call.
+`DispatchPrefix.decompose` computes this view of an ordinary `ExecutionTrace`;
+`toTrace_decompose` proves exact reconstruction. Completed answers also form a
+typed caller trace. Each completed call contributes its primitive transitions
+and two administrative ticks. An unfinished call contributes its entry tick and
+all work performed so far, including when the service has returned but dispatch
+has not yet resumed the caller.
+
+The same decomposition preserves ordered monoidal observations. Entry, body and
+return remain separate, without a commutativity assumption. The
+[quantitative observation bridge](../../PolyFun/Realizability/Quantitative/TraceCost.lean)
+identifies the existing realization's cost with this shared observation fold,
+then adds initialization and final observation exactly once. Its representations
+and code costs come from the supplied `QuantitativeRealization`; structural
+query counts alone do not establish a backend runtime bound.
+
 `capped` instead returns an `OptionT (FreeM Q)` implementation of each operation.
 A timeout permanently aborts the client. It neither restarts nor renormalizes
 that call. This is useful when a consumer requires finite syntax with an

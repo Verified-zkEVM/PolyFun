@@ -71,5 +71,15 @@ variable {machine : DynComputation.{u} p α β} {position : p.A}
 theorem exists_view (pending : Pending machine position) :
     ∃ next, machine.view pending.val = .inr ⟨position, next⟩ := pending.property
 
+/-- The retained query exposes its own canonical resumption function. -/
+theorem view_resume (pending : Pending machine position) :
+    machine.view pending.val = .inr ⟨position, pending.resume⟩ := by
+  obtain ⟨next, hv⟩ := pending.exists_view
+  have hp : pending = ofView hv := by cases pending; rfl
+  rw [hv]
+  congr 2
+  funext answer
+  rw [hp, resume_ofView]
+
 end Pending
 end PFunctor.DynSystem.DynComputation

@@ -8,6 +8,7 @@ module
 
 import PolyFun.PFunctor.Handler.Machine.Behavior
 import PolyFun.ITree.DomainLaws
+import PolyFun.PFunctor.Handler.Machine.Trace
 
 /-! # Public API checks for composed services and continuous interpretations -/
 
@@ -34,3 +35,22 @@ example {P : PFunctor} {α β D : Type} [OmegaCompletePartialOrder D] [OrderBot 
     Resumption.denote ret alg (Resumption.bind tree next) =
       Resumption.denote (fun a => Resumption.denote ret alg (next a)) alg tree :=
   Resumption.denote_bind ret alg tree next
+
+example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
+    (h : MachineHandler P Q S) (caller : DynComputation.{1} P A B)
+    {start : caller.State} {initial : S} {finish : MachineHandler.Phase h caller}
+    (trace : (h.dispatch caller).ExecutionTrace (.caller start initial) finish) :
+    (MachineHandler.DispatchPrefix.decompose trace).toTrace = trace :=
+  MachineHandler.DispatchPrefix.toTrace_decompose trace
+
+example {P Q : PFunctor.{1, 1}} {S A B : Type 1} {W : Type 2} [Monoid W]
+    (h : MachineHandler P Q S) (caller : DynComputation.{1} P A B)
+    (observe : MachineHandler.Phase h caller →
+      (q : (Q + y.{1, 1}).A) → (Q + y.{1, 1}).B q → W)
+    {a : P.A} (pending : caller.Pending a) {start finish : (h a).State}
+    (trace : (h a).ExecutionTrace start finish) :
+    (h.liftHandlerTrace caller pending trace).accumulate
+        ((h.dispatch caller).queryEventMap observe) =
+      trace.accumulate ((h a).queryEventMap
+        (fun state q answer => observe (.handler a state pending) (.inl q) answer)) :=
+  h.accumulate_liftHandlerTrace caller observe pending trace

@@ -9,6 +9,7 @@ module
 public import PolyFun.PFunctor.Dynamical.DynComputation.Observe
 public import PolyFun.PFunctor.Dynamical.DynComputation.Pending
 public import PolyFun.Realizability.Quantitative.Recost
+public import PolyFun.Realizability.Quantitative.TraceCost
 
 /-!
 # Execution prefixes across public abstraction boundaries
@@ -74,3 +75,16 @@ example (machine : DynComputation.{u} P α β) {W : Type*} [Monoid W]
         (fun out => (out.1, left * out.2)))
         ((machine.withAccumulator observe).unrollChunk fuel (state, right)) :=
   machine.unrollChunk_withAccumulator_mul observe fuel state left right
+
+example {p : PFunctor.{u, u}} {input output : Type u}
+    {C : StepClass.{u, 0}} [C.HasProd] [C.HasSum] [C.HasOption]
+    [DecidableEq p.A] {Q : QuantitativeStepClass.{u, 0, 0} C}
+    {bd : DynComputation.Boundary C p input output}
+    (R : DynComputation.QuantitativeRealization Q bd) (value : input)
+    {finish : R.machine.State} (trace : R.ExecutionTrace (R.machine.init value) finish) :
+    R.executionCost value trace =
+      ExecutionCost.ofWork (Q.cost R.initCode value) +
+        (Multiplicative.toAdd
+          (trace.accumulate (DynComputation.RankedResource.stepObservation R)) +
+            DynComputation.RankedResource.terminalCost R finish) :=
+  DynComputation.RankedResource.executionCost_eq_init_add_accumulate_add_terminal R value trace
