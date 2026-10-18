@@ -10,6 +10,7 @@ public import PolyFun.PFunctor.Handler.Machine.Defs
 public import PolyFun.ITree.ResumptionWithTau
 public import PolyFun.ITree.Free
 public import PolyFun.ITree.Interp.Laws
+public import PolyFun.ITree.Interp.Stateful
 public import PolyFun.Control.Monad.Iter.Instances
 
 /-!
@@ -103,22 +104,6 @@ private theorem callerTree_query (caller : DynComputation.{u} P A B) {state : ca
     callerTree caller state = query a (fun b => callerTree caller (next b)) := by
   apply eq_query_of_dest
   rw [callerTree, Resumption.shape'_toITree, DynComputation.dest_behavior_view, ha]
-  rfl
-
-private theorem interp_run_pure (h : MachineHandler P Q S) (b : B) (s : S) :
-    (interp h.toITreeHandler (ITree.pure b)).run s = ITree.pure (b, s) := by
-  change iter (StateT.stateBody (interpStep h.toITreeHandler)) (ITree.pure b, s) = _
-  rw [ITree.iter_unfold]
-  simp [StateT.stateBody, ITree.map, bind_pure_left, pure_eq_pure]
-
-private theorem interp_run_query (h : MachineHandler P Q S) (a : P.A)
-    (next : P.B a → ITree P B) (s : S) :
-    (interp h.toITreeHandler (query a next)).run s =
-      (h.toITreeHandler a s >>= fun result =>
-        step ((interp h.toITreeHandler (next result.1)).run result.2)) := by
-  change iter (StateT.stateBody (interpStep h.toITreeHandler)) (query a next, s) = _
-  rw [ITree.iter_unfold]
-  simp [StateT.stateBody, ITree.map, bind_pure_left, ITree.bind_assoc]
   rfl
 
 /-- Interpretation of a retained phase, including the return guard of an active call. -/
