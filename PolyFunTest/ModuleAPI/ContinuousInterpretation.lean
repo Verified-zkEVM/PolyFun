@@ -57,4 +57,19 @@ example (a : P.A) (next : P.B a → Resumption P α) :
   rw [Resumption.denote_query]
   rfl
 
+/-- Loop state and return values can inhabit different universes. -/
+example (ret : α → D) (alg : Resumption.ContinuousAlgebra P D)
+    (body : ULift.{uβ} ℕ → ITree P (ULift.{uβ} ℕ ⊕ α)) (bound : ULift.{uβ} ℕ → D)
+    (hbody : ∀ state, ITree.denote (Sum.elim bound ret) alg (body state) ≤ bound state)
+    (state : ULift.{uβ} ℕ) : ITree.denote ret alg (ITree.iter body state) ≤ bound state :=
+  ITree.denote_iter_le ret alg body bound hbody state
+
+/-- A loop which always continues silently has bottom denotation. -/
+example (ret : α → D) (alg : Resumption.ContinuousAlgebra P D) (state : ℕ) :
+    ITree.denote ret alg (ITree.iter (fun n : ℕ => ITree.pure (.inl (n + 1))) state) = ⊥ := by
+  apply le_antisymm _ bot_le
+  apply ITree.denote_iter_le ret alg _ (fun _ => ⊥) _ state
+  intro n
+  simp
+
 end PolyFunTest.ModuleAPI.ContinuousInterpretation

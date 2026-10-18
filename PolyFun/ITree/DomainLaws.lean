@@ -10,10 +10,11 @@ public import PolyFun.ITree.Domain
 public import PolyFun.PFunctor.Resumption.DomainLaws
 
 /-!
-# Continuous interpretations of embedded and sequenced interaction trees
+# Continuous interpretations of embedding, sequencing and iteration
 
 The tau-free resumption embedding commutes with continuous interpretation.
 Sequencing substitutes the meanings of continuation trees at return leaves.
+Iteration is the least solution of its body equations, including silent divergence.
 -/
 
 public section
@@ -23,7 +24,7 @@ open PFunctor.Resumption (ContinuousAlgebra)
 
 namespace ITree
 
-universe uA uB uα uβ uD uE
+universe uA uB uα uβ uD uE uS
 
 variable {P : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ}
   {D : Type uD} {E : Type uE} [OmegaCompletePartialOrder D] [OrderBot D]
@@ -83,5 +84,54 @@ theorem denote_bind (ret : β → D) (alg : ContinuousAlgebra P D)
         rw [ContinuousHom.approximants_succ]
         simpa only [domainStep, ContinuousHom.ofFun_apply, shape'_diverge] using ih
   exact h.le
+
+variable {S : Type uS}
+
+/-- Iteration interprets a continuation result by another iteration and a return
+result by the return algebra. Silent guards have no denotational cost. -/
+theorem denote_iter_eq (ret : α → D) (alg : ContinuousAlgebra P D)
+    (body : S → ITree P (S ⊕ α)) (state : S) :
+    denote ret alg (iter body state) =
+      denote (Sum.elim (fun s => denote ret alg (iter body s)) ret) alg (body state) := by
+  rw [iter_unfold, denote_bind]
+  congr 1
+  funext result
+  cases result <;> simp
+
+/-- Any family preserved as an upper bound by the loop body bounds the whole
+iteration. The rule needs neither termination nor a bound on the number of iterations. -/
+theorem denote_iter_le (ret : α → D) (alg : ContinuousAlgebra P D)
+    (body : S → ITree P (S ⊕ α)) (bound : S → D)
+    (h : ∀ state, denote (Sum.elim bound ret) alg (body state) ≤ bound state)
+    (state : S) : denote ret alg (iter body state) ≤ bound state := by
+  change denote ret alg (corec (iterStep body) (body state)) ≤ _
+  rw [denote_corec]
+  apply le_trans ((corecDomainStep (iterStep body) ret alg).fix_le
+    (x := denote (Sum.elim bound ret) alg) ?_ (body state)) (h state)
+  intro tree
+  rw [denote_eq]
+  simp only [corecDomainStep, ContinuousHom.ofFun_apply, iterStep]
+  rcases shape' tree with ⟨head, children⟩
+  cases head with
+  | pure result => cases result with
+    | inl state => exact h state
+    | inr value => exact le_rfl
+  | step => exact le_rfl
+  | query a => exact le_rfl
+
+/-- A continuous interpretation of the loop body gives exactly its least fixed
+point. The supplied body equation makes continuity an explicit reusable obligation. -/
+theorem denote_iter_eq_fix (ret : α → D) (alg : ContinuousAlgebra P D)
+    (body : S → ITree P (S ⊕ α)) (step : (S → D) →𝒄 (S → D))
+    (hstep : ∀ meaning s, step meaning s = denote (Sum.elim meaning ret) alg (body s)) :
+    (fun s => denote ret alg (iter body s)) = step.fix := by
+  apply le_antisymm
+  · intro s
+    apply denote_iter_le ret alg body step.fix _ s
+    intro s
+    rw [← hstep, step.map_fix]
+  · apply step.fix_le
+    intro s
+    rw [hstep, ← denote_iter_eq]
 
 end ITree
