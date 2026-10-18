@@ -81,7 +81,7 @@ theorem behavior_handler_pure (h : MachineHandler P Q S) (caller : DynComputatio
       step (h.behavior caller (.caller (pending.resume result.1) result.2)) := by
   apply eq_step_of_dest
     (c := fun _ => h.behavior caller (.caller (pending.resume result.1) result.2))
-  rw [shape_behavior, dispatchStep, hb]
+  rw [shape_behavior, dispatchStep_handler_pure h caller a hb]
 
 /-- An active service's primitive query retains its dependent continuation. -/
 theorem behavior_handler_query (h : MachineHandler P Q S) (caller : DynComputation.{u} P A B)
@@ -90,15 +90,17 @@ theorem behavior_handler_query (h : MachineHandler P Q S) (caller : DynComputati
     h.behavior caller (.handler a state pending) =
       query q (fun answer => h.behavior caller (.handler a (rest answer) pending)) := by
   apply eq_query_of_dest
-  rw [shape_behavior, dispatchStep, hq]
+  rw [shape_behavior, dispatchStep_handler_query h caller a hq]
 
-private theorem callerTree_pure (caller : DynComputation.{u} P A B) {state : caller.State}
+/-- A returning caller exposes its result in the canonical interaction tree. -/
+theorem callerTree_pure (caller : DynComputation.{u} P A B) {state : caller.State}
     {b : B} (hb : caller.view state = .inl b) : callerTree caller state = ITree.pure b := by
   apply eq_pure_of_dest (c := PEmpty.elim)
   rw [callerTree, Resumption.shape'_toITree, DynComputation.dest_behavior_view, hb]
   rfl
 
-private theorem callerTree_query (caller : DynComputation.{u} P A B) {state : caller.State}
+/-- A querying caller exposes the same dependent continuation in the interaction tree. -/
+theorem callerTree_query (caller : DynComputation.{u} P A B) {state : caller.State}
     {a : P.A} {next : P.B a → caller.State}
     (ha : caller.view state = .inr ⟨a, next⟩) :
     callerTree caller state = query a (fun b => callerTree caller (next b)) := by

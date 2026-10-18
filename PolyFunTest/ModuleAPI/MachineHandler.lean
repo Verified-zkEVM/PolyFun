@@ -9,6 +9,7 @@ module
 import PolyFun.PFunctor.Handler.Machine.Behavior
 import PolyFun.ITree.DomainLaws
 import PolyFun.PFunctor.Handler.Machine.Trace
+import PolyFun.PFunctor.Handler.Machine.StateLens
 
 /-! # Public API checks for composed services and continuous interpretations -/
 
@@ -54,3 +55,19 @@ example {P Q : PFunctor.{1, 1}} {S A B : Type 1} {W : Type 2} [Monoid W]
       trace.accumulate ((h a).queryEventMap
         (fun state q answer => observe (.handler a state pending) (.inl q) answer)) :=
   h.accumulate_liftHandlerTrace caller observe pending trace
+
+example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
+    (L : StateLens P Q S) (caller : DynComputation.{1} P A B) (input : A) (service : S) :
+    ITree.WeakBisim (ITree.ofResumptionWithTau
+      (((MachineHandler.ofFreeM L.toStateful).dispatch caller).denote (input, service)))
+      (((caller.wrapState L).denote (input, service)).toITree) :=
+  L.dispatch_weakBisim_wrapState caller input service
+
+example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
+    (L : StateLens P Q S) (caller : DynComputation.{1} P A B)
+    {start finish : caller.State × S}
+    (trace : (caller.wrapState L).ExecutionTrace start finish) :
+    ∃ out : ((MachineHandler.ofFreeM L.toStateful).dispatch caller).ExecutionTrace
+      (.caller start.1 start.2) (.caller finish.1 finish.2),
+        out.length = 3 * trace.length :=
+  L.exists_dispatchTrace caller trace

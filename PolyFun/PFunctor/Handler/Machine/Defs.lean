@@ -112,6 +112,23 @@ theorem dispatchStep_caller_query (h : MachineHandler P Q S)
     cases heq
     rfl
 
+/-- A completed service resumes its suspended caller after one administrative transition. -/
+theorem dispatchStep_handler_pure (h : MachineHandler P Q S)
+    (caller : DynComputation P A B) (a : P.A) {state : (h a).State} {result : P.B a × S}
+    (hb : (h a).view state = .inl result) (pending : caller.Pending a) :
+    h.dispatchStep caller (.handler a state pending) =
+      .inr ⟨.inr PUnit.unit, fun _ => .caller (pending.resume result.1) result.2⟩ := by
+  simp only [dispatchStep, hb]
+
+/-- A service query retains its operation and suspended caller across the primitive answer. -/
+theorem dispatchStep_handler_query (h : MachineHandler P Q S)
+    (caller : DynComputation P A B) (a : P.A) {state : (h a).State}
+    {q : Q.A} {rest : Q.B q → (h a).State}
+    (hq : (h a).view state = .inr ⟨q, rest⟩) (pending : caller.Pending a) :
+    h.dispatchStep caller (.handler a state pending) =
+      .inr ⟨.inl q, fun answer => .handler a (rest answer) pending⟩ := by
+  simp only [dispatchStep, hq]
+
 /-- Compose a caller and service into one machine, with explicit dispatch steps.
 The state projection reduces to `Phase`, so consumers can inspect retained phases. -/
 @[expose, implicit_reducible] def dispatch (h : MachineHandler P Q S)

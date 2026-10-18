@@ -301,6 +301,7 @@ public import PolyFun.PFunctor.Handler.Instrumentation.Free
 public import PolyFun.PFunctor.Handler.Machine.Admission
 public import PolyFun.PFunctor.Handler.Machine.Behavior
 public import PolyFun.PFunctor.Handler.Machine.Defs
+public import PolyFun.PFunctor.Handler.Machine.StateLens
 public import PolyFun.PFunctor.Handler.Machine.Trace
 public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr

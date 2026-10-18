@@ -83,6 +83,16 @@ bound or handler termination. Weak bisimulation hides administrative steps;
 it does not preserve fuel counts or timing observations. Service calls,
 primitive queries, and administrative transitions are distinct costs.
 
+The [one-query lens bridge](../../PolyFun/PFunctor/Handler/Machine/StateLens.lean)
+proves `StateLens.dispatch_weakBisim_wrapState`: dispatch of `L.toStateful`
+and the existing direct `wrapState` have the same weak behavior and final shared
+state, even for an infinite caller. The direct wrapper uses one primitive
+transition per call; the dispatcher additionally enters and returns from each
+call. `exists_dispatchTrace` gives every finite wrapper prefix a dispatcher
+prefix with the same endpoint and exactly three times its length; the prefix
+need not terminate. Use the wrapper's existing quantitative certificates for its tighter
+bounds, rather than transferring clock bounds through weak bisimulation.
+
 [Dispatcher prefix decomposition](../../PolyFun/PFunctor/Handler/Machine/Trace.lean)
 retains every completed call's exact service trace and any unfinished call.
 `DispatchPrefix.decompose` computes this view of an ordinary `ExecutionTrace`;
