@@ -63,18 +63,20 @@ structure SubstMonoid where
   unit appearing beside `carrier ◃ carrier`. -/
   unit : Lens y.{max uA uB, uB} carrier
   /-- The multiplication `μ : p ◃ p ⇆ p`. -/
-  mult : Lens (carrier ◃ carrier) carrier
+  mul : Lens (carrier ◃ carrier) carrier
   /-- Left unitality: `μ ∘ (η ◃ id) ∘ λ⁻¹ = id`. -/
-  unit_left : mult ∘ₗ (unit ◃ₗ Lens.id carrier) ∘ₗ
+  unit_left : mul ∘ₗ (unit ◃ₗ Lens.id carrier) ∘ₗ
       Lens.Equiv.yComp.invLens = Lens.id carrier
   /-- Right unitality: `μ ∘ (id ◃ η) ∘ ρ⁻¹ = id`. -/
-  unit_right : mult ∘ₗ (Lens.id carrier ◃ₗ unit) ∘ₗ
+  unit_right : mul ∘ₗ (Lens.id carrier ◃ₗ unit) ∘ₗ
       Lens.Equiv.compY.invLens = Lens.id carrier
   /-- Associativity: multiplying the outer pair or the inner pair agrees. -/
-  assoc : mult ∘ₗ (mult ◃ₗ Lens.id carrier) =
-      mult ∘ₗ (Lens.id carrier ◃ₗ mult) ∘ₗ Lens.Equiv.compAssoc.toLens
+  assoc : mul ∘ₗ (mul ◃ₗ Lens.id carrier) =
+      mul ∘ₗ (Lens.id carrier ◃ₗ mul) ∘ₗ Lens.Equiv.compAssoc.toLens
 
 namespace SubstMonoid
+
+@[deprecated (since := "2026-10-19")] alias mult := mul
 
 /-! ## Morphisms -/
 
@@ -86,8 +88,10 @@ structure Hom (M N : SubstMonoid.{uA, uB}) where
   /-- Preservation of the unit. -/
   map_unit : toLens ∘ₗ M.unit = N.unit
   /-- Preservation of multiplication. -/
-  map_mult : toLens ∘ₗ M.mult =
-    N.mult ∘ₗ (toLens ◃ₗ toLens)
+  map_mul : toLens ∘ₗ M.mul =
+    N.mul ∘ₗ (toLens ◃ₗ toLens)
+
+@[deprecated (since := "2026-10-19")] alias Hom.map_mult := Hom.map_mul
 
 instance {M N : SubstMonoid.{uA, uB}} :
     Coe (Hom M N) (Lens M.carrier N.carrier) :=
@@ -105,26 +109,26 @@ theorem Hom.ext {M N : SubstMonoid.{uA, uB}} (f g : Hom M N)
 def Hom.id (M : SubstMonoid.{uA, uB}) : Hom M M where
   toLens := Lens.id M.carrier
   map_unit := rfl
-  map_mult := by simp
+  map_mul := by simp
 
 /-- Composition of substitution-monoid homomorphisms, in diagrammatic order. -/
 def Hom.comp {M N O : SubstMonoid.{uA, uB}} (f : Hom M N) (g : Hom N O) : Hom M O where
   toLens := g.toLens ∘ₗ f.toLens
   map_unit := by
     rw [Lens.comp_assoc, f.map_unit, g.map_unit]
-  map_mult := by
+  map_mul := by
     calc
-      (g.toLens ∘ₗ f.toLens) ∘ₗ M.mult =
-          g.toLens ∘ₗ (f.toLens ∘ₗ M.mult) := rfl
-      _ = g.toLens ∘ₗ (N.mult ∘ₗ (f.toLens ◃ₗ f.toLens)) := by
-        rw [f.map_mult]
-      _ = (g.toLens ∘ₗ N.mult) ∘ₗ (f.toLens ◃ₗ f.toLens) := rfl
-      _ = (O.mult ∘ₗ (g.toLens ◃ₗ g.toLens)) ∘ₗ
+      (g.toLens ∘ₗ f.toLens) ∘ₗ M.mul =
+          g.toLens ∘ₗ (f.toLens ∘ₗ M.mul) := rfl
+      _ = g.toLens ∘ₗ (N.mul ∘ₗ (f.toLens ◃ₗ f.toLens)) := by
+        rw [f.map_mul]
+      _ = (g.toLens ∘ₗ N.mul) ∘ₗ (f.toLens ◃ₗ f.toLens) := rfl
+      _ = (O.mul ∘ₗ (g.toLens ◃ₗ g.toLens)) ∘ₗ
           (f.toLens ◃ₗ f.toLens) := by
-        rw [g.map_mult]
-      _ = O.mult ∘ₗ ((g.toLens ◃ₗ g.toLens) ∘ₗ
+        rw [g.map_mul]
+      _ = O.mul ∘ₗ ((g.toLens ◃ₗ g.toLens) ∘ₗ
           (f.toLens ◃ₗ f.toLens)) := rfl
-      _ = O.mult ∘ₗ ((g.toLens ∘ₗ f.toLens) ◃ₗ
+      _ = O.mul ∘ₗ ((g.toLens ∘ₗ f.toLens) ◃ₗ
           (g.toLens ∘ₗ f.toLens)) := by
         rw [Lens.compMap_comp]
 

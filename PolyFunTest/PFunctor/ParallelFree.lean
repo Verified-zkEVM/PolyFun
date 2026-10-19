@@ -244,7 +244,7 @@ theorem lensMapComp
         Lens.parallelSumMap firstLeft firstRight =
       Lens.parallelSumMap (secondLeft ∘ₗ firstLeft)
         (secondRight ∘ₗ firstRight) :=
-  Lens.parallelSumMap_comp secondLeft secondRight firstLeft firstRight
+  Lens.parallelSumMap_comp_parallelSumMap secondLeft secondRight firstLeft firstRight
 
 abbrev Step : PFunctor.{0, 0} := ⟨Bool, fun _ => PUnit⟩
 

@@ -282,14 +282,14 @@ example :
       rw [CofreeP.restrict_extend]
       simp only [CofreeP.comonoid_carrier, Comonoid.tensor_carrier, compNth,
         Lens.compNthMap_succ, Lens.compNthMap_zero,
-        Comonoid.comultN_succ, Comonoid.comultN_zero]
+        Comonoid.comulN_succ, Comonoid.comulN_zero]
       rfl)
   · exact hright.trans (by
       dsimp only [F, CofreeP.laxTensorHom]
       rw [CofreeP.restrict_extend]
       simp only [CofreeP.comonoid_carrier, Comonoid.tensor_carrier, compNth,
         Lens.compNthMap_succ, Lens.compNthMap_zero,
-        Comonoid.comultN_succ, Comonoid.comultN_zero]
+        Comonoid.comulN_succ, Comonoid.comulN_zero]
       rfl)
 
 /-! ## Observable lax unit -/

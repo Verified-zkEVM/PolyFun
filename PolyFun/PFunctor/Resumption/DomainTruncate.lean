@@ -98,7 +98,7 @@ theorem foldTruncate_le_succ (ret : α → D) (alg : ContinuousAlgebra P D)
     foldTruncate_le_succ ret alg n tree)⟩
 
 /-- Finite polynomial folds approximate the entire coinductive interpretation. -/
-theorem denote_eq_sup_truncations (ret : α → D) (alg : ContinuousAlgebra P D) :
+theorem denote_eq_ωSup (ret : α → D) (alg : ContinuousAlgebra P D) :
     denote ret alg = ωSup (truncationChain ret alg) := by
   apply le_antisymm
   · apply ωSup_le
@@ -106,5 +106,7 @@ theorem denote_eq_sup_truncations (ret : α → D) (alg : ContinuousAlgebra P D)
     exact le_trans (approximants_le_foldTruncate ret alg n tree)
       (le_ωSup (truncationChain ret alg) n tree)
   · exact ωSup_le _ _ (fun n tree => foldTruncate_le_denote ret alg n tree)
+
+@[deprecated (since := "2026-10-19")] alias denote_eq_sup_truncations := denote_eq_ωSup
 
 end PFunctor.Resumption

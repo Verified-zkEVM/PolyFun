@@ -33,7 +33,7 @@ preserves just the returned value or also that retained handler state.
 
 Stateful handlers compose the way effect stacks do
 ([`Handler/Stateful/Combinators.lean`](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean)):
-`sum` and `pi` run handlers for the summands of `P + Q` or of an indexed
+`sum` and `sigma` run handlers for the summands of `P + Q` or of an indexed
 sum on a product state, `flatten` reassociates a handler over a stateful base
 into one product state, `mapBase` interprets a handler's base free monad through
 an outer handler, and `extend` / `extendLeft` add a passive auxiliary component
@@ -42,7 +42,7 @@ the combinator to the runs of its parts; their common core,
 `run_map_eq_of_apply_map_eq`, says that a state projection which commutes with
 every single request commutes with every run.
 
-A `StateLens` ([`Handler/StateLens.lean`](../../PolyFun/PFunctor/Handler/StateLens.lean))
+A `StatefulLens` ([`Handler/StateLens.lean`](../../PolyFun/PFunctor/Handler/StateLens.lean))
 is the stateful handler that answers every request with exactly one inner
 request; its substitution is `Stateful.run` of its handler (`mapFreeM_eq_run`).
 `DynComputation.wrapState` runs a machine against it as one product machine, and

@@ -46,7 +46,7 @@ the concatenation lemmas below equate flattened chains with `FreeM.append`
 through the substitution monoid there. `implicit_reducible` (unlike
 `reducible`) stays invisible to simp validation and instance search. -/
 attribute [local implicit_reducible]
-  PFunctor.FreeP.substMonoid PFunctor.FreeP.mult TypeTree.Chain toTypeTree
+  PFunctor.FreeP.substMonoid PFunctor.FreeP.mul TypeTree.Chain toTypeTree
 
 /-- Transport a chain across an equality of its round count. -/
 @[expose]
@@ -100,7 +100,7 @@ theorem toTypeTree_then : {m n : Nat} → (c : Chain m) →
       rfl
   | m + 1, n, ⟨tree, cont⟩, k => by
       simp only [Chain.then, toTypeTree_castRounds, toTypeTree,
-        TypeTree.substMonoid_mult_toFunA]
+        TypeTree.substMonoid_mul_toFunA]
       rw [PFunctor.FreeM.Path.append_tree_assoc]
       congr 1
       funext path

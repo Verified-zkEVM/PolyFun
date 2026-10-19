@@ -42,61 +42,61 @@ example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
   Comonoid.tensor_counit C D
 
 example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
-    (Comonoid.tensor C D).comult = Comonoid.tensorComult C D :=
-  Comonoid.tensor_comult C D
+    (Comonoid.tensor C D).comul = Comonoid.tensorComul C D :=
+  Comonoid.tensor_comul C D
 
 /-! ## Unit and coherence canaries -/
 
 /-- The unit comonoid retains an independent position/direction universe pair,
 including when its structural maps compare different copies of `y`. -/
-example : Comonoid.{uA₁, uB₁} := Comonoid.unit
+example : Comonoid.{uA₁, uB₁} := Comonoid.trivial
 
-example : (Comonoid.unit.{uA₁, uB₁}).carrier = y := by
+example : (Comonoid.trivial.{uA₁, uB₁}).carrier = y := by
   simp
 
 example :
-    (Comonoid.unit.{uA₁, uB₁}).counit = Lens.unitComparison :=
-  Comonoid.unit_counit
+    (Comonoid.trivial.{uA₁, uB₁}).counit = Lens.unitComparison :=
+  Comonoid.trivial_counit
 
 example :
-    (Comonoid.unit.{uA₁, uB₁}).comult =
+    (Comonoid.trivial.{uA₁, uB₁}).comul =
       Lens.compUnitMap ∘ₗ
         (Lens.unitComparison : Lens y.{uA₁, uB₁}
           y.{max uA₁ uB₁, uB₁}) :=
-  Comonoid.unit_comult
+  Comonoid.trivial_comul
 
 /-- Both directions of the tensor unitors are comonoid morphisms whose
 underlying maps are exactly the established polynomial-lens equivalences. -/
 example (C : Comonoid.{uA₁, uB₁}) :
-    (Comonoid.tensorUnitLeftIso C).hom.toLens =
+    (Comonoid.tensorLeftUnitor C).hom.toLens =
       (Lens.Equiv.yTensor (P := C.carrier)).toLens := by
   simp
 
 example (C : Comonoid.{uA₁, uB₁}) :
-    (Comonoid.tensorUnitLeftIso C).inv.toLens =
+    (Comonoid.tensorLeftUnitor C).inv.toLens =
       (Lens.Equiv.yTensor (P := C.carrier)).invLens := by
   simp
 
 example (C : Comonoid.{uA₁, uB₁}) :
-    (Comonoid.tensorUnitRightIso C).hom.toLens =
+    (Comonoid.tensorRightUnitor C).hom.toLens =
       (Lens.Equiv.tensorY (P := C.carrier)).toLens := by
   simp
 
 example (C : Comonoid.{uA₁, uB₁}) :
-    (Comonoid.tensorUnitRightIso C).inv.toLens =
+    (Comonoid.tensorRightUnitor C).inv.toLens =
       (Lens.Equiv.tensorY (P := C.carrier)).invLens := by
   simp
 
 /-- The associator remains heterogeneous in all three input universe pairs,
 and exposes both directions without transports. -/
 example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) (E : Comonoid.{uA₃, uB₃}) :
-    (Comonoid.tensorAssocIso C D E).hom.toLens =
+    (Comonoid.tensorAssociator C D E).hom.toLens =
       (Lens.Equiv.tensorAssoc
         (P := C.carrier) (Q := D.carrier) (R := E.carrier)).toLens := by
   simp
 
 example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) (E : Comonoid.{uA₃, uB₃}) :
-    (Comonoid.tensorAssocIso C D E).inv.toLens =
+    (Comonoid.tensorAssociator C D E).inv.toLens =
       (Lens.Equiv.tensorAssoc
         (P := C.carrier) (Q := D.carrier) (R := E.carrier)).invLens := by
   simp
@@ -104,42 +104,42 @@ example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) (E : Comonoi
 /-- Category-theoretic inverse laws are available for each packaged
 coherence isomorphism. -/
 example (C : Comonoid.{uA₁, uB₁}) :
-    (Comonoid.tensorUnitLeftIso C).hom.comp
-        (Comonoid.tensorUnitLeftIso C).inv =
+    (Comonoid.tensorLeftUnitor C).hom.comp
+        (Comonoid.tensorLeftUnitor C).inv =
       Comonoid.Hom.id
-        (Comonoid.tensor (Comonoid.unit.{uA₁, uB₁}) C) :=
-  (Comonoid.tensorUnitLeftIso C).hom_inv_id
+        (Comonoid.tensor (Comonoid.trivial.{uA₁, uB₁}) C) :=
+  (Comonoid.tensorLeftUnitor C).hom_inv_id
 
 example (C : Comonoid.{uA₁, uB₁}) :
-    (Comonoid.tensorUnitLeftIso C).inv.comp
-        (Comonoid.tensorUnitLeftIso C).hom =
+    (Comonoid.tensorLeftUnitor C).inv.comp
+        (Comonoid.tensorLeftUnitor C).hom =
       Comonoid.Hom.id C :=
-  (Comonoid.tensorUnitLeftIso C).inv_hom_id
+  (Comonoid.tensorLeftUnitor C).inv_hom_id
 
 example (C : Comonoid.{uA₁, uB₁}) :
-    (Comonoid.tensorUnitRightIso C).inv.comp
-        (Comonoid.tensorUnitRightIso C).hom =
+    (Comonoid.tensorRightUnitor C).inv.comp
+        (Comonoid.tensorRightUnitor C).hom =
       Comonoid.Hom.id C :=
-  (Comonoid.tensorUnitRightIso C).inv_hom_id
+  (Comonoid.tensorRightUnitor C).inv_hom_id
 
 example (C : Comonoid.{uA₁, uB₁}) :
-    (Comonoid.tensorUnitRightIso C).hom.comp
-        (Comonoid.tensorUnitRightIso C).inv =
+    (Comonoid.tensorRightUnitor C).hom.comp
+        (Comonoid.tensorRightUnitor C).inv =
       Comonoid.Hom.id
-        (Comonoid.tensor C (Comonoid.unit.{uA₁, uB₁})) :=
-  (Comonoid.tensorUnitRightIso C).hom_inv_id
+        (Comonoid.tensor C (Comonoid.trivial.{uA₁, uB₁})) :=
+  (Comonoid.tensorRightUnitor C).hom_inv_id
 
 example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) (E : Comonoid.{uA₃, uB₃}) :
-    (Comonoid.tensorAssocIso C D E).hom.comp
-        (Comonoid.tensorAssocIso C D E).inv =
+    (Comonoid.tensorAssociator C D E).hom.comp
+        (Comonoid.tensorAssociator C D E).inv =
       Comonoid.Hom.id (Comonoid.tensor (Comonoid.tensor C D) E) :=
-  (Comonoid.tensorAssocIso C D E).hom_inv_id
+  (Comonoid.tensorAssociator C D E).hom_inv_id
 
 example (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) (E : Comonoid.{uA₃, uB₃}) :
-    (Comonoid.tensorAssocIso C D E).inv.comp
-        (Comonoid.tensorAssocIso C D E).hom =
+    (Comonoid.tensorAssociator C D E).inv.comp
+        (Comonoid.tensorAssociator C D E).hom =
       Comonoid.Hom.id (Comonoid.tensor C (Comonoid.tensor D E)) :=
-  (Comonoid.tensorAssocIso C D E).inv_hom_id
+  (Comonoid.tensorAssociator C D E).inv_hom_id
 
 /-- Tensor products of retrofunctors retain the componentwise lens, identity,
 and diagrammatic composition laws. -/
@@ -182,7 +182,7 @@ example :
 paths and returns both final targets.  This detects the middle-four direction
 permutation, not merely the forward object map. -/
 example :
-    (Comonoid.tensor (stateComonoid ThreeState) (stateComonoid Bool)).comult.toFunB
+    (Comonoid.tensor (stateComonoid ThreeState) (stateComonoid Bool)).comul.toFunB
         (.source, false) ⟨(.middle, true), (.final, false)⟩ =
       (.final, false) :=
   rfl
@@ -192,7 +192,7 @@ Its noncommutative composition makes path order observable. -/
 def listMonoidComonoid : Comonoid where
   carrier := y^ (List Bool)
   counit := (fun _ => PUnit.unit) ⇆ (fun _ _ => [])
-  comult :=
+  comul :=
     (fun _ => ⟨PUnit.unit, fun _ => PUnit.unit⟩) ⇆
       (fun _ directions =>
         (show List Bool from directions.1) ++
@@ -212,40 +212,40 @@ def listMonoidComonoid : Comonoid where
 /-- The forward and inverse left unitors expose the exact placement and
 removal of the unit direction. -/
 example :
-    (Comonoid.tensorUnitLeftIso listMonoidComonoid).hom.toLens.toFunB
+    (Comonoid.tensorLeftUnitor listMonoidComonoid).hom.toLens.toFunB
         (PUnit.unit, PUnit.unit) [false, true] =
       (PUnit.unit, [false, true]) :=
   rfl
 
 example :
-    (Comonoid.tensorUnitLeftIso listMonoidComonoid).inv.toLens.toFunB
+    (Comonoid.tensorLeftUnitor listMonoidComonoid).inv.toLens.toFunB
         PUnit.unit (PUnit.unit, [false, true]) = [false, true] :=
   rfl
 
 /-- The forward and inverse right unitors place the unique unit direction on
 the opposite side. -/
 example :
-    (Comonoid.tensorUnitRightIso listMonoidComonoid).hom.toLens.toFunB
+    (Comonoid.tensorRightUnitor listMonoidComonoid).hom.toLens.toFunB
         (PUnit.unit, PUnit.unit) [false, true] =
       ([false, true], PUnit.unit) :=
   rfl
 
 example :
-    (Comonoid.tensorUnitRightIso listMonoidComonoid).inv.toLens.toFunB
+    (Comonoid.tensorRightUnitor listMonoidComonoid).inv.toLens.toFunB
         PUnit.unit ([false, true], PUnit.unit) = [false, true] :=
   rfl
 
 /-- The two associator directions perform opposite rebracketings on three
 distinguishable direction components. -/
 example :
-    (Comonoid.tensorAssocIso listMonoidComonoid listMonoidComonoid
+    (Comonoid.tensorAssociator listMonoidComonoid listMonoidComonoid
         listMonoidComonoid).hom.toLens.toFunB
       ((PUnit.unit, PUnit.unit), PUnit.unit)
       ([false], ([true], [])) = (([false], [true]), []) :=
   rfl
 
 example :
-    (Comonoid.tensorAssocIso listMonoidComonoid listMonoidComonoid
+    (Comonoid.tensorAssociator listMonoidComonoid listMonoidComonoid
         listMonoidComonoid).inv.toLens.toFunB
       (PUnit.unit, (PUnit.unit, PUnit.unit))
       (([false], [true]), []) = ([false], ([true], [])) :=
@@ -255,7 +255,7 @@ example :
 noncommutative factor.  Swapping phases or crossing middle components changes
 this result. -/
 example :
-    (Comonoid.tensor listMonoidComonoid listMonoidComonoid).comult.toFunB
+    (Comonoid.tensor listMonoidComonoid listMonoidComonoid).comul.toFunB
         (PUnit.unit, PUnit.unit)
         ⟨([false], [true]), ([true], [false])⟩ =
       ([false, true], [true, false]) :=

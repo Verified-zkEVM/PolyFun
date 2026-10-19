@@ -44,7 +44,7 @@ def pure {α : Type uB} (x : α) : Extension M α :=
 
 /-- The extension-level bind induced by polynomial substitution. -/
 def bind {α β : Type uB} (x : Extension M α) (f : α → Extension M β) : Extension M β :=
-  Lens.mapObj M.mult
+  Lens.mapObj M.mul
     (Obj.mk ⟨x.fst, fun d => (f (x.snd d)).fst⟩
       (fun direction => (f (x.snd direction.1)).snd direction.2) :
       (M.carrier ◃ M.carrier).Obj β)
@@ -105,7 +105,7 @@ def toMonadHom (f : SubstMonoid.Hom M N) : (Extension M) →ᵐ (Extension N) wh
     let source : (M.carrier ◃ M.carrier).Obj _ :=
       Obj.mk ⟨x.fst, fun d => (k (x.snd d)).fst⟩
         (fun direction => (k (x.snd direction.1)).snd direction.2)
-    congrArg (fun lens => Lens.mapObj lens source) f.map_mult
+    congrArg (fun lens => Lens.mapObj lens source) f.map_mul
 
 @[simp]
 theorem toMonadHom_apply (f : SubstMonoid.Hom M N) {α : Type uB} (x : Extension M α) :

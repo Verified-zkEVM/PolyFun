@@ -265,7 +265,7 @@ theorem runObj_natural {P' : PFunctor.{pA', pB'}} {Q' : PFunctor.{qA', qB'}}
                 M.Vertex sourceChild))
           (runLabeled mappedPattern x)
       have hMatter := congrArg runMatterObj
-        (CofreeP.mapChildObj g matter qDirection)
+        (CofreeP.map_childObj g matter qDirection)
       have hMatterNormalized :
           runMatterObj
               (.mk (M.children (M.mapLens g matter) qDirection)

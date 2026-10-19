@@ -115,7 +115,10 @@ families of names are fixed:
 Renaming a declaration that is on `main` leaves
 `@[deprecated (since := "YYYY-MM-DD")] alias oldName := newName` beside the new
 declaration for one release cycle. Two names that trade places cannot keep an
-alias, so a swap first checks that downstream consumers use neither name.
+alias, so a swap first checks that downstream consumers use neither name. A
+renamed structure field keeps an alias for its projection only: `where` and
+`{ field := … }` syntax cannot use an alias, so a field rename first checks
+that no downstream consumer builds the structure with the old field name.
 
 `CofreeP` and `FreeP`, like cslib's `C`, are documented exceptions to the case
 rule: they keep their capitalization because they act as notation for the
