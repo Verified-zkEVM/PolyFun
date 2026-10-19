@@ -111,9 +111,10 @@ carrier:
 * `CompCat.{u, v}` (polynomials at `{max u v, v}`) is a `MonoidalCategory` for `◃` and `y`.
 
 Their coherence fields are the `rfl` lemmas above, and Mathlib's `monoidal` tactic closes
-coherence goals in them. The carriers unfold to `PFunctor`, so the polynomial `⊗` from
-`open scoped PFunctor` and Mathlib's monoidal `⊗` both elaborate on their objects. Work with the
-Mathlib structures where PolyFun's scoped notation is not open.
+coherence goals in them. Each carrier is a one-field structure over `PFunctor`, built with `of`
+and read back with `toPFunctor`, so Mathlib's monoidal `⊗` on carrier objects and PolyFun's
+polynomial `⊗` stay distinct with `open scoped PFunctor`. `LensCat.Iso.mk`, `TensorCat.Iso.mk`
+and `CompCat.Iso.mk` turn lens equivalences into isomorphisms.
 
 ## Where to start
 

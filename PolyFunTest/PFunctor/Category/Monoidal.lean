@@ -21,9 +21,9 @@ instance on `LensCat`, the `SymmetricCategory` instance on `TensorCat`, and the
 * `CartesianMonoidalCategory.lift_fst` and `HasFiniteProducts`;
 * the `monoidal` coherence tactic.
 
-They also check that the Mathlib structure is the PolyFun one definitionally. These files leave
-PolyFun's scoped notation closed: the carriers unfold to `PFunctor`, so with `open scoped PFunctor`
-the polynomial `⊗` and Mathlib's monoidal `⊗` would both elaborate.
+They also check that the Mathlib structure is the PolyFun one definitionally, and that the
+carriers, being one-field structures, keep Mathlib's monoidal `⊗` unambiguous when PolyFun's scoped
+notation is open.
 -/
 
 @[expose] public section
@@ -42,7 +42,7 @@ example {P Q R : _root_.PFunctor.LensCat.{0, 0}} (f : P ⟶ Q) (g : P ⟶ R) :
 
 /-- The monoidal product of `LensCat` is the polynomial product `*`. -/
 example (P Q : _root_.PFunctor.LensCat.{0, 0}) :
-    P ⊗ Q = _root_.PFunctor.LensCat.of (_root_.PFunctor.prod P.as Q.as) := rfl
+    P ⊗ Q = _root_.PFunctor.LensCat.of (_root_.PFunctor.prod P.toPFunctor Q.toPFunctor) := rfl
 
 /-! ## `TensorCat` is symmetric monoidal -/
 
@@ -60,8 +60,8 @@ example (P Q R S : _root_.PFunctor.TensorCat.{0, 0}) :
 
 /-- The associator of `TensorCat` is the lens `tensorAssoc`. -/
 example (P Q R : _root_.PFunctor.TensorCat.{0, 0}) :
-    (α_ P Q R).hom = (_root_.PFunctor.Lens.Equiv.tensorAssoc (P := P.as) (Q := Q.as)
-      (R := R.as)).toLens := rfl
+    (α_ P Q R).hom = (_root_.PFunctor.Lens.Equiv.tensorAssoc (P := P.toPFunctor) (Q := Q.toPFunctor)
+      (R := R.toPFunctor)).toLens := rfl
 
 /-! ## `CompCat` is monoidal for the composition product -/
 
@@ -76,7 +76,23 @@ example (P Q R S : _root_.PFunctor.CompCat.{0, 0}) :
 
 /-- The monoidal product of `CompCat` is the composition product `◃`. -/
 example (P Q : _root_.PFunctor.CompCat.{0, 0}) :
-    P ⊗ Q = _root_.PFunctor.CompCat.of (_root_.PFunctor.comp P.as Q.as) := rfl
+    P ⊗ Q = _root_.PFunctor.CompCat.of (_root_.PFunctor.comp P.toPFunctor Q.toPFunctor) := rfl
+
+/-! ## Notation -/
+
+section ScopedNotation
+
+open scoped _root_.PFunctor
+
+/-- With PolyFun's scoped notation open, `⊗` on carrier objects is Mathlib's monoidal product,
+while `⊗` on polynomials is the parallel product. -/
+example (P Q : _root_.PFunctor.TensorCat.{0, 0}) :
+    (P ⊗ Q).toPFunctor = P.toPFunctor ⊗ Q.toPFunctor := rfl
+
+example (P Q : _root_.PFunctor.CompCat.{0, 0}) :
+    (P ⊗ Q).toPFunctor = P.toPFunctor ◃ Q.toPFunctor := rfl
+
+end ScopedNotation
 
 /-! ## Composition powers and the action of `◃` -/
 
