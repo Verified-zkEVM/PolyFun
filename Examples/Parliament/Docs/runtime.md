@@ -4,21 +4,13 @@ The executable uses the same PolyFun application machine in production and tests
 A real handler performs terminal and filesystem operations in Lean `IO`; a
 `StateM Memory` handler supplies scripted answers and models storage failures.
 
-## The reusable driver
+## Execution boundary
 
-`PFunctor.DynSystem.DynComputation.unrollChunk` builds a finite `FreeM` interaction program from
-any compatible `DynComputation`. `Chunk.done` carries a returned result;
-`Chunk.paused` carries the exact residual state. `runChunk` interprets this program
-through `PFunctor.Handler m p`. `runIO` repeatedly runs 128-interaction chunks.
-It does not restart the machine at a chunk boundary or require a proof that the
-meeting eventually terminates.
-
-`unrollChunk_result` and `runChunk_result` show agreement with PolyFun's existing
-bounded-run observation after forgetting the residual state. `unrollChunk_add`
-and `runChunk_add` prove that resuming successive chunks agrees with the combined
-budget. These equations apply to arbitrary compatible interfaces and lawful monads,
-not just Parliament. They concern query sequencing; the backend remains responsible
-for implementing the effect it was asked to perform.
+The application uses PolyFun's generic `DynComputation.runIO` driver, continuing from
+the retained machine state at each chunk boundary. A chunk budget does not assert that
+the meeting terminates. See the [execution guide](../../../docs/guides/execution.md)
+for the reusable driver, residual-state semantics, and chunk-composition laws.
+Those laws concern query sequencing; handlers remain responsible for their external effects.
 
 ## Certified history and document policy
 
@@ -75,7 +67,7 @@ A publication effect must carry an `Artifacts` certificate for its journal.
 
 The directory contains:
 
-- `journal.json`: format/semantics version 1, initial configuration, and accepted commands.
+- `journal.json`: format/semantics version 2, initial configuration, and accepted commands.
 - `meeting.lock`: the separate inode locked for the entire single-writer session.
 - `journal.json.pending`: staged journal replacement, ignored during recovery.
 - `exports/rev-N/minutes.json` and `minutes.md`: an immutable pair for revision N.
@@ -102,7 +94,7 @@ after a journal may have been stored, and tests mismatched publication readback.
 
 ## Terminal and wire input
 
-Run `lake exe polyfun-parliament --help` for workflows, or `example-config` for a complete
+Run `lake -d Examples/Parliament exe polyfun-parliament --help` for workflows, or `example-config` for a complete
 JSON configuration template. `new` refuses an existing meeting directory. `resume`
 validates and replays the journal before presenting input. `replay` writes exports
 without opening a live meeting; `verify` checks both files without changing them.
@@ -110,7 +102,11 @@ All loaders reject unknown journal versions and report the first illegal command
 zero-based index. They rebuild states and certificates instead of loading purported
 proofs, event histories, or saved states.
 
-The terminal accepts each public command name and prompts for typed parameters.
+The terminal accepts each public command name and prompts for typed parameters through
+`PolyFunIO.Form`, an `ExceptT` over the existing free monad. Names and choices are plain
+text; dates and edits use individual typed fields. The same forms run in memory tests.
+`history`, `back`, `forward` and `live` use ephemeral handler-side display state.
+History renders a replayed prefix without persisting, publishing, or modifying it.
 It also accepts a complete JSON command on one line. The encoding uses named
 constructor arguments, for example:
 
@@ -134,7 +130,29 @@ version-checked command, and the separate appeal opportunity remains open until
 explicitly resolved. Replies and the configured identities are attributed inputs,
 not authenticated facts.
 
+## Editable minutes are not the action register
+
+`Minutes/Basic` deliberately depends only on content and foundation data. The secretary
+submits text attributed to an earlier meeting's recorded adjournment revision. Approval
+and correction commands cannot edit the old accepted commands or substantive decisions.
+The chair opens review; pending questions, recognition requests, rulings, polls and floor
+ownership block closing it. Present members may correct minutes even if absent from the
+recorded meeting. An initial correction uses the ordinary amendment/decision machinery.
+Closing review approves without a whole-document vote.
+
+After approval, a correction is a seconded, debatable, amendable motion. Its special
+threshold is two-thirds cast, majority cast with qualifying prior notice, or majority
+of the entire voting membership. These alternatives do not use `Rules.ordinaryBasis`.
+Unanimous consent remains possible. The narrow notice profile requires exact unchanged
+replacement text from the preceding meeting within the quarterly interval; amendment
+loses that route but not the motion. Original approval text is immutable and later
+adopted replacement receipts carry meeting/revision cross-references.
+
+The action register remains a draft generated from typed entries; exports include a
+separately labeled document collection. Approval establishes procedural provenance, not
+factual accuracy. Tests intentionally approve inaccurate text to expose that boundary.
+Version 1 journals are rejected rather than reinterpreted under version 2 semantics.
+
 `export` and `quit` are application actions, never parliamentary motions. EOF behaves
 as `quit` and produces an unfinished draft unless adjournment was actually recorded.
-No approval, correction, signature, network multi-user service, or formal minutes
-adoption procedure is modeled.
+Signatures and a network multi-user service are not modeled.

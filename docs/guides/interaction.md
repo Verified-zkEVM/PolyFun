@@ -77,6 +77,18 @@ the dependent payload and expose the renamed sender without unfolding the implem
 
 ## Core concepts: TypeTree, Node, Party, Profile
 
+For a concrete concurrent consumer, [FairWorkQueues](../../Examples/Tutorials/FairWorkQueues.lean)
+models two persistent queues and proves that weakly fair service drains a finite backlog
+when no new jobs arrive. A valid always-left run witnesses starvation; alternating service
+is strongly fair. Tickets identify queues, not transient paths. The public `enabledAt_iff`,
+`firedAt_iff`, `weakFairOn_iff`, `strongFairOn_iff`, `weakFair_iff` and `strongFair_iff`
+equations expose these predicates through ordinary imports without opening their bodies.
+
+[ReviewableWorkflows](../../Examples/Tutorials/ReviewableWorkflows.lean) attaches source
+metadata and dependent positive-line evidence to a review program using `Decoration.map`
+and `Decoration.toOver`. Cursor restriction preserves the same metadata; this certificate
+does not assert that a proposed edit is correct or approved.
+
 Before reading any one file, it helps to fix four words. They are the
 load-bearing vocabulary of the entire `Interaction/` layer.
 

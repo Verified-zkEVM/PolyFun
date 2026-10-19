@@ -61,14 +61,14 @@ public section
     def test_auxiliary_modules_and_umbrellas_are_checked(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
-            for root_name in ("ToCslib", "ComplexityBackends", "Examples/Tutorials",
-                              "test/DocumentationConsumer", "test/ParliamentConsumer"):
+            for root_name in ("ToCslib", "ComplexityBackends", "Examples/Tutorials", "PolyFunIO",
+                              "test/DocumentationConsumer", "Examples/Parliament/Parliament"):
                 source = repo_root / root_name / "MissingDoc.lean"
                 source.parent.mkdir(parents=True)
                 source.write_text("module\n\npublic section\n")
             (repo_root / "ComplexityBackends.lean").write_text("module\n")
-            (repo_root / "PolyFunParliamentMain.lean").write_text("module\n")
-            cached = repo_root / "test/ParliamentConsumer/.lake/build/Cached.lean"
+            (repo_root / "Examples/Parliament/ParliamentMain.lean").write_text("module\n")
+            cached = repo_root / "Examples/Parliament/.lake/build/Cached.lean"
             cached.parent.mkdir(parents=True)
             cached.write_text("module\n")
             with patch.object(CHECKER, "REPO_ROOT", repo_root):
@@ -80,8 +80,9 @@ public section
                         "Missing module docstring: ComplexityBackends.lean",
                         "Missing module docstring: Examples/Tutorials/MissingDoc.lean",
                         "Missing module docstring: test/DocumentationConsumer/MissingDoc.lean",
-                        "Missing module docstring: test/ParliamentConsumer/MissingDoc.lean",
-                        "Missing module docstring: PolyFunParliamentMain.lean",
+                        "Missing module docstring: Examples/Parliament/Parliament/MissingDoc.lean",
+                        "Missing module docstring: Examples/Parliament/ParliamentMain.lean",
+                        "Missing module docstring: PolyFunIO/MissingDoc.lean",
                     ],
                 )
 

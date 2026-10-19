@@ -16,3 +16,7 @@ Current meeting 0: unfinished
 
 ## Unresolved business
 
+
+## Submitted minutes documents
+
+Approval certifies the recorded procedure, not the factual truth of submitted text.

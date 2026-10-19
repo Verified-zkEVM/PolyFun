@@ -8,11 +8,17 @@ lake build PolyFun ToCslib ComplexityBackends PolyFunExamples PolyFunTest --wfai
 lake lint -- --trace
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
-  Examples.Tutorials.InteractionTrees \
-  Examples.Parliament PolyFunParliamentMain
+  Examples.Tutorials.InteractionTrees Examples.Tutorials.ParallelReports \
+  Examples.Tutorials.VersionedRequests Examples.Tutorials.UpdatePolicies \
+  Examples.Tutorials.ReviewableWorkflows Examples.Tutorials.FairWorkQueues \
+  Examples.Tutorials.BoundedController \
+  PolyFunIO
+lake -d Examples/Parliament lint
+lake -d Examples/Notes lint
+lake -d Examples/Pipeline lint
 ```
 
-The convenience command `./scripts/validate.sh --lint --test --axioms` runs
+The convenience command `./scripts/validate.sh --examples --lint --test --axioms` runs
 production and tutorial builds with warnings fatal, environment and text-style
 linting, the test library, and the integrity/axiom checks.
 

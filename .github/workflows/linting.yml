@@ -24,4 +24,13 @@ jobs:
       # The action invokes lint-style with the default target (PolyFun).
       # The adapter, staging, and example libraries are separate, non-default targets.
       - name: Lint auxiliary libraries and examples
-        run: lake exe lint-style ToCslib ComplexityBackends Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms Examples.Tutorials.InteractionTrees Examples.Parliament PolyFunParliamentMain
+        run: |
+          lake exe lint-style ToCslib ComplexityBackends PolyFunIO \
+            Examples.Tutorials.Requests Examples.Tutorials.Machines \
+            Examples.Tutorials.IndexedPrograms Examples.Tutorials.InteractionTrees \
+            Examples.Tutorials.ParallelReports Examples.Tutorials.VersionedRequests \
+            Examples.Tutorials.UpdatePolicies Examples.Tutorials.ReviewableWorkflows \
+            Examples.Tutorials.FairWorkQueues Examples.Tutorials.BoundedController
+          (cd Examples/Parliament && lake exe lint-style Parliament ParliamentMain)
+          (cd Examples/Notes && lake exe lint-style Notes NotesMain)
+          (cd Examples/Pipeline && lake exe lint-style Pipeline PipelineMain)
