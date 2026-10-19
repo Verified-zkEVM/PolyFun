@@ -11,7 +11,7 @@ public import PolyFun.PFunctor.Dynamical.RunN
 # Examples for `n`-step systems
 
 Regression tests: `nStep` preserves the state set, handles the zero- and
-one-step boundaries, and collapses to `twoStep` at `n = 2`.
+one-step boundaries, and collapses to `Lens.speedup` at `n = 2`.
 -/
 
 @[expose] public section
@@ -26,10 +26,10 @@ variable {S : Type u} {p : PFunctor.{u, u}}
 states `S` is again a system on states `S`. -/
 example (φ : DynSystem S p) (n : ℕ) : DynSystem S (compNth p n) := φ.nStep n
 
-/-- `Run_2` collapses to `twoStep` after the inner unitor. -/
+/-- `Run_2` collapses to the two-step system `Lens.speedup` after the inner unitor. -/
 example (φ : DynSystem S p) :
-    (Lens.id p ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ φ.nStep 2 = φ.twoStep :=
-  DynSystem.nStep_two_eq_twoStep φ
+    (Lens.id p ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ φ.nStep 2 = φ.speedup :=
+  DynSystem.nStep_two_eq_speedup φ
 
 /-- `Run_0` performs no transition. -/
 example (φ : DynSystem S p) (state : S)

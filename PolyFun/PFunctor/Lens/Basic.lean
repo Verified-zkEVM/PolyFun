@@ -373,7 +373,10 @@ the helper behind `speedup`. -/
 def fixState {S : Type u} : Lens (selfMonomial S) (selfMonomial S ◃ selfMonomial S) :=
   (fun s₀ => ⟨s₀, fun s₁ => s₁⟩) ⇆ (fun _s₀ => fun ⟨_s₁, s₂⟩ => s₂)
 
-/-- The `speedup` lens operation: `Lens (S y^S) P → Lens (S y^S) (P ◃ P)` -/
+/-- The **two-step system** `(l ◃ l) ∘ₗ δ : Lens (S y^S) (P ◃ P)` of a dynamical system
+`l : Lens (S y^S) P` along the transition lens `δ = fixState` (Niu–Spivak Example 6.44):
+one composite step exposes a first `P`-position, consumes a direction, exposes a second
+`P`-position, and updates. -/
 def speedup {S : Type u} {P : PFunctor.{uA, uB}} (l : Lens (selfMonomial S) P) :
     Lens (selfMonomial S) (P ◃ P) :=
   (l ◃ₗ l) ∘ₗ fixState

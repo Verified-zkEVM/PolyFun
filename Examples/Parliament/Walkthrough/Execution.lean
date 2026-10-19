@@ -62,8 +62,8 @@ theorem toPrefix_events {s last : AssemblyState D} {commands : List (Command D)}
     SafetySpec (MeetingP D rules).sigmaPFunctor where
   State := AssemblyState D
   toDynSystem := meetingSystem D rules
-  init state := state = initial ∧ state.WellFormed
-  safe := AssemblyState.WellFormed
+  Init state := state = initial ∧ state.WellFormed
+  Safe := AssemblyState.WellFormed
 
 /-- Safety follows arbitrary environment choices, not only a scripted meeting. -/
 theorem prefix_wellFormed {s : AssemblyState D} {n : Nat}
@@ -76,7 +76,7 @@ theorem prefix_wellFormed {s : AssemblyState D} {n : Nat}
 /-- Every finite execution from an initialized safety specification ends safely. -/
 theorem meetingSafety_safe (initial s : AssemblyState D) {n : Nat}
     (orbit : Prefix (meetingSafety rules initial).toDynSystem s n)
-    (initialized : (meetingSafety rules initial).init s) :
-    (meetingSafety rules initial).safe orbit.last := prefix_wellFormed orbit initialized.2
+    (initialized : (meetingSafety rules initial).Init s) :
+    (meetingSafety rules initial).Safe orbit.last := prefix_wellFormed orbit initialized.2
 
 end Parliament.Walkthrough

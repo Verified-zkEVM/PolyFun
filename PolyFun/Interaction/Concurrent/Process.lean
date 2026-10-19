@@ -598,15 +598,17 @@ abbrev EventMap {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
 
 /--
 A stable ticket for each complete step path of a process: the
-dynamical-system `Tickets` at the step polynomial.
+dynamical-system `TicketMap` at the step polynomial.
 
 Tickets are the intended handles for fairness and liveness: instead of talking
 about unstable frontier events whose types change from state to state, later
 semantic layers can talk about these stable identifiers.
 -/
-abbrev Tickets {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+abbrev TicketMap {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (process : ProcessOver.{v, w, w₂} P Γ) (Ticket : Type w₃) :=
-  PFunctor.DynSystem.Tickets process Ticket
+  PFunctor.DynSystem.TicketMap process Ticket
+
+@[deprecated (since := "2026-10-19"), reducible] alias Tickets := TicketMap
 
 /--
 `StepRel left right` relates concrete process steps: each argument
@@ -846,9 +848,11 @@ abbrev EventMap {P : Type v} {Party : Type u}
 /--
 A stable ticket for each complete closed-world process step.
 -/
-abbrev Tickets {P : Type v} {Party : Type u}
+abbrev TicketMap {P : Type v} {Party : Type u}
     (process : Process P Party) (Ticket : Type w₂) :=
-  ProcessOver.Tickets process Ticket
+  ProcessOver.TicketMap process Ticket
+
+@[deprecated (since := "2026-10-19"), reducible] alias Tickets := TicketMap
 
 /--
 The closed-world specialization of `ProcessOver.StepRel`.

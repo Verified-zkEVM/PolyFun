@@ -274,7 +274,7 @@ def tickets
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
-    (ticketMap : process.Tickets Ticket) :
+    (ticketMap : process.TicketMap Ticket) :
     {p : process.Proc} → Trace process p → List Ticket
   | _, .done _ => []
   | p, .step tr tail =>
@@ -439,7 +439,7 @@ abbrev events {Party : Type u} {P : Type v} {process : Process P Party} {Event :
 
 /-- The stable tickets attached to the executed steps of a closed-world trace. -/
 abbrev tickets {Party : Type u} {P : Type v} {process : Process P Party} {Ticket : Type w₃}
-    (ticketMap : process.Tickets Ticket) :
+    (ticketMap : process.TicketMap Ticket) :
     {p : process.Proc} → Process.Trace process p → List Ticket :=
   ProcessOver.Trace.tickets ticketMap
 

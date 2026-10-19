@@ -55,9 +55,9 @@ def parity : DeterministicAutomaton Bool Bool where
   transition := Bool.xor
   start := true
 
-example : parity.accepts [true, true] := by decide
+example : parity.Accepts [true, true] := by decide
 
-example : ¬ parity.accepts [true] := by decide
+example : ¬ parity.Accepts [true] := by decide
 
 /-! ## A mode-dependent system
 

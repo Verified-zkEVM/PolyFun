@@ -112,7 +112,7 @@ def byTicket
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
-    (ticketMap : process.Tickets Ticket)
+    (ticketMap : process.TicketMap Ticket)
     (allow : Ticket → Bool) : StepPolicy process :=
   fun {p} tr => allow (ticketMap p tr)
 
@@ -200,7 +200,7 @@ closed-world step path by `ticketMap`.
 -/
 abbrev byTicket {Party : Type u} {P : Type v} {process : Process P Party}
     {Ticket : Type w₃}
-    (ticketMap : process.Tickets Ticket)
+    (ticketMap : process.TicketMap Ticket)
     (allow : Ticket → Bool) : StepPolicy process :=
   ProcessOver.StepPolicy.byTicket ticketMap allow
 

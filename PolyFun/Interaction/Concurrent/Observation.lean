@@ -210,7 +210,7 @@ Match two paths by equality of stable tickets.
 -/
 @[expose]
 def byTicket {Party : Type u} {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party}
-    {Ticket : Type w} (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket) :
+    {Ticket : Type w} (ticketL : left.TicketMap Ticket) (ticketR : right.TicketMap Ticket) :
     StepRel left right :=
   fun ⟨pL, trL⟩ ⟨pR, trR⟩ =>
     ticketL pL trL = ticketR pR trR
@@ -338,7 +338,7 @@ theorem events_eq_of_relByEvent {Party : Type u}
 of finite prefixes. -/
 theorem tickets_eq_of_relByTicket {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} {Ticket : Type w}
-    (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket)
+    (ticketL : left.TicketMap Ticket) (ticketR : right.TicketMap Ticket)
     {pL : left.Proc} {pR : right.Proc} {n : Nat}
     {leftPrefix : Process.Prefix left pL n}
     {rightPrefix : Process.Prefix right pR n}
@@ -528,7 +528,7 @@ theorem eventsUpTo_eq_of_relUpTo_byEvent {Party : Type u}
 of the first `n` run steps. -/
 theorem ticketsUpTo_eq_of_relUpTo_byTicket {Party : Type u}
     {P₁ P₂ : Type v} {left : Process P₁ Party} {right : Process P₂ Party} {Ticket : Type w}
-    (ticketL : left.Tickets Ticket) (ticketR : right.Tickets Ticket)
+    (ticketL : left.TicketMap Ticket) (ticketR : right.TicketMap Ticket)
     (leftRun : Process.Run left) (rightRun : Process.Run right) {n : Nat}
     (hrel : RelUpTo (StepRel.byTicket ticketL ticketR) leftRun rightRun n) :
     leftRun.ticketsUpTo ticketL n = rightRun.ticketsUpTo ticketR n := by

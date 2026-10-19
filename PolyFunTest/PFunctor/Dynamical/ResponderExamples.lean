@@ -12,7 +12,7 @@ public import PolyFun.PFunctor.Dynamical.Responder
 
 Regression tests for `PFunctor/Dynamical/Responder.lean`: the `committed` /
 `answer` / `next` accessors, the stateless `ofSection` / `ofHandler`
-constructors, and the Kleisli–Mealy bridge `equivStateHandler` with its
+constructors, and the Kleisli–Mealy bridge `equivStateful` with its
 definitional round-trips.
 -/
 
@@ -48,15 +48,15 @@ example (h : Handler Id q) :
 
 /-- The `Responder ≃ Handler (StateT S Id)` bridge round-trips definitionally. -/
 example (R : Responder Nat q) :
-    Responder.equivStateHandler.symm (Responder.equivStateHandler R) = R := rfl
+    Responder.equivStateful.symm (Responder.equivStateful R) = R := rfl
 
 example (h : Handler (StateT Nat Id) q) :
-    Responder.equivStateHandler (Responder.equivStateHandler.symm h) = h := rfl
+    Responder.equivStateful (Responder.equivStateful.symm h) = h := rfl
 
 /-- The forward direction of the bridge answers from the state and threads the
 next state, i.e. it is a Mealy step in Kleisli form. -/
 example (s : Nat) (a : PUnit) :
-    echoResponder.toStateHandler a s = (echoResponder.answer s a, echoResponder.next s a) := rfl
+    echoResponder.toStateful a s = (echoResponder.answer s a, echoResponder.next s a) := rfl
 
 end Responder.Examples
 end PFunctor

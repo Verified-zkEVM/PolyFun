@@ -131,13 +131,15 @@ theorem trace_comp (first : Spine program middle)
       simp only [comp, trace, ih]
       rfl
 
-theorem length_eq_trace_length (spine : Spine program residual) :
+theorem length_eq_length_trace (spine : Spine program residual) :
     spine.length = FreeMonoid.length spine.trace := by
   induction spine with
   | root => rfl
   | down answer tail ih =>
       simp only [length, trace, ih]
       rfl
+
+@[deprecated (since := "2026-10-19")] alias length_eq_trace_length := length_eq_length_trace
 
 /-- Plug a complete path through the residual back through a cursor spine. -/
 def plug : {program residual : FreeM P α} →
@@ -302,9 +304,11 @@ theorem trace_comp (first : Cursor program) (second : Cursor first.residual) :
     (first.comp second).trace = List.append first.trace second.trace :=
   Spine.trace_comp first.spine second.spine
 
-theorem length_eq_trace_length (cursor : Cursor program) :
+theorem length_eq_length_trace (cursor : Cursor program) :
     cursor.length = FreeMonoid.length cursor.trace :=
-  Spine.length_eq_trace_length cursor.spine
+  Spine.length_eq_length_trace cursor.spine
+
+@[deprecated (since := "2026-10-19")] alias length_eq_trace_length := length_eq_length_trace
 
 /-- Plug a complete residual path back into the source program. -/
 def plug (cursor : Cursor program) : Path cursor.residual → Path program :=
