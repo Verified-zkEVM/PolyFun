@@ -29,14 +29,15 @@ open _root_.PFunctor
 variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
 
 example {S : Type uB} (l : Lens (y^S : PFunctor.{uA, uB}) Q) :
-    Lens.purePowerEquiv.symm (Lens.purePowerEquiv l) = l := rfl
+    Lens.fromPurePowerEquiv.symm (Lens.fromPurePowerEquiv l) = l := rfl
 
 example {S : Type uB} (x : Q.Obj S) :
-    Lens.purePowerEquiv (Lens.purePowerEquiv.symm x : Lens (y^S : PFunctor.{uA, uB}) Q) = x :=
+    Lens.fromPurePowerEquiv
+      (Lens.fromPurePowerEquiv.symm x : Lens (y^S : PFunctor.{uA, uB}) Q) = x :=
   rfl
 
 example {S : Type uB} (g : Lens Q R) (l : Lens (y^S : PFunctor.{uA, uB}) Q) :
-    Lens.purePowerEquiv (g ∘ₗ l) = g.mapObj (Lens.purePowerEquiv l) := rfl
+    Lens.fromPurePowerEquiv (g ∘ₗ l) = g.mapObj (Lens.fromPurePowerEquiv l) := rfl
 
 example (l : Lens P Q) : Lens.equivPiObj.symm (Lens.equivPiObj l) = l := rfl
 

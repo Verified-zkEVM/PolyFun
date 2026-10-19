@@ -103,8 +103,8 @@ isomorphisms. Other descriptions of the same data enter as one of the following:
 - a constructor with characterization lemmas, so data arriving in another shape is converted
   once, such as `Lens.ofNatural` with `Lens.mapObj_ofNatural` and `Lens.existsUnique_mapObj`
   for natural transformations;
-- a predicate with an `_iff` characterization, such as `IsRepresentable` and
-  `isRepresentable_iff`;
+- a predicate with an `_iff` characterization, such as `IsPurePower` and
+  `isPurePower_iff`;
 - a carrier synonym that exists only to key a different instance, documented as such, such as
   `LensCat`, `TensorCat` and `CompCat`.
 

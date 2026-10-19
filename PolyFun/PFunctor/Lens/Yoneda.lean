@@ -18,7 +18,7 @@ transformations between these actions (Niu–Spivak §1.1, §2.1, §3.1–§3.7)
   values `p(1) ≅ p.A` (Prop 2.6, p. 27) and `p(0) ≅ {a // p.B a = ∅}`.
 * `Lens.purePowerMap`: a function `R → S` induces a lens `y^S ⇆ y^R` (Prop 1.4, p. 4), and the
   assignment is functorial (Ex 1.8).
-* `Lens.purePowerEquiv`: the Yoneda lemma for polynomials, `Lens (y^S) Q ≃ Q.Obj S`
+* `Lens.fromPurePowerEquiv`: the Yoneda lemma for polynomials, `Lens (y^S) Q ≃ Q.Obj S`
   (Lemma 1.10, p. 5, and Ex 3.2), natural in `S` and `Q`.
 * `Lens.equivPiObj`: a lens `P ⇆ Q` is a choice of an element of `Q.Obj (P.B a)` for every
   position `a` (Prop 3.6, p. 42).
@@ -101,23 +101,27 @@ def purePowerMap {R : Type uB₁} {S : Type uB₂} (f : R → S) :
 
 /-- **Yoneda for polynomials** (Niu–Spivak Lemma 1.10, Ex 3.2): a lens out of the
 representable `y^S` is an element of `Q.Obj S`. -/
-def purePowerEquiv {S : Type uB} {Q : PFunctor.{uA₂, uB₂}} :
+def fromPurePowerEquiv {S : Type uB} {Q : PFunctor.{uA₂, uB₂}} :
     Lens (y^S : PFunctor.{uA, uB}) Q ≃ Q.Obj S where
   toFun l := Obj.mk (l.toFunA PUnit.unit) (l.toFunB PUnit.unit)
   invFun x := (fun _ => x.fst) ⇆ fun _ => x.snd
   left_inv _ := rfl
   right_inv _ := rfl
+@[deprecated (since := "2026-10-19")] alias purePowerEquiv := fromPurePowerEquiv
 
 /-- The Yoneda bijection is natural in the target polynomial. -/
-@[simp] theorem purePowerEquiv_comp {S : Type uB} {Q : PFunctor.{uA₂, uB₂}}
+@[simp] theorem fromPurePowerEquiv_comp {S : Type uB} {Q : PFunctor.{uA₂, uB₂}}
     {R : PFunctor.{uA₃, uB₃}} (g : Lens Q R) (l : Lens (y^S : PFunctor.{uA, uB}) Q) :
-    purePowerEquiv (g ∘ₗ l) = g.mapObj (purePowerEquiv l) := rfl
+    fromPurePowerEquiv (g ∘ₗ l) = g.mapObj (fromPurePowerEquiv l) := rfl
+@[deprecated (since := "2026-10-19")] alias purePowerEquiv_comp := fromPurePowerEquiv_comp
 
 /-- The Yoneda bijection is natural in the representing set. -/
-theorem purePowerEquiv_comp_purePowerMap {R : Type uB₁} {S : Type uB}
+theorem fromPurePowerEquiv_comp_purePowerMap {R : Type uB₁} {S : Type uB}
     {Q : PFunctor.{uA₂, uB₂}} (l : Lens (y^R : PFunctor.{uA₁, uB₁}) Q) (f : R → S) :
-    purePowerEquiv (l ∘ₗ (purePowerMap f : Lens (y^S : PFunctor.{uA, uB}) (y^R))) =
-      Q.map f (purePowerEquiv l) := rfl
+    fromPurePowerEquiv (l ∘ₗ (purePowerMap f : Lens (y^S : PFunctor.{uA, uB}) (y^R))) =
+      Q.map f (fromPurePowerEquiv l) := rfl
+@[deprecated (since := "2026-10-19")]
+alias purePowerEquiv_comp_purePowerMap := fromPurePowerEquiv_comp_purePowerMap
 
 /-! ## Lenses as families of elements -/
 

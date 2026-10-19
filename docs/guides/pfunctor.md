@@ -67,7 +67,7 @@ input/output transformers and of proof-system context lenses, are built with
 
 ## Representables, Yoneda, and natural transformations
 
-`Lens.purePowerEquiv : Lens (y^S) Q ≃ Q.Obj S` is the Yoneda lemma for polynomials, and
+`Lens.fromPurePowerEquiv : Lens (y^S) Q ≃ Q.Obj S` is the Yoneda lemma for polynomials, and
 `Lens.equivPiObj : Lens P Q ≃ ((a : P.A) → Q.Obj (P.B a))` reads a lens as its value on each
 generic element `Obj.mk a id`. Lenses are exactly the natural transformations between
 actions: the action `Lens.mapObj` is natural (`Lens.mapObj_map`), and every natural family
@@ -79,7 +79,7 @@ of exactly one lens (`Lens.existsUnique_mapObj`), namely `Lens.ofNatural η`
 
 [`Equiv/Special.lean`](../../PolyFun/PFunctor/Equiv/Special.lean) presents every polynomial as
 the sum of the representables at its directions (`Equiv.sigmaPurePower`) and defines the
-representable, constant, linear, and monomial classes up to `≃ₚ`. `isRepresentable_iff`,
+pure-power (the book's representable), constant, linear, and monomial classes up to `≃ₚ`. `isPurePower_iff`,
 `isConstant_iff`, `isLinear_iff`, and `isMonomial_iff` characterize them by positions and
 directions.
 
