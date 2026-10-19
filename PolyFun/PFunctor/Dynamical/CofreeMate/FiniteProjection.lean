@@ -38,15 +38,15 @@ theorem projectionN_comp_cofreeMate {S : Type u} {P : PFunctor.{u, u}}
 @[deprecated (since := "2026-10-19")] alias cofreeMate_comp_projectionN :=
   projectionN_comp_cofreeMate
 
-/-- At depth two, finite projection recovers the established two-step system
+/-- At depth two, finite projection recovers the two-step system `Lens.speedup`
 after removing the innermost right composition unit. -/
 theorem projectionN_two_comp_cofreeMate
     {S : Type u} {P : PFunctor.{u, u}} (system : DynSystem S P) :
     (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ
         (CofreeP.projectionN P 2 ∘ₗ system.cofreeMate.toLens) =
-      system.twoStep :=
+      Lens.speedup system :=
   (congrArg (fun lens => (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ lens)
-    (projectionN_comp_cofreeMate system 2)).trans (nStep_two_eq_twoStep system)
+    (projectionN_comp_cofreeMate system 2)).trans (nStep_two_eq_speedup system)
 
 @[deprecated (since := "2026-10-19")] alias cofreeMate_comp_projectionN_two :=
   projectionN_two_comp_cofreeMate

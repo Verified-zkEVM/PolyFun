@@ -96,7 +96,7 @@ noncomputable abbrev matchPath
       ProcessOver.StepRel impl.toProcess spec.toProcess}
     (sim : SafetyRefinement impl spec matchStep)
     {pImpl pSpec : _}
-    (hrel : sim.stateRel pImpl pSpec)
+    (hrel : sim.StateRel pImpl pSpec)
     (trImpl : (impl.step pImpl).tree.Path) :
     (spec.step pSpec).tree.Path :=
   sim.matchDir hrel trImpl
@@ -117,7 +117,7 @@ theorem admissible_mapRun
     (sim : SafetyRefinement impl spec matchStep)
     (run : ProcessOver.Run impl.toProcess)
     {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec)
+    (hrel : sim.StateRel run.initial pSpec)
     (hadm : ProcessOver.SafetySpec.Admissible impl run) :
     ProcessOver.SafetySpec.Admissible spec (sim.mapRun run hrel) :=
   sim.assumptions_mapRun run hrel hadm
@@ -129,7 +129,7 @@ theorem currentControllersUpTo_mapRun {Party : Type u}
     (sim : SafetyRefinement impl spec Observation.Process.StepRel.byController)
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
+    (hrel : sim.StateRel run.initial pSpec) (n : Nat) :
     Process.Run.currentControllersUpTo run n =
       Process.Run.currentControllersUpTo (sim.mapRun run hrel) n :=
   Observation.Process.Run.currentControllersUpTo_eq_of_relUpTo_byController
@@ -145,7 +145,7 @@ theorem controllerPathsUpTo_mapRun {Party : Type u}
     (sim : SafetyRefinement impl spec Observation.Process.StepRel.byPath)
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
+    (hrel : sim.StateRel run.initial pSpec) (n : Nat) :
     Process.Run.controllerPathsUpTo run n =
       Process.Run.controllerPathsUpTo (sim.mapRun run hrel) n :=
   Observation.Process.Run.controllerPathsUpTo_eq_of_relUpTo_byPath
@@ -164,7 +164,7 @@ theorem eventsUpTo_mapRun {Party : Type u}
       (Observation.Process.StepRel.byEvent eventImpl eventSpec))
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
+    (hrel : sim.StateRel run.initial pSpec) (n : Nat) :
     Process.Run.eventsUpTo eventImpl run n =
       Process.Run.eventsUpTo eventSpec (sim.mapRun run hrel) n :=
   Observation.Process.Run.eventsUpTo_eq_of_relUpTo_byEvent
@@ -177,13 +177,13 @@ theorem eventsUpTo_mapRun {Party : Type u}
 finite run prefix. -/
 theorem ticketsUpTo_mapRun {Party : Type u}
     {impl spec : Process.SafetySpec Party} {Ticket : Type w}
-    {ticketImpl : impl.toProcess.Tickets Ticket}
-    {ticketSpec : spec.toProcess.Tickets Ticket}
+    {ticketImpl : impl.toProcess.TicketMap Ticket}
+    {ticketSpec : spec.toProcess.TicketMap Ticket}
     (sim : SafetyRefinement impl spec
       (Observation.Process.StepRel.byTicket ticketImpl ticketSpec))
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
+    (hrel : sim.StateRel run.initial pSpec) (n : Nat) :
     Process.Run.ticketsUpTo ticketImpl run n =
       Process.Run.ticketsUpTo ticketSpec (sim.mapRun run hrel) n :=
   Observation.Process.Run.ticketsUpTo_eq_of_relUpTo_byTicket
@@ -201,7 +201,7 @@ theorem observationsUpTo_mapRun {Party : Type u} [DecidableEq Party]
       (Observation.Process.StepRel.byObservation me))
     (run : Process.Run impl.toProcess)
     {pSpec : spec.Proc}
-    (hrel : sim.stateRel run.initial pSpec) (n : Nat) :
+    (hrel : sim.StateRel run.initial pSpec) (n : Nat) :
     Observation.Process.Run.observationsUpTo me run n =
       Observation.Process.Run.observationsUpTo me (sim.mapRun run hrel) n :=
   Observation.Process.Run.observationsUpTo_eq_of_relUpTo_byObservation
@@ -230,7 +230,7 @@ theorem safe_of_satisfies
     (fairSpec : ProcessOver.Run.Pred spec.toProcess)
     (hfair :
       ∀ (run : ProcessOver.Run impl.toProcess) {pSpec : spec.Proc},
-        (hrel : sim.stateRel run.initial pSpec) →
+        (hrel : sim.StateRel run.initial pSpec) →
           fairImpl run → fairSpec (sim.mapRun run hrel))
     (hspec : ProcessOver.SafetySpec.Satisfies spec fairSpec (ProcessOver.SafetySpec.Safe spec)) :
     ProcessOver.SafetySpec.Satisfies impl fairImpl (ProcessOver.SafetySpec.Safe impl) := by

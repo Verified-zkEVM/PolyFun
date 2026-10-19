@@ -95,7 +95,7 @@ abbrev tickets
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
-    (ticketMap : process.Tickets Ticket) :
+    (ticketMap : process.TicketMap Ticket) :
     {p : process.Proc} → {n : Nat} → Prefix process p n → List Ticket :=
   PFunctor.DynSystem.Prefix.tickets ticketMap
 
@@ -143,7 +143,7 @@ theorem tickets_nil
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
-    (ticketMap : process.Tickets Ticket)
+    (ticketMap : process.TicketMap Ticket)
     {p : process.Proc} :
     tickets ticketMap (.nil : Prefix process p 0) = [] :=
   PFunctor.DynSystem.Prefix.tickets_nil ticketMap
@@ -300,7 +300,7 @@ abbrev ticket
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
-    (ticketMap : process.Tickets Ticket)
+    (ticketMap : process.TicketMap Ticket)
     (run : Run process) (n : Nat) : Ticket :=
   PFunctor.DynSystem.Run.ticket ticketMap run n
 
@@ -310,7 +310,7 @@ abbrev ticketsUpTo
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
-    (ticketMap : process.Tickets Ticket)
+    (ticketMap : process.TicketMap Ticket)
     (run : Run process) : Nat → List Ticket :=
   PFunctor.DynSystem.Run.ticketsUpTo ticketMap run
 
@@ -414,7 +414,7 @@ theorem ticketsUpTo_zero
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
-    (ticketMap : process.Tickets Ticket)
+    (ticketMap : process.TicketMap Ticket)
     (run : Run process) :
     run.ticketsUpTo ticketMap 0 = [] := rfl
 
@@ -453,7 +453,7 @@ theorem ticketsUpTo_succ
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {P : Type v} {process : ProcessOver P Γ}
     {Ticket : Type w₃}
-    (ticketMap : process.Tickets Ticket)
+    (ticketMap : process.TicketMap Ticket)
     (run : Run process) (n : Nat) :
     run.ticketsUpTo ticketMap (n + 1) =
       run.ticket ticketMap 0 :: run.tail.ticketsUpTo ticketMap n := rfl
@@ -498,7 +498,7 @@ abbrev events {Party : Type u} {P : Type v} {process : Process P Party} {Event :
 /-- The stable tickets attached to the executed steps of a finite closed-world
 prefix. -/
 abbrev tickets {Party : Type u} {P : Type v} {process : Process P Party} {Ticket : Type w₃}
-    (ticketMap : process.Tickets Ticket) :
+    (ticketMap : process.TicketMap Ticket) :
     {p : process.Proc} → {n : Nat} → Prefix process p n → List Ticket :=
   ProcessOver.Prefix.tickets ticketMap
 
@@ -527,7 +527,7 @@ theorem events_nil {Party : Type u} {P : Type v} {process : Process P Party}
 
 @[simp, grind =]
 theorem tickets_nil {Party : Type u} {P : Type v} {process : Process P Party}
-    {Ticket : Type w₃} (ticketMap : process.Tickets Ticket)
+    {Ticket : Type w₃} (ticketMap : process.TicketMap Ticket)
     {p : process.Proc} :
     tickets ticketMap (.nil : Prefix process p 0) = [] :=
   ProcessOver.Prefix.tickets_nil ticketMap
@@ -607,14 +607,14 @@ abbrev eventsUpTo {Party : Type u} {P : Type v} {process : Process P Party}
 
 /-- The stable ticket attached to step `n` of a closed-world run. -/
 abbrev ticket {Party : Type u} {P : Type v} {process : Process P Party}
-    {Ticket : Type w₃} (ticketMap : process.Tickets Ticket)
+    {Ticket : Type w₃} (ticketMap : process.TicketMap Ticket)
     (run : Run process) (n : Nat) : Ticket :=
   ProcessOver.Run.ticket ticketMap run n
 
 /-- The stable tickets attached to the first `n` executed steps of a
 closed-world run. -/
 abbrev ticketsUpTo {Party : Type u} {P : Type v} {process : Process P Party}
-    {Ticket : Type w₃} (ticketMap : process.Tickets Ticket)
+    {Ticket : Type w₃} (ticketMap : process.TicketMap Ticket)
     (run : Run process) : Nat → List Ticket :=
   ProcessOver.Run.ticketsUpTo ticketMap run
 
@@ -651,7 +651,7 @@ theorem eventsUpTo_zero {Party : Type u} {P : Type v} {process : Process P Party
 
 @[simp, grind =]
 theorem ticketsUpTo_zero {Party : Type u} {P : Type v} {process : Process P Party}
-    {Ticket : Type w₃} (ticketMap : process.Tickets Ticket)
+    {Ticket : Type w₃} (ticketMap : process.TicketMap Ticket)
     (run : Run process) :
     run.ticketsUpTo ticketMap 0 = [] :=
   ProcessOver.Run.ticketsUpTo_zero ticketMap run
@@ -678,7 +678,7 @@ theorem eventsUpTo_succ {Party : Type u} {P : Type v} {process : Process P Party
 
 @[simp, grind =]
 theorem ticketsUpTo_succ {Party : Type u} {P : Type v} {process : Process P Party}
-    {Ticket : Type w₃} (ticketMap : process.Tickets Ticket)
+    {Ticket : Type w₃} (ticketMap : process.TicketMap Ticket)
     (run : Run process) (n : Nat) :
     run.ticketsUpTo ticketMap (n + 1) =
       run.ticket ticketMap 0 :: run.tail.ticketsUpTo ticketMap n :=

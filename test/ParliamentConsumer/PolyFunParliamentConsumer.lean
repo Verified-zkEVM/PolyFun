@@ -68,4 +68,4 @@ example (config : App.Configuration) (fuel : Nat) (state : App.State config) :
   Walkthrough.forget_logged_run config fuel state
 
 example (rules : Rules) (initial : AssemblyState wordDomain) (valid : initial.WellFormed) :
-    (Walkthrough.meetingSafety rules initial).init initial := ⟨rfl, valid⟩
+    (Walkthrough.meetingSafety rules initial).Init initial := ⟨rfl, valid⟩

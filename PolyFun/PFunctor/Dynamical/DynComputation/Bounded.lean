@@ -571,7 +571,7 @@ theorem unroll_seqComp_inr {γ : Type uγ}
           have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
               Sum.inl result := by
             rw [seqComp_view_inr]
-            simp only [seqComp_State]
+            simp only [seqComp_state]
             rw [hview]
             rfl
           rw [(M₁.seqComp M₂).unroll_return 0 _ result hcomposite,
@@ -581,7 +581,7 @@ theorem unroll_seqComp_inr {γ : Type uγ}
           have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
               Sum.inr ⟨position, fun direction => Sum.inr (next direction)⟩ := by
             rw [seqComp_view_inr]
-            simp only [seqComp_State]
+            simp only [seqComp_state]
             rw [hview]
             rfl
           rw [(M₁.seqComp M₂).unroll_query_zero _ position _ hcomposite,
@@ -592,7 +592,7 @@ theorem unroll_seqComp_inr {γ : Type uγ}
           have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
               Sum.inl result := by
             rw [seqComp_view_inr]
-            simp only [seqComp_State]
+            simp only [seqComp_state]
             rw [hview]
             rfl
           rw [(M₁.seqComp M₂).unroll_return (k + 1) _ result hcomposite,
@@ -602,7 +602,7 @@ theorem unroll_seqComp_inr {γ : Type uγ}
           have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
               Sum.inr ⟨position, fun direction => Sum.inr (next direction)⟩ := by
             rw [seqComp_view_inr]
-            simp only [seqComp_State]
+            simp only [seqComp_state]
             rw [hview]
             rfl
           rw [(M₁.seqComp M₂).unroll_query_succ k _ position _ hcomposite,
@@ -624,7 +624,7 @@ theorem unroll_seqComp_inl_of_return {γ : Type uγ}
       have hcomposite : (M₁.seqComp M₂).view (Sum.inl state₁) =
           Sum.inl result := by
         rw [seqComp_view_inl, hview]
-        simp only [seqComp_State]
+        simp only [seqComp_state]
         rw [hview₂]
         rfl
       rw [(M₁.seqComp M₂).unroll_return k _ result hcomposite,
@@ -634,7 +634,7 @@ theorem unroll_seqComp_inl_of_return {γ : Type uγ}
       have hcomposite : (M₁.seqComp M₂).view (Sum.inl state₁) =
           Sum.inr ⟨position, fun direction => Sum.inr (next direction)⟩ := by
         rw [seqComp_view_inl, hview]
-        simp only [seqComp_State]
+        simp only [seqComp_state]
         rw [hview₂]
         rfl
       cases k with

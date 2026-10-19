@@ -17,7 +17,7 @@ system, kept out of `DynSystem` itself so the core dynamics stay minimal:
 * `DynSystem.EventMap` / `DynSystem.Labeled` — a stable external label for each
   transition (state and direction), the observable step descriptions one wants
   to preserve under refinement or compare across runs.
-* `DynSystem.Tickets` / `DynSystem.Ticketed` — a stable obligation identifier
+* `DynSystem.TicketMap` / `DynSystem.Ticketed` — a stable obligation identifier
   for each transition, the handles that fairness and liveness layers quantify
   over instead of the state-dependent direction types themselves.
 * `DynSystem.SafetySpec` — a dynamical system together with an initial-state
@@ -50,8 +50,10 @@ Unlike the direction itself, a ticket is meant to persist across different
 representations of the same scheduling obligation, so fairness and liveness
 layers quantify over tickets rather than over the direction type of one
 particular state. -/
-abbrev Tickets {S : Type u} (s : DynSystem S p) (Ticket : Type w) :=
+abbrev TicketMap {S : Type u} (s : DynSystem S p) (Ticket : Type w) :=
   (st : S) → p.B (s.expose st) → Ticket
+
+@[deprecated (since := "2026-10-19"), reducible] alias Tickets := TicketMap
 
 set_option linter.checkUnivs false in
 /-- A dynamical system equipped with a stable external event label for each
@@ -72,7 +74,7 @@ structure Ticketed (p : PFunctor.{uA, uB}) extends Machine.{u} p where
   /-- The type of stable scheduling-obligation identifiers. -/
   Ticket : Type w
   /-- The assignment of a ticket to each transition. -/
-  ticket : toMachine.toDynSystem.Tickets Ticket
+  ticket : toMachine.toDynSystem.TicketMap Ticket
 
 /-- A safety-verification problem: dynamics together with initial states,
 ambient assumptions, and the state predicate to be established.
@@ -82,11 +84,16 @@ out of `DynSystem` and bundled only for verification-oriented statements. -/
 -- The system's state universe (`u`) and interface universes are independent.
 structure SafetySpec (p : PFunctor.{uA, uB}) extends Machine.{u} p where
   /-- The predicate characterizing the system's initial states. -/
-  init : State → Prop
+  Init : State → Prop
   /-- The ambient assumptions imposed on states. -/
-  assumptions : State → Prop := fun _ => True
+  Assumptions : State → Prop := fun _ => True
   /-- The safety predicate that states are required to satisfy. -/
-  safe : State → Prop := fun _ => True
+  Safe : State → Prop := fun _ => True
+
+@[deprecated (since := "2026-10-19")] alias SafetySpec.init := SafetySpec.Init
+@[deprecated (since := "2026-10-19")] alias SafetySpec.assumptions := SafetySpec.Assumptions
+@[deprecated (since := "2026-10-19")] alias SafetySpec.safe := SafetySpec.Safe
+
 end DynSystem
 
 end PFunctor

@@ -68,7 +68,7 @@ performs effects in `m`, and returns a direction together with the next state.
 
 This is a transparent name for `Handler (StateT S m) q`, so it introduces no
 new data or laws. At `m := Id` it is the pure Kleisli--Mealy presentation used
-by `Responder.equivStateHandler`. -/
+by `Responder.equivStateful`. -/
 abbrev Stateful (m : Type u → Type v) (S : Type u)
     (q : PFunctor.{uA, u}) :=
   Handler (StateT S m) q

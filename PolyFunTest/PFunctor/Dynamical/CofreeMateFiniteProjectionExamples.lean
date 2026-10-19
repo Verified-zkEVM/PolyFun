@@ -39,7 +39,7 @@ example (P : PFunctor.{u, u}) (S : Type u)
     (system : DynSystem S P) :
     (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ
         (CofreeP.projectionN P 2 ∘ₗ system.cofreeMate.toLens) =
-      system.twoStep :=
+      Lens.speedup system :=
   DynSystem.projectionN_two_comp_cofreeMate system
 
 /-! ## Observable branching behavior -/

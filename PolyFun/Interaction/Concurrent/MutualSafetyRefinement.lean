@@ -93,7 +93,7 @@ theorem left_safe_of_satisfies
     (fairLeft : ProcessOver.Run.Pred left.toProcess)
     (fairRight : ProcessOver.Run.Pred right.toProcess)
     (hfair : ∀ (run : ProcessOver.Run left.toProcess) {pRight : right.Proc},
-      (hrel : both.forth.stateRel run.initial pRight) →
+      (hrel : both.forth.StateRel run.initial pRight) →
         fairLeft run → fairRight (both.forth.mapRun run hrel))
     (hright : ProcessOver.SafetySpec.Satisfies right fairRight
       (ProcessOver.SafetySpec.Safe right)) :
@@ -116,7 +116,7 @@ theorem right_safe_of_satisfies
     (fairLeft : ProcessOver.Run.Pred left.toProcess)
     (fairRight : ProcessOver.Run.Pred right.toProcess)
     (hfair : ∀ (run : ProcessOver.Run right.toProcess) {pLeft : left.Proc},
-      (hrel : both.back.stateRel run.initial pLeft) →
+      (hrel : both.back.StateRel run.initial pLeft) →
         fairRight run → fairLeft (both.back.mapRun run hrel))
     (hleft : ProcessOver.SafetySpec.Satisfies left fairLeft (ProcessOver.SafetySpec.Safe left)) :
     ProcessOver.SafetySpec.Satisfies right fairRight (ProcessOver.SafetySpec.Safe right) :=
@@ -138,10 +138,10 @@ theorem safe_iff_of_satisfies
     (fairLeft : ProcessOver.Run.Pred left.toProcess)
     (fairRight : ProcessOver.Run.Pred right.toProcess)
     (hfairLeft : ∀ (run : ProcessOver.Run left.toProcess) {pRight : right.Proc},
-      (hrel : both.forth.stateRel run.initial pRight) →
+      (hrel : both.forth.StateRel run.initial pRight) →
         fairLeft run → fairRight (both.forth.mapRun run hrel))
     (hfairRight : ∀ (run : ProcessOver.Run right.toProcess) {pLeft : left.Proc},
-      (hrel : both.back.stateRel run.initial pLeft) →
+      (hrel : both.back.StateRel run.initial pLeft) →
         fairRight run → fairLeft (both.back.mapRun run hrel)) :
     ProcessOver.SafetySpec.Satisfies left fairLeft (ProcessOver.SafetySpec.Safe left) ↔
       ProcessOver.SafetySpec.Satisfies right fairRight (ProcessOver.SafetySpec.Safe right) :=
