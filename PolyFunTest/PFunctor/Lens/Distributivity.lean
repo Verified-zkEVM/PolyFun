@@ -12,7 +12,7 @@ public import PolyFun.PFunctor.Lens.Distributivity
 
 Regression tests instantiating the substitution-distributivity equivalences at
 small concrete polynomials, and the guardrail witnessing that substitution does
-*not* right-distribute over products (Spivak–Niu, Ex. 6.56).
+*not* right-distribute over products (Niu–Spivak, Ex. 6.56).
 -/
 
 @[expose] public section

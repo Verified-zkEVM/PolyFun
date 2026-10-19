@@ -359,7 +359,7 @@ def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
   Lens P y.{uA₁, uB₁}
 
 /-- The transition lens `δ : Sy^S ⇆ Sy^S ◃ Sy^S` on the self-monomial state
-polynomial (Spivak–Niu Example 6.44): `δ = (id, tgt, run)` remembers the start
+polynomial (Niu–Spivak Example 6.44): `δ = (id, tgt, run)` remembers the start
 state, relabels each direction by the state it targets, and composes two hops
 into one. It is the comultiplication of the state comonoid `stateComonoid S`, and
 the helper behind `speedup`. -/
@@ -689,7 +689,7 @@ def yComp : y ◃ P ≃ₗ P where
 @[deprecated (since := "2026-08-17")] alias compX := compY
 @[deprecated (since := "2026-08-17")] alias XComp := yComp
 
-/-- Left distributivity of composition over coproduct (Spivak–Niu Prop 6.47). -/
+/-- Left distributivity of composition over coproduct (Niu–Spivak Prop 6.47). -/
 def sumCompDistrib {R : PFunctor.{uA₃, uB₂}} :
     Lens.Equiv.{max uA₁ uA₂ uA₃ uB₂, max uB₁ uB₂, max uA₁ uA₂ uA₃ uB₂, max uB₁ uB₂}
       ((Q + R : PFunctor.{max uA₂ uA₃, uB₂}) ◃ P) ((Q ◃ P) + (R ◃ P)) where

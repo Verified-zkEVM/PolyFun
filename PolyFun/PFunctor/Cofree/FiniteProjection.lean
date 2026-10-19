@@ -18,7 +18,7 @@ codomain the right-nested composition power `compNth P n`.
 The definition is structural and remains polymorphic in the two universes of
 `P`.  At the current homogeneous `Comonoid.Hom` boundary it agrees with the
 abstract composite of iterated comultiplication and the iterated cogenerator.
-This gives the general finite-run equation of Spivak--Niu Proposition 8.49.
+This gives the general finite-run equation of Niu–Spivak Proposition 8.49.
 
 The additive splitting equation for arbitrary pairs of depths is deliberately
 not stated here: with right-nested composition powers it first requires an
@@ -211,7 +211,7 @@ theorem hom_comp_projectionN
         (Lens.compNthMap_comp (cogenerator P) hom.toLens n).symm
     _ = _ := rfl
 
-/-- **Spivak--Niu Proposition 8.49.** Projecting the cofree extension of a
+/-- **Niu–Spivak Proposition 8.49.** Projecting the cofree extension of a
 generator lens to depth `n` is its `n`-step run. -/
 theorem extend_comp_projectionN
     {P : PFunctor.{u, u}} (C : Comonoid.{u, u})

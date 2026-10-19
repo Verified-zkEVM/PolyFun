@@ -928,7 +928,7 @@ alone does not establish strict PPT.
 See [`REFERENCES.md`](../../REFERENCES.md) — `AM74`, `AMMS13`, `PR89`, `Uus15`,
 `PM15`, `Blum67`, `FKL22`, `DH11`, `Cob65`, `HUM13`, `GHP09` for the realizability notion, and
 `Coc93`, `CLW93`, `Wal91`, `CF92`, `CDGH12`, `CH08`, `Clo99` for the
-distributive-category and function-algebra vocabulary; plus `SN24`, `LS25`, and
+distributive-category and function-algebra vocabulary; plus `NS24`, `LS25`, and
 `Abe26`.
 
 Terminology follows classical (co)algebraic *realization* theory rather than the

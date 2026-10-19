@@ -17,7 +17,7 @@ captures inductive types (`W`-types), free monads on signatures, M-types
 (coinductive types), event signatures for interaction trees, and the kind
 of dependent typing needed for protocol move spaces.
 
-The Spivak-Niu *Poly* category (positions and directions composed via
+The Niu–Spivak *Poly* category (positions and directions composed via
 `Σ` / `Π`) is the categorical home of all of these. PolyFun internalizes
 enough of that category to model:
 
@@ -34,7 +34,7 @@ enough of that category to model:
 References:
 [`REFERENCES.md`](../../REFERENCES.md). Hancock-Setzer 2000,
 Altenkirch-Ghani-Hancock-McBride-Morris 2015 (*Indexed Containers*),
-Spivak-Niu 2025 (*Polynomial Functors: A Mathematical Theory of Interaction*),
+Niu–Spivak 2025 (*Polynomial Functors: A Mathematical Theory of Interaction*),
 McBride 2010 / Dagand-McBride 2014 (displayed algebras / ornaments).
 
 ## Polynomial objects

@@ -22,8 +22,7 @@ naturality, left and right unitality, and associativity to the corresponding
 tensor-lens coherence equations.
 
 This is Libkind–Spivak, *Pattern Runs on Matter*, Proposition C.1, and the
-concrete lax-monoidal construction of Spivak–Niu, Proposition 8.79 in the
-current edition (Proposition 8.81 in earlier-edition notes).  The module
+concrete lax-monoidal construction of Niu–Spivak, Proposition 8.81.  The module
 supplies the explicit maps and laws needed downstream; it does not install an
 abstract `LaxMonoidalFunctor` or symmetric-monoidal packaging.
 -/

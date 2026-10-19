@@ -355,7 +355,7 @@ end Sigma
 section Pi
 
 /-- Composition distributes over an indexed product on the left
-(Spivak–Niu (6.51)):
+(Niu–Spivak (6.51)):
 `(Π i, F i) ◃ P ≃ₚ Π i, (F i ◃ P)`.
 
 A position on the left chooses all `F i` positions and one continuation on
@@ -592,7 +592,7 @@ def yComp : y ◃ P ≃ₚ P where
 @[deprecated (since := "2026-08-17")] alias compX := compY
 @[deprecated (since := "2026-08-17")] alias XComp := yComp
 
-/-- Left distributivity of composition over sum (Spivak–Niu Prop 6.47). -/
+/-- Left distributivity of composition over sum (Niu–Spivak Prop 6.47). -/
 def sumCompDistrib (Q : PFunctor.{uA₂, uB₁}) :
     (P + Q : PFunctor.{max uA₁ uA₂, uB₁}) ◃ R ≃ₚ
     ((P ◃ R) + (Q ◃ R) : PFunctor.{max uA₁ uA₂ uA₃ uB₁, max uB₁ uB₃}) where

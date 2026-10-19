@@ -16,8 +16,7 @@ The duoidal interchange lens equips the tensor product of two comonoids in
 `(Poly, ◃, y)` with a comonoid structure.  Its objects and outgoing arrows are
 pairs, its counit combines the two component counits, and its comultiplication
 composes each component independently.  This is the concrete construction in
-Spivak–Niu, Proposition 8.77 in the current edition (Proposition 8.79 in the
-earlier-edition notes).
+Niu–Spivak, Proposition 8.79.
 
 The two input comonoids retain independent position and direction universes.
 The counit uses `Lens.tensorUnitMap` to compare their independently instantiated

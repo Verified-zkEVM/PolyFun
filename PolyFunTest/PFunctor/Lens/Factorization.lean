@@ -86,7 +86,7 @@ section Closure
 
 variable {R W : PFunctor.{u, u}} {l₁ : Lens P R} {l₂ : Lens Q W}
 
-/-- Verticality is closed under `⊎ₗ`, `×ₗ`, `⊗ₗ` (Spivak–Niu Prop 5.63). -/
+/-- Verticality is closed under `⊎ₗ`, `×ₗ`, `⊗ₗ` (Niu–Spivak Prop 5.63). -/
 example (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊎ₗ l₂).IsVertical :=
   h₁.sumMap h₂
 
@@ -96,7 +96,7 @@ example (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ×ₗ l₂).Is
 example (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊗ₗ l₂).IsVertical :=
   h₁.tensorMap h₂
 
-/-- Cartesianness is closed under `×ₗ`, `⊗ₗ`, and `◃ₗ` (Spivak–Niu Prop 5.63,
+/-- Cartesianness is closed under `×ₗ`, `⊗ₗ`, and `◃ₗ` (Niu–Spivak Prop 5.63,
 6.88). -/
 example (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ×ₗ l₂).IsCartesian :=
   h₁.prodMap h₂

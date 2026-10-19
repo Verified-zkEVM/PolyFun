@@ -13,7 +13,7 @@ public import PolyFun.PFunctor.Lens.Basic
 This file collects the *left*-distributivity laws for the substitution product
 `◃` over the coproduct and product of polynomial functors, promoted to
 lens-equivalences `≃ₗ`, together with the representable-hom description of lenses
-out of a monomial. These are distributive laws of Spivak–Niu, *Polynomial
+out of a monomial. These are distributive laws of Niu–Spivak, *Polynomial
 Functors: A Mathematical Theory of Interaction*, Chapter 6.
 
 Substitution distributes over the various operations *on the left* — that is,
@@ -37,7 +37,7 @@ Each lens-equivalence is produced from an object-level `≃ₚ` through
 `PFunctor.Equiv.toLensEquiv`, which discharges the lens round-trips.
 
 Substitution does **not** distribute over products on the *right*: in general
-`p ◃ (q * r)` and `(p ◃ q) * (p ◃ r)` differ (Spivak–Niu, Ex. 6.56). A concrete
+`p ◃ (q * r)` and `(p ◃ q) * (p ◃ r)` differ (Niu–Spivak, Ex. 6.56). A concrete
 witness of this failure lives in the companion test file.
 
 ## Hom-sets out of a monomial
@@ -59,7 +59,7 @@ namespace Equiv
 
 /-! ## Substitution over a scalar (object level) -/
 
-/-- **Spivak–Niu Ex. 6.55**, object level: substituting into a scalar multiple
+/-- **Niu–Spivak Ex. 6.55**, object level: substituting into a scalar multiple
 splits off the scalar, `(C A * p) ◃ q ≃ₚ C A * (p ◃ q)`.
 
 The empty direction type of `C A` makes the left injection of a direction
@@ -100,14 +100,14 @@ namespace Equiv
 
 variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
 
-/-- **Spivak–Niu (6.51)**: `(Π i, F i) ◃ P ≃ₗ Π i, (F i ◃ P)`, obtained from
+/-- **Niu–Spivak (6.51)**: `(Π i, F i) ◃ P ≃ₗ Π i, (F i ◃ P)`, obtained from
 the object-level indexed-product distributivity equivalence. -/
 def piCompDistrib {I : Type v} {F : I → PFunctor.{uA₁, uB₁}}
     {P : PFunctor.{uA₂, uB₂}} :
     Lens.Equiv (pi F ◃ P) (pi (fun i => F i ◃ P)) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.piCompDistrib F P)
 
-/-- **Spivak–Niu (6.49)**: `(P * Q) ◃ R ≃ₗ (P ◃ R) * (Q ◃ R)`, the
+/-- **Niu–Spivak (6.49)**: `(P * Q) ◃ R ≃ₗ (P ◃ R) * (Q ◃ R)`, the
 lens-equivalence obtained from the object-level `PFunctor.Equiv.prodCompDistrib`. -/
 def prodCompDistrib :
     Lens.Equiv.{max uA₁ uA₂ uA₃ uB₁ uB₂, max uB₁ uB₂ uB₃,
@@ -116,7 +116,7 @@ def prodCompDistrib :
       ((P ◃ R) * (Q ◃ R) : PFunctor.{max uA₁ uA₂ uA₃ uB₁ uB₂, max uB₁ uB₂ uB₃}) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.prodCompDistrib P Q R)
 
-/-- **Spivak–Niu Ex. 6.55**: `(C A * p) ◃ q ≃ₗ C A * (p ◃ q)`, the
+/-- **Niu–Spivak Ex. 6.55**: `(C A * p) ◃ q ≃ₗ C A * (p ◃ q)`, the
 lens-equivalence obtained from `PFunctor.Equiv.scalarCompDistrib`. -/
 def scalarCompDistrib {A : Type uA} {p : PFunctor.{uA₁, uB₁}} {q : PFunctor.{uA₂, uB₂}} :
     Lens.Equiv.{max uA uA₁ uA₂ uB₁, max uB₁ uB₂, max uA uA₁ uA₂ uB₁, max uB₁ uB₂}
@@ -129,7 +129,7 @@ end Equiv
 
 /-! ## Lenses out of a monomial -/
 
-/-- **Spivak–Niu (6.65) / (A8)**: a lens `A y^ B ⇆ p` is the same data as a
+/-- **Niu–Spivak (6.65) / (A8)**: a lens `A y^ B ⇆ p` is the same data as a
 function `A → p(B)`.
 
 The forward position map is a function `A → p.A` and the backward direction map

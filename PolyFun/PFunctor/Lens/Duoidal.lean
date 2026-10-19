@@ -13,7 +13,7 @@ public import PolyFun.PFunctor.Lens.Cartesian
 The category `Poly` carries two monoidal products that are both relevant to
 interaction: the tensor (Dirichlet) product `⊗`, whose positions are pairs and
 whose directions are pairs, and the substitution product `◃`, whose positions
-package a first move together with a continuation. Spivak–Niu, *Polynomial
+package a first move together with a continuation. Niu–Spivak, *Polynomial
 Functors: A Mathematical Theory of Interaction* §6.3.4–6.3.5 show that these two
 products are **duoidal**: they share the unit `y` and there is a canonical
 family of interchange lenses that make `(Poly, ⊗, ◃)` a duoidal category.
@@ -69,7 +69,7 @@ namespace Lens
 
 /-! ## The ordering lens `p ⊗ q → p ◃ q` -/
 
-/-- The **ordering lens** `p ⊗ q → p ◃ q` (Spivak–Niu Example 6.85).
+/-- The **ordering lens** `p ⊗ q → p ◃ q` (Niu–Spivak Example 6.85).
 
 On positions it turns a pair of simultaneous moves `(a, b) : p.A × q.A` into a
 sequential position `⟨a, fun _ => b⟩ : p ◃ q`, where the continuation is the
@@ -101,7 +101,7 @@ theorem orderingLens_natural {p : PFunctor.{uA₁, uB₁}} {p' : PFunctor.{uA₂
 The interchange lens `(p ◃ p') ⊗ (q ◃ q') → (p ⊗ q) ◃ (p' ⊗ q')` runs two
 two-phase protocols in parallel and regroups their phases. -/
 
-/-- The **duoidal interchange lens** (Spivak–Niu Equation 6.86)
+/-- The **duoidal interchange lens** (Niu–Spivak Equation 6.86)
 
 `(p ◃ p') ⊗ (q ◃ q') → (p ⊗ q) ◃ (p' ⊗ q')`.
 
@@ -341,7 +341,7 @@ load-bearing formers of this file are `orderingLens` and `duoidalLens` above
 
 namespace Equiv
 
-/-- `Ay ⊗ By ≅ Ay ◃ By` (Spivak–Niu Exercise 6.84).
+/-- `Ay ⊗ By ≅ Ay ◃ By` (Niu–Spivak Exercise 6.84).
 
 Both sides are `(A × B) y`: a pair of linear moves is the same data as a linear
 move followed by a linear move, since each linear factor has a unique
@@ -353,7 +353,7 @@ def linearTensorLinear (A : Type u) (B : Type u) :
   left_inv := rfl
   right_inv := rfl
 
-/-- `y^A ⊗ y^B ≅ y^A ◃ y^B` (Spivak–Niu Exercise 6.84).
+/-- `y^A ⊗ y^B ≅ y^A ◃ y^B` (Niu–Spivak Exercise 6.84).
 
 Both sides are `y^(A × B)`: a pair of directions `A × B` is the same as an
 `A`-direction followed by a `B`-direction, since each pure-power factor has a
@@ -366,7 +366,7 @@ def purePowerTensorPurePower (A : Type u) (B : Type u) :
   left_inv := rfl
   right_inv := rfl
 
-/-- `By ⊗ p ≅ By ◃ p` (Spivak–Niu Exercise 6.84), with the *linear* factor `By`
+/-- `By ⊗ p ≅ By ◃ p` (Niu–Spivak Exercise 6.84), with the *linear* factor `By`
 on the left.
 
 The linear factor `By = linear B` has a unique direction, so pairing a
@@ -380,7 +380,7 @@ def linearTensor (B : Type u) (p : PFunctor.{u, u}) :
   left_inv := rfl
   right_inv := rfl
 
-/-- `p ⊗ y^A ≅ p ◃ y^A` (Spivak–Niu Exercise 6.84), with the *pure-power* factor
+/-- `p ⊗ y^A ≅ p ◃ y^A` (Niu–Spivak Exercise 6.84), with the *pure-power* factor
 `y^A` on the right.
 
 The pure-power factor `y^A = y^ A` has a unique position, so a `p`-move

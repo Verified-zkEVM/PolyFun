@@ -10,7 +10,7 @@ public import PolyFun.PFunctor.Lens.Basic
 /-!
 # Lenses into composites, and the composition-power of a lens
 
-Two pieces of Spivak–Niu Ch. 6 machinery for the composition product `◃`.
+Two pieces of Niu–Spivak Ch. 6 machinery for the composition product `◃`.
 
 ## Destructor triple (Example 6.40)
 
@@ -30,7 +30,7 @@ auxiliary wrapper type.
 ## Composition power of a lens (§6.1.4)
 
 `Lens.compNthMap l n : Lens (compNth p n) (compNth q n)` lifts a lens `l : p ⇆ q`
-through the `n`-fold composition power `p^{◃n}` (Spivak–Niu's `φ^{◁n}`, the
+through the `n`-fold composition power `p^{◃n}` (Niu–Spivak's `φ^{◁n}`, the
 "`n` steps of the interface" map). It is the interface-lift underneath multi-step
 dynamical systems.
 -/
@@ -48,7 +48,7 @@ variable {p q r : PFunctor.{uA, uB}}
 /-! ## Components of a lens into `q ◃ r` -/
 
 /-- The outer `q`-position selected by a lens into `q ◃ r` at each source
-position (Spivak–Niu Example 6.40). -/
+position (Niu–Spivak Example 6.40). -/
 def compOuter (l : Lens p (q ◃ r)) (i : p.A) : q.A :=
   (l.toFunA i).1
 
@@ -66,7 +66,7 @@ def compPullback (l : Lens p (q ◃ r)) (i : p.A) :
 /-! ## The composition power of a lens -/
 
 /-- The `n`-fold composition power of a lens: `l^{◃n} : compNth p n ⇆ compNth q n`
-(Spivak–Niu §6.1.4). Built by iterating `compMap` (`◃ₗ`). -/
+(Niu–Spivak §6.1.4). Built by iterating `compMap` (`◃ₗ`). -/
 def compNthMap (l : Lens p q) : (n : ℕ) → Lens (compNth p n) (compNth q n)
   | 0 => Lens.id y
   | n + 1 => l ◃ₗ compNthMap l n

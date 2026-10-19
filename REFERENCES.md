@@ -51,12 +51,14 @@ interface.
 Used in: `PolyFun/Control/Monad/Indexed.lean`, `PolyFun/IPFunctor/Basic.lean`,
 `PolyFun/IPFunctor/Free/Basic.lean`.
 
-### SN24 — Spivak and Niu, *Polynomial Functors*
+### NS24 — Niu and Spivak, *Polynomial Functors*
 
-David I. Spivak and Nelson Niu.
+Nelson Niu and David I. Spivak.
 *Polynomial Functors: A Mathematical Theory of Interaction*.
 Cambridge University Press, London Mathematical Society Lecture Note
 Series 498, 2025 (DOI 10.1017/9781009576734; preprint: arXiv:2312.00990).
+Result numbers and pages cited across PolyFun refer to arXiv v2 (August 2024);
+the print edition numbers some Chapter 8 results differently.
 
 The polynomial-functor calculus, charts, lenses, the composition product,
 the free-monad / cofree-comonad pairing, and the slogan "pattern runs on
@@ -107,7 +109,7 @@ arXiv:1604.01187.
 
 Directed containers, equivalently comonoids for the composition product of
 polynomials, are the same as small categories; container morphisms between them
-are cofunctors (retrofunctors). This is the result SN24 presents as Thm 7.28.
+are cofunctors (retrofunctors). This is the result NS24 presents as Thm 7.28.
 
 Used in: `PolyFun/PFunctor/Comonoid.lean`,
 `PolyFun/PFunctor/Comonoid/Category.lean`.

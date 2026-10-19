@@ -12,7 +12,7 @@ public import PolyFun.PFunctor.Lens.Basic
 # Lawful State Lenses
 
 This file specializes polynomial-functor lenses to **state lenses**. In Poly,
-following Spivak and Niu's *Polynomial Functors: A Mathematical Theory of
+following Niu and Spivak's *Polynomial Functors: A Mathematical Theory of
 Interaction*, a dependent lens `p → q` is a natural transformation between
 polynomial functors, represented by a forward map on positions and a backward
 map on directions. For the self-monomial polynomial `PFunctor.selfMonomial σ`,
@@ -41,7 +41,7 @@ two views describe spatially separated portions of a state.
 
 References:
 
-* David I. Spivak and Nelson Niu, *Polynomial Functors: A Mathematical Theory
+* Nelson Niu and David I. Spivak, *Polynomial Functors: A Mathematical Theory
   of Interaction*, Cambridge University Press, 2025.
 * J. Nathan Foster, Michael B. Greenwald, Jonathan T. Moore, Benjamin C. Pierce,
   and Alan Schmitt, *Combinators for Bidirectional Tree Transformations: A

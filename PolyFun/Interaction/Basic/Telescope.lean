@@ -41,7 +41,7 @@ initial-algebra universal property. `toTypeTree` is the fold into the algebra
 ## References
 
 * Hancock–Setzer (2000), recursion over interaction interfaces.
-* Spivak–Niu (2024), polynomial functors as the algebra of interaction.
+* Niu–Spivak (2024), polynomial functors as the algebra of interaction.
 -/
 
 public section

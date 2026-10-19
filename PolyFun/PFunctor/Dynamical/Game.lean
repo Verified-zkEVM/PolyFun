@@ -14,7 +14,7 @@ public import PolyFun.PFunctor.Lens.Duoidal
 # Games: challengers wired against adversaries along evaluation
 
 A **game** pairs a challenger, whose interface is an internal hom `q ⊸ r`
-(Spivak–Niu Ex 4.78), with an adversary playing `q`. Wiring the two along the
+(Niu–Spivak Ex 4.78), with an adversary playing `q`. Wiring the two along the
 evaluation lens `Lens.eval : (q ⊸ r) ⊗ q ⟹ r` (`DynSystem.game`) yields a single
 system over the outer interface `r`; equivalently — definitionally — it is the
 uncurried challenger applied to the adversary (`game_eq_uncurry`), the
@@ -38,7 +38,7 @@ is essential because a returned computation state has no query transition.
 
 Two-phase (commit-then-guess) games arrive by substitution: `Lens.eval₂` runs
 two evaluations in sequence after reshuffling along the duoidal interchange
-`Lens.duoidalLens` (Spivak–Niu Eq 6.86), `DynSystem.orderPair` orders two
+`Lens.duoidalLens` (Niu–Spivak Eq 6.86), `DynSystem.orderPair` orders two
 single-phase adversaries into a `q₁ ◃ q₂` player along `Lens.orderingLens`
 (Ex 6.85), and `DynSystem.game₂` wires a two-phase challenger against a
 two-phase adversary. `Lens.compOuter`, `Lens.compInner`, and `Lens.compPullback`
@@ -61,7 +61,7 @@ section Game
 variable {S : Type u} {T : Type v} {q r : PFunctor.{uA, uB}}
 
 /-- Wire a challenger over the internal hom `q ⊸ r` against an adversary playing
-`q`, along the evaluation lens (Spivak–Niu (4.88), Ex 4.89): at each step the challenger
+`q`, along the evaluation lens (Niu–Spivak (4.88), Ex 4.89): at each step the challenger
 commits to a lens `q ⟹ r`, the adversary picks a `q`-position, and the composite
 exposes the resulting `r`-position; the incoming `r`-direction is answered back
 through the committed lens. The Kleisli runs below drive a system against a
@@ -205,7 +205,7 @@ phase-one transcript, is a phase-two responder lens — and the adversary plays
 namespace Lens
 
 /-- The **two-phase evaluation wiring**: reshuffle a two-phase challenger against
-a two-phase adversary along the duoidal interchange `duoidalLens` (Spivak–Niu
+a two-phase adversary along the duoidal interchange `duoidalLens` (Niu–Spivak
 Eq 6.86), so the phase-one pair and phase-two pair each meet in an evaluation
 lens (4.88), run in sequence. -/
 def eval₂ (q₁ r₁ q₂ r₂ : PFunctor.{uA, uB}) :
@@ -221,7 +221,7 @@ section OrderPair
 variable {T₁ : Type u} {T₂ : Type v} {q₁ : PFunctor.{uA₁, uB₁}} {q₂ : PFunctor.{uA₂, uB₂}}
 
 /-- Order two systems into a single two-phase system along `Lens.orderingLens`
-(Spivak–Niu Ex 6.85): the pair plays `q₁ ◃ q₂`, phase one first. **The second
+(Niu–Spivak Ex 6.85): the pair plays `q₁ ◃ q₂`, phase one first. **The second
 phase cannot see the first phase's answer within one composite step**: before
 ordering, the two phases were simultaneous (`tensor`), and the ordering lens
 makes the phase-two position constant in the phase-one direction. A
@@ -248,7 +248,7 @@ variable {S : Type u} {T : Type v} {q₁ r₁ q₂ r₂ : PFunctor.{uA, uB}}
 /-- Wire a two-phase challenger against a two-phase adversary along
 `Lens.eval₂`: commit phase, then guess phase, exposed on the outer interface
 `r₁ ◃ r₂`. The challenger's interface has the direct composite-lens accessors
-`compOuter`, `compInner`, and `compPullback` (Spivak–Niu Ex 6.40) as its
+`compOuter`, `compInner`, and `compPullback` (Niu–Spivak Ex 6.40) as its
 elimination rules. -/
 def game₂ (chal : DynSystem S ((q₁ ⊸ r₁) ◃ (q₂ ⊸ r₂))) (adv : DynSystem T (q₁ ◃ q₂)) :
     DynSystem (S × T) (r₁ ◃ r₂) :=

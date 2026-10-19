@@ -13,10 +13,10 @@ import Batteries.Tactic.Lint
 /-!
 # Comonoids in the composition-monoidal category
 
-Following Spivak–Niu, *Polynomial Functors* (§7.1, Def 7.14), a **comonoid** in
+Following Niu–Spivak, *Polynomial Functors* (§7.1, Def 7.14), a **comonoid** in
 the monoidal category `(Poly, ◃, y)` is a carrier `c : PFunctor` with a counit
 `ε : c ⇆ y` and a comultiplication `δ : c ⇆ c ◃ c` satisfying counitality and
-coassociativity. By the Ahman–Uustalu theorem (Spivak–Niu Thm 7.28), comonoids in
+coassociativity. By the Ahman–Uustalu theorem (Niu–Spivak Thm 7.28), comonoids in
 `Poly` correspond to small categories: `c.A` is the objects, the directions are the
 outgoing morphisms, `ε` picks the identities, and `δ` is composition.
 `PFunctor/Comonoid/Category.lean` extracts the category of a comonoid.
@@ -24,14 +24,14 @@ outgoing morphisms, `ε` picks the identities, and `δ` is composition.
 Counitality and coassociativity are lens equations, phrased through the unitor and
 associator equivalences `compY` / `yComp` / `compAssoc` (`PFunctor.Lens.Equiv`).
 A comonoid is *data*, not a predicate: one carrier can admit many comonoid
-structures (Spivak–Niu Ex 7.39), so the laws are fields, not a `Prop`-class.
+structures (Niu–Spivak Ex 7.39), so the laws are fields, not a `Prop`-class.
 
 The primary instance is the **state comonoid** `stateComonoid S` on the
-self-monomial `S y^S` (Spivak–Niu Ex 6.44 / 7.19): the contractible groupoid on
+self-monomial `S y^S` (Niu–Spivak Ex 6.44 / 7.19): the contractible groupoid on
 the state set `S`, whose comultiplication is the transition lens `Lens.fixState`
 (`δ = (id, tgt, run)`) and whose counit is the stay-put self-loop. `comultN`
 packages the canonical `n`-fold comultiplication `δ^{(n)} : c ⇆ c^{◃n}`
-(Spivak–Niu Prop 7.20) — the comonoid data underneath the `n`-step run `Run_n`
+(Niu–Spivak Prop 7.20) — the comonoid data underneath the `n`-step run `Run_n`
 (`PFunctor.DynSystem.nStep`).
 
 The layer is kept à-la-carte (explicit lens laws) rather than routed through a
@@ -54,7 +54,7 @@ namespace PFunctor
 
 set_option linter.checkUnivs false in
 /-- A **comonoid** in the composition-monoidal category `(Poly, ◃, y)`
-(Spivak–Niu Def 7.14): a carrier `c`, a counit `ε : c ⇆ y`, and a
+(Niu–Spivak Def 7.14): a carrier `c`, a counit `ε : c ⇆ y`, and a
 comultiplication `δ : c ⇆ c ◃ c` satisfying left/right counitality and
 coassociativity as lens equations (through the unitors `yComp` / `compY` and the
 associator `compAssoc`). This is the polynomial encoding of a small category. -/
@@ -163,7 +163,7 @@ instance : Category Comonoid.{uA, uB} where
 /-! ## The `n`-fold comultiplication `δ^{(n)}` -/
 
 /-- The `n`-fold comultiplication `δ^{(n)} : c ⇆ c^{◃n}` of a comonoid, defined
-recursively by `δ^{(0)} = ε` and `δ^{(n+1)} = (id ◃ δ^{(n)}) ∘ δ`. Spivak–Niu
+recursively by `δ^{(0)} = ε` and `δ^{(n+1)} = (id ◃ δ^{(n)}) ∘ δ`. Niu–Spivak
 Prop 7.20 recurses on the other factor, `δ^{(n+1)} = (δ^{(n)} ◃ id) ∘ δ`; the two
 agree by the canonicity of Prop 7.20(d), that every bracketing of the `n`-fold
 comultiplication agrees, which is not proved here. Only the definitional
@@ -223,12 +223,12 @@ theorem Hom.map_comultN {C D : Comonoid.{uA, uB}} (f : Hom C D) (n : ℕ) :
               ((Lens.id C.carrier ◃ₗ C.comultN n) ∘ₗ C.comult) :=
                 Lens.comp_assoc _ _ _
 
-/-! ## State systems (Spivak–Niu Ex 7.22) -/
+/-! ## State systems (Niu–Spivak Ex 7.22) -/
 
 /-- A comonoid **is a state system** when, at every object, its codomain map
 `d ↦ cod d` (the second component of `δ`'s position action) is a bijection: from
 each object there is exactly one morphism to each object (a contractible
-groupoid). A predicate, never a field (Spivak–Niu Ex 7.22).
+groupoid). A predicate, never a field (Niu–Spivak Ex 7.22).
 
 Reference API: exercised in `PolyFunTest/PFunctor/Comonoid.lean`, staged for
 downstream state-system consumers. -/
@@ -239,7 +239,7 @@ end Comonoid
 
 /-! ## The state comonoid `S y^S` -/
 
-/-- The **state comonoid** on `S y^S` (Spivak–Niu Ex 6.44 / 7.19): the
+/-- The **state comonoid** on `S y^S` (Niu–Spivak Ex 6.44 / 7.19): the
 contractible groupoid on the state set `S`. Its comultiplication is the
 transition lens `Lens.fixState` (Example 6.44, `δ = (id, tgt, run)`) and its
 counit is the stay-put self-loop `s ↦ (⋆ ↦ s)`. -/
@@ -332,7 +332,7 @@ def stateLensEquiv :
 end Comonoid.Hom
 
 /-- The state comonoid is a state system: its codomain map `s₁ ↦ s₁` is the
-identity, hence bijective (Spivak–Niu Ex 7.22). -/
+identity, hence bijective (Niu–Spivak Ex 7.22). -/
 theorem isStateSystem_stateComonoid (S : Type u) :
     (stateComonoid S).IsStateSystem :=
   fun _ => Function.bijective_id

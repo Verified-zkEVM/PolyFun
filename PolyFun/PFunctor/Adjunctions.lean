@@ -10,7 +10,7 @@ public import PolyFun.PFunctor.Lens.Basic
 /-!
 # Hom-set adjunctions for trivial-interface polynomial functors
 
-This file records the "trivial interface" hom-set equivalences of Spivak–Niu
+This file records the "trivial interface" hom-set equivalences of Niu–Spivak
 *Polynomial Functors: A Mathematical Theory of Interaction* (Cambridge University
 Press, 2025), §5.1. Each computes the set of lenses out of, or into, one of the
 distinguished polynomial functors `0`, `1`, `y = y`, a constant `C A`, or a
@@ -20,7 +20,7 @@ the sections/principal-monomial refinements.
 
 * `homFromZero` — `0` is initial in `Poly`: the lens `0 ⇆ p` is unique,
   `Lens 0 p ≃ PUnit`. (A special case of `Poly(I, q) ≅ Set(I, q(0))` from
-  Spivak–Niu Thm 5.4 at `I = 0`.)
+  Niu–Spivak Thm 5.4 at `I = 0`.)
 * `homToOne` — `1` is terminal in `Poly`: the lens `p ⇆ 1` is unique,
   `Lens p 1 ≃ PUnit`. (The `I = PUnit` case of `Poly(q, I) ≅ Set(q(1), I)`
   from Thm 5.4.)
@@ -33,7 +33,7 @@ the sections/principal-monomial refinements.
 * `homToLinear` — a lens `p ⇆ A·y` is a map of positions together with a
   section, `Lens p (linear A) ≃ (p.A → A) × ((a : p.A) → p.B a)`. This is the
   principal-monomial hom-iso `Poly(p, Iy^A) ≅ Set(p(1), I) × Set(A, Γ(p))` of
-  Spivak–Niu Cor 5.15 specialised to `A_exp = PUnit`, where the second factor
+  Niu–Spivak Cor 5.15 specialised to `A_exp = PUnit`, where the second factor
   `(a : p.A) → p.B a` is the set of sections `Γ(p) = Poly(p, y)` (Prop 5.12).
 
 ## Design notes
@@ -52,7 +52,7 @@ touching an empty direction type (`homFromZero`, `homToOne`, `homToConst`)
 need a `funext` into the empty type for one inverse law.
 
 The final section implements the tensor-gluing universal property of
-Spivak–Niu Proposition 5.49. A lens out of `p ⊗ q` is reconstructed from its
+Niu–Spivak Proposition 5.49. A lens out of `p ⊗ q` is reconstructed from its
 two views in which one factor is replaced by its position-only linear shadow;
 compatibility is exactly equality of the two position maps.
 -/
@@ -65,7 +65,7 @@ namespace PFunctor
 
 variable {p : PFunctor.{uA, uB}}
 
-/-- **`0` is initial** (Spivak–Niu Thm 5.4, special case). The only lens out of
+/-- **`0` is initial** (Niu–Spivak Thm 5.4, special case). The only lens out of
 the zero polynomial functor is `Lens.initial`, so the hom-set is a singleton. -/
 def homFromZero : Lens (0 : PFunctor.{uA₁, uB₁}) p ≃ PUnit where
   toFun _ := PUnit.unit
@@ -73,7 +73,7 @@ def homFromZero : Lens (0 : PFunctor.{uA₁, uB₁}) p ≃ PUnit where
   left_inv _ := Lens.ext _ _ (fun a => a.elim) (fun a => a.elim)
   right_inv _ := rfl
 
-/-- **`1` is terminal** (Spivak–Niu Thm 5.4, `I = PUnit` case of
+/-- **`1` is terminal** (Niu–Spivak Thm 5.4, `I = PUnit` case of
 `Poly(q, I) ≅ Set(q(1), I)`). The only lens into the unit polynomial functor is
 `Lens.terminal`, so the hom-set is a singleton. -/
 def homToOne : Lens p (1 : PFunctor.{uA₁, uB₁}) ≃ PUnit where
@@ -82,7 +82,7 @@ def homToOne : Lens p (1 : PFunctor.{uA₁, uB₁}) ≃ PUnit where
   left_inv _ := Lens.ext _ _ (fun _ => rfl) fun _ => funext fun d => d.elim
   right_inv _ := rfl
 
-/-- **Representability of `y`** (Spivak–Niu Thm 5.4, `Poly(y, q) ≅ q(1)`). A
+/-- **Representability of `y`** (Niu–Spivak Thm 5.4, `Poly(y, q) ≅ q(1)`). A
 lens `y ⇆ p` picks a single position of `p` via `toFunA PUnit.unit`, and its
 `toFunB` is forced (every direction of `y` is `PUnit.unit`). -/
 def homFromY : Lens y.{uA₁, uB₁} p ≃ p.A where
@@ -93,7 +93,7 @@ def homFromY : Lens y.{uA₁, uB₁} p ≃ p.A where
 
 @[deprecated (since := "2026-08-17")] alias homFromX := homFromY
 
-/-- **Constants are right adjoint on positions** (Spivak–Niu Thm 5.4,
+/-- **Constants are right adjoint on positions** (Niu–Spivak Thm 5.4,
 `Poly(q, I) ≅ Set(q(1), I)`). A lens `p ⇆ C A` is exactly a function on
 positions `p.A → A`; its backward map is forced since `C A` has no directions. -/
 def homToConst {A : Type uA₂} : Lens p (C A : PFunctor.{uA₂, uB₁}) ≃ (p.A → A) where
@@ -102,7 +102,7 @@ def homToConst {A : Type uA₂} : Lens p (C A : PFunctor.{uA₂, uB₁}) ≃ (p.
   left_inv _ := Lens.ext _ _ (fun _ => rfl) fun _ => funext fun d => d.elim
   right_inv _ := rfl
 
-/-- **Principal monomial hom-iso** (Spivak–Niu Cor 5.15, at exponent `PUnit`).
+/-- **Principal monomial hom-iso** (Niu–Spivak Cor 5.15, at exponent `PUnit`).
 A lens `p ⇆ A·y` is a function on positions `p.A → A` together with a section
 `(a : p.A) → p.B a` of `p` (an element `Γ(p) = Poly(p, y)`), because the single
 direction of `linear A` at each position is pulled back to a chosen direction
@@ -114,7 +114,7 @@ def homToLinear {A : Type uA₂} :
   left_inv _ := rfl
   right_inv _ := rfl
 
-/-! ## Tensor gluing (Spivak–Niu Proposition 5.49) -/
+/-! ## Tensor gluing (Niu–Spivak Proposition 5.49) -/
 
 namespace Lens
 
@@ -158,7 +158,7 @@ def tensorRightView (l : Lens (p ⊗ q) r) : Lens (linear p.A ⊗ q) r :=
     (tensorRightView l).toFunB pq d = (PUnit.unit, (l.toFunB pq d).2) := rfl
 
 /-- Glue two one-sided lenses whose position maps agree into a lens
-`p ⊗ q ⇆ r` (Spivak–Niu Proposition 5.49). The result reuses the ordinary
+`p ⊗ q ⇆ r` (Niu–Spivak Proposition 5.49). The result reuses the ordinary
 `Lens` representation: no parallel “tensor views” structure is introduced. -/
 def tensorGlue (left : Lens (p ⊗ linear q.A) r) (right : Lens (linear p.A ⊗ q) r)
     (positions : left.toFunA = right.toFunA) : Lens (p ⊗ q) r := by

@@ -11,7 +11,7 @@ public import PolyFun.PFunctor.Comonoid
 /-!
 # Two-step and `n`-step dynamical systems (`Run_n`)
 
-Spivak–Niu §6.2.2 / §7.1.5 assemble the multi-step behaviours of a
+Niu–Spivak §6.2.2 / §7.1.5 assemble the multi-step behaviours of a
 `p`-dynamical system into composite systems over the composition powers of `p`.
 
 The **two-step system** `DynSystem.twoStep φ = (φ ◃ φ) ∘ₗ δ : DynSystem S (p ◃ p)`
@@ -43,7 +43,7 @@ section
 variable {S : Type u} {p : PFunctor.{uA, uB}}
 
 /-- The two-step system `(φ ◃ φ) ∘ₗ δ : DynSystem S (p ◃ p)` of a `p`-dynamical
-system (Spivak–Niu Example 6.44): one composite step exposes a first `p`-position,
+system (Niu–Spivak Example 6.44): one composite step exposes a first `p`-position,
 consumes a direction, exposes a second `p`-position, and updates. Same state set
 as `φ` — literally `Lens.speedup` on the system's interface lens, and the `n = 2`
 case of `nStep` over the binary composite `p ◃ p` (see `nStep_two_eq_twoStep`). -/
@@ -61,7 +61,7 @@ section
 variable {S : Type u} {p : PFunctor.{u, u}}
 
 /-- The **`n`-step system** `Run_n(φ) = φ^{◁n} ∘ₗ δ^{(n)} : DynSystem (p^{◃n})`
-(Spivak–Niu §7.1.5): a single composite step exposes `n` successive `p`-positions,
+(Niu–Spivak §7.1.5): a single composite step exposes `n` successive `p`-positions,
 consuming a direction after each, and updates the state. Same state set as `φ`. -/
 def nStep (φ : DynSystem S p) (n : ℕ) : DynSystem S (compNth p n) :=
   φ.compNthMap n ∘ₗ (stateComonoid S).comultN n

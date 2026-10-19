@@ -38,7 +38,7 @@ variable {P : PFunctor.{uA, uB}}
 
 /-- The one-layer projection from the cofree polynomial to its generator.
 It exposes the root position and pulls a generator direction back to the
-corresponding depth-one vertex.  This is `ε_P^{(1)}` in Spivak--Niu. -/
+corresponding depth-one vertex.  This is `ε_P^{(1)}` in Niu–Spivak. -/
 def cogenerator (P : PFunctor.{uA, uB}) : Lens (CofreeP P) P where
   toFunA := M.head
   toFunB tree direction :=

@@ -67,7 +67,7 @@ example (C : Comonoid.{u, v}) : C.comultN 0 = C.counit := rfl
 /-- The state comonoid's comultiplication is the transition lens. -/
 example : (stateComonoid S).comult = Lens.fixState := rfl
 
-/-- The state comonoid is a state system (Spivak–Niu Ex 7.22). -/
+/-- The state comonoid is a state system (Niu–Spivak Ex 7.22). -/
 example : (stateComonoid S).IsStateSystem := isStateSystem_stateComonoid S
 
 /-- `δ^{(0)}` is the counit. -/

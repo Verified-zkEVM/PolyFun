@@ -25,7 +25,7 @@ namespace PFunctor
 namespace DynSystem
 
 /-- Projecting a dynamical system's cofree mate to depth `n` is its `n`-step
-run. This is the dynamical-system specialization of Spivak--Niu Proposition
+run. This is the dynamical-system specialization of Niu–Spivak Proposition
 8.49. -/
 theorem cofreeMate_comp_projectionN {S : Type u} {P : PFunctor.{u, u}}
     (system : DynSystem S P) (n : ℕ) :
