@@ -169,6 +169,17 @@ instance : Category Comonoid.{uA, uB} where
   comp_id := Hom.comp_id
   assoc := Hom.comp_assoc
 
+/-- Morphisms in `Cat♯` are determined by their underlying lenses. -/
+@[ext]
+theorem hom_ext {C D : Comonoid.{uA, uB}} {f g : C ⟶ D} (h : f.toLens = g.toLens) : f = g :=
+  Hom.ext f g h
+
+@[simp] theorem id_toLens (C : Comonoid.{uA, uB}) :
+    (𝟙 C : C ⟶ C).toLens = Lens.id C.carrier := rfl
+
+@[simp] theorem comp_toLens {C D E : Comonoid.{uA, uB}} (f : C ⟶ D) (g : D ⟶ E) :
+    (f ≫ g).toLens = g.toLens ∘ₗ f.toLens := rfl
+
 /-! ## The `n`-fold comultiplication `δ^{(n)}` -/
 
 /-- The `n`-fold comultiplication `δ^{(n)} : c ⇆ c^{◃n}` of a comonoid, defined

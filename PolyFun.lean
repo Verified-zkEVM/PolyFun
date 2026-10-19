@@ -201,6 +201,7 @@ public import PolyFun.PFunctor.Basic
 public import PolyFun.PFunctor.Bound
 public import PolyFun.PFunctor.CartesianClosed
 public import PolyFun.PFunctor.Category
+public import PolyFun.PFunctor.Category.Factorization
 public import PolyFun.PFunctor.Category.Monoidal
 public import PolyFun.PFunctor.Chart.Basic
 public import PolyFun.PFunctor.Cofree

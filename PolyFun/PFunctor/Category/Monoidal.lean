@@ -29,7 +29,9 @@ structure gets its own carrier, a one-field structure over `PFunctor` as in
 
 Every coherence field of the `⊗` and `◃` structures is a lemma of `PFunctor/Lens/Coherence.lean`
 and holds definitionally. `LensCat.Iso.mk`, `TensorCat.Iso.mk` and `CompCat.Iso.mk` turn lens
-equivalences `≃ₗ` into isomorphisms.
+equivalences `≃ₗ` into isomorphisms, and `Iso.toLensEquiv` inverts each of them definitionally
+(`lensEquivEquivIso`). These carriers fix one universe pair, while `≃ₗ` relates polynomials in
+independent universes, so the lens equivalence stays the general notion of isomorphism.
 -/
 
 @[expose] public section
@@ -47,6 +49,23 @@ namespace LensCat
 /-- A lens equivalence is an isomorphism in `LensCat`. -/
 abbrev Iso.mk {P Q : LensCat.{uA, uB}} (e : P.toPFunctor ≃ₗ Q.toPFunctor) : P ≅ Q :=
   ⟨e.toLens, e.invLens, e.left_inv, e.right_inv⟩
+
+/-- An isomorphism in `LensCat` is a lens equivalence. -/
+def Iso.toLensEquiv {P Q : LensCat.{uA, uB}} (f : P ≅ Q) : P.toPFunctor ≃ₗ Q.toPFunctor :=
+  ⟨f.hom, f.inv, f.hom_inv_id, f.inv_hom_id⟩
+
+theorem Iso.toLensEquiv_mk {P Q : LensCat.{uA, uB}} (e : P.toPFunctor ≃ₗ Q.toPFunctor) :
+    Iso.toLensEquiv (Iso.mk e) = e := rfl
+
+theorem Iso.mk_toLensEquiv {P Q : LensCat.{uA, uB}} (f : P ≅ Q) :
+    Iso.mk (Iso.toLensEquiv f) = f := rfl
+
+/-- Isomorphisms in `LensCat` are exactly the lens equivalences of the underlying polynomials. -/
+def lensEquivEquivIso {P Q : LensCat.{uA, uB}} : (P.toPFunctor ≃ₗ Q.toPFunctor) ≃ (P ≅ Q) where
+  toFun := Iso.mk
+  invFun := Iso.toLensEquiv
+  left_inv _ := rfl
+  right_inv _ := rfl
 
 /-- `1` is terminal in `LensCat`. -/
 def isTerminalOne : IsTerminal (LensCat.of (1 : PFunctor.{uA, uB})) :=
@@ -92,6 +111,30 @@ instance instCategory : Category TensorCat.{uA, uB} where
 /-- A lens equivalence is an isomorphism in `TensorCat`. -/
 abbrev Iso.mk {P Q : TensorCat.{uA, uB}} (e : P.toPFunctor ≃ₗ Q.toPFunctor) : P ≅ Q :=
   ⟨e.toLens, e.invLens, e.left_inv, e.right_inv⟩
+
+/-- An isomorphism in `TensorCat` is a lens equivalence. -/
+def Iso.toLensEquiv {P Q : TensorCat.{uA, uB}} (f : P ≅ Q) : P.toPFunctor ≃ₗ Q.toPFunctor :=
+  ⟨f.hom, f.inv, f.hom_inv_id, f.inv_hom_id⟩
+
+theorem Iso.toLensEquiv_mk {P Q : TensorCat.{uA, uB}} (e : P.toPFunctor ≃ₗ Q.toPFunctor) :
+    Iso.toLensEquiv (Iso.mk e) = e := rfl
+
+theorem Iso.mk_toLensEquiv {P Q : TensorCat.{uA, uB}} (f : P ≅ Q) :
+    Iso.mk (Iso.toLensEquiv f) = f := rfl
+
+/-- Isomorphisms in `TensorCat` are exactly the lens equivalences of the underlying polynomials. -/
+def lensEquivEquivIso {P Q : TensorCat.{uA, uB}} : (P.toPFunctor ≃ₗ Q.toPFunctor) ≃ (P ≅ Q) where
+  toFun := Iso.mk
+  invFun := Iso.toLensEquiv
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- Morphisms of `TensorCat` are lenses, compared as `Lens.ext` compares them. -/
+@[ext (iff := false)]
+theorem hom_ext {P Q : TensorCat.{uA, uB}} {f g : P ⟶ Q}
+    (h₁ : ∀ a, Lens.toFunA f a = Lens.toFunA g a)
+    (h₂ : ∀ a, Lens.toFunB f a = (h₁ a) ▸ Lens.toFunB g a) : f = g :=
+  Lens.ext f g h₁ h₂
 
 instance instMonoidalCategoryStruct : MonoidalCategoryStruct TensorCat.{uA, uB} where
   tensorObj P Q := of (P.toPFunctor ⊗ Q.toPFunctor)
@@ -151,6 +194,30 @@ instance instCategory : Category CompCat.{u, v} where
 /-- A lens equivalence is an isomorphism in `CompCat`. -/
 abbrev Iso.mk {P Q : CompCat.{u, v}} (e : P.toPFunctor ≃ₗ Q.toPFunctor) : P ≅ Q :=
   ⟨e.toLens, e.invLens, e.left_inv, e.right_inv⟩
+
+/-- An isomorphism in `CompCat` is a lens equivalence. -/
+def Iso.toLensEquiv {P Q : CompCat.{u, v}} (f : P ≅ Q) : P.toPFunctor ≃ₗ Q.toPFunctor :=
+  ⟨f.hom, f.inv, f.hom_inv_id, f.inv_hom_id⟩
+
+theorem Iso.toLensEquiv_mk {P Q : CompCat.{u, v}} (e : P.toPFunctor ≃ₗ Q.toPFunctor) :
+    Iso.toLensEquiv (Iso.mk e) = e := rfl
+
+theorem Iso.mk_toLensEquiv {P Q : CompCat.{u, v}} (f : P ≅ Q) :
+    Iso.mk (Iso.toLensEquiv f) = f := rfl
+
+/-- Isomorphisms in `CompCat` are exactly the lens equivalences of the underlying polynomials. -/
+def lensEquivEquivIso {P Q : CompCat.{u, v}} : (P.toPFunctor ≃ₗ Q.toPFunctor) ≃ (P ≅ Q) where
+  toFun := Iso.mk
+  invFun := Iso.toLensEquiv
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- Morphisms of `CompCat` are lenses, compared as `Lens.ext` compares them. -/
+@[ext (iff := false)]
+theorem hom_ext {P Q : CompCat.{u, v}} {f g : P ⟶ Q}
+    (h₁ : ∀ a, Lens.toFunA f a = Lens.toFunA g a)
+    (h₂ : ∀ a, Lens.toFunB f a = (h₁ a) ▸ Lens.toFunB g a) : f = g :=
+  Lens.ext f g h₁ h₂
 
 instance instMonoidalCategoryStruct : MonoidalCategoryStruct CompCat.{u, v} where
   tensorObj P Q := of (P.toPFunctor ◃ Q.toPFunctor)

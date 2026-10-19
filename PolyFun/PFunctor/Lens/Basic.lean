@@ -141,17 +141,17 @@ structure Equiv (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) wher
 namespace Equiv
 
 /-- The identity equivalence on `P`, built from the identity lens in both directions. -/
-@[refl]
+@[refl, simps]
 def refl (P : PFunctor.{uA, uB}) : P ≃ₗ P :=
   ⟨Lens.id P, Lens.id P, rfl, rfl⟩
 
 /-- The inverse equivalence, swapping the forward and backward lenses of `e`. -/
-@[symm]
+@[symm, simps]
 def symm {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (e : P ≃ₗ Q) : Q ≃ₗ P :=
   ⟨e.invLens, e.toLens, e.right_inv, e.left_inv⟩
 
 /-- The composite equivalence `P ≃ₗ R` obtained by chaining `e₁ : P ≃ₗ Q` and `e₂ : Q ≃ₗ R`. -/
-@[trans]
+@[trans, simps]
 def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     (e₁ : P ≃ₗ Q) (e₂ : Q ≃ₗ R) : P ≃ₗ R :=
   ⟨e₂.toLens ∘ₗ e₁.toLens, e₁.invLens ∘ₗ e₂.invLens,
@@ -163,6 +163,49 @@ def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunc
       rw [comp_assoc]
       rw (occs := [2]) [← comp_assoc]
       simp [e₁.right_inv, e₂.right_inv]⟩
+
+/-- Lens equivalences compose in `calc` chains, across independent universes. -/
+instance instTrans :
+    @Trans PFunctor.{uA₁, uB₁} PFunctor.{uA₂, uB₂} PFunctor.{uA₃, uB₃}
+      Lens.Equiv Lens.Equiv Lens.Equiv where
+  trans := Equiv.trans
+
+section Groupoid
+
+variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
+  {S : PFunctor.{uA₄, uB₄}}
+
+/-- A lens equivalence is determined by its forward lens: inverses are unique. -/
+theorem toLens_injective : Function.Injective (toLens : P ≃ₗ Q → Lens P Q) := by
+  intro e f h
+  have hinv : e.invLens = f.invLens := by
+    calc
+      e.invLens = e.invLens ∘ₗ (f.toLens ∘ₗ f.invLens) := by rw [f.right_inv]; rfl
+      _ = (e.invLens ∘ₗ e.toLens) ∘ₗ f.invLens := by rw [h]; rfl
+      _ = f.invLens := by rw [e.left_inv]; rfl
+  exact Equiv.ext h hinv
+
+@[simp] theorem symm_symm (e : P ≃ₗ Q) : e.symm.symm = e := rfl
+
+@[simp] theorem refl_symm : (refl P).symm = refl P := rfl
+
+@[simp] theorem trans_refl (e : P ≃ₗ Q) : e.trans (refl Q) = e := rfl
+
+@[simp] theorem refl_trans (e : P ≃ₗ Q) : (refl P).trans e = e := rfl
+
+theorem trans_assoc (e₁ : P ≃ₗ Q) (e₂ : Q ≃ₗ R) (e₃ : R ≃ₗ S) :
+    (e₁.trans e₂).trans e₃ = e₁.trans (e₂.trans e₃) := rfl
+
+@[simp] theorem symm_trans_self (e : P ≃ₗ Q) : e.symm.trans e = refl Q :=
+  Equiv.ext e.right_inv e.right_inv
+
+@[simp] theorem self_trans_symm (e : P ≃ₗ Q) : e.trans e.symm = refl P :=
+  Equiv.ext e.left_inv e.left_inv
+
+theorem symm_trans (e₁ : P ≃ₗ Q) (e₂ : Q ≃ₗ R) :
+    (e₁.trans e₂).symm = e₂.symm.trans e₁.symm := rfl
+
+end Groupoid
 
 end Equiv
 
@@ -186,6 +229,18 @@ def terminal {P : PFunctor.{uA, uB}} : Lens P 1 :=
 
 alias fromZero := initial
 alias toOne := terminal
+
+/-- `0` is initial: `initial` is the only lens out of it. -/
+instance uniqueFromZero {P : PFunctor.{uA, uB}} :
+    Unique (Lens (0 : PFunctor.{uA₁, uB₁}) P) where
+  default := initial
+  uniq _ := Lens.ext _ _ (fun a => a.elim) fun a => a.elim
+
+/-- `1` is terminal: `terminal` is the only lens into it. -/
+instance uniqueToOne {P : PFunctor.{uA, uB}} :
+    Unique (Lens P (1 : PFunctor.{uA₁, uB₁})) where
+  default := terminal
+  uniq _ := Lens.ext _ _ (fun _ => rfl) fun _ => funext fun d => d.elim
 
 /-- Construct a lens from the variable polynomial by selecting a position. The
 backward map is uniquely determined by the unit direction of `y`. -/

@@ -168,6 +168,17 @@ instance : Category SubstMonoid.{uA, uB} where
   comp_id := Hom.comp_id
   assoc := Hom.comp_assoc
 
+/-- Morphisms of substitution monoids are determined by their underlying lenses. -/
+@[ext]
+theorem hom_ext {M N : SubstMonoid.{uA, uB}} {f g : M ⟶ N} (h : f.toLens = g.toLens) : f = g :=
+  Hom.ext f g h
+
+@[simp] theorem id_toLens (M : SubstMonoid.{uA, uB}) :
+    (𝟙 M : M ⟶ M).toLens = Lens.id M.carrier := rfl
+
+@[simp] theorem comp_toLens {M N O : SubstMonoid.{uA, uB}} (f : M ⟶ N) (g : N ⟶ O) :
+    (f ≫ g).toLens = g.toLens ∘ₗ f.toLens := rfl
+
 end SubstMonoid
 
 end PFunctor

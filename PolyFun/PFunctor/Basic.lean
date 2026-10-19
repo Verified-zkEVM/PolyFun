@@ -363,11 +363,15 @@ namespace Equiv
 variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
 
 /-- The identity equivalence between a polynomial functor `P` and itself. -/
+@[refl, simps]
 def refl (P : PFunctor.{uA, uB}) : P ≃ₚ P where
   equivA := _root_.Equiv.refl P.A
   equivB := fun a => _root_.Equiv.refl (P.B a)
 
-/-- The inverse of an equivalence between polynomial functors. -/
+/-- The inverse of an equivalence between polynomial functors. Its direction equivalences are
+transported along `E.equivA.apply_symm_apply`, so only its position equivalence is a `simp`
+projection (`symm_equivA`). -/
+@[symm]
 def symm {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (E : P ≃ₚ Q) : Q ≃ₚ P where
   equivA := E.equivA.symm
   equivB := fun a =>
@@ -375,10 +379,20 @@ def symm {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (E : P ≃�
       (E.equivB (E.equivA.symm a)).symm
 
 /-- The composition of two equivalences between polynomial functors. -/
+@[trans, simps]
 def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     (E : P ≃ₚ Q) (F : Q ≃ₚ R) : P ≃ₚ R where
   equivA := E.equivA.trans F.equivA
   equivB := fun a => (E.equivB a).trans (F.equivB (E.equivA a))
+
+@[simp] theorem symm_equivA {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (E : P ≃ₚ Q) :
+    E.symm.equivA = E.equivA.symm := rfl
+
+/-- Polynomial equivalences compose in `calc` chains, across independent universes. -/
+instance instTrans :
+    @Trans PFunctor.{uA₁, uB₁} PFunctor.{uA₂, uB₂} PFunctor.{uA₃, uB₃}
+      PFunctor.Equiv PFunctor.Equiv PFunctor.Equiv where
+  trans := Equiv.trans
 
 /-- Equivalence between two polynomial functors `P` and `Q` that are equal. -/
 def cast {P Q : PFunctor.{uA, uB}} (hA : P.A = Q.A) (hB : ∀ a, P.B a = Q.B (cast hA a)) :
@@ -386,7 +400,6 @@ def cast {P Q : PFunctor.{uA, uB}} (hA : P.A = Q.A) (hB : ∀ a, P.B a = Q.B (ca
   equivA := _root_.Equiv.cast hA
   equivB := fun a => _root_.Equiv.cast (hB a)
 
-@[simp]
 theorem symm_equivA_comp_equivA {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
     (e : P ≃ₚ Q) : e.symm.equivA ∘ e.equivA = id := by
   simp [Equiv.symm]

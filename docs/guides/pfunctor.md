@@ -114,7 +114,27 @@ Their coherence fields are the `rfl` lemmas above, and Mathlib's `monoidal` tact
 coherence goals in them. Each carrier is a one-field structure over `PFunctor`, built with `of`
 and read back with `toPFunctor`, so Mathlib's monoidal `⊗` on carrier objects and PolyFun's
 polynomial `⊗` stay distinct with `open scoped PFunctor`. `LensCat.Iso.mk`, `TensorCat.Iso.mk`
-and `CompCat.Iso.mk` turn lens equivalences into isomorphisms.
+and `CompCat.Iso.mk` turn lens equivalences into isomorphisms; `Iso.toLensEquiv` inverts each of
+them definitionally, and `lensEquivEquivIso` packages the pair. Morphisms of each carrier have an
+`ext` lemma (`hom_ext`).
+
+[`Category/Factorization.lean`](../../PolyFun/PFunctor/Category/Factorization.lean) restates the
+vertical–cartesian factorization system of
+[`Lens/Factorization.lean`](../../PolyFun/PFunctor/Lens/Factorization.lean) with Mathlib's
+`MorphismProperty`: `LensCat.vertical` and `LensCat.cartesian` are multiplicative, every lens
+factors through them (`HasFactorization`), a `Lens.DiagonalFiller` is a `CommSq.LiftStruct`, and
+the isomorphisms of `LensCat` are the lenses in both classes.
+
+Every Mathlib structure here lives in one category, so it fixes one universe pair:
+`LensCat.{uA, uB}`, `TensorCat.{uA, uB}`, `CompCat.{u, v}`. The lens-level statements they repackage, such as
+the coherence laws, `Lens.nonempty_diagonalFiller` and lens equivalences `≃ₗ`, relate polynomials
+in independent universes and remain the general form. Use the Mathlib structures to reach
+Mathlib's theorems and tactics, and the lens-level statements otherwise.
+
+`≃ₗ`, `≃c` and `≃ₚ` are groupoids in the Mathlib style: `refl`, `symm` and `trans` carry
+`simps` projections and the `refl`/`symm`/`trans` attributes, `Trans` instances chain them in
+`calc` across universes, and `symm_symm`, `trans_refl`, `symm_trans_self` and `toLens_injective`
+(`toChart_injective`) hold. Lenses out of `0` and into `1` are `Unique`.
 
 ## Where to start
 

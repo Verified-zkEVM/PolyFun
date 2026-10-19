@@ -87,6 +87,16 @@ In particular:
 - **Mathematical scope:** check that a categorical name, paper claim or complexity
   label matches the actual objects, operations and laws. Add a boundary example
   when it refutes an overclaim; strengthen the interface only for a real consumer.
+- **Universe generality:** a Mathlib or CSLib structure that fixes universes PolyFun keeps
+  independent enters as a bridge at the universes where the two coincide, never as a
+  replacement. For example, `LensCat.vertical` restates `Lens.IsVertical` on one universe pair,
+  and `Comonoid.{uA, uB}` corresponds to categories whose objects and arrows lie in any two
+  universes, whereas `Comon CompCat.{u, v}` forces positions in `max u v`. A refactor that reuses
+  an upstream lemma must leave each touched signature at least as universe-general: compare
+  `#check @name` under `set_option pp.universes true` before and after.
+- **Equivalence-like structures:** give `refl`, `symm` and `trans` `simps` projections and the
+  `refl`/`symm`/`trans` attributes, provide a `Trans` instance for `calc`, and keep `cast` and
+  `▸` out of statements where a fiber, subtype or `Equiv.cast` formulation exists.
 - **Compatibility:** exercise ordinary imports, independent universes and relevant
   downstream semantics. Qualitative reachability must not choose VCVio's probability
   or WP interpretation implicitly. Check the pinned API separately from roadmap

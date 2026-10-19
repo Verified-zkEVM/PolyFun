@@ -59,6 +59,15 @@ Their pins are recorded in the manifest; their README files live under
   wrap PolyFun's routed runtime and retain residuals. Their composition laws
   delegate to that runtime; CSLib's free-monad interpreters do not own
   PolyFun's packet topology.
+- **Category theory:** Mathlib's categorical structures are adapters on carriers that fix one
+  universe pair: `LensCat`, `TensorCat` and `CompCat` with their monoidal instances
+  ([`Category/Monoidal.lean`](../../PolyFun/PFunctor/Category/Monoidal.lean)) and the
+  vertical/cartesian `MorphismProperty`s
+  ([`Category/Factorization.lean`](../../PolyFun/PFunctor/Category/Factorization.lean)). Lenses,
+  lens equivalences, comonoids and substitution monoids keep independent position and direction
+  universes, so they stay primary. A `Comonoid.{uA, uB}` presents a category whose objects lie in
+  `uA` and arrows in `uB`; `Comon CompCat.{u, v}` requires positions in `max u v`, so a bridge to
+  Mathlib's `Comon`/`Mon` covers only that case and does not replace the PolyFun structure.
 - **Transition systems:** `Control.LTS.toLts` forgets the polynomial witness
   move. Generic relational simulation and finite-trace results use CSLib;
   dependent response witnesses and delay semantics remain explicit in PolyFun.

@@ -122,17 +122,17 @@ scoped[PFunctor] infix:50 " ≃c " => PFunctor.Chart.Equiv
 namespace Equiv
 
 /-- The identity equivalence on `P`, built from the identity chart in both directions. -/
-@[refl]
+@[refl, simps]
 def refl (P : PFunctor.{uA, uB}) : P ≃c P :=
   ⟨Chart.id P, Chart.id P, rfl, rfl⟩
 
 /-- The inverse equivalence, swapping the forward and backward charts of `e`. -/
-@[symm]
+@[symm, simps]
 def symm {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (e : P ≃c Q) : Q ≃c P :=
   ⟨e.invChart, e.toChart, e.right_inv, e.left_inv⟩
 
 /-- The composite equivalence `P ≃c R` obtained by chaining `e₁ : P ≃c Q` and `e₂ : Q ≃c R`. -/
-@[trans]
+@[trans, simps]
 def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     (e₁ : P ≃c Q) (e₂ : Q ≃c R) : P ≃c R :=
   ⟨e₂.toChart ∘c e₁.toChart, e₁.invChart ∘c e₂.invChart,
@@ -144,6 +144,49 @@ def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunc
       rw [comp_assoc]
       rw (occs := [2]) [← comp_assoc]
       simp [e₁.right_inv, e₂.right_inv]⟩
+
+/-- Chart equivalences compose in `calc` chains, across independent universes. -/
+instance instTrans :
+    @Trans PFunctor.{uA₁, uB₁} PFunctor.{uA₂, uB₂} PFunctor.{uA₃, uB₃}
+      Chart.Equiv Chart.Equiv Chart.Equiv where
+  trans := Equiv.trans
+
+section Groupoid
+
+variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
+  {S : PFunctor.{uA₄, uB₄}}
+
+/-- A chart equivalence is determined by its forward chart: inverses are unique. -/
+theorem toChart_injective : Function.Injective (toChart : P ≃c Q → Chart P Q) := by
+  intro e f h
+  have hinv : e.invChart = f.invChart := by
+    calc
+      e.invChart = e.invChart ∘c (f.toChart ∘c f.invChart) := by rw [f.right_inv]; rfl
+      _ = (e.invChart ∘c e.toChart) ∘c f.invChart := by rw [h]; rfl
+      _ = f.invChart := by rw [e.left_inv]; rfl
+  exact Equiv.ext h hinv
+
+@[simp] theorem symm_symm (e : P ≃c Q) : e.symm.symm = e := rfl
+
+@[simp] theorem refl_symm : (refl P).symm = refl P := rfl
+
+@[simp] theorem trans_refl (e : P ≃c Q) : e.trans (refl Q) = e := rfl
+
+@[simp] theorem refl_trans (e : P ≃c Q) : (refl P).trans e = e := rfl
+
+theorem trans_assoc (e₁ : P ≃c Q) (e₂ : Q ≃c R) (e₃ : R ≃c S) :
+    (e₁.trans e₂).trans e₃ = e₁.trans (e₂.trans e₃) := rfl
+
+@[simp] theorem symm_trans_self (e : P ≃c Q) : e.symm.trans e = refl Q :=
+  Equiv.ext e.right_inv e.right_inv
+
+@[simp] theorem self_trans_symm (e : P ≃c Q) : e.trans e.symm = refl P :=
+  Equiv.ext e.left_inv e.left_inv
+
+theorem symm_trans (e₁ : P ≃c Q) (e₂ : Q ≃c R) :
+    (e₁.trans e₂).symm = e₂.symm.trans e₁.symm := rfl
+
+end Groupoid
 
 end Equiv
 
