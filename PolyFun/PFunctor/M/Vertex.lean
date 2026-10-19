@@ -257,17 +257,21 @@ def append : {t : M P} → (initial : Vertex t) →
       .child direction (append next suffix)
 
 @[simp]
-theorem append_root (t : M P) (suffix : Vertex t) :
+theorem root_append (t : M P) (suffix : Vertex t) :
     append (.root t) suffix = suffix :=
   rfl
 
+@[deprecated (since := "2026-10-19")] alias append_root := root_append
+
 @[simp]
-theorem append_child {t : M P} (direction : P.B (M.head t))
+theorem child_append {t : M P} (direction : P.B (M.head t))
     (next : Vertex (M.children t direction))
     (suffix : Vertex (subtree next)) :
     append (.child direction next) suffix =
       .child direction (append next suffix) :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias append_child := child_append
 
 @[simp]
 theorem append_root_right {t : M P} (vertex : Vertex t) :
@@ -296,9 +300,9 @@ theorem depth_append {t : M P} (initial : Vertex t)
     depth (append initial suffix) = depth initial + depth suffix := by
   match initial with
   | .root _ =>
-      simp only [append_root, depth_root, Nat.zero_add]
+      simp only [root_append, depth_root, Nat.zero_add]
   | .child direction next =>
-      simp only [append_child, depth_child]
+      simp only [child_append, depth_child]
       rw [depth_append next suffix]
       exact Nat.add_right_comm (depth next) (depth suffix) 1
 
@@ -600,7 +604,7 @@ private theorem pullMapLensAux_append (l : Lens P Q) (tree : M P)
   induction initial generalizing tree with
   | root => rfl
   | child direction next ih =>
-      simp only [append_child, pullMapLensAux, subtree_child]
+      simp only [child_append, pullMapLensAux, subtree_child]
       exact congrArg (Vertex.child _) (ih _ _ _)
 
 /-- Pulling a mapped finite path commutes with concatenation. The explicit

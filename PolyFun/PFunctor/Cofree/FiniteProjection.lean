@@ -115,27 +115,33 @@ theorem projectionN_zero (P : PFunctor.{u, u}) :
 /-- The first finite projection is the cogenerator after removing the
 right-hand composition unit.  The unitor is necessary because
 `compNth P 1 = P ◃ y`, not `P`. -/
-theorem projectionN_one_comp_compY (P : PFunctor.{uA, uB}) :
+theorem compY_comp_projectionN_one (P : PFunctor.{uA, uB}) :
     Lens.Equiv.compY.toLens ∘ₗ projectionN P 1 = cogenerator P :=
   rfl
 
+@[deprecated (since := "2026-10-19")] alias projectionN_one_comp_compY :=
+  compY_comp_projectionN_one
+
 /-- The second finite projection agrees with one comultiplication followed by
 the cogenerator on both components, after removing the innermost right unit. -/
-theorem projectionN_two_comp_compY (P : PFunctor.{uA, uB}) :
+theorem compMap_compY_comp_projectionN_two (P : PFunctor.{uA, uB}) :
     (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ projectionN P 2 =
       (cogenerator P ◃ₗ cogenerator P) ∘ₗ comult :=
   rfl
 
+@[deprecated (since := "2026-10-19")] alias projectionN_two_comp_compY :=
+  compMap_compY_comp_projectionN_two
+
 @[deprecated (since := "2026-08-17")] alias projectionN_one_comp_compX :=
-  projectionN_one_comp_compY
+  compY_comp_projectionN_one
 @[deprecated (since := "2026-08-17")] alias projectionN_two_comp_compX :=
-  projectionN_two_comp_compY
+  compMap_compY_comp_projectionN_two
 
 /-! ## Algebraic characterization and Proposition 8.49 -/
 
 /-- At the homogeneous universe boundary, structural finite projection is
 iterated comultiplication followed by the iterated cogenerator. -/
-theorem projectionN_eq_comultN_compNthMap
+theorem projectionN_eq_compNthMap_comp_comultN
     (P : PFunctor.{u, u}) (n : ℕ) :
     projectionN P n =
       (cogenerator P).compNthMap n ∘ₗ (comonoid P).comultN n := by
@@ -182,15 +188,18 @@ theorem projectionN_eq_comultN_compNthMap
         simpa only [comonoid_carrier, comonoid_comult] using hassoc
       exact houter'.trans hassoc'
 
+@[deprecated (since := "2026-10-19")] alias projectionN_eq_comultN_compNthMap :=
+  projectionN_eq_compNthMap_comp_comultN
+
 /-- A retrofunctor into the cofree comonoid commutes with every finite
 projection.  This is the structural form of the finite-run equation, with the
 one-layer restriction of the retrofunctor on the right. -/
-theorem hom_comp_projectionN
+theorem projectionN_comp_toLens
     {P : PFunctor.{u, u}} {C : Comonoid.{u, u}}
     (hom : Comonoid.Hom C (comonoid P)) (n : ℕ) :
     projectionN P n ∘ₗ hom.toLens =
       (restrict C hom).compNthMap n ∘ₗ C.comultN n := by
-  rw [projectionN_eq_comultN_compNthMap]
+  rw [projectionN_eq_compNthMap_comp_comultN]
   change ((cogenerator P).compNthMap n ∘ₗ
       (comonoid P).comultN n) ∘ₗ hom.toLens = _
   calc
@@ -211,15 +220,19 @@ theorem hom_comp_projectionN
         (Lens.compNthMap_comp (cogenerator P) hom.toLens n).symm
     _ = _ := rfl
 
+@[deprecated (since := "2026-10-19")] alias hom_comp_projectionN := projectionN_comp_toLens
+
 /-- **Niu–Spivak Proposition 8.49.** Projecting the cofree extension of a
 generator lens to depth `n` is its `n`-step run. -/
-theorem extend_comp_projectionN
+theorem projectionN_comp_extend
     {P : PFunctor.{u, u}} (C : Comonoid.{u, u})
     (lens : Lens C.carrier P) (n : ℕ) :
     projectionN P n ∘ₗ (extend C lens).toLens =
       lens.compNthMap n ∘ₗ C.comultN n := by
   simpa only [restrict_extend] using
-    hom_comp_projectionN (extend C lens) n
+    projectionN_comp_toLens (extend C lens) n
+
+@[deprecated (since := "2026-10-19")] alias extend_comp_projectionN := projectionN_comp_extend
 
 end CofreeP
 end PFunctor

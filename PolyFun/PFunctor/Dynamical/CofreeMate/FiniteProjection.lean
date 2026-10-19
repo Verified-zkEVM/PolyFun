@@ -27,23 +27,29 @@ namespace DynSystem
 /-- Projecting a dynamical system's cofree mate to depth `n` is its `n`-step
 run. This is the dynamical-system specialization of Niu–Spivak Proposition
 8.49. -/
-theorem cofreeMate_comp_projectionN {S : Type u} {P : PFunctor.{u, u}}
+theorem projectionN_comp_cofreeMate {S : Type u} {P : PFunctor.{u, u}}
     (system : DynSystem S P) (n : ℕ) :
     CofreeP.projectionN P n ∘ₗ system.cofreeMate.toLens =
       system.nStep n := by
   change CofreeP.projectionN P n ∘ₗ
       (CofreeP.extend (stateComonoid S) system).toLens = system.nStep n
-  rw [CofreeP.extend_comp_projectionN, nStep_eq]
+  rw [CofreeP.projectionN_comp_extend, nStep_eq]
+
+@[deprecated (since := "2026-10-19")] alias cofreeMate_comp_projectionN :=
+  projectionN_comp_cofreeMate
 
 /-- At depth two, finite projection recovers the established two-step system
 after removing the innermost right composition unit. -/
-theorem cofreeMate_comp_projectionN_two
+theorem projectionN_two_comp_cofreeMate
     {S : Type u} {P : PFunctor.{u, u}} (system : DynSystem S P) :
     (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ
         (CofreeP.projectionN P 2 ∘ₗ system.cofreeMate.toLens) =
       system.twoStep :=
   (congrArg (fun lens => (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ lens)
-    (cofreeMate_comp_projectionN system 2)).trans (nStep_two_eq_twoStep system)
+    (projectionN_comp_cofreeMate system 2)).trans (nStep_two_eq_twoStep system)
+
+@[deprecated (since := "2026-10-19")] alias cofreeMate_comp_projectionN_two :=
+  projectionN_two_comp_cofreeMate
 
 end DynSystem
 end PFunctor

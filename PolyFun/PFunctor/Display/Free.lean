@@ -112,13 +112,15 @@ def bind (S : Display.{uA, uB, uC, uD} P)
       ⟨c, fun b e => S.bind (rest b) (children b e) g dg⟩
 
 @[simp]
-theorem bind_pure (S : Display.{uA, uB, uC, uD} P)
+theorem pure_bind (S : Display.{uA, uB, uC, uD} P)
     {E : Type uE} {F : E → Type uF}
     {E' : Type uE'} {G : E' → Type uG}
     (x : E) (d : ULift.{max uC uB uD} (F x)) (g : E → FreeM P E')
     (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedAlgebra G) (g x)) :
     S.bind (pure x) d g dg = dg x d.down :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias bind_pure := pure_bind
 
 theorem bind_liftBind (S : Display.{uA, uB, uC, uD} P)
     {E : Type uE} {F : E → Type uF}

@@ -162,7 +162,8 @@ def terminal {P : PFunctor.{uA, uB}} : Chart P y :=
   (fun _ => PUnit.unit) ⇉ (fun _ _ => PUnit.unit)
 
 alias fromZero := initial
-alias toOne := terminal
+
+@[deprecated (since := "2026-10-19")] alias toOne := terminal
 
 /-! ### Coproduct (`+`)
 

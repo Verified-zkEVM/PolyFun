@@ -174,7 +174,7 @@ def PathAlong.algebra (l : Lens P Q) : Displayed.Algebra.{uA, uB, v, uB₂+1} P 
 `pure x` is trivial (`PUnit`); a path through `(FreeM.lift a).bind rest` is a runtime direction
 `d : Q.B (l.toFunA a)` together with a path through the source branch `rest (l.toFunB a d)` that `d`
 selects. Prefer `PathAlong.cons`, `PathAlong.head` and `PathAlong.tail` for node paths. It is
-`Path (s.mapLens l)` up to `pathAlongToMapLensPath`; `projectPathAlong` forgets it to `Path s`. -/
+`Path (s.mapLens l)` up to `PathAlong.toMapLensPath`; `projectPathAlong` forgets it to `Path s`. -/
 abbrev PathAlong (l : Lens P Q) (s : FreeM P α) : Type uB₂ :=
   Displayed (PathAlong.algebra l) s
 
@@ -346,7 +346,7 @@ theorem projectPathAlong_liftBind (l : Lens P Q) (a : P.A) (rest : P.B a → Fre
 
 /-- `projectPathAlong` preserves the selected leaf: reading the control payload along the projected
 path is reading the runtime payload along the original path. `simp` uses it to rewrite `output` of a
-projected path to `outputAlong`; `output_mapLens_pathAlongToMapLensPath` is the variant through the
+projected path to `outputAlong`; `output_mapLens_toMapLensPath` is the variant through the
 lens-mapped tree. -/
 @[simp]
 theorem output_projectPathAlong (l : Lens P Q) :
@@ -360,108 +360,137 @@ theorem output_projectPathAlong (l : Lens P Q) :
 /-- View a runtime path through `s` along `l` as the canonical path through the lens-mapped
 runtime tree `s.mapLens l`. Both types have the same constructor shape, but `PathAlong` lives over
 the source tree while `Path (s.mapLens l)` lives over the lens-mapped tree. Its equations are
-`pathAlongToMapLensPath_pure` and `pathAlongToMapLensPath_liftBind`; `mapLensPathToPathAlong` is
-its inverse by `mapLensPathToPathAlong_toMapLensPath` and `pathAlongToMapLensPath_toPathAlong`. -/
-def pathAlongToMapLensPath (l : Lens P Q) : (s : FreeM P α) → PathAlong l s → Path (s.mapLens l)
+`PathAlong.toMapLensPath_pure` and `PathAlong.toMapLensPath_liftBind`; `PathAlong.ofMapLensPath`
+is its inverse by `PathAlong.ofMapLensPath_toMapLensPath` and
+`PathAlong.toMapLensPath_ofMapLensPath`. -/
+def PathAlong.toMapLensPath (l : Lens P Q) : (s : FreeM P α) → PathAlong l s → Path (s.mapLens l)
   | .pure _, _ => ⟨⟩
-  | .liftBind a rest, ⟨d, path⟩ => ⟨d, pathAlongToMapLensPath l (rest (l.toFunB a d)) path⟩
+  | .liftBind a rest, ⟨d, path⟩ => ⟨d, toMapLensPath l (rest (l.toFunB a d)) path⟩
 
-/-- `pathAlongToMapLensPath` at a leaf: `Path ((pure x).mapLens l)` reduces to `Path (pure x)`, the
-trivial fiber `PUnit`, so every runtime path through a leaf maps to `⟨⟩`.
-`pathAlongToMapLensPath_liftBind` is the step through a node. -/
+@[deprecated (since := "2026-10-19")] alias pathAlongToMapLensPath := PathAlong.toMapLensPath
+
+/-- `PathAlong.toMapLensPath` at a leaf: `Path ((pure x).mapLens l)` reduces to `Path (pure x)`,
+the trivial fiber `PUnit`, so every runtime path through a leaf maps to `⟨⟩`.
+`PathAlong.toMapLensPath_liftBind` is the step through a node. -/
 @[simp]
-theorem pathAlongToMapLensPath_pure (l : Lens P Q) (x : α)
+theorem PathAlong.toMapLensPath_pure (l : Lens P Q) (x : α)
     (path : PathAlong l (FreeM.pure x : FreeM P α)) :
-    pathAlongToMapLensPath l (pure x) path = ⟨⟩ := rfl
+    PathAlong.toMapLensPath l (pure x) path = ⟨⟩ := rfl
 
-/-- `pathAlongToMapLensPath` through a node: the runtime direction `PathAlong.head` becomes the
+@[deprecated (since := "2026-10-19")] alias pathAlongToMapLensPath_pure :=
+  PathAlong.toMapLensPath_pure
+
+/-- `PathAlong.toMapLensPath` through a node: the runtime direction `PathAlong.head` becomes the
 direction at the mapped node `l.toFunA a` and the view continues along `PathAlong.tail`. -/
-theorem pathAlongToMapLensPath_liftBind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α)
+theorem PathAlong.toMapLensPath_liftBind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α)
     (path : PathAlong l ((FreeM.lift a).bind rest)) :
-    pathAlongToMapLensPath l (FreeM.liftBind a rest) path =
+    PathAlong.toMapLensPath l (FreeM.liftBind a rest) path =
       Path.cons (l.toFunA a) (fun d => (rest (l.toFunB a d)).mapLens l)
         (PathAlong.head l a rest path)
-        (pathAlongToMapLensPath l (rest (l.toFunB a (PathAlong.head l a rest path)))
+        (PathAlong.toMapLensPath l (rest (l.toFunB a (PathAlong.head l a rest path)))
           (PathAlong.tail l a rest path)) := rfl
+
+@[deprecated (since := "2026-10-19")] alias pathAlongToMapLensPath_liftBind :=
+  PathAlong.toMapLensPath_liftBind
 
 /-- View a canonical path through the lens-mapped runtime tree `s.mapLens l` as a runtime path
 through the original control tree `s` along `l`. This is the inverse constructor-by-constructor
-view of `pathAlongToMapLensPath`. Its equations are `mapLensPathToPathAlong_pure` and
-`mapLensPathToPathAlong_liftBind`; the round trips are `mapLensPathToPathAlong_toMapLensPath` and
-`pathAlongToMapLensPath_toPathAlong`. -/
-def mapLensPathToPathAlong (l : Lens P Q) : (s : FreeM P α) → Path (s.mapLens l) → PathAlong l s
+view of `PathAlong.toMapLensPath`. Its equations are `PathAlong.ofMapLensPath_pure` and
+`PathAlong.ofMapLensPath_liftBind`; the round trips are `PathAlong.ofMapLensPath_toMapLensPath` and
+`PathAlong.toMapLensPath_ofMapLensPath`. -/
+def PathAlong.ofMapLensPath (l : Lens P Q) : (s : FreeM P α) → Path (s.mapLens l) → PathAlong l s
   | .pure _, _ => ⟨⟩
-  | .liftBind a rest, ⟨d, path⟩ => ⟨d, mapLensPathToPathAlong l (rest (l.toFunB a d)) path⟩
+  | .liftBind a rest, ⟨d, path⟩ => ⟨d, ofMapLensPath l (rest (l.toFunB a d)) path⟩
 
-/-- `mapLensPathToPathAlong` at a leaf: `PathAlong l (pure x)` is the trivial fiber `PUnit`, so
+@[deprecated (since := "2026-10-19")] alias mapLensPathToPathAlong := PathAlong.ofMapLensPath
+
+/-- `PathAlong.ofMapLensPath` at a leaf: `PathAlong l (pure x)` is the trivial fiber `PUnit`, so
 every path through the mapped leaf `(pure x).mapLens l` maps to `⟨⟩`.
-`mapLensPathToPathAlong_liftBind` is the step through a node. -/
+`PathAlong.ofMapLensPath_liftBind` is the step through a node. -/
 @[simp]
-theorem mapLensPathToPathAlong_pure (l : Lens P Q) (x : α)
+theorem PathAlong.ofMapLensPath_pure (l : Lens P Q) (x : α)
     (path : Path ((FreeM.pure x : FreeM P α).mapLens l)) :
-    mapLensPathToPathAlong l (pure x) path = ⟨⟩ := rfl
+    PathAlong.ofMapLensPath l (pure x) path = ⟨⟩ := rfl
 
-/-- `mapLensPathToPathAlong` through a node: the direction `Path.head` at the mapped node
+@[deprecated (since := "2026-10-19")] alias mapLensPathToPathAlong_pure :=
+  PathAlong.ofMapLensPath_pure
+
+/-- `PathAlong.ofMapLensPath` through a node: the direction `Path.head` at the mapped node
 `l.toFunA a` becomes the runtime direction of `PathAlong.cons` and the view continues along
 `Path.tail`. -/
-theorem mapLensPathToPathAlong_liftBind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α)
+theorem PathAlong.ofMapLensPath_liftBind (l : Lens P Q) (a : P.A) (rest : P.B a → FreeM P α)
     (path : Path ((FreeM.lift (l.toFunA a)).bind fun d => (rest (l.toFunB a d)).mapLens l)) :
-    mapLensPathToPathAlong l (FreeM.liftBind a rest) path =
+    PathAlong.ofMapLensPath l (FreeM.liftBind a rest) path =
       let d := Path.head (l.toFunA a) (fun d => (rest (l.toFunB a d)).mapLens l) path
       PathAlong.cons l a rest d
-        (mapLensPathToPathAlong l (rest (l.toFunB a d))
+        (PathAlong.ofMapLensPath l (rest (l.toFunB a d))
           (Path.tail (l.toFunA a) (fun d => (rest (l.toFunB a d)).mapLens l) path)) := rfl
 
-/-- `mapLensPathToPathAlong` undoes `pathAlongToMapLensPath`: viewing a runtime path through the
+@[deprecated (since := "2026-10-19")] alias mapLensPathToPathAlong_liftBind :=
+  PathAlong.ofMapLensPath_liftBind
+
+/-- `PathAlong.ofMapLensPath` undoes `PathAlong.toMapLensPath`: viewing a runtime path through the
 lens-mapped tree and back returns it unchanged. `simp` uses it to cancel the round trip;
-`pathAlongToMapLensPath_toPathAlong` is the other direction. -/
+`PathAlong.toMapLensPath_ofMapLensPath` is the other direction. -/
 @[simp]
-theorem mapLensPathToPathAlong_toMapLensPath (l : Lens P Q) :
+theorem PathAlong.ofMapLensPath_toMapLensPath (l : Lens P Q) :
     (s : FreeM P α) → (path : PathAlong l s) →
-      mapLensPathToPathAlong l s (pathAlongToMapLensPath l s path) = path
+      PathAlong.ofMapLensPath l s (PathAlong.toMapLensPath l s path) = path
   | .pure _, _ => rfl
   | .liftBind a rest, ⟨d, path⟩ =>
       congrArg (PathAlong.cons l a rest d)
-        (mapLensPathToPathAlong_toMapLensPath l (rest (l.toFunB a d)) path)
+        (ofMapLensPath_toMapLensPath l (rest (l.toFunB a d)) path)
 
-/-- `pathAlongToMapLensPath` undoes `mapLensPathToPathAlong`: viewing a path through the
+@[deprecated (since := "2026-10-19")] alias mapLensPathToPathAlong_toMapLensPath :=
+  PathAlong.ofMapLensPath_toMapLensPath
+
+/-- `PathAlong.toMapLensPath` undoes `PathAlong.ofMapLensPath`: viewing a path through the
 lens-mapped tree as a runtime path and back returns it unchanged. `simp` uses it to cancel the
-round trip; `mapLensPathToPathAlong_toMapLensPath` is the other direction. -/
+round trip; `PathAlong.ofMapLensPath_toMapLensPath` is the other direction. -/
 @[simp]
-theorem pathAlongToMapLensPath_toPathAlong (l : Lens P Q) :
+theorem PathAlong.toMapLensPath_ofMapLensPath (l : Lens P Q) :
     (s : FreeM P α) → (path : Path (s.mapLens l)) →
-      pathAlongToMapLensPath l s (mapLensPathToPathAlong l s path) = path
+      PathAlong.toMapLensPath l s (PathAlong.ofMapLensPath l s path) = path
   | .pure _, _ => rfl
   | .liftBind a rest, ⟨d, path⟩ =>
       congrArg (Path.cons (l.toFunA a) (fun d => (rest (l.toFunB a d)).mapLens l) d)
-        (pathAlongToMapLensPath_toPathAlong l (rest (l.toFunB a d)) path)
+        (toMapLensPath_ofMapLensPath l (rest (l.toFunB a d)) path)
+
+@[deprecated (since := "2026-10-19")] alias pathAlongToMapLensPath_toPathAlong :=
+  PathAlong.toMapLensPath_ofMapLensPath
 
 /-- Viewing a runtime path in the lens-mapped tree preserves the selected leaf: `simp` uses it to
 rewrite `output` of `s.mapLens l` along the viewed path to `outputAlong`. The converse view is
-`outputAlong_mapLensPathToPathAlong`; `output_projectPathAlong` is the variant by projection. -/
+`outputAlong_ofMapLensPath`; `output_projectPathAlong` is the variant by projection. -/
 @[simp]
-theorem output_mapLens_pathAlongToMapLensPath (l : Lens P Q) :
+theorem output_mapLens_toMapLensPath (l : Lens P Q) :
     (s : FreeM P α) → (path : PathAlong l s) →
-      output (s.mapLens l) (pathAlongToMapLensPath l s path) = outputAlong l s path
+      output (s.mapLens l) (PathAlong.toMapLensPath l s path) = outputAlong l s path
   | .pure _, _ => rfl
   | .liftBind a rest, ⟨d, path⟩ =>
-      output_mapLens_pathAlongToMapLensPath l (rest (l.toFunB a d)) path
+      output_mapLens_toMapLensPath l (rest (l.toFunB a d)) path
+
+@[deprecated (since := "2026-10-19")] alias output_mapLens_pathAlongToMapLensPath :=
+  output_mapLens_toMapLensPath
 
 /-- Viewing a path through the lens-mapped tree as a runtime path preserves the selected leaf:
 `simp` uses it to rewrite `outputAlong` along the viewed path to `output` of `s.mapLens l`. The
-converse view is `output_mapLens_pathAlongToMapLensPath`; `output_projectPathAlong` is the variant
-by projection. -/
+converse view is `output_mapLens_toMapLensPath`; `output_projectPathAlong` is the variant by
+projection. -/
 @[simp]
-theorem outputAlong_mapLensPathToPathAlong (l : Lens P Q) :
+theorem outputAlong_ofMapLensPath (l : Lens P Q) :
     (s : FreeM P α) → (path : Path (s.mapLens l)) →
-      outputAlong l s (mapLensPathToPathAlong l s path) = output (s.mapLens l) path
+      outputAlong l s (PathAlong.ofMapLensPath l s path) = output (s.mapLens l) path
   | .pure _, _ => rfl
-  | .liftBind a rest, ⟨d, path⟩ => outputAlong_mapLensPathToPathAlong l (rest (l.toFunB a d)) path
+  | .liftBind a rest, ⟨d, path⟩ => outputAlong_ofMapLensPath l (rest (l.toFunB a d)) path
+
+@[deprecated (since := "2026-10-19")] alias outputAlong_mapLensPathToPathAlong :=
+  outputAlong_ofMapLensPath
 
 /-- Pull a canonical path through the lens-mapped tree `s.mapLens l` back to the source tree `s`:
 at each node the mapped direction `d` becomes the source direction `l.toFunB a d`. Its equations
 are `pullMapLens_pure` and `pullMapLens_liftBind`; `pullMapLens_eq_projectPathAlong` factors it
-through `mapLensPathToPathAlong`. `Path.pullMap` is the analogue for leaf relabelling. -/
+through `PathAlong.ofMapLensPath`. `Path.pullMap` is the analogue for leaf relabelling. -/
 def Path.pullMapLens (l : Lens P Q) : (s : FreeM P α) → Path (s.mapLens l) → Path s
   | .pure _, _ => ⟨⟩
   | .liftBind a rest, ⟨d, path⟩ => ⟨l.toFunB a d, pullMapLens l (rest (l.toFunB a d)) path⟩
@@ -486,11 +515,11 @@ theorem Path.pullMapLens_liftBind (l : Lens P Q) (a : P.A) (rest : P.B a → Fre
           (Path.tail (l.toFunA a) (fun d => (rest (l.toFunB a d)).mapLens l) path)) := rfl
 
 /-- `Path.pullMapLens` factors through the runtime view: pulling a path through the lens-mapped
-tree back directly agrees with viewing it as a runtime path by `mapLensPathToPathAlong` and then
+tree back directly agrees with viewing it as a runtime path by `PathAlong.ofMapLensPath` and then
 projecting by `projectPathAlong`. Not `@[simp]`, since the right-hand side is the longer form. -/
 theorem Path.pullMapLens_eq_projectPathAlong (l : Lens P Q) :
     (s : FreeM P α) → (path : Path (s.mapLens l)) →
-      Path.pullMapLens l s path = projectPathAlong l s (mapLensPathToPathAlong l s path)
+      Path.pullMapLens l s path = projectPathAlong l s (PathAlong.ofMapLensPath l s path)
   | .pure _, _ => rfl
   | .liftBind a rest, ⟨d, path⟩ =>
       congrArg (Path.cons a rest (l.toFunB a d))

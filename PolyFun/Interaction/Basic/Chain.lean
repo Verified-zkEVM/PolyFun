@@ -211,7 +211,7 @@ theorem splitPath_appendPath (n : Nat) (c : Chain (n + 1))
 /-! ## Strategy composition -/
 
 /-- Output family for strategy composition along a chain. This is the intrinsic analog of
-`Path.stateChainFamily`: a family on the remaining chain is lifted to a family on
+`PFunctor.FreeM.Path.stateChainFamily`: a family on the remaining chain is lifted to a family on
 paths of the flattened `TypeTree`. -/
 @[expose]
 def outputFamily
