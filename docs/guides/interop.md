@@ -56,3 +56,10 @@ Syntax size, transition counts, visible query counts and backend execution cost
 are separate quantities. A correspondence theorem alone supplies none of the
 extra laws needed to identify them. See [computation models](computation-models.md),
 [execution](execution.md) and [realizability](realizability.md).
+
+The [whole-module consumer contract](cryptol-model.md#whole-module-consumer-contract)
+specifies the next substantial workloads for these APIs. The single
+[cross-repository tracker](https://github.com/Verified-zkEVM/VCVio/issues/879)
+owns their workstream status and dependencies; generic PolyFun work remains
+fully proved while downstream source/algorithm obligations are reported at
+their own boundary.
