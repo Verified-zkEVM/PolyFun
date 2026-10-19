@@ -61,7 +61,7 @@ theorem charge_apply {R : Type w} [CompleteLattice R] [Add R] (c : P.A → R) (a
 
 /-- The charge reading is monotone whenever addition is. -/
 theorem charge_mono {R : Type w} [CompleteLattice R] [Add R] [AddLeftMono R] (c : P.A → R) :
-    (charge c).Mono := by
+    (charge c).Monotone := by
   intro a k k' hk
   change c a + ⨆ b, k b ≤ c a + ⨆ b, k' b
   gcongr with b

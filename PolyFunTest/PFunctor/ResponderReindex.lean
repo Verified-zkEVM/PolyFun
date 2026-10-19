@@ -104,14 +104,14 @@ example :
 
 /-- Decoding after encoding preserves a nontrivial handler extensionally. -/
 example : Handler.ofFreeLens (Handler.toFreeLens twoCalls) = twoCalls :=
-  Handler.freeLensEquiv.left_inv twoCalls
+  Handler.equivFreeLens.left_inv twoCalls
 
 /-- Encoding after decoding preserves a nontrivial lens extensionally. -/
 example :
     Handler.toFreeLens
         (Handler.ofFreeLens (Handler.toFreeLens twoCalls)) =
       Handler.toFreeLens twoCalls :=
-  Handler.freeLensEquiv.right_inv (Handler.toFreeLens twoCalls)
+  Handler.equivFreeLens.right_inv (Handler.toFreeLens twoCalls)
 
 def displayedTwoCalls : Display.Handler contract contract twoCalls :=
   fun _ sourcePrecondition =>
@@ -375,7 +375,7 @@ variable {State : Type uS}
 
 def universeFreeLensEquiv :
     Handler (FreeM Q) P ≃ Lens P (FreeP Q) :=
-  Handler.freeLensEquiv
+  Handler.equivFreeLens
 
 def universeDisplayHandlerTransport
     (S : Display.{uA, uB, uC, uD} P)

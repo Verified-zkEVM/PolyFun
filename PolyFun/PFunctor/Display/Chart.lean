@@ -141,7 +141,7 @@ theorem ofChartLift_toFunB {Q : PFunctor.{uA', uB'}} (f : Chart Q P)
 /-- The total polynomial of the literal fiber display of a chart is chart-
 equivalent to its source polynomial. This makes the fiber-normal-form claim
 precise. -/
-def ofChartEquiv {Q : PFunctor.{uA', uB'}} (f : Chart Q P) :
+def ofChartTotalEquiv {Q : PFunctor.{uA', uB'}} (f : Chart Q P) :
     (ofChart f).total ≃c Q where
   toChart := ofChartSource f
   invChart := ofChartLift f
@@ -152,6 +152,8 @@ def ofChartEquiv {Q : PFunctor.{uA', uB'}} (f : Chart Q P) :
       cases hd
       rfl
   right_inv := rfl
+
+@[deprecated (since := "2026-10-19")] alias ofChartEquiv := ofChartTotalEquiv
 
 end Display
 end PFunctor

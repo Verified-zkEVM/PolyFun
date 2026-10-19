@@ -122,7 +122,7 @@ theorem pure_bind (S : Display.{uA, uB, uC, uD} P)
 
 @[deprecated (since := "2026-10-19")] alias bind_pure := pure_bind
 
-theorem bind_liftBind (S : Display.{uA, uB, uC, uD} P)
+theorem liftBind_bind (S : Display.{uA, uB, uC, uD} P)
     {E : Type uE} {F : E → Type uF}
     {E' : Type uE'} {G : E' → Type uG}
     (a : P.A) (rest : P.B a → FreeM P E)
@@ -134,6 +134,8 @@ theorem bind_liftBind (S : Display.{uA, uB, uC, uD} P)
     S.bind (FreeM.liftBind a rest) ⟨c, children⟩ g dg =
       ⟨c, fun b e => S.bind (rest b) (children b e) g dg⟩ :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias bind_liftBind := liftBind_bind
 
 /-! ## Transport -/
 

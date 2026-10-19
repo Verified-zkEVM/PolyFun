@@ -311,7 +311,7 @@ theorem parallelSumAssoc_pentagon
 
 /-- The braiding and associator satisfy the symmetric-monoidal hexagon.  The
 opposite hexagon follows from this equation and braiding involutivity. -/
-theorem parallelSum_hexagon
+theorem parallelSumComm_hexagon
     (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB})
     (R : PFunctor.{uA₃, uB}) :
     parallelSumAssoc Q R P ∘ₗ
@@ -325,6 +325,8 @@ theorem parallelSum_hexagon
     | left operation => cases operation <;> rfl
     | right operation => rfl
     | both operation rightOperation => cases operation <;> rfl
+
+@[deprecated (since := "2026-10-19")] alias parallelSum_hexagon := parallelSumComm_hexagon
 
 /-- Triangle coherence for the explicit unitors and associator. -/
 theorem parallelSum_triangle

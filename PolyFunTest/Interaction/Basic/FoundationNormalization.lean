@@ -108,7 +108,7 @@ def manualHeight :
 
 example {s : PUnit} (tree : Telescope stoppedRound stoppedStep s) :
     manualHeight tree = height tree :=
-  PFunctor.FreeM.StoppingTree.eq_fold heightAlg manualHeight
+  PFunctor.FreeM.StoppingTree.fold_unique heightAlg manualHeight
     (fun _ => rfl) (fun _ _ => rfl) tree
 
 end TypeTree

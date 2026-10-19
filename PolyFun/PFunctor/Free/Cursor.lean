@@ -593,9 +593,9 @@ theorem pathOfTerminal_terminalOfPath :
         Path (FreeM.liftBind a next)) = ⟨answer, tail⟩
       rw [pathOfTerminal_terminalOfPath]
 
-theorem terminal_output_eq_path_output (terminal : Terminal program) :
-    terminal.output = output program (pathOfTerminal terminal) := by
-  change terminal.output = output program (terminal.cursor.plug terminal.residualPath)
+theorem Terminal.output_eq_output_pathOfTerminal (terminal : Terminal program) :
+    terminal.output = FreeM.output program (pathOfTerminal terminal) := by
+  change terminal.output = FreeM.output program (terminal.cursor.plug terminal.residualPath)
   rw [output_plug]
   cases terminal with
   | mk cursor leaf residual_eq =>
@@ -604,6 +604,9 @@ theorem terminal_output_eq_path_output (terminal : Terminal program) :
           dsimp at residual_eq ⊢
           subst residual
           rfl
+
+@[deprecated (since := "2026-10-19")] alias terminal_output_eq_path_output :=
+  Terminal.output_eq_output_pathOfTerminal
 
 @[simp]
 theorem terminalOfPath_pathOfTerminal :
@@ -618,7 +621,7 @@ theorem terminalOfPath_pathOfTerminal :
   have output_eq :
       (terminalOfPath program (pathOfTerminal terminal)).output = terminal.output := by
     rw [terminalOfPath_output]
-    exact (terminal_output_eq_path_output terminal).symm
+    exact (Terminal.output_eq_output_pathOfTerminal terminal).symm
   exact Terminal.ext cursor_eq output_eq
 
 /-- Terminal cursors are equivalent to complete paths. -/

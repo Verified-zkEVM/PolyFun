@@ -34,7 +34,7 @@ a halting predicate or a well-founded ranking).
 
 ## Universal property
 
-`PFunctor.FreeM.StoppingTree.Algebra`, `fold`, and `eq_fold` formalize the
+`PFunctor.FreeM.StoppingTree.Algebra`, `fold`, and `fold_unique` formalize the
 initial-algebra universal property. `toTypeTree` is the fold into the algebra
 `(fun _ => TypeTree, .done, fun s cont => (round s).append cont)`.
 
@@ -118,7 +118,7 @@ theorem eq_toTypeTree
       f (Telescope.extend s cont) =
         TypeTree.substMonoid.mul.toFunA ⟨round s, fun tr => f (cont tr)⟩) :
     {s : St} → (tree : Telescope round step s) → f tree = tree.toTypeTree :=
-  PFunctor.FreeM.StoppingTree.eq_fold toTypeTreeAlgebra f hDone hExtend
+  PFunctor.FreeM.StoppingTree.fold_unique toTypeTreeAlgebra f hDone hExtend
 
 end Telescope
 end TypeTree

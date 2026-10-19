@@ -552,7 +552,7 @@ theorem Path.pullMap_liftBind {β : Type t} (f : α → β) (a : P.A) (rest : P.
 /-- Dependent sequential composition of `FreeM` trees: `append s₁ s₂` grafts onto each leaf of `s₁`
 the tree `s₂` selects for the canonical path that reached it, so a suffix may inspect the whole
 branch and not merely the payload. `append_pure` and `append_liftBind` are its equations and
-`append_output_eq_bind` its overlap with `>>=`. `Path.append_tree_assoc` makes grafting associative,
+`append_output_eq_bind` its overlap with `>>=`. `append_assoc` makes grafting associative,
 reindexing by the path pairing `Path.append` and its inverse `Path.split`. -/
 @[implicit_reducible]
 def append {β : Type t} : (s₁ : FreeM P α) → (Path s₁ → FreeM P β) → FreeM P β
@@ -592,18 +592,20 @@ namespace Path
 /-- Lift a two-argument family indexed by a canonical prefix path and a canonical suffix path to a
 family on the appended tree, by recursion on the prefix. `liftAppend_append` cancels it against
 `Path.append`, `liftAppend_split` restates it through `split`, and `packAppend`/`unpackAppend`
-transport values across it. `PathAlong.liftAppend` is the runtime form along a lens. -/
-def liftAppend {β : Type t} :
+transport values across it. `PathAlong.LiftAppend` is the runtime form along a lens. -/
+def LiftAppend {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) → ((path₁ : Path s₁) → Path (s₂ path₁) → Type w) →
     Path (FreeM.append s₁ s₂) → Type w
   | .pure _, _, F, path => F ⟨⟩ path
   | .liftBind _ rest, s₂, F, ⟨b, path⟩ =>
-      liftAppend (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
+      LiftAppend (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path
 
+@[deprecated (since := "2026-10-19")] alias liftAppend := LiftAppend
+
 /-- Combine a canonical prefix path through `s₁` with a canonical suffix path through the tree `s₂`
-grafts there, by recursion on the prefix; the leaf case is `append_done`. `split` is the two-sided
-inverse, with round trips `split_append` and `append_split`; `append_tree_assoc` reindexes an
+grafts there, by recursion on the prefix; the leaf case is `append_pure`. `split` is the two-sided
+inverse, with round trips `split_append` and `append_split`; `FreeM.append_assoc` reindexes an
 iterated graft by it, and `PathAlong.append` is the runtime form along a lens. -/
 def append {β : Type t} : (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) → (path₁ : Path s₁) →
     Path (s₂ path₁) → Path (FreeM.append s₁ s₂)
@@ -612,22 +614,26 @@ def append {β : Type t} : (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P
       ⟨b, append (rest b) (fun path => s₂ ⟨b, path⟩) path₁ path₂⟩
 
 /-- The `pure` case of `Path.append`: a leaf prefix contributes no directions, so appending the
-trivial prefix path `⟨⟩` to a suffix path returns that suffix unchanged. The `_done` suffix names
-the `pure` case throughout the `append` family; `Path.split` inverts `Path.append`, and
-`packAppend_done` is the sibling equation transporting payloads across `liftAppend`. -/
+trivial prefix path `⟨⟩` to a suffix path returns that suffix unchanged, as `FreeM.append_pure`
+does for the grafted tree. `Path.split` inverts `Path.append`, and `packAppend_pure` is the sibling
+equation transporting payloads across `LiftAppend`. -/
 @[simp]
-theorem append_done {β : Type t} (x : α) (s₂ : Path (FreeM.pure (P := P) x) → FreeM P β)
+theorem append_pure {β : Type t} (x : α) (s₂ : Path (FreeM.pure (P := P) x) → FreeM P β)
     (path₂ : Path (s₂ ⟨⟩)) : append (pure x) s₂ ⟨⟩ path₂ = path₂ := rfl
+
+@[deprecated (since := "2026-10-19")] alias append_done := append_pure
 
 /-- Associativity of path-indexed tree grafting. The suffix continuation on the right is reindexed
 by `Path.append`, which pairs the outer and middle canonical paths; `Path.split` inverts it. -/
-theorem append_tree_assoc {β : Type t} {γ : Type z} :
+theorem _root_.PFunctor.FreeM.append_assoc {β : Type t} {γ : Type z} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) → (s₃ : Path (FreeM.append s₁ s₂) → FreeM P γ) →
       FreeM.append (FreeM.append s₁ s₂) s₃ = FreeM.append s₁ (fun path₁ =>
-        FreeM.append (s₂ path₁) (fun path₂ => s₃ (append s₁ s₂ path₁ path₂)))
+        FreeM.append (s₂ path₁) (fun path₂ => s₃ (Path.append s₁ s₂ path₁ path₂)))
   | .pure _, _, _ => rfl
   | .liftBind a rest, s₂, s₃ => congrArg (FreeM.liftBind a) (funext fun b =>
-      append_tree_assoc (rest b) (fun path => s₂ ⟨b, path⟩) (fun path => s₃ ⟨b, path⟩))
+      FreeM.append_assoc (rest b) (fun path => s₂ ⟨b, path⟩) (fun path => s₃ ⟨b, path⟩))
+
+@[deprecated (since := "2026-10-19")] alias append_tree_assoc := FreeM.append_assoc
 
 /-- Split a canonical path through `FreeM.append s₁ s₂` into a prefix path through `s₁` and a
 suffix path through the tree `s₂` grafts there. It is a two-sided inverse of `append`, with
@@ -641,15 +647,15 @@ def split {β : Type t} :
       let splitRest := split (rest b) (fun path₁ => s₂ ⟨b, path₁⟩) path
       ⟨⟨b, splitRest.1⟩, splitRest.2⟩
 
-/-- `liftAppend` on an appended canonical path reduces to the original two-argument family, so
-`simp` cancels a `liftAppend`/`append` pair. `liftAppend_split` rebuilds the same family from the
+/-- `LiftAppend` on an appended canonical path reduces to the original two-argument family, so
+`simp` cancels a `LiftAppend`/`append` pair. `liftAppend_split` rebuilds the same family from the
 pieces `split` returns; `PathAlong.liftAppend_append` is the runtime form along a lens. -/
 @[simp]
 theorem liftAppend_append {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) → (path₁ : Path s₁) →
     (path₂ : Path (s₂ path₁)) →
-      liftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂) = F path₁ path₂
+      LiftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂) = F path₁ path₂
   | .pure _, _, _, ⟨⟩, _ => rfl
   | .liftBind _ rest, s₂, F, ⟨b, path₁⟩, path₂ =>
       liftAppend_append (rest b) (fun path => s₂ ⟨b, path⟩)
@@ -677,43 +683,45 @@ theorem append_split {β : Type t} :
   | .liftBind _ rest, s₂, ⟨b, path⟩ => by
       simp only [split, append, append_split]
 
-/-- Transport a value of `F path₁ path₂` to the `liftAppend` family at the appended canonical path,
-following the recursion of `liftAppend` so that no explicit equality transport is needed; the leaf
-case is `packAppend_done`. `unpackAppend` is the inverse, with `unpackAppend_packAppend` and
+/-- Transport a value of `F path₁ path₂` to the `LiftAppend` family at the appended canonical path,
+following the recursion of `LiftAppend` so that no explicit equality transport is needed; the leaf
+case is `packAppend_pure`. `unpackAppend` is the inverse, with `unpackAppend_packAppend` and
 `packAppend_unpackAppend` the two round trips; `PathAlong.packAppend` is the runtime form
 along a lens. -/
 def packAppend {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) → (path₁ : Path s₁) →
-    (path₂ : Path (s₂ path₁)) → F path₁ path₂ → liftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂)
+    (path₂ : Path (s₂ path₁)) → F path₁ path₂ → LiftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂)
   | .pure _, _, _, ⟨⟩, _, x => x
   | .liftBind _ rest, s₂, F, ⟨b, path₁⟩, path₂, x =>
       packAppend (rest b) (fun path => s₂ ⟨b, path⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path₁ path₂ x
 
 /-- The `pure` case of `packAppend`: over a leaf prefix the appended path is the suffix path
-itself, so the payload crosses `liftAppend` unchanged. `append_done` is the sibling equation and
+itself, so the payload crosses `LiftAppend` unchanged. `append_pure` is the sibling equation and
 `unpackAppend` is the inverse transport. -/
 @[simp]
-theorem packAppend_done {β : Type t} (x : α) (s₂ : Path (FreeM.pure (P := P) x) → FreeM P β)
+theorem packAppend_pure {β : Type t} (x : α) (s₂ : Path (FreeM.pure (P := P) x) → FreeM P β)
     (F : (path₁ : Path (FreeM.pure (P := P) x)) → Path (s₂ path₁) → Type w) (path₂ : Path (s₂ ⟨⟩))
     (y : F ⟨⟩ path₂) : packAppend (pure x) s₂ F ⟨⟩ path₂ y = y := rfl
 
-/-- Transport a value from the `liftAppend` family at an appended canonical path back to the
-original two-argument family, undoing the recursion of `liftAppend` with no equality transport.
+@[deprecated (since := "2026-10-19")] alias packAppend_done := packAppend_pure
+
+/-- Transport a value from the `LiftAppend` family at an appended canonical path back to the
+original two-argument family, undoing the recursion of `LiftAppend` with no equality transport.
 `packAppend` is the inverse, with `unpackAppend_packAppend` and `packAppend_unpackAppend` the round
 trips; `collapseAppend_append` reduces to it and `PathAlong.unpackAppend` is the runtime form
 along a lens. -/
 def unpackAppend {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) → (path₁ : Path s₁) →
-    (path₂ : Path (s₂ path₁)) → liftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂) → F path₁ path₂
+    (path₂ : Path (s₂ path₁)) → LiftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂) → F path₁ path₂
   | .pure _, _, _, ⟨⟩, _, x => x
   | .liftBind _ rest, s₂, F, ⟨b, path₁⟩, path₂, x =>
       unpackAppend (rest b) (fun path => s₂ ⟨b, path⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path₁ path₂ x
 
-/-- Pointwise congruence for `Path.liftAppend`: families agreeing at every pair of a canonical
+/-- Pointwise congruence for `Path.LiftAppend`: families agreeing at every pair of a canonical
 prefix and suffix path lift to the same family on the appended tree, so the pair-indexed family
 may be swapped for a pointwise-equal one. Hypothesis and conclusion are equalities of types, not
 `Iff`s, so it is applied by `rw`/`Eq.mpr`, not `simp`. -/
@@ -721,22 +729,22 @@ theorem liftAppend_congr {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F G : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) →
     (∀ path₁ path₂, F path₁ path₂ = G path₁ path₂) → (path : Path (FreeM.append s₁ s₂)) →
-      liftAppend s₁ s₂ F path = liftAppend s₁ s₂ G path :=
+      LiftAppend s₁ s₂ F path = LiftAppend s₁ s₂ G path :=
   fun s₁ s₂ _ _ h path =>
-    congrArg (fun F => liftAppend s₁ s₂ F path) (funext₂ h)
+    congrArg (fun F => LiftAppend s₁ s₂ F path) (funext₂ h)
 
-/-- `Path.liftAppend` leaves a constant family alone: a family ignoring both the canonical prefix
+/-- `Path.LiftAppend` leaves a constant family alone: a family ignoring both the canonical prefix
 and the canonical suffix path lifts to that same constant on the appended tree. It is the constant
 case of `liftAppend_split`, and unlike `liftAppend_congr` it is `@[simp]`: the right-hand side `γ`
 is closed, so `simp` always has a target to rewrite to. -/
 @[simp]
 theorem liftAppend_const {β : Type t} (γ : Type w) :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) → (path : Path (FreeM.append s₁ s₂)) →
-      liftAppend s₁ s₂ (fun _ _ => γ) path = γ
+      LiftAppend s₁ s₂ (fun _ _ => γ) path = γ
   | .pure _, _, _ => rfl
   | .liftBind _ rest, s₂, ⟨b, path⟩ => liftAppend_const γ (rest b) (fun path₁ => s₂ ⟨b, path₁⟩) path
 
-/-- `liftAppend` at a canonical path is the two-argument family evaluated at the pieces `split`
+/-- `LiftAppend` at a canonical path is the two-argument family evaluated at the pieces `split`
 returns. This is the `split`-side reconstruction, while `liftAppend_append` is the `append`-side
 cancellation; `unliftAppend` witnesses the equation by transport, and `PathAlong.liftAppend_split`
 is the runtime form along a lens. -/
@@ -745,20 +753,20 @@ theorem liftAppend_split {β : Type t} :
     (F : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) →
     (path : Path (FreeM.append s₁ s₂)) →
       let splitPath := split s₁ s₂ path
-      liftAppend s₁ s₂ F path = F splitPath.1 splitPath.2
+      LiftAppend s₁ s₂ F path = F splitPath.1 splitPath.2
   | .pure _, _, _, _ => rfl
   | .liftBind _ rest, s₂, F, ⟨b, path⟩ =>
       liftAppend_split (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path
 
-/-- Transport a value of `liftAppend` at a canonical path through `FreeM.append s₁ s₂` to the
-two-argument family at the pieces `split` returns, following the recursion of `liftAppend` so that
+/-- Transport a value of `LiftAppend` at a canonical path through `FreeM.append s₁ s₂` to the
+two-argument family at the pieces `split` returns, following the recursion of `LiftAppend` so that
 no explicit equality transport is needed. `liftAppend_split` is the equation it witnesses;
 `PathAlong.unliftAppend` is the runtime form along a lens. -/
 def unliftAppend {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) → (path : Path (FreeM.append s₁ s₂)) →
-    liftAppend s₁ s₂ F path →
+    LiftAppend s₁ s₂ F path →
       let splitPath := split s₁ s₂ path
       F splitPath.1 splitPath.2
   | .pure _, _, _, _, x => x
@@ -782,28 +790,28 @@ theorem unpackAppend_packAppend {β : Type t} :
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path₁ path₂ x
 
 /-- One of the two round trips between `packAppend` and `unpackAppend`: at an appended canonical
-path, unpacking a `liftAppend` value and packing it again returns it unchanged.
+path, unpacking a `LiftAppend` value and packing it again returns it unchanged.
 `unpackAppend_packAppend` is the round trip in the other order and
 `PathAlong.packAppend_unpackAppend` is the runtime form along a lens. -/
 @[simp]
 theorem packAppend_unpackAppend {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) → (path₁ : Path s₁) →
-    (path₂ : Path (s₂ path₁)) → (x : liftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂)) →
+    (path₂ : Path (s₂ path₁)) → (x : LiftAppend s₁ s₂ F (append s₁ s₂ path₁ path₂)) →
       packAppend s₁ s₂ F path₁ path₂ (unpackAppend s₁ s₂ F path₁ path₂ x) = x
   | .pure _, _, _, ⟨⟩, _, _ => rfl
   | .liftBind _ rest, s₂, F, ⟨b, path₁⟩, path₂, x =>
       packAppend_unpackAppend (rest b) (fun path => s₂ ⟨b, path⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path₁ path₂ x
 
-/-- Collapse a `liftAppend` family whose pair index passes through `append`: a payload of
-`liftAppend s₁ s₂ (fun path₁ path₂ => F (append s₁ s₂ path₁ path₂)) path` is a payload of `F` at
+/-- Collapse a `LiftAppend` family whose pair index passes through `append`: a payload of
+`LiftAppend s₁ s₂ (fun path₁ path₂ => F (append s₁ s₂ path₁ path₂)) path` is a payload of `F` at
 the fused path `path` itself. `collapseAppend_append` is the computation rule at an appended path,
 reducing it to `unpackAppend` on the same family. -/
 def collapseAppend {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) → (F : Path (FreeM.append s₁ s₂) → Type w) →
     (path : Path (FreeM.append s₁ s₂)) →
-    liftAppend s₁ s₂ (fun path₁ path₂ => F (append s₁ s₂ path₁ path₂)) path → F path
+    LiftAppend s₁ s₂ (fun path₁ path₂ => F (append s₁ s₂ path₁ path₂)) path → F path
   | .pure _, _, _, _, x => x
   | .liftBind _ rest, s₂, F, ⟨b, path⟩, x =>
       collapseAppend (rest b) (fun path₁ => s₂ ⟨b, path₁⟩) (fun tail => F ⟨b, tail⟩) path x
@@ -815,7 +823,7 @@ that form, this evaluates `collapseAppend` everywhere. -/
 @[simp]
 theorem collapseAppend_append {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) → (F : Path (FreeM.append s₁ s₂) → Type w) →
-    (path₁ : Path s₁) → (path₂ : Path (s₂ path₁)) → (x : liftAppend s₁ s₂
+    (path₁ : Path s₁) → (path₂ : Path (s₂ path₁)) → (x : LiftAppend s₁ s₂
       (fun path₁ path₂ => F (append s₁ s₂ path₁ path₂)) (append s₁ s₂ path₁ path₂)) →
     collapseAppend s₁ s₂ F (append s₁ s₂ path₁ path₂) x =
       unpackAppend s₁ s₂ (fun path₁ path₂ => F (append s₁ s₂ path₁ path₂)) path₁ path₂ x
@@ -824,29 +832,29 @@ theorem collapseAppend_append {β : Type t} :
       collapseAppend_append (rest b) (fun path => s₂ ⟨b, path⟩)
         (fun tail => F ⟨b, tail⟩) path₁ path₂ x
 
-/-- Split a fused `liftAppend` product payload into separately lifted payloads. The payload passes
+/-- Split a fused `LiftAppend` product payload into separately lifted payloads. The payload passes
 through every node unchanged, so this is definitionally the identity and inverse to
 `liftAppendProdMk`: `liftAppendProdMk_liftAppendProd` and `liftAppendProd_liftAppendProdMk` are its
 round trips, both by `rfl`, and `liftAppendProd_packAppend` evaluates it on an appended path. -/
 def liftAppendProd {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (A B : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) → (path : Path (FreeM.append s₁ s₂)) →
-    liftAppend s₁ s₂ (fun path₁ path₂ => A path₁ path₂ × B path₁ path₂) path →
-      liftAppend s₁ s₂ A path × liftAppend s₁ s₂ B path
+    LiftAppend s₁ s₂ (fun path₁ path₂ => A path₁ path₂ × B path₁ path₂) path →
+      LiftAppend s₁ s₂ A path × LiftAppend s₁ s₂ B path
   | .pure _, _, _, _, _, x => x
   | .liftBind _ rest, s₂, A, B, ⟨b, path⟩, x =>
       liftAppendProd (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => A ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => B ⟨b, path₁⟩ path₂) path x
 
-/-- Fuse separately lifted payloads into a `liftAppend` product payload. The payload passes through
+/-- Fuse separately lifted payloads into a `LiftAppend` product payload. The payload passes through
 every node unchanged, so this is definitionally the identity and inverse to `liftAppendProd`, with
 round trips `liftAppendProdMk_liftAppendProd` and `liftAppendProd_liftAppendProdMk`, both `rfl`. -/
 def liftAppendProdMk {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (A B : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) → (path : Path (FreeM.append s₁ s₂)) →
-    liftAppend s₁ s₂ A path × liftAppend s₁ s₂ B path →
-      liftAppend s₁ s₂ (fun path₁ path₂ => A path₁ path₂ × B path₁ path₂) path
+    LiftAppend s₁ s₂ A path × LiftAppend s₁ s₂ B path →
+      LiftAppend s₁ s₂ (fun path₁ path₂ => A path₁ path₂ × B path₁ path₂) path
   | .pure _, _, _, _, _, x => x
   | .liftBind _ rest, s₂, A, B, ⟨b, path⟩, x =>
       liftAppendProdMk (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
@@ -861,7 +869,7 @@ equation through each node and bottoms out at `rfl`. `simp` uses it to cancel th
 theorem liftAppendProdMk_liftAppendProd {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (A B : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) → (path : Path (FreeM.append s₁ s₂)) →
-    (x : liftAppend s₁ s₂ (fun path₁ path₂ => A path₁ path₂ × B path₁ path₂) path) →
+    (x : LiftAppend s₁ s₂ (fun path₁ path₂ => A path₁ path₂ × B path₁ path₂) path) →
       liftAppendProdMk s₁ s₂ A B path (liftAppendProd s₁ s₂ A B path x) = x
   | .pure _, _, _, _, _, _ => rfl
   | .liftBind _ rest, s₂, A, B, ⟨b, path⟩, x =>
@@ -877,7 +885,7 @@ equation through each node and bottoms out at `rfl`. `simp` uses it to cancel th
 theorem liftAppendProd_liftAppendProdMk {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (A B : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) → (path : Path (FreeM.append s₁ s₂)) →
-    (x : liftAppend s₁ s₂ A path × liftAppend s₁ s₂ B path) →
+    (x : LiftAppend s₁ s₂ A path × LiftAppend s₁ s₂ B path) →
       liftAppendProd s₁ s₂ A B path (liftAppendProdMk s₁ s₂ A B path x) = x
   | .pure _, _, _, _, _, _ => rfl
   | .liftBind _ rest, s₂, A, B, ⟨b, path⟩, x =>
@@ -927,29 +935,31 @@ theorem rel_unliftAppend_append {β : Type t} :
 /-- Lift a binary relation on pair-indexed families to the fused appended path: at a leaf it is
 `R` on the trivial prefix, and at a node the recursion descends under the chosen direction.
 `liftAppendRel_iff` characterises it as `R` at the path pair `split` recovers, on the payloads
-`unliftAppend` extracts from the two `liftAppend` families. `liftAppendPred` is the unary form. -/
-def liftAppendRel {β : Type t} :
+`unliftAppend` extracts from the two `LiftAppend` families. `LiftAppendPred` is the unary form. -/
+def LiftAppendRel {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F G : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) →
     (R : ∀ (path₁ : Path s₁) (path₂ : Path (s₂ path₁)), F path₁ path₂ → G path₁ path₂ → Prop) →
-    (path : Path (FreeM.append s₁ s₂)) → liftAppend s₁ s₂ F path → liftAppend s₁ s₂ G path → Prop
+    (path : Path (FreeM.append s₁ s₂)) → LiftAppend s₁ s₂ F path → LiftAppend s₁ s₂ G path → Prop
   | .pure _, _, _, _, R, path, x, y => R ⟨⟩ path x y
   | .liftBind _ rest, s₂, F, G, R, ⟨b, path⟩, x, y =>
-      liftAppendRel (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
+      LiftAppendRel (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => G ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => R ⟨b, path₁⟩ path₂) path x y
 
-/-- `liftAppendRel` unfolds to `R` at the path pair `split` recovers from the fused path, applied
-to the payloads `unliftAppend` extracts from the two `liftAppend` families; use it to turn a
-`liftAppendRel` goal into a plain `R` goal. `liftAppendPred_iff` is the unary form. -/
+@[deprecated (since := "2026-10-19")] alias liftAppendRel := LiftAppendRel
+
+/-- `LiftAppendRel` unfolds to `R` at the path pair `split` recovers from the fused path, applied
+to the payloads `unliftAppend` extracts from the two `LiftAppend` families; use it to turn a
+`LiftAppendRel` goal into a plain `R` goal. `liftAppendPred_iff` is the unary form. -/
 theorem liftAppendRel_iff {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F G : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) →
     (R : ∀ (path₁ : Path s₁) (path₂ : Path (s₂ path₁)), F path₁ path₂ → G path₁ path₂ → Prop) →
-    (path : Path (FreeM.append s₁ s₂)) → (x : liftAppend s₁ s₂ F path) →
-    (y : liftAppend s₁ s₂ G path) →
-      liftAppendRel s₁ s₂ F G R path x y ↔
+    (path : Path (FreeM.append s₁ s₂)) → (x : LiftAppend s₁ s₂ F path) →
+    (y : LiftAppend s₁ s₂ G path) →
+      LiftAppendRel s₁ s₂ F G R path x y ↔
         R (split s₁ s₂ path).1 (split s₁ s₂ path).2 (unliftAppend s₁ s₂ F path x)
           (unliftAppend s₁ s₂ G path y)
   | .pure _, _, _, _, _, _, _, _ => Iff.rfl
@@ -962,27 +972,29 @@ theorem liftAppendRel_iff {β : Type t} :
 /-- Lift a unary predicate on a pair-indexed family to the fused appended path: at a leaf it is
 `Pred` on the trivial prefix, and at a node the recursion descends under the chosen direction.
 `liftAppendPred_iff` characterises it as `Pred` at the path pair `split` recovers, on the payload
-`unliftAppend` extracts from the `liftAppend` family. `liftAppendRel` is the binary form. -/
-def liftAppendPred {β : Type t} :
+`unliftAppend` extracts from the `LiftAppend` family. `LiftAppendRel` is the binary form. -/
+def LiftAppendPred {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) →
     (Pred : ∀ (path₁ : Path s₁) (path₂ : Path (s₂ path₁)), F path₁ path₂ → Prop) →
-    (path : Path (FreeM.append s₁ s₂)) → liftAppend s₁ s₂ F path → Prop
+    (path : Path (FreeM.append s₁ s₂)) → LiftAppend s₁ s₂ F path → Prop
   | .pure _, _, _, Pred, path, x => Pred ⟨⟩ path x
   | .liftBind _ rest, s₂, F, Pred, ⟨b, path⟩, x =>
-      liftAppendPred (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
+      LiftAppendPred (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => Pred ⟨b, path₁⟩ path₂) path x
 
-/-- `liftAppendPred` unfolds to `Pred` at the path pair `split` recovers from the fused path,
-applied to the payload `unliftAppend` extracts from the `liftAppend` family; use it to turn a
-`liftAppendPred` goal into a plain `Pred` goal. `liftAppendRel_iff` is the binary form. -/
+@[deprecated (since := "2026-10-19")] alias liftAppendPred := LiftAppendPred
+
+/-- `LiftAppendPred` unfolds to `Pred` at the path pair `split` recovers from the fused path,
+applied to the payload `unliftAppend` extracts from the `LiftAppend` family; use it to turn a
+`LiftAppendPred` goal into a plain `Pred` goal. `liftAppendRel_iff` is the binary form. -/
 theorem liftAppendPred_iff {β : Type t} :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : Path s₁) → Path (s₂ path₁) → Type w) →
     (Pred : ∀ (path₁ : Path s₁) (path₂ : Path (s₂ path₁)), F path₁ path₂ → Prop) →
-    (path : Path (FreeM.append s₁ s₂)) → (x : liftAppend s₁ s₂ F path) →
-      liftAppendPred s₁ s₂ F Pred path x ↔
+    (path : Path (FreeM.append s₁ s₂)) → (x : LiftAppend s₁ s₂ F path) →
+      LiftAppendPred s₁ s₂ F Pred path x ↔
         Pred (split s₁ s₂ path).1 (split s₁ s₂ path).2 (unliftAppend s₁ s₂ F path x)
   | .pure _, _, _, _, _, _ => Iff.rfl
   | .liftBind _ rest, s₂, F, Pred, ⟨b, path⟩, x =>
@@ -1008,15 +1020,17 @@ reintroduce exactly the equality transports these definitions are shaped to avoi
 family on the appended tree, by recursion on the prefix; the suffix is selected by the control
 projection of the runtime prefix. `PathAlong.liftAppend_append` cancels it against `append`,
 `PathAlong.liftAppend_split` restates it through `split`, and `packAppend`, `unpackAppend` and
-`unliftAppend` transport values across it. `Path.liftAppend` is the control-path form. -/
-def liftAppend {β : Type t} (l : Lens P Q) :
+`unliftAppend` transport values across it. `Path.LiftAppend` is the control-path form. -/
+def LiftAppend {β : Type t} (l : Lens P Q) :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     ((path₁ : PathAlong l s₁) → PathAlong l (s₂ (projectPathAlong l s₁ path₁)) → Type w) →
     PathAlong l (FreeM.append s₁ s₂) → Type w
   | .pure _, _, F, path => F ⟨⟩ path
   | .liftBind a rest, s₂, F, ⟨d, path⟩ =>
-      liftAppend l (rest (l.toFunB a d)) (fun path₁ => s₂ ⟨l.toFunB a d, path₁⟩)
+      LiftAppend l (rest (l.toFunB a d)) (fun path₁ => s₂ ⟨l.toFunB a d, path₁⟩)
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂) path
+
+@[deprecated (since := "2026-10-19")] alias liftAppend := LiftAppend
 
 /-- Combine a runtime prefix path through `s₁` with a runtime suffix path through the tree `s₂`
 grafts at the control projection `projectPathAlong l s₁ path₁` of that prefix, by recursion on the
@@ -1050,8 +1064,8 @@ to unfold there. -/
 attribute [local implicit_reducible] Displayed.LocalMap.toHom
   Displayed.LocalMap.toHomFun projectPathAlongLocalMap projectPathAlong
 
-/-- `liftAppend` on an appended runtime path reduces to the original two-argument family, so `simp`
-cancels a `liftAppend`/`append` pair. `Path.liftAppend_append` is the control-path form, where the
+/-- `LiftAppend` on an appended runtime path reduces to the original two-argument family, so `simp`
+cancels a `LiftAppend`/`append` pair. `Path.liftAppend_append` is the control-path form, where the
 suffix is indexed by the control path directly; `packAppend` and `unpackAppend` transport values
 across this equality without an explicit transport. -/
 @[simp]
@@ -1059,7 +1073,7 @@ theorem liftAppend_append {β : Type t} (l : Lens P Q) :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : PathAlong l s₁) → PathAlong l (s₂ (projectPathAlong l s₁ path₁)) → Type w) →
     (path₁ : PathAlong l s₁) → (path₂ : PathAlong l (s₂ (projectPathAlong l s₁ path₁))) →
-      liftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂) = F path₁ path₂
+      LiftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂) = F path₁ path₂
   | .pure _, _, _, ⟨⟩, _ => rfl
   | .liftBind a rest, s₂, F, ⟨d, path₁⟩, path₂ =>
       liftAppend_append l (rest (l.toFunB a d)) (fun path => s₂ ⟨l.toFunB a d, path⟩)
@@ -1089,35 +1103,35 @@ theorem append_split {β : Type t} (l : Lens P Q) :
   | .liftBind a rest, s₂, ⟨d, path⟩ => by
       simp only [split, append, append_split]
 
-/-- Transport a value of `F path₁ path₂` to the `liftAppend` family at the appended runtime path,
-following the recursion of `liftAppend` so that no explicit equality transport is needed.
+/-- Transport a value of `F path₁ path₂` to the `LiftAppend` family at the appended runtime path,
+following the recursion of `LiftAppend` so that no explicit equality transport is needed.
 `unpackAppend` is the inverse, with `unpackAppend_packAppend` and `packAppend_unpackAppend` the two
 round trips; `Path.packAppend` is the control-path form. -/
 def packAppend {β : Type t} (l : Lens P Q) :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : PathAlong l s₁) → PathAlong l (s₂ (projectPathAlong l s₁ path₁)) → Type w) →
     (path₁ : PathAlong l s₁) → (path₂ : PathAlong l (s₂ (projectPathAlong l s₁ path₁))) →
-    F path₁ path₂ → liftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂)
+    F path₁ path₂ → LiftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂)
   | .pure _, _, _, ⟨⟩, _, x => x
   | .liftBind a rest, s₂, F, ⟨d, path₁⟩, path₂, x =>
       packAppend l (rest (l.toFunB a d)) (fun path => s₂ ⟨l.toFunB a d, path⟩)
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂) path₁ path₂ x
 
-/-- Transport a value from the `liftAppend` family at an appended runtime path back to the original
-two-argument family, undoing the recursion of `liftAppend` with no explicit equality transport.
+/-- Transport a value from the `LiftAppend` family at an appended runtime path back to the original
+two-argument family, undoing the recursion of `LiftAppend` with no explicit equality transport.
 `packAppend` is the inverse, with `unpackAppend_packAppend` and `packAppend_unpackAppend` the two
 round trips; `Path.unpackAppend` is the control-path form. -/
 def unpackAppend {β : Type t} (l : Lens P Q) :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : PathAlong l s₁) → PathAlong l (s₂ (projectPathAlong l s₁ path₁)) → Type w) →
     (path₁ : PathAlong l s₁) → (path₂ : PathAlong l (s₂ (projectPathAlong l s₁ path₁))) →
-    liftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂) → F path₁ path₂
+    LiftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂) → F path₁ path₂
   | .pure _, _, _, ⟨⟩, _, x => x
   | .liftBind a rest, s₂, F, ⟨d, path₁⟩, path₂, x =>
       unpackAppend l (rest (l.toFunB a d)) (fun path => s₂ ⟨l.toFunB a d, path⟩)
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂) path₁ path₂ x
 
-/-- `liftAppend` at a runtime path is the two-argument family evaluated at the pieces
+/-- `LiftAppend` at a runtime path is the two-argument family evaluated at the pieces
 `PathAlong.split` returns, so the family is recovered from a path never presented as an `append`.
 This is the `split`-side reconstruction; `PathAlong.liftAppend_append` is the `append`-side
 cancellation, and `Path.liftAppend_split` is the control-path form. -/
@@ -1126,20 +1140,20 @@ theorem liftAppend_split {β : Type t} (l : Lens P Q) :
     (F : (path₁ : PathAlong l s₁) → PathAlong l (s₂ (projectPathAlong l s₁ path₁)) → Type w) →
     (path : PathAlong l (FreeM.append s₁ s₂)) →
       let splitPath := split l s₁ s₂ path
-      liftAppend l s₁ s₂ F path = F splitPath.1 splitPath.2
+      LiftAppend l s₁ s₂ F path = F splitPath.1 splitPath.2
   | .pure _, _, _, _ => rfl
   | .liftBind a rest, s₂, F, ⟨d, path⟩ =>
       liftAppend_split l (rest (l.toFunB a d)) (fun path₁ => s₂ ⟨l.toFunB a d, path₁⟩)
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂) path
 
-/-- Transport a value of `PathAlong.liftAppend` at a runtime path through `FreeM.append s₁ s₂` to
+/-- Transport a value of `PathAlong.LiftAppend` at a runtime path through `FreeM.append s₁ s₂` to
 the two-argument family at the pieces `PathAlong.split` returns, following the recursion of
-`liftAppend` so that no explicit equality transport is needed. `PathAlong.liftAppend_split` is the
+`LiftAppend` so that no explicit equality transport is needed. `PathAlong.liftAppend_split` is the
 equation it witnesses; `Path.unliftAppend` is the control-path form. -/
 def unliftAppend {β : Type t} (l : Lens P Q) :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : PathAlong l s₁) → PathAlong l (s₂ (projectPathAlong l s₁ path₁)) → Type w) →
-    (path : PathAlong l (FreeM.append s₁ s₂)) → liftAppend l s₁ s₂ F path →
+    (path : PathAlong l (FreeM.append s₁ s₂)) → LiftAppend l s₁ s₂ F path →
       let splitPath := split l s₁ s₂ path
       F splitPath.1 splitPath.2
   | .pure _, _, _, _, x => x
@@ -1164,7 +1178,7 @@ theorem unpackAppend_packAppend {β : Type t} (l : Lens P Q) :
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂) path₁ path₂ x
 
 /-- One of the two round trips between `PathAlong.packAppend` and `PathAlong.unpackAppend`: at an
-appended runtime path, unpacking a `liftAppend` value and packing it again returns it unchanged.
+appended runtime path, unpacking a `LiftAppend` value and packing it again returns it unchanged.
 `PathAlong.unpackAppend_packAppend` is the round trip in the other order and
 `Path.packAppend_unpackAppend` is the control-path form. -/
 @[simp]
@@ -1172,7 +1186,7 @@ theorem packAppend_unpackAppend {β : Type t} (l : Lens P Q) :
     (s₁ : FreeM P α) → (s₂ : Path s₁ → FreeM P β) →
     (F : (path₁ : PathAlong l s₁) → PathAlong l (s₂ (projectPathAlong l s₁ path₁)) → Type w) →
     (path₁ : PathAlong l s₁) → (path₂ : PathAlong l (s₂ (projectPathAlong l s₁ path₁))) →
-    (x : liftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂)) →
+    (x : LiftAppend l s₁ s₂ F (append l s₁ s₂ path₁ path₂)) →
       packAppend l s₁ s₂ F path₁ path₂ (unpackAppend l s₁ s₂ F path₁ path₂ x) = x
   | .pure _, _, _, ⟨⟩, _, _ => rfl
   | .liftBind a rest, s₂, F, ⟨d, path₁⟩, path₂, x =>
@@ -1206,7 +1220,7 @@ end PathAlong
 `Obs`: at each state an inhabitant either stops or extends into the state `step s obs` selected by
 each observation. Because `done s` is available at every state, inhabitation alone does not assert
 termination. It is the initial `StoppingTree.Algebra`, with catamorphism `StoppingTree.fold` and
-uniqueness lemma `StoppingTree.eq_fold`; `Telescope` specializes `Obs` to path fibres. -/
+uniqueness lemma `StoppingTree.fold_unique`; `Telescope` specializes `Obs` to path fibres. -/
 inductive StoppingTree {St : Type z} (Obs : St → Type w) (step : (s : St) → Obs s → St) :
     St → Type (max w z)
   /-- Stop at the current state, running no further transition. -/
@@ -1222,7 +1236,7 @@ variable {St : Type z} {Obs : St → Type w} {step : (s : St) → Obs s → St}
 /-- Algebra for the indexed polynomial `y ↦ (fun s => PUnit ⊕ ((obs : Obs s) → y (step s obs)))`: a
 `done` interpretation at each state and an `extend` interpretation of one transition layer.
 `StoppingTree` is its initial algebra: `fold` is the unique homomorphism into `Carrier`, with
-`fold_done` and `fold_extend` its computation rules and `eq_fold` its uniqueness. -/
+`fold_done` and `fold_extend` its computation rules and `fold_unique` its uniqueness. -/
 structure Algebra (Carrier : St → Type t) where
   /-- Interpretation of the `StoppingTree.done` leaf at a state. -/
   done : (s : St) → Carrier s
@@ -1231,15 +1245,16 @@ structure Algebra (Carrier : St → Type t) where
 
 /-- Catamorphism out of the initial stopping-tree algebra: recursion over a `StoppingTree` that
 interprets each `done` leaf and each `extend` layer by the matching field of the `Algebra` `alg`.
-Its computation rules `fold_done` and `fold_extend` hold by `rfl`, and `eq_fold` is the uniqueness
-half of the universal property. `Telescope.toFreeM` is `fold` at the `FreeM.append` algebra. -/
+Its computation rules `fold_done` and `fold_extend` hold by `rfl`, and `fold_unique` is the
+uniqueness half of the universal property. `Telescope.toFreeM` is `fold` at the `FreeM.append`
+algebra. -/
 def fold {Carrier : St → Type t} (alg : Algebra (Obs := Obs) (step := step) Carrier) :
     {s : St} → StoppingTree Obs step s → Carrier s
   | _, .done s => alg.done s
   | _, .extend s cont => alg.extend s fun obs => fold alg (cont obs)
 
 /-- `fold` at a stopping leaf: the catamorphism reads off the algebra's `done` interpretation and
-recurses no further. `fold_extend` is the equation through a transition layer, and `eq_fold` is
+recurses no further. `fold_extend` is the equation through a transition layer, and `fold_unique` is
 the uniqueness half of the initial-algebra universal property. -/
 @[simp]
 theorem fold_done {Carrier : St → Type t} (alg : Algebra (Obs := Obs) (step := step) Carrier)
@@ -1247,7 +1262,7 @@ theorem fold_done {Carrier : St → Type t} (alg : Algebra (Obs := Obs) (step :=
 
 /-- `fold` through a transition layer: one `extend` node is interpreted by the algebra's `extend`,
 with the fold applied under every observation. `fold_done` is the equation at a stopping leaf, and
-`eq_fold` is the uniqueness half of the initial-algebra universal property. -/
+`fold_unique` is the uniqueness half of the initial-algebra universal property. -/
 @[simp]
 theorem fold_extend {Carrier : St → Type t} (alg : Algebra (Obs := Obs) (step := step) Carrier)
     (s : St) (cont : (obs : Obs s) → StoppingTree Obs step (step s obs)) :
@@ -1256,7 +1271,7 @@ theorem fold_extend {Carrier : St → Type t} (alg : Algebra (Obs := Obs) (step 
 /-- Uniqueness half of the initial-algebra universal property: any `f` satisfying the algebra
 equations `hDone` and `hExtend` agrees pointwise with `fold`. `fold_done` and `fold_extend` say
 that `fold alg` itself satisfies them, so it is the unique such algebra homomorphism. -/
-theorem eq_fold {Carrier : St → Type t} (alg : Algebra (Obs := Obs) (step := step) Carrier)
+theorem fold_unique {Carrier : St → Type t} (alg : Algebra (Obs := Obs) (step := step) Carrier)
     (f : {s : St} → StoppingTree Obs step s → Carrier s)
     (hDone : (s : St) → f (StoppingTree.done s) = alg.done s)
     (hExtend : (s : St) → (cont : (obs : Obs s) → StoppingTree Obs step (step s obs)) →
@@ -1264,7 +1279,9 @@ theorem eq_fold {Carrier : St → Type t} (alg : Algebra (Obs := Obs) (step := s
     {s : St} → (tree : StoppingTree Obs step s) → f tree = fold alg tree
   | _, .done s => hDone s
   | _, .extend s cont => (hExtend s cont).trans
-      (congrArg (alg.extend s) (funext fun obs => eq_fold alg f hDone hExtend (cont obs)))
+      (congrArg (alg.extend s) (funext fun obs => fold_unique alg f hDone hExtend (cont obs)))
+
+@[deprecated (since := "2026-10-19")] alias eq_fold := fold_unique
 
 end StoppingTree
 
