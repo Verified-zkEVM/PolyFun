@@ -214,11 +214,11 @@ example (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂})
 example (P : PFunctor.{uA, uB}) :
     Lens.comp
       (Lens.comp (FreeP.substMonoid P).mul
-        (Lens.compMap (FreeP.substMonoid P).unit
+        (Lens.compMap (FreeP.substMonoid P).one
           (Lens.id (FreeP.substMonoid P).carrier)))
       Lens.Equiv.yComp.invLens =
     Lens.id (FreeP.substMonoid P).carrier :=
-  (FreeP.substMonoid P).unit_left
+  (FreeP.substMonoid P).one_mul
 
 end FreePolynomialTest
 end PFunctor

@@ -164,7 +164,7 @@ example :
         CofreeP.comul (P := binaryP) =
       (Lens.id (CofreeP binaryP) ◃ₗ CofreeP.comul (P := binaryP)) ∘ₗ
         CofreeP.comul (P := binaryP) :=
-  CofreeP.comul_coassoc
+  CofreeP.comul_assoc
 
 /-- Cofree-polynomial mapping leaves all source, intermediate, and target
 polynomial universes independent. -/

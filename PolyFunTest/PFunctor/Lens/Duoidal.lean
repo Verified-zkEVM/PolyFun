@@ -130,7 +130,7 @@ example :
       ((Lens.unitComparison : Lens y.{pA₁, pB₁} y.{pA₁, pB₁}) ⊗ₗ
         Lens.id y.{pA₁, pB₁}) =
       Lens.Equiv.yTensor.toLens :=
-  Lens.tensorUnitMap_unit_left
+  Lens.tensorUnitMap_one_mul
 
 example :
     (Lens.tensorUnitMap :
@@ -138,7 +138,7 @@ example :
       (Lens.id y.{pA₁, pB₁} ⊗ₗ
         (Lens.unitComparison : Lens y.{pA₁, pB₁} y.{pA₁, pB₁})) =
       Lens.Equiv.tensorY.toLens :=
-  Lens.tensorUnitMap_unit_right
+  Lens.tensorUnitMap_mul_one
 
 example :
     (Lens.tensorUnitMap :
@@ -151,7 +151,7 @@ example :
         (Lens.id y.{pA₁, pB₁} ⊗ₗ (Lens.tensorUnitMap :
           Lens (y.{pA₁, pB₁} ⊗ y.{pA₁, pB₁}) y.{pA₁, pB₁})) ∘ₗ
         Lens.Equiv.tensorAssoc.toLens :=
-  Lens.tensorUnitMap_assoc
+  Lens.tensorUnitMap_mul_assoc
 
 example :
     (Lens.Equiv.yComp (P := y.{pA₁, pB₁})).toLens ∘ₗ
@@ -161,7 +161,7 @@ example :
           (Lens.unitComparison :
             Lens y.{pA₁, pB₁} y.{max pA₁ pB₁, pB₁})) =
       Lens.id y.{pA₁, pB₁} :=
-  Lens.compUnitMap_counit_left
+  Lens.compUnitMap_counit_comul
 
 example :
     (Lens.Equiv.compY (P := y.{pA₁, pB₁})).toLens ∘ₗ
@@ -171,7 +171,7 @@ example :
           (Lens.unitComparison :
             Lens y.{pA₁, pB₁} y.{max pA₁ pB₁, pB₁})) =
       Lens.id y.{pA₁, pB₁} :=
-  Lens.compUnitMap_counit_right
+  Lens.compUnitMap_comul_counit
 
 example :
     (Lens.Equiv.compAssoc (P := y.{pA₁, pB₁})
@@ -190,7 +190,7 @@ example :
         (Lens.compUnitMap ∘ₗ
           (Lens.unitComparison :
             Lens y.{pA₁, pB₁} y.{max pA₁ pB₁, pB₁})) :=
-  Lens.compUnitMap_coassoc
+  Lens.compUnitMap_comul_assoc
 
 /-- The internal interchange unit laws preserve independent universe pairs. -/
 example (p : PFunctor.{pA₁, pB₁}) (q : PFunctor.{qA₁, qB₁}) :

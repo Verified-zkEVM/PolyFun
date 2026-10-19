@@ -57,7 +57,9 @@ set_option linter.checkUnivs false in
 (Niu–Spivak Def 7.14): a carrier `c`, a counit `ε : c ⇆ y`, and a
 comultiplication `δ : c ⇆ c ◃ c` satisfying left/right counitality and
 coassociativity as lens equations (through the unitors `yComp` / `compY` and the
-associator `compAssoc`). This is the polynomial encoding of a small category. -/
+associator `compAssoc`). This is the polynomial encoding of a small category.
+The law fields use the names of Mathlib's `CategoryTheory.ComonObj`:
+`counit_comul`, `comul_counit` and `comul_assoc`. -/
 -- The carrier's position and direction universes are independent; `checkUnivs`
 -- sees only their joint contribution to the structure's resulting sort.
 structure Comonoid where
@@ -69,18 +71,21 @@ structure Comonoid where
   /-- The comultiplication `δ : c ⇆ c ◃ c` — the composition operation. -/
   comul : Lens carrier (carrier ◃ carrier)
   /-- Left counitality: `λ ∘ (ε ◃ id) ∘ δ = id`. -/
-  counit_left : Lens.Equiv.yComp.toLens ∘ₗ (counit ◃ₗ Lens.id carrier) ∘ₗ comul
+  counit_comul : Lens.Equiv.yComp.toLens ∘ₗ (counit ◃ₗ Lens.id carrier) ∘ₗ comul
       = Lens.id carrier
   /-- Right counitality: `ρ ∘ (id ◃ ε) ∘ δ = id`. -/
-  counit_right : Lens.Equiv.compY.toLens ∘ₗ (Lens.id carrier ◃ₗ counit) ∘ₗ comul
+  comul_counit : Lens.Equiv.compY.toLens ∘ₗ (Lens.id carrier ◃ₗ counit) ∘ₗ comul
       = Lens.id carrier
   /-- Coassociativity: `α ∘ (δ ◃ id) ∘ δ = (id ◃ δ) ∘ δ`. -/
-  coassoc : Lens.Equiv.compAssoc.toLens ∘ₗ (comul ◃ₗ Lens.id carrier) ∘ₗ comul
+  comul_assoc : Lens.Equiv.compAssoc.toLens ∘ₗ (comul ◃ₗ Lens.id carrier) ∘ₗ comul
       = (Lens.id carrier ◃ₗ comul) ∘ₗ comul
 
 namespace Comonoid
 
 @[deprecated (since := "2026-10-19")] alias comult := comul
+@[deprecated (since := "2026-10-19")] alias counit_left := counit_comul
+@[deprecated (since := "2026-10-19")] alias counit_right := comul_counit
+@[deprecated (since := "2026-10-19")] alias coassoc := comul_assoc
 
 /-! ## Morphisms of comonoids (retrofunctors) -/
 
@@ -260,9 +265,9 @@ def stateComonoid (S : Type u) : Comonoid.{u, u} where
   carrier := selfMonomial S
   counit := (fun _ => PUnit.unit) ⇆ (fun s _ => s)
   comul := Lens.fixState
-  counit_left := rfl
-  counit_right := rfl
-  coassoc := rfl
+  counit_comul := rfl
+  comul_counit := rfl
+  comul_assoc := rfl
 
 @[simp] theorem stateComonoid_carrier (S : Type u) :
     (stateComonoid S).carrier = selfMonomial S := rfl

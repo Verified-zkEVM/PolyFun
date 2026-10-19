@@ -480,9 +480,11 @@ theorem map_comp_map (l₂ : Lens Q R) (l₁ : Lens P Q) :
 /-! ## Substitution-monoid structure -/
 
 /-- The unit of the free substitution monoid: the single unlabelled leaf. -/
-def unit : Lens y.{max uA uB, uB} (FreeP P) where
+def one : Lens y.{max uA uB, uB} (FreeP P) where
   toFunA _ := .pure PUnit.unit
   toFunB _ _ := PUnit.unit
+
+@[deprecated (since := "2026-10-19")] alias unit := one
 
 /-- Multiplication of the free substitution monoid grafts the inner tree at
 each path of the outer tree. A direction through the grafted tree splits into
@@ -494,9 +496,11 @@ def mul : Lens (FreeP P ◃ FreeP P) (FreeP P) where
 @[deprecated (since := "2026-10-19")] alias mult := mul
 
 @[simp]
-theorem unit_toFunA (u : y.{max uA uB, uB}.A) :
-    (unit (P := P)).toFunA u = FreeM.pure PUnit.unit :=
+theorem one_toFunA (u : y.{max uA uB, uB}.A) :
+    (one (P := P)).toFunA u = FreeM.pure PUnit.unit :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias unit_toFunA := one_toFunA
 
 @[simp]
 theorem mul_toFunA (x : (FreeP P ◃ FreeP P).A) :
@@ -540,21 +544,21 @@ theorem decode_mul (x : (FreeP P ◃ FreeP P).Obj α) :
 
 @[deprecated (since := "2026-10-19")] alias decode_mult := decode_mul
 
-theorem mul_unit_left :
+protected theorem one_mul :
     Lens.comp
       (Lens.comp (mul (P := P))
-        (Lens.compMap (unit (P := P)) (Lens.id (FreeP P))))
+        (Lens.compMap (one (P := P)) (Lens.id (FreeP P))))
       Lens.Equiv.yComp.invLens = Lens.id (FreeP P) :=
   rfl
 
-@[deprecated (since := "2026-10-19")] alias mult_unit_left := mul_unit_left
+@[deprecated (since := "2026-10-19")] alias mult_unit_left := FreeP.one_mul
 
 /-- Pointwise container form of right unitality for free-tree grafting. -/
-theorem mul_unit_right_obj (s : (FreeP P).A) :
+theorem mul_one_obj (s : (FreeP P).A) :
     let composite :=
       Lens.comp
         (Lens.comp (mul (P := P))
-          (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
+          (Lens.compMap (Lens.id (FreeP P)) (one (P := P))))
         Lens.Equiv.compY.invLens
     (.mk (composite.toFunA s) (composite.toFunB s) :
       (FreeP P).Obj (FreeM.Path s)) = .mk s id := by
@@ -573,7 +577,7 @@ theorem mul_unit_right_obj (s : (FreeP P).A) :
           (let composite :=
             Lens.comp
               (Lens.comp (mul (P := P))
-                (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
+                (Lens.compMap (Lens.id (FreeP P)) (one (P := P))))
               Lens.Equiv.compY.invLens
            (.mk (composite.toFunA (rest b)) (composite.toFunB (rest b)) :
              (FreeP P).Obj (FreeM.Path (rest b))))) =
@@ -583,7 +587,7 @@ theorem mul_unit_right_obj (s : (FreeP P).A) :
             (let composite :=
               Lens.comp
                 (Lens.comp (mul (P := P))
-                  (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
+                  (Lens.compMap (Lens.id (FreeP P)) (one (P := P))))
                 Lens.Equiv.compY.invLens
              (.mk (composite.toFunA (rest b)) (composite.toFunB (rest b)) :
                (FreeP P).Obj (FreeM.Path (rest b))))) =
@@ -591,20 +595,20 @@ theorem mul_unit_right_obj (s : (FreeP P).A) :
             (FreeP P).Obj (FreeM.Path (FreeM.liftBind a rest)))) := by
         funext b
         exact congrArg (relabel (FreeM.Path.cons a rest b))
-          (mul_unit_right_obj (rest b))
+          (mul_one_obj (rest b))
       rw [hchildren]
       exact node_paths a rest id
 
-@[deprecated (since := "2026-10-19")] alias mult_unit_right_obj := mul_unit_right_obj
+@[deprecated (since := "2026-10-19")] alias mult_unit_right_obj := mul_one_obj
 
-theorem mul_unit_right :
+protected theorem mul_one :
     Lens.comp
       (Lens.comp (mul (P := P))
-        (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
+        (Lens.compMap (Lens.id (FreeP P)) (one (P := P))))
       Lens.Equiv.compY.invLens = Lens.id (FreeP P) :=
-  Lens.ext_mapObj _ _ mul_unit_right_obj
+  Lens.ext_mapObj _ _ mul_one_obj
 
-@[deprecated (since := "2026-10-19")] alias mult_unit_right := mul_unit_right
+@[deprecated (since := "2026-10-19")] alias mult_unit_right := FreeP.mul_one
 
 /-- The left-associated composite of free-tree multiplication. -/
 def mulAssocLeft : Lens ((FreeP P ◃ FreeP P) ◃ FreeP P) (FreeP P) :=
@@ -684,11 +688,11 @@ polynomial of well-founded `P`-trees, its unit is the one-leaf tree, and its
 multiplication is path-indexed grafting. -/
 def substMonoid (P : PFunctor.{uA, uB}) : SubstMonoid.{max uA uB, uB} where
   carrier := FreeP P
-  unit := unit
+  one := one
   mul := mul
-  unit_left := mul_unit_left
-  unit_right := mul_unit_right
-  assoc := FreeP.mul_assoc
+  one_mul := FreeP.one_mul
+  mul_one := FreeP.mul_one
+  mul_assoc := FreeP.mul_assoc
 
 @[simp]
 theorem substMonoid_carrier (P : PFunctor.{uA, uB}) :
@@ -696,9 +700,11 @@ theorem substMonoid_carrier (P : PFunctor.{uA, uB}) :
   rfl
 
 @[simp]
-theorem substMonoid_unit (P : PFunctor.{uA, uB}) :
-    (substMonoid P).unit = unit :=
+theorem substMonoid_one (P : PFunctor.{uA, uB}) :
+    (substMonoid P).one = one :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias substMonoid_unit := substMonoid_one
 
 @[simp]
 theorem substMonoid_mul (P : PFunctor.{uA, uB}) :

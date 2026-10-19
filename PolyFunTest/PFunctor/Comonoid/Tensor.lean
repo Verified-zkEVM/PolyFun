@@ -197,13 +197,13 @@ def listMonoidComonoid : Comonoid where
       (fun _ directions =>
         (show List Bool from directions.1) ++
           (show List Bool from directions.2))
-  counit_left := by
+  counit_comul := by
     refine Lens.ext _ _ (fun _ => rfl) (fun _ => ?_)
     exact funext List.nil_append
-  counit_right := by
+  comul_counit := by
     refine Lens.ext _ _ (fun _ => rfl) (fun _ => ?_)
     exact funext List.append_nil
-  coassoc := by
+  comul_assoc := by
     refine Lens.ext _ _ (fun _ => rfl) (fun _ => ?_)
     exact funext fun d => List.append_assoc d.1 d.2.1 d.2.2
 

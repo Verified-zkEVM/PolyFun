@@ -82,7 +82,7 @@ variable (C : Comonoid.{uA, uB})
 object. -/
 theorem comul_toFunA_fst (c : C.carrier.A) :
     (C.comul.toFunA c).1 = c :=
-  congrArg (fun lens => lens.toFunA c) C.counit_right
+  congrArg (fun lens => lens.toFunA c) C.comul_counit
 
 @[deprecated (since := "2026-10-19")] alias comultOuter_eq := comul_toFunA_fst
 
@@ -172,25 +172,25 @@ private theorem normalizedComul_eq : normalizedComul C = C.comul := by
   rcases direction with ⟨d, e⟩
   rfl
 
-private theorem normalized_counit_right :
+private theorem normalized_comul_counit :
     Lens.Equiv.compY.toLens ∘ₗ
         (Lens.id C.carrier ◃ₗ C.counit) ∘ₗ normalizedComul C =
       Lens.id C.carrier := by
-  simpa only [normalizedComul_eq] using C.counit_right
+  simpa only [normalizedComul_eq] using C.comul_counit
 
-private theorem normalized_counit_left :
+private theorem normalized_counit_comul :
     Lens.Equiv.yComp.toLens ∘ₗ
         (C.counit ◃ₗ Lens.id C.carrier) ∘ₗ normalizedComul C =
       Lens.id C.carrier := by
-  simpa only [normalizedComul_eq] using C.counit_left
+  simpa only [normalizedComul_eq] using C.counit_comul
 
-private theorem normalized_coassoc :
+private theorem normalized_comul_assoc :
     Lens.Equiv.compAssoc.toLens ∘ₗ
           (normalizedComul C ◃ₗ Lens.id C.carrier) ∘ₗ
         normalizedComul C =
       (Lens.id C.carrier ◃ₗ normalizedComul C) ∘ₗ
         normalizedComul C := by
-  simpa only [normalizedComul_eq] using C.coassoc
+  simpa only [normalizedComul_eq] using C.comul_assoc
 
 /-! ## Category laws -/
 
@@ -199,7 +199,7 @@ private theorem normalized_coassoc :
 theorem target_identity (c : C.carrier.A) :
     target C c (identity C c) = c := by
   have h := congrArg (fun lens : Lens C.carrier C.carrier => lens.toFunA c)
-    C.counit_left
+    C.counit_comul
   change (C.comul.toFunA c).2
       (C.counit.toFunB (C.comul.toFunA c).1 PUnit.unit) = c at h
   change (C.comul.toFunA c).2
@@ -217,7 +217,7 @@ theorem compose_identity (c : C.carrier.A) (d : C.carrier.B c) :
     (Lens.Equiv.compY.toLens ∘ₗ
         (Lens.id C.carrier ◃ₗ C.counit) ∘ₗ
       normalizedComul C).toFunB c d = d
-  exact lens_toFunB_apply_eq_of_eq (normalized_counit_right C) c d
+  exact lens_toFunB_apply_eq_of_eq (normalized_comul_counit C) c d
 
 @[deprecated (since := "2026-10-19")] alias compose_identity_right := compose_identity
 
@@ -231,7 +231,7 @@ theorem identity_compose_eq_cast (c : C.carrier.A)
     (fun lens : Lens C.carrier C.carrier =>
       Lens.mapObj lens
         (⟨c, id⟩ : C.carrier.Obj (C.carrier.B c)))
-    (normalized_counit_left C)
+    (normalized_counit_comul C)
   change
     (⟨target C c (identity C c),
       fun direction => compose C c (identity C c) direction⟩ :
@@ -267,7 +267,7 @@ theorem target_compose (c : C.carrier.A) (d : C.carrier.B c)
     (e : C.carrier.B (target C c d)) :
     target C c (compose C c d e) = target C (target C c d) e := by
   have h := congrArg (fun lens => lens.toFunA c)
-    (normalized_coassoc C)
+    (normalized_comul_assoc C)
   change
     (⟨c, fun d => ⟨target C c d,
       fun e => target C c (compose C c d e)⟩⟩ :
@@ -403,14 +403,14 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
                 (⟨c, rightChildren⟩ :
                   (C.carrier ◃ (C.carrier ◃ C.carrier)).A)))
           hInner
-  have h := lens_toFunB_apply_eq_of_eq (normalized_coassoc C).symm c
+  have h := lens_toFunB_apply_eq_of_eq (normalized_comul_assoc C).symm c
     leftDirection
   have hPosition :
       congrArg
         (C.carrier ◃ (C.carrier ◃ C.carrier)).B
         (congrArg
           (fun lens => lens.toFunA c)
-          (normalized_coassoc C).symm).symm =
+          (normalized_comul_assoc C).symm).symm =
       congrArg
         (C.carrier ◃ (C.carrier ◃ C.carrier)).B positionEq :=
     Subsingleton.elim _ _
@@ -418,7 +418,7 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
       cast (congrArg
         (C.carrier ◃ (C.carrier ◃ C.carrier)).B
         (congrArg (fun lens => lens.toFunA c)
-          (normalized_coassoc C).symm).symm) leftDirection =
+          (normalized_comul_assoc C).symm).symm) leftDirection =
         rightDirection := by
     rw [hPosition]
     exact hTransport

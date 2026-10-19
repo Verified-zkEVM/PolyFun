@@ -41,17 +41,17 @@ def wordMul : Lens (wordP ◃ wordP) wordP :=
 monoid. -/
 def wordMonoid : SubstMonoid where
   carrier := wordP
-  unit := wordUnit
+  one := wordUnit
   mul := wordMul
-  unit_left := by
+  one_mul := by
     apply Lens.ext _ _ (fun _ => rfl)
     intro a
     exact Subsingleton.elim _ _
-  unit_right := by
+  mul_one := by
     apply Lens.ext _ _ List.append_nil
     intro a
     exact Subsingleton.elim _ _
-  assoc := by
+  mul_assoc := by
     let hA : ∀ a : ((wordP ◃ wordP) ◃ wordP).A,
         (wordMul ∘ₗ (wordMul ◃ₗ Lens.id wordP)).toFunA a =
           (wordMul ∘ₗ (Lens.id wordP ◃ₗ wordMul) ∘ₗ
@@ -83,7 +83,7 @@ homomorphism. -/
 def wordMapHom (f : Bool → List Bool) :
     SubstMonoid.Hom wordMonoid wordMonoid where
   toLens := List.flatMap f ⇆ (fun _ d => d)
-  map_unit := rfl
+  map_one := rfl
   map_mul := by
     let hA : ∀ a : (wordP ◃ wordP).A,
         ((List.flatMap f ⇆ fun _ d => d) ∘ₗ wordMul).toFunA a =
@@ -133,8 +133,8 @@ example {M N O : SubstMonoid.{u, v}} (f : M ⟶ N) (g : N ⟶ O) :
 
 /-- Position and direction universes of substitution monoids are independent. -/
 example (M : SubstMonoid.{u, v}) : M.mul ∘ₗ
-    (M.unit ◃ₗ Lens.id M.carrier) ∘ₗ Lens.Equiv.yComp.invLens =
-    Lens.id M.carrier := M.unit_left
+    (M.one ◃ₗ Lens.id M.carrier) ∘ₗ Lens.Equiv.yComp.invLens =
+    Lens.id M.carrier := M.one_mul
 
 end SubstMonoidTest
 end PFunctor
