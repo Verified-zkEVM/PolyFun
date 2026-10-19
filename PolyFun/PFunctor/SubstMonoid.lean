@@ -94,7 +94,7 @@ structure Hom (M N : SubstMonoid.{uA, uB}) where
   /-- Preservation of the unit. -/
   protected map_one : toLens ∘ₗ M.one = N.one
   /-- Preservation of multiplication. -/
-  map_mul : toLens ∘ₗ M.mul =
+  protected map_mul : toLens ∘ₗ M.mul =
     N.mul ∘ₗ (toLens ◃ₗ toLens)
 
 @[deprecated (since := "2026-10-19")] alias Hom.map_mult := Hom.map_mul
