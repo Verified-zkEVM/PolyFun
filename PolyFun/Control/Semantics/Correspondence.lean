@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import Mathlib.Logic.Embedding.Basic
+public import Mathlib.Logic.Relator
 
 /-!
 # Semantic correspondence on represented inputs
@@ -26,10 +27,46 @@ universe uA uB uC uD uE uF
 variable {A : Type uA} {B : Type uB} {C : Type uC}
   {D : Type uD} {E : Type uE} {F : Type uF}
 
+/-- Total correctness for every semantic representative of each admissible input.
+Relations permit partial values and irrelevant components to have many representations. -/
+@[expose] def RelationalContract (input : A → D → Prop) (output : B → E → Prop)
+    (meaning : D → E) (pre : A → Prop) (post : A → B → Prop) : Prop :=
+  ∀ x d, pre x → input x d → ∃ y, output y (meaning d) ∧ post x y
+
+/-- A logical relation transfers contracts when represented outputs determine
+a unique native result. Input representations need exist only on the precondition. -/
+theorem RelationalContract.iff_of_liftFun
+    {input : A → D → Prop} {output : B → E → Prop}
+    {meaning : D → E} {implementation : A → B} (pre : A → Prop) (post : A → B → Prop)
+    (h : Relator.LiftFun (fun x d => pre x ∧ input x d) output implementation meaning)
+    (available : ∀ x, pre x → ∃ d, input x d) (unique : Relator.LeftUnique output) :
+    RelationalContract input output meaning pre post ↔ ∀ x, pre x → post x (implementation x) := by
+  constructor
+  · intro hc x hx
+    obtain ⟨d, hd⟩ := available x hx
+    obtain ⟨y, hy, hp⟩ := hc x d hx hd
+    exact unique hy (h ⟨hx, hd⟩) ▸ hp
+  · intro hp x d hx hd
+    exact ⟨implementation x, h ⟨hx, hd⟩, hp x hx⟩
+
 /-- Total correctness on represented inputs and fully represented outputs. -/
 @[expose] def DataContract (input : A ↪ D) (output : B ↪ E) (meaning : D → E)
     (pre : A → Prop) (post : A → B → Prop) : Prop :=
   ∀ x, pre x → ∃ y, meaning (input x) = output y ∧ post x y
+
+/-- Injective encodings are the special case with one semantic representative per value. -/
+theorem dataContract_iff_relationalContract (input : A ↪ D) (output : B ↪ E)
+    (meaning : D → E) (pre : A → Prop) (post : A → B → Prop) :
+    DataContract input output meaning pre post ↔
+      RelationalContract (fun x d => input x = d) (fun y e => output y = e)
+        meaning pre post := by
+  constructor
+  · intro h x d hx hd
+    obtain ⟨y, hy, hp⟩ := h x hx
+    exact ⟨y, hd ▸ hy.symm, hp⟩
+  · intro h x hx
+    obtain ⟨y, hy, hp⟩ := h x (input x) hx rfl
+    exact ⟨y, hy.symm, hp⟩
 
 /-- A semantic function agrees with a native implementation on admissible inputs. -/
 @[expose] def CorrespondsOn (input : A ↪ D) (output : B ↪ E) (valid : A → Prop)
@@ -67,13 +104,14 @@ theorem comp (h : CorrespondsOn input output valid meaning implementation)
 theorem contract_iff (h : CorrespondsOn input output valid meaning implementation)
     (pre : A → Prop) (post : A → B → Prop) (admissible : ∀ x, pre x → valid x) :
     DataContract input output meaning pre post ↔ ∀ x, pre x → post x (implementation x) := by
-  constructor
-  · intro hc x hx
-    obtain ⟨y, hy, hp⟩ := hc x hx
-    have he : implementation x = y := output.injective ((h x (admissible x hx)).symm.trans hy)
-    exact he.symm ▸ hp
-  · intro hp x hx
-    exact ⟨implementation x, h x (admissible x hx), hp x hx⟩
+  rw [dataContract_iff_relationalContract]
+  apply RelationalContract.iff_of_liftFun pre post
+  · intro x d hx
+    exact hx.2 ▸ (h x (admissible x hx.1)).symm
+  · intro x _
+    exact ⟨input x, rfl⟩
+  · intro x y d hx hy
+    exact output.injective (hx.trans hy.symm)
 
 /-- Equality to a represented result reflects equality of native results. -/
 theorem eq_iff (h : CorrespondsOn input output valid meaning implementation)

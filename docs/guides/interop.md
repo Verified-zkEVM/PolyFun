@@ -12,6 +12,7 @@ and cryptographic interpretations belong to their consumers.
 | External source to scoped syntax | `IPFunctor.ScopedSignature`, `ScopedFamily` | Validate binding, types, constraints and the supported fragment; state parser/exporter trust |
 | Scoped syntax to meaning | Algebraic folds and semantic substitution; `Control.Domain.Result` for partial carriers | Give primitive and recursion equations, retaining distinctions between failure, divergence and partial values |
 | Represented meaning to implementation | `Control.Semantics.CorrespondsOn`, `CertifiedMeaning` | Supply injective input/output encodings and prove agreement on the stated admissible inputs |
+| Partial representations to native values | Mathlib `Relator.LiftFun`, `Control.Semantics.RelationalContract` | Cover admissible inputs and prove output left-uniqueness; irrelevant tails need not have unique representations |
 | Deterministic execution | `Control.Transition`, `Executes`, `Terminates` | Define states/results and prove preservation or adequacy for the language |
 | Execution to existing machines | `Transition.tree`, `toMachine`, `runChunk_toMachine` | Choose observations and preserve any effects or errors encoded by the frontend |
 | Machine to resource certificate | `Realizability` and its quantitative interfaces | Supply the admissible backend, representation and cost laws |
@@ -27,6 +28,15 @@ Its equivalence to a native postcondition uses output injectivity and an explici
 admissibility premise. Composition requires the first implementation to establish
 the second implementation's domain. These interfaces do not manufacture totality
 or erase failures.
+
+`RelationalContract.iff_of_liftFun` handles representation relations. The
+embedding-based contract is a special case, and its transfer theorem uses this
+same proof. VCVio's Foundation-list view is a concrete consumer: a finite list
+observes a length and a stream prefix, while different unused tails represent
+the same list. An empty list may even have a bottom stream component. Requiring
+an equivalence or a unique semantic representative there would impose the
+wrong definedness requirement. No additional correspondence class is needed;
+function compatibility is Mathlib's `Relator.LiftFun`.
 
 ## Two consumers
 
@@ -63,3 +73,9 @@ specifies the next substantial workloads for these APIs. The single
 owns their workstream status and dependencies; generic PolyFun work remains
 fully proved while downstream source/algorithm obligations are reported at
 their own boundary.
+
+The axiom scanner's `sorryGraph` report retains direct kernel dependencies,
+elaborated proposition text, and internal auxiliary nodes for the `sorryAx`
+closure. Consumers can use that report to explain inherited proof obligations.
+This does not change PolyFun's policy: `--check` still rejects every admission
+and every nonstandard axiom, and its baseline must remain empty.
