@@ -50,12 +50,12 @@ example : TypeTree.stepPoly = ⟨TypeTree, Path⟩ := rfl
 example : TypeTree.substMonoid.carrier = TypeTree.stepPoly := rfl
 
 example (spec : TypeTree) (next : Path spec → TypeTree) :
-    TypeTree.substMonoid.mult.toFunA ⟨spec, next⟩ = spec.append next :=
+    TypeTree.substMonoid.mul.toFunA ⟨spec, next⟩ = spec.append next :=
   rfl
 
 example (spec : TypeTree) (next : Path spec → TypeTree)
     (tr : Path (spec.append next)) :
-    TypeTree.substMonoid.mult.toFunB ⟨spec, next⟩ tr =
+    TypeTree.substMonoid.mul.toFunB ⟨spec, next⟩ tr =
       PFunctor.FreeM.Path.split spec next tr :=
   rfl
 

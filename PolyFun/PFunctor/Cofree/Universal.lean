@@ -88,7 +88,7 @@ theorem cogenerator_comp_map {Q : PFunctor.{uA₂, uB₂}}
       (.root (M.children tree
         (lens.toFunB (M.head tree) direction)))
   rw [M.Vertex.pullMapLens_child,
-    M.Vertex.cast_root (M.children_mapLens lens tree direction),
+    M.Vertex.castEquiv_root (M.children_mapLens lens tree direction),
     M.Vertex.pullMapLens_root]
   rfl
 
@@ -196,7 +196,7 @@ termination_by _ vertex => M.Vertex.depth vertex
 decreasing_by
   calc
     M.Vertex.depth (M.Vertex.castEquiv childEq next) =
-        M.Vertex.depth next := M.Vertex.depth_cast childEq next
+        M.Vertex.depth next := M.Vertex.depth_castEquiv childEq next
     _ < M.Vertex.depth (.child direction next) := Nat.lt_succ_self _
 
 @[simp]
@@ -266,7 +266,7 @@ theorem subtree_unfoldShape (lens : Lens C.carrier P) :
       have ih := subtree_unfoldShape lens
         (Comonoid.target C object first) next'
       have hsub : M.Vertex.subtree next' = M.Vertex.subtree next :=
-        M.Vertex.subtree_cast childEq next
+        M.Vertex.subtree_castEquiv childEq next
       rw [unfoldDirection_child]
       change M.Vertex.subtree next =
         unfoldShape C lens
@@ -285,7 +285,7 @@ termination_by _ vertex => M.Vertex.depth vertex
 decreasing_by
   calc
     M.Vertex.depth next' = M.Vertex.depth next :=
-      M.Vertex.depth_cast childEq next
+      M.Vertex.depth_castEquiv childEq next
     _ < M.Vertex.depth (.child direction next) := Nat.lt_succ_self _
 
 private theorem vertex_cast_append {tree tree' : M P} (h : tree = tree')
@@ -294,7 +294,7 @@ private theorem vertex_cast_append {tree tree' : M P} (h : tree = tree')
     M.Vertex.castEquiv h (M.Vertex.append initial suffix) =
       M.Vertex.append (M.Vertex.castEquiv h initial)
         (M.Vertex.castEquiv
-          (M.Vertex.subtree_cast h initial).symm suffix) := by
+          (M.Vertex.subtree_castEquiv h initial).symm suffix) := by
   subst tree'
   rfl
 
@@ -373,7 +373,7 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
         simpa only [first] using
           children_unfoldShape C lens object direction
       let next' := M.Vertex.castEquiv childEq next
-      let subtreeEq := M.Vertex.subtree_cast childEq next
+      let subtreeEq := M.Vertex.subtree_castEquiv childEq next
       let suffix' := M.Vertex.castEquiv subtreeEq.symm suffix
       let rest := unfoldDirection C lens
         (Comonoid.target C object first) next'
@@ -475,7 +475,7 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
   decreasing_by
     calc
       M.Vertex.depth next' = M.Vertex.depth next :=
-        M.Vertex.depth_cast childEq next
+        M.Vertex.depth_castEquiv childEq next
       _ < M.Vertex.depth (.child direction next) := Nat.lt_succ_self _
 
 /-- The carrier lens obtained by coiteration. -/
@@ -565,9 +565,9 @@ theorem cogenerator_comp_unfoldLens (lens : Lens C.carrier P) :
         (.root (M.children (unfoldShape C lens object) direction))) =
     lens.toFunB object direction
   rw [unfoldDirection_child,
-    M.Vertex.cast_root (children_unfoldShape C lens object direction),
+    M.Vertex.castEquiv_root (children_unfoldShape C lens object direction),
     unfoldDirection_root,
-    Comonoid.compose_identity_right]
+    Comonoid.compose_identity]
   rfl
 
 /-- Restricting a cofree extension recovers its generator lens. -/
@@ -654,7 +654,7 @@ private theorem unfoldDirection_restrict
             (unfoldShape_restrict C hom object)
               (.root (unfoldShape C (restrict C hom) object)) =
             .root (hom.toLens.toFunA object) :=
-        M.Vertex.cast_root (unfoldShape_restrict C hom object)
+        M.Vertex.castEquiv_root (unfoldShape_restrict C hom object)
       calc
         unfoldDirection C (restrict C hom) object
             (.root (unfoldShape C (restrict C hom) object)) =
@@ -744,7 +744,7 @@ private theorem unfoldDirection_restrict
       have hmappedVertex :
           M.Vertex.castEquiv shapeEq (.child direction next) =
             M.Vertex.append firstVertex mappedNext := by
-        rw [M.Vertex.cast_child]
+        rw [M.Vertex.castEquiv_child]
         rfl
       calc
         unfoldDirection C (restrict C hom) object
@@ -762,7 +762,7 @@ private theorem unfoldDirection_restrict
   decreasing_by
     calc
       M.Vertex.depth nativeNext = M.Vertex.depth next :=
-        M.Vertex.depth_cast childEq next
+        M.Vertex.depth_castEquiv childEq next
       _ < M.Vertex.depth (.child direction next) := Nat.lt_succ_self _
 
 /-- Extending the restriction of a retrofunctor into the cofree polynomial

@@ -462,7 +462,7 @@ polynomials. -/
     _ _ (parallelSumMap_id_total S T)
 
 /-- Bifunctorial composition coherence on total polynomials. -/
-theorem parallelSumMap_comp_total
+theorem parallelSumMap_comp_parallelSumMap_total
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
     {W : PFunctor.{uA₅, uB}} {X : PFunctor.{uA₆, uB}}
@@ -489,7 +489,10 @@ theorem parallelSumMap_comp_total
   rintro ⟨operation, contract⟩
   cases operation <;> rfl
 
-theorem parallelSumMap_comp
+@[deprecated (since := "2026-10-19")] alias parallelSumMap_comp_total :=
+  parallelSumMap_comp_parallelSumMap_total
+
+theorem parallelSumMap_comp_parallelSumMap
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
     {W : PFunctor.{uA₅, uB}} {X : PFunctor.{uA₆, uB}}
@@ -508,16 +511,19 @@ theorem parallelSumMap_comp
     (firstLeft : Display.Lens S₁ S₂ firstLeftBase)
     (firstRight : Display.Lens T₁ T₂ firstRightBase) :
     transport
-        (PFunctor.Lens.parallelSumMap_comp secondLeftBase secondRightBase
+        (PFunctor.Lens.parallelSumMap_comp_parallelSumMap secondLeftBase secondRightBase
           firstLeftBase firstRightBase)
         (comp (parallelSumMap secondLeft secondRight)
           (parallelSumMap firstLeft firstRight)) =
       parallelSumMap (comp secondLeft firstLeft)
         (comp secondRight firstRight) :=
   transport_eq_of_totalEq
-    (PFunctor.Lens.parallelSumMap_comp secondLeftBase secondRightBase
+    (PFunctor.Lens.parallelSumMap_comp_parallelSumMap secondLeftBase secondRightBase
       firstLeftBase firstRightBase) _ _
-    (parallelSumMap_comp_total secondLeft secondRight firstLeft firstRight)
+    (parallelSumMap_comp_parallelSumMap_total secondLeft secondRight firstLeft firstRight)
+
+@[deprecated (since := "2026-10-19")] alias parallelSumMap_comp :=
+  parallelSumMap_comp_parallelSumMap
 
 /-- The displayed braiding is involutive on total polynomials. -/
 @[simp] theorem parallelSumComm_comp_parallelSumComm_total

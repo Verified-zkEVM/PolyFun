@@ -12,23 +12,23 @@ public import PolyFun.PFunctor.Free.Resumption
 /-!
 # Stateful lenses: one-query stateful handlers
 
-A `StateLens p r σ` is a stateful handler that answers every outer `p`-query with exactly one inner
-`r`-query. At handler state `s`, the outer query `x` is forwarded as `pos (x, s)`, and the inner
-answer `e` determines the outer answer `answer (x, s) e` and the next handler state
+A `StatefulLens p r σ` is a stateful handler that answers every outer `p`-query with exactly one
+inner `r`-query. At handler state `s`, the outer query `x` is forwarded as `pos (x, s)`, and the
+inner answer `e` determines the outer answer `answer (x, s) e` and the next handler state
 `update (x, s) e`. Its data is exactly that of a lens from the tensor of `p` with the state monomial
-`σy^σ` to `r` (`StateLens.equivLens`). (`Lens.State`, a get/put lens on states, is unrelated.)
+`σy^σ` to `r` (`StatefulLens.equivLens`).
 
 Forwarding, logging, counting and relabelling handlers have this shape. A handler that may answer
 without an inner query, such as a cache hit, or with several does not.
 
 ## Main definitions and results
 
-* `StateLens.equivLens`: stateful lenses are lenses `p ⊗ σy^σ → r`.
-* `StateLens.mapFreeM` and `StateLens.mapResumption`: stateful substitution on programs and
+* `StatefulLens.equivLens`: stateful lenses are lenses `p ⊗ σy^σ → r`.
+* `StatefulLens.mapFreeM` and `StatefulLens.mapResumption`: stateful substitution on programs and
   resumptions, related by `toResumption_mapFreeM`.
-* `StateLens.toStateful` and `mapFreeM_eq_run`: substitution along a stateful lens is
+* `StatefulLens.toStateful` and `mapFreeM_eq_run`: substitution along a stateful lens is
   `Handler.Stateful.run` of its handler.
-* `StateLens.pullHead`: the partial pullback of a tagged inner answer, which machines running
+* `StatefulLens.pullHead`: the partial pullback of a tagged inner answer, which machines running
   against the lens use to resume.
 -/
 
@@ -40,7 +40,7 @@ namespace PFunctor
 
 /-- A stateful lens: a handler for the outer interface `p` that forwards every query as one query
 of the inner interface `r`, threading a handler state `σ`. -/
-structure StateLens (p r : PFunctor.{u, u}) (σ : Type u) where
+structure StatefulLens (p r : PFunctor.{u, u}) (σ : Type u) where
   /-- The inner query issued for an outer query at a handler state. -/
   pos : p.A × σ → r.A
   /-- The outer answer determined by an inner answer. -/
@@ -48,14 +48,16 @@ structure StateLens (p r : PFunctor.{u, u}) (σ : Type u) where
   /-- The handler state after an inner answer. -/
   update : (query : p.A × σ) → r.B (pos query) → σ
 
-namespace StateLens
+@[deprecated (since := "2026-10-19")] alias StateLens := StatefulLens
+
+namespace StatefulLens
 
 variable {p r : PFunctor.{u, u}} {σ : Type u}
 
 /-- A stateful lens is a lens from the tensor of `p` with the state monomial `σy^σ` to `r`: the
 forward map issues the inner query, and the backward map returns the outer answer together with the
 next handler state. -/
-def equivLens : StateLens p r σ ≃ Lens (tensor p (selfMonomial σ)) r where
+def equivLens : StatefulLens p r σ ≃ Lens (tensor p (selfMonomial σ)) r where
   toFun L := ⟨L.pos, fun query answer ↦ (L.answer query answer, L.update query answer)⟩
   invFun l := ⟨l.toFunA, fun query answer ↦ (l.toFunB query answer).1,
     fun query answer ↦ (l.toFunB query answer).2⟩
@@ -63,14 +65,14 @@ def equivLens : StateLens p r σ ≃ Lens (tensor p (selfMonomial σ)) r where
   right_inv _ := rfl
 
 /-- Stateful substitution of a free program along a stateful lens. -/
-def mapFreeM (L : StateLens p r σ) {β : Type u} : FreeM p β → σ → FreeM r (β × σ)
+def mapFreeM (L : StatefulLens p r σ) {β : Type u} : FreeM p β → σ → FreeM r (β × σ)
   | .pure value, state => .pure (value, state)
   | .liftBind position next, state =>
       .liftBind (L.pos (position, state)) fun answer ↦
         L.mapFreeM (next (L.answer (position, state) answer)) (L.update (position, state) answer)
 
 /-- The one-step coalgebra of stateful substitution on resumptions. -/
-def mapStep (L : StateLens p r σ) {β : Type u} (x : Resumption p β × σ) :
+def mapStep (L : StatefulLens p r σ) {β : Type u} (x : Resumption p β × σ) :
     (β × σ) ⊕ r.Obj (Resumption p β × σ) :=
   Sum.elim (fun value ↦ Sum.inl (value, x.2))
     (fun query ↦ Sum.inr ⟨L.pos (query.1, x.2), fun answer ↦
@@ -78,12 +80,12 @@ def mapStep (L : StateLens p r σ) {β : Type u} (x : Resumption p β × σ) :
     (Resumption.dest x.1)
 
 /-- Stateful substitution of a resumption along a stateful lens. -/
-def mapResumption (L : StateLens p r σ) {β : Type u} (computation : Resumption p β)
+def mapResumption (L : StatefulLens p r σ) {β : Type u} (computation : Resumption p β)
     (state : σ) : Resumption r (β × σ) :=
   Resumption.corec L.mapStep (computation, state)
 
 /-- Stateful substitution commutes with the embedding of free programs into resumptions. -/
-theorem toResumption_mapFreeM (L : StateLens p r σ) {β : Type u} (program : FreeM p β)
+theorem toResumption_mapFreeM (L : StatefulLens p r σ) {β : Type u} (program : FreeM p β)
     (state : σ) :
     FreeM.toResumption (L.mapFreeM program state) =
       L.mapResumption (FreeM.toResumption program) state := by
@@ -103,12 +105,12 @@ theorem toResumption_mapFreeM (L : StateLens p r σ) {β : Type u} (program : Fr
       exact ih _ _
 
 /-- A stateful lens as a stateful handler into free programs: one inner query per outer query. -/
-def toStateful (L : StateLens p r σ) : Handler.Stateful (FreeM r) σ p := fun position state ↦
+def toStateful (L : StatefulLens p r σ) : Handler.Stateful (FreeM r) σ p := fun position state ↦
   FreeM.liftBind (L.pos (position, state)) fun answer ↦
     FreeM.pure (L.answer (position, state) answer, L.update (position, state) answer)
 
 /-- Stateful substitution along a stateful lens is `Handler.Stateful.run` of its handler. -/
-theorem mapFreeM_eq_run (L : StateLens p r σ) {β : Type u} (program : FreeM p β) (state : σ) :
+theorem mapFreeM_eq_run (L : StatefulLens p r σ) {β : Type u} (program : FreeM p β) (state : σ) :
     L.mapFreeM program state = L.toStateful.run program state := by
   induction program generalizing state with
   | pure value => rfl
@@ -126,13 +128,30 @@ theorem mapFreeM_eq_run (L : StateLens p r σ) {β : Type u} (program : FreeM p 
 machine's readout, the handler state and a tagged inner answer, it recovers the tagged outer
 answer and the next handler state, or `none` if the answer is not one the handler is waiting
 for. -/
-def pullHead [DecidableEq r.A] (L : StateLens p r σ) (β : Type u) :
+def pullHead [DecidableEq r.A] (L : StatefulLens p r σ) (β : Type u) :
     ((β ⊕ p.A) × σ) × r.Idx → Option (p.Idx × σ) := fun x ↦
   x.1.1.elim (fun _ ↦ none) fun position ↦
     if h : x.2.1 = L.pos (position, x.1.2) then
       some (⟨position, L.answer (position, x.1.2) (h ▸ x.2.2)⟩,
         L.update (position, x.1.2) (h ▸ x.2.2))
     else none
+
+end StatefulLens
+
+namespace StateLens
+
+@[deprecated (since := "2026-10-19")] alias pos := StatefulLens.pos
+@[deprecated (since := "2026-10-19")] alias answer := StatefulLens.answer
+@[deprecated (since := "2026-10-19")] alias update := StatefulLens.update
+@[deprecated (since := "2026-10-19")] alias equivLens := StatefulLens.equivLens
+@[deprecated (since := "2026-10-19")] alias mapFreeM := StatefulLens.mapFreeM
+@[deprecated (since := "2026-10-19")] alias mapStep := StatefulLens.mapStep
+@[deprecated (since := "2026-10-19")] alias mapResumption := StatefulLens.mapResumption
+@[deprecated (since := "2026-10-19")] alias toResumption_mapFreeM :=
+  StatefulLens.toResumption_mapFreeM
+@[deprecated (since := "2026-10-19")] alias toStateful := StatefulLens.toStateful
+@[deprecated (since := "2026-10-19")] alias mapFreeM_eq_run := StatefulLens.mapFreeM_eq_run
+@[deprecated (since := "2026-10-19")] alias pullHead := StatefulLens.pullHead
 
 end StateLens
 

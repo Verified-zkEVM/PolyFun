@@ -206,11 +206,13 @@ theorem castEquiv_trans {t t' t'' : M P} (h : t = t') (h' : t' = t'')
 
 /-- Transporting a vertex forward and then back is the identity. -/
 @[simp 1100]
-theorem castEquiv_symm_apply {t t' : M P} (h : t = t')
+theorem castEquiv_symm_castEquiv {t t' : M P} (h : t = t')
     (vertex : Vertex t) :
     castEquiv h.symm (castEquiv h vertex) = vertex := by
   subst t'
   rfl
+
+@[deprecated (since := "2026-10-19")] alias castEquiv_symm_apply := castEquiv_symm_castEquiv
 
 /-- Transporting a vertex along a tree equality is heterogeneously equal to the
 original vertex. -/
@@ -468,13 +470,15 @@ theorem splitAt_fst_isPrefix (n : Nat) {t : M P} (vertex : Vertex t) :
   ⟨(splitAt n vertex).2, append_splitAt n vertex⟩
 
 @[simp]
-theorem cast_root {t t' : M P} (h : t = t') :
+theorem castEquiv_root {t t' : M P} (h : t = t') :
     castEquiv h (.root t) = .root t' := by
   subst h
   rfl
 
+@[deprecated (since := "2026-10-19")] alias cast_root := castEquiv_root
+
 @[simp]
-theorem cast_child {t t' : M P} (h : t = t')
+theorem castEquiv_child {t t' : M P} (h : t = t')
     (direction : P.B (M.head t))
     (next : Vertex (M.children t direction)) :
     castEquiv h (.child direction next) =
@@ -483,22 +487,28 @@ theorem cast_child {t t' : M P} (h : t = t')
   subst h
   rfl
 
+@[deprecated (since := "2026-10-19")] alias cast_child := castEquiv_child
+
 @[simp]
 theorem castEquiv_rfl {t : M P} (vertex : Vertex t) :
     castEquiv rfl vertex = vertex :=
   rfl
 
 @[simp]
-theorem depth_cast {t t' : M P} (h : t = t') (vertex : Vertex t) :
+theorem depth_castEquiv {t t' : M P} (h : t = t') (vertex : Vertex t) :
     depth (castEquiv h vertex) = depth vertex := by
   subst h
   rfl
 
+@[deprecated (since := "2026-10-19")] alias depth_cast := depth_castEquiv
+
 @[simp]
-theorem subtree_cast {t t' : M P} (h : t = t') (vertex : Vertex t) :
+theorem subtree_castEquiv {t t' : M P} (h : t = t') (vertex : Vertex t) :
     subtree (castEquiv h vertex) = subtree vertex := by
   subst h
   rfl
+
+@[deprecated (since := "2026-10-19")] alias subtree_cast := subtree_castEquiv
 
 /-- Structural implementation of vertex pullback.  The equality records that
 the current target subtree is the image of the current source subtree, so the
@@ -634,7 +644,7 @@ private theorem pullMapLensAux_id (tree : M P) (target : M P)
     pullMapLensAux (Lens.id P) tree target htarget vertex =
       castEquiv (htarget.trans (M.mapLens_id tree)) vertex := by
   induction vertex generalizing tree with
-  | @root target => rw [pullMapLensAux, cast_root]
+  | @root target => rw [pullMapLensAux, castEquiv_root]
   | @child target direction next ih =>
       let mappedDirection := M.castDirection htarget direction
       let sourceDirection :=
@@ -659,7 +669,7 @@ private theorem pullMapLensAux_id (tree : M P) (target : M P)
         exact cast_heq _ direction
       have hdirection : sourceDirection = targetDirection :=
         eq_of_heq (hsource.trans htargetDirection.symm)
-      rw [pullMapLensAux, cast_child, Vertex.child.injEq]
+      rw [pullMapLensAux, castEquiv_child, Vertex.child.injEq]
       refine ⟨hdirection, ?_⟩
       have hrecursive := ih
         (M.children tree sourceDirection)
@@ -687,7 +697,7 @@ private theorem pullMapLensAux_comp {R : PFunctor.{uA₃, uB₃}}
             (htarget.trans (M.mapLens_comp g f tree)) vertex)) := by
   induction vertex generalizing tree with
   | @root target =>
-      rw [pullMapLensAux, cast_root, pullMapLens_root, pullMapLens_root]
+      rw [pullMapLensAux, castEquiv_root, pullMapLens_root, pullMapLens_root]
   | @child target direction next ih =>
       let mappedDirection := M.castDirection htarget direction
       let compositeDirection :=
@@ -712,7 +722,7 @@ private theorem pullMapLensAux_comp {R : PFunctor.{uA₃, uB₃}}
                   sequentialDirection) :=
             M.pullDirection_comp g f tree mappedDirection
           _ = fDirection := by rw [hsequential]
-      rw [pullMapLensAux, cast_child, pullMapLens_child,
+      rw [pullMapLensAux, castEquiv_child, pullMapLens_child,
         pullMapLens_child, Vertex.child.injEq]
       refine ⟨hdirection, ?_⟩
       let leftChildEq := (M.children_castDirection htarget direction).trans

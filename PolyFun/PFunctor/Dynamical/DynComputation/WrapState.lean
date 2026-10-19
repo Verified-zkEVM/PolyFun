@@ -12,7 +12,7 @@ public import PolyFun.PFunctor.Handler.StateLens
 /-!
 # Running a computation against a stateful lens
 
-`DynComputation.wrapState M L` runs `M` against a stateful lens `L : StateLens p r σ` as one
+`DynComputation.wrapState M L` runs `M` against a stateful lens `L : StatefulLens p r σ` as one
 product machine:
 - the hidden state is `M.State × σ`;
 - every outer query of `M` becomes exactly one inner query, so the visible query count is `M`'s;
@@ -34,7 +34,7 @@ variable {p r : PFunctor.{u, u}} {σ α β : Type u}
 /-- Run a returning computation against a stateful lens: the hidden state pairs the computation's
 state with the handler state, each outer query becomes one inner query, and the final handler
 state is returned alongside the result. -/
-abbrev wrapState (M : DynComputation.{u} p α β) (L : StateLens p r σ) :
+abbrev wrapState (M : DynComputation.{u} p α β) (L : StatefulLens p r σ) :
     DynComputation.{u} r (α × σ) (β × σ) :=
   ofStep (S := M.State × σ)
     (fun state ↦ Sum.elim (fun value ↦ Sum.inl (value, state.2))
@@ -43,12 +43,12 @@ abbrev wrapState (M : DynComputation.{u} p α β) (L : StateLens p r σ) :
       (M.view state.1))
     (fun input ↦ (M.init input.1, input.2))
 
-theorem view_wrapState_of_return (M : DynComputation.{u} p α β) (L : StateLens p r σ)
+theorem view_wrapState_of_return (M : DynComputation.{u} p α β) (L : StatefulLens p r σ)
     {state : M.State × σ} {value : β} (h : M.view state.1 = Sum.inl value) :
     (M.wrapState L).view state = Sum.inl (value, state.2) := by
   rw [view_ofStep, h]; rfl
 
-theorem view_wrapState_of_query (M : DynComputation.{u} p α β) (L : StateLens p r σ)
+theorem view_wrapState_of_query (M : DynComputation.{u} p α β) (L : StatefulLens p r σ)
     {state : M.State × σ} {position : p.A} {next : p.B position → M.State}
     (h : M.view state.1 = Sum.inr ⟨position, next⟩) :
     (M.wrapState L).view state = Sum.inr ⟨L.pos (position, state.2), fun answer ↦
@@ -57,7 +57,7 @@ theorem view_wrapState_of_query (M : DynComputation.{u} p α β) (L : StateLens 
 
 /-- A query exposed by the product machine is the lens image of a query of `M`. -/
 theorem exists_view_eq_query_of_wrapState (M : DynComputation.{u} p α β)
-    (L : StateLens p r σ) {state : M.State × σ} {position : r.A}
+    (L : StatefulLens p r σ) {state : M.State × σ} {position : r.A}
     {next : r.B position → M.State × σ}
     (h : (M.wrapState L).view state = Sum.inr ⟨position, next⟩) :
     ∃ (source : p.A) (sourceNext : p.B source → M.State),
@@ -72,7 +72,7 @@ theorem exists_view_eq_query_of_wrapState (M : DynComputation.{u} p α β)
     exact ⟨source, sourceNext, rfl, (Sum.inr.inj h).symm⟩
 
 /-- The product machine returns exactly when `M` does, with the current handler state. -/
-theorem view_eq_return_of_wrapState (M : DynComputation.{u} p α β) (L : StateLens p r σ)
+theorem view_eq_return_of_wrapState (M : DynComputation.{u} p α β) (L : StatefulLens p r σ)
     {state : M.State × σ} {result : β × σ}
     (h : (M.wrapState L).view state = Sum.inl result) :
     M.view state.1 = Sum.inl result.1 ∧ result.2 = state.2 := by
@@ -85,7 +85,7 @@ theorem view_eq_return_of_wrapState (M : DynComputation.{u} p α β) (L : StateL
 
 /-- State-level semantics: the product machine performs stateful substitution of `M`'s
 behavior. -/
-theorem behavior_wrapState (M : DynComputation.{u} p α β) (L : StateLens p r σ)
+theorem behavior_wrapState (M : DynComputation.{u} p α β) (L : StatefulLens p r σ)
     (state : M.State × σ) :
     (M.wrapState L).toDynSystem.behavior state =
       L.mapResumption (M.toDynSystem.behavior state.1) state.2 := by
@@ -96,34 +96,34 @@ theorem behavior_wrapState (M : DynComputation.{u} p α β) (L : StateLens p r �
         Resumption.corec (M.wrapState L).view := by
     apply Resumption.corec_unique
     intro state
-    rw [StateLens.mapResumption, Resumption.dest_corec]
-    simp only [StateLens.mapStep, dest_behavior_view]
+    rw [StatefulLens.mapResumption, Resumption.dest_corec]
+    simp only [StatefulLens.mapStep, dest_behavior_view]
     rcases hview : M.view state.1 with value | ⟨position, next⟩
     · rw [view_wrapState_of_return M L hview]; rfl
     · rw [view_wrapState_of_query M L hview]; rfl
   exact congrFun (h₁.trans h₂.symm) state
 
 /-- The product machine denotes stateful substitution of `M`'s denotation. -/
-@[simp] theorem denote_wrapState (M : DynComputation.{u} p α β) (L : StateLens p r σ)
+@[simp] theorem denote_wrapState (M : DynComputation.{u} p α β) (L : StatefulLens p r σ)
     (input : α × σ) :
     (M.wrapState L).denote input = L.mapResumption (M.denote input.1) input.2 :=
   behavior_wrapState M L (M.init input.1, input.2)
 
 /-- Running against a stateful lens transports implementation to stateful substitution. -/
 theorem Implements.wrapState {M : DynComputation.{u} p α β} {program : α → FreeM p β}
-    (h : M.Implements program) (L : StateLens p r σ) :
+    (h : M.Implements program) (L : StatefulLens p r σ) :
     (M.wrapState L).Implements fun input ↦ L.mapFreeM (program input.1) input.2 := by
   intro input
-  rw [denote_wrapState, h input.1, StateLens.toResumption_mapFreeM]
+  rw [denote_wrapState, h input.1, StatefulLens.toResumption_mapFreeM]
 
 /-- The product machine implements `Handler.Stateful.run` of the lens's stateful handler. -/
 theorem Implements.wrapState_run {M : DynComputation.{u} p α β} {program : α → FreeM p β}
-    (h : M.Implements program) (L : StateLens p r σ) :
+    (h : M.Implements program) (L : StatefulLens p r σ) :
     (M.wrapState L).Implements fun input ↦ L.toStateful.run (program input.1) input.2 := by
   intro input
   change (M.wrapState L).denote input =
     FreeM.toResumption (L.toStateful.run (program input.1) input.2)
-  rw [← StateLens.mapFreeM_eq_run]
+  rw [← StatefulLens.mapFreeM_eq_run]
   exact h.wrapState L input
 
 end PFunctor.DynSystem.DynComputation

@@ -20,7 +20,7 @@ transition lens `δ = Lens.fixState`; it is `Lens.speedup` on the interface lens
 
 The **`n`-step system** `Run_n(φ) = φ^{◁n} ∘ₗ δ^{(n)} : Sy^S ⇆ p^{◃n}` (§7.1.5)
 generalises this to all `n`, where `δ^{(n)}` is the `n`-fold comultiplication of
-the state comonoid on `S y^S` (`PFunctor.Comonoid.comultN` on `stateComonoid S`)
+the state comonoid on `S y^S` (`PFunctor.Comonoid.comulN` on `stateComonoid S`)
 and `φ^{◁n}` is the composition power of the interface lens (`Lens.compNthMap`).
 `DynSystem.nStep` is that construction on bundled systems: one composite
 `p^{◃n}`-step exposes `n` successive `p`-positions and threads the answers through
@@ -64,10 +64,10 @@ variable {S : Type u} {p : PFunctor.{u, u}}
 (Niu–Spivak §7.1.5): a single composite step exposes `n` successive `p`-positions,
 consuming a direction after each, and updates the state. Same state set as `φ`. -/
 def nStep (φ : DynSystem S p) (n : ℕ) : DynSystem S (compNth p n) :=
-  φ.compNthMap n ∘ₗ (stateComonoid S).comultN n
+  φ.compNthMap n ∘ₗ (stateComonoid S).comulN n
 
 theorem nStep_eq (φ : DynSystem S p) (n : ℕ) :
-    φ.nStep n = φ.compNthMap n ∘ₗ (stateComonoid S).comultN n := rfl
+    φ.nStep n = φ.compNthMap n ∘ₗ (stateComonoid S).comulN n := rfl
 
 /-- A zero-step system exposes the composition unit and leaves its state
 unchanged. -/

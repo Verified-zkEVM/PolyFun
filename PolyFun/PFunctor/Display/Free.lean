@@ -170,11 +170,13 @@ theorem transport_trans (S : Display.{uA, uB, uC, uD} P) {E : Type uE} (F : E �
 
 /-- Transporting forward and then backward along the same base-tree equality
 recovers the original displayed data. -/
-theorem transport_symm (S : Display.{uA, uB, uC, uD} P) {E : Type uE} (F : E → Type uF)
+theorem transport_symm_transport (S : Display.{uA, uB, uC, uD} P) {E : Type uE} (F : E → Type uF)
     {t t' : FreeM P E} (h : t = t') (d : FreeM.Displayed (S.toDisplayedAlgebra F) t) :
     S.transport F h.symm (S.transport F h d) = d := by
   cases h
   rfl
+
+@[deprecated (since := "2026-10-19")] alias transport_symm := transport_symm_transport
 
 /-- Transport along equality of the substitution function acts pointwise on
 the displayed data supplied at leaves. -/
@@ -323,7 +325,7 @@ theorem bind_assoc_symm (S : Display.{uA, uB, uC, uD} P)
           (fun x dx => S.bind (g x) (dg x dx) h dh)) =
       S.bind (t.bind g) (S.bind t d g dg) h dh := by
   rw [← S.bind_assoc t d g dg h dh]
-  exact S.transport_symm H (FreeM.bind_assoc t g h)
+  exact S.transport_symm_transport H (FreeM.bind_assoc t g h)
     (S.bind (t.bind g) (S.bind t d g dg) h dh)
 
 end Display

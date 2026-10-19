@@ -29,7 +29,7 @@ structures (Niu–Spivak Ex 7.39), so the laws are fields, not a `Prop`-class.
 The primary instance is the **state comonoid** `stateComonoid S` on the
 self-monomial `S y^S` (Niu–Spivak Ex 6.44 / 7.19): the contractible groupoid on
 the state set `S`, whose comultiplication is the transition lens `Lens.fixState`
-(`δ = (id, tgt, run)`) and whose counit is the stay-put self-loop. `comultN`
+(`δ = (id, tgt, run)`) and whose counit is the stay-put self-loop. `comulN`
 packages the canonical `n`-fold comultiplication `δ^{(n)} : c ⇆ c^{◃n}`
 (Niu–Spivak Prop 7.20) — the comonoid data underneath the `n`-step run `Run_n`
 (`PFunctor.DynSystem.nStep`).
@@ -67,18 +67,20 @@ structure Comonoid where
   instance agrees with the zeroth composition power of `carrier`. -/
   counit : Lens carrier y.{max uA uB, uB}
   /-- The comultiplication `δ : c ⇆ c ◃ c` — the composition operation. -/
-  comult : Lens carrier (carrier ◃ carrier)
+  comul : Lens carrier (carrier ◃ carrier)
   /-- Left counitality: `λ ∘ (ε ◃ id) ∘ δ = id`. -/
-  counit_left : Lens.Equiv.yComp.toLens ∘ₗ (counit ◃ₗ Lens.id carrier) ∘ₗ comult
+  counit_left : Lens.Equiv.yComp.toLens ∘ₗ (counit ◃ₗ Lens.id carrier) ∘ₗ comul
       = Lens.id carrier
   /-- Right counitality: `ρ ∘ (id ◃ ε) ∘ δ = id`. -/
-  counit_right : Lens.Equiv.compY.toLens ∘ₗ (Lens.id carrier ◃ₗ counit) ∘ₗ comult
+  counit_right : Lens.Equiv.compY.toLens ∘ₗ (Lens.id carrier ◃ₗ counit) ∘ₗ comul
       = Lens.id carrier
   /-- Coassociativity: `α ∘ (δ ◃ id) ∘ δ = (id ◃ δ) ∘ δ`. -/
-  coassoc : Lens.Equiv.compAssoc.toLens ∘ₗ (comult ◃ₗ Lens.id carrier) ∘ₗ comult
-      = (Lens.id carrier ◃ₗ comult) ∘ₗ comult
+  coassoc : Lens.Equiv.compAssoc.toLens ∘ₗ (comul ◃ₗ Lens.id carrier) ∘ₗ comul
+      = (Lens.id carrier ◃ₗ comul) ∘ₗ comul
 
 namespace Comonoid
+
+@[deprecated (since := "2026-10-19")] alias comult := comul
 
 /-! ## Morphisms of comonoids (retrofunctors) -/
 
@@ -92,8 +94,10 @@ structure Hom (C D : Comonoid.{uA, uB}) where
   /-- Preservation of identity arrows. -/
   map_counit : D.counit ∘ₗ toLens = C.counit
   /-- Preservation of composition. -/
-  map_comult : D.comult ∘ₗ toLens =
-    (toLens ◃ₗ toLens) ∘ₗ C.comult
+  map_comul : D.comul ∘ₗ toLens =
+    (toLens ◃ₗ toLens) ∘ₗ C.comul
+
+@[deprecated (since := "2026-10-19")] alias Hom.map_comult := Hom.map_comul
 
 instance {C D : Comonoid.{uA, uB}} : Coe (Hom C D) (Lens C.carrier D.carrier) :=
   ⟨Hom.toLens⟩
@@ -110,25 +114,25 @@ theorem Hom.ext {C D : Comonoid.{uA, uB}} (f g : Hom C D)
 def Hom.id (C : Comonoid.{uA, uB}) : Hom C C where
   toLens := Lens.id C.carrier
   map_counit := rfl
-  map_comult := by simp
+  map_comul := by simp
 
 /-- Composition of retrofunctors, in diagrammatic order. -/
 def Hom.comp {C D E : Comonoid.{uA, uB}} (f : Hom C D) (g : Hom D E) : Hom C E where
   toLens := g.toLens ∘ₗ f.toLens
   map_counit := by
     rw [← Lens.comp_assoc, g.map_counit, f.map_counit]
-  map_comult := by
+  map_comul := by
     calc
-      E.comult ∘ₗ (g.toLens ∘ₗ f.toLens) =
-          (E.comult ∘ₗ g.toLens) ∘ₗ f.toLens := rfl
-      _ = ((g.toLens ◃ₗ g.toLens) ∘ₗ D.comult) ∘ₗ f.toLens := by
-        rw [g.map_comult]
-      _ = (g.toLens ◃ₗ g.toLens) ∘ₗ (D.comult ∘ₗ f.toLens) := rfl
+      E.comul ∘ₗ (g.toLens ∘ₗ f.toLens) =
+          (E.comul ∘ₗ g.toLens) ∘ₗ f.toLens := rfl
+      _ = ((g.toLens ◃ₗ g.toLens) ∘ₗ D.comul) ∘ₗ f.toLens := by
+        rw [g.map_comul]
+      _ = (g.toLens ◃ₗ g.toLens) ∘ₗ (D.comul ∘ₗ f.toLens) := rfl
       _ = (g.toLens ◃ₗ g.toLens) ∘ₗ
-          ((f.toLens ◃ₗ f.toLens) ∘ₗ C.comult) := by
-        rw [f.map_comult]
+          ((f.toLens ◃ₗ f.toLens) ∘ₗ C.comul) := by
+        rw [f.map_comul]
       _ = ((g.toLens ∘ₗ f.toLens) ◃ₗ (g.toLens ∘ₗ f.toLens)) ∘ₗ
-          C.comult := by
+          C.comul := by
         rw [Lens.compMap_comp, Lens.comp_assoc]
 
 @[simp] theorem Hom.id_toLens (C : Comonoid.{uA, uB}) :
@@ -167,61 +171,69 @@ recursively by `δ^{(0)} = ε` and `δ^{(n+1)} = (id ◃ δ^{(n)}) ∘ δ`. Niu�
 Prop 7.20 recurses on the other factor, `δ^{(n+1)} = (δ^{(n)} ◃ id) ∘ δ`; the two
 agree by the canonicity of Prop 7.20(d), that every bracketing of the `n`-fold
 comultiplication agrees, which is not proved here. Only the definitional
-unfolders `comultN_zero` / `comultN_succ` are. This is the comonoid data
+unfolders `comulN_zero` / `comulN_succ` are. This is the comonoid data
 underneath the `n`-step run `PFunctor.DynSystem.nStep`. -/
-def comultN (C : Comonoid.{uA, uB}) : (n : ℕ) → Lens C.carrier (compNth C.carrier n)
+def comulN (C : Comonoid.{uA, uB}) : (n : ℕ) → Lens C.carrier (compNth C.carrier n)
   | 0 => C.counit
-  | n + 1 => (Lens.id C.carrier ◃ₗ C.comultN n) ∘ₗ C.comult
+  | n + 1 => (Lens.id C.carrier ◃ₗ C.comulN n) ∘ₗ C.comul
 
-@[simp] theorem comultN_zero (C : Comonoid.{uA, uB}) : C.comultN 0 = C.counit := rfl
+@[deprecated (since := "2026-10-19")] alias comultN := comulN
 
-@[simp] theorem comultN_succ (C : Comonoid.{uA, uB}) (n : ℕ) :
-    C.comultN (n + 1) = (Lens.id C.carrier ◃ₗ C.comultN n) ∘ₗ C.comult := rfl
+@[simp] theorem comulN_zero (C : Comonoid.{uA, uB}) : C.comulN 0 = C.counit := rfl
+
+@[deprecated (since := "2026-10-19")] alias comultN_zero := comulN_zero
+
+@[simp] theorem comulN_succ (C : Comonoid.{uA, uB}) (n : ℕ) :
+    C.comulN (n + 1) = (Lens.id C.carrier ◃ₗ C.comulN n) ∘ₗ C.comul := rfl
+
+@[deprecated (since := "2026-10-19")] alias comultN_succ := comulN_succ
 
 /-- A retrofunctor preserves every iterated comultiplication. This is the
-finite-path extension of `map_counit` and `map_comult`, and is the form used by
+finite-path extension of `map_counit` and `map_comul`, and is the form used by
 `DynSystem.nStep` consumers. -/
-theorem Hom.map_comultN {C D : Comonoid.{uA, uB}} (f : Hom C D) (n : ℕ) :
-    D.comultN n ∘ₗ f.toLens = f.toLens.compNthMap n ∘ₗ C.comultN n := by
+theorem Hom.map_comulN {C D : Comonoid.{uA, uB}} (f : Hom C D) (n : ℕ) :
+    D.comulN n ∘ₗ f.toLens = f.toLens.compNthMap n ∘ₗ C.comulN n := by
   induction n with
   | zero => simpa using f.map_counit
   | succ n ih =>
       have hleft :
-          (Lens.id D.carrier ◃ₗ D.comultN n) ∘ₗ (f.toLens ◃ₗ f.toLens) =
-            f.toLens ◃ₗ (f.toLens.compNthMap n ∘ₗ C.comultN n) := by
+          (Lens.id D.carrier ◃ₗ D.comulN n) ∘ₗ (f.toLens ◃ₗ f.toLens) =
+            f.toLens ◃ₗ (f.toLens.compNthMap n ∘ₗ C.comulN n) := by
         calc
           _ = (Lens.id D.carrier ∘ₗ f.toLens) ◃ₗ
-                (D.comultN n ∘ₗ f.toLens) :=
+                (D.comulN n ∘ₗ f.toLens) :=
               (Lens.compMap_comp f.toLens f.toLens
-                (Lens.id D.carrier) (D.comultN n)).symm
+                (Lens.id D.carrier) (D.comulN n)).symm
           _ = _ := by rw [Lens.id_comp, ih]
       have hright :
           (f.toLens ◃ₗ f.toLens.compNthMap n) ∘ₗ
-              (Lens.id C.carrier ◃ₗ C.comultN n) =
-            f.toLens ◃ₗ (f.toLens.compNthMap n ∘ₗ C.comultN n) := by
+              (Lens.id C.carrier ◃ₗ C.comulN n) =
+            f.toLens ◃ₗ (f.toLens.compNthMap n ∘ₗ C.comulN n) := by
         calc
           _ = (f.toLens ∘ₗ Lens.id C.carrier) ◃ₗ
-                (f.toLens.compNthMap n ∘ₗ C.comultN n) :=
-              (Lens.compMap_comp (Lens.id C.carrier) (C.comultN n)
+                (f.toLens.compNthMap n ∘ₗ C.comulN n) :=
+              (Lens.compMap_comp (Lens.id C.carrier) (C.comulN n)
                 f.toLens (f.toLens.compNthMap n)).symm
           _ = _ := by rw [Lens.comp_id]
-      change ((Lens.id D.carrier ◃ₗ D.comultN n) ∘ₗ D.comult) ∘ₗ f.toLens =
+      change ((Lens.id D.carrier ◃ₗ D.comulN n) ∘ₗ D.comul) ∘ₗ f.toLens =
         (f.toLens ◃ₗ f.toLens.compNthMap n) ∘ₗ
-          ((Lens.id C.carrier ◃ₗ C.comultN n) ∘ₗ C.comult)
+          ((Lens.id C.carrier ◃ₗ C.comulN n) ∘ₗ C.comul)
       calc
-        ((Lens.id D.carrier ◃ₗ D.comultN n) ∘ₗ D.comult) ∘ₗ f.toLens =
-            (Lens.id D.carrier ◃ₗ D.comultN n) ∘ₗ
-              (D.comult ∘ₗ f.toLens) := rfl
-        _ = (Lens.id D.carrier ◃ₗ D.comultN n) ∘ₗ
-              ((f.toLens ◃ₗ f.toLens) ∘ₗ C.comult) := by rw [f.map_comult]
-        _ = ((Lens.id D.carrier ◃ₗ D.comultN n) ∘ₗ
-              (f.toLens ◃ₗ f.toLens)) ∘ₗ C.comult := rfl
+        ((Lens.id D.carrier ◃ₗ D.comulN n) ∘ₗ D.comul) ∘ₗ f.toLens =
+            (Lens.id D.carrier ◃ₗ D.comulN n) ∘ₗ
+              (D.comul ∘ₗ f.toLens) := rfl
+        _ = (Lens.id D.carrier ◃ₗ D.comulN n) ∘ₗ
+              ((f.toLens ◃ₗ f.toLens) ∘ₗ C.comul) := by rw [f.map_comul]
+        _ = ((Lens.id D.carrier ◃ₗ D.comulN n) ∘ₗ
+              (f.toLens ◃ₗ f.toLens)) ∘ₗ C.comul := rfl
         _ = ((f.toLens ◃ₗ f.toLens.compNthMap n) ∘ₗ
-              (Lens.id C.carrier ◃ₗ C.comultN n)) ∘ₗ C.comult := by
-                exact congrArg (fun l => l ∘ₗ C.comult) (hleft.trans hright.symm)
+              (Lens.id C.carrier ◃ₗ C.comulN n)) ∘ₗ C.comul := by
+                exact congrArg (fun l => l ∘ₗ C.comul) (hleft.trans hright.symm)
         _ = (f.toLens ◃ₗ f.toLens.compNthMap n) ∘ₗ
-              ((Lens.id C.carrier ◃ₗ C.comultN n) ∘ₗ C.comult) :=
+              ((Lens.id C.carrier ◃ₗ C.comulN n) ∘ₗ C.comul) :=
                 Lens.comp_assoc _ _ _
+
+@[deprecated (since := "2026-10-19")] alias Hom.map_comultN := Hom.map_comulN
 
 /-! ## State systems (Niu–Spivak Ex 7.22) -/
 
@@ -233,7 +245,7 @@ groupoid). A predicate, never a field (Niu–Spivak Ex 7.22).
 Reference API: exercised in `PolyFunTest/PFunctor/Comonoid.lean`, staged for
 downstream state-system consumers. -/
 def IsStateSystem (C : Comonoid.{uA, uB}) : Prop :=
-  ∀ a : C.carrier.A, Function.Bijective (C.comult.toFunA a).2
+  ∀ a : C.carrier.A, Function.Bijective (C.comul.toFunA a).2
 
 end Comonoid
 
@@ -247,7 +259,7 @@ counit is the stay-put self-loop `s ↦ (⋆ ↦ s)`. -/
 def stateComonoid (S : Type u) : Comonoid.{u, u} where
   carrier := selfMonomial S
   counit := (fun _ => PUnit.unit) ⇆ (fun s _ => s)
-  comult := Lens.fixState
+  comul := Lens.fixState
   counit_left := rfl
   counit_right := rfl
   coassoc := rfl
@@ -255,8 +267,10 @@ def stateComonoid (S : Type u) : Comonoid.{u, u} where
 @[simp] theorem stateComonoid_carrier (S : Type u) :
     (stateComonoid S).carrier = selfMonomial S := rfl
 
-@[simp] theorem stateComonoid_comult (S : Type u) :
-    (stateComonoid S).comult = Lens.fixState := rfl
+@[simp] theorem stateComonoid_comul (S : Type u) :
+    (stateComonoid S).comul = Lens.fixState := rfl
+
+@[deprecated (since := "2026-10-19")] alias stateComonoid_comult := stateComonoid_comul
 
 @[simp, grind =] theorem stateComonoid_counit (S : Type u) :
     (stateComonoid S).counit = ((fun _ => PUnit.unit) ⇆ (fun s _ => s)) := rfl
@@ -268,7 +282,7 @@ variable {S T : Type u}
 /-- A very-well-behaved state lens is exactly a retrofunctor between state
 comonoids. Preservation of the counit is `GetPut`; preservation of
 comultiplication splits into `PutGet` on positions and `PutPut` on directions.
-The argument is a get/put `Lens.State`, not a one-query stateful handler `StateLens`. -/
+The argument is a get/put `Lens.State`. -/
 def ofStateLens (L : Lens.State S T) [L.IsVeryWellBehaved] :
     Comonoid.Hom (stateComonoid S) (stateComonoid T) where
   toLens := L
@@ -276,21 +290,21 @@ def ofStateLens (L : Lens.State S T) [L.IsVeryWellBehaved] :
     refine Lens.ext _ _ (fun _ => rfl) (fun s => ?_)
     funext _
     exact Lens.State.put_get (L := L) s
-  map_comult := by
-    have hA : ∀ s, ((stateComonoid T).comult ∘ₗ L).toFunA s =
-        ((L ◃ₗ L) ∘ₗ (stateComonoid S).comult).toFunA s := fun s => by
+  map_comul := by
+    have hA : ∀ s, ((stateComonoid T).comul ∘ₗ L).toFunA s =
+        ((L ◃ₗ L) ∘ₗ (stateComonoid S).comul).toFunA s := fun s => by
       apply Sigma.ext
       · rfl
       · exact heq_of_eq (funext fun t => (Lens.State.get_put (L := L) s t).symm)
     apply Lens.ext _ _ hA
     intro s
     apply eq_of_heq
-    have hraw : ((stateComonoid T).comult ∘ₗ L).toFunB s =
-        ((L ◃ₗ L) ∘ₗ (stateComonoid S).comult).toFunB s := by
+    have hraw : ((stateComonoid T).comul ∘ₗ L).toFunB s =
+        ((L ◃ₗ L) ∘ₗ (stateComonoid S).comul).toFunB s := by
       funext d
       exact (Lens.State.put_put (L := L) s d.1 d.2).symm
-    have hcast : (hA s ▸ ((L ◃ₗ L) ∘ₗ (stateComonoid S).comult).toFunB s) ≍
-        ((L ◃ₗ L) ∘ₗ (stateComonoid S).comult).toFunB s :=
+    have hcast : (hA s ▸ ((L ◃ₗ L) ∘ₗ (stateComonoid S).comul).toFunB s) ≍
+        ((L ◃ₗ L) ∘ₗ (stateComonoid S).comul).toFunB s :=
       eqRec_heq_self _ _
     exact (heq_of_eq hraw).trans hcast.symm
 
@@ -302,9 +316,9 @@ the three very-well-behaved lens laws. -/
 theorem stateLens_isVeryWellBehaved
     (F : Comonoid.Hom (stateComonoid S) (stateComonoid T)) :
     Lens.State.IsVeryWellBehaved (show Lens.State S T from F.toLens) where
-  get_put s t := (congrArg (fun l => (l.toFunA s).2 t) F.map_comult).symm
+  get_put s t := (congrArg (fun l => (l.toFunA s).2 t) F.map_comul).symm
   put_get s := congrArg (fun l => l.toFunB s PUnit.unit) F.map_counit
-  put_put s t₁ t₂ := (congrArg (fun l => l.toFunB s ⟨t₁, t₂⟩) F.map_comult).symm
+  put_put s t₁ t₂ := (congrArg (fun l => l.toFunB s ⟨t₁, t₂⟩) F.map_comul).symm
 
 /-- Retrofunctors between state comonoids are equivalent to ordinary state
 lenses equipped with the very-well-behaved laws. The subtype records genuine

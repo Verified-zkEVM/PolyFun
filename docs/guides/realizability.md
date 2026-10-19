@@ -397,19 +397,19 @@ a backend that copies both results into one pair encoding cannot meet.
 ### Stateful handler substitution
 
 A reduction often runs its adversary against a stateful handler that forwards
-each call, logging or counting along the way. `StateLens p r σ`
+each call, logging or counting along the way. `StatefulLens p r σ`
 (`PFunctor/Handler/StateLens.lean`) is such a handler when it answers every outer
 query with exactly one inner query. Its data is that of a lens
-`p ⊗ σy^σ → r` (`StateLens.equivLens`), and substitution along it is
+`p ⊗ σy^σ → r` (`StatefulLens.equivLens`), and substitution along it is
 `Handler.Stateful.run` of its handler (`mapFreeM_eq_run`). On the program side,
-`StateLens.wpFold_charge_mapFreeM_le` bounds the worst-case charge of a
+`StatefulLens.wpFold_charge_mapFreeM_le` bounds the worst-case charge of a
 substituted program by the source program's, with each call charged its
 forwarded query's worst case, the stateful counterpart of
 `wpFold_charge_liftM_le`.
 `DynComputation.wrapState` runs a machine against it as one product machine, and
 `QuantitativeRealization.wrapState` (`Quantitative/Handler.lean`) assembles that
 machine's code from the adversary's code and the lens code
-`StateLens.QuantitativelyAdmissible`.
+`StatefulLens.QuantitativelyAdmissible`.
 
 `RunsWithinUnder.wrapState` transfers a bound through the substitution. It needs
 two hypotheses beyond the per-step `WrapStateCostCertificate`:

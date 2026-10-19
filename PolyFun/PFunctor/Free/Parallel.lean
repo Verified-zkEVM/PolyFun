@@ -107,7 +107,7 @@ def parallelSumMap
     parallelSumMap (Lens.id P) (Lens.id Q) = Lens.id (P ∥ Q) := by
   ext operation answer <;> cases operation <;> rfl
 
-theorem parallelSumMap_comp
+theorem parallelSumMap_comp_parallelSumMap
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
     {W : PFunctor.{uA₅, uB}} {X : PFunctor.{uA₆, uB}}
@@ -118,6 +118,9 @@ theorem parallelSumMap_comp
       parallelSumMap (secondLeft ∘ₗ firstLeft)
         (secondRight ∘ₗ firstRight) := by
   ext operation answer <;> cases operation <;> rfl
+
+@[deprecated (since := "2026-10-19")] alias parallelSumMap_comp :=
+  parallelSumMap_comp_parallelSumMap
 
 /-- Embed the left interface into its one-or-both parallel sum. -/
 def parallelSumLeft (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :

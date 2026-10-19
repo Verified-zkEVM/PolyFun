@@ -100,8 +100,8 @@ private theorem decode_extension_bind {R : PFunctor.{u, u}} {E F : Type u}
   let source : (FreeP R ◃ FreeP R).Obj F :=
     .mk ⟨x.fst, fun path => (f (x.snd path)).fst⟩
       (fun direction => (f (x.snd direction.1)).snd direction.2)
-  change FreeP.decode (Lens.mapObj (FreeP.mult (P := R)) source) = _
-  rw [FreeP.decode_mult]
+  change FreeP.decode (Lens.mapObj (FreeP.mul (P := R)) source) = _
+  rw [FreeP.decode_mul]
   have hnest : FreeP.nest source =
       FreeP.relabel (fun value => FreeP.decode (f value)) x := rfl
   rw [hnest, FreeP.decode_relabel]

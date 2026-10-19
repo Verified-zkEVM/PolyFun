@@ -18,7 +18,7 @@ the ways an effect stack composes:
 * `mapBase` interprets the base free monad of a stateful handler through an outer handler, so a
   handler answering in `StateT S (FreeM Q)` becomes one answering in `StateT S m`;
 * `sum` runs two stateful handlers on the two summands of `P + Q` with a product state;
-* `pi` runs an indexed family of stateful handlers on `PFunctor.sigma P` with a dependent
+* `sigma` runs an indexed family of stateful handlers on `PFunctor.sigma P` with a dependent
   product state, updating one component per request;
 * `flatten` reassociates a stateful handler over a stateful base into one product state;
 * `extend` and `extendLeft` add a passive auxiliary state component, and `fixSnd` projects one
@@ -58,7 +58,7 @@ theorem run_map_eq_of_apply_map_eq [Monad m] [LawfulMonad m]
     exact bind_congr fun r => run_map_eq_of_apply_map_eq h₁ h₂ proj hproj (k r.1) r.2
 
 /-- The value-only form of `run_map_eq_of_apply_map_eq`. -/
-theorem map_fst_run_eq_of_apply_map_eq [Monad m] [LawfulMonad m]
+theorem fst_map_run_eq_of_apply_map_eq [Monad m] [LawfulMonad m]
     (h₁ : Stateful m S₁ P) (h₂ : Stateful m S₂ P) (proj : S₁ → S₂)
     (hproj : ∀ a s, Prod.map _root_.id proj <$> (h₁ a).run s = (h₂ a).run (proj s)) {α : Type u}
     (x : FreeM P α) (s : S₁) :
@@ -66,16 +66,21 @@ theorem map_fst_run_eq_of_apply_map_eq [Monad m] [LawfulMonad m]
   rw [← run_map_eq_of_apply_map_eq h₁ h₂ proj hproj x s, Functor.map_map]
   rfl
 
+@[deprecated (since := "2026-10-19")] alias map_fst_run_eq_of_apply_map_eq :=
+  fst_map_run_eq_of_apply_map_eq
+
 /-- A stateful handler over the same interface whose answers, ignoring the state, are the
 requests themselves leaves every program's value unchanged. -/
-theorem map_fst_run_eq_self (h : Stateful (FreeM P) S P)
+theorem fst_map_run_eq_self (h : Stateful (FreeM P) S P)
     (hh : ∀ a s, Prod.fst <$> (h a).run s = FreeM.lift a) {α : Type u} :
     ∀ (x : FreeM P α) (s : S), Prod.fst <$> h.run x s = x
   | .pure a, s => by simp
   | .liftBind a k, s => by
     rw [run_liftBind, map_bind, FreeM.liftBind_eq, FreeM.bind_eq_bind, ← hh a s,
       bind_map_left]
-    exact bind_congr fun r => map_fst_run_eq_self h hh (k r.1) r.2
+    exact bind_congr fun r => fst_map_run_eq_self h hh (k r.1) r.2
+
+@[deprecated (since := "2026-10-19")] alias map_fst_run_eq_self := fst_map_run_eq_self
 
 /-! ### Changing the base monad -/
 
@@ -129,21 +134,25 @@ component and leaves the first component unchanged. -/
 
 /-- Run an indexed family of stateful handlers on the indexed sum, each member on its own
 component of a dependent product state. -/
-def pi {I : Type u} [DecidableEq I] [Functor m] {P : I → PFunctor.{uA, u}} {S : I → Type u}
+def sigma {I : Type u} [DecidableEq I] [Functor m] {P : I → PFunctor.{uA, u}} {S : I → Type u}
     (f : (i : I) → Stateful m (S i) (P i)) :
     Stateful m ((i : I) → S i) (PFunctor.sigma P) :=
   fun x => StateT.mk fun s =>
     Prod.map _root_.id (Function.update s (PFunctor.sigma.fst x)) <$>
       (f (PFunctor.sigma.fst x) (PFunctor.sigma.snd x)).run (s (PFunctor.sigma.fst x))
 
+@[deprecated (since := "2026-10-19")] alias pi := sigma
+
 /-- The product handler answers a request at member `i` with the `i`-th handler on the `i`-th
 state component and updates only that component. -/
-@[simp] theorem pi_mk_run {I : Type u} [DecidableEq I] [Functor m] {P : I → PFunctor.{uA, u}}
+@[simp] theorem sigma_mk_run {I : Type u} [DecidableEq I] [Functor m] {P : I → PFunctor.{uA, u}}
     {S : I → Type u} (f : (i : I) → Stateful m (S i) (P i)) (i : I) (a : (P i).A)
     (s : (i : I) → S i) :
-    (pi f (PFunctor.sigma.mk i a)).run s =
+    (sigma f (PFunctor.sigma.mk i a)).run s =
       Prod.map _root_.id (Function.update s i) <$> (f i a).run (s i) :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias pi_mk_run := sigma_mk_run
 
 /-- Reassociate a stateful handler over a stateful base into one product state; the outer state
 is the first component. -/
