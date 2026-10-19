@@ -158,6 +158,20 @@ def toResumptionHom : FreeM p →ᵐ Resumption p where
 @[simp] theorem toResumptionHom_apply (program : FreeM p α) :
     toResumptionHom program = toResumption program := rfl
 
+/-- The finite-program embedding is the canonical lift from `FreeM p` to `Resumption p`.
+`Resumption p` is an abbreviation of an M-type, so the elaborator does not insert this lift on
+its own: write `liftM program`. Composed with the lift into `ITree p`, it does lift `FreeM p`
+programs into `ITree p` automatically. -/
+instance : MonadLift (FreeM p) (Resumption p) where
+  monadLift := toResumption
+
+instance : LawfulMonadLift (FreeM p) (Resumption p) where
+  monadLift_pure _ := rfl
+  monadLift_bind := toResumption_bind
+
+@[simp] theorem monadLift_eq_toResumption (program : FreeM p α) :
+    (monadLift program : Resumption p α) = toResumption program := rfl
+
 end MonadHom
 
 end PFunctor.FreeM

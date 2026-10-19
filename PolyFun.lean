@@ -227,6 +227,7 @@ public import PolyFun.PFunctor.Display.M
 public import PolyFun.PFunctor.Display.Parallel
 public import PolyFun.PFunctor.Display.Parallel.Free
 public import PolyFun.PFunctor.Display.Parallel.Lens
+public import PolyFun.PFunctor.Dynamical.Automata
 public import PolyFun.PFunctor.Dynamical.Basic
 public import PolyFun.PFunctor.Dynamical.Behavior
 public import PolyFun.PFunctor.Dynamical.Bisimulation

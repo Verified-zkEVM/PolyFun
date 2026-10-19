@@ -16,6 +16,7 @@ proves that a second input list can be run from the first list's final state.
 |---|---|---|
 | Describe state exposure and update | `PFunctor.DynSystem` | `PolyFun.PFunctor.Dynamical.Basic` |
 | Run a Moore machine on inputs | `MooreMachine.run`, `trace` | `PolyFun.PFunctor.Dynamical.Run` |
+| Use CSLib's and Mathlib's automata theory | `MooreMachine.toFLTS`, `DeterministicAutomaton.toDA`, `toFinAcc`, `toDFA` | `PolyFun.PFunctor.Dynamical.Automata` |
 | Describe arbitrary prefixes and continuing runs | `DynSystem.Prefix`, `Run` | `PolyFun.PFunctor.Dynamical.Run` |
 | Initialize a return-capable machine | `DynSystem.DynComputation` | `PolyFun.PFunctor.Dynamical.DynComputation` |
 | Interpret a finite query budget | `DynComputation.runWith`, `ImplementsWithin` | `PolyFun.PFunctor.Dynamical.DynComputation.Bounded` |

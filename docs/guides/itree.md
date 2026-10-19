@@ -70,6 +70,11 @@ follow the polynomial event interface described below.
   `Resumption (P + y) α`. Thus finite programs embed as the well-founded,
   tau-free fragment, while arbitrary ITrees use the same resumption boundary
   with `y` recording silent steps.
+- The embeddings are the canonical monad lifts `FreeM P → Resumption P → ITree P`
+  (`MonadLift` with `LawfulMonadLift`). A `do` block in `ITree P` runs a
+  `FreeM P` program directly, and `liftM` of a finite program is
+  `FreeM.toITree`. `Resumption P` is an abbreviation of an M-type, so a lift into
+  it is written `liftM program`.
 - Lean's core `whileM` has the same continue/terminate protocol as `ITree.iter`
   but uses generic partial recursion and requires an inhabited result type.
   Import `PolyFun.ITree.Do` and write `open scoped ITree` to make `while`

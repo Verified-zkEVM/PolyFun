@@ -142,6 +142,18 @@ theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β
       ITree.shape'_query _ _, ITree.shape'_query _ _, ?_⟩
     exact fun direction => ⟨next (lens.toFunB position direction), rfl, rfl⟩
 
+/-- The tau-free embedding is the canonical lift from `Resumption p` to `ITree p`. Composed with
+the lift from `FreeM p`, it embeds finite programs as `FreeM.toITree`. -/
+instance : MonadLift (Resumption p) (_root_.ITree p) where
+  monadLift := toITree
+
+instance : LawfulMonadLift (Resumption p) (_root_.ITree p) where
+  monadLift_pure := toITree_pure
+  monadLift_bind := toITree_bind
+
+@[simp] theorem monadLift_eq_toITree (computation : Resumption p β) :
+    (monadLift computation : _root_.ITree p β) = toITree computation := rfl
+
 /-! ## The tau-free greatest invariant -/
 
 end PFunctor.Resumption
