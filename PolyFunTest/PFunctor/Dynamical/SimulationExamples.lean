@@ -169,10 +169,8 @@ example (D : DynSystem S p) :
       ⟨⟨S, D⟩, fun _ => True, fun _ => True, fun _ => True⟩
     DynSystem.SafetyRefinement system system
       (DynSystem.StepRel.comp
-        (DynSystem.StepRel.top :
-          DynSystem.StepRel system.toDynSystem system.toDynSystem)
-        (DynSystem.StepRel.top :
-          DynSystem.StepRel system.toDynSystem system.toDynSystem)) := by
+        (⊤ : DynSystem.StepRel system.toDynSystem system.toDynSystem)
+        (⊤ : DynSystem.StepRel system.toDynSystem system.toDynSystem)) := by
   intro system
   exact (DynSystem.SafetyRefinement.reflTop system).comp
     (DynSystem.SafetyRefinement.reflTop system)
@@ -180,23 +178,22 @@ example (D : DynSystem S p) :
 /-! Concrete-step relations expose the expected relational algebra. -/
 
 example (D : DynSystem S p) :
-    DynSystem.StepRel.comp (DynSystem.StepRel.id D) DynSystem.StepRel.top =
-      (DynSystem.StepRel.top : DynSystem.StepRel D D) := by simp
+    DynSystem.StepRel.comp (DynSystem.StepRel.id D) ⊤ = (⊤ : DynSystem.StepRel D D) := by simp
 
 example (D : DynSystem S p) :
     DynSystem.StepRel.reverse
-        (DynSystem.StepRel.comp DynSystem.StepRel.top (DynSystem.StepRel.id D)) =
-      (DynSystem.StepRel.top : DynSystem.StepRel D D) := by simp
+        (DynSystem.StepRel.comp ⊤ (DynSystem.StepRel.id D)) = (⊤ : DynSystem.StepRel D D) := by
+  simp
 
 /-- Mutual refinements can weaken both endpoint matching relations together. -/
 example (D : DynSystem S p) :
     let system : DynSystem.SafetySpec.{u} p :=
       ⟨⟨S, D⟩, fun _ => True, fun _ => True, fun _ => True⟩
     DynSystem.MutualSafetyRefinement system system
-      DynSystem.StepRel.top DynSystem.StepRel.top := by
+      ⊤ ⊤ := by
   intro system
   exact (DynSystem.MutualSafetyRefinement.refl system
-    DynSystem.StepRel.top DynSystem.StepRel.top (fun _ => trivial) (fun _ => trivial)).weakenMatch
+    ⊤ ⊤ (fun _ => trivial) (fun _ => trivial)).weakenMatch
       (fun _ _ h => h) (fun _ _ h => h)
 
 end PFunctor

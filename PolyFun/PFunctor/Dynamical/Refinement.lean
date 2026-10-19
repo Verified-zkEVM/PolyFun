@@ -53,7 +53,7 @@ some related specification step, preserving both `matchStep` and the state
 relation. Initial states and semantic predicates are deliberately separate. -/
 -- The state universes (`u₁`, `u₂`) and the interface universes are independent.
 structure ForwardSimulation (impl : DynSystem SImpl p) (spec : DynSystem SSpec q)
-    (matchStep : StepRel impl spec := StepRel.top) where
+    (matchStep : StepRel impl spec := ⊤) where
   /-- The relation linking implementation states to specification states. -/
   StateRel : SImpl → SSpec → Prop
   /-- Every implementation step has a matching specification step that
@@ -107,7 +107,7 @@ simulation preserves at each step: choosing different `StepRel`s recovers
 event-preserving, ticket-preserving, or observation-preserving refinements. -/
 -- The state universes (`u₁`, `u₂`) and the interface universes are independent.
 structure SafetyRefinement (impl : SafetySpec.{u₁} p) (spec : SafetySpec.{u₂} q)
-    (matchStep : StepRel impl.toDynSystem spec.toDynSystem := StepRel.top)
+    (matchStep : StepRel impl.toDynSystem spec.toDynSystem := ⊤)
     extends ForwardSimulation impl.toDynSystem spec.toDynSystem matchStep where
   /-- Every initial implementation state is related to an initial
   specification state. -/
@@ -129,7 +129,7 @@ variable {impl : DynSystem SImpl p} {spec : DynSystem SSpec q}
 each concrete step to itself. This is the canonical witness that every system
 refines itself. -/
 def refl {S : Type u} (system : DynSystem S p)
-    (matchStep : StepRel system system := StepRel.top)
+    (matchStep : StepRel system system := ⊤)
     (hmatch : ∀ step : system.Step, matchStep step step) :
     ForwardSimulation system system matchStep where
   StateRel st₁ st₂ := st₁ = st₂
@@ -137,8 +137,8 @@ def refl {S : Type u} (system : DynSystem S p)
     | rfl, d => ⟨d, hmatch ⟨_, d⟩, rfl⟩
 
 /-- The identity simulation using the permissive step relation. -/
-def reflTop {S : Type u} (system : DynSystem S p) : ForwardSimulation system system StepRel.top :=
-  refl system StepRel.top fun _ => trivial
+def reflTop {S : Type u} (system : DynSystem S p) : ForwardSimulation system system ⊤ :=
+  refl system ⊤ fun _ => trivial
 
 /-- Weaken the required step relation of a forward simulation. The state
 relation and its preservation proof are unchanged. -/
@@ -323,7 +323,7 @@ variable {impl : SafetySpec.{u₁} p} {spec : SafetySpec.{u₂} q}
 /-- The identity safety refinement, provided that `matchStep` relates each
 concrete step to itself. -/
 def refl (system : SafetySpec.{u} p)
-    (matchStep : StepRel system.toDynSystem system.toDynSystem := StepRel.top)
+    (matchStep : StepRel system.toDynSystem system.toDynSystem := ⊤)
     (hmatch : ∀ step : system.toDynSystem.Step, matchStep step step) :
     SafetyRefinement system system matchStep where
   toForwardSimulation := ForwardSimulation.refl system.toDynSystem matchStep hmatch
@@ -334,8 +334,8 @@ def refl (system : SafetySpec.{u} p)
     | rfl, h => h
 
 /-- The identity safety refinement using the permissive step relation. -/
-def reflTop (system : SafetySpec.{u} p) : SafetyRefinement system system StepRel.top :=
-  refl system StepRel.top fun _ => trivial
+def reflTop (system : SafetySpec.{u} p) : SafetyRefinement system system ⊤ :=
+  refl system ⊤ fun _ => trivial
 
 /-- Weaken the required step relation of a safety refinement while retaining
 its operational state relation and all verification-policy obligations. -/
@@ -517,7 +517,7 @@ end SafetyRefinement
 `spec` to `impl`, with the step-matching relation reversed accordingly. It is
 only a change of viewpoint, not a second primitive notion. -/
 abbrev ReverseSafetyRefinement (impl : SafetySpec.{u₁} p) (spec : SafetySpec.{u₂} q)
-    (matchStep : StepRel impl.toDynSystem spec.toDynSystem := StepRel.top) :=
+    (matchStep : StepRel impl.toDynSystem spec.toDynSystem := ⊤) :=
   SafetyRefinement spec impl (StepRel.reverse matchStep)
 
 /-- `MutualSafetyRefinement left right matchForth matchBack` packages one forward
@@ -529,7 +529,7 @@ other's executions, possibly using independent state relations. It is not a
 coalgebraic bisimulation. -/
 -- The state universes and the interface universes are independent.
 structure MutualSafetyRefinement (left : SafetySpec.{u₁} p) (right : SafetySpec.{u₂} q)
-    (matchForth : StepRel left.toDynSystem right.toDynSystem := StepRel.top)
+    (matchForth : StepRel left.toDynSystem right.toDynSystem := ⊤)
     (matchBack : StepRel right.toDynSystem left.toDynSystem :=
       StepRel.reverse matchForth) where
   /-- The forward refinement: `left` refines `right` under `matchForth`. -/
@@ -566,7 +566,7 @@ def weakenMatch
 /-- The identity mutual safety refinement on `system`, provided that both step
 relations relate every direction to itself. -/
 def refl (system : SafetySpec.{u} p)
-    (matchForth : StepRel system.toDynSystem system.toDynSystem := StepRel.top)
+    (matchForth : StepRel system.toDynSystem system.toDynSystem := ⊤)
     (matchBack : StepRel system.toDynSystem system.toDynSystem :=
       StepRel.reverse matchForth)
     (hForth : ∀ step : system.toDynSystem.Step, matchForth step step)

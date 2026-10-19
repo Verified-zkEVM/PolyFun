@@ -633,13 +633,14 @@ namespace StepRel
 
 /-- The permissive step relation that accepts every pair of concrete process
 steps. -/
+@[deprecated "use `⊤`, the top of the lattice of relations" (since := "2026-10-19")]
 abbrev top
     {P₁ P₂ : Type v}
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {left : ProcessOver P₁ Γ} {right : ProcessOver P₂ Δ} :
     StepRel left right :=
-  PFunctor.DynSystem.StepRel.top
+  ⊤
 
 /-- Reverse a step-matching relation by flipping its two path
 arguments. -/
@@ -653,6 +654,7 @@ abbrev reverse
   PFunctor.DynSystem.StepRel.reverse rel
 
 /-- Conjunction of step-matching relations. -/
+@[deprecated "use `⊓`, the meet of the lattice of relations" (since := "2026-10-19")]
 abbrev inter
     {P₁ P₂ : Type v}
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
@@ -660,7 +662,7 @@ abbrev inter
     {left : ProcessOver P₁ Γ} {right : ProcessOver P₂ Δ}
     (first second : StepRel left right) :
     StepRel left right :=
-  PFunctor.DynSystem.StepRel.inter first second
+  first ⊓ second
 
 end StepRel
 

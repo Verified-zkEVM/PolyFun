@@ -65,8 +65,7 @@ example (rel : DynSystem.StepRel system₁ system₂)
 
 example (first second : DynSystem.StepRel system₁ system₂)
     (step₁ : system₁.Step) (step₂ : system₂.Step) :
-    DynSystem.StepRel.inter first second step₁ step₂ ↔
-      first step₁ step₂ ∧ second step₁ step₂ := Iff.rfl
+    (first ⊓ second) step₁ step₂ ↔ first step₁ step₂ ∧ second step₁ step₂ := Iff.rfl
 
 end StepRelations
 

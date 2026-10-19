@@ -54,7 +54,7 @@ abbrev ReverseSafetyRefinement
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     (impl : ProcessOver.SafetySpec Γ) (spec : ProcessOver.SafetySpec Δ)
     (matchStep : ProcessOver.StepRel impl.toProcess spec.toProcess :=
-      ProcessOver.StepRel.top) :=
+      ⊤) :=
   PFunctor.DynSystem.ReverseSafetyRefinement impl spec matchStep
 
 /--
@@ -71,7 +71,7 @@ abbrev MutualSafetyRefinement
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     (left : ProcessOver.SafetySpec Γ) (right : ProcessOver.SafetySpec Δ)
     (matchForth : ProcessOver.StepRel left.toProcess right.toProcess :=
-      ProcessOver.StepRel.top)
+      ⊤)
     (matchBack : ProcessOver.StepRel right.toProcess left.toProcess :=
       ProcessOver.StepRel.reverse matchForth) :=
   PFunctor.DynSystem.MutualSafetyRefinement left right matchForth matchBack

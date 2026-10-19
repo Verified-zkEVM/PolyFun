@@ -77,7 +77,7 @@ abbrev SafetyRefinement
     (spec : ProcessOver.SafetySpec Δ)
     (matchStep :
       ProcessOver.StepRel impl.toProcess spec.toProcess :=
-        ProcessOver.StepRel.top) :=
+        ⊤) :=
   PFunctor.DynSystem.SafetyRefinement impl spec matchStep
 
 namespace SafetyRefinement

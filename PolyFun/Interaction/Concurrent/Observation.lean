@@ -171,8 +171,8 @@ concrete process steps. Each step pairs its source process state with the
 complete path selected there.
 
 This is the basic matching interface used later by refinement, equivalence, and
-observation-preservation theorems. The permissive relation and conjunction live
-on the canonical type as `ProcessOver.StepRel.top` / `.inter`.
+observation-preservation theorems. The permissive relation and conjunction are
+the lattice operations `⊤` and `⊓` on relations.
 -/
 abbrev StepRel {Party : Type u}
     {P₁ P₂ : Type v} (left : Process P₁ Party) (right : Process P₂ Party) :=
