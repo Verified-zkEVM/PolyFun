@@ -27,6 +27,8 @@ Following the treatment of `CategoryTheory.Cat`, `RelCat`, `KleisliCat`, and
 `LensCat.of` / `ChartCat.of` move a `PFunctor` into the chosen carrier, and
 `LensCat.as` / `ChartCat.as` move back. Both are definitional, so a proof about
 a polynomial functor transports to its categorical avatar by `rfl`.
+`PFunctor/Category/Monoidal.lean` adds the cartesian structure on `LensCat` and the
+carriers `TensorCat` and `CompCat` for the parallel and composition products.
 -/
 
 @[expose] public section

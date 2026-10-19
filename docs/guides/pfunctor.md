@@ -93,6 +93,28 @@ the adjoint quadruple between `Set` and `Poly`), `Lens.sectionEquiv` for section
 `Lens.toPurePowerEquiv` and `Lens.toMonomialEquiv` for lenses into representables and monomials,
 and `Lens.sectionTensorEquiv` for sections of `p ⊗ q`.
 
+## Monoidal structures
+
+[`Lens/Coherence.lean`](../../PolyFun/PFunctor/Lens/Coherence.lean) states the coherence laws of
+the parallel product `⊗` (pentagon, triangle, braiding naturality, symmetry, both hexagons) and of
+the composition product `◃` (associator and unitor naturality, pentagon, triangle) at independent
+universes. All of them hold by `rfl`. The same file proves that `◃` acts as the composite of
+actions, `Obj.compEquiv : (P ◃ Q).Obj X ≃ P.Obj (Q.Obj X)`, with `◃ₗ` as the horizontal composite,
+and splits composition powers with `Lens.Equiv.compNthAdd`.
+
+[`Category/Monoidal.lean`](../../PolyFun/PFunctor/Category/Monoidal.lean) packages these as Mathlib
+structures. Each structure has its own carrier, because a monoidal instance is keyed on its
+carrier:
+
+* `LensCat` is a `CartesianMonoidalCategory` for `*` and `1`;
+* `TensorCat` is a `SymmetricCategory` for `⊗` and `y`;
+* `CompCat.{u, v}` (polynomials at `{max u v, v}`) is a `MonoidalCategory` for `◃` and `y`.
+
+Their coherence fields are the `rfl` lemmas above, and Mathlib's `monoidal` tactic closes
+coherence goals in them. The carriers unfold to `PFunctor`, so the polynomial `⊗` from
+`open scoped PFunctor` and Mathlib's monoidal `⊗` both elaborate on their objects. Work with the
+Mathlib structures where PolyFun's scoped notation is not open.
+
 ## Where to start
 
 | Task | Modules |
@@ -102,7 +124,7 @@ and `Lens.sectionTensorEquiv` for sections of `p ⊗ q`.
 | Inspect or decorate a program | [Paths](../../PolyFun/PFunctor/Free/Path.lean), [cursors](../../PolyFun/PFunctor/Free/Cursor.lean), [displayed programs](../../PolyFun/PFunctor/Free/Displayed.lean) |
 | Model stateful behavior | [Dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean), [resumable execution](execution.md#resumable-execution), [computation model guide](computation-models.md) |
 | Compare possibly infinite trees | [M-types](../../PolyFun/PFunctor/M.lean), [resumptions](../../PolyFun/PFunctor/Resumption.lean) |
-| Study the categorical structure | [Tensor internal hom](../../PolyFun/PFunctor/InternalHom.lean), [cartesian exponential](../../PolyFun/PFunctor/CartesianClosed.lean), [mathematical background](../reference/mathematical-background.md) |
+| Study the categorical structure | [Monoidal structures](../../PolyFun/PFunctor/Category/Monoidal.lean), [coherence](../../PolyFun/PFunctor/Lens/Coherence.lean), [Tensor internal hom](../../PolyFun/PFunctor/InternalHom.lean), [cartesian exponential](../../PolyFun/PFunctor/CartesianClosed.lean), [mathematical background](../reference/mathematical-background.md) |
 | Relate free and cofree constructions | [Pattern runs on matter](../reference/pattern-runs-on-matter.md) |
 
 Mathlib owns `PFunctor`, its object action, and W/M-type foundations. CSLib
