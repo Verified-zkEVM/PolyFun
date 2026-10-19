@@ -93,7 +93,10 @@ In particular:
   and `Comonoid.{uA, uB}` corresponds to categories whose objects and arrows lie in any two
   universes, whereas `Comon CompCat.{u, v}` forces positions in `max u v`. A refactor that reuses
   an upstream lemma must leave each touched signature at least as universe-general: compare
-  `#check @name` under `set_option pp.universes true` before and after.
+  `#check @name` under `set_option pp.universes true` before and after. Typeclass
+  hypotheses count too: CSLib's `IsMonadHom` preserves `<$>` and `<*>`, which needs lawful
+  monads, so `FreeM.liftM_natural`, which holds for any morphism preserving `pure` and `bind`,
+  keeps its own proof.
 - **Equivalence-like structures:** give `refl`, `symm` and `trans` `simps` projections and the
   `refl`/`symm`/`trans` attributes, provide a `Trans` instance for `calc`, and keep `cast` and
   `▸` out of statements where a fiber, subtype or `Equiv.cast` formulation exists.

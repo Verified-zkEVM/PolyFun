@@ -223,15 +223,12 @@ variable {n : Type uB → Type u} [Monad n] [LawfulMonad n]
 `FreeM.lift a`, then `F = FreeM.liftMHom s`. So handlers `(a : P.A) → m (P.B a)` are in bijection
 with monad homomorphisms `FreeM P →ᵐ m` — the universal property behind `simulateQ`. -/
 theorem liftMHom_unique (F : FreeM P →ᵐ m) (h : ∀ a, F (FreeM.lift a) = s a) :
-    F = FreeM.liftMHom s := by
-  refine MonadHom.ext' fun β x => ?_
-  induction x with
-  | pure x => exact F.mmap_pure x
-  | lift_bind a r ih =>
-    change F (FreeM.liftBind a r) = FreeM.liftM s (FreeM.liftBind a r)
-    rw [show (FreeM.liftBind a r : FreeM P β) = FreeM.lift a >>= r from rfl,
-      MonadHom.mmap_bind, h, FreeM.liftM_lift_bind]
-    exact bind_congr ih
+    F = FreeM.liftMHom s :=
+  MonadHom.ext' fun _ x => congrFun (FreeM.Interprets.eq (handler := s)
+    { apply_pure := F.mmap_pure
+      apply_lift_bind := fun a cont => by
+        rw [← h a]
+        exact F.mmap_bind (FreeM.lift a) cont }) x
 
 omit [LawfulMonad m] [LawfulMonad n] in
 /-- **Naturality of the fold along a monad morphism**: pushing a monad morphism `φ : m →ᵐ n` through
