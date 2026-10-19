@@ -16,6 +16,8 @@ A `SubstMonoid` is a monoid object in the composition-monoidal category
 `(Poly, ◃, y)`: a polynomial `p`, a unit lens `y ⇆ p`, and a multiplication
 lens `p ◃ p ⇆ p` satisfying the two unit laws and associativity. Under
 polynomial extension, every substitution monoid induces a monad on `Type`.
+The fields use the names of Mathlib's `CategoryTheory.MonObj`: `one`, `mul`,
+`one_mul`, `mul_one` and `mul_assoc`.
 
 The laws are stated directly with the composition unitors and associator from
 `PFunctor.Lens.Equiv`. This à-la-carte presentation avoids choosing between the
@@ -61,22 +63,26 @@ structure SubstMonoid where
   carrier : PFunctor.{uA, uB}
   /-- The unit `η : y ⇆ p`. Its universe instance agrees with the composition
   unit appearing beside `carrier ◃ carrier`. -/
-  unit : Lens y.{max uA uB, uB} carrier
+  one : Lens y.{max uA uB, uB} carrier
   /-- The multiplication `μ : p ◃ p ⇆ p`. -/
   mul : Lens (carrier ◃ carrier) carrier
   /-- Left unitality: `μ ∘ (η ◃ id) ∘ λ⁻¹ = id`. -/
-  unit_left : mul ∘ₗ (unit ◃ₗ Lens.id carrier) ∘ₗ
+  protected one_mul : mul ∘ₗ (one ◃ₗ Lens.id carrier) ∘ₗ
       Lens.Equiv.yComp.invLens = Lens.id carrier
   /-- Right unitality: `μ ∘ (id ◃ η) ∘ ρ⁻¹ = id`. -/
-  unit_right : mul ∘ₗ (Lens.id carrier ◃ₗ unit) ∘ₗ
+  protected mul_one : mul ∘ₗ (Lens.id carrier ◃ₗ one) ∘ₗ
       Lens.Equiv.compY.invLens = Lens.id carrier
   /-- Associativity: multiplying the outer pair or the inner pair agrees. -/
-  assoc : mul ∘ₗ (mul ◃ₗ Lens.id carrier) =
+  protected mul_assoc : mul ∘ₗ (mul ◃ₗ Lens.id carrier) =
       mul ∘ₗ (Lens.id carrier ◃ₗ mul) ∘ₗ Lens.Equiv.compAssoc.toLens
 
 namespace SubstMonoid
 
 @[deprecated (since := "2026-10-19")] alias mult := mul
+@[deprecated (since := "2026-10-19")] alias unit := one
+@[deprecated (since := "2026-10-19")] alias unit_left := SubstMonoid.one_mul
+@[deprecated (since := "2026-10-19")] alias unit_right := SubstMonoid.mul_one
+@[deprecated (since := "2026-10-19")] alias assoc := SubstMonoid.mul_assoc
 
 /-! ## Morphisms -/
 
@@ -86,12 +92,13 @@ structure Hom (M N : SubstMonoid.{uA, uB}) where
   /-- The underlying lens between carrier polynomials. -/
   toLens : Lens M.carrier N.carrier
   /-- Preservation of the unit. -/
-  map_unit : toLens ∘ₗ M.unit = N.unit
+  protected map_one : toLens ∘ₗ M.one = N.one
   /-- Preservation of multiplication. -/
   map_mul : toLens ∘ₗ M.mul =
     N.mul ∘ₗ (toLens ◃ₗ toLens)
 
 @[deprecated (since := "2026-10-19")] alias Hom.map_mult := Hom.map_mul
+@[deprecated (since := "2026-10-19")] alias Hom.map_unit := Hom.map_one
 
 instance {M N : SubstMonoid.{uA, uB}} :
     Coe (Hom M N) (Lens M.carrier N.carrier) :=
@@ -108,14 +115,14 @@ theorem Hom.ext {M N : SubstMonoid.{uA, uB}} (f g : Hom M N)
 /-- The identity substitution-monoid homomorphism. -/
 def Hom.id (M : SubstMonoid.{uA, uB}) : Hom M M where
   toLens := Lens.id M.carrier
-  map_unit := rfl
+  map_one := rfl
   map_mul := by simp
 
 /-- Composition of substitution-monoid homomorphisms, in diagrammatic order. -/
 def Hom.comp {M N O : SubstMonoid.{uA, uB}} (f : Hom M N) (g : Hom N O) : Hom M O where
   toLens := g.toLens ∘ₗ f.toLens
-  map_unit := by
-    rw [Lens.comp_assoc, f.map_unit, g.map_unit]
+  map_one := by
+    rw [Lens.comp_assoc, f.map_one, g.map_one]
   map_mul := by
     calc
       (g.toLens ∘ₗ f.toLens) ∘ₗ M.mul =

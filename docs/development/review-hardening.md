@@ -106,11 +106,15 @@ Where the terminology of Niu and Spivak's book
 ([NS24](../../REFERENCES.md#ns24--niu-and-spivak-polynomial-functors)) differs
 from Mathlib's, the name follows Mathlib and the docstring cites the book. The
 book's representable polynomials are `IsPurePower`, for example, because
-Mathlib's `Functor.IsRepresentable` is about contravariant functors. Two
+Mathlib's `Functor.IsRepresentable` is about contravariant functors. Three
 families of names are fixed:
 
 - hom-set equivalences are `Lens.from…Equiv` and `Lens.to…Equiv`;
-- an isomorphism constructor from an equivalence is `Carrier.Iso.mk`.
+- an isomorphism constructor from an equivalence is `Carrier.Iso.mk`;
+- comonoid and monoid laws take the field names of Mathlib's `ComonObj` and
+  `MonObj`: `counit_comul`, `comul_counit` and `comul_assoc`, and `one`,
+  `one_mul`, `mul_one` and `mul_assoc`. A field or lemma whose name would
+  shadow a root lemma such as `one_mul` or `map_one` is `protected`.
 
 Renaming a declaration that is on `main` leaves
 `@[deprecated (since := "YYYY-MM-DD")] alias oldName := newName` beside the new

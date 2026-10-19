@@ -96,13 +96,13 @@ example :
 
 /-- The raw convolution unit emits the empty word. -/
 example :
-    (convolutionUnitRaw (stateComonoid ThreeState) wordMonoid).toFunA
+    (convolutionOneRaw (stateComonoid ThreeState) wordMonoid).toFunA
       (PUnit.unit, source) = [] := rfl
 
 /-- The raw convolution unit follows the identity transition selected by the
 comonoid counit. -/
 example :
-    ((convolutionUnitRaw (stateComonoid ThreeState) wordMonoid).toFunB
+    ((convolutionOneRaw (stateComonoid ThreeState) wordMonoid).toFunB
       (PUnit.unit, source) PUnit.unit).2 = source := rfl
 
 /-- The comonoid and target monoid may use four independent universes. -/
@@ -123,8 +123,8 @@ example (C : Comonoid.{cA, cB}) (M : SubstMonoid.{mA, mB}) :
 
 /-- The exported unit equation exposes the exact uncurried semantics. -/
 example (C : Comonoid.{cA, cB}) (M : SubstMonoid.{mA, mB}) :
-    Lens.uncurry (convolution C M).unit = convolutionUnitRaw C M :=
-  uncurry_convolution_unit C M
+    Lens.uncurry (convolution C M).one = convolutionOneRaw C M :=
+  uncurry_convolution_one C M
 
 end SubstMonoidConvolutionTest
 end PFunctor

@@ -47,9 +47,9 @@ def trivial : Comonoid.{uA, uB} where
   counit := Lens.unitComparison
   comul := Lens.compUnitMap ∘ₗ
     (Lens.unitComparison : Lens y.{uA, uB} y.{max uA uB, uB})
-  counit_left := Lens.compUnitMap_counit_left
-  counit_right := Lens.compUnitMap_counit_right
-  coassoc := Lens.compUnitMap_coassoc.{uA, uB}
+  counit_comul := Lens.compUnitMap_counit_comul
+  comul_counit := Lens.compUnitMap_comul_counit
+  comul_assoc := Lens.compUnitMap_comul_assoc.{uA, uB}
 
 @[deprecated (since := "2026-10-19")] alias unit := trivial
 
@@ -89,7 +89,7 @@ def tensorComul (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
 
 @[deprecated (since := "2026-10-19")] alias tensorComult := tensorComul
 
-private theorem tensorCounit_left_factor (C : Comonoid.{uA₁, uB₁})
+private theorem tensor_counit_comul_factor (C : Comonoid.{uA₁, uB₁})
     (D : Comonoid.{uA₂, uB₂}) :
     Lens.Equiv.yComp.toLens ∘ₗ
         (tensorCounit C D ◃ₗ Lens.id (C.carrier ⊗ D.carrier)) ∘ₗ
@@ -99,7 +99,7 @@ private theorem tensorCounit_left_factor (C : Comonoid.{uA₁, uB₁})
         (Lens.Equiv.yComp.toLens ∘ₗ
           (D.counit ◃ₗ Lens.id D.carrier) ∘ₗ D.comul)) := rfl
 
-private theorem tensorCounit_right_factor (C : Comonoid.{uA₁, uB₁})
+private theorem tensor_comul_counit_factor (C : Comonoid.{uA₁, uB₁})
     (D : Comonoid.{uA₂, uB₂}) :
     Lens.Equiv.compY.toLens ∘ₗ
         (Lens.id (C.carrier ⊗ D.carrier) ◃ₗ tensorCounit C D) ∘ₗ
@@ -143,14 +143,14 @@ def tensor (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
   carrier := C.carrier ⊗ D.carrier
   counit := tensorCounit C D
   comul := tensorComul C D
-  counit_left := by
-    rw [tensorCounit_left_factor, C.counit_left, D.counit_left,
+  counit_comul := by
+    rw [tensor_counit_comul_factor, C.counit_comul, D.counit_comul,
       Lens.tensorMap_id]
-  counit_right := by
-    rw [tensorCounit_right_factor, C.counit_right, D.counit_right,
+  comul_counit := by
+    rw [tensor_comul_counit_factor, C.comul_counit, D.comul_counit,
       Lens.tensorMap_id]
-  coassoc := by
-    rw [tensorComul_assoc_left_factor, C.coassoc, D.coassoc]
+  comul_assoc := by
+    rw [tensorComul_assoc_left_factor, C.comul_assoc, D.comul_assoc]
     exact (tensorComul_assoc_right_factor C D).symm
 
 @[simp] theorem tensor_carrier (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :

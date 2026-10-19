@@ -203,8 +203,10 @@ complete path of an outer tree. -/
 abbrev substMonoid : PFunctor.SubstMonoid.{u + 1, u} :=
   PFunctor.FreeP.substMonoid TypeTree.basePFunctor
 
-theorem substMonoid_unit_toFunA (x : PUnit) : TypeTree.substMonoid.unit.toFunA x = TypeTree.done :=
+theorem substMonoid_one_toFunA (x : PUnit) : TypeTree.substMonoid.one.toFunA x = TypeTree.done :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias substMonoid_unit_toFunA := substMonoid_one_toFunA
 
 -- Not `@[simp]`: `substMonoid` is a reducible `abbrev`, so the LHS
 -- dsimp-normalizes through the `FreeP.substMonoid` projection lemmas and the
