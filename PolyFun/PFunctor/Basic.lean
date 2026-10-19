@@ -96,7 +96,13 @@ section Sum
 `hAdd_A` and `hAdd_B`); both summands share the direction universe. The direction equations
 below are not simp lemmas, since `hAdd_B` and iota reduction already compute them. -/
 
-@[deprecated (since := "2026-10-19")] alias sum := add
+/-- The deprecated spelling of `P + Q`. It keeps the body and the `abbrev` transparency it had
+before it was deprecated, so instance search and reducible `simp` still compute
+`(sum P Q).B (.inl a)` to `P.B a`. cslib's `add` is only implicit-reducible, so a plain alias would
+not. -/
+@[deprecated add (since := "2026-10-19")]
+abbrev sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max uA₁ uA₂, uB} :=
+  ⟨P.A ⊕ Q.A, @Sum.rec P.A Q.A (fun _ => Type uB) P.B Q.B⟩
 
 @[deprecated (since := "2026-10-19")] alias coprod := add
 
