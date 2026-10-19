@@ -69,11 +69,12 @@ input/output transformers and of proof-system context lenses, are built with
 
 `Lens.purePowerEquiv : Lens (y^S) Q ≃ Q.Obj S` is the Yoneda lemma for polynomials, and
 `Lens.equivPiObj : Lens P Q ≃ ((a : P.A) → Q.Obj (P.B a))` reads a lens as its value on each
-generic element `Obj.mk a id`. `Lens.objHomEquiv` identifies lenses with `ObjHom P Q`, the
-natural transformations `P.Obj ⟹ Q.Obj` whose components live at the source's direction
-universe; `Lens.toObjHom_comp` makes the identification functorial. Every round trip is
-definitional except `ObjHom → Lens → ObjHom`, which uses naturality
-(`ObjHom.mapObj_toLens`). `Obj.punitEquiv` and `Obj.pemptyEquiv` compute `p(1) ≃ P.A` and
+generic element `Obj.mk a id`. Lenses are exactly the natural transformations between
+actions: the action `Lens.mapObj` is natural (`Lens.mapObj_map`), and every natural family
+`η X : P.Obj X → Q.Obj X`, with components at the source's direction universe, is the action
+of exactly one lens (`Lens.existsUnique_mapObj`), namely `Lens.ofNatural η`
+(`Lens.mapObj_ofNatural`). `Lens` stays the carrier; convert a natural family once with
+`Lens.ofNatural`. `Obj.punitEquiv` and `Obj.pemptyEquiv` compute `p(1) ≃ P.A` and
 `p(0)`, and `Lens.purePowerMap` is the representable map `y^S ⇆ y^R` of a function `R → S`.
 
 [`Equiv/Special.lean`](../../PolyFun/PFunctor/Equiv/Special.lean) presents every polynomial as

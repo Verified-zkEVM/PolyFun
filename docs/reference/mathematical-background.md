@@ -14,7 +14,7 @@ direction. For interaction, positions are requests and directions are their
 possible replies. A lens maps positions forward and directions backward;
 a chart maps both forward. These are different notions of morphism. Lenses are exactly
 the natural transformations between the actions `P.Obj ⟹ Q.Obj`
-([`Lens.objHomEquiv`](../../PolyFun/PFunctor/Lens/Yoneda.lean)).
+([`Lens.existsUnique_mapObj`](../../PolyFun/PFunctor/Lens/Yoneda.lean)).
 
 [Mathlib's polynomial type](../../PolyFun/PFunctor/Basic.lean) underlies this
 representation. [Indexed polynomials](../guides/ipfunctor.md) add a source

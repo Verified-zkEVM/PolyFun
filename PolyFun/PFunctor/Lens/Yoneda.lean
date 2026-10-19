@@ -22,15 +22,16 @@ transformations between these actions (Niu–Spivak §1.1, §2.1, §3.1–§3.7)
   (Lemma 1.10, p. 5, and Ex 3.2), natural in `S` and `Q`.
 * `Lens.equivPiObj`: a lens `P ⇆ Q` is a choice of an element of `Q.Obj (P.B a)` for every
   position `a` (Prop 3.6, p. 42).
-* `ObjHom` and `Lens.objHomEquiv`: lenses `P ⇆ Q` correspond to natural transformations
-  `P.Obj ⟹ Q.Obj` (Prop 3.44, p. 58, and Cor 3.47, p. 59), compatibly with identities and
-  composition.
+* `Lens.ofNatural`, `Lens.mapObj_ofNatural` and `Lens.existsUnique_mapObj`: every natural
+  transformation `P.Obj ⟹ Q.Obj` is the action `Lens.mapObj` of exactly one lens (Prop 3.44,
+  p. 58, and Cor 3.47, p. 59). The action of a lens is natural (`Lens.mapObj_map`) and
+  functorial (`Lens.mapObj_id`, `Lens.mapObj_comp`).
 
-The forward maps send a lens to its action `Lens.mapObj`. Every round trip except
-`objHomEquiv`'s right inverse holds by `rfl`; that one uses naturality, as it must.
-
-Natural transformations are taken with components at the source's direction universe, the
-universe in which the generic element `Obj.mk a id : P.Obj (P.B a)` lives.
+`Lens` is the carrier of this data: a natural family of maps arriving from elsewhere is
+converted once with `Lens.ofNatural`. Every round trip holds by `rfl` except
+`mapObj_ofNatural`, which uses naturality, as it must. Natural families are taken with
+components at the source's direction universe, the universe in which the generic element
+`Obj.mk a id : P.Obj (P.B a)` lives.
 -/
 
 @[expose] public section
@@ -141,97 +142,42 @@ theorem mapObj_map {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (
 
 end Lens
 
-/-! ## Natural transformations between polynomial functors -/
+/-! ## Lenses as natural transformations -/
 
-/-- A **natural transformation** `P.Obj ⟹ Q.Obj` between the actions of two polynomials, with
-components at the direction universe of `P`. By `Lens.objHomEquiv` these are exactly the
-lenses `P ⇆ Q` (Niu–Spivak Prop 3.44, Cor 3.47). -/
-@[ext]
-structure ObjHom (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) where
-  /-- The component at a type `X`. -/
-  app : ∀ X : Type uB₁, P.Obj X → Q.Obj X
-  /-- Naturality in `X`. -/
-  naturality : ∀ {X Y : Type uB₁} (h : X → Y) (x : P.Obj X),
-    app Y (P.map h x) = Q.map h (app X x)
+namespace Lens
 
-namespace ObjHom
+/-- The lens read off from a family of maps `η X : P.Obj X → Q.Obj X`: its value on each generic
+element `Obj.mk a id`. When `η` is natural, this is the unique lens whose action is `η`
+(`mapObj_ofNatural`, `existsUnique_mapObj`; Niu–Spivak Cor 3.47). -/
+def ofNatural {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (η : ∀ X : Type uB₁, P.Obj X → Q.Obj X) : Lens P Q :=
+  (fun a => (η (P.B a) (Obj.mk a id)).fst) ⇆ fun a => (η (P.B a) (Obj.mk a id)).snd
 
-/-- The identity natural transformation. -/
-protected def id (P : PFunctor.{uA, uB}) : ObjHom P P where
-  app _ x := x
-  naturality _ _ := rfl
+/-- A lens is recovered from its action. -/
+@[simp] theorem ofNatural_mapObj {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (l : Lens P Q) : ofNatural (fun _ => l.mapObj) = l := rfl
 
-/-- Composition of natural transformations; the middle polynomial shares its direction
-universe with the source, where the components of the second transformation live. -/
-def comp {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB₃}}
-    (θ : ObjHom Q R) (η : ObjHom P Q) : ObjHom P R where
-  app X x := θ.app X (η.app X x)
-  naturality h x := by rw [η.naturality, θ.naturality]
-
-@[simp] theorem id_app (P : PFunctor.{uA, uB}) (X : Type uB) (x : P.Obj X) :
-    (ObjHom.id P).app X x = x := rfl
-
-@[simp] theorem comp_app {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
-    {R : PFunctor.{uA₃, uB₃}} (θ : ObjHom Q R) (η : ObjHom P Q) (X : Type uB) (x : P.Obj X) :
-    (θ.comp η).app X x = θ.app X (η.app X x) := rfl
-
-/-- The lens determined by a natural transformation: its value on each generic element
-`Obj.mk a id` (Niu–Spivak Cor 3.47). -/
-def toLens {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (η : ObjHom P Q) : Lens P Q :=
-  (fun a => (η.app (P.B a) (Obj.mk a _root_.id)).fst) ⇆
-    fun a => (η.app (P.B a) (Obj.mk a _root_.id)).snd
-
-/-- A natural transformation acts as its lens: naturality at `x.snd` moves `x` to the generic
-element at `x.fst`. -/
-theorem mapObj_toLens {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (η : ObjHom P Q)
-    {X : Type uB₁} (x : P.Obj X) : η.toLens.mapObj x = η.app X x := by
+/-- A natural family of maps is the action of the lens read off from it: naturality at `x.snd`
+moves `x` to the generic element at `x.fst`. -/
+theorem mapObj_ofNatural {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (η : ∀ X : Type uB₁, P.Obj X → Q.Obj X)
+    (hη : ∀ {X Y : Type uB₁} (h : X → Y) (x : P.Obj X), η Y (P.map h x) = Q.map h (η X x))
+    {X : Type uB₁} (x : P.Obj X) : (ofNatural η).mapObj x = η X x := by
   induction x using Obj.rec with
   | mk a f =>
-    have h := η.naturality f (Obj.mk a _root_.id)
+    have h := hη f (Obj.mk a id)
     simp only [PFunctor.map_eq, Function.comp_id] at h
     rw [h]
     rfl
 
-end ObjHom
-
-namespace Lens
-
-/-- The natural transformation `P.Obj ⟹ Q.Obj` given by the action of a lens. -/
-def toObjHom {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q) : ObjHom P Q where
-  app _ := l.mapObj
-  naturality := l.mapObj_map
-
-@[simp] theorem toObjHom_app {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
-    (X : Type uB₁) (x : P.Obj X) : l.toObjHom.app X x = l.mapObj x := rfl
-
-/-- **Lenses are natural transformations** (Niu–Spivak Prop 3.44, Cor 3.47): sending a lens to
-its action is a bijection onto the natural transformations `P.Obj ⟹ Q.Obj`. -/
-def objHomEquiv {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} :
-    Lens P Q ≃ ObjHom P Q where
-  toFun := toObjHom
-  invFun := ObjHom.toLens
-  left_inv _ := rfl
-  right_inv η := ObjHom.ext (funext fun _ => funext fun x => η.mapObj_toLens x)
-
-@[simp] theorem objHomEquiv_apply {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
-    (l : Lens P Q) : objHomEquiv l = l.toObjHom := rfl
-
-@[simp] theorem objHomEquiv_symm_apply {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
-    (η : ObjHom P Q) : objHomEquiv.symm η = η.toLens := rfl
-
-@[simp] theorem toObjHom_id (P : PFunctor.{uA, uB}) :
-    (Lens.id P).toObjHom = ObjHom.id P := rfl
-
-/-- The correspondence between lenses and natural transformations preserves composition. -/
-@[simp] theorem toObjHom_comp {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
-    {R : PFunctor.{uA₃, uB₃}} (g : Lens Q R) (f : Lens P Q) :
-    (g ∘ₗ f).toObjHom = g.toObjHom.comp f.toObjHom := rfl
-
-/-- The lens of a composite natural transformation is the composite lens. -/
-theorem toLens_comp {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB₃}}
-    (θ : ObjHom Q R) (η : ObjHom P Q) : (θ.comp η).toLens = θ.toLens ∘ₗ η.toLens := by
-  refine objHomEquiv.injective (ObjHom.ext (funext fun X => funext fun x => ?_))
-  simp [ObjHom.mapObj_toLens]
+/-- **Lenses are natural transformations** (Niu–Spivak Prop 3.44, Cor 3.47): every natural family
+of maps `P.Obj X → Q.Obj X` is the action of exactly one lens `P ⇆ Q`. -/
+theorem existsUnique_mapObj {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (η : ∀ X : Type uB₁, P.Obj X → Q.Obj X)
+    (hη : ∀ {X Y : Type uB₁} (h : X → Y) (x : P.Obj X), η Y (P.map h x) = Q.map h (η X x)) :
+    ∃! l : Lens P Q, ∀ (X : Type uB₁) (x : P.Obj X), l.mapObj x = η X x :=
+  ⟨ofNatural η, fun _ x => mapObj_ofNatural η hη x,
+    fun _ hl => ext_mapObj _ _ fun _ => (hl _ _).trans (mapObj_ofNatural η hη _).symm⟩
 
 end Lens
 

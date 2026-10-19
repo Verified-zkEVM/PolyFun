@@ -13,7 +13,7 @@ public import PolyFun.PFunctor.Equiv.Special
 # Ordinary-import canaries for Yoneda and the normal form
 
 The Yoneda bijection, the hom formula `Lens P Q ≃ Π a, Q.Obj (P.B a)`, the values `p(1)` and
-`p(0)`, the normal form, and the lens-to-natural-transformation direction are definitional.
+`p(0)`, the normal form, and the recovery of a lens from its action are definitional.
 These examples check that those equations hold by `rfl` through ordinary imports, with
 independent universes, as a consumer in another package sees them.
 -/
@@ -42,7 +42,7 @@ example (l : Lens P Q) : Lens.equivPiObj.symm (Lens.equivPiObj l) = l := rfl
 
 example (l : Lens P Q) (a : P.A) : Lens.equivPiObj l a = l.mapObj (Obj.mk a id) := rfl
 
-example (l : Lens P Q) : Lens.objHomEquiv.symm (Lens.objHomEquiv l) = l := rfl
+example (l : Lens P Q) : Lens.ofNatural (fun _ => l.mapObj) = l := rfl
 
 example {X Y : Type uB₁} (l : Lens P Q) (h : X → Y) (x : P.Obj X) :
     l.mapObj (P.map h x) = Q.map h (l.mapObj x) := rfl

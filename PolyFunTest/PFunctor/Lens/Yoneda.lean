@@ -63,22 +63,28 @@ example : Lens.equivPiObj negLens true = Obj.mk false id := rfl
 
 /-! ## Lenses as natural transformations -/
 
-/-- The natural transformation on `y^Bool` that precomposes with negation. -/
-def negNat : ObjHom (y^Bool : PFunctor.{0, 0}) (y^Bool) where
-  app _ x := Obj.mk PUnit.unit (x.snd ∘ fun d => !d)
-  naturality _ _ := rfl
+/-- The natural family on `y^Bool` that precomposes with negation. -/
+def negFamily (X : Type) (x : (y^Bool : PFunctor.{0, 0}).Obj X) :
+    (y^Bool : PFunctor.{0, 0}).Obj X :=
+  Obj.mk PUnit.unit (x.snd ∘ fun d => !d)
 
-/-- Its lens negates directions. -/
-example : negNat.toLens.toFunB PUnit.unit true = false := rfl
+/-- The lens read off from it negates directions. -/
+example : (Lens.ofNatural negFamily).toFunB PUnit.unit true = false := rfl
 
-/-- Converting a lens to a natural transformation and back is the identity. -/
-example : Lens.objHomEquiv.symm (Lens.objHomEquiv negLens) = negLens := rfl
+/-- By naturality, that lens acts as the family. -/
+example (x : (y^Bool : PFunctor.{0, 0}).Obj Nat) :
+    (Lens.ofNatural negFamily).mapObj x = negFamily Nat x :=
+  Lens.mapObj_ofNatural negFamily (fun _ _ => rfl) x
 
-/-- Converting a natural transformation to a lens and back is the identity. -/
-example : Lens.objHomEquiv negNat.toLens = negNat :=
-  Lens.objHomEquiv.apply_symm_apply negNat
+/-- It is the only lens acting as the family. -/
+example (l : Lens (y^Bool : PFunctor.{0, 0}) (y^Bool))
+    (hl : ∀ (X : Type) (x : (y^Bool : PFunctor.{0, 0}).Obj X), l.mapObj x = negFamily X x) :
+    l = Lens.ofNatural negFamily :=
+  (Lens.existsUnique_mapObj negFamily (fun _ _ => rfl)).unique hl
+    fun _ x => Lens.mapObj_ofNatural negFamily (fun _ _ => rfl) x
 
-example : (negLens ∘ₗ negLens).toObjHom = negLens.toObjHom.comp negLens.toObjHom := rfl
+/-- A lens is recovered from its action. -/
+example : Lens.ofNatural (fun _ => negLens.mapObj) = negLens := rfl
 
 /-! ## The normal form -/
 
