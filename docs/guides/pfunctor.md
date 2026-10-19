@@ -88,7 +88,7 @@ properties of sums and products as hom-set equivalences (`Lens.sigmaEquiv`, `Len
 the projections `Lens.piProj`, and the binary `Lens.sumEquiv` and `Lens.prodEquiv`), and shows
 that the actions of sums and products are sums and products of actions (`Obj.sigmaEquiv`,
 `Obj.piEquiv`, `Obj.sumEquiv`, `Obj.prodEquiv`). It also reduces lenses into and out of the
-special polynomials to functions: `Lens.linearEquiv` and `Lens.constEquiv` (with `homToConst`,
+special polynomials to functions: `Lens.fromLinearEquiv` and `Lens.fromConstEquiv` (with `homToConst`,
 the adjoint quadruple between `Set` and `Poly`), `Lens.sectionEquiv` for sections `Lens p y`,
 `Lens.toPurePowerEquiv` and `Lens.toMonomialEquiv` for lenses into representables and monomials,
 and `Lens.sectionTensorEquiv` for sections of `p ⊗ q`.

@@ -60,7 +60,9 @@ example (f g : Lens qBool qBool) : Lens.sumEquiv (Lens.sumPair f g) = (f, g) := 
 /-! ## Special polynomials -/
 
 /-- A lens out of `linear Bool` picks a position for each boolean. -/
-example : Lens.linearEquiv (Lens.linearEquiv.symm (fun b : Bool => !b) : Lens (linear Bool) qBool)
+example :
+    Lens.fromLinearEquiv
+      (Lens.fromLinearEquiv.symm (fun b : Bool => !b) : Lens (linear Bool) qBool)
     = fun b => !b := rfl
 
 /-- The section of `qBool` that answers every position with itself. -/
@@ -86,7 +88,7 @@ example : (Lens.sectionTensorEquiv
 empty because `y`'s only position has a direction. -/
 example : IsEmpty (Lens (C Bool : PFunctor.{0, 0}) (y : PFunctor.{0, 0})) := by
   refine ⟨fun l => ?_⟩
-  obtain ⟨_, h⟩ := Obj.pemptyEquiv (y : PFunctor.{0, 0}) (Lens.constEquiv l true)
+  obtain ⟨_, h⟩ := Obj.pemptyEquiv (y : PFunctor.{0, 0}) (Lens.fromConstEquiv l true)
   exact h.false PUnit.unit
 
 end PolyFunTest.PFunctor.Universal

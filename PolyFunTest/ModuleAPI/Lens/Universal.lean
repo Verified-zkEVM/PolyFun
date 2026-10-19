@@ -40,7 +40,7 @@ example {F : I → PFunctor.{uA₁, uB₁}} {X : Type w} (x : (pi F).Obj X) :
     (Obj.piEquiv F X).symm (Obj.piEquiv F X x) = x := rfl
 
 example {J : Type uA₂} (l : Lens (linear J : PFunctor.{uA₂, uB₂}) p) :
-    Lens.linearEquiv.symm (Lens.linearEquiv l) = l := rfl
+    Lens.fromLinearEquiv.symm (Lens.fromLinearEquiv l) = l := rfl
 
 example (l : Lens p (y : PFunctor.{uA₂, uB₂})) :
     Lens.sectionEquiv.symm (Lens.sectionEquiv l) = l := rfl

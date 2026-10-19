@@ -23,8 +23,8 @@ pointwise sums and products of their actions (Niu–Spivak Prop 3.3, p. 42, and 
 Lenses into and out of the special polynomials of Niu–Spivak §5.1 (pp. 145–148) reduce to
 functions between positions and directions:
 
-* `Lens.linearEquiv : Lens (linear I) p ≃ (I → p.A)` and
-  `Lens.constEquiv : Lens (C I) p ≃ (I → p.Obj PEmpty)`, two of the hom-isomorphisms of the
+* `Lens.fromLinearEquiv : Lens (linear I) p ≃ (I → p.A)` and
+  `Lens.fromConstEquiv : Lens (C I) p ≃ (I → p.Obj PEmpty)`, two of the hom-isomorphisms of the
   adjoint quadruple of Thm 5.4. The third, `Poly(p, I) ≅ Set(p(1), I)`, is `homToConst`.
 * `Lens.sectionEquiv : Lens p y ≃ ((a : p.A) → p.B a)`, the sections `Γ(p)` (Def 3.36).
 * `Lens.toPurePowerEquiv : Lens p (y^A) ≃ (A → (a : p.A) → p.B a)`, the adjunction `Γ ⊣ y^(−)`
@@ -174,7 +174,7 @@ variable {p : PFunctor.{uA₁, uB₁}} {q : PFunctor.{uA₃, uB₃}}
 
 /-- `Poly(I y, p) ≅ Set(I, p(1))`: a lens out of a linear polynomial is a family of positions
 (Niu–Spivak Thm 5.4, `linear ⊣ (−)(1)`). -/
-def linearEquiv {I : Type uA₂} : Lens (linear I : PFunctor.{uA₂, uB₂}) p ≃ (I → p.A) where
+def fromLinearEquiv {I : Type uA₂} : Lens (linear I : PFunctor.{uA₂, uB₂}) p ≃ (I → p.A) where
   toFun l := l.toFunA
   invFun f := f ⇆ fun _ _ => PUnit.unit
   left_inv _ := rfl
@@ -183,7 +183,7 @@ def linearEquiv {I : Type uA₂} : Lens (linear I : PFunctor.{uA₂, uB₂}) p �
 /-- `Poly(I, p) ≅ Set(I, p(0))`: a lens out of a constant polynomial is a family of elements of
 `p.Obj PEmpty`, i.e. of positions without directions (Niu–Spivak Thm 5.4, `C ⊣ (−)(0)`; see
 `Obj.pemptyEquiv`). -/
-def constEquiv {I : Type uA₂} :
+def fromConstEquiv {I : Type uA₂} :
     Lens (C I : PFunctor.{uA₂, uB₂}) p ≃ (I → p.Obj PEmpty.{uB₂ + 1}) :=
   homMonomialEquiv
 
@@ -226,14 +226,14 @@ def sectionTensorEquiv :
 
 /-! ### Naturality -/
 
-/-- `linearEquiv` is natural in the target. -/
-theorem linearEquiv_comp {I : Type uA₂} (f : Lens p q)
+/-- `fromLinearEquiv` is natural in the target. -/
+theorem fromLinearEquiv_comp {I : Type uA₂} (f : Lens p q)
     (l : Lens (linear I : PFunctor.{uA₂, uB₂}) p) :
-    linearEquiv (f ∘ₗ l) = f.toFunA ∘ linearEquiv l := rfl
+    fromLinearEquiv (f ∘ₗ l) = f.toFunA ∘ fromLinearEquiv l := rfl
 
-/-- `constEquiv` is natural in the target. -/
-theorem constEquiv_comp {I : Type uA₂} (f : Lens p q) (l : Lens (C I : PFunctor.{uA₂, uB₂}) p) :
-    constEquiv (f ∘ₗ l) = f.mapObj ∘ constEquiv l := rfl
+/-- `fromConstEquiv` is natural in the target. -/
+theorem fromConstEquiv_comp {I : Type uA₂} (f : Lens p q) (l : Lens (C I : PFunctor.{uA₂, uB₂}) p) :
+    fromConstEquiv (f ∘ₗ l) = f.mapObj ∘ fromConstEquiv l := rfl
 
 /-- `sectionEquiv` is natural in the source: precomposing a section with a lens pulls it back. -/
 theorem sectionEquiv_comp (s : Lens q (y : PFunctor.{uA₂, uB₂})) (f : Lens p q) :
