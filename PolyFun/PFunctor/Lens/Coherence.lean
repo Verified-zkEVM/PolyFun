@@ -15,8 +15,8 @@ The parallel product `⊗` with unit `y` is a symmetric monoidal structure on le
 (Niu–Spivak §6.1–§6.3, pp. 177–213). This file states the coherence laws for the structural
 lenses of `Lens/Basic.lean` at independent universes:
 
-* for `⊗`: `tensorAssoc_pentagon`, `tensor_triangle`, `tensorComm_natural`, `tensorComm_symm`,
-  `tensorComm_hexagon`, and `tensorComm_hexagon_reverse`;
+* for `⊗`: `tensorAssoc_pentagon`, `tensor_triangle`, `tensorComm_natural`,
+  `tensorComm_comp_tensorComm`, `tensorComm_hexagon`, and `tensorComm_hexagon_reverse`;
 * for `◃`: `compAssoc_natural`, `compY_natural`, `yComp_natural`, `compAssoc_pentagon`, and
   `comp_triangle`.
 
@@ -70,7 +70,7 @@ theorem tensorComm_natural {P' : PFunctor.{uA₃, uB₃}} {Q' : PFunctor.{uA₄,
   rfl
 
 /-- The braiding is its own inverse: `⊗` is symmetric. -/
-theorem tensorComm_symm :
+theorem tensorComm_comp_tensorComm :
     (Lens.Equiv.tensorComm Q P).toLens ∘ₗ (Lens.Equiv.tensorComm P Q).toLens =
       Lens.id (P ⊗ Q) :=
   rfl
