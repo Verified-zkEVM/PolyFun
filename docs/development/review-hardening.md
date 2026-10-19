@@ -92,6 +92,27 @@ In particular:
   or WP interpretation implicitly. Check the pinned API separately from roadmap
   proposals and newer upstream source.
 
+## Canonical Carriers
+
+Each concept has one carrier that consumers store, pass around, and state results about:
+`PFunctor` for polynomials, `Lens` and `Chart` for their morphisms, `PFunctor.Equiv` for their
+isomorphisms. Other descriptions of the same data enter as one of the following:
+
+- an equivalence into an existing type, used to compute or reason before returning to the
+  carrier, such as `Lens.equivPiObj : Lens P Q ≃ ((a : P.A) → Q.Obj (P.B a))`;
+- a constructor with characterization lemmas, so data arriving in another shape is converted
+  once, such as `Lens.ofNatural` with `Lens.mapObj_ofNatural` and `Lens.existsUnique_mapObj`
+  for natural transformations;
+- a predicate with an `_iff` characterization, such as `IsRepresentable` and
+  `isRepresentable_iff`;
+- a carrier synonym that exists only to key a different instance, documented as such, such as
+  `LensCat`, `TensorCat` and `CompCat`.
+
+Do not add a second structure that stores a carrier's data unless it has consumers of its own.
+Mathlib's categorical vocabulary (`NatTrans`, `Iso`, `MonoidalCategory`) is the extensional
+interface for adapters, not a parallel PolyFun carrier. When two structures already store the
+same data, relate them by an equivalence and track their consolidation.
+
 ## Hardening Checklist
 
 A merge-ready change must have:
@@ -99,6 +120,8 @@ A merge-ready change must have:
 - a focused current-`main` diff and fresh CI;
 - minimal, correctly classified imports and no accidental transitive API;
 - an explicit public API delta, including removals and instance changes;
+- no new structure that stores the data of an existing
+  [canonical carrier](#canonical-carriers);
 - ordinary-import canaries for load-bearing public laws;
 - tests placed on the narrowest useful surface: ordinary-import canaries for
   public API, focused proof regressions beside the owning subsystem, and

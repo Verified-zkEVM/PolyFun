@@ -65,11 +65,29 @@ input/output transformers and of proof-system context lenses, are built with
 `Lens.ofMonomial`, `monomialMapFst`, and `monomialMapSnd` in
 [`Lens/Monomial.lean`](../../PolyFun/PFunctor/Lens/Monomial.lean).
 
+## Representables, Yoneda, and natural transformations
+
+`Lens.purePowerEquiv : Lens (y^S) Q ≃ Q.Obj S` is the Yoneda lemma for polynomials, and
+`Lens.equivPiObj : Lens P Q ≃ ((a : P.A) → Q.Obj (P.B a))` reads a lens as its value on each
+generic element `Obj.mk a id`. Lenses are exactly the natural transformations between
+actions: the action `Lens.mapObj` is natural (`Lens.mapObj_map`), and every natural family
+`η X : P.Obj X → Q.Obj X`, with components at the source's direction universe, is the action
+of exactly one lens (`Lens.existsUnique_mapObj`), namely `Lens.ofNatural η`
+(`Lens.mapObj_ofNatural`). `Lens` stays the carrier; convert a natural family once with
+`Lens.ofNatural`. `Obj.punitEquiv` and `Obj.pemptyEquiv` compute `p(1) ≃ P.A` and
+`p(0)`, and `Lens.purePowerMap` is the representable map `y^S ⇆ y^R` of a function `R → S`.
+
+[`Equiv/Special.lean`](../../PolyFun/PFunctor/Equiv/Special.lean) presents every polynomial as
+the sum of the representables at its directions (`Equiv.sigmaPurePower`) and defines the
+representable, constant, linear, and monomial classes up to `≃ₚ`. `isRepresentable_iff`,
+`isConstant_iff`, `isLinear_iff`, and `isMonomial_iff` characterize them by positions and
+directions.
+
 ## Where to start
 
 | Task | Modules |
 |---|---|
-| Describe an interface and translate requests/replies | [Basic](../../PolyFun/PFunctor/Basic.lean), [lenses](../../PolyFun/PFunctor/Lens/Basic.lean), [charts](../../PolyFun/PFunctor/Chart/Basic.lean) |
+| Describe an interface and translate requests/replies | [Basic](../../PolyFun/PFunctor/Basic.lean), [lenses](../../PolyFun/PFunctor/Lens/Basic.lean), [charts](../../PolyFun/PFunctor/Chart/Basic.lean), [Yoneda](../../PolyFun/PFunctor/Lens/Yoneda.lean) |
 | Write and interpret a well-founded program | [FreeM](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean), [first tutorial](../tutorials/first-program.md) |
 | Inspect or decorate a program | [Paths](../../PolyFun/PFunctor/Free/Path.lean), [cursors](../../PolyFun/PFunctor/Free/Cursor.lean), [displayed programs](../../PolyFun/PFunctor/Free/Displayed.lean) |
 | Model stateful behavior | [Dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean), [resumable execution](execution.md#resumable-execution), [computation model guide](computation-models.md) |
