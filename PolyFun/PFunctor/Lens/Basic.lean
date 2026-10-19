@@ -685,7 +685,7 @@ def yComp : y ◃ P ≃ₗ P where
 @[deprecated (since := "2026-08-17")] alias compX := compY
 @[deprecated (since := "2026-08-17")] alias XComp := yComp
 
-/-- Left distributivity of composition over coproduct (Niu–Spivak Prop 6.47). -/
+/-- Right distributivity of composition over coproduct (Niu–Spivak Prop 6.47). -/
 def sumCompDistrib {R : PFunctor.{uA₃, uB₂}} :
     Lens.Equiv.{max uA₁ uA₂ uA₃ uB₂, max uB₁ uB₂, max uA₁ uA₂ uA₃ uB₂, max uB₁ uB₂}
       ((Q + R : PFunctor.{max uA₂ uA₃, uB₂}) ◃ P) ((Q ◃ P) + (R ◃ P)) where

@@ -57,13 +57,13 @@ section Sum
 variable (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB})
   (R : PFunctor.{uA₃, uB}) (S : PFunctor.{uA₄, uB})
 
-/-- Addition with the zero functor on the left is equivalent to the original functor -/
+/-- Adding the zero functor on the right is equivalent to the original functor. -/
 @[simps]
 def sumZero : P + 0 ≃ₚ P where
   equivA := Equiv.sumEmpty P.A PEmpty
   equivB := (Sum.casesOn · (fun _ => _root_.Equiv.refl _) (fun a => a.elim))
 
-/-- Addition with the zero functor on the right is equivalent to the original functor -/
+/-- Adding the zero functor on the left is equivalent to the original functor. -/
 @[simps]
 def zeroSum : 0 + P ≃ₚ P where
   equivA := Equiv.emptySum PEmpty P.A
@@ -600,7 +600,7 @@ def yComp : y ◃ P ≃ₚ P where
 @[deprecated (since := "2026-08-17")] alias compX := compY
 @[deprecated (since := "2026-08-17")] alias XComp := yComp
 
-/-- Left distributivity of composition over sum (Niu–Spivak Prop 6.47). -/
+/-- Right distributivity of composition over sum (Niu–Spivak Prop 6.47). -/
 def sumCompDistrib (Q : PFunctor.{uA₂, uB₁}) :
     (P + Q : PFunctor.{max uA₁ uA₂, uB₁}) ◃ R ≃ₚ
     ((P ◃ R) + (Q ◃ R) : PFunctor.{max uA₁ uA₂ uA₃ uB₁, max uB₁ uB₃}) where
