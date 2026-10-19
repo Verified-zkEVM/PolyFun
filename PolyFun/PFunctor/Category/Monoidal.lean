@@ -15,19 +15,21 @@ public import Mathlib.CategoryTheory.Monoidal.Braided.Basic
 
 The category of polynomials and lenses carries three monoidal structures (Niu–Spivak §3.10,
 p. 65, and §6.3, pp. 202–213). A `MonoidalCategory` instance is keyed on its carrier, so each
-structure gets its own carrier with the lens category on it, following `PFunctor/Category.lean`:
+structure gets its own carrier, a one-field structure over `PFunctor` as in
+`PFunctor/Category.lean`:
 
 * `LensCat` is cartesian monoidal for the categorical product `*` with terminal object `1`
   (`CartesianMonoidalCategory`, Prop 3.56), built from the limit cones `prodFan` and
   `isTerminalOne`.
-* `TensorCat` is `LensCat` with the parallel product `⊗` and unit `y`, a symmetric monoidal
-  category (Prop 3.73).
-* `CompCat.{u, v}` is `LensCat.{max u v, v}` with the composition product `◃` and unit `y`, a
-  monoidal category (§6.3). The universe pair `{max u v, v}` is closed under `◃` and contains the
-  counit target `y.{max uA uB, uB}` of a `PFunctor.Comonoid`.
+* `TensorCat` carries the parallel product `⊗` with unit `y`, a symmetric monoidal category
+  (Prop 3.73).
+* `CompCat.{u, v}` carries the composition product `◃` with unit `y` on polynomials in the
+  universe pair `{max u v, v}`, a monoidal category (§6.3). This universe pair is closed under
+  `◃` and contains the counit target `y.{max uA uB, uB}` of a `PFunctor.Comonoid`.
 
 Every coherence field of the `⊗` and `◃` structures is a lemma of `PFunctor/Lens/Coherence.lean`
-and holds definitionally. Lens equivalences `≃ₗ` become isomorphisms through `isoOfEquiv`.
+and holds definitionally. `LensCat.Iso.mk`, `TensorCat.Iso.mk` and `CompCat.Iso.mk` turn lens
+equivalences `≃ₗ` into isomorphisms.
 -/
 
 @[expose] public section
@@ -43,7 +45,7 @@ namespace PFunctor
 namespace LensCat
 
 /-- A lens equivalence is an isomorphism in `LensCat`. -/
-abbrev isoOfEquiv {P Q : LensCat.{uA, uB}} (e : P.as ≃ₗ Q.as) : P ≅ Q :=
+abbrev Iso.mk {P Q : LensCat.{uA, uB}} (e : P.toPFunctor ≃ₗ Q.toPFunctor) : P ≅ Q :=
   ⟨e.toLens, e.invLens, e.left_inv, e.right_inv⟩
 
 /-- `1` is terminal in `LensCat`. -/
@@ -53,7 +55,7 @@ def isTerminalOne : IsTerminal (LensCat.of (1 : PFunctor.{uA, uB})) :=
 
 /-- The product cone `P * Q` with its two projections. -/
 def prodFan (P Q : LensCat.{uA, uB}) : BinaryFan P Q :=
-  BinaryFan.mk (P := LensCat.of (P.as * Q.as)) Lens.fst Lens.snd
+  BinaryFan.mk (P := LensCat.of (P.toPFunctor * Q.toPFunctor)) Lens.fst Lens.snd
 
 /-- `P * Q` is the product of `P` and `Q` in `LensCat` (Niu–Spivak Prop 3.56). -/
 def prodFanIsLimit (P Q : LensCat.{uA, uB}) : IsLimit (prodFan P Q) :=
@@ -74,32 +76,33 @@ end LensCat
 set_option linter.checkUnivs false in
 /-- The category of polynomials and lenses with the parallel product `⊗` as its monoidal
 structure. -/
-def TensorCat : Type max (uA + 1) (uB + 1) := PFunctor.{uA, uB}
+structure TensorCat : Type max (uA + 1) (uB + 1) where
+  /-- Regard a polynomial functor as an object of `TensorCat`. -/
+  of ::
+  /-- The polynomial functor underlying an object of `TensorCat`. -/
+  toPFunctor : PFunctor.{uA, uB}
 
 namespace TensorCat
 
-/-- Regard a polynomial functor as an object of `TensorCat`. -/
-abbrev of (P : PFunctor.{uA, uB}) : TensorCat.{uA, uB} := P
-
-/-- Regard an object of `TensorCat` as a polynomial functor. -/
-abbrev as (P : TensorCat.{uA, uB}) : PFunctor.{uA, uB} := P
-
-instance instCategory : Category TensorCat.{uA, uB} :=
-  inferInstanceAs (Category LensCat.{uA, uB})
+instance instCategory : Category TensorCat.{uA, uB} where
+  Hom P Q := Lens P.toPFunctor Q.toPFunctor
+  id P := Lens.id P.toPFunctor
+  comp f g := Lens.comp g f
 
 /-- A lens equivalence is an isomorphism in `TensorCat`. -/
-abbrev isoOfEquiv {P Q : TensorCat.{uA, uB}} (e : P.as ≃ₗ Q.as) : P ≅ Q :=
+abbrev Iso.mk {P Q : TensorCat.{uA, uB}} (e : P.toPFunctor ≃ₗ Q.toPFunctor) : P ≅ Q :=
   ⟨e.toLens, e.invLens, e.left_inv, e.right_inv⟩
 
 instance instMonoidalCategoryStruct : MonoidalCategoryStruct TensorCat.{uA, uB} where
-  tensorObj P Q := of (P.as ⊗ Q.as)
-  whiskerLeft P _ _ g := Lens.id P.as ⊗ₗ g
-  whiskerRight f Q := f ⊗ₗ Lens.id Q.as
+  tensorObj P Q := of (P.toPFunctor ⊗ Q.toPFunctor)
+  whiskerLeft P _ _ g := Lens.id P.toPFunctor ⊗ₗ g
+  whiskerRight f Q := f ⊗ₗ Lens.id Q.toPFunctor
   tensorHom f g := f ⊗ₗ g
   tensorUnit := of y
-  associator P Q R := isoOfEquiv (Lens.Equiv.tensorAssoc (P := P.as) (Q := Q.as) (R := R.as))
-  leftUnitor P := isoOfEquiv (Lens.Equiv.yTensor (P := P.as))
-  rightUnitor P := isoOfEquiv (Lens.Equiv.tensorY (P := P.as))
+  associator P Q R := Iso.mk
+    (Lens.Equiv.tensorAssoc (P := P.toPFunctor) (Q := Q.toPFunctor) (R := R.toPFunctor))
+  leftUnitor P := Iso.mk (Lens.Equiv.yTensor (P := P.toPFunctor))
+  rightUnitor P := Iso.mk (Lens.Equiv.tensorY (P := P.toPFunctor))
 
 /-- `(TensorCat, ⊗, y)` is a monoidal category; every law holds definitionally. -/
 instance instMonoidalCategory : MonoidalCategory TensorCat.{uA, uB} :=
@@ -116,7 +119,7 @@ instance instMonoidalCategory : MonoidalCategory TensorCat.{uA, uB} :=
 
 /-- `(TensorCat, ⊗, y)` is symmetric monoidal, with the braiding `tensorComm`. -/
 instance instSymmetricCategory : SymmetricCategory TensorCat.{uA, uB} where
-  braiding P Q := isoOfEquiv (Lens.Equiv.tensorComm P.as Q.as)
+  braiding P Q := Iso.mk (Lens.Equiv.tensorComm P.toPFunctor Q.toPFunctor)
   braiding_naturality_right _ _ _ _ := rfl
   braiding_naturality_left _ _ := rfl
   hexagon_forward _ _ _ := rfl
@@ -132,32 +135,33 @@ end TensorCat
 set_option linter.checkUnivs false in
 /-- The category of polynomials and lenses with the composition product `◃` as its monoidal
 structure, on the universe pair `{max u v, v}`, which `◃` preserves. -/
-def CompCat : Type (max u v + 1) := PFunctor.{max u v, v}
+structure CompCat : Type (max u v + 1) where
+  /-- Regard a polynomial functor as an object of `CompCat`. -/
+  of ::
+  /-- The polynomial functor underlying an object of `CompCat`. -/
+  toPFunctor : PFunctor.{max u v, v}
 
 namespace CompCat
 
-/-- Regard a polynomial functor as an object of `CompCat`. -/
-abbrev of (P : PFunctor.{max u v, v}) : CompCat.{u, v} := P
-
-/-- Regard an object of `CompCat` as a polynomial functor. -/
-abbrev as (P : CompCat.{u, v}) : PFunctor.{max u v, v} := P
-
-instance instCategory : Category CompCat.{u, v} :=
-  inferInstanceAs (Category LensCat.{max u v, v})
+instance instCategory : Category CompCat.{u, v} where
+  Hom P Q := Lens P.toPFunctor Q.toPFunctor
+  id P := Lens.id P.toPFunctor
+  comp f g := Lens.comp g f
 
 /-- A lens equivalence is an isomorphism in `CompCat`. -/
-abbrev isoOfEquiv {P Q : CompCat.{u, v}} (e : P.as ≃ₗ Q.as) : P ≅ Q :=
+abbrev Iso.mk {P Q : CompCat.{u, v}} (e : P.toPFunctor ≃ₗ Q.toPFunctor) : P ≅ Q :=
   ⟨e.toLens, e.invLens, e.left_inv, e.right_inv⟩
 
 instance instMonoidalCategoryStruct : MonoidalCategoryStruct CompCat.{u, v} where
-  tensorObj P Q := of (P.as ◃ Q.as)
-  whiskerLeft P _ _ g := Lens.id P.as ◃ₗ g
-  whiskerRight f Q := f ◃ₗ Lens.id Q.as
+  tensorObj P Q := of (P.toPFunctor ◃ Q.toPFunctor)
+  whiskerLeft P _ _ g := Lens.id P.toPFunctor ◃ₗ g
+  whiskerRight f Q := f ◃ₗ Lens.id Q.toPFunctor
   tensorHom f g := f ◃ₗ g
   tensorUnit := of y
-  associator P Q R := isoOfEquiv (Lens.Equiv.compAssoc (P := P.as) (Q := Q.as) (R := R.as))
-  leftUnitor P := isoOfEquiv (Lens.Equiv.yComp (P := P.as))
-  rightUnitor P := isoOfEquiv (Lens.Equiv.compY (P := P.as))
+  associator P Q R := Iso.mk
+    (Lens.Equiv.compAssoc (P := P.toPFunctor) (Q := Q.toPFunctor) (R := R.toPFunctor))
+  leftUnitor P := Iso.mk (Lens.Equiv.yComp (P := P.toPFunctor))
+  rightUnitor P := Iso.mk (Lens.Equiv.compY (P := P.toPFunctor))
 
 /-- `(CompCat, ◃, y)` is a monoidal category; every law holds definitionally. -/
 instance instMonoidalCategory : MonoidalCategory CompCat.{u, v} :=
