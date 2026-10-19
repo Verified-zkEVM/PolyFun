@@ -10,7 +10,7 @@ public import PolyFun.PFunctor.Basic
 /-!
 # Book-style polynomial notation
 
-Regression tests for the Spivak–Niu surface syntax on `PFunctor`: the
+Regression tests for the Niu–Spivak surface syntax on `PFunctor`: the
 monomial infix `A y^ B`, the representable prefix `y^ B`, the composition
 power `p ◃^ n`, and the indexed sum/product binders `Σₚ`/`Πₚ`. The examples
 pin down definitional equality with the named primitives and the intended

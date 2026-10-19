@@ -17,8 +17,7 @@ tests synchronize two observably different behavior trees.  Their backward
 maps distinguish the two factors and two different depth-two direction
 sequences, so a copied, swapped, reversed, or root-only implementation fails.
 
-This is the concrete lax-monoidal structure of Spivak–Niu, Proposition 8.79
-in the current edition (Proposition 8.81 in the earlier-edition notes).
+This is the concrete lax-monoidal structure of Niu–Spivak, Proposition 8.81.
 -/
 
 @[expose] public section

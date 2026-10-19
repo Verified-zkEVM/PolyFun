@@ -10,7 +10,7 @@ public import PolyFun.PFunctor.Comonoid
 /-!
 # The category encoded by a polynomial comonoid
 
-The Ahman–Uustalu correspondence (Spivak–Niu, Theorem 7.28) identifies a
+The Ahman–Uustalu correspondence (Niu–Spivak, Theorem 7.28) identifies a
 comonoid in `(Poly, ◃, y)` with a small category in outgoing-arrow form. For
 `C : Comonoid`, the positions `C.carrier.A` are objects and a direction
 `d : C.carrier.B c` is an arrow with source `c`. The counit selects the identity
@@ -20,7 +20,7 @@ an arrow leaving that target.
 This file exposes that dictionary and derives the five category laws directly
 from the two counitality equations and coassociativity. It also projects the
 laws of `Comonoid.Hom` into the identity/target/composition laws of a
-retrofunctor (Spivak–Niu, Definition 7.55): objects move forward while outgoing
+retrofunctor (Niu–Spivak, Definition 7.55): objects move forward while outgoing
 arrows move backward. Conversely, `Comonoid.Hom.ofCategoryLaws` reconstructs
 the raw comonoid-homomorphism equations from exactly those three laws, keeping
 dependent transport localized in this producer module.

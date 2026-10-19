@@ -346,7 +346,7 @@ When a proof framework follows an external paper, cite the public paper
 by title, venue, or URL rather than pointing agents at a repo-local file
 path. Foundational citations live in
 [`REFERENCES.md`](../../REFERENCES.md); module docstrings reference
-those keys (`Hancock-Setzer`, `Spivak-Niu`, etc.) rather than copying
+those keys (`Hancock-Setzer`, `Niu–Spivak`, etc.) rather than copying
 prose.
 
 ### `Std.WP` imports are quarantined, in two tiers

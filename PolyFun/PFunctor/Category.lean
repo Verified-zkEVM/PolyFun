@@ -21,7 +21,7 @@ Following the treatment of `CategoryTheory.Cat`, `RelCat`, `KleisliCat`, and
 `PartialFun` in Mathlib, each structure therefore gets its own carrier:
 
 * `PFunctor.LensCat`, with `Lens` as morphisms. This is the category **Poly**
-  of Spivak–Niu.
+  of Niu–Spivak.
 * `PFunctor.ChartCat`, with `Chart` as morphisms.
 
 `LensCat.of` / `ChartCat.of` move a `PFunctor` into the chosen carrier, and

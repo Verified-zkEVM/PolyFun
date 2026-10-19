@@ -14,7 +14,7 @@ public import PolyFun.PFunctor.Dynamical.Basic
 
 A **responder** for an interface `q` receives `q`-positions (queries) and returns
 `q`-directions (answers), updating an internal state as it goes. Following
-Spivak–Niu, *Polynomial Functors: A Mathematical Theory of Interaction* (Ex 4.78),
+Niu–Spivak, *Polynomial Functors: A Mathematical Theory of Interaction* ((4.82), Ex 4.92),
 this is exactly a dynamical system over the internal hom `q ⊸ y`: by `ihom_y_A`
 the positions of `q ⊸ y` are the sections of `q`, so at each state the responder
 *commits* to an answer for every possible query, and a direction of `q ⊸ y` over
@@ -39,7 +39,7 @@ universe u v uA uB
 namespace PFunctor
 
 /-- A **responder** with states `S` for the interface `q`: a dynamical system over
-the internal hom `q ⊸ y` (Spivak–Niu Ex 4.78). By `ihom_y_A` its exposed
+the internal hom `q ⊸ y` (Niu–Spivak (4.82)). By `ihom_y_A` its exposed
 positions are the sections of `q` — at each state the responder commits to an
 answer for every possible query — and a direction over a committed section is
 just a query, so `update` evolves the state by the query heard. -/

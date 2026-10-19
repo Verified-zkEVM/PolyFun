@@ -10,7 +10,7 @@ public import PolyFun.PFunctor.Adjunctions
 /-!
 # Examples for the trivial-interface hom-set adjunctions
 
-Regression tests exercising the Spivak–Niu §5.1 hom-isomorphisms
+Regression tests exercising the Niu–Spivak §5.1 hom-isomorphisms
 `homFromZero`, `homToOne`, `homFromY`, `homToConst`, and `homToLinear` on the
 small concrete polynomial `qBool = Bool y^Bool`.
 -/

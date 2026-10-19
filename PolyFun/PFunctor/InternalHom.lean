@@ -11,7 +11,7 @@ import Batteries.Tactic.Lint
 /-!
 # The internal hom of the tensor product
 
-Following Spivak–Niu, *Polynomial Functors: A Mathematical Theory of Interaction*
+Following Niu–Spivak, *Polynomial Functors: A Mathematical Theory of Interaction*
 (§4.5, Ex 4.78), the tensor (parallel / Dirichlet) product `⊗` on `PFunctor` is
 closed: for each `q` the functor `- ⊗ q` has a right adjoint `ihom q -`, the
 **internal hom** `[q, r]`. Its positions are exactly the lenses `q ⇆ r`, and a
@@ -32,7 +32,7 @@ tie the hom back to existing structure: `[y, r] ≅ r` (`ihomY`, the tensor-unit
 law) and `(ihom q y).A = Lens q y = enclose q` — the positions of `[q, y]` are
 the handlers (sections) of `q`.
 
-Note this is a *different* object from `PFunctor.exp` (`P ^ Q`, Spivak–Niu §5.3),
+Note this is a *different* object from `PFunctor.exp` (`P ^ Q`, Niu–Spivak §5.3),
 which is the cartesian exponential right-adjoint to the categorical product,
 not to `⊗`.
 -/
@@ -43,7 +43,7 @@ universe uA uB pA pB qA qA₁ qA₂ qB rA rB
 
 namespace PFunctor
 
-/-- The **internal hom** `[q, r]` of the tensor product (Spivak–Niu Ex 4.78):
+/-- The **internal hom** `[q, r]` of the tensor product (Niu–Spivak Ex 4.78):
 positions are the lenses `q ⇆ r`, and a direction at a lens `f` is a `q`-position
 `j` paired with an `r`-direction over `f.toFunA j`. -/
 def ihom (q : PFunctor.{qA, qB}) (r : PFunctor.{rA, rB}) :

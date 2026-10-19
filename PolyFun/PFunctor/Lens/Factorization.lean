@@ -11,8 +11,8 @@ import Batteries.Tactic.Lint
 /-!
 # Vertical–cartesian factorization of lenses
 
-Following Spivak–Niu, *Polynomial Functors: A Mathematical Theory of Interaction*
-(§5.5, Prop 5.51–5.53), this file constructs the vertical–cartesian
+Following Niu–Spivak, *Polynomial Functors: A Mathematical Theory of Interaction*
+(§5.5, Def 5.51, Prop 5.52), this file constructs the vertical–cartesian
 factorization of a lens and proves the corresponding lifting law. The two
 classes are:
 
@@ -33,12 +33,12 @@ built here as `equivOfVerticalCartesian`, by packaging the position bijection
 and the fiber bijections into a `PFunctor.Equiv` and pushing through
 `PFunctor.Equiv.toLensEquiv`.
 
-Both classes are closed under the polynomial operations (Spivak–Niu Prop 5.63,
-6.88): `IsVertical.sumMap` / `prodMap` / `tensorMap` and `IsCartesian.prodMap`
-/ `tensorMap` / `compMap` witness closure under `+`, `×`, `⊗`, and `◃`. Vertical
-lenses are *not* closed under the copairing `sumPair` (a `Sum.elim` of two
-bijections into a shared codomain need not be injective), so no such witness is
-provided.
+Both classes are closed under `+`, `×`, and `⊗` (Niu–Spivak Prop 5.63), and
+cartesian lenses are also closed under `◃` (Prop 6.88): `IsVertical.sumMap` /
+`prodMap` / `tensorMap` and `IsCartesian.prodMap` / `tensorMap` / `compMap` are
+the witnesses. Vertical lenses are *not* closed under `◃` (Ex 6.89), nor under
+the copairing `sumPair` (a `Sum.elim` of two bijections into a shared codomain
+need not be injective), so no such witnesses are provided.
 
 Finally, `verticalCartesianDiagonal` constructs the unique diagonal in every
 commutative square whose left edge is vertical and whose right edge is
@@ -392,7 +392,7 @@ theorem subsingleton_verticalCartesianFillers
 
 /-! ## Closure of cartesian lenses under the polynomial operations
 
-The cartesian analogues of the verticality closure lemmas (Spivak–Niu Prop 5.63,
+The cartesian analogues of the verticality closure lemmas (Niu–Spivak Prop 5.63,
 6.88). Unlike positions, the fiber of a product / tensor / composition splits as
 a `Sum.map` / `Prod.map` / dependent `Sigma`-map of the leg fibers, so each is a
 bijection when both legs are cartesian. -/
@@ -418,7 +418,7 @@ theorem tensorMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
     (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ⊗ₗ l₂).IsCartesian := fun pq =>
   Function.Bijective.prodMap (h₁ pq.1) (h₂ pq.2)
 
-/-- Cartesianness is closed under the composition `◃ₗ` (Spivak–Niu Prop 6.88):
+/-- Cartesianness is closed under the composition `◃ₗ` (Niu–Spivak Prop 6.88):
 the fiber of `l₁ ◃ₗ l₂` at `⟨pa, pq⟩` sends `⟨rb, wc⟩` to
 `⟨l₁.toFunB pa rb, l₂.toFunB (pq (l₁.toFunB pa rb)) wc⟩`, a dependent
 `Sigma`-congruence built from the base bijection `l₁.toFunB pa` and the fiber

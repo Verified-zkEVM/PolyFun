@@ -17,7 +17,7 @@ positions and finite rooted vertices of each tree as directions.  Labelling
 every finite vertex by `y` recovers the ordinary cofree comonad `CofreeC P y`.
 
 This is the direct M-type presentation of the cofree polynomial comonoid from
-Spivak–Niu, Chapter 8 (Definitions 8.2, Example 8.16, Propositions 8.18 and
+Niu–Spivak, Chapter 8 (Definition 8.2, Exercise 8.16, Propositions 8.18 and
 8.33). Libkind–Spivak, *Pattern Runs on Matter*, supplies the subsequent
 module-action application.
 -/

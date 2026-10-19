@@ -33,7 +33,7 @@ Precedence ensures `A ∥ B ⊞ C ⊠ K` parses as `((A ∥ B) ⊞ C) ⊠ K`.
 
 ## Polynomial (PFunctor) Notation
 
-The polynomial algebra uses the Spivak–Niu book surface, scoped to the
+The polynomial algebra uses the Niu–Spivak book surface, scoped to the
 `PFunctor` namespace (activated by `open scoped PFunctor`). The named
 definitions (`PFunctor.monomial`, `purePower`, `comp`, `compNth`,
 `sigma`, `pi`, …) remain the canonical API; every glyph below is sugar
@@ -94,7 +94,7 @@ Conventions and glyph rationale:
 - `Responder S q` and the game formers in
   `PolyFun/PFunctor/Dynamical/{Responder, Game}.lean` are dynamical
   systems over `q ⊸ y` and `q ⊸ r`; the positions of `q ⊸ r` are the
-  lenses `Lens q r` (Spivak–Niu Ex 4.78).
+  lenses `Lens q r` (Niu–Spivak Ex 4.78).
 - Lens and chart constructors have the scoped arrows `toFunA ⇆ toFunB` (`Lens.mk`) and
   `toFunA ⇉ toFunB` (`Chart.mk`), active under `open scoped PFunctor` like the rest of the
   polynomial algebra. The pairing brackets `⟨l₁, l₂⟩ₗ` / `[l₁, l₂]ₗ` (`Lens.prodPair` /
