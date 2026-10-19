@@ -305,9 +305,10 @@ abbrev Point (p : PFunctor.{uA, uB}) : Type _ := Lens y.{uA, uB} p
 /-- A **section** of an interface `p` is a lens `p ⟹ y` (the book's `p ⟹ y`),
 equivalently a dependent section `(a : p.A) → p.B a` choosing a direction at every
 position. Composing a section after a system's interface lens closes the system off
-(Niu–Spivak §4.3.4); see `DynSystem.close`. This is `Lens.enclose p` with the unit's
-universes instantiated at those of `p`. -/
+(Niu–Spivak §4.3.4); see `DynSystem.close`. -/
 abbrev Section (p : PFunctor.{uA, uB}) : Type _ := Lens p y.{uA, uB}
+
+@[deprecated (since := "2026-10-19")] alias Lens.enclose := Section
 
 /-- The section `p ⟹ y` picking the direction `σ a` at each position `a`. Unpacking
 a `Section p`, the position map is trivial and the direction map is `σ`. -/

@@ -146,8 +146,8 @@ structural replay consumers used downstream.
 ### Monoid traces and dependent events
 
 Use `TraceList.positions_mul`, `occurrences_mul`, and the generator lookup
-equations to observe traces. Use `TraceList.mapPartial_comp` and
-`Trace.mapPartial_comp` to reason about filtering and wiring. A consumer that
+equations to observe traces. Use `TraceList.mapPartial_mapPartial` and
+`Trace.mapPartial_mapPartial` to reason about filtering and wiring. A consumer that
 needs list operations should cross the boundary explicitly with
 `FreeMonoid.toList`; `TraceList.toList_mapPartial` exposes the filtered list.
 Induct on a generic trace with `FreeMonoid.recOn`, whose cases are `one` and

@@ -264,7 +264,7 @@ theorem mapBoundary_wireLeft {Δ₁ Δ₁' Γ : PortBoundary} {Δ₂ Δ₂' : Po
         (PortBoundary.Hom.tensor f₁ (PortBoundary.Hom.id Γ))).wireLeft Δ₂' := by
   simp only [wireLeft, mapBoundary, PortBoundary.Hom.tensor, PortBoundary.Hom.id]
   congr 1
-  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_comp]
+  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_mapPartial]
   congr 1
   funext packet
   rcases packet with ⟨port, message⟩
@@ -280,7 +280,7 @@ theorem mapBoundary_wireRight {Δ₁ Δ₁' : PortBoundary} {Γ Δ₂ Δ₂' : P
           (PortBoundary.Hom.id (PortBoundary.swap Γ)) f₂)).wireRight Δ₁' := by
   simp only [wireRight, mapBoundary, PortBoundary.Hom.tensor, PortBoundary.Hom.id]
   congr 1
-  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_comp]
+  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_mapPartial]
   congr 1
   funext packet
   rcases packet with ⟨port, message⟩

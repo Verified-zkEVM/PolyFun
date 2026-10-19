@@ -695,7 +695,7 @@ theorem ofFn_seqComp_obsEq {γ : Type uγ} (f : α → β)
     (M : DynComputation.{u} p β γ) :
     ObsEq ((ofFn (p := p) f).seqComp M) (M.contramapInput f) := by
   intro input
-  simp only [denote_seqComp, denote_ofFn, Resumption.bind_pure_left,
+  simp only [denote_seqComp, denote_ofFn, Resumption.pure_bind,
     contramapInput_denote]
 
 /-- An immediate second computation is observationally result mapping. -/

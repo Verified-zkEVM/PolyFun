@@ -122,8 +122,8 @@ example (first : PFunctor.Lens E F) (second : PFunctor.Lens F G)
   ITree.Handler.ofLens_comp_apply first second a
 
 /-- Coproduct routing only inherits the equal direction-universe constraint
-of `PFunctor.sum`; the two position universes and target universes remain
-independent. -/
+of the sum `PFunctor.add`; the two position universes and target universes
+remain independent. -/
 def caseSeparated (left : ITree.Handler E G) (right : ITree.Handler Q G) :
     ITree.Handler.{max uEA uQA, uEB, uGA, uGB} (E + Q) G :=
   ITree.Handler.case_ left right

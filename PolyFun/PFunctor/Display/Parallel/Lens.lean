@@ -520,7 +520,7 @@ theorem parallelSumMap_comp
     (parallelSumMap_comp_total secondLeft secondRight firstLeft firstRight)
 
 /-- The displayed braiding is involutive on total polynomials. -/
-@[simp] theorem parallelSumComm_involutive_total
+@[simp] theorem parallelSumComm_comp_parallelSumComm_total
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
@@ -531,15 +531,21 @@ theorem parallelSumMap_comp
   rintro ⟨operation, contract⟩
   cases operation <;> rfl
 
-@[simp] theorem parallelSumComm_involutive
+@[deprecated (since := "2026-10-19")] alias parallelSumComm_involutive_total :=
+  parallelSumComm_comp_parallelSumComm_total
+
+@[simp] theorem parallelSumComm_comp_parallelSumComm
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
-    transport (PFunctor.Lens.parallelSumComm_involutive P Q)
+    transport (PFunctor.Lens.parallelSumComm_comp_parallelSumComm P Q)
         (comp (parallelSumComm T S) (parallelSumComm S T)) =
       id (Display.parallelSum S T) :=
-  transport_eq_of_totalEq (PFunctor.Lens.parallelSumComm_involutive P Q)
-    _ _ (parallelSumComm_involutive_total S T)
+  transport_eq_of_totalEq (PFunctor.Lens.parallelSumComm_comp_parallelSumComm P Q)
+    _ _ (parallelSumComm_comp_parallelSumComm_total S T)
+
+@[deprecated (since := "2026-10-19")] alias parallelSumComm_involutive :=
+  parallelSumComm_comp_parallelSumComm
 
 /-- Naturality of the displayed braiding on total polynomials. -/
 theorem parallelSumComm_natural_total

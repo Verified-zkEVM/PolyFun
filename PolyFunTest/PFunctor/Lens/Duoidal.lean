@@ -404,7 +404,7 @@ example (p p' q q' : PFunctor.{u, u}) :
     Lens.duoidalLens p p' q q' ∘ₗ
         (Lens.orderingLens p p' ⊗ₗ Lens.orderingLens q q') =
       Lens.orderingLens (p ⊗ q) (p' ⊗ q') ∘ₗ
-        (Lens.Equiv.tensorMiddleFour p p' q q').toLens :=
+        (Lens.Equiv.tensorTensorTensorComm p p' q q').toLens :=
   Lens.orderingLens_duoidal p p' q q'
 
 /-- Ordering agrees with both tensor/composition unitors. -/

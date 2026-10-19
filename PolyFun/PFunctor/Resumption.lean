@@ -297,10 +297,12 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
   · simp only [bindStep, h]
     rfl
 
-@[simp] theorem bind_pure_left (value : α) (k : α → Resumption p β) :
+@[simp] theorem pure_bind (value : α) (k : α → Resumption p β) :
     bind (pure value) k = k value := by
   apply eq_of_dest_eq
   simp
+
+@[deprecated (since := "2026-10-19")] alias bind_pure_left := pure_bind
 
 @[simp] theorem bind_query (position : p.A) (next : p.B position → Resumption p α)
     (k : α → Resumption p β) :
@@ -308,7 +310,7 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
   apply eq_of_dest_eq
   simp
 
-@[simp] theorem bind_pure_right (computation : Resumption p α) :
+@[simp] theorem bind_pure (computation : Resumption p α) :
     bind computation pure = computation := by
   refine M.bisim
     (fun (left right : Resumption p α) =>
@@ -332,6 +334,8 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
     · rw [← pack_dest, ← pack_inr]
       exact congrArg pack h
 
+@[deprecated (since := "2026-10-19")] alias bind_pure_right := bind_pure
+
 theorem bind_assoc (computation : Resumption p α) (k : α → Resumption p β)
     (k' : β → Resumption p γ) :
     bind (bind computation k) k' = bind computation (fun value => bind (k value) k') := by
@@ -350,7 +354,7 @@ theorem bind_assoc (computation : Resumption p α) (k : α → Resumption p β)
     · rw [show source = pure value by
         apply eq_of_dest_eq
         simpa using h]
-      simp only [bind_pure_left]
+      simp only [pure_bind]
       rcases hk : M.dest (bind (k value) k') with ⟨shape, next⟩
       exact ⟨shape, next, next, rfl, rfl, fun _ => Or.inl rfl⟩
     · refine ⟨Sum.inl position,
@@ -376,7 +380,7 @@ theorem bind_assoc (computation : Resumption p α) (k : α → Resumption p β)
 @[simp] theorem map_id (computation : Resumption p α) :
     map id computation = computation := by
   change bind computation pure = computation
-  exact bind_pure_right computation
+  exact bind_pure computation
 
 theorem map_comp (g : β → γ) (f : α → β) (computation : Resumption p α) :
     map (g ∘ f) computation = map g (map f computation) := by
@@ -444,7 +448,7 @@ def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β 
         (fun direction => ⟨next direction, rfl, rfl⟩)
   · exact ⟨computation, rfl, rfl⟩
 
-@[simp] theorem mapLens_comp (lens₂ : Lens q r) (lens₁ : Lens p q)
+@[simp] theorem mapLens_mapLens (lens₂ : Lens q r) (lens₁ : Lens p q)
     (computation : Resumption p β) :
     mapLens lens₂ (mapLens lens₁ computation) =
       mapLens (lens₂ ∘ₗ lens₁) computation := by
@@ -469,6 +473,8 @@ def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β 
         (fun direction => ⟨_, rfl, rfl⟩)
   · exact ⟨computation, rfl, rfl⟩
 
+@[deprecated (since := "2026-10-19")] alias mapLens_comp := mapLens_mapLens
+
 theorem mapLens_bind (lens : Lens p q) (computation : Resumption p α)
     (k : α → Resumption p β) :
     mapLens lens (bind computation k) =
@@ -487,7 +493,7 @@ theorem mapLens_bind (lens : Lens p q) (computation : Resumption p α)
       subst right
       rcases h : dest source with value | ⟨position, next⟩
       · rw [show source = pure value by apply eq_of_dest_eq; simpa using h]
-        simp only [bind_pure_left, mapLens_pure]
+        simp only [pure_bind, mapLens_pure]
         rcases hk : dest (mapLens lens (k value)) with result | ⟨position, next⟩
         · exact .pure result hk hk
         · exact .query position next next hk hk (fun _ => Or.inl rfl)
@@ -526,7 +532,7 @@ instance instMonad : Monad (Resumption p) where
 instance instLawfulMonad : LawfulMonad (Resumption p) := LawfulMonad.mk'
   (bind_pure_comp := by intros; rfl)
   (id_map := map_id)
-  (pure_bind := bind_pure_left)
+  (pure_bind := pure_bind)
   (bind_assoc := bind_assoc)
 
 end Instances

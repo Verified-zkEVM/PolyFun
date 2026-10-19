@@ -29,8 +29,8 @@ Their pins are recorded in the manifest; their README files live under
   the constants `0` and `1`, `P + Q` (through `PFunctor.add`), `P * Q`
   (through `PFunctor.prod`) and `PFunctor.ext`, together with their simp
   lemmas. `PolyFun/PFunctor/Basic.lean` re-exports that module and adds the
-  universe polynomial, the named sum `PFunctor.sum`, indexed sums and
-  products, tensor, lifts, exponentials, lenses and charts. The reducibility of
+  universe polynomial, indexed sums and products, tensor, lifts,
+  exponentials, lenses and charts. The reducibility of
   the shared constructions is CSLib's; the
   [polynomial guide](../guides/pfunctor.md#cslibs-polynomial-constructions)
   describes what it implies for instance search and simp.

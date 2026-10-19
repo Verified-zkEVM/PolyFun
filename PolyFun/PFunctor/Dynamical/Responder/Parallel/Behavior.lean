@@ -39,7 +39,7 @@ variable {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
 one component and leaves the other component unchanged. -/
 def sumBehavior
     (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) :
-    PFunctor.M (PFunctor.sum P Q ⊸ y.{max uA₁ uA₂, uB}) :=
+    PFunctor.M (PFunctor.add P Q ⊸ y.{max uA₁ uA₂, uB}) :=
   (Responder.sum (Responder.terminal (P := P))
     (Responder.terminal (P := Q))).behavior (left, right)
 
@@ -64,11 +64,11 @@ theorem sum_behavior
 @[simp]
 theorem sumBehavior_answer_inl
     (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (a : P.A) :
-    (Responder.terminal (P := PFunctor.sum P Q)).answer
+    (Responder.terminal (P := PFunctor.add P Q)).answer
         (sumBehavior left right) (.inl a) =
       (Responder.terminal (P := P)).answer left a := by
   change
-    (Responder.terminal (P := PFunctor.sum P Q)).answer
+    (Responder.terminal (P := PFunctor.add P Q)).answer
       ((Responder.sum (Responder.terminal (P := P))
         (Responder.terminal (P := Q))).behavior (left, right)) (.inl a) = _
   rw [terminal_answer_behavior]
@@ -77,11 +77,11 @@ theorem sumBehavior_answer_inl
 @[simp]
 theorem sumBehavior_answer_inr
     (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (b : Q.A) :
-    (Responder.terminal (P := PFunctor.sum P Q)).answer
+    (Responder.terminal (P := PFunctor.add P Q)).answer
         (sumBehavior left right) (.inr b) =
       (Responder.terminal (P := Q)).answer right b := by
   change
-    (Responder.terminal (P := PFunctor.sum P Q)).answer
+    (Responder.terminal (P := PFunctor.add P Q)).answer
       ((Responder.sum (Responder.terminal (P := P))
         (Responder.terminal (P := Q))).behavior (left, right)) (.inr b) = _
   rw [terminal_answer_behavior]
@@ -91,12 +91,12 @@ theorem sumBehavior_answer_inr
 theorem sumBehavior_child_inl
     (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (a : P.A) :
     (sumBehavior left right).children
-        ⟨(Sum.inl a : (PFunctor.sum P Q).A), PUnit.unit⟩ =
+        ⟨(Sum.inl a : (PFunctor.add P Q).A), PUnit.unit⟩ =
       sumBehavior (left.children ⟨a, PUnit.unit⟩) right := by
   change
     ((Responder.sum (Responder.terminal (P := P))
       (Responder.terminal (P := Q))).behavior (left, right)).children
-        ⟨(Sum.inl a : (PFunctor.sum P Q).A), PUnit.unit⟩ = _
+        ⟨(Sum.inl a : (PFunctor.add P Q).A), PUnit.unit⟩ = _
   rw [behavior_child]
   rfl
 
@@ -104,12 +104,12 @@ theorem sumBehavior_child_inl
 theorem sumBehavior_child_inr
     (left : PFunctor.M (P ⊸ y.{uA₁, uB})) (right : PFunctor.M (Q ⊸ y.{uA₂, uB})) (b : Q.A) :
     (sumBehavior left right).children
-        ⟨(Sum.inr b : (PFunctor.sum P Q).A), PUnit.unit⟩ =
+        ⟨(Sum.inr b : (PFunctor.add P Q).A), PUnit.unit⟩ =
       sumBehavior left (right.children ⟨b, PUnit.unit⟩) := by
   change
     ((Responder.sum (Responder.terminal (P := P))
       (Responder.terminal (P := Q))).behavior (left, right)).children
-        ⟨(Sum.inr b : (PFunctor.sum P Q).A), PUnit.unit⟩ = _
+        ⟨(Sum.inr b : (PFunctor.add P Q).A), PUnit.unit⟩ = _
   rw [behavior_child]
   rfl
 
@@ -294,7 +294,7 @@ def sumDisplayedBehavior
       Display.M (Display.responder T) state.2)
     (terminalSumCoalgebra S T)
     (left, right) (displayedLeft, displayedRight)
-    (Sum.inl a : (PFunctor.sum P Q).A) (ULift.up contract)).trans rfl
+    (Sum.inl a : (PFunctor.add P Q).A) (ULift.up contract)).trans rfl
 
 @[simp] theorem respondDisplayed_sumDisplayedBehavior_post_inr
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
@@ -314,7 +314,7 @@ def sumDisplayedBehavior
       Display.M (Display.responder T) state.2)
     (terminalSumCoalgebra S T)
     (left, right) (displayedLeft, displayedRight)
-    (Sum.inr b : (PFunctor.sum P Q).A) (ULift.up contract)).trans rfl
+    (Sum.inr b : (PFunctor.add P Q).A) (ULift.up contract)).trans rfl
 
 /-- Exact continuation observation for displayed coproduct behavior.  The two
 `sumCoalgebra_obligation_*` equations specialize its witness to the selected
@@ -326,7 +326,7 @@ theorem respondDisplayed_sumDisplayedBehavior_next
     (displayedLeft : Display.M (Display.responder S) left)
     (right : PFunctor.M (Q ⊸ y.{uA₂, uB}))
     (displayedRight : Display.M (Display.responder T) right)
-    (query : (PFunctor.sum P Q).A)
+    (query : (PFunctor.add P Q).A)
     (contract : (Display.sum S T).position query) :
     Display.M.transport
         (behavior_child
