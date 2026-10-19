@@ -238,7 +238,7 @@ theorem toChart_refl (P : IPFunctor.{uI, uJ, uA₁, uB₁} I J) :
 theorem toChart_trans (e₁ : P ≃ₚ Q) (e₂ : Q ≃ₚ R) :
     (e₁.trans e₂).toChart = Chart.comp e₂.toChart e₁.toChart := rfl
 
-private theorem forward_equivB_roundtrip (e : P ≃ₚ Q) (j : J) (a : P.A j)
+private theorem symm_equivB_equivB (e : P ≃ₚ Q) (j : J) (a : P.A j)
     (b : P.B j a) :
     e.symm.equivB j (e.equivA j a) (e.equivB j a b) =
       _root_.cast
@@ -251,7 +251,7 @@ private theorem forward_equivB_roundtrip (e : P ≃ₚ Q) (j : J) (a : P.A j)
     (a := (e.equivA j).symm (e.equivA j a)) (a' := a)
     (ha := (e.equivA j).apply_symm_apply _) (b := b)
 
-private theorem reverse_equivB_roundtrip (e : P ≃ₚ Q) (j : J) (a : Q.A j)
+private theorem equivB_symm_equivB (e : P ≃ₚ Q) (j : J) (a : Q.A j)
     (b : Q.B j a) :
     e.equivB j ((e.equivA j).symm a) (e.symm.equivB j a b) =
       _root_.cast
@@ -281,7 +281,7 @@ theorem symm_toChart_comp_toChart (e : P ≃ₚ Q) :
   intro j a
   funext b
   simp only [Chart.comp, Chart.id, toChart, Function.comp_apply]
-  rw [forward_equivB_roundtrip]
+  rw [symm_equivB_equivB]
   exact (eqRec_id_apply_codomain ((e.equivA j).symm_apply_apply a).symm b).symm
 
 /-- Pushing responses forward through the inverse and then the original
@@ -296,7 +296,7 @@ theorem toChart_comp_symm_toChart (e : P ≃ₚ Q) :
   funext b
   simp only [Chart.comp, Chart.id, toChart, Function.comp_apply]
   change e.equivB j ((e.equivA j).symm a) (e.symm.equivB j a b) = _
-  rw [reverse_equivB_roundtrip]
+  rw [equivB_symm_equivB]
   exact (eqRec_id_apply_codomain ((e.equivA j).apply_symm_apply a).symm b).symm
 
 /-- Convert a structural equivalence to an isomorphism in the indexed chart

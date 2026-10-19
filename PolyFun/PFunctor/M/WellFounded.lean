@@ -96,7 +96,7 @@ def mapLens (lens : Lens P Q) : P.W → Q.W
   | mk position next ih =>
       exact congrArg (WType.mk position) (funext ih)
 
-@[simp] theorem mapLens_comp (second : Lens Q R) (first : Lens P Q)
+@[simp] theorem mapLens_mapLens (second : Lens Q R) (first : Lens P Q)
     (tree : P.W) :
     mapLens second (mapLens first tree) =
       mapLens (second ∘ₗ first) tree := by
@@ -105,6 +105,8 @@ def mapLens (lens : Lens P Q) : P.W → Q.W
       apply congrArg (WType.mk (second.toFunA (first.toFunA position)))
       funext direction
       exact ih (first.toFunB position (second.toFunB (first.toFunA position) direction))
+
+@[deprecated (since := "2026-10-19")] alias mapLens_comp := mapLens_mapLens
 
 /-- Regard a well-founded polynomial tree as an M-type tree. -/
 def toM : P.W → P.M

@@ -297,11 +297,15 @@ set_option linter.checkUnivs false in
 
 A chart `P → y` is equivalent to a function `(a : P.A) → P.B a → PUnit`,
 i.e. a boundary valuation that picks out a single direction at every
-position. Analogous to `Lens.enclose`. -/
--- `Chart.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
+position. It is the chart analogue of the lens sections `PFunctor.Section`. -/
+-- `Chart.Enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
 -- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
-def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
+def Enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
   Chart P y.{uA₁, uB₁}
+
+set_option linter.checkUnivs false in
+-- The alias keeps `Chart.Enclose`'s independent codomain universes `uA₁`/`uB₁`.
+@[deprecated (since := "2026-10-19")] alias enclose := Enclose
 
 /-! ### Notations for binary operations -/
 
@@ -724,7 +728,7 @@ def toChart (e : P ≃ₚ Q) : Chart P Q where
 Every polynomial-functor equivalence yields a chart equivalence: the forward
 chart uses `e.equivA` / `e.equivB`, and the inverse chart uses their symmetric
 counterparts. The proofs of `left_inv` / `right_inv` need the cast
-machinery from `forward_equivB_roundtrip` / `reverse_equivB_roundtrip` because
+machinery from `symm_equivB_equivB` / `equivB_symm_equivB` because
 `e.symm.equivA (e.equivA a)` and `a` are only propositionally equal.
 
 This is the chart analogue of `Equiv.toLensEquiv` and is the standard way to
@@ -744,7 +748,7 @@ theorem symm_toChart_comp_toChart (e : P ≃ₚ Q) :
   refine Chart.ext _ _ (fun a => e.equivA.symm_apply_apply a) (fun a => ?_)
   funext b
   simp only [Chart.comp, Chart.id, toChart, Function.comp_apply]
-  rw [forward_equivB_roundtrip]
+  rw [symm_equivB_equivB]
   exact (eqRec_id_apply_codomain (e.equivA.symm_apply_apply a).symm b).symm
 
 @[simp]
@@ -754,7 +758,7 @@ theorem toChart_comp_symm_toChart (e : P ≃ₚ Q) :
   funext b
   simp only [Chart.comp, Chart.id, toChart, Function.comp_apply]
   change e.equivB (e.equivA.symm a) (e.symm.equivB a b) = _
-  rw [reverse_equivB_roundtrip]
+  rw [equivB_symm_equivB]
   exact (eqRec_id_apply_codomain (e.equivA.apply_symm_apply a).symm b).symm
 
 /-- Convert an equivalence between two polynomial functors to a chart equivalence.
@@ -773,32 +777,39 @@ end Equiv
 /-! ### Sigma equivalences
 
 These are derived from `PFunctor.Equiv.toChartEquiv` applied to the
-corresponding `PFunctor.Equiv` constructions. They mirror the
-`PFunctor.Lens.Equiv.sigma*` family. -/
+corresponding `PFunctor.Equiv` constructions. They mirror the lens equivalences
+`Lens.Equiv.emptySigma`, `Lens.Equiv.punitSigma`, `Lens.Equiv.uniqueSigma` and the
+`Lens.Equiv` sigma distributivity laws. -/
 
 namespace Chart.Equiv
 
 variable {I : Type v}
 
 /-- Sigma of an empty family is the zero functor. -/
-def sigmaEmpty [IsEmpty I] {F : I → PFunctor.{uA, uB}} : sigma F ≃c 0 :=
+def emptySigma [IsEmpty I] {F : I → PFunctor.{uA, uB}} : sigma F ≃c 0 :=
   PFunctor.Equiv.toChartEquiv (PFunctor.Equiv.emptySigma (F := F))
+
+@[deprecated (since := "2026-10-19")] alias sigmaEmpty := emptySigma
 
 /-- Sigma of a `PUnit`-indexed family is equivalent to the functor itself
     (up to `ulift`). -/
-def sigmaUnit {F : PUnit → PFunctor.{uA, uB}} : sigma F ≃c (F PUnit.unit).ulift :=
+def punitSigma {F : PUnit → PFunctor.{uA, uB}} : sigma F ≃c (F PUnit.unit).ulift :=
   PFunctor.Equiv.toChartEquiv
     (PFunctor.Equiv.trans
       (PFunctor.Equiv.punitSigma (F := F))
-      (PFunctor.Equiv.uliftEquiv (P := F PUnit.unit)))
+      (PFunctor.Equiv.ulift (F PUnit.unit)).symm)
+
+@[deprecated (since := "2026-10-19")] alias sigmaUnit := punitSigma
 
 /-- Sigma of a unique-indexed family is equivalent to the default fiber
     (up to `ulift`). -/
-def sigmaOfUnique [Unique I] {F : I → PFunctor.{uA, uB}} : sigma F ≃c (F default).ulift :=
+def uniqueSigma [Unique I] {F : I → PFunctor.{uA, uB}} : sigma F ≃c (F default).ulift :=
   PFunctor.Equiv.toChartEquiv
     (PFunctor.Equiv.trans
       (PFunctor.Equiv.uniqueSigma (F := F))
-      (PFunctor.Equiv.uliftEquiv (P := F default)))
+      (PFunctor.Equiv.ulift (F default)).symm)
+
+@[deprecated (since := "2026-10-19")] alias sigmaOfUnique := uniqueSigma
 
 /-- Left distributivity of polynomial product over sigma. -/
 def prodSigmaDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
@@ -826,10 +837,10 @@ def sigmaTensorDistrib {P : PFunctor.{uA₂, uB₂}} {F : I → PFunctor.{uA₁,
 
 `piMap` lives in the operations section, but unlike lenses, charts admit
 no `piForall` (Pi-elimination requires direction-contravariance). What we
-get cleanly here is `piUnit` and `piZero`. -/
+get cleanly here is `piPUnit` and `piZero`. -/
 
 /-- Pi over a `PUnit`-indexed family is equivalent to the functor itself. -/
-def piUnit {P : PFunctor.{uA, uB}} : pi (fun (_ : PUnit) => P) ≃c P where
+def piPUnit {P : PFunctor.{uA, uB}} : pi (fun (_ : PUnit) => P) ≃c P where
   toChart := (fun f => f PUnit.unit) ⇉ (fun _ s => s.2)
   invChart := (fun pa _ => pa) ⇉ (fun _ pb => ⟨PUnit.unit, pb⟩)
   left_inv := by
@@ -840,6 +851,8 @@ def piUnit {P : PFunctor.{uA, uB}} : pi (fun (_ : PUnit) => P) ≃c P where
     refine Chart.ext _ _ ?_ ?_
     · intro _; rfl
     · intro _; funext _; rfl
+
+@[deprecated (since := "2026-10-19")] alias piUnit := piPUnit
 
 /-- Pi of a family of zero functors over an inhabited type is the zero functor. -/
 def piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0) :

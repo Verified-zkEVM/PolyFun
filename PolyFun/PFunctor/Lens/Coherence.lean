@@ -16,7 +16,7 @@ The parallel product `⊗` with unit `y` is a symmetric monoidal structure on le
 lenses of `Lens/Basic.lean` at independent universes:
 
 * for `⊗`: `tensorAssoc_pentagon`, `tensor_triangle`, `tensorComm_natural`,
-  `tensorComm_comp_tensorComm`, `tensorComm_hexagon`, and `tensorComm_hexagon_reverse`;
+  `tensorComm_comp_tensorComm`, `tensorComm_hexagon_forward`, and `tensorComm_hexagon_reverse`;
 * for `◃`: `compAssoc_natural`, `compY_natural`, `yComp_natural`, `compAssoc_pentagon`, and
   `comp_triangle`.
 
@@ -76,7 +76,7 @@ theorem tensorComm_comp_tensorComm :
   rfl
 
 /-- The hexagon law for the braiding of `⊗`. -/
-theorem tensorComm_hexagon :
+theorem tensorComm_hexagon_forward :
     (Lens.Equiv.tensorAssoc (P := Q) (Q := R) (R := P)).toLens ∘ₗ
         (Lens.Equiv.tensorComm P (Q ⊗ R)).toLens ∘ₗ
           (Lens.Equiv.tensorAssoc (P := P) (Q := Q) (R := R)).toLens =

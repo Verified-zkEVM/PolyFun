@@ -88,10 +88,10 @@ properties of sums and products as hom-set equivalences (`Lens.sigmaEquiv`, `Len
 the projections `Lens.piProj`, and the binary `Lens.sumEquiv` and `Lens.prodEquiv`), and shows
 that the actions of sums and products are sums and products of actions (`Obj.sigmaEquiv`,
 `Obj.piEquiv`, `Obj.sumEquiv`, `Obj.prodEquiv`). It also reduces lenses into and out of the
-special polynomials to functions: `Lens.fromLinearEquiv` and `Lens.fromConstEquiv` (with `homToConst`,
-the adjoint quadruple between `Set` and `Poly`), `Lens.sectionEquiv` for sections `Lens p y`,
-`Lens.toPurePowerEquiv` and `Lens.toMonomialEquiv` for lenses into representables and monomials,
-and `Lens.sectionTensorEquiv` for sections of `p ⊗ q`.
+special polynomials to functions: `Lens.fromLinearEquiv` and `Lens.fromConstEquiv` (with
+`Lens.toConstEquiv`, the adjoint quadruple between `Set` and `Poly`), `Lens.sectionEquiv` for
+sections `Lens p y`, `Lens.toPurePowerEquiv` and `Lens.toMonomialEquiv` for lenses into
+representables and monomials, and `Lens.sectionTensorEquiv` for sections of `p ⊗ q`.
 
 ## Monoidal structures
 
@@ -153,17 +153,16 @@ and the constructions it supplies keep CSLib's transparency:
 - `P + Q` elaborates through CSLib's `instHAddPFunctor` to `PFunctor.add`, and
   `P * Q` through `instHMulPFunctor` to `PFunctor.prod`; both definitions are
   `implicit_reducible`. Instance search therefore does not see through `P + Q`:
-  a `Unique ((P + Q).B (.inl a))` goal needs an explicit instance or a rewrite.
-  PolyFun's named sum `PFunctor.sum` is a separate reducible structure literal
-  with the same body, so `P + Q = PFunctor.sum P Q` holds by `rfl` but not at
-  reducible and instance transparency. The homogeneous instance
-  `instAddPFunctor` is defined by `sum`.
+  a `Unique ((P + Q).B (.inl a))` goal needs an explicit instance or a rewrite,
+  such as PolyFun's `add_B_inl` and `add_B_inr`. When `P + Q` does not
+  elaborate at the intended universes, write the named spelling
+  `PFunctor.add P Q`.
 - CSLib's global simp lemmas include `hAdd_A` and `hAdd_B` (which rewrites
   `(P + Q).B t` to `Sum.rec P.B Q.B t` for every `t`, not only constructors),
   `hMul_A`, `hMul_B`, `zero_A`, `zero_B`, `one_A`, `one_B`, `C_pempty`,
   `C_punit`, `linear_punit`, `selfMonomial_punit`, `purePower_punit`,
   `add_eq_add` and `prod_eq_mul`.
-- The universe parameters of `purePower` (and its alias `representable`) are
+- The universe parameters of `purePower` are
   `.{uB, uA}`, child universe first; those of `prod` and `instHMulPFunctor`
   are `.{uA₁, uA₂, uB₁, uB₂}`; `instZeroPFunctor` and `instOnePFunctor` take
   the child universe first.

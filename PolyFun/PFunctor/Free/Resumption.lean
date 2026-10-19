@@ -62,7 +62,7 @@ theorem dest_toResumption_liftBind (position : p.A)
   | pure value =>
       change toResumption (k value) =
         Resumption.bind (Resumption.pure value) (fun result => toResumption (k result))
-      rw [Resumption.bind_pure_left]
+      rw [Resumption.pure_bind]
   | lift_bind position next ih =>
       change toResumption
           (FreeM.liftBind position (fun direction => FreeM.bind (next direction) k)) =

@@ -11,8 +11,8 @@ public import PolyFun.PFunctor.Adjunctions
 # Examples for the trivial-interface hom-set adjunctions
 
 Regression tests exercising the Niu–Spivak §5.1 hom-isomorphisms
-`homFromZero`, `homToOne`, `homFromY`, `homToConst`, and `homToLinear` on the
-small concrete polynomial `qBool = Bool y^Bool`.
+`Lens.fromZeroEquiv`, `Lens.toOneEquiv`, `Lens.fromYEquiv`, `Lens.toConstEquiv`, and
+`homToLinear` on the small concrete polynomial `qBool = Bool y^Bool`.
 -/
 
 @[expose] public section
@@ -27,54 +27,55 @@ def qBool : PFunctor.{0, 0} := Bool y^ Bool
 
 /-! ## The equivalences instantiate at the stated types -/
 
-example {p : PFunctor.{u, u}} : Lens (0 : PFunctor.{u, u}) p ≃ PUnit := homFromZero
-example {p : PFunctor.{u, u}} : Lens p (1 : PFunctor.{u, u}) ≃ PUnit := homToOne
-example {p : PFunctor.{u, u}} : Lens y.{u, u} p ≃ p.A := homFromY
-example {p : PFunctor.{u, u}} {A : Type u} : Lens p (C A) ≃ (p.A → A) := homToConst
+example {p : PFunctor.{u, u}} : Lens (0 : PFunctor.{u, u}) p ≃ PUnit := Lens.fromZeroEquiv
+example {p : PFunctor.{u, u}} : Lens p (1 : PFunctor.{u, u}) ≃ PUnit := Lens.toOneEquiv
+example {p : PFunctor.{u, u}} : Lens y.{u, u} p ≃ p.A := Lens.fromYEquiv
+example {p : PFunctor.{u, u}} {A : Type u} : Lens p (C A) ≃ (p.A → A) := Lens.toConstEquiv
 example {p : PFunctor.{u, u}} {A : Type u} :
     Lens p (linear A) ≃ ((p.A → A) × ((a : p.A) → p.B a)) := homToLinear
 
 /-! ## `0` is initial and `1` is terminal -/
 
 /-- The unique lens out of `0` is sent to the point. -/
-example : homFromZero (p := qBool) Lens.initial = PUnit.unit := rfl
+example : Lens.fromZeroEquiv (p := qBool) Lens.initial = PUnit.unit := rfl
 /-- The unique lens into `1` is sent to the point. -/
-example : homToOne (p := qBool) Lens.terminal = PUnit.unit := rfl
-/-- Every lens out of `0` is `Lens.initial` (the uniqueness content of `homFromZero`). -/
+example : Lens.toOneEquiv (p := qBool) Lens.terminal = PUnit.unit := rfl
+/-- Every lens out of `0` is `Lens.initial` (the uniqueness content of `Lens.fromZeroEquiv`). -/
 example (l : Lens (0 : PFunctor.{0, 0}) qBool) : l = Lens.initial := by
   ext a <;> exact a.elim
-/-- Every lens into `1` is `Lens.terminal` (the uniqueness content of `homToOne`). -/
+/-- Every lens into `1` is `Lens.terminal` (the uniqueness content of `Lens.toOneEquiv`). -/
 example (l : Lens qBool (1 : PFunctor.{0, 0})) : l = Lens.terminal := by
   ext a d
   · rfl
   · exact d.elim
 
-/-! ## `homFromY`: a lens `y ⇆ p` is a position -/
+/-! ## `Lens.fromYEquiv`: a lens `y ⇆ p` is a position -/
 
 /-- The forward map reads off the chosen position. -/
-example : homFromY (p := qBool) (Lens.fromY true) = true := rfl
+example : Lens.fromYEquiv (p := qBool) (Lens.fromY true) = true := rfl
 
 /-- The inverse builds the constant-position lens. -/
-example : (homFromY (p := qBool)).symm false = Lens.fromY false := rfl
+example : (Lens.fromYEquiv (p := qBool)).symm false = Lens.fromY false := rfl
 
 /-- Round-trip through a position is the identity. -/
-example (a : qBool.A) : homFromY (p := qBool) ((homFromY (p := qBool)).symm a) = a := rfl
+example (a : qBool.A) :
+    Lens.fromYEquiv (p := qBool) ((Lens.fromYEquiv (p := qBool)).symm a) = a := rfl
 
-/-! ## `homToConst`: a lens `p ⇆ C A` is a position map -/
+/-! ## `Lens.toConstEquiv`: a lens `p ⇆ C A` is a position map -/
 
 /-- The forward map is exactly the position map `toFunA`, checked concretely
 on `Bool.toNat`. -/
-example : homToConst (Lens.toConst Bool.toNat : Lens qBool (C Nat)) = Bool.toNat := rfl
+example : Lens.toConstEquiv (Lens.toConst Bool.toNat : Lens qBool (C Nat)) = Bool.toNat := rfl
 
 /-- The forward map is exactly the position map `toFunA`, for an arbitrary map. -/
-example (f : qBool.A → Nat) : homToConst (Lens.toConst f : Lens qBool (C Nat)) = f := rfl
+example (f : qBool.A → Nat) : Lens.toConstEquiv (Lens.toConst f : Lens qBool (C Nat)) = f := rfl
 
 /-- The inverse installs the empty backward map. -/
-example (f : Bool → Nat) : ((homToConst (p := qBool) (A := Nat)).symm f).toFunA = f := rfl
+example (f : Bool → Nat) : ((Lens.toConstEquiv (p := qBool) (A := Nat)).symm f).toFunA = f := rfl
 
 /-- Round-trip through a position map is the identity. -/
 example (f : qBool.A → Nat) :
-    homToConst (p := qBool) ((homToConst (p := qBool) (A := Nat)).symm f) = f := rfl
+    Lens.toConstEquiv (p := qBool) ((Lens.toConstEquiv (p := qBool) (A := Nat)).symm f) = f := rfl
 
 /-! ## `homToLinear`: a lens `p ⇆ A·y` is a position map plus a section -/
 

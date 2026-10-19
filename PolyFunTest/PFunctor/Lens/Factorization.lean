@@ -41,7 +41,7 @@ variable {R S : PFunctor.{u, u}}
 example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVertical)
     (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
     Nonempty (Lens.DiagonalFiller v f c g) :=
-  Lens.exists_verticalCartesianDiagonal v f c g hv hc comm
+  Lens.nonempty_diagonalFiller v f c g hv hc comm
 
 /-- Both triangle equations are available directly from the bundled filler. -/
 example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVertical)
@@ -68,7 +68,7 @@ example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVe
 example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVertical)
     (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
     Subsingleton (Lens.DiagonalFiller v f c g) :=
-  Lens.subsingleton_verticalCartesianFillers v f c g hv hc comm
+  Lens.subsingleton_diagonalFiller v f c g hv hc comm
 
 end Orthogonality
 

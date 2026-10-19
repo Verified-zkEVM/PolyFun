@@ -98,8 +98,8 @@ def separatedCall {A : Type uA} {B : Type uB} (a : A) :
   CallE.call a
 
 /-- Recursive procedures permit independent call-input and external-event
-position universes. The common reply universe is the genuine current
-constraint inherited from `PFunctor.sum`. -/
+position universes. The common reply universe is the genuine constraint
+inherited from the sum `PFunctor.add`. -/
 def separatedFixRec {A : Type uA} {B : Type uB}
     {E : PFunctor.{uExtA, uB}}
     (body : A →

@@ -70,7 +70,7 @@ theorem denote_bind (ret : β → D) (alg : ContinuousAlgebra P D)
     | succ n ih =>
       rcases ht : dest t with a | ⟨a, children⟩
       · have he : t = pure a := eq_of_dest_eq (ht.trans (dest_pure a).symm)
-        rw [he, bind_pure_left]
+        rw [he, pure_bind]
         change _ ≤ denote (fun a => denote ret alg (next a)) alg (pure a)
         rw [denote_pure]
         exact (domainStep ret alg).approximants_le_fix (n + 1) (next a)

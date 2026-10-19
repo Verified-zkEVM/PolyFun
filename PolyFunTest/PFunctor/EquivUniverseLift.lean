@@ -45,15 +45,16 @@ def rightSumDirection : RightSum.B rightSumPosition := ULift.up 3
 
 def rightProdDirection : RightProd.B rightProdPosition := ULift.up 4
 
-abbrev liftEquiv := PFunctor.Equiv.uliftEquiv.{7, 8} (P := Left)
+abbrev liftEquiv := PFunctor.Equiv.ulift.{7, 8} Left
 
-example : liftEquiv.equivA leftPosition = ULift.up leftPosition := rfl
+example : liftEquiv.equivA (ULift.up leftPosition) = leftPosition := rfl
 
-example : liftEquiv.equivA.symm (ULift.up leftPosition) = leftPosition := rfl
+example : liftEquiv.equivA.symm leftPosition = ULift.up leftPosition := rfl
 
-example : liftEquiv.equivB leftPosition leftDirection = ULift.up leftDirection := rfl
+example : liftEquiv.equivB (ULift.up leftPosition) (ULift.up leftDirection) = leftDirection := rfl
 
-example : (liftEquiv.equivB leftPosition).symm (ULift.up leftDirection) = leftDirection := rfl
+example : (liftEquiv.equivB (ULift.up leftPosition)).symm leftDirection = ULift.up leftDirection :=
+  rfl
 
 abbrev iteratedLiftEquiv :=
   PFunctor.Equiv.uliftUliftEquiv.{1, 2, 3, 4, 5, 6} Left

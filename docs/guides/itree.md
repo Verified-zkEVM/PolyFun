@@ -105,8 +105,8 @@ follow the polynomial event interface described below.
   visible. Their facts files expose exact computation and bind laws.
 - Recursive calls separate input, result, external-event, and final-result
   universes. `mutualRec` and `fixRec` retain one local equality: recursive and
-  external replies share a universe because the current `PFunctor.sum`
-  representation requires it. No other ITree API inherits that constraint.
+  external replies share a universe because the sum `PFunctor.add` requires
+  it. No other ITree API inherits that constraint.
 
 ## Interpreting into a monad
 

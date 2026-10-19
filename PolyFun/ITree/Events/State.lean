@@ -86,9 +86,9 @@ def interpStateStep {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
 /-- Interpret state operations in `t`, starting from `s`, and return the final
 state together with the computation result. External events remain visible.
 
-The direction universe of `E` agrees with that of `σ` only because the source
-signature uses the current homogeneous `PFunctor.sum`. The final result
-universe is independent. -/
+The direction universe of `E` agrees with that of `σ` only because the summands
+of the source signature `StateE σ + E` (`PFunctor.add`) share a direction
+universe. The final result universe is independent. -/
 def interpState {σ : Type uσ} {E : PFunctor.{uEA, uσ}} {α : Type uα}
     (t : ITree (StateE σ + E : PFunctor.{max uσ uEA, uσ}) α) (s : σ) : ITree E (σ × α) :=
   ITree.corec interpStateStep (s, t)

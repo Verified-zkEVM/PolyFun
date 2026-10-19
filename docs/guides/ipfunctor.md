@@ -257,8 +257,8 @@ needs distinct input and output indices to type-check in general.
 
 `IPFunctor.sum P Q` offers at each output index `j` the shapes of both
 summands, `P.A j ⊕ Q.A j`, and a shape keeps the responses and source indices
-of its summand. As with `PFunctor.sum`, the response and source maps are `Sum`
-recursors, so on `Sum.inl a` they reduce to those of `a` by `rfl`; the summands
+of its summand. As with the sum `P + Q` (`PFunctor.add`), the response and
+source maps are `Sum` recursors, so on `Sum.inl a` they reduce to those of `a` by `rfl`; the summands
 share one response universe. `IPFunctor.sumULift P Q` allows independent
 response universes by lifting each summand's responses to their maximum, so a
 command signature whose kinds have responses in different universes is the

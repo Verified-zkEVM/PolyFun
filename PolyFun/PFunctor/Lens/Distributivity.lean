@@ -24,7 +24,7 @@ products.
 * **Prop. 6.47 / (6.48)** `(p + q) ◃ r ≃ₗ (p ◃ r) + (q ◃ r)` is already available
   as `PFunctor.Lens.Equiv.sumCompDistrib`.
 * **(6.50)** the `Σ`-indexed generalization `(Σ i, Fᵢ) ◃ r ≃ₗ Σ i, (Fᵢ ◃ r)` is
-  `PFunctor.Lens.sigmaCompDistrib`.
+  `PFunctor.Lens.Equiv.sigmaCompDistrib`.
 * **(6.51)** `(Π i, Fᵢ) ◃ r ≃ₗ Π i, (Fᵢ ◃ r)` is
   `Lens.Equiv.piCompDistrib` below.
 * **(6.49)** `(p * q) ◃ r ≃ₗ (p ◃ r) * (q ◃ r)` is `Lens.Equiv.prodCompDistrib`
@@ -45,7 +45,7 @@ witness of this failure lives in the companion test file.
 **(6.65) / (A8)** A lens `A y^ B ⇆ p` is exactly a function `A → p(B)`: its
 forward position map is `A → p.A` and its backward direction map assigns to each
 `a` a function `p.B (toFunA a) → B`, together packaging as an element of
-`p.Obj B = Σ x : p.A, (p.B x → B)`. This is `Lens.homMonomialEquiv`.
+`p.Obj B = Σ x : p.A, (p.B x → B)`. This is `Lens.fromMonomialEquiv`.
 
 -/
 
@@ -136,12 +136,14 @@ The forward position map is a function `A → p.A` and the backward direction ma
 sends each `a` to a function `p.B (toFunA a) → B`; bundling these pointwise gives
 an element of `p.Obj B = Σ x : p.A, (p.B x → B)`. Both round-trips hold
 definitionally. -/
-def homMonomialEquiv {A : Type uA} {B : Type uB} {p : PFunctor.{uA₂, uB₂}} :
+def fromMonomialEquiv {A : Type uA} {B : Type uB} {p : PFunctor.{uA₂, uB₂}} :
     Lens (A y^ B) p ≃ (A → p.Obj B) where
   toFun := fun l a => ⟨l.toFunA a, l.toFunB a⟩
   invFun := fun g => (fun a => (g a).1) ⇆ (fun a => (g a).2)
   left_inv := fun _ => rfl
   right_inv := fun _ => rfl
+
+@[deprecated (since := "2026-10-19")] alias homMonomialEquiv := fromMonomialEquiv
 
 end Lens
 

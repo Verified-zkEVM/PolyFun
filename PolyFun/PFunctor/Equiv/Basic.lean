@@ -401,7 +401,13 @@ section ULift
 
 variable (P : PFunctor.{uA₁, uB₁})
 
-/-- Equivalence between a polynomial functor and its universe-lifted version -/
+/-- The universe lift of a polynomial functor is equivalent to the polynomial functor. -/
+def ulift : (P.ulift : PFunctor.{max uA₁ u, max uB₁ v}) ≃ₚ P where
+  equivA := _root_.Equiv.ulift
+  equivB := fun _ => _root_.Equiv.ulift
+
+/-- `P` is equivalent to its universe lift; the inverse direction of `Equiv.ulift`. -/
+@[deprecated ulift +typeChanged (since := "2026-10-19")]
 def uliftEquiv : P ≃ₚ (P.ulift : PFunctor.{max uA₁ u, max uB₁ v}) where
   equivA := _root_.Equiv.ulift.symm
   equivB := fun _ => _root_.Equiv.ulift.symm

@@ -215,10 +215,13 @@ def parallelSumAssoc
   (PFunctor.Equiv.toLensEquiv
     (PFunctor.Equiv.parallelSumAssoc P Q R)).toLens
 
-@[simp] theorem parallelSumComm_involutive
+@[simp] theorem parallelSumComm_comp_parallelSumComm
     (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
     parallelSumComm Q P ∘ₗ parallelSumComm P Q = Lens.id (P ∥ Q) := by
   ext operation answer <;> cases operation <;> rfl
+
+@[deprecated (since := "2026-10-19")] alias parallelSumComm_involutive :=
+  parallelSumComm_comp_parallelSumComm
 
 theorem parallelSumComm_natural
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}

@@ -298,7 +298,7 @@ theorem duoidalLens_tensor_unit_right (p : PFunctor.{uA₁, uB₁}) (q : PFuncto
 
 This is the structural reordering required to state the lax-monoidal law for
 `orderingLens` without silently identifying differently ordered products. -/
-def Equiv.tensorMiddleFour (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
+def Equiv.tensorTensorTensorComm (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
     (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
     ((p ⊗ p') ⊗ (q ⊗ q')) ≃ₗ ((p ⊗ q) ⊗ (p' ⊗ q')) where
   toLens := (fun ((a, b), (c, d)) => ((a, c), (b, d))) ⇆
@@ -307,6 +307,9 @@ def Equiv.tensorMiddleFour (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, 
     (fun _ ((a, b), (c, d)) => ((a, c), (b, d)))
   left_inv := rfl
   right_inv := rfl
+
+@[deprecated (since := "2026-10-19")] alias Equiv.tensorMiddleFour :=
+  Equiv.tensorTensorTensorComm
 
 /-- `orderingLens : (⊗) ⇒ (◃)` preserves the binary multiplication:
 ordering each pair and then interchanging phases agrees with first applying the
@@ -317,7 +320,7 @@ theorem orderingLens_duoidal
     (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
     duoidalLens p p' q q' ∘ₗ (orderingLens p p' ⊗ₗ orderingLens q q') =
       orderingLens (p ⊗ q) (p' ⊗ q') ∘ₗ
-        (Equiv.tensorMiddleFour p p' q q').toLens := rfl
+        (Equiv.tensorTensorTensorComm p p' q q').toLens := rfl
 
 /-- Right-unit compatibility of `orderingLens`. -/
 @[simp] theorem orderingLens_unit_right (p : PFunctor.{uA₁, uB₁}) :

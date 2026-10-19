@@ -88,7 +88,7 @@ theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β
         apply eq_of_dest_eq
         simpa using h
       subst source
-      simp only [bind_pure_left, toITree_pure, ITree.bind_pure_left]
+      simp only [pure_bind, toITree_pure, ITree.bind_pure_left]
       rcases hk : ITree.shape' (toITree (k value)) with ⟨shape, next⟩
       exact ⟨shape, next, next, rfl, rfl, fun _ => Or.inl rfl⟩
     · have hsource : source = query position next := by
