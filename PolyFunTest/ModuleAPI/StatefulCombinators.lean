@@ -44,8 +44,8 @@ def program : FreeM (counter + flag) (Nat × Nat × Bool) := do
   let b ← FreeM.lift (P := counter + flag) (.inl ())
   pure (a, b, c)
 
-/-- `parallel` threads each summand's state through its own component. -/
-example : Id.run ((Handler.Stateful.parallel tick take).run program (3, true)) =
+/-- `sum` threads each summand's state through its own component. -/
+example : Id.run ((Handler.Stateful.sum tick take).run program (3, true)) =
     ((3, 4, true), (5, false)) := rfl
 
 /-- `extend` records the request history in a passive auxiliary component. -/

@@ -243,12 +243,12 @@ theorem comp_apply (g : Hom E F) (f : Hom D E)
   rfl
 
 @[simp]
-theorem comp_id (f : Hom D E) :
+theorem id_comp (f : Hom D E) :
     comp Hom.id f = f :=
   rfl
 
 @[simp]
-theorem id_comp (f : Hom D E) :
+theorem comp_id (f : Hom D E) :
     comp f Hom.id = f :=
   rfl
 
@@ -383,12 +383,12 @@ theorem comp_apply {η : Displayed.Hom D E} {θ : Displayed.Hom E F}
   rfl
 
 @[simp]
-theorem comp_id {η : Displayed.Hom D E} (f : Displayed.Over.Hom η R S) :
+theorem id_comp {η : Displayed.Hom D E} (f : Displayed.Over.Hom η R S) :
     comp (Displayed.Over.Hom.id S) f = f :=
   rfl
 
 @[simp]
-theorem id_comp {η : Displayed.Hom D E} (f : Displayed.Over.Hom η R S) :
+theorem comp_id {η : Displayed.Hom D E} (f : Displayed.Over.Hom η R S) :
     comp f (Displayed.Over.Hom.id R) = f :=
   rfl
 

@@ -92,6 +92,35 @@ In particular:
   or WP interpretation implicitly. Check the pinned API separately from roadmap
   proposals and newer upstream source.
 
+## Naming
+
+Names follow
+[Mathlib's naming conventions](https://leanprover-community.github.io/contribute/naming.html):
+a theorem name describes its conclusion with the operands in the order they
+appear, and a function returning a `Prop` or a `Type` is UpperCamelCase.
+Polynomial objects shared with cslib keep cslib's names: `monomial`, `C`,
+`linear`, `purePower`, `y`, `add`, `prod`, `FreeM.lift`, `liftBind`, `liftM`
+and `foldFreeM`.
+
+Where the terminology of Niu and Spivak's book
+([NS24](../../REFERENCES.md#ns24--niu-and-spivak-polynomial-functors)) differs
+from Mathlib's, the name follows Mathlib and the docstring cites the book. The
+book's representable polynomials are `IsPurePower`, for example, because
+Mathlib's `Functor.IsRepresentable` is about contravariant functors. Two
+families of names are fixed:
+
+- hom-set equivalences are `Lens.from…Equiv` and `Lens.to…Equiv`;
+- an isomorphism constructor from an equivalence is `Carrier.Iso.mk`.
+
+Renaming a declaration that is on `main` leaves
+`@[deprecated (since := "YYYY-MM-DD")] alias oldName := newName` beside the new
+declaration for one release cycle. Two names that trade places cannot keep an
+alias, so a swap first checks that downstream consumers use neither name.
+
+`CofreeP` and `FreeP`, like cslib's `C`, are documented exceptions to the case
+rule: they keep their capitalization because they act as notation for the
+book's 𝔠_p and 𝔪_p.
+
 ## Canonical Carriers
 
 Each concept has one carrier that consumers store, pass around, and state results about:
@@ -132,7 +161,9 @@ A merge-ready change must have:
   member (inhabitation), something provably outside it, such as the counting
   separation (discrimination), and a model in which the assumption is provable
   (hypothesis consistency);
-- Mathlib-style names, intrinsic docstrings, and lint-clean simp declarations;
+- names that follow the [naming rules](#naming), with deprecated aliases for
+  renamed public names;
+- intrinsic docstrings and lint-clean simp declarations;
 - any new scripts justified by a recurring library workflow under the
   [repository script policy](../../CONTRIBUTING.md#repository-scripts);
 - no new `sorry`, `admit`, unsafe proof shortcut, or non-standard axiom;

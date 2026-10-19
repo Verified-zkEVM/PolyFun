@@ -360,7 +360,7 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
             Comonoid.compose C object (Comonoid.identity C object)
               (unfoldDirection C lens identityTarget canonicalVertex) :=
         compose_heq C object (heq_of_eq hdirection) htail
-      simp only [M.Vertex.append_root]
+      simp only [M.Vertex.root_append]
       exact (hcompose.trans (by
         rw [hcanonical]
         exact Comonoid.identity_compose C object
@@ -429,7 +429,7 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
                   (Comonoid.target C object first)
                   (M.Vertex.castEquiv childEq
                     (M.Vertex.append next suffix))) := by
-            rw [M.Vertex.append_child, unfoldDirection_child]
+            rw [M.Vertex.child_append, unfoldDirection_child]
           _ = Comonoid.compose C object first
                 (Comonoid.compose C (Comonoid.target C object first) rest
                   (unfoldDirection C lens final finalVertex)) := by

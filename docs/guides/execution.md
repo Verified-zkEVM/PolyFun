@@ -33,7 +33,7 @@ preserves just the returned value or also that retained handler state.
 
 Stateful handlers compose the way effect stacks do
 ([`Handler/Stateful/Combinators.lean`](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean)):
-`parallel` and `pi` run handlers for the summands of `P + Q` or of an indexed
+`sum` and `pi` run handlers for the summands of `P + Q` or of an indexed
 sum on a product state, `flatten` reassociates a handler over a stateful base
 into one product state, `mapBase` interprets a handler's base free monad through
 an outer handler, and `extend` / `extendLeft` add a passive auxiliary component

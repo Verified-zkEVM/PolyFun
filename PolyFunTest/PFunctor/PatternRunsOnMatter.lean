@@ -276,7 +276,7 @@ theorem mappedMatterDirections :
     (fun lens : Lens (CofreeP.comonoid matterP).carrier
         (compNth matterP 2) =>
       lens.toFunB matter mappedMatterDirection)
-    (CofreeP.hom_comp_projectionN F 2)
+    (CofreeP.projectionN_comp_toLens F 2)
   dsimp only [mappedMatterVertex]
   change matterDirections
       ((CofreeP.projectionN matterP 2 ∘ₗ F.toLens).toFunB
@@ -413,7 +413,7 @@ theorem synchronizedBackwardDirections :
           (CofreeP.comonoid auxiliaryP)).carrier
         (compNth (matterP ⊗ auxiliaryP) 2) =>
       lens.toFunB (matter, auxiliaryMatter) synchronizedDirection)
-    (CofreeP.hom_comp_projectionN F 2)
+    (CofreeP.projectionN_comp_toLens F 2)
   dsimp only [synchronizedVertex]
   change
     matterDirections

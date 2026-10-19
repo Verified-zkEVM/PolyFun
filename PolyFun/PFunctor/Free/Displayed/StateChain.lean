@@ -78,6 +78,35 @@ def stateChainFamily {a : α} {Stage : Nat → Type w}
           stateChainFamily Family n (i + 1) (advance i state path₁) pathRest)
         path
 
+@[simp]
+theorem stateChainFamily_zero {a : α} {Stage : Nat → Type w}
+    {s : (i : Nat) → Stage i → FreeM P α}
+    {advance : (i : Nat) → (state : Stage i) → Path (s i state) → Stage (i + 1)}
+    (Family : (i : Nat) → Stage i → Type w₂) (i : Nat) (state : Stage i)
+    (path : Path (FreeM.stateChain a Stage s advance 0 i state)) :
+    stateChainFamily (advance := advance) Family 0 i state path = Family i state := rfl
+
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the path-family lemma below rewrites along a `stateChain` layer there.
+`implicit_reducible` (unlike `reducible`) stays invisible to simp
+validation and instance search. -/
+attribute [local implicit_reducible] FreeM.stateChain in
+/-- A constant family is unaffected by `stateChainFamily`. -/
+theorem stateChainFamily_const {a : α} {Stage : Nat → Type w}
+    {s : (i : Nat) → Stage i → FreeM P α}
+    {advance : (i : Nat) → (state : Stage i) → Path (s i state) → Stage (i + 1)}
+    (β : Type w₂) :
+    (n : Nat) → (i : Nat) → (state : Stage i) →
+    (path : Path (FreeM.stateChain a Stage s advance n i state)) →
+    stateChainFamily (advance := advance) (fun _ _ => β) n i state path = β
+  | 0, _, _, _ => rfl
+  | n + 1, i, state, path => by
+      simp only [stateChainFamily]
+      rw [Path.liftAppend_congr (s i state) _ _ _
+        (fun path₁ pathRest =>
+          stateChainFamily_const β n (i + 1) (advance i state path₁) pathRest)]
+      exact Path.liftAppend_const β (s i state) _ path
+
 end Path
 
 namespace Displayed

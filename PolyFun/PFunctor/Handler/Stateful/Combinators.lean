@@ -17,7 +17,7 @@ the ways an effect stack composes:
 
 * `mapBase` interprets the base free monad of a stateful handler through an outer handler, so a
   handler answering in `StateT S (FreeM Q)` becomes one answering in `StateT S m`;
-* `parallel` runs two stateful handlers on the two summands of `P + Q` with a product state;
+* `sum` runs two stateful handlers on the two summands of `P + Q` with a product state;
 * `pi` runs an indexed family of stateful handlers on `PFunctor.sigma P` with a dependent
   product state, updating one component per request;
 * `flatten` reassociates a stateful handler over a stateful base into one product state;
@@ -104,22 +104,28 @@ theorem run_mapBase [Monad m] [LawfulMonad m] (outer : Handler m Q)
 
 /-- Run two stateful handlers on the two summands of `P + Q`, each on its own component of a
 product state. -/
-def parallel [Functor m] (f : Stateful m S P) (g : Stateful m T Q) :
+def sum [Functor m] (f : Stateful m S P) (g : Stateful m T Q) :
     Stateful m (S × T) (P + Q : PFunctor.{max uA uA', u})
   | .inl a => StateT.mk fun st => Prod.map _root_.id (·, st.2) <$> (f a).run st.1
   | .inr b => StateT.mk fun st => Prod.map _root_.id (st.1, ·) <$> (g b).run st.2
 
-/-- The parallel handler answers a left request with the left handler on the first state
-component and leaves the second component unchanged. -/
-@[simp] theorem parallel_inl_run [Functor m] (f : Stateful m S P) (g : Stateful m T Q)
-    (a : P.A) (st : S × T) :
-    (parallel f g (.inl a)).run st = Prod.map _root_.id (·, st.2) <$> (f a).run st.1 := rfl
+@[deprecated (since := "2026-10-19")] alias parallel := sum
 
-/-- The parallel handler answers a right request with the right handler on the second state
+/-- The sum handler answers a left request with the left handler on the first state
+component and leaves the second component unchanged. -/
+@[simp] theorem sum_inl_run [Functor m] (f : Stateful m S P) (g : Stateful m T Q)
+    (a : P.A) (st : S × T) :
+    (sum f g (.inl a)).run st = Prod.map _root_.id (·, st.2) <$> (f a).run st.1 := rfl
+
+@[deprecated (since := "2026-10-19")] alias parallel_inl_run := sum_inl_run
+
+/-- The sum handler answers a right request with the right handler on the second state
 component and leaves the first component unchanged. -/
-@[simp] theorem parallel_inr_run [Functor m] (f : Stateful m S P) (g : Stateful m T Q)
+@[simp] theorem sum_inr_run [Functor m] (f : Stateful m S P) (g : Stateful m T Q)
     (b : Q.A) (st : S × T) :
-    (parallel f g (.inr b)).run st = Prod.map _root_.id (st.1, ·) <$> (g b).run st.2 := rfl
+    (sum f g (.inr b)).run st = Prod.map _root_.id (st.1, ·) <$> (g b).run st.2 := rfl
+
+@[deprecated (since := "2026-10-19")] alias parallel_inr_run := sum_inr_run
 
 /-- Run an indexed family of stateful handlers on the indexed sum, each member on its own
 component of a dependent product state. -/

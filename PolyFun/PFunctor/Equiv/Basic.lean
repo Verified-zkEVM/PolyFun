@@ -40,9 +40,11 @@ universe u v uA uB uA' uB' uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uA₄ uB₄
 
 section find_home
 
-instance instIsEmptySigma {α : Sort u} {β : α → Sort v} [inst : IsEmpty α] :
+instance PSigma.isEmpty_left {α : Sort u} {β : α → Sort v} [inst : IsEmpty α] :
     IsEmpty ((a : α) ×' β a) where
   false := fun a => inst.elim a.1
+
+@[deprecated (since := "2026-10-19")] alias instIsEmptySigma := PSigma.isEmpty_left
 
 end find_home
 

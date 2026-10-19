@@ -265,7 +265,7 @@ example :
         ((CofreeP.comonoid leftP).tensor (CofreeP.comonoid rightP)).carrier
         (compNth (leftP ⊗ rightP) 2) =>
       lens.toFunB (leftTree, rightTree) synchronizedDirection)
-    (CofreeP.hom_comp_projectionN F 2)
+    (CofreeP.projectionN_comp_toLens F 2)
   dsimp only
   change
     leftDirections

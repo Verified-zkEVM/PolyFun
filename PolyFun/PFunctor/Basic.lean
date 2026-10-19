@@ -400,9 +400,11 @@ def cast {P Q : PFunctor.{uA, uB}} (hA : P.A = Q.A) (hB : ∀ a, P.B a = Q.B (ca
   equivB := fun a => _root_.Equiv.cast (hB a)
 
 @[simp]
-theorem symm_comp_self {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (e : P ≃ₚ Q) :
-    e.symm.equivA ∘ e.equivA = id := by
+theorem symm_equivA_comp_equivA {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+    (e : P ≃ₚ Q) : e.symm.equivA ∘ e.equivA = id := by
   simp [Equiv.symm]
+
+@[deprecated (since := "2026-10-19")] alias symm_comp_self := symm_equivA_comp_equivA
 
 /-- Rewrite a dependent `Eq.rec` with identity to a cast on the argument. -/
 lemma eqRec_id_apply {α : Sort u} {β : α → Sort v}
