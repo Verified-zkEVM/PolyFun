@@ -76,7 +76,7 @@ def comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunct
   toFunA := l.toFunA ∘ l'.toFunA
   toFunB := fun i => (l'.toFunB i) ∘ l.toFunB (l'.toFunA i)
 
-@[inherit_doc] infixl:75 " ∘ₗ " => comp
+@[inherit_doc] scoped[PFunctor] infixl:75 " ∘ₗ " => PFunctor.Lens.comp
 
 /-- Apply a polynomial lens to an element of the source polynomial's
 extension. The position is sent forward and the payload is pulled back along
@@ -136,7 +136,7 @@ structure Equiv (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) wher
   left_inv : comp invLens toLens = Lens.id P := by simp
   right_inv : comp toLens invLens = Lens.id Q := by simp
 
-@[inherit_doc] infix:50 " ≃ₗ " => Equiv
+@[inherit_doc] scoped[PFunctor] infix:50 " ≃ₗ " => PFunctor.Lens.Equiv
 
 namespace Equiv
 
@@ -340,10 +340,10 @@ def invTildeR {P : PFunctor.{uA, uB}} : Lens (P ◃ y) P :=
 def invTildeL {P : PFunctor.{uA, uB}} : Lens (y ◃ P) P :=
   (fun ⟨_, f⟩ => f PUnit.unit) ⇆ (fun _ b => ⟨PUnit.unit, b⟩)
 
-@[inherit_doc] infixl:75 " ◃ₗ " => compMap
-@[inherit_doc] infixl:75 " ×ₗ " => prodMap
-@[inherit_doc] infixl:75 " ⊎ₗ " => sumMap
-@[inherit_doc] infixl:75 " ⊗ₗ " => tensorMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ◃ₗ " => PFunctor.Lens.compMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ×ₗ " => PFunctor.Lens.prodMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ⊎ₗ " => PFunctor.Lens.sumMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ⊗ₗ " => PFunctor.Lens.tensorMap
 /-- Notation for the copairing `sumPair l₁ l₂` of two lenses out of a sum; activate it with
 `open scoped PFunctor.Lens`. -/
 scoped notation "[" l₁ "," l₂ "]ₗ" => sumPair l₁ l₂

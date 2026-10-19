@@ -63,6 +63,7 @@ def mapSpecSeparated (lens : PFunctor.Lens E F) (tree : ITree E R) :
     ITree F R :=
   ITree.mapSpec lens tree
 
+open scoped PFunctor in
 example (first : PFunctor.Lens E F) (second : PFunctor.Lens F G)
     (tree : ITree E R) :
     ITree.mapSpec (second ∘ₗ first) tree =
@@ -114,6 +115,7 @@ example {H : PFunctor.{uHA, uHB}} (first : ITree.Handler E F)
       ((third.comp second).comp first a) :=
   ITree.Handler.comp_assoc_apply third second first a
 
+open scoped PFunctor in
 example (first : PFunctor.Lens E F) (second : PFunctor.Lens F G)
     (a : E.A) :
     ITree.WeakBisim

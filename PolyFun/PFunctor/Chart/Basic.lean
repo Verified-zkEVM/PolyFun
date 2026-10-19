@@ -88,8 +88,8 @@ def comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunct
   toFunA := c'.toFunA ∘ c.toFunA
   toFunB := fun i => c'.toFunB (c.toFunA i) ∘ c.toFunB i
 
-/-- Infix notation for chart composition `c' ∘c c` -/
-infixl:75 " ∘c " => comp
+/-- Infix notation for chart composition `c' ∘c c`; activate it with `open scoped PFunctor`. -/
+scoped[PFunctor] infixl:75 " ∘c " => PFunctor.Chart.comp
 
 @[simp]
 theorem id_comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (f : Chart P Q) :
@@ -116,8 +116,8 @@ protected structure Equiv (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB
   left_inv : comp invChart toChart = Chart.id P := by simp
   right_inv : comp toChart invChart = Chart.id Q := by simp
 
-/-- Infix notation for chart equivalence `P ≃c Q` -/
-infix:50 " ≃c " => Chart.Equiv
+/-- Infix notation for chart equivalence `P ≃c Q`; activate it with `open scoped PFunctor`. -/
+scoped[PFunctor] infix:50 " ≃c " => PFunctor.Chart.Equiv
 
 namespace Equiv
 
@@ -309,9 +309,9 @@ set_option linter.checkUnivs false in
 
 /-! ### Notations for binary operations -/
 
-@[inherit_doc] infixl:75 " ⊎c " => sumMap
-@[inherit_doc] infixl:75 " ⊗c " => tensorMap
-@[inherit_doc] infixl:75 " ×c " => prodMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ⊎c " => PFunctor.Chart.sumMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ⊗c " => PFunctor.Chart.tensorMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ×c " => PFunctor.Chart.prodMap
 /-- Notation for the copairing `sumPair c₁ c₂` of two charts out of a sum; activate it with
 `open scoped PFunctor.Chart`. -/
 scoped notation "[" c₁ "," c₂ "]c" => sumPair c₁ c₂

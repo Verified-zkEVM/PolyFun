@@ -128,6 +128,9 @@ that no downstream consumer builds the structure with the old field name.
 rule: they keep their capitalization because they act as notation for the
 book's 𝔠_p and 𝔪_p.
 
+Notations for polynomial, lens and chart operations are `scoped[PFunctor]`, never
+global, so they cannot collide with Mathlib's.
+
 ## Canonical Carriers
 
 Each concept has one carrier that consumers store, pass around, and state results about:

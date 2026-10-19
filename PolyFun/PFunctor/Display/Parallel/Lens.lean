@@ -769,7 +769,7 @@ theorem parallelSumAssoc_pentagon
     (parallelSumAssoc_pentagon_totalEq S T U W)
 
 /-- Symmetric-monoidal hexagon for the displayed braiding and associator. -/
-theorem parallelSumComm_hexagon_totalEq
+theorem parallelSumComm_hexagon_forward_totalEq
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
@@ -790,25 +790,25 @@ theorem parallelSumComm_hexagon_totalEq
   | both operation _ => cases operation <;> rfl
 
 @[deprecated (since := "2026-10-19")] alias parallelSum_hexagon_total :=
-  parallelSumComm_hexagon_totalEq
+  parallelSumComm_hexagon_forward_totalEq
 
-theorem parallelSumComm_hexagon
+theorem parallelSumComm_hexagon_forward
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (U : Display.{uA₃, uB, uC₃, uD₃} R) :
-    transport (PFunctor.Lens.parallelSumComm_hexagon P Q R)
+    transport (PFunctor.Lens.parallelSumComm_hexagon_forward P Q R)
         (comp (parallelSumAssoc T U S)
           (comp (parallelSumComm S (Display.parallelSum T U))
             (parallelSumAssoc S T U))) =
       comp (parallelSumMap (id T) (parallelSumComm S U))
         (comp (parallelSumAssoc T S U)
           (parallelSumMap (parallelSumComm S T) (id U))) :=
-  transport_eq_of_totalEq (PFunctor.Lens.parallelSumComm_hexagon P Q R) _ _
-    (parallelSumComm_hexagon_totalEq S T U)
+  transport_eq_of_totalEq (PFunctor.Lens.parallelSumComm_hexagon_forward P Q R) _ _
+    (parallelSumComm_hexagon_forward_totalEq S T U)
 
-@[deprecated (since := "2026-10-19")] alias parallelSum_hexagon := parallelSumComm_hexagon
+@[deprecated (since := "2026-10-19")] alias parallelSum_hexagon := parallelSumComm_hexagon_forward
 
 /-- Triangle coherence for the displayed unitors and associator. -/
 theorem parallelSum_triangle_totalEq

@@ -821,6 +821,7 @@ theorem shape'_mapSpec {E : PFunctor.{uEA, uEB}}
       .mk (mapSpecStep φ u).fst (fun b => mapSpec φ ((mapSpecStep φ u).snd b)) :=
   dest_mapSpec φ u
 
+open scoped PFunctor in
 theorem mapSpec_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
     {G : PFunctor.{uGA, uGB}} {α : Type uα}
     (φ : PFunctor.Lens E F) (ψ : PFunctor.Lens F G) (t : ITree E α) :
@@ -1169,6 +1170,7 @@ theorem simulate_ofLens {E : PFunctor.{uEA, uEB}}
       intro b
       exact Or.inr ⟨c (φ.toFunB a b), rfl, rfl⟩
 
+open scoped PFunctor in
 /-- Composition of pure-renaming handlers agrees pointwise, up to weak
 bisimilarity, with composition of their underlying lenses. -/
 theorem Handler.ofLens_comp_apply {E : PFunctor.{uEA, uEB}}
