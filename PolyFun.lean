@@ -260,6 +260,7 @@ public import PolyFun.PFunctor.Dynamical.Safety
 public import PolyFun.PFunctor.Dynamical.Simulation
 public import PolyFun.PFunctor.Dynamical.Trajectory
 public import PolyFun.PFunctor.Equiv.Basic
+public import PolyFun.PFunctor.Equiv.Special
 public import PolyFun.PFunctor.Free.Basic
 public import PolyFun.PFunctor.Free.Cursor
 public import PolyFun.PFunctor.Free.Cursor.Append
@@ -306,6 +307,7 @@ public import PolyFun.PFunctor.Lens.Duoidal
 public import PolyFun.PFunctor.Lens.Factorization
 public import PolyFun.PFunctor.Lens.Monomial
 public import PolyFun.PFunctor.Lens.State
+public import PolyFun.PFunctor.Lens.Yoneda
 public import PolyFun.PFunctor.M
 public import PolyFun.PFunctor.M.Vertex
 public import PolyFun.PFunctor.M.WellFounded

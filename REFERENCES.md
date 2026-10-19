@@ -68,6 +68,7 @@ an adjunction; PolyFun formalizes `LawfulMonad (FreeM P)` and
 
 Used in: `PolyFun/PFunctor/Trace.lean`, `PolyFun/PFunctor/Free/Path.lean`,
 the lens category and its structure (`PolyFun/PFunctor/Category.lean`,
+`PolyFun/PFunctor/Lens/Yoneda.lean`, `PolyFun/PFunctor/Equiv/Special.lean`,
 `PolyFun/PFunctor/Lens/Basic.lean`, `PolyFun/PFunctor/Lens/Composite.lean`,
 `PolyFun/PFunctor/Lens/Distributivity.lean`, `PolyFun/PFunctor/Lens/Duoidal.lean`,
 `PolyFun/PFunctor/Lens/Factorization.lean`, `PolyFun/PFunctor/Lens/State.lean`,
