@@ -12,7 +12,7 @@ public import PolyFun.PFunctor.Lens.Basic
 
 This file constructs the evaluation lens and one direction of the cartesian
 exponential transpose, following Spivak–Niu
-*Polynomial Functors* (Theorem 5.31, Example 5.32).
+*Polynomial Functors* (Theorem 5.31, Exercise 5.32).
 
 The exponential object used here is the `PFunctor.exp` of `PFunctor.Basic`,
 namely `exp r q = ∏_{a : q.A} r ◃ (y + C (q.B a))`. This is the **cartesian**
@@ -66,7 +66,7 @@ attribute [local implicit_reducible] PFunctor.instHMulPFunctor PFunctor.instMulP
   PFunctor.exp
 
 /-- The evaluation lens `exp r q * q ⇆ r`, the counit of the cartesian
-exponential adjunction (Spivak–Niu Example 5.32).
+exponential adjunction (Spivak–Niu Exercise 5.32).
 
 On positions, a pair `(f, a)` of an exponential position `f : (exp r q).A` and
 an input position `a : q.A` maps to the `r`-position `(f a).1` that the strategy

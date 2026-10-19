@@ -43,7 +43,7 @@ universe u u₁ u₂ u₃ u₄ uA uB uA₂ uB₂ uA₃ uB₃ uA₄ uB₄ uO uI
 
 namespace PFunctor
 
-/-- A **`p`-dynamical system with states `S`** (Niu–Spivak §4.1): a dependent
+/-- A **`p`-dynamical system with states `S`** (Niu–Spivak §4.2, Def 4.18): a dependent
 lens `selfMonomial S ⟹ p`. Under the dynamical accessors this is
 
 * `expose : S → p.A` — the position the system currently presents (the lens's

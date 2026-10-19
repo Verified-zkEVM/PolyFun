@@ -12,7 +12,7 @@ import Batteries.Tactic.Lint
 # Vertical–cartesian factorization of lenses
 
 Following Spivak–Niu, *Polynomial Functors: A Mathematical Theory of Interaction*
-(§5.5, Prop 5.51–5.53), this file constructs the vertical–cartesian
+(§5.5, Def 5.51, Prop 5.52), this file constructs the vertical–cartesian
 factorization of a lens and proves the corresponding lifting law. The two
 classes are:
 
@@ -33,12 +33,12 @@ built here as `equivOfVerticalCartesian`, by packaging the position bijection
 and the fiber bijections into a `PFunctor.Equiv` and pushing through
 `PFunctor.Equiv.toLensEquiv`.
 
-Both classes are closed under the polynomial operations (Spivak–Niu Prop 5.63,
-6.88): `IsVertical.sumMap` / `prodMap` / `tensorMap` and `IsCartesian.prodMap`
-/ `tensorMap` / `compMap` witness closure under `+`, `×`, `⊗`, and `◃`. Vertical
-lenses are *not* closed under the copairing `sumPair` (a `Sum.elim` of two
-bijections into a shared codomain need not be injective), so no such witness is
-provided.
+Both classes are closed under `+`, `×`, and `⊗` (Spivak–Niu Prop 5.63), and
+cartesian lenses are also closed under `◃` (Prop 6.88): `IsVertical.sumMap` /
+`prodMap` / `tensorMap` and `IsCartesian.prodMap` / `tensorMap` / `compMap` are
+the witnesses. Vertical lenses are *not* closed under `◃` (Ex 6.89), nor under
+the copairing `sumPair` (a `Sum.elim` of two bijections into a shared codomain
+need not be injective), so no such witnesses are provided.
 
 Finally, `verticalCartesianDiagonal` constructs the unique diagonal in every
 commutative square whose left edge is vertical and whose right edge is

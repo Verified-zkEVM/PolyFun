@@ -592,7 +592,7 @@ def yComp : y ◃ P ≃ₚ P where
 @[deprecated (since := "2026-08-17")] alias compX := compY
 @[deprecated (since := "2026-08-17")] alias XComp := yComp
 
-/-- Distributivity of composition over sum on the right -/
+/-- Left distributivity of composition over sum (Spivak–Niu Prop 6.47). -/
 def sumCompDistrib (Q : PFunctor.{uA₂, uB₁}) :
     (P + Q : PFunctor.{max uA₁ uA₂, uB₁}) ◃ R ≃ₚ
     ((P ◃ R) + (Q ◃ R) : PFunctor.{max uA₁ uA₂ uA₃ uB₁, max uB₁ uB₃}) where

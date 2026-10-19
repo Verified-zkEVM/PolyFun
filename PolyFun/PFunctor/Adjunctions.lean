@@ -25,10 +25,11 @@ the sections/principal-monomial refinements.
   `Lens p 1 ≃ PUnit`. (The `I = PUnit` case of `Poly(q, I) ≅ Set(q(1), I)`
   from Thm 5.4.)
 * `homFromY` — a lens `y ⇆ p` is a position of `p`, `Lens y p ≃ p.A`. This is
-  the counit of `linear ⊣ (−)(1)`, i.e. `Poly(y, q) ≅ q(1)` (Thm 5.4).
+  the `I = 1` case of the `linear ⊣ (−)(1)` hom-iso `Poly(Iy, q) ≅ Set(I, q(1))`
+  (Thm 5.4).
 * `homToConst` — a lens `p ⇆ C A` is a map of positions `p.A → A`,
-  `Lens p (C A) ≃ (p.A → A)`, i.e. `Poly(q, I) ≅ Set(q(1), I)` (Thm 5.4;
-  the `C ⊣ (−)(0)` / `(−)(1) ⊣ C` unit).
+  `Lens p (C A) ≃ (p.A → A)`, i.e. `Poly(q, I) ≅ Set(q(1), I)` (Thm 5.4,
+  the `(−)(1) ⊣ C` hom-iso).
 * `homToLinear` — a lens `p ⇆ A·y` is a map of positions together with a
   section, `Lens p (linear A) ≃ (p.A → A) × ((a : p.A) → p.B a)`. This is the
   principal-monomial hom-iso `Poly(p, Iy^A) ≅ Set(p(1), I) × Set(A, Γ(p))` of

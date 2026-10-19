@@ -30,7 +30,7 @@ lenses and equations.
   bijection on every fiber, so `orderingLens_isCartesian` holds — the two
   products agree on directions.
 
-* The `Equiv`s in `PFunctor.Lens.Equiv` (Example 6.84) collect the special
+* The `Equiv`s in `PFunctor.Lens.Equiv` (Exercise 6.84) collect the special
   cases where `orderingLens` is invertible, i.e. where `⊗` and `◃` genuinely
   coincide. These are exactly the cases in which one factor's positions carry a
   unique continuation:
@@ -327,7 +327,7 @@ theorem orderingLens_duoidal
 @[simp] theorem orderingLens_unit_left (p : PFunctor.{uA₁, uB₁}) :
     Equiv.yComp.toLens ∘ₗ orderingLens y p = Equiv.yTensor.toLens := rfl
 
-/-! ## Catalogue of `⊗`/`◃` coincidences (Example 6.84)
+/-! ## Catalogue of `⊗`/`◃` coincidences (Exercise 6.84)
 
 These are the special cases in which `orderingLens` is an isomorphism, i.e. the
 two monoidal products agree outright. In each case one of the factors has a
@@ -335,13 +335,13 @@ unique continuation into the other, so the ordering of moves carries no
 information.
 
 These catalogue isos are reference API — book-completeness formalizations of
-Example 6.84, exercised in `PolyFunTest/PFunctor/Lens/Duoidal.lean`. The
+Exercise 6.84, exercised in `PolyFunTest/PFunctor/Lens/Duoidal.lean`. The
 load-bearing formers of this file are `orderingLens` and `duoidalLens` above
 (consumed by `PolyFun/PFunctor/Dynamical/Game.lean`). -/
 
 namespace Equiv
 
-/-- `Ay ⊗ By ≅ Ay ◃ By` (Spivak–Niu Example 6.84).
+/-- `Ay ⊗ By ≅ Ay ◃ By` (Spivak–Niu Exercise 6.84).
 
 Both sides are `(A × B) y`: a pair of linear moves is the same data as a linear
 move followed by a linear move, since each linear factor has a unique
@@ -353,7 +353,7 @@ def linearTensorLinear (A : Type u) (B : Type u) :
   left_inv := rfl
   right_inv := rfl
 
-/-- `y^A ⊗ y^B ≅ y^A ◃ y^B` (Spivak–Niu Example 6.84).
+/-- `y^A ⊗ y^B ≅ y^A ◃ y^B` (Spivak–Niu Exercise 6.84).
 
 Both sides are `y^(A × B)`: a pair of directions `A × B` is the same as an
 `A`-direction followed by a `B`-direction, since each pure-power factor has a
@@ -366,7 +366,7 @@ def purePowerTensorPurePower (A : Type u) (B : Type u) :
   left_inv := rfl
   right_inv := rfl
 
-/-- `By ⊗ p ≅ By ◃ p` (Spivak–Niu Example 6.84), with the *linear* factor `By`
+/-- `By ⊗ p ≅ By ◃ p` (Spivak–Niu Exercise 6.84), with the *linear* factor `By`
 on the left.
 
 The linear factor `By = linear B` has a unique direction, so pairing a
@@ -380,7 +380,7 @@ def linearTensor (B : Type u) (p : PFunctor.{u, u}) :
   left_inv := rfl
   right_inv := rfl
 
-/-- `p ⊗ y^A ≅ p ◃ y^A` (Spivak–Niu Example 6.84), with the *pure-power* factor
+/-- `p ⊗ y^A ≅ p ◃ y^A` (Spivak–Niu Exercise 6.84), with the *pure-power* factor
 `y^A` on the right.
 
 The pure-power factor `y^A = y^ A` has a unique position, so a `p`-move

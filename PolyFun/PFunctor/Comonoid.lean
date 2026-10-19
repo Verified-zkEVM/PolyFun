@@ -16,9 +16,10 @@ import Batteries.Tactic.Lint
 Following Spivak–Niu, *Polynomial Functors* (§7.1, Def 7.14), a **comonoid** in
 the monoidal category `(Poly, ◃, y)` is a carrier `c : PFunctor` with a counit
 `ε : c ⇆ y` and a comultiplication `δ : c ⇆ c ◃ c` satisfying counitality and
-coassociativity. Comonoids in `Poly` are exactly small categories: `c.A` is the
-objects, the directions are the outgoing morphisms, `ε` picks the identities, and
-`δ` is composition.
+coassociativity. By the Ahman–Uustalu theorem (Spivak–Niu Thm 7.28), comonoids in
+`Poly` correspond to small categories: `c.A` is the objects, the directions are the
+outgoing morphisms, `ε` picks the identities, and `δ` is composition.
+`PFunctor/Comonoid/Category.lean` extracts the category of a comonoid.
 
 Counitality and coassociativity are lens equations, phrased through the unitor and
 associator equivalences `compY` / `yComp` / `compAssoc` (`PFunctor.Lens.Equiv`).
@@ -81,9 +82,10 @@ namespace Comonoid
 
 /-! ## Morphisms of comonoids (retrofunctors) -/
 
-/-- A morphism of composition comonoids, called a **retrofunctor** under the
-identification of polynomial comonoids with small categories (Niu–Spivak,
-Def. 7.55). It is a lens on carriers that preserves identities and composition. -/
+/-- A morphism of composition comonoids (Niu–Spivak Def 7.49), called a
+**retrofunctor** under the identification of polynomial comonoids with small
+categories (Def 7.55). It is a lens on carriers that preserves identities and
+composition. -/
 structure Hom (C D : Comonoid.{uA, uB}) where
   /-- The underlying lens between carrier polynomials. -/
   toLens : Lens C.carrier D.carrier
@@ -161,11 +163,12 @@ instance : Category Comonoid.{uA, uB} where
 /-! ## The `n`-fold comultiplication `δ^{(n)}` -/
 
 /-- The `n`-fold comultiplication `δ^{(n)} : c ⇆ c^{◃n}` of a comonoid, defined
-recursively by `δ^{(0)} = ε` and `δ^{(n+1)} = (id ◃ δ^{(n)}) ∘ δ`
-(Spivak–Niu Prop 7.20). Only the definitional unfolders `comultN_zero` /
-`comultN_succ` are proved here; the canonicity of Prop 7.20(d) — that every
-bracketing of the `n`-fold comultiplication agrees — is a follow-on. This is
-the comonoid data underneath the `n`-step run `PFunctor.DynSystem.nStep`. -/
+recursively by `δ^{(0)} = ε` and `δ^{(n+1)} = (id ◃ δ^{(n)}) ∘ δ`. Spivak–Niu
+Prop 7.20 recurses on the other factor, `δ^{(n+1)} = (δ^{(n)} ◃ id) ∘ δ`; the two
+agree by the canonicity of Prop 7.20(d), that every bracketing of the `n`-fold
+comultiplication agrees, which is not proved here. Only the definitional
+unfolders `comultN_zero` / `comultN_succ` are. This is the comonoid data
+underneath the `n`-step run `PFunctor.DynSystem.nStep`. -/
 def comultN (C : Comonoid.{uA, uB}) : (n : ℕ) → Lens C.carrier (compNth C.carrier n)
   | 0 => C.counit
   | n + 1 => (Lens.id C.carrier ◃ₗ C.comultN n) ∘ₗ C.comult

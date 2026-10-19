@@ -61,7 +61,7 @@ section Game
 variable {S : Type u} {T : Type v} {q r : PFunctor.{uA, uB}}
 
 /-- Wire a challenger over the internal hom `q ⊸ r` against an adversary playing
-`q`, along the evaluation lens (Spivak–Niu Ex 4.78): at each step the challenger
+`q`, along the evaluation lens (Spivak–Niu (4.88), Ex 4.89): at each step the challenger
 commits to a lens `q ⟹ r`, the adversary picks a `q`-position, and the composite
 exposes the resulting `r`-position; the incoming `r`-direction is answered back
 through the committed lens. The Kleisli runs below drive a system against a
@@ -207,7 +207,7 @@ namespace Lens
 /-- The **two-phase evaluation wiring**: reshuffle a two-phase challenger against
 a two-phase adversary along the duoidal interchange `duoidalLens` (Spivak–Niu
 Eq 6.86), so the phase-one pair and phase-two pair each meet in an evaluation
-lens (Ex 4.78), run in sequence. -/
+lens (4.88), run in sequence. -/
 def eval₂ (q₁ r₁ q₂ r₂ : PFunctor.{uA, uB}) :
     Lens (((q₁ ⊸ r₁) ◃ (q₂ ⊸ r₂)) ⊗ (q₁ ◃ q₂)) (r₁ ◃ r₂) :=
   (eval q₁ r₁ ◃ₗ eval q₂ r₂) ∘ₗ duoidalLens (q₁ ⊸ r₁) (q₂ ⊸ r₂) q₁ q₂
