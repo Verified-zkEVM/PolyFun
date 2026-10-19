@@ -71,8 +71,12 @@ The free and cofree universal properties have their own domains and codomains.
 categorical structure from a polynomial comonoid and relates homomorphisms
 to retrofunctor laws. This should not be read as a packaged equivalence of
 all categories with polynomial comonoids. Similarly, individual tensor and
-duoidal coherence laws do not by themselves assert a complete abstract
-monoidal-category packaging or a bicomodule theory.
+duoidal coherence laws do not by themselves assert a bicomodule theory. The
+monoidal packaging is separate:
+[Category/Monoidal](../../PolyFun/PFunctor/Category/Monoidal.lean) makes lenses a
+cartesian monoidal category for `*`, a symmetric monoidal category for `⊗`, and a
+monoidal category for `◃`, with every coherence law from
+[Lens/Coherence](../../PolyFun/PFunctor/Lens/Coherence.lean) holding definitionally.
 
 ## Protocol and open-system interpretations
 
