@@ -564,6 +564,28 @@ theorem outputAlong_mapLensPathToPathAlong (l : Lens P Q) :
   | .pure _, _ => rfl
   | .liftBind a rest, ⟨d, path⟩ => outputAlong_mapLensPathToPathAlong l (rest (l.toFunB a d)) path
 
+/-- The deprecated `pathAlongToMapLensPath` agrees with `PathAlong.toMapLensPath`, so statements
+using either name can be rewritten to the other. -/
+@[deprecated PathAlong.toMapLensPath +typeChanged (since := "2026-10-19")]
+theorem pathAlongToMapLensPath_eq_toMapLensPath (l : Lens P Q) :
+    (s : FreeM P α) → (path : PathAlong l s) →
+      pathAlongToMapLensPath l s path = PathAlong.toMapLensPath l s path
+  | .pure _, _ => rfl
+  | .liftBind a rest, ⟨d, path⟩ =>
+      congrArg (Path.cons (l.toFunA a) (fun d => (rest (l.toFunB a d)).mapLens l) d)
+        (pathAlongToMapLensPath_eq_toMapLensPath l (rest (l.toFunB a d)) path)
+
+/-- The deprecated `mapLensPathToPathAlong` agrees with `PathAlong.ofMapLensPath`, so statements
+using either name can be rewritten to the other. -/
+@[deprecated PathAlong.ofMapLensPath +typeChanged (since := "2026-10-19")]
+theorem mapLensPathToPathAlong_eq_ofMapLensPath (l : Lens P Q) :
+    (s : FreeM P α) → (path : Path (s.mapLens l)) →
+      mapLensPathToPathAlong l s path = PathAlong.ofMapLensPath l s path
+  | .pure _, _ => rfl
+  | .liftBind a rest, ⟨d, path⟩ =>
+      congrArg (PathAlong.cons l a rest d)
+        (mapLensPathToPathAlong_eq_ofMapLensPath l (rest (l.toFunB a d)) path)
+
 /-- Pull a canonical path through the lens-mapped tree `s.mapLens l` back to the source tree `s`:
 at each node the mapped direction `d` becomes the source direction `l.toFunB a d`. Its equations
 are `pullMapLens_pure` and `pullMapLens_liftBind`; `pullMapLens_eq_projectPathAlong` factors it
