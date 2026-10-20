@@ -172,7 +172,7 @@ theorem comp_assoc {S₃ : Type u₃} {S₄ : Type u₄}
 
 /-- The permissive relation accepting every pair of concrete steps. -/
 @[deprecated "use `⊤`, the top of the lattice of relations" (since := "2026-10-19")]
-def top : StepRel s₁ s₂ := ⊤
+abbrev top : StepRel s₁ s₂ := ⊤
 
 @[deprecated "use `Pi.top_apply`" (since := "2026-10-19")]
 theorem top_apply (step₁ : s₁.Step) (step₂ : s₂.Step) :
@@ -201,7 +201,7 @@ theorem reverse_comp {S₃ : Type u₃} {r : PFunctor.{uA₃, uB₃}} {s₃ : Dy
 
 /-- Conjunction of step relations. -/
 @[deprecated "use `⊓`, the meet of the lattice of relations" (since := "2026-10-19")]
-def inter (first second : StepRel s₁ s₂) : StepRel s₁ s₂ := first ⊓ second
+abbrev inter (first second : StepRel s₁ s₂) : StepRel s₁ s₂ := first ⊓ second
 
 @[deprecated "use `Pi.inf_apply`" (since := "2026-10-19")]
 theorem inter_apply (first second : StepRel s₁ s₂) (step₁ : s₁.Step) (step₂ : s₂.Step) :
