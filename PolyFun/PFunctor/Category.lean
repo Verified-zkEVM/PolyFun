@@ -55,7 +55,7 @@ structure LensCat : Type max (uA + 1) (uB + 1) where
 
 namespace LensCat
 
-@[deprecated (since := "2026-10-19")] alias as := toPFunctor
+@[reducible, deprecated (since := "2026-10-19")] alias as := toPFunctor
 
 instance instCategory : Category LensCat.{uA, uB} where
   Hom P Q := Lens P.toPFunctor Q.toPFunctor
@@ -92,7 +92,7 @@ structure ChartCat : Type max (uA + 1) (uB + 1) where
 
 namespace ChartCat
 
-@[deprecated (since := "2026-10-19")] alias as := toPFunctor
+@[reducible, deprecated (since := "2026-10-19")] alias as := toPFunctor
 
 instance instCategory : Category ChartCat.{uA, uB} where
   Hom P Q := Chart P.toPFunctor Q.toPFunctor

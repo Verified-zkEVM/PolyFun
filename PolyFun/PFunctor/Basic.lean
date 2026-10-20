@@ -93,26 +93,44 @@ lemma univ_B (T : Type u) : univ.{u}.B T = T := rfl
 section Sum
 
 /- The sum of two polynomial functors is cslib's `P + Q` (`PFunctor.add`, with simp lemmas
-`hAdd_A` and `hAdd_B`); both summands share the direction universe. The direction equations
-below are not simp lemmas, since `hAdd_B` and iota reduction already compute them. -/
+`hAdd_A` and `hAdd_B`); both summands share the direction universe. The equations `add_B_inl`
+and `add_B_inr` are not simp lemmas, since `hAdd_B` and iota reduction already compute them. -/
 
-@[deprecated (since := "2026-10-19")] alias sum := add
+/-- The deprecated spelling of `P + Q`. It keeps the body and the `abbrev` transparency it had
+before it was deprecated, so instance search and reducible `simp` still compute
+`(sum P Q).B (.inl a)` to `P.B a`. cslib's `add` is only implicit-reducible, so a plain alias would
+not. -/
+@[deprecated add (since := "2026-10-19")]
+abbrev sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max uA₁ uA₂, uB} :=
+  ⟨P.A ⊕ Q.A, @Sum.rec P.A Q.A (fun _ => Type uB) P.B Q.B⟩
 
-@[deprecated (since := "2026-10-19")] alias coprod := add
+/-- The coproduct of two polynomial functors, with reducible direction projections. -/
+@[deprecated add (since := "2026-10-19")]
+def coprod (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max uA₁ uA₂, uB} :=
+  ⟨P.A ⊕ Q.A, @Sum.rec P.A Q.A (fun _ => Type uB) P.B Q.B⟩
 
-@[deprecated (since := "2026-10-19")] alias sum_A := hAdd_A
+/-- The positions of the sum are the sum of its position types. -/
+@[simp, deprecated hAdd_A +typeChanged (since := "2026-10-19")]
+lemma sum_A (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
+    (sum P Q).A = (P.A ⊕ Q.A) := rfl
 
 /-- The directions of `P + Q` at a left position are those of `P`. -/
 lemma add_B_inl (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : P.A) :
     (P + Q).B (.inl a) = P.B a := rfl
 
-@[deprecated (since := "2026-10-19")] alias sum_B_inl := add_B_inl
+/-- The directions of the sum at a left position are those of `P`. -/
+@[simp, deprecated add_B_inl +typeChanged (since := "2026-10-19")]
+lemma sum_B_inl (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : P.A) :
+    (sum P Q).B (.inl a) = P.B a := rfl
 
 /-- The directions of `P + Q` at a right position are those of `Q`. -/
 lemma add_B_inr (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : Q.A) :
     (P + Q).B (.inr a) = Q.B a := rfl
 
-@[deprecated (since := "2026-10-19")] alias sum_B_inr := add_B_inr
+/-- The directions of the sum at a right position are those of `Q`. -/
+@[simp, deprecated add_B_inr +typeChanged (since := "2026-10-19")]
+lemma sum_B_inr (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : Q.A) :
+    (sum P Q).B (.inr a) = Q.B a := rfl
 
 lemma add_def (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
     P + Q = ⟨P.A ⊕ Q.A, @Sum.rec P.A Q.A (fun _ => Type uB) P.B Q.B⟩ := rfl
@@ -345,7 +363,9 @@ instance [Inhabited B] : (monomial A B).Inhabited where
 
 end monomial
 
-@[deprecated (since := "2026-10-19")] alias ofConst := monomial
+/-- A polynomial with constant direction type `B` over the position type `A`. -/
+@[deprecated monomial (since := "2026-10-19")]
+abbrev ofConst (A : Type uA) (B : Type uB) : PFunctor.{uA, uB} := monomial A B
 
 /-- An equivalence between two polynomial functors `P` and `Q`, written `P ≃ₚ Q`, is given by an
 equivalence of the `A` types and an equivalence between the `B` types for each `a : A`. -/
