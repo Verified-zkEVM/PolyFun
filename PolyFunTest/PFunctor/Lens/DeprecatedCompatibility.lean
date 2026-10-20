@@ -8,11 +8,12 @@ module
 public import PolyFun.PFunctor.Lens.Basic
 
 /-!
-# Direct-import compatibility for the former `X` lens API
+# Direct-import compatibility for deprecated lens APIs
 
 These canaries import only `PFunctor.Lens.Basic`. They ensure downstream files
 using the former `X` spellings keep elaborating without relying on the aggregate
 `PFunctor.Deprecated` module or the `PolyFun` umbrella.
+The section canaries preserve the independent universes of `Lens.enclose`.
 -/
 
 @[expose] public section
@@ -48,5 +49,19 @@ Hint: Replace the deprecated name:
 -/
 #guard_msgs in
 example {P : PFunctor.{0, 0}} : Lens.Equiv (P ◃ X) P := Lens.Equiv.compX
+
+set_option linter.deprecated false
+
+universe uA uB uA₁ uB₁
+
+-- Old universe arity and import surface: only Lens.Basic is imported.
+example (P : PFunctor.{uA, uB}) (l : Lens P y.{uA₁, uB₁}) :
+    enclose.{uA, uB, uA₁, uB₁} P := l
+
+-- Old explicit unfolding at independent endpoint universes.
+example (P : PFunctor.{uA, uB}) :
+    enclose.{uA, uB, uA₁, uB₁} P = Lens P y.{uA₁, uB₁} := by
+  unfold enclose
+  rfl
 
 end PFunctor.Lens
