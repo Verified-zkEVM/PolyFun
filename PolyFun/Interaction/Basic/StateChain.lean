@@ -248,12 +248,50 @@ The output family of state chain composition is the substrate's
 through `PFunctor.FreeM.Path.liftAppend` at each step and reduces definitionally when the path is
 built by `PFunctor.FreeM.Path.append`. -/
 
-@[deprecated (since := "2026-10-19")] alias PFunctor.FreeM.Path.stateChainFamily :=
-  _root_.PFunctor.FreeM.Path.stateChainFamily
-@[deprecated (since := "2026-10-19")] alias PFunctor.FreeM.Path.stateChainFamily_zero :=
-  _root_.PFunctor.FreeM.Path.stateChainFamily_zero
-@[deprecated (since := "2026-10-19")] alias PFunctor.FreeM.Path.stateChainFamily_const :=
-  _root_.PFunctor.FreeM.Path.stateChainFamily_const
+/-- The output family of a state chain at its terminal stage. -/
+@[expose, deprecated _root_.PFunctor.FreeM.Path.stateChainFamily +typeChanged
+  (since := "2026-10-19")]
+def PFunctor.FreeM.Path.stateChainFamily
+    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
+    {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
+    (Family : (i : Nat) → Stage i → Type u) :
+    (n : Nat) → (i : Nat) → (stage : Stage i) →
+    Path (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i stage) → Type u
+  | 0, i, stage, _ => Family i stage
+  | n + 1, i, stage, tr =>
+      PFunctor.FreeM.Path.liftAppend (spec i stage)
+        (fun tr₁ =>
+          PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n (i + 1)
+            (advance i stage tr₁))
+        (fun tr₁ trRest =>
+          PFunctor.FreeM.Path.stateChainFamily Family n (i + 1) (advance i stage tr₁) trRest)
+        tr
+
+/-- A zero-stage chain has the initial family. -/
+@[simp, deprecated _root_.PFunctor.FreeM.Path.stateChainFamily_zero +typeChanged
+  (since := "2026-10-19")]
+theorem PFunctor.FreeM.Path.stateChainFamily_zero
+    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
+    {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
+    (Family : (i : Nat) → Stage i → Type u) (i : Nat) (s : Stage i) (tr : PUnit) :
+    PFunctor.FreeM.Path.stateChainFamily (advance := advance) Family 0 i s tr = Family i s := rfl
+
+/-- A constant family is unaffected by state-chain composition. -/
+@[deprecated _root_.PFunctor.FreeM.Path.stateChainFamily_const +typeChanged (since := "2026-10-19")]
+theorem PFunctor.FreeM.Path.stateChainFamily_const
+    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
+    {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
+    (α : Type u) :
+    (n : Nat) → (i : Nat) → (s : Stage i) →
+    (tr : Path (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i s)) →
+    PFunctor.FreeM.Path.stateChainFamily (advance := advance) (fun _ _ => α) n i s tr = α
+  | 0, _, _, _ => rfl
+  | n + 1, i, s, tr => by
+      simp only [PFunctor.FreeM.Path.stateChainFamily]
+      exact (PFunctor.FreeM.Path.liftAppend_congr (spec i s) _ _ _
+        (fun tr₁ trR =>
+          PFunctor.FreeM.Path.stateChainFamily_const α n (i + 1) (advance i s tr₁) trR) tr).trans
+        (PFunctor.FreeM.Path.liftAppend_const α (spec i s) _ tr)
 
 /-! ## Strategy composition along state chains -/
 

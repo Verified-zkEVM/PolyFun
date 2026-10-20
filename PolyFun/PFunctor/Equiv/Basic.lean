@@ -44,7 +44,11 @@ instance PSigma.isEmpty_left {α : Sort u} {β : α → Sort v} [inst : IsEmpty 
     IsEmpty ((a : α) ×' β a) where
   false := fun a => inst.elim a.1
 
-@[deprecated (since := "2026-10-19")] alias instIsEmptySigma := PSigma.isEmpty_left
+/-- A dependent pair over an empty first component is empty. -/
+@[deprecated PSigma.isEmpty_left (since := "2026-10-19")]
+instance instIsEmptySigma {α : Sort u} {β : α → Sort v} [inst : IsEmpty α] :
+    IsEmpty ((a : α) ×' β a) where
+  false := fun a => inst.elim a.1
 
 end find_home
 
