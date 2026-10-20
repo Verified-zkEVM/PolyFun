@@ -52,11 +52,11 @@ example : (Lens.purePowerMap (fun n : Fin 2 => decide (n = 1)) :
     Lens (y^Bool : PFunctor.{0, 0}) (y^(Fin 2))).toFunB PUnit.unit 1 = true := rfl
 
 /-- The Yoneda bijection sends a lens out of `y^Bool` to its image of the generic element. -/
-example : Lens.purePowerEquiv (negLens ∘ₗ ((fun _ => true) ⇆ fun _ d => !d :
+example : Lens.fromPurePowerEquiv (negLens ∘ₗ ((fun _ => true) ⇆ fun _ d => !d :
     Lens (y^Bool : PFunctor.{0, 0}) qBool)) = Obj.mk false fun d => !d := rfl
 
 example (l : Lens (y^Bool : PFunctor.{0, 0}) qBool) :
-    Lens.purePowerEquiv.symm (Lens.purePowerEquiv l) = l := rfl
+    Lens.fromPurePowerEquiv.symm (Lens.fromPurePowerEquiv l) = l := rfl
 
 /-- `equivPiObj` reads off the forward and backward maps at each position. -/
 example : Lens.equivPiObj negLens true = Obj.mk false id := rfl
@@ -93,14 +93,14 @@ example : (Equiv.sigmaPurePower qBool).equivA.symm false = sigma.mk false PUnit.
 
 /-! ## Special classes, with counterexamples -/
 
-example : IsRepresentable (y^Bool : PFunctor.{0, 0}) := isRepresentable_purePower Bool
+example : IsPurePower (y^Bool : PFunctor.{0, 0}) := isPurePower_purePower Bool
 example : IsConstant (C Bool : PFunctor.{0, 0}) := isConstant_C Bool
 example : IsLinear (linear Bool : PFunctor.{0, 0}) := isLinear_linear Bool
 example : IsMonomial qBool := isMonomial_monomial Bool Bool
 
 /-- `Bool y^ Bool` has two positions, so it is not representable. -/
-example : ¬ IsRepresentable qBool := by
-  rw [isRepresentable_iff]
+example : ¬ IsPurePower qBool := by
+  rw [isPurePower_iff]
   rintro ⟨u⟩
   exact Bool.noConfusion (u.uniq true ▸ (u.uniq false).symm : true = false)
 
@@ -119,6 +119,6 @@ example : ¬ IsMonomial (y + 1 : PFunctor.{0, 0}) := by
   exact (e₂.symm (e₁ PUnit.unit)).elim
 
 /-- A representable polynomial is a monomial. -/
-example : IsMonomial (y^Bool : PFunctor.{0, 0}) := (isRepresentable_purePower Bool).isMonomial
+example : IsMonomial (y^Bool : PFunctor.{0, 0}) := (isPurePower_purePower Bool).isMonomial
 
 end PolyFunTest.PFunctor.Yoneda

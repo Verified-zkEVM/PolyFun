@@ -67,7 +67,7 @@ input/output transformers and of proof-system context lenses, are built with
 
 ## Representables, Yoneda, and natural transformations
 
-`Lens.purePowerEquiv : Lens (y^S) Q ≃ Q.Obj S` is the Yoneda lemma for polynomials, and
+`Lens.fromPurePowerEquiv : Lens (y^S) Q ≃ Q.Obj S` is the Yoneda lemma for polynomials, and
 `Lens.equivPiObj : Lens P Q ≃ ((a : P.A) → Q.Obj (P.B a))` reads a lens as its value on each
 generic element `Obj.mk a id`. Lenses are exactly the natural transformations between
 actions: the action `Lens.mapObj` is natural (`Lens.mapObj_map`), and every natural family
@@ -79,9 +79,19 @@ of exactly one lens (`Lens.existsUnique_mapObj`), namely `Lens.ofNatural η`
 
 [`Equiv/Special.lean`](../../PolyFun/PFunctor/Equiv/Special.lean) presents every polynomial as
 the sum of the representables at its directions (`Equiv.sigmaPurePower`) and defines the
-representable, constant, linear, and monomial classes up to `≃ₚ`. `isRepresentable_iff`,
+pure-power (the book's representable), constant, linear, and monomial classes up to `≃ₚ`. `isPurePower_iff`,
 `isConstant_iff`, `isLinear_iff`, and `isMonomial_iff` characterize them by positions and
 directions.
+
+[`Lens/Universal.lean`](../../PolyFun/PFunctor/Lens/Universal.lean) states the universal
+properties of sums and products as hom-set equivalences (`Lens.sigmaEquiv`, `Lens.piEquiv` with
+the projections `Lens.piProj`, and the binary `Lens.sumEquiv` and `Lens.prodEquiv`), and shows
+that the actions of sums and products are sums and products of actions (`Obj.sigmaEquiv`,
+`Obj.piEquiv`, `Obj.sumEquiv`, `Obj.prodEquiv`). It also reduces lenses into and out of the
+special polynomials to functions: `Lens.fromLinearEquiv` and `Lens.fromConstEquiv` (with `homToConst`,
+the adjoint quadruple between `Set` and `Poly`), `Lens.sectionEquiv` for sections `Lens p y`,
+`Lens.toPurePowerEquiv` and `Lens.toMonomialEquiv` for lenses into representables and monomials,
+and `Lens.sectionTensorEquiv` for sections of `p ⊗ q`.
 
 ## Where to start
 

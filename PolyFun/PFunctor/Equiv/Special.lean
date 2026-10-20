@@ -17,7 +17,8 @@ component equivalences are definitional.
 Niu–Spivak §2.2 (pp. 28–29) singles out four classes of polynomials, each defined up to
 isomorphism:
 
-* `IsRepresentable P`: `P ≃ₚ y^A` for some `A`;
+* `IsPurePower P`: `P ≃ₚ y^A` for some `A`. The book calls these *representable*; the covariant
+  functor `Hom(A, −)` is *corepresentable* in Mathlib's terminology (`Functor.IsCorepresentable`);
 * `IsConstant P`: `P ≃ₚ C I` for some `I`;
 * `IsLinear P`: `P ≃ₚ linear I` for some `I` (Def 2.14);
 * `IsMonomial P`: `P ≃ₚ I y^ A` for some `I` and `A` (Def 2.15).
@@ -55,9 +56,11 @@ end Equiv
 
 variable {P : PFunctor.{uA, uB}}
 
-/-- `P` is **representable** if it is isomorphic to `y^A` for some `A` (Niu–Spivak §2.2). -/
-def IsRepresentable (P : PFunctor.{uA, uB}) : Prop :=
+/-- `P` is a **pure power** if it is isomorphic to `y^A` for some `A`: a representable polynomial in
+the sense of Niu–Spivak §2.2, whose action is the corepresentable functor `Hom(A, −)`. -/
+def IsPurePower (P : PFunctor.{uA, uB}) : Prop :=
   ∃ A : Type uB, Nonempty (P ≃ₚ (y^A : PFunctor.{uA, uB}))
+@[deprecated (since := "2026-10-19")] alias IsRepresentable := IsPurePower
 
 /-- `P` is **constant** if it is isomorphic to the constant polynomial `C I` for some `I`
 (Niu–Spivak §2.2). -/
@@ -74,9 +77,10 @@ Def 2.15). -/
 def IsMonomial (P : PFunctor.{uA, uB}) : Prop :=
   ∃ (I : Type uA) (A : Type uB), Nonempty (P ≃ₚ (I y^ A : PFunctor.{uA, uB}))
 
-theorem isRepresentable_purePower (A : Type uB) :
-    IsRepresentable (y^A : PFunctor.{uA, uB}) :=
+theorem isPurePower_purePower (A : Type uB) :
+    IsPurePower (y^A : PFunctor.{uA, uB}) :=
   ⟨A, ⟨Equiv.refl _⟩⟩
+@[deprecated (since := "2026-10-19")] alias isRepresentable_purePower := isPurePower_purePower
 
 theorem isConstant_C (I : Type uA) : IsConstant (C I : PFunctor.{uA, uB}) :=
   ⟨I, ⟨Equiv.refl _⟩⟩
@@ -88,9 +92,9 @@ theorem isMonomial_monomial (I : Type uA) (A : Type uB) :
     IsMonomial (I y^ A : PFunctor.{uA, uB}) :=
   ⟨I, A, ⟨Equiv.refl _⟩⟩
 
-/-- A polynomial is representable exactly when it has a unique position (Niu–Spivak
+/-- A polynomial is a pure power exactly when it has a unique position (Niu–Spivak
 Ex 2.13). -/
-theorem isRepresentable_iff : IsRepresentable P ↔ Nonempty (Unique P.A) := by
+theorem isPurePower_iff : IsPurePower P ↔ Nonempty (Unique P.A) := by
   constructor
   · rintro ⟨A, ⟨e⟩⟩
     exact ⟨e.equivA.unique⟩
@@ -98,6 +102,7 @@ theorem isRepresentable_iff : IsRepresentable P ↔ Nonempty (Unique P.A) := by
     exact ⟨P.B default, ⟨
       { equivA := _root_.Equiv.equivPUnit P.A
         equivB := fun a => _root_.Equiv.cast (congrArg P.B (Subsingleton.elim a default)) }⟩⟩
+@[deprecated (since := "2026-10-19")] alias isRepresentable_iff := isPurePower_iff
 
 /-- A polynomial is constant exactly when none of its positions has a direction (Niu–Spivak
 Ex 2.13). -/
@@ -142,11 +147,12 @@ theorem IsLinear.isMonomial (h : IsLinear P) : IsMonomial P :=
   isMonomial_iff.mpr ⟨PUnit, fun a =>
     ⟨@_root_.Equiv.equivPUnit _ (isLinear_iff.mp h a).some⟩⟩
 
-/-- Representable polynomials are monomials with a single position (Niu–Spivak
+/-- Pure powers are monomials with a single position (Niu–Spivak
 Example 2.16). -/
-theorem IsRepresentable.isMonomial (h : IsRepresentable P) : IsMonomial P := by
-  obtain ⟨u⟩ := isRepresentable_iff.mp h
+theorem IsPurePower.isMonomial (h : IsPurePower P) : IsMonomial P := by
+  obtain ⟨u⟩ := isPurePower_iff.mp h
   exact isMonomial_iff.mpr ⟨P.B default, fun a =>
     ⟨_root_.Equiv.cast (congrArg P.B (Subsingleton.elim a default))⟩⟩
+@[deprecated (since := "2026-10-19")] alias IsRepresentable.isMonomial := IsPurePower.isMonomial
 
 end PFunctor

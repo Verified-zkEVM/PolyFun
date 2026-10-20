@@ -307,6 +307,7 @@ public import PolyFun.PFunctor.Lens.Duoidal
 public import PolyFun.PFunctor.Lens.Factorization
 public import PolyFun.PFunctor.Lens.Monomial
 public import PolyFun.PFunctor.Lens.State
+public import PolyFun.PFunctor.Lens.Universal
 public import PolyFun.PFunctor.Lens.Yoneda
 public import PolyFun.PFunctor.M
 public import PolyFun.PFunctor.M.Vertex
