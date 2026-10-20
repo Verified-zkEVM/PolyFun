@@ -140,18 +140,70 @@ end StatefulLens
 
 namespace StateLens
 
-@[deprecated (since := "2026-10-19")] alias pos := StatefulLens.pos
-@[deprecated (since := "2026-10-19")] alias answer := StatefulLens.answer
-@[deprecated (since := "2026-10-19")] alias update := StatefulLens.update
+-- The old receiver head is intentional; the deprecation type check does not unfold it.
+variable {p r : PFunctor.{u, u}} {σ : Type u}
+
+/-- Construct a stateful lens from its forwarding, answer and update functions. -/
+@[deprecated StatefulLens.mk +typeChanged (since := "2026-10-19"), match_pattern]
+def mk (pos : p.A × σ → r.A)
+    (answer : (query : p.A × σ) → r.B (pos query) → p.B query.1)
+    (update : (query : p.A × σ) → r.B (pos query) → σ) : StateLens p r σ :=
+  StatefulLens.mk pos answer update
+
+@[inherit_doc StatefulLens.pos,
+  deprecated StatefulLens.pos +typeChanged (since := "2026-10-19")]
+def pos (self : StateLens p r σ) : p.A × σ → r.A := StatefulLens.pos self
+
+@[inherit_doc StatefulLens.answer,
+  deprecated StatefulLens.answer +typeChanged (since := "2026-10-19")]
+def answer (self : StateLens p r σ) (query : p.A × σ) :
+    r.B (self.pos query) → p.B query.1 := StatefulLens.answer self query
+
+@[inherit_doc StatefulLens.update,
+  deprecated StatefulLens.update +typeChanged (since := "2026-10-19")]
+def update (self : StateLens p r σ) (query : p.A × σ) :
+    r.B (self.pos query) → σ := StatefulLens.update self query
+
 @[deprecated (since := "2026-10-19")] alias equivLens := StatefulLens.equivLens
-@[deprecated (since := "2026-10-19")] alias mapFreeM := StatefulLens.mapFreeM
-@[deprecated (since := "2026-10-19")] alias mapStep := StatefulLens.mapStep
-@[deprecated (since := "2026-10-19")] alias mapResumption := StatefulLens.mapResumption
-@[deprecated (since := "2026-10-19")] alias toResumption_mapFreeM :=
-  StatefulLens.toResumption_mapFreeM
-@[deprecated (since := "2026-10-19")] alias toStateful := StatefulLens.toStateful
-@[deprecated (since := "2026-10-19")] alias mapFreeM_eq_run := StatefulLens.mapFreeM_eq_run
-@[deprecated (since := "2026-10-19")] alias pullHead := StatefulLens.pullHead
+
+@[inherit_doc StatefulLens.mapFreeM,
+  deprecated StatefulLens.mapFreeM +typeChanged (since := "2026-10-19")]
+def mapFreeM (L : StateLens p r σ) {β : Type u} : FreeM p β → σ → FreeM r (β × σ) :=
+  StatefulLens.mapFreeM L
+
+@[inherit_doc StatefulLens.mapStep,
+  deprecated StatefulLens.mapStep +typeChanged (since := "2026-10-19")]
+def mapStep (L : StateLens p r σ) {β : Type u} (x : Resumption p β × σ) :
+    (β × σ) ⊕ r.Obj (Resumption p β × σ) := StatefulLens.mapStep L x
+
+@[inherit_doc StatefulLens.mapResumption,
+  deprecated StatefulLens.mapResumption +typeChanged (since := "2026-10-19")]
+def mapResumption (L : StateLens p r σ) {β : Type u} (computation : Resumption p β)
+    (state : σ) : Resumption r (β × σ) := StatefulLens.mapResumption L computation state
+
+@[inherit_doc StatefulLens.toResumption_mapFreeM,
+  deprecated StatefulLens.toResumption_mapFreeM +typeChanged (since := "2026-10-19")]
+theorem toResumption_mapFreeM (L : StateLens p r σ) {β : Type u} (program : FreeM p β)
+    (state : σ) :
+    FreeM.toResumption (L.mapFreeM program state) =
+      L.mapResumption (FreeM.toResumption program) state :=
+  StatefulLens.toResumption_mapFreeM L program state
+
+@[inherit_doc StatefulLens.toStateful,
+  deprecated StatefulLens.toStateful +typeChanged (since := "2026-10-19")]
+def toStateful (L : StateLens p r σ) : Handler.Stateful (FreeM r) σ p :=
+  StatefulLens.toStateful L
+
+@[inherit_doc StatefulLens.mapFreeM_eq_run,
+  deprecated StatefulLens.mapFreeM_eq_run +typeChanged (since := "2026-10-19")]
+theorem mapFreeM_eq_run (L : StateLens p r σ) {β : Type u} (program : FreeM p β) (state : σ) :
+    L.mapFreeM program state = L.toStateful.run program state :=
+  StatefulLens.mapFreeM_eq_run L program state
+
+@[inherit_doc StatefulLens.pullHead,
+  deprecated StatefulLens.pullHead +typeChanged (since := "2026-10-19")]
+def pullHead [DecidableEq r.A] (L : StateLens p r σ) (β : Type u) :
+    ((β ⊕ p.A) × σ) × r.Idx → Option (p.Idx × σ) := StatefulLens.pullHead L β
 
 end StateLens
 

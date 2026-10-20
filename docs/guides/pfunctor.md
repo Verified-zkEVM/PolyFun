@@ -157,6 +157,8 @@ and the constructions it supplies keep CSLib's transparency:
   such as PolyFun's `add_B_inl` and `add_B_inr`. When `P + Q` does not
   elaborate at the intended universes, write the named spelling
   `PFunctor.add P Q`.
+  The homogeneous `Add PFunctor` and `Mul PFunctor` instances were deliberately
+  removed: use CSLib's single `HAdd`/`HMul` route, or the named `add`/`prod` operations.
 - CSLib's global simp lemmas include `hAdd_A` and `hAdd_B` (which rewrites
   `(P + Q).B t` to `Sum.rec P.B Q.B t` for every `t`, not only constructors),
   `hMul_A`, `hMul_B`, `zero_A`, `zero_B`, `one_A`, `one_B`, `C_pempty`,
@@ -166,6 +168,14 @@ and the constructions it supplies keep CSLib's transparency:
   `.{uB, uA}`, child universe first; those of `prod` and `instHMulPFunctor`
   are `.{uA₁, uA₂, uB₁, uB₂}`; `instZeroPFunctor` and `instOnePFunctor` take
   the child universe first.
+
+Deprecated compatibility names preserve their original reduction contracts: `ofConst`
+is a reducible abbreviation for `monomial`, and `sum` retains its literal body for
+direction-type instance search. Its `sum_A`, `sum_B_inl`, and `sum_B_inr` equations
+still rewrite the `sum` spelling. Explicitly unfolding `coprod` exposes the same
+body. `Lens.enclose` remains available from `PolyFun.PFunctor.Lens.Basic` with
+four independent universe parameters; the preferred `Section` API is available
+there too and uses the interface's universe pair for both endpoints.
 
 Three rules follow from this transparency:
 
