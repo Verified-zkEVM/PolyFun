@@ -12,7 +12,7 @@ public import PolyFun.PFunctor.Lens.Distributivity
 # Universal properties of sums and products, and lenses into special polynomials
 
 Sums and products of polynomials are coproducts and products in `Poly`, and they agree with the
-pointwise sums and products of their actions (Niu–Spivak Prop 3.3, p. 42, and Prop 3.56, p. 57).
+pointwise sums and products of their actions (Niu–Spivak Prop 3.3, p. 42, and Prop 3.56, p. 65).
 
 * `Obj.sigmaEquiv`, `Obj.piEquiv`, `Obj.sumEquiv`, `Obj.prodEquiv`: the action of a sum or
   product is the sum or product of the actions. `Obj.piEquiv` is the instance of pushing `Π`
@@ -32,9 +32,11 @@ functions between positions and directions:
 * `Lens.toMonomialEquiv`, the principal-monomial hom-isomorphism (Cor 5.15).
 * `Lens.sectionTensorEquiv`, the sections of a parallel product (Prop 4.54).
 
-Prop 5.8 is the constant-family case of `sigmaEquiv` and `piEquiv`. Each equivalence comes with
-its naturality in the polynomial that varies. All of them except the binary `+` and `*` cases
-are definitional in both directions.
+Prop 5.8 is the constant-family case of `sigmaEquiv` and `piEquiv`. The six special-polynomial
+hom-equivalences have naturality laws in their varying polynomials, including simultaneous
+pullback in both factors for `sectionTensorEquiv`. The laws also cover reindexing the set `I`
+and contravariant change of the exponent `A`. The special-polynomial equivalences are
+definitional in both directions.
 -/
 
 @[expose] public section
@@ -249,6 +251,53 @@ theorem toMonomialEquiv_comp {I : Type uA₂} {A : Type uB₂} (g : Lens q (I y^
     toMonomialEquiv (g ∘ₗ f) =
       ((toMonomialEquiv g).1 ∘ f.toFunA,
         fun x a => f.toFunB a ((toMonomialEquiv g).2 x (f.toFunA a))) := rfl
+
+/-- Pulling back a tensor section uses both forward maps to select its directions, then
+applies the corresponding backward maps. -/
+theorem sectionTensorEquiv_comp {p' : PFunctor.{uA, uB}} {q' : PFunctor.{v, w}}
+    (s : Lens (p ⊗ q) (y : PFunctor.{uA₂, uB₂})) (f : Lens p' p) (g : Lens q' q) :
+    sectionTensorEquiv (s ∘ₗ (f ⊗ₗ g)) =
+      (fun b a => f.toFunB a ((sectionTensorEquiv s).1 (g.toFunA b) (f.toFunA a)),
+        fun a b => g.toFunB b ((sectionTensorEquiv s).2 (f.toFunA a) (g.toFunA b))) := rfl
+
+/-- Reindexing a linear polynomial precomposes its family of positions. -/
+theorem fromLinearEquiv_reindex {I : Type uA₂} {J : Type v}
+    (l : Lens (linear I : PFunctor.{uA₂, uB₂}) p) (h : J → I) :
+    fromLinearEquiv
+        (l ∘ₗ (fromLinearEquiv.symm h : Lens (linear J : PFunctor.{v, w}) (linear I))) =
+      fromLinearEquiv l ∘ h := rfl
+
+/-- Reindexing a constant polynomial precomposes its family of nullary elements. -/
+theorem fromConstEquiv_reindex {I : Type uA₂} {J : Type v}
+    (l : Lens (C I : PFunctor.{uA₂, uB₂}) p) (h : J → I) :
+    fromConstEquiv
+        (l ∘ₗ (fromConstEquiv.symm (fun j => Obj.mk (h j) id) :
+          Lens (C J : PFunctor.{v, uB₂}) (C I))) =
+      fromConstEquiv l ∘ h := rfl
+
+/-- Changing the exponent of a pure power precomposes its family of sections. -/
+theorem toPurePowerEquiv_comp_purePower {A : Type uB₂} {B : Type w}
+    (l : Lens p (y^A : PFunctor.{uA₂, uB₂})) (h : B → A) :
+    toPurePowerEquiv
+        ((toPurePowerEquiv.symm (fun b _ => h b) :
+          Lens (y^A : PFunctor.{uA₂, uB₂}) (y^B : PFunctor.{v, w})) ∘ₗ l) =
+      toPurePowerEquiv l ∘ h := rfl
+
+/-- Reindexing the positions of a monomial postcomposes the position component and leaves
+the family of sections unchanged. -/
+theorem toMonomialEquiv_reindex {I : Type uA₂} {J : Type v} {A : Type uB₂}
+    (l : Lens p (I y^ A)) (h : I → J) :
+    toMonomialEquiv
+        ((toMonomialEquiv.symm (h, fun a _ => a) : Lens (I y^ A) (J y^ A)) ∘ₗ l) =
+      (h ∘ (toMonomialEquiv l).1, (toMonomialEquiv l).2) := rfl
+
+/-- Changing a monomial's exponent precomposes its family of sections and leaves its
+position component unchanged. -/
+theorem toMonomialEquiv_comp_exponent {I : Type uA₂} {A : Type uB₂} {B : Type w}
+    (l : Lens p (I y^ A)) (h : B → A) :
+    toMonomialEquiv
+        ((toMonomialEquiv.symm (id, fun b _ => h b) : Lens (I y^ A) (I y^ B)) ∘ₗ l) =
+      ((toMonomialEquiv l).1, (toMonomialEquiv l).2 ∘ h) := rfl
 
 end Special
 
