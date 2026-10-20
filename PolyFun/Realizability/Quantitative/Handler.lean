@@ -950,14 +950,62 @@ end StatefulLens
 
 namespace StateLens
 
-@[deprecated (since := "2026-10-19")] alias QuantitativelyAdmissible :=
-  StatefulLens.QuantitativelyAdmissible
-@[deprecated (since := "2026-10-19")] alias QuantitativelyAdmissible.onPos :=
-  StatefulLens.QuantitativelyAdmissible.onPos
-@[deprecated (since := "2026-10-19")] alias QuantitativelyAdmissible.onPull :=
-  StatefulLens.QuantitativelyAdmissible.onPull
-@[deprecated (since := "2026-10-19")] alias wpFold_charge_mapFreeM_le :=
-  StatefulLens.wpFold_charge_mapFreeM_le
+open DynSystem.DynComputation
+
+-- The old receiver heads are intentional; the deprecation type check does not unfold them.
+variable {p r : PFunctor.{u, u}}
+
+section QuantitativelyAdmissible
+
+variable {C : StepClass.{u, v}} [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
+  [DecidableEq r.A] {A B σ : Type u}
+
+@[inherit_doc StatefulLens.QuantitativelyAdmissible,
+  deprecated StatefulLens.QuantitativelyAdmissible +typeChanged (since := "2026-10-19")]
+def QuantitativelyAdmissible (Q : QuantitativeStepClass.{u, v, w} C)
+    (bd : Boundary C p A B) (stateRep : C.Str σ) (posRep : C.Str r.A)
+    (idxRep : C.Str r.Idx) (L : StateLens p r σ) :=
+  StatefulLens.QuantitativelyAdmissible Q bd stateRep posRep idxRep L
+
+variable {Q : QuantitativeStepClass.{u, v, w} C} {bd : Boundary C p A B}
+  {stateRep : C.Str σ} {posRep : C.Str r.A} {idxRep : C.Str r.Idx}
+
+/-- Construct executable evidence from forwarding and partial-pullback realizers. -/
+@[deprecated StatefulLens.QuantitativelyAdmissible.mk +typeChanged (since := "2026-10-19"),
+  match_pattern]
+def QuantitativelyAdmissible.mk {L : StateLens p r σ}
+    (onPos : Q.Realizer (P.prod bd.pos stateRep) posRep L.pos)
+    (onPull : Q.Realizer (P.prod (P.prod bd.head stateRep) idxRep)
+      (O.option (P.prod bd.idx stateRep)) (L.pullHead B)) :
+    QuantitativelyAdmissible Q bd stateRep posRep idxRep L :=
+  StatefulLens.QuantitativelyAdmissible.mk onPos onPull
+
+@[inherit_doc StatefulLens.QuantitativelyAdmissible.onPos,
+  deprecated StatefulLens.QuantitativelyAdmissible.onPos +typeChanged (since := "2026-10-19")]
+def QuantitativelyAdmissible.onPos {L : StateLens p r σ}
+    (self : QuantitativelyAdmissible Q bd stateRep posRep idxRep L) :
+    Q.Realizer (P.prod bd.pos stateRep) posRep L.pos :=
+  StatefulLens.QuantitativelyAdmissible.onPos self
+
+@[inherit_doc StatefulLens.QuantitativelyAdmissible.onPull,
+  deprecated StatefulLens.QuantitativelyAdmissible.onPull +typeChanged (since := "2026-10-19")]
+def QuantitativelyAdmissible.onPull {L : StateLens p r σ}
+    (self : QuantitativelyAdmissible Q bd stateRep posRep idxRep L) :
+    Q.Realizer (P.prod (P.prod bd.head stateRep) idxRep)
+      (O.option (P.prod bd.idx stateRep)) (L.pullHead B) :=
+  StatefulLens.QuantitativelyAdmissible.onPull self
+
+end QuantitativelyAdmissible
+
+variable {σ : Type u}
+
+@[inherit_doc StatefulLens.wpFold_charge_mapFreeM_le,
+  deprecated StatefulLens.wpFold_charge_mapFreeM_le +typeChanged (since := "2026-10-19")]
+theorem wpFold_charge_mapFreeM_le (L : StateLens p r σ) (c : r.A → ℕ∞) {β : Type u}
+    (x : FreeM p β) (state : σ) :
+    FreeM.wpFold (OpSpec.charge c) (L.mapFreeM x state) (fun _ => 0) ≤
+      FreeM.wpFold (OpSpec.charge fun a => ⨆ st, c (L.pos (a, st))) x (fun _ => 0) :=
+  StatefulLens.wpFold_charge_mapFreeM_le L c x state
 
 end StateLens
 
