@@ -700,7 +700,7 @@ def LiftAppend {β : Type t} :
       LiftAppend (rest b) (fun path₁ => s₂ ⟨b, path₁⟩)
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂) path
 
-@[deprecated (since := "2026-10-19")] alias liftAppend := LiftAppend
+@[reducible, deprecated (since := "2026-10-19")] alias liftAppend := LiftAppend
 
 /-- Combine a canonical prefix path through `s₁` with a canonical suffix path through the tree `s₂`
 grafts there, by recursion on the prefix; the leaf case is `append_pure`. `split` is the two-sided
@@ -1047,7 +1047,7 @@ def LiftAppendRel {β : Type t} :
         (fun path₁ path₂ => G ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => R ⟨b, path₁⟩ path₂) path x y
 
-@[deprecated (since := "2026-10-19")] alias liftAppendRel := LiftAppendRel
+@[reducible, deprecated (since := "2026-10-19")] alias liftAppendRel := LiftAppendRel
 
 /-- `LiftAppendRel` unfolds to `R` at the path pair `split` recovers from the fused path, applied
 to the payloads `unliftAppend` extracts from the two `LiftAppend` families; use it to turn a
@@ -1083,7 +1083,7 @@ def LiftAppendPred {β : Type t} :
         (fun path₁ path₂ => F ⟨b, path₁⟩ path₂)
         (fun path₁ path₂ => Pred ⟨b, path₁⟩ path₂) path x
 
-@[deprecated (since := "2026-10-19")] alias liftAppendPred := LiftAppendPred
+@[reducible, deprecated (since := "2026-10-19")] alias liftAppendPred := LiftAppendPred
 
 /-- `LiftAppendPred` unfolds to `Pred` at the path pair `split` recovers from the fused path,
 applied to the payload `unliftAppend` extracts from the `LiftAppend` family; use it to turn a
@@ -1129,7 +1129,7 @@ def LiftAppend {β : Type t} (l : Lens P Q) :
       LiftAppend l (rest (l.toFunB a d)) (fun path₁ => s₂ ⟨l.toFunB a d, path₁⟩)
         (fun path₁ path₂ => F ⟨d, path₁⟩ path₂) path
 
-@[deprecated (since := "2026-10-19")] alias liftAppend := LiftAppend
+@[reducible, deprecated (since := "2026-10-19")] alias liftAppend := LiftAppend
 
 /-- Combine a runtime prefix path through `s₁` with a runtime suffix path through the tree `s₂`
 grafts at the control projection `projectPathAlong l s₁ path₁` of that prefix, by recursion on the
