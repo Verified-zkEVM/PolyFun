@@ -35,6 +35,12 @@ end find_home
 
 namespace PFunctor
 
+/-- A **section** of an interface `p` is a lens `p ⟹ y` (the book's `p ⟹ y`),
+equivalently a dependent section `(a : p.A) → p.B a` choosing a direction at every
+position. Composing a section after a system's interface lens closes the system off
+(Niu–Spivak §4.3.4); see `DynSystem.close`. -/
+abbrev Section (p : PFunctor.{uA, uB}) : Type _ := Lens p y.{uA, uB}
+
 namespace Lens
 
 /-- Lenses agree when their position maps agree pointwise and their direction maps agree after
@@ -350,6 +356,14 @@ scoped notation "[" l₁ "," l₂ "]ₗ" => sumPair l₁ l₂
 /-- Notation for the pairing `prodPair l₁ l₂` of two lenses into a product; activate it with
 `open scoped PFunctor.Lens`. -/
 scoped notation "⟨" l₁ "," l₂ "⟩ₗ" => prodPair l₁ l₂
+
+set_option linter.checkUnivs false in
+/-- The type of lenses from a polynomial functor `P` to `y` -/
+-- `Lens.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
+-- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
+@[deprecated Section +typeChanged (since := "2026-10-19")]
+def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
+  Lens P y.{uA₁, uB₁}
 
 /-- The transition lens `δ : Sy^S ⇆ Sy^S ◃ Sy^S` on the self-monomial state
 polynomial (Niu–Spivak Example 6.44): `δ = (id, tgt, run)` remembers the start
