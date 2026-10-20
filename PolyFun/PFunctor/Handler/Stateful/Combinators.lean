@@ -140,6 +140,13 @@ theorem parallel_inr_run [Functor m] (f : Stateful m S P) (g : Stateful m T Q)
     (b : Q.A) (st : S × T) :
     (parallel f g (.inr b)).run st = Prod.map _root_.id (st.1, ·) <$> (g b).run st.2 := rfl
 
+/-- The deprecated `parallel` is `sum`. -/
+@[deprecated sum +typeChanged (since := "2026-10-19")]
+theorem parallel_eq_sum [Functor m] (f : Stateful m S P) (g : Stateful m T Q) :
+    parallel f g = sum f g := by
+  funext x
+  cases x <;> rfl
+
 /-- Run an indexed family of stateful handlers on the indexed sum, each member on its own
 component of a dependent product state. -/
 def pi {I : Type u} [DecidableEq I] [Functor m] {P : I → PFunctor.{uA, u}} {S : I → Type u}

@@ -293,6 +293,24 @@ theorem PFunctor.FreeM.Path.stateChainFamily_const
           PFunctor.FreeM.Path.stateChainFamily_const α n (i + 1) (advance i s tr₁) trR) tr).trans
         (PFunctor.FreeM.Path.liftAppend_const α (spec i s) _ tr)
 
+/-- The deprecated specialized family agrees with the generic substrate family. -/
+@[deprecated _root_.PFunctor.FreeM.Path.stateChainFamily +typeChanged (since := "2026-10-19")]
+theorem PFunctor.FreeM.Path.stateChainFamily_eq
+    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
+    {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
+    (Family : (i : Nat) → Stage i → Type u) :
+    (n : Nat) → (i : Nat) → (s : Stage i) →
+    (tr : Path (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i s)) →
+    PFunctor.FreeM.Path.stateChainFamily (advance := advance) Family n i s tr =
+      _root_.PFunctor.FreeM.Path.stateChainFamily Family n i s tr
+  | 0, _, _, _ => rfl
+  | n + 1, i, s, tr => by
+      simp only [PFunctor.FreeM.Path.stateChainFamily,
+        _root_.PFunctor.FreeM.Path.stateChainFamily]
+      exact PFunctor.FreeM.Path.liftAppend_congr (spec i s) _ _ _
+        (fun tr₁ trR =>
+          PFunctor.FreeM.Path.stateChainFamily_eq Family n (i + 1) (advance i s tr₁) trR) tr
+
 /-! ## Strategy composition along state chains -/
 
 variable {m : Type u → Type u}
