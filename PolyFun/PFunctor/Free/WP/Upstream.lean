@@ -51,19 +51,19 @@ variable {l : Type v} [CompleteLattice l]
 
 /-- The core interpretation of free programs induced by a monotone per-operation spec. -/
 @[instance_reducible]
-def toWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) : WPMonad (FreeM P) l EStack⟨⟩ :=
+def toWPMonad (Φ : OpSpec P l) (hΦ : Φ.Monotone) : WPMonad (FreeM P) l EStack⟨⟩ :=
   letI := Φ.toMAlgOrdered hΦ
   MAlgOrdered.toWPMonad
 
 /-- Its `wp` is the syntactic fold. -/
-theorem toWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Mono) {α : Type v} (x : FreeM P α) (post : α → l)
+theorem toWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Monotone) {α : Type v} (x : FreeM P α) (post : α → l)
     (epost : EStack⟨⟩) :
     ((Φ.toWPMonad hΦ).toWP α).wp x post epost = FreeM.wpFold Φ x post := by
   change (letI := Φ.toMAlgOrdered hΦ; MAlgOrdered.μ (x >>= fun a => pure (post a))) = _
   exact FreeM.toMAlgOrdered_μ_bind_pure Φ hΦ x post
 
 /-- The syntactic interpretation is exact. -/
-instance instExactWPMonadToWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) :
+instance instExactWPMonadToWPMonad (Φ : OpSpec P l) (hΦ : Φ.Monotone) :
     @ExactWPMonad (FreeM P) l EStack⟨⟩ _ _ _ (Φ.toWPMonad hΦ) :=
   letI := Φ.toMAlgOrdered hΦ
   MAlgOrdered.instExactWPMonadToWPMonad
@@ -72,12 +72,12 @@ instance instExactWPMonadToWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) :
 the order duals (`ExactWPMonad.dual`). Its triple `⦃ toDual t ⦄ x ⦃ post ⦄` states that the fold
 of `Φ` over `x`, with leaf values `ofDual ∘ post`, is at most `t`. -/
 @[instance_reducible]
-def toUpperWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) : WPMonad (FreeM P) lᵒᵈ EStack⟨⟩ᵒᵈ :=
+def toUpperWPMonad (Φ : OpSpec P l) (hΦ : Φ.Monotone) : WPMonad (FreeM P) lᵒᵈ EStack⟨⟩ᵒᵈ :=
   letI := Φ.toWPMonad hΦ
   ExactWPMonad.dual
 
 /-- The upper-bound reading's `wp` is the fold, read in the dual order. -/
-theorem toUpperWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Mono) {α : Type v} (x : FreeM P α)
+theorem toUpperWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Monotone) {α : Type v} (x : FreeM P α)
     (post : α → lᵒᵈ) (epost : EStack⟨⟩ᵒᵈ) :
     ((Φ.toUpperWPMonad hΦ).toWP α).wp x post epost =
       OrderDual.toDual (FreeM.wpFold Φ x fun a => OrderDual.ofDual (post a)) := by
@@ -86,7 +86,7 @@ theorem toUpperWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Mono) {α : Type v} (x : F
   rw [toWPMonad_wp]
 
 /-- The upper-bound reading is exact. -/
-instance instExactWPMonadToUpperWPMonad (Φ : OpSpec P l) (hΦ : Φ.Mono) :
+instance instExactWPMonadToUpperWPMonad (Φ : OpSpec P l) (hΦ : Φ.Monotone) :
     @ExactWPMonad (FreeM P) lᵒᵈ EStack⟨⟩ᵒᵈ _ _ _ (Φ.toUpperWPMonad hΦ) :=
   letI := Φ.toWPMonad hΦ
   ExactWPMonad.instExactWPMonadDual

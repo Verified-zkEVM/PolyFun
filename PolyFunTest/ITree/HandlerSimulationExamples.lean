@@ -63,6 +63,7 @@ def mapSpecSeparated (lens : PFunctor.Lens E F) (tree : ITree E R) :
     ITree F R :=
   ITree.mapSpec lens tree
 
+open scoped PFunctor in
 example (first : PFunctor.Lens E F) (second : PFunctor.Lens F G)
     (tree : ITree E R) :
     ITree.mapSpec (second ∘ₗ first) tree =
@@ -114,6 +115,7 @@ example {H : PFunctor.{uHA, uHB}} (first : ITree.Handler E F)
       ((third.comp second).comp first a) :=
   ITree.Handler.comp_assoc_apply third second first a
 
+open scoped PFunctor in
 example (first : PFunctor.Lens E F) (second : PFunctor.Lens F G)
     (a : E.A) :
     ITree.WeakBisim
@@ -122,8 +124,8 @@ example (first : PFunctor.Lens E F) (second : PFunctor.Lens F G)
   ITree.Handler.ofLens_comp_apply first second a
 
 /-- Coproduct routing only inherits the equal direction-universe constraint
-of `PFunctor.sum`; the two position universes and target universes remain
-independent. -/
+of the sum `PFunctor.add`; the two position universes and target universes
+remain independent. -/
 def caseSeparated (left : ITree.Handler E G) (right : ITree.Handler Q G) :
     ITree.Handler.{max uEA uQA, uEB, uGA, uGB} (E + Q) G :=
   ITree.Handler.case_ left right

@@ -62,18 +62,18 @@ example (R : Responder S q) (s : S) (d : (q ⊸ y).B (DynSystem.expose R s)) :
     DynSystem.update R s d = R.next s d.1 := rfl
 
 /-- Eta canaries: the Kleisli–Mealy round-trips are definitional. -/
-example (R : Responder S q) : Responder.ofStateHandler R.toStateHandler = R := rfl
+example (R : Responder S q) : Responder.ofStateful R.toStateful = R := rfl
 
 example (h : Handler (StateT S Id) q) :
-    Responder.toStateHandler (Responder.ofStateHandler h) = h := rfl
+    Responder.toStateful (Responder.ofStateful h) = h := rfl
 
 example (R : Responder S q) :
-    Responder.equivStateHandler.symm (Responder.equivStateHandler R) = R := rfl
+    Responder.equivStateful.symm (Responder.equivStateful R) = R := rfl
 
 /-- `stepWith` against a responder's stateful handler, at `m := Id`, is the
 closed game's step. -/
 example (R : Responder T q) (A : DynSystem S q) (p : T × S) :
-    DynSystem.stepWith (m := Id) R.toStateHandler A p
+    DynSystem.stepWith (m := Id) R.toStateful A p
       = (DynSystem.closedGame R A).step p := rfl
 
 end Canaries
@@ -105,7 +105,7 @@ def answerAndAdvanceResponder : Responder Nat (Bool y^ Nat) :=
     answerAndAdvanceResponder.next state true = state + 1 := rfl
 
 def answerAndAdvanceHandler : Handler (StateT Nat (Id.{0})) (Bool y^ Nat) :=
-  answerAndAdvanceResponder.toStateHandler
+  answerAndAdvanceResponder.toStateful
 
 def responderQueryRun (fuel : Nat) (state : Option Nat) : StateT Nat (Id.{0}) (Option Nat) :=
   responderQueryComputation.{0}.runWith answerAndAdvanceHandler fuel state

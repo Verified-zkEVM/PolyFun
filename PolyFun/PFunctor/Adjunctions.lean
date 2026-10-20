@@ -18,16 +18,16 @@ linear `linear A` by a concrete data type. These are the hom-isomorphisms
 witnessing the adjoint quadruple `linear ⊣ (−)(1) ⊣ C ⊣ (−)(0)` together with
 the sections/principal-monomial refinements.
 
-* `homFromZero` — `0` is initial in `Poly`: the lens `0 ⇆ p` is unique,
+* `Lens.fromZeroEquiv` — `0` is initial in `Poly`: the lens `0 ⇆ p` is unique,
   `Lens 0 p ≃ PUnit`. (A special case of `Poly(I, q) ≅ Set(I, q(0))` from
   Niu–Spivak Thm 5.4 at `I = 0`.)
-* `homToOne` — `1` is terminal in `Poly`: the lens `p ⇆ 1` is unique,
+* `Lens.toOneEquiv` — `1` is terminal in `Poly`: the lens `p ⇆ 1` is unique,
   `Lens p 1 ≃ PUnit`. (The `I = PUnit` case of `Poly(q, I) ≅ Set(q(1), I)`
   from Thm 5.4.)
-* `homFromY` — a lens `y ⇆ p` is a position of `p`, `Lens y p ≃ p.A`. This is
+* `Lens.fromYEquiv` — a lens `y ⇆ p` is a position of `p`, `Lens y p ≃ p.A`. This is
   the `I = 1` case of the `linear ⊣ (−)(1)` hom-iso `Poly(Iy, q) ≅ Set(I, q(1))`
   (Thm 5.4).
-* `homToConst` — a lens `p ⇆ C A` is a map of positions `p.A → A`,
+* `Lens.toConstEquiv` — a lens `p ⇆ C A` is a map of positions `p.A → A`,
   `Lens p (C A) ≃ (p.A → A)`, i.e. `Poly(q, I) ≅ Set(q(1), I)` (Thm 5.4,
   the `(−)(1) ⊣ C` hom-iso).
 * `homToLinear` — a lens `p ⇆ A·y` is a map of positions together with a
@@ -46,10 +46,10 @@ These hom-isomorphisms are reference API: book-completeness formalizations of
 the §5.1 trivial-interface adjunctions, staged for downstream (VCVio)
 consumers and exercised in `PolyFunTest/PFunctor/Adjunctions.lean`.
 
-Both directions of `homFromY` and `homToLinear` hold definitionally
+Both directions of `Lens.fromYEquiv` and `homToLinear` hold definitionally
 (`PUnit`/`Prod` eta), so their inverse laws are `rfl`. The three equivalences
-touching an empty direction type (`homFromZero`, `homToOne`, `homToConst`)
-need a `funext` into the empty type for one inverse law.
+touching an empty direction type (`Lens.fromZeroEquiv`, `Lens.toOneEquiv`,
+`Lens.toConstEquiv`) need a `funext` into the empty type for one inverse law.
 
 The final section implements the tensor-gluing universal property of
 Niu–Spivak Proposition 5.49. A lens out of `p ⊗ q` is reconstructed from its
@@ -67,40 +67,48 @@ variable {p : PFunctor.{uA, uB}}
 
 /-- **`0` is initial** (Niu–Spivak Thm 5.4, special case). The only lens out of
 the zero polynomial functor is `Lens.initial`, so the hom-set is a singleton. -/
-def homFromZero : Lens (0 : PFunctor.{uA₁, uB₁}) p ≃ PUnit where
+def Lens.fromZeroEquiv : Lens (0 : PFunctor.{uA₁, uB₁}) p ≃ PUnit where
   toFun _ := PUnit.unit
   invFun _ := Lens.initial
   left_inv _ := Lens.ext _ _ (fun a => a.elim) (fun a => a.elim)
   right_inv _ := rfl
 
+@[deprecated (since := "2026-10-19")] alias homFromZero := Lens.fromZeroEquiv
+
 /-- **`1` is terminal** (Niu–Spivak Thm 5.4, `I = PUnit` case of
 `Poly(q, I) ≅ Set(q(1), I)`). The only lens into the unit polynomial functor is
 `Lens.terminal`, so the hom-set is a singleton. -/
-def homToOne : Lens p (1 : PFunctor.{uA₁, uB₁}) ≃ PUnit where
+def Lens.toOneEquiv : Lens p (1 : PFunctor.{uA₁, uB₁}) ≃ PUnit where
   toFun _ := PUnit.unit
   invFun _ := Lens.terminal
   left_inv _ := Lens.ext _ _ (fun _ => rfl) fun _ => funext fun d => d.elim
   right_inv _ := rfl
 
+@[deprecated (since := "2026-10-19")] alias homToOne := Lens.toOneEquiv
+
 /-- **Representability of `y`** (Niu–Spivak Thm 5.4, `Poly(y, q) ≅ q(1)`). A
 lens `y ⇆ p` picks a single position of `p` via `toFunA PUnit.unit`, and its
 `toFunB` is forced (every direction of `y` is `PUnit.unit`). -/
-def homFromY : Lens y.{uA₁, uB₁} p ≃ p.A where
+def Lens.fromYEquiv : Lens y.{uA₁, uB₁} p ≃ p.A where
   toFun l := l.toFunA PUnit.unit
   invFun := Lens.fromY
   left_inv _ := rfl
   right_inv _ := rfl
 
-@[deprecated (since := "2026-08-17")] alias homFromX := homFromY
+@[deprecated (since := "2026-10-19")] alias homFromY := Lens.fromYEquiv
+
+@[deprecated (since := "2026-08-17")] alias homFromX := Lens.fromYEquiv
 
 /-- **Constants are right adjoint on positions** (Niu–Spivak Thm 5.4,
 `Poly(q, I) ≅ Set(q(1), I)`). A lens `p ⇆ C A` is exactly a function on
 positions `p.A → A`; its backward map is forced since `C A` has no directions. -/
-def homToConst {A : Type uA₂} : Lens p (C A : PFunctor.{uA₂, uB₁}) ≃ (p.A → A) where
+def Lens.toConstEquiv {A : Type uA₂} : Lens p (C A : PFunctor.{uA₂, uB₁}) ≃ (p.A → A) where
   toFun l := l.toFunA
   invFun := Lens.toConst
   left_inv _ := Lens.ext _ _ (fun _ => rfl) fun _ => funext fun d => d.elim
   right_inv _ := rfl
+
+@[deprecated (since := "2026-10-19")] alias homToConst := Lens.toConstEquiv
 
 /-- **Principal monomial hom-iso** (Niu–Spivak Cor 5.15, at exponent `PUnit`).
 A lens `p ⇆ A·y` is a function on positions `p.A → A` together with a section
@@ -229,11 +237,14 @@ def tensorGlue (left : Lens (p ⊗ linear q.A) r) (right : Lens (linear p.A ⊗ 
   · rfl
 
 /-- Gluing the two canonical one-sided views of a lens recovers that lens. -/
-@[simp] theorem tensorGlue_leftView_rightView (l : Lens (p ⊗ q) r) :
+@[simp] theorem tensorGlue_tensorLeftView_tensorRightView (l : Lens (p ⊗ q) r) :
     tensorGlue (tensorLeftView l) (tensorRightView l) rfl = l := by
   refine Lens.ext _ _ (fun _ => rfl) (fun pq => ?_)
   funext d
   exact Prod.eta (l.toFunB pq d)
+
+@[deprecated (since := "2026-10-19")] alias tensorGlue_leftView_rightView :=
+  tensorGlue_tensorLeftView_tensorRightView
 
 /-- The tensor-gluing universal property as an equivalence: lenses out of a
 tensor are exactly pairs of ordinary one-sided lenses whose position maps
@@ -244,7 +255,7 @@ def tensorGlueEquiv : Lens (p ⊗ q) r ≃
         views.1.toFunA = views.2.toFunA } where
   toFun l := ⟨(tensorLeftView l, tensorRightView l), rfl⟩
   invFun views := tensorGlue views.1.1 views.1.2 views.2
-  left_inv := tensorGlue_leftView_rightView
+  left_inv := tensorGlue_tensorLeftView_tensorRightView
   right_inv views := by
     apply Subtype.ext
     apply Prod.ext

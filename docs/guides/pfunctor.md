@@ -88,10 +88,10 @@ properties of sums and products as hom-set equivalences (`Lens.sigmaEquiv`, `Len
 the projections `Lens.piProj`, and the binary `Lens.sumEquiv` and `Lens.prodEquiv`), and shows
 that the actions of sums and products are sums and products of actions (`Obj.sigmaEquiv`,
 `Obj.piEquiv`, `Obj.sumEquiv`, `Obj.prodEquiv`). It also reduces lenses into and out of the
-special polynomials to functions: `Lens.fromLinearEquiv` and `Lens.fromConstEquiv` (with `homToConst`,
-the adjoint quadruple between `Set` and `Poly`), `Lens.sectionEquiv` for sections `Lens p y`,
-`Lens.toPurePowerEquiv` and `Lens.toMonomialEquiv` for lenses into representables and monomials,
-and `Lens.sectionTensorEquiv` for sections of `p ⊗ q`.
+special polynomials to functions: `Lens.fromLinearEquiv` and `Lens.fromConstEquiv` (with
+`Lens.toConstEquiv`, the adjoint quadruple between `Set` and `Poly`), `Lens.sectionEquiv` for
+sections `Lens p y`, `Lens.toPurePowerEquiv` and `Lens.toMonomialEquiv` for lenses into
+representables and monomials, and `Lens.sectionTensorEquiv` for sections of `p ⊗ q`.
 
 ## Monoidal structures
 
@@ -114,7 +114,27 @@ Their coherence fields are the `rfl` lemmas above, and Mathlib's `monoidal` tact
 coherence goals in them. Each carrier is a one-field structure over `PFunctor`, built with `of`
 and read back with `toPFunctor`, so Mathlib's monoidal `⊗` on carrier objects and PolyFun's
 polynomial `⊗` stay distinct with `open scoped PFunctor`. `LensCat.Iso.mk`, `TensorCat.Iso.mk`
-and `CompCat.Iso.mk` turn lens equivalences into isomorphisms.
+and `CompCat.Iso.mk` turn lens equivalences into isomorphisms; `Iso.toLensEquiv` inverts each of
+them definitionally, and `lensEquivEquivIso` packages the pair. Morphisms of each carrier have an
+`ext` lemma (`hom_ext`).
+
+[`Category/Factorization.lean`](../../PolyFun/PFunctor/Category/Factorization.lean) restates the
+vertical–cartesian factorization system of
+[`Lens/Factorization.lean`](../../PolyFun/PFunctor/Lens/Factorization.lean) with Mathlib's
+`MorphismProperty`: `LensCat.vertical` and `LensCat.cartesian` are multiplicative, every lens
+factors through them (`HasFactorization`), a `Lens.DiagonalFiller` is a `CommSq.LiftStruct`, and
+the isomorphisms of `LensCat` are the lenses in both classes.
+
+Every Mathlib structure here lives in one category, so it fixes one universe pair:
+`LensCat.{uA, uB}`, `TensorCat.{uA, uB}`, `CompCat.{u, v}`. The lens-level statements they repackage, such as
+the coherence laws, `Lens.nonempty_diagonalFiller` and lens equivalences `≃ₗ`, relate polynomials
+in independent universes and remain the general form. Use the Mathlib structures to reach
+Mathlib's theorems and tactics, and the lens-level statements otherwise.
+
+`≃ₗ`, `≃c` and `≃ₚ` are groupoids in the Mathlib style: `refl`, `symm` and `trans` carry
+`simps` projections and the `refl`/`symm`/`trans` attributes, `Trans` instances chain them in
+`calc` across universes, and `symm_symm`, `trans_refl`, `symm_trans_self` and `toLens_injective`
+(`toChart_injective`) hold. Lenses out of `0` and into `1` are `Unique`.
 
 ## Where to start
 
@@ -153,20 +173,29 @@ and the constructions it supplies keep CSLib's transparency:
 - `P + Q` elaborates through CSLib's `instHAddPFunctor` to `PFunctor.add`, and
   `P * Q` through `instHMulPFunctor` to `PFunctor.prod`; both definitions are
   `implicit_reducible`. Instance search therefore does not see through `P + Q`:
-  a `Unique ((P + Q).B (.inl a))` goal needs an explicit instance or a rewrite.
-  PolyFun's named sum `PFunctor.sum` is a separate reducible structure literal
-  with the same body, so `P + Q = PFunctor.sum P Q` holds by `rfl` but not at
-  reducible and instance transparency. The homogeneous instance
-  `instAddPFunctor` is defined by `sum`.
+  a `Unique ((P + Q).B (.inl a))` goal needs an explicit instance or a rewrite,
+  such as PolyFun's `add_B_inl` and `add_B_inr`. When `P + Q` does not
+  elaborate at the intended universes, write the named spelling
+  `PFunctor.add P Q`.
+  The homogeneous `Add PFunctor` and `Mul PFunctor` instances were deliberately
+  removed: use CSLib's single `HAdd`/`HMul` route, or the named `add`/`prod` operations.
 - CSLib's global simp lemmas include `hAdd_A` and `hAdd_B` (which rewrites
   `(P + Q).B t` to `Sum.rec P.B Q.B t` for every `t`, not only constructors),
   `hMul_A`, `hMul_B`, `zero_A`, `zero_B`, `one_A`, `one_B`, `C_pempty`,
   `C_punit`, `linear_punit`, `selfMonomial_punit`, `purePower_punit`,
   `add_eq_add` and `prod_eq_mul`.
-- The universe parameters of `purePower` (and its alias `representable`) are
+- The universe parameters of `purePower` are
   `.{uB, uA}`, child universe first; those of `prod` and `instHMulPFunctor`
   are `.{uA₁, uA₂, uB₁, uB₂}`; `instZeroPFunctor` and `instOnePFunctor` take
   the child universe first.
+
+Deprecated compatibility names preserve their original reduction contracts: `ofConst`
+is a reducible abbreviation for `monomial`, and `sum` retains its literal body for
+direction-type instance search. Its `sum_A`, `sum_B_inl`, and `sum_B_inr` equations
+still rewrite the `sum` spelling. Explicitly unfolding `coprod` exposes the same
+body. `Lens.enclose` remains available from `PolyFun.PFunctor.Lens.Basic` with
+four independent universe parameters; the preferred `Section` API is available
+there too and uses the interface's universe pair for both endpoints.
 
 Three rules follow from this transparency:
 

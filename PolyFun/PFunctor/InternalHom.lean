@@ -28,8 +28,8 @@ is witnessed by the `curry` / `uncurry` bijection
 
 Wiring a challenger against an adversary is exactly closing over `eval`
 (`DynSystem.game`, and `DynSystem.closedGame` for a responder). Two special cases
-tie the hom back to existing structure: `[y, r] ≅ r` (`ihomY`, the tensor-unit
-law) and `(ihom q y).A = Lens q y = enclose q` — the positions of `[q, y]` are
+tie the hom back to existing structure: `[y, r] ≅ r` (`Lens.Equiv.ihomY`, the
+tensor-unit law) and `(ihom q y).A = Lens q y` — the positions of `[q, y]` are
 the handlers (sections) of `q`.
 
 Note this is a *different* object from `PFunctor.exp` (`P ^ Q`, Niu–Spivak §5.3),
@@ -101,16 +101,18 @@ end Lens
 
 /-- The tensor-unit law `[y, r] ≅ r`: a lens `y ⇆ r` is a position of `r`, and a
 direction of `[y, r]` at that lens is a direction of `r`. -/
-def ihomY (r : PFunctor.{uA, uB}) : ihom y r ≃ₗ r where
+def Lens.Equiv.ihomY (r : PFunctor.{uA, uB}) : ihom y r ≃ₗ r where
   toLens := (fun f => f.toFunA PUnit.unit) ⇆ (fun _f d => ⟨PUnit.unit, d⟩)
   invLens := Lens.fromY ⇆ fun _ ⟨_, d⟩ => d
   left_inv := rfl
   right_inv := rfl
 
-@[deprecated (since := "2026-08-17")] alias ihomX := ihomY
+@[deprecated (since := "2026-10-19")] alias ihomY := Lens.Equiv.ihomY
+
+@[deprecated (since := "2026-08-17")] alias ihomX := Lens.Equiv.ihomY
 
 /-- The positions of `[q, y]` are the sections (handlers) of `q`, i.e. the
-lenses `q ⇆ y = enclose q`. -/
+lenses `q ⇆ y`. -/
 theorem ihom_y_A (q : PFunctor.{uA, uB}) :
     (ihom q y.{uA, uB}).A = Lens q y.{uA, uB} := rfl
 
@@ -135,11 +137,11 @@ attribute [local implicit_reducible] ihom
 
 /-- The positions of `[q₁ + q₂, r]` split as a product: a lens `q₁ + q₂ ⇆ r` is
 exactly a pair of lenses `(q₁ ⇆ r, q₂ ⇆ r)`, by the universal property of the
-coproduct. This is the position component of `ihomSum`, and equally identifies
+coproduct. This is the position component of `Equiv.ihomSum`, and equally identifies
 the positions of the categorical-product form `ihom q₁ r * ihom q₂ r`. -/
 def ihomSumAEquiv (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
     (r : PFunctor.{rA, rB}) :
-    (ihom (PFunctor.sum q₁ q₂) r).A ≃ (ihom q₁ r).A × (ihom q₂ r).A where
+    (ihom (PFunctor.add q₁ q₂) r).A ≃ (ihom q₁ r).A × (ihom q₂ r).A where
   toFun f := (f ∘ₗ Lens.inl, f ∘ₗ Lens.inr)
   invFun p := Lens.sumPair p.1 p.2
   left_inv f := Lens.comp_inl_inr f
@@ -150,18 +152,22 @@ def ihomSumAEquiv (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
 /-- The position bijection together with the fiber splitting, packaged as a
 `PFunctor.Equiv`: over a lens `f : q₁ + q₂ ⇆ r` the sigma of `r`-directions over
 `(q₁ + q₂).A` splits as the coproduct of the sigmas over `q₁.A` and `q₂.A`. -/
-def ihomSumPEquiv (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
+def Equiv.ihomSum (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
     (r : PFunctor.{rA, rB}) :
-    ihom (PFunctor.sum q₁ q₂) r ≃ₚ PFunctor.prod (ihom q₁ r) (ihom q₂ r) where
+    ihom (PFunctor.add q₁ q₂) r ≃ₚ PFunctor.prod (ihom q₁ r) (ihom q₂ r) where
   equivA := ihomSumAEquiv q₁ q₂ r
   equivB f := _root_.Equiv.sumSigmaDistrib (fun j => r.B (f.toFunA j))
+
+@[deprecated (since := "2026-10-19")] alias ihomSumPEquiv := Equiv.ihomSum
 
 /-- The internal hom sends a coproduct in its first argument to a categorical
 product: `[q₁ + q₂, r] ≅ [q₁, r] × [q₂, r]`. This is the contravariant image of
 the coproduct's universal property under the tensor–hom adjunction. -/
-def ihomSum (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
+def Lens.Equiv.ihomSum (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
     (r : PFunctor.{rA, rB}) :
-    ihom (PFunctor.sum q₁ q₂) r ≃ₗ PFunctor.prod (ihom q₁ r) (ihom q₂ r) :=
-  PFunctor.Equiv.toLensEquiv (ihomSumPEquiv q₁ q₂ r)
+    ihom (PFunctor.add q₁ q₂) r ≃ₗ PFunctor.prod (ihom q₁ r) (ihom q₂ r) :=
+  PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.ihomSum q₁ q₂ r)
+
+@[deprecated (since := "2026-10-19")] alias ihomSum := Lens.Equiv.ihomSum
 
 end PFunctor

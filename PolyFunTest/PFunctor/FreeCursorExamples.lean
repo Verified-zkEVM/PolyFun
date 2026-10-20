@@ -161,7 +161,7 @@ example (path : Path unitEdge.residual) :
   Cursor.plug_comp afterIndexCursor unitEdge.toCursor path
 
 example : trueLeaf.length = FreeMonoid.length trueLeaf.trace :=
-  Cursor.length_eq_trace_length trueLeaf
+  Cursor.length_eq_length_trace trueLeaf
 
 /-- The witness retains the continuation, rather than merely comparing lengths. -/
 def extendsInternal : Cursor.Extends internal trueLeaf where

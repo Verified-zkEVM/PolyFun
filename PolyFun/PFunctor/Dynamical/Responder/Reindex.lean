@@ -27,7 +27,7 @@ with Polynomial Functors in Dependent Type Theory* ([Abe26] in
 Responder execution is defined by structural recursion, so its state and leaf
 universes are independent of the interface-direction universe.  This matters
 for terminal-coalgebra states such as `M (Q ⊸ y)`, whose universe also contains
-the interface-position universe.  The existing `Responder.equivStateHandler`
+the interface-position universe.  The existing `Responder.equivStateful`
 bridge remains available in the homogeneous fragment where state and response
 types share a universe; it is not used to restrict the core execution API.
 
@@ -96,7 +96,7 @@ theorem runFree_eq_liftM
     {Q : PFunctor.{uA', uB}} {State : Type uB}
     (R : Responder State Q) {E : Type uB}
     (program : FreeM Q E) (state : State) :
-    R.runFree program state = program.liftM R.toStateHandler state := by
+    R.runFree program state = program.liftM R.toStateful state := by
   induction program generalizing state with
   | pure value => rfl
   | lift_bind query next ih =>
@@ -104,12 +104,14 @@ theorem runFree_eq_liftM
 
 /-- Structural responder execution is the pure specialization of effectful
 stateful-handler execution. -/
-theorem runFree_eq_statefulRun
+theorem runFree_eq_run_toStateful
     {Q : PFunctor.{uA', uB}} {State : Type uB}
     (R : Responder State Q) {E : Type uB}
     (program : FreeM Q E) (state : State) :
-    R.runFree program state = R.toStateHandler.run program state :=
+    R.runFree program state = R.toStateful.run program state :=
   R.runFree_eq_liftM program state
+
+@[deprecated (since := "2026-10-19")] alias runFree_eq_statefulRun := runFree_eq_run_toStateful
 
 /-- Transport dependent result and state evidence along equality of execution
 results. This names the equality plumbing used by displayed execution laws. -/
@@ -173,13 +175,15 @@ def reindex (f : Handler (FreeM Q) P) (R : Responder State Q) :
     (fun state query => (R.runFree (f query) state).2)
 
 @[simp]
-theorem toStateHandler_reindex
+theorem toStateful_reindex
     {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
     {State : Type uB}
     (f : Handler (FreeM Q) P)
     (R : Responder State Q) :
-    (reindex f R).toStateHandler = fun query state => R.runFree (f query) state :=
+    (reindex f R).toStateful = fun query state => R.runFree (f query) state :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias toStateHandler_reindex := toStateful_reindex
 
 @[simp]
 theorem answer_reindex (f : Handler (FreeM Q) P)

@@ -44,8 +44,8 @@ def program : FreeM (counter + flag) (Nat × Nat × Bool) := do
   let b ← FreeM.lift (P := counter + flag) (.inl ())
   pure (a, b, c)
 
-/-- `parallel` threads each summand's state through its own component. -/
-example : Id.run ((Handler.Stateful.parallel tick take).run program (3, true)) =
+/-- `sum` threads each summand's state through its own component. -/
+example : Id.run ((Handler.Stateful.sum tick take).run program (3, true)) =
     ((3, 4, true), (5, false)) := rfl
 
 /-- `extend` records the request history in a passive auxiliary component. -/
@@ -90,6 +90,6 @@ returns every program's value unchanged. -/
 example (x : FreeM counter Nat) (s : Nat) :
     Prod.fst <$> (Handler.Stateful.lift (S := Nat) FreeM.lift : Handler.Stateful (FreeM counter)
       Nat counter).run x s = x :=
-  Handler.Stateful.map_fst_run_eq_self _ (fun a s => by simp [Handler.Stateful.lift]) x s
+  Handler.Stateful.fst_map_run_eq_self _ (fun a s => by simp [Handler.Stateful.lift]) x s
 
 end PolyFunTest.ModuleAPI.StatefulCombinators

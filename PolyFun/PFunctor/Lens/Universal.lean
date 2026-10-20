@@ -25,7 +25,7 @@ functions between positions and directions:
 
 * `Lens.fromLinearEquiv : Lens (linear I) p ≃ (I → p.A)` and
   `Lens.fromConstEquiv : Lens (C I) p ≃ (I → p.Obj PEmpty)`, two of the hom-isomorphisms of the
-  adjoint quadruple of Thm 5.4. The third, `Poly(p, I) ≅ Set(p(1), I)`, is `homToConst`.
+  adjoint quadruple of Thm 5.4. The third, `Poly(p, I) ≅ Set(p(1), I)`, is `Lens.toConstEquiv`.
 * `Lens.sectionEquiv : Lens p y ≃ ((a : p.A) → p.B a)`, the sections `Γ(p)` (Def 3.36).
 * `Lens.toPurePowerEquiv : Lens p (y^A) ≃ (A → (a : p.A) → p.B a)`, the adjunction `Γ ⊣ y^(−)`
   (Prop 5.12).
@@ -187,7 +187,7 @@ def fromLinearEquiv {I : Type uA₂} : Lens (linear I : PFunctor.{uA₂, uB₂})
 `Obj.pemptyEquiv`). -/
 def fromConstEquiv {I : Type uA₂} :
     Lens (C I : PFunctor.{uA₂, uB₂}) p ≃ (I → p.Obj PEmpty.{uB₂ + 1}) :=
-  homMonomialEquiv
+  fromMonomialEquiv
 
 /-- A lens into `y` is a **section**: a choice of direction at every position, `Γ(p) = Poly(p, y)
 ≅ Π_{a ∈ p(1)} p[a]` (Niu–Spivak Def 3.36). -/

@@ -304,13 +304,16 @@ noncomputable def verticalCartesianFiller
   comp_right := verticalCartesianDiagonal_comp_right v f c g hv hc comm
 
 /-- Existence form of vertical/cartesian orthogonality. -/
-theorem exists_verticalCartesianDiagonal
+theorem nonempty_diagonalFiller
     {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
     {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
     (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
     (hv : v.IsVertical) (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
     Nonempty (DiagonalFiller v f c g) :=
   ⟨verticalCartesianFiller v f c g hv hc comm⟩
+
+@[deprecated (since := "2026-10-19")] alias exists_verticalCartesianDiagonal :=
+  nonempty_diagonalFiller
 
 /-- The forward map of a diagonal filler is forced by the left triangle and
 the vertical position bijection. -/
@@ -369,7 +372,7 @@ theorem verticalCartesianDiagonal_unique
 
 /-- Orthogonality in bundled form: a vertical/cartesian square has exactly one
 diagonal filler. -/
-theorem subsingleton_verticalCartesianFillers
+theorem subsingleton_diagonalFiller
     {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
     {R : PFunctor.{uA₃, uB₃}} {S : PFunctor.{uA₄, uB₄}}
     (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S)
@@ -389,6 +392,9 @@ theorem subsingleton_verticalCartesianFillers
         cases h₁
         cases h₂
         rfl
+
+@[deprecated (since := "2026-10-19")] alias subsingleton_verticalCartesianFillers :=
+  subsingleton_diagonalFiller
 
 /-! ## Closure of cartesian lenses under the polynomial operations
 

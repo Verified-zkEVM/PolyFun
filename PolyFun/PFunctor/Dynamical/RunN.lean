@@ -14,18 +14,18 @@ public import PolyFun.PFunctor.Comonoid
 Niu–Spivak §6.2.2 / §7.1.5 assemble the multi-step behaviours of a
 `p`-dynamical system into composite systems over the composition powers of `p`.
 
-The **two-step system** `DynSystem.twoStep φ = (φ ◃ φ) ∘ₗ δ : DynSystem S (p ◃ p)`
+The **two-step system** `Lens.speedup φ = (φ ◃ φ) ∘ₗ δ : DynSystem S (p ◃ p)`
 (Example 6.44) runs `φ` twice through one composite `p ◃ p`-step via the
-transition lens `δ = Lens.fixState`; it is `Lens.speedup` on the interface lens.
+transition lens `δ = Lens.fixState`.
 
 The **`n`-step system** `Run_n(φ) = φ^{◁n} ∘ₗ δ^{(n)} : Sy^S ⇆ p^{◃n}` (§7.1.5)
 generalises this to all `n`, where `δ^{(n)}` is the `n`-fold comultiplication of
-the state comonoid on `S y^S` (`PFunctor.Comonoid.comultN` on `stateComonoid S`)
+the state comonoid on `S y^S` (`PFunctor.Comonoid.comulN` on `stateComonoid S`)
 and `φ^{◁n}` is the composition power of the interface lens (`Lens.compNthMap`).
 `DynSystem.nStep` is that construction on bundled systems: one composite
 `p^{◃n}`-step exposes `n` successive `p`-positions and threads the answers through
-`n` updates. `nStep_two_eq_twoStep` records that the `n = 2` case collapses to
-`twoStep`. This is the generic core of a finite-run truncation ladder, which a
+`n` updates. `nStep_two_eq_speedup` records that the `n = 2` case collapses to
+`Lens.speedup`. This is the generic core of a finite-run truncation ladder, which a
 probabilistic run semantics can instantiate.
 -/
 
@@ -37,23 +37,7 @@ namespace PFunctor
 
 namespace DynSystem
 
-/-! ## The two-step system (Example 6.44) -/
-
-section
-variable {S : Type u} {p : PFunctor.{uA, uB}}
-
-/-- The two-step system `(φ ◃ φ) ∘ₗ δ : DynSystem S (p ◃ p)` of a `p`-dynamical
-system (Niu–Spivak Example 6.44): one composite step exposes a first `p`-position,
-consumes a direction, exposes a second `p`-position, and updates. Same state set
-as `φ` — literally `Lens.speedup` on the system's interface lens, and the `n = 2`
-case of `nStep` over the binary composite `p ◃ p` (see `nStep_two_eq_twoStep`). -/
-def twoStep (s : DynSystem S p) : DynSystem S (p ◃ p) :=
-  Lens.speedup s
-
-@[simp] theorem twoStep_eq_speedup (s : DynSystem S p) :
-    s.twoStep = Lens.speedup s := rfl
-
-end
+@[deprecated (since := "2026-10-19")] alias twoStep := Lens.speedup
 
 /-! ## The `n`-step system `Run_n` (§7.1.5) -/
 
@@ -64,10 +48,10 @@ variable {S : Type u} {p : PFunctor.{u, u}}
 (Niu–Spivak §7.1.5): a single composite step exposes `n` successive `p`-positions,
 consuming a direction after each, and updates the state. Same state set as `φ`. -/
 def nStep (φ : DynSystem S p) (n : ℕ) : DynSystem S (compNth p n) :=
-  φ.compNthMap n ∘ₗ (stateComonoid S).comultN n
+  φ.compNthMap n ∘ₗ (stateComonoid S).comulN n
 
 theorem nStep_eq (φ : DynSystem S p) (n : ℕ) :
-    φ.nStep n = φ.compNthMap n ∘ₗ (stateComonoid S).comultN n := rfl
+    φ.nStep n = φ.compNthMap n ∘ₗ (stateComonoid S).comulN n := rfl
 
 /-- A zero-step system exposes the composition unit and leaves its state
 unchanged. -/
@@ -88,11 +72,13 @@ position of the composition unit. -/
     (direction : (compNth p 1).B ((φ.nStep 1).expose state)) :
     (φ.nStep 1).update state direction = φ.update state direction.1 := rfl
 
-/-- Coherence with `twoStep`: the `n = 2` step over the right-nested power
-`compNth p 2 = p ◃ (p ◃ y)` collapses to `twoStep`'s binary composite `p ◃ p`
-after the inner unitor `compY` (`p ◃ y ≅ p`). -/
-theorem nStep_two_eq_twoStep (φ : DynSystem S p) :
-    (Lens.id p ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ φ.nStep 2 = φ.twoStep := rfl
+/-- Coherence with the two-step system: the `n = 2` step over the right-nested power
+`compNth p 2 = p ◃ (p ◃ y)` collapses to the binary composite `p ◃ p` of
+`Lens.speedup` after the inner unitor `compY` (`p ◃ y ≅ p`). -/
+theorem nStep_two_eq_speedup (φ : DynSystem S p) :
+    (Lens.id p ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ φ.nStep 2 = Lens.speedup φ := rfl
+
+@[deprecated (since := "2026-10-19")] alias nStep_two_eq_twoStep := nStep_two_eq_speedup
 
 end
 

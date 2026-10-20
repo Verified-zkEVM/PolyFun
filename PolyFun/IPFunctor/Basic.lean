@@ -266,10 +266,11 @@ def sigmaPFunctor (P : IPFunctor I J) : PFunctor where
 /-! ## Coproducts
 
 `sum P Q` offers, at each output index `j`, the shapes of both summands, and a shape keeps the
-responses and source indices of its summand. As with `PFunctor.sum`, the response and source maps
-are `Sum` recursors written directly, so on `Sum.inl a` and `Sum.inr a` they reduce to those of
-`a` at implicit transparency; the summands then share one response universe. `sumULift P Q`
-allows independent response universes by lifting each summand's responses to their maximum. -/
+responses and source indices of its summand. As with the sum `P + Q` (`PFunctor.add`), the
+response and source maps are `Sum` recursors written directly, so on `Sum.inl a` and
+`Sum.inr a` they reduce to those of `a` at implicit transparency; the summands then share one
+response universe. `sumULift P Q` allows independent response universes by lifting each
+summand's responses to their maximum. -/
 
 /-- The coproduct of two indexed polynomial functors over the same indices, with a shared
 response universe: the shapes at `j` are `P.A j ⊕ Q.A j`, and each shape keeps the responses and

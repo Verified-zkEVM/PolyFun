@@ -131,13 +131,15 @@ theorem trace_comp (first : Spine program middle)
       simp only [comp, trace, ih]
       rfl
 
-theorem length_eq_trace_length (spine : Spine program residual) :
+theorem length_eq_length_trace (spine : Spine program residual) :
     spine.length = FreeMonoid.length spine.trace := by
   induction spine with
   | root => rfl
   | down answer tail ih =>
       simp only [length, trace, ih]
       rfl
+
+@[deprecated (since := "2026-10-19")] alias length_eq_trace_length := length_eq_length_trace
 
 /-- Plug a complete path through the residual back through a cursor spine. -/
 def plug : {program residual : FreeM P α} →
@@ -302,9 +304,11 @@ theorem trace_comp (first : Cursor program) (second : Cursor first.residual) :
     (first.comp second).trace = List.append first.trace second.trace :=
   Spine.trace_comp first.spine second.spine
 
-theorem length_eq_trace_length (cursor : Cursor program) :
+theorem length_eq_length_trace (cursor : Cursor program) :
     cursor.length = FreeMonoid.length cursor.trace :=
-  Spine.length_eq_trace_length cursor.spine
+  Spine.length_eq_length_trace cursor.spine
+
+@[deprecated (since := "2026-10-19")] alias length_eq_trace_length := length_eq_length_trace
 
 /-- Plug a complete residual path back into the source program. -/
 def plug (cursor : Cursor program) : Path cursor.residual → Path program :=
@@ -589,9 +593,9 @@ theorem pathOfTerminal_terminalOfPath :
         Path (FreeM.liftBind a next)) = ⟨answer, tail⟩
       rw [pathOfTerminal_terminalOfPath]
 
-theorem terminal_output_eq_path_output (terminal : Terminal program) :
-    terminal.output = output program (pathOfTerminal terminal) := by
-  change terminal.output = output program (terminal.cursor.plug terminal.residualPath)
+theorem Terminal.output_eq_output_pathOfTerminal (terminal : Terminal program) :
+    terminal.output = FreeM.output program (pathOfTerminal terminal) := by
+  change terminal.output = FreeM.output program (terminal.cursor.plug terminal.residualPath)
   rw [output_plug]
   cases terminal with
   | mk cursor leaf residual_eq =>
@@ -600,6 +604,9 @@ theorem terminal_output_eq_path_output (terminal : Terminal program) :
           dsimp at residual_eq ⊢
           subst residual
           rfl
+
+@[deprecated (since := "2026-10-19")] alias terminal_output_eq_path_output :=
+  Terminal.output_eq_output_pathOfTerminal
 
 @[simp]
 theorem terminalOfPath_pathOfTerminal :
@@ -614,7 +621,7 @@ theorem terminalOfPath_pathOfTerminal :
   have output_eq :
       (terminalOfPath program (pathOfTerminal terminal)).output = terminal.output := by
     rw [terminalOfPath_output]
-    exact (terminal_output_eq_path_output terminal).symm
+    exact (Terminal.output_eq_output_pathOfTerminal terminal).symm
   exact Terminal.ext cursor_eq output_eq
 
 /-- Terminal cursors are equivalent to complete paths. -/

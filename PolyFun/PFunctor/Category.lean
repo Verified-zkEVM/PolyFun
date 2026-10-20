@@ -70,6 +70,13 @@ instance instCategory : Category LensCat.{uA, uB} where
 @[simp] theorem comp_eq {P Q R : LensCat.{uA, uB}} (f : P ⟶ Q) (g : Q ⟶ R) :
     f ≫ g = Lens.comp g f := rfl
 
+/-- Morphisms of `LensCat` are lenses, compared as `Lens.ext` compares them. -/
+@[ext (iff := false)]
+theorem hom_ext {P Q : LensCat.{uA, uB}} {f g : P ⟶ Q}
+    (h₁ : ∀ a, Lens.toFunA f a = Lens.toFunA g a)
+    (h₂ : ∀ a, Lens.toFunB f a = (h₁ a) ▸ Lens.toFunB g a) : f = g :=
+  Lens.ext f g h₁ h₂
+
 end LensCat
 
 /-! ## Charts -/
@@ -99,6 +106,13 @@ instance instCategory : Category ChartCat.{uA, uB} where
 
 @[simp] theorem comp_eq {P Q R : ChartCat.{uA, uB}} (f : P ⟶ Q) (g : Q ⟶ R) :
     f ≫ g = Chart.comp g f := rfl
+
+/-- Morphisms of `ChartCat` are charts, compared as `Chart.ext` compares them. -/
+@[ext (iff := false)]
+theorem hom_ext {P Q : ChartCat.{uA, uB}} {f g : P ⟶ Q}
+    (h₁ : ∀ a, Chart.toFunA f a = Chart.toFunA g a)
+    (h₂ : ∀ a, Chart.toFunB f a = (h₁ a) ▸ Chart.toFunB g a) : f = g :=
+  Chart.ext f g h₁ h₂
 
 end ChartCat
 

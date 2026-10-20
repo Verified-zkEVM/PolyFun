@@ -68,7 +68,7 @@ instance instMonadAttach : MonadAttach (FreeM P) where
 
 /-- The structural support is the strongest postcondition: anything reachable in a tree of
 refined values satisfies the refinement. -/
-theorem supp_map {Q : α → Prop} (x : FreeM P {a : α // Q a}) {b : α} :
+theorem supp_map_imp {Q : α → Prop} (x : FreeM P {a : α // Q a}) {b : α} :
     b ∈ supp (Subtype.val <$> x) → Q b := by
   induction x with
   | pure a => intro h; cases h; exact a.2
@@ -77,6 +77,8 @@ theorem supp_map {Q : α → Prop} (x : FreeM P {a : α // Q a}) {b : α} :
       change b ∈ supp (FreeM.liftBind op fun c => Subtype.val <$> r c) at h
       obtain ⟨c, hc⟩ := Set.mem_iUnion.mp h
       exact ih c hc
+
+@[deprecated (since := "2026-10-19")] alias supp_map := supp_map_imp
 
 theorem map_attachSupp (x : FreeM P α) : Subtype.val <$> attachSupp x = x := by
   induction x with
@@ -96,7 +98,7 @@ theorem map_attachSupp (x : FreeM P α) : Subtype.val <$> attachSupp x = x := by
 
 instance instExactMonadAttach : ExactMonadAttach (FreeM P) where
   map_attach := map_attachSupp _
-  canReturn_map_imp h := supp_map _ h
+  canReturn_map_imp h := supp_map_imp _ h
   canReturn_pure _ := rfl
   canReturn_bind {_ _ x _ _ _} ha hb := by
     induction x with

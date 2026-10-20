@@ -102,6 +102,11 @@ inductive Equiv : {S : Spec} → Trace S → Trace S → Prop where
 
 namespace Equiv
 
+/-- Interleaving equivalence is an equivalence relation on the traces of each
+specification. -/
+theorem equivalence (S : Spec) : _root_.Equivalence (@Equiv S) :=
+  ⟨refl, symm, trans⟩
+
 /--
 Interleaving-equivalent traces have the same length.
 -/

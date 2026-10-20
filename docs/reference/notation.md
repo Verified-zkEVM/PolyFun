@@ -85,6 +85,24 @@ Conventions and glyph rationale:
   [`Deprecated.lean`](../../PolyFun/PFunctor/Deprecated.lean) aggregates the
   full surface. It is slated for removal once downstream projects migrate.
 
+### Lenses and charts
+
+The lens and chart operators are scoped to `PFunctor` as well (activated by
+`open scoped PFunctor`); a file inside `namespace PFunctor` sees them without an `open`. They
+are never global, because Mathlib declares `∘ₗ` (`LinearMap.comp`), `×ₗ` (`Lex`) and
+`≃ₗ[R]` (`LinearEquiv`) globally. They are defined in
+[`Lens/Basic.lean`](../../PolyFun/PFunctor/Lens/Basic.lean) and
+[`Chart/Basic.lean`](../../PolyFun/PFunctor/Chart/Basic.lean).
+
+| Notation | Meaning | Prec |
+|----------|---------|------|
+| `g ∘ₗ f` | `Lens.comp g f` (`f` first, then `g`) | 75l |
+| `P ≃ₗ Q` | `Lens.Equiv P Q` | 50 |
+| `l₁ ◃ₗ l₂`, `l₁ ×ₗ l₂`, `l₁ ⊎ₗ l₂`, `l₁ ⊗ₗ l₂` | `Lens.compMap`, `prodMap`, `sumMap`, `tensorMap` | 75l |
+| `g ∘c f` | `Chart.comp g f` | 75l |
+| `P ≃c Q` | `Chart.Equiv P Q` | 50 |
+| `c₁ ⊎c c₂`, `c₁ ⊗c c₂`, `c₁ ×c c₂` | `Chart.sumMap`, `tensorMap`, `prodMap` | 75l |
+
 ## FreeM and Dynamical Notation
 
 - `FreeM` uses standard monadic `do`-notation. There is no separate
@@ -115,8 +133,8 @@ Conventions and glyph rationale:
   about resource bounds.
 - Bundled monad morphisms (`PolyFun/Control/Monad/Hom.lean`) write their type as
   `m →ᵐ n` (`MonadHom m n`) and their composition as `G ∘ᵐ F` (`MonadHom.comp`). Both
-  are global, like the lens and chart operators. The superscript `ᵐ` keeps the composition
-  glyph distinct from Mathlib's `scoped[ProbabilityTheory]` `κ ∘ₘ μ` (`Measure.bind`).
+  are global. The superscript `ᵐ` keeps the composition glyph distinct from Mathlib's
+  `scoped[ProbabilityTheory]` `κ ∘ₘ μ` (`Measure.bind`).
 - Comonadic cosequencing `xs <@> ys`, `xs <@ ys`, `xs @> ys` (`Coseq.coseq`,
   `CoseqLeft.coseqLeft`, `CoseqRight.coseqRight` in `PolyFun/Control/Comonad/Basic.lean`)
   is opt-in via `open scoped Coapplicative`.

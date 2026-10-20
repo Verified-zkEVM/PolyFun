@@ -35,6 +35,12 @@ end find_home
 
 namespace PFunctor
 
+/-- A **section** of an interface `p` is a lens `p ⟹ y` (the book's `p ⟹ y`),
+equivalently a dependent section `(a : p.A) → p.B a` choosing a direction at every
+position. Composing a section after a system's interface lens closes the system off
+(Niu–Spivak §4.3.4); see `DynSystem.close`. -/
+abbrev Section (p : PFunctor.{uA, uB}) : Type _ := Lens p y.{uA, uB}
+
 namespace Lens
 
 /-- Lenses agree when their position maps agree pointwise and their direction maps agree after
@@ -76,7 +82,7 @@ def comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunct
   toFunA := l.toFunA ∘ l'.toFunA
   toFunB := fun i => (l'.toFunB i) ∘ l.toFunB (l'.toFunA i)
 
-@[inherit_doc] infixl:75 " ∘ₗ " => comp
+@[inherit_doc] scoped[PFunctor] infixl:75 " ∘ₗ " => PFunctor.Lens.comp
 
 /-- Apply a polynomial lens to an element of the source polynomial's
 extension. The position is sent forward and the payload is pulled back along
@@ -136,22 +142,22 @@ structure Equiv (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂}) wher
   left_inv : comp invLens toLens = Lens.id P := by simp
   right_inv : comp toLens invLens = Lens.id Q := by simp
 
-@[inherit_doc] infix:50 " ≃ₗ " => Equiv
+@[inherit_doc] scoped[PFunctor] infix:50 " ≃ₗ " => PFunctor.Lens.Equiv
 
 namespace Equiv
 
 /-- The identity equivalence on `P`, built from the identity lens in both directions. -/
-@[refl]
+@[refl, simps]
 def refl (P : PFunctor.{uA, uB}) : P ≃ₗ P :=
   ⟨Lens.id P, Lens.id P, rfl, rfl⟩
 
 /-- The inverse equivalence, swapping the forward and backward lenses of `e`. -/
-@[symm]
+@[symm, simps]
 def symm {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (e : P ≃ₗ Q) : Q ≃ₗ P :=
   ⟨e.invLens, e.toLens, e.right_inv, e.left_inv⟩
 
 /-- The composite equivalence `P ≃ₗ R` obtained by chaining `e₁ : P ≃ₗ Q` and `e₂ : Q ≃ₗ R`. -/
-@[trans]
+@[trans, simps]
 def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     (e₁ : P ≃ₗ Q) (e₂ : Q ≃ₗ R) : P ≃ₗ R :=
   ⟨e₂.toLens ∘ₗ e₁.toLens, e₁.invLens ∘ₗ e₂.invLens,
@@ -163,6 +169,49 @@ def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunc
       rw [comp_assoc]
       rw (occs := [2]) [← comp_assoc]
       simp [e₁.right_inv, e₂.right_inv]⟩
+
+/-- Lens equivalences compose in `calc` chains, across independent universes. -/
+instance instTrans :
+    @Trans PFunctor.{uA₁, uB₁} PFunctor.{uA₂, uB₂} PFunctor.{uA₃, uB₃}
+      Lens.Equiv Lens.Equiv Lens.Equiv where
+  trans := Equiv.trans
+
+section Groupoid
+
+variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
+  {S : PFunctor.{uA₄, uB₄}}
+
+/-- A lens equivalence is determined by its forward lens: inverses are unique. -/
+theorem toLens_injective : Function.Injective (toLens : P ≃ₗ Q → Lens P Q) := by
+  intro e f h
+  have hinv : e.invLens = f.invLens := by
+    calc
+      e.invLens = e.invLens ∘ₗ (f.toLens ∘ₗ f.invLens) := by rw [f.right_inv]; rfl
+      _ = (e.invLens ∘ₗ e.toLens) ∘ₗ f.invLens := by rw [h]; rfl
+      _ = f.invLens := by rw [e.left_inv]; rfl
+  exact Equiv.ext h hinv
+
+@[simp] theorem symm_symm (e : P ≃ₗ Q) : e.symm.symm = e := rfl
+
+@[simp] theorem refl_symm : (refl P).symm = refl P := rfl
+
+@[simp] theorem trans_refl (e : P ≃ₗ Q) : e.trans (refl Q) = e := rfl
+
+@[simp] theorem refl_trans (e : P ≃ₗ Q) : (refl P).trans e = e := rfl
+
+theorem trans_assoc (e₁ : P ≃ₗ Q) (e₂ : Q ≃ₗ R) (e₃ : R ≃ₗ S) :
+    (e₁.trans e₂).trans e₃ = e₁.trans (e₂.trans e₃) := rfl
+
+@[simp] theorem symm_trans_self (e : P ≃ₗ Q) : e.symm.trans e = refl Q :=
+  Equiv.ext e.right_inv e.right_inv
+
+@[simp] theorem self_trans_symm (e : P ≃ₗ Q) : e.trans e.symm = refl P :=
+  Equiv.ext e.left_inv e.left_inv
+
+theorem symm_trans (e₁ : P ≃ₗ Q) (e₂ : Q ≃ₗ R) :
+    (e₁.trans e₂).symm = e₂.symm.trans e₁.symm := rfl
+
+end Groupoid
 
 end Equiv
 
@@ -186,6 +235,18 @@ def terminal {P : PFunctor.{uA, uB}} : Lens P 1 :=
 
 alias fromZero := initial
 alias toOne := terminal
+
+/-- `0` is initial: `initial` is the only lens out of it. -/
+instance uniqueFromZero {P : PFunctor.{uA, uB}} :
+    Unique (Lens (0 : PFunctor.{uA₁, uB₁}) P) where
+  default := initial
+  uniq _ := Lens.ext _ _ (fun a => a.elim) fun a => a.elim
+
+/-- `1` is terminal: `terminal` is the only lens into it. -/
+instance uniqueToOne {P : PFunctor.{uA, uB}} :
+    Unique (Lens P (1 : PFunctor.{uA₁, uB₁})) where
+  default := terminal
+  uniq _ := Lens.ext _ _ (fun _ => rfl) fun _ => funext fun d => d.elim
 
 /-- Construct a lens from the variable polynomial by selecting a position. The
 backward map is uniquely determined by the unit direction of `y`. -/
@@ -340,10 +401,10 @@ def invTildeR {P : PFunctor.{uA, uB}} : Lens (P ◃ y) P :=
 def invTildeL {P : PFunctor.{uA, uB}} : Lens (y ◃ P) P :=
   (fun ⟨_, f⟩ => f PUnit.unit) ⇆ (fun _ b => ⟨PUnit.unit, b⟩)
 
-@[inherit_doc] infixl:75 " ◃ₗ " => compMap
-@[inherit_doc] infixl:75 " ×ₗ " => prodMap
-@[inherit_doc] infixl:75 " ⊎ₗ " => sumMap
-@[inherit_doc] infixl:75 " ⊗ₗ " => tensorMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ◃ₗ " => PFunctor.Lens.compMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ×ₗ " => PFunctor.Lens.prodMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ⊎ₗ " => PFunctor.Lens.sumMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ⊗ₗ " => PFunctor.Lens.tensorMap
 /-- Notation for the copairing `sumPair l₁ l₂` of two lenses out of a sum; activate it with
 `open scoped PFunctor.Lens`. -/
 scoped notation "[" l₁ "," l₂ "]ₗ" => sumPair l₁ l₂
@@ -355,6 +416,7 @@ set_option linter.checkUnivs false in
 /-- The type of lenses from a polynomial functor `P` to `y` -/
 -- `Lens.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
 -- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
+@[deprecated Section +typeChanged (since := "2026-10-19")]
 def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
   Lens P y.{uA₁, uB₁}
 
@@ -366,7 +428,10 @@ the helper behind `speedup`. -/
 def fixState {S : Type u} : Lens (selfMonomial S) (selfMonomial S ◃ selfMonomial S) :=
   (fun s₀ => ⟨s₀, fun s₁ => s₁⟩) ⇆ (fun _s₀ => fun ⟨_s₁, s₂⟩ => s₂)
 
-/-- The `speedup` lens operation: `Lens (S y^S) P → Lens (S y^S) (P ◃ P)` -/
+/-- The **two-step system** `(l ◃ l) ∘ₗ δ : Lens (S y^S) (P ◃ P)` of a dynamical system
+`l : Lens (S y^S) P` along the transition lens `δ = fixState` (Niu–Spivak Example 6.44):
+one composite step exposes a first `P`-position, consumes a direction, exposes a second
+`P`-position, and updates. -/
 def speedup {S : Type u} {P : PFunctor.{uA, uB}} (l : Lens (selfMonomial S) P) :
     Lens (selfMonomial S) (P ◃ P) :=
   (l ◃ₗ l) ∘ₗ fixState
@@ -689,7 +754,7 @@ def yComp : y ◃ P ≃ₗ P where
 @[deprecated (since := "2026-08-17")] alias compX := compY
 @[deprecated (since := "2026-08-17")] alias XComp := yComp
 
-/-- Left distributivity of composition over coproduct (Niu–Spivak Prop 6.47). -/
+/-- Right distributivity of composition over coproduct (Niu–Spivak Prop 6.47). -/
 def sumCompDistrib {R : PFunctor.{uA₃, uB₂}} :
     Lens.Equiv.{max uA₁ uA₂ uA₃ uB₂, max uB₁ uB₂, max uA₁ uA₂ uA₃ uB₂, max uB₁ uB₂}
       ((Q + R : PFunctor.{max uA₂ uA₃, uB₂}) ◃ P) ((Q ◃ P) + (R ◃ P)) where
@@ -913,51 +978,67 @@ instance [IsEmpty I] {F : I → PFunctor.{u}} {a : (sigma F).A} : IsEmpty ((sigm
   isEmptyElim a
 
 /-- Sigma of an empty family is the zero functor. -/
-def sigmaEmpty [IsEmpty I] {F : I → PFunctor.{uA, uB}} : sigma F ≃ₗ 0 :=
+def Equiv.emptySigma [IsEmpty I] {F : I → PFunctor.{uA, uB}} : sigma F ≃ₗ 0 :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.emptySigma (F := F))
 
+@[deprecated (since := "2026-10-19")] alias sigmaEmpty := Equiv.emptySigma
+
 /-- Sigma of a `PUnit`-indexed family is equivalent to the functor itself (up to `ulift`). -/
-def sigmaUnit {F : PUnit → PFunctor.{uA, uB}} : sigma F ≃ₗ (F PUnit.unit).ulift :=
+def Equiv.punitSigma {F : PUnit → PFunctor.{uA, uB}} : sigma F ≃ₗ (F PUnit.unit).ulift :=
   PFunctor.Equiv.toLensEquiv
     (PFunctor.Equiv.trans
       (PFunctor.Equiv.punitSigma (F := F))
-      (PFunctor.Equiv.uliftEquiv (P := F PUnit.unit)))
+      (PFunctor.Equiv.ulift (F PUnit.unit)).symm)
+
+@[deprecated (since := "2026-10-19")] alias sigmaUnit := Equiv.punitSigma
 
 /-- Sigma of a unique-indexed family is equivalent to the default fiber (up to `ulift`). -/
-def sigmaOfUnique [Unique I] {F : I → PFunctor.{uA, uB}} : sigma F ≃ₗ (F default).ulift :=
+def Equiv.uniqueSigma [Unique I] {F : I → PFunctor.{uA, uB}} : sigma F ≃ₗ (F default).ulift :=
   PFunctor.Equiv.toLensEquiv
     (PFunctor.Equiv.trans
       (PFunctor.Equiv.uniqueSigma (F := F))
-      (PFunctor.Equiv.uliftEquiv (P := F default)))
+      (PFunctor.Equiv.ulift (F default)).symm)
+
+@[deprecated (since := "2026-10-19")] alias sigmaOfUnique := Equiv.uniqueSigma
 
 /-- Left distributivity of product over sigma. -/
-def prodSigmaDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
+def Equiv.prodSigmaDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
     (P * sigma F : PFunctor.{max uA₁ uA₂ v, max uB₁ uB₂}) ≃ₗ
       (sigma (fun i => (P * F i : PFunctor.{max uA₁ uA₂, max uB₁ uB₂})) :
         PFunctor.{max uA₁ uA₂ v, max uB₁ uB₂}) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.prodSigmaDistrib (P := P) (F := F))
 
+@[deprecated (since := "2026-10-19")] alias prodSigmaDistrib := Equiv.prodSigmaDistrib
+
 /-- Right distributivity of product over sigma. -/
-def sigmaProdDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
+def Equiv.sigmaProdDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
     (sigma F * P : PFunctor.{max uA₁ uA₂ v, max uB₁ uB₂}) ≃ₗ
       (sigma (fun i => (F i * P : PFunctor.{max uA₁ uA₂, max uB₁ uB₂})) :
         PFunctor.{max uA₁ uA₂ v, max uB₁ uB₂}) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.sigmaProdDistrib (P := P) (F := F))
 
+@[deprecated (since := "2026-10-19")] alias sigmaProdDistrib := Equiv.sigmaProdDistrib
+
 /-- Left distributivity of tensor product over sigma. -/
-def tensorSigmaDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
+def Equiv.tensorSigmaDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
     P ⊗ sigma F ≃ₗ sigma (fun i => P ⊗ F i) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.tensorSigmaDistrib (P := P) (F := F))
 
+@[deprecated (since := "2026-10-19")] alias tensorSigmaDistrib := Equiv.tensorSigmaDistrib
+
 /-- Right distributivity of tensor product over sigma. -/
-def sigmaTensorDistrib {P : PFunctor.{uA₂, uB₂}} {F : I → PFunctor.{uA₁, uB₁}} :
+def Equiv.sigmaTensorDistrib {P : PFunctor.{uA₂, uB₂}} {F : I → PFunctor.{uA₁, uB₁}} :
     sigma F ⊗ P ≃ₗ sigma (fun i => F i ⊗ P) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.sigmaTensorDistrib (F := F) (P := P))
 
+@[deprecated (since := "2026-10-19")] alias sigmaTensorDistrib := Equiv.sigmaTensorDistrib
+
 /-- Right distributivity of composition over sigma. -/
-def sigmaCompDistrib {P : PFunctor.{uA₂, uB₂}} {F : I → PFunctor.{uA₁, uB₁}} :
+def Equiv.sigmaCompDistrib {P : PFunctor.{uA₂, uB₂}} {F : I → PFunctor.{uA₁, uB₁}} :
     sigma F ◃ P ≃ₗ sigma (fun i => F i ◃ P) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.sigmaCompDistrib (F := F) (P := P))
+
+@[deprecated (since := "2026-10-19")] alias sigmaCompDistrib := Equiv.sigmaCompDistrib
 
 end Sigma
 
@@ -966,14 +1047,16 @@ section Pi
 variable {I : Type v}
 
 /-- Pi over a `PUnit`-indexed family is equivalent to the functor itself. -/
-def piUnit {P : PFunctor.{u}} : pi (fun (_ : PUnit) => P) ≃ₗ P where
+def Equiv.piPUnit {P : PFunctor.{u}} : pi (fun (_ : PUnit) => P) ≃ₗ P where
   toLens := (fun f => f PUnit.unit) ⇆ (fun _ pb => ⟨PUnit.unit, pb⟩)
   invLens := (fun pa _ => pa) ⇆ (fun _ spb => spb.2)
   left_inv := rfl
   right_inv := rfl
 
+@[deprecated (since := "2026-10-19")] alias piUnit := Equiv.piPUnit
+
 /-- Pi of a family of zero functors over an inhabited type is the zero functor. -/
-def piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0) :
+def Equiv.piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0) :
     pi F ≃ₗ 0 := by
   have : IsEmpty (pi F).A := by
     refine ⟨fun f => ?_⟩
@@ -987,6 +1070,8 @@ def piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0)
         ext a <;> exact isEmptyElim a
       right_inv := by
         ext a <;> exact PEmpty.elim a }
+
+@[deprecated (since := "2026-10-19")] alias piZero := Equiv.piZero
 
 end Pi
 

@@ -62,8 +62,7 @@ the exponential-adjunction equations below rewrite through the cartesian
 product and exponential constructions there. `implicit_reducible` (unlike
 `reducible`) keeps them opaque to simp and typeclass resolution, and needs
 no `allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] PFunctor.instHMulPFunctor PFunctor.instMulPFunctor PFunctor.pi
-  PFunctor.exp
+attribute [local implicit_reducible] PFunctor.instHMulPFunctor PFunctor.pi PFunctor.exp
 
 /-- The evaluation lens `exp r q * q ⇆ r`, the counit of the cartesian
 exponential adjunction (Niu–Spivak Exercise 5.32).

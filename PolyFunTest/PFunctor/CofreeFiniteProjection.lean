@@ -39,12 +39,12 @@ example (P : PFunctor.{uA, uB}) (n : ℕ) (tree : M P)
 
 example (P : PFunctor.{uA, uB}) :
     Lens.Equiv.compY.toLens ∘ₗ CofreeP.projectionN P 1 = CofreeP.cogenerator P :=
-  CofreeP.projectionN_one_comp_compY P
+  CofreeP.compY_comp_projectionN_one P
 
 example (P : PFunctor.{uA, uB}) :
     (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ CofreeP.projectionN P 2 =
-      (CofreeP.cogenerator P ◃ₗ CofreeP.cogenerator P) ∘ₗ CofreeP.comult :=
-  CofreeP.projectionN_two_comp_compY P
+      (CofreeP.cogenerator P ◃ₗ CofreeP.cogenerator P) ∘ₗ CofreeP.comul :=
+  CofreeP.compMap_compY_comp_projectionN_two P
 
 /-! ## Concrete finite paths -/
 
@@ -74,15 +74,15 @@ example : M.Vertex.depth ((CofreeP.projectionN binaryP 2).toFunB binaryTree
 equality, not merely an equality of position maps. -/
 example (P : PFunctor.{u, u}) (C : Comonoid.{u, u})
     (hom : Comonoid.Hom C (CofreeP.comonoid P)) (n : ℕ) :
-    CofreeP.projectionN P n ∘ₗ hom.toLens = (CofreeP.restrict C hom).compNthMap n ∘ₗ C.comultN n :=
-  CofreeP.hom_comp_projectionN hom n
+    CofreeP.projectionN P n ∘ₗ hom.toLens = (CofreeP.restrict C hom).compNthMap n ∘ₗ C.comulN n :=
+  CofreeP.projectionN_comp_toLens hom n
 
 /-- Proposition 8.49 itself holds for an arbitrary generator lens and every
 finite depth. -/
 example (P : PFunctor.{u, u}) (C : Comonoid.{u, u})
     (lens : Lens C.carrier P) (n : ℕ) :
-    CofreeP.projectionN P n ∘ₗ (CofreeP.extend C lens).toLens = lens.compNthMap n ∘ₗ C.comultN n :=
-  CofreeP.extend_comp_projectionN C lens n
+    CofreeP.projectionN P n ∘ₗ (CofreeP.extend C lens).toLens = lens.compNthMap n ∘ₗ C.comulN n :=
+  CofreeP.projectionN_comp_extend C lens n
 
 end CofreeFiniteProjectionTest
 end PFunctor

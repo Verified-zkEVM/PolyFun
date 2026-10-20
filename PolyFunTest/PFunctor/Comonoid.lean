@@ -37,8 +37,8 @@ example {C D E : Comonoid.{u, v}} (f : C ⟶ D) (g : D ⟶ E) :
 
 /-- Retrofunctors preserve the complete finite comultiplication ladder. -/
 example {C D : Comonoid.{u, v}} (f : Comonoid.Hom C D) (n : ℕ) :
-    D.comultN n ∘ₗ f.toLens = f.toLens.compNthMap n ∘ₗ C.comultN n :=
-  f.map_comultN n
+    D.comulN n ∘ₗ f.toLens = f.toLens.compNthMap n ∘ₗ C.comulN n :=
+  f.map_comulN n
 
 /-- Retrofunctors between state comonoids are precisely very-well-behaved
 state lenses; the first projection supplies a concrete nontrivial example. -/
@@ -62,26 +62,26 @@ example {S T : Type u}
   simp
 
 /-- Comonoids support independent position and direction universes. -/
-example (C : Comonoid.{u, v}) : C.comultN 0 = C.counit := rfl
+example (C : Comonoid.{u, v}) : C.comulN 0 = C.counit := rfl
 
 /-- The state comonoid's comultiplication is the transition lens. -/
-example : (stateComonoid S).comult = Lens.fixState := rfl
+example : (stateComonoid S).comul = Lens.fixState := rfl
 
 /-- The state comonoid is a state system (Niu–Spivak Ex 7.22). -/
 example : (stateComonoid S).IsStateSystem := isStateSystem_stateComonoid S
 
 /-- `δ^{(0)}` is the counit. -/
-example : (stateComonoid S).comultN 0 = (stateComonoid S).counit := rfl
+example : (stateComonoid S).comulN 0 = (stateComonoid S).counit := rfl
 
 /-- `δ^{(1)}` unfolds through the counit. -/
 example :
-    (stateComonoid S).comultN 1
+    (stateComonoid S).comulN 1
       = (Lens.id _ ◃ₗ (stateComonoid S).counit) ∘ₗ Lens.fixState := rfl
 
 /-- `δ^{(n+1)}` unfolds by one composition step. -/
 example (n : ℕ) :
-    (stateComonoid S).comultN (n + 1)
-      = (Lens.id _ ◃ₗ (stateComonoid S).comultN n) ∘ₗ Lens.fixState := rfl
+    (stateComonoid S).comulN (n + 1)
+      = (Lens.id _ ◃ₗ (stateComonoid S).comulN n) ∘ₗ Lens.fixState := rfl
 
 /-- A fully concrete instance: `Bool` states. -/
 example : (stateComonoid Bool).IsStateSystem := isStateSystem_stateComonoid Bool

@@ -52,7 +52,7 @@ def mapTarget {m : Type u → Type v} {n : Type u → Type w}
     mapTarget (fun computation => computation) handler = handler :=
   rfl
 
-theorem mapTarget_comp {m : Type u → Type v} {n : Type u → Type w}
+theorem mapTarget_mapTarget {m : Type u → Type v} {n : Type u → Type w}
     {o : Type u → Type uI} {q : PFunctor.{uA, u}}
     (second : ∀ {α : Type u}, n α → o α)
     (first : ∀ {α : Type u}, m α → n α)
@@ -61,12 +61,14 @@ theorem mapTarget_comp {m : Type u → Type v} {n : Type u → Type w}
       mapTarget (fun computation => second (first computation)) handler :=
   rfl
 
+@[deprecated (since := "2026-10-19")] alias mapTarget_comp := mapTarget_mapTarget
+
 /-- An effectful stateful handler for `q`: on each position it reads a state,
 performs effects in `m`, and returns a direction together with the next state.
 
 This is a transparent name for `Handler (StateT S m) q`, so it introduces no
 new data or laws. At `m := Id` it is the pure Kleisli--Mealy presentation used
-by `Responder.equivStateHandler`. -/
+by `Responder.equivStateful`. -/
 abbrev Stateful (m : Type u → Type v) (S : Type u)
     (q : PFunctor.{uA, u}) :=
   Handler (StateT S m) q

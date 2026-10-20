@@ -66,7 +66,7 @@ example {P : PFunctor.{uA, uB}} {α : Type v} (x : (FreeP P).Obj α) :
 example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
     (handler : Handler (FreeM Q) P) :
     Handler.ofFreeLens (Handler.toFreeLens handler) = handler :=
-  Handler.freeLensEquiv.left_inv handler
+  Handler.equivFreeLens.left_inv handler
 
 example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
     (lens : Lens P Q) (tree : M P) :

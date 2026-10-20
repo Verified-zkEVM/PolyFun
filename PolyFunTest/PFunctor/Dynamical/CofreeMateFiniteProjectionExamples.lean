@@ -33,14 +33,14 @@ example (P : PFunctor.{u, u}) (S : Type u)
     (system : DynSystem S P) (n : ℕ) :
     CofreeP.projectionN P n ∘ₗ system.cofreeMate.toLens =
       system.nStep n :=
-  DynSystem.cofreeMate_comp_projectionN system n
+  DynSystem.projectionN_comp_cofreeMate system n
 
 example (P : PFunctor.{u, u}) (S : Type u)
     (system : DynSystem S P) :
     (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ
         (CofreeP.projectionN P 2 ∘ₗ system.cofreeMate.toLens) =
-      system.twoStep :=
-  DynSystem.cofreeMate_comp_projectionN_two system
+      Lens.speedup system :=
+  DynSystem.projectionN_two_comp_cofreeMate system
 
 /-! ## Observable branching behavior -/
 
@@ -48,7 +48,7 @@ example (P : PFunctor.{u, u}) (S : Type u)
 example : (CofreeP.projectionN binaryP 0 ∘ₗ
       branchingSystem.cofreeMate.toLens).toFunB .source PUnit.unit =
     ThreeState.source := by
-  rw [DynSystem.cofreeMate_comp_projectionN]
+  rw [DynSystem.projectionN_comp_cofreeMate]
   rfl
 
 /-- Projecting the mate through `false` then `true` reaches the final state,
@@ -56,7 +56,7 @@ pinning both the dependent backward map and the order of the two edges. -/
 example : (CofreeP.projectionN binaryP 2 ∘ₗ
       branchingSystem.cofreeMate.toLens).toFunB .source
         ⟨false, ⟨true, PUnit.unit⟩⟩ = ThreeState.final := by
-  rw [DynSystem.cofreeMate_comp_projectionN]
+  rw [DynSystem.projectionN_comp_cofreeMate]
   rfl
 
 /-- The same concrete depth-two run agrees with the established binary
@@ -64,7 +64,7 @@ two-step system after applying the inner right unitor. -/
 example : ((Lens.id binaryP ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ
       (CofreeP.projectionN binaryP 2 ∘ₗ branchingSystem.cofreeMate.toLens)).toFunB
       .source ⟨false, true⟩ = ThreeState.final := by
-  rw [DynSystem.cofreeMate_comp_projectionN_two]
+  rw [DynSystem.projectionN_two_comp_cofreeMate]
   rfl
 
 end CofreeMateFiniteProjectionTest

@@ -76,8 +76,8 @@ example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpe
     {matchStep : DynSystem.StepRel impl spec}
     (sim : DynSystem.ForwardSimulation impl spec matchStep)
     (run : DynSystem.Run impl) {initialSpec : SSpec}
-    (hrel : sim.stateRel run.initial initialSpec) (n : ℕ) :
-    sim.stateRel (run.state n) ((sim.mapRun run hrel).state n) :=
+    (hrel : sim.StateRel run.initial initialSpec) (n : ℕ) :
+    sim.StateRel (run.state n) ((sim.mapRun run hrel).state n) :=
   sim.stateRel_mapRun run hrel n
 
 /-- The mapped run also satisfies the requested concrete-step relation. -/
@@ -85,7 +85,7 @@ example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpe
     {matchStep : DynSystem.StepRel impl spec}
     (sim : DynSystem.ForwardSimulation impl spec matchStep)
     (run : DynSystem.Run impl) {initialSpec : SSpec}
-    (hrel : sim.stateRel run.initial initialSpec) (n : ℕ) :
+    (hrel : sim.StateRel run.initial initialSpec) (n : ℕ) :
     matchStep ⟨run.state n, run.dir n⟩
       ⟨(sim.mapRun run hrel).state n, (sim.mapRun run hrel).dir n⟩ :=
   sim.match_mapRun run hrel n
@@ -96,7 +96,7 @@ example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpe
     {matchStep : DynSystem.StepRel impl spec}
     (sim : DynSystem.ForwardSimulation impl spec matchStep)
     (run : DynSystem.Run impl) {initialSpec : SSpec}
-    (hrel : sim.stateRel run.initial initialSpec) :
+    (hrel : sim.StateRel run.initial initialSpec) :
     (sim.matchedState run hrel 0).1 = initialSpec ∧
       (sim.mapRun run hrel).initial = initialSpec := by
   simp
@@ -107,7 +107,7 @@ example {SImpl SSpec : Type u} {impl : DynSystem SImpl p} {spec : DynSystem SSpe
     {matchStep : DynSystem.StepRel impl spec}
     (sim : DynSystem.ForwardSimulation impl spec matchStep)
     (run : DynSystem.Run impl) {initialSpec : SSpec}
-    (hrel : sim.stateRel run.initial initialSpec) (n : ℕ) :
+    (hrel : sim.StateRel run.initial initialSpec) (n : ℕ) :
     (sim.mapRun run hrel).state n = (sim.matchedState run hrel n).1 ∧
       (sim.matchedState run hrel (n + 1)).1 =
         spec.update (sim.matchedState run hrel n).1 (sim.matchedDir run hrel n) := by
@@ -147,7 +147,7 @@ example {impl spec : DynSystem.SafetySpec.{u} p}
     {matchStep : DynSystem.StepRel impl.toDynSystem spec.toDynSystem}
     (sim : DynSystem.SafetyRefinement impl spec matchStep)
     (run : DynSystem.Run impl.toDynSystem) {initialSpec : spec.State}
-    (hrel : sim.stateRel run.initial initialSpec) :
+    (hrel : sim.StateRel run.initial initialSpec) :
     (sim.matchedState run hrel 0).1 = initialSpec ∧
       (sim.mapRun run hrel).initial = initialSpec := by
   simp
@@ -169,10 +169,8 @@ example (D : DynSystem S p) :
       ⟨⟨S, D⟩, fun _ => True, fun _ => True, fun _ => True⟩
     DynSystem.SafetyRefinement system system
       (DynSystem.StepRel.comp
-        (DynSystem.StepRel.top :
-          DynSystem.StepRel system.toDynSystem system.toDynSystem)
-        (DynSystem.StepRel.top :
-          DynSystem.StepRel system.toDynSystem system.toDynSystem)) := by
+        (⊤ : DynSystem.StepRel system.toDynSystem system.toDynSystem)
+        (⊤ : DynSystem.StepRel system.toDynSystem system.toDynSystem)) := by
   intro system
   exact (DynSystem.SafetyRefinement.reflTop system).comp
     (DynSystem.SafetyRefinement.reflTop system)
@@ -180,23 +178,22 @@ example (D : DynSystem S p) :
 /-! Concrete-step relations expose the expected relational algebra. -/
 
 example (D : DynSystem S p) :
-    DynSystem.StepRel.comp (DynSystem.StepRel.id D) DynSystem.StepRel.top =
-      (DynSystem.StepRel.top : DynSystem.StepRel D D) := by simp
+    DynSystem.StepRel.comp (DynSystem.StepRel.id D) ⊤ = (⊤ : DynSystem.StepRel D D) := by simp
 
 example (D : DynSystem S p) :
     DynSystem.StepRel.reverse
-        (DynSystem.StepRel.comp DynSystem.StepRel.top (DynSystem.StepRel.id D)) =
-      (DynSystem.StepRel.top : DynSystem.StepRel D D) := by simp
+        (DynSystem.StepRel.comp ⊤ (DynSystem.StepRel.id D)) = (⊤ : DynSystem.StepRel D D) := by
+  simp
 
 /-- Mutual refinements can weaken both endpoint matching relations together. -/
 example (D : DynSystem S p) :
     let system : DynSystem.SafetySpec.{u} p :=
       ⟨⟨S, D⟩, fun _ => True, fun _ => True, fun _ => True⟩
     DynSystem.MutualSafetyRefinement system system
-      DynSystem.StepRel.top DynSystem.StepRel.top := by
+      ⊤ ⊤ := by
   intro system
   exact (DynSystem.MutualSafetyRefinement.refl system
-    DynSystem.StepRel.top DynSystem.StepRel.top (fun _ => trivial) (fun _ => trivial)).weakenMatch
+    ⊤ ⊤ (fun _ => trivial) (fun _ => trivial)).weakenMatch
       (fun _ _ h => h) (fun _ _ h => h)
 
 end PFunctor

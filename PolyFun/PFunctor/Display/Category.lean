@@ -63,7 +63,7 @@ def ofFreeLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
 /-- Free handlers are structurally equivalent to lenses into the free
 polynomial, with independent position and direction universes for the source
 and target interfaces. -/
-def freeLensEquiv {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}} :
+def equivFreeLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}} :
     Handler (FreeM Q) P ≃ Lens P (FreeP Q) where
   toFun := toFreeLens
   invFun := ofFreeLens
@@ -77,15 +77,21 @@ def freeLensEquiv {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}} :
       (.mk (lens.toFunA operation) (lens.toFunB operation) :
         (FreeP Q).Obj (P.B operation))
 
-@[simp]
-theorem freeLensEquiv_apply {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
-    (f : Handler (FreeM Q) P) : freeLensEquiv f = toFreeLens f :=
-  rfl
+@[deprecated (since := "2026-10-19")] alias freeLensEquiv := equivFreeLens
 
 @[simp]
-theorem freeLensEquiv_symm_apply {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
-    (lens : Lens P (FreeP Q)) : freeLensEquiv.symm lens = ofFreeLens lens :=
+theorem equivFreeLens_apply {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
+    (f : Handler (FreeM Q) P) : equivFreeLens f = toFreeLens f :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias freeLensEquiv_apply := equivFreeLens_apply
+
+@[simp]
+theorem equivFreeLens_symm_apply {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
+    (lens : Lens P (FreeP Q)) : equivFreeLens.symm lens = ofFreeLens lens :=
+  rfl
+
+@[deprecated (since := "2026-10-19")] alias freeLensEquiv_symm_apply := equivFreeLens_symm_apply
 
 @[simp]
 theorem toFreeLens_id (P : PFunctor.{uA, u}) :
@@ -100,8 +106,8 @@ private theorem decode_extension_bind {R : PFunctor.{u, u}} {E F : Type u}
   let source : (FreeP R ◃ FreeP R).Obj F :=
     .mk ⟨x.fst, fun path => (f (x.snd path)).fst⟩
       (fun direction => (f (x.snd direction.1)).snd direction.2)
-  change FreeP.decode (Lens.mapObj (FreeP.mult (P := R)) source) = _
-  rw [FreeP.decode_mult]
+  change FreeP.decode (Lens.mapObj (FreeP.mul (P := R)) source) = _
+  rw [FreeP.decode_mul]
   have hnest : FreeP.nest source =
       FreeP.relabel (fun value => FreeP.decode (f value)) x := rfl
   rw [hnest, FreeP.decode_relabel]
@@ -162,7 +168,7 @@ private theorem foldObjAt_encode {Q R : PFunctor.{u, u}} (second : Handler (Free
       (FreeP.encode program).snd = program from FreeP.decode_encode _]
   exact liftM_encode second program
 
-/-- Under `freeLensEquiv`, categorical free-handler composition is the
+/-- Under `equivFreeLens`, categorical free-handler composition is the
 existing universal free-polynomial fold followed by ordinary lens
 composition.  This theorem is stated in the homogeneous categorical fragment
 required by `FreeP.substMonoid`; the structural equivalence itself above is

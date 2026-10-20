@@ -40,6 +40,12 @@ universe u v uA uB uA' uB' uA₁ uB₁ uA₂ uB₂ uA₃ uB₃ uA₄ uB₄
 
 section find_home
 
+instance PSigma.isEmpty_left {α : Sort u} {β : α → Sort v} [inst : IsEmpty α] :
+    IsEmpty ((a : α) ×' β a) where
+  false := fun a => inst.elim a.1
+
+/-- A dependent pair over an empty first component is empty. -/
+@[deprecated PSigma.isEmpty_left (since := "2026-10-19")]
 instance instIsEmptySigma {α : Sort u} {β : α → Sort v} [inst : IsEmpty α] :
     IsEmpty ((a : α) ×' β a) where
   false := fun a => inst.elim a.1
@@ -55,13 +61,13 @@ section Sum
 variable (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB})
   (R : PFunctor.{uA₃, uB}) (S : PFunctor.{uA₄, uB})
 
-/-- Addition with the zero functor on the left is equivalent to the original functor -/
+/-- Adding the zero functor on the right is equivalent to the original functor. -/
 @[simps]
 def sumZero : P + 0 ≃ₚ P where
   equivA := Equiv.sumEmpty P.A PEmpty
   equivB := (Sum.casesOn · (fun _ => _root_.Equiv.refl _) (fun a => a.elim))
 
-/-- Addition with the zero functor on the right is equivalent to the original functor -/
+/-- Adding the zero functor on the left is equivalent to the original functor. -/
 @[simps]
 def zeroSum : 0 + P ≃ₚ P where
   equivA := Equiv.emptySum PEmpty P.A
@@ -399,7 +405,13 @@ section ULift
 
 variable (P : PFunctor.{uA₁, uB₁})
 
-/-- Equivalence between a polynomial functor and its universe-lifted version -/
+/-- The universe lift of a polynomial functor is equivalent to the polynomial functor. -/
+def ulift : (P.ulift : PFunctor.{max uA₁ u, max uB₁ v}) ≃ₚ P where
+  equivA := _root_.Equiv.ulift
+  equivB := fun _ => _root_.Equiv.ulift
+
+/-- `P` is equivalent to its universe lift; the inverse direction of `Equiv.ulift`. -/
+@[deprecated ulift +typeChanged (since := "2026-10-19")]
 def uliftEquiv : P ≃ₚ (P.ulift : PFunctor.{max uA₁ u, max uB₁ v}) where
   equivA := _root_.Equiv.ulift.symm
   equivB := fun _ => _root_.Equiv.ulift.symm
@@ -592,7 +604,7 @@ def yComp : y ◃ P ≃ₚ P where
 @[deprecated (since := "2026-08-17")] alias compX := compY
 @[deprecated (since := "2026-08-17")] alias XComp := yComp
 
-/-- Left distributivity of composition over sum (Niu–Spivak Prop 6.47). -/
+/-- Right distributivity of composition over sum (Niu–Spivak Prop 6.47). -/
 def sumCompDistrib (Q : PFunctor.{uA₂, uB₁}) :
     (P + Q : PFunctor.{max uA₁ uA₂, uB₁}) ◃ R ≃ₚ
     ((P ◃ R) + (Q ◃ R) : PFunctor.{max uA₁ uA₂ uA₃ uB₁, max uB₁ uB₃}) where

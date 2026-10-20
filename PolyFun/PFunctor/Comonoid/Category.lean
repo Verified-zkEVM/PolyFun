@@ -80,9 +80,11 @@ variable (C : Comonoid.{uA, uB})
 
 /-- The outer source object selected by comultiplication is the original
 object. -/
-theorem comultOuter_eq (c : C.carrier.A) :
-    (C.comult.toFunA c).1 = c :=
-  congrArg (fun lens => lens.toFunA c) C.counit_right
+theorem comul_toFunA_fst (c : C.carrier.A) :
+    (C.comul.toFunA c).1 = c :=
+  congrArg (fun lens => lens.toFunA c) C.comul_counit
+
+@[deprecated (since := "2026-10-19")] alias comultOuter_eq := comul_toFunA_fst
 
 /-! ## Outgoing-arrow operations -/
 
@@ -99,8 +101,8 @@ private theorem identity_transport {a b : C.carrier.A} (h : a = b) :
 /-- The target (categorical codomain) of an outgoing arrow. The source is
 already recorded by the direction fiber `C.carrier.B c`. -/
 def target (c : C.carrier.A) (d : C.carrier.B c) : C.carrier.A :=
-  (C.comult.toFunA c).2
-    (cast (congrArg C.carrier.B (comultOuter_eq C c).symm) d)
+  (C.comul.toFunA c).2
+    (cast (congrArg C.carrier.B (comul_toFunA_fst C c).symm) d)
 
 /-- The original comultiplication-based definition of a state system is
 equivalent to bijectivity of the canonical outgoing-arrow target map. -/
@@ -110,36 +112,38 @@ theorem isStateSystem_iff_target_bijective :
   constructor
   · intro h c
     let e := _root_.Equiv.cast
-      (congrArg C.carrier.B (comultOuter_eq C c).symm)
-    change Function.Bijective ((C.comult.toFunA c).2 ∘ e)
+      (congrArg C.carrier.B (comul_toFunA_fst C c).symm)
+    change Function.Bijective ((C.comul.toFunA c).2 ∘ e)
     exact Function.Bijective.comp (h c) e.bijective
   · intro h c
     let e := _root_.Equiv.cast
-      (congrArg C.carrier.B (comultOuter_eq C c).symm)
+      (congrArg C.carrier.B (comul_toFunA_fst C c).symm)
     have hTarget := h c
-    change Function.Bijective ((C.comult.toFunA c).2 ∘ e) at hTarget
+    change Function.Bijective ((C.comul.toFunA c).2 ∘ e) at hTarget
     simpa only [Function.comp_def, Equiv.apply_symm_apply] using
       Function.Bijective.comp hTarget e.symm.bijective
 
 /-- The position action of comultiplication is canonically the source object
 paired with the target of every outgoing arrow. -/
-theorem comultPosition_eq (c : C.carrier.A) :
-    C.comult.toFunA c = ⟨c, target C c⟩ := by
-  apply Sigma.ext (comultOuter_eq C c)
-  apply Function.hfunext (congrArg C.carrier.B (comultOuter_eq C c))
+theorem comul_toFunA (c : C.carrier.A) :
+    C.comul.toFunA c = ⟨c, target C c⟩ := by
+  apply Sigma.ext (comul_toFunA_fst C c)
+  apply Function.hfunext (congrArg C.carrier.B (comul_toFunA_fst C c))
   intro rawDirection canonicalDirection hDirection
   apply heq_of_eq
   unfold target
-  apply congrArg ((C.comult.toFunA c).2)
+  apply congrArg ((C.comul.toFunA c).2)
   exact ((cast_eq_iff_heq).2 hDirection.symm).symm
+
+@[deprecated (since := "2026-10-19")] alias comultPosition_eq := comul_toFunA
 
 /-- Compose an arrow `d` leaving `c` with an arrow `e` leaving the target of
 `d`, in path order. -/
 def compose (c : C.carrier.A) (d : C.carrier.B c)
     (e : C.carrier.B (target C c d)) : C.carrier.B c :=
-  C.comult.toFunB c
+  C.comul.toFunB c
     (cast (congrArg (C.carrier ◃ C.carrier).B
-      (comultPosition_eq C c).symm) ⟨d, e⟩)
+      (comul_toFunA C c).symm) ⟨d, e⟩)
 
 @[simp] theorem stateComonoid_identity (S : Type uA) (state : S) :
     identity (stateComonoid S) state = state :=
@@ -155,38 +159,38 @@ def compose (c : C.carrier.A) (d : C.carrier.B c)
   rfl
 
 @[implicit_reducible]
-private def normalizedComult : Lens C.carrier (C.carrier ◃ C.carrier) where
+private def normalizedComul : Lens C.carrier (C.carrier ◃ C.carrier) where
   toFunA c := ⟨c, target C c⟩
   toFunB c direction := compose C c direction.1 direction.2
 
-private theorem normalizedComult_eq : normalizedComult C = C.comult := by
-  refine Lens.ext _ _ (fun c => (comultPosition_eq C c).symm) ?_
+private theorem normalizedComul_eq : normalizedComul C = C.comul := by
+  refine Lens.ext _ _ (fun c => (comul_toFunA C c).symm) ?_
   intro c
   funext direction
-  unfold normalizedComult compose
-  rw [eqRec_function_apply (h := (comultPosition_eq C c).symm)]
+  unfold normalizedComul compose
+  rw [eqRec_function_apply (h := (comul_toFunA C c).symm)]
   rcases direction with ⟨d, e⟩
   rfl
 
-private theorem normalized_counit_right :
+private theorem normalized_comul_counit :
     Lens.Equiv.compY.toLens ∘ₗ
-        (Lens.id C.carrier ◃ₗ C.counit) ∘ₗ normalizedComult C =
+        (Lens.id C.carrier ◃ₗ C.counit) ∘ₗ normalizedComul C =
       Lens.id C.carrier := by
-  simpa only [normalizedComult_eq] using C.counit_right
+  simpa only [normalizedComul_eq] using C.comul_counit
 
-private theorem normalized_counit_left :
+private theorem normalized_counit_comul :
     Lens.Equiv.yComp.toLens ∘ₗ
-        (C.counit ◃ₗ Lens.id C.carrier) ∘ₗ normalizedComult C =
+        (C.counit ◃ₗ Lens.id C.carrier) ∘ₗ normalizedComul C =
       Lens.id C.carrier := by
-  simpa only [normalizedComult_eq] using C.counit_left
+  simpa only [normalizedComul_eq] using C.counit_comul
 
-private theorem normalized_coassoc :
+private theorem normalized_comul_assoc :
     Lens.Equiv.compAssoc.toLens ∘ₗ
-          (normalizedComult C ◃ₗ Lens.id C.carrier) ∘ₗ
-        normalizedComult C =
-      (Lens.id C.carrier ◃ₗ normalizedComult C) ∘ₗ
-        normalizedComult C := by
-  simpa only [normalizedComult_eq] using C.coassoc
+          (normalizedComul C ◃ₗ Lens.id C.carrier) ∘ₗ
+        normalizedComul C =
+      (Lens.id C.carrier ◃ₗ normalizedComul C) ∘ₗ
+        normalizedComul C := by
+  simpa only [normalizedComul_eq] using C.comul_assoc
 
 /-! ## Category laws -/
 
@@ -195,29 +199,31 @@ private theorem normalized_coassoc :
 theorem target_identity (c : C.carrier.A) :
     target C c (identity C c) = c := by
   have h := congrArg (fun lens : Lens C.carrier C.carrier => lens.toFunA c)
-    C.counit_left
-  change (C.comult.toFunA c).2
-      (C.counit.toFunB (C.comult.toFunA c).1 PUnit.unit) = c at h
-  change (C.comult.toFunA c).2
-      (cast (congrArg C.carrier.B (comultOuter_eq C c).symm)
+    C.counit_comul
+  change (C.comul.toFunA c).2
+      (C.counit.toFunB (C.comul.toFunA c).1 PUnit.unit) = c at h
+  change (C.comul.toFunA c).2
+      (cast (congrArg C.carrier.B (comul_toFunA_fst C c).symm)
         (identity C c)) = c
-  rw [← identity_transport C (comultOuter_eq C c)]
+  rw [← identity_transport C (comul_toFunA_fst C c)]
   exact h
 
 /-- Composing an outgoing arrow with the identity at its target leaves the
 arrow unchanged. -/
 @[simp]
-theorem compose_identity_right (c : C.carrier.A) (d : C.carrier.B c) :
+theorem compose_identity (c : C.carrier.A) (d : C.carrier.B c) :
     compose C c d (identity C (target C c d)) = d := by
   change
     (Lens.Equiv.compY.toLens ∘ₗ
         (Lens.id C.carrier ◃ₗ C.counit) ∘ₗ
-      normalizedComult C).toFunB c d = d
-  exact lens_toFunB_apply_eq_of_eq (normalized_counit_right C) c d
+      normalizedComul C).toFunB c d = d
+  exact lens_toFunB_apply_eq_of_eq (normalized_comul_counit C) c d
+
+@[deprecated (since := "2026-10-19")] alias compose_identity_right := compose_identity
 
 /-- Composing the identity at `c` with an arrow leaving its propositionally
 equal target returns that arrow in the canonical fiber over `c`. -/
-theorem compose_identity_left (c : C.carrier.A)
+theorem identity_compose_eq_cast (c : C.carrier.A)
     (e : C.carrier.B (target C c (identity C c))) :
     compose C c (identity C c) e =
       cast (congrArg C.carrier.B (target_identity C c)) e := by
@@ -225,7 +231,7 @@ theorem compose_identity_left (c : C.carrier.A)
     (fun lens : Lens C.carrier C.carrier =>
       Lens.mapObj lens
         (⟨c, id⟩ : C.carrier.Obj (C.carrier.B c)))
-    (normalized_counit_left C)
+    (normalized_counit_comul C)
   change
     (⟨target C c (identity C c),
       fun direction => compose C c (identity C c) direction⟩ :
@@ -245,12 +251,14 @@ theorem compose_identity_left (c : C.carrier.A)
     (cast (congrArg C.carrier.B (target_identity C c)) e)
     hFunctions hInput
 
+@[deprecated (since := "2026-10-19")] alias compose_identity_left := identity_compose_eq_cast
+
 /-- Canonical-fiber form of left identity. -/
 @[simp]
 theorem identity_compose (c : C.carrier.A) (e : C.carrier.B c) :
     compose C c (identity C c)
         (cast (congrArg C.carrier.B (target_identity C c).symm) e) = e := by
-  simpa using compose_identity_left C c
+  simpa using identity_compose_eq_cast C c
     (cast (congrArg C.carrier.B (target_identity C c).symm) e)
 
 /-- The target of a composite is the target of its second arrow. -/
@@ -259,7 +267,7 @@ theorem target_compose (c : C.carrier.A) (d : C.carrier.B c)
     (e : C.carrier.B (target C c d)) :
     target C c (compose C c d e) = target C (target C c d) e := by
   have h := congrArg (fun lens => lens.toFunA c)
-    (normalized_coassoc C)
+    (normalized_comul_assoc C)
   change
     (⟨c, fun d => ⟨target C c d,
       fun e => target C c (compose C c d e)⟩⟩ :
@@ -395,14 +403,14 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
                 (⟨c, rightChildren⟩ :
                   (C.carrier ◃ (C.carrier ◃ C.carrier)).A)))
           hInner
-  have h := lens_toFunB_apply_eq_of_eq (normalized_coassoc C).symm c
+  have h := lens_toFunB_apply_eq_of_eq (normalized_comul_assoc C).symm c
     leftDirection
   have hPosition :
       congrArg
         (C.carrier ◃ (C.carrier ◃ C.carrier)).B
         (congrArg
           (fun lens => lens.toFunA c)
-          (normalized_coassoc C).symm).symm =
+          (normalized_comul_assoc C).symm).symm =
       congrArg
         (C.carrier ◃ (C.carrier ◃ C.carrier)).B positionEq :=
     Subsingleton.elim _ _
@@ -410,7 +418,7 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
       cast (congrArg
         (C.carrier ◃ (C.carrier ◃ C.carrier)).B
         (congrArg (fun lens => lens.toFunA c)
-          (normalized_coassoc C).symm).symm) leftDirection =
+          (normalized_comul_assoc C).symm).symm) leftDirection =
         rightDirection := by
     rw [hPosition]
     exact hTransport
@@ -432,10 +440,10 @@ theorem Hom.map_identity (F : Hom C D) (c : C.carrier.A) :
     F.toLens.toFunB c (identity D (F.toLens.toFunA c)) = identity C c :=
   congrArg (fun lens => lens.toFunB c PUnit.unit) F.map_counit
 
-private theorem Hom.map_normalizedComult (F : Hom C D) :
-    normalizedComult D ∘ₗ F.toLens =
-      (F.toLens ◃ₗ F.toLens) ∘ₗ normalizedComult C := by
-  simpa only [normalizedComult_eq] using F.map_comult
+private theorem Hom.map_normalizedComul (F : Hom C D) :
+    normalizedComul D ∘ₗ F.toLens =
+      (F.toLens ◃ₗ F.toLens) ∘ₗ normalizedComul C := by
+  simpa only [normalizedComul_eq] using F.map_comul
 
 /-- A retrofunctor preserves targets forward after pulling an outgoing arrow
 backward. -/
@@ -444,7 +452,7 @@ theorem Hom.map_target (F : Hom C D) (c : C.carrier.A)
     F.toLens.toFunA (target C c (F.toLens.toFunB c d)) =
       target D (F.toLens.toFunA c) d := by
   have h := congrArg (fun lens => lens.toFunA c)
-    (F.map_normalizedComult)
+    (F.map_normalizedComul)
   change
     (⟨F.toLens.toFunA c,
       target D (F.toLens.toFunA c)⟩ :
@@ -505,18 +513,18 @@ theorem Hom.map_compose (F : Hom C D) (c : C.carrier.A)
       (F.toLens.toFunA c) targetsEq d e
     convert hCast using 1
   have h := lens_toFunB_apply_eq_of_eq
-    (F.map_normalizedComult).symm c leftDirection
+    (F.map_normalizedComul).symm c leftDirection
   have hPosition :
       congrArg (D.carrier ◃ D.carrier).B
         (congrArg (fun lens => lens.toFunA c)
-          (F.map_normalizedComult).symm).symm =
+          (F.map_normalizedComul).symm).symm =
       congrArg (D.carrier ◃ D.carrier).B
         positionEq :=
     Subsingleton.elim _ _
   have hTransportActual :
       cast (congrArg (D.carrier ◃ D.carrier).B
         (congrArg (fun lens => lens.toFunA c)
-          (F.map_normalizedComult).symm).symm) leftDirection =
+          (F.map_normalizedComul).symm).symm) leftDirection =
         rightDirection := by
     rw [hPosition]
     exact hTransport
@@ -529,7 +537,7 @@ theorem Hom.map_compose (F : Hom C D) (c : C.carrier.A)
 
 /-! ## Constructing retrofunctors from category laws -/
 
-private theorem normalizedComult_natural_of_categoryLaws
+private theorem normalizedComul_natural_of_categoryLaws
     (F : Lens C.carrier D.carrier)
     (mapTarget : ∀ (c : C.carrier.A)
       (d : D.carrier.B (F.toFunA c)),
@@ -542,12 +550,12 @@ private theorem normalizedComult_natural_of_categoryLaws
         compose C c (F.toFunB c d)
           (F.toFunB (target C c (F.toFunB c d))
             (cast (congrArg D.carrier.B (mapTarget c d).symm) e))) :
-    normalizedComult D ∘ₗ F =
-      (F ◃ₗ F) ∘ₗ normalizedComult C := by
+    normalizedComul D ∘ₗ F =
+      (F ◃ₗ F) ∘ₗ normalizedComul C := by
   let hobj : ∀ c : C.carrier.A,
-      Lens.mapObj (normalizedComult D ∘ₗ F)
+      Lens.mapObj (normalizedComul D ∘ₗ F)
           (⟨c, id⟩ : C.carrier.Obj (C.carrier.B c)) =
-        Lens.mapObj ((F ◃ₗ F) ∘ₗ normalizedComult C)
+        Lens.mapObj ((F ◃ₗ F) ∘ₗ normalizedComul C)
           (⟨c, id⟩ : C.carrier.Obj (C.carrier.B c)) := fun c => by
     let leftTargets :
         D.carrier.B (F.toFunA c) → D.carrier.A :=
@@ -591,26 +599,26 @@ private theorem normalizedComult_natural_of_categoryLaws
     subst rightDirection
     apply heq_of_eq
     rw [hcanonical]
-    dsimp only [Lens.mapObj, Lens.comp, normalizedComult, Lens.compMap]
+    dsimp only [Lens.mapObj, Lens.comp, normalizedComul, Lens.compMap]
     change F.toFunB c (compose D (F.toFunA c) d e) =
       compose C c (F.toFunB c d)
         (F.toFunB (target C c (F.toFunB c d))
           (cast (congrArg D.carrier.B (mapTarget c d).symm) e))
     exact mapCompose c d e
   let hA : ∀ c,
-      (normalizedComult D ∘ₗ F).toFunA c =
-        ((F ◃ₗ F) ∘ₗ normalizedComult C).toFunA c :=
+      (normalizedComul D ∘ₗ F).toFunA c =
+        ((F ◃ₗ F) ∘ₗ normalizedComul C).toFunA c :=
     fun c => congrArg Sigma.fst (hobj c)
   refine Lens.ext _ _ hA ?_
   intro c
   apply eq_of_heq
   have hraw :
-      (normalizedComult D ∘ₗ F).toFunB c ≍
-        ((F ◃ₗ F) ∘ₗ normalizedComult C).toFunB c :=
+      (normalizedComul D ∘ₗ F).toFunB c ≍
+        ((F ◃ₗ F) ∘ₗ normalizedComul C).toFunB c :=
     (Sigma.ext_iff.mp (hobj c)).2
   have htransport :
-      (hA c ▸ ((F ◃ₗ F) ∘ₗ normalizedComult C).toFunB c) ≍
-        ((F ◃ₗ F) ∘ₗ normalizedComult C).toFunB c :=
+      (hA c ▸ ((F ◃ₗ F) ∘ₗ normalizedComul C).toFunB c) ≍
+        ((F ◃ₗ F) ∘ₗ normalizedComul C).toFunB c :=
     eqRec_heq_self _ _
   exact hraw.trans htransport.symm
 
@@ -640,9 +648,9 @@ def Hom.ofCategoryLaws (F : Lens C.carrier D.carrier)
     funext direction
     cases direction
     exact mapIdentity c
-  map_comult := by
-    simpa only [normalizedComult_eq] using
-      normalizedComult_natural_of_categoryLaws F mapTarget mapCompose
+  map_comul := by
+    simpa only [normalizedComul_eq] using
+      normalizedComul_natural_of_categoryLaws F mapTarget mapCompose
 
 @[simp]
 theorem Hom.ofCategoryLaws_toLens (F : Lens C.carrier D.carrier)

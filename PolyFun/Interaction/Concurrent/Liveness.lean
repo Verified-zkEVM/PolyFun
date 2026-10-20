@@ -129,7 +129,7 @@ def Admissible
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : ProcessOver.SafetySpec Γ)
     (run : ProcessOver.Run system.toProcess) : Prop :=
-  ProcessOver.Run.AlwaysState system.assumptions run
+  ProcessOver.Run.AlwaysState system.Assumptions run
 
 /-- A run of `system` is safe when the safety predicate holds at every state
 along the run. -/
@@ -137,15 +137,15 @@ def Safe
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : ProcessOver.SafetySpec Γ)
     (run : ProcessOver.Run system.toProcess) : Prop :=
-  ProcessOver.Run.AlwaysState system.safe run
+  ProcessOver.Run.AlwaysState (PFunctor.DynSystem.SafetySpec.Safe system) run
 
 /-- A run starts from an initial state when its first residual process state
-satisfies `system.init`. -/
+satisfies `system.Init`. -/
 def Initial
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : ProcessOver.SafetySpec Γ)
     (run : ProcessOver.Run system.toProcess) : Prop :=
-  system.init run.initial
+  system.Init run.initial
 
 /--
 `Satisfies system fairness property` means:
@@ -170,7 +170,7 @@ theorem alwaysState_of_safe
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (system : ProcessOver.SafetySpec Γ)
     {P : ProcessOver.Run.StatePred system.toProcess}
-    (himp : ∀ p, system.safe p → P p) :
+    (himp : ∀ p, PFunctor.DynSystem.SafetySpec.Safe system p → P p) :
     ∀ {run : ProcessOver.Run system.toProcess},
       Safe system run → ProcessOver.Run.AlwaysState P run := by
   intro run hsafe n
@@ -251,7 +251,7 @@ abbrev Satisfies {Party : Type u} (system : Process.SafetySpec Party)
 
 theorem alwaysState_of_safe {Party : Type u} (system : Process.SafetySpec Party)
     {P : Process.Run.StatePred system.toProcess}
-    (himp : ∀ p, system.safe p → P p) :
+    (himp : ∀ p, PFunctor.DynSystem.SafetySpec.Safe system p → P p) :
     ∀ {run : Process.Run system.toProcess},
       Safe system run → Process.Run.AlwaysState P run :=
   ProcessOver.SafetySpec.alwaysState_of_safe system himp

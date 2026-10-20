@@ -223,7 +223,7 @@ into `Chain`; `Chain.toTypeTree_ofStateChain` shows that flattening it recovers
 by `done` and `extend`, with a formal initial-algebra fold. It is not by itself
 a termination certificate, because `done` is available at every state.
 
-`Path.liftAppend` lifts a type family on the first path to
+`Path.LiftAppend` lifts a type family on the first path to
 the combined path, avoiding `cast` / `Eq.rec` pollution.
 `Strategy.comp` composes strategies along `append`.
 At the explicit-round `Chain.then` boundary, `Chain.thenPathEquiv` and its

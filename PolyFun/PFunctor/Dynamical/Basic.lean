@@ -143,10 +143,10 @@ def id (s : DynSystem S p) : StepRel s s := Eq
 @[simp] theorem id_apply (s : DynSystem S p) (step₁ step₂ : s.Step) :
     id s step₁ step₂ ↔ step₁ = step₂ := Iff.rfl
 
-/-- Relational composition of step relations. -/
+/-- Relational composition of step relations: Mathlib's `Relation.Comp`. -/
 def comp {S₃ : Type u₃} {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem S₃ r}
     (first : StepRel s₁ s₂) (second : StepRel s₂ s₃) : StepRel s₁ s₃ :=
-  fun step₁ step₃ => ∃ step₂, first step₁ step₂ ∧ second step₂ step₃
+  Relation.Comp first second
 
 @[simp] theorem comp_apply {S₃ : Type u₃} {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem S₃ r}
     (first : StepRel s₁ s₂) (second : StepRel s₂ s₃)
@@ -155,32 +155,31 @@ def comp {S₃ : Type u₃} {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem S₃
       ∃ step₂, first step₁ step₂ ∧ second step₂ step₃ := Iff.rfl
 
 @[simp] theorem comp_id (rel : StepRel s₁ s₂) :
-    comp rel (id s₂) = rel := by
-  funext step₁ step₂
-  simp [comp, id]
+    comp rel (id s₂) = rel :=
+  Relation.comp_eq
 
 @[simp] theorem id_comp (rel : StepRel s₁ s₂) :
-    comp (id s₁) rel = rel := by
-  funext step₁ step₂
-  simp [comp, id]
+    comp (id s₁) rel = rel :=
+  Relation.eq_comp
 
 /-- Relational composition of concrete-step relations is associative. -/
 theorem comp_assoc {S₃ : Type u₃} {S₄ : Type u₄}
     {r : PFunctor.{uA₃, uB₃}} {t : PFunctor.{uA₄, uB₄}}
     {s₃ : DynSystem S₃ r} {s₄ : DynSystem S₄ t}
     (first : StepRel s₁ s₂) (second : StepRel s₂ s₃) (third : StepRel s₃ s₄) :
-    comp (comp first second) third = comp first (comp second third) := by
-  funext step₁ step₄
-  grind [comp]
+    comp (comp first second) third = comp first (comp second third) :=
+  Relation.comp_assoc
 
 /-- The permissive relation accepting every pair of concrete steps. -/
-def top : StepRel s₁ s₂ := fun _ _ => True
+@[deprecated "use `⊤`, the top of the lattice of relations" (since := "2026-10-19")]
+abbrev top : StepRel s₁ s₂ := ⊤
 
-@[simp] theorem top_apply (step₁ : s₁.Step) (step₂ : s₂.Step) :
-    (top : StepRel s₁ s₂) step₁ step₂ := trivial
+@[deprecated "use `Pi.top_apply`" (since := "2026-10-19")]
+theorem top_apply (step₁ : s₁.Step) (step₂ : s₂.Step) :
+    (⊤ : StepRel s₁ s₂) step₁ step₂ := trivial
 
-/-- Reverse a step relation by flipping its arguments. -/
-def reverse (rel : StepRel s₁ s₂) : StepRel s₂ s₁ := fun step₂ step₁ => rel step₁ step₂
+/-- Reverse a step relation by flipping its arguments: `flip`. -/
+def reverse (rel : StepRel s₁ s₂) : StepRel s₂ s₁ := flip rel
 
 @[simp] theorem reverse_apply (rel : StepRel s₁ s₂) (step₂ : s₂.Step) (step₁ : s₁.Step) :
     reverse rel step₂ step₁ ↔ rel step₁ step₂ := Iff.rfl
@@ -192,25 +191,26 @@ def reverse (rel : StepRel s₁ s₂) : StepRel s₂ s₁ := fun step₂ step₁
   exact propext eq_comm
 
 @[simp] theorem reverse_top :
-    reverse (top : StepRel s₁ s₂) = (top : StepRel s₂ s₁) := rfl
+    reverse (⊤ : StepRel s₁ s₂) = (⊤ : StepRel s₂ s₁) := rfl
 
 /-- Reversing a relational composite reverses the order of its factors. -/
 theorem reverse_comp {S₃ : Type u₃} {r : PFunctor.{uA₃, uB₃}} {s₃ : DynSystem S₃ r}
     (first : StepRel s₁ s₂) (second : StepRel s₂ s₃) :
-    reverse (comp first second) = comp (reverse second) (reverse first) := by
-  funext step₃ step₁
-  simp [reverse, comp, and_comm]
+    reverse (comp first second) = comp (reverse second) (reverse first) :=
+  Relation.flip_comp
 
 /-- Conjunction of step relations. -/
-def inter (first second : StepRel s₁ s₂) : StepRel s₁ s₂ :=
-  fun step₁ step₂ => first step₁ step₂ ∧ second step₁ step₂
+@[deprecated "use `⊓`, the meet of the lattice of relations" (since := "2026-10-19")]
+abbrev inter (first second : StepRel s₁ s₂) : StepRel s₁ s₂ := first ⊓ second
 
-@[simp] theorem inter_apply (first second : StepRel s₁ s₂)
-    (step₁ : s₁.Step) (step₂ : s₂.Step) :
-    inter first second step₁ step₂ ↔ first step₁ step₂ ∧ second step₁ step₂ := Iff.rfl
+@[deprecated "use `Pi.inf_apply`" (since := "2026-10-19")]
+theorem inter_apply (first second : StepRel s₁ s₂) (step₁ : s₁.Step) (step₂ : s₂.Step) :
+    (first ⊓ second) step₁ step₂ ↔ first step₁ step₂ ∧ second step₁ step₂ := Iff.rfl
 
-@[simp] theorem reverse_inter (first second : StepRel s₁ s₂) :
-    reverse (inter first second) = inter (reverse first) (reverse second) := rfl
+@[simp] theorem reverse_inf (first second : StepRel s₁ s₂) :
+    reverse (first ⊓ second) = reverse first ⊓ reverse second := rfl
+
+@[deprecated (since := "2026-10-19")] alias reverse_inter := reverse_inf
 
 /-- Synchronized concrete steps over a shared interface expose equal positions
 and select equal directions up to transport along that equality. -/
@@ -301,13 +301,6 @@ end DeterministicAutomaton
 picks a position and discards directions, so `Point p ≅ p.A`. It is the data of a
 generalized element of the interface, not enough on its own to close a system. -/
 abbrev Point (p : PFunctor.{uA, uB}) : Type _ := Lens y.{uA, uB} p
-
-/-- A **section** of an interface `p` is a lens `p ⟹ y` (the book's `p ⟹ y`),
-equivalently a dependent section `(a : p.A) → p.B a` choosing a direction at every
-position. Composing a section after a system's interface lens closes the system off
-(Niu–Spivak §4.3.4); see `DynSystem.close`. This is `Lens.enclose p` with the unit's
-universes instantiated at those of `p`. -/
-abbrev Section (p : PFunctor.{uA, uB}) : Type _ := Lens p y.{uA, uB}
 
 /-- The section `p ⟹ y` picking the direction `σ a` at each position `a`. Unpacking
 a `Section p`, the position map is trivial and the direction map is `σ`. -/

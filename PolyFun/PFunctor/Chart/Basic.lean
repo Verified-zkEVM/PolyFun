@@ -88,8 +88,8 @@ def comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunct
   toFunA := c'.toFunA ∘ c.toFunA
   toFunB := fun i => c'.toFunB (c.toFunA i) ∘ c.toFunB i
 
-/-- Infix notation for chart composition `c' ∘c c` -/
-infixl:75 " ∘c " => comp
+/-- Infix notation for chart composition `c' ∘c c`; activate it with `open scoped PFunctor`. -/
+scoped[PFunctor] infixl:75 " ∘c " => PFunctor.Chart.comp
 
 @[simp]
 theorem id_comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (f : Chart P Q) :
@@ -116,23 +116,23 @@ protected structure Equiv (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB
   left_inv : comp invChart toChart = Chart.id P := by simp
   right_inv : comp toChart invChart = Chart.id Q := by simp
 
-/-- Infix notation for chart equivalence `P ≃c Q` -/
-infix:50 " ≃c " => Chart.Equiv
+/-- Infix notation for chart equivalence `P ≃c Q`; activate it with `open scoped PFunctor`. -/
+scoped[PFunctor] infix:50 " ≃c " => PFunctor.Chart.Equiv
 
 namespace Equiv
 
 /-- The identity equivalence on `P`, built from the identity chart in both directions. -/
-@[refl]
+@[refl, simps]
 def refl (P : PFunctor.{uA, uB}) : P ≃c P :=
   ⟨Chart.id P, Chart.id P, rfl, rfl⟩
 
 /-- The inverse equivalence, swapping the forward and backward charts of `e`. -/
-@[symm]
+@[symm, simps]
 def symm {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (e : P ≃c Q) : Q ≃c P :=
   ⟨e.invChart, e.toChart, e.right_inv, e.left_inv⟩
 
 /-- The composite equivalence `P ≃c R` obtained by chaining `e₁ : P ≃c Q` and `e₂ : Q ≃c R`. -/
-@[trans]
+@[trans, simps]
 def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
     (e₁ : P ≃c Q) (e₂ : Q ≃c R) : P ≃c R :=
   ⟨e₂.toChart ∘c e₁.toChart, e₁.invChart ∘c e₂.invChart,
@@ -144,6 +144,49 @@ def trans {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunc
       rw [comp_assoc]
       rw (occs := [2]) [← comp_assoc]
       simp [e₁.right_inv, e₂.right_inv]⟩
+
+/-- Chart equivalences compose in `calc` chains, across independent universes. -/
+instance instTrans :
+    @Trans PFunctor.{uA₁, uB₁} PFunctor.{uA₂, uB₂} PFunctor.{uA₃, uB₃}
+      Chart.Equiv Chart.Equiv Chart.Equiv where
+  trans := Equiv.trans
+
+section Groupoid
+
+variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
+  {S : PFunctor.{uA₄, uB₄}}
+
+/-- A chart equivalence is determined by its forward chart: inverses are unique. -/
+theorem toChart_injective : Function.Injective (toChart : P ≃c Q → Chart P Q) := by
+  intro e f h
+  have hinv : e.invChart = f.invChart := by
+    calc
+      e.invChart = e.invChart ∘c (f.toChart ∘c f.invChart) := by rw [f.right_inv]; rfl
+      _ = (e.invChart ∘c e.toChart) ∘c f.invChart := by rw [h]; rfl
+      _ = f.invChart := by rw [e.left_inv]; rfl
+  exact Equiv.ext h hinv
+
+@[simp] theorem symm_symm (e : P ≃c Q) : e.symm.symm = e := rfl
+
+@[simp] theorem refl_symm : (refl P).symm = refl P := rfl
+
+@[simp] theorem trans_refl (e : P ≃c Q) : e.trans (refl Q) = e := rfl
+
+@[simp] theorem refl_trans (e : P ≃c Q) : (refl P).trans e = e := rfl
+
+theorem trans_assoc (e₁ : P ≃c Q) (e₂ : Q ≃c R) (e₃ : R ≃c S) :
+    (e₁.trans e₂).trans e₃ = e₁.trans (e₂.trans e₃) := rfl
+
+@[simp] theorem symm_trans_self (e : P ≃c Q) : e.symm.trans e = refl Q :=
+  Equiv.ext e.right_inv e.right_inv
+
+@[simp] theorem self_trans_symm (e : P ≃c Q) : e.trans e.symm = refl P :=
+  Equiv.ext e.left_inv e.left_inv
+
+theorem symm_trans (e₁ : P ≃c Q) (e₂ : Q ≃c R) :
+    (e₁.trans e₂).symm = e₂.symm.trans e₁.symm := rfl
+
+end Groupoid
 
 end Equiv
 
@@ -162,7 +205,8 @@ def terminal {P : PFunctor.{uA, uB}} : Chart P y :=
   (fun _ => PUnit.unit) ⇉ (fun _ _ => PUnit.unit)
 
 alias fromZero := initial
-alias toOne := terminal
+
+@[deprecated (since := "2026-10-19")] alias toOne := terminal
 
 /-! ### Coproduct (`+`)
 
@@ -296,17 +340,21 @@ set_option linter.checkUnivs false in
 
 A chart `P → y` is equivalent to a function `(a : P.A) → P.B a → PUnit`,
 i.e. a boundary valuation that picks out a single direction at every
-position. Analogous to `Lens.enclose`. -/
--- `Chart.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
+position. It is the chart analogue of the lens sections `PFunctor.Section`. -/
+-- `Chart.Enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
 -- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
-def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
+def Enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
   Chart P y.{uA₁, uB₁}
+
+set_option linter.checkUnivs false in
+-- The alias keeps `Chart.Enclose`'s independent codomain universes `uA₁`/`uB₁`.
+@[deprecated (since := "2026-10-19")] alias enclose := Enclose
 
 /-! ### Notations for binary operations -/
 
-@[inherit_doc] infixl:75 " ⊎c " => sumMap
-@[inherit_doc] infixl:75 " ⊗c " => tensorMap
-@[inherit_doc] infixl:75 " ×c " => prodMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ⊎c " => PFunctor.Chart.sumMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ⊗c " => PFunctor.Chart.tensorMap
+@[inherit_doc] scoped[PFunctor] infixl:75 " ×c " => PFunctor.Chart.prodMap
 /-- Notation for the copairing `sumPair c₁ c₂` of two charts out of a sum; activate it with
 `open scoped PFunctor.Chart`. -/
 scoped notation "[" c₁ "," c₂ "]c" => sumPair c₁ c₂
@@ -723,7 +771,7 @@ def toChart (e : P ≃ₚ Q) : Chart P Q where
 Every polynomial-functor equivalence yields a chart equivalence: the forward
 chart uses `e.equivA` / `e.equivB`, and the inverse chart uses their symmetric
 counterparts. The proofs of `left_inv` / `right_inv` need the cast
-machinery from `forward_equivB_roundtrip` / `reverse_equivB_roundtrip` because
+machinery from `symm_equivB_equivB` / `equivB_symm_equivB` because
 `e.symm.equivA (e.equivA a)` and `a` are only propositionally equal.
 
 This is the chart analogue of `Equiv.toLensEquiv` and is the standard way to
@@ -743,7 +791,7 @@ theorem symm_toChart_comp_toChart (e : P ≃ₚ Q) :
   refine Chart.ext _ _ (fun a => e.equivA.symm_apply_apply a) (fun a => ?_)
   funext b
   simp only [Chart.comp, Chart.id, toChart, Function.comp_apply]
-  rw [forward_equivB_roundtrip]
+  rw [symm_equivB_equivB]
   exact (eqRec_id_apply_codomain (e.equivA.symm_apply_apply a).symm b).symm
 
 @[simp]
@@ -753,7 +801,7 @@ theorem toChart_comp_symm_toChart (e : P ≃ₚ Q) :
   funext b
   simp only [Chart.comp, Chart.id, toChart, Function.comp_apply]
   change e.equivB (e.equivA.symm a) (e.symm.equivB a b) = _
-  rw [reverse_equivB_roundtrip]
+  rw [equivB_symm_equivB]
   exact (eqRec_id_apply_codomain (e.equivA.apply_symm_apply a).symm b).symm
 
 /-- Convert an equivalence between two polynomial functors to a chart equivalence.
@@ -772,32 +820,39 @@ end Equiv
 /-! ### Sigma equivalences
 
 These are derived from `PFunctor.Equiv.toChartEquiv` applied to the
-corresponding `PFunctor.Equiv` constructions. They mirror the
-`PFunctor.Lens.Equiv.sigma*` family. -/
+corresponding `PFunctor.Equiv` constructions. They mirror the lens equivalences
+`Lens.Equiv.emptySigma`, `Lens.Equiv.punitSigma`, `Lens.Equiv.uniqueSigma` and the
+`Lens.Equiv` sigma distributivity laws. -/
 
 namespace Chart.Equiv
 
 variable {I : Type v}
 
 /-- Sigma of an empty family is the zero functor. -/
-def sigmaEmpty [IsEmpty I] {F : I → PFunctor.{uA, uB}} : sigma F ≃c 0 :=
+def emptySigma [IsEmpty I] {F : I → PFunctor.{uA, uB}} : sigma F ≃c 0 :=
   PFunctor.Equiv.toChartEquiv (PFunctor.Equiv.emptySigma (F := F))
+
+@[deprecated (since := "2026-10-19")] alias sigmaEmpty := emptySigma
 
 /-- Sigma of a `PUnit`-indexed family is equivalent to the functor itself
     (up to `ulift`). -/
-def sigmaUnit {F : PUnit → PFunctor.{uA, uB}} : sigma F ≃c (F PUnit.unit).ulift :=
+def punitSigma {F : PUnit → PFunctor.{uA, uB}} : sigma F ≃c (F PUnit.unit).ulift :=
   PFunctor.Equiv.toChartEquiv
     (PFunctor.Equiv.trans
       (PFunctor.Equiv.punitSigma (F := F))
-      (PFunctor.Equiv.uliftEquiv (P := F PUnit.unit)))
+      (PFunctor.Equiv.ulift (F PUnit.unit)).symm)
+
+@[deprecated (since := "2026-10-19")] alias sigmaUnit := punitSigma
 
 /-- Sigma of a unique-indexed family is equivalent to the default fiber
     (up to `ulift`). -/
-def sigmaOfUnique [Unique I] {F : I → PFunctor.{uA, uB}} : sigma F ≃c (F default).ulift :=
+def uniqueSigma [Unique I] {F : I → PFunctor.{uA, uB}} : sigma F ≃c (F default).ulift :=
   PFunctor.Equiv.toChartEquiv
     (PFunctor.Equiv.trans
       (PFunctor.Equiv.uniqueSigma (F := F))
-      (PFunctor.Equiv.uliftEquiv (P := F default)))
+      (PFunctor.Equiv.ulift (F default)).symm)
+
+@[deprecated (since := "2026-10-19")] alias sigmaOfUnique := uniqueSigma
 
 /-- Left distributivity of polynomial product over sigma. -/
 def prodSigmaDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
@@ -825,10 +880,10 @@ def sigmaTensorDistrib {P : PFunctor.{uA₂, uB₂}} {F : I → PFunctor.{uA₁,
 
 `piMap` lives in the operations section, but unlike lenses, charts admit
 no `piForall` (Pi-elimination requires direction-contravariance). What we
-get cleanly here is `piUnit` and `piZero`. -/
+get cleanly here is `piPUnit` and `piZero`. -/
 
 /-- Pi over a `PUnit`-indexed family is equivalent to the functor itself. -/
-def piUnit {P : PFunctor.{uA, uB}} : pi (fun (_ : PUnit) => P) ≃c P where
+def piPUnit {P : PFunctor.{uA, uB}} : pi (fun (_ : PUnit) => P) ≃c P where
   toChart := (fun f => f PUnit.unit) ⇉ (fun _ s => s.2)
   invChart := (fun pa _ => pa) ⇉ (fun _ pb => ⟨PUnit.unit, pb⟩)
   left_inv := by
@@ -839,6 +894,8 @@ def piUnit {P : PFunctor.{uA, uB}} : pi (fun (_ : PUnit) => P) ≃c P where
     refine Chart.ext _ _ ?_ ?_
     · intro _; rfl
     · intro _; funext _; rfl
+
+@[deprecated (since := "2026-10-19")] alias piUnit := piPUnit
 
 /-- Pi of a family of zero functors over an inhabited type is the zero functor. -/
 def piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0) :

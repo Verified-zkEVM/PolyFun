@@ -87,10 +87,62 @@ In particular:
 - **Mathematical scope:** check that a categorical name, paper claim or complexity
   label matches the actual objects, operations and laws. Add a boundary example
   when it refutes an overclaim; strengthen the interface only for a real consumer.
+- **Universe generality:** a Mathlib or CSLib structure that fixes universes PolyFun keeps
+  independent enters as a bridge at the universes where the two coincide, never as a
+  replacement. For example, `LensCat.vertical` restates `Lens.IsVertical` on one universe pair,
+  and `Comonoid.{uA, uB}` corresponds to categories whose objects and arrows lie in any two
+  universes, whereas `Comon CompCat.{u, v}` forces positions in `max u v`. A refactor that reuses
+  an upstream lemma must leave each touched signature at least as universe-general: compare
+  `#check @name` under `set_option pp.universes true` before and after. Typeclass
+  hypotheses count too: CSLib's `IsMonadHom` preserves `<$>` and `<*>`, which needs lawful
+  monads, so `FreeM.liftM_natural`, which holds for any morphism preserving `pure` and `bind`,
+  keeps its own proof.
+- **Equivalence-like structures:** give `refl`, `symm` and `trans` `simps` projections and the
+  `refl`/`symm`/`trans` attributes, provide a `Trans` instance for `calc`, and keep `cast` and
+  `▸` out of statements where a fiber, subtype or `Equiv.cast` formulation exists.
 - **Compatibility:** exercise ordinary imports, independent universes and relevant
   downstream semantics. Qualitative reachability must not choose VCVio's probability
   or WP interpretation implicitly. Check the pinned API separately from roadmap
   proposals and newer upstream source.
+
+## Naming
+
+Names follow
+[Mathlib's naming conventions](https://leanprover-community.github.io/contribute/naming.html):
+a theorem name describes its conclusion with the operands in the order they
+appear, and a function returning a `Prop` or a `Type` is UpperCamelCase.
+Polynomial objects shared with cslib keep cslib's names: `monomial`, `C`,
+`linear`, `purePower`, `y`, `add`, `prod`, `FreeM.lift`, `liftBind`, `liftM`
+and `foldFreeM`.
+
+Where the terminology of Niu and Spivak's book
+([NS24](../../REFERENCES.md#ns24--niu-and-spivak-polynomial-functors)) differs
+from Mathlib's, the name follows Mathlib and the docstring cites the book. The
+book's representable polynomials are `IsPurePower`, for example, because
+Mathlib's `Functor.IsRepresentable` is about contravariant functors. Three
+families of names are fixed:
+
+- hom-set equivalences are `Lens.from…Equiv` and `Lens.to…Equiv`;
+- an isomorphism constructor from an equivalence is `Carrier.Iso.mk`;
+- comonoid and monoid laws take the field names of Mathlib's `ComonObj` and
+  `MonObj`: `counit_comul`, `comul_counit` and `comul_assoc`, and `one`,
+  `one_mul`, `mul_one` and `mul_assoc`. A field or lemma whose name would
+  shadow a root lemma such as `one_mul` or `map_one` is `protected`.
+
+Renaming a declaration that is on `main` leaves
+`@[deprecated (since := "YYYY-MM-DD")] alias oldName := newName` beside the new
+declaration for one release cycle. Two names that trade places cannot keep an
+alias, so a swap first checks that downstream consumers use neither name. A
+renamed structure field keeps an alias for its projection only: `where` and
+`{ field := … }` syntax cannot use an alias, so a field rename first checks
+that no downstream consumer builds the structure with the old field name.
+
+`CofreeP` and `FreeP`, like cslib's `C`, are documented exceptions to the case
+rule: they keep their capitalization because they act as notation for the
+book's 𝔠_p and 𝔪_p.
+
+Notations for polynomial, lens and chart operations are `scoped[PFunctor]`, never
+global, so they cannot collide with Mathlib's.
 
 ## Canonical Carriers
 
@@ -132,7 +184,9 @@ A merge-ready change must have:
   member (inhabitation), something provably outside it, such as the counting
   separation (discrimination), and a model in which the assumption is provable
   (hypothesis consistency);
-- Mathlib-style names, intrinsic docstrings, and lint-clean simp declarations;
+- names that follow the [naming rules](#naming), with deprecated aliases for
+  renamed public names;
+- intrinsic docstrings and lint-clean simp declarations;
 - any new scripts justified by a recurring library workflow under the
   [repository script policy](../../CONTRIBUTING.md#repository-scripts);
 - no new `sorry`, `admit`, unsafe proof shortcut, or non-standard axiom;

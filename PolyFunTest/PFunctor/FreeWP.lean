@@ -51,7 +51,7 @@ example : wpFold (OpSpec.angelic coinP) flipTwo (fun out => out = true) := by
 def chooseTrueSpec : OpSpec coinP Prop :=
   fun _ continuation => continuation true
 
-theorem chooseTrueSpec_mono : chooseTrueSpec.Mono :=
+theorem chooseTrueSpec_mono : chooseTrueSpec.Monotone :=
   fun _ _ _ h => h true
 
 /-- `wpFold` preserves the answer-dependent continuation of both queries. -/

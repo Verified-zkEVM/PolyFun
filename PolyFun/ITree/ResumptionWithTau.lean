@@ -136,7 +136,7 @@ theorem dest_toResumptionWithTau (tree : _root_.ITree P α) :
           have heq := eq_pure_of_dest h
           subst source
           simp only [bind_pure_left, toResumptionWithTau_pure,
-            PFunctor.Resumption.bind_pure_left]
+            PFunctor.Resumption.pure_bind]
           rcases hn : PFunctor.Resumption.dest (toResumptionWithTau (next value)) with
             result | ⟨a, children⟩
           · exact .pure result hn hn

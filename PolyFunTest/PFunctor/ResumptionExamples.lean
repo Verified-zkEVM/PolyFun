@@ -69,7 +69,7 @@ example (position : p.A) :
 
 example {α : Type uα} (value : α) (k : α → Resumption p β) :
     bind (pure value) k = k value :=
-  bind_pure_left value k
+  pure_bind value k
 
 example {α : Type uα} (position : p.A)
     (next : p.B position → Resumption p α) (k : α → Resumption p β) :
@@ -79,7 +79,7 @@ example {α : Type uα} (position : p.A)
 
 example {α : Type uα} (computation : Resumption p α) :
     bind computation pure = computation :=
-  bind_pure_right computation
+  bind_pure computation
 
 example {α : Type uα} {γ : Type uγ} (computation : Resumption p α)
     (k : α → Resumption p β) (k' : β → Resumption p γ) :

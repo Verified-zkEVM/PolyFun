@@ -32,7 +32,7 @@ namespace FreeM
 /-- A right fold whose every step asks one fixed query has `rounds` as a
 branchwise query upper bound. The bound need not be minimal when a reachable
 query has no possible answer. -/
-theorem isTotalRollBound_foldr_lift (position : p.A)
+theorem isTotalRollBound_foldr (position : p.A)
     (step : state → ℕ → p.B position → state)
     (readout : state → output) (rounds : ℕ) (accumulator : state) :
     (FreeM.foldr position step readout rounds accumulator).IsTotalRollBound rounds := by
@@ -44,6 +44,8 @@ theorem isTotalRollBound_foldr_lift (position : p.A)
       rw [FreeM.foldr_succ]
       simp only [← FreeM.liftBind_eq]
       exact ⟨Nat.succ_pos rounds, fun answer ↦ induction (step accumulator rounds answer)⟩
+
+@[deprecated (since := "2026-10-19")] alias isTotalRollBound_foldr_lift := isTotalRollBound_foldr
 
 end FreeM
 

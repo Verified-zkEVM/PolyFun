@@ -21,9 +21,9 @@ P ∥ Q ≃ₚ (P + Q) + (P ⊗ Q).
 ```
 
 The zero polynomial is the unit, and explicit polynomial equivalences give
-symmetry and associativity. The implementation follows the existing
-`PFunctor.sum`/handler convention that the two interfaces share a direction
-universe; their position universes remain independent.
+symmetry and associativity. The implementation follows the convention of the
+sum `P + Q` (`PFunctor.add`) and its handlers that the two interfaces share a
+direction universe; their position universes remain independent.
 
 ## Displays and programs
 
