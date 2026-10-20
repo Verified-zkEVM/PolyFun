@@ -109,7 +109,12 @@ def sum [Functor m] (f : Stateful m S P) (g : Stateful m T Q) :
   | .inl a => StateT.mk fun st => Prod.map _root_.id (·, st.2) <$> (f a).run st.1
   | .inr b => StateT.mk fun st => Prod.map _root_.id (st.1, ·) <$> (g b).run st.2
 
-@[deprecated (since := "2026-10-19")] alias parallel := sum
+/-- Run two stateful handlers on the two summands with a product state. -/
+@[deprecated sum (since := "2026-10-19")]
+def parallel [Functor m] (f : Stateful m S P) (g : Stateful m T Q) :
+    Stateful m (S × T) (P + Q : PFunctor.{max uA uA', u})
+  | .inl a => StateT.mk fun st => Prod.map _root_.id (·, st.2) <$> (f a).run st.1
+  | .inr b => StateT.mk fun st => Prod.map _root_.id (st.1, ·) <$> (g b).run st.2
 
 /-- The sum handler answers a left request with the left handler on the first state
 component and leaves the second component unchanged. -/
@@ -117,7 +122,11 @@ component and leaves the second component unchanged. -/
     (a : P.A) (st : S × T) :
     (sum f g (.inl a)).run st = Prod.map _root_.id (·, st.2) <$> (f a).run st.1 := rfl
 
-@[deprecated (since := "2026-10-19")] alias parallel_inl_run := sum_inl_run
+/-- The left handler updates the first state component. -/
+@[simp, deprecated sum_inl_run +typeChanged (since := "2026-10-19")]
+theorem parallel_inl_run [Functor m] (f : Stateful m S P) (g : Stateful m T Q)
+    (a : P.A) (st : S × T) :
+    (parallel f g (.inl a)).run st = Prod.map _root_.id (·, st.2) <$> (f a).run st.1 := rfl
 
 /-- The sum handler answers a right request with the right handler on the second state
 component and leaves the first component unchanged. -/
@@ -125,7 +134,18 @@ component and leaves the first component unchanged. -/
     (b : Q.A) (st : S × T) :
     (sum f g (.inr b)).run st = Prod.map _root_.id (st.1, ·) <$> (g b).run st.2 := rfl
 
-@[deprecated (since := "2026-10-19")] alias parallel_inr_run := sum_inr_run
+/-- The right handler updates the second state component. -/
+@[simp, deprecated sum_inr_run +typeChanged (since := "2026-10-19")]
+theorem parallel_inr_run [Functor m] (f : Stateful m S P) (g : Stateful m T Q)
+    (b : Q.A) (st : S × T) :
+    (parallel f g (.inr b)).run st = Prod.map _root_.id (st.1, ·) <$> (g b).run st.2 := rfl
+
+/-- The deprecated `parallel` is `sum`. -/
+@[deprecated sum +typeChanged (since := "2026-10-19")]
+theorem parallel_eq_sum [Functor m] (f : Stateful m S P) (g : Stateful m T Q) :
+    parallel f g = sum f g := by
+  funext x
+  cases x <;> rfl
 
 /-- Run an indexed family of stateful handlers on the indexed sum, each member on its own
 component of a dependent product state. -/

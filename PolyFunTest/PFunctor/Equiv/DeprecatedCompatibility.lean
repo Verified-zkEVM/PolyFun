@@ -96,3 +96,25 @@ example (P : PFunctor.{0, 0}) (a : (X ⊗ P).A) :
   xTensor_equivB.{0, 0, 0, 0} P a
 
 end PFunctor.Equiv
+
+section IsEmptySigma
+
+set_option linter.deprecated false
+
+universe u v
+
+-- Old universe arity and named instance binder remain available without an aggregate import.
+example {α : Sort u} {β : α → Sort v} (inst : IsEmpty α) : IsEmpty ((a : α) ×' β a) :=
+  instIsEmptySigma.{u, v} (α := α) (β := β) (inst := inst)
+
+-- The old declaration can still supply the local instance used by instance search.
+example {α : Sort u} {β : α → Sort v} (inst : IsEmpty α) : IsEmpty ((a : α) ×' β a) := by
+  let := @instIsEmptySigma.{u, v} α β inst
+  infer_instance
+
+-- Old instance registration remains usable when the preferred instance is locally removed.
+attribute [-instance] PSigma.isEmpty_left in
+example {α : Sort u} {β : α → Sort v} [IsEmpty α] : IsEmpty ((a : α) ×' β a) :=
+  inferInstance
+
+end IsEmptySigma
