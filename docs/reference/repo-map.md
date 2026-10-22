@@ -63,6 +63,15 @@ explicit size, time and description comparisons. `Reference.lean` contains unres
 arithmetic models. The concrete unary pure-family bridge lives in
 `ComplexityBackends/CslibSingleTape/Uniform.lean`, outside the generic umbrella.
 
+Indexed command substitution lives in
+[`IPFunctor/Free/Substitution.lean`](../../PolyFun/IPFunctor/Free/Substitution.lean).
+`IFreeM.substitute` builds on the indexed fold, bind, and lens APIs. Its charge
+transport laws and finite sums of indexed charges live in
+[the bound module](../../PolyFun/IPFunctor/Free/Bound/Substitution.lean), which
+imports Mathlib's finite-sum API. Scaling remains in `IPFunctor/Free/Bound.lean`.
+See the guide to
+[command substitution](../guides/ipfunctor.md#command-substitution-and-combined-budgets).
+
 ## Conceptual layering
 
 Arrows mean “is used by”; they do not assert equivalence of the objects.
