@@ -41,13 +41,15 @@ supplies the expectation reading of its oracle computations.
 | `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWPOf` / `transportWPMonadOf` (along cslib's `IsMonadHom`) and the bundled `transportWP` / `transportWPMonad`: pulling a core `WPMonad` back along a monad morphism, preserving exactness |
 | `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.wpMonadOf`, the interpretation of `WriterT` with explicit empty and append operations on the log-indexed carrier `ω → Pred`, and its multiplicative specialization, scoped under `WriterT.MonoidWP`; the equations `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, and `wp_run_eq`; the `tell` and `monadLift` entailments behind the `@[spec]` rules; and exactness over an exact base (`exactWPMonad_wpMonadOf`, scoped `WriterT.MonoidWP.instExactWPMonad`) |
 | `PolyFun/Control/Monad/Hom/Loops.lean` | A monad morphism between lawful monads commutes with `forIn'`/`forIn`/`forM`/`foldlM`/`mapM` and with `forIn` over `PureForIn` containers (`@[simp, grind =]`), through `MonadHom.isMonadHom` and cslib's `IsMonadHom.map_list*` |
-| `PolyFun/Control/Do/Spec.lean` | Tactic tier: the `@[spec]` rules listed below, for list loops, `try … catch`, sequencing, `WriterT`, `OptionT`, and the transformers' constructors, lifts, and runners |
+| `PolyFun/Control/Do/Spec.lean` | Tactic tier: the `@[spec]` rules listed below, for list loops, `Fin.mOfFn`, `try … catch`, sequencing, `WriterT`, `OptionT`, and the transformers' constructors, lifts, and runners |
 
 `PolyFun/Control/Do/Spec.lean` adds these rules to core's `@[spec]` catalogue, in core's
 namespace `Std.WP`:
 
 - `Spec.forM_list`, for the one list loop that core does not specify, and `Spec.mapM_list`,
   with an invariant over the elements consumed, the elements remaining, and the outputs so far.
+- `Spec.mOfFn_fin`, for `Fin.mOfFn` (`ToCslib/Data/Fin/MOfFn.lean`), with an invariant
+  `MOfFnInvariant` over the results collected so far, indexed by their number.
 - The registration of core's `Spec.tryCatch_MonadExcept`, the rule for
   `MonadExcept.tryCatch`, which `try … catch` elaborates to. Core states this rule but does not
   tag it.
@@ -232,6 +234,7 @@ with no PolyFun proof.
 | `for` over `List`/`Array`/ranges/`Option`/`Vector` | free (`Spec.forIn'_list`, `forIn_pure` + `PureForIn`) | `Support/Loops.lean` | via the instance | `Hom/Loops.lean` | via `OpSpec.toWPMonad` (`Free/WP/Upstream.lean`) |
 | `forM`, `foldlM` | `Spec.foldlM_list` free, `Spec.forM_list` in `Do/Spec.lean` | `Support/Loops.lean` | via the instance | `Hom/Loops.lean` | — |
 | `mapM` | `Spec.mapM_list` in `Do/Spec.lean`, with an invariant over the elements consumed, the elements remaining and the outputs so far | — | — | `Hom/Loops.lean` | — |
+| `Fin.mOfFn` | `Spec.mOfFn_fin` in `Do/Spec.lean`, with an invariant over the results collected so far | — | — | — | — |
 | early `return`/`break`/`continue` | `Invariant.withEarlyReturnNewDo` (core) | via the instance | — | — | — |
 | `throw`/`tryCatch` on `ExceptT`/`OptionT` | core's lifted instances (`Spec.throw_MonadExcept`, `Spec.tryCatch_ExceptT`), plus `Spec.tryCatch_MonadExcept` registered in `Do/Spec.lean` for the `try … catch` elaboration | via the instance | core's lifts, exact over an exact base | `ExceptT.mapHom`/`OptionT.mapHom` | — |
 | `get`/`set`/`read` | core's lifted instances | `Support/Indexed.lean` (`supportFrom`, `supportAt`) | core's lifts, exact over an exact base | `StateT.mapHom`/`ReaderT.mapHom` | — |

@@ -14,11 +14,12 @@ public import Mathlib.Data.ENat.Lattice
 
 The rules of `PolyFun.Control.Do.Spec` for `StateT.mk`, `StateT.lift`, running a `StateT` with
 the state discarded, `OptionT.mk`, `ExceptT.mk`, `ExceptT.lift`, running an `OptionT` or `ExceptT`
-into a postcondition of the returned option or result, `List.mapM` with a loop invariant, and the
-sequence combinators `<*` and `*>`, each over core's `Prop` reading of `Id`, where the matcher
-applies the rule to the constructor, lift or runner before `vcgen` looks inside; and `guard` under
-a lattice-valued reading of a deterministic monad, where `Spec.guard_OptionT_iInf` applies in
-place of the `Prop` rule.
+into a postcondition of the returned option or result, `List.mapM` and `Fin.mOfFn` with a loop
+invariant, and the sequence combinators `<*` and `*>`, each over core's `Prop` reading of `Id`,
+where the matcher applies the rule to the constructor, lift or runner before `vcgen` looks inside;
+`Fin.mOfFn` over `StateT`, with a state-passing invariant; and `guard` under a lattice-valued
+reading of a deterministic monad, where `Spec.guard_OptionT_iInf` applies in place of the `Prop`
+rule.
 -/
 
 public section
@@ -74,6 +75,31 @@ example : ⦃ True ⦄ ([1, 2, 3].mapM fun n => (pure (n + 1) : Id Nat))
     ⦃ fun bs => bs.length = 3 ⦄ := by
   vcgen invariants
     · fun pref _ bs => bs.length = pref.length
+  all_goals simp_all
+
+/- `Fin.mOfFn` with an invariant on the results collected so far: after `k` steps, the result at
+each index is twice that index. -/
+example (n : Nat) : ⦃ True ⦄ (Fin.mOfFn n fun i => (pure (2 * i.val) : Id Nat))
+    ⦃ fun v => ∀ i, v i = 2 * i.val ⦄ := by
+  vcgen invariants
+    · fun _ v => ∀ i, v i = 2 * i.val
+  · exact Fin.elim0 ‹_›
+  · rename_i k hk v hv i
+    induction i using Fin.lastCases with
+    | last => simp
+    | cast i => simpa using hv i
+
+/-- A `Fin.mOfFn` family whose steps each advance a counter. -/
+def countSteps (n : Nat) : StateT Nat Id (Fin n → Nat) :=
+  Fin.mOfFn n fun i => do
+    modify (· + 1)
+    pure i.val
+
+/- Over `StateT`, the invariant is state-passing: after `k` steps the counter has advanced by
+`k`. -/
+example (n : Nat) : ⦃ fun s => s = 0 ⦄ countSteps n ⦃ fun _ s => s = n ⦄ := by
+  vcgen [countSteps] invariants
+    · fun k _ s => s = k
   all_goals simp_all
 
 /- The sequence combinators keep the first, respectively the second, value. -/
