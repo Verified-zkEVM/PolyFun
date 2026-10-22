@@ -95,7 +95,7 @@ it does not preserve fuel counts or timing observations. Service calls,
 primitive queries, and administrative transitions are distinct costs.
 
 The [one-query lens bridge](../../PolyFun/PFunctor/Handler/Machine/StateLens.lean)
-proves `StateLens.dispatch_weakBisim_wrapState`: dispatch of `L.toStateful`
+proves `StatefulLens.dispatch_weakBisim_wrapState`: dispatch of `L.toStateful`
 and the existing direct `wrapState` have the same weak behavior and final shared
 state, even for an infinite caller. The direct wrapper uses one primitive
 transition per call; the dispatcher additionally enters and returns from each

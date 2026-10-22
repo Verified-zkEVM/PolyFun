@@ -23,7 +23,7 @@ public section
 
 universe u
 
-namespace PFunctor.StateLens
+namespace PFunctor.StatefulLens
 
 open DynSystem ITree
 
@@ -32,7 +32,7 @@ variable {P Q : PFunctor.{u, u}} {S A B : Type u}
 /-- Dispatching the one-query lens handler and wrapping the caller directly have the
 same weak behavior, including shared final state and divergence. Dispatcher entry
 and return steps are silent; this theorem does not equate their clocks. -/
-theorem dispatch_weakBisim_wrapState (L : StateLens P Q S) (caller : DynComputation P A B)
+theorem dispatch_weakBisim_wrapState (L : StatefulLens P Q S) (caller : DynComputation P A B)
     (input : A) (service : S) :
     WeakBisim (ITree.ofResumptionWithTau
       (((MachineHandler.ofFreeM L.toStateful).dispatch caller).denote (input, service)))
@@ -69,7 +69,7 @@ theorem dispatch_weakBisim_wrapState (L : StateLens P Q S) (caller : DynComputat
 /-- Every finite direct-wrapper prefix has a dispatcher prefix with the same endpoint
 and exactly three transitions per query: entry, primitive answer, and return.
 No terminal-state assumption is required, so the bound also covers continuing callers. -/
-theorem exists_dispatchTrace (L : StateLens P Q S) (caller : DynComputation P A B)
+theorem exists_dispatchTrace (L : StatefulLens P Q S) (caller : DynComputation P A B)
     {start finish : caller.State × S}
     (trace : (caller.wrapState L).ExecutionTrace start finish) :
     ∃ out : ((MachineHandler.ofFreeM L.toStateful).dispatch caller).ExecutionTrace
@@ -116,8 +116,8 @@ theorem exists_dispatchTrace (L : StateLens P Q S) (caller : DynComputation P A 
       rw [h.dispatchStep_handler_pure caller a hreturn]
       simp only [pending, DynComputation.Pending.resume_ofView]
     exact ⟨.query hin PUnit.unit (.query hbody answer (.query hout PUnit.unit slow)), by
-      simp only [DynComputation.ExecutionTrace.length_query, hslow]
+      change slow.length + 1 + 1 + 1 = 3 * (tail.length + 1)
       omega⟩
 
 
-end PFunctor.StateLens
+end PFunctor.StatefulLens

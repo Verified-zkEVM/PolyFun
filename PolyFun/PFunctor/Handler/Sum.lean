@@ -128,12 +128,6 @@ theorem liftM_sum_lift_inr [LawfulMonad m] (f : Handler m P) (g : Handler m Q) (
     (FreeM.lift (P := (P + Q : PFunctor.{max uA₁ uA₂, u})) (.inr b)).liftM (sum f g) = g b := by
   simp
 
-end LawfulMonad
-
-section Monad
-
-variable [Monad m] {α : Type u}
-
 /-! ### Relabelled programs
 
 A program over one summand, relabelled into the sum along `Lens.inl` or `Lens.inr`, is

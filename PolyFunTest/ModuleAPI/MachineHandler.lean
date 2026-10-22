@@ -57,14 +57,14 @@ example {P Q : PFunctor.{1, 1}} {S A B : Type 1} {W : Type 2} [Monoid W]
   h.accumulate_liftHandlerTrace caller observe pending trace
 
 example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
-    (L : StateLens P Q S) (caller : DynComputation.{1} P A B) (input : A) (service : S) :
+    (L : StatefulLens P Q S) (caller : DynComputation.{1} P A B) (input : A) (service : S) :
     ITree.WeakBisim (ITree.ofResumptionWithTau
       (((MachineHandler.ofFreeM L.toStateful).dispatch caller).denote (input, service)))
       (((caller.wrapState L).denote (input, service)).toITree) :=
   L.dispatch_weakBisim_wrapState caller input service
 
 example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
-    (L : StateLens P Q S) (caller : DynComputation.{1} P A B)
+    (L : StatefulLens P Q S) (caller : DynComputation.{1} P A B)
     {start finish : caller.State × S}
     (trace : (caller.wrapState L).ExecutionTrace start finish) :
     ∃ out : ((MachineHandler.ofFreeM L.toStateful).dispatch caller).ExecutionTrace
