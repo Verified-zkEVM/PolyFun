@@ -10,6 +10,7 @@ import Examples.Tutorials.Requests
 import Examples.Tutorials.Machines
 import Examples.Tutorials.IndexedPrograms
 import Examples.Tutorials.InteractionTrees
+import PolyFun.PFunctor.Handler.Sum
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess
 import PolyFun.Interaction.Execution.RequestNetwork
@@ -51,6 +52,14 @@ example (effect : PFunctor.{0, 0}) (boundary : PortBoundary) :
     (Execution.ReactiveProcess.signature effect boundary).A := .tick
 
 example : Execution.RequestNetwork.Activation Unit := .deliver
+
+-- An ordinary import across a Lake package boundary: the coproduct injection law needs only
+-- `Monad`.
+example {P Q : PFunctor.{0, 0}} {m : Type → Type} [Monad m]
+    (left : PFunctor.Handler m P) (right : PFunctor.Handler m Q)
+    (program : PFunctor.FreeM P Nat) :
+    (program.mapLens PFunctor.Lens.inl).liftM (PFunctor.Handler.sum left right) =
+      program.liftM left := PFunctor.Handler.liftM_sum_mapLens_inl left right program
 
 example (T : Open.OpenTheory) (Δ : PortBoundary) (system : T.Obj Δ) :
     Open.Emulates system system (Open.Observation.eq T) :=
