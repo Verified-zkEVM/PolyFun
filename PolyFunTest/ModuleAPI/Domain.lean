@@ -30,7 +30,7 @@ example {P : PFunctor.{uA, uB}} {α : Type uα} {D : Type uD}
     (ret : α → D) (alg : PFunctor.Resumption.ContinuousAlgebra P D) :
     PFunctor.Resumption.denote ret alg =
       ωSup (PFunctor.Resumption.truncationChain ret alg) :=
-  PFunctor.Resumption.denote_eq_sup_truncations ret alg
+  PFunctor.Resumption.denote_eq_ωSup ret alg
 
 example {P : PFunctor.{uA, uB}} {α : Type uα} {D : Type uD}
     [OmegaCompletePartialOrder D] [OrderBot D]
