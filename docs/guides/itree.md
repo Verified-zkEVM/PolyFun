@@ -260,6 +260,12 @@ operator, `denote_iter_eq_fix` identifies the existing executable iteration's
 meaning with its least fixed point. These rules use the same `ITree.iter` and
 continuous algebra as the substitution and weak-bisimulation laws.
 
+[`Interp/Stateful`](../../PolyFun/ITree/Interp/Stateful.lean) exposes exact
+`StateT` loop-body and `interp_run_*` equations when the target is another
+interaction tree. A source silent step stays silent, and a service query runs
+once before a silent guard enters its continuation with the updated private
+state. The target operation and answer universes are independent of the source universe.
+
 Weak equivalence does not identify clocks: a return leaf and one silent step
 followed by that leaf are weakly equivalent, but their exact explicit-tau
 resumption truncations differ at zero fuel. The ordinary-import continuous
