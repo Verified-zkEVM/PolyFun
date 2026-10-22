@@ -16,6 +16,9 @@ lake env lean Examples/Tutorials/Requests.lean
 | [Parallel reports](Tutorials/ParallelReports.lean) | Independent sources and explicit joint-request interpretation order |
 | [Versioned requests](Tutorials/VersionedRequests.lean) | Routed clients, retained traffic, and stale-write rejection |
 | [Update policies](Tutorials/UpdatePolicies.lean) | All-response safety, allowed answers, and why safety is not progress |
+| [Reviewable workflows](Tutorials/ReviewableWorkflows.lean) | Edit approval, source metadata, dependent certificates, and cursor navigation |
+| [Fair work queues](Tutorials/FairWorkQueues.lean) | Fair service drains finite backlogs; valid executions can still starve |
+| [Bounded controller](Tutorials/BoundedController.lean) | Two worker slots, finite-state realizability, and equivalent representations |
 
 Use ordinary imports such as `import Examples.Tutorials.Requests`.
 The Lake target is `PolyFunExamples`, so it can coexist with downstream

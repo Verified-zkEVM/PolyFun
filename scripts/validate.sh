@@ -75,6 +75,8 @@ if (( run_lint )); then
     Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
     Examples.Tutorials.InteractionTrees Examples.Tutorials.ParallelReports \
     Examples.Tutorials.VersionedRequests Examples.Tutorials.UpdatePolicies \
+    Examples.Tutorials.ReviewableWorkflows Examples.Tutorials.FairWorkQueues \
+    Examples.Tutorials.BoundedController \
     Examples.Parliament PolyFunParliamentMain
 fi
 
@@ -105,6 +107,8 @@ if (( run_axioms )); then
     --root Examples.Tutorials.IndexedPrograms --root Examples.Tutorials.InteractionTrees \
     --root Examples.Tutorials.ParallelReports --root Examples.Tutorials.VersionedRequests \
     --root Examples.Tutorials.UpdatePolicies \
+    --root Examples.Tutorials.ReviewableWorkflows --root Examples.Tutorials.FairWorkQueues \
+    --root Examples.Tutorials.BoundedController \
     --root Examples.Parliament \
     --root PolyFunParliamentMain --check
 fi
