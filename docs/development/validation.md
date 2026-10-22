@@ -28,6 +28,12 @@ arrays stay empty. `--update-baseline` refuses to record taint and is only
 useful after removing all debt. Do not introduce `sorry`, `admit`, or
 non-standard axioms to finished work.
 
+The report written with `lake exe polyfun-axiomsweep --out FILE` also carries
+`sorryGraph`: every declaration in the `sorryAx` closure, with its kind, its
+elaborated statement, whether it uses `sorryAx` directly, and its tainted kernel
+dependencies, internal auxiliaries included. Downstream projects read it to
+trace inherited proof obligations; PolyFun's own `--check` still rejects them.
+
 ## New or moved source files
 
 Stage additions, deletions, and renames before generating the relevant umbrella:
