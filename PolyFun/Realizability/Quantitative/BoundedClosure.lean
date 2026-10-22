@@ -236,7 +236,8 @@ query contract verified for `R` transfers verbatim to the transported trace; the
     (code : Q.Realizer inputRep bd.input f) (allows : ∀ position, p.B position → Prop)
     {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
     (trace.toPrecomp R code).Conforms allows ↔ trace.Conforms allows := by
-  induction trace <;> simp [toPrecomp, Conforms, *]
+  induction trace <;>
+    simp_all [toPrecomp, Conforms, DynComputation.ExecutionTrace.Conforms, nil, query]
 
 /-- Forgetting the changed initialization of an input-precomposed trace preserves conformance, so a
 query contract verified for `R` transfers verbatim to traces of `R.precomp code`; the companion
@@ -273,7 +274,8 @@ initialization and keeps the visible query-answer steps in bijection. -/
 @[simp] theorem length_toPrecomp (R : QuantitativeRealization Q bd)
     (code : Q.Realizer inputRep bd.input f) {start finish : R.machine.State}
     (trace : R.ExecutionTrace start finish) : (trace.toPrecomp R code).length = trace.length := by
-  induction trace <;> simp [toPrecomp, length, *]
+  induction trace <;>
+    simp_all [toPrecomp, length, DynComputation.ExecutionTrace.length, nil, query]
 
 end QuantitativeRealization.ExecutionTrace
 
@@ -511,7 +513,8 @@ states the same for the second-phase embedding. -/
     (R₂ : QuantitativeRealization Q (bd.mid outRep)) (allows : ∀ position, p.B position → Prop)
     {start finish : R₁.machine.State} (trace : R₁.ExecutionTrace start finish) :
     (trace.toSeqCompLeft R₁ R₂).Conforms allows ↔ trace.Conforms allows := by
-  induction trace <;> simp [toSeqCompLeft, Conforms, *]
+  induction trace <;>
+    simp_all [toSeqCompLeft, Conforms, DynComputation.ExecutionTrace.Conforms, nil, query]
 
 /-- Embedding a second-phase trace on the `Sum.inr` side of a sequential composition leaves its
 query contract unchanged: the composite issues exactly the queries of `trace`, so `allows` neither
@@ -520,7 +523,8 @@ gains nor discharges an obligation. `conforms_toSeqCompLeft` is the first-phase 
     (R₂ : QuantitativeRealization Q (bd.mid outRep)) (allows : ∀ position, p.B position → Prop)
     {start finish : R₂.machine.State} (trace : R₂.ExecutionTrace start finish) :
     (trace.toSeqCompRight R₁ R₂).Conforms allows ↔ trace.Conforms allows := by
-  induction trace <;> simp [toSeqCompRight, Conforms, *]
+  induction trace <;>
+    simp_all [toSeqCompRight, Conforms, DynComputation.ExecutionTrace.Conforms, nil, query]
 
 end QuantitativeRealization.ExecutionTrace
 
@@ -778,7 +782,8 @@ def seqCompAnyDecompositionAux (R₁ : QuantitativeRealization Q bd)
   | fuel + 1, _, _, .query view_eq direction tail, length_le => by
       rename_i state position next finish
       have tailLength_le : tail.length ≤ fuel := by
-        simp only [length] at length_le
+        simp only [length, DynComputation.ExecutionTrace.length] at length_le
+        change DynComputation.ExecutionTrace.length tail ≤ fuel
         omega
       let tailDecomposition := seqCompAnyDecompositionAux R₁ R₂ fuel tail tailLength_le
       cases state with
@@ -811,7 +816,9 @@ def seqCompAnyDecompositionAux (R₁ : QuantitativeRealization Q bd)
                         exact ⟨htrace.1, tailConforms allows htrace.2⟩
                       · simpa [SeqCompAnyTraceSource.length,
                           SeqCompRightTraceSource.length,
-                          QuantitativeRealization.ExecutionTrace.length] using tailLength_eq
+                          QuantitativeRealization.ExecutionTrace.length,
+                          DynComputation.ExecutionTrace.length,
+                          QuantitativeRealization.ExecutionTrace.query] using tailLength_eq
       | inl state₁ =>
           cases hsource : R₁.machine.view state₁ with
           | inl value =>
@@ -847,7 +854,9 @@ def seqCompAnyDecompositionAux (R₁ : QuantitativeRealization Q bd)
                             exact ⟨trivial, ⟨htrace.1, tailConforms allows htrace.2⟩⟩
                           · simpa [SeqCompAnyTraceSource.length, SeqCompTraceSource.length,
                               SeqCompRightTraceSource.length,
-                              QuantitativeRealization.ExecutionTrace.length] using tailLength_eq
+                              QuantitativeRealization.ExecutionTrace.length,
+                          DynComputation.ExecutionTrace.length,
+                          QuantitativeRealization.ExecutionTrace.query] using tailLength_eq
           | inr query =>
               rcases query with ⟨sourcePosition, sourceNext⟩
               have hquery :=

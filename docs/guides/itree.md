@@ -264,7 +264,8 @@ continuous algebra as the substitution and weak-bisimulation laws.
 `StateT` loop-body and `interp_run_*` equations when the target is another
 interaction tree. A source silent step stays silent, and a service query runs
 once before a silent guard enters its continuation with the updated private
-state. The target operation and answer universes are independent of the source universe.
+state. The machine-dispatcher correctness proof uses these same equations.
+The target operation and answer universes are independent of the source universe.
 
 Weak equivalence does not identify clocks: a return leaf and one silent step
 followed by that leaf are weakly equivalent, but their exact explicit-tau

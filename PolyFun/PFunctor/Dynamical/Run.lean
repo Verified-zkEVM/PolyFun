@@ -65,7 +65,24 @@ inductive Prefix (s : DynSystem S p) : S → ℕ → Sort _ where
     step {st : S} {n : ℕ} (d : p.B (s.expose st)) :
       Prefix s (s.update st d) n → Prefix s st n.succ
 
+/-- Evaluate a state-aware observation using an equation for the exposed operation. -/
+def EventMap.atOut {s : DynSystem S p} {W : Type w} (observe : s.EventMap W)
+    {st : S} {position : p.A} {next : p.B position → S}
+    (h : s.out st = ⟨position, next⟩) (answer : p.B position) : W :=
+  observe st (cast (congrArg p.B (congrArg PFunctor.Obj.fst h).symm) answer)
+
 namespace Prefix
+
+/-- Extend an orbit using a computational equation for its exposed operation. -/
+def stepOfOut {s : DynSystem S p} {st : S} {n : ℕ} {position : p.A}
+    {next : p.B position → S} (h : s.out st = ⟨position, next⟩)
+    (direction : p.B position) (tail : Prefix s (next direction) n) : Prefix s st (n + 1) := by
+  have hpos : s.expose st = position := congrArg PFunctor.Obj.fst h
+  subst position
+  have hnext : s.update st = next :=
+    eq_of_heq (PFunctor.Obj.mk.inj_iff.mp h).2
+  subst next
+  exact .step direction tail
 
 /-- The stable event labels attached to the steps of a finite orbit. -/
 def events {s : DynSystem S p} {Event : Type w} (eventMap : s.EventMap Event) :
@@ -108,6 +125,66 @@ def last {s : DynSystem S p} : {st : S} → {n : ℕ} → Prefix s st n → S
 @[simp] theorem last_step {s : DynSystem S p} {st : S} {n : ℕ}
     (d : p.B (s.expose st)) (tail : Prefix s (s.update st d) n) :
     (Prefix.step d tail).last = tail.last := rfl
+
+/-- Computationally described steps retain the tail's endpoint. -/
+@[simp] theorem last_stepOfOut {s : DynSystem S p} {st : S} {n : ℕ} {position : p.A}
+    {next : p.B position → S} (h : s.out st = ⟨position, next⟩)
+    (direction : p.B position) (tail : Prefix s (next direction) n) :
+    (stepOfOut h direction tail).last = tail.last := by
+  have hpos : s.expose st = position := congrArg PFunctor.Obj.fst h
+  subst position
+  have hnext : s.update st = next := eq_of_heq (PFunctor.Obj.mk.inj_iff.mp h).2
+  subst next
+  rfl
+
+/-- Computational query equations give the same observations as dependent orbit steps. -/
+@[simp] theorem events_stepOfOut {s : DynSystem S p} {st : S} {n : ℕ} {position : p.A}
+    {next : p.B position → S} {W : Type w} (observe : s.EventMap W)
+    (h : s.out st = ⟨position, next⟩) (direction : p.B position)
+    (tail : Prefix s (next direction) n) :
+    (stepOfOut h direction tail).events observe =
+      observe.atOut h direction :: tail.events observe := by
+  have hpos : s.expose st = position := congrArg PFunctor.Obj.fst h
+  subst position
+  have hnext : s.update st = next := eq_of_heq (PFunctor.Obj.mk.inj_iff.mp h).2
+  subst next
+  rfl
+
+/-- Concatenate adjacent orbits, retaining the exact intermediate state. -/
+def append {s : DynSystem S p} {st : S} {n m : ℕ}
+    (left : Prefix s st n) (right : Prefix s left.last m) : Prefix s st (n + m) :=
+  match left with
+  | .nil => (Nat.zero_add m).symm ▸ right
+  | .step (n := n) d tail => (Nat.succ_add n m).symm ▸ Prefix.step d (tail.append right)
+
+/-- Changing a length index by equality leaves event observations unchanged. -/
+@[simp] theorem events_cast {s : DynSystem S p} {st : S} {n m : ℕ} {Event : Type w}
+    (eventMap : s.EventMap Event) (h : n = m) (pre : Prefix s st n) :
+    (h ▸ pre).events eventMap = pre.events eventMap := by subst m; rfl
+
+/-- Labels of adjacent orbits concatenate in execution order. -/
+theorem events_append {s : DynSystem S p} {st : S} {n m : ℕ} {Event : Type w}
+    (eventMap : s.EventMap Event) (left : Prefix s st n) (right : Prefix s left.last m) :
+    (left.append right).events eventMap = left.events eventMap ++ right.events eventMap := by
+  induction left with
+  | nil => exact events_cast eventMap (Nat.zero_add m).symm right
+  | @step st n d tail ih =>
+      calc
+        _ = (Prefix.step d (tail.append right)).events eventMap :=
+          events_cast eventMap (Nat.succ_add n m).symm _
+        _ = _ := congrArg (List.cons (eventMap st d)) (ih right)
+
+/-- Accumulate state-aware observations in execution order in any monoid. -/
+def accumulate {s : DynSystem S p} {W : Type w} [Monoid W]
+    (eventMap : s.EventMap W) {st : S} {n : ℕ} (pre : Prefix s st n) : W :=
+  (pre.events eventMap).prod
+
+/-- Monoidal accumulation composes across a pause/resume boundary. -/
+theorem accumulate_append {s : DynSystem S p} {st : S} {n m : ℕ} {W : Type w} [Monoid W]
+    (eventMap : s.EventMap W) (left : Prefix s st n) (right : Prefix s left.last m) :
+    (left.append right).accumulate eventMap =
+      left.accumulate eventMap * right.accumulate eventMap := by
+  simp only [accumulate, events_append, List.prod_append]
 
 end Prefix
 

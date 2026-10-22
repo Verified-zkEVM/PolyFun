@@ -637,7 +637,8 @@ theorem traceCost_add_terminal_le (certificate : PotentialCertificate R allows b
         (QuantitativeRealization.ExecutionTrace.query (R := R) view_eq direction tail).cost +
             terminalCost R finish =
             queryStepCost R state position direction +
-              (tail.cost + terminalCost R finish) := by
+              (QuantitativeRealization.ExecutionTrace.cost (R := R) tail +
+                terminalCost R finish) := by
           simp only [QuantitativeRealization.ExecutionTrace.cost, queryStepCost, add_assoc]
         _ ≤ queryStepCost R state position direction + certificate.potential (next direction) :=
           ExecutionCost.add_le_add le_rfl (ih htrace.2)

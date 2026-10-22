@@ -1,0 +1,73 @@
+/-
+Copyright (c) 2026 PolyFun Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Devon Tuma
+-/
+
+module
+
+import PolyFun.PFunctor.Handler.Machine.Behavior
+import PolyFun.ITree.DomainLaws
+import PolyFun.PFunctor.Handler.Machine.Trace
+import PolyFun.PFunctor.Handler.Machine.StateLens
+
+/-! # Public API checks for composed services and continuous interpretations -/
+
+public section
+
+open PFunctor PFunctor.DynSystem
+
+-- The dependent answer type and higher universe remain visible across ordinary imports.
+example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
+    (h : MachineHandler P Q S) (client : A → FreeM P B) (input : A) (state : S) :
+    ITree.WeakBisim (ITree.ofResumptionWithTau ((h.compile client).denote (input, state)))
+      (h.execute (client input) state).toITree :=
+  h.compile_weakBisim_execute client input state
+
+example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
+    (h : MachineHandler P Q S) (caller : DynComputation.{1} P A B)
+    (phase : MachineHandler.Phase h caller) :
+    (h.dispatch caller).view phase = h.dispatchStep caller phase :=
+  h.view_dispatch caller phase
+
+example {P : PFunctor} {α β D : Type} [OmegaCompletePartialOrder D] [OrderBot D]
+    (ret : β → D) (alg : Resumption.ContinuousAlgebra P D)
+    (tree : Resumption P α) (next : α → Resumption P β) :
+    Resumption.denote ret alg (Resumption.bind tree next) =
+      Resumption.denote (fun a => Resumption.denote ret alg (next a)) alg tree :=
+  Resumption.denote_bind ret alg tree next
+
+example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
+    (h : MachineHandler P Q S) (caller : DynComputation.{1} P A B)
+    {start : caller.State} {initial : S} {finish : MachineHandler.Phase h caller}
+    (trace : (h.dispatch caller).ExecutionTrace (.caller start initial) finish) :
+    (MachineHandler.DispatchPrefix.decompose trace).toTrace = trace :=
+  MachineHandler.DispatchPrefix.toTrace_decompose trace
+
+example {P Q : PFunctor.{1, 1}} {S A B : Type 1} {W : Type 2} [Monoid W]
+    (h : MachineHandler P Q S) (caller : DynComputation.{1} P A B)
+    (observe : MachineHandler.Phase h caller →
+      (q : (Q + y.{1, 1}).A) → (Q + y.{1, 1}).B q → W)
+    {a : P.A} (pending : caller.Pending a) {start finish : (h a).State}
+    (trace : (h a).ExecutionTrace start finish) :
+    (h.liftHandlerTrace caller pending trace).accumulate
+        ((h.dispatch caller).queryEventMap observe) =
+      trace.accumulate ((h a).queryEventMap
+        (fun state q answer => observe (.handler a state pending) (.inl q) answer)) :=
+  h.accumulate_liftHandlerTrace caller observe pending trace
+
+example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
+    (L : StatefulLens P Q S) (caller : DynComputation.{1} P A B) (input : A) (service : S) :
+    ITree.WeakBisim (ITree.ofResumptionWithTau
+      (((MachineHandler.ofFreeM L.toStateful).dispatch caller).denote (input, service)))
+      (((caller.wrapState L).denote (input, service)).toITree) :=
+  L.dispatch_weakBisim_wrapState caller input service
+
+example {P Q : PFunctor.{1, 1}} {S A B : Type 1}
+    (L : StatefulLens P Q S) (caller : DynComputation.{1} P A B)
+    {start finish : caller.State × S}
+    (trace : (caller.wrapState L).ExecutionTrace start finish) :
+    ∃ out : ((MachineHandler.ofFreeM L.toStateful).dispatch caller).ExecutionTrace
+      (.caller start.1 start.2) (.caller finish.1 finish.2),
+        out.length = 3 * trace.length :=
+  L.exists_dispatchTrace caller trace

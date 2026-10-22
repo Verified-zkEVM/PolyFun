@@ -8,6 +8,11 @@ module
 
 public import PolyFun.PFunctor.Bound
 public import PolyFun.PFunctor.Free.Support
+public import PolyFun.PFunctor.Handler.Machine.Defs
+public import PolyFun.PFunctor.Handler.Instrumentation.Free
+public import Mathlib.Algebra.Group.ULift
+public import Mathlib.Algebra.Group.Prod
+public import Mathlib.Algebra.Group.TypeTags.Basic
 
 /-!
 # Executing dependent handler substitution in explicit phases
@@ -20,6 +25,8 @@ visible. Finite execution retains unfinished phases and counts both kinds of tra
 This is an operational semantics for substitution of finite polynomial programs. Its counters
 measure dispatcher transitions and visible queries. Backend code for host-language operations,
 encoded state sizes, and their machine costs are additional quantitative-realization obligations.
+The runner folds a chunk of `MachineHandler.dispatch` through writer instrumentation. Its
+constructor equations expose the finite phase API without another recursive interpreter.
 -/
 
 public section
@@ -63,18 +70,185 @@ structure Prefix (P Q : PFunctor.{u, u}) (α : Type u) where
   | .caller program => program.liftM impl
   | .handler _ program next => program >>= fun answer => (next answer).liftM impl
 
-/-- Execute at most the supplied number of transitions, counting both dispatch and queries. -/
-@[expose] def runPrefix (impl : (a : P.A) → FreeM Q (P.B a)) :
-    ℕ → Phase P Q α → FreeM Q (Prefix P Q α)
-  | 0, phase => pure ⟨phase, 0, 0⟩
-  | _ + 1, .caller (.pure value) => pure ⟨.caller (.pure value), 0, 0⟩
-  | fuel + 1, .caller (.liftBind a next) =>
-      Prefix.admin <$> runPrefix impl fuel (.handler a (impl a) next)
-  | fuel + 1, .handler _ (.pure answer) next =>
-      Prefix.admin <$> runPrefix impl fuel (.caller (next answer))
-  | fuel + 1, .handler a (.liftBind b rest) next =>
-      FreeM.liftBind b fun answer =>
-        Prefix.query <$> runPrefix impl fuel (.handler a (rest answer) next)
+/-- A stateless finite service retains its current free program as private machine state. -/
+@[expose, reducible] def service (impl : (a : P.A) → FreeM Q (P.B a)) :
+    MachineHandler P Q PUnit := fun a =>
+  DynSystem.DynComputation.ofStep (fun program : FreeM Q (P.B a) => match program with
+    | .pure answer => .inl (answer, PUnit.unit)
+    | .liftBind q next => .inr ⟨q, next⟩) (fun _ => impl a)
+
+/-- The residual-program caller used by the shared dispatcher. -/
+@[expose, reducible] def caller : DynSystem.DynComputation P (FreeM P α) α :=
+  .ofFreeM id
+
+/-- Embed a finite residual phase in the common dispatcher state. -/
+@[expose] def encodePhase (impl : (a : P.A) → FreeM Q (P.B a)) :
+    Phase P Q α → MachineHandler.Phase (service impl) (caller (P := P) (α := α))
+  | .caller program => .caller program PUnit.unit
+  | .handler a program next => .handler a program
+      (.ofView (DynSystem.DynComputation.view_ofFreeM_liftBind id a next))
+
+/-- Observe the common dispatcher state through the finite-program phase API. -/
+@[expose] def decodePhase (impl : (a : P.A) → FreeM Q (P.B a)) :
+    MachineHandler.Phase (service impl) (caller (P := P) (α := α)) → Phase P Q α
+  | .caller program _ => .caller program
+  | .handler a program pending => .handler a program pending.resume
+
+@[simp] theorem decodePhase_encodePhase (impl : (a : P.A) → FreeM Q (P.B a))
+    (phase : Phase P Q α) : decodePhase impl (encodePhase impl phase) = phase := by
+  cases phase with
+  | caller program => rfl
+  | handler a program next =>
+    unfold encodePhase decodePhase
+    congr 1
+
+/-- Separate administrative and primitive-query counts, in the handler's universe. -/
+abbrev Counts := ULift.{u} (Multiplicative (ℕ × ℕ))
+
+/-- Interpret primitive queries directly and administrative transitions as a unary return. -/
+@[expose] def primitiveHandler : Handler (FreeM Q) (Q + y.{u, u})
+  | .inl q => FreeM.lift q
+  | .inr _ => pure PUnit.unit
+
+/-- Charge each explicit dispatcher operation in its own counter. -/
+@[expose] def charge : (Q + y.{u, u}).A → Counts.{u}
+  | .inl _ => ⟨Multiplicative.ofAdd (0, 1)⟩
+  | .inr _ => ⟨Multiplicative.ofAdd (1, 0)⟩
+
+/-- Observe a saved dispatcher chunk and its accumulated transition counts. -/
+@[expose] def decodePrefix (impl : (a : P.A) → FreeM Q (P.B a))
+    (out : DynSystem.DynComputation.Chunk
+      (MachineHandler.Phase (service impl) (caller (P := P) (α := α))) (α × PUnit) × Counts) :
+    Prefix P Q α :=
+  ⟨match out.1 with
+    | .done value => .caller (.pure value.1)
+    | .paused phase => decodePhase impl phase,
+    out.2.down.toAdd.1, out.2.down.toAdd.2⟩
+
+/-- Execute the common dispatcher and record its operations through writer instrumentation. -/
+@[expose] def runPrefix (impl : (a : P.A) → FreeM Q (P.B a))
+    (fuel : ℕ) (phase : Phase P Q α) : FreeM Q (Prefix P Q α) :=
+  decodePrefix impl <$> ((((service impl).dispatch caller).unrollChunk
+    fuel (encodePhase impl phase)).liftM (primitiveHandler.withTraceBefore charge)).run
+
+/-- Finite prefixes are observations of the same runner used for arbitrary machine services. -/
+theorem runPrefix_eq_runChunk (impl : (a : P.A) → FreeM Q (P.B a))
+    (fuel : ℕ) (phase : Phase P Q α) :
+    runPrefix impl fuel phase =
+      decodePrefix impl <$> (((service impl).dispatch caller).runChunk
+        (primitiveHandler.withTraceBefore charge) fuel (encodePhase impl phase)).run := by
+  rw [DynSystem.DynComputation.runChunk_eq_liftM]
+  rfl
+
+open DynSystem.DynComputation in
+/-- The common dispatcher's view in finite residual-program coordinates. -/
+theorem view_encodePhase (impl : (a : P.A) → FreeM Q (P.B a)) (phase : Phase P Q α) :
+    ((service impl).dispatch caller).view (encodePhase impl phase) = match phase with
+      | .caller (.pure value) => .inl (value, PUnit.unit)
+      | .caller (.liftBind a next) => .inr ⟨.inr PUnit.unit,
+          fun _ => encodePhase impl (.handler a (impl a) next)⟩
+      | .handler _ (.pure answer) next => .inr ⟨.inr PUnit.unit,
+          fun _ => encodePhase impl (.caller (next answer))⟩
+      | .handler a (.liftBind q rest) next => .inr ⟨.inl q,
+          fun answer => encodePhase impl (.handler a (rest answer) next)⟩ := by
+  rw [MachineHandler.view_dispatch]
+  cases phase with
+  | caller program =>
+    cases program with
+    | pure value =>
+      exact MachineHandler.dispatchStep_caller_pure (service impl) caller
+        (view_ofFreeM_pure id value) PUnit.unit
+    | liftBind a next =>
+      exact MachineHandler.dispatchStep_caller_query (service impl) caller
+        (view_ofFreeM_liftBind id a next) PUnit.unit
+  | handler a program next =>
+    cases program <;>
+      simp only [MachineHandler.dispatchStep, encodePhase,
+        service, view_ofStep]
+    congr 3
+
+open DynSystem.DynComputation in
+@[simp] theorem runPrefix_zero (impl : (a : P.A) → FreeM Q (P.B a))
+    (phase : Phase P Q α) : runPrefix impl 0 phase = pure ⟨phase, 0, 0⟩ := by
+  rw [runPrefix, unrollChunk_zero, view_encodePhase]
+  cases phase with
+  | caller program => cases program <;> rfl
+  | handler a program next =>
+    cases program <;>
+      change (pure ⟨decodePhase impl (encodePhase impl _), 0, 0⟩ : FreeM Q (Prefix P Q α)) = _
+    all_goals rw [decodePhase_encodePhase]
+
+open DynSystem.DynComputation in
+@[freeM_unfold] theorem runPrefix_caller_pure (impl : (a : P.A) → FreeM Q (P.B a))
+    (fuel : ℕ) (value : α) :
+    runPrefix impl fuel (.caller (.pure value)) = pure ⟨.caller (.pure value), 0, 0⟩ := by
+  cases fuel with
+  | zero => exact runPrefix_zero _ _
+  | succ fuel => rw [runPrefix, unrollChunk_succ, view_encodePhase]; rfl
+
+private theorem decodePrefix_admin (impl : (a : P.A) → FreeM Q (P.B a))
+    (out : DynSystem.DynComputation.Chunk
+      (MachineHandler.Phase (service impl) (caller (P := P) (α := α))) (α × PUnit) × Counts) :
+    decodePrefix impl (out.1, charge (Q := Q) (.inr PUnit.unit) * out.2) =
+      (decodePrefix impl out).admin := by
+  rcases out with ⟨chunk, counts⟩
+  cases chunk <;> simp [decodePrefix, Prefix.admin, charge, Nat.add_comm]
+
+private theorem decodePrefix_query (impl : (a : P.A) → FreeM Q (P.B a)) (q : Q.A)
+    (out : DynSystem.DynComputation.Chunk
+      (MachineHandler.Phase (service impl) (caller (P := P) (α := α))) (α × PUnit) × Counts) :
+    decodePrefix impl (out.1, charge (Q := Q) (.inl q) * out.2) =
+      (decodePrefix impl out).query := by
+  rcases out with ⟨chunk, counts⟩
+  cases chunk <;> simp [decodePrefix, Prefix.query, charge, Nat.add_comm]
+
+open DynSystem.DynComputation in
+/-- Entering a finite service consumes one administrative transition. -/
+@[freeM_unfold] theorem runPrefix_caller_query (impl : (a : P.A) → FreeM Q (P.B a))
+    (fuel : ℕ) (a : P.A) (next : P.B a → FreeM P α) :
+    runPrefix impl (fuel + 1) (.caller (.liftBind a next)) =
+      Prefix.admin <$> runPrefix impl fuel (.handler a (impl a) next) := by
+  rw [runPrefix, unrollChunk_succ, view_encodePhase]
+  dsimp only
+  rw [Handler.run_liftM_withTraceBefore_liftBind]
+  simp only [primitiveHandler, LawfulMonad.pure_bind, runPrefix, Functor.map_map]
+  congr 1
+  funext out
+  exact decodePrefix_admin impl out
+
+open DynSystem.DynComputation in
+/-- Returning an answer to the caller consumes one administrative transition. -/
+@[freeM_unfold] theorem runPrefix_handler_pure (impl : (a : P.A) → FreeM Q (P.B a))
+    (fuel : ℕ) (a : P.A) (answer : P.B a) (next : P.B a → FreeM P α) :
+    runPrefix impl (fuel + 1) (.handler a (.pure answer) next) =
+      Prefix.admin <$> runPrefix impl fuel (.caller (next answer)) := by
+  rw [runPrefix, unrollChunk_succ, view_encodePhase]
+  dsimp only
+  rw [Handler.run_liftM_withTraceBefore_liftBind]
+  simp only [primitiveHandler, LawfulMonad.pure_bind, runPrefix, Functor.map_map]
+  congr 1
+  funext out
+  exact decodePrefix_admin impl out
+
+open DynSystem.DynComputation in
+/-- An actual inner operation consumes one query transition. -/
+@[freeM_unfold] theorem runPrefix_handler_query (impl : (a : P.A) → FreeM Q (P.B a))
+    (fuel : ℕ) (a : P.A) (q : Q.A) (rest : Q.B q → FreeM Q (P.B a))
+    (next : P.B a → FreeM P α) :
+    runPrefix impl (fuel + 1) (.handler a (.liftBind q rest) next) =
+      FreeM.liftBind q fun answer =>
+        Prefix.query <$> runPrefix impl fuel (.handler a (rest answer) next) := by
+  rw [runPrefix, unrollChunk_succ, view_encodePhase]
+  dsimp only
+  rw [Handler.run_liftM_withTraceBefore_liftBind]
+  simp only [primitiveHandler, _root_.map_bind]
+  change FreeM.liftBind q _ = FreeM.liftBind q _
+  congr 1
+  funext answer
+  simp only [FreeM.bind_eq_bind, LawfulMonad.pure_bind, runPrefix, Functor.map_map]
+  congr 1
+  funext out
+  exact decodePrefix_query impl q out
 
 /-- Only a returned caller provides a final result; a handler return still needs dispatch. -/
 @[expose] def result : Phase P Q α → Option α
@@ -87,22 +261,25 @@ theorem runPrefix_resume (impl : (a : P.A) → FreeM Q (P.B a))
     (fuel : ℕ) (phase : Phase P Q α) :
     (runPrefix impl fuel phase >>= fun out => denote impl out.phase) = denote impl phase := by
   induction fuel generalizing phase with
-  | zero => simp [runPrefix]
+  | zero => simp only [runPrefix_zero, LawfulMonad.pure_bind]
   | succ fuel ih =>
       cases phase with
       | caller program =>
           cases program with
-          | pure value => simp [runPrefix, denote]
+          | pure value => rw [runPrefix_caller_pure]; simp [denote]
           | liftBind a next =>
-              simpa [runPrefix, Prefix.admin, bind_map_left, denote] using
+              rw [runPrefix_caller_query]
+              simpa [Prefix.admin, bind_map_left, denote] using
                 ih (.handler a (impl a) next)
       | handler a program next =>
           cases program with
           | pure answer =>
-              simpa [runPrefix, Prefix.admin, bind_map_left, denote] using
+              rw [runPrefix_handler_pure]
+              simpa [Prefix.admin, bind_map_left, denote] using
                 ih (.caller (next answer))
           | liftBind b rest =>
-              simp only [runPrefix, denote]
+              rw [runPrefix_handler_query]
+              simp only [denote]
               apply congrArg (FreeM.liftBind b)
               funext answer
               change (Prefix.query <$> runPrefix impl fuel (.handler a (rest answer) next) >>=
@@ -116,14 +293,14 @@ theorem runPrefix_transitions (impl : (a : P.A) → FreeM Q (P.B a))
     AllOutputs (fun out => out.administrative + out.queries ≤ fuel)
       (runPrefix impl fuel phase) := by
   induction fuel generalizing phase with
-  | zero => simp [runPrefix, allOutputs_pure]
+  | zero => simp [runPrefix_zero, allOutputs_pure]
   | succ fuel ih =>
       cases phase with
       | caller program =>
           cases program with
-          | pure value => simp [runPrefix, allOutputs_pure]
+          | pure value => rw [runPrefix_caller_pure]; simp [allOutputs_pure]
           | liftBind a next =>
-              rw [runPrefix, allOutputs_map]
+              rw [runPrefix_caller_query, allOutputs_map]
               intro out hout
               have h := ih (.handler a (impl a) next) out hout
               change out.administrative + 1 + out.queries ≤ fuel + 1
@@ -131,13 +308,13 @@ theorem runPrefix_transitions (impl : (a : P.A) → FreeM Q (P.B a))
       | handler a program next =>
           cases program with
           | pure answer =>
-              rw [runPrefix, allOutputs_map]
+              rw [runPrefix_handler_pure, allOutputs_map]
               intro out hout
               have h := ih (.caller (next answer)) out hout
               change out.administrative + 1 + out.queries ≤ fuel + 1
               omega
           | liftBind b rest =>
-              rw [runPrefix, allOutputs_liftBind]
+              rw [runPrefix_handler_query, allOutputs_liftBind]
               intro answer
               rw [allOutputs_map]
               intro out hout
@@ -166,7 +343,7 @@ theorem runPrefix_complete_of_budget (impl : (a : P.A) → FreeM Q (P.B a))
       | caller program =>
           obtain ⟨n, hprogram, hsize⟩ := hbudget
           cases program with
-          | pure value => simp [runPrefix, allOutputs_pure]
+          | pure value => rw [runPrefix_caller_pure]; simp [allOutputs_pure]
           | liftBind a next =>
               have hpos := Nat.mul_pos hprogram.1 (show 0 < handlerLimit + 2 by omega)
               omega
@@ -178,14 +355,14 @@ theorem runPrefix_complete_of_budget (impl : (a : P.A) → FreeM Q (P.B a))
       | caller program =>
           obtain ⟨n, hprogram, hsize⟩ := hbudget
           cases program with
-          | pure value => simp [runPrefix, allOutputs_pure]
+          | pure value => rw [runPrefix_caller_pure]; simp [allOutputs_pure]
           | liftBind a next =>
               rw [isTotalRollBound_liftBind_iff] at hprogram
               obtain ⟨hpos, hnext⟩ := hprogram
               cases n with
               | zero => omega
               | succ n =>
-                  rw [runPrefix, allOutputs_map]
+                  rw [runPrefix_caller_query, allOutputs_map]
                   apply ih (.handler a (impl a) next)
                   refine ⟨n, handlerLimit, himpl a, ?_, ?_⟩
                   · simpa using hnext
@@ -195,7 +372,7 @@ theorem runPrefix_complete_of_budget (impl : (a : P.A) → FreeM Q (P.B a))
           obtain ⟨n, k, hprogram, hnext, hsize⟩ := hbudget
           cases program with
           | pure answer =>
-              rw [runPrefix, allOutputs_map]
+              rw [runPrefix_handler_pure, allOutputs_map]
               exact ih (.caller (next answer)) ⟨n, hnext answer, by omega⟩
           | liftBind b rest =>
               rw [isTotalRollBound_liftBind_iff] at hprogram
@@ -203,7 +380,7 @@ theorem runPrefix_complete_of_budget (impl : (a : P.A) → FreeM Q (P.B a))
               cases k with
               | zero => omega
               | succ k =>
-                  rw [runPrefix, allOutputs_liftBind]
+                  rw [runPrefix_handler_query, allOutputs_liftBind]
                   intro answer
                   rw [allOutputs_map]
                   exact ih (.handler a (rest answer) next)

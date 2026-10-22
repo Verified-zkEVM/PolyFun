@@ -24,7 +24,20 @@ universe u v uA
 namespace PFunctor.Handler
 
 variable {p : PFunctor.{uA, u}} {m : Type u → Type v} [Monad m] [LawfulMonad m]
-  {ω α : Type u} [EmptyCollection ω] [Append ω]
+  {ω α : Type u}
+
+/-- Before-tracing a free node prefixes its observation to the continuation's writer output. -/
+theorem run_liftM_withTraceBefore_liftBind [Monoid ω] (handler : Handler m p)
+    (trace : p.A → ω) (a : p.A) (next : p.B a → FreeM p α) :
+    (FreeM.liftM (handler.withTraceBefore trace) (.liftBind a next)).run =
+      (handler a >>= fun answer =>
+        (fun out : α × ω => (out.1, trace a * out.2)) <$>
+          (FreeM.liftM (handler.withTraceBefore trace) (next answer)).run) := by
+  change ((handler.withTraceBefore trace a) >>=
+    fun answer => FreeM.liftM (handler.withTraceBefore trace) (next answer)).run = _
+  simp [withTraceBefore_apply, bind_map_left, map_bind]
+
+variable [EmptyCollection ω] [Append ω]
 
 /-- Erasing response-dependent trace output recovers the uninstrumented fold. -/
 theorem fst_map_run_liftM_withTraceAppend (handler : Handler m p)

@@ -7,6 +7,8 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Realizability.Quantitative
+public import PolyFun.PFunctor.Dynamical.DynComputation.Observe
+public import Mathlib.Algebra.Group.TypeTags.Basic
 
 /-!
 # Local resource costs of machine traces
@@ -73,5 +75,35 @@ theorem executionCost_eq_init_add_trace_add_terminal
     R.executionCost value trace =
       ExecutionCost.ofWork (Q.cost R.initCode value) + (trace.cost + terminalCost R finish) := by
   simp [QuantitativeRealization.executionCost, terminalCost, add_assoc]
+
+/-- The stored realization costs as a generic monoidal transition observation. -/
+def stepObservation (R : QuantitativeRealization Q bd) :
+    R.machine.toDynSystem.EventMap (Multiplicative ExecutionCost) :=
+  R.machine.queryEventMap (fun state position direction =>
+    Multiplicative.ofAdd (queryStepCost R state position direction))
+
+/-- The quantitative trace cost is the same fold used by machine observations. -/
+theorem cost_eq_accumulate {R : QuantitativeRealization Q bd}
+    {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
+    trace.cost = Multiplicative.toAdd (trace.accumulate (stepObservation R)) := by
+  induction trace with
+  | nil => simp only [QuantitativeRealization.ExecutionTrace.cost,
+      ExecutionTrace.accumulate_nil]; rfl
+  | query hv answer tail ih =>
+      rw [executionTrace_cost_query]
+      simp only [stepObservation, ExecutionTrace.accumulate_query, queryEventMap_atOut] at *
+      rw [ih]
+      rfl
+
+/-- Full prefix accounting includes initialization and final observation, even when
+the endpoint is an unfinished call or a diverging machine. -/
+theorem executionCost_eq_init_add_accumulate_add_terminal
+    (R : QuantitativeRealization Q bd) (value : input) {finish : R.machine.State}
+    (trace : R.ExecutionTrace (R.machine.init value) finish) :
+    R.executionCost value trace =
+      ExecutionCost.ofWork (Q.cost R.initCode value) +
+        (Multiplicative.toAdd (trace.accumulate (stepObservation R)) + terminalCost R finish) := by
+  rw [executionCost_eq_init_add_trace_add_terminal, cost_eq_accumulate]
+
 
 end PFunctor.DynSystem.DynComputation.RankedResource

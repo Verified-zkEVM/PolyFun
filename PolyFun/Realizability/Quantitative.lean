@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Realizability.Basic
+public import PolyFun.PFunctor.Dynamical.DynComputation.Trace
 
 /-!
 # Quantitative realizability
@@ -416,84 +417,87 @@ def toRealization (R : QuantitativeRealization Q bd) : Realization C bd where
 
 /-! ## Fully syntactic execution prefixes -/
 
-/-- A finite, fully syntactic query-answer prefix of a quantitative realization.
-
-The indices are the starting and ending hidden states. `nil` observes no query.
-`query` records the exposed dependent position, one typed answer, and the rest
-of the prefix. Its `view_eq` proof ensures that the charged `update?` call is
-enabled rather than a junk-input branch of the partial function. -/
-inductive ExecutionTrace (R : QuantitativeRealization Q bd) :
-    R.machine.State → R.machine.State → Type u where
-  /-- The empty prefix at a state. -/
-  | nil (state : R.machine.State) : ExecutionTrace R state state
-  /-- Extend a prefix by one exposed query and typed answer. -/
-  | query {state : R.machine.State} {position : p.A}
-      {next : p.B position → R.machine.State} {finish : R.machine.State}
-      (view_eq : R.machine.view state = Sum.inr ⟨position, next⟩)
-      (direction : p.B position)
-      (tail : ExecutionTrace R (next direction) finish) :
-      ExecutionTrace R state finish
+/-- The syntactic execution prefixes of the represented machine. -/
+abbrev ExecutionTrace (R : QuantitativeRealization Q bd) :=
+  DynSystem.DynComputation.ExecutionTrace R.machine
 
 namespace ExecutionTrace
 
 variable {R : QuantitativeRealization Q bd}
 
-/-- Every response recorded by a syntactic trace satisfies a dependent answer relation.
+/-- The empty execution prefix of a represented machine. -/
+@[match_pattern, simp] abbrev nil (state : R.machine.State) : ExecutionTrace R state state :=
+  DynSystem.DynComputation.ExecutionTrace.nil state
 
-The relation is supplied externally, so this predicate can express an oracle contract without
-changing the fully syntactic trace type or pretending that disallowed answers do not exist. -/
-def Conforms (allows : ∀ position, p.B position → Prop)
-    {start finish : R.machine.State} : ExecutionTrace R start finish → Prop
-  | .nil _ => True
-  | .query (position := position) _ direction tail =>
-      allows position direction ∧ tail.Conforms allows
+/-- Extend an execution prefix by an enabled query. -/
+@[match_pattern, simp] abbrev query {state : R.machine.State} {position : p.A}
+    {next : p.B position → R.machine.State} {finish : R.machine.State}
+    (view_eq : R.machine.view state = Sum.inr ⟨position, next⟩)
+    (direction : p.B position) (tail : ExecutionTrace R (next direction) finish) :
+    ExecutionTrace R state finish :=
+  DynSystem.DynComputation.ExecutionTrace.query view_eq direction tail
 
-/-- Every syntactic trace conforms to the relation that allows every typed answer. -/
-theorem conforms_all {start finish : R.machine.State}
-    (trace : ExecutionTrace R start finish) :
-    trace.Conforms (fun _ _ ↦ True) := by
-  induction trace with
-  | nil => trivial
-  | query view_eq direction tail ih => exact ⟨trivial, ih⟩
+/-- Every response in a represented-machine prefix satisfies the supplied contract. -/
+abbrev Conforms (allows : ∀ position, p.B position → Prop)
+    {start finish : R.machine.State} (trace : ExecutionTrace R start finish) : Prop :=
+  DynSystem.DynComputation.ExecutionTrace.Conforms allows trace
 
-/-- Conformance is monotone under pointwise enlargement of the allowed-answer relation. -/
+/-- The length of the underlying syntactic machine prefix. -/
+abbrev length {start finish : R.machine.State} (trace : ExecutionTrace R start finish) : ℕ :=
+  DynSystem.DynComputation.ExecutionTrace.length trace
+
+/-- Count queries on the selected interface in the underlying prefix. -/
+abbrev queryCount {label : Type*} [DecidableEq label] (labelOf : p.A → label)
+    (interface : label) {start finish : R.machine.State}
+    (trace : ExecutionTrace R start finish) : ℕ :=
+  DynSystem.DynComputation.ExecutionTrace.queryCount labelOf interface trace
+
+/-- Concatenate underlying machine prefixes. -/
+abbrev append {start middle finish : R.machine.State}
+    (left : ExecutionTrace R start middle) (right : ExecutionTrace R middle finish) :
+    ExecutionTrace R start finish :=
+  DynSystem.DynComputation.ExecutionTrace.append left right
+
+/-- All typed answers satisfy the unrestricted contract. -/
+theorem conforms_all {start finish : R.machine.State} (trace : ExecutionTrace R start finish) :
+    trace.Conforms (fun _ _ ↦ True) :=
+  DynSystem.DynComputation.ExecutionTrace.conforms_all trace
+
+/-- Conformance is monotone in the answer contract. -/
 theorem Conforms.mono {allows allows' : ∀ position, p.B position → Prop}
     (hAllows : ∀ position direction, allows position direction → allows' position direction)
     {start finish : R.machine.State} {trace : ExecutionTrace R start finish}
-    (h : trace.Conforms allows) : trace.Conforms allows' := by
-  induction trace with
-  | nil => trivial
-  | query view_eq direction tail ih => exact ⟨hAllows _ _ h.1, ih h.2⟩
+    (h : trace.Conforms allows) : trace.Conforms allows' :=
+  DynSystem.DynComputation.ExecutionTrace.Conforms.mono hAllows h
 
-/-- Number of visible query-answer transitions in a prefix. -/
-def length {start finish : R.machine.State} : ExecutionTrace R start finish → ℕ
-  | .nil _ => 0
-  | .query _ _ tail => tail.length + 1
-
-/-- Every execution prefix fits within a branchwise resolution budget at its start. -/
+/-- A resolution bound bounds every syntactic prefix. -/
 theorem length_le_of_resolvesIn {start finish : R.machine.State} {budget : ℕ}
     (trace : ExecutionTrace R start finish) (resolves : R.machine.ResolvesIn budget start) :
-    trace.length ≤ budget := by
-  induction trace generalizing budget with
-  | nil => simp [length]
-  | @query state position next finish view_eq direction tail ih =>
-      cases budget with
-      | zero =>
-          exact False.elim
-            (R.machine.not_resolvesIn_query_zero state position next view_eq resolves)
-      | succ budget =>
-          exact Nat.succ_le_succ (ih
-            ((R.machine.resolvesIn_query_succ_iff budget state position next view_eq).mp
-              resolves direction))
+    trace.length ≤ budget :=
+  DynSystem.DynComputation.ExecutionTrace.length_le_of_resolvesIn trace resolves
 
-/-- Number of query-answer transitions carrying one selected interface label. -/
-def queryCount {label : Type*} [DecidableEq label] (labelOf : p.A → label)
-    (interface : label) {start finish : R.machine.State} :
-    ExecutionTrace R start finish → ℕ
-  | .nil _ => 0
-  | .query (position := position) _ _ tail =>
-      if labelOf position = interface then tail.queryCount labelOf interface + 1
-      else tail.queryCount labelOf interface
+/-- A selected interface accounts for at most the total number of queries. -/
+theorem queryCount_le_length {label : Type*} [DecidableEq label]
+    (labelOf : p.A → label) (interface : label)
+    {start finish : R.machine.State} (trace : ExecutionTrace R start finish) :
+    trace.queryCount labelOf interface ≤ trace.length :=
+  DynSystem.DynComputation.ExecutionTrace.queryCount_le_length labelOf interface trace
+
+/-- Concatenation preserves a contract exactly when both prefixes satisfy it. -/
+theorem conforms_append {allows : ∀ position, p.B position → Prop}
+    {start middle finish : R.machine.State}
+    (left : ExecutionTrace R start middle) (right : ExecutionTrace R middle finish) :
+    (left.append right).Conforms allows ↔ left.Conforms allows ∧ right.Conforms allows :=
+  DynSystem.DynComputation.ExecutionTrace.conforms_append left right
+
+/-- Interface query counts add across adjacent prefixes. -/
+theorem queryCount_append {label : Type*} [DecidableEq label]
+    (labelOf : p.A → label) (interface : label)
+    {start middle finish : R.machine.State}
+    (left : ExecutionTrace R start middle) (right : ExecutionTrace R middle finish) :
+    (left.append right).queryCount labelOf interface =
+      left.queryCount labelOf interface + right.queryCount labelOf interface :=
+  DynSystem.DynComputation.ExecutionTrace.queryCount_append labelOf interface left right
 
 /-- Encoded query-answer traffic carrying one selected interface label. -/
 def interfaceTraffic {label : Type*} [DecidableEq label] (labelOf : p.A → label)
@@ -503,19 +507,8 @@ def interfaceTraffic {label : Type*} [DecidableEq label] (labelOf : p.A → labe
   | .query (position := position) _ direction tail =>
       if labelOf position = interface then
         Q.size bd.pos position + Q.size bd.idx ⟨position, direction⟩ +
-          tail.interfaceTraffic labelOf interface
-      else tail.interfaceTraffic labelOf interface
-
-/-- A selected interface cannot account for more queries than occur in the whole trace. -/
-theorem queryCount_le_length {label : Type*} [DecidableEq label]
-    (labelOf : p.A → label) (interface : label)
-    {start finish : R.machine.State} (trace : ExecutionTrace R start finish) :
-    trace.queryCount labelOf interface ≤ trace.length := by
-  induction trace with
-  | nil => rfl
-  | query view_eq direction tail ih =>
-      simp only [queryCount, length]
-      split <;> omega
+          interfaceTraffic labelOf interface tail
+      else interfaceTraffic labelOf interface tail
 
 /-- The partial transition charged by a query trace step is enabled and reaches
 the state at which its tail begins. -/
@@ -551,13 +544,15 @@ theorem work_cost_add_finalHead_le
     trace.cost.work + Q.cost R.headCode finish ≤
       (trace.length + 1) * headBound + trace.length * updateBound := by
   induction trace with
-  | nil state => simpa [cost, length] using head_le state
+  | nil state =>
+      simpa [cost, length, DynSystem.DynComputation.ExecutionTrace.length] using head_le state
   | @query state position next finish view_eq direction tail ih =>
       have headAtState := head_le state
       have updateAtState := update_le (state, ⟨position, direction⟩)
-      simp only [cost, length, ExecutionCost.work_add, ExecutionCost.work_ofWork,
+      simp only [cost, length, DynSystem.DynComputation.ExecutionTrace.length,
+        ExecutionCost.work_add, ExecutionCost.work_ofWork,
         ExecutionCost.work_observe, ExecutionCost.work_query, Nat.add_zero]
-      simp only [Nat.add_mul, Nat.one_mul] at ih ⊢
+      simp only [length, Nat.add_mul, Nat.one_mul] at ih ⊢
       omega
 
 /-- Pointwise bounds on encoded positions and indices bound a trace's traffic by its length
@@ -568,11 +563,13 @@ theorem traffic_cost_le (positionBound indexBound : ℕ)
     {start finish : R.machine.State} (trace : ExecutionTrace R start finish) :
     trace.cost.traffic ≤ trace.length * (positionBound + indexBound) := by
   induction trace with
-  | nil => simp [cost, length]
+  | nil => simp [cost, length, DynSystem.DynComputation.ExecutionTrace.length]
   | @query state position next finish view_eq direction tail ih =>
+      simp only [length] at ih
       have hposition := position_le position
       have hindex := index_le ⟨position, direction⟩
-      simp only [cost, length, ExecutionCost.traffic_add, ExecutionCost.traffic_ofWork,
+      simp only [cost, length, DynSystem.DynComputation.ExecutionTrace.length,
+        ExecutionCost.traffic_add, ExecutionCost.traffic_ofWork,
         ExecutionCost.traffic_observe, ExecutionCost.traffic_query, Nat.add_mul, Nat.one_mul]
       omega
 
@@ -637,47 +634,18 @@ length and is independent of backend work or size accounting. -/
     (trace : ExecutionTrace R start finish) : trace.cost.queries = trace.length := by
   induction trace with
   | nil => rfl
-  | query view_eq direction tail ih => simp [cost, length, ih, Nat.add_comm]
-
-/-- Concatenate two adjacent execution prefixes. -/
-def append {start middle finish : R.machine.State}
-    (left : ExecutionTrace R start middle) (right : ExecutionTrace R middle finish) :
-    ExecutionTrace R start finish :=
-  match left with
-  | .nil _ => right
-  | .query view_eq direction tail => .query view_eq direction (tail.append right)
-
-/-- Conformance composes under concatenation of adjacent traces. -/
-theorem conforms_append {allows : ∀ position, p.B position → Prop}
-    {start middle finish : R.machine.State}
-    (left : ExecutionTrace R start middle) (right : ExecutionTrace R middle finish) :
-    (left.append right).Conforms allows ↔ left.Conforms allows ∧ right.Conforms allows := by
-  induction left with
-  | nil => simp [append, Conforms]
-  | query view_eq direction tail ih => simp [append, Conforms, ih, and_assoc]
+  | query view_eq direction tail ih =>
+      simp [cost, length, DynSystem.DynComputation.ExecutionTrace.length, ih, Nat.add_comm]
 
 /-- Trace cost composes additively under concatenation. -/
 theorem cost_append {start middle finish : R.machine.State}
     (left : ExecutionTrace R start middle) (right : ExecutionTrace R middle finish) :
     cost (left.append right) = cost left + cost right := by
   induction left with
-  | nil => simp [append, cost]
+  | nil => simp [append, DynSystem.DynComputation.ExecutionTrace.append, cost]
   | query view_eq direction tail ih =>
-      simp only [append, cost, ih]
+      simp only [append, DynSystem.DynComputation.ExecutionTrace.append, cost, ih]
       simp only [add_assoc]
-
-/-- Per-interface query counts add under trace concatenation. -/
-theorem queryCount_append {label : Type*} [DecidableEq label]
-    (labelOf : p.A → label) (interface : label)
-    {start middle finish : R.machine.State}
-    (left : ExecutionTrace R start middle) (right : ExecutionTrace R middle finish) :
-    (left.append right).queryCount labelOf interface =
-      left.queryCount labelOf interface + right.queryCount labelOf interface := by
-  induction left with
-  | nil => simp [append, queryCount]
-  | query view_eq direction tail ih =>
-      simp only [append, queryCount]
-      split <;> simp [ih, Nat.add_left_comm, Nat.add_comm]
 
 /-- Per-interface encoded traffic adds under trace concatenation. -/
 theorem interfaceTraffic_append {label : Type*} [DecidableEq label]
@@ -687,9 +655,9 @@ theorem interfaceTraffic_append {label : Type*} [DecidableEq label]
     (left.append right).interfaceTraffic labelOf interface =
       left.interfaceTraffic labelOf interface + right.interfaceTraffic labelOf interface := by
   induction left with
-  | nil => simp [append, interfaceTraffic]
+  | nil => simp [append, DynSystem.DynComputation.ExecutionTrace.append, interfaceTraffic]
   | query view_eq direction tail ih =>
-      simp only [append, interfaceTraffic]
+      simp only [append, DynSystem.DynComputation.ExecutionTrace.append, interfaceTraffic]
       split <;> simp [ih, Nat.add_assoc]
 
 /-- Bounds for adjacent prefixes compose by addition. -/
