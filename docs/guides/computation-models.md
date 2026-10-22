@@ -41,6 +41,7 @@ See [interaction](interaction.md).
 | Free-handler interpretation and ITree interpretation | Correspondence up to weak bisimulation, accounting for interpreter steps | [Free-program bridge](../../PolyFun/ITree/Free.lean) |
 | Explicit-state machine to behavior | Unfolding forgets the internal state representation | [Behavior and trajectories](../../PolyFun/PFunctor/Dynamical/Trajectory.lean), [returning computations](../../PolyFun/PFunctor/Dynamical/DynComputation.lean) |
 | Machine to free program | `Implements` relates behavior; `ImplementsWithin` supplies a finite query budget for execution laws | [Bounded computations](../../PolyFun/PFunctor/Dynamical/DynComputation/Bounded.lean) |
+| Deterministic transition to tree and machine | Fuel-bounded runs keep exact residual states; the tree takes one silent step per continuing transition, and the machine's chunk runner agrees with `Control.Transition.run` | [Transitions](../../PolyFun/Control/Transition.lean), [tree and machine adapters](../../PolyFun/ITree/Transition.lean) |
 | Semantic meaning to native implementation | `CorrespondsOn`, `CertifiedMeaning` and `RelationalContract` transfer total-correctness contracts on stated admissible inputs | [Correspondence](../../PolyFun/Control/Semantics/Correspondence.lean) |
 
 The corresponding tree presentations are equivalences or embeddings as named
