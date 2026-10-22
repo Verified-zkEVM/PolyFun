@@ -41,6 +41,7 @@ public import PolyFun.Control.Monad.Support.Loops
 public import PolyFun.Control.Monad.Support.Structural
 public import PolyFun.Control.Monad.Support.WP
 public import PolyFun.Control.Monad.WriterT.WP
+public import PolyFun.Control.Semantics.Correspondence
 public import PolyFun.Control.Trace
 public import PolyFun.IPFunctor.Basic
 public import PolyFun.IPFunctor.Chart.Basic
