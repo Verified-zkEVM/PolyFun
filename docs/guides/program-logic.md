@@ -39,7 +39,7 @@ supplies the expectation reading of its oracle computations.
 | `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as the core `Std.WP.WPMonad m l EStack⟨⟩` with `wp x post = μ (x >>= fun a => pure (post a))` (through the `ToCslib.Order.LeanOrder` bridge), exact (`instExactWPMonadToWPMonad`), its value by `rfl` (`toWPMonad_wp`, not `@[simp]`), `toWP_triple_iff`, `wpConjunctiveOf`, and the transfer lemmas `top_eq_top`, `meet_eq_inf`, `join_eq_sup`, `iInf_eq_iInf`, and `iSup_eq_iSup` between core's and Mathlib's lattice operations |
 | `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPDemonic` / `toWPAngelic`: the always and sometimes judgments as core `WP` transformers from attachment alone; `toWPMonadDemonic` / `toWPMonadAngelic`: the demonic and angelic readings as `WPMonad m Prop EStack⟨⟩`; conjunctivity of the demonic reading; exactness of both readings over an `ExactMonadAttach`; soundness of the demonic reading in the sense of core's `Std.WP.LawfulWPMonadAttach` (`toWPMonadDemonic_lawfulWPMonadAttach`); `support_subset_of_wp` / `allOutputs_of_wp` |
 | `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWPOf` / `transportWPMonadOf` (along cslib's `IsMonadHom`) and the bundled `transportWP` / `transportWPMonad`: pulling a core `WPMonad` back along a monad morphism, preserving exactness |
-| `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.wpMonadOf`, the interpretation of `WriterT` with explicit empty and append operations on the log-indexed carrier `ω → Pred`, and its multiplicative specialization, scoped under `WriterT.MonoidWP`; the equations `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, and `wp_run_eq`; the `tell` and `monadLift` entailments behind the `@[spec]` rules; and exactness over an exact base (`exactWPMonad_wpMonadOf`, scoped `WriterT.MonoidWP.instExactWPMonad`) |
+| `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.wpMonadOf`, the interpretation of `WriterT` with explicit empty and append operations on the log-indexed carrier `ω → Pred`, its multiplicative specialization, scoped under `WriterT.MonoidWP`, and its append-based specialization over core's `Std.Associative (· ++ ·)` and `Std.LawfulIdentity (· ++ ·) ∅`, scoped under `WriterT.AppendWP` with the writer's lawfulness (`WriterT.lawfulMonad_monad`); the equations `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, and `wp_run_eq` and their `WriterT.AppendWP` counterparts; the `tell` and `monadLift` entailments behind the `@[spec]` rules; and exactness over an exact base (`exactWPMonad_wpMonadOf`, scoped `WriterT.MonoidWP.instExactWPMonad` and `WriterT.AppendWP.instExactWPMonad`) |
 | `PolyFun/Control/Monad/Hom/Loops.lean` | A monad morphism between lawful monads commutes with `forIn'`/`forIn`/`forM`/`foldlM`/`mapM` and with `forIn` over `PureForIn` containers (`@[simp, grind =]`), through `MonadHom.isMonadHom` and cslib's `IsMonadHom.map_list*` |
 | `PolyFun/Control/Do/Spec.lean` | Tactic tier: the `@[spec]` rules listed below, for list loops, `Fin.mOfFn`, `try … catch`, sequencing, `WriterT`, `OptionT`, and the transformers' constructors, lifts, and runners |
 
@@ -55,7 +55,9 @@ namespace `Std.WP`:
   tag it.
 - `Spec.seqLeft` and `Spec.seqRight`, for `<*` and `*>`.
 - `Spec.tell_WriterT`, `Spec.monadLift_WriterT`, `Spec.mk_WriterT`, and `Spec.run_WriterT`, for
-  Mathlib's `WriterT` with a multiplicative log.
+  Mathlib's `WriterT` with a multiplicative log, and `Spec.tell_WriterT_append`,
+  `Spec.monadLift_WriterT_append`, `Spec.mk_WriterT_append`, and `Spec.run_WriterT_append` for an
+  append-based log.
 - `Spec.failure_OptionT` and `Spec.lift_OptionT` for every assertion carrier, `Spec.guard_OptionT`
   for `Prop`-valued readings, and `Spec.guard_OptionT_iInf`, its counterpart for every assertion
   carrier.
@@ -238,7 +240,7 @@ with no PolyFun proof.
 | early `return`/`break`/`continue` | `Invariant.withEarlyReturnNewDo` (core) | via the instance | — | — | — |
 | `throw`/`tryCatch` on `ExceptT`/`OptionT` | core's lifted instances (`Spec.throw_MonadExcept`, `Spec.tryCatch_ExceptT`), plus `Spec.tryCatch_MonadExcept` registered in `Do/Spec.lean` for the `try … catch` elaboration | via the instance | core's lifts, exact over an exact base | `ExceptT.mapHom`/`OptionT.mapHom` | — |
 | `get`/`set`/`read` | core's lifted instances | `Support/Indexed.lean` (`supportFrom`, `supportAt`) | core's lifts, exact over an exact base | `StateT.mapHom`/`ReaderT.mapHom` | — |
-| `tell`/`WriterT.run` | `WriterT.MonoidWP.instWPMonad` (`WriterT/WP.lean`) with `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` in `Do/Spec.lean` | `mem_support_writerT_iff`, with exact support over an exact base (`Support/Instances.lean`) | `WriterT.MonoidWP.instExactWPMonad` | `WriterT.mapHom` | — |
+| `tell`/`WriterT.run` | `WriterT.MonoidWP.instWPMonad` or `WriterT.AppendWP.instWPMonad` (`WriterT/WP.lean`) with `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` and their `_append` forms in `Do/Spec.lean` | `mem_support_writerT_iff`, with exact support over an exact base (`Support/Instances.lean`) | `WriterT.MonoidWP.instExactWPMonad`, `WriterT.AppendWP.instExactWPMonad` | `WriterT.mapHom` | — |
 | `while`/`repeat` | `ITree` only (`ITree/Do.lean`); no rule on finite `FreeM` | — | — | — | — |
 
 The table has no relational column: loop rules for `MAlgRelOrdered` would need an invariant
@@ -274,10 +276,16 @@ interpretations. The free-monad readings are `scoped` under `PFunctor.FreeM.Demo
 they are intended.
 
 The writer interpretation also needs an explicit choice. Either `open scoped WriterT.MonoidWP`
-for multiplicative logs, or install `WriterT.wpMonadOf` locally with the empty and append
-operations and the lawfulness witness for the same `WriterT.monad`. The second choice supports
-append-based logs without adding a `Monoid` instance or a competing writer monad.
-`PolyFunTest/Do/WriterAppend.lean` checks ordered accumulation from a nonempty incoming log.
+for multiplicative logs, `open scoped WriterT.AppendWP` for logs combined by `++` from `∅`, or
+install `WriterT.wpMonadOf` locally with the empty and append operations and the lawfulness
+witness for the same `WriterT.monad`. The append-based choices support logs such as lists without
+adding a `Monoid` instance or a competing writer monad. `WriterT.AppendWP` takes core's
+`Std.Associative (· ++ ·)` and `Std.LawfulIdentity (· ++ ·) ∅` and also supplies the writer's
+`LawfulMonad` instance. The identity of `Std.LawfulIdentity` is an `outParam`, which instance
+search does not re-abstract in the hypotheses of an instance, so a log type needs its identity
+instance at the spelling `∅`; the scope provides it for `List`, whose core instance is stated at
+`[]`. `PolyFunTest/Do/WriterAppend.lean` checks ordered accumulation from a nonempty incoming log,
+both with a local interpretation and through `vcgen` under `WriterT.AppendWP`.
 
 Core marks `vcgen` as experimental: each call prints a warning unless
 `set_option experimental.vcgen true` acknowledges that status. No proof in the library calls

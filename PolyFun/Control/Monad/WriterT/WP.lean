@@ -20,8 +20,11 @@ reading the interpretation at the unit recovers the log-oblivious one.
 
 `WriterT.wpMonadOf` takes explicit empty/append operations and their laws, so it also
 interprets append-based logs without a `Monoid` instance. The monoid specialization is scoped
-under `WriterT.MonoidWP`; clients opt in with `open scoped WriterT.MonoidWP` or install an
-explicit interpretation locally. Importing the module does not choose a writer interpretation.
+under `WriterT.MonoidWP`, and the specialization to logs combined by `++` from `∅` under core's
+`Std.Associative` and `Std.LawfulIdentity` is scoped under `WriterT.AppendWP`, which also supplies
+the writer's `LawfulMonad` instance (`WriterT.lawfulMonad_monad`). Clients opt in with
+`open scoped WriterT.MonoidWP` or `open scoped WriterT.AppendWP`, or install an explicit
+interpretation locally. Importing the module does not choose a writer interpretation.
 The `@[spec]` rules for `tell`, `monadLift`, `mk`, and `run`
 live in `PolyFun.Control.Do.Spec`, the tactic tier of the `Std.WP` quarantine; the entailments
 they wrap are stated here.
@@ -61,6 +64,39 @@ def wpInstOf (append : ω → ω → ω) [WP (m (α × ω)) (α × ω) Pred EPre
     · intro p
       exact hpost p.1 (append w p.2)
     · exact hepost
+
+/-! ## Lawful writer monads -/
+
+/-- The writer monad of explicit log operations is lawful when `empty` is a two-sided unit of an
+associative `append`. -/
+theorem lawfulMonad_monad [Monad m] [LawfulMonad m] (empty : ω) (append : ω → ω → ω)
+    (left_id : ∀ w, append empty w = w) (right_id : ∀ w, append w empty = w)
+    (assoc : ∀ a b c, append (append a b) c = append a (append b c)) :
+    @LawfulMonad (WriterT ω m) (WriterT.monad empty append) :=
+  letI := WriterT.monad (M := m) empty append
+  LawfulMonad.mk'
+    (bind_pure_comp := fun _ _ => by ext; simp [right_id])
+    (id_map := fun _ => by ext; simp)
+    (pure_bind := fun _ _ => by ext; simp [left_id])
+    (bind_assoc := fun _ _ _ => by ext; simp [assoc])
+
+namespace AppendWP
+
+/-- `List`'s identity for `++` at the spelling `∅` of the writer monad's empty log. Core states it
+at `[]`, and instance search does not re-abstract the identity, an `outParam`, in the hypotheses
+of the instances below, so they need the `∅` form. -/
+scoped instance instLawfulIdentityListAppend {β : Type u} :
+    Std.LawfulIdentity (α := List β) (· ++ ·) ∅ :=
+  inferInstanceAs (Std.LawfulIdentity (α := List β) (· ++ ·) [])
+
+/-- The writer monad of an append-based log is lawful. -/
+scoped instance instLawfulMonad [Monad m] [LawfulMonad m] [EmptyCollection ω] [Append ω]
+    [Std.Associative (α := ω) (· ++ ·)] [Std.LawfulIdentity (α := ω) (· ++ ·) ∅] :
+    LawfulMonad (WriterT ω m) :=
+  lawfulMonad_monad ∅ (· ++ ·) Std.LawfulLeftIdentity.left_id Std.LawfulRightIdentity.right_id
+    Std.Associative.assoc
+
+end AppendWP
 
 variable [Monad m] [WPMonad m Pred EPred]
 
@@ -145,6 +181,54 @@ theorem wp_run_eq_of (empty : ω) (append : ω → ω → ω)
     (post : α × ω → Pred) (epost : EPred) :
     wp x.run post epost = (wpInstOf append).wp x (fun a w => post (a, w)) epost empty := by
   simp only [wpInstOf_apply_eq, left_id]
+
+/-! ## Append-based logs
+
+`WriterT.AppendWP` interprets a log combined by `++` from `∅`, such as a list, under core's
+`Std.Associative (· ++ ·)` and `Std.LawfulIdentity (· ++ ·) ∅`. -/
+
+namespace AppendWP
+
+variable [EmptyCollection ω] [Append ω] [Std.Associative (α := ω) (· ++ ·)]
+  [Std.LawfulIdentity (α := ω) (· ++ ·) ∅]
+
+/-- Opt-in writer interpretation for append-based logs: the postcondition is told the log
+accumulated so far, extended on the right by `++`. -/
+scoped instance instWPMonad : WPMonad (WriterT ω m) (ω → Pred) EPred :=
+  wpMonadOf ∅ (· ++ ·) Std.LawfulRightIdentity.right_id Std.Associative.assoc
+
+/-- The append-based writer interpretation is exact over an exact base. -/
+scoped instance instExactWPMonad [ExactWPMonad m Pred EPred] :
+    ExactWPMonad (WriterT ω m) (ω → Pred) EPred :=
+  exactWPMonad_wpMonadOf ∅ (· ++ ·) Std.LawfulRightIdentity.right_id Std.Associative.assoc
+
+@[simp, grind =]
+theorem wp_apply_eq (x : WriterT ω m α) (post : α → ω → Pred) (epost : EPred) (w : ω) :
+    wp x post epost w = wp x.run (fun p => post p.1 (w ++ p.2)) epost :=
+  rfl
+
+/-- Writing to an append-based log extends the accumulated log on the right. -/
+theorem le_wp_tell (out : ω) (post : PUnit → ω → Pred) (epost : EPred) :
+    (fun w => post ⟨⟩ (w ++ out)) ⊑ wp (MonadWriter.tell out : WriterT ω m PUnit) post epost :=
+  le_wp_tell_of (· ++ ·) out post epost
+
+/-- A lifted base computation leaves an append-based log unchanged. -/
+theorem le_wp_monadLift (x : m α) (post : α → ω → Pred) (epost : EPred) :
+    (fun w => wp x (fun a => post a w) epost) ⊑
+      wp (MonadLift.monadLift x : WriterT ω m α) post epost :=
+  le_wp_liftTell_of ∅ (· ++ ·) Std.LawfulRightIdentity.right_id x post epost
+
+@[simp, grind =]
+theorem wp_mk_apply_eq (x : m (α × ω)) (post : α → ω → Pred) (epost : EPred) (w : ω) :
+    wp (WriterT.mk x : WriterT ω m α) post epost w = wp x (fun p => post p.1 (w ++ p.2)) epost :=
+  rfl
+
+/-- Running an append-based writer computation from the empty log. -/
+theorem wp_run_eq (x : WriterT ω m α) (post : α × ω → Pred) (epost : EPred) :
+    wp x.run post epost = wp x (fun a w => post (a, w)) epost ∅ :=
+  wp_run_eq_of ∅ (· ++ ·) Std.LawfulLeftIdentity.left_id x post epost
+
+end AppendWP
 
 variable [Monoid ω]
 
