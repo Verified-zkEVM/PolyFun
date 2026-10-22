@@ -42,8 +42,8 @@ variable {m : Type u → Type v} {n : Type u → Type w}
 @[expose, instance_reducible]
 def transportWPOf (F : ∀ {α : Type u}, m α → n α) (α : Type u) [WP (n α) α Pred EPred] :
     WP (m α) α Pred EPred where
-  wpTrans x := WP.wpTrans (F x)
-  wp_trans_monotone x := WP.wp_trans_monotone (F x)
+  trans x := WP.trans (F x)
+  trans_monotone x := WP.trans_monotone (F x)
 
 @[simp]
 theorem transportWPOf_wp (F : ∀ {α : Type u}, m α → n α) {α : Type u} [WP (n α) α Pred EPred]

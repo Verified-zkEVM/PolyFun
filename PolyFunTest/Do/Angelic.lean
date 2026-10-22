@@ -158,7 +158,7 @@ example :
   have hwp : Lean.Order.top ⊑ wp zeroOne (fun a => ⌜a = 0⌝) Lean.Order.top := by
     intro _
     change SomeOutput (fun a => ⌜a = 0⌝) zeroOne
-    exact ⟨0, Or.inl rfl, (Lean.Order.ofProp_prop_eq _).mpr rfl⟩
+    exact ⟨0, Or.inl rfl, (Lean.Order.CompleteLattice.ofProp_prop_eq _).mpr rfl⟩
   have h₁ : CanReturn zeroOne 1 := Or.inr rfl
   have h₀ := h.of_canReturn_wp h₁ hwp
   exact Nat.one_ne_zero h₀

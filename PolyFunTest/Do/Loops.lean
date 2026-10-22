@@ -50,14 +50,11 @@ def firstOrDefault (o : Option Bool) : FreeM coinP Bool := do
     FreeM.lift (P := coinP) PUnit.unit
 
 /- The `else` branch puts an operation in tail position with the value type already
-normalized to `Bool`, where `vcgen`'s structural matcher cannot apply `Spec.lift` (stated at
-`P.B a`); the residual `wp` goal is finished by the judgment equations, naming the interface
-explicitly because its value type reads `Bool` rather than `coinP.B _`. -/
+normalized to `Bool`; `vcgen` still decomposes it by `Spec.lift`, leaving only the
+postcondition at the returned answer. -/
 example (o : Option Bool) : ⦃ True ⦄ firstOrDefault o ⦃ fun r => r = true ∨ r = false ⦄ := by
   vcgen -errorOnMissingSpec [firstOrDefault]
-  · exact Bool.eq_false_or_eq_true _
-  · rw [FreeM.DemonicWP.wp_apply_eq, FreeM.allOutputs_lift (P := coinP)]
-    exact fun b => Bool.eq_false_or_eq_true b
+  all_goals exact Bool.eq_false_or_eq_true _
 
 /- With the value type syntactically `P.B a`, a tail-position operation is decomposed by
 `Spec.lift` directly. -/
