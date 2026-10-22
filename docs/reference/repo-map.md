@@ -51,7 +51,9 @@ Example and test imports never flow back into production.
 | Strength, the strong bind, and structural cost laws | [Strength](../../PolyFun/Realizability/Quantitative/Strength.lean), [cost laws](../../PolyFun/Realizability/Quantitative/CostLaws.lean), [carries](../../PolyFun/Realizability/Quantitative/Carry.lean) | [Realizability](../guides/realizability.md#strength-and-the-strong-bind) |
 | Stateful handler substitution | [Handler costs](../../PolyFun/Realizability/Quantitative/Handler.lean), [product machine](../../PolyFun/PFunctor/Dynamical/DynComputation/WrapState.lean) | [Realizability](../guides/realizability.md#stateful-handler-substitution) |
 
-`Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure.
+`Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure: ordered,
+graded, Dijkstra and relative monads and monad relations under `Control/Monad/`, and the
+lawfulness classes `LawfulMonadFunctor` and `LawfulMonadControl` under `Control/Lawful/`.
 `Logic/` holds small logic helpers. `Complexity/` supplies resource-bound syntax;
 concrete machine complexity lives in the optional `ComplexityBackends` library.
 
