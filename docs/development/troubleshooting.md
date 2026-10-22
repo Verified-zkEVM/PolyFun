@@ -365,8 +365,8 @@ dependency therefore stays confined to those files. Every interpretation they ex
 construction (`def`) or a `scoped` instance, never a global instance, because a global `WP`
 instance on `FreeM P` would compete with downstream instances on its reducible unfoldings, such
 as oracle-computation types. Register the provided interpretations `scoped` or `local`
-downstream. The writer interpretation follows the same rule: `WriterT.MonoidWP.instWPMonad` is
-scoped under `WriterT.MonoidWP`. `scripts/check-modules.sh` enforces both tiers. See
+downstream. The writer interpretations follow the same rule: `WriterT.MonoidWP.instWPMonad` is
+scoped under `WriterT.MonoidWP`, and `WriterT.AppendWP.instWPMonad` under `WriterT.AppendWP`. `scripts/check-modules.sh` enforces both tiers. See
 [`program-logic.md`](../guides/program-logic.md).
 
 ### `vcgen` finds no spec unless the `Std.WP` root is imported
