@@ -13,6 +13,9 @@ lake env lean Examples/Tutorials/Requests.lean
 | [Machines](Tutorials/Machines.lean) | A counter's state, outputs, trace, and composition of finite runs |
 | [Indexed programs](Tutorials/IndexedPrograms.lean) | Two protocol phases, indexed sequencing, and forgetting indices |
 | [Interaction trees](Tutorials/InteractionTrees.lean) | A counter over state events and ticks, run by the state corecursor and through handlers |
+| [Parallel reports](Tutorials/ParallelReports.lean) | Independent sources and explicit joint-request interpretation order |
+| [Versioned requests](Tutorials/VersionedRequests.lean) | Routed clients, retained traffic, and stale-write rejection |
+| [Update policies](Tutorials/UpdatePolicies.lean) | All-response safety, allowed answers, and why safety is not progress |
 
 Use ordinary imports such as `import Examples.Tutorials.Requests`.
 The Lake target is `PolyFunExamples`, so it can coexist with downstream

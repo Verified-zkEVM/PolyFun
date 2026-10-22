@@ -8,7 +8,8 @@ lake build PolyFun ToCslib ComplexityBackends PolyFunExamples PolyFunTest --wfai
 lake lint -- --trace
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
-  Examples.Tutorials.InteractionTrees \
+  Examples.Tutorials.InteractionTrees Examples.Tutorials.ParallelReports \
+  Examples.Tutorials.VersionedRequests Examples.Tutorials.UpdatePolicies \
   Examples.Parliament PolyFunParliamentMain
 ```
 
