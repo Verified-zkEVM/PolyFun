@@ -12,6 +12,7 @@ public import ToCslib.Control.ForIn
 public import ToCslib.Control.Monad.HomTransport
 public import ToCslib.Data.BitVec
 public import ToCslib.Data.Fin.Cases
+public import ToCslib.Data.Fin.MOfFn
 public import ToCslib.Data.PFunctor.Free.Basic
 public import ToCslib.Data.PFunctor.Free.Loops
 public import ToCslib.Order.Admissible
@@ -30,8 +31,8 @@ lemmas in cslib's simp normal form, transport of loop combinators along monad mo
 `PureForIn` instances, the bridge from Mathlib's complete lattices to core's `Lean.Order`,
 least fixed points, admissible predicates, and discrete, lifted, and disjoint-sum carriers over
 Mathlib's omega-complete partial orders, finite prefix recursion, direct compilation of
-`Fin.cases`, single-bit overwrites on bitvectors, monotonicity of natural-number polynomial
-evaluation, and polynomial growth against `2 ^ n`.
+`Fin.cases`, monadic sequencing of `Fin`-indexed families, single-bit overwrites on bitvectors,
+monotonicity of natural-number polynomial evaluation, and polynomial growth against `2 ^ n`.
 It imports core, cslib, and Mathlib only — never `PolyFun`, a concrete complexity backend, or any
 downstream oracle or cryptographic semantics. `PolyFun` imports the modules it needs explicitly;
 `ComplexityBackends` may do the same.

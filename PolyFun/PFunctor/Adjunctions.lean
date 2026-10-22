@@ -97,8 +97,6 @@ def Lens.fromYEquiv : Lens y.{uA₁, uB₁} p ≃ p.A where
 
 @[deprecated (since := "2026-10-19")] alias homFromY := Lens.fromYEquiv
 
-@[deprecated (since := "2026-08-17")] alias homFromX := Lens.fromYEquiv
-
 /-- **Constants are right adjoint on positions** (Niu–Spivak Thm 5.4,
 `Poly(q, I) ≅ Set(q(1), I)`). A lens `p ⇆ C A` is exactly a function on
 positions `p.A → A`; its backward map is forced since `C A` has no directions. -/

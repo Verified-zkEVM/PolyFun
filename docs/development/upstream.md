@@ -104,6 +104,12 @@ The wrapper equations matter because imported wrappers can be inlined after
 the compiler simplification pass. Remove these staging lemmas when the owning
 core and Mathlib definitions acquire equivalent compiled implementations.
 
+`ToCslib/Data/Fin/MOfFn.lean` defines `Fin.mOfFn`, which runs a `Fin n`-indexed
+family of monadic computations in order and collects the results as a function.
+The pinned Mathlib has only the vector-valued `List.Vector.mOfFn`; an upstream
+version belongs beside it. Its `vcgen` rule `Spec.mOfFn_fin` stays in
+`PolyFun/Control/Do/Spec.lean`, inside the `Std.WP` quarantine.
+
 ## Omega-CPO fixed points
 
 `ToCslib/Order/` extends Mathlib’s omega-CPO API with continuous currying,
