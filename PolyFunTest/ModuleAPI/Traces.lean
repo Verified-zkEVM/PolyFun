@@ -47,7 +47,7 @@ example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uC, uD}}
     TraceList.mapPartial g (TraceList.mapPartial f (first * second)) =
       TraceList.mapPartial (fun event => (f event).bind g) first *
         TraceList.mapPartial (fun event => (f event).bind g) second := by
-  rw [TraceList.mapPartial_comp, TraceList.mapPartial_mul]
+  rw [TraceList.mapPartial_mapPartial, TraceList.mapPartial_mul]
 
 example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uC, uD}} {X : Type v}
     (trace : Trace P X) : Trace.mapPartial (Q := Q) (fun _ => none) trace = 1 := by
@@ -108,7 +108,7 @@ example : TraceList.getAt? (TraceList.mapPartial keepNaturals events) true 0 =
 
 example : TraceList.mapPartial (Q := signature) (fun _ => none)
     (TraceList.mapPartial keepNaturals events) = 1 := by
-  rw [TraceList.mapPartial_comp]
+  rw [TraceList.mapPartial_mapPartial]
   simp only [Option.bind_fun_none, TraceList.mapPartial_none]
 
 end PolyFunTest.ModuleAPI.Traces

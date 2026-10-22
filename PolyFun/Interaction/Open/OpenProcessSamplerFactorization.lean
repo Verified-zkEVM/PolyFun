@@ -384,7 +384,7 @@ theorem map_tensorComm_comp_wireLeft_comp_map_tensorComm (Δ₁ Γ Δ₂ : PortB
     OpenNodeProfile.mapBoundary, BoundaryAction.mapBoundary, OpenNodeContext.wireLeft,
     BoundaryAction.wireLeft, OpenNodeContext.wireRight, BoundaryAction.wireRight,
     OpenNodeProfile.mk.injEq, BoundaryAction.mk.injEq, true_and]
-  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_comp]
+  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_mapPartial]
   congr 1
   funext packet
   rcases packet with ⟨(_ | _), _⟩ <;> rfl
@@ -403,7 +403,7 @@ theorem map_tensorComm_comp_wireRight_comp_map_tensorComm (Δ₁ Γ Δ₂ : Port
     OpenNodeProfile.mapBoundary, BoundaryAction.mapBoundary, OpenNodeContext.wireLeft,
     BoundaryAction.wireLeft, OpenNodeContext.wireRight, BoundaryAction.wireRight,
     OpenNodeProfile.mk.injEq, BoundaryAction.mk.injEq, true_and]
-  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_comp]
+  simp only [PFunctor.Trace.mapChart, PFunctor.Trace.mapPartial_mapPartial]
   congr 1
   funext packet
   rcases packet with ⟨(_ | _), _⟩ <;> rfl

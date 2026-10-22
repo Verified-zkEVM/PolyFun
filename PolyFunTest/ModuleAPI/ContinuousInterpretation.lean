@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.ITree.DomainLaws
+public import PolyFun.ITree.Interp.Stateful
 public import PolyFun.PFunctor.Resumption.DomainTruncate
 
 /-!
@@ -42,7 +43,7 @@ example (ret : β → D) (alg : Resumption.ContinuousAlgebra P D)
 
 example (ret : α → D) (alg : Resumption.ContinuousAlgebra P D) :
     Resumption.denote ret alg = ωSup (Resumption.truncationChain ret alg) :=
-  Resumption.denote_eq_sup_truncations ret alg
+  Resumption.denote_eq_ωSup ret alg
 
 example (ret : α → D) (alg : Resumption.ContinuousAlgebra P D)
     {left right : ITree P α} (h : ITree.WeakBisim left right) :
@@ -56,5 +57,41 @@ example (a : P.A) (next : P.B a → Resumption P α) :
     Resumption.denote (fun _ => False) (fun _ => .const True) (.query a next) = True := by
   rw [Resumption.denote_query]
   rfl
+
+/-- Loop state and return values can inhabit different universes. -/
+example (ret : α → D) (alg : Resumption.ContinuousAlgebra P D)
+    (body : ULift.{uβ} ℕ → ITree P (ULift.{uβ} ℕ ⊕ α)) (bound : ULift.{uβ} ℕ → D)
+    (hbody : ∀ state, ITree.denote (Sum.elim bound ret) alg (body state) ≤ bound state)
+    (state : ULift.{uβ} ℕ) : ITree.denote ret alg (ITree.iter body state) ≤ bound state :=
+  ITree.denote_iter_le ret alg body bound hbody state
+
+/-- A loop which always continues silently has bottom denotation. -/
+example (ret : α → D) (alg : Resumption.ContinuousAlgebra P D) (state : ℕ) :
+    ITree.denote ret alg (ITree.iter (fun n : ℕ => ITree.pure (.inl (n + 1))) state) = ⊥ := by
+  apply le_antisymm _ bot_le
+  apply ITree.denote_iter_le ret alg _ (fun _ => ⊥) _ state
+  intro n
+  simp
+
+/-- Exact stateful equations do not require a lawful equality monad and allow
+larger target-operation and target-answer universes. -/
+example {E : PFunctor.{0, 0}} {F : PFunctor.{uA, uB}} {S R : Type}
+    (handler : PFunctor.Handler (StateT S (ITree F)) E)
+    (a : E.A) (next : E.B a → ITree E R) (s : S) :
+    (ITree.interp handler (ITree.query a next)).run s =
+      (handler a s >>= fun out => ITree.step ((ITree.interp handler (next out.1)).run out.2)) :=
+  ITree.interp_run_query handler a next s
+
+/-- Inserting a silent guard preserves weak behavior. -/
+example (value : α) :
+    ITree.WeakBisim (ITree.step (ITree.pure (F := P) value)) (ITree.pure value) :=
+  ITree.WeakBisim.weakBisim_of_tauSteps
+    (ITree.TauSteps.step _ (ITree.shape'_step _) (ITree.TauSteps.refl _))
+
+/-- The same weakly equivalent trees disagree at zero fuel when the clock counts silent steps. -/
+example (value : α) :
+    Resumption.truncate 0 (ITree.toResumptionWithTau (ITree.step (ITree.pure (F := P) value))) ≠
+      Resumption.truncate 0 (ITree.toResumptionWithTau (ITree.pure (F := P) value)) := by
+  simp [ITree.toResumptionWithTau_step, ITree.toResumptionWithTau_pure]
 
 end PolyFunTest.ModuleAPI.ContinuousInterpretation

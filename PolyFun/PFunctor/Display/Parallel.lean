@@ -178,7 +178,7 @@ def parallelSumComponentsLiftPositionLeftEquiv
     (a : P.A) :
     left.position a ≃
       (parallelSumComponentsLift left right joint).position (.left a) :=
-  Equiv.ulift.symm
+  _root_.Equiv.ulift.symm
 
 /-- The right position component of heterogeneous assembly is canonically
 equivalent to the original evidence fiber. -/
@@ -190,7 +190,7 @@ def parallelSumComponentsLiftPositionRightEquiv
     (b : Q.A) :
     right.position b ≃
       (parallelSumComponentsLift left right joint).position (.right b) :=
-  Equiv.ulift.symm
+  _root_.Equiv.ulift.symm
 
 /-- The joint position component of heterogeneous assembly is canonically
 equivalent to the original relational evidence fiber. -/
@@ -202,7 +202,7 @@ def parallelSumComponentsLiftPositionBothEquiv
     (a : P.A) (b : Q.A) :
     joint.position (a, b) ≃
       (parallelSumComponentsLift left right joint).position (.both a b) :=
-  Equiv.ulift.symm
+  _root_.Equiv.ulift.symm
 
 /-- The left direction component of heterogeneous assembly is canonically
 equivalent to the original evidence fiber. -/
@@ -215,7 +215,7 @@ def parallelSumComponentsLiftDirectionLeftEquiv
     left.direction a contract answer ≃
       (parallelSumComponentsLift left right joint).direction
         (.left a) (ULift.up.{max uC₂ uC₃} contract) answer :=
-  Equiv.ulift.symm
+  _root_.Equiv.ulift.symm
 
 /-- The right direction component of heterogeneous assembly is canonically
 equivalent to the original evidence fiber. -/
@@ -228,7 +228,7 @@ def parallelSumComponentsLiftDirectionRightEquiv
     right.direction b contract answer ≃
       (parallelSumComponentsLift left right joint).direction
         (.right b) (ULift.up.{max uC₁ uC₃} contract) answer :=
-  Equiv.ulift.symm
+  _root_.Equiv.ulift.symm
 
 /-- The joint direction component of heterogeneous assembly is canonically
 equivalent to the original relational evidence fiber. -/
@@ -242,7 +242,7 @@ def parallelSumComponentsLiftDirectionBothEquiv
     joint.direction (a, b) contract answer ≃
       (parallelSumComponentsLift left right joint).direction
         (.both a b) (ULift.up.{max uC₁ uC₂} contract) answer :=
-  Equiv.ulift.symm
+  _root_.Equiv.ulift.symm
 
 /-- Restrict a parallel display to left-only operations. -/
 def leftComponent

@@ -91,7 +91,7 @@ theorem tail_mapLens (lens : Lens F G) (tree : CofreeC F α) :
   change M.mapLens (Lens.id (constProd F α)) tree = tree
   exact M.mapLens_id tree
 
-@[simp] theorem mapLens_comp (second : Lens G H) (first : Lens F G)
+@[simp] theorem mapLens_mapLens (second : Lens G H) (first : Lens F G)
     (tree : CofreeC F α) :
     mapLens second (mapLens first tree) =
       mapLens (second ∘ₗ first) tree := by
@@ -100,6 +100,8 @@ theorem tail_mapLens (lens : Lens F G) (tree : CofreeC F α) :
     M.mapLens (constProdLens (second ∘ₗ first)) tree
   rw [← M.mapLens_comp]
   rfl
+
+@[deprecated (since := "2026-10-19")] alias mapLens_comp := mapLens_mapLens
 
 /-- Comonad counit: extract the label at the root of a cofree tree, i.e. its `head`. -/
 def extract (t : CofreeC F α) : α :=

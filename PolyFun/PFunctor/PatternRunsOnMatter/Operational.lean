@@ -117,12 +117,12 @@ theorem runTree_append
 after pattern grafting is convolution multiplication of the two runs. -/
 theorem runOn_preserves_substitution
     (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB}) :
-    Lens.curry (runOn P Q) ∘ₗ FreeP.mult =
+    Lens.curry (runOn P Q) ∘ₗ FreeP.mul =
       (SubstMonoid.convolution (CofreeP.comonoid Q)
-          (FreeP.substMonoid (P ⊗ Q))).mult ∘ₗ
+          (FreeP.substMonoid (P ⊗ Q))).mul ∘ₗ
         (Lens.curry (runOn P Q) ◃ₗ Lens.curry (runOn P Q)) := by
   rw [runOn_eq_xi]
-  exact (xiHom P Q).map_mult
+  exact (xiHom P Q).map_mul
 
 section Handler
 

@@ -44,11 +44,22 @@ See [interaction](interaction.md).
 | Free-handler interpretation and ITree interpretation | Correspondence up to weak bisimulation, accounting for interpreter steps | [Free-program bridge](../../PolyFun/ITree/Free.lean) |
 | Explicit-state machine to behavior | Unfolding forgets the internal state representation | [Behavior and trajectories](../../PolyFun/PFunctor/Dynamical/Trajectory.lean), [returning computations](../../PolyFun/PFunctor/Dynamical/DynComputation.lean) |
 | Machine to free program | `Implements` relates behavior; `ImplementsWithin` supplies a finite query budget for execution laws | [Bounded computations](../../PolyFun/PFunctor/Dynamical/DynComputation/Bounded.lean) |
+| Deterministic transition to tree and machine | Fuel-bounded runs keep exact residual states; the tree takes one silent step per continuing transition, and the machine's chunk runner agrees with `Control.Transition.run` | [Transitions](../../PolyFun/Control/Transition.lean), [tree and machine adapters](../../PolyFun/ITree/Transition.lean) |
+| Semantic meaning to native implementation | `CorrespondsOn`, `CertifiedMeaning` and `RelationalContract` transfer total-correctness contracts on stated admissible inputs | [Correspondence](../../PolyFun/Control/Semantics/Correspondence.lean) |
 
 The corresponding tree presentations are equivalences or embeddings as named
 by their declarations, not interchangeable definitional equalities. A structural
 bridge states which result, trace, state, or behavior it preserves. Probability
 and execution-cost preservation require additional interpretations and evidence.
+
+A meaning in an arbitrary semantic carrier, which may contain errors, divergence
+or partial values, corresponds to a native implementation on an explicit set of
+admissible inputs (`CorrespondsOn`). `DataContract` requires a represented output,
+so a contract over such a correspondence is equivalent to the native postcondition.
+Representation relations are handled by `RelationalContract.iff_of_liftFun` through
+Mathlib's `Relator.LiftFun`; it needs a representative of each admissible input and a
+left-unique output relation, not a unique representative, and the embedding case is
+proved by it. These interfaces do not manufacture totality or erase failures.
 
 ## Equality and observation
 

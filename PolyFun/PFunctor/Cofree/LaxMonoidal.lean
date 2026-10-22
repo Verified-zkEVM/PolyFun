@@ -22,8 +22,7 @@ naturality, left and right unitality, and associativity to the corresponding
 tensor-lens coherence equations.
 
 This is Libkind–Spivak, *Pattern Runs on Matter*, Proposition C.1, and the
-concrete lax-monoidal construction of Spivak–Niu, Proposition 8.79 in the
-current edition (Proposition 8.81 in earlier-edition notes).  The module
+concrete lax-monoidal construction of Niu–Spivak, Proposition 8.81.  The module
 supplies the explicit maps and laws needed downstream; it does not install an
 abstract `LaxMonoidalFunctor` or symmetric-monoidal packaging.
 -/
@@ -49,9 +48,9 @@ attribute [local implicit_reducible] PFunctor.tensor Comonoid.Hom.ofCategoryLaws
 canonical comparison between the two required universe instances of `y`. -/
 def laxUnitHom :
     Comonoid.Hom
-      (Comonoid.unit.{max uA uB, max uA uB})
+      (Comonoid.trivial.{max uA uB, max uA uB})
       (comonoid y.{uA, uB}) :=
-  extend (Comonoid.unit.{max uA uB, max uA uB})
+  extend (Comonoid.trivial.{max uA uB, max uA uB})
     (Lens.unitComparison :
       Lens y.{max uA uB, max uA uB} y.{uA, uB})
 
@@ -71,7 +70,7 @@ theorem cogenerator_comp_laxUnit :
     cogenerator y.{uA, uB} ∘ₗ laxUnit.{uA, uB} =
       (Lens.unitComparison :
         Lens y.{max uA uB, max uA uB} y.{uA, uB}) :=
-  restrict_extend (Comonoid.unit.{max uA uB, max uA uB})
+  restrict_extend (Comonoid.trivial.{max uA uB, max uA uB})
     (Lens.unitComparison :
       Lens y.{max uA uB, max uA uB} y.{uA, uB})
 
@@ -287,11 +286,11 @@ theorem laxTensorHom_unit_left (P : PFunctor.{uA, uB}) :
         (Comonoid.Hom.id (comonoid P))).comp
       (laxTensorHom y.{uA, uB} P)).comp
         (mapHom (Lens.Equiv.yTensor (P := P)).toLens) =
-      (Comonoid.tensorUnitLeftIso (comonoid P)).hom := by
+      (Comonoid.tensorLeftUnitor (comonoid P)).hom := by
   apply hom_ext_cogenerator
   simp only [Comonoid.Hom.comp_toLens, Comonoid.Hom.tensor_toLens,
     Comonoid.Hom.id_toLens, mapHom_toLens, laxTensorHom_toLens,
-    laxUnitHom_toLens, Comonoid.tensorUnitLeftIso_hom_toLens]
+    laxUnitHom_toLens, Comonoid.tensorLeftUnitor_hom_toLens]
   calc
     cogenerator P ∘ₗ
           (map ((Lens.Equiv.yTensor (P := P)).toLens) ∘ₗ
@@ -331,11 +330,11 @@ theorem laxTensorHom_unit_right (P : PFunctor.{uA, uB}) :
         laxUnitHom.{uA, uB}).comp
       (laxTensorHom P y.{uA, uB})).comp
         (mapHom (Lens.Equiv.tensorY (P := P)).toLens) =
-      (Comonoid.tensorUnitRightIso (comonoid P)).hom := by
+      (Comonoid.tensorRightUnitor (comonoid P)).hom := by
   apply hom_ext_cogenerator
   simp only [Comonoid.Hom.comp_toLens, Comonoid.Hom.tensor_toLens,
     Comonoid.Hom.id_toLens, mapHom_toLens, laxTensorHom_toLens,
-    laxUnitHom_toLens, Comonoid.tensorUnitRightIso_hom_toLens]
+    laxUnitHom_toLens, Comonoid.tensorRightUnitor_hom_toLens]
   calc
     cogenerator P ∘ₗ
           (map ((Lens.Equiv.tensorY (P := P)).toLens) ∘ₗ
@@ -373,7 +372,7 @@ retrofunctors. -/
 theorem laxTensorHom_assoc
     (P : PFunctor.{uA₁, uB₁}) (Q : PFunctor.{uA₂, uB₂})
     (R : PFunctor.{uA₃, uB₃}) :
-    (((Comonoid.tensorAssocIso (comonoid P) (comonoid Q) (comonoid R)).hom.comp
+    (((Comonoid.tensorAssociator (comonoid P) (comonoid Q) (comonoid R)).hom.comp
         (Comonoid.Hom.tensor (Comonoid.Hom.id (comonoid P))
           (laxTensorHom Q R))).comp
       (laxTensorHom P (Q ⊗ R))) =
@@ -385,7 +384,7 @@ theorem laxTensorHom_assoc
   apply hom_ext_cogenerator
   simp only [Comonoid.Hom.comp_toLens, Comonoid.Hom.tensor_toLens,
     Comonoid.Hom.id_toLens, mapHom_toLens, laxTensorHom_toLens,
-    Comonoid.tensorAssocIso_hom_toLens]
+    Comonoid.tensorAssociator_hom_toLens]
   calc
     cogenerator (P ⊗ (Q ⊗ R)) ∘ₗ
           (laxTensor P (Q ⊗ R) ∘ₗ

@@ -14,8 +14,8 @@ public import Mathlib.Order.Filter.AtTopBot.Basic
 
 This file adds the first fairness layer on top of `Concurrent.ProcessOver.Run`.
 
-The key design choice is that fairness is phrased in terms of stable
-`Tickets`, not raw frontier events. This matters because the concrete event
+The key design choice is that fairness is phrased in terms of stable tickets
+(`ProcessOver.TicketMap`), not raw frontier events. This matters because the concrete event
 type available at one residual process state need not even be comparable with
 the event type at a later state, while a ticket is meant to name the same
 scheduling obligation across time and across different presentations of the

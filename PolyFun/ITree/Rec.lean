@@ -10,7 +10,7 @@ public import PolyFun.ITree.Sim.Defs
 /-! # Recursive procedure helpers
 
 `ITree.mutualRec` and `ITree.fixRec` are the standard recursive procedure-call
-combinators built on top of the `PFunctor.sum` infrastructure. The event
+combinators built on top of the sum `D + E` of event signatures. The event
 `CallE α β` describes "one recursive call expecting an `α`-argument and
 returning a `β`-result"; it is the source signature passed to `fixRec`.
 
@@ -25,8 +25,8 @@ productive.
 
 `D` and `E` may have independent event-position universes, and every final
 result universe is independent of the event signatures. Their direction
-universes remain equal because the current `PFunctor.sum` representation
-requires that genuine local constraint. In particular, `CallE α β` itself
+universes remain equal because the sum `PFunctor.add` requires that genuine
+local constraint. In particular, `CallE α β` itself
 does have independent argument and result universes; `fixRec` only requires
 the external signature's direction universe to agree with that of `β` at the
 coproduct boundary.

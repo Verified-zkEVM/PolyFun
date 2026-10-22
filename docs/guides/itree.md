@@ -70,6 +70,11 @@ follow the polynomial event interface described below.
   `Resumption (P + y) α`. Thus finite programs embed as the well-founded,
   tau-free fragment, while arbitrary ITrees use the same resumption boundary
   with `y` recording silent steps.
+- The embeddings are the canonical monad lifts `FreeM P → Resumption P → ITree P`
+  (`MonadLift` with `LawfulMonadLift`). A `do` block in `ITree P` runs a
+  `FreeM P` program directly, and `liftM` of a finite program is
+  `FreeM.toITree`. `Resumption P` is an abbreviation of an M-type, so a lift into
+  it is written `liftM program`.
 - Lean's core `whileM` has the same continue/terminate protocol as `ITree.iter`
   but uses generic partial recursion and requires an inhabited result type.
   Import `PolyFun.ITree.Do` and write `open scoped ITree` to make `while`
@@ -105,8 +110,8 @@ follow the polynomial event interface described below.
   visible. Their facts files expose exact computation and bind laws.
 - Recursive calls separate input, result, external-event, and final-result
   universes. `mutualRec` and `fixRec` retain one local equality: recursive and
-  external replies share a universe because the current `PFunctor.sum`
-  representation requires it. No other ITree API inherits that constraint.
+  external replies share a universe because the sum `PFunctor.add` requires
+  it. No other ITree API inherits that constraint.
 
 ## Interpreting into a monad
 
@@ -208,16 +213,18 @@ uniformity) over a monad-specific equivalence; for interaction trees that
 equivalence is weak bisimulation, because every loop step inserts a silent
 guard. [`Control/Monad/Iter/Instances.lean`](../../PolyFun/Control/Monad/Iter/Instances.lean)
 makes `StateT`, `ReaderT`, `ExceptT`, and `OptionT` over an iterative monad
-iterative, with `run_iterM` equations by definition, and proves the state and
-reader transformers lawful over a lawful base, so `StateT σ (ITree F)` and
-`ReaderT ρ (ITree F)` carry the same loop laws as `ITree F`.
+iterative, with `run_iterM` equations by definition. All four transformers
+are lawful over a lawful base. State and reader equivalences compare runs
+pointwise; exception and option equivalences retain errors and failure in the
+base result. Transformer order determines whether state survives an abort: use
+`ExceptT ε (StateT σ m)` when the error outcome must retain the final state.
 
 `ITree.bind_eq_bind`, `ITree.pure_eq_pure`, and `ITree.iterM_eq_iter` identify
 the monadic `>>=`, `pure`, and `iterM` with `ITree.bind`, `ITree.pure`, and
 `ITree.iter`, whose exact equations (`bind_query`, `bind_pure_left`,
 `iter_unfold`) compute concrete runs. The
 [tutorial](../tutorials/interaction-trees.md) uses them to compute
-interpretations into `OptionT (ITree E)`, a target without a lawful instance.
+interpretations into `OptionT (ITree E)`, including early failure.
 
 ## Running a tree as a machine
 
@@ -270,3 +277,54 @@ The [Parliament behavior walkthrough](../../Examples/Parliament/Docs/walkthrough
 uses `DynComputation` behavior and `Resumption.toITree` to present the live application
 as a tau-free interaction tree. It proves query/return observations and relates finite
 chunks to resumption truncation; this does not require the meeting to terminate.
+
+## Continuous domain interpretations
+
+[`ITree.Domain`](../../PolyFun/ITree/Domain.lean) interprets trees into any
+pointed omega-CPO with a continuous algebra for each visible query. Silent
+steps use identity. `ITree.denote` interprets the exact resumption-with-tau
+representation; `denote_eq_fix` identifies it with the least solution of the tree equations;
+`WeakBisim.denote_eq` proves it invariant under weak bisimulation.
+`denote_corec` relates a corecursive tree to the least solution of its state
+equations. This is a domain interpretation, separate from a chosen monadic
+handler or a termination argument.
+
+[`Resumption.Domain`](../../PolyFun/PFunctor/Resumption/Domain.lean) supplies
+the same construction for resumptions, proves agreement with well-founded
+free folds, and transports algebras along lenses. `denote_toResumptionWithTau`
+connects the ITree and resumption presentations exactly.
+[`DomainTruncate`](../../PolyFun/PFunctor/Resumption/DomainTruncate.lean)
+interprets finite cutoff leaves as bottom and proves that the increasing
+truncation folds have the full denotation as their supremum. These theorems
+do not require finite branching or a uniform finite depth for a well-founded tree.
+
+### Sequencing and iterating continuous interpretations
+
+[`Resumption/DomainLaws`](../../PolyFun/PFunctor/Resumption/DomainLaws.lean)
+and [`ITree/DomainLaws`](../../PolyFun/ITree/DomainLaws.lean) provide algebra
+fusion and substitution laws. A strict continuous map that commutes with query
+algebras commutes with `denote`. Interpreting `bind tree next` changes the return
+interpretation to `fun a => denote ret alg (next a)` and retains the query algebra.
+The proof uses leastness and increasing approximants, so it covers unbounded
+branching and divergence. `ITree.denote_toITree` connects these laws across the
+canonical tau-free resumption embedding. Measure and kernel algebras belong in
+VCVio; these laws themselves impose no probability interpretation.
+
+`ITree.denote_iter_eq` gives the semantic loop-body equation, and
+`denote_iter_le` bounds an unbounded iteration by any family preserved by its
+body. The rule also handles silent divergence and independent loop-state and
+result universes. When the body interpretation is supplied as a continuous
+operator, `denote_iter_eq_fix` identifies the existing executable iteration's
+meaning with its least fixed point. These rules use the same `ITree.iter` and
+continuous algebra as the substitution and weak-bisimulation laws.
+
+[`Interp/Stateful`](../../PolyFun/ITree/Interp/Stateful.lean) exposes exact
+`StateT` loop-body and `interp_run_*` equations when the target is another
+interaction tree. A source silent step stays silent, and a service query runs
+once before a silent guard enters its continuation with the updated private
+state. The target operation and answer universes are independent of the source universe.
+
+Weak equivalence does not identify clocks: a return leaf and one silent step
+followed by that leaf are weakly equivalent, but their exact explicit-tau
+resumption truncations differ at zero fuel. The ordinary-import continuous
+interpretation canary checks both statements together.

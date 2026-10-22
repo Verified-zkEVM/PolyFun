@@ -31,7 +31,7 @@ namespace PFunctor.QuantitativeHandlerTest
 open DynSystem.DynComputation QuantitativeBoundedClosureTest QuantitativeStrengthTest
 
 /-- Forward each query unchanged and count the queries answered. -/
-def countingLens : StateLens boolResponse boolResponse ℕ where
+def countingLens : StatefulLens boolResponse boolResponse ℕ where
   pos query := query.1
   answer _ value := value
   update query _ := query.2 + 1
@@ -57,7 +57,7 @@ abbrev counterRep : StepClass.unconstrained.{0, 0}.Str ℕ := PUnit.unit
 
 /-- The counting lens carries constant-cost code in the fixture. -/
 def countingAdmissible :
-    StateLens.QuantitativelyAdmissible (p := boolResponse) (r := boolResponse) unitCostBackend
+    StatefulLens.QuantitativelyAdmissible (p := boolResponse) (r := boolResponse) unitCostBackend
       firstQueryBoundary counterRep PUnit.unit PUnit.unit countingLens where
   onPos := PUnit.unit
   onPull := PUnit.unit

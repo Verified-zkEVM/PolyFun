@@ -441,7 +441,7 @@ branches and their `ULift` normalization. -/
 
 /-- Bifunctorial identity coherence, observed canonically on total
 polynomials. -/
-@[simp] theorem parallelSumMap_id_total
+@[simp] theorem parallelSumMap_id_totalEq
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
@@ -451,6 +451,8 @@ polynomials. -/
   rintro ⟨operation, contract⟩
   cases operation <;> rfl
 
+@[deprecated (since := "2026-10-19")] alias parallelSumMap_id_total := parallelSumMap_id_totalEq
+
 @[simp] theorem parallelSumMap_id
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
@@ -459,10 +461,10 @@ polynomials. -/
         (parallelSumMap (id S) (id T)) =
       id (Display.parallelSum S T) :=
   transport_eq_of_totalEq (PFunctor.Lens.parallelSumMap_id P Q)
-    _ _ (parallelSumMap_id_total S T)
+    _ _ (parallelSumMap_id_totalEq S T)
 
 /-- Bifunctorial composition coherence on total polynomials. -/
-theorem parallelSumMap_comp_total
+theorem parallelSumMap_comp_parallelSumMap_totalEq
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
     {W : PFunctor.{uA₅, uB}} {X : PFunctor.{uA₆, uB}}
@@ -489,7 +491,10 @@ theorem parallelSumMap_comp_total
   rintro ⟨operation, contract⟩
   cases operation <;> rfl
 
-theorem parallelSumMap_comp
+@[deprecated (since := "2026-10-19")] alias parallelSumMap_comp_total :=
+  parallelSumMap_comp_parallelSumMap_totalEq
+
+theorem parallelSumMap_comp_parallelSumMap
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
     {W : PFunctor.{uA₅, uB}} {X : PFunctor.{uA₆, uB}}
@@ -508,19 +513,22 @@ theorem parallelSumMap_comp
     (firstLeft : Display.Lens S₁ S₂ firstLeftBase)
     (firstRight : Display.Lens T₁ T₂ firstRightBase) :
     transport
-        (PFunctor.Lens.parallelSumMap_comp secondLeftBase secondRightBase
+        (PFunctor.Lens.parallelSumMap_comp_parallelSumMap secondLeftBase secondRightBase
           firstLeftBase firstRightBase)
         (comp (parallelSumMap secondLeft secondRight)
           (parallelSumMap firstLeft firstRight)) =
       parallelSumMap (comp secondLeft firstLeft)
         (comp secondRight firstRight) :=
   transport_eq_of_totalEq
-    (PFunctor.Lens.parallelSumMap_comp secondLeftBase secondRightBase
+    (PFunctor.Lens.parallelSumMap_comp_parallelSumMap secondLeftBase secondRightBase
       firstLeftBase firstRightBase) _ _
-    (parallelSumMap_comp_total secondLeft secondRight firstLeft firstRight)
+    (parallelSumMap_comp_parallelSumMap_totalEq secondLeft secondRight firstLeft firstRight)
+
+@[deprecated (since := "2026-10-19")] alias parallelSumMap_comp :=
+  parallelSumMap_comp_parallelSumMap
 
 /-- The displayed braiding is involutive on total polynomials. -/
-@[simp] theorem parallelSumComm_involutive_total
+@[simp] theorem parallelSumComm_comp_parallelSumComm_totalEq
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
@@ -531,18 +539,24 @@ theorem parallelSumMap_comp
   rintro ⟨operation, contract⟩
   cases operation <;> rfl
 
-@[simp] theorem parallelSumComm_involutive
+@[deprecated (since := "2026-10-19")] alias parallelSumComm_involutive_total :=
+  parallelSumComm_comp_parallelSumComm_totalEq
+
+@[simp] theorem parallelSumComm_comp_parallelSumComm
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
-    transport (PFunctor.Lens.parallelSumComm_involutive P Q)
+    transport (PFunctor.Lens.parallelSumComm_comp_parallelSumComm P Q)
         (comp (parallelSumComm T S) (parallelSumComm S T)) =
       id (Display.parallelSum S T) :=
-  transport_eq_of_totalEq (PFunctor.Lens.parallelSumComm_involutive P Q)
-    _ _ (parallelSumComm_involutive_total S T)
+  transport_eq_of_totalEq (PFunctor.Lens.parallelSumComm_comp_parallelSumComm P Q)
+    _ _ (parallelSumComm_comp_parallelSumComm_totalEq S T)
+
+@[deprecated (since := "2026-10-19")] alias parallelSumComm_involutive :=
+  parallelSumComm_comp_parallelSumComm
 
 /-- Naturality of the displayed braiding on total polynomials. -/
-theorem parallelSumComm_natural_total
+theorem parallelSumComm_natural_totalEq
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
     {S : Display.{uA₁, uB, uC₁, uD₁} P}
@@ -559,6 +573,9 @@ theorem parallelSumComm_natural_total
   rintro ⟨operation, contract⟩
   cases operation <;> rfl
 
+@[deprecated (since := "2026-10-19")] alias parallelSumComm_natural_total :=
+  parallelSumComm_natural_totalEq
+
 theorem parallelSumComm_natural
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
@@ -574,10 +591,10 @@ theorem parallelSumComm_natural
       comp (parallelSumMap right left) (parallelSumComm S T) :=
   transport_eq_of_totalEq
     (PFunctor.Lens.parallelSumComm_natural leftBase rightBase) _ _
-    (parallelSumComm_natural_total left right)
+    (parallelSumComm_natural_totalEq left right)
 
 /-- Naturality of the displayed right unitor on total polynomials. -/
-theorem parallelSumZero_natural_total
+theorem parallelSumZero_natural_totalEq
     {P : PFunctor.{uA₁, uB}} {R : PFunctor.{uA₂, uB}}
     {S : Display.{uA₁, uB, uC₁, uD₁} P}
     {T : Display.{uA₂, uB, uC₂, uD₂} R}
@@ -593,6 +610,9 @@ theorem parallelSumZero_natural_total
   | right impossible => exact impossible.elim
   | both _ impossible => exact impossible.elim
 
+@[deprecated (since := "2026-10-19")] alias parallelSumZero_natural_total :=
+  parallelSumZero_natural_totalEq
+
 theorem parallelSumZero_natural
     {P : PFunctor.{uA₁, uB}} {R : PFunctor.{uA₂, uB}}
     {S : Display.{uA₁, uB, uC₁, uD₁} P}
@@ -603,10 +623,10 @@ theorem parallelSumZero_natural
           (parallelSumMap displayed (id Display.zero))) =
       comp displayed (parallelSumZero S) :=
   transport_eq_of_totalEq (PFunctor.Lens.parallelSumZero_natural base)
-    _ _ (parallelSumZero_natural_total displayed)
+    _ _ (parallelSumZero_natural_totalEq displayed)
 
 /-- Naturality of the displayed left unitor on total polynomials. -/
-theorem zeroParallelSum_natural_total
+theorem zeroParallelSum_natural_totalEq
     {P : PFunctor.{uA₁, uB}} {R : PFunctor.{uA₂, uB}}
     {S : Display.{uA₁, uB, uC₁, uD₁} P}
     {T : Display.{uA₂, uB, uC₂, uD₂} R}
@@ -622,6 +642,9 @@ theorem zeroParallelSum_natural_total
   | right _ => rfl
   | both impossible _ => exact impossible.elim
 
+@[deprecated (since := "2026-10-19")] alias zeroParallelSum_natural_total :=
+  zeroParallelSum_natural_totalEq
+
 theorem zeroParallelSum_natural
     {P : PFunctor.{uA₁, uB}} {R : PFunctor.{uA₂, uB}}
     {S : Display.{uA₁, uB, uC₁, uD₁} P}
@@ -632,10 +655,10 @@ theorem zeroParallelSum_natural
           (parallelSumMap (id Display.zero) displayed)) =
       comp displayed (zeroParallelSum S) :=
   transport_eq_of_totalEq (PFunctor.Lens.zeroParallelSum_natural base)
-    _ _ (zeroParallelSum_natural_total displayed)
+    _ _ (zeroParallelSum_natural_totalEq displayed)
 
 /-- Naturality of the displayed associator on total polynomials. -/
-theorem parallelSumAssoc_natural_total
+theorem parallelSumAssoc_natural_totalEq
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}}
     {P' : PFunctor.{uA₄, uB}} {Q' : PFunctor.{uA₅, uB}}
@@ -664,6 +687,9 @@ theorem parallelSumAssoc_natural_total
   | right _ => rfl
   | both operation _ => cases operation <;> rfl
 
+@[deprecated (since := "2026-10-19")] alias parallelSumAssoc_natural_total :=
+  parallelSumAssoc_natural_totalEq
+
 theorem parallelSumAssoc_natural
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}}
@@ -690,10 +716,10 @@ theorem parallelSumAssoc_natural
         (parallelSumAssoc S₁ T₁ U₁) :=
   transport_eq_of_totalEq
     (PFunctor.Lens.parallelSumAssoc_natural leftBase middleBase rightBase)
-    _ _ (parallelSumAssoc_natural_total left middle right)
+    _ _ (parallelSumAssoc_natural_totalEq left middle right)
 
 /-- Mac Lane's pentagon for the displayed forward associator. -/
-theorem parallelSumAssoc_pentagon_total
+theorem parallelSumAssoc_pentagon_totalEq
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
@@ -722,6 +748,9 @@ theorem parallelSumAssoc_pentagon_total
         | right _ => rfl
         | both pq _ => cases pq <;> rfl
 
+@[deprecated (since := "2026-10-19")] alias parallelSumAssoc_pentagon_total :=
+  parallelSumAssoc_pentagon_totalEq
+
 theorem parallelSumAssoc_pentagon
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
@@ -737,10 +766,10 @@ theorem parallelSumAssoc_pentagon
         (parallelSumAssoc (Display.parallelSum S T) U W) :=
   transport_eq_of_totalEq
     (PFunctor.Lens.parallelSumAssoc_pentagon P Q R V) _ _
-    (parallelSumAssoc_pentagon_total S T U W)
+    (parallelSumAssoc_pentagon_totalEq S T U W)
 
 /-- Symmetric-monoidal hexagon for the displayed braiding and associator. -/
-theorem parallelSum_hexagon_total
+theorem parallelSumComm_hexagon_forward_totalEq
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
@@ -760,24 +789,29 @@ theorem parallelSum_hexagon_total
   | right _ => rfl
   | both operation _ => cases operation <;> rfl
 
-theorem parallelSum_hexagon
+@[deprecated (since := "2026-10-19")] alias parallelSum_hexagon_total :=
+  parallelSumComm_hexagon_forward_totalEq
+
+theorem parallelSumComm_hexagon_forward
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q)
     (U : Display.{uA₃, uB, uC₃, uD₃} R) :
-    transport (PFunctor.Lens.parallelSum_hexagon P Q R)
+    transport (PFunctor.Lens.parallelSumComm_hexagon_forward P Q R)
         (comp (parallelSumAssoc T U S)
           (comp (parallelSumComm S (Display.parallelSum T U))
             (parallelSumAssoc S T U))) =
       comp (parallelSumMap (id T) (parallelSumComm S U))
         (comp (parallelSumAssoc T S U)
           (parallelSumMap (parallelSumComm S T) (id U))) :=
-  transport_eq_of_totalEq (PFunctor.Lens.parallelSum_hexagon P Q R) _ _
-    (parallelSum_hexagon_total S T U)
+  transport_eq_of_totalEq (PFunctor.Lens.parallelSumComm_hexagon_forward P Q R) _ _
+    (parallelSumComm_hexagon_forward_totalEq S T U)
+
+@[deprecated (since := "2026-10-19")] alias parallelSum_hexagon := parallelSumComm_hexagon_forward
 
 /-- Triangle coherence for the displayed unitors and associator. -/
-theorem parallelSum_triangle_total
+theorem parallelSum_triangle_totalEq
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
     (T : Display.{uA₂, uB, uC₂, uD₂} Q) :
@@ -811,6 +845,9 @@ theorem parallelSum_triangle_total
       | right impossible => exact impossible.elim
       | both _ impossible => exact impossible.elim
 
+@[deprecated (since := "2026-10-19")] alias parallelSum_triangle_total :=
+  parallelSum_triangle_totalEq
+
 theorem parallelSum_triangle
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
@@ -831,7 +868,7 @@ theorem parallelSum_triangle
         (parallelSumAssoc S
           (Display.zero : Display (0 : PFunctor.{uA₄, uB})) T) :=
   transport_eq_of_totalEq (PFunctor.Lens.parallelSum_triangle P Q) _ _
-    (parallelSum_triangle_total S T)
+    (parallelSum_triangle_totalEq S T)
 
 end Lens
 end Display

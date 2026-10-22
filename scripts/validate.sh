@@ -73,7 +73,9 @@ if (( run_lint )); then
   lake lint
   lake exe lint-style PolyFun ToCslib ComplexityBackends \
     Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
-    Examples.Tutorials.InteractionTrees Examples.Tutorials.ScopedPrograms \
+    Examples.Tutorials.InteractionTrees Examples.Tutorials.ParallelReports \
+    Examples.Tutorials.VersionedRequests Examples.Tutorials.UpdatePolicies \
+    Examples.Tutorials.ScopedPrograms \
     Examples.Tutorials.ScopedFamily Examples.Tutorials.ScopedExecution \
     Examples.Parliament PolyFunParliamentMain
 fi
@@ -103,6 +105,8 @@ if (( run_axioms )); then
   lake exe polyfun-axiomsweep --root PolyFun --root ToCslib --root ComplexityBackends \
     --root Examples.Tutorials.Requests --root Examples.Tutorials.Machines \
     --root Examples.Tutorials.IndexedPrograms --root Examples.Tutorials.InteractionTrees \
+    --root Examples.Tutorials.ParallelReports --root Examples.Tutorials.VersionedRequests \
+    --root Examples.Tutorials.UpdatePolicies \
     --root Examples.Tutorials.ScopedPrograms --root Examples.Tutorials.ScopedFamily \
     --root Examples.Tutorials.ScopedExecution \
     --root Examples.Parliament \

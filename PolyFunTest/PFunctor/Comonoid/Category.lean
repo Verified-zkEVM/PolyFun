@@ -36,8 +36,8 @@ example (C : Comonoid.{uA, uB}) :
         Function.Bijective (Comonoid.target C c) :=
   Comonoid.isStateSystem_iff_target_bijective C
 
-example (C : Comonoid.{uA, uB}) (c : C.carrier.A) : C.comult.toFunA c = ⟨c, Comonoid.target C c⟩ :=
-  Comonoid.comultPosition_eq C c
+example (C : Comonoid.{uA, uB}) (c : C.carrier.A) : C.comul.toFunA c = ⟨c, Comonoid.target C c⟩ :=
+  Comonoid.comul_toFunA C c
 
 example (C : Comonoid.{uA, uB}) (c : C.carrier.A) (d : C.carrier.B c)
     (e : C.carrier.B (Comonoid.target C c d)) : C.carrier.B c :=
@@ -50,14 +50,14 @@ example (C : Comonoid.{uA, uB}) (c : C.carrier.A) :
 example (C : Comonoid.{uA, uB}) (c : C.carrier.A) (d : C.carrier.B c) :
     Comonoid.compose C c d
         (Comonoid.identity C (Comonoid.target C c d)) = d :=
-  Comonoid.compose_identity_right C c d
+  Comonoid.compose_identity C c d
 
 example (C : Comonoid.{uA, uB}) (c : C.carrier.A)
     (e : C.carrier.B
       (Comonoid.target C c (Comonoid.identity C c))) :
     Comonoid.compose C c (Comonoid.identity C c) e =
       cast (congrArg C.carrier.B (Comonoid.target_identity C c)) e :=
-  Comonoid.compose_identity_left C c e
+  Comonoid.identity_compose_eq_cast C c e
 
 example (C : Comonoid.{uA, uB}) (c : C.carrier.A)
     (e : C.carrier.B c) :
@@ -157,14 +157,14 @@ targets: the composite of `first` and `second` is `first ++ second`. -/
 def listMonoidComonoid : Comonoid where
   carrier := y^ (List Bool)
   counit := (fun _ => PUnit.unit) ⇆ (fun _ _ => [])
-  comult :=
+  comul :=
     (fun _ => ⟨PUnit.unit, fun _ => PUnit.unit⟩) ⇆
       (fun _ directions =>
         (show List Bool from directions.1) ++
           (show List Bool from directions.2))
-  counit_left := Lens.ext _ _ (fun _ => rfl) fun _ => funext List.nil_append
-  counit_right := Lens.ext _ _ (fun _ => rfl) fun _ => funext List.append_nil
-  coassoc := Lens.ext _ _ (fun _ => rfl) fun _ =>
+  counit_comul := Lens.ext _ _ (fun _ => rfl) fun _ => funext List.nil_append
+  comul_counit := Lens.ext _ _ (fun _ => rfl) fun _ => funext List.append_nil
+  comul_assoc := Lens.ext _ _ (fun _ => rfl) fun _ =>
     funext fun direction =>
       List.append_assoc direction.1 direction.2.1 direction.2.2
 
@@ -201,7 +201,7 @@ def negateListHom : Comonoid.Hom listMonoidComonoid listMonoidComonoid :=
       cases object
       cases direction
       rfl
-    map_comult := by
+    map_comul := by
       refine Lens.ext _ _ (fun _ => rfl) ?_
       intro object
       funext directions

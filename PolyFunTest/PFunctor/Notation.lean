@@ -10,7 +10,7 @@ public import PolyFun.PFunctor.Basic
 /-!
 # Book-style polynomial notation
 
-Regression tests for the Spivak–Niu surface syntax on `PFunctor`: the
+Regression tests for the Niu–Spivak surface syntax on `PFunctor`: the
 monomial infix `A y^ B`, the representable prefix `y^ B`, the composition
 power `p ◃^ n`, and the indexed sum/product binders `Σₚ`/`Πₚ`. The examples
 pin down definitional equality with the named primitives and the intended
@@ -86,18 +86,9 @@ end Units
 
 section DirectImportCompatibility
 
-/- These canaries intentionally use deprecated spellings. They import only
+/- These canaries intentionally use the transitional spellings. They import only
 `PFunctor.Basic`, proving the compatibility surface is not accidentally tied
 to the aggregate `PFunctor.Deprecated` or `PolyFun` umbrella imports. -/
-/--
-warning: `PFunctor.X` has been deprecated: Use `PFunctor.y` instead
-
-Hint: Replace the deprecated name:
-  X̵y̲
--/
-#guard_msgs in
-example : (X : PFunctor.{0, 0}) = y := rfl
-
 example : (Bool X^ Nat) = monomial Bool Nat := rfl
 
 example (p : PFunctor.{0, 0}) : p ^ 2 = p ◃ (p ◃ y) := rfl

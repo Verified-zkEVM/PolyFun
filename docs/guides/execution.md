@@ -16,6 +16,7 @@ proves that a second input list can be run from the first list's final state.
 |---|---|---|
 | Describe state exposure and update | `PFunctor.DynSystem` | `PolyFun.PFunctor.Dynamical.Basic` |
 | Run a Moore machine on inputs | `MooreMachine.run`, `trace` | `PolyFun.PFunctor.Dynamical.Run` |
+| Use CSLib's and Mathlib's automata theory | `MooreMachine.toFLTS`, `DeterministicAutomaton.toDA`, `toFinAcc`, `toDFA` | `PolyFun.PFunctor.Dynamical.Automata` |
 | Describe arbitrary prefixes and continuing runs | `DynSystem.Prefix`, `Run` | `PolyFun.PFunctor.Dynamical.Run` |
 | Initialize a return-capable machine | `DynSystem.DynComputation` | `PolyFun.PFunctor.Dynamical.DynComputation` |
 | Interpret a finite query budget | `DynComputation.runWith`, `ImplementsWithin` | `PolyFun.PFunctor.Dynamical.DynComputation.Bounded` |
@@ -33,7 +34,7 @@ preserves just the returned value or also that retained handler state.
 
 Stateful handlers compose the way effect stacks do
 ([`Handler/Stateful/Combinators.lean`](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean)):
-`parallel` and `pi` run handlers for the summands of `P + Q` or of an indexed
+`sum` and `sigma` run handlers for the summands of `P + Q` or of an indexed
 sum on a product state, `flatten` reassociates a handler over a stateful base
 into one product state, `mapBase` interprets a handler's base free monad through
 an outer handler, and `extend` / `extendLeft` add a passive auxiliary component
@@ -42,7 +43,7 @@ the combinator to the runs of its parts; their common core,
 `run_map_eq_of_apply_map_eq`, says that a state projection which commutes with
 every single request commutes with every run.
 
-A `StateLens` ([`Handler/StateLens.lean`](../../PolyFun/PFunctor/Handler/StateLens.lean))
+A `StatefulLens` ([`Handler/StateLens.lean`](../../PolyFun/PFunctor/Handler/StateLens.lean))
 is the stateful handler that answers every request with exactly one inner
 request; its substitution is `Stateful.run` of its handler (`mapFreeM_eq_run`).
 `DynComputation.wrapState` runs a machine against it as one product machine, and
@@ -137,7 +138,8 @@ the elementary process and routing interfaces do not depend on that syntax.
 
 `RequestNetwork.State.initial` starts every client ready, with no traffic and a fresh ticket
 counter. `ClientState.result` observes only a returned client and leaves the network's queue
-and transcript in place.
+and transcript in place. The [versioned-cell example](../../Examples/Tutorials/VersionedRequests.lean)
+demonstrates two read-then-update clients under an explicit schedule.
 
 `HandledDiagram.initial`, `runToken` and `runFIFO` execute a diagram with its intrinsic
 handlers and return complete residual states. Their `runToken_add` and `runFIFO_append` laws
@@ -167,7 +169,8 @@ counterpart show that interpreting the embedding uses only the corresponding han
 `Handler.mapTarget_sum` preserves this separation when changing target monads.
 
 For one-or-both interfaces, `Handler.parallelSeq` executes a joint request left first. This is
-an explicit interpretation order, not OS parallelism or a commutativity guarantee. Arbitrary
+an explicit interpretation order, not OS parallelism or a commutativity guarantee. Compare the
+request traces in [parallel reports](../../Examples/Tutorials/ParallelReports.lean). Arbitrary
 free-handler composition can change which requests synchronize, so unrestricted interchange is
 not promised.
 

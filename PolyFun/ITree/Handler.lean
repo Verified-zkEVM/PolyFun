@@ -83,9 +83,9 @@ def ofLens (φ : PFunctor.Lens E F) : Handler E F :=
 
 /-- Route events from a coproduct signature through one of two handlers.
 
-The source signatures share a direction universe because `PFunctor.sum`
-currently requires it; their position universes and both universes of the
-target signature remain independent. -/
+The source signatures share a direction universe because the sum `PFunctor.add`
+requires it; their position universes and both universes of the target
+signature remain independent. -/
 def case_ {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uEB}}
     (left : Handler.{uEA, uEB, uGA, uGB} E G)
     (right : Handler.{uFA, uEB, uGA, uGB} F G) :

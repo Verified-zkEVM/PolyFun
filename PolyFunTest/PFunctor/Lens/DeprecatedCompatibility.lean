@@ -8,11 +8,12 @@ module
 public import PolyFun.PFunctor.Lens.Basic
 
 /-!
-# Direct-import compatibility for the former `X` lens API
+# Direct-import compatibility for deprecated lens APIs
 
 These canaries import only `PFunctor.Lens.Basic`. They ensure downstream files
-using the former `X` spellings keep elaborating without relying on the aggregate
-`PFunctor.Deprecated` module or the `PolyFun` umbrella.
+using deprecated lens spellings keep elaborating without relying on the aggregate
+`PFunctor.Deprecated` module or the `PolyFun` umbrella, and preserve the
+independent universes of `Lens.enclose`.
 -/
 
 @[expose] public section
@@ -21,32 +22,18 @@ open scoped PFunctor
 
 namespace PFunctor.Lens
 
-/--
-warning: `PFunctor.X` has been deprecated: Use `PFunctor.y` instead
+set_option linter.deprecated false
 
-Hint: Replace the deprecated name:
-  X̵y̲
----
-warning: `PFunctor.Lens.fromX` has been deprecated: Use `PFunctor.Lens.fromY` instead
+universe uA uB uA₁ uB₁
 
-Hint: Replace the deprecated name:
-  fromX̵Y̲
--/
-#guard_msgs in
-example {P : PFunctor.{0, 0}} (a : P.A) : Lens X P := fromX a
+-- Old universe arity and import surface: only Lens.Basic is imported.
+example (P : PFunctor.{uA, uB}) (l : Lens P y.{uA₁, uB₁}) :
+    enclose.{uA, uB, uA₁, uB₁} P := l
 
-/--
-warning: `PFunctor.X` has been deprecated: Use `PFunctor.y` instead
-
-Hint: Replace the deprecated name:
-  X̵y̲
----
-warning: `PFunctor.Lens.Equiv.compX` has been deprecated: Use `PFunctor.Lens.Equiv.compY` instead
-
-Hint: Replace the deprecated name:
-  L̵e̵n̵s̵.̵E̵q̵u̵i̵v̵.̵c̵o̵m̵p̵X̵E̲q̲u̲i̲v̲.̲c̲o̲m̲p̲Y̲
--/
-#guard_msgs in
-example {P : PFunctor.{0, 0}} : Lens.Equiv (P ◃ X) P := Lens.Equiv.compX
+-- Old explicit unfolding at independent endpoint universes.
+example (P : PFunctor.{uA, uB}) :
+    enclose.{uA, uB, uA₁, uB₁} P = Lens P y.{uA₁, uB₁} := by
+  unfold enclose
+  rfl
 
 end PFunctor.Lens

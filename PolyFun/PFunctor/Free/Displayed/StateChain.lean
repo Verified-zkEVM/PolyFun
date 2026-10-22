@@ -64,7 +64,7 @@ namespace Path
 Lift a family on state-chain states to a family on the combined path selected
 through the chained tree.
 -/
-def stateChainFamily {a : α} {Stage : Nat → Type w}
+def StateChainFamily {a : α} {Stage : Nat → Type w}
     {s : (i : Nat) → Stage i → FreeM P α}
     {advance : (i : Nat) → (state : Stage i) → Path (s i state) → Stage (i + 1)}
     (Family : (i : Nat) → Stage i → Type w₂) :
@@ -72,11 +72,42 @@ def stateChainFamily {a : α} {Stage : Nat → Type w}
     Path (FreeM.stateChain a Stage s advance n i state) → Type w₂
   | 0, i, state, _ => Family i state
   | n + 1, i, state, path =>
-      Path.liftAppend (s i state)
+      Path.LiftAppend (s i state)
         (fun path₁ => FreeM.stateChain a Stage s advance n (i + 1) (advance i state path₁))
         (fun path₁ pathRest =>
-          stateChainFamily Family n (i + 1) (advance i state path₁) pathRest)
+          StateChainFamily Family n (i + 1) (advance i state path₁) pathRest)
         path
+
+@[reducible, deprecated (since := "2026-10-19")] alias stateChainFamily := StateChainFamily
+
+@[simp]
+theorem stateChainFamily_zero {a : α} {Stage : Nat → Type w}
+    {s : (i : Nat) → Stage i → FreeM P α}
+    {advance : (i : Nat) → (state : Stage i) → Path (s i state) → Stage (i + 1)}
+    (Family : (i : Nat) → Stage i → Type w₂) (i : Nat) (state : Stage i)
+    (path : Path (FreeM.stateChain a Stage s advance 0 i state)) :
+    StateChainFamily (advance := advance) Family 0 i state path = Family i state := rfl
+
+/- Lean 4.33 compares assigned metavariable types at implicit transparency;
+the path-family lemma below rewrites along a `stateChain` layer there.
+`implicit_reducible` (unlike `reducible`) stays invisible to simp
+validation and instance search. -/
+attribute [local implicit_reducible] FreeM.stateChain in
+/-- A constant family is unaffected by `StateChainFamily`. -/
+theorem stateChainFamily_const {a : α} {Stage : Nat → Type w}
+    {s : (i : Nat) → Stage i → FreeM P α}
+    {advance : (i : Nat) → (state : Stage i) → Path (s i state) → Stage (i + 1)}
+    (β : Type w₂) :
+    (n : Nat) → (i : Nat) → (state : Stage i) →
+    (path : Path (FreeM.stateChain a Stage s advance n i state)) →
+    StateChainFamily (advance := advance) (fun _ _ => β) n i state path = β
+  | 0, _, _, _ => rfl
+  | n + 1, i, state, path => by
+      simp only [StateChainFamily]
+      rw [Path.liftAppend_congr (s i state) _ _ _
+        (fun path₁ pathRest =>
+          stateChainFamily_const β n (i + 1) (advance i state path₁) pathRest)]
+      exact Path.liftAppend_const β (s i state) _ path
 
 end Path
 

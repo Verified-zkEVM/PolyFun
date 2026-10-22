@@ -37,12 +37,28 @@ strictly-positive datatypes.
 Used in: `PolyFun/PFunctor/Free/Path.lean`,
 `PolyFun/Interaction/Basic/TypeTree.lean`.
 
-### SN24 — Spivak and Niu, *Polynomial Functors*
+### Atk09 — Atkey, *Parameterised notions of computation*
 
-David I. Spivak and Nelson Niu.
+Robert Atkey.
+*Parameterised Notions of Computation*.
+*Journal of Functional Programming* 19(3–4), pp. 335–376, 2009.
+DOI: <https://doi.org/10.1017/S095679680900728X>
+
+Indexed (parameterised) monads, whose bind threads a pre- and post-state
+index. PolyFun's indexed free monads over `IPFunctor` instantiate this
+interface.
+
+Used in: `PolyFun/Control/Monad/Indexed.lean`, `PolyFun/IPFunctor/Basic.lean`,
+`PolyFun/IPFunctor/Free/Basic.lean`.
+
+### NS24 — Niu and Spivak, *Polynomial Functors*
+
+Nelson Niu and David I. Spivak.
 *Polynomial Functors: A Mathematical Theory of Interaction*.
 Cambridge University Press, London Mathematical Society Lecture Note
 Series 498, 2025 (DOI 10.1017/9781009576734; preprint: arXiv:2312.00990).
+Result numbers and pages cited across PolyFun refer to arXiv v2 (August 2024);
+the print edition numbers some Chapter 8 results differently.
 
 The polynomial-functor calculus, charts, lenses, the composition product,
 the free-monad / cofree-comonad pairing, and the slogan "pattern runs on
@@ -50,9 +66,21 @@ matter". (The pairing is the module structure of Libkind–Spivak below, not
 an adjunction; PolyFun formalizes `LawfulMonad (FreeM P)` and
 `LawfulComonad (CofreeC F)` separately.)
 
-Used in: `PolyFun/PFunctor/Trace.lean`, `PolyFun/PFunctor/Lens/State.lean`,
-`PolyFun/PFunctor/Free/Path.lean`, the dynamical-systems layer in
-`PolyFun/PFunctor/Dynamical/` (Ch. 4), `PolyFun/Interaction/Basic/TypeTree.lean`,
+Used in: `PolyFun/PFunctor/Trace.lean`, `PolyFun/PFunctor/Free/Path.lean`,
+the lens category and its structure (`PolyFun/PFunctor/Category.lean`,
+`PolyFun/PFunctor/Lens/Yoneda.lean`, `PolyFun/PFunctor/Lens/Universal.lean`,
+`PolyFun/PFunctor/Lens/Coherence.lean`, `PolyFun/PFunctor/Category/Monoidal.lean`,
+`PolyFun/PFunctor/Equiv/Special.lean`,
+`PolyFun/PFunctor/Lens/Basic.lean`, `PolyFun/PFunctor/Lens/Composite.lean`,
+`PolyFun/PFunctor/Lens/Distributivity.lean`, `PolyFun/PFunctor/Lens/Duoidal.lean`,
+`PolyFun/PFunctor/Lens/Factorization.lean`, `PolyFun/PFunctor/Lens/State.lean`,
+`PolyFun/PFunctor/Equiv/Basic.lean`), the Ch. 5 and §4.5 constructions
+(`PolyFun/PFunctor/Adjunctions.lean`, `PolyFun/PFunctor/CartesianClosed.lean`,
+`PolyFun/PFunctor/InternalHom.lean`), the dynamical-systems layer in
+`PolyFun/PFunctor/Dynamical/` (Ch. 4, §7.1.5), comonoids and retrofunctors
+(`PolyFun/PFunctor/Comonoid.lean`, `PolyFun/PFunctor/Comonoid/`; Ch. 7, §8.2.4),
+the cofree comonoid (`PolyFun/PFunctor/Cofree/`; Ch. 8),
+`PolyFun/PFunctor/SubstMonoid.lean`, `PolyFun/Interaction/Basic/TypeTree.lean`,
 `PolyFun/Interaction/Basic/Telescope.lean`,
 `PolyFun/Interaction/Interface.lean`, and
 companion files in `PolyFun/Interaction/Open/`.
@@ -73,6 +101,21 @@ Used in: `PolyFun/PFunctor/SubstMonoid.lean`,
 `PolyFun/PFunctor/Free/Path.lean`,
 `PolyFun/PFunctor/PatternRunsOnMatter/`, and
 `PolyFun/Realizability/Basic.lean`.
+
+### AU16 — Ahman and Uustalu, *Directed containers as categories*
+
+Danel Ahman and Tarmo Uustalu.
+*Directed Containers as Categories*.
+In *Mathematically Structured Functional Programming (MSFP 2016)*,
+Electronic Proceedings in Theoretical Computer Science 207 (2016), pp. 89–98.
+arXiv:1604.01187.
+
+Directed containers, equivalently comonoids for the composition product of
+polynomials, are the same as small categories; container morphisms between them
+are cofunctors (retrofunctors). This is the result NS24 presents as Thm 7.28.
+
+Used in: `PolyFun/PFunctor/Comonoid.lean`,
+`PolyFun/PFunctor/Comonoid/Category.lean`.
 
 ### XZHHMPZ20 — Xia, Zakowski, He, Hur, Malecha, Pierce, Zdancewic, *Interaction Trees*
 

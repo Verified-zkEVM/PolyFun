@@ -102,7 +102,7 @@ def plug (occ : Occurrence target program n) (answer : P.B target)
     (Occurrence.stepOther hne prefixAnswer tail).plug answer suffix =
       ⟨prefixAnswer, tail.plug answer suffix⟩ := rfl
 
-@[simp] theorem before_count [DecidableEq P.A] (occ : Occurrence target program n) :
+@[simp] theorem occurrences_before [DecidableEq P.A] (occ : Occurrence target program n) :
     occurrences target occ.before = n := by
   induction occ with
   | here => rfl
@@ -114,6 +114,8 @@ def plug (occ : Occurrence target program n) (answer : P.B target)
       change occurrences target
         ((⟨_, answer⟩ : P.Idx) :: tail.before) = _
       simpa [hne] using ih
+
+@[deprecated (since := "2026-10-19")] alias before_count := occurrences_before
 
 @[simp] theorem trace_plug (occ : Occurrence target program n)
     (answer : P.B target) (suffix : Path (occ.resume answer)) :
@@ -156,7 +158,7 @@ the answer stored by that completion. -/
     PFunctor.TraceList.getAt? (Path.trace program completion.path) target n =
       some completion.answer := by
   rw [Completion.path, trace_plug]
-  simpa only [before_count] using
+  simpa only [occurrences_before] using
     (PFunctor.TraceList.getAt?_append_self_occurrences
       occ.before (Path.trace (occ.resume completion.answer) completion.suffix)
         target completion.answer)

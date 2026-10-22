@@ -27,9 +27,9 @@ example : Requests.twoRequests.liftM Requests.double = (6, 12) := Requests.twoRe
 example (xs ys : List Nat) : Machines.counter.run 0 (xs ++ ys) =
     Machines.counter.run (Machines.counter.run 0 xs) ys := Machines.counter_run_append 0 xs ys
 
-example : IPFunctor.FreeM₂ IPFunctor.Examples.proto
-    IPFunctor.Examples.Phase.opn IPFunctor.Examples.Phase.counting Nat :=
-  IPFunctor.Examples.TwoIndex.run
+example : IPFunctor.FreeM₂ PolyFunExamples.IndexedPrograms.proto
+    PolyFunExamples.IndexedPrograms.Phase.opn PolyFunExamples.IndexedPrograms.Phase.counting Nat :=
+  PolyFunExamples.IndexedPrograms.TwoIndex.run
 
 example :
     (ITree.interp InteractionTrees.refuse InteractionTrees.bump).run =

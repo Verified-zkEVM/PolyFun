@@ -52,9 +52,9 @@ variable (M : SubstMonoid.{max uA uB, uB})
 /-- Evaluate an unlabelled free `P`-tree as a position of the substitution
 monoid `M`. -/
 def foldShape : FreeM P PUnit.{uB + 1} → M.carrier.A
-  | .pure _ => M.unit.toFunA PUnit.unit
+  | .pure _ => M.one.toFunA PUnit.unit
   | .liftBind a rest =>
-      M.mult.toFunA
+      M.mul.toFunA
         ⟨l.toFunA a, fun d => foldShape (rest (l.toFunB a d))⟩
 
 /-- Pull a direction through an evaluated free tree back to the selected
@@ -65,7 +65,7 @@ def foldPath : (s : FreeM P PUnit.{uB + 1}) →
   | .liftBind a rest, direction =>
       let outer : (M.carrier ◃ M.carrier).A :=
         ⟨l.toFunA a, fun d => foldShape M l (rest (l.toFunB a d))⟩
-      let split := M.mult.toFunB outer direction
+      let split := M.mul.toFunB outer direction
       ⟨l.toFunB a split.1,
         foldPath (rest (l.toFunB a split.1)) split.2⟩
 
@@ -139,11 +139,13 @@ theorem foldLens_toFunB (s : (FreeP P).A)
   rfl
 
 /-- The fold agrees with the target substitution unit on the one-leaf tree. -/
-theorem foldLens_comp_unit :
-    foldLens M l ∘ₗ unit (P := P) = M.unit := by
+theorem foldLens_comp_one :
+    foldLens M l ∘ₗ one (P := P) = M.one := by
   apply Lens.ext _ _ (fun _ => rfl)
   intro _
   exact Subsingleton.elim _ _
+
+@[deprecated (since := "2026-10-19")] alias foldLens_comp_unit := foldLens_comp_one
 
 /-- `foldObjAt` sends free-tree grafting to bind in the extension monad. -/
 theorem foldObjAt_append_split {α : Type uB}
@@ -160,14 +162,14 @@ theorem foldObjAt_append_split {α : Type uB}
 /-- Pointwise container form of multiplication preservation by `foldLens`.
 Both the evaluated position and the reconstructed pair of source paths are
 checked at once. -/
-theorem foldLens_mult_obj
+theorem foldLens_mul_obj
     (s : FreeM P PUnit.{uB + 1})
     (next : FreeM.Path s → FreeM P PUnit.{uB + 1}) :
     let x : (FreeP P ◃ FreeP P).A := ⟨s, next⟩
-    Lens.mapObj (foldLens M l ∘ₗ mult (P := P))
+    Lens.mapObj (foldLens M l ∘ₗ mul (P := P))
         (Obj.mk x id : (FreeP P ◃ FreeP P).Obj
           ((FreeP P ◃ FreeP P).B x)) =
-      Lens.mapObj (M.mult ∘ₗ (foldLens M l ◃ₗ foldLens M l))
+      Lens.mapObj (M.mul ∘ₗ (foldLens M l ◃ₗ foldLens M l))
         (Obj.mk x id : (FreeP P ◃ FreeP P).Obj
           ((FreeP P ◃ FreeP P).B x)) := by
   dsimp only
@@ -197,25 +199,29 @@ theorem foldLens_mult_obj
   dsimp only [id] at h
   rw [houter, hinner] at h
   simpa [PFunctor.comp, Lens.mapObj, Lens.comp, Lens.compMap,
-    foldLens, mult,
+    foldLens, mul,
     SubstMonoid.Extension.bind,
     Function.comp_def] using h
 
+@[deprecated (since := "2026-10-19")] alias foldLens_mult_obj := foldLens_mul_obj
+
 /-- The free fold preserves substitution multiplication as a full lens,
 including its backward path map. -/
-theorem foldLens_comp_mult :
-    foldLens M l ∘ₗ mult (P := P) =
-      M.mult ∘ₗ (foldLens M l ◃ₗ foldLens M l) := by
+theorem foldLens_comp_mul :
+    foldLens M l ∘ₗ mul (P := P) =
+      M.mul ∘ₗ (foldLens M l ◃ₗ foldLens M l) := by
   apply Lens.ext_mapObj
   rintro ⟨s, next⟩
-  exact foldLens_mult_obj M l s next
+  exact foldLens_mul_obj M l s next
+
+@[deprecated (since := "2026-10-19")] alias foldLens_comp_mult := foldLens_comp_mul
 
 /-- Extend a generator lens uniquely to a substitution-monoid homomorphism
 out of the free substitution monoid. -/
 def extend : SubstMonoid.Hom (substMonoid P) M where
   toLens := foldLens M l
-  map_unit := foldLens_comp_unit M l
-  map_mult := foldLens_comp_mult M l
+  map_one := foldLens_comp_one M l
+  map_mul := foldLens_comp_mul M l
 
 /-- Pointwise container form of the fact that extending a lens and then
 restricting to one-node generators recovers the original lens. -/
@@ -326,12 +332,12 @@ a generator lens. -/
 def mapHom (lPQ : Lens P Q) :
     SubstMonoid.Hom (substMonoid P) (substMonoid Q) where
   toLens := map lPQ
-  map_unit := by
+  map_one := by
     rw [← foldLens_generator_comp lPQ]
-    exact foldLens_comp_unit (substMonoid Q) (generator Q ∘ₗ lPQ)
-  map_mult := by
+    exact foldLens_comp_one (substMonoid Q) (generator Q ∘ₗ lPQ)
+  map_mul := by
     rw [← foldLens_generator_comp lPQ]
-    exact foldLens_comp_mult (substMonoid Q) (generator Q ∘ₗ lPQ)
+    exact foldLens_comp_mul (substMonoid Q) (generator Q ∘ₗ lPQ)
 
 @[simp]
 theorem mapHom_toLens (lPQ : Lens P Q) :
@@ -346,21 +352,23 @@ theorem mapHom_id : mapHom (Lens.id P) =
 variable {R : PFunctor.{uA, uB}}
 
 @[simp]
-theorem mapHom_comp (lPQ : Lens P Q) (lQR : Lens Q R) :
+theorem mapHom_comp_mapHom (lPQ : Lens P Q) (lQR : Lens Q R) :
     (mapHom lPQ).comp (mapHom lQR) = mapHom (lQR ∘ₗ lPQ) :=
-  SubstMonoid.Hom.ext _ _ (map_comp lQR lPQ)
+  SubstMonoid.Hom.ext _ _ (map_comp_map lQR lPQ)
+
+@[deprecated (since := "2026-10-19")] alias mapHom_comp := mapHom_comp_mapHom
 
 /-- Evaluating a grafted free tree agrees on positions with multiplying the
 evaluated outer tree by the evaluated inner trees. -/
 theorem foldShape_append (s : FreeM P PUnit.{uB + 1})
     (next : FreeM.Path s → FreeM P PUnit.{uB + 1}) :
     foldShape M l (FreeM.append s next) =
-      M.mult.toFunA
+      M.mul.toFunA
         ⟨foldShape M l s,
           fun direction =>
             foldShape M l (next (foldPath M l s direction))⟩ := by
-  have h := congrArg Obj.fst (foldLens_mult_obj M l s next)
-  simpa [Lens.mapObj, Lens.comp, Lens.compMap, foldLens, mult,
+  have h := congrArg Obj.fst (foldLens_mul_obj M l s next)
+  simpa [Lens.mapObj, Lens.comp, Lens.compMap, foldLens, mul,
     Function.comp_def] using h
 
 /-! ## Restriction -/

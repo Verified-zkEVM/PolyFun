@@ -198,7 +198,7 @@ theorem EmitsAlong.comp {Δ₁ Δ₂ Δ₃ : PortBoundary}
     EmitsAlong (TypeTree.Node.ContextHom.comp h₂ h₁) (fun i => (g₁ i).bind g₂) := by
   intro X ons
   change (h₂ X (h₁ X ons)).boundary.emit = _
-  rw [hh₂, hh₁, PFunctor.Trace.mapPartial_comp]
+  rw [hh₂, hh₁, PFunctor.Trace.mapPartial_mapPartial]
 
 theorem emitsAlong_map {Δ₁ Δ₂ : PortBoundary} (φ : PortBoundary.Hom Δ₁ Δ₂) :
     EmitsAlong (OpenNodeContext.map.{u, w} Party φ)

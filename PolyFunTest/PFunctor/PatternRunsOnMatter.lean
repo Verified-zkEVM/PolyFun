@@ -276,7 +276,7 @@ theorem mappedMatterDirections :
     (fun lens : Lens (CofreeP.comonoid matterP).carrier
         (compNth matterP 2) =>
       lens.toFunB matter mappedMatterDirection)
-    (CofreeP.hom_comp_projectionN F 2)
+    (CofreeP.projectionN_comp_toLens F 2)
   dsimp only [mappedMatterVertex]
   change matterDirections
       ((CofreeP.projectionN matterP 2 ∘ₗ F.toLens).toFunB
@@ -291,7 +291,7 @@ theorem mappedMatterDirections :
     rw [hrestrict]
     simp only [CofreeP.comonoid_carrier, compNth,
       Lens.compNthMap_succ, Lens.compNthMap_zero,
-      Comonoid.comultN_succ, Comonoid.comultN_zero]
+      Comonoid.comulN_succ, Comonoid.comulN_zero]
     rfl)
 
 /-- The mapped interaction uses that complete cofree pullback, not merely its
@@ -320,7 +320,7 @@ example :
         (⟨(pattern, matter), id⟩ :
           (FreeP patternP ⊗ CofreeP matterP).Obj
             (FreeM.Path pattern × M.Vertex matter)) :=
-  FreeP.runObj_eq_xi_mapObj patternP matterP pattern matter
+  FreeP.runObj_eq_mapObj_xi patternP matterP pattern matter
 
 /-- Unit coherence is operationally nontrivial on the two-node pattern. -/
 example :
@@ -413,7 +413,7 @@ theorem synchronizedBackwardDirections :
           (CofreeP.comonoid auxiliaryP)).carrier
         (compNth (matterP ⊗ auxiliaryP) 2) =>
       lens.toFunB (matter, auxiliaryMatter) synchronizedDirection)
-    (CofreeP.hom_comp_projectionN F 2)
+    (CofreeP.projectionN_comp_toLens F 2)
   dsimp only [synchronizedVertex]
   change
     matterDirections
@@ -432,14 +432,14 @@ theorem synchronizedBackwardDirections :
       rw [CofreeP.restrict_extend]
       simp only [CofreeP.comonoid_carrier, Comonoid.tensor_carrier, compNth,
         Lens.compNthMap_succ, Lens.compNthMap_zero,
-        Comonoid.comultN_succ, Comonoid.comultN_zero]
+        Comonoid.comulN_succ, Comonoid.comulN_zero]
       rfl)
   · exact hauxiliary.trans (by
       dsimp only [F, CofreeP.laxTensorHom]
       rw [CofreeP.restrict_extend]
       simp only [CofreeP.comonoid_carrier, Comonoid.tensor_carrier, compNth,
         Lens.compNthMap_succ, Lens.compNthMap_zero,
-        Comonoid.comultN_succ, Comonoid.comultN_zero]
+        Comonoid.comulN_succ, Comonoid.comulN_zero]
       rfl)
 
 /-- The two parenthesizations compute the same depth-two output position. -/

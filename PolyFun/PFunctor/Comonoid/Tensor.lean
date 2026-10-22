@@ -16,15 +16,14 @@ The duoidal interchange lens equips the tensor product of two comonoids in
 `(Poly, ◃, y)` with a comonoid structure.  Its objects and outgoing arrows are
 pairs, its counit combines the two component counits, and its comultiplication
 composes each component independently.  This is the concrete construction in
-Spivak–Niu, Proposition 8.77 in the current edition (Proposition 8.79 in the
-earlier-edition notes).
+Niu–Spivak, Proposition 8.79.
 
 The two input comonoids retain independent position and direction universes.
 The counit uses `Lens.tensorUnitMap` to compare their independently instantiated
 copies of the composition unit with the unit at the componentwise maximum.
 Tensor products of retrofunctors are defined componentwise.
 
-The common composition unit `y` is packaged as `Comonoid.unit`.  The tensor
+The common composition unit `y` is packaged as `Comonoid.trivial`.  The tensor
 left/right unitors and associator lift to `CategoryTheory.Iso`s of comonoids;
 their forward and inverse retrofunctors use exactly the corresponding
 polynomial-lens equivalences.
@@ -43,27 +42,35 @@ namespace Comonoid
 comultiplication are the canonical maps between universe-instantiated copies
 of `y`; all of its arrows are the unique unit arrow. -/
 @[reducible]
-def unit : Comonoid.{uA, uB} where
+def trivial : Comonoid.{uA, uB} where
   carrier := y
   counit := Lens.unitComparison
-  comult := Lens.compUnitMap ∘ₗ
+  comul := Lens.compUnitMap ∘ₗ
     (Lens.unitComparison : Lens y.{uA, uB} y.{max uA uB, uB})
-  counit_left := Lens.compUnitMap_counit_left
-  counit_right := Lens.compUnitMap_counit_right
-  coassoc := Lens.compUnitMap_coassoc.{uA, uB}
+  counit_comul := Lens.compUnitMap_counit_comul
+  comul_counit := Lens.compUnitMap_comul_counit
+  comul_assoc := Lens.compUnitMap_comul_assoc.{uA, uB}
 
-@[simp] theorem unit_carrier : (unit.{uA, uB}).carrier = y := rfl
+@[deprecated (since := "2026-10-19")] alias unit := trivial
+
+@[simp] theorem trivial_carrier : (trivial.{uA, uB}).carrier = y := rfl
+
+@[deprecated (since := "2026-10-19")] alias unit_carrier := trivial_carrier
 
 /-- The counit of the composition-unit comonoid is the canonical comparison
 between its two universe instantiations. -/
-theorem unit_counit : (unit.{uA, uB}).counit = Lens.unitComparison := rfl
+theorem trivial_counit : (trivial.{uA, uB}).counit = Lens.unitComparison := rfl
+
+@[deprecated (since := "2026-10-19")] alias unit_counit := trivial_counit
 
 /-- The comultiplication of the composition-unit comonoid is the canonical
 map `y ⇆ y ◃ y`, after comparing its source universe instantiation. -/
-theorem unit_comult :
-    (unit.{uA, uB}).comult =
+theorem trivial_comul :
+    (trivial.{uA, uB}).comul =
       Lens.compUnitMap ∘ₗ
         (Lens.unitComparison : Lens y.{uA, uB} y.{max uA uB, uB}) := rfl
+
+@[deprecated (since := "2026-10-19")] alias unit_comult := trivial_comul
 
 /-! ## Tensor product -/
 
@@ -74,56 +81,58 @@ def tensorCounit (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
   Lens.tensorUnitMap ∘ₗ (C.counit ⊗ₗ D.counit)
 
 /-- The comultiplication of the tensor product of two composition comonoids. -/
-def tensorComult (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
+def tensorComul (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
     Lens (C.carrier ⊗ D.carrier)
       ((C.carrier ⊗ D.carrier) ◃ (C.carrier ⊗ D.carrier)) :=
   Lens.duoidalLens C.carrier C.carrier D.carrier D.carrier ∘ₗ
-    (C.comult ⊗ₗ D.comult)
+    (C.comul ⊗ₗ D.comul)
 
-private theorem tensorCounit_left_factor (C : Comonoid.{uA₁, uB₁})
+@[deprecated (since := "2026-10-19")] alias tensorComult := tensorComul
+
+private theorem tensor_counit_comul_factor (C : Comonoid.{uA₁, uB₁})
     (D : Comonoid.{uA₂, uB₂}) :
     Lens.Equiv.yComp.toLens ∘ₗ
         (tensorCounit C D ◃ₗ Lens.id (C.carrier ⊗ D.carrier)) ∘ₗ
-        tensorComult C D =
+        tensorComul C D =
       ((Lens.Equiv.yComp.toLens ∘ₗ
-          (C.counit ◃ₗ Lens.id C.carrier) ∘ₗ C.comult) ⊗ₗ
+          (C.counit ◃ₗ Lens.id C.carrier) ∘ₗ C.comul) ⊗ₗ
         (Lens.Equiv.yComp.toLens ∘ₗ
-          (D.counit ◃ₗ Lens.id D.carrier) ∘ₗ D.comult)) := rfl
+          (D.counit ◃ₗ Lens.id D.carrier) ∘ₗ D.comul)) := rfl
 
-private theorem tensorCounit_right_factor (C : Comonoid.{uA₁, uB₁})
+private theorem tensor_comul_counit_factor (C : Comonoid.{uA₁, uB₁})
     (D : Comonoid.{uA₂, uB₂}) :
     Lens.Equiv.compY.toLens ∘ₗ
         (Lens.id (C.carrier ⊗ D.carrier) ◃ₗ tensorCounit C D) ∘ₗ
-        tensorComult C D =
+        tensorComul C D =
       ((Lens.Equiv.compY.toLens ∘ₗ
-          (Lens.id C.carrier ◃ₗ C.counit) ∘ₗ C.comult) ⊗ₗ
+          (Lens.id C.carrier ◃ₗ C.counit) ∘ₗ C.comul) ⊗ₗ
         (Lens.Equiv.compY.toLens ∘ₗ
-          (Lens.id D.carrier ◃ₗ D.counit) ∘ₗ D.comult)) := rfl
+          (Lens.id D.carrier ◃ₗ D.counit) ∘ₗ D.comul)) := rfl
 
-private theorem tensorComult_assoc_left_factor (C : Comonoid.{uA₁, uB₁})
+private theorem tensorComul_assoc_left_factor (C : Comonoid.{uA₁, uB₁})
     (D : Comonoid.{uA₂, uB₂}) :
     Lens.Equiv.compAssoc.toLens ∘ₗ
-        (tensorComult C D ◃ₗ Lens.id (C.carrier ⊗ D.carrier)) ∘ₗ
-        tensorComult C D =
+        (tensorComul C D ◃ₗ Lens.id (C.carrier ⊗ D.carrier)) ∘ₗ
+        tensorComul C D =
       (Lens.id (C.carrier ⊗ D.carrier) ◃ₗ
           Lens.duoidalLens C.carrier C.carrier D.carrier D.carrier) ∘ₗ
         Lens.duoidalLens C.carrier (C.carrier ◃ C.carrier)
           D.carrier (D.carrier ◃ D.carrier) ∘ₗ
         ((Lens.Equiv.compAssoc.toLens ∘ₗ
-            (C.comult ◃ₗ Lens.id C.carrier) ∘ₗ C.comult) ⊗ₗ
+            (C.comul ◃ₗ Lens.id C.carrier) ∘ₗ C.comul) ⊗ₗ
           (Lens.Equiv.compAssoc.toLens ∘ₗ
-            (D.comult ◃ₗ Lens.id D.carrier) ∘ₗ D.comult)) := rfl
+            (D.comul ◃ₗ Lens.id D.carrier) ∘ₗ D.comul)) := rfl
 
-private theorem tensorComult_assoc_right_factor (C : Comonoid.{uA₁, uB₁})
+private theorem tensorComul_assoc_right_factor (C : Comonoid.{uA₁, uB₁})
     (D : Comonoid.{uA₂, uB₂}) :
-    (Lens.id (C.carrier ⊗ D.carrier) ◃ₗ tensorComult C D) ∘ₗ
-        tensorComult C D =
+    (Lens.id (C.carrier ⊗ D.carrier) ◃ₗ tensorComul C D) ∘ₗ
+        tensorComul C D =
       (Lens.id (C.carrier ⊗ D.carrier) ◃ₗ
           Lens.duoidalLens C.carrier C.carrier D.carrier D.carrier) ∘ₗ
         Lens.duoidalLens C.carrier (C.carrier ◃ C.carrier)
           D.carrier (D.carrier ◃ D.carrier) ∘ₗ
-        (((Lens.id C.carrier ◃ₗ C.comult) ∘ₗ C.comult) ⊗ₗ
-          ((Lens.id D.carrier ◃ₗ D.comult) ∘ₗ D.comult)) := rfl
+        (((Lens.id C.carrier ◃ₗ C.comul) ∘ₗ C.comul) ⊗ₗ
+          ((Lens.id D.carrier ◃ₗ D.comul) ∘ₗ D.comul)) := rfl
 
 /-- The tensor product of two comonoids in `(Poly, ◃, y)`.  The construction
 is heterogeneous in both input universe pairs and lands at their componentwise
@@ -133,16 +142,16 @@ def tensor (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
     Comonoid.{max uA₁ uA₂, max uB₁ uB₂} where
   carrier := C.carrier ⊗ D.carrier
   counit := tensorCounit C D
-  comult := tensorComult C D
-  counit_left := by
-    rw [tensorCounit_left_factor, C.counit_left, D.counit_left,
+  comul := tensorComul C D
+  counit_comul := by
+    rw [tensor_counit_comul_factor, C.counit_comul, D.counit_comul,
       Lens.tensorMap_id]
-  counit_right := by
-    rw [tensorCounit_right_factor, C.counit_right, D.counit_right,
+  comul_counit := by
+    rw [tensor_comul_counit_factor, C.comul_counit, D.comul_counit,
       Lens.tensorMap_id]
-  coassoc := by
-    rw [tensorComult_assoc_left_factor, C.coassoc, D.coassoc]
-    exact (tensorComult_assoc_right_factor C D).symm
+  comul_assoc := by
+    rw [tensorComul_assoc_left_factor, C.comul_assoc, D.comul_assoc]
+    exact (tensorComul_assoc_right_factor C D).symm
 
 @[simp] theorem tensor_carrier (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
     (tensor C D).carrier = C.carrier ⊗ D.carrier := rfl
@@ -154,60 +163,78 @@ theorem tensor_counit (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}
 
 /-- The tensor-product comultiplication is componentwise comultiplication
 followed by duoidal interchange. -/
-theorem tensor_comult (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
-    (tensor C D).comult = tensorComult C D := rfl
+theorem tensor_comul (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂}) :
+    (tensor C D).comul = tensorComul C D := rfl
+
+@[deprecated (since := "2026-10-19")] alias tensor_comult := tensor_comul
 
 /-! ## Tensor coherence isomorphisms -/
 
 /-- The left tensor unitor, lifted from polynomial lenses to composition
 comonoids.  Both directions preserve identities and composition. -/
-def tensorUnitLeftIso (C : Comonoid.{uA, uB}) :
-    CategoryTheory.Iso (tensor (unit.{uA, uB}) C) C where
+def tensorLeftUnitor (C : Comonoid.{uA, uB}) :
+    CategoryTheory.Iso (tensor (trivial.{uA, uB}) C) C where
   hom := {
     toLens := (Lens.Equiv.yTensor (P := C.carrier)).toLens
     map_counit := rfl
-    map_comult := rfl }
+    map_comul := rfl }
   inv := {
     toLens := (Lens.Equiv.yTensor (P := C.carrier)).invLens
     map_counit := rfl
-    map_comult := rfl }
+    map_comul := rfl }
   hom_inv_id := rfl
   inv_hom_id := rfl
 
-@[simp] theorem tensorUnitLeftIso_hom_toLens (C : Comonoid.{uA, uB}) :
-    (tensorUnitLeftIso C).hom.toLens =
+@[deprecated (since := "2026-10-19")] alias tensorUnitLeftIso := tensorLeftUnitor
+
+@[simp] theorem tensorLeftUnitor_hom_toLens (C : Comonoid.{uA, uB}) :
+    (tensorLeftUnitor C).hom.toLens =
       (Lens.Equiv.yTensor (P := C.carrier)).toLens := rfl
 
-@[simp] theorem tensorUnitLeftIso_inv_toLens (C : Comonoid.{uA, uB}) :
-    (tensorUnitLeftIso C).inv.toLens =
+@[deprecated (since := "2026-10-19")] alias tensorUnitLeftIso_hom_toLens :=
+  tensorLeftUnitor_hom_toLens
+
+@[simp] theorem tensorLeftUnitor_inv_toLens (C : Comonoid.{uA, uB}) :
+    (tensorLeftUnitor C).inv.toLens =
       (Lens.Equiv.yTensor (P := C.carrier)).invLens := rfl
+
+@[deprecated (since := "2026-10-19")] alias tensorUnitLeftIso_inv_toLens :=
+  tensorLeftUnitor_inv_toLens
 
 /-- The right tensor unitor, lifted from polynomial lenses to composition
 comonoids.  Both directions preserve identities and composition. -/
-def tensorUnitRightIso (C : Comonoid.{uA, uB}) :
-    CategoryTheory.Iso (tensor C (unit.{uA, uB})) C where
+def tensorRightUnitor (C : Comonoid.{uA, uB}) :
+    CategoryTheory.Iso (tensor C (trivial.{uA, uB})) C where
   hom := {
     toLens := (Lens.Equiv.tensorY (P := C.carrier)).toLens
     map_counit := rfl
-    map_comult := rfl }
+    map_comul := rfl }
   inv := {
     toLens := (Lens.Equiv.tensorY (P := C.carrier)).invLens
     map_counit := rfl
-    map_comult := rfl }
+    map_comul := rfl }
   hom_inv_id := rfl
   inv_hom_id := rfl
 
-@[simp] theorem tensorUnitRightIso_hom_toLens (C : Comonoid.{uA, uB}) :
-    (tensorUnitRightIso C).hom.toLens =
+@[deprecated (since := "2026-10-19")] alias tensorUnitRightIso := tensorRightUnitor
+
+@[simp] theorem tensorRightUnitor_hom_toLens (C : Comonoid.{uA, uB}) :
+    (tensorRightUnitor C).hom.toLens =
       (Lens.Equiv.tensorY (P := C.carrier)).toLens := rfl
 
-@[simp] theorem tensorUnitRightIso_inv_toLens (C : Comonoid.{uA, uB}) :
-    (tensorUnitRightIso C).inv.toLens =
+@[deprecated (since := "2026-10-19")] alias tensorUnitRightIso_hom_toLens :=
+  tensorRightUnitor_hom_toLens
+
+@[simp] theorem tensorRightUnitor_inv_toLens (C : Comonoid.{uA, uB}) :
+    (tensorRightUnitor C).inv.toLens =
       (Lens.Equiv.tensorY (P := C.carrier)).invLens := rfl
+
+@[deprecated (since := "2026-10-19")] alias tensorUnitRightIso_inv_toLens :=
+  tensorRightUnitor_inv_toLens
 
 /-- The tensor associator, lifted from polynomial lenses to composition
 comonoids.  The three input universe pairs remain independent. -/
-def tensorAssocIso
+def tensorAssociator
     (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂})
     (E : Comonoid.{uA₃, uB₃}) :
     CategoryTheory.Iso (tensor (tensor C D) E)
@@ -216,28 +243,34 @@ def tensorAssocIso
     toLens := (Lens.Equiv.tensorAssoc
       (P := C.carrier) (Q := D.carrier) (R := E.carrier)).toLens
     map_counit := rfl
-    map_comult := rfl }
+    map_comul := rfl }
   inv := {
     toLens := (Lens.Equiv.tensorAssoc
       (P := C.carrier) (Q := D.carrier) (R := E.carrier)).invLens
     map_counit := rfl
-    map_comult := rfl }
+    map_comul := rfl }
   hom_inv_id := rfl
   inv_hom_id := rfl
 
-@[simp] theorem tensorAssocIso_hom_toLens
+@[deprecated (since := "2026-10-19")] alias tensorAssocIso := tensorAssociator
+
+@[simp] theorem tensorAssociator_hom_toLens
     (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂})
     (E : Comonoid.{uA₃, uB₃}) :
-    (tensorAssocIso C D E).hom.toLens =
+    (tensorAssociator C D E).hom.toLens =
       (Lens.Equiv.tensorAssoc
         (P := C.carrier) (Q := D.carrier) (R := E.carrier)).toLens := rfl
 
-@[simp] theorem tensorAssocIso_inv_toLens
+@[deprecated (since := "2026-10-19")] alias tensorAssocIso_hom_toLens := tensorAssociator_hom_toLens
+
+@[simp] theorem tensorAssociator_inv_toLens
     (C : Comonoid.{uA₁, uB₁}) (D : Comonoid.{uA₂, uB₂})
     (E : Comonoid.{uA₃, uB₃}) :
-    (tensorAssocIso C D E).inv.toLens =
+    (tensorAssociator C D E).inv.toLens =
       (Lens.Equiv.tensorAssoc
         (P := C.carrier) (Q := D.carrier) (R := E.carrier)).invLens := rfl
+
+@[deprecated (since := "2026-10-19")] alias tensorAssocIso_inv_toLens := tensorAssociator_inv_toLens
 
 /-! ## Tensor products of retrofunctors -/
 
@@ -252,10 +285,10 @@ def tensor {C₁ D₁ : Comonoid.{uA₁, uB₁}} {C₂ D₂ : Comonoid.{uA₂, u
         ((D₁.counit ⊗ₗ D₂.counit) ∘ₗ (f.toLens ⊗ₗ g.toLens)) = _
     rw [← Lens.tensorMap_comp, f.map_counit, g.map_counit]
     rfl
-  map_comult := by
+  map_comul := by
     change Lens.duoidalLens D₁.carrier D₁.carrier D₂.carrier D₂.carrier ∘ₗ
-        ((D₁.comult ⊗ₗ D₂.comult) ∘ₗ (f.toLens ⊗ₗ g.toLens)) = _
-    rw [← Lens.tensorMap_comp, f.map_comult, g.map_comult]
+        ((D₁.comul ⊗ₗ D₂.comul) ∘ₗ (f.toLens ⊗ₗ g.toLens)) = _
+    rw [← Lens.tensorMap_comp, f.map_comul, g.map_comul]
     rfl
 
 @[simp] theorem tensor_toLens {C₁ D₁ : Comonoid.{uA₁, uB₁}} {C₂ D₂ : Comonoid.{uA₂, uB₂}}

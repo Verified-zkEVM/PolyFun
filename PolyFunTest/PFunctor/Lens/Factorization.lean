@@ -41,7 +41,7 @@ variable {R S : PFunctor.{u, u}}
 example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVertical)
     (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
     Nonempty (Lens.DiagonalFiller v f c g) :=
-  Lens.exists_verticalCartesianDiagonal v f c g hv hc comm
+  Lens.nonempty_diagonalFiller v f c g hv hc comm
 
 /-- Both triangle equations are available directly from the bundled filler. -/
 example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVertical)
@@ -68,7 +68,7 @@ example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVe
 example (v : Lens P Q) (f : Lens P R) (c : Lens R S) (g : Lens Q S) (hv : v.IsVertical)
     (hc : c.IsCartesian) (comm : c ∘ₗ f = g ∘ₗ v) :
     Subsingleton (Lens.DiagonalFiller v f c g) :=
-  Lens.subsingleton_verticalCartesianFillers v f c g hv hc comm
+  Lens.subsingleton_diagonalFiller v f c g hv hc comm
 
 end Orthogonality
 
@@ -86,7 +86,7 @@ section Closure
 
 variable {R W : PFunctor.{u, u}} {l₁ : Lens P R} {l₂ : Lens Q W}
 
-/-- Verticality is closed under `⊎ₗ`, `×ₗ`, `⊗ₗ` (Spivak–Niu Prop 5.63). -/
+/-- Verticality is closed under `⊎ₗ`, `×ₗ`, `⊗ₗ` (Niu–Spivak Prop 5.63). -/
 example (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊎ₗ l₂).IsVertical :=
   h₁.sumMap h₂
 
@@ -96,7 +96,7 @@ example (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ×ₗ l₂).Is
 example (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊗ₗ l₂).IsVertical :=
   h₁.tensorMap h₂
 
-/-- Cartesianness is closed under `×ₗ`, `⊗ₗ`, and `◃ₗ` (Spivak–Niu Prop 5.63,
+/-- Cartesianness is closed under `×ₗ`, `⊗ₗ`, and `◃ₗ` (Niu–Spivak Prop 5.63,
 6.88). -/
 example (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ×ₗ l₂).IsCartesian :=
   h₁.prodMap h₂

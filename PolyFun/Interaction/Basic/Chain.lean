@@ -93,13 +93,13 @@ dependent `PFunctor.FreeM.append`. -/
 def toTypeTree : (n : Nat) → Chain n → TypeTree
   | 0, _ => .done
   | n + 1, ⟨spec, cont⟩ =>
-      TypeTree.substMonoid.mult.toFunA ⟨spec, fun tr => toTypeTree n (cont tr)⟩
+      TypeTree.substMonoid.mul.toFunA ⟨spec, fun tr => toTypeTree n (cont tr)⟩
 
 /- Lean 4.33 compares assigned metavariable types at implicit transparency;
 the flattening lemmas below equate `toTypeTree` layers with `FreeM.append`
 through the substitution monoid there. `implicit_reducible` (unlike
 `reducible`) stays invisible to simp validation and instance search. -/
-attribute [local implicit_reducible] PFunctor.FreeP.substMonoid PFunctor.FreeP.mult
+attribute [local implicit_reducible] PFunctor.FreeP.substMonoid PFunctor.FreeP.mul
   toTypeTree
 
 @[simp, grind =]
@@ -141,7 +141,7 @@ theorem toTypeTree_replicate (spec : TypeTree) :
     (n : Nat) → toTypeTree n (Chain.replicate spec n) = spec.replicate n
   | 0 => rfl
   | n + 1 => by
-      simp only [Chain.replicate, toTypeTree, TypeTree.substMonoid_mult_toFunA,
+      simp only [Chain.replicate, toTypeTree, TypeTree.substMonoid_mul_toFunA,
         PFunctor.FreeM.replicate]
       congr 1; funext _; exact toTypeTree_replicate spec n
 
@@ -155,7 +155,7 @@ theorem toTypeTree_ofStateChain (Stage : Nat → Type u)
       PFunctor.FreeM.stateChain PUnit.unit Stage step next n i s
   | 0, _, _ => rfl
   | n + 1, i, s => by
-      simp only [Chain.ofStateChain, toTypeTree, TypeTree.substMonoid_mult_toFunA,
+      simp only [Chain.ofStateChain, toTypeTree, TypeTree.substMonoid_mul_toFunA,
         PFunctor.FreeM.stateChain]
       congr 1
       funext tr
@@ -211,7 +211,7 @@ theorem splitPath_appendPath (n : Nat) (c : Chain (n + 1))
 /-! ## Strategy composition -/
 
 /-- Output family for strategy composition along a chain. This is the intrinsic analog of
-`Path.stateChainFamily`: a family on the remaining chain is lifted to a family on
+`PFunctor.FreeM.Path.StateChainFamily`: a family on the remaining chain is lifted to a family on
 paths of the flattened `TypeTree`. -/
 @[expose]
 def outputFamily
@@ -219,7 +219,7 @@ def outputFamily
     (n : Nat) → (c : Chain n) → Path (toTypeTree n c) → Type u
   | 0, c, _ => Family c
   | n + 1, ⟨spec, cont⟩, tr =>
-      PFunctor.FreeM.Path.liftAppend spec (fun tr₁ => toTypeTree n (cont tr₁))
+      PFunctor.FreeM.Path.LiftAppend spec (fun tr₁ => toTypeTree n (cont tr₁))
         (fun tr₁ tr₂ => outputFamily Family n (cont tr₁) tr₂)
         tr
 

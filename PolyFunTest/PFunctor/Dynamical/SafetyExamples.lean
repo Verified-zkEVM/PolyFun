@@ -27,11 +27,11 @@ def toggle : DynSystem Bool y.{0, 0} :=
 def toggleSafety : DynSystem.SafetySpec y.{0, 0} where
   State := Bool
   toDynSystem := toggle
-  init state := state = false
+  Init state := state = false
 
-example : toggleSafety.init false := rfl
-example (state : Bool) : toggleSafety.assumptions state := trivial
-example (state : Bool) : toggleSafety.safe state := trivial
+example : toggleSafety.Init false := rfl
+example (state : Bool) : toggleSafety.Assumptions state := trivial
+example (state : Bool) : toggleSafety.Safe state := trivial
 example (state : Bool) :
     toggleSafety.toDynSystem.expose state = toggle.expose state := rfl
 example (state : Bool) : toggleSafety.toDynSystem.update state PUnit.unit = !state := rfl
@@ -65,8 +65,7 @@ example (rel : DynSystem.StepRel system₁ system₂)
 
 example (first second : DynSystem.StepRel system₁ system₂)
     (step₁ : system₁.Step) (step₂ : system₂.Step) :
-    DynSystem.StepRel.inter first second step₁ step₂ ↔
-      first step₁ step₂ ∧ second step₁ step₂ := Iff.rfl
+    (first ⊓ second) step₁ step₂ ↔ first step₁ step₂ ∧ second step₁ step₂ := Iff.rfl
 
 end StepRelations
 

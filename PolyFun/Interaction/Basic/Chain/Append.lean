@@ -46,7 +46,7 @@ the concatenation lemmas below equate flattened chains with `FreeM.append`
 through the substitution monoid there. `implicit_reducible` (unlike
 `reducible`) stays invisible to simp validation and instance search. -/
 attribute [local implicit_reducible]
-  PFunctor.FreeP.substMonoid PFunctor.FreeP.mult TypeTree.Chain toTypeTree
+  PFunctor.FreeP.substMonoid PFunctor.FreeP.mul TypeTree.Chain toTypeTree
 
 /-- Transport a chain across an equality of its round count. -/
 @[expose]
@@ -100,8 +100,8 @@ theorem toTypeTree_then : {m n : Nat} → (c : Chain m) →
       rfl
   | m + 1, n, ⟨tree, cont⟩, k => by
       simp only [Chain.then, toTypeTree_castRounds, toTypeTree,
-        TypeTree.substMonoid_mult_toFunA]
-      rw [PFunctor.FreeM.Path.append_tree_assoc]
+        TypeTree.substMonoid_mul_toFunA]
+      rw [PFunctor.FreeM.append_assoc]
       congr 1
       funext path
       rw [toTypeTree_then]
@@ -211,7 +211,7 @@ theorem appendThenPath_eq_cast_append {m n : Nat} (c : Chain m)
 
 /-- Lift a family indexed separately by a prefix path and its selected suffix
 path to a family on paths through the concatenated chain. This is the
-chain-boundary counterpart of `PFunctor.FreeM.Path.liftAppend`. -/
+chain-boundary counterpart of `PFunctor.FreeM.Path.LiftAppend`. -/
 @[expose]
 def liftThen {m n : Nat} (c : Chain m)
     (k : Path (toTypeTree m c) → Chain n)
@@ -233,14 +233,14 @@ theorem liftThen_appendThenPath {m n : Nat} (c : Chain m)
   rw [splitThenPath_appendThenPath]
 
 /-- After transporting a concatenated-chain path along `toTypeTree_then`,
-`liftThen` is exactly the generic appended-tree family `Path.liftAppend`. -/
+`liftThen` is exactly the generic appended-tree family `Path.LiftAppend`. -/
 theorem liftThen_eq_liftAppend_cast {m n : Nat} (c : Chain m)
     (k : Path (toTypeTree m c) → Chain n)
     (Family : (path : Path (toTypeTree m c)) →
       Path (toTypeTree n (k path)) → Type u)
     (combined : Path (toTypeTree (m + n) (Chain.then c k))) :
     liftThen c k Family combined =
-      PFunctor.FreeM.Path.liftAppend (toTypeTree m c)
+      PFunctor.FreeM.Path.LiftAppend (toTypeTree m c)
         (fun path => toTypeTree n (k path)) Family
         (Equiv.cast (congrArg Path (toTypeTree_then c k)) combined) :=
   (PFunctor.FreeM.Path.liftAppend_split (toTypeTree m c)
@@ -330,7 +330,7 @@ theorem toTypeTree_then_assoc {m n p : Nat} (c : Chain m)
               (l (Equiv.cast (congrArg Path (toTypeTree_then c k)).symm
                 (PFunctor.FreeM.Path.append (toTypeTree m c)
                   (fun path => toTypeTree n (k path)) path suffix))))) :=
-      PFunctor.FreeM.Path.append_tree_assoc _ _ _
+      PFunctor.FreeM.append_assoc _ _ _
     _ = toTypeTree (m + (n + p))
           (Chain.then c (fun path =>
             Chain.then (k path) (fun suffix =>

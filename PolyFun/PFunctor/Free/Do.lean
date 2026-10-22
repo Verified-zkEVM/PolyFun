@@ -169,7 +169,7 @@ variable {l : Type uB} [CompleteLattice l]
 transformer read in the dual order. Stated against the explicit interpretation; it applies once
 `OpSpec.toUpperWPMonad Φ hΦ` is installed. -/
 @[spec]
-theorem lift_upper (Φ : OpSpec P l) (hΦ : Φ.Mono) (a : P.A) (Q : P.B a → lᵒᵈ)
+theorem lift_upper (Φ : OpSpec P l) (hΦ : Φ.Monotone) (a : P.A) (Q : P.B a → lᵒᵈ)
     (E : EStack⟨⟩ᵒᵈ) :
     @Triple lᵒᵈ EStack⟨⟩ᵒᵈ (FreeM P (P.B a)) (P.B a) _ _ (FreeM.lift (P := P) a)
       ((Φ.toUpperWPMonad hΦ).toWP _)

@@ -14,7 +14,7 @@ public import PolyFun.PFunctor.Dynamical.Basic
 
 A **responder** for an interface `q` receives `q`-positions (queries) and returns
 `q`-directions (answers), updating an internal state as it goes. Following
-Spivak–Niu, *Polynomial Functors: A Mathematical Theory of Interaction* (Ex 4.78),
+Niu–Spivak, *Polynomial Functors: A Mathematical Theory of Interaction* ((4.82), Ex 4.92),
 this is exactly a dynamical system over the internal hom `q ⊸ y`: by `ihom_y_A`
 the positions of `q ⊸ y` are the sections of `q`, so at each state the responder
 *commits* to an answer for every possible query, and a direction of `q ⊸ y` over
@@ -27,7 +27,7 @@ trivial). The dynamical accessors under responder names are
 
 A responder is the deterministic challenger side of a game before Kleisli
 weighting: wiring it against an adversary along `Lens.eval` closes the system
-(`DynSystem.game` / `DynSystem.closedGame`). The `equivStateHandler` bridge
+(`DynSystem.game` / `DynSystem.closedGame`). The `equivStateful` bridge
 identifies responders with `Handler.Stateful Id S q`, the pure specialization
 of PolyFun's effectful Mealy interface `Handler.Stateful m S q`.
 -/
@@ -39,7 +39,7 @@ universe u v uA uB
 namespace PFunctor
 
 /-- A **responder** with states `S` for the interface `q`: a dynamical system over
-the internal hom `q ⊸ y` (Spivak–Niu Ex 4.78). By `ihom_y_A` its exposed
+the internal hom `q ⊸ y` (Niu–Spivak (4.82)). By `ihom_y_A` its exposed
 positions are the sections of `q` — at each state the responder commits to an
 answer for every possible query — and a direction over a committed section is
 just a query, so `update` evolves the state by the query heard. -/
@@ -75,7 +75,7 @@ def mk' (ans : (s : S) → (a : q.A) → q.B a) (nxt : S → q.A → S) : Respon
     (s : S) (a : q.A) : (mk' ans nxt).next s a = nxt s a := rfl
 
 /-- Responders are determined by their pointwise answers and next states.
-Unlike `equivStateHandler`, this extensionality principle imposes no equality
+Unlike `equivStateful`, this extensionality principle imposes no equality
 between the responder-state and interface-direction universes. -/
 @[ext]
 theorem ext (R R' : Responder S q)
@@ -152,27 +152,37 @@ variable {q : PFunctor.{uA, u}} {S : Type u}
 
 /-- Read a responder as a stateful handler: answer the query from the current
 state and thread the next state. -/
-def toStateHandler (R : Responder S q) : Handler.Stateful Id S q :=
+def toStateful (R : Responder S q) : Handler.Stateful Id S q :=
   fun a s => (R.answer s a, R.next s a)
 
+@[deprecated (since := "2026-10-19")] alias toStateHandler := toStateful
+
 /-- Bundle a stateful handler as a responder. -/
-def ofStateHandler (h : Handler.Stateful Id S q) : Responder S q :=
+def ofStateful (h : Handler.Stateful Id S q) : Responder S q :=
   mk' (fun s a => (h a s).1) (fun s a => (h a s).2)
+
+@[deprecated (since := "2026-10-19")] alias ofStateHandler := ofStateful
 
 /-- The **Kleisli–Mealy bridge**: responders with states `S` for `q` are exactly
 the pure stateful handlers `Handler.Stateful Id S q`, with both round-trips
 definitional. -/
-def equivStateHandler : Responder S q ≃ Handler.Stateful Id S q where
-  toFun := toStateHandler
-  invFun := ofStateHandler
+def equivStateful : Responder S q ≃ Handler.Stateful Id S q where
+  toFun := toStateful
+  invFun := ofStateful
   left_inv _ := rfl
   right_inv _ := rfl
 
-@[simp] theorem equivStateHandler_apply (R : Responder S q) :
-    equivStateHandler R = R.toStateHandler := rfl
+@[deprecated (since := "2026-10-19")] alias equivStateHandler := equivStateful
 
-@[simp] theorem equivStateHandler_symm_apply (h : Handler.Stateful Id S q) :
-    equivStateHandler.symm h = ofStateHandler h := rfl
+@[simp] theorem equivStateful_apply (R : Responder S q) :
+    equivStateful R = R.toStateful := rfl
+
+@[deprecated (since := "2026-10-19")] alias equivStateHandler_apply := equivStateful_apply
+
+@[simp] theorem equivStateful_symm_apply (h : Handler.Stateful Id S q) :
+    equivStateful.symm h = ofStateful h := rfl
+
+@[deprecated (since := "2026-10-19")] alias equivStateHandler_symm_apply := equivStateful_symm_apply
 
 end KleisliMealy
 

@@ -205,7 +205,7 @@ example (P : PFunctor.{uA, uB}) {tree tree' : M P}
       .child (M.castDirection h direction)
         (M.Vertex.castEquiv
           (M.children_castDirection h direction) next) :=
-  M.Vertex.cast_child h direction next
+  M.Vertex.castEquiv_child h direction next
 
 /-- Vertex transport composes without exposing the underlying dependent
 cast. -/

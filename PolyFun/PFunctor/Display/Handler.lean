@@ -572,7 +572,7 @@ theorem comp_assoc
     (congrFun (PFunctor.Handler.comp_assoc h g f) operation) hpoint.symm]
   have hforward := comp_assoc_apply first second third operation displayedPosition
   rw [← hforward]
-  exact W.transport_symm (S.direction operation displayedPosition) hpoint
+  exact W.transport_symm_transport (S.direction operation displayedPosition) hpoint
     (third.comp (second.comp first) operation displayedPosition)
 
 end Handler

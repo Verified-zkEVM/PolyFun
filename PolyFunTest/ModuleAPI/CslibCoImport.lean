@@ -34,14 +34,11 @@ open _root_.PFunctor
 
 /-! ## Polynomial constructions -/
 
-/-- cslib's `P + Q` and PolyFun's named sum `PFunctor.sum` are the same polynomial. -/
-example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}} : P + Q = PFunctor.sum P Q := rfl
-
-/-- cslib's direction equation for `P + Q` and PolyFun's for `PFunctor.sum` agree on a left
-position. -/
+/-- cslib's `P + Q` is its named sum `PFunctor.add`, whose left directions PolyFun's
+`add_B_inl` computes. -/
 example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}} (a : P.A) :
-    (P + Q).B (.inl a) = (PFunctor.sum P Q).B (.inl a) := by
-  rw [hAdd_B, sum_B_inl]
+    PFunctor.add P Q = P + Q ∧ (P + Q).B (.inl a) = P.B a :=
+  ⟨add_eq_add P Q, add_B_inl P Q a⟩
 
 /-- cslib's `C_pempty` turns `0` into a constant polynomial, whose positions PolyFun's `C_A`
 computes. -/

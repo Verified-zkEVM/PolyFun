@@ -13,7 +13,7 @@ public import PolyFun.PFunctor.Lens.Cartesian
 The category `Poly` carries two monoidal products that are both relevant to
 interaction: the tensor (Dirichlet) product `⊗`, whose positions are pairs and
 whose directions are pairs, and the substitution product `◃`, whose positions
-package a first move together with a continuation. Spivak–Niu, *Polynomial
+package a first move together with a continuation. Niu–Spivak, *Polynomial
 Functors: A Mathematical Theory of Interaction* §6.3.4–6.3.5 show that these two
 products are **duoidal**: they share the unit `y` and there is a canonical
 family of interchange lenses that make `(Poly, ⊗, ◃)` a duoidal category.
@@ -30,7 +30,7 @@ lenses and equations.
   bijection on every fiber, so `orderingLens_isCartesian` holds — the two
   products agree on directions.
 
-* The `Equiv`s in `PFunctor.Lens.Equiv` (Example 6.84) collect the special
+* The `Equiv`s in `PFunctor.Lens.Equiv` (Exercise 6.84) collect the special
   cases where `orderingLens` is invertible, i.e. where `⊗` and `◃` genuinely
   coincide. These are exactly the cases in which one factor's positions carry a
   unique continuation:
@@ -69,7 +69,7 @@ namespace Lens
 
 /-! ## The ordering lens `p ⊗ q → p ◃ q` -/
 
-/-- The **ordering lens** `p ⊗ q → p ◃ q` (Spivak–Niu Example 6.85).
+/-- The **ordering lens** `p ⊗ q → p ◃ q` (Niu–Spivak Example 6.85).
 
 On positions it turns a pair of simultaneous moves `(a, b) : p.A × q.A` into a
 sequential position `⟨a, fun _ => b⟩ : p ◃ q`, where the continuation is the
@@ -101,7 +101,7 @@ theorem orderingLens_natural {p : PFunctor.{uA₁, uB₁}} {p' : PFunctor.{uA₂
 The interchange lens `(p ◃ p') ⊗ (q ◃ q') → (p ⊗ q) ◃ (p' ⊗ q')` runs two
 two-phase protocols in parallel and regroups their phases. -/
 
-/-- The **duoidal interchange lens** (Spivak–Niu Equation 6.86)
+/-- The **duoidal interchange lens** (Niu–Spivak Equation 6.86)
 
 `(p ◃ p') ⊗ (q ◃ q') → (p ⊗ q) ◃ (p' ⊗ q')`.
 
@@ -167,23 +167,27 @@ def compUnitMap :
 /-! ### The shared unit object -/
 
 /-- Left unitality of the tensor-unit multiplication. -/
-theorem tensorUnitMap_unit_left :
+theorem tensorUnitMap_one_mul :
     (tensorUnitMap :
         Lens (y.{uA, uB} ⊗ y.{uA, uB}) y.{uA, uB}) ∘ₗ
       ((unitComparison : Lens y.{uA, uB} y.{uA, uB}) ⊗ₗ
         Lens.id y.{uA, uB}) =
       Equiv.yTensor.toLens := rfl
 
+@[deprecated (since := "2026-10-19")] alias tensorUnitMap_unit_left := tensorUnitMap_one_mul
+
 /-- Right unitality of the tensor-unit multiplication. -/
-theorem tensorUnitMap_unit_right :
+theorem tensorUnitMap_mul_one :
     (tensorUnitMap :
         Lens (y.{uA, uB} ⊗ y.{uA, uB}) y.{uA, uB}) ∘ₗ
       (Lens.id y.{uA, uB} ⊗ₗ
         (unitComparison : Lens y.{uA, uB} y.{uA, uB})) =
       Equiv.tensorY.toLens := rfl
 
+@[deprecated (since := "2026-10-19")] alias tensorUnitMap_unit_right := tensorUnitMap_mul_one
+
 /-- Associativity of the tensor-unit multiplication. -/
-theorem tensorUnitMap_assoc :
+theorem tensorUnitMap_mul_assoc :
     (tensorUnitMap :
         Lens (y.{uA, uB} ⊗ y.{uA, uB}) y.{uA, uB}) ∘ₗ
         ((tensorUnitMap :
@@ -195,8 +199,10 @@ theorem tensorUnitMap_assoc :
           Lens (y.{uA, uB} ⊗ y.{uA, uB}) y.{uA, uB})) ∘ₗ
         Equiv.tensorAssoc.toLens := rfl
 
+@[deprecated (since := "2026-10-19")] alias tensorUnitMap_assoc := tensorUnitMap_mul_assoc
+
 /-- Left counitality of the composition-unit comultiplication. -/
-theorem compUnitMap_counit_left :
+theorem compUnitMap_counit_comul :
     (Equiv.yComp (P := y.{uA, uB})).toLens ∘ₗ
         ((unitComparison : Lens y.{uA, uB} y.{uA, uB}) ◃ₗ
           Lens.id y.{uA, uB}) ∘ₗ
@@ -205,8 +211,10 @@ theorem compUnitMap_counit_left :
             Lens y.{uA, uB} y.{max uA uB, uB})) =
       Lens.id y.{uA, uB} := rfl
 
+@[deprecated (since := "2026-10-19")] alias compUnitMap_counit_left := compUnitMap_counit_comul
+
 /-- Right counitality of the composition-unit comultiplication. -/
-theorem compUnitMap_counit_right :
+theorem compUnitMap_comul_counit :
     (Equiv.compY (P := y.{uA, uB})).toLens ∘ₗ
         (Lens.id y.{uA, uB} ◃ₗ
           (unitComparison : Lens y.{uA, uB} y.{uA, uB})) ∘ₗ
@@ -215,8 +223,10 @@ theorem compUnitMap_counit_right :
             Lens y.{uA, uB} y.{max uA uB, uB})) =
       Lens.id y.{uA, uB} := rfl
 
+@[deprecated (since := "2026-10-19")] alias compUnitMap_counit_right := compUnitMap_comul_counit
+
 /-- Coassociativity of the composition-unit comultiplication. -/
-theorem compUnitMap_coassoc :
+theorem compUnitMap_comul_assoc :
     (Equiv.compAssoc (P := y.{uA, uB})
       (Q := y.{uA, uB}) (R := y.{uA, uB})).toLens ∘ₗ
         ((compUnitMap ∘ₗ
@@ -233,6 +243,8 @@ theorem compUnitMap_coassoc :
         (compUnitMap ∘ₗ
           (unitComparison :
             Lens y.{uA, uB} y.{max uA uB, uB})) := rfl
+
+@[deprecated (since := "2026-10-19")] alias compUnitMap_coassoc := compUnitMap_comul_assoc
 
 /-- Left-composition-unit coherence for duoidal interchange. Interchanging a pair of
 left-unital composites and then combining their two unit components agrees
@@ -298,7 +310,7 @@ theorem duoidalLens_tensor_unit_right (p : PFunctor.{uA₁, uB₁}) (q : PFuncto
 
 This is the structural reordering required to state the lax-monoidal law for
 `orderingLens` without silently identifying differently ordered products. -/
-def Equiv.tensorMiddleFour (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
+def Equiv.tensorTensorTensorComm (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
     (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
     ((p ⊗ p') ⊗ (q ⊗ q')) ≃ₗ ((p ⊗ q) ⊗ (p' ⊗ q')) where
   toLens := (fun ((a, b), (c, d)) => ((a, c), (b, d))) ⇆
@@ -307,6 +319,9 @@ def Equiv.tensorMiddleFour (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, 
     (fun _ ((a, b), (c, d)) => ((a, c), (b, d)))
   left_inv := rfl
   right_inv := rfl
+
+@[deprecated (since := "2026-10-19")] alias Equiv.tensorMiddleFour :=
+  Equiv.tensorTensorTensorComm
 
 /-- `orderingLens : (⊗) ⇒ (◃)` preserves the binary multiplication:
 ordering each pair and then interchanging phases agrees with first applying the
@@ -317,7 +332,7 @@ theorem orderingLens_duoidal
     (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
     duoidalLens p p' q q' ∘ₗ (orderingLens p p' ⊗ₗ orderingLens q q') =
       orderingLens (p ⊗ q) (p' ⊗ q') ∘ₗ
-        (Equiv.tensorMiddleFour p p' q q').toLens := rfl
+        (Equiv.tensorTensorTensorComm p p' q q').toLens := rfl
 
 /-- Right-unit compatibility of `orderingLens`. -/
 @[simp] theorem orderingLens_unit_right (p : PFunctor.{uA₁, uB₁}) :
@@ -327,7 +342,7 @@ theorem orderingLens_duoidal
 @[simp] theorem orderingLens_unit_left (p : PFunctor.{uA₁, uB₁}) :
     Equiv.yComp.toLens ∘ₗ orderingLens y p = Equiv.yTensor.toLens := rfl
 
-/-! ## Catalogue of `⊗`/`◃` coincidences (Example 6.84)
+/-! ## Catalogue of `⊗`/`◃` coincidences (Exercise 6.84)
 
 These are the special cases in which `orderingLens` is an isomorphism, i.e. the
 two monoidal products agree outright. In each case one of the factors has a
@@ -335,13 +350,13 @@ unique continuation into the other, so the ordering of moves carries no
 information.
 
 These catalogue isos are reference API — book-completeness formalizations of
-Example 6.84, exercised in `PolyFunTest/PFunctor/Lens/Duoidal.lean`. The
+Exercise 6.84, exercised in `PolyFunTest/PFunctor/Lens/Duoidal.lean`. The
 load-bearing formers of this file are `orderingLens` and `duoidalLens` above
 (consumed by `PolyFun/PFunctor/Dynamical/Game.lean`). -/
 
 namespace Equiv
 
-/-- `Ay ⊗ By ≅ Ay ◃ By` (Spivak–Niu Example 6.84).
+/-- `Ay ⊗ By ≅ Ay ◃ By` (Niu–Spivak Exercise 6.84).
 
 Both sides are `(A × B) y`: a pair of linear moves is the same data as a linear
 move followed by a linear move, since each linear factor has a unique
@@ -353,7 +368,7 @@ def linearTensorLinear (A : Type u) (B : Type u) :
   left_inv := rfl
   right_inv := rfl
 
-/-- `y^A ⊗ y^B ≅ y^A ◃ y^B` (Spivak–Niu Example 6.84).
+/-- `y^A ⊗ y^B ≅ y^A ◃ y^B` (Niu–Spivak Exercise 6.84).
 
 Both sides are `y^(A × B)`: a pair of directions `A × B` is the same as an
 `A`-direction followed by a `B`-direction, since each pure-power factor has a
@@ -366,7 +381,7 @@ def purePowerTensorPurePower (A : Type u) (B : Type u) :
   left_inv := rfl
   right_inv := rfl
 
-/-- `By ⊗ p ≅ By ◃ p` (Spivak–Niu Example 6.84), with the *linear* factor `By`
+/-- `By ⊗ p ≅ By ◃ p` (Niu–Spivak Exercise 6.84), with the *linear* factor `By`
 on the left.
 
 The linear factor `By = linear B` has a unique direction, so pairing a
@@ -380,7 +395,7 @@ def linearTensor (B : Type u) (p : PFunctor.{u, u}) :
   left_inv := rfl
   right_inv := rfl
 
-/-- `p ⊗ y^A ≅ p ◃ y^A` (Spivak–Niu Example 6.84), with the *pure-power* factor
+/-- `p ⊗ y^A ≅ p ◃ y^A` (Niu–Spivak Exercise 6.84), with the *pure-power* factor
 `y^A` on the right.
 
 The pure-power factor `y^A = y^ A` has a unique position, so a `p`-move

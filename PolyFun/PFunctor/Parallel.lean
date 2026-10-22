@@ -22,8 +22,8 @@ P ∥ Q ≃ (P + Q) + (P ⊗ Q).
 The direct `ParallelChoice` presentation keeps the three operational cases
 visible.  The equivalence with the sum/tensor expression and the symmetric
 monoidal unit, symmetry, and associator are provided explicitly.  As with
-`PFunctor.sum`, the two interfaces share one direction universe; their
-position universes remain independent.
+the sum `P + Q` (`PFunctor.add`), the two interfaces share one direction
+universe; their position universes remain independent.
 -/
 
 @[expose] public section

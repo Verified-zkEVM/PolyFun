@@ -1,0 +1,57 @@
+/-
+Copyright (c) 2026 PolyFun Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Quang Dao
+-/
+module
+
+/-!
+# Lawful monad control
+
+`MonadControl m n` runs an `n`-computation inside `m` through `liftWith` and recovers the result
+with `restoreM`. `LawfulMonadControl m n` asks that `liftWith` of a computation that ignores its
+runner preserve `pure` and `bind`, and that lifting a run and restoring it be the identity;
+`LawfulMonadControlT` states the same laws for the reflexive-transitive closure `MonadControlT`.
+The classes parallel core's `LawfulMonadLift` and `LawfulMonadLiftT`.
+-/
+
+@[expose] public section
+
+universe u v w
+
+/-- A `MonadControl` whose `liftWith` preserves `pure` and `bind` and is undone by `restoreM`. -/
+class LawfulMonadControl (m : semiOutParam (Type u → Type v)) (n : Type u → Type w)
+    [Monad m] [Monad n] [MonadControl m n] : Prop where
+
+  /-- Lifting a pure computation should be pure -/
+  liftWith_pure {α : Type u} (a : α) :
+    MonadControl.liftWith (m := m) (n := n) (fun _ => pure a) = pure a
+
+  /-- Lifting a bind computation should respect bind -/
+  liftWith_bind {α β : Type u} (ma : m α) (f : α → m β) :
+    MonadControl.liftWith (fun _ => ma) >>= MonadControl.liftWith ∘ (fun a _ => f a) =
+        MonadControl.liftWith (n := n) (fun _ => ma >>= f)
+
+  /-- Restoring after lifting should be identity -/
+  liftWith_restoreM {α : Type u} (t : n α) :
+    MonadControl.liftWith (m := m) (fun run => run t) >>= MonadControl.restoreM ∘ pure = t
+
+/-- A `MonadControlT` whose `liftWith` preserves `pure` and `bind` and is undone by `restoreM`. -/
+class LawfulMonadControlT (m : Type u → Type v) (n : Type u → Type w)
+    [Monad m] [Monad n] [MonadControlT m n] : Prop where
+
+  /-- Lifting a pure computation should be pure -/
+  liftWith_pure {α : Type u} (a : α) :
+    liftWith (m := m) (n := n) (fun _ => pure a) = pure a
+
+  /-- Lifting a bind computation should respect bind -/
+  liftWith_bind {α β : Type u} (ma : m α) (f : α → m β) :
+    liftWith (fun _ => ma) >>= liftWith ∘ (fun a _ => f a) = liftWith (n := n) (fun _ => ma >>= f)
+
+  /-- Restoring after lifting should be identity -/
+  liftWith_restoreM {α : Type u} (t : n α) :
+    liftWith (m := m) (fun run => run t) >>= restoreM = t
+
+export LawfulMonadControlT (liftWith_pure liftWith_bind liftWith_restoreM)
+
+attribute [simp] liftWith_pure liftWith_bind liftWith_restoreM

@@ -9,7 +9,7 @@ it provides, rather than importing the whole project while developing a module.
 | Target | Purpose | Build or import |
 |---|---|---|
 | `PolyFun` | Generic polynomial, interaction, logic, and realizability library | Default `lake build`; `import PolyFun` or a specific module |
-| `ToCslib` | Upstream staging: free-monad and loop laws, order bridge, omega-CPO fixed points, finite case compilation, bitvector and polynomial lemmas | `lake build ToCslib`; specific `ToCslib.*` imports |
+| `ToCslib` | Upstream staging: free-monad and loop laws, order bridge, omega-CPO fixed points, finite case compilation, `Fin`-indexed monadic sequencing, bitvector and polynomial lemmas | `lake build ToCslib`; specific `ToCslib.*` imports |
 | `ComplexityBackends` | Optional concrete complexity backends, one subdirectory per machine model | `lake build ComplexityBackends`; `import ComplexityBackends` or a specific `ComplexityBackends.CslibSingleTape.*` module |
 | `PolyFunExamples` | Checked tutorials and the Parliament application under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
 | `PolyFunTest` | Regression tests, adversarial cases, and ordinary-import consumers | `lake test` |
@@ -27,18 +27,20 @@ Example and test imports never flow back into production.
 
 | Subject | Entry point | Guide |
 |---|---|---|
-| Polynomial interfaces and morphisms | [PFunctor basics](../../PolyFun/PFunctor/Basic.lean), [lens laws](../../PolyFun/PFunctor/Lens/Basic.lean) | [Polynomial functors](../guides/pfunctor.md) |
-| Free programs and handlers | [Free basics](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean), [handler sums](../../PolyFun/PFunctor/Handler/Sum.lean), [stateful combinators](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean), [stateful lenses](../../PolyFun/PFunctor/Handler/StateLens.lean) | [First program](../tutorials/first-program.md) |
+| Polynomial interfaces and morphisms | [PFunctor basics](../../PolyFun/PFunctor/Basic.lean), [lens laws](../../PolyFun/PFunctor/Lens/Basic.lean), [Yoneda and natural transformations](../../PolyFun/PFunctor/Lens/Yoneda.lean), [special classes](../../PolyFun/PFunctor/Equiv/Special.lean), [universal properties](../../PolyFun/PFunctor/Lens/Universal.lean), [monoidal structures](../../PolyFun/PFunctor/Category/Monoidal.lean), [factorization as morphism properties](../../PolyFun/PFunctor/Category/Factorization.lean) | [Polynomial functors](../guides/pfunctor.md) |
+| Free programs and handlers | [Free basics](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean), [handler sums](../../PolyFun/PFunctor/Handler/Sum.lean), [exceptional answers](../../PolyFun/PFunctor/Free/Except.lean), [stateful combinators](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean), [stateful lenses](../../PolyFun/PFunctor/Handler/StateLens.lean) | [First program](../tutorials/first-program.md) |
 | Binding syntax and type-changing IR translations | [Scoped signatures](../../PolyFun/IPFunctor/Scoped/Basic.lean), [interpretations](../../PolyFun/IPFunctor/Scoped/Interpretation.lean), [reindexing](../../PolyFun/IPFunctor/Scoped/Reindex.lean) | [Scoped programs](../guides/ipfunctor.md#binding-signatures-and-native-ir) |
 | Binding families over parameter contexts | [Families](../../PolyFun/IPFunctor/Scoped/Family.lean), [family maps](../../PolyFun/IPFunctor/Scoped/FamilyMap.lean), [substitution](../../PolyFun/IPFunctor/Scoped/FamilySubstitution.lean), [translation/substitution laws](../../PolyFun/IPFunctor/Scoped/FamilyMapSubstitution.lean), [indexed traversals](../../PolyFun/IPFunctor/Free/Traversal.lean), [continuous environments](../../PolyFun/IPFunctor/Scoped/Domain.lean) | [Parameter-context binders](../guides/ipfunctor.md#binders-that-change-parameter-contexts) |
-| State-dependent interfaces | [Indexed basics](../../PolyFun/IPFunctor/Basic.lean) | [Indexed polynomials](../guides/ipfunctor.md) |
+| Represented-data contracts | [Correspondence](../../PolyFun/Control/Semantics/Correspondence.lean) | [Computation models](../guides/computation-models.md#connections-and-their-proof-boundaries) |
+| Deterministic transitions | [Transitions](../../PolyFun/Control/Transition.lean), [tree and machine adapters](../../PolyFun/ITree/Transition.lean) | [Computation models](../guides/computation-models.md#connections-and-their-proof-boundaries) |
+| State-dependent interfaces | [Indexed basics](../../PolyFun/IPFunctor/Basic.lean), [indexed roll bounds](../../PolyFun/IPFunctor/Free/Bound.lean), [bound transport](../../PolyFun/IPFunctor/Free/Bound/Reindex.lean), [transport along lenses](../../PolyFun/IPFunctor/Free/Lens.lean) | [Indexed polynomials](../guides/ipfunctor.md) |
 | Indexed folds, reindexing, and traversals | [Folds](../../PolyFun/IPFunctor/Free/Fold.lean), [reindexing](../../PolyFun/IPFunctor/Free/Reindex.lean), [traversals](../../PolyFun/IPFunctor/Free/Traversal.lean) | [Indexed polynomials](../guides/ipfunctor.md#folds-reindexing-and-traversals) |
-| Behaviors and explicit-state machines | [Resumptions](../../PolyFun/PFunctor/Resumption.lean), [dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean) | [Computation models](../guides/computation-models.md) |
+| Behaviors and explicit-state machines | [Resumptions](../../PolyFun/PFunctor/Resumption.lean), [dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean), [automata bridges](../../PolyFun/PFunctor/Dynamical/Automata.lean) | [Computation models](../guides/computation-models.md) |
 | Interaction trees and recursion | [ITree basics](../../PolyFun/ITree/Basic.lean) | [Interaction trees](../guides/itree.md) |
 | Partial result domains | [Pointed domains](../../PolyFun/Control/Domain/Pointed.lean), [lifted results](../../PolyFun/Control/Domain/Result.lean), [prefix recurrences](../../PolyFun/Control/Domain/PrefixRecursion.lean) | [Continuous interpretations](../guides/itree.md#continuous-domain-interpretations) |
-| Continuous tree interpretations | [Resumption domains](../../PolyFun/PFunctor/Resumption/Domain.lean), [finite approximations](../../PolyFun/PFunctor/Resumption/DomainTruncate.lean), [ITree domains](../../PolyFun/ITree/Domain.lean), [sequencing](../../PolyFun/ITree/DomainLaws.lean) | [Continuous interpretations](../guides/itree.md#continuous-domain-interpretations) |
+| Continuous tree interpretations | [Resumption domains](../../PolyFun/PFunctor/Resumption/Domain.lean), [finite approximations](../../PolyFun/PFunctor/Resumption/DomainTruncate.lean), [ITree domains](../../PolyFun/ITree/Domain.lean), [sequencing and iteration](../../PolyFun/ITree/DomainLaws.lean) | [Continuous interpretations](../guides/itree.md#continuous-domain-interpretations) |
 | Least fixed points and admissible predicates | [Omega-CPO fixed points](../../ToCslib/Order/OmegaCompletePartialOrder.lean), [admissibility](../../ToCslib/Order/Admissible.lean), [prefix recursion](../../ToCslib/Order/PrefixRecursion.lean) | [Upstream ownership](../development/upstream.md#omega-cpo-fixed-points) |
-| Interpreting trees into monads | [Interpretation](../../PolyFun/ITree/Interp/Defs.lean), [laws](../../PolyFun/ITree/Interp/Laws.lean) | [Interaction trees](../guides/itree.md#interpreting-into-a-monad) |
+| Interpreting trees into monads | [Interpretation](../../PolyFun/ITree/Interp/Defs.lean), [laws](../../PolyFun/ITree/Interp/Laws.lean), [exact stateful equations](../../PolyFun/ITree/Interp/Stateful.lean) | [Interaction trees](../guides/itree.md#interpreting-into-a-monad) |
 | Running trees as machines, with silent-step handlers | [Machine](../../PolyFun/ITree/Machine.lean) | [Interaction trees](../guides/itree.md#running-a-tree-as-a-machine) |
 | Iterative monads and transformer loops | [Iteration](../../PolyFun/Control/Monad/Iter.lean), [transformer instances](../../PolyFun/Control/Monad/Iter/Instances.lean) | [Interaction trees](../guides/itree.md#iterative-monads) |
 | Protocol shapes and strategies | [TypeTree](../../PolyFun/Interaction/Basic/TypeTree.lean) | [Interaction](../guides/interaction.md) |
@@ -49,12 +51,14 @@ Example and test imports never flow back into production.
 | Activation budgets and work conservation | [Budget](../../PolyFun/Interaction/Execution/ReactiveNetwork/Budget.lean), [conservation](../../PolyFun/Interaction/Execution/ReactiveNetwork/Conserving.lean), [charged folds](../../PolyFun/Control/Monad/Support/Charged.lean), [process certificates](../../PolyFun/Interaction/Execution/ReactiveProcess/Conserving.lean), [import ledgers](../../PolyFun/Interaction/Execution/ReactiveNetwork/Import.lean), [input-relative bounds](../../PolyFun/Interaction/Execution/ReactiveNetwork/InputRelative.lean) | [Open systems](../guides/open-systems.md#reactive-execution-and-exact-behavior), [program logic](../guides/program-logic.md#charges-and-budgets) |
 | Open composition, contextual emulation, and observations | [OpenTheory](../../PolyFun/Interaction/Open/OpenTheory.lean), [OpenProcess](../../PolyFun/Interaction/Open/OpenProcess.lean) | [Open systems](../guides/open-systems.md) |
 | Support and weakest preconditions | [Ordered algebras](../../PolyFun/Control/Monad/Algebra.lean), [support](../../PolyFun/Control/Monad/Support.lean), [exact interpretations](../../PolyFun/Control/Monad/ExactWP.lean) | [Program logic](../guides/program-logic.md#exact-interpretations) |
-| Worst-case cost and query budgets | [Charges](../../PolyFun/PFunctor/Free/WP/Charge.lean); support-level [charged folds](../../PolyFun/Control/Monad/Support/Charged.lean) | [Program logic](../guides/program-logic.md#charges-and-budgets) |
+| Worst-case cost and query budgets | [Charges](../../PolyFun/PFunctor/Free/WP/Charge.lean), [roll bounds](../../PolyFun/PFunctor/Bound.lean); support-level [charged folds](../../PolyFun/Control/Monad/Support/Charged.lean); state-dependent [indexed charge bounds](../../PolyFun/IPFunctor/Free/Bound.lean) | [Program logic](../guides/program-logic.md#charges-and-budgets) |
 | Admissible implementations and resources | [Realizability](../../PolyFun/Realizability/Basic.lean), [quantitative certificates](../../PolyFun/Realizability/Quantitative.lean), [description measures](../../PolyFun/Realizability/Quantitative/Description.lean) | [Realizability](../guides/realizability.md) |
 | Strength, the strong bind, and structural cost laws | [Strength](../../PolyFun/Realizability/Quantitative/Strength.lean), [cost laws](../../PolyFun/Realizability/Quantitative/CostLaws.lean), [carries](../../PolyFun/Realizability/Quantitative/Carry.lean) | [Realizability](../guides/realizability.md#strength-and-the-strong-bind) |
 | Stateful handler substitution | [Handler costs](../../PolyFun/Realizability/Quantitative/Handler.lean), [product machine](../../PolyFun/PFunctor/Dynamical/DynComputation/WrapState.lean) | [Realizability](../guides/realizability.md#stateful-handler-substitution) |
 
-`Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure.
+`Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure: ordered,
+graded, Dijkstra and relative monads and monad relations under `Control/Monad/`, and the
+lawfulness classes `LawfulMonadFunctor` and `LawfulMonadControl` under `Control/Lawful/`.
 `Control/Semantics/Correspondence` owns represented-data contract transfer;
 `Control/Transition` and `ITree/Transition` connect deterministic execution to
 resumable machines. Their frontend obligations are in the [interop guide](../guides/interop.md).
@@ -68,6 +72,15 @@ charges change; `Simulation.lean` and `FamilySimulation.lean` handle backend cha
 explicit size, time and description comparisons. `Reference.lean` contains unrestricted
 arithmetic models. The concrete unary pure-family bridge lives in
 `ComplexityBackends/CslibSingleTape/Uniform.lean`, outside the generic umbrella.
+
+Indexed command substitution lives in
+[`IPFunctor/Free/Substitution.lean`](../../PolyFun/IPFunctor/Free/Substitution.lean).
+`IFreeM.substitute` builds on the indexed fold, bind, and lens APIs. Its charge
+transport laws and finite sums of indexed charges live in
+[the bound module](../../PolyFun/IPFunctor/Free/Bound/Substitution.lean), which
+imports Mathlib's finite-sum API. Scaling remains in `IPFunctor/Free/Bound.lean`.
+See the guide to
+[command substitution](../guides/ipfunctor.md#command-substitution-and-combined-budgets).
 
 ## Conceptual layering
 

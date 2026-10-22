@@ -34,14 +34,14 @@ a halting predicate or a well-founded ranking).
 
 ## Universal property
 
-`PFunctor.FreeM.StoppingTree.Algebra`, `fold`, and `eq_fold` formalize the
+`PFunctor.FreeM.StoppingTree.Algebra`, `fold`, and `fold_unique` formalize the
 initial-algebra universal property. `toTypeTree` is the fold into the algebra
 `(fun _ => TypeTree, .done, fun s cont => (round s).append cont)`.
 
 ## References
 
 * Hancock–Setzer (2000), recursion over interaction interfaces.
-* Spivak–Niu (2024), polynomial functors as the algebra of interaction.
+* Niu–Spivak (2024), polynomial functors as the algebra of interaction.
 -/
 
 public section
@@ -89,7 +89,7 @@ def toTypeTreeAlgebra :
     PFunctor.FreeM.StoppingTree.Algebra
       (Obs := fun s => Path (round s)) (step := step) (fun _ => TypeTree) where
   done _ := TypeTree.done
-  extend s cont := TypeTree.substMonoid.mult.toFunA ⟨round s, cont⟩
+  extend s cont := TypeTree.substMonoid.mul.toFunA ⟨round s, cont⟩
 
 /-- Fold a `Telescope` into a concrete `TypeTree` using the canonical substitution
 monoid: `done` is its unit and `extend` is its multiplication/append. -/
@@ -116,9 +116,9 @@ theorem eq_toTypeTree
     (hExtend : (s : St) →
       (cont : (tr : Path (round s)) → Telescope round step (step s tr)) →
       f (Telescope.extend s cont) =
-        TypeTree.substMonoid.mult.toFunA ⟨round s, fun tr => f (cont tr)⟩) :
+        TypeTree.substMonoid.mul.toFunA ⟨round s, fun tr => f (cont tr)⟩) :
     {s : St} → (tree : Telescope round step s) → f tree = tree.toTypeTree :=
-  PFunctor.FreeM.StoppingTree.eq_fold toTypeTreeAlgebra f hDone hExtend
+  PFunctor.FreeM.StoppingTree.fold_unique toTypeTreeAlgebra f hDone hExtend
 
 end Telescope
 end TypeTree

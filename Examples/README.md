@@ -16,6 +16,9 @@ lake env lean Examples/Tutorials/Requests.lean
 | [Scoped execution](Tutorials/ScopedExecution.lean) | Strict arithmetic/let/loop execution, all-input semantic correspondence and machine adapters |
 | [Polymorphic scoped families](Tutorials/ScopedFamily.lean) | Finite syntax with changing type-parameter scopes, parameter renaming, and erasure preservation by generic traversal |
 | [Interaction trees](Tutorials/InteractionTrees.lean) | A counter over state events and ticks, run by the state corecursor and through handlers |
+| [Parallel reports](Tutorials/ParallelReports.lean) | Independent sources and explicit joint-request interpretation order |
+| [Versioned requests](Tutorials/VersionedRequests.lean) | Routed clients, retained traffic, and stale-write rejection |
+| [Update policies](Tutorials/UpdatePolicies.lean) | All-response safety, allowed answers, and why safety is not progress |
 
 Use ordinary imports such as `import Examples.Tutorials.Requests`.
 The Lake target is `PolyFunExamples`, so it can coexist with downstream
