@@ -32,7 +32,7 @@ supplies the expectation reading of its oracle computations.
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); folding after substitution (`OpSpec.pullback`, `wpFold_liftM`, `OpSpec.pullback_pullback`); `OpSpec.toMAlgOrdered` (`toMAlgOrdered_μ_bind_pure`); coherence of the demonic/angelic folds with the support judgments |
 | `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`) and its upper-bound reading `OpSpec.toUpperWPMonad` over the order duals, `FreeM.wpMonadOfHandler` (transport along `liftMHom`), all exact when their source is; `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad`, and `wpFold_eq_wp_liftM` over an exact one; `allOutputs_liftM_of_wpFold` / `allOutputs_liftM_of_allOutputs` for the support of the interpreted program |
-| `PolyFun/PFunctor/Free/WP/Charge.lean` | The worst-case charge reading `OpSpec.charge`; budgets as charge bounds (`isRollBound_iff_wpFold_charge`); simulation overhead (`wpFold_charge_liftM_le`, `handlerCost`); ranked simulation triples (`triple_liftM_ranked`) |
+| `PolyFun/PFunctor/Free/WP/Charge.lean` | The worst-case charge reading `OpSpec.charge`; budgets as charge bounds (`isRollBound_iff_wpFold_charge`); simulation overhead (`wpFold_charge_liftM_le`, `handlerCost`); ranked simulation triples over any roll budget (`triple_liftM_of_isRollBound`, with `triple_liftM_ranked` and `triple_liftM_ranked_total` for natural-number budgets) and the invariant rule `triple_liftM_invariant` |
 | `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
 | `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.bind`, `Spec.lift_angelic`, `Spec.lift_ofHandler`, `Spec.lift_upper` that let `vcgen` decompose free programs with uninterpreted operations |
 | `PolyFun/Control/Monad/ExactWP.lean` | `ExactWPMonad m Pred EPred`, the mixin that makes a core `WPMonad` exact, with its dual reading `ExactWPMonad.dual`, the equational `simp` set on core's `wp` (`wp_pure` to `wp_sum_elim`), and the exactness instances for core's interpretations and transformer lifts (see [Exact interpretations](#exact-interpretations)) |
@@ -426,13 +426,19 @@ There are two ways to state such a bound as a core triple.
   charge-to-go is at most `t`. `Spec.lift_upper` decomposes one call, but the continuation stays
   under the supremum, so `vcgen` stops after the first call. The rest closes by rewriting with
   `OpSpec.toUpperWPMonad_wp` and `simp` on the fold.
-- **Ranked simulation triples.** `triple_liftM_ranked` carries the budget in the precondition
-  instead: every call at `a` moves a rank family from `k + c a` to `k`. This is the shape that
-  decomposes call by call. With ranks that hold a bad-event indicator plus the remaining budget,
-  it is the union bound over the calls.
+- **Ranked simulation triples.** `triple_liftM_of_isRollBound` carries the budget in the
+  precondition instead: under a roll bound `IsRollBound x b canRoll cost`, every admitted call at
+  `a` moves a rank family from `Φ b` to `Φ (cost a b)`. This is the shape that decomposes call by
+  call. With ranks that hold a bad-event indicator plus the remaining budget, it is the union
+  bound over the calls. `triple_liftM_ranked` is the subtractive natural-number budget, where a
+  call at `a` moves the rank from `k + c a` to `k`, and `triple_liftM_ranked_total` its
+  unit-charge case. `IsRollBound.prod` and `IsRollBound.pi` pair budgets or take a family of them,
+  and `triple_liftM_invariant` is the unranked case: a handler that preserves an assertion
+  preserves it through every simulated program.
 
 `PolyFunTest/Do/Charge.lean` checks both forms on a coin interface. The ranked triple is
-instantiated in the upper-bound reading, where it bounds a simulated program's charge.
+instantiated in the upper-bound reading, where it bounds a simulated program's charge, and over a
+counting `StateT` handler with a budget that charges only one of two operations.
 
 `OpSpec.charge` reads cost off the syntax of a free program: its fold is the worst case over
 every branch, whether or not an interpretation reaches it. `MonadAttach.chargedFoldlM`

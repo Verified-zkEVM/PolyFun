@@ -28,9 +28,11 @@ is the specialization of this predicate to `FreeM (spec.toPFunctor)` and is
 equal to `IsRollBound` definitionally; the bridge lemma in `QueryBound.lean`
 witnesses the equivalence by `Iff.rfl`.
 
-Bounds compose under `FreeM.bind` (`isRollBound_bind`, `isTotalRollBound_bind`) and under the
-binds of the error-handling transformers `ExceptT ε (FreeM P)` and `OptionT (FreeM P)`, whose
-early exits perform no roll (`isTotalRollBound_exceptT_bind`, `isTotalRollBound_optionT_bind`).
+Bounds on one program combine into product and family budgets (`IsRollBound.prod`,
+`IsRollBound.pi`). Bounds compose under `FreeM.bind` (`isRollBound_bind`, `isTotalRollBound_bind`)
+and under the binds of the error-handling transformers `ExceptT ε (FreeM P)` and
+`OptionT (FreeM P)`, whose early exits perform no roll (`isTotalRollBound_exceptT_bind`,
+`isTotalRollBound_optionT_bind`).
 
 `ProgramProgress` is the complementary liveness predicate: every reachable query
 has at least one typed answer, so a roll bound stated by universal quantification
@@ -169,6 +171,28 @@ lemma IsRollBound.mono_of_rel (R : B → B → Prop) {oa : FreeM P α} {b b' : B
   | pure _ => trivial
   | lift_bind a r ih =>
       exact ⟨h_can a b b' hb h.1, fun y => ih y (h.2 y) (h_cost a b b' hb h.1)⟩
+
+/-- Two bounds on one program combine into a bound with a product budget: a roll is admitted
+when both components admit it, and each component is charged by its own cost. -/
+lemma IsRollBound.prod {B' : Type*} {oa : FreeM P α} {b : B} {b' : B'}
+    {canRoll : P.A → B → Prop} {cost : P.A → B → B}
+    {canRoll' : P.A → B' → Prop} {cost' : P.A → B' → B'}
+    (h : IsRollBound oa b canRoll cost) (h' : IsRollBound oa b' canRoll' cost') :
+    IsRollBound oa (b, b') (fun a p => canRoll a p.1 ∧ canRoll' a p.2)
+      (fun a p => (cost a p.1, cost' a p.2)) := by
+  induction oa using FreeM.induction generalizing b b' with
+  | pure _ => trivial
+  | lift_bind a r ih => exact ⟨⟨h.1, h'.1⟩, fun y => ih y (h.2 y) (h'.2 y)⟩
+
+/-- A family of bounds on one program combines into a bound with a budget for each member: a
+roll is admitted when every member admits it, and each budget is charged by its own cost. -/
+lemma IsRollBound.pi {ι : Type*} {Bι : ι → Type*} {oa : FreeM P α} {b : ∀ i, Bι i}
+    {canRoll : ∀ i, P.A → Bι i → Prop} {cost : ∀ i, P.A → Bι i → Bι i}
+    (h : ∀ i, IsRollBound oa (b i) (canRoll i) (cost i)) :
+    IsRollBound oa b (fun a p => ∀ i, canRoll i a (p i)) (fun a p i => cost i a (p i)) := by
+  induction oa using FreeM.induction generalizing b with
+  | pure _ => trivial
+  | lift_bind a r ih => exact ⟨fun i => (h i).1, fun y => ih y fun i => (h i).2 y⟩
 
 /-- Generic bind composition for `IsRollBound` parameterised by an arbitrary
 budget type `B` and a binary `combine` operation on it.
