@@ -141,7 +141,7 @@ theorem wpFold_le_wp_liftM {Φ : OpSpec P l} (s : Handler n P)
     calc Φ a (fun b => wpFold Φ (r b) post)
         ≤ wp (s a) (fun b => wpFold Φ (r b) post) Lean.Order.bot := h a _
       _ ≤ wp (s a) (fun b => wp ((r b).liftM s) post Lean.Order.bot) Lean.Order.bot :=
-          WP.wp_consequence (s a) _ _ Lean.Order.bot fun b => ih b
+          WP.wp_monotone_post (x := s a) fun b => ih b
       _ ≤ wp (s a >>= fun b => (r b).liftM s) post Lean.Order.bot :=
           WPMonad.bind_le_wp_bind (s a) _ post Lean.Order.bot
 
