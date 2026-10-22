@@ -70,6 +70,13 @@ direct = tainted_entries[prefix + "directSorry"]["axioms"]
 transitive = tainted_entries[prefix + "transitiveSorry"]["axioms"]
 assert "sorryAx" in direct
 assert "sorryAx" in transitive
+graph = {entry["name"]: entry for entry in tainted["sorryGraph"]}
+assert clean["sorryGraph"] == []
+assert graph[prefix + "directSorry"]["direct"]
+assert not graph[prefix + "transitiveSorry"]["direct"]
+assert prefix + "directSorry" in graph[prefix + "transitiveSorry"]["dependencies"]
+assert graph[prefix + "directSorry"]["type"]
+assert all(dep in graph for entry in graph.values() for dep in entry["dependencies"])
 
 axiom_in_type = tainted_entries[prefix + "axiomInType"]["axioms"]
 assert prefix + "typeIndex" in axiom_in_type
