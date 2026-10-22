@@ -10,6 +10,9 @@ import Examples.Tutorials.Requests
 import Examples.Tutorials.Machines
 import Examples.Tutorials.IndexedPrograms
 import Examples.Tutorials.InteractionTrees
+import Examples.Tutorials.ParallelReports
+import Examples.Tutorials.VersionedRequests
+import Examples.Tutorials.UpdatePolicies
 import PolyFun.PFunctor.Handler.Sum
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess
@@ -37,9 +40,9 @@ example (initial : Nat) (xs ys : List Nat) :
       Machines.counter.run (Machines.counter.run initial xs) ys :=
   Machines.counter_run_append initial xs ys
 
-example : IPFunctor.FreeM₂ IPFunctor.Examples.proto
-    IPFunctor.Examples.Phase.opn IPFunctor.Examples.Phase.counting Nat :=
-  IPFunctor.Examples.TwoIndex.run
+example : IPFunctor.FreeM₂ PolyFunExamples.IndexedPrograms.proto
+    PolyFunExamples.IndexedPrograms.Phase.opn PolyFunExamples.IndexedPrograms.Phase.counting Nat :=
+  PolyFunExamples.IndexedPrograms.TwoIndex.run
 
 example :
     (ITree.interp InteractionTrees.refuse InteractionTrees.bump).run =
@@ -60,6 +63,20 @@ example {P Q : PFunctor.{0, 0}} {m : Type → Type} [Monad m]
     (program : PFunctor.FreeM P Nat) :
     (program.mapLens PFunctor.Lens.inl).liftM (PFunctor.Handler.sum left right) =
       program.liftM left := PFunctor.Handler.liftM_sum_mapLens_inl left right program
+
+example : UpdatePolicies.checked 10 |>.wpFold (PFunctor.OpSpec.demonic _) (· ≤ 10) :=
+  UpdatePolicies.checked_safe 10
+
+example : VersionedRequests.finished.service = ⟨1, "first"⟩ := rfl
+
+/-- error: Type mismatch
+  true
+has type
+  Bool
+but is expected to have type
+  VersionedRequests.Store.B VersionedRequests.Request.read -/
+#guard_msgs in
+example : VersionedRequests.Store.B .read := true
 
 example (T : Open.OpenTheory) (Δ : PortBoundary) (system : T.Obj Δ) :
     Open.Emulates system system (Open.Observation.eq T) :=

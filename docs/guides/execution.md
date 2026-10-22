@@ -121,7 +121,8 @@ the elementary process and routing interfaces do not depend on that syntax.
 
 `RequestNetwork.State.initial` starts every client ready, with no traffic and a fresh ticket
 counter. `ClientState.result` observes only a returned client and leaves the network's queue
-and transcript in place.
+and transcript in place. The [versioned-cell example](../../Examples/Tutorials/VersionedRequests.lean)
+demonstrates two read-then-update clients under an explicit schedule.
 
 `HandledDiagram.initial`, `runToken` and `runFIFO` execute a diagram with its intrinsic
 handlers and return complete residual states. Their `runToken_add` and `runFIFO_append` laws
@@ -151,7 +152,8 @@ counterpart show that interpreting the embedding uses only the corresponding han
 `Handler.mapTarget_sum` preserves this separation when changing target monads.
 
 For one-or-both interfaces, `Handler.parallelSeq` executes a joint request left first. This is
-an explicit interpretation order, not OS parallelism or a commutativity guarantee. Arbitrary
+an explicit interpretation order, not OS parallelism or a commutativity guarantee. Compare the
+request traces in [parallel reports](../../Examples/Tutorials/ParallelReports.lean). Arbitrary
 free-handler composition can change which requests synchronize, so unrestricted interchange is
 not promised.
 

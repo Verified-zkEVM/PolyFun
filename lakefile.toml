@@ -10,6 +10,8 @@ lintDriverArgs = [
   "PolyFun", "ToCslib", "ComplexityBackends",
   "Examples.Tutorials.Requests", "Examples.Tutorials.Machines",
   "Examples.Tutorials.IndexedPrograms", "Examples.Tutorials.InteractionTrees",
+  "Examples.Tutorials.ParallelReports", "Examples.Tutorials.VersionedRequests",
+  "Examples.Tutorials.UpdatePolicies",
   "Examples.Parliament", "PolyFunParliamentMain"
 ]
 testDriver = "PolyFunTest"
