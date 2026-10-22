@@ -5,6 +5,7 @@
 #   ./scripts/update-lib.sh                       # regenerates PolyFun.lean
 #   ./scripts/update-lib.sh ToCslib               # regenerates ToCslib.lean
 #   ./scripts/update-lib.sh ComplexityBackends    # regenerates ComplexityBackends.lean
+#   ./scripts/update-lib.sh PolyFunIO             # regenerates PolyFunIO.lean
 #   ./scripts/update-lib.sh Examples.Parliament   # regenerates Examples/Parliament.lean
 #
 # This script only considers tracked files. New <Lib>/**/*.lean files
@@ -17,9 +18,9 @@ cd "$REPO_ROOT"
 
 lib="${1:-PolyFun}"
 case "$lib" in
-  PolyFun|ToCslib|ComplexityBackends|Examples.Parliament) ;;
+  PolyFun|ToCslib|ComplexityBackends|PolyFunIO|Examples.Parliament) ;;
   *)
-    echo "ERROR: unknown library '$lib' (expected PolyFun, ToCslib, ComplexityBackends, or Examples.Parliament)." >&2
+    echo "ERROR: unknown library '$lib' (expected PolyFun, ToCslib, ComplexityBackends, PolyFunIO, or Examples.Parliament)." >&2
     exit 1
     ;;
 esac
@@ -58,7 +59,7 @@ trap cleanup EXIT
 # around their generated imports.
 umbrella_header() {
   case "$1" in
-    Examples.Parliament)
+    Examples.Parliament|PolyFunIO)
       cat <<'EOF_HEADER'
 /-
 Copyright (c) 2026 PolyFun Contributors. All rights reserved.
@@ -93,6 +94,15 @@ EOF_HEADER
 
 umbrella_docstring() {
   case "$1" in
+    PolyFunIO)
+      cat <<'EOF_DOCSTRING'
+
+/-! # Optional typed console forms and checked filesystem operations
+
+This library is deliberately outside the backend-neutral `PolyFun` umbrella.
+-/
+EOF_DOCSTRING
+      ;;
     Examples.Parliament)
       cat <<'EOF_DOCSTRING'
 

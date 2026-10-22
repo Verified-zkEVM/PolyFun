@@ -11,6 +11,7 @@ it provides, rather than importing the whole project while developing a module.
 | `PolyFun` | Generic polynomial, interaction, logic, and realizability library | Default `lake build`; `import PolyFun` or a specific module |
 | `ToCslib` | Upstream staging: free-monad and loop laws, order bridge, omega-CPO fixed points, finite case compilation, `Fin`-indexed monadic sequencing, bitvector and polynomial lemmas | `lake build ToCslib`; specific `ToCslib.*` imports |
 | `ComplexityBackends` | Optional concrete complexity backends, one subdirectory per machine model | `lake build ComplexityBackends`; `import ComplexityBackends` or a specific `ComplexityBackends.CslibSingleTape.*` module |
+| `PolyFunIO` | Optional typed console forms and checked filesystem operations, outside the backend-neutral `PolyFun` umbrella | `lake build PolyFunIO`; `import PolyFunIO` |
 | `PolyFunExamples` | Checked tutorials and the Parliament application under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
 | `PolyFunTest` | Regression tests, adversarial cases, and ordinary-import consumers | `lake test` |
 
