@@ -35,9 +35,6 @@ namespace PFunctor
 
 section Basic
 
-/-- Deprecated compatibility name for the variable polynomial. -/
-@[deprecated (since := "2026-08-17")] alias X := y
-
 instance : IsEmpty (A 0) := inferInstanceAs (IsEmpty PEmpty)
 instance instUniqueAOfNatOne : Unique (A 1) := inferInstanceAs (Unique PUnit)
 
@@ -74,9 +71,6 @@ lemma C_B (A : Type u) (a : (C A).A) : (C A).B a = PEmpty := rfl
 
 lemma y_A : y.A = PUnit := rfl
 lemma y_B (a : y.A) : y.B a = PUnit := rfl
-
-@[deprecated (since := "2026-08-17")] alias X_A := y_A
-@[deprecated (since := "2026-08-17")] alias X_B := y_B
 
 lemma linear_A (A : Type u) : (linear A).A = A := rfl
 lemma linear_B (A : Type u) (a : (linear A).A) : (linear A).B a = PUnit := rfl
@@ -531,9 +525,6 @@ section Lemmas
 
 lemma y_eq_linear_pUnit : y = linear PUnit := rfl
 lemma y_eq_purePower_pUnit : y = purePower PUnit := rfl
-
-@[deprecated (since := "2026-08-17")] alias X_eq_linear_pUnit := y_eq_linear_pUnit
-@[deprecated (since := "2026-08-17")] alias X_eq_purePower_pUnit := y_eq_purePower_pUnit
 
 section ULift
 

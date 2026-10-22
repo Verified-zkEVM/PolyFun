@@ -80,8 +80,8 @@ Conventions and glyph rationale:
   U+25C1 `◁` (Mathlib's monoidal whiskering) and must not be confused
   with the containers-school/Agda former `S ▷ P`, which PolyFun spells
   with the anonymous constructor `⟨S, P⟩`.
-- The transitional `X`-spelling (deprecated aliases, parse-only `A X^ B`)
-  lives beside each canonical declaration so direct imports remain compatible;
+- The transitional spellings (deprecated aliases, parse-only `A X^ B`)
+  live beside each canonical declaration so direct imports remain compatible;
   [`Deprecated.lean`](../../PolyFun/PFunctor/Deprecated.lean) aggregates the
   full surface. It is slated for removal once downstream projects migrate.
 
