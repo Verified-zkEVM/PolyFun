@@ -240,7 +240,7 @@ interprets finite cutoff leaves as bottom and proves that the increasing
 truncation folds have the full denotation as their supremum. These theorems
 do not require finite branching or a uniform finite depth for a well-founded tree.
 
-### Sequencing continuous interpretations
+### Sequencing and iterating continuous interpretations
 
 [`Resumption/DomainLaws`](../../PolyFun/PFunctor/Resumption/DomainLaws.lean)
 and [`ITree/DomainLaws`](../../PolyFun/ITree/DomainLaws.lean) provide algebra
@@ -251,3 +251,16 @@ The proof uses leastness and increasing approximants, so it covers unbounded
 branching and divergence. `ITree.denote_toITree` connects these laws across the
 canonical tau-free resumption embedding. Measure and kernel algebras belong in
 VCVio; these laws themselves impose no probability interpretation.
+
+`ITree.denote_iter_eq` gives the semantic loop-body equation, and
+`denote_iter_le` bounds an unbounded iteration by any family preserved by its
+body. The rule also handles silent divergence and independent loop-state and
+result universes. When the body interpretation is supplied as a continuous
+operator, `denote_iter_eq_fix` identifies the existing executable iteration's
+meaning with its least fixed point. These rules use the same `ITree.iter` and
+continuous algebra as the substitution and weak-bisimulation laws.
+
+Weak equivalence does not identify clocks: a return leaf and one silent step
+followed by that leaf are weakly equivalent, but their exact explicit-tau
+resumption truncations differ at zero fuel. The ordinary-import continuous
+interpretation canary checks both statements together.
