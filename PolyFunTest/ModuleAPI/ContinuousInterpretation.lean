@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.ITree.DomainLaws
+public import PolyFun.ITree.Interp.Stateful
 public import PolyFun.PFunctor.Resumption.DomainTruncate
 
 /-!
@@ -71,6 +72,15 @@ example (ret : α → D) (alg : Resumption.ContinuousAlgebra P D) (state : ℕ) 
   apply ITree.denote_iter_le ret alg _ (fun _ => ⊥) _ state
   intro n
   simp
+
+/-- Exact stateful equations do not require a lawful equality monad and allow
+larger target-operation and target-answer universes. -/
+example {E : PFunctor.{0, 0}} {F : PFunctor.{uA, uB}} {S R : Type}
+    (handler : PFunctor.Handler (StateT S (ITree F)) E)
+    (a : E.A) (next : E.B a → ITree E R) (s : S) :
+    (ITree.interp handler (ITree.query a next)).run s =
+      (handler a s >>= fun out => ITree.step ((ITree.interp handler (next out.1)).run out.2)) :=
+  ITree.interp_run_query handler a next s
 
 /-- Inserting a silent guard preserves weak behavior. -/
 example (value : α) :
