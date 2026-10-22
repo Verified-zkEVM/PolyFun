@@ -155,16 +155,18 @@ uniformity) over a monad-specific equivalence; for interaction trees that
 equivalence is weak bisimulation, because every loop step inserts a silent
 guard. [`Control/Monad/Iter/Instances.lean`](../../PolyFun/Control/Monad/Iter/Instances.lean)
 makes `StateT`, `ReaderT`, `ExceptT`, and `OptionT` over an iterative monad
-iterative, with `run_iterM` equations by definition, and proves the state and
-reader transformers lawful over a lawful base, so `StateT σ (ITree F)` and
-`ReaderT ρ (ITree F)` carry the same loop laws as `ITree F`.
+iterative, with `run_iterM` equations by definition. All four transformers
+are lawful over a lawful base. State and reader equivalences compare runs
+pointwise; exception and option equivalences retain errors and failure in the
+base result. Transformer order determines whether state survives an abort: use
+`ExceptT ε (StateT σ m)` when the error outcome must retain the final state.
 
 `ITree.bind_eq_bind`, `ITree.pure_eq_pure`, and `ITree.iterM_eq_iter` identify
 the monadic `>>=`, `pure`, and `iterM` with `ITree.bind`, `ITree.pure`, and
 `ITree.iter`, whose exact equations (`bind_query`, `bind_pure_left`,
 `iter_unfold`) compute concrete runs. The
 [tutorial](../tutorials/interaction-trees.md) uses them to compute
-interpretations into `OptionT (ITree E)`, a target without a lawful instance.
+interpretations into `OptionT (ITree E)`, including early failure.
 
 ## Running a tree as a machine
 
