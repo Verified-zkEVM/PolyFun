@@ -51,9 +51,29 @@ example : LawfulMonadIter (StateT Nat (ITree Tick)) := inferInstance
 
 example : LawfulMonadIter (ReaderT Bool (ITree Tick)) := inferInstance
 
-example : MonadIter (OptionT (ITree Tick)) := inferInstance
+example : LawfulMonadIter (OptionT (ITree Tick)) := inferInstance
 
-example : MonadIter (ExceptT String (ITree Tick)) := inferInstance
+example : LawfulMonadIter (ExceptT String (ITree Tick)) := inferInstance
+
+/-- Exception iteration remains lawful inside a state transformer that retains failed logs. -/
+example : LawfulMonadIter (ExceptT String (StateT (List Nat) (ITree Tick))) := inferInstance
+
+/-- Naturality applies directly to optional loops, including early failure. -/
+example (body : Nat → OptionT (ITree Tick) (Nat ⊕ Bool))
+    (next : Bool → OptionT (ITree Tick) Nat) (initial : Nat) :
+    WeakBisim ((iterM body initial >>= next).run)
+      ((iterM (fun state => body state >>= fun
+        | .inl more => Pure.pure (.inl more)
+        | .inr value => next value >>= fun output => Pure.pure (.inr output)) initial).run) := by
+  convert (LawfulMonadIter.iter_natural (m := OptionT (ITree Tick)) body next initial) using 1
+  simp only [LawfulMonadIter.Eqv]
+  apply Iff.of_eq
+  congr 3
+  funext state
+  apply bind_congr
+  intro value
+  cases value <;> rfl
+
 
 /-- Uniformity at the state transformer: relabelling the loop state through `φ` is invisible
 when the two bodies agree up to `φ` at every state. -/

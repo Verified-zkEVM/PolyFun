@@ -21,9 +21,9 @@ iterative.
 
 The base loop bodies are named (`StateT.stateBody`, `ExceptT.exceptBody`,
 `OptionT.optionBody`), and the `run_iterM` equations, which hold by definition, state each loop
-through them. `StateT` and `ReaderT` are lawful whenever the base is, with the base equivalence
-taken pointwise in the state or environment; the exception and option transformers carry no
-`LawfulMonadIter` instance.
+through them. `StateT`, `ReaderT`, `ExceptT`, and `OptionT` are lawful whenever the base is.
+State and reader instances compare runs pointwise; exception and option instances
+compare the base computations including their early-exit outcomes.
 -/
 
 @[expose] public section
@@ -77,7 +77,7 @@ variable {m : Type u → Type v} {ε : Type u} [Monad m]
 
 /-- An exception-monadic loop body as the body of the base loop that `ExceptT.instMonadIter`
 runs: an exception ends the loop with that exception. -/
-def exceptBody {α β : Type u} (f : β → ExceptT ε m (β ⊕ α)) (b : β) : m (β ⊕ Except ε α) :=
+def exceptBody {α β γ : Type u} (f : β → ExceptT ε m (γ ⊕ α)) (b : β) : m (γ ⊕ Except ε α) :=
   (fun
     | .error e => .inr (.error e)
     | .ok (.inl next) => .inl next
@@ -101,7 +101,7 @@ variable {m : Type u → Type v} [Monad m]
 
 /-- An option-monadic loop body as the body of the base loop that `OptionT.instMonadIter` runs:
 failure ends the loop with `none`. -/
-def optionBody {α β : Type u} (f : β → OptionT m (β ⊕ α)) (b : β) : m (β ⊕ Option α) :=
+def optionBody {α β γ : Type u} (f : β → OptionT m (γ ⊕ α)) (b : β) : m (γ ⊕ Option α) :=
   (fun
     | none => .inr none
     | some (.inl next) => .inl next
@@ -244,3 +244,195 @@ instance instLawfulMonadIter : LawfulMonadIter (StateT σ m) where
     exact congrArg (· <$> _) (funext fun q => by rcases q with ⟨_ | _, s'⟩ <;> rfl)
 
 end StateT
+
+namespace ExceptT
+
+variable {m : Type u → Type v} {ε : Type u} [Monad m] [LawfulMonad m]
+
+/-- The base loop body exposes errors as terminal outcomes. -/
+theorem exceptBody_eq {α β γ : Type u} (f : β → ExceptT ε m (γ ⊕ α)) (b : β) :
+    exceptBody f b = (f b).run >>= fun
+      | .error e => pure (.inr (.error e))
+      | .ok (.inl next) => pure (.inl next)
+      | .ok (.inr result) => pure (.inr (.ok result)) := by
+  rw [exceptBody, map_eq_pure_bind]
+  apply bind_congr
+  intro value
+  rcases value with e | (_ | _) <;> rfl
+
+variable [MonadIter m] [LawfulMonadIter m]
+
+open LawfulMonadIter in
+instance instLawfulMonadIter : LawfulMonadIter (ExceptT ε m) where
+  Eqv x y := Eqv (m := m) x.run y.run
+  eqv_refl _ := eqv_refl _
+  eqv_symm h := eqv_symm h
+  eqv_trans h₁ h₂ := eqv_trans h₁ h₂
+  bind_eqv hxy hfg := by
+    simp only [ExceptT.run_bind]
+    exact bind_eqv hxy fun value => by cases value with
+      | error e => exact eqv_refl _
+      | ok a => exact hfg a
+  iter_eqv hfg init := iter_eqv (fun b => map_eqv _ (hfg b)) init
+  iter_unfold body init := by
+    rw [run_iterM]
+    refine eqv_trans (iter_unfold (exceptBody body) init) (eqv_of_eq ?_)
+    simp only [exceptBody_eq, ExceptT.run_bind, bind_assoc]
+    refine bind_congr fun value => ?_
+    rcases value with e | (_ | _) <;> simp only [pure_bind, run_iterM, ExceptT.run_pure]
+  iter_natural body k init := by
+    rw [ExceptT.run_bind, run_iterM, run_iterM]
+    refine eqv_trans (iter_natural (exceptBody body) _ init)
+      (eqv_of_eq (congrArg (iterM · init) (funext fun b => ?_)))
+    simp only [exceptBody_eq, ExceptT.run_bind, bind_assoc]
+    refine bind_congr fun value => ?_
+    rcases value with e | (next | result)
+    · simp only [pure_bind]
+    · simp only [pure_bind, ExceptT.run_pure]
+    · simp only [pure_bind, ExceptT.run_bind, ExceptT.run_pure, bind_assoc]
+      apply bind_congr
+      intro value
+      cases value <;> simp only [pure_bind]
+  iter_dinatural f g init := by
+    rw [ExceptT.run_bind, run_iterM]
+    refine eqv_trans (eqv_of_eq (congrArg (iterM · init) (funext fun a => ?_)))
+      (eqv_trans (iter_dinatural (exceptBody f) (exceptBody g) init) (eqv_of_eq ?_))
+    · simp only [exceptBody_eq, ExceptT.run_bind, bind_assoc]
+      refine bind_congr fun value => ?_
+      rcases value with e | (_ | _) <;> simp only [ExceptT.run_pure, pure_bind]
+    · simp only [exceptBody_eq, bind_assoc]
+      refine bind_congr fun value => ?_
+      rcases value with e | (b | result)
+      · simp only [pure_bind]
+      · simp only [pure_bind, run_iterM]
+        refine congrArg (iterM · b) (funext fun b => ?_)
+        simp only [exceptBody_eq, ExceptT.run_bind, bind_assoc]
+        refine bind_congr fun value => ?_
+        rcases value with e | (_ | _) <;> simp only [ExceptT.run_pure, pure_bind]
+      · simp only [pure_bind, ExceptT.run_pure]
+  iter_codiagonal {α β} body init := by
+    let inner : α → m (α ⊕ (α ⊕ Except ε β)) := fun a =>
+      (fun
+        | .error e => .inr (.inr (.error e))
+        | .ok (.inl next) => .inl next
+        | .ok (.inr (.inl next)) => .inr (.inl next)
+        | .ok (.inr (.inr result)) => .inr (.inr (.ok result))) <$> (body a).run
+    rw [run_iterM]
+    refine eqv_trans (iter_eqv (fun a => ?_) init)
+      (eqv_trans (iter_codiagonal inner init)
+        (eqv_of_eq (congrArg (iterM · init) (funext fun a => ?_))))
+    · simp only [exceptBody_eq, run_iterM]
+      refine eqv_trans (iter_natural (exceptBody body) _ a)
+        (eqv_of_eq (congrArg (iterM · a) (funext fun b => ?_)))
+      simp only [inner, exceptBody_eq, map_eq_pure_bind, bind_assoc]
+      refine bind_congr fun value => ?_
+      rcases value with e | (_ | _ | _) <;> simp only [pure_bind]
+    · simp only [inner, exceptBody_eq, ExceptT.run_bind, bind_assoc, pure_bind,
+        map_eq_pure_bind]
+      refine bind_congr fun value => ?_
+      rcases value with e | (_ | _ | _) <;> simp only [ExceptT.run_pure, pure_bind]
+  iter_uniform φ f g h init := by
+    rw [run_iterM, run_iterM]
+    refine iter_uniform φ (exceptBody f) (exceptBody g) (fun b => ?_) init
+    refine eqv_trans (map_eqv _ (h b)) (eqv_of_eq ?_)
+    simp only [exceptBody, ExceptT.run_map, Functor.map_map]
+    exact congrArg (· <$> _) (funext fun value => by rcases value with e | (_ | _) <;> rfl)
+
+end ExceptT
+
+namespace OptionT
+
+variable {m : Type u → Type v} [Monad m] [LawfulMonad m]
+
+/-- The base loop body exposes failure as a terminal outcome. -/
+theorem optionBody_eq {α β γ : Type u} (f : β → OptionT m (γ ⊕ α)) (b : β) :
+    optionBody f b = (f b).run >>= fun
+      | none => pure (.inr (none))
+      | some (.inl next) => pure (.inl next)
+      | some (.inr result) => pure (.inr (some result)) := by
+  rw [optionBody, map_eq_pure_bind]
+  apply bind_congr
+  intro value
+  rcases value with _ | (_ | _) <;> rfl
+
+variable [MonadIter m] [LawfulMonadIter m]
+
+open LawfulMonadIter in
+instance instLawfulMonadIter : LawfulMonadIter (OptionT m) where
+  Eqv x y := Eqv (m := m) x.run y.run
+  eqv_refl _ := eqv_refl _
+  eqv_symm h := eqv_symm h
+  eqv_trans h₁ h₂ := eqv_trans h₁ h₂
+  bind_eqv hxy hfg := by
+    simp only [OptionT.run_bind]
+    exact bind_eqv hxy fun value => by cases value with
+      | none => exact eqv_refl _
+      | some a => exact hfg a
+  iter_eqv hfg init := iter_eqv (fun b => map_eqv _ (hfg b)) init
+  iter_unfold body init := by
+    rw [run_iterM]
+    refine eqv_trans (iter_unfold (optionBody body) init) (eqv_of_eq ?_)
+    simp only [optionBody_eq, OptionT.run_bind, Option.elimM, bind_assoc]
+    refine bind_congr fun value => ?_
+    rcases value with _ | (_ | _) <;>
+      simp only [Option.elim, pure_bind, run_iterM, OptionT.run_pure]
+  iter_natural body k init := by
+    rw [OptionT.run_bind, Option.elimM, run_iterM, run_iterM]
+    refine eqv_trans (iter_natural (optionBody body) _ init)
+      (eqv_of_eq (congrArg (iterM · init) (funext fun b => ?_)))
+    simp only [optionBody_eq, OptionT.run_bind, Option.elimM, bind_assoc]
+    refine bind_congr fun value => ?_
+    rcases value with _ | (next | result)
+    · simp only [Option.elim, pure_bind]
+    · simp only [Option.elim, pure_bind, OptionT.run_pure]
+    · simp only [Option.elim, pure_bind, OptionT.run_bind, Option.elimM,
+        OptionT.run_pure, bind_assoc]
+      apply bind_congr
+      intro value
+      cases value <;> simp only [pure_bind]
+  iter_dinatural f g init := by
+    rw [OptionT.run_bind, Option.elimM, run_iterM]
+    refine eqv_trans (eqv_of_eq (congrArg (iterM · init) (funext fun a => ?_)))
+      (eqv_trans (iter_dinatural (optionBody f) (optionBody g) init) (eqv_of_eq ?_))
+    · simp only [optionBody_eq, OptionT.run_bind, Option.elimM, bind_assoc]
+      refine bind_congr fun value => ?_
+      rcases value with _ | (_ | _) <;> simp only [Option.elim, OptionT.run_pure, pure_bind]
+    · simp only [optionBody_eq, bind_assoc]
+      refine bind_congr fun value => ?_
+      rcases value with _ | (b | result)
+      · simp only [Option.elim, pure_bind]
+      · simp only [Option.elim, pure_bind, run_iterM]
+        refine congrArg (iterM · b) (funext fun b => ?_)
+        simp only [optionBody_eq, OptionT.run_bind, Option.elimM, bind_assoc]
+        refine bind_congr fun value => ?_
+        rcases value with _ | (_ | _) <;> simp only [Option.elim, OptionT.run_pure, pure_bind]
+      · simp only [Option.elim, pure_bind, OptionT.run_pure]
+  iter_codiagonal {α β} body init := by
+    let inner : α → m (α ⊕ (α ⊕ Option β)) := fun a =>
+      (fun
+        | none => .inr (.inr (none))
+        | some (.inl next) => .inl next
+        | some (.inr (.inl next)) => .inr (.inl next)
+        | some (.inr (.inr result)) => .inr (.inr (some result))) <$> (body a).run
+    rw [run_iterM]
+    refine eqv_trans (iter_eqv (fun a => ?_) init)
+      (eqv_trans (iter_codiagonal inner init)
+        (eqv_of_eq (congrArg (iterM · init) (funext fun a => ?_))))
+    · simp only [optionBody_eq, run_iterM]
+      refine eqv_trans (iter_natural (optionBody body) _ a)
+        (eqv_of_eq (congrArg (iterM · a) (funext fun b => ?_)))
+      simp only [inner, optionBody_eq, map_eq_pure_bind, bind_assoc]
+      refine bind_congr fun value => ?_
+      rcases value with _ | (_ | _ | _) <;> simp only [pure_bind]
+    · simp only [inner, optionBody_eq, OptionT.run_bind, Option.elimM, bind_assoc, pure_bind,
+        map_eq_pure_bind]
+      refine bind_congr fun value => ?_
+      rcases value with _ | (_ | _ | _) <;> simp only [Option.elim, OptionT.run_pure, pure_bind]
+  iter_uniform φ f g h init := by
+    rw [run_iterM, run_iterM]
+    refine iter_uniform φ (optionBody f) (optionBody g) (fun b => ?_) init
+    refine eqv_trans (map_eqv _ (h b)) (eqv_of_eq ?_)
+    simp only [optionBody, OptionT.run_map, Functor.map_map]
+    exact congrArg (· <$> _) (funext fun value => by rcases value with _ | (_ | _) <;> rfl)
+
+end OptionT
