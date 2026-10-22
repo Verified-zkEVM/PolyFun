@@ -184,6 +184,16 @@ lemma isChargeBound_bind {Y : I → Type w} {x : IFreeM P X s} {g : ∀ s', X s'
     IsChargeBound (x.bind g) c (n₁ + n₂) := by
   refine isRollBound_bind (· + ·) ?_ ?_ h₁ h₂ <;> grind
 
+/-- Multiplying both the charge and the budget by a natural number preserves a bound. -/
+lemma IsChargeBound.mul {x : IFreeM P X s} {n : ℕ} (h : x.IsChargeBound c n) (k : ℕ) :
+    x.IsChargeBound (fun s a => k * c s a) (k * n) := by
+  induction x using IFreeM.inductionOn generalizing n with
+  | pure _ _ => exact isChargeBound_pure _ _
+  | liftBind s a next ih =>
+      rw [isChargeBound_liftBind_iff]
+      refine ⟨Nat.mul_le_mul_left k h.1, fun b => ?_⟩
+      simpa only [Nat.mul_sub_left_distrib] using ih b (h.2 b)
+
 /-! ## Total roll bounds -/
 
 /-- A total roll bound: `x` encounters at most `n` `IFreeM.liftBind` constructors along every
