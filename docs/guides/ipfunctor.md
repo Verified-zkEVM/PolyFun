@@ -70,6 +70,7 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 | [`PolyFun/IPFunctor/Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `do`-notation for `IPFunctor.FreeM` with a `DeterministicTransitions P` class. Specializes `IPFunctor.FreeM.lift`-style steps to a concrete source index. |
 | [Indexed tutorial](../../Examples/Tutorials/IndexedPrograms.lean) | A two-phase protocol using `FreeM₂`, deterministic `FreeM`, and sigma erasure. [Regression tests](../../PolyFunTest/IPFunctor/Examples.lean) check information loss and the empty-result round-trip. |
 | [`PolyFun/Control/Monad/Indexed.lean`](../../PolyFun/Control/Monad/Indexed.lean) | Atkey indexed-monad class (`IndexedMonad`, `LawfulIndexedMonad`) and the trivial-`Unit` instance. |
+| [`PolyFun/Control/Monad/Graded.lean`](../../PolyFun/Control/Monad/Graded.lean) | Graded monads over a monoid (`GradedMonad`, `LawfulGradedMonad`), the trivial `Unit` grading, and the indexed monad of a grading over a group (`GradedMonad.toIndexedMonad`). |
 
 ## Mental model
 
