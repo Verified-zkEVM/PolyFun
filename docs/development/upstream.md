@@ -29,8 +29,8 @@ Their pins are recorded in the manifest; their README files live under
   the constants `0` and `1`, `P + Q` (through `PFunctor.add`), `P * Q`
   (through `PFunctor.prod`) and `PFunctor.ext`, together with their simp
   lemmas. `PolyFun/PFunctor/Basic.lean` re-exports that module and adds the
-  universe polynomial, the named sum `PFunctor.sum`, indexed sums and
-  products, tensor, lifts, exponentials, lenses and charts. The reducibility of
+  universe polynomial, indexed sums and products, tensor, lifts,
+  exponentials, lenses and charts. The reducibility of
   the shared constructions is CSLib's; the
   [polynomial guide](../guides/pfunctor.md#cslibs-polynomial-constructions)
   describes what it implies for instance search and simp.
@@ -59,6 +59,15 @@ Their pins are recorded in the manifest; their README files live under
   wrap PolyFun's routed runtime and retain residuals. Their composition laws
   delegate to that runtime; CSLib's free-monad interpreters do not own
   PolyFun's packet topology.
+- **Category theory:** Mathlib's categorical structures are adapters on carriers that fix one
+  universe pair: `LensCat`, `TensorCat` and `CompCat` with their monoidal instances
+  ([`Category/Monoidal.lean`](../../PolyFun/PFunctor/Category/Monoidal.lean)) and the
+  vertical/cartesian `MorphismProperty`s
+  ([`Category/Factorization.lean`](../../PolyFun/PFunctor/Category/Factorization.lean)). Lenses,
+  lens equivalences, comonoids and substitution monoids keep independent position and direction
+  universes, so they stay primary. A `Comonoid.{uA, uB}` presents a category whose objects lie in
+  `uA` and arrows in `uB`; `Comon CompCat.{u, v}` requires positions in `max u v`, so a bridge to
+  Mathlib's `Comon`/`Mon` covers only that case and does not replace the PolyFun structure.
 - **Transition systems:** `Control.LTS.toLts` forgets the polynomial witness
   move. Generic relational simulation and finite-trace results use CSLib;
   dependent response witnesses and delay semantics remain explicit in PolyFun.
@@ -94,6 +103,12 @@ with a kernel-checked equality and unchanged logical computation rules.
 The wrapper equations matter because imported wrappers can be inlined after
 the compiler simplification pass. Remove these staging lemmas when the owning
 core and Mathlib definitions acquire equivalent compiled implementations.
+
+`ToCslib/Data/Fin/MOfFn.lean` defines `Fin.mOfFn`, which runs a `Fin n`-indexed
+family of monadic computations in order and collects the results as a function.
+The pinned Mathlib has only the vector-valued `List.Vector.mOfFn`; an upstream
+version belongs beside it. Its `vcgen` rule `Spec.mOfFn_fin` stays in
+`PolyFun/Control/Do/Spec.lean`, inside the `Std.WP` quarantine.
 
 ## Omega-CPO fixed points
 

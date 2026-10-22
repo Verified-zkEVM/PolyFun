@@ -54,7 +54,7 @@ abbrev ReverseSafetyRefinement
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     (impl : ProcessOver.SafetySpec Γ) (spec : ProcessOver.SafetySpec Δ)
     (matchStep : ProcessOver.StepRel impl.toProcess spec.toProcess :=
-      ProcessOver.StepRel.top) :=
+      ⊤) :=
   PFunctor.DynSystem.ReverseSafetyRefinement impl spec matchStep
 
 /--
@@ -71,7 +71,7 @@ abbrev MutualSafetyRefinement
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}} {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     (left : ProcessOver.SafetySpec Γ) (right : ProcessOver.SafetySpec Δ)
     (matchForth : ProcessOver.StepRel left.toProcess right.toProcess :=
-      ProcessOver.StepRel.top)
+      ⊤)
     (matchBack : ProcessOver.StepRel right.toProcess left.toProcess :=
       ProcessOver.StepRel.reverse matchForth) :=
   PFunctor.DynSystem.MutualSafetyRefinement left right matchForth matchBack
@@ -93,7 +93,7 @@ theorem left_safe_of_satisfies
     (fairLeft : ProcessOver.Run.Pred left.toProcess)
     (fairRight : ProcessOver.Run.Pred right.toProcess)
     (hfair : ∀ (run : ProcessOver.Run left.toProcess) {pRight : right.Proc},
-      (hrel : both.forth.stateRel run.initial pRight) →
+      (hrel : both.forth.StateRel run.initial pRight) →
         fairLeft run → fairRight (both.forth.mapRun run hrel))
     (hright : ProcessOver.SafetySpec.Satisfies right fairRight
       (ProcessOver.SafetySpec.Safe right)) :
@@ -116,7 +116,7 @@ theorem right_safe_of_satisfies
     (fairLeft : ProcessOver.Run.Pred left.toProcess)
     (fairRight : ProcessOver.Run.Pred right.toProcess)
     (hfair : ∀ (run : ProcessOver.Run right.toProcess) {pLeft : left.Proc},
-      (hrel : both.back.stateRel run.initial pLeft) →
+      (hrel : both.back.StateRel run.initial pLeft) →
         fairRight run → fairLeft (both.back.mapRun run hrel))
     (hleft : ProcessOver.SafetySpec.Satisfies left fairLeft (ProcessOver.SafetySpec.Safe left)) :
     ProcessOver.SafetySpec.Satisfies right fairRight (ProcessOver.SafetySpec.Safe right) :=
@@ -138,10 +138,10 @@ theorem safe_iff_of_satisfies
     (fairLeft : ProcessOver.Run.Pred left.toProcess)
     (fairRight : ProcessOver.Run.Pred right.toProcess)
     (hfairLeft : ∀ (run : ProcessOver.Run left.toProcess) {pRight : right.Proc},
-      (hrel : both.forth.stateRel run.initial pRight) →
+      (hrel : both.forth.StateRel run.initial pRight) →
         fairLeft run → fairRight (both.forth.mapRun run hrel))
     (hfairRight : ∀ (run : ProcessOver.Run right.toProcess) {pLeft : left.Proc},
-      (hrel : both.back.stateRel run.initial pLeft) →
+      (hrel : both.back.StateRel run.initial pLeft) →
         fairRight run → fairLeft (both.back.mapRun run hrel)) :
     ProcessOver.SafetySpec.Satisfies left fairLeft (ProcessOver.SafetySpec.Safe left) ↔
       ProcessOver.SafetySpec.Satisfies right fairRight (ProcessOver.SafetySpec.Safe right) :=

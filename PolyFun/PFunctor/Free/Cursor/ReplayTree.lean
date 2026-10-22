@@ -70,7 +70,7 @@ theorem Leaf.output_path {program : FreeM P α} {tree : ReplayTree program}
   | branch i tail ih => simpa only [Leaf.path, Occurrence.output_plug, Leaf.result] using ih
 
 /-- Every branch keeps precisely the prefix preceding its selected occurrence. -/
-theorem branch_trace {program : FreeM P α} {target : P.A} {ordinal : Nat}
+theorem Leaf.trace_path_branch {program : FreeM P α} {target : P.A} {ordinal : Nat}
     (occurrence : Occurrence target program ordinal) (arity : Nat)
     (answers : Fin arity → P.B target)
     (children : (i : Fin arity) → ReplayTree (occurrence.resume (answers i)))
@@ -79,6 +79,8 @@ theorem branch_trace {program : FreeM P α} {target : P.A} {ordinal : Nat}
       (.branch i tail)) = List.append occurrence.before
         (⟨target, answers i⟩ :: Path.trace _ tail.path) :=
   occurrence.trace_plug (answers i) tail.path
+
+@[deprecated (since := "2026-10-19")] alias branch_trace := Leaf.trace_path_branch
 
 
 end ReplayTree

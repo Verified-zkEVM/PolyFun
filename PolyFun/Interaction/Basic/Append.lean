@@ -18,9 +18,9 @@ Given two interactions where the second may depend on the outcome of the first,
 algebra around this operation:
 
 - **PFunctor.FreeM.Path operations**: `PFunctor.FreeM.Path.append` / `split` construct and decompose
-  combined paths, while `PFunctor.FreeM.Path.liftAppend` lifts a two-argument type family
+  combined paths, while `PFunctor.FreeM.Path.LiftAppend` lifts a two-argument type family
   to a single-argument family on the combined path with definitional computation.
-- **Strategy composition**: `Strategy.comp` (factored output via `liftAppend`) and
+- **Strategy composition**: `Strategy.comp` (factored output via `LiftAppend`) and
   `Strategy.compFlat` (flat output via `PFunctor.FreeM.Path.append`).
 - **Decoration / refinement append** and their naturality lemmas.
 -/
@@ -38,10 +38,10 @@ variable {m : Type u → Type u}
 
 The output type is given as a two-argument family
 `F : PFunctor.FreeM.Path s₁ → PFunctor.FreeM.Path (s₂ tr₁) → Type u`, lifted to the combined tree
-via `PFunctor.FreeM.Path.liftAppend`. The continuation receives the first-phase strategy's
+via `PFunctor.FreeM.Path.LiftAppend`. The continuation receives the first-phase strategy's
 output and produces a second-phase strategy whose output family is `F tr₁`.
 
-This is the preferred composition form: `liftAppend` ensures the output type
+This is the preferred composition form: `LiftAppend` ensures the output type
 reduces definitionally when combined with `PFunctor.FreeM.Path.append`, which is essential
 for dependent chain composition (see `Strategy.stateChainComp`). -/
 @[expose]
@@ -51,7 +51,7 @@ def Strategy.comp {m : Type u → Type u} [Monad m] :
     {F : (tr₁ : PFunctor.FreeM.Path s₁) → PFunctor.FreeM.Path (s₂ tr₁) → Type u} →
     Strategy.Plain m s₁ Mid →
     ((tr₁ : PFunctor.FreeM.Path s₁) → Mid tr₁ → m (Strategy.Plain m (s₂ tr₁) (F tr₁))) →
-    m (Strategy.Plain m (s₁.append s₂) (PFunctor.FreeM.Path.liftAppend s₁ s₂ F))
+    m (Strategy.Plain m (s₁.append s₂) (PFunctor.FreeM.Path.LiftAppend s₁ s₂ F))
   | .done, _, _, _, mid, f => f ⟨⟩ mid
   | .node _ rest, s₂, _, _, ⟨x, cont⟩, f => pure ⟨x, do
       let next ← cont

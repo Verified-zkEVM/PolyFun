@@ -28,6 +28,12 @@ arrays stay empty. `--update-baseline` refuses to record taint and is only
 useful after removing all debt. Do not introduce `sorry`, `admit`, or
 non-standard axioms to finished work.
 
+The report written with `lake exe polyfun-axiomsweep --out FILE` also carries
+`sorryGraph`: every declaration in the `sorryAx` closure, with its kind, its
+elaborated statement, whether it uses `sorryAx` directly, and its tainted kernel
+dependencies, internal auxiliaries included. Downstream projects read it to
+trace inherited proof obligations; PolyFun's own `--check` still rejects them.
+
 ## New or moved source files
 
 Stage additions, deletions, and renames before generating the relevant umbrella:
@@ -103,10 +109,10 @@ the source and its result proofs.
 - [Text lint](../../.github/workflows/linting.yml): source style for production
   and tutorial libraries.
 - [API docs](../../.github/workflows/docs.yml): generated source documentation
-  published on pushes to `main`. The Lean action also runs tests and environment
-  lint, so its explicit build targets must cover every root in `lintDriverArgs`,
-  including the executable entry point. Keep those targets in sync when adding
-  lint roots; the default `lake build` target alone does not cover them.
+  published on pushes to `main`. Its Lean action builds the documented roots and
+  leaves the tests and environment lint to CI: a single `lake lint` process over
+  every root needs about 7 GB, which shuts the hosted runner down, so the linters
+  run one root per process in the CI lint job.
 
 All required jobs must pass on the revision under review. Retargeted or
 restacked PRs need fresh checks, including intermediate base branches. A

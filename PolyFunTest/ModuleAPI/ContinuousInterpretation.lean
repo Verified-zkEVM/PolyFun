@@ -43,7 +43,7 @@ example (ret : β → D) (alg : Resumption.ContinuousAlgebra P D)
 
 example (ret : α → D) (alg : Resumption.ContinuousAlgebra P D) :
     Resumption.denote ret alg = ωSup (Resumption.truncationChain ret alg) :=
-  Resumption.denote_eq_sup_truncations ret alg
+  Resumption.denote_eq_ωSup ret alg
 
 example (ret : α → D) (alg : Resumption.ContinuousAlgebra P D)
     {left right : ITree P α} (h : ITree.WeakBisim left right) :

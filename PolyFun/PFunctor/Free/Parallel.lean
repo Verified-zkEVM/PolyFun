@@ -107,7 +107,7 @@ def parallelSumMap
     parallelSumMap (Lens.id P) (Lens.id Q) = Lens.id (P ∥ Q) := by
   ext operation answer <;> cases operation <;> rfl
 
-theorem parallelSumMap_comp
+theorem parallelSumMap_comp_parallelSumMap
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
     {W : PFunctor.{uA₅, uB}} {X : PFunctor.{uA₆, uB}}
@@ -118,6 +118,9 @@ theorem parallelSumMap_comp
       parallelSumMap (secondLeft ∘ₗ firstLeft)
         (secondRight ∘ₗ firstRight) := by
   ext operation answer <;> cases operation <;> rfl
+
+@[deprecated (since := "2026-10-19")] alias parallelSumMap_comp :=
+  parallelSumMap_comp_parallelSumMap
 
 /-- Embed the left interface into its one-or-both parallel sum. -/
 def parallelSumLeft (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
@@ -215,10 +218,13 @@ def parallelSumAssoc
   (PFunctor.Equiv.toLensEquiv
     (PFunctor.Equiv.parallelSumAssoc P Q R)).toLens
 
-@[simp] theorem parallelSumComm_involutive
+@[simp] theorem parallelSumComm_comp_parallelSumComm
     (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
     parallelSumComm Q P ∘ₗ parallelSumComm P Q = Lens.id (P ∥ Q) := by
   ext operation answer <;> cases operation <;> rfl
+
+@[deprecated (since := "2026-10-19")] alias parallelSumComm_involutive :=
+  parallelSumComm_comp_parallelSumComm
 
 theorem parallelSumComm_natural
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
@@ -305,7 +311,7 @@ theorem parallelSumAssoc_pentagon
 
 /-- The braiding and associator satisfy the symmetric-monoidal hexagon.  The
 opposite hexagon follows from this equation and braiding involutivity. -/
-theorem parallelSum_hexagon
+theorem parallelSumComm_hexagon_forward
     (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB})
     (R : PFunctor.{uA₃, uB}) :
     parallelSumAssoc Q R P ∘ₗ
@@ -319,6 +325,8 @@ theorem parallelSum_hexagon
     | left operation => cases operation <;> rfl
     | right operation => rfl
     | both operation rightOperation => cases operation <;> rfl
+
+@[deprecated (since := "2026-10-19")] alias parallelSum_hexagon := parallelSumComm_hexagon_forward
 
 /-- Triangle coherence for the explicit unitors and associator. -/
 theorem parallelSum_triangle

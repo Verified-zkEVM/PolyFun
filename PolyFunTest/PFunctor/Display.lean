@@ -181,19 +181,19 @@ def chartFiberDirection : (Display.ofChart dependentContract.forget).total.B cha
 components; dropping an equality fiber or reversing either chart fails one of
 these four projections. -/
 example :
-    (Display.ofChartEquiv dependentContract.forget).toChart.toFunA
+    (Display.ofChartTotalEquiv dependentContract.forget).toChart.toFunA
       chartFiberPosition = totalPosition := rfl
 
 example :
-    (Display.ofChartEquiv dependentContract.forget).toChart.toFunB
+    (Display.ofChartTotalEquiv dependentContract.forget).toChart.toFunB
       chartFiberPosition chartFiberDirection = totalDirection := rfl
 
 example :
-    (Display.ofChartEquiv dependentContract.forget).invChart.toFunA
+    (Display.ofChartTotalEquiv dependentContract.forget).invChart.toFunA
       totalPosition = chartFiberPosition := rfl
 
 example :
-    (Display.ofChartEquiv dependentContract.forget).invChart.toFunB
+    (Display.ofChartTotalEquiv dependentContract.forget).invChart.toFunB
       totalPosition totalDirection = chartFiberDirection := rfl
 
 def indexedObjData : (dependentContract.action Nat).Obj (fun _ : Nat => Nat) dependentObj :=

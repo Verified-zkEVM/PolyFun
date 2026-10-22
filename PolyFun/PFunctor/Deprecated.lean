@@ -14,14 +14,13 @@ public import PolyFun.PFunctor.Adjunctions
 public import PolyFun.PFunctor.Cofree.FiniteProjection
 
 /-!
-  # Transitional `X`-spelling compatibility surface
+  # Transitional compatibility surface of the polynomial algebra
 
-  Aggregate import for deprecated aliases and parse-only notation bridging the
-  former `X`-based spelling of the polynomial algebra to the `y`-based one, so
-  downstream projects can migrate incrementally:
+  Aggregate import for the deprecated aliases and parse-only notation of the
+  polynomial algebra, so downstream projects can migrate incrementally:
 
-  - `PFunctor.X` and every `X`-named companion declaration resolve, with a
-    deprecation warning, to their `y`-named counterparts.
+  - Each deprecated alias resolves, with a deprecation warning, to its current
+    name.
   - `A X^ B` still parses (to `PFunctor.monomial A B`), but is parse-only:
     goals always display the canonical `A y^ B` form.
   - `p ^ n` still elaborates to `PFunctor.compNth p n` through the `NatPow`
@@ -31,6 +30,6 @@ public import PolyFun.PFunctor.Cofree.FiniteProjection
 
   Each alias lives beside its canonical declaration so ordinary direct imports
   preserve the old API. This module re-exports the complete compatibility
-  surface and is slated for removal once dependent projects reference the
-  `y`-spelling directly; nothing inside PolyFun may import it.
+  surface and is slated for removal once dependent projects use the current
+  spellings directly; nothing inside PolyFun may import it.
 -/

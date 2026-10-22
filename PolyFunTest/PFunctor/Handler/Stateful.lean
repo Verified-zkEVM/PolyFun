@@ -88,11 +88,11 @@ example :
 /-- Pure responders inhabit exactly the `Id` specialization of the generalized
 effectful stateful-handler interface. -/
 example (R : Responder Nat Q) : Handler.Stateful Id Nat Q :=
-  R.toStateHandler
+  R.toStateful
 
 example (R : Responder Nat Q) (program : FreeM Q Nat) (state : Nat) :
-    R.runFree program state = R.toStateHandler.run program state := by
-  rw [Responder.runFree_eq_statefulRun]
+    R.runFree program state = R.toStateful.run program state := by
+  rw [Responder.runFree_eq_run_toStateful]
 
 /-- Query positions may live in a higher universe than directions and state. -/
 example : Handler.Stateful Option Nat ((Type 0) y^ Nat) :=

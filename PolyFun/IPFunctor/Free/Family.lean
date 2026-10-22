@@ -66,8 +66,10 @@ protected def bind {Y : I → Type w} :
   | _, .liftBind a r, g => .liftBind a (fun b => (r b).bind g)
 
 @[simp]
-lemma bind_pure {Y : I → Type w} {s : I} (x : X s) (g : ∀ s', X s' → IFreeM P Y s') :
+lemma pure_bind {Y : I → Type w} {s : I} (x : X s) (g : ∀ s', X s' → IFreeM P Y s') :
     (IFreeM.pure (P := P) x).bind g = g s x := rfl
+
+@[deprecated (since := "2026-10-19")] alias bind_pure := pure_bind
 
 @[simp]
 lemma bind_liftBind {Y : I → Type w} {s : I} (a : P.A s)

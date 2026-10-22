@@ -17,7 +17,7 @@ positions and finite rooted vertices of each tree as directions.  Labelling
 every finite vertex by `y` recovers the ordinary cofree comonad `CofreeC P y`.
 
 This is the direct M-type presentation of the cofree polynomial comonoid from
-Spivak–Niu, Chapter 8 (Definitions 8.2, Example 8.16, Propositions 8.18 and
+Niu–Spivak, Chapter 8 (Definition 8.2, Exercise 8.16, Propositions 8.18 and
 8.33). Libkind–Spivak, *Pattern Runs on Matter*, supplies the subsequent
 module-action application.
 -/
@@ -233,7 +233,7 @@ private theorem encode_decode_label (x : (CofreeP P).Obj α)
           have hcast :
               cast (congrArg M.Vertex (erase_decode x).symm) (.root tree) =
                 .root (erase (decode x)) :=
-            M.Vertex.cast_root (erase_decode x).symm
+            M.Vertex.castEquiv_root (erase_decode x).symm
           change (encode (decode x)).snd
             (cast (congrArg M.Vertex (erase_decode x).symm) (.root tree)) =
               labels (.root tree)
@@ -256,7 +256,7 @@ private theorem encode_decode_label (x : (CofreeP P).Obj α)
               cast (congrArg M.Vertex (erase_decode x).symm)
                   (.child direction next) =
                 .child erasedDirection erasedNext :=
-            M.Vertex.cast_child (erase_decode x).symm direction next
+            M.Vertex.castEquiv_child (erase_decode x).symm direction next
           change (encode (decode x)).snd
               (cast (congrArg M.Vertex (erase_decode x).symm)
                 (.child direction next)) =
@@ -362,7 +362,7 @@ theorem map_toFunB {Q : PFunctor.{uA₂, uB₂}} (lens : Lens P Q)
 pullback. This equality hides the dependent transport induced by
 `M.children_mapLens`, so consumers can rewrite the complete child object
 without separating its shape from its direction family. -/
-theorem mapChildObj {Q : PFunctor.{uA₂, uB₂}} (lens : Lens P Q)
+theorem map_childObj {Q : PFunctor.{uA₂, uB₂}} (lens : Lens P Q)
     (tree : (CofreeP P).A)
     (direction : Q.B (M.head (M.mapLens lens tree))) :
     let sourceDirection := M.pullDirection lens tree direction
@@ -376,6 +376,8 @@ theorem mapChildObj {Q : PFunctor.{uA₂, uB₂}} (lens : Lens P Q)
   let childEq := M.children_mapLens lens tree direction
   cases childEq
   rfl
+
+@[deprecated (since := "2026-10-19")] alias mapChildObj := map_childObj
 
 /-- Pointwise container form of identity preservation for `CofreeP.map`. -/
 private theorem map_obj_id (tree : (CofreeP P).A) :
@@ -439,7 +441,7 @@ private theorem map_obj_comp {R : PFunctor.{uA₃, uB₃}}
 
 /-- Mapping preserves lens composition. This is intentionally not a simp
 lemma: `Lens.mapObj_comp` owns the canonical object-level normal form. -/
-theorem map_comp {R : PFunctor.{uA₃, uB₃}}
+theorem map_comp_map {R : PFunctor.{uA₃, uB₃}}
     (g : Lens Q R) (f : Lens P Q) :
     map g ∘ₗ map f = map (g ∘ₗ f) := by
   apply Lens.ext_mapObj
@@ -450,6 +452,8 @@ theorem map_comp {R : PFunctor.{uA₃, uB₃}}
     .mk ((map (g ∘ₗ f)).toFunA tree) ((map (g ∘ₗ f)).toFunB tree)
   exact map_obj_comp g f tree
 
+@[deprecated (since := "2026-10-19")] alias map_comp := map_comp_map
+
 /-! ## Substitution-comonoid structure -/
 
 /-- The counit selects the root vertex of an infinite tree. -/
@@ -459,9 +463,11 @@ def counit : Lens (CofreeP P) y.{max uA uB, max uA uB} where
 
 /-- Comultiplication exposes every rooted subtree. A nested pair of vertices
 is pulled back by path concatenation. -/
-def comult : Lens (CofreeP P) (CofreeP P ◃ CofreeP P) where
+def comul : Lens (CofreeP P) (CofreeP P ◃ CofreeP P) where
   toFunA tree := ⟨tree, M.Vertex.subtree⟩
   toFunB _ vertices := M.Vertex.append vertices.1 vertices.2
+
+@[deprecated (since := "2026-10-19")] alias comult := comul
 
 @[simp]
 theorem counit_toFunB (tree : (CofreeP P).A)
@@ -471,57 +477,65 @@ theorem counit_toFunB (tree : (CofreeP P).A)
   rfl
 
 @[simp]
-theorem comult_toFunA (tree : (CofreeP P).A) :
-    (comult (P := P)).toFunA tree =
+theorem comul_toFunA (tree : (CofreeP P).A) :
+    (comul (P := P)).toFunA tree =
       ⟨tree, M.Vertex.subtree⟩ :=
   rfl
 
+@[deprecated (since := "2026-10-19")] alias comult_toFunA := comul_toFunA
+
 @[simp]
-theorem comult_toFunB (tree : (CofreeP P).A)
+theorem comul_toFunB (tree : (CofreeP P).A)
     (vertices : (CofreeP P ◃ CofreeP P).B
-      ((comult (P := P)).toFunA tree)) :
-    (comult (P := P)).toFunB tree vertices =
+      ((comul (P := P)).toFunA tree)) :
+    (comul (P := P)).toFunB tree vertices =
       M.Vertex.append vertices.1 vertices.2 :=
   rfl
 
-theorem comult_counit_left :
+@[deprecated (since := "2026-10-19")] alias comult_toFunB := comul_toFunB
+
+theorem counit_comul :
     Lens.Equiv.yComp.toLens ∘ₗ
         ((counit (P := P)) ◃ₗ Lens.id (CofreeP P)) ∘ₗ
-      comult (P := P) =
+      comul (P := P) =
     Lens.id (CofreeP P) :=
   rfl
 
-theorem comult_counit_right :
+@[deprecated (since := "2026-10-19")] alias comult_counit_left := counit_comul
+
+theorem comul_counit :
     Lens.Equiv.compY.toLens ∘ₗ
         (Lens.id (CofreeP P) ◃ₗ counit (P := P)) ∘ₗ
-      comult (P := P) =
+      comul (P := P) =
     Lens.id (CofreeP P) := by
   ext tree
   · rfl
   · rename_i vertex
     exact M.Vertex.append_root_right vertex
 
+@[deprecated (since := "2026-10-19")] alias comult_counit_right := comul_counit
+
 /-- The left-associated composite of cofree-tree comultiplication. -/
-private def comultAssocLeft :
+private def comulAssocLeft :
     Lens (CofreeP P) (CofreeP P ◃ (CofreeP P ◃ CofreeP P)) :=
   Lens.Equiv.compAssoc.toLens ∘ₗ
-      (comult (P := P) ◃ₗ Lens.id (CofreeP P)) ∘ₗ
-    comult (P := P)
+      (comul (P := P) ◃ₗ Lens.id (CofreeP P)) ∘ₗ
+    comul (P := P)
 
 /-- The right-associated composite of cofree-tree comultiplication. -/
-private def comultAssocRight :
+private def comulAssocRight :
     Lens (CofreeP P) (CofreeP P ◃ (CofreeP P ◃ CofreeP P)) :=
-  (Lens.id (CofreeP P) ◃ₗ comult (P := P)) ∘ₗ comult (P := P)
+  (Lens.id (CofreeP P) ◃ₗ comul (P := P)) ∘ₗ comul (P := P)
 
 /-- The left-associated two-level subtree object below a fixed first vertex. -/
-private def comultAssocLeftAt {tree : M P} (first : M.Vertex tree) :
+private def comulAssocLeftAt {tree : M P} (first : M.Vertex tree) :
     (CofreeP P ◃ CofreeP P).Obj (M.Vertex tree) :=
   .mk ⟨M.Vertex.subtree first, fun second =>
       M.Vertex.subtree (M.Vertex.append first second)⟩ (fun direction =>
       M.Vertex.append (M.Vertex.append first direction.1) direction.2)
 
 /-- The right-associated two-level subtree object below a fixed first vertex. -/
-private def comultAssocRightAt {tree : M P} (first : M.Vertex tree) :
+private def comulAssocRightAt {tree : M P} (first : M.Vertex tree) :
     (CofreeP P ◃ CofreeP P).Obj (M.Vertex tree) :=
   .mk ⟨M.Vertex.subtree first, M.Vertex.subtree⟩ (fun direction =>
       M.Vertex.append first
@@ -529,22 +543,22 @@ private def comultAssocRightAt {tree : M P} (first : M.Vertex tree) :
 
 /-- Associativity below a fixed first vertex. Induction on that finite vertex
 turns the child case into ordinary payload relabelling. -/
-private theorem comult_assoc_at {tree : M P} : (first : M.Vertex tree) →
-    comultAssocLeftAt first = comultAssocRightAt first
+private theorem comul_assoc_at {tree : M P} : (first : M.Vertex tree) →
+    comulAssocLeftAt first = comulAssocRightAt first
   | .root _ => rfl
   | .child direction next => by
       change
         (CofreeP P ◃ CofreeP P).map (M.Vertex.child direction)
-            (comultAssocLeftAt next) =
+            (comulAssocLeftAt next) =
           (CofreeP P ◃ CofreeP P).map (M.Vertex.child direction)
-            (comultAssocRightAt next)
+            (comulAssocRightAt next)
       exact congrArg
         ((CofreeP P ◃ CofreeP P).map (M.Vertex.child direction))
-        (comult_assoc_at next)
+        (comul_assoc_at next)
 
 /-- Assemble a three-level object from the two-level object below each first
 vertex. -/
-private def comultAssocNode (tree : M P)
+private def comulAssocNode (tree : M P)
     (below : (first : M.Vertex tree) →
       (CofreeP P ◃ CofreeP P).Obj α) :
     (CofreeP P ◃ (CofreeP P ◃ CofreeP P)).Obj α :=
@@ -552,42 +566,44 @@ private def comultAssocNode (tree : M P)
     (fun direction => (below direction.1).snd direction.2)
 
 /-- Pointwise container form of coassociativity. -/
-private theorem comult_coassoc_obj (tree : M P) :
-    ((.mk ((comultAssocLeft (P := P)).toFunA tree) ((comultAssocLeft (P := P)).toFunB tree)) :
+private theorem comul_assoc_obj (tree : M P) :
+    ((.mk ((comulAssocLeft (P := P)).toFunA tree) ((comulAssocLeft (P := P)).toFunB tree)) :
       (CofreeP P ◃ (CofreeP P ◃ CofreeP P)).Obj (M.Vertex tree)) =
-    .mk ((comultAssocRight (P := P)).toFunA tree) ((comultAssocRight (P := P)).toFunB tree) := by
-  change comultAssocNode tree comultAssocLeftAt =
-    comultAssocNode tree comultAssocRightAt
-  exact congrArg (comultAssocNode tree)
-    (funext fun first => comult_assoc_at first)
+    .mk ((comulAssocRight (P := P)).toFunA tree) ((comulAssocRight (P := P)).toFunB tree) := by
+  change comulAssocNode tree comulAssocLeftAt =
+    comulAssocNode tree comulAssocRightAt
+  exact congrArg (comulAssocNode tree)
+    (funext fun first => comul_assoc_at first)
 
 /-- Cofree comultiplication is coassociative: selecting a subtree and then a
 subtree inside it is the same as selecting the concatenated vertex. -/
-theorem comult_coassoc :
+theorem comul_assoc :
     Lens.Equiv.compAssoc.toLens ∘ₗ
-          (comult (P := P) ◃ₗ Lens.id (CofreeP P)) ∘ₗ
-        comult (P := P) =
-      (Lens.id (CofreeP P) ◃ₗ comult (P := P)) ∘ₗ
-        comult (P := P) := by
-  change comultAssocLeft (P := P) = comultAssocRight (P := P)
+          (comul (P := P) ◃ₗ Lens.id (CofreeP P)) ∘ₗ
+        comul (P := P) =
+      (Lens.id (CofreeP P) ◃ₗ comul (P := P)) ∘ₗ
+        comul (P := P) := by
+  change comulAssocLeft (P := P) = comulAssocRight (P := P)
   apply Lens.ext_mapObj
   intro tree
   change
-    ((.mk ((comultAssocLeft (P := P)).toFunA tree) ((comultAssocLeft (P := P)).toFunB tree)) :
+    ((.mk ((comulAssocLeft (P := P)).toFunA tree) ((comulAssocLeft (P := P)).toFunB tree)) :
       (CofreeP P ◃ (CofreeP P ◃ CofreeP P)).Obj
         (M.Vertex tree)) =
-    .mk ((comultAssocRight (P := P)).toFunA tree) ((comultAssocRight (P := P)).toFunB tree)
-  exact comult_coassoc_obj tree
+    .mk ((comulAssocRight (P := P)).toFunA tree) ((comulAssocRight (P := P)).toFunB tree)
+  exact comul_assoc_obj tree
+
+@[deprecated (since := "2026-10-19")] alias comult_coassoc := comul_assoc
 
 /-- The cofree substitution comonoid generated by `P`. -/
 def comonoid (P : PFunctor.{uA, uB}) :
     Comonoid.{max uA uB, max uA uB} where
   carrier := CofreeP P
   counit := counit
-  comult := comult
-  counit_left := comult_counit_left
-  counit_right := comult_counit_right
-  coassoc := comult_coassoc
+  comul := comul
+  counit_comul := counit_comul
+  comul_counit := comul_counit
+  comul_assoc := comul_assoc
 
 @[simp]
 theorem comonoid_carrier (P : PFunctor.{uA, uB}) :
@@ -600,9 +616,11 @@ theorem comonoid_counit (P : PFunctor.{uA, uB}) :
   rfl
 
 @[simp]
-theorem comonoid_comult (P : PFunctor.{uA, uB}) :
-    (comonoid P).comult = comult :=
+theorem comonoid_comul (P : PFunctor.{uA, uB}) :
+    (comonoid P).comul = comul :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias comonoid_comult := comonoid_comul
 
 /-! ## Functoriality of the cofree comonoid -/
 
@@ -624,7 +642,7 @@ private theorem cast_composite_direction {Q : PFunctor.{uA, uB}}
 the naturality equations below rewrite vertices indexed through `comonoid`
 comultiplication and lens composition, which must unfold there for the
 rewrites to type-check. -/
-attribute [local implicit_reducible] comonoid comult counit Lens.comp
+attribute [local implicit_reducible] comonoid comul counit Lens.comp
 
 /-- Mapping cofree trees along a generating lens preserves the root counit.
 This theorem uses the common-generator-universe specialization chosen for
@@ -634,10 +652,10 @@ theorem map_counit {Q : PFunctor.{uA, uB}} (lens : Lens P Q) :
   ext tree
   · rfl
 
-private theorem map_comult_obj {Q : PFunctor.{uA, uB}}
+private theorem map_comul_obj {Q : PFunctor.{uA, uB}}
     (lens : Lens P Q) (tree : M P) :
-    let left := (comonoid Q).comult ∘ₗ map lens
-    let right := (map lens ◃ₗ map lens) ∘ₗ (comonoid P).comult
+    let left := (comonoid Q).comul ∘ₗ map lens
+    let right := (map lens ◃ₗ map lens) ∘ₗ (comonoid P).comul
     ((.mk (left.toFunA tree) (left.toFunB tree)) :
       (CofreeP Q ◃ CofreeP Q).Obj (M.Vertex tree)) =
     .mk (right.toFunA tree) (right.toFunB tree) := by
@@ -651,9 +669,9 @@ private theorem map_comult_obj {Q : PFunctor.{uA, uB}}
     funext vertex
     exact (M.Vertex.subtree_pullMapLens lens tree vertex).symm
   let hPosition :
-      ((comonoid Q).comult ∘ₗ map lens).toFunA tree =
+      ((comonoid Q).comul ∘ₗ map lens).toFunA tree =
         ((map lens ◃ₗ map lens) ∘ₗ
-          (comonoid P).comult).toFunA tree := by
+          (comonoid P).comul).toFunA tree := by
     exact congrArg
       (fun current =>
         (⟨M.mapLens lens tree, current⟩ :
@@ -706,19 +724,21 @@ private theorem map_comult_obj {Q : PFunctor.{uA, uB}}
 
 /-- Mapping cofree trees along a generating lens preserves vertex
 concatenation, hence cofree comultiplication. -/
-theorem map_comult {Q : PFunctor.{uA, uB}} (lens : Lens P Q) :
-    (comonoid Q).comult ∘ₗ map lens =
-      (map lens ◃ₗ map lens) ∘ₗ (comonoid P).comult := by
+theorem map_comul {Q : PFunctor.{uA, uB}} (lens : Lens P Q) :
+    (comonoid Q).comul ∘ₗ map lens =
+      (map lens ◃ₗ map lens) ∘ₗ (comonoid P).comul := by
   apply Lens.ext_mapObj
   intro tree
   change
-    ((.mk (((comonoid Q).comult ∘ₗ map lens).toFunA tree)
-      (((comonoid Q).comult ∘ₗ map lens).toFunB tree)) :
+    ((.mk (((comonoid Q).comul ∘ₗ map lens).toFunA tree)
+      (((comonoid Q).comul ∘ₗ map lens).toFunB tree)) :
       (CofreeP Q ◃ CofreeP Q).Obj (M.Vertex tree)) =
     .mk (((map lens ◃ₗ map lens) ∘ₗ
-        (comonoid P).comult).toFunA tree) (((map lens ◃ₗ map lens) ∘ₗ
-        (comonoid P).comult).toFunB tree)
-  exact map_comult_obj lens tree
+        (comonoid P).comul).toFunA tree) (((map lens ◃ₗ map lens) ∘ₗ
+        (comonoid P).comul).toFunB tree)
+  exact map_comul_obj lens tree
+
+@[deprecated (since := "2026-10-19")] alias map_comult := map_comul
 
 /-- The cofree-comonoid action on a generating lens. Unlike the underlying
 heterogeneous `map`, this packaging currently chooses a common generator
@@ -729,7 +749,7 @@ def mapHom {Q : PFunctor.{uA, uB}} (lens : Lens P Q) :
     Comonoid.Hom (comonoid P) (comonoid Q) where
   toLens := map lens
   map_counit := map_counit lens
-  map_comult := map_comult lens
+  map_comul := map_comul lens
 
 @[simp]
 theorem mapHom_toLens {Q : PFunctor.{uA, uB}} (lens : Lens P Q) :
@@ -742,10 +762,12 @@ theorem mapHom_id :
   Comonoid.Hom.ext _ _ map_id
 
 @[simp]
-theorem mapHom_comp {Q R : PFunctor.{uA, uB}}
+theorem mapHom_comp_mapHom {Q R : PFunctor.{uA, uB}}
     (f : Lens P Q) (g : Lens Q R) :
     (mapHom f).comp (mapHom g) = mapHom (g ∘ₗ f) :=
-  Comonoid.Hom.ext _ _ (map_comp g f)
+  Comonoid.Hom.ext _ _ (map_comp_map g f)
+
+@[deprecated (since := "2026-10-19")] alias mapHom_comp := mapHom_comp_mapHom
 
 end CofreeP
 end PFunctor

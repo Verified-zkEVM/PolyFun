@@ -8,7 +8,8 @@ lake build PolyFun ToCslib ComplexityBackends PolyFunExamples PolyFunTest --wfai
 lake lint -- --trace
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
-  Examples.Tutorials.InteractionTrees \
+  Examples.Tutorials.InteractionTrees Examples.Tutorials.ParallelReports \
+  Examples.Tutorials.VersionedRequests Examples.Tutorials.UpdatePolicies \
   Examples.Parliament PolyFunParliamentMain
 ```
 
@@ -84,7 +85,7 @@ mode, and review the combined result across roots.
 match the file and error payload, ignoring line numbers. One Unicode
 file/character entry covers every occurrence in that file. Check for duplicate
 entries and deleted paths. The style-exception file is kept empty; polynomial
-composition uses the supported `∘ₗ` and `∘c` notation. See
+composition uses the supported `∘ₗ` and `∘c` notation, scoped to `PFunctor`. See
 [notation.md](../reference/notation.md) for operand order and the relation to book notation.
 
 Follow the linter policy in [AGENTS.md](../../AGENTS.md#lean-and-api-policy).

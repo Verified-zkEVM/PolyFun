@@ -32,7 +32,7 @@ example {p : PFunctor.{pA, pB}} {q : PFunctor.{qA, qB}}
 example : (ihom q y.{u, u}).A = Lens q y.{u, u} := ihom_y_A q
 
 /-- The tensor-unit law `[y, r] ≅ r` is realised as a lens equivalence. -/
-example : Nonempty (ihom y.{u, u} r ≃ₗ r) := ⟨ihomY r⟩
+example : Nonempty (ihom y.{u, u} r ≃ₗ r) := ⟨Lens.Equiv.ihomY r⟩
 
 /-- `curry` and `uncurry` are mutually inverse. -/
 example (φ : Lens (p ⊗ q) r) : Lens.uncurry (Lens.curry φ) = φ := Lens.uncurry_curry φ
@@ -55,17 +55,17 @@ example (f : Lens (p + q) r) :
 
 /-- The internal hom sends a coproduct to a categorical product `[q₁+q₂, r] ≅
 [q₁, r] × [q₂, r]`. -/
-example : Nonempty (ihom (p + q) r ≃ₗ (ihom p r * ihom q r)) := ⟨ihomSum p q r⟩
+example : Nonempty (ihom (p + q) r ≃ₗ (ihom p r * ihom q r)) := ⟨Lens.Equiv.ihomSum p q r⟩
 
 /-- The direction / fiber splitting is packaged into a `PFunctor.Equiv`. -/
-example : Nonempty (ihom (p + q) r ≃ₚ (ihom p r * ihom q r)) := ⟨ihomSumPEquiv p q r⟩
+example : Nonempty (ihom (p + q) r ≃ₚ (ihom p r * ihom q r)) := ⟨Equiv.ihomSum p q r⟩
 
 /-- Coproduct-to-product internal hom permits independent position universes
 for both summands and an unrelated universe pair for the codomain. -/
 example {q₁ : PFunctor.{qA₁, qB}} {q₂ : PFunctor.{qA₂, qB}}
     {r : PFunctor.{rA, rB}} :
-    Nonempty (ihom (PFunctor.sum q₁ q₂) r ≃ₗ
+    Nonempty (ihom (PFunctor.add q₁ q₂) r ≃ₗ
       PFunctor.prod (ihom q₁ r) (ihom q₂ r)) :=
-  ⟨ihomSum q₁ q₂ r⟩
+  ⟨Lens.Equiv.ihomSum q₁ q₂ r⟩
 
 end PFunctor

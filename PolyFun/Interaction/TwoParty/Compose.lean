@@ -24,7 +24,7 @@ Role-aware composition of strategies and counterparts along `PFunctor.FreeM.appe
 each node (sending or receiving) to compose the two-party strategies correctly.
 
 For binary composition, `StrategyOver.TwoParty.Focal.comp` and
-`StrategyOver.TwoParty.Counterpart.append` use `PFunctor.FreeM.Path.liftAppend`
+`StrategyOver.TwoParty.Counterpart.append` use `PFunctor.FreeM.Path.LiftAppend`
 for the output type (factored form). The flat variants (`compFlat`,
 `StrategyOver.TwoParty.Counterpart.appendFlat`) take a single output
 family on the combined path.
@@ -70,7 +70,7 @@ class LawfulCommMonad (m : Type u → Type u) [Monad m] extends LawfulMonad m wh
       k a b)
 
 /-- Compose role-aware strategies along `PFunctor.FreeM.append` with a two-argument output family
-lifted through `PFunctor.FreeM.Path.liftAppend`. The continuation receives the first phase's
+lifted through `PFunctor.FreeM.Path.LiftAppend`. The continuation receives the first phase's
 output and produces a second-phase strategy. -/
 def _root_.Interaction.StrategyOver.TwoParty.Focal.comp {m : Type u → Type u} [Monad m]
     {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
@@ -84,7 +84,7 @@ def _root_.Interaction.StrategyOver.TwoParty.Focal.comp {m : Type u → Type u} 
         (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₂ tr₁) (r₂ tr₁) (F tr₁))) :
     m (StrategyOver
       (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal (s₁.append s₂) (r₁.append r₂)
-        (PFunctor.FreeM.Path.liftAppend s₁ s₂ F)) :=
+        (PFunctor.FreeM.Path.LiftAppend s₁ s₂ F)) :=
   match s₁, r₁ with
   | .done, _ => f ⟨⟩ strat₁
   | .node _ _, ⟨.sender, _⟩ =>
@@ -324,7 +324,7 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.compFlat_splitPrefix
   exact go s₁ r₁ strat
 
 /-- Compose counterparts along `PFunctor.FreeM.append` with a two-argument output family
-lifted through `PFunctor.FreeM.Path.liftAppend`. The continuation maps the first phase's
+lifted through `PFunctor.FreeM.Path.LiftAppend`. The continuation maps the first phase's
 output to a second-phase counterpart. -/
 def _root_.Interaction.StrategyOver.TwoParty.Counterpart.append {m : Type u → Type u} [Monad m]
     {s₁ : TypeTree} {s₂ : PFunctor.FreeM.Path s₁ → TypeTree}
@@ -339,7 +339,7 @@ def _root_.Interaction.StrategyOver.TwoParty.Counterpart.append {m : Type u → 
         (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart (s₂ tr₁) (r₂ tr₁) (F tr₁)) →
     StrategyOver
       (SyntaxOver.TwoParty.pairedTypeTree m) Participant.counterpart (s₁.append s₂) (r₁.append r₂)
-        (PFunctor.FreeM.Path.liftAppend s₁ s₂ F) :=
+        (PFunctor.FreeM.Path.LiftAppend s₁ s₂ F) :=
   match s₁, r₁ with
   | .done, _ => fun out₁ c₂ => c₂ ⟨⟩ out₁
   | .node _ _, ⟨.sender, _⟩ => fun c₁ c₂ =>
@@ -458,7 +458,7 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.comp_eq_compFlat_mapOutpu
               (PFunctor.FreeM.append (rest x) (fun path => s₂ ⟨x, path⟩))
               (PFunctor.FreeM.Displayed.Decoration.append (rRest x)
                 (fun path => r₂ ⟨x, path⟩))
-              (fun tr => PFunctor.FreeM.Path.liftAppend (TypeTree.node X rest) s₂ F ⟨x, tr⟩)
+              (fun tr => PFunctor.FreeM.Path.LiftAppend (TypeTree.node X rest) s₂ F ⟨x, tr⟩)
           exact congrArg (fun z => z >>= fun tail => pure (⟨x, tail⟩ : (x : X) × Tail x))
             (comp_eq_compFlat_mapOutput next (fun p o => f ⟨x, p⟩ o))
   | .node X rest, s₂, ⟨.receiver, rRest⟩, r₂, Mid, F, strat₁, f => by
@@ -1089,7 +1089,7 @@ def _root_.Interaction.StrategyOver.TwoParty.Focal.iterate {m : Type u → Type 
 /-- Compose counterparts along a state chain with stage-dependent output. At each stage,
 the step transforms `Family i s` into a counterpart whose output is
 `Family (i+1) (advance i s tr)`. The full state chain output is
-`PFunctor.FreeM.Path.stateChainFamily Family`. -/
+`PFunctor.FreeM.Path.StateChainFamily Family`. -/
 def _root_.Interaction.StrategyOver.TwoParty.Counterpart.stateChainComp
     {m : Type u → Type u} [Monad m]
     {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
@@ -1105,7 +1105,7 @@ def _root_.Interaction.StrategyOver.TwoParty.Counterpart.stateChainComp
       (PFunctor.FreeM.Displayed.Decoration.stateChain
         (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) (a := PUnit.unit)
         (advance := advance) roles n i s)
-      (PFunctor.FreeM.Path.stateChainFamily Family n i s)
+      (PFunctor.FreeM.Path.StateChainFamily Family n i s)
   | 0, _, _, b => b
   | n + 1, i, s, b =>
       StrategyOver.TwoParty.Counterpart.append (step i s b)
@@ -1114,7 +1114,7 @@ def _root_.Interaction.StrategyOver.TwoParty.Counterpart.stateChainComp
 /-- Compose role-aware strategies along a state chain with stage-dependent output.
 At each stage, the step transforms `Family i s` into a strategy whose output is
 `Family (i+1) (advance i s tr)`. The full state chain output is
-`PFunctor.FreeM.Path.stateChainFamily Family`. -/
+`PFunctor.FreeM.Path.StateChainFamily Family`. -/
 def _root_.Interaction.StrategyOver.TwoParty.Focal.stateChainComp {m : Type u → Type u} [Monad m]
     {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → PFunctor.FreeM.Path (spec i s) → Stage (i + 1)}
@@ -1130,7 +1130,7 @@ def _root_.Interaction.StrategyOver.TwoParty.Focal.stateChainComp {m : Type u �
       (PFunctor.FreeM.Displayed.Decoration.stateChain
         (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) (a := PUnit.unit)
         (advance := advance) roles n i s)
-      (PFunctor.FreeM.Path.stateChainFamily Family n i s))
+      (PFunctor.FreeM.Path.StateChainFamily Family n i s))
   | 0, _, _, a => pure a
   | n + 1, i, s, a => do
     let strat ← step i s a

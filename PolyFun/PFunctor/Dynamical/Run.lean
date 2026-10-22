@@ -31,12 +31,12 @@ For a general `p`-system:
 
 For Moore machines and closed systems:
 
-* `MooreMachine.stepInput` — a single input step.
-* `MooreMachine.run` — the final state after folding a list of inputs.
+* `MooreMachine.run` — the final state after folding `MooreMachine.transition` over
+  a list of inputs.
 * `MooreMachine.trace` — the list of outputs observed along the way (classical
   Moore semantics: one more output than inputs, including the initial output).
 * `MooreMachine.outputOn` — the final output after consuming a word.
-* `DeterministicAutomaton.accepts` — language membership for a Boolean automaton.
+* `DeterministicAutomaton.Accepts` — language membership for a Boolean automaton.
 * `MooreMachine.streamRun` / `Closed.iterateRun` — the input-stream and
   closed-system orbits as generic `Run`s, with `state_eq_stateStream` /
   `state_eq_iterate` identifying every generic run with them.
@@ -91,7 +91,7 @@ def events {s : DynSystem S p} {Event : Type w} (eventMap : s.EventMap Event) :
   | st, _, .step d tail => eventMap st d :: tail.events eventMap
 
 /-- The stable tickets attached to the steps of a finite orbit. -/
-def tickets {s : DynSystem S p} {Ticket : Type w} (ticketMap : s.Tickets Ticket) :
+def tickets {s : DynSystem S p} {Ticket : Type w} (ticketMap : s.TicketMap Ticket) :
     {st : S} → {n : ℕ} → Prefix s st n → List Ticket
   | _, _, .nil => []
   | st, _, .step d tail => ticketMap st d :: tail.tickets ticketMap
@@ -106,7 +106,7 @@ def last {s : DynSystem S p} : {st : S} → {n : ℕ} → Prefix s st n → S
     events eventMap (.nil : Prefix s st 0) = [] := rfl
 
 @[simp] theorem tickets_nil {s : DynSystem S p} {Ticket : Type w}
-    (ticketMap : s.Tickets Ticket) {st : S} :
+    (ticketMap : s.TicketMap Ticket) {st : S} :
     tickets ticketMap (.nil : Prefix s st 0) = [] := rfl
 
 @[simp] theorem events_step {s : DynSystem S p} {Event : Type w}
@@ -115,7 +115,7 @@ def last {s : DynSystem S p} : {st : S} → {n : ℕ} → Prefix s st n → S
     events eventMap (.step d tail) = eventMap st d :: tail.events eventMap := rfl
 
 @[simp] theorem tickets_step {s : DynSystem S p} {Ticket : Type w}
-    (ticketMap : s.Tickets Ticket) {st : S} {n : ℕ}
+    (ticketMap : s.TicketMap Ticket) {st : S} {n : ℕ}
     (d : p.B (s.expose st)) (tail : Prefix s (s.update st d) n) :
     tickets ticketMap (.step d tail) = ticketMap st d :: tail.tickets ticketMap := rfl
 
@@ -271,11 +271,11 @@ def eventsUpTo {Event : Type w} (eventMap : s.EventMap Event) (r : Run s) : ℕ 
   | n + 1 => r.event eventMap 0 :: r.tail.eventsUpTo eventMap n
 
 /-- The stable ticket attached to step `n` of a run. -/
-def ticket {Ticket : Type w} (ticketMap : s.Tickets Ticket) (r : Run s) (n : ℕ) : Ticket :=
+def ticket {Ticket : Type w} (ticketMap : s.TicketMap Ticket) (r : Run s) (n : ℕ) : Ticket :=
   ticketMap (r.state n) (r.dir n)
 
 /-- The stable tickets attached to the first `n` steps of a run. -/
-def ticketsUpTo {Ticket : Type w} (ticketMap : s.Tickets Ticket) (r : Run s) : ℕ → List Ticket
+def ticketsUpTo {Ticket : Type w} (ticketMap : s.TicketMap Ticket) (r : Run s) : ℕ → List Ticket
   | 0 => []
   | n + 1 => r.ticket ticketMap 0 :: r.tail.ticketsUpTo ticketMap n
 
@@ -286,10 +286,10 @@ def ticketsUpTo {Ticket : Type w} (ticketMap : s.Tickets Ticket) (r : Run s) : �
     (r : Run s) (n : ℕ) :
     r.eventsUpTo eventMap (n + 1) = r.event eventMap 0 :: r.tail.eventsUpTo eventMap n := rfl
 
-@[simp] theorem ticketsUpTo_zero {Ticket : Type w} (ticketMap : s.Tickets Ticket) (r : Run s) :
+@[simp] theorem ticketsUpTo_zero {Ticket : Type w} (ticketMap : s.TicketMap Ticket) (r : Run s) :
     r.ticketsUpTo ticketMap 0 = [] := rfl
 
-@[simp] theorem ticketsUpTo_succ {Ticket : Type w} (ticketMap : s.Tickets Ticket)
+@[simp] theorem ticketsUpTo_succ {Ticket : Type w} (ticketMap : s.TicketMap Ticket)
     (r : Run s) (n : ℕ) :
     r.ticketsUpTo ticketMap (n + 1) = r.ticket ticketMap 0 :: r.tail.ticketsUpTo ticketMap n := rfl
 
@@ -377,17 +377,16 @@ namespace MooreMachine
 
 variable {S : Type u} {O : Type uO} {I : Type uI}
 
-/-- A single input step of a Moore machine. -/
-def stepInput (m : MooreMachine S O I) (st : S) (i : I) : S := m.transition st i
+@[deprecated (since := "2026-10-19")] alias stepInput := transition
 
 /-- The state reached after consuming a list of inputs from `st`. -/
-def run (m : MooreMachine S O I) (st : S) : List I → S := List.foldl m.stepInput st
+def run (m : MooreMachine S O I) (st : S) : List I → S := List.foldl m.transition st
 
 /-- The list of outputs observed while consuming a word, including the initial
 output. Its length is `inputs.length + 1`. -/
 def trace (m : MooreMachine S O I) (st : S) : List I → List O
   | [] => [m.output st]
-  | i :: is => m.output st :: m.trace (m.stepInput st i) is
+  | i :: is => m.output st :: m.trace (m.transition st i) is
 
 /-- The final output after consuming a word from `st`. -/
 def outputOn (m : MooreMachine S O I) (st : S) (is : List I) : O := m.output (m.run st is)
@@ -395,14 +394,16 @@ def outputOn (m : MooreMachine S O I) (st : S) (is : List I) : O := m.output (m.
 @[simp] theorem run_nil (m : MooreMachine S O I) (st : S) : m.run st [] = st := rfl
 
 @[simp] theorem run_cons (m : MooreMachine S O I) (st : S) (i : I) (is : List I) :
-    m.run st (i :: is) = m.run (m.stepInput st i) is := rfl
+    m.run st (i :: is) = m.run (m.transition st i) is := rfl
 
 theorem run_append (m : MooreMachine S O I) (st : S) (is js : List I) :
     m.run st (is ++ js) = m.run (m.run st is) js := List.foldl_append
 
-@[simp] theorem trace_length (m : MooreMachine S O I) (st : S) (is : List I) :
+@[simp] theorem length_trace (m : MooreMachine S O I) (st : S) (is : List I) :
     (m.trace st is).length = is.length + 1 := by
   induction is generalizing st <;> simp [trace, *]
+
+@[deprecated (since := "2026-10-19")] alias trace_length := length_trace
 
 /-! ## Streams
 
@@ -414,7 +415,7 @@ identification with the finite `run` on every prefix. -/
 stream `ins`. -/
 def stateStream (m : MooreMachine S O I) (st : S) (ins : ℕ → I) : ℕ → S
   | 0 => st
-  | n + 1 => m.stepInput (m.stateStream st ins n) (ins n)
+  | n + 1 => m.transition (m.stateStream st ins n) (ins n)
 
 /-- The output observed at time `n` along the stream-driven run. -/
 def outputStream (m : MooreMachine S O I) (st : S) (ins : ℕ → I) (n : ℕ) : O :=
@@ -424,7 +425,7 @@ def outputStream (m : MooreMachine S O I) (st : S) (ins : ℕ → I) (n : ℕ) :
     m.stateStream st ins 0 = st := rfl
 
 @[simp] theorem stateStream_succ (m : MooreMachine S O I) (st : S) (ins : ℕ → I) (n : ℕ) :
-    m.stateStream st ins (n + 1) = m.stepInput (m.stateStream st ins n) (ins n) := rfl
+    m.stateStream st ins (n + 1) = m.transition (m.stateStream st ins n) (ins n) := rfl
 
 /-- The stream-driven state at time `n` is the finite `run` on the first `n` inputs:
 streams and finite runs agree on every prefix. -/
@@ -439,11 +440,13 @@ namespace DeterministicAutomaton
 variable {I : Type uI}
 
 /-- Whether a Boolean deterministic automaton accepts a word: its final output is `true`. -/
-def accepts (a : DeterministicAutomaton Bool I) (w : List I) : Prop :=
+def Accepts (a : DeterministicAutomaton Bool I) (w : List I) : Prop :=
   a.toMooreMachine.outputOn a.start w = true
 
-instance (a : DeterministicAutomaton Bool I) (w : List I) : Decidable (a.accepts w) :=
+instance (a : DeterministicAutomaton Bool I) (w : List I) : Decidable (a.Accepts w) :=
   inferInstanceAs (Decidable (_ = true))
+
+@[deprecated (since := "2026-10-19")] alias accepts := Accepts
 
 end DeterministicAutomaton
 

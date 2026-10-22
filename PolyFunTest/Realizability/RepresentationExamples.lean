@@ -113,6 +113,9 @@ def natPolyCodable : StepClass.PolyCodable
 example : Function.Injective natPolyCodable.encode :=
   natPolyCodable.encode_injective
 
+example (m n : ℕ) (h : natPolyCodable.toEmbedding m = natPolyCodable.toEmbedding n) : m = n :=
+  natPolyCodable.toEmbedding.injective h
+
 example {C : StepClass.{0, 0}} {A B : Type} {a a' : C.Str A}
     {b b' : C.Str B} (ha : C.PolyTranslatable a a')
     (hb : C.PolyTranslatable b b') (f : A → B) :

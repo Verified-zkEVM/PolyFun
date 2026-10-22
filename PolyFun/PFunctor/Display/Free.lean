@@ -112,7 +112,7 @@ def bind (S : Display.{uA, uB, uC, uD} P)
       ⟨c, fun b e => S.bind (rest b) (children b e) g dg⟩
 
 @[simp]
-theorem bind_pure (S : Display.{uA, uB, uC, uD} P)
+theorem pure_bind (S : Display.{uA, uB, uC, uD} P)
     {E : Type uE} {F : E → Type uF}
     {E' : Type uE'} {G : E' → Type uG}
     (x : E) (d : ULift.{max uC uB uD} (F x)) (g : E → FreeM P E')
@@ -120,7 +120,9 @@ theorem bind_pure (S : Display.{uA, uB, uC, uD} P)
     S.bind (pure x) d g dg = dg x d.down :=
   rfl
 
-theorem bind_liftBind (S : Display.{uA, uB, uC, uD} P)
+@[deprecated (since := "2026-10-19")] alias bind_pure := pure_bind
+
+theorem liftBind_bind (S : Display.{uA, uB, uC, uD} P)
     {E : Type uE} {F : E → Type uF}
     {E' : Type uE'} {G : E' → Type uG}
     (a : P.A) (rest : P.B a → FreeM P E)
@@ -132,6 +134,8 @@ theorem bind_liftBind (S : Display.{uA, uB, uC, uD} P)
     S.bind (FreeM.liftBind a rest) ⟨c, children⟩ g dg =
       ⟨c, fun b e => S.bind (rest b) (children b e) g dg⟩ :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias bind_liftBind := liftBind_bind
 
 /-! ## Transport -/
 
@@ -168,11 +172,13 @@ theorem transport_trans (S : Display.{uA, uB, uC, uD} P) {E : Type uE} (F : E �
 
 /-- Transporting forward and then backward along the same base-tree equality
 recovers the original displayed data. -/
-theorem transport_symm (S : Display.{uA, uB, uC, uD} P) {E : Type uE} (F : E → Type uF)
+theorem transport_symm_transport (S : Display.{uA, uB, uC, uD} P) {E : Type uE} (F : E → Type uF)
     {t t' : FreeM P E} (h : t = t') (d : FreeM.Displayed (S.toDisplayedAlgebra F) t) :
     S.transport F h.symm (S.transport F h d) = d := by
   cases h
   rfl
+
+@[deprecated (since := "2026-10-19")] alias transport_symm := transport_symm_transport
 
 /-- Transport along equality of the substitution function acts pointwise on
 the displayed data supplied at leaves. -/
@@ -321,7 +327,7 @@ theorem bind_assoc_symm (S : Display.{uA, uB, uC, uD} P)
           (fun x dx => S.bind (g x) (dg x dx) h dh)) =
       S.bind (t.bind g) (S.bind t d g dg) h dh := by
   rw [← S.bind_assoc t d g dg h dh]
-  exact S.transport_symm H (FreeM.bind_assoc t g h)
+  exact S.transport_symm_transport H (FreeM.bind_assoc t g h)
     (S.bind (t.bind g) (S.bind t d g dg) h dh)
 
 end Display

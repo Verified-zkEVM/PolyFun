@@ -18,8 +18,9 @@ the state advances to `advance i s tr : Stage (i + 1)`.
 
 This file provides the type-tree-level state chain (`TypeTree.stateChain`), a path telescope type
 (`Path.stateChain`), flattening operations (`Path.stateChainJoin` /
-`stateChainUnjoin`), type-level lifting (`Path.stateChainLiftJoin`,
-`PFunctor.FreeM.Path.stateChainFamily`), decorations, and strategy composition along state chains.
+`stateChainUnjoin`), type-level lifting (`Path.stateChainLiftJoin`), decorations, and strategy
+composition along state chains, whose output family is the substrate's
+`PFunctor.FreeM.Path.StateChainFamily`.
 
 For the primary (stateless, continuation-style) chain API see `TypeTree.Chain` in
 `PolyFun.Interaction.Basic.Chain`.
@@ -179,7 +180,7 @@ theorem Path.stateChainJoin_unjoin
       exact PFunctor.FreeM.Path.append_split _ _ tr
 
 /-- Lift a family indexed by the path telescope to a family on the combined
-state chain path. Uses `PFunctor.FreeM.Path.liftAppend` at each stage, ensuring that
+state chain path. Uses `PFunctor.FreeM.Path.LiftAppend` at each stage, ensuring that
 `stateChainLiftJoin ... F (stateChainJoin ... trs)` reduces **definitionally**
 to `F trs`. -/
 def Path.stateChainLiftJoin (Stage : Nat → Type u) (spec : (i : Nat) → Stage i → TypeTree)
@@ -189,7 +190,7 @@ def Path.stateChainLiftJoin (Stage : Nat → Type u) (spec : (i : Nat) → Stage
     Path (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i s) → Type u
   | 0, _, _, F, _ => F ⟨⟩
   | n + 1, i, s, F, tr =>
-      PFunctor.FreeM.Path.liftAppend (spec i s)
+      PFunctor.FreeM.Path.LiftAppend (spec i s)
         (fun tr₁ =>
           PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n (i + 1)
             (advance i s tr₁))
@@ -240,16 +241,16 @@ theorem Decoration.Over.map_stateChain {L : Type u → Type v} {F G : ∀ X, L X
   PFunctor.FreeM.Displayed.Decoration.Over.map_stateChain
     (P := TypeTree.basePFunctor) (α := PUnit.{u+1}) η rDeco n i s
 
-/-! ## State chain families -/
+/-! ## State chain families
 
-/-- The output type of state chain composition. Given a per-stage family `Family i s`,
-this computes the type at the terminal stage by threading through `PFunctor.FreeM.Path.liftAppend`
-at each step. Reduces **definitionally** when the path is built via
-`PFunctor.FreeM.Path.append`, avoiding Nat-arithmetic casts.
+The output family of state chain composition is the substrate's
+`PFunctor.FreeM.Path.StateChainFamily` at the leaf `PUnit.unit`. It threads a per-stage family
+through `PFunctor.FreeM.Path.LiftAppend` at each step and reduces definitionally when the path is
+built by `PFunctor.FreeM.Path.append`. -/
 
-This is the canonical output type for `Strategy.stateChainComp` and
-`StrategyOver.TwoParty.Counterpart.stateChainComp`. -/
-@[expose]
+/-- The output family of a state chain at its terminal stage. -/
+@[expose, deprecated _root_.PFunctor.FreeM.Path.StateChainFamily +typeChanged
+  (since := "2026-10-19")]
 def PFunctor.FreeM.Path.stateChainFamily
     {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
@@ -258,7 +259,7 @@ def PFunctor.FreeM.Path.stateChainFamily
     Path (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i stage) → Type u
   | 0, i, stage, _ => Family i stage
   | n + 1, i, stage, tr =>
-      PFunctor.FreeM.Path.liftAppend (spec i stage)
+      PFunctor.FreeM.Path.LiftAppend (spec i stage)
         (fun tr₁ =>
           PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n (i + 1)
             (advance i stage tr₁))
@@ -266,20 +267,17 @@ def PFunctor.FreeM.Path.stateChainFamily
           PFunctor.FreeM.Path.stateChainFamily Family n (i + 1) (advance i stage tr₁) trRest)
         tr
 
-@[simp]
+/-- A zero-stage chain has the initial family. -/
+@[simp, deprecated _root_.PFunctor.FreeM.Path.stateChainFamily_zero +typeChanged
+  (since := "2026-10-19")]
 theorem PFunctor.FreeM.Path.stateChainFamily_zero
     {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
     (Family : (i : Nat) → Stage i → Type u) (i : Nat) (s : Stage i) (tr : PUnit) :
     PFunctor.FreeM.Path.stateChainFamily (advance := advance) Family 0 i s tr = Family i s := rfl
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the path-family lemma below rewrites along a `stateChain` layer there.
-`implicit_reducible` (unlike `reducible`) stays invisible to simp
-validation and instance search. -/
-attribute [local implicit_reducible] PFunctor.FreeM.stateChain
-
-/-- A constant family is unaffected by `stateChainFamily`. -/
+/-- A constant family is unaffected by state-chain composition. -/
+@[deprecated _root_.PFunctor.FreeM.Path.stateChainFamily_const +typeChanged (since := "2026-10-19")]
 theorem PFunctor.FreeM.Path.stateChainFamily_const
     {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
@@ -290,10 +288,28 @@ theorem PFunctor.FreeM.Path.stateChainFamily_const
   | 0, _, _, _ => rfl
   | n + 1, i, s, tr => by
       simp only [PFunctor.FreeM.Path.stateChainFamily]
-      rw [PFunctor.FreeM.Path.liftAppend_congr (spec i s) _ _ _
+      exact (PFunctor.FreeM.Path.liftAppend_congr (spec i s) _ _ _
         (fun tr₁ trR =>
-          PFunctor.FreeM.Path.stateChainFamily_const α n (i + 1) (advance i s tr₁) trR)]
-      exact PFunctor.FreeM.Path.liftAppend_const α (spec i s) _ tr
+          PFunctor.FreeM.Path.stateChainFamily_const α n (i + 1) (advance i s tr₁) trR) tr).trans
+        (PFunctor.FreeM.Path.liftAppend_const α (spec i s) _ tr)
+
+/-- The deprecated specialized family agrees with the generic substrate family. -/
+@[deprecated _root_.PFunctor.FreeM.Path.StateChainFamily +typeChanged (since := "2026-10-19")]
+theorem PFunctor.FreeM.Path.stateChainFamily_eq
+    {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
+    {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
+    (Family : (i : Nat) → Stage i → Type u) :
+    (n : Nat) → (i : Nat) → (s : Stage i) →
+    (tr : Path (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i s)) →
+    PFunctor.FreeM.Path.stateChainFamily (advance := advance) Family n i s tr =
+      _root_.PFunctor.FreeM.Path.StateChainFamily Family n i s tr
+  | 0, _, _, _ => rfl
+  | n + 1, i, s, tr => by
+      simp only [PFunctor.FreeM.Path.stateChainFamily,
+        _root_.PFunctor.FreeM.Path.StateChainFamily]
+      exact PFunctor.FreeM.Path.liftAppend_congr (spec i s) _ _ _
+        (fun tr₁ trR =>
+          PFunctor.FreeM.Path.stateChainFamily_eq Family n (i + 1) (advance i s tr₁) trR) tr
 
 /-! ## Strategy composition along state chains -/
 
@@ -301,7 +317,7 @@ variable {m : Type u → Type u}
 
 /-- Compose per-stage strategies along a state chain. At each stage, the step function
 transforms `Family i s` into a strategy whose output is `Family (i+1) (advance i s tr)`.
-The full state chain output is `PFunctor.FreeM.Path.stateChainFamily Family`. -/
+The full state chain output is `PFunctor.FreeM.Path.StateChainFamily Family`. -/
 def Strategy.stateChainComp {m : Type u → Type u} [Monad m]
     {Stage : Nat → Type u} {spec : (i : Nat) → Stage i → TypeTree}
     {advance : (i : Nat) → (s : Stage i) → Path (spec i s) → Stage (i + 1)}
@@ -310,7 +326,7 @@ def Strategy.stateChainComp {m : Type u → Type u} [Monad m]
       m (Strategy.Plain m (spec i s) (fun tr => Family (i + 1) (advance i s tr)))) :
     (n : Nat) → (i : Nat) → (s : Stage i) → Family i s →
     m (Strategy.Plain m (PFunctor.FreeM.stateChain PUnit.unit Stage spec advance n i s)
-      (PFunctor.FreeM.Path.stateChainFamily Family n i s))
+      (_root_.PFunctor.FreeM.Path.StateChainFamily Family n i s))
   | 0, _, _, a => pure a
   | n + 1, i, s, a => do
     let strat ← step i s a

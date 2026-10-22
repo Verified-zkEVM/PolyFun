@@ -108,14 +108,14 @@ def innerVertex : M.Vertex (M.Vertex.subtree outerVertex) :=
   .child false (.root _)
 
 example : M.Vertex.depth
-      ((CofreeP.comult (P := binaryP)).toFunB binaryTree
+      ((CofreeP.comul (P := binaryP)).toFunB binaryTree
         ⟨outerVertex, innerVertex⟩) = 2 :=
   rfl
 
 /-- Concatenation preserves the concrete outer-then-inner order, not merely
 the total path length. -/
 example :
-    match (CofreeP.comult (P := binaryP)).toFunB binaryTree
+    match (CofreeP.comul (P := binaryP)).toFunB binaryTree
         ⟨outerVertex, innerVertex⟩ with
     | .child outer (.child inner _) => outer = true ∧ inner = false
     | _ => False := by
@@ -136,15 +136,15 @@ def coassocLeft :
     Lens (CofreeP binaryP)
       (CofreeP binaryP ◃ (CofreeP binaryP ◃ CofreeP binaryP)) :=
   Lens.Equiv.compAssoc.toLens ∘ₗ
-      (CofreeP.comult (P := binaryP) ◃ₗ Lens.id (CofreeP binaryP)) ∘ₗ
-    CofreeP.comult (P := binaryP)
+      (CofreeP.comul (P := binaryP) ◃ₗ Lens.id (CofreeP binaryP)) ∘ₗ
+    CofreeP.comul (P := binaryP)
 
 def coassocRight :
     Lens (CofreeP binaryP)
       (CofreeP binaryP ◃ (CofreeP binaryP ◃ CofreeP binaryP)) :=
   (Lens.id (CofreeP binaryP) ◃ₗ
-      CofreeP.comult (P := binaryP)) ∘ₗ
-    CofreeP.comult (P := binaryP)
+      CofreeP.comul (P := binaryP)) ∘ₗ
+    CofreeP.comul (P := binaryP)
 
 /-- Left-associated comultiplication concatenates all three backward path
 components in outer-to-inner order. -/
@@ -160,11 +160,11 @@ example : coassocRight.toFunB binaryTree
 
 example :
     Lens.Equiv.compAssoc.toLens ∘ₗ
-          (CofreeP.comult (P := binaryP) ◃ₗ Lens.id (CofreeP binaryP)) ∘ₗ
-        CofreeP.comult (P := binaryP) =
-      (Lens.id (CofreeP binaryP) ◃ₗ CofreeP.comult (P := binaryP)) ∘ₗ
-        CofreeP.comult (P := binaryP) :=
-  CofreeP.comult_coassoc
+          (CofreeP.comul (P := binaryP) ◃ₗ Lens.id (CofreeP binaryP)) ∘ₗ
+        CofreeP.comul (P := binaryP) =
+      (Lens.id (CofreeP binaryP) ◃ₗ CofreeP.comul (P := binaryP)) ∘ₗ
+        CofreeP.comul (P := binaryP) :=
+  CofreeP.comul_assoc
 
 /-- Cofree-polynomial mapping leaves all source, intermediate, and target
 polynomial universes independent. -/
@@ -178,7 +178,7 @@ example : CofreeP.map (Lens.id binaryP) = Lens.id (CofreeP binaryP) := by
 example (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂})
     (R : PFunctor.{uA₃, uB₃}) (f : Lens P Q) (g : Lens Q R) :
     CofreeP.map g ∘ₗ CofreeP.map f = CofreeP.map (g ∘ₗ f) :=
-  CofreeP.map_comp g f
+  CofreeP.map_comp_map g f
 
 /-- The current comonoid-morphism API chooses one common generator universe
 pair, ensuring the two carrier maxima agree for `Comonoid.Hom`. -/
@@ -192,12 +192,12 @@ example :
   simp
 
 example :
-    (CofreeP.comonoid binaryP).comult ∘ₗ
+    (CofreeP.comonoid binaryP).comul ∘ₗ
         CofreeP.map reverseBranchLens =
       (CofreeP.map reverseBranchLens ◃ₗ
           CofreeP.map reverseBranchLens) ∘ₗ
-        (CofreeP.comonoid binaryP).comult :=
-  CofreeP.map_comult reverseBranchLens
+        (CofreeP.comonoid binaryP).comul :=
+  CofreeP.map_comul reverseBranchLens
 
 example :
     CofreeP.mapHom (Lens.id binaryP) =

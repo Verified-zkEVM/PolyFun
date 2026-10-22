@@ -477,16 +477,16 @@ example :
 def loopSystem : Process.SafetySpec Party where
   State := PUnit
   toDynSystem := loopProcess
-  init _ := True
-  assumptions _ := True
-  safe _ := True
+  Init _ := True
+  Assumptions _ := True
+  Safe _ := True
 
 /-- The identity simulation on `loopSystem`, preserving the boolean ticket. -/
 def loopSim :
     Refinement.SafetyRefinement loopSystem loopSystem
       (Observation.Process.StepRel.byTicket
         loopTicketed.ticket loopTicketed.ticket) where
-  stateRel _ _ := True
+  StateRel _ _ := True
   init p hp := ⟨p, hp, trivial⟩
   assumptions _ _ := trivial
   step _
@@ -503,7 +503,7 @@ observations. -/
 def loopObsSimBob :
     Refinement.SafetyRefinement loopSystem loopSystem
       (Observation.Process.StepRel.byObservation Party.bob) where
-  stateRel _ _ := True
+  StateRel _ _ := True
   init p hp := ⟨p, hp, trivial⟩
   assumptions _ _ := trivial
   step _
@@ -664,11 +664,11 @@ example : PFunctor.DynSystem.ObsEq counterMachine counterMachine (3 : ℕ) (3 : 
 def counterSystem : Machine.SafetySpec where
   State := ℕ
   toDynSystem := counterMachine
-  init := fun (n : ℕ) => n = 0
+  Init := fun (n : ℕ) => n = 0
 
-example : counterSystem.init (0 : ℕ) := rfl
+example : counterSystem.Init (0 : ℕ) := rfl
 
-example : counterSystem.safe (5 : ℕ) := trivial
+example : counterSystem.Safe (5 : ℕ) := trivial
 
 example : counterSystem.toDynSystem = counterMachine := rfl
 

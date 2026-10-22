@@ -12,7 +12,7 @@ public import PolyFun.PFunctor.Lens.Distributivity
 
 Regression tests instantiating the substitution-distributivity equivalences at
 small concrete polynomials, and the guardrail witnessing that substitution does
-*not* right-distribute over products (Spivak–Niu, Ex. 6.56).
+*not* right-distribute over products (Niu–Spivak, Ex. 6.56).
 -/
 
 @[expose] public section
@@ -27,7 +27,7 @@ namespace PFunctor
 example := Lens.Equiv.sumCompDistrib (P := (y : PFunctor.{0, 0})) (Q := y) (R := 1)
 
 /-- **(6.50)** (library `sigmaCompDistrib`) at a `Bool`-indexed family of `y`s. -/
-example := Lens.sigmaCompDistrib (P := (y : PFunctor.{0, 0})) (F := fun _ : Bool => y)
+example := Lens.Equiv.sigmaCompDistrib (P := (y : PFunctor.{0, 0})) (F := fun _ : Bool => y)
 
 /-- **(6.51)** at a `Bool`-indexed product of `y`s. -/
 example := Lens.Equiv.piCompDistrib (P := (y : PFunctor.{0, 0})) (F := fun _ : Bool => y)
@@ -50,15 +50,15 @@ example := Lens.Equiv.scalarCompDistrib (A := Bool) (p := (y : PFunctor.{0, 0}))
 
 /-- A lens out of a monomial round-trips through `A → p(B)`. -/
 example {A B : Type} {p : PFunctor.{0, 0}} (l : Lens (A y^ B) p) :
-    Lens.homMonomialEquiv.symm (Lens.homMonomialEquiv l) = l := rfl
+    Lens.fromMonomialEquiv.symm (Lens.fromMonomialEquiv l) = l := rfl
 
 /-- A function `A → p(B)` round-trips through the lens. -/
 example {A B : Type} {p : PFunctor.{0, 0}} (g : A → p.Obj B) :
-    Lens.homMonomialEquiv (Lens.homMonomialEquiv.symm g) = g := rfl
+    Lens.fromMonomialEquiv (Lens.fromMonomialEquiv.symm g) = g := rfl
 
 /-- The identity lens on `Bool y^ Unit` becomes `a ↦ ⟨a, id⟩`. -/
 example :
-    Lens.homMonomialEquiv (Lens.id (Bool y^ Unit))
+    Lens.fromMonomialEquiv (Lens.id (Bool y^ Unit))
       = (fun a => ⟨a, id⟩ : Bool → (Bool y^ Unit).Obj Unit) := rfl
 
 /-! ## Ex. 6.56: substitution does not right-distribute over products

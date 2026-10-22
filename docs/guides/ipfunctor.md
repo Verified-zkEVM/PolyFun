@@ -72,6 +72,7 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 | [`PolyFun/IPFunctor/Notation/Deterministic.lean`](../../PolyFun/IPFunctor/Notation/Deterministic.lean) | `do`-notation for `IPFunctor.FreeM` with a `DeterministicTransitions P` class. Specializes `IPFunctor.FreeM.lift`-style steps to a concrete source index. |
 | [Indexed tutorial](../../Examples/Tutorials/IndexedPrograms.lean) | A two-phase protocol using `FreeM₂`, deterministic `FreeM`, and sigma erasure. [Regression tests](../../PolyFunTest/IPFunctor/Examples.lean) check information loss and the empty-result round-trip. |
 | [`PolyFun/Control/Monad/Indexed.lean`](../../PolyFun/Control/Monad/Indexed.lean) | Atkey indexed-monad class (`IndexedMonad`, `LawfulIndexedMonad`) and the trivial-`Unit` instance. |
+| [`PolyFun/Control/Monad/Graded.lean`](../../PolyFun/Control/Monad/Graded.lean) | Graded monads over a monoid (`GradedMonad`, `LawfulGradedMonad`), the trivial `Unit` grading, and the indexed monad of a grading over a group (`GradedMonad.toIndexedMonad`). |
 
 ## Mental model
 
@@ -204,6 +205,39 @@ implicit transparency. Declare such a polynomial with `abbrev`, or use the
 constructor form; [`BoundTests.lean`](../../PolyFunTest/IPFunctor/BoundTests.lean)
 does the latter for a register-machine signature with oracle ports.
 
+### Command substitution and combined budgets
+
+[`Free/Substitution.lean`](../../PolyFun/IPFunctor/Free/Substitution.lean)
+defines `CommandSubstitution P Q`: at each state `s` and shape `a : P.A s`,
+provide a `Q`-tree whose leaf at `t` carries
+`{b : P.B s a // P.src s a b = t}`. The equality ensures that the continuation
+for response `b` starts at the replacement tree's terminal state.
+`x.substitute h` extends this assignment through the existing `fold` and `bind`.
+It keeps pure leaves, including their state-dependent types, and binds each
+replacement to the recursively translated continuations.
+
+`substitute_pure` and `substitute_liftBind` are simp equations;
+`substitute_bind` preserves sequencing across independent leaf universes.
+For a lens `l`, `Lens.toSubstitution` supplies its single-node trees, and
+`substitute_toSubstitution` identifies their extension with `mapLens l`.
+
+[`Bound/Substitution.lean`](../../PolyFun/IPFunctor/Free/Bound/Substitution.lean)
+provides `IsChargeBound.substitute`: if `x.IsChargeBound c n` and every
+`h s a` has target charge bound `c s a`, then `x.substitute h` has target
+charge bound `n`. `IsChargeBound.substitute_mul` allows each replacement to
+cost at most `k * c s a` and concludes a bound of `k * n`, including `k = 0`.
+
+In `Free/Bound.lean`, `IsChargeBound.mul` scales a charge and its budget
+together. In `Bound/Substitution.lean`, `isChargeBound_sum` combines bounds for
+every member of a finite family: charges `c i` bounded by budgets `b i` give the summed charge
+`fun s a => ∑ i, c i s a` bounded by `∑ i, b i`. These are simultaneous
+bounds on every path, so the sum is valid even when different paths attain
+different component maxima. An empty family gives the zero charge bound.
+
+The [substitution regressions](../../PolyFunTest/IPFunctor/Substitution.lean)
+exercise changing states, dependent leaves, multi-node replacements, label
+budgets, and rejection of an insufficient target budget.
+
 ### Forgetful maps
 
 - `IPFunctor.FreeM₂.toFreeM : FreeM₂ P s t α → FreeM P s α` — always available;
@@ -259,8 +293,8 @@ needs distinct input and output indices to type-check in general.
 
 `IPFunctor.sum P Q` offers at each output index `j` the shapes of both
 summands, `P.A j ⊕ Q.A j`, and a shape keeps the responses and source indices
-of its summand. As with `PFunctor.sum`, the response and source maps are `Sum`
-recursors, so on `Sum.inl a` they reduce to those of `a` by `rfl`; the summands
+of its summand. As with the sum `P + Q` (`PFunctor.add`), the response and
+source maps are `Sum` recursors, so on `Sum.inl a` they reduce to those of `a` by `rfl`; the summands
 share one response universe. `IPFunctor.sumULift P Q` allows independent
 response universes by lifting each summand's responses to their maximum, so a
 command signature whose kinds have responses in different universes is the

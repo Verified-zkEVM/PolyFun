@@ -471,39 +471,51 @@ theorem map_obj_comp (l₂ : Lens Q R) (l₁ : Lens P Q)
 /-- Mapping preserves lens composition. This is intentionally not a simp
 lemma: `Lens.mapObj_comp` already selects the canonical normal form for
 composition acting on polynomial extensions. -/
-theorem map_comp (l₂ : Lens Q R) (l₁ : Lens P Q) :
+theorem map_comp_map (l₂ : Lens Q R) (l₁ : Lens P Q) :
     map l₂ ∘ₗ map l₁ = map (l₂ ∘ₗ l₁) :=
   Lens.ext_mapObj _ _ (map_obj_comp l₂ l₁)
+
+@[deprecated (since := "2026-10-19")] alias map_comp := map_comp_map
 
 /-! ## Substitution-monoid structure -/
 
 /-- The unit of the free substitution monoid: the single unlabelled leaf. -/
-def unit : Lens y.{max uA uB, uB} (FreeP P) where
+def one : Lens y.{max uA uB, uB} (FreeP P) where
   toFunA _ := .pure PUnit.unit
   toFunB _ _ := PUnit.unit
+
+@[deprecated (since := "2026-10-19")] alias unit := one
 
 /-- Multiplication of the free substitution monoid grafts the inner tree at
 each path of the outer tree. A direction through the grafted tree splits into
 its outer and inner path components. -/
-def mult : Lens (FreeP P ◃ FreeP P) (FreeP P) where
+def mul : Lens (FreeP P ◃ FreeP P) (FreeP P) where
   toFunA x := FreeM.append x.1 x.2
   toFunB x path := FreeM.Path.split x.1 x.2 path
 
-@[simp]
-theorem unit_toFunA (u : y.{max uA uB, uB}.A) :
-    (unit (P := P)).toFunA u = FreeM.pure PUnit.unit :=
-  rfl
+@[deprecated (since := "2026-10-19")] alias mult := mul
 
 @[simp]
-theorem mult_toFunA (x : (FreeP P ◃ FreeP P).A) :
-    (mult (P := P)).toFunA x = FreeM.append x.1 x.2 :=
+theorem one_toFunA (u : y.{max uA uB, uB}.A) :
+    (one (P := P)).toFunA u = FreeM.pure PUnit.unit :=
   rfl
 
+@[deprecated (since := "2026-10-19")] alias unit_toFunA := one_toFunA
+
 @[simp]
-theorem mult_toFunB (x : (FreeP P ◃ FreeP P).A)
-    (path : (FreeP P).B ((mult (P := P)).toFunA x)) :
-    (mult (P := P)).toFunB x path = FreeM.Path.split x.1 x.2 path :=
+theorem mul_toFunA (x : (FreeP P ◃ FreeP P).A) :
+    (mul (P := P)).toFunA x = FreeM.append x.1 x.2 :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias mult_toFunA := mul_toFunA
+
+@[simp]
+theorem mul_toFunB (x : (FreeP P ◃ FreeP P).A)
+    (path : (FreeP P).B ((mul (P := P)).toFunA x)) :
+    (mul (P := P)).toFunB x path = FreeM.Path.split x.1 x.2 path :=
+  rfl
+
+@[deprecated (since := "2026-10-19")] alias mult_toFunB := mul_toFunB
 
 /-- Decode each inner tree of a two-layer `FreeP` object, leaving the outer
 tree labelled by free-monad computations. -/
@@ -513,8 +525,8 @@ def nest (x : (FreeP P ◃ FreeP P).Obj α) : (FreeP P).Obj (FreeM P α) :=
 
 /-- Multiplication of labelled free polynomials corresponds under `objEquiv`
 to joining the nested decoded free-monad computation. -/
-theorem decode_mult (x : (FreeP P ◃ FreeP P).Obj α) :
-    decode (Lens.mapObj (mult (P := P)) x) =
+theorem decode_mul (x : (FreeP P ◃ FreeP P).Obj α) :
+    decode (Lens.mapObj (mul (P := P)) x) =
       FreeM.bind (decode (nest x)) id := by
   cases x using PFunctor.Obj.rec with | mk position label =>
   rcases position with ⟨s, middle⟩
@@ -523,26 +535,30 @@ theorem decode_mult (x : (FreeP P ◃ FreeP P).Obj α) :
       cases u
       rfl
   | liftBind a rest ih =>
-      simp only [Lens.mapObj, mult, nest, decode, PFunctor.Obj.fst_mk,
+      simp only [Lens.mapObj, mul, nest, decode, PFunctor.Obj.fst_mk,
         PFunctor.Obj.snd_mk, decodeAt, FreeM.bind]
       apply congrArg (FreeM.liftBind a)
       funext b
       exact ih b (fun path ↦ middle ⟨b, path⟩)
         (fun pair ↦ label ⟨⟨b, pair.1⟩, pair.2⟩)
 
-theorem mult_unit_left :
+@[deprecated (since := "2026-10-19")] alias decode_mult := decode_mul
+
+protected theorem one_mul :
     Lens.comp
-      (Lens.comp (mult (P := P))
-        (Lens.compMap (unit (P := P)) (Lens.id (FreeP P))))
+      (Lens.comp (mul (P := P))
+        (Lens.compMap (one (P := P)) (Lens.id (FreeP P))))
       Lens.Equiv.yComp.invLens = Lens.id (FreeP P) :=
   rfl
 
+@[deprecated (since := "2026-10-19")] alias mult_unit_left := FreeP.one_mul
+
 /-- Pointwise container form of right unitality for free-tree grafting. -/
-theorem mult_unit_right_obj (s : (FreeP P).A) :
+theorem mul_one_obj (s : (FreeP P).A) :
     let composite :=
       Lens.comp
-        (Lens.comp (mult (P := P))
-          (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
+        (Lens.comp (mul (P := P))
+          (Lens.compMap (Lens.id (FreeP P)) (one (P := P))))
         Lens.Equiv.compY.invLens
     (.mk (composite.toFunA s) (composite.toFunB s) :
       (FreeP P).Obj (FreeM.Path s)) = .mk s id := by
@@ -560,8 +576,8 @@ theorem mult_unit_right_obj (s : (FreeP P).A) :
         node a (fun b => relabel (FreeM.Path.cons a rest b)
           (let composite :=
             Lens.comp
-              (Lens.comp (mult (P := P))
-                (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
+              (Lens.comp (mul (P := P))
+                (Lens.compMap (Lens.id (FreeP P)) (one (P := P))))
               Lens.Equiv.compY.invLens
            (.mk (composite.toFunA (rest b)) (composite.toFunB (rest b)) :
              (FreeP P).Obj (FreeM.Path (rest b))))) =
@@ -570,8 +586,8 @@ theorem mult_unit_right_obj (s : (FreeP P).A) :
           (fun b => relabel (FreeM.Path.cons a rest b)
             (let composite :=
               Lens.comp
-                (Lens.comp (mult (P := P))
-                  (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
+                (Lens.comp (mul (P := P))
+                  (Lens.compMap (Lens.id (FreeP P)) (one (P := P))))
                 Lens.Equiv.compY.invLens
              (.mk (composite.toFunA (rest b)) (composite.toFunB (rest b)) :
                (FreeP P).Obj (FreeM.Path (rest b))))) =
@@ -579,43 +595,51 @@ theorem mult_unit_right_obj (s : (FreeP P).A) :
             (FreeP P).Obj (FreeM.Path (FreeM.liftBind a rest)))) := by
         funext b
         exact congrArg (relabel (FreeM.Path.cons a rest b))
-          (mult_unit_right_obj (rest b))
+          (mul_one_obj (rest b))
       rw [hchildren]
       exact node_paths a rest id
 
-theorem mult_unit_right :
+@[deprecated (since := "2026-10-19")] alias mult_unit_right_obj := mul_one_obj
+
+protected theorem mul_one :
     Lens.comp
-      (Lens.comp (mult (P := P))
-        (Lens.compMap (Lens.id (FreeP P)) (unit (P := P))))
+      (Lens.comp (mul (P := P))
+        (Lens.compMap (Lens.id (FreeP P)) (one (P := P))))
       Lens.Equiv.compY.invLens = Lens.id (FreeP P) :=
-  Lens.ext_mapObj _ _ mult_unit_right_obj
+  Lens.ext_mapObj _ _ mul_one_obj
+
+@[deprecated (since := "2026-10-19")] alias mult_unit_right := FreeP.mul_one
 
 /-- The left-associated composite of free-tree multiplication. -/
-def multAssocLeft : Lens ((FreeP P ◃ FreeP P) ◃ FreeP P) (FreeP P) :=
-  Lens.comp (mult (P := P))
-    (Lens.compMap (mult (P := P)) (Lens.id (FreeP P)))
+def mulAssocLeft : Lens ((FreeP P ◃ FreeP P) ◃ FreeP P) (FreeP P) :=
+  Lens.comp (mul (P := P))
+    (Lens.compMap (mul (P := P)) (Lens.id (FreeP P)))
+
+@[deprecated (since := "2026-10-19")] alias multAssocLeft := mulAssocLeft
 
 /-- The right-associated composite of free-tree multiplication, with the
 composition associator inserted on the source. -/
-def multAssocRight : Lens ((FreeP P ◃ FreeP P) ◃ FreeP P) (FreeP P) :=
+def mulAssocRight : Lens ((FreeP P ◃ FreeP P) ◃ FreeP P) (FreeP P) :=
   Lens.comp
-    (Lens.comp (mult (P := P))
-      (Lens.compMap (Lens.id (FreeP P)) (mult (P := P))))
+    (Lens.comp (mul (P := P))
+      (Lens.compMap (Lens.id (FreeP P)) (mul (P := P))))
     Lens.Equiv.compAssoc.toLens
 
+@[deprecated (since := "2026-10-19")] alias multAssocRight := mulAssocRight
+
 /-- Pointwise container form of associativity for free-tree grafting. -/
-theorem mult_assoc_obj
+theorem mul_assoc_obj
     (s : (FreeP P).A)
     (middle : FreeM.Path s → (FreeP P).A)
     (inner : ((path₁ : FreeM.Path s) × FreeM.Path (middle path₁)) →
       (FreeP P).A) :
     let x : ((FreeP P ◃ FreeP P) ◃ FreeP P).A :=
       ⟨⟨s, middle⟩, inner⟩
-    (.mk ((multAssocLeft (P := P)).toFunA x)
-        ((multAssocLeft (P := P)).toFunB x) :
+    (.mk ((mulAssocLeft (P := P)).toFunA x)
+        ((mulAssocLeft (P := P)).toFunB x) :
       (FreeP P).Obj (((FreeP P ◃ FreeP P) ◃ FreeP P).B x)) =
-    .mk ((multAssocRight (P := P)).toFunA x)
-      ((multAssocRight (P := P)).toFunB x) := by
+    .mk ((mulAssocRight (P := P)).toFunA x)
+      ((mulAssocRight (P := P)).toFunB x) := by
   dsimp only
   match s with
   | .pure u =>
@@ -635,36 +659,40 @@ theorem mult_assoc_obj
             direction.1.2⟩, direction.2⟩
       change
         node a (fun b => relabel (embed b)
-          (.mk ((multAssocLeft (P := P)).toFunA (child b))
-            ((multAssocLeft (P := P)).toFunB (child b)) :
+          (.mk ((mulAssocLeft (P := P)).toFunA (child b))
+            ((mulAssocLeft (P := P)).toFunB (child b)) :
             (FreeP P).Obj
               (((FreeP P ◃ FreeP P) ◃ FreeP P).B (child b)))) =
         node a (fun b => relabel (embed b)
-          (.mk ((multAssocRight (P := P)).toFunA (child b))
-            ((multAssocRight (P := P)).toFunB (child b)) :
+          (.mk ((mulAssocRight (P := P)).toFunA (child b))
+            ((mulAssocRight (P := P)).toFunB (child b)) :
             (FreeP P).Obj
               (((FreeP P ◃ FreeP P) ◃ FreeP P).B (child b))))
       congr 1
       funext b
       exact congrArg (relabel (embed b))
-        (mult_assoc_obj (rest b)
+        (mul_assoc_obj (rest b)
           (fun path => middle (FreeM.Path.cons a rest b path))
           (fun pair => inner
             ⟨FreeM.Path.cons a rest b pair.1, pair.2⟩))
 
-theorem mult_assoc : multAssocLeft (P := P) = multAssocRight (P := P) :=
-  Lens.ext_mapObj _ _ fun x => mult_assoc_obj x.1.1 x.1.2 x.2
+@[deprecated (since := "2026-10-19")] alias mult_assoc_obj := mul_assoc_obj
+
+protected theorem mul_assoc : mulAssocLeft (P := P) = mulAssocRight (P := P) :=
+  Lens.ext_mapObj _ _ fun x => mul_assoc_obj x.1.1 x.1.2 x.2
+
+@[deprecated (since := "2026-10-19")] alias mult_assoc := FreeP.mul_assoc
 
 /-- The free substitution monoid generated by `P`. Its carrier is the
 polynomial of well-founded `P`-trees, its unit is the one-leaf tree, and its
 multiplication is path-indexed grafting. -/
 def substMonoid (P : PFunctor.{uA, uB}) : SubstMonoid.{max uA uB, uB} where
   carrier := FreeP P
-  unit := unit
-  mult := mult
-  unit_left := mult_unit_left
-  unit_right := mult_unit_right
-  assoc := mult_assoc
+  one := one
+  mul := mul
+  one_mul := FreeP.one_mul
+  mul_one := FreeP.mul_one
+  mul_assoc := FreeP.mul_assoc
 
 @[simp]
 theorem substMonoid_carrier (P : PFunctor.{uA, uB}) :
@@ -672,14 +700,18 @@ theorem substMonoid_carrier (P : PFunctor.{uA, uB}) :
   rfl
 
 @[simp]
-theorem substMonoid_unit (P : PFunctor.{uA, uB}) :
-    (substMonoid P).unit = unit :=
+theorem substMonoid_one (P : PFunctor.{uA, uB}) :
+    (substMonoid P).one = one :=
   rfl
 
+@[deprecated (since := "2026-10-19")] alias substMonoid_unit := substMonoid_one
+
 @[simp]
-theorem substMonoid_mult (P : PFunctor.{uA, uB}) :
-    (substMonoid P).mult = mult :=
+theorem substMonoid_mul (P : PFunctor.{uA, uB}) :
+    (substMonoid P).mul = mul :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias substMonoid_mult := substMonoid_mul
 
 end FreeP
 

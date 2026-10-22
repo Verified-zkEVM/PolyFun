@@ -7,6 +7,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.PFunctor.Display.Basic
+public import PolyFun.PFunctor.Display.Category
 public import PolyFun.PFunctor.Display.Chart
 public import PolyFun.PFunctor.Display.Coalgebra
 public import PolyFun.PFunctor.Display.Free
@@ -14,6 +15,7 @@ public import PolyFun.PFunctor.Display.Handler
 public import PolyFun.PFunctor.Display.Handler.Sigma
 public import PolyFun.PFunctor.Display.Indexed
 public import PolyFun.PFunctor.Display.Lens
+public import PolyFun.PFunctor.Display.M
 public import PolyFun.PFunctor.Display.Parallel
 public import PolyFun.PFunctor.Display.Parallel.Lens
 public import PolyFun.PFunctor.Display.Parallel.Free
@@ -22,8 +24,9 @@ public import PolyFun.PFunctor.Display.Parallel.Free
 # Polynomial displays
 
 This umbrella imports the intrinsic one-step display definition, displayed
-coalgebras, chart and indexed-polynomial comparisons, and free-tree
-substitution and the displayed-handler API, including fiberwise lenses, indexed
-coproducts of displayed handlers, and coherent one-or-both parallel
-composition.
+coalgebras, chart and indexed-polynomial comparisons, displayed M-types over
+possibly infinite base trees, and free-tree substitution and the
+displayed-handler API, including fiberwise lenses, the identification of free
+handlers with Kleisli lenses into `FreeP`, indexed coproducts of displayed
+handlers, and coherent one-or-both parallel composition.
 -/

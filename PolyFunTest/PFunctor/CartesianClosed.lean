@@ -26,7 +26,7 @@ open CartesianClosed
 
 variable {p q r : PFunctor.{u, u}}
 
-/-- The evaluation / counit lens typechecks (Spivak–Niu Example 5.32). -/
+/-- The evaluation / counit lens typechecks (Niu–Spivak Exercise 5.32). -/
 example : Lens (exp r q * q) r := eval
 
 /-- `curry` transposes a lens `p * q ⇆ r` into `p ⇆ exp r q` (Theorem 5.31). -/

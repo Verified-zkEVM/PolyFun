@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import Mathlib.Logic.Relation
+public import Mathlib.Logic.Relator
 public import Cslib.Foundations.Semantics.LTS.Bisimulation
 
 /-!
@@ -273,7 +274,7 @@ protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {r₁₂ : L₁.State → L₂.State → Prop} {r₂₃ : L₂.State → L₃.State → Prop}
     (h₁₂ : IsStrongSimulation L₁ L₂ r₁₂)
     (h₂₃ : IsStrongSimulation L₂ L₃ r₂₃) :
-    IsStrongSimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) :=
+    IsStrongSimulation L₁ L₃ (Relation.Comp r₁₂ r₂₃) :=
   isStrongSimulation_iff.mpr
     (Cslib.LTS.IsSimulation.comp _ _
       (isStrongSimulation_iff.mp h₁₂) (isStrongSimulation_iff.mp h₂₃))
@@ -330,7 +331,7 @@ protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {r₁₂ : L₁.State → L₂.State → Prop} {r₂₃ : L₂.State → L₃.State → Prop}
     (h₁₂ : IsDelaySimulation L₁ L₂ r₁₂)
     (h₂₃ : IsDelaySimulation L₂ L₃ r₂₃) :
-    IsDelaySimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) := by
+    IsDelaySimulation L₁ L₃ (Relation.Comp r₁₂ r₂₃) := by
   rintro s₁ s₃ ⟨s₂, hrel₁₂, hrel₂₃⟩ label t₁ hstep
   obtain ⟨t₂, hstep₂, hrelt₂⟩ := h₁₂ hrel₁₂ hstep
   obtain ⟨t₃, hstep₃, hrelt₃⟩ := h₂₃.delayStep hrel₂₃ hstep₂
@@ -371,7 +372,7 @@ protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {r₁₂ : L₁.State → L₂.State → Prop} {r₂₃ : L₂.State → L₃.State → Prop}
     (h₁₂ : IsWeakSimulation L₁ L₂ r₁₂)
     (h₂₃ : IsWeakSimulation L₂ L₃ r₂₃) :
-    IsWeakSimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) :=
+    IsWeakSimulation L₁ L₃ (Relation.Comp r₁₂ r₂₃) :=
   isWeakSimulation_iff.mpr
     (Cslib.LTS.IsSimulation.comp _ _ (isWeakSimulation_iff.mp h₁₂)
       (isWeakSimulation_iff.mp h₂₃).isSimulation_saturate_left)
@@ -394,21 +395,21 @@ structure IsStrongBisimulation (L₁ : LTS.{uObs, uState₁, uMove₁} Obs)
     (L₂ : LTS.{uObs, uState₂, uMove₂} Obs)
     (rel : L₁.State → L₂.State → Prop) : Prop where
   forward : IsStrongSimulation L₁ L₂ rel
-  backward : IsStrongSimulation L₂ L₁ (fun s₂ s₁ => rel s₁ s₂)
+  backward : IsStrongSimulation L₂ L₁ (flip rel)
 
 /-- A relation that delay-simulates in both directions. -/
 structure IsDelayBisimulation (L₁ : LTS.{uObs, uState₁, uMove₁} Obs)
     (L₂ : LTS.{uObs, uState₂, uMove₂} Obs)
     (rel : L₁.State → L₂.State → Prop) : Prop where
   forward : IsDelaySimulation L₁ L₂ rel
-  backward : IsDelaySimulation L₂ L₁ (fun s₂ s₁ => rel s₁ s₂)
+  backward : IsDelaySimulation L₂ L₁ (flip rel)
 
 /-- A relation that weakly simulates in both directions. -/
 structure IsWeakBisimulation (L₁ : LTS.{uObs, uState₁, uMove₁} Obs)
     (L₂ : LTS.{uObs, uState₂, uMove₂} Obs)
     (rel : L₁.State → L₂.State → Prop) : Prop where
   forward : IsWeakSimulation L₁ L₂ rel
-  backward : IsWeakSimulation L₂ L₁ (fun s₂ s₁ => rel s₁ s₂)
+  backward : IsWeakSimulation L₂ L₁ (flip rel)
 
 namespace IsStrongBisimulation
 
@@ -423,7 +424,7 @@ the opposite direction. -/
 protected theorem symm {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop}
     (h : IsStrongBisimulation L₁ L₂ rel) :
-    IsStrongBisimulation L₂ L₁ (fun s₂ s₁ => rel s₁ s₂) := ⟨h.backward, h.forward⟩
+    IsStrongBisimulation L₂ L₁ (flip rel) := ⟨h.backward, h.forward⟩
 
 /-- Strong bisimulations compose by relational composition. -/
 protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -432,7 +433,7 @@ protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {r₁₂ : L₁.State → L₂.State → Prop} {r₂₃ : L₂.State → L₃.State → Prop}
     (h₁₂ : IsStrongBisimulation L₁ L₂ r₁₂)
     (h₂₃ : IsStrongBisimulation L₂ L₃ r₂₃) :
-    IsStrongBisimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) := by
+    IsStrongBisimulation L₁ L₃ (Relation.Comp r₁₂ r₂₃) := by
   refine ⟨IsStrongSimulation.comp h₁₂.forward h₂₃.forward, ?_⟩
   rintro s₃ s₁ ⟨s₂, hr₁₂, hr₂₃⟩ label t₃ hstep₃
   obtain ⟨t₂, hstep₂, hrt₂₃⟩ := h₂₃.backward hr₂₃ hstep₃
@@ -460,7 +461,7 @@ opposite direction. -/
 protected theorem symm {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop}
     (h : IsDelayBisimulation L₁ L₂ rel) :
-    IsDelayBisimulation L₂ L₁ (fun s₂ s₁ => rel s₁ s₂) := ⟨h.backward, h.forward⟩
+    IsDelayBisimulation L₂ L₁ (flip rel) := ⟨h.backward, h.forward⟩
 
 /-- Delay bisimulations compose by relational composition. -/
 protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -469,7 +470,7 @@ protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {r₁₂ : L₁.State → L₂.State → Prop} {r₂₃ : L₂.State → L₃.State → Prop}
     (h₁₂ : IsDelayBisimulation L₁ L₂ r₁₂)
     (h₂₃ : IsDelayBisimulation L₂ L₃ r₂₃) :
-    IsDelayBisimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) := by
+    IsDelayBisimulation L₁ L₃ (Relation.Comp r₁₂ r₂₃) := by
   refine ⟨IsDelaySimulation.comp h₁₂.forward h₂₃.forward, ?_⟩
   rintro s₃ s₁ ⟨s₂, hr₁₂, hr₂₃⟩ label t₃ hstep₃
   obtain ⟨t₂, hstep₂, hrt₂₃⟩ := h₂₃.backward hr₂₃ hstep₃
@@ -498,7 +499,7 @@ opposite direction. -/
 protected theorem symm {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {rel : L₁.State → L₂.State → Prop}
     (h : IsWeakBisimulation L₁ L₂ rel) :
-    IsWeakBisimulation L₂ L₁ (fun s₂ s₁ => rel s₁ s₂) := ⟨h.backward, h.forward⟩
+    IsWeakBisimulation L₂ L₁ (flip rel) := ⟨h.backward, h.forward⟩
 
 /-- Weak bisimulations compose by relational composition. -/
 protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -507,7 +508,7 @@ protected theorem comp {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {r₁₂ : L₁.State → L₂.State → Prop} {r₂₃ : L₂.State → L₃.State → Prop}
     (h₁₂ : IsWeakBisimulation L₁ L₂ r₁₂)
     (h₂₃ : IsWeakBisimulation L₂ L₃ r₂₃) :
-    IsWeakBisimulation L₁ L₃ (fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃) := by
+    IsWeakBisimulation L₁ L₃ (Relation.Comp r₁₂ r₂₃) := by
   refine ⟨IsWeakSimulation.comp h₁₂.forward h₂₃.forward, ?_⟩
   rintro s₃ s₁ ⟨s₂, hr₁₂, hr₂₃⟩ label t₃ hstep₃
   obtain ⟨t₂, hstep₂, hrt₂₃⟩ := h₂₃.backward hr₂₃ hstep₃
@@ -546,7 +547,7 @@ namespace StrongBisimilar
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {s₁ : L₁.State} {s₂ : L₂.State}
     (h : StrongBisimilar L₁ L₂ s₁ s₂) : StrongBisimilar L₂ L₁ s₂ s₁ := by
   obtain ⟨rel, hb, hrel⟩ := h
-  exact ⟨fun t₂ t₁ => rel t₁ t₂, hb.symm, hrel⟩
+  exact ⟨flip rel, hb.symm, hrel⟩
 
 /-- Strong bisimilarity of states is transitive. -/
 @[trans] protected theorem trans {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -557,8 +558,7 @@ namespace StrongBisimilar
     StrongBisimilar L₁ L₃ s₁ s₃ := by
   obtain ⟨r₁₂, hb₁₂, hr₁₂⟩ := h₁₂
   obtain ⟨r₂₃, hb₂₃, hr₂₃⟩ := h₂₃
-  exact ⟨fun t₁ t₃ => ∃ t₂, r₁₂ t₁ t₂ ∧ r₂₃ t₂ t₃,
-    hb₁₂.comp hb₂₃, s₂, hr₁₂, hr₂₃⟩
+  exact ⟨Relation.Comp r₁₂ r₂₃, hb₁₂.comp hb₂₃, s₂, hr₁₂, hr₂₃⟩
 
 /-- Strongly bisimilar states are delay bisimilar. -/
 protected theorem toDelay {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -580,7 +580,7 @@ namespace DelayBisimilar
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {s₁ : L₁.State} {s₂ : L₂.State}
     (h : DelayBisimilar L₁ L₂ s₁ s₂) : DelayBisimilar L₂ L₁ s₂ s₁ := by
   obtain ⟨rel, hb, hrel⟩ := h
-  exact ⟨fun t₂ t₁ => rel t₁ t₂, hb.symm, hrel⟩
+  exact ⟨flip rel, hb.symm, hrel⟩
 
 /-- Delay bisimilarity of states is transitive. -/
 @[trans] protected theorem trans {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -591,8 +591,7 @@ namespace DelayBisimilar
     DelayBisimilar L₁ L₃ s₁ s₃ := by
   obtain ⟨r₁₂, hb₁₂, hr₁₂⟩ := h₁₂
   obtain ⟨r₂₃, hb₂₃, hr₂₃⟩ := h₂₃
-  exact ⟨fun t₁ t₃ => ∃ t₂, r₁₂ t₁ t₂ ∧ r₂₃ t₂ t₃,
-    hb₁₂.comp hb₂₃, s₂, hr₁₂, hr₂₃⟩
+  exact ⟨Relation.Comp r₁₂ r₂₃, hb₁₂.comp hb₂₃, s₂, hr₁₂, hr₂₃⟩
 
 /-- Delay-bisimilar states are weakly bisimilar. -/
 protected theorem toWeak {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -614,7 +613,7 @@ namespace WeakBisimilar
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} {s₁ : L₁.State} {s₂ : L₂.State}
     (h : WeakBisimilar L₁ L₂ s₁ s₂) : WeakBisimilar L₂ L₁ s₂ s₁ := by
   obtain ⟨rel, hb, hrel⟩ := h
-  exact ⟨fun t₂ t₁ => rel t₁ t₂, hb.symm, hrel⟩
+  exact ⟨flip rel, hb.symm, hrel⟩
 
 /-- Weak bisimilarity of states is transitive. -/
 @[trans] protected theorem trans {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -625,47 +624,43 @@ namespace WeakBisimilar
     WeakBisimilar L₁ L₃ s₁ s₃ := by
   obtain ⟨r₁₂, hb₁₂, hr₁₂⟩ := h₁₂
   obtain ⟨r₂₃, hb₂₃, hr₂₃⟩ := h₂₃
-  exact ⟨fun t₁ t₃ => ∃ t₂, r₁₂ t₁ t₂ ∧ r₂₃ t₂ t₃,
-    hb₁₂.comp hb₂₃, s₂, hr₁₂, hr₂₃⟩
+  exact ⟨Relation.Comp r₁₂ r₂₃, hb₁₂.comp hb₂₃, s₂, hr₁₂, hr₂₃⟩
 
 end WeakBisimilar
 
 /-! ## Whole-system equivalence -/
 
 /-- Whole-system strong bisimulation equivalence: a strong bisimulation whose
-relation is total on both state spaces. -/
+relation is total on both state spaces (`Relator.BiTotal`). -/
 def StrongBisimulationEquivalent (L₁ : LTS.{uObs, uState₁, uMove₁} Obs)
     (L₂ : LTS.{uObs, uState₂, uMove₂} Obs) : Prop :=
-  ∃ rel, IsStrongBisimulation L₁ L₂ rel ∧
-    (∀ s₁, ∃ s₂, rel s₁ s₂) ∧ (∀ s₂, ∃ s₁, rel s₁ s₂)
+  ∃ rel, IsStrongBisimulation L₁ L₂ rel ∧ Relator.BiTotal rel
 
 /-- Whole-system delay bisimulation equivalence: a delay bisimulation whose
-relation is total on both state spaces. -/
+relation is total on both state spaces (`Relator.BiTotal`). -/
 def DelayBisimulationEquivalent (L₁ : LTS.{uObs, uState₁, uMove₁} Obs)
     (L₂ : LTS.{uObs, uState₂, uMove₂} Obs) : Prop :=
-  ∃ rel, IsDelayBisimulation L₁ L₂ rel ∧
-    (∀ s₁, ∃ s₂, rel s₁ s₂) ∧ (∀ s₂, ∃ s₁, rel s₁ s₂)
+  ∃ rel, IsDelayBisimulation L₁ L₂ rel ∧ Relator.BiTotal rel
 
 /-- Whole-system weak bisimulation equivalence: a weak bisimulation whose
-relation is total on both state spaces. -/
+relation is total on both state spaces (`Relator.BiTotal`). -/
 def WeakBisimulationEquivalent (L₁ : LTS.{uObs, uState₁, uMove₁} Obs)
     (L₂ : LTS.{uObs, uState₂, uMove₂} Obs) : Prop :=
-  ∃ rel, IsWeakBisimulation L₁ L₂ rel ∧
-    (∀ s₁, ∃ s₂, rel s₁ s₂) ∧ (∀ s₂, ∃ s₁, rel s₁ s₂)
+  ∃ rel, IsWeakBisimulation L₁ L₂ rel ∧ Relator.BiTotal rel
 
 namespace StrongBisimulationEquivalent
 
 /-- Every labelled transition system is strongly bisimulation equivalent to
 itself. -/
 @[refl] protected theorem refl (L : LTS Obs) : StrongBisimulationEquivalent L L :=
-  ⟨Eq, IsStrongBisimulation.refl L, fun s => ⟨s, rfl⟩, fun s => ⟨s, rfl⟩⟩
+  ⟨Eq, IsStrongBisimulation.refl L, Relator.BiTotal.refl fun _ => rfl⟩
 
 /-- Whole-system strong bisimulation equivalence is symmetric. -/
 @[symm] protected theorem symm {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} (h : StrongBisimulationEquivalent L₁ L₂) :
     StrongBisimulationEquivalent L₂ L₁ := by
-  obtain ⟨rel, hb, hleft, hright⟩ := h
-  exact ⟨fun s₂ s₁ => rel s₁ s₂, hb.symm, hright, hleft⟩
+  obtain ⟨rel, hb, htotal⟩ := h
+  exact ⟨flip rel, hb.symm, htotal.symm fun _ _ h => h⟩
 
 /-- Whole-system strong bisimulation equivalence is transitive. -/
 @[trans] protected theorem trans {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -673,21 +668,17 @@ itself. -/
     {L₃ : LTS.{uObs, uState₃, uMove₃} Obs}
     (h₁₂ : StrongBisimulationEquivalent L₁ L₂) (h₂₃ : StrongBisimulationEquivalent L₂ L₃) :
     StrongBisimulationEquivalent L₁ L₃ := by
-  obtain ⟨r₁₂, hb₁₂, hl₁₂, hr₁₂⟩ := h₁₂
-  obtain ⟨r₂₃, hb₂₃, hl₂₃, hr₂₃⟩ := h₂₃
-  refine ⟨fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃,
-    hb₁₂.comp hb₂₃, ?_, ?_⟩
-  · intro s₁; obtain ⟨s₂, h₁₂⟩ := hl₁₂ s₁; obtain ⟨s₃, h₂₃⟩ := hl₂₃ s₂
-    exact ⟨s₃, s₂, h₁₂, h₂₃⟩
-  · intro s₃; obtain ⟨s₂, h₂₃⟩ := hr₂₃ s₃; obtain ⟨s₁, h₁₂⟩ := hr₁₂ s₂
-    exact ⟨s₁, s₂, h₁₂, h₂₃⟩
+  obtain ⟨r₁₂, hb₁₂, ht₁₂⟩ := h₁₂
+  obtain ⟨r₂₃, hb₂₃, ht₂₃⟩ := h₂₃
+  exact ⟨Relation.Comp r₁₂ r₂₃, hb₁₂.comp hb₂₃,
+    ht₁₂.trans (fun _ s₂ _ h₁₂ h₂₃ => ⟨s₂, h₁₂, h₂₃⟩) ht₂₃⟩
 
 /-- Whole-system strong equivalence implies whole-system delay equivalence. -/
 protected theorem toDelay {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} (h : StrongBisimulationEquivalent L₁ L₂) :
     DelayBisimulationEquivalent L₁ L₂ := by
-  obtain ⟨rel, hb, hleft, hright⟩ := h
-  exact ⟨rel, hb.toDelay, hleft, hright⟩
+  obtain ⟨rel, hb, htotal⟩ := h
+  exact ⟨rel, hb.toDelay, htotal⟩
 
 end StrongBisimulationEquivalent
 
@@ -696,14 +687,14 @@ namespace DelayBisimulationEquivalent
 /-- Every labelled transition system is delay bisimulation equivalent to
 itself. -/
 @[refl] protected theorem refl (L : LTS Obs) : DelayBisimulationEquivalent L L :=
-  ⟨Eq, IsDelayBisimulation.refl L, fun s => ⟨s, rfl⟩, fun s => ⟨s, rfl⟩⟩
+  ⟨Eq, IsDelayBisimulation.refl L, Relator.BiTotal.refl fun _ => rfl⟩
 
 /-- Whole-system delay bisimulation equivalence is symmetric. -/
 @[symm] protected theorem symm {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} (h : DelayBisimulationEquivalent L₁ L₂) :
     DelayBisimulationEquivalent L₂ L₁ := by
-  obtain ⟨rel, hb, hleft, hright⟩ := h
-  exact ⟨fun s₂ s₁ => rel s₁ s₂, hb.symm, hright, hleft⟩
+  obtain ⟨rel, hb, htotal⟩ := h
+  exact ⟨flip rel, hb.symm, htotal.symm fun _ _ h => h⟩
 
 /-- Whole-system delay bisimulation equivalence is transitive. -/
 @[trans] protected theorem trans {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -711,21 +702,17 @@ itself. -/
     {L₃ : LTS.{uObs, uState₃, uMove₃} Obs}
     (h₁₂ : DelayBisimulationEquivalent L₁ L₂) (h₂₃ : DelayBisimulationEquivalent L₂ L₃) :
     DelayBisimulationEquivalent L₁ L₃ := by
-  obtain ⟨r₁₂, hb₁₂, hl₁₂, hr₁₂⟩ := h₁₂
-  obtain ⟨r₂₃, hb₂₃, hl₂₃, hr₂₃⟩ := h₂₃
-  refine ⟨fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃,
-    hb₁₂.comp hb₂₃, ?_, ?_⟩
-  · intro s₁; obtain ⟨s₂, h₁₂⟩ := hl₁₂ s₁; obtain ⟨s₃, h₂₃⟩ := hl₂₃ s₂
-    exact ⟨s₃, s₂, h₁₂, h₂₃⟩
-  · intro s₃; obtain ⟨s₂, h₂₃⟩ := hr₂₃ s₃; obtain ⟨s₁, h₁₂⟩ := hr₁₂ s₂
-    exact ⟨s₁, s₂, h₁₂, h₂₃⟩
+  obtain ⟨r₁₂, hb₁₂, ht₁₂⟩ := h₁₂
+  obtain ⟨r₂₃, hb₂₃, ht₂₃⟩ := h₂₃
+  exact ⟨Relation.Comp r₁₂ r₂₃, hb₁₂.comp hb₂₃,
+    ht₁₂.trans (fun _ s₂ _ h₁₂ h₂₃ => ⟨s₂, h₁₂, h₂₃⟩) ht₂₃⟩
 
 /-- Whole-system delay equivalence implies whole-system weak equivalence. -/
 protected theorem toWeak {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} (h : DelayBisimulationEquivalent L₁ L₂) :
     WeakBisimulationEquivalent L₁ L₂ := by
-  obtain ⟨rel, hb, hleft, hright⟩ := h
-  exact ⟨rel, hb.toWeak, hleft, hright⟩
+  obtain ⟨rel, hb, htotal⟩ := h
+  exact ⟨rel, hb.toWeak, htotal⟩
 
 end DelayBisimulationEquivalent
 
@@ -734,14 +721,14 @@ namespace WeakBisimulationEquivalent
 /-- Every labelled transition system is weakly bisimulation equivalent to
 itself. -/
 @[refl] protected theorem refl (L : LTS Obs) : WeakBisimulationEquivalent L L :=
-  ⟨Eq, IsWeakBisimulation.refl L, fun s => ⟨s, rfl⟩, fun s => ⟨s, rfl⟩⟩
+  ⟨Eq, IsWeakBisimulation.refl L, Relator.BiTotal.refl fun _ => rfl⟩
 
 /-- Whole-system weak bisimulation equivalence is symmetric. -/
 @[symm] protected theorem symm {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} (h : WeakBisimulationEquivalent L₁ L₂) :
     WeakBisimulationEquivalent L₂ L₁ := by
-  obtain ⟨rel, hb, hleft, hright⟩ := h
-  exact ⟨fun s₂ s₁ => rel s₁ s₂, hb.symm, hright, hleft⟩
+  obtain ⟨rel, hb, htotal⟩ := h
+  exact ⟨flip rel, hb.symm, htotal.symm fun _ _ h => h⟩
 
 /-- Whole-system weak bisimulation equivalence is transitive. -/
 @[trans] protected theorem trans {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
@@ -749,14 +736,10 @@ itself. -/
     {L₃ : LTS.{uObs, uState₃, uMove₃} Obs}
     (h₁₂ : WeakBisimulationEquivalent L₁ L₂) (h₂₃ : WeakBisimulationEquivalent L₂ L₃) :
     WeakBisimulationEquivalent L₁ L₃ := by
-  obtain ⟨r₁₂, hb₁₂, hl₁₂, hr₁₂⟩ := h₁₂
-  obtain ⟨r₂₃, hb₂₃, hl₂₃, hr₂₃⟩ := h₂₃
-  refine ⟨fun s₁ s₃ => ∃ s₂, r₁₂ s₁ s₂ ∧ r₂₃ s₂ s₃,
-    hb₁₂.comp hb₂₃, ?_, ?_⟩
-  · intro s₁; obtain ⟨s₂, h₁₂⟩ := hl₁₂ s₁; obtain ⟨s₃, h₂₃⟩ := hl₂₃ s₂
-    exact ⟨s₃, s₂, h₁₂, h₂₃⟩
-  · intro s₃; obtain ⟨s₂, h₂₃⟩ := hr₂₃ s₃; obtain ⟨s₁, h₁₂⟩ := hr₁₂ s₂
-    exact ⟨s₁, s₂, h₁₂, h₂₃⟩
+  obtain ⟨r₁₂, hb₁₂, ht₁₂⟩ := h₁₂
+  obtain ⟨r₂₃, hb₂₃, ht₂₃⟩ := h₂₃
+  exact ⟨Relation.Comp r₁₂ r₂₃, hb₁₂.comp hb₂₃,
+    ht₁₂.trans (fun _ s₂ _ h₁₂ h₂₃ => ⟨s₂, h₁₂, h₂₃⟩) ht₂₃⟩
 
 end WeakBisimulationEquivalent
 

@@ -125,6 +125,17 @@ structure Entry where
   axioms : Array String
   deriving ToJson
 
+/-- The kernel dependency graph restricted to declarations with `sorryAx` taint.
+Internal auxiliaries are retained so consumers can distinguish direct admissions
+from inherited debt without guessing from declaration names or source text. -/
+structure SorryDependency where
+  name : String
+  kind : String
+  type : String
+  direct : Bool
+  dependencies : Array String
+  deriving ToJson
+
 /-- A declaration depending on axioms beyond the standard foundation (and `sorryAx`,
 which is tracked separately). -/
 structure NonstandardEntry where
@@ -185,7 +196,7 @@ def isReportable (n : Name) : Bool :=
 
 /-- Enumerate the reportable declarations of every module under one of `roots` and
 compute their axiom closures. -/
-def buildEntries (roots : Array Name) : CoreM (Array Entry × Nat) := do
+def buildEntries (roots : Array Name) : CoreM (Array Entry × Nat × Array SorryDependency) := do
   let env ← getEnv
   let mut targets : Array (Name × Name) := #[]
   let mut seen : Std.HashSet Name := {}
@@ -213,7 +224,21 @@ def buildEntries (roots : Array Name) : CoreM (Array Entry × Nat) := do
       kind := kindOf ci
       line := line
       axioms := dedupSort ((memo[c]?.getD #[]).map (normalizeAxiomName ·.toString)) }
-  return (entries.qsort (fun a b => a.name < b.name), moduleCount)
+  let mut graph : Array SorryDependency := #[]
+  for c in order do
+    if c == ``sorryAx || !(memo[c]?.getD #[]).contains ``sorryAx then continue
+    let some ci := env.find? c | continue
+    let deps := ci.getUsedConstantsAsSet.toList.toArray
+    let type ← Meta.MetaM.run' (Meta.ppExpr ci.type)
+    graph := graph.push {
+      name := c.toString
+      kind := kindOf ci
+      type := type.pretty
+      direct := deps.contains ``sorryAx
+      dependencies := dedupSort ((deps.filter fun d => d != ``sorryAx &&
+        (memo[d]?.getD #[]).contains ``sorryAx).map (·.toString)) }
+  return (entries.qsort (fun a b => a.name < b.name), moduleCount,
+    graph.qsort (fun a b => a.name < b.name))
 
 def isStandard (a : String) : Bool :=
   standardAxioms.any (toString · == a)
@@ -316,7 +341,7 @@ unsafe def main (args : List String) : IO UInt32 := do
         (roots must be importable modules — glob-based libs without an umbrella \
         module cannot be swept by library name)"
       return (2 : UInt32)
-  let ((entries, moduleCount), _) ← (buildEntries roots).toIO
+  let ((entries, moduleCount, sorryGraph), _) ← (buildEntries roots).toIO
     { fileName := "<axiomsweep>", fileMap := default } { env }
   let cur := currentBaseline entries
   let distinctNonstd := cur.nonstandard.foldl (init := (#[] : Array String)) fun acc e =>
@@ -330,6 +355,7 @@ unsafe def main (args : List String) : IO UInt32 := do
     let report := Json.mkObj [
       ("roots", toJson (roots.map (·.toString))),
       ("declarationCount", toJson entries.size),
+      ("sorryGraph", toJson sorryGraph),
       ("declarations", toJson entries)]
     IO.FS.writeFile out (report.pretty ++ "\n")
     IO.println s!"axiomsweep: wrote report to {out}"

@@ -12,7 +12,9 @@ A polynomial has positions `A` and directions `B : A → Type`. Its action on
 `X` is `Σ a, B a → X`: choose a position and give a continuation for every
 direction. For interaction, positions are requests and directions are their
 possible replies. A lens maps positions forward and directions backward;
-a chart maps both forward. These are different notions of morphism.
+a chart maps both forward. These are different notions of morphism. Lenses are exactly
+the natural transformations between the actions `P.Obj ⟹ Q.Obj`
+([`Lens.existsUnique_mapObj`](../../PolyFun/PFunctor/Lens/Yoneda.lean)).
 
 [Mathlib's polynomial type](../../PolyFun/PFunctor/Basic.lean) underlies this
 representation. [Indexed polynomials](../guides/ipfunctor.md) add a source
@@ -69,8 +71,12 @@ The free and cofree universal properties have their own domains and codomains.
 categorical structure from a polynomial comonoid and relates homomorphisms
 to retrofunctor laws. This should not be read as a packaged equivalence of
 all categories with polynomial comonoids. Similarly, individual tensor and
-duoidal coherence laws do not by themselves assert a complete abstract
-monoidal-category packaging or a bicomodule theory.
+duoidal coherence laws do not by themselves assert a bicomodule theory. The
+monoidal packaging is separate:
+[Category/Monoidal](../../PolyFun/PFunctor/Category/Monoidal.lean) makes lenses a
+cartesian monoidal category for `*`, a symmetric monoidal category for `⊗`, and a
+monoidal category for `◃`, with every coherence law from
+[Lens/Coherence](../../PolyFun/PFunctor/Lens/Coherence.lean) holding definitionally.
 
 ## Protocol and open-system interpretations
 

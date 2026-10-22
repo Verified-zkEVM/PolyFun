@@ -116,21 +116,15 @@ theorem liftM_sum_liftBind_inr (f : Handler m P) (g : Handler m Q) (b : Q.A)
       g b >>= fun d => (k d).liftM (sum f g) :=
   rfl
 
-end Monad
-
-section LawfulMonad
-
-variable [Monad m] [LawfulMonad m] {α : Type u}
-
 /-- Interpreting a single request at a left position through a sum handler gives the left
 handler's answer to it. -/
-theorem liftM_sum_lift_inl (f : Handler m P) (g : Handler m Q) (a : P.A) :
+theorem liftM_sum_lift_inl [LawfulMonad m] (f : Handler m P) (g : Handler m Q) (a : P.A) :
     (FreeM.lift (P := (P + Q : PFunctor.{max uA₁ uA₂, u})) (.inl a)).liftM (sum f g) = f a := by
   simp
 
 /-- Interpreting a single request at a right position through a sum handler gives the right
 handler's answer to it. -/
-theorem liftM_sum_lift_inr (f : Handler m P) (g : Handler m Q) (b : Q.A) :
+theorem liftM_sum_lift_inr [LawfulMonad m] (f : Handler m P) (g : Handler m Q) (b : Q.A) :
     (FreeM.lift (P := (P + Q : PFunctor.{max uA₁ uA₂, u})) (.inr b)).liftM (sum f g) = g b := by
   simp
 

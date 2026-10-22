@@ -30,11 +30,13 @@ The API deliberately separates three levels:
 - `{Strong,Delay,Weak}Bisimilar L₁ L₂ s₁ s₂` concern a particular pair of
   states and have reflexive, symmetric, and transitive laws;
 - `{Strong,Delay,Weak}BisimulationEquivalent L₁ L₂` require a bisimulation relation
-  that is total on both state spaces.
+  that is total on both state spaces (`Relator.BiTotal`).
 
 Closure lemmas lift simulations across silent/delay/weak paths, and the
-inclusions `strong ⊆ delay ⊆ weak` are explicit. State and move universes are
-independent on the two sides.
+inclusions `strong ⊆ delay ⊆ weak` are explicit. Composites, converses and totality
+use Mathlib's relation vocabulary (`Relation.Comp`, `flip`, `Relator.BiTotal` with
+its `refl`/`symm`/`trans`). State and move universes are independent on the two
+sides.
 
 ### Relation to cslib
 

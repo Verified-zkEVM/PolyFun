@@ -17,8 +17,7 @@ tests synchronize two observably different behavior trees.  Their backward
 maps distinguish the two factors and two different depth-two direction
 sequences, so a copied, swapped, reversed, or root-only implementation fails.
 
-This is the concrete lax-monoidal structure of Spivak–Niu, Proposition 8.79
-in the current edition (Proposition 8.81 in the earlier-edition notes).
+This is the concrete lax-monoidal structure of Niu–Spivak, Proposition 8.81.
 -/
 
 @[expose] public section
@@ -266,7 +265,7 @@ example :
         ((CofreeP.comonoid leftP).tensor (CofreeP.comonoid rightP)).carrier
         (compNth (leftP ⊗ rightP) 2) =>
       lens.toFunB (leftTree, rightTree) synchronizedDirection)
-    (CofreeP.hom_comp_projectionN F 2)
+    (CofreeP.projectionN_comp_toLens F 2)
   dsimp only
   change
     leftDirections
@@ -283,14 +282,14 @@ example :
       rw [CofreeP.restrict_extend]
       simp only [CofreeP.comonoid_carrier, Comonoid.tensor_carrier, compNth,
         Lens.compNthMap_succ, Lens.compNthMap_zero,
-        Comonoid.comultN_succ, Comonoid.comultN_zero]
+        Comonoid.comulN_succ, Comonoid.comulN_zero]
       rfl)
   · exact hright.trans (by
       dsimp only [F, CofreeP.laxTensorHom]
       rw [CofreeP.restrict_extend]
       simp only [CofreeP.comonoid_carrier, Comonoid.tensor_carrier, compNth,
         Lens.compNthMap_succ, Lens.compNthMap_zero,
-        Comonoid.comultN_succ, Comonoid.comultN_zero]
+        Comonoid.comulN_succ, Comonoid.comulN_zero]
       rfl)
 
 /-! ## Observable lax unit -/

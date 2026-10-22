@@ -286,8 +286,16 @@ theorem encode_injective (coding : PolyCodable word rep) :
     Function.Injective coding.encode :=
   coding.toCodeRetract.encode_injective
 
+/-- Forget admissible decoding and retain the injective word encoder as an embedding. -/
+def toEmbedding (coding : PolyCodable word rep) : A ↪ W :=
+  ⟨coding.encode, coding.encode_injective⟩
+
+@[simp] theorem toEmbedding_apply (coding : PolyCodable word rep) (value : A) :
+    coding.toEmbedding value = coding.encode value := rfl
+
 /-- Forget admissible decoding and retain the raw injective encoder expected by
 word-class representations. -/
+@[deprecated toEmbedding +typeChanged (since := "2026-10-19")]
 def toEncoding (coding : PolyCodable word rep) :
     { encode : A → W // Function.Injective encode } :=
   ⟨coding.encode, coding.encode_injective⟩

@@ -84,7 +84,7 @@ theorem xi_comp_generator (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB})
 /-- Strong operational characterization of the universal interaction.
 It identifies the complete output object, including the backward map from
 output paths to source pattern paths and matter vertices. -/
-theorem runObj_eq_xi_mapObj (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB})
+theorem runObj_eq_mapObj_xi (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB})
     (pattern : (FreeP P).A) (matter : (CofreeP Q).A) :
     runObj pattern matter =
       Lens.mapObj (xi P Q)
@@ -129,6 +129,8 @@ theorem runObj_eq_xi_mapObj (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB
                   M.Vertex matter)) := rfl
       exact hfirst.trans hsecond
 
+@[deprecated (since := "2026-10-19")] alias runObj_eq_xi_mapObj := runObj_eq_mapObj_xi
+
 /-- The executable synchronized traversal is exactly the paper's
 internal-hom/convolution construction. -/
 theorem runOn_eq_xi (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB}) :
@@ -136,14 +138,14 @@ theorem runOn_eq_xi (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB}) :
   let hA : ∀ input,
       (runOn P Q).toFunA input = (xi P Q).toFunA input :=
     fun input =>
-      congrArg Sigma.fst (runObj_eq_xi_mapObj P Q input.1 input.2)
+      congrArg Sigma.fst (runObj_eq_mapObj_xi P Q input.1 input.2)
   refine Lens.ext _ _ hA ?_
   intro input
   rcases input with ⟨pattern, matter⟩
   apply eq_of_heq
   have hraw : (runOn P Q).toFunB (pattern, matter) ≍
       (xi P Q).toFunB (pattern, matter) :=
-    (Sigma.ext_iff.mp (runObj_eq_xi_mapObj P Q pattern matter)).2
+    (Sigma.ext_iff.mp (runObj_eq_mapObj_xi P Q pattern matter)).2
   have hcast : (hA (pattern, matter) ▸
       (xi P Q).toFunB (pattern, matter)) ≍
       (xi P Q).toFunB (pattern, matter) :=

@@ -346,7 +346,7 @@ When a proof framework follows an external paper, cite the public paper
 by title, venue, or URL rather than pointing agents at a repo-local file
 path. Foundational citations live in
 [`REFERENCES.md`](../../REFERENCES.md); module docstrings reference
-those keys (`Hancock-Setzer`, `Spivak-Niu`, etc.) rather than copying
+those keys (`Hancock-Setzer`, `Niu–Spivak`, etc.) rather than copying
 prose.
 
 ### `Std.WP` imports are quarantined, in two tiers
@@ -365,8 +365,8 @@ dependency therefore stays confined to those files. Every interpretation they ex
 construction (`def`) or a `scoped` instance, never a global instance, because a global `WP`
 instance on `FreeM P` would compete with downstream instances on its reducible unfoldings, such
 as oracle-computation types. Register the provided interpretations `scoped` or `local`
-downstream. The writer interpretation follows the same rule: `WriterT.MonoidWP.instWPMonad` is
-scoped under `WriterT.MonoidWP`. `scripts/check-modules.sh` enforces both tiers. See
+downstream. The writer interpretations follow the same rule: `WriterT.MonoidWP.instWPMonad` is
+scoped under `WriterT.MonoidWP`, and `WriterT.AppendWP.instWPMonad` under `WriterT.AppendWP`. `scripts/check-modules.sh` enforces both tiers. See
 [`program-logic.md`](../guides/program-logic.md).
 
 ### `vcgen` finds no spec unless the `Std.WP` root is imported

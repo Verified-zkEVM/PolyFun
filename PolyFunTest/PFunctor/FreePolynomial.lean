@@ -81,19 +81,19 @@ def triple : ((FreeP unaryP ◃ FreeP unaryP) ◃ FreeP unaryP).A :=
     fun _ => op false leaf⟩
 
 /-- Left-associated multiplication preserves outer-to-inner node order. -/
-example : (FreeP.multAssocLeft (P := unaryP)).toFunA triple =
+example : (FreeP.mulAssocLeft (P := unaryP)).toFunA triple =
     op false (op true (op false leaf)) :=
   rfl
 
 /-- Right-associated multiplication computes the same ordered tree. -/
-example : (FreeP.multAssocRight (P := unaryP)).toFunA triple =
+example : (FreeP.mulAssocRight (P := unaryP)).toFunA triple =
     op false (op true (op false leaf)) :=
   rfl
 
 /-- Splitting the unique path through a two-node graft recovers one path from
 each substitution layer. -/
 example :
-    (FreeP.mult (P := unaryP)).toFunB
+    (FreeP.mul (P := unaryP)).toFunB
       ⟨op false leaf, fun _ => op true leaf⟩
       ⟨PUnit.unit, PUnit.unit, ⟨⟩⟩ =
     ⟨⟨PUnit.unit, ⟨⟩⟩, ⟨PUnit.unit, ⟨⟩⟩⟩ :=
@@ -102,7 +102,7 @@ example :
 /-- Splitting must preserve both nontrivial branch choices; a unary signature
 would not detect swapping or duplicating the outer and inner components. -/
 example :
-    (FreeP.mult (P := binaryP)).toFunB
+    (FreeP.mul (P := binaryP)).toFunB
       ⟨binaryOp false, fun _ => binaryOp true⟩
       ⟨false, true, ⟨⟩⟩ =
     ⟨⟨false, ⟨⟩⟩, ⟨true, ⟨⟩⟩⟩ :=
@@ -127,7 +127,7 @@ outer-then-inner order. Reversing the two path components changes either the
 inner operation label or one of the four leaf payloads. -/
 example :
     FreeP.decode
-        (Lens.mapObj (FreeP.mult (P := binaryP)) nestedBinaryObj) =
+        (Lens.mapObj (FreeP.mul (P := binaryP)) nestedBinaryObj) =
       FreeM.liftBind false (fun outer =>
         FreeM.liftBind outer (fun inner =>
           FreeM.pure (branchPayload outer inner))) :=
@@ -136,7 +136,7 @@ example :
 /-- Left-associated multiplication reassociates all three path components
 without permuting them. -/
 example :
-    (FreeP.multAssocLeft (P := binaryP)).toFunB binaryTriple
+    (FreeP.mulAssocLeft (P := binaryP)).toFunB binaryTriple
       ⟨false, true, false, ⟨⟩⟩ =
     ⟨⟨⟨false, ⟨⟩⟩, ⟨true, ⟨⟩⟩⟩, ⟨false, ⟨⟩⟩⟩ :=
   rfl
@@ -144,7 +144,7 @@ example :
 /-- The right-associated composite has the same observable reassociation of
 three nontrivial path components. -/
 example :
-    (FreeP.multAssocRight (P := binaryP)).toFunB binaryTriple
+    (FreeP.mulAssocRight (P := binaryP)).toFunB binaryTriple
       ⟨false, true, false, ⟨⟩⟩ =
     ⟨⟨⟨false, ⟨⟩⟩, ⟨true, ⟨⟩⟩⟩, ⟨false, ⟨⟩⟩⟩ :=
   rfl
@@ -208,17 +208,17 @@ independent. -/
 example (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂})
     (R : PFunctor.{uA₃, uB₃}) (l₁ : Lens P Q) (l₂ : Lens Q R) :
     FreeP.map l₂ ∘ₗ FreeP.map l₁ = FreeP.map (l₂ ∘ₗ l₁) :=
-  FreeP.map_comp l₂ l₁
+  FreeP.map_comp_map l₂ l₁
 
 /-- The constructed carrier exposes all substitution-monoid laws. -/
 example (P : PFunctor.{uA, uB}) :
     Lens.comp
-      (Lens.comp (FreeP.substMonoid P).mult
-        (Lens.compMap (FreeP.substMonoid P).unit
+      (Lens.comp (FreeP.substMonoid P).mul
+        (Lens.compMap (FreeP.substMonoid P).one
           (Lens.id (FreeP.substMonoid P).carrier)))
       Lens.Equiv.yComp.invLens =
     Lens.id (FreeP.substMonoid P).carrier :=
-  (FreeP.substMonoid P).unit_left
+  (FreeP.substMonoid P).one_mul
 
 end FreePolynomialTest
 end PFunctor

@@ -152,7 +152,7 @@ path pulled back to the source program. -/
       exact congrArg (fun n => n + 1) (length_pullMap f (next answer) tail)
 
 /-- The typed path length agrees with the length of its erased event trace. -/
-theorem length_eq_trace_length (program : FreeM P α) (path : Path program) :
+theorem length_eq_length_trace (program : FreeM P α) (path : Path program) :
     length program path = (trace program path).length := by
   induction program with
   | pure x => rfl
@@ -161,6 +161,8 @@ theorem length_eq_trace_length (program : FreeM P α) (path : Path program) :
       change length (next answer) tail + 1 =
         (trace (next answer) tail).length + 1
       exact congrArg (fun n => n + 1) (ih answer tail)
+
+@[deprecated (since := "2026-10-19")] alias length_eq_trace_length := length_eq_length_trace
 
 /-- Agreement on the operations visited by one deterministic execution preserves its entire
 typed path. The alternative handler may differ arbitrarily on unvisited operations. -/

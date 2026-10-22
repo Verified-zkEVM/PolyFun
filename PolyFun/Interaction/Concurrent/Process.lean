@@ -598,15 +598,17 @@ abbrev EventMap {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
 
 /--
 A stable ticket for each complete step path of a process: the
-dynamical-system `Tickets` at the step polynomial.
+dynamical-system `TicketMap` at the step polynomial.
 
 Tickets are the intended handles for fairness and liveness: instead of talking
 about unstable frontier events whose types change from state to state, later
 semantic layers can talk about these stable identifiers.
 -/
-abbrev Tickets {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
+abbrev TicketMap {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (process : ProcessOver.{v, w, w₂} P Γ) (Ticket : Type w₃) :=
-  PFunctor.DynSystem.Tickets process Ticket
+  PFunctor.DynSystem.TicketMap process Ticket
+
+@[deprecated (since := "2026-10-19"), reducible] alias Tickets := TicketMap
 
 /--
 `StepRel left right` relates concrete process steps: each argument
@@ -631,13 +633,14 @@ namespace StepRel
 
 /-- The permissive step relation that accepts every pair of concrete process
 steps. -/
+@[deprecated "use `⊤`, the top of the lattice of relations" (since := "2026-10-19")]
 abbrev top
     {P₁ P₂ : Type v}
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
     {left : ProcessOver P₁ Γ} {right : ProcessOver P₂ Δ} :
     StepRel left right :=
-  PFunctor.DynSystem.StepRel.top
+  ⊤
 
 /-- Reverse a step-matching relation by flipping its two path
 arguments. -/
@@ -651,6 +654,7 @@ abbrev reverse
   PFunctor.DynSystem.StepRel.reverse rel
 
 /-- Conjunction of step-matching relations. -/
+@[deprecated "use `⊓`, the meet of the lattice of relations" (since := "2026-10-19")]
 abbrev inter
     {P₁ P₂ : Type v}
     {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
@@ -658,7 +662,7 @@ abbrev inter
     {left : ProcessOver P₁ Γ} {right : ProcessOver P₂ Δ}
     (first second : StepRel left right) :
     StepRel left right :=
-  PFunctor.DynSystem.StepRel.inter first second
+  first ⊓ second
 
 end StepRel
 
@@ -846,9 +850,11 @@ abbrev EventMap {P : Type v} {Party : Type u}
 /--
 A stable ticket for each complete closed-world process step.
 -/
-abbrev Tickets {P : Type v} {Party : Type u}
+abbrev TicketMap {P : Type v} {Party : Type u}
     (process : Process P Party) (Ticket : Type w₂) :=
-  ProcessOver.Tickets process Ticket
+  ProcessOver.TicketMap process Ticket
+
+@[deprecated (since := "2026-10-19"), reducible] alias Tickets := TicketMap
 
 /--
 The closed-world specialization of `ProcessOver.StepRel`.

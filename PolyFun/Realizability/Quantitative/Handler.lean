@@ -14,8 +14,8 @@ public import PolyFun.PFunctor.Free.WP.Charge
 # Quantitative substitution of one-query stateful handlers
 
 `QuantitativeRealization.wrapState` runs an adversary realization `R` over interface `p` against a
-stateful lens `L : StateLens p r σ` that carries executable code
-(`StateLens.QuantitativelyAdmissible`):
+stateful lens `L : StatefulLens p r σ` that carries executable code
+(`StatefulLens.QuantitativelyAdmissible`):
 - `onPos` computes the forwarded inner query from the outer query and the handler state;
 - `onPull` partially pulls a tagged inner answer back to a tagged outer answer and the next handler
   state.
@@ -44,7 +44,7 @@ is charged twice and the bound doubles the adversary's work (`ExecutionCost.hand
   handler-state size bound, per-call work bounds for the lens code and a per-step inner-traffic
   bound. The structural primitives charged are the named counts `wrapStatePullCount`,
   `wrapStateStepCount` and `wrapStateUpdateCount`.
-* `StateLens.wpFold_charge_mapFreeM_le`: the program-side counterpart. Under any per-position
+* `StatefulLens.wpFold_charge_mapFreeM_le`: the program-side counterpart. Under any per-position
   charge on `r`, the substituted program costs at most the source program with each call charged
   the worst case of its forwarded query.
 -/
@@ -65,7 +65,7 @@ attribute [local implicit_reducible] PFunctor.Idx
 
 /-- The product readout returns with the handler state, or exposes the lens image of `M`'s
 query. -/
-theorem head_wrapState (M : DynComputation.{u} p α β) (L : StateLens p r σ)
+theorem head_wrapState (M : DynComputation.{u} p α β) (L : StatefulLens p r σ)
     (state : M.State × σ) :
     (M.wrapState L).head state = Sum.elim (fun value ↦ Sum.inl (value, state.2))
       (fun position ↦ Sum.inr (L.pos (position, state.2))) (M.head state.1) := by
@@ -76,7 +76,7 @@ theorem head_wrapState (M : DynComputation.{u} p α β) (L : StateLens p r σ)
 
 /-- The product transition pulls an inner answer back through the lens, then steps `M`. -/
 theorem update?_wrapState [DecidableEq p.A] [DecidableEq r.A] (M : DynComputation.{u} p α β)
-    (L : StateLens p r σ) (state : M.State × σ) (index : r.Idx) :
+    (L : StatefulLens p r σ) (state : M.State × σ) (index : r.Idx) :
     (M.wrapState L).update? (state, index) =
       (L.pullHead β ((M.head state.1, state.2), index)).bind fun pulled ↦
         (M.update? (state.1, pulled.1)).map fun next ↦ (next, pulled.2) := by
@@ -128,9 +128,9 @@ end Boundary
 
 /-- Executable evidence for a stateful lens: the forwarded inner query, and the partial pullback
 of a tagged inner answer (absorbing the returned case, as `Lens.pullHeadIdx` does). -/
-structure _root_.PFunctor.StateLens.QuantitativelyAdmissible
+structure _root_.PFunctor.StatefulLens.QuantitativelyAdmissible
     (Q : QuantitativeStepClass.{u, v, w} C) (bd : Boundary C p A B) (stateRep : C.Str σ)
-    (posRep : C.Str r.A) (idxRep : C.Str r.Idx) (L : StateLens p r σ) where
+    (posRep : C.Str r.A) (idxRep : C.Str r.Idx) (L : StatefulLens p r σ) where
   /-- Executable forwarding of an outer query at a handler state. -/
   onPos : Q.Realizer (P.prod bd.pos stateRep) posRep L.pos
   /-- Executable partial pullback of a tagged inner answer. -/
@@ -140,7 +140,7 @@ structure _root_.PFunctor.StateLens.QuantitativelyAdmissible
 omit [DecidableEq p.A] [DecidableEq r.A] in
 /-- Running against a stateful lens transfers relation-restricted resolution along the lens
 contract: every allowed inner answer pulls back to an allowed outer answer. -/
-theorem resolvesInUnder_wrapState (M : DynComputation.{u} p A B) (L : StateLens p r σ)
+theorem resolvesInUnder_wrapState (M : DynComputation.{u} p A B) (L : StatefulLens p r σ)
     {allowsP : ∀ position, p.B position → Prop} {allowsR : ∀ position, r.B position → Prop}
     (contract : ∀ position state answer, allowsR (L.pos (position, state)) answer →
       allowsP position (L.answer (position, state) answer))
@@ -164,7 +164,7 @@ omit [O : C.HasOption] [DecidableEq p.A] [DecidableEq r.A] in
 /-- The product readout is encoded within `R`'s readout, the handler state, the forwarded inner
 query (if any) and constant overheads. -/
 theorem size_head_wrapState_le [QP : Q.HasProd] [PC : Q.HasProdCost] [QS : Q.HasSum]
-    [SC : Q.HasSumCost] {stateRep : C.Str σ} {posRep : C.Str r.A} {L : StateLens p r σ}
+    [SC : Q.HasSumCost] {stateRep : C.Str σ} {posRep : C.Str r.A} {L : StatefulLens p r σ}
     (M : DynComputation.{u} p A B) (s : M.State) (st : σ) :
     Q.size (S.sum (P.prod bd.out stateRep) posRep) ((M.wrapState L).head (s, st)) ≤
       Q.size bd.head (M.head s) + Q.size stateRep st + PC.sizeOverhead + SC.sizeOverhead +
@@ -192,7 +192,7 @@ variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
 `((s, st), j) ↦ (L.pullHead ((R.head s, st), j), s)` — recompute the adversary's readout, pull the
 tagged inner answer back through the lens code, and keep the adversary state. -/
 def wrapStatePull (R : QuantitativeRealization Q bd) {stateRep : C.Str σ} {posRep : C.Str r.A}
-    {idxRep : C.Str r.Idx} {L : StateLens p r σ}
+    {idxRep : C.Str r.Idx} {L : StatefulLens p r σ}
     (hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep) :
     Q.Realizer (P.prod (P.prod R.state stateRep) idxRep)
       (P.prod (O.option (P.prod bd.idx stateRep)) R.state)
@@ -218,7 +218,7 @@ realization `R` runs against the stateful lens `L` in the product machine
 mixins. -/
 @[implicit_reducible]
 def wrapState (R : QuantitativeRealization Q bd) (stateRep : C.Str σ) (posRep : C.Str r.A)
-    (idxRep : C.Str r.Idx) {L : StateLens p r σ}
+    (idxRep : C.Str r.Idx) {L : StatefulLens p r σ}
     (hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep) :
     QuantitativeRealization Q (bd.withHandler stateRep posRep idxRep) where
   machine := R.machine.wrapState L
@@ -236,7 +236,7 @@ def wrapState (R : QuantitativeRealization Q bd) (stateRep : C.Str σ) (posRep :
 
 /-- The product realization implements stateful substitution of the adversary's program. -/
 theorem wrapState_implements (R : QuantitativeRealization Q bd) (stateRep : C.Str σ)
-    (posRep : C.Str r.A) (idxRep : C.Str r.Idx) {L : StateLens p r σ}
+    (posRep : C.Str r.A) (idxRep : C.Str r.Idx) {L : StatefulLens p r σ}
     (hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep) {program : A → FreeM p B}
     (h : R.machine.Implements program) :
     (R.wrapState stateRep posRep idxRep hL).machine.Implements
@@ -246,7 +246,7 @@ theorem wrapState_implements (R : QuantitativeRealization Q bd) (stateRep : C.St
 /-! ### Cost certificate -/
 
 variable {stateRep : C.Str σ} {posRep : C.Str r.A} {idxRep : C.Str r.Idx}
-  {L : StateLens p r σ}
+  {L : StatefulLens p r σ}
 
 /-- Per-step allowances for running `R` against an executable stateful lens.
 
@@ -443,7 +443,7 @@ theorem RunsWithinUnder.wrapState {R : QuantitativeRealization Q bd}
 
 /-- Every conforming product trace has a conforming source trace of `R` of the same length. -/
 theorem exists_source_conforms {R : QuantitativeRealization Q bd}
-    {stateRep : C.Str σ} {posRep : C.Str r.A} {idxRep : C.Str r.Idx} {L : StateLens p r σ}
+    {stateRep : C.Str σ} {posRep : C.Str r.A} {idxRep : C.Str r.Idx} {L : StatefulLens p r σ}
     {hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep}
     {allowsP : ∀ position, p.B position → Prop} {allowsR : ∀ position, r.B position → Prop}
     (contract : ∀ position state answer, allowsR (L.pos (position, state)) answer →
@@ -922,7 +922,7 @@ end DynSystem.DynComputation
 
 /-! ## The program-side counterpart -/
 
-namespace StateLens
+namespace StatefulLens
 
 variable {p r : PFunctor.{u, u}} {σ : Type u}
 
@@ -930,7 +930,7 @@ variable {p r : PFunctor.{u, u}} {σ : Type u}
 substituting a program along a stateful lens costs at most the source program with each call at
 `a` charged the worst forwarded query over handler states. With unit charges, the substituted
 program makes at most as many queries as the source on every branch. -/
-theorem wpFold_charge_mapFreeM_le (L : StateLens p r σ) (c : r.A → ℕ∞) {β : Type u}
+theorem wpFold_charge_mapFreeM_le (L : StatefulLens p r σ) (c : r.A → ℕ∞) {β : Type u}
     (x : FreeM p β) (state : σ) :
     FreeM.wpFold (OpSpec.charge c) (L.mapFreeM x state) (fun _ => 0) ≤
       FreeM.wpFold (OpSpec.charge fun a => ⨆ st, c (L.pos (a, st))) x (fun _ => 0) := by
@@ -948,6 +948,67 @@ theorem wpFold_charge_mapFreeM_le (L : StateLens p r σ) (c : r.A → ℕ∞) {�
     · exact iSup_le fun answer => (ih _ _).trans
         (le_iSup (fun b => FreeM.wpFold (OpSpec.charge fun a => ⨆ st, c (L.pos (a, st)))
           (next b) fun _ => 0) _)
+
+end StatefulLens
+
+namespace StateLens
+
+open DynSystem.DynComputation
+
+-- The old receiver heads are intentional; the deprecation type check does not unfold them.
+variable {p r : PFunctor.{u, u}}
+
+section QuantitativelyAdmissible
+
+variable {C : StepClass.{u, v}} [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
+  [DecidableEq r.A] {A B σ : Type u}
+
+@[inherit_doc StatefulLens.QuantitativelyAdmissible,
+  deprecated StatefulLens.QuantitativelyAdmissible +typeChanged (since := "2026-10-19")]
+def QuantitativelyAdmissible (Q : QuantitativeStepClass.{u, v, w} C)
+    (bd : Boundary C p A B) (stateRep : C.Str σ) (posRep : C.Str r.A)
+    (idxRep : C.Str r.Idx) (L : StateLens p r σ) :=
+  StatefulLens.QuantitativelyAdmissible Q bd stateRep posRep idxRep L
+
+variable {Q : QuantitativeStepClass.{u, v, w} C} {bd : Boundary C p A B}
+  {stateRep : C.Str σ} {posRep : C.Str r.A} {idxRep : C.Str r.Idx}
+
+/-- Construct executable evidence from forwarding and partial-pullback realizers. -/
+@[deprecated StatefulLens.QuantitativelyAdmissible.mk +typeChanged (since := "2026-10-19"),
+  match_pattern]
+def QuantitativelyAdmissible.mk {L : StateLens p r σ}
+    (onPos : Q.Realizer (P.prod bd.pos stateRep) posRep L.pos)
+    (onPull : Q.Realizer (P.prod (P.prod bd.head stateRep) idxRep)
+      (O.option (P.prod bd.idx stateRep)) (L.pullHead B)) :
+    QuantitativelyAdmissible Q bd stateRep posRep idxRep L :=
+  StatefulLens.QuantitativelyAdmissible.mk onPos onPull
+
+@[inherit_doc StatefulLens.QuantitativelyAdmissible.onPos,
+  deprecated StatefulLens.QuantitativelyAdmissible.onPos +typeChanged (since := "2026-10-19")]
+def QuantitativelyAdmissible.onPos {L : StateLens p r σ}
+    (self : QuantitativelyAdmissible Q bd stateRep posRep idxRep L) :
+    Q.Realizer (P.prod bd.pos stateRep) posRep L.pos :=
+  StatefulLens.QuantitativelyAdmissible.onPos self
+
+@[inherit_doc StatefulLens.QuantitativelyAdmissible.onPull,
+  deprecated StatefulLens.QuantitativelyAdmissible.onPull +typeChanged (since := "2026-10-19")]
+def QuantitativelyAdmissible.onPull {L : StateLens p r σ}
+    (self : QuantitativelyAdmissible Q bd stateRep posRep idxRep L) :
+    Q.Realizer (P.prod (P.prod bd.head stateRep) idxRep)
+      (O.option (P.prod bd.idx stateRep)) (L.pullHead B) :=
+  StatefulLens.QuantitativelyAdmissible.onPull self
+
+end QuantitativelyAdmissible
+
+variable {σ : Type u}
+
+@[inherit_doc StatefulLens.wpFold_charge_mapFreeM_le,
+  deprecated StatefulLens.wpFold_charge_mapFreeM_le +typeChanged (since := "2026-10-19")]
+theorem wpFold_charge_mapFreeM_le (L : StateLens p r σ) (c : r.A → ℕ∞) {β : Type u}
+    (x : FreeM p β) (state : σ) :
+    FreeM.wpFold (OpSpec.charge c) (L.mapFreeM x state) (fun _ => 0) ≤
+      FreeM.wpFold (OpSpec.charge fun a => ⨆ st, c (L.pos (a, st))) x (fun _ => 0) :=
+  StatefulLens.wpFold_charge_mapFreeM_le L c x state
 
 end StateLens
 

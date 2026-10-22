@@ -74,7 +74,7 @@ potentially infinite computation datatype `ITree` lives in its own subtree.
   free interaction structure on a polynomial container
 * Altenkirch–Ghani–Hancock–McBride–Morris (2015), *Indexed Containers*,
   Journal of Functional Programming 25, e5
-* Spivak–Niu (2025), *Polynomial Functors: A Mathematical Theory of
+* Niu–Spivak (2025), *Polynomial Functors: A Mathematical Theory of
   Interaction*, Cambridge University Press; the pattern-runs-on-matter
   module structure of `FreeM` over `Cofree`
 * Escardó–Oliva (2023, TCS 974), games as type trees
@@ -203,22 +203,28 @@ complete path of an outer tree. -/
 abbrev substMonoid : PFunctor.SubstMonoid.{u + 1, u} :=
   PFunctor.FreeP.substMonoid TypeTree.basePFunctor
 
-theorem substMonoid_unit_toFunA (x : PUnit) : TypeTree.substMonoid.unit.toFunA x = TypeTree.done :=
+theorem substMonoid_one_toFunA (x : PUnit) : TypeTree.substMonoid.one.toFunA x = TypeTree.done :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias substMonoid_unit_toFunA := substMonoid_one_toFunA
 
 -- Not `@[simp]`: `substMonoid` is a reducible `abbrev`, so the LHS
 -- dsimp-normalizes through the `FreeP.substMonoid` projection lemmas and the
 -- `simpNF` linter rejects the attribute. Used by name in `simp only` rewrites.
-theorem substMonoid_mult_toFunA (spec : TypeTree) (next : Path spec → TypeTree) :
-    TypeTree.substMonoid.mult.toFunA ⟨spec, next⟩ = spec.append next :=
+theorem substMonoid_mul_toFunA (spec : TypeTree) (next : Path spec → TypeTree) :
+    TypeTree.substMonoid.mul.toFunA ⟨spec, next⟩ = spec.append next :=
   rfl
 
--- Not `@[simp]` for the same `simpNF` reason as `substMonoid_mult_toFunA`.
-theorem substMonoid_mult_toFunB (spec : TypeTree) (next : Path spec → TypeTree)
+@[deprecated (since := "2026-10-19")] alias substMonoid_mult_toFunA := substMonoid_mul_toFunA
+
+-- Not `@[simp]` for the same `simpNF` reason as `substMonoid_mul_toFunA`.
+theorem substMonoid_mul_toFunB (spec : TypeTree) (next : Path spec → TypeTree)
     (tr : Path (spec.append next)) :
-    TypeTree.substMonoid.mult.toFunB ⟨spec, next⟩ tr =
+    TypeTree.substMonoid.mul.toFunB ⟨spec, next⟩ tr =
       PFunctor.FreeM.Path.split spec next tr :=
   rfl
+
+@[deprecated (since := "2026-10-19")] alias substMonoid_mult_toFunB := substMonoid_mul_toFunB
 
 /-- A straight-line `TypeTree` with no branching: each move type in the list
 becomes one round, and later rounds do not depend on earlier moves. -/

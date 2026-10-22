@@ -33,7 +33,7 @@ Precedence ensures `A ∥ B ⊞ C ⊠ K` parses as `((A ∥ B) ⊞ C) ⊠ K`.
 
 ## Polynomial (PFunctor) Notation
 
-The polynomial algebra uses the Spivak–Niu book surface, scoped to the
+The polynomial algebra uses the Niu–Spivak book surface, scoped to the
 `PFunctor` namespace (activated by `open scoped PFunctor`). The named
 definitions (`PFunctor.monomial`, `purePower`, `comp`, `compNth`,
 `sigma`, `pi`, …) remain the canonical API; every glyph below is sugar
@@ -80,10 +80,28 @@ Conventions and glyph rationale:
   U+25C1 `◁` (Mathlib's monoidal whiskering) and must not be confused
   with the containers-school/Agda former `S ▷ P`, which PolyFun spells
   with the anonymous constructor `⟨S, P⟩`.
-- The transitional `X`-spelling (deprecated aliases, parse-only `A X^ B`)
-  lives beside each canonical declaration so direct imports remain compatible;
+- The transitional spellings (deprecated aliases, parse-only `A X^ B`)
+  live beside each canonical declaration so direct imports remain compatible;
   [`Deprecated.lean`](../../PolyFun/PFunctor/Deprecated.lean) aggregates the
   full surface. It is slated for removal once downstream projects migrate.
+
+### Lenses and charts
+
+The lens and chart operators are scoped to `PFunctor` as well (activated by
+`open scoped PFunctor`); a file inside `namespace PFunctor` sees them without an `open`. They
+are never global, because Mathlib declares `∘ₗ` (`LinearMap.comp`), `×ₗ` (`Lex`) and
+`≃ₗ[R]` (`LinearEquiv`) globally. They are defined in
+[`Lens/Basic.lean`](../../PolyFun/PFunctor/Lens/Basic.lean) and
+[`Chart/Basic.lean`](../../PolyFun/PFunctor/Chart/Basic.lean).
+
+| Notation | Meaning | Prec |
+|----------|---------|------|
+| `g ∘ₗ f` | `Lens.comp g f` (`f` first, then `g`) | 75l |
+| `P ≃ₗ Q` | `Lens.Equiv P Q` | 50 |
+| `l₁ ◃ₗ l₂`, `l₁ ×ₗ l₂`, `l₁ ⊎ₗ l₂`, `l₁ ⊗ₗ l₂` | `Lens.compMap`, `prodMap`, `sumMap`, `tensorMap` | 75l |
+| `g ∘c f` | `Chart.comp g f` | 75l |
+| `P ≃c Q` | `Chart.Equiv P Q` | 50 |
+| `c₁ ⊎c c₂`, `c₁ ⊗c c₂`, `c₁ ×c c₂` | `Chart.sumMap`, `tensorMap`, `prodMap` | 75l |
 
 ## FreeM and Dynamical Notation
 
@@ -94,7 +112,7 @@ Conventions and glyph rationale:
 - `Responder S q` and the game formers in
   `PolyFun/PFunctor/Dynamical/{Responder, Game}.lean` are dynamical
   systems over `q ⊸ y` and `q ⊸ r`; the positions of `q ⊸ r` are the
-  lenses `Lens q r` (Spivak–Niu Ex 4.78).
+  lenses `Lens q r` (Niu–Spivak Ex 4.78).
 - Lens and chart constructors have the scoped arrows `toFunA ⇆ toFunB` (`Lens.mk`) and
   `toFunA ⇉ toFunB` (`Chart.mk`), active under `open scoped PFunctor` like the rest of the
   polynomial algebra. The pairing brackets `⟨l₁, l₂⟩ₗ` / `[l₁, l₂]ₗ` (`Lens.prodPair` /
@@ -115,8 +133,8 @@ Conventions and glyph rationale:
   about resource bounds.
 - Bundled monad morphisms (`PolyFun/Control/Monad/Hom.lean`) write their type as
   `m →ᵐ n` (`MonadHom m n`) and their composition as `G ∘ᵐ F` (`MonadHom.comp`). Both
-  are global, like the lens and chart operators. The superscript `ᵐ` keeps the composition
-  glyph distinct from Mathlib's `scoped[ProbabilityTheory]` `κ ∘ₘ μ` (`Measure.bind`).
+  are global. The superscript `ᵐ` keeps the composition glyph distinct from Mathlib's
+  `scoped[ProbabilityTheory]` `κ ∘ₘ μ` (`Measure.bind`).
 - Comonadic cosequencing `xs <@> ys`, `xs <@ ys`, `xs @> ys` (`Coseq.coseq`,
   `CoseqLeft.coseqLeft`, `CoseqRight.coseqRight` in `PolyFun/Control/Comonad/Basic.lean`)
   is opt-in via `open scoped Coapplicative`.

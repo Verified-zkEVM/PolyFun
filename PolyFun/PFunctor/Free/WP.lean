@@ -58,9 +58,12 @@ namespace OpSpec
 
 variable {P : PFunctor.{uA, uB}} {l : Type w}
 
-/-- Monotonicity of a per-operation spec in its continuation. -/
-def Mono [Preorder l] (Φ : OpSpec P l) : Prop :=
+/-- Monotonicity of a per-operation spec in its continuation: at every position `a`, `Φ a` is
+`Monotone` for the pointwise order on continuations. -/
+protected def Monotone [Preorder l] (Φ : OpSpec P l) : Prop :=
   ∀ (a : P.A) ⦃k k' : P.B a → l⦄, (∀ b, k b ≤ k' b) → Φ a k ≤ Φ a k'
+
+@[deprecated (since := "2026-10-19")] alias Mono := OpSpec.Monotone
 
 /-- The demonic ("all responses") spec on the `Prop` carrier: a call to `a`
 guarantees only that *every* response satisfies the continuation. -/
@@ -86,18 +89,18 @@ along any response satisfying `allows`. -/
 def angelicUnder (allows : (a : P.A) → P.B a → Prop) : OpSpec P Prop :=
   fun a k => ∃ b, allows a b ∧ k b
 
-theorem demonic_mono : (demonic P).Mono :=
+theorem demonic_mono : (demonic P).Monotone :=
   fun _ _ _ h hk b => h b (hk b)
 
 theorem demonicUnder_mono (allows : (a : P.A) → P.B a → Prop) :
-    (demonicUnder allows).Mono :=
+    (demonicUnder allows).Monotone :=
   fun _ _ _ h hk b hb => h b (hk b hb)
 
-theorem angelic_mono : (angelic P).Mono :=
+theorem angelic_mono : (angelic P).Monotone :=
   fun _ _ _ h => fun ⟨b, hb⟩ => ⟨b, h b hb⟩
 
 theorem angelicUnder_mono (allows : (a : P.A) → P.B a → Prop) :
-    (angelicUnder allows).Mono :=
+    (angelicUnder allows).Monotone :=
   fun _ _ _ h => fun ⟨b, hb, hk⟩ => ⟨b, hb, h b hk⟩
 
 end OpSpec
@@ -198,7 +201,7 @@ theorem wpFold_sum_elim {γ : Type uX} {δ : Type uY} (Φ : OpSpec P l) (s : γ 
       s.elim (fun c => wpFold Φ (f c) post) fun d => wpFold Φ (g d) post := by
   cases s <;> rfl
 
-theorem wpFold_mono [Preorder l] {Φ : OpSpec P l} (hΦ : Φ.Mono) (x : FreeM P α)
+theorem wpFold_mono [Preorder l] {Φ : OpSpec P l} (hΦ : Φ.Monotone) (x : FreeM P α)
     {post post' : α → l} (h : ∀ a, post a ≤ post' a) :
     wpFold Φ x post ≤ wpFold Φ x post' := by
   induction x with
@@ -590,7 +593,7 @@ theorem _root_.PFunctor.OpSpec.pullback_pullback {Q : PFunctor.{uA₂, uB}}
 monad algebra on `FreeM P`: the fold at the identity postcondition. -/
 @[instance_reducible]
 def _root_.PFunctor.OpSpec.toMAlgOrdered {l : Type v} [CompleteLattice l]
-    (Φ : OpSpec P l) (hΦ : Φ.Mono) : MAlgOrdered (FreeM P) l where
+    (Φ : OpSpec P l) (hΦ : Φ.Monotone) : MAlgOrdered (FreeM P) l where
   μ x := wpFold Φ x id
   μ_pure _ := rfl
   μ_bind_mono f g hfg x := by
@@ -600,7 +603,7 @@ def _root_.PFunctor.OpSpec.toMAlgOrdered {l : Type v} [CompleteLattice l]
 /-- The algebra induced by a per-operation spec sends a program with a mapped output to its
 syntactic fold. -/
 theorem toMAlgOrdered_μ_bind_pure {l : Type v} [CompleteLattice l]
-    (Φ : OpSpec P l) (hΦ : Φ.Mono) (x : FreeM P α) (post : α → l) :
+    (Φ : OpSpec P l) (hΦ : Φ.Monotone) (x : FreeM P α) (post : α → l) :
     letI := Φ.toMAlgOrdered hΦ
     MAlgOrdered.μ (x >>= fun a => pure (post a)) = wpFold Φ x post := by
   change wpFold Φ (x >>= fun a => pure (post a)) id = _

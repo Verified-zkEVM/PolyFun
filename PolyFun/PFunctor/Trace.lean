@@ -294,12 +294,14 @@ theorem mapPartial_none {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB�
   simp
 
 /-- Partial event maps compose by binding their optional outputs. -/
-theorem mapPartial_comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+theorem mapPartial_mapPartial {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
     {R : PFunctor.{uA₃, uB₃}} (g : Idx Q → Option (Idx R))
     (f : Idx P → Option (Idx Q)) (t : TraceList P) :
     mapPartial g (mapPartial f t) = mapPartial (fun i => (f i).bind g) t := by
   apply FreeMonoid.toList.injective
   simp only [toList_mapPartial, List.filterMap_filterMap]
+
+@[deprecated (since := "2026-10-19")] alias mapPartial_comp := mapPartial_mapPartial
 
 end TraceList
 
@@ -358,10 +360,13 @@ def toMonoid {ω : Type w} [Monoid ω] (φ : Idx P → ω) : Trace P X → Contr
   funext x
   exact TraceList.mapPartial_some (t x)
 
-theorem mapPartial_comp (g : Idx Q → Option (Idx R)) (f : Idx P → Option (Idx Q)) (t : Trace P X) :
+theorem mapPartial_mapPartial (g : Idx Q → Option (Idx R)) (f : Idx P → Option (Idx Q))
+    (t : Trace P X) :
     mapPartial g (mapPartial f t) = mapPartial (fun i => (f i).bind g) t := by
   funext x
-  exact TraceList.mapPartial_comp g f (t x)
+  exact TraceList.mapPartial_mapPartial g f (t x)
+
+@[deprecated (since := "2026-10-19")] alias mapPartial_comp := mapPartial_mapPartial
 
 @[simp]
 theorem mapPartial_none (t : Trace P X) : mapPartial (Q := Q) (fun _ => none) t = 1 := by
@@ -376,7 +381,7 @@ theorem mapPartial_none (t : Trace P X) : mapPartial (Q := Q) (fun _ => none) t 
   change mapPartial (fun i => some (Chart.mapIdx (g ∘c f) i)) t =
     mapPartial (fun i => some (Chart.mapIdx g i))
       (mapPartial (fun i => some (Chart.mapIdx f i)) t)
-  rw [mapPartial_comp]
+  rw [mapPartial_mapPartial]
   rfl
 
 /-! ### Trivial-trace lemmas

@@ -19,7 +19,11 @@ Checks for `PolyFun.PFunctor.Free.WP.Charge` and `Spec.lift_upper` on a coin int
 * under the upper-bound reading of the unit charge, `vcgen` decomposes the first flip and the
   remaining condition closes on the fold;
 * the ranked triple, read in that same upper-bound reading, bounds the charge of a simulated
-  program by twice its budget.
+  program by twice its budget;
+* over a counting `StateT` handler, `triple_liftM_invariant` carries the parity of the counter
+  through every simulated program, and `triple_liftM_of_isRollBound` bounds the counter by a budget
+  that charges only the metered operation, alone or paired with a total bound by
+  `IsRollBound.prod`.
 -/
 
 public section
@@ -100,5 +104,64 @@ example (x : FreeM Coin Bool) (k : ℕ) (hx : FreeM.IsTotalRollBound x k) :
   · intro j
     simp only [Lean.Order.rel_eq_le, toDual_le_toDual]
     exact_mod_cast (by omega : 2 * 0 ≤ 2 * j)
+
+/-! ## Handlers with state -/
+
+/-- Each flip advances a counter by two and answers `true`. -/
+def countTwice : (a : Coin.A) → StateT ℕ Id (Coin.B a) := fun _ => do
+  modify (· + 2)
+  pure true
+
+/- The parity of the counter is an invariant of every simulated coin program. -/
+example (x : FreeM Coin Bool) :
+    ⦃ fun s => Even s ⦄ (x.liftM countTwice) ⦃ fun _ s => Even s ⦄ :=
+  FreeM.triple_liftM_invariant countTwice (fun s => Even s) _
+    (fun _ => by
+      vcgen [countTwice]
+      grind)
+    x
+
+/-- An interface with a metered and an unmetered operation, both answering `Bool`. -/
+abbrev Metered : PFunctor.{0, 0} := ⟨Bool, fun _ => Bool⟩
+
+/-- A budget that admits an unmetered call at every budget and charges a metered call one unit. -/
+abbrev MeteredBound (x : FreeM Metered Bool) (k : ℕ) : Prop :=
+  FreeM.IsRollBound x k (fun a b => a = true → 0 < b) (fun a b => if a then b - 1 else b)
+
+/-- The handler counts the metered calls only. -/
+def countMetered : (a : Metered.A) → StateT ℕ Id (Metered.B a) := fun a => do
+  if a then modify (· + 1)
+  pure a
+
+/-- The metered calls of a program within budget `k` advance the counter by at most `k`. -/
+theorem countMetered_le (x : FreeM Metered Bool) (k : ℕ) (hx : MeteredBound x k) :
+    ⦃ fun s => s + k ≤ k ⦄ (x.liftM countMetered) ⦃ fun _ s => s ≤ k ⦄ := by
+  refine FreeM.triple_liftM_of_isRollBound countMetered (fun b s => s + b ≤ k) (fun s => s ≤ k)
+    _ (fun a b hb => ?_) (fun b s hs => by omega) x k hx
+  cases a
+  · vcgen [countMetered]
+    all_goals simp_all
+  · vcgen [countMetered]
+    all_goals simp_all
+    omega
+
+/- Started at `0`, the counter ends at most the budget. -/
+example (x : FreeM Metered Bool) (k : ℕ) (hx : MeteredBound x k) :
+    ⦃ fun s => s = 0 ⦄ (x.liftM countMetered) ⦃ fun _ s => s ≤ k ⦄ :=
+  ⟨Triple.entails_wp_of_pre (countMetered_le x k hx) fun s hs => by simp [hs]⟩
+
+/- The metered budget paired with a total bound is a product budget, and the ranked triple
+over it reads only the metered component. -/
+example (x : FreeM Metered Bool) (k n : ℕ) (hx : MeteredBound x k)
+    (hn : FreeM.IsTotalRollBound x n) :
+    ⦃ fun s => s + k ≤ k ⦄ (x.liftM countMetered) ⦃ fun _ s => s ≤ k ⦄ := by
+  refine FreeM.triple_liftM_of_isRollBound countMetered (fun p s => s + p.1 ≤ k)
+    (fun s => s ≤ k) _ (fun a p hp => ?_) (fun p s hs => by omega) x (k, n) (hx.prod hn)
+  cases a
+  · vcgen [countMetered]
+    all_goals simp_all
+  · vcgen [countMetered]
+    all_goals simp_all
+    omega
 
 end PFunctor.ChargeTest

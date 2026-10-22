@@ -85,8 +85,8 @@ mutually safety-refining while preserving the stable tickets attached to complet
 paths.
 -/
 abbrev Ticket {Party : Type u} {TicketTy : Type w} (left right : Process.SafetySpec Party)
-    (ticketLeft : left.toProcess.Tickets TicketTy)
-    (ticketRight : right.toProcess.Tickets TicketTy) :=
+    (ticketLeft : left.toProcess.TicketMap TicketTy)
+    (ticketRight : right.toProcess.TicketMap TicketTy) :=
   Refinement.MutualSafetyRefinement left right
     (Observation.Process.StepRel.byTicket ticketLeft ticketRight)
     (Observation.Process.StepRel.byTicket
@@ -134,7 +134,7 @@ sequence of every finite run prefix is preserved.
 -/
 theorem currentControllersUpTo_eq {Party : Type u} {left right : Process.SafetySpec Party}
     (equiv : Controller left right) (run : Process.Run left.toProcess) {pRight : right.Proc}
-    (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
+    (hrel : equiv.forth.StateRel run.initial pRight) (n : Nat) :
     Process.Run.currentControllersUpTo run n =
       Process.Run.currentControllersUpTo (equiv.forth.mapRun run hrel) n :=
   Refinement.SafetyRefinement.currentControllersUpTo_mapRun equiv.forth run hrel n
@@ -172,7 +172,7 @@ controller-path sequence of every finite run prefix is preserved.
 -/
 theorem controllerPathsUpTo_eq {Party : Type u} {left right : Process.SafetySpec Party}
     (equiv : ControllerPath left right) (run : Process.Run left.toProcess) {pRight : right.Proc}
-    (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
+    (hrel : equiv.forth.StateRel run.initial pRight) (n : Nat) :
     Process.Run.controllerPathsUpTo run n =
       Process.Run.controllerPathsUpTo (equiv.forth.mapRun run hrel) n :=
   Refinement.SafetyRefinement.controllerPathsUpTo_mapRun equiv.forth run hrel n
@@ -214,7 +214,7 @@ every finite run prefix is preserved.
 theorem eventsUpTo_eq {Party : Type u} {Event : Type w} {left right : Process.SafetySpec Party}
     {eventLeft : left.toProcess.EventMap Event} {eventRight : right.toProcess.EventMap Event}
     (equiv : Trace left right eventLeft eventRight) (run : Process.Run left.toProcess)
-    {pRight : right.Proc} (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
+    {pRight : right.Proc} (hrel : equiv.forth.StateRel run.initial pRight) (n : Nat) :
     Process.Run.eventsUpTo eventLeft run n =
       Process.Run.eventsUpTo eventRight (equiv.forth.mapRun run hrel) n :=
   Refinement.SafetyRefinement.eventsUpTo_mapRun equiv.forth run hrel n
@@ -226,7 +226,7 @@ namespace Ticket
 /-- Ticket equivalence is reflexive for any fixed ticket map. -/
 @[refl]
 def refl {Party : Type u} {TicketTy : Type w} (system : Process.SafetySpec Party)
-    (ticket : system.toProcess.Tickets TicketTy) : Ticket system system ticket ticket :=
+    (ticket : system.toProcess.TicketMap TicketTy) : Ticket system system ticket ticket :=
   PFunctor.DynSystem.MutualSafetyRefinement.refl system
     (Observation.Process.StepRel.byTicket ticket ticket)
     (Observation.Process.StepRel.byTicket ticket ticket)
@@ -235,16 +235,17 @@ def refl {Party : Type u} {TicketTy : Type w} (system : Process.SafetySpec Party
 /-- Ticket equivalence is symmetric. -/
 @[symm]
 def symm {Party : Type u} {TicketTy : Type w} {left right : Process.SafetySpec Party}
-    {ticketLeft : left.toProcess.Tickets TicketTy} {ticketRight : right.toProcess.Tickets TicketTy}
+    {ticketLeft : left.toProcess.TicketMap TicketTy}
+    {ticketRight : right.toProcess.TicketMap TicketTy}
     (equiv : Ticket left right ticketLeft ticketRight) : Ticket right left ticketRight ticketLeft :=
   PFunctor.DynSystem.MutualSafetyRefinement.symm equiv
 
 /-- Ticket equivalence is transitive through a shared middle ticket map. -/
 @[trans]
 def trans {Party : Type u} {TicketTy : Type w} {left middle right : Process.SafetySpec Party}
-    {ticketLeft : left.toProcess.Tickets TicketTy}
-    {ticketMiddle : middle.toProcess.Tickets TicketTy}
-    {ticketRight : right.toProcess.Tickets TicketTy}
+    {ticketLeft : left.toProcess.TicketMap TicketTy}
+    {ticketMiddle : middle.toProcess.TicketMap TicketTy}
+    {ticketRight : right.toProcess.TicketMap TicketTy}
     (first : Ticket left middle ticketLeft ticketMiddle)
     (second : Ticket middle right ticketMiddle ticketRight) :
     Ticket left right ticketLeft ticketRight :=
@@ -257,9 +258,10 @@ Along the forward direction of a ticket equivalence, the stable ticket
 sequence of every finite run prefix is preserved.
 -/
 theorem ticketsUpTo_eq {Party : Type u} {TicketTy : Type w} {left right : Process.SafetySpec Party}
-    {ticketLeft : left.toProcess.Tickets TicketTy} {ticketRight : right.toProcess.Tickets TicketTy}
+    {ticketLeft : left.toProcess.TicketMap TicketTy}
+    {ticketRight : right.toProcess.TicketMap TicketTy}
     (equiv : Ticket left right ticketLeft ticketRight) (run : Process.Run left.toProcess)
-    {pRight : right.Proc} (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
+    {pRight : right.Proc} (hrel : equiv.forth.StateRel run.initial pRight) (n : Nat) :
     Process.Run.ticketsUpTo ticketLeft run n =
       Process.Run.ticketsUpTo ticketRight (equiv.forth.mapRun run hrel) n :=
   Refinement.SafetyRefinement.ticketsUpTo_mapRun equiv.forth run hrel n
@@ -299,7 +301,7 @@ observations of the chosen party are preserved on every finite run prefix.
 theorem observationsUpTo_eq {Party : Type u} [DecidableEq Party] (me : Party)
     {left right : Process.SafetySpec Party} (equiv : Observation me left right)
     (run : Process.Run left.toProcess) {pRight : right.Proc}
-    (hrel : equiv.forth.stateRel run.initial pRight) (n : Nat) :
+    (hrel : equiv.forth.StateRel run.initial pRight) (n : Nat) :
     Observation.Process.Run.observationsUpTo me run n =
       Observation.Process.Run.observationsUpTo me (equiv.forth.mapRun run hrel) n :=
   Refinement.SafetyRefinement.observationsUpTo_mapRun me equiv.forth run hrel n

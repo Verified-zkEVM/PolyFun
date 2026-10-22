@@ -33,7 +33,7 @@ def wordUnit : Lens y wordP :=
   (fun _ => []) ⇆ (fun _ _ => PUnit.unit)
 
 /-- Substitution concatenates the outer label before the inner label. -/
-def wordMult : Lens (wordP ◃ wordP) wordP :=
+def wordMul : Lens (wordP ◃ wordP) wordP :=
   (fun a => a.1 ++ a.2 PUnit.unit) ⇆
     (fun _ _ => ⟨PUnit.unit, PUnit.unit⟩)
 
@@ -41,20 +41,20 @@ def wordMult : Lens (wordP ◃ wordP) wordP :=
 monoid. -/
 def wordMonoid : SubstMonoid where
   carrier := wordP
-  unit := wordUnit
-  mult := wordMult
-  unit_left := by
+  one := wordUnit
+  mul := wordMul
+  one_mul := by
     apply Lens.ext _ _ (fun _ => rfl)
     intro a
     exact Subsingleton.elim _ _
-  unit_right := by
+  mul_one := by
     apply Lens.ext _ _ List.append_nil
     intro a
     exact Subsingleton.elim _ _
-  assoc := by
+  mul_assoc := by
     let hA : ∀ a : ((wordP ◃ wordP) ◃ wordP).A,
-        (wordMult ∘ₗ (wordMult ◃ₗ Lens.id wordP)).toFunA a =
-          (wordMult ∘ₗ (Lens.id wordP ◃ₗ wordMult) ∘ₗ
+        (wordMul ∘ₗ (wordMul ◃ₗ Lens.id wordP)).toFunA a =
+          (wordMul ∘ₗ (Lens.id wordP ◃ₗ wordMul) ∘ₗ
             Lens.Equiv.compAssoc.toLens).toFunA a := fun a =>
       List.append_assoc a.1.1 (a.1.2 PUnit.unit) (a.2 ⟨PUnit.unit, PUnit.unit⟩)
     apply Lens.ext _ _ hA
@@ -74,7 +74,7 @@ def wordMonoid : SubstMonoid where
     exact Subsingleton.elim _ _
 
 /-- The multiplication order is observable and is outer-before-inner. -/
-example : wordMonoid.mult.toFunA
+example : wordMonoid.mul.toFunA
     (⟨[false], fun _ : PUnit => [true]⟩ : (wordP ◃ wordP).A) =
       [false, true] := rfl
 
@@ -83,11 +83,11 @@ homomorphism. -/
 def wordMapHom (f : Bool → List Bool) :
     SubstMonoid.Hom wordMonoid wordMonoid where
   toLens := List.flatMap f ⇆ (fun _ d => d)
-  map_unit := rfl
-  map_mult := by
+  map_one := rfl
+  map_mul := by
     let hA : ∀ a : (wordP ◃ wordP).A,
-        ((List.flatMap f ⇆ fun _ d => d) ∘ₗ wordMult).toFunA a =
-          (wordMult ∘ₗ ((List.flatMap f ⇆ fun _ d => d) ◃ₗ
+        ((List.flatMap f ⇆ fun _ d => d) ∘ₗ wordMul).toFunA a =
+          (wordMul ∘ₗ ((List.flatMap f ⇆ fun _ d => d) ◃ₗ
             (List.flatMap f ⇆ fun _ d => d))).toFunA a := fun _ =>
       List.flatMap_append
     apply Lens.ext _ _ hA
@@ -132,9 +132,9 @@ example {M N O : SubstMonoid.{u, v}} (f : M ⟶ N) (g : N ⟶ O) :
     (f ≫ g).toLens = g.toLens ∘ₗ f.toLens := rfl
 
 /-- Position and direction universes of substitution monoids are independent. -/
-example (M : SubstMonoid.{u, v}) : M.mult ∘ₗ
-    (M.unit ◃ₗ Lens.id M.carrier) ∘ₗ Lens.Equiv.yComp.invLens =
-    Lens.id M.carrier := M.unit_left
+example (M : SubstMonoid.{u, v}) : M.mul ∘ₗ
+    (M.one ◃ₗ Lens.id M.carrier) ∘ₗ Lens.Equiv.yComp.invLens =
+    Lens.id M.carrier := M.one_mul
 
 end SubstMonoidTest
 end PFunctor

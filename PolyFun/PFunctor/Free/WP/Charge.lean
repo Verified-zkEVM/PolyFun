@@ -23,11 +23,14 @@ public import Mathlib.Data.ENat.Lattice
 * `wpFold_charge_liftM_le`: a program simulated through a handler costs at most the program with
   each call charged its handler's worst case (`handlerCost`). This is `wpFold_liftM` for the
   charge reading, with `wpFold_charge_le` splitting off the continuation.
-* `triple_liftM_ranked`: the same budget as a core triple. If every call at `a` turns a
-  rank-`(k + c a)` precondition into a rank-`k` one, then any program within budget `k` maps rank
-  `k` to rank `0`. The budget sits in the precondition rather than under a supremum, which is the
-  shape `vcgen` decomposes call by call; with a rank family carrying a bad-event indicator plus
-  the remaining budget, it is the union bound over the calls.
+* `triple_liftM_of_isRollBound`: a roll budget as a core triple. If a call at `a` admitted at
+  budget `b` turns rank `Φ b` into rank `Φ (cost a b)`, then any program within budget `b` maps
+  rank `Φ b` to the final assertion. The budget sits in the precondition rather than under a
+  supremum, which is the shape `vcgen` decomposes call by call; with a rank family carrying a
+  bad-event indicator plus the remaining budget, it is the union bound over the calls.
+  `triple_liftM_ranked` is the subtractive natural-number budget (a call at `a` consumes `c a`)
+  and `triple_liftM_ranked_total` the unit-charge one.
+* `triple_liftM_invariant`: the unranked case, in which every call preserves one assertion.
 
 Under the upper-bound reading `(OpSpec.charge c).toUpperWPMonad (OpSpec.charge_mono c)`, a triple
 `⦃ toDual t ⦄ x ⦃ post ⦄` states that the charge-to-go of `x` is at most `t`.
@@ -61,7 +64,7 @@ theorem charge_apply {R : Type w} [CompleteLattice R] [Add R] (c : P.A → R) (a
 
 /-- The charge reading is monotone whenever addition is. -/
 theorem charge_mono {R : Type w} [CompleteLattice R] [Add R] [AddLeftMono R] (c : P.A → R) :
-    (charge c).Mono := by
+    (charge c).Monotone := by
   intro a k k' hk
   change c a + ⨆ b, k b ≤ c a + ⨆ b, k' b
   gcongr with b
@@ -154,6 +157,36 @@ section Ranked
 variable {n : Type uB → Type w} [Monad n] {Pred : Type v} {EPred : Type z}
   [Assertion Pred] [Assertion EPred] [WPMonad n Pred EPred]
 
+/-- **Invariant simulation.** If every call of the handler preserves an assertion, then every
+program simulated through it preserves that assertion. -/
+theorem triple_liftM_invariant (handler : (a : P.A) → n (P.B a)) (I : Pred) (E : EPred)
+    (hstep : ∀ a, Triple (handler a) I (fun _ => I) E) (x : FreeM P α) :
+    Triple (x.liftM handler) I (fun _ => I) E := by
+  induction x with
+  | pure x => exact Triple.pure x Lean.Order.PartialOrder.rel_refl
+  | lift_bind a r ih =>
+    change Triple (handler a >>= fun u => (r u).liftM handler) _ _ E
+    exact Triple.bind _ _ _ (hstep a) ih
+
+/-- **Ranked simulation** over any roll budget. If a call at `a` admitted at budget `b` turns rank
+`Φ b` into rank `Φ (cost a b)`, and every rank entails the final assertion `Φ₀`, then a program
+within budget `b` (`IsRollBound x b canRoll cost`) maps rank `Φ b` to `Φ₀`. The budget type, the
+admission test and the cost are those of the roll bound; `triple_liftM_ranked` is the subtractive
+natural-number budget, `triple_liftM_ranked_total` the unit-charge one, and `IsRollBound.prod` and
+`IsRollBound.pi` combine budgets. -/
+theorem triple_liftM_of_isRollBound {B : Type*} (handler : (a : P.A) → n (P.B a))
+    {canRoll : P.A → B → Prop} {cost : P.A → B → B} (Φ : B → Pred) (Φ₀ : Pred) (E : EPred)
+    (hstep : ∀ a b, canRoll a b → Triple (handler a) (Φ b) (fun _ => Φ (cost a b)) E)
+    (hdrop : ∀ b, Lean.Order.PartialOrder.rel (Φ b) Φ₀)
+    (x : FreeM P α) (b : B) (hx : IsRollBound x b canRoll cost) :
+    Triple (x.liftM handler) (Φ b) (fun _ => Φ₀) E := by
+  induction x generalizing b with
+  | pure x => exact Triple.pure x (hdrop b)
+  | lift_bind a r ih =>
+    rw [isRollBound_lift_bind_iff] at hx
+    change Triple (handler a >>= fun u => (r u).liftM handler) _ _ E
+    exact Triple.bind _ _ _ (hstep a b hx.1) fun u => ih u (cost a b) (hx.2 u)
+
 /-- **Ranked simulation.** If every call at `a` consumes `c a` units of rank, then a program
 within budget `k` maps rank `k` to rank `0`, after dropping unspent rank. -/
 theorem triple_liftM_ranked (handler : (a : P.A) → n (P.B a)) (c : P.A → ℕ)
@@ -163,14 +196,10 @@ theorem triple_liftM_ranked (handler : (a : P.A) → n (P.B a)) (c : P.A → ℕ
     (x : FreeM P α) (k : ℕ)
     (hx : IsRollBound x k (fun a b => c a ≤ b) (fun a b => b - c a)) :
     Triple (x.liftM handler) (Φ k) (fun _ => Φ 0) E := by
-  induction x generalizing k with
-  | pure x => exact Triple.pure x (hdrop k)
-  | lift_bind a r ih =>
-    rw [isRollBound_lift_bind_iff] at hx
-    obtain ⟨hc, hr⟩ := hx
-    obtain ⟨j, rfl⟩ : ∃ j, k = j + c a := ⟨k - c a, (Nat.sub_add_cancel hc).symm⟩
-    change Triple (handler a >>= fun u => (r u).liftM handler) _ _ E
-    exact Triple.bind _ _ _ (hstep a j) fun u => ih u j (by simpa using hr u)
+  refine triple_liftM_of_isRollBound handler Φ (Φ 0) E (fun a b hb => ?_) hdrop x k hx
+  obtain ⟨j, rfl⟩ : ∃ j, b = j + c a := ⟨b - c a, (Nat.sub_add_cancel hb).symm⟩
+  rw [Nat.add_sub_cancel]
+  exact hstep a j
 
 /-- Ranked simulation with unit charges, under a total roll bound. -/
 theorem triple_liftM_ranked_total (handler : (a : P.A) → n (P.B a)) (Φ : ℕ → Pred) (E : EPred)

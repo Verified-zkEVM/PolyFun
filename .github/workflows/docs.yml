@@ -29,7 +29,10 @@ jobs:
       - name: Build project
         uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0
         with:
-          # The action also runs lake lint; build every configured lint root first.
+          # CI runs the tests and the environment linters (one process per lint root); a single
+          # `lake lint` over every root needs about 7 GB and shuts the hosted runner down.
+          test: false
+          lint: false
           build-args: >-
             PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain
             --log-level=warning

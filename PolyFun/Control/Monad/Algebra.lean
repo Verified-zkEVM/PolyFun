@@ -12,8 +12,10 @@ public import Mathlib.Order.CompleteLattice.Basic
 
 This file contains two layers:
 
-1. A minimal `MonadAlgebra` interface: a structure map `m α → α`, made Eilenberg-Moore
-   by `LawfulMonadAlgebra`.
+1. A minimal `MonadAlgebra` interface: a structure map `m α → α` uniform in `α`. Under
+   `LawfulMonadAlgebra` the uniform family preserves `pure` and `bind`; for a lawful endomonad
+   it is a natural monad morphism from `m` to `Id` and each component is an Eilenberg-Moore
+   algebra on `α`.
 2. Ordered monad algebras `MAlgOrdered m l`: a structure map `μ : m l → l` into a complete
    lattice that fixes `pure` and is monotone under `bind`. An ordered algebra is the most
    economical presentation of an *exact* weakest-precondition interpretation: one map and two
@@ -46,7 +48,10 @@ class MonadAlgebra (m : Type u → Type v) where
 export MonadAlgebra (monadAlg)
 
 /-- A monad algebra is lawful when its structure map is compatible with the monad's `pure` and
-`bind`, making it an Eilenberg-Moore algebra. -/
+`bind`: the uniform family `m α → α` preserves both, as a `pure`/`bind` morphism from `m` to `Id`.
+The class constrains neither `Functor.map` nor the monad laws, and allows `m : Type u → Type v`.
+When `m` is a lawful endomonad (`[LawfulMonad m]` with `v = u`), the family is moreover natural,
+hence a monad morphism `m → Id`, and each component is an Eilenberg-Moore algebra on `α`. -/
 class LawfulMonadAlgebra (m : Type u → Type v) [Monad m] [MonadAlgebra m] where
   monadAlg_pure {α : Type u} (a : α) : monadAlg (pure a : m α) = a
   monadAlg_bind {α β : Type u} (ma : m α) (mb : α → m β) :
