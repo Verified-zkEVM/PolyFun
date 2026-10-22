@@ -8,6 +8,7 @@ module
 public import Std.Tactic.Do
 public import Std.WP
 public import PolyFun.Control.Monad.WriterT.WP
+public import ToCslib.Data.Fin.MOfFn
 
 /-!
 # Additional Specifications and Normal Forms for `vcgen`
@@ -31,7 +32,9 @@ ranges, arrays, and iterators, and the operations of core's own transformers; th
   `ExceptT.mk`, `ExceptT.lift`, and running an `OptionT` or `ExceptT` into a postcondition of the
   option or the result, which outrank core's `Spec.run_OptionT` and `Spec.run_ExceptT`;
 * `List.mapM` with a loop invariant over the elements consumed, the elements remaining and the
-  outputs so far, and the sequence combinators `<*` and `*>`.
+  outputs so far, and the sequence combinators `<*` and `*>`;
+* `Fin.mOfFn` with a loop invariant `MOfFnInvariant` over the results collected so far, indexed
+  by their number.
 
 `StateT.run x s` is `x s` once `vcgen` has unfolded the reducible constants of its goal, so no
 rule can be keyed on it; a `StateT` program run at a state is reasoned about as a triple of the
@@ -332,6 +335,44 @@ theorem Spec.mapM_list {xs : List α} {f : α → m β} (inv : Invariant α (Lis
     exact PartialOrder.rel_refl
 
 end mapM
+
+/-! ## `Fin.mOfFn` -/
+
+section mOfFn
+
+/-- The type of loop invariants used by the specification of `Fin.mOfFn`: an assertion on the
+first `k` results, for every number `k` of results collected so far. `vcgen`'s `invariants`
+clause fills it. -/
+@[spec_invariant_type, simp, grind =]
+def MOfFnInvariant (α : Type u) (Pred : Type w) :=
+  (k : ℕ) → (Fin k → α) → Pred
+
+variable {m : Type u → Type v} {Pred : Type w} {EPred : Type z}
+  [Monad m] [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred] {α : Type u}
+
+/-- `Fin.mOfFn` with a loop invariant over the results collected so far, indexed by their number:
+the step at index `k` starts from the first `k` results and extends them by its own. -/
+@[spec]
+theorem Spec.mOfFn_fin {n : ℕ} {f : Fin n → m α} (inv : MOfFnInvariant α Pred) {epost : EPred}
+    (step : ∀ k (hk : k < n) (v : Fin k → α),
+      ⦃ inv k v ⦄ f ⟨k, hk⟩ ⦃ fun a => inv (k + 1) (Fin.snoc v a); epost ⦄) :
+    ⦃ inv 0 Fin.elim0 ⦄ Fin.mOfFn n f ⦃ fun v => inv n v; epost ⦄ := by
+  induction n generalizing inv with
+  | zero => exact Triple.pure _ PartialOrder.rel_refl
+  | succ n ih =>
+    rw [Fin.mOfFn_succ]
+    refine Triple.bind _ _ _ (step 0 n.succ_pos Fin.elim0) fun a => ?_
+    have h₁ : (Fin.snoc (α := fun _ => α) Fin.elim0 a : Fin 1 → α) =
+        Fin.cons (α := fun _ => α) a Fin.elim0 :=
+      funext fun i => by rw [Fin.fin_one_eq_zero i]; rfl
+    rw [h₁]
+    refine Triple.bind _ _ _
+      (ih (fun k w => inv (k + 1) (Fin.cons a w)) fun k hk w => ?_)
+      fun rest => Triple.pure _ PartialOrder.rel_refl
+    simp only [Fin.cons_snoc_eq_snoc_cons]
+    exact step (k + 1) (Nat.succ_lt_succ hk) (Fin.cons a w)
+
+end mOfFn
 
 /-! ## Sequencing -/
 
