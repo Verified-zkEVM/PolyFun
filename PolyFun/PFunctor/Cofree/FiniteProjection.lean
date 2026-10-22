@@ -132,11 +132,6 @@ theorem compMap_compY_comp_projectionN_two (P : PFunctor.{uA, uB}) :
 @[deprecated (since := "2026-10-19")] alias projectionN_two_comp_compY :=
   compMap_compY_comp_projectionN_two
 
-@[deprecated (since := "2026-08-17")] alias projectionN_one_comp_compX :=
-  compY_comp_projectionN_one
-@[deprecated (since := "2026-08-17")] alias projectionN_two_comp_compX :=
-  compMap_compY_comp_projectionN_two
-
 /-! ## Algebraic characterization and Proposition 8.49 -/
 
 /-- At the homogeneous universe boundary, structural finite projection is

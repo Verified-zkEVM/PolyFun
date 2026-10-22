@@ -489,13 +489,6 @@ def yTensor : y ⊗ P ≃ₚ P where
   equivA := _root_.Equiv.punitProd P.A
   equivB := fun a => _root_.Equiv.punitProd (P.B a.2)
 
-@[deprecated (since := "2026-08-17")] alias tensorX := tensorY
-@[deprecated (since := "2026-08-17")] alias xTensor := yTensor
-@[deprecated (since := "2026-08-17")] alias tensorX_equivA := tensorY_equivA
-@[deprecated (since := "2026-08-17")] alias tensorX_equivB := tensorY_equivB
-@[deprecated (since := "2026-08-17")] alias xTensor_equivA := yTensor_equivA
-@[deprecated (since := "2026-08-17")] alias xTensor_equivB := yTensor_equivB
-
 /-- Tensor product of polynomial functors is commutative up to equivalence -/
 @[simps]
 def tensorComm :
@@ -600,9 +593,6 @@ def compY : P ◃ y ≃ₚ P where
 def yComp : y ◃ P ≃ₚ P where
   equivA := (_root_.Equiv.uniqueSigma _).trans (Equiv.punitArrowEquiv P.A)
   equivB := fun _ => by exact _root_.Equiv.uniqueSigma _
-
-@[deprecated (since := "2026-08-17")] alias compX := compY
-@[deprecated (since := "2026-08-17")] alias XComp := yComp
 
 /-- Right distributivity of composition over sum (Niu–Spivak Prop 6.47). -/
 def sumCompDistrib (Q : PFunctor.{uA₂, uB₁}) :
