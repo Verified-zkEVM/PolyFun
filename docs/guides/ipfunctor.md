@@ -547,6 +547,18 @@ transports compose. `fixGroup_rename` handles ambient value renaming, and
 commutes with whole-group unfolding. Language specific errors and quantifier
 stages remain outside this generic layer.
 
+A [`DomainInterpretation`](../../PolyFun/IPFunctor/Scoped/DomainInterpretation.lean)
+gives each constructor its arguments as continuous functions of only their own
+bound variables, so `Term.denoteDomain` is continuous in the environment and
+natural in the context. `denoteDomain_rename`, `denoteDomain_subst` and
+`denoteDomain_substOne` hold for every such algebra. `Term.denoteDomain_related`
+is the fundamental lemma of logical relations: if each constructor sends
+`EnvRelated` arguments to related results (`DomainInterpretation.Related`), then
+every term's continuous meaning is related to its meaning under an ordinary
+`Interpretation`. The [lazy-semantics tutorial](../../Examples/Tutorials/ScopedDomains.lean)
+uses it to show that a call-by-value evaluator for a recursion-free fragment
+agrees with a call-by-name semantics with `fix`, from one constructor-local lemma.
+
 The [polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean) constructs
 a finite identity under a type binder and proves erasure preservation for every
 parameter renaming using `fold_map_rel`. It also demonstrates an ambient value
