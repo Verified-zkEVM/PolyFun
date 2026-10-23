@@ -222,6 +222,13 @@ chunks to resumption truncation; this does not require the meeting to terminate.
 
 ## Continuous domain interpretations
 
+[`PointedDomain`](../../PolyFun/Control/Domain/Pointed.lean) bundles the carrier,
+omega-CPO structure, and bottom when a semantic domain depends on syntax.
+Dependent products preserve each coordinate's partial information; `result`
+adds a new outer suspension and an explicit error alternative. The strict
+`DomainResult.elim` map can target any pointed omega-CPO, including a dependent
+family without an additional suspension.
+
 [`ITree.Domain`](../../PolyFun/ITree/Domain.lean) interprets trees into any
 pointed omega-CPO with a continuous algebra for each visible query. Silent
 steps use identity. `ITree.denote` interprets the exact resumption-with-tau
@@ -239,6 +246,16 @@ connects the ITree and resumption presentations exactly.
 interprets finite cutoff leaves as bottom and proves that the increasing
 truncation folds have the full denotation as their supremum. These theorems
 do not require finite branching or a uniform finite depth for a well-founded tree.
+
+[`DomainResult.generateStep_fix_eq`](../../PolyFun/Control/Domain/PrefixRecursion.lean)
+solves a finite recursive array by its strict-prefix equations. The generator
+must expose its outer constructor; entries may still be bottom or errors.
+`Function.UsesPrefix` expresses that coordinate `i` observes only coordinates
+strictly before `i`, and yields uniqueness without requiring total entries.
+`generateStep_fix_eq_prefixRecursion` connects the least fixed point to the
+well-founded `Function.prefixRecursion` in `ToCslib/Order/PrefixRecursion.lean`.
+Self-dependent equations and generators that demand the whole array before
+returning its constructor do not satisfy this contract.
 
 ### Sequencing and iterating continuous interpretations
 
