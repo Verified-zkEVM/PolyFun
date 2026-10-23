@@ -23,6 +23,11 @@ namespace PolyFunTest.Scoped
 open IPFunctor IPFunctor.ScopedSignature Examples.ScopedPrograms
 
 example : (sumTo 10).denote algebra Env.empty = 45 := rfl
+
+/-- Environment lookups simplify by name across the module boundary. -/
+example {Γ : List Ty} {a b : Ty} (x : Ty.Value a) (ρ : Env Ty.Value Γ) (v : ScopedVar Γ b) :
+    Env.cons x ρ .zero = x ∧ Env.cons x ρ v.succ = ρ v := by
+  simp
 /-- The older binding survives entry into the lambda body. -/
 theorem scoped_capture : captureExample.denote algebra Env.empty 3 = 10 := rfl
 example : (eliminateLets captureExample).denote algebra Env.empty 3 = 10 := rfl

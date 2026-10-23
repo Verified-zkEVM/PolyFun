@@ -37,6 +37,11 @@ namespace Env
   | _, .zero => x
   | _, .succ v => ρ v
 
+@[simp] theorem cons_zero {a : S} (x : V a) (ρ : Env V Γ) : cons x ρ .zero = x := rfl
+
+@[simp] theorem cons_succ {a b : S} (x : V a) (ρ : Env V Γ) (v : ScopedVar Γ b) :
+    cons x ρ v.succ = ρ v := rfl
+
 /-- Combine values for new binders with the surrounding environment. -/
 @[expose] def append : {Ξ : List S} → Env V Ξ → Env V Γ → Env V (Ξ ++ Γ)
   | [], _, ρ => ρ

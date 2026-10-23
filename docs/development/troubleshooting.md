@@ -86,6 +86,11 @@ Symptoms and fixes (see the Transparency Attributes section of
   with the reduced component types. The two-party runner rules ascribe the
   role pair as `Role × ((x : X) → RoleDecoration (rest x))` so the index
   contains `X`, rather than a stuck base-polynomial direction projection.
+  The same holds for reducible type families defined by pattern matching:
+  simp indexes lemmas with iota reduction off but reduces goals, so
+  `some k : Option (Value .integer)` in a lemma never meets the goal's
+  `Option Int`. Ascribe such arguments at the reduced carrier, as
+  `Cryptol.Native.shift_word` does with `(some k : Option Int)`.
 - `calc` failing with a `Trans` instance error where a plain `.trans`
   works → typeclass resolution runs below implicit transparency; keep
   the term-level `.trans` form with a comment.
