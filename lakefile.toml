@@ -15,7 +15,7 @@ lintDriverArgs = [
   "Examples.Tutorials.FairWorkQueues", "Examples.Tutorials.BoundedController",
   "Examples.Tutorials.ScopedPrograms", "Examples.Tutorials.ScopedExecution",
   "Examples.Tutorials.ScopedFamily",
-  "Examples.Parliament", "PolyFunParliamentMain"
+  "Examples.Parliament", "PolyFunParliamentMain", "PolyFunCryptol", "PolyFunCryptolMain"
 ]
 testDriver = "PolyFunTest"
 
@@ -56,6 +56,13 @@ name = "ToCslib"
 [[lean_lib]]
 name = "ComplexityBackends"
 
+# Optional Cryptol language case study: lazy reference semantics, the checked typed-AST importer
+# and native IR. It sits above `PolyFun`, outside the backend-neutral umbrella; VCVio owns the
+# Foundation and cryptographic correspondences. Package-prefixed so it cannot collide with a
+# downstream package's own Cryptol targets.
+[[lean_lib]]
+name = "PolyFunCryptol"
+
 # Optional human-facing tutorials and executable case studies. This target name can coexist with VCVio's
 # `Examples` target. No generic `Examples` umbrella or core import is introduced.
 [[lean_lib]]
@@ -95,3 +102,13 @@ globs = ["PolyFunAxiomSweepTestFixtures.+"]
 [[lean_exe]]
 name = "polyfun-parliament"
 root = "PolyFunParliamentMain"
+
+# Regression tests for the Cryptol case study, built by `./scripts/validate.sh --test` rather than
+# `lake test` so the default test library stays independent of the case study.
+[[lean_lib]]
+name = "PolyFunCryptolTest"
+globs = ["PolyFunCryptolTest.+"]
+
+[[lean_exe]]
+name = "polyfun-cryptol"
+root = "PolyFunCryptolMain"

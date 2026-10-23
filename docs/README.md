@@ -21,6 +21,7 @@ The Lean source is authoritative for definitions and theorem assumptions.
 - [Interaction trees](tutorials/interaction-trees.md): a program with state and ticks, run three ways.
 - [Runnable Lean examples](../Examples/README.md): program, machine, and indexed-program source.
 - [Parliament](../Examples/Parliament/README.md): an executable application with certified history, interchangeable handlers, and explicit IO boundaries.
+- [Cryptol](../PolyFunCryptol/README.md): lazy reference semantics for a Cryptol fragment, a checked importer of official typed-AST exports, and native IR on PolyFun's scoped syntax, domains, contracts and transitions.
 
 ## Guides
 

@@ -4,7 +4,8 @@
 
 ```bash
 lake exe cache get
-lake build PolyFun ToCslib ComplexityBackends PolyFunExamples PolyFunTest --wfail
+lake build PolyFun ToCslib ComplexityBackends PolyFunCryptol PolyFunExamples PolyFunTest \
+  +PolyFunCryptolMain --wfail
 lake lint -- --trace
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
@@ -13,14 +14,14 @@ lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.ReviewableWorkflows Examples.Tutorials.FairWorkQueues \
   Examples.Tutorials.BoundedController Examples.Tutorials.ScopedPrograms \
   Examples.Tutorials.ScopedExecution Examples.Tutorials.ScopedFamily \
-  Examples.Parliament PolyFunParliamentMain
+  Examples.Parliament PolyFunParliamentMain PolyFunCryptol PolyFunCryptolMain
 ```
 
 The convenience command `./scripts/validate.sh --lint --test --axioms` runs
 production and tutorial builds with warnings fatal, environment and text-style
 linting, the test library, and the integrity/axiom checks.
 
-`PolyFun`, `ToCslib`, and `ComplexityBackends` are separate production roots. All must be named in
+`PolyFun`, `ToCslib`, `ComplexityBackends`, and `PolyFunCryptol` are separate production roots. All must be named in
 environment linting and standalone text linting. `PolyFunExamples` is the
 additional tutorial library; its individual modules appear in `lintDriverArgs`
 because it has no umbrella. The default target is only
