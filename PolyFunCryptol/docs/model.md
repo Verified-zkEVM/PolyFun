@@ -317,10 +317,14 @@ Foundation fixtures, and security claims belong in that downstream consumer.
 Directions select typed children, including beneath binders.
 [`NativePrimitives.lean`](../Model/NativePrimitives.lean)
 provides instantiated primitive constants with independent denotations.
+`Resolved.denote` is the generic continuous interpretation
+(`ScopedSignature.Term.denoteDomain`) of the constructor algebra `Resolved.algebra`.
+Each constructor receives its arguments as continuous functions of only their own
+bindings, and Cryptol environments are the generic `ScopedDomain.Env`. Renaming,
+substitution (`Resolved.denote_rename`, `denote_subst`, `denote_substOne`) and the
+fundamental lemma of logical relations therefore come from the generic layer.
 `Primitive.lower_correct` and `Resolved.lower_correct` relate source meaning
-to core meaning for arbitrary partial environments. Generic folds implement both
-syntax translations and interpretation; their fusion and substitution laws also
-support independent language developments.
+to core meaning for arbitrary partial environments.
 
 For source proofs, use the equations in `ResolvedLaws` together with
 `Environment.cons_zero` and `Environment.cons_succ`. These preserve named

@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFunCryptol.Model.NativePrimitives
+public import PolyFun.IPFunctor.Scoped.DomainInterpretation
 public import PolyFun.IPFunctor.Scoped.Substitution
 
 /-!
@@ -128,49 +129,50 @@ abbrev Term := syntaxSignature.Term
   t.fold (D := fun j : Scope => Expr j.1 j.2) (fun _ v => .var v)
     (fun j op next => lowerOp j.1 op next)
 
-/-- Interpret one constructor in continuous, lazy environment functions. -/
-@[expose] noncomputable def denoteOp (Γ : List ClosedTy) : {a : ClosedTy} → (op : Op a) →
-    ((p : Fin op.arity) → Environment ((op.child p).1 ++ Γ) →𝒄 Computation (op.child p).2) →
-      Environment Γ →𝒄 Computation a
-  | _, .sequence _, next => .ofFun (fun ρ => DomainResult.valueContinuous (fun i => next i ρ))
-  | _, .primitive p, _ => .const p.denote
-  | _, .bit b, _ => .const (.value ⟨b⟩)
-  | _, .integer i, _ => .const (.value ⟨i⟩)
-  | _, .unit, _ => .const (.value ⟨()⟩)
-  | _, .error e, _ => .const (.error e)
-  | _, .lam, next => DomainResult.valueContinuous.comp
-        (.ofFun (fun ρ => .ofFun (fun x => next 0 (Environment.cons x ρ))))
-  | _, .app, next => .ofFun (fun ρ => DomainResult.applyContinuous (next 0 ρ)
-        (next 1 ρ))
-  | _, .letE, next => .ofFun (fun ρ => next 1
-        (Environment.cons (next 0 ρ) ρ))
-  | _, .pair, next => .ofFun (fun ρ => DomainResult.valueContinuous
-        (next 0 ρ, next 1 ρ))
-  | _, .fst, next => (DomainResult.bind (.ofFun Prod.fst)).comp (next 0)
-  | _, .snd, next => (DomainResult.bind (.ofFun Prod.snd)).comp (next 0)
-  | _, .generate l, next => .ofFun (fun ρ => DomainResult.valueContinuous (fun i : l.Index =>
-        next 0 (Environment.cons (DomainResult.value ⟨(Length.indexNat i : Int)⟩) ρ)))
-  | _, .index, next => .ofFun (fun ρ => Semantics.index (next 0 ρ) (next 1 ρ))
-  | _, .ite, next => .ofFun (fun ρ => Semantics.conditional
-        (next 1 ρ, next 2 ρ) (next 0 ρ))
-  | _, .fix, next => ContinuousHom.fixContinuous.comp
-        (.ofFun (fun ρ => .ofFun (fun x => next 0 (Environment.cons x ρ))))
-  | _, .bitNot, next => Semantics.bitNot.comp (next 0)
-  | _, .bitOp op, next => .ofFun (fun ρ => Semantics.binary (fun a b => .ok (op.eval a b))
-        (next 0 ρ) (next 1 ρ))
-  | _, .intOp op, next => .ofFun (fun ρ => Semantics.binary op.eval
-        (next 0 ρ) (next 1 ρ))
-  | _, .intEq, next => .ofFun (fun ρ => Semantics.binary (fun a b : Int => .ok (a == b))
-        (next 0 ρ) (next 1 ρ))
-  | _, .intLt, next => .ofFun (fun ρ => Semantics.binary (fun a b : Int => .ok (decide (a < b)))
-        (next 0 ρ) (next 1 ρ))
+/-- The lazy constructor algebra. Each argument is a continuous function of only its own
+bindings, so the generic renaming, substitution and logical-relation laws apply. -/
+@[expose] noncomputable def algebra :
+    IPFunctor.ScopedSignature.DomainInterpretation syntaxSignature computationDomain
+  | _, .sequence _ => DomainResult.valueContinuous.comp
+      (.ofFun (fun k i => k i Environment.empty))
+  | _, .primitive p => .const p.denote
+  | _, .bit b => .const (.value ⟨b⟩)
+  | _, .integer i => .const (.value ⟨i⟩)
+  | _, .unit => .const (.value ⟨()⟩)
+  | _, .error e => .const (.error e)
+  | _, .lam => .ofFun (fun k =>
+      DomainResult.valueContinuous (IPFunctor.ScopedDomain.Env.bindOne (k 0)))
+  | _, .app => .ofFun (fun k =>
+      DomainResult.applyContinuous (k 0 Environment.empty) (k 1 Environment.empty))
+  | _, .letE => .ofFun (fun k =>
+      IPFunctor.ScopedDomain.Env.bindOne (k 1) (k 0 Environment.empty))
+  | _, .pair => .ofFun (fun k =>
+      DomainResult.valueContinuous (k 0 Environment.empty, k 1 Environment.empty))
+  | _, .fst => .ofFun (fun k => DomainResult.bind (.ofFun Prod.fst) (k 0 Environment.empty))
+  | _, .snd => .ofFun (fun k => DomainResult.bind (.ofFun Prod.snd) (k 0 Environment.empty))
+  | _, .generate l => DomainResult.valueContinuous.comp (.ofFun (fun k (i : l.Index) =>
+      IPFunctor.ScopedDomain.Env.bindOne (k 0) (DomainResult.value ⟨(Length.indexNat i : Int)⟩)))
+  | _, .index => .ofFun (fun k =>
+      Semantics.index (k 0 Environment.empty) (k 1 Environment.empty))
+  | _, .ite => .ofFun (fun k => Semantics.conditional
+      (k 1 Environment.empty, k 2 Environment.empty) (k 0 Environment.empty))
+  | _, .fix => .ofFun (fun k =>
+      ContinuousHom.fixContinuous (IPFunctor.ScopedDomain.Env.bindOne (k 0)))
+  | _, .bitNot => .ofFun (fun k => Semantics.bitNot (k 0 Environment.empty))
+  | _, .bitOp op => .ofFun (fun k => Semantics.binary (fun a b => .ok (op.eval a b))
+      (k 0 Environment.empty) (k 1 Environment.empty))
+  | _, .intOp op => .ofFun (fun k => Semantics.binary op.eval
+      (k 0 Environment.empty) (k 1 Environment.empty))
+  | _, .intEq => .ofFun (fun k => Semantics.binary (fun a b : Int => .ok (a == b))
+      (k 0 Environment.empty) (k 1 Environment.empty))
+  | _, .intLt => .ofFun (fun k => Semantics.binary (fun a b : Int => .ok (decide (a < b)))
+      (k 0 Environment.empty) (k 1 Environment.empty))
 
-/-- Source meaning is an independent fold into continuous maps. -/
+/-- Source meaning is the generic continuous interpretation of the scoped syntax. -/
 @[expose] noncomputable def denote {s : Scope}
     (t : IPFunctor.IFreeM signature (fun j => Var j.1 j.2) s) :
     Environment s.1 →𝒄 Computation s.2 :=
-  t.fold (D := fun j : Scope => Environment j.1 →𝒄 Computation j.2)
-    (fun _ v => .ofFun (fun ρ => ρ _ v)) (fun j op next => denoteOp j.1 op next)
+  IPFunctor.ScopedSignature.Term.denoteDomain (Γ := s.1) (a := s.2) algebra t
 
 @[simp] theorem lower_node {Γ : List ClosedTy} {a : ClosedTy} (op : Op a)
     (args : (p : Fin op.arity) → Term ((op.child p).1 ++ Γ) (op.child p).2) :
@@ -178,21 +180,23 @@ abbrev Term := syntaxSignature.Term
       lowerOp Γ op (fun p => lower (args p)) := rfl
 
 @[simp] theorem denote_node {Γ : List ClosedTy} {a : ClosedTy} (op : Op a)
-    (args : (p : Fin op.arity) → Term ((op.child p).1 ++ Γ) (op.child p).2) :
-    denote (IPFunctor.IFreeM.liftBind (s := (Γ, a)) op args) =
-      denoteOp Γ op (fun p => denote (args p)) := rfl
+    (args : (p : Fin op.arity) → Term ((op.child p).1 ++ Γ) (op.child p).2) (ρ : Environment Γ) :
+    denote (IPFunctor.IFreeM.liftBind (s := (Γ, a)) op args) ρ =
+      algebra op (fun p => IPFunctor.ScopedSignature.DomainInterpretation.under
+        (denote (args p)) ρ) := rfl
 
 /-- Lowering preserves source meaning, including higher-order partial values. -/
 theorem lower_correct {s : Scope} (term : IPFunctor.IFreeM signature (fun j => Var j.1 j.2) s) :
     (lower term).denote = denote term := by
   induction term with
-  | pure v => rfl
+  | pure v => exact DFunLike.ext _ _ fun _ => rfl
   | @liftBind s head next ih =>
       rcases s with ⟨Γ, a⟩
+      apply DFunLike.ext
+      intro η
       cases head with
       | sequence n =>
-          apply DFunLike.ext
-          intro η
+          change _ = DomainResult.value (fun i => denote (next i) η)
           apply congrArg DomainResult.value
           funext i
           change (Expr.select _ (.var .zero)).denote
@@ -201,23 +205,24 @@ theorem lower_correct {s : Scope} (term : IPFunctor.IFreeM signature (fun j => V
           simp only [List.getElem_map, Expr.denote_weaken]
           erw [List.getElem_finRange]
           exact DFunLike.congr_fun (ih i) η
-      | primitive p =>
-          apply DFunLike.ext
-          intro η
-          exact p.lower_correct η
-      | lam | fix =>
-          simp only [lower_node, denote_node, lowerOp, denoteOp, Expr.denote, ih]
+      | primitive p => exact p.lower_correct η
+      | lam =>
+          change DomainResult.value _ = DomainResult.value _
+          congr 1
+          apply ContinuousHom.ext
+          intro x
+          exact DFunLike.congr_fun (ih 0) _
+      | fix =>
+          change ContinuousHom.fix _ = ContinuousHom.fix _
+          congr 1
+          apply ContinuousHom.ext
+          intro x
+          exact DFunLike.congr_fun (ih 0) _
       | _ =>
-          simp only [lower_node, denote_node, lowerOp, denoteOp, Expr.denote]
-          all_goals
-            repeat erw [ih 0]
-            all_goals first
-            | rfl
-            | apply DFunLike.ext
-              intro η
-              dsimp only [ContinuousHom.ofFun, ContinuousHom.coe_mk, OrderHom.coe_mk]
-              repeat first | erw [ih 0] | erw [ih 1] | erw [ih 2]
-              all_goals rfl
+          simp only [lower_node, lowerOp, Expr.denote]
+          try dsimp only [ContinuousHom.ofFun, ContinuousHom.coe_mk, OrderHom.coe_mk]
+          repeat first | erw [ih 0] | erw [ih 1] | erw [ih 2]
+          all_goals rfl
 
 /-- Number of retained source nodes, without expanding primitive implementations. -/
 @[expose] def nodeCount : {s : Scope} → IPFunctor.IFreeM signature (fun j => Var j.1 j.2) s → Nat

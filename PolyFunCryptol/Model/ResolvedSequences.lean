@@ -46,7 +46,9 @@ theorem denote_map {Γ : List ClosedTy} {a b : ClosedTy} {l : Length}
     (f : Term Γ (.arrow a b)) (xs : Term Γ (.seq l a)) (ρ : Environment Γ) :
     denote (Term.map f xs) ρ = DomainResult.value (fun i : l.Index =>
       DomainResult.applyContinuous (denote f ρ)
-        (Semantics.indexAt (denote xs ρ) (Length.indexNat i))) := rfl
+        (Semantics.indexAt (denote xs ρ) (Length.indexNat i))) := by
+  unfold Term.map
+  rfl
 
 /-- A sequential generator whose finite row may depend on the preceding value.
 Rows are visited in source order; a row of length zero never demands its source. -/

@@ -114,7 +114,10 @@ example (f g : Computation (.arrow .integer .integer)) (x : Computation .integer
 
 example (xs : Computation (.seq (.finite 3) .integer)) :
     DomainResult.applyContinuous (Resolved.denote folded Environment.empty) xs =
-      Semantics.foldlPrefix 3 3 (Resolved.denote add Environment.empty) (.value ⟨0⟩) xs := rfl
+      Semantics.foldlPrefix 3 3 (Resolved.denote add Environment.empty) (.value ⟨0⟩) xs := by
+  unfold folded
+  rw [Resolved.denote_lam_apply, Resolved.denote_app, Resolved.denote_app, Resolved.denote_app]
+  rfl
 
 example (xs : Nat → Int) (i : Nat) :
     Semantics.indexAt
