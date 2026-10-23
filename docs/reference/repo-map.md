@@ -14,7 +14,7 @@ it provides, rather than importing the whole project while developing a module.
 | `PolyFunExamples` | Checked tutorials and the Parliament application under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
 | `PolyFunTest` | Regression tests, adversarial cases, and ordinary-import consumers | `lake test` |
 
-`PolyFun.lean`, `ToCslib.lean`, `ComplexityBackends.lean` are generated import
+`PolyFun.lean`, `ToCslib.lean`, and `ComplexityBackends.lean` are generated import
 indexes. The optional backends and examples are outside the `PolyFun` umbrella.
 `PolyFunTest` can consume examples, but production never depends on examples or tests.
 
