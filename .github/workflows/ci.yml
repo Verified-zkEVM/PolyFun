@@ -232,3 +232,5 @@ jobs:
           lake -d test/ParliamentConsumer build --wfail
           lake build PolyFunCryptolTest polyfun-cryptol --wfail --iofail
           python3 -u PolyFunCryptol/scripts/test_model.py
+          python3 -u PolyFunCryptol/scripts/test_source.py
+          python3 -u PolyFunCryptol/scripts/test_modules.py

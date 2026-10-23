@@ -20,8 +20,8 @@ proofs, examples, import boundaries, or validation infrastructure.
 | Generated imports | Generated umbrellas match the tracked source tree |
 | Documentation | Checker regressions, agent symlink, local paths and heading anchors, module docstrings, README excerpt synchronization |
 | `--lint` | Batteries environment linters and Mathlib text-style checks over production and example libraries plus the executable entry point |
-| `--test` | `PolyFunTest` with warnings and printed output fatal (`--wfail --iofail`), `lake test`, native CLI/filesystem tests, both separate consumers, `PolyFunCryptolTest`, and the offline Cryptol model fixtures |
-| `--cryptol-external` | `--test` plus a comparison of the Cryptol model with the pinned Cryptol 3.6.0 executable named by `CRYPTOL_BINARY` |
+| `--test` | `PolyFunTest` with warnings and printed output fatal (`--wfail --iofail`), `lake test`, native CLI/filesystem tests, both separate consumers, `PolyFunCryptolTest`, and the offline Cryptol model, importer and module-canary checks |
+| `--cryptol-external` | `--test` plus a comparison of the Cryptol model with the pinned Cryptol 3.6.0 executable named by `CRYPTOL_BINARY`. `FOUNDATION_PATH`, `CRYPTOL_EXPORTER`/`CRYPTOL_SOURCE` and `CRYPTOL_UPSTREAM_BINARY` add the canary observations, the regeneration of cases, census and Foundation status, and the evaluator audit; see the [Cryptol tooling guide](../../PolyFunCryptol/docs/tooling.md) |
 | `--axioms` | Axiom-sweep fixture matrix and zero-debt check over production, tutorial, case-study, and executable module roots |
 
 The committed axiom baseline is a zero-debt policy, not an allowlist. Both
@@ -67,6 +67,8 @@ python3 scripts/test-parliament-cli.py
 lake -d test/ParliamentConsumer build --wfail
 lake build PolyFunCryptolTest polyfun-cryptol --wfail --iofail
 python3 PolyFunCryptol/scripts/test_model.py
+python3 PolyFunCryptol/scripts/test_source.py
+python3 PolyFunCryptol/scripts/test_modules.py
 lake lint
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \

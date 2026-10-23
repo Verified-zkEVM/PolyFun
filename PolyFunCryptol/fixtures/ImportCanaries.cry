@@ -1,0 +1,33 @@
+// Copyright (c) 2026 PolyFun Contributors. Apache-2.0.
+module ImportCanaries where
+
+// Captured variables cross two local declarations and an inner lambda.
+capture : Integer -> Integer -> Integer
+capture x = answer
+  where
+  saved : Integer
+  saved = x
+  answer : Integer -> Integer
+  answer y = saved + y
+
+recordSelect : { flag : Bit, value : Integer } -> Integer
+recordSelect r = r.value
+
+tupleSelect : (Integer, Bit) -> Integer
+tupleSelect p = p.0
+
+higherOrder : (Integer -> Integer) -> (Integer -> Integer) -> Integer -> Integer
+higherOrder f g x = f (g x)
+
+mapped : [3]Integer -> [3]Integer
+mapped xs = [x + 1 | x <- xs]
+
+streamMap : [inf]Integer -> [inf]Integer
+streamMap xs = [x + 1 | x <- xs]
+
+folded : [3]Integer -> Integer
+folded xs = foldl (+) 0 xs
+
+guarded : {n} (fin n) => [n]Integer -> Integer
+guarded xs | n == 0 => 0
+           | n >= 1 => xs @ (0 : Integer)

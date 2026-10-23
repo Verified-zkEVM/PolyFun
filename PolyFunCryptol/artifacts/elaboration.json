@@ -1,0 +1,90 @@
+{
+ "entries": [
+  {
+   "bundle": "list.json",
+   "module": "Cryptol::Reference",
+   "result": {
+    "location": [
+     "Cryptol::Reference",
+     "elaboration"
+    ],
+    "message": "Cryptol::fromTo: type requires a checked partial numeric evaluation",
+    "status": "rejected"
+   }
+  },
+  {
+   "bundle": "list.json",
+   "module": "shared::common::utils::List",
+   "result": {
+    "location": [
+     "shared::common::utils::List",
+     "elaboration"
+    ],
+    "message": "Cryptol::fromToLessThan: type requires a checked partial numeric evaluation",
+    "status": "rejected"
+   }
+  },
+  {
+   "bundle": "list.json",
+   "module": "shared::common::utils::Sort",
+   "result": {
+    "location": [
+     "shared::common::utils::Sort",
+     "elaboration"
+    ],
+    "message": "value type 2-tuple requires an aggregate or nominal source-shape interpretation",
+    "status": "rejected"
+   }
+  },
+  {
+   "bundle": "list.json",
+   "module": "shared::common::utils::Imperative",
+   "result": {
+    "bodies": [],
+    "exports": [
+     {
+      "name": "while",
+      "scheme": "Cryptol.Polymorphic.Scheme.allType\n  (Cryptol.Polymorphic.Scheme.mono\n    (Cryptol.Ty.arrow\n      (Cryptol.Ty.arrow (Cryptol.Ty.var 0) (Cryptol.Ty.bit))\n      (Cryptol.Ty.arrow\n        (Cryptol.Ty.arrow (Cryptol.Ty.var 0) (Cryptol.Ty.var 0))\n        (Cryptol.Ty.arrow (Cryptol.Ty.var 0) (Cryptol.Ty.var 0)))))"
+     },
+     {
+      "name": "dowhile",
+      "scheme": "Cryptol.Polymorphic.Scheme.allType\n  (Cryptol.Polymorphic.Scheme.mono\n    (Cryptol.Ty.arrow\n      (Cryptol.Ty.arrow (Cryptol.Ty.var 0) (Cryptol.Ty.bit))\n      (Cryptol.Ty.arrow\n        (Cryptol.Ty.arrow (Cryptol.Ty.var 0) (Cryptol.Ty.var 0))\n        (Cryptol.Ty.arrow (Cryptol.Ty.var 0) (Cryptol.Ty.var 0)))))"
+     }
+    ],
+    "expression_typing": "accepted",
+    "module": "shared::common::utils::Imperative",
+    "module_type_parameters": 0,
+    "module_value_parameters": 0,
+    "primitive_requirements": [],
+    "semantic_import": "model",
+    "shared_declarations": 2,
+    "source_correspondence": "not-established"
+   }
+  },
+  {
+   "bundle": "list.json",
+   "module": "shared::common::utils::Enum",
+   "result": {
+    "location": [
+     "shared::common::utils::Enum",
+     "elaboration"
+    ],
+    "message": "value type Cryptol::Result requires an aggregate or nominal source-shape interpretation",
+    "status": "rejected"
+   }
+  },
+  {
+   "bundle": "crc.json",
+   "module": "shared::CRC::Main",
+   "result": {
+    "location": [
+     "shared::CRC::Main",
+     "elaboration"
+    ],
+    "message": "Cryptol::fromTo: type requires a checked partial numeric evaluation",
+    "status": "rejected"
+   }
+  }
+ ],
+ "version": 1
+}

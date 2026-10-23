@@ -29,7 +29,10 @@ Optional checks:
   --axioms  Test axiomsweep, then enforce the zero axiom/sorry-debt gate
   --cryptol-external
             Also compare the Cryptol model with the pinned Cryptol 3.6.0 executable
-            named by CRYPTOL_BINARY (implies --test)
+            named by CRYPTOL_BINARY (implies --test). With FOUNDATION_PATH, also run
+            the importer canaries through both evaluators. With CRYPTOL_EXPORTER and
+            CRYPTOL_SOURCE, regenerate the cases, census and corpus status. With
+            CRYPTOL_UPSTREAM_BINARY, reproduce the evaluator audit
 EOF
 }
 
@@ -108,6 +111,33 @@ if (( run_test )); then
   cryptol_model_test=(python3 -u PolyFunCryptol/scripts/test_model.py)
   if (( run_cryptol_external )); then cryptol_model_test+=(--cryptol "$CRYPTOL_BINARY"); fi
   "${cryptol_model_test[@]}"
+  cryptol_source_test=(python3 -u PolyFunCryptol/scripts/test_source.py)
+  if (( run_cryptol_external )) && [[ -n "${FOUNDATION_PATH:-}" ]]; then
+    cryptol_source_test+=(--cryptol "$CRYPTOL_BINARY" --foundation "$FOUNDATION_PATH")
+  fi
+  "${cryptol_source_test[@]}"
+  python3 -u PolyFunCryptol/scripts/test_modules.py
+  if (( run_cryptol_external )) && [[ -n "${FOUNDATION_PATH:-}" ]]; then
+    cryptol_reports="${CRYPTOL_REPORT_DIR:-${TMPDIR:-/tmp}/polyfun-cryptol-validation}"
+    mkdir -p "$cryptol_reports"
+    if [[ -n "${CRYPTOL_UPSTREAM_BINARY:-}" ]]; then
+      python3 -u PolyFunCryptol/scripts/test_evaluators.py --cryptol "$CRYPTOL_BINARY" \
+        --upstream-cryptol "$CRYPTOL_UPSTREAM_BINARY" --foundation "$FOUNDATION_PATH" \
+        --report "$cryptol_reports/evaluators.json"
+      cmp PolyFunCryptol/artifacts/evaluator-audit.json "$cryptol_reports/evaluators.json"
+    fi
+    if [[ -n "${CRYPTOL_EXPORTER:-}" ]]; then
+      : "${CRYPTOL_SOURCE:?Set CRYPTOL_SOURCE to the pinned Cryptol source checkout}"
+      cryptol_export=(--exporter "$CRYPTOL_EXPORTER" --foundation "$FOUNDATION_PATH")
+      python3 -u PolyFunCryptol/scripts/export_cases.py --check "${cryptol_export[@]}" \
+        --cryptol-source "$CRYPTOL_SOURCE"
+      python3 -u PolyFunCryptol/scripts/inventory_foundation.py "${cryptol_export[@]}" \
+        --out "$cryptol_reports/foundation-inventory.json"
+      python3 -u PolyFunCryptol/scripts/corpus.py --all --check "${cryptol_export[@]}" \
+        --cryptol-source "$CRYPTOL_SOURCE" --out "$cryptol_reports"
+      python3 -u PolyFunCryptol/scripts/test_modules.py --report "$cryptol_reports"
+    fi
+  fi
 fi
 
 if (( run_axioms )); then
