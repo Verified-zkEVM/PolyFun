@@ -51,7 +51,7 @@ theorem Represents.snoc {a : Ty} {n : Nat} {xs : Fin n → a.Native} {x : a.Nati
 theorem EnvRepresents.extend {Γ : List Ty} {a : Ty} {ρ : Env Γ}
     {η : Environment (Γ.map Ty.core)} (h : EnvRepresents ρ η)
     {x : a.Native} {dx : Computation a.core} (hx : Represents a x dx) :
-    EnvRepresents (ρ.extend x) (η.extend dx) := by
+    EnvRepresents (ρ.extend x) (Environment.cons dx η) := by
   intro b v
   cases v with
   | zero => exact hx

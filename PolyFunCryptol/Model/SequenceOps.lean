@@ -203,7 +203,7 @@ theorem denote_append {front : Nat} {back : Length}
       Semantics.append front back (xs.denote η) (ys.denote η) := by
   apply congrArg DomainResult.value
   funext i
-  simp only [Environment.extendContinuous_apply, denote_ite, denote_index, denote_weaken,
+  simp only [denote_ite, denote_index, denote_weaken,
     denote_intOp, denote_integer, denote_var]
   change Semantics.conditional _
     (.value ⟨decide ((Length.indexNat i : Int) < front)⟩) = _
@@ -251,7 +251,7 @@ theorem denote_update {l : Length} (xs : Expr Γ (.seq l a)) (i : Expr Γ .integ
           · simp only [hj, ↓reduceIte]
             apply congrArg DomainResult.value
             funext k
-            simp only [Environment.extendContinuous_apply, denote_ite, denote_intEq,
+            simp only [denote_ite, denote_intEq,
               denote_var, denote_weaken, denote_index, hi]
             change Semantics.conditional (value.denote η,
               Semantics.indexAt (xs.denote η) (Length.indexNat k))
@@ -265,7 +265,7 @@ theorem denote_update {l : Length} (xs : Expr Γ (.seq l a)) (i : Expr Γ .integ
           rw [Semantics.conditional_value]
           apply congrArg DomainResult.value
           funext k
-          simp only [Environment.extendContinuous_apply, denote_ite, denote_intEq,
+          simp only [denote_ite, denote_intEq,
             denote_var, denote_weaken, denote_index, hi]
           change Semantics.conditional (value.denote η,
             Semantics.indexAt (xs.denote η) (Length.indexNat k))
@@ -303,7 +303,7 @@ theorem denote_updateEnd {n : Nat} (xs : Expr Γ (.seq (.finite n) a)) (i : Expr
       · simp only [hj, ↓reduceIte]
         apply congrArg DomainResult.value
         funext k
-        simp only [Environment.extendContinuous_apply, denote_ite, denote_intEq,
+        simp only [denote_ite, denote_intEq,
           denote_var, denote_weaken, denote_index, denote_intOp, denote_integer, hi]
         change Semantics.conditional (value.denote η,
           Semantics.indexAt (xs.denote η) (Length.indexNat k))
@@ -318,7 +318,7 @@ theorem denote_take (front back : Length) (xs : Expr Γ (.seq (front.add back) a
       Semantics.take front back (xs.denote η) := by
   apply congrArg DomainResult.value
   funext i
-  simp only [Environment.extendContinuous_apply, denote_index, denote_weaken, denote_var]
+  simp only [denote_index, denote_weaken, denote_var]
   rfl
 
 /-- Reverse indexing validates the original index after demanding the outer source. -/
@@ -366,7 +366,7 @@ theorem denote_drop (front : Nat) (back : Length)
     (xs.drop front back).denote η = Semantics.drop front back (xs.denote η) := by
   apply congrArg DomainResult.value
   funext i
-  simp only [Environment.extendContinuous_apply, denote_index, denote_weaken, denote_intOp,
+  simp only [denote_index, denote_weaken, denote_intOp,
     denote_integer, denote_var]
   rfl
 
@@ -374,7 +374,7 @@ theorem denote_reverse {n : Nat} (xs : Expr Γ (.seq (.finite n) a)) (η : Envir
     xs.reverse.denote η = Semantics.reverse n (xs.denote η) := by
   apply congrArg DomainResult.value
   funext i
-  simp only [Environment.extendContinuous_apply, denote_index, denote_weaken, denote_intOp,
+  simp only [denote_index, denote_weaken, denote_intOp,
     denote_integer, denote_var]
   rfl
 
@@ -385,7 +385,7 @@ theorem denote_split (parts : Length) (each : Nat)
   funext i
   apply congrArg DomainResult.value
   funext j
-  simp only [Environment.extendContinuous_apply, denote_index, denote_weaken, denote_intOp,
+  simp only [denote_index, denote_weaken, denote_intOp,
     denote_integer, denote_var]
   rfl
 
@@ -397,7 +397,7 @@ theorem denote_join (parts : Length) (each : Nat)
   have hn : (each : Int) ≠ 0 := by
     have := Length.each_pos_of_index parts each i
     omega
-  simp only [Environment.extendContinuous_apply, denote_index, denote_weaken,
+  simp only [denote_index, denote_weaken,
     denote_intOp, denote_integer, denote_var]
   change Semantics.index (Semantics.index (xs.denote η)
     (ofExcept (IntOp.div.eval (Length.indexNat i) each)))
@@ -412,7 +412,7 @@ theorem denote_transpose (rows cols : Length) (xs : Expr Γ (.seq rows (.seq col
   funext c
   apply congrArg DomainResult.value
   funext r
-  simp only [Environment.extendContinuous_apply, denote_index, denote_weaken, denote_var]
+  simp only [denote_index, denote_weaken, denote_var]
   rfl
 
 end Expr

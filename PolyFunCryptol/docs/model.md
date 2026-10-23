@@ -323,7 +323,7 @@ syntax translations and interpretation; their fusion and substitution laws also
 support independent language developments.
 
 For source proofs, use the equations in `ResolvedLaws` together with
-`Environment.extend_zero` and `Environment.extend_succ`. These preserve named
+`Environment.cons_zero` and `Environment.cons_succ`. These preserve named
 environments during normalization. Unfolding the entire environment function
 under continuous maps can make kernel conversion much more expensive than the
 corresponding constructor proof.

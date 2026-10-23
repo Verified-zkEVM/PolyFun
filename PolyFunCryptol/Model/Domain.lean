@@ -8,6 +8,7 @@ module
 
 public import PolyFunCryptol.Model.Syntax
 public import PolyFun.Control.Domain.Result
+public import PolyFun.IPFunctor.Scoped.Domain
 
 /-!
 # Lazy semantic domains
@@ -56,43 +57,19 @@ abbrev Value (a : ClosedTy) : Type := valueDomain a
 /-- Possibly divergent or erroneous computations at a type. -/
 abbrev Computation (a : ClosedTy) : Type := DomainResult EvalError (Value a)
 
+/-- Each closed type's computations, as a pointed domain. -/
+@[expose, reducible] noncomputable def computationDomain (a : ClosedTy) : PointedDomain :=
+  .ofType (Computation a)
+
 /-- A semantic environment supplies a suspended computation for each variable. -/
-abbrev Environment (Γ : List ClosedTy) := ∀ a, Var Γ a → Computation a
+abbrev Environment (Γ : List ClosedTy) := IPFunctor.ScopedDomain.Env computationDomain Γ
+
+/-! The generic environment operations, under the names used by the Cryptol model. -/
 
 namespace Environment
 
-/-- Extend an environment with one suspended computation. -/
-@[expose] def extend {Γ : List ClosedTy} {a : ClosedTy} (ρ : Environment Γ)
-    (x : Computation a) : Environment (a :: Γ) := fun _ v => match v with
-  | .zero => x
-  | .succ v => ρ _ v
-
-@[simp] theorem extend_zero {Γ : List ClosedTy} {a : ClosedTy} (ρ : Environment Γ)
-    (x : Computation a) : ρ.extend x a .zero = x := rfl
-
-@[simp] theorem extend_succ {Γ : List ClosedTy} {a b : ClosedTy} (ρ : Environment Γ)
-    (x : Computation a) (v : Var Γ b) : ρ.extend x b (.succ v) = ρ b v := rfl
-
-/-- Extending environments is jointly continuous. -/
-@[expose] noncomputable def extendContinuous {Γ : List ClosedTy} {a : ClosedTy} :
-    (Environment Γ × Computation a) →𝒄 Environment (a :: Γ) :=
-  .ofFun (fun p => extend p.1 p.2) (by
-    apply ωScottContinuous.of_apply₂
-    intro b
-    apply ωScottContinuous.of_apply₂
-    intro v
-    cases v with
-    | zero => exact Prod.ωScottContinuous_snd
-    | succ v =>
-        exact (ωScottContinuous.apply v).comp
-          ((ωScottContinuous.apply b).comp Prod.ωScottContinuous_fst))
-
-/-- Continuous environment extension has the ordinary lookup equations. -/
-@[simp] theorem extendContinuous_apply {Γ : List ClosedTy} {a : ClosedTy}
-    (p : Environment Γ × Computation a) : extendContinuous p = p.1.extend p.2 := rfl
-
-/-- The unique environment of a closed term. -/
-@[expose] def empty : Environment [] := fun _ v => nomatch v
+export IPFunctor.ScopedDomain.Env (empty cons cons_zero cons_succ consContinuous
+  consContinuous_apply append appendContinuous rename)
 
 end Environment
 
