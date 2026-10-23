@@ -39,7 +39,8 @@ interfaces with a strict evaluation strategy.
 | `scripts/` | Export, census, corpus and audit drivers, and the offline model, importer and module tests; see the [tooling guide](docs/tooling.md) |
 | `fixtures/`, `artifacts/` | PolyFun's own Cryptol fixtures, the committed exports and the [Foundation status](docs/compatibility.md) |
 
-The [model guide](docs/model.md) gives the precise claims, the coverage and gap
+The [tutorial](docs/tutorial.md) imports a small Cryptol function and proves facts
+about it. The [model guide](docs/model.md) gives the precise claims, the coverage and gap
 ledger, and the next milestones. The [evaluator survey](docs/evaluators.md) fixes the
 semantic anchor, and the [Foundation status](docs/compatibility.md) measures coverage.
 
