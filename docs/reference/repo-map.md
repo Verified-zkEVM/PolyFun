@@ -29,12 +29,15 @@ Example and test imports never flow back into production.
 |---|---|---|
 | Polynomial interfaces and morphisms | [PFunctor basics](../../PolyFun/PFunctor/Basic.lean), [lens laws](../../PolyFun/PFunctor/Lens/Basic.lean), [Yoneda and natural transformations](../../PolyFun/PFunctor/Lens/Yoneda.lean), [special classes](../../PolyFun/PFunctor/Equiv/Special.lean), [universal properties](../../PolyFun/PFunctor/Lens/Universal.lean), [monoidal structures](../../PolyFun/PFunctor/Category/Monoidal.lean), [factorization as morphism properties](../../PolyFun/PFunctor/Category/Factorization.lean) | [Polynomial functors](../guides/pfunctor.md) |
 | Free programs and handlers | [Free basics](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean), [handler sums](../../PolyFun/PFunctor/Handler/Sum.lean), [exceptional answers](../../PolyFun/PFunctor/Free/Except.lean), [stateful combinators](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean), [stateful lenses](../../PolyFun/PFunctor/Handler/StateLens.lean) | [First program](../tutorials/first-program.md) |
+| Binding syntax and type-changing IR translations | [Scoped signatures](../../PolyFun/IPFunctor/Scoped/Basic.lean), [interpretations](../../PolyFun/IPFunctor/Scoped/Interpretation.lean), [reindexing](../../PolyFun/IPFunctor/Scoped/Reindex.lean) | [Scoped programs](../guides/ipfunctor.md#binding-signatures-and-native-ir) |
+| Binding families over parameter contexts | [Families](../../PolyFun/IPFunctor/Scoped/Family.lean), [family maps](../../PolyFun/IPFunctor/Scoped/FamilyMap.lean), [substitution](../../PolyFun/IPFunctor/Scoped/FamilySubstitution.lean), [translation/substitution laws](../../PolyFun/IPFunctor/Scoped/FamilyMapSubstitution.lean), [indexed traversals](../../PolyFun/IPFunctor/Free/Traversal.lean), [continuous environments](../../PolyFun/IPFunctor/Scoped/Domain.lean) | [Parameter-context binders](../guides/ipfunctor.md#binders-that-change-parameter-contexts) |
 | Represented-data contracts | [Correspondence](../../PolyFun/Control/Semantics/Correspondence.lean) | [Computation models](../guides/computation-models.md#connections-and-their-proof-boundaries) |
 | Deterministic transitions | [Transitions](../../PolyFun/Control/Transition.lean), [tree and machine adapters](../../PolyFun/ITree/Transition.lean) | [Computation models](../guides/computation-models.md#connections-and-their-proof-boundaries) |
 | State-dependent interfaces | [Indexed basics](../../PolyFun/IPFunctor/Basic.lean), [indexed roll bounds](../../PolyFun/IPFunctor/Free/Bound.lean), [bound transport](../../PolyFun/IPFunctor/Free/Bound/Reindex.lean), [transport along lenses](../../PolyFun/IPFunctor/Free/Lens.lean) | [Indexed polynomials](../guides/ipfunctor.md) |
 | Indexed folds, reindexing, and traversals | [Folds](../../PolyFun/IPFunctor/Free/Fold.lean), [reindexing](../../PolyFun/IPFunctor/Free/Reindex.lean), [traversals](../../PolyFun/IPFunctor/Free/Traversal.lean) | [Indexed polynomials](../guides/ipfunctor.md#folds-reindexing-and-traversals) |
 | Behaviors and explicit-state machines | [Resumptions](../../PolyFun/PFunctor/Resumption.lean), [dynamical systems](../../PolyFun/PFunctor/Dynamical/Basic.lean), [automata bridges](../../PolyFun/PFunctor/Dynamical/Automata.lean) | [Computation models](../guides/computation-models.md) |
 | Interaction trees and recursion | [ITree basics](../../PolyFun/ITree/Basic.lean) | [Interaction trees](../guides/itree.md) |
+| Partial result domains | [Pointed domains](../../PolyFun/Control/Domain/Pointed.lean), [lifted results](../../PolyFun/Control/Domain/Result.lean), [prefix recurrences](../../PolyFun/Control/Domain/PrefixRecursion.lean) | [Continuous interpretations](../guides/itree.md#continuous-domain-interpretations) |
 | Continuous tree interpretations | [Resumption domains](../../PolyFun/PFunctor/Resumption/Domain.lean), [finite approximations](../../PolyFun/PFunctor/Resumption/DomainTruncate.lean), [ITree domains](../../PolyFun/ITree/Domain.lean), [sequencing and iteration](../../PolyFun/ITree/DomainLaws.lean) | [Continuous interpretations](../guides/itree.md#continuous-domain-interpretations) |
 | Least fixed points and admissible predicates | [Omega-CPO fixed points](../../ToCslib/Order/OmegaCompletePartialOrder.lean), [admissibility](../../ToCslib/Order/Admissible.lean), [prefix recursion](../../ToCslib/Order/PrefixRecursion.lean) | [Upstream ownership](../development/upstream.md#omega-cpo-fixed-points) |
 | Interpreting trees into monads | [Interpretation](../../PolyFun/ITree/Interp/Defs.lean), [laws](../../PolyFun/ITree/Interp/Laws.lean), [exact stateful equations](../../PolyFun/ITree/Interp/Stateful.lean) | [Interaction trees](../guides/itree.md#interpreting-into-a-monad) |
@@ -56,6 +59,9 @@ Example and test imports never flow back into production.
 `Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure: ordered,
 graded, Dijkstra and relative monads and monad relations under `Control/Monad/`, and the
 lawfulness classes `LawfulMonadFunctor` and `LawfulMonadControl` under `Control/Lawful/`.
+`Control/Semantics/Correspondence` owns represented-data contract transfer;
+`Control/Transition` and `ITree/Transition` connect deterministic execution to
+resumable machines. Their frontend obligations are in the [interop guide](../guides/interop.md).
 `Logic/` holds small logic helpers. `Complexity/` supplies resource-bound syntax;
 concrete machine complexity lives in the optional `ComplexityBackends` library.
 
@@ -107,7 +113,9 @@ flowchart TD
   OP --> OR
   R --> AD[ComplexityBackends]
   T -.-> AD
-  I --> EX[Optional examples]
+  I --> SF[Algebraic folds and scoped syntax]
+  SF --> EX[Optional examples]
+  I --> EX
   IO --> EX
   EX --> CLI[Parliament executable]
   EX --> TEST[Regression and consumer tests]

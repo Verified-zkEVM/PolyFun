@@ -11,7 +11,8 @@ lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.InteractionTrees Examples.Tutorials.ParallelReports \
   Examples.Tutorials.VersionedRequests Examples.Tutorials.UpdatePolicies \
   Examples.Tutorials.ReviewableWorkflows Examples.Tutorials.FairWorkQueues \
-  Examples.Tutorials.BoundedController \
+  Examples.Tutorials.BoundedController Examples.Tutorials.ScopedPrograms \
+  Examples.Tutorials.ScopedFamily Examples.Tutorials.ScopedExecution \
   Examples.Parliament PolyFunParliamentMain
 ```
 

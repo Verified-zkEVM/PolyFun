@@ -138,6 +138,22 @@ the chain-closure hypothesis in unfolded form, so an `Admissible` proof can be
 passed directly; `Admissible.fix_induction` states the same principle with the
 named predicate. An upstream version belongs beside `fixedPoints.iterateChain`.
 
+## Binding families and parameter transport
+
+`ScopedFamily` describes changing parameter contexts, typed binding positions,
+and constructor-local maps over the existing `IPFunctor.IFreeM` carrier.
+Identity, composition, renaming, and relational-fold laws belong beside this
+representation. Substitution laws state the compatibility required of the
+language's parameter action explicitly.
+
+The pinned CSLib `Foundations.Syntax.HasSubstitution` provides notation for a
+replacement operation, and its locally nameless lambda calculi provide
+language-specific substitution and binding theories. Neither supplies this
+indexed polynomial family interface. Retain the binding-family layer in
+PolyFun; revisit it when an upstream indexed binding abstraction supplies
+equivalent mixed-binder and noninjective sort-map laws. Language semantics and
+the proof that a concrete parameter action satisfies these laws remain downstream.
+
 ## Object, path, and trace interfaces
 
 `FreeP.node`, `FreeP.encode`, and `FreeP.decode` use the owning polynomial
