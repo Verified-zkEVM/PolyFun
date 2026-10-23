@@ -40,7 +40,7 @@ namespace Cryptol.Reference
   | _ => none
 
 /-- Infer a type expression's kind while checking parameter identities and arities. -/
-def TypeExpr.kindWith? (nominals : List (Name × List Kind × Kind)) :
+@[expose] def TypeExpr.kindWith? (nominals : List (Name × List Kind × Kind)) :
     Nat → List Parameter → TypeExpr → Except String Kind
   | 0, _, _ => .error "type-kind nesting budget exhausted"
   | fuel + 1, params, expression => do
@@ -87,20 +87,20 @@ def TypeExpr.kindWith? (nominals : List (Name × List Kind × Kind)) :
           return .proposition
 
 /-- Kind inference without ambient nominal declarations. -/
-def TypeExpr.kind? := TypeExpr.kindWith? []
+@[expose] def TypeExpr.kind? := TypeExpr.kindWith? []
 
 /-- Check one type expression against a required kind. -/
-def TypeExpr.checkKindWith (nominals : List (Name × List Kind × Kind))
+@[expose] def TypeExpr.checkKindWith (nominals : List (Name × List Kind × Kind))
     (fuel : Nat) (params : List Parameter) (kind : Kind)
     (expression : TypeExpr) : Except String Unit := do
   unless (← expression.kindWith? nominals fuel params) = kind do
     throw "unexpected type-expression kind"
 
 /-- Kind checking without ambient nominal declarations. -/
-def TypeExpr.checkKind := TypeExpr.checkKindWith []
+@[expose] def TypeExpr.checkKind := TypeExpr.checkKindWith []
 
 /-- Check a scheme under its ambient numeric and type parameters. -/
-def Schema.checkKindsWith (nominals : List (Name × List Kind × Kind))
+@[expose] def Schema.checkKindsWith (nominals : List (Name × List Kind × Kind))
     (fuel : Nat) (ambient : List Parameter) (schema : Schema) :
     Except String Unit := do
   let params := schema.parameters ++ ambient
@@ -111,6 +111,6 @@ def Schema.checkKindsWith (nominals : List (Name × List Kind × Kind))
   schema.body.checkKindWith nominals fuel params .value
 
 /-- Scheme checking without ambient nominal declarations. -/
-def Schema.checkKinds := Schema.checkKindsWith []
+@[expose] def Schema.checkKinds := Schema.checkKindsWith []
 
 end Cryptol.Reference

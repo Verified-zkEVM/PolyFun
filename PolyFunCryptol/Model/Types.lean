@@ -18,7 +18,7 @@ those constraints. No inference or constraint solver is part of this model.
 Infinite lengths are separate from finite lengths, including zero.
 -/
 
-public section
+@[expose] public section
 
 namespace Cryptol
 
@@ -33,7 +33,7 @@ inductive NumExpr (n : Nat) where
   deriving DecidableEq, Repr
 
 /-- Evaluate numeric arguments under an explicit numeric instantiation. -/
-@[expose] def NumExpr.eval {n : Nat} (ρ : Fin n → Length) : NumExpr n → Length
+def NumExpr.eval {n : Nat} (ρ : Fin n → Length) : NumExpr n → Length
   | .var i => ρ i
   | .finite m => .finite m
   | .infinite => .infinite
@@ -42,7 +42,7 @@ inductive NumExpr (n : Nat) where
   | .min a b => Length.min (a.eval ρ) (b.eval ρ)
 
 /-- Embed the total numeric fragment into partial reference numeric syntax. -/
-@[expose] def NumExpr.numeric {n : Nat} : NumExpr n → NumericExpr n
+def NumExpr.numeric {n : Nat} : NumExpr n → NumericExpr n
   | .var i => .var i
   | .finite k => .finite k
   | .infinite => .infinite
@@ -76,7 +76,7 @@ abbrev ClosedTy := Ty Length Empty
 abbrev PolyTy (n v : Nat) := Ty (NumExpr n) (Fin v)
 
 /-- Interpret a type at an explicit assignment to both kinds of variables. -/
-@[expose] def Ty.instantiate {N V M W : Type} (ρ : N → M) (θ : V → Ty M W) :
+def Ty.instantiate {N V M W : Type} (ρ : N → M) (θ : V → Ty M W) :
     Ty N V → Ty M W
   | .var i => θ i
   | .bit => .bit
@@ -92,12 +92,12 @@ inductive ValueClass where
   deriving DecidableEq, Repr
 
 /-- Recognize the bit element type used by packed sequences. -/
-@[expose] def ClosedTy.isBit : ClosedTy → Bool
+def ClosedTy.isBit : ClosedTy → Bool
   | .bit => true
   | _ => false
 
 /-- Structural class membership of an evaluated semantic type. -/
-@[expose] def ClosedTy.supports (c : ValueClass) : ClosedTy → Bool
+def ClosedTy.supports (c : ValueClass) : ClosedTy → Bool
   | .var i => i.elim
   | .bit => c == .zero || c == .logic || c == .eq || c == .cmp
   | .integer => c == .zero || c == .ring || c == .integral || c == .eq || c == .cmp
@@ -115,7 +115,7 @@ inductive ValueClass where
   | .arrow _ b => (c == .zero || c == .logic || c == .ring) && supports c b
 
 /-- Literal admissibility distinguishes an exact value from an exclusive upper bound. -/
-@[expose] def ClosedTy.literal (exclusive : Bool) (n : Length) : ClosedTy → Bool
+def ClosedTy.literal (exclusive : Bool) (n : Length) : ClosedTy → Bool
   | .bit => match n with
       | .finite n => n ≤ if exclusive then 2 else 1
       | .infinite => false
@@ -145,7 +145,7 @@ theorem ClosedTy.literal_zero_of_supports_integral (a : ClosedTy) (exclusive : B
   | bit | unit | prod | arrow => simp [supports] at h
 
 /-- Numeric comparison with infinity as the greatest length. -/
-@[expose] def Length.ge : Length → Length → Bool
+def Length.ge : Length → Length → Bool
   | .infinite, _ => true
   | .finite _, .infinite => false
   | .finite a, .finite b => b ≤ a
@@ -164,7 +164,7 @@ inductive Constraint (n v : Nat) where
   deriving DecidableEq, Repr
 
 /-- Satisfaction requires actual defined numeric results, including for equality. -/
-@[expose] def Constraint.Holds {n v : Nat} (ρ : Fin n → Length)
+def Constraint.Holds {n v : Nat} (ρ : Fin n → Length)
     (θ : Fin v → ClosedTy) : Constraint n v → Prop
   | .fin l => ∃ k, l.eval ρ = .finite k
   | .eq a b => a.eval ρ = b.eval ρ

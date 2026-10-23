@@ -19,7 +19,7 @@ outer suspension; proof assumptions introduce only an erased proof argument.
 The leaf domain is the existing lazy computation domain at an instantiated type.
 -/
 
-public section
+@[expose] public section
 
 namespace Cryptol.Polymorphic
 
@@ -34,7 +34,7 @@ inductive Scheme : Nat → Nat → Type where
 namespace Scheme
 
 /-- Substitute parameters, lifting under each quantifier of the appropriate kind. -/
-@[expose] def subst {n v m w : Nat} (σ : ParameterSubstitution n v m w) :
+def subst {n v m w : Nat} (σ : ParameterSubstitution n v m w) :
     Scheme n v → Scheme m w
   | .mono a => .mono (σ.apply a)
   | .allNum s => .allNum (s.subst σ.liftNum)
@@ -63,7 +63,7 @@ theorem subst_subst {n v m w k u : Nat} (s : Scheme n v)
   | guard c s ih => simp only [subst, ih, Constraint.subst_subst, ParameterSubstitution.comp]
 
 /-- The lazy computation domain of a scheme at an assignment of its free parameters. -/
-@[expose, implicit_reducible] noncomputable def domain {n v : Nat} :
+@[implicit_reducible] noncomputable def domain {n v : Nat} :
     Scheme n v → ParameterAssignment n v → PointedDomain
   | .mono a, ρ => .ofType (Computation (ρ.apply a))
   | .allNum s, ρ => .result EvalError (.pi Length (fun l => s.domain (ρ.extendNum l)))
@@ -104,7 +104,7 @@ theorem domain_subst {n v m w : Nat} (s : Scheme n v)
         (fun _ => s.domain (ρ.pull σ))) hc
 
 /-- Errors propagate through erased proof assumptions without adding a suspension. -/
-@[expose] noncomputable def error {n v : Nat} :
+noncomputable def error {n v : Nat} :
     (s : Scheme n v) → (ρ : ParameterAssignment n v) → EvalError → s.Meaning ρ
   | .mono _, _, e => .error e
   | .allNum _, _, e => .error e

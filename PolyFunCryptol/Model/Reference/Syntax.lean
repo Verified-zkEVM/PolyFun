@@ -17,7 +17,7 @@ Types and expressions here are input syntax; acceptance requires a separate
 scope, kind, and typing check. Proof application has no proof payload upstream.
 -/
 
-public section
+@[expose] public section
 
 namespace Cryptol.Reference
 
@@ -177,25 +177,25 @@ mutual
 end
 
 /-- The identity declared by a source declaration. -/
-@[expose] def Decl.name : Decl → Name
+def Decl.name : Decl → Name
   | .mk name _ _ => name
 
 /-- The complete scheme of a source declaration. -/
-@[expose] def Decl.schema : Decl → Schema
+def Decl.schema : Decl → Schema
   | .mk _ schema _ => schema
 
 /-- The implementation of a source declaration. -/
-@[expose] def Decl.definition : Decl → Definition
+def Decl.definition : Decl → Definition
   | .mk _ _ definition => definition
 
 /-- Exactly the source forms that require an external implementation. -/
-@[expose] def Decl.requiresImplementation (d : Decl) : Bool :=
+def Decl.requiresImplementation (d : Decl) : Bool :=
   match d.definition with
   | .primitive | .foreign _ none => true
   | .expression _ | .foreign _ (some _) => false
 
 /-- The declarations introduced by a group, in their exported order. -/
-@[expose] def DeclGroup.declarations : DeclGroup → List Decl
+def DeclGroup.declarations : DeclGroup → List Decl
   | .nonrecursive declaration => [declaration]
   | .recursive declarations => declarations
 

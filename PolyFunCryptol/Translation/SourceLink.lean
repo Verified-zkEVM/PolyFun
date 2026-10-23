@@ -137,7 +137,7 @@ structure LinkCertificate (bundle : ModuleBundle) (rootName : String) where
   accepted : bundle.link rootName budget = .ok result
 
 /-- Retain the checked link result together with its acceptance equation. -/
-def certifyLink (bundle : ModuleBundle) (rootName : String) (fuel : Nat := 10000) :
+@[expose] def certifyLink (bundle : ModuleBundle) (rootName : String) (fuel : Nat := 10000) :
     Except ImportError (bundle.LinkCertificate rootName) :=
   match h : bundle.link rootName fuel with
   | .ok result => .ok ⟨fuel, result, h⟩

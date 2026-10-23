@@ -19,7 +19,7 @@ Class membership follows the structural instances in Cryptol 3.6.0's
 tuples, and records. These are explicit checks, separate from expression typing.
 -/
 
-public section
+@[expose] public section
 
 namespace Cryptol.Reference
 
@@ -35,7 +35,7 @@ inductive ValueType where
 mutual
 
   /-- Structural equality executable by kernel reduction, including nested aggregates. -/
-  @[expose] def ValueType.beq : ValueType → ValueType → Bool
+  def ValueType.beq : ValueType → ValueType → Bool
     | .bit, .bit | .integer, .integer => true
     | .seq n a, .seq m b => n == m && a.beq b
     | .function a b, .function c d => a.beq c && b.beq d
@@ -44,13 +44,13 @@ mutual
     | _, _ => false
 
   /-- Compare an ordered tuple of source types. -/
-  @[expose] def ValueType.beqFields : List ValueType → List ValueType → Bool
+  def ValueType.beqFields : List ValueType → List ValueType → Bool
     | [], [] => true
     | a :: as, b :: bs => a.beq b && ValueType.beqFields as bs
     | _, _ => false
 
   /-- Compare canonical record labels and their source types. -/
-  @[expose] def ValueType.beqRecordFields :
+  def ValueType.beqRecordFields :
       List (String × ValueType) → List (String × ValueType) → Bool
     | [], [] => true
     | (label, a) :: as, (name, b) :: bs =>
@@ -98,7 +98,7 @@ abbrev ValueClass := Cryptol.ValueClass
 mutual
 
   /-- Erase source aggregate labels only when assigning the resolved carrier type. -/
-  @[expose] def ValueType.coreType : ValueType → ClosedTy
+  def ValueType.coreType : ValueType → ClosedTy
     | .bit => .bit
     | .integer => .integer
     | .seq n a => .seq n (ValueType.coreType a)
@@ -107,26 +107,26 @@ mutual
     | .record fields => ValueType.recordType fields
 
   /-- Tuples use a right-associated product ending in the empty tuple. -/
-  @[expose] def ValueType.tupleType : List ValueType → ClosedTy
+  def ValueType.tupleType : List ValueType → ClosedTy
     | [] => .unit
     | a :: fields => .prod (ValueType.coreType a) (ValueType.tupleType fields)
 
   /-- Record fields retain the canonical order supplied by Cryptol. -/
-  @[expose] def ValueType.recordType : List (String × ValueType) → ClosedTy
+  def ValueType.recordType : List (String × ValueType) → ClosedTy
     | [] => .unit
     | (_, a) :: fields => .prod (ValueType.coreType a) (ValueType.recordType fields)
 
 end
 
 /-- Distinguish packed words through the canonical carrier shape. -/
-@[expose] def ValueType.isBit (t : ValueType) : Bool := ClosedTy.isBit t.coreType
+def ValueType.isBit (t : ValueType) : Bool := ClosedTy.isBit t.coreType
 
 /-- Source classes use the same structural interpretation as open constraints. -/
-@[expose] def ValueType.supports (c : ValueClass) (t : ValueType) : Bool :=
+def ValueType.supports (c : ValueClass) (t : ValueType) : Bool :=
   ClosedTy.supports c t.coreType
 
 /-- Source literal admissibility uses the canonical interpretation of exact and exclusive bounds. -/
-@[expose] def ValueType.literal (exclusive : Bool) (n : Length) (t : ValueType) : Bool :=
+def ValueType.literal (exclusive : Bool) (n : Length) (t : ValueType) : Bool :=
   ClosedTy.literal exclusive n t.coreType
 
 /-- Numeric comparison includes infinity as the greatest length. -/
@@ -140,23 +140,23 @@ inductive TypeValue where
   deriving Repr, BEq
 
 /-- The kind of a closed argument. -/
-@[expose] def TypeValue.kind : TypeValue → Kind
+def TypeValue.kind : TypeValue → Kind
   | .number _ => .number
   | .value _ => .value
   | .proposition _ => .proposition
 
 /-- Resolve a closed numeric argument without coercions or defaults. -/
-@[expose] def TypeValue.number? : TypeValue → Except String Length
+def TypeValue.number? : TypeValue → Except String Length
   | .number n => .ok n
   | _ => .error "expected a numeric argument"
 
 /-- Resolve a closed value-type argument without coercions or defaults. -/
-@[expose] def TypeValue.value? : TypeValue → Except String ValueType
+def TypeValue.value? : TypeValue → Except String ValueType
   | .value t => .ok t
   | _ => .error "expected a value-type argument"
 
 /-- Resolve a closed constraint without coercions or defaults. -/
-@[expose] def TypeValue.proposition? : TypeValue → Except String Bool
+def TypeValue.proposition? : TypeValue → Except String Bool
   | .proposition p => .ok p
   | _ => .error "expected a constraint"
 
@@ -164,7 +164,7 @@ inductive TypeValue where
 abbrev TypeEnvironment := List (Nat × TypeValue)
 
 /-- Decode a binary numeric constructor at the pinned frontend version. -/
-@[expose] def numericBinary? : String → Option NumericBinary
+def numericBinary? : String → Option NumericBinary
   | "TF TCAdd" => some .add
   | "TF TCSub" => some .sub
   | "TF TCMul" => some .mul
@@ -178,7 +178,7 @@ abbrev TypeEnvironment := List (Nat × TypeValue)
   | _ => none
 
 /-- Decode a structural class constructor. -/
-@[expose] def valueClass? : String → Option ValueClass
+def valueClass? : String → Option ValueClass
   | "PC PZero" => some .zero
   | "PC PLogic" => some .logic
   | "PC PRing" => some .ring
@@ -189,7 +189,7 @@ abbrev TypeEnvironment := List (Nat × TypeValue)
   | _ => none
 
 /-- Evaluate a fully applied constructor, rejecting kind and arithmetic failures. -/
-@[expose] def evaluateConstructor (name : String) (args : List TypeValue) :
+def evaluateConstructor (name : String) (args : List TypeValue) :
     Except String TypeValue := do
   match name, args with
   | "TC TCBit", [] => return .value .bit
@@ -224,7 +224,7 @@ abbrev TypeEnvironment := List (Nat × TypeValue)
   | _, _ => throw s!"unsupported constructor or argument kinds: {name}"
 
 /-- Type-directed selection also checks the frontend's optional shape annotation. -/
-@[expose] def ValueType.select (s : Selector) : ValueType → Except String ValueType
+def ValueType.select (s : Selector) : ValueType → Except String ValueType
   | .tuple fields => match s with
       | .tuple i size => do
           unless size.isNone || size == some fields.length do throw "tuple shape mismatch"

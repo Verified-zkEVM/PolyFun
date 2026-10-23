@@ -291,7 +291,7 @@ structure Certificate (bundle : SourceBundle) (root : SourceRoot) where
   accepted : check bundle root budget = .ok result
 
 /-- A successful elaboration retains its acceptance equation. -/
-def certify (bundle : SourceBundle) (root : SourceRoot) (fuel : Nat := 1000) :
+@[expose] def certify (bundle : SourceBundle) (root : SourceRoot) (fuel : Nat := 1000) :
     Except ImportError (Certificate bundle root) :=
   match h : check bundle root fuel with
   | .ok result => .ok ⟨fuel, result, h⟩
