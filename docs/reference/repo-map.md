@@ -11,11 +11,13 @@ it provides, rather than importing the whole project while developing a module.
 | `PolyFun` | Generic polynomial, interaction, logic, and realizability library | Default `lake build`; `import PolyFun` or a specific module |
 | `ToCslib` | Upstream staging: free-monad and loop laws, order bridge, omega-CPO fixed points, finite case compilation, `Fin`-indexed monadic sequencing, bitvector and polynomial lemmas | `lake build ToCslib`; specific `ToCslib.*` imports |
 | `ComplexityBackends` | Optional concrete complexity backends, one subdirectory per machine model | `lake build ComplexityBackends`; `import ComplexityBackends` or a specific `ComplexityBackends.CslibSingleTape.*` module |
+| `PolyFunCryptol` | Optional Cryptol language case study: lazy reference semantics, typed-AST importer and native IR | `lake build PolyFunCryptol`; `import PolyFunCryptol`; tests in `PolyFunCryptolTest`, executable `polyfun-cryptol` |
 | `PolyFunExamples` | Checked tutorials and the Parliament application under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
 | `PolyFunTest` | Regression tests, adversarial cases, and ordinary-import consumers | `lake test` |
 
-`PolyFun.lean`, `ToCslib.lean`, and `ComplexityBackends.lean` are generated import
-indexes. The optional backends and examples are outside the `PolyFun` umbrella.
+`PolyFun.lean`, `ToCslib.lean`, `ComplexityBackends.lean`, and `PolyFunCryptol.lean` are
+generated import indexes. The optional backends, the Cryptol case study and the examples
+are outside the `PolyFun` umbrella.
 `PolyFunTest` can consume examples, but production never depends on examples or tests.
 
 `PolyFunExamples` combines tutorial globs with the generated `Examples.Parliament`
@@ -114,6 +116,7 @@ flowchart TD
   R --> AD[ComplexityBackends]
   T -.-> AD
   I --> SF[Algebraic folds and scoped syntax]
+  SF --> CRY[Optional Cryptol case study]
   SF --> EX[Optional examples]
   I --> EX
   IO --> EX
@@ -129,7 +132,8 @@ bridges its P/poly certificates to per-parameter program witnesses, and proves
 per-step cost adequacy); a new backend is a sibling subdirectory, never a
 module inside `PolyFun/`.
 `ToCslib` never imports PolyFun or a backend, and PolyFun never imports a
-backend; `scripts/check-modules.sh` enforces both.
+backend; `scripts/check-modules.sh` enforces both. `PolyFunCryptol` builds on the
+scoped syntax, partial domains, contracts and transitions; nothing below it imports it.
 
 PolyFun and `ToCslib` import the CSLib module that owns each reused
 declaration instead of declaring a local copy: `PolyFun.PFunctor.Basic`

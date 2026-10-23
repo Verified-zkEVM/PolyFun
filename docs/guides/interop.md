@@ -47,11 +47,12 @@ steps. `compile_correct` relates it to the scoped algebra for every supported
 term and environment; `executes` and `execution_correct` connect its transitions
 to that meaning. `sumCertificate` demonstrates all-input contract transfer.
 
-VCVio's optional Cryptol development uses the same correspondence and transition
-interfaces with lazy partial values, typed machine states and language-specific
-errors. Cryptol source schemes, primitives, adequacy, Foundation provenance and
-crypto specification transfer remain in VCVio. The two frontends share neither
-an opcode vocabulary nor an evaluation strategy.
+The [Cryptol case study](../../PolyFunCryptol/README.md) uses the same correspondence
+and transition interfaces with lazy partial values, typed machine states and
+language-specific errors, together with scoped families for its ordered numeric,
+type and proof binders. Foundation provenance and cryptographic specification
+transfer remain in VCVio. The two frontends share neither an opcode vocabulary nor
+an evaluation strategy.
 
 ## Further connections
 

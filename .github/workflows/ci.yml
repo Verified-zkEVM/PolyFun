@@ -162,7 +162,7 @@ jobs:
         run: lake exe cache get
 
       - name: Build production and example libraries
-        run: lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
+        run: lake build PolyFun ToCslib ComplexityBackends PolyFunCryptol PolyFunExamples +PolyFunParliamentMain +PolyFunCryptolMain --wfail
 
       # One process per lint root. `lake lint` loads every root's environment into a single
       # process (about 7 GB in total); on Lean v4.35.0 the runner was shut down during that step.
@@ -230,3 +230,5 @@ jobs:
           lake build polyfun-parliament --wfail
           python3 scripts/test-parliament-cli.py
           lake -d test/ParliamentConsumer build --wfail
+          lake build PolyFunCryptolTest polyfun-cryptol --wfail --iofail
+          python3 -u PolyFunCryptol/scripts/test_model.py

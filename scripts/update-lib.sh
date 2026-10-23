@@ -5,6 +5,7 @@
 #   ./scripts/update-lib.sh                       # regenerates PolyFun.lean
 #   ./scripts/update-lib.sh ToCslib               # regenerates ToCslib.lean
 #   ./scripts/update-lib.sh ComplexityBackends    # regenerates ComplexityBackends.lean
+#   ./scripts/update-lib.sh PolyFunCryptol        # regenerates PolyFunCryptol.lean
 #   ./scripts/update-lib.sh Examples.Parliament   # regenerates Examples/Parliament.lean
 #
 # This script only considers tracked files. New <Lib>/**/*.lean files
@@ -17,9 +18,9 @@ cd "$REPO_ROOT"
 
 lib="${1:-PolyFun}"
 case "$lib" in
-  PolyFun|ToCslib|ComplexityBackends|Examples.Parliament) ;;
+  PolyFun|ToCslib|ComplexityBackends|PolyFunCryptol|Examples.Parliament) ;;
   *)
-    echo "ERROR: unknown library '$lib' (expected PolyFun, ToCslib, ComplexityBackends, or Examples.Parliament)." >&2
+    echo "ERROR: unknown library '$lib' (expected PolyFun, ToCslib, ComplexityBackends, PolyFunCryptol, or Examples.Parliament)." >&2
     exit 1
     ;;
 esac
@@ -58,7 +59,7 @@ trap cleanup EXIT
 # around their generated imports.
 umbrella_header() {
   case "$1" in
-    Examples.Parliament)
+    Examples.Parliament|PolyFunCryptol)
       cat <<'EOF_HEADER'
 /-
 Copyright (c) 2026 PolyFun Contributors. All rights reserved.
@@ -93,6 +94,20 @@ EOF_HEADER
 
 umbrella_docstring() {
   case "$1" in
+    PolyFunCryptol)
+      cat <<'EOF_DOCSTRING'
+
+/-!
+# Cryptol language case study
+
+A lazy denotational semantics anchored in Cryptol's reference evaluator, its call-by-name
+execution and adequacy, and the checked import of official typed-AST exports into PolyFun's
+scoped polynomial syntax and native finite IR. This library is outside the backend-neutral
+`PolyFun` umbrella. Foundation correspondences and cryptographic interpretations remain in
+VCVio. See `PolyFunCryptol/README.md` for the supported fragment and trust boundary.
+-/
+EOF_DOCSTRING
+      ;;
     Examples.Parliament)
       cat <<'EOF_DOCSTRING'
 

@@ -15,12 +15,13 @@ proofs, examples, import boundaries, or validation infrastructure.
 
 | Check | Scope |
 |---|---|
-| Default build | `PolyFun`, `ToCslib`, `ComplexityBackends`, `PolyFunExamples`, and `+PolyFunParliamentMain`, with `--wfail` |
-| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.WP` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend; `PolyFun` imports no backend), `import all` boundaries (tests may open backends, backends never open `PolyFun` or `ToCslib`, module canaries open nothing) |
+| Default build | `PolyFun`, `ToCslib`, `ComplexityBackends`, `PolyFunCryptol`, `PolyFunExamples`, `+PolyFunParliamentMain`, and `+PolyFunCryptolMain`, with `--wfail` |
+| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.WP` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend; `PolyFun` imports no backend; nothing below `PolyFunCryptol` imports it), `import all` boundaries (tests may open backends, backends and the Cryptol case study never open `PolyFun` or `ToCslib`, only the case study and its tests open it, module canaries open nothing) |
 | Generated imports | Generated umbrellas match the tracked source tree |
 | Documentation | Checker regressions, agent symlink, local paths and heading anchors, module docstrings, README excerpt synchronization |
 | `--lint` | Batteries environment linters and Mathlib text-style checks over production and example libraries plus the executable entry point |
-| `--test` | `PolyFunTest` with warnings and printed output fatal (`--wfail --iofail`), `lake test`, native CLI/filesystem tests, and both separate consumers |
+| `--test` | `PolyFunTest` with warnings and printed output fatal (`--wfail --iofail`), `lake test`, native CLI/filesystem tests, both separate consumers, `PolyFunCryptolTest`, and the offline Cryptol model fixtures |
+| `--cryptol-external` | `--test` plus a comparison of the Cryptol model with the pinned Cryptol 3.6.0 executable named by `CRYPTOL_BINARY` |
 | `--axioms` | Axiom-sweep fixture matrix and zero-debt check over production, tutorial, case-study, and executable module roots |
 
 The committed axiom baseline is a zero-debt policy, not an allowlist. Both
@@ -39,10 +40,11 @@ trace inherited proof obligations; PolyFun's own `--check` still rejects them.
 Stage additions, deletions, and renames before generating the relevant umbrella:
 
 ```bash
-git add PolyFun ToCslib ComplexityBackends
+git add PolyFun ToCslib ComplexityBackends PolyFunCryptol
 ./scripts/update-lib.sh
 ./scripts/update-lib.sh ToCslib
 ./scripts/update-lib.sh ComplexityBackends
+./scripts/update-lib.sh PolyFunCryptol
 ./scripts/validate.sh --lint --test --axioms
 ```
 
@@ -63,6 +65,8 @@ lake -d test/DocumentationConsumer build --wfail
 lake build polyfun-parliament --wfail
 python3 scripts/test-parliament-cli.py
 lake -d test/ParliamentConsumer build --wfail
+lake build PolyFunCryptolTest polyfun-cryptol --wfail --iofail
+python3 PolyFunCryptol/scripts/test_model.py
 lake lint
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \

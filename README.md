@@ -44,6 +44,7 @@ below and learn the categorical vocabulary as needed.
 | **PolyFun** | Handlers, lenses, paths, computation-model connections, interaction frameworks, generic program logic, and realizability |
 | `ToCslib` | Local additions staged for upstream: free-monad and loop laws, an order bridge, bitvector and polynomial lemmas |
 | `ComplexityBackends` | Optional concrete complexity backends, one subdirectory per machine model, instantiating PolyFun's quantitative realizability |
+| `PolyFunCryptol` | Optional Cryptol language case study: lazy reference semantics, a checked typed-AST importer and native IR built on PolyFun's scoped syntax, domains, contracts and transitions |
 | [VCVio](https://github.com/Verified-zkEVM/VCVio) | Probability semantics, cryptographic experiments, security definitions, reductions, and cryptographic applications |
 
 ```mermaid
@@ -54,6 +55,8 @@ flowchart LR
   C --> T
   T --> P
   P --> A[Optional ComplexityBackends]
+  P --> CR[Optional PolyFunCryptol]
+  CR -.-> V
   T -.-> A
   P --> V[VCVio]
 ```
@@ -160,7 +163,8 @@ then run `lake exe polyfun-parliament --help`.
 The [documentation hub](docs/README.md) also indexes notation, bisimulation,
 realizability, and program logic. Prefer specific module imports while
 working; `import PolyFun` exposes the full generic library. Optional concrete
-backends use `import ComplexityBackends`. The [repository map](docs/reference/repo-map.md)
+backends use `import ComplexityBackends`, and the [Cryptol case study](PolyFunCryptol/README.md)
+uses `import PolyFunCryptol`. The [repository map](docs/reference/repo-map.md)
 explains the separate library targets.
 
 ## Status and contributions
