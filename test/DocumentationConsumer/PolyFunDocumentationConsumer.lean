@@ -16,6 +16,7 @@ import Examples.Tutorials.UpdatePolicies
 import PolyFun.PFunctor.Handler.Sum
 import Examples.Tutorials.ScopedPrograms
 import Examples.Tutorials.ScopedExecution
+import Examples.Tutorials.ScopedFamily
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess
 import PolyFun.Interaction.Execution.RequestNetwork
@@ -96,3 +97,17 @@ example {S R : Type} (step : Control.Transition S R) (fuel : Nat) (state : S) :
     (Control.Transition.toMachine step).runChunk Control.Transition.tickHandler fuel
       (.inr state) = Control.Transition.toChunk (Control.Transition.run step fuel state) :=
   Control.Transition.runChunk_toMachine step fuel state
+
+example {n m : Nat} (ρ : Fin n → Fin m)
+    {Γ : List (Examples.ScopedFamily.ValueSort n)} {s : Examples.ScopedFamily.ValueSort n}
+    (t : Examples.ScopedFamily.Term n Γ s) :
+    Examples.ScopedFamily.erase (t.map Examples.ScopedFamily.parameterHom ρ) =
+      Examples.ScopedFamily.erase t := Examples.ScopedFamily.erase_parameters ρ t
+
+example {n m : Nat} (μ : Fin n → Fin m)
+    {Γ Δ : List (Examples.ScopedFamily.ValueSort n)} {s : Examples.ScopedFamily.ValueSort n}
+    (ρ : IPFunctor.ScopedSignature.Renaming Γ Δ) (t : Examples.ScopedFamily.Term n Γ s) :
+    (t.rename ρ).map Examples.ScopedFamily.parameterHom μ =
+      (t.map Examples.ScopedFamily.parameterHom μ).rename
+        (IPFunctor.ScopedSignature.Renaming.map (Examples.ScopedFamily.ValueSort.rename μ) ρ) :=
+  Examples.ScopedFamily.parameters_rename μ ρ t
