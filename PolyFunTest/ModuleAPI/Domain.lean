@@ -48,9 +48,9 @@ example :
     let D := fun _ : Bool => PointedDomain.ofType (DomainResult Unit (DiscreteOrder Nat))
     let E := fun _ : Unit => PointedDomain.ofType (DomainResult Unit (DiscreteOrder Nat))
     let η : IPFunctor.ScopedDomain.Env D [true, false] :=
-      IPFunctor.ScopedDomain.Env.cons D (DomainResult.error ())
-        (IPFunctor.ScopedDomain.Env.cons D ⊥ (IPFunctor.ScopedDomain.Env.empty D))
-    let ζ := IPFunctor.ScopedDomain.Env.reindex D E (fun _ => ()) (fun _ => rfl) η
+      IPFunctor.ScopedDomain.Env.cons (DomainResult.error ())
+        (IPFunctor.ScopedDomain.Env.cons ⊥ (IPFunctor.ScopedDomain.Env.empty))
+    let ζ := IPFunctor.ScopedDomain.Env.reindex E (fun _ => ()) (fun _ => rfl) η
     ζ () .zero = DomainResult.error () ∧ ζ () (.succ .zero) = ⊥ := by
   constructor <;> rfl
 

@@ -28,7 +28,7 @@ variable {w : Scope} (ρ : w.Assignment) {Γ Δ : List w.ValueSort}
 
 /-- Read local values at the positions selected by a renaming. -/
 @[expose] noncomputable def rename (r : ScopedSignature.Renaming Γ Δ) : Env ρ Δ →𝒄 Env ρ Γ :=
-  ScopedDomain.Env.rename _ r
+  ScopedDomain.Env.rename r
 
 @[simp] theorem rename_apply (r : ScopedSignature.Renaming Γ Δ) (η : Env ρ Δ)
     {s : w.ValueSort} (x : ScopedVar Γ s) : rename ρ r η s x = η s (r x) := rfl
@@ -36,21 +36,21 @@ variable {w : Scope} (ρ : w.Assignment) {Γ Δ : List w.ValueSort}
 /-- Context normalization commutes with value lookup. -/
 theorem rename_same (r : ScopedSignature.Renaming Γ Δ) (η : Env ρ Δ) :
     rename ρ (ScopedSignature.Renaming.map id r) (same ρ η) = same ρ (rename ρ r η) :=
-  (ScopedDomain.Env.reindex_rename _ _ _ _ r η).symm
+  (ScopedDomain.Env.reindex_rename _ _ _ r η).symm
 
 /-- Entering a numeric binder commutes with value lookup. -/
 theorem rename_enterNum (r : ScopedSignature.Renaming Γ Δ) (l : Length) (η : Env ρ Δ) :
     rename (ρ.extendNum l) (ScopedSignature.Renaming.map
       (Scheme.subst (ParameterSubstitution.weakenNum w.numbers w.types)) r) (enterNum ρ l η) =
       enterNum ρ l (rename ρ r η) :=
-  (ScopedDomain.Env.reindex_rename _ _ _ _ r η).symm
+  (ScopedDomain.Env.reindex_rename _ _ _ r η).symm
 
 /-- Entering a type binder commutes with value lookup. -/
 theorem rename_enterType (r : ScopedSignature.Renaming Γ Δ) (a : ClosedTy) (η : Env ρ Δ) :
     rename (ρ.extendType a) (ScopedSignature.Renaming.map
       (Scheme.subst (ParameterSubstitution.weakenType w.numbers w.types)) r) (enterType ρ a η) =
       enterType ρ a (rename ρ r η) :=
-  (ScopedDomain.Env.reindex_rename _ _ _ _ r η).symm
+  (ScopedDomain.Env.reindex_rename _ _ _ r η).symm
 
 /-- A lifted renaming retains the newly bound value. -/
 theorem rename_cons (r : ScopedSignature.Renaming Γ Δ) {s : w.ValueSort}
@@ -63,7 +63,7 @@ theorem rename_cons (r : ScopedSignature.Renaming Γ Δ) {s : w.ValueSort}
 theorem rename_append (r : ScopedSignature.Renaming Γ Δ) {Ξ : List w.ValueSort}
     (ξ : Env ρ Ξ) (η : Env ρ Δ) :
     rename ρ (r.liftMany Ξ) (append ρ (ξ, η)) = append ρ (ξ, rename ρ r η) :=
-  ScopedDomain.Env.rename_append _ r ξ η
+  ScopedDomain.Env.rename_append r ξ η
 
 end Env
 
@@ -151,14 +151,14 @@ theorem denoteOp_rename {w : Scope} {Γ Δ : List w.ValueSort}
     let D := fun s : w.ValueSort => s.domain ρ.val
     let rhs : (i : Fin bindings.length) → Env ρ (bindings ++ Γ.map id) →𝒄
         bindings[i].Meaning ρ.val := fun i => next i.succ ρ
-    have hg := ScopedDomain.Env.fixGroup_rename D (Ξ := bindings) rhs
+    have hg := ScopedDomain.Env.fixGroup_rename (Ξ := bindings) rhs
       (ScopedSignature.Renaming.map id r) (Env.same ρ η)
-    have hg' : ScopedDomain.Env.fixGroup D (Ξ := bindings)
+    have hg' : ScopedDomain.Env.fixGroup (Ξ := bindings)
         (fun i => (rhs i).comp (Env.rename ρ
           (ScopedSignature.Renaming.liftMany (ScopedSignature.Renaming.map id r) bindings)))
-            (Env.same ρ η) = ScopedDomain.Env.fixGroup D rhs
+            (Env.same ρ η) = ScopedDomain.Env.fixGroup rhs
               (Env.same ρ (Env.rename ρ r η)) :=
-      hg.symm.trans (congrArg (ScopedDomain.Env.fixGroup D rhs) (Env.rename_same ρ r η))
+      hg.symm.trans (congrArg (ScopedDomain.Env.fixGroup rhs) (Env.rename_same ρ r η))
     exact congrArg (fun ξ => next 0 ρ (Env.append ρ (Ξ := bindings)
       (ξ, Env.same ρ (Env.rename ρ r η)))) hg'
 

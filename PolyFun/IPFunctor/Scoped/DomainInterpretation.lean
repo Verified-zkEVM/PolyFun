@@ -45,11 +45,11 @@ namespace DomainInterpretation
 @[expose] noncomputable def under {Ξ : List S} {b : S}
     (f : ScopedDomain.Env D (Ξ ++ Γ) →𝒄 D b) :
     ScopedDomain.Env D Γ →𝒄 (ScopedDomain.Env D Ξ →𝒄 D b) :=
-  ContinuousHom.swapArgs (ContinuousHom.curry (f.comp (ScopedDomain.Env.appendContinuous D)))
+  ContinuousHom.swapArgs (ContinuousHom.curry (f.comp (ScopedDomain.Env.appendContinuous)))
 
 @[simp] theorem under_apply {Ξ : List S} {b : S} (f : ScopedDomain.Env D (Ξ ++ Γ) →𝒄 D b)
     (η : ScopedDomain.Env D Γ) (ξ : ScopedDomain.Env D Ξ) :
-    under f η ξ = f (ScopedDomain.Env.append D ξ η) := rfl
+    under f η ξ = f (ScopedDomain.Env.append ξ η) := rfl
 
 end DomainInterpretation
 
@@ -81,7 +81,7 @@ namespace Term
 theorem denoteDomain_rename (alg : DomainInterpretation σ D) {a : S} (t : σ.Term Γ a)
     (ρ : Renaming Γ Δ) (η : ScopedDomain.Env D Δ) :
     (t.rename ρ).denoteDomain alg η =
-      t.denoteDomain alg (ScopedDomain.Env.rename D ρ η) := by
+      t.denoteDomain alg (ScopedDomain.Env.rename ρ η) := by
   induction t using Term.inductionOn generalizing Δ with
   | hvar Γ a x => rfl
   | hnode Γ a op args ih =>
@@ -99,8 +99,8 @@ theorem denoteDomain_rename (alg : DomainInterpretation σ D) {a : S} (t : σ.Te
 theorem substitutionEnvDomain_liftMany (alg : DomainInterpretation σ D)
     (θ : σ.Substitution Γ Δ) (Ξ : List S) (ξ : ScopedDomain.Env D Ξ)
     (η : ScopedDomain.Env D Δ) :
-    substitutionEnvDomain alg (Substitution.liftMany θ Ξ) (ScopedDomain.Env.append D ξ η) =
-      ScopedDomain.Env.append D ξ (substitutionEnvDomain alg θ η) := by
+    substitutionEnvDomain alg (Substitution.liftMany θ Ξ) (ScopedDomain.Env.append ξ η) =
+      ScopedDomain.Env.append ξ (substitutionEnvDomain alg θ η) := by
   induction Ξ with
   | nil => rfl
   | cons b Ξ ih =>
@@ -129,7 +129,7 @@ theorem denoteDomain_subst (alg : DomainInterpretation σ D) {a : S} (t : σ.Ter
 theorem denoteDomain_substOne (alg : DomainInterpretation σ D) {a b : S}
     (body : σ.Term (a :: Γ) b) (value : σ.Term Γ a) (η : ScopedDomain.Env D Γ) :
     (body.substOne value).denoteDomain alg η =
-      body.denoteDomain alg (ScopedDomain.Env.cons D (value.denoteDomain alg η) η) := by
+      body.denoteDomain alg (ScopedDomain.Env.cons (value.denoteDomain alg η) η) := by
   rw [substOne, denoteDomain_subst]
   congr 1
   funext c x
@@ -152,7 +152,7 @@ variable {V : S → Type z'}
 theorem EnvRelated.append {R : ∀ a, D a → V a → Prop} {Ξ : List S}
     {ξ : ScopedDomain.Env D Ξ} {ξ' : Env V Ξ} {η : ScopedDomain.Env D Γ} {ζ : Env V Γ}
     (hξ : EnvRelated R ξ ξ') (hη : EnvRelated R η ζ) :
-    EnvRelated R (ScopedDomain.Env.append D ξ η) (Env.append ξ' ζ) := by
+    EnvRelated R (ScopedDomain.Env.append ξ η) (Env.append ξ' ζ) := by
   induction Ξ with
   | nil => exact hη
   | cons b Ξ ih =>

@@ -32,27 +32,27 @@ namespace Env
 variable {w : Scope} (ρ : w.Assignment) {Γ : List w.ValueSort}
 
 /-- The empty local environment. -/
-@[expose] noncomputable def empty : Env ρ [] := IPFunctor.ScopedDomain.Env.empty _
+@[expose] noncomputable def empty : Env ρ [] := IPFunctor.ScopedDomain.Env.empty
 
 /-- Normalize the identity context map at a constructor child. -/
 @[expose] noncomputable def same : Env ρ Γ →𝒄 Env ρ (Γ.map id) :=
-  IPFunctor.ScopedDomain.Env.reindex _ _ id (fun _ => rfl)
+  IPFunctor.ScopedDomain.Env.reindex _ id (fun _ => rfl)
 
 /-- Add a local suspended value. -/
 @[expose] noncomputable def cons {s : w.ValueSort} :
     (Env ρ Γ × s.Meaning ρ.val) →𝒄 Env ρ (s :: Γ) :=
-  (IPFunctor.ScopedDomain.Env.consContinuous _).comp (.ofFun (fun p => (p.2, p.1)))
+  (IPFunctor.ScopedDomain.Env.consContinuous).comp (.ofFun (fun p => (p.2, p.1)))
 
 /-- Add a whole recursive group of suspended values. -/
 @[expose] noncomputable def append {Ξ : List w.ValueSort} :
     (Env ρ Ξ × Env ρ Γ) →𝒄 Env ρ (Ξ ++ Γ) :=
-  IPFunctor.ScopedDomain.Env.appendContinuous _
+  IPFunctor.ScopedDomain.Env.appendContinuous
 
 /-- Enter a numeric abstraction without forcing any existing value. -/
 @[expose] noncomputable def enterNum (l : Length) :
     Env ρ Γ →𝒄 Env (ρ.extendNum l)
       (Γ.map (Scheme.subst (ParameterSubstitution.weakenNum w.numbers w.types))) :=
-  IPFunctor.ScopedDomain.Env.reindex _ _ _ (fun s => by
+  IPFunctor.ScopedDomain.Env.reindex _ _ (fun s => by
     rw [Scheme.domain_subst]
     change s.domain ((ρ.val.extendNum l).pull _) = s.domain ρ.val
     rw [ParameterAssignment.pull_weakenNum])
@@ -61,7 +61,7 @@ variable {w : Scope} (ρ : w.Assignment) {Γ : List w.ValueSort}
 @[expose] noncomputable def enterType (a : ClosedTy) :
     Env ρ Γ →𝒄 Env (ρ.extendType a)
       (Γ.map (Scheme.subst (ParameterSubstitution.weakenType w.numbers w.types))) :=
-  IPFunctor.ScopedDomain.Env.reindex _ _ _ (fun s => by
+  IPFunctor.ScopedDomain.Env.reindex _ _ (fun s => by
     rw [Scheme.domain_subst]
     change s.domain ((ρ.val.extendType a).pull _) = s.domain ρ.val
     rw [ParameterAssignment.pull_weakenType])
