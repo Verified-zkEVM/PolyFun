@@ -32,6 +32,7 @@ Example and test imports never flow back into production.
 | Free programs and handlers | [Free basics](../../PolyFun/PFunctor/Free/Basic.lean), [handlers](../../PolyFun/PFunctor/Handler.lean), [handler sums](../../PolyFun/PFunctor/Handler/Sum.lean), [exceptional answers](../../PolyFun/PFunctor/Free/Except.lean), [handler composition](../../PolyFun/PFunctor/Handler/Free.lean), [stateful combinators](../../PolyFun/PFunctor/Handler/Stateful/Combinators.lean), [stateful projections](../../PolyFun/PFunctor/Handler/Stateful/Projection.lean), [stateful packages](../../PolyFun/PFunctor/Handler/Stateful/Link.lean), [stateful lenses](../../PolyFun/PFunctor/Handler/StateLens.lean) | [First program](../tutorials/first-program.md) |
 | Program-type signatures, codes, and relational lifts | [Signature derivation](../../PolyFun/PFunctor/Free/DeriveSig.lean), [codes](../../PolyFun/PFunctor/Free/Code.lean), [relations between codes](../../PolyFun/PFunctor/Free/CodeRel.lean), [cost folds](../../PolyFun/PFunctor/Free/WP/Cost.lean), [quotients by equations](../../PolyFun/PFunctor/Free/Quotient.lean) | [Polynomial functors](../guides/pfunctor.md#signatures-of-program-types) |
 | Σ, Π and pullback along maps; natural models | [Slices](../../PolyFun/PFunctor/Slice.lean), [natural models](../../PolyFun/PFunctor/NaturalModel.lean) | [Polynomial functors](../guides/pfunctor.md#signatures-of-program-types) |
+| Binding syntax and type-changing IR translations | [Scoped signatures](../../PolyFun/IPFunctor/Scoped/Basic.lean), [interpretations](../../PolyFun/IPFunctor/Scoped/Interpretation.lean), [reindexing](../../PolyFun/IPFunctor/Scoped/Reindex.lean) | [Scoped programs](../guides/ipfunctor.md#binding-signatures-and-native-ir) |
 | Represented-data contracts | [Correspondence](../../PolyFun/Control/Semantics/Correspondence.lean) | [Computation models](../guides/computation-models.md#connections-and-their-proof-boundaries) |
 | Deterministic transitions | [Transitions](../../PolyFun/Control/Transition.lean), [tree and machine adapters](../../PolyFun/ITree/Transition.lean) | [Computation models](../guides/computation-models.md#connections-and-their-proof-boundaries) |
 | State-dependent interfaces | [Indexed basics](../../PolyFun/IPFunctor/Basic.lean), [indexed roll bounds](../../PolyFun/IPFunctor/Free/Bound.lean), [bound transport](../../PolyFun/IPFunctor/Free/Bound/Reindex.lean), [bounds under traversals](../../PolyFun/IPFunctor/Free/Bound/Traversal.lean), [loop bounds](../../PolyFun/IPFunctor/Free/Bound/Loops.lean), [dependent tuples](../../PolyFun/IPFunctor/Free/Tuple.lean), [transport along lenses](../../PolyFun/IPFunctor/Free/Lens.lean) | [Indexed polynomials](../guides/ipfunctor.md) |
@@ -60,6 +61,9 @@ Example and test imports never flow back into production.
 `Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure: ordered,
 graded, Dijkstra and relative monads and monad relations under `Control/Monad/`, and the
 lawfulness classes `LawfulMonadFunctor` and `LawfulMonadControl` under `Control/Lawful/`.
+`Control/Semantics/Correspondence` owns represented-data contract transfer;
+`Control/Transition` and `ITree/Transition` connect deterministic execution to
+resumable machines. Their frontend obligations are in the [interop guide](../guides/interop.md).
 `Logic/` holds small logic helpers. `Complexity/` supplies resource-bound syntax;
 concrete machine complexity lives in the optional `ComplexityBackends` library.
 
@@ -111,7 +115,9 @@ flowchart TD
   OP --> OR
   R --> AD[ComplexityBackends]
   T -.-> AD
-  I --> EX[Optional examples]
+  I --> SF[Algebraic folds and scoped syntax]
+  SF --> EX[Optional examples]
+  I --> EX
   IO --> EX
   EX --> CLI[Parliament executable]
   EX --> TEST[Regression and consumer tests]
