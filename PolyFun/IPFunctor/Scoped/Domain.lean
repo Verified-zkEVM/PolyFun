@@ -120,6 +120,23 @@ theorem rename_append (ρ : ScopedSignature.Renaming Γ Δ) {Ξ : List S}
     ωScottContinuous fun t => cons (f t) (g t) :=
   consContinuous.ωScottContinuous.comp (Prod.ωScottContinuous.prodMk hf hg)
 
+/-- A one-variable environment. -/
+@[expose] noncomputable def single {a : S} : D a →𝒄 Env D [a] := .ofFun (fun x => cons x empty)
+
+@[simp] theorem single_apply {a : S} (x : D a) : single x = cons x empty := rfl
+
+/-- A meaning in a one-variable environment, as a continuous function of that variable. -/
+@[expose] noncomputable def bindOne {a : S} {E : Type*} [OmegaCompletePartialOrder E] :
+    (Env D [a] →𝒄 E) →𝒄 (D a →𝒄 E) :=
+  .ofFun (fun f => f.comp single) (by
+    apply ContinuousHom.ωScottContinuous_of_apply
+    intro x
+    change ωScottContinuous fun f : Env D [a] →𝒄 E => f (single x)
+    fun_prop)
+
+theorem bindOne_apply {a : S} {E : Type*} [OmegaCompletePartialOrder E]
+    (f : Env D [a] →𝒄 E) (x : D a) : bindOne f x = f (cons x empty) := rfl
+
 /-- Appending a finite block of bindings is jointly continuous. -/
 @[expose] noncomputable def appendContinuous {Ξ : List S} :
     (Env D Ξ × Env D Γ) →𝒄 Env D (Ξ ++ Γ) := .ofFun (fun p => append p.1 p.2) (by

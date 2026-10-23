@@ -113,4 +113,24 @@ theorem denote_lam_eq (body : Term (a :: Γ) b) (ρ : Environment Γ)
   intro x
   exact h x
 
+/-! ## Renaming and substitution, from the generic interpretation -/
+
+/-- Renaming syntax reads its environment along the renaming. -/
+theorem denote_rename {Δ : List ClosedTy} (t : Term Γ a)
+    (ρ : IPFunctor.ScopedSignature.Renaming Γ Δ) (η : Environment Δ) :
+    denote (t.rename ρ) η = denote t (Environment.rename ρ η) :=
+  IPFunctor.ScopedSignature.Term.denoteDomain_rename algebra t ρ η
+
+/-- Substitution composes meanings. -/
+theorem denote_subst {Δ : List ClosedTy} (t : Term Γ a)
+    (θ : syntaxSignature.Substitution Γ Δ) (η : Environment Δ) :
+    denote (t.subst θ) η =
+      denote t (IPFunctor.ScopedSignature.Term.substitutionEnvDomain algebra θ η) :=
+  IPFunctor.ScopedSignature.Term.denoteDomain_subst algebra t θ η
+
+/-- Substituting a term for the nearest variable binds its meaning there. -/
+theorem denote_substOne (body : Term (a :: Γ) b) (value : Term Γ a) (η : Environment Γ) :
+    denote (body.substOne value) η = denote body (Environment.cons (denote value η) η) :=
+  IPFunctor.ScopedSignature.Term.denoteDomain_substOne algebra body value η
+
 end Cryptol.Resolved
