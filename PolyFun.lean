@@ -68,6 +68,13 @@ public import PolyFun.IPFunctor.Notation.Common
 public import PolyFun.IPFunctor.Notation.Deterministic
 public import PolyFun.IPFunctor.Notation.Indexed
 public import PolyFun.IPFunctor.Scoped.Basic
+public import PolyFun.IPFunctor.Scoped.ConstantFamily
+public import PolyFun.IPFunctor.Scoped.Family
+public import PolyFun.IPFunctor.Scoped.FamilyMap
+public import PolyFun.IPFunctor.Scoped.FamilyMapCongr
+public import PolyFun.IPFunctor.Scoped.FamilyMapSubstitution
+public import PolyFun.IPFunctor.Scoped.FamilySize
+public import PolyFun.IPFunctor.Scoped.FamilySubstitution
 public import PolyFun.IPFunctor.Scoped.Interpretation
 public import PolyFun.IPFunctor.Scoped.Reindex
 public import PolyFun.IPFunctor.Scoped.Renaming
