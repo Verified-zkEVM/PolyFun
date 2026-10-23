@@ -84,7 +84,7 @@ theorem mix_correct (x : BitVec 8) :
   rw [mixTerm, Resolved.denote_lam_apply]
   simp (config := { dsimp := false }) only [Resolved.denote_wordLogic,
     Resolved.denote_shift, Resolved.denote_var, Resolved.denote_integer,
-    Environment.extend_zero]
+    Environment.cons_zero]
   rw [show (3 : Int) = ((3 : Nat) : Int) from rfl, show (5 : Int) = ((5 : Nat) : Int) from rfl,
     ← Semantics.shiftFixed_eq_shift .rotateRight 8 3, ← Semantics.shiftFixed_eq_shift .right 8 5]
   simp only [Semantics.shiftFixed_value, Semantics.wordLogic_values]

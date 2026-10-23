@@ -85,7 +85,7 @@ theorem denote_zipWith {Γ : List ClosedTy} {a b c : ClosedTy} {l m : Length}
         (Semantics.indexAt (denote xs ρ) (Length.indexNat i)))
         (Semantics.indexAt (denote ys ρ) (Length.indexNat i))) := by
   simp (config := { dsimp := false }) only [Term.zipWith, denote_app, denote_lam_apply,
-    denote_generate, denote_var, denote_index, Environment.extend_succ, Environment.extend_zero]
+    denote_generate, denote_var, denote_index, Environment.cons_succ, Environment.cons_zero]
   rfl
 
 end Cryptol.Resolved

@@ -176,7 +176,7 @@ theorem denote_rotateLeftFixed {Γ : List ClosedTy} {n : Nat} (amount : Nat)
   · simp only [rotateLeft, Semantics.rotateLeftFixed, hn, ↓reduceIte]
     apply congrArg DomainResult.value
     funext i
-    simp only [Environment.extendContinuous_apply, denote_index, denote_weaken, denote_intOp,
+    simp only [denote_index, denote_weaken, denote_intOp,
       denote_var, denote_integer]
     change Semantics.index (xs.denote η)
       (ofExcept (IntOp.mod.eval ((i.val : Int) + amount) n)) = _
@@ -192,7 +192,7 @@ theorem denote_shiftFixed {Γ : List ClosedTy} {n : Nat} (op : ShiftOp) (amount 
   | left =>
       apply congrArg DomainResult.value
       funext i
-      simp only [Environment.extendContinuous_apply, denote_ite, denote_index, denote_weaken,
+      simp only [denote_ite, denote_index, denote_weaken,
         denote_intOp, denote_intLt, denote_var, denote_integer]
       change Semantics.conditional _ (.value ⟨decide ((i.val : Int) + amount < n)⟩) = _
       rw [Semantics.conditional_value]
@@ -201,7 +201,7 @@ theorem denote_shiftFixed {Γ : List ClosedTy} {n : Nat} (op : ShiftOp) (amount 
   | right =>
       apply congrArg DomainResult.value
       funext i
-      simp only [Environment.extendContinuous_apply, denote_ite, denote_index, denote_weaken,
+      simp only [denote_ite, denote_index, denote_weaken,
         denote_intOp, denote_intLt, denote_var, denote_integer]
       change Semantics.conditional _ (.value ⟨decide ((i.val : Int) < amount)⟩) = _
       rw [Semantics.conditional_value]
@@ -268,9 +268,9 @@ theorem denote_shift {Γ : List ClosedTy} {n : Nat} (op : ShiftOp)
       · simp only [h, ↓reduceIte]
         apply congrArg DomainResult.value
         funext i
-        simpa only [denote_weaken, Environment.extendContinuous_apply, Length.indexNat] using
+        simpa only [denote_weaken, Length.indexNat] using
           denote_shiftBody op xs.weaken amount.weaken (.var .zero)
-            (η.extend (.value ⟨(i.val : Int)⟩)) k i
+            (Environment.cons (.value ⟨(i.val : Int)⟩) η) k i
             (by simpa only [denote_weaken] using hk) rfl
 
 end Expr

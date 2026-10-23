@@ -112,8 +112,8 @@ theorem Expr.denote_integerToWord {Γ : List ClosedTy} (value : Expr Γ .integer
   funext i
   change (select ((List.finRange n).map fun j =>
     integerBit (.var (.succ .zero)) (n - 1 - j.val)) (.var .zero)).denote
-      ((η.extend (a := .integer) (.value ⟨x % (2 ^ n : Nat)⟩)).extend
-        (a := .integer) (.value ⟨(i.val : Int)⟩)) = _
+      (Environment.cons (DomainResult.value ⟨(i.val : Int)⟩ : Computation .integer)
+        (Environment.cons (DomainResult.value ⟨x % (2 ^ n : Nat)⟩ : Computation .integer) η)) = _
   rw [denote_select _ _ i.val (by simp) _ rfl]
   simp only [List.getElem_map, List.getElem_finRange]
   have hm : 0 ≤ x % (2 ^ n : Nat) := Int.emod_nonneg _

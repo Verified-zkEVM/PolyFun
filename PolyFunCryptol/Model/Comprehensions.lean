@@ -89,7 +89,7 @@ theorem Expr.denote_flatMap {Γ : List ClosedTy} {a b : ClosedTy} {outer : Lengt
       have hn := Length.each_pos_of_index outer each i
       have hi : (each : Int) ≠ 0 := by omega
       simp only [denote_index, denote_app, denote_weaken, denote_intOp, denote_var,
-        denote_integer, Environment.extend_zero]
+        denote_integer, Environment.cons_zero]
       change Semantics.index
         (DomainResult.applyContinuous (f.denote ρ) (Semantics.index (xs.denote ρ)
           (ofExcept (IntOp.div.eval (Length.indexNat i) each))))

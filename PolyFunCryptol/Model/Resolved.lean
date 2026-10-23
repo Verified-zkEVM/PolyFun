@@ -139,23 +139,22 @@ abbrev Term := syntaxSignature.Term
   | _, .unit, _ => .const (.value ⟨()⟩)
   | _, .error e, _ => .const (.error e)
   | _, .lam, next => DomainResult.valueContinuous.comp
-        (ContinuousHom.curry ((next 0).comp Environment.extendContinuous))
+        (.ofFun (fun ρ => .ofFun (fun x => next 0 (Environment.cons x ρ))))
   | _, .app, next => .ofFun (fun ρ => DomainResult.applyContinuous (next 0 ρ)
         (next 1 ρ))
   | _, .letE, next => .ofFun (fun ρ => next 1
-        (Environment.extendContinuous (ρ, next 0 ρ)))
+        (Environment.cons (next 0 ρ) ρ))
   | _, .pair, next => .ofFun (fun ρ => DomainResult.valueContinuous
         (next 0 ρ, next 1 ρ))
   | _, .fst, next => (DomainResult.bind (.ofFun Prod.fst)).comp (next 0)
   | _, .snd, next => (DomainResult.bind (.ofFun Prod.snd)).comp (next 0)
   | _, .generate l, next => .ofFun (fun ρ => DomainResult.valueContinuous (fun i : l.Index =>
-        next 0 (Environment.extendContinuous
-          (ρ, DomainResult.value ⟨(Length.indexNat i : Int)⟩))))
+        next 0 (Environment.cons (DomainResult.value ⟨(Length.indexNat i : Int)⟩) ρ)))
   | _, .index, next => .ofFun (fun ρ => Semantics.index (next 0 ρ) (next 1 ρ))
   | _, .ite, next => .ofFun (fun ρ => Semantics.conditional
         (next 1 ρ, next 2 ρ) (next 0 ρ))
   | _, .fix, next => ContinuousHom.fixContinuous.comp
-        (ContinuousHom.curry ((next 0).comp Environment.extendContinuous))
+        (.ofFun (fun ρ => .ofFun (fun x => next 0 (Environment.cons x ρ))))
   | _, .bitNot, next => Semantics.bitNot.comp (next 0)
   | _, .bitOp op, next => .ofFun (fun ρ => Semantics.binary (fun a b => .ok (op.eval a b))
         (next 0 ρ) (next 1 ρ))
@@ -197,7 +196,7 @@ theorem lower_correct {s : Scope} (term : IPFunctor.IFreeM signature (fun j => V
           apply congrArg DomainResult.value
           funext i
           change (Expr.select _ (.var .zero)).denote
-            (η.extend (.value ⟨(i.val : Int)⟩)) = _
+            (Environment.cons (.value ⟨(i.val : Int)⟩) η) = _
           rw [Expr.denote_select _ _ i.val (by simp) _ rfl]
           simp only [List.getElem_map, Expr.denote_weaken]
           erw [List.getElem_finRange]
@@ -206,6 +205,8 @@ theorem lower_correct {s : Scope} (term : IPFunctor.IFreeM signature (fun j => V
           apply DFunLike.ext
           intro η
           exact p.lower_correct η
+      | lam | fix =>
+          simp only [lower_node, denote_node, lowerOp, denoteOp, Expr.denote, ih]
       | _ =>
           simp only [lower_node, denote_node, lowerOp, denoteOp, Expr.denote]
           all_goals

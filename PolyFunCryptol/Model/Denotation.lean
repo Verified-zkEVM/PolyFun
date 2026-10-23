@@ -106,22 +106,21 @@ end Semantics
   | .unit => .const (.value ⟨()⟩)
   | .error e => .const (.error e)
   | .lam e => DomainResult.valueContinuous.comp
-      (ContinuousHom.curry (e.denote.comp Environment.extendContinuous))
+      (.ofFun (fun ρ => .ofFun (fun x => e.denote (Environment.cons x ρ))))
   | .app f x => .ofFun (fun ρ => DomainResult.applyContinuous (f.denote ρ) (x.denote ρ))
   | .letE x e => .ofFun (fun ρ =>
-      e.denote (Environment.extendContinuous (ρ, x.denote ρ)))
+      e.denote (Environment.cons (x.denote ρ) ρ))
   | .force x e => .ofFun (fun ρ => DomainResult.force (x.denote ρ) (e.denote ρ))
   | .pair x y => .ofFun (fun ρ => DomainResult.valueContinuous (x.denote ρ, y.denote ρ))
   | .fst x => (DomainResult.bind (.ofFun Prod.fst)).comp x.denote
   | .snd x => (DomainResult.bind (.ofFun Prod.snd)).comp x.denote
   | .generate l e => .ofFun (fun ρ => DomainResult.valueContinuous (fun i : l.Index =>
-      e.denote (Environment.extendContinuous
-        (ρ, DomainResult.value ⟨(Length.indexNat i : Int)⟩))))
+      e.denote (Environment.cons (DomainResult.value ⟨(Length.indexNat i : Int)⟩) ρ)))
   | .index xs i => .ofFun (fun ρ => Semantics.index (xs.denote ρ) (i.denote ρ))
   | .ite p x y => .ofFun (fun ρ =>
       Semantics.conditional (x.denote ρ, y.denote ρ) (p.denote ρ))
   | .fix e => ContinuousHom.fixContinuous.comp
-      (ContinuousHom.curry (e.denote.comp Environment.extendContinuous))
+      (.ofFun (fun ρ => .ofFun (fun x => e.denote (Environment.cons x ρ))))
   | .bitNot x => (DomainResult.bind (DiscreteOrder.continuousMap
       (fun b : Bool => DomainResult.value ⟨!b⟩))).comp x.denote
   | .bitOp op x y => .ofFun (fun ρ =>

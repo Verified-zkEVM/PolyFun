@@ -63,7 +63,7 @@ variable {Γ : List ClosedTy} {a b : ClosedTy} (η : Environment Γ)
     (Expr.force x next).denote η = DomainResult.force (x.denote η) (next.denote η) := rfl
 
 @[simp] theorem denote_letE (x : Expr Γ a) (body : Expr (a :: Γ) b) :
-    (Expr.letE x body).denote η = body.denote (η.extend (x.denote η)) := rfl
+    (Expr.letE x body).denote η = body.denote (Environment.cons (x.denote η) η) := rfl
 
 @[simp] theorem denote_app (f : Expr Γ (.arrow a b)) (x : Expr Γ a) :
     (Expr.app f x).denote η = DomainResult.applyContinuous (f.denote η) (x.denote η) := rfl
@@ -71,7 +71,7 @@ variable {Γ : List ClosedTy} {a b : ClosedTy} (η : Environment Γ)
 /-- A function equation is proved on arbitrary suspended arguments. -/
 theorem denote_lam_eq (body : Expr (a :: Γ) b)
     (f : Computation a →𝒄 Computation b)
-    (h : ∀ x, body.denote (η.extend x) = f x) :
+    (h : ∀ x : Computation a, body.denote (Environment.cons x η) = f x) :
     (Expr.lam body).denote η = .value f := by
   apply congrArg DomainResult.value
   change body.bodyDenote η = f
@@ -84,7 +84,7 @@ theorem denote_lam_eq (body : Expr (a :: Γ) b)
 
 @[simp] theorem denote_generate {l : Length} (body : Expr (.integer :: Γ) a) :
     (Expr.generate l body).denote η = .value (fun i : l.Index =>
-      body.denote (η.extend (.value ⟨(Length.indexNat i : Int)⟩))) := rfl
+      body.denote (Environment.cons (.value ⟨(Length.indexNat i : Int)⟩) η)) := rfl
 
 @[simp] theorem denote_index {l : Length} (xs : Expr Γ (.seq l a)) (i : Expr Γ .integer) :
     (Expr.index xs i).denote η = Semantics.index (xs.denote η) (i.denote η) := rfl

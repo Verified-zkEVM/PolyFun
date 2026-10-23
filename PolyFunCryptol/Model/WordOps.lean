@@ -37,7 +37,7 @@ variable {Γ : List ClosedTy} {n : Nat}
 
 /-- Weakening ignores the fresh environment entry. -/
 @[simp] theorem denote_weaken {a b : ClosedTy} (e : Expr Γ a) (η : Environment Γ)
-    (x : Computation b) : e.weaken.denote (η.extend x) = e.denote η := by
+    (x : Computation b) : e.weaken.denote (Environment.cons x η) = e.denote η := by
   rw [weaken, denote_rename]
   rfl
 
@@ -62,13 +62,13 @@ theorem denote_wordBitOp (op : BitOp) (e f : Expr Γ (.seq (.finite n) .bit))
   apply congrArg DomainResult.value
   funext i
   change Semantics.binary (fun a b => .ok (op.eval a b))
-    ((Expr.index e.weaken (.var .zero)).denote (η.extend (.value ⟨(i.val : Int)⟩)))
-    ((Expr.index f.weaken (.var .zero)).denote (η.extend (.value ⟨(i.val : Int)⟩))) = _
+    ((Expr.index e.weaken (.var .zero)).denote (Environment.cons (.value ⟨(i.val : Int)⟩) η))
+    ((Expr.index f.weaken (.var .zero)).denote (Environment.cons (.value ⟨(i.val : Int)⟩) η)) = _
   rw [show (Expr.index e.weaken (.var .zero)).denote
-      (η.extend (.value ⟨(i.val : Int)⟩)) = .value ⟨x.getMsbD i.val⟩ from
+      (Environment.cons (.value ⟨(i.val : Int)⟩) η) = .value ⟨x.getMsbD i.val⟩ from
     denote_index_word _ _ x (by simpa using he) i _ rfl]
   rw [show (Expr.index f.weaken (.var .zero)).denote
-      (η.extend (.value ⟨(i.val : Int)⟩)) = .value ⟨y.getMsbD i.val⟩ from
+      (Environment.cons (.value ⟨(i.val : Int)⟩) η) = .value ⟨y.getMsbD i.val⟩ from
     denote_index_word _ _ y (by simpa using hf) i _ rfl]
   change (DomainResult.value ⟨op.eval (x.getMsbD i.val) (y.getMsbD i.val)⟩ :
     Computation .bit) = _
@@ -83,7 +83,7 @@ theorem denote_wordNot (e : Expr Γ (.seq (.finite n) .bit))
   apply congrArg DomainResult.value
   funext i
   change DomainResult.bind _ ((Expr.index e.weaken (.var .zero)).denote
-    (η.extend (.value ⟨(i.val : Int)⟩))) = _
+    (Environment.cons (.value ⟨(i.val : Int)⟩) η)) = _
   rw [denote_index_word _ _ x (by simpa using he) i _ rfl]
   change (DomainResult.value ⟨!x.getMsbD i.val⟩ : Computation .bit) = _
   simp [wordValue, i.isLt]
@@ -111,14 +111,14 @@ theorem denote_rotateLeft (amount : Nat) (e : Expr Γ (.seq (.finite n) .bit))
     let j : Fin n := ⟨(i.val + amount) % n, Nat.mod_lt _ (by omega)⟩
     have hi : (Expr.intOp .mod (.intOp .add (.var .zero) (.integer amount))
         (.integer n) : Expr (.integer :: Γ) .integer).denote
-        (η.extend (.value ⟨(i.val : Int)⟩)) = .value ⟨(j.val : Int)⟩ := by
+        (Environment.cons (.value ⟨(i.val : Int)⟩) η) = .value ⟨(j.val : Int)⟩ := by
       change ofExcept (IntOp.mod.eval ((i.val : Int) + amount) n) = _
       simp [IntOp.eval, hn, ofExcept, j,
         Int.tmod_eq_emod_of_nonneg (show 0 ≤ (i.val : Int) + amount by omega),
         Int.natCast_emod]
     change (Expr.index e.weaken (.intOp .mod
       (.intOp .add (.var .zero) (.integer amount)) (.integer n))).denote
-      (η.extend (.value ⟨(i.val : Int)⟩)) = _
+      (Environment.cons (.value ⟨(i.val : Int)⟩) η) = _
     rw [denote_index_word _ _ x (by simpa using he) j _ hi]
     simp [wordValue, BitVec.getMsbD_rotateLeft, i.isLt, j, Nat.add_comm]
 
@@ -166,7 +166,7 @@ theorem denote_shiftLeft (amount : Nat) (e : Expr Γ (.seq (.finite n) .bit))
   · have ht : (i.val : Int) + amount < n := by omega
     simp only [ht, decide_true]
     change (Expr.index e.weaken (.intOp .add (.var .zero) (.integer amount))).denote
-      (η.extend (.value ⟨(i.val : Int)⟩)) = _
+      (Environment.cons (.value ⟨(i.val : Int)⟩) η) = _
     rw [denote_index_word _ _ x (by simpa using he) ⟨i.val + amount, h⟩ _
       (by change ofExcept (.ok ((i.val : Int) + amount)) = _; simp [ofExcept])]
     simp [wordValue]
@@ -190,7 +190,7 @@ theorem denote_shiftRight (amount : Nat) (e : Expr Γ (.seq (.finite n) .bit))
   · have ht : ¬ (i.val : Int) < amount := by omega
     simp only [ht, decide_false]
     change (Expr.index e.weaken (.intOp .sub (.var .zero) (.integer amount))).denote
-      (η.extend (.value ⟨(i.val : Int)⟩)) = _
+      (Environment.cons (.value ⟨(i.val : Int)⟩) η) = _
     rw [denote_index_word _ _ x (by simpa using he) ⟨i.val - amount, by omega⟩ _
       (by change ofExcept (.ok ((i.val : Int) - amount)) = _
           simp [ofExcept, Int.natCast_sub (by omega : amount ≤ i.val)])]

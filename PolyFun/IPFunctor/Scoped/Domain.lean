@@ -114,6 +114,12 @@ theorem rename_append (ρ : ScopedSignature.Renaming Γ Δ) {Ξ : List S}
 @[simp] theorem consContinuous_apply {a : S} (p : D a × Env D Γ) :
     consContinuous p = cons p.1 p.2 := rfl
 
+/-- Adding a binding is continuous in the new value and the environment together. -/
+@[fun_prop] theorem ωScottContinuous_cons {α : Type*} [OmegaCompletePartialOrder α] {a : S}
+    {f : α → D a} {g : α → Env D Γ} (hf : ωScottContinuous f) (hg : ωScottContinuous g) :
+    ωScottContinuous fun t => cons (f t) (g t) :=
+  consContinuous.ωScottContinuous.comp (Prod.ωScottContinuous.prodMk hf hg)
+
 /-- Appending a finite block of bindings is jointly continuous. -/
 @[expose] noncomputable def appendContinuous {Ξ : List S} :
     (Env D Ξ × Env D Γ) →𝒄 Env D (Ξ ++ Γ) := .ofFun (fun p => append p.1 p.2) (by
