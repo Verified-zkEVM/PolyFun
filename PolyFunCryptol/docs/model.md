@@ -548,6 +548,26 @@ the original Haskell AST. A checked decoder narrows that boundary; proving its
 relation to a pinned reference-core export is a further obligation, not an
 automatic consequence of decoding.
 
+Galois's experimental [SAWCore-to-Lean backend](https://github.com/GaloisInc/saw-script/pull/3214)
+(`saw-core-lean`, draft at `33b8494b`, BSD-3) has a different purpose: discharging SAW
+proof obligations in Lean's kernel. It normalizes terms with `scNormalize`, so user
+definitions are inlined rather than retained as modules or shared declarations. Value
+positions use a strict `Except String` carrier with no bottom, and only recognized
+`fix` shapes are accepted. Its support library is Mathlib-free and pinned to Lean
+v4.32. Its documented LIB-1 limitation is that `Except String (Vec n T)` collapses an
+unread erroneous element into failure of the whole vector, so two values that Cryptol
+distinguishes can become equal. This model keeps each sequence element as its own
+`DomainResult`, so an unread erroneous element is never forced.
+
+The sound comparison between the two is one-directional. If `saw-core-lean` yields
+`ok v` for a closed term, then this model's meaning is fully defined and error-free
+and equals `v`, under the most-significant-bit-first word, stream and record
+correspondences. An error result constrains nothing. The backends also differ on
+negative `Integer` division: theirs follows `Int.fdiv`/`Int.fmod`, while this model
+follows the reference evaluator's `quot`/`rem` ([Cryptol #2060](https://github.com/GaloisInc/cryptol/issues/2060)).
+No Lean or build dependency on SAW is introduced. The Cryptol-expressible rows of
+its differential corpus are candidate comparison cases for the evaluator audit.
+
 The older [Cryptol Coq semantics project](https://github.com/GaloisInc/cryptol-semantics/blob/master/TOUR.md)
 is useful for comparing overlapping definitions and proof structure. It is not
 a complete verified semantics for Cryptol 3.6.0; its admission inventory and
