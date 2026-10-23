@@ -176,6 +176,21 @@ mutual
 
 end
 
+/-- The source constructor of an expression, for diagnostics. -/
+def Expr.constructorName : Expr → String
+  | .list .. => "list" | .tuple .. => "tuple" | .record .. => "record"
+  | .select .. => "select" | .update .. => "update" | .ite .. => "ite"
+  | .caseE .. => "case" | .comprehension .. => "comprehension" | .var .. => "var"
+  | .typeAbs .. => "typeAbs" | .typeApp .. => "typeApp" | .app .. => "app"
+  | .abs .. => "abs" | .proofAbs .. => "proofAbs" | .proofApp .. => "proofApp"
+  | .whereE .. => "where" | .guards .. => "guards"
+
+/-- The outermost type former, for diagnostics. -/
+def TypeExpr.headName : TypeExpr → String
+  | .var _ => "variable" | .number _ => "number" | .constructor name _ => name
+  | .tuple size _ => s!"{size}-tuple" | .record _ => "record"
+  | .synonym name _ _ => name.origin | .nominal name _ => name.origin | .has .. => "selector"
+
 /-- The identity declared by a source declaration. -/
 def Decl.name : Decl → Name
   | .mk name _ _ => name

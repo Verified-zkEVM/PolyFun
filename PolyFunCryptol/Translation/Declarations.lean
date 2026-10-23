@@ -156,5 +156,41 @@ namespace OpenElaboration
       let ⟨Δ, tail⟩ ← declarations fuel params (sigs ++ Γ) rest
       return ⟨Δ, .recursive sigs values tail⟩
 
+/-- The outcome of one source declaration group in a coverage diagnosis. -/
+structure GroupDiagnosis where
+  /-- Source identities of the group's members, in source order. -/
+  names : List String
+  /-- The group's first failure, if any. -/
+  failure : Option String
+
+/-- Attempt every group under the declared schemes of all earlier groups, retaining each
+failure. A group whose body fails keeps its declared scheme for later groups. A group whose
+scheme fails is left out, so its dependents report it as an unbound value. This is a coverage
+diagnostic, not an acceptance certificate. -/
+def diagnose (fuel : Nat) {w : Scope} (params : OpenTypes.Parameters w.numbers w.types) :
+    Signatures w → List Reference.DeclGroup → List GroupDiagnosis
+  | _, [] => []
+  | Γ, .nonrecursive d :: rest =>
+      match OpenTypes.scheme params fuel d.schema with
+      | .error e => ⟨[d.name.origin], some s!"{d.name.origin}: {e}"⟩ :: diagnose fuel params Γ rest
+      | .ok s =>
+          let failure := match definitionBody d with
+            | .error e => some e
+            | .ok body =>
+                match elaborate fuel params (Names.ofSignatures Γ) body >>= expect s with
+                | .ok _ => none
+                | .error e => some s!"{d.name.origin}: {e}"
+          ⟨[d.name.origin], failure⟩ :: diagnose fuel params ((d.name, s) :: Γ) rest
+  | Γ, .recursive ds :: rest =>
+      let names := ds.map (·.name.origin)
+      match signatures params fuel ds with
+      | .error e => ⟨names, some e⟩ :: diagnose fuel params Γ rest
+      | .ok sigs =>
+          let failure :=
+            match bodies fuel params (Names.extendMany (Names.ofSignatures Γ) sigs) ds sigs with
+            | .ok _ => none
+            | .error e => some e
+          ⟨names, failure⟩ :: diagnose fuel params (sigs ++ Γ) rest
+
 end OpenElaboration
 end Cryptol.Translation
