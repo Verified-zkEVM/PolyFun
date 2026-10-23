@@ -1,0 +1,10 @@
+// Copyright (c) 2026 PolyFun Contributors. Apache-2.0.
+module Tutorial where
+
+/** Rotate, shift and combine an 8-bit word. */
+mix : [8] -> [8]
+mix x = (x >>> 3) ^ (x >> 5)
+
+/** The top three bits of the result are zero, even when the input is undefined. */
+clear : [8] -> [8]
+clear x = (x >> 3) ^ (x >> 5)

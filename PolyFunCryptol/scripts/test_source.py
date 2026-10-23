@@ -68,6 +68,13 @@ def canaries(manifest):
     assert sha256(ROOT / "fixtures/ImportCanaries.cry") == manifest["canaries"]["source_sha256"]
     code, report = run(path, "elaborate")
     assert code == 0 and all(r["status"] == "typed" for r in report), report
+    tutorial = ARTIFACTS / "tutorial.json"
+    assert sha256(tutorial) == manifest["tutorial"]["bundle_sha256"]
+    assert sha256(REPO / "PolyFunCryptolTest/Tutorial/MixSource.lean") == \
+        manifest["tutorial"]["lean_sha256"]
+    assert sha256(ROOT / "fixtures/Tutorial.cry") == manifest["tutorial"]["source_sha256"]
+    code, typed = run(tutorial, "elaborate")
+    assert code == 0 and [r["status"] for r in typed] == ["typed", "typed"], typed
     bundle = json.loads(path.read_bytes())
 
     def single(root, change):
