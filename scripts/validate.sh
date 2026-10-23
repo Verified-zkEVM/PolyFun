@@ -77,7 +77,7 @@ if (( run_lint )); then
     Examples.Tutorials.VersionedRequests Examples.Tutorials.UpdatePolicies \
     Examples.Tutorials.ReviewableWorkflows Examples.Tutorials.FairWorkQueues \
     Examples.Tutorials.BoundedController Examples.Tutorials.ScopedPrograms \
-    Examples.Tutorials.ScopedExecution \
+    Examples.Tutorials.ScopedExecution Examples.Tutorials.ScopedFamily \
     Examples.Parliament PolyFunParliamentMain
 fi
 
@@ -110,7 +110,7 @@ if (( run_axioms )); then
     --root Examples.Tutorials.UpdatePolicies \
     --root Examples.Tutorials.ReviewableWorkflows --root Examples.Tutorials.FairWorkQueues \
     --root Examples.Tutorials.BoundedController --root Examples.Tutorials.ScopedPrograms \
-    --root Examples.Tutorials.ScopedExecution \
+    --root Examples.Tutorials.ScopedExecution --root Examples.Tutorials.ScopedFamily \
     --root Examples.Parliament \
     --root PolyFunParliamentMain --check
 fi

@@ -476,3 +476,70 @@ contains arithmetic, functions, lexical lets, and a bounded loop whose body is
 stored once. Its let-elimination proof uses generic fold fusion and substitution
 correctness. [Ordinary-import checks](../../PolyFunTest/ModuleAPI/Scoped.lean)
 exercise capture avoidance and noninjective sort translation.
+
+## Binders that change parameter contexts
+
+[`ScopedFamily W S`](../../PolyFun/IPFunctor/Scoped/Family.lean) lets each child
+enter its own parameter context `w : W`, reindex old value sorts `S w`, and
+bind new values. A judgment contains the parameter context, the local value
+context, and the result sort. Terms remain `IFreeM` trees. This supports type
+or numeric quantifiers without representing syntax as a callback that builds a
+different term for each instantiation.
+
+[`ScopedFamily.Hom`](../../PolyFun/IPFunctor/Scoped/FamilyMap.lean) describes a
+parameter transformation by constructor-local equations. It checks how the
+parameter map lifts at every child, including compatibility with old variable
+sorts, new binder lists, and result sorts. `Term.map` assembles these equations
+into an [`IPFunctor.Traversal`](../../PolyFun/IPFunctor/Free/Traversal.lean).
+`Term.map_node` exposes the lifted child maps and their context transports;
+`Term.map_rename` proves that mapping parameters commutes with value renaming.
+`Hom.comp` composes the constructor translations and their lifted parameter
+maps. `Term.map_map` identifies successive maps with this composite after
+normalizing the ambient context's two `List.map` applications.
+`Hom.identity` transports between equal parameter contexts; `Term.map_identity`
+normalizes an identity map in one context, and `Term.map_identity_heq` handles
+distinct but provably equal parameter contexts.
+`IFreeM.traverse_comp` fuses traversals; `IFreeM.traverse_identity` accepts any
+equality witness between its source and target judgments and returns the
+transported tree. `Term.fold_map_rel` lifts local semantic
+compatibility to all family terms. A language must still prove that compatibility
+for its own constructor algebra. `Term.cast` normalizes contexts and result sorts.
+Its self-transport simplifier accepts arbitrary equality proofs, while
+`Term.cast_heq` compares terms across potentially different contexts and sorts.
+
+[`Scoped.Transport`](../../PolyFun/IPFunctor/Scoped/Transport.lean) reindexes
+variables by their original positions. No injectivity assumption is required:
+two parameters can instantiate to the same type without merging their bindings.
+Value renaming has identity and composition laws. The
+[`family substitution API`](../../PolyFun/IPFunctor/Scoped/FamilySubstitution.lean)
+requires a language action for reindexing substitution images when entering a
+new parameter context. `ReindexAction.Lawful` states variable preservation and
+compatibility with value renaming and substitution. The public laws include
+`subst_id`, `subst_rename`, `rename_subst`, and `subst_subst`; individual theorems
+require only the compatibility they use. `substOne` and `substOne_subst_lift`
+support beta reduction and closing a term below a fresh binder. A language must
+establish these action laws; they do not follow from arbitrary `ReindexAction`
+data. Semantic substitution additionally requires interpretation preservation.
+
+[`FamilyMapSubstitution`](../../PolyFun/IPFunctor/Scoped/FamilyMapSubstitution.lean)
+relates these operations. `Hom.PreservesReindex` asks for a commuting square
+between a translation and the source/target parameter actions at each child.
+Its `preservesSubstitution` theorem handles positional lookup and binder lifting;
+`Term.map_subst` then commutes the translation with simultaneous substitution.
+This does not assume injectivity of sort maps or preservation of an interpretation.
+`Substitution.cast` accepts arbitrary context equalities, and its `cast_heq`
+simplifier also covers contexts that are only propositionally equal.
+
+The [constant-family adapter](../../PolyFun/IPFunctor/Scoped/ConstantFamily.lean)
+provides both proved round trips to the existing `ScopedSignature` API.
+[`FamilySize`](../../PolyFun/IPFunctor/Scoped/FamilySize.lean) counts nodes when
+every constructor has finitely many children. The count excludes head payloads
+and measures neither execution cost nor the size of a semantic value.
+
+The [polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean) constructs
+a finite identity under a type binder and proves erasure preservation for every
+parameter renaming using `fold_map_rel`. It also demonstrates an ambient value
+remaining free below a type binder and a value binder. It has no Cryptol or cryptography
+dependency. [Public API checks](../../PolyFunTest/ModuleAPI/ScopedFamily.lean)
+and the separate documentation consumer exercise the same theorems through
+ordinary imports.
