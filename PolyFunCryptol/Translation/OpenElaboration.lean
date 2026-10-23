@@ -156,7 +156,7 @@ mutual
             let rhs ← bodies fuel params names' ds sigs
             let ⟨s, term⟩ ← elaborate fuel params names' (.whereE body rest)
             return ⟨s, .letRec (sigs.map Prod.snd) rhs term⟩
-        | _ => throw "unsupported open expression constructor"
+        | _ => throw s!"unsupported open expression constructor {expression.constructorName}"
 
   /-- Check each body against the signature registered for its source identity. -/
   @[expose] def bodies : Nat → {w : Scope} → {Γ : List w.ValueSort} →

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "cryptol_revision": "61dd17b0c45ddf8c5c1e952afd5e789c4dc4ec4b",
+  "foundation_revision": "7d0528bd998682788f4e23661f2829298f9e47db",
+  "frontend_patches": [
+    "cffd4082d3347aba60c131d2e7d33f8b8fdfaf6afa4aedd52d8d2fff7bb30a2e"
+  ],
+  "exporter_sha256": "a0bd4ebc025bcf5a9dced0eafbdb13d3698d81d63786197899eec0d16806aa39",
+  "numeric_cases": 2020,
+  "class_cases": 345,
+  "numeric_sha256": "9c0a5c4df4474003545422686a7fa9ab401d309e097f2dba7eedc403da9ee5c8",
+  "class_sha256": "06addcaf599dacc61f7b15fc2cbd3fd26203f0ed958c674dc25ba0942eed45c4",
+  "canaries": {
+    "roots": 9,
+    "bundle_sha256": "d8a6914016b198a6c0a109dab448ecab5049dcdfe87e7ff12eaa686cb827f491",
+    "lean_sha256": "6c9225f13b768d45b450dd649674eae893ec1370e6149c4ca4b71055342837b3",
+    "source_sha256": "0955c9c3cb16f49389e57aa701f0a47d52954d58a084981f1a087ba6258af8e9"
+  },
+  "module_canaries": {
+    "bundle_sha256": "6b5cb036462884187a04bfe0e28d82545c4ce2db172f8ef9fae416809d7da944",
+    "modules": [
+      "Cryptol",
+      "ModuleLoops",
+      "ModuleCanaries",
+      "Cryptol::Reference"
+    ],
+    "source_sha256": "3550d9ba033e865852c648c365fce3bb4954e54bba0965d47b0f06a11d5c7863"
+  },
+  "trust_boundary": [
+    "Pinned Cryptol parser, renamer, type checker and module elaborator",
+    "Haskell typed-AST serialization and provenance collection"
+  ]
+}

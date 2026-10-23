@@ -281,6 +281,11 @@ warrant its own `namespace` or its own file.
 This project is licensed under Apache 2.0. By contributing, you agree
 that your contributions are licensed under the same terms.
 
+A file derived from a third-party project, such as an exported abstract syntax
+tree or a patch to an external tool, keeps that project's license text in the
+tree and is listed in the owning library's `NOTICE.md` (for example
+[`PolyFunCryptol/NOTICE.md`](PolyFunCryptol/NOTICE.md)) in the same PR.
+
 ## Documentation and examples
 
 Use the [documentation hub](docs/README.md) to find each topic's owning page.

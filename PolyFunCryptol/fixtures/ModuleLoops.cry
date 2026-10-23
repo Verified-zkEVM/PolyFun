@@ -1,0 +1,15 @@
+// Copyright (c) 2026 PolyFun Contributors. Apache-2.0.
+module ModuleLoops where
+
+/** Iterate a step while a condition holds, as a recursive group. */
+loop : {a} (a -> Bit) -> (a -> a) -> a -> a
+loop condition step state =
+  if condition state then loop condition step (step state) else state
+
+/** Apply a function twice. */
+twice : {a} (a -> a) -> a -> a
+twice f x = f (f x)
+
+/** Count down to zero through the integer primitives. */
+countdown : Integer -> Integer
+countdown n = loop (\k -> k > 0) (\k -> k - 1) n

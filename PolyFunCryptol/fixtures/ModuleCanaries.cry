@@ -1,0 +1,28 @@
+// Copyright (c) 2026 PolyFun Contributors. Apache-2.0.
+module ModuleCanaries where
+
+import ModuleLoops
+
+/** Accepted: a reference to the imported loop. */
+settle : Integer -> Integer
+settle = countdown
+
+/** A tuple pattern. */
+swap : (Integer, Bit) -> (Bit, Integer)
+swap (x, b) = (b, x)
+
+/** A list literal. */
+small : [3]Integer
+small = [1, 2, 3]
+
+/** A record selection. */
+field : { x : Integer } -> Integer
+field r = r.x
+
+/** A comprehension through the prelude. */
+bump : [3]Integer -> [3]Integer
+bump xs = [x + 1 | x <- xs]
+
+/** A definition depending on a failing one. */
+smallFirst : Integer
+smallFirst = small @ (0 : Integer)

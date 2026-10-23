@@ -9,7 +9,8 @@ and nothing in `PolyFun/`, `ToCslib/` or `ComplexityBackends/` imports it.
 
 Foundation correspondences, cryptographic specifications and probability
 statements belong in VCVio (`Interop/Cryptol/Bridge`). The typed-AST exporter,
-corpus census and evaluator audit currently live there too.
+Foundation census and status, and evaluator audit live here, because they
+measure the language rather than any algorithm.
 The [cross-repository tracker](https://github.com/Verified-zkEVM/VCVio/issues/879)
 coordinates the remaining language and Foundation work.
 
@@ -34,10 +35,13 @@ interfaces with a strict evaluation strategy.
 | `Model/` | Types, partial numeric expressions, constraints and schemes; resolved and ordered polymorphic syntax; lazy domains and denotation; call-by-name execution, soundness and monomorphic adequacy; primitive demand rules |
 | `Translation/` | The native scoped IR and its representation relation; typed-AST decoding, scope and kind checks; open-module elaboration; proof-producing constraint evidence; declaration groups; certificates, quotation and export |
 | `../PolyFunCryptolTest/` | Semantic, demand, polymorphism and translation regressions |
-| `scripts/test_model.py` | Model CLI fixtures and word-boundary cases, optionally compared with a pinned Cryptol executable |
+| `exporter/` | The [pinned typed-AST exporter](exporter/README.md) linked to the official Cryptol frontend |
+| `scripts/` | Export, census, corpus and audit drivers, and the offline model, importer and module tests; see the [tooling guide](docs/tooling.md) |
+| `fixtures/`, `artifacts/` | PolyFun's own Cryptol fixtures, the committed exports and the [Foundation status](docs/compatibility.md) |
 
 The [model guide](docs/model.md) gives the precise claims, the coverage and gap
-ledger, and the next milestones.
+ledger, and the next milestones. The [evaluator survey](docs/evaluators.md) fixes the
+semantic anchor, and the [Foundation status](docs/compatibility.md) measures coverage.
 
 ## Building and validation
 
@@ -49,10 +53,12 @@ lake exe polyfun-cryptol model arx-native 32 8
 ```
 
 `./scripts/validate.sh` builds and lints the case study and includes it in the
-zero-debt axiom gate. `--test` builds its regressions and runs the offline model
-fixtures. `--cryptol-external` also compares the model with the pinned Cryptol
-3.6.0 executable named by `CRYPTOL_BINARY`. Validation never downloads or
-installs Cryptol.
+zero-debt axiom gate. `--test` builds its regressions and runs the offline model,
+importer and module-canary checks. `--cryptol-external` also compares the model
+with the pinned Cryptol 3.6.0 executable named by `CRYPTOL_BINARY` and, given the
+exporter and Foundation, regenerates every committed export; see the
+[tooling guide](docs/tooling.md). Validation never downloads or installs Cryptol.
+[NOTICE.md](NOTICE.md) lists the third-party material.
 
 ## Scope and trust
 

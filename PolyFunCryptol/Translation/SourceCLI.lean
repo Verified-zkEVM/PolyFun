@@ -44,7 +44,8 @@ public def run (args : List String) : IO UInt32 := do
           out.putStrLn (Lean.toJson reports).compress
           return if bundle.scopeReport.all (fun r => r.2 matches .ok _) then 0 else 1
   | [mode, file, moduleName] =>
-      unless mode == "module-elaborate" || mode == "module-code" || mode == "module-link" do
+      unless mode == "module-elaborate" || mode == "module-code" || mode == "module-link" ||
+          mode == "module-diagnose" do
         err.putStrLn "Unknown module command"
         return 1
       let text ← IO.FS.readFile file
@@ -54,6 +55,21 @@ public def run (args : List String) : IO UInt32 := do
       match input with
       | .error error => out.putStrLn (errorJson error).compress; return 1
       | .ok bundle =>
+          if mode == "module-diagnose" then
+            match bundle.diagnose moduleName with
+            | .error error => out.putStrLn (errorJson error).compress; return 1
+            | .ok diagnosis =>
+                let failure : Option String → Lean.Json
+                  | none => .null
+                  | some message => .str message
+                out.putStrLn (Lean.Json.mkObj [("module", .str moduleName),
+                  ("status", .str "diagnosed"),
+                  ("primitives", .arr (diagnosis.primitives.toArray.map fun (name, result) =>
+                    .mkObj [("name", .str name), ("failure", failure result)])),
+                  ("groups", .arr (diagnosis.groups.toArray.map fun group =>
+                    .mkObj [("declarations", Lean.toJson group.names),
+                      ("failure", failure group.failure)]))]).compress
+                return 0
           if mode == "module-link" then
             match bundle.link moduleName with
             | .error error => out.putStrLn (errorJson error).compress; return 1
@@ -164,7 +180,7 @@ public def run (args : List String) : IO UInt32 := do
   | _ =>
       err.putStrLn "Usage: cryptol-interop source \
         {inspect | elaborate | constraints | modules} FILE.json; \
-        {module-link | module-elaborate | module-code} FILE.json MODULE"
+        {module-link | module-elaborate | module-code | module-diagnose} FILE.json MODULE"
       return 1
 
 end Cryptol.Translation.SourceCLI
