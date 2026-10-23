@@ -116,7 +116,7 @@ end Expr
 
 /-- A one-variable environment. -/
 @[expose] noncomputable def single {a : Ty} : a.domain →𝒄 ScopedDomain.Env Ty.domain [a] :=
-  .ofFun (fun x => ScopedDomain.Env.cons Ty.domain x (ScopedDomain.Env.empty Ty.domain)) (by
+  .ofFun (fun x => ScopedDomain.Env.cons x ScopedDomain.Env.empty) (by
     apply ωScottContinuous.of_apply₂
     intro b
     apply ωScottContinuous.of_apply₂
@@ -152,19 +152,19 @@ end Expr
   | _, .zero => .const (number 0)
   | _, .succ => .ofFun (fun k => DomainResult.bind
       (DiscreteOrder.continuousMap fun n : ℕ => number (n + 1))
-      (k 0 (ScopedDomain.Env.empty Ty.domain)))
+      (k 0 ScopedDomain.Env.empty))
   | _, .ifz _ => .ofFun (fun k => DomainResult.elimContinuous Empty.elim
-      (branch (k 1 (ScopedDomain.Env.empty Ty.domain), body (k 2)))
-      (k 0 (ScopedDomain.Env.empty Ty.domain)))
+      (branch (k 1 ScopedDomain.Env.empty, body (k 2)))
+      (k 0 ScopedDomain.Env.empty))
   | _, .lam _ _ => DomainResult.valueContinuous.comp (body.comp (.ofFun (fun k => k 0)))
   | _, .app _ _ => .ofFun (fun k =>
-      DomainResult.applyContinuous (k 0 (ScopedDomain.Env.empty Ty.domain))
-        (k 1 (ScopedDomain.Env.empty Ty.domain)))
+      DomainResult.applyContinuous (k 0 ScopedDomain.Env.empty)
+        (k 1 ScopedDomain.Env.empty))
   | _, .fix _ => ContinuousHom.fixContinuous.comp (body.comp (.ofFun (fun k => k 0)))
 
 /-- The lazy meaning of a closed term. -/
 @[expose] noncomputable def meaning {a : Ty} (t : Expr [] a) : a.domain :=
-  t.denoteDomain algebra (ScopedDomain.Env.empty Ty.domain)
+  t.denoteDomain algebra ScopedDomain.Env.empty
 
 /-! ## A total evaluator and the fundamental lemma -/
 
@@ -201,7 +201,7 @@ end Expr
 theorem agrees_none (a : Ty) (d : a.domain) : Agrees a d none := fun _ h => nomatch h
 
 theorem envRelated_empty :
-    EnvRelated Agrees (ScopedDomain.Env.empty Ty.domain) (Env.empty (V := Ty.result)) :=
+    EnvRelated Agrees ScopedDomain.Env.empty (Env.empty (V := Ty.result)) :=
   fun _ x => nomatch x
 
 theorem envRelated_single {a : Ty} {e : a.domain} {x : a.native} (h : Represents a e x) :
@@ -221,19 +221,19 @@ theorem algebra_related : DomainInterpretation.Related Agrees algebra evaluator 
       obtain ⟨n, hn, rfl⟩ := Option.map_eq_some_iff.mp hx
       have h := hk 0 _ _ envRelated_empty n hn
       change DomainResult.bind _ (k 0 _) = _
-      rw [show k 0 (ScopedDomain.Env.empty Ty.domain) = number n from h]
+      rw [show k 0 ScopedDomain.Env.empty = number n from h]
       rfl
   | ifz =>
       intro x hx
       obtain ⟨n, hn, hx⟩ := Option.bind_eq_some_iff.mp hx
       change ℕ at n
-      have h : k 0 (ScopedDomain.Env.empty Ty.domain) = number n :=
+      have h : k 0 ScopedDomain.Env.empty = number n :=
         hk 0 _ _ envRelated_empty n hn
       have step : algebra (Op.ifz a) k =
-          branch (k 1 (ScopedDomain.Env.empty Ty.domain), body (k 2)) ⟨n⟩ := by
+          branch (k 1 ScopedDomain.Env.empty, body (k 2)) ⟨n⟩ := by
         rw [show algebra (Op.ifz a) k = DomainResult.elim (β := a.domain) Empty.elim
-          (branch (k 1 (ScopedDomain.Env.empty Ty.domain), body (k 2)))
-          (k 0 (ScopedDomain.Env.empty Ty.domain)) from rfl, h]
+          (branch (k 1 ScopedDomain.Env.empty, body (k 2)))
+          (k 0 ScopedDomain.Env.empty) from rfl, h]
         rfl
       rw [step]
       rcases n with _ | m
@@ -249,9 +249,9 @@ theorem algebra_related : DomainInterpretation.Related Agrees algebra evaluator 
       obtain ⟨x, hx, hy⟩ := Option.bind_eq_some_iff.mp hy
       obtain ⟨g, hg, hfg⟩ := hk 0 _ _ envRelated_empty f hf
       have hxe := hk 1 _ _ envRelated_empty x hx
-      have step : DomainResult.applyContinuous (k 0 (ScopedDomain.Env.empty Ty.domain))
-          (k 1 (ScopedDomain.Env.empty Ty.domain)) =
-            g (k 1 (ScopedDomain.Env.empty Ty.domain)) := by
+      have step : DomainResult.applyContinuous (k 0 ScopedDomain.Env.empty)
+          (k 1 ScopedDomain.Env.empty) =
+            g (k 1 ScopedDomain.Env.empty) := by
         rw [hg]
         rfl
       change Represents _ (DomainResult.applyContinuous (k 0 _) (k 1 _)) y

@@ -302,8 +302,8 @@ theorem denoteOp_parameters {w z : Scope} (μ : Scope.Map w z)
         Env ρ (bindings.map μ.sort ++ (Γ.map μ.sort).map id) →𝒄
         (bindings.map μ.sort)[j].Meaning ρ.val := fun j => mapped j.succ ρ
     have hg : ScopedDomain.Env.Pointwise
-        (ScopedDomain.Env.fixGroup D rhs (Env.same (μ.pull ρ) η))
-        (ScopedDomain.Env.fixGroup E rhs' (Env.same ρ ζ)) := by
+        (ScopedDomain.Env.fixGroup rhs (Env.same (μ.pull ρ) η))
+        (ScopedDomain.Env.fixGroup rhs' (Env.same ρ ζ)) := by
       apply ScopedDomain.Env.fixGroup_pointwise μ.sort
         (fun a => Scheme.domain_subst a μ.parameters ρ.val)
       intro ξ ψ hξ i j hij
@@ -317,9 +317,9 @@ theorem denoteOp_parameters {w z : Scope} (μ : Scope.Map w z)
       exact (hh.trans (congr_arg_heq (fun p => (next p (μ.pull ρ)).toFun
         (Env.append (μ.pull ρ) (ξ, Env.same (μ.pull ρ) η))) hp)).symm
     change HEq ((mapped 0 ρ).toFun (Env.append ρ
-      (ScopedDomain.Env.fixGroup E rhs' (Env.same ρ ζ), Env.same ρ ζ)))
+      (ScopedDomain.Env.fixGroup rhs' (Env.same ρ ζ), Env.same ρ ζ)))
       ((next 0 (μ.pull ρ)).toFun (Env.append (μ.pull ρ)
-        (ScopedDomain.Env.fixGroup D rhs (Env.same (μ.pull ρ) η), Env.same (μ.pull ρ) η)))
+        (ScopedDomain.Env.fixGroup rhs (Env.same (μ.pull ρ) η), Env.same (μ.pull ρ) η)))
     apply ih 0 ρ (μ.pull ρ) rfl
     exact fun {_ _} x y he => ScopedDomain.Env.Pointwise.append
       (List.length_map μ.sort).symm hg hsame x y he

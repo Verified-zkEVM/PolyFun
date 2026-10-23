@@ -37,7 +37,7 @@ variable {w : Scope} (ρ : w.Assignment) {Γ : List w.ValueSort}
 
 /-- Identity context normalization changes no variable value. -/
 theorem same_eq (η : Env ρ Γ) : same ρ η = (List.map_id Γ).symm ▸ η := by
-  exact IPFunctor.ScopedDomain.Env.reindex_id _ η
+  exact IPFunctor.ScopedDomain.Env.reindex_id η
 
 /-- Normalize an ambient identity map beneath one value binder. -/
 theorem cons_same {s : w.ValueSort} (η : Env ρ Γ) (x : s.Meaning ρ.val) :
@@ -191,10 +191,10 @@ theorem denote_letRec (bindings : List w.ValueSort)
     (rhs : (i : Fin bindings.length) → Term w (bindings ++ Γ) bindings[i])
     (body : Term w (bindings ++ Γ) s) (η : Env ρ Γ) :
     (letRec bindings rhs body).denote ρ η = body.denote ρ
-      (Env.append ρ (IPFunctor.ScopedDomain.Env.fixGroup (fun s => s.domain ρ.val)
+      (Env.append ρ (IPFunctor.ScopedDomain.Env.fixGroup
         (fun i => (rhs i).denote ρ) η, η)) := by
   change (underSame bindings body).denote ρ (Env.append ρ
-    (IPFunctor.ScopedDomain.Env.fixGroup _
+    (IPFunctor.ScopedDomain.Env.fixGroup
       (fun i => (underSame bindings (rhs i)).denote ρ) (Env.same ρ η), Env.same ρ η)) = _
   rw [denote_underSame_append]
   congr 2
