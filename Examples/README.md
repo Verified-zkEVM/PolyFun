@@ -12,6 +12,8 @@ lake env lean Examples/Tutorials/Requests.lean
 | [Requests](Tutorials/Requests.lean) | The same dependent sequence of requests interpreted by two handlers |
 | [Machines](Tutorials/Machines.lean) | A counter's state, outputs, trace, and composition of finite runs |
 | [Indexed programs](Tutorials/IndexedPrograms.lean) | Two protocol phases, indexed sequencing, and forgetting indices |
+| [Scoped programs](Tutorials/ScopedPrograms.lean) | Native polynomial syntax, capture-avoiding substitution, bounded loops, and proved let elimination |
+| [Scoped execution](Tutorials/ScopedExecution.lean) | Strict arithmetic/let/loop execution, all-input semantic correspondence and machine adapters |
 | [Interaction trees](Tutorials/InteractionTrees.lean) | A counter over state events and ticks, run by the state corecursor and through handlers |
 | [Parallel reports](Tutorials/ParallelReports.lean) | Independent sources and explicit joint-request interpretation order |
 | [Versioned requests](Tutorials/VersionedRequests.lean) | Routed clients, retained traffic, and stale-write rejection |
