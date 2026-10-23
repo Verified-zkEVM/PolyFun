@@ -17,6 +17,7 @@ import PolyFun.PFunctor.Handler.Sum
 import Examples.Tutorials.ScopedPrograms
 import Examples.Tutorials.ScopedExecution
 import Examples.Tutorials.ScopedFamily
+import Examples.Tutorials.ScopedDomains
 import PolyFun.IPFunctor.Scoped.DomainRelation
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess

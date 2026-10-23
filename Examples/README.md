@@ -14,6 +14,7 @@ lake env lean Examples/Tutorials/Requests.lean
 | [Indexed programs](Tutorials/IndexedPrograms.lean) | Two protocol phases, indexed sequencing, and forgetting indices |
 | [Scoped programs](Tutorials/ScopedPrograms.lean) | Native polynomial syntax, capture-avoiding substitution, bounded loops, and proved let elimination |
 | [Scoped execution](Tutorials/ScopedExecution.lean) | Strict arithmetic/let/loop execution, all-input semantic correspondence and machine adapters |
+| [Lazy scoped semantics](Tutorials/ScopedDomains.lean) | A call-by-name language with `fix` as a continuous interpretation, and a total evaluator related to it by the fundamental lemma |
 | [Polymorphic scoped families](Tutorials/ScopedFamily.lean) | Finite syntax with changing type-parameter scopes, parameter renaming, and erasure preservation by generic traversal |
 | [Interaction trees](Tutorials/InteractionTrees.lean) | A counter over state events and ticks, run by the state corecursor and through handlers |
 | [Parallel reports](Tutorials/ParallelReports.lean) | Independent sources and explicit joint-request interpretation order |
