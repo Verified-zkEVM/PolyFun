@@ -10,13 +10,15 @@ cd "$REPO_ROOT"
 run_lint=0
 run_test=0
 run_axioms=0
+run_cryptol_external=0
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/validate.sh [--lint] [--test] [--axioms]
+Usage: ./scripts/validate.sh [--lint] [--test] [--axioms] [--cryptol-external]
 
 Default checks:
-  - lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
+  - lake build PolyFun ToCslib ComplexityBackends PolyFunCryptol PolyFunExamples
+    +PolyFunParliamentMain +PolyFunCryptolMain --wfail
   - ./scripts/check-modules.sh
   - ./scripts/check-imports.sh
   - python3 ./scripts/check-docs-integrity.py
@@ -25,6 +27,9 @@ Optional checks:
   --lint    Run environment and text-style linters over production, tutorials, and case studies
   --test    Build regressions, run CLI/filesystem tests, and build both separate consumers
   --axioms  Test axiomsweep, then enforce the zero axiom/sorry-debt gate
+  --cryptol-external
+            Also compare the Cryptol model with the pinned Cryptol 3.6.0 executable
+            named by CRYPTOL_BINARY (implies --test)
 EOF
 }
 
@@ -39,6 +44,10 @@ for arg in "$@"; do
     --axioms)
       run_axioms=1
       ;;
+    --cryptol-external)
+      run_test=1
+      run_cryptol_external=1
+      ;;
     -h|--help)
       usage
       exit 0
@@ -51,8 +60,13 @@ for arg in "$@"; do
   esac
 done
 
+if (( run_cryptol_external )); then
+  : "${CRYPTOL_BINARY:?Set CRYPTOL_BINARY to the pinned Cryptol 3.6.0 executable}"
+fi
+
 echo "# Building project"
-lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
+lake build PolyFun ToCslib ComplexityBackends PolyFunCryptol PolyFunExamples \
+  +PolyFunParliamentMain +PolyFunCryptolMain --wfail
 
 echo ""
 echo "# Checking module scopes"
@@ -78,7 +92,7 @@ if (( run_lint )); then
     Examples.Tutorials.ReviewableWorkflows Examples.Tutorials.FairWorkQueues \
     Examples.Tutorials.BoundedController Examples.Tutorials.ScopedPrograms \
     Examples.Tutorials.ScopedExecution Examples.Tutorials.ScopedFamily \
-    Examples.Parliament PolyFunParliamentMain
+    Examples.Parliament PolyFunParliamentMain PolyFunCryptol PolyFunCryptolMain
 fi
 
 if (( run_test )); then
@@ -90,12 +104,17 @@ if (( run_test )); then
   lake build polyfun-parliament --wfail
   python3 scripts/test-parliament-cli.py
   lake -d test/ParliamentConsumer build --wfail
+  lake build PolyFunCryptolTest polyfun-cryptol --wfail --iofail
+  cryptol_model_test=(python3 -u PolyFunCryptol/scripts/test_model.py)
+  if (( run_cryptol_external )); then cryptol_model_test+=(--cryptol "$CRYPTOL_BINARY"); fi
+  "${cryptol_model_test[@]}"
 fi
 
 if (( run_axioms )); then
   echo ""
   echo "# Building axiom sweep roots"
-  lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
+  lake build PolyFun ToCslib ComplexityBackends PolyFunCryptol PolyFunExamples \
+    +PolyFunParliamentMain +PolyFunCryptolMain --wfail
 
   echo ""
   echo "# Testing the axiom sweep tool"
@@ -112,7 +131,9 @@ if (( run_axioms )); then
     --root Examples.Tutorials.BoundedController --root Examples.Tutorials.ScopedPrograms \
     --root Examples.Tutorials.ScopedExecution --root Examples.Tutorials.ScopedFamily \
     --root Examples.Parliament \
-    --root PolyFunParliamentMain --check
+    --root PolyFunParliamentMain --root PolyFunCryptol --check
+  # Each executable entry point defines `main`, so the Cryptol one is swept on its own.
+  lake exe polyfun-axiomsweep --root PolyFunCryptolMain --check
 fi
 
 echo ""

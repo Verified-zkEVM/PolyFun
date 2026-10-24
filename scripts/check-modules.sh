@@ -14,6 +14,8 @@ lean_sources() {
   git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
     'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunTest/*.lean' \
     'Examples/*.lean' 'PolyFunParliamentMain.lean' \
+    'PolyFunCryptol.lean' 'PolyFunCryptol/*.lean' 'PolyFunCryptolTest/*.lean' \
+    'PolyFunCryptolMain.lean' \
     'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean'
 }
 
@@ -141,12 +143,12 @@ fi
 
 # Production and upstream staging must stay usable without teaching/test libraries or executables.
 while IFS= read -r file; do
-  if grep -qE "${import_prefix}(Examples|PolyFunTest|PolyFunParliamentMain)([[:space:]]|\.|$)" "$file"; then
+  if grep -qE "${import_prefix}(Examples|PolyFunTest|PolyFunParliamentMain|PolyFunCryptolTest|PolyFunCryptolMain)([[:space:]]|\.|$)" "$file"; then
     echo "ERROR: $file imports an example, test, or executable from a production library." >&2
     status=1
   fi
 done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
-  'ComplexityBackends.lean' 'ComplexityBackends/*.lean')
+  'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunCryptol.lean' 'PolyFunCryptol/*.lean')
 
 # Layering (docs/reference/repo-map.md): `ToCslib` is upstream staging and never imports PolyFun or
 # a complexity backend; the generic `PolyFun` library never imports a concrete complexity backend.
@@ -163,6 +165,23 @@ while IFS= read -r file; do
     status=1
   fi
 done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean')
+
+# The optional Cryptol case study sits above PolyFun: the generic library, staging and the
+# complexity backends never import it, and it imports no complexity backend.
+while IFS= read -r file; do
+  if grep -qE "${import_prefix}PolyFunCryptol([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file imports the optional PolyFunCryptol case study from a lower layer." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
+  'ComplexityBackends.lean' 'ComplexityBackends/*.lean')
+
+while IFS= read -r file; do
+  if grep -qE "${import_prefix}ComplexityBackends([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file imports a concrete complexity backend from the PolyFunCryptol case study." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFunCryptol.lean' 'PolyFunCryptol/*.lean')
 
 # `import all` boundaries (docs/development/module-api.md, "Who may open whose bodies"): bodies are
 # opened only inside the library that owns them. Tests may open a complexity backend; nothing opens a
@@ -183,6 +202,10 @@ for import_all_form in \
 done
 if grep -qE "${import_all_prefix}PolyFun([[:space:]]|\.|$)" <<< 'import all PolyFunTest.Realizability.Quantitative'; then
   echo "ERROR: import-all matcher must not classify PolyFunTest imports as PolyFun imports." >&2
+  status=1
+fi
+if grep -qE "${import_all_prefix}PolyFun([[:space:]]|\.|$)" <<< 'import all PolyFunCryptol.Model.Syntax'; then
+  echo "ERROR: import-all matcher must not classify PolyFunCryptol imports as PolyFun imports." >&2
   status=1
 fi
 
@@ -236,6 +259,25 @@ while IFS= read -r file; do
   fi
 done < <(git ls-files -- 'ComplexityBackends.lean' 'ComplexityBackends/*.lean')
 
+# The Cryptol case study reaches `PolyFun` and `ToCslib` through their public APIs, and only the
+# case study and its own tests open its bodies.
+while IFS= read -r file; do
+  if grep -qE "${import_all_prefix}(PolyFun|ToCslib)([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file opens PolyFun or ToCslib bodies from the PolyFunCryptol case study." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFunCryptol.lean' 'PolyFunCryptol/*.lean' 'PolyFunCryptolTest/*.lean')
+
+while IFS= read -r file; do
+  case "$file" in
+    PolyFunCryptol/*|PolyFunCryptolTest/*) continue ;;
+  esac
+  if grep -qE "${import_all_prefix}PolyFunCryptol([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file opens PolyFunCryptol bodies outside the case study and its tests." >&2
+    status=1
+  fi
+done < <(lean_sources)
+
 # `ToCslib` opens nothing. Staging modules are meant to be lifted into cslib unchanged, and cslib
 # has no access to this repository's bodies, so a proof that needs an opened body is not portable.
 while IFS= read -r file; do
@@ -255,7 +297,7 @@ while IFS= read -r file; do
     echo "packages must reach every library through its public API." >&2
     status=1
   fi
-done < <(git ls-files -- 'Examples/*.lean' 'PolyFunParliamentMain.lean' \
+done < <(git ls-files -- 'Examples/*.lean' 'PolyFunParliamentMain.lean' 'PolyFunCryptolMain.lean' \
   'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean')
 
 # Grandfathered worked examples that still open `PolyFun` bodies. Remove entries as they migrate to

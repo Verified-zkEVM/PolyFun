@@ -47,6 +47,7 @@ boundary. Imports flow downward and must remain acyclic.
 | `PolyFun/Complexity/`, `PolyFun/Logic/` | Generic resource-bound syntax and small logic helpers |
 | `ToCslib/` | Lowest production layer: upstream staging for free-monad, loop, order, bitvector and polynomial lemmas |
 | `ComplexityBackends/` | Optional concrete complexity backends, one subdirectory per machine model (`CslibSingleTape/`), outside the generic umbrella |
+| `PolyFunCryptol/` | Optional Cryptol language case study: lazy reference semantics, typed-AST importer and native IR, above PolyFun and outside its umbrella; tests in `PolyFunCryptolTest/`, executable `polyfun-cryptol` |
 | `Examples/` | Tutorials and the Parliament case study, target `PolyFunExamples` |
 | `PolyFunTest/` | Regression tests; may import tutorials, with no reverse production dependency |
 
@@ -55,10 +56,15 @@ and `Interaction/Basic/{TypeTree,Decoration}.lean` under `PolyFun/`.
 CSLib owns `PFunctor.FreeM` and the functor-generic `Cslib.FreeM`; extend them.
 `ToCslib` imports core, CSLib and Mathlib, never PolyFun, a backend, probability
 or cryptography. `ComplexityBackends` imports PolyFun and `ToCslib`; PolyFun never
-imports a backend. `scripts/check-modules.sh` enforces both directions.
+imports a backend. `PolyFunCryptol` imports PolyFun and `ToCslib`; PolyFun, `ToCslib` and
+the backends never import it. `scripts/check-modules.sh` enforces these directions.
 
 ## Semantic boundaries
 
+- `PolyFunCryptol` models Cryptol 3.6.0's reference semantics for its supported
+  fragment. It keeps errors, bottom and suspended components distinct and adds no
+  axiom for recursion. Foundation correspondences, cryptographic specifications and
+  probability stay in VCVio; see the [case-study README](PolyFunCryptol/README.md).
 - Parameterize generic effects by an abstract monad. Keep oracle/probability
   interpretations, security policy and concrete protocol runtime semantics downstream.
 - `TypeTree := PFunctor.FreeM TypeTree.basePFunctor PUnit`. Its `done` and
@@ -84,9 +90,10 @@ bodies individually when definitional equality is part of the public contract.
 Broad `@[expose] public section` is forbidden under `PolyFun/Interaction/`.
 `import all` opens bodies only inside the library that owns them: tests may
 open `ComplexityBackends`, nothing opens a backend from `PolyFun/`, a backend
-never opens `PolyFun` or `ToCslib`, and `ToCslib/`, `Examples/`,
-`PolyFunParliamentMain.lean`, the consumer packages and `PolyFunTest/ModuleAPI/`
-canaries open nothing (`scripts/check-modules.sh`). Use ordinary-import
+never opens `PolyFun` or `ToCslib`, only `PolyFunCryptol/` and its tests open the
+case study, which never opens `PolyFun` or `ToCslib`, and `ToCslib/`, `Examples/`,
+`PolyFunParliamentMain.lean`, `PolyFunCryptolMain.lean`, the consumer packages and
+`PolyFunTest/ModuleAPI/` canaries open nothing (`scripts/check-modules.sh`). Use ordinary-import
 canaries and the separate documentation consumer to check public equations; see
 [module APIs](docs/development/module-api.md).
 
@@ -137,10 +144,10 @@ and [review guide](docs/development/review-hardening.md) apply to every change.
 
 ## Generated files and scripts
 
-`PolyFun.lean`, `ToCslib.lean` and `ComplexityBackends.lean` are generated; never
-hand-edit them. Stage new/deleted/renamed source files before running
-`./scripts/update-lib.sh`, `./scripts/update-lib.sh ToCslib` or
-`./scripts/update-lib.sh ComplexityBackends`. See
+`PolyFun.lean`, `ToCslib.lean`, `ComplexityBackends.lean` and `PolyFunCryptol.lean` are
+generated; never hand-edit them. Stage new/deleted/renamed source files before running
+`./scripts/update-lib.sh`, `./scripts/update-lib.sh ToCslib`,
+`./scripts/update-lib.sh ComplexityBackends` or `./scripts/update-lib.sh PolyFunCryptol`. See
 [generated files](docs/development/generated-files.md).
 Tutorial modules use a glob target and need no generated umbrella. The optional
 case-study root `Examples/Parliament.lean` is generated with
