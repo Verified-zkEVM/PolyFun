@@ -211,7 +211,9 @@ def varianceUniverseCanary {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
   (M.dimap inputMap resultMap).wrap lens
 
 example : (emptyOfFn.contramapInput (fun n : Nat => n + 1)).denote 3 =
-    Resumption.pure 5 := by simp [emptyOfFn]
+    Resumption.pure 5 := by
+  rw [contramapInput_denote]
+  simp [emptyOfFn]
 
 example : emptyOfFn.contramapInput id = emptyOfFn := by simp
 

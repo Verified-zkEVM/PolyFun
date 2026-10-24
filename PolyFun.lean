@@ -252,9 +252,14 @@ public import PolyFun.PFunctor.Dynamical.Combinators
 public import PolyFun.PFunctor.Dynamical.DynComputation
 public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 public import PolyFun.PFunctor.Dynamical.DynComputation.BoundedFold
+public import PolyFun.PFunctor.Dynamical.DynComputation.History
 public import PolyFun.PFunctor.Dynamical.DynComputation.IO
+public import PolyFun.PFunctor.Dynamical.DynComputation.Observe
+public import PolyFun.PFunctor.Dynamical.DynComputation.Pending
 public import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
+public import PolyFun.PFunctor.Dynamical.DynComputation.ResumableMap
 public import PolyFun.PFunctor.Dynamical.DynComputation.Termination
+public import PolyFun.PFunctor.Dynamical.DynComputation.Trace
 public import PolyFun.PFunctor.Dynamical.DynComputation.WrapState
 public import PolyFun.PFunctor.Dynamical.Game
 public import PolyFun.PFunctor.Dynamical.Refinement
@@ -311,6 +316,11 @@ public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Free
 public import PolyFun.PFunctor.Handler.Instrumentation
 public import PolyFun.PFunctor.Handler.Instrumentation.Free
+public import PolyFun.PFunctor.Handler.Machine.Admission
+public import PolyFun.PFunctor.Handler.Machine.Behavior
+public import PolyFun.PFunctor.Handler.Machine.Defs
+public import PolyFun.PFunctor.Handler.Machine.StateLens
+public import PolyFun.PFunctor.Handler.Machine.Trace
 public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr
 public import PolyFun.PFunctor.Handler.StateLens

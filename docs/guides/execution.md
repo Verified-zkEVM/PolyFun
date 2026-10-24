@@ -89,6 +89,21 @@ completed result. Neither requires reconstructing the machine's hidden state.
 `startChunk_continueChunk` equates consecutive budgets with their sum, including the exact
 residual, and `startChunk_zero` shows that zero fuel still observes a terminal state.
 
+For joint observations across time, import
+`PolyFun.PFunctor.Dynamical.DynComputation.History`. `unrollHistory fuel state`
+returns a `Fin (fuel + 1)` tuple of chunks, beginning with the zero-fuel observation.
+Each extension resumes only the last saved chunk for one query. Completed results
+remain constant through the remaining coordinates. `map_unrollHistory_last`
+recovers exactly `unrollChunk fuel state`, including its effects. Earlier-coordinate
+projections still execute the whole budget: removing those effects requires a law
+of the chosen interpretation and is not a general syntactic equality.
+
+`DynComputation.ResumableMap` transports these observations through existing
+input and result adapters. `unrollChunk_mapResult` and `unrollHistory_mapResult`
+map only returned values and retain the exact residual state at every coordinate.
+`unrollHistory_contramapInput` changes only initialization. The maps may change
+their input or output universes; the proofs use heterogeneous free-monad laws.
+
 The syntax keeps state, input, result, position, and direction universes
 independent. Its observation law uses the universe-polymorphic `FreeM.map`.
 Monadic interpretation aligns the state, result, and response universes;
@@ -162,3 +177,46 @@ not promised.
 typed completions. It does not ask the handler for either selected answer. **Both suffixes
 still execute their effects independently**: this is not rollback or automatic state
 isolation, so speculative callers should fork over a read-only interface.
+
+## Observations and resource-independent prefixes
+
+[`DynComputation.Trace`](../../PolyFun/PFunctor/Dynamical/DynComputation/Trace.lean)
+records actual query/answer steps with both endpoint states. Its `ExecutionTrace`
+carrier, append, length, answer conformance and query counts require no resource
+backend. `toPrefix` connects it to the general length-indexed `DynSystem.Prefix`.
+Quantitative realizations use this same carrier; recosting leaves a trace unchanged.
+
+[`DynComputation.Observe`](../../PolyFun/PFunctor/Dynamical/DynComputation/Observe.lean)
+uses `DynSystem.EventMap` for observations depending on the current state and
+the typed answer. `withAccumulator` carries a monoid value in the machine state
+and returns it with the result. `ExecutionTrace.withAccumulator` lifts a source
+trace with exactly its accumulated observation, while `accumulate_append` splits
+it at any retained intermediate state. `map_unrollChunk_withAccumulator` erases
+observations from every bounded execution, including a pause inside a call.
+Noncommutative monoids retain observation order. `unrollChunk_withAccumulator_mul`
+factors a fixed left multiplier through the entire residual computation. This lets
+semantic consumers vary the initial accumulator using one pushforward of the
+execution started at the monoid identity.
+
+A [`Pending`](../../PolyFun/PFunctor/Dynamical/DynComputation/Pending.lean) query
+stores the caller state and evidence for the operation it exposes. `resume`
+recovers the continuation from that state. Machine-handler phases use this
+representation, so a suspended caller's representation certificate need not
+encode a function. Entry and return remain explicit administrative transitions.
+
+The finite [`FreeM.HandlerMachine`](../../PolyFun/PFunctor/Free/HandlerMachine.lean)
+API observes this same dispatcher through `encodePhase` and `decodePrefix`.
+`runPrefix_eq_runChunk` identifies its runner with a shared machine chunk interpreted
+through `Handler.withTraceBefore`. Administrative transitions and primitive queries
+have separate counters, including an unfinished call. The public `runPrefix_*`
+constructor equations support proofs without unfolding the writer implementation.
+`runPrefix_complete` includes both entry and return in its `calls * (inner + 2)`
+budget; `map_result_runPrefix` preserves the ordered inner interaction after completion.
+
+[`Machine.Admission`](../../PolyFun/PFunctor/Handler/Machine/Admission.lean) adds an
+executable admission policy around any service. The policy can refuse a call or
+supply its cap and update separate admission data before execution. `admitted`
+uses core `ExceptT` over `StateT`, so an error retains state and stops a free client's
+continuation. The timeout callback observes the saved private state; auxiliary
+admission data survives success and timeout unchanged by the service. This supports
+prepaid budgets without embedding their bookkeeping in every service machine.

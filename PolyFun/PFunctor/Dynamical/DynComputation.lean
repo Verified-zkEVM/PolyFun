@@ -162,7 +162,9 @@ def ObsEq (M : DynComputation.{u} p α β) (N : DynComputation.{v} p α β) : Pr
     (hMN : ObsEq M N) (hNO : ObsEq N O) : ObsEq M O :=
   fun input => (hMN input).trans (hNO input)
 
-/-- Reindex a returning computation contravariantly along an input map. -/
+/-- Reindex a returning computation contravariantly along an input map.
+The state projection reduces to the original state type, including during instance search. -/
+@[reducible]
 def contramapInput {γ : Type uγ} (M : DynComputation.{u} p α β) (f : γ → α) :
     DynComputation.{u} p γ β where
   State := M.State
@@ -182,7 +184,7 @@ def contramapInput {γ : Type uγ} (M : DynComputation.{u} p α β) (f : γ → 
     (M : DynComputation.{u} p α β) (state : M.State) :
     (M.contramapInput f).view state = M.view state := rfl
 
-@[simp] theorem contramapInput_denote {γ : Type uγ} (f : γ → α)
+theorem contramapInput_denote {γ : Type uγ} (f : γ → α)
     (M : DynComputation.{u} p α β) (input : γ) :
     (M.contramapInput f).denote input = M.denote (f input) := rfl
 
@@ -226,8 +228,8 @@ private def mapResultLift {γ : Type uγ} (f : β → γ) :
   Lens.sumMap (Lens.id p) (Lens.toConst f)
 
 /-- Map the returned value of a computation while preserving its hidden state
-and visible-query interface. -/
-@[implicit_reducible]
+and visible-query interface. The state projection reduces during instance search. -/
+@[reducible]
 def mapResult {γ : Type uγ} (M : DynComputation.{u} p α β) (f : β → γ) :
     DynComputation.{u} p α γ where
   State := M.State
@@ -388,7 +390,7 @@ def dimap {γ : Type uγ} {δ : Type uδ} (M : DynComputation.{u} p α β)
 @[simp] theorem dimap_denote {γ : Type uγ} {δ : Type uδ} (f : γ → α) (g : β → δ)
     (M : DynComputation.{u} p α β) (input : γ) :
     (M.dimap f g).denote input = Resumption.map g (M.denote (f input)) := by
-  simp [dimap]
+  rw [dimap, mapResult_denote, contramapInput_denote]
 
 /-! ### Variance laws -/
 

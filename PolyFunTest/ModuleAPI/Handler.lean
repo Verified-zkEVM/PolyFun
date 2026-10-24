@@ -28,13 +28,13 @@ open _root_.PFunctor
 section Generic
 
 variable {P : PFunctor.{uA₁, u}} {Q : PFunctor.{uA₂, u}} {m : Type u → Type u} [Monad m]
-  [LawfulMonad m] {α : Type u} (f : Handler m P) (g : Handler m Q)
+  {α : Type u} (f : Handler m P) (g : Handler m Q)
 
 example (a : P.A) : Handler.sum f g (.inl a) = f a := by simp
 
 example (b : Q.A) : Handler.sum f g (.inr b) = g b := by simp
 
-example (a : P.A) :
+example [LawfulMonad m] (a : P.A) :
     (FreeM.lift (P := (P + Q : PFunctor.{max uA₁ uA₂, u})) (.inl a)).liftM (Handler.sum f g) =
       f a := by
   simp

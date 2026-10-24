@@ -6,13 +6,13 @@ Authors: Devon Tuma
 
 module
 
-import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
+import PolyFun.PFunctor.Dynamical.DynComputation.ResumableMap
 
 /-! # Ordinary-import canaries for resumable execution across independent universes -/
 
 open PFunctor PFunctor.DynSystem PFunctor.DynSystem.DynComputation
 
-universe uA uB uState uInput uResult
+universe uA uB uState uInput uResult uMapped
 
 example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uB}
     (machine : DynComputation.{uB} p α β) (handler : Handler Id p) (input : α) :
@@ -43,6 +43,40 @@ example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uB} {m : Type uB �
     (machine.startChunk handler first input >>= machine.continueChunk handler second) =
       machine.startChunk handler (first + second) input :=
   machine.startChunk_continueChunk handler first second input
+
+/-- Histories retain the runner's actual last chunk at independent syntax universes. -/
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uResult}
+    (machine : DynComputation.{uState} p α β) (fuel : Nat) (state : machine.State) :
+    FreeM.map (fun history => history (Fin.last fuel)) (machine.unrollHistory fuel state) =
+      machine.unrollChunk fuel state := machine.map_unrollHistory_last fuel state
+
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uResult}
+    (machine : DynComputation.{uState} p α β) {state : machine.State} {value : β}
+    (h : machine.view state = .inl value) (fuel : Nat) :
+    machine.unrollHistory fuel state = .pure (fun _ => .done value) :=
+  machine.unrollHistory_of_view_return h fuel
+
+/-- Mapping a result may change its universe without changing any retained state. -/
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uResult} {γ : Type uMapped}
+    (machine : DynComputation.{uState} p α β) (f : β → γ) (fuel : Nat) (state : machine.State) :
+    (machine.mapResult f).unrollHistory fuel state =
+      FreeM.map (fun history i => (history i).map id f) (machine.unrollHistory fuel state) :=
+  machine.unrollHistory_mapResult f fuel state
+
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uResult} {γ : Type uMapped}
+    (machine : DynComputation.{uState} p α β) (f : γ → α) (fuel : Nat) (input : γ) :
+    (machine.contramapInput f).unrollHistory fuel ((machine.contramapInput f).init input) =
+      machine.unrollHistory fuel (machine.init (f input)) := by
+  rw [contramapInput_init, unrollHistory_contramapInput]
+
+/-- Structural wrappers reuse state-type instances without global projection instances. -/
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uResult} {γ : Type uMapped}
+    (machine : DynComputation.{uState} p α β) [Inhabited machine.State] (f : β → γ) :
+    Inhabited (machine.mapResult f).State := inferInstance
+
+example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uResult} {γ : Type uMapped}
+    (machine : DynComputation.{uState} p α β) [Inhabited machine.State] (f : γ → α) :
+    Inhabited (machine.contramapInput f).State := inferInstance
 
 example {p : PFunctor.{uA, uB}} {α : Type uInput} {β : Type uResult}
     (machine : DynComputation.{uState} p α β) (fuel : Nat) (state : machine.State) :
