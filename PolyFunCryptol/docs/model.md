@@ -326,6 +326,15 @@ fundamental lemma of logical relations therefore come from the generic layer.
 `Primitive.lower_correct` and `Resolved.lower_correct` relate source meaning
 to core meaning for arbitrary partial environments.
 
+[`ResolvedNative.lean`](../Model/ResolvedNative.lean) gives the same syntax a second,
+ordinary interpretation, `Resolved.native`, in the native values of
+[`Native.lean`](../Model/Native.lean). Fixed points, errors and unsupported
+primitives have no answer (`none`). `Resolved.native_related` checks the two
+interpretations constructor by constructor against `Native.Agrees`, and the generic
+fundamental lemma lifts this to `Resolved.denote_agrees` for every closed term.
+`Resolved.word_function` and `word_function_lam` specialize it: a word function
+whose native evaluation returns a word certifies its lazy meaning on that input.
+
 For source proofs, use the equations in `ResolvedLaws` together with
 `Environment.cons_zero` and `Environment.cons_succ`. These preserve named
 environments during normalization. Unfolding the entire environment function
