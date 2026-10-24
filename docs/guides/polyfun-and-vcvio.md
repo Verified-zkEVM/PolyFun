@@ -33,6 +33,7 @@ its own encoding, probability, resource, and adequacy obligations.
 | `QueryImpl spec m` | Definitionally `PFunctor.Handler m spec.toPFunctor` |
 | `QueryImpl.add` and the `simulateQ_add_*` routing lemmas | `PFunctor.Handler.sum` with `liftM_sum_lift_inl`, `liftM_sum_mapLens_inl`, and their right-hand and `sumLift` variants |
 | `mapStateTBase`, `parallelStateT`, `piStateT`, `flattenStateT`, `extendState`, `fixSndStateT` and their `simulateQ … .run` laws | `PFunctor.Handler.Stateful.mapBase`, `sum`, `sigma`, `flatten`, `extend`, `fixSnd` with `run_mapBase`, `run_flatten`, `run_extend_map_fst`, and `run_map_eq_of_apply_map_eq` |
+| `QueryImpl.Stateful.link`, `parSum` and their run lemmas | `PFunctor.Handler.Stateful.link` and `sumMap`, with `run_link`, `link_assoc`, the unit laws, and the interchange laws `sumMap_link_sum` and `sumMap_link_sumMap` |
 | `QueryImpl.compose` (`∘ₛ`) and `simulateQ_compose` | `PFunctor.Handler.comp` with `Handler.liftM_comp` |
 | `StateOrnament` and `StateOrnament.run_eq` | `PFunctor.Handler.Stateful.IsProjection` with `IsProjection.run_eq` and `fst_map_run_eq` |
 | ArkLib's `Statement.Lens`, `Witness.Lens`, and context lenses | `PFunctor.Lens.ofMonomial`, `monomialMapFst`, `monomialMapSnd` between monomials |
