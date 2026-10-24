@@ -31,6 +31,12 @@ example (pre : Nat → Prop) (post : Nat → Nat → Prop) :
     DataContract represented represented increment.meaning pre post ↔
       ∀ x, pre x → post x (x + 1) := increment.contract_iff pre post
 
+/-- A pointwise equal implementation carries the same certificate. -/
+example (pre : Nat → Prop) (post : Nat → Nat → Prop) :
+    DataContract represented represented increment.meaning pre post ↔
+      ∀ x, pre x → post x x.succ :=
+  (increment.congr (g := Nat.succ) fun _ => rfl).contract_iff pre post
+
 -- Unrepresented failure cannot satisfy total correctness, even for a trivial postcondition.
 example : ¬ DataContract represented represented (fun _ => none)
     (fun x => x = 0) (fun _ _ => True) := by

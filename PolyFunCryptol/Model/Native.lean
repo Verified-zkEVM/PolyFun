@@ -151,6 +151,15 @@ theorem eq_wordValue_of_bits? {n : Nat} {d : Computation (wordTy n)} {xs : Value
   | _, .shift _ op => some fun x => some fun k => shift op x k
   | _, _ => none
 
+@[simp] theorem primitive_word {n : Nat} (x : BitVec n) :
+    primitive (.word x) = wordResult x := rfl
+
+@[simp] theorem primitive_wordLogic (n : Nat) (op : BitOp) :
+    primitive (.wordLogic n op) = some fun x => some fun y => wordLogic op x y := rfl
+
+@[simp] theorem primitive_shift (n : Nat) (op : ShiftOp) :
+    primitive (.shift n op) = some fun x => some fun k => shift op x k := rfl
+
 @[simp] theorem wordLogic_word {n : Nat} (op : BitOp) (x y : BitVec n) :
     wordLogic op (wordResult x) (wordResult y) = wordResult (op.word x y) := by
   simp [wordLogic, wordResult]

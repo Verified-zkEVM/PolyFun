@@ -248,56 +248,61 @@ This quotation creates a checked description; it does not parse Cryptol files.
 [`Representation.lean`](../Translation/Representation.lean) provides
 `DataShape`, canonical `encodeData`, uniqueness of represented data, and
 `Term.denote_apply_data`. Products encode multiple arguments and finite arrays
-encode multiword state. [`Contracts.lean`](../Translation/Contracts.lean)
-then transports arbitrary preconditions and postconditions after an all-input
-native equality `∀ x, f.denote Env.empty x = g x`:
+encode multiword state.
+
+[`DataCertificate.lean`](../Translation/DataCertificate.lean) states every correspondence
+between a Cryptol meaning and a native function with PolyFun's generic API.
+`DataCertificate`, `DataContract` and `CorrespondsOn` are
+`Control.Semantics.CertifiedMeaning`, `DataContract` and `CorrespondsOn` at the
+data embedding `dataEmbedding`. Composition, restricted admissibility profiles,
+`contract_iff` and `eq_iff` are therefore the generic theorems:
 
 ```text
-DataContract inputShape f.lower pre post  ↔  ∀ x, pre x → post x (g x)
+DataContract inputShape outputShape (Resolved.denote f Environment.empty) pre post
+  ↔  ∀ x, pre x → post x (g x)
 ```
 
-Use `Term.dataContract_iff` for direct lowering or
-`Term.source_dataContract_iff` for `Resolved.lower f.source`. The word-specific
-`Term.totalContract_iff` remains available.
+The left side requires a fully represented result, not just a conditional
+assertion about terminating executions. `CorrespondsOn` records equality on an
+explicit admissible set of inputs and asserts nothing outside it. Equality with a
+represented `true` (`eq_iff`) rules out errors and divergence, so an erroring
+source cannot satisfy a property. Tests include a source that errors outside its
+admitted domain, and they reject unrestricted correspondence for erroring and
+divergent sources. `Resolved.lower_correct` moves any of these statements to the
+operational core lowering.
 
-The left side includes a fully represented result, rather than just a
-conditional assertion about terminating executions. Adequacy then supplies
-termination of every in-range bit observation. `Term.property_iff` connects
-finite Boolean predicates to core truth assertions. Exporting a property to
-Cryptol additionally requires a finite description of the predicate; arbitrary
-Lean propositions and proofs are not printable Cryptol programs.
+Two producers build certificates:
+* `Resolved.dataCertificate` evaluates resolved source natively. Its obligation is one
+  native evaluation per input, which `simp` usually discharges for a symbolic input.
+  `Resolved.apply_data_of_native` is the pointwise form.
+* `Finite.Term.dataCertificate` certifies the compact source translation of a finite
+  description. It serves recursion and loops, which native evaluation does not run.
+  For direct lowering, `Term.denote_apply_data` is the certificate's `correct` field.
+  Adequacy supplies termination of every in-range bit observation
+  (`Term.bit_observation_terminates`).
 
-[`Certified.lean`](../Translation/Certified.lean) retains a resolved source and a
-finite implementation with a complete-output equality on represented inputs.
-`CertifiedFunction.contract_iff` transfers arbitrary predicates without exposing
-the recurrence proof. `Recurrence.lean` supplies the constructor-producing,
-strict-prefix fixed-point rule; `Finite/Loop.lean` constructs shared finite
-prefix tables and iterations. `ResolvedSequences.lean` supplies ranges and
-lazy `map`, dependent `flatMap` with finite inner rows, and `zipWith` over
-finite or infinite sources, with partial denotation equations. Sequential
-generators visit each row in source order; parallel generators truncate at the
-shorter length. Both retain suspended arguments. These derived combinators use
-the existing lowering and operational theorems. `Comprehensions.lean` also gives
-core lowerings and direct semantic equations for infinite inner rows and
-independent parallel branch environments. The full source comprehension AST is
-retained by the bundle decoder; automatic checked lowering remains pending.
+Exporting a property to Cryptol additionally requires a finite description of
+the predicate. Arbitrary Lean propositions and proofs are not printable Cryptol
+programs.
 
-[`SemanticCertificate.lean`](../Translation/SemanticCertificate.lean) factors
-the representation contract over a semantic computation, independent of which
-syntax denotes it. `CorrespondsOn` records equality on an explicit admissible
-set of inputs. Its `contract_iff` transfers arbitrary preconditions and
-postconditions when the precondition implies admissibility. `property_iff`
-identifies a source Boolean property with a **defined** `true` result, so an
-error or divergence cannot satisfy it. Outside the profile no behavior is
-asserted. Tests include a source that errors outside its admitted domain and
-reject unrestricted correspondence for error and divergent sources.
+`Recurrence.lean` supplies the constructor-producing, strict-prefix fixed-point
+rule; `Finite/Loop.lean` constructs shared finite prefix tables and iterations.
+`ResolvedSequences.lean` supplies ranges and lazy `map`, dependent `flatMap`
+with finite inner rows, and `zipWith` over finite or infinite sources, with
+partial denotation equations. Sequential generators visit each row in source
+order; parallel generators truncate at the shorter length. Both retain suspended
+arguments. These derived combinators use the existing lowering and operational
+theorems. `Comprehensions.lean` also gives core lowerings and direct semantic
+equations for infinite inner rows and independent parallel branch environments.
+The full source comprehension AST is retained by the bundle decoder; automatic
+checked lowering remains pending.
 
 [`CertifiedFamily.lean`](../Translation/CertifiedFamily.lean)
-retains one finite polymorphic source together with implementations and
+retains one finite polymorphic source together with native functions and
 all-input representation proofs for every instance of an explicit
-`FamilyInterface`. Its `contract_iff` pulls or pushes arbitrary preconditions
-and postconditions at those instances. The interface determines the scope of
-the theorem; it need not cover every possible specialization of the source.
+`FamilyInterface`. `certificateAt` gives the certificate at one instance. The
+interface determines the scope of the theorem; it need not cover every possible
+specialization of the source.
 [`PolymorphicExamples.lean`](../Translation/PolymorphicExamples.lean) certifies
 XOR for **every** natural width and every pair of words, including width zero.
 This transfer uses a denotational equality and does not require a new evaluator.
@@ -332,8 +337,7 @@ ordinary interpretation, `Resolved.native`, in the native values of
 primitives have no answer (`none`). `Resolved.native_related` checks the two
 interpretations constructor by constructor against `Native.Agrees`, and the generic
 fundamental lemma lifts this to `Resolved.denote_agrees` for every closed term.
-`Resolved.word_function` and `word_function_lam` specialize it: a word function
-whose native evaluation returns a word certifies its lazy meaning on that input.
+`Resolved.dataCertificate` packages it as a certificate on fully defined data.
 
 For source proofs, use the equations in `ResolvedLaws` together with
 `Environment.cons_zero` and `Environment.cons_succ`. These preserve named

@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFunCryptol.Translation.SemanticCertificate
+public import PolyFunCryptol.Translation.DataCertificate
 public import PolyFunCryptol.Model.Resolved
 
 /-! # Admissibility, defined truth, and rejection of erroneous property certificates -/
@@ -25,13 +25,12 @@ theorem correct : CorrespondsOn .bit .bit (fun x => x = true) meaning (fun _ => 
   rfl
 
 example (post : Bool → Bool → Prop) :
-    DataMeaningContract (b := .bit) .bit meaning (fun x => x = true) post ↔ post true true := by
-  rw [correct.contract_iff (fun x => x = true) post (fun _ h => h)]
-  simp
+    DataContract .bit .bit meaning (fun x => x = true) post ↔ post true true :=
+  (correct.contract_iff (fun x => x = true) post (fun _ h => h)).trans (by simp)
 
 example (x : Bool) (hx : x = true) :
     DomainResult.applyContinuous meaning (encodeData .bit x) = encodeData .bit true :=
-  (correct.property_iff x hx).mpr rfl
+  (correct.eq_iff x hx true).mpr rfl
 
 example : DomainResult.applyContinuous meaning (encodeData .bit false) =
     .error (.user "outside profile") := rfl
