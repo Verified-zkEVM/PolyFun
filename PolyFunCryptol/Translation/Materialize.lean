@@ -31,7 +31,7 @@ private def app (name : String) (args : List String) : String :=
   "(" ++ name ++ " " ++ String.intercalate " " args ++ ")"
 
 private def finiteCases : List String → String
-  | [] => "(fun i => nomatch i)"
+  | [] => "(fun i => Fin.elim0 i)"
   | x :: xs => app "Fin.cases" [x, finiteCases xs]
 
 private def op {w : Scope} : {s : w.ValueSort} → (head : Op w s) →

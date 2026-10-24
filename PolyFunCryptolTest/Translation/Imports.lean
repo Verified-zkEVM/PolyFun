@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFunCryptolTest.Translation.ImportedSource
+public import PolyFunCryptol.Translation.Import
 public import PolyFunCryptol.Model.ResolvedLaws
 public import PolyFunCryptol.Translation.SourceElaboration
 import PolyFunCryptol.Translation.SourceElaboration
@@ -19,14 +19,15 @@ import PolyFunCryptol.Model.Types
 /-!
 # Official frontend import canaries
 
-Kernel reduction checks exact imported terms. Semantic equations then check captured variables,
+`cryptol_import` checks the exported canaries, and the kernel re-checks each acceptance. The
+imports equal hand-written terms. Semantic equations then check captured variables,
 higher-order arguments, record projection, folds, and finite observations of infinite sequences.
 These equations describe the current partial model; normal-evaluator demand equivalence is separate.
 -/
 
 public section
 
-open Cryptol Translation SourceElaboration Tests.ImportedCanariesSource
+open Cryptol Translation SourceElaboration
 
 namespace Cryptol.Tests.Imports
 
@@ -64,39 +65,29 @@ namespace Cryptol.Tests.Imports
 
 /-! ## Kernel-checked acceptance
 
-Each equation reduces the checker over the complete quoted bundle, whose nested
-constructor data exceeds the default recursion depth of the reducer. -/
+`cryptol_import` proves `Imported.r.accepted` for each root `r` in the kernel; each
+import is the hand-written term. -/
 
-set_option maxRecDepth 10000 in
-example : check bundle root0 = .ok ⟨_, capture⟩ := by with_unfolding_all rfl
+cryptol_import Imported from "PolyFunCryptol/artifacts/references/import-canaries.json"
 
-set_option maxRecDepth 10000 in
-example : check bundle root1 = .ok ⟨_, recordSelect⟩ := by with_unfolding_all rfl
+example : Imported.capture = capture := rfl
 
-set_option maxRecDepth 10000 in
-example : check bundle root2 = .ok ⟨.arrow (.prod .integer (.prod .bit .unit)) .integer,
-    .lam (.fst (.var .zero))⟩ := by with_unfolding_all rfl
+example : Imported.recordSelect = recordSelect := rfl
 
-set_option maxRecDepth 10000 in
-example : check bundle root3 = .ok ⟨_, higherOrder⟩ := by with_unfolding_all rfl
+example : Imported.tupleSelect = .lam (.fst (.var .zero)) := rfl
 
-set_option maxRecDepth 10000 in
-example : check bundle root4 = .ok ⟨_, mapped (.finite 3)⟩ := by with_unfolding_all rfl
+example : Imported.higherOrder = higherOrder := rfl
 
-set_option maxRecDepth 10000 in
-example : check bundle root5 = .ok ⟨_, mapped .infinite⟩ := by with_unfolding_all rfl
+example : Imported.mapped = mapped (.finite 3) := rfl
 
-set_option maxRecDepth 10000 in
-example : check bundle root6 = .ok ⟨_, folded⟩ := by with_unfolding_all rfl
+example : Imported.streamMap = mapped .infinite := rfl
 
-set_option maxRecDepth 10000 in
-example : check bundle root7 = .ok ⟨.arrow (.seq (.finite 0) .integer) .integer,
-    .lam (.integer 0)⟩ := by with_unfolding_all rfl
+example : Imported.folded = folded := rfl
 
-set_option maxRecDepth 10000 in
-example : check bundle root8 = .ok ⟨.arrow (.seq (.finite 3) .integer) .integer,
-    .lam (.app (.app (.lam (.lam (.index (.var (.succ .zero)) (.var .zero)))) (.var .zero))
-      (.integer 0))⟩ := by with_unfolding_all rfl
+example : Imported.root7 = .lam (.integer 0) := rfl
+
+example : Imported.root8 = .lam (.app (.app (.lam (.lam (.index (.var (.succ .zero))
+    (.var .zero)))) (.var .zero)) (.integer 0)) := rfl
 
 example (x y : Computation .integer) :
     DomainResult.applyContinuous
@@ -125,5 +116,14 @@ example (xs : Nat → Int) (i : Nat) :
         (.value (fun n => .value ⟨xs n⟩))) i = .value ⟨xs i + 1⟩ := by
   simp only [mapped]
   rfl
+
+/-! `as` names the roots in order, here the two tutorial functions. -/
+
+cryptol_import Renamed from "PolyFunCryptol/artifacts/references/tutorial.json" as mixed, cleared
+
+example : Renamed.mixed.root.text = "mix" := rfl
+
+example : check Renamed.bundle Renamed.cleared.root = .ok ⟨_, Renamed.cleared⟩ :=
+  Renamed.cleared.accepted
 
 end Cryptol.Tests.Imports

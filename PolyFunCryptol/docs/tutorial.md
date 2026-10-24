@@ -16,27 +16,31 @@ hand. VCVio's `Interop/Cryptol/Consumer/Demo.lean` continues the same route for
 Foundation's `sigma_256_0`. It proves the function equal to VCVio's `ssig0`
 and substitutes it inside every adaptive oracle client.
 
-## 1. Export and quote
+## 1. Export
 
 [`scripts/export_cases.py`](../scripts/export_cases.py) runs the
 [pinned exporter](../exporter/README.md) on the requested roots. The exporter
 returns the official frontend's typed AST for `mix` and `clear` and their
-dependency closure as JSON (`artifacts/references/tutorial.json`). The script
-then quotes that JSON as Lean constructor data in
-`PolyFunCryptolTest/Tutorial/MixSource.lean`. The parser, type checker and
-serializer are trusted at this step; Lean has not checked anything yet.
+dependency closure as JSON (`artifacts/references/tutorial.json`). The parser,
+type checker and serializer are trusted at this step; Lean has not checked
+anything yet.
 
-## 2. Check the import in the kernel
+## 2. Import and check in the kernel
 
 ```lean
-theorem mix_accepted : check bundle root0 = .ok ⟨_, mixTerm⟩ := by
-  with_unfolding_all rfl
+cryptol_import Imported from "PolyFunCryptol/artifacts/references/tutorial.json"
 ```
 
-`SourceElaboration.check` validates scope, kinds, closed constraints and typing,
-and returns a typed `Resolved.Term`. The kernel runs it on the exact quoted
-bundle. Today the statement names the expected output, `mixTerm`, which is
-written out by hand. Each acceptance theorem also raises `maxRecDepth`.
+The command decodes the JSON and runs `SourceElaboration.check` on every root.
+The checker validates scope, kinds, closed constraints and typing, and returns a
+typed `Resolved.Term`. The command then declares:
+* `Imported.bundle`, the decoded bundle;
+* `Imported.mix` and `Imported.clear`, the checked terms;
+* `Imported.mix.accepted : check Imported.bundle Imported.mix.root = .ok ⟨_, Imported.mix⟩`,
+  which the kernel proves by running the checker again.
+
+Neither the JSON nor the command is trusted. A one-line `rfl` example shows that
+`Imported.mix` is the resolved term one would write by hand.
 
 ## 3. Certify what the import computes
 
@@ -99,7 +103,7 @@ These manual steps are the targets of the next milestones in the
 
 | Step | Manual today |
 |---|---|
-| 1 | A Python quotation of the exported JSON |
-| 2 | The expected resolved term, and a recursion-depth override |
+| 1 | Nothing: `cryptol_import` reads the exported JSON |
+| 2 | Nothing: the import declares the checked term and its acceptance theorem |
 | 3 | Nothing: native evaluation certifies the lazy meaning |
 | 4 | Nothing: the certificate's implementation is `mixNative` itself |

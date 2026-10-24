@@ -10,7 +10,6 @@ Edit the source of truth, not the output.
 | `ComplexityBackends.lean` | generated umbrella for the optional backend library | No | `./scripts/update-lib.sh ComplexityBackends` or `./scripts/check-imports.sh` |
 | `PolyFunCryptol.lean` | generated umbrella for the optional Cryptol case study | No | `./scripts/update-lib.sh PolyFunCryptol` or `./scripts/check-imports.sh` |
 | `Examples/Parliament.lean` | generated case-study umbrella | No | `./scripts/update-lib.sh Examples.Parliament` |
-| `PolyFunCryptolTest/Translation/ImportedSource.lean`, `PolyFunCryptolTest/Tutorial/MixSource.lean` | quoted importer canaries and tutorial source | No | `PolyFunCryptol/scripts/export_cases.py`; see the [Cryptol tooling guide](../../PolyFunCryptol/docs/tooling.md) |
 | `PolyFunCryptol/artifacts/` | exported cases, module canaries, Foundation status and evaluator audit | No | The drivers in `PolyFunCryptol/scripts/`, checked by `./scripts/validate.sh --cryptol-external` |
 | `.lake/` | build artifacts and cache | No | `lake build`, `lake exe cache get` |
 | `lake-manifest.json` | resolved dependency lockfile | Manual edits unsafe | Update `lean-toolchain` and both dependency pins in `lakefile.toml`, then run `lake update` |

@@ -23,7 +23,12 @@ Certified inbound clients supply a resolved, well-typed representation. The
 versioned typed-AST input path separately checks scopes and kinds and evaluates
 closed numeric and class constraints. `SourceElaboration` additionally constructs
 intrinsically typed resolved terms for a checked nonrecursive scalar fragment,
-retaining the exact acceptance equation. `ImportedScalar` connects its output
+retaining the exact acceptance equation. `cryptol_import` runs this check on an
+exported JSON bundle at elaboration time and declares the bundle, each checked term,
+and its kernel-proved acceptance equation. Its `module "M"` form elaborates one module of
+a whole-module bundle, restricted to the declaration groups the module reaches, and
+declares the restricted bundle, each checked body, the elaborated module and its
+kernel-proved acceptance equation. `ImportedScalar` connects its output
 to the existing partial semantics and core SHA-2 implementation. General
 expression elaboration and its preservation theorem remain open. There is no Cryptol source parser,
 type inference engine, or open-constraint entailment solver in Lean.

@@ -13,13 +13,11 @@
   "canaries": {
     "roots": 9,
     "bundle_sha256": "d8a6914016b198a6c0a109dab448ecab5049dcdfe87e7ff12eaa686cb827f491",
-    "lean_sha256": "6c9225f13b768d45b450dd649674eae893ec1370e6149c4ca4b71055342837b3",
     "source_sha256": "0955c9c3cb16f49389e57aa701f0a47d52954d58a084981f1a087ba6258af8e9"
   },
   "tutorial": {
     "roots": 2,
     "bundle_sha256": "f1e7ff01a802d57866ddf614c2adff3970484f650e3601056b64318b3193233c",
-    "lean_sha256": "ef10c60636157bfa71e39510dee06b2a7952555cd8b529b1271617ebbf943a53",
     "source_sha256": "ffee675a6784c47a16fcc399acfbb95b276d03eed7f86441770c48a9f917f8cd"
   },
   "module_canaries": {

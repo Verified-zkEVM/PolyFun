@@ -2,10 +2,10 @@
 """Export the language-level reference cases through the pinned typed-AST exporter.
 
 The numeric and class cases compare Lean's numeric semantics and class resolution
-with the pinned frontend. The importer canaries are a small Cryptol fixture whose
-exact export is quoted for kernel-checked acceptance tests, and so is the
-tutorial fixture. The module canaries are a two-module fixture for offline
-whole-module checks and diagnoses. The committed files are inputs to Lean
+with the pinned frontend. The importer canaries and the tutorial fixture are small
+Cryptol fixtures whose exact exports Lean tests read with `cryptol_import`, which
+re-checks them in the kernel. The module canaries are a two-module fixture for
+offline whole-module checks and diagnoses. The committed files are inputs to Lean
 validation, not typing certificates.
 """
 
@@ -14,33 +14,16 @@ import json
 import tempfile
 from pathlib import Path
 
-from pins import CRYPTOL, FOUNDATION, LEAN, REPO, ROOT, canonical, digest, run, verify_checkout
+from pins import CRYPTOL, FOUNDATION, LEAN, ROOT, canonical, digest, run, verify_checkout
 from frontend import frontend_patches, check_frontend
-from quote_reference import quote_bundle
 
 ARTIFACTS = ROOT / "artifacts" / "references"
 CANARY_SOURCE = ROOT / "fixtures/ImportCanaries.cry"
-CANARY_QUOTATION = REPO / "PolyFunCryptolTest/Translation/ImportedSource.lean"
 TUTORIAL_SOURCE = ROOT / "fixtures/Tutorial.cry"
-TUTORIAL_QUOTATION = REPO / "PolyFunCryptolTest/Tutorial/MixSource.lean"
 MODULE_SOURCE = ROOT / "fixtures/ModuleCanaries.cry"
 MODULE_BUNDLE = ROOT / "artifacts/modules/canaries.json"
 CANARY_ROOTS = ("capture", "recordSelect", "tupleSelect", "higherOrder", "mapped", "streamMap",
                 "folded", "(guarded : [0]Integer -> Integer)", "(guarded : [3]Integer -> Integer)")
-
-
-def quote_canaries(canaries):
-    return quote_bundle(canaries, namespace="Cryptol.Tests.ImportedCanariesSource",
-                        artifact="PolyFunCryptol/artifacts/references/import-canaries.json",
-                        title="Quoted importer canaries",
-                        driver="PolyFunCryptol/scripts/export_cases.py")
-
-
-def quote_tutorial(tutorial):
-    return quote_bundle(tutorial, namespace="Cryptol.Tests.Tutorial.MixSource",
-                        artifact="PolyFunCryptol/artifacts/references/tutorial.json",
-                        title="Quoted tutorial source",
-                        driver="PolyFunCryptol/scripts/export_cases.py")
 
 
 def main():
@@ -89,8 +72,6 @@ def main():
         scopes = json.loads(run(str(args.lean), "source", "modules", str(checked)))
         if any(r["scope"]["status"] != "accepted" for r in scopes):
             raise ValueError("module canaries failed scope and kind validation")
-    canary_lean = quote_canaries(canaries)
-    tutorial_lean = quote_tutorial(tutorial)
     manifest = {
         "schema_version": 1, "cryptol_revision": CRYPTOL, "foundation_revision": FOUNDATION,
         "frontend_patches": patches,
@@ -98,10 +79,8 @@ def main():
         "numeric_cases": len(numeric), "class_cases": len(classes),
         "numeric_sha256": digest(canonical(numeric)), "class_sha256": digest(canonical(classes)),
         "canaries": {"roots": len(canaries["roots"]), "bundle_sha256": digest(canary_data),
-                     "lean_sha256": digest(canary_lean),
                      "source_sha256": digest(CANARY_SOURCE.read_bytes())},
         "tutorial": {"roots": len(tutorial["roots"]), "bundle_sha256": digest(tutorial_data),
-                     "lean_sha256": digest(tutorial_lean),
                      "source_sha256": digest(TUTORIAL_SOURCE.read_bytes())},
         "module_canaries": {"bundle_sha256": digest(module_data),
                             "modules": [r["module"] for r in scopes],
@@ -115,9 +94,7 @@ def main():
                ARTIFACTS / "cryptol-license.txt": (args.cryptol_source / "LICENSE").read_bytes(),
                ARTIFACTS / "manifest.json": (json.dumps(manifest, indent=2) + "\n").encode(),
                ARTIFACTS / "tutorial.json": tutorial_data,
-               TUTORIAL_QUOTATION: tutorial_lean,
-               MODULE_BUNDLE: module_data,
-               CANARY_QUOTATION: canary_lean}
+               MODULE_BUNDLE: module_data}
     for path, contents in outputs.items():
         if args.check:
             if not path.is_file() or path.read_bytes() != contents:

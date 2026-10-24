@@ -84,7 +84,6 @@ def canaries(lean):
     assert loops["expression_typing"] == "accepted", loops
     assert loops["semantic_import"] == "conditional-model" and loops["shared_declarations"] == 3
     assert {p["name"] for p in loops["primitive_requirements"]} >= {"(Cryptol::-)", "(Cryptol::>)"}
-    check_materialized(loops)
     rejected = elaborate_module(lean, path, "ModuleCanaries")
     assert rejected["status"] == "rejected", rejected
     diagnosis = diagnose_module(lean, path, "ModuleCanaries")
@@ -250,7 +249,7 @@ def main():
                         help="external corpus report directory written by corpus.py --all")
     args = parser.parse_args()
     mutations = canaries(args.lean)
-    print(f"Module canaries: 2 modules, kernel-replayed loop bodies, 4 diagnosed blockers, "
+    print(f"Module canaries: 2 modules, typed loop bodies, 4 diagnosed blockers, "
           f"{mutations} scope mutations and 2 typing/meaning mutations")
     if args.report:
         foundation(args.lean, args.report)

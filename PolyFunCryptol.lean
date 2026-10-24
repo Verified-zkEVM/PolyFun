@@ -89,6 +89,7 @@ public import PolyFunCryptol.Translation.Finite.Basic
 public import PolyFunCryptol.Translation.Finite.Loop
 public import PolyFunCryptol.Translation.Finite.Relation
 public import PolyFunCryptol.Translation.FiniteSource
+public import PolyFunCryptol.Translation.Import
 public import PolyFunCryptol.Translation.Materialize
 public import PolyFunCryptol.Translation.ModuleElaboration
 public import PolyFunCryptol.Translation.NumericCLI

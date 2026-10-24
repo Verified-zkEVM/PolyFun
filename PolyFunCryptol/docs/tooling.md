@@ -3,7 +3,8 @@
 The official Cryptol parser, renamer, type checker and module loader, together
 with the [typed-AST exporter](../exporter/README.md), are external assumptions.
 Lean checks the exact artifact it receives: decoding, scopes and kinds, linking,
-expression typing, and kernel-checked acceptance equations for quoted imports.
+expression typing, and kernel-checked acceptance equations for imports
+(`cryptol_import` in [`Translation/Import.lean`](../Translation/Import.lean)).
 A transformation after that boundary, such as the official specializer's output,
 is a candidate whose correspondence must be proved in Lean before a certificate
 is reused. Retyping a candidate is insufficient.
@@ -24,14 +25,15 @@ versioned observations rather than changes to the model.
 
 Drivers refuse a Foundation checkout at another revision or with modified
 tracked files, and a Cryptol source tree whose diff is not exactly the reviewed
-compatibility patch. Downstream bridges import `pins.py`, `frontend.py` and
-`quote_reference.py` from the package checkout instead of restating them.
+compatibility patch. Downstream bridges import `pins.py` and `frontend.py` from
+the package checkout instead of restating them. Lean reads every committed export
+directly through `cryptol_import`, so no driver writes Lean source.
 
 ## Drivers and committed outputs
 
 | Script | Inputs | Committed output |
 |---|---|---|
-| `export_cases.py` | Exporter, Foundation, patched Cryptol source | `artifacts/references/{numeric-cases,class-cases,import-canaries,manifest}.json`, `artifacts/modules/canaries.json`, `PolyFunCryptolTest/Translation/ImportedSource.lean` |
+| `export_cases.py` | Exporter, Foundation, patched Cryptol source | `artifacts/references/{numeric-cases,class-cases,import-canaries,tutorial,manifest}.json`, `artifacts/modules/canaries.json` |
 | `corpus.py --all` | Exporter, Foundation, patched Cryptol source | `artifacts/foundation-status.json`, `artifacts/elaboration.json` |
 | `inventory_foundation.py` | Exporter, Foundation | None; the complete census goes to the report directory |
 | `test_evaluators.py` | Both Cryptol binaries, Foundation | `artifacts/evaluator-audit.json` (152 observations) |
