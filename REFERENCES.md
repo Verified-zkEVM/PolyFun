@@ -285,7 +285,7 @@ Free-monad cryptographic packages, sequential and parallel composition, and
 machine-checked algebraic package laws connected to a probabilistic relational
 program logic.
 
-Used in: `docs/guides/open-systems.md`.
+Used in: `docs/guides/open-systems.md`, `PolyFun/PFunctor/Handler/Stateful/Link.lean`.
 
 ### LS25-N — Larsen and Schürmann, *Nominal State-Separating Proofs*
 
