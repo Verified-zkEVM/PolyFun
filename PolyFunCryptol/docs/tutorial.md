@@ -45,13 +45,17 @@ def mixNative (x : BitVec 8) : BitVec 8 := x.rotateRight 3 ^^^ (x >>> 5)
 
 theorem mix_correct (x : BitVec 8) :
     DomainResult.applyContinuous (Resolved.denote mixTerm Environment.empty)
-      (.value (wordValue x)) = .value (wordValue (mixNative x))
+      (.value (wordValue x)) = .value (wordValue (mixNative x)) :=
+  Resolved.word_function_lam _ (by simp [mixNative])
 ```
 
 The meaning is lazy and partial: `Computation` keeps divergence, errors and
-suspended components distinct. On a fully defined input, the proof unfolds the
-denotation with the `Resolved.denote_*` equations and the word-operation lemmas,
-which is about ten lines here.
+suspended components distinct. The proof never unfolds it. `Resolved.native`
+evaluates the same syntax in native values, and `simp` runs that evaluation on
+`mix`'s body. The fundamental lemma of logical relations (`Resolved.denote_agrees`)
+then says that the lazy meaning represents whatever native evaluation returns.
+`Resolved.native_related` proves this one constructor at a time, once for every
+program.
 
 ## 4. Certify a native implementation and move specifications
 
@@ -86,5 +90,5 @@ These manual steps are the targets of the next milestones in the
 |---|---|
 | 1 | A Python quotation of the exported JSON |
 | 2 | The expected resolved term, and a recursion-depth override |
-| 3 | The proof from the lazy denotation to the native function |
+| 3 | Nothing: native evaluation certifies the lazy meaning |
 | 4 | The finite implementation, written separately from the source |

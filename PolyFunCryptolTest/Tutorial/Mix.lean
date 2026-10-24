@@ -10,6 +10,7 @@ public import PolyFunCryptolTest.Tutorial.MixSource
 public import PolyFunCryptol.Translation.SourceElaboration
 public import PolyFunCryptol.Translation.Certified
 public import PolyFunCryptol.Model.ResolvedLaws
+public import PolyFunCryptol.Model.ResolvedNative
 import PolyFunCryptol.Translation.SourceScope
 import PolyFunCryptol.Model.Reference.Kinds
 import PolyFunCryptol.Model.Reference.Types
@@ -77,18 +78,12 @@ theorem clear_accepted : check bundle root1 = .ok ⟨_, clearTerm⟩ := by
 /-- The native Lean function that `mix` should compute. -/
 @[expose] def mixNative (x : BitVec 8) : BitVec 8 := x.rotateRight 3 ^^^ (x >>> 5)
 
-/-- On every defined input, the imported `mix` returns the native result. -/
+/-- On every defined input, the imported `mix` returns the native result. The proof
+evaluates `mix` natively; the fundamental lemma supplies the lazy meaning. -/
 theorem mix_correct (x : BitVec 8) :
     DomainResult.applyContinuous (Resolved.denote mixTerm Environment.empty)
-      (.value (wordValue x)) = .value (wordValue (mixNative x)) := by
-  rw [mixTerm, Resolved.denote_lam_apply]
-  simp (config := { dsimp := false }) only [Resolved.denote_wordLogic,
-    Resolved.denote_shift, Resolved.denote_var, Resolved.denote_integer,
-    Environment.cons_zero]
-  rw [show (3 : Int) = ((3 : Nat) : Int) from rfl, show (5 : Int) = ((5 : Nat) : Int) from rfl,
-    ← Semantics.shiftFixed_eq_shift .rotateRight 8 3, ← Semantics.shiftFixed_eq_shift .right 8 5]
-  simp only [Semantics.shiftFixed_value, Semantics.wordLogic_values]
-  rfl
+      (.value (wordValue x)) = .value (wordValue (mixNative x)) :=
+  Resolved.word_function_lam _ (by simp [mixNative])
 
 /-! ## A certified native implementation -/
 

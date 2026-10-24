@@ -21,6 +21,7 @@ public import PolyFunCryptol.Model.Laws
 public import PolyFunCryptol.Model.Length
 public import PolyFunCryptol.Model.LogicalRelation
 public import PolyFunCryptol.Model.MachineDomain
+public import PolyFunCryptol.Model.Native
 public import PolyFunCryptol.Model.NativeLaws
 public import PolyFunCryptol.Model.NativePrimitives
 public import PolyFunCryptol.Model.Numeric
@@ -57,6 +58,7 @@ public import PolyFunCryptol.Model.Reference.Syntax
 public import PolyFunCryptol.Model.Reference.Types
 public import PolyFunCryptol.Model.Resolved
 public import PolyFunCryptol.Model.ResolvedLaws
+public import PolyFunCryptol.Model.ResolvedNative
 public import PolyFunCryptol.Model.ResolvedSequences
 public import PolyFunCryptol.Model.Scheme
 public import PolyFunCryptol.Model.SequenceAppend
