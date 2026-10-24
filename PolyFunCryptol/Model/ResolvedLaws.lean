@@ -113,6 +113,15 @@ theorem denote_lam_eq (body : Term (a :: Γ) b) (ρ : Environment Γ)
   intro x
   exact h x
 
+/-- Lambdas in different environments agree when their bodies agree on every argument. -/
+theorem denote_lam_congr {Δ : List ClosedTy} (body : Term (a :: Γ) b) (body' : Term (a :: Δ) b)
+    (ρ : Environment Γ) (ρ' : Environment Δ)
+    (h : ∀ x : Computation a,
+      denote body (Environment.cons x ρ) = denote body' (Environment.cons x ρ')) :
+    denote (Term.lam body) ρ = denote (Term.lam body') ρ' := by
+  rw [denote_lam body' ρ']
+  exact denote_lam_eq body ρ _ h
+
 /-! ## Renaming and substitution, from the generic interpretation -/
 
 /-- Renaming syntax reads its environment along the renaming. -/

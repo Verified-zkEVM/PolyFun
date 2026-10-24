@@ -246,6 +246,15 @@ theorem Term.denote_apply_bit {n : Nat} (p : Term [] (.arrow (.word n) .bit))
     (Expr.app p.lower (.word x)).denote Environment.empty =
       .value ⟨p.denote Env.empty x⟩ :=
   (Term.app p (.word x)).lower_correct Env.empty Environment.empty envRepresents_empty
+
+/-- A represented result guarantees termination of each in-range bit observation. -/
+theorem Term.bit_observation_terminates {n m : Nat}
+    (f : Term [] (.arrow (.word n) (.word m))) (x : BitVec n) (i : Fin m) :
+    ∃ w, Evaluates (Expr.index (.app f.lower (.word x)) (.integer i.val)) (.ok w) ∧
+      w.denote = (⟨(f.denote Env.empty x).getMsbD i.val⟩ : Value .bit) := by
+  apply (Expr.adequacy_value _ _).mp
+  exact Expr.denote_index_word _ _ _ (f.denote_apply_word x) i _ rfl
+
 /-- The compact source route also preserves the native result after core lowering. -/
 theorem Term.source_lower_correct {Γ : List Ty} {a : Ty} (e : Term Γ a) (ρ : Env Γ)
     (η : Environment (Γ.map Ty.core)) (h : EnvRepresents ρ η) :

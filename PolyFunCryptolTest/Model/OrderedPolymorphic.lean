@@ -117,12 +117,12 @@ example : Polymorphic.Examples.shiftedCycle.denote emptyAssignment (Env.empty _)
 
 example (n : Nat) (x y : BitVec n) :
     DomainResult.applyContinuous
-      (Finite.PolymorphicExamples.xorCertificate.meaningAt n).meaning
+      (Finite.PolymorphicExamples.xorInterface.observe Polymorphic.Examples.xor n)
       (Finite.encodeData (.prod (.word n) (.word n)) (x, y)) =
         Finite.encodeData (.word n) (x ^^^ y) :=
   Finite.PolymorphicExamples.xorCertificate.correct n (x, y)
 
-example : (Finite.PolymorphicExamples.xorCertificate.meaningAt 0).implementation
+example : (Finite.PolymorphicExamples.xorCertificate.certificateAt 0).implementation
     ((0 : BitVec 0), (0 : BitVec 0)) = (0 : BitVec 0) := rfl
 
 /-- Renaming an open recursive group retains one simultaneous fixed point. -/

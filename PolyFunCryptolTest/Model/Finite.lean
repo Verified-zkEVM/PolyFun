@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFunCryptol.Translation.Contracts
+public import PolyFunCryptol.Translation.DataCertificate
 public import PolyFunCryptol.Model.Inspect
 
 /-!
@@ -72,8 +72,9 @@ example (x : BitVec 8) :
 
 example {n m : Nat} (f : Term [] (.arrow (.word n) (.word m)))
     (pre : BitVec n → Prop) (post : BitVec n → BitVec m → Prop) :
-    TotalContract f.lower pre post ↔ ∀ x, pre x → post x (f.evalWord x) :=
-  f.totalContract_iff f.evalWord (fun _ => rfl) pre post
+    Cryptol.DataContract (.word n) (.word m) (Resolved.denote f.source Environment.empty)
+      pre post ↔ ∀ x, pre x → post x (f.evalWord x) :=
+  (Term.dataCertificate (.word n) (.word m) f).contract_iff pre post
 
 example {a : ClosedTy} (fuel count : Nat) (state : MachineState a) :
     (state.runCounted fuel count).2 = state.run fuel := by

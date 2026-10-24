@@ -8,7 +8,7 @@ module
 
 public import PolyFunCryptolTest.Tutorial.MixSource
 public import PolyFunCryptol.Translation.SourceElaboration
-public import PolyFunCryptol.Translation.Certified
+public import PolyFunCryptol.Translation.DataCertificate
 public import PolyFunCryptol.Model.ResolvedLaws
 public import PolyFunCryptol.Model.ResolvedNative
 import PolyFunCryptol.Translation.SourceScope
@@ -73,42 +73,30 @@ set_option maxRecDepth 10000 in
 theorem clear_accepted : check bundle root1 = .ok ⟨_, clearTerm⟩ := by
   with_unfolding_all rfl
 
-/-! ## Meaning on defined inputs -/
+/-! ## Certified meaning on defined inputs -/
 
 /-- The native Lean function that `mix` should compute. -/
 @[expose] def mixNative (x : BitVec 8) : BitVec 8 := x.rotateRight 3 ^^^ (x >>> 5)
 
-/-- On every defined input, the imported `mix` returns the native result. The proof
-evaluates `mix` natively; the fundamental lemma supplies the lazy meaning. -/
+/-- The imported `mix`, certified against `mixNative`. `simp` evaluates the source
+natively for every input; the fundamental lemma supplies the lazy meaning. -/
+@[expose] noncomputable def mixCertificate : DataCertificate (.word 8) (.word 8) :=
+  Resolved.dataCertificate (.word 8) (.word 8) mixTerm mixNative (by simp [mixTerm, mixNative])
+
+/-- On every defined input, the imported `mix` returns the native result. -/
 theorem mix_correct (x : BitVec 8) :
     DomainResult.applyContinuous (Resolved.denote mixTerm Environment.empty)
       (.value (wordValue x)) = .value (wordValue (mixNative x)) :=
-  Resolved.word_function_lam _ (by simp [mixNative])
-
-/-! ## A certified native implementation -/
-
-/-- The native implementation in the finite IR. -/
-@[expose] def mixFinite : Finite.Term [] (.arrow (.word 8) (.word 8)) :=
-  .lam (.wordOp .xor (.rotateRight 3 (.var .zero)) (.shiftRight 5 (.var .zero)))
-
-theorem mixFinite_denote (x : BitVec 8) : mixFinite.denote Finite.Env.empty x = mixNative x :=
-  rfl
-
-/-- The imported source with its certified implementation. -/
-@[expose] noncomputable def mixCertified : Finite.CertifiedFunction (.word 8) (.word 8) where
-  source := mixTerm
-  implementation := mixFinite
-  correct x := (mix_correct x).trans (congrArg (fun y => DomainResult.value (wordValue y))
-    (mixFinite_denote x).symm)
+  mixCertificate.correct x
 
 /-- Any pre/post contract on the imported source is a statement about `mixNative`. -/
 theorem mix_contract_iff (pre : BitVec 8 → Prop) (post : BitVec 8 → BitVec 8 → Prop) :
-    Finite.DataContract (.word 8) (Resolved.lower mixCertified.source) pre post ↔
+    DataContract (.word 8) (.word 8) (Resolved.denote mixTerm Environment.empty) pre post ↔
       ∀ x, pre x → post x (mixNative x) :=
-  mixCertified.contract_iff mixNative mixFinite_denote pre post
+  mixCertificate.contract_iff pre post
 
 /-- `mix` maps zero to zero. -/
-example : Finite.DataContract (.word 8) (Resolved.lower mixCertified.source)
+example : DataContract (.word 8) (.word 8) (Resolved.denote mixTerm Environment.empty)
     (fun x : BitVec 8 => x = 0) (fun _ (r : BitVec 8) => r = 0) := by
   rw [mix_contract_iff]
   rintro x rfl

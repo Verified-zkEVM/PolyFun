@@ -79,10 +79,9 @@ public import PolyFunCryptol.Model.WordShift
 public import PolyFunCryptol.Model.Words
 public import PolyFunCryptol.Model.Zero
 public import PolyFunCryptol.Translation.CLI
-public import PolyFunCryptol.Translation.Certified
 public import PolyFunCryptol.Translation.CertifiedFamily
 public import PolyFunCryptol.Translation.ConstraintEvidence
-public import PolyFunCryptol.Translation.Contracts
+public import PolyFunCryptol.Translation.DataCertificate
 public import PolyFunCryptol.Translation.Declarations
 public import PolyFunCryptol.Translation.Export
 public import PolyFunCryptol.Translation.Finite
@@ -98,7 +97,6 @@ public import PolyFunCryptol.Translation.OpenTypes
 public import PolyFunCryptol.Translation.PolymorphicExamples
 public import PolyFunCryptol.Translation.Quote
 public import PolyFunCryptol.Translation.Representation
-public import PolyFunCryptol.Translation.SemanticCertificate
 public import PolyFunCryptol.Translation.SourceBundle
 public import PolyFunCryptol.Translation.SourceCLI
 public import PolyFunCryptol.Translation.SourceElaboration

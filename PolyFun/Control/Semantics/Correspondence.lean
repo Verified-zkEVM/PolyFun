@@ -138,6 +138,19 @@ variable {input : A ↪ D} {output : B ↪ E}
 theorem correspondsOn (f : CertifiedMeaning input output) (valid : A → Prop) :
     CorrespondsOn input output valid f.meaning f.implementation := fun x _ => f.correct x
 
+/-- Replace the implementation by a pointwise equal function. -/
+@[expose] def congr (f : CertifiedMeaning input output) {g : A → B}
+    (h : ∀ x, f.implementation x = g x) : CertifiedMeaning input output where
+  meaning := f.meaning
+  implementation := g
+  correct x := h x ▸ f.correct x
+
+@[simp] theorem congr_meaning (f : CertifiedMeaning input output) {g : A → B}
+    (h : ∀ x, f.implementation x = g x) : (f.congr h).meaning = f.meaning := rfl
+
+@[simp] theorem congr_implementation (f : CertifiedMeaning input output) {g : A → B}
+    (h : ∀ x, f.implementation x = g x) : (f.congr h).implementation = g := rfl
+
 /-- Compose total certificates through their common represented boundary. -/
 @[expose] def comp {final : C ↪ F} (g : CertifiedMeaning output final)
     (f : CertifiedMeaning input output) : CertifiedMeaning input final where

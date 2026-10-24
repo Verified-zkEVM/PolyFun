@@ -7,16 +7,16 @@ Authors: Devon Tuma
 module
 
 public import PolyFunCryptol.Model.PolySpecialization
-public import PolyFunCryptol.Translation.SemanticCertificate
-public import PolyFunCryptol.Translation.FiniteSource
+public import PolyFunCryptol.Translation.DataCertificate
 
 /-!
 # Certificates for one finite polymorphic source
 
 A family interface specifies the admitted instantiations and represented input
-and output shapes. A certificate retains one finite source description and
-proves correspondence for every instance of that interface. Restricting the
-interface restricts the claim; unlisted instantiations are not certified.
+and output shapes. A certificate retains one polymorphic source and proves
+correspondence with a native function at every instance of that interface.
+Restricting the interface restricts the claim; unlisted instantiations are not
+certified.
 -/
 
 public section
@@ -41,41 +41,31 @@ structure FamilyInterface {w : Polymorphic.Scope} (s : w.ValueSort) (I : Type) w
   specialization : ∀ i, Specialization s (assignment i).val
     (.arrow (input i).core (output i).core)
 
+/-- The source's meaning at one admitted instance. -/
+@[expose] noncomputable def FamilyInterface.observe {w : Polymorphic.Scope} {s : w.ValueSort}
+    {I : Type} (interface : FamilyInterface s I) (source : Polymorphic.Term w [] s) (i : I) :
+    Computation (.arrow (interface.input i).core (interface.output i).core) :=
+  source.observe (interface.assignment i) (interface.specialization i) (Polymorphic.Env.empty _)
+
 /-- All-input semantic correspondence for one finite polymorphic description. -/
 structure CertifiedFamily {w : Polymorphic.Scope} {s : w.ValueSort} {I : Type}
     (interface : FamilyInterface s I) where
-  /-- The single finite source, before any instantiation. -/
+  /-- The single source, before any instantiation. -/
   source : Polymorphic.Term w [] s
-  /-- Executable finite implementations for the admitted instances. -/
-  implementation : ∀ i, Term [] (.arrow (interface.input i) (interface.output i))
+  /-- Native functions at the admitted instances. -/
+  implementation : ∀ i, (interface.input i).Native → (interface.output i).Native
   /-- Every instance and represented input has the full represented result. -/
-  correct : ∀ i x, DomainResult.applyContinuous
-    (source.observe (interface.assignment i) (interface.specialization i)
-      (Polymorphic.Env.empty _)) (encodeData (interface.inputData i) x) =
-        encodeData (interface.outputData i) ((implementation i).denote Env.empty x)
+  correct : ∀ i x, DomainResult.applyContinuous (interface.observe source i)
+    (encodeData (interface.inputData i) x) =
+      encodeData (interface.outputData i) (implementation i x)
 
-namespace CertifiedFamily
-
-variable {w : Polymorphic.Scope} {s : w.ValueSort} {I : Type}
-  {interface : FamilyInterface s I}
-
-/-- Expose the shared semantic certificate at one checked instance. -/
-@[expose] noncomputable def meaningAt (f : CertifiedFamily interface) (i : I) :
-    CertifiedMeaning (interface.inputData i) (interface.outputData i) where
-  meaning := f.source.observe (interface.assignment i) (interface.specialization i)
-    (Polymorphic.Env.empty _)
-  implementation := (f.implementation i).denote Env.empty
+/-- The certificate at one admitted instance. -/
+@[expose] noncomputable def CertifiedFamily.certificateAt {w : Polymorphic.Scope}
+    {s : w.ValueSort} {I : Type} {interface : FamilyInterface s I}
+    (f : CertifiedFamily interface) (i : I) :
+    DataCertificate (interface.inputData i) (interface.outputData i) where
+  meaning := DomainResult.applyContinuous (interface.observe f.source i)
+  implementation := f.implementation i
   correct := f.correct i
 
-/-- Pull or push an arbitrary specification at any admitted instantiation. -/
-theorem contract_iff (f : CertifiedFamily interface) (i : I)
-    (g : (interface.input i).Native → (interface.output i).Native)
-    (h : ∀ x, (f.implementation i).denote Env.empty x = g x)
-    (pre : (interface.input i).Native → Prop)
-    (post : (interface.input i).Native → (interface.output i).Native → Prop) :
-    DataMeaningContract (interface.inputData i) (f.meaningAt i).meaning pre post ↔
-      ∀ x, pre x → post x (g x) :=
-  (f.meaningAt i).contract_iff g h pre post
-
-end CertifiedFamily
 end Cryptol.Finite
