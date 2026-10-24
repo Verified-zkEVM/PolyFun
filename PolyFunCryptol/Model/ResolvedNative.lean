@@ -16,9 +16,8 @@ public import PolyFunCryptol.Model.SequenceLaws
 and unsupported primitives have no answer. `native_related` checks the native
 interpretation against the lazy algebra one constructor at a time, and the generic
 fundamental lemma lifts it to every term: whatever native evaluation returns, the lazy
-meaning represents (`denote_agrees`). A closed word function that evaluates natively
-therefore certifies its lazy meaning on every input (`word_function`), with no proof
-about the lazy semantics.
+meaning represents (`denote_agrees`). `Resolved.certificate` turns this into
+certificates on fully defined data, with no proof about the lazy semantics.
 -/
 
 public section
@@ -245,31 +244,5 @@ end Equations
 theorem denote_agrees {a : ClosedTy} (t : Term [] a) :
     Native.Agrees a (denote t Environment.empty) (t.denote native Env.empty) :=
   Term.denoteDomain_related native_related t envRelated_empty
-
-/-- A closed word function that evaluates natively certifies its lazy meaning at an input. -/
-theorem word_function {n m : Nat} (t : Term [] (.arrow (wordTy n) (wordTy m)))
-    {f : Native.Value (.arrow (wordTy n) (wordTy m))}
-    (hf : t.denote native Env.empty = some f) {x : BitVec n} {y : BitVec m}
-    (hy : f (Native.wordResult x) = Native.wordResult y) :
-    DomainResult.applyContinuous (denote t Environment.empty) (.value (wordValue x)) =
-      .value (wordValue y) := by
-  obtain ⟨g, hg, hfg⟩ := denote_agrees t f hf
-  have hx : Native.Agrees (wordTy n) (.value (wordValue x)) (some (Native.word x)) :=
-    fun _ h => by cases h; exact Native.represents_word x
-  have step : DomainResult.applyContinuous (denote t Environment.empty) (.value (wordValue x)) =
-      g (.value (wordValue x)) := by
-    rw [hg]
-    rfl
-  rw [step]
-  exact Native.eq_wordValue_of_bits? (hfg _ _ hx _ hy) (Native.bits?_word y)
-
-/-- An imported word function's body that evaluates natively certifies its meaning. -/
-theorem word_function_lam {n m : Nat} (body : Term [wordTy n] (wordTy m)) {x : BitVec n}
-    {y : BitVec m}
-    (hy : body.denote native (Env.cons (Native.wordResult x) Env.empty) =
-      Native.wordResult y) :
-    DomainResult.applyContinuous (denote (Term.lam body) Environment.empty)
-      (.value (wordValue x)) = .value (wordValue y) :=
-  word_function (Term.lam body) rfl hy
 
 end Cryptol.Resolved

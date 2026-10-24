@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFunCryptol.Translation.Certified
+public import PolyFunCryptol.Translation.DataCertificate
 import PolyFunCryptol.Model.Zero
 import PolyFunCryptol.Model.ResolvedSequences
 

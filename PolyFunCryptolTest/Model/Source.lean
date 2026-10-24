@@ -7,7 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFunCryptol.Translation.Quote
-import PolyFunCryptol.Translation.Contracts
+import PolyFunCryptol.Translation.DataCertificate
 import PolyFunCryptol.Translation.Export
 import PolyFunCryptol.Model.Inspect
 
@@ -42,14 +42,14 @@ example {Γ : List ClosedTy} {a : ClosedTy} (e : Resolved.Term Γ a) (η : Envir
     (Resolved.lower e).denote η = Resolved.denote e η :=
   congrArg (fun f => f η) (Resolved.lower_correct e)
 
+/-- A finite description certifies its source translation; contracts transfer generically. -/
 example (pre : BitVec 8 × BitVec 8 → Prop) (post : (BitVec 8 × BitVec 8) → BitVec 8 → Prop) :
-    DataContract (.prod (.word 8) (.word 8))
-      (Finite.Term.lam (.arithmetic .add (.fst (.var .zero)) (.snd (.var .zero))) :
-        Finite.Term [] (.arrow (.prod (.word 8) (.word 8)) (.word 8))).lower
-      pre post ↔ ∀ x, pre x → post x (x.1 + x.2) := by
-  apply Term.dataContract_iff (.prod (.word 8) (.word 8)) (.word 8)
-  intro x
-  rfl
+    Cryptol.DataContract (.prod (.word 8) (.word 8)) (.word 8)
+      (Resolved.denote (Finite.Term.lam (.arithmetic .add (.fst (.var .zero))
+        (.snd (.var .zero))) : Finite.Term [] (.arrow (.prod (.word 8) (.word 8)) (.word 8))).source
+        Environment.empty)
+      pre post ↔ ∀ x, pre x → post x (x.1 + x.2) :=
+  (Finite.Term.dataCertificate (.prod (.word 8) (.word 8)) (.word 8) _).contract_iff pre post
 
 example (xs : Fin 3 → BitVec 8) :
     DomainResult.applyContinuous

@@ -32,15 +32,10 @@ namespace Cryptol.Finite.PolymorphicExamples
   outputData n := .word n
   specialization := Polymorphic.Examples.xorInstance
 
-/-- A finite native implementation at a selected width. -/
-@[expose] def xorImplementation (n : Nat) :
-    Term [] (.arrow (.prod (.word n) (.word n)) (.word n)) :=
-  .lam (.wordOp .xor (.fst (.var .zero)) (.snd (.var .zero)))
-
 /-- One source and an all-input, all-width representation proof. -/
 @[expose] noncomputable def xorCertificate : CertifiedFamily xorInterface where
   source := Polymorphic.Examples.xor
-  implementation := xorImplementation
+  implementation n := fun x : BitVec n × BitVec n => x.1 ^^^ x.2
   correct n x := by
     change BitVec n × BitVec n at x
     change DomainResult.applyContinuous (DomainResult.applyContinuous
@@ -56,10 +51,9 @@ namespace Cryptol.Finite.PolymorphicExamples
 /-- Arbitrary word specifications transfer for every width; no Boolean reification is needed. -/
 theorem xor_contract (n : Nat) (pre : (BitVec n × BitVec n) → Prop)
     (post : (BitVec n × BitVec n) → BitVec n → Prop) :
-    DataMeaningContract (b := .word n) (.prod (.word n) (.word n))
-      (xorCertificate.meaningAt n).meaning pre post ↔
+    DataContract (.prod (.word n) (.word n)) (.word n)
+      (xorInterface.observe Polymorphic.Examples.xor n) pre post ↔
         ∀ x, pre x → post x (x.1 ^^^ x.2) :=
-  xorCertificate.contract_iff n (fun x : BitVec n × BitVec n => x.1 ^^^ x.2)
-    (fun _ => rfl) pre post
+  (xorCertificate.certificateAt n).contract_iff pre post
 
 end Cryptol.Finite.PolymorphicExamples
