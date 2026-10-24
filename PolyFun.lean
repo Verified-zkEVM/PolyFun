@@ -217,6 +217,7 @@ public import PolyFun.PFunctor.Bound
 public import PolyFun.PFunctor.CartesianClosed
 public import PolyFun.PFunctor.Category
 public import PolyFun.PFunctor.Category.Factorization
+public import PolyFun.PFunctor.Category.MonoEpi
 public import PolyFun.PFunctor.Category.Monoidal
 public import PolyFun.PFunctor.Chart.Basic
 public import PolyFun.PFunctor.Cofree
@@ -327,6 +328,7 @@ public import PolyFun.PFunctor.Lens.Composite
 public import PolyFun.PFunctor.Lens.Distributivity
 public import PolyFun.PFunctor.Lens.Duoidal
 public import PolyFun.PFunctor.Lens.Factorization
+public import PolyFun.PFunctor.Lens.MonoEpi
 public import PolyFun.PFunctor.Lens.Monomial
 public import PolyFun.PFunctor.Lens.State
 public import PolyFun.PFunctor.Lens.Universal

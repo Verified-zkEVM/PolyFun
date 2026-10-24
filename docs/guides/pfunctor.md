@@ -125,6 +125,19 @@ vertical–cartesian factorization system of
 factors through them (`HasFactorization`), a `Lens.DiagonalFiller` is a `CommSq.LiftStruct`, and
 the isomorphisms of `LensCat` are the lenses in both classes.
 
+[`Category/MonoEpi.lean`](../../PolyFun/PFunctor/Category/MonoEpi.lean) characterizes the
+monomorphisms and epimorphisms of `LensCat`. A lens is a monomorphism exactly when it is
+injective on positions and surjective on every direction map (`LensCat.mono_iff`). It is an
+epimorphism exactly when it is surjective on positions and every *joint* fibre map
+`Lens.fiberJoint` is injective (`LensCat.epi_iff`). The joint fibre map sends a target direction
+to its images at all source positions over it, so an epimorphism can have no injective direction
+map at all. The sufficient halves, `Lens.cancel_left` and `Lens.cancel_right`
+([`Lens/MonoEpi.lean`](../../PolyFun/PFunctor/Lens/MonoEpi.lean)), hold across universes.
+`LensCat` is `Balanced`. A cartesian lens is a family of direction equivalences
+(`Lens.cartesianEquiv`, with the computable inverse `Lens.ofDirectionEquiv`). Into a sum, it routes
+each position to one summand (`Lens.cartesianSumEquiv`), and it is a monomorphism exactly when it
+is injective on positions.
+
 Every Mathlib structure here lives in one category, so it fixes one universe pair:
 `LensCat.{uA, uB}`, `TensorCat.{uA, uB}`, `CompCat.{u, v}`. The lens-level statements they repackage, such as
 the coherence laws, `Lens.nonempty_diagonalFiller` and lens equivalences `≃ₗ`, relate polynomials

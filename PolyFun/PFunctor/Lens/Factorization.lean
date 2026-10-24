@@ -191,6 +191,40 @@ noncomputable def cartesianDirectionEquiv (c : Lens P Q) (hc : c.IsCartesian) (p
     c.toFunB p ((cartesianDirectionEquiv c hc p).symm r) = r :=
   (cartesianDirectionEquiv c hc p).apply_symm_apply r
 
+/-- The cartesian lens that sends each position `a` of `P` to a chosen position of `Q` and
+identifies the directions there with those of `a`. -/
+def ofDirectionEquiv (r : (a : P.A) → Σ b : Q.A, Q.B b ≃ P.B a) : Lens P Q :=
+  (fun a => (r a).1) ⇆ fun a => (r a).2
+
+theorem ofDirectionEquiv_isCartesian (r : (a : P.A) → Σ b : Q.A, Q.B b ≃ P.B a) :
+    (ofDirectionEquiv r).IsCartesian :=
+  fun a => (r a).2.bijective
+
+/-- Cartesian lenses are exactly the choices, at each position of `P`, of a position of `Q`
+together with an equivalence of directions. The inverse is `ofDirectionEquiv`, which is
+computable. -/
+noncomputable def cartesianEquiv :
+    {l : Lens P Q // l.IsCartesian} ≃ ((a : P.A) → Σ b : Q.A, Q.B b ≃ P.B a) where
+  toFun l a := ⟨l.1.toFunA a, cartesianDirectionEquiv l.1 l.2 a⟩
+  invFun r := ⟨ofDirectionEquiv r, ofDirectionEquiv_isCartesian r⟩
+  left_inv _ := rfl
+  right_inv _ := funext fun _ => Sigma.ext rfl (heq_of_eq (_root_.Equiv.ext fun _ => rfl))
+
+/-- A cartesian lens into a sum routes each position of `P` to one summand, with an
+equivalence of directions there. -/
+noncomputable def cartesianSumEquiv {R : PFunctor.{uA₃, uB₂}} :
+    {l : Lens P (Q + R : PFunctor.{max uA₂ uA₃, uB₂}) // l.IsCartesian} ≃
+      ((a : P.A) → (Σ b : Q.A, Q.B b ≃ P.B a) ⊕ (Σ c : R.A, R.B c ≃ P.B a)) :=
+  cartesianEquiv.trans <| _root_.Equiv.piCongrRight fun _ =>
+    { toFun := fun
+        | ⟨.inl b, e⟩ => .inl ⟨b, e⟩
+        | ⟨.inr c, e⟩ => .inr ⟨c, e⟩
+      invFun := fun
+        | .inl ⟨b, e⟩ => ⟨.inl b, e⟩
+        | .inr ⟨c, e⟩ => ⟨.inr c, e⟩
+      left_inv := by rintro ⟨_ | _, _⟩ <;> rfl
+      right_inv := by rintro (⟨_, _⟩ | ⟨_, _⟩) <;> rfl }
+
 /-- The position component of the lower triangle for the canonical diagonal. -/
 theorem verticalCartesianDiagonal_pos_comm
     {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
