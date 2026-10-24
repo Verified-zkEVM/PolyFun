@@ -12,14 +12,21 @@ public import PolyFun.PFunctor.Handler
 /-!
 # Identity and composition of free handlers
 
-This module equips handlers valued in a free monad with their Kleisli identity
-and categorical-order composition. The generic `PFunctor.Handler` definition
-remains independent of `FreeM`.
+This module equips handlers valued in a free monad with their Kleisli identity,
+and composes a free handler with a handler into any monad. The generic
+`PFunctor.Handler` definition remains independent of `FreeM`.
+
+`second.comp first` interprets each operation of `P` as a free program over `Q`
+through `first`, then runs that program through `second : Handler m Q`. With
+`m := FreeM R` this is Kleisli composition of free handlers; for a general monad
+it is the precomposition that implements one interface in terms of another and
+then runs the result. `id_comp` holds for every monad, while `comp_id`,
+`comp_assoc` and `liftM_comp` need `LawfulMonad m`.
 -/
 
 @[expose] public section
 
-universe u u' uA uA' uA'' uA'''
+universe u u' v uA uA' uA''
 
 namespace PFunctor
 namespace Handler
@@ -47,21 +54,20 @@ def ofLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     ofLens (Lens.id P) = id P :=
   rfl
 
-/-- Kleisli composition of free handlers, in categorical order:
-`second.comp first` first interprets by `first`, then by `second`. The source
-and intermediate direction universes agree because `FreeM.liftM` requires
-them to; the final target direction universe remains independent. -/
+/-- Composition of a free handler with a handler into any monad, in categorical
+order: `second.comp first` first interprets by `first`, then by `second`. With
+`m := FreeM R` this is Kleisli composition of free handlers. The source and
+intermediate direction universes agree because `FreeM.liftM` requires them to;
+the target monad's universes remain independent. -/
 @[implicit_reducible]
-def comp {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
-    {R : PFunctor.{uA'', u'}}
-    (second : Handler (FreeM R) Q) (first : Handler (FreeM Q) P) :
-    Handler (FreeM R) P :=
+def comp {m : Type u → Type v} [Monad m] {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    (second : Handler m Q) (first : Handler (FreeM Q) P) :
+    Handler m P :=
   fun a => (first a).liftM second
 
 @[simp]
-theorem comp_apply {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
-    {R : PFunctor.{uA'', u'}}
-    (second : Handler (FreeM R) Q) (first : Handler (FreeM Q) P)
+theorem comp_apply {m : Type u → Type v} [Monad m] {P : PFunctor.{uA, u}}
+    {Q : PFunctor.{uA', u}} (second : Handler m Q) (first : Handler (FreeM Q) P)
     (a : P.A) :
     second.comp first a = (first a).liftM second :=
   rfl
@@ -81,17 +87,25 @@ theorem id_comp {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
   exact FreeM.liftM_lift_eq_self (first a)
 
 @[simp]
-theorem comp_id {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
-    (second : Handler (FreeM Q) P) :
+theorem comp_id {m : Type u → Type v} [Monad m] [LawfulMonad m] {P : PFunctor.{uA, u}}
+    (second : Handler m P) :
     second.comp (id P) = second := by
   funext a
   exact FreeM.liftM_lift second a
 
-/-- Free-handler composition is associative in categorical order. -/
-theorem comp_assoc
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
-    {R : PFunctor.{uA'', u}} {V : PFunctor.{uA''', u'}}
-    (third : Handler (FreeM V) R)
+/-- Running a program through a composite handler runs it through `first`, then
+runs the resulting free program through `second`. -/
+@[simp]
+theorem liftM_comp {m : Type u → Type v} [Monad m] [LawfulMonad m] {P : PFunctor.{uA, u}}
+    {Q : PFunctor.{uA', u}} (second : Handler m Q) (first : Handler (FreeM Q) P)
+    {α : Type u} (x : FreeM P α) :
+    x.liftM (second.comp first) = (x.liftM first).liftM second :=
+  (FreeM.liftM_comp x first second).symm
+
+/-- Handler composition is associative in categorical order. -/
+theorem comp_assoc {m : Type u → Type v} [Monad m] [LawfulMonad m]
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}} {R : PFunctor.{uA'', u}}
+    (third : Handler m R)
     (second : Handler (FreeM R) Q)
     (first : Handler (FreeM Q) P) :
     (third.comp second).comp first = third.comp (second.comp first) := by
