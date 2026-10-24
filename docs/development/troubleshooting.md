@@ -91,6 +91,17 @@ Symptoms and fixes (see the Transparency Attributes section of
   `some k : Option (Value .integer)` in a lemma never meets the goal's
   `Option Int`. Ascribe such arguments at the reduced carrier, as
   `Cryptol.Native.shift_word` does with `(some k : Option Int)`.
+- "(kernel) deterministic timeout" after a `simp (config := { dsimp := false })` that
+  both unfolds binders (`denote_app`, `denote_lam_apply`, `denote_letE`) and resolves
+  environment lookups (`denote_var`, `cons_zero`, `cons_succ`) → split it into
+  sequential passes: binders first, then lookups, then primitive equations. One
+  combined pass builds a proof whose environments the kernel copies exponentially,
+  even when elaboration is fast.
+- "maximum recursion depth" when `exact` checks a certificate against a statement →
+  the statement may elaborate a term at its declared type while the certificate
+  carries it at a shape's type (`(Finite.Ty.word 32).core` versus `wordTy 32`). Name
+  the term at the shape's type, or rewrite with the certificate's projection lemmas
+  before `exact`.
 - `calc` failing with a `Trans` instance error where a plain `.trans`
   works → typeclass resolution runs below implicit transparency; keep
   the term-level `.trans` form with a comment.

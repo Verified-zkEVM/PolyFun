@@ -229,6 +229,26 @@ variable {Γ : List ClosedTy} {a b : ClosedTy} (ρ : Env Native.Result Γ)
     (Term.app f x).denote native ρ =
       (f.denote native ρ).bind fun g => g (x.denote native ρ) := rfl
 
+@[simp] theorem native_word {n : Nat} (x : BitVec n) :
+    (Term.word x : Term Γ (wordTy n)).denote native ρ = Native.wordResult x := rfl
+
+@[simp] theorem native_letE (x : Term Γ a) (body : Term (a :: Γ) b) :
+    (Term.letE x body).denote native ρ =
+      body.denote native (Env.cons (V := Native.Result) (x.denote native ρ) ρ) := rfl
+
+@[simp] theorem native_pair (x : Term Γ a) (y : Term Γ b) :
+    (Term.pair x y).denote native ρ = some (x.denote native ρ, y.denote native ρ) := rfl
+
+@[simp] theorem native_fst (x : Term Γ (.prod a b)) :
+    (Term.fst x).denote native ρ = (x.denote native ρ).bind Prod.fst := rfl
+
+@[simp] theorem native_snd (x : Term Γ (.prod a b)) :
+    (Term.snd x).denote native ρ = (x.denote native ρ).bind Prod.snd := rfl
+
+@[simp] theorem native_ite (c : Term Γ .bit) (x y : Term Γ a) :
+    (Term.ite c x y).denote native ρ = (c.denote native ρ).bind fun b : Bool =>
+      if b then x.denote native ρ else y.denote native ρ := rfl
+
 @[simp] theorem native_wordLogic {n : Nat} (op : BitOp) (x y : Term Γ (wordTy n)) :
     (Term.wordLogic op x y).denote native ρ =
       Native.wordLogic op (x.denote native ρ) (y.denote native ρ) := rfl

@@ -131,6 +131,20 @@ theorem apply_data_of_native (ha : DataShape a) (hb : DataShape b)
   implementation := g
   correct x := apply_data_of_native ha hb t (h x)
 
+/-! The projection equations are for `rw`: simp indexes the implicit carrier types of
+`CertifiedMeaning.meaning` without reducing them, so they would not match concrete goals. -/
+
+theorem dataCertificate_meaning (ha : DataShape a) (hb : DataShape b)
+    (t : Term [] (.arrow a.core b.core)) (g : a.Native → b.Native)
+    (h : ∀ x, (t.denote native Env.empty).bind (fun f => f (ha.native x)) = hb.native (g x)) :
+    (dataCertificate ha hb t g h).meaning =
+      DomainResult.applyContinuous (denote t Environment.empty) := rfl
+
+theorem dataCertificate_implementation (ha : DataShape a) (hb : DataShape b)
+    (t : Term [] (.arrow a.core b.core)) (g : a.Native → b.Native)
+    (h : ∀ x, (t.denote native Env.empty).bind (fun f => f (ha.native x)) = hb.native (g x)) :
+    (dataCertificate ha hb t g h).implementation = g := rfl
+
 end Resolved
 
 /-- A finite description certifies its own compact source translation. -/
@@ -144,5 +158,14 @@ end Resolved
     change DomainResult.applyContinuous _ _ = _
     rw [hf, DomainResult.applyContinuous_value]
     exact Finite.Represents.eq_encodeData hb (hfn x _ (Finite.represents_encodeData ha x))
+
+theorem Finite.Term.dataCertificate_meaning (ha : DataShape a) (hb : DataShape b)
+    (f : Finite.Term [] (.arrow a b)) :
+    (f.dataCertificate ha hb).meaning =
+      DomainResult.applyContinuous (Resolved.denote f.source Environment.empty) := rfl
+
+theorem Finite.Term.dataCertificate_implementation (ha : DataShape a)
+    (hb : DataShape b) (f : Finite.Term [] (.arrow a b)) :
+    (f.dataCertificate ha hb).implementation = f.denote Finite.Env.empty := rfl
 
 end Cryptol
