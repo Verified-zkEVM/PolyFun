@@ -98,7 +98,7 @@ theorem denote_wordNot_sem (x : Expr Γ (wordTy n)) (η : Environment Γ) :
   apply congrArg DomainResult.value
   funext i
   change Semantics.bitNot ((Expr.index x.weaken (.var .zero)).denote
-    (η.extend (.value ⟨(i.val : Int)⟩))) = _
+    (Environment.cons (.value ⟨(i.val : Int)⟩) η)) = _
   rw [denote_index, denote_weaken]
   rfl
 
@@ -111,8 +111,8 @@ theorem denote_wordLogic_sem (op : BitOp) (x y : Expr Γ (wordTy n)) (η : Envir
   apply congrArg DomainResult.value
   funext i
   change Semantics.binary _
-    ((Expr.index x.weaken (.var .zero)).denote (η.extend (.value ⟨(i.val : Int)⟩)))
-    ((Expr.index y.weaken (.var .zero)).denote (η.extend (.value ⟨(i.val : Int)⟩))) = _
+    ((Expr.index x.weaken (.var .zero)).denote (Environment.cons (.value ⟨(i.val : Int)⟩) η))
+    ((Expr.index y.weaken (.var .zero)).denote (Environment.cons (.value ⟨(i.val : Int)⟩) η)) = _
   simp only [denote_index, denote_weaken]
   rfl
 

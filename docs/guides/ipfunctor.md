@@ -559,6 +559,14 @@ every term's continuous meaning is related to its meaning under an ordinary
 uses it to show that a call-by-value evaluator for a recursion-free fragment
 agrees with a call-by-name semantics with `fix`, from one constructor-local lemma.
 
+Define a language's domain family as a reducible function, so that its carriers
+are visible to instance search and dot notation. Simp indexes implicit type
+arguments. A generic lemma about a continuous map between `(D a).Carrier`
+types therefore does not fire at such a family, while lookup lemmas such as
+`ScopedDomain.Env.cons_zero` do. Let language definitions unfold to `cons`
+and discharge their continuity with `fun_prop` (`ωScottContinuous_cons`), rather
+than exposing `consContinuous` in their equations.
+
 The [polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean) constructs
 a finite identity under a type binder and proves erasure preservation for every
 parameter renaming using `fold_map_rel`. It also demonstrates an ambient value

@@ -116,10 +116,9 @@ theorem Term.source_correct {Γ : List Ty} {a : Ty} (e : Term Γ a) (ρ : Env Γ
     | lam =>
       let body : Term _ _ := args 0
       have ih := ih 0
-      refine ⟨(ContinuousHom.curry
-        ((Resolved.denote body.source).comp Environment.extendContinuous)) η, rfl, ?_⟩
+      refine ⟨.ofFun (fun x => Resolved.denote body.source (Environment.cons x η)), rfl, ?_⟩
       intro x dx hx
-      exact ih (ρ.extend x) (η.extend dx) (h.extend hx)
+      exact ih (ρ.extend x) (Environment.cons dx η) (h.extend hx)
     | app =>
       let f : Term _ _ := args 0
       let x : Term _ _ := args 1

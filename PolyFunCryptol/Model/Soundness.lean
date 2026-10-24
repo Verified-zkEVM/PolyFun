@@ -32,7 +32,7 @@ namespace Cryptol
   | .function body => body.bodyDenote Environment.empty
   | .pair x y => (x.denote Environment.empty, y.denote Environment.empty)
   | .sequence l body => fun i : l.Index =>
-      body.denote (Environment.empty.extend (.value ⟨(Length.indexNat i : Int)⟩))
+      body.denote (Environment.cons (.value ⟨(Length.indexNat i : Int)⟩) Environment.empty)
 
 /-- Interpret an operational result, keeping errors separate from values. -/
 @[expose] noncomputable def Outcome.denote {a : ClosedTy} : Outcome a → Computation a
@@ -131,7 +131,8 @@ theorem MachineState.denote_step {r : ClosedTy} (state : MachineState r) :
       case var v => cases v
       case error e => exact stack.denote_error e
       case letE x body =>
-        change stack.denote (body.denote (Environment.empty.extend (x.denote Environment.empty))) =
+        change stack.denote
+            (body.denote (Environment.cons (x.denote Environment.empty) Environment.empty)) =
           stack.denote ((body.substOne x).denote Environment.empty)
         rw [Expr.denote_substOne]
       case fix body =>

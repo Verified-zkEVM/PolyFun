@@ -32,18 +32,19 @@ variable {Γ Δ : List ClosedTy} {a : ClosedTy}
 
 @[simp] theorem Renaming.pull_lift (ρ : Renaming Γ Δ) (η : Environment Δ)
     {b : ClosedTy} (x : Computation b) :
-    Renaming.pull (Renaming.lift (a := b) ρ) (η.extend x) = (ρ.pull η).extend x := by
+    Renaming.pull (Renaming.lift (a := b) ρ) (Environment.cons x η) =
+      Environment.cons x (ρ.pull η) := by
   funext a v
   cases v <;> rfl
 
 /-- The continuous function denoted by a body under its next binder. -/
 @[expose] noncomputable def bodyDenote {b : ClosedTy} (body : Expr (a :: Γ) b)
     (η : Environment Γ) : Computation a →𝒄 Computation b :=
-  ContinuousHom.curry (body.denote.comp Environment.extendContinuous) η
+  .ofFun (fun x => body.denote (Environment.cons x η))
 
 @[simp] theorem bodyDenote_apply {b : ClosedTy} (body : Expr (a :: Γ) b)
     (η : Environment Γ) (x : Computation a) :
-    body.bodyDenote η x = body.denote (η.extend x) := rfl
+    body.bodyDenote η x = body.denote (Environment.cons x η) := rfl
 
 /-- Renaming is interpreted by reindexing the environment. -/
 theorem denote_rename {Γ : List ClosedTy} {a : ClosedTy} (e : Expr Γ a)
@@ -66,7 +67,7 @@ theorem denote_rename {Γ : List ClosedTy} {a : ClosedTy} (e : Expr Γ a)
       rw [ihf, ihx]
       rfl
   | letE x body ihx ihbody =>
-      change (body.rename ρ.lift).denote (η.extend ((x.rename ρ).denote η)) = _
+      change (body.rename ρ.lift).denote (Environment.cons ((x.rename ρ).denote η) η) = _
       rw [ihx, ihbody, Renaming.pull_lift]
       rfl
   | force x next ihx ihn =>
@@ -87,7 +88,7 @@ theorem denote_rename {Γ : List ClosedTy} {a : ClosedTy} (e : Expr Γ a)
       rfl
   | generate l body ih =>
       change DomainResult.value (fun i : l.Index =>
-        (body.rename ρ.lift).denote (η.extend (.value ⟨(Length.indexNat i : Int)⟩))) = _
+        (body.rename ρ.lift).denote (Environment.cons (.value ⟨(Length.indexNat i : Int)⟩) η)) = _
       simp only [ih, Renaming.pull_lift]
       rfl
   | index xs i ihxs ihi =>
@@ -132,13 +133,13 @@ theorem denote_rename {Γ : List ClosedTy} {a : ClosedTy} (e : Expr Γ a)
 
 @[simp] theorem Substitution.meaning_lift (σ : Substitution Γ Δ) (η : Environment Δ)
     {b : ClosedTy} (x : Computation b) :
-    Substitution.meaning (Substitution.lift (a := b) σ) (η.extend x) =
-      (σ.meaning η).extend x := by
+    Substitution.meaning (Substitution.lift (a := b) σ) (Environment.cons x η) =
+      Environment.cons x (σ.meaning η) := by
   funext a v
   cases v with
   | zero => rfl
   | succ v =>
-      change ((σ v).rename Var.succ).denote (η.extend x) = (σ v).denote η
+      change ((σ v).rename Var.succ).denote (Environment.cons x η) = (σ v).denote η
       rw [denote_rename]
       rfl
 
@@ -163,7 +164,7 @@ theorem denote_subst {Γ : List ClosedTy} {a : ClosedTy} (e : Expr Γ a)
       rw [ihf, ihx]
       rfl
   | letE x body ihx ihbody =>
-      change (body.subst σ.lift).denote (η.extend ((x.subst σ).denote η)) = _
+      change (body.subst σ.lift).denote (Environment.cons ((x.subst σ).denote η) η) = _
       rw [ihx, ihbody, Substitution.meaning_lift]
       rfl
   | force x next ihx ihn =>
@@ -184,7 +185,7 @@ theorem denote_subst {Γ : List ClosedTy} {a : ClosedTy} (e : Expr Γ a)
       rfl
   | generate l body ih =>
       change DomainResult.value (fun i : l.Index =>
-        (body.subst σ.lift).denote (η.extend (.value ⟨(Length.indexNat i : Int)⟩))) = _
+        (body.subst σ.lift).denote (Environment.cons (.value ⟨(Length.indexNat i : Int)⟩) η)) = _
       simp only [ih, Substitution.meaning_lift]
       rfl
   | index xs i ihxs ihi =>
@@ -225,7 +226,7 @@ theorem denote_subst {Γ : List ClosedTy} {a : ClosedTy} (e : Expr Γ a)
 /-- Substituting one argument extends the environment with its meaning. -/
 theorem denote_substOne {b : ClosedTy} (body : Expr (a :: Γ) b)
     (argument : Expr Γ a) (η : Environment Γ) :
-    (body.substOne argument).denote η = body.denote (η.extend (argument.denote η)) := by
+    (body.substOne argument).denote η = body.denote (Environment.cons (argument.denote η) η) := by
   rw [substOne, denote_subst]
   congr 1
   funext a v
@@ -233,7 +234,7 @@ theorem denote_substOne {b : ClosedTy} (body : Expr (a :: Γ) b)
 
 /-- Recursive definitions satisfy the compositional unfolding equation. -/
 theorem denote_fix (body : Expr (a :: Γ) a) (η : Environment Γ) :
-    (Expr.fix body).denote η = body.denote (η.extend ((Expr.fix body).denote η)) :=
+    (Expr.fix body).denote η = body.denote (Environment.cons ((Expr.fix body).denote η) η) :=
   (body.bodyDenote η).map_fix.symm
 
 

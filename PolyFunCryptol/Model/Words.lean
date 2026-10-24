@@ -62,7 +62,7 @@ theorem Expr.denote_word {Γ : List ClosedTy} {n : Nat} (bits : BitVec n)
   apply congrArg DomainResult.value
   funext i
   change (Expr.select ((List.finRange n).map fun j => Expr.bit (bits.getMsbD j.val))
-    (.var .zero)).denote (η.extend (.value ⟨(i.val : Int)⟩)) = _
+    (.var .zero)).denote (Environment.cons (.value ⟨(i.val : Int)⟩) η) = _
   rw [Expr.denote_select _ _ i.val (by simp) _ rfl]
   simp [wordValue, Expr.denote]
 

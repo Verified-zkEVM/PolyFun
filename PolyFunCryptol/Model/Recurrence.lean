@@ -27,16 +27,16 @@ namespace Cryptol.Resolved
 @[expose] noncomputable def recurrenceBody {Γ : List ClosedTy} {a : ClosedTy} {n : Nat}
     (body : Term (.integer :: .seq (.finite n) a :: Γ) a) (ρ : Environment Γ) :
     Computation (.seq (.finite n) a) →𝒄 (Fin n → Computation a) :=
-  .ofFun (fun xs i => denote body (Environment.extendContinuous
-    (Environment.extendContinuous (ρ, xs), DomainResult.value ⟨(i.val : Int)⟩)))
+  .ofFun (fun xs i => denote body
+    (Environment.cons (DomainResult.value ⟨(i.val : Int)⟩) (Environment.cons xs ρ)))
 
 /-- A checked prefix equation certifies the entire recursive source array. -/
 theorem denote_fix_generate {Γ : List ClosedTy} {a : ClosedTy} {n : Nat}
     (body : Term (.integer :: .seq (.finite n) a :: Γ) a) (ρ : Environment Γ)
     (step : (i : Fin n) → (Fin i.val → Computation a) →𝒄 Computation a)
     (hbody : ∀ (xs : Fin n → Computation a) (i : Fin n),
-      denote body ((ρ.extend (DomainResult.value xs : Computation (.seq (.finite n) a))).extend
-        (.value ⟨(i.val : Int)⟩)) =
+      denote body (Environment.cons (.value ⟨(i.val : Int)⟩)
+        (Environment.cons (DomainResult.value xs : Computation (.seq (.finite n) a)) ρ)) =
         step i (fun j => xs ⟨j.val, j.isLt.trans i.isLt⟩)) :
     denote (Term.fix (Term.generate (.finite n) body)) ρ =
       DomainResult.value (Function.prefixRecursion (fun i => step i)) := by

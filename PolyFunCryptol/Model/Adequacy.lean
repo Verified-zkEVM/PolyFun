@@ -33,7 +33,7 @@ namespace Cryptol
 theorem EnvironmentRelated.cons {Γ : List ClosedTy} {η : Environment Γ}
     {σ : Expr.Substitution Γ []} (h : EnvironmentRelated η σ) {a : ClosedTy}
     {d : Computation a} {arg : Expr [] a} (ha : Related d arg) :
-    EnvironmentRelated (η.extend d) (σ.cons arg) := by
+    EnvironmentRelated (Environment.cons d η) (σ.cons arg) := by
   intro b v
   cases v with
   | zero => exact ha
@@ -90,7 +90,7 @@ theorem Expr.related_denote {Γ : List ClosedTy} {a : ClosedTy} (e : Expr Γ a)
       refine (StateRelated.value (w := .function (body.subst σ.lift)) ?_).prev rfl
       intro x arg hx
       rw [Expr.substOne_subst_lift]
-      exact ih (σ.cons arg) (η.extend x) (hη.cons hx)
+      exact ih (σ.cons arg) (Environment.cons x η) (hη.cons hx)
   | @app Γ a b f x ihf ihx =>
       apply StateRelated.prev (next := .eval (f.subst σ) (.push (.app (x.subst σ)) .done))
         (hs := rfl)
@@ -101,7 +101,7 @@ theorem Expr.related_denote {Γ : List ClosedTy} {a : ClosedTy} (e : Expr Γ a)
       cases w with
       | function body => exact StateRelated.prev (hw _ _ (ihx σ η hη)) rfl
   | letE x body ihx ihbody =>
-      have hbody := ihbody (σ.cons (x.subst σ)) (η.extend (x.denote η))
+      have hbody := ihbody (σ.cons (x.subst σ)) (Environment.cons (x.denote η) η)
         (hη.cons (ihx σ η hη))
       rw [← Expr.substOne_subst_lift] at hbody
       exact StateRelated.prev hbody rfl
@@ -131,7 +131,7 @@ theorem Expr.related_denote {Γ : List ClosedTy} {a : ClosedTy} (e : Expr Γ a)
       intro i
       rw [Expr.substOne_subst_lift]
       exact ih (σ.cons (.integer (Length.indexNat i)))
-        (η.extend (.value ⟨(Length.indexNat i : Int)⟩))
+        (Environment.cons (.value ⟨(Length.indexNat i : Int)⟩) η)
         (hη.cons (Related.integer (Length.indexNat i)))
   | @index Γ a l xs i ihxs ihi =>
       apply StateRelated.prev (next := .eval (xs.subst σ) (.push (.index (i.subst σ)) .done))
@@ -173,7 +173,7 @@ theorem Expr.related_denote {Γ : List ClosedTy} {a : ClosedTy} (e : Expr Γ a)
       refine (body.bodyDenote η).fix_induction
         (fun d => Related d (.fix (body.subst σ.lift))) trivial ?_ (admissible_related _)
       intro d hd
-      have hbody := ih (σ.cons (.fix (body.subst σ.lift))) (η.extend d) (hη.cons hd)
+      have hbody := ih (σ.cons (.fix (body.subst σ.lift))) (Environment.cons d η) (hη.cons hd)
       rw [← Expr.substOne_subst_lift] at hbody
       exact StateRelated.prev hbody rfl
   | bitNot x ih =>
