@@ -70,6 +70,7 @@ public import PolyFun.IPFunctor.Notation.Indexed
 public import PolyFun.IPFunctor.Scoped.Basic
 public import PolyFun.IPFunctor.Scoped.ConstantFamily
 public import PolyFun.IPFunctor.Scoped.Domain
+public import PolyFun.IPFunctor.Scoped.DomainInterpretation
 public import PolyFun.IPFunctor.Scoped.DomainRelation
 public import PolyFun.IPFunctor.Scoped.Family
 public import PolyFun.IPFunctor.Scoped.FamilyMap

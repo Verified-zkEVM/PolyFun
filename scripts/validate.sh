@@ -95,6 +95,7 @@ if (( run_lint )); then
     Examples.Tutorials.ReviewableWorkflows Examples.Tutorials.FairWorkQueues \
     Examples.Tutorials.BoundedController Examples.Tutorials.ScopedPrograms \
     Examples.Tutorials.ScopedExecution Examples.Tutorials.ScopedFamily \
+    Examples.Tutorials.ScopedDomains \
     Examples.Parliament PolyFunParliamentMain PolyFunCryptol PolyFunCryptolMain
 fi
 
@@ -160,6 +161,7 @@ if (( run_axioms )); then
     --root Examples.Tutorials.ReviewableWorkflows --root Examples.Tutorials.FairWorkQueues \
     --root Examples.Tutorials.BoundedController --root Examples.Tutorials.ScopedPrograms \
     --root Examples.Tutorials.ScopedExecution --root Examples.Tutorials.ScopedFamily \
+    --root Examples.Tutorials.ScopedDomains \
     --root Examples.Parliament \
     --root PolyFunParliamentMain --root PolyFunCryptol --check
   # Each executable entry point defines `main`, so the Cryptol one is swept on its own.
