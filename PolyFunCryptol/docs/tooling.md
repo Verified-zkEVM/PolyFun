@@ -25,8 +25,9 @@ versioned observations rather than changes to the model.
 
 Drivers refuse a Foundation checkout at another revision or with modified
 tracked files, and a Cryptol source tree whose diff is not exactly the reviewed
-compatibility patch. Downstream bridges import `pins.py`, `frontend.py` and
-`quote_reference.py` from the package checkout instead of restating them.
+compatibility patch. Downstream bridges import `pins.py` and `frontend.py` from
+the package checkout instead of restating them. Lean reads every committed export
+directly through `cryptol_import`, so no driver writes Lean source.
 
 ## Drivers and committed outputs
 

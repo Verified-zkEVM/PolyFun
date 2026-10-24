@@ -117,4 +117,13 @@ example (xs : Nat → Int) (i : Nat) :
   simp only [mapped]
   rfl
 
+/-! `as` names the roots in order, here the two tutorial functions. -/
+
+cryptol_import Renamed from "PolyFunCryptol/artifacts/references/tutorial.json" as mixed, cleared
+
+example : Renamed.mixed.root.text = "mix" := rfl
+
+example : check Renamed.bundle Renamed.cleared.root = .ok ⟨_, Renamed.cleared⟩ :=
+  Renamed.cleared.accepted
+
 end Cryptol.Tests.Imports

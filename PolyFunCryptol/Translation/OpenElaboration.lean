@@ -164,7 +164,7 @@ mutual
       (sigs : List (Reference.Name × w.ValueSort)) →
       Except String ((i : Fin (sigs.map Prod.snd).length) → Term w Γ (sigs.map Prod.snd)[i])
     | 0, _, _, _, _, _, _ => .error "declaration elaboration budget exhausted"
-    | _ + 1, _, _, _, _, _, [] => .ok (fun i => nomatch i)
+    | _ + 1, _, _, _, _, _, [] => .ok (fun i => Fin.elim0 i)
     | fuel + 1, _, _, params, names, ds, (name, s) :: sigs => do
         let some d := ds.find? (fun d => d.name == name)
           | throw s!"missing source declaration {name.origin}"
