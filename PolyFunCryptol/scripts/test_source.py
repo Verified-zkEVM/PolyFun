@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from pins import CRYPTOL, FOUNDATION, LEAN, REPO, ROOT, verify_checkout
+from pins import CRYPTOL, FOUNDATION, LEAN, ROOT, verify_checkout
 
 ARTIFACTS = ROOT / "artifacts/references"
 
@@ -63,15 +63,11 @@ def cases(manifest):
 def canaries(manifest):
     path = ARTIFACTS / "import-canaries.json"
     assert sha256(path) == manifest["canaries"]["bundle_sha256"]
-    assert sha256(REPO / "PolyFunCryptolTest/Translation/ImportedSource.lean") == \
-        manifest["canaries"]["lean_sha256"]
     assert sha256(ROOT / "fixtures/ImportCanaries.cry") == manifest["canaries"]["source_sha256"]
     code, report = run(path, "elaborate")
     assert code == 0 and all(r["status"] == "typed" for r in report), report
     tutorial = ARTIFACTS / "tutorial.json"
     assert sha256(tutorial) == manifest["tutorial"]["bundle_sha256"]
-    assert sha256(REPO / "PolyFunCryptolTest/Tutorial/MixSource.lean") == \
-        manifest["tutorial"]["lean_sha256"]
     assert sha256(ROOT / "fixtures/Tutorial.cry") == manifest["tutorial"]["source_sha256"]
     code, typed = run(tutorial, "elaborate")
     assert code == 0 and [r["status"] for r in typed] == ["typed", "typed"], typed

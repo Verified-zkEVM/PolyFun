@@ -6,8 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFunCryptolTest.Tutorial.MixSource
-public import PolyFunCryptol.Translation.SourceElaboration
+public import PolyFunCryptol.Translation.Import
 public import PolyFunCryptol.Translation.DataCertificate
 public import PolyFunCryptol.Model.ResolvedLaws
 public import PolyFunCryptol.Model.ResolvedNative
@@ -28,14 +27,13 @@ clear x = (x >> 3) ^ (x >> 5)
 ```
 
 `PolyFunCryptol/scripts/export_cases.py` exports them through the official
-frontend and quotes the result as `MixSource`. This file then:
+frontend to `PolyFunCryptol/artifacts/references/tutorial.json`. This file then:
 
-1. checks the quoted import in the kernel, against an explicitly written
-   resolved term;
-2. proves that `mix` computes a native `BitVec` function on every defined input;
-3. packages that native function as a certified implementation and moves a
-   pre/post contract and an algebraic property across;
-4. proves a fact only the lazy semantics can state: bit 0 of `clear` is defined
+1. imports the export with `cryptol_import`, which checks both functions and has the
+   kernel re-check that acceptance;
+2. certifies `mix` against a native `BitVec` function by native evaluation, and moves
+   a pre/post contract and an algebraic property across;
+3. proves a fact only the lazy semantics can state: bit 0 of `clear` is defined
    even when its input is undefined. Cryptol's reference evaluator agrees, while
    its normal evaluator, which packs words, reports the input's error.
 
@@ -46,32 +44,17 @@ public section
 
 namespace Cryptol.Tests.Tutorial
 
-open Translation SourceElaboration MixSource
+/-! ## Importing
 
-/-! ## Checking the import -/
+`cryptol_import` decodes the export, checks every root, and declares `Imported.mix` and
+`Imported.clear` with their kernel-checked acceptance theorems `Imported.mix.accepted`
+and `Imported.clear.accepted`. -/
 
-/-- The resolved term the checker must produce for `mix`. -/
-@[expose] def mixTerm : Resolved.Term [] (.arrow (wordTy 8) (wordTy 8)) :=
-  .lam (.wordLogic .xor (.shift .rotateRight (.var .zero) (.integer 3))
-    (.shift .right (.var .zero) (.integer 5)))
+cryptol_import Imported from "PolyFunCryptol/artifacts/references/tutorial.json"
 
-/-- The resolved term the checker must produce for `clear`. -/
-@[expose] def clearTerm : Resolved.Term [] (.arrow (wordTy 8) (wordTy 8)) :=
-  .lam (.wordLogic .xor (.shift .right (.var .zero) (.integer 3))
-    (.shift .right (.var .zero) (.integer 5)))
-
-/-! Kernel reduction runs the checker over the complete quoted bundle, whose nested
-constructor data exceeds the default recursion depth of the reducer. -/
-
-set_option maxRecDepth 10000 in
-/-- The exported `mix` passes scope, kind, constraint and typing checks. -/
-theorem mix_accepted : check bundle root0 = .ok ⟨_, mixTerm⟩ := by
-  with_unfolding_all rfl
-
-set_option maxRecDepth 10000 in
-/-- The exported `clear` passes the same checks. -/
-theorem clear_accepted : check bundle root1 = .ok ⟨_, clearTerm⟩ := by
-  with_unfolding_all rfl
+/-- The import is the resolved term one would write by hand. -/
+example : Imported.mix = .lam (.wordLogic .xor (.shift .rotateRight (.var .zero) (.integer 3))
+    (.shift .right (.var .zero) (.integer 5))) := rfl
 
 /-! ## Certified meaning on defined inputs -/
 
@@ -81,22 +64,23 @@ theorem clear_accepted : check bundle root1 = .ok ⟨_, clearTerm⟩ := by
 /-- The imported `mix`, certified against `mixNative`. `simp` evaluates the source
 natively for every input; the fundamental lemma supplies the lazy meaning. -/
 @[expose] noncomputable def mixCertificate : DataCertificate (.word 8) (.word 8) :=
-  Resolved.dataCertificate (.word 8) (.word 8) mixTerm mixNative (by simp [mixTerm, mixNative])
+  Resolved.dataCertificate (.word 8) (.word 8) Imported.mix mixNative
+    (by simp [Imported.mix, mixNative])
 
 /-- On every defined input, the imported `mix` returns the native result. -/
 theorem mix_correct (x : BitVec 8) :
-    DomainResult.applyContinuous (Resolved.denote mixTerm Environment.empty)
+    DomainResult.applyContinuous (Resolved.denote Imported.mix Environment.empty)
       (.value (wordValue x)) = .value (wordValue (mixNative x)) :=
   mixCertificate.correct x
 
 /-- Any pre/post contract on the imported source is a statement about `mixNative`. -/
 theorem mix_contract_iff (pre : BitVec 8 → Prop) (post : BitVec 8 → BitVec 8 → Prop) :
-    DataContract (.word 8) (.word 8) (Resolved.denote mixTerm Environment.empty) pre post ↔
+    DataContract (.word 8) (.word 8) (Resolved.denote Imported.mix Environment.empty) pre post ↔
       ∀ x, pre x → post x (mixNative x) :=
   mixCertificate.contract_iff pre post
 
 /-- `mix` maps zero to zero. -/
-example : DataContract (.word 8) (.word 8) (Resolved.denote mixTerm Environment.empty)
+example : DataContract (.word 8) (.word 8) (Resolved.denote Imported.mix Environment.empty)
     (fun x : BitVec 8 => x = 0) (fun _ (r : BitVec 8) => r = 0) := by
   rw [mix_contract_iff]
   rintro x rfl
@@ -113,7 +97,7 @@ theorem mixNative_xor (x y : BitVec 8) : mixNative (x ^^^ y) = mixNative x ^^^ m
 
 /-- So does the imported `mix`, on defined inputs. -/
 theorem mix_xor (x y : BitVec 8) :
-    DomainResult.applyContinuous (Resolved.denote mixTerm Environment.empty)
+    DomainResult.applyContinuous (Resolved.denote Imported.mix Environment.empty)
       (.value (wordValue (x ^^^ y))) = .value (wordValue (mixNative x ^^^ mixNative y)) := by
   rw [mix_correct, mixNative_xor]
 
@@ -121,9 +105,10 @@ theorem mix_xor (x y : BitVec 8) :
 
 /-- Bit 0 of `clear` is defined, and false, even when its input is undefined. -/
 theorem clear_bot_zero :
-    Semantics.indexAt (DomainResult.applyContinuous (Resolved.denote clearTerm Environment.empty) ⊥)
-      0 = .value ⟨false⟩ := by
-  rw [clearTerm, Resolved.denote_lam_apply]
+    Semantics.indexAt
+      (DomainResult.applyContinuous (Resolved.denote Imported.clear Environment.empty) ⊥) 0 =
+        .value ⟨false⟩ := by
+  rw [Imported.clear, Resolved.denote_lam_apply]
   rfl
 
 end Cryptol.Tests.Tutorial

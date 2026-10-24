@@ -33,7 +33,7 @@ interfaces with a strict evaluation strategy.
 | Directory | Responsibility |
 |---|---|
 | `Model/` | Types, partial numeric expressions, constraints and schemes; resolved and ordered polymorphic syntax; lazy domains and denotation; call-by-name execution, soundness and monomorphic adequacy; primitive demand rules |
-| `Translation/` | The native scoped IR and its representation relation; typed-AST decoding, scope and kind checks; open-module elaboration; proof-producing constraint evidence; declaration groups; certificates, quotation and export |
+| `Translation/` | The native scoped IR and its representation relation; typed-AST decoding, scope and kind checks; open-module elaboration; proof-producing constraint evidence; declaration groups; certificates, the `cryptol_import` command, quotation and export |
 | `../PolyFunCryptolTest/` | Semantic, demand, polymorphism and translation regressions |
 | `exporter/` | The [pinned typed-AST exporter](exporter/README.md) linked to the official Cryptol frontend |
 | `scripts/` | Export, census, corpus and audit drivers, and the offline model, importer and module tests; see the [tooling guide](docs/tooling.md) |
