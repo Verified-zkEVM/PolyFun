@@ -88,7 +88,7 @@ namespace Cryptol.Polymorphic
         (Env.cons ρ (Env.same ρ p.1, p.2)))))
   | _, .letRec bindings _, next, ρ =>
       let group : Env ρ (Γ.map id) →𝒄 Env ρ bindings :=
-        IPFunctor.ScopedDomain.Env.fixGroup _ (fun i => next i.succ ρ)
+        IPFunctor.ScopedDomain.Env.fixGroup (fun i => next i.succ ρ)
       (next 0 ρ).comp ((Env.append ρ).comp ((ContinuousHom.ofFun
         (fun η : Env ρ (Γ.map id) => (group η, η))).comp (Env.same ρ)))
   | _, .bitNot, next, ρ => Semantics.bitNot.comp ((next 0 ρ).comp (Env.same ρ))

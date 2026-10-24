@@ -88,8 +88,8 @@ theorem substitute_reindex {w : Scope} {a : w.ValueSort} (op : Head w a)
     (hρ : σ.val = ρ.val.pull (op.code.2.binderMap p).parameters)
     (hD : ∀ s, (op.code.2.reindex p s).domain ρ.val = s.domain σ.val) (η : Env σ Δ) :
     substitute ρ (θ.reindex reindexAction op p)
-      (ScopedDomain.Env.reindex _ _ (op.code.2.reindex p) hD η) =
-      ScopedDomain.Env.reindex _ _ (op.code.2.reindex p) hD (substitute σ θ η) := by
+      (ScopedDomain.Env.reindex _ (op.code.2.reindex p) hD η) =
+      ScopedDomain.Env.reindex _ (op.code.2.reindex p) hD (substitute σ θ η) := by
   symm
   apply ScopedDomain.Env.pointwise_reindex_eq
   apply substitute_reindex_pointwise op p θ ρ σ hρ
@@ -233,8 +233,8 @@ theorem denoteOp_subst {w : Scope} {Γ Δ : List w.ValueSort}
         bindings[i].Meaning ρ.val := fun i => (next i.succ ρ).comp (Env.substitute ρ
           (ScopedFamily.Substitution.liftMany (θ.reindex reindexAction
             (Head.ofOp (.letRec bindings s)) i.succ) bindings))
-    have hg : ScopedDomain.Env.fixGroup D rhs' (Env.same ρ η) =
-        ScopedDomain.Env.fixGroup D rhs (Env.same ρ (Env.substitute ρ θ η)) := by
+    have hg : ScopedDomain.Env.fixGroup rhs' (Env.same ρ η) =
+        ScopedDomain.Env.fixGroup rhs (Env.same ρ (Env.substitute ρ θ η)) := by
       apply ScopedDomain.Env.fixGroup_congr
       intro ξ i
       change next i.succ ρ (Env.substitute ρ

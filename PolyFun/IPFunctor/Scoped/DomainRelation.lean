@@ -46,7 +46,7 @@ theorem Pointwise.symm {η : Env D Γ} {ζ : Env E Δ} (h : Pointwise η ζ) :
 /-- Corresponding fresh bindings extend corresponding environments. -/
 theorem Pointwise.cons {η : Env D Γ} {ζ : Env E Δ} (h : Pointwise η ζ)
     {a : S} {b : T} {x : D a} {y : E b} (hxy : HEq x y) :
-    Pointwise (cons D x η) (cons E y ζ) := by
+    Pointwise (cons x η) (cons y ζ) := by
   intro c d v w he
   cases v <;> cases w
   · exact hxy
@@ -58,7 +58,7 @@ theorem Pointwise.cons {η : Env D Γ} {ζ : Env E Δ} (h : Pointwise η ζ)
 theorem Pointwise.reindex_right {U : Type*} {F : U → PointedDomain}
     {η : Env D Γ} {ζ : Env E Δ} (h : Pointwise η ζ)
     (f : T → U) (hf : ∀ a, F (f a) = E a) :
-    Pointwise η (reindex E F f hf ζ) := by
+    Pointwise η (reindex F f hf ζ) := by
   intro a b x y he
   induction y using ScopedVar.map_inductionOn f with
   | h b y =>
@@ -70,7 +70,7 @@ theorem Pointwise.reindex_right {U : Type*} {F : U → PointedDomain}
 theorem Pointwise.reindex_left {U : Type*} {F : U → PointedDomain}
     {η : Env D Γ} {ζ : Env E Δ} (h : Pointwise η ζ)
     (f : S → U) (hf : ∀ a, F (f a) = D a) :
-    Pointwise (reindex D F f hf η) ζ :=
+    Pointwise (reindex F f hf η) ζ :=
   Pointwise.symm (Pointwise.reindex_right (Pointwise.symm h) f hf)
 
 /-- Transporting a context retains positional correspondence on the source side. -/
@@ -93,7 +93,7 @@ theorem pointwise_eq {η ζ : Env D Γ} (h : Pointwise η ζ) : η = ζ := by
 /-- Domain transport is the unique target environment with the corresponding values. -/
 theorem pointwise_reindex_eq {f : S → T} (hf : ∀ a, E (f a) = D a)
     {η : Env D Γ} {ζ : Env E (Γ.map f)} (h : Pointwise η ζ) :
-    reindex D E f hf η = ζ := by
+    reindex E f hf η = ζ := by
   funext b x
   induction x using ScopedVar.map_inductionOn f with
   | h a x =>
@@ -104,7 +104,7 @@ theorem pointwise_reindex_eq {f : S → T} (hf : ∀ a, E (f a) = D a)
 theorem Pointwise.append {Ξ : List S} {Ψ : List T} (hl : Ξ.length = Ψ.length)
     {ξ : Env D Ξ} {ψ : Env E Ψ} {η : Env D Γ} {ζ : Env E Δ}
     (hx : Pointwise ξ ψ) (he : Pointwise η ζ) :
-    Pointwise (append D ξ η) (append E ψ ζ) := by
+    Pointwise (append ξ η) (append ψ ζ) := by
   induction Ξ generalizing Ψ with
   | nil =>
     cases Ψ with
@@ -122,7 +122,7 @@ theorem Pointwise.append {Ξ : List S} {Ψ : List T} (hl : Ξ.length = Ψ.length
 
 /-- Finite environment assembly separates the nearest position from the remaining positions. -/
 theorem ofFin_cons {a : S} (xs : (i : Fin (a :: Γ).length) → D (a :: Γ)[i]) :
-    ofFin D xs = cons D (xs 0) (ofFin D (fun i => xs i.succ)) := by
+    ofFin xs = cons (xs 0) (ofFin (fun i => xs i.succ)) := by
   funext b x
   cases x <;> rfl
 
@@ -130,7 +130,7 @@ theorem ofFin_cons {a : S} (xs : (i : Fin (a :: Γ).length) → D (a :: Γ)[i]) 
 theorem pointwise_ofFin {Ξ : List S} {Ψ : List T} (hl : Ξ.length = Ψ.length)
     (xs : (i : Fin Ξ.length) → D Ξ[i]) (ys : (j : Fin Ψ.length) → E Ψ[j])
     (h : ∀ i j, i.val = j.val → HEq (xs i) (ys j)) :
-    Pointwise (ofFin D xs) (ofFin E ys) := by
+    Pointwise (ofFin xs) (ofFin ys) := by
   induction Ξ generalizing Ψ with
   | nil => intro a b x; exact nomatch x
   | cons a Ξ ih =>
@@ -149,15 +149,15 @@ theorem fixGroup_pointwise (f : S → T) (hf : ∀ a, E (f a) = D a)
     (rhs' : (j : Fin (Ξ.map f).length) → Env E (Ξ.map f ++ Δ) →𝒄 E (Ξ.map f)[j])
     (η : Env D Γ) (ζ : Env E Δ)
     (h : ∀ (ξ : Env D Ξ) (ψ : Env E (Ξ.map f)), Pointwise ξ ψ →
-      ∀ i j, i.val = j.val → HEq (rhs i (append D ξ η)) (rhs' j (append E ψ ζ))) :
-    Pointwise (fixGroup D rhs η) (fixGroup E rhs' ζ) := by
-  have hfix := fixGroup_fusion D E rhs rhs' η ζ (reindex D E f hf)
-    (reindex_bot D E f hf) (fun ξ => pointwise_reindex_eq hf
+      ∀ i j, i.val = j.val → HEq (rhs i (append ξ η)) (rhs' j (append ψ ζ))) :
+    Pointwise (fixGroup rhs η) (fixGroup rhs' ζ) := by
+  have hfix := fixGroup_fusion E rhs rhs' η ζ (reindex E f hf)
+    (reindex_bot E f hf) (fun ξ => pointwise_reindex_eq hf
       (pointwise_ofFin (List.length_map f).symm _ _
         (h ξ _ (Pointwise.reindex_right (pointwise_refl ξ) f hf))))
   rw [← hfix]
   exact fun {_ _} x y he => Pointwise.reindex_right
-    (pointwise_refl (fixGroup D rhs η)) f hf x y he
+    (pointwise_refl (fixGroup rhs η)) f hf x y he
 
 end ScopedDomain.Env
 end IPFunctor

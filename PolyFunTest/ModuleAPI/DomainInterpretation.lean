@@ -25,7 +25,7 @@ example {S : Type} {σ : ScopedSignature S} {D : S → PointedDomain}
     (alg : DomainInterpretation σ D) {Γ : List S} {a b : S}
     (body : σ.Term (a :: Γ) b) (value : σ.Term Γ a) (η : ScopedDomain.Env D Γ) :
     (body.substOne value).denoteDomain alg η =
-      body.denoteDomain alg (ScopedDomain.Env.cons D (value.denoteDomain alg η) η) :=
+      body.denoteDomain alg (ScopedDomain.Env.cons (value.denoteDomain alg η) η) :=
   Term.denoteDomain_substOne alg body value η
 
 /-! ## The tutorial's definitional facts survive the module boundary -/

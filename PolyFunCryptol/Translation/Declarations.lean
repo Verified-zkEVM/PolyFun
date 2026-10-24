@@ -89,8 +89,7 @@ theorem introduced_append {w : Scope} {Γ Δ Ω : Signatures w}
   | .nonrecursive _ _ value rest =>
       (rest.denote ρ).comp ((Env.cons ρ).comp (.ofFun (fun η => (η, value.denote ρ η))))
   | .recursive bindings values rest =>
-      let group := IPFunctor.ScopedDomain.Env.fixGroup (fun s => s.domain ρ.val)
-        (fun i => (values i).denote ρ)
+      let group := IPFunctor.ScopedDomain.Env.fixGroup (fun i => (values i).denote ρ)
       let extend := (Env.append ρ).comp (.ofFun (fun η => (group η, η)))
       (rest.denote ρ).comp (List.map_append.symm ▸ extend)
 

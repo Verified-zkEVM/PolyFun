@@ -29,7 +29,7 @@ namespace Env
 @[expose] noncomputable def parameters {w z : Scope} (μ : Scope.Map w z)
     (ρ : z.Assignment) {Γ : List w.ValueSort} :
     Env (μ.pull ρ) Γ →𝒄 Env ρ (Γ.map μ.sort) :=
-  ScopedDomain.Env.reindex _ _ μ.sort (fun s => Scheme.domain_subst s μ.parameters ρ.val)
+  ScopedDomain.Env.reindex _ μ.sort (fun s => Scheme.domain_subst s μ.parameters ρ.val)
 
 /-- Parameter transport retains every value at its original binding position. -/
 theorem parameters_related {w z : Scope} (μ : Scope.Map w z)
