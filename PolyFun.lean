@@ -276,6 +276,7 @@ public import PolyFun.PFunctor.Dynamical.Run
 public import PolyFun.PFunctor.Dynamical.RunN
 public import PolyFun.PFunctor.Dynamical.Safety
 public import PolyFun.PFunctor.Dynamical.Simulation
+public import PolyFun.PFunctor.Dynamical.Trace
 public import PolyFun.PFunctor.Dynamical.Trajectory
 public import PolyFun.PFunctor.Equiv.Basic
 public import PolyFun.PFunctor.Equiv.Special

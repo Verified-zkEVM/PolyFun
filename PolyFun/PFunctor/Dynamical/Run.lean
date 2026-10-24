@@ -20,8 +20,10 @@ For a general `p`-system:
 
 * `DynSystem.Prefix` — a finite orbit: a chosen direction at each visited
   state, with `Prefix.last` reading off the final state visited.
+* `DynSystem.Prefix.append` — join an orbit with an orbit from its last state.
 * `DynSystem.ReachableIn` — `n`-step reachability: some length-`n` finite
-  orbit connects the two states.
+  orbit connects the two states; `ReachableIn.add` composes it and
+  `ReachableIn.split` cuts it.
 * `DynSystem.Run` — an infinite orbit: the state at each time, the direction
   chosen there, and the proof that states follow the transition; with
   `Run.take` truncating to a `Prefix` and `Run.eventsUpTo` / `Run.ticketsUpTo`
@@ -109,6 +111,40 @@ def last {s : DynSystem S p} : {st : S} → {n : ℕ} → Prefix s st n → S
     (d : p.B (s.expose st)) (tail : Prefix s (s.update st d) n) :
     (Prefix.step d tail).last = tail.last := rfl
 
+/-- Join an orbit with an orbit starting at its last state. The second orbit's length comes
+first, which is the order the recursion produces. -/
+def append {s : DynSystem S p} : {st : S} → {m : ℕ} → (pre : Prefix s st m) → {n : ℕ} →
+    Prefix s pre.last n → Prefix s st (n + m)
+  | _, _, .nil, _, post => post
+  | _, _, .step d tail, _, post => .step d (tail.append post)
+
+@[simp] theorem append_nil {s : DynSystem S p} {st : S} {n : ℕ} (post : Prefix s st n) :
+    (Prefix.nil (s := s) (st := st)).append post = post := rfl
+
+@[simp] theorem append_step {s : DynSystem S p} {st : S} {m n : ℕ} (d : p.B (s.expose st))
+    (tail : Prefix s (s.update st d) m) (post : Prefix s (Prefix.step d tail).last n) :
+    (Prefix.step d tail).append post = .step d (tail.append post) := rfl
+
+theorem last_append {s : DynSystem S p} {st : S} {m n : ℕ} (pre : Prefix s st m)
+    (post : Prefix s pre.last n) : (pre.append post).last = post.last := by
+  induction pre with
+  | nil => rfl
+  | step d tail ih => exact ih post
+
+theorem events_append {s : DynSystem S p} {Event : Type w} (eventMap : s.EventMap Event)
+    {st : S} {m n : ℕ} (pre : Prefix s st m) (post : Prefix s pre.last n) :
+    (pre.append post).events eventMap = pre.events eventMap ++ post.events eventMap := by
+  induction pre with
+  | nil => rfl
+  | step d tail ih => simpa using ih post
+
+/-- An orbit's event trace has the orbit's length. -/
+theorem length_events {s : DynSystem S p} {Event : Type w} (eventMap : s.EventMap Event)
+    {st : S} {n : ℕ} (pre : Prefix s st n) : (pre.events eventMap).length = n := by
+  induction pre with
+  | nil => rfl
+  | step _ _ ih => exact congrArg Nat.succ ih
+
 end Prefix
 
 /-! ## Reachability -/
@@ -140,6 +176,28 @@ theorem ReachableIn.step {s : DynSystem S p} {n : ℕ} {st st' : S}
     exact hpre.symm
   · rintro rfl
     exact .refl s _
+
+/-- Reachability composes, with the second orbit's length first, as in `Prefix.append`. -/
+theorem ReachableIn.add' {s : DynSystem S p} {m n : ℕ} {st mid st' : S}
+    (first : s.ReachableIn m st mid) (second : s.ReachableIn n mid st') :
+    s.ReachableIn (n + m) st st' := by
+  obtain ⟨pre, rfl⟩ := first
+  obtain ⟨post, rfl⟩ := second
+  exact ⟨pre.append post, pre.last_append post⟩
+
+/-- Reachability composes. -/
+theorem ReachableIn.add {s : DynSystem S p} {m n : ℕ} {st mid st' : S}
+    (first : s.ReachableIn m st mid) (second : s.ReachableIn n mid st') :
+    s.ReachableIn (m + n) st st' :=
+  Nat.add_comm n m ▸ first.add' second
+
+/-- An orbit of length `n + m` splits after its first `m` steps. -/
+theorem ReachableIn.split {s : DynSystem S p} : ∀ {m : ℕ} {st : S} {n : ℕ} {st' : S},
+    s.ReachableIn (n + m) st st' → ∃ mid, s.ReachableIn m st mid ∧ s.ReachableIn n mid st'
+  | 0, st, _, _, h => ⟨st, ReachableIn.refl s st, h⟩
+  | m + 1, _, _, _, ⟨.step d tail, hlast⟩ =>
+      let ⟨mid, hm, hn⟩ := ReachableIn.split (m := m) ⟨tail, hlast⟩
+      ⟨mid, ReachableIn.step d hm, hn⟩
 
 /-- An infinite orbit of a `p`-system: the state at each time, the direction
 chosen there, and the proof that the state stream follows the transition
