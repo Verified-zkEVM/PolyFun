@@ -29,7 +29,8 @@ state-separating proofs (Haselwarter et al., *SSProve*, `HARM+23` in REFERENCES.
 The laws are:
 * associativity of `link`, up to `Equiv.prodAssoc` (`link_assoc`);
 * the identity package on both sides, up to the unit equivalences (`link_lift_id`,
-  `lift_id_link`);
+  `lift_id_link`), and `Stateful.reindex` as linking a stateless package in front
+  (`reindex_eq_link`);
 * interchange of `link` with parallel composition, up to `Equiv.prodProdProdComm`. This
   holds both into a sum of inner handlers in any monad (`sumMap_link_sum`) and into another
   parallel package (`sumMap_link_sumMap`).
@@ -137,6 +138,18 @@ theorem lift_id_link [Monad m] [LawfulMonad m] (a : Stateful m S E) :
   simp only [run_pure, stateCongr_apply_run, _root_.Equiv.symm_symm,
     _root_.Equiv.punitProd_apply, bind_pure_comp, Functor.map_map]
   rfl
+
+/-- Reindexing a handler along a free handler is linking the stateless package of that free
+handler in front of it, up to the trivial state component. -/
+theorem reindex_eq_link [Monad m] [LawfulMonad m] (impl : Handler (FreeM M) E)
+    (h : Stateful m S M) :
+    h.reindex impl =
+      stateCongr (_root_.Equiv.punitProd S) ((lift (S := PUnit.{u + 1}) impl).link h) := by
+  funext q
+  refine StateT.ext fun s => ?_
+  simp only [stateCongr_apply_run, _root_.Equiv.punitProd_symm_apply, link_apply_run, lift,
+    StateT.run_lift, reindex_apply, bind_pure_comp, run_map, Functor.map_map]
+  exact (id_map _).symm
 
 /-! ### Relabelling imports -/
 

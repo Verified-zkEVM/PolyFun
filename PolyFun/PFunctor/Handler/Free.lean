@@ -54,6 +54,14 @@ def ofLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     ofLens (Lens.id P) = id P :=
   rfl
 
+/-- Interpreting a program through the one-operation handler of a lens relabels it along the
+lens. -/
+theorem liftM_ofLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}} (l : Lens P Q)
+    {α : Type u} (x : FreeM P α) : x.liftM (ofLens l) = x.mapLens l := by
+  induction x with
+  | pure _ => rfl
+  | lift_bind a k ih => exact congrArg (FreeM.liftBind (l.toFunA a)) (funext fun d => ih _)
+
 /-- Composition of a free handler with a handler into any monad, in categorical
 order: `second.comp first` first interprets by `first`, then by `second`. With
 `m := FreeM R` this is Kleisli composition of free handlers. The source and

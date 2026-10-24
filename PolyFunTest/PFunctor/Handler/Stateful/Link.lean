@@ -90,4 +90,24 @@ example : (sumMap offset forwardFlag).link (sum ticker toggler) =
       (sum (offset.link ticker) (forwardFlag.link toggler)) :=
   sumMap_link_sum offset forwardFlag ticker toggler
 
+/-! ### Reindexing is linking a stateless package -/
+
+/-- Answer a request by asking the counter twice and adding the two answers. -/
+def twice : Handler (FreeM counter) counter :=
+  fun _ => FreeM.liftBind () fun a => FreeM.liftBind () fun b => FreeM.pure (a + b)
+
+/-- One reindexed request reads the counter twice. -/
+example : (ticker.reindex twice).run (FreeM.lift ()) 0 = some (1, 2) := rfl
+
+/-- The second reindexed request reaches the failing count. -/
+example : (ticker.reindex twice).run twoQueries 0 = none := rfl
+
+example : ticker.reindex twice =
+    stateCongr (Equiv.punitProd Nat) ((lift (S := PUnit) twice).link ticker) :=
+  reindex_eq_link twice ticker
+
+/-- Interpreting through the handler of a lens relabels the program. -/
+example : twoQueries.liftM (Handler.ofLens (Lens.id counter)) = twoQueries.mapLens (Lens.id _) :=
+  Handler.liftM_ofLens _ _
+
 end PolyFunTest.PFunctor.Handler.Stateful.Link

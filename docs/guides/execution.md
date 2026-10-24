@@ -64,6 +64,8 @@ packages side by side over `E₁ + E₂`, relabelling their imports into `I₁ +
 Linking is associative and unital, and interchanges with parallel composition,
 each up to the canonical reassociation of product states (`link_assoc`,
 `link_lift_id`, `lift_id_link`, `sumMap_link_sum`, `sumMap_link_sumMap`).
+Reindexing a handler along a free handler is linking that handler's stateless
+package in front of it (`reindex_eq_link`).
 
 A `StatefulLens` ([`Handler/StateLens.lean`](../../PolyFun/PFunctor/Handler/StateLens.lean))
 is the stateful handler that answers every request with exactly one inner

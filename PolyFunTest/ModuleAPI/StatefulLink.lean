@@ -62,4 +62,12 @@ example (o₁ : Handler.Stateful (FreeM M₁) S₁ E₁) (o₂ : Handler.Statefu
       stateCongr (Equiv.prodProdProdComm S₁ T₁ S₂ T₂) (sumMap (o₁.link i₁) (o₂.link i₂)) :=
   sumMap_link_sumMap o₁ o₂ i₁ i₂
 
+example (impl : Handler (FreeM M) E) (h : Handler.Stateful m S M) :
+    h.reindex impl = stateCongr (Equiv.punitProd S) ((lift (S := PUnit.{u + 1}) impl).link h) :=
+  reindex_eq_link impl h
+
+example (l : Lens E M) {α : Type u} (x : FreeM E α) :
+    x.liftM (Handler.ofLens l) = x.mapLens l :=
+  Handler.liftM_ofLens l x
+
 end PolyFunTest.ModuleAPI.StatefulLink
