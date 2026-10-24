@@ -1,0 +1,13 @@
+diff --git a/src/Cryptol/TypeCheck/ModuleBacktickInstance.hs b/src/Cryptol/TypeCheck/ModuleBacktickInstance.hs
+index 09546a0..a85ec9e 100644
+--- a/src/Cryptol/TypeCheck/ModuleBacktickInstance.hs
++++ b/src/Cryptol/TypeCheck/ModuleBacktickInstance.hs
+@@ -394,7 +394,7 @@ instance RewVal Expr where
+         _ -> orElse
+
+ instance RewVal CaseAlt where
+-  rew (CaseAlt xs e) = CaseAlt xs (rew e)
++  rew (CaseAlt xs e) = CaseAlt [(x, rewType t) | (x, t) <- xs] (rew e)
+
+
+ instance RewVal DeclGroup where

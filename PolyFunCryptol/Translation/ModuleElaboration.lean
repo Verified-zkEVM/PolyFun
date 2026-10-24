@@ -109,6 +109,39 @@ namespace ModuleBundle
     return ⟨root, scope, ambient, bindings, code, linked.down.requirements⟩
   result.mapError (⟨[root.provenance.name, "elaboration"], ·⟩)
 
+/-- Every independent blocker of a module's typed elaboration. -/
+structure Diagnosis where
+  /-- Each explicit primitive input, with the failure of its declared scheme if any. -/
+  primitives : List (String × Option String)
+  /-- Each linked declaration group, checked under the schemes of the groups before it. -/
+  groups : List OpenElaboration.GroupDiagnosis
+
+/-- Diagnose a complete module, continuing past failing primitive schemes and bodies.
+Failures of the module's own parameters or constraints remain whole-module errors. -/
+def diagnose (bundle : ModuleBundle) (rootName : String) (fuel : Nat := 10000) :
+    Except ImportError Diagnosis := do
+  let linked ← match bundle.link rootName fuel with
+  | .error e => throw e
+  | .ok source => pure (ULift.up source)
+  let root := linked.down.source
+  let result : Except String Diagnosis := do
+    let ⟨w, env⟩ ← parameters Scope.empty ⟨[], []⟩ root.typeParameters
+    let cs ← root.constraints.mapM (OpenTypes.constraint env fuel)
+    let scope : Scope := ⟨w.numbers, w.types, cs ++ w.constraints⟩
+    let ambient ← root.valueParameters.mapM fun (name, schema) => do
+      return (name, ← OpenTypes.scheme env fuel schema)
+    let primitives := linked.down.requirements.map fun r =>
+      (r.declaration.name.origin,
+        OpenElaboration.signatures (w := scope) env fuel [r.declaration])
+    let inputs := primitives.flatMap fun (_, result) => match result with
+      | .ok sigs => sigs
+      | .error _ => []
+    return ⟨primitives.map fun (name, result) => (name, match result with
+        | .ok _ => none
+        | .error e => some e),
+      OpenElaboration.diagnose fuel (w := scope) env (inputs ++ ambient) linked.down.groups⟩
+  result.mapError (⟨[root.provenance.name, "elaboration"], ·⟩)
+
 /-- An exact accepted module elaboration, independent of source-preservation claims. -/
 structure ElaborationCertificate (bundle : ModuleBundle) (source : String) where
   /-- Explicit checking budget. -/

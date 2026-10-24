@@ -91,7 +91,8 @@ structure Parameters (n v : Nat) where
           return .arrow (← value env fuel a) (← value env fuel b)
       | .tuple 0 [] => return .unit
       | .synonym _ _ body => value env fuel body
-      | _ => throw "value type requires an aggregate or nominal source-shape interpretation"
+      | _ => throw s!"value type {expression.headName} requires an aggregate or nominal \
+          source-shape interpretation"
 
 /-- Check an open assumption, retaining partial arithmetic and structural class identities. -/
 @[expose] def constraint {n v : Nat} (env : Parameters n v) (fuel : Nat) :
@@ -112,7 +113,7 @@ structure Parameters (n v : Nat) where
       let some c := valueClass? name | throw s!"unsupported structural class {name}"
       return .valueClass c (← value env fuel a)
   | .synonym _ _ body => constraint env fuel body
-  | _ => .error "unsupported open constraint"
+  | c => .error s!"unsupported open constraint {c.headName}"
 
 /-- Build ordered scheme binders from the official source schema. -/
 @[expose] def scheme : {n v : Nat} → Parameters n v → Nat → Reference.Schema →

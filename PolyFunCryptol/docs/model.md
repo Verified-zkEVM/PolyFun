@@ -51,7 +51,7 @@ constructor without demanding its components. `force` is internal: `Resolved.Ter
 retains named source primitives, and `Export.coreExpression?` rejects a bare core
 term containing `force`. Neither `trace` nor `deepseq` is substituted for it.
 
-The source path is documented in VCVio's typed-AST exporter guide (`Interop/Cryptol/exporter`).
+The source path is documented in the [typed-AST exporter guide](../exporter/README.md).
 Its current boundary is deliberately visible in the `scoped` inspection result.
 The separate `typed` scalar path is narrower than the `scoped` corpus. General
 reference/core correspondence and resumable shared evaluation of the imported
@@ -485,7 +485,7 @@ upgrade. Probability and security interpretations belong downstream in VCVio.
 | Polymorphic recursion | Finite recursive-group syntax, one scheme-environment fixed point, changing-instantiation and mutual-recursion proofs | No general compiler from polymorphic recursive groups to finite native implementations |
 | Language semantics | Closed typed core and adequacy; partial numeric substitution; structural logic/ring preservation; lazy record spines; sequential finite/infinite and independent parallel generator lowerings | General source elaboration, open constraint entailment, nominal/enumeration types, rational/modular integers and trace/deepseq/random remain absent |
 | Opaque operations | Unsupported operations are rejected by the importer | Floating point, arrays and foreign backends need explicit semantic interfaces and conditional correspondence proofs |
-| Inbound transport | SHA256 certificate path, versioned typed-AST exporter, 31 scoped dependency closures, and a checked scalar elaborator whose exact output has an all-input SHA-2 theorem | General AST elaboration/preservation remains open; expression locations are erased |
+| Inbound transport | SHA256 certificate path, versioned typed-AST exporter, 31 scoped dependency closures, a checked scalar elaborator whose exact output has an all-input SHA-2 theorem, and a whole-module diagnosis that reports every independent blocker | General AST elaboration/preservation remains open; expression locations are erased. The [Foundation status](compatibility.md) lists the features still needed per module instance |
 | Outbound transport | Typed resolved printer and comparisons with both pinned evaluators | No formal parser/printer round trip or Haskell correctness proof |
 | Foundation | SHA-256 compression for all finite state/block values and valid byte windows; adaptive VCVio replacement | CRC, whole-hash padding and cryptographic security claims remain outside the certificate |
 
