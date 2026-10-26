@@ -215,15 +215,8 @@ equivalence of directions there. -/
 noncomputable def cartesianSumEquiv {R : PFunctor.{uA₃, uB₂}} :
     {l : Lens P (Q + R : PFunctor.{max uA₂ uA₃, uB₂}) // l.IsCartesian} ≃
       ((a : P.A) → (Σ b : Q.A, Q.B b ≃ P.B a) ⊕ (Σ c : R.A, R.B c ≃ P.B a)) :=
-  cartesianEquiv.trans <| _root_.Equiv.piCongrRight fun _ =>
-    { toFun := fun
-        | ⟨.inl b, e⟩ => .inl ⟨b, e⟩
-        | ⟨.inr c, e⟩ => .inr ⟨c, e⟩
-      invFun := fun
-        | .inl ⟨b, e⟩ => ⟨.inl b, e⟩
-        | .inr ⟨c, e⟩ => ⟨.inr c, e⟩
-      left_inv := by rintro ⟨_ | _, _⟩ <;> rfl
-      right_inv := by rintro (⟨_, _⟩ | ⟨_, _⟩) <;> rfl }
+  cartesianEquiv.trans <| _root_.Equiv.piCongrRight fun a =>
+    _root_.Equiv.sumSigmaDistrib fun b => (Q + R : PFunctor.{max uA₂ uA₃, uB₂}).B b ≃ P.B a
 
 /-- The position component of the lower triangle for the canonical diagonal. -/
 theorem verticalCartesianDiagonal_pos_comm
