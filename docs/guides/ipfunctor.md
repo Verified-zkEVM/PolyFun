@@ -391,12 +391,17 @@ laws through a definitional wrapper with its own `Monad` instance.
 The dependent-fold laws apply to `Fin.dfoldlM` itself. A dependent tuple is sequenced
 by [`FreeM₂.seqPi`](../../PolyFun/IPFunctor/Free/Tuple.lean), which returns at once on
 the empty tuple (`seqPi_zero`) and otherwise binds the head, then the sequenced tail,
-and returns their `Fin.cons` (`seqPi_succ`); both equations hold by `rfl`. It recurses
-directly, because `Fin.dfoldlM` associates its binds the other way. `seqPi_unique`
+and returns their `Fin.cons` (`seqPi_succ`); both equations hold by `rfl`. A tuple-prefix
+implementation using `Fin.dfoldlM` assembles the tuple inside each step; relating it
+to these equations requires bind laws and tuple identities. Direct recursion keeps
+the equations definitional without choosing a diagonal monad instance. `seqPi_unique`
 identifies any operation with these two equations with `seqPi`, so a sequencer defined
 elsewhere through such a monad structure inherits `isRollBound_seqPi`,
 `isChargeBound_seqPi` (a sum of position budgets), `isChargeBound_seqPi_of_forall`, and
 `isRollBound_seqPi_unit`.
+The family `β : Fin k → Type v` has one result universe, independent of the state,
+shape and response universes. Universe levels cannot vary with a value-level index;
+lift entries to a common universe when their original types lie in different ones.
 
 ## `mapM` and the universe constraint
 

@@ -18,9 +18,15 @@ definitional: the empty tuple returns at once (`seqPi_zero`), and a tuple of pos
 binds its head, then the sequenced tail, and returns their `Fin.cons` (`seqPi_succ`).
 `seqPi_unique` identifies every operation satisfying these two equations with `seqPi`.
 
-The recursion is not a dependent left fold such as Batteries' `Fin.dfoldlM`: that fold extends
-an accumulator after each step, so its tree associates the binds the other way and agrees with
-`seqPi` only up to bind associativity.
+A `Fin.dfoldlM` implementation can accumulate tuple prefixes, but then tuple assembly occurs
+inside each step rather than after sequencing the tail. Relating that presentation to these
+equations requires bind laws and tuple identities; the equations are not definitional for that
+implementation. Direct recursion keeps the two displayed equations definitional without choosing
+a diagonal monad instance.
+
+All entries of the family `β : Fin k → Type v` share its universe `v`, independently of the
+state, shape and response universes. Lean universe levels cannot depend on the value of `i`;
+entries from different universes can be lifted to a common universe before sequencing.
 -/
 
 @[expose] public section

@@ -293,6 +293,21 @@ example : answerTrue drawAll 0 = (0 : Fin 1) := rfl
 example : answerTrue drawAll 1 = (1 : Fin 2) := rfl
 example : answerTrue drawAll 2 = (2 : Fin 3) := rfl
 
+/-- Run a program with successive supplied responses, using `false` after they run out. -/
+def answerStream {α : Type} (x : Prog α) : List Bool → α :=
+  IFreeM.fold (D := fun _ => List Bool → α) (fun _ p _ => p.2)
+    (fun _ _ k answers => k (answers.headD false) answers.tail) x
+
+-- Only the last draw receives `true`: reversing execution or reusing an answer fails here.
+example : answerStream drawAll [false, false, true] 1 = (0 : Fin 2) := rfl
+example : answerStream drawAll [false, false, true] 2 = (2 : Fin 3) := rfl
+example : answerStream drawAll [] 2 = (0 : Fin 3) := rfl
+
+-- All three nodes really execute; a budget of two cannot cover the tuple.
+example : ¬ FreeM₂.IsChargeBound drawAll trueCharge 2 := by
+  intro h
+  exact absurd (h.2 true |>.2 true |>.1) (by decide)
+
 -- The constructor equations.
 example {β : Fin 0 → Type} (f : (i : Fin 0) → Prog (β i)) :
     FreeM₂.seqPi f = FreeM₂.pure fun i => i.elim0 :=
@@ -311,6 +326,12 @@ def tuple : {k : ℕ} → {β : Fin k → Type} → ((i : Fin k) → Prog (β i)
 example {k : ℕ} {β : Fin k → Type} (f : (i : Fin k) → Prog (β i)) :
     tuple f = FreeM₂.seqPi f :=
   FreeM₂.seqPi_unique (fun f => tuple f) (fun _ => rfl) (fun _ => rfl) f
+
+-- Ordinary imports preserve definitional equations at independent signature/result universes.
+example {I : Type uI} {P : Endo.{uI, uA, uB} I} {s : I} {k : ℕ}
+    {β : Fin (k + 1) → Type uX} (f : (i : Fin (k + 1)) → FreeM₂ P s s (β i)) :
+    FreeM₂.seqPi f = (f 0).bind fun b => (FreeM₂.seqPi fun i => f i.succ).bind fun bs =>
+      FreeM₂.pure (Fin.cons b bs) := rfl
 
 lemma draw_isChargeBound (i : Fin 3) : FreeM₂.IsChargeBound (draw i) trueCharge 1 :=
   ⟨le_rfl, fun _ => trivial⟩
