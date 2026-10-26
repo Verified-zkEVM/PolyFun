@@ -15,11 +15,12 @@ A fold algebra consumes every child meaning at its own index. Unlike an effect
 handler, it need not choose a single response. Function-valued carriers can
 delay evaluation of children, including children under language binders.
 The name `FoldAlgebra` leaves Mathlib's `Algebra` unshadowed under `open IPFunctor`.
+Folding a bind folds each continuation at its leaf (`fold_bind`).
 -/
 
 public section
 
-universe uI uA uB uX uD uE
+universe uI uA uB uX uY uD uE
 
 namespace IPFunctor
 
@@ -86,6 +87,14 @@ theorem fold_unique (leaf : ∀ s, X s → D s) (alg : FoldAlgebra P D)
     rw [hnode, fold_liftBind]
     congr 1
     exact funext ih
+
+/-- Folding a bind folds the first tree with leaves interpreted by folding each continuation.
+The leaf families of the tree and of the continuation and the carrier lie in independent
+universes. -/
+theorem fold_bind {Y : I → Type uY} (leaf : ∀ s, Y s → D s) (alg : FoldAlgebra P D)
+    {s : I} (x : IFreeM P X s) (k : ∀ s', X s' → IFreeM P Y s') :
+    (x.bind k).fold leaf alg = x.fold (fun s a => (k s a).fold leaf alg) alg :=
+  fold_unique _ alg (fun _ t => (t.bind k).fold leaf alg) (fun _ _ => rfl) (fun _ _ _ => rfl) x
 
 end IFreeM
 end IPFunctor
