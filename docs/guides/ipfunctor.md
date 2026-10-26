@@ -125,8 +125,9 @@ The leaf family `X : I → Type v` and the continuation's family `Y` live in
 independent universes, so a bind can, for example, turn Boolean leaves into
 type-valued leaves. `bind_pure_right` and `bind_assoc` hold across independent
 leaf universes, and `imap` is the bind whose continuation returns a leaf
-(`imap_eq_bind`). `FreeM.bind` and `FreeM₂.bind` keep one value universe:
-their `do`-notation elaborators build terms at fixed universe levels.
+(`imap_eq_bind`). `FreeM.bind` keeps one value universe. `FreeM₂.bind` and
+`FreeM₂.map` allow independent input and output value universes, but `FreeM₂`
+`do`-notation still elaborates every step at the block's value universe.
 
 Specializing the return family `X` recovers the two distinguished cases:
 
@@ -157,6 +158,9 @@ Strictly more restrictive than `FreeM`, but in return:
 - `IPFunctor.FreeM₂.bind` is a genuine indexed bind:
   `FreeM₂ P s t α → (α → FreeM₂ P t u β) → FreeM₂ P s u β`. Implemented
   by `IFreeM.bind` with an `h ▸ g a` transport across the equality witness.
+  The input value type `α` and the output value type `β` may live in different
+  universes, and so do the laws `bind_pure_right`, `bind_assoc` and
+  `map_eq_bind_pure` (`x.map f = x.bind fun a => pure (f a)`).
 - `IPFunctor.FreeM₂` carries a `LawfulIndexedMonad I (IPFunctor.FreeM₂ P)`
   instance, so it can be used via the Atkey `ipure` / `ibind` interface.
 

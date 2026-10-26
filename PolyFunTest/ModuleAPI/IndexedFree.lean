@@ -59,6 +59,20 @@ example {s : I} (f : ∀ s, X s → X s) (x : IFreeM P X s) :
 example {α β : Type v} {s : I} (x : FreeM P s α) (g : (s' : I) → α → FreeM P s' β) :
     x.bind g = IFreeM.bind x g := rfl
 
+/-- Two-index bind can lower the value universe through an ordinary import. -/
+example {s t : I} (x : FreeM₂ P s t (ULift.{1} ℕ)) :
+    FreeM₂ P s t Bool :=
+  x.bind fun a => FreeM₂.pure (a.down == 0)
+
+example {α : Type v} {β : Type w} {γ : Type w'} {s t u z : I}
+    (x : FreeM₂ P s t α) (f : α → FreeM₂ P t u β) (g : β → FreeM₂ P u z γ) :
+    (x.bind f).bind g = x.bind (fun a => (f a).bind g) :=
+  FreeM₂.bind_assoc x f g
+
+example {α : Type v} {β : Type w} {s t : I} (x : FreeM₂ P s t α) (f : α → β) :
+    x.map f = x.bind (fun a => FreeM₂.pure (f a)) :=
+  FreeM₂.map_eq_bind_pure x f
+
 /-! ## Roll bounds -/
 
 /-- A charge bound on a `liftBind` is built from its constructor form. -/
@@ -81,7 +95,8 @@ example {α : Type v} {s : I} (x : FreeM P s α) (n : ℕ) :
     (FreeM.toSigmaFreeM P x).IsTotalRollBound n ↔ x.IsTotalRollBound n :=
   FreeM.isTotalRollBound_toSigmaFreeM_iff x n
 
-example {α β : Type v} {s t u : I} {x : FreeM₂ P s t α} {g : α → FreeM₂ P t u β}
+example {α : Type v} {β : Type w} {s t u : I}
+    {x : FreeM₂ P s t α} {g : α → FreeM₂ P t u β}
     (h₁ : x.IsTotalRollBound 1) (h₂ : ∀ y, (g y).IsTotalRollBound 2) :
     (x.bind g).IsTotalRollBound 3 :=
   FreeM₂.isTotalRollBound_bind h₁ h₂

@@ -23,6 +23,9 @@ leaf of a `FreeM₂ P s t α` tree to sit at state `t`. Consequently `FreeM₂.b
 and post-indices positionally, and the type carries a `LawfulIndexedMonad I (FreeM₂ P)`
 instance.
 
+`FreeM₂.bind` and `FreeM₂.map` allow independent input and output value universes.
+Their laws use these operations directly; the typeclass instances use one value universe.
+
 `FreeM₂` is strictly more restrictive than `FreeM`: a `FreeM₂ P s t α` tree corresponds to a
 `FreeM P s α` tree whose leaves are uniformly at state `t`. The forgetful coercion `toFreeM`
 makes this explicit by discarding the equality witness.
@@ -37,7 +40,7 @@ is known to be uniform.
 
 @[expose] public section
 
-universe uI uA uB v
+universe uI uA uB v w w'
 
 namespace IPFunctor
 
@@ -57,7 +60,8 @@ def FreeM₂ (P : Endo.{uI, uA, uB} I) (s t : I) (α : Type v) :
 
 namespace FreeM₂
 
-variable {P : Endo.{uI, uA, uB} I} {α β γ : Type v} {s t u v : I}
+variable {P : Endo.{uI, uA, uB} I} {α : Type v} {β : Type w} {γ : Type w'}
+  {s t u v : I}
 
 /-- A pure leaf, available when pre- and post-states agree. Tagged `@[match_pattern]`; plain
 `def` so the notation elaborator's `.reducible` `whnf` does not unfold the head. -/
@@ -145,6 +149,30 @@ protected theorem inductionOn {C : ∀ s t, FreeM₂ P s t α → Prop}
   · intro s' a r ih
     exact liftBind s' t a r ih
 
+/-! ## Bind and map laws -/
+
+/-- Binding with a pure return preserves the tree and its terminal state. -/
+@[simp]
+lemma bind_pure_right (x : FreeM₂ P s t α) : x.bind FreeM₂.pure = x := by
+  induction x using FreeM₂.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ _ _ _ ih => exact congrArg _ (funext ih)
+
+/-- Bind is associative across three independent value universes. -/
+lemma bind_assoc (x : FreeM₂ P s t α) (f : α → FreeM₂ P t u β)
+    (g : β → FreeM₂ P u v γ) :
+    (x.bind f).bind g = x.bind (fun a => (f a).bind g) := by
+  induction x using FreeM₂.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ _ _ _ ih => exact congrArg _ (funext (fun b => ih b f))
+
+/-- Mapping is binding with a pure return, including across value universes. -/
+lemma map_eq_bind_pure (x : FreeM₂ P s t α) (f : α → β) :
+    x.map f = x.bind (fun a => FreeM₂.pure (f a)) := by
+  induction x using FreeM₂.inductionOn with
+  | pure _ _ => rfl
+  | liftBind _ _ _ _ ih => exact congrArg _ (funext ih)
+
 /-! ## `Functor` / `LawfulFunctor` instances
 
 `FreeM₂` is a functor in the value type at fixed pre/post-states. State is unchanged by
@@ -191,20 +219,14 @@ lemma ipure_def (x : α) :
     (ipure x : FreeM₂ P s s α) = FreeM₂.pure x := rfl
 
 @[simp]
-lemma ibind_def (x : FreeM₂ P s t α) (g : α → FreeM₂ P t u β) :
+lemma ibind_def {β : Type v} (x : FreeM₂ P s t α) (g : α → FreeM₂ P t u β) :
     ibind x g = x.bind g := rfl
 
 instance (P : Endo.{uI, uA, uB} I) :
     LawfulIndexedMonad I (fun s t α => FreeM₂.{uI, uA, uB, v} P s t α) where
   ipure_ibind _ _ := rfl
-  ibind_ipure x := by
-    induction x using FreeM₂.inductionOn with
-    | pure _ _ => rfl
-    | liftBind _ _ _ _ ih => exact congrArg _ (funext ih)
-  ibind_assoc x f _ := by
-    induction x using FreeM₂.inductionOn with
-    | pure _ _ => rfl
-    | liftBind _ _ _ _ ih => exact congrArg _ (funext (fun b => ih b f))
+  ibind_ipure := bind_pure_right
+  ibind_assoc := bind_assoc
 
 /-! ## Forgetful coercion to single-index `FreeM`
 
