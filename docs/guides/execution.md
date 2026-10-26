@@ -41,7 +41,18 @@ an outer handler, and `extend` / `extendLeft` add a passive auxiliary component
 that `fixSnd` projects away. Each has a run law relating `Stateful.run` through
 the combinator to the runs of its parts; their common core,
 `run_map_eq_of_apply_map_eq`, says that a state projection which commutes with
-every single request commutes with every run.
+every single request commutes with every run. `IsProjection`
+([`Handler/Stateful/Projection.lean`](../../PolyFun/PFunctor/Handler/Stateful/Projection.lean))
+adds an invariant: if the projection commutes with each request from states
+satisfying an invariant that every possible step preserves, read through
+`MonadAttach.support`, then it commutes with every run from such a state
+(`IsProjection.run_eq`).
+
+`Handler.comp second first`
+([`Handler/Free.lean`](../../PolyFun/PFunctor/Handler/Free.lean)) implements
+each request of `P` as a free program over `Q` and runs that program through
+`second : Handler m Q` in any monad `m`; `liftM_comp` factors a run through the
+composite into the two interpretations.
 
 A `StatefulLens` ([`Handler/StateLens.lean`](../../PolyFun/PFunctor/Handler/StateLens.lean))
 is the stateful handler that answers every request with exactly one inner
