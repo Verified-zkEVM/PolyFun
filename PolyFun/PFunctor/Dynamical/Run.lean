@@ -118,10 +118,10 @@ def append {s : DynSystem S p} : {st : S} → {m : ℕ} → (pre : Prefix s st m
   | _, _, .nil, _, post => post
   | _, _, .step d tail, _, post => .step d (tail.append post)
 
-@[simp] theorem append_nil {s : DynSystem S p} {st : S} {n : ℕ} (post : Prefix s st n) :
+@[simp] theorem nil_append {s : DynSystem S p} {st : S} {n : ℕ} (post : Prefix s st n) :
     (Prefix.nil (s := s) (st := st)).append post = post := rfl
 
-@[simp] theorem append_step {s : DynSystem S p} {st : S} {m n : ℕ} (d : p.B (s.expose st))
+@[simp] theorem step_append {s : DynSystem S p} {st : S} {m n : ℕ} (d : p.B (s.expose st))
     (tail : Prefix s (s.update st d) m) (post : Prefix s (Prefix.step d tail).last n) :
     (Prefix.step d tail).append post = .step d (tail.append post) := rfl
 
