@@ -181,6 +181,14 @@ theorem mapLens_bind (l : Lens P Q) (x : FreeM P α) (f : α → FreeM P β) :
 theorem mapLens_bind' (l : Lens P Q) (x : FreeM P α) (f : α → FreeM P β) :
     (x >>= f).mapLens l = x.mapLens l >>= fun a => (f a).mapLens l := mapLens_bind l x f
 
+/-- Relabelling a program along a lens commutes with mapping its results. -/
+@[simp]
+theorem mapLens_map (l : Lens P Q) (f : α → β) (x : FreeM P α) :
+    (f <$> x).mapLens l = f <$> x.mapLens l := by
+  induction x with
+  | pure _ => rfl
+  | lift_bind a rest ih => exact congrArg (FreeM.liftBind (l.toFunA a)) (funext fun d => ih _)
+
 end mapLens
 
 section liftM

@@ -54,6 +54,19 @@ each request of `P` as a free program over `Q` and runs that program through
 `second : Handler m Q` in any monad `m`; `liftM_comp` factors a run through the
 composite into the two interpretations.
 
+A stateful handler `Stateful (FreeM M) S E` is also a *package* in the sense of
+state-separating proofs: it exports `E`, keeps private state `S`, and answers
+with programs over the imported `M`
+([`Handler/Stateful/Link.lean`](../../PolyFun/PFunctor/Handler/Stateful/Link.lean)).
+`link outer inner` runs each answer program of `outer` through `inner` in any
+monad, on the product state with the outer state first. `sumMap f g` places two
+packages side by side over `E₁ + E₂`, relabelling their imports into `I₁ + I₂`.
+Linking is associative and unital, and interchanges with parallel composition,
+each up to the canonical reassociation of product states (`link_assoc`,
+`link_lift_id`, `lift_id_link`, `sumMap_link_sum`, `sumMap_link_sumMap`).
+Reindexing a handler along a free handler is linking that handler's stateless
+package in front of it (`reindex_eq_link`).
+
 A `StatefulLens` ([`Handler/StateLens.lean`](../../PolyFun/PFunctor/Handler/StateLens.lean))
 is the stateful handler that answers every request with exactly one inner
 request; its substitution is `Stateful.run` of its handler (`mapFreeM_eq_run`).
