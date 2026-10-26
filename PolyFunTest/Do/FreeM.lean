@@ -78,9 +78,9 @@ theorem maskFalse_spec : ⦃ True ⦄ maskFalse ⦃ fun r => r = false ⦄ := by
 example (a : Bool) (h : MonadAttach.CanReturn maskFalse a) : a = false :=
   Std.WP.LawfulWPMonadAttach.of_canReturn_wp (P := fun r => r = false) h <| by
     intro _
-    simpa only [Lean.Order.ofProp_prop_eq] using maskFalse_spec.le_wp trivial
+    simpa only [Lean.Order.CompleteLattice.ofProp_prop_eq] using maskFalse_spec.le_wp trivial
 
 /-- The same, phrased as the "always" judgment over the support. -/
 example : MonadAttach.AllOutputs (fun b => b = false) maskFalse := by
   refine MonadAttach.allOutputs_of_wp fun _ => ?_
-  simpa only [Lean.Order.ofProp_prop_eq] using maskFalse_spec.le_wp trivial
+  simpa only [Lean.Order.CompleteLattice.ofProp_prop_eq] using maskFalse_spec.le_wp trivial

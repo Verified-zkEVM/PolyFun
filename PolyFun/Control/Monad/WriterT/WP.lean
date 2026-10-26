@@ -58,9 +58,9 @@ told the log accumulated so far. -/
 @[expose, instance_reducible]
 def wpInstOf (append : ω → ω → ω) [WP (m (α × ω)) (α × ω) Pred EPred] :
     WP (WriterT ω m α) α (ω → Pred) EPred where
-  wpTrans x := ⟨fun post epost w => wp x.run (fun p => post p.1 (append w p.2)) epost⟩
-  wp_trans_monotone x := fun _ _ _ _ hepost hpost w => by
-    apply WP.wp_consequence_econs (x := x.run)
+  trans x := ⟨fun post epost w => wp x.run (fun p => post p.1 (append w p.2)) epost⟩
+  trans_monotone x := fun _ _ _ _ hepost hpost w => by
+    apply WP.wp_monotone (x := x.run)
     · intro p
       exact hpost p.1 (append w p.2)
     · exact hepost
@@ -124,7 +124,8 @@ def wpMonadOf (empty : ω) (append : ω → ω → ω)
         (fun q => post q.1 (append (append w p.2) q.2)) epost) epost ⊑
           wp (x.run >>= fun p => (fun q : β × ω => (q.1, append p.2 q.2)) <$> (f p.1).run)
             (fun q => post q.1 (append w q.2)) epost
-      refine Lean.Order.PartialOrder.rel_trans (WP.wp_consequence x.run _ _ epost fun p => ?_)
+      refine Lean.Order.PartialOrder.rel_trans
+        (WP.wp_monotone_post (x := x.run) (eposts := epost) fun p => ?_)
         (WPMonad.bind_le_wp_bind x.run _ _ epost)
       exact WPMonad.map_le_wp_map' _ (f p.1).run _ _ epost (funext fun q => by rw [assoc]) }
 

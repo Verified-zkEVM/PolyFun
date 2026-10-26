@@ -51,7 +51,7 @@ theorem allOutputs_forIn'_list_of_inv {xs : List ι} {init : β}
         | .done b' => inv xs [] b') (f cur (by simp [h]) b))
     (hinit : inv [] xs init) : AllOutputs (inv xs []) (forIn' xs init f) := by
   let inst := toWPMonadDemonic (m := m)
-  exact (Spec.forIn'_list (m := m) inv (epost := Lean.Order.bot)
+  exact (Spec.forIn'_list (m := m) inv (eposts := Lean.Order.bot)
     fun pref cur suff h b => ⟨fun hpre => step pref cur suff h b hpre⟩).le_wp hinit
 
 theorem allOutputs_forIn_list_of_inv {xs : List ι} {init : β} {f : ι → β → m (ForInStep β)}
@@ -62,7 +62,7 @@ theorem allOutputs_forIn_list_of_inv {xs : List ι} {init : β} {f : ι → β �
         | .done b' => inv xs [] b') (f cur b))
     (hinit : inv [] xs init) : AllOutputs (inv xs []) (forIn xs init f) := by
   let inst := toWPMonadDemonic (m := m)
-  exact (Spec.forIn_list (m := m) inv (epost := Lean.Order.bot)
+  exact (Spec.forIn_list (m := m) inv (eposts := Lean.Order.bot)
     fun pref cur suff h b => ⟨fun hpre => step pref cur suff h b hpre⟩).le_wp hinit
 
 /-- `allOutputs_forIn_list_of_inv` with an invariant on the accumulator alone. -/
@@ -82,7 +82,7 @@ theorem allOutputs_foldlM_list_of_inv {xs : List ι} {init : β} {f : β → ι 
       AllOutputs (fun b' => inv (pref ++ [cur]) suff b') (f b cur))
     (hinit : inv [] xs init) : AllOutputs (inv xs []) (xs.foldlM f init) := by
   let inst := toWPMonadDemonic (m := m)
-  exact (Spec.foldlM_list (m := m) inv (epost := Lean.Order.bot)
+  exact (Spec.foldlM_list (m := m) inv (eposts := Lean.Order.bot)
     fun pref cur suff h b => ⟨fun hpre => step pref cur suff h b hpre⟩).le_wp hinit
 
 theorem allOutputs_forM_list_of_inv {xs : List ι} {f : ι → m PUnit}
@@ -134,7 +134,7 @@ theorem someOutput_forIn'_list_of_inv {xs : List ι} {init : β}
         | .done b' => inv xs [] b') (f cur (by simp [h]) b))
     (hinit : inv [] xs init) : SomeOutput (inv xs []) (forIn' xs init f) := by
   let inst := toWPMonadAngelic (m := m)
-  exact (Spec.forIn'_list (m := m) inv (epost := Lean.Order.bot)
+  exact (Spec.forIn'_list (m := m) inv (eposts := Lean.Order.bot)
     fun pref cur suff h b => ⟨fun hpre => step pref cur suff h b hpre⟩).le_wp hinit
 
 theorem someOutput_forIn_list_of_inv {xs : List ι} {init : β} {f : ι → β → m (ForInStep β)}
@@ -145,7 +145,7 @@ theorem someOutput_forIn_list_of_inv {xs : List ι} {init : β} {f : ι → β �
         | .done b' => inv xs [] b') (f cur b))
     (hinit : inv [] xs init) : SomeOutput (inv xs []) (forIn xs init f) := by
   let inst := toWPMonadAngelic (m := m)
-  exact (Spec.forIn_list (m := m) inv (epost := Lean.Order.bot)
+  exact (Spec.forIn_list (m := m) inv (eposts := Lean.Order.bot)
     fun pref cur suff h b => ⟨fun hpre => step pref cur suff h b hpre⟩).le_wp hinit
 
 end Angelic
