@@ -23,6 +23,8 @@ at every state.
   and every translated leaf is bounded at the related target budget.
 * `IsRollBound.of_traverse`: when every response map is surjective, a target bound reflects
   to the source; translated leaves impose no condition.
+* `IsRollBound.of_traverse_of_exists`: reflection only needs a compatible preimage of each
+  source response at related budgets where the translated roll is allowed.
 
 For charge bounds, `IsChargeBound.traverse` allows translated constructors that cost at most
 their source constructors and translated leaves bounded by a common `m`, and adds `m` to the
@@ -67,6 +69,28 @@ theorem IsRollBound.traverse (f : Traversal P Q S)
       exact ⟨h_can s a b b' hR hx.1,
         fun y => ih _ (hx.2 _) (h_cost s a b b' hR hx.1 y)⟩
 
+/-- Reflect a roll bound using one compatible target response for each source response.
+The witness condition is needed only at related budgets with an allowed translated roll;
+other target responses and unrelated traversal states impose no condition. -/
+theorem IsRollBound.of_traverse_of_exists (f : Traversal P Q S)
+    (leaf : ∀ {i j}, S i j → X i → IFreeM Q Y j)
+    (R : ∀ {i j}, S i j → B' → B → Prop)
+    (h_can : ∀ {i j} (s : S i j) (a : P.A i) b' b, R s b' b → canRoll' j (f.op s a) b' →
+      canRoll i a b)
+    (h_next : ∀ {i j} (s : S i j) (a : P.A i) b' b, R s b' b →
+      canRoll' j (f.op s a) b' → ∀ answer, ∃ y, f.arg s a y = answer ∧
+        R (f.next s a y) (cost' j (f.op s a) b') (cost i a b))
+    {i j} {s : S i j} {x : IFreeM P X i} {b' : B'} {b : B}
+    (hx : (x.traverse f leaf s).IsRollBound b' canRoll' cost') (hR : R s b' b) :
+    x.IsRollBound b canRoll cost := by
+  induction x using IFreeM.inductionOn generalizing j b b' with
+  | pure _ _ => trivial
+  | liftBind i a next ih =>
+      rw [traverse_liftBind, isRollBound_liftBind_iff] at hx
+      refine ⟨h_can s a b' b hR hx.1, fun answer => ?_⟩
+      obtain ⟨y, rfl, hy⟩ := h_next s a b' b hR hx.1 answer
+      exact ih _ (hx.2 y) hy
+
 /-- A traversal whose response maps are all surjective reflects a roll bound along a budget
 relation `R` from target to source budgets, which may read the traversal state:
 * `h_can` — at related budgets, an allowed translated roll comes from an allowed source roll;
@@ -85,13 +109,10 @@ theorem IsRollBound.of_traverse (f : Traversal P Q S)
     {i j} {s : S i j} {x : IFreeM P X i} {b' : B'} {b : B}
     (hx : (x.traverse f leaf s).IsRollBound b' canRoll' cost') (hR : R s b' b) :
     x.IsRollBound b canRoll cost := by
-  induction x using IFreeM.inductionOn generalizing j b b' with
-  | pure _ _ => trivial
-  | liftBind i a next ih =>
-      rw [traverse_liftBind, isRollBound_liftBind_iff] at hx
-      refine ⟨h_can s a b' b hR hx.1, fun answer => ?_⟩
-      obtain ⟨y, rfl⟩ := hargs s a answer
-      exact ih _ (hx.2 y) (h_cost s a b' b hR hx.1 y)
+  apply IsRollBound.of_traverse_of_exists f leaf R h_can ?_ hx hR
+  intro i j s a b' b hR hcan answer
+  obtain ⟨y, hy⟩ := hargs s a answer
+  exact ⟨y, hy, h_cost s a b' b hR hcan y⟩
 
 /-! ## Charge bounds -/
 

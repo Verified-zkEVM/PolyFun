@@ -118,6 +118,58 @@ example (j n : ℕ) :
   IFreeM.isChargeBound_traverse_iff deepen pureLeaf (fun _ _ => Function.surjective_id)
     (fun _ _ => rfl) (fun _ _ => trivial) ⟨⟩ program n
 
+/-- Keep only the source's `false` branch at every node. -/
+def prune : Traversal Cmd Deep (fun _ _ => PUnit.{1}) where
+  op _ _ := ()
+  arg _ _ _ := false
+  next _ _ _ := ⟨⟩
+
+-- Preservation permits pruning; the expensive `true` branch no longer appears.
+example : (program.traverse prune pureLeaf (j := 0) ⟨⟩).IsChargeBound (fun _ _ => 1) 1 :=
+  ⟨le_rfl, fun _ => trivial⟩
+
+-- Reflection without surjectivity would incorrectly bound the source by one.
+example : ¬ program.IsChargeBound (fun _ _ => 1) 1 := by
+  intro h
+  exact absurd (h.2 true).1 (by decide)
+
+example : ¬ Function.Surjective (prune.arg (i := ()) (j := 0) ⟨⟩ true) := by
+  intro h
+  obtain ⟨b, hb⟩ := h true
+  cases hb
+
+-- Reflection needs no bound on translated leaves, even when they add a charged node.
+example (j : ℕ)
+    (h : (program.traverse deepen nodeLeaf (j := j) ⟨⟩).IsChargeBound (fun _ _ => 1) 3) :
+    program.IsChargeBound (fun _ _ => 1) 3 :=
+  IFreeM.IsChargeBound.of_traverse deepen nodeLeaf (fun _ _ => Function.surjective_id)
+    (fun _ _ => le_rfl) h
+
+/-- Responses are preserved in state `true`; every child stays in that state. -/
+def guarded : Traversal Cmd Deep (fun _ _ => Bool) where
+  op _ _ := ()
+  arg s _ b := if s then b else false
+  next _ _ _ := true
+
+-- Global surjectivity fails in the state excluded by the budget relation.
+example : ¬ Function.Surjective (guarded.arg (i := ()) (j := 0) false true) := by
+  intro h
+  obtain ⟨b, hb⟩ := h true
+  cases hb
+
+-- Local response witnesses suffice for reflection from the invariant state.
+example (j n : ℕ)
+    (h : (program.traverse guarded (fun _ x => .pure x) (j := j) true).IsChargeBound
+      (fun _ _ => 1) n) : program.IsChargeBound (fun _ _ => 1) n := by
+  refine IFreeM.IsRollBound.of_traverse_of_exists guarded (fun _ x => .pure x)
+    (fun s n' n => s = true ∧ n' ≤ n) ?_ ?_ h ⟨rfl, le_rfl⟩
+  · intro i j s a b' b hR hcan
+    exact hcan.trans hR.2
+  · intro i j s a b' b hR hcan answer
+    refine ⟨answer, ?_, rfl, ?_⟩
+    · simp only [guarded, hR.1, ↓reduceIte]
+    · exact Nat.sub_le_sub_right hR.2 1
+
 /-! ## Loops through a monad structure on a wrapper -/
 
 /-- Programs that return to the sole state, behind a definitional wrapper. -/

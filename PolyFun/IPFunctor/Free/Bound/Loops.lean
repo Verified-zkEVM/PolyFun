@@ -57,7 +57,7 @@ variable {σ : Type v} {ε : Type*} {f : σ → ε → FreeM₂ P s s σ}
 
 /-- Roll bounds compose along a left fold over a list, with the side conditions of
 `FreeM₂.isRollBound_bind`. Step `e` is bounded by `budget e`, and the fold by those budgets
-combined from the left onto an arbitrary final budget `z`. -/
+combined in list order, associated to the right, with final budget `z`. -/
 theorem isRollBound_foldlM (hm : IsDiagonalMonad inst) (combine : B → B → B)
     (h_can : ∀ s a b₁' b₂' b, canRoll s a b →
       canRoll s a (combine b₁' b) ∧ canRoll s a (combine b b₂'))
@@ -108,7 +108,7 @@ section Fin
 
 /-- Roll bounds compose along the dependent left fold `Fin.dfoldlM`, with the side conditions
 of `FreeM₂.isRollBound_bind`. Step `i` is bounded by `budget i`, and the fold by those budgets
-combined from the left onto an arbitrary final budget `z`. -/
+combined in index order, associated to the right, with final budget `z`. -/
 theorem isRollBound_dfoldlM (hm : IsDiagonalMonad inst) (combine : B → B → B)
     (h_can : ∀ s a b₁' b₂' b, canRoll s a b →
       canRoll s a (combine b₁' b) ∧ canRoll s a (combine b b₂'))

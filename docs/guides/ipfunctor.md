@@ -322,8 +322,8 @@ need not choose a single response, and function-valued carriers can delay the
 evaluation of children, including children under a language's binders.
 `fold_rel`, `fold_fusion`, and `fold_unique` separate constructor reasoning from
 whole-tree induction. `fold_bind` folds a bind by folding each continuation at its
-leaf, with the two leaf families and the carrier in independent universes. The algebra is named `FoldAlgebra` so that `open IPFunctor`
-leaves Mathlib's `Algebra` unshadowed.
+leaf, with the two leaf families and the carrier in independent universes. The algebra is
+named `FoldAlgebra` so that `open IPFunctor` leaves Mathlib's `Algebra` unshadowed.
 
 `IPFunctor.Reindexing P Q f` translates the constructors of `P : Endo I` into
 those of `Q : Endo J` along a change of index `f : I → J`, together with argument
@@ -364,7 +364,11 @@ source and target budgets by a relation that may read the state.
 `IsRollBound.traverse` needs related budgets to stay related through every translated
 constructor and every translated leaf to be bounded at the related target budget;
 `IsRollBound.of_traverse` reflects bounds when every response map is surjective, with
-no condition on leaves. For charges, `IsChargeBound.traverse` adds the common leaf
+no condition on leaves. The weaker `IsRollBound.of_traverse_of_exists` only requires
+one compatible preimage per source response at related budgets where the translated
+roll is allowed. Use it when the budget relation excludes some traversal states or
+only selected preimages preserve the relation.
+For charges, `IsChargeBound.traverse` adds the common leaf
 budget `m` (zero for pure leaves) when each translated constructor costs at most its
 source, `IsChargeBound.of_traverse` needs the reverse inequality and surjectivity, and
 `isChargeBound_traverse_iff` combines them for equal charges.
@@ -382,6 +386,9 @@ proved by `⟨fun _ => rfl, fun _ _ => rfl⟩` for the evident instance). Along
 (`…_of_forall`), and the `…_unit` forms preserve a predicate on every rolled shape.
 The [regressions](../../PolyFunTest/IPFunctor/TraversalLoopBounds.lean) apply these
 laws through a definitional wrapper with its own `Monad` instance.
+
+The dependent-fold laws apply to `Fin.dfoldlM` itself. A separately defined dependent
+tuple sequencer needs an equation relating it to that fold before these bounds apply.
 
 ## `mapM` and the universe constraint
 
