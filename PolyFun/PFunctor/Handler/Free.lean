@@ -20,8 +20,8 @@ and composes a free handler with a handler into any monad. The generic
 through `first`, then runs that program through `second : Handler m Q`. With
 `m := FreeM R` this is Kleisli composition of free handlers; for a general monad
 it is the precomposition that implements one interface in terms of another and
-then runs the result. `id_comp` holds for every monad, while `comp_id`,
-`comp_assoc` and `liftM_comp` need `LawfulMonad m`.
+then runs the result. `id_comp` is the left-identity law for free handlers;
+`comp_id`, `comp_assoc` and `liftM_comp` hold for any `LawfulMonad m`.
 -/
 
 @[expose] public section
