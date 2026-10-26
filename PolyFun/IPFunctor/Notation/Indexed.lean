@@ -95,8 +95,8 @@ meta def mkBindFreeM₂ (dec : DoElemCont) (lvls : List Level) (I P s tStep uOut
       let bodyRaw ← dec.k
       Term.ensureHasType (mkApp nextM β) bodyRaw
     let kLam ← mkLambdaFVars #[xFVar] body
-    return mkAppN (mkConst ``IPFunctor.FreeM₂.bind lvls)
-      #[I, P, xType, β, s, tStep, uOuter, e, kLam]
+    mkAppOptM ``IPFunctor.FreeM₂.bind
+      #[some I, some P, some xType, some β, some s, some tStep, some uOuter, some e, some kLam]
 
 /-! ## Elaborators -/
 

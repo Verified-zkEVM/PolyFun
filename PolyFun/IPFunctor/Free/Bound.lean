@@ -314,7 +314,8 @@ end IPFunctor.FreeM
 
 namespace IPFunctor.FreeM₂
 
-variable {I : Type uI} {P : Endo.{uI, uA, uB} I} {α β : Type v} {B : Type*} {s t u : I}
+variable {I : Type uI} {P : Endo.{uI, uA, uB} I} {α : Type v} {β : Type w}
+  {B : Type*} {s t u : I}
   {canRoll : (s : I) → P.A s → B → Prop} {cost : (s : I) → P.A s → B → B}
 
 /-- `IFreeM.IsRollBound` on the terminal-state-marker tree underlying `x`. -/
