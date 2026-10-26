@@ -59,7 +59,8 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 | [`PolyFun/IPFunctor/Free/Indexed.lean`](../../PolyFun/IPFunctor/Free/Indexed.lean) | `IPFunctor.FreeM₂ P s t α := IFreeM P (fun u => PSigma (fun _ : u = t => α)) s` — the terminal-state-marker specialization. `bind` chains indices positionally; carries `IndexedMonad` / `LawfulIndexedMonad` instances. Forgetful coercion `toFreeM`. |
 | [`PolyFun/IPFunctor/Free/Bound.lean`](../../PolyFun/IPFunctor/Free/Bound.lean) | Roll bounds on `IFreeM` whose check and cost read the state (`IsRollBound`), the subtractive charge bound `IsChargeBound` and the total bound `IsTotalRollBound`; budgets add under `bind` across leaf universes; defined by `PFunctor.FreeM.IsRollBound` through `toSigmaFreeM`; `FreeM` / `FreeM₂` abbreviations for dot notation. |
 | [`PolyFun/IPFunctor/Free/Bound/Traversal.lean`](../../PolyFun/IPFunctor/Free/Bound/Traversal.lean) | Roll and charge bounds under `IFreeM.traverse`: preservation along a state-dependent budget relation, reflection for surjective response maps, and the charge forms `IsChargeBound.traverse`, `IsChargeBound.of_traverse`, `isChargeBound_traverse_iff`. |
-| [`PolyFun/IPFunctor/Free/Bound/Loops.lean`](../../PolyFun/IPFunctor/Free/Bound/Loops.lean) | Bounds for `List.foldlM` and Batteries' dependent `Fin.dfoldlM` over `FreeM₂ P s s`, through any monad structure whose `pure` and `bind` are those of `FreeM₂` (`FreeM₂.IsDiagonalMonad`): combined roll bounds, summed and uniform charge bounds, and preservation of a predicate on every shape. |
+| [`PolyFun/IPFunctor/Free/Bound/Loops.lean`](../../PolyFun/IPFunctor/Free/Bound/Loops.lean) | Bounds for `List.foldlM` and Batteries' dependent `Fin.dfoldlM` over `FreeM₂ P s s`, through any monad structure whose `pure` and `bind` are those of `FreeM₂` (`FreeM₂.IsDiagonalMonad`): combined roll bounds, summed and uniform charge bounds, and preservation of a predicate on every shape; the same bounds for the tuple sequencer `FreeM₂.seqPi`. |
+| [`PolyFun/IPFunctor/Free/Tuple.lean`](../../PolyFun/IPFunctor/Free/Tuple.lean) | `FreeM₂.seqPi`, sequencing a dependent tuple of programs `(i : Fin k) → FreeM₂ P s s (β i)` into one returning `(i : Fin k) → β i`, with the definitional equations `seqPi_zero` / `seqPi_succ` and `seqPi_unique`. |
 | [`PolyFun/IPFunctor/Free/Lens.lean`](../../PolyFun/IPFunctor/Free/Lens.lean) | `IFreeM.mapLens`: transport of a tree along a lens, cast-free along the coproduct injections, injective along them, and its action on roll bounds. |
 | [`PolyFun/IPFunctor/Free/Fold.lean`](../../PolyFun/IPFunctor/Free/Fold.lean) | `IPFunctor.FoldAlgebra P D` and the whole-tree fold `IFreeM.fold`, with `fold_rel`, `fold_fusion`, `fold_unique`, and `fold_bind`. |
 | [`PolyFun/IPFunctor/Free/Reindex.lean`](../../PolyFun/IPFunctor/Free/Reindex.lean) | `IPFunctor.Reindexing P Q f` across index types and `IFreeM.reindex`, with identity, composition, transport, and interpretation laws. `Lens.toReindexing` views an indexed lens as a reindexing along `id`. |
@@ -387,8 +388,15 @@ proved by `⟨fun _ => rfl, fun _ _ => rfl⟩` for the evident instance). Along
 The [regressions](../../PolyFunTest/IPFunctor/TraversalLoopBounds.lean) apply these
 laws through a definitional wrapper with its own `Monad` instance.
 
-The dependent-fold laws apply to `Fin.dfoldlM` itself. A separately defined dependent
-tuple sequencer needs an equation relating it to that fold before these bounds apply.
+The dependent-fold laws apply to `Fin.dfoldlM` itself. A dependent tuple is sequenced
+by [`FreeM₂.seqPi`](../../PolyFun/IPFunctor/Free/Tuple.lean), which returns at once on
+the empty tuple (`seqPi_zero`) and otherwise binds the head, then the sequenced tail,
+and returns their `Fin.cons` (`seqPi_succ`); both equations hold by `rfl`. It recurses
+directly, because `Fin.dfoldlM` associates its binds the other way. `seqPi_unique`
+identifies any operation with these two equations with `seqPi`, so a sequencer defined
+elsewhere through such a monad structure inherits `isRollBound_seqPi`,
+`isChargeBound_seqPi` (a sum of position budgets), `isChargeBound_seqPi_of_forall`, and
+`isRollBound_seqPi_unit`.
 
 ## `mapM` and the universe constraint
 

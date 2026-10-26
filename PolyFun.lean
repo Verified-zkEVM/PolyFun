@@ -60,6 +60,7 @@ public import PolyFun.IPFunctor.Free.Lens
 public import PolyFun.IPFunctor.Free.Reindex
 public import PolyFun.IPFunctor.Free.Substitution
 public import PolyFun.IPFunctor.Free.Traversal
+public import PolyFun.IPFunctor.Free.Tuple
 public import PolyFun.IPFunctor.Lens.Basic
 public import PolyFun.IPFunctor.M
 public import PolyFun.IPFunctor.Notation

@@ -9,6 +9,7 @@ module
 public import PolyFun.IPFunctor.Free.Fold
 public import PolyFun.IPFunctor.Free.Bound.Traversal
 public import PolyFun.IPFunctor.Free.Bound.Loops
+public import PolyFun.IPFunctor.Free.Tuple
 
 /-!
 # Folds over binds, bounds under traversals, and loop bounds
@@ -269,5 +270,65 @@ example : FreeM₂.IsChargeBound growAll trueCharge (∑ _ : Fin 3, 1) := by
 example : FreeM₂.IsRollBound growAll () (fun _ a _ => a = true) (fun _ _ b => b) := by
   unfold growAll
   exact FreeM₂.isRollBound_dfoldlM_unit prog_isDiagonalMonad grow_isRollBound 0
+
+/-! ## A dependent tuple of programs -/
+
+/-- Position `i` of the tuple holds a value below `i + 1`. -/
+abbrev Slot (i : Fin 3) : Type := Fin (i.val + 1)
+
+/-- Roll the `true` shape; return the top value on `true` and zero on `false`. -/
+def draw (i : Fin 3) : Prog (Slot i) :=
+  FreeM₂.liftBind (P := Cmd) (s := ()) true fun b =>
+    FreeM₂.pure (if b then Fin.last i.val else 0)
+
+/-- Sequence the three draws into a dependent tuple. -/
+def drawAll : Prog ((i : Fin 3) → Slot i) := FreeM₂.seqPi draw
+
+/-- Run a program, answering `true` to every shape. -/
+def answerTrue {α : Type} (x : Prog α) : α :=
+  IFreeM.fold (D := fun _ => α) (fun _ p => p.2) (fun _ _ k => k true) x
+
+-- The tuple holds a value of a different type at each position.
+example : answerTrue drawAll 0 = (0 : Fin 1) := rfl
+example : answerTrue drawAll 1 = (1 : Fin 2) := rfl
+example : answerTrue drawAll 2 = (2 : Fin 3) := rfl
+
+-- The constructor equations.
+example {β : Fin 0 → Type} (f : (i : Fin 0) → Prog (β i)) :
+    FreeM₂.seqPi f = FreeM₂.pure fun i => i.elim0 :=
+  FreeM₂.seqPi_zero f
+example : drawAll = (draw 0).bind fun b => (FreeM₂.seqPi fun i => draw i.succ).bind fun bs =>
+    FreeM₂.pure (Fin.cons b bs) :=
+  FreeM₂.seqPi_succ draw
+
+/-- A tuple sequencer written separately, through the monad structure of the wrapper. -/
+def tuple : {k : ℕ} → {β : Fin k → Type} → ((i : Fin k) → Prog (β i)) →
+    Prog ((i : Fin k) → β i)
+  | 0, _, _ => pure fun i => i.elim0
+  | _ + 1, _, f => f 0 >>= fun a => tuple (fun i => f i.succ) >>= fun as => pure (Fin.cons a as)
+
+-- Its two equations hold by definition, so it is the generic sequencer.
+example {k : ℕ} {β : Fin k → Type} (f : (i : Fin k) → Prog (β i)) :
+    tuple f = FreeM₂.seqPi f :=
+  FreeM₂.seqPi_unique (fun f => tuple f) (fun _ => rfl) (fun _ => rfl) f
+
+lemma draw_isChargeBound (i : Fin 3) : FreeM₂.IsChargeBound (draw i) trueCharge 1 :=
+  ⟨le_rfl, fun _ => trivial⟩
+
+lemma draw_isRollBound (i : Fin 3) :
+    FreeM₂.IsRollBound (draw i) () (fun _ a _ => a = true) (fun _ _ b => b) :=
+  ⟨rfl, fun _ => trivial⟩
+
+-- Per-position budgets add as a finite sum.
+example : FreeM₂.IsChargeBound drawAll trueCharge (∑ _ : Fin 3, 1) :=
+  FreeM₂.isChargeBound_seqPi (fun _ => 1) draw_isChargeBound
+
+-- A uniform budget gives the length times the budget.
+example : FreeM₂.IsChargeBound drawAll trueCharge 3 :=
+  FreeM₂.isChargeBound_seqPi_of_forall draw_isChargeBound
+
+-- The predicate on shapes holds throughout the tuple.
+example : FreeM₂.IsRollBound drawAll () (fun _ a _ => a = true) (fun _ _ b => b) :=
+  FreeM₂.isRollBound_seqPi_unit draw_isRollBound
 
 end IPFunctorTraversalLoopBoundsTests

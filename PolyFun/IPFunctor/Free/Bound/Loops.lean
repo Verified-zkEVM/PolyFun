@@ -7,6 +7,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.IPFunctor.Free.Bound
+public import PolyFun.IPFunctor.Free.Tuple
 public import Batteries.Data.Fin.Fold
 public import Mathlib.Algebra.BigOperators.Fin
 
@@ -22,6 +23,9 @@ Through such a structure, roll bounds compose along the two standard loops:
 * `List.foldlM`, a left fold of a step program over a list;
 * Batteries' `Fin.dfoldlM`, the dependent left fold over `Fin n` whose accumulator type varies
   with the position.
+
+The dependent tuple sequencer `FreeM₂.seqPi` uses `FreeM₂.bind` and `FreeM₂.pure` directly and
+needs no monad structure; `isRollBound_seqPi` and its specializations bound it the same way.
 
 The generic laws `isRollBound_foldlM` and `isRollBound_dfoldlM` combine the per-step budgets
 with the same side conditions as `FreeM₂.isRollBound_bind`. Their specializations bound charge
@@ -106,6 +110,12 @@ end List
 
 section Fin
 
+private theorem foldr_add_eq_sum {m : ℕ} (b : Fin m → ℕ) :
+    Fin.foldr m (fun i k => b i + k) 0 = ∑ i, b i := by
+  induction m with
+  | zero => simp
+  | succ m ih => rw [Fin.foldr_succ, Fin.sum_univ_succ, ih]
+
 /-- Roll bounds compose along the dependent left fold `Fin.dfoldlM`, with the side conditions
 of `FreeM₂.isRollBound_bind`. Step `i` is bounded by `budget i`, and the fold by those budgets
 combined in index order, associated to the right, with final budget `z`. -/
@@ -138,13 +148,7 @@ theorem isChargeBound_dfoldlM (hm : IsDiagonalMonad inst) (b : Fin n → ℕ)
     (hf : ∀ i x, (f i x).IsChargeBound c (b i)) (init : α 0) :
     (Fin.dfoldlM n α f init).IsChargeBound c (∑ i, b i) := by
   have h := isRollBound_dfoldlM hm (· + ·) (by grind) (by grind) b 0 hf init
-  have hsum : ∀ {m : ℕ} (b : Fin m → ℕ),
-      Fin.foldr m (fun i k => b i + k) 0 = ∑ i, b i := by
-    intro m b
-    induction m with
-    | zero => simp
-    | succ m ih => rw [Fin.foldr_succ, Fin.sum_univ_succ, ih]
-  rwa [hsum] at h
+  rwa [foldr_add_eq_sum] at h
 
 /-- Steps within a common charge budget `k` give a dependent left fold over `Fin n` within
 `n * k`. -/
@@ -162,5 +166,57 @@ theorem isRollBound_dfoldlM_unit (hm : IsDiagonalMonad inst) {p : (s : I) → P.
     (fun _ _ _ _ _ _ => ⟨rfl, rfl⟩) (fun _ => ()) () hf init
 
 end Fin
+
+/-! ## Dependent tuples -/
+
+section Tuple
+
+/-- Roll bounds compose along the dependent tuple sequencer `seqPi`, with the side conditions of
+`FreeM₂.isRollBound_bind` and a right unit `z` of `combine`, which bounds the final `pure`.
+Program `i` is bounded by `budget i`, and the tuple by those budgets combined in index order,
+associated to the right, with final budget `z`. -/
+theorem isRollBound_seqPi (combine : B → B → B)
+    (h_can : ∀ s a b₁' b₂' b, canRoll s a b →
+      canRoll s a (combine b₁' b) ∧ canRoll s a (combine b b₂'))
+    (h_cost : ∀ s a b₁' b₂' b, canRoll s a b →
+      combine b₁' (cost s a b) = cost s a (combine b₁' b) ∧
+      cost s a (combine b b₂') = combine (cost s a b) b₂')
+    {k : ℕ} {β : Fin k → Type v} (budget : Fin k → B) (z : B) (hz : ∀ b, combine b z = b)
+    {f : (i : Fin k) → FreeM₂ P s s (β i)}
+    (hf : ∀ i, (f i).IsRollBound (budget i) canRoll cost) :
+    (seqPi f).IsRollBound (Fin.foldr k (fun i b => combine (budget i) b) z) canRoll cost := by
+  induction k with
+  | zero => exact isRollBound_pure _ _
+  | succ k ih =>
+      rw [seqPi_succ, Fin.foldr_succ, ← hz (Fin.foldr k _ z)]
+      exact isRollBound_bind combine h_can h_cost (hf 0) fun _ =>
+        isRollBound_bind combine h_can h_cost
+          (ih (f := fun i => f i.succ) (fun i => budget i.succ) fun i => hf i.succ)
+          fun _ => isRollBound_pure _ _
+
+variable {c : (s : I) → P.A s → ℕ} {k : ℕ} {β : Fin k → Type v}
+  {f : (i : Fin k) → FreeM₂ P s s (β i)}
+
+/-- Charge bounds add along the dependent tuple sequencer `seqPi`. -/
+theorem isChargeBound_seqPi (b : Fin k → ℕ) (hf : ∀ i, (f i).IsChargeBound c (b i)) :
+    (seqPi f).IsChargeBound c (∑ i, b i) := by
+  have h := isRollBound_seqPi (· + ·) (by grind) (by grind) b 0 Nat.add_zero hf
+  rwa [foldr_add_eq_sum] at h
+
+/-- Programs within a common charge budget `m` give a sequenced tuple of length `k` within
+`k * m`. -/
+theorem isChargeBound_seqPi_of_forall {m : ℕ} (hf : ∀ i, (f i).IsChargeBound c m) :
+    (seqPi f).IsChargeBound c (k * m) := by
+  simpa using isChargeBound_seqPi (fun _ => m) hf
+
+/-- A predicate on every rolled shape is preserved by the dependent tuple sequencer `seqPi`. The
+predicate is the roll bound with the unit budget, check `p` and the identity cost. -/
+theorem isRollBound_seqPi_unit {p : (s : I) → P.A s → Prop}
+    (hf : ∀ i, (f i).IsRollBound () (fun s a _ => p s a) (fun _ _ b => b)) :
+    (seqPi f).IsRollBound () (fun s a _ => p s a) (fun _ _ b => b) :=
+  isRollBound_seqPi (fun _ _ => ()) (fun _ _ _ _ _ h => ⟨h, h⟩)
+    (fun _ _ _ _ _ _ => ⟨rfl, rfl⟩) (fun _ => ()) () (fun _ => rfl) hf
+
+end Tuple
 
 end IPFunctor.FreeM₂
