@@ -58,8 +58,10 @@ indexed-monad shape that `IPFunctor.FreeM₂` instantiates.
 | [`PolyFun/IPFunctor/Free/Basic.lean`](../../PolyFun/IPFunctor/Free/Basic.lean) | `IPFunctor.FreeM P s α := IFreeM P (fun _ => α) s` — the constant-family specialization. Constructors `pure` / `liftBind` (as `@[match_pattern]` aliases over `IFreeM`), `lift` (shape) / `liftObj` (object), `bind` (state-polymorphic), `Functor` / `LawfulFunctor`, `inductionOn`, `construct`, `mapM`, `erase` (forgetful to `PFunctor.FreeM` under `[Unique I]`), `toSigmaFreeM`. |
 | [`PolyFun/IPFunctor/Free/Indexed.lean`](../../PolyFun/IPFunctor/Free/Indexed.lean) | `IPFunctor.FreeM₂ P s t α := IFreeM P (fun u => PSigma (fun _ : u = t => α)) s` — the terminal-state-marker specialization. `bind` chains indices positionally; carries `IndexedMonad` / `LawfulIndexedMonad` instances. Forgetful coercion `toFreeM`. |
 | [`PolyFun/IPFunctor/Free/Bound.lean`](../../PolyFun/IPFunctor/Free/Bound.lean) | Roll bounds on `IFreeM` whose check and cost read the state (`IsRollBound`), the subtractive charge bound `IsChargeBound` and the total bound `IsTotalRollBound`; budgets add under `bind` across leaf universes; defined by `PFunctor.FreeM.IsRollBound` through `toSigmaFreeM`; `FreeM` / `FreeM₂` abbreviations for dot notation. |
+| [`PolyFun/IPFunctor/Free/Bound/Traversal.lean`](../../PolyFun/IPFunctor/Free/Bound/Traversal.lean) | Roll and charge bounds under `IFreeM.traverse`: preservation along a state-dependent budget relation, reflection for surjective response maps, and the charge forms `IsChargeBound.traverse`, `IsChargeBound.of_traverse`, `isChargeBound_traverse_iff`. |
+| [`PolyFun/IPFunctor/Free/Bound/Loops.lean`](../../PolyFun/IPFunctor/Free/Bound/Loops.lean) | Bounds for `List.foldlM` and Batteries' dependent `Fin.dfoldlM` over `FreeM₂ P s s`, through any monad structure whose `pure` and `bind` are those of `FreeM₂` (`FreeM₂.IsDiagonalMonad`): combined roll bounds, summed and uniform charge bounds, and preservation of a predicate on every shape. |
 | [`PolyFun/IPFunctor/Free/Lens.lean`](../../PolyFun/IPFunctor/Free/Lens.lean) | `IFreeM.mapLens`: transport of a tree along a lens, cast-free along the coproduct injections, injective along them, and its action on roll bounds. |
-| [`PolyFun/IPFunctor/Free/Fold.lean`](../../PolyFun/IPFunctor/Free/Fold.lean) | `IPFunctor.FoldAlgebra P D` and the whole-tree fold `IFreeM.fold`, with `fold_rel`, `fold_fusion`, and `fold_unique`. |
+| [`PolyFun/IPFunctor/Free/Fold.lean`](../../PolyFun/IPFunctor/Free/Fold.lean) | `IPFunctor.FoldAlgebra P D` and the whole-tree fold `IFreeM.fold`, with `fold_rel`, `fold_fusion`, `fold_unique`, and `fold_bind`. |
 | [`PolyFun/IPFunctor/Free/Reindex.lean`](../../PolyFun/IPFunctor/Free/Reindex.lean) | `IPFunctor.Reindexing P Q f` across index types and `IFreeM.reindex`, with identity, composition, transport, and interpretation laws. `Lens.toReindexing` views an indexed lens as a reindexing along `id`. |
 | [`PolyFun/IPFunctor/Free/Traversal.lean`](../../PolyFun/IPFunctor/Free/Traversal.lean) | `IPFunctor.Traversal P Q State` and `IFreeM.traverse`, carrying a state into each child and replacing leaves by trees; composition, identity, and interpretation laws. `Reindexing.toTraversal` relates traversals to reindexing. |
 | [`PolyFun/IPFunctor/Lens/Basic.lean`](../../PolyFun/IPFunctor/Lens/Basic.lean) | `IPFunctor.Lens P Q` — Cartesian lens between indexed polynomials with the source-index preservation law `src_eq`. Identity, composition, coproduct injections `inl` / `inr` / `inlULift` / `inrULift` and copairing `sumPair`, `Lens.Equiv`. |
@@ -319,7 +321,8 @@ tree with a leaf map and such an algebra. Unlike an effect handler, an algebra
 need not choose a single response, and function-valued carriers can delay the
 evaluation of children, including children under a language's binders.
 `fold_rel`, `fold_fusion`, and `fold_unique` separate constructor reasoning from
-whole-tree induction. The algebra is named `FoldAlgebra` so that `open IPFunctor`
+whole-tree induction. `fold_bind` folds a bind by folding each continuation at its
+leaf, with the two leaf families and the carrier in independent universes. The algebra is named `FoldAlgebra` so that `open IPFunctor`
 leaves Mathlib's `Algebra` unshadowed.
 
 `IPFunctor.Reindexing P Q f` translates the constructors of `P : Endo I` into
@@ -353,6 +356,32 @@ read through the translated operation. `isRollBound_reindex_iff` additionally
 requires every source answer to be represented by a target answer. Without
 that surjectivity condition, reindexing can discard an expensive branch.
 The coproduct injection equivalences specialize this shared theorem.
+
+A traversal chooses each target constructor from the traversal state, which changes
+along every branch, so its target checks cannot be read through a fixed index map.
+[`Bound/Traversal.lean`](../../PolyFun/IPFunctor/Free/Bound/Traversal.lean) relates
+source and target budgets by a relation that may read the state.
+`IsRollBound.traverse` needs related budgets to stay related through every translated
+constructor and every translated leaf to be bounded at the related target budget;
+`IsRollBound.of_traverse` reflects bounds when every response map is surjective, with
+no condition on leaves. For charges, `IsChargeBound.traverse` adds the common leaf
+budget `m` (zero for pure leaves) when each translated constructor costs at most its
+source, `IsChargeBound.of_traverse` needs the reverse inequality and surjectivity, and
+`isChargeBound_traverse_iff` combines them for equal charges.
+
+### Loops
+
+`FreeM₂ P s s` has no fixed `Monad` instance, and developments may wrap it with their
+own. [`Bound/Loops.lean`](../../PolyFun/IPFunctor/Free/Bound/Loops.lean) takes any monad
+structure whose `pure` and `bind` are those of `FreeM₂` (`FreeM₂.IsDiagonalMonad`,
+proved by `⟨fun _ => rfl, fun _ _ => rfl⟩` for the evident instance). Along
+`List.foldlM` and Batteries' dependent `Fin.dfoldlM`, `isRollBound_foldlM` and
+`isRollBound_dfoldlM` combine step budgets with the side conditions of
+`FreeM₂.isRollBound_bind`. Charge bounds add (`isChargeBound_foldlM`,
+`isChargeBound_dfoldlM`) or multiply a uniform step budget by the number of steps
+(`…_of_forall`), and the `…_unit` forms preserve a predicate on every rolled shape.
+The [regressions](../../PolyFunTest/IPFunctor/TraversalLoopBounds.lean) apply these
+laws through a definitional wrapper with its own `Monad` instance.
 
 ## `mapM` and the universe constraint
 

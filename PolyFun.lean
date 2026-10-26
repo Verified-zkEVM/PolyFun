@@ -49,8 +49,10 @@ public import PolyFun.IPFunctor.Chart.Basic
 public import PolyFun.IPFunctor.Equiv.Basic
 public import PolyFun.IPFunctor.Free.Basic
 public import PolyFun.IPFunctor.Free.Bound
+public import PolyFun.IPFunctor.Free.Bound.Loops
 public import PolyFun.IPFunctor.Free.Bound.Reindex
 public import PolyFun.IPFunctor.Free.Bound.Substitution
+public import PolyFun.IPFunctor.Free.Bound.Traversal
 public import PolyFun.IPFunctor.Free.Family
 public import PolyFun.IPFunctor.Free.Fold
 public import PolyFun.IPFunctor.Free.Indexed
