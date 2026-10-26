@@ -429,7 +429,9 @@ Consequently the whole dynamical-system toolkit applies to processes and
 machines directly: terminal-coalgebra behavior and observational
 equivalence (`DynSystem.behavior`, `DynSystem.ObsEq`), orbits
 (`DynSystem.Run` / `DynSystem.Prefix`, of which `ProcessOver.Run` /
-`ProcessOver.Prefix` are the path-vocabulary views), transition
+`ProcessOver.Prefix` are the path-vocabulary views; `Prefix.append`,
+`ReachableIn.add` and `ReachableIn.split` join and cut finite orbits, and
+`DynSystem.Labeled.Trace` names the event trace of one), transition
 metadata (`DynSystem.EventMap`, `DynSystem.Labeled`, `DynSystem.SafetySpec`,
 `DynSystem.StepRel`), and the combinators (`ProcessOver.interleave` is the
 `wrap` of `DynSystem.choiceProd` along the scheduler wiring lens,
