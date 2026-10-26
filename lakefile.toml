@@ -13,7 +13,7 @@ lintDriverArgs = [
   "Examples.Tutorials.ParallelReports", "Examples.Tutorials.VersionedRequests",
   "Examples.Tutorials.UpdatePolicies", "Examples.Tutorials.ReviewableWorkflows",
   "Examples.Tutorials.FairWorkQueues", "Examples.Tutorials.BoundedController",
-  "Examples.Parliament", "PolyFunParliamentMain"
+  "Examples.Parliament", "PolyFunParliamentMain", "PolyFunIO"
 ]
 testDriver = "PolyFunTest"
 
@@ -53,6 +53,10 @@ name = "ToCslib"
 # root so `import PolyFun` remains backend-neutral.
 [[lean_lib]]
 name = "ComplexityBackends"
+
+# Optional executable IO adapters; the mathematical PolyFun umbrella does not import these.
+[[lean_lib]]
+name = "PolyFunIO"
 
 # Optional human-facing tutorials and executable case studies. This target name can coexist with VCVio's
 # `Examples` target. No generic `Examples` umbrella or core import is introduced.
