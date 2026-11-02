@@ -11,6 +11,10 @@ For routine local feedback, `./scripts/validate.sh` runs the required build,
 module, import, and documentation checks. Add the flags when changing APIs,
 proofs, examples, import boundaries, or validation infrastructure.
 
+The [review workflow](../../.github/workflows/review.yml) uses `lean4repo-utils/review@main`.
+Updates on that branch change the GitHub Actions review behavior.
+This adds no Lean or Python package dependency.
+
 ## What the wrapper checks
 
 | Check | Scope |
