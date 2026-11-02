@@ -21,6 +21,13 @@ jobs:
       name: github-pages
       url: https://verified-zkevm.github.io/PolyFun/docs/
     steps:
+      # Each Lake worker thread reserves a 1 GiB stack. On Ubuntu 26.04 adjacent stacks merge into
+      # one mapping, which reached 73 GiB here. The default overcommit policy refuses to fork a
+      # process with a mapping larger than RAM plus swap, so doc-gen4's `git` calls fail with ENOMEM
+      # although the job uses about 3 GB. The stacks are only reserved, so overcommit is safe here.
+      - name: Allow Lake to fork with large reserved stacks
+        run: sudo sysctl -w vm.overcommit_memory=1
+
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
