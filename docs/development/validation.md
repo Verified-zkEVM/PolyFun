@@ -1,5 +1,15 @@
 # Validation
 
+## Python tooling
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) for
+repository Python checks. CI uses uv 0.13.6. The uv commands below select Python
+3.12; uv downloads it if needed. Run them from the repository root.
+These checks use only the standard library. `--no-project` runs them without
+installing a Python package or creating a project environment.
+
+## Full validation
+
 Fetch precompiled dependencies on a fresh checkout, then run the full suite:
 
 ```bash
@@ -68,8 +78,8 @@ lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
   Examples.Tutorials.InteractionTrees \
   Examples.Parliament PolyFunParliamentMain
-python3 scripts/test-docs-integrity.py
-python3 scripts/check-docs-integrity.py
+uv run --no-project --python 3.12 python ./scripts/test-docs-integrity.py
+uv run --no-project --python 3.12 python ./scripts/check-docs-integrity.py
 ```
 
 Build the relevant libraries before running environment linters. Use

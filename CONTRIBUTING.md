@@ -10,6 +10,9 @@ Start with:
 - [`AGENTS.md`](AGENTS.md) for the concise agent policy
 - [`REFERENCES.md`](REFERENCES.md) for the citations used by module docstrings
 
+Install uv as described in [Python tooling](docs/development/validation.md#python-tooling)
+for the repository Python checks.
+
 Before sending work for review:
 
 - Fetch dependencies with `lake exe cache get`, then run
