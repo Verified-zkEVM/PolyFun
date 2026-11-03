@@ -172,10 +172,12 @@ Text in parentheses counts as one word in the enclosing sentence. Check the pare
 separately for sentence length. A list introduction ends at its colon for word counting. Each list
 item counts separately.
 
-PolyFun also counts a formula, a Lean expression, a command, a URL, or a citation key as one word.
-Ordinary link text keeps its words. This word-count convention is a technical-text adaptation. The
-[checker](write-technical-prose.md#use-the-checker) approximates these conventions. Review the
-actual sentence when its count is doubtful.
+STE 8.6 treats a formula as quoted text, so it counts as one word. PolyFun also groups an entire
+Lean expression, command, URL, or citation key as one word. This local convention extends the
+STE categories where quoted text or alphanumeric identifiers do not already cover the element.
+Ordinary link text keeps its words.
+The [checker](write-technical-prose.md#use-the-checker) approximates these conventions.
+Review the actual sentence when its count is doubtful.
 
 ### Claims and source evidence
 
@@ -245,7 +247,7 @@ source. A shorter sentence is not an improvement if it changes the statement.
 | STE 3.1 to 3.4, verb forms | PolyFun adaptation. Simple constructions stay preferred. A modal or complex form stays when a change would lose uncertainty or time. |
 | STE 5.3, imperative instructions | PolyFun adaptation. A requirement keeps its force ("must", "may", "can") when it is revised as a description. |
 | STE 7, safety instructions | Apply the relevant principle to risky operations. Put the condition or instruction before an explanation of the consequence. |
-| STE 8.4 to 8.7, word count | PolyFun adaptation. A formula, Lean expression, command, URL, or citation key counts as one word. STE already counts alphanumeric identifiers as one word. |
+| STE 8.4 to 8.7, word count | STE already counts formulas as quoted text and alphanumeric identifiers as one word. PolyFun also groups entire Lean expressions, commands, URLs, and citation keys where the STE categories do not already cover them. |
 | STE general recommendations | The named recommendations are local requirements. This guide does not represent them as STE rules. |
 | PolyFun additions | Source evidence, history scope, citations, clause-joining dashes, emphasis, and the capital letter on list items are local contribution policies. |
 
