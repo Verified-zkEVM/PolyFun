@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import importlib.util
 import io
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -28,9 +29,12 @@ def findings(text: str, path: str = "doc.md") -> list[str]:
 
 class WritingRuleTests(unittest.TestCase):
     def test_semicolon_excerpt_starts_before_the_semicolon(self) -> None:
-        blocks = WRITING.file_blocks("page.md", "This works; it is fine.\n")
-        excerpts = [item.excerpt for item in WRITING.check_blocks(blocks) if item.rule == "U1"]
-        self.assertEqual(excerpts, ["This works; it is fine."])
+        for text in ["This works; it is fine.", "; The lemma holds."]:
+            with self.subTest(text=text):
+                blocks = WRITING.file_blocks("page.md", text + "\n")
+                excerpts = [item.excerpt for item in WRITING.check_blocks(blocks)
+                            if item.rule == "U1"]
+                self.assertEqual(excerpts, [text])
 
     def test_vocabulary_is_parsed(self) -> None:
         general, history = WRITING.avoid_words()
@@ -201,13 +205,23 @@ class LeanExtractionTests(unittest.TestCase):
 
 class ChangedLineTests(unittest.TestCase):
     def test_only_changed_blocks_are_checked(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
+        # Keep the fixture independent of user configuration and inherited Git routing.
+        git_env = {key: value for key, value in os.environ.items()
+                   if not key.startswith("GIT_")}
+        git_env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_SYSTEM=os.devnull,
+                       GIT_CONFIG_GLOBAL=os.devnull)
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            mock.patch.dict(os.environ, git_env, clear=True),
+        ):
             root = Path(directory)
 
             def run(*args: str) -> None:
                 subprocess.run(["git", *args], cwd=root, check=True, capture_output=True)
 
-            run("init", "-q", "-b", "main")
+            run("init", "-q", "-b", "main", "--template=")
+            run("config", "core.hooksPath", os.devnull)
+            run("config", "commit.gpgsign", "false")
             run("config", "user.email", "test@example.org")
             run("config", "user.name", "Test")
             (root / "page.md").write_text("Old text; with a semicolon.\n\nA clean line.\n")

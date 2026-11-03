@@ -1,8 +1,7 @@
 name: Writing
 
-# The writing checker is an advisory editing aid. Its findings on changed prose and on the pull
-# request body are warnings, and they never fail this workflow. The tests of the checker itself
-# can fail it.
+# The writing checker reports prose findings as warnings and exits successfully.
+# Execution errors and failures in the checker tests fail this workflow.
 #
 # The pull request body comes from its author. Pass it to the checker through an environment
 # variable. Never interpolate it into a shell command.
@@ -51,12 +50,10 @@ jobs:
           version: "0.13.6"
           enable-cache: false
       - name: Check the changed prose
-        continue-on-error: true
         env:
           BASE_REF: ${{ github.base_ref }}
         run: uv run --no-project --python 3.12 python ./scripts/check-writing.py --base "origin/${BASE_REF}" --github
       - name: Check the pull request body
-        continue-on-error: true
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: printf '%s\n' "$PR_BODY" | uv run --no-project --python 3.12 python ./scripts/check-writing.py --stdin body --github
