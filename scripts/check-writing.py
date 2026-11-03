@@ -1,5 +1,5 @@
 #!/usr/bin/env -S uv run --no-project --python 3.12 python
-"""Report editing suggestions for selected rules of the PolyFun writing standard.
+"""Report prose suggestions for selected rules of the PolyFun writing standard.
 
 The standard is `docs/development/writing.md`. This script reports patterns that a search can
 find:
@@ -84,10 +84,10 @@ MODAL_BEFORE = re.compile(r"\b(?:may|might|could|would|should|must|can|will)(?:\
                           re.IGNORECASE)
 # Adjectives in "-ed" that follow "has" or "have" as possession: "polynomials have bounded degree".
 POSSESSED_ADJECTIVES = {"bounded", "unbounded", "fixed", "nested", "ordered", "distributed",
-                        "prescribed", "limited", "mixed", "balanced", "weighted", "labeled",
+                        "prescribed", "limited", "mixed", "balanced", "weighted", "labeled", "labelled",
                         "sorted", "indexed", "typed", "isolated", "repeated", "related", "named"}
-# Words in "-ing" that act as nouns or adjectives, not as verbs (rule V2). The technical nouns
-# name PolyFun constructions, such as an embedding of free programs into resumptions.
+# Local exceptions for the progressive-form pattern in V1.
+# Rule V2 uses the explicit technical-noun table in the vocabulary.
 ING_NOUNS = {"nothing", "something", "anything", "everything", "missing", "remaining",
              "existing", "pending", "ongoing", "outstanding", "corresponding", "string",
              "strings", "ring", "rings", "thing", "things", "during", "padding", "binding",
@@ -97,10 +97,6 @@ NOT_PROGRESSIVE = ING_NOUNS | {
     "hiding", "increasing", "decreasing", "nondecreasing", "nonincreasing",
     "vanishing", "accepting", "winning",
 }
-NON_VERBAL_ING = NOT_PROGRESSIVE | {
-    "hamming", "interleaving", "coupling", "tracing", "embedding", "unfolding",
-    "rewriting", "normalizing", "lowering", "wrapping", "masking", "leading",
-}
 # These phrases are objects of possession, not perfect-tense actions.
 POSSESSED_PHRASES = re.compile(
     r"(?:correlated\s+agreement|centered\s+norm|centred\s+norm|squared\s+norm|expected\s+value|"
@@ -109,10 +105,14 @@ PROGRESSIVE = re.compile(r"\b(?:is|are|was|were|be|been)\s+(\w+ing)\b", re.IGNOR
 BARE_THIS = re.compile(
     r"^(?:This|These)\s+(?:is|are|was|were|means|makes|ensures|lets|gives|shows|allows|"
     r"requires|keeps|fixes|adds|avoids|matches|also|will|can)\b")
-# "During" is a preposition, and the words in `ING_NOUNS` are not verb forms.
-ING_START = re.compile(
-    r"^(?!(?:" + "|".join(word.capitalize() for word in sorted(ING_NOUNS)) + r")\b)"
-    r"[A-Z][a-z]+ing\b[^,.;:]{0,80},")
+# "During" is a preposition, not a verb form.
+ING_START = re.compile(r"^(?!During\b)[A-Z][a-z]+ing\b[^,.;:]{0,80},")
+PREPOSITION_ING = re.compile(
+    r"\b(?:after|before|by|for|from|in|of|on|through|to|upon|with|without|when|while|than|as)"
+    r"\s+(?:not\s+)?(?P<form>[A-Za-z]+ing)\b", re.IGNORECASE)
+NON_VERBAL_WORDS = {"nothing", "something", "anything", "everything", "during", "missing",
+                    "remaining", "string", "strings", "ring", "rings", "thing", "things",
+                    "hamming", "turing"}
 EM_DASH = re.compile(r"—|\s–\s|\s--\s")
 FORMATTED_TERM = r"(?:\[[^\]]+\]\((?:[^()]|\([^()]*\))*\)|``[^`]+``|`[^`]+`|\$[^$]+\$|\*\*[^*]+\*\*)"
 DEFINITION_SEPARATOR = re.compile(
@@ -167,6 +167,23 @@ def avoid_words(vocabulary: Path = VOCABULARY) -> tuple[list[str], list[str]]:
     return general, history
 
 
+def technical_ing_nouns(vocabulary: Path = VOCABULARY) -> set[str]:
+    """Read the technical -ing terms in the vocabulary's dedicated table."""
+    text = vocabulary.read_text(encoding="utf-8")
+    section = re.search(r"^## Technical -ing nouns\s*$", text, re.MULTILINE)
+    if section is None:
+        return set()
+    body = re.split(r"^## ", text[section.end():], maxsplit=1, flags=re.MULTILINE)[0]
+    result: set[str] = set()
+    for row in body.splitlines():
+        if not row.lstrip().startswith("|"):
+            continue
+        first = row.strip().strip("|").split("|", 1)[0]
+        for term in re.findall(r"`([^`]+)`", first):
+            result.update(word.lower() for word in re.findall(r"\b[A-Za-z]+ing\b", term))
+    return result
+
+
 def word_pattern(words: list[str]) -> re.Pattern[str] | None:
     if not words:
         return None
@@ -191,7 +208,7 @@ LIST_ITEM = re.compile(r"^(\s*)(?:[-*+]|(\d+)[.)])\s+(.*)$")
 
 
 def strip_html_comments(text: str, inside: bool, visible: str) -> tuple[str, bool]:
-    """Remove HTML comments on one line, retaining code spans and character positions."""
+    """Remove HTML comments on one line. Keep code spans and character positions."""
     result = list(text)
     index = 0
     while index < len(text):
@@ -417,7 +434,7 @@ def file_blocks(path: str, text: str) -> list[Block]:
 
 
 def blank(text: str, token: bool = False) -> str:
-    """Hide content without changing its length or newline positions."""
+    """Hide content and keep its length and newline positions."""
     result = re.sub(r"[^\r\n]", " ", text)
     if token:
         positions = [i for i, char in enumerate(result) if char == " "]
@@ -430,7 +447,7 @@ def blank(text: str, token: bool = False) -> str:
 def mask(text: str, collapse_parentheses: bool,
          parentheticals: list[str] | None = None,
          parenthetical_offsets: list[int] | None = None) -> str:
-    """Mask exempt elements with one word, preserving source offsets and newlines."""
+    """Mask exempt elements with one word. Keep source offsets and newlines."""
     text = CODE_SPAN.sub(lambda m: blank(m.group(), True), text)
     for pattern, token in (
             (r"\$\$.*?\$\$|\$[^$]+\$", True),
@@ -462,7 +479,7 @@ def mask(text: str, collapse_parentheses: bool,
 
 
 def sentence_spans(text: str) -> list[tuple[int, int]]:
-    """Return sentence spans in the supplied text without losing source offsets."""
+    """Return sentence spans in the supplied text. Keep source offsets."""
     spans: list[tuple[int, int]] = []
     start = 0
     boundaries = list(re.finditer(
@@ -492,7 +509,8 @@ def word_count(sentence: str) -> int:
 
 
 def check_block(block: Block, general: re.Pattern[str] | None,
-                history: re.Pattern[str] | None) -> list[Finding]:
+                history: re.Pattern[str] | None,
+                technical_ings: set[str] | None = None) -> list[Finding]:
     found: list[Finding] = []
 
     def add(rule: str, message: str, offset: int, end: int | None = None,
@@ -536,7 +554,7 @@ def check_block(block: Block, general: re.Pattern[str] | None,
             (LATIN, "W7", "Write the English words for this Latin abbreviation."),
             (PHRASAL, "W6", "Consider a direct verb that preserves this meaning."),
             (CONTRACTION, "S5", "Write the full form of this contraction."),
-            (general, "W1", "Review this wording using writing-vocabulary.md. Preserve its meaning.")):
+            (general, "W1", "Review this wording in writing-vocabulary.md. Preserve its meaning.")):
         if pattern is None:
             continue
         for match in pattern.finditer(plain):
@@ -556,11 +574,19 @@ def check_block(block: Block, general: re.Pattern[str] | None,
     if history is not None and HISTORY_SCOPE.search(block.path):
         for match in history.finditer(plain):
             add("C3", "Describe the present state, not the history.", match.start(), match.end())
+    allowed_ings = NON_VERBAL_WORDS | (technical_ings or set())
+    for match in PREPOSITION_ING.finditer(plain):
+        form = match.group("form")
+        if form.isupper() or form.lower().endswith("string"):
+            continue  # Acronyms, file labels, and string nouns are not verb inflections.
+        if form.lower() not in allowed_ings:
+            add("V2", "Use a finite clause unless this is a technical noun or part of one.",
+                match.start("form"), match.end("form"))
     for start, end in sentence_spans(plain):
         sentence = plain[start:end]
         if BARE_THIS.match(sentence):
             add("S7", "Name the noun if this reference is ambiguous.", start, end)
-        if ING_START.match(sentence) and re.match(r"\w+", sentence).group().lower() not in NON_VERBAL_ING:
+        if ING_START.match(sentence) and re.match(r"\w+", sentence).group().lower() not in allowed_ings:
             add("V2", "Review this possible verb clause. A finite clause can be clearer.", start, end)
     return found
 
@@ -569,9 +595,10 @@ def check_blocks(blocks: list[Block], vocabulary: Path = VOCABULARY) -> list[Fin
     general_words, history_words = avoid_words(vocabulary)
     general = word_pattern(general_words)
     history = word_pattern(history_words)
+    technical_ings = technical_ing_nouns(vocabulary)
     found: list[Finding] = []
     for block in blocks:
-        found.extend(check_block(block, general, history))
+        found.extend(check_block(block, general, history, technical_ings=technical_ings))
     return found
 
 
@@ -592,7 +619,7 @@ def checked_path(path: str) -> bool:
 def added_lines(base: str) -> dict[str, set[int]]:
     """Map each changed tracked file to the line numbers that it adds since the merge base."""
     merge_base = git("merge-base", base, "HEAD").strip()
-    # NUL-delimited names do not depend on quoting or patch-header prefixes.
+    # NUL-delimited names do not depend on quotation marks or patch-header prefixes.
     # Keep both sides of a rename so unchanged prose is not treated as an addition.
     options = ("--no-ext-diff", "--no-textconv", "--find-renames")
     names = iter(git("diff", *options, "--name-status", "-z", "--diff-filter=ACMRT",
@@ -617,7 +644,7 @@ def added_lines(base: str) -> dict[str, set[int]]:
 
 
 def read_source(path: Path, label: str, diagnostics: list[Finding]) -> str | None:
-    """Report unsupported source input as advisory data, retaining other file checks."""
+    """Report unsupported source input as advisory data. Continue the other file checks."""
     try:
         return path.read_text(encoding="utf-8")
     except UnicodeDecodeError as error:

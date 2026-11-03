@@ -157,7 +157,7 @@ class PolyFunTermTests(unittest.TestCase):
         for text in ["Unfolding, as a map to behavior, forgets the internal state.",
                      "Embedding, well-foundedness, and the image are in one module.",
                      "Nothing about cost, time, or structure enters the definition.",
-                     "Existing revisions, once checked, stay unchanged.",
+                     "Current revisions, once checked, stay unchanged.",
                      "The proof is pending.", "The work is ongoing."]:
             self.assertEqual(findings(text), [], text)
         self.assertEqual(findings("Interpreting the tree, the handler answers each request."),
@@ -257,6 +257,56 @@ class ReportTests(unittest.TestCase):
         self.assertTrue(WRITING.checked_path("docs/guides/itree.md"))
 
 
+class StrictV2Tests(unittest.TestCase):
+    vocabulary = """## Technical -ing nouns
+
+| Term | Technical meaning |
+|---|---|
+| `encoding`, `folding`, `sampling` | Protocol constructions |
+| `gas metering` | Resource accounting |
+
+## Other terms
+
+| `making` | Outside the technical noun table |
+
+## Words to avoid
+
+| Avoid | Use |
+|---|---|
+| "utilize" | use |
+| "no longer" | present fact (rule C3) |
+"""
+
+    def test_technical_ing_nouns_are_vocabulary_defined(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'vocabulary.md'
+            path.write_text(self.vocabulary)
+            self.assertEqual(WRITING.technical_ing_nouns(path),
+                             {'encoding', 'folding', 'sampling', 'metering'})
+
+    def test_preposition_gerunds_and_listed_technical_nouns(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'vocabulary.md'
+            path.write_text(self.vocabulary)
+            cases = [('Before making a change, run the tests.', True),
+                     ('Existing revisions, once checked, stay unchanged.', True),
+                     ('Instead of calling the function, use the cached value.', True),
+                     ('The bound follows by assuming P.', True),
+                     ('After encoding, the message has a fixed length.', False),
+                     ('The bound follows from sampling.', False),
+                     ('Nothing changes before folding.', False),
+                     ('The budget accounts for gas metering.', False),
+                     ('Refer to CONTRIBUTING for docstring rules.', False)]
+            for text, expected in cases:
+                with self.subTest(text=text):
+                    found = WRITING.check_blocks(WRITING.file_blocks('page.md', text), path)
+                    self.assertEqual(any(f.rule == 'V2' for f in found), expected)
+            text = 'Run the tests before\nmaking a change.'
+            found = WRITING.check_blocks(WRITING.file_blocks('page.md', text), path)
+            self.assertEqual([f.line for f in found if f.rule == 'V2'], [2])
+
+
+
 class WritingRegressionTests(unittest.TestCase):
     def test_wrapped_technical_phrases_keep_their_meaning(self) -> None:
         for text in ['The code has correlated\nagreement.',
@@ -270,7 +320,7 @@ class WritingRegressionTests(unittest.TestCase):
 
 
     def test_wrapped_straight_quotes_are_one_exempt_element(self) -> None:
-        text = ('"essentially\nsurjective". Review their meaning rather than deleting them as '
+        text = ('"essentially\nsurjective". Review their meaning. Do not delete them as '
                 'isolated words. "Negligible" retains its technical meaning.')
         self.assertEqual(findings(text), [])
         text = 'The text "quoted\nwords; ignored" is literal.\nActual prose; checked.'
@@ -308,7 +358,8 @@ class WritingRegressionTests(unittest.TestCase):
         self.assertEqual([f.line for f in found if f.rule == 'S1'], [2])
 
     def test_possession_is_not_a_perfect_tense(self) -> None:
-        for text in ['The code has correlated agreement.', 'The vector has centered norm.',
+        for text in ['The code has correlated agreement.', 'The graph has labelled edges.',
+                     'The vector has centered norm.',
                      'The vector has squared norm.', 'The variable has expected value zero.',
                      'The tree has left and right children.', 'The polynomials have known degree.']:
             with self.subTest(text=text):

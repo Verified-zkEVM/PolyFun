@@ -4,7 +4,7 @@ Contribute a definition, proof, test, example, or documentation change. This gui
 to prepare the change, validate it, and describe it for review. Read these pages first:
 
 - [`README.md`](README.md) for the project overview and scope
-- [Documentation hub](docs/README.md) for concepts and reading routes
+- [Documentation hub](docs/README.md) for concepts and documentation routes
 - [Repository map](docs/reference/repo-map.md) and [validation](docs/development/validation.md)
   for contributor workflows
 - [`AGENTS.md`](AGENTS.md) for the concise agent policy
@@ -12,7 +12,7 @@ to prepare the change, validate it, and describe it for review. Read these pages
 
 ## Before You Start
 
-### Check the scope
+### Check The Scope
 
 PolyFun hosts generic, domain-agnostic infrastructure. It contains polynomial functors,
 interaction trees, state machines, generic interaction, program logic, and realizability. It
@@ -21,11 +21,10 @@ also contains free, displayed-free, and cofree structures. *Cryptographic* conte
 Examples of such content are probabilistic semantics, evaluation distributions,
 oracle-simulation security definitions, and scheme-specific algebra.
 
-A generic PolyFun construction can have a load-bearing dependency on a probability monad, an
-oracle simulator, or a security predicate. In that case, parameterize the construction over an
-arbitrary monad or observation. Let downstream consumers instantiate it.
+Consider a PolyFun definition with a load-bearing dependency on a probability monad, oracle simulator, or security predicate.
+Parameterize the generic construction over an arbitrary monad or observation. Let downstream consumers instantiate it.
 
-### Check for overlap and upstream results
+### Check For Overlap And Upstream Results
 
 Before you start a substantial change, search the open pull requests and issues for the same
 target:
@@ -36,34 +35,33 @@ gh issue list -R Verified-zkEVM/PolyFun --state open --search "<declaration or t
 ```
 
 If an open PR covers the same declarations, ask its author whether the work is active. If you
-open a PR for the same target, link the earlier PR and explain how your work relates to it.
+open a PR for the same target, link the earlier PR. Explain how your work relates to it.
 
 Before you add a generic definition or lemma, search the pinned Lean core, Mathlib, Batteries,
 and CSLib for it. The [upstream-first rules](docs/development/review-hardening.md#upstream-first-mathematics)
 describe the search and the evidence to record.
 
-## Prepare and Validate a Change
+## Prepare And Validate A Change
 
-1. On a new clone, fetch the dependency cache with `lake exe cache get`.
+1. Before review, fetch the dependency cache with `lake exe cache get`.
 2. If you add, delete, or rename source files, stage them with `git add`.
 3. Then regenerate each affected umbrella, such as `PolyFun.lean` or `ToCslib.lean`.
    [Generated files](docs/development/generated-files.md) gives the command for each umbrella.
 4. Run the full suite with `./scripts/validate.sh --lint --test --axioms`.
 
 The [validation guide](docs/development/validation.md) explains each check, the focused commands,
-and the CI jobs. Every change must also obey these source rules:
+and the CI jobs. Follow these source rules:
 
-- Finished work does not contain `sorry` or `admit`. Use `stop` only to preserve partial proof
+- Finished work should not contain `sorry` or `admit`. Use `stop` only to preserve partial proof
   work explicitly during a refactor.
 - Repository-wide Lean options stay in `lakefile.toml`. Do not restate `autoImplicit = false`
   with a `set_option` line in a file.
-- Do not disable linters locally or globally to remove warnings. Fix the underlying issue instead
-  of adding `set_option linter.* false`, `set_option weak.linter.* false`, or repository-level
-  linter suppressions.
+- Do not disable linters locally or globally to remove warnings. Fix the cause. Do not add
+  `set_option linter.* false`, `set_option weak.linter.* false`, or repository-level linter suppressions.
 
 ## Pull Requests
 
-### Title format
+### Title Format
 
 Use this format for the PR title:
 
@@ -81,13 +79,18 @@ Choose the type from this list:
 - `ci`: CI workflows and checks
 - `chore`: maintenance, such as dependency updates
 
-Use the scope to identify the affected area in lowercase, for example `pfunctor`, `ipfunctor`,
+Use a lowercase scope to identify the affected area. Examples are `pfunctor`, `ipfunctor`,
 `itree`, `interaction`, `execution`, `control`, `realizability`, `examples`, or `deps`. Write a
 short subject that names the change. It can be an imperative phrase, such as "add lens
 monomorphisms", or a noun phrase for the result, such as "exact equations for stateful
 interpretation". Keep ordinary words lowercase. Preserve the capitalization of names such as
-`FreeM`, and do not end the subject with a period. A squash merge uses the title as the commit
-subject.
+`FreeM`, and do not end the subject with a period.
+
+For a title without a scope, omit both parentheses, as in `docs: clarify the interface`.
+
+GitHub can use a lone commit subject as the default squash subject. With several commits,
+it uses the PR title. The default squash body joins the commit messages. Review and edit that
+message to describe the final tree. A rebase merge preserves the individual commit messages.
 
 ### Description
 
@@ -96,19 +99,19 @@ the information needed to assess the contribution:
 
 - State the problem, the change, and its purpose.
 - Identify headline declarations and the scope of each statement.
-- Give the public API delta, including removals, renamed declarations, deprecated aliases, and
+- Give the public API delta, with removals, renamed declarations, deprecated aliases, and
   instance changes.
 - State the validation commands, their results, and the commit that they cover.
 - For a substantial PR, record the [review passes](docs/development/review-hardening.md#required-review-passes)
   and the final audit note from the [hardening checklist](docs/development/review-hardening.md#hardening-checklist).
 - For a new script, identify its workflow under the [script policy](#repository-scripts).
-- Link related issues, the base of a stack, overlapping work, and any downstream VCVio check.
+- Link related issues, the base of a stack, work that overlaps this PR, and any downstream VCVio check.
 - Describe the known gaps and the parts of a source that the change does not formalize.
 
 Keep the claims in the title and the description consistent with the code and the evidence. A
 successful build does not establish fidelity to a source or axiom cleanliness.
 
-### Size and stacking
+### Size And Stacking
 
 Give each PR one topic. Separate mechanical changes from mathematical changes when each part can
 be reviewed and validated independently. Split a broad change when its independent claims cannot
@@ -117,13 +120,13 @@ be reviewed and reverted separately.
 Use a native GitHub stack for a contribution that needs several dependent PRs. Name the base of
 each PR in its description. Each PR must build and pass its checks against that base. A retargeted
 or restacked PR needs fresh checks. The [stack rules](docs/development/review-hardening.md#native-github-stacks)
-describe how a stack is merged and checked.
+describe how maintainers merge and check a stack.
 
 ### Writing
 
 Use the [writing standard](docs/development/writing.md) for documentation, docstrings, comments,
 commit messages, PR and issue text, and review comments. It applies to all authors. It uses STE to
-correct defects in existing prose, with stated adaptations for mathematical text.
+correct defects in current prose, with stated adaptations for mathematical text.
 
 Use the [writing workflow](docs/development/write-technical-prose.md) when you draft or revise
 that text. Keep claims, hypotheses, uncertainty, and requirement strength unchanged during a style
@@ -134,26 +137,26 @@ The [writing checker](docs/development/write-technical-prose.md#use-the-checker)
 suggestions on changed prose. CI shows its findings as warnings. The findings do not fail a PR,
 and an empty report does not establish conformance to the standard.
 
-### Tool-assisted contributions
+### Tool-Assisted Contributions
 
 Authors stay responsible for content produced with an AI agent or another tool:
 
 - Read the headline statements and the full description before you request review.
 - Keep temporary plans, handoff notes, and session logs out of the contribution.
 - Replace inaccessible planning codes with the maintained source or an explanation.
-- Coordinate concurrent tool runs so that they do not open competing PRs for the same target.
+- Coordinate concurrent tool runs so that they do not open PRs that compete for the same target.
 
 ## Repository Scripts
 
-Add a script only when it serves a concrete, recurring workflow for library development,
+Add a script only when it serves a concrete, regular workflow for library development,
 validation, or maintenance. The PR must identify that workflow. It must explain why an upstream
-command, a Lake target, or an existing script cannot reasonably provide the workflow. It must also
+command, a Lake target, or a current script cannot reasonably provide the workflow. It must also
 justify the maintenance of the additional code.
 
 Keep temporary review probes, migration experiments, and one-time audits outside the tracked
-repository. Record their findings and validation evidence in the PR. Put lasting guidance in the
-owning documentation page. Tests for maintained repository behavior belong on the narrowest
-existing test surface. A useful review experiment alone does not justify a new script or CI job.
+repository. Record their findings and validation evidence in the PR. Put durable guidance in the
+documentation page for that topic. Tests for maintained repository behavior belong on the narrowest
+current test surface. A useful review experiment alone does not justify a new script or CI job.
 
 ## Attribution And File Headers
 
@@ -169,7 +172,7 @@ Authors: Author Name
 -/
 ```
 
-* `CURRENT_YEAR` is the calendar year when the file is created.
+* `CURRENT_YEAR` is the calendar year when you create the file.
 * The first line *always* gives the copyright to "PolyFun Contributors", never to an individual.
   The project then keeps the copyright, and the headers do not diverge as contributors change.
 * The `Authors:` line *always* names individual humans. List the people credited for the design
@@ -180,14 +183,14 @@ Follow this attribution policy:
 
 1. **New files**: add the standard header with the current year and "PolyFun Contributors" as
    the copyright holder. Name the credited authors on the `Authors:` line.
-2. **Routine edits to existing files**: preserve the existing `Authors:` line. Do not rewrite
+2. **Routine edits to current files**: preserve the current `Authors:` line. Do not rewrite
    attribution only because you edited the file. The copyright line stays "PolyFun Contributors".
 3. **Substantial rewrites or replacements**: if new content effectively replaces a file, update
    the `Authors:` line for the new authorship. The copyright line stays "PolyFun Contributors".
 4. **Copied or ported material**: a new file can keep substantial structure or content from
    another source. In that case, preserve any required upstream `Authors:` attribution. For
    example, the files imported from `Verified-zkEVM/VCVio` at the start of the project kept their
-   `Authors:` line. Their copyright line names "PolyFun Contributors".
+   `Authors:` line verbatim. Their copyright line names "PolyFun Contributors".
 5. **AI assistance**: do not add a separate AI-attribution line. Use the normal header format, with
    only the credited human authors on the `Authors:` line.
 
@@ -199,14 +202,14 @@ When the policy does not decide a case, prefer these choices:
 
 ## Documentation Expectations
 
-- Every ordinary Lean source file has a module docstring near the top, written with `/-! ... -/`.
-- Import-only umbrella modules such as `PolyFun.lean`, and `lakefile.toml`, stay bare.
-- Public definitions and major theorems have declaration docstrings, written with `/-- ... -/`.
-- A module docstring gives a concise title and summary. It includes notation or references when
+- Every ordinary Lean source file should have a module docstring near the top, written with `/-! ... -/`.
+- Import-only umbrella modules such as `PolyFun.lean`, and `lakefile.toml`, should stay bare.
+- Public definitions and major theorems should have declaration docstrings, written with `/-- ... -/`.
+- A module docstring should give a concise title and summary, with notation or references when
   that context materially helps a reader.
-- A declaration docstring describes what a definition is or what a theorem states, not how it
+- A declaration docstring should describe what a definition is or what a theorem states, not how it
   evolved.
-- Docstrings are intrinsic and descriptive. Cross-reference live definitions when that helps. Do
+- Docstrings must be intrinsic and descriptive. Cross-reference live definitions when that helps. Do
   not mention removed or renamed declarations, change history, or reactive phrases such as
   "replaces" or "renamed from".
 - If a file cites papers, include a references section in the module docstring, or cite the
@@ -228,7 +231,7 @@ normalize local fixtures, and these modules stay outside the production library.
 - Use `public import` only when declarations from the imported module occur in the public
   signatures of this module or are intentionally re-exported.
 - Use plain `import` for implementation-only dependencies.
-- Use `import all` before the corresponding regular or public import when proofs need opaque
+- Use `import all` before the regular or public import for that module when proofs need opaque
   declaration bodies from another module. Comment which definition they unfold.
 - The library boundaries for `import all` are in [module APIs](docs/development/module-api.md),
   and `scripts/check-modules.sh` enforces them. Tests can open `ComplexityBackends`. Backends never
@@ -252,11 +255,11 @@ indices, constructor wrappers, or coherent instance paths:
 
 - **No attribute** is the normal state. Use public equations for ordinary rewriting and recursive
   computation.
-- **`@[implicit_reducible]`** is appropriate when a definition must compute in types. Core's
+- **`@[implicit_reducible]`** is appropriate when a definition is intended to compute in types. Core's
   `Init.MetaTypes` recommends this attribute for operations in type parameters. Explain the
   dependent consumer. An elaboration diagnostic alone is not sufficient evidence.
 - **`@[instance_reducible]`** exposes a definition to instance synthesis. Justify the instance
-  path, and test it together with competing inherited paths.
+  path, and test it together with alternative inherited paths.
 - **`@[reducible]`** is appropriate for intentional transparent wrappers. It also suits
   instance-building definitions whose projections must agree during synthesis. Mathlib's hierarchy
   note explicitly relies on reducible non-instances for this purpose. The attribute changes
@@ -315,7 +318,7 @@ own `namespace` or its own file.
 
 - For proof-only cleanup, preserve declaration names, signatures, binder and universe parameters,
   attributes, imports, and intended definitional equations.
-- Prefer a direct theorem application or constructor to a one-step tactic wrapper. Reuse existing
+- Prefer a direct theorem application or constructor to a one-step tactic wrapper. Reuse current
   map, preservation, and extensionality laws before you introduce induction or unfold
   representations.
 - Use `rfl` for definitional equations and proof-irrelevance equalities when the public reduction
@@ -324,8 +327,8 @@ own `namespace` or its own file.
   dependent transports and case splits when they explain the types. Fewer lines alone do not
   justify heavier automation.
 - Keep theorem docstrings concise, and state the useful relation or assumptions. Check claims
-  about equivalence, bounds, and codomains against the declaration, including empty cases.
-- Record reusable guidance in the owning documentation. Keep per-file cleanup inventories outside
+  about equivalence, bounds, and codomains against the declaration, also for empty cases.
+- Record reusable guidance in the documentation for that topic. Keep per-file cleanup inventories outside
   the tracked tree.
 - Keep imports at the top of the file.
 - Follow the [Mathlib naming guide](https://leanprover-community.github.io/contribute/naming.html)
@@ -340,15 +343,16 @@ own `namespace` or its own file.
 - Use `/-! ## Title -/` doc headers, not ASCII banners, for inline section breaks. See
   [section headers](#section-headers-within-a-file).
 
-## Documentation and examples
+## Documentation And Examples
 
-Use the [documentation hub](docs/README.md) to find the owning page of each topic. Update that
-page in the same PR as a change to a public API, a command, an import boundary, or the layout.
-Keep the README focused on purpose, a checked example, installation, and reading routes. Explain
+Use the [documentation hub](docs/README.md) to find the page for each topic.
+Update that page with a change to a public API, a command, an import boundary, or the layout.
+Include that update in the same PR.
+Keep the README focused on purpose, a checked example, installation, and documentation routes. Explain
 assumptions and theorem scope in the guides and source docstrings. Use the bibliography for
 public literature references.
 
-Teaching programs belong under `Examples/Tutorials/` in the optional `PolyFunExamples` target.
+Tutorial programs belong under `Examples/Tutorials/` in the optional `PolyFunExamples` target.
 Regressions and adversarial cases belong in `PolyFunTest/`. Production libraries import neither.
 When examples rely on equations across a package boundary, add public-consumer checks in
 [the separate fixture](test/DocumentationConsumer/README.md).
@@ -356,13 +360,13 @@ When examples rely on equations across a package boundary, add public-consumer c
 The `lean-example` marker in the README selects a named region from a compiled Lean module.
 Change that source and the excerpt together. The integrity checker validates excerpt equality,
 local paths, Markdown heading anchors, and module docstrings. Historical progress notes belong in
-Git and PR history. Preserve useful rationale in the owning guide before you remove a stale
+Git and PR history. Preserve useful rationale in the guide for that topic before you remove a stale
 document.
 
-## Case-study validation
+## Case-Study Validation
 
 Maintained applications live under `Examples/` in the optional `PolyFunExamples` library. The
-recurring Parliament test, `scripts/test-parliament-cli.py`, uses temporary directories. It checks
+regular Parliament test, `scripts/test-parliament-cli.py`, uses temporary directories. It checks
 process exit codes, terminal input, writer locks, publication, and recovery. The validation wrapper
 and CI run it after they build `polyfun-parliament`. Every spawned process needs a bounded wait and
 cleanup on failure.

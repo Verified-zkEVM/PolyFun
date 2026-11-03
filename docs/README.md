@@ -61,9 +61,9 @@ docstrings, comments, commit messages, and PR, issue, and review text.
 
 ## Maintenance contract
 
-Each topic has one owning guide. Change that guide in the same PR as a public
+Each topic has one guide for that topic. Change that guide in the same PR as a public
 API, command, import boundary, or source-layout change. Source wins when prose
-and declarations disagree. Keep executable teaching material in `Examples/`
+and declarations disagree. Keep executable tutorial material in `Examples/`
 and regressions in `PolyFunTest/`. Keep links and README excerpts checked by
 `scripts/check-docs-integrity.py`.
 

@@ -73,7 +73,7 @@ python3 scripts/test-docs-integrity.py
 python3 scripts/check-docs-integrity.py
 ```
 
-Build the relevant libraries before running environment linters. Use
+Build the relevant libraries before you run environment linters. Use
 `lake lint -- --trace` to see which checks actually run. `checkUnivs` runs
 during elaboration. Text-style linting is a separate check. The test library
 is outside `lake lint` scope. See [lint policy](linting.md).
@@ -83,7 +83,7 @@ The [documentation consumer](../../test/DocumentationConsumer/README.md) and
 imports. They share the root's dependency cache and pins. These separate packages catch missing public
 equations that an internal `import all` test could conceal.
 
-When changing the README example, update both its fenced block and the named
+When you change the README example, update both its fenced block and the named
 region in [Requests.lean](../../Examples/Tutorials/Requests.lean). The checker
 compares imports plus the region body. `lake build PolyFunExamples` elaborates
 the source and its result proofs.
@@ -101,8 +101,10 @@ the source and its result proofs.
   Every job restores two caches. One holds the dependencies, keyed on the
   toolchain and manifest. The other holds PolyFun's own `.lake/build`, keyed per
   commit and restored from the newest `main` build. Each job therefore rebuilds only what the checkout
-  changed. Only `build` on `main` saves the caches, and a newer push to `main`
-  waits for the running job rather than cancelling its save. A nightly clean
+  changed.
+
+  Only `build` on `main` saves the caches. A newer push to `main` waits for the job already in progress.
+  It does not cancel the save. A nightly clean
   build of `main` skips the build cache, so nothing passes only because of it.
 - [Import check](../../.github/workflows/check-imports.yml): generated imports.
 - [Docs integrity](../../.github/workflows/docs-integrity.yml): checker tests,
@@ -129,8 +131,8 @@ Lean, Mathlib and CSLib stay in sync. Update `lean-toolchain`, both consumers'
 matching `lean-toolchain`, and both dependency pins in `lakefile.toml`, then
 run `lake update` and the full suite. Keep the root manifest committed and
 review the resolved versions. Consumer manifests are local artifacts that Lake regenerates.
-Compatibility tests for existing deprecated APIs should assert their expected
-diagnostics with strict `#guard_msgs` rather than suppressing warnings.
+Compatibility tests for current deprecated APIs should assert their expected
+diagnostics with strict `#guard_msgs` and do not suppress warnings.
 
 Pin a release candidate like a stable version, with its `-rcN` tag wherever
 the version appears. When a change to `lean-toolchain` reaches `main`,

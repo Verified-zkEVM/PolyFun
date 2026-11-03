@@ -13,8 +13,8 @@ word.
 4. Use a qualifier when two technical meanings occur in the same passage.
 5. Add a missing term or meaning when the contribution first needs it.
 
-A noun and a verb need separate technical uses, even when they have the same spelling. Listing
-"query" as a noun does not approve every verb use of that word. A category example is not a reason
+A noun and a verb need separate technical uses, even when they have the same spelling. A noun entry for
+"query" does not approve every verb use of that word. A category example is not a reason
 to reject another established term from that field.
 
 ## Terms and context
@@ -67,6 +67,28 @@ Introduce a longer or unfamiliar term before you use an abbreviation:
 Prose uses Oxford spelling or American spelling, as rule W8 describes. Keep the original spelling
 in a cited title or a declaration name.
 
+## Technical -ing nouns
+
+These terms name the stated technical concepts. They do not authorize a verbal clause.
+The checker reads this table for rule V2.
+
+| Term | Technical meaning |
+|---|---|
+| `encoding`, `decoding` | The representation and interpretation of values or messages under specified formats. |
+| `folding`, `batching` | Reduction and aggregation constructions on words or computations. |
+| `hashing`, `binding`, `hiding` | Hash constructions and named commitment properties. |
+| `sampling`, `padding` | Random-choice constructions and prescribed data extension. |
+| `rewriting`, `normalizing` | Lean expression transformations by equations or reduction. |
+| `pattern matching` | Selection of a branch by a constructor pattern. |
+| `indexing`, `mapping` | Index conventions and maps between mathematical objects. |
+| `working tree`, `dangling symlink` | A Git checkout and a symlink with no target. |
+| `programming`, `computing` | Program construction and computation as subject fields. |
+| `unfolding`, `embedding` | The behavior map of a machine and inclusions that preserve structure. |
+| `routing`, `branching`, `linking` | Request dispatch, choice structure, and composition of processes. |
+| `counting`, `typing` | Cardinality arguments and the types of dependent expressions. |
+| `opening` | Initial meeting formalities. The [coverage notes](../../Examples/Parliament/Docs/coverage.md) identify these as outside the model. |
+| `operating system` | The system that hosts an executable process. |
+
 ## Technical verbs
 
 Use these verbs for the stated subject-field actions. Keep the meaning of a verb consistent within
@@ -88,7 +110,7 @@ flags".
 
 ## Words to avoid
 
-This table gives prompts for an editing pass over ordinary prose. It does not define STE word
+This table gives prompts for a revision pass over ordinary prose. It does not define STE word
 approval. Use a replacement only when it preserves the meaning and grammatical role. Rewrite the
 sentence when a direct replacement does not work:
 
@@ -111,5 +133,4 @@ sentence when a direct replacement does not work:
 
 "The following are equivalent" is a permitted mathematical introduction. A word in the table can
 also occur in a technical term, such as "robust compilation". Words such as "simply" and
-"essentially" occur in "simply typed" and "essentially surjective". Review their meaning rather
-than deleting them as isolated words.
+"essentially" occur in "simply typed" and "essentially surjective". Review their meaning. Do not delete them as isolated words.
