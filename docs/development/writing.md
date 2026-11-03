@@ -156,16 +156,22 @@ requirements.
 
 ### Word count
 
-STE 8.4 to 8.7 defines word counting. A number with its unit, an abbreviation, a proper name,
-a quoted title, a formula, and a hyphenated group each count as one word. Do not add hyphens or
-quotation marks to hide a long sentence.
+STE 8.4 to 8.7 defines word counting. Each of these elements counts as one word:
+
+- A number, or a number with its unit.
+- An abbreviation or an alphanumeric identifier.
+- Quoted text, a title, or a label.
+- A proper name.
+- A hyphenated group.
+
+Do not add hyphens or quotation marks to hide a long sentence.
 
 Text in parentheses counts as one word in the enclosing sentence. Check the parenthetical text
 separately for sentence length. A list introduction ends at its colon for word counting. Each list
 item counts separately.
 
-PolyFun also counts an identifier, command, URL, or citation key as one word. Ordinary link text
-keeps its words. This word-count convention is a technical-text adaptation. The
+PolyFun also counts a formula, a Lean expression, a command, a URL, or a citation key as one word.
+Ordinary link text keeps its words. This word-count convention is a technical-text adaptation. The
 [checker](write-technical-prose.md#use-the-checker) approximates these conventions. Review the
 actual sentence when its count is doubtful.
 
@@ -236,7 +242,7 @@ source. A shorter sentence is not an improvement if it changes the statement.
 | STE 3.1 to 3.4, verb forms | PolyFun adaptation. Simple constructions stay preferred. A modal or complex form stays when a change would lose uncertainty or time. |
 | STE 5.3, imperative instructions | PolyFun adaptation. A requirement keeps its force ("must", "may", "can") when it is revised as a description. |
 | STE 7, safety instructions | Apply the relevant principle to risky operations. Put the condition or instruction before an explanation of the consequence. |
-| STE 8.4 to 8.7, word count | PolyFun adaptation. An identifier, command, URL, or citation key counts as one word. |
+| STE 8.4 to 8.7, word count | PolyFun adaptation. A formula, Lean expression, command, URL, or citation key counts as one word. STE already counts alphanumeric identifiers as one word. |
 | STE general recommendations | The named recommendations are local requirements. This guide does not represent them as STE rules. |
 | PolyFun additions | Source evidence, history scope, citations, clause-joining dashes, emphasis, and the capital letter on list items are local contribution policies. |
 
