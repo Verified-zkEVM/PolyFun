@@ -64,8 +64,8 @@ Introduce a longer or unfamiliar term before you use an abbreviation:
 | Lean | declaration, theorem, lemma, hypothesis, docstring, namespace, typeclass, instance, module, `public section`, transparency, axiom |
 | Repository tools | branch, commit, pull request, build, linter, axiom sweep, umbrella module, consumer package, validation, CI |
 
-Use American spelling in prose, such as "labeled transition system" and "behavior". Keep a
-different spelling in a cited title or a declaration name.
+Prose uses Oxford spelling or American spelling, as rule W8 describes. Keep the original spelling
+in a cited title or a declaration name.
 
 ## Technical verbs
 
