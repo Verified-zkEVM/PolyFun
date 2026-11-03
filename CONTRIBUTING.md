@@ -138,8 +138,6 @@ and an empty report does not establish conformance to the standard.
 
 Authors stay responsible for content produced with an AI agent or another tool:
 
-- In the PR description, identify the tools that produced a substantial part of the code or prose.
-  File headers do not carry this information (see [attribution](#attribution-and-file-headers)).
 - Read the headline statements and the full description before you request review.
 - Keep temporary plans, handoff notes, and session logs out of the contribution.
 - Replace inaccessible planning codes with the maintained source or an explanation.
