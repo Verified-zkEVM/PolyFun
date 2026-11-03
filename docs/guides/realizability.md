@@ -870,10 +870,6 @@ alone does not establish strict PPT.
   answers are finitely enumerable and checkable. A class bounded only by queries carries
   information-theoretic hardness of an instance behind the interface, not computational hardness
   of a problem posed in the input.
-- **No machine-level strength.** The continuation of `QuantitativeRealization.seqComp` runs over
-  `Boundary.mid`, whose input is the first phase's result alone. A continuation that also reads
-  the original input therefore has no sequential realization; only the realizer-level
-  `HasProd.withInput` retains context.
 - **`queries ≤ work` needs positive costs.** Each visible query adds one query and the costs of
   that step's head and update codes to an execution's `ExecutionCost`. The inequality therefore
   holds only for a backend whose codes cost at least one; the cost-free test fixtures run any

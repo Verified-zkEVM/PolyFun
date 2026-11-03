@@ -124,6 +124,16 @@ Lean, Mathlib and CSLib stay in sync. Update `lean-toolchain`, both consumers'
 matching `lean-toolchain`, and both dependency pins in `lakefile.toml`, then
 run `lake update` and the full suite. Keep the root manifest committed and
 review the resolved versions. Consumer manifests are regenerated locally.
+Both consumers resolve into the root's package cache
+(`packagesDir = "../../.lake/packages"`), and their ignored `lake-manifest.json`
+and `.lake/` stay on disk between runs, so a stale consumer manifest checks the
+root's packages out at its old revisions. A worktree whose `.lake/packages` is a
+symlink passes the damage to the checkout it points at. Before validating a
+toolchain or manifest change, run `rm -f test/*/lake-manifest.json` and
+`rm -rf test/*/.lake`. If a build then fails inside a dependency, compare
+`git -C .lake/packages/<pkg> rev-parse HEAD` with the root manifest's pin and
+check the pin out (`git -C .lake/packages/<pkg> checkout --detach <rev>`) before
+rebuilding. Never build the consumers on two toolchains against one cache.
 Compatibility tests for existing deprecated APIs should assert their expected
 diagnostics with strict `#guard_msgs` rather than suppressing warnings.
 
