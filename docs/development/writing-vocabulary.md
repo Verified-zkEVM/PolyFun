@@ -33,7 +33,7 @@ meaning of a word in a different context:
 | handler | A value that answers each request of an interface, such as `Handler m P` | Distinguish a stateful handler from a machine. Name the monad when it matters. |
 | instance | A typeclass instance, or an instantiation of a generic interface | Write "typeclass instance" when both meanings occur. |
 | interface | A polynomial interface of requests and responses, or the public API of a module | Write "polynomial interface" or "public API" when both meanings occur. |
-| module | A Lean module | Write "Lean module" if an algebraic module or a state-separating package occurs in the same passage. |
+| module | A Lean module | Write "Lean module" if an algebraic module occurs in the same passage. |
 | package | A Lake package, or a stateful handler in the sense of state-separating proofs | Write "Lake package" or "state-separating package". |
 | position, direction | The shape `P.A` and the arity family `P.B` of a polynomial functor | Do not rotate with "shape" and "arity" in one passage (W3). Introduce the alternative names once if a source uses them. |
 | process | An open process in `PolyFun/Interaction/Open/`, or an operating-system process | Write "open process" or "operating-system process" when both occur. |

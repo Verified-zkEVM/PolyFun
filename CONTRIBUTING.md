@@ -14,16 +14,16 @@ to prepare the change, validate it, and describe it for review. Read these pages
 
 ### Check the scope
 
-PolyFun hosts generic, domain-agnostic infrastructure. It contains polynomial functors, free,
-displayed-free, and cofree structures, interaction trees, state machines, generic interaction,
-program logic, and realizability. *Cryptographic* content belongs in
+PolyFun hosts generic, domain-agnostic infrastructure. It contains polynomial functors,
+interaction trees, state machines, generic interaction, program logic, and realizability. It
+also contains free, displayed-free, and cofree structures. *Cryptographic* content belongs in
 [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio) or in downstream consumers.
 Examples of such content are probabilistic semantics, evaluation distributions,
 oracle-simulation security definitions, and scheme-specific algebra.
 
-A PolyFun definition can need a probability monad, an oracle simulator, or a security predicate.
-In that case, parameterize the generic construction over an arbitrary monad or observation, and
-let downstream consumers instantiate it.
+A generic PolyFun construction can have a load-bearing dependency on a probability monad, an
+oracle simulator, or a security predicate. In that case, parameterize the construction over an
+arbitrary monad or observation. Let downstream consumers instantiate it.
 
 ### Check for overlap and upstream results
 
