@@ -11,12 +11,12 @@ public import PolyFun.ITree.Basic
 
 Definitions of the standard interaction-tree combinators that depend only on
 `bind`, `iter`, the smart constructors, and `ITree.corec`. These are the Lean
-analogues of Coq's `Core/ITreeDefinition.v` `spin`, `forever`, `burn` and the
+analogues of Rocq's `Core/ITreeDefinition.v` `spin`, `forever`, `burn` and the
 helpers in `Core/KTree.v` (`map`, `cat`, `ignore`).
 
-The list of definitions and their Coq counterparts:
+The list of definitions and their Rocq counterparts:
 
-| Coq             | Lean              |
+| Rocq            | Lean              |
 | --------------- | ----------------- |
 | `spin`          | `ITree.diverge`   |
 | `forever t`     | `ITree.forever`   |
@@ -44,7 +44,7 @@ variable {F : PFunctor.{uA, uB}} {α : Type uα} {β : Type uβ} {γ : Type uγ}
 /-! ### Diverging tree -/
 
 /-- The diverging interaction tree, an infinite sequence of silent (`step`)
-nodes. (Coq `spin`.) -/
+nodes. (Rocq `spin`.) -/
 def diverge : ITree F α :=
   ITree.corec (F := F) (α := α)
     (fun (_ : PUnit.{uB + 1}) => .mk .step (fun _ => PUnit.unit))
@@ -61,7 +61,7 @@ def diverge : ITree F α :=
 
 /-! ### Functor map -/
 
-/-- Map a function over the leaves of an interaction tree. (Coq
+/-- Map a function over the leaves of an interaction tree. (Rocq
 `ITree.map`.) -/
 def map (f : α → β) (t : ITree F α) : ITree F β :=
   bind t (fun a => pure (f a))
@@ -69,28 +69,28 @@ def map (f : α → β) (t : ITree F α) : ITree F β :=
 /-! ### Kleisli composition -/
 
 /-- Kleisli composition for ITree-valued functions: `cat f g a = f a >>= g`.
-(Coq `ITree.cat`.) -/
+(Rocq `ITree.cat`.) -/
 def cat (f : α → ITree F β) (g : β → ITree F γ) : α → ITree F γ :=
   fun a => bind (f a) g
 
 /-! ### Ignoring the result -/
 
 /-- Run `t`, discarding its leaf value. The unit result may live in any
-universe. (Coq `ITree.ignore`.) -/
+universe. (Rocq `ITree.ignore`.) -/
 def ignore (t : ITree F α) : ITree F PUnit.{uUnit + 1} :=
   map (fun _ => PUnit.unit) t
 
 /-! ### Forever -/
 
 /-- Run `t` forever, discarding each leaf value. The result type `β` is
-arbitrary because `forever t` never produces a leaf. (Coq `forever`.) -/
+arbitrary because `forever t` never produces a leaf. (Rocq `forever`.) -/
 def forever (t : ITree F α) : ITree F β :=
   iter (fun _ : PUnit.{uB + 1} => bind t (fun _ => pure (Sum.inl PUnit.unit))) PUnit.unit
 
 /-! ### Bounded execution -/
 
 /-- Strip up to `n` silent steps from the head of an interaction tree.
-Stops early at the first `pure` or `query` node. (Coq `burn`.) -/
+Stops early at the first `pure` or `query` node. (Rocq `burn`.) -/
 def take : Nat → ITree F α → ITree F α
   | 0, t => t
   | n + 1, t =>

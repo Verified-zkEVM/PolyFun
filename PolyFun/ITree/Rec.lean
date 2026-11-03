@@ -31,7 +31,7 @@ does have independent argument and result universes; `fixRec` only requires
 the external signature's direction universe to agree with that of `β` at the
 coproduct boundary.
 
-Coq references:
+Rocq references:
 
 * `Interp/Recursion.v` — `mrec`, `rec`, `interp_mrec`, `calling'`.
 * `Core/CategoryOps.v` — the underlying KTree categorical structure.
@@ -46,7 +46,7 @@ namespace ITree
 /-- `CallE α β` is a polynomial functor with a single event, modelling "make
 a recursive call with an `α`-argument and expect a `β`-result".
 
-In Coq this is `inductive callE (A B : Type) : Type → Type | Call : A →
+In Rocq this is `inductive callE (A B : Type) : Type → Type | Call : A →
 callE A B B`. Translated to a polynomial functor, the event name carries the
 input `α`-value and the answer type is constantly `β`. -/
 def CallE (α : Type uCallA) (β : Type uCallB) : PFunctor.{uCallA, uCallB} where
@@ -101,7 +101,7 @@ def interpMrec {D : PFunctor.{uDA, uB}} {E : PFunctor.{uEA, uB}} {α : Type uα}
 invoking `body : Handler D (D + E)`. Each recursive `D`-call in the body is
 silent-step-guarded so the combined corecursive definition is productive.
 
-This is the Lean version of Coq's `mrec`. -/
+This is the Lean version of Rocq's `mrec`. -/
 def mutualRec {D : PFunctor.{uDA, uB}} {E : PFunctor.{uEA, uB}}
     (body : ∀ a : D.A, ITree (D + E : PFunctor.{max uDA uEA, uB}) (D.B a))
     (req : D.A) : ITree E (D.B req) :=
@@ -111,7 +111,7 @@ def mutualRec {D : PFunctor.{uDA, uB}} {E : PFunctor.{uEA, uB}}
 `α`, recursive-call argument feedback, and result `β`, returning the
 specialised tree at input `a`.
 
-This is the Lean version of Coq's `rec`. It is a direct specialisation of
+This is the Lean version of Rocq's `rec`. It is a direct specialisation of
 `mutualRec` to the single-call event signature `CallE α β`. -/
 def fixRec {E : PFunctor.{uEA, uB}} {α : Type uCallA} {β : Type uB}
     (body : α → ITree (CallE α β + E : PFunctor.{max uCallA uEA, uB}) β) (a : α) : ITree E β :=

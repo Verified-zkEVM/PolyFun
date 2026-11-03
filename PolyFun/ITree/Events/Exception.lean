@@ -18,7 +18,7 @@ A thrown exception terminates as `Except.error`, while ordinary returns become
 `Except.ok` and external `E`-events remain visible. `runExcept` is its
 conventional runner alias.
 
-Coq references:
+Rocq references:
 
 * `Events/Exception.v` — `exceptE`, `interp_except`.
 -/

@@ -7,7 +7,7 @@ in Coq* (Xia, Zakowski, He, Hur, Malecha, Pierce, Zdancewic, POPL 2020).
 
 Interaction Trees (ITrees) are a coinductive datatype for representing
 recursive and impure programs that interact with an environment through a
-fixed set of events. Coq's presentation is
+fixed set of events. Rocq's presentation is
 
 ```coq
 CoInductive itree (E : Type → Type) (R : Type) :=
@@ -36,7 +36,7 @@ ITree F α       : Type (max uA uB uR)
 The empty direction type of a pure leaf and the unit direction type of a silent
 step are lifted to `uB`; a visible query retains its original direction type.
 
-| Coq | Lean |
+| Rocq | Lean |
 |---|---|
 | `itree E R` | `ITree F α` |
 | `itreeF E R T` | `ITree.Shape F α` |
@@ -55,7 +55,7 @@ step are lifted to `uB`; a visible query retains its original direction type.
 | Run guarded loops in `do` notation | [Do](../../PolyFun/ITree/Do.lean) |
 | Choose between ITrees and other models | [Computation models](computation-models.md) |
 
-The Lean representation uses Mathlib's M-type. Familiarity with the Coq
+The Lean representation uses Mathlib's M-type. Familiarity with the Rocq
 library helps with the algebra, but Lean constructors and universe parameters
 follow the polynomial event interface described below.
 
@@ -188,9 +188,9 @@ as a machine, so the dynamical-system and computation APIs apply to it.
   handler runs `toDynComputation`. Silent steps still consume fuel, and a
   finite budget makes no claim of termination or productivity.
 
-## Recovering Coq references
+## Recovering Rocq references
 
-Coq file references in module docstrings and Lean comments use the file
+Rocq file references in module docstrings and Lean comments use the file
 names from the upstream
 [`DeepSpec/InteractionTrees`](https://github.com/DeepSpec/InteractionTrees)
 repository (`Core/ITreeDefinition.v`, `Core/Subevent.v`,

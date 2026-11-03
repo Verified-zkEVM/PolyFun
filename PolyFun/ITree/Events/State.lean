@@ -21,7 +21,7 @@ threading an initial state through the computation and leaving every external
 direct productive corecursor, so their computation rules are exact equalities
 rather than merely weak bisimulations.
 
-Coq references:
+Rocq references:
 
 * `Events/State.v` — `stateE`, `interp_state`, `run_state`.
 -/

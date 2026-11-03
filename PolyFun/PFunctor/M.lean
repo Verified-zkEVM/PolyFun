@@ -11,7 +11,7 @@ public import PolyFun.PFunctor.Obj
 /-! # Auxiliary lemmas for `PFunctor.M`
 
 Small extensions to `Mathlib.Data.PFunctor.Univariate.M` used by the
-`PolyFun.ITree` port of the Coq `InteractionTrees` library.
+`PolyFun.ITree` port of the Rocq `InteractionTrees` library.
 
 The Mathlib file already supplies `M.mk`, `M.dest`, `M.corec`, `M.dest_mk`,
 `M.mk_dest`, `M.dest_corec`, `M.corec_unique`, and the bisimulation principle

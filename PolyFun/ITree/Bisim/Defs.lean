@@ -18,11 +18,11 @@ algebraic theory:
   `PFunctor.M`, strong bisimulation coincides with Lean equality;
   for that reason we set `Bisim = (· = ·)`.
 
-* `ITree.WeakBisimRel RR t s` — relational weak bisimulation (Coq `euttR`).
+* `ITree.WeakBisimRel RR t s` — relational weak bisimulation (Rocq `euttR`).
   The trees share an event signature, but their return types and universes are
   independent; pure leaves are compared by `RR`.
 
-* `ITree.WeakBisim t s` — the equality-specialized weak bisimulation (Coq
+* `ITree.WeakBisim t s` — the equality-specialized weak bisimulation (Rocq
   `eutt`). Two ITrees are
   weakly bisimilar iff, after stripping any *finitely many* leading `step`
   nodes from each side, their observable heads agree (pure leaves, visible
@@ -390,7 +390,7 @@ theorem WeakBisimRelF.toWeakBisimF {R : ITree F α → ITree F α → Prop}
   obtain ⟨t', s', ht, hs, hm⟩ := hF
   exact ⟨t', s', ht, hs, hm.toMatch⟩
 
-/-- Weak bisimulation (Coq `eutt`). Two trees are weakly bisimilar iff
+/-- Weak bisimulation (Rocq `eutt`). Two trees are weakly bisimilar iff
 there exists a relation `R` containing the pair that is closed under
 one-step unfolding into `WeakBisimF`. Equivalently, `WeakBisim` is the
 largest such relation (Tarski greatest fixed point). -/
