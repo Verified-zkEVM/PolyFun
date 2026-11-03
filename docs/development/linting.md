@@ -5,7 +5,7 @@
 ```bash
 lake exe cache get
 lake build PolyFun ToCslib ComplexityBackends PolyFunExamples PolyFunTest --wfail
-lake lint -- --trace
+lake exe runLinter --trace PolyFun   # once for each root in lintDriverArgs
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
   Examples.Tutorials.InteractionTrees Examples.Tutorials.ParallelReports \
@@ -31,8 +31,9 @@ The checks serve different purposes:
 
 - Build-time linters include Mathlib's standard set and core's `checkUnivs`.
   `--wfail` makes their warnings fail the build.
-- `lake lint` uses Batteries' environment runner, with all production roots and tutorial modules
-  supplied by `lintDriverArgs`. `--trace` shows which checks actually run.
+- The environment linters use Batteries' runner over the production roots and tutorial modules
+  listed in `lintDriverArgs`, one root per process (below). `--trace` shows which checks actually
+  run.
 - `lake exe lint-style` over the roots above uses Mathlib's source-text checks,
   including Unicode. Build-time checks do not cover every text-style rule.
 
@@ -41,6 +42,13 @@ environment linting. Its headers use the same standard checks as production. Run
 [Batteries runner](https://github.com/leanprover-community/batteries/blob/4488d40d070b9700d4d5a6aa342f0d40c31b2a2d/scripts/runLinter.lean)
 can reuse existing oleans. It imports each root independently at private
 visibility, including private bodies and documentation.
+
+Run one root per process, as `./scripts/validate.sh --lint` and CI do. In a single
+process, as with `lake lint` over every root, each root's imports stay live for the
+whole run. Every module's olean is mapped at a fixed address, so each later root
+finds those addresses taken and reads its whole import closure into memory instead.
+Memory then grows by roughly one closure per root, past what hosted runners and
+most laptops have.
 
 ## Registration and upstream tools
 

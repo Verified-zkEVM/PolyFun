@@ -69,8 +69,14 @@ python3 ./scripts/check-docs-integrity.py
 
 if (( run_lint )); then
   echo ""
-  echo "# Running environment linters (lake lint)"
-  lake lint
+  echo "# Running environment linters (runLinter, one process per lintDriverArgs root)"
+  # One process per root, as in CI: a single `lake lint` keeps every root's imports alive and
+  # reads each later root's oleans into memory instead of mapping them (docs/development/linting.md).
+  lint_roots="$(python3 -c \
+    "import tomllib; print('\n'.join(tomllib.load(open('lakefile.toml', 'rb'))['lintDriverArgs']))")"
+  for root in $lint_roots; do
+    lake exe runLinter "$root"
+  done
   lake exe lint-style PolyFun ToCslib ComplexityBackends \
     Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
     Examples.Tutorials.InteractionTrees Examples.Tutorials.ParallelReports \

@@ -63,7 +63,7 @@ lake -d test/DocumentationConsumer build --wfail
 lake build polyfun-parliament --wfail
 python3 scripts/test-parliament-cli.py
 lake -d test/ParliamentConsumer build --wfail
-lake lint
+lake exe runLinter PolyFun   # once for each root in lintDriverArgs
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
   Examples.Tutorials.InteractionTrees \
@@ -72,10 +72,10 @@ python3 scripts/test-docs-integrity.py
 python3 scripts/check-docs-integrity.py
 ```
 
-Build the relevant libraries before running environment linters. Use
-`lake lint -- --trace` to see which checks actually run. `checkUnivs` runs
-during elaboration; text-style linting is a separate check. The test library
-is outside `lake lint` scope. See [lint policy](linting.md).
+Build the relevant libraries before running environment linters, and run them
+one root per process. Use `lake exe runLinter --trace <root>` to see which checks
+actually run. `checkUnivs` runs during elaboration; text-style linting is a
+separate check. The test library is not a lint root. See [lint policy](linting.md).
 
 The [documentation consumer](../../test/DocumentationConsumer/README.md) and
 `test/ParliamentConsumer` depend on PolyFun as separate packages and use ordinary
@@ -93,7 +93,7 @@ the source and its result proofs.
   merge-queue candidates:
   - `build` runs the wrapper with `--axioms`;
   - `Lint (environment linters)` builds the production and example libraries
-    with `--wfail` and runs `lake lint`;
+    with `--wfail` and runs Batteries' `runLinter` once per `lintDriverArgs` root;
   - `Test` builds `PolyFunTest` with `--wfail --iofail` and runs `lake test`,
     the CLI tests and both consumers.
 
@@ -110,9 +110,8 @@ the source and its result proofs.
   and tutorial libraries.
 - [API docs](../../.github/workflows/docs.yml): generated source documentation
   published on pushes to `main`. Its Lean action builds the documented roots and
-  leaves the tests and environment lint to CI: a single `lake lint` process over
-  every root needs about 7 GB, which shuts the hosted runner down, so the linters
-  run one root per process in the CI lint job.
+  leaves the tests and environment lint to CI, whose lint job runs one root per
+  process ([lint policy](linting.md#commands-and-coverage) explains why).
 
 All required jobs must pass on the revision under review. Retargeted or
 restacked PRs need fresh checks, including intermediate base branches. A
