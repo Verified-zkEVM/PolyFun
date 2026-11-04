@@ -300,9 +300,8 @@ answers and a price per operation.
   prices are allowed.
 
 `comp outer inner` runs `inner`, computes `outer`'s view from the actual intermediate result, and
-runs `outer`, on the sum of `inner`'s operations and the dependent sum of `outer`'s operations over
-its views. It realizes the composite (`run_comp`, `Realizes.comp`), and budgets add
-(`CostAtMost.comp`). `contramap` precomposes an uncharged map, and `ofFun` is the program with no
+runs `outer`, on the sum of the two interfaces, each operation tagged with the view it belongs to.
+It realizes the composite (`run_comp`, `Realizes.comp`), and budgets add (`CostAtMost.comp`). `contramap` precomposes an uncharged map, and `ofFun` is the program with no
 operations. `BudgetedProgram f ω` bundles a measured program realizing `f` with its budget, and
 composes the same way.
 

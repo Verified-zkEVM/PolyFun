@@ -24,8 +24,8 @@ charge of every completed path of every view's program, so signed prices are all
 computes `f` with no operations at cost `0`.
 
 `comp outer inner` runs `inner`, computes `outer`'s view from the actual intermediate result, and
-runs `outer`. It does this on the sum of `inner`'s operations and the dependent sum of `outer`'s
-operations over its views, keeping both price lists. It computes the composite
+runs `outer`. It does this on the sum of the two interfaces, each operation tagged with the view it
+belongs to, keeping both price lists. It computes the composite
 (`run_comp`, `Realizes.comp`), and its budgets add (`CostAtMost.comp`). `contramap` precomposes an
 uncharged map on inputs. A `BudgetedProgram f ω` bundles a measured program realizing `f` with a
 budget, and composes the same way.
@@ -141,17 +141,17 @@ theorem costAtMost_ofFun [Add ω] [Zero ω] [Preorder ω] (f : Input → Result)
     (ofFun f (ω := ω)).CostAtMost 0 :=
   fun _ _ => le_rfl
 
-/-- The answers of the composite interface: `inner`'s at its view, and `outer`'s at each of its
-views. -/
+/-- The answers of the composite interface, which does not depend on the view: each operation is
+tagged with the view it belongs to, `inner`'s or `outer`'s. -/
 def CompAns (outer : MeasuredProgram Mid Result ω) (inner : MeasuredProgram Input Mid ω)
-    (v : inner.View) : inner.Op ⊕ (Σ _ : outer.View, outer.Op) → Type u
-  | .inl o => inner.Ans v o
+    (_ : inner.View) : (Σ _ : inner.View, inner.Op) ⊕ (Σ _ : outer.View, outer.Op) → Type u
+  | .inl ⟨v, o⟩ => inner.Ans v o
   | .inr ⟨v', o⟩ => outer.Ans v' o
 
-/-- The inclusion of `inner`'s interface into the composite interface. -/
+/-- The inclusion of `inner`'s interface at view `v` into the composite interface. -/
 def innerLens (outer : MeasuredProgram Mid Result ω) (inner : MeasuredProgram Input Mid ω)
     (v : inner.View) : Lens ⟨inner.Op, inner.Ans v⟩ ⟨_, CompAns outer inner v⟩ :=
-  ⟨Sum.inl, fun _ b => b⟩
+  ⟨fun o => Sum.inl ⟨v, o⟩, fun _ b => b⟩
 
 /-- The inclusion of `outer`'s interface at view `v'` into the composite interface. -/
 def outerLens (outer : MeasuredProgram Mid Result ω) (inner : MeasuredProgram Input Mid ω)
@@ -159,20 +159,21 @@ def outerLens (outer : MeasuredProgram Mid Result ω) (inner : MeasuredProgram I
   ⟨fun o => Sum.inr ⟨v', o⟩, fun _ b => b⟩
 
 /-- Run `inner`, compute `outer`'s view from the actual intermediate result without charging it,
-and run `outer`, on the sum of the two interfaces with both price lists. -/
+and run `outer`, on the sum of the two interfaces, each operation tagged with its view, with both
+price lists. -/
 def comp (outer : MeasuredProgram Mid Result ω) (inner : MeasuredProgram Input Mid ω) :
     MeasuredProgram Input Result ω where
   View := inner.View
   view := inner.view
-  Op := inner.Op ⊕ (Σ _ : outer.View, outer.Op)
+  Op := (Σ _ : inner.View, inner.Op) ⊕ (Σ _ : outer.View, outer.Op)
   Ans := CompAns outer inner
   program v := (inner.program v).mapLens (innerLens outer inner v) >>= fun m =>
     (outer.program (outer.view m)).mapLens (outerLens outer inner v (outer.view m))
-  answer v
-    | .inl o => inner.answer v o
+  answer _
+    | .inl ⟨v, o⟩ => inner.answer v o
     | .inr ⟨v', o⟩ => outer.answer v' o
   cost
-    | .inl o => inner.cost o
+    | .inl ⟨_, o⟩ => inner.cost o
     | .inr ⟨_, o⟩ => outer.cost o
 
 /-- The composite computes the composite function. -/
@@ -187,10 +188,11 @@ theorem Realizes.comp {outer : MeasuredProgram Mid Result ω} {inner : MeasuredP
     (outer.comp inner).Realizes (g ∘ f) := fun i => by
   rw [run_comp, Function.comp_apply, hi i, ho]
 
-/-- Composite budgets add. -/
+/-- Composite budgets add: the inner budget, then the outer one. Arguments come in the order of
+`comp`, outer first. -/
 theorem CostAtMost.comp [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω]
     {outer : MeasuredProgram Mid Result ω} {inner : MeasuredProgram Input Mid ω} {B₁ B₂ : ω}
-    (hi : inner.CostAtMost B₁) (ho : outer.CostAtMost B₂) :
+    (ho : outer.CostAtMost B₂) (hi : inner.CostAtMost B₁) :
     (outer.comp inner).CostAtMost (B₁ + B₂) := by
   intro v q
   have hq := Path.charge_splitBind (c := (outer.comp inner).cost)
@@ -252,7 +254,7 @@ def comp [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω] {g : Mid → R
     {f : Input → Mid} (outer : BudgetedProgram g ω) (inner : BudgetedProgram f ω) :
     BudgetedProgram (g ∘ f) ω :=
   ⟨outer.program.comp inner.program, inner.budget + outer.budget,
-    outer.realizes.comp inner.realizes, inner.costAtMost.comp outer.costAtMost⟩
+    outer.realizes.comp inner.realizes, outer.costAtMost.comp inner.costAtMost⟩
 
 end BudgetedProgram
 
