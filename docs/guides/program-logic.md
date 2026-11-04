@@ -462,17 +462,20 @@ counting `StateT` handler with a budget that charges only one of two operations.
 call by call.
 
 - **Instrumented runs.** `h.withCharge c` keeps the amount spent as `StateT` state, and
-  `Handler.withCharge_eq_modify` (`@[spec]`) exposes a call as `modify (· + c a)` followed by
-  `h a`. Core's `StateT` rules and loop `invariants` then apply unchanged, under any base reading.
+  `Handler.withCharge_eq_modify` exposes a call as `modify (· + c a)` followed by `h a`; it is a
+  `vcgen` rule under `open scoped PFunctor.Handler.ChargeSteps`. Core's `StateT` rules and loop
+  `invariants` then apply unchanged, under any base reading.
   Under the demonic reading of `FreeM`, a triple about the instrumented run of the identity handler
   is a bound on the charge of every completed path (`Handler.triple_liftM_id_withCharge_iff`). To
   unfold `liftM` through a program, pass `FreeM.liftM_lift_bind'`, `FreeM.liftM_ite` and
-  `FreeM.liftM_pure` to `vcgen` as rules rather than rewriting with `simp` first: `simp` reduces
-  the value type of each call, which the rules then no longer match. This is the recommended route.
+  `FreeM.liftM_pure` (and `FreeM.liftM_dite` for dependent branches) to `vcgen` as rules rather
+  than rewriting with `simp` first: on a concrete interface `simp` reduces the value type of each
+  call, which the rules then no longer match. This is the recommended route.
 - **The budget reading.** `FreeM.budgetWPMonad c B` reads `FreeM P` over predicates on the amount
   spent, and its triples are exactly charge bounds (`isChargeBound_iff_triple`). Its call rule
   `FreeM.Spec.lift_budget` is stated with the lattice connectives `⊓` and `⨅`, which `vcgen`
-  splits. The reading fixes `c` and `B`, so install it with `attribute [local instance]`.
+  splits; it is a rule under `open scoped PFunctor.FreeM.BudgetReading`. The reading fixes `c` and
+  `B`, so install it with `attribute [local instance]`.
 
 `PolyFunTest/Do/Budget.lean` checks both: the budget of a two-call program, the spend of a `for`
 loop and of a branching program, and the conversion to completed-path bounds.

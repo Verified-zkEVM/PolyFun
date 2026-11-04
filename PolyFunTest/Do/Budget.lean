@@ -8,6 +8,7 @@ module
 
 public import PolyFun.PFunctor.Free.WP.Budget
 public import PolyFun.PFunctor.Free.Cost.Tactic
+public import ToCslib.Data.PFunctor.Free.Basic
 public import ToCslib.Data.PFunctor.Free.Loops
 
 /-!
@@ -30,6 +31,7 @@ Checks for `PolyFun.PFunctor.Free.WP.Budget`:
 public section
 
 open Std.WP PFunctor
+open scoped PFunctor.FreeM.BudgetReading PFunctor.Handler.ChargeSteps
 
 set_option experimental.vcgen true
 
@@ -93,7 +95,9 @@ def loopCalls (a : P.A) (n : ℕ) : FreeM P Unit := do
   for _ in List.range n do
     let _ ← FreeM.lift (P := P) a
 
-/-- `vcgen` proves the spend of the instrumented run of a free program with a loop. -/
+/-- `vcgen` proves the spend of the instrumented run of a free program with a loop. Over a generic
+interface, a `simp` pass unfolding `liftM` first is harmless: the value type of each call stays
+`P.B a`. -/
 theorem loopCalls_spend (c : P.A → ℕ) (a : P.A) (n : ℕ) :
     ⦃ fun s => s = 0 ⦄ (loopCalls a n).liftM ((Handler.id P).withCharge c)
       ⦃ fun _ s => s ≤ n * c a ⦄ := by
