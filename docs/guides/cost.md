@@ -252,12 +252,16 @@ with each call charged the worst case of its implementation, `handlerCost` (`cos
 state gives the same transfer (`IsChargeBound.run_liftM`). When the step's target charge depends
 on the state, a potential pays for it: `Path.exists_run_liftM_amortized` bounds the target charge
 of every completed path by the source charge plus the growth of the potential. A cache whose size
-is the potential makes at most as many target calls as it grows.
+is the potential makes at most as many target calls as it grows. A handler that may pause
+(`runUntil`, returning the pending call and its continuation) has the budget form of the same
+argument: a nonnegative potential that pays for each step gives a target budget, whatever the
+program's own charge (`IsChargeBound.runUntil`).
 
 **Handlers into any monad.**
 
 - `h.withCharge c` keeps the amount spent as `StateT` state, and forgetting it recovers the
-  handler (`fst_map_run_liftM_withCharge`).
+  handler (`fst_map_run_liftM_withCharge`). `h.withChargeW c` logs it in a writer instead
+  (`fst_map_run_liftM_writerT`, `run_liftM_withChargeW_id`, `supp_run_liftM_id_withChargeW`).
 - On every possible result of a run of a program within budget `B`, the amount spent is at most
   `B` (`IsChargeBound.le_of_canReturn_run_liftM_withCharge`).
 - That is an instance of resource growth (`IsChargeBound.le_of_canReturn_run_liftM`): if each call
