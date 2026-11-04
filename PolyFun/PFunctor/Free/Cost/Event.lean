@@ -249,14 +249,6 @@ theorem Path.zero_le_peak (x : FreeM P α) (p : Path x) :
     change 0 ≤ max (max 0 (c a)) (c a + (Path.charge (Watermark.of ∘ c) (r b) p).peak)
     exact le_max_of_le_left (le_max_left _ _)
 
-omit [AddCommGroup ω] [LinearOrder ω] [IsOrderedAddMonoid ω] in
-/-- Over an interface whose every call has an answer, every program makes progress. -/
-theorem programProgress_of_nonempty [∀ a, Nonempty (P.B a)] (x : FreeM P α) :
-    x.ProgramProgress := by
-  induction x using FreeM.rec with
-  | pure a => exact programProgress_pure a
-  | liftBind a r ih => exact (programProgress_liftBind_iff a r).2 ⟨inferInstance, ih⟩
-
 /-- The peak of a path's watermark from `s` spent: the highest amount spent along the path. -/
 private theorem add_peak_liftBind (a : P.A) (r : P.B a → FreeM P α) (b : P.B a) (p : Path (r b)) :
     s + (Path.charge (Watermark.of ∘ c) (FreeM.liftBind a r) ⟨b, p⟩).peak =
