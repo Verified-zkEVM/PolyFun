@@ -94,9 +94,12 @@ continuation start from any amount within a bound.
 
 - Bounds push forward along monotone additive maps (`IsChargeBound.map`). A per-kind vector bound
   weighted by a linear form is a weighted bound.
-- Bounds transfer both ways along additive order embeddings, such as `ℕ ↪ ℕ∞`
+- Bounds transfer both ways along additive order embeddings, such as `ℕ ↪ ℕ∞` or `ℕ ↪ ℝ≥0∞`
   (`isChargeBound_comp_iff`, `isChargeBound_natCast_iff`).
-- Pairs and families split componentwise (`isChargeBound_prod_iff`, `isChargeBound_pi_iff`).
+- Pairs and families split componentwise (`isChargeBound_prod_iff`, `isChargeBound_pi_iff`), a
+  family sums to a total (`IsChargeBound.sum`), and a bound holds in every coordinate of a constant
+  family (`IsChargeBound.const`). Per-index unit budgets are the subtractive per-index roll bound
+  (`isChargeBound_single_iff_isRollBound`).
 
 ## Lenses and handlers
 
@@ -107,4 +110,5 @@ continuation start from any amount within a bound.
 
 **Free handlers.** If each implementation `h a` stays within `c a` under the target charge `d`,
 simulating a program within budget through `h` stays within the same budget
-(`IsChargeBound.liftM`).
+(`IsChargeBound.liftM`). With a uniform step bound `k`, a program of `n` calls is simulated within
+`n • k` (`IsChargeBound.liftM_nsmul`).

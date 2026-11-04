@@ -467,6 +467,13 @@ lemma programProgress_liftBind_iff (a : P.A) (r : P.B a → FreeM P α) :
     ProgramProgress (FreeM.liftBind a r) ↔ Nonempty (P.B a) ∧ ∀ y, ProgramProgress (r y) :=
   Iff.rfl
 
+/-- Over an interface whose every call has an answer, every program makes progress. -/
+theorem programProgress_of_nonempty [∀ a, Nonempty (P.B a)] (x : FreeM P α) :
+    x.ProgramProgress := by
+  induction x using FreeM.rec with
+  | pure a => exact programProgress_pure a
+  | liftBind a r ih => exact (programProgress_liftBind_iff a r).2 ⟨inferInstance, ih⟩
+
 /-- Mapping returned values preserves the reachable query tree and hence
 program progress. -/
 lemma ProgramProgress.map {oa : FreeM P α} (h : oa.ProgramProgress) (f : α → β) :
