@@ -384,14 +384,9 @@ noncomputable def handlerCost (d : Q.A → ω) (handler : (a : P.A) → FreeM Q 
 with each call charged the worst case of its implementation. -/
 theorem costWith_liftM_le (d : Q.A → ω) (handler : (a : P.A) → FreeM Q (P.B a))
     (x : FreeM P α) (k : α → ω) :
-    costWith d (x.liftM handler) k ≤ costWith (handlerCost d handler) x k := by
-  rw [costWith_eq_wpFold, wpFold_liftM]
-  induction x using FreeM.rec with
-  | pure x => exact le_rfl
-  | liftBind a r ih =>
-    change costWith d (handler a) (fun u => wpFold _ (r u) k) ≤
-      handlerCost d handler a + ⨆ u, costWith (handlerCost d handler) (r u) k
-    exact (costWith_le_cost_add (handler a) _).trans (add_le_add le_rfl (iSup_mono ih))
+    costWith d (x.liftM handler) k ≤ costWith (handlerCost d handler) x k :=
+  wpFold_liftM_le handler (OpSpec.charge_mono _) (fun a k => costWith_le_cost_add (handler a) k)
+    x k
 
 theorem cost_liftM_le (d : Q.A → ω) (handler : (a : P.A) → FreeM Q (P.B a)) (x : FreeM P α) :
     cost d (x.liftM handler) ≤ cost (handlerCost d handler) x :=
