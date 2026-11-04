@@ -334,7 +334,7 @@ end Cost
 /-- A natural-number budget is a bound on the worst-case cost in `ℕ∞`. -/
 theorem isChargeBound_iff_cost_natCast_le {x : FreeM P α} {c : P.A → ℕ} {n : ℕ} :
     IsChargeBound x c n ↔ cost (fun a => (c a : ℕ∞)) x ≤ n := by
-  rw [← isChargeBound_natCast_iff, Nat.cast_zero, isChargeBound_iff_cost_le]
+  rw [← isChargeBound_natCast_iff (R := ℕ∞), Nat.cast_zero, isChargeBound_iff_cost_le]
 
 section CostTransfer
 
