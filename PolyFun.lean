@@ -345,6 +345,7 @@ public import PolyFun.PFunctor.Free.Sigma
 public import PolyFun.PFunctor.Free.Support
 public import PolyFun.PFunctor.Free.Universal
 public import PolyFun.PFunctor.Free.WP
+public import PolyFun.PFunctor.Free.WP.Budget
 public import PolyFun.PFunctor.Free.WP.Charge
 public import PolyFun.PFunctor.Free.WP.Cost
 public import PolyFun.PFunctor.Free.WP.Upstream
