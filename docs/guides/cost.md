@@ -68,8 +68,8 @@ leaves free.
 
 ### Bounds as contracts
 
-The laws above hold for any ordered additive monoid. A bound presented as a resource contract
-needs more:
+The laws of this guide hold in any ordered additive monoid. A bound presented as a resource
+contract needs more:
 
 - **A canonically ordered cost type.** With negative prices, a program can be padded with refund
   calls to meet any budget. Signed prices belong inside potential and completed-path arguments,
