@@ -40,16 +40,6 @@ open Std.WP
 
 namespace PFunctor
 
-namespace OpSpec
-
-variable {P : PFunctor.{uA, uB}} {ω : Type uB}
-
-/-- The budget reading is monotone. -/
-theorem budget_monotone [Add ω] [LE ω] (c : P.A → ω) (B : ω) : (budget c B).Monotone :=
-  fun _ _ _ hk _ hs => ⟨hs.1, fun b => hk b _ (hs.2 b)⟩
-
-end OpSpec
-
 namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {ω : Type uB} [Add ω] [LE ω]
