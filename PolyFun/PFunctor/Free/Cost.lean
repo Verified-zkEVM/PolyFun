@@ -72,6 +72,11 @@ theorem budget_apply {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω) (a
     budget c B a k s ↔ s + c a ≤ B ∧ ∀ b, k b (s + c a) :=
   Iff.rfl
 
+/-- The budget reading is monotone in its continuation. -/
+theorem budget_monotone {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω) :
+    (budget c B).Monotone :=
+  fun _ _ _ hk _ hs => ⟨hs.1, fun b => hk b _ (hs.2 b)⟩
+
 /-- The fold of a roll bound: a call at `a` is admitted at state `b` when `canRoll a b`, and each
 continuation starts from `cost a b`. -/
 def roll {σ : Type w} (canRoll : P.A → σ → Prop) (cost : P.A → σ → σ) : OpSpec P (σ → Prop) :=
@@ -115,7 +120,13 @@ variable [Add ω] [LE ω] [Zero ω]
 
 /-- `x.IsChargeBound c B s`: with `s` already spent, every call of `x` keeps the amount spent at
 most `B`, where a call at `a` costs `c a`, and every leaf is reached within `B`. The spent amount
-defaults to `0`. -/
+defaults to `0`.
+
+The bound is relative to an accounting boundary: it charges the calls of `x` and nothing else.
+The code between calls, the answers and the handler or machine that produces them are free at
+this layer, and are bounded one layer down (`docs/guides/cost.md`, "Accounting boundary"). Read as
+a resource contract, it needs a canonically ordered cost type: with negative prices, refund calls
+make any budget reachable. -/
 def IsChargeBound (x : FreeM P α) (c : P.A → ω) (B : ω) (spent : ω := 0) : Prop :=
   wpFold (OpSpec.budget c B) x (fun _ s => s ≤ B) spent
 

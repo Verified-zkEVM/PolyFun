@@ -20,7 +20,9 @@ Checks for `PolyFun.PFunctor.Free.Cost` and for the lens transport of roll bound
 * a per-kind vector budget pushes forward to a weighted budget;
 * a pair budget is the subtractive roll bound on what remains;
 * simulating through a handler that doubles every call doubles a unit budget;
-* a non-additive roll bound transports along a lens into a sum.
+* a non-additive roll bound transports along a lens into a sum;
+* contracts need care: a per-kind budget over infinitely many kinds does not bound total use, and
+  with a negative price a refund call meets a budget the work alone would exceed.
 -/
 
 public section
@@ -152,5 +154,41 @@ example : (upThenDown.mapLens (Lens.inl (Q := Coin))).IsRollBound false
     (fun a s => Sum.elim (admits · s) (fun _ => True) a)
     (fun a s => Sum.elim (record · s) (fun _ => s) a) :=
   IsRollBound.mapLens Lens.inl upThenDown_isRollBound
+
+/-! ## Bounds as contracts -/
+
+/-- Infinitely many kinds of call, one answer each. -/
+abbrev Kinds : PFunctor.{0, 0} := ⟨ℕ, fun _ => PUnit⟩
+
+/-- One call to each of three kinds. -/
+def spread : FreeM Kinds Bool := do
+  let _ ← FreeM.lift (P := Kinds) 0
+  let _ ← FreeM.lift (P := Kinds) 1
+  let _ ← FreeM.lift (P := Kinds) 2
+  pure true
+
+/-- Each kind is called at most once: the per-kind budget `1` holds. -/
+example : spread.IsChargeBound (fun k => Pi.single k 1) (fun _ => (1 : ℕ)) := by
+  rw [isChargeBound_pi_iff]
+  intro i
+  simp only [spread, isChargeBound_lift_bind_iff', isChargeBound_pure_iff, Pi.single_apply,
+    Pi.zero_apply]
+  refine ⟨?_, fun _ => ⟨?_, fun _ => ⟨?_, fun _ => ?_⟩⟩⟩ <;> split_ifs <;> omega
+
+/-- The total use is three, so the per-kind budget does not bound it. -/
+example : ¬ spread.IsChargeBound (fun _ => (1 : ℕ)) 1 := by
+  simp [spread]
+
+/-- A call costing `5`, preceded by a refund of `5`. -/
+def refundThenWork : FreeM Two Bool := do
+  let _ ← FreeM.lift (P := Two) false
+  let _ ← FreeM.lift (P := Two) true
+  pure true
+
+def refundPrice (b : Two.A) : ℤ := if b then 5 else -5
+
+/-- With a negative price, the padded program meets the budget `0`, although its work costs `5`. -/
+example : refundThenWork.IsChargeBound refundPrice 0 := by
+  simp [refundThenWork, refundPrice]
 
 end PolyFunTest.Charge
