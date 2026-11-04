@@ -1,9 +1,7 @@
 # Writing Vocabulary
 
-Use this page with the [writing standard](writing.md). STE's general dictionary stays the
-reference for general words, meanings, and grammatical roles. This page adds subject-field terms
-and advice for PolyFun prose. It does not replace the dictionary or list every permitted English
-word.
+Use this page with the [writing guide](writing.md) to clarify technical meanings and review wording.
+Its entries are advice, not a list of every permitted English word or an STE dictionary check.
 
 ## How to add a term
 
@@ -66,29 +64,6 @@ Introduce a longer or unfamiliar term before you use an abbreviation:
 
 Prose uses Oxford spelling or American spelling, as rule W8 describes. Keep the original spelling
 in a cited title or a declaration name.
-
-## Technical -ing nouns
-
-These entries describe their stated technical uses. They do not establish that a clause has a
-clear subject. The checker matches complete terms from this table for its advisory V2 hints.
-An individual word from a multi-word term is not a general exemption.
-
-| Term | Technical meaning |
-|---|---|
-| `encoding`, `decoding` | The representation and interpretation of values or messages under specified formats. |
-| `folding`, `batching` | Reduction and aggregation constructions on words or computations. |
-| `hashing`, `binding`, `hiding` | Hash constructions and named commitment properties. |
-| `sampling`, `padding` | Random-choice constructions and prescribed data extension. |
-| `rewriting`, `normalizing` | Lean expression transformations by equations or reduction. |
-| `pattern matching` | Selection of a branch by a constructor pattern. |
-| `indexing`, `mapping` | Index conventions and maps between mathematical objects. |
-| `working tree`, `dangling symlink` | A Git checkout and a symlink with no target. |
-| `programming`, `computing` | Program construction and computation as subject fields. |
-| `unfolding`, `embedding` | The behavior map of a machine and inclusions that preserve structure. |
-| `routing`, `branching`, `linking` | Request dispatch, choice structure, and composition of processes. |
-| `counting`, `typing` | Cardinality arguments and the types of dependent expressions. |
-| `opening` | Initial meeting formalities. The [coverage notes](../../Examples/Parliament/Docs/coverage.md) identify these as outside the model. |
-| `operating system` | The system that hosts an executable process. |
 
 ## Technical verbs
 

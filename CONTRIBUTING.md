@@ -36,8 +36,9 @@ gh pr list -R Verified-zkEVM/PolyFun --state open --search "<declaration or topi
 gh issue list -R Verified-zkEVM/PolyFun --state open --search "<declaration or topic>"
 ```
 
-If an open PR covers the same declarations, ask its author whether the work is active. If you
-open a PR for the same target, link the earlier PR and explain how your work relates to it.
+If an open PR covers the same declarations, ask its author whether the work is active.
+Do not duplicate active work. If you open a PR for the same target, link the earlier PR and
+explain how your work relates to it.
 
 If earlier work appears abandoned, you may ask a maintainer whether to proceed. A maintainer may
 waive the overlap requirement for that contribution.
@@ -48,7 +49,9 @@ describe the search and the evidence to record.
 
 ## Prepare and Validate a Change
 
-1. Before review, fetch the dependency cache with `lake exe cache get`.
+Before review:
+
+1. Fetch the dependency cache with `lake exe cache get`.
 2. If you add, delete, or rename source files, stage them with `git add`.
 3. Then regenerate each affected umbrella, such as `PolyFun.lean` or `ToCslib.lean`.
    [Generated files](docs/development/generated-files.md) gives the command for each umbrella.
@@ -130,20 +133,17 @@ describe how a stack is merged and checked.
 
 ### Writing
 
-Use the [writing standard](docs/development/writing.md) for documentation, docstrings, comments,
-commit messages, PR and issue text, and review comments. It applies to all authors. It uses STE to
-correct defects in existing prose, with stated adaptations for mathematical text.
-
-C1 to C8 and applicable statement and correctness audits are mandatory. Existing accuracy and
-domain-claim requirements remain in force. The other style guidance is advisory. A style warning
-alone does not require a rewrite or prevent an edit or merge.
+The [writing guide](docs/development/writing.md) offers advice for documentation, docstrings,
+comments, commit messages, PR and issue text, and review comments. Use it to improve clarity and
+precision. Leave clear, correct text alone, even if it does not follow a rule or the checker reports
+it. The contribution requirements in this document retain their stated force.
 
 Use the [writing workflow](docs/development/write-technical-prose.md) when you draft or revise
 that text. Keep claims, hypotheses, uncertainty, and requirement strength unchanged during a style
 edit. The [vocabulary](docs/development/writing-vocabulary.md) records technical meanings. It does
 not prohibit other meanings when their context is clear.
 
-The [writing checker](docs/development/write-technical-prose.md#use-the-checker) reports
+The [writing checker](docs/development/write-technical-prose.md#use-the-checker) offers optional
 suggestions on changed prose. CI shows its findings as warnings. The findings do not fail a PR,
 and an empty report does not establish conformance to the standard.
 

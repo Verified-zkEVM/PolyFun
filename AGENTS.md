@@ -145,15 +145,12 @@ and [review guide](docs/development/review-hardening.md) apply to every change.
 
 Before you draft or revise prose, follow the
 [writing workflow](docs/development/write-technical-prose.md). Apply it to documentation, docstrings, comments,
-commit messages, PR and issue text, and review comments. In the
-[writing standard](docs/development/writing.md), C1 to C8 and applicable statement and correctness
-audits are mandatory. Other style guidance is advisory, and a style warning alone does not block
-an edit or merge. Keep claims, hypotheses, uncertainty, and requirement
-strength unchanged.
+commit messages, PR and issue text, and review comments. The
+[writing guide](docs/development/writing.md) gives advice. Keep claims, hypotheses, uncertainty,
+and requirement strength unchanged. CONTRIBUTING owns the contribution requirements.
 
-Before you hand over a PR, run `scripts/check-writing.py` on the changed prose,
-the draft description, and the commit messages. Read each finding in context.
-The checker gives suggestions, not a conformance result.
+You can use `scripts/check-writing.py` for optional suggestions on changed prose and drafts.
+Read each suggestion in context. Leave clear, correct text alone.
 
 ## Generated files and scripts
 
