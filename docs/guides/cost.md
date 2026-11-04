@@ -287,6 +287,28 @@ on reachable states needs a state type that excludes the unreachable ones.
   answers it with a fallback. On a program within budget neither intervenes
   (`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).
 
+## Measured and budgeted programs
+
+`MeasuredProgram Input Result ω` (`PolyFun/PFunctor/Free/Cost/Measured.lean`) computes a function
+by a free program whose interface depends on an uncharged view of the input, with deterministic
+answers and a price per operation.
+
+- `run` answers every call and returns the output of the one path the answers pick
+  (`run_eq_output`).
+- `Realizes f` says the run computes `f`.
+- `CostAtMost B` bounds the charge of every completed path of every view's program, so signed
+  prices are allowed.
+
+`comp outer inner` runs `inner`, computes `outer`'s view from the actual intermediate result, and
+runs `outer`, on the sum of `inner`'s operations and the dependent sum of `outer`'s operations over
+its views. It realizes the composite (`run_comp`, `Realizes.comp`), and budgets add
+(`CostAtMost.comp`). `contramap` precomposes an uncharged map, and `ofFun` is the program with no
+operations. `BudgetedProgram f ω` bundles a measured program realizing `f` with its budget, and
+composes the same way.
+
+`Budgeted c B α` is the subtype of free programs within budget `B`. Graded by `Multiplicative ω`,
+it is a `GradedMonad`: `gbind` adds budgets.
+
 ## Other models
 
 The other models of computation reduce to free programs: resumptions, machines and interaction
