@@ -287,6 +287,22 @@ on reachable states needs a state type that excludes the unreachable ones.
   answers it with a fallback. On a program within budget neither intervenes
   (`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).
 
+## Other models
+
+The other models of computation inherit the notion through their finite truncations, which are
+free programs.
+
+| Model | Bound | Agreement |
+|---|---|---|
+| `Resumption p β` | `IsChargeBound`: every `truncate k r` within budget (safety reading) | `isChargeBound_toResumption_iff`, `isChargeBound_query_iff` |
+| `DynComputation p α β` | every `unroll k state` within budget | `isChargeBound_iff_behavior`, `isChargeBound_ofFreeM_iff`, `IsChargeBound.wrap` |
+| `ITree F α` | visible calls charged by `c`, silent steps by `tau` (default `0`) | `isChargeBound_step_iff` (free silent steps are invisible), `isChargeBound_iff_toDynComputation` |
+| `IFreeM P X s` | the bound of the Σ-erasure | `isChargeBound_iff_toSigmaFreeM` |
+| `TypeTree` | a `FreeM` over move types; a unit charge counts rounds | definitional |
+
+The safety reading allows runs that never return: such a run is within budget when all of its
+finite prefixes are.
+
 ## Proving bounds
 
 - **Concrete programs.** `cost_bound [defs]` (`PolyFun/PFunctor/Free/Cost/Tactic.lean`) unfolds
