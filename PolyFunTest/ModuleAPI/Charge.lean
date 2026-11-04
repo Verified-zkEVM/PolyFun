@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Devon Tuma
 -/
 
+module
+
 import PolyFun.PFunctor.Charge
 import PolyFun.PFunctor.Free.Cost
 
