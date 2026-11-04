@@ -19,7 +19,8 @@ Checks that one notion of charge bound covers the models PolyFun connects to fre
 
 * a protocol shape (`TypeTree`) is a free program over move types, so a unit charge counts its
   rounds;
-* a machine built from a free program has the bound of the program;
+* a machine built from a free program has the bound of the program, and implements it within a
+  charge;
 * free silent steps of an interaction tree do not change its bound;
 * resource records (`ExecutionCost`) serve as a cost type.
 -/
@@ -50,6 +51,18 @@ def flipTwice : FreeM Coin Bool := do
 example : (DynSystem.DynComputation.ofFreeM fun _ : Unit => flipTwice).IsChargeBound
     (fun _ => (1 : ℕ)) 2 ((DynSystem.DynComputation.ofFreeM fun _ : Unit => flipTwice).init ()) :=
   (DynSystem.DynComputation.isChargeBound_ofFreeM_iff _ ()).2 (by cost_bound [flipTwice])
+
+/-- Bounded implementation with a charge in place of a call count, and the bound it gives on the
+machine from every initial state. -/
+example : (DynSystem.DynComputation.ofFreeM fun _ : Unit => flipTwice).ImplementsWithinCharge
+    (fun _ : Unit => flipTwice) (fun _ => (3 : ℕ)) 6 :=
+  ⟨DynSystem.DynComputation.implements_ofFreeM _, fun _ => by cost_bound [flipTwice]⟩
+
+example (h : (DynSystem.DynComputation.ofFreeM fun _ : Unit => flipTwice).ImplementsWithinCharge
+    (fun _ : Unit => flipTwice) (fun _ => (3 : ℕ)) 6) :
+    (DynSystem.DynComputation.ofFreeM fun _ : Unit => flipTwice).IsChargeBound (fun _ => 3) 6
+      ((DynSystem.DynComputation.ofFreeM fun _ : Unit => flipTwice).init ()) :=
+  h.isChargeBound ()
 
 /-- A silent step before a visible call is free. -/
 example (k : Bool → ITree Coin Bool) (n : ℕ) :

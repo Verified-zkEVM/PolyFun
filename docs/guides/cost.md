@@ -295,7 +295,7 @@ free programs.
 | Model | Bound | Agreement |
 |---|---|---|
 | `Resumption p β` | `IsChargeBound`: every `truncate k r` within budget (safety reading) | `isChargeBound_toResumption_iff`, `isChargeBound_query_iff` |
-| `DynComputation p α β` | every `unroll k state` within budget | `isChargeBound_iff_behavior`, `isChargeBound_ofFreeM_iff`, `IsChargeBound.wrap` |
+| `DynComputation p α β` | every `unroll k state` within budget | `isChargeBound_iff_behavior`, `Implements.isChargeBound_init_iff` (any machine implementing a program has its bound), `isChargeBound_ofFreeM_iff`, `IsChargeBound.wrap`; `ImplementsWithinCharge` is bounded implementation with a charge |
 | `ITree F α` | visible calls charged by `c`, silent steps by `tau` (default `0`) | `isChargeBound_step_iff` (free silent steps are invisible), `isChargeBound_iff_toDynComputation` |
 | `IFreeM P X s` | the bound of the Σ-erasure | `isChargeBound_iff_toSigmaFreeM` |
 | `TypeTree` | a `FreeM` over move types; a unit charge counts rounds | definitional |
