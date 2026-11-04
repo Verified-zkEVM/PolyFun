@@ -103,6 +103,27 @@ example {α : Type} (x : FreeM Coin α) (q : Path (x.mapLens (Lens.inl (Q := Two
       Path.charge (fun _ => (1 : ℤ)) x (Path.pullMapLens Lens.inl x q) :=
   Path.charge_mapLens_eq_map (AddMonoidHom.id ℤ) Lens.inl (fun _ => rfl) x q
 
+/-! ## Sums, coordinates and the charge of the path taken -/
+
+/-- The charge under a sum of charges is the sum of the charges. -/
+example {α : Type} (x : FreeM Coin α) (p : Path x) :
+    Path.charge (fun a => ∑ i ∈ Finset.range 3, (fun (k : ℕ) (_ : Coin.A) => k) i a) x p =
+      ∑ i ∈ Finset.range 3, Path.charge (fun _ => i) x p :=
+  Path.charge_finsetSum _ _ x p
+
+/-- Running with the charge of the path taken generalizes running with its length. -/
+example {α : Type} (x : FreeM Coin α) : withPathLength x = withPathCharge (fun _ => 1) x :=
+  withPathLength_eq_withPathCharge x
+
+/-- A relabelled program followed by relabelled continuations: its path budgets add. -/
+example {α β : Type} (x : FreeM Coin α) (y : α → FreeM Coin β) (B₁ B₂ : ℤ)
+    (hx : ∀ p, Path.charge (fun _ => (1 : ℤ)) x p ≤ B₁)
+    (hy : ∀ m p, Path.charge (fun _ => (1 : ℤ)) (y m) p ≤ B₂)
+    (q : Path (FreeM.bind (x.mapLens (Lens.inl (Q := Two))) fun m =>
+      (y m).mapLens (Lens.inl (Q := Two)))) :
+    Path.charge (Sum.elim (fun _ => (1 : ℤ)) fun _ => 0) _ q ≤ B₁ + B₂ :=
+  Path.charge_bind_mapLens_le x _ y _ (fun _ => rfl) (fun _ _ => rfl) hx hy q
+
 /-! ## Distinct keys -/
 
 abbrev Keys : PFunctor.{0, 0} := ⟨ℕ, fun _ => Bool⟩

@@ -144,6 +144,12 @@ The calculus:
   the same output, when each implementation stays within its call's charge on every completed
   path (`exists_path_liftM`, `charge_liftM_le_of_forall`).
 - With subsingleton answers there is exactly one path (`forall_charge_le_iff_ofHandler`).
+- A program relabelled into a common interface, followed by relabelled continuations, has every
+  path within the sum of the two path budgets (`charge_bind_mapLens_le`). Composites of measured
+  programs, over any presentation of the common interface, are instances.
+- Charges of sums and coordinates distribute (`charge_finsetSum`, `charge_apply`), and
+  `withPathCharge c x` runs `x` and returns the charge of the path taken, generalizing
+  `withPathLength`.
 
 **Node weights.** A charge that depends on the node rather than the operation is a decoration:
 `Path.chargeDec` sums the weights a `Decoration (fun _ => ω)` puts on the nodes along a path. It
