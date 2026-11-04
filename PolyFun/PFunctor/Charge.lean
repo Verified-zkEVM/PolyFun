@@ -1,0 +1,101 @@
+/-
+Copyright (c) 2026 PolyFun Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Devon Tuma
+-/
+module
+
+public import PolyFun.PFunctor.Lens.Basic
+public import PolyFun.PFunctor.Trace
+public import Mathlib.Algebra.BigOperators.Group.List.Basic
+
+/-!
+# Charges on an interface
+
+A charge prices the calls of an interface `P` in a cost type `ω`: a call at position `a` costs
+`c a`. Throughout PolyFun a charge is the plain function `c : P.A → ω`; the cost of a program is a
+fold of its charge (`PolyFun.PFunctor.Free.Cost`).
+
+As a polynomial map, a charge is a lens into the constant polynomial `C ω`, whose positions are the
+prices and which has no directions to answer. Charges on composite interfaces are then lens
+constructions: pulling a charge back along a lens is composition (`Lens.toCharge_comp`), and the
+charge on a sum is the copairing (`Lens.toCharge_sumPair`).
+
+A charge read off events instead of positions, `e : P.Idx → ω`, prices a call together with its
+answer. `TraceList.charge e` extends it additively to the event traces of `PolyFun.PFunctor.Trace`.
+-/
+
+@[expose] public section
+
+universe uA uB uA₂ uB₂ uE w
+
+namespace PFunctor
+
+variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}} {ω : Type w}
+
+namespace Lens
+
+/-- The charge read off a lens into the constant polynomial `C ω`. -/
+def toCharge (l : Lens P (C.{w, uE} ω)) : P.A → ω :=
+  l.toFunA
+
+/-- A charge as a lens into the constant polynomial `C ω`. `C ω` has no directions, so the
+backward map is empty. -/
+def ofCharge (c : P.A → ω) : Lens P (C.{w, uE} ω) :=
+  c ⇆ fun _ e => PEmpty.elim e
+
+@[simp]
+theorem toCharge_ofCharge (c : P.A → ω) : (ofCharge.{uA, uB, uE} c : Lens P (C ω)).toCharge = c :=
+  rfl
+
+@[simp]
+theorem ofCharge_toCharge (l : Lens P (C.{w, uE} ω)) : ofCharge l.toCharge = l :=
+  Lens.ext _ _ (fun _ => rfl) fun _ => funext fun e => PEmpty.elim e
+
+/-- Pulling a charge back along a lens is lens composition. -/
+theorem toCharge_comp (m : Lens Q (C.{w, uE} ω)) (l : Lens P Q) :
+    (m ∘ₗ l).toCharge = m.toCharge ∘ l.toFunA :=
+  rfl
+
+/-- The charge on a sum of interfaces is the copairing of the charges. -/
+theorem toCharge_sumPair {Q : PFunctor.{uA₂, uB}} (l₁ : Lens P (C.{w, uE} ω))
+    (l₂ : Lens Q (C.{w, uE} ω)) :
+    (sumPair l₁ l₂).toCharge = Sum.elim l₁.toCharge l₂.toCharge :=
+  rfl
+
+end Lens
+
+namespace TraceList
+
+variable [AddMonoid ω]
+
+/-- The additive valuation of an event trace: the sum of the charges of its events. -/
+def charge (e : P.Idx → ω) (t : TraceList P) : ω :=
+  ((FreeMonoid.toList t).map e).sum
+
+variable (e : P.Idx → ω)
+
+@[simp]
+theorem charge_one : charge e (1 : TraceList P) = 0 :=
+  rfl
+
+@[simp]
+theorem charge_nil : charge e ([] : TraceList P) = 0 :=
+  rfl
+
+@[simp]
+theorem charge_cons (i : P.Idx) (t : TraceList P) :
+    charge e ((i :: t : List P.Idx) : TraceList P) = e i + charge e t :=
+  List.sum_cons
+
+@[simp]
+theorem charge_of (i : P.Idx) : charge e (FreeMonoid.of i) = e i := by
+  simp [charge]
+
+@[simp]
+theorem charge_mul (s t : TraceList P) : charge e (s * t) = charge e s + charge e t := by
+  simp [charge]
+
+end TraceList
+
+end PFunctor
