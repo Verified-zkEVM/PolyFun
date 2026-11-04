@@ -52,6 +52,36 @@ fold, of `OpSpec.roll canRoll cost` (`isRollBound_iff_wpFold`).
 Roll bounds also express protocols that are not additive, such as "never call `b` after `a`".
 Charge bounds trade that generality for the laws below, which hold with no side conditions.
 
+## Accounting boundary
+
+A charge bound is a bound on interface use, relative to an accounting boundary. It charges the
+calls a program makes and nothing else. At this layer the following are free:
+
+- the code between calls, including any view or encoding of the input;
+- the answers, and whatever handler, oracle or machine produces them;
+- handler state, and the cost of reading or updating it.
+
+Each free component is bounded one layer down: by a certified handler into the next interface,
+by a machine that refines the program, or by a quantitative realization, which charges backend
+work. A bound is useful only together with a statement of which layer picks up what this one
+leaves free.
+
+### Bounds as contracts
+
+The laws above hold for any ordered additive monoid. A bound presented as a resource contract
+needs more:
+
+- **A canonically ordered cost type.** With negative prices, a program can be padded with refund
+  calls to meet any budget. Signed prices belong inside potential and completed-path arguments,
+  not in contracts.
+- **Finitely many kinds.** With `K → ℕ` and infinite `K`, a pointwise budget does not bound total
+  use: one call to each of many kinds meets a budget of `1` per kind. Use `K →₀ ℕ`, or `[Finite K]`.
+- **The usual order and addition.** A reversed order, or a max-based addition, makes `≤ B` mean
+  something else.
+- **Availability and termination stated separately.** A budget says nothing about divergence, or
+  about whether a call can be answered. Keep `CallsIn` or an availability predicate as its own
+  conjunct.
+
 ## Laws
 
 **Sequencing.** `isChargeBound_bind_iff` is exact: the continuation starts from the amount spent
