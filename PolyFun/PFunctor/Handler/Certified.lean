@@ -1,0 +1,190 @@
+/-
+Copyright (c) 2026 PolyFun Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Devon Tuma
+-/
+module
+
+public import PolyFun.PFunctor.Handler.Charge
+
+/-!
+# Certified handlers
+
+A layer of cost accounting is an interface with a charge: `P` priced by `c : P.A → ω`. An
+implementation of `P` one layer down, by programs over `Q` priced by `d : Q.A → ω'`, is
+*certified* when it comes with an **exchange** `E : ω →+o ω'` that converts prices between the
+layers, and every call at `a` is implemented within `E (c a)` (`Handler.Certified`).
+
+* A bound transfers along a certified handler: a program within `B` is simulated within `E B`
+  (`Certified.transfer`), and in value form a simulated program costs at most `E` of the
+  original's cost (`Certified.cost_liftM_le`).
+* Certified handlers compose, composing their exchanges (`Certified.comp`), and the identity
+  handler is certified by the identity exchange. Interfaces with charges and certified handlers
+  therefore form a category, whose arrows are the cross-layer links of a cost argument: a
+  specification implemented by an algorithm, the algorithm compiled to instructions, and so on.
+* A reduction runs a setup program, the source program through a certified handler, and a
+  finishing program. Its bound is affine in the source budget, `setupCost + E B + finishCost`
+  (`CostedReduction.run_isChargeBound`). This is the shape of a reduction's cost transformer in a
+  security proof.
+
+The exchange is monotone and additive, so it handles changes of unit (one hash is `k`
+compressions), changes of cost type (per-kind counts to weighted totals) and the identity. Costs
+that are not additive across a layer, such as a cache answering repeated calls, are handled by the
+amortized transfer of `PolyFun.PFunctor.Handler.Charge`.
+-/
+
+@[expose] public section
+
+universe uA uA₂ uA₃ uB w w' w''
+
+namespace PFunctor
+
+namespace FreeM
+
+variable {P : PFunctor.{uA, uB}} {α : Type uB} {ω : Type w} {ω' : Type w'}
+
+/-- Exchanging prices along a monotone additive map costs no more than exchanging the cost. -/
+theorem cost_comp_le [AddCommMonoid ω] [CompleteLattice ω] [AddCommMonoid ω']
+    [CompleteLattice ω'] [IsOrderedAddMonoid ω'] (E : ω →+o ω') (c : P.A → ω) (x : FreeM P α) :
+    cost (E ∘ c) x ≤ E (cost c x) := by
+  induction x using FreeM.rec with
+  | pure a => simp
+  | liftBind a r ih =>
+    rw [cost_liftBind, cost_liftBind, map_add]
+    exact add_le_add le_rfl
+      (iSup_le fun b => (ih b).trans (E.monotone' (le_iSup (fun b => cost c (r b)) b)))
+
+end FreeM
+
+namespace Handler
+
+variable {ω : Type w} {ω' : Type w'} {ω'' : Type w''}
+
+section Certified
+
+variable [AddCommMonoid ω] [PartialOrder ω] [AddCommMonoid ω'] [PartialOrder ω']
+  [AddCommMonoid ω''] [PartialOrder ω'']
+
+/-- A handler implementing `P` by programs over `Q`, with an exchange from `P`'s prices to `Q`'s
+under which each call at `a` is implemented within `exchange (c a)`. -/
+structure Certified (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB}) (c : P.A → ω)
+    (d : Q.A → ω') where
+  /-- The implementation of each call. -/
+  handler : Handler (FreeM Q) P
+  /-- The conversion of prices from `P`'s layer to `Q`'s. -/
+  exchange : ω →+o ω'
+  /-- Each call is implemented within its exchanged price. -/
+  certificate : handler.WithinCharge d (exchange ∘ c)
+
+variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB}}
+
+namespace Certified
+
+/-- The identity handler, certified by the identity exchange. -/
+def id (P : PFunctor.{uA, uB}) (c : P.A → ω) : Certified P P c c where
+  handler := Handler.id P
+  exchange := OrderAddMonoidHom.id ω
+  certificate := withinCharge_id c
+
+/-- Certified handlers compose: implement by `f`, then implement `f`'s target by `g`, exchanging
+prices through both. -/
+def comp [IsOrderedAddMonoid ω''] {c : P.A → ω} {d : Q.A → ω'} {e : R.A → ω''}
+    (g : Certified Q R d e) (f : Certified P Q c d) : Certified P R c e where
+  handler := g.handler.comp f.handler
+  exchange := g.exchange.comp f.exchange
+  certificate a := by
+    have h := (f.certificate a).map g.exchange
+    rw [map_zero] at h
+    exact h.liftM g.handler g.certificate
+
+@[simp]
+theorem comp_exchange [IsOrderedAddMonoid ω''] {c : P.A → ω} {d : Q.A → ω'} {e : R.A → ω''}
+    (g : Certified Q R d e) (f : Certified P Q c d) :
+    (g.comp f).exchange = g.exchange.comp f.exchange :=
+  rfl
+
+/-- **Transfer.** A program within budget `B`, simulated through a certified handler, is within the
+exchanged budget. -/
+theorem transfer [IsOrderedAddMonoid ω'] {c : P.A → ω} {d : Q.A → ω'} (f : Certified P Q c d)
+    {α : Type uB} {x : FreeM P α} {B s : ω} (hx : x.IsChargeBound c B s) :
+    (x.liftM f.handler).IsChargeBound d (f.exchange B) (f.exchange s) :=
+  (hx.map f.exchange).liftM f.handler f.certificate
+
+end Certified
+
+end Certified
+
+section Value
+
+variable [AddCommMonoid ω] [CompleteLattice ω] [AddCommMonoid ω'] [CompleteLattice ω']
+  [IsOrderedAddMonoid ω'] [CanonicallyOrderedAdd ω'] [AddSupDistrib ω']
+  {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}}
+
+/-- **Transfer, value form.** A program simulated through a certified handler costs at most the
+exchange of the original's worst-case cost. -/
+theorem Certified.cost_liftM_le {c : P.A → ω} {d : Q.A → ω'} (f : Certified P Q c d)
+    {α : Type uB} (x : FreeM P α) :
+    FreeM.cost d (x.liftM f.handler) ≤ f.exchange (FreeM.cost c x) := by
+  refine (FreeM.cost_liftM_le d f.handler x).trans
+    ((FreeM.cost_mono_charge (fun a => ?_) x).trans (FreeM.cost_comp_le f.exchange c x))
+  have h := FreeM.cost_le_of_isChargeBound (f.certificate a)
+  rw [zero_add] at h
+  exact h
+
+end Value
+
+section Reduction
+
+variable [AddCommMonoid ω] [PartialOrder ω] [AddCommMonoid ω'] [PartialOrder ω']
+  [IsOrderedAddMonoid ω'] [CanonicallyOrderedAdd ω']
+  {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}}
+
+/-- A reduction from a `P`-program to a `Q`-program: run `setup`, then the source program through
+a certified handler, then `finish` on its result. Each of the two extra stages has a budget. -/
+structure CostedReduction (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB}) (c : P.A → ω)
+    (d : Q.A → ω') (α β : Type uB) where
+  /-- The certified implementation of the source calls. -/
+  certified : Certified P Q c d
+  /-- Work before running the source program. -/
+  setup : FreeM Q PUnit.{uB + 1}
+  /-- Work after the source program returns. -/
+  finish : α → FreeM Q β
+  /-- The budget of `setup`. -/
+  setupCost : ω'
+  /-- The budget of `finish`, uniform in the source result. -/
+  finishCost : ω'
+  setup_le : setup.IsChargeBound d setupCost
+  finish_le : ∀ a, (finish a).IsChargeBound d finishCost
+
+namespace CostedReduction
+
+variable {c : P.A → ω} {d : Q.A → ω'} {α β : Type uB}
+
+/-- The reduced program. -/
+def run (r : CostedReduction P Q c d α β) (x : FreeM P α) : FreeM Q β :=
+  FreeM.bind r.setup fun _ => FreeM.bind (x.liftM r.certified.handler) r.finish
+
+/-- The reduction's cost transformer: affine in the source budget. -/
+def bound (r : CostedReduction P Q c d α β) (B : ω) : ω' :=
+  r.setupCost + r.certified.exchange B + r.finishCost
+
+omit [CanonicallyOrderedAdd ω'] in
+theorem bound_mono (r : CostedReduction P Q c d α β) : Monotone r.bound :=
+  fun _ _ h => add_le_add (add_le_add le_rfl (r.certified.exchange.monotone' h)) le_rfl
+
+/-- **The reduction's bound.** A source program within `B` reduces to a target program within
+`setupCost + E B + finishCost`. -/
+theorem run_isChargeBound (r : CostedReduction P Q c d α β) {x : FreeM P α} {B : ω}
+    (hx : x.IsChargeBound c B) : (r.run x).IsChargeBound d (r.bound B) := by
+  have hmid : (x.liftM r.certified.handler).IsChargeBound d (r.certified.exchange B) := by
+    simpa using r.certified.transfer hx
+  have := r.setup_le.bind fun _ => hmid.bind r.finish_le
+  rwa [← add_assoc] at this
+
+end CostedReduction
+
+end Reduction
+
+end Handler
+
+end PFunctor
