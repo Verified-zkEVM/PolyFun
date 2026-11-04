@@ -102,7 +102,7 @@ UpperCamelCase. Keep files below 1500 lines unless explicitly opted out.
 not repeat that option per file. Lean, Mathlib and CSLib versions stay in sync.
 
 Do not add `sorry`, `admit`, or non-standard axioms to finished work. Use `stop`
-only to preserve partial proof work explicitly during a refactor. The axiom
+only when explicitly preserving partial proof work during a refactor. The axiom
 baseline must stay empty, and update mode refuses to record taint.
 
 Do not disable linters to suppress errors, locally or globally. The narrow
@@ -137,7 +137,7 @@ through [REFERENCES.md](REFERENCES.md).
 
 Update the owning tutorial/guide/reference/development page with API and
 workflow changes. Source is authoritative when prose disagrees. Promote durable
-learnings into the current docs, and keep one-time reviews and migration maps
+learnings into the existing docs, and keep one-time reviews and migration maps
 outside the tracked tree. The [maintenance contract](docs/README.md#maintenance-contract)
 and [review guide](docs/development/review-hardening.md) apply to every change.
 
@@ -145,8 +145,10 @@ and [review guide](docs/development/review-hardening.md) apply to every change.
 
 Before you draft or revise prose, follow the
 [writing workflow](docs/development/write-technical-prose.md). Apply it to documentation, docstrings, comments,
-commit messages, PR and issue text, and review comments. Assess current prose
-against the [writing standard](docs/development/writing.md). Correct its defects. Keep claims, hypotheses, uncertainty, and requirement
+commit messages, PR and issue text, and review comments. In the
+[writing standard](docs/development/writing.md), C1 to C8 and applicable statement and correctness
+audits are mandatory. Other style guidance is advisory, and a style warning alone does not block
+an edit or merge. Keep claims, hypotheses, uncertainty, and requirement
 strength unchanged.
 
 Before you hand over a PR, run `scripts/check-writing.py` on the changed prose,
@@ -166,6 +168,6 @@ case-study root `Examples/Parliament.lean` is generated with
 `./scripts/update-lib.sh Examples.Parliament`. Stage new case-study modules first.
 Core libraries may not import examples, tests, or `PolyFunParliamentMain`.
 
-Add repository scripts only for concrete regular workflows under
-[the scripts policy](CONTRIBUTING.md#repository-scripts). Reuse current drivers
+Add repository scripts only for concrete recurring workflows under
+[the scripts policy](CONTRIBUTING.md#repository-scripts). Reuse existing drivers
 for validation. Keep temporary probes outside the tracked repository.

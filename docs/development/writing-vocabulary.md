@@ -13,8 +13,8 @@ word.
 4. Use a qualifier when two technical meanings occur in the same passage.
 5. Add a missing term or meaning when the contribution first needs it.
 
-A noun and a verb need separate technical uses, even when they have the same spelling. A noun entry for
-"query" does not approve every verb use of that word. A category example is not a reason
+A noun and a verb need separate technical uses, even when they have the same spelling. Listing
+"query" as a noun does not approve every verb use of that word. A category example is not a reason
 to reject another established term from that field.
 
 ## Terms and context
@@ -69,8 +69,9 @@ in a cited title or a declaration name.
 
 ## Technical -ing nouns
 
-These terms name the stated technical concepts. They do not authorize a verbal clause.
-The checker reads this table for rule V2.
+These entries describe their stated technical uses. They do not establish that a clause has a
+clear subject. The checker matches complete terms from this table for its advisory V2 hints.
+An individual word from a multi-word term is not a general exemption.
 
 | Term | Technical meaning |
 |---|---|
@@ -110,7 +111,7 @@ flags".
 
 ## Words to avoid
 
-This table gives prompts for a revision pass over ordinary prose. It does not define STE word
+This table gives prompts for an editing pass over ordinary prose. It does not define STE word
 approval. Use a replacement only when it preserves the meaning and grammatical role. Rewrite the
 sentence when a direct replacement does not work:
 
@@ -133,4 +134,5 @@ sentence when a direct replacement does not work:
 
 "The following are equivalent" is a permitted mathematical introduction. A word in the table can
 also occur in a technical term, such as "robust compilation". Words such as "simply" and
-"essentially" occur in "simply typed" and "essentially surjective". Review their meaning. Do not delete them as isolated words.
+"essentially" occur in "simply typed" and "essentially surjective". Review their meaning rather
+than deleting them as isolated words.

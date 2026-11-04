@@ -1,5 +1,5 @@
 #!/usr/bin/env -S uv run --no-project --python 3.12 python
-"""Report prose suggestions for selected rules of the PolyFun writing standard.
+"""Report editing suggestions for selected rules of the PolyFun writing standard.
 
 The standard is `docs/development/writing.md`. This script reports patterns that a search can
 find:
@@ -9,7 +9,7 @@ find:
 - U1: semicolons, and U2: em dashes that join clauses
 - W6: phrasal verbs, and W7: Latin abbreviations
 - S5: contractions
-- V1: perfect and progressive verb forms, and V2: a clause that starts with an "-ing" form
+- V1: perfect and progressive verb forms, and V2: introductory "-ing" clauses for manual subject review
 - S7: a sentence that starts with "This" or "These" and a verb, with no noun
 - Vocabulary: the words to avoid in `docs/development/writing-vocabulary.md`.
 
@@ -30,8 +30,8 @@ In `--base` mode, the checker reads the tracked files in the working tree. It ch
 paragraph, list item, or table cell that contains an added line. It ignores untracked files.
 
 Option: `--github` prints GitHub warning annotations. Findings exit with 0.
-Usage, Git and configuration errors exit with 2. Non-UTF-8 source input and dangling symlinks
-produce advisory Input diagnostics.
+Usage, Git and configuration errors exit with 2. Non-UTF-8 source input and symlinks produce
+advisory Input diagnostics. Symlink targets are not read as source prose.
 """
 
 from __future__ import annotations
@@ -107,9 +107,6 @@ BARE_THIS = re.compile(
     r"requires|keeps|fixes|adds|avoids|matches|also|will|can)\b")
 # "During" is a preposition, not a verb form.
 ING_START = re.compile(r"^(?!During\b)[A-Z][a-z]+ing\b[^,.;:]{0,80},")
-PREPOSITION_ING = re.compile(
-    r"\b(?:after|before|by|for|from|in|of|on|through|to|upon|with|without|when|while|than|as)"
-    r"\s+(?:not\s+)?(?P<form>[A-Za-z]+ing)\b", re.IGNORECASE)
 NON_VERBAL_WORDS = {"nothing", "something", "anything", "everything", "during", "missing",
                     "remaining", "string", "strings", "ring", "rings", "thing", "things",
                     "hamming", "turing"}
@@ -145,6 +142,20 @@ class Finding:
 # Vocabulary
 
 
+def vocabulary_section(text: str, title: str, *, required: bool = False) -> str:
+    """Read a named Markdown section at any heading level."""
+    heading = re.search(r"^(#{1,6})[ \t]+" + re.escape(title) + r"[ \t]*(?:#+[ \t]*)?\r?$",
+                        text, re.MULTILINE | re.IGNORECASE)
+    if heading is None:
+        if required:
+            raise ValueError(f"vocabulary is missing the '{title}' section")
+        return ""
+    body = text[heading.end():]
+    following = re.search(r"^#{1," + str(len(heading.group(1))) + r"}[ \t]+", body,
+                          re.MULTILINE)
+    return body[:following.start()] if following else body
+
+
 def avoid_words(vocabulary: Path = VOCABULARY) -> tuple[list[str], list[str]]:
     """Return the general words to avoid and the history words (rule C3) from the vocabulary.
 
@@ -152,7 +163,7 @@ def avoid_words(vocabulary: Path = VOCABULARY) -> tuple[list[str], list[str]]:
     second column names rule C3 gives history words, which apply only to library text.
     """
     text = vocabulary.read_text(encoding="utf-8")
-    table = text[text.index("## Words to avoid"):]
+    table = vocabulary_section(text, "Words to avoid", required=True)
     general: list[str] = []
     history: list[str] = []
     for row in table.splitlines():
@@ -170,17 +181,15 @@ def avoid_words(vocabulary: Path = VOCABULARY) -> tuple[list[str], list[str]]:
 def technical_ing_nouns(vocabulary: Path = VOCABULARY) -> set[str]:
     """Read the technical -ing terms in the vocabulary's dedicated table."""
     text = vocabulary.read_text(encoding="utf-8")
-    section = re.search(r"^## Technical -ing nouns\s*$", text, re.MULTILINE)
-    if section is None:
-        return set()
-    body = re.split(r"^## ", text[section.end():], maxsplit=1, flags=re.MULTILINE)[0]
+    body = vocabulary_section(text, "Technical -ing nouns")
     result: set[str] = set()
     for row in body.splitlines():
         if not row.lstrip().startswith("|"):
             continue
         first = row.strip().strip("|").split("|", 1)[0]
         for term in re.findall(r"`([^`]+)`", first):
-            result.update(word.lower() for word in re.findall(r"\b[A-Za-z]+ing\b", term))
+            if re.search(r"\b[A-Za-z]+ing\b", term, re.IGNORECASE):
+                result.add(" ".join(term.lower().split()))
     return result
 
 
@@ -208,7 +217,7 @@ LIST_ITEM = re.compile(r"^(\s*)(?:[-*+]|(\d+)[.)])\s+(.*)$")
 
 
 def strip_html_comments(text: str, inside: bool, visible: str) -> tuple[str, bool]:
-    """Remove HTML comments on one line. Keep code spans and character positions."""
+    """Remove HTML comments on one line, retaining code spans and character positions."""
     result = list(text)
     index = 0
     while index < len(text):
@@ -277,7 +286,8 @@ def markdown_blocks(path: str, text: str, first_line: int = 1) -> list[Block]:
             flush()
             fence = (opening.group()[0], len(opening.group()))
             continue
-        if raw.startswith(("    ", "\t")) and not current and not comment and not list_context:
+        if (not path.endswith(".lean") and raw.startswith(("    ", "\t"))
+                and not current and not comment and not list_context):
             continue
         raw, comment = strip_html_comments(raw, comment, visible_lines[offset])
         stripped = raw.strip()
@@ -434,7 +444,7 @@ def file_blocks(path: str, text: str) -> list[Block]:
 
 
 def blank(text: str, token: bool = False) -> str:
-    """Hide content and keep its length and newline positions."""
+    """Hide content without changing its length or newline positions."""
     result = re.sub(r"[^\r\n]", " ", text)
     if token:
         positions = [i for i, char in enumerate(result) if char == " "]
@@ -447,7 +457,7 @@ def blank(text: str, token: bool = False) -> str:
 def mask(text: str, collapse_parentheses: bool,
          parentheticals: list[str] | None = None,
          parenthetical_offsets: list[int] | None = None) -> str:
-    """Mask exempt elements with one word. Keep source offsets and newlines."""
+    """Mask exempt elements with one word, preserving source offsets and newlines."""
     text = CODE_SPAN.sub(lambda m: blank(m.group(), True), text)
     for pattern, token in (
             (r"\$\$.*?\$\$|\$[^$]+\$", True),
@@ -479,7 +489,7 @@ def mask(text: str, collapse_parentheses: bool,
 
 
 def sentence_spans(text: str) -> list[tuple[int, int]]:
-    """Return sentence spans in the supplied text. Keep source offsets."""
+    """Return sentence spans in the supplied text without losing source offsets."""
     spans: list[tuple[int, int]] = []
     start = 0
     boundaries = list(re.finditer(
@@ -574,20 +584,27 @@ def check_block(block: Block, general: re.Pattern[str] | None,
     if history is not None and HISTORY_SCOPE.search(block.path):
         for match in history.finditer(plain):
             add("C3", "Describe the present state, not the history.", match.start(), match.end())
-    allowed_ings = NON_VERBAL_WORDS | (technical_ings or set())
-    for match in PREPOSITION_ING.finditer(plain):
-        form = match.group("form")
-        if form.isupper() or form.lower().endswith("string"):
-            continue  # Acronyms, file labels, and string nouns are not verb inflections.
-        if form.lower() not in allowed_ings:
-            add("V2", "Use a finite clause unless this is a technical noun or part of one.",
-                match.start("form"), match.end("form"))
+    technical_pattern = word_pattern(sorted(technical_ings or set(), key=len, reverse=True))
     for start, end in sentence_spans(plain):
         sentence = plain[start:end]
         if BARE_THIS.match(sentence):
             add("S7", "Name the noun if this reference is ambiguous.", start, end)
-        if ING_START.match(sentence) and re.match(r"\w+", sentence).group().lower() not in allowed_ings:
-            add("V2", "Review this possible verb clause. A finite clause can be clearer.", start, end)
+        if ING_START.match(sentence):
+            if (re.match(r"^Assuming\b", sentence)
+                    or re.match(r"^Writing\s+[^,]*=", sentence)
+                    or re.search(r",\s*(?:I|we|you)\b", sentence, re.IGNORECASE)):
+                continue
+            form = re.match(r"\w+", sentence)
+            if form.group().lower() in {
+                "existing", "recurring", "resulting", "following", "preceding",
+                    "corresponding", "surrounding", "underlying"}:
+                continue
+            technical_term = technical_pattern is not None and any(
+                term.start() <= start and start + form.end() <= term.end()
+                for term in technical_pattern.finditer(plain))
+            if form.group().lower() not in NON_VERBAL_WORDS and not technical_term:
+                add("V2", "Review the subject of this introductory clause for ambiguity or a dangling modifier.",
+                    start, end)
     return found
 
 
@@ -633,7 +650,8 @@ def added_lines(base: str) -> dict[str, set[int]]:
         if not checked_path(path):
             continue
         paths = (source, path) if status[0] in "RC" else (path,)
-        diff = git("--literal-pathspecs", "diff", *options, "--text", "--unified=0", "--no-color",
+        diff = git("--literal-pathspecs", "diff", *options, "--text", "--unified=0",
+                   "--inter-hunk-context=0", "--no-color",
                    merge_base, "--", *paths)
         lines = result.setdefault(path, set())
         for hunk in re.finditer(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", diff, re.MULTILINE):
@@ -644,16 +662,15 @@ def added_lines(base: str) -> dict[str, set[int]]:
 
 
 def read_source(path: Path, label: str, diagnostics: list[Finding]) -> str | None:
-    """Report unsupported source input as advisory data. Continue the other file checks."""
+    """Report unsupported source input as advisory data, retaining other file checks."""
+    if path.is_symlink():
+        diagnostics.append(Finding(label, 1, "Input", "Symlink source was not checked. Review its target separately.", ""))
+        return None
     try:
         return path.read_text(encoding="utf-8")
     except UnicodeDecodeError as error:
         line = error.object.count(b"\n", 0, error.start) + 1
         diagnostics.append(Finding(label, line, "Input", "This file is not UTF-8. Prose was not checked.", ""))
-    except FileNotFoundError:
-        if not path.is_symlink():
-            raise
-        diagnostics.append(Finding(label, 1, "Input", "This symlink has no target. Prose was not checked.", ""))
     return None
 
 
