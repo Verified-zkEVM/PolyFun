@@ -1,5 +1,16 @@
 # Validation
 
+## Python tooling
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) for
+all repository Python entry points, including validation scripts and CI.
+CI uses uv 0.13.6. The uv commands below select Python
+3.12; uv downloads it if needed. Run them from the repository root.
+These checks use only the standard library. `--no-project` runs them without
+installing a Python package or creating a project environment.
+
+## Full validation
+
 Fetch precompiled dependencies on a fresh checkout, then run the full suite:
 
 ```bash
@@ -16,7 +27,7 @@ proofs, examples, import boundaries, or validation infrastructure.
 | Check | Scope |
 |---|---|
 | Default build | `PolyFun`, `ToCslib`, `ComplexityBackends`, `PolyFunIO`, `PolyFunExamples`, and `+PolyFunParliamentMain`, with `--wfail` |
-| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.WP` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend; `PolyFun` imports no backend), `import all` boundaries (tests may open backends, backends never open `PolyFun` or `ToCslib`, module canaries open nothing) |
+| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.WP` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend, and `PolyFun` imports no backend), `import all` boundaries (tests may open backends, backends never open `PolyFun` or `ToCslib`, module canaries open nothing) |
 | Generated imports | Generated umbrellas match the tracked source tree |
 | Documentation | Checker regressions, agent symlink, local paths and heading anchors, module docstrings, README excerpt synchronization |
 | `--lint` | Batteries environment linters and Mathlib text-style checks over production and example libraries plus the executable entry point |
@@ -29,10 +40,11 @@ useful after removing all debt. Do not introduce `sorry`, `admit`, or
 non-standard axioms to finished work.
 
 The report written with `lake exe polyfun-axiomsweep --out FILE` also carries
-`sorryGraph`: every declaration in the `sorryAx` closure, with its kind, its
-elaborated statement, whether it uses `sorryAx` directly, and its tainted kernel
-dependencies, internal auxiliaries included. Downstream projects read it to
-trace inherited proof obligations; PolyFun's own `--check` still rejects them.
+`sorryGraph`. It lists every declaration in the `sorryAx` closure, internal
+auxiliaries included. Each entry gives the kind, the elaborated statement, whether
+the declaration uses `sorryAx` directly, and its tainted kernel dependencies.
+Downstream projects read the graph to trace inherited proof obligations. PolyFun's
+own `--check` still rejects any such declaration.
 
 ## New or moved source files
 
@@ -47,8 +59,8 @@ git add PolyFun ToCslib ComplexityBackends
 ```
 
 The generator reads tracked paths and rejects untracked source files. Never
-edit generated umbrellas by hand. Tutorial and test libraries use glob targets;
-they have no generated umbrella. The Parliament case study uses
+edit generated umbrellas by hand. Tutorial and test libraries use glob targets,
+so they have no generated umbrella. The Parliament case study uses
 `./scripts/update-lib.sh Examples.Parliament`. Add new tutorial modules to the explicit
 environment-lint, text-lint, and axiom-sweep module lists in `lakefile.toml`,
 `scripts/validate.sh`, and the text-lint workflow. See [generated files](generated-files.md).
@@ -61,45 +73,45 @@ lake build PolyFunTest --wfail --iofail
 lake test
 lake -d test/DocumentationConsumer build --wfail
 lake build polyfun-parliament --wfail
-python3 scripts/test-parliament-cli.py
+uv run --no-project --python 3.12 python scripts/test-parliament-cli.py
 lake -d test/ParliamentConsumer build --wfail
 lake lint
 lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
   Examples.Tutorials.InteractionTrees \
   Examples.Parliament PolyFunParliamentMain
-python3 scripts/test-docs-integrity.py
-python3 scripts/check-docs-integrity.py
+uv run --no-project --python 3.12 python ./scripts/test-docs-integrity.py
+uv run --no-project --python 3.12 python ./scripts/check-docs-integrity.py
 ```
 
 Build the relevant libraries before running environment linters. Use
 `lake lint -- --trace` to see which checks actually run. `checkUnivs` runs
-during elaboration; text-style linting is a separate check. The test library
+during elaboration. Text-style linting is a separate check. The test library
 is outside `lake lint` scope. See [lint policy](linting.md).
 
 The [documentation consumer](../../test/DocumentationConsumer/README.md) and
 `test/ParliamentConsumer` depend on PolyFun as separate packages and use ordinary
-imports. They share the root's dependency cache and pins. This catches missing public equations that an
-internal `import all` test could conceal.
+imports. They share the root's dependency cache and pins. These separate packages catch missing public
+equations that an internal `import all` test could conceal.
 
 When changing the README example, update both its fenced block and the named
 region in [Requests.lean](../../Examples/Tutorials/Requests.lean). The checker
-compares imports plus the region body; `lake build PolyFunExamples` elaborates
+compares imports plus the region body. `lake build PolyFunExamples` elaborates
 the source and its result proofs.
 
 ## CI mapping
 
 - [CI](../../.github/workflows/ci.yml): three parallel jobs, including
   merge-queue candidates:
-  - `build` runs the wrapper with `--axioms`;
+  - `build` runs the wrapper with `--axioms`.
   - `Lint (environment linters)` builds the production and example libraries
-    with `--wfail` and runs `lake lint`;
+    with `--wfail` and runs `lake lint`.
   - `Test` builds `PolyFunTest` with `--wfail --iofail` and runs `lake test`,
     the CLI tests and both consumers.
 
-  Every job restores two caches: dependencies keyed on the toolchain and
-  manifest, and PolyFun's own `.lake/build` keyed per commit and restored from
-  the newest `main` build. Each job therefore rebuilds only what the checkout
+  Every job restores two caches. One holds the dependencies, keyed on the
+  toolchain and manifest. The other holds PolyFun's own `.lake/build`, keyed per
+  commit and restored from the newest `main` build. Each job therefore rebuilds only what the checkout
   changed. Only `build` on `main` saves the caches, and a newer push to `main`
   waits for the running job rather than cancelling its save. A nightly clean
   build of `main` skips the build cache, so nothing passes only because of it.
@@ -110,9 +122,13 @@ the source and its result proofs.
   and tutorial libraries.
 - [API docs](../../.github/workflows/docs.yml): generated source documentation
   published on pushes to `main`. Its Lean action builds the documented roots and
-  leaves the tests and environment lint to CI: a single `lake lint` process over
-  every root needs about 7 GB, which shuts the hosted runner down, so the linters
-  run one root per process in the CI lint job.
+  leaves the tests and environment lint to CI. A single `lake lint` process over
+  every root needs about 7 GB, which shuts the hosted runner down. The CI lint job
+  therefore runs the linters with one root per process.
+- [Writing](../../.github/workflows/writing.yml): tests for the writing checker,
+  and [writing suggestions](write-technical-prose.md#use-the-checker) for the
+  changed prose and the PR description. The suggestions are warnings and do not
+  fail the job.
 
 All required jobs must pass on the revision under review. Retargeted or
 restacked PRs need fresh checks, including intermediate base branches. A
@@ -123,10 +139,10 @@ style-only result does not cover compilation or proof validation.
 Lean, Mathlib and CSLib stay in sync. Update `lean-toolchain`, both consumers'
 matching `lean-toolchain`, and both dependency pins in `lakefile.toml`, then
 run `lake update` and the full suite. Keep the root manifest committed and
-review the resolved versions. Consumer manifests are regenerated locally.
+review the resolved versions. Consumer manifests are local artifacts that Lake regenerates.
 Both consumers resolve into the root's package cache
-(`packagesDir = "../../.lake/packages"`), and their ignored `lake-manifest.json`
-and `.lake/` stay on disk between runs, so a stale consumer manifest checks the
+(`packagesDir = "../../.lake/packages"`). Their ignored `lake-manifest.json` and
+`.lake/` stay on disk between runs, so a stale consumer manifest checks the
 root's packages out at its old revisions. A worktree whose `.lake/packages` is a
 symlink passes the damage to the checkout it points at. Before validating a
 toolchain or manifest change, run `rm -f test/*/lake-manifest.json` and
@@ -137,8 +153,8 @@ rebuilding. Never build the consumers on two toolchains against one cache.
 Compatibility tests for existing deprecated APIs should assert their expected
 diagnostics with strict `#guard_msgs` rather than suppressing warnings.
 
-A release candidate is pinned like a stable version, with its `-rcN` tag
-wherever the version appears. When a change to `lean-toolchain` reaches `main`,
+Pin a release candidate like a stable version, with its `-rcN` tag wherever
+the version appears. When a change to `lean-toolchain` reaches `main`,
 the [release-tag workflow](../../.github/workflows/release-tag.yml) creates the
 matching PolyFun release tag.
 
