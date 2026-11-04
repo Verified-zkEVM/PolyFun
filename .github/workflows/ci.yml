@@ -47,6 +47,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.13.6"
+          enable-cache: false
+
       - name: Restore dependency cache
         id: deps-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -71,10 +77,6 @@ jobs:
           restore-keys: |
             polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
             polyfun-build-${{ runner.os }}-${{ runner.arch }}-
-
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
-        with:
-          python-version: "3.12"
 
       - name: Set up Lean environment
         uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64 # v1.7.0
@@ -125,6 +127,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.13.6"
+          enable-cache: false
+
       # Paths and keys must match the saves in `build` exactly, or the restore misses.
       - name: Restore dependency cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -168,7 +176,7 @@ jobs:
       # process (about 7 GB in total); on Lean v4.35.0 the runner was shut down during that step.
       - name: Run environment linters
         run: |
-          python3 -c "import tomllib; print('\\n'.join(tomllib.load(open('lakefile.toml', 'rb'))['lintDriverArgs']))" |
+          uv run --no-project --python 3.12 python -c "import tomllib; print('\\n'.join(tomllib.load(open('lakefile.toml', 'rb'))['lintDriverArgs']))" |
             while read -r root; do
               lake exe runLinter "$root"
             done
@@ -185,6 +193,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.13.6"
+          enable-cache: false
 
       # Paths and keys must match the saves in `build` exactly, or the restore misses.
       - name: Restore dependency cache
@@ -228,5 +242,5 @@ jobs:
           lake test
           lake -d test/DocumentationConsumer build --wfail
           lake build polyfun-parliament --wfail
-          python3 scripts/test-parliament-cli.py
+          uv run --no-project --python 3.12 python scripts/test-parliament-cli.py
           lake -d test/ParliamentConsumer build --wfail

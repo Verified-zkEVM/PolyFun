@@ -16,10 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
-          python-version: "3.12"
+          version: "0.13.6"
+          enable-cache: false
       - name: Test docs integrity checker
-        run: python3 ./scripts/test-docs-integrity.py
+        run: uv run --no-project --python 3.12 python ./scripts/test-docs-integrity.py
       - name: Check docs integrity
-        run: python3 ./scripts/check-docs-integrity.py
+        run: uv run --no-project --python 3.12 python ./scripts/check-docs-integrity.py

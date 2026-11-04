@@ -19,7 +19,7 @@ Default checks:
   - lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunExamples +PolyFunParliamentMain --wfail
   - ./scripts/check-modules.sh
   - ./scripts/check-imports.sh
-  - python3 ./scripts/check-docs-integrity.py
+  - uv run --no-project --python 3.12 python ./scripts/check-docs-integrity.py
 
 Optional checks:
   --lint    Run environment and text-style linters over production, tutorials, and case studies
@@ -64,8 +64,8 @@ echo "# Checking umbrella imports"
 
 echo ""
 echo "# Checking docs integrity"
-python3 ./scripts/test-docs-integrity.py
-python3 ./scripts/check-docs-integrity.py
+uv run --no-project --python 3.12 python ./scripts/test-docs-integrity.py
+uv run --no-project --python 3.12 python ./scripts/check-docs-integrity.py
 
 if (( run_lint )); then
   echo ""
@@ -87,7 +87,7 @@ if (( run_test )); then
   lake test
   lake -d test/DocumentationConsumer build --wfail
   lake build polyfun-parliament --wfail
-  python3 scripts/test-parliament-cli.py
+  uv run --no-project --python 3.12 python scripts/test-parliament-cli.py
   lake -d test/ParliamentConsumer build --wfail
 fi
 
