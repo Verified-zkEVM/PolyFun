@@ -82,6 +82,25 @@ the demonic reading:
   when each implementation returns only allowed source answers along the target's allowed answers
   (`IsChargeBoundUnder.liftM`).
 
+## Worst-case cost
+
+`cost c x` (`PolyFun/PFunctor/Free/Cost/Value.lean`) is the worst-case cost of `x`: the fold of
+`OpSpec.charge c`, which reads a call at `a` as `c a` followed by its worst continuation, with zero
+leaves. It lives in a complete lattice such as `ℕ∞`, `ℝ≥0∞` or `ι → ℕ∞`. `costWith c x k` adds a
+leaf cost `k`, which makes sequencing exact.
+
+| Reading | Definition | Cost types |
+|---|---|---|
+| Budget | `x.IsChargeBound c B s` | any ordered additive monoid |
+| Worst-case cost | `cost c x`, `costWith c x k` | complete lattices such as `ℕ∞` |
+
+The two readings agree in canonically ordered monoids:
+
+- `isChargeBound_of_cost_le` holds in general;
+- `cost_le_of_isChargeBound` needs addition to distribute over nonempty suprema (`AddSupDistrib`,
+  which holds for `ℕ∞` and pointwise);
+- `isChargeBound_iff_cost_natCast_le` reads a natural-number budget as a bound in `ℕ∞`.
+
 ## Accounting boundary
 
 A charge bound is a bound on interface use, relative to an accounting boundary. It charges the
@@ -115,12 +134,19 @@ A bound presented as a resource contract needs more than the laws of this guide:
 
 ## Laws
 
-**Sequencing.** `isChargeBound_bind_iff` is exact: the continuation starts from the amount spent
-at each leaf. A call whose answer is ignored, such as a tick, merges into what follows when it has
-an answer (`isChargeBound_liftBind_const_iff`). `IsChargeBound.bind` adds budgets, and
-`IsChargeBound.bind_of_le` lets the continuation start from any amount within a bound.
+**Sequencing.** `isChargeBound_bind_iff` and `cost c (x >>= f) = costWith c x fun a => cost c
+(f a)` are exact: the continuation starts from the amount spent at each leaf. A call whose answer is
+ignored, such as a tick, merges into what follows when it has an answer
+(`isChargeBound_liftBind_const_iff`). `IsChargeBound.bind` adds budgets, `cost_bind_le` adds costs,
+and `IsChargeBound.bind_of_le` lets the continuation start from any amount within a bound.
 
-**Monotonicity.** `IsChargeBound.mono`, `.mono_charge` and `.mono_spent`.
+**Reachable results** (`PolyFun/PFunctor/Free/Cost/Support.lean`). The continuation's budget is
+needed only where `x` can return: `IsChargeBound.bind_supp` and `cost_bind_le_supp` take it on the
+support `x.supp`. `x.CallsIn S` says every call of `x` is in `S`; then charges and handlers matter
+only on `S` (`IsChargeBound.congr_charge`, `costWith_congr_charge`, `liftM_congr_of_callsIn`).
+
+**Monotonicity.** `IsChargeBound.mono`, `.mono_charge` and `.mono_spent`; `cost_mono_charge` is
+tagged `@[gcongr]`.
 
 **Changing the cost type.**
 
@@ -133,14 +159,29 @@ an answer (`isChargeBound_liftBind_const_iff`). `IsChargeBound.bind` adds budget
   family (`IsChargeBound.const`). Per-index unit budgets are the subtractive per-index roll bound
   (`isChargeBound_single_iff_isRollBound`).
 
+**Loops** (`PolyFun/PFunctor/Free/Cost/Loops.lean`). `forM`, `mapM`, `foldlM` and `forIn` stay
+within the sum of their per-iteration budgets, or `xs.length • B` for a uniform budget `B`.
+`cost_forM_le` and `cost_forIn_le` are the value forms.
+
 ## Lenses and handlers
 
 **Lenses.** A bound with the pulled-back charge bounds the relabelled program
 (`IsChargeBound.mapLens`), and the two agree when the lens reaches every answer
-(`isChargeBound_mapLens_iff`). Roll bounds transport the same way (`IsRollBound.mapLens`,
+(`isChargeBound_mapLens_iff`). In value form, `cost_mapLens_le` and `cost_mapLens_of_surjective`.
+Roll bounds transport the same way (`IsRollBound.mapLens`,
 `isRollBound_mapLens_iff`).
 
 **Free handlers.** If each implementation `h a` stays within `c a` under the target charge `d`,
 simulating a program within budget through `h` stays within the same budget
 (`IsChargeBound.liftM`). With a uniform step bound `k`, a program of `n` calls is simulated within
-`n • k` (`IsChargeBound.liftM_nsmul`).
+`n • k` (`IsChargeBound.liftM_nsmul`). In value form, a simulated program costs at most the original with each
+call charged the worst case of its implementation, `handlerCost` (`cost_liftM_le`).
+
+## Proving bounds
+
+- **Concrete programs.** `cost_bound [defs]` (`PolyFun/PFunctor/Free/Cost/Tactic.lean`) unfolds
+  the definitions and runs `simp` with the cost equations and with finite-supremum unfolding
+  (`Fin.iSup_succ`, `iSup_bool_eq`, `iSup_option`, `iSup_sum`). Then `norm_num` and `omega` handle
+  the arithmetic. It decides budgets and computes worst-case costs of `do` programs over finite
+  answer types.
+- **Loops with a symbolic number of iterations.** Use the loop lemmas.

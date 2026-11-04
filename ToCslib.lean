@@ -12,6 +12,7 @@ public import ToCslib.Control.ForIn
 public import ToCslib.Control.Monad.HomTransport
 public import ToCslib.Data.BitVec
 public import ToCslib.Data.Fin.Cases
+public import ToCslib.Data.Fin.Lattice
 public import ToCslib.Data.Fin.MOfFn
 public import ToCslib.Data.PFunctor.Free.Basic
 public import ToCslib.Data.PFunctor.Free.Loops

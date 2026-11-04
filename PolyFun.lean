@@ -289,6 +289,10 @@ public import PolyFun.PFunctor.Free.Basic
 public import PolyFun.PFunctor.Free.Code
 public import PolyFun.PFunctor.Free.CodeRel
 public import PolyFun.PFunctor.Free.Cost
+public import PolyFun.PFunctor.Free.Cost.Loops
+public import PolyFun.PFunctor.Free.Cost.Support
+public import PolyFun.PFunctor.Free.Cost.Tactic
+public import PolyFun.PFunctor.Free.Cost.Value
 public import PolyFun.PFunctor.Free.Cursor
 public import PolyFun.PFunctor.Free.Cursor.Append
 public import PolyFun.PFunctor.Free.Cursor.Fork
