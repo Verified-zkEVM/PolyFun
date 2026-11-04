@@ -12,13 +12,13 @@ public import PolyFun.PFunctor.Lens.Factorization
 # The natural-model structure of a universe polynomial
 
 A universe is a family `El : U → Type u`; its display map is the projection
-`u : Ũ = Σ a, El a → U`, and its polynomial is `univPoly El = ⟨U, El⟩`, the polynomial `P_u` of
+`u : U• = Σ a, El a → U`, and its polynomial is `univPoly El = ⟨U, El⟩`, the polynomial `P_u` of
 `u` (`PFunctor.Slice.equivOfMapFst` in `PolyFun.PFunctor.Slice`). Following
 Awodey [Awo18], a Σ-structure on `u` is a cartesian map of
 polynomials `P_u ◃ P_u → P_u`, and a Π-structure is a cartesian map from the polynomial
 `piPoly El` (positions `P_u U`, directions at `(a, b)` the dependent functions
-`∀ x : El a, El (b x)`) to `P_u`; equivalently, a pullback square from `P_u Ũ → P_u U` to
-`u : Ũ → U`.
+`∀ x : El a, El (b x)`) to `P_u`; equivalently, a pullback square from `P_u U• → P_u U` to
+`u : U• → U`.
 
 A cartesian map of polynomials is a `CartLens`: a map of positions with an equivalence of
 directions at each position, so that its underlying lens is cartesian
@@ -31,7 +31,7 @@ Codes for Σ and Π (`SigmaCodes`, `PiCodes`): a code `sig a b` (resp. `pi a b`)
 `a : U` and `b : El a → U`, with an equivalence `El (sig a b) ≃ Σ x, El (b x)`
 (resp. `El (pi a b) ≃ ∀ x, El (b x)`). Codes are the same as structures
 (`sigmaCodesEquiv`, `piCodesEquiv`), and the Π-structure of codes has Awodey's pullback square
-`P_u Ũ ≃ P_u U ×_U Ũ` with the abstraction map `lam` on top (`PiStructure.lamPullbackEquiv`).
+`P_u U• ≃ P_u U ×_U U•` with the abstraction map `lam` on top (`PiStructure.lamPullbackEquiv`).
 
 ## Main definitions
 
@@ -39,7 +39,7 @@ Codes for Σ and Π (`SigmaCodes`, `PiCodes`): a code `sig a b` (resp. `pi a b`)
 * `PFunctor.NaturalModel.univPoly`, `PFunctor.NaturalModel.piPoly`.
 * `PFunctor.NaturalModel.SigmaStructure`, `PFunctor.NaturalModel.PiStructure`.
 * `PFunctor.NaturalModel.SigmaCodes`, `PFunctor.NaturalModel.PiCodes`.
-* `PFunctor.NaturalModel.PiStructure.lam`: the abstraction map `P_u Ũ → Ũ`.
+* `PFunctor.NaturalModel.PiStructure.lam`: the abstraction map `P_u U• → U•`.
 
 ## Main results
 
@@ -173,7 +173,7 @@ theorem piCodesEquiv_toFunA (c : PiCodes El) (a : U) (b : El a → U) :
     (piCodesEquiv El c).toFunA ⟨a, b⟩ = c.pi a b :=
   rfl
 
-/-- `P_u Ũ` is the total space of `piPoly El`: a family of elements is its family of codes
+/-- `P_u U•` is the total space of `piPoly El`: a family of elements is its family of codes
 with an element over each. -/
 def objTotalEquiv :
     univPoly El (Σ a, El a) ≃ Σ c : univPoly El U, ∀ x : El c.1, El (c.2 x) where
@@ -186,7 +186,7 @@ namespace PiStructure
 
 variable {El}
 
-/-- The abstraction map `λ : P_u Ũ → Ũ` of a Π-structure. -/
+/-- The abstraction map `λ : P_u U• → U•` of a Π-structure. -/
 def lam (s : PiStructure El) (t : univPoly El (Σ a, El a)) : Σ a, El a :=
   s.total (objTotalEquiv El t)
 
@@ -195,7 +195,7 @@ theorem lam_fst (s : PiStructure El) (t : univPoly El (Σ a, El a)) :
     (s.lam t).1 = s.toFunA ((univPoly El).map Sigma.fst t) :=
   rfl
 
-/-- Awodey's Π-square is a pullback: the gap map `P_u Ũ → P_u U ×_U Ũ`, `t ↦ (P_u(u) t, λ t)`,
+/-- Awodey's Π-square is a pullback: the gap map `P_u U• → P_u U ×_U U•`, `t ↦ (P_u(u) t, λ t)`,
 is an equivalence. -/
 def lamPullbackEquiv (s : PiStructure El) :
     univPoly El (Σ a, El a) ≃
