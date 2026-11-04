@@ -125,7 +125,8 @@ additive valuation of the path's event trace (`charge_eq_traceList_charge`), and
 `Path.length` (`length_eq_charge_one`).
 
 - A budget bounds every completed path (`charge_le_of_isChargeBound`), and so does the worst-case
-  cost (`charge_le_cost`).
+  cost (`charge_le_cost`). When every reachable call has an answer, the worst-case cost is the
+  supremum of the path charges (`cost_eq_iSup_charge`).
 - The converse needs every reachable call to have an answer (`isChargeBound_of_forall_charge_le`,
   under `ProgramProgress`): a call with no answers ends no completed path but is still charged.
 - With signed weights the readings differ even then: a prefix may overspend a budget that every
