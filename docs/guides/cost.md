@@ -298,6 +298,12 @@ its views. It realizes the composite (`run_comp`, `Realizes.comp`), and budgets 
 operations. `BudgetedProgram f ω` bundles a measured program realizing `f` with its budget, and
 composes the same way.
 
+Only the operations are charged: the view, the answering function and the code between calls are
+free, so `ofFun f` realizes any `f` at cost `0`. A cost statement therefore names its measured
+program instead of quantifying over one, and the uncharged parts are bounded one layer down. Prices
+do not depend on the view; for a family of inputs, fix the size measure and the budget envelope
+independently of the program, and prove growth separately.
+
 `Budgeted c B α` is the subtype of free programs within budget `B`. Graded by `Multiplicative ω`,
 it is a `GradedMonad`: `gbind` adds budgets.
 
