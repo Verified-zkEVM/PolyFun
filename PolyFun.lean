@@ -241,6 +241,7 @@ public import PolyFun.PFunctor.Category
 public import PolyFun.PFunctor.Category.Factorization
 public import PolyFun.PFunctor.Category.MonoEpi
 public import PolyFun.PFunctor.Category.Monoidal
+public import PolyFun.PFunctor.Charge
 public import PolyFun.PFunctor.Chart.Basic
 public import PolyFun.PFunctor.Cofree
 public import PolyFun.PFunctor.Cofree.FiniteProjection
@@ -306,6 +307,7 @@ public import PolyFun.PFunctor.Equiv.Special
 public import PolyFun.PFunctor.Free.Basic
 public import PolyFun.PFunctor.Free.Code
 public import PolyFun.PFunctor.Free.CodeRel
+public import PolyFun.PFunctor.Free.Cost
 public import PolyFun.PFunctor.Free.Cursor
 public import PolyFun.PFunctor.Free.Cursor.Append
 public import PolyFun.PFunctor.Free.Cursor.Fork

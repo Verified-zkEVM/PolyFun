@@ -133,6 +133,13 @@ theorem wpFold_lift (Φ : OpSpec P l) (a : P.A) (post : P.B a → l) :
     wpFold (α := no_index (P.B a)) Φ (FreeM.lift (P := P) a) post = Φ a post :=
   rfl
 
+/-- A lifted object, the form in which `MonadLift P (FreeM P)` issues a call, folds as one call
+followed by its continuation. -/
+@[simp]
+theorem wpFold_liftObj (Φ : OpSpec P l) (x : P.Obj α) (post : α → l) :
+    wpFold Φ (FreeM.liftObj x) post = Φ x.1 fun b => post (x.2 b) :=
+  rfl
+
 /-- Weakest preconditions compose through sequencing across result universes. -/
 theorem wpFold_bind' {X : Type uX} {Y : Type uY} (Φ : OpSpec P l)
     (x : FreeM P X) (f : X → FreeM P Y) (post : Y → l) :
