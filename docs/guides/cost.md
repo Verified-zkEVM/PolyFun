@@ -198,6 +198,23 @@ A bound presented as a resource contract needs more than the laws of this guide:
   a call whose answer type is empty meets its budget and never returns. Keep `ProgramProgress`
   (`programProgress_of_nonempty`) or an availability predicate as its own conjunct.
 
+## Answers and peaks
+
+**Answer-dependent prices** (`PolyFun/PFunctor/Free/Cost/Event.lean`). An event charge
+`e : P.Idx → ω` prices a call together with its answer: the size of returned data, or a price that
+depends on what the answer reveals. `IsEventChargeBound x e B` is its budget reading, paid after
+each answer. A call price that dominates every answer gives an event bound
+(`IsEventChargeBound.of_isChargeBound`), event bounds bound every completed path through
+`Path.chargeEvent` (`chargeEvent_le_of_isEventChargeBound`), and they add under sequencing.
+Prices that depend on earlier calls, such as warm and cold storage access, are a charge on the
+handler state, bounded by a potential (resource growth or the amortized transfer).
+
+**Peaks.** With signed prices the amount spent rises and falls. The `Watermark` of a sequence of
+prices is its highest prefix sum and its total; watermarks form a monoid under concatenation that is
+not commutative. A budget with signed prices is exactly a bound on the peak of every completed
+path (`isChargeBound_iff_forall_peak_le`, when every call has an answer). With `+1` on allocation
+and `-1` on release this bounds peak space, stack depth or live width.
+
 ## Laws
 
 **Sequencing.** `isChargeBound_bind_iff` and `cost c (x >>= f) = costWith c x fun a => cost c
