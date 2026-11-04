@@ -69,6 +69,8 @@ inductive Op
   | group
   deriving DecidableEq
 
+instance : Fintype Op := ⟨{.hash, .group}, fun o => by cases o <;> simp⟩
+
 /-- Count each kind of query separately. -/
 def kind (o : Op) : Op → ℕ := Pi.single o 1
 
@@ -154,6 +156,38 @@ example : (upThenDown.mapLens (Lens.inl (Q := Coin))).IsRollBound false
     (fun a s => Sum.elim (admits · s) (fun _ => True) a)
     (fun a s => Sum.elim (record · s) (fun _ => s) a) :=
   IsRollBound.mapLens Lens.inl upThenDown_isRollBound
+
+/-! ## Totals, constants and uniform steps -/
+
+/-- Per-kind budgets sum to a total budget. -/
+example {P : PFunctor} (c : P.A → Op) (x : FreeM P PUnit) (q : ℕ)
+    (h : x.IsChargeBound (kind ∘ c) (q • kind Op.hash + kind Op.group)) :
+    x.IsChargeBound (fun a => ∑ o, kind (c a) o) (∑ o, (q • kind Op.hash + kind Op.group) o)
+      (∑ o, (0 : Op → ℕ) o) :=
+  h.sum
+
+/-- A natural-number budget is a budget in `ℕ∞`. -/
+example {α : Type} (x : FreeM Coin α) (n : ℕ) (h : x.IsChargeBound (fun _ => (1 : ℕ)) n) :
+    x.IsChargeBound (fun _ => ((1 : ℕ) : ℕ∞)) (n : ℕ∞) ((0 : ℕ) : ℕ∞) :=
+  isChargeBound_natCast_iff.2 h
+
+/-- Each call implemented by two calls: `n` calls become `n • 2`. -/
+example {α : Type} (x : FreeM Coin α) (n : ℕ) (hx : x.IsChargeBound (fun _ => (1 : ℕ)) n) :
+    (x.liftM doubled).IsChargeBound (fun _ => (1 : ℕ)) (n • 2) :=
+  IsChargeBound.liftM_nsmul doubled (fun _ => by simp [doubled]) hx
+
+/-- Two calls to distinct keys. -/
+def keysOneTwo : FreeM Keys Bool := do
+  let _ ← FreeM.lift (P := Keys) 1
+  let _ ← FreeM.lift (P := Keys) 2
+  pure true
+
+/-- Per-index budgets with unit charges are the per-index subtractive roll bound. -/
+example :
+    keysOneTwo.IsChargeBound (fun a => Pi.single a 1) (fun k => if k = 1 ∨ k = 2 then 1 else 0) :=
+  (isChargeBound_single_iff_isRollBound _ _).2 (by
+    simp only [keysOneTwo, isRollBound_lift_bind_iff', isRollBound_pure]
+    exact ⟨by decide, fun _ => ⟨by decide, fun _ => trivial⟩⟩)
 
 /-! ## Bounds as contracts -/
 

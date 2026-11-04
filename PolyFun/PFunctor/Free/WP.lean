@@ -597,6 +597,30 @@ theorem wpFold_liftM_le [Preorder l] (handler : (position : P.A) → FreeM Q (P.
   | pure result => exact le_rfl
   | lift_bind position next ih => exact (h position _).trans (hΦ position ih)
 
+/-- **Transfer along a stateful handler.** If, for every continuation and every state, the fold
+of `Ψ` over each implementation's run is below the spec `Φ` of its call at that state, then folding
+`Ψ` over the run of the substituted program is below folding `Φ` over the program. -/
+theorem wpFold_run_liftM_le [Preorder l] {σ : Type uB}
+    (handler : (position : P.A) → StateT σ (FreeM Q) (P.B position)) {Ψ : OpSpec Q l}
+    {Φ : OpSpec P (σ → l)} (hΨ : Ψ.Monotone)
+    (h : ∀ position (k : P.B position → σ → l) state,
+      wpFold Ψ ((handler position).run state) (fun z => k z.1 z.2) ≤ Φ position k state)
+    (program : FreeM P α) (post : α → σ → l) (state : σ) :
+    wpFold Ψ ((program.liftM handler).run state) (fun z => post z.1 z.2) ≤
+      wpFold Φ program post state := by
+  induction program generalizing state with
+  | pure result => exact le_rfl
+  | lift_bind position next ih =>
+      change wpFold Ψ ((handler position >>= fun b => (next b).liftM handler).run state)
+        (fun z => post z.1 z.2) ≤ _
+      rw [StateT.run_bind]
+      change wpFold Ψ (FreeM.bind ((handler position).run state)
+        fun p : P.B position × σ => ((next p.1).liftM handler).run p.2)
+        (fun z => post z.1 z.2) ≤ _
+      rw [wpFold_bind']
+      exact (wpFold_mono hΨ _ fun p : P.B position × σ => ih p.1 p.2).trans
+        (h position (fun b s => wpFold Φ (next b) post s) state)
+
 end FreeHandler
 
 /-- Pullback is functorial: pulling back along two handlers in turn is pulling back along the

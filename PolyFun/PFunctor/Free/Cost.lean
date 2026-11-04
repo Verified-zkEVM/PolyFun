@@ -11,6 +11,11 @@ public import PolyFun.PFunctor.Bound
 public import Mathlib.Algebra.Order.Hom.Monoid
 public import Mathlib.Algebra.Order.Monoid.Canonical.Defs
 public import Mathlib.Algebra.Order.Pi
+public import Mathlib.Algebra.Order.Monoid.Prod
+public import Mathlib.Algebra.Order.Sub.Prod
+public import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
+public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+public import Mathlib.Algebra.Order.BigOperators.Group.Finset
 public import Mathlib.Data.ENat.Lattice
 public import Mathlib.Data.Nat.Cast.Order.Basic
 
@@ -380,12 +385,14 @@ theorem isChargeBound_comp_iff {x : FreeM P α} (φ : ω →+ ω') (hφ : ∀ a 
       hφ]
     exact and_congr_right fun _ => forall_congr' fun b => ih b
 
-/-- Natural-number budgets as budgets in `ℕ∞`. -/
-theorem isChargeBound_natCast_iff {x : FreeM P α} {c : P.A → ℕ} {n s : ℕ} :
-    IsChargeBound x (fun a => (c a : ℕ∞)) n s ↔ IsChargeBound x c n s :=
-  isChargeBound_comp_iff (Nat.castAddMonoidHom ℕ∞) fun _ _ => Nat.cast_le
-
 end Transport
+
+/-- Natural-number budgets as budgets in any ordered semiring of characteristic zero, such as `ℕ∞`
+or `ℝ≥0∞`. -/
+theorem isChargeBound_natCast_iff {R : Type w'} [AddCommMonoidWithOne R] [PartialOrder R]
+    [AddLeftMono R] [ZeroLEOneClass R] [CharZero R] {x : FreeM P α} {c : P.A → ℕ} {n s : ℕ} :
+    IsChargeBound x (fun a => (c a : R)) n s ↔ IsChargeBound x c n s :=
+  isChargeBound_comp_iff (Nat.castAddMonoidHom R) fun _ _ => Nat.cast_le
 
 /-! ### Product and family budgets -/
 
@@ -419,7 +426,50 @@ theorem isChargeBound_pi_iff {ι : Type*} {ω : ι → Type w} [∀ i, Add (ω i
     simp only [isChargeBound_liftBind_iff, Pi.le_def, Pi.add_apply, ih]
     exact ⟨fun h i => ⟨h.1 i, fun b => h.2 b i⟩, fun h => ⟨fun i => (h i).1, fun b i => (h i).2 b⟩⟩
 
+/-- A bound holds in every coordinate of a constant family. -/
+theorem IsChargeBound.const (ι : Type*) {x : FreeM P α} {c : P.A → ω₁} {B s : ω₁}
+    (h : IsChargeBound x c B s) :
+    IsChargeBound x (fun a (_ : ι) => c a) (fun _ => B) (fun _ => s) :=
+  isChargeBound_pi_iff.2 fun _ => h
+
 end Product
+
+section Sum
+
+variable {ι : Type*} [Fintype ι] [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω]
+
+/-- A bound on a family of charges sums to a bound on the total charge: per-index budgets give a
+total budget. -/
+theorem IsChargeBound.sum {x : FreeM P α} {c : P.A → ι → ω} {B s : ι → ω}
+    (h : IsChargeBound x c B s) :
+    IsChargeBound x (fun a => ∑ i, c a i) (∑ i, B i) (∑ i, s i) := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact Finset.sum_le_sum fun i _ => h i
+  | liftBind a r ih =>
+    have hsum : ∑ i, s i + ∑ i, c a i = ∑ i, (s + c a) i := by
+      rw [← Finset.sum_add_distrib]; rfl
+    refine ⟨?_, fun b => ?_⟩
+    · rw [hsum]; exact Finset.sum_le_sum fun i _ => h.1 i
+    · rw [hsum]; exact ih b (h.2 b)
+
+end Sum
+
+/-- Per-index budgets with unit charges are the subtractive per-index roll bound: a call at `a`
+needs a positive budget at `a` and spends one unit there. -/
+theorem isChargeBound_single_iff_isRollBound [DecidableEq P.A] (x : FreeM P α) (qb : P.A → ℕ) :
+    x.IsChargeBound (fun a => Pi.single a 1) qb ↔
+      x.IsRollBound qb (fun a b => 0 < b a) (fun a b => Function.update b a (b a - 1)) := by
+  rw [isChargeBound_iff_isRollBound_orderedSub, tsub_zero]
+  simp only [zero_le, true_and]
+  refine isRollBound_congr (fun a b => ⟨fun h => ?_, fun h j => ?_⟩) fun a b => ?_
+  · simpa [Nat.one_le_iff_ne_zero, Nat.pos_iff_ne_zero] using h a
+  · by_cases hj : j = a
+    · subst hj; simpa [Nat.one_le_iff_ne_zero, Nat.pos_iff_ne_zero] using h
+    · simp [hj]
+  · funext j
+    by_cases hj : j = a
+    · subst hj; simp
+    · simp [hj]
 
 /-! ### Lenses and free handlers -/
 
@@ -468,6 +518,21 @@ theorem IsChargeBound.liftM (handler : (a : P.A) → FreeM Q (P.B a)) {c : P.A �
     have hh := (hstep a).add_left s
     rw [add_zero] at hh
     exact hh.bind_of_le hx.1 fun b s' hs' => (ih b (hx.2 b)).mono_spent hs'
+
+/-- **Uniform-step transfer.** If every implementation stays within `k`, a program making at most
+`n` calls is simulated within `n • k`. -/
+theorem IsChargeBound.liftM_nsmul [CanonicallyOrderedAdd ω] (handler : (a : P.A) → FreeM Q (P.B a))
+    {d : Q.A → ω} {k : ω} (hstep : ∀ a, (handler a).IsChargeBound d k) {x : FreeM P α} {n : ℕ}
+    (hx : x.IsChargeBound (fun _ => (1 : ℕ)) n) : (x.liftM handler).IsChargeBound d (n • k) := by
+  let scale : ℕ →+o ω :=
+    { toFun := fun m => m • k, map_zero' := zero_nsmul k, map_add' := fun a b => add_nsmul k a b,
+      monotone' := fun _ _ h => nsmul_le_nsmul_left zero_le h }
+  have h := hx.map scale
+  rw [map_zero] at h
+  refine h.liftM handler fun a => ?_
+  change (handler a).IsChargeBound d ((1 : ℕ) • k)
+  rw [one_nsmul]
+  exact hstep a
 
 end Handler
 
