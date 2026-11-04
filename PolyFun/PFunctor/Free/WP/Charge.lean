@@ -6,15 +6,16 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Free.WP.Upstream
-public import PolyFun.PFunctor.Bound
+public import PolyFun.PFunctor.Free.Cost.Value
 public import Mathlib.Data.ENat.Lattice
 
 /-!
 # Charges: worst-case cost as a weakest-precondition fold
 
-`OpSpec.charge c` reads a call at `a` as costing `c a`, followed by its worst continuation:
-`c a + ⨆ b, k b`. Its fold `wpFold (OpSpec.charge c) x post` is the worst-case charge-to-go of
-`x`, where `post` gives the cost of each leaf.
+`OpSpec.charge c` (`PolyFun.PFunctor.Free.Cost.Value`) reads a call at `a` as costing `c a`,
+followed by its worst continuation: `c a + ⨆ b, k b`. Its fold `wpFold (OpSpec.charge c) x post`
+is the worst-case charge-to-go of `x` (`FreeM.costWith`), where `post` gives the cost of each
+leaf. This module states its `ℕ∞` laws in fold form and connects roll budgets to core triples.
 
 * `isRollBound_iff_wpFold_charge`: subtractive per-position budgets
   (`IsRollBound x n (fun a b => c a ≤ b) (fun a b => b - c a)`) are exactly upper bounds on the
@@ -46,31 +47,6 @@ universe uA uB uA₂ v w z
 open Std.WP
 
 namespace PFunctor
-
-namespace OpSpec
-
-variable {P : PFunctor.{uA, uB}}
-
-/-- The worst-case charge reading: a call at `a` costs `c a`, followed by the worst
-continuation. -/
-noncomputable def charge {R : Type w} [CompleteLattice R] [Add R] (c : P.A → R) : OpSpec P R :=
-  fun a k => c a + ⨆ b, k b
-
-@[simp]
-theorem charge_apply {R : Type w} [CompleteLattice R] [Add R] (c : P.A → R) (a : P.A)
-    (k : P.B a → R) :
-    charge c a k = c a + ⨆ b, k b :=
-  rfl
-
-/-- The charge reading is monotone whenever addition is. -/
-theorem charge_mono {R : Type w} [CompleteLattice R] [Add R] [AddLeftMono R] (c : P.A → R) :
-    (charge c).Monotone := by
-  intro a k k' hk
-  change c a + ⨆ b, k b ≤ c a + ⨆ b, k' b
-  gcongr with b
-  exact hk b
-
-end OpSpec
 
 namespace FreeM
 
@@ -130,11 +106,6 @@ theorem wpFold_charge_le {Q : PFunctor.{uA₂, uB}} (c : Q.A → ℕ∞) {β : T
     refine iSup_le fun u => (ih u).trans ?_
     gcongr
     exact le_iSup (fun u => wpFold (OpSpec.charge c) (r u) fun _ => 0) u
-
-/-- The worst-case charge of a handler's implementation of the call at `a`. -/
-noncomputable def handlerCost {Q : PFunctor.{uA₂, uB}} (c : Q.A → ℕ∞)
-    (handler : (a : P.A) → FreeM Q (P.B a)) (a : P.A) : ℕ∞ :=
-  wpFold (OpSpec.charge c) (handler a) fun _ => 0
 
 /-- **Simulation overhead.** A program simulated through a handler costs at most the program with
 each call at `a` charged the handler's worst-case cost at `a`. -/

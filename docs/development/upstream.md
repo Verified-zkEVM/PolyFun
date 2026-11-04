@@ -110,6 +110,11 @@ The pinned Mathlib has only the vector-valued `List.Vector.mOfFn`; an upstream
 version belongs beside it. Its `vcgen` rule `Spec.mOfFn_fin` stays in
 `PolyFun/Control/Do/Spec.lean`, inside the `Std.WP` quarantine.
 
+`ToCslib/Data/Fin/Lattice.lean` splits a supremum over `Fin (n + 1)` into its first term and the
+rest (`Fin.iSup_succ`, with `Fin.iSup_zero`). Mathlib unfolds suprema over `Bool`, `Option` and
+sums but not over `Fin`; `cost_bound` uses these to evaluate worst-case costs over finite answer
+types. They belong beside Mathlib's `iSup_bool_eq`.
+
 ## Omega-CPO fixed points
 
 `ToCslib/Order/` extends Mathlib’s omega-CPO API with continuous currying,
