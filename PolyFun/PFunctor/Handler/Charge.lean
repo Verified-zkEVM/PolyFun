@@ -174,12 +174,12 @@ theorem _root_.PFunctor.FreeM.supp_map_eq_image {α β : Type*} (f : α → β) 
 
 /-- Instrument a handler with a charge in a writer: a call at `a` writes `c a`. The log lives in
 `Multiplicative ω`, so it accumulates the sum of the charges. -/
-def withChargeW [Monad m] [AddMonoid ω] (h : Handler m P) (c : P.A → ω) :
+def withChargeW [Functor m] (h : Handler m P) (c : P.A → ω) :
     Handler (WriterT (Multiplicative ω) m) P :=
   fun a => WriterT.mk ((fun b => (b, Multiplicative.ofAdd (c a))) <$> h a)
 
 @[simp]
-theorem run_withChargeW [Monad m] [AddMonoid ω] (h : Handler m P) (c : P.A → ω) (a : P.A) :
+theorem run_withChargeW [Functor m] (h : Handler m P) (c : P.A → ω) (a : P.A) :
     (h.withChargeW c a).run = (fun b => (b, Multiplicative.ofAdd (c a))) <$> h a :=
   rfl
 
@@ -414,7 +414,7 @@ def runUntil (h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))) :
 
 @[simp]
 theorem runUntil_pure (h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))) (x : α) (state : σ) :
-    runUntil h (.pure x) state = .pure (.inl x, state) :=
+    runUntil h (pure x) state = pure (.inl x, state) :=
   rfl
 
 theorem runUntil_liftBind (h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))) (a : P.A)
