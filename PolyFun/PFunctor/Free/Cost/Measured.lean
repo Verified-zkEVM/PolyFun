@@ -71,7 +71,12 @@ end Deterministic
 /-! ## Measured programs -/
 
 /-- A function computed by a free program over an interface that depends on an uncharged view of
-the input, answered deterministically, with a price per operation. -/
+the input, answered deterministically, with a price per operation.
+
+Only the operations are charged. The view, the answering function and the code between calls are
+free at this layer, so `ofFun f` realizes any `f` at cost `0`: a statement of the form
+`∃ M, M.Realizes f ∧ M.CostAtMost B` is trivial. Cost statements name the measured program, and
+the uncharged parts are bounded one layer down. -/
 structure MeasuredProgram (Input Result : Type u) (ω : Type w) where
   /-- What the program is allowed to depend on. -/
   View : Type u

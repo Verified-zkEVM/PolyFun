@@ -14,7 +14,8 @@ public import PolyFun.PFunctor.Free.Cost.Measured
 Checks for `PolyFun.PFunctor.Free.Cost.Measured`:
 
 * a measured program composed with itself computes the composite and adds budgets;
-* budgeted programs compose into a budgeted program for the composite function;
+* budgeted programs compose into a budgeted program for the composite function, and the
+  existential form of a cost statement is trivial;
 * free programs within budget form a graded monad.
 -/
 
@@ -55,6 +56,11 @@ def addTwo : BudgetedProgram ((· + 1) ∘ (· + 1) : ℕ → ℕ) ℕ :=
 example : addTwo.budget = 2 := rfl
 
 example : (BudgetedProgram.ofFun (ω := ℕ) (fun n : ℕ => n * 2)).budget = 0 := rfl
+
+/-- Quantifying over measured programs proves nothing: every function has one at cost `0`, because
+the view, the answers and the code between calls are uncharged. Statements name the program. -/
+example (f : ℕ → ℕ) : ∃ M : MeasuredProgram ℕ ℕ ℕ, M.Realizes f ∧ M.CostAtMost 0 :=
+  ⟨MeasuredProgram.ofFun f, MeasuredProgram.realizes_ofFun f, MeasuredProgram.costAtMost_ofFun f⟩
 
 /-! ## Budgeted carriers -/
 
