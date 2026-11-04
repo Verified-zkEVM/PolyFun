@@ -194,13 +194,9 @@ theorem CostAtMost.comp [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω]
     {outer : MeasuredProgram Mid Result ω} {inner : MeasuredProgram Input Mid ω} {B₁ B₂ : ω}
     (ho : outer.CostAtMost B₂) (hi : inner.CostAtMost B₁) :
     (outer.comp inner).CostAtMost (B₁ + B₂) := by
-  intro v q
-  have hq := Path.charge_splitBind (c := (outer.comp inner).cost)
-    ((inner.program v).mapLens (innerLens outer inner v))
-    (fun m => (outer.program (outer.view m)).mapLens (outerLens outer inner v (outer.view m))) q
-  refine hq.trans_le (add_le_add ?_ ?_)
-  · exact (Path.charge_pullMapLens _ _ _).trans_le (hi v _)
-  · exact (Path.charge_pullMapLens _ _ _).trans_le (ho _ _)
+  intro v
+  exact Path.charge_bind_mapLens_le _ _ _ _ (fun _ => rfl) (fun _ _ => rfl) (hi v)
+    fun m => ho (outer.view m)
 
 /-- Precompose with an uncharged map on inputs. -/
 def contramap {Input' : Type u} (M : MeasuredProgram Input Result ω) (g : Input' → Input) :
